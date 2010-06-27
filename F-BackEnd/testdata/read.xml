@@ -1,0 +1,43 @@
+<XcodeProgram source="read.f90"
+              language="Fortran"
+              time="2009-03-27 18:07:57"
+              compiler-info="XcodeML/Fortran-FrontEnd"
+              version="1.0">
+  <typeTable>
+    <FbasicType type="B80a5fa0" ref="Fint" />
+    <FfunctionType type="F80a5b00" return_type="Fvoid" is_program="1" />
+  </typeTable>
+  <globalSymbols>
+    <id sclass="extern_def" type="F80a5b00">
+      <name type="F80a5b00">main</name>
+    </id>
+  </globalSymbols>
+  <globalDeclarations>
+    <FfunctionDefinition lineno="1" file="read.f90">
+      <name type="F80a5b00">main</name>
+      <symbols>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">i</name>
+        </id>
+      </symbols>
+      <declarations>
+        <varDecl lineno="2" file="read.f90">
+          <name type="Fint">i</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <FreadStatement lineno="3" file="read.f90">
+          <namedValueList>
+            <namedValue name="UNIT" value="*" />
+            <namedValue name="FMT" value="*" />
+          </namedValueList>
+          <valueList>
+            <value>
+              <Var>i</Var>
+            </value>
+          </valueList>
+        </FreadStatement>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

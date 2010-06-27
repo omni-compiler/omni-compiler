@@ -1,0 +1,57 @@
+#!/bin/sh
+
+# $Id$
+# $RWC_Release$
+# $RWC_Copyright$
+
+ERROR=0
+
+case $EXEC in 
+*/scrun*|scrun*)
+  echo "Omni on SCASH do not support OMP_NUM_THREADS environment value."
+  echo "test skip"
+  exit 1
+;;
+esac
+
+OMP_NUM_THREADS=1
+export OMP_NUM_THREADS
+RESULT=`./envparam -t | grep -v SCore-D`
+if [ "$RESULT" != "number of threads is 1" ] ; then
+   ERROR=1
+fi
+
+OMP_NUM_THREADS=2
+export OMP_NUM_THREADS
+RESULT=`./envparam -t | grep -v SCore-D`
+if [ "$RESULT" != "number of threads is 2" ] ; then
+   ERROR=1
+fi
+
+OMP_NUM_THREADS=3
+export OMP_NUM_THREADS
+RESULT=`./envparam -t | grep -v SCore-D`
+if [ "$RESULT" != "number of threads is 3" ] ; then
+   ERROR=1
+fi
+
+OMP_NUM_THREADS=4
+export OMP_NUM_THREADS
+RESULT=`./envparam -t | grep -v SCore-D`
+if [ "$RESULT" != "number of threads is 4" ] ; then
+   ERROR=1
+fi
+
+OMP_NUM_THREADS=100
+export OMP_NUM_THREADS
+RESULT=`./envparam -t | grep -v SCore-D`
+if [ "$RESULT" != "number of threads is 100" ] ; then
+   ERROR=1
+fi
+
+
+if [ "$ERROR" = "0" ] ; then
+  echo "OMP_NUM_THREADS 001 : SUCCESS"
+else
+  echo "OMP_NUM_THREADS 001 : FAILED"
+fi

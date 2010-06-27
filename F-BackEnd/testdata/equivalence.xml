@@ -1,0 +1,42 @@
+<XcodeProgram source="equivalence.f90"
+              language="Fortran"
+              time="2009-03-27 18:07:57"
+              compiler-info="XcodeML/Fortran-FrontEnd"
+              version="1.0">
+  <typeTable>
+    <FbasicType type="C80a5f30" ref="Fcharacter">
+      <len><FintConstant type="Fint">-1</FintConstant></len>
+    </FbasicType>
+    <FbasicType type="C80a6338" ref="Fcharacter">
+      <len><FintConstant type="Fint">-1</FintConstant></len>
+    </FbasicType>
+    <FbasicType type="CA80a63f0" ref="Fcharacter">
+      <len><FintConstant type="Fint">-2</FintConstant></len>
+    </FbasicType>
+    <FbasicType type="B80a71d0" ref="U80a7180" />
+    <FbasicType type="C80a4540" ref="Fcharacter">
+      <len><FintConstant type="Fint">1</FintConstant></len>
+    </FbasicType>
+    <FfunctionType type="F80a5b08" return_type="Fvoid" is_program="1" />
+  </typeTable>
+  <globalSymbols>
+    <id sclass="extern_def" type="F80a5b08">
+      <name type="F80a5b08">main</name>
+    </id>
+     [* tagname S80a7900 ()]     [* tagname S80a7bd8 ()]     [* tagname S80a7eb0 ()]     [* tagname S80a83e0 ()]    <id sclass="tagname" type="U80a7180    "></id>
+  </globalSymbols>
+  <globalDeclarations>
+    <FfunctionDefinition lineno="1" file="equivalence.f90">
+      <name type="F80a5b08">main</name>
+      <symbols>
+        <id sclass="auto" type="U80a7180">
+          <name type="U80a7180">__Equiv_1_1</name>
+        </id>
+      </symbols>
+      <declarations>
+      </declarations>
+      <body>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

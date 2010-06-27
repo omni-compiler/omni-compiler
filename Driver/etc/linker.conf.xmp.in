@@ -1,0 +1,4 @@
+LINKER=@MPI_CMD@
+OM_OPTIONS="${OM_OPTIONS} -L${OMNI_HOME}/lib"
+LIBS="${LIBS} -lxmp"
+INPFILES="${INPFILES} ${OMNI_HOME}/lib/xmp_crt0.o"

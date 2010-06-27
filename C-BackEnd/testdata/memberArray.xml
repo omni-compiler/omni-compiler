@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XcodeProgram source="memberArray.c">
+<!-- 
+struct array_struct {
+    int array[2];
+};
+
+struct array_struct as;
+
+void function()
+{
+    as.array[0] = 0;
+    as.array[1] = 1;
+}
+-->
+<typeTable>
+  <arrayType type="type_of_array" element_type="int" array_size="1"/>
+  <pointerType type="pointerType_of_array" ref="type_of_array"/>
+  <structType type="type_of_structure">
+    <symbols>
+      <id>
+        <name type="type_of_array">array</name>
+      </id>
+    </symbols>
+  </structType>
+  <pointerType type="pointerType_of_as" ref="type_of_structure"/>
+  <functionType type="functionType_of_function" return_type="void">
+    <params>
+    </params>
+  </functionType>
+  <pointerType type="pointerType_of_function" ref="functionType_of_function"/>
+</typeTable>
+
+<globalSymbols>
+  <id sclass="tagname">
+    <name type="type_of_structure">array_struct</name>
+  </id>
+  <id sclass="extern_def">
+    <name type="type_of_structure">as</name>
+  </id>
+  <id sclass="extern_def">
+    <name type="functionType_of_function">function</name>
+  </id>
+</globalSymbols>
+<globalDeclarations>
+  <varDecl>
+    <name>as</name>
+  </varDecl>
+  <functionDefinition>
+    <name>function</name>
+    <symbols/>
+    <params/>
+    <body> 
+      <compoundStatement>
+        <symbols>
+        </symbols>
+        <declarations>
+        </declarations>
+        <body>
+          <exprStatement>
+            <assignExpr type="int">
+              <pointerRef type="int">
+                <plusExpr type="type_of_array">
+                  <pointerRef type="type_of_array">
+                    <memberArrayAddr member="array" type="pointerType_of_array">
+                      <varAddr type="pointerType_of_as">as</varAddr>
+                    </memberArrayAddr>
+                  </pointerRef>
+                  <intConstant type="int">0</intConstant>
+                </plusExpr>
+              </pointerRef>
+              <intConstant type="int">0</intConstant>
+            </assignExpr>
+          </exprStatement>
+
+          <exprStatement>
+
+            <assignExpr type="int">
+              <pointerRef type="int">
+                <plusExpr type="type_of_array">
+                  <memberArrayRef member="array" type="type_of_array">
+                    <varAddr type="pointerType_of_as">as</varAddr>
+                  </memberArrayRef>
+                  <intConstant type="int">0</intConstant>
+                </plusExpr>
+              </pointerRef>
+              <intConstant type="int">1</intConstant>
+            </assignExpr>
+          </exprStatement>
+
+        </body>
+      </compoundStatement>
+    </body>
+  </functionDefinition>
+</globalDeclarations>
+</XcodeProgram>

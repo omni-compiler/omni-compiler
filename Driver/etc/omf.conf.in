@@ -1,0 +1,16 @@
+# for scripts
+Preprocessor=@OMNI_HOME@/bin/omfpp
+L2X=@OMNI_HOME@/bin/omf2x
+LX2X=@OMNI_HOME@/bin/omfx2x
+X2L=@OMNI_HOME@/bin/omx2f
+NativeCompiler=@OMNI_HOME@/bin/omfnative
+Linker=@OMNI_HOME@/bin/omflinker
+
+# for options
+PreprocessorOption=
+L2XOption=
+LX2XOption=@OMF_CONF_LX2X_OPT@
+X2LOption=
+NativeCompilerOption=@OMF_CONF_NTV_OPT@
+LinkerOption=@OMF_CONF_LNK_OPT@
+TempDir=/tmp

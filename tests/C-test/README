@@ -1,0 +1,82 @@
+
+Test programs for OpenMP C API 1.0
+
+NOTES:
+
+1. Following test programs are valid OpenMP'd program.
+   But compilation with Omni failed because of its bug.
+
+     directive/data/dflt/dflt003.c :
+
+	Acording to the specification, const qualified valiable must
+	not be affected 'default(none)' clause. But in Omni, the
+	clause affects to the variable.
+     
+     directive/data/cpyin/cpyin020.c,
+     directive/data/thdprvt/thdprvt012.c,
+     directive/data/thdprvt/thdprvt026.c :
+
+	If a loop counter of '#pragma omp for' or '#pragma omp
+	parallel for' is declared as a threadprivate valiable,
+	compilation with Omni failed because of its bug.
+
+
+2. Following test programs also are valid OpenMP'd program.
+   Compilation with Omni made success but execution result says
+   "FAILED".
+
+     directive/data/thdprvt/thdprvt003.c :
+
+	Acording to the specification, a threadpriavate variable must
+	be private to each thread. But in Omni, the threadprivate
+	variable is private to EACH THREAD ID. In example below, 'i'
+	is shared within threads having same thread id in nested
+	parallel region.
+
+       ex)
+         int i;
+	 #pragma omp threadprivate(i)
+         #pragma omp parallel
+	 {
+	   /* 'i' is private to each thread */
+	   
+	   #pragma omp parallel
+	   {
+	     /* 'i' is private to different id of thread number. */
+           }
+         }
+
+
+SCore AND SCASH RELATED MATTERS:
+
+1. To run this test suite with Omni SCASH configuration,
+   use following command steps:
+   
+   % make CC="omcc -omniconfig=scash"
+
+	(csh-variant user)
+   % setenv OMNI_SCASH_HEAP_SIZE %HeapSize%
+
+       Where:
+         %HeapSize%  Size of SCASH heap memory.
+		     Heap memory size depends on number of nodes. 
+		     Should be set following value : 
+		       16 nodes : 1000000
+		       32 nodes : 2000000
+		       64 nodes : 4000000
+
+	(bsh-variant user)
+   % OMNI_SCASH_HEAP_SIZE=%HeapSize%; export OMNI_SCASH_HEAP_SIZE
+
+   % scout -g %ClusterName%
+
+   % make EXEC="scrun -nodes=%#ofNodes%" test
+
+	Where:
+		%ClusterName%	SCore cluster system name
+		%#ofNodes%	Number of nodes to be occupied
+
+2. Because of 'scrun' (SCore 3.x cluster system program launcher)
+   don't return proper exit code, execution result of test program
+   'exit001' and 'exit002' are "FAILED".
+

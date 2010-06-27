@@ -1,0 +1,87 @@
+#!/bin/sh
+
+# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
+# $TSUKUBA_Copyright:
+#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
+#  $
+
+# ---------- check input/output files ------------------------------------------------------
+OUTFILE=$1
+INPFILE=$2
+
+if [ -z "${OUTFILE}" ]; then
+  echo output file not specified
+  exit 1
+fi
+
+if [ -z "${INPFILE}" ]; then
+  echo input file not specified
+  exit 1
+fi
+
+# ---------- setup temporary files ---------------------------------------------------------
+BNAME=`dirname ${INPFILE}`/`basename ${INPFILE} .xml`
+TMP_OUTFILE=${BNAME}.tmp.xml
+TMP_INPFILE=${BNAME}.in.xml
+
+OM_INPFILE=$TMP_INPFILE
+OM_OUTFILE=$TMP_OUTFILE
+export OM_INPFILE
+export OM_OUTFILE
+
+# ---------- read conf files ---------------------------------------------------------------
+if [ -z "${OM_TRANSLATORS}" ]; then
+  exit 0
+else
+  CMD_OPT="-decomp"
+  for TID in ${OM_TRANSLATORS}; do
+    CONF="${OMNI_HOME}/etc/x2x.conf.${TID}"
+    if [ -r ${CONF} ]; then
+      . ${CONF}
+    else
+      echo cannot read ${CONF} script.
+      exit 1
+    fi
+  done;
+fi
+
+# ---------- setup java --------------------------------------------------------------------
+CONF="${OMNI_HOME}/etc/java.conf"
+if [ -e ${CONF} ]; then
+  if [ -r ${CONF} ]; then
+    . ${CONF}
+  else
+    echo cannot read ${CONF} script.
+    exit 1
+  fi
+else
+  echo cannot find ${CONF} script.
+  exit 1
+fi
+
+OMNI_JAR1="${OMNI_HOME}/java/om-exc-tools.jar"
+OMNI_JAR2="${OMNI_HOME}/java/om-c-back.jar"
+OMNI_JAR3="${OMNI_HOME}/java/om-f-back.jar"
+OMNI_JAR4="${OMNI_HOME}/java/om-common.jar"
+
+if [ -f $OMNI_JAR1 -a -f $OMNI_JAR2 -a -f $OMNI_JAR3 -a -f $OMNI_JAR4 ]; then
+  JAVA_CMD="${OMNI_JAVA} ${OMNI_JAVA_OPT} -cp ${OMNI_JAR4}:${OMNI_JAR3}:${OMNI_JAR2}:${OMNI_JAR1} exc.util.omompx ${CMD_OPT}"
+elif [ -f "${OMNI_HOME}/classes/exc/util/omompx.class" ]; then
+  export CLASSPATH="${OMNI_HOME}/classes:${OMNI_HOME}/../C-BackEnd/binding/classes:${OMNI_HOME}/../C-BackEnd/classes:${OMNI_HOME}/../F-BackEnd/binding/classes:${OMNI_HOME}/../F-BackEnd/classes:${OMNI_HOME}/../XcodeML-Common/classes"
+  JAVA_CMD="${OMNI_JAVA} ${OMNI_JAVA_OPT} exc.util.omompx ${CMD_OPT}"
+else
+  echo program not found.
+  exit 1
+fi
+
+# ---------- execute translator ------------------------------------------------------------
+mv ${INPFILE} ${TMP_INPFILE} || exit $?
+X2X_CMD="${JAVA_CMD} -x${OM_LANGID} ${OM_OPTIONS} ${TMP_INPFILE} -o ${TMP_OUTFILE}"
+if [ "${OM_VERBOSE}" = "1" ]; then
+  echo "executing translator ..."
+  echo ${X2X_CMD}
+fi
+${X2X_CMD} || exit $?
+mv ${TMP_OUTFILE} ${OUTFILE} || exit $?
+
+exit 0

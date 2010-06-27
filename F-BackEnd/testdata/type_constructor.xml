@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- 
+      program main
+        type point3d
+          real x
+          real y
+          real z
+        end type
+        type(point3d) p
+        p = point3d(1.0, 2.0, 3.0)
+      end
+-->
+<XcodeProgram compiler-info="F-Frontend"
+              version="0.8"
+              time="2009-02-17 10:53:20"
+              language="Fortran 90 Free Format"
+              source="type_constructor.f90">
+
+  <!-- typeTable -->
+  <typeTable>
+    <FfunctionType type="FfunctionType_of_main" return_type="Fvoid" />
+    <FstructType type="FstructType_of_point3d">
+      <symbols>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">x</name>
+        </id>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">y</name>
+        </id>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">z</name>
+        </id>
+      </symbols>
+    </FstructType>
+  </typeTable>
+
+  <!-- globalSymbols -->
+  <globalSymbols>
+    <id sclass="extern_def" type="FfunctionType_of_main">
+      <name type="FfunctionType_of_main">main</name>
+    </id>
+  </globalSymbols>
+
+  <!-- globalDeclarations -->
+  <globalDeclarations>
+    <!-- 1: program main -->
+    <FfunctionDefinition is_program="1" lineno="1" file="type_constructor.f90"> 
+      <name type="FfunctionType_of_main">main</name>
+      <symbols>
+        <id sclass="tagname" type="FstructType_of_point3d">
+          <name type="FstructType_of_point3d">point3d</name>
+        </id>
+        <id sclass="auto" type="FstructType_of_point3d">
+          <name type="FstructType_of_point3d">p</name>
+        </id>
+      </symbols>
+      <declarations>
+        <!-- 2: type point3d
+                  real x
+                  real y
+                  real z
+                end type
+          -->
+        <!-- 7: type(point3d) p -->
+        <varDecl lineno="7" file="type_constructor.f90">
+          <name type="FstructType_of_point3d">p</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <!-- 8: p = point3d(1.0, 2.0, 3.0) -->
+        <exprStatement lineno="8" file="type_constructor.f90">
+          <assignExpr>
+            <Var scope="local">p</Var>
+            <FstructConstructor type="FstructType_of_point3d">
+              <FrealConstant type="Freal">1.0</FrealConstant>
+              <FrealConstant type="Freal">2.0</FrealConstant>
+              <FrealConstant type="Freal">3.0</FrealConstant>
+            </FstructConstructor>
+          </assignExpr>
+        </exprStatement>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+
+</XcodeProgram>

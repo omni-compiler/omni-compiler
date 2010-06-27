@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XcodeProgram>
+  <typeTable>
+    <pointerType  type="PTR_C0"     ref="char"/>
+    <functionType type="FUN_MAIN"   return_type="int"/>
+    <functionType type="PFUN_MAIN"  return_type="FUN_MAIN"/>
+    <functionType type="FUN0"       return_type="int" is_const="1">
+      <params>
+        <name type="int">p1</name>
+        <name type="PTR_C0">p2</name>
+      </params>
+    </functionType>
+  </typeTable>
+  <globalSymbols>
+    <id sclass="extern">
+      <name type="FUN0">a_func0</name>
+    </id>
+    <id sclass="extern_def">
+      <name type="FUN_MAIN">main</name>
+    </id>
+  </globalSymbols>
+  <globalDeclarations>
+    <functionDecl><name>a_func0</name></functionDecl>
+    <varDecl><name>main</name></varDecl>
+    <functionDefinition>
+      <name>main</name>
+      <symbols/>
+      <params/>
+      <body>
+        <returnStatement>
+          <functionCall>
+            <function>
+              <funcAddr type="PFUN_MAIN">a_func0</funcAddr>
+            </function>
+            <arguments>
+              <intConstant>1</intConstant>
+            </arguments>
+          </functionCall>
+        </returnStatement>
+      </body>
+    </functionDefinition>
+  </globalDeclarations>
+</XcodeProgram>
+

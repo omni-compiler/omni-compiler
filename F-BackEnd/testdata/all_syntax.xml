@@ -1,0 +1,1973 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XcodeProgram compiler-info="F-Frontend"
+              version="0.8"
+              time="2009-03-10 12:34:56"
+              language="Fortran 90 Free Format"
+              source="all_syntax.F90">
+
+  <!-- ========================================= -->
+  <!-- typeTable                                 -->
+  <!-- ========================================= -->
+  <!--
+
+  BASIC(<category parameter>)#<type name>(<type parameter>)#<variable name>
+  <category parameter>
+    G: PUBLIC
+    L: PRIVATE
+    *: POINTER
+    T: TARGET
+    E: EXTERNAL
+    I: INTRINSIC
+    O: OPTIONAL
+    S: SAVE
+    P: PARAMETER
+    A: ALLOCATABLE
+    R: INTENT(IN)
+    W: INTENT(OUT)
+    RW: INTENT(INOUT)
+  <type name>
+    INT, REAL, BOOL, COMPLEX, CHAR
+
+  STRUCT(type parameter)
+    P: PUBLIC
+    L: PRIVATE
+    I: PRIVATE (internal)
+    S: SEQUENCE
+
+  FUNC(type parameter)
+    S: SUBROUTINE
+    F: FUNCTION
+    P: PROGRAM
+
+  -->
+  <typeTable>
+    <FbasicType type="M1#BASIC(*)#INT()#int_variable_ptr" ref="Fint" is_pointer="true"/>
+    <FbasicType type="M1#BASIC()[1:10,20]#INT()#int_array" ref="Fint">
+      <indexRange>
+        <lowerBound><FintConstant type="Fint">1</FintConstant></lowerBound>
+        <upperBound><FintConstant type="Fint">10</FintConstant></upperBound>
+      </indexRange>
+      <arrayIndex><FintConstant type="Fint">20</FintConstant></arrayIndex>
+    </FbasicType>
+    <FbasicType type="M1#BASIC()#CHAR(L10K2)#string_variable" ref="Fcharacter">
+      <kind>1</kind>
+      <len><FintConstant type="Fint" kind="2">10</FintConstant></len>
+    </FbasicType>
+    <FbasicType type="M1#BASIC()#CHAR(L10)#string_array" ref="Fcharacter">
+      <len><FintConstant type="Fint">10</FintConstant></len>
+    </FbasicType>
+    <FbasicType type="M1#BASIC()[10]#REF()#string_array" ref="M1#BASIC()#CHAR(L10)#string_array">
+      <arrayIndex><FintConstant type="Fint">10</FintConstant></arrayIndex>
+    </FbasicType>
+    <FbasicType type="M1#BASIC(*)#REF()#test_struct_ptr" ref="M1#STRUCT(PS)#TEST_STRUCT" is_pointer="true"/>
+    <FbasicType type="M1#BASIC(*)[10]#REF()#test_struct_array" ref="M1#STRUCT(PS)#TEST_STRUCT" is_pointer="true">
+      <indexRange>
+      </indexRange>
+    </FbasicType>
+    <FstructType type="M1#STRUCT(PS)#TEST_STRUCT" is_public="true" is_internal_private="false" is_sequence="true">
+      <symbols>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">int_variable</name>
+        </id>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">real_variable</name>
+        </id>
+        <id sclass="auto" type="Fcomplex">
+          <name type="Fcomplex">comp_variable</name>
+        </id>
+        <id sclass="auto" type="Flogical">
+          <name type="Flogical">log_variable</name>
+        </id>
+        <id sclass="auto" type="Fcharacter">
+          <name type="Fcharacter">char_variable</name>
+        </id>
+        <id sclass="auto" type="M1#BASIC(*)#INT()#int_variable_ptr">
+          <name type="M1#BASIC(*)#INT()#int_variable_ptr">int_variable_ptr</name>
+        </id>
+        <id sclass="auto" type="M1#BASIC()[1:10,20]#INT()#int_array">
+          <name type="M1#BASIC()[1:10,20]#INT()#int_array">int_array</name>
+        </id>
+        <id sclass="auto" type="M1#BASIC()#CHAR(L10K2)#string_variable">
+          <name type="M1#BASIC()#CHAR(L10K2)#string_variable">string_variable</name>
+        </id>
+        <id sclass="auto" type="M1#BASIC()[10]#REF()#string_array">
+          <name type="M1#BASIC()[10]#REF()#string_array">string_array</name>
+        </id>
+        <id sclass="auto" type="M1#BASIC(*)#REF()#test_struct_ptr">
+          <name type="M1#BASIC(*)#REF()#test_struct_ptr">test_struct_ptr</name>
+        </id>
+        <id sclass="auto" type="M1#BASIC(*)[10]#REF()#test_struct_array">
+          <name type="M1#BASIC(*)[10]#REF()#test_struct_array">test_struct_array</name>
+        </id>
+      </symbols>
+    </FstructType>
+
+    <!-- INTEGER, PUBLIC :: test_mod_public_int_variable = 10 -->
+    <FbasicType type="M1#BASIC(G)#INT()#test_mod_public_int_variable" ref="Fint" is_public="true"/>
+    <!-- INTEGER, PRIVATE :: test_mod_private_int_variable = 20 -->
+    <FbasicType type="M1#BASIC(L)#INT()#test_mod_private_int_variable" ref="Fint" is_private="true"/>
+    <!-- FUNCTION func(arg) RESULT(retval) -->
+    <FfunctionType type="M1#FUNC(F)#func" return_type="M1#STRUCT(PS)#TEST_STRUCT" result_name="retval">
+      <params>
+        <name type="Fint">arg</name>
+      </params>
+    </FfunctionType>
+    <!-- SUBROUTINE sub(arg) -->
+    <FfunctionType type="M1#FUNC(S)#sub" return_type="Fvoid">
+      <params>
+        <name type="Fint">arg</name>
+      </params>
+    </FfunctionType>
+
+    <!-- main program -->
+    <FfunctionType type="M0#FUNC(P)#main" return_type="Fvoid" is_program="1"/>
+
+    <!-- sub_variable_and_expr -->
+    <FfunctionType type="M0#FUNC(S)#sub_variable_and_expr" return_type="Fvoid"/>
+    <FbasicType type="M0#BASIC(T)#INT()#int_variable" ref="Fint" is_target="true"/>
+    <FbasicType type="M0#BASIC(*)#INT()#int_variable_ptr" ref="Fint" is_pointer="true"/>
+    <FbasicType type="M0#BASIC()#CHAR(L10)#string_variable" ref="Fcharacter">
+      <len><FintConstant type="Fint">10</FintConstant></len>
+    </FbasicType>
+
+    <!-- sub_array -->
+    <FfunctionType type="M0#FUNC(S)#sub_array" return_type="Fvoid"/>
+    <FbasicType type="M0#BASIC()[10,1:20]#INT()#int_array" ref="Fint">
+      <arrayIndex><FintConstant type="Fint">10</FintConstant></arrayIndex>
+      <indexRange>
+        <lowerBound><FintConstant type="Fint">1</FintConstant></lowerBound>
+        <upperBound><FintConstant type="Fint">20</FintConstant></upperBound>
+      </indexRange>
+    </FbasicType>
+    <FbasicType type="M0#BASIC(A)[:,:]#INT()#int_array_alloc" ref="Fint" is_allocatable="true">
+      <indexRange></indexRange>
+      <indexRange></indexRange>
+    </FbasicType>
+    <FbasicType type="M0#BASIC()[4]#INT()#int_array_constructor" ref="Fint">
+      <arrayIndex><FintConstant type="Fint">4</FintConstant></arrayIndex>
+    </FbasicType>
+    <FbasicType type="M0#BASIC()[10]#INT()#int_array_do_loop" ref="Fint">
+      <arrayIndex><FintConstant type="Fint">10</FintConstant></arrayIndex>
+    </FbasicType>
+
+    <!-- sub_struct -->
+    <FfunctionType type="M0#FUNC(S)#sub_struct" return_type="Fvoid"/>
+    <FbasicType type="M0#BASIC()#REF()#wk_test_struct" ref="M1#STRUCT(PS)#TEST_STRUCT"/>
+    <FbasicType type="M0#BASIC(*)#REF()#test_struct_ptr" ref="M1#STRUCT(PS)#TEST_STRUCT" is_pointer="true"/>
+    <FbasicType type="M0#BASIC(*)[:]#REF()#test_struct_ptr_array" ref="M1#STRUCT(PS)#TEST_STRUCT" is_pointer="true">
+      <indexRange>
+      </indexRange>
+    </FbasicType>
+
+    <!-- sub_interface -->
+    <FfunctionType type="M0#FUNC(S)#sub_interface" return_type="Fvoid"/>
+
+    <!-- sub_statement -->
+    <FfunctionType type="M0#FUNC(S)#sub_statement" return_type="Fvoid"/>
+    <FbasicType type="M0#BASIC()[10]#INT()#int_array" ref="Fint">
+      <arrayIndex><FintConstant type="Fint">10</FintConstant></arrayIndex>
+    </FbasicType>
+
+    <!-- sub_io -->
+    <FfunctionType type="M0#FUNC(S)#sub_io" return_type="Fvoid"/>
+    <FbasicType type="M0#BASIC(P)#CHAR(L10)#FORMAT_PARAM" ref="Fcharacter">
+      <len><FintConstant type="Fint">10</FintConstant></len>
+    </FbasicType>
+
+    <!-- sub_etc -->
+    <FfunctionType type="M0#FUNC(S)#sub_etc" return_type="Fvoid"/>
+
+    <!-- interface_sub -->
+    <FfunctionType type="M0#FUNC(S)#interface_sub" return_type="Fvoid"/>
+
+    <!-- interface_func_int -->
+    <FfunctionType type="M0#FUNC(F)#interface_func_int" return_type="Fint">
+      <params>
+        <name type="Fint">arg1</name>
+      </params>
+    </FfunctionType>
+
+    <!-- interface_func_real -->
+    <FfunctionType type="M0#FUNC(F)#interface_func_real" return_type="Freal">
+      <params>
+        <name type="Freal">arg1</name>
+      </params>
+    </FfunctionType>
+
+    <!-- interface_binary_operator -->
+    <FfunctionType type="M0#FUNC(F)#interface_binary_operator" return_type="Fint">
+      <params>
+        <name type="Fint">arg1</name>
+        <name type="Fint">arg2</name>
+      </params>
+    </FfunctionType>
+    <FbasicType type="M0#BASIC(R)#INT()#arg1" ref="Fint" intent="in"/>
+    <FbasicType type="M0#BASIC(R)#INT()#arg2" ref="Fint" intent="in"/>
+
+    <!-- interface_unary_operator -->
+    <FfunctionType type="M0#FUNC(F)#interface_unary_operator" return_type="Fint">
+      <params>
+        <name type="Fint">arg1</name>
+      </params>
+    </FfunctionType>
+    <FbasicType type="M0#BASIC(R)#INT()#arg1" ref="Fint" intent="in"/>
+
+    <!-- interface_assign -->
+    <FfunctionType type="M0#FUNC(S)#interface_assign" return_type="Fvoid">
+      <params>
+        <name type="Fint">arg1</name>
+        <name type="Fint">arg2</name>
+      </params>
+    </FfunctionType>
+    <FbasicType type="M0#BASIC(W)#INT()#arg1" ref="Fint" intent="out"/>
+    <FbasicType type="M0#BASIC(R)#BOOL()#arg2" ref="Flogical" intent="in"/>
+
+  </typeTable>
+
+  <!-- ========================================= -->
+  <!-- globalSymbols                             -->
+  <!-- ========================================= -->
+  <globalSymbols>
+    <id sclass="extern_def" type="M0#FUNC(P)#main">
+      <name type="M0#FUNC(P)#main">main</name>
+    </id>
+  </globalSymbols>
+
+  <!-- ========================================= -->
+  <!-- globalDeclarations                        -->
+  <!-- ========================================= -->
+  <globalDeclarations>
+
+  <!-- ========================================= -->
+  <!-- MODULE mod1                               -->
+  <!-- ========================================= -->
+<!-- 
+MODULE mod1
+    TYPE, PUBLIC :: TEST_STRUCT
+        PRIVATE
+        SEQUENCE
+
+        INTEGER :: int_variable
+        REAL :: real_variable
+        COMPLEX :: comp_variable
+        LOGICAL :: log_variable
+        CHARACTER :: char_variable
+
+        INTEGER, POINTER :: int_variable_ptr
+        INTEGER :: int_array(1:10, 20)
+
+        CHARACTER(LEN=10_2, KIND=1) :: string_variable
+        CHARACTER(LEN=10) :: string_array(10)
+
+        TYPE(TEST_STRUCT), POINTER :: test_struct_ptr
+        TYPE(TEST_STRUCT), POINTER :: test_struct_array(:)
+    END TYPE
+
+    INTEGER, PUBLIC :: test_mod_public_int_variable = 10
+    INTEGER, PRIVATE :: test_mod_private_int_variable = 20
+
+CONTAINS
+    FUNCTION func(arg) RESULT(retval)
+        INTEGER :: arg
+        TYPE(TEST_STRUCT) :: retval
+
+    ENTRY func_entry(arg) RESULT(retval)
+        retval%int_variable = arg
+    END FUNCTION func
+
+    SUBROUTINE sub(arg)
+        INTEGER :: arg
+
+    ENTRY sub_entry(arg)
+    END SUBROUTINE sub
+END MODULE mod1
+-->
+    <FmoduleDefinition name="mod1" lineno="1" file="all_syntax.F90">
+      <symbols>
+        <id sclass="tagname" type="M1#STRUCT(PS)#TEST_STRUCT">
+          <name type="M1#STRUCT(PS)#TEST_STRUCT">TEST_STRUCT</name>
+        </id>
+        <id sclass="extern_def" type="M1#FUNC(F)#func">
+          <name type="M1#FUNC(F)#func">func</name>
+        </id>
+        <id sclass="extern_def" type="M1#BASIC(G)#INT()#test_mod_public_int_variable">
+          <name type="M1#BASIC(G)#INT()#test_mod_public_int_variable">test_mod_public_int_variable</name>
+        </id>
+        <id sclass="extern_def" type="M1#BASIC(L)#INT()#test_mod_private_int_variable">
+          <name type="M1#BASIC(L)#INT()#test_mod_private_int_variable">test_mod_private_int_variable</name>
+        </id>
+      </symbols>
+      <declarations>
+        <!-- 0: TYPE TEST_STRUCT ... END TYPE -->
+        <FstructDecl lineno="0" file="all_syntax.F90">
+          <name type="M1#STRUCT(PS)#TEST_STRUCT">TEST_STRUCT</name>
+        </FstructDecl>
+        <!-- 0: INTEGER, PUBLIC :: test_mod_public_int_variable = 10 -->
+        <varDecl lineno="0" file="all_syntax.F90">
+          <name type="M1#BASIC(G)#INT()#test_mod_public_int_variable">test_mod_public_int_variable</name>
+          <value><FintConstant type="Fint">10</FintConstant></value>
+        </varDecl>
+        <!-- 0: INTEGER, PRIVATE :: test_mod_private_int_variable = 20 -->
+        <varDecl lineno="0" file="all_syntax.F90">
+          <name type="M1#BASIC(L)#INT()#test_mod_private_int_variable">test_mod_private_int_variable</name>
+          <value><FintConstant type="Fint">20</FintConstant></value>
+        </varDecl>
+      </declarations>
+      <FcontainsStatement lineno="0" file="all_syntax.F90">
+        <!--
+          FUNCTION func(arg) RESULT(retval)
+              INTEGER :: arg
+              TYPE(TEST_STRUCT) :: retval
+
+          ENTRY func_entry(arg) RESULT(retval)
+              retval%int_variable = arg
+          END FUNCTION func
+        -->
+        <FfunctionDefinition lineno="0" file="all_syntax.F90">
+          <name type="M1#FUNC(F)#func">func</name>
+          <symbols>
+            <id sclass="param" type="Fint"><name type="Fint">arg</name></id>
+          </symbols>
+          <declarations>
+            <varDecl lineno="0" file="all_syntax.F90">
+              <name type="Fint">arg</name>
+            </varDecl>
+            <varDecl lineno="0" file="all_syntax.F90">
+              <name type="M1#STRUCT(PS)#TEST_STRUCT">retval</name>
+            </varDecl>
+          </declarations>
+          <body>
+            <!-- 0: ENTRY func_entry(arg) RESULT(retval) -->
+            <FentryDecl lineno="0" file="all_syntax.F90">
+              <name type="M1#FUNC(F)#func">func_entry</name>
+            </FentryDecl>
+            <!-- 0: retval%int_variable = arg -->
+            <exprStatement lineno="0" file="all_syntax.F90">
+              <assignExpr>
+                <FmemberRef type="Fint" member="int_variable">
+                  <varRef>
+                    <Var scope="local" type="M1#STRUCT(PS)#TEST_STRUCT">retval</Var>
+                  </varRef>
+                </FmemberRef>
+                <Var scope="local" type="Fint">arg</Var>
+              </assignExpr>
+            </exprStatement>
+          </body>
+        </FfunctionDefinition>
+        <!--
+          SUBROUTINE sub(arg)
+              INTEGER :: arg
+
+          ENTRY sub_entry(arg)
+          END SUBROUTINE sub
+        -->
+        <FfunctionDefinition lineno="0" file="all_syntax.F90">
+          <name type="M1#FUNC(S)#sub">sub</name>
+          <symbols>
+            <id sclass="param" type="Fint"><name type="Fint">arg</name></id>
+          </symbols>
+          <declarations>
+            <varDecl lineno="0" file="all_syntax.F90">
+              <name type="Fint">arg</name>
+            </varDecl>
+          </declarations>
+          <body>
+            <!-- 0: ENTRY sub_entry(arg) -->
+            <FentryDecl lineno="0" file="all_syntax.F90">
+              <name type="M1#FUNC(S)#sub">sub_entry</name>
+            </FentryDecl>
+          </body>
+        </FfunctionDefinition>
+      </FcontainsStatement>
+    </FmoduleDefinition>
+
+  <!-- ========================================= -->
+  <!-- PROGRAM main                              -->
+  <!-- ========================================= -->
+    <!--
+      PROGRAM main
+          USE mod1, ONLY: LOCAL_TEST_STRUCT => TEST_STRUCT
+          USE mod1, ONLY: mod1_func => func
+          IMPLICIT NONE
+          EXTERNAL interface_sub, interface_func_int, interface_func_real
+
+          CALL sub_variable_and_expr()
+          CALL sub_array()
+          CALL sub_struct()
+          CALL sub_interface()
+          CALL sub_statement()
+          CALL sub_io()
+          CALL sub_etc()
+
+          STOP "stop"
+      CONTAINS
+
+      END
+    -->
+    <FfunctionDefinition lineno="100" file="all_syntax.F90">
+      <name type="M0#FUNC(P)#main">main</name>
+
+      <!-- <<<<<symbols>>>>> -->
+      <symbols>
+        <id sclass="tagname" type="M1#STRUCT(PS)#TEST_STRUCT">
+          <name type="M1#STRUCT(PS)#TEST_STRUCT">LOCAL_TEST_STRUCT</name>
+        </id>
+        <id sclass="extern" type="M1#FUNC(F)#func">
+          <name type="M1#FUNC(F)#func">mod1_func</name>
+        </id>
+      </symbols>
+
+      <!-- <<<<<declarations>>>>> -->
+      <declarations>
+        <!-- 101: USE mod1, LOCAL_TEST_STRUCT => TEST_STRUCT -->
+        <FuseOnlyDecl lineno="101" file="all_syntax.F90" name="mod1">
+          <renamable use_name="TEST_STRUCT" local_name="LOCAL_TEST_STRUCT"/>
+        </FuseOnlyDecl>
+        <!-- 102: USE mod1, ONLY: mod1_func => func -->
+        <FuseOnlyDecl lineno="102" file="all_syntax.F90" name="mod1">
+          <renamable use_name="func" local_name="mod1_func"/>
+        </FuseOnlyDecl>
+        <!-- 103: EXTERNAL interface_sub, interface_func_int, interface_func_real -->
+        <externDecl lineno="102" file="all_syntax.F90">
+          <name>interface_sub</name>
+        </externDecl>
+        <externDecl lineno="102" file="all_syntax.F90">
+          <name>interface_func_int</name>
+        </externDecl>
+        <externDecl lineno="102" file="all_syntax.F90">
+          <name>interface_func_real</name>
+        </externDecl>
+      </declarations>
+
+      <!-- <<<<<body>>>>> -->
+      <body>
+        <FpragmaStatement lineno="100" file="all_syntax.F90">!$OMP test</FpragmaStatement>
+        <exprStatement lineno="100" file="all_syntax.F90">
+          <functionCall type="Fvoid">
+            <name type="M0#FUNC(S)#sub_variable_and_expr">sub_variable_and_expr</name>
+          </functionCall>
+        </exprStatement>
+        <exprStatement lineno="100" file="all_syntax.F90">
+          <functionCall type="Fvoid">
+            <name type="M0#FUNC(S)#sub_array">sub_array</name>
+          </functionCall>
+        </exprStatement>
+        <exprStatement lineno="100" file="all_syntax.F90">
+          <functionCall type="Fvoid">
+            <name type="M0#FUNC(S)#sub_struct">sub_struct</name>
+          </functionCall>
+        </exprStatement>
+        <exprStatement lineno="100" file="all_syntax.F90">
+          <functionCall type="Fvoid">
+            <name type="M0#FUNC(S)#sub_interface">sub_interface</name>
+          </functionCall>
+        </exprStatement>
+        <exprStatement lineno="100" file="all_syntax.F90">
+          <functionCall type="Fvoid">
+            <name type="M0#FUNC(S)#sub_statement">sub_statement</name>
+          </functionCall>
+        </exprStatement>
+        <exprStatement lineno="100" file="all_syntax.F90">
+          <functionCall type="Fvoid">
+            <name type="M0#FUNC(S)#sub_io">sub_io</name>
+          </functionCall>
+        </exprStatement>
+        <exprStatement lineno="100" file="all_syntax.F90">
+          <functionCall type="Fvoid">
+            <name type="M0#FUNC(S)#sub_etc">sub_etc</name>
+          </functionCall>
+        </exprStatement>
+        <FstopStatement lineno="100" file="all_syntax.F90" message="stop"/>
+        <FcontainsStatement lineno="200" file="all_syntax.F90">
+          <!--
+            SUBROUTINE sub_variable_and_expr()
+                INTEGER, TARGET :: int_variable = 10_4
+                INTEGER, POINTER :: int_variable_ptr
+                REAL :: real_variable = 1.0_8
+                LOGICAL :: log_variable = .TRUE._1
+                COMPLEX :: cmp_variable = (1.0, 1.0)
+                CHARACTER(LEN=10) :: string_variable = 1_"><&"""
+
+                real_variable = 1 + 2 - 3 * 4 / 5.0 ** 2
+                int_variable = &minus;-1
+                log_variable = (1 == 2)
+                log_variable = (1 /= 2)
+                log_variable = (1 >= 2)
+                log_variable = (1 > 2)
+                log_variable = (1 <= 2)
+                log_variable = (1 < 2)
+                log_variable = (.TRUE. .EQV. .FALSE.)
+                log_variable = (.TRUE. .NEQV. .FALSE.)
+                log_variable = (.TRUE. .AND. .FALSE.)
+                log_variable = (.TRUE. .OR. .FALSE.)
+                log_variable = (.NOT. .TRUE.)
+                string_variable = ("abc" // "def")
+                int_variable_ptr => int_variable
+
+            END SUBROUTINE
+          -->
+          <FfunctionDefinition lineno="200" file="all_syntax.F90">
+            <name type="M0#FUNC(S)#sub_variable_and_expr">sub_variable_and_expr</name>
+            <symbols>
+              <id sclass="auto" type="M0#BASIC()#CHAR(L10)#string_variable">
+                <name type="M0#BASIC()#CHAR(L10)#string_variable">string_variable</name>
+              </id>
+            </symbols>
+            <declarations>
+              <!-- 200: INTEGER, TARGET :: int_variable = 10_4 -->
+              <varDecl lineno="200" file="all_syntax.F90">
+                <name type="M0#BASIC(T)#INT()#int_variable">int_variable</name>
+                <value><FintConstant type="Fint" kind="4">10</FintConstant></value>
+              </varDecl>
+              <!-- 200: INTEGER, POINTER :: int_variable_ptr -->
+              <varDecl lineno="200" file="all_syntax.F90">
+                <name type="M0#BASIC(*)#INT()#int_variable_ptr">int_variable_ptr</name>
+              </varDecl>
+              <!-- 200: REAL :: real_variable = 1.0_8 -->
+              <varDecl lineno="200" file="all_syntax.F90">
+                <name type="Freal">real_variable</name>
+                <value><FrealConstant type="Freal" kind="8">1.0</FrealConstant></value>
+              </varDecl>
+              <!-- 200: LOGICAL :: log_variable = .TRUE._1 -->
+              <varDecl lineno="200" file="all_syntax.F90">
+                <name type="Flogical">log_variable</name>
+                <value><FlogicalConstant type="Flogical" kind="1">.TRUE.</FlogicalConstant></value>
+              </varDecl>
+              <!-- 200: COMPLEX :: cmp_variable = (2.0, 1.0) -->
+              <varDecl lineno="200" file="all_syntax.F90">
+                <name type="Fcomplex">cmp_variable</name>
+                <value><FcomplexConstant type="Fcomplex">
+                  <FrealConstant type="Freal">2.0</FrealConstant>
+                  <FrealConstant type="Freal">1.0</FrealConstant>
+                </FcomplexConstant></value>
+              </varDecl>
+              <!-- 200: CHARACTER(LEN=10) :: string_variable = "><&""" -->
+              <varDecl lineno="200" file="all_syntax.F90">
+                <name type="M0#BASIC()#CHAR(L10)#string_variable">string_variable</name>
+                <value><FcharacterConstant type="Fcharacter" kind="1">&lt;&gt;&amp;"</FcharacterConstant></value>
+              </varDecl>
+            </declarations>
+            <body>
+              <!-- 200: real_variable = 1 + 2 - 3 * 4 / 5.0 ** 2 -->
+              <exprStatement lineno="200" file="all_syntax.F90">
+                <assignExpr>
+                  <Var scope="local">real_variable</Var>
+                  <minusExpr>
+                    <plusExpr>
+                      <FintConstant type="Fint">1</FintConstant>
+                      <FintConstant type="Fint">2</FintConstant>
+                    </plusExpr>
+                    <divExpr>
+                      <mulExpr>
+                        <FintConstant type="Fint">3</FintConstant>
+                        <FintConstant type="Fint">4</FintConstant>
+                      </mulExpr>
+                      <FpowerExpr>
+                        <FrealConstant type="Freal">5.0</FrealConstant>
+                        <FintConstant type="Fint">2</FintConstant>
+                      </FpowerExpr>
+                    </divExpr>
+                  </minusExpr>
+                </assignExpr>
+              </exprStatement>
+              <!-- 200: int_variable = &minus;-1 -->
+              <exprStatement lineno="200" file="all_syntax.F90">
+                <assignExpr>
+                  <Var scope="local">int_variable</Var>
+                  <unaryMinusExpr>
+                    <unaryMinusExpr>
+                      <FintConstant type="Fint">1</FintConstant>
+                    </unaryMinusExpr>
+                  </unaryMinusExpr>
+                </assignExpr>
+              </exprStatement>
+              <!-- 200: log_variable = (1 == 2) -->
+              <exprStatement lineno="200" file="all_syntax.F90">
+                <assignExpr>
+                  <Var scope="local">log_variable</Var>
+                  <logEQExpr>
+                    <FintConstant type="Fint">1</FintConstant>
+                    <FintConstant type="Fint">2</FintConstant>
+                  </logEQExpr>
+                </assignExpr>
+              </exprStatement>
+              <!-- 200: log_variable = (1 /= 2) -->
+              <exprStatement lineno="200" file="all_syntax.F90">
+                <assignExpr>
+                  <Var scope="local">log_variable</Var>
+                  <logNEQExpr>
+                    <FintConstant type="Fint">1</FintConstant>
+                    <FintConstant type="Fint">2</FintConstant>
+                  </logNEQExpr>
+                </assignExpr>
+              </exprStatement>
+              <!-- 200: log_variable = (1 >= 2) -->
+              <exprStatement lineno="200" file="all_syntax.F90">
+                <assignExpr>
+                  <Var scope="local">log_variable</Var>
+                  <logGEExpr>
+                    <FintConstant type="Fint">1</FintConstant>
+                    <FintConstant type="Fint">2</FintConstant>
+                  </logGEExpr>
+                </assignExpr>
+              </exprStatement>
+              <!-- 200: log_variable = (1 > 2) -->
+              <exprStatement lineno="200" file="all_syntax.F90">
+                <assignExpr>
+                  <Var scope="local">log_variable</Var>
+                  <logGTExpr>
+                    <FintConstant type="Fint">1</FintConstant>
+                    <FintConstant type="Fint">2</FintConstant>
+                  </logGTExpr>
+                </assignExpr>
+              </exprStatement>
+              <!-- 200: log_variable = (1 <= 2) -->
+              <exprStatement lineno="200" file="all_syntax.F90">
+                <assignExpr>
+                  <Var scope="local">log_variable</Var>
+                  <logLEExpr>
+                    <FintConstant type="Fint">1</FintConstant>
+                    <FintConstant type="Fint">2</FintConstant>
+                  </logLEExpr>
+                </assignExpr>
+              </exprStatement>
+              <!-- 200: log_variable = (1 < 2) -->
+              <exprStatement lineno="200" file="all_syntax.F90">
+                <assignExpr>
+                  <Var scope="local">log_variable</Var>
+                  <logLTExpr>
+                    <FintConstant type="Fint">1</FintConstant>
+                    <FintConstant type="Fint">2</FintConstant>
+                  </logLTExpr>
+                </assignExpr>
+              </exprStatement>
+              <!-- 200: log_variable = (1 .EQV. 2) -->
+              <exprStatement lineno="200" file="all_syntax.F90">
+                <assignExpr>
+                  <Var scope="local">log_variable</Var>
+                  <logEQVExpr>
+                    <FlogicalConstant type="Flogical">.TRUE.</FlogicalConstant>
+                    <FlogicalConstant type="Flogical">.FALSE.</FlogicalConstant>
+                  </logEQVExpr>
+                </assignExpr>
+              </exprStatement>
+              <!-- 200: log_variable = (1 .NEQV. 2) -->
+              <exprStatement lineno="200" file="all_syntax.F90">
+                <assignExpr>
+                  <Var scope="local">log_variable</Var>
+                  <logNEQVExpr>
+                    <FlogicalConstant type="Flogical">.TRUE.</FlogicalConstant>
+                    <FlogicalConstant type="Flogical">.FALSE.</FlogicalConstant>
+                  </logNEQVExpr>
+                </assignExpr>
+              </exprStatement>
+              <!-- 200: log_variable = (.TRUE. .AND. .FALSE.) -->
+              <exprStatement lineno="200" file="all_syntax.F90">
+                <assignExpr>
+                  <Var scope="local">log_variable</Var>
+                  <logAndExpr>
+                    <FlogicalConstant type="Flogical">.TRUE.</FlogicalConstant>
+                    <FlogicalConstant type="Flogical">.FALSE.</FlogicalConstant>
+                  </logAndExpr>
+                </assignExpr>
+              </exprStatement>
+              <!-- 200: log_variable = (.TRUE. .OR. .FALSE.) -->
+              <exprStatement lineno="200" file="all_syntax.F90">
+                <assignExpr>
+                  <Var scope="local">log_variable</Var>
+                  <logOrExpr>
+                    <FlogicalConstant type="Flogical">.TRUE.</FlogicalConstant>
+                    <FlogicalConstant type="Flogical">.FALSE.</FlogicalConstant>
+                  </logOrExpr>
+                </assignExpr>
+              </exprStatement>
+              <!-- 200: log_variable = (.NOT. .TRUE.) -->
+              <exprStatement lineno="200" file="all_syntax.F90">
+                <assignExpr>
+                  <Var scope="local">log_variable</Var>
+                  <logNotExpr>
+                    <FlogicalConstant type="Flogical">.TRUE.</FlogicalConstant>
+                  </logNotExpr>
+                </assignExpr>
+              </exprStatement>
+              <!-- 200: string_variable = "abc" // "def" -->
+              <exprStatement lineno="200" file="all_syntax.F90">
+                <assignExpr>
+                  <Var scope="local">string_variable</Var>
+                  <FconcatExpr>
+                    <FcharacterConstant type="Flogical">abc</FcharacterConstant>
+                    <FcharacterConstant type="Flogical">def</FcharacterConstant>
+                  </FconcatExpr>
+                </assignExpr>
+              </exprStatement>
+              <!-- 200: int_variable_ptr => int_variable -->
+              <exprStatement lineno="200" file="all_syntax.F90">
+                <FpointerAssignExpr>
+                  <Var scope="local">int_variable_ptr</Var>
+                  <Var scope="local">int_variable</Var>
+                </FpointerAssignExpr>
+              </exprStatement>
+            </body>
+          </FfunctionDefinition>
+          <!--
+            SUBROUTINE sub_array()
+                INTEGER :: int_variable
+                INTEGER :: int_array(10, 1:20)
+                INTEGER, ALLOCATABLE :: int_array_alloc(:, :)
+                INTEGER :: int_array_constructor(4) = (/ 1, 2, 3, 4 /)
+                INTEGER :: int_array_do_loop(10) = (/ (1, int_variable, int_variable = 0, 8, 2) /)
+
+                ALLOCATE (int_array_alloc(10, 1:20))
+
+                int_array_alloc(10, :) = int_array(10, 1:)
+                int_array_alloc = int_array(1:10, 1:)
+                int_array_alloc = int_array(:10, 1:20:2)
+
+                DEALLOCATE (int_array_alloc)
+            END SUBROUTINE
+          -->
+          <FfunctionDefinition lineno="300" file="all_syntax.F90">
+            <name type="M0#FUNC(S)#sub_array">sub_array</name>
+            <symbols>
+              <id sclass="auto" type="M0#BASIC()[10,1:20]#INT()#int_array">
+                <name type="M0#BASIC()[10,1:20]#INT()#int_array">int_array</name>
+              </id>
+              <id sclass="auto" type="M0#BASIC(A)[:,:]#INT()#int_array_alloc">
+                <name type="M0#BASIC(A)[:,:]#INT()#int_array_alloc">int_array_alloc</name>
+              </id>
+              <id sclass="auto" type="M0#BASIC()[4]#INT()#int_array_constructor">
+                <name type="M0#BASIC()[4]#INT()#int_array_constructor">int_array_constructor</name>
+              </id>
+              <id sclass="auto" type="M0#BASIC()[10]#INT()#int_array_do_loop">
+                <name type="M0#BASIC()[10]#INT()#int_array_do_loop">int_array_do_loop</name>
+              </id>
+            </symbols>
+            <declarations>
+              <!-- 300: INTEGER :: int_variable -->
+              <varDecl lineno="300" file="all_syntax.F90">
+                <name type="Fint">int_variable</name>
+              </varDecl>
+              <!-- 300: INTEGER :: int_array(10, 1:20) -->
+              <varDecl lineno="300" file="all_syntax.F90">
+                <name type="M0#BASIC()[10,1:20]#INT()#int_array">int_array</name>
+              </varDecl>
+              <!-- 300: INTEGER, ALLOCATABLE :: int_array_alloc(:, :) -->
+              <varDecl lineno="300" file="all_syntax.F90">
+                <name type="M0#BASIC(A)[:,:]#INT()#int_array_alloc">int_array_alloc</name>
+              </varDecl>
+              <!-- 300: INTEGER :: int_array_constructor(4) = (/ 1, 2, 3, 4 /) -->
+              <varDecl lineno="300" file="all_syntax.F90">
+                <name type="M0#BASIC()[4]#INT()#int_array_constructor">int_array_constructor</name>
+                <value>
+                  <FarrayConstructor>
+                    <FintConstant type="Fint">1</FintConstant>
+                    <FintConstant type="Fint">2</FintConstant>
+                    <FintConstant type="Fint">3</FintConstant>
+                    <FintConstant type="Fint">4</FintConstant>
+                  </FarrayConstructor>
+                </value>
+              </varDecl>
+              <!-- 300: INTEGER :: int_array_do_loop(10) = (/ (1, int_variable, int_variable = 0, 8, 2) /) -->
+              <varDecl lineno="300" file="all_syntax.F90">
+                <name type="M0#BASIC()[10]#INT()#int_array_do_loop">int_array_do_loop</name>
+                <value>
+                  <FarrayConstructor>
+                    <FdoLoop>
+                      <Var type="Fint" scope="local">int_variable</Var>
+                      <indexRange>
+                        <lowerBound><FintConstant type="Fint">0</FintConstant></lowerBound>
+                        <upperBound><FintConstant type="Fint">8</FintConstant></upperBound>
+                        <step><FintConstant type="Fint">2</FintConstant></step>
+                      </indexRange>
+                      <value><FintConstant type="Fint">1</FintConstant></value>
+                      <value><Var type="Fint" scope="local">int_variable</Var></value>
+                    </FdoLoop>
+                  </FarrayConstructor>
+                </value>
+              </varDecl>
+            </declarations>
+            <body>
+              <!-- 300: ALLOCATE (int_array_alloc(10, 1:20)) -->
+              <FallocateStatement lineno="300" file="all_syntax.F90">
+                <alloc>
+                  <Var scope="local" type="M0#BASIC(A)[:,:]#INT()#int_array_alloc">int_array_alloc</Var>
+                  <arrayIndex><FintConstant type="Fint">10</FintConstant></arrayIndex>
+                  <indexRange>
+                    <lowerBound><FintConstant type="Fint">1</FintConstant></lowerBound>
+                    <upperBound><FintConstant type="Fint">20</FintConstant></upperBound>
+                  </indexRange>
+                </alloc>
+              </FallocateStatement>
+              <!-- 300: int_array_alloc(10, :) = int_array(10, 1:) -->
+              <exprStatement lineno="300" file="all_syntax.F90">
+                <assignExpr>
+                  <FarrayRef>
+                    <varRef><Var scope="local">int_array_alloc</Var></varRef>
+                    <arrayIndex><FintConstant type="Fint">10</FintConstant></arrayIndex>
+                    <indexRange></indexRange>
+                  </FarrayRef>
+                  <FarrayRef>
+                    <varRef><Var scope="local">int_array</Var></varRef>
+                    <arrayIndex><FintConstant type="Fint">10</FintConstant></arrayIndex>
+                    <indexRange>
+                      <lowerBound><FintConstant type="Fint">1</FintConstant></lowerBound>
+                    </indexRange>
+                  </FarrayRef>
+                </assignExpr>
+              </exprStatement>
+              <!-- 300: int_array_alloc = int_array(1:10, 1:) -->
+              <exprStatement lineno="300" file="all_syntax.F90">
+                <assignExpr>
+                  <Var scope="local" type="M0#BASIC(A)[:,:]#INT()#int_array_alloc">int_array_alloc</Var>
+                  <FarrayRef>
+                    <varRef><Var scope="local">int_array</Var></varRef>
+                    <indexRange>
+                      <lowerBound><FintConstant type="Fint">1</FintConstant></lowerBound>
+                      <upperBound><FintConstant type="Fint">10</FintConstant></upperBound>
+                    </indexRange>
+                    <indexRange>
+                      <lowerBound><FintConstant type="Fint">1</FintConstant></lowerBound>
+                    </indexRange>
+                  </FarrayRef>
+                </assignExpr>
+              </exprStatement>
+              <!-- 300: int_array_alloc = int_array(:10, 1:20:2) -->
+              <exprStatement lineno="300" file="all_syntax.F90">
+                <assignExpr>
+                  <Var scope="local" type="M0#BASIC(A)[:,:]#INT()#int_array_alloc">int_array_alloc</Var>
+                  <FarrayRef>
+                    <varRef><Var scope="local">int_array</Var></varRef>
+                    <indexRange>
+                      <upperBound><FintConstant type="Fint">10</FintConstant></upperBound>
+                    </indexRange>
+                    <indexRange>
+                      <lowerBound><FintConstant type="Fint">1</FintConstant></lowerBound>
+                      <upperBound><FintConstant type="Fint">20</FintConstant></upperBound>
+                      <step><FintConstant type="Fint">2</FintConstant></step>
+                    </indexRange>
+                  </FarrayRef>
+                </assignExpr>
+              </exprStatement>
+              <!-- 300: DEALLOCATE (int_array_alloc) -->
+              <FdeallocateStatement lineno="300" file="all_syntax.F90">
+                <alloc>
+                  <Var scope="local" type="M0#BASIC(A)[:,:]#INT()#int_array_alloc">int_array_alloc</Var>
+                </alloc>
+              </FdeallocateStatement>
+            </body>
+          </FfunctionDefinition>
+          <!--
+            SUBROUTINE sub_struct()
+                INTEGER :: error = 0
+                INTEGER, POINTER :: int_variable_ptr
+                TYPE(LOCAL_TEST_STRUCT), POINTER :: test_struct_ptr
+                TYPE(LOCAL_TEST_STRUCT), POINTER :: test_struct_ptr_array(:)
+                TYPE(LOCAL_TEST_STRUCT) :: wk_test_struct
+
+                ALLOCATE (test_struct_ptr, test_struct_ptr_array(10), STAT = error)
+
+                test_struct_ptr_array(1) = LOCAL_TEST_STRUCT( &
+                    1, 1.0, (1.0, 2.0), .TRUE., 'a', &
+                    int_variable_ptr, &
+                    0, 'b', (/ 'c' /), test_struct_ptr, test_struct_ptr_array)
+
+                test_struct_ptr_array(2) = mod1_func(10)
+                test_struct_ptr_array(1)%int_variable = 1
+                test_struct_ptr_array(1)%int_array(1, 2) = 1
+                test_struct_ptr_array(1)%string_array(1)(1:10) = 'A'
+
+                NULLIFY (test_struct_ptr, test_struct_ptr_array)
+                DEALLOCATE (test_struct_ptr, test_struct_ptr_array, STAT = error)
+            END SUBROUTINE
+          -->
+          <FfunctionDefinition lineno="400" file="all_syntax.F90">
+            <name type="M0#FUNC(S)#sub_struct">sub_struct</name>
+            <symbols>
+              <id sclass="auto" type="M0#BASIC(*)#INT()#int_variable_ptr">
+                <name type="M0#BASIC(*)#INT()#int_variable_ptr">int_variable_ptr</name>
+              </id>
+              <id sclass="auto" type="M0#BASIC(*)#REF()#test_struct_ptr">
+                <name type="M0#BASIC(*)#REF()#test_struct_ptr">test_struct_ptr</name>
+              </id>
+              <id sclass="auto" type="M0#BASIC(*)[:]#REF()#test_struct_ptr_array">
+                <name type="M0#BASIC(*)[:]#REF()#test_struct_ptr_array">test_struct_ptr_array</name>
+              </id>
+              <id sclass="auto" type="M0#BASIC()#REF()#wk_test_struct">
+                <name type="M0#BASIC()#REF()#wk_test_struct">wk_test_struct</name>
+              </id>
+            </symbols>
+            <declarations>
+              <!-- 400: INTEGER :: error = 0 -->
+              <varDecl lineno="400" file="all_syntax.F90">
+                <name type="Fint">error</name>
+                <value><FintConstant type="Fint">0</FintConstant></value>
+              </varDecl>
+              <!-- 400: INTEGER, POINTER :: int_variable_ptr -->
+              <varDecl lineno="400" file="all_syntax.F90">
+                <name type="M0#BASIC(*)#INT()#int_variable_ptr">int_variable_ptr</name>
+              </varDecl>
+              <!-- 400: TYPE(LOCAL_TEST_STRUCT), POINTER :: test_struct_ptr -->
+              <varDecl lineno="400" file="all_syntax.F90">
+                <name type="M0#BASIC(*)#REF()#test_struct_ptr">test_struct_ptr</name>
+              </varDecl>
+              <!-- 400: TYPE(LOCAL_TEST_STRUCT), POINTER :: test_struct_ptr_array(:) -->
+              <varDecl lineno="400" file="all_syntax.F90">
+                <name type="M0#BASIC(*)[:]#REF()#test_struct_ptr_array">test_struct_ptr_array</name>
+              </varDecl>
+              <!-- 400: TYPE(LOCAL_TEST_STRUCT) wk_test_struct -->
+              <varDecl lineno="400" file="all_syntax.F90">
+                <name type="M0#BASIC()#REF()#wk_test_struct">wk_test_struct</name>
+              </varDecl>
+            </declarations>
+            <body>
+              <!-- 400: ALLOCATE (test_struct_ptr, test_struct_ptr_array(10), STAT = error) -->
+              <FallocateStatement lineno="400" file="all_syntax.F90" stat_name="error">
+                <alloc>
+                  <Var scope="local" type="M0#BASIC(*)#REF()#test_struct_ptr">test_struct_ptr</Var>
+                </alloc>
+                <alloc>
+                  <Var scope="local" type="M0#BASIC(*)[:]#REF()#test_struct_ptr_array">test_struct_ptr_array</Var>
+                  <arrayIndex><FintConstant type="Fint">10</FintConstant></arrayIndex>
+                </alloc>
+              </FallocateStatement>
+              <!-- 400: test_struct_ptr_array(1) = LOCAL_TEST_STRUCT(...) -->
+              <exprStatement lineno="400" file="all_syntax.F90">
+                <assignExpr>
+                  <FarrayRef>
+                    <varRef>
+                      <Var scope="local" type="M0#BASIC(*)[:]#REF()#test_struct_ptr_array">test_struct_ptr_array</Var>
+                    </varRef>
+                    <arrayIndex><FintConstant type="Fint">1</FintConstant></arrayIndex>
+                  </FarrayRef>
+                  <FstructConstructor type="M1#STRUCT(PS)#TEST_STRUCT">
+                    <FintConstant type="Fint">1</FintConstant>
+                    <FrealConstant type="Freal">1.0</FrealConstant>
+                    <FcomplexConstant type="Fcomplex">
+                      <FrealConstant type="Freal">1.0</FrealConstant>
+                      <FrealConstant type="Freal">2.0</FrealConstant>
+                    </FcomplexConstant>
+                    <FlogicalConstant type="Flogical">.TRUE.</FlogicalConstant>
+                    <FcharacterConstant type="Fcharacter">a</FcharacterConstant>
+                    <Var scope="local">int_variable_ptr</Var>
+                    <FintConstant type="Fint">0</FintConstant>
+                    <FcharacterConstant type="Fcharacter">b</FcharacterConstant>
+                    <FarrayConstructor>
+                      <FcharacterConstant type="Fcharacter">c</FcharacterConstant>
+                    </FarrayConstructor>
+                    <Var scope="local">test_struct_ptr</Var>
+                    <Var scope="local">test_struct_ptr_array</Var>
+                  </FstructConstructor>
+                </assignExpr>
+              </exprStatement>
+              <!-- 400: test_struct_ptr_array(2) = mod1_func(10) -->
+              <exprStatement lineno="400" file="all_syntax.F90">
+                <assignExpr>
+                  <FarrayRef>
+                    <varRef>
+                      <Var scope="local" type="M0#BASIC(*)[:]#REF()#test_struct_ptr_array">test_struct_ptr_array</Var>
+                    </varRef>
+                    <arrayIndex><FintConstant type="Fint">2</FintConstant></arrayIndex>
+                  </FarrayRef>
+                  <functionCall type="M0#BASIC()#REF()#wk_test_struct">
+                    <name type="M1#FUNC(F)#func">mod1_func</name>
+                    <arguments>
+                      <FintConstant type="Fint">10</FintConstant>
+                    </arguments>
+                  </functionCall>
+                </assignExpr>
+              </exprStatement>
+              <!-- 400: test_struct_ptr_array(1)%int_variable = 1 -->
+              <exprStatement lineno="400" file="all_syntax.F90">
+                <assignExpr>
+                  <FmemberRef type="Fint" member="int_variable">
+                    <varRef>
+                      <FarrayRef>
+                        <varRef>
+                          <Var scope="local" type="M0#BASIC(*)[:]#REF()#test_struct_ptr_array">test_struct_ptr_array</Var>
+                        </varRef>
+                        <arrayIndex><FintConstant type="Fint">1</FintConstant></arrayIndex>
+                      </FarrayRef>
+                    </varRef>
+                  </FmemberRef>
+                  <FintConstant type="Fint">1</FintConstant>
+                </assignExpr>
+              </exprStatement>
+              <!-- 400: test_struct_ptr_array(1)%int_array(1, 2) = 1 -->
+              <exprStatement lineno="400" file="all_syntax.F90">
+                <assignExpr>
+                  <FarrayRef type="Fint">
+                    <varRef>
+                      <FmemberRef type="M0#BASIC()[10,1:20]#INT()#int_array" member="int_array">
+                        <varRef>
+                          <FarrayRef>
+                            <varRef>
+                              <Var scope="local" type="M0#BASIC(*)[:]#REF()#test_struct_ptr_array">test_struct_ptr_array</Var>
+                            </varRef>
+                            <arrayIndex><FintConstant type="Fint">1</FintConstant></arrayIndex>
+                          </FarrayRef>
+                        </varRef>
+                      </FmemberRef>
+                    </varRef>
+                    <arrayIndex><FintConstant type="Fint">1</FintConstant></arrayIndex>
+                    <arrayIndex><FintConstant type="Fint">2</FintConstant></arrayIndex>
+                  </FarrayRef>
+                  <FintConstant type="Fint">1</FintConstant>
+                </assignExpr>
+              </exprStatement>
+              <!-- 400: test_struct_ptr_array(1)%string_array(1)(1:10) = 'A' -->
+              <exprStatement lineno="400" file="all_syntax.F90">
+                <assignExpr>
+                  <FcharacterRef type="Fcharacter">
+                    <varRef>
+                      <FarrayRef type="Fcharacter">
+                        <varRef>
+                          <FmemberRef type="M1#BASIC()#CHAR(L10)#string_array" member="string_array">
+                            <varRef>
+                              <FarrayRef>
+                                <varRef>
+                                  <Var scope="local" type="M0#BASIC(*)[:]#REF()#test_struct_ptr_array">test_struct_ptr_array</Var>
+                                </varRef>
+                                <arrayIndex><FintConstant type="Fint">1</FintConstant></arrayIndex>
+                              </FarrayRef>
+                            </varRef>
+                          </FmemberRef>
+                        </varRef>
+                        <arrayIndex><FintConstant type="Fint">1</FintConstant></arrayIndex>
+                      </FarrayRef>
+                    </varRef>
+                    <indexRange>
+                      <lowerBound><FintConstant type="Fint">1</FintConstant></lowerBound>
+                      <upperBound><FintConstant type="Fint">10</FintConstant></upperBound>
+                    </indexRange>
+                  </FcharacterRef>
+                  <FcharacterConstant type="Fcharacter">A</FcharacterConstant>
+                </assignExpr>
+              </exprStatement>
+              <!-- 400: NULLIFY (test_struct_ptr, test_struct_ptr_array) -->
+              <FnullifyStatement lineno="400" file="all_syntax.F90">
+                <alloc>
+                  <Var scope="local" type="M0#BASIC(*)#REF()#test_struct_ptr">test_struct_ptr</Var>
+                </alloc>
+                <alloc>
+                  <Var scope="local" type="M0#BASIC(*)[:]#REF()#test_struct_ptr_array">test_struct_ptr_array</Var>
+                </alloc>
+              </FnullifyStatement>
+              <!-- 400: DEALLOCATE (test_struct_ptr, test_struct_ptr_array, STAT = error) -->
+              <FdeallocateStatement lineno="400" file="all_syntax.F90" stat_name="error">
+                <alloc>
+                  <Var scope="local" type="M0#BASIC(*)#REF()#test_struct_ptr">test_struct_ptr</Var>
+                </alloc>
+                <alloc>
+                  <Var scope="local" type="M0#BASIC(*)[:]#REF()#test_struct_ptr_array">test_struct_ptr_array</Var>
+                </alloc>
+              </FdeallocateStatement>
+            </body>
+          </FfunctionDefinition>
+          <!--
+              SUBROUTINE sub_interface
+                  USE mod1, ONLY: mod1_sub => sub
+
+                  INTERFACE interface_sub
+                      SUBROUTINE interface_sub()
+                      END SUBROUTINE
+                      MODULE PROCEDURE mod1_sub
+                  END INTERFACE
+
+                  INTERFACE intarface_func
+                      FUNCTION interface_func_int(arg1)
+                          INTEGER :: interface_func_int
+                          INTEGER :: arg1
+                      END FUNCTION
+                      FUNCTION interface_func_real(arg1)
+                          REAL :: interface_func
+                          REAL :: arg1
+                      END FUNCTION
+                  END INTERFACE
+
+                  INTERFACE OPERATOR(.PLUS.)
+                      FUNCTION interface_binary_operator(arg1, arg2)
+                          INTEGER :: interface_binary_operator
+                          INTEGER, INTENT(IN) :: arg1
+                          INTEGER, INTENT(IN) :: arg2
+                      END FUNCTION
+                  END INTERFACE
+
+                  INTERFACE OPERATOR(.NEGATIVE.)
+                      FUNCTION interface_unary_operator(arg1)
+                          INTEGER :: interface_unary_operator
+                          INTEGER, INTENT(IN) :: arg1
+                      END FUNCTION
+                  END INTERFACE
+
+                  INTERFACE ASSIGNMENT(=)
+                      ELEMENTAL SUBROUTINE interface_assign(arg1, arg2)
+                          INTEGER, INTENT(OUT) :: arg1
+                          LOGICAL, INTENT(IN) :: arg2
+                      END SUBROUTINE
+                  END INTERFACE
+
+                  INTEGER :: int_variable
+
+                  int_variable = 1 .PLUS. 2
+                  int_variable = .NEGATIVE.1
+                  int_variable = .TRUE.
+              END SUBROUTINE
+          -->
+          <FfunctionDefinition lineno="500" file="all_syntax.F90">
+            <name type="M0#FUNC(S)#sub_interface">sub_interface</name>
+            <symbols>
+              <id sclass="extern" type="M1#FUNC(S)#sub">
+                <name type="M1#FUNC(F)#sub">mod1_sub</name>
+              </id>
+            </symbols>
+            <declarations>
+              <!-- 500: USE mod1, ONLY: mod1_sub => sub -->
+              <FuseOnlyDecl lineno="500" file="all_syntax.F90" name="mod1">
+                <renamable use_name="sub" local_name="mod1_sub"/>
+              </FuseOnlyDecl>
+              <!--
+                INTERFACE interface_sub
+                    SUBROUTINE interface_sub()
+                    END SUBROUTINE
+                    MODULE PROCEDURE mod1_sub
+                END INTERFACE
+              -->
+              <FinterfaceDecl lineno="500" file="all_syntax.F90" name="interface_sub" is_operator="false" is_assignment="false">
+                <FfunctionDecl lineno="500" file="all_syntax.F90">
+                  <name type="M0#FUNC(S)#interface_sub">interface_sub</name>
+                </FfunctionDecl>
+                <FmoduleProcedureDecl lineno="500" file="all_syntax.F90">
+                  <name type="M1#FUNC(S)#sub">mod1_sub</name>
+                </FmoduleProcedureDecl>
+              </FinterfaceDecl>
+              <!--
+                INTERFACE intarface_func
+                    FUNCTION interface_func_int(arg1)
+                        INTEGER :: interface_func_int
+                        INTEGER :: arg1
+                    END FUNCTION
+                    FUNCTION interface_func_real(arg1)
+                        REAL :: interface_func
+                        REAL :: arg1
+                    END FUNCTION
+                END INTERFACE
+              -->
+              <FinterfaceDecl lineno="500" file="all_syntax.F90" name="intarface_func" is_operator="false" is_assignment="false">
+                <FfunctionDecl lineno="500" file="all_syntax.F90">
+                  <name type="M0#FUNC(F)#interface_func_int">interface_func_int</name>
+                  <declarations>
+                    <varDecl lineno="0" file="all_syntax.F90">
+                      <name type="Fint">interface_func_int</name>
+                    </varDecl>
+                    <varDecl lineno="0" file="all_syntax.F90">
+                      <name type="Fint">arg1</name>
+                    </varDecl>
+                  </declarations>
+                </FfunctionDecl>
+                <FfunctionDecl lineno="500" file="all_syntax.F90">
+                  <name type="M0#FUNC(F)#interface_func_real">interface_func_real</name>
+                  <declarations>
+                    <varDecl lineno="0" file="all_syntax.F90">
+                      <name type="Freal">interface_func_real</name>
+                    </varDecl>
+                    <varDecl lineno="0" file="all_syntax.F90">
+                      <name type="Freal">arg1</name>
+                    </varDecl>
+                  </declarations>
+                </FfunctionDecl>
+              </FinterfaceDecl>
+              <!--
+                INTERFACE OPERATOR(.PLUS.)
+                    FUNCTION interface_binary_operator(arg1, arg2)
+                        INTEGER :: interface_binary_operator
+                        INTEGER, INTENT(IN) :: arg1
+                        INTEGER, INTENT(IN) :: arg2
+                    END FUNCTION
+                END INTERFACE
+              -->
+              <FinterfaceDecl lineno="500" file="all_syntax.F90" name=".PLUS." is_operator="true" is_assignment="false">
+                <FfunctionDecl lineno="500" file="all_syntax.F90">
+                  <name type="M0#FUNC(F)#interface_binary_operator">interface_binary_operator</name>
+                  <declarations>
+                    <varDecl lineno="0" file="all_syntax.F90">
+                      <name type="Fint">interface_binary_operator</name>
+                    </varDecl>
+                    <varDecl lineno="0" file="all_syntax.F90">
+                      <name type="M0#BASIC(R)#INT()#arg1">arg1</name>
+                    </varDecl>
+                    <varDecl lineno="0" file="all_syntax.F90">
+                      <name type="M0#BASIC(R)#INT()#arg2">arg2</name>
+                    </varDecl>
+                  </declarations>
+                </FfunctionDecl>
+              </FinterfaceDecl>
+              <!--
+                INTERFACE OPERATOR(.NEGATIVE.)
+                    FUNCTION interface_unary_operator(arg1)
+                        INTEGER :: interface_unary_operator
+                        INTEGER, INTENT(IN) :: arg1
+                    END FUNCTION
+                END INTERFACE
+              -->
+              <FinterfaceDecl lineno="500" file="all_syntax.F90" name=".NEGATIVE." is_operator="true" is_assignment="false">
+                <FfunctionDecl lineno="500" file="all_syntax.F90">
+                  <name type="M0#FUNC(F)#interface_unary_operator">interface_unary_operator</name>
+                  <declarations>
+                    <varDecl lineno="0" file="all_syntax.F90">
+                      <name type="Fint">interface_unary_operator</name>
+                    </varDecl>
+                    <varDecl lineno="0" file="all_syntax.F90">
+                      <name type="M0#BASIC(R)#INT()#arg1">arg1</name>
+                    </varDecl>
+                  </declarations>
+                </FfunctionDecl>
+              </FinterfaceDecl>
+              <!--
+                INTERFACE ASSIGNMENT(=)
+                    ELEMENTAL SUBROUTINE interface_assign(arg1, arg2)
+                        INTEGER, INTENT(OUT) :: arg1
+                        LOGICAL, INTENT(IN) :: arg2
+                    END SUBROUTINE
+                END INTERFACE
+              -->
+              <FinterfaceDecl lineno="500" file="all_syntax.F90" is_operator="false" is_assignment="true">
+                <FfunctionDecl lineno="500" file="all_syntax.F90">
+                  <name type="M0#FUNC(S)#interface_assign">interface_assign</name>
+                  <declarations>
+                    <varDecl lineno="0" file="all_syntax.F90">
+                      <name type="M0#BASIC(W)#INT()#arg1">arg1</name>
+                    </varDecl>
+                    <varDecl lineno="0" file="all_syntax.F90">
+                      <name type="M0#BASIC(R)#BOOL()#arg2">arg2</name>
+                    </varDecl>
+                  </declarations>
+                </FfunctionDecl>
+              </FinterfaceDecl>
+              <!-- 500: INTEGER :: int_variable -->
+              <varDecl lineno="500" file="all_syntax.F90">
+                <name type="Fint">int_variable</name>
+              </varDecl>
+            </declarations>
+            <body>
+              <!-- 500: int_variable = 1 .PLUS. 2 -->
+              <exprStatement lineno="500" file="all_syntax.F90">
+                <assignExpr>
+                  <Var scope="local">int_variable</Var>
+                  <userBinaryExpr name=".PLUS.">
+                    <FintConstant type="Fint">1</FintConstant>
+                    <FintConstant type="Fint">2</FintConstant>
+                  </userBinaryExpr>
+                </assignExpr>
+              </exprStatement>
+              <!-- 500: int_variable = .NEGATIVE.1 -->
+              <exprStatement lineno="500" file="all_syntax.F90">
+                <assignExpr>
+                  <Var scope="local">int_variable</Var>
+                  <userUnaryExpr name=".NEGATIVE.">
+                    <FintConstant type="Fint">1</FintConstant>
+                  </userUnaryExpr>
+                </assignExpr>
+              </exprStatement>
+              <!-- 500: int_variable = .TRUE. -->
+              <exprStatement lineno="500" file="all_syntax.F90">
+                <assignExpr>
+                  <Var scope="local">int_variable</Var>
+                  <FlogicalConstant type="Flogical">.TRUE.</FlogicalConstant>
+                </assignExpr>
+              </exprStatement>
+            </body>
+          </FfunctionDefinition>
+          <!--
+            SUBROUTINE sub_statement
+                INTEGER :: int_variable = 1
+                INTEGER :: int_array(10)
+                CHARACTER(LEN=10) :: string_variable
+
+                GOTO (1000, 2000, 3000), int_variable
+                GOTO 1000
+
+            1000 &
+                TEST_IF: IF (int_variable == 1) THEN
+                    int_variable = 10
+                ELSE TEST_IF
+                    int_variable = 99
+                END IF TEST_IF
+
+            2000 &
+                TEST_DO: DO, int_variable = 1, 10
+                    CONTINUE
+                    CYCLE TEST_DO
+                    EXIT TEST_DO
+                END DO TEST_DO
+
+            3000 &
+                TEST_DO_WHILE: DO, WHILE (int_variable > 0)
+                    int_variable = 0
+                END DO TEST_DO_WHILE
+
+            4000 &
+                WHERE (int_array > 0)
+                    int_array = 0
+                ELSEWHERE
+                    int_array = 1
+                END WHERE
+
+            5000 &
+                TEST_SELECT: SELECT CASE (string_variable)
+                CASE ('L', 'M', 'N') TEST_SELECT
+                    CONTINUE
+                CASE (:'C') TEST_SELECT
+                    CONTINUE
+                CASE ('X':) TEST_SELECT
+                    CONTINUE
+                CASE ('D':'F') TEST_SELECT
+                    CONTINUE
+                CASE DEFAULT TEST_SELECT
+                    CONTINUE
+                END SELECT TEST_SELECT
+
+            END SUBROUTINE
+          -->
+          <FfunctionDefinition lineno="600" file="all_syntax.F90">
+            <name type="M0#FUNC(S)#sub_statement">sub_statement</name>
+            <symbols>
+            </symbols>
+            <declarations>
+              <!-- 600: INTEGER :: int_variable = 1 -->
+              <varDecl lineno="600" file="all_syntax.F90">
+                <name type="Fint">int_variable</name>
+                <value><FintConstant type="Fint">1</FintConstant></value>
+              </varDecl>
+              <!-- 600: INTEGER :: int_array(10) -->
+              <varDecl lineno="600" file="all_syntax.F90">
+                <name type="M0#BASIC()[10]#INT()#int_array">int_array</name>
+              </varDecl>
+              <!-- 600: CHARACTER(LEN=10) :: string_variable = "A" -->
+              <varDecl lineno="600" file="all_syntax.F90">
+                <name type="M0#BASIC()#CHAR(L10)#string_variable">string_variable</name>
+                <value><FcharacterConstant type="Fcharacter">A</FcharacterConstant></value>
+              </varDecl>
+            </declarations>
+            <body>
+              <!-- 600: GOTO (1000, 2000, 3000), int_variable -->
+              <gotoStatement lineno="600" file="all_syntax.F90">
+                <params>
+                  <name type="Fint">1000</name>
+                  <name type="Fint">2000</name>
+                  <name type="Fint">3000</name>
+                </params>
+                <value><Var scope="local" type="Fint">int_variable</Var></value>
+              </gotoStatement>
+              <!-- 600: GOTO 1000 -->
+              <gotoStatement lineno="600" file="all_syntax.F90" label_name="1000"/>
+              <!-- 600: 1000 & -->
+              <statementLabel lineno="600" file="all_syntax.F90" label_name="1000"/>
+              <!-- 600: TEST_IF: IF (int_variable == 1) THEN -->
+              <FifStatement lineno="600" file="all_syntax.F90" construct_name="TEST_IF">
+                <condition>
+                  <logEQExpr>
+                    <Var scope="local" type="Fint">int_variable</Var>
+                    <FintConstant type="Fint">1</FintConstant>
+                  </logEQExpr>
+                </condition>
+                <then>
+                  <body>
+                    <!-- 600: int_variable = 10 -->
+                    <exprStatement lineno="600" file="all_syntax.F90">
+                      <assignExpr>
+                        <Var scope="local">int_variable</Var>
+                        <FintConstant type="Fint">10</FintConstant>
+                      </assignExpr>
+                    </exprStatement>
+                  </body>
+                </then>
+                <else>
+                  <body>
+                    <!-- 600: int_variable = 99 -->
+                    <exprStatement lineno="600" file="all_syntax.F90">
+                      <assignExpr>
+                        <Var scope="local">int_variable</Var>
+                        <FintConstant type="Fint">99</FintConstant>
+                      </assignExpr>
+                    </exprStatement>
+                  </body>
+                </else>
+              </FifStatement>
+              <!-- 600: 2000 & -->
+              <statementLabel lineno="600" file="all_syntax.F90" label_name="2000"/>
+              <!-- 600: TEST_DO: DO, int_variable = 1, 10 -->
+              <FdoStatement lineno="600" file="all_syntax.F90" construct_name="TEST_DO">
+                <Var scope="local">int_variable</Var>
+                <indexRange>
+                  <lowerBound><FintConstant type="Fint">1</FintConstant></lowerBound>
+                  <upperBound><FintConstant type="Fint">10</FintConstant></upperBound>
+                </indexRange>
+                <body>
+                  <!-- 600: CONTINUE -->
+                  <continueStatement lineno="600" file="all_syntax.F90"/>
+                  <!-- 600: CYCLE TEST_DO -->
+                  <FcycleStatement lineno="600" file="all_syntax.F90" construct_name="TEST_DO"/>
+                  <!-- 600: EXIT TEST_DO -->
+                  <FexitStatement lineno="600" file="all_syntax.F90" construct_name="TEST_DO"/>
+                </body>
+              </FdoStatement>
+              <!-- 600: 3000 & -->
+              <statementLabel lineno="600" file="all_syntax.F90" label_name="3000"/>
+              <!-- 600: TEST_DO_WHILE: DO, WHILE (int_variable > 0) -->
+              <FdoWhileStatement lineno="600" file="all_syntax.F90" construct_name="TEST_DO_WHILE">
+                <condition>
+                  <logGTExpr>
+                    <Var scope="local" type="Fint">int_variable</Var>
+                    <FintConstant type="Fint">0</FintConstant>
+                  </logGTExpr>
+                </condition>
+                <body>
+                  <!-- 600: int_variable = 10 -->
+                  <exprStatement lineno="600" file="all_syntax.F90">
+                    <assignExpr>
+                      <Var scope="local">int_variable</Var>
+                      <FintConstant type="Fint">0</FintConstant>
+                    </assignExpr>
+                  </exprStatement>
+                </body>
+              </FdoWhileStatement>
+              <!-- 600: 4000 & -->
+              <statementLabel lineno="600" file="all_syntax.F90" label_name="4000"/>
+              <!-- 600: WHERE (int_array > 0) -->
+              <FwhereStatement lineno="600" file="all_syntax.F90">
+                <condition>
+                  <logEQExpr>
+                    <Var scope="local" type="M0#BASIC()[10]#INT()#int_array">int_array</Var>
+                    <FintConstant type="Fint">0</FintConstant>
+                  </logEQExpr>
+                </condition>
+                <then>
+                  <body>
+                    <!-- 600: int_array = 0 -->
+                    <exprStatement lineno="600" file="all_syntax.F90">
+                      <assignExpr>
+                        <Var scope="local" type="M0#BASIC()[10]#INT()#int_array">int_array</Var>
+                        <FintConstant type="Fint">0</FintConstant>
+                      </assignExpr>
+                    </exprStatement>
+                  </body>
+                </then>
+                <else>
+                  <body>
+                    <!-- 600: int_array = 1 -->
+                    <exprStatement lineno="600" file="all_syntax.F90">
+                      <assignExpr>
+                        <Var scope="local" type="M0#BASIC()[10]#INT()#int_array">int_array</Var>
+                        <FintConstant type="Fint">1</FintConstant>
+                      </assignExpr>
+                    </exprStatement>
+                  </body>
+                </else>
+              </FwhereStatement>
+              <!-- 600: 5000 & -->
+              <statementLabel lineno="600" file="all_syntax.F90" label_name="5000"/>
+              <!-- 600: TEST_SELECT: SELECT CASE (string_variable) -->
+              <FselectCaseStatement lineno="600" file="all_syntax.F90" construct_name="TEST_SELECT">
+                <value><Var>string_variable</Var></value>
+                <!-- 600: CASE ('L', 'M', 'N') TEST_SELECT -->
+                <FcaseLabel lineno="600" file="all_syntax.F90" construct_name="TEST_SELECT">
+                  <value><FcharacterConstant type="Fcharacter">L</FcharacterConstant></value>
+                  <value><FcharacterConstant type="Fcharacter">M</FcharacterConstant></value>
+                  <value><FcharacterConstant type="Fcharacter">N</FcharacterConstant></value>
+                  <body>
+                    <!-- 600: CONTINUE -->
+                    <continueStatement lineno="600" file="all_syntax.F90"/>
+                  </body>
+                </FcaseLabel>
+                <!-- 600: CASE (:'C') TEST_SELECT -->
+                <FcaseLabel lineno="600" file="all_syntax.F90" construct_name="TEST_SELECT">
+                  <indexRange>
+                    <upperBound><FcharacterConstant type="Fcharacter">C</FcharacterConstant></upperBound>
+                  </indexRange>
+                  <body>
+                    <!-- 600: CONTINUE -->
+                    <continueStatement lineno="600" file="all_syntax.F90"/>
+                  </body>
+                </FcaseLabel>
+                <!-- 600: CASE ('X':) TEST_SELECT -->
+                <FcaseLabel lineno="600" file="all_syntax.F90" construct_name="TEST_SELECT">
+                  <indexRange>
+                    <lowerBound><FcharacterConstant type="Fcharacter">X</FcharacterConstant></lowerBound>
+                  </indexRange>
+                  <body>
+                    <!-- 600: CONTINUE -->
+                    <continueStatement lineno="600" file="all_syntax.F90"/>
+                  </body>
+                </FcaseLabel>
+                <!-- 600: CASE ('D':'F') TEST_SELECT -->
+                <FcaseLabel lineno="600" file="all_syntax.F90" construct_name="TEST_SELECT">
+                  <indexRange>
+                    <lowerBound><FcharacterConstant type="Fcharacter">D</FcharacterConstant></lowerBound>
+                    <upperBound><FcharacterConstant type="Fcharacter">F</FcharacterConstant></upperBound>
+                  </indexRange>
+                  <body>
+                    <!-- 600: CONTINUE -->
+                    <continueStatement lineno="600" file="all_syntax.F90"/>
+                  </body>
+                </FcaseLabel>
+                <!-- 600: CASE DEFAULT TEST_SELECT -->
+                <FcaseLabel lineno="600" file="all_syntax.F90" construct_name="TEST_SELECT">
+                  <body>
+                    <!-- 600: CONTINUE -->
+                    <continueStatement lineno="600" file="all_syntax.F90"/>
+                  </body>
+                </FcaseLabel>
+              </FselectCaseStatement>
+            </body>
+          </FfunctionDefinition>
+          <!--
+            SUBROUTINE sub_io
+                CHARACTER(LEN=10), PARAMETER :: FORMAT_PARAM = "(Z8)"
+
+            1000 &
+                FORMAT (Z8)
+                PRINT *, "any text", 12345
+                PRINT "(Z8)", 12345
+                PRINT 1000, 12345
+                PRINT FORMAT_PARAM, 12345
+
+            END SUBROUTINE
+          -->
+          <FfunctionDefinition lineno="900" file="all_syntax.F90">
+            <name type="M0#FUNC(S)#sub_io">sub_io</name>
+            <symbols>
+            </symbols>
+            <declarations>
+              <!-- 700: CHARACTER(LEN=10), PARAMETER :: FORMAT_PARAM = "(Z8)" -->
+              <varDecl lineno="700" file="all_syntax.F90">
+                <name type="M0#BASIC(P)#CHAR(L10)#FORMAT_PARAM">FORMAT_PARAM</name>
+                <value><FcharacterConstant type="Fcharacter">(Z8)</FcharacterConstant></value>
+              </varDecl>
+            </declarations>
+            <body>
+              <!-- 700: 1000 & -->
+              <statementLabel lineno="700" file="all_syntax.F90" label_name="1000"/>
+              <!-- 700: FORMAT (Z8) -->
+              <FformatDecl lineno="700" file="all_syntax.F90" format="Z8"/>
+              <!-- 700: PRINT *, "any text", 12345 -->
+              <FprintStatement lineno="700" file="all_syntax.F90" format="*">
+                <valueList>
+                  <value><FcharacterConstant type="Fcharacter">any text</FcharacterConstant></value>
+                  <value><FintConstant type="Fint">12345</FintConstant></value>
+                </valueList>
+              </FprintStatement>
+              <!-- 700: PRINT "(Z8)", 12345 -->
+              <FprintStatement lineno="700" file="all_syntax.F90" format="&quot;(Z8)&quot;">
+                <valueList>
+                  <value><FintConstant type="Fint">12345</FintConstant></value>
+                </valueList>
+              </FprintStatement>
+              <!-- 700: PRINT 1000, 12345 -->
+              <FprintStatement lineno="700" file="all_syntax.F90" format="1000">
+                <valueList>
+                  <value><FintConstant type="Fint">12345</FintConstant></value>
+                </valueList>
+              </FprintStatement>
+              <!-- 700: PRINT FORMAT_PARAM, 12345 -->
+              <FprintStatement lineno="700" file="all_syntax.F90" format="FORMAT_PARAM">
+                <valueList>
+                  <value><FintConstant type="Fint">12345</FintConstant></value>
+                </valueList>
+              </FprintStatement>
+              <!-- TODO: OPEN ... -->
+              <FopenStatement lineno="700" file="all_syntax.F90">
+                <namedValueList>
+                  <namedValue name="UNIT" value="*"/>
+                  <namedValue name="IOSTAT" value="var"/>
+                  <namedValue name="ERR" value="2000"/>
+                  <namedValue name="FILE" value="&quot;filename&quot;"/>
+                  <namedValue name="STATUS" value="&quot;STATUS&quot;"/>
+                  <namedValue name="ACCESS" value="&quot;ACCESS&quot;"/>
+                  <namedValue name="FORM" value="&quot;FORM&quot;"/>
+                  <namedValue name="RECL" value="1 + 2"/>
+                  <namedValue name="BLANK" value="&quot;BLANK&quot;"/>
+                  <namedValue name="POSITION" value="&quot;POSITION&quot;"/>
+                  <namedValue name="ACTION" value="&quot;ACTION&quot;"/>
+                  <namedValue name="DELIM" value="&quot;DELIM&quot;"/>
+                  <namedValue name="PAD" value="&quot;PAD&quot;"/>
+                </namedValueList>
+              </FopenStatement>
+            </body>
+          </FfunctionDefinition>
+          <!--
+            SUBROUTINE sub_etc
+                INTEGER :: int_cmn_variable1
+                INTEGER :: int_cmn_array
+                INTEGER :: int_cmn_variable3
+                INTEGER :: int_cmn_variable4
+                COMMON      /TEST_BLOCK/ int_cmn_variable1, int_cmn_array(10), &
+                            // int_cmn_variable3, int_cmn_variable4
+
+                INTEGER :: int_nml_variable1
+                INTEGER :: int_nml_variable2
+                INTEGER :: int_nml_variable3
+                INTEGER :: int_nml_variable4
+                NAMELIST    /TEST_NAME1/int_nml_variable1, int_nml_variable2, &
+                            /TEST_NAME2/ int_nml_variable3, int_nml_variable4
+
+                INTEGER :: int_equiv_variable1
+                INTEGER :: int_equiv_variable2
+                INTEGER :: int_equiv_variable3
+                INTEGER :: int_equiv_variable4
+                EQUIVALENCE (int_equiv_variable1, int_equiv_variable2), &
+                            (int_equiv_variable3, int_equiv_variable4)
+
+                INTEGER :: i
+                INTEGER :: int_data_variable1
+                INTEGER :: int_data_variable2
+                INTEGER :: int_data_array1(10)
+                INTEGER :: int_data_array2(10)
+                DATA    int_data_variable1, int_data_variable2 /1, 2/, &
+                        int_data_array1 /10*1/, &
+                        (int_data_array2(i), i = 1, 10, 2) /5*1/
+            END SUBROUTINE
+          -->
+          <FfunctionDefinition lineno="900" file="all_syntax.F90">
+            <name type="M0#FUNC(S)#sub_etc">sub_etc</name>
+            <symbols>
+            </symbols>
+            <declarations>
+              <!-- 900: INTEGER :: int_cmn_variable1 -->
+              <varDecl lineno="900" file="all_syntax.F90">
+                <name type="Fint">int_cmn_variable1</name>
+              </varDecl>
+              <!-- 900: INTEGER :: int_cmn_array -->
+              <varDecl lineno="900" file="all_syntax.F90">
+                <name type="M0#BASIC()[10]#INT()#int_array">int_cmn_array</name>
+              </varDecl>
+              <!-- 900: INTEGER :: int_cmn_variable3 -->
+              <varDecl lineno="900" file="all_syntax.F90">
+                <name type="Fint">int_cmn_variable3</name>
+              </varDecl>
+              <!-- 900: INTEGER :: int_cmn_variable4 -->
+              <varDecl lineno="900" file="all_syntax.F90">
+                <name type="Fint">int_cmn_variable4</name>
+              </varDecl>
+              <!-- 900: COMMON      /TEST_BLOCK/ int_cmn_variable1, int_cmn_array(10), &
+                                    // int_cmn_variable3, int_cmn_variable4 -->
+              <FcommonDecl lineno="900" file="all_syntax.F90">
+                <varList name="TEST_BLOCK">
+                  <varRef><Var>int_cmn_variable1</Var></varRef>
+                  <varRef><Var>int_cmn_array</Var></varRef>
+                </varList>
+                <varList>
+                  <varRef><Var>int_cmn_variable3</Var></varRef>
+                  <varRef><Var>int_cmn_variable4</Var></varRef>
+                </varList>
+              </FcommonDecl>
+              <!-- 900: INTEGER :: int_nml_variable1 -->
+              <varDecl lineno="900" file="all_syntax.F90">
+                <name type="Fint">int_nml_variable1</name>
+              </varDecl>
+              <!-- 900: INTEGER :: int_nml_variable2 -->
+              <varDecl lineno="900" file="all_syntax.F90">
+                <name type="Fint">int_nml_variable2</name>
+              </varDecl>
+              <!-- 900: INTEGER :: int_nml_variable3 -->
+              <varDecl lineno="900" file="all_syntax.F90">
+                <name type="Fint">int_nml_variable3</name>
+              </varDecl>
+              <!-- 900: INTEGER :: int_nml_variable4 -->
+              <varDecl lineno="900" file="all_syntax.F90">
+                <name type="Fint">int_nml_variable4</name>
+              </varDecl>
+              <!-- 900: NAMELIST    /TEST_NAME1/int_equiv_variable1, int_equiv_variable2, &
+                                    /TEST_NAME2/ int_equiv_variable3, int_equiv_variable4 -->
+              <FnamelistDecl lineno="900" file="all_syntax.F90">
+                <varList name="TEST_NAME1">
+                  <varRef><Var>int_nml_variable1</Var></varRef>
+                  <varRef><Var>int_nml_variable2</Var></varRef>
+                </varList>
+                <varList name="TEST_NAME2">
+                  <varRef><Var>int_nml_variable3</Var></varRef>
+                  <varRef><Var>int_nml_variable4</Var></varRef>
+                </varList>
+              </FnamelistDecl>
+              <!-- 900: INTEGER :: int_equiv_variable1 -->
+              <varDecl lineno="900" file="all_syntax.F90">
+                <name type="Fint">int_equiv_variable1</name>
+              </varDecl>
+              <!-- 900: INTEGER :: int_equiv_variable2 -->
+              <varDecl lineno="900" file="all_syntax.F90">
+                <name type="Fint">int_equiv_variable2</name>
+              </varDecl>
+              <!-- 900: INTEGER :: int_equiv_variable3 -->
+              <varDecl lineno="900" file="all_syntax.F90">
+                <name type="Fint">int_equiv_variable3</name>
+              </varDecl>
+              <!-- 900: INTEGER :: int_equiv_variable4 -->
+              <varDecl lineno="900" file="all_syntax.F90">
+                <name type="Fint">int_equiv_variable4</name>
+              </varDecl>
+              <!-- 900: EQUIVALENCE (int_equiv_variable1, int_equiv_variable2), &
+                                    (int_equiv_variable3, int_equiv_variable4) -->
+              <FequivalenceDecl lineno="900" file="all_syntax.F90">
+                <varRef><Var>int_equiv_variable1</Var></varRef>
+                <varList>
+                  <varRef><Var>int_equiv_variable2</Var></varRef>
+                </varList>
+                <varRef><Var>int_equiv_variable3</Var></varRef>
+                <varList>
+                  <varRef><Var>int_equiv_variable4</Var></varRef>
+                </varList>
+              </FequivalenceDecl>
+              <!-- 900: INTEGER :: i -->
+              <varDecl lineno="900" file="all_syntax.F90">
+                <name type="Fint">i</name>
+              </varDecl>
+              <!-- 900: INTEGER :: int_data_variable1 -->
+              <varDecl lineno="900" file="all_syntax.F90">
+                <name type="Fint">int_data_variable1</name>
+              </varDecl>
+              <!-- 900: INTEGER :: int_data_variable2 -->
+              <varDecl lineno="900" file="all_syntax.F90">
+                <name type="Fint">int_data_variable2</name>
+              </varDecl>
+              <!-- 900: INTEGER :: int_data_array1(10) -->
+              <varDecl lineno="900" file="all_syntax.F90">
+                <name type="M0#BASIC()[10]#INT()#int_array">int_data_array1</name>
+              </varDecl>
+              <!-- 900: INTEGER :: int_data_array2(10) -->
+              <varDecl lineno="900" file="all_syntax.F90">
+                <name type="M0#BASIC()[10]#INT()#int_array">int_data_array2</name>
+              </varDecl>
+            </declarations>
+            <body>
+              <!-- 900: DATA    int_data_variable1, int_data_variable2 /1, 2/, &
+                                int_data_array1 /10*1/, &
+                                (int_data_array2(i), i = 1, 10, 2) /5*1/ -->
+              <FdataDecl lineno="900" file="all_syntax.F90">
+                <varList>
+                  <varRef><Var>int_data_variable1</Var></varRef>
+                  <varRef><Var>int_data_variable2</Var></varRef>
+                </varList>
+                <valueList>
+                  <value><FintConstant type="Fint">1</FintConstant></value>
+                  <value><FintConstant type="Fint">2</FintConstant></value>
+                </valueList>
+                <varList>
+                  <varRef><Var>int_data_array1</Var></varRef>
+                </varList>
+                <valueList>
+                  <value repeat_count="10"><FintConstant type="Fint">1</FintConstant></value>
+                </valueList>
+                <varList>
+                  <FdoLoop>
+                    <Var type="Fint" scope="local">i</Var>
+                    <indexRange>
+                      <lowerBound><FintConstant type="Fint">1</FintConstant></lowerBound>
+                      <upperBound><FintConstant type="Fint">10</FintConstant></upperBound>
+                      <step><FintConstant type="Fint">2</FintConstant></step>
+                    </indexRange>
+                    <value>
+                      <FarrayRef>
+                        <varRef>
+                          <Var scope="local" type="M0#BASIC()[10]#INT()#int_array">int_data_array2</Var>
+                        </varRef>
+                        <arrayIndex><Var type="Fint" scope="local">i</Var></arrayIndex>
+                      </FarrayRef>
+                    </value>
+                  </FdoLoop>
+                </varList>
+                <valueList>
+                  <value repeat_count="5"><FintConstant type="Fint">1</FintConstant></value>
+                </valueList>
+              </FdataDecl>
+            </body>
+          </FfunctionDefinition>
+        </FcontainsStatement>
+      </body>
+    </FfunctionDefinition>
+
+<!-- =================================================================== -->
+
+    <!--
+      SUBROUTINE interface_sub()
+          RETURN
+      END SUBROUTINE
+    -->
+    <FfunctionDefinition lineno="0" file="all_syntax.F90">
+      <name type="M0#FUNC(S)#interface_sub">interface_sub</name>
+      <symbols>
+      </symbols>
+      <declarations>
+      </declarations>
+      <body>
+        <FreturnStatement lineno="0" file="all_syntax.F90"/>
+      </body>
+    </FfunctionDefinition>
+
+    <!--
+      FUNCTION interface_func_int(arg1)
+          INTEGER :: interface_func_int
+          INTEGER :: arg1
+          interface_func_int = arg1
+      END FUNCTION
+    -->
+    <FfunctionDefinition lineno="0" file="all_syntax.F90">
+      <name type="M0#FUNC(F)#interface_func_int">interface_func_int</name>
+      <symbols>
+        <id sclass="param" type="Fint"><name type="Fint">arg1</name></id>
+      </symbols>
+      <declarations>
+        <varDecl lineno="0" file="all_syntax.F90">
+          <name type="Fint">interface_func_int</name>
+        </varDecl>
+        <varDecl lineno="0" file="all_syntax.F90">
+          <name type="Fint">arg1</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <!-- 0: interface_func_int = arg1 -->
+        <exprStatement lineno="0" file="all_syntax.F90">
+          <assignExpr>
+            <Var scope="local" type="Fint">interface_func_int</Var>
+            <Var scope="local" type="Fint">arg1</Var>
+          </assignExpr>
+        </exprStatement>
+      </body>
+    </FfunctionDefinition>
+
+    <!--
+      FUNCTION interface_func_real(arg1)
+          REAL :: interface_func_real
+          REAL :: arg1
+          interface_func_real = arg1
+      END FUNCTION
+    -->
+    <FfunctionDefinition lineno="0" file="all_syntax.F90">
+      <name type="M0#FUNC(F)#interface_func_real">interface_func_real</name>
+      <symbols>
+        <id sclass="param" type="Freal"><name type="Freal">arg1</name></id>
+      </symbols>
+      <declarations>
+        <varDecl lineno="0" file="all_syntax.F90">
+          <name type="Freal">interface_func_real</name>
+        </varDecl>
+        <varDecl lineno="0" file="all_syntax.F90">
+          <name type="Freal">arg1</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <!-- 0: interface_func_real = arg1 -->
+        <exprStatement lineno="0" file="all_syntax.F90">
+          <assignExpr>
+            <Var scope="local" type="Freal">interface_func_real</Var>
+            <Var scope="local" type="Freal">arg1</Var>
+          </assignExpr>
+        </exprStatement>
+      </body>
+    </FfunctionDefinition>
+
+    <!--
+      FUNCTION interface_binary_operator(arg1, arg2)
+          INTEGER :: interface_binary_operator
+          INTEGER, INTENT(IN) :: arg1
+          INTEGER, INTENT(IN) :: arg2
+          interface_binary_operator = arg1 + arg2
+      END FUNCTION
+    -->
+    <FfunctionDefinition lineno="0" file="all_syntax.F90">
+      <name type="M0#FUNC(F)#interface_binary_operator">interface_binary_operator</name>
+      <symbols>
+        <id sclass="param" type="M0#BASIC(R)#INT()#arg1"><name type="M0#BASIC(R)#INT()#arg1">arg1</name></id>
+        <id sclass="param" type="M0#BASIC(R)#INT()#arg2"><name type="M0#BASIC(R)#INT()#arg2">arg2</name></id>
+      </symbols>
+      <declarations>
+        <varDecl lineno="0" file="all_syntax.F90">
+          <name type="Fint">interface_binary_operator</name>
+        </varDecl>
+        <varDecl lineno="0" file="all_syntax.F90">
+          <name type="M0#BASIC(R)#INT()#arg1">arg1</name>
+        </varDecl>
+        <varDecl lineno="0" file="all_syntax.F90">
+          <name type="M0#BASIC(R)#INT()#arg2">arg2</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <!-- 0: interface_binary_operator = arg1 + arg2 -->
+        <exprStatement lineno="0" file="all_syntax.F90">
+          <assignExpr>
+            <Var scope="local" type="Fint">interface_binary_operator</Var>
+            <plusExpr>
+              <Var scope="local" type="M0#BASIC(R)#INT()#arg1">arg1</Var>
+              <Var scope="local" type="M0#BASIC(R)#INT()#arg2">arg2</Var>
+            </plusExpr>
+          </assignExpr>
+        </exprStatement>
+      </body>
+    </FfunctionDefinition>
+
+    <!--
+      FUNCTION interface_unary_operator(arg1)
+          INTEGER :: interface_unary_operator
+          INTEGER, INTENT(IN) :: arg1
+          interface_unary_operator = -arg1
+      END FUNCTION
+    -->
+    <FfunctionDefinition lineno="0" file="all_syntax.F90">
+      <name type="M0#FUNC(F)#interface_unary_operator">interface_unary_operator</name>
+      <symbols>
+        <id sclass="param" type="M0#BASIC(R)#INT()#arg1"><name type="M0#BASIC(R)#INT()#arg1">arg1</name></id>
+      </symbols>
+      <declarations>
+        <varDecl lineno="0" file="all_syntax.F90">
+          <name type="Fint">interface_unary_operator</name>
+        </varDecl>
+        <varDecl lineno="0" file="all_syntax.F90">
+          <name type="M0#BASIC(R)#INT()#arg1">arg1</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <!-- 0: interface_unary_operator = arg1 + arg2 -->
+        <exprStatement lineno="0" file="all_syntax.F90">
+          <assignExpr>
+            <Var scope="local" type="Fint">interface_unary_operator</Var>
+            <unaryMinusExpr>
+              <Var scope="local" type="M0#BASIC(R)#INT()#arg1">arg1</Var>
+            </unaryMinusExpr>
+          </assignExpr>
+        </exprStatement>
+      </body>
+    </FfunctionDefinition>
+
+    <!--
+      SUBROUTINE interface_assign(arg1, arg2)
+          INTEGER, INTENT(OUT) :: arg1
+          LOGICAL, INTENT(IN) :: arg2
+          arg1 = 1
+      END SUBROUTINE
+    -->
+    <FfunctionDefinition lineno="0" file="all_syntax.F90">
+      <name type="M0#FUNC(S)#interface_assign">interface_assign</name>
+      <symbols>
+        <id sclass="param" type="M0#BASIC(W)#INT()#arg1"><name type="M0#BASIC(R)#INT()#arg1">arg1</name></id>
+        <id sclass="param" type="M0#BASIC(R)#BOOL()#arg2"><name type="M0#BASIC(R)#BOOL()#arg2">arg2</name></id>
+      </symbols>
+      <declarations>
+        <varDecl lineno="0" file="all_syntax.F90">
+          <name type="M0#BASIC(W)#INT()#arg1">arg1</name>
+        </varDecl>
+        <varDecl lineno="0" file="all_syntax.F90">
+          <name type="M0#BASIC(R)#BOOL()#arg2">arg2</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <!-- 0: arg1 = 1 -->
+        <exprStatement lineno="0" file="all_syntax.F90">
+          <assignExpr>
+            <Var scope="local" type="M0#BASIC(W)#INT()#arg1">arg1</Var>
+            <FintConstant type="Fint">1</FintConstant>
+          </assignExpr>
+        </exprStatement>
+      </body>
+    </FfunctionDefinition>
+
+  </globalDeclarations>
+
+</XcodeProgram>

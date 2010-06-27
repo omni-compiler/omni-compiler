@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XcodeProgram source="gotoStatement.c">
+  <!-- 
+       int gotoStatementFunction () {
+           goto done;
+           done:
+           return 0;
+       }
+  -->
+  <typeTable>
+    <functionType type="type_of_function" return_type="int"/>
+    <pointerType type="pointer_of_function" ref="type_of_function"/>
+  </typeTable>
+  
+  <globalSymbols>
+    <id sclass="extern_def">
+      <name type="type_of_function">gotoStatementFunction</name>
+    </id>
+  </globalSymbols>
+  
+  <globalDeclarations>
+
+    <functionDefinition>
+      <name>gotoStatementFunction</name>
+
+      <symbols>
+      </symbols>
+      
+      <params>
+      </params>
+
+      <body>
+        <compoundStatement>
+          <symbols></symbols>
+          <declarations></declarations>
+          <body>
+            <gotoStatement>
+              <name>done</name>
+            </gotoStatement>
+            <statementLabel>
+              <name>done</name>
+            </statementLabel>
+            <returnStatement>
+              <intConstant type="int">0</intConstant>
+            </returnStatement>
+          </body>
+        </compoundStatement>
+      </body>
+    </functionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

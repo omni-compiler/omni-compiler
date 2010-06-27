@@ -1,0 +1,42 @@
+<XcodeProgram source="print.f90"
+              language="Fortran"
+              time="2009-03-27 18:07:57"
+              compiler-info="XcodeML/Fortran-FrontEnd"
+              version="1.0">
+  <typeTable>
+    <FbasicType type="C80a5d00" ref="Fcharacter">
+      <len><FintConstant type="Fint">12</FintConstant></len>
+    </FbasicType>
+    <FfunctionType type="F80a5b00" return_type="Fvoid" is_program="1" />
+  </typeTable>
+  <globalSymbols>
+    <id sclass="extern_def" type="F80a5b00">
+      <name type="F80a5b00">main</name>
+    </id>
+  </globalSymbols>
+  <globalDeclarations>
+    <FfunctionDefinition lineno="1" file="print.f90">
+      <name type="F80a5b00">main</name>
+      <symbols>
+      </symbols>
+      <declarations>
+      </declarations>
+      <body>
+        <FprintStatement lineno="2" file="print.f90" format="*">
+          <valueList>
+            <value>
+              <FcharacterConstant>Hello world!</FcharacterConstant>
+            </value>
+          </valueList>
+        </FprintStatement>
+        <FprintStatement lineno="3" file="print.f90" format="&quot;(F10.3)&quot;">
+          <valueList>
+            <value>
+              <FrealConstant>3ff3c0ca 4283de1b</FrealConstant>
+            </value>
+          </valueList>
+        </FprintStatement>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

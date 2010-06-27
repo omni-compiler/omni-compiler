@@ -1,0 +1,48 @@
+#!/bin/sh
+
+# $Id$
+# $RWC_Release$
+# $RWC_Copyright$
+
+
+ERROR=0
+
+OMP_SCHEDULE="guided"
+export OMP_SCHEDULE
+RESULT=`$EXEC ./schedule guided | grep -v SCore-D`
+if [ "$RESULT" != "scheduling test is SUCCESS(guided,0)." ] ; then
+  echo $RESULT
+  ERROR=1
+fi
+
+OMP_SCHEDULE="guided,1"
+export OMP_SCHEDULE
+RESULT=`$EXEC ./schedule guided 1 | grep -v SCore-D`
+if [ "$RESULT" != "scheduling test is SUCCESS(guided,1)." ] ; then
+  echo $RESULT
+  ERROR=1
+fi
+
+OMP_SCHEDULE="guided,2"
+export OMP_SCHEDULE
+RESULT=`$EXEC ./schedule guided 2 | grep -v SCore-D`
+if [ "$RESULT" != "scheduling test is SUCCESS(guided,2)." ] ; then
+  echo $RESULT
+  ERROR=1
+fi
+
+OMP_SCHEDULE="guided,100"
+export OMP_SCHEDULE
+RESULT=`$EXEC ./schedule guided 100 | grep -v SCore-D`
+if [ "$RESULT" != "scheduling test is SUCCESS(guided,100)." ] ; then
+  echo $RESULT
+  ERROR=1
+fi
+
+
+
+if [ "$ERROR" = "0" ] ; then
+  echo "OMP_SCHEDULE 003 : SUCCESS"
+else
+  echo "OMP_SCHEDULE 003 : FAILED"
+fi

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- 
+      module mod
+        contains
+          function func ()
+           func = 0
+          end function
+      end module
+
+      program main
+        contains
+          function func_main ()
+            func_main = 1
+          end function
+      end program
+
+-->
+<XcodeProgram compiler-info="F-Frontend"
+              version="1.0"
+              time="2009-02-17 10:53:20"
+              language="Fortran"
+              source="contains.f90">
+
+  <!-- typeTable -->
+  <typeTable>
+    <FfunctionType type="FfunctionType_of_func_main" return_type="Fint">
+      <params>
+      </params>
+    </FfunctionType>
+    <FfunctionType type="FfunctionType_of_func" return_type="Fint">
+      <params>
+      </params>
+    </FfunctionType>
+    <FfunctionType type="FfunctionType_of_main" return_type="Fvoid" />
+  </typeTable>
+
+  <!-- globalSymbols -->
+  <globalSymbols>
+    <id sclass="extern_def" type="FfunctionType_of_func">
+      <name type="FfunctionType_of_func">func</name>
+    </id>
+  </globalSymbols>
+
+  <!-- globalDeclarations -->
+  <globalDeclarations>
+
+    <!-- 1: module mod -->
+    <FmoduleDefinition lineno="1" file="contains.f90" name="mod">
+
+      <!-- 2: contains -->
+      <!-- 3: function func () -->
+      <FfunctionDefinition lineno="3" file="contains.f90">
+        <name type="FfunctionType_of_func">func</name>
+        <body>
+          <!-- 4: func = 0 -->
+          <exprStatement lineno="4" file="contains.f90">
+            <assignExpr>
+              <Var scope="local">func</Var>
+              <FintConstant type="Fint">0</FintConstant>
+            </assignExpr>
+          </exprStatement>
+        </body>
+      </FfunctionDefinition>
+
+    </FmoduleDefinition>
+
+    <!-- 10: program main -->
+    <FfunctionDefinition is_program="1" lineno="1" file="contains.f90">
+
+      <!-- name -->
+      <name type="FfunctionType_of_main">main</name>
+
+      <!-- body -->
+      <body>
+
+        <!-- 11: contains -->
+        <FcontainsStatement lineno="11" file="contains.f90">
+          <!-- 12: function func_main () -->
+          <FfunctionDefinition lineno="11" file="contains.f90">
+            <name type="FfunctionType_of_func_main">func_main</name>
+            <body>
+              <!-- 13: func_main = 1 -->
+              <exprStatement lineno="12" file="contains.f90">
+                <assignExpr>
+                  <Var scope="local">func_main</Var>
+                  <FintConstant type="Fint">1</FintConstant>
+                </assignExpr>
+              </exprStatement>
+            </body>
+          </FfunctionDefinition>
+        </FcontainsStatement>
+
+      </body>
+
+    </FfunctionDefinition>
+
+  </globalDeclarations>
+
+</XcodeProgram>

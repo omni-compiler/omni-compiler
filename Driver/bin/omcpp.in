@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
+# $TSUKUBA_Copyright:
+#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
+#  $
+
+PP="@OM_EXEC_C_PP@"
+OM_OPTIONS="${OM_OPTIONS} -std=gnu99"
+. ${OMNI_HOME}/bin/ompp $*

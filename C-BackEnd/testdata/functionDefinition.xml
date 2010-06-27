@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XcodeProgram source="functionDefinition.c">
+  <!-- 
+       void func1 (int n) {
+       }
+  -->
+  <typeTable>
+    <functionType type="type_of_func1" return_type="void">
+      <params>
+        <name type="int">n</name>
+      </params>
+    </functionType>
+    <pointerType type="pointer_of_func1" ref="type_of_func1"/>
+    <pointerType type="pointer_of_f_n_1" ref="int"/>
+  </typeTable>
+  
+  <globalSymbols>
+    <id sclass="extern_def">
+      <name type="type_of_func1">func1</name>
+    </id>
+  </globalSymbols>
+  
+  <globalDeclarations>
+
+    <functionDefinition>
+      <name>func1</name>
+      
+      <symbols>
+        
+        <id sclass="param">
+          <name type="int">n</name>
+        </id>
+        
+      </symbols>
+      
+      <params>
+        <name type="int">n</name>
+      </params>
+      
+      <body>
+        <compoundStatement>
+          <symbols></symbols>
+          <declarations></declarations>
+          <body>
+          </body>
+        </compoundStatement>
+        
+      </body>
+    </functionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

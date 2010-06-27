@@ -1,0 +1,4 @@
+relaxer.home=${env.RELAXER_HOME}
+debug=true
+target.lang.id=f
+target.lang.ID=F

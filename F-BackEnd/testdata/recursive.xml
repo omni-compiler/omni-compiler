@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- 
+      recursive function factorial(n) result(res)
+        implicit none
+        integer n, res
+        if (n < 1) then
+          res = 1
+        else
+          res = n * factorial(n - 1)
+        end if
+      end function
+
+      program main
+        implicit none
+        external factorial 
+        integer res, factorial 
+        res = factorial(6)
+!       print *, res
+      end program
+-->
+<XcodeProgram compiler-info="F-Frontend"
+              version="0.8"
+              time="2009-02-17 10:53:20"
+              language="Fortran 90 Free Format"
+              source="recursive.f90">
+
+  <!-- typeTable -->
+  <typeTable>
+    <FfunctionType type="FfunctionType_of_factorial" return_type="Fint">
+      <params>
+        <name type="Fint">n</name>
+      </params>
+    </FfunctionType>
+    <FfunctionType type="FfunctionType_of_main" return_type="Fvoid" />
+  </typeTable>
+
+  <!-- globalSymbols -->
+  <globalSymbols>
+    <id sclass="extern_def" type="FfunctionType_of_main">
+      <name type="FfunctionType_of_factorial">factorial</name>
+    </id>
+  </globalSymbols>
+
+  <!-- globalDeclarations -->
+  <globalDeclarations>
+
+    <!-- 1: recursive function factorial(n) result(res) -->
+    <FfunctionDefinition is_recursive="1" lineno="1" file="recursive.f90"> 
+      <name type="FfunctionType_of_factorial">factorial</name>
+      <symbols>
+        <id sclass="param" type="Fint">
+          <name type="Fint">n</name>
+        </id>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">res</name>
+        </id>
+      </symbols>
+      <params>
+        <name type="Fint">n</name>
+      </params>
+      <declarations>
+        <!-- 2: integer n, res -->
+        <varDecl lineno="2" file="recursive.f90">
+          <name type="Fint">n</name>
+        </varDecl>
+        <varDecl lineno="2" file="recursive.f90">
+          <name type="Fint">res</name>
+        </varDecl>
+      </declarations>
+      <result>res</result>
+      <!-- body -->
+      <body>
+        <!-- 3: if (n < 1) then -->
+        <FifStatement lineno="3" file="recursive.f90">
+          <condition>
+            <logGTExpr>
+              <Var scope="local">i</Var>
+              <FintConstant type="Fint">0</FintConstant>
+            </logGTExpr>
+          </condition>
+          <then>
+            <body>
+              <!-- 4: res = 1 -->
+              <exprStatement lineno="4" file="recursive.f90">
+                <assignExpr>
+                  <Var scope="local">res</Var>
+                  <FintConstant type="Fint">1</FintConstant>
+                </assignExpr>
+              </exprStatement>
+            </body>
+          </then>
+          <else>
+            <body>
+              <!-- 6: res = n * factorial(n - 1) -->
+              <exprStatement lineno="6" file="recursive.f90">
+                <assignExpr>
+                  <Var scope="local">res</Var>
+                  <mulExpr>
+                    <Var scope="param">n</Var>
+                    <functionCall>
+                      <function>factorial</function>
+                      <arguments>
+                        <minusExpr>
+                          <Var scope="param">n</Var>
+                          <FintConstant type="Fint">1</FintConstant>
+                        </minusExpr>
+                      </arguments>
+                    </functionCall>
+                  </mulExpr>
+                </assignExpr>
+              </exprStatement>
+            </body>
+          </else>
+        </FifStatement>
+      </body>
+    </FfunctionDefinition>
+
+    <!-- 11: program main -->
+    <FfunctionDefinition is_program="1" lineno="11" file="recursive.f90">
+      <name type="FfunctionType_of_main">main</name>
+      <symbols>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">res</name>
+        </id>
+      </symbols>
+      <declarations>
+        <!-- 13: external factorial -->
+        <externDecl lineno="13" file="recursive.f90">
+          <name type="FfunctionType_of_factorial">factorial</name>
+        </externDecl>
+        <!-- 14: integer res, factorial -->
+        <varDecl lineno="14" file="function.f90">
+          <name type="Fint">res</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <!-- 15: res = factorial(6) -->
+        <exprStatement lineno="11" file="recursive.f90">
+          <assignExpr>
+            <Var scope="local">res</Var>
+            <functionCall>
+              <function type="FfunctionType_of_factorial">factrial</function>
+              <arguments>
+                <FintConstant type="Fint">6</FintConstant>
+              </arguments>
+            </functionCall>
+          </assignExpr>
+        </exprStatement>
+      </body>
+    </FfunctionDefinition>
+
+  </globalDeclarations>
+
+</XcodeProgram>

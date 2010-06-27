@@ -1,0 +1,100 @@
+<XcodeProgram source="FcharacterConstant.f90"
+              language="Fortran"
+              time="2009-03-27 18:07:57"
+              compiler-info="XcodeML/Fortran-FrontEnd"
+              version="1.0">
+  <typeTable>
+    <FbasicType type="C80a4548" ref="Fcharacter">
+      <len><FintConstant type="Fint">1</FintConstant></len>
+    </FbasicType>
+    <FbasicType type="C80a6428" ref="Fcharacter">
+      <len><FintConstant type="Fint">6</FintConstant></len>
+    </FbasicType>
+    <FbasicType type="C80a6608" ref="Fcharacter">
+      <len><FintConstant type="Fint">15</FintConstant></len>
+    </FbasicType>
+    <FbasicType type="C80a6840" ref="Fcharacter">
+      <len><FintConstant type="Fint">18</FintConstant></len>
+    </FbasicType>
+    <FbasicType type="C80a6a40" ref="Fcharacter">
+      <len><FintConstant type="Fint">19</FintConstant></len>
+    </FbasicType>
+    <FfunctionType type="F80a5b10" return_type="Fvoid" is_program="1" />
+  </typeTable>
+  <globalSymbols>
+    <id sclass="extern_def" type="F80a5b10">
+      <name type="F80a5b10">main</name>
+    </id>
+  </globalSymbols>
+  <globalDeclarations>
+    <FfunctionDefinition lineno="1" file="FcharacterConstant.f90">
+      <name type="F80a5b10">main</name>
+      <symbols>
+        <id sclass="auto" type="C80a4548">
+          <name type="C80a4548">s1</name>
+        </id>
+        <id sclass="auto" type="C80a4548">
+          <name type="C80a4548">s2</name>
+        </id>
+        <id sclass="auto" type="C80a4548">
+          <name type="C80a4548">s3</name>
+        </id>
+        <id sclass="auto" type="C80a4548">
+          <name type="C80a4548">s4</name>
+        </id>
+        <id sclass="auto" type="C80a4548">
+          <name type="C80a4548">s5</name>
+        </id>
+      </symbols>
+      <declarations>
+        <varDecl lineno="2" file="FcharacterConstant.f90">
+          <name type="C80a4548">s1</name>
+        </varDecl>
+        <varDecl lineno="2" file="FcharacterConstant.f90">
+          <name type="C80a4548">s2</name>
+        </varDecl>
+        <varDecl lineno="2" file="FcharacterConstant.f90">
+          <name type="C80a4548">s3</name>
+        </varDecl>
+        <varDecl lineno="2" file="FcharacterConstant.f90">
+          <name type="C80a4548">s4</name>
+        </varDecl>
+        <varDecl lineno="2" file="FcharacterConstant.f90">
+          <name type="C80a4548">s5</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <exprStatement lineno="3" file="FcharacterConstant.f90">
+          <assignExpr>
+            <Var>s1</Var>
+            <FcharacterConstant>STRING</FcharacterConstant>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="4" file="FcharacterConstant.f90">
+          <assignExpr>
+            <Var>s2</Var>
+            <FcharacterConstant>HE SAID "HELLO"</FcharacterConstant>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="5" file="FcharacterConstant.f90">
+          <assignExpr>
+            <Var>s3</Var>
+            <FcharacterConstant>THIS CONTAINS AN '</FcharacterConstant>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="6" file="FcharacterConstant.f90">
+          <assignExpr>
+            <Var>s4</Var>
+            <FcharacterConstant>ISN'T IT A NICE DAY</FcharacterConstant>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="7" file="FcharacterConstant.f90">
+          <assignExpr>
+            <Var>s5</Var>
+            <FcharacterConstant></FcharacterConstant>
+          </assignExpr>
+        </exprStatement>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

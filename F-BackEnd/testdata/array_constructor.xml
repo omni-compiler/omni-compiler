@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- 
+      program main
+        real, dimension(3)   :: vector3d
+        vector3d = (/ 1.0, 2.0, 3.0/)
+      end
+-->
+<XcodeProgram compiler-info="F-Frontend"
+              version="1.0"
+              time="2009-02-17 10:53:20"
+              language="Fortran"
+              source="array_constructor.f90">
+
+  <!-- typeTable -->
+  <typeTable>
+    <FfunctionType type="FfunctionType_of_main" return_type="Fvoid" />
+    <FarrayType type="FarrayType_of_vector3d" element_type="Freal">
+      <indexRange>
+        <upperBound>
+          <FintConstant type="Fint">3</FintConstant>
+        </upperBound>
+      </indexRange>
+    </FarrayType>
+    <FarrayType type="FarrayType_of_constructor" element_type="Freal">
+      <indexRange>
+        <upperBound>
+          <FintConstant type="Fint">3</FintConstant>
+        </upperBound>
+      </indexRange>
+    </FarrayType>
+  </typeTable>
+
+  <!-- globalSymbols -->
+  <globalSymbols>
+    <id sclass="extern_def" type="FfunctionType_of_main">
+      <name type="FfunctionType_of_main">main</name>
+    </id>
+  </globalSymbols>
+
+  <!-- globalDeclarations -->
+  <globalDeclarations>
+    <!-- 1: program main -->
+    <FfunctionDefinition is_program="1" lineno="1"
+                         file="array_constructor.f90">
+      <!-- name -->
+      <name type="FfunctionType_of_main">main</name>
+      <!-- symbols -->
+      <symbols>
+        <id sclass="auto" type="FarrayType_of_vector3d">
+          <name type="FarrayType_of_vector3d">vector3d</name>
+        </id>
+      </symbols>
+      <!-- declarations -->
+      <declarations>
+        <varDecl lineno="2" file="array_constructor.f90">
+          <name type="FarrayType_of_vector3d">vector3d</name>
+        </varDecl>
+      </declarations>
+      <!-- body -->
+      <body>
+        <exprStatement lineno="3" file="array_constructor.f90">
+          <assignExpr>
+            <Var scope="local">vector3d</Var>
+            <FarrayConstructor type="FarrayType_of_constructor">
+              <FrealConstant type="Freal">1.0</FrealConstant>
+              <FrealConstant type="Freal">2.0</FrealConstant>
+              <FrealConstant type="Freal">3.0</FrealConstant>
+            </FarrayConstructor>
+          </assignExpr>
+        </exprStatement>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+
+</XcodeProgram>
+

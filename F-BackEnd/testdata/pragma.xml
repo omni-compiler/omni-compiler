@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- 
+      program hello_omp
+        !$ use omp_lib
+        !$ call omp_set_num_thread(4)
+        !$OMP parallel
+          write(*,*) 'hello'
+        !$OMP end parallel  
+      end program hello_omp
+-->
+<XcodeProgram compiler-info="F-Frontend"
+              version="0.8"
+              time="2009-02-17 10:53:20"
+              language="Fortran 90 Free Format"
+              source="pragma.f90">
+
+  <!-- typeTable -->
+  <typeTable>
+    <FfunctionType type="FfunctionType_of_hello_omp" return_type="Fvoid" />
+  </typeTable>
+
+  <!-- globalSymbols -->
+  <globalSymbols>
+    <id sclass="extern_def" type="FfunctionType_of_hello_omp">
+      <name type="FfunctionType_of_hello_omp">hello_omp</name>
+    </id>
+  </globalSymbols>
+
+  <!-- globalDeclarations -->
+  <globalDeclarations>
+    <FfunctionDefinition is_program="1" lineno="1" file="pragma.f90">
+
+      <!-- name -->
+      <name type="FfunctionType_of_hello_omp">hello_omp</name>
+
+      <!-- body -->
+      <body>
+
+        <FpragmaStatement lineno="2" file="pragma.f90"> use omp_lib</FpragmaStatement>
+        <FpragmaStatement lineno="3" file="pragma.f90"> call omp_set_num_thread(4)</FpragmaStatement>
+        <FpragmaStatement lineno="4" file="pragma.f90">OMP parallel</FpragmaStatement>
+        <FwriteStatement lineno="5" file="pragma.f90">
+          <namedValueList>
+            <namedValue name="unit" value="*"/>
+            <namedValue name="fmt" value="*" />
+          </namedValueList>
+          <valueList>
+            <value>
+              <FcharacterConstant type="Fcharacter">Hello world!</FcharacterConstant>
+            </value>
+          </valueList>
+        </FwriteStatement>
+        <FpragmaStatement lineno="6" file="pragma.f90">OMP end parallel</FpragmaStatement>
+
+      </body>
+
+    </FfunctionDefinition>
+  </globalDeclarations>
+
+</XcodeProgram>

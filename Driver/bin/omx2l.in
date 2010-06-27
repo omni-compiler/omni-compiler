@@ -1,0 +1,37 @@
+#!/bin/sh
+
+# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
+# $TSUKUBA_Copyright:
+#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
+#  $
+OUTFILE=$1
+INPFILE=$2
+
+if [ -z "${OUTFILE}" ]; then
+    echo output file not specified
+    exit 1
+fi
+
+if [ -z "${INPFILE}" ]; then
+    echo input file not specified
+    exit 1
+fi
+
+if [ "${OM_USE_OPENMP}" = "1" -o "${OM_USE_XMP}" = "1" ]; then
+    if [ "${OM_VERBOSE}" = "1" ]; then
+        echo "skip backend"
+    fi
+    if [ ! -e $OUTFILE ]; then
+        echo $OUTFILE not found
+        exit 1
+    fi
+    exit 0
+fi
+
+CMD="${X2L} ${OM_OPTIONS} ${INPFILE} -o ${OUTFILE}"
+
+if [ "${OM_VERBOSE}" = "1" ]; then
+    echo $CMD
+fi
+
+$CMD || exit $?

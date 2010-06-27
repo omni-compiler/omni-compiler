@@ -1,0 +1,711 @@
+#!/usr/bin/perl
+#
+#eval "exec /usr/bin/perl -S $0 $*"
+#    if $running_under_some_shell;
+#                        # this emulates #! processing on NIH machines.
+#                        # (remove #! line above if indigestible)
+
+use File::Basename;
+
+require("newgetopt.pl");
+require("find.pl");
+
+1;
+
+@ignores = ();
+
+%C_Comment = (
+    'start', '/* ',
+    'cont',  ' * ',
+    'end',   ' */',
+    );
+
+%F_Comment = (
+    'start', '! ',
+    'cont',  '! ',
+    'end',   '! ',
+    );
+
+%Shell_Comment = (
+    'start', '# ',
+    'cont',  '# ',
+    'end',   '# ',
+    );
+
+%AWK_Comment = (
+    'start', '# ',
+    'cont',  '# ',
+    'end',   '# ',
+    );
+
+%Python_Comment = (
+    'start', '# ',
+    'cont',  '# ',
+    'end',   '# ',
+    );
+
+%Imake_Comment = (
+    'start', 'XCOMM ',
+    'cont',  'XCOMM ',
+    'end',   'XCOMM ',
+    );
+
+%Lisp_Comment = (
+    'start', '; ',
+    'cont',  '; ',
+    'end',   '; ',
+    );
+
+%Verilog_Comment = (
+    'start', '// ',
+    'cont',  '// ',
+    'end',   '// ',
+    );
+
+%As_Comment = (
+    'start', '/* ',
+    'cont',  ' * ',
+    'end',   ' */',
+    );
+
+%Java_Comment = (
+    'start', '/* ',
+    'cont',  ' * ',
+    'end',   ' */',
+    );
+
+%Xml_Comment = (
+    'start', '<!-- ',
+    'cont',  '     ',
+    'end',   '-->  ',
+    );
+
+%Bat_Comment = (
+    'start', 'rem ',
+    'cont',  'rem ',
+    'end',   'rem ',
+    );
+
+
+sub GetFileName {
+    local($name) = @_;
+    local(@list) = split(/\//, $name);
+    return $list[$#list];
+}
+
+
+sub GetDirName {
+    local($name) = @_;
+    local(@list) = split(/\//, $name);
+    $list[$#list] = "";
+    return join('/', @list);
+}
+
+
+sub GetTmpName {
+    local($file) = @_;
+    return &GetDirName($file) . ".~###" . &GetFileName($file) . ".$$";
+}
+
+sub GetSuffix {
+    local($file) = &GetFileName(@_);
+    local(@list) = split(/\./, $file);
+    if ( @list == 1 ) {
+        return "";
+    }
+    return "." . $list[$#list];
+}
+
+
+sub GetPrefix {
+    local($file) = &GetFileName(@_);
+    local(@list) = split(/\./, $file);
+    return $list[0];
+}
+
+
+sub GuessFileType {
+    local($file) = @_;
+    local($sufix) = &GetSuffix($file);
+    local($rmsufix) = $file;
+    local($prfix) = &GetPrefix($file);
+    local($guess) = "unknown";
+
+    # for Makefile
+    if ($prfix =~ /.*[Mm]akefile/) {
+        if ($prfix !~ /^Imakefile$/) {
+            $guess = "shell";
+        } else {
+            return "imake";
+        }
+    }
+
+    # for .in
+    if ($guess eq "unknown" and $sufix eq ".in") {
+        $rmsufix =~ s/\.in($)//;
+        $sufix = &GetSuffix($rmsufix);
+    }
+
+    # for C
+    if ($sufix eq ".c" || $sufix eq ".C" || $sufix eq ".h" ||
+        $sufix eq ".cc" || $sufix eq ".l" || $sufix eq ".y" ) {
+        $guess = "c";
+    }
+
+    # for F
+    if ($sufix eq ".f" || $sufix eq ".F" ||
+        $sufix eq ".f77" || $sufix eq ".F77" ||
+        $sufix eq ".f90" || $sufix eq ".F90") {
+        $guess = "f";
+    }
+
+    # for perl and tcl
+    if ($sufix eq ".pl" || $sufix eq ".tcl") {
+        $guess = "shell";
+    }
+
+    # for Verilog
+    if ($sufix eq ".v" || $sufix eq ".V") {
+        $guess = "verilog";
+    }
+
+    # for Assembler
+    if ($sufix eq ".s" || $sufix eq ".as") {
+        $guess = "as";
+    }
+
+    # for HTML
+    if ($sufix eq ".html" || $sufix eq ".htm" ||
+        $sufix eq ".rng" || $sufix eq ".xsd" ||
+        $sufix eq ".dtd" || $sufix eq ".xml") {
+        $guess = "xml";
+    }
+
+    # for Java
+    if ($sufix eq ".java") {
+        $guess = "java";
+    }
+
+    # for Python
+    if ($sufix eq ".py") {
+        $guess = "python";
+    }
+
+    # for AWK
+    if ($sufix eq ".awk") {
+        $guess = "awk";
+    }
+
+    if ($sufix eq ".sh" || $sufix eq ".bash" ||
+        $sufix eq ".zsh" || $sufix eq ".csh") {
+        $guess = "shell";
+    }
+
+    # for bat
+    if ($sufix eq ".bat") {
+        $guess = "bat";
+    }
+
+    # for ocore..
+    # if () {};
+
+    if (! ($guess eq "unknown")) {
+#    print "debug:It's $guess\n";
+        return $guess;
+    }
+
+    # Doxygen file
+    if ($file eq "Doxyfile") {
+        $guess = "shell";
+    }
+
+    local($header) = undef;
+    local($first) = undef;
+
+    open(IN, "<$file") || die "can't open $file.";
+    while(<IN>) {
+        local($d0, $d1);
+        next if /^\n/;
+        chop;
+        $header = $_;
+        ($first, $d0, $d1) = split(/[ \t]+/, $_, 3);
+#    print "debug:\t0 $first\n\t1 $d0\n\t2 $d1\n";
+        if ( $first eq "" ) {
+            $first = $d0;
+        }
+        last;
+    }
+    close(IN);
+
+    if ( $header =~ /^#[ \t]*.*$\!/ ) {
+        local($exec) = &GetFileName($header);
+#    print "debug: exec = $exec\n";
+        if ( $exec =~ /.*sh$/ || $exec eq "perl" || $exec eq "wish") {
+            return "shell";
+        }
+    }
+
+    if ( $first =~ /\/\*.*$/ ) {
+        return "c";
+    }
+
+    if ( $first =~ /^[\;]+.*$/ ) {
+        return "lisp";
+    }
+
+    return $first;
+}
+
+
+sub IsCSource {
+    local($file) = @_;
+    local($sufix) = &GetSuffix($file);
+
+    if (! (&GuessFileType($file) eq "c")) {
+        return 0;
+    }
+    else {
+        if ( !($sufix eq ".h" || $sufix eq ".H") ) {
+            return 1;
+        }
+    }
+}
+
+
+sub Grep {
+    local($expr, $file) = @_;
+    open(IN, "<$file");
+    local(@lines);
+    local(@ret);
+    while (<IN>) {
+        push(@lines, $_);
+    }
+    close(IN);
+    @ret = grep(/$expr/, @lines);
+    return @ret;
+}
+
+
+sub PutHeader {
+    local ($file, %com) = @_;
+    local ($start) = $com{"start"};
+    local ($cont) = $com{"cont"};
+    local ($end) = $com{"end"};
+    local ($tmpfile) = &GetTmpName($file);
+    local ($sufix) = &GetSuffix($file);
+
+    if (! -e $file ) {
+        open(NEW, ">$file");
+        close(NEW);
+    }
+    local (@DontPCCCRelease) = &Grep('TSUKUBA_Release', $file);
+    local (@DontPCCCCopyright) = &Grep('TSUKUBA_Copyright', $file);
+    local (@HaveSharpExcram) = &Grep('^[ \t]*#[ \t]*!', $file);
+    local (@HavePercentRoundBrace);
+    if ($sufix eq ".l" || $sufix eq ".y") {
+        @HavePercentRoundBrace = &Grep('^[ \t]*\%[ \t]*\{', $file);
+    }
+    local ($IsMultilineComment) = ($start ne $cont) ? 1 : 0;
+    local ($IsC) = &IsCSource($file);
+
+    local($In_comment) = 0;
+
+#    print "debug:@HaveSharpExcram\n";
+#    print "debug:@HavePercentRoundBrace\n";
+#    print "debug:@DontPCCCRelease\n";
+#    print "debug:@DontPCCCCopyright\n";
+#    print "debug:$long\n";
+
+    if (@DontPCCCRelease &&
+        @DontPCCCCopyright &&
+        !$long) {
+        return;
+    }
+    
+    open(OUT, ">$tmpfile") || die "can't open $tmpfile.\n";
+    
+    if (!$IsC && !$IsMultilineComment) {
+        if (@HaveSharpExcram) {
+            print(OUT "@HaveSharpExcram\n");
+        }
+    }
+
+    if ($sufix eq ".l" || $sufix eq ".y") {
+        if (@HavePercentRoundBrace) {
+            print(OUT "@HavePercentRoundBrace\n");
+        }
+    }
+
+    if ($IsMultilineComment && !$In_comment) {
+        print(OUT "$start\n");
+    }
+
+    if (!@DontPCCCRelease) {
+        print(OUT $cont . "\$TSUKUBA_Release\$\n");
+    }
+
+    if (!@DontPCCCCopyright) {
+        print(OUT $cont . "\$TSUKUBA_Copyright\$\n");
+    }
+
+    if ($long) {
+        print(OUT $cont . "\$RCSfile\$\n");
+        print(OUT $cont . "\$Revision\$\n");
+        print(OUT $cont . "\$Date\$\n");
+        print(OUT $cont . "\$Author\$\n");
+#    print(OUT $cont . "\$Log\$\n");
+    }
+
+    if ($IsMultilineComment) {
+        print(OUT $end . "\n");
+    }
+
+    open(IN, "<$file") || die "can't open $file.\n";
+
+    local ($dev, $ino, $mode) = stat(IN);
+    die "can't stat $file" unless $ino;
+
+    while(<IN>) {
+        if (/^[ \t]*#[ \t]*!.*/ && @HaveSharpExcram) {
+            next;
+        }
+        if (/^[ \t]*\%[ \t]*\{/ && @HavePercentRoundBrace) {
+            @HavePecentRoundBrace = undef;
+            next;
+        }
+        print(OUT $_);
+    }
+    close(OUT);
+    close(IN);
+
+    rename($tmpfile, $file) || die "can't rename from $tmpfile to $file";
+    chmod($mode, $file) || die "can't chmod $file";
+}
+
+
+sub ExpandHeader {
+    local ($file, $rel, @CopyString) = @_;
+    local ($tmpfile) = &GetTmpName($file);
+
+    local (@DoPCCCRelease) = &Grep('TSUKUBA_Release', $file);
+    local (@DoPCCCCopyright) = &Grep('TSUKUBA_Copyright', $file);
+
+    if ( !@DoPCCCRelease && !@DoPCCCCopyright ) {
+        return;
+    }
+
+    open(OUT, ">$tmpfile") || die "can't open $tmpfile.\n";
+
+    open(IN, "<$file") || die "can't open $file.\n";
+
+    local ($dev, $ino, $mode) = stat(IN);
+    die "can't stat $file" unless $ino;
+
+    while(<IN>) {
+        local($line);
+        if (/^(.*)\$[ \t]*TSUKUBA_Copyright[ \t]*([:]*[^\$]*[\$]*.*)$/) {
+            local($pre) = $1;
+            local($post) = $2;
+            local($c);
+            $_ = $pre;
+            s/^([ \t]*.*)//;
+            $c = $1;
+            print(OUT $pre);
+            print(OUT "\$TSUKUBA_Copyright:\n");
+            foreach $i (@CopyString) {
+                chop $i if ($i =~ /\n$/);
+                print(OUT "$c $i\n");
+            }
+            print(OUT "$c \$\n");
+            $_ = $post;
+            if (/^[\$].*/) {
+                s/://;
+                s/\$//;
+                s/^[ \t]*//;
+                if (/.+/) {
+                    print(OUT "$c $_\n");
+                }
+                next;
+            } else {
+                s/://;
+                s/\$//;
+                s/^[ \t]*//;
+                if (/.+/) {
+                    print(OUT "$c $_\n");
+                }
+            }
+            $_ = $c;
+            s/\*/\\*/g;
+            $c = $_;
+            while (<IN>) {
+                chop;
+                if (/^$c[ \t]*[\$][ \t]*$/) {
+                    last;
+                }
+            }
+            next;
+        }
+        s/\$[ \t]*TSUKUBA_Release[ \t]*[:]*[ \t]*[^\$]*\$/\$TSUKUBA_Release: $rel \$/;
+        print(OUT "$_");
+    }
+    close(OUT);
+    close(IN);
+
+    rename($tmpfile, $file) || die "can't rename from $tmpfile to $file";
+    chmod($mode, $file) || die "can't chmod $file";
+}
+
+
+sub GetFileTypeInteractive {
+    local($file, $com) = @_;
+    local($ret);
+    print(STDOUT "Warrning:\tI can't guess comment leader for $file.\n");
+    print(STDOUT "\t\tCan I use '$com' as comment leader ?\n");
+    print(STDOUT "\t\tIf OK, hit return. Otherwise input comment leader: ");
+    $ret = <STDIN>;
+    chop($ret);
+    if ( "X$ret" eq "X" ) {
+        return $com;
+    }
+    else {
+        return $ret;
+    }
+}
+
+
+sub GetCommentStyle {
+    local($mode) = @_;
+    local(%Comment);
+
+    if ($mode eq "shell") {
+        %Comment = %Shell_Comment;
+    } elsif ($mode eq "c" || $mode =~ /[\/]*\*[\/]*/ ) {
+        %Comment = %C_Comment;
+    } elsif ($mode eq "f") {
+        %Comment = %F_Comment;
+    } elsif ($mode eq "lisp") {
+        %Comment = %Lisp_Comment;
+    } elsif ($mode eq "imake") {
+        %Comment = %Imake_Comment;
+    } elsif ($mode eq "verilog") {
+        %Comment = %Verilog_Comment;
+    } elsif ($mode eq "as") {
+        %Comment = %As_Comment;
+    } elsif ($mode eq "xml") {
+        %Comment = %Xml_Comment;
+    } elsif ($mode eq "java") {
+        %Comment = %Java_Comment;
+    } elsif ($mode eq "python") {
+        %Comment = %Python_Comment;
+    } elsif ($mode eq "awk") {
+        %Comment = %AWK_Comment;
+    } elsif ($mode eq "sh") {
+        %Comment = %Shell_Comment;
+    } elsif ($mode eq "bat") {
+        %Comment = %Bat_Comment;
+    }
+    return %Comment;
+}
+
+
+sub SetCommentStyle {
+    local($mode) = @_;
+    local(%Comment);
+
+    if ($mode eq "shell") {
+        %Comment = %Shell_Comment;
+    } elsif ($mode eq "c" || $mode =~ /[\/]*\*[\/]*/ ) {
+        %Comment = %C_Comment;
+    } elsif ($mode eq "lisp") {
+        %Comment = %Lisp_Comment;
+    } elsif ($mode eq "imake") {
+        %Comment = %Imake_Comment;
+    } elsif ($mode eq "verilog") {
+        %Comment = %Verilog_Comment;
+    } elsif ($mode eq "as") {
+        %Comment = %As_Comment;
+    } elsif ($mode eq "java") {
+        %Comment = %Java_Comment;
+    }
+    else {
+        %Comment = (
+            'start', $mode . " ",
+            'cont',  $mode . " ",
+            'end',   $mode . " ",
+            );
+    }
+    return %Comment;
+}
+
+
+sub Usage {
+    print(STDOUT "usage:\n");
+    print(STDOUT "\t$ProgName -help\n");
+    print(STDOUT "\t\tor\n");
+    if ( $ProgName eq "addrcsheader" ) {
+        print(STDOUT "\t$ProgName [-comment <comment_leader>] files ...\n");
+    } elsif ( $ProgName eq "expand_tsukuba_keyword" ) {
+        print(STDOUT "\t$ProgName\t-release <release string>\n\t\t\t\t-copyright <copyright file>\n\t\t\t\tfiles ...\n");
+    }
+}
+
+
+sub ErrorExit {
+    local($stat, $mes) = @_;
+    print(STDERR "Error: $mes\n");
+    &Usage();
+    exit($stat);
+}
+
+
+sub ArgCheck {
+    if ($help) {
+        &Usage();
+        exit(0);
+    }
+    if (!@ARGV) {
+        &ErrorExit(1, "No files are specified.");
+    }
+    if ( $ProgName eq "expand_tsukuba_keyword" ) {
+        if (!$copy) {
+            &ErrorExit(1, "No copyright file is specified.");
+        }
+    }
+}
+
+sub wanted {
+    local ($save) = $_;
+    local ($i) = $_;
+
+    /^CVS(ROOT)?$/ && ($prune = 1, return);
+    return if (-d $_);
+    return if (/\.gif$/);
+    return if (/\.jpg$/);
+    return if (/\.png$/);
+    return if (/\.gz$/);
+    return if (/\.tgz$/);
+    return if (/\.jar$/);
+    return if (/\.o$/);
+    return if (/\.class$/);
+    return if (/\.classpath$/);
+    return if (/\.project$/);
+    return if (/\.properties$/);
+    return if (/\.properties.in$/);
+    return if (/\.txt$/);
+    return if (/\.conf$/);
+    return if (/\.prefs$/);
+    return if (/\.def$/);
+    return if (/\.sample$/);
+    return if (/\.css$/);
+    return if (/\.svn$/);
+    return if (/\.git$/);
+
+    foreach $ig (@ignores) {
+        if ($_ eq $ig || $name =~ $ig) {
+            #print(STDOUT "$name is ignored by keyword $ig\n");
+            return;
+        }
+    }
+    &process_file($i);
+    $_ = $save;
+}
+
+sub process_file {
+    local($_) = $@;
+
+    if ( -l $_ ) {
+        $i = readlink($i);
+    }
+
+    if ( $ProgName eq "addrcsheader" ) {
+        if (!$comstr) {
+            $mode = &GuessFileType($i);
+            %Comment = &GetCommentStyle($mode);
+            $start = $Comment{"start"};
+            if ( "X$start" eq "X" ) {
+                print "$start\n";
+                $mode = &GetFileTypeInteractive($i, $mode);
+                %Comment = &SetCommentStyle($mode);
+            }
+        }
+        &PutHeader($i, %Comment);
+    } else {
+        &ExpandHeader($i, $rel, @CopyString);
+    }
+}
+
+$ProgName = &GetFileName($0);
+if ( $ProgName eq "addrcsheader" ) {
+    &NGetOpt("comment:s", "ignore:s", "long", "help");
+    $comstr = defined($opt_comment) ? $opt_comment : undef;
+    $ignore = defined($opt_ignore) ? $opt_ignore : undef;
+    $long = defined($opt_long) ? $opt_long : undef;
+    $help = defined($opt_help) ? $opt_help : undef;
+
+    &ArgCheck();
+    
+    if ($comstr) {
+        %Comment = &SetCommentStyle($comstr);
+    }
+    
+    if ($ignore) {
+        open(IN, "<$ignore") || die "can't open $ignore.";
+        while (<IN>) {
+	    chomp $_;
+            $_ =~ s/([\\\.\/\[\]\(\)])/\\$1/g;
+            if($_ ne "") {
+                push(@ignores, $_);
+            }
+        }
+        close(IN);
+        #exit(0);
+    }
+
+    foreach $i (@ARGV) {
+        if ( -d $i ) {
+            &find($i);
+        } else {
+            &process_file($i);
+        }
+    }
+
+} elsif ( $ProgName eq "expand_tsukuba_keyword" ) {
+    &NGetOpt("help", "release:s", "copyright:s", "ignore:s");
+    $help = defined($opt_help) ? $opt_help : undef;
+    $rel = defined($opt_release) ? $opt_release : undef;
+    $copy = defined($opt_copyright) ? $opt_copyright : undef;
+    $ignore = defined($opt_ignore) ? $opt_ignore : undef;
+
+    &ArgCheck();
+
+    if ($ignore) {
+        open(IN, "<$ignore") || die "can't open $ignore.";
+        while (<IN>) {
+	    chomp $_;
+            $_ =~ s/([\\\.\/\[\]\(\)])/\\$1/g;
+            if($_ ne "") {
+                push(@ignores, $_);
+            }
+        }
+        close(IN);
+    }
+
+    if ($copy) {
+        open(IN, "<$copy") || die "can't open $copy.";
+        while (<IN>) {
+            push(@CopyString, $_);
+        }
+        close(IN);
+    }
+    foreach $i (@ARGV) {
+        if ( -d $i ) {
+            &find($i);
+        } else {
+            &process_file($i);
+        }
+    }
+} else {
+    exit(1);
+}
+
+exit(0);

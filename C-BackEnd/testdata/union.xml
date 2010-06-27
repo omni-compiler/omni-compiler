@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XcodeProgram source="union.c">
+<!--
+union UNION {
+    int i;
+    char c;
+}
+
+int main() {
+    union UNION uni;
+    uni.i = 3;
+    return uni.i;
+}
+-->
+<typeTable>
+  <unionType type="type_of_union">
+    <symbols>
+      <id>
+        <name type="int">i</name>
+      </id>
+      <id>
+        <name type="char">c</name>
+      </id>
+    </symbols>
+  </unionType>
+  <pointerType type="pointerType_of_uni" ref="type_of_union"/>
+  <pointerType type="pointerType_of_i" ref="int"/>
+  <pointerType type="pointerType_of_c" ref="char"/>
+  <functionType type="functionType_of_main" return_type="int">
+    <params>
+    </params>
+  </functionType>
+  <pointerType type="pointerType_of_main" ref="functionType_of_main"/>
+</typeTable>
+
+<globalSymbols>
+  <id sclass="tagname">
+    <name type="type_of_union">UNION</name>
+  </id>
+  <id sclass="extern_def">
+    <name type="functionType_of_main">main</name>
+  </id>
+</globalSymbols>
+
+<globalDeclarations>
+<functionDefinition>
+  <name>main</name>
+  <symbols></symbols>
+  <params></params>
+  <body>
+    <compoundStatement>
+      <symbols>
+        <id sclass="auto">
+          <name type="type_of_union">uni</name>
+        </id>
+      </symbols>
+      <declarations>
+        <varDecl>
+          <name>uni</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <exprStatement>
+          <assignExpr type="int">
+            <pointerRef type="int">
+              <memberAddr member="i" type="pointerType_of_i">
+                <varAddr scope="local" type="pointerType_of_uni">uni</varAddr>
+              </memberAddr>
+            </pointerRef>
+            <intConstant type="int">1</intConstant>
+          </assignExpr>
+        </exprStatement>
+        <returnStatement>
+          <memberRef member="i" type="int">
+            <varAddr scope="local" type="pointerType_of_uni">uni</varAddr>
+          </memberRef>
+        </returnStatement>
+      </body>
+    </compoundStatement>
+  </body>
+</functionDefinition>
+</globalDeclarations>
+</XcodeProgram>

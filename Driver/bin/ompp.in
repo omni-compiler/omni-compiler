@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
+# $TSUKUBA_Copyright:
+#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
+#  $
+OUTFILE=$1
+INPFILE=$2
+
+if [ -z "${OUTFILE}" ]; then
+    echo output file not specified
+    exit 1
+fi
+
+if [ -z "${INPFILE}" ]; then
+    echo input file not specified
+    exit 1
+fi
+
+if [ ! -z "${OM_TRANSLATORS}" ]; then
+    OM_OPTIONS="${OM_OPTIONS} -I${OMNI_HOME}/include"
+    for TID in ${OM_TRANSLATORS}; do
+        CONF="${OMNI_HOME}/etc/pp.conf.${TID}"
+        if [ -r ${CONF} ]; then
+            . ${CONF}
+        else
+            echo cannot read ${CONF} script.
+            exit 1
+        fi
+    done;
+fi
+
+CMD="${PP} ${OM_OPTIONS} ${INPFILE}"
+
+if [ "${OM_VERBOSE}" = "1" ]; then
+    echo $CMD \> ${OUTFILE}
+fi
+
+$CMD -o ${OUTFILE} || exit $?

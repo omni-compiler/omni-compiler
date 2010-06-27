@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XcodeProgram source="intConstant.c">
+  <!-- 
+      int main () {
+          15;
+          15u;
+          15L;
+          15uL;
+          15LL;
+          15uLL;
+          017;
+          0xf;
+          0xfu;
+          0xfL;
+          0xfuL;
+          0xfLL;
+          0xfuLL;
+      }
+  -->
+  <typeTable>
+    <functionType type="F9177420" return_type="int" />
+    <pointerType type="P9177460" ref="F9177420"/>
+  </typeTable>
+
+  <globalSymbols>
+    <id sclass="extern_def">
+      <name type="F9177420">main</name>
+    </id>
+  </globalSymbols>
+
+  <globalDeclarations>
+    <functionDefinition> 
+      <name>main</name>
+      <symbols/>
+      <params/>
+      <body>
+        <compoundStatement>
+          <symbols>
+          </symbols>
+          <declarations>
+          </declarations>
+          <body>
+            <exprStatement lineno="2" file="intConstant.c">
+              <intConstant type="int">15</intConstant>
+            </exprStatement>
+            <exprStatement lineno="3" file="intConstant.c">
+              <intConstant type="unsigned">15</intConstant>
+            </exprStatement>
+            <exprStatement lineno="4" file="intConstant.c">
+              <intConstant type="long">15</intConstant>
+            </exprStatement>
+            <exprStatement lineno="5" file="intConstant.c">
+              <intConstant type="unsigned_long">15</intConstant>
+            </exprStatement>
+            <exprStatement lineno="6" file="intConstant.c">
+              <longlongConstant type="long_long">0x0 0xf</longlongConstant>
+            </exprStatement>
+            <exprStatement lineno="7" file="intConstant.c">
+              <longlongConstant type="unsigned_long_long">0x0 0xf</longlongConstant>
+            </exprStatement>
+            <exprStatement lineno="8" file="intConstant.c">
+              <intConstant type="int">0xf</intConstant>
+            </exprStatement>
+            <exprStatement lineno="9" file="intConstant.c">
+              <intConstant type="int">0xf</intConstant>
+            </exprStatement>
+            <exprStatement lineno="10" file="intConstant.c">
+              <intConstant type="unsigned">0xf</intConstant>
+            </exprStatement>
+            <exprStatement lineno="11" file="intConstant.c">
+              <intConstant type="long">0xf</intConstant>
+            </exprStatement>
+            <exprStatement lineno="12" file="intConstant.c">
+              <intConstant type="unsigned_long">0xf</intConstant>
+            </exprStatement>
+            <exprStatement lineno="13" file="intConstant.c">
+              <longlongConstant type="long_long">0x0 0xf</longlongConstant>
+            </exprStatement>
+            <exprStatement lineno="14" file="intConstant.c">
+              <longlongConstant type="unsigned_long_long">0x0 0xf</longlongConstant>
+            </exprStatement>
+          </body>
+        </compoundStatement>
+      </body>
+    </functionDefinition>
+  </globalDeclarations>
+
+</XcodeProgram>

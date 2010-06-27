@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<XcodeProgram source="../testdata/anon_enum.c" language="C" time="2009-02-24 13:24:07"
+              compiler-info="XcodeML/C-FrontEnd" version="1.0">
+  <typeTable>
+    <enumType type="E0">
+      <symbols>
+        <id>
+          <name>true</name>
+        </id>
+        <id>
+          <name>false</name>
+        </id>
+      </symbols>
+    </enumType>
+    <enumType type="E1">
+      <symbols>
+        <id>
+          <name>a</name>
+        </id>
+        <id>
+          <name>b</name>
+        </id>
+      </symbols>
+    </enumType>
+    <enumType type="E2">
+      <symbols>
+        <id>
+          <name>false</name>
+        </id>
+        <id>
+          <name>true</name>
+        </id>
+      </symbols>
+    </enumType>
+    <functionType type="F0" return_type="int">
+      <params/>
+    </functionType>
+  </typeTable>
+  <globalSymbols>
+    <id type="E0" sclass="moe">
+      <name>true</name>
+    </id>
+    <id type="F0" sclass="extern_def">
+      <name>main</name>
+    </id>
+    <id type="E0" sclass="moe">
+      <name>false</name>
+    </id>
+  </globalSymbols>
+  <globalDeclarations>
+    <functionDefinition>
+      <name>main</name>
+      <symbols/>
+      <params/>
+      <body>
+        <compoundStatement lineno="7" rawlineno="7" file="../testdata/anon_enum.c">
+          <symbols>
+            <id type="E1" sclass="moe">
+              <name>a</name>
+            </id>
+            <id type="E1" sclass="moe">
+              <name>b</name>
+            </id>
+            <id type="E1" sclass="tagname">
+              <name>e</name>
+            </id>
+          </symbols>
+          <declarations/>
+          <body>
+            <exprStatement lineno="9" rawlineno="9" file="../testdata/anon_enum.c">
+              <moeConstant type="E0">true</moeConstant>
+            </exprStatement>
+            <compoundStatement lineno="10" rawlineno="10" file="../testdata/anon_enum.c">
+              <symbols>
+                <id type="E2" sclass="moe">
+                  <name>true</name>
+                </id>
+                <id type="E2" sclass="moe">
+                  <name>false</name>
+                </id>
+              </symbols>
+              <declarations/>
+              <body>
+                <exprStatement lineno="12" rawlineno="12" file="../testdata/anon_enum.c">
+                  <moeConstant type="E2">false</moeConstant>
+                </exprStatement>
+              </body>
+            </compoundStatement>
+          </body>
+        </compoundStatement>
+        <returnStatement lineno="15" rawlineno="15" file="../testdata/anon_enum.c">
+          <moeConstant type="E0">false</moeConstant>
+        </returnStatement>
+      </body>
+    </functionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

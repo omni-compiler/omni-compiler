@@ -1,0 +1,76 @@
+/* 
+ * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
+ * $TSUKUBA_Copyright:
+ *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
+ *  $
+ */
+package xcodeml.c.decompile;
+
+import xcodeml.XmException;
+import xcodeml.c.obj.XcNode;
+import xcodeml.c.util.XmcWriter;
+
+/**
+ * Internal object represents following elements:
+ *   pragma, text
+ */
+public class XcDirectiveObj extends XcStmtObj implements XcDecAndDefObj
+{
+    private String _line;
+
+    /**
+     * Creates XcDirectiveObj.
+     */
+    public XcDirectiveObj()
+    {
+    }
+
+    /**
+     * Creates XcDirectiveObj.
+     * 
+     * @param line a content of the directive.
+     */
+    public XcDirectiveObj(String line)
+    {
+        _line = line;
+    }
+
+    /**
+     * Sets a content of the directive.
+     * 
+     * @param line a content of the directive.
+     */
+    public final void setLine(String line)
+    {
+        _line = line;
+    }
+
+    @Override
+    public void addChild(XcNode child)
+    {
+    }
+
+    @Override
+    public void checkChild()
+    {
+    }
+
+    @Override
+    public XcNode[] getChild()
+    {
+        return null;
+    }
+
+    @Override
+    public final void setChild(int index, XcNode child)
+    {
+        throw new IllegalArgumentException(index + ":" + child.getClass().getName());
+    }
+    
+    @Override
+    public void appendCode(XmcWriter w) throws XmException
+    {
+        super.appendCode(w);
+        w.add(_line).lf();
+    }
+}

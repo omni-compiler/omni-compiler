@@ -1,0 +1,21 @@
+abspath()
+{
+    cd $1 > /dev/null
+    if [ $? != 0 ]; then
+        echo file not found : $1
+    fi
+    echo $PWD
+    cd - > /dev/null
+}
+
+if [ -z "$OMNI_JAVA" ]; then
+    if [ -e "@JAVACOM@" ]; then
+        OMNI_JAVA=@JAVACOM@
+    elif [ "${JAVA_HOME:+set}" = "set" ]; then
+        OMNI_JAVA=${JAVA_HOME}/bin/java
+    else
+        OMNI_JAVA=java
+    fi
+fi
+
+OMNI_JAVA_OPT="@JAVA_OPT@"

@@ -1,0 +1,71 @@
+-- Parser interface in Omni F-front/F95-front ---
+
+F-front:
+
+In Omni F-front, the parser construct a primary AST to pass it to a
+single function "compile_statement". The statement numbers are handled
+by F-lex, and are stored in st_no to keep track of it.
+
+
+(F_PROGRAM_STATEMENT <program_name>)
+(F_BLOCK_STATEMENT <program_name>)
+ <program_name> = <I> | <>
+
+(F_SUBROUNTINE_STATEMENT <I> <dummy_arg_list>)
+(F_FUNCTION_STATEMENT <I> <dummy_arg_list> <function_type_or_null>)
+(F_ENTRY_STATEMENT <I> <dummy_arg_list>)
+
+ <dummy_arg_list> := <> | (LIST <dummy_arg> ...) # <> if no args
+ <dummy_arg> := <I> | <>        # <> if arg is '*'
+ <function_type_or_null> := <type> | <>  # <> if type is not specified
+
+(F_INCLUDE_STATEMENT <C>)
+
+(F_END_STATEMENT)
+
+(F_TYPE_DECL (LIST <declaration> ...) <type>)
+  <declaration> := (LIST <I> <dims> <length_spec>)
+
+(F_COMMON_DECL (LIST <common_decl> ...))
+  common_decl := (LIST <common_block> <common_var>)
+  common_block := <> | <I>
+  common_var := (LIST <I> <dims>)
+
+(F_EXTERNAL_DECL (LIST <I> ...))
+
+(F_INTRINSIC_DECL (LIST <I> ...))
+
+(F_EQUIV_DECL (LIST <equ_decl> ...))
+ equv_decl := (LIST <E> ...)
+
+(F_DATA_DECL (LIST <data_list> ...))
+ data_list := (LIST (LIST <data_var> ...) (LIST <data_val> ...))
+ data_var := <E> | (F_IMPLIED_DO (LIST data_var ...)  <do_spec>)
+ data_val := <E> | (F_DUP_DECL <E> <E>)
+
+(F_IMPLICIT_DECL <implicit_decl>)
+
+(F_NAMELIST_DECL <namelist_decl>)
+
+(F_SAVE_DECL <save_list>)
+
+(F_PARAM_DECL <const_list>)
+
+(F_POINTER_DECL <pointer_decl>)
+
+(F_FORMAT_DECL <C>)
+ 
+
+ <type> := (LIST <T> <leng_spec>)
+ <length_spec> := <> | <E> | (LIST) 
+        # <> if not specifed
+        # <E> is length expression
+        # (LIST) if (*) is given
+ <dims> := <> | (LIST <dim> ...)
+        # <> is not specifed
+ <dim> := <> | <E> | (LIST <E> <E>)
+        # <> is not specifed
+        # <E> is upper bound
+        # (LIST ..) is a pair of upper and lower
+  
+

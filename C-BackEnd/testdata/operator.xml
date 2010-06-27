@@ -1,0 +1,555 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XcodeProgram source="test.c">
+  <typeTable>
+    <functionType type="F0" return_type="int">
+      <params>
+        <name type="void"/>
+      </params>
+    </functionType>
+    <pointerType type="PF0" ref="F0" />
+    <pointerType type="PI0" ref="int"/>
+  </typeTable>
+
+  <globalSymbols>
+    <id sclass="extern_def">
+      <name type="F0">func</name>
+    </id>
+  </globalSymbols>
+
+  <globalDeclarations>
+    <functionDefinition> 
+      <name>func</name>
+      <symbols/>
+      <params/>
+      <body>
+        <compoundStatement>
+          <symbols>
+            <id> <name type="int">a01</name> </id>
+            <id> <name type="int">b01</name> </id>
+            <id> <name type="int">a02</name> </id>
+            <id> <name type="int">b02</name> </id>
+            <id> <name type="int">a03</name> </id>
+            <id> <name type="int">b03</name> </id>
+            <id> <name type="int">a04</name> </id>
+            <id> <name type="int">b04</name> </id>
+            <id> <name type="int">a05</name> </id>
+            <id> <name type="int">b05</name> </id>
+            <id> <name type="int">a10</name> </id>
+            <id> <name type="int">b10</name> </id>
+            <id> <name type="int">a11</name> </id>
+            <id> <name type="int">b11</name> </id>
+            <id> <name type="int">a12</name> </id>
+            <id> <name type="int">b12</name> </id>
+            <id> <name type="int">a13</name> </id>
+            <id> <name type="int">b13</name> </id>
+            <id> <name type="int">a14</name> </id>
+            <id> <name type="int">b14</name> </id>
+            <id> <name type="int">a15</name> </id>
+            <id> <name type="int">b15</name> </id>
+            <id> <name type="int">a16</name> </id>
+            <id> <name type="int">b16</name> </id>
+            <id> <name type="int">a17</name> </id>
+            <id> <name type="int">b17</name> </id>
+            <id> <name type="int">a18</name> </id>
+            <id> <name type="int">b18</name> </id>
+            <id> <name type="int">a19</name> </id>
+            <id> <name type="int">b19</name> </id>
+            <id> <name type="int">a20</name> </id>
+            <id> <name type="int">b20</name> </id>
+            <id> <name type="int">c20</name> </id>
+            <id> <name type="int">a21</name> </id>
+            <id> <name type="int">b21</name> </id>
+            <id> <name type="int">c21</name> </id>
+            <id> <name type="int">a22</name> </id>
+            <id> <name type="int">b22</name> </id>
+            <id> <name type="int">c22</name> </id>
+            <id> <name type="int">a23</name> </id>
+            <id> <name type="int">b23</name> </id>
+            <id> <name type="int">c23</name> </id>
+            <id> <name type="int">a24</name> </id>
+            <id> <name type="int">b24</name> </id>
+            <id> <name type="int">c24</name> </id>
+            <id> <name type="int">a25</name> </id>
+            <id> <name type="int">b25</name> </id>
+            <id> <name type="int">c25</name> </id>
+            <id> <name type="int">a26</name> </id>
+            <id> <name type="int">b26</name> </id>
+            <id> <name type="int">c26</name> </id>
+            <id> <name type="int">a27</name> </id>
+            <id> <name type="int">b27</name> </id>
+            <id> <name type="int">c27</name> </id>
+            <id> <name type="int">a28</name> </id>
+            <id> <name type="int">b28</name> </id>
+            <id> <name type="int">c28</name> </id>
+            <id> <name type="int">a29</name> </id>
+            <id> <name type="int">b29</name> </id>
+            <id> <name type="int">c29</name> </id>
+            <id> <name type="int">a30</name> </id>
+            <id> <name type="int">b30</name> </id>
+            <id> <name type="int">c30</name> </id>
+            <id> <name type="int">a31</name> </id>
+            <id> <name type="int">b31</name> </id>
+            <id> <name type="int">c31</name> </id>
+            <id> <name type="int">a32</name> </id>
+            <id> <name type="int">b32</name> </id>
+            <id> <name type="int">c32</name> </id>
+            <id> <name type="int">a33</name> </id>
+            <id> <name type="int">b33</name> </id>
+            <id> <name type="int">c33</name> </id>
+            <id> <name type="int">a34</name> </id>
+            <id> <name type="int">b34</name> </id>
+            <id> <name type="int">c34</name> </id>
+            <id> <name type="int">a35</name> </id>
+            <id> <name type="int">b35</name> </id>
+            <id> <name type="int">c35</name> </id>
+            <id> <name type="int">a36</name> </id>
+            <id> <name type="int">b36</name> </id>
+            <id> <name type="int">c36</name> </id>
+            <id> <name type="int">a37</name> </id>
+            <id> <name type="int">b37</name> </id>
+            <id> <name type="int">c37</name> </id>
+            <id> <name type="int">a40</name> </id>
+            <id> <name type="int">b40</name> </id>
+            <id> <name type="int">c40</name> </id>
+            <id> <name type="int">a41</name> </id>
+            <id> <name type="int">a42</name> </id>
+            <id> <name type="PI0">a50</name> </id>
+          </symbols>
+          <declarations>
+            <varDecl> <name>a01</name> </varDecl>
+            <varDecl> <name>b01</name> <value><intConstant>10</intConstant></value> </varDecl>
+            <varDecl> <name>a02</name> </varDecl>
+            <varDecl> <name>b02</name> <value><intConstant>20</intConstant></value> </varDecl>
+            <varDecl> <name>a03</name> </varDecl>
+            <varDecl> <name>b03</name> <value><intConstant>30</intConstant></value> </varDecl>
+            <varDecl> <name>a04</name> </varDecl>
+            <varDecl> <name>b04</name> <value><intConstant>40</intConstant></value> </varDecl>
+            <varDecl> <name>a05</name> </varDecl>
+            <varDecl> <name>b05</name> <value><intConstant>50</intConstant></value> </varDecl>
+            <varDecl> <name>a10</name> </varDecl>
+            <varDecl> <name>b10</name> <value><intConstant>100</intConstant></value> </varDecl>
+            <varDecl> <name>a11</name> </varDecl>
+            <varDecl> <name>b11</name> <value><intConstant>110</intConstant></value> </varDecl>
+            <varDecl> <name>a12</name> </varDecl>
+            <varDecl> <name>b12</name> <value><intConstant>120</intConstant></value> </varDecl>
+            <varDecl> <name>a13</name> </varDecl>
+            <varDecl> <name>b13</name> <value><intConstant>130</intConstant></value> </varDecl>
+            <varDecl> <name>a14</name> </varDecl>
+            <varDecl> <name>b14</name> <value><intConstant>140</intConstant></value> </varDecl>
+            <varDecl> <name>a15</name> </varDecl>
+            <varDecl> <name>b15</name> <value><intConstant>150</intConstant></value> </varDecl>
+            <varDecl> <name>a16</name> </varDecl>
+            <varDecl> <name>b16</name> <value><intConstant>160</intConstant></value> </varDecl>
+            <varDecl> <name>a17</name> </varDecl>
+            <varDecl> <name>b17</name> <value><intConstant>170</intConstant></value> </varDecl>
+            <varDecl> <name>a18</name> </varDecl>
+            <varDecl> <name>b18</name> <value><intConstant>180</intConstant></value> </varDecl>
+            <varDecl> <name>a19</name> </varDecl>
+            <varDecl> <name>b19</name> <value><intConstant>190</intConstant></value> </varDecl>
+            <varDecl> <name>a20</name> </varDecl>
+            <varDecl> <name>b20</name> <value><intConstant>200</intConstant></value> </varDecl>
+            <varDecl> <name>c20</name> <value><intConstant>205</intConstant></value> </varDecl>
+            <varDecl> <name>a21</name> </varDecl>
+            <varDecl> <name>b21</name> <value><intConstant>210</intConstant></value> </varDecl>
+            <varDecl> <name>c21</name> <value><intConstant>215</intConstant></value> </varDecl>
+            <varDecl> <name>a22</name> </varDecl>
+            <varDecl> <name>b22</name> <value><intConstant>220</intConstant></value> </varDecl>
+            <varDecl> <name>c22</name> <value><intConstant>225</intConstant></value> </varDecl>
+            <varDecl> <name>a23</name> </varDecl>
+            <varDecl> <name>b23</name> <value><intConstant>230</intConstant></value> </varDecl>
+            <varDecl> <name>c23</name> <value><intConstant>235</intConstant></value> </varDecl>
+            <varDecl> <name>a24</name> </varDecl>
+            <varDecl> <name>b24</name> <value><intConstant>240</intConstant></value> </varDecl>
+            <varDecl> <name>c24</name> <value><intConstant>245</intConstant></value> </varDecl>
+            <varDecl> <name>a25</name> </varDecl>
+            <varDecl> <name>b25</name> <value><intConstant>250</intConstant></value> </varDecl>
+            <varDecl> <name>c25</name> <value><intConstant>255</intConstant></value> </varDecl>
+            <varDecl> <name>a26</name> </varDecl>
+            <varDecl> <name>b26</name> <value><intConstant>260</intConstant></value> </varDecl>
+            <varDecl> <name>c26</name> <value><intConstant>265</intConstant></value> </varDecl>
+            <varDecl> <name>a27</name> </varDecl>
+            <varDecl> <name>b27</name> <value><intConstant>270</intConstant></value> </varDecl>
+            <varDecl> <name>c27</name> <value><intConstant>275</intConstant></value> </varDecl>
+            <varDecl> <name>a28</name> </varDecl>
+            <varDecl> <name>b28</name> <value><intConstant>280</intConstant></value> </varDecl>
+            <varDecl> <name>c28</name> <value><intConstant>285</intConstant></value> </varDecl>
+            <varDecl> <name>a29</name> </varDecl>
+            <varDecl> <name>b29</name> <value><intConstant>290</intConstant></value> </varDecl>
+            <varDecl> <name>c29</name> <value><intConstant>295</intConstant></value> </varDecl>
+            <varDecl> <name>a30</name> </varDecl>
+            <varDecl> <name>b30</name> <value><intConstant>300</intConstant></value> </varDecl>
+            <varDecl> <name>c30</name> <value><intConstant>305</intConstant></value> </varDecl>
+            <varDecl> <name>a31</name> </varDecl>
+            <varDecl> <name>b31</name> <value><intConstant>310</intConstant></value> </varDecl>
+            <varDecl> <name>c31</name> <value><intConstant>315</intConstant></value> </varDecl>
+            <varDecl> <name>a32</name> </varDecl>
+            <varDecl> <name>b32</name> <value><intConstant>320</intConstant></value> </varDecl>
+            <varDecl> <name>c32</name> <value><intConstant>325</intConstant></value> </varDecl>
+            <varDecl> <name>a33</name> </varDecl>
+            <varDecl> <name>b33</name> <value><intConstant>330</intConstant></value> </varDecl>
+            <varDecl> <name>c33</name> <value><intConstant>335</intConstant></value> </varDecl>
+            <varDecl> <name>a34</name> </varDecl>
+            <varDecl> <name>b34</name> <value><intConstant>340</intConstant></value> </varDecl>
+            <varDecl> <name>c34</name> <value><intConstant>345</intConstant></value> </varDecl>
+            <varDecl> <name>a35</name> </varDecl>
+            <varDecl> <name>b35</name> <value><intConstant>350</intConstant></value> </varDecl>
+            <varDecl> <name>c35</name> <value><intConstant>355</intConstant></value> </varDecl>
+            <varDecl> <name>a36</name> </varDecl>
+            <varDecl> <name>b36</name> <value><intConstant>360</intConstant></value> </varDecl>
+            <varDecl> <name>c36</name> <value><intConstant>365</intConstant></value> </varDecl>
+            <varDecl> <name>a37</name> </varDecl>
+            <varDecl> <name>b37</name> <value><intConstant>370</intConstant></value> </varDecl>
+            <varDecl> <name>c37</name> <value><intConstant>375</intConstant></value> </varDecl>
+            <varDecl> <name>a40</name> </varDecl>
+            <varDecl> <name>b40</name> <value><intConstant>400</intConstant></value> </varDecl>
+            <varDecl> <name>c40</name> <value><intConstant>405</intConstant></value> </varDecl>
+            <varDecl> <name>a41</name> </varDecl>
+            <varDecl> <name>a42</name> </varDecl>
+            <varDecl> <name>a50</name> </varDecl>
+          </declarations>
+          <body>
+
+            <!-- unary pre -->
+
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a01</Var>
+                <unaryMinusExpr><Var scope="local">b01</Var></unaryMinusExpr>
+              </assignExpr>
+            </exprStatement>
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a02</Var>
+                <bitNotExpr><Var scope="local">b02</Var></bitNotExpr>
+              </assignExpr>
+            </exprStatement>
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a03</Var>
+                <logNotExpr><Var scope="local">b03</Var></logNotExpr>
+              </assignExpr>
+            </exprStatement>
+
+            <!-- unary post -->
+
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a04</Var>
+                <postIncrExpr><Var scope="local">b04</Var></postIncrExpr>
+              </assignExpr>
+            </exprStatement>
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a05</Var>
+                <postDecrExpr><Var scope="local">b05</Var></postDecrExpr>
+              </assignExpr>
+            </exprStatement>
+
+            <!-- assign -->
+
+            <exprStatement>
+              <asgPlusExpr>
+                <Var scope="local">a10</Var>
+                <Var scope="local">b10</Var>
+              </asgPlusExpr>
+            </exprStatement>
+            <exprStatement>
+              <asgMinusExpr>
+                <Var scope="local">a11</Var>
+                <Var scope="local">b11</Var>
+              </asgMinusExpr>
+            </exprStatement>
+            <exprStatement>
+              <asgMulExpr>
+                <Var scope="local">a12</Var>
+                <Var scope="local">b12</Var>
+              </asgMulExpr>
+            </exprStatement>
+            <exprStatement>
+              <asgDivExpr>
+                <Var scope="local">a13</Var>
+                <Var scope="local">b13</Var>
+              </asgDivExpr>
+            </exprStatement>
+            <exprStatement>
+              <asgModExpr>
+                <Var scope="local">a14</Var>
+                <Var scope="local">b14</Var>
+              </asgModExpr>
+            </exprStatement>
+            <exprStatement>
+              <asgLshiftExpr>
+                <Var scope="local">a15</Var>
+                <Var scope="local">b15</Var>
+              </asgLshiftExpr>
+            </exprStatement>
+            <exprStatement>
+              <asgRshiftExpr>
+                <Var scope="local">a16</Var>
+                <Var scope="local">b16</Var>
+              </asgRshiftExpr>
+            </exprStatement>
+            <exprStatement>
+              <asgBitAndExpr>
+                <Var scope="local">a17</Var>
+                <Var scope="local">b17</Var>
+              </asgBitAndExpr>
+            </exprStatement>
+            <exprStatement>
+              <asgBitOrExpr>
+                <Var scope="local">a18</Var>
+                <Var scope="local">b18</Var>
+              </asgBitOrExpr>
+            </exprStatement>
+            <exprStatement>
+              <asgBitXorExpr>
+                <Var scope="local">a19</Var>
+                <Var scope="local">b19</Var>
+              </asgBitXorExpr>
+            </exprStatement>
+
+            <!-- binary -->
+
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a20</Var>
+                <plusExpr>
+                  <Var scope="local">b20</Var>
+                  <Var scope="local">c20</Var>
+                </plusExpr>
+              </assignExpr>
+            </exprStatement>
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a21</Var>
+                <minusExpr>
+                  <Var scope="local">b21</Var>
+                  <Var scope="local">c21</Var>
+                </minusExpr>
+              </assignExpr>
+            </exprStatement>
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a22</Var>
+                <mulExpr>
+                  <Var scope="local">b22</Var>
+                  <Var scope="local">c22</Var>
+                </mulExpr>
+              </assignExpr>
+            </exprStatement>
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a23</Var>
+                <divExpr>
+                  <Var scope="local">b23</Var>
+                  <Var scope="local">c23</Var>
+                </divExpr>
+              </assignExpr>
+            </exprStatement>
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a24</Var>
+                <modExpr>
+                  <Var scope="local">b24</Var>
+                  <Var scope="local">c24</Var>
+                </modExpr>
+              </assignExpr>
+            </exprStatement>
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a25</Var>
+                <LshiftExpr>
+                  <Var scope="local">b25</Var>
+                  <Var scope="local">c25</Var>
+                </LshiftExpr>
+              </assignExpr>
+            </exprStatement>
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a26</Var>
+                <RshiftExpr>
+                  <Var scope="local">b26</Var>
+                  <Var scope="local">c26</Var>
+                </RshiftExpr>
+              </assignExpr>
+            </exprStatement>
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a27</Var>
+                <bitAndExpr>
+                  <Var scope="local">b27</Var>
+                  <Var scope="local">c27</Var>
+                </bitAndExpr>
+              </assignExpr>
+            </exprStatement>
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a28</Var>
+                <bitOrExpr>
+                  <Var scope="local">b28</Var>
+                  <Var scope="local">c28</Var>
+                </bitOrExpr>
+              </assignExpr>
+            </exprStatement>
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a29</Var>
+                <bitXorExpr>
+                  <Var scope="local">b29</Var>
+                  <Var scope="local">c29</Var>
+                </bitXorExpr>
+              </assignExpr>
+            </exprStatement>
+
+            <!-- logical -->
+
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a30</Var>
+                <logEQExpr>
+                  <Var scope="local">b30</Var>
+                  <Var scope="local">c30</Var>
+                </logEQExpr>
+              </assignExpr>
+            </exprStatement>
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a31</Var>
+                <logNEQExpr>
+                  <Var scope="local">b31</Var>
+                  <Var scope="local">c31</Var>
+                </logNEQExpr>
+              </assignExpr>
+            </exprStatement>
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a32</Var>
+                <logGEExpr>
+                  <Var scope="local">b32</Var>
+                  <Var scope="local">c32</Var>
+                </logGEExpr>
+              </assignExpr>
+            </exprStatement>
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a33</Var>
+                <logGTExpr>
+                  <Var scope="local">b33</Var>
+                  <Var scope="local">c33</Var>
+                </logGTExpr>
+              </assignExpr>
+            </exprStatement>
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a34</Var>
+                <logLEExpr>
+                  <Var scope="local">b34</Var>
+                  <Var scope="local">c34</Var>
+                </logLEExpr>
+              </assignExpr>
+            </exprStatement>
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a35</Var>
+                <logLTExpr>
+                  <Var scope="local">b35</Var>
+                  <Var scope="local">c35</Var>
+                </logLTExpr>
+              </assignExpr>
+            </exprStatement>
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a36</Var>
+                <logAndExpr>
+                  <Var scope="local">b36</Var>
+                  <Var scope="local">c36</Var>
+                </logAndExpr>
+              </assignExpr>
+            </exprStatement>
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a37</Var>
+                <logOrExpr>
+                  <Var scope="local">b37</Var>
+                  <Var scope="local">c37</Var>
+                </logOrExpr>
+              </assignExpr>
+            </exprStatement>
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a40</Var>
+                <commaExpr>
+                  <Var scope="local">b40</Var>
+                  <Var scope="local">c40</Var>
+                </commaExpr>
+              </assignExpr>
+            </exprStatement>
+
+            <!-- comma -->
+
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a41</Var>
+                <commaExpr>
+                  <assignExpr>
+                    <Var scope="local">a01</Var>
+                    <Var scope="local">b01</Var>
+                  </assignExpr>
+                  <unaryMinusExpr><Var scope="local">b01</Var></unaryMinusExpr>
+                  <bitNotExpr>
+                    <Var scope="local">b02</Var>
+                  </bitNotExpr>
+                  <assignExpr>
+                    <Var scope="local">a05</Var>
+                    <postDecrExpr><Var scope="local">b05</Var></postDecrExpr>
+                  </assignExpr>
+                  <logGTExpr>
+                    <Var scope="local">b33</Var>
+                    <Var scope="local">c33</Var>
+                  </logGTExpr>
+                </commaExpr>
+              </assignExpr>
+            </exprStatement>
+
+            <!-- brace -->
+
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a42</Var>
+                <mulExpr>
+                  <Var scope="local">b20</Var>
+                  <plusExpr>
+                    <Var scope="local">b21</Var>
+                    <mulExpr>
+                      <Var scope="local">b22</Var>
+                      <plusExpr>
+                        <Var scope="local">b23</Var>
+                        <unaryMinusExpr>
+                          <Var scope="local">c23</Var>
+                        </unaryMinusExpr>
+                      </plusExpr>
+                    </mulExpr>
+                  </plusExpr>
+                </mulExpr>
+              </assignExpr>
+            </exprStatement>
+
+            <!-- cast -->
+
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a50</Var>
+                <castExpr type="PI0">
+                  <intConstant>0</intConstant>
+                </castExpr>
+              </assignExpr>
+            </exprStatement>
+
+            <returnStatement><intConstant>0</intConstant></returnStatement>
+          </body>
+        </compoundStatement>
+      </body>
+    </functionDefinition>
+  </globalDeclarations>
+</XcodeProgram>
+

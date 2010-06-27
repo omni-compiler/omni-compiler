@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- 
+      module mod1
+      end module
+
+      module mod2
+      end module
+
+      module mod3
+        integer i
+      end module
+
+      subroutine sub1
+        use mod1
+      end subroutine
+
+      function func1 ()
+        use mod2
+        integer func1
+        func1 = 0
+      end function
+
+      program main
+        use mod3
+        call sub1
+        i = func1
+      end program
+-->
+<XcodeProgram compiler-info="F-Frontend"
+              version="0.8"
+              time="2009-02-17 10:53:20"
+              language="Fortran 90 Free Format"
+              source="use.f90">
+
+  <!-- typeTable -->
+  <typeTable>
+    <FfunctionType type="FfunctionType_of_sub1" return_type="Fvoid" />
+    <FfunctionType type="FfunctionType_of_func1" return_type="Fint" />
+    <FfunctionType type="FfunctionType_of_main" return_type="Fvoid" />
+  </typeTable>
+
+  <!-- globalSymbols -->
+  <globalSymbols>
+    <id sclass="extern_def" type="FfunctionType_of_sub1">
+      <name type="FfunctionType_of_sub1">sub1</name>
+    </id>
+    <id sclass="extern_def" type="FfunctionType_of_func1">
+      <name type="FfunctionType_of_func1">func1</name>
+    </id>
+    <id sclass="extern_def" type="FfunctionType_of_main">
+      <name type="FfunctionType_of_main">main</name>
+    </id>
+  </globalSymbols>
+
+  <!-- globalDeclarations -->
+  <globalDeclarations>
+
+    <!-- 1: module mod1 -->
+    <FmoduleDefinition lineno="1" file="use.xml" name="mod1">
+    </FmoduleDefinition>
+
+    <!-- 4: module mod2 -->
+    <FmoduleDefinition lineno="4" file="use.xml" name="mod2">
+    </FmoduleDefinition>
+
+    <!-- 7: module mod3 -->
+    <FmoduleDefinition lineno="7" file="use.xml" name="mod3">
+      <symbols>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">i</name>
+        </id>
+      </symbols>
+      <declarations>
+        <!-- 8: integer i -->
+        <varDecl lineno="8" file="use.xml">
+          <name type="Fint">i</name>
+        </varDecl>
+      </declarations>
+    </FmoduleDefinition>
+
+    <!-- 11: subroutine sub1 -->
+    <FfunctionDefinition lineno="11" file="use.xml">
+      <name type="FfunctionType_of_sub1">sub1</name>
+      <declarations>
+        <!-- 12: use mod1 -->
+        <FuseDecl lineno="12" file="use.xml" name="mod1">
+        </FuseDecl>
+      </declarations>
+      <body>
+      </body>
+    </FfunctionDefinition>
+
+    <!-- 15: function func1 () -->
+    <FfunctionDefinition lineno="15" file="use.xml">
+      <name type="FfunctionType_of_func1">func1</name>
+      <symbols>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">func1</name>
+        </id>
+      </symbols>
+      <declarations>
+        <!-- 16: use mod2 -->
+        <FuseDecl lineno="16" file="use.xml" name="mod2">
+        </FuseDecl>
+        <!-- 17: integer func1 -->
+        <varDecl lineno="17" file="use.xml">
+          <name type="Fint">func1</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <!-- 18: func1 = 0-->
+        <exprStatement lineno="18" file="use.f90">
+          <assignExpr>
+            <Var scope="local">func1</Var>
+            <FintConstant type="Fint">0</FintConstant>
+          </assignExpr>
+        </exprStatement>
+      </body>
+    </FfunctionDefinition>
+
+    <!-- 21: program main -->
+    <FfunctionDefinition is_program="1" lineno="21" file="use.f90">
+      <name type="FfunctionType_of_main">main</name>
+      <symbols>
+        <id sclass="extern" type="Fint">
+          <name type="Fint">i</name>
+        </id>
+      </symbols>
+      <declarations>
+        <!-- 22: use mod3 -->
+        <FuseDecl lineno="22" file="use.xml" name="mod3">
+        </FuseDecl>
+      </declarations>
+      <body>
+        <!-- 23: call sub1 -->
+        <exprStatement lineno="23" file="use.f90">
+          <functionCall>
+            <function>sub1</function>
+            <arguments></arguments>
+          </functionCall>
+        </exprStatement>
+        <!-- 24: i = func1 -->
+        <exprStatement lineno="24" file="use.f90">
+          <assignExpr>
+            <Var scope="local">i</Var>
+            <functionCall>
+              <function>func1</function>
+              <arguments></arguments>
+            </functionCall>
+          </assignExpr>
+        </exprStatement>
+      </body>
+    </FfunctionDefinition>
+
+  </globalDeclarations>
+
+</XcodeProgram>

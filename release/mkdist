@@ -1,0 +1,76 @@
+#!/bin/sh
+
+if [ ! -e configure.ac ]; then
+    pwd
+    echo execute this script in top directory
+    exit 1
+fi
+
+if [ -e "./config.log" ]; then
+    echo execute this script before configure
+    exit 1
+fi
+
+CPYRHTTXT="./release/copyright.txt"
+RELNAMETXT="./release/releasename.txt"
+
+if [ ! -e "${CPYRHTTXT}" ]; then
+     echo needed copyright.txt.
+     exit 1
+fi
+if [ "* PLEASE DESCRIBE LICENSE AGREEMENT HERE *" = \
+     "`head -n1 ${CPYRHTTXT}`" ]; then
+     echo before execute this script, describe copyright agreement ${CPYRHTTXT}.
+     exit 1
+fi
+if [ ! -e "${RELNAMETXT}" ]; then
+     echo needed ${RELNAMETXT}.
+     exit 1
+fi
+if [ "* PLEASE DESCRIBE RELEASE NAME HERE *" = \
+     "`head -n1 ${RELNAMETXT}`" ]; then
+     echo before execute this script, describe release name in ${RELNAMETXT}.
+     exit 1
+fi
+
+PACKAGE_NAME=omni-3
+WORK_DIR=../`basename $PWD`-dist
+PACKAGE_DIR=$WORK_DIR/$PACKAGE_NAME
+DOC_DIR=$PACKAGE_DIR/doc
+
+echo autogen.sh
+./autogen.sh
+
+echo delete dist dir
+rm -rf $WORK_DIR
+mkdir $WORK_DIR
+
+echo copy whole files
+cp -r . $PACKAGE_DIR
+
+# expands keywords for a releasement.
+echo expand a copyright and a release name.
+./release/expand_tsukuba_keyword \
+  -ignore release/ignore_expand_keyword.txt\
+  -copyright ${CPYRHTTXT} \
+  -release "`head -n1 ${RELNAMETXT}`"\
+  $PACKAGE_DIR 
+
+echo delete .svn dirs
+find $PACKAGE_DIR -name \.svn -exec rm -rf \{\} \; 2> /dev/null
+
+echo configure
+./configure > /dev/null
+
+echo touch Makefile.in
+find $PACKAGE_DIR -name Makefile.in -exec touch \{\} \;
+
+echo touch configure
+touch $PACKAGE_DIR/configure
+
+echo archiving
+cd $WORK_DIR
+tar czf $PACKAGE_NAME.tar.gz $PACKAGE_NAME
+
+echo completed
+

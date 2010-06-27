@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# $Id$
+# $RWC_Release$
+# $RWC_Copyright$
+
+ERROR=0
+
+OMP_DYNAMIC=TRUE
+export OMP_DYNAMIC
+RESULT=`$EXEC ./envparam -d | grep -v SCore-D`
+if [ "$RESULT" = "dynamic schedule is disable" ] ; then
+  echo "dynamic_threads is not implement."
+elif [ "$RESULT" != "dynamic schedule is enable" ] ; then
+  ERROR=1
+fi
+
+OMP_DYNAMIC=FALSE
+export OMP_DYNAMIC
+RESULT=`$EXEC ./envparam -d | grep -v SCore-D`
+if [ "$RESULT" != "dynamic schedule is disable" ] ; then
+  ERROR=1
+fi
+
+if [ "$ERROR" = "0" ] ; then
+  echo "OMP_DYNAMIC 001 : SUCCESS"
+else
+  echo "OMP_DYNAMIC 001 : FAILED"
+fi

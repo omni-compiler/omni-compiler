@@ -1,0 +1,104 @@
+<XcodeProgram source="do.f90"
+              language="Fortran"
+              time="2009-03-27 18:07:57"
+              compiler-info="XcodeML/Fortran-FrontEnd"
+              version="1.0">
+  <typeTable>
+    <FbasicType type="B80a6010" ref="Fint" />
+    <FbasicType type="B80a6388" ref="Fint" />
+    <FfunctionType type="F80a5b00" return_type="Fvoid" is_program="1" />
+  </typeTable>
+  <globalSymbols>
+    <id sclass="extern_def" type="F80a5b00">
+      <name type="F80a5b00">main</name>
+    </id>
+  </globalSymbols>
+  <globalDeclarations>
+    <FfunctionDefinition lineno="1" file="do.f90">
+      <name type="F80a5b00">main</name>
+      <symbols>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">sum</name>
+        </id>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">i</name>
+        </id>
+      </symbols>
+      <declarations>
+        <varDecl lineno="2" file="do.f90">
+          <name type="Fint">sum</name>
+        </varDecl>
+        <varDecl lineno="2" file="do.f90">
+          <name type="Fint">i</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <exprStatement lineno="3" file="do.f90">
+          <assignExpr>
+            <Var>sum</Var>
+            <FintConstant>0</FintConstant>
+          </assignExpr>
+        </exprStatement>
+        <FdoStatement lineno="4" file="do.f90">
+          <Var>i</Var>
+          <indexRange>
+            <lowerBound>
+              <FintConstant>1</FintConstant>
+            </lowerBound>
+            <upperBound>
+              <FintConstant>10</FintConstant>
+            </upperBound>
+            <step>
+              <FintConstant>1</FintConstant>
+            </step>
+          </indexRange>
+          <body>
+            <FifStatement lineno="5" file="do.f90">
+              <condition>
+                <logEQExpr>
+                  <Var>i</Var>
+                  <FintConstant>3</FintConstant>
+                </logEQExpr>
+              </condition>
+              <then>
+                <body>
+                  <FcycleStatement lineno="5" file="do.f90" />
+                </body>
+              </then>
+              <else>
+                <body>
+                </body>
+              </else>
+            </FifStatement>
+            <exprStatement lineno="6" file="do.f90">
+              <assignExpr>
+                <Var>sum</Var>
+                <plusExpr>
+                  <Var>sum</Var>
+                  <Var>i</Var>
+                </plusExpr>
+              </assignExpr>
+            </exprStatement>
+            <FifStatement lineno="7" file="do.f90">
+              <condition>
+                <logGTExpr>
+                  <Var>sum</Var>
+                  <FintConstant>100</FintConstant>
+                </logGTExpr>
+              </condition>
+              <then>
+                <body>
+                  <FexitStatement lineno="7" file="do.f90" />
+                </body>
+              </then>
+              <else>
+                <body>
+                </body>
+              </else>
+            </FifStatement>
+          </body>
+        </FdoStatement>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

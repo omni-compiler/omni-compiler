@@ -1,0 +1,104 @@
+<XcodeProgram source="goto.f90"
+              language="Fortran"
+              time="2009-03-27 18:07:57"
+              compiler-info="XcodeML/Fortran-FrontEnd"
+              version="1.0">
+  <typeTable>
+    <FbasicType type="B80a6040" ref="Fint" />
+    <FfunctionType type="F80a5b00" return_type="Fvoid" is_program="1" />
+  </typeTable>
+  <globalSymbols>
+    <id sclass="extern_def" type="F80a5b00">
+      <name type="F80a5b00">main</name>
+    </id>
+  </globalSymbols>
+  <globalDeclarations>
+    <FfunctionDefinition lineno="1" file="goto.f90">
+      <name type="F80a5b00">main</name>
+      <symbols>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">i</name>
+        </id>
+        <id sclass="label" type="Fcharacter">
+          <name type="Fcharacter">L00010</name>
+        </id>
+        <id sclass="label" type="Fcharacter">
+          <name type="Fcharacter">L00020</name>
+        </id>
+        <id sclass="label" type="Fcharacter">
+          <name type="Fcharacter">L00030</name>
+        </id>
+      </symbols>
+      <declarations>
+        <varDecl lineno="2" file="goto.f90">
+          <name type="Fint">i</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <statementLabel lineno="3" file="goto.f90" label_name="L00010" />
+        <exprStatement lineno="3" file="goto.f90">
+          <assignExpr>
+            <Var>i</Var>
+            <plusExpr>
+              <Var>i</Var>
+              <FintConstant>10</FintConstant>
+            </plusExpr>
+          </assignExpr>
+        </exprStatement>
+        <FifStatement lineno="4" file="goto.f90">
+          <condition>
+            <logGEExpr>
+              <Var>i</Var>
+              <FintConstant>10</FintConstant>
+            </logGEExpr>
+          </condition>
+          <then>
+            <body>
+              <gotoStatement lineno="4" file="goto.f90" label_name="L00020" />
+            </body>
+          </then>
+          <else>
+            <body>
+            </body>
+          </else>
+        </FifStatement>
+        <gotoStatement lineno="5" file="goto.f90" label_name="L00010" />
+        <statementLabel lineno="6" file="goto.f90" label_name="L00020" />
+        <exprStatement lineno="6" file="goto.f90">
+          <assignExpr>
+            <Var>i</Var>
+            <plusExpr>
+              <Var>i</Var>
+              <FintConstant>10</FintConstant>
+            </plusExpr>
+          </assignExpr>
+        </exprStatement>
+        <FselectCaseStatement lineno="7" file="goto.f90">
+          <Var>i</Var>
+          <FcaseLabel lineno="7" file="goto.f90">
+            <FintConstant>1</FintConstant>
+          </FcaseLabel>
+          <gotoStatement lineno="7" file="goto.f90" label_name="L00010" />
+          <FcaseLabel lineno="7" file="goto.f90">
+            <FintConstant>2</FintConstant>
+          </FcaseLabel>
+          <gotoStatement lineno="7" file="goto.f90" label_name="L00020" />
+          <FcaseLabel lineno="7" file="goto.f90">
+            <FintConstant>3</FintConstant>
+          </FcaseLabel>
+          <gotoStatement lineno="7" file="goto.f90" label_name="L00030" />
+        </FselectCaseStatement>
+        <statementLabel lineno="8" file="goto.f90" label_name="L00030" />
+        <exprStatement lineno="8" file="goto.f90">
+          <assignExpr>
+            <Var>i</Var>
+            <plusExpr>
+              <Var>i</Var>
+              <FintConstant>20</FintConstant>
+            </plusExpr>
+          </assignExpr>
+        </exprStatement>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

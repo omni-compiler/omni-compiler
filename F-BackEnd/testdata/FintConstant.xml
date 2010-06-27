@@ -1,0 +1,92 @@
+<XcodeProgram source="FintConstant.f90"
+              language="Fortran"
+              time="2009-03-27 18:07:57"
+              compiler-info="XcodeML/Fortran-FrontEnd"
+              version="1.0">
+  <typeTable>
+    <FbasicType type="B80a63f0" ref="Fint" />
+    <FbasicType type="B80a65e0" ref="Fint" />
+    <FbasicType type="B80a6858" ref="Fint" />
+    <FbasicType type="B80a6af0" ref="Fint" />
+    <FbasicType type="B80a6cf8" ref="Fint" />
+    <FfunctionType type="F80a5b08" return_type="Fvoid" is_program="1" />
+  </typeTable>
+  <globalSymbols>
+    <id sclass="extern_def" type="F80a5b08">
+      <name type="F80a5b08">main</name>
+    </id>
+  </globalSymbols>
+  <globalDeclarations>
+    <FfunctionDefinition lineno="1" file="FintConstant.f90">
+      <name type="F80a5b08">main</name>
+      <symbols>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">i1</name>
+        </id>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">i2</name>
+        </id>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">i3</name>
+        </id>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">i4</name>
+        </id>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">i5</name>
+        </id>
+      </symbols>
+      <declarations>
+        <varDecl lineno="2" file="FintConstant.f90">
+          <name type="Fint">i1</name>
+        </varDecl>
+        <varDecl lineno="2" file="FintConstant.f90">
+          <name type="Fint">i2</name>
+        </varDecl>
+        <varDecl lineno="2" file="FintConstant.f90">
+          <name type="Fint">i3</name>
+        </varDecl>
+        <varDecl lineno="2" file="FintConstant.f90">
+          <name type="Fint">i4</name>
+        </varDecl>
+        <varDecl lineno="2" file="FintConstant.f90">
+          <name type="Fint">i5</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <exprStatement lineno="3" file="FintConstant.f90">
+          <assignExpr>
+            <Var>i1</Var>
+            <FintConstant>473</FintConstant>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="4" file="FintConstant.f90">
+          <assignExpr>
+            <Var>i2</Var>
+            <FintConstant>56</FintConstant>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="5" file="FintConstant.f90">
+          <assignExpr>
+            <Var>i3</Var>
+            <unaryMinusExpr>
+              <FintConstant>101</FintConstant>
+            </unaryMinusExpr>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="6" file="FintConstant.f90">
+          <assignExpr>
+            <Var>i4</Var>
+            <FintConstant>21</FintConstant>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="7" file="FintConstant.f90">
+          <assignExpr>
+            <Var>i5</Var>
+            <FintConstant>1976354279</FintConstant>
+          </assignExpr>
+        </exprStatement>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

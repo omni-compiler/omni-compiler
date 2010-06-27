@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XcodeProgram source="struct.c">
+<!--
+struct point {
+    int x;
+    int * y;
+}
+
+struct point * p;
+
+void main() {
+    *(&(p->x)) = 0;
+    p->x = 0;
+    *(p->y) = 0;
+}
+-->
+<typeTable>
+  <structType type="type_of_structure">
+    <symbols>
+      <id>
+        <name type="int">x</name>
+      </id>
+      <id>
+        <name type="pointerType_of_member_y">y</name>
+      </id>
+    </symbols>
+  </structType>
+  <pointerType type="pointerType_of_member_x" ref="int"/>
+  <pointerType type="pointerType_of_member_y" ref="int"/>
+  <pointerType type="pointerType_of_pointerType_of_member_y" ref="pointerType_of_member_y"/>
+  <pointerType type="pointerType_of_structure" ref="type_of_structure"/>
+  <pointerType type="pointerType_of_p" ref="pointerType_of_structure"/>
+  <functionType type="functionType_of_main" return_type="int">
+    <params></params>
+  </functionType>
+  <pointerType type="pointerType_of_main" ref="functionType_of_main"/>
+</typeTable>
+
+<globalSymbols>
+  <id sclass="tagname">
+    <name type="type_of_structure">point</name>
+  </id>
+  <id sclass="extern_def">
+    <name type="pointerType_of_structure">p</name>
+  </id>
+  <id sclass="extern_def">
+    <name type="functionType_of_main">main</name>
+  </id>
+</globalSymbols>
+
+<globalDeclarations>
+<varDecl>
+  <name>p</name>
+</varDecl>
+<functionDefinition>
+  <name>main</name>
+  <symbols>
+  </symbols>
+  <params>
+  </params>
+  <body>
+    <compoundStatement>
+      <symbols>
+      </symbols>
+      <declarations></declarations>
+      <body>
+        <exprStatement>
+          <assignExpr type="int">
+            <pointerRef type="int">
+              <memberAddr member="x" type="pointerType_of_member_x">
+                <Var scope="global" type="pointerType_of_structure">p</Var>
+              </memberAddr>
+            </pointerRef>
+            <intConstant type="int">0</intConstant>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement>
+          <assignExpr type="int">
+            <memberRef member="x" type="int">
+              <Var scope="global"  type="pointerType_of_structure">p</Var>
+            </memberRef>
+            <intConstant type="int">0</intConstant>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement>
+          <assignExpr type="int">
+            <pointerRef type="int">
+              <pointerRef type="pointerType_of_member_y">
+                <memberAddr member="y" type="pointerType_of_pointerType_of_member_y">
+                  <Var scope="global"  type="pointerType_of_structure">p</Var>
+                </memberAddr>
+              </pointerRef>
+            </pointerRef>
+            <intConstant type="int">0</intConstant>
+          </assignExpr>
+        </exprStatement>
+        <returnStatement>
+          <intConstant type="int">0</intConstant>
+        </returnStatement>
+      </body>
+    </compoundStatement>
+  </body>
+</functionDefinition>
+</globalDeclarations>
+</XcodeProgram>

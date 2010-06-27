@@ -1,0 +1,72 @@
+<XcodeProgram source="common.f90"
+              language="Fortran"
+              time="2009-03-27 18:07:57"
+              compiler-info="XcodeML/Fortran-FrontEnd"
+              version="1.0">
+  <typeTable>
+    <FbasicType type="B80a73b8" ref="Fint" />
+    <FbasicType type="B80a7508" ref="Fint" />
+    <FbasicType type="A80a6a38" ref="Fint">
+      <indexRange>
+        <lowerBound>
+          <FintConstant>0</FintConstant>
+        </lowerBound>
+        <upperBound>
+          <FintConstant>9</FintConstant>
+        </upperBound>
+      </indexRange>
+    </FbasicType>
+    <FbasicType type="B80a6f20" ref="Fint" />
+    <FbasicType type="B80a7070" ref="Fint" />
+    <FbasicType type="B80a71c0" ref="Fint" />
+    <FfunctionType type="F80a5b00" return_type="Fvoid" is_program="1" />
+  </typeTable>
+  <globalSymbols>
+    <id sclass="extern_def" type="F80a5b00">
+      <name type="F80a5b00">main</name>
+    </id>
+  </globalSymbols>
+  <globalDeclarations>
+    <FfunctionDefinition lineno="1" file="common.f90">
+      <name type="F80a5b00">main</name>
+      <symbols>
+      </symbols>
+      <declarations>
+        <varDecl lineno="3" file="common.f90">
+          <name type="Fint">i</name>
+        </varDecl>
+        <varDecl lineno="3" file="common.f90">
+          <name type="Fint">j</name>
+        </varDecl>
+        <varDecl lineno="3" file="common.f90">
+          <name type="Fint">k</name>
+        </varDecl>
+        <FcommonDecl lineno="3" file="common.f90">
+          <varList name="_____BLANK_COMMON_____">
+            <varRef><Var>i</Var></varRef>
+            <varRef><Var>j</Var></varRef>
+            <varRef><Var>k</Var></varRef>
+          </varList>
+        </FcommonDecl>
+        <varDecl lineno="2" file="common.f90">
+          <name type="Fint">a</name>
+        </varDecl>
+        <varDecl lineno="2" file="common.f90">
+          <name type="Fint">b</name>
+        </varDecl>
+        <varDecl lineno="2" file="common.f90">
+          <name type="A80a6a38">c</name>
+        </varDecl>
+        <FcommonDecl lineno="2" file="common.f90">
+          <varList name="block_COMMON">
+            <varRef><Var>a</Var></varRef>
+            <varRef><Var>b</Var></varRef>
+            <varRef><Var>c</Var></varRef>
+          </varList>
+        </FcommonDecl>
+      </declarations>
+      <body>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

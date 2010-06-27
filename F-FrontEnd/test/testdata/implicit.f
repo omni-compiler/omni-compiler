@@ -1,0 +1,5 @@
+      SUBROUTINE NOZZLE (TIME,P0,D0,E0,C0,PRES,DENS,VEL,ENER,FLOW,
+     *     GAMMA)
+      PARAMETER (AREA=5.1725E-7,VOL=1.24E-5)
+      IMPLICIT REAL (A-H,O-Z), integer (i-k)
+      end

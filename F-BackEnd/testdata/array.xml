@@ -1,0 +1,39 @@
+<XcodeProgram source="array.f90"
+              language="Fortran"
+              time="2009-03-27 18:07:57"
+              compiler-info="XcodeML/Fortran-FrontEnd"
+              version="1.0">
+  <typeTable>
+    <FbasicType type="B80a6270" ref="Freal" />
+    <FbasicType type="B80a62e0" ref="Freal" />
+    <FfunctionType type="F80a5b00" return_type="Fvoid" is_program="1" />
+  </typeTable>
+  <globalSymbols>
+    <id sclass="extern_def" type="F80a5b00">
+      <name type="F80a5b00">main</name>
+    </id>
+  </globalSymbols>
+  <globalDeclarations>
+    <FfunctionDefinition lineno="1" file="array.f90">
+      <name type="F80a5b00">main</name>
+      <symbols>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">vector3d</name>
+        </id>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">matrix3d</name>
+        </id>
+      </symbols>
+      <declarations>
+        <varDecl lineno="2" file="array.f90">
+          <name type="Freal">vector3d</name>
+        </varDecl>
+        <varDecl lineno="3" file="array.f90">
+          <name type="Freal">matrix3d</name>
+        </varDecl>
+      </declarations>
+      <body>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

@@ -1,0 +1,53 @@
+package exc.xcalablemp;
+
+import exc.object.*;
+import java.util.Vector;
+
+public class XMPobject {
+  public final static int NODES		= 100;
+  public final static int TEMPLATE	= 101;
+
+  private int			_kind;
+  private int			_lineNo;
+  private String		_name;
+  private int			_dim;
+  private Ident			_descId;
+  private Vector<Xobject>	_upperVector;
+
+  public XMPobject(int kind, int lineNo, String name, int dim, Ident descId) {
+    _kind = kind;
+    _lineNo = lineNo;
+    _name = name;
+    _dim = dim;
+    _descId = descId;
+    _upperVector = new Vector<Xobject>();
+  }
+
+  public int getKind() {
+    return _kind;
+  }
+
+  public int getLineNo() {
+    return _lineNo;
+  }
+
+  public String getName() {
+    return _name;
+  }
+
+  public int getDim() {
+    return _dim;
+  }
+
+  public Ident getDescId() {
+    return _descId;
+  }
+
+  public void addUpper(Xobject upper) {
+    _upperVector.add(upper);
+  }
+
+  public Xobject getUpperAt(int index) {
+    return _upperVector.get(index);
+  }
+}

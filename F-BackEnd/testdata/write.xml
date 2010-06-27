@@ -1,0 +1,56 @@
+<XcodeProgram source="write.f90"
+              language="Fortran"
+              time="2009-03-27 18:07:57"
+              compiler-info="XcodeML/Fortran-FrontEnd"
+              version="1.0">
+  <typeTable>
+    <FbasicType type="C80a5d68" ref="Fcharacter">
+      <len><FintConstant type="Fint">12</FintConstant></len>
+    </FbasicType>
+    <FbasicType type="C80a5fe0" ref="Fcharacter">
+      <len><FintConstant type="Fint">3</FintConstant></len>
+    </FbasicType>
+    <FbasicType type="C80a6098" ref="Fcharacter">
+      <len><FintConstant type="Fint">12</FintConstant></len>
+    </FbasicType>
+    <FfunctionType type="F80a5b00" return_type="Fvoid" is_program="1" />
+  </typeTable>
+  <globalSymbols>
+    <id sclass="extern_def" type="F80a5b00">
+      <name type="F80a5b00">main</name>
+    </id>
+  </globalSymbols>
+  <globalDeclarations>
+    <FfunctionDefinition lineno="1" file="write.f90">
+      <name type="F80a5b00">main</name>
+      <symbols>
+      </symbols>
+      <declarations>
+      </declarations>
+      <body>
+        <FwriteStatement lineno="2" file="write.f90">
+          <namedValueList>
+            <namedValue name="UNIT" value="*" />
+            <namedValue name="FMT" value="*" />
+          </namedValueList>
+          <valueList>
+            <value>
+              <FcharacterConstant>Hello world!</FcharacterConstant>
+            </value>
+          </valueList>
+        </FwriteStatement>
+        <FwriteStatement lineno="3" file="write.f90">
+          <namedValueList>
+            <namedValue name="UNIT" value="*" />
+            <namedValue name="FMT" value="&quot;(A)&quot;" />
+          </namedValueList>
+          <valueList>
+            <value>
+              <FcharacterConstant>Hello world!</FcharacterConstant>
+            </value>
+          </valueList>
+        </FwriteStatement>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

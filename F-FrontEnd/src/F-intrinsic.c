@@ -1,0 +1,1001 @@
+/* 
+ * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
+ * $TSUKUBA_Copyright:
+ *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
+ *  $
+ */
+/**
+ * \file F-intrinsic.c
+ */
+
+#include "F-front.h"
+
+#include "F-intrinsics-types.h"
+
+#define isValidString(s)        (s != NULL && *s != '\0')
+#define isValidType(tp)         \
+    (tp != NULL && get_basic_type(tp) != TYPE_UNKNOWN)
+#define isValidTypedExpv(v)     (v != NULL && isValidType(EXPV_TYPE(v)))
+
+int langSpecSet = LANGSPEC_DEFAULT_SET;
+
+
+static int              compare_intrinsic_arg_type(expv arg,
+                                                   TYPE_DESC tp,
+                                                   INTR_DATA_TYPE iType);
+static void             generate_reverse_dimension_expr(TYPE_DESC tp,
+                                                        expr dimSpec);
+static TYPE_DESC        get_intrinsic_return_type(intrinsic_entry *ep,
+                                                  expv args);
+static BASIC_DATA_TYPE	intr_type_to_basic_type(INTR_DATA_TYPE iType);
+
+
+
+void
+initialize_intrinsic() {
+    int i;
+    SYMBOL sp;
+    intrinsic_entry *ep;
+
+    for (i = 0, ep = &intrinsic_table[0];
+        INTR_OP((ep = &intrinsic_table[i])) != INTR_END; i++){
+        if ((ep->langSpec & langSpecSet) == 0) {
+            continue;
+        }
+        if (!(isValidString(INTR_NAME(ep)))) {
+            continue;
+        }
+        if (INTR_HAS_KIND_ARG(ep)) {
+            if (INTR_RETURN_TYPE_SAME_AS(ep) != -1) {
+                fatal("%: Invalid intrinsic initialization.", __func__);
+            }
+        }
+        sp = find_symbol((char *)INTR_NAME(ep));
+        SYM_TYPE(sp) = S_INTR;
+        SYM_VAL(sp) = i;
+    }
+}
+
+
+int
+is_intrinsic_function(ID id) {
+    return (SYM_TYPE(ID_SYM(id)) == S_INTR) ? TRUE : FALSE;
+}
+
+
+expv 
+compile_intrinsic_call(ID id, expv args) {
+    intrinsic_entry *ep = NULL;
+    int found = 0;
+    int nArgs = 0;
+    int nIntrArgs = 0;
+    int i;
+    expv ret = NULL;
+    expv a = NULL;
+    TYPE_DESC tp = NULL, ftp;
+    list lp;
+    INTR_OPS iOps = INTR_END;
+    const char *iName = NULL;
+    int hasKind = 0;
+    int typeNotMatch = 0;
+    int isVarArgs = 0;
+    EXT_ID extid;
+
+    if (SYM_TYPE(ID_SYM(id)) != S_INTR) {
+        fatal("%s: not intrinsic symbol", __func__);
+    }
+    if (args == NULL) {
+        return NULL; /* error recovery */
+    }
+
+    ep = &(intrinsic_table[SYM_VAL(ID_SYM(id))]);
+    iOps = INTR_OP(ep);
+    iName = ID_NAME(id);
+
+    /* Count a number of argument, first. */
+    nArgs = 0;
+    FOR_ITEMS_IN_LIST(lp, args) {
+        nArgs++;
+    }
+
+    /* Search an intrinsic by checking argument types. */
+    found = 0;
+    for (;
+         ((INTR_OP(ep) == iOps) &&
+          ((strcasecmp(iName, INTR_NAME(ep)) == 0) ||
+           !(isValidString(INTR_NAME(ep)))));
+         ep++) {
+
+        hasKind = 0;
+        typeNotMatch = 0;
+        isVarArgs = 0;
+
+        /* Check a number of arguments. */
+        if (INTR_N_ARGS(ep) < 0 ||
+            INTR_N_ARGS(ep) == nArgs) {
+            /* varriable args or no kind arg. */
+            if (INTR_N_ARGS(ep) < 0) {
+                isVarArgs = 1;
+            }
+            nIntrArgs = nArgs;
+        } else if (INTR_HAS_KIND_ARG(ep) &&
+                   ((INTR_N_ARGS(ep) + 1) == nArgs)) {
+            /* could be intrinsic call with kind arg. */
+
+            expv lastV = expr_list_get_n(args, nArgs - 1);
+            if (lastV == NULL) {
+                return NULL;    /* error recovery */
+            }
+            tp = EXPV_TYPE(lastV);
+            if (!(isValidType(tp))) {
+                return NULL;    /* error recovery */
+            }
+            if (TYPE_BASIC_TYPE(tp) != TYPE_INT) {
+                /* kind arg must be integer type. */
+                continue;
+            }
+            nIntrArgs = INTR_N_ARGS(ep);
+            hasKind = 1;
+        } else {
+            continue;
+        }
+
+        /* The number of arguments matchs. Then check types. */
+        for (i = 0; i < nIntrArgs; i++) {
+            a = expr_list_get_n(args, i);
+            if (a == NULL) {
+                return NULL;    /* error recovery */
+            }
+            tp = EXPV_TYPE(a);
+            if (!(isValidType(tp))) {
+                return NULL;    /* error recovery */
+            }
+            if (compare_intrinsic_arg_type(a, tp,
+                                           ((isVarArgs == 0) ?
+                                            INTR_ARG_TYPE(ep)[i] :
+                                            INTR_ARG_TYPE(ep)[0])) != 0) {
+                /* Type mismatch. */
+                typeNotMatch = 1;
+                break;
+            }
+        }
+        if (typeNotMatch == 1) {
+            continue;
+        } else {
+            found = 1;
+            break;
+        }
+    }
+
+    if (found == 1) {
+        /* Yes we found an intrinsic to use. */
+        SYMBOL sp = NULL;
+        expv symV = NULL;
+
+        /* Then we have to determine return type. */
+        if (INTR_RETURN_TYPE(ep) != INTR_TYPE_NONE) {
+            tp = get_intrinsic_return_type(ep, args);
+            if (!(isValidType(tp))) {
+                fatal("%s: can't determine return type.", __func__);
+                return NULL;
+            }
+        } else {
+            tp = BASIC_TYPE_DESC(TYPE_SUBR);
+        }
+
+        /* Finally find symbol for the intrinsic and make it expv. */
+        sp = find_symbol((char *)iName);
+        if (sp == NULL) {
+            fatal("%s: symbol '%s' is not created??",
+                  __func__,
+                  INTR_NAME(ep));
+            /* not reached */
+            return NULL;
+        }
+        symV = expv_sym_term(F_FUNC, NULL, sp);
+        if (symV == NULL) {
+            fatal("%s: symbol expv creation failure.", __func__);
+            /* not reached */
+            return NULL;
+        }
+
+        ftp = function_type(tp);
+        TYPE_SET_INTRINSIC(ftp);
+        /* set external id for functionType's type ID.
+         * dont call declare_external_id() */
+        extid = new_external_id_for_external_decl(ID_SYM(id), ftp);
+        EXT_PROC_CLASS(extid) = EP_INTRINSIC;
+        ID_TYPE(id) = ftp;
+        PROC_EXT_ID(id) = extid;
+
+        ret = expv_cons(FUNCTION_CALL, tp, symV, args);
+    }
+
+    if (ret == NULL) {
+        error_at_node((expr)args,
+                      "argument(s) mismatch for an intrinsic '%s()'.",
+                      iName);
+    }
+    return ret;
+}
+
+
+
+/*
+ * Returns like strcmp().
+ */
+static int
+compare_intrinsic_arg_type(expv arg,
+    TYPE_DESC tp, INTR_DATA_TYPE iType) {
+
+    BASIC_DATA_TYPE bType;
+    int ret = 1;
+    int isArray = 0;
+
+    if(IS_GNUMERIC_ALL(tp))
+        return 0;
+
+    if (IS_ARRAY_TYPE(tp)) {
+        while (IS_ARRAY_TYPE(tp)) {
+            tp = TYPE_REF(tp);
+        }
+        isArray = 1;
+    }
+
+    bType = TYPE_BASIC_TYPE(tp);
+
+    if (isArray == 1) {
+        switch (iType) {
+            case INTR_TYPE_ANY_ARRAY: {
+                ret = 0;
+                break;
+            }
+            case INTR_TYPE_INT_ARRAY: {
+                if (bType == TYPE_INT ||
+                    bType == TYPE_GNUMERIC ||
+                    bType == TYPE_GNUMERIC_ALL) {
+                    ret = 0;
+                }
+                break;
+            }
+            case INTR_TYPE_REAL_ARRAY: {
+                if (bType == TYPE_REAL ||
+                    bType == TYPE_GNUMERIC ||
+                    bType == TYPE_GNUMERIC_ALL) {
+                    ret = 0;
+                }
+                break;
+            }
+            case INTR_TYPE_DREAL_ARRAY: {
+                if (type_is_possible_dreal(tp) ||
+                    bType == TYPE_GNUMERIC ||
+                    bType == TYPE_GNUMERIC_ALL) {
+                    ret = 0;
+                }
+                break;
+            }
+            case INTR_TYPE_ALL_REAL_ARRAY: {
+                if (bType == TYPE_REAL ||
+                    bType == TYPE_DREAL ||
+                    bType == TYPE_GNUMERIC ||
+                    bType == TYPE_GNUMERIC_ALL) {
+                    ret = 0;
+                }
+                break;
+            }
+            case INTR_TYPE_ALL_COMPLEX_ARRAY:
+            case INTR_TYPE_COMPLEX_ARRAY: {
+                if (bType == TYPE_COMPLEX ||
+                    bType == TYPE_DCOMPLEX ||
+                    bType == TYPE_GNUMERIC_ALL) {
+                    ret = 0;
+                }
+                break;
+            }
+            case INTR_TYPE_CHAR_ARRAY: {
+                if (bType == TYPE_CHAR) {
+                    ret = 0;
+                }
+                break;
+            }
+            case INTR_TYPE_LOGICAL_ARRAY: {
+                if (bType == TYPE_LOGICAL) {
+                    ret = 0;
+                }
+                break;
+            }
+            case INTR_TYPE_NUMERICS_ARRAY: {
+                if (bType == TYPE_INT ||
+                    bType == TYPE_REAL ||
+                    bType == TYPE_DREAL ||
+                    bType == TYPE_GNUMERIC ||
+                    bType == TYPE_GNUMERIC_ALL) {
+                    ret = 0;
+                }
+                break;
+            }
+            case INTR_TYPE_ALL_NUMERICS_ARRAY: {
+                if (bType == TYPE_INT ||
+                    bType == TYPE_REAL ||
+                    bType == TYPE_DREAL ||
+                    bType == TYPE_GNUMERIC ||
+                    bType == TYPE_COMPLEX ||
+                    bType == TYPE_DCOMPLEX ||
+                    bType == TYPE_GNUMERIC_ALL) {
+                    ret = 0;
+                }
+                break;
+            }
+
+            case INTR_TYPE_ANY_ARRAY_ALLOCATABLE: {
+                if (TYPE_IS_ALLOCATABLE(tp)) {
+                    ret = 0;
+                }
+                break;
+            }
+
+            default: {
+                goto DoCompareBasic;
+            }
+        }
+
+    } else {
+        DoCompareBasic:
+        switch (iType) {
+            case INTR_TYPE_ANY: {
+                ret = 0;
+                break;
+            }
+            case INTR_TYPE_INT: {
+                if (bType == TYPE_INT ||
+                    bType == TYPE_GNUMERIC ||
+                    bType == TYPE_GNUMERIC_ALL) {
+                    ret = 0;
+                }
+                break;
+            }
+            case INTR_TYPE_REAL: {
+                if (bType == TYPE_REAL ||
+                    bType == TYPE_GNUMERIC ||
+                    bType == TYPE_GNUMERIC_ALL) {
+                    ret = 0;
+                }
+                break;
+            }
+            case INTR_TYPE_DREAL: {
+                if (type_is_possible_dreal(tp) ||
+                    bType == TYPE_GNUMERIC ||
+                    bType == TYPE_GNUMERIC_ALL) {
+                    ret = 0;
+                }
+                break;
+            }
+            case INTR_TYPE_ALL_REAL: {
+                if (bType == TYPE_REAL ||
+                    bType == TYPE_DREAL ||
+                    bType == TYPE_GNUMERIC ||
+                    bType == TYPE_GNUMERIC_ALL) {
+                    ret = 0;
+                }
+                break;
+            }
+            case INTR_TYPE_ALL_COMPLEX:
+            case INTR_TYPE_COMPLEX: {
+                if (bType == TYPE_COMPLEX ||
+                    bType == TYPE_DCOMPLEX ||
+                    bType == TYPE_GNUMERIC_ALL) {
+                    ret = 0;
+                }
+                break;
+            }
+            case INTR_TYPE_DCOMPLEX: {
+                if (bType == TYPE_DCOMPLEX ||
+                    bType == TYPE_GNUMERIC ||
+                    bType == TYPE_GNUMERIC_ALL) {
+                    ret = 0;
+                }
+                break;
+            }
+            case INTR_TYPE_CHAR: {
+                if (bType == TYPE_CHAR) {
+                    ret = 0;
+                }
+                break;
+            }
+            case INTR_TYPE_LOGICAL: {
+                if (bType == TYPE_LOGICAL) {
+                    ret = 0;
+                }
+                break;
+            }
+            case INTR_TYPE_NUMERICS: {
+                if (bType == TYPE_INT ||
+                    bType == TYPE_REAL ||
+                    bType == TYPE_DREAL ||
+                    bType == TYPE_GNUMERIC) {
+                    ret = 0;
+                }
+                break;
+            }
+            case INTR_TYPE_ALL_NUMERICS: {
+                if (bType == TYPE_INT ||
+                    bType == TYPE_REAL ||
+                    bType == TYPE_DREAL ||
+                    bType == TYPE_GNUMERIC ||
+                    bType == TYPE_COMPLEX ||
+                    bType == TYPE_DCOMPLEX ||
+                    bType == TYPE_GNUMERIC_ALL) {
+                    ret = 0;
+                }
+                break;
+            }
+
+            case INTR_TYPE_POINTER:
+            case INTR_TYPE_TARGET:
+            case INTR_TYPE_ANY_OPTIONAL: {
+                ID id;
+                TYPE_DESC argtp = NULL;
+                switch(EXPV_CODE(arg)) {
+                    case(F_VAR): {
+                        id = find_ident(EXPV_NAME(arg));
+                        if(id == NULL)
+                            break;
+                        argtp = ID_TYPE(id);
+                    } break;
+                    case(F95_MEMBER_REF): {
+                        if(iType != INTR_TYPE_ANY_OPTIONAL)
+                            argtp = EXPV_TYPE(arg);
+                    } break;
+                    default: {
+                        break;
+                    }
+                }
+                if(argtp == NULL)
+                    break;
+                if(iType == INTR_TYPE_POINTER) {
+                    if(TYPE_IS_POINTER(argtp) == FALSE)
+                        break;
+                } else if(iType == INTR_TYPE_TARGET) {
+                    if(TYPE_IS_TARGET(argtp) == FALSE)
+                        break;
+                } else {
+                    if(TYPE_IS_OPTIONAL(argtp) == FALSE)
+                        break;
+                }
+                ret = 0;
+                break;
+            }
+
+            default: {
+                break;
+            }
+        }
+    }
+    return ret;
+}
+
+void
+generate_shape_expr(TYPE_DESC tp, expr dimSpec) {
+    expv dimElm;
+
+    if ((TYPE_REF(tp) == NULL) || !IS_ARRAY_TYPE(tp))
+        return;
+
+    dimElm = list3(LIST, TYPE_DIM_LOWER(tp), TYPE_DIM_UPPER(tp), TYPE_DIM_STEP(tp));
+    generate_shape_expr(TYPE_REF(tp), dimSpec);
+
+    if(TYPE_N_DIM(tp) != 0)
+        list_put_last(dimSpec, dimElm);
+}
+
+
+static void
+generate_assumed_shape_expr(expr dimSpec, int dim) {
+    expv dimElm;
+
+    if (dim == 1)
+        return;
+
+    dimElm = list3(LIST, NULL, NULL, NULL);
+
+    generate_assumed_shape_expr(dimSpec, dim - 1);
+
+    list_put_last(dimSpec, dimElm);
+}
+
+
+static void
+generate_contracted_shape_expr(TYPE_DESC tp, expr dimSpec, int dim) {
+    expv dimElm;
+
+    if ((TYPE_REF(tp) == NULL) || !IS_ARRAY_TYPE(tp))
+        return;
+
+    dimElm = list3(LIST, TYPE_DIM_LOWER(tp), TYPE_DIM_UPPER(tp), TYPE_DIM_STEP(tp));
+
+    if (dim == 0) {
+        generate_shape_expr(TYPE_REF(tp), dimSpec);
+    }  else {
+        generate_contracted_shape_expr(TYPE_REF(tp), dimSpec, dim - 1);
+        list_put_last(dimSpec, dimElm);
+    }
+}
+
+
+static void
+generate_expand_shape_expr(TYPE_DESC tp, expr dimSpec, expr extDim, int dim) {
+    expv dimElm;
+
+    if ((TYPE_REF(tp) == NULL) || !IS_ARRAY_TYPE(tp))
+        return;
+
+    dimElm = list3(LIST, TYPE_DIM_LOWER(tp), TYPE_DIM_UPPER(tp), TYPE_DIM_STEP(tp));
+
+    if (dim == 0) {
+        generate_shape_expr(tp, dimSpec);
+        list_put_last(dimSpec, extDim);
+    }  else {
+        generate_contracted_shape_expr(TYPE_REF(tp), dimSpec, dim - 1);
+        list_put_last(dimSpec, dimElm);
+    }
+}
+
+
+static void
+generate_reverse_dimension_expr(TYPE_DESC tp, expr dimSpec) {
+
+    if (TYPE_REF(tp) != NULL && IS_ARRAY_TYPE(tp)) {
+
+        expr lower = NULL;
+        expr upper = NULL;
+        expr step = NULL;
+        expr dims = NULL;
+        int n;
+
+        if (TYPE_DIM_UPPER(tp) != NULL) {
+            n = (int)EXPV_INT_VALUE(TYPE_DIM_UPPER(tp));
+            upper = make_int_enode(n);
+        }
+        if (TYPE_DIM_LOWER(tp) != NULL) {
+            n = (int)EXPV_INT_VALUE(TYPE_DIM_LOWER(tp));
+            lower = make_int_enode(n);
+        }
+        if (TYPE_DIM_STEP(tp) != NULL) {
+            n = (int)EXPV_INT_VALUE(TYPE_DIM_STEP(tp));
+            step = make_int_enode(n);
+        }
+
+        dims = list3(LIST, lower, upper, step);
+        list_put_last(dimSpec, dims);
+        generate_reverse_dimension_expr(TYPE_REF(tp), dimSpec);
+    }
+}
+
+
+static BASIC_DATA_TYPE
+intr_type_to_basic_type(INTR_DATA_TYPE iType) {
+    BASIC_DATA_TYPE ret = TYPE_UNKNOWN;
+
+    switch (iType) {
+        case INTR_TYPE_NONE: {
+            break;
+        }
+
+        case INTR_TYPE_INT_DYNAMIC_ARRAY:
+        case INTR_TYPE_INT_ARRAY:
+        case INTR_TYPE_INT: {
+            ret = TYPE_INT;
+            break;
+        }
+
+        case INTR_TYPE_ALL_REAL_DYNAMIC_ARRAY:
+        case INTR_TYPE_REAL_DYNAMIC_ARRAY:
+        case INTR_TYPE_ALL_REAL_ARRAY:
+        case INTR_TYPE_REAL_ARRAY:
+        case INTR_TYPE_ALL_REAL:
+        case INTR_TYPE_REAL: {
+            ret = TYPE_REAL;
+            break;
+        }
+
+        case INTR_TYPE_DREAL_DYNAMIC_ARRAY:
+        case INTR_TYPE_DREAL_ARRAY:
+        case INTR_TYPE_DREAL: {
+            ret = TYPE_DREAL;
+            break;
+        }
+
+        case INTR_TYPE_ALL_COMPLEX_DYNAMIC_ARRAY:
+        case INTR_TYPE_COMPLEX_DYNAMIC_ARRAY:
+        case INTR_TYPE_ALL_COMPLEX_ARRAY:
+        case INTR_TYPE_COMPLEX_ARRAY:
+        case INTR_TYPE_ALL_COMPLEX:
+        case INTR_TYPE_COMPLEX: {
+            ret = TYPE_COMPLEX;
+            break;
+        }
+
+        case INTR_TYPE_DCOMPLEX_DYNAMIC_ARRAY:
+        case INTR_TYPE_DCOMPLEX_ARRAY:
+        case INTR_TYPE_DCOMPLEX: {
+            ret = TYPE_DCOMPLEX;
+            break;
+        }
+
+        case INTR_TYPE_CHAR_DYNAMIC_ARRAY:
+        case INTR_TYPE_CHAR_ARRAY:
+        case INTR_TYPE_CHAR: {
+            ret = TYPE_CHAR;
+            break;
+        }
+
+        case INTR_TYPE_LOGICAL_DYNAMIC_ARRAY:
+        case INTR_TYPE_LOGICAL_ARRAY:
+        case INTR_TYPE_LOGICAL: {
+            ret = TYPE_LOGICAL;
+            break;
+        }
+
+        case INTR_TYPE_ANY_DYNAMIC_ARRAY:
+        case INTR_TYPE_ANY_ARRAY:
+        case INTR_TYPE_ANY: {
+            /*
+             * FIXME: The super type is needed.
+             */
+            ret = TYPE_UNKNOWN;
+            break;
+        }
+
+        case INTR_TYPE_NUMERICS_DYNAMIC_ARRAY:
+        case INTR_TYPE_NUMERICS_ARRAY:
+        case INTR_TYPE_NUMERICS: {
+            ret = TYPE_GNUMERIC;
+            break;
+        }
+
+        case INTR_TYPE_ALL_NUMERICS_DYNAMIC_ARRAY:
+        case INTR_TYPE_ALL_NUMERICS_ARRAY:
+        case INTR_TYPE_ALL_NUMERICS: {
+            ret = TYPE_GNUMERIC_ALL;
+            break;
+        }
+
+        case INTR_TYPE_POINTER: {
+            /*
+             * FIXME:
+             */
+            ret = TYPE_UNKNOWN;
+            break;
+        }
+
+        case INTR_TYPE_TARGET: {
+            /*
+             * FIXME:
+             */
+            ret = TYPE_UNKNOWN;
+            break;
+        }
+
+        case INTR_TYPE_ANY_ARRAY_ALLOCATABLE: {
+            ret = TYPE_UNKNOWN;
+            break;
+        }
+
+        default: {
+            fatal("%s: Unknown INTR_TYPE.", __func__);
+            break;
+        }
+    }
+
+    return ret;
+}
+
+
+static TYPE_DESC
+intr_convert_to_dimension_ifneeded(intrinsic_entry *ep,
+    expv args, TYPE_DESC ret_tp)
+{
+    TYPE_DESC tp0;
+
+    if(INTR_RETURN_TYPE_SAME_AS(ep) == -6)
+        return ret_tp;
+
+    tp0 = EXPV_TYPE(EXPR_ARG1(args));
+
+    if(INTR_IS_ARG_TYPE0_ARRAY(ep) == FALSE &&
+        IS_ARRAY_TYPE(tp0)) {
+        ret_tp = copy_dimension(tp0, get_bottom_ref_type(ret_tp));
+    }
+
+    return ret_tp;
+}
+
+
+static TYPE_DESC
+get_intrinsic_return_type(intrinsic_entry *ep, expv args) {
+    TYPE_DESC ret = NULL;
+    expv a = NULL;
+
+    if (INTR_RETURN_TYPE(ep) == INTR_TYPE_NONE) {
+        return NULL;
+    }
+
+    if (INTR_RETURN_TYPE_SAME_AS(ep) >= 0) {
+        /* return type is in args. */
+        a = expr_list_get_n(args, INTR_RETURN_TYPE_SAME_AS(ep));
+        if (!(isValidTypedExpv(a))) {
+            return NULL;
+        }
+        ret = EXPV_TYPE(a);
+    } else {
+        switch (INTR_RETURN_TYPE_SAME_AS(ep)) {
+
+            case -1 /* if not dynamic return type,
+                        argument is scalar/array and
+                        return type is scalar/array */ :
+            case -6 /* if not dynamic return type,
+                        argument is scalar/array, return
+                        return type is scalar */ : {
+
+                if (!(INTR_IS_RETURN_TYPE_DYNAMIC(ep))) {
+                    BASIC_DATA_TYPE bType =
+                        intr_type_to_basic_type(INTR_RETURN_TYPE(ep));
+                    if (bType == TYPE_UNKNOWN) {
+                        ret = NULL;
+                    } else {
+                        ret = (bType != TYPE_CHAR) ? type_basic(bType) :
+                            type_char(1);
+                    }
+                    ret = intr_convert_to_dimension_ifneeded(
+                        ep, args, ret);
+                } else {
+                    expv shape = list0(LIST);
+                    TYPE_DESC tp, bTypeDsc;
+
+                    switch (INTR_OP(ep)) {
+
+                    case INTR_ALL:
+                    case INTR_ANY:
+                    case INTR_MAXVAL:
+                    case INTR_MINVAL:
+                    case INTR_PRODUCT:
+                    case INTR_SUM:
+                    case INTR_COUNT:
+                    {
+                        /* intrinsic arguments */
+                        expv array, dim;
+
+                        array = expr_list_get_n(args, 0);
+                        if (!(isValidTypedExpv(array))) {
+                            return NULL;
+                        }
+                        tp = EXPV_TYPE(array);
+
+                        dim = expr_list_get_n(args, 1);
+                        if (!(isValidTypedExpv(dim))) {
+                            return NULL;
+                        }
+
+                        /* set basic type of array type */
+                        switch (INTR_OP(ep)) {
+                        case INTR_ALL:
+                        case INTR_ANY:
+                            bTypeDsc = BASIC_TYPE_DESC(TYPE_LOGICAL);
+                            break;
+                        case INTR_COUNT:
+                            bTypeDsc = BASIC_TYPE_DESC(TYPE_INT);
+                            break;
+                        default:
+                            bTypeDsc = BASIC_TYPE_DESC(get_basic_type(tp));
+                        }
+
+                        dim = expv_reduce(dim, FALSE);
+
+                        if(EXPV_CODE(dim) == INT_CONSTANT) {
+                            int nDim;
+                            nDim  = (int)EXPV_INT_VALUE(dim);
+
+                            if(nDim > TYPE_N_DIM(tp) || nDim <= 0) {
+                                error("value DIM of intrinsic %s out of range.", INTR_NAME(ep));
+                                return NULL;
+                            }
+
+                            generate_contracted_shape_expr(tp, shape, TYPE_N_DIM(tp) - nDim);
+                        } else {
+                            generate_assumed_shape_expr(shape, TYPE_N_DIM(tp) - 1);
+                        }
+                    }
+                        break;
+                    case INTR_SPREAD:
+                    {
+                        /* intrinsic arguments */
+                        expv array, dim, ncopies;
+
+                        array = expr_list_get_n(args, 0);
+                        if (!(isValidTypedExpv(array))) {
+                            return NULL;
+                        }
+                        dim = expr_list_get_n(args, 1);
+                        if (!(isValidTypedExpv(dim))) {
+                            return NULL;
+                        }
+                        ncopies = expr_list_get_n(args, 2);
+                        if (!(isValidTypedExpv(ncopies))) {
+                            return NULL;
+                        }
+
+                        tp = EXPV_TYPE(array);
+                        bTypeDsc = BASIC_TYPE_DESC(get_basic_type(tp));
+                        dim = expv_reduce(dim, FALSE);
+
+                        if(EXPR_CODE(dim) == INT_CONSTANT) {
+                            int nDim;
+                            nDim  = (int)EXPV_INT_VALUE(dim);
+
+                            if(nDim > (TYPE_N_DIM(tp) + 1) || nDim <= 0) {
+                                error("value DIM of intrinsic %s out of range.", INTR_NAME(ep));
+                                return NULL;
+                            }
+
+                            generate_expand_shape_expr(tp, shape, ncopies, TYPE_N_DIM(tp) + 1 - nDim);
+                        } else {
+                            generate_assumed_shape_expr(shape, TYPE_N_DIM(tp) - 1);
+                        }
+                    }
+                    break;
+
+                    case INTR_RESHAPE:
+                    {
+                        /* intrinsic arguments */
+                        expv source, arg_shape;
+
+                        source = expr_list_get_n(args, 0);
+                        if (!(isValidTypedExpv(source))) {
+                            return NULL;
+                        }
+                        arg_shape = expr_list_get_n(args, 1);
+                        if (!(isValidTypedExpv(arg_shape))) {
+                            return NULL;
+                        }
+
+                        tp = EXPV_TYPE(source);
+                        bTypeDsc = BASIC_TYPE_DESC(get_basic_type(tp));
+
+                        tp = EXPV_TYPE(arg_shape);
+                        if(TYPE_N_DIM(tp) != 1) {
+                            error("SHAPE argument of intrinsic RESHAPE is not vector.");
+                            return NULL;
+                        }
+
+                        /* check if arg_shape is array constructer. */
+
+                        {
+                            int nDims;
+                            expv upper, lower, step;
+
+                            upper = expv_reduce(TYPE_DIM_UPPER(tp), FALSE);
+                            lower = expv_reduce(TYPE_DIM_LOWER(tp), FALSE);
+                            step  = expv_reduce(TYPE_DIM_STEP(tp), FALSE);
+
+                            if(upper != NULL && EXPV_CODE(upper) == INT_CONSTANT &&
+                               lower != NULL && EXPV_CODE(lower) == INT_CONSTANT &&
+                               (step == NULL || EXPV_CODE(step) != INT_CONSTANT)) {
+
+                                nDims = (int)EXPV_INT_VALUE(upper) -
+                                    (int)EXPV_INT_VALUE(lower) + 1;
+
+                                if(step != NULL) {
+                                    nDims = nDims / ((int)EXPV_INT_VALUE(step));
+                                }
+
+                                generate_assumed_shape_expr(shape, nDims);
+
+                            } else {
+                                /* not  reached ! */
+                                ret = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+                            }
+                        }
+
+                    }
+                    break;
+
+                    default:
+                        /* not  reached ! */
+                        ret = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+                    }
+
+                    ret = compile_dimensions(bTypeDsc, shape);
+                    fix_array_dimensions(ret);
+                }
+
+                break;
+            }
+
+            case -2: {
+                /*
+                 * Returns BASIC_TYPE of the first arg.
+                 */
+                BASIC_DATA_TYPE bType;
+                a = expr_list_get_n(args, 0);
+                if (!(isValidTypedExpv(a))) {
+                    return NULL;
+                }
+                bType = get_basic_type(EXPV_TYPE(a));
+                ret = BASIC_TYPE_DESC(bType);
+                break;
+            }
+
+            case -3: {
+                /*
+                 * Returns single dimension array of integer having
+                 * elemnets that equals to the first arg's dimension.
+                 */
+                TYPE_DESC bTypDsc = BASIC_TYPE_DESC(TYPE_INT);
+                TYPE_DESC tp = NULL;
+                expr dims = NULL;
+                int nDims = 0;
+                a = expr_list_get_n(args, 0);
+                if (!(isValidTypedExpv(a))) {
+                    return NULL;
+                }
+
+                tp = EXPV_TYPE(a);
+                nDims = TYPE_N_DIM(tp);
+                dims = list1(LIST, make_int_enode(nDims));
+                ret = compile_dimensions(bTypDsc, dims);
+                fix_array_dimensions(ret);
+
+                break;
+            }
+
+            case -4:{
+                /*
+                 * Returns transpose of the first arg (matrix).
+                 */
+                BASIC_DATA_TYPE bType = TYPE_UNKNOWN;
+                TYPE_DESC bTypDsc = NULL;
+                TYPE_DESC tp = NULL;
+                expr dims = list0(LIST);
+
+                a = expr_list_get_n(args, 0);
+                if (!(isValidTypedExpv(a))) {
+                    return NULL;
+                }
+                tp = EXPV_TYPE(a);
+                bType = get_basic_type(tp);
+                bTypDsc = BASIC_TYPE_DESC(bType);
+
+                if (TYPE_N_DIM(tp) != 2) {
+                    error("Dimension is not two.");
+                    return NULL;
+                }
+
+                generate_reverse_dimension_expr(tp, dims);
+                ret = compile_dimensions(bTypDsc, dims);
+                fix_array_dimensions(ret);
+
+                break;
+            }
+
+            case -5: {
+                /* -5 : BASIC_TYPE of return type is 'returnType'
+                    and kind of return type is same as first
+                    arg. */
+                a = expr_list_get_n(args, 0);
+                if (!(isValidTypedExpv(a)))
+                    return NULL;
+                ret = type_basic(intr_type_to_basic_type(INTR_RETURN_TYPE(ep)));
+                TYPE_KIND(ret) = TYPE_KIND(get_bottom_ref_type(EXPV_TYPE(a)));
+                ret = intr_convert_to_dimension_ifneeded(ep, args, ret);
+                break;
+            }
+
+            default: {
+                fatal("%s: Unknown return type specification.", __func__);
+                break;
+            }
+        }
+    }
+
+    return ret;
+}

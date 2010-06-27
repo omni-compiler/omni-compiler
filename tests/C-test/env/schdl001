@@ -1,0 +1,48 @@
+#!/bin/sh
+
+# $Id$
+# $RWC_Release$
+# $RWC_Copyright$
+
+
+ERROR=0
+
+OMP_SCHEDULE="static"
+export OMP_SCHEDULE
+RESULT=`$EXEC ./schedule static | grep -v SCore-D`
+if [ "$RESULT" != "scheduling test is SUCCESS(static,0)." ] ; then
+  echo $RESULT
+  ERROR=1
+fi
+
+OMP_SCHEDULE="static,1"
+export OMP_SCHEDULE
+RESULT=`$EXEC ./schedule static 1 | grep -v SCore-D`
+if [ "$RESULT" != "scheduling test is SUCCESS(static,1)." ] ; then
+  echo $RESULT
+  ERROR=1
+fi
+
+OMP_SCHEDULE="static,2"
+export OMP_SCHEDULE
+RESULT=`$EXEC ./schedule static 2 | grep -v SCore-D`
+if [ "$RESULT" != "scheduling test is SUCCESS(static,2)." ] ; then
+  echo $RESULT
+  ERROR=1
+fi
+
+OMP_SCHEDULE="static,100"
+export OMP_SCHEDULE
+RESULT=`$EXEC ./schedule static 100 | grep -v SCore-D`
+if [ "$RESULT" != "scheduling test is SUCCESS(static,100)." ] ; then
+  echo $RESULT
+  ERROR=1
+fi
+
+
+
+if [ "$ERROR" = "0" ] ; then
+  echo "OMP_SCHEDULE 001 : SUCCESS"
+else
+  echo "OMP_SCHEDULE 001 : FAILED"
+fi

@@ -1,0 +1,46 @@
+<XcodeProgram source="namelist.f90"
+              language="Fortran"
+              time="2009-03-27 18:07:57"
+              compiler-info="XcodeML/Fortran-FrontEnd"
+              version="1.0">
+  <typeTable>
+    <FbasicType type="B80a63a0" ref="Fint" />
+    <FbasicType type="B80a6410" ref="Fint" />
+    <FbasicType type="B80a6480" ref="Fint" />
+    <FfunctionType type="F80a5b08" return_type="Fvoid" is_program="1" />
+  </typeTable>
+  <globalSymbols>
+    <id sclass="extern_def" type="F80a5b08">
+      <name type="F80a5b08">main</name>
+    </id>
+  </globalSymbols>
+  <globalDeclarations>
+    <FfunctionDefinition lineno="1" file="namelist.f90">
+      <name type="F80a5b08">main</name>
+      <symbols>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">a</name>
+        </id>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">b</name>
+        </id>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">c</name>
+        </id>
+      </symbols>
+      <declarations>
+        <varDecl lineno="2" file="namelist.f90">
+          <name type="Fint">a</name>
+        </varDecl>
+        <varDecl lineno="2" file="namelist.f90">
+          <name type="Fint">b</name>
+        </varDecl>
+        <varDecl lineno="2" file="namelist.f90">
+          <name type="Fint">c</name>
+        </varDecl>
+      </declarations>
+      <body>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

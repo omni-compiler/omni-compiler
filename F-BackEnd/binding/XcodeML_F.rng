@@ -1,0 +1,1580 @@
+<?xml version="1.0"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0"
+         xmlns:java="http://www.relaxer.org/xmlns/relaxer/java">
+  <!--
+  $TSUKUBA_Release$
+  $TSUKUBA_Copyright$ 
+-->
+
+  <start>
+    <ref name="XcodeProgram"/>
+  </start>
+
+<!-- ========================================= -->
+<!-- type definition                           -->
+<!-- ========================================= -->
+
+<define name="defTypeString">
+  <data type="string"/>
+</define>
+
+<define name="defTypeBoolean">
+  <data type="boolean" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes"/>
+</define>
+
+<define name="defTypeInt">
+  <data type="int" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes"/>
+</define>
+
+<!-- ========================================= -->
+<!-- choice definition                         -->
+<!-- ========================================= -->
+
+<define name="defChoiceBoolean">
+  <!--
+  <choice>
+    <value>0</value>
+    <value>1</value>
+    <value>true</value>
+    <value>false</value>
+  </choice>
+  -->
+  <ref name="defTypeBoolean"/>
+</define>
+
+<define name="defChoiceIntent">
+  <choice>
+    <value>in</value>
+    <value>out</value>
+    <value>inout</value>
+  </choice>
+</define>
+
+<define name="defChoiceScope">
+  <choice>
+    <value>local</value>
+    <value>global</value>
+    <value>param</value>
+  </choice>
+</define>
+
+<define name="defChoiceSclass">
+  <choice>
+    <value>flocal</value>
+    <value>fsave</value>
+    <value>fcommon</value>
+    <value>fparam</value>
+    <value>ffunc</value>
+    <value>ftype_name</value>
+    <value>fcommon_name</value>
+    <value>fnamelist_name</value>
+  </choice>
+</define>
+
+<!-- ========================================= -->
+<!-- attribute definition                      -->
+<!-- ========================================= -->
+
+<define name="defAttrProgram">
+  <optional>
+    <attribute name="compiler-info">
+      <data type="string"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="version">
+      <data type="string"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="time">
+      <data type="string"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="language">
+      <data type="string"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="source">
+      <data type="string"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrTypeName">
+  <optional>
+    <attribute name="type"> 
+      <data type="string"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrRefTypeName">
+  <optional>
+    <attribute name="ref">
+      <data type="string"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrReturnTypeName">
+  <optional>
+    <attribute name="return_type">
+      <data type="string"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrResultName">
+  <optional>
+    <attribute name="result_name">
+      <data type="string"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrBasicTypeModifier">
+  <optional>
+    <attribute name="is_public">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="is_private">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="is_pointer">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="is_target">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="is_optional">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="is_save">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="is_parameter">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="is_allocatable">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="intent">
+      <ref name="defChoiceIntent"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrFunction">
+  <optional>
+    <attribute name="is_intrinsic">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrStructTypeModifier">
+  <optional>
+    <attribute name="is_public">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="is_private">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="is_sequence">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="is_internal_private">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrFunctionTypeModifier">
+  <optional>
+    <attribute name="is_recursive">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="is_program">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="is_internal">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="is_intrinsic">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="is_external">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="is_public">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="is_private">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrSclass">
+  <optional>
+    <attribute name="sclass">
+      <ref name="defChoiceSclass"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrInterface">
+  <optional>
+    <attribute name="is_operator">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="is_assignment">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrRename">
+  <optional>
+    <attribute name="use_name">
+      <data type="string"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="local_name">
+      <data type="string"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrRenamable">
+  <optional>
+    <attribute name="use_name">
+      <data type="string"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="local_name">
+      <data type="string"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrKind">
+  <optional>
+    <attribute name="kind">
+      <data type="string"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrScope">
+  <optional>
+    <attribute name="scope">
+      <ref name="defChoiceScope"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrMemberNameRef">
+  <optional>
+    <attribute name="member">
+      <data type="string"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrSourceLine">
+  <optional>
+    <attribute name="lineno">
+      <data type="string"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="rawlineno">
+      <data type="string"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="file">
+      <data type="string"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrGenericName">
+  <optional>
+    <attribute name="name">
+      <data type="string"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrConstructName">
+  <optional>
+    <attribute name="construct_name">
+      <data type="string"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrLabelName">
+  <optional>
+    <attribute name="label_name">
+      <data type="string"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrCode">
+  <optional>
+    <attribute name="code">
+      <data type="string"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrMessage">
+  <optional>
+    <attribute name="message">
+      <data type="string"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrStatName">
+  <optional>
+    <attribute name="stat_name">
+      <data type="string"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrFormatSpec">
+  <optional>
+    <attribute name="format">
+      <data type="string"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrValue">
+  <optional>
+    <attribute name="value">
+      <data type="string"/>
+    </attribute>
+  </optional>
+</define>
+
+<define name="defAttrIndexRange">
+  <optional>
+    <attribute name="is_assumed_shape">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="is_assumed_size">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+</define>
+
+
+<!-- ========================================= -->
+<!-- content model definition                  -->
+<!-- ========================================= -->
+
+<define name="defModelLValue">
+  <choice>
+    <ref name="Var"/>
+    <ref name="FarrayRef"/>
+    <ref name="FcharacterRef"/>
+    <ref name="FmemberRef"/>
+  </choice>
+</define>
+
+<define name="defModelExpr">
+  <choice>
+    <ref name="FintConstant"/>
+    <ref name="FrealConstant"/>
+    <ref name="FcomplexConstant"/>
+    <ref name="FcharacterConstant"/>
+    <ref name="FlogicalConstant"/>
+    <ref name="FarrayConstructor"/>
+    <ref name="FstructConstructor"/>
+    <ref name="Var"/>
+    <ref name="FarrayRef"/>
+    <ref name="FcharacterRef"/>
+    <ref name="FmemberRef"/>
+    <ref name="varRef"/>
+    <ref name="functionCall"/>
+    <ref name="plusExpr"/>
+    <ref name="minusExpr"/>
+    <ref name="mulExpr"/>
+    <ref name="divExpr"/>
+    <ref name="FpowerExpr"/>
+    <ref name="FconcatExpr"/>
+    <ref name="logEQExpr"/>
+    <ref name="logNEQExpr"/>
+    <ref name="logGEExpr"/>
+    <ref name="logGTExpr"/>
+    <ref name="logLEExpr"/>
+    <ref name="logLTExpr"/>
+    <ref name="logAndExpr"/>
+    <ref name="logOrExpr"/>
+    <ref name="logEQVExpr"/>
+    <ref name="logNEQVExpr"/>
+    <ref name="unaryMinusExpr"/>
+    <ref name="logNotExpr"/>
+    <ref name="userBinaryExpr"/>
+    <ref name="userUnaryExpr"/>
+    <ref name="FdoLoop"/>
+  </choice>
+</define>
+
+<define name="defModelExprList">
+  <zeroOrMore>
+    <ref name="defModelExpr"/>
+  </zeroOrMore>
+</define>
+
+<define name="defModelBinaryOperation">
+  <ref name="defAttrTypeName"/>
+  <ref name="defModelExpr"/>
+  <ref name="defModelExpr"/>
+</define>
+
+<define name="defModelUnaryOperation">
+  <ref name="defAttrTypeName"/>
+  <ref name="defModelExpr"/>
+</define>
+
+<define name="defModelStatement">
+  <choice>
+    <ref name="FassignStatement"/>
+    <ref name="exprStatement"/>
+    <ref name="FpointerAssignStatement"/>
+    <ref name="FifStatement"/>
+    <ref name="FdoStatement"/>
+    <ref name="FdoWhileStatement"/>
+    <ref name="continueStatement"/>
+    <ref name="FcycleStatement"/>
+    <ref name="FexitStatement"/>
+    <ref name="FreturnStatement"/>
+    <ref name="gotoStatement"/>
+    <ref name="statementLabel"/>
+    <ref name="FselectCaseStatement"/>
+    <ref name="FcaseLabel"/>
+    <ref name="FwhereStatement"/>
+    <ref name="FstopStatement"/>
+    <ref name="FpauseStatement"/>
+    <ref name="FreadStatement"/>
+    <ref name="FwriteStatement"/>
+    <ref name="FprintStatement"/>
+    <ref name="FrewindStatement"/>
+    <ref name="FendFileStatement"/>
+    <ref name="FbackspaceStatement"/>
+    <ref name="FopenStatement"/>
+    <ref name="FcloseStatement"/>
+    <ref name="FinquireStatement"/>
+    <ref name="FformatDecl"/>
+    <ref name="FdataDecl"/>
+    <ref name="FentryDecl"/>
+    <ref name="FallocateStatement"/>
+    <ref name="FdeallocateStatement"/>
+    <ref name="FnullifyStatement"/>
+    <ref name="FpragmaStatement"/>
+    <ref name="FcontainsStatement"/>
+    <ref name="text"/>
+  </choice>
+</define>
+
+<define name="defModelArraySubscript">
+  <choice>
+    <ref name="indexRange"/>
+    <ref name="arrayIndex"/>
+  </choice>
+</define>
+
+<define name="defModelArraySubscriptSequence0">
+  <zeroOrMore>
+    <ref name="defModelArraySubscript"/>
+  </zeroOrMore>
+</define>
+
+<define name="defModelArraySubscriptSequence1">
+  <oneOrMore>
+    <ref name="defModelArraySubscript"/>
+  </oneOrMore>
+</define>
+
+<!-- ========================================= -->
+<!-- generic element                           -->
+<!-- ========================================= -->
+
+<define name="XcodeProgram">
+  <element name="XcodeProgram" java:extends="xcodeml.f.XmfObj"
+  java:implements="xcodeml.binding.XmXcodeProgram">
+    <ref name="defAttrProgram"/>
+    <ref name="typeTable"/>
+    <ref name="globalSymbols"/>
+    <ref name="globalDeclarations"/>
+  </element>
+</define>
+
+<define name="typeTable">
+  <element name="typeTable" java:extends="xcodeml.f.XmfObj">
+    <zeroOrMore>
+      <choice>
+        <ref name="FbasicType"/>
+        <ref name="FfunctionType"/>
+        <ref name="FstructType"/>
+      </choice>
+    </zeroOrMore>
+  </element>
+</define>
+
+<define name="FbasicType">
+  <element name="FbasicType" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfType">
+    <ref name="defAttrTypeName"/>
+    <ref name="defAttrRefTypeName"/>
+    <ref name="defAttrBasicTypeModifier"/>
+    <optional>
+      <ref name="kind"/>
+    </optional>
+    <optional>
+      <choice>
+        <ref name="len"/>
+        <ref name="defModelArraySubscriptSequence1"/>
+      </choice>
+    </optional>
+  </element>
+</define>
+
+<define name="FfunctionType">
+  <element name="FfunctionType" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfType">
+    <ref name="defAttrTypeName"/>
+    <ref name="defAttrReturnTypeName"/>
+    <ref name="defAttrResultName"/>
+    <ref name="defAttrFunctionTypeModifier"/>
+    <optional>
+      <ref name="params"/>
+    </optional>
+  </element>
+</define>
+
+<define name="FstructType">
+  <element name="FstructType" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfType">
+    <ref name="defAttrTypeName"/>
+    <ref name="defAttrStructTypeModifier"/>
+    <ref name="symbols"/>
+  </element>
+</define>
+
+<define name="globalSymbols">
+  <element name="globalSymbols" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbSymbols">
+    <zeroOrMore>
+      <ref name="id"/>
+    </zeroOrMore>
+  </element>
+</define>
+
+<define name="globalDeclarations">
+  <element name="globalDeclarations" java:extends="xcodeml.f.XmfObj">
+    <zeroOrMore>
+      <choice>
+        <ref name="FfunctionDefinition"/>
+        <ref name="FmoduleDefinition"/>
+        <ref name="FblockDataDefinition"/>
+        <ref name="text"/>
+      </choice>
+    </zeroOrMore>
+  </element>
+</define>
+
+<define name="FfunctionDefinition">
+  <element name="FfunctionDefinition" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbLineNo">
+    <ref name="defAttrSourceLine"/>
+    <ref name="name"/>
+    <optional>
+      <ref name="symbols"/>
+    </optional>
+    <optional>
+      <ref name="declarations"/>
+    </optional>
+    <ref name="body"/>
+  </element>
+</define>
+
+<define name="varDecl">
+  <element name="varDecl" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbLineNo">
+    <ref name="defAttrSourceLine"/>
+    <ref name="name"/>
+    <optional>
+      <ref name="value"/>
+    </optional>
+  </element>
+</define>
+
+<define name="FstructDecl">
+  <element name="FstructDecl" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbLineNo">
+    <ref name="defAttrSourceLine"/>
+    <ref name="name"/>
+  </element>
+</define>
+
+<define name="externDecl">
+  <element name="externDecl" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbLineNo">
+    <ref name="defAttrSourceLine"/>
+    <ref name="name"/>
+  </element>
+</define>
+
+<define name="FmoduleDefinition">
+  <element name="FmoduleDefinition" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbLineNo">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defAttrGenericName"/>
+    <optional>
+      <ref name="symbols"/>
+    </optional>
+    <optional>
+      <ref name="declarations"/>
+    </optional>
+    <optional>
+      <ref name="FcontainsStatement"/>
+    </optional>
+  </element>
+</define>
+
+<define name="FuseDecl">
+  <element name="FuseDecl" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbLineNo">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defAttrGenericName"/>
+    <zeroOrMore>
+      <ref name="rename"/>
+    </zeroOrMore>
+  </element>
+</define>
+
+<define name="FuseOnlyDecl">
+  <element name="FuseOnlyDecl" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbLineNo">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defAttrGenericName"/>
+    <zeroOrMore>
+      <ref name="renamable"/>
+    </zeroOrMore>
+  </element>
+</define>
+
+<define name="FinterfaceDecl">
+  <element name="FinterfaceDecl" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbLineNo">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defAttrGenericName"/>
+    <ref name="defAttrInterface"/>
+    <zeroOrMore>
+      <choice>
+        <ref name="FfunctionDecl"/>
+        <ref name="FmoduleProcedureDecl"/>
+      </choice>
+    </zeroOrMore>
+  </element>
+</define>
+
+<define name="FmoduleProcedureDecl">
+  <element name="FmoduleProcedureDecl" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbLineNo">
+    <ref name="defAttrSourceLine"/>
+    <zeroOrMore>
+      <ref name="name"/>
+    </zeroOrMore>
+  </element>
+</define>
+
+<define name="FblockDataDefinition">
+  <element name="FblockDataDefinition" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbLineNo">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defAttrGenericName"/>
+    <optional>
+      <ref name="symbols"/>
+    </optional>
+    <optional>
+      <ref name="declarations"/>
+    </optional>
+  </element>
+</define>
+
+<define name="FfunctionDecl">
+  <element name="FfunctionDecl" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbLineNo">
+    <ref name="defAttrSourceLine"/>
+    <ref name="name"/>
+    <optional>
+      <ref name="declarations"/>
+    </optional>
+  </element>
+</define>
+
+<define name="symbols">
+  <element name="symbols" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbSymbols">
+    <zeroOrMore>
+      <ref name="id"/>
+    </zeroOrMore>
+  </element>
+</define>
+
+<define name="declarations">
+  <element name="declarations" java:extends="xcodeml.f.XmfObj">
+    <zeroOrMore>
+      <choice>
+        <ref name="varDecl"/>
+        <ref name="externDecl"/>
+        <ref name="FuseDecl"/>
+        <ref name="FuseOnlyDecl"/>
+        <ref name="FinterfaceDecl"/>
+        <ref name="FnamelistDecl"/>
+        <ref name="FequivalenceDecl"/>
+        <ref name="FcommonDecl"/>
+        <ref name="FstructDecl"/>
+        <ref name="FentryDecl"/>
+        <ref name="FdataDecl"/>
+        <ref name="FpragmaStatement"/>
+      </choice>
+    </zeroOrMore>
+  </element>
+</define>
+
+<define name="lowerBound">
+  <element name="lowerBound" java:extends="xcodeml.f.XmfObj">
+    <ref name="defModelExpr"/>
+  </element>
+</define>
+
+<define name="upperBound">
+  <element name="upperBound" java:extends="xcodeml.f.XmfObj">
+    <ref name="defModelExpr"/>
+  </element>
+</define>
+
+<define name="step">
+  <element name="step" java:extends="xcodeml.f.XmfObj">
+    <ref name="defModelExpr"/>
+  </element>
+</define>
+
+<define name="kind">
+  <element name="kind" java:extends="xcodeml.f.XmfObj">
+    <ref name="defModelExpr"/>
+  </element>
+</define>
+
+<define name="params">
+  <element name="params" java:extends="xcodeml.f.XmfObj">
+    <zeroOrMore>
+      <ref name="name"/>
+    </zeroOrMore>
+  </element>
+</define>
+
+<define name="id">
+  <element name="id" java:extends="xcodeml.f.XmfObj">
+    <ref name="defAttrSclass"/>
+    <ref name="defAttrTypeName"/>
+    <optional>
+      <ref name="name"/>
+    </optional>
+  </element>
+</define>
+
+<define name="name">
+  <element name="name" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbTypedExpr">
+    <ref name="defAttrTypeName"/>
+    <data type="string"/>
+  </element>
+</define>
+
+<define name="value">
+  <element name="value" java:extends="xcodeml.f.XmfObj">
+    <ref name="defModelExpr"/>
+    <optional>
+        <ref name="repeat_count"/>
+    </optional>
+  </element>
+</define>
+
+<define name="repeat_count">
+  <element name="repeat_count" java:extends="xcodeml.f.XmfObj">
+    <ref name="defModelExpr"/>
+  </element>
+</define>
+
+<define name="len">
+  <element name="len" java:extends="xcodeml.f.XmfObj">
+    <optional>
+      <ref name="defModelExpr"/>
+    </optional>
+  </element>
+</define>
+
+<define name="body">
+  <element name="body" java:extends="xcodeml.f.XmfObj">
+    <zeroOrMore>
+      <ref name="defModelStatement"/>
+    </zeroOrMore>
+  </element>
+</define>
+
+<define name="rename">
+  <element name="rename" java:extends="xcodeml.f.XmfObj">
+    <ref name="defAttrRename"/>
+    <empty/>
+  </element>
+</define>
+
+<define name="renamable">
+  <element name="renamable" java:extends="xcodeml.f.XmfObj">
+    <ref name="defAttrRenamable"/>
+    <empty/>
+  </element>
+</define>
+
+<define name="arrayIndex">
+  <element name="arrayIndex" java:extends="xcodeml.f.XmfObj">
+    <ref name="defModelExpr"/>
+  </element>
+</define>
+
+<define name="indexRange">
+  <element name="indexRange" java:extends="xcodeml.f.XmfObj">
+    <ref name="defAttrIndexRange"/>
+    <optional>
+      <ref name="lowerBound"/>
+    </optional>
+    <optional>
+      <ref name="upperBound"/>
+    </optional>
+    <optional>
+      <ref name="step"/>
+    </optional>
+  </element>
+</define>
+
+<define name="FdoLoop">
+  <element name="FdoLoop" java:extends="xcodeml.f.XmfObj">
+    <ref name="Var"/>
+    <ref name="indexRange"/>
+    <oneOrMore>
+      <ref name="value"/>
+    </oneOrMore>
+  </element>
+</define>
+
+<define name="namedValue">
+  <element name="namedValue" java:extends="xcodeml.f.XmfObj">
+    <ref name="defAttrGenericName"/>
+    <ref name="defAttrValue"/>
+    <optional>
+      <ref name="defModelExpr"/>
+    </optional>
+  </element>
+</define>
+
+<define name="namedValueList">
+  <element name="namedValueList" java:extends="xcodeml.f.XmfObj">
+    <zeroOrMore>
+      <ref name="namedValue"/>
+    </zeroOrMore>
+  </element>
+</define>
+
+<define name="valueList">
+  <element name="valueList" java:extends="xcodeml.f.XmfObj">
+    <zeroOrMore>
+      <ref name="value"/>
+    </zeroOrMore>
+  </element>
+</define>
+
+<define name="varList">
+  <element name="varList" java:extends="xcodeml.f.XmfObj">
+    <ref name="defAttrGenericName"/>
+    <zeroOrMore>
+      <choice>
+        <ref name="varRef"/>
+        <ref name="FdoLoop"/>
+      </choice>
+    </zeroOrMore>
+  </element>
+</define>
+
+<!-- ========================================= -->
+<!-- expression element                        -->
+<!-- ========================================= -->
+
+<define name="FintConstant">
+  <element name="FintConstant" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfConstWithKind">
+    <ref name="defAttrTypeName"/>
+    <ref name="defAttrKind"/>
+    <data type="string"/>
+  </element>
+</define>
+
+<define name="FrealConstant">
+  <element name="FrealConstant" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfConstWithKind">
+    <ref name="defAttrTypeName"/>
+    <ref name="defAttrKind"/>
+    <data type="string"/>
+  </element>
+</define>
+
+<define name="FcomplexConstant">
+  <element name="FcomplexConstant" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbTypedExpr">
+    <ref name="defAttrTypeName"/>
+    <ref name="defModelExpr"/>
+    <ref name="defModelExpr"/>
+  </element>
+</define>
+
+<define name="FcharacterConstant">
+  <element name="FcharacterConstant" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfConstWithKind">
+    <ref name="defAttrTypeName"/>
+    <ref name="defAttrKind"/>
+    <data type="string"/>
+  </element>
+</define>
+
+<define name="FlogicalConstant">
+  <element name="FlogicalConstant" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfConstWithKind">
+    <ref name="defAttrTypeName"/>
+    <ref name="defAttrKind"/>
+    <data type="string"/>
+  </element>
+</define>
+
+<define name="FarrayConstructor">
+  <element name="FarrayConstructor" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbTypedExpr">
+    <ref name="defAttrTypeName"/>
+    <ref name="defModelExprList"/>
+  </element>
+</define>
+
+<define name="FstructConstructor">
+  <element name="FstructConstructor" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbTypedExpr">
+    <ref name="defAttrTypeName"/>
+    <ref name="defModelExprList"/>
+  </element>
+</define>
+
+<define name="Var">
+  <element name="Var" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbVarRef">
+    <ref name="defAttrTypeName"/>
+    <ref name="defAttrScope"/>
+    <data type="string"/>
+  </element>
+</define>
+
+<define name="FarrayRef">
+  <element name="FarrayRef" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbTypedExpr">
+    <ref name="defAttrTypeName"/>
+    <ref name="varRef"/>
+    <zeroOrMore>
+      <choice>
+        <ref name="indexRange"/>
+        <ref name="arrayIndex"/>
+        <ref name="FarrayConstructor"/>
+        <ref name="FarrayRef"/>
+      </choice>
+    </zeroOrMore>
+  </element>
+</define>
+
+<define name="FcharacterRef">
+  <element name="FcharacterRef" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbTypedExpr">
+    <ref name="defAttrTypeName"/>
+    <ref name="varRef"/>
+    <optional>
+      <ref name="indexRange"/>
+    </optional>
+  </element>
+</define>
+
+<define name="FmemberRef">
+  <element name="FmemberRef" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbTypedExpr">
+    <ref name="defAttrTypeName"/>
+    <ref name="defAttrMemberNameRef"/>
+    <ref name="varRef"/>
+  </element>
+</define>
+
+<define name="Ffunction"> <!-- used as function retrun value -->
+  <element name="Ffunction" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbTypedExpr,xcodeml.binding.IXbStringContent">
+    <ref name="defAttrTypeName"/>
+    <data type="string"/>
+  </element>
+</define>
+
+<define name="varRef">
+  <element name="varRef" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbTypedExpr">
+    <ref name="defAttrTypeName"/>
+    <choice>
+      <ref name="defModelLValue"/>
+    </choice>
+  </element>
+</define>
+
+<define name="functionCall">
+  <element name="functionCall" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbTypedExpr">
+    <ref name="defAttrTypeName"/>
+    <ref name="defAttrFunction"/>
+    <ref name="name"/>
+    <optional>
+      <ref name="arguments"/>
+    </optional>
+  </element>
+</define>
+
+<define name="arguments">
+  <element name="arguments" java:extends="xcodeml.f.XmfObj">
+    <zeroOrMore>
+      <choice>
+        <ref name="defModelExpr"/>
+        <ref name="Ffunction"/>
+        <ref name="namedValue"/>
+      </choice>
+    </zeroOrMore>
+  </element>
+</define>
+
+<define name="plusExpr">
+  <element name="plusExpr" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfBinaryExpr">
+    <ref name="defModelBinaryOperation"/>
+  </element>
+</define>
+
+<define name="minusExpr">
+  <element name="minusExpr" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfBinaryExpr">
+    <ref name="defModelBinaryOperation"/>
+  </element>
+</define>
+
+<define name="mulExpr">
+  <element name="mulExpr" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfBinaryExpr">
+    <ref name="defModelBinaryOperation"/>
+  </element>
+</define>
+
+<define name="divExpr">
+  <element name="divExpr" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfBinaryExpr">
+    <ref name="defModelBinaryOperation"/>
+  </element>
+</define>
+
+<define name="FpowerExpr">
+  <element name="FpowerExpr" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfBinaryExpr">
+    <ref name="defModelBinaryOperation"/>
+  </element>
+</define>
+
+<define name="FconcatExpr">
+  <element name="FconcatExpr" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfBinaryExpr">
+    <ref name="defModelBinaryOperation"/>
+  </element>
+</define>
+
+<define name="logEQExpr">
+  <element name="logEQExpr" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfBinaryExpr">
+    <ref name="defModelBinaryOperation"/>
+  </element>
+</define>
+
+<define name="logNEQExpr">
+  <element name="logNEQExpr" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfBinaryExpr">
+    <ref name="defModelBinaryOperation"/>
+  </element>
+</define>
+
+<define name="logGEExpr">
+  <element name="logGEExpr" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfBinaryExpr">
+    <ref name="defModelBinaryOperation"/>
+  </element>
+</define>
+
+<define name="logGTExpr">
+  <element name="logGTExpr" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfBinaryExpr">
+    <ref name="defModelBinaryOperation"/>
+  </element>
+</define>
+
+<define name="logLEExpr">
+  <element name="logLEExpr" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfBinaryExpr">
+    <ref name="defModelBinaryOperation"/>
+  </element>
+</define>
+
+<define name="logLTExpr">
+  <element name="logLTExpr" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfBinaryExpr">
+    <ref name="defModelBinaryOperation"/>
+  </element>
+</define>
+
+<define name="logAndExpr">
+  <element name="logAndExpr" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfBinaryExpr">
+    <ref name="defModelBinaryOperation"/>
+  </element>
+</define>
+
+<define name="logOrExpr">
+  <element name="logOrExpr" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfBinaryExpr">
+    <ref name="defModelBinaryOperation"/>
+  </element>
+</define>
+
+<define name="logEQVExpr">
+  <element name="logEQVExpr" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfBinaryExpr">
+    <ref name="defModelBinaryOperation"/>
+  </element>
+</define>
+
+<define name="logNEQVExpr">
+  <element name="logNEQVExpr" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfBinaryExpr">
+    <ref name="defModelBinaryOperation"/>
+  </element>
+</define>
+
+<define name="unaryMinusExpr">
+  <element name="unaryMinusExpr" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfUnaryExpr">
+    <ref name="defModelUnaryOperation"/>
+  </element>
+</define>
+
+<define name="logNotExpr">
+  <element name="logNotExpr" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfUnaryExpr">
+    <ref name="defModelUnaryOperation"/>
+  </element>
+</define>
+
+<define name="userBinaryExpr">
+  <element name="userBinaryExpr" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfBinaryExpr">
+    <ref name="defAttrGenericName"/>
+    <ref name="defModelBinaryOperation"/>
+  </element>
+</define>
+
+<define name="userUnaryExpr">
+  <element name="userUnaryExpr" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfUnaryExpr">
+    <ref name="defAttrGenericName"/>
+    <ref name="defModelUnaryOperation"/>
+  </element>
+</define>
+
+<!-- ========================================= -->
+<!-- statement element                         -->
+<!-- ========================================= -->
+
+<define name="defAssignStatement">
+  <ref name="defAttrSourceLine"/>
+  <ref name="defModelLValue"/>
+  <ref name="defModelExpr"/>
+</define>
+
+<define name="FassignStatement">
+  <element name="FassignStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAssignStatement"/>
+  </element>
+</define>
+
+<define name="FpointerAssignStatement">
+  <element name="FpointerAssignStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAssignStatement"/>
+  </element>
+</define>
+
+<define name="exprStatement">
+  <element name="exprStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defModelExpr"/>
+  </element>
+</define>
+
+<define name="FifStatement">
+  <element name="FifStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defAttrConstructName"/>
+    <ref name="condition"/>
+    <ref name="then"/>
+    <optional>
+      <ref name="else"/>
+    </optional>
+  </element>
+</define>
+
+<define name="FdoStatement">
+  <element name="FdoStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defAttrConstructName"/>
+    <optional>
+      <ref name="Var"/>
+      <ref name="indexRange"/>
+    </optional>
+    <optional>
+      <ref name="body"/>
+    </optional>
+  </element>
+</define>
+
+<define name="FdoWhileStatement">
+  <element name="FdoWhileStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defAttrConstructName"/>
+    <ref name="condition"/>
+    <optional>
+      <ref name="body"/>
+    </optional>
+  </element>
+</define>
+
+<define name="continueStatement">
+  <element name="continueStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <empty/>
+  </element>
+</define>
+
+<define name="FcycleStatement">
+  <element name="FcycleStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defAttrConstructName"/>
+    <empty/>
+  </element>
+</define>
+
+<define name="FexitStatement">
+  <element name="FexitStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defAttrConstructName"/>
+    <empty/>
+  </element>
+</define>
+
+<define name="FreturnStatement">
+  <element name="FreturnStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <empty/>
+  </element>
+</define>
+
+<define name="gotoStatement">
+  <element name="gotoStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defAttrLabelName"/>
+    <optional>
+      <ref name="params"/>
+      <ref name="value"/>
+    </optional>
+  </element>
+</define>
+
+<define name="statementLabel">
+  <element name="statementLabel" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defAttrLabelName"/>
+    <empty/>
+  </element>
+</define>
+
+<define name="FselectCaseStatement">
+  <element name="FselectCaseStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defAttrConstructName"/>
+    <ref name="value"/>
+    <zeroOrMore>
+      <ref name="FcaseLabel"/>
+    </zeroOrMore>
+  </element>
+</define>
+
+<define name="FcaseLabel">
+  <element name="FcaseLabel" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defAttrConstructName"/>
+    <zeroOrMore>
+      <choice>
+        <ref name="value"/>
+        <ref name="indexRange"/>
+      </choice>
+    </zeroOrMore>
+    <ref name="body"/>
+  </element>
+</define>
+
+<define name="FwhereStatement">
+  <element name="FwhereStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="condition"/>
+    <ref name="then"/>
+    <optional>
+      <ref name="else"/>
+    </optional>
+  </element>
+</define>
+
+<define name="FstopStatement">
+  <element name="FstopStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defAttrCode"/>
+    <ref name="defAttrMessage"/>
+    <empty/>
+  </element>
+</define>
+
+<define name="FpauseStatement">
+  <element name="FpauseStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defAttrCode"/>
+    <ref name="defAttrMessage"/>
+    <empty/>
+  </element>
+</define>
+
+<define name="FreadStatement">
+  <element name="FreadStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfRWStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="namedValueList"/>
+    <ref name="valueList"/>
+  </element>
+</define>
+
+<define name="FwriteStatement">
+  <element name="FwriteStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfRWStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="namedValueList"/>
+    <ref name="valueList"/>
+  </element>
+</define>
+
+<define name="FprintStatement">
+  <element name="FprintStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defAttrFormatSpec"/>
+    <ref name="valueList"/>
+  </element>
+</define>
+
+<define name="FrewindStatement">
+  <element name="FrewindStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfIOStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="namedValueList"/>
+  </element>
+</define>
+
+<define name="FendFileStatement">
+  <element name="FendFileStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfIOStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="namedValueList"/>
+  </element>
+</define>
+
+<define name="FbackspaceStatement">
+  <element name="FbackspaceStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfIOStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="namedValueList"/>
+  </element>
+</define>
+
+<define name="FopenStatement">
+  <element name="FopenStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfIOStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="namedValueList"/>
+  </element>
+</define>
+
+<define name="FcloseStatement">
+  <element name="FcloseStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfIOStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="namedValueList"/>
+  </element>
+</define>
+
+<define name="FinquireStatement">
+  <element name="FinquireStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfRWStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="namedValueList"/>
+    <optional>
+      <ref name="valueList"/>
+    </optional>
+  </element>
+</define>
+
+<define name="FformatDecl">
+  <element name="FformatDecl" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbLineNo">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defAttrFormatSpec"/>
+    <empty/>
+  </element>
+</define>
+
+<define name="FdataDecl">
+  <element name="FdataDecl" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbLineNo">
+    <ref name="defAttrSourceLine"/>
+    <oneOrMore>
+      <ref name="varList"/>
+      <ref name="valueList"/>
+    </oneOrMore>
+  </element>
+</define>
+
+<define name="FnamelistDecl">
+  <element name="FnamelistDecl" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbLineNo">
+    <ref name="defAttrSourceLine"/>
+    <oneOrMore>
+      <ref name="varList"/>
+    </oneOrMore>
+  </element>
+</define>
+
+<define name="FequivalenceDecl">
+  <element name="FequivalenceDecl" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbLineNo">
+    <ref name="defAttrSourceLine"/>
+    <oneOrMore>
+      <ref name="varRef"/>
+      <ref name="varList"/>
+    </oneOrMore>
+  </element>
+</define>
+
+<define name="FcommonDecl">
+  <element name="FcommonDecl" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbLineNo">
+    <ref name="defAttrSourceLine"/>
+    <oneOrMore>
+      <ref name="varList"/>
+    </oneOrMore>
+  </element>
+</define>
+
+<define name="FentryDecl">
+  <element name="FentryDecl" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbLineNo">
+    <ref name="defAttrSourceLine"/>
+    <ref name="name"/>
+  </element>
+</define>
+
+<define name="FallocateStatement">
+  <element name="FallocateStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defAttrStatName"/>
+    <oneOrMore>
+      <ref name="alloc"/>
+    </oneOrMore>
+  </element>
+</define>
+
+<define name="FdeallocateStatement">
+  <element name="FdeallocateStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <ref name="defAttrStatName"/>
+    <oneOrMore>
+      <ref name="alloc"/>
+    </oneOrMore>
+  </element>
+</define>
+
+<define name="FnullifyStatement">
+  <element name="FnullifyStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <oneOrMore>
+      <ref name="alloc"/>
+    </oneOrMore>
+  </element>
+</define>
+
+<define name="FpragmaStatement">
+  <element name="FpragmaStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <data type="string"/>
+  </element>
+</define>
+
+<define name="text">
+  <element name="text" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <data type="string"/>
+  </element>
+</define>
+
+<define name="FcontainsStatement">
+  <element name="FcontainsStatement" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbStatement">
+    <ref name="defAttrSourceLine"/>
+    <oneOrMore>
+      <ref name="FfunctionDefinition"/>
+    </oneOrMore>
+  </element>
+</define>
+
+<define name="condition">
+  <element name="condition" java:extends="xcodeml.f.XmfObj">
+    <ref name="defModelExpr"/>
+  </element>
+</define>
+
+<define name="then">
+  <element name="then" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbLineNo">
+    <ref name="defAttrSourceLine"/>
+    <ref name="body"/>
+  </element>
+</define>
+
+<define name="else">
+  <element name="else" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbLineNo">
+    <ref name="defAttrSourceLine"/>
+    <ref name="body"/>
+  </element>
+</define>
+
+<define name="alloc">
+  <element name="alloc" java:extends="xcodeml.f.XmfObj">
+    <choice>
+      <ref name="Var"/>
+      <ref name="FmemberRef"/>
+    </choice>
+    <ref name="defModelArraySubscriptSequence0"/>
+  </element>
+</define>
+
+</grammar>
+

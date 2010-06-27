@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- 
+      program main
+        integer sum, i
+        sum = 0; i = 1
+        do while (i <= 10)
+        sum = sum + i
+        i = i + 1          
+        end do
+      end
+-->
+<XcodeProgram compiler-info="F-Frontend"
+              version="0.8"
+              time="2009-02-17 10:53:20"
+              language="Fortran 90 Free Format"
+              source="do_while.f90">
+
+  <!-- typeTable -->
+  <typeTable>
+    <FfunctionType type="FfunctionType_of_main" return_type="Fvoid" />
+  </typeTable>
+
+  <!-- globalSymbols -->
+  <globalSymbols>
+    <id type="FfunctionType_of_main" sclass="extern_def">
+      <name type="FfunctionType_of_main">main</name>
+    </id>
+  </globalSymbols>
+
+  <!-- globalDeclarations -->
+  <globalDeclarations>
+
+    <!-- 1: program main -->
+    <FfunctionDefinition is_program="1" lineno="1" file="do_while.f90">
+
+      <!-- name -->
+      <name type="FfunctionType_of_main">main</name>
+
+      <!-- symbols -->
+      <symbols>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">sum</name>
+        </id>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">i</name>
+        </id>
+      </symbols>
+
+      <!-- declarations -->
+      <declarations>
+        <!-- 2: integer sum, i -->
+        <varDecl lineno="2" file="do_while.f90">
+          <name type="Fint">sum</name>
+        </varDecl>
+        <varDecl lineno="2" file="do_while.f90">
+          <name type="Fint">i</name>
+        </varDecl>
+      </declarations>
+
+      <!-- body -->
+      <body>
+
+        <!-- 3: sum = 0; i = 1 -->
+        <exprStatement lineno="3" file="do_while.f90">
+          <assignExpr>
+            <Var scope="local">sum</Var>
+            <FintConstant type="Fint">0</FintConstant>
+          </assignExpr>
+        </exprStatement>
+
+        <exprStatement lineno="3" file="do_while.f90">
+          <assignExpr>
+            <Var scope="local">i</Var>
+            <FintConstant type="Fint">1</FintConstant>
+          </assignExpr>
+        </exprStatement>
+
+        <!-- 4: do while (i <= 10) -->
+        <FdoWhileStatement lineno="4" file="do_while.f90">
+          <condition>
+            <logLEExpr>
+              <Var scope="local">i</Var>
+              <FintConstant type="Fint">10</FintConstant>
+            </logLEExpr>
+          </condition>
+          <body>
+
+            <!-- 5: sum = sum + i -->
+            <exprStatement lineno="5" file="do_while.f90">
+              <assignExpr>
+                <Var scope="local">sum</Var>
+                <plusExpr>
+                  <Var scope="local">sum</Var>
+                  <Var scope="local">i</Var>
+                </plusExpr>
+              </assignExpr>
+            </exprStatement>
+
+            <!-- 6: i = i + 1 -->      
+            <exprStatement lineno="6" file="do_while.f90">
+              <assignExpr>
+                <Var scope="local">i</Var>
+                <plusExpr>
+                  <Var scope="local">i</Var>
+                  <FintConstant type="Fint">1</FintConstant>
+                </plusExpr>
+              </assignExpr>
+            </exprStatement>
+
+          </body>
+        </FdoWhileStatement>
+
+      </body>
+
+    </FfunctionDefinition>
+
+  </globalDeclarations>
+</XcodeProgram>

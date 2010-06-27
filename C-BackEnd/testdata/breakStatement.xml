@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XcodeProgram source="breakStatement.c">
+  <!-- 
+       int breakStatementFunction () {
+           while(0) {
+               break;
+           }
+           return 0;
+       }
+  -->
+  <typeTable>
+    <functionType type="type_of_function" return_type="int">
+      <params>
+      </params>
+    </functionType>
+    <pointerType type="pointer_of_function" ref="type_of_function"/>
+  </typeTable>
+  
+  <globalSymbols>
+    <id sclass="extern_def">
+      <name type="type_of_function">breakStatementFunction</name>
+    </id>
+  </globalSymbols>
+  
+  <globalDeclarations>
+
+    <functionDefinition>
+      <name>breakStatementFunction</name>
+      <symbols>
+      </symbols>
+      <params>
+      </params>
+      <body>
+        <compoundStatement>
+          <symbols></symbols>
+          <declarations></declarations>
+          <body>
+            <whileStatement>
+              <condition>
+                <intConstant type="int">0</intConstant>
+              </condition>
+              <body>
+                <breakStatement></breakStatement>
+              </body>
+            </whileStatement>
+            <returnStatement>
+              <intConstant type="int">0</intConstant>
+            </returnStatement>
+          </body>
+        </compoundStatement>
+      </body>
+    </functionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

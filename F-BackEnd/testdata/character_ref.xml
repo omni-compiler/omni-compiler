@@ -1,0 +1,64 @@
+<XcodeProgram source="character_ref.f90"
+              language="Fortran"
+              time="2009-03-27 18:07:57"
+              compiler-info="XcodeML/Fortran-FrontEnd"
+              version="1.0">
+  <typeTable>
+    <FbasicType type="C80a5e18" ref="Fcharacter">
+      <len><FintConstant type="Fint">-1</FintConstant></len>
+    </FbasicType>
+    <FbasicType type="C80a6128" ref="Fcharacter">
+      <len><FintConstant type="Fint">-1</FintConstant></len>
+    </FbasicType>
+    <FbasicType type="C80a4540" ref="Fcharacter">
+      <len><FintConstant type="Fint">1</FintConstant></len>
+    </FbasicType>
+    <FfunctionType type="F80a5b08" return_type="Fvoid" is_program="1" />
+  </typeTable>
+  <globalSymbols>
+    <id sclass="extern_def" type="F80a5b08">
+      <name type="F80a5b08">main</name>
+    </id>
+  </globalSymbols>
+  <globalDeclarations>
+    <FfunctionDefinition lineno="1" file="character_ref.f90">
+      <name type="F80a5b08">main</name>
+      <symbols>
+        <id sclass="auto" type="C80a5e18">
+          <name type="C80a5e18">string</name>
+        </id>
+        <id sclass="auto" type="C80a6128">
+          <name type="C80a6128">substring</name>
+        </id>
+      </symbols>
+      <declarations>
+        <varDecl lineno="2" file="character_ref.f90">
+          <name type="C80a5e18">string</name>
+        </varDecl>
+        <varDecl lineno="3" file="character_ref.f90">
+          <name type="C80a6128">substring</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <exprStatement lineno="4" file="character_ref.f90">
+          <assignExpr>
+            <Var>substring</Var>
+            <FcharacterRef type="Fcharacter">
+              <varRef>
+                <Var>string</Var>
+              </varRef>
+              <indexRange>
+                <lowerBound>
+                  <FintConstant>6</FintConstant>
+                </lowerBound>
+                <upperBound>
+                  <FintConstant>6</FintConstant>
+                </upperBound>
+              </indexRange>
+            </FcharacterRef>
+          </assignExpr>
+        </exprStatement>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

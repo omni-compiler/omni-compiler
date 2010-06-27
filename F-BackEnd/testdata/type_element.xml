@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- 
+      program main
+        type nline
+          integer no
+          integer, dimension(80) :: buffer
+        end type
+        type(nline) line
+        line%no = 10
+        line%buffer(1) = 1
+      end
+-->
+<XcodeProgram compiler-info="F-Frontend"
+              version="0.8"
+              time="2009-02-17 10:53:20"
+              language="Fortran 90 Free Format"
+              source="type_element.f90">
+
+  <!-- typeTable -->
+  <typeTable>
+    <FfunctionType type="FfunctionType_of_main" return_type="Fvoid" />
+    <FarrayType type="FarrayType_of_buffer" element_type="Fint" />
+    <FstructType type="FstructType_of_nline">
+      <symbols>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">no</name>
+        </id>
+        <id sclass="auto" type="FarrayType_of_buffer">
+          <name type="FarrayType_of_buffer">buffer</name>
+        </id>
+      </symbols>
+    </FstructType>
+  </typeTable>
+
+  <!-- globalSymbols -->
+  <globalSymbols>
+    <id sclass="extern_def" type="FfunctionType_of_main">
+      <name type="FfunctionType_of_main">main</name>
+    </id>
+  </globalSymbols>
+
+  <!-- globalDeclarations -->
+  <globalDeclarations>
+    <FfunctionDefinition is_program="1" lineno="1" file="type_element.f90">
+      <!-- name -->
+      <name type="FfunctionType_of_main">main</name>
+      <!-- symbols -->
+      <symbols>
+        <id sclass="tagname" type="FstructType_of_nline">
+          <name type="FstructType_of_nline">nline</name>
+        </id>
+        <id sclass="auto" type="FstructType_of_line">
+          <name type="FstructType_of_line">line</name>
+        </id>
+      </symbols>
+      <!-- declarations -->
+      <declarations>
+        <!-- 2: type nline
+                  integer no
+                  integer, dimension(80) :: buffer
+                end type
+          -->
+        <!-- 6: type(nline) line -->
+        <varDecl lineno="6" file="type_element.f90">
+          <name type="FstructType_of_nline">line</name>
+        </varDecl>
+      </declarations>
+      <!-- body -->
+      <body>
+        <!-- 7: line%no = 10 -->
+        <exprStatement lineno="7" file="type_element.f90">
+          <assignExpr>
+            <FmemberRef member="no" type="FstructType_of_nline">
+              <varRef>
+                <Var scope="local">line</Var>
+              </varRef>
+            </FmemberRef>
+            <FintConstant type="Fint">10</FintConstant>
+          </assignExpr>
+        </exprStatement>
+        <!-- 8: line%buffer(1) = 1 -->
+        <exprStatement lineno="8" file="type_element.f90">
+          <assignExpr>
+            <FmemberRef member="buffer" type="FstructType_of_nline">
+              <varRef>
+                <FarrayElementRef scope="local" type="FarrayType_of_buffer">
+                  <varRef>
+                    <Var scope="local">line</Var>
+                  </varRef>
+                  <arrayIndex>
+                    <FintConstant type="Fint">1</FintConstant>
+                  </arrayIndex>
+                </FarrayElementRef>
+              </varRef>
+            </FmemberRef>
+            <FintConstant type="Fint">1</FintConstant>
+          </assignExpr>
+        </exprStatement>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+
+</XcodeProgram>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XcodeProgram source="switchStatement.c">
+  <!-- 
+       int switchStatementFunction () {
+           int n;
+           int m;
+
+           switch ( n ) {
+               1 ... 10 : return n;
+               default: return 0;
+           }
+       }
+  -->
+  <typeTable>
+    <functionType type="type_of_function" return_type="int">
+      <params>
+      </params>
+    </functionType>
+    <pointerType type="pointer_of_function" ref="type_of_function"/>
+    <pointerType type="pointer_of_n_1" ref="int"/>
+    <pointerType type="pointer_of_m_1" ref="int"/>
+    <pointerType type="pointer_of_n_2" ref="int"/>
+    <pointerType type="pointer_of_n_3" ref="int"/>
+    <pointerType type="pointer_of_m_2" ref="int"/>
+  </typeTable>
+  
+  <globalSymbols>
+    <id sclass="extern_def">
+      <name type="type_of_function">switchStatementFunction</name>
+    </id>
+  </globalSymbols>
+  
+  <globalDeclarations>
+
+    <functionDefinition>
+      <name>switchStatementFunction</name>
+      <symbols>
+      </symbols>
+      
+      <params>
+      </params>
+      
+      <body>
+        <compoundStatement>
+          <symbols>
+            <id sclass="auto">
+              <name type="int">n</name>
+            </id>
+            <id sclass="auto">
+              <name type="int">m</name>
+            </id>
+          </symbols>
+          <declarations>
+            <varDecl>
+              <name>n</name>
+            </varDecl>
+            <varDecl>
+              <name>m</name>
+            </varDecl>
+
+          </declarations>
+          <body>
+            <switchStatement>
+              <value>
+                <pointerRef type="int">
+                  <varAddr scope="param" type="pointer_of_n_2">n</varAddr>
+                </pointerRef>
+              </value>
+              <body>
+                <gccRangedCaseLabel>
+                  <value>
+                    <intConstant type="int">1</intConstant>
+                  </value>
+                  <value>
+                    <intConstant type="int">10</intConstant>
+                  </value>
+                </gccRangedCaseLabel>
+                <returnStatement>
+                  <pointerRef type="int">
+                    <varAddr scope="param" type="pointer_of_n_3">n</varAddr>
+                  </pointerRef>
+                </returnStatement>
+                <defaultLabel/>
+                <returnStatement>
+                  <intConstant type="int">0</intConstant>
+                </returnStatement>
+              </body>
+            </switchStatement>
+          </body>
+        </compoundStatement>
+      </body>
+    </functionDefinition>
+
+  </globalDeclarations>
+  
+</XcodeProgram>

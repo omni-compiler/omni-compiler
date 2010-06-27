@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- 
+      program main
+        character(len=10)       :: name
+        integer, dimension(0:9) :: miles
+        data name / 'John Doe' /, miles / 10*0 /
+      end
+-->
+<XcodeProgram compiler-info="F-Frontend"
+              version="1.0"
+              time="2009-02-17 10:53:20"
+              language="Fortran"
+              source="data.f90">
+
+  <!-- typeTable -->
+  <typeTable>
+    <FfunctionType type="FfunctionType_of_main" return_type="Fvoid" />
+    <FcharacterType type="FcharacterType_of_name">
+      <len><FintConstant type="Fint">10</FintConstant></len>
+    </FcharacterType>
+    <FarrayType type="FarrayType_of_miles" element_type="Fint">
+      <indexRange>
+        <lowerBound>
+          <FintConstant type="Fint">0</FintConstant></lowerBound>
+        <upperBound>
+          <FintConstant type="Fint">9</FintConstant></upperBound>
+      </indexRange>
+    </FarrayType>
+  </typeTable>
+
+  <!-- globalSymbols -->
+  <globalSymbols>
+    <id sclass="extern_def" type="FfunctionType_of_main">
+      <name type="FfunctionType_of_main">main</name>
+    </id>
+  </globalSymbols>
+
+  <!-- globalDeclarations -->
+  <globalDeclarations>
+    <!-- 1: program main -->
+    <FfunctionDefinition is_program="1" lineno="1" file="data.f90">
+      <!-- name -->
+      <name type="FfunctionType_of_main">main</name>
+      <!-- symbols -->
+      <symbols>
+        <id sclass="auto" type="FcharacterType_of_a">
+          <name type="FcharacterType_of_a">name</name>
+        </id>
+        <id sclass="auto" type="FarrayType_of_b">
+          <name type="FarrayType_of_b">miles</name>
+        </id>
+      </symbols>
+      <!-- declarations -->
+      <declarations>
+        <!-- 2: character(len=10)       :: name -->
+        <varDecl lineno="2" file="data.f90">
+          <name type="FcharacterType_of_a">name</name>
+        </varDecl>
+        <!-- 3: integer, dimension(0:9) :: miles -->
+        <varDecl lineno="3" file="data.f90">
+          <name type="FarrayType_of_b">miles</name>
+        </varDecl>
+      </declarations>
+      <!-- body -->
+      <body>
+        <!-- 4: data name / 'John Doe' /, miles / 10*0 /  -->
+        <FdataDecl lineno="4" file="data.f90">
+          <varList>
+            <varRef>
+              <Var scope="local">name</Var>
+            </varRef>
+          </varList>
+          <valueList>
+            <value>
+              <FcharacterConstant type="Fcharacter">John Doe</FcharacterConstant>
+            </value>
+          </valueList>
+          <varList>
+            <varRef>
+              <Var scope="local">miles</Var>
+            </varRef>
+          </varList>
+          <valueList>
+            <value repeat_count="10">
+              <FintConstant type="Fint">0</FintConstant>
+            </value>
+          </valueList>
+        </FdataDecl>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+
+</XcodeProgram>

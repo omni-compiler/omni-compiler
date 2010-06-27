@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XcodeProgram source="array.c">
+<!-- 
+int A[10];
+int B[10];
+
+main()
+{
+    int C[10];
+
+    (*(&A))[0] = 0;
+    B[1] = 1;
+    C[2] = 2;
+
+}
+-->
+<typeTable>
+  <arrayType type="arrayType_of_A" element_type="int" array_size="10"/>
+  <pointerType type="pointerType_of_A" ref="arrayType_of_A"/>
+  <arrayType type="arrayType_of_B" element_type="int" array_size="10"/>
+  <pointerType type="pointerType_of_B" ref="arrayType_of_B"/>
+  <arrayType type="arrayType_of_C" element_type="int" array_size="10"/>
+  <pointerType type="pointerType_of_C" ref="arrayType_of_C"/>
+  <functionType type="functionType_of_main" return_type="double">
+    <params>
+    </params>
+  </functionType>
+  <pointerType type="pointerType_of_main" ref="functionType_of_main"/>
+</typeTable>
+
+<globalSymbols>
+ <id sclass="extern_def">
+   <name type="arrayType_of_A">A</name>
+ </id>
+ <id sclass="extern_def">
+   <name type="arrayType_of_B">B</name>
+ </id>
+ <id sclass="extern_def">
+   <name type="functionType_of_main">main</name>
+ </id>
+</globalSymbols>
+<globalDeclarations>
+  <varDecl>
+    <name>A</name>
+  </varDecl>
+  <varDecl>
+    <name>B</name>
+  </varDecl>
+  <functionDefinition>
+    <name>main</name>
+    <symbols/>
+    <params/>
+    <body> 
+      <compoundStatement>
+        <symbols>
+          <id sclass="auto">
+            <name type="arrayType_of_C">C</name>
+          </id>
+        </symbols>
+        <declarations>
+          <varDecl>
+            <name>C</name>
+          </varDecl>
+        </declarations>
+        <body>
+          <exprStatement>
+            <assignExpr type="int">
+              <pointerRef type="int">
+                <plusExpr type="arrayType_of_A">
+                  <arrayRef type="arrayType_of_A">A</arrayRef>
+                  <intConstant>0</intConstant>
+                </plusExpr>
+              </pointerRef>
+              <intConstant>0</intConstant>
+            </assignExpr>
+          </exprStatement>
+          <exprStatement>
+            <assignExpr type="int">
+              <pointerRef type="int">
+                <plusExpr type="arrayType_of_B">
+                  <arrayRef type="arrayType_of_B">B</arrayRef>
+                  <intConstant>1</intConstant>
+                </plusExpr>
+              </pointerRef>
+              <intConstant>1</intConstant>
+            </assignExpr>
+          </exprStatement>
+          <exprStatement>
+            <assignExpr type="int">
+              <pointerRef type="int">
+                <plusExpr type="arrayType_of_C">
+                  <arrayRef type="arrayType_of_C">C</arrayRef>
+                  <intConstant>2</intConstant>
+                </plusExpr>
+              </pointerRef>
+              <intConstant>2</intConstant>
+            </assignExpr>
+          </exprStatement>
+        </body>
+      </compoundStatement>
+    </body>
+  </functionDefinition>
+</globalDeclarations>
+</XcodeProgram>

@@ -1,0 +1,448 @@
+2009-04-16  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* F95-main.c: remove the flag for enable/disable openmp.
+
+	* F-output-xcodeml.c (XcodeML_output_rec): same as.
+
+	* F95-lex.c: same as.
+
+	* F95-parser.y (expr): change the name realted with OMP to PRAGMA.
+
+	* F-front.h (compile_OMN_directive): remove.
+
+	* F-compile-decl.c: change the name realted with OMP to PRAGMA.
+
+	* Parser-intrf.txt: remove the description for OMP directive.
+
+	* C-exprcode.def: same as.
+
+	* F-output-xcodeml.c (XcodeML_output_rec): same as and remove
+	tail blank in pragma.
+	
+	* F95-parser.y (expr): change reasonable id, F_PRAGMA_DECL from
+	F_OMP_DECL.
+	
+	
+	* F-compile-decl.c (declare_procedure): generatte the name
+	"no__name__" in no program.
+
+2009-04-15  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* F-compile-decl.c (declare_type_attributes): fix for dimention in
+	attribute list.
+	(compile_type_decl): same as. (testdate/decl_dimension.f90)
+
+	* F95-lex.c(readline_free_format): fix for ';'.(testdata/do_while.f90)
+1
+	* F95-lex.c (is_OMP_sentinel): progma for 'c$' or '!$'.
+	(read_fixed_format): same as
+	(readline_fixed_format): same as and remove unneed clause.
+
+2009-04-13  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* F95-lex.c (classify_statement): bug fixed for kw, SAVE/END/STOP
+	(t56.f).
+
+	* F-io-xcodeml.c (compile_INQUIRE_statement, compile_FPOS_Statment):
+	bug fixed like rewind(5) and inquire.(t57.f, t59.f)
+
+2009-04-10  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* F-compile-decl.c (declare_procedure): fix for non PROGRAM file.
+
+2009-04-07  Tadashi Inoue  <now@sra.co.jp>
+
+	* F-output-xcodeml.c 
+	(XcodeML_output_type_table):
+	fix Character Declaration output, when LEN=*.
+	(getRealCommonName):
+	fix <FcommonDecl>'s name output correctly.
+	(print_index_range):
+	fix that indexs of array's FbasicType was reverse order output.
+	(print_value,XcodeML_output_PointerRef,XcodeML_output_PointerRef1):
+	add code for FCOMM_ARRAY_ADDR.
+
+2009-04-05  Tadashi Inoue  <now@sra.co.jp>
+
+	* F-output-xcodeml.c 
+	(XcodeML_output_NAMELIST_decl): add for <FnamelistDecl>.
+	(XcodeML_output_ArrayAddr_Plus):  add for [L]ARRAY_ADDR output.
+	This fix corrects a part of array index output problem.
+
+	* F-io-xcodeml.c (compile_NAMELIST_decl): 
+	set line no and file name in NAMELIST ID.
+
+2009-03-31  Tadashi Inoue  <now@sra.co.jp>
+
+	* F-output-xcodeml.c (XcodeML_output_global_declarations): 
+	- fix <FcommonDecl> output.
+
+	* F-compile.c, F-ident.h, F-compile-decl.c:
+	- make EXT_ID set proc_no.
+	
+2009-03-30  Tadashi Inoue  <now@sra.co.jp>
+
+	* F-output-xcodeml.c (XcodeML_output_rec_terminal): 
+	change output value of FlogicalConstant ( 0/1 -> .FALSE./.TRUE. )
+
+	* F-compile-expr.c (compile_array_ref): disable to translate number of subscript 
+	on character array.
+
+        * C-exprcode.def: remove Doxygen header
+
+	* *.[chy]: add Doxygen comment and remove disable codes.
+        * C-exprcode.def: add Doxygen header
+
+	* F-output-xcodeml.c (XcodeML_output_global_declarations): 
+	- output temporaly variable's <varDecl>.
+
+	* F-compile-decl.c (allocate_temporary_variable):
+	- add dummy line_info to temporaly variables.
+
+	* F-output-xcodeml.c 
+	(XcodeML_output_rec_terminal): support <FlogicalConstant> output.
+	(XcodeML_output_MemberRef): support <FmemberRef> output.
+	(XcodeML_output_type_table): fix output type of character array.
+
+	* F-output-xcodeml.c, F-ident.h, F-compile-decl.c
+	(XcodeML_output_ID_as_vardecl): support <value> element of <varDecl>.
+
+2009-03-29  Tadashi Inoue  <now@sra.co.jp>
+
+	* F-output-xcodeml.c, F-output-xcodeml.h, F-io-xcodeml.c
+	(XcodeML_output_type_table): 
+	- fix array type reference attribute.
+	- add new function: print_array_type_ref() for above fix.
+	(XcodeML_output_PointerRef1, XcodeML_output_PointerRef1): 
+	- fix <FarrayRef> index output again.
+	(XcodeML_output_rec_terminal): 
+	- fix <statmentLabel> and <FrealConstant> output.
+	(XcodeML_output_rec): 
+	- add <FformatDecl> output code.
+
+	* F-output-xcodeml.c
+	(XcodeML_output_FdoLoop, XcodeML_output_PointerRef): 
+	- fix FdoLoop <value> output.
+	  before this fix, 1-dimension array's index was not printed.
+
+	* F-output-xcodeml.c, F-output-xcodeml.c : fix many bugs:
+	- fix <Var> element display name.
+	- fix <FarrayRef> index output.
+	- fix that some <FcommonDecl> has no line no. and filename.
+	- remove <CAST_EXPR>.
+	- fix <FdoLoop> output.
+	- fix <FdataDecl>.
+
+	* F-compile-decl.c: enable commented out codes.
+	
+	* F-OMP.c (compile_OMP_directive): temporaly change for XML validation test.
+
+2009-03-28  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* F95-main.c (main): same as.
+
+	* F95-lex.c (include_file): add the future for search path.
+	
+	* F95-lex.c (Dirname): new func for include_file().
+	(include_file): use dirname for source file name in include_file().
+
+2009-03-27  Tadashi Inoue  <now@sra.co.jp>
+
+	* F-output-xcodeml.c, F-io-xcodeml.c
+	(XcodeML_output_CharacterRef_statement): fix some bug:
+	- add CharacterRef output function.
+	- fix on IO statement output.
+
+	* F-output-xcodeml.c, F-output-xcodeml.h
+	(output_Initializer, outputCharInitializer): function interface change.
+	(print_index_range): add new function to output array type with N-dimension.
+
+	* F-compile-decl.c (declare_procedure): fix a bug:
+	- output line_no attribute in FfunctionType.
+
+	* F-output-xcodeml.c 
+	(XcodeML_output_IO_statement): add new function.
+	(XcodeML_output_RW_statement): bug fix for READ/WRITE statment.
+
+	* F-ident.h (external_symbol): add is_program attribute.
+
+2009-03-26  Tadashi Inoue  <now@sra.co.jp>
+
+	* F-output-xcodeml.c :
+	* F-output-xcodeml.h : fix COMMON statement output,
+	and many fix for XcodeML/Fortran validation.
+
+	* F-compile-decl.c: remove useless commnet.
+
+2009-03-25  Tadashi Inoue  <now@sra.co.jp>
+
+	* F-io-xcodeml.c
+	(compile_IO_statement):
+	(compile_OPEN_statement):
+	(compile_CLOSE_statement):
+	(compile_FPOS_statement):
+	(compile_INQUIRE_statement): add fixes below:
+	- naive re-implemention of above functions.
+	- remove the other functions.
+
+	* F-output-xcodeml.c: bug fixes below:
+	- fix fatal error cases.
+	- fix handling "*_ADDR" elements.
+	- remove useless comment.
+
+	* C-exprcode.def: fix typo:
+	- 'FendfileStatment' -> 'FendFileStatment'
+
+2009-03-25  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* Makefile.am (YFLAGS): use this insted of F_Front_YFLAGS.
+
+	* F95-lex.c (include_file): bug fix for not be able to open.
+
+	* configure.ac: add the getter for unsigned long long.
+
+2009-03-25  Tadashi Inoue  <now@sra.co.jp>
+
+	* F-output-xcodeml.c: 
+	* F-output-xcodeml.h: 
+	* F-io-xcodeml.c: 
+	add new file for XcodeML/Fortran format output.
+
+	* C-exprcode.def: 
+	add expr codes for XcodeML/Fortran elements.
+
+	* C-expr.h: 
+	* F-front.h: 
+	* F-ident.h: 
+	* F-compile.c: 
+	* F-compile-decl.c: 
+	* F-compile-expr.c: 
+	* F-OMP.c: 
+	fix and add new functions for XcodeML/Fortran format output.
+
+	* Makefile.am: 
+	* F95-main.c: 
+	fix for XcodeML/Fortran format output.
+
+2009-03-25  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* Makefile.am: add the xml2 utilities.
+
+	* F95-main.c (main): add the error handlign for sscanf.
+
+	* F-compile.c (do_use): new func. for handling of use.
+
+	* F95-main.c (main): add the new option:
+        -MC=lineNo:StartSeekPos:EndSeekPos
+
+        * F-compile.c (begin_module): new func. for handling of module.
+        (end_module): likewise.
+        (compile_statement1): add the simple handling for module/end module.
+
+        * F-main.c: remove.
+
+        * C-exprcode.def: typo fixed.
+
+        * F95-lex.c (initialize_lex): add the new option as
+        -MC=lineNo:StartSeekPos:EndSeekPos and set the intial in ln_no.
+        (classify_statement): KW_TYPE, KW_KIND, KW_GO fix for fixed format.
+        (part of id has some key, it cause syntax error.)
+        (include_file): handle only for another search dir.
+        (anotherEOF): new func. for another EOF on module compile mode.o
+        (readline_free_format): use anotherEOF().
+        (readline_fixed_format): use anotherEOF().
+
+        * F95-parser.y (statement): typo fix for subroutine.
+
+        * configure.ac: add the check for size unsigned long long.
+
+2009-03-19  Tadashi Inoue  <now@sra.co.jp>
+
+	* F-compile.c (end_declaration): delete unreasonable #ifndef.
+
+2009-03-18  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* F95-parser.y (type_spec0): typo fixed for length.
+
+	* exc_platform.h(_omAddrInt_t): add the case for 32 bit machine.
+
+2009-03-18  Tadashi Inoue  <now@sra.co.jp>
+
+	* F-compile-decl.c (declare_procedure): 
+	fix for main program with no program statement.
+
+2009-03-17  Tadashi Inoue  <now@sra.co.jp>
+
+	* F-compile.c (compile_statement1): 
+	* F-compile-decl.c (declare_type_attributes,compile_struct_decl): 
+	* F-datatype.h (type_descriptor): 
+	* F-front.h: 
+	* F-ident.h (external_symbol): 
+	* F-output.c (output_X_file): 
+	add new functions for F90 derived types and attribute
+	specifications for a type declaration statement.
+
+2009-03-17  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* F95-lex.c (classify_statement): add the ARITHIF lexical analysis.
+
+	* F95-parser.y (expr): use ARITHIF rather than LOGIF in arith if
+	context.
+
+2009-03-13  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* F95-lex.c (classify_statement): ad hock lex for 'out' and 'len'
+	including id.
+
+	* F-compile-decl.c (fix_array_dimensions): add the assertion.
+
+	* F-compile.c (compile_statement1): fix for handling of implicit with
+	group letter.
+
+2009-03-12  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* F-intrinsic.c: fix for location for 'ishft' decl.
+
+	* F95-parser.y (type_spec0): activate for the compatibility field.
+
+	* F-compile-decl.c (type_align): anyway do not call basic_type_align.
+
+	* F-equiv.c (getIdOffsetInCommon): anyway, do not call type_align.
+
+	* F-intrinsic.c: add the intrinsic for BTEST/ISHFT.
+
+	* F95-parser.y: type_keyword: KW_INTEGER/REAL/COMPLEX/LOGICAL --
+	remove need_key.
+
+	* F95-lex.c (read_identifier): fix bug for parse in'funciton id(..)'
+	
+	* F95-lex.c (classify_statement): add the check for lex of
+	if (...) yy = zz or if (..(..)..) yyy= zzz.
+
+2009-03-11  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* F95-parser.y: comment out for active of need_keyword since
+	fix in F95-lex.c.
+
+	* F95-lex.c (read_identifier): special handling for taken, function as
+	KEYWORD.
+
+	* Makefile.am: add the flag, -DBUGFIX for bug, sub./func. define
+	before use.
+	
+2009-03-10  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* F95-lex.c (classify_statement): fix for miss lex like totaltime....=.
+
+2009-03-09  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* F95-lex.c (get_keyword_optional_blank): lex for do while.
+
+2009-03-07  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* F95-parser.y: comment out for need_keyword, for fix in fixed-format,
+	like 'double precision toxx'
+
+2009-03-06  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* F-compile-decl.c (declare_common_variables): undef for align
+	handling.
+
+	* ../src/testRegression/bad: collect bad case.
+
+	* ../src/testRegression: add new file.
+
+	* F95-parser.y ('type_spec0/KW_UNDEFINED'): fix for 'implicit none'
+
+	* F95-lex.c (keywords): fix for handling of token, 'precision'.
+
+	* F95-main.c (main): fix for -force-* handling.
+
+	* F95-parser.y (imp_list): fix AST structure for "implicit none"
+
+	* ../src/testRegression: rename file suffix, F to f90 and add new
+	file(t4a.f90, t6.f)
+
+	* F95-main.c (main): add the option,
+	-force-fixed-format/-force-free-format.
+
+2009-03-05  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* F95-parser.y (KW_INTEGER/REAL/COMPLEX/LOGICAL): fix for this type
+	integer.
+
+	* F-compile-decl.c (compile_IMPLICIT_decl): fixed for implicit none.
+
+	* Makefile.in: remove because automake generation from Makefile.am.
+
+	* F95-lex.c (keywords): bug fix for search with do/double precision.
+
+	* F95-main.c (main): active file name handlig for .f/.F with fixed
+	format.
+
+	* Makefile.am (F_Front_YFLAGS): add the -v for bison.
+
+2009-03-03  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* F95-parser.y (KW_INTEGER/REAL/COMPLEX/LOGICAL): assume keyword
+	after type decl. in funciton type definition(fix for function
+	define).
+
+	* Makefile.am (F_Front_CFLAGS): activate yydebug symbol.
+
+	* F-output.c (output_X_file): no action for align check in
+	omini3(___XCODEML__).
+
+	* F-compile-decl.c (compile_type): safety null check.
+
+	* F-compile.c (compile_statement1): for end functoin and end
+	subroutine in f95.
+
+2009-03-02  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* F95-lex.c (yylex0): 
+	* F95-parser.y (imp_list): add the implicit type marker for handling of
+	integer/real/doubleprecision/complex/logical/character(..) as same.
+	
+2009-02-27  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* F95-lex.c (yylex0): handling 'integer (' as key for handling of
+	integer(...)
+
+	* F95-parser.y (imp_list): add the implicit type marker and rule
+	for handling of integer(..)
+
+	* F-front.h: add the implicit type marker for handling of integer(..)
+
+2009-02-26  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* F-compile.c (compile_statement1): add the handling of end program.
+
+	* F-compile-decl.c (compile_IMPLICIT_decl): fix for handling of
+	implicit none.
+
+2009-02-24  Nobuyuki Hikichi  <hikichi@srapc3112.sra.co.jp>
+
+	* ChangeLog: new file.
+
+	* F-machine-dep.c (basic_type_align): internal error for call this.
+
+        * F95-main.c (main): use YYDEBUG with yydebug for avoid compile error.
+	
+        * F95-lex.c: disalbe for LEX_DEBUG.
+	
+	* F95-parser.y (statement): use non prefix statement for F95_*.
+
+	* F-front.h: add the include of config.h and define macro for HAS*.
+	
+	* Makefile.in: remove for use of automake.
+
+	* configure.ac: new file.
+
+	* Makefile.am: new file.
+
+	* Makefile.in: replace generated file by automake.
+
+	* config.h.in: new file.
+
+	*  (configure): new file.

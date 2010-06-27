@@ -1,0 +1,26 @@
+
+Examples        Program name
+-------------------------------------
+A.1             tiny01.c
+A.2		tiny02.c
+A.3             tiny03.c(need omp.h)
+A.4             tiny04.c
+A.5		tiny05.c
+A.6             tiny06.c
+A.7             tiny07.c
+A.8             tiny08.c
+A.9             tiny09.c
+A.10		tiny10.c
+A.11		tiny11.c
+A.12            tiny12.c
+A.13		tiny13.c
+A.14		tiny14.c
+A.15		tiny15.c
+A.16		tiny16.c
+A.17		<not implement>
+A.18            tiny18.c
+A.19		incorrect case (tiny19-1.c ¡Á tiny19-5.c)
+A.20		tiny20,c
+A.21            tiny21.c
+A.22		tiny22-1.c
+		incorrect case (tiny22-2.c ¡Á tiny22-3.c)

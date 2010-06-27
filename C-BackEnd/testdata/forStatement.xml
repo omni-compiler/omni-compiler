@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XcodeProgram source="forStatement.c">
+  <!-- 
+       int forStatementFunction () {
+           int n = 3;
+           int m = 4;
+
+           for (n; n < m; n++) {
+                return n;
+           }
+           return 0;
+       }
+  -->
+  <typeTable>
+    <functionType type="type_of_function" return_type="int">
+      <params>
+      </params>
+    </functionType>
+    <pointerType type="pointer_of_function" ref="type_of_function"/>
+    <pointerType type="pointer_of_n_1" ref="int"/>
+    <pointerType type="pointer_of_m_1" ref="int"/>
+    <pointerType type="pointer_of_n_2" ref="int"/>
+    <pointerType type="pointer_of_n_3" ref="int"/>
+    <pointerType type="pointer_of_m_2" ref="int"/>
+    <pointerType type="pointer_of_n_4" ref="int"/>
+    <pointerType type="pointer_of_n_5" ref="int"/>
+  </typeTable>
+  
+  <globalSymbols>
+    <id sclass="extern_def">
+      <name type="type_of_function">forStatementFunction</name>
+    </id>
+  </globalSymbols>
+  
+  <globalDeclarations>
+
+    <functionDefinition>
+      <name>forStatementFunction</name>
+      
+      <symbols>
+      </symbols>
+      
+      <params>
+      </params>
+      
+      <body>
+        <compoundStatement>
+          <symbols>
+            <id sclass="auto">
+              <name type="int">n</name>
+            </id>
+            <id sclass="auto">
+              <name type="int">m</name>
+            </id>
+          </symbols>
+          <declarations>
+            <varDecl>
+              <name>n</name>
+              <value>
+                <intConstant type="int">3</intConstant>
+              </value>
+            </varDecl>
+            <varDecl>
+              <name>m</name>
+              <value>
+                <intConstant type="int">4</intConstant>
+              </value>
+            </varDecl>
+
+          </declarations>
+          <body>
+            <forStatement>
+
+              <init>
+                <pointerRef type="int">
+                  <varAddr scope="local" type="pointer_of_n_2">n</varAddr>
+                </pointerRef>
+              </init>
+
+              <condition>
+                <logLTExpr>
+                  <pointerRef type="int">
+                    <varAddr scope="local" type="pointer_of_n_3">n</varAddr>
+                  </pointerRef>
+                  <pointerRef type="int">
+                    <varAddr scope="local" type="pointer_of_m_2">m</varAddr>
+                  </pointerRef>
+                </logLTExpr>
+              </condition>
+
+              <iter>
+                <plusExpr type="int">
+                  <pointerRef type="int">
+                    <varAddr scope="local" type="pointer_of_n_4">n</varAddr>
+                  </pointerRef>
+                  <intConstant type="int">1</intConstant>
+                </plusExpr>
+              </iter>
+
+              <body>
+                <compoundStatement>
+                  <symbols></symbols>
+                  <declarations></declarations>
+                  <body>
+                    <returnStatement>
+                      <pointerRef type="int">
+                        <varAddr scope="local" type="pointer_of_n_5">n</varAddr>
+                      </pointerRef>
+                    </returnStatement>
+                  </body>
+                </compoundStatement>
+              </body>
+            </forStatement>
+            <returnStatement>
+              <intConstant type="int">0</intConstant>
+            </returnStatement>
+          </body>
+        </compoundStatement>
+      </body>
+    </functionDefinition>
+
+  </globalDeclarations>
+  
+</XcodeProgram>

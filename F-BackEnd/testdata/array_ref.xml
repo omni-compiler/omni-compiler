@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- 
+      program main
+        real, dimension(10) :: vector
+        real, dimension(5)  :: subvector
+        subvector = vector(1:10:2)
+      end
+-->
+<XcodeProgram compiler-info="F-Frontend"
+              version="1.0"
+              time="2009-02-17 10:53:20"
+              language="Fortran"
+              source="array_ref.f90">
+
+  <!-- typeTable -->
+  <typeTable>
+    <FfunctionType type="FfunctionType_of_main" return_type="Fvoid" />
+    <FarrayType type="FarrayType_of_vector" element_type="Freal">
+      <indexRange>
+        <upperBound><FintConstant type="Fint">10</FintConstant></upperBound>
+      </indexRange>
+    </FarrayType>
+    <FarrayType type="FarrayType_of_subvector" element_type="Freal">
+      <indexRange>
+        <upperBound><FintConstant type="Fint">5</FintConstant></upperBound>
+      </indexRange>
+    </FarrayType>
+  </typeTable>
+
+  <!-- globalSymbols -->
+  <globalSymbols>
+    <id sclass="extern_def" type="FfunctionType_of_main">
+      <name type="FfunctionType_of_main">main</name>
+    </id>
+  </globalSymbols>
+
+  <!-- globalDeclarations -->
+  <globalDeclarations>
+    <!-- 1: program main -->
+    <FfunctionDefinition is_program="1" lineno="1" file="array_ref.f90">
+      <!-- name -->
+      <name type="FfunctionType_of_main">main</name>
+      <!-- symbols -->
+      <symbols>
+        <id sclass="auto" type="FarrayType_of_vector">
+          <name type="FarrayType_of_vector">vector</name>
+        </id>
+        <id sclass="auto" type="FarrayType_of_subvector">
+          <name type="FarrayType_of_subvector">subvector</name>
+        </id>
+      </symbols>
+      <!-- declarations -->
+      <declarations>
+        <!-- 2: real, dimension(10) :: vector -->
+        <varDecl lineno="2" file="array_ref.f90">
+          <name type="FarrayType_of_vector">vector</name>
+        </varDecl>
+        <!-- 3: real, dimension(5)  :: subvector-->
+        <varDecl lineno="3" file="array_ref.f90">
+          <name type="FarrayType_of_subvector">subvector</name>
+        </varDecl>
+      </declarations>
+      <!-- body -->
+      <body>
+        <!-- 4: subvector = vector(1:10:2) -->
+        <exprStatement lineno="4" file="array_ref.f90">
+          <assignExpr>
+            <Var scope="local">vector</Var>
+            <FarrayRef type="FarrayType_of_subvector">
+              <varRef>
+                <Var scope="local">subvector</Var>
+              </varRef>
+              <indexRange>
+                <lowerBound>
+                  <FintConstant type="Fint">1</FintConstant>
+                </lowerBound>
+                <upperBound>
+                  <FintConstant type="Fint">10</FintConstant>
+                </upperBound>
+                <step>
+                  <FintConstant type="Fint">2</FintConstant>
+                </step>
+              </indexRange>
+            </FarrayRef>
+          </assignExpr>
+        </exprStatement>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+
+</XcodeProgram>

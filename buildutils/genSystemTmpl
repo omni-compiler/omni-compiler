@@ -1,0 +1,119 @@
+getArgVal () {
+    optName=`echo $1 | awk -F'=' '{ print $1 }'`
+    echo $1 | sed "s:${optName}=::"
+}
+
+genCppMTSafeDef () {
+    defs=""
+    case "${os}" in
+	irix)
+	    defs="-D_SGI_MP_SOURCE -D_SGI_REENTRANT_FUNCTIONS";;
+	aix)
+	    defs="-D_THREAD_SAFE";;
+	solaris|linux|freebsd|darwin)
+	    defs="-D_REENTRANT";;
+	*)
+	    true;;
+    esac
+    echo "sysMtSafeDefs='$defs'"
+}
+
+
+genDefCc () {
+    sysCc="cc"
+    if test "${os}" = "aix"; then
+	sysCc="cc_r"
+    fi
+    
+    echo "sysCc='${sysCc}'"
+    echo "gccUnionBug='${gccBug}'"
+}
+
+
+linuxVMSize () {
+    rMem=`grep MemTotal /proc/meminfo | awk '{ print $2 }'` 2>/dev/null
+    sMem=`grep SwapTotal /proc/meminfo | awk '{ print $2 }'` 2>/dev/null
+    
+    if test "x${rMem}" = "x"; then
+	# wild guess. 128MB main memory.
+	rMem=131072
+    fi
+    if test "x${sMem}" = "x"; then
+	# wild guess. rMem *2
+	sMem=`expr "${rMem}" '*' '2'`
+    fi
+    vMem=`expr "${rMem}" + "${sMem}"`
+    vMem=`expr "${vMem}" '/' '1024' '-' '1'`
+    echo ${vMem}
+}
+
+
+genJavaThing () {
+    if test "x${javaType}" = "xibm"; then
+	echo "minJavaMem=''"
+	echo "maxJavaMem=''"
+	echo "maxJavaStack=''"
+	return 0
+    fi
+
+    minOpt="-ms"
+    maxOpt="-mx"
+
+    minJavaMem="${minOpt}16m"
+    if test "${os}" = "aix" -o "${os}" = "darwin"; then
+	maxJavaMem="${maxOpt}512m"
+    else
+	maxJavaMem="${maxOpt}1024m"
+    fi
+    echo "minJavaMem='${minJavaMem}'"
+    echo "maxJavaMem='${maxJavaMem}'"
+    maxJavaStack=""
+
+    if test "x${useJava}" = "xyes"; then
+        v=`java -version 2>&1 | grep 'java version' | sed 's/"//g' | awk '{ print $NF }'`
+
+        case "${os}" in
+	    linux)
+	        if test "x${v}" = "x1.2.2"; then
+		    vMem=`linuxVMSize`
+		    if test $vMem -gt 1024; then
+		        maxJavaStack="-Xss1024m"
+		    else
+		        maxJavaStack="-Xss${vMem}m"
+		    fi
+	        fi;;
+        esac
+    fi
+
+    echo "maxJavaStack='${maxJavaStack}'"
+}
+
+
+while case "$1" in
+    --os=*)
+	os=`getArgVal "$1"`
+	true;;
+    --cpu=*)
+	cpu=`getArgVal "$1"`
+	true;;
+    --gccBug=*)
+	gccBug=`getArgVal "$1"`
+	true;;
+    --useJava=*)
+        useJava=`getArgVal "$1"`
+        true;;
+    --javaType=*)
+	javaType=`getArgVal "$1"`
+	true;;
+    *)
+	false;;
+    esac
+do
+    shift
+done
+
+genCppMTSafeDef
+genDefCc
+genJavaThing
+
+exit 0

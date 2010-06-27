@@ -1,0 +1,82 @@
+<XcodeProgram source="if.f90"
+              language="Fortran"
+              time="2009-03-27 18:07:57"
+              compiler-info="XcodeML/Fortran-FrontEnd"
+              version="1.0">
+  <typeTable>
+    <FbasicType type="B80a5f38" ref="Fint" />
+    <FfunctionType type="F80a5b00" return_type="Fvoid" is_program="1" />
+  </typeTable>
+  <globalSymbols>
+    <id sclass="extern_def" type="F80a5b00">
+      <name type="F80a5b00">main</name>
+    </id>
+  </globalSymbols>
+  <globalDeclarations>
+    <FfunctionDefinition lineno="1" file="if.f90">
+      <name type="F80a5b00">main</name>
+      <symbols>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">i</name>
+        </id>
+      </symbols>
+      <declarations>
+        <varDecl lineno="2" file="if.f90">
+          <name type="Fint">i</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <FifStatement lineno="3" file="if.f90">
+          <condition>
+            <logGTExpr>
+              <Var>i</Var>
+              <FintConstant>0</FintConstant>
+            </logGTExpr>
+          </condition>
+          <then>
+            <body>
+              <exprStatement lineno="4" file="if.f90">
+                <assignExpr>
+                  <Var>i</Var>
+                  <FintConstant>2</FintConstant>
+                </assignExpr>
+              </exprStatement>
+            </body>
+          </then>
+          <else>
+            <body>
+              <FifStatement lineno="5" file="if.f90">
+                <condition>
+                  <logGTExpr>
+                    <Var>i</Var>
+                    <FintConstant>10</FintConstant>
+                  </logGTExpr>
+                </condition>
+                <then>
+                  <body>
+                    <exprStatement lineno="6" file="if.f90">
+                      <assignExpr>
+                        <Var>i</Var>
+                        <FintConstant>3</FintConstant>
+                      </assignExpr>
+                    </exprStatement>
+                  </body>
+                </then>
+                <else>
+                  <body>
+                    <exprStatement lineno="8" file="if.f90">
+                      <assignExpr>
+                        <Var>i</Var>
+                        <FintConstant>4</FintConstant>
+                      </assignExpr>
+                    </exprStatement>
+                  </body>
+                </else>
+              </FifStatement>
+            </body>
+          </else>
+        </FifStatement>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

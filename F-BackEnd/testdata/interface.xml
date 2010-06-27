@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- 
+      program main
+        real f
+        interface
+          real function fun (x)
+            real, intent(in) :: x
+          end function fun
+        end interface
+        f = fun(2.0)
+      end program
+
+      real function fun (x)
+        real, intent(in) :: x
+        fun = 3.0 * x
+      end function
+-->
+<XcodeProgram compiler-info="F-Frontend"
+              version="0.8"
+              time="2009-02-17 10:53:20"
+              language="Fortran 90 Free Format"
+              source="interface.f90">
+
+  <!-- typeTable -->
+  <typeTable>
+    <FfunctionType type="FfunctionType_of_main" return_type="Fvoid" />
+    <FfunctionType type="FfunctionType_of_fun" return_type="Freal" />
+    <FbasicType type="FbasicType_of_x" ref="Freal" intent="in" />
+  </typeTable>
+
+  <!-- globalSymbols -->
+  <globalSymbols>
+    <id sclass="extern_def" type="FfunctionType_of_main">
+      <name type="FfunctionType_of_main">main</name>
+    </id>
+    <id sclass="extern_def" type="FfunctionType_of_fun">
+      <name type="FfunctionType_of_fun">fun</name>
+    </id>
+  </globalSymbols>
+
+  <!-- globalDeclarations -->
+  <globalDeclarations>
+
+    <!-- 1: program main -->
+    <FfunctionDefinition is_program="1" lineno="1" file="interface.f90">
+
+      <!-- name -->
+      <name type="FfunctionType_of_main">main</name>
+
+      <!-- symbols -->
+      <symbols>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">f</name>
+        </id>
+      </symbols>
+
+      <!-- declarations -->
+      <declarations>
+        <!-- 2: real f -->
+        <varDecl lineno="2" file="interface.f90">
+          <name type="FfunctionType_of_fun">f</name>
+        </varDecl>
+
+        <!-- 3: interface -->
+        <FinterfaceDecl lineno="3" file="interface.f90">
+
+        <!-- 4: real function fun (x) -->
+          <FfunctionDecl lineno="4" file="interface.f90">
+            <name type="FfunctionType_of_fun">fun</name>
+            <params>
+              <name type="FbasicType_of_x">x</name>
+            </params>
+            <declarations>
+              <!-- 5: real, intent(in) :: x -->
+              <varDecl lineno="5" file="interface.f90">
+                <name type="FbasicType_of_x">x</name>
+              </varDecl>
+            </declarations>
+          </FfunctionDecl>
+        </FinterfaceDecl>
+      </declarations>
+
+      <!-- body -->
+      <body>
+
+        <!-- 8: f = fun(2.0) -->
+        <exprStatement lineno="8" file="interface.f90">
+          <assignExpr>
+            <Var scope="local">f</Var>
+            <functionCall>
+              <function type="FfunctionType_of_fun">fun</function>
+              <arguments>
+                <FrealConstant type="Freal">2.0</FrealConstant>
+              </arguments>
+            </functionCall>
+          </assignExpr>
+        </exprStatement>
+
+
+      </body>
+    </FfunctionDefinition>
+
+    <!-- 11: function fun -->
+    <FfunctionDefinition lineno="11" file="interface.f90"> 
+      <!-- name -->
+      <name type="FfunctionType_of_fun">fun</name>
+
+      <!-- symbols -->
+      <symbols>
+        <id sclass="auto" type="FbasicType_of_x">
+          <name type="FbasicType_of_x">x</name>
+        </id>
+      </symbols>
+
+      <!-- params -->
+      <params>
+        <name type="Freal">x</name>
+      </params>
+
+      <!-- declarations -->
+      <declarations>
+        <!-- 12: real, intent(in) :: x -->
+        <varDecl lineno="12" file="interface.f90">
+          <name type="FbasicType_of_x">x</name>
+        </varDecl>
+      </declarations>
+
+      <!-- body -->
+      <body>
+
+        <!-- 13: fun = 3.0 * x -->
+        <exprStatement lineno="13" file="interface.f90">
+          <assignExpr>
+            <Var scope="local">fun</Var>
+            <mulExpr>
+              <FrealConstant type="Freal">3.0</FrealConstant>
+              <Var scope="param">x</Var>
+            </mulExpr>
+          </assignExpr>
+        </exprStatement>
+
+      </body>
+
+    </FfunctionDefinition>
+
+  </globalDeclarations>
+
+</XcodeProgram>

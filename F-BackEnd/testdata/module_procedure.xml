@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- 
+      module POINT3D
+        type point
+           real x, y, z
+        end type point
+
+        interface operator(==)
+          module procedure POINT3D_EQ
+        end interface 
+
+        contains
+
+        function POINT3D_EQ (p1, p2)
+          logical :: POINT3D_EQ
+          type(point), intent(in) :: p1
+          type(point), intent(in) :: p2
+          POINT3D_EQ = p1%x == p2%x .AND. p1%y == p2%y .AND. p1%z == p2%z
+        end function
+      end module
+-->
+<XcodeProgram source="module_procedure.f90">
+  <typeTable>
+    <FstructType type="FstructType_of_point">
+      <symbols>
+        <id sclass="auto" type="Real">
+          <name type="Freal">x</name>
+        </id>
+        <id sclass="auto" type="Real">
+          <name type="Freal">y</name>
+        </id>
+        <id sclass="auto" type="Real">
+          <name type="Freal">z</name>
+        </id>
+      </symbols>
+    </FstructType >
+    <FbasicType type="FbasicType_of_p1" ref="FstructType_of_point" />
+    <FbasicType type="FbasicType_of_p2" ref="FstructType_of_point" />
+    <FfunctionType type="FfunctionType_of_POINT3D_EQ" return_type="Flogical">
+      <params>
+        <name type="FbasicType_of_p1">p1</name>
+        <name type="FbasicType_of_p2">p2</name>
+      </params>
+    </FfunctionType>
+  </typeTable>
+
+  <globalSymbols>
+  </globalSymbols>
+
+  <globalDeclarations>
+
+    <!-- module POINT3D -->
+    <FmoduleDefinition lineno="1" file="module_procedure.f90" name="POINT3D">
+
+      <!-- symbols -->
+      <symbols>
+        <id sclass="extern_def" type="FfunctionType_of_POINT3D_EQ">
+          <name type="FfunctionType_of_POINT3D_EQ">POINT3D_EQ</name>
+        </id>
+      </symbols>
+
+      <!-- declarations -->
+      <declarations>
+        <FinterfaceDecl is_operator="1" lineno="6" file="module_procedure.f90" name="==">
+          <FmoduleProcedureDecl lineno="7" file="module_procedure.f90">
+            <name type="FfunctionType_of_POINT3D_EQ">POINT3D_EQ</name>
+          </FmoduleProcedureDecl>
+        </FinterfaceDecl>
+      </declarations>
+
+      <!-- 11: function POINT3D_EQ (p1, p2) -->
+      <FfunctionDefinition lineno="11" file="module_procedure.f90">
+
+        <!-- name -->
+        <name type="FfunctionType_of_POINT3D_EQ">POINT3D_EQ</name>
+
+        <!-- symbols -->
+        <symbols>
+          <id sclass="param" type="FbasicType_of_p1">
+            <name type="FbasicType_of_p1">p1</name>
+          </id>
+          <id sclass="param" type="FbasicType_of_p2">
+            <name type="FbasicType_of_p2">p2</name>
+          </id>
+          <id sclass="auto" type="Flogical">
+            <name type="Flogical">POINT3D_EQ</name>
+          </id>
+        </symbols>
+
+        <!-- params -->
+        <params>
+          <name type="FbasicType_of_p1">p1</name>
+          <name type="FbasicType_of_p2">p2</name>
+        </params>
+
+        <!-- declarations -->
+        <declarations>
+        </declarations>
+
+        <!-- body -->
+        <body>
+          <exprStatement lineno="10" file="module_procedure.f90">
+            <assignExpr>
+              <Var scope="local">POINT3D_EQ</Var>
+              <logAndExpr>
+                <logEQExpr>
+                  <FmemberRef member="x" type="Freal">
+                    <varRef>
+                      <Var scope="param">p1</Var>
+                    </varRef>
+                  </FmemberRef>
+                  <FmemberRef member="x" type="Freal">
+                    <varRef>
+                      <Var scope="param">p2</Var>
+                    </varRef>
+                  </FmemberRef>
+                </logEQExpr>
+                <logAndExpr>
+                  <logEQExpr>
+                    <FmemberRef member="y" type="Freal">
+                      <varRef>
+                        <Var scope="param">p1</Var>
+                      </varRef>
+                    </FmemberRef>
+                    <FmemberRef member="y" type="Freal">
+                      <varRef>
+                        <Var scope="param">p2</Var>
+                      </varRef>
+                    </FmemberRef>
+                  </logEQExpr>
+                  <logEQExpr>
+                    <FmemberRef member="z" type="Freal">
+                      <varRef>
+                        <Var scope="param">p1</Var>
+                      </varRef>
+                    </FmemberRef>
+                    <FmemberRef member="z" type="Freal">
+                      <varRef>
+                        <Var scope="param">p2</Var>
+                      </varRef>
+                    </FmemberRef>
+                  </logEQExpr>
+                </logAndExpr>
+              </logAndExpr>
+            </assignExpr>
+          </exprStatement>
+
+        </body>
+
+      </FfunctionDefinition>
+
+    </FmoduleDefinition>
+
+  </globalDeclarations>
+
+</XcodeProgram>

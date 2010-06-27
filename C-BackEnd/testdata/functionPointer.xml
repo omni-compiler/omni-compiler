@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XcodeProgram source="functionPointer.c">
+<!--
+    int callee(int n, int m) {
+        return n + m;
+    }
+
+    void caller() {
+        void (* func)(int a, int b) = caller;
+        func(3, 4);
+    }
+-->
+<typeTable>
+  <functionType type="functionType_of_callee" return_type="int">
+    <params>
+      <name type="int">n</name>
+      <name type="int">m</name>
+    </params>
+  </functionType>
+  <pointerType type="pointerType_of_callee" ref="functionType_of_callee"/>
+  <functionType type="functionType_of_caller" return_type="void">
+    <params>
+    </params>
+  </functionType>
+  <pointerType type="paramAddr_of_a" ref="int"/>
+  <pointerType type="paramAddr_of_b" ref="int"/>
+  <functionType type="functionType_of_func" return_type="int">
+    <params>
+      <name type="int">a</name>
+      <name type="int">b</name>
+    </params>
+  </functionType>
+  <pointerType type="pointerType_of_func" ref="functionType_of_func"/>
+</typeTable>
+
+<globalSymbols>
+  <id sclass="extern_def">
+    <name type="functionType_of_callee">callee</name>
+  </id>
+  <id sclass="extern_def">
+    <name type="functionType_of_caller">caller</name>
+  </id>
+</globalSymbols>
+<globalDeclarations>
+  <functionDefinition>
+    <name>callee</name>
+    <symbols>
+      <id sclass="param">
+        <name type="int">n</name>
+      </id>
+      <id sclass="param">
+        <name type="int">m</name>
+      </id>
+    </symbols>
+    <params>
+      <name type="int">n</name>
+      <name type="int">m</name>
+    </params>
+    <body>
+      <compoundStatement>
+        <symbols></symbols>
+        <declarations></declarations>
+        <body>
+          <returnStatement>
+            <plusExpr type="int">
+              <Var scope="param" type="int">n</Var>
+              <Var scope="param" type="int">m</Var>
+            </plusExpr>
+          </returnStatement>
+        </body>
+      </compoundStatement>
+    </body>
+  </functionDefinition>
+  <functionDefinition>
+    <name>caller</name>
+    <symbols></symbols>
+    <params></params>
+    <body>
+      <compoundStatement>
+        <symbols>
+          <id sclass="auto">
+            <name type="pointerType_of_func">func</name>
+          </id>
+        </symbols>
+        <declarations>
+          <varDecl>
+            <name>func</name>
+            <value>
+              <funcAddr type="functionType_of_callee">callee</funcAddr>
+            </value>
+          </varDecl>
+        </declarations>
+        <body>
+          <exprStatement>
+            <functionCall>
+              <function>
+                <pointerRef type="funcAddr_of_func">
+                  <varAddr scope="local" type="LvarAddr_of_func">func</varAddr>
+                </pointerRef>
+              </function>
+              <arguments>
+                <intConstant type="int">3</intConstant>
+                <intConstant type="int">4</intConstant>
+              </arguments>
+            </functionCall>
+          </exprStatement>
+        </body>
+      </compoundStatement>
+    </body>
+  </functionDefinition>
+
+
+</globalDeclarations>
+</XcodeProgram>

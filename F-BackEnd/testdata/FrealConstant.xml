@@ -1,0 +1,130 @@
+<XcodeProgram source="FrealConstant.f90"
+              language="Fortran"
+              time="2009-03-27 18:13:01"
+              compiler-info="XcodeML/Fortran-FrontEnd"
+              version="1.0">
+  <typeTable>
+    <FbasicType type="B80a66b8" ref="Freal" />
+    <FbasicType type="B80a6938" ref="Freal" />
+    <FbasicType type="B80a6b78" ref="Freal" />
+    <FbasicType type="B80a6db8" ref="Freal" />
+    <FbasicType type="B80a7050" ref="Freal" />
+    <FbasicType type="B80a7258" ref="Freal" />
+    <FbasicType type="B80a7460" ref="Freal" />
+    <FbasicType type="B80a76f8" ref="Freal" />
+    <FfunctionType type="F80a5b08" return_type="Fvoid" is_program="1" />
+  </typeTable>
+  <globalSymbols>
+    <id sclass="extern_def" type="F80a5b08">
+      <name type="F80a5b08">main</name>
+    </id>
+  </globalSymbols>
+  <globalDeclarations>
+    <FfunctionDefinition lineno="1" file="FrealConstant.f90">
+      <name type="F80a5b08">main</name>
+      <symbols>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">r1</name>
+        </id>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">r2</name>
+        </id>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">r3</name>
+        </id>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">r4</name>
+        </id>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">r5</name>
+        </id>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">r6</name>
+        </id>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">r7</name>
+        </id>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">r8</name>
+        </id>
+      </symbols>
+      <declarations>
+        <varDecl lineno="2" file="FrealConstant.f90">
+          <name type="Freal">r1</name>
+        </varDecl>
+        <varDecl lineno="2" file="FrealConstant.f90">
+          <name type="Freal">r2</name>
+        </varDecl>
+        <varDecl lineno="2" file="FrealConstant.f90">
+          <name type="Freal">r3</name>
+        </varDecl>
+        <varDecl lineno="2" file="FrealConstant.f90">
+          <name type="Freal">r4</name>
+        </varDecl>
+        <varDecl lineno="2" file="FrealConstant.f90">
+          <name type="Freal">r5</name>
+        </varDecl>
+        <varDecl lineno="2" file="FrealConstant.f90">
+          <name type="Freal">r6</name>
+        </varDecl>
+        <varDecl lineno="2" file="FrealConstant.f90">
+          <name type="Freal">r7</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <exprStatement lineno="3" file="FrealConstant.f90">
+          <assignExpr>
+            <Var>r1</Var>
+            <unaryMinusExpr>
+              <FrealConstant>40298f5c 28f5c28f</FrealConstant>
+            </unaryMinusExpr>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="4" file="FrealConstant.f90">
+          <assignExpr>
+            <Var>r2</Var>
+            <FrealConstant>40990000 0</FrealConstant>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="5" file="FrealConstant.f90">
+          <assignExpr>
+            <Var>r3</Var>
+            <FrealConstant>4000cccc cccccccd</FrealConstant>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="6" file="FrealConstant.f90">
+          <assignExpr>
+            <Var>r4</Var>
+            <unaryMinusExpr>
+              <FrealConstant>41038800 0</FrealConstant>
+            </unaryMinusExpr>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="7" file="FrealConstant.f90">
+          <assignExpr>
+            <Var>r5</Var>
+            <FrealConstant>3f0797cc 39ffd60f</FrealConstant>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="8" file="FrealConstant.f90">
+          <assignExpr>
+            <Var>r6</Var>
+            <FrealConstant>419a0f24 80000000</FrealConstant>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="9" file="FrealConstant.f90">
+          <assignExpr>
+            <Var>r7</Var>
+            <FrealConstant>3fbf7ced 916872b0</FrealConstant>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="10" file="FrealConstant.f90">
+          <assignExpr>
+            <Var>r8</Var>
+            <FrealConstant>40dd4c00 0</FrealConstant>
+          </assignExpr>
+        </exprStatement>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

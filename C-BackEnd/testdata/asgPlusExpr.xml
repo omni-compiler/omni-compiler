@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XcodeProgram source="asgPlusExpr.c">
+  <typeTable>
+    <functionType type="type_of_func" return_type="int">
+      <params>
+        <name type="void"/>
+      </params>
+    </functionType>
+    <pointerType type="pointer_of_func" ref="type_of_func"/>
+  </typeTable>
+
+  <globalSymbols>
+    <id sclass="extern_def">
+      <name type="type_of_func">func</name>
+    </id>
+  </globalSymbols>
+
+  <globalDeclarations>
+    <functionDefinition> 
+      <name>func</name>
+      <symbols/>
+      <params/>
+      <body>
+        <compoundStatement>
+          <symbols>
+            <id>
+              <name type="int">n</name>
+            </id>
+            <id>
+              <name type="int">m</name>
+            </id>
+          </symbols>
+          <declarations>
+            <varDecl>
+              <name>n</name>
+              <value>
+                <intConstant>3</intConstant>
+              </value>
+            </varDecl>
+            <varDecl>
+              <name>m</name>
+              <value>
+                <intConstant>5</intConstant>
+              </value>
+            </varDecl>
+          </declarations>
+          <body>
+            <exprStatement>
+              <asgPlusExpr>
+                <Var scope="local">n</Var>
+                <Var scope="local">m</Var>
+              </asgPlusExpr>
+            </exprStatement>
+            <returnStatement><intConstant>0</intConstant></returnStatement>
+          </body>
+        </compoundStatement>
+      </body>
+    </functionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

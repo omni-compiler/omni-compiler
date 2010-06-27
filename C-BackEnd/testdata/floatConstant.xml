@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XcodeProgram source="testIntConstant.c">
+  <!-- 
+      int main () {
+          double a = 1.0;
+      }
+  -->
+  <typeTable>
+    <functionType type="type_of_function" return_type="int">
+      <params>
+      </params>
+    </functionType>
+    <pointerType type="pointer_of_function" ref="type_of_function"/>
+    <pointerType type="LvarAddr_of_a" ref="double"/>
+  </typeTable>
+
+  <globalSymbols>
+    <id sclass="extern_def">
+      <name type="type_of_function">main</name>
+    </id>
+  </globalSymbols>
+
+  <globalDeclarations>
+    <functionDefinition> 
+      <name>main</name>
+      <symbols/>
+      <params/>
+      <body>
+        <compoundStatement>
+          <symbols>
+            <id sclass="auto">
+              <name type="double">a</name>
+            </id>
+          </symbols>
+          <declarations>
+            <varDecl>
+              <name>a</name>
+              <value>
+                <floatConstant>1.0</floatConstant>
+              </value>
+            </varDecl>
+          </declarations>
+          <body>
+          </body>
+        </compoundStatement>
+      </body>
+    </functionDefinition>
+  </globalDeclarations>
+
+</XcodeProgram>

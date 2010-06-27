@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- 
+      function func (a, b, c)
+        integer a, b, c, func
+        c = c ** 2
+        entry func_entry (a, b, c) result (res)
+        func = a + b + c
+        res = a + b
+      end function
+-->
+<XcodeProgram compiler-info="F-Frontend"
+              version="0.8"
+              time="2009-02-17 10:53:20"
+              language="Fortran 90 Free Format"
+              source="entry.f90">
+
+  <!-- typeTable -->
+  <typeTable>
+    <FfunctionType type="FfunctionType_of_func" return_type="Fint">
+      <params>
+        <name type="Fint">a</name>
+        <name type="Fint">b</name>
+        <name type="Fint">c</name>
+      </params>
+    </FfunctionType>
+    <FfunctionType type="FfunctionType_of_func_entry" return_type="Fint">
+      <params>
+        <name type="Fint">a</name>
+        <name type="Fint">b</name>
+        <name type="Fint">c</name>
+      </params>
+    </FfunctionType>
+  </typeTable>
+
+  <!-- globalSymbols -->
+  <globalSymbols>
+    <id sclass="extern_def" type="FfunctionType_of_main">
+      <name type="FfunctionType_of_func">func</name>
+    </id>
+    <id sclass="extern_def" type="FfunctionType_of_sub">
+      <name type="FfunctionType_of_sub">sub</name>
+    </id>
+  </globalSymbols>
+
+  <!-- globalDeclarations -->
+  <globalDeclarations>
+
+    <!-- 1: program main -->
+    <FfunctionDefinition lineno="1" file="entry.f90">
+
+      <!-- name -->
+      <name type="FfunctionType_of_func">func</name>
+
+      <!-- symbols -->
+      <symbols>
+        <id sclass="param" type="Fint">
+          <name type="Fint">a</name>
+        </id>
+        <id sclass="param" type="Fint">
+          <name type="Fint">b</name>
+        </id>
+        <id sclass="param" type="Fint">
+          <name type="Fint">c</name>
+        </id>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">func</name>
+        </id>
+      </symbols>
+
+      <!-- params -->
+      <params>
+        <name type="Fint">a</name>
+        <name type="Fint">b</name>
+        <name type="Fint">c</name>
+      </params>
+
+      <!-- declarations -->
+      <declarations>
+        <!-- 2: integer a, b, c, func -->
+        <varDecl lineno="2" file="entry.f90">
+          <name type="Fint">a</name>
+        </varDecl>
+        <varDecl lineno="2" file="entry.f90">
+          <name type="Fint">b</name>
+        </varDecl>
+        <varDecl lineno="2" file="entry.f90">
+          <name type="Fint">c</name>
+        </varDecl>
+        <varDecl lineno="2" file="entry.f90">
+          <name type="Fint">func</name>
+        </varDecl>
+      </declarations>
+
+      <!-- body -->
+      <body>
+
+        <!-- 3: c = c ** 2 -->
+        <exprStatement lineno="3" file="entry.f90">
+          <assignExpr>
+            <Var scope="param">c</Var>
+            <FpowerExpr>
+              <Var scope="param">c</Var>
+              <FintConstant type="Fint">2</FintConstant>
+            </FpowerExpr>
+          </assignExpr>
+        </exprStatement>
+
+        <!-- 4: entry func_entry (a, b, c) result (res) -->
+        <FentryDecl lineno="4" file="entry.f90">
+          <name type="FfunctionType_of_func_entry">func_entry</name>
+          <symbols>
+            <id sclass="param" type="Fint">
+              <name type="Fint">a</name>
+            </id>
+            <id sclass="param" type="Fint">
+              <name type="Fint">b</name>
+            </id>
+            <id sclass="param" type="Fint">
+              <name type="Fint">c</name>
+            </id>
+          </symbols>
+          <params>
+            <name type="Fint">a</name>
+            <name type="Fint">b</name>
+            <name type="Fint">c</name>
+          </params>
+          <result>res</result>
+        </FentryDecl>
+
+        <!-- 5: func = a + b + c -->
+        <exprStatement lineno="5" file="entry.f90">
+          <assignExpr>
+            <Var scope="local">func</Var>
+            <plusExpr>
+              <plusExpr>
+                <Var scope="param">a</Var>
+                <Var scope="param">b</Var>
+              </plusExpr>
+              <Var scope="param">c</Var>
+            </plusExpr>
+          </assignExpr>
+        </exprStatement>
+
+        <!-- 6: res = a + b -->
+        <exprStatement lineno="6" file="entry.f90">
+          <assignExpr>
+            <Var scope="local">res</Var>
+            <plusExpr>
+              <Var scope="param">a</Var>
+              <Var scope="param">b</Var>
+            </plusExpr>
+          </assignExpr>
+        </exprStatement>
+
+      </body>
+
+    </FfunctionDefinition>
+
+  </globalDeclarations>
+
+</XcodeProgram>

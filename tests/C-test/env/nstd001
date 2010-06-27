@@ -1,0 +1,35 @@
+#!/bin/sh
+
+# $Id$
+# $RWC_Release$
+# $RWC_Copyright$
+
+ERROR=0
+
+unset OMP_NESTED
+RESULT=`$EXEC ./envparam -n | grep -v SCore-D`
+if [ "$RESULT" != "nested parallelism is disable" ] ; then
+  ERROR=1
+fi
+
+OMP_NESTED=TRUE
+export OMP_NESTED
+RESULT=`$EXEC ./envparam -n | grep -v SCore-D`
+if [ "$RESULT" = "nested parallelism is disable" ] ; then
+  echo "nested parallism is not implement."
+elif [ "$RESULT" != "nested parallelism is enable" ] ; then
+  ERROR=1
+fi
+
+OMP_NESTED=FALSE
+export OMP_NESTED
+RESULT=`$EXEC ./envparam -n | grep -v SCore-D`
+if [ "$RESULT" != "nested parallelism is disable" ] ; then
+  ERROR=1
+fi
+
+if [ "$ERROR" = "0" ] ; then
+  echo "OMP_NESTED 001 : SUCCESS"
+else
+  echo "OMP_NESTED 001 : FAILED"
+fi

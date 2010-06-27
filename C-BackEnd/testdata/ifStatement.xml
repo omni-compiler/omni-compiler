@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XcodeProgram source="ifStatement.c">
+  <!-- 
+       int ifStatementFunction () {
+           int n;
+           int m;
+
+           if (m)
+                return n;
+       }
+  -->
+  <typeTable>
+    <functionType type="type_of_function" return_type="int">
+      <params>
+      </params>
+    </functionType>
+    <pointerType type="pointer_of_function" ref="type_of_function"/>
+    <pointerType type="pointer_of_n_1" ref="int"/>
+    <pointerType type="pointer_of_m_1" ref="int"/>
+    <pointerType type="pointer_of_n_2" ref="int"/>
+    <pointerType type="pointer_of_m_2" ref="int"/>
+  </typeTable>
+  
+  <globalSymbols>
+    <id sclass="extern_def">
+      <name type="type_of_function">ifStatementFunction</name>
+    </id>
+  </globalSymbols>
+  
+  <globalDeclarations>
+
+      <functionDefinition>
+        <name>ifStatementFunction</name>
+
+        <symbols>
+        </symbols>
+        
+        <params>
+        </params>
+        
+        <body>
+          <compoundStatement>
+          <symbols>
+            <id sclass="auto">
+              <name type="int">n</name>
+            </id>
+            <id sclass="auto">
+              <name type="int">m</name>
+            </id>
+          </symbols>
+          <declarations>
+            <varDecl>
+              <name>n</name>
+            </varDecl>
+            <varDecl>
+              <name>m</name>
+            </varDecl>
+
+          </declarations>
+            <body>
+              <ifStatement>
+                <condition>
+                  <pointerRef type="int">
+                    <varAddr scope="param" type="pointer_of_m_2">m</varAddr>
+                  </pointerRef>
+                </condition>
+                <then>
+                  <returnStatement>
+                    <pointerRef type="int">
+                      <varAddr scope="param" type="pointer_of_n_2">n</varAddr>
+                    </pointerRef>
+                  </returnStatement>
+                </then>
+                <else/>
+              </ifStatement>
+            </body>
+          </compoundStatement>
+        </body>
+
+      </functionDefinition>
+  </globalDeclarations>
+  
+</XcodeProgram>

@@ -1,0 +1,34 @@
+#!/bin/sh
+
+# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
+# $TSUKUBA_Copyright:
+#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
+#  $
+# $Id$
+
+genJARjdk () {
+    /usr/bin/jar cf ${target} $*
+}
+
+genJARkaffe () {
+    TMPDIR=/tmp/.genjar.$$
+    rm -rf ${TMPDIR}
+    mkdir ${TMPDIR}
+    tar cpf - $* | ( cd ${TMPDIR}; tar xpf - )
+    (cd ${TMPDIR}; /usr/bin/zip -q -DX -r ${target} .)
+    mv ${TMPDIR}/${target} .
+    rm -rf ${TMPDIR}
+}
+
+target=$1
+shift
+
+isKaffe=no
+useGcj=no
+if test "x${isKaffe}" = "xyes" -o "x${useGcj}" = "xyes"; then
+    genJARkaffe ${1+"$@"}
+else
+    genJARjdk ${1+"$@"}
+fi
+exit 0
+

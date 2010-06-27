@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XcodeProgram source="ifelseStatement.c">
+  <!-- 
+       int ifelseStatementFunction () {
+           int n;
+           int m;
+
+           if (m > n) {
+                return n;
+           } else {
+                return m;
+           }
+       }
+  -->
+  <typeTable>
+    <functionType type="type_of_function" return_type="int">
+      <params>
+      </params>
+    </functionType>
+    <pointerType type="pointer_of_function" ref="type_of_function"/>
+    <pointerType type="pointer_of_n_1" ref="int"/>
+    <pointerType type="pointer_of_m_1" ref="int"/>
+    <pointerType type="pointer_of_m_2" ref="int"/>
+    <pointerType type="pointer_of_n_2" ref="int"/>
+    <pointerType type="pointer_of_n_3" ref="int"/>
+    <pointerType type="pointer_of_m_3" ref="int"/>
+  </typeTable>
+  
+  <globalSymbols>
+    <id sclass="extern_def">
+      <name type="type_of_function">ifelseStatementFunction</name>
+    </id>
+  </globalSymbols>
+  
+  <globalDeclarations>
+      <functionDefinition>
+        <name>ifelseStatementFunction</name>
+
+        <symbols>
+        </symbols>
+        
+        <params>
+        </params>
+
+        <body>
+          <compoundStatement>
+          <symbols>
+            <id sclass="auto">
+              <name type="int">n</name>
+            </id>
+            <id sclass="auto">
+              <name type="int">m</name>
+            </id>
+          </symbols>
+          <declarations>
+            <varDecl>
+              <name>n</name>
+            </varDecl>
+            <varDecl>
+              <name>m</name>
+            </varDecl>
+
+          </declarations>
+            <body>
+              <ifStatement>
+                <condition>
+                  <logGTExpr>
+                    <pointerRef type="int">
+                      <varAddr scope="param" type="pointer_of_m_2">m</varAddr>
+                    </pointerRef>
+                    <pointerRef type="int">
+                      <varAddr scope="param" type="pointer_of_n_2">n</varAddr>
+                    </pointerRef>
+                  </logGTExpr>
+                </condition>
+                <then>
+                  <compoundStatement>
+                    <symbols></symbols>
+                    <declarations></declarations>
+                    <body>
+                      <returnStatement>
+                        <pointerRef type="int">
+                          <varAddr scope="param" type="pointer_of_n_3">n</varAddr>
+                        </pointerRef>
+                      </returnStatement>
+                    </body>
+                  </compoundStatement>
+                </then>
+                <else>
+                  <compoundStatement>
+                    <symbols></symbols>
+                    <declarations></declarations>
+                    <body>
+                      <returnStatement>
+                        <pointerRef type="int">
+                          <varAddr scope="param" type="pointer_of_m_3">m</varAddr>
+                        </pointerRef>
+                      </returnStatement>
+                    </body>
+                  </compoundStatement>
+                </else>
+              </ifStatement>
+            </body>
+          </compoundStatement>
+        </body>
+
+      </functionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

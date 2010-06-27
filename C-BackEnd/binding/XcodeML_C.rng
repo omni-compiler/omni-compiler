@@ -1,0 +1,1522 @@
+<?xml version="1.0"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0"
+         xmlns:java="http://www.relaxer.org/xmlns/relaxer/java">
+  <!--
+  $TSUKUBA_Release$
+  $TSUKUBA_Copyright$ 
+-->
+  <start>
+    <ref name="XcodeProgram"/>
+  </start>
+
+  <define name="XcodeProgram">
+    <element name="XcodeProgram" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.binding.XmXcodeProgram">
+      <ref name="typeTable"/>
+      <ref name="globalSymbols"/>
+      <ref name="globalDeclarations"/>
+      <ref name="language"/>
+      <ref name="time"/>
+      <ref name="version"/>
+      <ref name="source"/>
+      <ref name="compiler-info"/>
+    </element>
+  </define>
+
+  <define name="language">
+    <optional>
+      <attribute name="language"><data type="string"/></attribute>
+    </optional>
+  </define>
+  <define name="time">
+    <optional>
+      <attribute name="time"><data type="string"/></attribute>
+    </optional>
+  </define>
+  <define name="version">
+    <optional>
+      <attribute name="version"><data type="string"/></attribute>
+    </optional>
+  </define>
+  <define name="source">
+    <optional>
+      <attribute name="source"><data type="string"/></attribute>
+    </optional>
+  </define>
+  <define name="compiler-info">
+    <optional>
+      <attribute name="compiler-info"><data type="string"/></attribute>
+    </optional>
+  </define>
+
+  <define name="params">
+    <element name="params" java:extends="xcodeml.c.obj.XmcObj">
+      <zeroOrMore>
+        <ref name="name"/>
+      </zeroOrMore>
+      <optional>
+        <ref name="ellipsis"/>
+      </optional>
+    </element>
+  </define>
+
+  <define name="ellipsis">
+    <element name="ellipsis" java:extends="xcodeml.c.obj.XmcObj">
+      <data type="string"/>
+    </element>
+  </define>
+
+  <define name="typeTable">
+    <element name="typeTable" java:extends="xcodeml.c.obj.XmcObj">
+     <zeroOrMore>
+        <ref name="types"/>
+      </zeroOrMore>
+    </element>
+  </define>
+
+  <define name="type">
+    <attribute name="type">
+      <data type="string"/>
+      <!--
+      <choice>
+        <value>void</value>
+        <value>char</value>
+        <value>short</value>
+        <value>int</value>
+        <value>long</value>
+        <value>long_long</value>
+        <value>unsigned</value>
+        <value>unsigned_char</value>
+        <value>unsigned_short</value>
+        <value>unsigned_long</value>
+        <value>unsigned_long_long</value>
+        <value>float</value>
+        <value>double</value>
+        <value>long_double</value>
+        <value>wchar_t</value>
+        <value>float_complex</value>
+        <value>double_complex</value>
+        <value>long_double_complex</value>
+        <value>float_imaginary</value>
+        <value>double_imaginary</value>
+        <value>long_double_imaginary</value>
+        <value>bool</value>
+        <value>__builtin_va_arg</value>
+      </choice>
+      -->
+    </attribute>
+  </define>
+
+  <define name="types">
+    <choice>
+      <ref name="basicType"/>
+      <ref name="pointerType"/>
+      <ref name="functionType"/>
+      <ref name="arrayType"/>
+      <ref name="structType"/>
+      <ref name="unionType"/>
+      <ref name="enumType"/>
+      <!-- XcarableMP extension -->
+      <ref name="coArrayType"/>
+    </choice>
+  </define>
+
+  <define name="basicType">
+    <element name="basicType" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcType">
+      <attribute name="name">
+        <data type="string"/>
+      </attribute>
+      <ref name="type"/>
+      <ref name="BaseType"/>
+    </element>
+  </define>
+
+  <define name="pointerType">
+    <element name="pointerType" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcType">
+      <ref name="type"/>
+      <ref name="ref"/>
+      <ref name="BaseType"/>
+    </element>
+  </define>
+
+  <define name="ref">
+    <attribute name="ref">
+      <data type="string"/>
+    </attribute>
+  </define>
+  
+  <define name="functionType">
+    <element name="functionType" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcType">
+      <ref name="BaseType"/>
+      <ref name="type"/>
+      <attribute name="return_type">
+        <data type="string"/>
+      </attribute>
+      <optional>
+        <attribute name="is_inline">
+          <choice>
+            <value>0</value>
+            <value>1</value>
+            <value>true</value>
+            <value>false</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute name="is_static">
+          <choice>
+            <value>0</value>
+            <value>1</value>
+            <value>true</value>
+            <value>false</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <ref name="params"/>
+      </optional>
+    </element>
+  </define>
+  
+  <define name="arrayType">
+    <element name="arrayType" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcType xcodeml.c.binding.IXbcArrayType">
+      <ref name="BaseType"/>
+      <ref name="type"/>
+      <optional>
+        <attribute name="array_size">
+          <data type="string"/>
+        </attribute>
+      </optional>
+      <optional>
+        <ref name="arraySize"/>
+      </optional>
+      <attribute name="element_type">
+        <data type="string"/>
+      </attribute>
+      <optional>
+        <attribute name="is_static">
+          <choice>
+            <value>0</value>
+            <value>1</value>
+            <value>true</value>
+            <value>false</value>
+          </choice>
+        </attribute>
+      </optional>
+    </element>
+  </define>
+
+  <define name="arraySize">
+    <element name="arraySize" java:extends="xcodeml.c.obj.XmcObj">
+      <ref name="expressions"/>
+    </element>
+  </define>
+  
+  <define name="structType">
+    <element name="structType" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcCompositeType">
+      <ref name="BaseType"/>
+      <ref name="type"/>
+      <optional>
+        <ref name="symbols"/>
+      </optional>
+    </element>
+  </define>
+
+  <define name="unionType">
+    <element name="unionType" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcCompositeType">
+      <ref name="BaseType"/>
+      <ref name="type"/>
+      <optional>
+        <ref name="symbols"/>
+      </optional>
+    </element>
+  </define>    
+
+  <define name="symbols">
+    <element name="symbols" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.binding.IXbSymbols">
+      <zeroOrMore>
+        <choice>
+          <ref name="id"/>
+          <ref name="pragma"/>
+          <ref name="text"/>
+        </choice>
+      </zeroOrMore>
+    </element>
+  </define>
+
+  <define name="enumType">
+    <element name="enumType" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcType">
+      <ref name="BaseType"/>
+      <ref name="type"/>
+      <optional>
+        <ref name="symbols"/>
+      </optional>
+    </element>
+  </define>
+
+  <define name="body">
+      <element name="body" java:extends="xcodeml.c.obj.XmcObj">
+        <zeroOrMore>
+          <ref name="statements"/>
+        </zeroOrMore>        
+      </element>
+  </define>
+
+  <define name="globalDeclarations">
+    <element name="globalDeclarations" java:extends="xcodeml.c.obj.XmcObj">
+      <zeroOrMore>
+        <choice>
+          <ref name="functionDefinition"/>
+          <ref name="varDecl"/>
+          <ref name="functionDecl"/>
+          <ref name="gccAsmDefinition"/>
+          <ref name="pragma"/>
+          <ref name="text"/>
+        </choice>
+      </zeroOrMore>
+    </element>
+  </define>
+
+  <define name="globalSymbols">
+    <element name="globalSymbols" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.binding.IXbSymbols">
+      <zeroOrMore>
+        <ref name="id"/>
+      </zeroOrMore>
+    </element>
+  </define>
+  
+  <define name="expressions">
+    <choice>
+      <ref name="intConstant"/>
+      <ref name="floatConstant"/>
+      <ref name="longlongConstant"/>
+      <ref name="stringConstant"/>
+      <ref name="moeConstant"/>
+      <ref name="funcAddr"/>
+      <ref name="pointerRef"/>
+      <ref name="Var"/>
+      <ref name="varAddr"/>
+      <ref name="arrayRef"/>
+      <ref name="arrayAddr"/>
+      <ref name="memberAddr"/>
+      <ref name="memberRef"/>
+      <ref name="memberArrayRef"/>
+      <ref name="memberArrayAddr"/>
+      <ref name="assignExpr"/>
+      <ref name="plusExpr"/>
+      <ref name="minusExpr"/>
+      <ref name="mulExpr"/>
+      <ref name="divExpr"/>
+      <ref name="modExpr"/>
+      <ref name="LshiftExpr"/>
+      <ref name="RshiftExpr"/>
+      <ref name="bitAndExpr"/>
+      <ref name="bitOrExpr"/>
+      <ref name="bitXorExpr"/>
+      <ref name="asgPlusExpr"/>
+      <ref name="asgMinusExpr"/>
+      <ref name="asgMulExpr"/>
+      <ref name="asgDivExpr"/>
+      <ref name="asgModExpr"/>
+      <ref name="asgLshiftExpr"/>
+      <ref name="asgRshiftExpr"/>
+      <ref name="asgBitAndExpr"/>
+      <ref name="asgBitOrExpr"/>
+      <ref name="asgBitXorExpr"/>
+      <ref name="logEQExpr"/>
+      <ref name="logNEQExpr"/>
+      <ref name="logGEExpr"/>
+      <ref name="logGTExpr"/>
+      <ref name="logLEExpr"/>
+      <ref name="logLTExpr"/>
+      <ref name="logAndExpr"/>
+      <ref name="logOrExpr"/>
+      <ref name="unaryMinusExpr"/>
+      <ref name="bitNotExpr"/>
+      <ref name="logNotExpr"/>
+      <ref name="functionCall"/>
+      <ref name="commaExpr"/>
+      <ref name="postIncrExpr"/>
+      <ref name="postDecrExpr"/>
+      <ref name="preIncrExpr"/>
+      <ref name="preDecrExpr"/>
+      <ref name="castExpr"/>
+      <ref name="condExpr"/>
+      <ref name="sizeOfExpr"/>
+      <ref name="compoundValueExpr"/>
+      <ref name="compoundValueAddrExpr"/>
+      <!-- gcc extension -->
+      <ref name="gccAlignOfExpr"/>
+      <ref name="gccLabelAddr"/>
+      <ref name="gccCompoundExpr"/>
+      <ref name="builtin_op"/>
+      <!-- XcarableMP extension -->
+      <ref name="subArrayRef"/>
+      <ref name="coArrayRef"/>
+      <ref name="coArrayAssignExpr"/>
+    </choice>
+  </define>
+
+  <define name="intConstant">
+    <element name="intConstant" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcConstant">
+      <ref name="BaseExpression"/>
+      <data type="string"/>
+    </element>
+  </define>
+
+  <define name="floatConstant">
+    <element name="floatConstant" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcConstant">
+      <ref name="BaseExpression"/>
+      <data type="string"/>
+    </element>
+  </define>
+        
+  <define name="longlongConstant">
+    <element name="longlongConstant" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcConstant">
+      <ref name="BaseExpression"/>
+      <data type="string"/>
+    </element>
+  </define>
+
+  <define name="stringConstant">
+    <element name="stringConstant" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcConstant">
+      <ref name="BaseExpression"/>
+      <optional>
+        <attribute name="is_wide">
+          <choice>
+            <value>0</value>
+            <value>1</value>
+            <value>true</value>
+            <value>false</value>
+          </choice>
+        </attribute>
+      </optional>
+      <data type="string"/>
+    </element>
+  </define>
+
+  <define name="moeConstant">
+    <element name="moeConstant" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcConstant">
+      <ref name="BaseExpression"/>
+      <data type="string"/>
+    </element>
+  </define>
+
+  <define name="funcAddr">
+    <element name="funcAddr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcSymbolAddr">
+      <ref name="BaseExpression"/>
+      <data type="string"/>
+    </element>
+  </define>
+
+  <define name="Var">
+    <element name="Var" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcVar">
+      <ref name="BaseExpression"/>
+      <ref name="varRefExpression"/>
+      <data type="string"/>
+    </element>
+  </define>
+
+  <define name="varAddr">
+    <element name="varAddr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcSymbolAddr,xcodeml.c.binding.IXbcVarRef">
+      <ref name="BaseExpression"/>
+      <ref name="varRefExpression"/>
+      <data type="string"/>
+    </element>
+  </define>
+
+  <define name="arrayRef">
+    <element name="arrayRef" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcVar">
+      <ref name="BaseExpression"/>
+      <ref name="varRefExpression"/>
+      <data type="string"/>
+    </element>
+  </define>
+
+  <define name="arrayAddr">
+    <element name="arrayAddr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcSymbolAddr,xcodeml.c.binding.IXbcVarRef">
+      <ref name="BaseExpression"/>
+      <ref name="varRefExpression"/>
+      <data type="string"/>
+    </element>
+  </define>
+
+  <define name="memberAddr">
+    <element name="memberAddr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcMember">
+      <ref name="unaryExpression"/>
+      <attribute name="member">
+        <data type="string"/>
+      </attribute>
+    </element>
+  </define>
+
+  <define name="memberRef">
+    <element name="memberRef" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcMember">
+      <ref name="unaryExpression"/>
+      <attribute name="member">
+        <data type="string"/>
+      </attribute>
+    </element>
+  </define>
+
+  <define name="memberArrayRef">
+    <element name="memberArrayRef" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcMember">
+      <ref name="unaryExpression"/>
+      <attribute name="member">
+        <data type="string"/>
+      </attribute>
+    </element>
+  </define>
+
+  <define name="memberArrayAddr">
+    <element name="memberArrayAddr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcMember">
+      <ref name="unaryExpression"/>
+      <attribute name="member">
+        <data type="string"/>
+      </attribute>
+    </element>
+  </define>
+
+  <define name="pointerRef">
+    <element name="pointerRef" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcUnaryExpr">
+      <ref name="unaryExpression"/>
+    </element>
+  </define>
+
+  <define name="assignExpr">
+    <element name="assignExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="plusExpr">
+    <element name="plusExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="minusExpr">
+    <element name="minusExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="mulExpr">
+    <element name="mulExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="divExpr">
+    <element name="divExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="modExpr">
+    <element name="modExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="LshiftExpr">
+    <element name="LshiftExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="RshiftExpr">
+    <element name="RshiftExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="bitAndExpr">
+    <element name="bitAndExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="bitOrExpr">
+    <element name="bitOrExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="bitXorExpr">
+    <element name="bitXorExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="asgPlusExpr">
+    <element name="asgPlusExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="asgMinusExpr">
+    <element name="asgMinusExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="asgMulExpr">
+    <element name="asgMulExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="asgDivExpr">
+    <element name="asgDivExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="asgModExpr">
+    <element name="asgModExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="asgLshiftExpr">
+    <element name="asgLshiftExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="asgRshiftExpr">
+    <element name="asgRshiftExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="asgBitAndExpr">
+    <element name="asgBitAndExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="asgBitOrExpr">
+    <element name="asgBitOrExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="asgBitXorExpr">
+    <element name="asgBitXorExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="logEQExpr">
+    <element name="logEQExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="logNEQExpr">
+    <element name="logNEQExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="logGEExpr">
+    <element name="logGEExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="logGTExpr">
+    <element name="logGTExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="logLEExpr">
+    <element name="logLEExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="logLTExpr">
+    <element name="logLTExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="logAndExpr">
+    <element name="logAndExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="logOrExpr">
+    <element name="logOrExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcBinaryExpr">
+      <ref name="binaryExpression"/>
+    </element>
+  </define>
+
+  <define name="unaryMinusExpr">
+    <element name="unaryMinusExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcUnaryExpr">
+      <ref name="unaryExpression"/>
+    </element>
+  </define>
+
+  <define name="bitNotExpr">
+    <element name="bitNotExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcUnaryExpr">
+      <ref name="unaryExpression"/>
+    </element>
+  </define>
+
+  <define name="logNotExpr">
+    <element name="logNotExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcUnaryExpr">
+      <ref name="unaryExpression"/>
+    </element>
+  </define>
+
+  <define name="functionCall">
+    <element name="functionCall" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr">
+      <ref name="function"/>
+      <ref name="arguments"/>
+      <ref name="BaseExpression"/>
+    </element>
+  </define>
+
+  <define name="function">
+    <element name="function" java:extends="xcodeml.c.obj.XmcObj">
+      <ref name="expressions"/>
+    </element>
+  </define>
+
+  <define name="arguments">
+    <element name="arguments" java:extends="xcodeml.c.obj.XmcObj">
+      <zeroOrMore>
+        <ref name="expressions"/>
+      </zeroOrMore>
+    </element>
+  </define>
+
+  <define name="commaExpr">
+    <element name="commaExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr">
+      <zeroOrMore>
+        <ref name="expressions"/>
+      </zeroOrMore>
+      <ref name="BaseExpression"/>
+    </element>
+  </define>
+
+  <define name="postIncrExpr">
+    <element name="postIncrExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcUnaryExpr">
+      <ref name="unaryExpression"/>
+    </element>
+  </define>
+
+  <define name="postDecrExpr">
+    <element name="postDecrExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcUnaryExpr">
+      <ref name="unaryExpression"/>
+    </element>
+  </define>
+
+  <define name="preIncrExpr">
+    <element name="preIncrExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcUnaryExpr">
+      <ref name="unaryExpression"/>
+    </element>
+  </define>
+
+  <define name="preDecrExpr">
+    <element name="preDecrExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcUnaryExpr">
+      <ref name="unaryExpression"/>
+    </element>
+  </define>
+
+  <define name="castExpr">
+    <element name="castExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr,xcodeml.c.binding.IXbcHasGccExtension">
+      <ref name="type"/>
+      <ref name="gccExtendable"/>
+      <ref name="annotation"/>
+      <choice>
+        <ref name="value"/>
+        <ref name="expressions"/>
+      </choice>
+    </element>
+  </define>
+
+  <define name="condExpr">
+    <element name="condExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr">
+      <ref name="expressions"/>
+      <ref name="expressions"/>
+      <optional>
+        <ref name="expressions"/>
+      </optional>
+      <ref name="BaseExpression"/>
+    </element>
+  </define>
+    
+  <define name="sizeOfExpr">
+    <element name="sizeOfExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcSizeOrAlignExpr">
+      <ref name="BaseExpression"/>
+      <ref name="exprOrType"/>
+    </element>
+  </define>
+
+  <!-- gcc extension -->
+  <define name="gccAlignOfExpr">
+    <element name="gccAlignOfExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcSizeOrAlignExpr">
+      <ref name="BaseExpression"/>
+      <ref name="exprOrType"/>
+    </element>
+  </define>
+
+  <define name="exprOrType">
+    <choice>
+      <ref name="expressions"/>
+      <ref name="typeName"/>
+    </choice>
+  </define>
+
+  <define name="typeName">
+    <element name="typeName" java:extends="xcodeml.c.obj.XmcObj">
+      <ref name="type"/>
+    </element>
+  </define>
+
+  <define name="gccLabelAddr">
+    <element name="gccLabelAddr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr">
+      <ref name="BaseExpression"/>
+      <data type="string"/>
+    </element>
+  </define>
+
+  <define name="gccCompoundExpr">
+    <element name="gccCompoundExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr,xcodeml.c.binding.IXbcHasGccExtension">
+      <optional>
+        <ref name="compoundStatement"/>
+      </optional>
+      <ref name="BaseExpression"/>
+      <ref name="gccExtendable"/>
+    </element>
+  </define>
+
+  <define name="builtin_op">
+    <element name="builtin_op" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr">
+      <ref name="BaseExpression"/>
+      <attribute name="name">
+        <data type="string"/>
+      </attribute>
+      <optional>
+        <attribute name="is_id">
+          <choice>
+            <value>0</value>
+            <value>1</value>
+            <value>true</value>
+            <value>false</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute name="is_addrOf">
+          <choice>
+            <value>0</value>
+            <value>1</value>
+            <value>true</value>
+            <value>false</value>
+          </choice>
+        </attribute>
+      </optional>
+      <zeroOrMore>
+        <choice>
+          <ref name="expressions"/>
+          <ref name="typeName"/>
+          <ref name="gccMemberDesignator"/>
+        </choice>
+      </zeroOrMore>
+    </element>
+  </define>
+
+  <define name="gccMemberDesignator">
+    <element name="gccMemberDesignator" java:extends="xcodeml.c.obj.XmcObj">
+      <ref name="ref"/>
+      <optional>
+        <attribute name="member">
+          <data type="string"/>
+        </attribute>
+      </optional>
+      <optional>
+        <ref name="gccMemberDesignator"/>
+      </optional>
+      <optional>
+        <ref name="expressions"/>
+      </optional>
+    </element>
+  </define>
+
+  <define name="statements">
+    <choice>
+      <ref name="exprStatement"/>
+      <ref name="compoundStatement"/>
+      <ref name="ifStatement"/>
+      <ref name="whileStatement"/>
+      <ref name="doStatement"/>
+      <ref name="forStatement"/>
+      <ref name="breakStatement"/>
+      <ref name="continueStatement"/>
+      <ref name="returnStatement"/>
+      <ref name="gotoStatement"/>
+      <ref name="statementLabel"/>
+      <ref name="switchStatement"/>
+      <ref name="caseLabel"/>
+      <ref name="defaultLabel"/>
+      <ref name="pragma"/>
+      <ref name="text"/>
+      <!-- gcc extension -->
+      <ref name="gccRangedCaseLabel"/>
+      <ref name="gccAsmStatement"/>
+    </choice>
+  </define>
+
+  <define name="exprStatement">
+    <element name="exprStatement" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement">
+      <ref name="expressions"/>
+      <ref name="BaseStatement"/>
+    </element>
+  </define>
+
+  <define name="compoundStatement">
+    <element name="compoundStatement" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement">
+      <ref name="BaseStatement"/>
+      <ref name="symbols"/>
+      <ref name="declarations"/>
+      <ref name="body"/>
+    </element>
+  </define>
+
+  <define name="declarations">
+    <element name="declarations" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement">
+      <ref name="BaseStatement"/>
+      <zeroOrMore>
+        <choice>
+          <ref name="functionDefinition"/>
+          <ref name="varDecl"/>
+          <ref name="functionDecl"/>
+        </choice>
+      </zeroOrMore>
+    </element>
+  </define>
+
+  <define name="ifStatement">
+    <element name="ifStatement" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement">
+      <ref name="BaseStatement"/>
+      <ref name="condition"/>
+      <ref name="then"/>
+      <optional>
+        <ref name="else"/>
+      </optional>
+    </element>
+  </define>
+
+  <define name="condition">
+    <element name="condition" java:extends="xcodeml.c.obj.XmcObj">
+      <optional>
+        <ref name="expressions"/>
+      </optional>
+    </element>
+  </define>
+
+  <define name="then">
+    <element name="then" java:extends="xcodeml.c.obj.XmcObj">
+      <optional>
+        <ref name="statements"/>
+      </optional>
+    </element>
+  </define>
+
+  <define name="else">
+    <element name="else" java:extends="xcodeml.c.obj.XmcObj">
+      <optional>
+        <ref name="statements"/>
+      </optional>
+    </element>
+  </define>
+
+  <define name="whileStatement">
+    <element name="whileStatement" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement">
+      <ref name="BaseStatement"/>
+      <ref name="condition"/>
+      <ref name="body"/>
+    </element>
+  </define>
+
+  <define name="doStatement">
+    <element name="doStatement" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement">
+      <ref name="BaseStatement"/>
+      <ref name="body"/>
+      <ref name="condition"/>
+    </element>
+  </define>
+
+  <define name="forStatement">
+    <element name="forStatement" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement">
+      <ref name="BaseStatement"/>
+      <ref name="init"/>
+      <ref name="condition"/>
+      <ref name="iter"/>
+      <ref name="body"/>
+    </element>
+  </define>
+
+  <define name="init">
+    <element name="init" java:extends="xcodeml.c.obj.XmcObj">
+      <optional>
+        <ref name="expressions"/>
+      </optional>
+    </element>
+  </define>
+
+  <define name="iter">
+    <element name="iter" java:extends="xcodeml.c.obj.XmcObj">
+      <optional>
+        <ref name="expressions"/>
+      </optional>
+    </element>
+  </define>
+
+  <define name="breakStatement">
+    <element name="breakStatement" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement">
+      <ref name="BaseStatement"/>
+    </element>
+  </define>
+
+  <define name="continueStatement">
+    <element name="continueStatement" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement">
+      <ref name="BaseStatement"/>
+    </element>
+  </define>
+
+  <define name="returnStatement">
+    <element name="returnStatement" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement">
+      <ref name="BaseStatement"/>
+      <optional>
+        <ref name="expressions"/>
+      </optional>
+    </element>
+  </define>
+
+  <define name="gotoStatement">
+    <element name="gotoStatement" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement">
+      <ref name="BaseStatement"/>
+      <choice>
+        <ref name="name"/>
+        <ref name="expressions"/> <!-- gcc extension -->
+      </choice>
+    </element>
+  </define>
+
+  <define name="statementLabel">
+    <element name="statementLabel" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement">
+      <ref name="name"/>
+      <ref name="BaseStatement"/>
+    </element>
+  </define>
+  
+  <define name="switchStatement">
+    <element name="switchStatement" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement">
+      <ref name="BaseStatement"/>
+      <ref name="value"/>
+      <ref name="body"/>
+    </element>
+  </define>
+
+  <define name="caseLabel">
+    <element name="caseLabel" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement">
+      <ref name="BaseStatement"/>
+      <ref name="value"/>
+    </element>
+  </define>
+
+  <define name="gccRangedCaseLabel">
+    <element name="gccRangedCaseLabel" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement">
+      <ref name="BaseStatement"/>
+      <ref name="value"/>
+      <ref name="value"/>
+    </element>
+  </define>
+
+  <define name="defaultLabel">
+    <element name="defaultLabel" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement">
+      <ref name="BaseStatement"/>
+    </element>
+  </define>
+
+  <define name="text">
+    <element name="text" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcDirective">
+      <ref name="BaseStatement"/>
+      <data type="string"/>
+    </element>
+  </define>
+
+  <define name="pragma">
+    <element name="pragma" java:extends="xcodeml.c.obj.XmcObj"  java:implements="xcodeml.c.binding.IXbcDirective">
+      <ref name="BaseStatement"/>
+      <data type="string"/>
+    </element>
+  </define>
+
+  <define name="functionDecl">
+    <element name="functionDecl" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement">
+      <ref name="BaseStatement"/>
+      <ref name="name"/>
+      <optional>
+        <ref name="gccAsm"/>
+      </optional>
+    </element>
+  </define>
+  
+  <define name="varDecl">
+    <element name="varDecl" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement">
+      <ref name="BaseStatement"/>
+      <ref name="name"/>
+      <optional>
+        <ref name="value"/>
+      </optional>
+      <optional>
+        <ref name="gccAsm"/>
+      </optional>
+    </element>
+  </define>
+
+  <define name="id">
+    <element name="id" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcHasGccExtension">
+      <optional>
+        <ref name="type"/>
+      </optional>
+      <optional>
+        <attribute name="sclass">
+          <choice>
+            <value>auto</value>
+            <value>param</value>
+            <value>extern</value>
+            <value>extern_def</value>
+            <value>static</value>
+            <value>register</value>
+            <value>label</value>
+            <value>tagname</value>
+            <value>moe</value>
+            <value>typedef_name</value>
+            <!-- gcc extension -->
+            <value>gccLabel</value>
+          </choice>
+        </attribute>
+      </optional>
+      <ref name="name"/>
+      <optional>
+        <ref name="value"/>
+      </optional>
+      <optional>
+        <ref name="is_gccThread"/>
+      </optional>
+      <optional>
+        <attribute name="bit_field">
+          <data type="string"/>
+        </attribute>
+      </optional>
+      <optional>
+        <ref name="bitField"/>
+      </optional>
+      <optional>
+        <ref name="gccAttributes"/>
+      </optional>
+      <ref name="gccExtendable"/>
+    </element>
+  </define>
+
+  <define name="value">
+    <element name="value" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcAnnotation">
+      <ref name="annotation"/>
+      <choice>
+        <ref name="expressions"/>
+        <ref name="compoundValue"/>
+        <ref name="designatedValue"/>
+      </choice>
+    </element>
+  </define>
+
+  <!--
+  Caution:
+        Following compoundValue definition is for non-top level 'value' element.
+        It is not for 'compoundValue' element.
+        The compoundValueExpr definition is for 'compoundValue' element.
+  -->
+  <define name="compoundValue">
+    <element name="value" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcAnnotation">
+      <ref name="annotation"/>
+      <ref name="compoundLiteral"/>
+    </element>
+  </define>
+
+  <define name="designatedValue">
+    <element name="designatedValue" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcAnnotation">
+      <ref name="annotation"/>
+      <attribute name="member">
+        <data type="string"/>
+      </attribute>
+      <optional>
+        <choice>
+          <ref name="expressions"/>
+          <ref name="compoundValue"/>
+          <ref name="designatedValue"/>
+        </choice>
+      </optional>
+    </element>
+  </define>
+
+  <define name="compoundValueExpr">
+    <element name="compoundValue" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr">
+      <ref name="BaseExpression"/>
+      <ref name="value"/>
+    </element>
+  </define>
+
+  <define name="compoundValueAddrExpr">
+    <element name="compoundValueAddr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr">
+      <ref name="BaseExpression"/>
+      <ref name="value"/>
+    </element>
+  </define>
+
+  <define name="compoundLiteral">
+    <zeroOrMore>
+      <choice>
+        <ref name="expressions"/>
+        <ref name="compoundValue"/>
+        <ref name="designatedValue"/>
+      </choice>
+    </zeroOrMore>
+  </define>
+
+  <define name="bitField">
+    <element name="bitField" java:extends="xcodeml.c.obj.XmcObj">
+      <ref name="expressions"/>
+    </element>
+  </define>
+
+  <define name="functionDefinition">
+    <element name="functionDefinition" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement,xcodeml.c.binding.IXbcHasGccExtension">
+      <ref name="name"/>
+      <optional>
+        <ref name="gccAttributes"/>
+      </optional>
+      <ref name="symbols"/>
+      <ref name="params"/>
+      <ref name="body"/>
+      <ref name="gccExtendable"/>
+      <ref name="BaseStatement"/>
+    </element>
+  </define>
+
+  <define name="name">
+    <element name="name" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.binding.IXbStringContent">
+      <data type="string"/>
+      <optional>
+        <ref name="type"/>
+      </optional>
+    </element>
+  </define>
+
+  <!-- gcc extension include below expressions -->
+
+  <define name="gccAsm">
+    <element name="gccAsm" java:extends="xcodeml.c.obj.XmcObj">
+      <ref name="gccAsmExpression"/>
+    </element>
+  </define>
+
+  <define name="gccAsmDefinition">
+    <element name="gccAsmDefinition" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement,xcodeml.c.binding.IXbcHasGccExtension">
+      <ref name="BaseStatement"/>
+      <ref name="gccExtendable"/>
+      <ref name="gccAsmExpression"/>
+    </element>
+  </define>
+
+  <define name="gccAsmStatement">
+    <element name="gccAsmStatement" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcStatement">
+      <optional>
+        <attribute name="is_volatile">
+          <choice>
+            <value>0</value>
+            <value>1</value>
+            <value>true</value>
+            <value>false</value>
+          </choice>
+        </attribute>
+      </optional>
+      <ref name="BaseStatement"/>
+      <ref name="stringConstant"/>
+	  <optional>
+		  <ref name="gccAsmOperands"/>
+	  </optional>
+	  <optional>
+		  <ref name="gccAsmOperands"/>
+	  </optional>
+      <optional>
+        <ref name="gccAsmClobbers"/>
+      </optional>
+    </element>
+  </define>
+
+  <define name="gccAsmOperands">
+    <element name="gccAsmOperands" java:extends="xcodeml.c.obj.XmcObj">
+      <zeroOrMore>
+        <ref name="gccAsmOperand"/>
+      </zeroOrMore>
+      </element>
+  </define>
+
+  <define name="gccAsmOperand">
+    <element name="gccAsmOperand" java:extends="xcodeml.c.obj.XmcObj">
+      <optional>
+        <attribute name="match">
+          <data type="string"/>
+        </attribute>
+      </optional>
+      <attribute name="constraint">
+        <data type="string"/>
+      </attribute>
+      <ref name="expressions"/>
+    </element>
+  </define>
+
+  <define name="gccAsmClobbers" java:extends="xcodeml.c.obj.XmcObj">
+    <element name="gccAsmClobbers" java:extends="xcodeml.c.obj.XmcObj">
+      <zeroOrMore>
+        <ref name="stringConstant"/>
+      </zeroOrMore>
+    </element>
+  </define>
+
+  <define name="gccExtendable">
+    <optional>
+      <attribute name="is_gccExtension">
+        <choice>
+          <value>0</value>
+          <value>1</value>
+          <value>true</value>
+          <value>false</value>
+        </choice>
+      </attribute>
+    </optional>
+  </define>
+
+  <define name="is_gccThread">
+    <optional>
+      <attribute name="is_gccThread">
+        <choice>
+          <value>0</value>
+          <value>1</value>
+          <value>true</value>
+          <value>false</value>
+        </choice>
+      </attribute>
+    </optional>
+  </define>
+
+  <define name="gccAsmExpression" java:extends="xcodeml.c.obj.XmcObj">
+    <ref name="stringConstant"/>
+  </define>
+
+  <define name="gccAttributes">
+    <element name="gccAttributes" java:extends="xcodeml.c.obj.XmcObj">
+      <zeroOrMore>
+        <ref name="gccAttribute"/>
+      </zeroOrMore>
+    </element>
+  </define>
+
+  <define name="gccAttribute">
+    <element name="gccAttribute" java:extends="xcodeml.c.obj.XmcObj">
+      <attribute name="name">
+        <data type="string"/>
+      </attribute>
+      <zeroOrMore>
+        <ref name="expressions"/>
+      </zeroOrMore>
+    </element>
+  </define>
+
+  <!-- subarray extension -->
+
+  <define name="subArrayRef">
+    <element name="subArrayRef" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr">
+      <ref name="expressions"/>
+      <optional>
+        <element name="lowerBound" java:extends="xcodeml.c.obj.XmcObj">
+          <ref name="expressions"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="upperBound" java:extends="xcodeml.c.obj.XmcObj">
+          <ref name="expressions"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="step" java:extends="xcodeml.c.obj.XmcObj">
+          <ref name="expressions"/>
+        </element>
+      </optional>
+      <ref name="BaseExpression"/>
+    </element>
+  </define>
+
+  <!-- coArray extension -->
+
+  <define name="coArrayRef">
+    <element name="coArrayRef" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr">
+      <ref name="BaseExpression"/>
+      <ref name="varRefExpression"/>
+      <ref name="name"/>
+      <ref name="coArrayDimension"/>
+    </element>
+  </define>
+
+  <define name="coArrayDimension">
+    <zeroOrMore>
+      <ref name="expressions"/>
+    </zeroOrMore>
+  </define>
+
+  <define name="coArrayAssignExpr">
+    <element name="coArrayAssignExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr">
+      <ref name="BaseExpression"/>
+      <ref name="expressions"/>
+      <ref name="expressions"/>
+    </element>
+  </define>
+
+  <define name="coArrayType">
+    <element name="coArrayType" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcArrayType">
+      <ref name="type"/>
+      <attribute name="element_type">
+        <data type="string"/>
+      </attribute>
+      <optional>
+        <attribute name="array_size">
+          <data type="string"/>
+        </attribute>
+      </optional>      
+      <optional>
+        <ref name="arraySize"/>
+      </optional>
+    </element>
+  </define>
+
+  <!-- only definition. -->
+
+  <define name="BaseExpression">
+    <optional>
+      <ref name="type"/>
+    </optional>
+    <ref name="annotation"/>
+  </define>
+
+  <define name="BaseType">
+    <optional>
+      <attribute name="is_volatile">
+        <choice>
+          <value>0</value>
+          <value>1</value>
+          <value>true</value>
+          <value>false</value>
+        </choice>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute name="is_const">
+        <choice>
+          <value>0</value>
+          <value>1</value>
+          <value>true</value>
+          <value>false</value>
+        </choice>
+      </attribute>
+    </optional>
+    <optional>
+      <!-- C99 -->
+      <attribute name="is_restrict">
+        <choice>
+          <value>0</value>
+          <value>1</value>
+          <value>true</value>
+          <value>false</value>
+        </choice>
+      </attribute>
+    </optional>
+    <optional>
+      <ref name="gccAttributes"/>
+    </optional>
+  </define>
+
+  <define name="binaryExpression">
+    <ref name="BaseExpression"/>
+    <ref name="expressions"/>
+    <ref name="expressions"/>
+  </define>
+
+  <define name="unaryExpression">
+    <ref name="BaseExpression"/>
+    <ref name="expressions"/>
+  </define>
+
+  <define name="BaseStatement">
+    <optional>
+      <attribute name="lineno">
+        <data type="string"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute name="rawlineno">
+        <data type="string"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute name="file">
+        <data type="string"/>
+      </attribute>
+    </optional>
+    <ref name="annotation"/>
+  </define>    
+
+  <define name="varRefExpression">
+    <optional>
+      <attribute name="scope">
+        <choice>
+          <value>global</value>
+          <value>local</value>
+          <value>param</value>
+        </choice>
+      </attribute>
+    </optional>
+  </define>    
+
+  <define name="annotation">
+    <optional>
+      <attribute name="is_gccSyntax">
+        <choice>
+          <value>0</value>
+          <value>1</value>
+          <value>true</value>
+          <value>false</value>
+        </choice>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute name="is_modified">
+        <choice>
+          <value>0</value>
+          <value>1</value>
+          <value>true</value>
+          <value>false</value>
+        </choice> 
+     </attribute>
+    </optional>
+  </define>
+</grammar>

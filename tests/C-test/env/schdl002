@@ -1,0 +1,48 @@
+#!/bin/sh
+
+# $Id$
+# $RWC_Release$
+# $RWC_Copyright$
+
+
+ERROR=0
+
+OMP_SCHEDULE="dynamic"
+export OMP_SCHEDULE
+RESULT=`$EXEC ./schedule dynamic | grep -v SCore-D`
+if [ "$RESULT" != "scheduling test is SUCCESS(dynamic,0)." ] ; then
+  echo $RESULT
+  ERROR=1
+fi
+
+OMP_SCHEDULE="dynamic,1"
+export OMP_SCHEDULE
+RESULT=`$EXEC ./schedule dynamic 1 | grep -v SCore-D`
+if [ "$RESULT" != "scheduling test is SUCCESS(dynamic,1)." ] ; then
+  echo $RESULT
+  ERROR=1
+fi
+
+OMP_SCHEDULE="dynamic,2"
+export OMP_SCHEDULE
+RESULT=`$EXEC ./schedule dynamic 2 | grep -v SCore-D`
+if [ "$RESULT" != "scheduling test is SUCCESS(dynamic,2)." ] ; then
+  echo $RESULT
+  ERROR=1
+fi
+
+OMP_SCHEDULE="dynamic,100"
+export OMP_SCHEDULE
+RESULT=`$EXEC ./schedule dynamic 100 | grep -v SCore-D`
+if [ "$RESULT" != "scheduling test is SUCCESS(dynamic,100)." ] ; then
+  echo $RESULT
+  ERROR=1
+fi
+
+
+
+if [ "$ERROR" = "0" ] ; then
+  echo "OMP_SCHEDULE 002 : SUCCESS"
+else
+  echo "OMP_SCHEDULE 002 : FAILED"
+fi

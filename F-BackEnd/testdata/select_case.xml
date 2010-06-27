@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- 
+      program main
+        logical ch_type, num_type, log_type
+        character :: ch = 'c'
+        integer :: num = 1
+        logical :: log = .true.
+
+        label1: select case (ch)
+        case ('c') label1
+          ch_type = .true.
+        case ('h') label1
+          ch_type = .true.
+        case default label1
+          ch_type = .false.
+        end select label1
+
+        label2: select case (num)
+        case (0) label2
+          num_type = .true.
+        case (1:9) label2
+          num_type = .true.
+        case default label2
+          num_type = .false.
+        end select label2
+
+        label3: select case (log)
+        case (.true.) label3
+          log_type = .true.
+        case (.false.) label3
+          log_type = .false.
+        case default label3
+          log_type = .false.
+        end select label3
+      end
+-->
+<XcodeProgram compiler-info="F-Frontend"
+              version="0.8"
+              time="2009-02-17 10:53:20"
+              language="Fortran 90 Free Format"
+              source="select_case.f90">
+
+  <!-- typeTable -->
+  <typeTable>
+    <FfunctionType type="FfunctionType_of_main" return_type="Fvoid" />
+  </typeTable>
+
+  <!-- globalSymbols -->
+  <globalSymbols>
+    <id sclass="extern_def" type="FfunctionType_of_main">
+      <name type="FfunctionType_of_main">main</name>
+    </id>
+  </globalSymbols>
+
+  <!-- globalDeclarations -->
+  <globalDeclarations>
+
+    <!-- 1: program main -->
+    <FfunctionDefinition is_program="1" lineno="1" file="select_case.f90"> 
+
+      <!-- name -->
+      <name type="FfunctionType_of_main">main</name>
+
+      <!-- symbols -->
+      <symbols>
+        <id sclass="auto" type="Flogical">
+          <name type="Flogical">ch_type</name></id>
+        <id sclass="auto" type="Flogical">
+          <name type="Flogical">num_type</name></id>
+        <id sclass="auto" type="Flogical">
+          <name type="Flogical">log_type</name></id>
+        <id sclass="auto" type="Fcharacter">
+          <name type="Fcharacter">ch</name></id>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">num</name></id>
+        <id sclass="auto" type="Flogical">
+          <name type="Flogical">log</name></id>
+      </symbols>
+
+      <!-- declarations -->
+      <declarations>
+        <!-- 2: logical ch_type, num_type, log_type -->
+        <varDecl lineno="2" file="select_case.f90">
+          <name type="Flogical">ch_type</name>
+        </varDecl>
+        <varDecl lineno="2" file="select_case.f90">
+          <name type="Flogical">num_type</name>
+        </varDecl>
+        <varDecl lineno="2" file="select_case.f90">
+          <name type="Flogical">log_type</name>
+        </varDecl>
+        <!-- 3: character :: ch = 'c' -->
+        <varDecl lineno="3" file="select_case.f90">
+          <name type="Fcharacter">ch</name>
+          <value><FcharacterConstant>c</FcharacterConstant></value>
+        </varDecl>
+        <!-- 4: integer :: num = 1 -->
+        <varDecl lineno="3" file="select_case.f90">
+          <name type="Fint">num</name>
+          <value><FintConstant>1</FintConstant></value>
+        </varDecl>
+        <!-- 5: logical :: log = .true. -->
+        <varDecl lineno="3" file="select_case.f90">
+          <name type="Flogical">log</name>
+          <value><FlogicalConstant>1</FlogicalConstant></value>
+        </varDecl>
+      </declarations>
+
+      <!-- body -->
+      <body>
+
+        <!-- 7: select case (ch) -->
+        <FselectCaseStatement lineno="4" file="select_case.f90"
+                              construct_name="label1">
+          <value><Var scope="local">ch</Var></value>
+          <!-- 8: case ('c') -->
+          <FcaseLabel lineno="5" file="select_case.f90">
+            <value><FcharacterConstant>c</FcharacterConstant></value>
+            <body>
+              <!-- 9: ch_type = .true. -->
+              <exprStatement lineno="6" file="select_case.f90">
+                <assignExpr>
+                  <Var scope="local">ch_type</Var>
+                  <FlogicalConstant>1</FlogicalConstant>
+                </assignExpr>
+              </exprStatement>
+            </body>
+          </FcaseLabel>
+          <!-- 10: case ('h') -->
+          <FcaseLabel lineno="7" file="select_case.f90">
+            <value><FcharacterConstant>h</FcharacterConstant></value>
+            <body>
+              <!-- 11: ch_type = .true. -->
+              <exprStatement lineno="8" file="select_case.f90">
+                <assignExpr>
+                  <Var scope="local">ch_type</Var>
+                  <FlogicalConstant>1</FlogicalConstant>
+                </assignExpr>
+              </exprStatement>
+            </body>
+          </FcaseLabel>
+          <!-- 12: case default -->
+          <FcaseLabel lineno="9" file="select_case.f90">
+            <body>
+              <!-- 13: ch_type = .false. -->
+              <exprStatement lineno="10" file="select_case.f90">
+                <assignExpr>
+                  <Var scope="local">ch_type</Var>
+                  <FlogicalConstant>0</FlogicalConstant>
+                </assignExpr>
+              </exprStatement>
+            </body>
+          </FcaseLabel>
+        </FselectCaseStatement>
+
+        <!-- 16: select case (num) -->
+        <FselectCaseStatement lineno="16" file="select_case.f90"
+                              construct_name="label2">
+          <value><Var scope="local">num</Var></value>
+          <!-- 17: case (0) -->
+          <FcaseLabel lineno="17" file="select_case.f90">
+            <value><FintConstant>0</FintConstant></value>
+            <body>
+              <!-- 18:   num_type = .true. -->
+              <exprStatement lineno="18" file="select_case.f90">
+                <assignExpr>
+                  <Var scope="local">num_type</Var>
+                  <FlogicalConstant>1</FlogicalConstant>
+                </assignExpr>
+              </exprStatement>
+            </body>
+          </FcaseLabel>
+          <!-- 19: case (1:9) -->
+          <FcaseLabel lineno="19" file="select_case.f90">
+            <indexRange>
+              <lowerBound><FintConstant>1</FintConstant></lowerBound>
+              <upperBound><FintConstant>9</FintConstant></upperBound>
+            </indexRange>
+            <body>
+              <!-- 20:   num_type = .true. -->
+              <exprStatement lineno="20" file="select_case.f90">
+                <assignExpr>
+                  <Var scope="local">num_type</Var>
+                  <FlogicalConstant>1</FlogicalConstant>
+                </assignExpr>
+              </exprStatement>
+            </body>
+          </FcaseLabel>
+          <!-- 21: case default -->
+          <FcaseLabel lineno="21" file="select_case.f90">
+            <body>
+              <!-- 22:   num_type = .false. -->
+              <exprStatement lineno="22" file="select_case.f90">
+                <assignExpr>
+                  <Var scope="local">num_type</Var>
+                  <FlogicalConstant>0</FlogicalConstant>
+                </assignExpr>
+              </exprStatement>
+            </body>
+          </FcaseLabel>
+
+        </FselectCaseStatement>
+
+        <!-- 25: select case (log) -->
+        <FselectCaseStatement lineno="16" file="select_case.f90"
+                              construct_name="label3">
+          <value><Var scope="local">log</Var></value>
+          <!-- 26: case (.true.) -->
+          <FcaseLabel lineno="17" file="select_case.f90">
+            <value><FlogicalConstant>c</FlogicalConstant></value>
+            <body>
+              <!-- 27:   log_type = .true. -->
+              <exprStatement lineno="18" file="select_case.f90">
+                <assignExpr>
+                  <Var scope="local">log_type</Var>
+                  <FlogicalConstant>1</FlogicalConstant>
+                </assignExpr>
+              </exprStatement>
+            </body>
+          </FcaseLabel>
+          <!-- 28: case (.false.) -->
+          <FcaseLabel lineno="19" file="select_case.f90">
+            <value><FlogicalConstant>0</FlogicalConstant></value>
+            <body>
+              <!-- 29:   log_type = .false. -->
+              <exprStatement lineno="20" file="select_case.f90">
+                <assignExpr>
+                  <Var scope="local">log_type</Var>
+                  <FlogicalConstant>0</FlogicalConstant>
+                </assignExpr>
+              </exprStatement>
+            </body>
+          </FcaseLabel>
+          <!-- 30: case default -->
+          <FcaseLabel lineno="21" file="select_case.f90">
+            <body>
+              <!-- 31:   log_type = .false. -->
+              <exprStatement lineno="22" file="select_case.f90">
+                <assignExpr>
+                  <Var scope="local">log_type</Var>
+                  <FlogicalConstant>0</FlogicalConstant>
+                </assignExpr>
+              </exprStatement>
+            </body>
+          </FcaseLabel>
+        </FselectCaseStatement>
+
+      </body>
+
+    </FfunctionDefinition>
+
+  </globalDeclarations>
+
+</XcodeProgram>

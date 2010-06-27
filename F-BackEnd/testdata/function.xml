@@ -1,0 +1,178 @@
+<XcodeProgram source="function.f90"
+              language="Fortran"
+              time="2009-03-27 18:07:57"
+              compiler-info="XcodeML/Fortran-FrontEnd"
+              version="1.0">
+  <typeTable>
+    <FbasicType type="B80a6558" ref="Freal" />
+    <FbasicType type="B80a6650" ref="Freal" />
+    <FbasicType type="B80a6748" ref="Freal" />
+    <FbasicType type="B80a64b0" ref="Freal" />
+    <FbasicType type="B80a7150" ref="Freal" />
+    <FbasicType type="B80a7248" ref="Freal" />
+    <FbasicType type="B80a7a08" ref="Fint" />
+    <FbasicType type="B80a7ba0" ref="Freal" />
+    <FbasicType type="B80a7d98" ref="Freal" />
+    <FbasicType type="B80a7fe0" ref="Freal" />
+    <FbasicType type="B80a8498" ref="Freal" />
+    <FbasicType type="B80a86a8" ref="Freal" />
+    <FfunctionType type="F80a63d0" return_type="Freal">
+      <params>
+        <name type="Freal">a</name>
+        <name type="Freal">b</name>
+        <name type="Freal">c</name>
+      </params>
+    </FfunctionType>
+    <FfunctionType type="F80a7100" return_type="Fvoid">
+      <params>
+        <name type="Freal">x</name>
+        <name type="Freal">y</name>
+      </params>
+    </FfunctionType>
+    <FfunctionType type="F80a7420" return_type="Fvoid" is_program="1" />
+  </typeTable>
+  <globalSymbols>
+    <id sclass="extern_def" type="F80a63d0">
+      <name type="F80a63d0">func</name>
+    </id>
+    <id sclass="extern_def" type="F80a7100">
+      <name type="F80a7100">sub</name>
+    </id>
+    <id sclass="extern_def" type="F80a7420">
+      <name type="F80a7420">main</name>
+    </id>
+  </globalSymbols>
+  <globalDeclarations>
+    <FfunctionDefinition lineno="2" file="function.f90">
+      <name type="F80a63d0">func</name>
+      <symbols>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">T000</name>
+        </id>
+      </symbols>
+      <declarations>
+        <varDecl lineno="2" file="function.f90">
+          <name type="Freal">a</name>
+        </varDecl>
+        <varDecl lineno="2" file="function.f90">
+          <name type="Freal">b</name>
+        </varDecl>
+        <varDecl lineno="2" file="function.f90">
+          <name type="Freal">c</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <exprStatement lineno="3" file="function.f90">
+          <assignExpr>
+            <Var>T000</Var>
+            <plusExpr>
+              <plusExpr>
+                <Var>a</Var>
+                <Var>b</Var>
+              </plusExpr>
+              <Var>c</Var>
+            </plusExpr>
+          </assignExpr>
+        </exprStatement>
+        <FreturnStatement lineno="4" file="function.f90" />
+      </body>
+    </FfunctionDefinition>
+    <FfunctionDefinition lineno="6" file="function.f90">
+      <name type="F80a7100">sub</name>
+      <symbols>
+      </symbols>
+      <declarations>
+        <varDecl lineno="7" file="function.f90">
+          <name type="Freal">x</name>
+        </varDecl>
+        <varDecl lineno="7" file="function.f90">
+          <name type="Freal">y</name>
+        </varDecl>
+      </declarations>
+      <body>
+      </body>
+    </FfunctionDefinition>
+    <FfunctionDefinition lineno="10" file="function.f90">
+      <name type="F80a7420">main</name>
+      <symbols>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">res</name>
+        </id>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">T001</name>
+        </id>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">T002</name>
+        </id>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">T003</name>
+        </id>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">T004</name>
+        </id>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">T005</name>
+        </id>
+      </symbols>
+      <declarations>
+        <varDecl lineno="12" file="function.f90">
+          <name type="Fint">res</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <exprStatement lineno="13" file="function.f90">
+          <assignExpr>
+            <Var>T001</Var>
+            <FrealConstant>3ff00000 0</FrealConstant>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="13" file="function.f90">
+          <assignExpr>
+            <Var>T002</Var>
+            <FrealConstant>40000000 0</FrealConstant>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="13" file="function.f90">
+          <assignExpr>
+            <Var>T003</Var>
+            <FrealConstant>40080000 0</FrealConstant>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="13" file="function.f90">
+          <assignExpr>
+            <Var>res</Var>
+            <functionCall>
+              <name>func</name>
+              <arguments>
+                <Var>T001</Var>
+                <Var>T002</Var>
+                <Var>T003</Var>
+              </arguments>
+            </functionCall>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="14" file="function.f90">
+          <assignExpr>
+            <Var>T004</Var>
+            <FrealConstant>40100000 0</FrealConstant>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="14" file="function.f90">
+          <assignExpr>
+            <Var>T005</Var>
+            <FrealConstant>40140000 0</FrealConstant>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="14" file="function.f90">
+          <functionCall>
+            <name>sub</name>
+            <arguments>
+              <Var>T004</Var>
+              <Var>T005</Var>
+            </arguments>
+          </functionCall>
+        </exprStatement>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+</XcodeProgram>

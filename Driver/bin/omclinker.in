@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
+# $TSUKUBA_Copyright:
+#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
+#  $
+LIBS=""
+LINKER="@OM_EXEC_C_LINKER@"
+. $OMNI_HOME/bin/omlinker $*

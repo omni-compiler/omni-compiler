@@ -1,0 +1,43 @@
+/* 
+ * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
+ * $TSUKUBA_Copyright:
+ *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
+ *  $
+ */
+/* 
+ * $Id$
+ * $RWC_Release$
+ * $RWC_Copyright$
+ */
+#ifndef _OMNIQREAL_H
+#define _OMNIQREAL_H
+
+#ifdef ENABLE_QREAL
+#include "gmp.h"
+
+typedef struct {
+    int _mp_prec;
+    int _mp_size;
+    mp_exp_t _mp_exp;
+#ifndef __OMNI_FRONTEND_INCORE__
+    @omniQRealFillGap@
+#endif /* __OMNI_FRONTEND_INCORE__ */
+    mp_limb_t *_mp_d;
+    mp_limb_t _omLimb[@omniQRealPrecInLimb@];
+} _omQReal_t;
+
+#else
+typedef struct {
+    int _mp_prec;
+    int _mp_size;
+    @omniExpT@ _mp_exp;
+#ifndef __OMNI_FRONTEND_INCORE__
+    @omniQRealFillGap@
+#endif /* __OMNI_FRONTEND_INCORE__ */
+    @omniLimbT@ *_mp_d;
+    @omniLimbT@ _omLimb[@omniQRealPrecInLimb@];
+} _omQReal_t;
+#endif /* ENABLE_QREAL */
+
+#endif /* _OMNIQREAL_H */
+

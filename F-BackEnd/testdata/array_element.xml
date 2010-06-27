@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- 
+     program main
+       real, dimension(3)   :: vector3d
+       real, dimension(3,3) :: matrix3d
+       vector3d(1) = 1.0
+       vector3d(2) = 2.0
+       vector3d(3) = 3.0
+       matrix3d    = 1.0
+     end
+-->
+<XcodeProgram compiler-info="F-Frontend"
+              version="1.0"
+              time="2009-02-17 10:53:20"
+              language="Fortran"
+              source="array_element.f90">
+
+  <!-- typeTable -->
+  <typeTable>
+    <FfunctionType type="FfunctionType_of_main" return_type="Fvoid" />
+    <FarrayType type="FarrayType_of_vector3d" element_type="Freal">
+      <indexRange>
+        <upperBound>
+          <FintConstant type="Fint">3</FintConstant>
+        </upperBound>
+      </indexRange>
+    </FarrayType>
+    <FarrayType type="FarrayType_of_matrix3d_1" element_type="Fint">
+      <indexRange>
+        <upperBound>
+          <FintConstant type="Fint">3</FintConstant>
+        </upperBound>
+      </indexRange>
+    </FarrayType>
+    <FarrayType type="FarrayType_of_matrix3d" element_type="FarrayType_of_matrix3d_1">
+      <indexRange>
+        <upperBound>
+          <FintConstant type="Fint">3</FintConstant>
+        </upperBound>
+      </indexRange>
+    </FarrayType>
+  </typeTable>
+
+  <!-- globalSymbols -->
+  <globalSymbols>
+    <id sclass="extern_def" type="FfunctionType_of_main">
+      <name type="FfunctionType_of_main">main</name>
+    </id>
+  </globalSymbols>
+
+  <!-- globalDeclarations -->
+  <globalDeclarations>
+    <!-- 1: program main -->
+    <FfunctionDefinition is_program="1" lineno="1"
+                         file="array_element.f90">
+      <!-- name -->
+      <name type="FfunctionType_of_main">main</name>
+      <!-- symbols -->
+      <symbols>
+        <id sclass="auto" type="FarrayType_of_vector3d">
+          <name type="FarrayType_of_vector3d">vector3d</name>
+        </id>
+        <id sclass="auto" type="FarrayType_of_matrix3d">
+          <name type="FarrayType_of_matrix3d">matrix3d</name>
+        </id>
+      </symbols>
+      <!-- declarations -->
+      <declarations>
+        <!-- 2: real, dimension(3)   :: vector3d -->
+        <varDecl lineno="2" file="array_element.f90">
+          <name type="FarrayType_of_vector3d">vector3d</name>
+        </varDecl>
+        <!-- 3: real, dimension(3,3) :: matrix3d -->
+        <varDecl lineno="3" file="array_element.f90">
+          <name type="FarrayType_of_matrix3d">matrix3d</name>
+        </varDecl>
+      </declarations>
+      <!-- body -->
+      <body>
+
+        <!-- 4: vector3d(1) = 1.0 -->
+        <exprStatement lineno="4" file="array_element.f90">
+          <assignExpr>
+            <FarrayElementRef scope="local">
+              <varRef>
+                <Var scope="local">point3d</Var>
+              </varRef>
+              <arrayIndex>
+                <FintConstant type="Fint">1</FintConstant>
+              </arrayIndex>
+            </FarrayElementRef>
+            <FrealConstant type="Freal">1.0</FrealConstant>
+          </assignExpr>
+        </exprStatement>
+
+        <!-- 5: vector3d(2) = 2.0 -->
+        <exprStatement lineno="5" file="array_element.f90">
+          <assignExpr>
+            <FarrayElementRef scope="local">
+              <varRef>
+                <Var scope="local">point3d</Var>
+              </varRef>
+              <arrayIndex>
+                <FintConstant type="Fint">2</FintConstant>
+              </arrayIndex>
+            </FarrayElementRef>
+            <FrealConstant type="Freal">2.0</FrealConstant>
+          </assignExpr>
+        </exprStatement>
+
+        <!-- 6: vector3d(3) = 3.0 -->
+        <exprStatement lineno="6" file="array_element.f90">
+          <assignExpr>
+            <FarrayElementRef scope="local">
+              <varRef>
+                <Var scope="local">point3d</Var>
+              </varRef>
+              <arrayIndex>
+                <FintConstant type="Fint">3</FintConstant>
+              </arrayIndex>
+            </FarrayElementRef>
+            <FrealConstant type="Freal">3.0</FrealConstant>
+          </assignExpr>
+        </exprStatement>
+
+        <!-- 7: matrix3d    = 1.0 -->
+        <exprStatement lineno="7" file="array_element.f90">
+          <assignExpr>
+            <Var scope="local">matrix3d</Var>
+            <FrealConstant type="Freal">1.0</FrealConstant>
+          </assignExpr>
+        </exprStatement>
+
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+
+</XcodeProgram>

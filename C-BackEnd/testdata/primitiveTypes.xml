@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XcodeProgram source="primitiveTypes.c">
+  <!-- 
+       char var_char;
+       unsigned char var_unsigned_char;
+       short var_short;
+       unsigned short var_unsigned_short;
+       int var_int;
+       unsigned int var_unsigned_int;
+       long var_long;
+       unsigned long var_long;
+       long long var_long_long;
+       unsigned long long var_unsigned_long_long;
+       float var_float;
+       double var_double;
+  -->
+  <typeTable>
+    <pointerType type="pointer_of_char"                ref="char" />
+    <pointerType type="pointer_of_unsigned_char"       ref="unsigned_char" />
+    <pointerType type="pointer_of_short"               ref="short" />
+    <pointerType type="pointer_of_unsigned_short"      ref="unsigned_short" />
+    <pointerType type="pointer_of_int"                 ref="int" />
+    <pointerType type="pointer_of_unsigned_int"        ref="unsigned" />
+    <pointerType type="pointer_of_long"                ref="long" />
+    <pointerType type="pointer_of_unsigned_long"       ref="unsigned_long" />
+    <pointerType type="pointer_of_long_long"           ref="long_long" />
+    <pointerType type="pointer_of_unsigned_long_long"  ref="unsigned_long_long" />
+    <pointerType type="pointer_of_float"               ref="float" />
+    <pointerType type="pointer_of_double"              ref="double" />
+  </typeTable>
+  
+  <globalSymbols>
+    <id sclass="extern_def">
+      <name type="char">var_char</name>
+    </id>
+    <id sclass="extern_def">
+      <name type="unsigned_char">var_unsigned_char</name>
+    </id>
+    <id sclass="extern_def">
+      <name type="short">var_short</name>
+    </id>
+    <id sclass="extern_def">
+      <name type="unsigned_short">var_unsigned_short</name>
+    </id>
+    <id sclass="extern_def">
+      <name type="int">var_int</name>
+    </id>
+    <id sclass="extern_def">
+      <name type="unsigned">var_unsigned_int</name>
+    </id>
+    <id sclass="extern_def">
+      <name type="long">var_long</name>
+    </id>
+    <id sclass="extern_def">
+      <name type="unsigned_long">var_unsigned_long</name>
+    </id>
+    <id sclass="extern_def">
+      <name type="long_long">var_long_long</name>
+    </id>
+    <id sclass="extern_def">
+      <name type="unsigned_long_long">var_unsigned_long_long</name>
+    </id>
+    <id sclass="extern_def">
+      <name type="float">var_float</name>
+    </id>
+    <id sclass="extern_def">
+      <name type="double">var_double</name>
+    </id>
+  </globalSymbols>
+  
+  <globalDeclarations>
+      <varDecl>
+        <name>var_char</name>
+      </varDecl>
+      <varDecl>
+        <name>var_unsigned_char</name>
+      </varDecl>
+      <varDecl>
+        <name>var_short</name>
+      </varDecl>
+      <varDecl>
+        <name>var_unsigned_short</name>
+      </varDecl>
+      <varDecl>
+        <name>var_int</name>
+      </varDecl>
+      <varDecl>
+        <name>var_unsigned_int</name>
+      </varDecl>
+      <varDecl>
+        <name>var_long</name>
+      </varDecl>
+      <varDecl>
+        <name>var_unsigned_long</name>
+      </varDecl>
+      <varDecl>
+        <name>var_long_long</name>
+      </varDecl>
+      <varDecl>
+        <name>var_unsigned_long_long</name>
+      </varDecl>
+      <varDecl>
+        <name>var_float</name>
+      </varDecl>
+      <varDecl>
+        <name>var_double</name>
+      </varDecl>
+  </globalDeclarations>
+</XcodeProgram>

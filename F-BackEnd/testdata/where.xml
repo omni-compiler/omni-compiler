@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- 
+      program main
+        real, dimension(5) :: A
+        A = (/ -2.0, -1.0, 0.0, 1.0, 2.0 /)
+        where (A > 0.0) A = 1.0/A
+      end
+-->
+<XcodeProgram compiler-info="F-Frontend"
+              version="0.8"
+              time="2009-02-17 10:53:20"
+              language="Fortran 90 Free Format"
+              source="where.f90">
+
+  <!-- typeTable -->
+  <typeTable>
+    <FfunctionType type="FfunctionType_of_main" return_type="Fvoid" />
+    <FarrayType type="FarrayType_of_A" element_type="Freal">
+      <indexRange>
+        <upperBound><FintConstant>5</FintConstant></upperBound>
+      </indexRange>
+    </FarrayType>
+  </typeTable>
+
+  <!-- globalSymbols -->
+  <globalSymbols>
+    <id sclass="extern_def" type="FfunctionType_of_main">
+      <name type="FfunctionType_of_main">main</name>
+    </id>
+  </globalSymbols>
+
+  <!-- globalDeclarations -->
+  <globalDeclarations>
+
+    <!-- 1: program main -->
+    <FfunctionDefinition is_program="1" lineno="1" file="where.f90"> 
+      <!-- name -->
+      <name type="FfunctionType_of_main">main</name>
+      <!-- symbols -->
+      <symbols>
+        <id sclass="auto" type="FarrayType_of_A">
+          <name type="FarrayType_of_A">A</name>
+        </id>
+      </symbols>
+      <!-- declarations -->
+      <declarations>
+        <!-- 2: real, dimension(5) :: A -->
+        <varDecl lineno="2" file="where.f90">
+          <name type="FarrayType_of_A">A</name>
+        </varDecl>
+      </declarations>
+      <!-- body -->
+      <body>
+        <!-- 3: A = (/ -2.0, -1.0, 0.0, 1.0, 2.0 /) -->
+        <exprStatement lineno="3" file="where.f90">
+          <assignExpr>
+            <Var scope="local">A</Var>
+            <FarrayConstructor type="FarrayType_of_constructor">
+              <FrealConstant type="Freal">-2.0</FrealConstant>
+              <FrealConstant type="Freal">-1.0</FrealConstant>
+              <FrealConstant type="Freal">0.0</FrealConstant>
+              <FrealConstant type="Freal">1.0</FrealConstant>
+              <FrealConstant type="Freal">2.0</FrealConstant>
+            </FarrayConstructor>
+          </assignExpr>
+        </exprStatement>
+        <!-- 4: where (A > 0.0) A = 1.0/A -->
+        <FwhereStatement lineno="3" file="where.f90">
+          <condition>
+            <logGTExpr>
+              <Var scope="local">A</Var>
+              <FrealConstant type="Freal">0.0</FrealConstant>
+            </logGTExpr>
+          </condition>
+          <then>
+            <body>
+              <exprStatement lineno="3" file="where.f90">
+                <assignExpr>
+                  <Var scope="local">A</Var>
+                  <divExpr>
+                    <FrealConstant type="Freal">1.0</FrealConstant>
+                    <Var scope="local">A</Var>
+                  </divExpr>
+                </assignExpr>
+              </exprStatement>
+            </body>
+          </then>
+        </FwhereStatement>
+      </body>
+    </FfunctionDefinition>
+
+  </globalDeclarations>
+
+</XcodeProgram>

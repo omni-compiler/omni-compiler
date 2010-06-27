@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
+# $TSUKUBA_Copyright:
+#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
+#  $
+
+COMPILER="@OM_EXEC_F_COMPILER@"
+. ${OMNI_HOME}/bin/omnative $*
+

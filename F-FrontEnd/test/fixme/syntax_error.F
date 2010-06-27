@@ -1,0 +1,11 @@
+      TYPE MESH
+      INTEGER, POINTER, DIMENSION(:,:) :: 
+     .          INTERPOLATION_FACTOR
+      END TYPE MESH
+      TYPE(MESH) :: M
+      INTEGER, POINTER, DIMENSION(:,:) :: 
+     .          INTERPOLATION_FACTOR
+      INTERPOLATION_FACTOR=>M%INTERPOLATION_FACTOR
+      return
+      end
+

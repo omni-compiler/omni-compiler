@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- 
+      program main
+        integer, dimension(:,:), allocatable :: m
+        integer, pointer :: p
+        integer, target :: i
+        integer :: res
+        allocate (m(3,3))
+        deallocate (m, stat=res)
+        nullify (p)
+        p => i
+      end
+-->
+<XcodeProgram compiler-info="F-Frontend"
+              version="0.8"
+              time="2009-02-17 10:53:20"
+              language="Fortran 90 Free Format"
+              source="pointer.f90">
+  <!-- typeTable -->
+  <typeTable>
+    <FfunctionType type="FfunctionType_of_main" return_type="Fvoid" />
+    <FarrayType type="FarrayType_of_m1" element_type="Fint" is_allocatable="1" >
+      <indexRange>
+        <upperBound><FintConstant></FintConstant></upperBound>
+      </indexRange>
+    </FarrayType>
+    <FarrayType type="FarrayType_of_m" element_type="FarrayType_of_m1" is_allocatable="1" >
+      <indexRange>
+        <upperBound><FintConstant></FintConstant></upperBound>
+      </indexRange>
+    </FarrayType>
+    <FbasicType type="FbasicType_of_m" ref="FarrayType_of_m" is_pointer="1" />
+    <FbasicType type="FbasicType_of_p" ref="Fint" is_pointer="1" />
+    <FbasicType type="FbasicType_of_i" ref="Fint" is_target="1" />
+  </typeTable>
+
+  <!-- globalSymbols -->
+  <globalSymbols>
+    <id sclass="extern_def" type="FfunctionType_of_main">
+      <name type="FfunctionType_of_main">main</name>
+    </id>
+  </globalSymbols>
+
+  <!-- globalDeclarations -->
+  <globalDeclarations>
+
+    <!-- 1: program main -->
+    <FfunctionDefinition is_program="1" lineno="1" file="pointer.f90"> 
+
+      <!-- name -->
+      <name type="FfunctionType_of_main">main</name>
+
+      <!-- symbols -->
+      <symbols>
+        <id sclass="auto" type="FbasicType_of_m">
+          <name type="FbasicType_of_m">m</name>
+        </id>
+        <id sclass="auto" type="FbasicType_of_p">
+          <name type="FbasicType_of_p">p</name>
+        </id>
+        <id sclass="auto" type="FbasicType_of_i">
+          <name type="FbasicType_of_i">i</name>
+        </id>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">res</name>
+        </id>
+      </symbols>
+
+      <!-- params -->
+      <params></params>
+
+      <!-- declarations -->
+      <declarations>
+        <!-- 2: integer, dimension(:,:), allocatable :: m -->
+        <varDecl lineno="2" file="pointer.f90">
+          <name type="FbasicType_of_m">m</name>
+        </varDecl>
+        <!-- 3: integer, pointer :: p -->
+        <varDecl lineno="3" file="pointer.f90">
+          <name type="FbasicType_of_p">p</name>
+        </varDecl>
+        <!-- 4: integer, target :: i -->
+        <varDecl lineno="4" file="pointer.f90">
+          <name type="FbasicType_of_i">i</name>
+        </varDecl>
+        <!-- 5: integer :: res -->
+        <varDecl lineno="5" file="pointer.f90">
+          <name type="Fint">res</name>
+        </varDecl>
+      </declarations>
+
+      <!-- body -->
+      <body>
+        <!-- 6: allocate (m(3,3)) -->
+        <FallocateStatement lineno="5" file="pointer.f90">
+          <alloc>
+            <Var scope="local">m</Var>
+            <indexRange>
+              <upperBound>
+                <FintConstant type="Fint">3</FintConstant>
+              </upperBound>
+            </indexRange>
+            <indexRange>
+              <upperBound>
+                <FintConstant type="Fint">3</FintConstant>
+              </upperBound>
+            </indexRange>
+          </alloc>
+        </FallocateStatement>
+        <!-- 7: deallocate (m, stat=res) -->
+        <FdeallocateStatement stat_name="res" lineno="6" file="pointer.f90">
+          <alloc>
+            <Var scope="local">m</Var>
+          </alloc>
+        </FdeallocateStatement>
+        <!-- 8: nullify (p, i) -->
+        <FnullifyStatement lineno="7" file="pointer.f90">
+          <alloc>
+            <Var scope="local">p</Var>
+          </alloc>
+          <alloc>
+            <Var scope="local">i</Var>
+          </alloc>
+        </FnullifyStatement>
+        <!-- 9: p => i -->
+        <exprStatement lineno="8" file="pointer.f90">
+          <FpointerAssignExpr>
+            <Var scope="local">p</Var>
+            <Var scope="local">i</Var>
+          </FpointerAssignExpr>
+        </exprStatement>
+      </body>
+      
+    </FfunctionDefinition>
+
+  </globalDeclarations>
+
+</XcodeProgram>

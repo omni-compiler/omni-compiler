@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
+# $TSUKUBA_Copyright:
+#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
+#  $
+
+CONF="${OMNI_HOME}/etc/java.conf"
+if [ -e ${CONF} ]; then
+  if [ -r ${CONF} ]; then
+    . ${CONF}
+  else
+    echo cannot read ${CONF} script.
+    exit 1
+  fi
+else
+  echo cannot find ${CONF} script.
+  exit 1
+fi
+
+OMNI_JAR1="${OMNI_HOME}/java/om-c-back.jar"
+OMNI_JAR2="${OMNI_HOME}/java/om-common.jar"
+
+if [ -f $OMNI_JAR1 -a -f $OMNI_JAR2 ]; then
+    ${OMNI_JAVA} ${OMNI_JAVA_OPT} -cp ${OMNI_JAR2}:${OMNI_JAR1} xcodeml.c.util.omx2c $@
+elif [ -f "${OMNI_HOME}/classes/xcodeml/c/util/omx2c.class" ]; then
+    export CLASSPATH="${OMNI_HOME}/classes:${OMNI_HOME}/binding/classes:${OMNI_HOME}/../XcodeML-Common/classes"
+    ${OMNI_JAVA} ${OMNI_JAVA_OPT} xcodeml.c.util.omx2c $@
+else
+  echo ${OMNI_JAR1} not found.
+  exit 1
+fi
+

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XcodeProgram source="test.c">
+  <typeTable>
+    <functionType type="F0" return_type="int">
+      <params>
+        <name type="void"/>
+      </params>
+    </functionType>
+    <pointerType type="PF0" ref="F0" />
+  </typeTable>
+
+  <globalSymbols>
+    <id sclass="extern_def">
+      <name type="F0">func</name>
+    </id>
+  </globalSymbols>
+
+  <globalDeclarations>
+    <functionDefinition> 
+      <name>func</name>
+      <symbols/>
+      <params/>
+      <body>
+        <compoundStatement>
+          <symbols>
+            <id> <name type="int">a</name> </id>
+            <id> <name type="int">b</name> </id>
+            <id> <name type="int">c</name> </id>
+          </symbols>
+          <declarations>
+            <varDecl> <name>a</name> <value><intConstant>1</intConstant></value> </varDecl>
+            <varDecl> <name>b</name> <value><intConstant>2</intConstant></value> </varDecl>
+            <varDecl> <name>c</name> <value><intConstant>3</intConstant></value> </varDecl>
+          </declarations>
+          <body>
+
+            <exprStatement>
+              <assignExpr>
+                <Var scope="local">a</Var>
+                <mulExpr>
+                  <Var scope="local">b</Var>
+                  <plusExpr>
+                    <Var scope="local">c</Var>
+                    <mulExpr>
+                      <Var scope="local">a</Var>
+                      <plusExpr>
+                        <Var scope="local">b</Var>
+                        <unaryMinusExpr>
+                          <Var scope="local">c</Var>
+                        </unaryMinusExpr>
+                      </plusExpr>
+                    </mulExpr>
+                  </plusExpr>
+                </mulExpr>
+              </assignExpr>
+            </exprStatement>
+
+            <returnStatement><intConstant>0</intConstant></returnStatement>
+          </body>
+        </compoundStatement>
+      </body>
+    </functionDefinition>
+  </globalDeclarations>
+</XcodeProgram>
+

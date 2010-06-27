@@ -1,0 +1,104 @@
+<XcodeProgram source="stop.f90"
+              language="Fortran"
+              time="2009-03-27 18:07:57"
+              compiler-info="XcodeML/Fortran-FrontEnd"
+              version="1.0">
+  <typeTable>
+    <FbasicType type="B80a6128" ref="Fint" />
+    <FbasicType type="B80a6080" ref="Fint" />
+    <FbasicType type="C80a4538" ref="Fcharacter">
+      <len><FintConstant type="Fint">1</FintConstant></len>
+    </FbasicType>
+    <FbasicType type="B80a6d00" ref="Freal" />
+    <FbasicType type="B80a6c58" ref="Freal" />
+    <FbasicType type="C80a6fc0" ref="Fcharacter">
+      <len><FintConstant type="Fint">11</FintConstant></len>
+    </FbasicType>
+    <FfunctionType type="F80a5fa0" return_type="Fint">
+      <params>
+        <name type="Fint">x</name>
+      </params>
+    </FfunctionType>
+    <FfunctionType type="F80a64d0" return_type="Fvoid" />
+    <FfunctionType type="F80a6b78" return_type="Freal">
+      <params>
+        <name type="Freal">x</name>
+      </params>
+    </FfunctionType>
+  </typeTable>
+  <globalSymbols>
+    <id sclass="extern_def" type="F80a5fa0">
+      <name type="F80a5fa0">func1</name>
+    </id>
+    <id sclass="extern" type="F80a64d0">
+      <name type="F80a64d0">s_stop</name>
+    </id>
+    <id sclass="extern_def" type="F80a6b78">
+      <name type="F80a6b78">func2</name>
+    </id>
+  </globalSymbols>
+  <globalDeclarations>
+    <FfunctionDefinition lineno="1" file="stop.f90">
+      <name type="F80a5fa0">func1</name>
+      <symbols>
+        <id sclass="auto" type="Fint">
+          <name type="Fint">T000</name>
+        </id>
+      </symbols>
+      <declarations>
+        <varDecl lineno="2" file="stop.f90">
+          <name type="Fint">x</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <exprStatement lineno="3" file="stop.f90">
+          <assignExpr>
+            <Var>T000</Var>
+            <Var>x</Var>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="4" file="stop.f90">
+          <functionCall>
+            <name>s_stop</name>
+            <arguments>
+              <FcharacterConstant>12345</FcharacterConstant>
+              <FintConstant>5</FintConstant>
+            </arguments>
+          </functionCall>
+        </exprStatement>
+        <FreturnStatement lineno="5" file="stop.f90" />
+      </body>
+    </FfunctionDefinition>
+    <FfunctionDefinition lineno="7" file="stop.f90">
+      <name type="F80a6b78">func2</name>
+      <symbols>
+        <id sclass="auto" type="Freal">
+          <name type="Freal">T001</name>
+        </id>
+      </symbols>
+      <declarations>
+        <varDecl lineno="8" file="stop.f90">
+          <name type="Freal">x</name>
+        </varDecl>
+      </declarations>
+      <body>
+        <exprStatement lineno="9" file="stop.f90">
+          <assignExpr>
+            <Var>T001</Var>
+            <Var>x</Var>
+          </assignExpr>
+        </exprStatement>
+        <exprStatement lineno="10" file="stop.f90">
+          <functionCall>
+            <name>s_stop</name>
+            <arguments>
+              <FcharacterConstant>ABORT FUNC2</FcharacterConstant>
+              <FintConstant>11</FintConstant>
+            </arguments>
+          </functionCall>
+        </exprStatement>
+        <FreturnStatement lineno="11" file="stop.f90" />
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+</XcodeProgram>
