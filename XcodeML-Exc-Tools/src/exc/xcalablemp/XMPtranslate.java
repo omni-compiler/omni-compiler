@@ -34,7 +34,7 @@ public class XMPtranslate implements XobjectDefVisitor {
       translate(def);
     } catch (XMPexception e) {
       String message = e.getMessage();
-      if (message != null) System.out.println(message);
+      if (message != null) System.out.println("[XcalableMP] " + message);
 
       return;
     }

@@ -25,7 +25,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       pragmaDir = lexXMPdirective(retSyntax, retArgs);
     } catch (XMPexception e) {
       String message = e.getMessage();
-      if (message != null) System.out.println(message);
+      if (message != null) System.out.println("[XcalableMP] " + message);
 
       return new Result(_lexer, null);
     }

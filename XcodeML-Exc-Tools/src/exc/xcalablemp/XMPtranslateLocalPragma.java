@@ -665,7 +665,7 @@ public class XMPtranslateLocalPragma {
     BlockList loopBody = pb.getBody();
 
     // replace pragma
-    CforBlock schedBaseBlock = getOutermostLoopBlock(loopBody);
+    CforBlock schedBaseBlock = getOutermostLoopBlock(pb.getLineNo(), loopBody);
     pb.replace(schedBaseBlock);
 
     if (loopDecl.getArg(0) == null) translateFollowingLoop(pb, schedBaseBlock);
@@ -692,7 +692,7 @@ public class XMPtranslateLocalPragma {
     XobjList loopVarList = (XobjList)loopDecl.getArg(0);
     Vector<CforBlock> loopVector = new Vector<CforBlock>(XMPutil.countElmts(loopVarList));
     for (XobjArgs i = loopVarList.getArgs(); i != null; i = i.nextArgs())
-      loopVector.add(findLoopBlock(loopBody, i.getArg().getString()));
+      loopVector.add(findLoopBlock(lnObj, loopBody, i.getArg().getString()));
 
     // schedule loop
     Iterator<CforBlock> it = loopVector.iterator();
@@ -734,7 +734,7 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private static CforBlock getOutermostLoopBlock(BlockList body) throws XMPexception {
+  private static CforBlock getOutermostLoopBlock(LineNo lnObj, BlockList body) throws XMPexception {
     Block b = body.getHead();
     if (b != null) {
       if (b.Opcode() == Xcode.FOR_STATEMENT) {
@@ -746,33 +746,41 @@ public class XMPtranslateLocalPragma {
         return forBlock;
       }
       else if (b.Opcode() == Xcode.COMPOUND_STATEMENT)
-        return getOutermostLoopBlock(b.getBody());
+        return getOutermostLoopBlock(lnObj, b.getBody());
     }
 
-    XMP.error(b.getLineNo(), "one for statement comes after loop directive");
+    XMP.error(lnObj, "cannot find the loop statement");
     // never reach here
     return null;
   }
 
-  private static CforBlock findLoopBlock(BlockList body, String loopVarName) throws XMPexception {
+  private static CforBlock findLoopBlock(LineNo lnObj, BlockList body, String loopVarName) throws XMPexception {
     Block b = body.getHead();
     if (b != null) {
-      if (b.Opcode() == Xcode.FOR_STATEMENT) {
-        CforBlock forBlock = (CforBlock)b;
-        forBlock.Canonicalize();
-        if (!(forBlock.isCanonical()))
-          XMP.error(b.getLineNo(), "loop is not canonical");
+      LineNo blockLnObj = b.getLineNo();
 
-        if (forBlock.getInductionVar().getSym().equals(loopVarName))
-          return (CforBlock)b;
-        else
-          return findLoopBlock(forBlock.getBody(), loopVarName);
+      switch (b.Opcode()) {
+        case FOR_STATEMENT:
+          {
+            CforBlock forBlock = (CforBlock)b;
+            forBlock.Canonicalize();
+            if (!(forBlock.isCanonical()))
+              XMP.error(blockLnObj, "loop is not canonical");
+
+            if (forBlock.getInductionVar().getSym().equals(loopVarName))
+              return (CforBlock)b;
+            else
+              return findLoopBlock(blockLnObj, forBlock.getBody(), loopVarName);
+          }
+        case COMPOUND_STATEMENT:
+          return findLoopBlock(blockLnObj, b.getBody(), loopVarName);
+        case XMP_PRAGMA:
+        case OMP_PRAGMA:
+          XMP.error(blockLnObj, "reached to a openmp/xcalablemp directive");
       }
-      else if (b.Opcode() == Xcode.COMPOUND_STATEMENT)
-        return findLoopBlock(b.getBody(), loopVarName);
     }
 
-    XMP.error(b.getLineNo(), "cannot find the loop statement");
+    XMP.error(lnObj, "cannot find the loop statement");
     // never reach here
     return null;
   }
