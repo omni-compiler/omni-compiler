@@ -6,6 +6,7 @@
 static void _XCALABLEMP_calc_template_size(_XCALABLEMP_template_t *t, int dim);
 static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper, long long *stride,
                                               long long lb, long long ub);
+static _Bool _XCALABLEMP_check_template_ref_inclusion(int lower, int upper, int stride, _XCALABLEMP_template_chunk_t *chunk);
 
 static void _XCALABLEMP_calc_template_size(_XCALABLEMP_template_t *t, int dim) {
   if (t == NULL)
@@ -24,8 +25,6 @@ static void _XCALABLEMP_calc_template_size(_XCALABLEMP_template_t *t, int dim) {
 
 static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper, long long *stride,
                                               long long lb, long long ub) {
-  // XXX node number is 1-origin in this function
-
   // setup temporary variables
   long long l, u;
   unsigned long long s = *(stride);
@@ -56,6 +55,11 @@ static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper
     *upper = u;
     *stride = s;
   }
+}
+
+static _Bool _XCALABLEMP_check_template_ref_inclusion(int lower, int upper, int stride, _XCALABLEMP_template_chunk_t *chunk) {
+  if ((_XCALABLEMP_world_rank % 2) == 0) return true;
+  else return false;
 }
 
 void _XCALABLEMP_init_template_FIXED(_XCALABLEMP_template_t **template, int dim, ...) {
@@ -207,6 +211,79 @@ void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int temp
 
   chunk->dist_manner = _XCALABLEMP_N_DIST_CYCLIC;
   chunk->onto_nodes_info = ni;
+}
+
+_Bool _XCALABLEMP_exec_task_TEMPLATE_PART(int get_upper, _XCALABLEMP_template_t *ref_template,
+                                                         _XCALABLEMP_nodes_t *onto_nodes, ...) {
+  if (ref_template == NULL)
+    _XCALABLEMP_fatal("null template descriptor detected");
+
+  if (ref_template->chunk == NULL) return false;
+
+  if (onto_nodes == NULL)
+    _XCALABLEMP_fatal("null nodes descriptor detected");
+
+  int color = 1;
+  _Bool is_member = true;
+  int acc_nodes_size = 1;
+  int ref_dim = ref_template->dim;
+  long long ref_lower, ref_upper, ref_stride;
+
+  va_list args;
+  va_start(args, onto_nodes);
+  for (int i = 0; i < ref_dim; i++) {
+    _XCALABLEMP_template_info_t *info = &(ref_template->info[i]);
+    _XCALABLEMP_template_chunk_t *chunk = &(ref_template->chunk[i]);
+
+    int size, rank;
+    _XCALABLEMP_nodes_info_t *onto_nodes_info = chunk->onto_nodes_info;
+    if (onto_nodes_info == NULL) { // distmanner == DUPLICATION
+      size = 1;
+      rank = 0;
+    }
+    else {
+      size = onto_nodes_info->size;
+      rank = onto_nodes_info->rank;
+    }
+
+    if (va_arg(args, int) == 1) color += (acc_nodes_size * rank);
+    else {
+      ref_lower = va_arg(args, long long);
+      if ((i == (ref_dim - 1)) && (get_upper == 1))
+        ref_upper = info->ser_upper;
+      else
+        ref_upper = va_arg(args, long long);
+      ref_stride = va_arg(args, long long);
+
+      _XCALABLEMP_validate_template_ref(&ref_lower, &ref_upper, &ref_stride, info->ser_lower, info->ser_upper);
+
+      is_member = is_member && _XCALABLEMP_check_template_ref_inclusion(ref_lower, ref_upper, ref_stride, chunk);
+    }
+
+    acc_nodes_size *= size;
+  }
+
+  MPI_Comm *comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
+  if (!is_member) color = 0;
+
+  MPI_Comm_split(*(onto_nodes->comm), color, onto_nodes->comm_rank, comm);
+
+  _XCALABLEMP_nodes_t *n = NULL;
+  if (is_member) {
+    n = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_nodes_t));
+
+    n->comm = comm;
+    MPI_Comm_size(*comm, &(n->comm_size));
+    MPI_Comm_rank(*comm, &(n->comm_rank));
+    n->dim = 0;
+  }
+  else _XCALABLEMP_free(comm);
+
+  if (n == NULL) return false;
+  else {
+    _XCALABLEMP_push_nodes(n);
+    return true;
+  }
 }
 
 void _XCALABLEMP_finalize_template(_XCALABLEMP_template_t *template) {

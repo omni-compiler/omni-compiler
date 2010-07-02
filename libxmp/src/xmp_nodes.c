@@ -75,8 +75,8 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NAMED(int dim, _
   int ref_dim = ref_nodes->dim;
   _Bool is_member = true;
   for (int i = 0; i < ref_dim; i++) {
-    _Bool res = _XCALABLEMP_check_nodes_ref_inclusion(ref_lower[i], ref_upper[i], ref_stride[i], ref_nodes->info[i].rank);
-    is_member = is_member && res;
+    is_member = is_member &&
+                _XCALABLEMP_check_nodes_ref_inclusion(ref_lower[i], ref_upper[i], ref_stride[i], ref_nodes->info[i].rank);
   }
 
   MPI_Comm *comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
@@ -501,8 +501,7 @@ _Bool _XCALABLEMP_exec_task_NODES_PART(int get_upper, _XCALABLEMP_nodes_t *ref_n
       ref_lower--;
       ref_upper--;
 
-      _Bool res = _XCALABLEMP_check_nodes_ref_inclusion(ref_lower, ref_upper, ref_stride, rank);
-      is_member = is_member && res;
+      is_member = is_member && _XCALABLEMP_check_nodes_ref_inclusion(ref_lower, ref_upper, ref_stride, rank);
     }
 
     acc_nodes_size *= size;

@@ -1391,6 +1391,7 @@ public class XMPtranslateLocalPragma {
               break;
             case XMPobject.TEMPLATE:
               execFuncSurfix = "TEMPLATE_PART";
+              execFuncArgs.cons(ontoNodesRef);
               execFuncArgs.cons(((XMPtemplate)onRefObject).getDescId().Ref());
               break;
             default:
