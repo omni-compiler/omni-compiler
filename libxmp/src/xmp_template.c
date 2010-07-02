@@ -6,7 +6,8 @@
 static void _XCALABLEMP_calc_template_size(_XCALABLEMP_template_t *t, int dim);
 static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper, long long *stride,
                                               long long lb, long long ub);
-static _Bool _XCALABLEMP_check_template_ref_inclusion(int lower, int upper, int stride, _XCALABLEMP_template_chunk_t *chunk);
+static _Bool _XCALABLEMP_check_template_ref_inclusion(long long lower, long long upper, long long stride,
+                                                      _XCALABLEMP_template_chunk_t *chunk);
 
 static void _XCALABLEMP_calc_template_size(_XCALABLEMP_template_t *t, int dim) {
   if (t == NULL)
@@ -26,8 +27,7 @@ static void _XCALABLEMP_calc_template_size(_XCALABLEMP_template_t *t, int dim) {
 static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper, long long *stride,
                                               long long lb, long long ub) {
   // setup temporary variables
-  long long l, u;
-  unsigned long long s = *(stride);
+  long long l, u, s = *(stride);
   if (s > 0) {
     l = *lower;
     u = *upper;
@@ -40,8 +40,8 @@ static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper
 
   // check boundary
   if (lb > l) _XCALABLEMP_fatal("<template-ref> is out of bounds, <ref-lower> is less than the template lower bound");
-  if (l > u) _XCALABLEMP_fatal("<nodes-ref> is out of bounds, <ref-upper> is less than <ref-lower>");
-  if (u > ub) _XCALABLEMP_fatal("<nodes-ref> is out of bounds, <ref-upper> is greater than the template upper bound");
+  if (l > u) _XCALABLEMP_fatal("<template-ref> is out of bounds, <ref-upper> is less than <ref-lower>");
+  if (u > ub) _XCALABLEMP_fatal("<template-ref> is out of bounds, <ref-upper> is greater than the template upper bound");
 
   // validate values
   if (s > 0) {
@@ -57,9 +57,26 @@ static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper
   }
 }
 
-static _Bool _XCALABLEMP_check_template_ref_inclusion(int lower, int upper, int stride, _XCALABLEMP_template_chunk_t *chunk) {
-  if ((_XCALABLEMP_world_rank % 2) == 0) return true;
-  else return false;
+static _Bool _XCALABLEMP_check_template_ref_inclusion(long long lower, long long upper, long long stride,
+                                                      _XCALABLEMP_template_chunk_t *chunk) {
+  switch (chunk->dist_manner) {
+    case _XCALABLEMP_N_DIST_DUPLICATION:
+      return true;
+    case _XCALABLEMP_N_DIST_BLOCK:
+      {
+        return true;
+      }
+    case _XCALABLEMP_N_DIST_CYCLIC:
+      {
+        if (stride == 1) {
+          return true;
+        }
+        else
+          _XCALABLEMP_fatal("not implemented condition: (stride is not 1 && cyclic distribution)");
+      }
+    default:
+      _XCALABLEMP_fatal("unknown distribution manner");
+  }
 }
 
 void _XCALABLEMP_init_template_FIXED(_XCALABLEMP_template_t **template, int dim, ...) {

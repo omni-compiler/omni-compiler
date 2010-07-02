@@ -146,8 +146,7 @@ void _XCALABLEMP_validate_nodes_ref(int *lower, int *upper, int *stride, int siz
   // XXX node number is 1-origin in this function
 
   // setup temporary variables
-  int l, u;
-  int s = *(stride);
+  int l, u, s = *(stride);
   if (s > 0) {
     l = *lower;
     u = *upper;
