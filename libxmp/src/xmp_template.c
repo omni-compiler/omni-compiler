@@ -64,8 +64,28 @@ static _Bool _XCALABLEMP_check_template_ref_inclusion(long long ref_lower, long 
       return true;
     case _XCALABLEMP_N_DIST_BLOCK:
       {
-        if (ref_upper < chunk->par_lower) return false;
-        if (chunk->par_upper < ref_lower) return false;
+        long long template_lower = chunk->par_lower;
+        long long template_upper = chunk->par_upper;
+
+        if (ref_stride != 1) {
+          long long ref_stride_mod = ref_lower % ref_stride;
+          /* normalize template lower */
+          long long template_lower_mod = template_lower % ref_stride;
+          if (template_lower_mod != ref_stride_mod) {
+            if (template_lower_mod < ref_stride_mod) template_lower += (ref_stride_mod - template_lower_mod);
+            else template_lower += (ref_stride - template_lower_mod + ref_stride_mod);
+          }
+          if (template_lower > template_upper) return false;
+          /* normalize template upper FIXME needed??? */
+          long long template_upper_mod = template_upper % ref_stride;
+          if (template_upper_mod != ref_stride_mod) {
+            if (ref_stride_mod < template_upper_mod) template_upper -= (template_upper_mod - ref_stride_mod);
+            else template_upper -= (ref_stride - ref_stride_mod + template_upper_mod);
+          }
+        }
+
+        if (ref_upper < template_lower) return false;
+        if (template_upper < ref_lower) return false;
         return true;
       }
     case _XCALABLEMP_N_DIST_CYCLIC:

@@ -38,7 +38,7 @@ if (ser_step != 1) { \
     else template_lower += (ser_step - lower_mod + dst_mod); \
   } \
   if (template_lower > template_upper) goto no_iter; \
-  /* normalize template upper */ \
+  /* normalize template upper FIXME needed??? */ \
   _type upper_mod = template_upper % ser_step; \
   if (upper_mod != dst_mod) { \
     if (dst_mod < upper_mod)   template_upper -= (upper_mod - dst_mod); \

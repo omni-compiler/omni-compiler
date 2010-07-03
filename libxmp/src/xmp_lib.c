@@ -19,3 +19,11 @@ int xmp_get_rank(void) {
 void xmp_barrier(void) {
   _XCALABLEMP_barrier_EXEC();
 }
+
+int xmp_get_world_size(void) {
+  return _XCALABLEMP_world_size;
+}
+
+int xmp_get_world_rank(void) {
+  return _XCALABLEMP_world_rank;
+}
