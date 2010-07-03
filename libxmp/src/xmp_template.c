@@ -6,7 +6,7 @@
 static void _XCALABLEMP_calc_template_size(_XCALABLEMP_template_t *t, int dim);
 static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper, long long *stride,
                                               long long lb, long long ub);
-static _Bool _XCALABLEMP_check_template_ref_inclusion(long long lower, long long upper, long long stride,
+static _Bool _XCALABLEMP_check_template_ref_inclusion(long long ref_lower, long long ref_upper, long long ref_stride,
                                                       _XCALABLEMP_template_chunk_t *chunk);
 
 static void _XCALABLEMP_calc_template_size(_XCALABLEMP_template_t *t, int dim) {
@@ -57,19 +57,30 @@ static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper
   }
 }
 
-static _Bool _XCALABLEMP_check_template_ref_inclusion(long long lower, long long upper, long long stride,
+static _Bool _XCALABLEMP_check_template_ref_inclusion(long long ref_lower, long long ref_upper, long long ref_stride,
                                                       _XCALABLEMP_template_chunk_t *chunk) {
   switch (chunk->dist_manner) {
     case _XCALABLEMP_N_DIST_DUPLICATION:
       return true;
     case _XCALABLEMP_N_DIST_BLOCK:
       {
+        if (ref_upper < chunk->par_lower) return false;
+        if (chunk->par_upper < ref_lower) return false;
         return true;
       }
     case _XCALABLEMP_N_DIST_CYCLIC:
       {
-        if (stride == 1) {
-          return true;
+        if (ref_stride == 1) {
+          int nodes_size = (chunk->onto_nodes_info)->size;
+          int par_lower_mod = chunk->par_lower % nodes_size;
+          int ref_lower_mod = ref_lower % nodes_size;
+          if (par_lower_mod != ref_lower_mod) {
+            if (ref_lower_mod < par_lower_mod) ref_lower += (par_lower_mod - ref_lower_mod);
+            else ref_lower += (nodes_size - ref_lower_mod + par_lower_mod);
+          }
+
+          if (ref_upper < ref_lower) return false;
+          else return true;
         }
         else
           _XCALABLEMP_fatal("not implemented condition: (stride is not 1 && cyclic distribution)");
