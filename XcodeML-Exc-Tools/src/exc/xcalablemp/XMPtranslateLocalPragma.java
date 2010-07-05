@@ -724,11 +724,8 @@ public class XMPtranslateLocalPragma {
           break;
         }
       case XMPobject.NODES:
-        {
-          XMPnodes onRefNodes = (XMPnodes)onRefObj;
-          // FIXME implement ...
-          break;
-        }
+        callLoopSchedFuncNodes((XMPnodes)onRefObj, (XobjList)onRef.getArg(1), forBlock, schedBaseBlock);
+        break;
       default:
         XMP.fatal("unknown object type");
     }
@@ -872,6 +869,67 @@ public class XMPtranslateLocalPragma {
     funcArgs.add(templateIndexArg);
 
     Ident funcId = _globalDecl.declExternFunc("_XCALABLEMP_sched_loop_template_" + distMannerString + "_" + funcTypeSurfix);
+
+    schedBaseBlock.insert(funcId.Call(funcArgs));
+  }
+
+  private void callLoopSchedFuncNodes(XMPnodes nodesObj, XobjList nodesSubscriptList,
+                                      CforBlock forBlock, CforBlock schedBaseBlock) throws XMPexception {
+    LineNo lnObj = forBlock.getLineNo();
+
+    Xobject loopIndex = forBlock.getInductionVar();
+    Xtype loopIndexType = loopIndex.Type();
+
+    if (!XMPutil.isIntegerType(loopIndexType))
+      XMP.error(lnObj, "loop index variable has a non-integer type");
+
+    String funcTypeSurfix = XMPutil.getTypeName(loopIndexType);
+    String loopIndexName = loopIndex.getSym();
+
+    XobjList funcArgs = Xcons.List();
+    funcArgs.add(forBlock.getLowerBound());
+    funcArgs.add(forBlock.getUpperBound());
+    funcArgs.add(forBlock.getStep());
+
+    int nodesIndex = 0;
+    int nodesDim = nodesObj.getDim();
+    Xobject nodesIndexArg = null;
+    for (XobjArgs i = nodesSubscriptList.getArgs(); i != null; i = i.nextArgs()) {
+      if (nodesIndex >= nodesDim)
+        XMP.error(lnObj, "wrong nodes dimensions, too many");
+
+      String s = i.getArg().getString();
+      if (s.equals(loopIndexName)) {
+        if (nodesIndexArg != null)
+          XMP.error(lnObj, "loop index '" + loopIndexName + "' is already described");
+
+        nodesIndexArg = Xcons.IntConstant(nodesIndex);
+      }
+
+      nodesIndex++;
+    }
+
+    if(nodesIndexArg == null)
+      XMP.error(lnObj, "cannot find index '" + loopIndexName + "' reference in <on-ref>");
+
+    if(nodesIndex != nodesDim)
+      XMP.error(lnObj, "wrong nodes dimensions, too few");
+
+    Ident parallelInitId = declLoopSchedIdent(schedBaseBlock,
+                                              "_XCALABLEMP_loop_init_" + loopIndexName, loopIndexType);
+    Ident parallelCondId = declLoopSchedIdent(schedBaseBlock,
+                                              "_XCALABLEMP_loop_cond_" + loopIndexName, loopIndexType);
+
+    forBlock.setLowerBound(parallelInitId.Ref());
+    forBlock.setUpperBound(parallelCondId.Ref());
+
+    funcArgs.add(parallelInitId.getAddr());
+    funcArgs.add(parallelCondId.getAddr());
+
+    funcArgs.add(nodesObj.getDescId().Ref());
+    funcArgs.add(nodesIndexArg);
+
+    Ident funcId = _globalDecl.declExternFunc("_XCALABLEMP_sched_loop_nodes_" + funcTypeSurfix);
 
     schedBaseBlock.insert(funcId.Call(funcArgs));
   }

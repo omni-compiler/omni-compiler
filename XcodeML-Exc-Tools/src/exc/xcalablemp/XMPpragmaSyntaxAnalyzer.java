@@ -688,7 +688,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     return Xcons.List(varList, fromRef, onRef);
   }
 
-  private XobjList parse_ON_REF(boolean isExecPragma, boolean isForPragma) throws XmException, XMPexception {
+  private XobjList parse_ON_REF(boolean isExecPragma, boolean isLoopPragma) throws XmException, XMPexception {
     if (pg_tok() == PG_IDENT) {
       // parse <named-obj-ref>
       XobjString objName = Xcons.String(pg_tok_buf());
@@ -699,7 +699,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       XobjList objSubscriptList = Xcons.List();
       do {
         pg_get_token();
-        parse_OBJ_SUBSCRIPT(objSubscriptList, isExecPragma, isForPragma);
+        parse_OBJ_SUBSCRIPT(objSubscriptList, isExecPragma, isLoopPragma);
 
         if (pg_tok() == ')') break;
         else if (pg_tok() == ',') continue;
@@ -711,7 +711,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       return Xcons.List(objName, objSubscriptList);
     }
     else {
-      if (isForPragma)
+      if (isLoopPragma)
         error("<node-number-ref> cannot be used in for directive");
 
       // parse <node-number-ref>
@@ -734,8 +734,8 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   }
 
   private void parse_OBJ_SUBSCRIPT(XobjList nodesSubscriptList,
-                                   boolean isExecPragma, boolean isForPragma) throws XmException, XMPexception {
-    if (isForPragma) {
+                                   boolean isExecPragma, boolean isLoopPragma) throws XmException, XMPexception {
+    if (isLoopPragma) {
       if (pg_tok() == '*') nodesSubscriptList.add(Xcons.String(XMP.ASTERISK));
       else if (pg_tok() == ':') nodesSubscriptList.add(Xcons.String(XMP.COLON));
       else {

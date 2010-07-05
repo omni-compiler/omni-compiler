@@ -21,7 +21,7 @@ if (ser_step == 0) _XCALABLEMP_fatal("loop step is 0"); \
 if (ser_step == 1) ser_cond--; \
 else ser_cond -= ((ser_cond - ser_init) % ser_step);
 
-
+// schedule by template -------------------------------------------------------------------------------------------------------------
 // block distribution ---------------------------------------------------------------------------------------------------------------
 #define _XCALABLEMP_SM_GET_TEMPLATE_INFO_BLOCK(_type) \
 if (template->chunk == NULL) _XCALABLEMP_fatal("template in loop directive is not distributed"); \
@@ -92,7 +92,6 @@ void _XCALABLEMP_sched_loop_template_BLOCK_UNSIGNED_LONG      _XCALABLEMP_SM_SCH
 void _XCALABLEMP_sched_loop_template_BLOCK_LONG_LONG          _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_S(long long)
 void _XCALABLEMP_sched_loop_template_BLOCK_UNSIGNED_LONG_LONG _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_U(unsigned long long)
 
-
 // cyclic distribution ---------------------------------------------------------------------------------------------------------------
 #define _XCALABLEMP_SM_GET_TEMPLATE_INFO_CYCLIC(_type) \
 if (template->chunk == NULL) _XCALABLEMP_fatal("template in loop directive is not distributed"); \
@@ -152,3 +151,35 @@ void _XCALABLEMP_sched_loop_template_CYCLIC_LONG               _XCALABLEMP_SM_SC
 void _XCALABLEMP_sched_loop_template_CYCLIC_UNSIGNED_LONG      _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_U(unsigned long)
 void _XCALABLEMP_sched_loop_template_CYCLIC_LONG_LONG          _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_S(long long)
 void _XCALABLEMP_sched_loop_template_CYCLIC_UNSIGNED_LONG_LONG _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_U(unsigned long long)
+
+// schedule by nodes ----------------------------------------------------------------------------------------------------------------
+#define _XCALABLEMP_SM_SCHED_LOOP_NODES(_type) \
+(_type ser_init, _type ser_cond, _type ser_step, \
+ _type *const par_init, _type *const par_cond, \
+ const _XCALABLEMP_nodes_t *const nodes, const int nodes_index) { \
+  _XCALABLEMP_SM_NORM_SCHED_PARAMS_S(_type) \
+  _type rank1O = (_type)((nodes->info[nodes_index].rank) + 1); \
+  if (rank1O < ser_init) goto no_iter; \
+  if (rank1O > ser_cond) goto no_iter; \
+  if (((rank1O - ser_init) % ser_step) == 0) { \
+    *par_init = rank1O; \
+    *par_cond = rank1O + 1; \
+    return; \
+  } \
+  else goto no_iter; \
+no_iter: \
+  *par_init = 0; \
+  *par_cond = 0; \
+  return; \
+}
+
+void _XCALABLEMP_sched_loop_nodes_CHAR               _XCALABLEMP_SM_SCHED_LOOP_NODES(char)
+void _XCALABLEMP_sched_loop_nodes_UNSIGNED_CHAR      _XCALABLEMP_SM_SCHED_LOOP_NODES(unsigned char)
+void _XCALABLEMP_sched_loop_nodes_SHORT              _XCALABLEMP_SM_SCHED_LOOP_NODES(short)
+void _XCALABLEMP_sched_loop_nodes_UNSIGNED_SHORT     _XCALABLEMP_SM_SCHED_LOOP_NODES(unsigned short)
+void _XCALABLEMP_sched_loop_nodes_INT                _XCALABLEMP_SM_SCHED_LOOP_NODES(int)
+void _XCALABLEMP_sched_loop_nodes_UNSIGNED_INT       _XCALABLEMP_SM_SCHED_LOOP_NODES(unsigned int)
+void _XCALABLEMP_sched_loop_nodes_LONG               _XCALABLEMP_SM_SCHED_LOOP_NODES(long)
+void _XCALABLEMP_sched_loop_nodes_UNSIGNED_LONG      _XCALABLEMP_SM_SCHED_LOOP_NODES(unsigned long)
+void _XCALABLEMP_sched_loop_nodes_LONG_LONG          _XCALABLEMP_SM_SCHED_LOOP_NODES(long long)
+void _XCALABLEMP_sched_loop_nodes_UNSIGNED_LONG_LONG _XCALABLEMP_SM_SCHED_LOOP_NODES(unsigned long long)
