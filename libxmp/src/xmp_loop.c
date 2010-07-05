@@ -38,12 +38,6 @@ if (ser_step != 1) { \
     else template_lower += (ser_step - lower_mod + dst_mod); \
   } \
   if (template_lower > template_upper) goto no_iter; \
-  /* normalize template upper FIXME needed??? */ \
-  _type upper_mod = template_upper % ser_step; \
-  if (upper_mod != dst_mod) { \
-    if (dst_mod < upper_mod)   template_upper -= (upper_mod - dst_mod); \
-    else template_upper -= (ser_step - dst_mod + upper_mod); \
-  } \
 }
 
 #define _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK \
@@ -55,15 +49,18 @@ if (ser_step != 1) { \
   if (ser_cond < template_lower) goto no_iter; \
   else if (template_upper < ser_cond) *par_cond = template_upper + 1; /* exprcode is LT(<) */ \
   else *par_cond = ser_cond + 1; /* exprcode is LT(<) */ \
+  /* calc par_step */ \
+  *par_step = ser_step; \
   return; \
 no_iter: \
   *par_init = 0; \
   *par_cond = 0; \
+  *par_step = 1; \
   return;
 
 #define _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_S(_type) \
 (_type ser_init, _type ser_cond, _type ser_step, \
- _type *const par_init, _type *const par_cond, \
+ _type *const par_init, _type *const par_cond, _type *const par_step, \
  const _XCALABLEMP_template_t *const template, const int template_index) { \
   _XCALABLEMP_SM_GET_TEMPLATE_INFO_BLOCK(_type) \
   _XCALABLEMP_SM_NORM_SCHED_PARAMS_S(_type) \
@@ -73,7 +70,7 @@ no_iter: \
 
 #define _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_U(_type) \
 (const _type ser_init, _type ser_cond, const _type ser_step, \
- _type *const par_init, _type *const par_cond, \
+ _type *const par_init, _type *const par_cond, _type *const par_step, \
  const _XCALABLEMP_template_t *const template, const int template_index) { \
   _XCALABLEMP_SM_GET_TEMPLATE_INFO_BLOCK(_type) \
   _XCALABLEMP_SM_NORM_SCHED_PARAMS_U \
@@ -113,19 +110,24 @@ _type template_lower = (_type)template->chunk[template_index].par_lower;
 
 #define _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC(_type) \
   if (ser_step == 1) { \
+    /* calc par_init */ \
     _XCALABLEMP_SM_CALC_PAR_INIT_CYCLIC_S1(_type) \
+    /* calc par_cond */ \
+    *par_cond = ser_cond; \
     /* calc par_step */ \
     *par_step = nodes_size; \
   } \
   else _XCALABLEMP_fatal("not implemented condition: (loop step is not 1 && cyclic distribution)"); \
   return; \
 no_iter: \
-  *par_init = ser_cond + 1; /* exprcode is LT(<) */ \
+  *par_init = 0; \
+  *par_cond = 0; \
+  *par_step = 1; \
   return;
 
 #define _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_S(_type) \
 (_type ser_init, _type ser_cond, _type ser_step, \
- _type *const par_init, _type *const par_step, \
+ _type *const par_init, _type *const par_cond, _type *const par_step, \
  const _XCALABLEMP_template_t *const template, const int template_index) { \
   _XCALABLEMP_SM_GET_TEMPLATE_INFO_CYCLIC(_type) \
   _XCALABLEMP_SM_NORM_SCHED_PARAMS_S(_type) \
@@ -134,7 +136,7 @@ no_iter: \
 
 #define _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_U(_type) \
 (const _type ser_init, _type ser_cond, const _type ser_step, \
- _type *const par_init, _type *const par_step, \
+ _type *const par_init, _type *const par_cond, _type *const par_step, \
  const _XCALABLEMP_template_t *const template, const int template_index) { \
   _XCALABLEMP_SM_GET_TEMPLATE_INFO_CYCLIC(_type) \
   _XCALABLEMP_SM_NORM_SCHED_PARAMS_U \
@@ -155,7 +157,7 @@ void _XCALABLEMP_sched_loop_template_CYCLIC_UNSIGNED_LONG_LONG _XCALABLEMP_SM_SC
 // schedule by nodes ----------------------------------------------------------------------------------------------------------------
 #define _XCALABLEMP_SM_SCHED_LOOP_NODES(_type) \
 (_type ser_init, _type ser_cond, _type ser_step, \
- _type *const par_init, _type *const par_cond, \
+ _type *const par_init, _type *const par_cond, _type *const par_step, \
  const _XCALABLEMP_nodes_t *const nodes, const int nodes_index) { \
   _XCALABLEMP_SM_NORM_SCHED_PARAMS_S(_type) \
   _type rank1O = (_type)((nodes->info[nodes_index].rank) + 1); \
@@ -164,12 +166,14 @@ void _XCALABLEMP_sched_loop_template_CYCLIC_UNSIGNED_LONG_LONG _XCALABLEMP_SM_SC
   if (((rank1O - ser_init) % ser_step) == 0) { \
     *par_init = rank1O; \
     *par_cond = rank1O + 1; \
+    *par_step = ser_step; \
     return; \
   } \
   else goto no_iter; \
 no_iter: \
   *par_init = 0; \
   *par_cond = 0; \
+  *par_step = 1; \
   return; \
 }
 

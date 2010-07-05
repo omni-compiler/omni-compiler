@@ -832,38 +832,22 @@ public class XMPtranslateLocalPragma {
     if(templateIndex != templateDim)
       XMP.error(lnObj, "wrong template dimensions, too few");
 
-    switch (distManner) {
-      case XMPtemplate.BLOCK:
-        {
-          Ident parallelInitId = declLoopSchedIdent(schedBaseBlock,
-                                                    "_XCALABLEMP_loop_init_" + loopIndexName, loopIndexType);
-          Ident parallelCondId = declLoopSchedIdent(schedBaseBlock,
-                                                    "_XCALABLEMP_loop_cond_" + loopIndexName, loopIndexType);
+    Ident parallelInitId = declLoopSchedIdent(schedBaseBlock,
+                                              "_XCALABLEMP_loop_init_" + loopIndexName, loopIndexType);
+    Ident parallelCondId = declLoopSchedIdent(schedBaseBlock,
+                                              "_XCALABLEMP_loop_cond_" + loopIndexName, loopIndexType);
+    Ident parallelStepId = declLoopSchedIdent(schedBaseBlock,
+                                              "_XCALABLEMP_loop_step_" + loopIndexName, loopIndexType);
 
-          forBlock.setLowerBound(parallelInitId.Ref());
-          forBlock.setUpperBound(parallelCondId.Ref());
+    forBlock.setLowerBound(parallelInitId.Ref());
+    forBlock.setUpperBound(parallelCondId.Ref());
+    forBlock.setStep(parallelStepId.Ref());
 
-          funcArgs.add(parallelInitId.getAddr());
-          funcArgs.add(parallelCondId.getAddr());
+    forBlock.getCondBBlock().setExpr(Xcons.binaryOp(Xcode.LOG_LT_EXPR, loopIndex, parallelCondId.Ref()));
 
-          break;
-        }
-      case XMPtemplate.CYCLIC:
-        {
-          Ident parallelInitId = declLoopSchedIdent(schedBaseBlock,
-                                                    "_XCALABLEMP_loop_init_" + loopIndexName, loopIndexType);
-          Ident parallelStepId = declLoopSchedIdent(schedBaseBlock,
-                                                    "_XCALABLEMP_loop_step_" + loopIndexName, loopIndexType);
-
-          forBlock.setLowerBound(parallelInitId.Ref());
-          forBlock.setStep(parallelStepId.Ref());
-
-          funcArgs.add(parallelInitId.getAddr());
-          funcArgs.add(parallelStepId.getAddr());
-        }
-      default:
-        XMP.fatal("wrong distribute manner");
-    }
+    funcArgs.add(parallelInitId.getAddr());
+    funcArgs.add(parallelCondId.getAddr());
+    funcArgs.add(parallelStepId.getAddr());
 
     funcArgs.add(templateObj.getDescId().Ref());
     funcArgs.add(templateIndexArg);
@@ -919,12 +903,18 @@ public class XMPtranslateLocalPragma {
                                               "_XCALABLEMP_loop_init_" + loopIndexName, loopIndexType);
     Ident parallelCondId = declLoopSchedIdent(schedBaseBlock,
                                               "_XCALABLEMP_loop_cond_" + loopIndexName, loopIndexType);
+    Ident parallelStepId = declLoopSchedIdent(schedBaseBlock,
+                                              "_XCALABLEMP_loop_step_" + loopIndexName, loopIndexType);
 
     forBlock.setLowerBound(parallelInitId.Ref());
     forBlock.setUpperBound(parallelCondId.Ref());
+    forBlock.setStep(parallelStepId.Ref());
+
+    forBlock.getCondBBlock().setExpr(Xcons.binaryOp(Xcode.LOG_LT_EXPR, loopIndex, parallelCondId.Ref()));
 
     funcArgs.add(parallelInitId.getAddr());
     funcArgs.add(parallelCondId.getAddr());
+    funcArgs.add(parallelStepId.getAddr());
 
     funcArgs.add(nodesObj.getDescId().Ref());
     funcArgs.add(nodesIndexArg);
