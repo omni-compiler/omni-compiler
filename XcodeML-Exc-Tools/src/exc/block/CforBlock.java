@@ -13,9 +13,10 @@ public class CforBlock extends CondBlock implements ForBlock
     private BasicBlock init_part, iter_part;
 
     // for cannonical shaped for-loop
-    private boolean is_canonical;
+    private boolean is_canonical = false;
     private Xobject ind_var;
     private Xobject lowerb, upperb, step;
+    private Xobject min_upperb;
 
     public CforBlock(BasicBlock init, BasicBlock cond, BasicBlock iter, BlockList body, String construct_name)
     {
@@ -64,6 +65,8 @@ public class CforBlock extends CondBlock implements ForBlock
     @Override
     public void Canonicalize()
     {
+        if (is_canonical) return;
+
         Xobject e, ind_var, ub, lb, step;
         Statement s;
         BasicBlock cond = getCondBBlock();
@@ -177,11 +180,17 @@ public class CforBlock extends CondBlock implements ForBlock
         // canonicalize conditional expression
         e = cond.getExpr();
         if(e.Opcode() == Xcode.LOG_LE_EXPR) {
+            this.min_upperb = ub.copy();
             ub = Xcons.binaryOp(Xcode.PLUS_EXPR, ub,/* step */Xcons.IntConstant(1));
             cond.setExpr(Xcons.binaryOp(Xcode.LOG_LT_EXPR, ind_var, ub));
         } else if(e.Opcode() == Xcode.LOG_GE_EXPR) {
+            this.min_upperb = ub.copy();
             ub = Xcons.binaryOp(Xcode.PLUS_EXPR, ub,/* step */Xcons.IntConstant(-1));
             cond.setExpr(Xcons.binaryOp(Xcode.LOG_GT_EXPR, ind_var, ub));
+        }
+        else { // Xcode.LOG_LT_EXPR, Xcode.LOG_GT_EXPR
+            Xobject ub_copy = ub.copy();
+            this.min_upperb = Xcons.binaryOp(Xcode.MINUS_EXPR, ub_copy,/* step */Xcons.IntConstant(1));
         }
         
         this.ind_var = ind_var;
@@ -219,6 +228,12 @@ public class CforBlock extends CondBlock implements ForBlock
     public Xobject getUpperBound()
     {
         return upperb;
+    }
+
+    // original function
+    public Xobject getMinUpperBound()
+    {
+        return min_upperb;
     }
 
     @Override

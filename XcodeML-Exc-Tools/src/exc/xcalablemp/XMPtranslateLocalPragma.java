@@ -684,6 +684,19 @@ public class XMPtranslateLocalPragma {
       // create on-ref for reduction
       XobjList originalOnRef = (XobjList)loopDecl.getArg(1);
       XobjList reductionOnRef = Xcons.List(originalOnRef.getArg(0), null);
+
+      int loopIndexValue = loopIndex.getInt();
+      int onRefSize = XMPutil.countElmts(originalOnRef);
+      XobjList onSubscriptList = Xcons.List();
+      for (int i = 0; i < onRefSize; i++) {
+        if (i == loopIndexValue) {
+          onSubscriptList.add(Xcons.List(schedBaseBlock.getLowerBound(),
+                                         schedBaseBlock.getMinUpperBound(),
+                                         schedBaseBlock.getStep()));
+        }
+        else onSubscriptList.add(null);
+      }
+      System.out.println("onSubscript(single)" + onSubscriptList.toString()); // FIXME for debug
     }
   }
 
@@ -714,7 +727,31 @@ public class XMPtranslateLocalPragma {
       // create on-ref for reduction
       XobjList originalOnRef = (XobjList)loopDecl.getArg(1);
       XobjList reductionOnRef = Xcons.List(originalOnRef.getArg(0), null);
+
+      int onRefSize = XMPutil.countElmts(originalOnRef);
+      XobjList onSubscriptList = Xcons.List();
+      for (int i = 0; i < onRefSize; i++) {
+        CforBlock forBlock = findReductionForBlock(loopVector, loopIndexVector, i);
+        if (forBlock == null) onSubscriptList.add(null);
+        else {
+          onSubscriptList.add(Xcons.List(forBlock.getLowerBound(),
+                                         forBlock.getMinUpperBound(),
+                                         forBlock.getStep()));
+        }
+      }
+      System.out.println("onSubscript(single)" + onSubscriptList.toString()); // FIXME for debug
     }
+  }
+
+  private CforBlock findReductionForBlock(Vector<CforBlock> loopVector, Vector<XobjInt> loopIndexVector, int i) {
+    Iterator<XobjInt> it = loopIndexVector.iterator();
+    while (it.hasNext()) {
+      XobjInt loopIndex = it.next();
+      if (i == loopIndex.getInt())
+        return loopVector.elementAt(loopIndexVector.indexOf(loopIndex));
+    }
+
+    return null;
   }
 
   private XobjInt scheduleLoop(PragmaBlock pb, CforBlock forBlock, CforBlock schedBaseBlock) throws XMPexception {
