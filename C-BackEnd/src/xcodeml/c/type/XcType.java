@@ -309,6 +309,8 @@ public abstract class XcType extends XcObj implements Cloneable, XcGccAttributab
             isAttrGuarded = true;
         }
 
+        // XXX add w.addSpc(attr);
+        w.addSpc(attr);
         t.appendTypeQualCode(w);
         t.appendTypeNameCode(w);
 
@@ -317,7 +319,8 @@ public abstract class XcType extends XcObj implements Cloneable, XcGccAttributab
         else if(symbol == null)
             return;
 
-        _appendCode(w, decls, symbol, isPreDecl, isAttrGuarded, attr, null);
+        // XXX change attr to null: _appendCode(w, decls, symbol, isPreDecl, isAttrGuarded, attr, null);
+        _appendCode(w, decls, symbol, isPreDecl, isAttrGuarded, null, null);
      }
 
      private static void _appendBasicType(XmcWriter w, Stack<XcType> decls, List<XcGccAttributeList> attrsList) throws XmException
