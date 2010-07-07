@@ -680,14 +680,15 @@ public class XMPtranslateLocalPragma {
     XobjInt loopIndex = scheduleLoop(pb, schedBaseBlock, schedBaseBlock);
 
     // create reduce functions
-    if (loopDecl.getArg(2) != null) {
+    XobjList reductionRefList = (XobjList)loopDecl.getArg(2);
+    if (reductionRefList != null) {
       // create on-ref for reduction
       XobjList originalOnRef = (XobjList)loopDecl.getArg(1);
-      XobjList reductionOnRef = Xcons.List(originalOnRef.getArg(0), null);
+      XobjList onSubscriptList = Xcons.List();
+      XobjList reductionOnRef = Xcons.List(originalOnRef.getArg(0), onSubscriptList);
 
       int loopIndexValue = loopIndex.getInt();
       int onRefSize = XMPutil.countElmts(originalOnRef);
-      XobjList onSubscriptList = Xcons.List();
       for (int i = 0; i < onRefSize; i++) {
         if (i == loopIndexValue) {
           onSubscriptList.add(Xcons.List(schedBaseBlock.getLowerBound(),
@@ -696,7 +697,9 @@ public class XMPtranslateLocalPragma {
         }
         else onSubscriptList.add(null);
       }
-      System.out.println("onSubscript(single)" + onSubscriptList.toString()); // FIXME for debug
+
+      // create reduce function calls
+      schedBaseBlock.add(createReductionClauseBlock(pb, reductionRefList, reductionOnRef));
     }
   }
 
@@ -723,13 +726,14 @@ public class XMPtranslateLocalPragma {
     }
 
     // create reduce functions
-    if (loopDecl.getArg(2) != null) {
+    XobjList reductionRefList = (XobjList)loopDecl.getArg(2);
+    if (reductionRefList != null) {
       // create on-ref for reduction
       XobjList originalOnRef = (XobjList)loopDecl.getArg(1);
-      XobjList reductionOnRef = Xcons.List(originalOnRef.getArg(0), null);
+      XobjList onSubscriptList = Xcons.List();
+      XobjList reductionOnRef = Xcons.List(originalOnRef.getArg(0), onSubscriptList);
 
       int onRefSize = XMPutil.countElmts(originalOnRef);
-      XobjList onSubscriptList = Xcons.List();
       for (int i = 0; i < onRefSize; i++) {
         CforBlock forBlock = findReductionForBlock(loopVector, loopIndexVector, i);
         if (forBlock == null) onSubscriptList.add(null);
@@ -739,7 +743,51 @@ public class XMPtranslateLocalPragma {
                                          forBlock.getStep()));
         }
       }
-      System.out.println("onSubscript(single)" + onSubscriptList.toString()); // FIXME for debug
+
+      // create reduce function calls
+      schedBaseBlock.add(createReductionClauseBlock(pb, reductionRefList, reductionOnRef));
+    }
+  }
+
+  private Block createReductionClauseBlock(PragmaBlock pb, XobjList reductionRefList, XobjList onRef) throws XMPexception {
+    LineNo lnObj = pb.getLineNo();
+    XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
+
+    // create function call
+    XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(lnObj, onRef, localObjectTable);
+    String execFuncSurfix = execOnRefArgs.getFirst();
+    boolean splitComm = execOnRefArgs.getSecond().booleanValue();
+    XobjList execFuncArgs = execOnRefArgs.getThird();
+
+    Iterator<Xobject> it = reductionRefList.iterator();
+    BlockList reductionBody = Bcons.emptyBody();
+    if (splitComm) {
+      while (it.hasNext()) {
+        XobjList reductionRef = (XobjList)it.next();
+        Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb);
+
+        reductionBody.add(createReductionFuncCallBlock("_XCALABLEMP_reduce_EXEC",
+                                                       null, reductionFuncArgsList));
+      }
+
+      // setup reduction finalizer
+      setupFinalizer(lnObj, reductionBody, _globalDecl.declExternFunc("_XCALABLEMP_pop_n_free_nodes"), null);
+
+      // create function call
+      Ident execFuncId = _env.declExternIdent("_XCALABLEMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
+      return Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), reductionBody, null);
+    }
+    else { // FIXME never reach here
+      while (it.hasNext()) {
+        XobjList reductionRef = (XobjList)it.next();
+        Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb);
+
+        // execFuncSurfix is {GLOBAL, NODES}_ENTIRE, execFuncArgs is LIST({null, NODES desc})
+        reductionBody.add(createReductionFuncCallBlock("_XCALABLEMP_reduce_" + execFuncSurfix,
+                                                       execFuncArgs.operand(), reductionFuncArgsList));
+      }
+
+      return Bcons.COMPOUND(reductionBody);
     }
   }
 
