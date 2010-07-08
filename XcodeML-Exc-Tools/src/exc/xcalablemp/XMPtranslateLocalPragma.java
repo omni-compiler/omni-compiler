@@ -1425,23 +1425,27 @@ public class XMPtranslateLocalPragma {
     BlockList gmoveBody = pb.getBody();
 
     // check body
+    Xobject assignStmt = null;
     String checkBodyErrMsg = new String("gmove directive should be written before one assign statement");
     Block gmoveBodyHead = gmoveBody.getHead();
     if(gmoveBodyHead instanceof SimpleBlock) {
+      if (gmoveBodyHead.getNext() != null)
+        XMP.error(lnObj, checkBodyErrMsg);
+
       Statement gmoveStmt = gmoveBodyHead.getBasicBlock().getHead();
       if (gmoveStmt.getNext() != null)
         XMP.error(lnObj, checkBodyErrMsg);
 
-      if(gmoveStmt.getExpr().Opcode() != Xcode.ASSIGN_EXPR)
-        XMP.error(lnObj, checkBodyErrMsg);
-
-      if (gmoveBodyHead.getNext() != null)
+      if(gmoveStmt.getExpr().Opcode() == Xcode.ASSIGN_EXPR)
+        assignStmt = gmoveStmt.getExpr();
+      else
         XMP.error(lnObj, checkBodyErrMsg);
     }
     else
       XMP.error(lnObj, checkBodyErrMsg);
 
     // FIXME parse assign statement
+    System.out.println("ASSIGN_STMT: " + assignStmt.toString());
   }
 
   private XMPtriplet<String, Boolean, XobjList> createExecOnRefArgs(LineNo lnObj, XobjList onRef,
