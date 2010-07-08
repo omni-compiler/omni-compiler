@@ -110,9 +110,16 @@ public class XMPrewriteExpr {
     switch (parentExpr.Opcode()) {
       case PLUS_EXPR:
         iter.next(); // goto PLUS_EXPR
-        myExpr = iter.getXobject();
-        args.add(getCalcIndexFuncRef(alignedArray, arrayDimCount, myExpr.right()));
-        return parseArrayExpr(iter, alignedArray, arrayDimCount+1, args);
+        parentExpr = iter.getParent();
+        if (parentExpr == null)
+          XMP.error(myExpr.getLineNo(), "incorrect array reference");
+
+        if (parentExpr.Opcode() == Xcode.POINTER_REF) {
+          myExpr = iter.getXobject();
+          args.add(getCalcIndexFuncRef(alignedArray, arrayDimCount, myExpr.right()));
+          return parseArrayExpr(iter, alignedArray, arrayDimCount+1, args);
+        }
+        else return arrayDimCount;
       case POINTER_REF:
         iter.next();
         return parseArrayExpr(iter, alignedArray, arrayDimCount, args);
