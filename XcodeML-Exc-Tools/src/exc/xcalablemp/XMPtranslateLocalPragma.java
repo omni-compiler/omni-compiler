@@ -734,7 +734,7 @@ public class XMPtranslateLocalPragma {
       XobjList reductionOnRef = Xcons.List(originalOnRef.getArg(0), onSubscriptList);
 
       int loopIndexValue = loopIndex.getInt();
-      int onRefSize = XMPutil.countElmts(originalOnRef);
+      int onRefSize = XMPutil.countElmts((XobjList)originalOnRef.getArg(1));
       for (int i = 0; i < onRefSize; i++) {
         if (i == loopIndexValue) {
           onSubscriptList.add(Xcons.List(schedBaseBlock.getLowerBound(),

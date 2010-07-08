@@ -27,3 +27,7 @@ int xmp_get_world_size(void) {
 int xmp_get_world_rank(void) {
   return _XCALABLEMP_world_rank;
 }
+
+double xmp_wtime(void) {
+  return MPI_Wtime();
+}

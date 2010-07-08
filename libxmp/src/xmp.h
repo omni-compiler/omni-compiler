@@ -9,5 +9,6 @@ extern int	xmp_get_rank(void);
 extern void	xmp_barrier(void);
 extern int	xmp_get_world_size(void);
 extern int	xmp_get_world_rank(void);
+extern double	xmp_wtime(void);
 
 #endif // _XCALABLEMP_USERAPI
