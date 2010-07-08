@@ -606,17 +606,40 @@ public class XMPtranslateLocalPragma {
         XMP.error(lnObj, "wrong shadow dimension indicated, too many");
 
       XobjList shadowObj = (XobjList)i.getArg();
-      if (shadowObj == null) {
-        shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_FULL)));
+      XobjInt shadowType = (XobjInt)shadowObj.getArg(0);
+      XobjList shadowBody = (XobjList)shadowObj.getArg(1);
+      switch (shadowType.getInt()) {
+        case XMPshadow.SHADOW_NONE:
+          {
+            shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_NONE)));
 
-        alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_FULL, null, null), arrayIndex);
-      }
-      else {
-        shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_NORMAL)));
-        shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowObj.left()));
-        shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowObj.right()));
+            alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_NONE, null, null), arrayIndex);
+            break;
+          }
+        case XMPshadow.SHADOW_NORMAL:
+          {
+            if (alignedArray.getDistMannerAt(arrayIndex) == XMPalignedArray.NO_ALIGN)
+              XMP.error(lnObj, "indicated dimension is not distributed");
 
-        alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_NORMAL, shadowObj.left(), shadowObj.right()), arrayIndex);
+            shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_NORMAL)));
+            shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowBody.left()));
+            shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowBody.right()));
+
+            alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_NORMAL, shadowBody.left(), shadowBody.right()), arrayIndex);
+            break;
+          }
+        case XMPshadow.SHADOW_FULL:
+          {
+            if (alignedArray.getDistMannerAt(arrayIndex) == XMPalignedArray.NO_ALIGN)
+              XMP.error(lnObj, "indicated dimension is not distributed");
+
+            shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_FULL)));
+
+            alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_FULL, null, null), arrayIndex);
+            break;
+          }
+        default:
+          XMP.error(lnObj, "unknown shadow type");
       }
 
       arrayIndex++;

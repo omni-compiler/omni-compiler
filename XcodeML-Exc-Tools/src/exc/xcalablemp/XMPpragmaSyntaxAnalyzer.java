@@ -539,7 +539,13 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
   private void parse_SHADOW_WIDTH(XobjList shadowWidthList) throws XmException, XMPexception {
     if (pg_tok() == '*') {
-      shadowWidthList.add(null);
+      shadowWidthList.add(Xcons.List(Xcons.IntConstant(XMPshadow.SHADOW_NONE), null));
+
+      pg_get_token();
+      return;
+    }
+    else if (pg_tok() == ':') {
+      shadowWidthList.add(Xcons.List(Xcons.IntConstant(XMPshadow.SHADOW_FULL), null));
 
       pg_get_token();
       return;
@@ -548,11 +554,13 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       Xobject width = pg_parse_int_expr();
       if (pg_tok() == ':') {
         pg_get_token();
-        shadowWidthList.add(Xcons.List(width, pg_parse_int_expr()));
+        shadowWidthList.add(Xcons.List(Xcons.IntConstant(XMPshadow.SHADOW_NORMAL),
+                                       Xcons.List(width, pg_parse_int_expr())));
         return;
       }
       else {
-        shadowWidthList.add(Xcons.List(width, width));
+        shadowWidthList.add(Xcons.List(Xcons.IntConstant(XMPshadow.SHADOW_NORMAL),
+                                       Xcons.List(width, width)));
         return;
       }
     }

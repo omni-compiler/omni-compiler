@@ -12,6 +12,8 @@ void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
     _XCALABLEMP_array_info_t *ai = &(array->info[i]);
     int type = va_arg(args, int);
     switch (type) {
+      case _XCALABLEMP_N_SHADOW_NONE:
+        break;
       case _XCALABLEMP_N_SHADOW_NORMAL:
         {
           int lo = va_arg(args, int);
