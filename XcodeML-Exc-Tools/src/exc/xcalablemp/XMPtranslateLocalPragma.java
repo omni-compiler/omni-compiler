@@ -351,14 +351,20 @@ public class XMPtranslateLocalPragma {
       // FIXME support cyclic(w), gblock
       switch (distManner) {
         case XMPtemplate.DUPLICATION:
+          {
+            setupDistribution(distManner, pb, templateObject, templateDimIdx, null, -1);
+            break;
+          }
         case XMPtemplate.BLOCK:
         case XMPtemplate.CYCLIC:
-          if (nodesDimIdx == nodesDim)
-            XMP.error(lnObj, "the number of <dist-format> (except '*') should be the same with the nodes dimension");
+          {
+            if (nodesDimIdx == nodesDim)
+              XMP.error(lnObj, "the number of <dist-format> (except '*') should be the same with the nodes dimension");
 
-          setupDistribution(distManner, pb, templateObject, templateDimIdx, nodesObject, nodesDimIdx);
-          nodesDimIdx++;
-          break;
+            setupDistribution(distManner, pb, templateObject, templateDimIdx, nodesObject, nodesDimIdx);
+            nodesDimIdx++;
+            break;
+          }
         default:
           XMP.fatal("unknown distribute manner");
       }
@@ -380,26 +386,41 @@ public class XMPtranslateLocalPragma {
   private void setupDistribution(int distManner, PragmaBlock pb,
                                  XMPtemplate templateObject, int templateDimIdx,
                                  XMPnodes nodesObject,       int nodesDimIdx) {
+    XobjList funcArgs = null;
     String distMannerName = null;
     switch (distManner) {
       case XMPtemplate.DUPLICATION:
-        distMannerName = "DUPLICATION";
-        break;
+        {
+          distMannerName = "DUPLICATION";
+          funcArgs = Xcons.List(templateObject.getDescId().Ref(),
+                                Xcons.IntConstant(templateDimIdx));
+          break;
+        }
       case XMPtemplate.BLOCK:
-        distMannerName = "BLOCK";
-        break;
+        {
+          distMannerName = "BLOCK";
+          funcArgs = Xcons.List(templateObject.getDescId().Ref(),
+                                Xcons.IntConstant(templateDimIdx),
+                                nodesObject.getDescId().Ref(),
+                                Xcons.IntConstant(nodesDimIdx));
+          templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
+          break;
+        }
       case XMPtemplate.CYCLIC:
-        distMannerName = "CYCLIC";
-        break;
+        {
+          distMannerName = "CYCLIC";
+          funcArgs = Xcons.List(templateObject.getDescId().Ref(),
+                                Xcons.IntConstant(templateDimIdx),
+                                nodesObject.getDescId().Ref(),
+                                Xcons.IntConstant(nodesDimIdx));
+          templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
+          break;
+        }
       default:
         XMP.fatal("unknown distribute manner");
     }
 
-    XMPlocalDecl.addConstructorCall("_XCALABLEMP_dist_template_" + distMannerName,
-                                    Xcons.List(templateObject.getDescId().Ref(), Xcons.IntConstant(templateDimIdx),
-                                               nodesObject.getDescId().Ref(), Xcons.IntConstant(nodesDimIdx)),
-                                    pb, _globalDecl);
-    templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
+    XMPlocalDecl.addConstructorCall("_XCALABLEMP_dist_template_" + distMannerName, funcArgs, pb, _globalDecl);
     templateObject.setDistMannerAt(distManner, templateDimIdx);
   }
 

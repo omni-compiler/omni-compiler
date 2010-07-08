@@ -27,7 +27,7 @@ public class XMPtemplate extends XMPobject {
 
     for (int i = 0; i < dim; i++) {
       _ontoNodesIndexVector.add(null);
-      _distMannerVector.add(new Integer(DUPLICATION));
+      _distMannerVector.add(null);
     }
 
     _lowerVector = new Vector<Xobject>();
