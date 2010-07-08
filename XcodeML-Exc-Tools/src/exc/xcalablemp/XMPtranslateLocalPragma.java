@@ -56,6 +56,8 @@ public class XMPtranslateLocalPragma {
         { translateReduction(pb);	break; }
       case BCAST:
         { translateBcast(pb);		break; }
+      case GMOVE:
+        { translateGmove(pb);           break; }
       default:
         XMP.fatal("'" + pragmaName.toLowerCase() + "' directive is not supported yet");
     }
@@ -1412,6 +1414,11 @@ public class XMPtranslateLocalPragma {
 
     // not reach here
     return null;
+  }
+
+  private void translateGmove(PragmaBlock pb) {
+    LineNo lnObj = pb.getLineNo();
+    System.out.println("GMOVE: " + pb.getClauses().toString() + " | body: " + pb.getBody().toXobject().toString());
   }
 
   private XMPtriplet<String, Boolean, XobjList> createExecOnRefArgs(LineNo lnObj, XobjList onRef,

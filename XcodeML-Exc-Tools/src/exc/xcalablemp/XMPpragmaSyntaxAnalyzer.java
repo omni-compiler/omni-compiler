@@ -224,6 +224,13 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       pg_get_token();
       args = parse_BCAST_clause();
     }
+    else if (pg_is_ident("gmove")) {
+      pragmaDir = XMPpragma.GMOVE;
+      syntax = PragmaSyntax.SYN_PREFIX;
+
+      pg_get_token();
+      args = parse_GMOVE_clause();
+    }
     else
       error("unknown XcalableMP directive, '" + pg_tok_buf() + "'");
  
@@ -815,5 +822,20 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
     // not reach here
     return null;
+  }
+
+  private XobjList parse_GMOVE_clause() throws XMPexception {
+    XobjInt gmoveClause = null;
+    if (pg_is_ident("in")) {
+      gmoveClause = Xcons.IntConstant(XMPcollective.GMOVE_IN);
+      pg_get_token();
+    }
+    else if (pg_is_ident("out")) {
+      gmoveClause = Xcons.IntConstant(XMPcollective.GMOVE_OUT);
+      pg_get_token();
+    }
+    else gmoveClause = Xcons.IntConstant(XMPcollective.GMOVE_NORMAL);
+
+    return Xcons.List(gmoveClause);
   }
 }
