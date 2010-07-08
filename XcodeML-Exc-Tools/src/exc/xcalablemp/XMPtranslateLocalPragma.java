@@ -1416,9 +1416,32 @@ public class XMPtranslateLocalPragma {
     return null;
   }
 
-  private void translateGmove(PragmaBlock pb) {
+  private void translateGmove(PragmaBlock pb) throws XMPexception {
     LineNo lnObj = pb.getLineNo();
-    System.out.println("GMOVE: " + pb.getClauses().toString() + " | body: " + pb.getBody().toXobject().toString());
+
+    // start translation
+    XobjList gmoveDecl = (XobjList)pb.getClauses();
+    //XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
+    BlockList gmoveBody = pb.getBody();
+
+    // check body
+    String checkBodyErrMsg = new String("gmove directive should be written before one assign statement");
+    Block gmoveBodyHead = gmoveBody.getHead();
+    if(gmoveBodyHead instanceof SimpleBlock) {
+      Statement gmoveStmt = gmoveBodyHead.getBasicBlock().getHead();
+      if (gmoveStmt.getNext() != null)
+        XMP.error(lnObj, checkBodyErrMsg);
+
+      if(gmoveStmt.getExpr().Opcode() != Xcode.ASSIGN_EXPR)
+        XMP.error(lnObj, checkBodyErrMsg);
+
+      if (gmoveBodyHead.getNext() != null)
+        XMP.error(lnObj, checkBodyErrMsg);
+    }
+    else
+      XMP.error(lnObj, checkBodyErrMsg);
+
+    // FIXME parse assign statement
   }
 
   private XMPtriplet<String, Boolean, XobjList> createExecOnRefArgs(LineNo lnObj, XobjList onRef,
