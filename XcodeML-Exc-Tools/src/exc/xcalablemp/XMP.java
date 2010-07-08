@@ -11,8 +11,8 @@ public class XMP {
   public final static String DESC_PREFIX_	= "_XCALABLEMP_desc_";
   public final static String ADDR_PREFIX_	= "_XCALABLEMP_addr_";
   public final static String GTOL_PREFIX_	= "_XCALABLEMP_gtol_";
-  public final static String ASTERISK		= "ASTERISK";
-  public final static String COLON		= "COLON";
+  public final static String ASTERISK		= "* @{ASTERISK}@";
+  public final static String COLON		= ": @{COLON}@";
 
   private static boolean errorFlag		= false;
 
