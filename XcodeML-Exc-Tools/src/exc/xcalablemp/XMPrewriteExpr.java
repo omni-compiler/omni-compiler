@@ -20,15 +20,8 @@ public class XMPrewriteExpr {
     XMPobjectTable localObjectTable = XMPlocalDecl.getObjectTable(fb);
 
     BasicBlockExprIterator iter = new BasicBlockExprIterator(fb);
-    for (iter.init(); !iter.end(); iter.next()) {
-      Xobject x = iter.getExpr();
-      if (x == null) continue;
-
-      Xobject newExpr = rewriteExpr(x, localObjectTable);
-      if (newExpr == null) continue;
-
-      iter.setExpr(newExpr);
-    }
+    for (iter.init(); !iter.end(); iter.next())
+      rewriteExpr(iter.getExpr(), localObjectTable);
 
     // create local object descriptors, constructors and desctructors
     XMPlocalDecl.setupObjectId(fb);
@@ -38,94 +31,100 @@ public class XMPrewriteExpr {
     def.Finalize();
   }
 
-  public Xobject rewriteExpr(Xobject expr, XMPobjectTable localObjectTable) throws XMPexception {
-    if (expr == null) return null;
+  public void rewriteExpr(Xobject expr, XMPobjectTable localObjectTable) throws XMPexception {
+    if (expr == null) return;
 
     bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
-    for (iter.init(); !iter.end(); iter.next()) {
+    iter.init();
+    while (!iter.end()) {
       Xobject newExpr = null;
       Xobject myExpr = iter.getXobject();
-      if (myExpr == null) continue;
+      if (myExpr == null) {
+        iter.next();
+        continue;
+      }
 
       switch (myExpr.Opcode()) {
         case ARRAY_REF:
           {
-            XMPalignedArray alignedArray = _globalObjectTable.getAlignedArray(myExpr.getSym());
+            String arrayName = myExpr.getSym();
+            XMPalignedArray alignedArray = _globalObjectTable.getAlignedArray(arrayName);
+            if (alignedArray == null)
+              alignedArray = localObjectTable.getAlignedArray(arrayName);
+
             if (alignedArray != null) {
-              if (alignedArray.checkRealloc()) 
+              if (alignedArray.checkRealloc()) {
+                iter.next();
                 rewriteAlignedArrayExpr(iter, alignedArray);
+                break;
+              }
             }
 
-            break;
-          }
-        case VAR:
-          {
-            if (localObjectTable == null) break;
-
-            XMPalignedArray alignedArray = localObjectTable.getAlignedArray(myExpr.getSym());
-            if (alignedArray != null) {
-              if (alignedArray.checkRealloc())
-                rewriteAlignedArrayExpr(iter, alignedArray);
-            }
-
+            iter.next();
             break;
           }
         default:
+          iter.next();
       }
     }
-
-    return iter.topXobject();
   }
 
-  private void rewriteAlignedArrayExpr(bottomupXobjectIterator iter, XMPalignedArray alignedArray) throws XMPexception {
+  private void rewriteAlignedArrayExpr(bottomupXobjectIterator iter,
+                                       XMPalignedArray alignedArray) throws XMPexception {
     XobjList getAddrFuncArgs = Xcons.List(alignedArray.getAddrId().Ref());
+    parseArrayExpr(iter, alignedArray, 0, getAddrFuncArgs);
+  }
 
-    int arrayDimCount = parseArrayExpr(iter, alignedArray, 0, getAddrFuncArgs);
+  private void parseArrayExpr(bottomupXobjectIterator iter,
+                              XMPalignedArray alignedArray, int arrayDimCount, XobjList args) throws XMPexception {
+    Xobject myExpr = iter.getXobject();
+    Xobject parentExpr = iter.getParent();
+    switch (myExpr.Opcode()) {
+      case PLUS_EXPR:
+        {
+          if (parentExpr.Opcode() == Xcode.POINTER_REF) {
+            args.add(getCalcIndexFuncRef(alignedArray, arrayDimCount, myExpr.right()));
+            iter.next();
+            parseArrayExpr(iter, alignedArray, arrayDimCount + 1, args);
+          }
+          else {
+            Xobject funcCall = createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
+            myExpr.setLeft(funcCall);
+            iter.next();
+          }
+
+          return;
+        }
+      case POINTER_REF:
+        {
+          iter.next();
+          parseArrayExpr(iter, alignedArray, arrayDimCount, args);
+          return;
+        }
+      default:
+        {
+          Xobject funcCall = createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
+          iter.setPrevXobject(funcCall);
+          return;
+        }
+    }
+  }
+
+  private Xobject createRewriteAlignedArrayFunc(XMPalignedArray alignedArray, int arrayDimCount, XobjList getAddrFuncArgs) {
     int arrayDim = alignedArray.getDim();
     Ident getAddrFuncId = null;
     if (arrayDimCount == arrayDim) {
       getAddrFuncId = XMP.getMacroId("_XCALABLEMP_M_GET_ELMT_" + arrayDim);
-      for (int i = 0; i < arrayDim - 1; i++) {
+      for (int i = 0; i < arrayDim - 1; i++)
         getAddrFuncArgs.add(alignedArray.getGtolAccIdAt(i).Ref());
-      }
     }
     else {
       getAddrFuncId = XMP.getMacroId("_XCALABLEMP_M_GET_ADDR_" + arrayDimCount);
-      for (int i = 0; i < arrayDimCount; i++) {
+      for (int i = 0; i < arrayDimCount; i++)
         getAddrFuncArgs.add(alignedArray.getGtolAccIdAt(i).Ref());
-      }
     }
 
-    iter.setXobject(getAddrFuncId.Call(getAddrFuncArgs));
-  }
-
-  private int parseArrayExpr(bottomupXobjectIterator iter,
-                             XMPalignedArray alignedArray, int arrayDimCount, XobjList args) throws XMPexception {
-    // myExpr: VAR, ARRAY_REF, POINTER_REF, PLUS_EXPR
-    Xobject myExpr = iter.getXobject();
-    Xobject parentExpr = iter.getParent();
-    if (parentExpr == null)
-      XMP.error(myExpr.getLineNo(), "incorrect array reference");
-
-    switch (parentExpr.Opcode()) {
-      case PLUS_EXPR:
-        iter.next(); // goto PLUS_EXPR
-        parentExpr = iter.getParent();
-        if (parentExpr == null)
-          XMP.error(myExpr.getLineNo(), "incorrect array reference");
-
-        if (parentExpr.Opcode() == Xcode.POINTER_REF) {
-          myExpr = iter.getXobject();
-          args.add(getCalcIndexFuncRef(alignedArray, arrayDimCount, myExpr.right()));
-          return parseArrayExpr(iter, alignedArray, arrayDimCount+1, args);
-        }
-        else return arrayDimCount;
-      case POINTER_REF:
-        iter.next();
-        return parseArrayExpr(iter, alignedArray, arrayDimCount, args);
-      default:
-        return arrayDimCount;
-    }
+    return getAddrFuncId.Call(getAddrFuncArgs);
   }
 
   private Xobject getCalcIndexFuncRef(XMPalignedArray alignedArray, int index, Xobject indexRef) throws XMPexception {

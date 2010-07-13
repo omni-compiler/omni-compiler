@@ -13,6 +13,8 @@ public class bottomupXobjectIterator extends XobjectIterator
     Stack<Xobject> obj_stack;
     Stack<XobjArgs> arg_stack;
 
+    XobjArgs prevArgs = null;
+
     public bottomupXobjectIterator(Xobject x)
     {
         topXobject = x;
@@ -47,6 +49,8 @@ public class bottomupXobjectIterator extends XobjectIterator
     @Override
     public void next()
     {
+        prevArgs = currentArgs;
+
         if(obj_stack.empty()) {
             currentXobject = null;
             return;
@@ -69,6 +73,16 @@ public class bottomupXobjectIterator extends XobjectIterator
             }
             currentXobject = currentArgs.getArg(); // next
         }
+    }
+
+    public void setPrevXobject(Xobject x)
+    {
+        prevArgs.setArg(x);
+    }
+
+    public Xobject getPrevXobject()
+    {
+        return prevArgs.getArg();
     }
 
     @Override
