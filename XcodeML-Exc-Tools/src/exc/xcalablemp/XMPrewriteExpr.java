@@ -77,11 +77,31 @@ public class XMPrewriteExpr {
 
   private void parseArrayExpr(bottomupXobjectIterator iter,
                               XMPalignedArray alignedArray, int arrayDimCount, XobjList args) throws XMPexception {
+    String syntaxErrMsg = "syntax error on array expression, cannot rewrite distributed array";
+    Xobject prevExpr = iter.getPrevXobject();
     Xobject myExpr = iter.getXobject();
+    LineNo lnObj = myExpr.getLineNo();
     Xobject parentExpr = iter.getParent();
     switch (myExpr.Opcode()) {
       case PLUS_EXPR:
         {
+          switch (prevExpr.Opcode()) {
+            case ARRAY_REF:
+              {
+                if (arrayDimCount != 0)
+                  XMP.error(lnObj, syntaxErrMsg);
+
+                break;
+              }
+            case POINTER_REF:
+              break;
+            default:
+              {
+                XMP.error(lnObj, syntaxErrMsg);
+                break;
+              }
+          }
+
           if (parentExpr.Opcode() == Xcode.POINTER_REF) {
             args.add(getCalcIndexFuncRef(alignedArray, arrayDimCount, myExpr.right()));
             iter.next();
@@ -97,6 +117,16 @@ public class XMPrewriteExpr {
         }
       case POINTER_REF:
         {
+          switch (prevExpr.Opcode()) {
+            case PLUS_EXPR:
+              break;
+            default:
+              {
+                XMP.error(lnObj, syntaxErrMsg);
+                break;
+              }
+          }
+
           iter.next();
           parseArrayExpr(iter, alignedArray, arrayDimCount, args);
           return;
