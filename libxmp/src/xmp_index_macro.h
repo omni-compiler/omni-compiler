@@ -78,6 +78,28 @@
 (*((_addr) + _XCALABLEMP_M_GET_INDEX_7(_i1, _i2, _i3, _i4, _i5, _i6, _i7, _acc1, _acc2, _acc3, _acc4, _acc5, _acc6)))
 
 // ------------------------------------------------------------------------------------------------------------------------------
+#define _XCALABLEMP_M_GET_ADDR_E_1(_addr, _i1) \
+((_addr) + _XCALABLEMP_M_GET_INDEX_1(_i1))
+
+#define _XCALABLEMP_M_GET_ADDR_E_2(_addr, _i1, _i2, _acc1) \
+((_addr) + _XCALABLEMP_M_GET_INDEX_2(_i1, _i2, _acc1))
+
+#define _XCALABLEMP_M_GET_ADDR_E_3(_addr, _i1, _i2, _i3, _acc1, _acc2) \
+((_addr) + _XCALABLEMP_M_GET_INDEX_3(_i1, _i2, _i3, _acc1, _acc2))
+
+#define _XCALABLEMP_M_GET_ADDR_E_4(_addr, _i1, _i2, _i3, _i4, _acc1, _acc2, _acc3) \
+((_addr) + _XCALABLEMP_M_GET_INDEX_4(_i1, _i2, _i3, _i4, _acc1, _acc2, _acc3))
+
+#define _XCALABLEMP_M_GET_ADDR_E_5(_addr, _i1, _i2, _i3, _i4, _i5, _acc1, _acc2, _acc3, _acc4) \
+((_addr) + _XCALABLEMP_M_GET_INDEX_5(_i1, _i2, _i3, _i4, _i5, _acc1, _acc2, _acc3, _acc4))
+
+#define _XCALABLEMP_M_GET_ADDR_E_6(_addr, _i1, _i2, _i3, _i4, _i5, i6, _acc1, _acc2, _acc3, _acc4, _acc5) \
+((_addr) + _XCALABLEMP_M_GET_INDEX_6(_i1, _i2, _i3, _i4, _i5, _i6, _acc1, _acc2, _acc3, _acc4, _acc5))
+
+#define _XCALABLEMP_M_GET_ADDR_E_7(_addr, _i1, _i2, _i3, _i4, _i5, i6, _7, _acc1, _acc2, _acc3, _acc4, _acc5, _acc6) \
+((_addr) + _XCALABLEMP_M_GET_INDEX_7(_i1, _i2, _i3, _i4, _i5, _i6, _i7, _acc1, _acc2, _acc3, _acc4, _acc5, _acc6))
+
+// ------------------------------------------------------------------------------------------------------------------------------
 #define _XCALABLEMP_M_GET_ADDR_0(_addr) \
 (_addr)
 
