@@ -20,6 +20,7 @@ public class XMPalignedArray {
   private Ident			_descId;
   private Ident			_addrId;
   private boolean		_hasShadow;
+  private boolean		_reallocChecked;
   private boolean		_realloc;
 
   public XMPalignedArray(LineNo lineNo, String name, Xtype type, int dim,
@@ -42,7 +43,7 @@ public class XMPalignedArray {
     _descId = descId;
     _addrId = addrId;
     _hasShadow = false;
-    _realloc = false;
+    _reallocChecked = false;
   }
 
   public LineNo getLineNo() {
@@ -130,6 +131,8 @@ public class XMPalignedArray {
   }
 
   public boolean checkRealloc() {
+    if (_reallocChecked) return _realloc;
+
     if (_hasShadow) {
       for (int i = 0; i < _dim; i++) {
         int distManner = getDistMannerAt(i);
@@ -140,6 +143,7 @@ public class XMPalignedArray {
               break;
             case XMPshadow.SHADOW_NONE:
             case XMPshadow.SHADOW_NORMAL:
+              _reallocChecked = true;
               _realloc = true;
               return true;
             default:
@@ -148,16 +152,20 @@ public class XMPalignedArray {
         }
       }
 
+      _reallocChecked = true;
       _realloc = false;
       return false;
     }
     else {
+      _reallocChecked = true;
       _realloc = true;
       return true;
     }
   }
 
-  public boolean realloc() {
-    return _realloc;
+  public boolean realloc() throws XMPexception {
+    if (_reallocChecked) return _realloc;
+    else
+      throw new XMPexception("target array is not checked");
   }
 }
