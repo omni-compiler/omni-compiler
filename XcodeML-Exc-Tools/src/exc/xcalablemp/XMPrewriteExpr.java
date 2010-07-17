@@ -167,8 +167,8 @@ public class XMPrewriteExpr {
     }
   }
 
-  private Xobject createRewriteAlignedArrayFunc(XMPalignedArray alignedArray,
-                                                int arrayDimCount, XobjList getAddrFuncArgs, Xcode opcode) throws XMPexception {
+  public static Xobject createRewriteAlignedArrayFunc(XMPalignedArray alignedArray, int arrayDimCount,
+                                                      XobjList getAddrFuncArgs, Xcode opcode) throws XMPexception {
     int arrayDim = alignedArray.getDim();
     Ident getAddrFuncId = null;
     if (arrayDim == arrayDimCount) {
@@ -193,7 +193,7 @@ public class XMPrewriteExpr {
     }
   }
 
-  private Xobject getCalcIndexFuncRef(XMPalignedArray alignedArray, int index, Xobject indexRef) throws XMPexception {
+  public static Xobject getCalcIndexFuncRef(XMPalignedArray alignedArray, int index, Xobject indexRef) throws XMPexception {
     int distManner = alignedArray.getDistMannerAt(index);
     switch (distManner) {
       case XMPalignedArray.NO_ALIGN:

@@ -1465,7 +1465,7 @@ public class XMPtranslateLocalPragma {
 
     // start translation
     XobjList gmoveDecl = (XobjList)pb.getClauses();
-    //XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
+    XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
     BlockList gmoveBody = pb.getBody();
 
     // check body
@@ -1489,7 +1489,128 @@ public class XMPtranslateLocalPragma {
       XMP.error(lnObj, checkBodyErrMsg);
 
     // FIXME parse assign statement
-    System.out.println("ASSIGN_STMT: " + assignStmt.toString());
+    Xobject leftAlignedArray = getAlignedArrayExpr(assignStmt.left(), localObjectTable);
+    Xobject rightAlignedArray = getAlignedArrayExpr(assignStmt.right(), localObjectTable);
+    if (leftAlignedArray == null) {
+      if (rightAlignedArray == null) {	// !leftIsAlignedArray && !rightIsAlignedArray	|-> local assignment (every node)
+        System.out.println("local (every node)");
+      }
+      else {				// !leftIsAlignedArray &&  rightIsAlignedArray	|-> broadcast
+        System.out.println("broadcast");
+      }
+    }
+    else {
+      if (rightAlignedArray == null) {	// !leftIsAlignedArray &&  rightIsAlignedArray	|-> local assignment (home node)
+        System.out.println("local (home node)");
+      }
+      else {				//  leftIsAlignedArray &&  rightIsAlignedArray	|-> send/recv
+        System.out.println("send/recv");
+      }
+    }
+
+    if (leftAlignedArray == null) System.out.println("LEFT  : " + assignStmt.left().toString());
+    else System.out.println("LEFT  : " + leftAlignedArray.toString());
+
+    if (rightAlignedArray == null) System.out.println("RIGHT : " + assignStmt.right().toString());
+    else System.out.println("RIGHT : " + rightAlignedArray.toString());
+  }
+
+  public Xobject getAlignedArrayExpr(Xobject expr, XMPobjectTable localObjectTable) throws XMPexception {
+    if (expr == null) return null;
+
+    bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
+    for (iter.init(); !iter.end(); iter.next()) {
+      Xobject newExpr = null;
+      Xobject myExpr = iter.getXobject();
+      if (myExpr == null) continue;
+
+      switch (myExpr.Opcode()) {
+        case ARRAY_REF:
+          {
+            String arrayName = myExpr.getSym();
+            XMPalignedArray alignedArray = _globalObjectTable.getAlignedArray(arrayName);
+            if (alignedArray == null)
+              alignedArray = localObjectTable.getAlignedArray(arrayName);
+
+            if (alignedArray != null) {
+              iter.next();
+              XobjList getAddrFuncArgs = Xcons.List(alignedArray.getAddrId().Ref());
+              return parseAlignedArrayExpr(iter, alignedArray, 0, getAddrFuncArgs);
+            }
+
+            break;
+          }
+        default:
+          break;
+      }
+    }
+
+    return null;
+  }
+
+  private Xobject parseAlignedArrayExpr(bottomupXobjectIterator iter,
+                                        XMPalignedArray alignedArray, int arrayDimCount, XobjList args) throws XMPexception {
+    String syntaxErrMsg = "syntax error on array expression, expression is not appropriate for gmove directive";
+    Xcode prevExprOpcode = iter.getPrevXobject().Opcode();
+    Xobject myExpr = iter.getXobject();
+    LineNo lnObj = myExpr.getLineNo();
+    switch (myExpr.Opcode()) {
+      case PLUS_EXPR:
+        {
+          switch (prevExprOpcode) {
+            case ARRAY_REF:
+              {
+                if (arrayDimCount != 0)
+                  XMP.error(lnObj, syntaxErrMsg);
+
+                break;
+              }
+            case POINTER_REF:
+              break;
+            default:
+              {
+                XMP.error(lnObj, syntaxErrMsg);
+                break;
+              }
+          }
+
+          args.add(XMPrewriteExpr.getCalcIndexFuncRef(alignedArray, arrayDimCount, myExpr.right()));
+          iter.next();
+          return parseAlignedArrayExpr(iter, alignedArray, arrayDimCount + 1, args);
+        }
+      case POINTER_REF:
+        {
+          switch (prevExprOpcode) {
+            case PLUS_EXPR:
+              break;
+            default:
+              {
+                XMP.error(lnObj, syntaxErrMsg);
+                break;
+              }
+          }
+
+          iter.next();
+          if (iter.end()) {
+            if (alignedArray.getDim() == arrayDimCount)
+              return XMPrewriteExpr.createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args, Xcode.POINTER_REF);
+            else {
+              XMP.error(lnObj, syntaxErrMsg);
+              break;
+            }
+          }
+          else
+            return parseAlignedArrayExpr(iter, alignedArray, arrayDimCount, args);
+        }
+      default:
+        {
+          XMP.error(lnObj, syntaxErrMsg);
+          break;
+        }
+    }
+
+    // FIXME how implement ???
+    throw new XMPexception("never reach here");
   }
 
   private XMPtriplet<String, Boolean, XobjList> createExecOnRefArgs(LineNo lnObj, XobjList onRef,
