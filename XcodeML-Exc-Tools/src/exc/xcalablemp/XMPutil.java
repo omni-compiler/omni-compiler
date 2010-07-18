@@ -145,14 +145,14 @@ public class XMPutil {
     Iterator<Xobject> it = list.iterator();
     while (it.hasNext()) {
       Xobject x = it.next();
-      if (x == null) continue;
-
-      if (x.Opcode() == Xcode.INT_CONSTANT) {
-        if (x.getInt() == constant)
-          return index;
-
-        index++;
+      if (x != null) {
+        if (x.Opcode() == Xcode.INT_CONSTANT) {
+          if (x.getInt() == constant)
+            return index;
+        }
       }
+
+      index++;
     }
 
     throw new XMPexception("exception in exc.xcalablemp.XMPutil.getFirstIndex(), element does not exist");
@@ -163,14 +163,14 @@ public class XMPutil {
     Iterator<Xobject> it = list.iterator();
     while (it.hasNext()) {
       Xobject x = it.next();
-      if (x == null) continue;
-
-      if (x.Opcode() == Xcode.STRING) {
-        if (x.getString().equals(string))
-          return index;
-
-        index++;
+      if (x != null) {
+        if (x.Opcode() == Xcode.STRING) {
+          if (x.getString().equals(string))
+            return index;
+        }
       }
+
+      index++;
     }
 
     throw new XMPexception("exception in exc.xcalablemp.XMPutil.getFirstIndex(), element does not exist");
@@ -184,16 +184,16 @@ public class XMPutil {
     Iterator<Xobject> it = list.iterator();
     while (it.hasNext()) {
       Xobject x = it.next();
-      if (x == null) continue;
-
-      if (x.Opcode() == Xcode.INT_CONSTANT) {
-        if (x.getInt() == constant) {
-          hasFound = true;
-          elmtIndex = index;
+      if (x != null) {
+        if (x.Opcode() == Xcode.INT_CONSTANT) {
+          if (x.getInt() == constant) {
+            hasFound = true;
+            elmtIndex = index;
+          }
         }
-
-        index++;
       }
+
+      index++;
     }
 
     if (hasFound) return elmtIndex;
@@ -209,16 +209,16 @@ public class XMPutil {
     Iterator<Xobject> it = list.iterator();
     while (it.hasNext()) {
       Xobject x = it.next();
-      if (x == null) continue;
-
-      if (x.Opcode() == Xcode.STRING) {
-        if (x.getString().equals(string)) {
-          hasFound = true;
-          elmtIndex = index;
+      if (x != null) {
+        if (x.Opcode() == Xcode.STRING) {
+          if (x.getString().equals(string)) {
+            hasFound = true;
+            elmtIndex = index;
+          }
         }
-
-        index++;
       }
+
+      index++;
     }
 
     if (hasFound) return elmtIndex;

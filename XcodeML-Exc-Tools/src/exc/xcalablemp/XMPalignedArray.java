@@ -17,6 +17,8 @@ public class XMPalignedArray {
   private Vector<Integer>	_distMannerVector;
   private Vector<Ident>		_gtolAccIdVector;
   private Vector<Ident>		_gtolTemp0IdVector;
+  private Vector<Integer>	_alignSubscriptIndexVector;
+  private Vector<Xobject>	_alignSubscriptExprVector;
   private Ident			_descId;
   private Ident			_addrId;
   private boolean		_hasShadow;
@@ -35,10 +37,14 @@ public class XMPalignedArray {
     _distMannerVector = new Vector<Integer>(XMP.MAX_DIM);
     _gtolAccIdVector = gtolAccIdVector;
     _gtolTemp0IdVector = new Vector<Ident>(XMP.MAX_DIM);
+    _alignSubscriptIndexVector = new Vector<Integer>(XMP.MAX_DIM);
+    _alignSubscriptExprVector = new Vector<Xobject>(XMP.MAX_DIM);
     for (int i = 0; i < dim; i++) {
       _shadowVector.add(new XMPshadow(XMPshadow.SHADOW_NONE, null, null));
       _distMannerVector.add(new Integer(NO_ALIGN));
       _gtolTemp0IdVector.add(null);
+      _alignSubscriptIndexVector.add(null);
+      _alignSubscriptExprVector.add(null);
     }
     _descId = descId;
     _addrId = addrId;
@@ -104,6 +110,22 @@ public class XMPalignedArray {
 
   public Ident getGtolTemp0IdAt(int index) {
     return _gtolTemp0IdVector.get(index);
+  }
+
+  public void setAlignSubscriptIndexAt(int alignSubscriptIndex, int alignSourceIndex) {
+    _alignSubscriptIndexVector.setElementAt(new Integer(alignSubscriptIndex), alignSourceIndex);
+  }
+
+  public Integer getAlignSubscriptIndexAt(int alignSourceIndex) {
+    return _alignSubscriptIndexVector.get(alignSourceIndex);
+  }
+
+  public void setAlignSubscriptExprAt(Xobject alignSubscriptExpr, int alignSourceIndex) {
+    _alignSubscriptExprVector.setElementAt(alignSubscriptExpr, alignSourceIndex);
+  }
+
+  public Xobject getAlignSubscriptExprAt(int alignSourceIndex) {
+    return _alignSubscriptExprVector.get(alignSourceIndex);
   }
 
   public Ident getDescId() {

@@ -524,16 +524,23 @@ public class XMPtranslateLocalPragma {
     for (XobjArgs i = alignSourceList.getArgs(); i != null; i = i.nextArgs()) {
       Xobject alignSourceObj = i.getArg();
       if (alignSourceObj.Opcode() == Xcode.INT_CONSTANT) {
-        int alignSource = alignSourceObj.getInt();
-        if (alignSource == XMPalignedArray.NO_ALIGN) continue;
-        else if (alignSource == XMPalignedArray.SIMPLE_ALIGN) {
-          if (!XMPutil.hasElmt(alignSubscriptVarList, XMPalignedArray.SIMPLE_ALIGN))
-            XMP.error(lnObj, "cannot find ':' in <align-subscript> list");
+        switch (alignSourceObj.getInt()) {
+          case XMPalignedArray.NO_ALIGN:
+            break;
+          case XMPalignedArray.SIMPLE_ALIGN:
+            {
+              if (!XMPutil.hasElmt(alignSubscriptVarList, XMPalignedArray.SIMPLE_ALIGN))
+                XMP.error(lnObj, "cannot find ':' in <align-subscript> list");
 
-          int alignSubscriptIndex = XMPutil.getLastIndex(alignSubscriptVarList, XMPalignedArray.SIMPLE_ALIGN);
-          alignSubscriptVarList.setArg(alignSubscriptIndex, null);
+              int alignSubscriptIndex = XMPutil.getLastIndex(alignSubscriptVarList, XMPalignedArray.SIMPLE_ALIGN);
+              alignSubscriptVarList.setArg(alignSubscriptIndex, null);
 
-          declAlignFunc(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex, null, pb);
+              declAlignFunc(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex, null, pb);
+
+              break;
+            }
+          default:
+            XMP.error(lnObj, "incorrect align source type");
         }
       }
       else if (alignSourceObj.Opcode() == Xcode.STRING) {
@@ -541,14 +548,14 @@ public class XMPtranslateLocalPragma {
         if (XMPutil.countElmts(alignSourceList, alignSource) != 1)
           XMP.error(lnObj, "multiple '" + alignSource + "' indicated in <align-source> list");
 
-        if (!XMPutil.hasElmt(alignSubscriptVarList, alignSource)) continue;
+        if (XMPutil.hasElmt(alignSubscriptVarList, alignSource)) {
+          if (XMPutil.countElmts(alignSubscriptVarList, alignSource) != 1)
+            XMP.error(lnObj, "multiple '" + alignSource + "' indicated in <align-subscript> list");
 
-        if (XMPutil.countElmts(alignSubscriptVarList, alignSource) != 1)
-          XMP.error(lnObj, "multiple '" + alignSource + "' indicated in <align-subscript> list");
-
-        int alignSubscriptIndex = XMPutil.getFirstIndex(alignSubscriptVarList, alignSource);
-        declAlignFunc(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex,
-                      alignSubscriptExprList.getArg(alignSubscriptIndex), pb);
+          int alignSubscriptIndex = XMPutil.getFirstIndex(alignSubscriptVarList, alignSource);
+          declAlignFunc(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex,
+                        alignSubscriptExprList.getArg(alignSubscriptIndex), pb);
+        }
       }
 
       alignSourceIndex++;
@@ -578,6 +585,9 @@ public class XMPtranslateLocalPragma {
 
     int distManner = templateObj.getDistMannerAt(alignSubscriptIndex);
     alignedArray.setDistMannerAt(distManner, alignSourceIndex);
+
+    alignedArray.setAlignSubscriptIndexAt(alignSubscriptIndex, alignSourceIndex);
+    alignedArray.setAlignSubscriptExprAt(alignSubscriptExpr, alignSourceIndex);
 
     switch (distManner) {
       case XMPtemplate.BLOCK:
@@ -1489,33 +1499,43 @@ public class XMPtranslateLocalPragma {
       XMP.error(lnObj, checkBodyErrMsg);
 
     // FIXME parse assign statement
-    Xobject leftAlignedArray = getAlignedArrayExpr(assignStmt.left(), localObjectTable);
-    Xobject rightAlignedArray = getAlignedArrayExpr(assignStmt.right(), localObjectTable);
-    if (leftAlignedArray == null) {
-      if (rightAlignedArray == null) {	// !leftIsAlignedArray && !rightIsAlignedArray	|-> local assignment (every node)
-        System.out.println("local (every node)");
+    XMPpair<XMPalignedArray, XobjList> leftExpr = getAlignedArrayExpr(assignStmt.left(), localObjectTable);
+    XMPpair<XMPalignedArray, XobjList> rightExpr = getAlignedArrayExpr(assignStmt.right(), localObjectTable);
+    if (leftExpr == null) {
+      if (rightExpr == null) {		// !leftIsAlignedArray && !rightIsAlignedArray	|-> local assignment (every node)
+        pb.replace(Bcons.COMPOUND(gmoveBody));
       }
       else {				// !leftIsAlignedArray &&  rightIsAlignedArray	|-> broadcast
         System.out.println("broadcast");
       }
     }
     else {
-      if (rightAlignedArray == null) {	// !leftIsAlignedArray &&  rightIsAlignedArray	|-> local assignment (home node)
-        System.out.println("local (home node)");
+      if (rightExpr == null) {		//  leftIsAlignedArray && !rightIsAlignedArray	|-> local assignment (home node)
+        XMPalignedArray leftAlignedArray = leftExpr.getFirst();
+        int dim = leftAlignedArray.getDim();
+        for (int i = 0; i < dim; i++) {
+          Integer subscriptIndex = leftAlignedArray.getAlignSubscriptIndexAt(i);
+          if (subscriptIndex == null) System.out.println("SUBSCRIPT_IDX(" + i + "): NULL");
+          else System.out.println("SUBSCRIPT_IDX(" + i + "): " + subscriptIndex.intValue());
+
+          Xobject subscriptExpr = leftAlignedArray.getAlignSubscriptExprAt(i);
+          if (subscriptExpr == null) System.out.println("SUBSCRIPT_EXPR(" + i + "): NULL");
+          else System.out.println("SUBSCRIPT_EXPR(" + i + "): " + subscriptExpr.toString());
+        }
       }
       else {				//  leftIsAlignedArray &&  rightIsAlignedArray	|-> send/recv
         System.out.println("send/recv");
       }
     }
 
-    if (leftAlignedArray == null) System.out.println("LEFT  : " + assignStmt.left().toString());
-    else System.out.println("LEFT  : " + leftAlignedArray.toString());
+    if (leftExpr == null) System.out.println("LEFT  : " + assignStmt.left().toString());
+    else System.out.println("LEFT  : " + leftExpr.getSecond().toString());
 
-    if (rightAlignedArray == null) System.out.println("RIGHT : " + assignStmt.right().toString());
-    else System.out.println("RIGHT : " + rightAlignedArray.toString());
+    if (rightExpr == null) System.out.println("RIGHT : " + assignStmt.right().toString());
+    else System.out.println("RIGHT : " + rightExpr.getSecond().toString());
   }
 
-  public Xobject getAlignedArrayExpr(Xobject expr, XMPobjectTable localObjectTable) throws XMPexception {
+  public XMPpair<XMPalignedArray, XobjList> getAlignedArrayExpr(Xobject expr, XMPobjectTable localObjectTable) throws XMPexception {
     if (expr == null) return null;
 
     bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
@@ -1534,8 +1554,8 @@ public class XMPtranslateLocalPragma {
 
             if (alignedArray != null) {
               iter.next();
-              XobjList getAddrFuncArgs = Xcons.List(alignedArray.getAddrId().Ref());
-              return parseAlignedArrayExpr(iter, alignedArray, 0, getAddrFuncArgs);
+              return new XMPpair<XMPalignedArray, XobjList>(alignedArray,
+                                                            parseAlignedArrayExpr(iter, alignedArray, 0, Xcons.List()));
             }
 
             break;
@@ -1548,8 +1568,8 @@ public class XMPtranslateLocalPragma {
     return null;
   }
 
-  private Xobject parseAlignedArrayExpr(bottomupXobjectIterator iter,
-                                        XMPalignedArray alignedArray, int arrayDimCount, XobjList args) throws XMPexception {
+  private XobjList parseAlignedArrayExpr(bottomupXobjectIterator iter,
+                                         XMPalignedArray alignedArray, int arrayDimCount, XobjList arrayRefs) throws XMPexception {
     String syntaxErrMsg = "syntax error on array expression, expression is not appropriate for gmove directive";
     Xcode prevExprOpcode = iter.getPrevXobject().Opcode();
     Xobject myExpr = iter.getXobject();
@@ -1574,9 +1594,9 @@ public class XMPtranslateLocalPragma {
               }
           }
 
-          args.add(XMPrewriteExpr.getCalcIndexFuncRef(alignedArray, arrayDimCount, myExpr.right()));
+          arrayRefs.add(myExpr.right());
           iter.next();
-          return parseAlignedArrayExpr(iter, alignedArray, arrayDimCount + 1, args);
+          return parseAlignedArrayExpr(iter, alignedArray, arrayDimCount + 1, arrayRefs);
         }
       case POINTER_REF:
         {
@@ -1592,15 +1612,14 @@ public class XMPtranslateLocalPragma {
 
           iter.next();
           if (iter.end()) {
-            if (alignedArray.getDim() == arrayDimCount)
-              return XMPrewriteExpr.createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args, Xcode.POINTER_REF);
+            if (alignedArray.getDim() == arrayDimCount) return arrayRefs;
             else {
               XMP.error(lnObj, syntaxErrMsg);
               break;
             }
           }
           else
-            return parseAlignedArrayExpr(iter, alignedArray, arrayDimCount, args);
+            return parseAlignedArrayExpr(iter, alignedArray, arrayDimCount, arrayRefs);
         }
       default:
         {

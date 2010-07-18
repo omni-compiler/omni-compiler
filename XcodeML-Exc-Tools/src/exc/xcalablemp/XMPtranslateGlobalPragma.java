@@ -461,16 +461,23 @@ public class XMPtranslateGlobalPragma {
     for (XobjArgs i = alignSourceList.getArgs(); i != null; i = i.nextArgs()) {
       Xobject alignSourceObj = i.getArg();
       if (alignSourceObj.Opcode() == Xcode.INT_CONSTANT) {
-        int alignSource = alignSourceObj.getInt();
-        if (alignSource == XMPalignedArray.NO_ALIGN) continue;
-        else if (alignSource == XMPalignedArray.SIMPLE_ALIGN) {
-          if (!XMPutil.hasElmt(alignSubscriptVarList, XMPalignedArray.SIMPLE_ALIGN))
-            XMP.error(lnObj, "cannot find ':' in <align-subscript> list");
+        switch (alignSourceObj.getInt()) {
+          case XMPalignedArray.NO_ALIGN:
+            break;
+          case XMPalignedArray.SIMPLE_ALIGN:
+            {
+              if (!XMPutil.hasElmt(alignSubscriptVarList, XMPalignedArray.SIMPLE_ALIGN))
+                XMP.error(lnObj, "cannot find ':' in <align-subscript> list");
 
-          int alignSubscriptIndex = XMPutil.getLastIndex(alignSubscriptVarList, XMPalignedArray.SIMPLE_ALIGN);
-          alignSubscriptVarList.setArg(alignSubscriptIndex, null);
+              int alignSubscriptIndex = XMPutil.getLastIndex(alignSubscriptVarList, XMPalignedArray.SIMPLE_ALIGN);
+              alignSubscriptVarList.setArg(alignSubscriptIndex, null);
 
-          declAlignFunc(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex, null);
+              declAlignFunc(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex, null);
+
+              break;
+            }
+          default:
+            XMP.error(lnObj, "incorrect align source type");
         }
       }
       else if (alignSourceObj.Opcode() == Xcode.STRING) {
@@ -478,14 +485,14 @@ public class XMPtranslateGlobalPragma {
         if (XMPutil.countElmts(alignSourceList, alignSource) != 1)
           XMP.error(lnObj, "multiple '" + alignSource + "' indicated in <align-source> list");
 
-        if (!XMPutil.hasElmt(alignSubscriptVarList, alignSource)) continue;
+        if (XMPutil.hasElmt(alignSubscriptVarList, alignSource)) {
+          if (XMPutil.countElmts(alignSubscriptVarList, alignSource) != 1)
+            XMP.error(lnObj, "multiple '" + alignSource + "' indicated in <align-subscript> list");
 
-        if (XMPutil.countElmts(alignSubscriptVarList, alignSource) != 1)
-          XMP.error(lnObj, "multiple '" + alignSource + "' indicated in <align-subscript> list");
-
-        int alignSubscriptIndex = XMPutil.getFirstIndex(alignSubscriptVarList, alignSource);
-        declAlignFunc(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex,
-                      alignSubscriptExprList.getArg(alignSubscriptIndex));
+          int alignSubscriptIndex = XMPutil.getFirstIndex(alignSubscriptVarList, alignSource);
+          declAlignFunc(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex,
+                        alignSubscriptExprList.getArg(alignSubscriptIndex));
+        }
       }
 
       alignSourceIndex++;
@@ -505,6 +512,9 @@ public class XMPtranslateGlobalPragma {
 
     int distManner = templateObj.getDistMannerAt(alignSubscriptIndex);
     alignedArray.setDistMannerAt(distManner, alignSourceIndex);
+
+    alignedArray.setAlignSubscriptIndexAt(alignSubscriptIndex, alignSourceIndex);
+    alignedArray.setAlignSubscriptExprAt(alignSubscriptExpr, alignSourceIndex);
 
     switch (distManner) {
       case XMPtemplate.BLOCK:
