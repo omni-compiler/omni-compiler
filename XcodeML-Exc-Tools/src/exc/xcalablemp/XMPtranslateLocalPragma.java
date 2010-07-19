@@ -497,7 +497,8 @@ public class XMPtranslateLocalPragma {
     XMPlocalDecl.insertDestructorCall("_XCALABLEMP_finalize_array_desc", Xcons.List(arrayDescId.Ref()), pb, _globalDecl);
 
     XMPalignedArray alignedArray = new XMPalignedArray(lnObj, arrayName, arrayElmtType, arrayDim,
-                                                       arraySizeVector, gtolAccIdVector, arrayDescId, arrayAddrId);
+                                                       arraySizeVector, gtolAccIdVector, arrayDescId, arrayAddrId,
+                                                       templateObj);
     localObjectTable.putAlignedArray(alignedArray);
 
     // check <align-source> list, <align-subscrip> list
@@ -1498,7 +1499,7 @@ public class XMPtranslateLocalPragma {
     else
       XMP.error(lnObj, checkBodyErrMsg);
 
-    // FIXME parse assign statement
+    // FIXME consider in, out clause
     XMPpair<XMPalignedArray, XobjList> leftExpr = getAlignedArrayExpr(assignStmt.left(), localObjectTable);
     XMPpair<XMPalignedArray, XobjList> rightExpr = getAlignedArrayExpr(assignStmt.right(), localObjectTable);
     if (leftExpr == null) {
@@ -1506,33 +1507,44 @@ public class XMPtranslateLocalPragma {
         pb.replace(Bcons.COMPOUND(gmoveBody));
       }
       else {				// !leftIsAlignedArray &&  rightIsAlignedArray	|-> broadcast
-        System.out.println("broadcast");
+        XMPalignedArray alignedArray = rightExpr.getFirst();
+
+        // XXX left/right is not a constant
+        XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(assignStmt.left()), Xcons.AddrOf(assignStmt.right()),
+                                            Xcons.SizeOf(alignedArray.getType()),
+                                            alignedArray.getDescId().Ref());
+        XMPutil.mergeLists(gmoveFuncArgs, rightExpr.getSecond());
+
+        pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_BCAST_SCALAR", gmoveFuncArgs));
       }
     }
     else {
       if (rightExpr == null) {		//  leftIsAlignedArray && !rightIsAlignedArray	|-> local assignment (home node)
-        XMPalignedArray leftAlignedArray = leftExpr.getFirst();
-        int dim = leftAlignedArray.getDim();
-        for (int i = 0; i < dim; i++) {
-          Integer subscriptIndex = leftAlignedArray.getAlignSubscriptIndexAt(i);
-          if (subscriptIndex == null) System.out.println("SUBSCRIPT_IDX(" + i + "): NULL");
-          else System.out.println("SUBSCRIPT_IDX(" + i + "): " + subscriptIndex.intValue());
+        XMPalignedArray alignedArray = leftExpr.getFirst();
 
-          Xobject subscriptExpr = leftAlignedArray.getAlignSubscriptExprAt(i);
-          if (subscriptExpr == null) System.out.println("SUBSCRIPT_EXPR(" + i + "): NULL");
-          else System.out.println("SUBSCRIPT_EXPR(" + i + "): " + subscriptExpr.toString());
-        }
+        XobjList gmoveFuncArgs = Xcons.List(alignedArray.getDescId().Ref());
+        XMPutil.mergeLists(gmoveFuncArgs, leftExpr.getSecond());
+
+        Ident gmoveFuncId = _env.declExternIdent("_XCALABLEMP_gmove_exec_home_SCALAR", Xtype.Function(Xtype.boolType));
+        pb.replace(Bcons.IF(BasicBlock.Cond(gmoveFuncId.Call(gmoveFuncArgs)),
+                            gmoveBody, null));
       }
       else {				//  leftIsAlignedArray &&  rightIsAlignedArray	|-> send/recv
-        System.out.println("send/recv");
+        XMPalignedArray leftAlignedArray = leftExpr.getFirst();
+        XMPalignedArray rightAlignedArray = rightExpr.getFirst();
+
+        // FIXME type check: left right is the same -> needed???
+
+        // XXX left/right is not a constant
+        XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(assignStmt.left()), Xcons.AddrOf(assignStmt.right()),
+                                            Xcons.SizeOf(leftAlignedArray.getType()),
+                                            leftAlignedArray.getDescId().Ref(), rightAlignedArray.getDescId().Ref());
+        XMPutil.mergeLists(gmoveFuncArgs, leftExpr.getSecond());
+        XMPutil.mergeLists(gmoveFuncArgs, rightExpr.getSecond());
+
+        pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_SENDRECV_SCALAR", gmoveFuncArgs));
       }
     }
-
-    if (leftExpr == null) System.out.println("LEFT  : " + assignStmt.left().toString());
-    else System.out.println("LEFT  : " + leftExpr.getSecond().toString());
-
-    if (rightExpr == null) System.out.println("RIGHT : " + assignStmt.right().toString());
-    else System.out.println("RIGHT : " + rightExpr.getSecond().toString());
   }
 
   public XMPpair<XMPalignedArray, XobjList> getAlignedArrayExpr(Xobject expr, XMPobjectTable localObjectTable) throws XMPexception {

@@ -24,10 +24,11 @@ public class XMPalignedArray {
   private boolean		_hasShadow;
   private boolean		_reallocChecked;
   private boolean		_realloc;
+  private XMPtemplate		_alignedTemplate;
 
   public XMPalignedArray(LineNo lineNo, String name, Xtype type, int dim,
                          Vector<Long> sizeVector, Vector<Ident> gtolAccIdVector,
-                         Ident descId, Ident addrId) {
+                         Ident descId, Ident addrId, XMPtemplate alignedTemplate) {
     _lineNo = lineNo;
     _name = name;
     _type = type;
@@ -50,6 +51,7 @@ public class XMPalignedArray {
     _addrId = addrId;
     _hasShadow = false;
     _reallocChecked = false;
+    _alignedTemplate = alignedTemplate;
   }
 
   public LineNo getLineNo() {
@@ -150,6 +152,10 @@ public class XMPalignedArray {
 
   public XMPshadow getShadowAt(int index) {
     return _shadowVector.get(index);
+  }
+
+  public XMPtemplate getAlignedTemplate() {
+    return _alignedTemplate;
   }
 
   public boolean checkRealloc() {

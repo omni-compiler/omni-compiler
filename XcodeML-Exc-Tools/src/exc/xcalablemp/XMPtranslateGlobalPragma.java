@@ -434,7 +434,8 @@ public class XMPtranslateGlobalPragma {
     _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_init_array_desc", initArrayDescFuncArgs);
 
     XMPalignedArray alignedArray = new XMPalignedArray(lnObj, arrayName, arrayElmtType, arrayDim,
-                                                       arraySizeVector, gtolAccIdVector, arrayDescId, arrayAddrId);
+                                                       arraySizeVector, gtolAccIdVector, arrayDescId, arrayAddrId,
+                                                       templateObj);
     _globalObjectTable.putAlignedArray(alignedArray);
 
     // check <align-source> list, <align-subscrip> list
