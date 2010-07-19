@@ -185,6 +185,8 @@ void _XCALABLEMP_dist_template_DUPLICATION(_XCALABLEMP_template_t *template, int
   chunk->par_chunk_width = ti->ser_size;
 
   chunk->dist_manner = _XCALABLEMP_N_DIST_DUPLICATION;
+
+  chunk->onto_nodes_dim = -1;
   chunk->onto_nodes_info = NULL;
 }
 
@@ -220,6 +222,8 @@ void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int templ
   chunk->par_chunk_width = chunk_width;
 
   chunk->dist_manner = _XCALABLEMP_N_DIST_BLOCK;
+
+  chunk->onto_nodes_dim = nodes_index;
   chunk->onto_nodes_info = ni;
 }
 
@@ -261,6 +265,8 @@ void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int temp
   chunk->par_chunk_width = _XCALABLEMP_M_CEILi(ti->ser_size, nodes_size);
 
   chunk->dist_manner = _XCALABLEMP_N_DIST_CYCLIC;
+
+  chunk->onto_nodes_dim = nodes_index;
   chunk->onto_nodes_info = ni;
 }
 

@@ -1606,7 +1606,7 @@ public class XMPtranslateLocalPragma {
               }
           }
 
-          arrayRefs.add(myExpr.right());
+          arrayRefs.add(Xcons.Cast(Xtype.intType, myExpr.right()));
           iter.next();
           return parseAlignedArrayExpr(iter, alignedArray, arrayDimCount + 1, arrayRefs);
         }

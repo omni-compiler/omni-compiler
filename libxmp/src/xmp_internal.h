@@ -38,7 +38,9 @@ typedef struct _XCALABLEMP_template_chunk_type {
   unsigned long long par_size;
   unsigned long long par_chunk_width;
 
-  int				dist_manner;
+  int dist_manner;
+
+  int onto_nodes_dim;
   _XCALABLEMP_nodes_info_t	*onto_nodes_info;
 } _XCALABLEMP_template_chunk_t;
 
@@ -68,6 +70,7 @@ typedef struct _XCALABLEMP_array_info_type {
   int shadow_size_lo;
   int shadow_size_hi;
 
+  int align_template_dim;
   _XCALABLEMP_template_info_t *align_template_info;
   _XCALABLEMP_template_chunk_t *align_template_chunk;
 } _XCALABLEMP_array_info_t;
@@ -75,7 +78,7 @@ typedef struct _XCALABLEMP_array_info_type {
 typedef struct _XCALABLEMP_array_type {
   int dim;
 
-  _XCALABLEMP_template_t *aligned_template;
+  _XCALABLEMP_template_t *align_template;
   _XCALABLEMP_array_info_t info[1];
 } _XCALABLEMP_array_t;
 

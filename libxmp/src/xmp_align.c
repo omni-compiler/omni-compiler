@@ -15,7 +15,7 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
   _XCALABLEMP_array_t *a = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_array_t) + sizeof(_XCALABLEMP_array_info_t) * (dim - 1));
 
   a->dim = dim;
-  a->aligned_template = template;
+  a->align_template = template;
 
   va_list args;
   va_start(args, dim);
@@ -43,6 +43,7 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
     ai->shadow_size_lo  = 0;
     ai->shadow_size_hi  = 0;
 
+    ai->align_template_dim = -1;
     ai->align_template_info = NULL;
     ai->align_template_chunk = NULL;
   }
@@ -59,14 +60,14 @@ void _XCALABLEMP_align_array_DUPLICATION(_XCALABLEMP_array_t *array, int array_i
   if (template == NULL)
     _XCALABLEMP_fatal("null template descriptor detected");
 
-  _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
-  _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
-
-  ai->align_template_info = ti;
-
   if (template->chunk == NULL)
     _XCALABLEMP_fatal("null template chunk descriptor detected");
 
+  _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
+  _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
+
+  ai->align_template_dim = template_index;
+  ai->align_template_info = ti;
   ai->align_template_chunk = &(template->chunk[template_index]);
 
   long long align_lower = ai->ser_lower + align_subscript;
@@ -87,14 +88,14 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index,
   if (template == NULL)
     _XCALABLEMP_fatal("null template descriptor detected");
 
-  _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
-  _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
-
   if (template->chunk == NULL)
     _XCALABLEMP_fatal("null template chunk descriptor detected");
 
+  _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
+  _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
 
+  ai->align_template_dim = template_index;
   ai->align_template_info = ti;
   ai->align_template_chunk = chunk;
 
@@ -139,14 +140,14 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
   if (template == NULL)
     _XCALABLEMP_fatal("null template descriptor detected");
 
-  _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
-  _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
-
   if (template->chunk == NULL)
     _XCALABLEMP_fatal("null template chunk descriptor detected");
 
+  _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
+  _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
 
+  ai->align_template_dim = template_index;
   ai->align_template_info = ti;
   ai->align_template_chunk = chunk;
 
