@@ -118,6 +118,7 @@ void _XCALABLEMP_init_template_FIXED(_XCALABLEMP_template_t **template, int dim,
   // calc members
   t->is_fixed = true;
   t->dim = dim;
+  t->onto_nodes = NULL;
   t->chunk = NULL;
 
   va_list args;
@@ -141,6 +142,7 @@ void _XCALABLEMP_init_template_UNFIXED(_XCALABLEMP_template_t **template, int di
   // calc members
   t->is_fixed = false;
   t->dim = dim;
+  t->onto_nodes = NULL;
   t->chunk = NULL;
 
   va_list args;
@@ -160,8 +162,10 @@ void _XCALABLEMP_init_template_chunk(_XCALABLEMP_template_t *template, _XCALABLE
   if (template == NULL)
     _XCALABLEMP_fatal("null template descriptor detected");
 
-  if (nodes != NULL)
+  if (nodes != NULL) {
+    template->onto_nodes = nodes;
     template->chunk = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_template_chunk_t) * (template->dim));
+  }
 }
 
 void _XCALABLEMP_dist_template_DUPLICATION(_XCALABLEMP_template_t *template, int template_index) {

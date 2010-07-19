@@ -46,6 +46,7 @@ typedef struct _XCALABLEMP_template_type {
   _Bool is_fixed;
   int   dim;
 
+  _XCALABLEMP_nodes_t *onto_nodes;
   _XCALABLEMP_template_chunk_t *chunk;
   _XCALABLEMP_template_info_t info[1];
 } _XCALABLEMP_template_t;
@@ -61,6 +62,8 @@ typedef struct _XCALABLEMP_array_info_type {
   int par_stride;
   int par_size;
 
+  long long align_subscript;
+
   int shadow_type;
   int shadow_size_lo;
   int shadow_size_hi;
@@ -72,6 +75,7 @@ typedef struct _XCALABLEMP_array_info_type {
 typedef struct _XCALABLEMP_array_type {
   int dim;
 
+  _XCALABLEMP_template_t *aligned_template;
   _XCALABLEMP_array_info_t info[1];
 } _XCALABLEMP_array_t;
 

@@ -15,6 +15,7 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
   _XCALABLEMP_array_t *a = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_array_t) + sizeof(_XCALABLEMP_array_info_t) * (dim - 1));
 
   a->dim = dim;
+  a->aligned_template = template;
 
   va_list args;
   va_start(args, dim);
@@ -35,6 +36,8 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
     ai->par_upper = ai->ser_upper;
     ai->par_stride = 1;
     ai->par_size = ai->ser_size;
+    
+    ai->align_subscript = 0;
 
     ai->shadow_type = _XCALABLEMP_N_SHADOW_NONE;
     ai->shadow_size_lo  = 0;
@@ -73,6 +76,7 @@ void _XCALABLEMP_align_array_DUPLICATION(_XCALABLEMP_array_t *array, int array_i
     _XCALABLEMP_fatal("aligned array is out of template bound");
 
   // par_* are not modified here
+  ai->align_subscript = align_subscript;
 }
 
 void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index,
@@ -122,6 +126,8 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index,
   ai->par_size   = _XCALABLEMP_M_COUNT_TRIPLETi(ai->par_lower,
                                                 ai->par_upper, 1);
 
+  ai->align_subscript = align_subscript;
+
   *temp0 = ai->par_lower;
 }
 
@@ -160,6 +166,8 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
   ai->par_lower  = mod;
   ai->par_upper  = mod + (dist * cycle);
   ai->par_size   = dist + 1;
+
+  ai->align_subscript = align_subscript;
 
   *temp0 = cycle;
 }

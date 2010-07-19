@@ -74,7 +74,8 @@ am_libxmp_a_OBJECTS = xmp_lib.$(OBJEXT) xmp_util.$(OBJEXT) \
 	xmp_nodes.$(OBJEXT) xmp_template.$(OBJEXT) \
 	xmp_barrier.$(OBJEXT) xmp_reduce.$(OBJEXT) xmp_bcast.$(OBJEXT) \
 	xmp_align.$(OBJEXT) xmp_shadow.$(OBJEXT) \
-	xmp_array_section.$(OBJEXT) xmp_loop.$(OBJEXT)
+	xmp_array_section.$(OBJEXT) xmp_loop.$(OBJEXT) \
+	xmp_gmove.$(OBJEXT)
 libxmp_a_OBJECTS = $(am_libxmp_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -270,7 +271,7 @@ lib_LIBRARIES = libxmp.a
 libxmp_a_SOURCES = xmp_internal.h xmp_math_macro.h xmp_constant.h \
 				  xmp_lib.c xmp_util.c xmp_world.c xmp_nodes_stack.c \
                                   xmp_nodes.c xmp_template.c xmp_barrier.c xmp_reduce.c xmp_bcast.c \
-                                  xmp_align.c xmp_shadow.c xmp_array_section.c xmp_loop.c
+                                  xmp_align.c xmp_shadow.c xmp_array_section.c xmp_loop.c xmp_gmove.c
 
 EXTRA_libxmp_a_SOURCES = xmp_crt0.c
 XMPCRTOBJ = xmp_crt0.o
@@ -357,6 +358,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_barrier.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_bcast.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_crt0.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_gmove.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_lib.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_loop.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_nodes.Po@am__quote@
