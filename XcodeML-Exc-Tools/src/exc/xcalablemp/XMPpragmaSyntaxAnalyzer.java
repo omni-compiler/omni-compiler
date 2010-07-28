@@ -430,6 +430,9 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       else break;
     } while (true);
 
+    if (!pg_is_ident("with"))
+      error("'with' is expected after ']'");
+
     // parse <template-name>
     pg_get_token();
     if (pg_tok() != PG_IDENT)

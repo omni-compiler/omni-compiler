@@ -191,9 +191,8 @@ public class XMPalignedArray {
     }
   }
 
-  public boolean realloc() throws XMPexception {
+  public boolean realloc() {
     if (_reallocChecked) return _realloc;
-    else
-      throw new XMPexception("target array is not checked");
+    else                 return checkRealloc();
   }
 }
