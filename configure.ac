@@ -7,7 +7,7 @@ AC_PREREQ(2.60)
 # --------------------------------------------------------------------
 # Let the initiation begin....
 
-AC_INIT([Omni Compiler], [3], [BUG-REPORT-ADDRESS], [omni])
+AC_INIT([Omni XcalableMP Compiler], [1], [BUG-REPORT-ADDRESS], [omni_xmp])
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([include/exc_platform.h])
 AC_CONFIG_HEADER([include/config.h])

@@ -9,8 +9,8 @@ SUBDIRS=@XCODEML_COMMON_DIR@ \
 	@OMDRIVER_DIR@ @LIBXMP_DIR@ \
 	@LIBOMPC_DIR@ @LIBTLOG_DIR@
 
-install-data-local:
-	if test -e "./doc"; then\
-		test -z "${docdir}" || ${MKDIR_P} "${docdir}";\
-		cp -fr ./doc/* ${docdir}/; chmod -R 755 ${docdir}/*;\
-	fi
+#install-data-local:
+#	if test -e "./doc"; then\
+#		test -z "${docdir}" || ${MKDIR_P} "${docdir}";\
+#		cp -fr ./doc/* ${docdir}/; chmod -R 755 ${docdir}/*;\
+#	fi

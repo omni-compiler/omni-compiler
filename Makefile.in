@@ -702,7 +702,7 @@ info: info-recursive
 
 info-am:
 
-install-data-am: install-data-local
+install-data-am:
 
 install-dvi: install-dvi-recursive
 
@@ -760,21 +760,20 @@ uninstall-am:
 	distclean distclean-generic distclean-hdr distclean-tags \
 	distcleancheck distdir distuninstallcheck dvi dvi-am html \
 	html-am info info-am install install-am install-data \
-	install-data-am install-data-local install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs installdirs-am \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-generic pdf pdf-am ps ps-am tags tags-recursive \
-	uninstall uninstall-am
+	install-data-am install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-man install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs installdirs-am maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-generic pdf \
+	pdf-am ps ps-am tags tags-recursive uninstall uninstall-am
 
 
-install-data-local:
-	if test -e "./doc"; then\
-		test -z "${docdir}" || ${MKDIR_P} "${docdir}";\
-		cp -fr ./doc/* ${docdir}/; chmod -R 755 ${docdir}/*;\
-	fi
+#install-data-local:
+#	if test -e "./doc"; then\
+#		test -z "${docdir}" || ${MKDIR_P} "${docdir}";\
+#		cp -fr ./doc/* ${docdir}/; chmod -R 755 ${docdir}/*;\
+#	fi
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
