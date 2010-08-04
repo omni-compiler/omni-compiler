@@ -557,9 +557,33 @@ public class XMPtranslateLocalPragma {
           declAlignFunc(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex,
                         alignSubscriptExprList.getArg(alignSubscriptIndex), pb);
         }
+        else
+          XMP.error(lnObj, "cannot find '" + alignSource + "' in <align-subscript> list");
       }
 
       alignSourceIndex++;
+    }
+
+    // check alignSubscriptVarList
+    for (XobjArgs i = alignSubscriptVarList.getArgs(); i != null; i = i.nextArgs()) {
+      Xobject alignSubscriptObj = i.getArg();
+      switch (alignSubscriptObj.Opcode()) {
+        case INT_CONSTANT:
+          break;
+        case STRING:
+          {
+            String alignSubscript = alignSubscriptObj.getString();
+            if (XMPutil.hasElmt(alignSourceList, alignSubscript)) {
+              if (XMPutil.countElmts(alignSourceList, alignSubscript) != 1)
+                XMP.error(lnObj, "no/multiple '" + alignSubscript + "' indicated in <align-source> list");
+            }
+            else
+              XMP.error(lnObj, "cannot find '" + alignSubscript + "' in <align-source> list");
+          }
+          break;
+        default:
+          XMP.error(lnObj, "unknown align subscript");
+      }
     }
 
     // init array address
