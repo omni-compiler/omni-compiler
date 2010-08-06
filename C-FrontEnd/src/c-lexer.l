@@ -319,12 +319,17 @@ L\"(\\.|[^\\"])*\"      { count(); yylval.expr = lexAllocStringConst(CT_WIDE);  
 "?"          { count(); return '?'; }
 
                         /* ------ directive ------ */
+ /*
+    Note: Since a directive include "\n", count() should be invoked after 
+          processing the directive. (Hitoshi Murai)
+ */
 
-^[ \t]*"#ident"([ \t]+[^\n]+)?[\n]      { count(); LEX_GCC_DIRECTIVE("#ident", DT_IDENT); }
-^[ \t]*"#warning"([ \t]+[^\n]+)?[\n]    { count(); LEX_GCC_DIRECTIVE("#warning", DT_WARNING); }
-^[ \t]*"#error"([ \t]+[^\n]+)[\n]       { count(); LEX_GCC_DIRECTIVE("#error", DT_ERROR); }
-^[ \t]*"#pragma"([ \t]+[^\n]+)?[\n]     { count(); int token;
-                                            yylval.expr = lexParsePragma(yytext, &token); return token; }
+^[ \t]*"#ident"([ \t]+[^\n]+)?[\n]      { LEX_GCC_DIRECTIVE("#ident", DT_IDENT); count(); }
+^[ \t]*"#warning"([ \t]+[^\n]+)?[\n]    { LEX_GCC_DIRECTIVE("#warning", DT_WARNING); count(); }
+^[ \t]*"#error"([ \t]+[^\n]+)[\n]       { LEX_GCC_DIRECTIVE("#error", DT_ERROR); count(); }
+^[ \t]*"#pragma"([ \t]+[^\n]+)?[\n]     { int token;
+                                            yylval.expr = lexParsePragma(yytext, &token); count();
+                                            return token; }
 ^[ \t]*"#"[ \t]*[0-9]+([ \t]+[^\r\n]*)?\r?\n  { lexParseLineDirective(0); }
 ^[ \t]*"#"[ \t]*"line"[ \t]+[0-9]+([ \t]+[^\r\n]*)?\r?\n  { lexParseLineDirective(1); }
 
