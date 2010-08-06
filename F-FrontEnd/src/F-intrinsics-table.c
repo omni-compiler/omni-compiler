@@ -199,11 +199,15 @@ intrinsic_entry intrinsic_table[] = {
 
     /* 2. Numeric functions */
 
+    /* Entries of ceiling and floor for DREAL added (by Hitoshi Murai). */
+
     // CEILING (A  [, KIND])
     { INTR_CEILING,     INTR_NAME_GENERIC,      "ceiling",      1,      {INTR_TYPE_REAL},       INTR_TYPE_INT,  1, -1, LANGSPEC_F90 },
+    { INTR_CEILING,     INTR_NAME_GENERIC,      "",             1,      {INTR_TYPE_DREAL},      INTR_TYPE_INT,  1, -1, LANGSPEC_F90 },
 
     // FLOOR (A  [, KIND])
     { INTR_FLOOR,       INTR_NAME_GENERIC,      "floor",        1,      {INTR_TYPE_REAL},       INTR_TYPE_INT,  1, -1, LANGSPEC_F90 },
+    { INTR_FLOOR,       INTR_NAME_GENERIC,      "",             1,      {INTR_TYPE_DREAL},      INTR_TYPE_INT,  1, -1, LANGSPEC_F90 },
 
 
 
