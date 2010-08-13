@@ -1,3 +1,4 @@
+
 /* 
  * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
  * $TSUKUBA_Copyright:
@@ -72,7 +73,7 @@ static void compile_DO_statement(int range_st_no,
                             expr construct_name,
                             expr var, expr init,
                             expr limit, expr incr);
-static void compile_DOWHILE_statement(expr cond,
+static void compile_DOWHILE_statement(int range_st_no, expr cond,
                             expr construct_name);
 static void check_DO_end(ID label);
 static void end_declaration(void);
@@ -605,11 +606,30 @@ void compile_statement1(int st_no, expr x)
         check_DO_end(NULL);
         break;
 
-    case F_DOWHILE_STATEMENT:
+    case F_DOWHILE_STATEMENT: {
+        int doStNo = -1;
         check_INEXEC();
-        /* (F_DOWHILE_STATEMENT cond_expr) */
-        compile_DOWHILE_statement(EXPR_ARG1(x), EXPR_ARG2(x));
+        /* (F_DOWHILE_STATEMENT label cond_expr) */
+
+        if (EXPR_ARG1(x) != NULL) {
+            expv stLabel = expr_label_value(EXPR_ARG1(x));
+            if (stLabel == NULL) {
+                error("illegal label in DO WHILE");
+                break;
+            }
+            doStNo = EXPV_INT_VALUE(stLabel);
+        }
+
+	compile_DOWHILE_statement(doStNo, EXPR_ARG2(x), EXPR_ARG3(x));
+
         break;
+
+	//    case F_DOWHILE_STATEMENT:
+	//        check_INEXEC();
+	//        /* (F_DOWHILE_STATEMENT cond_expr) */
+	//        compile_DOWHILE_statement(EXPR_ARG2(x), EXPR_ARG3(x));
+	//        break;
+    }
 
     /* case where statement*/
     case F_WHERE_STATEMENT:
@@ -2164,15 +2184,30 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
                                      NULL));
 }
 
-static void  compile_DOWHILE_statement(cond, construct_name)
-    expr cond, construct_name;
+static void  compile_DOWHILE_statement(range_st_no, cond, construct_name)
+     int range_st_no;
+     expr cond, construct_name;
 {
     expv v;
+    ID do_label = NULL;
+
     if(cond == NULL) return; /* error recovery */
+
+    if (range_st_no > 0) {
+        do_label = declare_label(range_st_no, LAB_EXEC, FALSE);
+        if (do_label == NULL) return;
+        if (LAB_IS_DEFINED(do_label)) {
+            error("no backward DO loops");
+            return;
+        }
+        /* turn off, becuase this is not branch */
+        LAB_IS_USED(do_label) = FALSE;
+    }
+
     v = compile_expression(cond);
     push_ctl(CTL_DO);
     CTL_DO_VAR(ctl_top) = NULL;
-    CTL_DO_LABEL(ctl_top) = NULL;
+    CTL_DO_LABEL(ctl_top) = do_label;
     CTL_BLOCK(ctl_top) = list3(F_DOWHILE_STATEMENT,v,NULL,construct_name);
 }
 
@@ -2188,8 +2223,22 @@ check_DO_end(ID label)
         if (CTL_TYPE(ctl_top) == CTL_DO) {
             if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F_DOWHILE_STATEMENT) {
                 /*
-                 * DOEHILE
+                 * DOWHILE
                  */
+                if (CTL_DO_LABEL(ctl_top) != NULL) {
+                    /*
+                     * An obsolete/unexpected syntax like:
+                     *	      do 300 while (.true.)
+                     *          ...
+                     *  300   end do
+                     * warn just for our mental health.
+                     */
+                    warning("Unexpected (maybe obsolete) syntax of "
+                            "DO WHILE - ENDDO statements, "
+                            "DO WHILE having a statement label '%s' "
+                            "and ended ENDDO.",
+                            SYM_NAME(ID_SYM(CTL_DO_LABEL(ctl_top))));
+                }
                 EXPR_ARG2(CTL_BLOCK(ctl_top)) = CURRENT_STATEMENTS;
             } else {
                 /*
@@ -2220,9 +2269,22 @@ check_DO_end(ID label)
 
     while (CTL_TYPE(ctl_top) == CTL_DO && 
            CTL_DO_LABEL(ctl_top) == label) {
-        /* close DO block */
+
+      /* close DO block */
+      if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F_DOWHILE_STATEMENT) {
+	/*
+	 * DOWHILE
+	 */
+	EXPR_ARG2(CTL_BLOCK(ctl_top)) = CURRENT_STATEMENTS;
+      }
+      else {
+	/*
+	 * else DO
+	 */  
         CTL_DO_BODY(ctl_top) = CURRENT_STATEMENTS;
-        pop_ctl();
+      }
+
+      pop_ctl();
     }
 
     /* check DO loop which is not propery closed. */

@@ -49,6 +49,7 @@
 %token DO
 %token ENDDO
 %token DOWHILE
+%token WHILE
 %token ELSE
 %token ELSEIF
 %token ELSEIFTHEN
@@ -981,6 +982,8 @@ namelist_list:  IDENTIFIER
  */
 executable_statement:
           action_statement
+	| DO label KW_WHILE '(' expr ')'
+	{ $$ = list3(F_DOWHILE_STATEMENT, $2, $5, st_name); }
         | DO label do_spec
         { $$ = list3(F_DO_STATEMENT, $2, $3, st_name); }
         | DO label ',' do_spec  /* for dusty deck */
@@ -1004,7 +1007,7 @@ executable_statement:
         | ENDIF name_or_null /* need to match the label in st_name?  */
         { $$ = list0(F_ENDIF_STATEMENT); }
         | DOWHILE '(' expr ')'
-        { $$ = list2(F_DOWHILE_STATEMENT, $3, st_name); }
+        { $$ = list3(F_DOWHILE_STATEMENT, NULL, $3, st_name); }
         | WHERE '(' expr ')' assign_statement_or_null
         { $$ = list2(F_WHERE_STATEMENT,$3,$5); }
         | ELSEWHERE

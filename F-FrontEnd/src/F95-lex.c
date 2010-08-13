@@ -295,6 +295,13 @@ yylex0()
             bufptr += 2;
             return(KW_TO);
         }
+	else if (st_class == DO && tkn_cnt == 3 &&
+		 bufptr[0] == 'w' && bufptr[1] == 'h' &&
+		 bufptr[2] == 'i' && bufptr[3] == 'l' &&
+		 bufptr[4] == 'e'){
+	  bufptr += 5;
+	  return KW_WHILE;
+	}
         t = token();
         if (t == FORMAT){
             /*

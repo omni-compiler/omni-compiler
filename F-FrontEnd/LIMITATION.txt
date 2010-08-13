@@ -31,7 +31,7 @@ ex.)
 ex.)
       1.0D10_8
 
-* 旧形式の DO WHILE ループ構文には対応していない。
+* 旧形式の DO WHILE ループ構文には対応していない。→ 解決済 (Aug. 8, 2010)
 
 ex.)
        DO label while ( logical-expression )
