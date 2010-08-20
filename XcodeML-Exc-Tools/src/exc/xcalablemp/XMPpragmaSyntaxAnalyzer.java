@@ -833,7 +833,11 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         return Xcons.IntConstant(XMPcollective.REDUCE_BXOR);
       case PG_IDENT:
         {
-          if (pg_is_ident("band") || pg_is_ident("BAND"))
+          if (pg_is_ident("sum") || pg_is_ident("SUM"))
+            return Xcons.IntConstant(XMPcollective.REDUCE_SUM);
+          else if (pg_is_ident("prod") || pg_is_ident("PROD"))
+            return Xcons.IntConstant(XMPcollective.REDUCE_PROD);
+          else if (pg_is_ident("band") || pg_is_ident("BAND"))
             return Xcons.IntConstant(XMPcollective.REDUCE_BAND);
           else if (pg_is_ident("land") || pg_is_ident("LAND"))
             return Xcons.IntConstant(XMPcollective.REDUCE_LAND);
