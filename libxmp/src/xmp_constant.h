@@ -31,6 +31,14 @@
 // defined in exc.xcalablemp.XMPcollective
 #define _XCALABLEMP_N_REDUCE_SUM			300
 #define _XCALABLEMP_N_REDUCE_PROD			301
+#define _XCALABLEMP_N_REDUCE_BAND			302
+#define _XCALABLEMP_N_REDUCE_LAND			303
+#define _XCALABLEMP_N_REDUCE_BOR			304
+#define _XCALABLEMP_N_REDUCE_LOR			305
+#define _XCALABLEMP_N_REDUCE_BXOR			306
+#define _XCALABLEMP_N_REDUCE_LXOR			307
+#define _XCALABLEMP_N_REDUCE_MAX			308
+#define _XCALABLEMP_N_REDUCE_MIN			309
 
 // defined in exc.xcalablemp.XMPshadow
 #define _XCALABLEMP_N_SHADOW_NONE			400

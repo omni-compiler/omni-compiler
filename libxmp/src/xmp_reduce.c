@@ -59,6 +59,22 @@ static void _XCALABLEMP_setup_reduce_info(MPI_Datatype *mpi_datatype, size_t *da
       { *mpi_op = MPI_SUM;	break; }
     case _XCALABLEMP_N_REDUCE_PROD:
       { *mpi_op = MPI_PROD;	break; }
+    case _XCALABLEMP_N_REDUCE_BAND:
+      { *mpi_op = MPI_BAND;	break; }
+    case _XCALABLEMP_N_REDUCE_LAND:
+      { *mpi_op = MPI_LAND;	break; }
+    case _XCALABLEMP_N_REDUCE_BOR:
+      { *mpi_op = MPI_BOR;	break; }
+    case _XCALABLEMP_N_REDUCE_LOR:
+      { *mpi_op = MPI_LOR;	break; }
+    case _XCALABLEMP_N_REDUCE_BXOR:
+      { *mpi_op = MPI_BXOR;	break; }
+    case _XCALABLEMP_N_REDUCE_LXOR:
+      { *mpi_op = MPI_LXOR;	break; }
+    case _XCALABLEMP_N_REDUCE_MAX:
+      { *mpi_op = MPI_MAX;	break; }
+    case _XCALABLEMP_N_REDUCE_MIN:
+      { *mpi_op = MPI_MIN;	break; }
     default:
       _XCALABLEMP_fatal("unknown reduce operation");
   }

@@ -371,9 +371,12 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       // FIXME support cyclic(w), gblock
       // parse <dist-format> := { * | block | cyclic }
       pg_get_token();
-      if (pg_tok() == '*')		distFormatList.add(Xcons.IntConstant(XMPtemplate.DUPLICATION));
-      else if (pg_is_ident("block"))	distFormatList.add(Xcons.IntConstant(XMPtemplate.BLOCK));
-      else if (pg_is_ident("cyclic"))	distFormatList.add(Xcons.IntConstant(XMPtemplate.CYCLIC));
+      if (pg_tok() == '*')
+        distFormatList.add(Xcons.IntConstant(XMPtemplate.DUPLICATION));
+      else if (pg_is_ident("block") || pg_is_ident("BLOCK"))
+        distFormatList.add(Xcons.IntConstant(XMPtemplate.BLOCK));
+      else if (pg_is_ident("cyclic") || pg_is_ident("CYCLIC"))
+        distFormatList.add(Xcons.IntConstant(XMPtemplate.CYCLIC));
       else
         error("unknown distribution manner");
 
@@ -789,8 +792,9 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
     // parse <reduction-kind>
     pg_get_token();
-    XobjInt reductionKind = parse_REDUCTION_KIND();
+    XobjInt reductionKind = get_REDUCTION_KIND();
 
+    pg_get_token();
     if (pg_tok() != ':')
       error("':' is expected after <reduction-kind>");
 
@@ -810,16 +814,47 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     return Xcons.List(reductionKind, reductionSpecList);
   }
 
-  private XobjInt parse_REDUCTION_KIND() throws XMPexception {
-    // FIXME incomplete implementation
-    XobjInt reductionKind = null;
-    if (pg_tok() == '+') reductionKind =  Xcons.IntConstant(XMPcollective.REDUCE_SUM);
-    else if (pg_tok() == '*') reductionKind =  Xcons.IntConstant(XMPcollective.REDUCE_PROD);
-    else
-      error("'" + pg_tok_buf() +  "' is not allowed for <reduction-spec>");
-
-    pg_get_token();
-    return reductionKind;
+  private XobjInt get_REDUCTION_KIND() throws XMPexception {
+    // FIXME some opearations are not implemented yet
+    switch (pg_tok()) {
+      case '+':
+        return Xcons.IntConstant(XMPcollective.REDUCE_SUM);
+      case '*':
+        return Xcons.IntConstant(XMPcollective.REDUCE_PROD);
+      case '&':
+        return Xcons.IntConstant(XMPcollective.REDUCE_BAND);
+      case PG_ANDAND:
+        return Xcons.IntConstant(XMPcollective.REDUCE_LAND);
+      case '|':
+        return Xcons.IntConstant(XMPcollective.REDUCE_BOR);
+      case PG_OROR:
+        return Xcons.IntConstant(XMPcollective.REDUCE_LOR);
+      case '^':
+        return Xcons.IntConstant(XMPcollective.REDUCE_BXOR);
+      case PG_IDENT:
+        {
+          if (pg_is_ident("band") || pg_is_ident("BAND"))
+            return Xcons.IntConstant(XMPcollective.REDUCE_BAND);
+          else if (pg_is_ident("land") || pg_is_ident("LAND"))
+            return Xcons.IntConstant(XMPcollective.REDUCE_LAND);
+          else if (pg_is_ident("bor") || pg_is_ident("BOR"))
+            return Xcons.IntConstant(XMPcollective.REDUCE_BOR);
+          else if (pg_is_ident("lor") || pg_is_ident("LOR"))
+            return Xcons.IntConstant(XMPcollective.REDUCE_LOR);
+          else if (pg_is_ident("bxor") || pg_is_ident("BXOR"))
+            return Xcons.IntConstant(XMPcollective.REDUCE_BXOR);
+          else if (pg_is_ident("lxor") || pg_is_ident("LXOR"))
+            return Xcons.IntConstant(XMPcollective.REDUCE_LXOR);
+          else if (pg_is_ident("max") || pg_is_ident("MAX"))
+            return Xcons.IntConstant(XMPcollective.REDUCE_MAX);
+          else if (pg_is_ident("min") || pg_is_ident("MIN"))
+            return Xcons.IntConstant(XMPcollective.REDUCE_MIN);
+        }
+      default:
+        error("'" + pg_tok_buf() +  "' is not allowed for <reduction-spec>");
+        // XXX never reach here
+        return null;
+    }
   }
 
   private XobjString parse_REDUCTION_SPEC() throws XMPexception {
