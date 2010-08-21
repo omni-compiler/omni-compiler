@@ -1270,7 +1270,8 @@ public class XMPtranslateLocalPragma {
       XobjList reductionFuncArgs = Xcons.List(specId.getAddr(), count, elmtType, reductionOp);
 
       // add extra args for (firstmax, firstmin, lastmax, lastmin) if needed
-      createFLMMreductionArgs(reductionOp.getInt(), count, (XobjList)reductionSpec.getArg(1), reductionFuncArgs, pb);
+      createFLMMreductionArgs(reductionOp.getInt(), count.getLongLow(),
+                              (XobjList)reductionSpec.getArg(1), reductionFuncArgs, pb);
 
       returnVector.add(reductionFuncArgs);
     }
@@ -1278,7 +1279,7 @@ public class XMPtranslateLocalPragma {
     return returnVector;
   }
 
-  private void createFLMMreductionArgs(int op, XobjLong count, XobjList locationVars,
+  private void createFLMMreductionArgs(int op, long count, XobjList locationVars,
                                        XobjList funcArgs, PragmaBlock pb) throws XMPexception {
     LineNo lnObj = pb.getLineNo();
 
@@ -1319,17 +1320,33 @@ public class XMPtranslateLocalPragma {
             if (!XMPutil.isIntegerType(varType))
               XMP.error(lnObj, "'" + varName + "' should have a integer type for reduction");
 
-            BasicType basicSpecType = (BasicType)varType;
+            BasicType basicVarType = (BasicType)varType;
             
-            // FIXME compare counts
+            if (count != 1)
+              XMP.error(lnObj, "'" + varName + "' should be a scalar variable");
 
             funcArgs.add(Xcons.Cast(Xtype.voidPtrType, varId.getAddr()));
-            funcArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(basicSpecType.getBasicType() + 200)));
+            funcArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(basicVarType.getBasicType() + 200)));
           }
           break;
         case Xtype.ARRAY:
-          // FIXME not implemented yet
-          XMP.error(lnObj, "not implemented yet");
+          {
+            ArrayType arrayVarType = (ArrayType)varType;
+            if (arrayVarType.getArrayElementType().getKind() != Xtype.BASIC)
+              XMP.error(lnObj, "array '" + varName + "' has has a wrong data type for reduction");
+
+            if (!XMPutil.isIntegerType(arrayVarType))
+              XMP.error(lnObj, "'" + varName + "' should have a integer type for reduction");
+
+            BasicType basicVarType = (BasicType)arrayVarType.getArrayElementType();
+
+            if (count != getArrayElmtCount(arrayVarType))
+              XMP.error(lnObj, "the size of '" + varName + "' is not same with the <reduction-variable>");
+
+            funcArgs.add(Xcons.Cast(Xtype.voidPtrType, varId.getAddr()));
+            funcArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(basicVarType.getBasicType() + 200)));
+          }
+          break;
         default:
           XMP.error(lnObj, "'" + varName + "' has a wrong data type for reduction");
       }
