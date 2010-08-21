@@ -802,7 +802,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     XobjList reductionSpecList = Xcons.List();
     do {
       pg_get_token();
-      reductionSpecList.add(parse_REDUCTION_SPEC());
+      reductionSpecList.add(parse_REDUCTION_SPEC(reductionKind.getInt()));
 
       if (pg_tok() == ')') break;
       else if (pg_tok() == ',') continue;
@@ -853,6 +853,14 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
             return Xcons.IntConstant(XMPcollective.REDUCE_MAX);
           else if (pg_is_ident("min") || pg_is_ident("MIN"))
             return Xcons.IntConstant(XMPcollective.REDUCE_MIN);
+          else if (pg_is_ident("firstmax") || pg_is_ident("FIRSTMAX"))
+            return Xcons.IntConstant(XMPcollective.REDUCE_FIRSTMAX);
+          else if (pg_is_ident("firstmin") || pg_is_ident("FIRSTMIN"))
+            return Xcons.IntConstant(XMPcollective.REDUCE_FIRSTMIN);
+          else if (pg_is_ident("lastmax") || pg_is_ident("LASTMAX"))
+            return Xcons.IntConstant(XMPcollective.REDUCE_LASTMAX);
+          else if (pg_is_ident("lastmin") || pg_is_ident("LASTMIN"))
+            return Xcons.IntConstant(XMPcollective.REDUCE_LASTMIN);
         }
       default:
         error("'" + pg_tok_buf() +  "' is not allowed for <reduction-spec>");
@@ -861,17 +869,57 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     }
   }
 
-  private XobjString parse_REDUCTION_SPEC() throws XMPexception {
-    // FIXME incomplete implementation
-    if (pg_tok() == PG_IDENT) {
-      pg_get_token();
-      return Xcons.String(pg_tok_buf());
-    }
+  private XobjList parse_REDUCTION_SPEC(int reductionKind) throws XMPexception {
+    XobjList reductionSpec = Xcons.List();
+    if (pg_tok() == PG_IDENT)
+      reductionSpec.add(Xcons.String(pg_tok_buf()));
     else
       error("syntax error on <reduction-spec>");
 
-    // not reach here
-    return null;
+    pg_get_token();
+    switch (reductionKind) {
+      case XMPcollective.REDUCE_SUM:
+      case XMPcollective.REDUCE_PROD:
+      case XMPcollective.REDUCE_BAND:
+      case XMPcollective.REDUCE_LAND:
+      case XMPcollective.REDUCE_BOR:
+      case XMPcollective.REDUCE_LOR:
+      case XMPcollective.REDUCE_BXOR:
+      case XMPcollective.REDUCE_LXOR:
+      case XMPcollective.REDUCE_MAX:
+      case XMPcollective.REDUCE_MIN:
+        reductionSpec.add(null);
+        break;
+      case XMPcollective.REDUCE_FIRSTMAX:
+      case XMPcollective.REDUCE_FIRSTMIN:
+      case XMPcollective.REDUCE_LASTMAX:
+      case XMPcollective.REDUCE_LASTMIN:
+        {
+          if (pg_tok() != '/')
+            error("'/' is expected after <reduction-variable>");
+
+          XobjList locationVariables = Xcons.List();
+          do {
+            pg_get_token();
+            if (pg_tok() == PG_IDENT)
+              locationVariables.add(Xcons.String(pg_tok_buf()));
+            else
+              error("syntax error on <location-variable>");
+
+            if (pg_tok() == '/') break;
+            else if (pg_tok() == ',') continue;
+            else
+              error("'/' or ',' is expected after <reduction-spec>");
+          } while (true);
+
+          reductionSpec.add(locationVariables);
+          pg_get_token();
+        }
+      default:
+        error("unknown reduce operation on <reduction-spec>");
+    }
+
+    return reductionSpec;
   }
 
   private XobjList parse_GMOVE_clause() throws XMPexception {

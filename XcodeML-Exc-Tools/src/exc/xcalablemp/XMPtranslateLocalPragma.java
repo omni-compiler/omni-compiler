@@ -1204,7 +1204,8 @@ public class XMPtranslateLocalPragma {
 
     XobjList reductionSpecList = (XobjList)reductionRef.getArg(1);
     for (XobjArgs i = reductionSpecList.getArgs(); i != null; i = i.nextArgs()) {
-      String specName = i.getArg().getString();
+      XobjList reductionSpec = (XobjList)i.getArg();
+      String specName = reductionSpec.getArg(0).getString();
 
       XMPpair<Ident, Xtype> typedSpec = findTypedVar(specName, pb);
       Ident specId = typedSpec.getFirst();
