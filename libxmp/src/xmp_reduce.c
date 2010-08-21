@@ -116,3 +116,40 @@ void _XCALABLEMP_reduce_EXEC(void *addr, int count, int datatype, int op) {
 
   _XCALABLEMP_free(temp_buffer);
 }
+
+void _XCALABLEMP_reduce_FLMM_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes, void *addr, int count, int datatype, int op) {
+  if (nodes == NULL) return;
+
+  // setup information
+  MPI_Datatype mpi_datatype;
+  size_t datatype_size;
+  MPI_Op mpi_op;
+  _XCALABLEMP_setup_reduce_info(&mpi_datatype, &datatype_size, &mpi_op, datatype, op);
+
+  // reduce
+  size_t n = datatype_size * count;
+  void *temp_buffer = _XCALABLEMP_alloc(n);
+  memcpy(temp_buffer, addr, n);
+
+  MPI_Allreduce(temp_buffer, addr, count, mpi_datatype, mpi_op, *(nodes->comm));
+
+  _XCALABLEMP_free(temp_buffer);
+}
+
+void _XCALABLEMP_reduce_FLMM_EXEC(void *addr, int count, int datatype, int op) {
+  // setup information
+  MPI_Datatype mpi_datatype;
+  size_t datatype_size;
+  MPI_Op mpi_op;
+  _XCALABLEMP_setup_reduce_info(&mpi_datatype, &datatype_size, &mpi_op, datatype, op);
+
+  // reduce
+  size_t n = datatype_size * count;
+  void *temp_buffer = _XCALABLEMP_alloc(n);
+  memcpy(temp_buffer, addr, n);
+
+  _XCALABLEMP_nodes_t *nodes = _XCALABLEMP_get_execution_nodes();
+  MPI_Allreduce(temp_buffer, addr, count, mpi_datatype, mpi_op, *(nodes->comm));
+
+  _XCALABLEMP_free(temp_buffer);
+}

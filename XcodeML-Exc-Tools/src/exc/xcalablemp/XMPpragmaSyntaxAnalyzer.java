@@ -906,6 +906,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
             else
               error("syntax error on <location-variable>");
 
+            pg_get_token();
             if (pg_tok() == '/') break;
             else if (pg_tok() == ',') continue;
             else
@@ -915,6 +916,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
           reductionSpec.add(locationVariables);
           pg_get_token();
         }
+        break;
       default:
         error("unknown reduce operation on <reduction-spec>");
     }

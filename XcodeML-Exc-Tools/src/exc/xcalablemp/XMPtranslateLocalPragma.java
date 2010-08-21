@@ -846,8 +846,9 @@ public class XMPtranslateLocalPragma {
       while (it.hasNext()) {
         XobjList reductionRef = (XobjList)it.next();
         Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb);
+        String reductionFuncPrefix = createReductionFuncPrefix(reductionRef, pb);
 
-        reductionBody.add(createReductionFuncCallBlock("_XCALABLEMP_reduce_EXEC",
+        reductionBody.add(createReductionFuncCallBlock(reductionFuncPrefix + "_EXEC",
                                                        null, reductionFuncArgsList));
       }
 
@@ -862,9 +863,9 @@ public class XMPtranslateLocalPragma {
       while (it.hasNext()) {
         XobjList reductionRef = (XobjList)it.next();
         Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb);
+        String reductionFuncPrefix = createReductionFuncPrefix(reductionRef, pb);
 
-        // execFuncSurfix is {GLOBAL, NODES}_ENTIRE, execFuncArgs is LIST({null, NODES desc})
-        reductionBody.add(createReductionFuncCallBlock("_XCALABLEMP_reduce_" + execFuncSurfix,
+        reductionBody.add(createReductionFuncCallBlock(reductionFuncPrefix + "_" + execFuncSurfix,
                                                        execFuncArgs.operand(), reductionFuncArgsList));
       }
 
@@ -1149,7 +1150,6 @@ public class XMPtranslateLocalPragma {
         pb.replace(Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), barrierBody, null));
       }
       else pb.replace(createFuncCallBlock("_XCALABLEMP_barrier_" + execFuncSurfix, execFuncArgs));
-      // execFuncSurfix is {GLOBAL, NODES, TEMPLATE}_ENTIRE, execFuncArgs is LIST({null, NODES desc, TEMPLATE desc})
     }
   }
 
@@ -1168,17 +1168,18 @@ public class XMPtranslateLocalPragma {
     // create function arguments
     XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
     Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb);
+    String reductionFuncPrefix = createReductionFuncPrefix(reductionRef, pb);
 
     // create function call
     XobjList onRef = (XobjList)reductionDecl.getArg(1);
-    if (onRef == null) pb.replace(createReductionFuncCallBlock("_XCALABLEMP_reduce_EXEC", null, reductionFuncArgsList));
+    if (onRef == null) pb.replace(createReductionFuncCallBlock(reductionFuncPrefix + "_EXEC", null, reductionFuncArgsList));
     else {
       XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(lnObj, onRef, localObjectTable);
       String execFuncSurfix = execOnRefArgs.getFirst();
       boolean splitComm = execOnRefArgs.getSecond().booleanValue();
       XobjList execFuncArgs = execOnRefArgs.getThird();
       if (splitComm) {
-        BlockList reductionBody = Bcons.blockList(createReductionFuncCallBlock("_XCALABLEMP_reduce_EXEC",
+        BlockList reductionBody = Bcons.blockList(createReductionFuncCallBlock(reductionFuncPrefix + "_EXEC",
                                                                                null, reductionFuncArgsList));
 
         // setup reduction finalizer
@@ -1189,10 +1190,36 @@ public class XMPtranslateLocalPragma {
         pb.replace(Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), reductionBody, null));
       }
       else {
-        // execFuncSurfix is {GLOBAL, NODES}_ENTIRE, execFuncArgs is LIST({null, NODES desc})
-        pb.replace(createReductionFuncCallBlock("_XCALABLEMP_reduce_" + execFuncSurfix,
+        pb.replace(createReductionFuncCallBlock(reductionFuncPrefix + "_" + execFuncSurfix,
                                                 execFuncArgs.operand(), reductionFuncArgsList));
       }
+    }
+  }
+
+  private String createReductionFuncPrefix(XobjList reductionRef, PragmaBlock pb) throws XMPexception {
+    LineNo lnObj = pb.getLineNo();
+    XobjInt reductionOp = (XobjInt)reductionRef.getArg(0);
+    switch (reductionOp.getInt()) {
+      case XMPcollective.REDUCE_SUM:
+      case XMPcollective.REDUCE_PROD:
+      case XMPcollective.REDUCE_BAND:
+      case XMPcollective.REDUCE_LAND:
+      case XMPcollective.REDUCE_BOR:
+      case XMPcollective.REDUCE_LOR:
+      case XMPcollective.REDUCE_BXOR:
+      case XMPcollective.REDUCE_LXOR:
+      case XMPcollective.REDUCE_MAX:
+      case XMPcollective.REDUCE_MIN:
+        return new String("_XCALABLEMP_reduce");
+      case XMPcollective.REDUCE_FIRSTMAX:
+      case XMPcollective.REDUCE_FIRSTMIN:
+      case XMPcollective.REDUCE_LASTMAX:
+      case XMPcollective.REDUCE_LASTMIN:
+        return new String("_XCALABLEMP_reduce_FLMM");
+      default:
+        XMP.error(lnObj, "unknown reduce operation");
+        // XXX never reach here
+        return null;
     }
   }
 
@@ -1345,7 +1372,6 @@ public class XMPtranslateLocalPragma {
         pb.replace(Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), bcastBody, null));
       }
       else {
-        // execFuncSurfix is {GLOBAL, NODES}_ENTIRE, execFuncArgs is LIST({null, NODES desc})
         pb.replace(createBcastFuncCallBlock(lnObj, "_XCALABLEMP_bcast_" + execFuncSurfix,
                                             execFuncArgs.operand(), bcastArgsList, execFromRefArgs));
       }
