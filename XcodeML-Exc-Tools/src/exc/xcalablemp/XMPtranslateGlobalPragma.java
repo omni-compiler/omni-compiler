@@ -47,7 +47,7 @@ public class XMPtranslateGlobalPragma {
     checkObjectNameCollision(lnObj, nodesName);
 
     // declare nodes desciptor
-    Ident nodesDescId = _env.declStaticIdent(XMP.DESC_PREFIX_ + nodesName, Xtype.Pointer(Xtype.voidType));
+    Ident nodesDescId = _env.declStaticIdent(XMP.DESC_PREFIX_ + nodesName, Xtype.voidPtrType);
 
     // declare nodes object
     int nodesDim = 0;
@@ -183,7 +183,7 @@ public class XMPtranslateGlobalPragma {
     checkObjectNameCollision(lnObj, templateName);
 
     // declare template desciptor
-    Ident templateDescId = _env.declStaticIdent(XMP.DESC_PREFIX_ + templateName, Xtype.Pointer(Xtype.voidType));
+    Ident templateDescId = _env.declStaticIdent(XMP.DESC_PREFIX_ + templateName, Xtype.voidPtrType);
 
     // declare template object
     int templateDim = 0;
@@ -406,7 +406,7 @@ public class XMPtranslateGlobalPragma {
 
     // declare array descriptor
     Ident arrayDescId = _env.declStaticIdent(XMP.DESC_PREFIX_ + arrayName,
-                                             Xtype.Pointer(Xtype.voidType));
+                                             Xtype.voidPtrType);
 
     int arrayDim = arrayType.getNumDimensions();
     if ((arrayDim > (XMP.MAX_DIM)) || (arrayDim < 1))

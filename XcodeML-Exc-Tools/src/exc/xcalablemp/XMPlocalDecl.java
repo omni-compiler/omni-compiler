@@ -53,7 +53,7 @@ public class XMPlocalDecl {
   }
 
   public static Ident addObjectId(String objectName, Block block) {
-    return addObjectId(objectName, Xtype.Pointer(Xtype.voidType), block);
+    return addObjectId(objectName, Xtype.voidPtrType, block);
   }
 
   public static void addConstructorCall(String funcName, Xobject funcArgs, Block block, XMPglobalDecl globalDecl) {

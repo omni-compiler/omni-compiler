@@ -1267,10 +1267,73 @@ public class XMPtranslateLocalPragma {
           XMP.error(lnObj, "'" + specName + "' has a wrong data type for reduction");
       }
 
-      returnVector.add(Xcons.List(specId.getAddr(), count, elmtType, reductionOp));
+      XobjList reductionFuncArgs = Xcons.List(specId.getAddr(), count, elmtType, reductionOp);
+
+      // add extra args for (firstmax, firstmin, lastmax, lastmin) if needed
+      createFLMMreductionArgs(reductionOp.getInt(), count, (XobjList)reductionSpec.getArg(1), reductionFuncArgs, pb);
+
+      returnVector.add(reductionFuncArgs);
     }
 
     return returnVector;
+  }
+
+  private void createFLMMreductionArgs(int op, XobjLong count, XobjList locationVars,
+                                       XobjList funcArgs, PragmaBlock pb) throws XMPexception {
+    LineNo lnObj = pb.getLineNo();
+
+    switch (op) {
+      case XMPcollective.REDUCE_SUM:
+      case XMPcollective.REDUCE_PROD:
+      case XMPcollective.REDUCE_BAND:
+      case XMPcollective.REDUCE_LAND:
+      case XMPcollective.REDUCE_BOR:
+      case XMPcollective.REDUCE_LOR:
+      case XMPcollective.REDUCE_BXOR:
+      case XMPcollective.REDUCE_LXOR:
+      case XMPcollective.REDUCE_MAX:
+      case XMPcollective.REDUCE_MIN:
+        return;
+      case XMPcollective.REDUCE_FIRSTMAX:
+      case XMPcollective.REDUCE_FIRSTMIN:
+      case XMPcollective.REDUCE_LASTMAX:
+      case XMPcollective.REDUCE_LASTMIN:
+        break;
+      default:
+        XMP.error(lnObj, "unknown reduce operation");
+    }
+
+    funcArgs.add(Xcons.IntConstant(XMPutil.countElmts(locationVars)));
+
+    // check <location-variables> and add to funcArgs
+    for (XobjArgs i = locationVars.getArgs(); i != null; i = i.nextArgs()) {
+      String varName = i.getArg().getString();
+
+      XMPpair<Ident, Xtype> typedVar = findTypedVar(varName, pb);
+      Ident varId = typedVar.getFirst();
+      Xtype varType = typedVar.getSecond();
+
+      switch (varType.getKind()) {
+        case Xtype.BASIC:
+          {
+            if (!XMPutil.isIntegerType(varType))
+              XMP.error(lnObj, "'" + varName + "' should have a integer type for reduction");
+
+            BasicType basicSpecType = (BasicType)varType;
+            
+            // FIXME compare counts
+
+            funcArgs.add(Xcons.Cast(Xtype.voidPtrType, varId.getAddr()));
+            funcArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(basicSpecType.getBasicType() + 200)));
+          }
+          break;
+        case Xtype.ARRAY:
+          // FIXME not implemented yet
+          XMP.error(lnObj, "not implemented yet");
+        default:
+          XMP.error(lnObj, "'" + varName + "' has a wrong data type for reduction");
+      }
+    }
   }
 
   private void checkReductionType(LineNo lnObj, String name, BasicType type) throws XMPexception {
