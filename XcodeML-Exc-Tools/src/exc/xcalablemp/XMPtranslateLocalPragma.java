@@ -1335,10 +1335,10 @@ public class XMPtranslateLocalPragma {
             if (arrayVarType.getArrayElementType().getKind() != Xtype.BASIC)
               XMP.error(lnObj, "array '" + varName + "' has has a wrong data type for reduction");
 
-            if (!XMPutil.isIntegerType(arrayVarType))
-              XMP.error(lnObj, "'" + varName + "' should have a integer type for reduction");
-
             BasicType basicVarType = (BasicType)arrayVarType.getArrayElementType();
+
+            if (!XMPutil.isIntegerType(basicVarType))
+              XMP.error(lnObj, "'" + varName + "' should have a integer type for reduction");
 
             if (count != getArrayElmtCount(arrayVarType))
               XMP.error(lnObj, "the size of '" + varName + "' is not same with the <reduction-variable>");
