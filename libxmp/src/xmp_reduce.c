@@ -1,13 +1,13 @@
 #include <string.h>
+#include <stdarg.h>
 #include "xmp_constant.h"
 #include "xmp_internal.h"
 
-static void _XCALABLEMP_setup_reduce_info(MPI_Datatype *mpi_datatype, size_t *datatype_size, MPI_Op *mpi_op,
-                                          int datatype, int op);
+static void _XCALABLEMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype);
+static void _XCALABLEMP_setup_reduce_op(MPI_Op *mpi_op, int op);
+static void _XCALABLEMP_setup_reduce_FLMM_op(MPI_Op *mpi_op, int op);
 
-static void _XCALABLEMP_setup_reduce_info(MPI_Datatype *mpi_datatype, size_t *datatype_size, MPI_Op *mpi_op,
-                                          int datatype, int op) {
-    // data type
+static void _XCALABLEMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype) {
     switch (datatype) {
 //    case _XCALABLEMP_N_TYPE_BOOL:
 //      { *datatype_size = sizeof(_Bool);			*mpi_datatype = MPI_C_BOOL;			break; }
@@ -52,8 +52,9 @@ static void _XCALABLEMP_setup_reduce_info(MPI_Datatype *mpi_datatype, size_t *da
     default:
       _XCALABLEMP_fatal("unknown data type for reduction");
   }
+}
 
-  // operation
+static void _XCALABLEMP_setup_reduce_op(MPI_Op *mpi_op, int op) {
   switch (op) {
     case _XCALABLEMP_N_REDUCE_SUM:
       { *mpi_op = MPI_SUM;	break; }
@@ -75,6 +76,27 @@ static void _XCALABLEMP_setup_reduce_info(MPI_Datatype *mpi_datatype, size_t *da
       { *mpi_op = MPI_MAX;	break; }
     case _XCALABLEMP_N_REDUCE_MIN:
       { *mpi_op = MPI_MIN;	break; }
+    case _XCALABLEMP_N_REDUCE_FIRSTMAX:
+      { *mpi_op = MPI_MAX;	break; }
+    case _XCALABLEMP_N_REDUCE_FIRSTMIN:
+      { *mpi_op = MPI_MIN;	break; }
+    case _XCALABLEMP_N_REDUCE_LASTMAX:
+      { *mpi_op = MPI_MAX;	break; }
+    case _XCALABLEMP_N_REDUCE_LASTMIN:
+      { *mpi_op = MPI_MIN;	break; }
+    default:
+      _XCALABLEMP_fatal("unknown reduce operation");
+  }
+}
+
+static void _XCALABLEMP_setup_reduce_FLMM_op(MPI_Op *mpi_op, int op) {
+  switch (op) {
+    case _XCALABLEMP_N_REDUCE_FIRSTMAX:
+    case _XCALABLEMP_N_REDUCE_FIRSTMIN:
+      { *mpi_op = MPI_MIN;      break; }
+    case _XCALABLEMP_N_REDUCE_LASTMAX:
+    case _XCALABLEMP_N_REDUCE_LASTMIN:
+      { *mpi_op = MPI_MAX;      break; }
     default:
       _XCALABLEMP_fatal("unknown reduce operation");
   }
@@ -87,7 +109,8 @@ void _XCALABLEMP_reduce_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes, void *addr, int
   MPI_Datatype mpi_datatype;
   size_t datatype_size;
   MPI_Op mpi_op;
-  _XCALABLEMP_setup_reduce_info(&mpi_datatype, &datatype_size, &mpi_op, datatype, op);
+  _XCALABLEMP_setup_reduce_type(&mpi_datatype, &datatype_size, datatype);
+  _XCALABLEMP_setup_reduce_op(&mpi_op, op);
 
   // reduce
   size_t n = datatype_size * count;
@@ -99,32 +122,20 @@ void _XCALABLEMP_reduce_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes, void *addr, int
   _XCALABLEMP_free(temp_buffer);
 }
 
-void _XCALABLEMP_reduce_EXEC(void *addr, int count, int datatype, int op) {
-  // setup information
-  MPI_Datatype mpi_datatype;
-  size_t datatype_size;
-  MPI_Op mpi_op;
-  _XCALABLEMP_setup_reduce_info(&mpi_datatype, &datatype_size, &mpi_op, datatype, op);
+// #define _XCALABLEMP_reduce_EXEC(addr, count, datatype, op) \
+// _XCALABLEMP_reduce_NODES_ENTIRE(_XCALABLEMP_get_execution_nodes(), addr, count, datatype, op)
 
-  // reduce
-  size_t n = datatype_size * count;
-  void *temp_buffer = _XCALABLEMP_alloc(n);
-  memcpy(temp_buffer, addr, n);
-
-  _XCALABLEMP_nodes_t *nodes = _XCALABLEMP_get_execution_nodes();
-  MPI_Allreduce(temp_buffer, addr, count, mpi_datatype, mpi_op, *(nodes->comm));
-
-  _XCALABLEMP_free(temp_buffer);
-}
-
-void _XCALABLEMP_reduce_FLMM_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes, void *addr, int count, int datatype, int op) {
+void _XCALABLEMP_reduce_FLMM_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes,
+                                          void *addr, int count, int datatype, int op,
+                                          int num_locs, ...) {
   if (nodes == NULL) return;
 
   // setup information
   MPI_Datatype mpi_datatype;
   size_t datatype_size;
   MPI_Op mpi_op;
-  _XCALABLEMP_setup_reduce_info(&mpi_datatype, &datatype_size, &mpi_op, datatype, op);
+  _XCALABLEMP_setup_reduce_type(&mpi_datatype, &datatype_size, datatype);
+  _XCALABLEMP_setup_reduce_op(&mpi_op, op);
 
   // reduce
   size_t n = datatype_size * count;
@@ -133,23 +144,16 @@ void _XCALABLEMP_reduce_FLMM_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes, void *addr
 
   MPI_Allreduce(temp_buffer, addr, count, mpi_datatype, mpi_op, *(nodes->comm));
 
-  _XCALABLEMP_free(temp_buffer);
-}
-
-void _XCALABLEMP_reduce_FLMM_EXEC(void *addr, int count, int datatype, int op) {
-  // setup information
-  MPI_Datatype mpi_datatype;
-  size_t datatype_size;
-  MPI_Op mpi_op;
-  _XCALABLEMP_setup_reduce_info(&mpi_datatype, &datatype_size, &mpi_op, datatype, op);
-
-  // reduce
-  size_t n = datatype_size * count;
-  void *temp_buffer = _XCALABLEMP_alloc(n);
-  memcpy(temp_buffer, addr, n);
-
-  _XCALABLEMP_nodes_t *nodes = _XCALABLEMP_get_execution_nodes();
-  MPI_Allreduce(temp_buffer, addr, count, mpi_datatype, mpi_op, *(nodes->comm));
+  va_list args;
+  va_start(args, num_locs);
+  for (int i = 0; i < num_locs; i++) {
+    void *loc = va_arg(args, void *);
+    int loc_datatype = va_arg(args, int);
+  }
+  va_end(args);
 
   _XCALABLEMP_free(temp_buffer);
 }
+
+// #define _XCALABLEMP_reduce_FLMM_EXEC(addr, count, datatype, op, num_locs, ...) \
+// _XCALABLEMP_reduce_FLMM_NODES_ENTIRE(_XCALABLEMP_get_execution_nodes(), addr, count, datatype, op, num_locs, __VA_ARGS__)

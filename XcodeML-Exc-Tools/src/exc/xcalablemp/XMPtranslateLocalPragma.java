@@ -846,9 +846,9 @@ public class XMPtranslateLocalPragma {
       while (it.hasNext()) {
         XobjList reductionRef = (XobjList)it.next();
         Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb);
-        String reductionFuncPrefix = createReductionFuncPrefix(reductionRef, pb);
+        String reductionFuncType = createReductionFuncType(reductionRef, pb);
 
-        reductionBody.add(createReductionFuncCallBlock(reductionFuncPrefix + "_EXEC",
+        reductionBody.add(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC",
                                                        null, reductionFuncArgsList));
       }
 
@@ -863,9 +863,9 @@ public class XMPtranslateLocalPragma {
       while (it.hasNext()) {
         XobjList reductionRef = (XobjList)it.next();
         Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb);
-        String reductionFuncPrefix = createReductionFuncPrefix(reductionRef, pb);
+        String reductionFuncType = createReductionFuncType(reductionRef, pb);
 
-        reductionBody.add(createReductionFuncCallBlock(reductionFuncPrefix + "_" + execFuncSurfix,
+        reductionBody.add(createReductionFuncCallBlock(false, reductionFuncType + "_" + execFuncSurfix,
                                                        execFuncArgs.operand(), reductionFuncArgsList));
       }
 
@@ -1168,18 +1168,18 @@ public class XMPtranslateLocalPragma {
     // create function arguments
     XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
     Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb);
-    String reductionFuncPrefix = createReductionFuncPrefix(reductionRef, pb);
+    String reductionFuncType = createReductionFuncType(reductionRef, pb);
 
     // create function call
     XobjList onRef = (XobjList)reductionDecl.getArg(1);
-    if (onRef == null) pb.replace(createReductionFuncCallBlock(reductionFuncPrefix + "_EXEC", null, reductionFuncArgsList));
+    if (onRef == null) pb.replace(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC", null, reductionFuncArgsList));
     else {
       XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(lnObj, onRef, localObjectTable);
       String execFuncSurfix = execOnRefArgs.getFirst();
       boolean splitComm = execOnRefArgs.getSecond().booleanValue();
       XobjList execFuncArgs = execOnRefArgs.getThird();
       if (splitComm) {
-        BlockList reductionBody = Bcons.blockList(createReductionFuncCallBlock(reductionFuncPrefix + "_EXEC",
+        BlockList reductionBody = Bcons.blockList(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC",
                                                                                null, reductionFuncArgsList));
 
         // setup reduction finalizer
@@ -1190,13 +1190,13 @@ public class XMPtranslateLocalPragma {
         pb.replace(Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), reductionBody, null));
       }
       else {
-        pb.replace(createReductionFuncCallBlock(reductionFuncPrefix + "_" + execFuncSurfix,
+        pb.replace(createReductionFuncCallBlock(false, reductionFuncType + "_" + execFuncSurfix,
                                                 execFuncArgs.operand(), reductionFuncArgsList));
       }
     }
   }
 
-  private String createReductionFuncPrefix(XobjList reductionRef, PragmaBlock pb) throws XMPexception {
+  private String createReductionFuncType(XobjList reductionRef, PragmaBlock pb) throws XMPexception {
     LineNo lnObj = pb.getLineNo();
     XobjInt reductionOp = (XobjInt)reductionRef.getArg(0);
     switch (reductionOp.getInt()) {
@@ -1210,12 +1210,12 @@ public class XMPtranslateLocalPragma {
       case XMPcollective.REDUCE_LXOR:
       case XMPcollective.REDUCE_MAX:
       case XMPcollective.REDUCE_MIN:
-        return new String("_XCALABLEMP_reduce");
+        return new String("reduce");
       case XMPcollective.REDUCE_FIRSTMAX:
       case XMPcollective.REDUCE_FIRSTMIN:
       case XMPcollective.REDUCE_LASTMAX:
       case XMPcollective.REDUCE_LASTMIN:
-        return new String("_XCALABLEMP_reduce_FLMM");
+        return new String("reduce_FLMM");
       default:
         XMP.error(lnObj, "unknown reduce operation");
         // XXX never reach here
@@ -1381,8 +1381,12 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private Block createReductionFuncCallBlock(String funcName, Xobject execDesc, Vector<XobjList> funcArgsList) {
-    Ident funcId = _globalDecl.declExternFunc(funcName);
+  private Block createReductionFuncCallBlock(boolean isMacroFunc, String funcType,
+                                             Xobject execDesc, Vector<XobjList> funcArgsList) {
+    Ident funcId = null;
+    if (isMacroFunc) funcId = XMP.getMacroId("_XCALABLEMP_M_" + funcType.toUpperCase());
+    else             funcId = _globalDecl.declExternFunc("_XCALABLEMP_" + funcType);
+
     BlockList funcCallList = Bcons.emptyBody();
     Iterator<XobjList> it = funcArgsList.iterator();
     while (it.hasNext()) {

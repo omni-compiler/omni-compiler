@@ -1,6 +1,6 @@
 CC=@MPI_CMD@
 
-include_HEADERS			= xmp.h xmp_index_macro.h
+include_HEADERS			= xmp.h xmp_index_macro.h xmp_comm_macro.h
 lib_LIBRARIES			= libxmp.a
 libxmp_a_SOURCES		= xmp_internal.h xmp_math_macro.h xmp_constant.h \
 				  xmp_lib.c xmp_util.c xmp_world.c xmp_nodes_stack.c \
