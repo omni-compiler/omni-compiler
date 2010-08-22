@@ -1,11 +1,14 @@
 #include <string.h>
 #include <stdarg.h>
+#include <limits.h>
 #include "xmp_constant.h"
 #include "xmp_internal.h"
 
 static void _XCALABLEMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype);
 static void _XCALABLEMP_setup_reduce_op(MPI_Op *mpi_op, int op);
 static void _XCALABLEMP_setup_reduce_FLMM_op(MPI_Op *mpi_op, int op);
+static void _XCALABLEMP_compare_reduce_results(_Bool *cmp_buffer, void *temp_buffer, void *addr, int count, int datatype);
+static void _XCALABLEMP_init_localtion_variables(void *loc, int count, int loc_datatype, _Bool *cmp_buffer, int op);
 
 static void _XCALABLEMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype) {
     switch (datatype) {
@@ -102,6 +105,81 @@ static void _XCALABLEMP_setup_reduce_FLMM_op(MPI_Op *mpi_op, int op) {
   }
 }
 
+#define _XCALABLEMP_M_COMPARE_REDUCE_RESULTS_MAIN(type)\
+{ \
+  type *buf1 = (type *)temp_buffer; \
+  type *buf2 = (type *)addr; \
+  for (int i = 0; i < count; i++) { \
+    if (buf1[i] == buf2[i]) cmp_buffer[i] = true; \
+    else                    cmp_buffer[i] = false; \
+  } \
+} break;
+
+static void _XCALABLEMP_compare_reduce_results(_Bool *cmp_buffer, void *temp_buffer, void *addr, int count, int datatype) {
+  switch (datatype) {
+    case _XCALABLEMP_N_TYPE_BOOL:			_XCALABLEMP_M_COMPARE_REDUCE_RESULTS_MAIN(_Bool)
+    case _XCALABLEMP_N_TYPE_CHAR:			_XCALABLEMP_M_COMPARE_REDUCE_RESULTS_MAIN(char)
+    case _XCALABLEMP_N_TYPE_UNSIGNED_CHAR:		_XCALABLEMP_M_COMPARE_REDUCE_RESULTS_MAIN(unsigned char)
+    case _XCALABLEMP_N_TYPE_SHORT:			_XCALABLEMP_M_COMPARE_REDUCE_RESULTS_MAIN(short)
+    case _XCALABLEMP_N_TYPE_UNSIGNED_SHORT:		_XCALABLEMP_M_COMPARE_REDUCE_RESULTS_MAIN(unsigned short)
+    case _XCALABLEMP_N_TYPE_INT:			_XCALABLEMP_M_COMPARE_REDUCE_RESULTS_MAIN(int)
+    case _XCALABLEMP_N_TYPE_UNSIGNED_INT:		_XCALABLEMP_M_COMPARE_REDUCE_RESULTS_MAIN(unsigned int)
+    case _XCALABLEMP_N_TYPE_LONG:			_XCALABLEMP_M_COMPARE_REDUCE_RESULTS_MAIN(long)
+    case _XCALABLEMP_N_TYPE_UNSIGNED_LONG:		_XCALABLEMP_M_COMPARE_REDUCE_RESULTS_MAIN(unsigned long)
+    case _XCALABLEMP_N_TYPE_LONGLONG:			_XCALABLEMP_M_COMPARE_REDUCE_RESULTS_MAIN(long long)
+    case _XCALABLEMP_N_TYPE_UNSIGNED_LONGLONG:		_XCALABLEMP_M_COMPARE_REDUCE_RESULTS_MAIN(unsigned long long)
+    case _XCALABLEMP_N_TYPE_FLOAT:			_XCALABLEMP_M_COMPARE_REDUCE_RESULTS_MAIN(float)
+    case _XCALABLEMP_N_TYPE_DOUBLE:			_XCALABLEMP_M_COMPARE_REDUCE_RESULTS_MAIN(double)
+    case _XCALABLEMP_N_TYPE_LONG_DOUBLE:		_XCALABLEMP_M_COMPARE_REDUCE_RESULTS_MAIN(long double)
+    case _XCALABLEMP_N_TYPE_FLOAT_IMAGINARY:
+    case _XCALABLEMP_N_TYPE_DOUBLE_IMAGINARY:
+    case _XCALABLEMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
+    case _XCALABLEMP_N_TYPE_FLOAT_COMPLEX:
+    case _XCALABLEMP_N_TYPE_DOUBLE_COMPLEX:
+    case _XCALABLEMP_N_TYPE_LONG_DOUBLE_COMPLEX:
+      // FIXME
+      _XCALABLEMP_fatal("not implemented yet");
+    default:
+      _XCALABLEMP_fatal("unknown data type for reduction");
+  }
+}
+
+#define _XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(type, init_min, init_max) \
+{ \
+  type *buf = (type *)loc; \
+  for (int i = 0; i < count; i++) { \
+    if (!(cmp_buffer[i])) { \
+      switch (op) { \
+        case _XCALABLEMP_N_REDUCE_FIRSTMAX: \
+        case _XCALABLEMP_N_REDUCE_FIRSTMIN: \
+          { buf[i] = init_max; break; } \
+        case _XCALABLEMP_N_REDUCE_LASTMAX: \
+        case _XCALABLEMP_N_REDUCE_LASTMIN: \
+          { buf[i] = init_min; break; } \
+        default: \
+          _XCALABLEMP_fatal("unknown reduce operation"); \
+      } \
+    } \
+  } \
+} break;
+
+static void _XCALABLEMP_init_localtion_variables(void *loc, int count, int loc_datatype, _Bool *cmp_buffer, int op) {
+  switch (loc_datatype) {
+    case _XCALABLEMP_N_TYPE_CHAR:			_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(char, SCHAR_MIN, SCHAR_MAX)
+    case _XCALABLEMP_N_TYPE_UNSIGNED_CHAR:		_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(unsigned char, 0, UCHAR_MAX)
+    case _XCALABLEMP_N_TYPE_SHORT:			_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(short, SHRT_MIN, SHRT_MAX)
+    case _XCALABLEMP_N_TYPE_UNSIGNED_SHORT:		_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(unsigned short, 0, USHRT_MAX)
+    case _XCALABLEMP_N_TYPE_INT:			_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(int, INT_MIN, INT_MAX)
+    case _XCALABLEMP_N_TYPE_UNSIGNED_INT:		_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(unsigned int, 0, UINT_MAX)
+    case _XCALABLEMP_N_TYPE_LONG:			_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(long, LONG_MIN, LONG_MAX)
+    case _XCALABLEMP_N_TYPE_UNSIGNED_LONG:		_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(unsigned long, 0, ULONG_MAX)
+    case _XCALABLEMP_N_TYPE_LONGLONG:			_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(long long, LLONG_MIN, LLONG_MAX)
+    case _XCALABLEMP_N_TYPE_UNSIGNED_LONGLONG:		_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(unsigned long long, 0, ULLONG_MAX)
+    default:
+      _XCALABLEMP_fatal("wrong data type for <location-variables>");
+  }
+}
+
 void _XCALABLEMP_reduce_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes, void *addr, int count, int datatype, int op) {
   if (nodes == NULL) return;
 
@@ -122,8 +200,7 @@ void _XCALABLEMP_reduce_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes, void *addr, int
   _XCALABLEMP_free(temp_buffer);
 }
 
-// #define _XCALABLEMP_reduce_EXEC(addr, count, datatype, op) \
-// _XCALABLEMP_reduce_NODES_ENTIRE(_XCALABLEMP_get_execution_nodes(), addr, count, datatype, op)
+// _XCALABLEMP_M_REDUCE_EXEC(addr, count, datatype, op) is in xmp_comm_macro.h
 
 void _XCALABLEMP_reduce_FLMM_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes,
                                           void *addr, int count, int datatype, int op,
@@ -137,23 +214,41 @@ void _XCALABLEMP_reduce_FLMM_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes,
   _XCALABLEMP_setup_reduce_type(&mpi_datatype, &datatype_size, datatype);
   _XCALABLEMP_setup_reduce_op(&mpi_op, op);
 
-  // reduce
+  // reduce <reduction-variable>
   size_t n = datatype_size * count;
   void *temp_buffer = _XCALABLEMP_alloc(n);
   memcpy(temp_buffer, addr, n);
 
   MPI_Allreduce(temp_buffer, addr, count, mpi_datatype, mpi_op, *(nodes->comm));
 
+  // compare results
+  n = sizeof(_Bool) * count;
+  _Bool *cmp_buffer = _XCALABLEMP_alloc(n);
+  _XCALABLEMP_compare_reduce_results(cmp_buffer, temp_buffer, addr, count, datatype);
+
+  // reduce <location-variable>
   va_list args;
   va_start(args, num_locs);
   for (int i = 0; i < num_locs; i++) {
     void *loc = va_arg(args, void *);
     int loc_datatype = va_arg(args, int);
+
+    _XCALABLEMP_setup_reduce_type(&mpi_datatype, &datatype_size, loc_datatype);
+    _XCALABLEMP_setup_reduce_FLMM_op(&mpi_op, op);
+    _XCALABLEMP_init_localtion_variables(loc, count, loc_datatype, cmp_buffer, op);
+
+    n = datatype_size * count;
+    void *loc_temp = _XCALABLEMP_alloc(n);
+    memcpy(loc_temp, loc, n);
+
+    MPI_Allreduce(loc_temp, loc, count, mpi_datatype, mpi_op, *(nodes->comm));
+
+    _XCALABLEMP_free(loc_temp);
   }
   va_end(args);
 
   _XCALABLEMP_free(temp_buffer);
+  _XCALABLEMP_free(cmp_buffer);
 }
 
-// #define _XCALABLEMP_reduce_FLMM_EXEC(addr, count, datatype, op, num_locs, ...) \
-// _XCALABLEMP_reduce_FLMM_NODES_ENTIRE(_XCALABLEMP_get_execution_nodes(), addr, count, datatype, op, num_locs, __VA_ARGS__)
+// _XCALABLEMP_M_REDUCR_FLMM_EXEC(addr, count, datatype, op, num_locs, ...) is in xmp_comm_macro.h
