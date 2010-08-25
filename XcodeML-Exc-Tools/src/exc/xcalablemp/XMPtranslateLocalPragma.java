@@ -1437,7 +1437,7 @@ public class XMPtranslateLocalPragma {
     if (fromRef != null) execFromRefArgs = createExecFromRefArgs(lnObj, fromRef, localObjectTable);
 
     XobjList onRef = (XobjList)bcastDecl.getArg(2);
-    if (onRef == null) pb.replace(createBcastFuncCallBlock(lnObj, "_XCALABLEMP_bcast_EXEC", null, bcastArgsList, execFromRefArgs));
+    if (onRef == null) pb.replace(createBcastFuncCallBlock(true, "EXEC", null, bcastArgsList, execFromRefArgs));
     else {
       XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(lnObj, onRef, localObjectTable);
 
@@ -1445,7 +1445,7 @@ public class XMPtranslateLocalPragma {
       boolean splitComm = execOnRefArgs.getSecond().booleanValue();
       XobjList execFuncArgs = execOnRefArgs.getThird();
       if (splitComm) {
-        BlockList bcastBody = Bcons.blockList(createBcastFuncCallBlock(lnObj, "_XCALABLEMP_bcast_EXEC",
+        BlockList bcastBody = Bcons.blockList(createBcastFuncCallBlock(true, "EXEC",
                                                                        null, bcastArgsList, execFromRefArgs));
 
         // setup reduction finalizer
@@ -1456,7 +1456,7 @@ public class XMPtranslateLocalPragma {
         pb.replace(Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), bcastBody, null));
       }
       else {
-        pb.replace(createBcastFuncCallBlock(lnObj, "_XCALABLEMP_bcast_" + execFuncSurfix,
+        pb.replace(createBcastFuncCallBlock(false, execFuncSurfix,
                                             execFuncArgs.operand(), bcastArgsList, execFromRefArgs));
       }
     }
@@ -1506,15 +1506,19 @@ public class XMPtranslateLocalPragma {
     return returnVector;
   }
 
-  private Block createBcastFuncCallBlock(LineNo lnObj, String funcName, Xobject execDesc, Vector<XobjList> funcArgsList,
+  private Block createBcastFuncCallBlock(boolean isMacro, String funcType, Xobject execDesc, Vector<XobjList> funcArgsList,
                                          XMPpair<String, XobjList> execFromRefArgs) throws XMPexception {
-    Ident funcId = null;
+    String funcSurfix = null;
     XobjList fromRef = null;
-    if (execFromRefArgs == null) funcId = _globalDecl.declExternFunc(funcName + "_OMITTED");
+    if (execFromRefArgs == null) funcSurfix = new String(funcType + "_OMITTED");
     else {
-      funcId = _globalDecl.declExternFunc(funcName + "_" + execFromRefArgs.getFirst());
+      funcSurfix = new String(funcType + "_" + execFromRefArgs.getFirst());
       fromRef = execFromRefArgs.getSecond();
     }
+
+    Ident funcId = null;
+    if (isMacro) funcId = XMP.getMacroId("_XCALABLEMP_M_BCAST_" + funcSurfix);
+    else         funcId = _globalDecl.declExternFunc("_XCALABLEMP_bcast_" + funcSurfix);
 
     BlockList funcCallList = Bcons.emptyBody();
     Iterator<XobjList> it = funcArgsList.iterator();
