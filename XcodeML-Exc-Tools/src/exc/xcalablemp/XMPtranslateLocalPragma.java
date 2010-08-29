@@ -915,10 +915,15 @@ public class XMPtranslateLocalPragma {
     Block b = body.getHead();
     if (b != null) {
       if (b.Opcode() == Xcode.FOR_STATEMENT) {
+        LineNo blockLnObj = b.getLineNo();
+
+        if (b.getNext() != null)
+          XMP.error(blockLnObj, "only one loop statement is allowed in loop directive");
+
         CforBlock forBlock = (CforBlock)b;
         forBlock.Canonicalize();
         if (!(forBlock.isCanonical()))
-          XMP.error(b.getLineNo(), "loop is not canonical");
+          XMP.error(blockLnObj, "loop statement is not canonical");
 
         return forBlock;
       }
