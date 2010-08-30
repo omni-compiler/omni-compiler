@@ -745,46 +745,76 @@ public class XMPtranslateLocalPragma {
     XobjList loopDecl = (XobjList)pb.getClauses();
     BlockList loopBody = pb.getBody();
 
-    // replace pragma
+    // get block to schedule
     CforBlock schedBaseBlock = getOutermostLoopBlock(pb.getLineNo(), loopBody);
-    pb.replace(schedBaseBlock);
 
-    if (loopDecl.getArg(0) == null) translateFollowingLoop(pb, schedBaseBlock);
-    else                            translateMultipleLoop(pb, schedBaseBlock);
+    // schedule loop
+    XobjList loopOnRef = null;
+    if (loopDecl.getArg(0) == null) loopOnRef = translateFollowingLoop(pb, schedBaseBlock);
+    else                            loopOnRef = translateMultipleLoop(pb, schedBaseBlock);
+
+    // translate reduction clause
+    XobjList reductionRefList = (XobjList)loopDecl.getArg(2);
+    if (reductionRefList != null)
+      schedBaseBlock.add(createReductionClauseBlock(pb, reductionRefList));
+
+    if ((reductionRefList != null) || XMPutil.hasCommXMPpragma(loopBody))
+      pb.replace(createLoopCommunicator(pb, loopOnRef));
+    else
+      pb.replace(Bcons.COMPOUND(loopBody));
   }
 
-  private void translateFollowingLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {
+  private Block createLoopCommunicator(PragmaBlock pb, XobjList onRef) throws XMPexception {
+    LineNo lnObj = pb.getLineNo();
+
+    // start translation
+    XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
+    BlockList loopBody = pb.getBody();
+
+    // create function arguments
+    XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(lnObj, onRef, localObjectTable);
+    String execFuncSurfix = execOnRefArgs.getFirst();
+    boolean splitComm = execOnRefArgs.getSecond().booleanValue();
+    XobjList execFuncArgs = execOnRefArgs.getThird();
+
+    // setup task finalizer
+    Ident finFuncId = null;
+    if (splitComm) finFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pop_n_free_nodes");
+    else           finFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pop_nodes");
+    setupFinalizer(lnObj, loopBody, finFuncId, null);
+
+    // create function call
+    Ident execFuncId = _env.declExternIdent("_XCALABLEMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
+    return Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), loopBody, null);
+  }
+
+  private XobjList translateFollowingLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {
     LineNo lnObj = pb.getLineNo();
     XobjList loopDecl = (XobjList)pb.getClauses();
 
     // schedule loop
     XobjInt loopIndex = scheduleLoop(pb, schedBaseBlock, schedBaseBlock);
 
-    // create reduce functions
-    XobjList reductionRefList = (XobjList)loopDecl.getArg(2);
-    if (reductionRefList != null) {
-      // create on-ref for reduction
-      XobjList originalOnRef = (XobjList)loopDecl.getArg(1);
-      XobjList onSubscriptList = Xcons.List();
-      XobjList reductionOnRef = Xcons.List(originalOnRef.getArg(0), onSubscriptList);
+    // create on-ref for comm
+    XobjList originalOnRef = (XobjList)loopDecl.getArg(1);
+    XobjList onSubscriptList = Xcons.List();
+    XobjList loopOnRef = Xcons.List(originalOnRef.getArg(0), onSubscriptList);
 
-      int loopIndexValue = loopIndex.getInt();
-      int onRefSize = XMPutil.countElmts((XobjList)originalOnRef.getArg(1));
-      for (int i = 0; i < onRefSize; i++) {
-        if (i == loopIndexValue) {
-          onSubscriptList.add(Xcons.List(schedBaseBlock.getLowerBound(),
-                                         schedBaseBlock.getMinUpperBound(),
-                                         schedBaseBlock.getStep()));
-        }
-        else onSubscriptList.add(null);
+    int loopIndexValue = loopIndex.getInt();
+    int onRefSize = XMPutil.countElmts((XobjList)originalOnRef.getArg(1));
+    for (int i = 0; i < onRefSize; i++) {
+      if (i == loopIndexValue) {
+        onSubscriptList.add(Xcons.List(schedBaseBlock.getLowerBound(),
+                                       schedBaseBlock.getMinUpperBound(),
+                                       schedBaseBlock.getStep()));
       }
-
-      // create reduce function calls
-      schedBaseBlock.add(createReductionClauseBlock(pb, reductionRefList, reductionOnRef));
+      else onSubscriptList.add(null);
     }
+
+    return loopOnRef;
   }
 
-  private void translateMultipleLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {
+  private XobjList translateMultipleLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {
     LineNo lnObj = pb.getLineNo();
 
     // start translation
@@ -806,71 +836,41 @@ public class XMPtranslateLocalPragma {
       loopIndexVector.add(loopIndex);
     }
 
-    // create reduce functions
-    XobjList reductionRefList = (XobjList)loopDecl.getArg(2);
-    if (reductionRefList != null) {
-      // create on-ref for reduction
-      XobjList originalOnRef = (XobjList)loopDecl.getArg(1);
-      XobjList onSubscriptList = Xcons.List();
-      XobjList reductionOnRef = Xcons.List(originalOnRef.getArg(0), onSubscriptList);
+    // create on-ref for comm
+    XobjList originalOnRef = (XobjList)loopDecl.getArg(1);
+    XobjList onSubscriptList = Xcons.List();
+    XobjList loopOnRef = Xcons.List(originalOnRef.getArg(0), onSubscriptList);
 
-      int onRefSize = XMPutil.countElmts((XobjList)originalOnRef.getArg(1));
-      for (int i = 0; i < onRefSize; i++) {
-        CforBlock forBlock = findReductionForBlock(loopVector, loopIndexVector, i);
-        if (forBlock == null) onSubscriptList.add(null);
-        else {
-          onSubscriptList.add(Xcons.List(forBlock.getLowerBound(),
-                                         forBlock.getMinUpperBound(),
-                                         forBlock.getStep()));
-        }
+    int onRefSize = XMPutil.countElmts((XobjList)originalOnRef.getArg(1));
+    for (int i = 0; i < onRefSize; i++) {
+      CforBlock forBlock = findReductionForBlock(loopVector, loopIndexVector, i);
+      if (forBlock == null) onSubscriptList.add(null);
+      else {
+        onSubscriptList.add(Xcons.List(forBlock.getLowerBound(),
+                                       forBlock.getMinUpperBound(),
+                                       forBlock.getStep()));
       }
-
-      // create reduce function calls
-      schedBaseBlock.add(createReductionClauseBlock(pb, reductionRefList, reductionOnRef));
     }
+
+    return loopOnRef;
   }
 
-  private Block createReductionClauseBlock(PragmaBlock pb, XobjList reductionRefList, XobjList onRef) throws XMPexception {
+  private Block createReductionClauseBlock(PragmaBlock pb, XobjList reductionRefList) throws XMPexception {
     LineNo lnObj = pb.getLineNo();
-    XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
 
     // create function call
-    XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(lnObj, onRef, localObjectTable);
-    String execFuncSurfix = execOnRefArgs.getFirst();
-    boolean splitComm = execOnRefArgs.getSecond().booleanValue();
-    XobjList execFuncArgs = execOnRefArgs.getThird();
-
     Iterator<Xobject> it = reductionRefList.iterator();
     BlockList reductionBody = Bcons.emptyBody();
-    if (splitComm) {
-      while (it.hasNext()) {
-        XobjList reductionRef = (XobjList)it.next();
-        Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb);
-        String reductionFuncType = createReductionFuncType(reductionRef, pb);
+    while (it.hasNext()) {
+      XobjList reductionRef = (XobjList)it.next();
+      Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb);
+      String reductionFuncType = createReductionFuncType(reductionRef, pb);
 
-        reductionBody.add(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC",
-                                                       null, reductionFuncArgsList));
-      }
-
-      // setup reduction finalizer
-      setupFinalizer(lnObj, reductionBody, _globalDecl.declExternFunc("_XCALABLEMP_pop_n_free_nodes"), null);
-
-      // create function call
-      Ident execFuncId = _env.declExternIdent("_XCALABLEMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
-      return Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), reductionBody, null);
+      reductionBody.add(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC",
+                                                     null, reductionFuncArgsList));
     }
-    else { // FIXME never reach here
-      while (it.hasNext()) {
-        XobjList reductionRef = (XobjList)it.next();
-        Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb);
-        String reductionFuncType = createReductionFuncType(reductionRef, pb);
 
-        reductionBody.add(createReductionFuncCallBlock(false, reductionFuncType + "_" + execFuncSurfix,
-                                                       execFuncArgs.operand(), reductionFuncArgsList));
-      }
-
-      return Bcons.COMPOUND(reductionBody);
-    }
+    return Bcons.COMPOUND(reductionBody);
   }
 
   private CforBlock findReductionForBlock(Vector<CforBlock> loopVector, Vector<XobjInt> loopIndexVector, int i) {
@@ -917,6 +917,7 @@ public class XMPtranslateLocalPragma {
       if (b.Opcode() == Xcode.FOR_STATEMENT) {
         LineNo blockLnObj = b.getLineNo();
 
+        // XXX too strict?
         if (b.getNext() != null)
           XMP.error(blockLnObj, "only one loop statement is allowed in loop directive");
 
