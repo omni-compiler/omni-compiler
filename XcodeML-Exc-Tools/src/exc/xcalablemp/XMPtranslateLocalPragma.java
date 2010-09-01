@@ -756,7 +756,7 @@ public class XMPtranslateLocalPragma {
     // translate reduction clause
     XobjList reductionRefList = (XobjList)loopDecl.getArg(2);
     if (reductionRefList != null)
-      schedBaseBlock.add(createReductionClauseBlock(pb, reductionRefList));
+      schedBaseBlock.add(createReductionClauseBlock(pb, reductionRefList, schedBaseBlock));
 
     if ((reductionRefList != null) || XMPutil.hasCommXMPpragma(loopBody))
       pb.replace(createLoopCommunicator(pb, loopOnRef));
@@ -855,7 +855,8 @@ public class XMPtranslateLocalPragma {
     return loopOnRef;
   }
 
-  private Block createReductionClauseBlock(PragmaBlock pb, XobjList reductionRefList) throws XMPexception {
+  private Block createReductionClauseBlock(PragmaBlock pb, XobjList reductionRefList,
+                                           CforBlock schedBaseBlock) throws XMPexception {
     LineNo lnObj = pb.getLineNo();
 
     // create function call
@@ -863,7 +864,7 @@ public class XMPtranslateLocalPragma {
     BlockList reductionBody = Bcons.emptyBody();
     while (it.hasNext()) {
       XobjList reductionRef = (XobjList)it.next();
-      Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb, true);
+      Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb, true, schedBaseBlock);
       String reductionFuncType = createReductionFuncType(reductionRef, pb);
 
       reductionBody.add(createReductionFuncCallBlock(false, reductionFuncType + "_CLAUSE",
@@ -1173,7 +1174,7 @@ public class XMPtranslateLocalPragma {
 
     // create function arguments
     XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
-    Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb, false);
+    Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb, false, null);
     String reductionFuncType = createReductionFuncType(reductionRef, pb);
 
     // create function call
@@ -1229,7 +1230,8 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private Vector<XobjList> createReductionArgsList(XobjList reductionRef, PragmaBlock pb, boolean isClause) throws XMPexception {
+  private Vector<XobjList> createReductionArgsList(XobjList reductionRef, PragmaBlock pb,
+                                                   boolean isClause, CforBlock schedBaseBlock) throws XMPexception {
     LineNo lnObj = pb.getLineNo();
     Vector<XobjList> returnVector = new Vector<XobjList>();
 
@@ -1281,16 +1283,18 @@ public class XMPtranslateLocalPragma {
 
       // declare temp variable for reduction
       if (isClause) {
-        CforBlock schedBaseBlock = getOutermostLoopBlock(pb.getLineNo(), pb.getBody());
-
         Ident tempId = null;
         if (isArray) {
           tempId = declIdentWithBlock(pb, "_XCALABLEMP_reduce_temp_" + specName, Xtype.voidPtrType);
           reductionFuncArgs.cons(tempId.Ref());
+          schedBaseBlock.insert(createFuncCallBlock("_XCALABLEMP_init_reduce_ARRAY",
+                                                    Xcons.List(tempId.Ref(), specRef, elmtType, reductionOp)));
         }
         else {
           tempId = declIdentWithBlock(pb, "_XCALABLEMP_reduce_temp_" + specName, specType);
           reductionFuncArgs.cons(tempId.getAddr());
+          schedBaseBlock.insert(createFuncCallBlock("_XCALABLEMP_init_reduce_BASIC",
+                                                    Xcons.List(tempId.getAddr(), specRef, count, elmtType, reductionOp)));
         }
       }
 
