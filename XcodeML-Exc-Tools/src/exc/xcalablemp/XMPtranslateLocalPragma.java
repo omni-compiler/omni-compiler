@@ -863,10 +863,10 @@ public class XMPtranslateLocalPragma {
     BlockList reductionBody = Bcons.emptyBody();
     while (it.hasNext()) {
       XobjList reductionRef = (XobjList)it.next();
-      Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb);
+      Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb, true);
       String reductionFuncType = createReductionFuncType(reductionRef, pb);
 
-      reductionBody.add(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC",
+      reductionBody.add(createReductionFuncCallBlock(false, reductionFuncType + "_CLAUSE",
                                                      null, reductionFuncArgsList));
     }
 
@@ -1018,11 +1018,11 @@ public class XMPtranslateLocalPragma {
     if(templateIndex != templateDim)
       XMP.error(lnObj, "wrong template dimensions, too few");
 
-    Ident parallelInitId = declLoopSchedIdent(schedBaseBlock,
+    Ident parallelInitId = declIdentWithBlock(schedBaseBlock,
                                               "_XCALABLEMP_loop_init_" + loopIndexName, loopIndexType);
-    Ident parallelCondId = declLoopSchedIdent(schedBaseBlock,
+    Ident parallelCondId = declIdentWithBlock(schedBaseBlock,
                                               "_XCALABLEMP_loop_cond_" + loopIndexName, loopIndexType);
-    Ident parallelStepId = declLoopSchedIdent(schedBaseBlock,
+    Ident parallelStepId = declIdentWithBlock(schedBaseBlock,
                                               "_XCALABLEMP_loop_step_" + loopIndexName, loopIndexType);
 
     forBlock.setLowerBound(parallelInitId.Ref());
@@ -1087,11 +1087,11 @@ public class XMPtranslateLocalPragma {
     if(nodesIndex != nodesDim)
       XMP.error(lnObj, "wrong nodes dimensions, too few");
 
-    Ident parallelInitId = declLoopSchedIdent(schedBaseBlock,
+    Ident parallelInitId = declIdentWithBlock(schedBaseBlock,
                                               "_XCALABLEMP_loop_init_" + loopIndexName, loopIndexType);
-    Ident parallelCondId = declLoopSchedIdent(schedBaseBlock,
+    Ident parallelCondId = declIdentWithBlock(schedBaseBlock,
                                               "_XCALABLEMP_loop_cond_" + loopIndexName, loopIndexType);
-    Ident parallelStepId = declLoopSchedIdent(schedBaseBlock,
+    Ident parallelStepId = declIdentWithBlock(schedBaseBlock,
                                               "_XCALABLEMP_loop_step_" + loopIndexName, loopIndexType);
 
     forBlock.setLowerBound(parallelInitId.Ref());
@@ -1114,7 +1114,7 @@ public class XMPtranslateLocalPragma {
     return nodesIndexArg;
   }
 
-  private Ident declLoopSchedIdent(CforBlock b, String identName, Xtype type) {
+  private Ident declIdentWithBlock(Block b, String identName, Xtype type) {
     BlockList bl = b.getParent();
     Ident id = bl.findLocalIdent(identName);
     if (id == null) {
@@ -1173,7 +1173,7 @@ public class XMPtranslateLocalPragma {
 
     // create function arguments
     XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
-    Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb);
+    Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb, false);
     String reductionFuncType = createReductionFuncType(reductionRef, pb);
 
     // create function call
@@ -1229,7 +1229,7 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private Vector<XobjList> createReductionArgsList(XobjList reductionRef, PragmaBlock pb) throws XMPexception {
+  private Vector<XobjList> createReductionArgsList(XobjList reductionRef, PragmaBlock pb, boolean isClause) throws XMPexception {
     LineNo lnObj = pb.getLineNo();
     Vector<XobjList> returnVector = new Vector<XobjList>();
 
@@ -1254,8 +1254,7 @@ public class XMPtranslateLocalPragma {
 
             count = Xcons.LongLongConstant(0, 1);
             elmtType = Xcons.IntConstant(basicSpecType.getBasicType() + 200);
-            break;
-          }
+          } break;
         case Xtype.ARRAY:
           {
             ArrayType arraySpecType = (ArrayType)specType;
@@ -1267,13 +1266,30 @@ public class XMPtranslateLocalPragma {
 
             count = Xcons.LongLongConstant(0, getArrayElmtCount(arraySpecType));
             elmtType = Xcons.IntConstant(basicSpecType.getBasicType() + 200);
-            break;
-          }
+          } break;
         default:
           XMP.error(lnObj, "'" + specName + "' has a wrong data type for reduction");
       }
 
       XobjList reductionFuncArgs = Xcons.List(specId.getAddr(), count, elmtType, reductionOp);
+
+      // declare temp variable for reduction
+      if (isClause) {
+        Ident tempId = null;
+        switch (specType.getKind()) {
+          case Xtype.BASIC:
+            tempId = declIdentWithBlock(pb, "_XCALABLEMP_reduce_temp_" + specName, specType);
+            reductionFuncArgs.cons(tempId.getAddr());
+            break;
+          case Xtype.ARRAY:
+            tempId = declIdentWithBlock(pb, "_XCALABLEMP_reduce_temp_" + specName,
+                                        Xtype.Pointer(((ArrayType)specType).getArrayElementType()));
+            reductionFuncArgs.cons(tempId.Ref());
+            break;
+          default:
+            XMP.error(lnObj, "'" + specName + "' has a wrong data type for reduction");
+        }
+      }
 
       // add extra args for (firstmax, firstmin, lastmax, lastmin) if needed
       createFLMMreductionArgs(reductionOp.getInt(), count.getLongLow(),

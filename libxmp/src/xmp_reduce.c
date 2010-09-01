@@ -251,4 +251,13 @@ void _XCALABLEMP_reduce_FLMM_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes,
   _XCALABLEMP_free(cmp_buffer);
 }
 
-// _XCALABLEMP_M_REDUCR_FLMM_EXEC(addr, count, datatype, op, num_locs, ...) is in xmp_comm_macro.h
+// _XCALABLEMP_M_REDUCE_FLMM_EXEC(addr, count, datatype, op, num_locs, ...) is in xmp_comm_macro.h
+
+void _XCALABLEMP_reduce_CLAUSE(void *temp_addr, void *data_addr, int count, int datatype, int op) {
+  return;
+}
+
+void _XCALABLEMP_reduce_FLMM_CLAUSE(void *temp_addr, void *data_addr, int count, int datatype, int op,
+                                    int num_locs, ...) {
+  return;
+}
