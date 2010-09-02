@@ -1265,6 +1265,12 @@ public class XMPtranslateLocalPragma {
             if (arraySpecType.getArrayElementType().getKind() != Xtype.BASIC)
               XMP.error(lnObj, "array '" + specName + "' has has a wrong data type for reduction");
 
+            // FIXME reduction clause only supports 1-dimensional array now
+            if (isClause) {
+              if (arraySpecType.getNumDimensions() != 1)
+                XMP.error(lnObj, "reduction clause supports scalar variable/1-dimensional array");
+            }
+
             BasicType basicSpecType = (BasicType)arraySpecType.getArrayElementType();
             checkReductionType(lnObj, specName, basicSpecType);
 

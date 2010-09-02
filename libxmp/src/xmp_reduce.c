@@ -253,19 +253,79 @@ void _XCALABLEMP_reduce_FLMM_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes,
 
 // _XCALABLEMP_M_REDUCE_FLMM_EXEC(addr, count, datatype, op, num_locs, ...) is in xmp_comm_macro.h
 
+// FIXME not implemented yet
 void _XCALABLEMP_init_reduce_BASIC(void *temp_addr, void *data_addr, int datatype, int op) {
   return;
 }
 
-void _XCALABLEMP_init_reduce_ARRAY(void *temp_addr, void *data_addr, int count, int datatype, int op) {
+// FIXME not implemented yet
+// FIXME only supports 1-dimensional array
+void _XCALABLEMP_init_reduce_ARRAY(void *temp_addr, void *data_addr, int count, int datatype, int datatype_size, int op) {
+  size_t n = datatype_size * count;
+  temp_addr = _XCALABLEMP_alloc(n);
+
   return;
 }
 
 void _XCALABLEMP_reduce_CLAUSE(void *temp_addr, void *data_addr, int count, int datatype, int op) {
-  return;
+  // setup information
+  MPI_Datatype mpi_datatype;
+  size_t datatype_size; // not used in this function
+  MPI_Op mpi_op;
+  _XCALABLEMP_setup_reduce_type(&mpi_datatype, &datatype_size, datatype);
+  _XCALABLEMP_setup_reduce_op(&mpi_op, op);
+
+  // reduce
+  MPI_Allreduce(temp_addr, data_addr, count, mpi_datatype, mpi_op, *((_XCALABLEMP_get_execution_nodes())->comm));
+
+  // free temp buffer, if needed
+  if (count > 1)
+    _XCALABLEMP_free(temp_addr);
 }
 
 void _XCALABLEMP_reduce_FLMM_CLAUSE(void *temp_addr, void *data_addr, int count, int datatype, int op,
                                     int num_locs, ...) {
-  return;
+  _XCALABLEMP_nodes_t *nodes = _XCALABLEMP_get_execution_nodes();
+
+  // setup information
+  MPI_Datatype mpi_datatype;
+  size_t datatype_size; // not used in this function
+  MPI_Op mpi_op;
+  _XCALABLEMP_setup_reduce_type(&mpi_datatype, &datatype_size, datatype);
+  _XCALABLEMP_setup_reduce_op(&mpi_op, op);
+
+  // reduce <reduction-variable
+  MPI_Allreduce(temp_addr, data_addr, count, mpi_datatype, mpi_op, *(nodes->comm));
+
+  // compare results
+  size_t n = sizeof(_Bool) * count;
+  _Bool *cmp_buffer = _XCALABLEMP_alloc(n);
+  _XCALABLEMP_compare_reduce_results(cmp_buffer, temp_addr, data_addr, count, datatype);
+
+  // reduce <location-variable>
+  va_list args;
+  va_start(args, num_locs);
+  for (int i = 0; i < num_locs; i++) {
+    void *loc = va_arg(args, void *);
+    int loc_datatype = va_arg(args, int);
+
+    _XCALABLEMP_setup_reduce_type(&mpi_datatype, &datatype_size, loc_datatype);
+    _XCALABLEMP_setup_reduce_FLMM_op(&mpi_op, op);
+    _XCALABLEMP_init_localtion_variables(loc, count, loc_datatype, cmp_buffer, op);
+
+    n = datatype_size * count;
+    void *loc_temp = _XCALABLEMP_alloc(n);
+    memcpy(loc_temp, loc, n);
+
+    MPI_Allreduce(loc_temp, loc, count, mpi_datatype, mpi_op, *(nodes->comm));
+
+    _XCALABLEMP_free(loc_temp);
+  }
+  va_end(args);
+
+  _XCALABLEMP_free(cmp_buffer);
+
+  // free temp buffer, if needed
+  if (count > 1)
+    _XCALABLEMP_free(temp_addr);
 }
