@@ -38,6 +38,12 @@ public class XobjString extends XobjConst
         return value;
     }
 
+    // used by xcalablemp package
+    public void setSym(String newValue)
+    {
+        value = newValue;
+    }
+
     @Override
     public String getName()
     {

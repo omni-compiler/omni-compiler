@@ -1117,13 +1117,9 @@ public class XMPtranslateLocalPragma {
 
   private Ident declIdentWithBlock(Block b, String identName, Xtype type) {
     BlockList bl = b.getParent();
-    Ident id = bl.findLocalIdent(identName);
-    if (id == null) {
-      id = Ident.Local(identName, type);
-      bl.addIdent(id);
-    }
 
-    return id;
+    // FIXME consider variable scope
+    return bl.declLocalIdent(identName, type);
   }
 
   private void translateReflect(PragmaBlock pb) {
@@ -1265,12 +1261,6 @@ public class XMPtranslateLocalPragma {
             if (arraySpecType.getArrayElementType().getKind() != Xtype.BASIC)
               XMP.error(lnObj, "array '" + specName + "' has has a wrong data type for reduction");
 
-            // FIXME reduction clause only supports 1-dimensional array now
-            if (isClause) {
-              if (arraySpecType.getNumDimensions() != 1)
-                XMP.error(lnObj, "reduction clause supports scalar variable/1-dimensional array");
-            }
-
             BasicType basicSpecType = (BasicType)arraySpecType.getArrayElementType();
             checkReductionType(lnObj, specName, basicSpecType);
 
@@ -1289,19 +1279,23 @@ public class XMPtranslateLocalPragma {
 
       // declare temp variable for reduction
       if (isClause) {
-        Ident tempId = null;
+        String tempName = new String("_XCALABLEMP_reduce_temp_" + specName);
+        Ident tempId = declReductionTempIdent(pb, specName, tempName, specType);
         if (isArray) {
-          tempId = declIdentWithBlock(pb, "_XCALABLEMP_reduce_temp_" + specName, Xtype.voidPtrType);
           reductionFuncArgs.cons(tempId.Ref());
           schedBaseBlock.insert(createFuncCallBlock("_XCALABLEMP_init_reduce_ARRAY",
                                                     Xcons.List(tempId.Ref(), specRef, elmtType, reductionOp)));
         }
         else {
-          tempId = declIdentWithBlock(pb, "_XCALABLEMP_reduce_temp_" + specName, specType);
           reductionFuncArgs.cons(tempId.getAddr());
           schedBaseBlock.insert(createFuncCallBlock("_XCALABLEMP_init_reduce_BASIC",
                                                     Xcons.List(tempId.getAddr(), specRef, count, elmtType, reductionOp)));
         }
+
+        // rewrite reduction variable
+        BasicBlockExprIterator iter = new BasicBlockExprIterator(schedBaseBlock);
+        for (iter.init(); !iter.end(); iter.next())
+          rewriteSymbolName(iter.getExpr(), specName, tempName);
       }
 
       // add extra args for (firstmax, firstmin, lastmax, lastmin) if needed
@@ -1312,6 +1306,35 @@ public class XMPtranslateLocalPragma {
     }
 
     return returnVector;
+  }
+
+  private Ident declReductionTempIdent(Block b, String oldName, String newName, Xtype type) {
+    BlockList bl = b.getParent();
+    Ident id = bl.findLocalIdent(oldName);
+    if (id == null) {
+      id = _env.findVarIdent(oldName);
+      if (id != null)
+        id = _env.declStaticIdent(newName, type);
+      else
+        id = bl.declLocalIdent(newName, type);
+    }
+
+    return id;
+  }
+
+  private void rewriteSymbolName(Xobject expr, String oldName, String newName) {
+    if (expr == null) return;
+
+    bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
+    for (iter.init(); !iter.end(); iter.next()) {
+      Xobject myExpr = iter.getXobject();
+      if (myExpr == null) continue;
+
+      if (myExpr instanceof XobjString) {
+        XobjString symbol = (XobjString)myExpr;
+        if (symbol.getSym().equals(oldName)) symbol.setSym(newName);
+      }
+    }
   }
 
   private void createFLMMreductionArgs(int op, long count, XobjList locationVars,

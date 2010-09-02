@@ -204,6 +204,17 @@ public class BlockList
         return null;
     }
 
+    // used by xcalablemp package
+    public Ident declLocalIdent(String name, Xtype type) {
+      Ident id = this.findLocalIdent(name);
+      if (id == null) {
+        id = Ident.Local(name, type);
+        this.addIdent(id);
+      }
+
+      return id;
+    }
+
     public void addIdent(Ident id)
     {
         if(id_list == null)

@@ -259,11 +259,7 @@ void _XCALABLEMP_init_reduce_BASIC(void *temp_addr, void *data_addr, int datatyp
 }
 
 // FIXME not implemented yet
-// FIXME only supports 1-dimensional array
 void _XCALABLEMP_init_reduce_ARRAY(void *temp_addr, void *data_addr, int count, int datatype, int datatype_size, int op) {
-  size_t n = datatype_size * count;
-  temp_addr = _XCALABLEMP_alloc(n);
-
   return;
 }
 
@@ -277,10 +273,6 @@ void _XCALABLEMP_reduce_CLAUSE(void *temp_addr, void *data_addr, int count, int 
 
   // reduce
   MPI_Allreduce(temp_addr, data_addr, count, mpi_datatype, mpi_op, *((_XCALABLEMP_get_execution_nodes())->comm));
-
-  // free temp buffer, if needed
-  if (count > 1)
-    _XCALABLEMP_free(temp_addr);
 }
 
 void _XCALABLEMP_reduce_FLMM_CLAUSE(void *temp_addr, void *data_addr, int count, int datatype, int op,
@@ -324,8 +316,4 @@ void _XCALABLEMP_reduce_FLMM_CLAUSE(void *temp_addr, void *data_addr, int count,
   va_end(args);
 
   _XCALABLEMP_free(cmp_buffer);
-
-  // free temp buffer, if needed
-  if (count > 1)
-    _XCALABLEMP_free(temp_addr);
 }
