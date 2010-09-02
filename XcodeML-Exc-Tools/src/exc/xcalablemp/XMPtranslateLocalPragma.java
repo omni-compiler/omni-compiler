@@ -1310,16 +1310,18 @@ public class XMPtranslateLocalPragma {
 
   private Ident declReductionTempIdent(Block b, String oldName, String newName, Xtype type) {
     BlockList bl = b.getParent();
-    Ident id = bl.findLocalIdent(oldName);
-    if (id == null) {
-      id = _env.findVarIdent(oldName);
-      if (id != null)
-        id = _env.declStaticIdent(newName, type);
+    Ident newId = null;
+    Ident oldId = bl.findLocalIdent(oldName);
+    if (oldId == null) {
+      oldId = _env.findVarIdent(oldName);
+      if (oldId != null)
+        newId = _env.declStaticIdent(newName, type);
       else
-        id = bl.declLocalIdent(newName, type);
+        newId = bl.declLocalIdent(newName, type);
     }
+    else newId = bl.declLocalIdent(newName, type);
 
-    return id;
+    return newId;
   }
 
   private void rewriteSymbolName(Xobject expr, String oldName, String newName) {

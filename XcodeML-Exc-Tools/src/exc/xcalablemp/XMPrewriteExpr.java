@@ -186,6 +186,7 @@ public class XMPrewriteExpr {
 
     Xobject retObj = getAddrFuncId.Call(getAddrFuncArgs);
     switch (opcode) {
+      case ARRAY_REF:
       case PLUS_EXPR:
         return retObj;
       case POINTER_REF:
