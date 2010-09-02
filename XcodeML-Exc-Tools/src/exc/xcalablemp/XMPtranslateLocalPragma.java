@@ -1733,8 +1733,10 @@ public class XMPtranslateLocalPragma {
           {
             String arrayName = myExpr.getSym();
             XMPalignedArray alignedArray = _globalObjectTable.getAlignedArray(arrayName);
-            if (alignedArray == null)
-              alignedArray = localObjectTable.getAlignedArray(arrayName);
+            if (alignedArray == null) {
+              if (localObjectTable != null)
+                alignedArray = localObjectTable.getAlignedArray(arrayName);
+            }
 
             if (alignedArray != null) {
               iter.next();
