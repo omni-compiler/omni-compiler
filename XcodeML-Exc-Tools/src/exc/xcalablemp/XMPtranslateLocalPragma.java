@@ -1350,7 +1350,7 @@ public class XMPtranslateLocalPragma {
   }
 
   private Block createReductionArrayInit(Ident tempId, Xobject initValueObj, XobjLong count, BasicType type,
-                                         Ident loopIndexId) throws XMPexception {
+                                         Ident loopIndexId) {
     Xobject loopIndexRef = loopIndexId.Ref();
 
     Xobject tempArrayRef = Xcons.PointerRef(Xcons.binaryOp(Xcode.PLUS_EXPR, Xcons.Cast(Xtype.Pointer(type), tempId.Ref()),
@@ -1365,8 +1365,70 @@ public class XMPtranslateLocalPragma {
   }
 
   // FIXME
-  private Xobject createReductionInitValueObj(Ident varId, BasicType type, int reductionOp) {
-    return Xcons.IntConstant(0);
+  private Xobject createReductionInitValueObj(Ident varId, BasicType type, int reductionOp) throws XMPexception {
+    Xobject varRef = varId.Ref();
+    Xobject intZero = Xcons.IntConstant(0);
+    Xobject intOne = Xcons.IntConstant(1);
+    Xobject floatZero = Xcons.FloatConstant(0.);
+    Xobject floatOne = Xcons.FloatConstant(1.);
+
+    switch (type.getBasicType()) {
+      case BasicType.BOOL:
+        // FIXME correct???
+        return selectReductionInitValueObj(reductionOp, varRef, intZero, intOne);
+      case BasicType.CHAR:
+      case BasicType.UNSIGNED_CHAR:
+      case BasicType.SHORT:
+      case BasicType.UNSIGNED_SHORT:
+      case BasicType.INT:
+      case BasicType.UNSIGNED_INT:
+      case BasicType.LONG:
+      case BasicType.UNSIGNED_LONG:
+      case BasicType.LONGLONG:
+      case BasicType.UNSIGNED_LONGLONG:
+        return selectReductionInitValueObj(reductionOp, varRef, intZero, intOne);
+      case BasicType.FLOAT:
+      case BasicType.DOUBLE:
+      case BasicType.LONG_DOUBLE:
+        return selectReductionInitValueObj(reductionOp, varRef, floatZero, floatOne);
+      case BasicType.FLOAT_IMAGINARY:
+      case BasicType.DOUBLE_IMAGINARY:
+      case BasicType.LONG_DOUBLE_IMAGINARY:
+      case BasicType.FLOAT_COMPLEX:
+      case BasicType.DOUBLE_COMPLEX:
+      case BasicType.LONG_DOUBLE_COMPLEX:
+        // FIXME not implemented yet
+        throw new XMPexception("not implemented yet");
+      default:
+        throw new XMPexception("wrong data type for reduction");
+    }
+  }
+
+  // FIXME needs type checking
+  private Xobject selectReductionInitValueObj(int reductionOp, Xobject varRef, Xobject zero, Xobject one) throws XMPexception {
+    switch (reductionOp) {
+      case XMPcollective.REDUCE_SUM:
+        return zero;
+      case XMPcollective.REDUCE_PROD:
+        return one;
+      case XMPcollective.REDUCE_BAND:
+      case XMPcollective.REDUCE_LAND:
+      case XMPcollective.REDUCE_BOR:
+      case XMPcollective.REDUCE_LOR:
+      case XMPcollective.REDUCE_MAX:
+      case XMPcollective.REDUCE_MIN:
+      case XMPcollective.REDUCE_FIRSTMAX:
+      case XMPcollective.REDUCE_FIRSTMIN:
+      case XMPcollective.REDUCE_LASTMAX:
+      case XMPcollective.REDUCE_LASTMIN:
+        return varRef;
+      case XMPcollective.REDUCE_BXOR:
+        return Xcons.unaryOp(Xcode.BIT_NOT_EXPR, varRef);
+      case XMPcollective.REDUCE_LXOR:
+        return Xcons.unaryOp(Xcode.LOG_NOT_EXPR, varRef);
+      default:
+        throw new XMPexception("unknown reduce operation");
+    }
   }
 
   private Ident declReductionTempIdent(Block b, String oldName, String newName, Xtype type) {
