@@ -12,6 +12,7 @@ public class XMPrewriteExpr {
     _globalObjectTable = globalDecl.getGlobalObjectTable();
   }
 
+  // FIXME this func never throw exception
   public void rewrite(FuncDefBlock def) throws XMPexception {
     FunctionBlock fb = def.getBlock();
     if (fb == null) return;
@@ -20,8 +21,15 @@ public class XMPrewriteExpr {
     XMPobjectTable localObjectTable = XMPlocalDecl.getObjectTable(fb);
 
     BasicBlockExprIterator iter = new BasicBlockExprIterator(fb);
-    for (iter.init(); !iter.end(); iter.next())
-      rewriteExpr(iter.getExpr(), localObjectTable);
+    for (iter.init(); !iter.end(); iter.next()) {
+      Xobject expr = iter.getExpr();
+
+      try {
+        rewriteExpr(expr, localObjectTable);
+      } catch (XMPexception e) {
+        XMP.error(expr.getLineNo(), e.getMessage());
+      }
+    }
 
     // create local object descriptors, constructors and desctructors
     XMPlocalDecl.setupObjectId(fb);
@@ -83,7 +91,6 @@ public class XMPrewriteExpr {
     Xobject prevExpr = iter.getPrevXobject();
     Xcode prevExprOpcode = prevExpr.Opcode();
     Xobject myExpr = iter.getXobject();
-    LineNo lnObj = myExpr.getLineNo();
     Xobject parentExpr = iter.getParent();
     switch (myExpr.Opcode()) {
       case PLUS_EXPR:
@@ -92,17 +99,14 @@ public class XMPrewriteExpr {
             case ARRAY_REF:
               {
                 if (arrayDimCount != 0)
-                  XMP.error(lnObj, syntaxErrMsg);
+                  throw new XMPexception(syntaxErrMsg);
 
                 break;
               }
             case POINTER_REF:
               break;
             default:
-              {
-                XMP.error(lnObj, syntaxErrMsg);
-                break;
-              }
+              throw new XMPexception(syntaxErrMsg);
           }
 
           if (parentExpr.Opcode() == Xcode.POINTER_REF) {
@@ -132,10 +136,7 @@ public class XMPrewriteExpr {
             case PLUS_EXPR:
               break;
             default:
-              {
-                XMP.error(lnObj, syntaxErrMsg);
-                break;
-              }
+              throw new XMPexception(syntaxErrMsg);
           }
 
           iter.next();
@@ -148,7 +149,7 @@ public class XMPrewriteExpr {
             case ARRAY_REF:
               {
                 if (arrayDimCount != 0)
-                  XMP.error(lnObj, syntaxErrMsg);
+                  throw new XMPexception(syntaxErrMsg);
 
                 break;
               }
@@ -156,10 +157,7 @@ public class XMPrewriteExpr {
             case POINTER_REF:
               break;
             default:
-              {
-                XMP.error(lnObj, syntaxErrMsg);
-                break;
-              }
+              throw new XMPexception(syntaxErrMsg);
           }
 
           Xobject funcCall = createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args, prevExprOpcode);
@@ -222,7 +220,7 @@ public class XMPrewriteExpr {
                 return XMP.getMacroId("_XCALABLEMP_M_CALC_INDEX_BLOCK_W_SHADOW").Call(args);
               }
             default:
-              XMP.error(alignedArray.getLineNo(), "unknown shadow type");
+              throw new XMPexception("unknown shadow type");
           }
         }
         else {
@@ -243,9 +241,9 @@ public class XMPrewriteExpr {
             case XMPshadow.SHADOW_FULL:
               return indexRef;
             case XMPshadow.SHADOW_NORMAL:
-              XMP.error(alignedArray.getLineNo(), "only block distribution allows shadow");
+              throw new XMPexception("only block distribution allows shadow");
             default:
-              XMP.error(alignedArray.getLineNo(), "unknown shadow type");
+              throw new XMPexception("unknown shadow type");
           }
         }
         else {
@@ -254,10 +252,7 @@ public class XMPrewriteExpr {
           return XMP.getMacroId("_XCALABLEMP_M_CALC_INDEX_CYCLIC").Call(args);
         }
       default:
-        XMP.error(alignedArray.getLineNo(), "unknown distribute manner for array '" + alignedArray.getName()  + "'");
+        throw new XMPexception("unknown distribute manner for array '" + alignedArray.getName()  + "'");
     }
-
-    // XXX not reach here
-    return null;
   }
 }

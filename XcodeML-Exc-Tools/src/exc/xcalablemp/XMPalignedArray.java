@@ -8,7 +8,6 @@ public class XMPalignedArray {
   public final static int NO_ALIGN	= 10;
   public final static int SIMPLE_ALIGN	= 11;
 
-  private LineNo		_lineNo;
   private String		_name;
   private Xtype			_type;
   private int			_dim;
@@ -26,10 +25,9 @@ public class XMPalignedArray {
   private boolean		_realloc;
   private XMPtemplate		_alignedTemplate;
 
-  public XMPalignedArray(LineNo lineNo, String name, Xtype type, int dim,
+  public XMPalignedArray(String name, Xtype type, int dim,
                          Vector<Long> sizeVector, Vector<Ident> gtolAccIdVector,
                          Ident descId, Ident addrId, XMPtemplate alignedTemplate) {
-    _lineNo = lineNo;
     _name = name;
     _type = type;
     _dim = dim;
@@ -52,10 +50,6 @@ public class XMPalignedArray {
     _hasShadow = false;
     _reallocChecked = false;
     _alignedTemplate = alignedTemplate;
-  }
-
-  public LineNo getLineNo() {
-    return _lineNo;
   }
 
   public String getName() {

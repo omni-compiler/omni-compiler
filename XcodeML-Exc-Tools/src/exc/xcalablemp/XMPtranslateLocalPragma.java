@@ -100,7 +100,7 @@ public class XMPtranslateLocalPragma {
     if ((nodesDim > (XMP.MAX_DIM)) || (nodesDim < 1))
       throw new XMPexception("nodes dimension should be less than " + (XMP.MAX_DIM + 1));
 
-    XMPnodes nodesObject = new XMPnodes(pb.getLineNo().lineNo(), nodesName, nodesDim, nodesDescId);
+    XMPnodes nodesObject = new XMPnodes(nodesName, nodesDim, nodesDescId);
     localObjectTable.putObject(nodesObject);
 
     // create function call
@@ -243,7 +243,7 @@ public class XMPtranslateLocalPragma {
     if ((templateDim > (XMP.MAX_DIM)) || (templateDim < 1))
       throw new XMPexception("template dimension should be less than " + (XMP.MAX_DIM + 1));
 
-    XMPtemplate templateObject = new XMPtemplate(pb.getLineNo().lineNo(), templateName, templateDim, templateDescId);
+    XMPtemplate templateObject = new XMPtemplate(templateName, templateDim, templateDescId);
     localObjectTable.putObject(templateObject);
 
     // create function call
@@ -289,10 +289,8 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception("'" + name + "' is already declared");
 
     // check name collision - local object table
-    if (objectTable.getObject(name) != null) {
-      int ln = _globalObjectTable.getObject(name).getLineNo();
-      throw new XMPexception("'" + name + "' is already declared in line." + ln);
-    }
+    if (objectTable.getObject(name) != null)
+      throw new XMPexception("'" + name + "' is already declared");
 
     // check name collision - descriptor name
     if (scopeBL.findLocalIdent(XMP.DESC_PREFIX_ + name) != null) {
@@ -496,7 +494,7 @@ public class XMPtranslateLocalPragma {
     XMPlocalDecl.addConstructorCall("_XCALABLEMP_init_array_desc", initArrayDescFuncArgs, pb, _globalDecl);
     XMPlocalDecl.insertDestructorCall("_XCALABLEMP_finalize_array_desc", Xcons.List(arrayDescId.Ref()), pb, _globalDecl);
 
-    XMPalignedArray alignedArray = new XMPalignedArray(pb.getLineNo(), arrayName, arrayElmtType, arrayDim,
+    XMPalignedArray alignedArray = new XMPalignedArray(arrayName, arrayElmtType, arrayDim,
                                                        arraySizeVector, gtolAccIdVector, arrayDescId, arrayAddrId,
                                                        templateObj);
     localObjectTable.putAlignedArray(alignedArray);

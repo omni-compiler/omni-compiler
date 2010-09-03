@@ -8,15 +8,13 @@ public class XMPobject {
   public final static int TEMPLATE	= 101;
 
   private int			_kind;
-  private int			_lineNo;
   private String		_name;
   private int			_dim;
   private Ident			_descId;
   private Vector<Xobject>	_upperVector;
 
-  public XMPobject(int kind, int lineNo, String name, int dim, Ident descId) {
+  public XMPobject(int kind, String name, int dim, Ident descId) {
     _kind = kind;
-    _lineNo = lineNo;
     _name = name;
     _dim = dim;
     _descId = descId;
@@ -25,10 +23,6 @@ public class XMPobject {
 
   public int getKind() {
     return _kind;
-  }
-
-  public int getLineNo() {
-    return _lineNo;
   }
 
   public String getName() {

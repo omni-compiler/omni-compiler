@@ -16,8 +16,8 @@ public class XMPtemplate extends XMPobject {
   private Vector<Integer>	_distMannerVector;
   private Vector<Xobject>	_lowerVector;
 
-  public XMPtemplate(int lineNo, String name, int dim, Ident descId) {
-    super(XMPobject.TEMPLATE, lineNo, name, dim, descId);
+  public XMPtemplate(String name, int dim, Ident descId) {
+    super(XMPobject.TEMPLATE, name, dim, descId);
 
     _isFixed = false;
     _isDistributed = false;

@@ -55,7 +55,7 @@ public class XMPtranslateGlobalPragma {
     if ((nodesDim > (XMP.MAX_DIM)) || (nodesDim < 1))
       XMP.error(lnObj, "nodes dimension should be less than " + (XMP.MAX_DIM + 1));
 
-    XMPnodes nodesObject = new XMPnodes(lnObj.lineNo(), nodesName, nodesDim, nodesDescId);
+    XMPnodes nodesObject = new XMPnodes(nodesName, nodesDim, nodesDescId);
     _globalObjectTable.putObject(nodesObject);
 
     // create function call
@@ -191,7 +191,7 @@ public class XMPtranslateGlobalPragma {
     if ((templateDim > (XMP.MAX_DIM)) || (templateDim < 1))
       XMP.error(lnObj, "template dimension should be less than " + (XMP.MAX_DIM + 1));
 
-    XMPtemplate templateObject = new XMPtemplate(lnObj.lineNo(), templateName, templateDim, templateDescId);
+    XMPtemplate templateObject = new XMPtemplate(templateName, templateDim, templateDescId);
     _globalObjectTable.putObject(templateObject);
 
     // create function call
@@ -234,8 +234,7 @@ public class XMPtranslateGlobalPragma {
 
     // check name collision - global object table
     if (_globalObjectTable.getObject(name) != null) {
-      int ln = _globalObjectTable.getObject(name).getLineNo();
-      XMP.error(lnObj, "'" + name + "' is already declared in line." + ln);
+      XMP.error(lnObj, "'" + name + "' is already declared");
     }
 
     // check name collision - descriptor name
@@ -433,7 +432,7 @@ public class XMPtranslateGlobalPragma {
 
     _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_init_array_desc", initArrayDescFuncArgs);
 
-    XMPalignedArray alignedArray = new XMPalignedArray(lnObj, arrayName, arrayElmtType, arrayDim,
+    XMPalignedArray alignedArray = new XMPalignedArray(arrayName, arrayElmtType, arrayDim,
                                                        arraySizeVector, gtolAccIdVector, arrayDescId, arrayAddrId,
                                                        templateObj);
     _globalObjectTable.putAlignedArray(alignedArray);
