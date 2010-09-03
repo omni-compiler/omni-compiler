@@ -99,6 +99,7 @@ extern void _XCALABLEMP_validate_nodes_ref(int *lower, int *upper, int *stride, 
 extern void _XCALABLEMP_push_nodes(_XCALABLEMP_nodes_t *nodes);
 extern void _XCALABLEMP_pop_nodes(void);
 extern _XCALABLEMP_nodes_t *_XCALABLEMP_get_execution_nodes(void);
+extern int _XCALABLEMP_get_execution_nodes_rank(void);
 
 // xmp_util.c
 extern void *_XCALABLEMP_alloc(size_t size);

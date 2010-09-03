@@ -55,6 +55,10 @@ public class XMPglobalDecl {
     return _env.declExternIdent(funcName, Xtype.Function(Xtype.voidType));
   }
 
+  public Ident declExternFunc(String funcName, Xtype type) {
+    return _env.declExternIdent(funcName, Xtype.Function(type));
+  }
+
   public void addGlobalInitFuncCall(String funcName, Xobject args) {
     Ident funcId = declExternFunc(funcName);
     _globalInitFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT, funcId.Call(args)));

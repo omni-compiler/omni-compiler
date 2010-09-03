@@ -756,8 +756,9 @@ public class XMPtranslateLocalPragma {
     // translate reduction clause
     XobjList reductionRefList = (XobjList)loopDecl.getArg(2);
     if (reductionRefList != null)
-      schedBaseBlock.add(createReductionClauseBlock(pb, reductionRefList, schedBaseBlock));
+      createReductionClauseBlock(pb, reductionRefList, schedBaseBlock);
 
+    // FIXME change implementation ???
     if ((reductionRefList != null) || XMPutil.hasCommXMPpragma(loopBody))
       pb.replace(createLoopCommunicator(pb, loopOnRef));
     else
@@ -855,23 +856,31 @@ public class XMPtranslateLocalPragma {
     return loopOnRef;
   }
 
-  private Block createReductionClauseBlock(PragmaBlock pb, XobjList reductionRefList,
-                                           CforBlock schedBaseBlock) throws XMPexception {
+  private void createReductionClauseBlock(PragmaBlock pb, XobjList reductionRefList,
+                                          CforBlock schedBaseBlock) throws XMPexception {
     LineNo lnObj = pb.getLineNo();
+
+    // create init block
+    Ident getRankFuncId = _globalDecl.declExternFunc("_XCALABLEMP_get_execution_nodes_rank", Xtype.intType);
+    IfBlock reductionInitIfBlock = (IfBlock)Bcons.IF(BasicBlock.Cond(Xcons.binaryOp(Xcode.LOG_EQ_EXPR, getRankFuncId.Call(null),
+                                                                                                       Xcons.IntConstant(0))),
+                                                     Bcons.emptyBody(), Bcons.emptyBody());
 
     // create function call
     Iterator<Xobject> it = reductionRefList.iterator();
     BlockList reductionBody = Bcons.emptyBody();
     while (it.hasNext()) {
       XobjList reductionRef = (XobjList)it.next();
-      Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb, true, schedBaseBlock);
+      Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb,
+                                                                       true, schedBaseBlock, reductionInitIfBlock);
       String reductionFuncType = createReductionFuncType(reductionRef, pb);
 
       reductionBody.add(createReductionFuncCallBlock(false, reductionFuncType + "_CLAUSE",
                                                      null, reductionFuncArgsList));
     }
 
-    return Bcons.COMPOUND(reductionBody);
+    schedBaseBlock.insert(reductionInitIfBlock);
+    schedBaseBlock.add(Bcons.COMPOUND(reductionBody));
   }
 
   private CforBlock findReductionForBlock(Vector<CforBlock> loopVector, Vector<XobjInt> loopIndexVector, int i) {
@@ -1170,12 +1179,14 @@ public class XMPtranslateLocalPragma {
 
     // create function arguments
     XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
-    Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb, false, null);
+    Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb,
+                                                                     false, null, null);
     String reductionFuncType = createReductionFuncType(reductionRef, pb);
 
     // create function call
     XobjList onRef = (XobjList)reductionDecl.getArg(1);
-    if (onRef == null) pb.replace(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC", null, reductionFuncArgsList));
+    if (onRef == null) pb.replace(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC",
+                                                               null, reductionFuncArgsList));
     else {
       XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(lnObj, onRef, localObjectTable);
       String execFuncSurfix = execOnRefArgs.getFirst();
@@ -1227,7 +1238,8 @@ public class XMPtranslateLocalPragma {
   }
 
   private Vector<XobjList> createReductionArgsList(XobjList reductionRef, PragmaBlock pb,
-                                                   boolean isClause, CforBlock schedBaseBlock) throws XMPexception {
+                                                   boolean isClause,
+                                                   CforBlock schedBaseBlock, IfBlock reductionInitIfBlock) throws XMPexception {
     LineNo lnObj = pb.getLineNo();
     Vector<XobjList> returnVector = new Vector<XobjList>();
 
@@ -1284,11 +1296,11 @@ public class XMPtranslateLocalPragma {
         Ident tempId = declReductionTempIdent(pb, specName, tempName, specType);
         if (isArray) {
           reductionFuncArgs.cons(tempId.Ref());
-          schedBaseBlock.insert(createReductionInitStatement(tempId, specId, true, count, basicSpecType, reductionOp.getInt()));
+          createReductionInitStatement(tempId, specId, true, count, basicSpecType, reductionOp.getInt(), reductionInitIfBlock);
         }
         else {
           reductionFuncArgs.cons(tempId.getAddr());
-          schedBaseBlock.insert(createReductionInitStatement(tempId, specId, false, null, basicSpecType, reductionOp.getInt()));
+          createReductionInitStatement(tempId, specId, false, null, basicSpecType, reductionOp.getInt(), reductionInitIfBlock);
         }
 
         // rewrite reduction variable
@@ -1307,12 +1319,22 @@ public class XMPtranslateLocalPragma {
     return returnVector;
   }
 
-  private Block createReductionInitStatement(Ident tempId, Ident specId,
-                                             boolean isArray, XobjLong count,
-                                             BasicType type, int reductionOp) {
-    Xobject statement = null;
+  private void createReductionInitStatement(Ident tempId, Ident varId,
+                                            boolean isArray, XobjLong count,
+                                            BasicType type, int reductionOp,
+                                            IfBlock reductionIfBlock) {
+    BlockList masterPart = reductionIfBlock.getThenBody();
+    BlockList otherPart = reductionIfBlock.getElseBody();
 
-    return Bcons.Statement(statement);
+    Xobject statement = null;
+    if (isArray) {
+      masterPart.add(Xcons.Set(tempId.Ref(), varId.Ref()));
+      otherPart.add(Xcons.Set(tempId.Ref(), varId.Ref()));
+    }
+    else {
+      masterPart.add(Xcons.Set(tempId.Ref(), varId.Ref()));
+      otherPart.add(Xcons.Set(tempId.Ref(), varId.Ref()));
+    }
   }
 
   private Ident declReductionTempIdent(Block b, String oldName, String newName, Xtype type) {

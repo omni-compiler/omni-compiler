@@ -46,3 +46,7 @@ _XCALABLEMP_nodes_t *_XCALABLEMP_get_execution_nodes(void) {
     else return exec_nodes;
   }
 }
+
+int _XCALABLEMP_get_execution_nodes_rank(void) {
+  return (_XCALABLEMP_get_execution_nodes())->comm_rank;
+}
