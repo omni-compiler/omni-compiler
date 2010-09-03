@@ -16,13 +16,22 @@ public class XMPtranslateLocalPragma {
     _globalObjectTable = globalDecl.getGlobalObjectTable();
   }
 
+  // FIXME this function never throw exception
   public void translate(FuncDefBlock def) throws XMPexception {
     FunctionBlock fb = def.getBlock();
 
     BlockIterator i = new topdownBlockIterator(fb);
     for (i.init(); !i.end(); i.next()) {
       Block b = i.getBlock();
-      if (b.Opcode() ==  Xcode.XMP_PRAGMA) translatePragma((PragmaBlock)b);
+      if (b.Opcode() ==  Xcode.XMP_PRAGMA) {
+        PragmaBlock pb = (PragmaBlock)b;
+
+        try {
+          translatePragma(pb);
+        } catch (XMPexception e) {
+          XMP.error(pb.getLineNo(), e.getMessage());
+        }
+      }
     }
 
     def.Finalize();
@@ -64,8 +73,6 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateNodes(PragmaBlock pb) throws XMPexception {
-    LineNo lnObj = pb.getLineNo();
-
     // check location
     checkDeclPragmaLocation(pb);
 
@@ -82,7 +89,7 @@ public class XMPtranslateLocalPragma {
 
     // check name collision
     String nodesName = nodesDecl.getArg(1).getString();
-    checkObjectNameCollision(lnObj, nodesName, funcBlockList, localObjectTable);
+    checkObjectNameCollision(nodesName, funcBlockList, localObjectTable);
 
     // declare nodes desciptor
     Ident nodesDescId = XMPlocalDecl.addObjectId(XMP.DESC_PREFIX_ + nodesName, pb);
@@ -91,9 +98,9 @@ public class XMPtranslateLocalPragma {
     int nodesDim = 0;
     for (XobjArgs i = nodesDecl.getArg(2).getArgs(); i != null; i = i.nextArgs()) nodesDim++;
     if ((nodesDim > (XMP.MAX_DIM)) || (nodesDim < 1))
-      XMP.error(lnObj, "nodes dimension should be less than " + (XMP.MAX_DIM + 1));
+      throw new XMPexception("nodes dimension should be less than " + (XMP.MAX_DIM + 1));
 
-    XMPnodes nodesObject = new XMPnodes(lnObj.lineNo(), nodesName, nodesDim, nodesDescId);
+    XMPnodes nodesObject = new XMPnodes(pb.getLineNo().lineNo(), nodesName, nodesDim, nodesDescId);
     localObjectTable.putObject(nodesObject);
 
     // create function call
@@ -134,7 +141,7 @@ public class XMPtranslateLocalPragma {
             nodesRefType = "NAMED";
 
             String nodesRefName = nodesRef.getArg(0).getString();
-            nodesRefObject = findXMPnodes(lnObj, nodesRefName, localObjectTable);
+            nodesRefObject = findXMPnodes(nodesRefName, localObjectTable);
             nodesArgs.add(nodesRefObject.getDescId().Ref());
 
             int nodesRefDim = nodesRefObject.getDim();
@@ -156,7 +163,7 @@ public class XMPtranslateLocalPragma {
               int nodesRefIndex = 0;
               for (XobjArgs i = subscriptList.getArgs(); i != null; i = i.nextArgs()) {
                 if (nodesRefIndex == nodesRefDim)
-                  XMP.error(lnObj, "wrong nodes dimension indicated, too many");
+                  throw new XMPexception("wrong nodes dimension indicated, too many");
 
                 XobjList subscriptTriplet = (XobjList)i.getArg();
                 // lower
@@ -177,7 +184,7 @@ public class XMPtranslateLocalPragma {
               }
 
               if (nodesRefIndex != nodesRefDim)
-                XMP.error(lnObj, "the number of <nodes-subscript> should be the same with the nodes dimension");
+                throw new XMPexception("the number of <nodes-subscript> should be the same with the nodes dimension");
             }
 
             if (isDynamicNodesRef) nodesArgs.cons(Xcons.IntConstant(1));
@@ -214,8 +221,6 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateTemplate(PragmaBlock pb) throws XMPexception {
-    LineNo lnObj = pb.getLineNo();
-
     // check location
     checkDeclPragmaLocation(pb);
 
@@ -227,7 +232,7 @@ public class XMPtranslateLocalPragma {
 
     // check name collision - parameters
     String templateName = templateDecl.getArg(0).getString();
-    checkObjectNameCollision(lnObj, templateName, funcBlockList, localObjectTable);
+    checkObjectNameCollision(templateName, funcBlockList, localObjectTable);
 
     // declare template desciptor
     Ident templateDescId = XMPlocalDecl.addObjectId(XMP.DESC_PREFIX_ + templateName, pb);
@@ -236,9 +241,9 @@ public class XMPtranslateLocalPragma {
     int templateDim = 0;
     for (XobjArgs i = templateDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) templateDim++;
     if ((templateDim > (XMP.MAX_DIM)) || (templateDim < 1))
-      XMP.error(lnObj, "template dimension should be less than " + (XMP.MAX_DIM + 1));
+      throw new XMPexception("template dimension should be less than " + (XMP.MAX_DIM + 1));
 
-    XMPtemplate templateObject = new XMPtemplate(lnObj.lineNo(), templateName, templateDim, templateDescId);
+    XMPtemplate templateObject = new XMPtemplate(pb.getLineNo().lineNo(), templateName, templateDim, templateDescId);
     localObjectTable.putObject(templateObject);
 
     // create function call
@@ -278,28 +283,25 @@ public class XMPtranslateLocalPragma {
     XMPlocalDecl.insertDestructorCall("_XCALABLEMP_finalize_template", Xcons.List(templateDescId.Ref()), pb, _globalDecl);
   }
 
-  private void checkObjectNameCollision(LineNo lnObj, String name,
-                                        BlockList scopeBL, XMPobjectTable objectTable) throws XMPexception {
+  private void checkObjectNameCollision(String name, BlockList scopeBL, XMPobjectTable objectTable) throws XMPexception {
     // check name collision - parameters
     if (scopeBL.findLocalIdent(name) != null)
-      XMP.error(lnObj, "'" + name + "' is already declared");
+      throw new XMPexception("'" + name + "' is already declared");
 
     // check name collision - local object table
     if (objectTable.getObject(name) != null) {
       int ln = _globalObjectTable.getObject(name).getLineNo();
-      XMP.error(lnObj, "'" + name + "' is already declared in line." + ln);
+      throw new XMPexception("'" + name + "' is already declared in line." + ln);
     }
 
     // check name collision - descriptor name
     if (scopeBL.findLocalIdent(XMP.DESC_PREFIX_ + name) != null) {
       // FIXME generate unique name
-      XMP.error(lnObj, "cannot declare template desciptor, '" + XMP.DESC_PREFIX_ + name + "' is already declared");
+      throw new XMPexception("cannot declare template desciptor, '" + XMP.DESC_PREFIX_ + name + "' is already declared");
     }
   }
 
   private void translateDistribute(PragmaBlock pb) throws XMPexception {
-    LineNo lnObj = pb.getLineNo();
-
     // check location
     checkDeclPragmaLocation(pb);
 
@@ -315,20 +317,20 @@ public class XMPtranslateLocalPragma {
     if (templateObject == null) {
       templateObject = _globalObjectTable.getTemplate(templateName);
       if (templateObject == null)
-        XMP.error(lnObj, "template '" + templateName + "' is not declared");
+        throw new XMPexception("template '" + templateName + "' is not declared");
       else
-        XMP.error(lnObj, "global template cannot be distributed in local scope");
+        throw new XMPexception("global template cannot be distributed in local scope");
     }
 
     if (templateObject.isDistributed())
-      XMP.error(lnObj, "template '" + templateName + "' is already distributed");
+      throw new XMPexception("template '" + templateName + "' is already distributed");
 
     if (!templateObject.isFixed())
-      XMP.error(lnObj, "the size of template '" + templateName + "' is not fixed");
+      throw new XMPexception("the size of template '" + templateName + "' is not fixed");
 
     // get nodes object
     String nodesName = distDecl.getArg(2).getString();
-    XMPnodes nodesObject = findXMPnodes(lnObj, nodesName, localObjectTable);
+    XMPnodes nodesObject = findXMPnodes(nodesName, localObjectTable);
 
     templateObject.setOntoNodes(nodesObject);
 
@@ -345,7 +347,7 @@ public class XMPtranslateLocalPragma {
     int nodesDimIdx = 0;
     for (XobjArgs i = distDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
       if (templateDimIdx == templateDim)
-        XMP.error(lnObj, "wrong template dimension indicated, too many");
+        throw new XMPexception("wrong template dimension indicated, too many");
 
       int distManner = i.getArg().getInt();
       // FIXME support cyclic(w), gblock
@@ -359,7 +361,7 @@ public class XMPtranslateLocalPragma {
         case XMPtemplate.CYCLIC:
           {
             if (nodesDimIdx == nodesDim)
-              XMP.error(lnObj, "the number of <dist-format> (except '*') should be the same with the nodes dimension");
+              throw new XMPexception("the number of <dist-format> (except '*') should be the same with the nodes dimension");
 
             setupDistribution(distManner, pb, templateObject, templateDimIdx, nodesObject, nodesDimIdx);
             nodesDimIdx++;
@@ -374,10 +376,10 @@ public class XMPtranslateLocalPragma {
 
     // check nodes, template dimension
     if (nodesDimIdx != nodesDim)
-      XMP.error(lnObj, "the number of <dist-format> (except '*') should be the same with the nodes dimension");
+      throw new XMPexception("the number of <dist-format> (except '*') should be the same with the nodes dimension");
 
     if (templateDimIdx != templateDim)
-      XMP.error(lnObj, "wrong template dimension indicated, too few");
+      throw new XMPexception("wrong template dimension indicated, too few");
 
     // set distributed
     templateObject.setIsDistributed();
@@ -425,8 +427,6 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateAlign(PragmaBlock pb) throws XMPexception {
-    LineNo lnObj = pb.getLineNo();
-
     // check location
     checkDeclPragmaLocation(pb);
 
@@ -439,27 +439,27 @@ public class XMPtranslateLocalPragma {
     // get array information
     String arrayName = alignDecl.getArg(0).getString();
     if (localObjectTable.getAlignedArray(arrayName) != null)
-      XMP.error(lnObj, "array '" + arrayName + "' is already aligned");
+      throw new XMPexception("array '" + arrayName + "' is already aligned");
 
     Ident arrayId = funcBlockList.findLocalIdent(arrayName);
     if (arrayId == null)
-      XMP.error(lnObj, "array '" + arrayName + "' is not declared");
+      throw new XMPexception("array '" + arrayName + "' is not declared");
 
     if (arrayId.getStorageClass() != StorageClass.PARAM)
-      XMP.error(lnObj, "array '" + arrayName + "' is not a parameter");
+      throw new XMPexception("array '" + arrayName + "' is not a parameter");
 
     Xtype arrayType = arrayId.Type();
     if (arrayType.getKind() != Xtype.ARRAY)
-      XMP.error(lnObj, arrayName + " is not an array");
+      throw new XMPexception(arrayName + " is not an array");
 
     Xtype arrayElmtType = arrayType.getArrayElementType();
 
     // get template information
     String templateName = alignDecl.getArg(2).getString();
-    XMPtemplate templateObj = findXMPtemplate(lnObj, templateName, localObjectTable);
+    XMPtemplate templateObj = findXMPtemplate(templateName, localObjectTable);
 
     if (!(templateObj.isDistributed()))
-      XMP.error(lnObj, "template '" + templateName + "' is not distributed");
+      throw new XMPexception("template '" + templateName + "' is not distributed");
 
     int templateDim = templateObj.getDim();
 
@@ -471,7 +471,7 @@ public class XMPtranslateLocalPragma {
 
     int arrayDim = arrayType.getNumDimensions();
     if ((arrayDim > (XMP.MAX_DIM)) || (arrayDim < 1))
-      XMP.error(lnObj, "array dimension should be less than " + (XMP.MAX_DIM + 1));
+      throw new XMPexception("array dimension should be less than " + (XMP.MAX_DIM + 1));
 
     XobjList initArrayDescFuncArgs = Xcons.List(arrayDescId.getAddr(),
                                                 templateObj.getDescId().Ref(),
@@ -482,7 +482,7 @@ public class XMPtranslateLocalPragma {
     for (int i = 0; i < arrayDim; i++, arrayType = arrayType.getRef()) {
       long dimSize = arrayType.getArraySize();
       if(dimSize == 0)
-        XMP.error(lnObj, "array size cannot be omitted");
+        throw new XMPexception("array size cannot be omitted");
 
       arraySizeVector.add(new Long(dimSize));
       initArrayDescFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.LongLongConstant(0, dimSize)));
@@ -496,7 +496,7 @@ public class XMPtranslateLocalPragma {
     XMPlocalDecl.addConstructorCall("_XCALABLEMP_init_array_desc", initArrayDescFuncArgs, pb, _globalDecl);
     XMPlocalDecl.insertDestructorCall("_XCALABLEMP_finalize_array_desc", Xcons.List(arrayDescId.Ref()), pb, _globalDecl);
 
-    XMPalignedArray alignedArray = new XMPalignedArray(lnObj, arrayName, arrayElmtType, arrayDim,
+    XMPalignedArray alignedArray = new XMPalignedArray(pb.getLineNo(), arrayName, arrayElmtType, arrayDim,
                                                        arraySizeVector, gtolAccIdVector, arrayDescId, arrayAddrId,
                                                        templateObj);
     localObjectTable.putAlignedArray(alignedArray);
@@ -509,16 +509,16 @@ public class XMPtranslateLocalPragma {
 
     // check <align-source> list
     if (XMPutil.countElmts(alignSourceList) != arrayDim)
-      XMP.error(lnObj, "the number of <align-source>s is not the same with array dimension");
+      throw new XMPexception("the number of <align-source>s is not the same with array dimension");
 
     // check <align-subscript> list
     if (XMPutil.countElmts(alignSubscriptVarList) != templateDim)
-      XMP.error(lnObj, "the number of <align-subscript>s is not the same with template dimension");
+      throw new XMPexception("the number of <align-subscript>s is not the same with template dimension");
 
     // check ':' source/subscript
     if (XMPutil.countElmts(alignSourceList, XMP.COLON) !=
         XMPutil.countElmts(alignSubscriptVarList, XMP.COLON))
-      XMP.error(lnObj, "the number of ':' in <align-source> list is not the same with <align-subscript> list");
+      throw new XMPexception("the number of ':' in <align-source> list is not the same with <align-subscript> list");
 
     // create align function calls
     int alignSourceIndex = 0;
@@ -531,7 +531,7 @@ public class XMPtranslateLocalPragma {
           case XMPalignedArray.SIMPLE_ALIGN:
             {
               if (!XMPutil.hasElmt(alignSubscriptVarList, XMPalignedArray.SIMPLE_ALIGN))
-                XMP.error(lnObj, "cannot find ':' in <align-subscript> list");
+                throw new XMPexception("cannot find ':' in <align-subscript> list");
 
               int alignSubscriptIndex = XMPutil.getLastIndex(alignSubscriptVarList, XMPalignedArray.SIMPLE_ALIGN);
               alignSubscriptVarList.setArg(alignSubscriptIndex, null);
@@ -541,24 +541,24 @@ public class XMPtranslateLocalPragma {
               break;
             }
           default:
-            XMP.error(lnObj, "incorrect align source type");
+            throw new XMPexception("incorrect align source type");
         }
       }
       else if (alignSourceObj.Opcode() == Xcode.STRING) {
         String alignSource = alignSourceObj.getString();
         if (XMPutil.countElmts(alignSourceList, alignSource) != 1)
-          XMP.error(lnObj, "multiple '" + alignSource + "' indicated in <align-source> list");
+          throw new XMPexception("multiple '" + alignSource + "' indicated in <align-source> list");
 
         if (XMPutil.hasElmt(alignSubscriptVarList, alignSource)) {
           if (XMPutil.countElmts(alignSubscriptVarList, alignSource) != 1)
-            XMP.error(lnObj, "multiple '" + alignSource + "' indicated in <align-subscript> list");
+            throw new XMPexception("multiple '" + alignSource + "' indicated in <align-subscript> list");
 
           int alignSubscriptIndex = XMPutil.getFirstIndex(alignSubscriptVarList, alignSource);
           declAlignFunc(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex,
                         alignSubscriptExprList.getArg(alignSubscriptIndex), pb);
         }
         else
-          XMP.error(lnObj, "cannot find '" + alignSource + "' in <align-subscript> list");
+          throw new XMPexception("cannot find '" + alignSource + "' in <align-subscript> list");
       }
 
       alignSourceIndex++;
@@ -575,14 +575,14 @@ public class XMPtranslateLocalPragma {
             String alignSubscript = alignSubscriptObj.getString();
             if (XMPutil.hasElmt(alignSourceList, alignSubscript)) {
               if (XMPutil.countElmts(alignSourceList, alignSubscript) != 1)
-                XMP.error(lnObj, "no/multiple '" + alignSubscript + "' indicated in <align-source> list");
+                throw new XMPexception("no/multiple '" + alignSubscript + "' indicated in <align-source> list");
             }
             else
-              XMP.error(lnObj, "cannot find '" + alignSubscript + "' in <align-source> list");
+              throw new XMPexception("cannot find '" + alignSubscript + "' in <align-source> list");
           }
           break;
         default:
-          XMP.error(lnObj, "unknown align subscript");
+          throw new XMPexception("unknown align subscript");
       }
     }
 
@@ -635,8 +635,6 @@ public class XMPtranslateLocalPragma {
 
   // FIXME incomplete, not checked
   private void translateShadow(PragmaBlock pb) throws XMPexception {
-    LineNo lnObj = pb.getLineNo();
-
     // check position
     checkDeclPragmaLocation(pb);
 
@@ -648,10 +646,10 @@ public class XMPtranslateLocalPragma {
     String arrayName = shadowDecl.getArg(0).getString();
     XMPalignedArray alignedArray = localObjectTable.getAlignedArray(arrayName);
     if (alignedArray == null)
-      XMP.error(lnObj, "the aligned array '" + arrayName + "' is not found in local scope");
+      throw new XMPexception("the aligned array '" + arrayName + "' is not found in local scope");
 
     if (alignedArray.hasShadow())
-      XMP.error(lnObj, "the aligned array '" + arrayName + "' has shadow already");
+      throw new XMPexception("the aligned array '" + arrayName + "' has shadow already");
 
     // init shadow
     XobjList shadowFuncArgs = Xcons.List(alignedArray.getDescId().Ref());
@@ -659,7 +657,7 @@ public class XMPtranslateLocalPragma {
     int arrayDim = alignedArray.getDim();
     for (XobjArgs i = shadowDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
       if (arrayIndex == arrayDim)
-        XMP.error(lnObj, "wrong shadow dimension indicated, too many");
+        throw new XMPexception("wrong shadow dimension indicated, too many");
 
       XobjList shadowObj = (XobjList)i.getArg();
       XobjInt shadowType = (XobjInt)shadowObj.getArg(0);
@@ -675,7 +673,7 @@ public class XMPtranslateLocalPragma {
         case XMPshadow.SHADOW_NORMAL:
           {
             if (alignedArray.getDistMannerAt(arrayIndex) == XMPalignedArray.NO_ALIGN)
-              XMP.error(lnObj, "indicated dimension is not distributed");
+              throw new XMPexception("indicated dimension is not distributed");
 
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_NORMAL)));
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowBody.left()));
@@ -687,7 +685,7 @@ public class XMPtranslateLocalPragma {
         case XMPshadow.SHADOW_FULL:
           {
             if (alignedArray.getDistMannerAt(arrayIndex) == XMPalignedArray.NO_ALIGN)
-              XMP.error(lnObj, "indicated dimension is not distributed");
+              throw new XMPexception("indicated dimension is not distributed");
 
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_FULL)));
 
@@ -695,14 +693,14 @@ public class XMPtranslateLocalPragma {
             break;
           }
         default:
-          XMP.error(lnObj, "unknown shadow type");
+          throw new XMPexception("unknown shadow type");
       }
 
       arrayIndex++;
     }
 
     if (arrayIndex != arrayDim)
-      XMP.error(lnObj, "the number of <nodes/template-subscript> should be the same with the dimension");
+      throw new XMPexception("the number of <nodes/template-subscript> should be the same with the dimension");
 
     XMPlocalDecl.addConstructorCall("_XCALABLEMP_init_shadow", shadowFuncArgs, pb, _globalDecl);
 
@@ -711,8 +709,6 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateTask(PragmaBlock pb) throws XMPexception {
-    LineNo lnObj = pb.getLineNo();
-
     // start translation
     XobjList taskDecl = (XobjList)pb.getClauses();
     XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
@@ -720,7 +716,7 @@ public class XMPtranslateLocalPragma {
 
     // create function arguments
     XobjList onRef = (XobjList)taskDecl.getArg(0);
-    XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(lnObj, onRef, localObjectTable);
+    XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(onRef, localObjectTable);
     String execFuncSurfix = execOnRefArgs.getFirst();
     boolean splitComm = execOnRefArgs.getSecond().booleanValue();
     XobjList execFuncArgs = execOnRefArgs.getThird();
@@ -729,7 +725,7 @@ public class XMPtranslateLocalPragma {
     Ident finFuncId = null;
     if (splitComm) finFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pop_n_free_nodes");
     else           finFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pop_nodes");
-    setupFinalizer(lnObj, taskBody, finFuncId, null);
+    setupFinalizer(taskBody, finFuncId, null);
 
     // create function call
     Ident execFuncId = _env.declExternIdent("_XCALABLEMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
@@ -737,7 +733,6 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateTasks(PragmaBlock pb) {
-    LineNo lnObj = pb.getLineNo();
     System.out.println("TASKS:" + pb.toXobject().toString());
   }
 
@@ -746,7 +741,7 @@ public class XMPtranslateLocalPragma {
     BlockList loopBody = pb.getBody();
 
     // get block to schedule
-    CforBlock schedBaseBlock = getOutermostLoopBlock(pb.getLineNo(), loopBody);
+    CforBlock schedBaseBlock = getOutermostLoopBlock(loopBody);
 
     // schedule loop
     XobjList loopOnRef = null;
@@ -766,14 +761,12 @@ public class XMPtranslateLocalPragma {
   }
 
   private Block createLoopCommunicator(PragmaBlock pb, XobjList onRef) throws XMPexception {
-    LineNo lnObj = pb.getLineNo();
-
     // start translation
     XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
     BlockList loopBody = pb.getBody();
 
     // create function arguments
-    XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(lnObj, onRef, localObjectTable);
+    XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(onRef, localObjectTable);
     String execFuncSurfix = execOnRefArgs.getFirst();
     boolean splitComm = execOnRefArgs.getSecond().booleanValue();
     XobjList execFuncArgs = execOnRefArgs.getThird();
@@ -782,7 +775,7 @@ public class XMPtranslateLocalPragma {
     Ident finFuncId = null;
     if (splitComm) finFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pop_n_free_nodes");
     else           finFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pop_nodes");
-    setupFinalizer(lnObj, loopBody, finFuncId, null);
+    setupFinalizer(loopBody, finFuncId, null);
 
     // create function call
     Ident execFuncId = _env.declExternIdent("_XCALABLEMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
@@ -790,7 +783,6 @@ public class XMPtranslateLocalPragma {
   }
 
   private XobjList translateFollowingLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {
-    LineNo lnObj = pb.getLineNo();
     XobjList loopDecl = (XobjList)pb.getClauses();
 
     // schedule loop
@@ -816,8 +808,6 @@ public class XMPtranslateLocalPragma {
   }
 
   private XobjList translateMultipleLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {
-    LineNo lnObj = pb.getLineNo();
-
     // start translation
     XobjList loopDecl = (XobjList)pb.getClauses();
     BlockList loopBody = pb.getBody();
@@ -826,7 +816,7 @@ public class XMPtranslateLocalPragma {
     XobjList loopVarList = (XobjList)loopDecl.getArg(0);
     Vector<CforBlock> loopVector = new Vector<CforBlock>(XMPutil.countElmts(loopVarList));
     for (XobjArgs i = loopVarList.getArgs(); i != null; i = i.nextArgs())
-      loopVector.add(findLoopBlock(lnObj, loopBody, i.getArg().getString()));
+      loopVector.add(findLoopBlock(loopBody, i.getArg().getString()));
 
     // schedule loop
     Vector<XobjInt> loopIndexVector = new Vector<XobjInt>(loopVector.size());
@@ -858,8 +848,6 @@ public class XMPtranslateLocalPragma {
 
   private void createReductionClauseBlock(PragmaBlock pb, XobjList reductionRefList,
                                           CforBlock schedBaseBlock) throws XMPexception {
-    LineNo lnObj = pb.getLineNo();
-
     // create init block
     Ident getRankFuncId = _globalDecl.declExternFunc("_XCALABLEMP_get_execution_nodes_rank", Xtype.intType);
     IfBlock reductionInitIfBlock = (IfBlock)Bcons.IF(BasicBlock.Cond(Xcons.binaryOp(Xcode.LOG_EQ_EXPR, getRankFuncId.Call(null),
@@ -895,20 +883,19 @@ public class XMPtranslateLocalPragma {
   }
 
   private XobjInt scheduleLoop(PragmaBlock pb, CforBlock forBlock, CforBlock schedBaseBlock) throws XMPexception {
-    LineNo lnObj = pb.getLineNo();
     XobjList loopDecl = (XobjList)pb.getClauses();
     XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(schedBaseBlock);
 
     // analyze <on-ref>
     Xobject onRef = loopDecl.getArg(1);
     String onRefObjName = onRef.getArg(0).getString();
-    XMPobject onRefObj = findXMPobject(lnObj, onRefObjName, localObjectTable);
+    XMPobject onRefObj = findXMPobject(onRefObjName, localObjectTable);
     switch (onRefObj.getKind()) {
       case XMPobject.TEMPLATE:
         {
           XMPtemplate onRefTemplate = (XMPtemplate)onRefObj;
           if (!(onRefTemplate.isDistributed()))
-            XMP.error(lnObj, "template '" + onRefObjName + "' is not distributed");
+            throw new XMPexception("template '" + onRefObjName + "' is not distributed");
 
           return callLoopSchedFuncTemplate(onRefTemplate, (XobjList)onRef.getArg(1), forBlock, schedBaseBlock);
         }
@@ -921,7 +908,7 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private static CforBlock getOutermostLoopBlock(LineNo lnObj, BlockList body) throws XMPexception {
+  private static CforBlock getOutermostLoopBlock(BlockList body) throws XMPexception {
     Block b = body.getHead();
     if (b != null) {
       if (b.Opcode() == Xcode.FOR_STATEMENT) {
@@ -929,64 +916,56 @@ public class XMPtranslateLocalPragma {
 
         // XXX too strict?
         if (b.getNext() != null)
-          XMP.error(blockLnObj, "only one loop statement is allowed in loop directive");
+          throw new XMPexception("only one loop statement is allowed in loop directive");
 
         CforBlock forBlock = (CforBlock)b;
         forBlock.Canonicalize();
         if (!(forBlock.isCanonical()))
-          XMP.error(blockLnObj, "loop statement is not canonical");
+          throw new XMPexception("loop statement is not canonical");
 
         return forBlock;
       }
       else if (b.Opcode() == Xcode.COMPOUND_STATEMENT)
-        return getOutermostLoopBlock(lnObj, b.getBody());
+        return getOutermostLoopBlock(b.getBody());
     }
 
-    XMP.error(lnObj, "cannot find the loop statement");
-    // never reach here
-    return null;
+    throw new XMPexception("cannot find the loop statement");
   }
 
-  private static CforBlock findLoopBlock(LineNo lnObj, BlockList body, String loopVarName) throws XMPexception {
+  private static CforBlock findLoopBlock(BlockList body, String loopVarName) throws XMPexception {
     Block b = body.getHead();
     if (b != null) {
-      LineNo blockLnObj = b.getLineNo();
-
       switch (b.Opcode()) {
         case FOR_STATEMENT:
           {
             CforBlock forBlock = (CforBlock)b;
             forBlock.Canonicalize();
             if (!(forBlock.isCanonical()))
-              XMP.error(blockLnObj, "loop is not canonical");
+              throw new XMPexception("loop is not canonical");
 
             if (forBlock.getInductionVar().getSym().equals(loopVarName))
               return (CforBlock)b;
             else
-              return findLoopBlock(blockLnObj, forBlock.getBody(), loopVarName);
+              return findLoopBlock(forBlock.getBody(), loopVarName);
           }
         case COMPOUND_STATEMENT:
-          return findLoopBlock(blockLnObj, b.getBody(), loopVarName);
+          return findLoopBlock(b.getBody(), loopVarName);
         case XMP_PRAGMA:
         case OMP_PRAGMA:
-          XMP.error(blockLnObj, "reached to a openmp/xcalablemp directive");
+          throw new XMPexception("reached to a openmp/xcalablemp directive");
       }
     }
 
-    XMP.error(lnObj, "cannot find the loop statement");
-    // never reach here
-    return null;
+    throw new XMPexception("cannot find the loop statement");
   }
 
   private XobjInt callLoopSchedFuncTemplate(XMPtemplate templateObj, XobjList templateSubscriptList,
                                             CforBlock forBlock, CforBlock schedBaseBlock) throws XMPexception {
-    LineNo lnObj = forBlock.getLineNo();
-
     Xobject loopIndex = forBlock.getInductionVar();
     Xtype loopIndexType = loopIndex.Type();
 
     if (!XMPutil.isIntegerType(loopIndexType))
-      XMP.error(lnObj, "loop index variable has a non-integer type");
+      throw new XMPexception("loop index variable has a non-integer type");
 
     String funcTypeSurfix = XMPutil.getTypeName(loopIndexType);
     String loopIndexName = loopIndex.getSym();
@@ -1003,19 +982,17 @@ public class XMPtranslateLocalPragma {
     String distMannerString = null;
     for (XobjArgs i = templateSubscriptList.getArgs(); i != null; i = i.nextArgs()) {
       if (templateIndex >= templateDim)
-        XMP.error(lnObj, "wrong template dimensions, too many");
+        throw new XMPexception("wrong template dimensions, too many");
 
       String s = i.getArg().getString();
       if (s.equals(loopIndexName)) {
         if (templateIndexArg != null)
-          XMP.error(lnObj, "loop index '" + loopIndexName + "' is already described");
+          throw new XMPexception("loop index '" + loopIndexName + "' is already described");
 
         templateIndexArg = Xcons.IntConstant(templateIndex);
         distManner = templateObj.getDistMannerAt(templateIndex);
-        if (distManner == XMPtemplate.DUPLICATION) {
-          XMP.warning(lnObj, "indicated template dimension is not distributed");
-          return templateIndexArg;
-        }
+        if (distManner == XMPtemplate.DUPLICATION) // FIXME how implement???
+          throw new XMPexception("indicated template dimension is not distributed");
         else distMannerString = templateObj.getDistMannerStringAt(templateIndex);
       }
 
@@ -1023,10 +1000,10 @@ public class XMPtranslateLocalPragma {
     }
 
     if(templateIndexArg == null)
-      XMP.error(lnObj, "cannot find index '" + loopIndexName + "' reference in <on-ref>");
+      throw new XMPexception("cannot find index '" + loopIndexName + "' reference in <on-ref>");
 
     if(templateIndex != templateDim)
-      XMP.error(lnObj, "wrong template dimensions, too few");
+      throw new XMPexception("wrong template dimensions, too few");
 
     Ident parallelInitId = declIdentWithBlock(schedBaseBlock,
                                               "_XCALABLEMP_loop_init_" + loopIndexName, loopIndexType);
@@ -1057,13 +1034,11 @@ public class XMPtranslateLocalPragma {
 
   private XobjInt callLoopSchedFuncNodes(XMPnodes nodesObj, XobjList nodesSubscriptList,
                                          CforBlock forBlock, CforBlock schedBaseBlock) throws XMPexception {
-    LineNo lnObj = forBlock.getLineNo();
-
     Xobject loopIndex = forBlock.getInductionVar();
     Xtype loopIndexType = loopIndex.Type();
 
     if (!XMPutil.isIntegerType(loopIndexType))
-      XMP.error(lnObj, "loop index variable has a non-integer type");
+      throw new XMPexception("loop index variable has a non-integer type");
 
     String funcTypeSurfix = XMPutil.getTypeName(loopIndexType);
     String loopIndexName = loopIndex.getSym();
@@ -1078,12 +1053,12 @@ public class XMPtranslateLocalPragma {
     XobjInt nodesIndexArg = null;
     for (XobjArgs i = nodesSubscriptList.getArgs(); i != null; i = i.nextArgs()) {
       if (nodesIndex >= nodesDim)
-        XMP.error(lnObj, "wrong nodes dimensions, too many");
+        throw new XMPexception("wrong nodes dimensions, too many");
 
       String s = i.getArg().getString();
       if (s.equals(loopIndexName)) {
         if (nodesIndexArg != null)
-          XMP.error(lnObj, "loop index '" + loopIndexName + "' is already described");
+          throw new XMPexception("loop index '" + loopIndexName + "' is already described");
 
         nodesIndexArg = Xcons.IntConstant(nodesIndex);
       }
@@ -1092,10 +1067,10 @@ public class XMPtranslateLocalPragma {
     }
 
     if(nodesIndexArg == null)
-      XMP.error(lnObj, "cannot find index '" + loopIndexName + "' reference in <on-ref>");
+      throw new XMPexception("cannot find index '" + loopIndexName + "' reference in <on-ref>");
 
     if(nodesIndex != nodesDim)
-      XMP.error(lnObj, "wrong nodes dimensions, too few");
+      throw new XMPexception("wrong nodes dimensions, too few");
 
     Ident parallelInitId = declIdentWithBlock(schedBaseBlock,
                                               "_XCALABLEMP_loop_init_" + loopIndexName, loopIndexType);
@@ -1132,13 +1107,10 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateReflect(PragmaBlock pb) {
-    LineNo lnObj = pb.getLineNo();
     System.out.println("REFLECT:" + pb.toXobject().toString());
   }
 
   private void translateBarrier(PragmaBlock pb) throws XMPexception {
-    LineNo lnObj = pb.getLineNo();
-
     // start translation
     XobjList barrierDecl = (XobjList)pb.getClauses();
     XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
@@ -1147,7 +1119,7 @@ public class XMPtranslateLocalPragma {
     XobjList onRef = (XobjList)barrierDecl.getArg(0);
     if (onRef == null) pb.replace(createFuncCallBlock("_XCALABLEMP_barrier_EXEC", null));
     else {
-      XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(lnObj, onRef, localObjectTable);
+      XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(onRef, localObjectTable);
       String execFuncSurfix = execOnRefArgs.getFirst();
       boolean splitComm = execOnRefArgs.getSecond().booleanValue();
       XobjList execFuncArgs = execOnRefArgs.getThird();
@@ -1155,7 +1127,7 @@ public class XMPtranslateLocalPragma {
         BlockList barrierBody = Bcons.blockList(createFuncCallBlock("_XCALABLEMP_barrier_EXEC", null));
 
         // setup barrier finalizer
-        setupFinalizer(lnObj, barrierBody, _globalDecl.declExternFunc("_XCALABLEMP_pop_n_free_nodes"), null);
+        setupFinalizer(barrierBody, _globalDecl.declExternFunc("_XCALABLEMP_pop_n_free_nodes"), null);
 
         // create function call
         Ident execFuncId = _env.declExternIdent("_XCALABLEMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
@@ -1171,8 +1143,6 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateReduction(PragmaBlock pb) throws XMPexception {
-    LineNo lnObj = pb.getLineNo();
-
     // start translation
     XobjList reductionDecl = (XobjList)pb.getClauses();
     XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
@@ -1187,7 +1157,7 @@ public class XMPtranslateLocalPragma {
     XobjList onRef = (XobjList)reductionDecl.getArg(1);
     if (onRef == null) pb.replace(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC", null, reductionFuncArgsList));
     else {
-      XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(lnObj, onRef, localObjectTable);
+      XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(onRef, localObjectTable);
       String execFuncSurfix = execOnRefArgs.getFirst();
       boolean splitComm = execOnRefArgs.getSecond().booleanValue();
       XobjList execFuncArgs = execOnRefArgs.getThird();
@@ -1196,7 +1166,7 @@ public class XMPtranslateLocalPragma {
                                                                                null, reductionFuncArgsList));
 
         // setup reduction finalizer
-        setupFinalizer(lnObj, reductionBody, _globalDecl.declExternFunc("_XCALABLEMP_pop_n_free_nodes"), null);
+        setupFinalizer(reductionBody, _globalDecl.declExternFunc("_XCALABLEMP_pop_n_free_nodes"), null);
 
         // create function call
         Ident execFuncId = _env.declExternIdent("_XCALABLEMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
@@ -1210,7 +1180,6 @@ public class XMPtranslateLocalPragma {
   }
 
   private String createReductionFuncType(XobjList reductionRef, PragmaBlock pb) throws XMPexception {
-    LineNo lnObj = pb.getLineNo();
     XobjInt reductionOp = (XobjInt)reductionRef.getArg(0);
     switch (reductionOp.getInt()) {
       case XMPcollective.REDUCE_SUM:
@@ -1230,16 +1199,13 @@ public class XMPtranslateLocalPragma {
       case XMPcollective.REDUCE_LASTMIN:
         return new String("reduce_FLMM");
       default:
-        XMP.error(lnObj, "unknown reduce operation");
-        // XXX never reach here
-        return null;
+        throw new XMPexception("unknown reduce operation");
     }
   }
 
   private Vector<XobjList> createReductionArgsList(XobjList reductionRef, PragmaBlock pb,
                                                    boolean isClause,
                                                    CforBlock schedBaseBlock, IfBlock reductionInitIfBlock) throws XMPexception {
-    LineNo lnObj = pb.getLineNo();
     Vector<XobjList> returnVector = new Vector<XobjList>();
 
     XobjInt reductionOp = (XobjInt)reductionRef.getArg(0);
@@ -1261,7 +1227,7 @@ public class XMPtranslateLocalPragma {
         case Xtype.BASIC:
           {
             basicSpecType = (BasicType)specType;
-            checkReductionType(lnObj, specName, basicSpecType);
+            checkReductionType(specName, basicSpecType);
 
             count = Xcons.LongLongConstant(0, 1);
             elmtType = Xcons.IntConstant(basicSpecType.getBasicType() + 200);
@@ -1271,16 +1237,16 @@ public class XMPtranslateLocalPragma {
             isArray = true;
             ArrayType arraySpecType = (ArrayType)specType;
             if (arraySpecType.getArrayElementType().getKind() != Xtype.BASIC)
-              XMP.error(lnObj, "array '" + specName + "' has has a wrong data type for reduction");
+              throw new XMPexception("array '" + specName + "' has has a wrong data type for reduction");
 
             basicSpecType = (BasicType)arraySpecType.getArrayElementType();
-            checkReductionType(lnObj, specName, basicSpecType);
+            checkReductionType(specName, basicSpecType);
 
             count = Xcons.LongLongConstant(0, getArrayElmtCount(arraySpecType));
             elmtType = Xcons.IntConstant(basicSpecType.getBasicType() + 200);
           } break;
         default:
-          XMP.error(lnObj, "'" + specName + "' has a wrong data type for reduction");
+          throw new XMPexception("'" + specName + "' has a wrong data type for reduction");
       }
 
       Xobject specRef = null;
@@ -1464,8 +1430,6 @@ public class XMPtranslateLocalPragma {
 
   private void createFLMMreductionArgs(int op, long count, XobjList locationVars,
                                        XobjList funcArgs, PragmaBlock pb) throws XMPexception {
-    LineNo lnObj = pb.getLineNo();
-
     switch (op) {
       case XMPcollective.REDUCE_SUM:
       case XMPcollective.REDUCE_PROD:
@@ -1484,7 +1448,7 @@ public class XMPtranslateLocalPragma {
       case XMPcollective.REDUCE_LASTMIN:
         break;
       default:
-        XMP.error(lnObj, "unknown reduce operation");
+        throw new XMPexception("unknown reduce operation");
     }
 
     funcArgs.add(Xcons.IntConstant(XMPutil.countElmts(locationVars)));
@@ -1501,12 +1465,12 @@ public class XMPtranslateLocalPragma {
         case Xtype.BASIC:
           {
             if (!XMPutil.isIntegerType(varType))
-              XMP.error(lnObj, "'" + varName + "' should have a integer type for reduction");
+              throw new XMPexception("'" + varName + "' should have a integer type for reduction");
 
             BasicType basicVarType = (BasicType)varType;
             
             if (count != 1)
-              XMP.error(lnObj, "'" + varName + "' should be a scalar variable");
+              throw new XMPexception("'" + varName + "' should be a scalar variable");
 
             funcArgs.add(Xcons.Cast(Xtype.voidPtrType, varId.getAddr()));
             funcArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(basicVarType.getBasicType() + 200)));
@@ -1515,26 +1479,26 @@ public class XMPtranslateLocalPragma {
           {
             ArrayType arrayVarType = (ArrayType)varType;
             if (arrayVarType.getArrayElementType().getKind() != Xtype.BASIC)
-              XMP.error(lnObj, "array '" + varName + "' has has a wrong data type for reduction");
+              throw new XMPexception("array '" + varName + "' has has a wrong data type for reduction");
 
             BasicType basicVarType = (BasicType)arrayVarType.getArrayElementType();
 
             if (!XMPutil.isIntegerType(basicVarType))
-              XMP.error(lnObj, "'" + varName + "' should have a integer type for reduction");
+              throw new XMPexception("'" + varName + "' should have a integer type for reduction");
 
             if (count != getArrayElmtCount(arrayVarType))
-              XMP.error(lnObj, "the size of '" + varName + "' is not same with the <reduction-variable>");
+              throw new XMPexception("the size of '" + varName + "' is not same with the <reduction-variable>");
 
             funcArgs.add(Xcons.Cast(Xtype.voidPtrType, varId.Ref()));
             funcArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(basicVarType.getBasicType() + 200)));
           } break;
         default:
-          XMP.error(lnObj, "'" + varName + "' has a wrong data type for reduction");
+          throw new XMPexception("'" + varName + "' has a wrong data type for reduction");
       }
     }
   }
 
-  private void checkReductionType(LineNo lnObj, String name, BasicType type) throws XMPexception {
+  private void checkReductionType(String name, BasicType type) throws XMPexception {
     switch (type.getBasicType()) {
       case BasicType.BOOL:
       case BasicType.CHAR:
@@ -1558,7 +1522,7 @@ public class XMPtranslateLocalPragma {
       case BasicType.LONG_DOUBLE_COMPLEX:
         break;
       default:
-        XMP.error(lnObj, "'" + name + "' has a wrong data type for reduction");
+        throw new XMPexception("'" + name + "' has a wrong data type for reduction");
     }
   }
 
@@ -1580,14 +1544,13 @@ public class XMPtranslateLocalPragma {
   }
 
   private XMPpair<Ident, Xtype> findTypedVar(String name, PragmaBlock pb) throws XMPexception {
-    LineNo lnObj = pb.getLineNo();
     Ident id = pb.findVarIdent(name);
     if (id == null)
-      XMP.error(lnObj, "cannot find '" + name + "'");
+      throw new XMPexception("cannot find '" + name + "'");
 
     Xtype type = id.Type();
     if (type == null)
-      XMP.error(lnObj, "'" + name + "' has no type");
+      throw new XMPexception("'" + name + "' has no type");
 
     return new XMPpair<Ident, Xtype>(id, type);
   }
@@ -1602,25 +1565,23 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateBcast(PragmaBlock pb) throws XMPexception {
-    LineNo lnObj = pb.getLineNo();
-
     // start translation
     XobjList bcastDecl = (XobjList)pb.getClauses();
     XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
 
     // create function arguments
     XobjList varList = (XobjList)bcastDecl.getArg(0);
-    Vector<XobjList> bcastArgsList = createBcastArgsList(lnObj, varList, pb);
+    Vector<XobjList> bcastArgsList = createBcastArgsList(varList, pb);
 
     // create function call
     XobjList fromRef = (XobjList)bcastDecl.getArg(1);
     XMPpair<String, XobjList> execFromRefArgs = null;
-    if (fromRef != null) execFromRefArgs = createExecFromRefArgs(lnObj, fromRef, localObjectTable);
+    if (fromRef != null) execFromRefArgs = createExecFromRefArgs(fromRef, localObjectTable);
 
     XobjList onRef = (XobjList)bcastDecl.getArg(2);
     if (onRef == null) pb.replace(createBcastFuncCallBlock(true, "EXEC", null, bcastArgsList, execFromRefArgs));
     else {
-      XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(lnObj, onRef, localObjectTable);
+      XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(onRef, localObjectTable);
 
       String execFuncSurfix = execOnRefArgs.getFirst();
       boolean splitComm = execOnRefArgs.getSecond().booleanValue();
@@ -1630,7 +1591,7 @@ public class XMPtranslateLocalPragma {
                                                                        null, bcastArgsList, execFromRefArgs));
 
         // setup reduction finalizer
-        setupFinalizer(lnObj, bcastBody, _globalDecl.declExternFunc("_XCALABLEMP_pop_n_free_nodes"), null);
+        setupFinalizer(bcastBody, _globalDecl.declExternFunc("_XCALABLEMP_pop_n_free_nodes"), null);
 
         // create function call
         Ident execFuncId = _env.declExternIdent("_XCALABLEMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
@@ -1643,8 +1604,7 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private Vector<XobjList> createBcastArgsList(LineNo lnObj,
-                                               XobjList varList, PragmaBlock pb) throws XMPexception {
+  private Vector<XobjList> createBcastArgsList(XobjList varList, PragmaBlock pb) throws XMPexception {
     Vector<XobjList> returnVector = new Vector<XobjList>();
 
     for (XobjArgs i = varList.getArgs(); i != null; i = i.nextArgs()) {
@@ -1672,14 +1632,14 @@ public class XMPtranslateLocalPragma {
               case Xtype.UNION:
                 break;
               default:
-                XMP.error(lnObj, "array '" + varName + "' has has a wrong data type for broadcast");
+                throw new XMPexception("array '" + varName + "' has has a wrong data type for broadcast");
             }
 
             count = Xcons.LongLongConstant(0, getArrayElmtCount(arrayVarType));
             returnVector.add(Xcons.List(varId.Ref(), count, Xcons.SizeOf(((ArrayType)varType).getArrayElementType())));
           } break;
         default:
-          XMP.error(lnObj, "'" + varName + "' has a wrong data type for broadcast");
+          throw new XMPexception("'" + varName + "' has a wrong data type for broadcast");
       }
     }
 
@@ -1712,7 +1672,7 @@ public class XMPtranslateLocalPragma {
     return Bcons.COMPOUND(funcCallList);
   }
 
-  private XMPpair<String, XobjList> createExecFromRefArgs(LineNo lnObj, XobjList fromRef,
+  private XMPpair<String, XobjList> createExecFromRefArgs(XobjList fromRef,
                                                           XMPobjectTable localObjectTable) throws XMPexception {
     if (fromRef.getArg(0) == null) {
       // execute on global communicator
@@ -1721,12 +1681,12 @@ public class XMPtranslateLocalPragma {
       XobjList execFuncArgs = Xcons.List();
       // lower
       if (globalRef.getArg(0) == null)
-        XMP.error(lnObj, "lower bound cannot be omitted in <from-ref>");
+        throw new XMPexception("lower bound cannot be omitted in <from-ref>");
       else execFuncArgs.add(globalRef.getArg(0));
 
       // upper
       if (globalRef.getArg(1) == null)
-        XMP.error(lnObj, "upper bound cannot be omitted in <from-ref>");
+        throw new XMPexception("upper bound cannot be omitted in <from-ref>");
       else execFuncArgs.add(globalRef.getArg(1));
 
       // stride
@@ -1740,13 +1700,13 @@ public class XMPtranslateLocalPragma {
 
       // check object name collision
       String objectName = fromRef.getArg(0).getString();
-      XMPobject fromRefObject = findXMPobject(lnObj, objectName, localObjectTable);
+      XMPobject fromRefObject = findXMPobject(objectName, localObjectTable);
       if (fromRefObject.getKind() == XMPobject.TEMPLATE)
-        XMP.error(lnObj, "template cannot be used in <from-ref>");
+        throw new XMPexception("template cannot be used in <from-ref>");
 
       // create arguments
       if (fromRef.getArg(1) == null)
-        XMP.error(lnObj, "multiple source nodes indicated in bcast directive");
+        throw new XMPexception("multiple source nodes indicated in bcast directive");
       else {
         XobjList execFuncArgs = Xcons.List(fromRefObject.getDescId().Ref());
 
@@ -1754,7 +1714,7 @@ public class XMPtranslateLocalPragma {
         int refDim = fromRefObject.getDim();
         for (XobjArgs i = fromRef.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
           if (refIndex == refDim)
-            XMP.error(lnObj, "wrong nodes dimension indicated, too many");
+            throw new XMPexception("wrong nodes dimension indicated, too many");
 
           XobjList t = (XobjList)i.getArg();
           if (t == null) execFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
@@ -1763,12 +1723,12 @@ public class XMPtranslateLocalPragma {
 
             // lower
             if (t.getArg(0) == null)
-              XMP.error(lnObj, "lower bound cannot be omitted in <from-ref>");
+              throw new XMPexception("lower bound cannot be omitted in <from-ref>");
             else execFuncArgs.add(Xcons.Cast(Xtype.intType, t.getArg(0)));
 
             // upper
             if (t.getArg(1) == null)
-              XMP.error(lnObj, "upper bound cannot be omitted in <from-ref>");
+              throw new XMPexception("upper bound cannot be omitted in <from-ref>");
             else execFuncArgs.add(Xcons.Cast(Xtype.intType, t.getArg(1)));
 
             // stride
@@ -1780,19 +1740,14 @@ public class XMPtranslateLocalPragma {
         }
 
         if (refIndex != refDim)
-          XMP.error(lnObj, "the number of <nodes/template-subscript> should be the same with the dimension");
+          throw new XMPexception("the number of <nodes/template-subscript> should be the same with the dimension");
 
         return new XMPpair<String, XobjList>(new String("NODES"), execFuncArgs);
       }
     }
-
-    // not reach here
-    return null;
   }
 
   private void translateGmove(PragmaBlock pb) throws XMPexception {
-    LineNo lnObj = pb.getLineNo();
-
     // start translation
     XobjList gmoveDecl = (XobjList)pb.getClauses();
     XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
@@ -1804,19 +1759,19 @@ public class XMPtranslateLocalPragma {
     Block gmoveBodyHead = gmoveBody.getHead();
     if(gmoveBodyHead instanceof SimpleBlock) {
       if (gmoveBodyHead.getNext() != null)
-        XMP.error(lnObj, checkBodyErrMsg);
+        throw new XMPexception(checkBodyErrMsg);
 
       Statement gmoveStmt = gmoveBodyHead.getBasicBlock().getHead();
       if (gmoveStmt.getNext() != null)
-        XMP.error(lnObj, checkBodyErrMsg);
+        throw new XMPexception(checkBodyErrMsg);
 
       if(gmoveStmt.getExpr().Opcode() == Xcode.ASSIGN_EXPR)
         assignStmt = gmoveStmt.getExpr();
       else
-        XMP.error(lnObj, checkBodyErrMsg);
+        throw new XMPexception(checkBodyErrMsg);
     }
     else
-      XMP.error(lnObj, checkBodyErrMsg);
+      throw new XMPexception(checkBodyErrMsg);
 
     // FIXME consider in, out clause
     XMPpair<XMPalignedArray, XobjList> leftExpr = getAlignedArrayExpr(assignStmt.left(), localObjectTable);
@@ -1906,7 +1861,6 @@ public class XMPtranslateLocalPragma {
     String syntaxErrMsg = "syntax error on array expression, expression is not appropriate for gmove directive";
     Xcode prevExprOpcode = iter.getPrevXobject().Opcode();
     Xobject myExpr = iter.getXobject();
-    LineNo lnObj = myExpr.getLineNo();
     switch (myExpr.Opcode()) {
       case PLUS_EXPR:
         {
@@ -1914,17 +1868,14 @@ public class XMPtranslateLocalPragma {
             case ARRAY_REF:
               {
                 if (arrayDimCount != 0)
-                  XMP.error(lnObj, syntaxErrMsg);
+                  throw new XMPexception(syntaxErrMsg);
 
                 break;
               }
             case POINTER_REF:
               break;
             default:
-              {
-                XMP.error(lnObj, syntaxErrMsg);
-                break;
-              }
+              throw new XMPexception(syntaxErrMsg);
           }
 
           arrayRefs.add(Xcons.Cast(Xtype.intType, myExpr.right()));
@@ -1937,35 +1888,24 @@ public class XMPtranslateLocalPragma {
             case PLUS_EXPR:
               break;
             default:
-              {
-                XMP.error(lnObj, syntaxErrMsg);
-                break;
-              }
+              throw new XMPexception(syntaxErrMsg);
           }
 
           iter.next();
           if (iter.end()) {
             if (alignedArray.getDim() == arrayDimCount) return arrayRefs;
-            else {
-              XMP.error(lnObj, syntaxErrMsg);
-              break;
-            }
+            else
+              throw new XMPexception(syntaxErrMsg);
           }
           else
             return parseAlignedArrayExpr(iter, alignedArray, arrayDimCount, arrayRefs);
         }
       default:
-        {
-          XMP.error(lnObj, syntaxErrMsg);
-          break;
-        }
+        throw new XMPexception(syntaxErrMsg);
     }
-
-    // FIXME how implement ???
-    throw new XMPexception("never reach here");
   }
 
-  private XMPtriplet<String, Boolean, XobjList> createExecOnRefArgs(LineNo lnObj, XobjList onRef,
+  private XMPtriplet<String, Boolean, XobjList> createExecOnRefArgs(XobjList onRef,
                                                                     XMPobjectTable localObjectTable) throws XMPexception {
     if (onRef.getArg(0) == null) {
       // execute on global communicator
@@ -2010,7 +1950,7 @@ public class XMPtranslateLocalPragma {
 
       // check object name collision
       String objectName = onRef.getArg(0).getString();
-      XMPobject onRefObject = findXMPobject(lnObj, objectName, localObjectTable);
+      XMPobject onRefObject = findXMPobject(objectName, localObjectTable);
 
       Xobject ontoNodesRef = null;
       Xtype castType = null;
@@ -2023,7 +1963,7 @@ public class XMPtranslateLocalPragma {
           {
             XMPnodes ontoNodes = ((XMPtemplate)onRefObject).getOntoNodes();
             if (ontoNodes == null)
-              XMP.error(lnObj, "template '" + objectName + "' is not distributed");
+              throw new XMPexception("template '" + objectName + "' is not distributed");
 
             ontoNodesRef = ontoNodes.getDescId().Ref();
             castType = Xtype.longlongType;
@@ -2044,7 +1984,7 @@ public class XMPtranslateLocalPragma {
         XobjList tempArgs = Xcons.List();
         for (XobjArgs i = onRef.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
           if (refIndex == refDim)
-            XMP.error(lnObj, "wrong nodes dimension indicated, too many");
+            throw new XMPexception("wrong nodes dimension indicated, too many");
 
           XobjList t = (XobjList)i.getArg();
           if (t == null) {
@@ -2082,7 +2022,7 @@ public class XMPtranslateLocalPragma {
         }
 
         if (refIndex != refDim)
-          XMP.error(lnObj, "the number of <nodes/template-subscript> should be the same with the dimension");
+          throw new XMPexception("the number of <nodes/template-subscript> should be the same with the dimension");
 
         if (splitComm) {
           String execFuncSurfix = null;
@@ -2114,12 +2054,12 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private void setupFinalizer(LineNo lbObj, BlockList body, Ident funcId, XobjList args) throws XMPexception {
+  private void setupFinalizer(BlockList body, Ident funcId, XobjList args) throws XMPexception {
     BlockIterator i = new topdownBlockIterator(body);
     for (i.init(); !i.end(); i.next()) {
       Block b = i.getBlock();
       if (b.Opcode() == Xcode.GOTO_STATEMENT)
-        XMP.error(lbObj, "cannot use goto statement here");
+        throw new XMPexception("cannot use goto statement here");
       else if (b.Opcode() == Xcode.RETURN_STATEMENT)
         b.insert(funcId.Call(args));
     }
@@ -2170,34 +2110,34 @@ public class XMPtranslateLocalPragma {
     return;
   }
 
-  private XMPobject findXMPobject(LineNo lnObj, String objectName, XMPobjectTable localObjectTable) throws XMPexception {
+  private XMPobject findXMPobject(String objectName, XMPobjectTable localObjectTable) throws XMPexception {
     XMPobject object = localObjectTable.getObject(objectName);
     if (object == null) {
       object = _globalObjectTable.getObject(objectName);
       if (object == null)
-        XMP.error(lnObj, "cannot find '" + objectName + "' nodes/template");
+        throw new XMPexception("cannot find '" + objectName + "' nodes/template");
     }
 
     return object;
   }
 
-  private XMPtemplate findXMPtemplate(LineNo lnObj, String templateName, XMPobjectTable localObjectTable) throws XMPexception {
+  private XMPtemplate findXMPtemplate(String templateName, XMPobjectTable localObjectTable) throws XMPexception {
     XMPtemplate t = localObjectTable.getTemplate(templateName);
     if (t == null) {
       t = _globalObjectTable.getTemplate(templateName);
       if (t == null)
-        XMP.error(lnObj, "template '" + templateName + "' is not declared");
+        throw new XMPexception("template '" + templateName + "' is not declared");
     }
 
     return t;
   }
 
-  private XMPnodes findXMPnodes(LineNo lnObj, String nodesName, XMPobjectTable localObjectTable) throws XMPexception {
+  private XMPnodes findXMPnodes(String nodesName, XMPobjectTable localObjectTable) throws XMPexception {
     XMPnodes n = localObjectTable.getNodes(nodesName);
     if (n == null) {
       n = _globalObjectTable.getNodes(nodesName);
       if (n == null)
-        XMP.error(lnObj, "nodes '" + nodesName + "' is not declared");
+        throw new XMPexception("nodes '" + nodesName + "' is not declared");
     }
 
     return n;
