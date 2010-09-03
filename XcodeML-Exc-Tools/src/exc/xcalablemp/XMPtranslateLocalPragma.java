@@ -1185,8 +1185,7 @@ public class XMPtranslateLocalPragma {
 
     // create function call
     XobjList onRef = (XobjList)reductionDecl.getArg(1);
-    if (onRef == null) pb.replace(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC",
-                                                               null, reductionFuncArgsList));
+    if (onRef == null) pb.replace(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC", null, reductionFuncArgsList));
     else {
       XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(lnObj, onRef, localObjectTable);
       String execFuncSurfix = execOnRefArgs.getFirst();
@@ -1296,11 +1295,13 @@ public class XMPtranslateLocalPragma {
         Ident tempId = declReductionTempIdent(pb, specName, tempName, specType);
         if (isArray) {
           reductionFuncArgs.cons(tempId.Ref());
-          createReductionInitStatement(tempId, specId, true, count, basicSpecType, reductionOp.getInt(), reductionInitIfBlock);
+          createReductionInitStatement(tempId, specId, true, count, basicSpecType, reductionOp.getInt(),
+                                       schedBaseBlock, reductionInitIfBlock);
         }
         else {
           reductionFuncArgs.cons(tempId.getAddr());
-          createReductionInitStatement(tempId, specId, false, null, basicSpecType, reductionOp.getInt(), reductionInitIfBlock);
+          createReductionInitStatement(tempId, specId, false, null, basicSpecType, reductionOp.getInt(),
+                                       schedBaseBlock, reductionInitIfBlock);
         }
 
         // rewrite reduction variable
@@ -1320,21 +1321,52 @@ public class XMPtranslateLocalPragma {
   }
 
   private void createReductionInitStatement(Ident tempId, Ident varId,
-                                            boolean isArray, XobjLong count,
-                                            BasicType type, int reductionOp,
-                                            IfBlock reductionIfBlock) {
+                                            boolean isArray, XobjLong count, BasicType type, int reductionOp,
+                                            CforBlock schedBaseBlock, IfBlock reductionIfBlock) throws XMPexception {
     BlockList masterPart = reductionIfBlock.getThenBody();
     BlockList otherPart = reductionIfBlock.getElseBody();
 
     Xobject statement = null;
     if (isArray) {
-      masterPart.add(Xcons.Set(tempId.Ref(), varId.Ref()));
-      otherPart.add(Xcons.Set(tempId.Ref(), varId.Ref()));
+      // master part
+      Ident masterLoopIndexId = declIdentWithBlock(schedBaseBlock, XMPuniqueName.getTempName(), Xtype.unsignedlonglongType);
+      Xobject masterInitValueObj = Xcons.PointerRef(Xcons.binaryOp(Xcode.PLUS_EXPR, Xcons.Cast(Xtype.Pointer(type), varId.Ref()),
+                                                                   masterLoopIndexId.Ref()));
+      masterPart.add(createReductionArrayInit(tempId, masterInitValueObj,
+                                              count, type, masterLoopIndexId));
+
+      // other part
+      Ident otherLoopIndexId = declIdentWithBlock(schedBaseBlock, XMPuniqueName.getTempName(), Xtype.unsignedlonglongType);
+      otherPart.add(createReductionArrayInit(tempId, createReductionInitValueObj(varId, type, reductionOp),
+                                             count, type, otherLoopIndexId));
     }
     else {
+      // master part
       masterPart.add(Xcons.Set(tempId.Ref(), varId.Ref()));
-      otherPart.add(Xcons.Set(tempId.Ref(), varId.Ref()));
+
+      // other part
+      otherPart.add(Xcons.Set(tempId.Ref(), createReductionInitValueObj(varId, type, reductionOp)));
     }
+  }
+
+  private Block createReductionArrayInit(Ident tempId, Xobject initValueObj, XobjLong count, BasicType type,
+                                         Ident loopIndexId) throws XMPexception {
+    Xobject loopIndexRef = loopIndexId.Ref();
+
+    Xobject tempArrayRef = Xcons.PointerRef(Xcons.binaryOp(Xcode.PLUS_EXPR, Xcons.Cast(Xtype.Pointer(type), tempId.Ref()),
+                                                                            loopIndexRef));
+
+    Block loopBlock = Bcons.FOR(Xcons.Set(loopIndexRef, Xcons.IntConstant(0)),
+                                Xcons.binaryOp(Xcode.LOG_LT_EXPR, loopIndexRef, count),
+                                Xcons.asgOp(Xcode.ASG_PLUS_EXPR, loopIndexRef, Xcons.IntConstant(1)),
+                                Bcons.Statement(Xcons.Set(tempArrayRef, initValueObj)));
+
+    return loopBlock;
+  }
+
+  // FIXME
+  private Xobject createReductionInitValueObj(Ident varId, BasicType type, int reductionOp) {
+    return Xcons.IntConstant(0);
   }
 
   private Ident declReductionTempIdent(Block b, String oldName, String newName, Xtype type) {

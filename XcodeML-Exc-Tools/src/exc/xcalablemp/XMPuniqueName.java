@@ -2,7 +2,7 @@ package exc.xcalablemp;
 
 public class XMPuniqueName {
   private final static int BUFFER_LEN = 32;
-  private static XMPuniqueName _instance = null;
+  private static XMPuniqueName _tempInstance = null;
 
   private char[] _buffer;
   private int _pointer;
@@ -58,10 +58,11 @@ public class XMPuniqueName {
     }
   }
 
-  public static String getUniqueName() throws XMPexception {
-    if (_instance == null) _instance = new XMPuniqueName();
-    else                   _instance.changeStatus();
+  public static String getTempName() throws XMPexception {
+    if (_tempInstance == null) _tempInstance = new XMPuniqueName();
+    else                       _tempInstance.changeStatus();
 
-    return new String(_instance._buffer, 0, _instance._pointer + 1);
+    String uniqueString =  new String(_tempInstance._buffer, 0, _tempInstance._pointer + 1);
+    return new String("_XCALABLEMP_temp_" + uniqueString);
   }
 }
