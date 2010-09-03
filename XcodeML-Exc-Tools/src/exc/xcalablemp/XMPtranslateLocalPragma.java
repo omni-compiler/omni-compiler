@@ -1245,10 +1245,11 @@ public class XMPtranslateLocalPragma {
       boolean isArray = false;
       XobjLong count = null;
       XobjInt elmtType = null;
+      BasicType basicSpecType = null;
       switch (specType.getKind()) {
         case Xtype.BASIC:
           {
-            BasicType basicSpecType = (BasicType)specType;
+            basicSpecType = (BasicType)specType;
             checkReductionType(lnObj, specName, basicSpecType);
 
             count = Xcons.LongLongConstant(0, 1);
@@ -1261,7 +1262,7 @@ public class XMPtranslateLocalPragma {
             if (arraySpecType.getArrayElementType().getKind() != Xtype.BASIC)
               XMP.error(lnObj, "array '" + specName + "' has has a wrong data type for reduction");
 
-            BasicType basicSpecType = (BasicType)arraySpecType.getArrayElementType();
+            basicSpecType = (BasicType)arraySpecType.getArrayElementType();
             checkReductionType(lnObj, specName, basicSpecType);
 
             count = Xcons.LongLongConstant(0, getArrayElmtCount(arraySpecType));
@@ -1283,13 +1284,11 @@ public class XMPtranslateLocalPragma {
         Ident tempId = declReductionTempIdent(pb, specName, tempName, specType);
         if (isArray) {
           reductionFuncArgs.cons(tempId.Ref());
-          schedBaseBlock.insert(createFuncCallBlock("_XCALABLEMP_init_reduce_ARRAY",
-                                                    Xcons.List(tempId.Ref(), specRef, elmtType, reductionOp)));
+          schedBaseBlock.insert(createReductionInitStatement(tempId, specId, true, count, basicSpecType, reductionOp.getInt()));
         }
         else {
           reductionFuncArgs.cons(tempId.getAddr());
-          schedBaseBlock.insert(createFuncCallBlock("_XCALABLEMP_init_reduce_BASIC",
-                                                    Xcons.List(tempId.getAddr(), specRef, count, elmtType, reductionOp)));
+          schedBaseBlock.insert(createReductionInitStatement(tempId, specId, false, null, basicSpecType, reductionOp.getInt()));
         }
 
         // rewrite reduction variable
@@ -1306,6 +1305,14 @@ public class XMPtranslateLocalPragma {
     }
 
     return returnVector;
+  }
+
+  private Block createReductionInitStatement(Ident tempId, Ident specId,
+                                             boolean isArray, XobjLong count,
+                                             BasicType type, int reductionOp) {
+    Xobject statement = null;
+
+    return Bcons.Statement(statement);
   }
 
   private Ident declReductionTempIdent(Block b, String oldName, String newName, Xtype type) {
@@ -1387,8 +1394,7 @@ public class XMPtranslateLocalPragma {
 
             funcArgs.add(Xcons.Cast(Xtype.voidPtrType, varId.getAddr()));
             funcArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(basicVarType.getBasicType() + 200)));
-          }
-          break;
+          } break;
         case Xtype.ARRAY:
           {
             ArrayType arrayVarType = (ArrayType)varType;
@@ -1403,10 +1409,9 @@ public class XMPtranslateLocalPragma {
             if (count != getArrayElmtCount(arrayVarType))
               XMP.error(lnObj, "the size of '" + varName + "' is not same with the <reduction-variable>");
 
-            funcArgs.add(Xcons.Cast(Xtype.voidPtrType, varId.getAddr()));
+            funcArgs.add(Xcons.Cast(Xtype.voidPtrType, varId.Ref()));
             funcArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(basicVarType.getBasicType() + 200)));
-          }
-          break;
+          } break;
         default:
           XMP.error(lnObj, "'" + varName + "' has a wrong data type for reduction");
       }
@@ -1533,17 +1538,17 @@ public class XMPtranslateLocalPragma {
       Ident varId = typedSpec.getFirst();
       Xtype varType = typedSpec.getSecond();
 
-      boolean isArray = false;
       XobjLong count = null;
       switch (varType.getKind()) {
         case Xtype.BASIC:
         case Xtype.STRUCT:
         case Xtype.UNION:
-          count = Xcons.LongLongConstant(0, 1);
-          break;
+          {
+            count = Xcons.LongLongConstant(0, 1);
+            returnVector.add(Xcons.List(varId.getAddr(), count, Xcons.SizeOf(varType)));
+          } break;
         case Xtype.ARRAY:
           {
-            isArray = true;
             ArrayType arrayVarType = (ArrayType)varType;
             switch (arrayVarType.getArrayElementType().getKind()) {
               case Xtype.BASIC:
@@ -1555,16 +1560,11 @@ public class XMPtranslateLocalPragma {
             }
 
             count = Xcons.LongLongConstant(0, getArrayElmtCount(arrayVarType));
-            break;
-          }
+            returnVector.add(Xcons.List(varId.Ref(), count, Xcons.SizeOf(((ArrayType)varType).getArrayElementType())));
+          } break;
         default:
           XMP.error(lnObj, "'" + varName + "' has a wrong data type for broadcast");
       }
-
-      if (isArray)
-        returnVector.add(Xcons.List(varId.Ref(), count, Xcons.SizeOf(((ArrayType)varType).getArrayElementType())));
-      else
-        returnVector.add(Xcons.List(varId.getAddr(), count, Xcons.SizeOf(varType)));
     }
 
     return returnVector;

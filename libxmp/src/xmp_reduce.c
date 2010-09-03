@@ -253,16 +253,6 @@ void _XCALABLEMP_reduce_FLMM_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes,
 
 // _XCALABLEMP_M_REDUCE_FLMM_EXEC(addr, count, datatype, op, num_locs, ...) is in xmp_comm_macro.h
 
-// FIXME not implemented yet
-void _XCALABLEMP_init_reduce_BASIC(void *temp_addr, void *data_addr, int datatype, int op) {
-  return;
-}
-
-// FIXME not implemented yet
-void _XCALABLEMP_init_reduce_ARRAY(void *temp_addr, void *data_addr, int count, int datatype, int datatype_size, int op) {
-  return;
-}
-
 void _XCALABLEMP_reduce_CLAUSE(void *temp_addr, void *data_addr, int count, int datatype, int op) {
   // setup information
   MPI_Datatype mpi_datatype;
