@@ -76,6 +76,7 @@ typedef struct _XCALABLEMP_array_info_type {
 } _XCALABLEMP_array_info_t;
 
 typedef struct _XCALABLEMP_array_type {
+  _Bool is_allocated;
   int dim;
 
   _XCALABLEMP_template_t *align_template;

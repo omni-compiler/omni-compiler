@@ -14,6 +14,7 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
 
   _XCALABLEMP_array_t *a = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_array_t) + sizeof(_XCALABLEMP_array_info_t) * (dim - 1));
 
+  a->is_allocated = true;
   a->dim = dim;
   a->align_template = template;
 
@@ -111,12 +112,18 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index,
   // set par_lower
   if (align_lower < template_lower)
     ai->par_lower = template_lower - align_subscript;
-  else if (template_upper < align_lower) return;
+  else if (template_upper < align_lower) {
+    array->is_allocated = false;
+    return;
+  }
   else
     ai->par_lower = ai->ser_lower;
 
   // set par_upper
-  if (align_upper < template_lower) return;
+  if (align_upper < template_lower) {
+    array->is_allocated = false;
+    return;
+  }
   else if (template_upper < align_upper)
     ai->par_upper = template_upper - align_subscript;
   else
@@ -179,6 +186,11 @@ void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc,
     return;
   }
 
+  if (!(array_desc->is_allocated)) {
+    *array_addr = NULL;
+    return;
+  }
+
   unsigned long long total_elmts = 1;
   int dim = array_desc->dim;
   va_list args;
@@ -190,11 +202,6 @@ void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc,
     _XCALABLEMP_array_info_t *ai = &(array_desc->info[i]);
 
     unsigned long long elmts = ai->par_size;
-    if (elmts == 0) {
-      *array_addr = NULL;
-      return;
-    }
-
     switch (ai->shadow_type) {
       case _XCALABLEMP_N_SHADOW_NONE:
         total_elmts *= elmts;
@@ -222,6 +229,11 @@ void _XCALABLEMP_init_array_addr(void **array_addr, void *param_addr,
     return;
   }
 
+  if (!(array_desc->is_allocated)) {
+    *array_addr = NULL;
+    return;
+  }
+
   unsigned long long total_elmts = 1;
   int dim = array_desc->dim;
   va_list args;
@@ -233,11 +245,6 @@ void _XCALABLEMP_init_array_addr(void **array_addr, void *param_addr,
     _XCALABLEMP_array_info_t *ai = &(array_desc->info[i]);
 
     unsigned long long elmts = ai->par_size;
-    if (elmts == 0) {
-      *array_addr = NULL;
-      return;
-    }
-
     switch (ai->shadow_type) {
       case _XCALABLEMP_N_SHADOW_NONE:
         total_elmts *= elmts;
