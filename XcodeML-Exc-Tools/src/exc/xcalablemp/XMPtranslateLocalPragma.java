@@ -2065,23 +2065,24 @@ public class XMPtranslateLocalPragma {
 
   public static void checkDeclPragmaLocation(PragmaBlock pb) throws XMPexception {
 /*
-    LineNo lnObj = pb.getLineNo();
     String pragmaNameL = pb.getPragma().toLowerCase();
+    String errMsg = new String(pragmaNameL +
+                               " directive should be written before declarations, statements and executable directives");
 
     // check parent
     Block parentBlock = pb.getParentBlock();
     if (parentBlock.Opcode() != Xcode.COMPOUND_STATEMENT)
-      XMP.error(lnObj, pragmaNameL + " directive should be written before declarations, statements and executable directives");
+      throw new XMPexception(errMsg);
     else {
       BlockList parent = pb.getParent();
       Xobject declList = parent.getDecls();
       if (declList != null) {
         if (declList.operand() != null)
-          XMP.error(lnObj, pragmaNameL + " directive should be written before declarations, statements and executable directives");
+          throw new XMPexception(errMsg);
       }
 
       if (parentBlock.getParentBlock().Opcode() != Xcode.FUNCTION_DEFINITION)
-        XMP.error(lnObj, pragmaNameL + " directive should be written before declarations, statements and executable directives");
+        throw new XMPexception(errMsg);
     }
 
     // check previous blocks
@@ -2096,11 +2097,11 @@ public class XMPtranslateLocalPragma {
           case SHADOW:
             continue;
           default:
-            XMP.error(lnObj, pragmaNameL + " directive should be written before declarations, statements and executable directives");
+            throw new XMPexception(errMsg);
         }
       }
       else
-        XMP.error(lnObj, pragmaNameL + " directive should be written before declarations, statements and executable directives");
+        throw new XMPexception(errMsg);
     }
 */
     // XXX delete this
