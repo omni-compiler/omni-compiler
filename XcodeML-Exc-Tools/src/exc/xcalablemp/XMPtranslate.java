@@ -30,17 +30,10 @@ public class XMPtranslate implements XobjectDefVisitor {
   }
 
   public void doDef(XobjectDef def) {
-    try {
-      translate(def);
-    } catch (XMPexception e) {
-      String message = e.getMessage();
-      if (message != null) System.out.println("[XcalableMP] " + message);
-
-      return;
-    }
+    translate(def);
   }
 
-  private void translate(XobjectDef def) throws XMPexception {
+  private void translate(XobjectDef def) {
     if (!def.isFuncDef()) {
       Xobject x = def.getDef();
       if (x.Opcode() == Xcode.XMP_PRAGMA) _translateGlobalPragma.translate(x);

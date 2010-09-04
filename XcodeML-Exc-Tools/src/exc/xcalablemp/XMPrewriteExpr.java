@@ -12,8 +12,7 @@ public class XMPrewriteExpr {
     _globalObjectTable = globalDecl.getGlobalObjectTable();
   }
 
-  // FIXME this func never throw exception
-  public void rewrite(FuncDefBlock def) throws XMPexception {
+  public void rewrite(FuncDefBlock def) {
     FunctionBlock fb = def.getBlock();
     if (fb == null) return;
 

@@ -14,7 +14,15 @@ public class XMPtranslateGlobalPragma {
     _globalObjectTable = globalDecl.getGlobalObjectTable();
   }
 
-  public void translate(Xobject x) throws XMPexception {
+  public void translate(Xobject x) {
+    try {
+      translatePragma(x);
+    } catch (XMPexception e) {
+      XMP.error(x.getLineNo(), e.getMessage());
+    }
+  }
+
+  public void translatePragma(Xobject x) throws XMPexception {
     String pragmaName = x.getArg(0).getString();
 
     switch (XMPpragma.valueOf(pragmaName)) {
@@ -34,7 +42,6 @@ public class XMPtranslateGlobalPragma {
   }
 
   private void translateNodes(Xobject nodesPragma) throws XMPexception {
-    LineNo lnObj = nodesPragma.getLineNo();
     XobjList nodesDecl = (XobjList)nodesPragma.getArg(1);
 
     // check <map-type> := { <undefined> | regular }
@@ -44,7 +51,7 @@ public class XMPtranslateGlobalPragma {
 
     // check name collision
     String nodesName = nodesDecl.getArg(1).getString();
-    checkObjectNameCollision(lnObj, nodesName);
+    checkObjectNameCollision(nodesName);
 
     // declare nodes desciptor
     Ident nodesDescId = _env.declStaticIdent(XMP.DESC_PREFIX_ + nodesName, Xtype.voidPtrType);
@@ -53,7 +60,7 @@ public class XMPtranslateGlobalPragma {
     int nodesDim = 0;
     for (XobjArgs i = nodesDecl.getArg(2).getArgs(); i != null; i = i.nextArgs()) nodesDim++;
     if ((nodesDim > (XMP.MAX_DIM)) || (nodesDim < 1))
-      XMP.error(lnObj, "nodes dimension should be less than " + (XMP.MAX_DIM + 1));
+      throw new XMPexception("nodes dimension should be less than " + (XMP.MAX_DIM + 1));
 
     XMPnodes nodesObject = new XMPnodes(nodesName, nodesDim, nodesDescId);
     _globalObjectTable.putObject(nodesObject);
@@ -98,7 +105,7 @@ public class XMPtranslateGlobalPragma {
             String nodesRefName = nodesRef.getArg(0).getString();
             nodesRefObject = _globalObjectTable.getNodes(nodesRefName);
             if (nodesRefObject == null)
-              XMP.error(lnObj, "cannot find nodes '" + nodesRefName + "'");
+              throw new XMPexception("cannot find nodes '" + nodesRefName + "'");
             else {
               nodesArgs.add(nodesRefObject.getDescId().Ref());
 
@@ -121,7 +128,7 @@ public class XMPtranslateGlobalPragma {
                 int nodesRefIndex = 0;
                 for (XobjArgs i = subscriptList.getArgs(); i != null; i = i.nextArgs()) {
                   if (nodesRefIndex == nodesRefDim)
-                    XMP.error(lnObj, "wrong nodes dimension indicated, too many");
+                    throw new XMPexception("wrong nodes dimension indicated, too many");
 
                   XobjList subscriptTriplet = (XobjList)i.getArg();
                   // lower
@@ -142,7 +149,7 @@ public class XMPtranslateGlobalPragma {
                 }
 
                 if (nodesRefIndex != nodesRefDim)
-                  XMP.error(lnObj, "the number of <nodes-subscript> should be the same with the nodes dimension");
+                  throw new XMPexception("the number of <nodes-subscript> should be the same with the nodes dimension");
               }
 
               if (isDynamicNodesRef) nodesArgs.cons(Xcons.IntConstant(1));
@@ -175,12 +182,11 @@ public class XMPtranslateGlobalPragma {
   }
 
   private void translateTemplate(Xobject templatePragma) throws XMPexception {
-    LineNo lnObj = templatePragma.getLineNo();
     XobjList templateDecl = (XobjList)templatePragma.getArg(1);
 
     // check name collision
     String templateName = templateDecl.getArg(0).getString();
-    checkObjectNameCollision(lnObj, templateName);
+    checkObjectNameCollision(templateName);
 
     // declare template desciptor
     Ident templateDescId = _env.declStaticIdent(XMP.DESC_PREFIX_ + templateName, Xtype.voidPtrType);
@@ -189,7 +195,7 @@ public class XMPtranslateGlobalPragma {
     int templateDim = 0;
     for (XobjArgs i = templateDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) templateDim++;
     if ((templateDim > (XMP.MAX_DIM)) || (templateDim < 1))
-      XMP.error(lnObj, "template dimension should be less than " + (XMP.MAX_DIM + 1));
+      throw new XMPexception("template dimension should be less than " + (XMP.MAX_DIM + 1));
 
     XMPtemplate templateObject = new XMPtemplate(templateName, templateDim, templateDescId);
     _globalObjectTable.putObject(templateObject);
@@ -227,44 +233,43 @@ public class XMPtranslateGlobalPragma {
     _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_init_template_" + fixedSurfix, templateArgs);
   }
 
-  private void checkObjectNameCollision(LineNo lnObj, String name) throws XMPexception {
+  private void checkObjectNameCollision(String name) throws XMPexception {
     // check name collision - global variables
     if (_env.findVarIdent(name) != null)
-      XMP.error(lnObj, "'" + name + "' is already declared");
+      throw new XMPexception("'" + name + "' is already declared");
 
     // check name collision - global object table
     if (_globalObjectTable.getObject(name) != null) {
-      XMP.error(lnObj, "'" + name + "' is already declared");
+      throw new XMPexception("'" + name + "' is already declared");
     }
 
     // check name collision - descriptor name
     if (_env.findVarIdent(XMP.DESC_PREFIX_ + name) != null) {
       // FIXME generate unique name
-      XMP.error(lnObj, "cannot declare desciptor, '" + XMP.DESC_PREFIX_ + name + "' is already declared");
+      throw new XMPexception("cannot declare desciptor, '" + XMP.DESC_PREFIX_ + name + "' is already declared");
     }
   }
 
   private void translateDistribute(Xobject distributePragma) throws XMPexception {
-    LineNo lnObj = distributePragma.getLineNo();
     XobjList distDecl = (XobjList)distributePragma.getArg(1);
 
     // get template object
     String templateName = distDecl.getArg(0).getString();
     XMPtemplate templateObject = _globalObjectTable.getTemplate(templateName);
     if (templateObject == null)
-      XMP.error(lnObj, "template '" + templateName + "' is not declared");
+      throw new XMPexception("template '" + templateName + "' is not declared");
 
     if (templateObject.isDistributed())
-      XMP.error(lnObj, "template '" + templateName + "' is already distributed");
+      throw new XMPexception("template '" + templateName + "' is already distributed");
 
     if (!templateObject.isFixed())
-      XMP.error(lnObj, "the size of template '" + templateName + "' is not fixed");
+      throw new XMPexception("the size of template '" + templateName + "' is not fixed");
 
     // get nodes object
     String nodesName = distDecl.getArg(2).getString();
     XMPnodes nodesObject = _globalObjectTable.getNodes(nodesName);
     if (nodesObject == null)
-      XMP.error(lnObj, "nodes '" + nodesName + "' is not declared");
+      throw new XMPexception("nodes '" + nodesName + "' is not declared");
 
     templateObject.setOntoNodes(nodesObject);
 
@@ -280,7 +285,7 @@ public class XMPtranslateGlobalPragma {
     int nodesDimIdx = 0;
     for (XobjArgs i = distDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
       if (templateDimIdx == templateDim)
-        XMP.error(lnObj, "wrong template dimension indicated, too many");
+        throw new XMPexception("wrong template dimension indicated, too many");
 
       int distManner = i.getArg().getInt();
       // FIXME support cyclic(w), gblock
@@ -294,7 +299,7 @@ public class XMPtranslateGlobalPragma {
         case XMPtemplate.CYCLIC:
           {
             if (nodesDimIdx == nodesDim)
-              XMP.error(lnObj, "the number of <dist-format> (except '*') should be the same with the nodes dimension");
+              throw new XMPexception("the number of <dist-format> (except '*') should be the same with the nodes dimension");
 
             setupDistribution(distManner, templateObject, templateDimIdx, nodesObject, nodesDimIdx);
             nodesDimIdx++;
@@ -309,10 +314,10 @@ public class XMPtranslateGlobalPragma {
 
     // check nodes, template dimension
     if (nodesDimIdx != nodesDim)
-      XMP.error(lnObj, "the number of <dist-format> (except '*') should be the same with the nodes dimension");
+      throw new XMPexception("the number of <dist-format> (except '*') should be the same with the nodes dimension");
 
     if (templateDimIdx != templateDim)
-      XMP.error(lnObj, "wrong template dimension indicated, too few");
+      throw new XMPexception("wrong template dimension indicated, too few");
 
     // set distributed
     templateObject.setIsDistributed();
@@ -360,21 +365,20 @@ public class XMPtranslateGlobalPragma {
   }
 
   private void translateAlign(Xobject alignPragma) throws XMPexception {
-    LineNo lnObj = alignPragma.getLineNo();
     Xobject alignDecl = alignPragma.getArg(1);
 
     // get array information
     String arrayName = alignDecl.getArg(0).getString();
     if (_globalObjectTable.getAlignedArray(arrayName) != null)
-      XMP.error(lnObj, "array '" + arrayName + "' is already aligned");
+      throw new XMPexception("array '" + arrayName + "' is already aligned");
 
     Ident arrayId = _env.findVarIdent(arrayName);
     if (arrayId == null)
-      XMP.error(lnObj, "array '" + arrayName + "' is not declared");
+      throw new XMPexception("array '" + arrayName + "' is not declared");
 
     Xtype arrayType = arrayId.Type();
     if (arrayType.getKind() != Xtype.ARRAY)
-      XMP.error(lnObj, arrayName + " is not an array");
+      throw new XMPexception(arrayName + " is not an array");
 
     Xtype arrayElmtType = arrayType.getArrayElementType();
 
@@ -382,10 +386,10 @@ public class XMPtranslateGlobalPragma {
     String templateName = alignDecl.getArg(2).getString();
     XMPtemplate templateObj = _globalObjectTable.getTemplate(templateName);
     if (templateObj == null)
-      XMP.error(lnObj, "template '" + templateName + "' is not declared");
+      throw new XMPexception("template '" + templateName + "' is not declared");
 
     if (!(templateObj.isDistributed()))
-      XMP.error(lnObj, "template '" + templateName + "' is not distributed");
+      throw new XMPexception("template '" + templateName + "' is not distributed");
 
     int templateDim = templateObj.getDim();
 
@@ -401,7 +405,7 @@ public class XMPtranslateGlobalPragma {
       arrayAddrId = _env.declGlobalIdent(XMP.ADDR_PREFIX_ + arrayName,
                                          Xtype.Pointer(arrayElmtType));
     else
-      XMP.error(lnObj, "cannot align array '" + arrayName +  ", wrong storage class");
+      throw new XMPexception("cannot align array '" + arrayName +  ", wrong storage class");
 
     // declare array descriptor
     Ident arrayDescId = _env.declStaticIdent(XMP.DESC_PREFIX_ + arrayName,
@@ -409,7 +413,7 @@ public class XMPtranslateGlobalPragma {
 
     int arrayDim = arrayType.getNumDimensions();
     if ((arrayDim > (XMP.MAX_DIM)) || (arrayDim < 1))
-      XMP.error(lnObj, "array dimension should be less than " + (XMP.MAX_DIM + 1));
+      throw new XMPexception("array dimension should be less than " + (XMP.MAX_DIM + 1));
 
     XobjList initArrayDescFuncArgs = Xcons.List(arrayDescId.getAddr(),
                                                 templateObj.getDescId().Ref(),
@@ -420,7 +424,7 @@ public class XMPtranslateGlobalPragma {
     for (int i = 0; i < arrayDim; i++, arrayType = arrayType.getRef()) {
       long dimSize = arrayType.getArraySize();
       if(dimSize == 0)
-        XMP.error(lnObj, "array size cannot be omitted");
+        throw new XMPexception("array size cannot be omitted");
 
       arraySizeVector.add(new Long(dimSize));
       initArrayDescFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.LongLongConstant(0, dimSize)));
@@ -445,16 +449,16 @@ public class XMPtranslateGlobalPragma {
 
     // check <align-source> list
     if (XMPutil.countElmts(alignSourceList) != arrayDim)
-      XMP.error(lnObj, "the number of <align-source>s is not the same with array dimension");
+      throw new XMPexception("the number of <align-source>s is not the same with array dimension");
 
     // check <align-subscript> list
     if (XMPutil.countElmts(alignSubscriptVarList) != templateDim)
-      XMP.error(lnObj, "the number of <align-subscript>s is not the same with template dimension");
+      throw new XMPexception("the number of <align-subscript>s is not the same with template dimension");
 
     // check ':' source/subscript
     if (XMPutil.countElmts(alignSourceList, XMP.COLON) !=
         XMPutil.countElmts(alignSubscriptVarList, XMP.COLON))
-      XMP.error(lnObj, "the number of ':' in <align-source> list is not the same with <align-subscript> list");
+      throw new XMPexception("the number of ':' in <align-source> list is not the same with <align-subscript> list");
 
     // create align function calls
     int alignSourceIndex = 0;
@@ -467,7 +471,7 @@ public class XMPtranslateGlobalPragma {
           case XMPalignedArray.SIMPLE_ALIGN:
             {
               if (!XMPutil.hasElmt(alignSubscriptVarList, XMPalignedArray.SIMPLE_ALIGN))
-                XMP.error(lnObj, "cannot find ':' in <align-subscript> list");
+                throw new XMPexception("cannot find ':' in <align-subscript> list");
 
               int alignSubscriptIndex = XMPutil.getLastIndex(alignSubscriptVarList, XMPalignedArray.SIMPLE_ALIGN);
               alignSubscriptVarList.setArg(alignSubscriptIndex, null);
@@ -477,24 +481,24 @@ public class XMPtranslateGlobalPragma {
               break;
             }
           default:
-            XMP.error(lnObj, "incorrect align source type");
+            throw new XMPexception("incorrect align source type");
         }
       }
       else if (alignSourceObj.Opcode() == Xcode.STRING) {
         String alignSource = alignSourceObj.getString();
         if (XMPutil.countElmts(alignSourceList, alignSource) != 1)
-          XMP.error(lnObj, "multiple '" + alignSource + "' indicated in <align-source> list");
+          throw new XMPexception("multiple '" + alignSource + "' indicated in <align-source> list");
 
         if (XMPutil.hasElmt(alignSubscriptVarList, alignSource)) {
           if (XMPutil.countElmts(alignSubscriptVarList, alignSource) != 1)
-            XMP.error(lnObj, "multiple '" + alignSource + "' indicated in <align-subscript> list");
+            throw new XMPexception("multiple '" + alignSource + "' indicated in <align-subscript> list");
 
           int alignSubscriptIndex = XMPutil.getFirstIndex(alignSubscriptVarList, alignSource);
           declAlignFunc(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex,
                         alignSubscriptExprList.getArg(alignSubscriptIndex));
         }
         else
-          XMP.error(lnObj, "cannot find '" + alignSource + "' in <align-subscript> list");
+          throw new XMPexception("cannot find '" + alignSource + "' in <align-subscript> list");
       }
 
       alignSourceIndex++;
@@ -511,14 +515,14 @@ public class XMPtranslateGlobalPragma {
             String alignSubscript = alignSubscriptObj.getString();
             if (XMPutil.hasElmt(alignSourceList, alignSubscript)) {
               if (XMPutil.countElmts(alignSourceList, alignSubscript) != 1)
-                XMP.error(lnObj, "no/multiple '" + alignSubscript + "' indicated in <align-source> list");
+                throw new XMPexception("no/multiple '" + alignSubscript + "' indicated in <align-source> list");
             }
             else
-              XMP.error(lnObj, "cannot find '" + alignSubscript + "' in <align-source> list");
+              throw new XMPexception("cannot find '" + alignSubscript + "' in <align-source> list");
           }
           break;
         default:
-          XMP.error(lnObj, "unknown align subscript");
+          throw new XMPexception("unknown align subscript");
       }
     }
   }
@@ -561,17 +565,16 @@ public class XMPtranslateGlobalPragma {
 
   // FIXME incomplete, not checked
   private void translateShadow(Xobject shadowPragma) throws XMPexception {
-    LineNo lnObj = shadowPragma.getLineNo();
     XobjList shadowDecl = (XobjList)shadowPragma.getArg(1);
 
     // find aligned array
     String arrayName = shadowDecl.getArg(0).getString();
     XMPalignedArray alignedArray = _globalObjectTable.getAlignedArray(arrayName);
     if (alignedArray == null)
-      XMP.error(lnObj, "the aligned array '" + arrayName + "' is not found");
+      throw new XMPexception("the aligned array '" + arrayName + "' is not found");
 
     if (alignedArray.hasShadow())
-      XMP.error(lnObj, "the aligned array '" + arrayName + "' has shadow already");
+      throw new XMPexception("the aligned array '" + arrayName + "' has shadow already");
 
     // init shadow
     XobjList shadowFuncArgs = Xcons.List(alignedArray.getDescId().Ref());
@@ -579,7 +582,7 @@ public class XMPtranslateGlobalPragma {
     int arrayDim = alignedArray.getDim();
     for (XobjArgs i = shadowDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
       if (arrayIndex == arrayDim)
-        XMP.error(lnObj, "wrong shadow dimension indicated, too many");
+        throw new XMPexception("wrong shadow dimension indicated, too many");
 
       XobjList shadowObj = (XobjList)i.getArg();
       XobjInt shadowType = (XobjInt)shadowObj.getArg(0);
@@ -595,7 +598,7 @@ public class XMPtranslateGlobalPragma {
         case XMPshadow.SHADOW_NORMAL:
           {
             if (alignedArray.getDistMannerAt(arrayIndex) == XMPalignedArray.NO_ALIGN)
-              XMP.error(lnObj, "indicated dimension is not distributed");
+              throw new XMPexception("indicated dimension is not distributed");
 
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_NORMAL)));
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowBody.left()));
@@ -607,7 +610,7 @@ public class XMPtranslateGlobalPragma {
         case XMPshadow.SHADOW_FULL:
           {
             if (alignedArray.getDistMannerAt(arrayIndex) == XMPalignedArray.NO_ALIGN)
-              XMP.error(lnObj, "indicated dimension is not distributed");
+              throw new XMPexception("indicated dimension is not distributed");
 
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_FULL)));
 
@@ -615,14 +618,14 @@ public class XMPtranslateGlobalPragma {
             break;
           }
         default:
-          XMP.error(lnObj, "unknown shadow type");
+          throw new XMPexception("unknown shadow type");
       }
 
       arrayIndex++;
     }
 
     if (arrayIndex != arrayDim)
-      XMP.error(lnObj, "the number of <nodes/template-subscript> should be the same with the dimension");
+      throw new XMPexception("the number of <nodes/template-subscript> should be the same with the dimension");
 
     _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_init_shadow", shadowFuncArgs);
 

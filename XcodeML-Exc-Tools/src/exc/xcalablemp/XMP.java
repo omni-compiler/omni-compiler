@@ -20,11 +20,9 @@ public class XMP {
     if (errorFlag) System.exit(1);
   }
 
-  // FIXME error never throw exception
-  public static void error(LineNo l, String msg) throws XMPexception {
+  public static void error(LineNo l, String msg) {
     errorFlag = true;
     XmLog.error(l, "[XcalableMP] " + msg);
-    throw new XMPexception();
   }
 
   public static void warning(LineNo l, String msg) {

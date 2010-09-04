@@ -16,8 +16,7 @@ public class XMPtranslateLocalPragma {
     _globalObjectTable = globalDecl.getGlobalObjectTable();
   }
 
-  // FIXME this function never throw exception
-  public void translate(FuncDefBlock def) throws XMPexception {
+  public void translate(FuncDefBlock def) {
     FunctionBlock fb = def.getBlock();
 
     BlockIterator i = new topdownBlockIterator(fb);
