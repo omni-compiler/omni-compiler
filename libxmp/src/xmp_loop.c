@@ -113,7 +113,7 @@ _type template_lower = (_type)template->chunk[template_index].par_lower;
     /* calc par_init */ \
     _XCALABLEMP_SM_CALC_PAR_INIT_CYCLIC_S1(_type) \
     /* calc par_cond */ \
-    *par_cond = ser_cond; \
+    *par_cond = ser_cond + 1; /* restore normalized value */ \
     /* calc par_step */ \
     *par_step = nodes_size; \
   } \
