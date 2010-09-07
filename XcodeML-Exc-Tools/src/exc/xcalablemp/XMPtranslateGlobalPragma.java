@@ -292,7 +292,7 @@ public class XMPtranslateGlobalPragma {
       switch (distManner) {
         case XMPtemplate.DUPLICATION:
           {
-            setupDistribution(distManner, templateObject, templateDimIdx, null, -1);
+            setupDistribution(distManner, templateObject, templateDimIdx, -1);
             break;
           }
         case XMPtemplate.BLOCK:
@@ -301,7 +301,7 @@ public class XMPtranslateGlobalPragma {
             if (nodesDimIdx == nodesDim)
               throw new XMPexception("the number of <dist-format> (except '*') should be the same with the nodes dimension");
 
-            setupDistribution(distManner, templateObject, templateDimIdx, nodesObject, nodesDimIdx);
+            setupDistribution(distManner, templateObject, templateDimIdx, nodesDimIdx);
             nodesDimIdx++;
             break;
           }
@@ -323,9 +323,7 @@ public class XMPtranslateGlobalPragma {
     templateObject.setIsDistributed();
   }
 
-  private void setupDistribution(int distManner,
-                                 XMPtemplate templateObject, int templateDimIdx,
-                                 XMPnodes nodesObject,       int nodesDimIdx) {
+  private void setupDistribution(int distManner, XMPtemplate templateObject, int templateDimIdx, int nodesDimIdx) {
     XobjList funcArgs = null;
     String distMannerName = null;
     switch (distManner) {
@@ -341,7 +339,6 @@ public class XMPtranslateGlobalPragma {
           distMannerName = "BLOCK";
           funcArgs = Xcons.List(templateObject.getDescId().Ref(),
                                 Xcons.IntConstant(templateDimIdx),
-                                nodesObject.getDescId().Ref(),
                                 Xcons.IntConstant(nodesDimIdx));
           templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
           break;
@@ -351,7 +348,6 @@ public class XMPtranslateGlobalPragma {
           distMannerName = "CYCLIC";
           funcArgs = Xcons.List(templateObject.getDescId().Ref(),
                                 Xcons.IntConstant(templateDimIdx),
-                                nodesObject.getDescId().Ref(),
                                 Xcons.IntConstant(nodesDimIdx));
           templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
           break;
@@ -532,7 +528,6 @@ public class XMPtranslateGlobalPragma {
                              Xobject alignSubscriptExpr) throws XMPexception {
     XobjList alignFuncArgs = Xcons.List(alignedArray.getDescId().getAddr(),
                                         Xcons.IntConstant(alignSourceIndex),
-                                        templateObj.getDescId().Ref(),
                                         Xcons.IntConstant(alignSubscriptIndex));
 
     if (alignSubscriptExpr == null) alignFuncArgs.add(Xcons.IntConstant(0));

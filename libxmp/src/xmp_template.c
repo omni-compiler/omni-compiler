@@ -199,15 +199,15 @@ void _XCALABLEMP_dist_template_DUPLICATION(_XCALABLEMP_template_t *template, int
   chunk->onto_nodes_info = NULL;
 }
 
-void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int template_index,
-                                     _XCALABLEMP_nodes_t *nodes,       int nodes_index) {
+void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int template_index, int nodes_index) {
   if (template == NULL)
     _XCALABLEMP_fatal("null template descriptor detected");
 
+  if (template->chunk == NULL) return;
+
+  _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
   if (nodes == NULL)
     _XCALABLEMP_fatal("null nodes descriptor detected");
-
-  if (template->chunk == NULL) return;
 
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
@@ -236,15 +236,15 @@ void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int templ
   chunk->onto_nodes_info = ni;
 }
 
-void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int template_index,
-                                      _XCALABLEMP_nodes_t *nodes,       int nodes_index) {
+void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int template_index, int nodes_index) {
   if (template == NULL)
     _XCALABLEMP_fatal("null template descriptor detected");
 
+  if (template->chunk == NULL) return;
+
+  _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
   if (nodes == NULL)
     _XCALABLEMP_fatal("null nodes descriptor detected");
-
-  if (template->chunk == NULL) return;
 
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
@@ -279,13 +279,13 @@ void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int temp
   chunk->onto_nodes_info = ni;
 }
 
-_Bool _XCALABLEMP_exec_task_TEMPLATE_PART(int get_upper, _XCALABLEMP_template_t *ref_template,
-                                                         _XCALABLEMP_nodes_t *onto_nodes, ...) {
+_Bool _XCALABLEMP_exec_task_TEMPLATE_PART(int get_upper, _XCALABLEMP_template_t *ref_template, ...) {
   if (ref_template == NULL)
     _XCALABLEMP_fatal("null template descriptor detected");
 
   if (ref_template->chunk == NULL) return false;
 
+  _XCALABLEMP_nodes_t *onto_nodes = ref_template->onto_nodes;
   if (onto_nodes == NULL)
     _XCALABLEMP_fatal("null nodes descriptor detected");
 
@@ -296,7 +296,7 @@ _Bool _XCALABLEMP_exec_task_TEMPLATE_PART(int get_upper, _XCALABLEMP_template_t 
   long long ref_lower, ref_upper, ref_stride;
 
   va_list args;
-  va_start(args, onto_nodes);
+  va_start(args, ref_template);
   for (int i = 0; i < ref_dim; i++) {
     _XCALABLEMP_template_info_t *info = &(ref_template->info[i]);
     _XCALABLEMP_template_chunk_t *chunk = &(ref_template->chunk[i]);
