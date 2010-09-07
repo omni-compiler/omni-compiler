@@ -37,7 +37,7 @@ public class XMPtranslateGlobalPragma {
       case SHADOW:
         { translateShadow(x);		break; }
       default:
-        new throw XMPexception("'" + pragmaName.toLowerCase() + "' directive is not supported yet");
+        throw new XMPexception("'" + pragmaName.toLowerCase() + "' directive is not supported yet");
     }
   }
 

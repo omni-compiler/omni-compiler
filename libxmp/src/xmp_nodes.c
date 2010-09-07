@@ -446,6 +446,15 @@ void _XCALABLEMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, int map_type, _XC
   *nodes = n;
 }
 
+void _XCALABLEMP_finalize_nodes(_XCALABLEMP_nodes_t **nodes) {
+  if ((*nodes) != NULL) {
+    _XCALABLEMP_free((*nodes)->comm);
+    _XCALABLEMP_free(*nodes);
+
+    *nodes = NULL;
+  }
+}
+
 _Bool _XCALABLEMP_exec_task_GLOBAL_PART(int ref_lower, int ref_upper, int ref_stride) {
   _XCALABLEMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, _XCALABLEMP_world_size);
 
@@ -526,12 +535,5 @@ _Bool _XCALABLEMP_exec_task_NODES_PART(int get_upper, _XCALABLEMP_nodes_t *ref_n
   else {
     _XCALABLEMP_push_nodes(n);
     return true;
-  }
-}
-
-void _XCALABLEMP_finalize_nodes(_XCALABLEMP_nodes_t *nodes) {
-  if (nodes != NULL) {
-    _XCALABLEMP_free(nodes->comm);
-    _XCALABLEMP_free(nodes);
   }
 }
