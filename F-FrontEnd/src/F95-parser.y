@@ -722,12 +722,12 @@ kind_key_spec: KW_KIND '=' expr
         { $$ = list1(F95_KIND_SELECTOR_SPEC, $3); }
         ;
 kind_or_len_selector:
-          KW SET_KIND expr  ')'
-        { $$ = list1(F95_KIND_SELECTOR_SPEC, $3); }
-        | KW SET_LEN '*' ')'
+          SET_KIND expr  ')'
+        { $$ = list1(F95_KIND_SELECTOR_SPEC, $2); }
+        | SET_LEN '*' ')'
         { $$ = list1(F95_LEN_SELECTOR_SPEC, NULL); }
-        | KW SET_LEN expr ')'
-        { $$ = list1(F95_LEN_SELECTOR_SPEC, $3); }
+        | SET_LEN expr ')'
+        { $$ = list1(F95_LEN_SELECTOR_SPEC, $2); }
         | '(' expr ')'
         { $$ = $2; }
         ;

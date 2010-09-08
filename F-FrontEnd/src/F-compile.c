@@ -426,7 +426,8 @@ void compile_statement1(int st_no, expr x)
 
     case F_IMPLICIT_DECL:
         check_INDCL();
-        FOR_ITEMS_IN_LIST(lp,EXPR_ARG1(x)){
+	if (EXPR_ARG1(x)){
+	  FOR_ITEMS_IN_LIST(lp,EXPR_ARG1(x)){
             v = LIST_ITEM(lp);
             /* implicit none?  result in peek the data structture.  */
             if (EXPR_CODE (EXPR_ARG1 (EXPR_ARG1(v)))== F_TYPE_NODE)
@@ -435,7 +436,14 @@ void compile_statement1(int st_no, expr x)
                 v = EXPR_ARG1(v);
                 compile_IMPLICIT_decl(EXPR_ARG1(v),EXPR_ARG2(v));
             }
-        }
+	  }
+	}
+	else { /* implicit none */
+	  set_implicit_type(NULL, 'a', 'z');
+	  list_put_last(UNIT_CTL_IMPLICIT_DECLS(CURRENT_UNIT_CTL),
+			create_implicit_decl_expv(NULL, "a", "z"));
+	}
+
         break;
 
     case F_FORMAT_DECL: {
@@ -3122,7 +3130,9 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
                 break;
             }
             vstat = compile_expression(EXPR_ARG2(r));
-            if(vstat == NULL || EXPR_CODE(vstat) != F_VAR) {
+            if(vstat == NULL || (EXPR_CODE(vstat) != F_VAR &&
+				 EXPR_CODE(vstat) != ARRAY_REF &&
+				 EXPR_CODE(vstat) != F95_MEMBER_REF)){
                 error("invalid status variable");
             } else if(IS_INT(EXPV_TYPE(vstat)) == FALSE) {
                 error("status variable is not a integer type");

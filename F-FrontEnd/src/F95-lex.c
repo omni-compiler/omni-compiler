@@ -1974,18 +1974,19 @@ next_line0:
             no_countup = TRUE;
             goto done;
         }
-        if(c == EOF) goto unexpected_EOF;
+        //if(c == EOF) goto unexpected_EOF;
+	if (c == EOF) goto done;
         if (anotherEOF()) goto unexpected_EOF;
         if (!inComment && (c == '\'')) {
             if (inQuote == c) /* terminate?  */
                 inQuote = 0;
-            else
+            else if (!inQuote)
                 inQuote = c;
         }
         else if (!inComment && (c == '"')) {
             if (inQuote == c) /* terminate? */
                 inQuote = 0;
-            else
+            else if (!inQuote)
                 inQuote = c;
         }
         else if (!inQuote && !inComment && (c == '!'))
@@ -1994,8 +1995,9 @@ next_line0:
     }
     error("too long line, skipped");
     while((c = getc(source_file)) != '\n'){
-            if(c == EOF) goto unexpected_EOF;
-            if (anotherEOF()) goto unexpected_EOF;
+      //if(c == EOF) goto unexpected_EOF;
+      if (c == EOF) break;
+      if (anotherEOF()) goto unexpected_EOF;
     }
     goto next_line;
 
@@ -2319,8 +2321,9 @@ next_line0:
         for(i = 0; i < 6 ;i++) {
             c = getc(source_file);
             if (c == EOF) {
-                warning("unexpected eof");
-                return(ST_EOF);
+	      //warning("unexpected eof");
+	      //return(ST_EOF);
+	      while (i < 6) stn_cols[i++] = ' ';
             } else if (anotherEOF()) {
                 warning("unexpected eof");
                 return(ST_EOF);
@@ -2427,12 +2430,12 @@ KeepOnGoin:
             if (c == '\'' && inComment == FALSE) {
                 if(c == inQuote)
                     inQuote = 0;
-                else
+                else if (!inQuote)
                     inQuote = c;
             } else if (c == '"' && inComment == FALSE) {
                 if(c == inQuote)
                     inQuote = 0;
-                else
+                else if (!inQuote)
                     inQuote = c;
             }
             if (c == '!' && inQuote == 0) {
@@ -2475,8 +2478,9 @@ KeepOnGoin:
         if (getNL != TRUE) {
             while((c = getc(source_file)) != '\n') {
                 if (c == EOF) {
-                    warning("unexpected EOF");
-                    return(ST_EOF);
+		  //warning("unexpected EOF");
+		  //return(ST_EOF);
+		  break;
                 }
                 if (anotherEOF()) {
                     warning("unexpected EOF");

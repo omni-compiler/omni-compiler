@@ -111,10 +111,11 @@ declare_procedure(enum name_class class,
             if (ep != NULL && EXT_IS_DEFINED(ep) &&
                  EXT_PROC_IS_MODULE_PROCEDURE(ep) == FALSE &&
                 (unit_ctl_level == 0 || PARENT_STATE != ININTR)) {
-                error("same name is already defined in parent");
-                return;
+	      //                error("same name is already defined in parent");
+	      //                return;
+	      warning("A host-associated procedure is overridden.");
             }
-            if (unit_ctl_level > 0 && PARENT_STATE != ININTR) {
+            else if (unit_ctl_level > 0 && PARENT_STATE != ININTR) {
                 ep = find_ext_id(CURRENT_PROC_NAME);
                 if (ep != NULL && EXT_IS_DEFINED(ep) &&
                     EXT_PROC_IS_MODULE_PROCEDURE(ep) == FALSE) {
@@ -488,11 +489,11 @@ implicit_declaration(ID id)
         }
         tp = IMPLICIT_TYPES[c-'a'];
         if (tp == NULL) {
-            if (ID_CLASS(id) == CL_PROC) {
-                return;
+            if (ID_CLASS(id) == CL_VAR) {
+	      error("attempt to use undefined type variable, %s", ID_NAME(id));
+	      return;
             }
-            error("attempt to use undefined type variable, %s", ID_NAME(id));
-            return;
+            else return;
         }
         /*
          * OK, here we make a new TYPE_DESC.
@@ -2013,7 +2014,7 @@ compile_IMPLICIT_decl(expr type,expr l)
     if ((BASIC_DATA_TYPE) EXPR_INT (ty) == TYPE_UNKNOWN) {
       set_implicit_type(NULL,'a','z');
 
-      /* store implict noe decl. */
+      /* store implict none decl. */
       list_put_last(UNIT_CTL_IMPLICIT_DECLS(CURRENT_UNIT_CTL),
                     create_implicit_decl_expv(NULL, "a", "z"));
       return;
@@ -2052,7 +2053,7 @@ set_implicit_type_uc(UNIT_CTL uc, TYPE_DESC tp, int c1, int c2)
     if (c1 > c2) {
         error("characters out of order in IMPLICIT:%c-%c", c1, c2);
     } else {
-        TYPE_SET_IMPLICIT(tp);
+      if (tp) TYPE_SET_IMPLICIT(tp);
         for (i = c1 ; i <= c2 ; ++i)
             UNIT_CTL_IMPLICIT_TYPES(uc)[i - 'a'] = tp;
     }

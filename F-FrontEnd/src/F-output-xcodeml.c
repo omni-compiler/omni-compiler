@@ -2050,7 +2050,26 @@ outx_ALLOCDEALLOC_statement(int l, expv v)
     expv vstat = expr_list_get_n(v, 1);
 
     if(vstat)
-        sprintf(buf, " stat_name=\"%s\"", SYM_NAME(EXPV_NAME(vstat)));
+      switch (EXPR_CODE(vstat)){
+      case F_VAR:
+	sprintf(buf, " stat_name=\"%s\"", SYM_NAME(EXPV_NAME(vstat)));
+	break;
+      case ARRAY_REF:
+        //error_at_node(v, "cannot use array ref. in stat specifier");
+	warning("cannot use array ref. in stat specifier");
+        buf[0] = '\0';
+	break;
+	//        exit(1);
+      case F95_MEMBER_REF:
+        //error_at_node(v, "cannot use member ref. in stat specifier");
+	warning("cannot use member ref. in stat specifier");
+        buf[0] = '\0';
+        //exit(1);
+	break;
+      default:
+        buf[0] = '\0';
+	break;
+      }
     else
         buf[0] = '\0';
 
@@ -3082,11 +3101,11 @@ genSortedIDs(ID ids, int *retnIDs)
 
 #define IS_NO_PROC_OR_DECLARED_PROC(id) \
     ((ID_CLASS(id) != CL_PROC || \
+        PROC_CLASS(id) == P_EXTERNAL || \
         TYPE_IS_EXTERNAL(ID_TYPE(id)) || \
         TYPE_IS_INTRINSIC(ID_TYPE(id)) || \
         PROC_CLASS(id) == P_UNDEFINEDPROC || \
-        PROC_CLASS(id) == P_DEFINEDPROC || \
-        PROC_CLASS(id) == P_EXTERNAL) \
+        PROC_CLASS(id) == P_DEFINEDPROC) \
     && (PROC_EXT_ID(id) == NULL || \
         PROC_CLASS(id) == P_UNDEFINEDPROC || \
         PROC_CLASS(id) == P_DEFINEDPROC || ( \

@@ -1286,7 +1286,8 @@ compile_function_call(ID f_id, expr args) {
     switch (PROC_CLASS(f_id)) {
         case P_UNDEFINEDPROC:
             /* f_id is not defined yet. */
-            tp = ID_TYPE(f_id);
+	  //tp = ID_TYPE(f_id);
+  	    tp = ID_TYPE(f_id) ? ID_TYPE(f_id) : new_type_desc();
             TYPE_SET_USED_EXPLICIT(tp);
 
             a = compile_args(args);
@@ -1318,7 +1319,8 @@ compile_function_call(ID f_id, expr args) {
                 error("attempt to use untyped function,'%s'",ID_NAME(f_id));
                 goto err;
             }
-            tp = ID_TYPE(f_id);
+	    //            tp = ID_TYPE(f_id);
+  	    tp = ID_TYPE(f_id) ? ID_TYPE(f_id) : new_type_desc();
             TYPE_SET_USED_EXPLICIT(tp);
             a = compile_args(args);
             ep = PROC_EXT_ID(f_id);
