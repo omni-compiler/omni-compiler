@@ -124,6 +124,8 @@ void _XCALABLEMP_init_template_FIXED(_XCALABLEMP_template_t **template, int dim,
   va_list args;
   va_start(args, dim);
   for (int i = 0; i < dim; i++) {
+    t->info[i].dim_index = i;
+
     t->info[i].ser_lower = va_arg(args, long long);
     t->info[i].ser_upper = va_arg(args, long long);
   }
@@ -148,6 +150,8 @@ void _XCALABLEMP_init_template_UNFIXED(_XCALABLEMP_template_t **template, int di
   va_list args;
   va_start(args, dim);
   for(int i = 0; i < dim - 1; i++) {
+    t->info[i].dim_index = i;
+
     t->info[i].ser_lower = va_arg(args, long long);
     t->info[i].ser_upper = va_arg(args, long long);
   }
@@ -164,7 +168,10 @@ void _XCALABLEMP_init_template_chunk(_XCALABLEMP_template_t *template, _XCALABLE
 
   if (nodes != NULL) {
     template->onto_nodes = nodes;
-    template->chunk = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_template_chunk_t) * (template->dim));
+
+    int template_dim = template->dim;
+    template->chunk = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_template_chunk_t) * template_dim);
+    for (int i = 0; i < template_dim; i++) template->chunk[i].dim_index = i;
   }
 }
 

@@ -25,6 +25,8 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_GLOBAL(int dim) {
   n->comm_rank = _XCALABLEMP_world_rank;
   n->dim = dim;
 
+  for (int i = 0; i < dim; i++) n->info[i].dim_index = i;
+
   return n;
 }
 
@@ -42,6 +44,8 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_EXEC(int dim) {
   n->comm_size = size;
   n->comm_rank = rank;
   n->dim = dim;
+
+  for (int i = 0; i < dim; i++) n->info[i].dim_index = i;
 
   return n;
 }
@@ -64,6 +68,8 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NUMBER(int dim, 
     MPI_Comm_size(*comm, &(n->comm_size));
     MPI_Comm_rank(*comm, &(n->comm_rank));
     n->dim = dim;
+
+    for (int i = 0; i < dim; i++) n->info[i].dim_index = i;
   }
   else _XCALABLEMP_free(comm);
 
@@ -94,6 +100,8 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NAMED(int dim, _
     MPI_Comm_size(*comm, &(n->comm_size));
     MPI_Comm_rank(*comm, &(n->comm_rank));
     n->dim = dim;
+
+    for (int i = 0; i < dim; i++) n->info[i].dim_index = i;
   }
   else _XCALABLEMP_free(comm);
 

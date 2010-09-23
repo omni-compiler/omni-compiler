@@ -9,6 +9,8 @@
 // --------------- structures ----------------------------------------
 // nodes descriptor
 typedef struct _XCALABLEMP_nodes_info_type {
+  int dim_index;
+
   int size;
   int rank;
 } _XCALABLEMP_nodes_info_t;
@@ -24,12 +26,16 @@ typedef struct _XCALABLEMP_nodes_type {
 
 // template desciptor
 typedef struct _XCALABLEMP_template_info_type {
+  int dim_index;
+
   long long		ser_lower;
   long long		ser_upper;
   unsigned long long	ser_size;
 } _XCALABLEMP_template_info_t;
 
 typedef struct _XCALABLEMP_template_chunk_type {
+  int dim_index;
+
   // FIXME not support BLOCK_CYCLIC yet
   long long par_lower;
   long long par_upper;
