@@ -734,39 +734,63 @@ public class XMPtranslateLocalPragma {
     CforBlock schedBaseBlock = getOutermostLoopBlock(loopBody);
 
     // schedule loop
-    XobjList loopOnRef = null;
     if (loopDecl.getArg(0) == null) translateFollowingLoop(pb, schedBaseBlock);
     else                            translateMultipleLoop(pb, schedBaseBlock);
 
     // translate reduction clause
     XobjList reductionRefList = (XobjList)loopDecl.getArg(2);
-    if (reductionRefList != null)
-      createReductionClauseBlock(pb, reductionRefList, schedBaseBlock);
+    if (reductionRefList != null) {
+      BlockList reductionBody = createReductionClauseBody(pb, reductionRefList, schedBaseBlock);
+      schedBaseBlock.add(createReductionClauseBlock(pb, reductionBody, (XobjList)loopDecl.getArg(1)));
+    }
 
     // replace pragma
     pb.replace(Bcons.COMPOUND(loopBody));
   }
 
-  private Block createLoopCommunicator(PragmaBlock pb, XobjList onRef) throws XMPexception {
-    // start translation
+  private Block createReductionClauseBlock(PragmaBlock pb, BlockList reductionBody, XobjList onRef) throws XMPexception {
+    String onRefObjName = onRef.getArg(0).getString();
+    XobjList subscriptList = (XobjList)onRef.getArg(1);
+
     XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
-    BlockList loopBody = pb.getBody();
+    XMPobject onRefObj = findXMPobject(onRefObjName, localObjectTable);
+    String initFuncSurfix = null;
+    switch (onRefObj.getKind()) {
+      case XMPobject.TEMPLATE:
+        initFuncSurfix = "TEMPLATE";
+        break;
+      case XMPobject.NODES:
+        initFuncSurfix = "NODES";
+        break;
+      default:
+        throw new XMPexception("unknown object type");
+    }
 
     // create function arguments
-    XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(onRef, localObjectTable);
-    String execFuncSurfix = execOnRefArgs.getFirst();
-    boolean splitComm = execOnRefArgs.getSecond().booleanValue();
-    XobjList execFuncArgs = execOnRefArgs.getThird();
+    XobjList initFuncArgs = Xcons.List(onRefObj.getDescId().Ref());
 
-    // setup task finalizer
-    Ident finFuncId = null;
-    if (splitComm) finFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pop_n_free_nodes");
-    else           finFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pop_nodes");
-    setupFinalizer(loopBody, finFuncId, null);
+    boolean initComm = false;
+    for (XobjArgs i = subscriptList.getArgs(); i != null; i = i.nextArgs()) {
+      String subscript = i.getArg().getString();
+      if (subscript.equals(XMP.ASTERISK)) {
+        initComm = true;
+        initFuncArgs.add(Xcons.IntConstant(1));
+      }
+      else
+        initFuncArgs.add(Xcons.IntConstant(0));
+    }
 
-    // create function call
-    Ident execFuncId = _env.declExternIdent("_XCALABLEMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
-    return Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), loopBody, null);
+    if (initComm) {
+      // setup finalizer
+      Ident finFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pop_n_free_nodes");
+      setupFinalizer(reductionBody, finFuncId, null);
+
+      // create function call
+      Ident initFuncId = _globalDecl.declExternFunc("_XCALABLEMP_init_reduce_comm_" + initFuncSurfix);
+      reductionBody.insert(initFuncId.Call(initFuncArgs));
+    }
+
+    return Bcons.COMPOUND(reductionBody);
   }
 
   private void translateFollowingLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {
@@ -795,8 +819,8 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private void createReductionClauseBlock(PragmaBlock pb, XobjList reductionRefList,
-                                          CforBlock schedBaseBlock) throws XMPexception {
+  private BlockList createReductionClauseBody(PragmaBlock pb, XobjList reductionRefList,
+                                              CforBlock schedBaseBlock) throws XMPexception {
     // create init block
     Ident getRankFuncId = _globalDecl.declExternFunc("_XCALABLEMP_get_execution_nodes_rank", Xtype.intType);
     IfBlock reductionInitIfBlock = (IfBlock)Bcons.IF(BasicBlock.Cond(Xcons.binaryOp(Xcode.LOG_EQ_EXPR, getRankFuncId.Call(null),
@@ -817,7 +841,8 @@ public class XMPtranslateLocalPragma {
     }
 
     schedBaseBlock.insert(reductionInitIfBlock);
-    schedBaseBlock.add(Bcons.COMPOUND(reductionBody));
+
+    return reductionBody;
   }
 
   private void scheduleLoop(PragmaBlock pb, CforBlock forBlock, CforBlock schedBaseBlock) throws XMPexception {

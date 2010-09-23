@@ -278,7 +278,6 @@ void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
   va_list args;
   va_start(args, array);
   for (int i = 0; i < template_dim; i++) {
-    _XCALABLEMP_template_info_t *info = &(align_template->info[i]);
     _XCALABLEMP_template_chunk_t *chunk = &(align_template->chunk[i]);
 
     int size, rank;

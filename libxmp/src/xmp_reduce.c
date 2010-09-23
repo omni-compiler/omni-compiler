@@ -307,3 +307,85 @@ void _XCALABLEMP_reduce_FLMM_CLAUSE(void *temp_addr, void *data_addr, int count,
 
   _XCALABLEMP_free(cmp_buffer);
 }
+
+void _XCALABLEMP_init_reduce_comm_NODES(_XCALABLEMP_nodes_t *nodes, ...) {
+  if (nodes == NULL)
+    _XCALABLEMP_fatal("null nodes descriptor detected");
+
+  int color = 1;
+  int acc_nodes_size = 1;
+  int nodes_dim = nodes->dim;
+
+  va_list args;
+  va_start(args, nodes);
+  for (int i = 0; i < nodes_dim; i++) {
+    int size = nodes->info[i].size;
+    int rank = nodes->info[i].rank;
+
+    if (va_arg(args, int) == 1) color += (acc_nodes_size * rank);
+
+    acc_nodes_size *= size;
+  }
+  va_end(args);
+
+  MPI_Comm *comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
+  MPI_Comm_split(*(nodes->comm), color, nodes->comm_rank, comm);
+
+  // create a new nodes descriptor
+  _XCALABLEMP_nodes_t *n = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_nodes_t));
+
+  n->comm = comm;
+  MPI_Comm_size(*comm, &(n->comm_size));
+  MPI_Comm_rank(*comm, &(n->comm_rank));
+  n->dim = 0;
+
+  _XCALABLEMP_push_nodes(n);
+}
+
+void _XCALABLEMP_init_reduce_comm_TEMPLATE(_XCALABLEMP_template_t *template, ...) {
+  if (template == NULL)
+    _XCALABLEMP_fatal("null template descriptor detected");
+
+  _XCALABLEMP_nodes_t *onto_nodes = template->onto_nodes;
+  if (onto_nodes == NULL)
+    _XCALABLEMP_fatal("null nodes descriptor detected");
+
+  int color = 1;
+  int acc_nodes_size = 1;
+  int template_dim = template->dim;
+
+  va_list args;
+  va_start(args, template);
+  for (int i = 0; i < template_dim; i++) {
+    _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[i]);
+
+    int size, rank;
+    _XCALABLEMP_nodes_info_t *onto_nodes_info = chunk->onto_nodes_info;
+    if (onto_nodes_info == NULL) { // distmanner == DUPLICATION
+      size = 1;
+      rank = 0;
+    }
+    else {
+      size = onto_nodes_info->size;
+      rank = onto_nodes_info->rank;
+    }
+
+    if (va_arg(args, int) == 1) color += (acc_nodes_size * rank);
+
+    acc_nodes_size *= size;
+  }
+  va_end(args);
+
+  MPI_Comm *comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
+  MPI_Comm_split(*(onto_nodes->comm), color, onto_nodes->comm_rank, comm);
+
+  // create a new nodes descriptor
+  _XCALABLEMP_nodes_t *n = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_nodes_t));
+
+  n->comm = comm;
+  MPI_Comm_size(*comm, &(n->comm_size));
+  MPI_Comm_rank(*comm, &(n->comm_rank));
+  n->dim = 0;
+
+  _XCALABLEMP_push_nodes(n);
+}
