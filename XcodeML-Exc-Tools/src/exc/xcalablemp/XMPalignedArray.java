@@ -145,7 +145,7 @@ public class XMPalignedArray {
     return _alignedTemplate;
   }
 
-  public boolean checkRealloc() {
+  public boolean checkRealloc() throws XMPexception {
     if (_reallocChecked) return _realloc;
 
     if (_hasShadow) {
@@ -162,7 +162,7 @@ public class XMPalignedArray {
               _realloc = true;
               return true;
             default:
-              XMP.fatal("unknown shadow type");
+              throw new XMPexception("unknown shadow type");
           }
         }
       }
@@ -178,7 +178,7 @@ public class XMPalignedArray {
     }
   }
 
-  public boolean realloc() {
+  public boolean realloc() throws XMPexception {
     if (_reallocChecked) return _realloc;
     else                 return checkRealloc();
   }

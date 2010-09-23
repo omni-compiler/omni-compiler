@@ -13,10 +13,15 @@ public class XMPrealloc implements XobjectDefVisitor {
   }
 
   public void doDef(XobjectDef def) {
-    realloc(def);
+    try {
+      realloc(def);
+    } catch (XMPexception e) {
+      // FIXME get line number
+      XMP.error(e.getMessage());
+    }
   }
 
-  public void realloc(XobjectDef def) {
+  public void realloc(XobjectDef def) throws XMPexception {
     if (def.isVarDecl()) {
       String varName = def.getName();
       XMPalignedArray alignedArray = _globalObjectTable.getAlignedArray(varName);

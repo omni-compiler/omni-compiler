@@ -51,7 +51,7 @@ public class XMPutil {
     else return false;
   }
 
-  public static String getTypeName(Xtype type) {
+  public static String getTypeName(Xtype type) throws XMPexception {
     if (type.getKind() == Xtype.BASIC) {
       BasicType basicType = (BasicType)type;
       switch (basicType.getBasicType()) {
@@ -76,7 +76,7 @@ public class XMPutil {
         case BasicType.DOUBLE_COMPLEX:		return new String("DOUBLE_COMPLEX");
         case BasicType.LONG_DOUBLE_COMPLEX:	return new String("LONG_DOUBLE_COMPLEX");
         default:
-          XMP.fatal("unsupported type");
+          throw new XMPexception("unsupported type");
       }
     }
 

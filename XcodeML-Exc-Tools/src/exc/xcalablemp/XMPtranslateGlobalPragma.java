@@ -159,7 +159,7 @@ public class XMPtranslateGlobalPragma {
           break;
         }
       default:
-        XMP.fatal("cannot create sub node set, unknown operation in nodes directive");
+        throw new XMPexception("cannot create sub node set, unknown operation in nodes directive");
     }
 
     boolean isDynamic = false;
@@ -306,7 +306,7 @@ public class XMPtranslateGlobalPragma {
             break;
           }
         default:
-          XMP.fatal("unknown distribute manner");
+          throw new XMPexception("unknown distribute manner");
       }
 
       templateDimIdx++;
@@ -323,7 +323,8 @@ public class XMPtranslateGlobalPragma {
     templateObject.setIsDistributed();
   }
 
-  private void setupDistribution(int distManner, XMPtemplate templateObject, int templateDimIdx, int nodesDimIdx) {
+  private void setupDistribution(int distManner, XMPtemplate templateObject,
+                                 int templateDimIdx, int nodesDimIdx) throws XMPexception {
     XobjList funcArgs = null;
     String distMannerName = null;
     switch (distManner) {
@@ -353,7 +354,7 @@ public class XMPtranslateGlobalPragma {
           break;
         }
       default:
-        XMP.fatal("unknown distribute manner");
+        throw new XMPexception("unknown distribute manner");
     }
 
     _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_dist_template_" + distMannerName, funcArgs);

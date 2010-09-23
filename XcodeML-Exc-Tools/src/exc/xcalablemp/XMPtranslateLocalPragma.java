@@ -67,7 +67,7 @@ public class XMPtranslateLocalPragma {
       case GMOVE:
         { translateGmove(pb);           break; }
       default:
-        XMP.fatal("'" + pragmaName.toLowerCase() + "' directive is not supported yet");
+        throw new XMPexception("'" + pragmaName.toLowerCase() + "' directive is not supported yet");
     }
   }
 
@@ -192,7 +192,7 @@ public class XMPtranslateLocalPragma {
           break;
         }
       default:
-        XMP.fatal("cannot create sub node set, unknown operation in nodes directive");
+        throw new XMPexception("cannot create sub node set, unknown operation in nodes directive");
     }
 
     boolean isDynamic = false;
@@ -351,7 +351,7 @@ public class XMPtranslateLocalPragma {
       switch (distManner) {
         case XMPtemplate.DUPLICATION:
           {
-            setupDistribution(distManner, pb, templateObject, templateDimIdx, -1);
+            setupDistribution(pb, distManner, templateObject, templateDimIdx, -1);
             break;
           }
         case XMPtemplate.BLOCK:
@@ -360,12 +360,12 @@ public class XMPtranslateLocalPragma {
             if (nodesDimIdx == nodesDim)
               throw new XMPexception("the number of <dist-format> (except '*') should be the same with the nodes dimension");
 
-            setupDistribution(distManner, pb, templateObject, templateDimIdx, nodesDimIdx);
+            setupDistribution(pb, distManner, templateObject, templateDimIdx, nodesDimIdx);
             nodesDimIdx++;
             break;
           }
         default:
-          XMP.fatal("unknown distribute manner");
+          throw new XMPexception("unknown distribute manner");
       }
 
       templateDimIdx++;
@@ -382,8 +382,8 @@ public class XMPtranslateLocalPragma {
     templateObject.setIsDistributed();
   }
 
-  private void setupDistribution(int distManner, PragmaBlock pb,
-                                 XMPtemplate templateObject, int templateDimIdx, int nodesDimIdx) {
+  private void setupDistribution(PragmaBlock pb, int distManner, XMPtemplate templateObject,
+                                 int templateDimIdx, int nodesDimIdx) throws XMPexception {
     XobjList funcArgs = null;
     String distMannerName = null;
     switch (distManner) {
@@ -413,7 +413,7 @@ public class XMPtranslateLocalPragma {
           break;
         }
       default:
-        XMP.fatal("unknown distribute manner");
+        throw new XMPexception("unknown distribute manner");
     }
 
     XMPlocalDecl.addConstructorCall("_XCALABLEMP_dist_template_" + distMannerName, funcArgs, pb, _globalDecl);
@@ -1892,7 +1892,7 @@ public class XMPtranslateLocalPragma {
             break;
           }
         default:
-          XMP.fatal("unknown object type");
+          throw new XMPexception("unknown object type");
       }
 
       // create arguments
@@ -1960,7 +1960,7 @@ public class XMPtranslateLocalPragma {
               execFuncArgs.cons(((XMPtemplate)onRefObject).getDescId().Ref());
               break;
             default:
-              XMP.fatal("unknown object type");
+              throw new XMPexception("unknown object type");
           }
 
           if (getUpper) execFuncArgs.cons(Xcons.IntConstant(1));
