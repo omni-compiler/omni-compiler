@@ -82,6 +82,9 @@ typedef struct _XCALABLEMP_array_info_type {
 } _XCALABLEMP_array_info_t;
 
 typedef struct _XCALABLEMP_array_type {
+  MPI_Comm *comm;
+  int comm_size;
+  int comm_rank;
   int dim;
 
   _XCALABLEMP_template_t *align_template;

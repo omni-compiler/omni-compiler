@@ -506,6 +506,17 @@ public class XMPtranslateGlobalPragma {
       else
         throw new XMPexception("cannot find '" + alignSubscript + "' in <align-source> list");
     }
+
+    // init array communicator
+    XobjList initArrayCommFuncArgs = Xcons.List(alignedArray.getDescId().Ref());
+    for (XobjArgs i = alignSubscriptVarList.getArgs(); i != null; i = i.nextArgs()) {
+      String alignSubscript = i.getArg().getString();
+
+      if (alignSubscript.equals(XMP.ASTERISK)) initArrayCommFuncArgs.add(Xcons.IntConstant(1));
+      else                                     initArrayCommFuncArgs.add(Xcons.IntConstant(0));
+    }
+
+    _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_init_array_comm", initArrayCommFuncArgs);
   }
 
   private void declAlignFunc(XMPalignedArray alignedArray, int alignSourceIndex,

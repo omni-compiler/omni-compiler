@@ -53,8 +53,12 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
 }
 
 void _XCALABLEMP_finalize_array_desc(_XCALABLEMP_array_t **array) {
-  _XCALABLEMP_free(*array);
-  *array = NULL;
+  if ((*array) != NULL) {
+    _XCALABLEMP_free((*array)->comm);
+    _XCALABLEMP_free(*array);
+
+    *array = NULL;
+  }
 }
 
 void _XCALABLEMP_align_array_DUPLICATION(_XCALABLEMP_array_t **array, int array_index, int template_index,
@@ -254,4 +258,50 @@ void _XCALABLEMP_init_array_addr(void **array_addr, void *param_addr,
   va_end(args);
 
   *array_addr = param_addr;
+}
+
+void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
+  if (array == NULL) return;
+
+  _XCALABLEMP_template_t *align_template = array->align_template;
+  if (align_template == NULL)
+    _XCALABLEMP_fatal("null template descriptor detected");
+
+  _XCALABLEMP_nodes_t *onto_nodes = align_template->onto_nodes;
+  if (onto_nodes == NULL)
+    _XCALABLEMP_fatal("null nodes descriptor detected");
+
+  int color = 1;
+  int acc_nodes_size = 1;
+  int template_dim = align_template->dim;
+
+  va_list args;
+  va_start(args, array);
+  for (int i = 0; i < template_dim; i++) {
+    _XCALABLEMP_template_info_t *info = &(align_template->info[i]);
+    _XCALABLEMP_template_chunk_t *chunk = &(align_template->chunk[i]);
+
+    int size, rank;
+    _XCALABLEMP_nodes_info_t *onto_nodes_info = chunk->onto_nodes_info;
+    if (onto_nodes_info == NULL) { // distmanner == DUPLICATION
+      size = 1;
+      rank = 0;
+    }
+    else {
+      size = onto_nodes_info->size;
+      rank = onto_nodes_info->rank;
+    }
+
+    if (va_arg(args, int) == 1) color += (acc_nodes_size * rank);
+
+    acc_nodes_size *= size;
+  }
+  va_end(args);
+
+  MPI_Comm *comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
+  MPI_Comm_split(*(onto_nodes->comm), color, onto_nodes->comm_rank, comm);
+
+  array->comm = comm;
+  MPI_Comm_size(*comm, &(array->comm_size));
+  MPI_Comm_rank(*comm, &(array->comm_rank));
 }

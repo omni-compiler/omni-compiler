@@ -564,6 +564,17 @@ public class XMPtranslateLocalPragma {
         throw new XMPexception("cannot find '" + alignSubscript + "' in <align-source> list");
     }
 
+    // init array communicator
+    XobjList initArrayCommFuncArgs = Xcons.List(alignedArray.getDescId().Ref());
+    for (XobjArgs i = alignSubscriptVarList.getArgs(); i != null; i = i.nextArgs()) {
+      String alignSubscript = i.getArg().getString();
+
+      if (alignSubscript.equals(XMP.ASTERISK)) initArrayCommFuncArgs.add(Xcons.IntConstant(1));
+      else                                     initArrayCommFuncArgs.add(Xcons.IntConstant(0));
+    }
+
+    XMPlocalDecl.addConstructorCall("_XCALABLEMP_init_array_comm", initArrayCommFuncArgs, pb, _globalDecl);
+
     // init array address
     XobjList initArrayAddrFuncArgs = Xcons.List(arrayAddrId.getAddr(),
                                                 arrayId.getAddr(),
