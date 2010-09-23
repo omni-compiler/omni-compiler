@@ -5,9 +5,6 @@ import java.util.Vector;
 import java.util.Iterator;
 
 public class XMPalignedArray {
-  public final static int NO_ALIGN	= 10;
-  public final static int SIMPLE_ALIGN	= 11;
-
   private String		_name;
   private Xtype			_type;
   private int			_dim;
@@ -40,7 +37,7 @@ public class XMPalignedArray {
     _alignSubscriptExprVector = new Vector<Xobject>(XMP.MAX_DIM);
     for (int i = 0; i < dim; i++) {
       _shadowVector.add(new XMPshadow(XMPshadow.SHADOW_NONE, null, null));
-      _distMannerVector.add(new Integer(NO_ALIGN));
+      _distMannerVector.add(new Integer(XMPtemplate.DUPLICATION));
       _gtolTemp0IdVector.add(null);
       _alignSubscriptIndexVector.add(null);
       _alignSubscriptExprVector.add(null);
@@ -72,11 +69,8 @@ public class XMPalignedArray {
     return _distMannerVector.get(index).intValue();
   }
 
-  public String getDistMannerStringAt(int index) {
+  public String getDistMannerStringAt(int index) throws XMPexception {
     switch (getDistMannerAt(index)) {
-      case NO_ALIGN:
-        XMP.fatal("exception in exc.xcalablemp.XMPalignedArray.getDistMannerStringAt(), not distributed");
-        return null; // XXX not reach here
       case XMPtemplate.DUPLICATION:
         return new String("DUPLICATION");
       case XMPtemplate.BLOCK:
@@ -84,8 +78,7 @@ public class XMPalignedArray {
       case XMPtemplate.CYCLIC:
         return new String("CYCLIC");
       default:
-        XMP.fatal("exception in exc.xcalablemp.XMPalignedArray.getDistMannerStringAt(), unknown distribution manner");
-        return null; // XXX not reach here
+        throw new XMPexception("unknown distribution manner");
     }
   }
 

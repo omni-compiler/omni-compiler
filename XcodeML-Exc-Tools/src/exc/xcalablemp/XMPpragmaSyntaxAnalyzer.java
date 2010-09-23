@@ -465,9 +465,9 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
   private void parse_ALIGN_SOURCE(XobjList alignSourceList) throws XMPexception {
     if (pg_tok() == '*')
-      alignSourceList.add(Xcons.IntConstant(XMPalignedArray.NO_ALIGN));
+      alignSourceList.add(Xcons.String(XMP.ASTERISK));
     else if (pg_tok() == ':')
-      alignSourceList.add(Xcons.IntConstant(XMPalignedArray.SIMPLE_ALIGN));
+      alignSourceList.add(Xcons.String(XMP.COLON));
     else if (pg_tok() == PG_IDENT)
       alignSourceList.add(Xcons.String(pg_tok_buf()));
     else
@@ -478,13 +478,13 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
   private void parse_ALIGN_SUBSCRIPT(XobjList alignSubscriptList) throws XmException, XMPexception {
     if (pg_tok() == '*') {
-      alignSubscriptList.left().add(Xcons.IntConstant(XMPalignedArray.NO_ALIGN));
+      alignSubscriptList.left().add(Xcons.String(XMP.ASTERISK));
       alignSubscriptList.right().add(null);
       pg_get_token();
       return;
     }
     else if (pg_tok() == ':') {
-      alignSubscriptList.left().add(Xcons.IntConstant(XMPalignedArray.SIMPLE_ALIGN));
+      alignSubscriptList.left().add(Xcons.String(XMP.COLON));
       alignSubscriptList.right().add(null);
       pg_get_token();
       return;

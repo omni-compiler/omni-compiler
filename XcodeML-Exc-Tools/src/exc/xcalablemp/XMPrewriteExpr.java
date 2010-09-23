@@ -196,7 +196,6 @@ public class XMPrewriteExpr {
   private Xobject getCalcIndexFuncRef(XMPalignedArray alignedArray, int index, Xobject indexRef) throws XMPexception {
     int distManner = alignedArray.getDistMannerAt(index);
     switch (distManner) {
-      case XMPalignedArray.NO_ALIGN:
       case XMPtemplate.DUPLICATION:
         return indexRef;
       case XMPtemplate.BLOCK:

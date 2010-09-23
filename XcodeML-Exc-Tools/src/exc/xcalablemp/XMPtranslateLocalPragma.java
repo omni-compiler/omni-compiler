@@ -517,29 +517,21 @@ public class XMPtranslateLocalPragma {
     // create align function calls
     int alignSourceIndex = 0;
     for (XobjArgs i = alignSourceList.getArgs(); i != null; i = i.nextArgs()) {
-      Xobject alignSourceObj = i.getArg();
-      if (alignSourceObj.Opcode() == Xcode.INT_CONSTANT) {
-        switch (alignSourceObj.getInt()) {
-          case XMPalignedArray.NO_ALIGN:
-            break;
-          case XMPalignedArray.SIMPLE_ALIGN:
-            {
-              if (!XMPutil.hasElmt(alignSubscriptVarList, XMPalignedArray.SIMPLE_ALIGN))
-                throw new XMPexception("cannot find ':' in <align-subscript> list");
+      String alignSource = i.getArg().getString();
 
-              int alignSubscriptIndex = XMPutil.getLastIndex(alignSubscriptVarList, XMPalignedArray.SIMPLE_ALIGN);
-              alignSubscriptVarList.setArg(alignSubscriptIndex, null);
-
-              declAlignFunc(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex, null, pb);
-
-              break;
-            }
-          default:
-            throw new XMPexception("incorrect align source type");
-        }
+      if (alignSource.equals(XMP.ASTERISK)) {
+        // do nothing
       }
-      else if (alignSourceObj.Opcode() == Xcode.STRING) {
-        String alignSource = alignSourceObj.getString();
+      else if (alignSource.equals(XMP.COLON)) {
+        if (!XMPutil.hasElmt(alignSubscriptVarList, XMP.COLON))
+          throw new XMPexception("cannot find ':' in <align-subscript> list");
+
+        int alignSubscriptIndex = XMPutil.getLastIndex(alignSubscriptVarList, XMP.COLON);
+        alignSubscriptVarList.setArg(alignSubscriptIndex, null);
+
+        declAlignFunc(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex, null, pb);
+      }
+      else {
         if (XMPutil.countElmts(alignSourceList, alignSource) != 1)
           throw new XMPexception("multiple '" + alignSource + "' indicated in <align-source> list");
 
@@ -560,24 +552,16 @@ public class XMPtranslateLocalPragma {
 
     // check alignSubscriptVarList
     for (XobjArgs i = alignSubscriptVarList.getArgs(); i != null; i = i.nextArgs()) {
-      Xobject alignSubscriptObj = i.getArg();
-      switch (alignSubscriptObj.Opcode()) {
-        case INT_CONSTANT:
-          break;
-        case STRING:
-          {
-            String alignSubscript = alignSubscriptObj.getString();
-            if (XMPutil.hasElmt(alignSourceList, alignSubscript)) {
-              if (XMPutil.countElmts(alignSourceList, alignSubscript) != 1)
-                throw new XMPexception("no/multiple '" + alignSubscript + "' indicated in <align-source> list");
-            }
-            else
-              throw new XMPexception("cannot find '" + alignSubscript + "' in <align-source> list");
-          }
-          break;
-        default:
-          throw new XMPexception("unknown align subscript");
+      String alignSubscript = i.getArg().getString();
+
+      if (alignSubscript.equals(XMP.ASTERISK) || alignSubscript.equals(XMP.COLON)) break;
+
+      if (XMPutil.hasElmt(alignSourceList, alignSubscript)) {
+        if (XMPutil.countElmts(alignSourceList, alignSubscript) != 1)
+          throw new XMPexception("no/multiple '" + alignSubscript + "' indicated in <align-source> list");
       }
+      else
+        throw new XMPexception("cannot find '" + alignSubscript + "' in <align-source> list");
     }
 
     // init array address
@@ -608,6 +592,8 @@ public class XMPtranslateLocalPragma {
     alignedArray.setAlignSubscriptExprAt(alignSubscriptExpr, alignSourceIndex);
 
     switch (distManner) {
+      case XMPtemplate.DUPLICATION: // FIXME how implement???
+        break;
       case XMPtemplate.BLOCK:
       case XMPtemplate.CYCLIC:
         {
@@ -619,7 +605,7 @@ public class XMPtranslateLocalPragma {
           break;
         }
       default:
-        XMP.fatal("unknown distribute manner");
+        throw new XMPexception("unknown distribute manner");
     }
 
     XMPlocalDecl.addConstructorCall("_XCALABLEMP_align_array_" + templateObj.getDistMannerStringAt(alignSubscriptIndex),
@@ -665,7 +651,7 @@ public class XMPtranslateLocalPragma {
           }
         case XMPshadow.SHADOW_NORMAL:
           {
-            if (alignedArray.getDistMannerAt(arrayIndex) == XMPalignedArray.NO_ALIGN)
+            if (alignedArray.getDistMannerAt(arrayIndex) == XMPtemplate.DUPLICATION)
               throw new XMPexception("indicated dimension is not distributed");
 
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_NORMAL)));
@@ -677,7 +663,7 @@ public class XMPtranslateLocalPragma {
           }
         case XMPshadow.SHADOW_FULL:
           {
-            if (alignedArray.getDistMannerAt(arrayIndex) == XMPalignedArray.NO_ALIGN)
+            if (alignedArray.getDistMannerAt(arrayIndex) == XMPtemplate.DUPLICATION)
               throw new XMPexception("indicated dimension is not distributed");
 
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_FULL)));

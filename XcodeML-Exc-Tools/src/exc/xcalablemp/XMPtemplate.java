@@ -27,7 +27,7 @@ public class XMPtemplate extends XMPobject {
 
     for (int i = 0; i < dim; i++) {
       _ontoNodesIndexVector.add(null);
-      _distMannerVector.add(null);
+      _distMannerVector.add(new Integer(DUPLICATION));
     }
 
     _lowerVector = new Vector<Xobject>();
@@ -73,7 +73,7 @@ public class XMPtemplate extends XMPobject {
     return _distMannerVector.get(index).intValue();
   }
 
-  public String getDistMannerStringAt(int index) {
+  public String getDistMannerStringAt(int index) throws XMPexception {
     switch (getDistMannerAt(index)) {
       case DUPLICATION:
         return new String("DUPLICATION");
@@ -82,8 +82,7 @@ public class XMPtemplate extends XMPobject {
       case CYCLIC:
         return new String("CYCLIC");
       default:
-        XMP.fatal("exception in exc.xcalablemp.XMPtemplate.getDistMannerStringAt(), unknown distribution manner");
-        return null; // XXX not reach here
+        throw new XMPexception("unknown distribute manner");
     }
   }
 
