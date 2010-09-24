@@ -740,15 +740,22 @@ public class XMPtranslateLocalPragma {
     // translate reduction clause
     XobjList reductionRefList = (XobjList)loopDecl.getArg(2);
     if (reductionRefList != null) {
+      XobjList schedVarList = null;
+      if (loopDecl.getArg(0) == null) schedVarList = Xcons.List(Xcons.String(schedBaseBlock.getInductionVar().getSym()));
+      else                            schedVarList = (XobjList)loopDecl.getArg(0).copy();
+
       BlockList reductionBody = createReductionClauseBody(pb, reductionRefList, schedBaseBlock);
-      schedBaseBlock.add(createReductionClauseBlock(pb, reductionBody, (XobjList)loopDecl.getArg(1)));
+      schedBaseBlock.add(createReductionClauseBlock(pb, reductionBody, schedVarList));
     }
 
     // replace pragma
     pb.replace(Bcons.COMPOUND(loopBody));
   }
 
-  private Block createReductionClauseBlock(PragmaBlock pb, BlockList reductionBody, XobjList onRef) throws XMPexception {
+  private Block createReductionClauseBlock(PragmaBlock pb, BlockList reductionBody, XobjList schedVarList) throws XMPexception {
+    XobjList loopDecl = (XobjList)pb.getClauses();
+
+    XobjList onRef = (XobjList)loopDecl.getArg(1);
     String onRefObjName = onRef.getArg(0).getString();
     XobjList subscriptList = (XobjList)onRef.getArg(1);
 
@@ -772,12 +779,12 @@ public class XMPtranslateLocalPragma {
     boolean initComm = false;
     for (XobjArgs i = subscriptList.getArgs(); i != null; i = i.nextArgs()) {
       String subscript = i.getArg().getString();
-      if (subscript.equals(XMP.ASTERISK)) {
+      if (XMPutil.hasElmt(schedVarList, subscript))
+        initFuncArgs.add(Xcons.IntConstant(0));
+      else {
         initComm = true;
         initFuncArgs.add(Xcons.IntConstant(1));
       }
-      else
-        initFuncArgs.add(Xcons.IntConstant(0));
     }
 
     if (initComm) {
