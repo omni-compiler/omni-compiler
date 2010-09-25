@@ -1,5 +1,3 @@
-// FIXME delete stdio.h
-#include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 #include "xmp_constant.h"
@@ -79,7 +77,6 @@ void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, size_t type_
     _XCALABLEMP_fatal("null nodes descriptor detected");
 
   int array_dim = array->dim;
-  int template_dim = template->dim;
   int nodes_dim = nodes->dim;
 
   int *src_rank_array = _XCALABLEMP_alloc(sizeof(int) * nodes_dim);
@@ -88,7 +85,7 @@ void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, size_t type_
 
   va_list args;
   va_start(args, array);
-  for(int i = 0; i < array_dim; i++) {
+  for (int i = 0; i < array_dim; i++) {
     int ref_index = va_arg(args, int);
 
     int template_dim_index = array->info[i].align_template_dim;
@@ -136,9 +133,82 @@ _Bool _XCALABLEMP_gmove_exec_home_SCALAR(_XCALABLEMP_array_t *array, ...) {
 
 void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr, size_t type_size,
                                        _XCALABLEMP_array_t *dst_array, _XCALABLEMP_array_t *src_array, ...) {
-  // isend
+  va_list args;
+  va_start(args, src_array);
+
+  // calc destination rank
+  if (dst_array == NULL) return;
+
+  _XCALABLEMP_template_t *dst_template = dst_array->align_template;
+  if (dst_template == NULL)
+    _XCALABLEMP_fatal("null template descriptor detected");
+
+  _XCALABLEMP_nodes_t *dst_nodes = dst_template->onto_nodes;
+  if (dst_nodes == NULL)
+    _XCALABLEMP_fatal("null nodes descriptor detected");
+
+  int dst_array_dim = dst_array->dim;
+  int dst_nodes_dim = dst_nodes->dim;
+
+  int *dst_rank_array = _XCALABLEMP_alloc(sizeof(int) * dst_nodes_dim);
+  for (int i = 0; i < dst_nodes_dim; i++)
+    dst_rank_array[i] = _XCALABLEMP_N_INVALID_RANK;
+
+  for (int i = 0; i < dst_array_dim; i++) {
+    int dst_ref_index = va_arg(args, int);
+
+    int dst_template_dim_index = dst_array->info[i].align_template_dim;
+    int dst_owner = _XCALABLEMP_calc_gmove_owner_SCALAR(dst_ref_index, dst_template, dst_template_dim_index);
+    if (dst_owner != _XCALABLEMP_N_INVALID_RANK)
+      dst_rank_array[dst_template->chunk[dst_template_dim_index].onto_nodes_dim] = dst_owner;
+  }
+
+  int dst_rank = _XCALABLEMP_calc_gmove_nodes_rank(dst_rank_array, dst_nodes);
+
+  _XCALABLEMP_free(dst_rank_array);
+
+  // calc source rank
   if (src_array == NULL) return;
 
+  _XCALABLEMP_template_t *src_template = src_array->align_template;
+  if (src_template == NULL)
+    _XCALABLEMP_fatal("null template descriptor detected");
+
+  _XCALABLEMP_nodes_t *src_nodes = src_template->onto_nodes;
+  if (src_nodes == NULL)
+    _XCALABLEMP_fatal("null nodes descriptor detected");
+
+  int src_array_dim = src_array->dim;
+  int src_nodes_dim = src_nodes->dim;
+
+  int *src_rank_array = _XCALABLEMP_alloc(sizeof(int) * src_nodes_dim);
+  for (int i = 0; i < src_nodes_dim; i++)
+    src_rank_array[i] = _XCALABLEMP_N_INVALID_RANK;
+
+  for (int i = 0; i < src_array_dim; i++) {
+    int src_ref_index = va_arg(args, int);
+
+    int src_template_dim_index = src_array->info[i].align_template_dim;
+    int src_owner = _XCALABLEMP_calc_gmove_owner_SCALAR(src_ref_index, src_template, src_template_dim_index);
+    if (src_owner != _XCALABLEMP_N_INVALID_RANK)
+      src_rank_array[src_template->chunk[src_template_dim_index].onto_nodes_dim] = src_owner;
+  }
+
+  int src_rank = _XCALABLEMP_calc_gmove_nodes_rank(src_rank_array, src_nodes);
+
+  _XCALABLEMP_free(src_rank_array);
+
+  va_end(args);
+
+  // isend
+  if (src_rank == src_array->comm_rank) {
+    MPI_Request request;
+    MPI_Isend(src_addr, type_size, MPI_BYTE, dst_rank, _XCALABLEMP_N_MPI_TAG_GMOVE, *(src_array->comm), &request);
+  }
+
   // recv
-  if (dst_array == NULL) return;
+  if (dst_rank == dst_array->comm_rank) {
+    MPI_Status status;
+    MPI_Recv(dst_addr, type_size, MPI_BYTE, src_rank, _XCALABLEMP_N_MPI_TAG_GMOVE, *(dst_array->comm), &status);
+  }
 }

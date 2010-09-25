@@ -1,6 +1,9 @@
 #ifndef _XCALABLEMP_CONSTANT
 #define _XCALABLEMP_CONSTANT
 
+// constants for mpi tag
+#define _XCALABLEMP_N_MPI_TAG_GMOVE			10
+
 // constants used in runtime functions
 #define _XCALABLEMP_N_INVALID_RANK			-1
 
