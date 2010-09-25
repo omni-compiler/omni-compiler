@@ -1,6 +1,9 @@
 #ifndef _XCALABLEMP_CONSTANT
 #define _XCALABLEMP_CONSTANT
 
+// constants used in runtime functions
+#define _XCALABLEMP_N_INVALID_RANK			-1
+
 // defined in exc.xcalablemp.XMPtemplate
 #define _XCALABLEMP_N_DIST_DUPLICATION			100
 #define _XCALABLEMP_N_DIST_BLOCK			101

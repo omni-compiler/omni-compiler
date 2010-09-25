@@ -1,6 +1,7 @@
 // FIXME delete stdio.h
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 #include "xmp_constant.h"
 #include "xmp_internal.h"
 
@@ -38,7 +39,7 @@ static int _XCALABLEMP_calc_gmove_owner_SCALAR(long long ref_index, _XCALABLEMP_
 
   switch (chunk->dist_manner) {
     case _XCALABLEMP_N_DIST_DUPLICATION:
-      return -1;
+      return _XCALABLEMP_N_INVALID_RANK;
     case _XCALABLEMP_N_DIST_BLOCK:
       return (ref_index - (info->ser_lower)) / (chunk->par_chunk_width);
     case _XCALABLEMP_N_DIST_CYCLIC:
@@ -56,7 +57,7 @@ static int _XCALABLEMP_calc_gmove_nodes_rank(int *rank_array, _XCALABLEMP_nodes_
   for (int i = 0; i < nodes_dim; i++) {
     int rank = rank_array[i];
 
-    if (rank != -1){
+    if (rank != _XCALABLEMP_N_INVALID_RANK) {
       acc_rank += rank * acc_nodes_size;
       acc_nodes_size *= nodes->info[i].size;
     }
@@ -66,6 +67,7 @@ static int _XCALABLEMP_calc_gmove_nodes_rank(int *rank_array, _XCALABLEMP_nodes_
 }
 
 void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, size_t type_size, _XCALABLEMP_array_t *array, ...) {
+  // calc source rank
   if (array == NULL) return;
 
   _XCALABLEMP_template_t *template = array->align_template;
@@ -81,15 +83,18 @@ void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, size_t type_
   int nodes_dim = nodes->dim;
 
   int *src_rank_array = _XCALABLEMP_alloc(sizeof(int) * nodes_dim);
-  for (int i = 0; i < nodes_dim; i++) src_rank_array[i] = -1;
+  for (int i = 0; i < nodes_dim; i++)
+    src_rank_array[i] = _XCALABLEMP_N_INVALID_RANK;
 
   va_list args;
   va_start(args, array);
   for(int i = 0; i < array_dim; i++) {
     int ref_index = va_arg(args, int);
 
-    int owner = _XCALABLEMP_calc_gmove_owner_SCALAR(ref_index, template, i);
-    if (owner != -1) src_rank_array[template->chunk[i].onto_nodes_dim] = owner;
+    int template_dim_index = array->info[i].align_template_dim;
+    int owner = _XCALABLEMP_calc_gmove_owner_SCALAR(ref_index, template, template_dim_index);
+    if (owner != _XCALABLEMP_N_INVALID_RANK)
+      src_rank_array[template->chunk[template_dim_index].onto_nodes_dim] = owner;
   }
   va_end(args);
 
@@ -98,8 +103,10 @@ void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, size_t type_
   _XCALABLEMP_free(src_rank_array);
 
   // broadcast
-  // FIXME implement & bug check
-  printf("[%d] bcast nodes = %d\n", _XCALABLEMP_world_rank, src_rank);
+  if (src_rank == array->comm_rank)
+    memcpy(dst_addr, src_addr, type_size);
+
+  MPI_Bcast(dst_addr, type_size, MPI_BYTE, src_rank, *(array->comm));
 }
 
 // FIXME change NULL check rule!!! (IMPORTANT, to all library functions)
