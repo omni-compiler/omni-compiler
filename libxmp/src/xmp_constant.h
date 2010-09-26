@@ -6,6 +6,8 @@
 
 // constants used in runtime functions
 #define _XCALABLEMP_N_INVALID_RANK			-1
+#define _XCALABLEMP_N_NO_ALIGNED_TEMPLATE		-1
+#define _XCALABLEMP_N_NO_ONTO_NODES			-1
 
 // defined in exc.xcalablemp.XMPtemplate
 #define _XCALABLEMP_N_DIST_DUPLICATION			100

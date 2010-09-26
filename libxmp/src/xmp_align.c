@@ -43,7 +43,7 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
     ai->shadow_size_lo  = 0;
     ai->shadow_size_hi  = 0;
 
-    ai->align_template_dim = -1;
+    ai->align_template_dim = _XCALABLEMP_N_NO_ALIGNED_TEMPLATE;
     ai->align_template_info = NULL;
     ai->align_template_chunk = NULL;
   }
