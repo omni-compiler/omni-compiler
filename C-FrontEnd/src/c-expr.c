@@ -3692,7 +3692,7 @@ exprCoarrayRef0(CExpr *prim, CExpr *dims, int addPtrRef)
 CExpr*
 exprCoarrayRef(CExpr *prim, CExpr *dims)
 {
-    return exprCoarrayRef0(prim, dims, 1);
+    return exprCoarrayRef0(prim, dims, 0);
 }
 
 

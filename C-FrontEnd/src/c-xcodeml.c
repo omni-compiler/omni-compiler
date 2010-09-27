@@ -2032,7 +2032,8 @@ outx_COMPOUND_LITERAL(FILE *fp, int indent, CExpr *expr)
 PRIVATE_STATIC void
 outx_ASSIGN(FILE *fp, int indent, CExpr *expr)
 {
-    const char *assignTag = isCoArrayAssign(expr) ? "coArrayAssignExpr" : "assignExpr";
+  //    const char *assignTag = isCoArrayAssign(expr) ? "coArrayAssignExpr" : "assignExpr";
+    const char *assignTag = "assignExpr";
     outxChildrenForExpr(fp, indent, expr, assignTag);
 }
 
