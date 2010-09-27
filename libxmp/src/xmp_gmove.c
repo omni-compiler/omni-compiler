@@ -6,7 +6,7 @@
 static _Bool _XCALABLEMP_check_gmove_inclusion_SCALAR(long long ref_index, _XCALABLEMP_template_chunk_t *chunk);
 static int _XCALABLEMP_calc_gmove_owner_SCALAR(long long ref_index, _XCALABLEMP_template_t *template, int dim_index);
 static int _XCALABLEMP_calc_gmove_nodes_rank(int *rank_array, _XCALABLEMP_nodes_t *nodes);
-static int _XCALABLEMP_calc_num_duplicated_nodes(_XCALABLEMP_nodes_t *nodes, int *rank_array);
+static int _XCALABLEMP_calc_gmove_target_nodes_size(_XCALABLEMP_nodes_t *nodes, int *rank_array);
 
 static _Bool _XCALABLEMP_check_gmove_inclusion_SCALAR(long long ref_index, _XCALABLEMP_template_chunk_t *chunk) {
   switch (chunk->dist_manner) {
@@ -68,22 +68,18 @@ static int _XCALABLEMP_calc_gmove_nodes_rank(int *rank_array, _XCALABLEMP_nodes_
   else          return _XCALABLEMP_N_INVALID_RANK;
 }
 
-static int _XCALABLEMP_calc_num_duplicated_nodes(_XCALABLEMP_nodes_t *nodes, int *rank_array) {
+static int _XCALABLEMP_calc_gmove_target_nodes_size(_XCALABLEMP_nodes_t *nodes, int *rank_array) {
   int nodes_dim = nodes->dim;
 
-  _Bool is_duplicated = false;
   int acc = 1;
   for (int i = 0; i < nodes_dim; i++) {
     int rank = rank_array[i];
 
-    if (rank == _XCALABLEMP_N_INVALID_RANK) {
-      is_duplicated = true;
+    if (rank == _XCALABLEMP_N_INVALID_RANK)
       acc *= nodes->info[i].size;
-    }
   }
 
-  if (is_duplicated) return acc;
-  else               return 0;
+  return acc;
 }
 
 void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, size_t type_size, _XCALABLEMP_array_t *array, ...) {
@@ -124,16 +120,17 @@ void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, size_t type_
 
   int src_rank = _XCALABLEMP_calc_gmove_nodes_rank(src_rank_array, nodes);
   if (src_rank == _XCALABLEMP_N_INVALID_RANK) {
+    // local copy
     memcpy(dst_addr, src_addr, type_size);
-    return;
   }
+  else {
+    // broadcast
+    if (src_rank == array->comm_rank)
+      memcpy(dst_addr, src_addr, type_size);
 
-  // broadcast
-  if (src_rank == array->comm_rank)
-    memcpy(dst_addr, src_addr, type_size);
-
-  // FIXME use execution nodes set
-  MPI_Bcast(dst_addr, type_size, MPI_BYTE, src_rank, *(array->comm));
+    // FIXME use execution nodes set
+    MPI_Bcast(dst_addr, type_size, MPI_BYTE, src_rank, *(array->comm));
+  }
 
   // clean up
   _XCALABLEMP_free(src_rank_array);
@@ -202,7 +199,6 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr, size_t ty
   }
 
   int dst_rank = _XCALABLEMP_calc_gmove_nodes_rank(dst_rank_array, dst_nodes);
-  // FIXME consider return val
 
   // calc source rank
   if (src_array == NULL) return;
@@ -237,37 +233,58 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr, size_t ty
   }
 
   int src_rank = _XCALABLEMP_calc_gmove_nodes_rank(src_rank_array, src_nodes);
-  // FIXME consider return val
 
   va_end(args);
 
-  // FIXME limitation: arrays should be distributed by the same nodes
-  if (dst_nodes != src_nodes)
-    _XCALABLEMP_fatal("arrays used in a gmove directive should be distributed by the same nodes set");
+  if ((dst_rank == _XCALABLEMP_N_INVALID_RANK) && (src_rank == _XCALABLEMP_N_INVALID_RANK)) {
+    // local copy
+    memcpy(dst_addr, src_addr, type_size);
+  }
+  else if ((dst_rank != _XCALABLEMP_N_INVALID_RANK) && (src_rank == _XCALABLEMP_N_INVALID_RANK)) {
+    // local copy on dst_rank
+    if (dst_rank == dst_array->comm_rank)
+      memcpy(dst_addr, src_addr, type_size);
+  }
+  else if ((dst_rank == _XCALABLEMP_N_INVALID_RANK) && (src_rank != _XCALABLEMP_N_INVALID_RANK)) {
+    // broadcast
+    if (src_rank == src_array->comm_rank)
+      memcpy(dst_addr, src_addr, type_size);
 
-  // FIXME use execution nodes set
-  _XCALABLEMP_nodes_t *comm_nodes = dst_nodes;
+    // FIXME use execution nodes set
+    MPI_Bcast(dst_addr, type_size, MPI_BYTE, src_rank, *(src_array->comm));
+  }
+  else { //(dst_rank != _XCALABLEMP_N_INVALID_RANK) && (src_rank != _XCALABLEMP_N_INVALID_RANK)
+    // send/recv FIXME limitation: arrays should be distributed by the same nodes
+    if (dst_nodes != src_nodes)
+      _XCALABLEMP_fatal("arrays used in a gmove directive should be distributed by the same nodes set");
 
-  // isend
-  if (src_rank == src_array->comm_rank) {
-    // FIXME master sends all
-    if (src_rank == comm_nodes->comm_rank) {
-      int num_targets = _XCALABLEMP_calc_num_duplicated_nodes(dst_nodes, dst_rank_array);
-      if (num_targets == 0) {
-        MPI_Request request;
-        MPI_Isend(src_addr, type_size, MPI_BYTE, dst_rank, _XCALABLEMP_N_MPI_TAG_GMOVE, *(comm_nodes->comm), &request);
-      }
-      else {
-        // FIXME implement
-        _XCALABLEMP_fatal("not supported yet");
+    // FIXME use execution nodes set
+    _XCALABLEMP_nodes_t *comm_nodes = dst_nodes;
+
+    // irecv
+    MPI_Request recv_request;
+    if (dst_rank == dst_array->comm_rank)
+      MPI_Irecv(dst_addr, type_size, MPI_BYTE, MPI_ANY_SOURCE, _XCALABLEMP_N_MPI_TAG_GMOVE, *(comm_nodes->comm), &recv_request);
+
+    // send
+    if (src_rank == src_array->comm_rank) {
+      // FIXME master sends all
+      if (src_rank == comm_nodes->comm_rank) {
+        int num_targets = _XCALABLEMP_calc_gmove_target_nodes_size(dst_nodes, dst_rank_array);
+        if (num_targets == 1)
+          MPI_Send(src_addr, type_size, MPI_BYTE, dst_rank, _XCALABLEMP_N_MPI_TAG_GMOVE, *(comm_nodes->comm));
+        else {
+          // FIXME implement
+          _XCALABLEMP_fatal("not supported yet");
+        }
       }
     }
-  }
 
-  // recv
-  if (dst_rank == dst_array->comm_rank) {
-    MPI_Status status;
-    MPI_Recv(dst_addr, type_size, MPI_BYTE, MPI_ANY_SOURCE, _XCALABLEMP_N_MPI_TAG_GMOVE, *(comm_nodes->comm), &status);
+    // wait
+    if (dst_rank == dst_array->comm_rank) {
+      MPI_Status recv_status;
+      MPI_Wait(&recv_request, &recv_status);
+    }
   }
 
   // clean up
