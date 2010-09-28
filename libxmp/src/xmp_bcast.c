@@ -21,8 +21,9 @@ void _XCALABLEMP_bcast_NODES_ENTIRE_GLOBAL(_XCALABLEMP_nodes_t *bcast_nodes, voi
 
   // check <from-ref>
   _XCALABLEMP_validate_nodes_ref(&from_lower, &from_upper, &from_stride, _XCALABLEMP_world_size);
-  if (_XCALABLEMP_M_COUNT_TRIPLETi(from_lower, from_upper, from_stride) != 1)
+  if (_XCALABLEMP_M_COUNT_TRIPLETi(from_lower, from_upper, from_stride) != 1) {
     _XCALABLEMP_fatal("multiple source nodes indicated in bcast directive");
+  }
 
   // setup type
   MPI_Datatype mpi_datatype;
@@ -37,7 +38,9 @@ void _XCALABLEMP_bcast_NODES_ENTIRE_GLOBAL(_XCALABLEMP_nodes_t *bcast_nodes, voi
 void _XCALABLEMP_bcast_NODES_ENTIRE_NODES(_XCALABLEMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
                                           _XCALABLEMP_nodes_t *from_nodes, ...) {
   if (bcast_nodes == NULL) return;
-  if (from_nodes == NULL) _XCALABLEMP_fatal("error on broadcast, cannot access to the source node");
+  if (from_nodes == NULL) {
+    _XCALABLEMP_fatal("error on broadcast, cannot access to the source node");
+  }
 
   // calc source nodes number
   int root = 0;
@@ -51,7 +54,9 @@ void _XCALABLEMP_bcast_NODES_ENTIRE_NODES(_XCALABLEMP_nodes_t *bcast_nodes, void
     int size = from_nodes->info[i].size;
     int rank = from_nodes->info[i].rank;
 
-    if (va_arg(args, int) == 1) root += (acc_nodes_size * rank);
+    if (va_arg(args, int) == 1) {
+      root += (acc_nodes_size * rank);
+    }
     else {
       from_lower = va_arg(args, int);
       from_upper = va_arg(args, int);
@@ -59,8 +64,9 @@ void _XCALABLEMP_bcast_NODES_ENTIRE_NODES(_XCALABLEMP_nodes_t *bcast_nodes, void
 
       // check <from-ref>
       _XCALABLEMP_validate_nodes_ref(&from_lower, &from_upper, &from_stride, size);
-      if (_XCALABLEMP_M_COUNT_TRIPLETi(from_lower, from_upper, from_stride) != 1)
+      if (_XCALABLEMP_M_COUNT_TRIPLETi(from_lower, from_upper, from_stride) != 1) {
         _XCALABLEMP_fatal("multiple source nodes indicated in bcast directive");
+      }
 
       // XXX node number translation: 1-origin -> 0-origin
       root += (acc_nodes_size * (from_lower - 1));

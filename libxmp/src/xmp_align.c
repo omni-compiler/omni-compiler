@@ -4,8 +4,9 @@
 #include "xmp_math_macro.h"
 
 void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_template_t *template, int dim, ...) {
-  if (template == NULL)
+  if (template == NULL) {
     _XCALABLEMP_fatal("null template descriptor detected");
+  }
 
   if (template->chunk == NULL) {
     *array = NULL;
@@ -66,8 +67,9 @@ void _XCALABLEMP_align_array_DUPLICATION(_XCALABLEMP_array_t **array, int array_
   if (*array == NULL) return;
 
   _XCALABLEMP_template_t *template = (*array)->align_template;
-  if (template == NULL)
+  if (template == NULL) {
     _XCALABLEMP_fatal("null template descriptor detected");
+  }
 
   if (template->chunk == NULL) return;
 
@@ -93,8 +95,9 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t **array, int array_index,
   if (*array == NULL) return;
 
   _XCALABLEMP_template_t *template = (*array)->align_template;
-  if (template == NULL)
+  if (template == NULL) {
     _XCALABLEMP_fatal("null template descriptor detected");
+  }
 
   if (template->chunk == NULL) return;
 
@@ -108,32 +111,36 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t **array, int array_index,
 
   long long align_lower = ai->ser_lower + align_subscript;
   long long align_upper = ai->ser_upper + align_subscript;
-  if (((align_lower < ti->ser_lower) ||
-      (align_upper > ti->ser_upper)))
+  if (((align_lower < ti->ser_lower) || (align_upper > ti->ser_upper))) {
     _XCALABLEMP_fatal("aligned array is out of template bound");
+  }
 
   long long template_lower = chunk->par_lower;
   long long template_upper = chunk->par_upper;
 
   // set par_lower
-  if (align_lower < template_lower)
+  if (align_lower < template_lower) {
     ai->par_lower = template_lower - align_subscript;
+  }
   else if (template_upper < align_lower) {
     _XCALABLEMP_finalize_array_desc(array);
     return;
   }
-  else
+  else {
     ai->par_lower = ai->ser_lower;
+  }
 
   // set par_upper
   if (align_upper < template_lower) {
     _XCALABLEMP_finalize_array_desc(array);
     return;
   }
-  else if (template_upper < align_upper)
+  else if (template_upper < align_upper) {
     ai->par_upper = template_upper - align_subscript;
-  else
+  }
+  else {
     ai->par_upper = ai->ser_upper;
+  }
 
   // set par_stride, par_size
   ai->par_stride = 1;
@@ -150,8 +157,9 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t **array, int array_index
   if (*array == NULL) return;
 
   _XCALABLEMP_template_t *template = (*array)->align_template;
-  if (template == NULL)
+  if (template == NULL) {
     _XCALABLEMP_fatal("null template descriptor detected");
+  }
 
   if (template->chunk == NULL) return;
 
@@ -166,9 +174,9 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t **array, int array_index
   long long align_lower = ai->ser_lower + align_subscript;
   long long align_upper = ai->ser_upper + align_subscript;
 
-  if (((align_lower < ti->ser_lower) ||
-       (align_upper > ti->ser_upper)))
+  if (((align_lower < ti->ser_lower) || (align_upper > ti->ser_upper))) {
     _XCALABLEMP_fatal("aligned array is out of template bound");
+  }
 
   int cycle = chunk->onto_nodes_info->size;
   int mod = (chunk->par_lower - align_subscript) % cycle;
@@ -264,12 +272,14 @@ void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
   if (array == NULL) return;
 
   _XCALABLEMP_template_t *align_template = array->align_template;
-  if (align_template == NULL)
+  if (align_template == NULL) {
     _XCALABLEMP_fatal("null template descriptor detected");
+  }
 
   _XCALABLEMP_nodes_t *onto_nodes = align_template->onto_nodes;
-  if (onto_nodes == NULL)
+  if (onto_nodes == NULL) {
     _XCALABLEMP_fatal("null nodes descriptor detected");
+  }
 
   int color = 1;
   int acc_nodes_size = 1;
@@ -291,7 +301,9 @@ void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
       rank = onto_nodes_info->rank;
     }
 
-    if (va_arg(args, int) == 1) color += (acc_nodes_size * rank);
+    if (va_arg(args, int) == 1) {
+      color += (acc_nodes_size * rank);
+    }
 
     acc_nodes_size *= size;
   }

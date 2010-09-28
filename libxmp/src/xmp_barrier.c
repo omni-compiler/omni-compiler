@@ -2,7 +2,9 @@
 
 void _XCALABLEMP_barrier_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes) {
   if (nodes == NULL) return;
-  else MPI_Barrier(*(nodes->comm));
+  else {
+    MPI_Barrier(*(nodes->comm));
+  }
 }
 
 void _XCALABLEMP_barrier_EXEC(void) {
