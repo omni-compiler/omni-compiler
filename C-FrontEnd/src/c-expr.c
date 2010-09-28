@@ -1365,25 +1365,35 @@ allocExprOfNumberConst(CExprCodeEnum exprCode, CBasicTypeEnum bt,
             }
             break;
         case BT_FLOAT:
-        case BT_DOUBLE:
-        case BT_LONGDOUBLE: {
-                long double n = expr->e_numValue.ld = strtold(digits, NULL);
-                if(errno) {
-                    overRange2 = 1;
-                } else {
-                    switch(bt) {
-                    case BT_FLOAT:
-                        overRange2 = (n > FLT_MAX); break;
-                    case BT_DOUBLE:
-                        overRange2 = (n > DBL_MAX); break;
-                    case BT_LONGDOUBLE:
-                        overRange2 = (n > DBL_MAX); break;
-                    default:
-                        break;
-                    }
-                }
+          {
+            long double n = expr->e_numValue.ld = strtof(digits, NULL);
+            if(errno) {
+              overRange2 = 1;
             }
-            break;
+            else {
+              overRange2 = (n > FLT_MAX);
+            }
+          } break;
+        case BT_DOUBLE:
+          {
+            long double n = expr->e_numValue.ld = strtod(digits, NULL);
+            if(errno) {
+              overRange2 = 1;
+            }
+            else {
+              overRange2 = (n > DBL_MAX);
+            }
+          } break;
+        case BT_LONGDOUBLE:
+          {
+            long double n = expr->e_numValue.ld = strtold(digits, NULL);
+            if(errno) {
+              overRange2 = 1;
+            }
+            else {
+              overRange2 = (n > DBL_MAX);
+            }
+          } break;
         default:
             ABORT();
         }
