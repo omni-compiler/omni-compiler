@@ -43,4 +43,9 @@ public class XMP {
     return new Ident(name, StorageClass.EXTERN, Xtype.Function(Xtype.voidType),
                      Xcons.Symbol(Xcode.FUNC_ADDR, Xtype.Pointer(Xtype.Function(Xtype.voidType)), name), VarScope.GLOBAL);
   }
+
+  public static Ident getMacroId(String name, Xtype type) {
+    return new Ident(name, StorageClass.EXTERN, Xtype.Function(type),
+                     Xcons.Symbol(Xcode.FUNC_ADDR, Xtype.Pointer(Xtype.Function(type)), name), VarScope.GLOBAL);
+  }
 }

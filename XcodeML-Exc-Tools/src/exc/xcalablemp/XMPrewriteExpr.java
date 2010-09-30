@@ -171,12 +171,12 @@ public class XMPrewriteExpr {
     int arrayDim = alignedArray.getDim();
     Ident getAddrFuncId = null;
     if (arrayDim == arrayDimCount) {
-      getAddrFuncId = XMP.getMacroId("_XCALABLEMP_M_GET_ADDR_E_" + arrayDim);
+      getAddrFuncId = XMP.getMacroId("_XCALABLEMP_M_GET_ADDR_E_" + arrayDim, Xtype.Pointer(alignedArray.getType()));
       for (int i = 0; i < arrayDim - 1; i++)
         getAddrFuncArgs.add(alignedArray.getGtolAccIdAt(i).Ref());
     }
     else {
-      getAddrFuncId = XMP.getMacroId("_XCALABLEMP_M_GET_ADDR_" + arrayDimCount);
+      getAddrFuncId = XMP.getMacroId("_XCALABLEMP_M_GET_ADDR_" + arrayDimCount, Xtype.Pointer(alignedArray.getType()));
       for (int i = 0; i < arrayDimCount; i++)
         getAddrFuncArgs.add(alignedArray.getGtolAccIdAt(i).Ref());
     }
