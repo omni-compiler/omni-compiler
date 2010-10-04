@@ -51,7 +51,7 @@ public class XMPutil {
     else return false;
   }
 
-  public static String getTypeName(Xtype type) throws XMPexception {
+  public static String getTypeName(Xtype type) {
     if (type.getKind() == Xtype.BASIC) {
       BasicType basicType = (BasicType)type;
       switch (basicType.getBasicType()) {
@@ -75,12 +75,12 @@ public class XMPutil {
         case BasicType.FLOAT_COMPLEX:		return new String("FLOAT_COMPLEX");
         case BasicType.DOUBLE_COMPLEX:		return new String("DOUBLE_COMPLEX");
         case BasicType.LONG_DOUBLE_COMPLEX:	return new String("LONG_DOUBLE_COMPLEX");
-        default:
-          throw new XMPexception("unsupported type");
+        default:				return null;
       }
     }
-
-    return null;
+    else {
+      return null;
+    }
   }
 
   public static void mergeLists(XobjList dstList, XobjList srcList) {

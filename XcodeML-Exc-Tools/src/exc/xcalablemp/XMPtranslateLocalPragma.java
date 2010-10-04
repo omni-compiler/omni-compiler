@@ -1075,6 +1075,7 @@ public class XMPtranslateLocalPragma {
     // start translation
     XobjList reflectDecl = (XobjList)pb.getClauses();
     XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
+    BlockList reflectFuncBody = Bcons.emptyBody();
 
     XobjList arrayList = (XobjList)reflectDecl.getArg(0);
     for (XobjArgs iter = arrayList.getArgs(); iter != null; iter = iter.nextArgs()) {
@@ -1098,10 +1099,8 @@ public class XMPtranslateLocalPragma {
           case XMPshadow.SHADOW_NONE:
             break;
           case XMPshadow.SHADOW_NORMAL:
-            // FIXME implement!!!
-            {
-              System.out.println(arrayName+"("+i+")["+shadowObj.getLo().toString()+":"+shadowObj.getHi().toString()+"]");
-            } break;
+            createReflectNormalShadowFunc(pb, alignedArray, reflectFuncBody);
+            break;
           case XMPshadow.SHADOW_FULL:
             // FIXME not implemented yet
             throw new XMPexception("not implemented yet");
@@ -1110,6 +1109,26 @@ public class XMPtranslateLocalPragma {
         }
       }
     }
+
+    pb.replace(Bcons.COMPOUND(reflectFuncBody));
+  }
+
+  // FIXME implement
+  private void createReflectNormalShadowFunc(PragmaBlock pb, XMPalignedArray alignedArray, BlockList reflectFuncBody) {
+    String arrayName = alignedArray.getName();
+    Xtype arrayType = alignedArray.getType();
+    Xtype arrayPtype = Xtype.Pointer(alignedArray.getType());
+    Xobject arrayDescRef = alignedArray.getDescId().Ref();
+
+    // decl buffers
+    Ident loSendId = reflectFuncBody.declLocalIdent("_XCALABLEMP_reflect_LO_SEND_" + arrayName, arrayPtype);
+    Ident loRecvId = reflectFuncBody.declLocalIdent("_XCALABLEMP_reflect_LO_RECV_" + arrayName, arrayPtype);
+    Ident hiSendId = reflectFuncBody.declLocalIdent("_XCALABLEMP_reflect_HI_SEND_" + arrayName, arrayPtype);
+    Ident hiRecvId = reflectFuncBody.declLocalIdent("_XCALABLEMP_reflect_HI_RECV_" + arrayName, arrayPtype);
+
+    Ident packLoFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pack_shadow_" + alignedArray.getDim());
+    XobjList packLoFuncArgs = Xcons.List(arrayDescRef, loSendId.Ref());
+    reflectFuncBody.add(Bcons.Statement(packLoFuncId.Call(packLoFuncArgs)));
   }
 
   private void translateBarrier(PragmaBlock pb) throws XMPexception {
