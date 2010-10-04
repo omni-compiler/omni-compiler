@@ -166,12 +166,20 @@ static void _XCALABLEMP_check_nodes_size_DYNAMIC(_XCALABLEMP_nodes_t *n, int dim
 }
 
 static _Bool _XCALABLEMP_check_nodes_ref_inclusion(int lower, int upper, int stride, int rank) {
-  if (rank < lower) return false;
+  if (rank < lower) {
+    return false;
+  }
 
-  if (rank > upper) return false;
+  if (rank > upper) {
+    return false;
+  }
 
-  if (((rank - lower) % stride) == 0) return true;
-  else return false;
+  if (((rank - lower) % stride) == 0) {
+    return true;
+  }
+  else {
+    return false;
+  }
 }
 
 void _XCALABLEMP_validate_nodes_ref(int *lower, int *upper, int *stride, int size) {
@@ -515,24 +523,30 @@ _Bool _XCALABLEMP_exec_task_GLOBAL_PART(int ref_lower, int ref_upper, int ref_st
   ref_upper--;
 
   _XCALABLEMP_nodes_t *n = _XCALABLEMP_init_nodes_struct_NODES_NUMBER(0, ref_lower, ref_upper, ref_stride);
-
-  if (n == NULL) return false;
-  else {
+  if (n->is_member) {
     _XCALABLEMP_push_nodes(n);
     return true;
+  }
+  else {
+    _XCALABLEMP_finalize_nodes(n);
+    return false;
   }
 }
 
 _Bool _XCALABLEMP_exec_task_NODES_ENTIRE(_XCALABLEMP_nodes_t *ref_nodes) {
-  if (ref_nodes == NULL) return false;
-  else {
+  if (ref_nodes->is_member) {
     _XCALABLEMP_push_nodes(ref_nodes);
     return true;
+  }
+  else {
+    return false;
   }
 }
 
 _Bool _XCALABLEMP_exec_task_NODES_PART(int get_upper, _XCALABLEMP_nodes_t *ref_nodes, ...) {
-  if (ref_nodes == NULL) return false;
+  if (!(ref_nodes->is_member)) {
+    return false;
+  }
 
   int color = 1;
   _Bool is_member = true;
@@ -546,13 +560,17 @@ _Bool _XCALABLEMP_exec_task_NODES_PART(int get_upper, _XCALABLEMP_nodes_t *ref_n
     int size = ref_nodes->info[i].size;
     int rank = ref_nodes->info[i].rank;
 
-    if (va_arg(args, int) == 1) color += (acc_nodes_size * rank);
+    if (va_arg(args, int) == 1) {
+      color += (acc_nodes_size * rank);
+    }
     else {
       ref_lower = va_arg(args, int);
-      if ((i == (ref_dim - 1)) && (get_upper == 1))
+      if ((i == (ref_dim - 1)) && (get_upper == 1)) {
         ref_upper = size;
-      else
+      }
+      else {
         ref_upper = va_arg(args, int);
+      }
       ref_stride = va_arg(args, int);
 
       _XCALABLEMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, size);
@@ -568,7 +586,9 @@ _Bool _XCALABLEMP_exec_task_NODES_PART(int get_upper, _XCALABLEMP_nodes_t *ref_n
   }
 
   MPI_Comm *comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
-  if (!is_member) color = 0;
+  if (!is_member) {
+    color = 0;
+  }
 
   MPI_Comm_split(*(ref_nodes->comm), color, ref_nodes->comm_rank, comm);
 
@@ -576,16 +596,18 @@ _Bool _XCALABLEMP_exec_task_NODES_PART(int get_upper, _XCALABLEMP_nodes_t *ref_n
   if (is_member) {
     n = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_nodes_t));
 
+    n->is_member = is_member;
+    n->dim = 0;
+
     n->comm = comm;
     MPI_Comm_size(*comm, &(n->comm_size));
     MPI_Comm_rank(*comm, &(n->comm_rank));
-    n->dim = 0;
-  }
-  else _XCALABLEMP_free(comm);
 
-  if (n == NULL) return false;
-  else {
     _XCALABLEMP_push_nodes(n);
     return true;
+  }
+  else {
+    _XCALABLEMP_free(comm);
+    return false;
   }
 }
