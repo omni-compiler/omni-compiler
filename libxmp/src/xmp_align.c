@@ -209,20 +209,14 @@ void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc,
 
     _XCALABLEMP_array_info_t *ai = &(array_desc->info[i]);
 
+    // FIXME correct???
     unsigned long long elmts = ai->par_size;
-    switch (ai->shadow_type) {
-      case _XCALABLEMP_N_SHADOW_NONE:
-        total_elmts *= elmts;
-        break;
-      case _XCALABLEMP_N_SHADOW_NORMAL:
-        // FIXME support other distribute manners
-        total_elmts *= (elmts + ai->shadow_size_lo + ai->shadow_size_hi);
-        break;
-      case _XCALABLEMP_N_SHADOW_FULL:
-        total_elmts *= ai->ser_size;
-        break;
-      default:
-        _XCALABLEMP_fatal("unknown shadow type");
+    if (elmts == 0) {
+      *array_addr = NULL;
+      return;
+    }
+    else {
+      total_elmts *= elmts;
     }
   }
   va_end(args);
@@ -247,20 +241,14 @@ void _XCALABLEMP_init_array_addr(void **array_addr, void *param_addr,
 
     _XCALABLEMP_array_info_t *ai = &(array_desc->info[i]);
 
+    // FIXME correct???
     unsigned long long elmts = ai->par_size;
-    switch (ai->shadow_type) {
-      case _XCALABLEMP_N_SHADOW_NONE:
-        total_elmts *= elmts;
-        break;
-      case _XCALABLEMP_N_SHADOW_NORMAL:
-        // FIXME support other distribute manners
-        total_elmts *= (elmts + ai->shadow_size_lo + ai->shadow_size_hi);
-        break;
-      case _XCALABLEMP_N_SHADOW_FULL:
-        total_elmts *= ai->ser_size;
-        break;
-      default:
-        _XCALABLEMP_fatal("unknown shadow type");
+    if (elmts == 0) {
+      *array_addr = NULL;
+      return;
+    }
+    else {
+      total_elmts *= elmts;
     }
   }
   va_end(args);

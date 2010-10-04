@@ -9,8 +9,10 @@ void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
   va_list args;
   va_start(args, array);
   for (int i = 0; i < dim; i++) {
-    _XCALABLEMP_array_info_t *ai = &(array->info[i]);
     int type = va_arg(args, int);
+    _XCALABLEMP_array_info_t *ai = &(array->info[i]);
+    ai->shadow_type = type;
+
     switch (type) {
       case _XCALABLEMP_N_SHADOW_NONE:
         break;
@@ -23,15 +25,14 @@ void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
           if (hi < 0) _XCALABLEMP_fatal("<shadow-width> should be a nonnegative integer");
 
           if ((lo != 0) || (hi != 0)) {
-            ai->shadow_type = _XCALABLEMP_N_SHADOW_NORMAL;
             ai->shadow_size_lo = lo;
             ai->shadow_size_hi = hi;
-          }
 
-          break;
-        }
+            ai->par_size += lo + hi;
+          }
+        } break;
       case _XCALABLEMP_N_SHADOW_FULL:
-        ai->shadow_type = _XCALABLEMP_N_SHADOW_FULL;
+        ai->par_size = ai->ser_size;
         break;
       default:
         _XCALABLEMP_fatal("unknown shadow type");
