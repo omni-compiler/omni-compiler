@@ -567,7 +567,7 @@ public class XMPtranslateGlobalPragma {
       throw new XMPexception("the aligned array '" + arrayName + "' is not found");
 
     if (alignedArray.hasShadow())
-      throw new XMPexception("the aligned array '" + arrayName + "' has shadow already");
+      throw new XMPexception("the aligned array '" + arrayName + "' has the shadow declaration already");
 
     // init shadow
     XobjList shadowFuncArgs = Xcons.List(alignedArray.getDescId().Ref());

@@ -646,13 +646,15 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   private XobjList parse_REFLECT_clause() throws XmException, XMPexception {
     XobjList arrayNameList = Xcons.List();
     do {
-      pg_get_token();
       if (pg_tok() == PG_IDENT) arrayNameList.add(Xcons.String(pg_tok_buf()));
       else
         error("<array-name> is not found");
 
       pg_get_token();
-      if (pg_tok() == ',') continue;
+      if (pg_tok() == ',') {
+        pg_get_token();
+        continue;
+      }
       else break;
     } while (true);
 

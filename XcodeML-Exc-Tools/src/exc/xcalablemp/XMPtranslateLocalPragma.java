@@ -639,7 +639,7 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception("the aligned array '" + arrayName + "' is not found in local scope");
 
     if (alignedArray.hasShadow())
-      throw new XMPexception("the aligned array '" + arrayName + "' has shadow already");
+      throw new XMPexception("the aligned array '" + arrayName + "' has the shadow declaration already");
 
     // init shadow
     XobjList shadowFuncArgs = Xcons.List(alignedArray.getDescId().Ref());
@@ -1071,8 +1071,45 @@ public class XMPtranslateLocalPragma {
     return bl.declLocalIdent(identName, type);
   }
 
-  private void translateReflect(PragmaBlock pb) {
-    System.out.println("REFLECT:" + pb.toXobject().toString());
+  private void translateReflect(PragmaBlock pb) throws XMPexception {
+    // start translation
+    XobjList reflectDecl = (XobjList)pb.getClauses();
+    XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
+
+    XobjList arrayList = (XobjList)reflectDecl.getArg(0);
+    for (XobjArgs iter = arrayList.getArgs(); iter != null; iter = iter.nextArgs()) {
+      String arrayName = iter.getArg().getString();
+      XMPalignedArray alignedArray = localObjectTable.getAlignedArray(arrayName);
+      if (alignedArray == null) {
+        alignedArray = _globalObjectTable.getAlignedArray(arrayName);
+        if (alignedArray == null) {
+          throw new XMPexception("the aligned array '" + arrayName + "' is not found");
+        }
+      }
+
+      if (!alignedArray.hasShadow()) {
+        throw new XMPexception("the aligned array '" + arrayName + "' has no shadow declaration");
+      }
+
+      int arrayDim = alignedArray.getDim();
+      for (int i = 0; i < arrayDim; i++) {
+        XMPshadow shadowObj = alignedArray.getShadowAt(i);
+        switch (shadowObj.getType()) {
+          case XMPshadow.SHADOW_NONE:
+            break;
+          case XMPshadow.SHADOW_NORMAL:
+            // FIXME implement!!!
+            {
+              System.out.println(arrayName+"("+i+")["+shadowObj.getLo().toString()+":"+shadowObj.getHi().toString()+"]");
+            } break;
+          case XMPshadow.SHADOW_FULL:
+            // FIXME not implemented yet
+            throw new XMPexception("not implemented yet");
+          default:
+            throw new XMPexception("unknown shadow type");
+        }
+      }
+    }
   }
 
   private void translateBarrier(PragmaBlock pb) throws XMPexception {
