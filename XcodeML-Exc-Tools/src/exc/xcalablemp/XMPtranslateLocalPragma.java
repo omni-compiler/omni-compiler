@@ -216,7 +216,7 @@ public class XMPtranslateLocalPragma {
                                       nodesArgs, pb, _globalDecl);
 
     // insert destructor call
-    XMPlocalDecl.insertDestructorCall("_XCALABLEMP_finalize_nodes", Xcons.List(nodesDescId.getAddr()), pb, _globalDecl);
+    XMPlocalDecl.insertDestructorCall("_XCALABLEMP_finalize_nodes", Xcons.List(nodesDescId.Ref()), pb, _globalDecl);
   }
 
   private void translateTemplate(PragmaBlock pb) throws XMPexception {

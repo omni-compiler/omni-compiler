@@ -9,17 +9,20 @@
 // --------------- structures ----------------------------------------
 // nodes descriptor
 typedef struct _XCALABLEMP_nodes_info_type {
-  int dim_index;
-
   int size;
+
+  // enable when is_member is true
   int rank;
 } _XCALABLEMP_nodes_info_t;
 
 typedef struct _XCALABLEMP_nodes_type {
-  MPI_Comm	*comm;
-  int		comm_size;
-  int		comm_rank;
-  int		dim;
+  _Bool is_member;
+  int dim;
+
+  // enable when is_member is true
+  MPI_Comm *comm;
+  int comm_size;
+  int comm_rank;
 
   _XCALABLEMP_nodes_info_t info[1];
 } _XCALABLEMP_nodes_t;
