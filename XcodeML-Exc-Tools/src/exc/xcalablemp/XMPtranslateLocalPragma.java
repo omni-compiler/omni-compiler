@@ -1099,7 +1099,7 @@ public class XMPtranslateLocalPragma {
           case XMPshadow.SHADOW_NONE:
             break;
           case XMPshadow.SHADOW_NORMAL:
-            createReflectNormalShadowFunc(pb, alignedArray, reflectFuncBody);
+            createReflectNormalShadowFunc(pb, alignedArray, i, reflectFuncBody);
             break;
           case XMPshadow.SHADOW_FULL:
             // FIXME not implemented yet
@@ -1113,12 +1113,15 @@ public class XMPtranslateLocalPragma {
     pb.replace(Bcons.COMPOUND(reflectFuncBody));
   }
 
-  // FIXME implement
-  private void createReflectNormalShadowFunc(PragmaBlock pb, XMPalignedArray alignedArray, BlockList reflectFuncBody) {
+  // FIXME implementing now
+  private void createReflectNormalShadowFunc(PragmaBlock pb,
+                                             XMPalignedArray alignedArray, int arrayIndex,
+                                             BlockList reflectFuncBody) {
     String arrayName = alignedArray.getName();
-    Xtype arrayType = alignedArray.getType();
-    Xtype arrayPtype = Xtype.Pointer(alignedArray.getType());
     Xobject arrayDescRef = alignedArray.getDescId().Ref();
+    Xtype arrayType = alignedArray.getType();
+    Xtype arrayPtype = Xtype.Pointer(arrayType);
+    String arrayTypeName = XMPutil.getTypeName(arrayType);
 
     // decl buffers
     Ident loSendId = reflectFuncBody.declLocalIdent("_XCALABLEMP_reflect_LO_SEND_" + arrayName, arrayPtype);
@@ -1126,9 +1129,18 @@ public class XMPtranslateLocalPragma {
     Ident hiSendId = reflectFuncBody.declLocalIdent("_XCALABLEMP_reflect_HI_SEND_" + arrayName, arrayPtype);
     Ident hiRecvId = reflectFuncBody.declLocalIdent("_XCALABLEMP_reflect_HI_RECV_" + arrayName, arrayPtype);
 
-    Ident packLoFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pack_shadow_" + alignedArray.getDim());
-    XobjList packLoFuncArgs = Xcons.List(arrayDescRef, loSendId.Ref());
-    reflectFuncBody.add(Bcons.Statement(packLoFuncId.Call(packLoFuncArgs)));
+    // pack shadow
+    Ident packFuncId = null;
+    XobjList packFuncArgs = Xcons.List(loSendId.getAddr(), hiSendId.getAddr(), arrayDescRef, Xcons.IntConstant(arrayIndex));
+    if (arrayTypeName == null) {
+      packFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pack_shadow_" + alignedArray.getDim() + "_GENERAL");
+      packFuncArgs.add(Xcons.SizeOf(arrayType));
+    }
+    else {
+      packFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pack_shadow_" + alignedArray.getDim() + "_" + arrayTypeName);
+    }
+
+    reflectFuncBody.add(Bcons.Statement(packFuncId.Call(packFuncArgs)));
   }
 
   private void translateBarrier(PragmaBlock pb) throws XMPexception {
@@ -1176,7 +1188,9 @@ public class XMPtranslateLocalPragma {
 
     // create function call
     XobjList onRef = (XobjList)reductionDecl.getArg(1);
-    if (onRef == null) pb.replace(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC", null, reductionFuncArgsList));
+    if (onRef == null) {
+      pb.replace(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC", null, reductionFuncArgsList));
+    }
     else {
       XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(onRef, localObjectTable);
       String execFuncSurfix = execOnRefArgs.getFirst();
