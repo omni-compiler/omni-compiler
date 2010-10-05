@@ -194,26 +194,12 @@ void _XCALABLEMP_init_template_UNFIXED(_XCALABLEMP_template_t **template, int di
 }
 
 void _XCALABLEMP_init_template_chunk(_XCALABLEMP_template_t *template, _XCALABLEMP_nodes_t *nodes) {
-  int template_dim = template->dim;
+  if (nodes->is_member) {
+    template->is_owner = true;
+  }
 
   template->onto_nodes = nodes;
-  template->chunk = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_template_chunk_t) * template_dim);
-
-  // default: DUPLICATION
-  for (int i = 0; i < template_dim; i++) {
-    _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[i]);
-    _XCALABLEMP_template_info_t *ti = &(template->info[i]);
-
-    chunk->par_lower = ti->ser_lower;
-    chunk->par_upper = ti->ser_upper;
-
-    chunk->par_stride = 1;
-    chunk->par_chunk_width = ti->ser_size;
-    chunk->dist_manner = _XCALABLEMP_N_DIST_DUPLICATION;
-
-    chunk->onto_nodes_dim = _XCALABLEMP_N_NO_ONTO_NODES;
-    chunk->onto_nodes_info = NULL;
-  }
+  template->chunk = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_template_chunk_t) * (template->dim));
 }
 
 void _XCALABLEMP_finalize_template(_XCALABLEMP_template_t *template) {
@@ -224,8 +210,20 @@ void _XCALABLEMP_finalize_template(_XCALABLEMP_template_t *template) {
 }
 
 void _XCALABLEMP_dist_template_DUPLICATION(_XCALABLEMP_template_t *template, int template_index) {
-  // FIXME do nothing, delete this function from backend
-  return;
+  _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
+  _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
+
+  if (template->is_owner) {
+    chunk->par_lower = ti->ser_lower;
+    chunk->par_upper = ti->ser_upper;
+  }
+
+  chunk->par_stride = 1;
+  chunk->par_chunk_width = ti->ser_size;
+  chunk->dist_manner = _XCALABLEMP_N_DIST_DUPLICATION;
+
+  chunk->onto_nodes_dim = _XCALABLEMP_N_NO_ONTO_NODES;
+  chunk->onto_nodes_info = NULL;
 }
 
 void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int template_index, int nodes_index) {

@@ -58,8 +58,10 @@ typedef struct _XCALABLEMP_template_type {
   _Bool is_fixed;
   int   dim;
 
+  // enable when template is distributed
   _XCALABLEMP_nodes_t *onto_nodes;
   _XCALABLEMP_template_chunk_t *chunk;
+  // -----------------------------------
 
   _XCALABLEMP_template_info_t info[1];
 } _XCALABLEMP_template_t;
