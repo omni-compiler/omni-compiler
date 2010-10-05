@@ -8,9 +8,6 @@ typedef struct _XCALABLEMP_nodes_dish_type {
 static _XCALABLEMP_nodes_dish_t *_XCALABLEMP_nodes_stack_top = NULL;
 
 void _XCALABLEMP_push_nodes(_XCALABLEMP_nodes_t *nodes) {
-  if (nodes == NULL)
-    _XCALABLEMP_fatal("null nodes descriptor detected");
-
   _XCALABLEMP_nodes_dish_t *new_dish = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_nodes_dish_t));
   new_dish->nodes = nodes;
   new_dish->prev = _XCALABLEMP_nodes_stack_top;
@@ -18,8 +15,9 @@ void _XCALABLEMP_push_nodes(_XCALABLEMP_nodes_t *nodes) {
 }
 
 void _XCALABLEMP_pop_nodes(void) {
-  if (_XCALABLEMP_nodes_stack_top == NULL)
-    _XCALABLEMP_fatal("global communicator has removed");
+  if (_XCALABLEMP_nodes_stack_top == NULL) {
+    _XCALABLEMP_fatal("cannot get the execution nodes");
+  }
   else {
     _XCALABLEMP_nodes_dish_t *freed_dish = _XCALABLEMP_nodes_stack_top;
     _XCALABLEMP_nodes_stack_top = freed_dish->prev;
@@ -28,8 +26,9 @@ void _XCALABLEMP_pop_nodes(void) {
 }
 
 void _XCALABLEMP_pop_n_free_nodes(void) {
-  if (_XCALABLEMP_nodes_stack_top == NULL)
-    _XCALABLEMP_fatal("global communicator has removed");
+  if (_XCALABLEMP_nodes_stack_top == NULL) {
+    _XCALABLEMP_fatal("cannot get the execution nodes");
+  }
   else {
     _XCALABLEMP_nodes_dish_t *freed_dish = _XCALABLEMP_nodes_stack_top;
     _XCALABLEMP_nodes_stack_top = freed_dish->prev;
@@ -39,14 +38,35 @@ void _XCALABLEMP_pop_n_free_nodes(void) {
 }
 
 _XCALABLEMP_nodes_t *_XCALABLEMP_get_execution_nodes(void) {
-  if (_XCALABLEMP_nodes_stack_top == NULL) _XCALABLEMP_fatal("cannot get the execution nodes");
+  if (_XCALABLEMP_nodes_stack_top == NULL) {
+    _XCALABLEMP_fatal("cannot get the execution nodes");
+  }
   else {
-    _XCALABLEMP_nodes_t *exec_nodes = _XCALABLEMP_nodes_stack_top->nodes;
-    if (exec_nodes == NULL) _XCALABLEMP_fatal("cannot get the execution nodes");
-    else return exec_nodes;
+    return _XCALABLEMP_nodes_stack_top->nodes;
   }
 }
 
 int _XCALABLEMP_get_execution_nodes_rank(void) {
+  // is_member is always true
   return (_XCALABLEMP_get_execution_nodes())->comm_rank;
+}
+
+void _XCALABLEMP_push_comm(MPI_Comm *comm) {
+  int size, rank;
+  MPI_Comm_size(*comm, &size);
+  MPI_Comm_rank(*comm, &rank);
+
+  _XCALABLEMP_nodes_t *n = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_nodes_t));
+
+  n->is_member = true;
+  n->dim = 1;
+
+  n->comm = comm;
+  n->comm_size = size;
+  n->comm_rank = rank;
+
+  n->info[0].size = size;
+  n->info[0].rank = rank;
+
+  _XCALABLEMP_push_nodes(n);
 }

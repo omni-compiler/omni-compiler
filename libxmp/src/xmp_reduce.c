@@ -335,14 +335,7 @@ void _XCALABLEMP_init_reduce_comm_NODES(_XCALABLEMP_nodes_t *nodes, ...) {
   MPI_Comm_split(*(nodes->comm), color, nodes->comm_rank, comm);
 
   // create a new nodes descriptor
-  _XCALABLEMP_nodes_t *n = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_nodes_t));
-
-  n->comm = comm;
-  MPI_Comm_size(*comm, &(n->comm_size));
-  MPI_Comm_rank(*comm, &(n->comm_rank));
-  n->dim = 0;
-
-  _XCALABLEMP_push_nodes(n);
+  _XCALABLEMP_push_comm(comm);
 }
 
 void _XCALABLEMP_init_reduce_comm_TEMPLATE(_XCALABLEMP_template_t *template, ...) {
@@ -380,12 +373,5 @@ void _XCALABLEMP_init_reduce_comm_TEMPLATE(_XCALABLEMP_template_t *template, ...
   MPI_Comm_split(*(onto_nodes->comm), color, onto_nodes->comm_rank, comm);
 
   // create a new nodes descriptor
-  _XCALABLEMP_nodes_t *n = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_nodes_t));
-
-  n->comm = comm;
-  MPI_Comm_size(*comm, &(n->comm_size));
-  MPI_Comm_rank(*comm, &(n->comm_rank));
-  n->dim = 0;
-
-  _XCALABLEMP_push_nodes(n);
+  _XCALABLEMP_push_comm(comm);
 }

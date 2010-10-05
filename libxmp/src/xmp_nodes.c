@@ -596,25 +596,8 @@ _Bool _XCALABLEMP_exec_task_NODES_PART(int get_upper, _XCALABLEMP_nodes_t *ref_n
 
   MPI_Comm_split(*(ref_nodes->comm), color, ref_nodes->comm_rank, comm);
 
-  _XCALABLEMP_nodes_t *n = NULL;
   if (is_member) {
-    int size, rank;
-    MPI_Comm_size(*comm, &size);
-    MPI_Comm_rank(*comm, &rank);
-
-    n = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_nodes_t));
-
-    n->is_member = is_member;
-    n->dim = 1;
-
-    n->comm = comm;
-    n->comm_size = size;
-    n->comm_rank = rank;
-
-    n->info[0].size = size;
-    n->info[0].rank = rank;
-
-    _XCALABLEMP_push_nodes(n);
+    _XCALABLEMP_push_comm(comm);
     return true;
   }
   else {
