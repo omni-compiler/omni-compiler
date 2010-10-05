@@ -279,7 +279,7 @@ public class XMPtranslateLocalPragma {
     XMPlocalDecl.addConstructorCall("_XCALABLEMP_init_template_" + fixedSurfix, templateArgs, pb, _globalDecl);
 
     // insert destructor call
-    XMPlocalDecl.insertDestructorCall("_XCALABLEMP_finalize_template", Xcons.List(templateDescId.getAddr()), pb, _globalDecl);
+    XMPlocalDecl.insertDestructorCall("_XCALABLEMP_finalize_template", Xcons.List(templateDescId.Ref()), pb, _globalDecl);
   }
 
   private void checkObjectNameCollision(String name, BlockList scopeBL, XMPobjectTable objectTable) throws XMPexception {

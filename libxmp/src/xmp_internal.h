@@ -13,6 +13,7 @@ typedef struct _XCALABLEMP_nodes_info_type {
 
   // enable when is_member is true
   int rank;
+  // -----------------------------
 } _XCALABLEMP_nodes_info_t;
 
 typedef struct _XCALABLEMP_nodes_type {
@@ -23,42 +24,43 @@ typedef struct _XCALABLEMP_nodes_type {
   MPI_Comm *comm;
   int comm_size;
   int comm_rank;
+  // -----------------------------
 
   _XCALABLEMP_nodes_info_t info[1];
 } _XCALABLEMP_nodes_t;
 
 // template desciptor
 typedef struct _XCALABLEMP_template_info_type {
-  int dim_index;
-
-  long long		ser_lower;
-  long long		ser_upper;
-  unsigned long long	ser_size;
+  long long ser_lower;
+  long long ser_upper;
+  unsigned long long ser_size;
 } _XCALABLEMP_template_info_t;
 
 typedef struct _XCALABLEMP_template_chunk_type {
-  int dim_index;
-
   // FIXME not support BLOCK_CYCLIC yet
+  // enable when _is_owner is true
   long long par_lower;
   long long par_upper;
+  // -----------------------------
+
   long long par_stride;
-
-  unsigned long long par_size;
   unsigned long long par_chunk_width;
-
   int dist_manner;
 
+  // enable when dist_manner is not _XCALABLEMP_N_DIST_DUPLICATION
   int onto_nodes_dim;
-  _XCALABLEMP_nodes_info_t	*onto_nodes_info;
+  _XCALABLEMP_nodes_info_t *onto_nodes_info;
+  // -------------------------------------------------------------
 } _XCALABLEMP_template_chunk_t;
 
 typedef struct _XCALABLEMP_template_type {
+  _Bool is_owner;
   _Bool is_fixed;
   int   dim;
 
   _XCALABLEMP_nodes_t *onto_nodes;
   _XCALABLEMP_template_chunk_t *chunk;
+
   _XCALABLEMP_template_info_t info[1];
 } _XCALABLEMP_template_t;
 

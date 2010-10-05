@@ -10,15 +10,13 @@ static _Bool _XCALABLEMP_check_template_ref_inclusion(long long ref_lower, long 
                                                       _XCALABLEMP_template_chunk_t *chunk);
 
 static void _XCALABLEMP_calc_template_size(_XCALABLEMP_template_t *t, int dim) {
-  if (t == NULL)
-    _XCALABLEMP_fatal("null template descriptor detected");
-
   for (int i = 0; i < dim; i++) {
     int ser_lower = t->info[i].ser_lower;
     int ser_upper = t->info[i].ser_upper;
 
-    if (ser_lower > ser_upper)
+    if (ser_lower > ser_upper) {
       _XCALABLEMP_fatal("the lower bound of template should be less than or equal to the upper bound");
+    }
 
     t->info[i].ser_size = _XCALABLEMP_M_COUNTi(ser_lower, ser_upper);
   }
@@ -36,12 +34,22 @@ static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper
     l = *upper;
     u = *lower;
   }
-  else _XCALABLEMP_fatal("the stride of <template-ref> is 0");
+  else {
+    _XCALABLEMP_fatal("the stride of <template-ref> is 0");
+  }
 
   // check boundary
-  if (lb > l) _XCALABLEMP_fatal("<template-ref> is out of bounds, <ref-lower> is less than the template lower bound");
-  if (l > u) _XCALABLEMP_fatal("<template-ref> is out of bounds, <ref-upper> is less than <ref-lower>");
-  if (u > ub) _XCALABLEMP_fatal("<template-ref> is out of bounds, <ref-upper> is greater than the template upper bound");
+  if (lb > l) {
+    _XCALABLEMP_fatal("<template-ref> is out of bounds, <ref-lower> is less than the template lower bound");
+  }
+
+  if (l > u) {
+    _XCALABLEMP_fatal("<template-ref> is out of bounds, <ref-upper> is less than <ref-lower>");
+  }
+
+  if (u > ub) {
+    _XCALABLEMP_fatal("<template-ref> is out of bounds, <ref-upper> is greater than the template upper bound");
+  }
 
   // validate values
   if (s > 0) {
@@ -72,20 +80,38 @@ static _Bool _XCALABLEMP_check_template_ref_inclusion(long long ref_lower, long 
           /* normalize template lower */
           long long template_lower_mod = template_lower % ref_stride;
           if (template_lower_mod != ref_stride_mod) {
-            if (template_lower_mod < ref_stride_mod) template_lower += (ref_stride_mod - template_lower_mod);
-            else template_lower += (ref_stride - template_lower_mod + ref_stride_mod);
+            if (template_lower_mod < ref_stride_mod) {
+              template_lower += (ref_stride_mod - template_lower_mod);
+            }
+            else {
+              template_lower += (ref_stride - template_lower_mod + ref_stride_mod);
+            }
           }
-          if (template_lower > template_upper) return false;
+
+          if (template_lower > template_upper) {
+            return false;
+          }
+
           /* normalize template upper FIXME needed??? */
           long long template_upper_mod = template_upper % ref_stride;
           if (template_upper_mod != ref_stride_mod) {
-            if (ref_stride_mod < template_upper_mod) template_upper -= (template_upper_mod - ref_stride_mod);
-            else template_upper -= (ref_stride - ref_stride_mod + template_upper_mod);
+            if (ref_stride_mod < template_upper_mod) {
+              template_upper -= (template_upper_mod - ref_stride_mod);
+            }
+            else {
+              template_upper -= (ref_stride - ref_stride_mod + template_upper_mod);
+            }
           }
         }
 
-        if (ref_upper < template_lower) return false;
-        if (template_upper < ref_lower) return false;
+        if (ref_upper < template_lower) {
+          return false;
+        }
+
+        if (template_upper < ref_lower) {
+          return false;
+        }
+
         return true;
       }
     case _XCALABLEMP_N_DIST_CYCLIC:
@@ -99,11 +125,16 @@ static _Bool _XCALABLEMP_check_template_ref_inclusion(long long ref_lower, long 
             else ref_lower += (nodes_size - ref_lower_mod + par_lower_mod);
           }
 
-          if (ref_upper < ref_lower) return false;
-          else return true;
+          if (ref_upper < ref_lower) {
+            return false;
+          }
+          else {
+            return true;
+          }
         }
-        else
+        else {
           _XCALABLEMP_fatal("not implemented condition: (stride is not 1 && cyclic distribution)");
+        }
       }
     default:
       _XCALABLEMP_fatal("unknown distribution manner");
@@ -116,16 +147,16 @@ void _XCALABLEMP_init_template_FIXED(_XCALABLEMP_template_t **template, int dim,
                                                 sizeof(_XCALABLEMP_template_info_t) * (dim - 1));
 
   // calc members
+  t->is_owner = false;
   t->is_fixed = true;
   t->dim = dim;
+
   t->onto_nodes = NULL;
   t->chunk = NULL;
 
   va_list args;
   va_start(args, dim);
   for (int i = 0; i < dim; i++) {
-    t->info[i].dim_index = i;
-
     t->info[i].ser_lower = va_arg(args, long long);
     t->info[i].ser_upper = va_arg(args, long long);
   }
@@ -142,16 +173,16 @@ void _XCALABLEMP_init_template_UNFIXED(_XCALABLEMP_template_t **template, int di
                                                 sizeof(_XCALABLEMP_template_info_t) * (dim - 1));
 
   // calc members
+  t->is_owner = false;
   t->is_fixed = false;
   t->dim = dim;
+
   t->onto_nodes = NULL;
   t->chunk = NULL;
 
   va_list args;
   va_start(args, dim);
   for(int i = 0; i < dim - 1; i++) {
-    t->info[i].dim_index = i;
-
     t->info[i].ser_lower = va_arg(args, long long);
     t->info[i].ser_upper = va_arg(args, long long);
   }
@@ -163,41 +194,32 @@ void _XCALABLEMP_init_template_UNFIXED(_XCALABLEMP_template_t **template, int di
 }
 
 void _XCALABLEMP_init_template_chunk(_XCALABLEMP_template_t *template, _XCALABLEMP_nodes_t *nodes) {
-  if (template == NULL)
-    _XCALABLEMP_fatal("null template descriptor detected");
+  int template_dim = template->dim;
 
-  if (nodes != NULL) {
-    template->onto_nodes = nodes;
+  template->onto_nodes = nodes;
+  template->chunk = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_template_chunk_t) * template_dim);
 
-    int template_dim = template->dim;
-    template->chunk = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_template_chunk_t) * template_dim);
-    for (int i = 0; i < template_dim; i++) {
-      _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[i]);
-      _XCALABLEMP_template_info_t *ti = &(template->info[i]);
+  // default: DUPLICATION
+  for (int i = 0; i < template_dim; i++) {
+    _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[i]);
+    _XCALABLEMP_template_info_t *ti = &(template->info[i]);
 
-      chunk->dim_index = i;
+    chunk->par_lower = ti->ser_lower;
+    chunk->par_upper = ti->ser_upper;
 
-      chunk->par_lower = ti->ser_lower;
-      chunk->par_upper = ti->ser_upper;
-      chunk->par_stride = 1;
+    chunk->par_stride = 1;
+    chunk->par_chunk_width = ti->ser_size;
+    chunk->dist_manner = _XCALABLEMP_N_DIST_DUPLICATION;
 
-      chunk->par_size = ti->ser_size;
-      chunk->par_chunk_width = ti->ser_size;
-
-      chunk->dist_manner = _XCALABLEMP_N_DIST_DUPLICATION;
-
-      chunk->onto_nodes_dim = _XCALABLEMP_N_NO_ONTO_NODES;
-      chunk->onto_nodes_info = NULL;
-    }
+    chunk->onto_nodes_dim = _XCALABLEMP_N_NO_ONTO_NODES;
+    chunk->onto_nodes_info = NULL;
   }
 }
 
-void _XCALABLEMP_finalize_template(_XCALABLEMP_template_t **template) {
-  if ((*template) != NULL) {
-    _XCALABLEMP_free((*template)->chunk);
-    _XCALABLEMP_free(*template);
-
-    *template = NULL;
+void _XCALABLEMP_finalize_template(_XCALABLEMP_template_t *template) {
+  if (template != NULL) {
+    _XCALABLEMP_free(template->chunk);
+    _XCALABLEMP_free(template);
   }
 }
 
@@ -207,14 +229,7 @@ void _XCALABLEMP_dist_template_DUPLICATION(_XCALABLEMP_template_t *template, int
 }
 
 void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int template_index, int nodes_index) {
-  if (template == NULL)
-    _XCALABLEMP_fatal("null template descriptor detected");
-
-  if (template->chunk == NULL) return;
-
   _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
-  if (nodes == NULL)
-    _XCALABLEMP_fatal("null nodes descriptor detected");
 
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
@@ -224,19 +239,26 @@ void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int templ
   long long nodes_size = (long long)ni->size;
 
   // check template size
-  if (ti->ser_size < nodes_size) _XCALABLEMP_fatal("template is too small to distribute");
+  if (ti->ser_size < nodes_size) {
+    _XCALABLEMP_fatal("template is too small to distribute");
+  }
 
   // calc parallel members
   unsigned long long chunk_width = _XCALABLEMP_M_CEILi(ti->ser_size, nodes_size);
 
-  chunk->par_lower = nodes_rank * chunk_width + ti->ser_lower;
-  if (nodes_rank == (nodes_size - 1)) chunk->par_upper = ti->ser_upper;
-  else chunk->par_upper = chunk->par_lower + chunk_width - 1;
+  if (template->is_owner) {
+    chunk->par_lower = nodes_rank * chunk_width + ti->ser_lower;
+
+    if (nodes_rank == (nodes_size - 1)) {
+      chunk->par_upper = ti->ser_upper;
+    }
+    else {
+      chunk->par_upper = chunk->par_lower + chunk_width - 1;
+    }
+  }
+
   chunk->par_stride = 1;
-
-  chunk->par_size = _XCALABLEMP_M_COUNTi(chunk->par_lower, chunk->par_upper);
   chunk->par_chunk_width = chunk_width;
-
   chunk->dist_manner = _XCALABLEMP_N_DIST_BLOCK;
 
   chunk->onto_nodes_dim = nodes_index;
@@ -244,14 +266,7 @@ void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int templ
 }
 
 void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int template_index, int nodes_index) {
-  if (template == NULL)
-    _XCALABLEMP_fatal("null template descriptor detected");
-
-  if (template->chunk == NULL) return;
-
   _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
-  if (nodes == NULL)
-    _XCALABLEMP_fatal("null nodes descriptor detected");
 
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
@@ -261,25 +276,33 @@ void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int temp
   long long nodes_size = (long long)ni->size;
 
   // check template size
-  if (ti->ser_size < nodes_size) _XCALABLEMP_fatal("template is too small to distribute");
+  if (ti->ser_size < nodes_size) {
+    _XCALABLEMP_fatal("template is too small to distribute");
+  }
 
   // calc parallel members
   unsigned long long div = ti->ser_size / nodes_size;
   unsigned long long mod = ti->ser_size % nodes_size;
   unsigned long long par_size = 0;
-  if(mod == 0) par_size = div;
+  if(mod == 0) {
+    par_size = div;
+  }
   else {
-    if(nodes_rank >= mod) par_size = div;
-    else par_size = div + 1;
+    if(nodes_rank >= mod) {
+      par_size = div;
+    }
+    else {
+      par_size = div + 1;
+    }
   }
 
-  chunk->par_lower = ti->ser_lower + nodes_rank;
-  chunk->par_upper = chunk->par_lower + nodes_size * (par_size - 1);
+  if (template->is_owner) {
+    chunk->par_lower = ti->ser_lower + nodes_rank;
+    chunk->par_upper = chunk->par_lower + nodes_size * (par_size - 1);
+  }
+
   chunk->par_stride = nodes_size;
-
-  chunk->par_size = par_size;
   chunk->par_chunk_width = _XCALABLEMP_M_CEILi(ti->ser_size, nodes_size);
-
   chunk->dist_manner = _XCALABLEMP_N_DIST_CYCLIC;
 
   chunk->onto_nodes_dim = nodes_index;
@@ -287,14 +310,11 @@ void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int temp
 }
 
 _Bool _XCALABLEMP_exec_task_TEMPLATE_PART(int get_upper, _XCALABLEMP_template_t *ref_template, ...) {
-  if (ref_template == NULL)
-    _XCALABLEMP_fatal("null template descriptor detected");
-
-  if (ref_template->chunk == NULL) return false;
+  if (!(ref_template->is_owner)) {
+    return false;
+  }
 
   _XCALABLEMP_nodes_t *onto_nodes = ref_template->onto_nodes;
-  if (onto_nodes == NULL)
-    _XCALABLEMP_fatal("null nodes descriptor detected");
 
   int color = 1;
   _Bool is_member = true;
@@ -309,23 +329,27 @@ _Bool _XCALABLEMP_exec_task_TEMPLATE_PART(int get_upper, _XCALABLEMP_template_t 
     _XCALABLEMP_template_chunk_t *chunk = &(ref_template->chunk[i]);
 
     int size, rank;
-    _XCALABLEMP_nodes_info_t *onto_nodes_info = chunk->onto_nodes_info;
-    if (onto_nodes_info == NULL) { // distmanner == DUPLICATION
+    if (chunk->dist_manner == _XCALABLEMP_N_DIST_DUPLICATION) {
       size = 1;
       rank = 0;
     }
     else {
+      _XCALABLEMP_nodes_info_t *onto_nodes_info = chunk->onto_nodes_info;
       size = onto_nodes_info->size;
       rank = onto_nodes_info->rank;
     }
 
-    if (va_arg(args, int) == 1) color += (acc_nodes_size * rank);
+    if (va_arg(args, int) == 1) {
+      color += (acc_nodes_size * rank);
+    }
     else {
       ref_lower = va_arg(args, long long);
-      if ((i == (ref_dim - 1)) && (get_upper == 1))
+      if ((i == (ref_dim - 1)) && (get_upper == 1)) {
         ref_upper = info->ser_upper;
-      else
+      }
+      else {
         ref_upper = va_arg(args, long long);
+      }
       ref_stride = va_arg(args, long long);
 
       _XCALABLEMP_validate_template_ref(&ref_lower, &ref_upper, &ref_stride, info->ser_lower, info->ser_upper);
@@ -337,7 +361,9 @@ _Bool _XCALABLEMP_exec_task_TEMPLATE_PART(int get_upper, _XCALABLEMP_template_t 
   }
 
   MPI_Comm *comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
-  if (!is_member) color = 0;
+  if (!is_member) {
+    color = 0;
+  }
 
   MPI_Comm_split(*(onto_nodes->comm), color, onto_nodes->comm_rank, comm);
 
@@ -349,12 +375,12 @@ _Bool _XCALABLEMP_exec_task_TEMPLATE_PART(int get_upper, _XCALABLEMP_template_t 
     MPI_Comm_size(*comm, &(n->comm_size));
     MPI_Comm_rank(*comm, &(n->comm_rank));
     n->dim = 0;
-  }
-  else _XCALABLEMP_free(comm);
 
-  if (n == NULL) return false;
-  else {
     _XCALABLEMP_push_nodes(n);
     return true;
+  }
+  else {
+    _XCALABLEMP_free(comm);
+    return false;
   }
 }

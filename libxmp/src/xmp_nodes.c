@@ -203,9 +203,11 @@ void _XCALABLEMP_validate_nodes_ref(int *lower, int *upper, int *stride, int siz
   if (1 > l) {
     _XCALABLEMP_fatal("<nodes-ref> is out of bounds, <ref-lower> is less than 1");
   }
+
   if (l > u) {
     _XCALABLEMP_fatal("<nodes-ref> is out of bounds, <ref-upper> is less than <ref-lower>");
   }
+
   if (u > size) {
     _XCALABLEMP_fatal("<nodes-ref> is out of bounds, <ref-upper> is greater than the node size");
   }
@@ -313,7 +315,9 @@ void _XCALABLEMP_init_nodes_DYNAMIC_EXEC(int map_type, _XCALABLEMP_nodes_t **nod
   va_start(args, dim);
   for (int i = 0; i < dim - 1; i++) {
     int dim_size = va_arg(args, int);
-    if (dim_size <= 0) _XCALABLEMP_fatal("<nodes-size> should be less or equal to zero");
+    if (dim_size <= 0) {
+      _XCALABLEMP_fatal("<nodes-size> should be less or equal to zero");
+    }
 
     n->info[i].size = dim_size;
   }
