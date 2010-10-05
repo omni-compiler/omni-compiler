@@ -4,7 +4,9 @@
 #include "xmp_math_macro.h"
 
 void _XCALABLEMP_bcast_NODES_ENTIRE_OMITTED(_XCALABLEMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size) {
-  if (bcast_nodes == NULL) return;
+  if (!(bcast_nodes->is_member)) {
+    return;
+  }
 
   // setup type
   MPI_Datatype mpi_datatype;
@@ -17,7 +19,9 @@ void _XCALABLEMP_bcast_NODES_ENTIRE_OMITTED(_XCALABLEMP_nodes_t *bcast_nodes, vo
 
 void _XCALABLEMP_bcast_NODES_ENTIRE_GLOBAL(_XCALABLEMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
                                            int from_lower, int from_upper, int from_stride) {
-  if (bcast_nodes == NULL) return;
+  if (!(bcast_nodes->is_member)) {
+    return;
+  }
 
   // check <from-ref>
   _XCALABLEMP_validate_nodes_ref(&from_lower, &from_upper, &from_stride, _XCALABLEMP_world_size);
@@ -37,6 +41,7 @@ void _XCALABLEMP_bcast_NODES_ENTIRE_GLOBAL(_XCALABLEMP_nodes_t *bcast_nodes, voi
 
 void _XCALABLEMP_bcast_NODES_ENTIRE_NODES(_XCALABLEMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
                                           _XCALABLEMP_nodes_t *from_nodes, ...) {
+  // FIXME how to implement???
   if (bcast_nodes == NULL) return;
   if (from_nodes == NULL) {
     _XCALABLEMP_fatal("error on broadcast, cannot access to the source node");

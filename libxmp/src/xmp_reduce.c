@@ -12,48 +12,48 @@ static void _XCALABLEMP_init_localtion_variables(void *loc, int count, int loc_d
 
 static void _XCALABLEMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype) {
     switch (datatype) {
-//    case _XCALABLEMP_N_TYPE_BOOL:
-//      { *datatype_size = sizeof(_Bool);			*mpi_datatype = MPI_C_BOOL;			break; }
-    case _XCALABLEMP_N_TYPE_CHAR:
-      { *datatype_size = sizeof(char);				*mpi_datatype = MPI_SIGNED_CHAR;		break; }
-    case _XCALABLEMP_N_TYPE_UNSIGNED_CHAR:
-      { *datatype_size = sizeof(unsigned char);			*mpi_datatype = MPI_UNSIGNED_CHAR;		break; }
-    case _XCALABLEMP_N_TYPE_SHORT:
-      { *datatype_size = sizeof(short);				*mpi_datatype = MPI_SHORT;			break; }
-    case _XCALABLEMP_N_TYPE_UNSIGNED_SHORT:
-      { *datatype_size = sizeof(unsigned short);		*mpi_datatype = MPI_UNSIGNED_SHORT;		break; }
-    case _XCALABLEMP_N_TYPE_INT:
-      { *datatype_size = sizeof(int);				*mpi_datatype = MPI_INT;			break; }
-    case _XCALABLEMP_N_TYPE_UNSIGNED_INT:
-      { *datatype_size = sizeof(unsigned int);			*mpi_datatype = MPI_UNSIGNED;			break; }
-    case _XCALABLEMP_N_TYPE_LONG:
-      { *datatype_size = sizeof(long);				*mpi_datatype = MPI_LONG;			break; }
-    case _XCALABLEMP_N_TYPE_UNSIGNED_LONG:
-      { *datatype_size = sizeof(unsigned long);			*mpi_datatype = MPI_UNSIGNED_LONG;		break; }
-    case _XCALABLEMP_N_TYPE_LONGLONG:
-      { *datatype_size = sizeof(long long);			*mpi_datatype = MPI_LONG_LONG;			break; }
-    case _XCALABLEMP_N_TYPE_UNSIGNED_LONGLONG:
-      { *datatype_size = sizeof(unsigned long long);		*mpi_datatype = MPI_UNSIGNED_LONG_LONG;		break; }
-    case _XCALABLEMP_N_TYPE_FLOAT:
-      { *datatype_size = sizeof(float);				*mpi_datatype = MPI_FLOAT;			break; }
-    case _XCALABLEMP_N_TYPE_DOUBLE:
-      { *datatype_size = sizeof(double);			*mpi_datatype = MPI_DOUBLE;			break; }
-    case _XCALABLEMP_N_TYPE_LONG_DOUBLE:
-      { *datatype_size = sizeof(long double);			*mpi_datatype = MPI_LONG_DOUBLE;		break; }
-//    case _XCALABLEMP_N_TYPE_FLOAT_IMAGINARY:
-//      { *datatype_size = sizeof(float _Imaginary);		*mpi_datatype = MPI_FLOAT;			break; }
-//    case _XCALABLEMP_N_TYPE_DOUBLE_IMAGINARY:
-//      { *datatype_size = sizeof(double _Imaginary);		*mpi_datatype = MPI_DOUBLE;			break; }
-//    case _XCALABLEMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
-//      { *datatype_size = sizeof(long double _Imaginary);	*mpi_datatype = MPI_LONG_DOUBLE;		break; }
-//    case _XCALABLEMP_N_TYPE_FLOAT_COMPLEX:
-//      { *datatype_size = sizeof(float _Complex);		*mpi_datatype = MPI_C_FLOAT_COMPLEX;		break; }
-//    case _XCALABLEMP_N_TYPE_DOUBLE_COMPLEX:
-//      { *datatype_size = sizeof(double _Complex);		*mpi_datatype = MPI_C_DOUBLE_COMPLEX;		break; }
-//    case _XCALABLEMP_N_TYPE_LONG_DOUBLE_COMPLEX:
-//      { *datatype_size = sizeof(long double _Complex);	*mpi_datatype = MPI_C_LONG_DOUBLE_COMPLEX;	break; }
-    default:
-      _XCALABLEMP_fatal("unknown data type for reduction");
+//      case _XCALABLEMP_N_TYPE_BOOL:
+//        { *datatype_size = sizeof(_Bool);			*mpi_datatype = MPI_C_BOOL;			break; }
+      case _XCALABLEMP_N_TYPE_CHAR:
+        { *datatype_size = sizeof(char);			*mpi_datatype = MPI_SIGNED_CHAR;		break; }
+      case _XCALABLEMP_N_TYPE_UNSIGNED_CHAR:
+        { *datatype_size = sizeof(unsigned char);		*mpi_datatype = MPI_UNSIGNED_CHAR;		break; }
+      case _XCALABLEMP_N_TYPE_SHORT:
+        { *datatype_size = sizeof(short);			*mpi_datatype = MPI_SHORT;			break; }
+      case _XCALABLEMP_N_TYPE_UNSIGNED_SHORT:
+        { *datatype_size = sizeof(unsigned short);		*mpi_datatype = MPI_UNSIGNED_SHORT;		break; }
+      case _XCALABLEMP_N_TYPE_INT:
+        { *datatype_size = sizeof(int);				*mpi_datatype = MPI_INT;			break; }
+      case _XCALABLEMP_N_TYPE_UNSIGNED_INT:
+        { *datatype_size = sizeof(unsigned int);		*mpi_datatype = MPI_UNSIGNED;			break; }
+      case _XCALABLEMP_N_TYPE_LONG:
+        { *datatype_size = sizeof(long);			*mpi_datatype = MPI_LONG;			break; }
+      case _XCALABLEMP_N_TYPE_UNSIGNED_LONG:
+        { *datatype_size = sizeof(unsigned long);		*mpi_datatype = MPI_UNSIGNED_LONG;		break; }
+      case _XCALABLEMP_N_TYPE_LONGLONG:
+        { *datatype_size = sizeof(long long);			*mpi_datatype = MPI_LONG_LONG;			break; }
+      case _XCALABLEMP_N_TYPE_UNSIGNED_LONGLONG:
+        { *datatype_size = sizeof(unsigned long long);		*mpi_datatype = MPI_UNSIGNED_LONG_LONG;		break; }
+      case _XCALABLEMP_N_TYPE_FLOAT:
+        { *datatype_size = sizeof(float);			*mpi_datatype = MPI_FLOAT;			break; }
+      case _XCALABLEMP_N_TYPE_DOUBLE:
+        { *datatype_size = sizeof(double);			*mpi_datatype = MPI_DOUBLE;			break; }
+      case _XCALABLEMP_N_TYPE_LONG_DOUBLE:
+        { *datatype_size = sizeof(long double);			*mpi_datatype = MPI_LONG_DOUBLE;		break; }
+//      case _XCALABLEMP_N_TYPE_FLOAT_IMAGINARY:
+//        { *datatype_size = sizeof(float _Imaginary);		*mpi_datatype = MPI_FLOAT;			break; }
+//      case _XCALABLEMP_N_TYPE_DOUBLE_IMAGINARY:
+//        { *datatype_size = sizeof(double _Imaginary);		*mpi_datatype = MPI_DOUBLE;			break; }
+//      case _XCALABLEMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
+//        { *datatype_size = sizeof(long double _Imaginary);	*mpi_datatype = MPI_LONG_DOUBLE;		break; }
+//      case _XCALABLEMP_N_TYPE_FLOAT_COMPLEX:
+//        { *datatype_size = sizeof(float _Complex);		*mpi_datatype = MPI_C_FLOAT_COMPLEX;		break; }
+//      case _XCALABLEMP_N_TYPE_DOUBLE_COMPLEX:
+//        { *datatype_size = sizeof(double _Complex);		*mpi_datatype = MPI_C_DOUBLE_COMPLEX;		break; }
+//      case _XCALABLEMP_N_TYPE_LONG_DOUBLE_COMPLEX:
+//        { *datatype_size = sizeof(long double _Complex);	*mpi_datatype = MPI_C_LONG_DOUBLE_COMPLEX;	break; }
+      default:
+        _XCALABLEMP_fatal("unknown data type for reduction");
   }
 }
 
@@ -165,23 +165,25 @@ static void _XCALABLEMP_compare_reduce_results(_Bool *cmp_buffer, void *temp_buf
 
 static void _XCALABLEMP_init_localtion_variables(void *loc, int count, int loc_datatype, _Bool *cmp_buffer, int op) {
   switch (loc_datatype) {
-    case _XCALABLEMP_N_TYPE_CHAR:			_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(char, SCHAR_MIN, SCHAR_MAX)
-    case _XCALABLEMP_N_TYPE_UNSIGNED_CHAR:		_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(unsigned char, 0, UCHAR_MAX)
-    case _XCALABLEMP_N_TYPE_SHORT:			_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(short, SHRT_MIN, SHRT_MAX)
-    case _XCALABLEMP_N_TYPE_UNSIGNED_SHORT:		_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(unsigned short, 0, USHRT_MAX)
-    case _XCALABLEMP_N_TYPE_INT:			_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(int, INT_MIN, INT_MAX)
-    case _XCALABLEMP_N_TYPE_UNSIGNED_INT:		_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(unsigned int, 0, UINT_MAX)
-    case _XCALABLEMP_N_TYPE_LONG:			_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(long, LONG_MIN, LONG_MAX)
-    case _XCALABLEMP_N_TYPE_UNSIGNED_LONG:		_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(unsigned long, 0, ULONG_MAX)
-    case _XCALABLEMP_N_TYPE_LONGLONG:			_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(long long, LLONG_MIN, LLONG_MAX)
-    case _XCALABLEMP_N_TYPE_UNSIGNED_LONGLONG:		_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(unsigned long long, 0, ULLONG_MAX)
+    case _XCALABLEMP_N_TYPE_CHAR:		_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(char, SCHAR_MIN, SCHAR_MAX)
+    case _XCALABLEMP_N_TYPE_UNSIGNED_CHAR:	_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(unsigned char, 0, UCHAR_MAX)
+    case _XCALABLEMP_N_TYPE_SHORT:		_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(short, SHRT_MIN, SHRT_MAX)
+    case _XCALABLEMP_N_TYPE_UNSIGNED_SHORT:	_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(unsigned short, 0, USHRT_MAX)
+    case _XCALABLEMP_N_TYPE_INT:		_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(int, INT_MIN, INT_MAX)
+    case _XCALABLEMP_N_TYPE_UNSIGNED_INT:	_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(unsigned int, 0, UINT_MAX)
+    case _XCALABLEMP_N_TYPE_LONG:		_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(long, LONG_MIN, LONG_MAX)
+    case _XCALABLEMP_N_TYPE_UNSIGNED_LONG:	_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(unsigned long, 0, ULONG_MAX)
+    case _XCALABLEMP_N_TYPE_LONGLONG:		_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(long long, LLONG_MIN, LLONG_MAX)
+    case _XCALABLEMP_N_TYPE_UNSIGNED_LONGLONG:	_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(unsigned long long, 0, ULLONG_MAX)
     default:
       _XCALABLEMP_fatal("wrong data type for <location-variables>");
   }
 }
 
 void _XCALABLEMP_reduce_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes, void *addr, int count, int datatype, int op) {
-  if (nodes == NULL) return;
+  if (!(nodes->is_member)) {
+    return;
+  }
 
   // setup information
   MPI_Datatype mpi_datatype;
@@ -205,7 +207,9 @@ void _XCALABLEMP_reduce_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes, void *addr, int
 void _XCALABLEMP_reduce_FLMM_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes,
                                           void *addr, int count, int datatype, int op,
                                           int num_locs, ...) {
-  if (nodes == NULL) return;
+  if (!(nodes->is_member)) {
+    return;
+  }
 
   // setup information
   MPI_Datatype mpi_datatype;
@@ -309,9 +313,6 @@ void _XCALABLEMP_reduce_FLMM_CLAUSE(void *temp_addr, void *data_addr, int count,
 }
 
 void _XCALABLEMP_init_reduce_comm_NODES(_XCALABLEMP_nodes_t *nodes, ...) {
-  if (nodes == NULL)
-    _XCALABLEMP_fatal("null nodes descriptor detected");
-
   int color = 1;
   int acc_nodes_size = 1;
   int nodes_dim = nodes->dim;
@@ -322,7 +323,9 @@ void _XCALABLEMP_init_reduce_comm_NODES(_XCALABLEMP_nodes_t *nodes, ...) {
     int size = nodes->info[i].size;
     int rank = nodes->info[i].rank;
 
-    if (va_arg(args, int) == 1) color += (acc_nodes_size * rank);
+    if (va_arg(args, int) == 1) {
+      color += (acc_nodes_size * rank);
+    }
 
     acc_nodes_size *= size;
   }
@@ -343,12 +346,7 @@ void _XCALABLEMP_init_reduce_comm_NODES(_XCALABLEMP_nodes_t *nodes, ...) {
 }
 
 void _XCALABLEMP_init_reduce_comm_TEMPLATE(_XCALABLEMP_template_t *template, ...) {
-  if (template == NULL)
-    _XCALABLEMP_fatal("null template descriptor detected");
-
   _XCALABLEMP_nodes_t *onto_nodes = template->onto_nodes;
-  if (onto_nodes == NULL)
-    _XCALABLEMP_fatal("null nodes descriptor detected");
 
   int color = 1;
   int acc_nodes_size = 1;
@@ -360,17 +358,19 @@ void _XCALABLEMP_init_reduce_comm_TEMPLATE(_XCALABLEMP_template_t *template, ...
     _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[i]);
 
     int size, rank;
-    _XCALABLEMP_nodes_info_t *onto_nodes_info = chunk->onto_nodes_info;
-    if (onto_nodes_info == NULL) { // distmanner == DUPLICATION
+    if (chunk->dist_manner == _XCALABLEMP_N_DIST_DUPLICATION) {
       size = 1;
       rank = 0;
     }
     else {
+      _XCALABLEMP_nodes_info_t *onto_nodes_info = chunk->onto_nodes_info;
       size = onto_nodes_info->size;
       rank = onto_nodes_info->rank;
     }
 
-    if (va_arg(args, int) == 1) color += (acc_nodes_size * rank);
+    if (va_arg(args, int) == 1) {
+      color += (acc_nodes_size * rank);
+    }
 
     acc_nodes_size *= size;
   }
