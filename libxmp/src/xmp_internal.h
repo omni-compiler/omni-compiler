@@ -78,6 +78,7 @@ typedef struct _XCALABLEMP_array_info_type {
   int par_stride;
   int par_size;
   int alloc_size;
+  int dim_acc;
   // --------------------------------
 
   long long align_subscript;

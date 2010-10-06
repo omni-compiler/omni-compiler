@@ -13,7 +13,6 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
   va_start(args, dim);
   for (int i = 0; i < dim; i++) {
     int size = va_arg(args, int);
-
     int lower = 0;
     int upper = size - 1;
 
@@ -23,11 +22,12 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
     ai->ser_upper = upper;
     ai->ser_size = size;
 
-    ai->par_lower = ai->ser_lower;
-    ai->par_upper = ai->ser_upper;
+    ai->par_lower = lower;
+    ai->par_upper = upper;
     ai->par_stride = 1;
-    ai->par_size = ai->ser_size;
-    ai->alloc_size = ai->ser_size;
+    ai->par_size = size;
+    ai->alloc_size = size;
+ // ai->dim_acc is calculated in _XCALABLEMP_alloc_array, _XCALABLEMP_init_array_addr
     
     ai->align_subscript = 0;
 
@@ -197,6 +197,8 @@ void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc,
     unsigned long long *acc = va_arg(args, unsigned long long *);
     *acc = total_elmts;
 
+    array_desc->info[i].dim_acc = total_elmts;
+
     total_elmts *= array_desc->info[i].alloc_size;
   }
   va_end(args);
@@ -218,6 +220,8 @@ void _XCALABLEMP_init_array_addr(void **array_addr, void *param_addr,
   for (int i = dim - 1; i >= 0; i--) {
     unsigned long long *acc = va_arg(args, unsigned long long *);
     *acc = total_elmts;
+
+    array_desc->info[i].dim_acc = total_elmts;
 
     total_elmts *= array_desc->info[i].alloc_size;
   }

@@ -92,7 +92,7 @@ void _XCALABLEMP_pack_shadow_NORMAL_2_BASIC(void **lo_buffer, void **hi_buffer, 
       lower0 = array_desc->info[0].shadow_size_lo + array_desc->info[0].par_size;
       upper0 = lower0 + array_desc->info[0].shadow_size_hi - 1;
       stride0 = 1;
-      dim_acc0 = array_desc->info[1].alloc_size;
+      dim_acc0 = array_desc->info[0].dim_acc;
 
       lower1 = array_desc->info[1].shadow_size_lo;
       upper1 = lower1 + array_desc->info[1].par_size - 1;
@@ -102,7 +102,7 @@ void _XCALABLEMP_pack_shadow_NORMAL_2_BASIC(void **lo_buffer, void **hi_buffer, 
       lower0 = array_desc->info[0].shadow_size_lo;
       upper0 = lower0 + array_desc->info[0].par_size - 1;
       stride0 = 1;
-      dim_acc0 = array_desc->info[1].alloc_size;
+      dim_acc0 = array_desc->info[0].dim_acc;
 
       lower1 = array_desc->info[1].shadow_size_lo + array_desc->info[1].par_size;
       upper1 = lower1 + array_desc->info[1].shadow_size_hi - 1;
