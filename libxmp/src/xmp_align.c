@@ -12,12 +12,9 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
   va_list args;
   va_start(args, dim);
   for (int i = 0; i < dim; i++) {
-    int lower = 0;
     int size = va_arg(args, int);
-    if (size <= 0) {
-      _XCALABLEMP_fatal("array size is less or equal to zero");
-    }
 
+    int lower = 0;
     int upper = size - 1;
 
     _XCALABLEMP_array_info_t *ai = &(a->info[i]);
@@ -30,6 +27,7 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
     ai->par_upper = ai->ser_upper;
     ai->par_stride = 1;
     ai->par_size = ai->ser_size;
+    ai->alloc_size = ai->ser_size;
     
     ai->align_subscript = 0;
 
@@ -118,7 +116,7 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, 
     }
 
     // set par_size
-    par_size   = _XCALABLEMP_M_COUNT_TRIPLETi(par_lower, par_upper, 1);
+    par_size = _XCALABLEMP_M_COUNT_TRIPLETi(par_lower, par_upper, 1);
   }
 
   // set members
@@ -127,6 +125,7 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, 
     ai->par_upper = par_upper;
     ai->par_stride = 1;
     ai->par_size = par_size;
+    ai->alloc_size = par_size;
 
     *temp0 = ai->par_lower;
   }
@@ -160,10 +159,10 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
 
     int dist = (ai->ser_upper - mod) / cycle;
 
-    par_lower  = mod;
-    par_upper  = mod + (dist * cycle);
+    par_lower = mod;
+    par_upper = mod + (dist * cycle);
     par_stride = cycle;
-    par_size   = dist + 1;
+    par_size = dist + 1;
   }
 
   // set members
@@ -172,6 +171,7 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
     ai->par_upper = par_upper;
     ai->par_stride = par_stride;
     ai->par_size = par_size;
+    ai->alloc_size = par_size;
 
     *temp0 = par_stride;
   }
@@ -197,7 +197,7 @@ void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc,
     unsigned long long *acc = va_arg(args, unsigned long long *);
     *acc = total_elmts;
 
-    total_elmts *= array_desc->info[i].par_size;
+    total_elmts *= array_desc->info[i].alloc_size;
   }
   va_end(args);
 
@@ -219,7 +219,7 @@ void _XCALABLEMP_init_array_addr(void **array_addr, void *param_addr,
     unsigned long long *acc = va_arg(args, unsigned long long *);
     *acc = total_elmts;
 
-    total_elmts *= array_desc->info[i].par_size;
+    total_elmts *= array_desc->info[i].alloc_size;
   }
   va_end(args);
 
