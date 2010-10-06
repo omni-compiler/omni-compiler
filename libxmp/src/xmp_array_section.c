@@ -14,7 +14,9 @@ static void _XCALABLEMP_normalize_array_section(int *lower, int *upper, int *str
     l = *upper;
     u = *lower;
   }
-  else _XCALABLEMP_fatal("the stride of <array-section> is 0");
+  else {
+    _XCALABLEMP_fatal("the stride of <array-section> is 0");
+  }
 
   // normalize values
   if (s > 0) {

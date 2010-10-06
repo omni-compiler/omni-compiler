@@ -14,7 +14,9 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
   for (int i = 0; i < dim; i++) {
     int lower = 0;
     int size = va_arg(args, int);
-    if (size <= 0) _XCALABLEMP_fatal("array size is less or equal to zero");
+    if (size <= 0) {
+      _XCALABLEMP_fatal("array size is less or equal to zero");
+    }
 
     int upper = size - 1;
 
@@ -182,7 +184,7 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
 }
 
 void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc, int datatype_size, ...) {
-  if (array_desc == NULL) {
+  if (!(array_desc->is_allocated)) {
     *array_addr = NULL;
     return;
   }
@@ -195,17 +197,7 @@ void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc,
     unsigned long long *acc = va_arg(args, unsigned long long *);
     *acc = total_elmts;
 
-    _XCALABLEMP_array_info_t *ai = &(array_desc->info[i]);
-
-    // FIXME correct???
-    unsigned long long elmts = ai->par_size;
-    if (elmts == 0) {
-      *array_addr = NULL;
-      return;
-    }
-    else {
-      total_elmts *= elmts;
-    }
+    total_elmts *= array_desc->info[i].par_size;
   }
   va_end(args);
 
@@ -214,7 +206,7 @@ void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc,
 
 void _XCALABLEMP_init_array_addr(void **array_addr, void *param_addr,
                                  _XCALABLEMP_array_t *array_desc, ...) {
-  if (array_desc == NULL) {
+  if (!(array_desc->is_allocated)) {
     *array_addr = NULL;
     return;
   }
@@ -227,17 +219,7 @@ void _XCALABLEMP_init_array_addr(void **array_addr, void *param_addr,
     unsigned long long *acc = va_arg(args, unsigned long long *);
     *acc = total_elmts;
 
-    _XCALABLEMP_array_info_t *ai = &(array_desc->info[i]);
-
-    // FIXME correct???
-    unsigned long long elmts = ai->par_size;
-    if (elmts == 0) {
-      *array_addr = NULL;
-      return;
-    }
-    else {
-      total_elmts *= elmts;
-    }
+    total_elmts *= array_desc->info[i].par_size;
   }
   va_end(args);
 
@@ -245,16 +227,10 @@ void _XCALABLEMP_init_array_addr(void **array_addr, void *param_addr,
 }
 
 void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
-  if (array == NULL) return;
-
   _XCALABLEMP_template_t *align_template = array->align_template;
-  if (align_template == NULL) {
-    _XCALABLEMP_fatal("null template descriptor detected");
-  }
-
   _XCALABLEMP_nodes_t *onto_nodes = align_template->onto_nodes;
-  if (onto_nodes == NULL) {
-    _XCALABLEMP_fatal("null nodes descriptor detected");
+  if (!(onto_nodes->is_member)) {
+    return;
   }
 
   int color = 1;
@@ -268,7 +244,7 @@ void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
 
     int size, rank;
     _XCALABLEMP_nodes_info_t *onto_nodes_info = chunk->onto_nodes_info;
-    if (onto_nodes_info == NULL) { // distmanner == DUPLICATION
+    if (chunk->dist_manner == _XCALABLEMP_N_DIST_DUPLICATION) {
       size = 1;
       rank = 0;
     }
@@ -288,6 +264,7 @@ void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
   MPI_Comm *comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_split(*(onto_nodes->comm), color, onto_nodes->comm_rank, comm);
 
+  // set members
   array->comm = comm;
   MPI_Comm_size(*comm, &(array->comm_size));
   MPI_Comm_rank(*comm, &(array->comm_rank));

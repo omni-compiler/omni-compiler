@@ -1,8 +1,7 @@
 #include "xmp_internal.h"
 
 void _XCALABLEMP_barrier_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes) {
-  if (nodes == NULL) return;
-  else {
+  if (nodes->is_member) {
     MPI_Barrier(*(nodes->comm));
   }
 }
