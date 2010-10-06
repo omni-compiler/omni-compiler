@@ -72,10 +72,12 @@ typedef struct _XCALABLEMP_array_info_type {
   int ser_size;
 
   // FIXME not support BLOCK_CYCLIC, GEN_BLOCK yet
+  // enable when is_allocated is true
   int par_lower;
   int par_upper;
   int par_stride;
   int par_size;
+  // --------------------------------
 
   long long align_subscript;
 
@@ -89,10 +91,14 @@ typedef struct _XCALABLEMP_array_info_type {
 } _XCALABLEMP_array_info_t;
 
 typedef struct _XCALABLEMP_array_type {
+  _Bool is_allocated;
+  int dim;
+
+  // enable when is_member is true
   MPI_Comm *comm;
   int comm_size;
   int comm_rank;
-  int dim;
+  // -----------------------------
 
   _XCALABLEMP_template_t *align_template;
   _XCALABLEMP_array_info_t info[1];
