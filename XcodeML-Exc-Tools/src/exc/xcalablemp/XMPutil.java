@@ -31,8 +31,7 @@ public class XMPutil {
 
   public static boolean isIntegerType(Xtype type) {
     if (type.getKind() == Xtype.BASIC) {
-      BasicType basicType = (BasicType)type;
-      switch (basicType.getBasicType()) {
+      switch (type.getBasicType()) {
         case BasicType.CHAR:
         case BasicType.UNSIGNED_CHAR:
         case BasicType.SHORT:
@@ -53,8 +52,7 @@ public class XMPutil {
 
   public static String getTypeName(Xtype type) {
     if (type.getKind() == Xtype.BASIC) {
-      BasicType basicType = (BasicType)type;
-      switch (basicType.getBasicType()) {
+      switch (type.getBasicType()) {
         case BasicType.BOOL:			return new String("BOOL");
         case BasicType.CHAR:			return new String("CHAR");
         case BasicType.UNSIGNED_CHAR:		return new String("UNSIGNED_CHAR");

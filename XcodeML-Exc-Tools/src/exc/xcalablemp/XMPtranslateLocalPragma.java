@@ -1134,7 +1134,7 @@ public class XMPtranslateLocalPragma {
                                        alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
     if (arrayType.getKind() == Xtype.BASIC) {
       packFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pack_shadow_NORMAL_" + alignedArray.getDim() + "_BASIC");
-      // FIXME create new type
+      packFuncArgs.add(Xcons.IntConstant(arrayType.getBasicType() + 200));
     }
     else {
       packFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pack_shadow_NORMAL_" + alignedArray.getDim() + "_GENERAL");
