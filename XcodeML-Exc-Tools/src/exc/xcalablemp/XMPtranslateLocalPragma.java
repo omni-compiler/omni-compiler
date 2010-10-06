@@ -1118,7 +1118,6 @@ public class XMPtranslateLocalPragma {
                                              XMPalignedArray alignedArray, int arrayIndex,
                                              BlockList reflectFuncBody) {
     String arrayName = alignedArray.getName();
-    Xobject arrayDescRef = alignedArray.getDescId().Ref();
     Xtype arrayType = alignedArray.getType();
     Xtype arrayPtype = Xtype.Pointer(arrayType);
     String arrayTypeName = XMPutil.getTypeName(arrayType);
@@ -1131,13 +1130,15 @@ public class XMPtranslateLocalPragma {
 
     // pack shadow
     Ident packFuncId = null;
-    XobjList packFuncArgs = Xcons.List(loSendId.getAddr(), hiSendId.getAddr(), arrayDescRef, Xcons.IntConstant(arrayIndex));
-    if (arrayTypeName == null) {
-      packFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pack_shadow_" + alignedArray.getDim() + "_GENERAL");
-      packFuncArgs.add(Xcons.SizeOf(arrayType));
+    XobjList packFuncArgs = Xcons.List(loSendId.getAddr(), hiSendId.getAddr(), alignedArray.getAddrId().Ref(),
+                                       alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
+    if (arrayType.getKind() == Xtype.BASIC) {
+      packFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pack_shadow_NORMAL_" + alignedArray.getDim() + "_BASIC");
+      // FIXME create new type
     }
     else {
-      packFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pack_shadow_" + alignedArray.getDim() + "_" + arrayTypeName);
+      packFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pack_shadow_NORMAL_" + alignedArray.getDim() + "_GENERAL");
+      packFuncArgs.add(Xcons.SizeOf(arrayType));
     }
 
     reflectFuncBody.add(Bcons.Statement(packFuncId.Call(packFuncArgs)));

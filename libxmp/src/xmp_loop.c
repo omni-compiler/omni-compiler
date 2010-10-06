@@ -86,8 +86,8 @@ void _XCALABLEMP_sched_loop_template_BLOCK_INT                _XCALABLEMP_SM_SCH
 void _XCALABLEMP_sched_loop_template_BLOCK_UNSIGNED_INT       _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_U(unsigned int)
 void _XCALABLEMP_sched_loop_template_BLOCK_LONG               _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_S(long)
 void _XCALABLEMP_sched_loop_template_BLOCK_UNSIGNED_LONG      _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_U(unsigned long)
-void _XCALABLEMP_sched_loop_template_BLOCK_LONG_LONG          _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_S(long long)
-void _XCALABLEMP_sched_loop_template_BLOCK_UNSIGNED_LONG_LONG _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_U(unsigned long long)
+void _XCALABLEMP_sched_loop_template_BLOCK_LONGLONG           _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_S(long long)
+void _XCALABLEMP_sched_loop_template_BLOCK_UNSIGNED_LONGLONG  _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_U(unsigned long long)
 
 // cyclic distribution ---------------------------------------------------------------------------------------------------------------
 #define _XCALABLEMP_SM_GET_TEMPLATE_INFO_CYCLIC(_type) \
@@ -151,8 +151,8 @@ void _XCALABLEMP_sched_loop_template_CYCLIC_INT                _XCALABLEMP_SM_SC
 void _XCALABLEMP_sched_loop_template_CYCLIC_UNSIGNED_INT       _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_U(unsigned int)
 void _XCALABLEMP_sched_loop_template_CYCLIC_LONG               _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_S(long)
 void _XCALABLEMP_sched_loop_template_CYCLIC_UNSIGNED_LONG      _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_U(unsigned long)
-void _XCALABLEMP_sched_loop_template_CYCLIC_LONG_LONG          _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_S(long long)
-void _XCALABLEMP_sched_loop_template_CYCLIC_UNSIGNED_LONG_LONG _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_U(unsigned long long)
+void _XCALABLEMP_sched_loop_template_CYCLIC_LONGLONG           _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_S(long long)
+void _XCALABLEMP_sched_loop_template_CYCLIC_UNSIGNED_LONGLONG  _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_U(unsigned long long)
 
 // schedule by nodes ----------------------------------------------------------------------------------------------------------------
 #define _XCALABLEMP_SM_SCHED_LOOP_NODES(_type) \
@@ -185,5 +185,5 @@ void _XCALABLEMP_sched_loop_nodes_INT                _XCALABLEMP_SM_SCHED_LOOP_N
 void _XCALABLEMP_sched_loop_nodes_UNSIGNED_INT       _XCALABLEMP_SM_SCHED_LOOP_NODES(unsigned int)
 void _XCALABLEMP_sched_loop_nodes_LONG               _XCALABLEMP_SM_SCHED_LOOP_NODES(long)
 void _XCALABLEMP_sched_loop_nodes_UNSIGNED_LONG      _XCALABLEMP_SM_SCHED_LOOP_NODES(unsigned long)
-void _XCALABLEMP_sched_loop_nodes_LONG_LONG          _XCALABLEMP_SM_SCHED_LOOP_NODES(long long)
-void _XCALABLEMP_sched_loop_nodes_UNSIGNED_LONG_LONG _XCALABLEMP_SM_SCHED_LOOP_NODES(unsigned long long)
+void _XCALABLEMP_sched_loop_nodes_LONGLONG           _XCALABLEMP_SM_SCHED_LOOP_NODES(long long)
+void _XCALABLEMP_sched_loop_nodes_UNSIGNED_LONGLONG  _XCALABLEMP_SM_SCHED_LOOP_NODES(unsigned long long)
