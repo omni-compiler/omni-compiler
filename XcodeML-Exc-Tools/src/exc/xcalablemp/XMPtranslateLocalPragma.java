@@ -488,7 +488,7 @@ public class XMPtranslateLocalPragma {
 
     // create/destroy local descriptor
     XMPlocalDecl.addConstructorCall("_XCALABLEMP_init_array_desc", initArrayDescFuncArgs, pb, _globalDecl);
-    XMPlocalDecl.insertDestructorCall("_XCALABLEMP_finalize_array_desc", Xcons.List(arrayDescId.getAddr()), pb, _globalDecl);
+    XMPlocalDecl.insertDestructorCall("_XCALABLEMP_finalize_array_desc", Xcons.List(arrayDescId.Ref()), pb, _globalDecl);
 
     XMPalignedArray alignedArray = new XMPalignedArray(arrayName, arrayElmtType, arrayDim,
                                                        arraySizeVector, gtolAccIdVector, arrayDescId, arrayAddrId,
@@ -589,7 +589,7 @@ public class XMPtranslateLocalPragma {
   private void declAlignFunc(XMPalignedArray alignedArray, int alignSourceIndex,
                              XMPtemplate templateObj, int alignSubscriptIndex,
                              Xobject alignSubscriptExpr, PragmaBlock pb) throws XMPexception {
-    XobjList alignFuncArgs = Xcons.List(alignedArray.getDescId().getAddr(),
+    XobjList alignFuncArgs = Xcons.List(alignedArray.getDescId().Ref(),
                                         Xcons.IntConstant(alignSourceIndex),
                                         Xcons.IntConstant(alignSubscriptIndex));
 

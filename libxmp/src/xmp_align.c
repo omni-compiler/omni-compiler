@@ -53,27 +53,25 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
   *array = a;
 }
 
-void _XCALABLEMP_finalize_array_desc(_XCALABLEMP_array_t **array) {
-  if ((*array) != NULL) {
-    _XCALABLEMP_free((*array)->comm);
-    _XCALABLEMP_free(*array);
-
-    *array = NULL;
+void _XCALABLEMP_finalize_array_desc(_XCALABLEMP_array_t *array) {
+  if (array != NULL) {
+    _XCALABLEMP_free(array->comm);
+    _XCALABLEMP_free(array);
   }
 }
 
-void _XCALABLEMP_align_array_DUPLICATION(_XCALABLEMP_array_t **array, int array_index, int template_index,
+void _XCALABLEMP_align_array_DUPLICATION(_XCALABLEMP_array_t *array, int array_index, int template_index,
                                          long long align_subscript) {
-  if (*array == NULL) return;
+  if (array == NULL) return;
 
-  _XCALABLEMP_template_t *template = (*array)->align_template;
+  _XCALABLEMP_template_t *template = array->align_template;
   if (template == NULL) {
     _XCALABLEMP_fatal("null template descriptor detected");
   }
 
   if (template->chunk == NULL) return;
 
-  _XCALABLEMP_array_info_t *ai = &((*array)->info[array_index]);
+  _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
   _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
 
   ai->align_template_dim = template_index;
@@ -90,18 +88,18 @@ void _XCALABLEMP_align_array_DUPLICATION(_XCALABLEMP_array_t **array, int array_
   ai->align_subscript = align_subscript;
 }
 
-void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t **array, int array_index, int template_index,
+void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, int template_index,
                                    long long align_subscript, int *temp0) {
-  if (*array == NULL) return;
+  if (array == NULL) return;
 
-  _XCALABLEMP_template_t *template = (*array)->align_template;
+  _XCALABLEMP_template_t *template = array->align_template;
   if (template == NULL) {
     _XCALABLEMP_fatal("null template descriptor detected");
   }
 
   if (template->chunk == NULL) return;
 
-  _XCALABLEMP_array_info_t *ai = &((*array)->info[array_index]);
+  _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
   _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
 
@@ -123,7 +121,7 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t **array, int array_index,
     ai->par_lower = template_lower - align_subscript;
   }
   else if (template_upper < align_lower) {
-    _XCALABLEMP_finalize_array_desc(array);
+    //_XCALABLEMP_finalize_array_desc(array);
     return;
   }
   else {
@@ -132,7 +130,7 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t **array, int array_index,
 
   // set par_upper
   if (align_upper < template_lower) {
-    _XCALABLEMP_finalize_array_desc(array);
+    //_XCALABLEMP_finalize_array_desc(array);
     return;
   }
   else if (template_upper < align_upper) {
@@ -152,18 +150,18 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t **array, int array_index,
   *temp0 = ai->par_lower;
 }
 
-void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t **array, int array_index, int template_index,
+void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index, int template_index,
                                     long long align_subscript, int *temp0) {
-  if (*array == NULL) return;
+  if (array == NULL) return;
 
-  _XCALABLEMP_template_t *template = (*array)->align_template;
+  _XCALABLEMP_template_t *template = array->align_template;
   if (template == NULL) {
     _XCALABLEMP_fatal("null template descriptor detected");
   }
 
   if (template->chunk == NULL) return;
 
-  _XCALABLEMP_array_info_t *ai = &((*array)->info[array_index]);
+  _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
   _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
 

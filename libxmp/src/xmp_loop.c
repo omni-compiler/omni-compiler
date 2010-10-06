@@ -24,7 +24,7 @@ else ser_cond -= ((ser_cond - ser_init) % ser_step);
 // schedule by template -------------------------------------------------------------------------------------------------------------
 // block distribution ---------------------------------------------------------------------------------------------------------------
 #define _XCALABLEMP_SM_GET_TEMPLATE_INFO_BLOCK(_type) \
-if (template->chunk == NULL) _XCALABLEMP_fatal("template in loop directive is not distributed"); \
+if (!(template->is_owner)) return; \
 _type template_lower = (_type)template->chunk[template_index].par_lower; \
 _type template_upper = (_type)template->chunk[template_index].par_upper;
 
@@ -91,7 +91,7 @@ void _XCALABLEMP_sched_loop_template_BLOCK_UNSIGNED_LONG_LONG _XCALABLEMP_SM_SCH
 
 // cyclic distribution ---------------------------------------------------------------------------------------------------------------
 #define _XCALABLEMP_SM_GET_TEMPLATE_INFO_CYCLIC(_type) \
-if (template->chunk == NULL) _XCALABLEMP_fatal("template in loop directive is not distributed"); \
+if (!(template->is_owner)) return; \
 _type nodes_size = (_type)template->chunk[template_index].onto_nodes_info->size; \
 _type template_lower = (_type)template->chunk[template_index].par_lower;
 

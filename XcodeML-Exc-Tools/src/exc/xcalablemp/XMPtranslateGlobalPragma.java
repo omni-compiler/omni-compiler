@@ -522,7 +522,7 @@ public class XMPtranslateGlobalPragma {
   private void declAlignFunc(XMPalignedArray alignedArray, int alignSourceIndex,
                              XMPtemplate templateObj, int alignSubscriptIndex,
                              Xobject alignSubscriptExpr) throws XMPexception {
-    XobjList alignFuncArgs = Xcons.List(alignedArray.getDescId().getAddr(),
+    XobjList alignFuncArgs = Xcons.List(alignedArray.getDescId().Ref(),
                                         Xcons.IntConstant(alignSourceIndex),
                                         Xcons.IntConstant(alignSubscriptIndex));
 

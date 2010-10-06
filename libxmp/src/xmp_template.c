@@ -194,9 +194,7 @@ void _XCALABLEMP_init_template_UNFIXED(_XCALABLEMP_template_t **template, int di
 }
 
 void _XCALABLEMP_init_template_chunk(_XCALABLEMP_template_t *template, _XCALABLEMP_nodes_t *nodes) {
-  if (nodes->is_member) {
-    template->is_owner = true;
-  }
+  template->is_owner = nodes->is_member;
 
   template->onto_nodes = nodes;
   template->chunk = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_template_chunk_t) * (template->dim));

@@ -38,10 +38,10 @@ typedef struct _XCALABLEMP_template_info_type {
 
 typedef struct _XCALABLEMP_template_chunk_type {
   // FIXME not support BLOCK_CYCLIC yet
-  // enable when _is_owner is true
+  // enable when is_owner is true
   long long par_lower;
   long long par_upper;
-  // -----------------------------
+  // ----------------------------
 
   long long par_stride;
   unsigned long long par_chunk_width;
