@@ -6,6 +6,31 @@
 //FIXME delete this include
 #include <stdio.h>
 
+static void _XCALABLEMP_pack_shadow_buffer(void *buffer, int array_type, int array_dim,
+                                           int *lower, int *upper, int *stride, unsigned long long *dim_acc);
+static void _XCALABLEMP_unpack_shadow_buffer(void *buffer, int array_type, int array_dim,
+                                             int *lower, int *upper, int *stride, unsigned long long *dim_acc);
+
+// FIXME implement
+static void _XCALABLEMP_pack_shadow_buffer(void *buffer, int array_type, int array_dim,
+                                           int *lower, int *upper, int *stride, unsigned long long *dim_acc) {
+  printf("[%d] pack ", _XCALABLEMP_world_rank);
+  for (int i = 0; i < array_dim; i++) {
+    printf("[%d:%d:%d](%ld)", lower[i], upper[i], stride[i], dim_acc[i]);
+  }
+  printf("\n");
+}
+
+// FIXME implement
+static void _XCALABLEMP_unpack_shadow_buffer(void *buffer, int array_type, int array_dim,
+                                             int *lower, int *upper, int *stride, unsigned long long *dim_acc) {
+  printf("[%d] unpack ", _XCALABLEMP_world_rank);
+  for (int i = 0; i < array_dim; i++) {
+    printf("[%d:%d:%d](%ld)", lower[i], upper[i], stride[i], dim_acc[i]);
+  }
+  printf("\n");
+}
+
 void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
   if (array == NULL) return;
 
@@ -54,14 +79,14 @@ void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
 }
 
 // FIXME consider full shadow in other dimensions
-void _XCALABLEMP_pack_shadow_NORMAL_2_BASIC(void **lo_buffer, void **hi_buffer, void *array_addr,
-                                            _XCALABLEMP_array_t *array_desc, int array_index, int array_type) {
+void _XCALABLEMP_pack_shadow_NORMAL_BASIC(void **lo_buffer, void **hi_buffer, void *array_addr,
+                                          _XCALABLEMP_array_t *array_desc, int array_index, int array_type) {
   int array_dim = array_desc->dim;
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
   _XCALABLEMP_template_chunk_t *ti = ai->align_template_chunk;
 
-  int lower[2], upper[2], stride[2];
-  unsigned long long dim_acc[2];
+  int lower[array_dim], upper[array_dim], stride[array_dim];
+  unsigned long long dim_acc[array_dim];
 
   // pack lo shadow
   if (ai->shadow_size_lo > 0) {
@@ -74,36 +99,24 @@ void _XCALABLEMP_pack_shadow_NORMAL_2_BASIC(void **lo_buffer, void **hi_buffer, 
     *lo_buffer = _XCALABLEMP_alloc((ai->shadow_size_lo) * (ai->dim_elmts));
 
     // calc index
-    if (array_index == 0) {
-      // XXX shadow is allowed in BLOCK distribution
-      lower[0] = array_desc->info[0].local_lower;
-      upper[0] = lower[0] + array_desc->info[0].shadow_size_lo - 1;
-      stride[0] = 1;
-      dim_acc[0] = array_desc->info[0].dim_acc;
+    for (int i = 0; i < array_dim; i++) {
+      if (i == array_index) {
+        // FIXME shadow is allowed in BLOCK distribution
+        lower[i] = array_desc->info[i].local_lower;
+        upper[i] = lower[i] + array_desc->info[i].shadow_size_lo - 1;
+        stride[i] = 1;
+      }
+      else {
+        lower[i] = array_desc->info[i].local_lower;
+        upper[i] = array_desc->info[i].local_upper;
+        stride[i] = array_desc->info[i].local_stride;
+      }
 
-      lower[1] = array_desc->info[1].local_lower;
-      upper[1] = array_desc->info[1].local_upper;
-      stride[1] = array_desc->info[1].local_stride;
-   // dim_acc[1] = array_desc->info[1].dim_acc;
-    }
-    else { // array_index == 1
-      lower[0] = array_desc->info[0].local_lower;
-      upper[0] = array_desc->info[0].local_upper;
-      stride[0] = array_desc->info[0].local_stride;
-      dim_acc[0] = array_desc->info[0].dim_acc;
-
-      // XXX shadow is allowed in BLOCK distribution
-      lower[1] = array_desc->info[1].local_lower;
-      upper[1] = lower[0] + array_desc->info[1].shadow_size_lo - 1;
-      stride[1] = 1;
-   // dim_acc[1] = array_desc->info[1].dim_acc;
+      dim_acc[i] = array_desc->info[i].dim_acc;
     }
 
-    // FIXME delete this
-    printf("[%d] pack shadow_lo[%d] = [%d:%d:%d][%d:%d:%d] (%ld)\n", _XCALABLEMP_world_rank, array_index,
-                                                                     lower[0], upper[0], stride[0],
-                                                                     lower[1], upper[1], stride[1],
-                                                                     (ai->shadow_size_lo) * (ai->dim_elmts));
+    // pack data
+    _XCALABLEMP_pack_shadow_buffer(*lo_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
   }
 
   // pack hi shadow
@@ -117,48 +130,36 @@ void _XCALABLEMP_pack_shadow_NORMAL_2_BASIC(void **lo_buffer, void **hi_buffer, 
     *hi_buffer = _XCALABLEMP_alloc((ai->shadow_size_hi) * (ai->dim_elmts));
 
     // calc index
-    if (array_index == 0) {
-      // XXX shadow is allowed in BLOCK distribution
-      lower[0] = array_desc->info[0].local_upper - array_desc->info[0].shadow_size_hi + 1;
-      upper[0] = lower[0] + array_desc->info[0].shadow_size_hi - 1;
-      stride[0] = 1;
-      dim_acc[0] = array_desc->info[0].dim_acc;
+    for (int i = 0; i < array_dim; i++) {
+      if (i == array_index) {
+        // XXX shadow is allowed in BLOCK distribution
+        lower[i] = array_desc->info[i].local_upper - array_desc->info[i].shadow_size_hi + 1;
+        upper[i] = lower[i] + array_desc->info[i].shadow_size_hi - 1;
+        stride[i] = 1;
+      }
+      else {
+        lower[i] = array_desc->info[i].local_lower;
+        upper[i] = array_desc->info[i].local_upper;
+        stride[i] = array_desc->info[i].local_stride;
+      }
 
-      lower[1] = array_desc->info[1].local_lower;
-      upper[1] = array_desc->info[1].local_upper;
-      stride[1] = array_desc->info[1].local_stride;
-   // dim_acc[1] = array_desc->info[1].dim_acc;
-    }
-    else { // array_index == 1
-      lower[0] = array_desc->info[0].local_lower;
-      upper[0] = array_desc->info[0].local_upper;
-      stride[0] = array_desc->info[0].local_stride;
-      dim_acc[0] = array_desc->info[0].dim_acc;
-
-      // XXX shadow is allowed in BLOCK distribution
-      lower[1] = array_desc->info[1].local_upper - array_desc->info[1].shadow_size_lo + 1;
-      upper[1] = lower[1] + array_desc->info[1].shadow_size_hi - 1;
-      stride[1] = 1;
-   // dim_acc[1] = array_desc->info[1].dim_acc;
+      dim_acc[i] = array_desc->info[i].dim_acc;
     }
 
-    // FIXME delete this
-    printf("[%d] pack shadow_hi[%d] = [%d:%d:%d][%d:%d:%d] (%ld)\n", _XCALABLEMP_world_rank, array_index,
-                                                                     lower[0], upper[0], stride[0],
-                                                                     lower[1], upper[1], stride[1],
-                                                                     (ai->shadow_size_hi) * (ai->dim_elmts));
+    // pack data
+    _XCALABLEMP_pack_shadow_buffer(*hi_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
   }
 }
 
 // FIXME not consider full shadow
-void _XCALABLEMP_unpack_shadow_NORMAL_2_BASIC(void *lo_buffer, void *hi_buffer, void *array_addr,
-                                              _XCALABLEMP_array_t *array_desc, int array_index, int array_type) {
+void _XCALABLEMP_unpack_shadow_NORMAL_BASIC(void *lo_buffer, void *hi_buffer, void *array_addr,
+                                            _XCALABLEMP_array_t *array_desc, int array_index, int array_type) {
   int array_dim = array_desc->dim;
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
   _XCALABLEMP_template_chunk_t *ti = ai->align_template_chunk;
 
-  int lower[2], upper[2], stride[2];
-  unsigned long long dim_acc[2];
+  int lower[array_dim], upper[array_dim], stride[array_dim];
+  unsigned long long dim_acc[array_dim];
 
   // unpack lo shadow
   if (ai->shadow_size_lo > 0) {
@@ -168,36 +169,24 @@ void _XCALABLEMP_unpack_shadow_NORMAL_2_BASIC(void *lo_buffer, void *hi_buffer, 
     }
 
     // calc index
-    if (array_index == 0) {
-      // XXX shadow is allowed in BLOCK distribution
-      lower[0] = 0;
-      upper[0] = array_desc->info[0].shadow_size_lo - 1;
-      stride[0] = 1;
-      dim_acc[0] = array_desc->info[0].dim_acc;
+    for (int i = 0; i < array_dim; i++) {
+      if (i == array_index) {
+        // XXX shadow is allowed in BLOCK distribution
+        lower[i] = 0;
+        upper[i] = array_desc->info[i].shadow_size_lo - 1;
+        stride[i] = 1;
+      }
+      else {
+        lower[i] = array_desc->info[i].local_lower;
+        upper[i] = array_desc->info[i].local_upper;
+        stride[i] = array_desc->info[i].local_stride;
+      }
 
-      lower[1] = array_desc->info[1].local_lower;
-      upper[1] = array_desc->info[1].local_upper;
-      stride[1] = array_desc->info[1].local_stride;
-   // dim_acc[1] = array_desc->info[1].dim_acc;
-    }
-    else { // array_index == 1
-      lower[0] = array_desc->info[0].local_lower;
-      upper[0] = array_desc->info[0].local_upper;
-      stride[0] = array_desc->info[0].local_stride;
-      dim_acc[0] = array_desc->info[0].dim_acc;
-
-      // XXX shadow is allowed in BLOCK distribution
-      lower[1] = 0;
-      upper[1] = array_desc->info[1].shadow_size_lo - 1;
-      stride[1] = 1;
-   // dim_acc[1] = array_desc->info[1].dim_acc;
+      dim_acc[i] = array_desc->info[i].dim_acc;
     }
 
-    // FIXME delete this
-    printf("[%d] unpack shadow_lo[%d] = [%d:%d:%d][%d:%d:%d] (%ld)\n", _XCALABLEMP_world_rank, array_index,
-                                                                       lower[0], upper[0], stride[0],
-                                                                       lower[1], upper[1], stride[1],
-                                                                       (ai->shadow_size_lo) * (ai->dim_elmts));
+    // unpack data
+    _XCALABLEMP_unpack_shadow_buffer(lo_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
 
     // free buffer
     _XCALABLEMP_free(lo_buffer);
@@ -211,36 +200,24 @@ void _XCALABLEMP_unpack_shadow_NORMAL_2_BASIC(void *lo_buffer, void *hi_buffer, 
     }
 
     // calc index
-    if (array_index == 0) {
-      // XXX shadow is allowed in BLOCK distribution
-      lower[0] = array_desc->info[0].shadow_size_lo + array_desc->info[0].par_size;
-      upper[0] = lower[0] + array_desc->info[0].shadow_size_hi - 1;
-      stride[0] = 1;
-      dim_acc[0] = array_desc->info[0].dim_acc;
+    for (int i = 0; i < array_dim; i++) {
+      if (array_index == 0) {
+        // XXX shadow is allowed in BLOCK distribution
+        lower[i] = array_desc->info[i].shadow_size_lo + array_desc->info[i].par_size;
+        upper[i] = lower[i] + array_desc->info[i].shadow_size_hi - 1;
+        stride[i] = 1;
+      }
+      else {
+        lower[i] = array_desc->info[i].local_lower;
+        upper[i] = array_desc->info[i].local_upper;
+        stride[i] = array_desc->info[i].local_stride;
+      }
 
-      lower[1] = array_desc->info[1].local_lower;
-      upper[1] = array_desc->info[1].local_upper;
-      stride[1] = array_desc->info[1].local_stride;
-   // dim_acc[1] = array_desc->info[1].dim_acc;
-    }
-    else { // array_index == 1
-      lower[0] = array_desc->info[0].local_lower;
-      upper[0] = array_desc->info[0].local_upper;
-      stride[0] = array_desc->info[0].local_stride;
-      dim_acc[0] = array_desc->info[0].dim_acc;
-
-      // XXX shadow is allowed in BLOCK distribution
-      lower[1] = array_desc->info[1].shadow_size_lo + array_desc->info[1].par_size;
-      upper[1] = lower[1] + array_desc->info[1].shadow_size_hi - 1;
-      stride[1] = 1;
-   // dim_acc[1] = array_desc->info[1].dim_acc;
+      dim_acc[i] = array_desc->info[i].dim_acc;
     }
 
-    // FIXME delete this
-    printf("[%d] unpack shadow_hi[%d] = [%d:%d:%d][%d:%d:%d] (%ld)\n", _XCALABLEMP_world_rank, array_index,
-                                                                       lower[0], upper[0], stride[0],
-                                                                       lower[1], upper[1], stride[1],
-                                                                       (ai->shadow_size_hi) * (ai->dim_elmts));
+    // unpack data
+    _XCALABLEMP_unpack_shadow_buffer(hi_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
 
     // free buffer
     _XCALABLEMP_free(hi_buffer);

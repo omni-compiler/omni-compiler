@@ -1133,11 +1133,11 @@ public class XMPtranslateLocalPragma {
     XobjList packFuncArgs = Xcons.List(loSendId.getAddr(), hiSendId.getAddr(), alignedArray.getAddrId().Ref(),
                                        alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
     if (arrayType.getKind() == Xtype.BASIC) {
-      packFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pack_shadow_NORMAL_" + alignedArray.getDim() + "_BASIC");
+      packFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pack_shadow_NORMAL_" + "BASIC");
       packFuncArgs.add(Xcons.IntConstant(arrayType.getBasicType() + 200));
     }
     else {
-      packFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pack_shadow_NORMAL_" + alignedArray.getDim() + "_GENERAL");
+      packFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pack_shadow_NORMAL_" + "GENERAL");
       packFuncArgs.add(Xcons.SizeOf(arrayType));
     }
 
@@ -1150,11 +1150,11 @@ public class XMPtranslateLocalPragma {
     XobjList unpackFuncArgs = Xcons.List(loSendId.Ref(), hiSendId.Ref(), alignedArray.getAddrId().Ref(),
                                          alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
     if (arrayType.getKind() == Xtype.BASIC) {
-      unpackFuncId = _globalDecl.declExternFunc("_XCALABLEMP_unpack_shadow_NORMAL_" + alignedArray.getDim() + "_BASIC");
+      unpackFuncId = _globalDecl.declExternFunc("_XCALABLEMP_unpack_shadow_NORMAL_" + "BASIC");
       unpackFuncArgs.add(Xcons.IntConstant(arrayType.getBasicType() + 200));
     }
     else {
-      unpackFuncId = _globalDecl.declExternFunc("_XCALABLEMP_unpack_shadow_NORMAL_" + alignedArray.getDim() + "_GENERAL");
+      unpackFuncId = _globalDecl.declExternFunc("_XCALABLEMP_unpack_shadow_NORMAL_" + "GENERAL");
       unpackFuncArgs.add(Xcons.SizeOf(arrayType));
     }
 
