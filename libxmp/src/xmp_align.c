@@ -3,6 +3,19 @@
 #include "xmp_internal.h"
 #include "xmp_math_macro.h"
 
+static void _XCALABLEMP_calc_array_dim_elmts(_XCALABLEMP_array_t *array, int array_index) {
+  int dim = array->dim;
+
+  unsigned long long dim_elmts = 1;
+  for (int i = 0; i < dim; i++) {
+    if (i != array_index) {
+      dim_elmts *= array->info[i].par_size;
+    }
+  }
+
+  array->info[array_index].dim_elmts = dim_elmts;
+}
+
 void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_template_t *template, int dim, ...) {
   _XCALABLEMP_array_t *a = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_array_t) + sizeof(_XCALABLEMP_array_info_t) * (dim - 1));
 
@@ -33,6 +46,7 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
     ai->alloc_size = size;
 
  // ai->dim_acc is calculated in _XCALABLEMP_alloc_array, _XCALABLEMP_init_array_addr
+ // ai->dim_elmts is calculated in _XCALABLEMP_alloc_array, _XCALABLEMP_init_array_addr
     
     ai->align_subscript = 0;
 
@@ -216,6 +230,10 @@ void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc,
   }
   va_end(args);
 
+  for (int i = 0; i < dim; i++) {
+    _XCALABLEMP_calc_array_dim_elmts(array_desc, i);
+  }
+
   *array_addr = _XCALABLEMP_alloc(total_elmts * datatype_size);
 }
 
@@ -239,6 +257,10 @@ void _XCALABLEMP_init_array_addr(void **array_addr, void *param_addr,
     total_elmts *= array_desc->info[i].alloc_size;
   }
   va_end(args);
+
+  for (int i = 0; i < dim; i++) {
+    _XCALABLEMP_calc_array_dim_elmts(array_desc, i);
+  }
 
   *array_addr = param_addr;
 }

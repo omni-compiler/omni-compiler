@@ -66,11 +66,15 @@ void _XCALABLEMP_pack_shadow_NORMAL_2_BASIC(void **lo_buffer, void **hi_buffer, 
 
   // pack lo shadow
   if (ai->shadow_size_lo > 0) {
-    // FIXME restrict condition
+    // FIXME strict condition
     if (ai->shadow_size_lo > ai->par_size) {
       _XCALABLEMP_fatal("shadow size is too big");
     }
 
+    // alloc buffer
+    *lo_buffer = _XCALABLEMP_alloc((ai->shadow_size_lo) * (ai->dim_elmts));
+
+    // calc index
     if (array_index == 0) {
       // XXX shadow is allowed in BLOCK distribution
       lower0 = array_desc->info[0].local_lower;
@@ -95,18 +99,23 @@ void _XCALABLEMP_pack_shadow_NORMAL_2_BASIC(void **lo_buffer, void **hi_buffer, 
     }
 
     // FIXME delete this
-    printf("[%d] pack shadow_lo[%d] = [%d:%d:%d][%d:%d:%d]\n", _XCALABLEMP_world_rank, array_index,
-                                                               lower0, upper0, stride0,
-                                                               lower1, upper1, stride1);
+    printf("[%d] pack shadow_lo[%d] = [%d:%d:%d][%d:%d:%d] (%ld)\n", _XCALABLEMP_world_rank, array_index,
+                                                                     lower0, upper0, stride0,
+                                                                     lower1, upper1, stride1,
+                                                                     (ai->shadow_size_lo) * (ai->dim_elmts));
   }
 
   // pack hi shadow
   if (ai->shadow_size_hi > 0) {
-    // FIXME restrict condition
+    // FIXME strict condition
     if (ai->shadow_size_hi > ai->par_size) {
       _XCALABLEMP_fatal("shadow size is too big");
     }
 
+    // alloc buffer
+    *hi_buffer = _XCALABLEMP_alloc((ai->shadow_size_hi) * (ai->dim_elmts));
+
+    // calc index
     if (array_index == 0) {
       // XXX shadow is allowed in BLOCK distribution
       lower0 = array_desc->info[0].local_upper - array_desc->info[0].shadow_size_hi + 1;
@@ -131,9 +140,10 @@ void _XCALABLEMP_pack_shadow_NORMAL_2_BASIC(void **lo_buffer, void **hi_buffer, 
     }
 
     // FIXME delete this
-    printf("[%d] pack shadow_hi[%d] = [%d:%d:%d][%d:%d:%d]\n", _XCALABLEMP_world_rank, array_index,
-                                                               lower0, upper0, stride0,
-                                                               lower1, upper1, stride1);
+    printf("[%d] pack shadow_hi[%d] = [%d:%d:%d][%d:%d:%d] (%ld)\n", _XCALABLEMP_world_rank, array_index,
+                                                                     lower0, upper0, stride0,
+                                                                     lower1, upper1, stride1,
+                                                                     (ai->shadow_size_hi) * (ai->dim_elmts));
   }
 }
 
@@ -150,11 +160,12 @@ void _XCALABLEMP_unpack_shadow_NORMAL_2_BASIC(void *lo_buffer, void *hi_buffer, 
 
   // unpack lo shadow
   if (ai->shadow_size_lo > 0) {
-    // FIXME restrict condition
+    // FIXME strict condition
     if (ai->shadow_size_lo > ai->par_size) {
       _XCALABLEMP_fatal("shadow size is too big");
     }
 
+    // calc index
     if (array_index == 0) {
       // XXX shadow is allowed in BLOCK distribution
       lower0 = 0;
@@ -182,15 +193,19 @@ void _XCALABLEMP_unpack_shadow_NORMAL_2_BASIC(void *lo_buffer, void *hi_buffer, 
     printf("[%d] unpack shadow_lo[%d] = [%d:%d:%d][%d:%d:%d]\n", _XCALABLEMP_world_rank, array_index,
                                                                  lower0, upper0, stride0,
                                                                  lower1, upper1, stride1);
+
+    // free buffer
+    _XCALABLEMP_free(lo_buffer);
   }
 
   // unpack hi shadow
   if (ai->shadow_size_hi > 0) {
-    // FIXME restrict condition
+    // FIXME strict condition
     if (ai->shadow_size_hi > ai->par_size) {
       _XCALABLEMP_fatal("shadow size is too big");
     }
 
+    // calc index
     if (array_index == 0) {
       // XXX shadow is allowed in BLOCK distribution
       lower0 = array_desc->info[0].shadow_size_lo + array_desc->info[0].par_size;
@@ -218,5 +233,8 @@ void _XCALABLEMP_unpack_shadow_NORMAL_2_BASIC(void *lo_buffer, void *hi_buffer, 
     printf("[%d] unpack shadow_hi[%d] = [%d:%d:%d][%d:%d:%d]\n", _XCALABLEMP_world_rank, array_index,
                                                                  lower0, upper0, stride0,
                                                                  lower1, upper1, stride1);
+
+    // free buffer
+    _XCALABLEMP_free(hi_buffer);
   }
 }
