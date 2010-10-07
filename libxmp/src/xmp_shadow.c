@@ -6,25 +6,49 @@
 //FIXME delete this include
 #include <stdio.h>
 
-static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array_index) {
-  _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
-  _XCALABLEMP_template_chunk_t *chunk = ai->align_template_chunk;
-  _XCALABLEMP_nodes_t *onto_nodes = array->align_template->onto_nodes;
-
-  int onto_nodes_index = chunk->onto_nodes_index;
-
-  int array_dim = array->dim;
-
-//  int color = 1;
-//  for (int i = 0; i < array_dim; i++) {
-//    ;
-//  }
-}
-
+static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array_index);
 static void _XCALABLEMP_pack_shadow_buffer(void *buffer, int array_type, int array_dim,
                                            int *lower, int *upper, int *stride, unsigned long long *dim_acc);
 static void _XCALABLEMP_unpack_shadow_buffer(void *buffer, int array_type, int array_dim,
                                              int *lower, int *upper, int *stride, unsigned long long *dim_acc);
+
+static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array_index) {
+  _XCALABLEMP_nodes_t *onto_nodes = array->align_template->onto_nodes;
+  if (!(onto_nodes->is_member)) {
+    return;
+  }
+
+  _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
+  int onto_nodes_index = (ai->align_template_chunk)->onto_nodes_index;
+  int array_dim = array->dim;
+
+  int color = 1;
+  int acc_nodes_size = 1;
+  int nodes_dim = onto_nodes->dim;
+  for (int i = 0; i < nodes_dim; i++) {
+    _XCALABLEMP_nodes_info_t *onto_nodes_info = &(onto_nodes->info[i]);
+    int size = onto_nodes_info->size;
+    int rank = onto_nodes_info->rank;
+
+    if (i != onto_nodes_index) {
+      color += (acc_nodes_size * rank);
+    }
+
+    acc_nodes_size *= size;
+  }
+
+  if (!(array->is_allocated)) {
+    color = 0;
+  }
+
+  MPI_Comm *comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
+  MPI_Comm_split(*(onto_nodes->comm), color, onto_nodes->comm_rank, comm);
+
+  // set members
+  ai->shadow_comm = comm;
+  MPI_Comm_size(*comm, &(ai->shadow_comm_size));
+  MPI_Comm_rank(*comm, &(ai->shadow_comm_rank));
+}
 
 // FIXME implement
 static void _XCALABLEMP_pack_shadow_buffer(void *buffer, int array_type, int array_dim,
@@ -51,12 +75,12 @@ void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
   va_list args;
   va_start(args, array);
   for (int i = 0; i < dim; i++) {
-    int type = va_arg(args, int);
     _XCALABLEMP_array_info_t *ai = &(array->info[i]);
-    ai->shadow_type = type;
 
+    int type = va_arg(args, int);
     switch (type) {
       case _XCALABLEMP_N_SHADOW_NONE:
+        ai->shadow_type = _XCALABLEMP_N_SHADOW_NONE;
         break;
       case _XCALABLEMP_N_SHADOW_NORMAL:
         {
@@ -66,7 +90,11 @@ void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
           int hi = va_arg(args, int);
           if (hi < 0) _XCALABLEMP_fatal("<shadow-width> should be a nonnegative integer");
 
-          if ((lo != 0) || (hi != 0)) {
+          if ((lo == 0) && (hi == 0)) {
+            ai->shadow_type = _XCALABLEMP_N_SHADOW_NONE;
+          }
+          else {
+            ai->shadow_type = _XCALABLEMP_N_SHADOW_NORMAL;
             ai->shadow_size_lo = lo;
             ai->shadow_size_hi = hi;
 
@@ -76,10 +104,13 @@ void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
            // ai->local_stride is not changed
               ai->alloc_size += lo + hi;
             }
+
+            _XCALABLEMP_create_shadow_comm(array, i);
           }
         } break;
       case _XCALABLEMP_N_SHADOW_FULL:
         {
+          ai->shadow_type = _XCALABLEMP_N_SHADOW_FULL;
           // FIXME calc shadow_size_{lo/hi} size
 
           if (array->is_allocated) {
@@ -88,6 +119,8 @@ void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
             ai->local_stride = ai->par_stride;
             ai->alloc_size = ai->ser_size;
           }
+
+          _XCALABLEMP_create_shadow_comm(array, i);
         } break;
       default:
         _XCALABLEMP_fatal("unknown shadow type");

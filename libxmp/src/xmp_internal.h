@@ -93,7 +93,7 @@ typedef struct _XCALABLEMP_array_info_type {
   int shadow_type;
   int shadow_size_lo;
   int shadow_size_hi;
-  MPI_Comm * shadow_comm;
+  MPI_Comm *shadow_comm;
   int shadow_comm_size;
   int shadow_comm_rank;
 
