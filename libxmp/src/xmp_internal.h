@@ -77,7 +77,12 @@ typedef struct _XCALABLEMP_array_info_type {
   int par_upper;
   int par_stride;
   int par_size;
+
+  int local_lower;
+  int local_upper;
+  int local_stride;
   int alloc_size;
+
   int dim_acc;
   // --------------------------------
 

@@ -32,12 +32,21 @@ void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
             ai->shadow_size_lo = lo;
             ai->shadow_size_hi = hi;
 
+            ai->local_lower += lo;
+            ai->local_upper += lo;
+         // ai->local_stride is not changed
             ai->alloc_size += lo + hi;
           }
         } break;
       case _XCALABLEMP_N_SHADOW_FULL:
-        ai->alloc_size = ai->ser_size;
-        break;
+        {
+          // FIXME calc shadow_size_{lo/hi} size
+
+          ai->local_lower = ai->par_lower;
+          ai->local_upper = ai->par_upper;
+          ai->local_stride = ai->par_stride;
+          ai->alloc_size = ai->ser_size;
+        } break;
       default:
         _XCALABLEMP_fatal("unknown shadow type");
     }

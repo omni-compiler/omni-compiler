@@ -26,7 +26,12 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
     ai->par_upper = upper;
     ai->par_stride = 1;
     ai->par_size = size;
+
+    ai->local_lower = lower;
+    ai->local_upper = upper;
+    ai->local_stride = 1;
     ai->alloc_size = size;
+
  // ai->dim_acc is calculated in _XCALABLEMP_alloc_array, _XCALABLEMP_init_array_addr
     
     ai->align_subscript = 0;
@@ -125,6 +130,10 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, 
     ai->par_upper = par_upper;
     ai->par_stride = 1;
     ai->par_size = par_size;
+
+    ai->local_lower = 0;
+    ai->local_upper = par_size - 1;
+    ai->local_stride = 1;
     ai->alloc_size = par_size;
 
     *temp0 = ai->par_lower;
@@ -171,6 +180,10 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
     ai->par_upper = par_upper;
     ai->par_stride = par_stride;
     ai->par_size = par_size;
+
+    ai->local_lower = 0;
+    ai->local_upper = par_size - 1;
+    ai->local_stride = 1;
     ai->alloc_size = par_size;
 
     *temp0 = par_stride;
