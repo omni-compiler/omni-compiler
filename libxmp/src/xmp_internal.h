@@ -48,7 +48,7 @@ typedef struct _XCALABLEMP_template_chunk_type {
   int dist_manner;
 
   // enable when dist_manner is not _XCALABLEMP_N_DIST_DUPLICATION
-  int onto_nodes_dim;
+  int onto_nodes_index;
   _XCALABLEMP_nodes_info_t *onto_nodes_info;
   // -------------------------------------------------------------
 } _XCALABLEMP_template_chunk_t;
@@ -89,11 +89,15 @@ typedef struct _XCALABLEMP_array_info_type {
 
   long long align_subscript;
 
+  // FIXME needs refactoring
   int shadow_type;
   int shadow_size_lo;
   int shadow_size_hi;
+  MPI_Comm * shadow_comm;
+  int shadow_comm_size;
+  int shadow_comm_rank;
 
-  int align_template_dim;
+  int align_template_index;
   _XCALABLEMP_template_info_t *align_template_info;
   _XCALABLEMP_template_chunk_t *align_template_chunk;
 } _XCALABLEMP_array_info_t;

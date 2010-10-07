@@ -139,13 +139,13 @@ void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, size_t type_
   for (int i = 0; i < array_dim; i++) {
     int ref_index = va_arg(args, int);
 
-    int template_dim_index = array->info[i].align_template_dim;
-    if (template_dim_index != _XCALABLEMP_N_NO_ALIGNED_TEMPLATE) {
-      int nodes_dim_index = template->chunk[template_dim_index].onto_nodes_dim;
-      if (nodes_dim_index != _XCALABLEMP_N_NO_ONTO_NODES) {
-        int owner = _XCALABLEMP_calc_gmove_owner_SCALAR(ref_index, template, template_dim_index);
+    int template_index = array->info[i].align_template_index;
+    if (template_index != _XCALABLEMP_N_NO_ALIGNED_TEMPLATE) {
+      int nodes_index = template->chunk[template_index].onto_nodes_index;
+      if (nodes_index != _XCALABLEMP_N_NO_ONTO_NODES) {
+        int owner = _XCALABLEMP_calc_gmove_owner_SCALAR(ref_index, template, template_index);
         if (owner != _XCALABLEMP_N_INVALID_RANK) {
-          src_rank_array[nodes_dim_index] = owner;
+          src_rank_array[nodes_index] = owner;
         }
       }
     }
@@ -221,13 +221,13 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr, size_t ty
   for (int i = 0; i < dst_array_dim; i++) {
     int dst_ref_index = va_arg(args, int);
 
-    int dst_template_dim_index = dst_array->info[i].align_template_dim;
-    if (dst_template_dim_index != _XCALABLEMP_N_NO_ALIGNED_TEMPLATE) {
-      int dst_nodes_dim_index = dst_template->chunk[dst_template_dim_index].onto_nodes_dim;
-      if (dst_nodes_dim_index != _XCALABLEMP_N_NO_ONTO_NODES) {
-        int dst_owner = _XCALABLEMP_calc_gmove_owner_SCALAR(dst_ref_index, dst_template, dst_template_dim_index);
+    int dst_template_index = dst_array->info[i].align_template_index;
+    if (dst_template_index != _XCALABLEMP_N_NO_ALIGNED_TEMPLATE) {
+      int dst_nodes_index = dst_template->chunk[dst_template_index].onto_nodes_index;
+      if (dst_nodes_index != _XCALABLEMP_N_NO_ONTO_NODES) {
+        int dst_owner = _XCALABLEMP_calc_gmove_owner_SCALAR(dst_ref_index, dst_template, dst_template_index);
         if (dst_owner != _XCALABLEMP_N_INVALID_RANK) {
-          dst_rank_array[dst_nodes_dim_index] = dst_owner;
+          dst_rank_array[dst_nodes_index] = dst_owner;
         }
       }
     }
@@ -259,13 +259,13 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr, size_t ty
   for (int i = 0; i < src_array_dim; i++) {
     int src_ref_index = va_arg(args, int);
 
-    int src_template_dim_index = src_array->info[i].align_template_dim;
-    if (src_template_dim_index != _XCALABLEMP_N_NO_ALIGNED_TEMPLATE) {
-      int src_nodes_dim_index = src_template->chunk[src_template_dim_index].onto_nodes_dim;
-      if (src_nodes_dim_index != _XCALABLEMP_N_NO_ONTO_NODES) {
-        int src_owner = _XCALABLEMP_calc_gmove_owner_SCALAR(src_ref_index, src_template, src_template_dim_index);
+    int src_template_index = src_array->info[i].align_template_index;
+    if (src_template_index != _XCALABLEMP_N_NO_ALIGNED_TEMPLATE) {
+      int src_nodes_index = src_template->chunk[src_template_index].onto_nodes_index;
+      if (src_nodes_index != _XCALABLEMP_N_NO_ONTO_NODES) {
+        int src_owner = _XCALABLEMP_calc_gmove_owner_SCALAR(src_ref_index, src_template, src_template_index);
         if (src_owner != _XCALABLEMP_N_INVALID_RANK) {
-          src_rank_array[src_nodes_dim_index] = src_owner;
+          src_rank_array[src_nodes_index] = src_owner;
         }
       }
     }

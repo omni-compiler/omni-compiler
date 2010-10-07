@@ -6,6 +6,21 @@
 //FIXME delete this include
 #include <stdio.h>
 
+static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array_index) {
+  _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
+  _XCALABLEMP_template_chunk_t *chunk = ai->align_template_chunk;
+  _XCALABLEMP_nodes_t *onto_nodes = array->align_template->onto_nodes;
+
+  int onto_nodes_index = chunk->onto_nodes_index;
+
+  int array_dim = array->dim;
+
+//  int color = 1;
+//  for (int i = 0; i < array_dim; i++) {
+//    ;
+//  }
+}
+
 static void _XCALABLEMP_pack_shadow_buffer(void *buffer, int array_type, int array_dim,
                                            int *lower, int *upper, int *stride, unsigned long long *dim_acc);
 static void _XCALABLEMP_unpack_shadow_buffer(void *buffer, int array_type, int array_dim,
@@ -32,8 +47,6 @@ static void _XCALABLEMP_unpack_shadow_buffer(void *buffer, int array_type, int a
 }
 
 void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
-  if (array == NULL) return;
-
   int dim = array->dim;
   va_list args;
   va_start(args, array);
@@ -57,20 +70,24 @@ void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
             ai->shadow_size_lo = lo;
             ai->shadow_size_hi = hi;
 
-            ai->local_lower += lo;
-            ai->local_upper += lo;
-         // ai->local_stride is not changed
-            ai->alloc_size += lo + hi;
+            if (array->is_allocated) {
+              ai->local_lower += lo;
+              ai->local_upper += lo;
+           // ai->local_stride is not changed
+              ai->alloc_size += lo + hi;
+            }
           }
         } break;
       case _XCALABLEMP_N_SHADOW_FULL:
         {
           // FIXME calc shadow_size_{lo/hi} size
 
-          ai->local_lower = ai->par_lower;
-          ai->local_upper = ai->par_upper;
-          ai->local_stride = ai->par_stride;
-          ai->alloc_size = ai->ser_size;
+          if (array->is_allocated) {
+            ai->local_lower = ai->par_lower;
+            ai->local_upper = ai->par_upper;
+            ai->local_stride = ai->par_stride;
+            ai->alloc_size = ai->ser_size;
+          }
         } break;
       default:
         _XCALABLEMP_fatal("unknown shadow type");
