@@ -60,8 +60,9 @@ void _XCALABLEMP_pack_shadow_NORMAL_2_BASIC(void **lo_buffer, void **hi_buffer, 
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
   _XCALABLEMP_template_chunk_t *ti = ai->align_template_chunk;
 
-  int lower0, upper0, stride0, dim_acc0,
+  int lower0, upper0, stride0,
       lower1, upper1, stride1;
+  unsigned long long dim_acc0;
 
   // pack lo shadow
   if (ai->shadow_size_lo > 0) {
@@ -143,8 +144,9 @@ void _XCALABLEMP_unpack_shadow_NORMAL_2_BASIC(void *lo_buffer, void *hi_buffer, 
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
   _XCALABLEMP_template_chunk_t *ti = ai->align_template_chunk;
 
-  int lower0, upper0, stride0, dim_acc0,
+  int lower0, upper0, stride0,
       lower1, upper1, stride1;
+  unsigned long long dim_acc0;
 
   // unpack lo shadow
   if (ai->shadow_size_lo > 0) {

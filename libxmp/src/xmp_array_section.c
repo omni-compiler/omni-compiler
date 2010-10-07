@@ -62,7 +62,7 @@ void _XCALABLEMP_pack_array_1_LONG_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_1(long doub
 // --- dimension 2
 #define _XCALABLEMP_SM_PACK_ARRAY_2(_type) \
 (_type *buf_addr, const _type *const src_addr, \
- int src_lower0, int src_upper0, int src_stride0, const int src_dim_acc0, \
+ int src_lower0, int src_upper0, int src_stride0, const unsigned long long src_dim_acc0, \
  int src_lower1, int src_upper1, int src_stride1) { \
   _XCALABLEMP_normalize_array_section(&src_lower0, &src_upper0, &src_stride0); \
   _XCALABLEMP_normalize_array_section(&src_lower1, &src_upper1, &src_stride1); \
@@ -93,8 +93,8 @@ void _XCALABLEMP_pack_array_2_LONG_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_2(long doub
 // --- dimension 3
 #define _XCALABLEMP_SM_PACK_ARRAY_3(_type) \
 (_type *buf_addr, const _type *const src_addr, \
- int src_lower0, int src_upper0, int src_stride0, const int src_dim_acc0, \
- int src_lower1, int src_upper1, int src_stride1, const int src_dim_acc1, \
+ int src_lower0, int src_upper0, int src_stride0, const unsigned long long src_dim_acc0, \
+ int src_lower1, int src_upper1, int src_stride1, const unsigned long long src_dim_acc1, \
  int src_lower2, int src_upper2, int src_stride2) { \
   _XCALABLEMP_normalize_array_section(&src_lower0, &src_upper0, &src_stride0); \
   _XCALABLEMP_normalize_array_section(&src_lower1, &src_upper1, &src_stride1); \
@@ -128,9 +128,9 @@ void _XCALABLEMP_pack_array_3_LONG_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_3(long doub
 // --- dimension 4
 #define _XCALABLEMP_SM_PACK_ARRAY_4(_type) \
 (_type *buf_addr, const _type *const src_addr, \
- int src_lower0, int src_upper0, int src_stride0, const int src_dim_acc0, \
- int src_lower1, int src_upper1, int src_stride1, const int src_dim_acc1, \
- int src_lower2, int src_upper2, int src_stride2, const int src_dim_acc2, \
+ int src_lower0, int src_upper0, int src_stride0, const unsigned long long src_dim_acc0, \
+ int src_lower1, int src_upper1, int src_stride1, const unsigned long long src_dim_acc1, \
+ int src_lower2, int src_upper2, int src_stride2, const unsigned long long src_dim_acc2, \
  int src_lower3, int src_upper3, int src_stride3) { \
   _XCALABLEMP_normalize_array_section(&src_lower0, &src_upper0, &src_stride0); \
   _XCALABLEMP_normalize_array_section(&src_lower1, &src_upper1, &src_stride1); \
@@ -167,10 +167,10 @@ void _XCALABLEMP_pack_array_4_LONG_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_4(long doub
 // --- dimension 5
 #define _XCALABLEMP_SM_PACK_ARRAY_5(_type) \
 (_type *buf_addr, const _type *const src_addr, \
- int src_lower0, int src_upper0, int src_stride0, const int src_dim_acc0, \
- int src_lower1, int src_upper1, int src_stride1, const int src_dim_acc1, \
- int src_lower2, int src_upper2, int src_stride2, const int src_dim_acc2, \
- int src_lower3, int src_upper3, int src_stride3, const int src_dim_acc3, \
+ int src_lower0, int src_upper0, int src_stride0, const unsigned long long src_dim_acc0, \
+ int src_lower1, int src_upper1, int src_stride1, const unsigned long long src_dim_acc1, \
+ int src_lower2, int src_upper2, int src_stride2, const unsigned long long src_dim_acc2, \
+ int src_lower3, int src_upper3, int src_stride3, const unsigned long long src_dim_acc3, \
  int src_lower4, int src_upper4, int src_stride4) { \
   _XCALABLEMP_normalize_array_section(&src_lower0, &src_upper0, &src_stride0); \
   _XCALABLEMP_normalize_array_section(&src_lower1, &src_upper1, &src_stride1); \
@@ -210,11 +210,11 @@ void _XCALABLEMP_pack_array_5_LONG_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_5(long doub
 // --- dimension 6
 #define _XCALABLEMP_SM_PACK_ARRAY_6(_type) \
 (_type *buf_addr, const _type *const src_addr, \
- int src_lower0, int src_upper0, int src_stride0, const int src_dim_acc0, \
- int src_lower1, int src_upper1, int src_stride1, const int src_dim_acc1, \
- int src_lower2, int src_upper2, int src_stride2, const int src_dim_acc2, \
- int src_lower3, int src_upper3, int src_stride3, const int src_dim_acc3, \
- int src_lower4, int src_upper4, int src_stride4, const int src_dim_acc4, \
+ int src_lower0, int src_upper0, int src_stride0, const unsigned long long src_dim_acc0, \
+ int src_lower1, int src_upper1, int src_stride1, const unsigned long long src_dim_acc1, \
+ int src_lower2, int src_upper2, int src_stride2, const unsigned long long src_dim_acc2, \
+ int src_lower3, int src_upper3, int src_stride3, const unsigned long long src_dim_acc3, \
+ int src_lower4, int src_upper4, int src_stride4, const unsigned long long src_dim_acc4, \
  int src_lower5, int src_upper5, int src_stride5) { \
   _XCALABLEMP_normalize_array_section(&src_lower0, &src_upper0, &src_stride0); \
   _XCALABLEMP_normalize_array_section(&src_lower1, &src_upper1, &src_stride1); \
@@ -258,12 +258,12 @@ void _XCALABLEMP_pack_array_6_LONG_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_6(long doub
 // --- dimension 7
 #define _XCALABLEMP_SM_PACK_ARRAY_7(_type) \
 (_type *buf_addr, const _type *const src_addr, \
- int src_lower0, int src_upper0, int src_stride0, const int src_dim_acc0, \
- int src_lower1, int src_upper1, int src_stride1, const int src_dim_acc1, \
- int src_lower2, int src_upper2, int src_stride2, const int src_dim_acc2, \
- int src_lower3, int src_upper3, int src_stride3, const int src_dim_acc3, \
- int src_lower4, int src_upper4, int src_stride4, const int src_dim_acc4, \
- int src_lower5, int src_upper5, int src_stride5, const int src_dim_acc5, \
+ int src_lower0, int src_upper0, int src_stride0, const unsigned long long src_dim_acc0, \
+ int src_lower1, int src_upper1, int src_stride1, const unsigned long long src_dim_acc1, \
+ int src_lower2, int src_upper2, int src_stride2, const unsigned long long src_dim_acc2, \
+ int src_lower3, int src_upper3, int src_stride3, const unsigned long long src_dim_acc3, \
+ int src_lower4, int src_upper4, int src_stride4, const unsigned long long src_dim_acc4, \
+ int src_lower5, int src_upper5, int src_stride5, const unsigned long long src_dim_acc5, \
  int src_lower6, int src_upper6, int src_stride6) { \
   _XCALABLEMP_normalize_array_section(&src_lower0, &src_upper0, &src_stride0); \
   _XCALABLEMP_normalize_array_section(&src_lower1, &src_upper1, &src_stride1); \
@@ -338,7 +338,7 @@ void _XCALABLEMP_unpack_array_1_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_1(long 
 // --- dimension 2
 #define _XCALABLEMP_SM_UNPACK_ARRAY_2(_type) \
 (_type *const dst_addr, _type *buf_addr, \
- int dst_lower0, int dst_upper0, int dst_stride0, const int dst_dim_acc0, \
+ int dst_lower0, int dst_upper0, int dst_stride0, const unsigned long long dst_dim_acc0, \
  int dst_lower1, int dst_upper1, int dst_stride1) { \
   _XCALABLEMP_normalize_array_section(&dst_lower0, &dst_upper0, &dst_stride0); \
   _XCALABLEMP_normalize_array_section(&dst_lower1, &dst_upper1, &dst_stride1); \
@@ -369,8 +369,8 @@ void _XCALABLEMP_unpack_array_2_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_2(long 
 // --- dimension 3
 #define _XCALABLEMP_SM_UNPACK_ARRAY_3(_type) \
 (_type *const dst_addr, _type *buf_addr, \
- int dst_lower0, int dst_upper0, int dst_stride0, const int dst_dim_acc0, \
- int dst_lower1, int dst_upper1, int dst_stride1, const int dst_dim_acc1, \
+ int dst_lower0, int dst_upper0, int dst_stride0, const unsigned long long dst_dim_acc0, \
+ int dst_lower1, int dst_upper1, int dst_stride1, const unsigned long long dst_dim_acc1, \
  int dst_lower2, int dst_upper2, int dst_stride2) { \
   _XCALABLEMP_normalize_array_section(&dst_lower0, &dst_upper0, &dst_stride0); \
   _XCALABLEMP_normalize_array_section(&dst_lower1, &dst_upper1, &dst_stride1); \
@@ -404,9 +404,9 @@ void _XCALABLEMP_unpack_array_3_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_3(long 
 // --- dimension 4
 #define _XCALABLEMP_SM_UNPACK_ARRAY_4(_type) \
 (_type *const dst_addr, _type *buf_addr, \
- int dst_lower0, int dst_upper0, int dst_stride0, const int dst_dim_acc0, \
- int dst_lower1, int dst_upper1, int dst_stride1, const int dst_dim_acc1, \
- int dst_lower2, int dst_upper2, int dst_stride2, const int dst_dim_acc2, \
+ int dst_lower0, int dst_upper0, int dst_stride0, const unsigned long long dst_dim_acc0, \
+ int dst_lower1, int dst_upper1, int dst_stride1, const unsigned long long dst_dim_acc1, \
+ int dst_lower2, int dst_upper2, int dst_stride2, const unsigned long long dst_dim_acc2, \
  int dst_lower3, int dst_upper3, int dst_stride3) { \
   _XCALABLEMP_normalize_array_section(&dst_lower0, &dst_upper0, &dst_stride0); \
   _XCALABLEMP_normalize_array_section(&dst_lower1, &dst_upper1, &dst_stride1); \
@@ -443,10 +443,10 @@ void _XCALABLEMP_unpack_array_4_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_4(long 
 // --- dimension 5
 #define _XCALABLEMP_SM_UNPACK_ARRAY_5(_type) \
 (_type *const dst_addr, _type *buf_addr, \
- int dst_lower0, int dst_upper0, int dst_stride0, const int dst_dim_acc0, \
- int dst_lower1, int dst_upper1, int dst_stride1, const int dst_dim_acc1, \
- int dst_lower2, int dst_upper2, int dst_stride2, const int dst_dim_acc2, \
- int dst_lower3, int dst_upper3, int dst_stride3, const int dst_dim_acc3, \
+ int dst_lower0, int dst_upper0, int dst_stride0, const unsigned long long dst_dim_acc0, \
+ int dst_lower1, int dst_upper1, int dst_stride1, const unsigned long long dst_dim_acc1, \
+ int dst_lower2, int dst_upper2, int dst_stride2, const unsigned long long dst_dim_acc2, \
+ int dst_lower3, int dst_upper3, int dst_stride3, const unsigned long long dst_dim_acc3, \
  int dst_lower4, int dst_upper4, int dst_stride4) { \
   _XCALABLEMP_normalize_array_section(&dst_lower0, &dst_upper0, &dst_stride0); \
   _XCALABLEMP_normalize_array_section(&dst_lower1, &dst_upper1, &dst_stride1); \
@@ -486,11 +486,11 @@ void _XCALABLEMP_unpack_array_5_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_5(long 
 // --- dimension 6
 #define _XCALABLEMP_SM_UNPACK_ARRAY_6(_type) \
 (_type *const dst_addr, _type *buf_addr, \
- int dst_lower0, int dst_upper0, int dst_stride0, const int dst_dim_acc0, \
- int dst_lower1, int dst_upper1, int dst_stride1, const int dst_dim_acc1, \
- int dst_lower2, int dst_upper2, int dst_stride2, const int dst_dim_acc2, \
- int dst_lower3, int dst_upper3, int dst_stride3, const int dst_dim_acc3, \
- int dst_lower4, int dst_upper4, int dst_stride4, const int dst_dim_acc4, \
+ int dst_lower0, int dst_upper0, int dst_stride0, const unsigned long long dst_dim_acc0, \
+ int dst_lower1, int dst_upper1, int dst_stride1, const unsigned long long dst_dim_acc1, \
+ int dst_lower2, int dst_upper2, int dst_stride2, const unsigned long long dst_dim_acc2, \
+ int dst_lower3, int dst_upper3, int dst_stride3, const unsigned long long dst_dim_acc3, \
+ int dst_lower4, int dst_upper4, int dst_stride4, const unsigned long long dst_dim_acc4, \
  int dst_lower5, int dst_upper5, int dst_stride5) { \
   _XCALABLEMP_normalize_array_section(&dst_lower0, &dst_upper0, &dst_stride0); \
   _XCALABLEMP_normalize_array_section(&dst_lower1, &dst_upper1, &dst_stride1); \
@@ -534,12 +534,12 @@ void _XCALABLEMP_unpack_array_6_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_6(long 
 // --- dimension 7
 #define _XCALABLEMP_SM_UNPACK_ARRAY_7(_type) \
 (_type *const dst_addr, _type *buf_addr, \
- int dst_lower0, int dst_upper0, int dst_stride0, const int dst_dim_acc0, \
- int dst_lower1, int dst_upper1, int dst_stride1, const int dst_dim_acc1, \
- int dst_lower2, int dst_upper2, int dst_stride2, const int dst_dim_acc2, \
- int dst_lower3, int dst_upper3, int dst_stride3, const int dst_dim_acc3, \
- int dst_lower4, int dst_upper4, int dst_stride4, const int dst_dim_acc4, \
- int dst_lower5, int dst_upper5, int dst_stride5, const int dst_dim_acc5, \
+ int dst_lower0, int dst_upper0, int dst_stride0, const unsigned long long dst_dim_acc0, \
+ int dst_lower1, int dst_upper1, int dst_stride1, const unsigned long long dst_dim_acc1, \
+ int dst_lower2, int dst_upper2, int dst_stride2, const unsigned long long dst_dim_acc2, \
+ int dst_lower3, int dst_upper3, int dst_stride3, const unsigned long long dst_dim_acc3, \
+ int dst_lower4, int dst_upper4, int dst_stride4, const unsigned long long dst_dim_acc4, \
+ int dst_lower5, int dst_upper5, int dst_stride5, const unsigned long long dst_dim_acc5, \
  int dst_lower6, int dst_upper6, int dst_stride6) { \
   _XCALABLEMP_normalize_array_section(&dst_lower0, &dst_upper0, &dst_stride0); \
   _XCALABLEMP_normalize_array_section(&dst_lower1, &dst_upper1, &dst_stride1); \
