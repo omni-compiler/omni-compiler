@@ -1142,6 +1142,23 @@ public class XMPtranslateLocalPragma {
     }
 
     reflectFuncBody.add(Bcons.Statement(packFuncId.Call(packFuncArgs)));
+
+    // FIXME send/recv shadow
+
+    // unpack shadow
+    Ident unpackFuncId = null;
+    XobjList unpackFuncArgs = Xcons.List(loSendId.Ref(), hiSendId.Ref(), alignedArray.getAddrId().Ref(),
+                                         alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
+    if (arrayType.getKind() == Xtype.BASIC) {
+      unpackFuncId = _globalDecl.declExternFunc("_XCALABLEMP_unpack_shadow_NORMAL_" + alignedArray.getDim() + "_BASIC");
+      unpackFuncArgs.add(Xcons.IntConstant(arrayType.getBasicType() + 200));
+    }
+    else {
+      unpackFuncId = _globalDecl.declExternFunc("_XCALABLEMP_unpack_shadow_NORMAL_" + alignedArray.getDim() + "_GENERAL");
+      unpackFuncArgs.add(Xcons.SizeOf(arrayType));
+    }
+
+    reflectFuncBody.add(Bcons.Statement(unpackFuncId.Call(unpackFuncArgs)));
   }
 
   private void translateBarrier(PragmaBlock pb) throws XMPexception {
