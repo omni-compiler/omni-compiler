@@ -3,9 +3,6 @@
 #include "xmp_constant.h"
 #include "xmp_internal.h"
 
-//FIXME delete this include
-#include <stdio.h>
-
 static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array_index);
 
 static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array_index) {
@@ -233,7 +230,7 @@ void _XCALABLEMP_unpack_shadow_NORMAL_BASIC(void *lo_buffer, void *hi_buffer, vo
       }
 
       // unpack data
-      _XCALABLEMP_unpack_shadow_buffer(lo_buffer, array_addr, array_type, array_dim, lower, upper, stride, dim_acc);
+      _XCALABLEMP_unpack_shadow_buffer(array_addr, lo_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
 
       // free buffer
       _XCALABLEMP_free(lo_buffer);
@@ -250,7 +247,7 @@ void _XCALABLEMP_unpack_shadow_NORMAL_BASIC(void *lo_buffer, void *hi_buffer, vo
 
       // calc index
       for (int i = 0; i < array_dim; i++) {
-        if (array_index == 0) {
+        if (i == array_index) {
           // FIXME shadow is allowed in BLOCK distribution
           lower[i] = array_desc->info[i].shadow_size_lo + array_desc->info[i].par_size;
           upper[i] = lower[i] + array_desc->info[i].shadow_size_hi - 1;
@@ -266,7 +263,7 @@ void _XCALABLEMP_unpack_shadow_NORMAL_BASIC(void *lo_buffer, void *hi_buffer, vo
       }
 
       // unpack data
-      _XCALABLEMP_unpack_shadow_buffer(hi_buffer, array_addr, array_type, array_dim, lower, upper, stride, dim_acc);
+      _XCALABLEMP_unpack_shadow_buffer(array_addr, hi_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
 
       // free buffer
       _XCALABLEMP_free(hi_buffer);

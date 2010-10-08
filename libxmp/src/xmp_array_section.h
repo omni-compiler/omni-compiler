@@ -327,9 +327,9 @@ extern void _XCALABLEMP_unpack_array_7_DOUBLE			_XCALABLEMP_SM_UNPACK_ARRAY_7(do
 extern void _XCALABLEMP_unpack_array_7_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_7(long double)
 
 // pack/unpack shadow
-extern void _XCALABLEMP_pack_shadow_buffer(void *buffer, void *src, int array_type, int array_dim,
-                                           int *l, int *u, int *s, unsigned long long *d);
-extern void _XCALABLEMP_unpack_shadow_buffer(void *buffer, void *dst, int array_type, int array_dim,
-                                             int *l, int *u, int *s, unsigned long long *d);
+extern void _XCALABLEMP_pack_shadow_buffer(void *buffer, void *src,
+                                           int array_type, int array_dim, int *l, int *u, int *s, unsigned long long *d);
+extern void _XCALABLEMP_unpack_shadow_buffer(void *dst, void *buffer,
+                                             int array_type, int array_dim, int *l, int *u, int *s, unsigned long long *d);
 
 #endif // _XCALABLEMP_ARRAY_SECTION

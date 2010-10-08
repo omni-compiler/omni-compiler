@@ -586,8 +586,8 @@ void _XCALABLEMP_unpack_array_7_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_7(long 
 
 
 // pack shadow
-void _XCALABLEMP_pack_shadow_buffer(void *buffer, void *src, int array_type, int array_dim,
-                                    int *l, int *u, int *s, unsigned long long *d) {
+void _XCALABLEMP_pack_shadow_buffer(void *buffer, void *src,
+                                    int array_type, int array_dim, int *l, int *u, int *s, unsigned long long *d) {
   switch (array_type) {
  // case _XCALABLEMP_N_TYPE_BOOL:
  //   _XCALABLEMP_fatal("unknown data type for reflect");
@@ -727,8 +727,8 @@ void _XCALABLEMP_pack_shadow_buffer(void *buffer, void *src, int array_type, int
 }
 
 // unpack shadow
-void _XCALABLEMP_unpack_shadow_buffer(void *buffer, void *dst, int array_type, int array_dim,
-                                      int *l, int *u, int *s, unsigned long long *d) {
+void _XCALABLEMP_unpack_shadow_buffer(void *dst, void *buffer,
+                                      int array_type, int array_dim, int *l, int *u, int *s, unsigned long long *d) {
   switch (array_type) {
  // case _XCALABLEMP_N_TYPE_BOOL:
  //   _XCALABLEMP_fatal("unknown data type for reflect");
@@ -740,9 +740,7 @@ void _XCALABLEMP_unpack_shadow_buffer(void *buffer, void *dst, int array_type, i
       _XCALABLEMP_fatal("unknown data type for reflect");
     case _XCALABLEMP_N_TYPE_UNSIGNED_SHORT:
       _XCALABLEMP_fatal("unknown data type for reflect");
-    case _XCALABLEMP_N_TYPE_INT:
-      _XCALABLEMP_fatal("unknown data type for reflect");
-    case _XCALABLEMP_N_TYPE_UNSIGNED_INT: {
+    case _XCALABLEMP_N_TYPE_INT: {
         switch (array_dim) {
           case 1: _XCALABLEMP_unpack_array_1_INT(dst, buffer, l[0], u[0], s[0]); break;
           case 2: _XCALABLEMP_unpack_array_2_INT(dst, buffer, l[0], u[0], s[0], d[0],
@@ -775,6 +773,8 @@ void _XCALABLEMP_unpack_shadow_buffer(void *buffer, void *dst, int array_type, i
           default: _XCALABLEMP_fatal("wrong array dimension");
         }
       } break;
+    case _XCALABLEMP_N_TYPE_UNSIGNED_INT:
+      _XCALABLEMP_fatal("unknown data type for reflect");
     case _XCALABLEMP_N_TYPE_LONG:
       _XCALABLEMP_fatal("unknown data type for reflect");
     case _XCALABLEMP_N_TYPE_UNSIGNED_LONG:
