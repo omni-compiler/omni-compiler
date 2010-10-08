@@ -4,7 +4,7 @@
 // ----- pack array
 // --- dimension 1
 #define _XCALABLEMP_SM_PACK_ARRAY_1(_type) \
-(_type *buf_addr, const _type *const src_addr, \
+(_type *buf_addr, _type *src_addr, \
  int src_lower, int src_upper, int src_stride);
 
 extern void _XCALABLEMP_pack_array_1_BOOL		_XCALABLEMP_SM_PACK_ARRAY_1(_Bool)
@@ -24,8 +24,8 @@ extern void _XCALABLEMP_pack_array_1_LONG_DOUBLE	_XCALABLEMP_SM_PACK_ARRAY_1(lon
 
 // --- dimension 2
 #define _XCALABLEMP_SM_PACK_ARRAY_2(_type) \
-(_type *buf_addr, const _type *const src_addr, \
- int src_lower0, int src_upper0, int src_stride0, const unsigned long long src_dim_acc0, \
+(_type *buf_addr, _type *src_addr, \
+ int src_lower0, int src_upper0, int src_stride0, unsigned long long src_dim_acc0, \
  int src_lower1, int src_upper1, int src_stride1);
 
 extern void _XCALABLEMP_pack_array_2_BOOL		_XCALABLEMP_SM_PACK_ARRAY_2(_Bool)
@@ -167,7 +167,7 @@ extern void _XCALABLEMP_pack_array_7_LONG_DOUBLE	_XCALABLEMP_SM_PACK_ARRAY_7(lon
 // ----- unpack array
 // --- dimension 1
 #define _XCALABLEMP_SM_UNPACK_ARRAY_1(_type) \
-(_type *const dst_addr, _type *buf_addr, \
+(_type *dst_addr, _type *buf_addr, \
  int dst_lower, int dst_upper, int dst_stride);
 
 extern void _XCALABLEMP_unpack_array_1_BOOL			_XCALABLEMP_SM_UNPACK_ARRAY_1(_Bool)
@@ -187,8 +187,8 @@ extern void _XCALABLEMP_unpack_array_1_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_
 
 // --- dimension 2
 #define _XCALABLEMP_SM_UNPACK_ARRAY_2(_type) \
-(_type *const dst_addr, _type *buf_addr, \
- int dst_lower0, int dst_upper0, int dst_stride0, const unsigned long long dst_dim_acc0, \
+(_type *dst_addr, _type *buf_addr, \
+ int dst_lower0, int dst_upper0, int dst_stride0, unsigned long long dst_dim_acc0, \
  int dst_lower1, int dst_upper1, int dst_stride1);
 
 extern void _XCALABLEMP_unpack_array_2_BOOL			_XCALABLEMP_SM_UNPACK_ARRAY_2(_Bool)

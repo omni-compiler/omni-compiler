@@ -249,7 +249,7 @@ void _XCALABLEMP_unpack_shadow_NORMAL_BASIC(void *lo_buffer, void *hi_buffer, vo
       for (int i = 0; i < array_dim; i++) {
         if (i == array_index) {
           // FIXME shadow is allowed in BLOCK distribution
-          lower[i] = array_desc->info[i].shadow_size_lo + array_desc->info[i].par_size;
+          lower[i] = array_desc->info[i].local_upper + 1;
           upper[i] = lower[i] + array_desc->info[i].shadow_size_hi - 1;
           stride[i] = 1;
         }
