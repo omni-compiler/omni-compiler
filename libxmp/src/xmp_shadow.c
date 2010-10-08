@@ -7,10 +7,6 @@
 #include <stdio.h>
 
 static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array_index);
-static void _XCALABLEMP_pack_shadow_buffer(void *buffer, int array_type, int array_dim,
-                                           int *lower, int *upper, int *stride, unsigned long long *dim_acc);
-static void _XCALABLEMP_unpack_shadow_buffer(void *buffer, int array_type, int array_dim,
-                                             int *lower, int *upper, int *stride, unsigned long long *dim_acc);
 
 static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array_index) {
   _XCALABLEMP_nodes_t *onto_nodes = array->align_template->onto_nodes;
@@ -50,26 +46,6 @@ static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array
     MPI_Comm_size(*comm, &(ai->shadow_comm_size));
     MPI_Comm_rank(*comm, &(ai->shadow_comm_rank));
   }
-}
-
-// FIXME implement
-static void _XCALABLEMP_pack_shadow_buffer(void *buffer, int array_type, int array_dim,
-                                           int *lower, int *upper, int *stride, unsigned long long *dim_acc) {
-  printf("[%d] pack ", _XCALABLEMP_world_rank);
-  for (int i = 0; i < array_dim; i++) {
-    printf("[%d:%d:%d](%ld)", lower[i], upper[i], stride[i], dim_acc[i]);
-  }
-  printf("\n");
-}
-
-// FIXME implement
-static void _XCALABLEMP_unpack_shadow_buffer(void *buffer, int array_type, int array_dim,
-                                             int *lower, int *upper, int *stride, unsigned long long *dim_acc) {
-  printf("[%d] unpack ", _XCALABLEMP_world_rank);
-  for (int i = 0; i < array_dim; i++) {
-    printf("[%d:%d:%d](%ld)", lower[i], upper[i], stride[i], dim_acc[i]);
-  }
-  printf("\n");
 }
 
 void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
@@ -176,7 +152,7 @@ void _XCALABLEMP_pack_shadow_NORMAL_BASIC(void **lo_buffer, void **hi_buffer, vo
       }
 
       // pack data
-      _XCALABLEMP_pack_shadow_buffer(*lo_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
+      _XCALABLEMP_pack_shadow_buffer(*lo_buffer, array_addr, array_type, array_dim, lower, upper, stride, dim_acc);
     }
   }
 
@@ -209,7 +185,7 @@ void _XCALABLEMP_pack_shadow_NORMAL_BASIC(void **lo_buffer, void **hi_buffer, vo
       }
 
       // pack data
-      _XCALABLEMP_pack_shadow_buffer(*hi_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
+      _XCALABLEMP_pack_shadow_buffer(*hi_buffer, array_addr, array_type, array_dim, lower, upper, stride, dim_acc);
     }
   }
 }
@@ -257,7 +233,7 @@ void _XCALABLEMP_unpack_shadow_NORMAL_BASIC(void *lo_buffer, void *hi_buffer, vo
       }
 
       // unpack data
-      _XCALABLEMP_unpack_shadow_buffer(lo_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
+      _XCALABLEMP_unpack_shadow_buffer(lo_buffer, array_addr, array_type, array_dim, lower, upper, stride, dim_acc);
 
       // free buffer
       _XCALABLEMP_free(lo_buffer);
@@ -290,7 +266,7 @@ void _XCALABLEMP_unpack_shadow_NORMAL_BASIC(void *lo_buffer, void *hi_buffer, vo
       }
 
       // unpack data
-      _XCALABLEMP_unpack_shadow_buffer(hi_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
+      _XCALABLEMP_unpack_shadow_buffer(hi_buffer, array_addr, array_type, array_dim, lower, upper, stride, dim_acc);
 
       // free buffer
       _XCALABLEMP_free(hi_buffer);

@@ -1,3 +1,4 @@
+#include "xmp_constant.h"
 #include "xmp_internal.h"
 
 static void _XCALABLEMP_normalize_array_section(int *lower, int *upper, int *stride);
@@ -54,7 +55,7 @@ void _XCALABLEMP_pack_array_1_UNSIGNED_INT		_XCALABLEMP_SM_PACK_ARRAY_1(unsigned
 void _XCALABLEMP_pack_array_1_LONG			_XCALABLEMP_SM_PACK_ARRAY_1(long)
 void _XCALABLEMP_pack_array_1_UNSIGNED_LONG		_XCALABLEMP_SM_PACK_ARRAY_1(unsigned long)
 void _XCALABLEMP_pack_array_1_LONGLONG			_XCALABLEMP_SM_PACK_ARRAY_1(long long)
-void _XCALABLEMP_pack_array_1_UNSIGNED_LONGLONG	_XCALABLEMP_SM_PACK_ARRAY_1(unsigned long long)
+void _XCALABLEMP_pack_array_1_UNSIGNED_LONGLONG		_XCALABLEMP_SM_PACK_ARRAY_1(unsigned long long)
 void _XCALABLEMP_pack_array_1_FLOAT			_XCALABLEMP_SM_PACK_ARRAY_1(float)
 void _XCALABLEMP_pack_array_1_DOUBLE			_XCALABLEMP_SM_PACK_ARRAY_1(double)
 void _XCALABLEMP_pack_array_1_LONG_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_1(long double)
@@ -85,7 +86,7 @@ void _XCALABLEMP_pack_array_2_UNSIGNED_INT		_XCALABLEMP_SM_PACK_ARRAY_2(unsigned
 void _XCALABLEMP_pack_array_2_LONG			_XCALABLEMP_SM_PACK_ARRAY_2(long)
 void _XCALABLEMP_pack_array_2_UNSIGNED_LONG		_XCALABLEMP_SM_PACK_ARRAY_2(unsigned long)
 void _XCALABLEMP_pack_array_2_LONGLONG			_XCALABLEMP_SM_PACK_ARRAY_2(long long)
-void _XCALABLEMP_pack_array_2_UNSIGNED_LONGLONG	_XCALABLEMP_SM_PACK_ARRAY_2(unsigned long long)
+void _XCALABLEMP_pack_array_2_UNSIGNED_LONGLONG		_XCALABLEMP_SM_PACK_ARRAY_2(unsigned long long)
 void _XCALABLEMP_pack_array_2_FLOAT			_XCALABLEMP_SM_PACK_ARRAY_2(float)
 void _XCALABLEMP_pack_array_2_DOUBLE			_XCALABLEMP_SM_PACK_ARRAY_2(double)
 void _XCALABLEMP_pack_array_2_LONG_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_2(long double)
@@ -120,7 +121,7 @@ void _XCALABLEMP_pack_array_3_UNSIGNED_INT		_XCALABLEMP_SM_PACK_ARRAY_3(unsigned
 void _XCALABLEMP_pack_array_3_LONG			_XCALABLEMP_SM_PACK_ARRAY_3(long)
 void _XCALABLEMP_pack_array_3_UNSIGNED_LONG		_XCALABLEMP_SM_PACK_ARRAY_3(unsigned long)
 void _XCALABLEMP_pack_array_3_LONGLONG			_XCALABLEMP_SM_PACK_ARRAY_3(long long)
-void _XCALABLEMP_pack_array_3_UNSIGNED_LONGLONG	_XCALABLEMP_SM_PACK_ARRAY_3(unsigned long long)
+void _XCALABLEMP_pack_array_3_UNSIGNED_LONGLONG		_XCALABLEMP_SM_PACK_ARRAY_3(unsigned long long)
 void _XCALABLEMP_pack_array_3_FLOAT			_XCALABLEMP_SM_PACK_ARRAY_3(float)
 void _XCALABLEMP_pack_array_3_DOUBLE			_XCALABLEMP_SM_PACK_ARRAY_3(double)
 void _XCALABLEMP_pack_array_3_LONG_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_3(long double)
@@ -159,7 +160,7 @@ void _XCALABLEMP_pack_array_4_UNSIGNED_INT		_XCALABLEMP_SM_PACK_ARRAY_4(unsigned
 void _XCALABLEMP_pack_array_4_LONG			_XCALABLEMP_SM_PACK_ARRAY_4(long)
 void _XCALABLEMP_pack_array_4_UNSIGNED_LONG		_XCALABLEMP_SM_PACK_ARRAY_4(unsigned long)
 void _XCALABLEMP_pack_array_4_LONGLONG			_XCALABLEMP_SM_PACK_ARRAY_4(long long)
-void _XCALABLEMP_pack_array_4_UNSIGNED_LONGLONG	_XCALABLEMP_SM_PACK_ARRAY_4(unsigned long long)
+void _XCALABLEMP_pack_array_4_UNSIGNED_LONGLONG		_XCALABLEMP_SM_PACK_ARRAY_4(unsigned long long)
 void _XCALABLEMP_pack_array_4_FLOAT			_XCALABLEMP_SM_PACK_ARRAY_4(float)
 void _XCALABLEMP_pack_array_4_DOUBLE			_XCALABLEMP_SM_PACK_ARRAY_4(double)
 void _XCALABLEMP_pack_array_4_LONG_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_4(long double)
@@ -202,7 +203,7 @@ void _XCALABLEMP_pack_array_5_UNSIGNED_INT		_XCALABLEMP_SM_PACK_ARRAY_5(unsigned
 void _XCALABLEMP_pack_array_5_LONG			_XCALABLEMP_SM_PACK_ARRAY_5(long)
 void _XCALABLEMP_pack_array_5_UNSIGNED_LONG		_XCALABLEMP_SM_PACK_ARRAY_5(unsigned long)
 void _XCALABLEMP_pack_array_5_LONGLONG			_XCALABLEMP_SM_PACK_ARRAY_5(long long)
-void _XCALABLEMP_pack_array_5_UNSIGNED_LONGLONG	_XCALABLEMP_SM_PACK_ARRAY_5(unsigned long long)
+void _XCALABLEMP_pack_array_5_UNSIGNED_LONGLONG		_XCALABLEMP_SM_PACK_ARRAY_5(unsigned long long)
 void _XCALABLEMP_pack_array_5_FLOAT			_XCALABLEMP_SM_PACK_ARRAY_5(float)
 void _XCALABLEMP_pack_array_5_DOUBLE			_XCALABLEMP_SM_PACK_ARRAY_5(double)
 void _XCALABLEMP_pack_array_5_LONG_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_5(long double)
@@ -250,7 +251,7 @@ void _XCALABLEMP_pack_array_6_UNSIGNED_INT		_XCALABLEMP_SM_PACK_ARRAY_6(unsigned
 void _XCALABLEMP_pack_array_6_LONG			_XCALABLEMP_SM_PACK_ARRAY_6(long)
 void _XCALABLEMP_pack_array_6_UNSIGNED_LONG		_XCALABLEMP_SM_PACK_ARRAY_6(unsigned long)
 void _XCALABLEMP_pack_array_6_LONGLONG			_XCALABLEMP_SM_PACK_ARRAY_6(long long)
-void _XCALABLEMP_pack_array_6_UNSIGNED_LONGLONG	_XCALABLEMP_SM_PACK_ARRAY_6(unsigned long long)
+void _XCALABLEMP_pack_array_6_UNSIGNED_LONGLONG		_XCALABLEMP_SM_PACK_ARRAY_6(unsigned long long)
 void _XCALABLEMP_pack_array_6_FLOAT			_XCALABLEMP_SM_PACK_ARRAY_6(float)
 void _XCALABLEMP_pack_array_6_DOUBLE			_XCALABLEMP_SM_PACK_ARRAY_6(double)
 void _XCALABLEMP_pack_array_6_LONG_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_6(long double)
@@ -302,7 +303,7 @@ void _XCALABLEMP_pack_array_7_UNSIGNED_INT		_XCALABLEMP_SM_PACK_ARRAY_7(unsigned
 void _XCALABLEMP_pack_array_7_LONG			_XCALABLEMP_SM_PACK_ARRAY_7(long)
 void _XCALABLEMP_pack_array_7_UNSIGNED_LONG		_XCALABLEMP_SM_PACK_ARRAY_7(unsigned long)
 void _XCALABLEMP_pack_array_7_LONGLONG			_XCALABLEMP_SM_PACK_ARRAY_7(long long)
-void _XCALABLEMP_pack_array_7_UNSIGNED_LONGLONG	_XCALABLEMP_SM_PACK_ARRAY_7(unsigned long long)
+void _XCALABLEMP_pack_array_7_UNSIGNED_LONGLONG		_XCALABLEMP_SM_PACK_ARRAY_7(unsigned long long)
 void _XCALABLEMP_pack_array_7_FLOAT			_XCALABLEMP_SM_PACK_ARRAY_7(float)
 void _XCALABLEMP_pack_array_7_DOUBLE			_XCALABLEMP_SM_PACK_ARRAY_7(double)
 void _XCALABLEMP_pack_array_7_LONG_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_7(long double)
@@ -582,3 +583,287 @@ void _XCALABLEMP_unpack_array_7_UNSIGNED_LONGLONG	_XCALABLEMP_SM_UNPACK_ARRAY_7(
 void _XCALABLEMP_unpack_array_7_FLOAT			_XCALABLEMP_SM_UNPACK_ARRAY_7(float)
 void _XCALABLEMP_unpack_array_7_DOUBLE			_XCALABLEMP_SM_UNPACK_ARRAY_7(double)
 void _XCALABLEMP_unpack_array_7_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_7(long double)
+
+
+// pack shadow
+void _XCALABLEMP_pack_shadow_buffer(void *buffer, void *src, int array_type, int array_dim,
+                                    int *l, int *u, int *s, unsigned long long *d) {
+  switch (array_type) {
+ // case _XCALABLEMP_N_TYPE_BOOL:
+ //   _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_CHAR:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_UNSIGNED_CHAR:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_SHORT:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_UNSIGNED_SHORT:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_INT: {
+        switch (array_dim) {
+          case 1: _XCALABLEMP_pack_array_1_INT(buffer, src, l[0], u[0], s[0]); break;
+          case 2: _XCALABLEMP_pack_array_2_INT(buffer, src, l[0], u[0], s[0], d[0],
+                                                            l[1], u[1], s[1]); break;
+          case 3: _XCALABLEMP_pack_array_3_INT(buffer, src, l[0], u[0], s[0], d[0],
+                                                            l[1], u[1], s[1], d[1],
+                                                            l[2], u[2], s[2]); break;
+          case 4: _XCALABLEMP_pack_array_4_INT(buffer, src, l[0], u[0], s[0], d[0],
+                                                            l[1], u[1], s[1], d[1],
+                                                            l[2], u[2], s[2], d[2],
+                                                            l[3], u[3], s[3]); break;
+          case 5: _XCALABLEMP_pack_array_5_INT(buffer, src, l[0], u[0], s[0], d[0],
+                                                            l[1], u[1], s[1], d[1],
+                                                            l[2], u[2], s[2], d[2],
+                                                            l[3], u[3], s[3], d[3],
+                                                            l[4], u[4], s[4]); break;
+          case 6: _XCALABLEMP_pack_array_6_INT(buffer, src, l[0], u[0], s[0], d[0],
+                                                            l[1], u[1], s[1], d[1],
+                                                            l[2], u[2], s[2], d[2],
+                                                            l[3], u[3], s[3], d[3],
+                                                            l[4], u[4], s[4], d[4],
+                                                            l[5], u[5], s[5]); break;
+          case 7: _XCALABLEMP_pack_array_7_INT(buffer, src, l[0], u[0], s[0], d[0],
+                                                            l[1], u[1], s[1], d[1],
+                                                            l[2], u[2], s[2], d[2],
+                                                            l[3], u[3], s[3], d[3],
+                                                            l[4], u[4], s[4], d[4],
+                                                            l[5], u[5], s[5], d[5],
+                                                            l[6], u[6], s[6]); break;
+          default: _XCALABLEMP_fatal("wrong array dimension");
+        }
+      } break;
+    case _XCALABLEMP_N_TYPE_UNSIGNED_INT:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_LONG:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_UNSIGNED_LONG:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_LONGLONG:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_UNSIGNED_LONGLONG:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_FLOAT: {
+        switch (array_dim) {
+          case 1: _XCALABLEMP_pack_array_1_FLOAT(buffer, src, l[0], u[0], s[0]); break;
+          case 2: _XCALABLEMP_pack_array_2_FLOAT(buffer, src, l[0], u[0], s[0], d[0],
+                                                              l[1], u[1], s[1]); break;
+          case 3: _XCALABLEMP_pack_array_3_FLOAT(buffer, src, l[0], u[0], s[0], d[0],
+                                                              l[1], u[1], s[1], d[1],
+                                                              l[2], u[2], s[2]); break;
+          case 4: _XCALABLEMP_pack_array_4_FLOAT(buffer, src, l[0], u[0], s[0], d[0],
+                                                              l[1], u[1], s[1], d[1],
+                                                              l[2], u[2], s[2], d[2],
+                                                              l[3], u[3], s[3]); break;
+          case 5: _XCALABLEMP_pack_array_5_FLOAT(buffer, src, l[0], u[0], s[0], d[0],
+                                                              l[1], u[1], s[1], d[1],
+                                                              l[2], u[2], s[2], d[2],
+                                                              l[3], u[3], s[3], d[3],
+                                                              l[4], u[4], s[4]); break;
+          case 6: _XCALABLEMP_pack_array_6_FLOAT(buffer, src, l[0], u[0], s[0], d[0],
+                                                              l[1], u[1], s[1], d[1],
+                                                              l[2], u[2], s[2], d[2],
+                                                              l[3], u[3], s[3], d[3],
+                                                              l[4], u[4], s[4], d[4],
+                                                              l[5], u[5], s[5]); break;
+          case 7: _XCALABLEMP_pack_array_7_FLOAT(buffer, src, l[0], u[0], s[0], d[0],
+                                                              l[1], u[1], s[1], d[1],
+                                                              l[2], u[2], s[2], d[2],
+                                                              l[3], u[3], s[3], d[3],
+                                                              l[4], u[4], s[4], d[4],
+                                                              l[5], u[5], s[5], d[5],
+                                                              l[6], u[6], s[6]); break;
+          default: _XCALABLEMP_fatal("wrong array dimension");
+        }
+      } break;
+    case _XCALABLEMP_N_TYPE_DOUBLE: {
+        switch (array_dim) {
+          case 1: _XCALABLEMP_pack_array_1_DOUBLE(buffer, src, l[0], u[0], s[0]); break;
+          case 2: _XCALABLEMP_pack_array_2_DOUBLE(buffer, src, l[0], u[0], s[0], d[0],
+                                                               l[1], u[1], s[1]); break;
+          case 3: _XCALABLEMP_pack_array_3_DOUBLE(buffer, src, l[0], u[0], s[0], d[0],
+                                                               l[1], u[1], s[1], d[1],
+                                                               l[2], u[2], s[2]); break;
+          case 4: _XCALABLEMP_pack_array_4_DOUBLE(buffer, src, l[0], u[0], s[0], d[0],
+                                                               l[1], u[1], s[1], d[1],
+                                                               l[2], u[2], s[2], d[2],
+                                                               l[3], u[3], s[3]); break;
+          case 5: _XCALABLEMP_pack_array_5_DOUBLE(buffer, src, l[0], u[0], s[0], d[0],
+                                                               l[1], u[1], s[1], d[1],
+                                                               l[2], u[2], s[2], d[2],
+                                                               l[3], u[3], s[3], d[3],
+                                                               l[4], u[4], s[4]); break;
+          case 6: _XCALABLEMP_pack_array_6_DOUBLE(buffer, src, l[0], u[0], s[0], d[0],
+                                                               l[1], u[1], s[1], d[1],
+                                                               l[2], u[2], s[2], d[2],
+                                                               l[3], u[3], s[3], d[3],
+                                                               l[4], u[4], s[4], d[4],
+                                                               l[5], u[5], s[5]); break;
+          case 7: _XCALABLEMP_pack_array_7_DOUBLE(buffer, src, l[0], u[0], s[0], d[0],
+                                                               l[1], u[1], s[1], d[1],
+                                                               l[2], u[2], s[2], d[2],
+                                                               l[3], u[3], s[3], d[3],
+                                                               l[4], u[4], s[4], d[4],
+                                                               l[5], u[5], s[5], d[5],
+                                                               l[6], u[6], s[6]); break;
+          default: _XCALABLEMP_fatal("wrong array dimension");
+        }
+      } break;
+    case _XCALABLEMP_N_TYPE_LONG_DOUBLE:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+ // case _XCALABLEMP_N_TYPE_FLOAT_IMAGINARY:
+ //   _XCALABLEMP_fatal("unknown data type for reflect");
+ // case _XCALABLEMP_N_TYPE_DOUBLE_IMAGINARY:
+ //   _XCALABLEMP_fatal("unknown data type for reflect");
+ // case _XCALABLEMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
+ //   _XCALABLEMP_fatal("unknown data type for reflect");
+ // case _XCALABLEMP_N_TYPE_FLOAT_COMPLEX:
+ //   _XCALABLEMP_fatal("unknown data type for reflect");
+ // case _XCALABLEMP_N_TYPE_DOUBLE_COMPLEX:
+ //   _XCALABLEMP_fatal("unknown data type for reflect");
+ // case _XCALABLEMP_N_TYPE_LONG_DOUBLE_COMPLEX:
+    default:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+  }
+}
+
+// unpack shadow
+void _XCALABLEMP_unpack_shadow_buffer(void *buffer, void *dst, int array_type, int array_dim,
+                                      int *l, int *u, int *s, unsigned long long *d) {
+  switch (array_type) {
+ // case _XCALABLEMP_N_TYPE_BOOL:
+ //   _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_CHAR:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_UNSIGNED_CHAR:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_SHORT:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_UNSIGNED_SHORT:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_INT:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_UNSIGNED_INT: {
+        switch (array_dim) {
+          case 1: _XCALABLEMP_unpack_array_1_INT(dst, buffer, l[0], u[0], s[0]); break;
+          case 2: _XCALABLEMP_unpack_array_2_INT(dst, buffer, l[0], u[0], s[0], d[0],
+                                                              l[1], u[1], s[1]); break;
+          case 3: _XCALABLEMP_unpack_array_3_INT(dst, buffer, l[0], u[0], s[0], d[0],
+                                                              l[1], u[1], s[1], d[1],
+                                                              l[2], u[2], s[2]); break;
+          case 4: _XCALABLEMP_unpack_array_4_INT(dst, buffer, l[0], u[0], s[0], d[0],
+                                                              l[1], u[1], s[1], d[1],
+                                                              l[2], u[2], s[2], d[2],
+                                                              l[3], u[3], s[3]); break;
+          case 5: _XCALABLEMP_unpack_array_5_INT(dst, buffer, l[0], u[0], s[0], d[0],
+                                                              l[1], u[1], s[1], d[1],
+                                                              l[2], u[2], s[2], d[2],
+                                                              l[3], u[3], s[3], d[3],
+                                                              l[4], u[4], s[4]); break;
+          case 6: _XCALABLEMP_unpack_array_6_INT(dst, buffer, l[0], u[0], s[0], d[0],
+                                                              l[1], u[1], s[1], d[1],
+                                                              l[2], u[2], s[2], d[2],
+                                                              l[3], u[3], s[3], d[3],
+                                                              l[4], u[4], s[4], d[4],
+                                                              l[5], u[5], s[5]); break;
+          case 7: _XCALABLEMP_unpack_array_7_INT(dst, buffer, l[0], u[0], s[0], d[0],
+                                                              l[1], u[1], s[1], d[1],
+                                                              l[2], u[2], s[2], d[2],
+                                                              l[3], u[3], s[3], d[3],
+                                                              l[4], u[4], s[4], d[4],
+                                                              l[5], u[5], s[5], d[5],
+                                                              l[6], u[6], s[6]); break;
+          default: _XCALABLEMP_fatal("wrong array dimension");
+        }
+      } break;
+    case _XCALABLEMP_N_TYPE_LONG:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_UNSIGNED_LONG:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_LONGLONG:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_UNSIGNED_LONGLONG:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_FLOAT: {
+        switch (array_dim) {
+          case 1: _XCALABLEMP_unpack_array_1_FLOAT(dst, buffer, l[0], u[0], s[0]); break;
+          case 2: _XCALABLEMP_unpack_array_2_FLOAT(dst, buffer, l[0], u[0], s[0], d[0],
+                                                                l[1], u[1], s[1]); break;
+          case 3: _XCALABLEMP_unpack_array_3_FLOAT(dst, buffer, l[0], u[0], s[0], d[0],
+                                                                l[1], u[1], s[1], d[1],
+                                                                l[2], u[2], s[2]); break;
+          case 4: _XCALABLEMP_unpack_array_4_FLOAT(dst, buffer, l[0], u[0], s[0], d[0],
+                                                                l[1], u[1], s[1], d[1],
+                                                                l[2], u[2], s[2], d[2],
+                                                                l[3], u[3], s[3]); break;
+          case 5: _XCALABLEMP_unpack_array_5_FLOAT(dst, buffer, l[0], u[0], s[0], d[0],
+                                                                l[1], u[1], s[1], d[1],
+                                                                l[2], u[2], s[2], d[2],
+                                                                l[3], u[3], s[3], d[3],
+                                                                l[4], u[4], s[4]); break;
+          case 6: _XCALABLEMP_unpack_array_6_FLOAT(dst, buffer, l[0], u[0], s[0], d[0],
+                                                                l[1], u[1], s[1], d[1],
+                                                                l[2], u[2], s[2], d[2],
+                                                                l[3], u[3], s[3], d[3],
+                                                                l[4], u[4], s[4], d[4],
+                                                                l[5], u[5], s[5]); break;
+          case 7: _XCALABLEMP_unpack_array_7_FLOAT(dst, buffer, l[0], u[0], s[0], d[0],
+                                                                l[1], u[1], s[1], d[1],
+                                                                l[2], u[2], s[2], d[2],
+                                                                l[3], u[3], s[3], d[3],
+                                                                l[4], u[4], s[4], d[4],
+                                                                l[5], u[5], s[5], d[5],
+                                                                l[6], u[6], s[6]); break;
+          default: _XCALABLEMP_fatal("wrong array dimension");
+        }
+      } break;
+    case _XCALABLEMP_N_TYPE_DOUBLE: {
+        switch (array_dim) {
+          case 1: _XCALABLEMP_unpack_array_1_DOUBLE(dst, buffer, l[0], u[0], s[0]); break;
+          case 2: _XCALABLEMP_unpack_array_2_DOUBLE(dst, buffer, l[0], u[0], s[0], d[0],
+                                                                 l[1], u[1], s[1]); break;
+          case 3: _XCALABLEMP_unpack_array_3_DOUBLE(dst, buffer, l[0], u[0], s[0], d[0],
+                                                                 l[1], u[1], s[1], d[1],
+                                                                 l[2], u[2], s[2]); break;
+          case 4: _XCALABLEMP_unpack_array_4_DOUBLE(dst, buffer, l[0], u[0], s[0], d[0],
+                                                                 l[1], u[1], s[1], d[1],
+                                                                 l[2], u[2], s[2], d[2],
+                                                                 l[3], u[3], s[3]); break;
+          case 5: _XCALABLEMP_unpack_array_5_DOUBLE(dst, buffer, l[0], u[0], s[0], d[0],
+                                                                 l[1], u[1], s[1], d[1],
+                                                                 l[2], u[2], s[2], d[2],
+                                                                 l[3], u[3], s[3], d[3],
+                                                                 l[4], u[4], s[4]); break;
+          case 6: _XCALABLEMP_unpack_array_6_DOUBLE(dst, buffer, l[0], u[0], s[0], d[0],
+                                                                 l[1], u[1], s[1], d[1],
+                                                                 l[2], u[2], s[2], d[2],
+                                                                 l[3], u[3], s[3], d[3],
+                                                                 l[4], u[4], s[4], d[4],
+                                                                 l[5], u[5], s[5]); break;
+          case 7: _XCALABLEMP_unpack_array_7_DOUBLE(dst, buffer, l[0], u[0], s[0], d[0],
+                                                                 l[1], u[1], s[1], d[1],
+                                                                 l[2], u[2], s[2], d[2],
+                                                                 l[3], u[3], s[3], d[3],
+                                                                 l[4], u[4], s[4], d[4],
+                                                                 l[5], u[5], s[5], d[5],
+                                                                 l[6], u[6], s[6]); break;
+          default: _XCALABLEMP_fatal("wrong array dimension");
+        }
+      } break;
+    case _XCALABLEMP_N_TYPE_LONG_DOUBLE:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+ // case _XCALABLEMP_N_TYPE_FLOAT_IMAGINARY:
+ //   _XCALABLEMP_fatal("unknown data type for reflect");
+ // case _XCALABLEMP_N_TYPE_DOUBLE_IMAGINARY:
+ //   _XCALABLEMP_fatal("unknown data type for reflect");
+ // case _XCALABLEMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
+ //   _XCALABLEMP_fatal("unknown data type for reflect");
+ // case _XCALABLEMP_N_TYPE_FLOAT_COMPLEX:
+ //   _XCALABLEMP_fatal("unknown data type for reflect");
+ // case _XCALABLEMP_N_TYPE_DOUBLE_COMPLEX:
+ //   _XCALABLEMP_fatal("unknown data type for reflect");
+ // case _XCALABLEMP_N_TYPE_LONG_DOUBLE_COMPLEX:
+ //   _XCALABLEMP_fatal("unknown data type for reflect");
+    default:
+      _XCALABLEMP_fatal("unknown data type for reflect");
+  }
+}
