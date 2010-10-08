@@ -45,9 +45,11 @@ static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array
   MPI_Comm_split(*(onto_nodes->comm), color, onto_nodes->comm_rank, comm);
 
   // set members
-  ai->shadow_comm = comm;
-  MPI_Comm_size(*comm, &(ai->shadow_comm_size));
-  MPI_Comm_rank(*comm, &(ai->shadow_comm_rank));
+  if (array->is_allocated) {
+    ai->shadow_comm = comm;
+    MPI_Comm_size(*comm, &(ai->shadow_comm_size));
+    MPI_Comm_rank(*comm, &(ai->shadow_comm_rank));
+  }
 }
 
 // FIXME implement
@@ -131,145 +133,167 @@ void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
 // FIXME consider full shadow in other dimensions
 void _XCALABLEMP_pack_shadow_NORMAL_BASIC(void **lo_buffer, void **hi_buffer, void *array_addr,
                                           _XCALABLEMP_array_t *array_desc, int array_index, int array_type) {
+  if (!(array_desc->is_allocated)) {
+    return;
+  }
+
   int array_dim = array_desc->dim;
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
   _XCALABLEMP_template_chunk_t *ti = ai->align_template_chunk;
+
+  int size = ai->shadow_comm_size;
+  int rank = ai->shadow_comm_rank;
 
   int lower[array_dim], upper[array_dim], stride[array_dim];
   unsigned long long dim_acc[array_dim];
 
   // pack lo shadow
-  if (ai->shadow_size_lo > 0) {
-    // FIXME strict condition
-    if (ai->shadow_size_lo > ai->par_size) {
-      _XCALABLEMP_fatal("shadow size is too big");
-    }
-
-    // alloc buffer
-    *lo_buffer = _XCALABLEMP_alloc((ai->shadow_size_lo) * (ai->dim_elmts));
-
-    // calc index
-    for (int i = 0; i < array_dim; i++) {
-      if (i == array_index) {
-        // FIXME shadow is allowed in BLOCK distribution
-        lower[i] = array_desc->info[i].local_lower;
-        upper[i] = lower[i] + array_desc->info[i].shadow_size_lo - 1;
-        stride[i] = 1;
-      }
-      else {
-        lower[i] = array_desc->info[i].local_lower;
-        upper[i] = array_desc->info[i].local_upper;
-        stride[i] = array_desc->info[i].local_stride;
+  if (rank != 0) {
+    if (ai->shadow_size_lo > 0) {
+      // FIXME strict condition
+      if (ai->shadow_size_lo > ai->par_size) {
+        _XCALABLEMP_fatal("shadow size is too big");
       }
 
-      dim_acc[i] = array_desc->info[i].dim_acc;
-    }
+      // alloc buffer
+      *lo_buffer = _XCALABLEMP_alloc((ai->shadow_size_lo) * (ai->dim_elmts));
 
-    // pack data
-    _XCALABLEMP_pack_shadow_buffer(*lo_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
+      // calc index
+      for (int i = 0; i < array_dim; i++) {
+        if (i == array_index) {
+          // FIXME shadow is allowed in BLOCK distribution
+          lower[i] = array_desc->info[i].local_lower;
+          upper[i] = lower[i] + array_desc->info[i].shadow_size_lo - 1;
+          stride[i] = 1;
+        }
+        else {
+          lower[i] = array_desc->info[i].local_lower;
+          upper[i] = array_desc->info[i].local_upper;
+          stride[i] = array_desc->info[i].local_stride;
+        }
+
+        dim_acc[i] = array_desc->info[i].dim_acc;
+      }
+
+      // pack data
+      _XCALABLEMP_pack_shadow_buffer(*lo_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
+    }
   }
 
   // pack hi shadow
-  if (ai->shadow_size_hi > 0) {
-    // FIXME strict condition
-    if (ai->shadow_size_hi > ai->par_size) {
-      _XCALABLEMP_fatal("shadow size is too big");
-    }
-
-    // alloc buffer
-    *hi_buffer = _XCALABLEMP_alloc((ai->shadow_size_hi) * (ai->dim_elmts));
-
-    // calc index
-    for (int i = 0; i < array_dim; i++) {
-      if (i == array_index) {
-        // XXX shadow is allowed in BLOCK distribution
-        lower[i] = array_desc->info[i].local_upper - array_desc->info[i].shadow_size_hi + 1;
-        upper[i] = lower[i] + array_desc->info[i].shadow_size_hi - 1;
-        stride[i] = 1;
-      }
-      else {
-        lower[i] = array_desc->info[i].local_lower;
-        upper[i] = array_desc->info[i].local_upper;
-        stride[i] = array_desc->info[i].local_stride;
+  if (rank != (size - 1)) {
+    if (ai->shadow_size_hi > 0) {
+      // FIXME strict condition
+      if (ai->shadow_size_hi > ai->par_size) {
+        _XCALABLEMP_fatal("shadow size is too big");
       }
 
-      dim_acc[i] = array_desc->info[i].dim_acc;
-    }
+      // alloc buffer
+      *hi_buffer = _XCALABLEMP_alloc((ai->shadow_size_hi) * (ai->dim_elmts));
 
-    // pack data
-    _XCALABLEMP_pack_shadow_buffer(*hi_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
+      // calc index
+      for (int i = 0; i < array_dim; i++) {
+        if (i == array_index) {
+          // XXX shadow is allowed in BLOCK distribution
+          lower[i] = array_desc->info[i].local_upper - array_desc->info[i].shadow_size_hi + 1;
+          upper[i] = lower[i] + array_desc->info[i].shadow_size_hi - 1;
+          stride[i] = 1;
+        }
+        else {
+          lower[i] = array_desc->info[i].local_lower;
+          upper[i] = array_desc->info[i].local_upper;
+          stride[i] = array_desc->info[i].local_stride;
+        }
+
+        dim_acc[i] = array_desc->info[i].dim_acc;
+      }
+
+      // pack data
+      _XCALABLEMP_pack_shadow_buffer(*hi_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
+    }
   }
 }
 
 // FIXME not consider full shadow
 void _XCALABLEMP_unpack_shadow_NORMAL_BASIC(void *lo_buffer, void *hi_buffer, void *array_addr,
                                             _XCALABLEMP_array_t *array_desc, int array_index, int array_type) {
+  if (!(array_desc->is_allocated)) {
+    return;
+  }
+
   int array_dim = array_desc->dim;
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
   _XCALABLEMP_template_chunk_t *ti = ai->align_template_chunk;
+
+  int size = ai->shadow_comm_size;
+  int rank = ai->shadow_comm_rank;
 
   int lower[array_dim], upper[array_dim], stride[array_dim];
   unsigned long long dim_acc[array_dim];
 
   // unpack lo shadow
-  if (ai->shadow_size_lo > 0) {
-    // FIXME strict condition
-    if (ai->shadow_size_lo > ai->par_size) {
-      _XCALABLEMP_fatal("shadow size is too big");
-    }
-
-    // calc index
-    for (int i = 0; i < array_dim; i++) {
-      if (i == array_index) {
-        // XXX shadow is allowed in BLOCK distribution
-        lower[i] = 0;
-        upper[i] = array_desc->info[i].shadow_size_lo - 1;
-        stride[i] = 1;
-      }
-      else {
-        lower[i] = array_desc->info[i].local_lower;
-        upper[i] = array_desc->info[i].local_upper;
-        stride[i] = array_desc->info[i].local_stride;
+  if (rank != 0) {
+    if (ai->shadow_size_lo > 0) {
+      // FIXME strict condition
+      if (ai->shadow_size_lo > ai->par_size) {
+        _XCALABLEMP_fatal("shadow size is too big");
       }
 
-      dim_acc[i] = array_desc->info[i].dim_acc;
+      // calc index
+      for (int i = 0; i < array_dim; i++) {
+        if (i == array_index) {
+          // FIXME shadow is allowed in BLOCK distribution
+          lower[i] = 0;
+          upper[i] = array_desc->info[i].shadow_size_lo - 1;
+          stride[i] = 1;
+        }
+        else {
+          lower[i] = array_desc->info[i].local_lower;
+          upper[i] = array_desc->info[i].local_upper;
+          stride[i] = array_desc->info[i].local_stride;
+        }
+
+        dim_acc[i] = array_desc->info[i].dim_acc;
+      }
+
+      // unpack data
+      _XCALABLEMP_unpack_shadow_buffer(lo_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
+
+      // free buffer
+      _XCALABLEMP_free(lo_buffer);
     }
-
-    // unpack data
-    _XCALABLEMP_unpack_shadow_buffer(lo_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
-
-    // free buffer
-    _XCALABLEMP_free(lo_buffer);
   }
 
   // unpack hi shadow
-  if (ai->shadow_size_hi > 0) {
-    // FIXME strict condition
-    if (ai->shadow_size_hi > ai->par_size) {
-      _XCALABLEMP_fatal("shadow size is too big");
-    }
-
-    // calc index
-    for (int i = 0; i < array_dim; i++) {
-      if (array_index == 0) {
-        // XXX shadow is allowed in BLOCK distribution
-        lower[i] = array_desc->info[i].shadow_size_lo + array_desc->info[i].par_size;
-        upper[i] = lower[i] + array_desc->info[i].shadow_size_hi - 1;
-        stride[i] = 1;
-      }
-      else {
-        lower[i] = array_desc->info[i].local_lower;
-        upper[i] = array_desc->info[i].local_upper;
-        stride[i] = array_desc->info[i].local_stride;
+  if (rank != (size - 1)) {
+    if (ai->shadow_size_hi > 0) {
+      // FIXME strict condition
+      if (ai->shadow_size_hi > ai->par_size) {
+        _XCALABLEMP_fatal("shadow size is too big");
       }
 
-      dim_acc[i] = array_desc->info[i].dim_acc;
+      // calc index
+      for (int i = 0; i < array_dim; i++) {
+        if (array_index == 0) {
+          // FIXME shadow is allowed in BLOCK distribution
+          lower[i] = array_desc->info[i].shadow_size_lo + array_desc->info[i].par_size;
+          upper[i] = lower[i] + array_desc->info[i].shadow_size_hi - 1;
+          stride[i] = 1;
+        }
+        else {
+          lower[i] = array_desc->info[i].local_lower;
+          upper[i] = array_desc->info[i].local_upper;
+          stride[i] = array_desc->info[i].local_stride;
+        }
+
+        dim_acc[i] = array_desc->info[i].dim_acc;
+      }
+
+      // unpack data
+      _XCALABLEMP_unpack_shadow_buffer(hi_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
+
+      // free buffer
+      _XCALABLEMP_free(hi_buffer);
     }
-
-    // unpack data
-    _XCALABLEMP_unpack_shadow_buffer(hi_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
-
-    // free buffer
-    _XCALABLEMP_free(hi_buffer);
   }
 }

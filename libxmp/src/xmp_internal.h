@@ -85,6 +85,10 @@ typedef struct _XCALABLEMP_array_info_type {
 
   unsigned long long dim_acc;
   unsigned long long dim_elmts;
+
+  MPI_Comm *shadow_comm;
+  int shadow_comm_size;
+  int shadow_comm_rank;
   // --------------------------------
 
   long long align_subscript;
@@ -93,9 +97,6 @@ typedef struct _XCALABLEMP_array_info_type {
   int shadow_type;
   int shadow_size_lo;
   int shadow_size_hi;
-  MPI_Comm *shadow_comm;
-  int shadow_comm_size;
-  int shadow_comm_rank;
 
   int align_template_index;
   _XCALABLEMP_template_info_t *align_template_info;

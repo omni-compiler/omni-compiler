@@ -19,7 +19,7 @@ static void _XCALABLEMP_calc_array_dim_elmts(_XCALABLEMP_array_t *array, int arr
 void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_template_t *template, int dim, ...) {
   _XCALABLEMP_array_t *a = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_array_t) + sizeof(_XCALABLEMP_array_info_t) * (dim - 1));
 
-  a->is_allocated = true;
+  a->is_allocated = template->is_owner;
   a->dim = dim;
 
   va_list args;
@@ -35,18 +35,24 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
     ai->ser_upper = upper;
     ai->ser_size = size;
 
-    ai->par_lower = lower;
-    ai->par_upper = upper;
-    ai->par_stride = 1;
-    ai->par_size = size;
+    if (a->is_allocated) {
+      ai->par_lower = lower;
+      ai->par_upper = upper;
+      ai->par_stride = 1;
+      ai->par_size = size;
 
-    ai->local_lower = lower;
-    ai->local_upper = upper;
-    ai->local_stride = 1;
-    ai->alloc_size = size;
+      ai->local_lower = lower;
+      ai->local_upper = upper;
+      ai->local_stride = 1;
+      ai->alloc_size = size;
 
- // ai->dim_acc is calculated in _XCALABLEMP_alloc_array, _XCALABLEMP_init_array_addr
- // ai->dim_elmts is calculated in _XCALABLEMP_alloc_array, _XCALABLEMP_init_array_addr
+   // ai->dim_acc is calculated in _XCALABLEMP_alloc_array, _XCALABLEMP_init_array_addr
+   // ai->dim_elmts is calculated in _XCALABLEMP_alloc_array, _XCALABLEMP_init_array_addr
+
+   // ai->shadow_comm is calculated in _XCALABLEMP_init_shadow
+   // ai->shadow_comm_size is calculated in _XCALABLEMP_init_shadow
+   // ai->shadow_comm_rank is calculated in _XCALABLEMP_init_shadow
+    }
     
     ai->align_subscript = 0;
 
