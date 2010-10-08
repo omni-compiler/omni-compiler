@@ -121,7 +121,7 @@ void _XCALABLEMP_pack_shadow_NORMAL_BASIC(void **lo_buffer, void **hi_buffer, vo
   unsigned long long dim_acc[array_dim];
 
   // pack lo shadow
-  if (rank != 0) {
+  if (rank != (size - 1)) {
     if (ai->shadow_size_lo > 0) {
       // FIXME strict condition
       if (ai->shadow_size_lo > ai->par_size) {
@@ -134,8 +134,8 @@ void _XCALABLEMP_pack_shadow_NORMAL_BASIC(void **lo_buffer, void **hi_buffer, vo
       // calc index
       for (int i = 0; i < array_dim; i++) {
         if (i == array_index) {
-          // FIXME shadow is allowed in BLOCK distribution
-          lower[i] = array_desc->info[i].local_lower;
+          // XXX shadow is allowed in BLOCK distribution
+          lower[i] = array_desc->info[i].local_upper - array_desc->info[i].shadow_size_lo + 1;
           upper[i] = lower[i] + array_desc->info[i].shadow_size_lo - 1;
           stride[i] = 1;
         }
@@ -154,7 +154,7 @@ void _XCALABLEMP_pack_shadow_NORMAL_BASIC(void **lo_buffer, void **hi_buffer, vo
   }
 
   // pack hi shadow
-  if (rank != (size - 1)) {
+  if (rank != 0) {
     if (ai->shadow_size_hi > 0) {
       // FIXME strict condition
       if (ai->shadow_size_hi > ai->par_size) {
@@ -167,8 +167,8 @@ void _XCALABLEMP_pack_shadow_NORMAL_BASIC(void **lo_buffer, void **hi_buffer, vo
       // calc index
       for (int i = 0; i < array_dim; i++) {
         if (i == array_index) {
-          // XXX shadow is allowed in BLOCK distribution
-          lower[i] = array_desc->info[i].local_upper - array_desc->info[i].shadow_size_hi + 1;
+          // FIXME shadow is allowed in BLOCK distribution
+          lower[i] = array_desc->info[i].local_lower;
           upper[i] = lower[i] + array_desc->info[i].shadow_size_hi - 1;
           stride[i] = 1;
         }
@@ -269,4 +269,51 @@ void _XCALABLEMP_unpack_shadow_NORMAL_BASIC(void *lo_buffer, void *hi_buffer, vo
       _XCALABLEMP_free(hi_buffer);
     }
   }
+}
+
+// FIXME change tag
+// FIXME not consider full shadow
+void _XCALABLEMP_exchange_shadow_NORMAL(void *lo_recv_buffer, void *hi_recv_buffer,
+                                        void *lo_send_buffer, void *hi_send_buffer,
+                                        _XCALABLEMP_array_t *array_desc, int array_index, int array_type_size) {
+  if (!(array_desc->is_allocated)) {
+    return;
+  }
+
+  _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
+
+  // get communicator info
+  MPI_Comm *comm = ai->shadow_comm;
+  int size = ai->shadow_comm_size;
+  int rank = ai->shadow_comm_rank;
+
+  // setup type
+  MPI_Datatype mpi_datatype;
+  MPI_Type_contiguous(array_type_size, MPI_BYTE, &mpi_datatype);
+  MPI_Type_commit(&mpi_datatype);
+
+  // exchange shadow
+  MPI_Request req[4];
+/*
+  // exchange lo shadow
+  if (rank != 0) {
+    if (ai->shadow_size_lo > 0) {
+      // send lo shadow
+      MPI_Isend(lo_send_buffer, (ai->shadow_size_lo) * (ai->dim_elmts), mpi_datatype, rank - 1, 0, *comm, &(req[0]));
+
+      // recv lo shadow
+      MPI_Irecv(lo_recv_buffer, (ai->shadow_size_lo) * (ai->dim_elmts), mpi_datatype, rank - 1, 0, *comm, &(req[1]));
+    }
+  }
+
+  // exchange hi shadow
+  if (rank != (size - 1)) {
+    if (ai->shadow_size_hi > 0) {
+      // send hi shadow
+      MPI_Isend(lo_send_buffer, (ai->shadow_size_hi) * (ai->dim_elmts), mpi_datatype, rank + 1, 2, *comm, &req[2]);
+
+      // recv hi shadow
+    }
+  }
+*/
 }
