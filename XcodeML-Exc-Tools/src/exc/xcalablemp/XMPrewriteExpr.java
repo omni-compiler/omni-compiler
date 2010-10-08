@@ -187,7 +187,12 @@ public class XMPrewriteExpr {
       case PLUS_EXPR:
         return retObj;
       case POINTER_REF:
-        return Xcons.List(Xcode.POINTER_REF, retObj.Type(), retObj);
+        if (arrayDim == arrayDimCount) {
+          return Xcons.List(Xcode.POINTER_REF, retObj.Type(), retObj);
+        }
+        else {
+          return retObj;
+        }
       default:
         throw new XMPexception("unknown operation in exc.xcalablemp.XMPrewrite.createRewriteAlignedArrayFunc()");
     }
