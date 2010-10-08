@@ -273,7 +273,7 @@ void _XCALABLEMP_unpack_shadow_NORMAL_BASIC(void *lo_buffer, void *hi_buffer, vo
 
 // FIXME change tag
 // FIXME not consider full shadow
-void _XCALABLEMP_exchange_shadow_NORMAL(void *lo_recv_buffer, void *hi_recv_buffer,
+void _XCALABLEMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
                                         void *lo_send_buffer, void *hi_send_buffer,
                                         _XCALABLEMP_array_t *array_desc, int array_index, int array_type_size) {
   if (!(array_desc->is_allocated)) {
@@ -293,21 +293,53 @@ void _XCALABLEMP_exchange_shadow_NORMAL(void *lo_recv_buffer, void *hi_recv_buff
   MPI_Type_commit(&mpi_datatype);
 
   // exchange shadow
-  MPI_Request req[4];
+  MPI_Request send_req[2];
+  MPI_Request recv_req[2];
 
   if (ai->shadow_size_lo > 0) {
     if (rank != 0) {
-      MPI_Irecv(lo_recv_buffer, (ai->shadow_size_lo) * (ai->dim_elmts), mpi_datatype, rank - 1, 0, *comm, &(req[0]));
-    }
-    else {
-      MPI_Cancel(&(req[0]));
+      *lo_recv_buffer = _XCALABLEMP_alloc((ai->shadow_size_lo) * (ai->dim_elmts));
+      MPI_Irecv(*lo_recv_buffer, (ai->shadow_size_lo) * (ai->dim_elmts), mpi_datatype, rank - 1, 0, *comm, &(recv_req[0]));
     }
 
     if (rank != (size - 1)) {
-      MPI_Isend(lo_send_buffer, (ai->shadow_size_hi) * (ai->dim_elmts), mpi_datatype, rank + 1, 0, *comm, &(req[1]));
+      MPI_Isend(lo_send_buffer, (ai->shadow_size_lo) * (ai->dim_elmts), mpi_datatype, rank + 1, 0, *comm, &(send_req[0]));
     }
-    else {
-      MPI_Cancel(&(req[1]));
+  }
+
+  if (ai->shadow_size_hi > 0) {
+    if (rank != (size - 1)) {
+      *hi_recv_buffer = _XCALABLEMP_alloc((ai->shadow_size_hi) * (ai->dim_elmts));
+      MPI_Irecv(*hi_recv_buffer, (ai->shadow_size_hi) * (ai->dim_elmts), mpi_datatype, rank + 1, 1, *comm, &(recv_req[1]));
+    }
+
+    if (rank != 0) {
+      MPI_Isend(hi_send_buffer, (ai->shadow_size_hi) * (ai->dim_elmts), mpi_datatype, rank - 1, 1, *comm, &(send_req[1]));
+    }
+  }
+
+  // wait & free
+  MPI_Status stat;
+
+  if (ai->shadow_size_lo > 0) {
+    if (rank != 0) {
+      MPI_Wait(&(recv_req[0]), &stat);
+    }
+
+    if (rank != (size - 1)) {
+      MPI_Wait(&(send_req[0]), &stat);
+      _XCALABLEMP_free(lo_send_buffer);
+    }
+  }
+
+  if (ai->shadow_size_hi > 0) {
+    if (rank != (size - 1)) {
+      MPI_Wait(&(recv_req[1]), &stat);
+    }
+
+    if (rank != 0) {
+      MPI_Wait(&(send_req[1]), &stat);
+      _XCALABLEMP_free(hi_send_buffer);
     }
   }
 }

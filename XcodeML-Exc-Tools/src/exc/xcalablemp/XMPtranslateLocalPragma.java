@@ -1143,7 +1143,14 @@ public class XMPtranslateLocalPragma {
 
     reflectFuncBody.add(Bcons.Statement(packFuncId.Call(packFuncArgs)));
 
-    // FIXME send/recv shadow
+    // exchange shadow
+    Ident exchangeFuncId = _globalDecl.declExternFunc("_XCALABLEMP_exchange_shadow_NORMAL");
+    XobjList exchangeFuncArgs = Xcons.List(loRecvId.getAddr(), hiRecvId.getAddr(), loSendId.Ref(), hiSendId.Ref());
+    exchangeFuncArgs.add(alignedArray.getDescId().Ref());
+    exchangeFuncArgs.add(Xcons.IntConstant(arrayIndex));
+    exchangeFuncArgs.add(Xcons.SizeOf(arrayType));
+
+    reflectFuncBody.add(Bcons.Statement(exchangeFuncId.Call(exchangeFuncArgs)));
 
     // unpack shadow
     Ident unpackFuncId = null;
