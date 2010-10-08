@@ -1147,7 +1147,7 @@ public class XMPtranslateLocalPragma {
 
     // unpack shadow
     Ident unpackFuncId = null;
-    XobjList unpackFuncArgs = Xcons.List(loSendId.Ref(), hiSendId.Ref(), alignedArray.getAddrId().Ref(),
+    XobjList unpackFuncArgs = Xcons.List(loRecvId.Ref(), hiRecvId.Ref(), alignedArray.getAddrId().Ref(),
                                          alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
     if (arrayType.getKind() == Xtype.BASIC) {
       unpackFuncId = _globalDecl.declExternFunc("_XCALABLEMP_unpack_shadow_NORMAL_" + "BASIC");

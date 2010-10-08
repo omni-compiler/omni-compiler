@@ -294,26 +294,20 @@ void _XCALABLEMP_exchange_shadow_NORMAL(void *lo_recv_buffer, void *hi_recv_buff
 
   // exchange shadow
   MPI_Request req[4];
-/*
-  // exchange lo shadow
-  if (rank != 0) {
-    if (ai->shadow_size_lo > 0) {
-      // send lo shadow
-      MPI_Isend(lo_send_buffer, (ai->shadow_size_lo) * (ai->dim_elmts), mpi_datatype, rank - 1, 0, *comm, &(req[0]));
 
-      // recv lo shadow
-      MPI_Irecv(lo_recv_buffer, (ai->shadow_size_lo) * (ai->dim_elmts), mpi_datatype, rank - 1, 0, *comm, &(req[1]));
+  if (ai->shadow_size_lo > 0) {
+    if (rank != 0) {
+      MPI_Irecv(lo_recv_buffer, (ai->shadow_size_lo) * (ai->dim_elmts), mpi_datatype, rank - 1, 0, *comm, &(req[0]));
+    }
+    else {
+      MPI_Cancel(&(req[0]));
+    }
+
+    if (rank != (size - 1)) {
+      MPI_Isend(lo_send_buffer, (ai->shadow_size_hi) * (ai->dim_elmts), mpi_datatype, rank + 1, 0, *comm, &(req[1]));
+    }
+    else {
+      MPI_Cancel(&(req[1]));
     }
   }
-
-  // exchange hi shadow
-  if (rank != (size - 1)) {
-    if (ai->shadow_size_hi > 0) {
-      // send hi shadow
-      MPI_Isend(lo_send_buffer, (ai->shadow_size_hi) * (ai->dim_elmts), mpi_datatype, rank + 1, 2, *comm, &req[2]);
-
-      // recv hi shadow
-    }
-  }
-*/
 }
