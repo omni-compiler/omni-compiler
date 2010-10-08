@@ -414,7 +414,8 @@ public class XMPtranslateGlobalPragma {
 
     XobjList initArrayDescFuncArgs = Xcons.List(arrayDescId.getAddr(),
                                                 templateObj.getDescId().Ref(),
-                                                Xcons.IntConstant(arrayDim));
+                                                Xcons.IntConstant(arrayDim),
+                                                Xcons.SizeOf(arrayElmtType));
 
     Vector<Long> arraySizeVector = new Vector<Long>(arrayDim);
     Vector<Ident> gtolAccIdVector = new Vector<Ident>(arrayDim);

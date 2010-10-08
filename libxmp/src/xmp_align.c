@@ -16,14 +16,15 @@ static void _XCALABLEMP_calc_array_dim_elmts(_XCALABLEMP_array_t *array, int arr
   array->info[array_index].dim_elmts = dim_elmts;
 }
 
-void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_template_t *template, int dim, ...) {
+void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_template_t *template, int dim, size_t type_size, ...) {
   _XCALABLEMP_array_t *a = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_array_t) + sizeof(_XCALABLEMP_array_info_t) * (dim - 1));
 
   a->is_allocated = template->is_owner;
   a->dim = dim;
+  a->type_size = type_size;
 
   va_list args;
-  va_start(args, dim);
+  va_start(args, type_size);
   for (int i = 0; i < dim; i++) {
     int size = va_arg(args, int);
     int lower = 0;

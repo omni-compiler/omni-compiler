@@ -129,7 +129,7 @@ void _XCALABLEMP_pack_shadow_NORMAL_BASIC(void **lo_buffer, void **hi_buffer, vo
       }
 
       // alloc buffer
-      *lo_buffer = _XCALABLEMP_alloc((ai->shadow_size_lo) * (ai->dim_elmts));
+      *lo_buffer = _XCALABLEMP_alloc((ai->shadow_size_lo) * (ai->dim_elmts) * (array_desc->type_size));
 
       // calc index
       for (int i = 0; i < array_dim; i++) {
@@ -162,7 +162,7 @@ void _XCALABLEMP_pack_shadow_NORMAL_BASIC(void **lo_buffer, void **hi_buffer, vo
       }
 
       // alloc buffer
-      *hi_buffer = _XCALABLEMP_alloc((ai->shadow_size_hi) * (ai->dim_elmts));
+      *hi_buffer = _XCALABLEMP_alloc((ai->shadow_size_hi) * (ai->dim_elmts) * (array_desc->type_size));
 
       // calc index
       for (int i = 0; i < array_dim; i++) {
@@ -275,7 +275,7 @@ void _XCALABLEMP_unpack_shadow_NORMAL_BASIC(void *lo_buffer, void *hi_buffer, vo
 // FIXME not consider full shadow
 void _XCALABLEMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
                                         void *lo_send_buffer, void *hi_send_buffer,
-                                        _XCALABLEMP_array_t *array_desc, int array_index, int array_type_size) {
+                                        _XCALABLEMP_array_t *array_desc, int array_index) {
   if (!(array_desc->is_allocated)) {
     return;
   }
@@ -289,7 +289,7 @@ void _XCALABLEMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_bu
 
   // setup type
   MPI_Datatype mpi_datatype;
-  MPI_Type_contiguous(array_type_size, MPI_BYTE, &mpi_datatype);
+  MPI_Type_contiguous(array_desc->type_size, MPI_BYTE, &mpi_datatype);
   MPI_Type_commit(&mpi_datatype);
 
   // exchange shadow
@@ -298,7 +298,7 @@ void _XCALABLEMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_bu
 
   if (ai->shadow_size_lo > 0) {
     if (rank != 0) {
-      *lo_recv_buffer = _XCALABLEMP_alloc((ai->shadow_size_lo) * (ai->dim_elmts));
+      *lo_recv_buffer = _XCALABLEMP_alloc((ai->shadow_size_lo) * (ai->dim_elmts) * (array_desc->type_size));
       MPI_Irecv(*lo_recv_buffer, (ai->shadow_size_lo) * (ai->dim_elmts), mpi_datatype, rank - 1, 0, *comm, &(recv_req[0]));
     }
 
@@ -309,7 +309,7 @@ void _XCALABLEMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_bu
 
   if (ai->shadow_size_hi > 0) {
     if (rank != (size - 1)) {
-      *hi_recv_buffer = _XCALABLEMP_alloc((ai->shadow_size_hi) * (ai->dim_elmts));
+      *hi_recv_buffer = _XCALABLEMP_alloc((ai->shadow_size_hi) * (ai->dim_elmts) * (array_desc->type_size));
       MPI_Irecv(*hi_recv_buffer, (ai->shadow_size_hi) * (ai->dim_elmts), mpi_datatype, rank + 1, 1, *comm, &(recv_req[1]));
     }
 

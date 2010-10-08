@@ -469,7 +469,8 @@ public class XMPtranslateLocalPragma {
 
     XobjList initArrayDescFuncArgs = Xcons.List(arrayDescId.getAddr(),
                                                 templateObj.getDescId().Ref(),
-                                                Xcons.IntConstant(arrayDim));
+                                                Xcons.IntConstant(arrayDim),
+                                                Xcons.SizeOf(arrayElmtType));
 
     Vector<Long> arraySizeVector = new Vector<Long>(arrayDim);
     Vector<Ident> gtolAccIdVector = new Vector<Ident>(arrayDim);
@@ -1138,7 +1139,6 @@ public class XMPtranslateLocalPragma {
     }
     else {
       packFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pack_shadow_NORMAL_" + "GENERAL");
-      packFuncArgs.add(Xcons.SizeOf(arrayType));
     }
 
     reflectFuncBody.add(Bcons.Statement(packFuncId.Call(packFuncArgs)));
@@ -1148,7 +1148,6 @@ public class XMPtranslateLocalPragma {
     XobjList exchangeFuncArgs = Xcons.List(loRecvId.getAddr(), hiRecvId.getAddr(), loSendId.Ref(), hiSendId.Ref());
     exchangeFuncArgs.add(alignedArray.getDescId().Ref());
     exchangeFuncArgs.add(Xcons.IntConstant(arrayIndex));
-    exchangeFuncArgs.add(Xcons.SizeOf(arrayType));
 
     reflectFuncBody.add(Bcons.Statement(exchangeFuncId.Call(exchangeFuncArgs)));
 
@@ -1162,7 +1161,6 @@ public class XMPtranslateLocalPragma {
     }
     else {
       unpackFuncId = _globalDecl.declExternFunc("_XCALABLEMP_unpack_shadow_NORMAL_" + "GENERAL");
-      unpackFuncArgs.add(Xcons.SizeOf(arrayType));
     }
 
     reflectFuncBody.add(Bcons.Statement(unpackFuncId.Call(unpackFuncArgs)));

@@ -106,6 +106,7 @@ typedef struct _XCALABLEMP_array_info_type {
 typedef struct _XCALABLEMP_array_type {
   _Bool is_allocated;
   int dim;
+  size_t type_size;
 
   // enable when is_member is true
   MPI_Comm *comm;
