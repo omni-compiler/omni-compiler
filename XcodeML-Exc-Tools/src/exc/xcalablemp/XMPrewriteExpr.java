@@ -17,7 +17,7 @@ public class XMPrewriteExpr {
     if (fb == null) return;
 
     // rewrite expr
-    XMPobjectTable localObjectTable = XMPlocalDecl.getObjectTable(fb);
+    XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(fb);
 
     BasicBlockExprIterator iter = new BasicBlockExprIterator(fb);
     for (iter.init(); !iter.end(); iter.next()) {

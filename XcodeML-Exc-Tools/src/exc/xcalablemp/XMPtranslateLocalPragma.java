@@ -1329,8 +1329,7 @@ public class XMPtranslateLocalPragma {
       }
 
       // add extra args for (firstmax, firstmin, lastmax, lastmin) if needed
-      createFLMMreductionArgs(reductionOp.getInt(), count.getLongLow(),
-                              (XobjList)reductionSpec.getArg(1), reductionFuncArgs, pb);
+      createFLMMreductionArgs(reductionOp.getInt(), (XobjList)reductionSpec.getArg(1), reductionFuncArgs, pb);
 
       returnVector.add(reductionFuncArgs);
     }
@@ -1480,8 +1479,7 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private void createFLMMreductionArgs(int op, long count, XobjList locationVars,
-                                       XobjList funcArgs, PragmaBlock pb) throws XMPexception {
+  private void createFLMMreductionArgs(int op, XobjList locationVars, XobjList funcArgs, PragmaBlock pb) throws XMPexception {
     switch (op) {
       case XMPcollective.REDUCE_SUM:
       case XMPcollective.REDUCE_PROD:
@@ -1520,9 +1518,6 @@ public class XMPtranslateLocalPragma {
               throw new XMPexception("'" + varName + "' should have a integer type for reduction");
 
             BasicType basicVarType = (BasicType)varType;
-            
-            if (count != 1)
-              throw new XMPexception("'" + varName + "' should be a scalar variable");
 
             funcArgs.add(Xcons.Cast(Xtype.voidPtrType, varId.getAddr()));
             funcArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(basicVarType.getBasicType() + 200)));
@@ -1537,9 +1532,6 @@ public class XMPtranslateLocalPragma {
 
             if (!XMPutil.isIntegerType(basicVarType))
               throw new XMPexception("'" + varName + "' should have a integer type for reduction");
-
-            if (count != getArrayElmtCount(arrayVarType))
-              throw new XMPexception("the size of '" + varName + "' is not same with the <reduction-variable>");
 
             funcArgs.add(Xcons.Cast(Xtype.voidPtrType, varId.Ref()));
             funcArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(basicVarType.getBasicType() + 200)));
