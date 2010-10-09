@@ -108,6 +108,11 @@ typedef struct _XCALABLEMP_array_type {
   int dim;
   size_t type_size;
 
+  // enable when is_allocated is true
+  void *addr;
+  unsigned long long total_elmts;
+  // --------------------------------
+
   // enable when is_member is true
   MPI_Comm *comm;
   int comm_size;
