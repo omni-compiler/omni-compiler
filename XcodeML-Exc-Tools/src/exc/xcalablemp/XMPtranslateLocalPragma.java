@@ -755,6 +755,7 @@ public class XMPtranslateLocalPragma {
 
   private Block createReductionClauseBlock(PragmaBlock pb, BlockList reductionBody, XobjList schedVarList) throws XMPexception {
     XobjList loopDecl = (XobjList)pb.getClauses();
+    BlockList loopBody = pb.getBody();
 
     XobjList onRef = (XobjList)loopDecl.getArg(1);
     String onRefObjName = onRef.getArg(0).getString();
@@ -795,7 +796,7 @@ public class XMPtranslateLocalPragma {
 
       // create function call
       Ident initFuncId = _globalDecl.declExternFunc("_XCALABLEMP_init_reduce_comm_" + initFuncSurfix);
-      reductionBody.insert(initFuncId.Call(initFuncArgs));
+      loopBody.insert(initFuncId.Call(initFuncArgs));
     }
 
     return Bcons.COMPOUND(reductionBody);
@@ -1272,6 +1273,7 @@ public class XMPtranslateLocalPragma {
       Xtype specType = typedSpec.getSecond();
 
       boolean isArray = false;
+      Xobject specRef = null;
       XobjLong count = null;
       XobjInt elmtType = null;
       BasicType basicSpecType = null;
@@ -1281,6 +1283,7 @@ public class XMPtranslateLocalPragma {
             basicSpecType = (BasicType)specType;
             checkReductionType(specName, basicSpecType);
 
+            specRef = specId.getAddr();
             count = Xcons.LongLongConstant(0, 1);
             elmtType = Xcons.IntConstant(basicSpecType.getBasicType() + 200);
           } break;
@@ -1294,16 +1297,13 @@ public class XMPtranslateLocalPragma {
             basicSpecType = (BasicType)arraySpecType.getArrayElementType();
             checkReductionType(specName, basicSpecType);
 
+            specRef = specId.Ref();
             count = Xcons.LongLongConstant(0, getArrayElmtCount(arraySpecType));
             elmtType = Xcons.IntConstant(basicSpecType.getBasicType() + 200);
           } break;
         default:
           throw new XMPexception("'" + specName + "' has a wrong data type for reduction");
       }
-
-      Xobject specRef = null;
-      if (isArray) specRef = specId.Ref();
-      else         specRef = specId.getAddr();
 
       XobjList reductionFuncArgs = Xcons.List(specRef, count, elmtType, reductionOp);
 
