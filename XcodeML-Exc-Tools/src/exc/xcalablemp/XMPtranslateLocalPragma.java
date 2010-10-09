@@ -1081,13 +1081,7 @@ public class XMPtranslateLocalPragma {
     XobjList arrayList = (XobjList)reflectDecl.getArg(0);
     for (XobjArgs iter = arrayList.getArgs(); iter != null; iter = iter.nextArgs()) {
       String arrayName = iter.getArg().getString();
-      XMPalignedArray alignedArray = localObjectTable.getAlignedArray(arrayName);
-      if (alignedArray == null) {
-        alignedArray = _globalObjectTable.getAlignedArray(arrayName);
-        if (alignedArray == null) {
-          throw new XMPexception("the aligned array '" + arrayName + "' is not found");
-        }
-      }
+      XMPalignedArray alignedArray = getXMPalignedArray(arrayName, localObjectTable);
 
       if (!alignedArray.hasShadow()) {
         throw new XMPexception("the aligned array '" + arrayName + "' has no shadow declaration");
@@ -1892,12 +1886,7 @@ public class XMPtranslateLocalPragma {
         case ARRAY_REF:
           {
             String arrayName = myExpr.getSym();
-            XMPalignedArray alignedArray = _globalObjectTable.getAlignedArray(arrayName);
-            if (alignedArray == null) {
-              if (localObjectTable != null)
-                alignedArray = localObjectTable.getAlignedArray(arrayName);
-            }
-
+            XMPalignedArray alignedArray = findXMPalignedArray(arrayName, localObjectTable);
             if (alignedArray != null) {
               iter.next();
               return new XMPpair<XMPalignedArray, XobjList>(alignedArray,
@@ -2199,5 +2188,25 @@ public class XMPtranslateLocalPragma {
     }
 
     return n;
+  }
+
+  private XMPalignedArray findXMPalignedArray(String arrayName, XMPobjectTable localObjectTable) throws XMPexception {
+    XMPalignedArray a = localObjectTable.getAlignedArray(arrayName);
+    if (a == null) {
+      a = _globalObjectTable.getAlignedArray(arrayName);
+    }
+
+    return a;
+  }
+
+  private XMPalignedArray getXMPalignedArray(String arrayName, XMPobjectTable localObjectTable) throws XMPexception {
+    XMPalignedArray a = localObjectTable.getAlignedArray(arrayName);
+    if (a == null) {
+      a = _globalObjectTable.getAlignedArray(arrayName);
+      if (a == null)
+        throw new XMPexception("array '" + arrayName + "' is not aligned");
+    }
+
+    return a;
   }
 }

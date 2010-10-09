@@ -55,12 +55,7 @@ public class XMPrewriteExpr {
         case ARRAY_REF:
           {
             String arrayName = myExpr.getSym();
-            XMPalignedArray alignedArray = _globalObjectTable.getAlignedArray(arrayName);
-            if (alignedArray == null) {
-              if (localObjectTable != null)
-                alignedArray = localObjectTable.getAlignedArray(arrayName);
-            }
-
+            XMPalignedArray alignedArray = findXMPalignedArray(arrayName, localObjectTable);
             if (alignedArray != null) {
               if (alignedArray.checkRealloc()) {
                 iter.next();
@@ -257,5 +252,14 @@ public class XMPrewriteExpr {
       default:
         throw new XMPexception("unknown distribute manner for array '" + alignedArray.getName()  + "'");
     }
+  }
+
+  private XMPalignedArray findXMPalignedArray(String arrayName, XMPobjectTable localObjectTable) throws XMPexception {
+    XMPalignedArray a = localObjectTable.getAlignedArray(arrayName);
+    if (a == null) {
+      a = _globalObjectTable.getAlignedArray(arrayName);
+    }
+
+    return a;
   }
 }
