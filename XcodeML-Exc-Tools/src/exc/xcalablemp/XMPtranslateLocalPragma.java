@@ -140,7 +140,7 @@ public class XMPtranslateLocalPragma {
             nodesRefType = "NAMED";
 
             String nodesRefName = nodesRef.getArg(0).getString();
-            nodesRefObject = findXMPnodes(nodesRefName, localObjectTable);
+            nodesRefObject = getXMPnodes(nodesRefName, localObjectTable);
             nodesArgs.add(nodesRefObject.getDescId().Ref());
 
             int nodesRefDim = nodesRefObject.getDim();
@@ -327,7 +327,7 @@ public class XMPtranslateLocalPragma {
 
     // get nodes object
     String nodesName = distDecl.getArg(2).getString();
-    XMPnodes nodesObject = findXMPnodes(nodesName, localObjectTable);
+    XMPnodes nodesObject = getXMPnodes(nodesName, localObjectTable);
 
     templateObject.setOntoNodes(nodesObject);
 
@@ -450,7 +450,7 @@ public class XMPtranslateLocalPragma {
 
     // get template information
     String templateName = alignDecl.getArg(2).getString();
-    XMPtemplate templateObj = findXMPtemplate(templateName, localObjectTable);
+    XMPtemplate templateObj = getXMPtemplate(templateName, localObjectTable);
 
     if (!(templateObj.isDistributed()))
       throw new XMPexception("template '" + templateName + "' is not distributed");
@@ -761,7 +761,7 @@ public class XMPtranslateLocalPragma {
     XobjList subscriptList = (XobjList)onRef.getArg(1);
 
     XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
-    XMPobject onRefObj = findXMPobject(onRefObjName, localObjectTable);
+    XMPobject onRefObj = getXMPobject(onRefObjName, localObjectTable);
     String initFuncSurfix = null;
     switch (onRefObj.getKind()) {
       case XMPobject.TEMPLATE:
@@ -860,7 +860,7 @@ public class XMPtranslateLocalPragma {
     // analyze <on-ref>
     Xobject onRef = loopDecl.getArg(1);
     String onRefObjName = onRef.getArg(0).getString();
-    XMPobject onRefObj = findXMPobject(onRefObjName, localObjectTable);
+    XMPobject onRefObj = getXMPobject(onRefObjName, localObjectTable);
     switch (onRefObj.getKind()) {
       case XMPobject.TEMPLATE:
         {
@@ -1752,7 +1752,7 @@ public class XMPtranslateLocalPragma {
 
       // check object name collision
       String objectName = fromRef.getArg(0).getString();
-      XMPobject fromRefObject = findXMPobject(objectName, localObjectTable);
+      XMPobject fromRefObject = getXMPobject(objectName, localObjectTable);
       if (fromRefObject.getKind() == XMPobject.TEMPLATE)
         throw new XMPexception("template cannot be used in <from-ref>");
 
@@ -1997,7 +1997,7 @@ public class XMPtranslateLocalPragma {
 
       // check object name collision
       String objectName = onRef.getArg(0).getString();
-      XMPobject onRefObject = findXMPobject(objectName, localObjectTable);
+      XMPobject onRefObject = getXMPobject(objectName, localObjectTable);
 
       Xobject ontoNodesRef = null;
       Xtype castType = null;
@@ -2157,7 +2157,7 @@ public class XMPtranslateLocalPragma {
     return;
   }
 
-  private XMPobject findXMPobject(String objectName, XMPobjectTable localObjectTable) throws XMPexception {
+  private XMPobject getXMPobject(String objectName, XMPobjectTable localObjectTable) throws XMPexception {
     XMPobject object = localObjectTable.getObject(objectName);
     if (object == null) {
       object = _globalObjectTable.getObject(objectName);
@@ -2168,7 +2168,7 @@ public class XMPtranslateLocalPragma {
     return object;
   }
 
-  private XMPtemplate findXMPtemplate(String templateName, XMPobjectTable localObjectTable) throws XMPexception {
+  private XMPtemplate getXMPtemplate(String templateName, XMPobjectTable localObjectTable) throws XMPexception {
     XMPtemplate t = localObjectTable.getTemplate(templateName);
     if (t == null) {
       t = _globalObjectTable.getTemplate(templateName);
@@ -2179,7 +2179,7 @@ public class XMPtranslateLocalPragma {
     return t;
   }
 
-  private XMPnodes findXMPnodes(String nodesName, XMPobjectTable localObjectTable) throws XMPexception {
+  private XMPnodes getXMPnodes(String nodesName, XMPobjectTable localObjectTable) throws XMPexception {
     XMPnodes n = localObjectTable.getNodes(nodesName);
     if (n == null) {
       n = _globalObjectTable.getNodes(nodesName);
@@ -2190,21 +2190,21 @@ public class XMPtranslateLocalPragma {
     return n;
   }
 
-  private XMPalignedArray findXMPalignedArray(String arrayName, XMPobjectTable localObjectTable) throws XMPexception {
-    XMPalignedArray a = localObjectTable.getAlignedArray(arrayName);
-    if (a == null) {
-      a = _globalObjectTable.getAlignedArray(arrayName);
-    }
-
-    return a;
-  }
-
   private XMPalignedArray getXMPalignedArray(String arrayName, XMPobjectTable localObjectTable) throws XMPexception {
     XMPalignedArray a = localObjectTable.getAlignedArray(arrayName);
     if (a == null) {
       a = _globalObjectTable.getAlignedArray(arrayName);
       if (a == null)
         throw new XMPexception("array '" + arrayName + "' is not aligned");
+    }
+
+    return a;
+  }
+
+  private XMPalignedArray findXMPalignedArray(String arrayName, XMPobjectTable localObjectTable) throws XMPexception {
+    XMPalignedArray a = localObjectTable.getAlignedArray(arrayName);
+    if (a == null) {
+      a = _globalObjectTable.getAlignedArray(arrayName);
     }
 
     return a;
