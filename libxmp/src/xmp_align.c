@@ -336,3 +336,7 @@ void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
   MPI_Comm_size(*comm, &(array->comm_size));
   MPI_Comm_rank(*comm, &(array->comm_rank));
 }
+
+unsigned long long _XCALABLEMP_get_array_total_elmts(_XCALABLEMP_array_t *array) {
+  return array->total_elmts;
+}

@@ -181,6 +181,8 @@ static void _XCALABLEMP_init_localtion_variables(void *loc, int count, int loc_d
 }
 
 void _XCALABLEMP_reduce_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes, void *addr, int count, int datatype, int op) {
+  if (count == 0) return; // FIXME not good implementation
+
   if (!(nodes->is_member)) {
     return;
   }
@@ -207,6 +209,8 @@ void _XCALABLEMP_reduce_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes, void *addr, int
 void _XCALABLEMP_reduce_FLMM_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes,
                                           void *addr, int count, int datatype, int op,
                                           int num_locs, ...) {
+  if (count == 0) return; // FIXME not good implementation
+
   if (!(nodes->is_member)) {
     return;
   }

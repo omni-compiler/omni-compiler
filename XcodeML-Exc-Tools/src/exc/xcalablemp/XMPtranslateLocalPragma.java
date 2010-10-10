@@ -1274,7 +1274,7 @@ public class XMPtranslateLocalPragma {
 
       boolean isArray = false;
       Xobject specRef = null;
-      XobjLong count = null;
+      Xobject count = null;
       XobjInt elmtType = null;
       BasicType basicSpecType = null;
       switch (specType.getKind()) {
@@ -1297,8 +1297,28 @@ public class XMPtranslateLocalPragma {
             basicSpecType = (BasicType)arraySpecType.getArrayElementType();
             checkReductionType(specName, basicSpecType);
 
-            specRef = specId.Ref();
-            count = Xcons.LongLongConstant(0, getArrayElmtCount(arraySpecType));
+            // FIXME not good implementation
+            XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
+            XMPalignedArray specAlignedArray = findXMPalignedArray(specName, localObjectTable);
+            if (specAlignedArray == null) {
+              specRef = specId.Ref();
+              count = Xcons.LongLongConstant(0, getArrayElmtCount(arraySpecType));
+            }
+            else {
+              if (isClause) {
+                throw new XMPexception("aligned arrays cannot be used in reduction clause");
+              }
+
+              if (specAlignedArray.hasShadow()) {
+                throw new XMPexception("arrays which have shadow cannot be used in reduction directive/clause");
+              }
+
+              specRef = specAlignedArray.getAddrId().Ref();
+              Ident getTotalElmtFuncId = _globalDecl.declExternFunc("_XCALABLEMP_get_array_total_elmts",
+                                                                    Xtype.unsignedlonglongType);
+              count = getTotalElmtFuncId.Call(Xcons.List(specAlignedArray.getDescId().Ref()));
+            }
+
             elmtType = Xcons.IntConstant(basicSpecType.getBasicType() + 200);
           } break;
         default:
@@ -1338,7 +1358,7 @@ public class XMPtranslateLocalPragma {
   }
 
   private void createReductionInitStatement(Ident tempId, Ident varId,
-                                            boolean isArray, XobjLong count, BasicType type, int reductionOp,
+                                            boolean isArray, Xobject count, BasicType type, int reductionOp,
                                             CforBlock schedBaseBlock, IfBlock reductionIfBlock) throws XMPexception {
     BlockList masterPart = reductionIfBlock.getThenBody();
     BlockList otherPart = reductionIfBlock.getElseBody();
@@ -1366,7 +1386,7 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private Block createReductionArrayInit(Ident tempId, Xobject initValueObj, XobjLong count, BasicType type,
+  private Block createReductionArrayInit(Ident tempId, Xobject initValueObj, Xobject count, BasicType type,
                                          Ident loopIndexId) {
     Xobject loopIndexRef = loopIndexId.Ref();
 
