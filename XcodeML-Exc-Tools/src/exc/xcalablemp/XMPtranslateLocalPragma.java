@@ -1886,81 +1886,42 @@ public class XMPtranslateLocalPragma {
   }
 
   public XMPpair<XMPalignedArray, XobjList> getAlignedArrayExpr(Xobject expr, XMPobjectTable localObjectTable) throws XMPexception {
-    if (expr == null) return null;
-
-    bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
-    for (iter.init(); !iter.end(); iter.next()) {
-      Xobject newExpr = null;
-      Xobject myExpr = iter.getXobject();
-      if (myExpr == null) continue;
-
-      switch (myExpr.Opcode()) {
-        case ARRAY_REF:
-          {
-            String arrayName = myExpr.getSym();
-            XMPalignedArray alignedArray = findXMPalignedArray(arrayName, localObjectTable);
-            if (alignedArray != null) {
-              iter.next();
-              return new XMPpair<XMPalignedArray, XobjList>(alignedArray,
-                                                            parseAlignedArrayExpr(iter, alignedArray, 0, Xcons.List()));
-            }
-
-            break;
-          }
-        default:
-          break;
-      }
-    }
-
-    return null;
+    return parseAlignedArrayExpr(expr, localObjectTable, 0, Xcons.List());
   }
 
-  private XobjList parseAlignedArrayExpr(bottomupXobjectIterator iter,
-                                         XMPalignedArray alignedArray, int arrayDimCount, XobjList arrayRefs) throws XMPexception {
+  private XMPpair<XMPalignedArray, XobjList> parseAlignedArrayExpr(Xobject expr, XMPobjectTable localObjectTable, int arrayDimCount,
+                                                                   XobjList arrayRefs) throws XMPexception {
     String syntaxErrMsg = "syntax error on array expression, expression is not appropriate for gmove directive";
-    Xcode prevExprOpcode = iter.getPrevXobject().Opcode();
-    Xobject myExpr = iter.getXobject();
-    switch (myExpr.Opcode()) {
-      case PLUS_EXPR:
-        {
-          switch (prevExprOpcode) {
-            case ARRAY_REF:
-              {
-                if (arrayDimCount != 0)
-                  throw new XMPexception(syntaxErrMsg);
-
-                break;
-              }
-            case POINTER_REF:
-              break;
-            default:
-              throw new XMPexception(syntaxErrMsg);
-          }
-
-          arrayRefs.add(Xcons.Cast(Xtype.intType, myExpr.right()));
-          iter.next();
-          return parseAlignedArrayExpr(iter, alignedArray, arrayDimCount + 1, arrayRefs);
-        }
+    switch (expr.Opcode()) {
       case POINTER_REF:
         {
-          switch (prevExprOpcode) {
-            case PLUS_EXPR:
-              break;
-            default:
-              throw new XMPexception(syntaxErrMsg);
+          Xobject child = expr.operand();
+          if (child.Opcode() == Xcode.PLUS_EXPR) {
+            arrayRefs.cons(Xcons.Cast(Xtype.intType, child.right()));
+            return parseAlignedArrayExpr(child.left(), localObjectTable, arrayDimCount + 1, arrayRefs);
           }
-
-          iter.next();
-          if (iter.end()) {
-            if (alignedArray.getDim() == arrayDimCount) return arrayRefs;
-            else
-              throw new XMPexception(syntaxErrMsg);
+          else {
+            return null;
           }
-          else
-            return parseAlignedArrayExpr(iter, alignedArray, arrayDimCount, arrayRefs);
+        }
+      case ARRAY_REF:
+        {
+          String arrayName = expr.getSym();
+          XMPalignedArray alignedArray = findXMPalignedArray(arrayName, localObjectTable);
+          if (alignedArray == null) {
+            return null;
+          }
+          else {
+            if (alignedArray.getDim() == arrayDimCount) {
+              return new XMPpair<XMPalignedArray, XobjList>(alignedArray, arrayRefs);
+            }
+            else {
+              return null;
+            }
+          }
         }
       default:
-        throw new XMPexception(syntaxErrMsg);
+        return null;
     }
   }
 
