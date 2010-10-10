@@ -13,7 +13,6 @@ static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array
 
   _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
   int onto_nodes_index = (ai->align_template_chunk)->onto_nodes_index;
-  int array_dim = array->dim;
 
   int color = 1;
   int acc_nodes_size = 1;
@@ -42,6 +41,9 @@ static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array
     ai->shadow_comm = comm;
     MPI_Comm_size(*comm, &(ai->shadow_comm_size));
     MPI_Comm_rank(*comm, &(ai->shadow_comm_rank));
+  }
+  else {
+    _XCALABLEMP_free(comm);
   }
 }
 

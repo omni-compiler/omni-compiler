@@ -27,6 +27,7 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
 //a->total_elmts is calculated in _XCALABLEMP_alloc_array, _XCALABLEMP_init_array_addr
 
 //a->comm is calculated in _XCALABLEMP_init_array_comm
+  a->comm = NULL;
 //a->comm_size is calculated in _XCALABLEMP_init_array_comm
 //a->comm_rank is calculated in _XCALABLEMP_init_array_comm
 
@@ -63,6 +64,8 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
    // ai->shadow_comm_size is calculated in _XCALABLEMP_init_shadow
    // ai->shadow_comm_rank is calculated in _XCALABLEMP_init_shadow
     }
+
+    ai->shadow_comm = NULL;
     
     ai->align_subscript = 0;
 
@@ -81,6 +84,11 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
 
 void _XCALABLEMP_finalize_array_desc(_XCALABLEMP_array_t *array) {
   if (array != NULL) {
+    int dim = array->dim;
+    for (int i = 0; i < dim; i++) {
+      _XCALABLEMP_free(array->info[i].shadow_comm);
+    }
+
     _XCALABLEMP_free(array->comm);
     _XCALABLEMP_free(array);
   }

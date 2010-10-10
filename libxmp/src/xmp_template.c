@@ -240,7 +240,7 @@ void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int templ
   }
 
   // calc parallel members
-  unsigned long long chunk_width = _XCALABLEMP_M_CEILi(ti->ser_size, nodes_size);
+  unsigned long long chunk_width = _XCALABLEMP_M_FLOORi(ti->ser_size, nodes_size);
 
   if (template->is_owner) {
     chunk->par_lower = nodes_rank * chunk_width + ti->ser_lower;
