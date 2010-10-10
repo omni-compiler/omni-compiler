@@ -5,9 +5,6 @@
 #define _XCALABLEMP_M_CALC_INDEX_BLOCK(_i, _x) \
 ((_i) - (_x))
 
-#define _XCALABLEMP_M_CALC_INDEX_BLOCK_W_SHADOW(_i, _x, _s) \
-((_i) - (_x) + (_s))
-
 #define _XCALABLEMP_M_CALC_INDEX_CYCLIC(_i, _x) \
 ((_i) / (_x))
 

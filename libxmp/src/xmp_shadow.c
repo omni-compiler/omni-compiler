@@ -80,6 +80,8 @@ void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
               ai->local_upper += lo;
            // ai->local_stride is not changed
               ai->alloc_size += lo + hi;
+
+              *(ai->temp0) -= lo;
             }
 
             _XCALABLEMP_create_shadow_comm(array, i);

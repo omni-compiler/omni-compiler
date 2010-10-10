@@ -171,6 +171,7 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, 
     ai->alloc_size = par_size;
 
     *temp0 = ai->par_lower;
+    ai->temp0 = temp0;
   }
 
   ai->align_subscript = align_subscript;
@@ -221,6 +222,7 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
     ai->alloc_size = par_size;
 
     *temp0 = par_stride;
+    ai->temp0 = temp0;
   }
 
   ai->align_subscript = align_subscript;

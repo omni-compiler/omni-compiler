@@ -83,6 +83,10 @@ typedef struct _XCALABLEMP_array_info_type {
   int local_stride;
   int alloc_size;
 
+  // enable when distribution is BLOCK/CYCLIC
+  int *temp0;
+  // ----------------------------------------
+
   unsigned long long dim_acc;
   unsigned long long dim_elmts;
 

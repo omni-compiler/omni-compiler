@@ -203,6 +203,7 @@ public class XMPrewriteExpr {
           XMPshadow shadow = alignedArray.getShadowAt(index);
           switch (shadow.getType()) {
             case XMPshadow.SHADOW_NONE:
+            case XMPshadow.SHADOW_NORMAL:
               {
                 XobjList args = Xcons.List(indexRef,
                                            alignedArray.getGtolTemp0IdAt(index).Ref());
@@ -210,13 +211,6 @@ public class XMPrewriteExpr {
               }
             case XMPshadow.SHADOW_FULL:
               return indexRef;
-            case XMPshadow.SHADOW_NORMAL:
-              {
-                XobjList args = Xcons.List(indexRef,
-                                           alignedArray.getGtolTemp0IdAt(index).Ref(),
-                                           shadow.getLo());
-                return XMP.getMacroId("_XCALABLEMP_M_CALC_INDEX_BLOCK_W_SHADOW").Call(args);
-              }
             default:
               throw new XMPexception("unknown shadow type");
           }
