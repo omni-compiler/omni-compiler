@@ -138,7 +138,6 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, 
     }
     else if (template_upper < align_lower) {
       array->is_allocated = false;
-      return;
     }
     else {
       par_lower = ai->ser_lower;
@@ -147,7 +146,6 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, 
     // set par_upper
     if (align_upper < template_lower) {
       array->is_allocated = false;
-      return;
     }
     else if (template_upper < align_upper) {
       par_upper = template_upper - align_subscript;
