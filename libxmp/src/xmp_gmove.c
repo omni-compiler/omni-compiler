@@ -113,18 +113,8 @@ static int _XCALABLEMP_calc_gmove_target_nodes_size(_XCALABLEMP_nodes_t *nodes, 
 }
 
 void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, size_t type_size, _XCALABLEMP_array_t *array, ...) {
-  // calc source rank
-  if (array == NULL) return;
-
   _XCALABLEMP_template_t *template = array->align_template;
-  if (template == NULL) {
-    _XCALABLEMP_fatal("null template descriptor detected");
-  }
-
   _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
-  if (nodes == NULL) {
-    _XCALABLEMP_fatal("null nodes descriptor detected");
-  }
 
   int array_dim = array->dim;
   int nodes_dim = nodes->dim;
@@ -168,13 +158,11 @@ void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, size_t type_
 
 // FIXME change NULL check rule!!! (IMPORTANT, to all library functions)
 _Bool _XCALABLEMP_gmove_exec_home_SCALAR(_XCALABLEMP_array_t *array, ...) {
-  if (array == NULL) return false;
+  if (!(array->is_allocated)) return false;
 
   _XCALABLEMP_template_t *ref_template = array->align_template;
-  if (ref_template == NULL) {
-    _XCALABLEMP_fatal("null template descriptor detected");
-  }
 
+  // FIXME how implement???
   if (ref_template->chunk == NULL) return false;
 
   _Bool execHere = true;
@@ -185,8 +173,11 @@ _Bool _XCALABLEMP_gmove_exec_home_SCALAR(_XCALABLEMP_array_t *array, ...) {
   for (int i = 0; i < ref_dim; i++) {
     int ref_index = va_arg(args, int);
 
-    _XCALABLEMP_template_chunk_t *chunk = &(ref_template->chunk[i]);
-    execHere = execHere && _XCALABLEMP_check_gmove_inclusion_SCALAR(ref_index + (array->info[i].align_subscript), chunk);
+    int template_index = array->info[i].align_template_index;
+    if (template_index != _XCALABLEMP_N_NO_ALIGNED_TEMPLATE) {
+      execHere = execHere && _XCALABLEMP_check_gmove_inclusion_SCALAR(ref_index + (array->info[i].align_subscript),
+                                                                      &(ref_template->chunk[template_index]));
+    }
   }
 
   return execHere;

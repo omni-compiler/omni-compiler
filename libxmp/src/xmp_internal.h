@@ -47,7 +47,7 @@ typedef struct _XCALABLEMP_template_chunk_type {
   unsigned long long par_chunk_width;
   int dist_manner;
 
-  // enable when dist_manner is not _XCALABLEMP_N_DIST_DUPLICATION
+  // FIXME<use onto_nodex_index???> enable when dist_manner is not _XCALABLEMP_N_DIST_DUPLICATION
   int onto_nodes_index;
   _XCALABLEMP_nodes_info_t *onto_nodes_info;
   // -------------------------------------------------------------
@@ -103,8 +103,10 @@ typedef struct _XCALABLEMP_array_info_type {
   int shadow_size_hi;
 
   int align_template_index;
+  // enable align_template_index is not _XCALABLEMP_N_NO_ALIGNED_TEMPLATE
   _XCALABLEMP_template_info_t *align_template_info;
   _XCALABLEMP_template_chunk_t *align_template_chunk;
+  // --------------------------------------------------------------------
 } _XCALABLEMP_array_info_t;
 
 typedef struct _XCALABLEMP_array_type {
