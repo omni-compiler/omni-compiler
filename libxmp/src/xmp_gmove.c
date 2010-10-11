@@ -13,6 +13,26 @@
   MPI_Bcast(dst_addr, type_size, MPI_BYTE, src_rank, *(array->comm)); \
 }
 
+#define _XCALABLEMP_M_GMOVE_BCAST_EXEC(exec_nodes, array, dst_addr, src_addr, type_size, src_rank) \
+{ \
+  int my_rank = array->comm_rank; \
+  if (src_rank == my_rank) { \
+    memcpy(dst_addr, src_addr, type_size); \
+\
+    int exec_size = exec_nodes->comm_size; \
+    int exec_rank = exec_nodes->comm_rank; \
+    for (int i = 0; i < exec_size; i++) { \
+      if (i != exec_rank) { \
+        MPI_Send(dst_addr, type_size, MPI_BYTE, i, _XCALABLEMP_N_MPI_TAG_GMOVE, *(exec_nodes->comm)); \
+      } \
+    } \
+  } \
+  else { \
+    MPI_Status stat; \
+    MPI_Recv(dst_addr, type_size, MPI_BYTE, MPI_ANY_SOURCE, _XCALABLEMP_N_MPI_TAG_GMOVE, *(exec_nodes->comm), &stat); \
+  } \
+}
+
 #define _XCALABLEMP_M_GMOVE_BCAST(array, dst_addr, src_addr, type_size, src_rank) \
 { \
   _XCALABLEMP_nodes_t *onto_nodes = (array->align_template)->onto_nodes; \
@@ -26,8 +46,7 @@
       _XCALABLEMP_M_GMOVE_BCAST_ARRAY(array, dst_addr, src_addr, type_size, src_rank); \
     } \
     else { \
-      /* FIXME implement */ \
-      _XCALABLEMP_fatal("not implemented yet"); \
+      _XCALABLEMP_M_GMOVE_BCAST_EXEC(exec_nodes, array, dst_addr, src_addr, type_size, src_rank); \
     } \
   } \
 }

@@ -303,22 +303,26 @@ void _XCALABLEMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_bu
   if (ai->shadow_size_lo > 0) {
     if (rank != 0) {
       *lo_recv_buffer = _XCALABLEMP_alloc((ai->shadow_size_lo) * (ai->dim_elmts) * (array_desc->type_size));
-      MPI_Irecv(*lo_recv_buffer, (ai->shadow_size_lo) * (ai->dim_elmts), mpi_datatype, rank - 1, 0, *comm, &(recv_req[0]));
+      MPI_Irecv(*lo_recv_buffer, (ai->shadow_size_lo) * (ai->dim_elmts), mpi_datatype,
+                rank - 1, _XCALABLEMP_N_MPI_TAG_REFLECT_LO, *comm, &(recv_req[0]));
     }
 
     if (rank != (size - 1)) {
-      MPI_Isend(lo_send_buffer, (ai->shadow_size_lo) * (ai->dim_elmts), mpi_datatype, rank + 1, 0, *comm, &(send_req[0]));
+      MPI_Isend(lo_send_buffer, (ai->shadow_size_lo) * (ai->dim_elmts), mpi_datatype,
+                rank + 1, _XCALABLEMP_N_MPI_TAG_REFLECT_LO, *comm, &(send_req[0]));
     }
   }
 
   if (ai->shadow_size_hi > 0) {
     if (rank != (size - 1)) {
       *hi_recv_buffer = _XCALABLEMP_alloc((ai->shadow_size_hi) * (ai->dim_elmts) * (array_desc->type_size));
-      MPI_Irecv(*hi_recv_buffer, (ai->shadow_size_hi) * (ai->dim_elmts), mpi_datatype, rank + 1, 1, *comm, &(recv_req[1]));
+      MPI_Irecv(*hi_recv_buffer, (ai->shadow_size_hi) * (ai->dim_elmts), mpi_datatype,
+                rank + 1, _XCALABLEMP_N_MPI_TAG_REFLECT_HI, *comm, &(recv_req[1]));
     }
 
     if (rank != 0) {
-      MPI_Isend(hi_send_buffer, (ai->shadow_size_hi) * (ai->dim_elmts), mpi_datatype, rank - 1, 1, *comm, &(send_req[1]));
+      MPI_Isend(hi_send_buffer, (ai->shadow_size_hi) * (ai->dim_elmts), mpi_datatype,
+                rank - 1, _XCALABLEMP_N_MPI_TAG_REFLECT_HI, *comm, &(send_req[1]));
     }
   }
 

@@ -3,6 +3,8 @@
 
 // constants for mpi tag
 #define _XCALABLEMP_N_MPI_TAG_GMOVE			10
+#define _XCALABLEMP_N_MPI_TAG_REFLECT_LO		11
+#define _XCALABLEMP_N_MPI_TAG_REFLECT_HI		12
 
 // constants used in runtime functions
 #define _XCALABLEMP_N_INVALID_RANK			-1
