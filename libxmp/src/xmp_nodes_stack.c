@@ -15,35 +15,20 @@ void _XCALABLEMP_push_nodes(_XCALABLEMP_nodes_t *nodes) {
 }
 
 void _XCALABLEMP_pop_nodes(void) {
-  if (_XCALABLEMP_nodes_stack_top == NULL) {
-    _XCALABLEMP_fatal("cannot get the execution nodes");
-  }
-  else {
-    _XCALABLEMP_nodes_dish_t *freed_dish = _XCALABLEMP_nodes_stack_top;
-    _XCALABLEMP_nodes_stack_top = freed_dish->prev;
-    _XCALABLEMP_free(freed_dish);
-  }
+  _XCALABLEMP_nodes_dish_t *freed_dish = _XCALABLEMP_nodes_stack_top;
+  _XCALABLEMP_nodes_stack_top = freed_dish->prev;
+  _XCALABLEMP_free(freed_dish);
 }
 
 void _XCALABLEMP_pop_n_free_nodes(void) {
-  if (_XCALABLEMP_nodes_stack_top == NULL) {
-    _XCALABLEMP_fatal("cannot get the execution nodes");
-  }
-  else {
-    _XCALABLEMP_nodes_dish_t *freed_dish = _XCALABLEMP_nodes_stack_top;
-    _XCALABLEMP_nodes_stack_top = freed_dish->prev;
-    _XCALABLEMP_free(freed_dish->nodes);
-    _XCALABLEMP_free(freed_dish);
-  }
+  _XCALABLEMP_nodes_dish_t *freed_dish = _XCALABLEMP_nodes_stack_top;
+  _XCALABLEMP_nodes_stack_top = freed_dish->prev;
+  _XCALABLEMP_free(freed_dish->nodes);
+  _XCALABLEMP_free(freed_dish);
 }
 
 _XCALABLEMP_nodes_t *_XCALABLEMP_get_execution_nodes(void) {
-  if (_XCALABLEMP_nodes_stack_top == NULL) {
-    _XCALABLEMP_fatal("cannot get the execution nodes");
-  }
-  else {
-    return _XCALABLEMP_nodes_stack_top->nodes;
-  }
+  return _XCALABLEMP_nodes_stack_top->nodes;
 }
 
 int _XCALABLEMP_get_execution_nodes_rank(void) {

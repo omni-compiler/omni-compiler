@@ -1885,12 +1885,84 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  public XMPpair<XMPalignedArray, XobjList> getAlignedArrayExpr(Xobject expr, XMPobjectTable localObjectTable) throws XMPexception {
-    return parseAlignedArrayExpr(expr, localObjectTable, 0, Xcons.List());
+  private XMPpair<XMPalignedArray, XobjList> getAlignedArrayExpr(Xobject expr, XMPobjectTable localObjectTable) throws XMPexception {
+    if (hasSubArrayRef(expr)) {
+      // FIXME implement
+      XMPpair<XMPalignedArray, XobjList> pair = parseSubArrayRefExpr(expr, localObjectTable, 0, Xcons.List());
+      if (pair != null) {
+        if (pair.getSecond() != null)
+          System.out.println("SUBARRAY: " + pair.getSecond().toString());
+      }
+
+      throw new XMPexception("not implemented yet");
+    }
+    else {
+      return parseArrayRefExpr(expr, localObjectTable, 0, Xcons.List());
+    }
   }
 
-  private XMPpair<XMPalignedArray, XobjList> parseAlignedArrayExpr(Xobject expr, XMPobjectTable localObjectTable, int arrayDimCount,
-                                                                   XobjList arrayRefs) throws XMPexception {
+  private boolean hasSubArrayRef(Xobject expr) {
+    bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
+    for (iter.init(); !iter.end(); iter.next()) {
+      Xobject currentExpr = iter.getXobject();
+      if (currentExpr != null) {
+        if (currentExpr.Opcode() == Xcode.SUB_ARRAY_REF) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private XMPpair<XMPalignedArray, XobjList> parseSubArrayRefExpr(Xobject expr, XMPobjectTable localObjectTable, int arrayDimCount,
+                                                                  XobjList arrayRefs) throws XMPexception {
+    String syntaxErrMsg = "syntax error on array expression, expression is not appropriate for gmove directive";
+    switch (expr.Opcode()) {
+      case POINTER_REF:
+        {
+          Xobject child = expr.operand();
+          if (child.Opcode() == Xcode.PLUS_EXPR) {
+            arrayRefs.cons(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+            arrayRefs.cons(Xcons.Cast(Xtype.intType, child.right()));
+            arrayRefs.cons(Xcons.Cast(Xtype.intType, child.right()));
+            return parseSubArrayRefExpr(child.left(), localObjectTable, arrayDimCount + 1, arrayRefs);
+          }
+          else {
+            return null;
+          }
+        }
+      case SUB_ARRAY_REF:
+        {
+          arrayRefs.cons(Xcons.Cast(Xtype.intType, expr.getArg(3).operand()));
+          arrayRefs.cons(Xcons.Cast(Xtype.intType, expr.getArg(2).operand()));
+          arrayRefs.cons(Xcons.Cast(Xtype.intType, expr.getArg(1).operand()));
+          return parseSubArrayRefExpr(expr.getArg(0), localObjectTable, arrayDimCount + 1, arrayRefs);
+        }
+      case ARRAY_REF:
+        {
+          String arrayName = expr.getSym();
+          XMPalignedArray alignedArray = findXMPalignedArray(arrayName, localObjectTable);
+          if (alignedArray == null) {
+            // FIXME check dim
+            return new XMPpair<XMPalignedArray, XobjList>(null, arrayRefs);
+          }
+          else {
+            if (alignedArray.getDim() == arrayDimCount) {
+              return new XMPpair<XMPalignedArray, XobjList>(alignedArray, arrayRefs);
+            }
+            else {
+              throw new XMPexception(syntaxErrMsg);
+            }
+          }
+        }
+      default:
+        return null;
+    }
+  }
+
+  private XMPpair<XMPalignedArray, XobjList> parseArrayRefExpr(Xobject expr, XMPobjectTable localObjectTable, int arrayDimCount,
+                                                               XobjList arrayRefs) throws XMPexception {
     String syntaxErrMsg = "syntax error on array expression, expression is not appropriate for gmove directive";
     switch (expr.Opcode()) {
       case POINTER_REF:
@@ -1898,7 +1970,7 @@ public class XMPtranslateLocalPragma {
           Xobject child = expr.operand();
           if (child.Opcode() == Xcode.PLUS_EXPR) {
             arrayRefs.cons(Xcons.Cast(Xtype.intType, child.right()));
-            return parseAlignedArrayExpr(child.left(), localObjectTable, arrayDimCount + 1, arrayRefs);
+            return parseArrayRefExpr(child.left(), localObjectTable, arrayDimCount + 1, arrayRefs);
           }
           else {
             return null;
@@ -1916,7 +1988,7 @@ public class XMPtranslateLocalPragma {
               return new XMPpair<XMPalignedArray, XobjList>(alignedArray, arrayRefs);
             }
             else {
-              return null;
+              throw new XMPexception(syntaxErrMsg);
             }
           }
         }
