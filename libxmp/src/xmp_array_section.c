@@ -93,17 +93,17 @@ void _XCALABLEMP_pack_array_2_LONG_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_2(long doub
 
 // --- dimension 3
 #define _XCALABLEMP_SM_PACK_ARRAY_3(_type) \
-(_type *buf_addr, const _type *const src_addr, \
- int src_lower0, int src_upper0, int src_stride0, const unsigned long long src_dim_acc0, \
- int src_lower1, int src_upper1, int src_stride1, const unsigned long long src_dim_acc1, \
+(_type *buf_addr, _type *src_addr, \
+ int src_lower0, int src_upper0, int src_stride0, unsigned long long src_dim_acc0, \
+ int src_lower1, int src_upper1, int src_stride1, unsigned long long src_dim_acc1, \
  int src_lower2, int src_upper2, int src_stride2) { \
   _XCALABLEMP_normalize_array_section(&src_lower0, &src_upper0, &src_stride0); \
   _XCALABLEMP_normalize_array_section(&src_lower1, &src_upper1, &src_stride1); \
   _XCALABLEMP_normalize_array_section(&src_lower2, &src_upper2, &src_stride2); \
-  for (int k = src_lower2; k <= src_upper2; k += src_stride2) { \
+  for (int k = src_lower0; k <= src_upper0; k += src_stride0) { \
     for (int j = src_lower1; j <= src_upper1; j += src_stride1) { \
-      const _type *const addr = src_addr + (j * src_dim_acc0) + (k * src_dim_acc1); \
-      for (int i = src_lower0; i <= src_upper0; i += src_stride0) { \
+      _type *addr = src_addr + (k * src_dim_acc0) + (j * src_dim_acc1); \
+      for (int i = src_lower2; i <= src_upper2; i += src_stride2) { \
         *buf_addr = addr[i]; \
         buf_addr++; \
       } \
@@ -128,20 +128,20 @@ void _XCALABLEMP_pack_array_3_LONG_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_3(long doub
 
 // --- dimension 4
 #define _XCALABLEMP_SM_PACK_ARRAY_4(_type) \
-(_type *buf_addr, const _type *const src_addr, \
- int src_lower0, int src_upper0, int src_stride0, const unsigned long long src_dim_acc0, \
- int src_lower1, int src_upper1, int src_stride1, const unsigned long long src_dim_acc1, \
- int src_lower2, int src_upper2, int src_stride2, const unsigned long long src_dim_acc2, \
+(_type *buf_addr, _type *src_addr, \
+ int src_lower0, int src_upper0, int src_stride0, unsigned long long src_dim_acc0, \
+ int src_lower1, int src_upper1, int src_stride1, unsigned long long src_dim_acc1, \
+ int src_lower2, int src_upper2, int src_stride2, unsigned long long src_dim_acc2, \
  int src_lower3, int src_upper3, int src_stride3) { \
   _XCALABLEMP_normalize_array_section(&src_lower0, &src_upper0, &src_stride0); \
   _XCALABLEMP_normalize_array_section(&src_lower1, &src_upper1, &src_stride1); \
   _XCALABLEMP_normalize_array_section(&src_lower2, &src_upper2, &src_stride2); \
   _XCALABLEMP_normalize_array_section(&src_lower3, &src_upper3, &src_stride3); \
-  for (int l = src_lower3; l <= src_upper3; l += src_stride3) { \
-    for (int k = src_lower2; k <= src_upper2; k += src_stride2) { \
-      for (int j = src_lower1; j <= src_upper1; j += src_stride1) { \
-        const _type *const addr = src_addr + (j * src_dim_acc0) + (k * src_dim_acc1); + (l * src_dim_acc2); \
-        for (int i = src_lower0; i <= src_upper0; i += src_stride0) { \
+  for (int l = src_lower0; l <= src_upper0; l += src_stride0) { \
+    for (int k = src_lower1; k <= src_upper1; k += src_stride1) { \
+      for (int j = src_lower2; j <= src_upper2; j += src_stride2) { \
+        _type *addr = src_addr + (l * src_dim_acc0) + (k * src_dim_acc1); + (j * src_dim_acc2); \
+        for (int i = src_lower3; i <= src_upper3; i += src_stride3) { \
           *buf_addr = addr[i]; \
           buf_addr++; \
         } \
@@ -167,23 +167,23 @@ void _XCALABLEMP_pack_array_4_LONG_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_4(long doub
 
 // --- dimension 5
 #define _XCALABLEMP_SM_PACK_ARRAY_5(_type) \
-(_type *buf_addr, const _type *const src_addr, \
- int src_lower0, int src_upper0, int src_stride0, const unsigned long long src_dim_acc0, \
- int src_lower1, int src_upper1, int src_stride1, const unsigned long long src_dim_acc1, \
- int src_lower2, int src_upper2, int src_stride2, const unsigned long long src_dim_acc2, \
- int src_lower3, int src_upper3, int src_stride3, const unsigned long long src_dim_acc3, \
+(_type *buf_addr, _type *src_addr, \
+ int src_lower0, int src_upper0, int src_stride0, unsigned long long src_dim_acc0, \
+ int src_lower1, int src_upper1, int src_stride1, unsigned long long src_dim_acc1, \
+ int src_lower2, int src_upper2, int src_stride2, unsigned long long src_dim_acc2, \
+ int src_lower3, int src_upper3, int src_stride3, unsigned long long src_dim_acc3, \
  int src_lower4, int src_upper4, int src_stride4) { \
   _XCALABLEMP_normalize_array_section(&src_lower0, &src_upper0, &src_stride0); \
   _XCALABLEMP_normalize_array_section(&src_lower1, &src_upper1, &src_stride1); \
   _XCALABLEMP_normalize_array_section(&src_lower2, &src_upper2, &src_stride2); \
   _XCALABLEMP_normalize_array_section(&src_lower3, &src_upper3, &src_stride3); \
   _XCALABLEMP_normalize_array_section(&src_lower4, &src_upper4, &src_stride4); \
-  for (int m = src_lower4; m <= src_upper4; m += src_stride4) { \
-    for (int l = src_lower3; l <= src_upper3; l += src_stride3) { \
+  for (int m = src_lower0; m <= src_upper0; m += src_stride0) { \
+    for (int l = src_lower1; l <= src_upper1; l += src_stride1) { \
       for (int k = src_lower2; k <= src_upper2; k += src_stride2) { \
-        for (int j = src_lower1; j <= src_upper1; j += src_stride1) { \
-          const _type *const addr = src_addr + (j * src_dim_acc0) + (k * src_dim_acc1); + (l * src_dim_acc2) + (m * src_dim_acc3); \
-          for (int i = src_lower0; i <= src_upper0; i += src_stride0) { \
+        for (int j = src_lower3; j <= src_upper3; j += src_stride3) { \
+          _type *addr = src_addr + (m * src_dim_acc0) + (l * src_dim_acc1); + (k * src_dim_acc2) + (j * src_dim_acc3); \
+          for (int i = src_lower4; i <= src_upper4; i += src_stride4) { \
             *buf_addr = addr[i]; \
             buf_addr++; \
           } \
@@ -210,12 +210,12 @@ void _XCALABLEMP_pack_array_5_LONG_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_5(long doub
 
 // --- dimension 6
 #define _XCALABLEMP_SM_PACK_ARRAY_6(_type) \
-(_type *buf_addr, const _type *const src_addr, \
- int src_lower0, int src_upper0, int src_stride0, const unsigned long long src_dim_acc0, \
- int src_lower1, int src_upper1, int src_stride1, const unsigned long long src_dim_acc1, \
- int src_lower2, int src_upper2, int src_stride2, const unsigned long long src_dim_acc2, \
- int src_lower3, int src_upper3, int src_stride3, const unsigned long long src_dim_acc3, \
- int src_lower4, int src_upper4, int src_stride4, const unsigned long long src_dim_acc4, \
+(_type *buf_addr, _type *src_addr, \
+ int src_lower0, int src_upper0, int src_stride0, unsigned long long src_dim_acc0, \
+ int src_lower1, int src_upper1, int src_stride1, unsigned long long src_dim_acc1, \
+ int src_lower2, int src_upper2, int src_stride2, unsigned long long src_dim_acc2, \
+ int src_lower3, int src_upper3, int src_stride3, unsigned long long src_dim_acc3, \
+ int src_lower4, int src_upper4, int src_stride4, unsigned long long src_dim_acc4, \
  int src_lower5, int src_upper5, int src_stride5) { \
   _XCALABLEMP_normalize_array_section(&src_lower0, &src_upper0, &src_stride0); \
   _XCALABLEMP_normalize_array_section(&src_lower1, &src_upper1, &src_stride1); \
@@ -223,14 +223,14 @@ void _XCALABLEMP_pack_array_5_LONG_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_5(long doub
   _XCALABLEMP_normalize_array_section(&src_lower3, &src_upper3, &src_stride3); \
   _XCALABLEMP_normalize_array_section(&src_lower4, &src_upper4, &src_stride4); \
   _XCALABLEMP_normalize_array_section(&src_lower5, &src_upper5, &src_stride5); \
-  for (int n = src_lower5; n <= src_upper5; n += src_stride5) { \
-    for (int m = src_lower4; m <= src_upper4; m += src_stride4) { \
-      for (int l = src_lower3; l <= src_upper3; l += src_stride3) { \
-        for (int k = src_lower2; k <= src_upper2; k += src_stride2) { \
-          for (int j = src_lower1; j <= src_upper1; j += src_stride1) { \
-            const _type *const addr = src_addr + (j * src_dim_acc0) + (k * src_dim_acc1); + (l * src_dim_acc2) + \
-                                                 (m * src_dim_acc3) + (n * src_dim_acc4); \
-            for (int i = src_lower0; i <= src_upper0; i += src_stride0) { \
+  for (int n = src_lower0; n <= src_upper0; n += src_stride0) { \
+    for (int m = src_lower1; m <= src_upper1; m += src_stride1) { \
+      for (int l = src_lower2; l <= src_upper2; l += src_stride2) { \
+        for (int k = src_lower3; k <= src_upper3; k += src_stride3) { \
+          for (int j = src_lower4; j <= src_upper4; j += src_stride4) { \
+            _type *addr = src_addr + (n * src_dim_acc0) + (m * src_dim_acc1); + (l * src_dim_acc2) + \
+                                     (k * src_dim_acc3) + (j * src_dim_acc4); \
+            for (int i = src_lower5; i <= src_upper5; i += src_stride5) { \
               *buf_addr = addr[i]; \
               buf_addr++; \
             } \
@@ -258,13 +258,13 @@ void _XCALABLEMP_pack_array_6_LONG_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_6(long doub
 
 // --- dimension 7
 #define _XCALABLEMP_SM_PACK_ARRAY_7(_type) \
-(_type *buf_addr, const _type *const src_addr, \
- int src_lower0, int src_upper0, int src_stride0, const unsigned long long src_dim_acc0, \
- int src_lower1, int src_upper1, int src_stride1, const unsigned long long src_dim_acc1, \
- int src_lower2, int src_upper2, int src_stride2, const unsigned long long src_dim_acc2, \
- int src_lower3, int src_upper3, int src_stride3, const unsigned long long src_dim_acc3, \
- int src_lower4, int src_upper4, int src_stride4, const unsigned long long src_dim_acc4, \
- int src_lower5, int src_upper5, int src_stride5, const unsigned long long src_dim_acc5, \
+(_type *buf_addr, _type *src_addr, \
+ int src_lower0, int src_upper0, int src_stride0, unsigned long long src_dim_acc0, \
+ int src_lower1, int src_upper1, int src_stride1, unsigned long long src_dim_acc1, \
+ int src_lower2, int src_upper2, int src_stride2, unsigned long long src_dim_acc2, \
+ int src_lower3, int src_upper3, int src_stride3, unsigned long long src_dim_acc3, \
+ int src_lower4, int src_upper4, int src_stride4, unsigned long long src_dim_acc4, \
+ int src_lower5, int src_upper5, int src_stride5, unsigned long long src_dim_acc5, \
  int src_lower6, int src_upper6, int src_stride6) { \
   _XCALABLEMP_normalize_array_section(&src_lower0, &src_upper0, &src_stride0); \
   _XCALABLEMP_normalize_array_section(&src_lower1, &src_upper1, &src_stride1); \
@@ -273,15 +273,15 @@ void _XCALABLEMP_pack_array_6_LONG_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_6(long doub
   _XCALABLEMP_normalize_array_section(&src_lower4, &src_upper4, &src_stride4); \
   _XCALABLEMP_normalize_array_section(&src_lower5, &src_upper5, &src_stride5); \
   _XCALABLEMP_normalize_array_section(&src_lower6, &src_upper6, &src_stride6); \
-  for (int o = src_lower6; o <= src_upper6; o += src_stride6) { \
-    for (int n = src_lower5; n <= src_upper5; n += src_stride5) { \
-      for (int m = src_lower4; m <= src_upper4; m += src_stride4) { \
+  for (int o = src_lower0; o <= src_upper0; o += src_stride0) { \
+    for (int n = src_lower1; n <= src_upper1; n += src_stride1) { \
+      for (int m = src_lower2; m <= src_upper2; m += src_stride2) { \
         for (int l = src_lower3; l <= src_upper3; l += src_stride3) { \
-          for (int k = src_lower2; k <= src_upper2; k += src_stride2) { \
-            for (int j = src_lower1; j <= src_upper1; j += src_stride1) { \
-              const _type *const addr = src_addr + (j * src_dim_acc0) + (k * src_dim_acc1); + (l * src_dim_acc2) + \
-                                                   (m * src_dim_acc3) + (n * src_dim_acc4); + (o * src_dim_acc5); \
-              for (int i = src_lower0; i <= src_upper0; i += src_stride0) { \
+          for (int k = src_lower4; k <= src_upper4; k += src_stride4) { \
+            for (int j = src_lower5; j <= src_upper5; j += src_stride5) { \
+              _type *addr = src_addr + (o * src_dim_acc0) + (n * src_dim_acc1); + (m * src_dim_acc2) + \
+                                       (l * src_dim_acc3) + (k * src_dim_acc4); + (j * src_dim_acc5); \
+              for (int i = src_lower6; i <= src_upper6; i += src_stride6) { \
                 *buf_addr = addr[i]; \
                 buf_addr++; \
               } \
@@ -369,17 +369,17 @@ void _XCALABLEMP_unpack_array_2_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_2(long 
 
 // --- dimension 3
 #define _XCALABLEMP_SM_UNPACK_ARRAY_3(_type) \
-(_type *const dst_addr, _type *buf_addr, \
- int dst_lower0, int dst_upper0, int dst_stride0, const unsigned long long dst_dim_acc0, \
- int dst_lower1, int dst_upper1, int dst_stride1, const unsigned long long dst_dim_acc1, \
+(_type *dst_addr, _type *buf_addr, \
+ int dst_lower0, int dst_upper0, int dst_stride0, unsigned long long dst_dim_acc0, \
+ int dst_lower1, int dst_upper1, int dst_stride1, unsigned long long dst_dim_acc1, \
  int dst_lower2, int dst_upper2, int dst_stride2) { \
   _XCALABLEMP_normalize_array_section(&dst_lower0, &dst_upper0, &dst_stride0); \
   _XCALABLEMP_normalize_array_section(&dst_lower1, &dst_upper1, &dst_stride1); \
   _XCALABLEMP_normalize_array_section(&dst_lower2, &dst_upper2, &dst_stride2); \
-  for (int k = dst_lower2; k <= dst_upper2; k += dst_stride2) { \
+  for (int k = dst_lower0; k <= dst_upper0; k += dst_stride0) { \
     for (int j = dst_lower1; j <= dst_upper1; j += dst_stride1) { \
-      _type *const addr = dst_addr + (j * dst_dim_acc0) + (k * dst_dim_acc1); \
-      for (int i = dst_lower0; i <= dst_upper0; i += dst_stride0) { \
+      _type *addr = dst_addr + (k * dst_dim_acc0) + (j * dst_dim_acc1); \
+      for (int i = dst_lower2; i <= dst_upper2; i += dst_stride2) { \
         addr[i] = *buf_addr; \
         buf_addr++; \
       } \
@@ -404,20 +404,20 @@ void _XCALABLEMP_unpack_array_3_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_3(long 
 
 // --- dimension 4
 #define _XCALABLEMP_SM_UNPACK_ARRAY_4(_type) \
-(_type *const dst_addr, _type *buf_addr, \
- int dst_lower0, int dst_upper0, int dst_stride0, const unsigned long long dst_dim_acc0, \
- int dst_lower1, int dst_upper1, int dst_stride1, const unsigned long long dst_dim_acc1, \
- int dst_lower2, int dst_upper2, int dst_stride2, const unsigned long long dst_dim_acc2, \
+(_type *dst_addr, _type *buf_addr, \
+ int dst_lower0, int dst_upper0, int dst_stride0, unsigned long long dst_dim_acc0, \
+ int dst_lower1, int dst_upper1, int dst_stride1, unsigned long long dst_dim_acc1, \
+ int dst_lower2, int dst_upper2, int dst_stride2, unsigned long long dst_dim_acc2, \
  int dst_lower3, int dst_upper3, int dst_stride3) { \
   _XCALABLEMP_normalize_array_section(&dst_lower0, &dst_upper0, &dst_stride0); \
   _XCALABLEMP_normalize_array_section(&dst_lower1, &dst_upper1, &dst_stride1); \
   _XCALABLEMP_normalize_array_section(&dst_lower2, &dst_upper2, &dst_stride2); \
   _XCALABLEMP_normalize_array_section(&dst_lower3, &dst_upper3, &dst_stride3); \
-  for (int l = dst_lower3; l <= dst_upper3; l += dst_stride3) { \
-    for (int k = dst_lower2; k <= dst_upper2; k += dst_stride2) { \
-      for (int j = dst_lower1; j <= dst_upper1; j += dst_stride1) { \
-        _type *const addr = dst_addr + (j * dst_dim_acc0) + (k * dst_dim_acc1) + (l * dst_dim_acc2); \
-        for (int i = dst_lower0; i <= dst_upper0; i += dst_stride0) { \
+  for (int l = dst_lower0; l <= dst_upper0; l += dst_stride0) { \
+    for (int k = dst_lower1; k <= dst_upper1; k += dst_stride1) { \
+      for (int j = dst_lower2; j <= dst_upper2; j += dst_stride2) { \
+        _type *addr = dst_addr + (l * dst_dim_acc0) + (k * dst_dim_acc1) + (j * dst_dim_acc2); \
+        for (int i = dst_lower3; i <= dst_upper3; i += dst_stride3) { \
           addr[i] = *buf_addr; \
           buf_addr++; \
         } \
@@ -443,23 +443,23 @@ void _XCALABLEMP_unpack_array_4_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_4(long 
 
 // --- dimension 5
 #define _XCALABLEMP_SM_UNPACK_ARRAY_5(_type) \
-(_type *const dst_addr, _type *buf_addr, \
- int dst_lower0, int dst_upper0, int dst_stride0, const unsigned long long dst_dim_acc0, \
- int dst_lower1, int dst_upper1, int dst_stride1, const unsigned long long dst_dim_acc1, \
- int dst_lower2, int dst_upper2, int dst_stride2, const unsigned long long dst_dim_acc2, \
- int dst_lower3, int dst_upper3, int dst_stride3, const unsigned long long dst_dim_acc3, \
+(_type *dst_addr, _type *buf_addr, \
+ int dst_lower0, int dst_upper0, int dst_stride0, unsigned long long dst_dim_acc0, \
+ int dst_lower1, int dst_upper1, int dst_stride1, unsigned long long dst_dim_acc1, \
+ int dst_lower2, int dst_upper2, int dst_stride2, unsigned long long dst_dim_acc2, \
+ int dst_lower3, int dst_upper3, int dst_stride3, unsigned long long dst_dim_acc3, \
  int dst_lower4, int dst_upper4, int dst_stride4) { \
   _XCALABLEMP_normalize_array_section(&dst_lower0, &dst_upper0, &dst_stride0); \
   _XCALABLEMP_normalize_array_section(&dst_lower1, &dst_upper1, &dst_stride1); \
   _XCALABLEMP_normalize_array_section(&dst_lower2, &dst_upper2, &dst_stride2); \
   _XCALABLEMP_normalize_array_section(&dst_lower3, &dst_upper3, &dst_stride3); \
   _XCALABLEMP_normalize_array_section(&dst_lower4, &dst_upper4, &dst_stride4); \
-  for (int m = dst_lower4; m <= dst_upper4; m += dst_stride4) { \
-    for (int l = dst_lower3; l <= dst_upper3; l += dst_stride3) { \
+  for (int m = dst_lower0; m <= dst_upper0; m += dst_stride0) { \
+    for (int l = dst_lower1; l <= dst_upper1; l += dst_stride1) { \
       for (int k = dst_lower2; k <= dst_upper2; k += dst_stride2) { \
-        for (int j = dst_lower1; j <= dst_upper1; j += dst_stride1) { \
-          _type *const addr = dst_addr + (j * dst_dim_acc0) + (k * dst_dim_acc1) + (l * dst_dim_acc2) + (m * dst_dim_acc3); \
-          for (int i = dst_lower0; i <= dst_upper0; i += dst_stride0) { \
+        for (int j = dst_lower3; j <= dst_upper3; j += dst_stride3) { \
+          _type *addr = dst_addr + (m * dst_dim_acc0) + (l * dst_dim_acc1) + (k * dst_dim_acc2) + (j * dst_dim_acc3); \
+          for (int i = dst_lower4; i <= dst_upper4; i += dst_stride4) { \
             addr[i] = *buf_addr; \
             buf_addr++; \
           } \
@@ -486,12 +486,12 @@ void _XCALABLEMP_unpack_array_5_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_5(long 
 
 // --- dimension 6
 #define _XCALABLEMP_SM_UNPACK_ARRAY_6(_type) \
-(_type *const dst_addr, _type *buf_addr, \
- int dst_lower0, int dst_upper0, int dst_stride0, const unsigned long long dst_dim_acc0, \
- int dst_lower1, int dst_upper1, int dst_stride1, const unsigned long long dst_dim_acc1, \
- int dst_lower2, int dst_upper2, int dst_stride2, const unsigned long long dst_dim_acc2, \
- int dst_lower3, int dst_upper3, int dst_stride3, const unsigned long long dst_dim_acc3, \
- int dst_lower4, int dst_upper4, int dst_stride4, const unsigned long long dst_dim_acc4, \
+(_type *dst_addr, _type *buf_addr, \
+ int dst_lower0, int dst_upper0, int dst_stride0, unsigned long long dst_dim_acc0, \
+ int dst_lower1, int dst_upper1, int dst_stride1, unsigned long long dst_dim_acc1, \
+ int dst_lower2, int dst_upper2, int dst_stride2, unsigned long long dst_dim_acc2, \
+ int dst_lower3, int dst_upper3, int dst_stride3, unsigned long long dst_dim_acc3, \
+ int dst_lower4, int dst_upper4, int dst_stride4, unsigned long long dst_dim_acc4, \
  int dst_lower5, int dst_upper5, int dst_stride5) { \
   _XCALABLEMP_normalize_array_section(&dst_lower0, &dst_upper0, &dst_stride0); \
   _XCALABLEMP_normalize_array_section(&dst_lower1, &dst_upper1, &dst_stride1); \
@@ -499,14 +499,14 @@ void _XCALABLEMP_unpack_array_5_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_5(long 
   _XCALABLEMP_normalize_array_section(&dst_lower3, &dst_upper3, &dst_stride3); \
   _XCALABLEMP_normalize_array_section(&dst_lower4, &dst_upper4, &dst_stride4); \
   _XCALABLEMP_normalize_array_section(&dst_lower5, &dst_upper5, &dst_stride5); \
-  for (int n = dst_lower5; n <= dst_upper5; n += dst_stride5) { \
-    for (int m = dst_lower4; m <= dst_upper4; m += dst_stride4) { \
-      for (int l = dst_lower3; l <= dst_upper3; l += dst_stride3) { \
-        for (int k = dst_lower2; k <= dst_upper2; k += dst_stride2) { \
-          for (int j = dst_lower1; j <= dst_upper1; j += dst_stride1) { \
-            _type *const addr = dst_addr + (j * dst_dim_acc0) + (k * dst_dim_acc1) + (l * dst_dim_acc2) + \
-                                           (m * dst_dim_acc3) + (n * dst_dim_acc4); \
-            for (int i = dst_lower0; i <= dst_upper0; i += dst_stride0) { \
+  for (int n = dst_lower0; n <= dst_upper0; n += dst_stride0) { \
+    for (int m = dst_lower1; m <= dst_upper1; m += dst_stride1) { \
+      for (int l = dst_lower2; l <= dst_upper2; l += dst_stride2) { \
+        for (int k = dst_lower3; k <= dst_upper3; k += dst_stride3) { \
+          for (int j = dst_lower4; j <= dst_upper4; j += dst_stride4) { \
+            _type *addr = dst_addr + (n * dst_dim_acc0) + (m * dst_dim_acc1) + (l * dst_dim_acc2) + \
+                                     (k * dst_dim_acc3) + (j * dst_dim_acc4); \
+            for (int i = dst_lower5; i <= dst_upper5; i += dst_stride5) { \
               addr[i] = *buf_addr; \
               buf_addr++; \
             } \
@@ -534,13 +534,13 @@ void _XCALABLEMP_unpack_array_6_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_6(long 
 
 // --- dimension 7
 #define _XCALABLEMP_SM_UNPACK_ARRAY_7(_type) \
-(_type *const dst_addr, _type *buf_addr, \
- int dst_lower0, int dst_upper0, int dst_stride0, const unsigned long long dst_dim_acc0, \
- int dst_lower1, int dst_upper1, int dst_stride1, const unsigned long long dst_dim_acc1, \
- int dst_lower2, int dst_upper2, int dst_stride2, const unsigned long long dst_dim_acc2, \
- int dst_lower3, int dst_upper3, int dst_stride3, const unsigned long long dst_dim_acc3, \
- int dst_lower4, int dst_upper4, int dst_stride4, const unsigned long long dst_dim_acc4, \
- int dst_lower5, int dst_upper5, int dst_stride5, const unsigned long long dst_dim_acc5, \
+(_type *dst_addr, _type *buf_addr, \
+ int dst_lower0, int dst_upper0, int dst_stride0, unsigned long long dst_dim_acc0, \
+ int dst_lower1, int dst_upper1, int dst_stride1, unsigned long long dst_dim_acc1, \
+ int dst_lower2, int dst_upper2, int dst_stride2, unsigned long long dst_dim_acc2, \
+ int dst_lower3, int dst_upper3, int dst_stride3, unsigned long long dst_dim_acc3, \
+ int dst_lower4, int dst_upper4, int dst_stride4, unsigned long long dst_dim_acc4, \
+ int dst_lower5, int dst_upper5, int dst_stride5, unsigned long long dst_dim_acc5, \
  int dst_lower6, int dst_upper6, int dst_stride6) { \
   _XCALABLEMP_normalize_array_section(&dst_lower0, &dst_upper0, &dst_stride0); \
   _XCALABLEMP_normalize_array_section(&dst_lower1, &dst_upper1, &dst_stride1); \
@@ -549,15 +549,15 @@ void _XCALABLEMP_unpack_array_6_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_6(long 
   _XCALABLEMP_normalize_array_section(&dst_lower4, &dst_upper4, &dst_stride4); \
   _XCALABLEMP_normalize_array_section(&dst_lower5, &dst_upper5, &dst_stride5); \
   _XCALABLEMP_normalize_array_section(&dst_lower6, &dst_upper6, &dst_stride6); \
-  for (int o = dst_lower6; o <= dst_upper6; o += dst_stride6) { \
-    for (int n = dst_lower5; n <= dst_upper5; n += dst_stride5) { \
-      for (int m = dst_lower4; m <= dst_upper4; m += dst_stride4) { \
+  for (int o = dst_lower0; o <= dst_upper0; o += dst_stride0) { \
+    for (int n = dst_lower1; n <= dst_upper1; n += dst_stride1) { \
+      for (int m = dst_lower2; m <= dst_upper2; m += dst_stride2) { \
         for (int l = dst_lower3; l <= dst_upper3; l += dst_stride3) { \
-          for (int k = dst_lower2; k <= dst_upper2; k += dst_stride2) { \
-            for (int j = dst_lower1; j <= dst_upper1; j += dst_stride1) { \
-              _type *const addr = dst_addr + (j * dst_dim_acc0) + (k * dst_dim_acc1) + (l * dst_dim_acc2) + \
-                                             (m * dst_dim_acc3) + (n * dst_dim_acc4) + (o * dst_dim_acc5); \
-              for (int i = dst_lower0; i <= dst_upper0; i += dst_stride0) { \
+          for (int k = dst_lower4; k <= dst_upper4; k += dst_stride4) { \
+            for (int j = dst_lower5; j <= dst_upper5; j += dst_stride5) { \
+              _type *addr = dst_addr + (o * dst_dim_acc0) + (n * dst_dim_acc1) + (m * dst_dim_acc2) + \
+                                       (l * dst_dim_acc3) + (k * dst_dim_acc4) + (j * dst_dim_acc5); \
+              for (int i = dst_lower6; i <= dst_upper6; i += dst_stride6) { \
                 addr[i] = *buf_addr; \
                 buf_addr++; \
               } \
