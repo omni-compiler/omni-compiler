@@ -198,6 +198,7 @@ _Bool _XCALABLEMP_gmove_exec_home_SCALAR(_XCALABLEMP_array_t *array, ...) {
                                                                       &(ref_template->chunk[template_index]));
     }
   }
+  va_end(args);
 
   return execHere;
 }
