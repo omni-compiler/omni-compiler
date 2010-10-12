@@ -1868,7 +1868,7 @@ public class XMPtranslateLocalPragma {
         }
       }
       else {
-        if (rightExpr == null) {		//  leftIsAlignedArray && !rightIsAlignedArray	|-> local assignment (home node)
+        if (rightAlignedArray == null) {	//  leftIsAlignedArray && !rightIsAlignedArray	|-> local assignment (home node)
           XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref());
           XMPutil.mergeLists(gmoveFuncArgs, leftExpr.getThird());
 
@@ -1876,7 +1876,7 @@ public class XMPtranslateLocalPragma {
           pb.replace(Bcons.IF(BasicBlock.Cond(gmoveFuncId.Call(gmoveFuncArgs)),
                               gmoveBody, null));
         }
-        else {				//  leftIsAlignedArray &&  rightIsAlignedArray	|-> send/recv
+        else {					//  leftIsAlignedArray &&  rightIsAlignedArray	|-> send/recv
           // XXX type check is not needed
           // FIXME left/right is not a constant
           XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(assignStmt.left()), Xcons.AddrOf(assignStmt.right()),

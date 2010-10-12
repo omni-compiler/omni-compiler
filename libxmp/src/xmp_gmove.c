@@ -286,54 +286,58 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr, size_t ty
 
   va_end(args);
 
-  if ((dst_rank == _XCALABLEMP_N_INVALID_RANK) && (src_rank == _XCALABLEMP_N_INVALID_RANK)) {
-    // local copy
-    memcpy(dst_addr, src_addr, type_size);
-  }
-  else if ((dst_rank != _XCALABLEMP_N_INVALID_RANK) && (src_rank == _XCALABLEMP_N_INVALID_RANK)) {
-    // local copy on dst_rank
-    if (dst_rank == dst_array->comm_rank) {
+  if (dst_rank == _XCALABLEMP_N_INVALID_RANK) {
+    if (src_rank == _XCALABLEMP_N_INVALID_RANK) {
+      // local copy
       memcpy(dst_addr, src_addr, type_size);
     }
-  }
-  else if ((dst_rank == _XCALABLEMP_N_INVALID_RANK) && (src_rank != _XCALABLEMP_N_INVALID_RANK)) {
-    // broadcast
-    _XCALABLEMP_M_GMOVE_BCAST(src_array, dst_addr, src_addr, type_size, src_rank);
-  }
-  else { //(dst_rank != _XCALABLEMP_N_INVALID_RANK) && (src_rank != _XCALABLEMP_N_INVALID_RANK)
-    // send/recv FIXME limitation: arrays should be distributed by the same nodes
-    if (dst_nodes != src_nodes) {
-      _XCALABLEMP_fatal("arrays used in a gmove directive should be distributed by the same nodes set");
+    else {
+      // broadcast
+      _XCALABLEMP_M_GMOVE_BCAST(src_array, dst_addr, src_addr, type_size, src_rank);
     }
-
-    // FIXME use execution nodes set
-    _XCALABLEMP_nodes_t *comm_nodes = dst_nodes;
-
-    // irecv
-    MPI_Request recv_req;
-    if (dst_rank == dst_array->comm_rank) {
-      MPI_Irecv(dst_addr, type_size, MPI_BYTE, MPI_ANY_SOURCE, _XCALABLEMP_N_MPI_TAG_GMOVE, *(comm_nodes->comm), &recv_req);
-    }
-
-    // send
-    if (src_rank == src_array->comm_rank) {
-      // FIXME master sends all
-      if (src_rank == comm_nodes->comm_rank) {
-        int num_targets = _XCALABLEMP_calc_gmove_target_nodes_size(dst_nodes, dst_rank_array);
-        if (num_targets == 1) {
-          MPI_Send(src_addr, type_size, MPI_BYTE, dst_rank, _XCALABLEMP_N_MPI_TAG_GMOVE, *(comm_nodes->comm));
-        }
-        else {
-          // FIXME implement
-          _XCALABLEMP_fatal("not supported yet");
-        }
+  }
+  else {
+    if (src_rank == _XCALABLEMP_N_INVALID_RANK) {
+      // local copy on dst_rank
+      if (dst_rank == dst_array->comm_rank) {
+        memcpy(dst_addr, src_addr, type_size);
       }
     }
+    else {
+      // send/recv FIXME limitation: arrays should be distributed by the same nodes
+      if (dst_nodes != src_nodes) {
+        _XCALABLEMP_fatal("arrays used in a gmove directive should be distributed by the same nodes set");
+      }
 
-    // wait
-    if (dst_rank == dst_array->comm_rank) {
-      MPI_Status recv_stat;
-      MPI_Wait(&recv_req, &recv_stat);
+      // FIXME use execution nodes set
+      _XCALABLEMP_nodes_t *comm_nodes = dst_nodes;
+
+      // irecv
+      MPI_Request recv_req;
+      if (dst_rank == dst_array->comm_rank) {
+        MPI_Irecv(dst_addr, type_size, MPI_BYTE, MPI_ANY_SOURCE, _XCALABLEMP_N_MPI_TAG_GMOVE, *(comm_nodes->comm), &recv_req);
+      }
+
+      // send
+      if (src_rank == src_array->comm_rank) {
+        // FIXME master sends all
+        if (src_rank == comm_nodes->comm_rank) {
+          int num_targets = _XCALABLEMP_calc_gmove_target_nodes_size(dst_nodes, dst_rank_array);
+          if (num_targets == 1) {
+            MPI_Send(src_addr, type_size, MPI_BYTE, dst_rank, _XCALABLEMP_N_MPI_TAG_GMOVE, *(comm_nodes->comm));
+          }
+          else {
+            // FIXME implement
+            _XCALABLEMP_fatal("not supported yet");
+          }
+        }
+      }
+
+      // wait
+      if (dst_rank == dst_array->comm_rank) {
+        MPI_Status recv_stat;
+        MPI_Wait(&recv_req, &recv_stat);
+      }
     }
   }
 
