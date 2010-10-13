@@ -1,6 +1,8 @@
 #ifndef _XCALABLEMP_CONSTANT
 #define _XCALABLEMP_CONSTANT
 
+#define _XCALABLEMP_N_MAX_DIM				7
+
 // constants for mpi tag
 #define _XCALABLEMP_N_MPI_TAG_GMOVE			10
 #define _XCALABLEMP_N_MPI_TAG_REFLECT_LO		11
