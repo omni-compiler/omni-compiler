@@ -1,38 +1,6 @@
 #include "xmp_constant.h"
 #include "xmp_internal.h"
 
-static void _XCALABLEMP_normalize_array_section(int *lower, int *upper, int *stride);
-
-static void _XCALABLEMP_normalize_array_section(int *lower, int *upper, int *stride) {
-  // setup temporary variables
-  int l, u;
-  int s = *(stride);
-  if (s > 0) {
-    l = *lower;
-    u = *upper;
-  }
-  else if (s < 0) {
-    l = *upper;
-    u = *lower;
-  }
-  else {
-    _XCALABLEMP_fatal("the stride of <array-section> is 0");
-  }
-
-  // normalize values
-  if (s > 0) {
-    u = u - ((u - l) % s);
-    *upper = u;
-  }
-  else {
-    s = -s;
-    l = l + ((u - l) % s);
-    *lower = l;
-    *upper = u;
-    *stride = s;
-  }
-}
-
 // ----- pack array
 // --- dimension 1
 #define _XCALABLEMP_SM_PACK_ARRAY_1(_type) \
@@ -540,13 +508,51 @@ static void _XCALABLEMP_unpack_array_7_FLOAT			_XCALABLEMP_SM_UNPACK_ARRAY_7(flo
 static void _XCALABLEMP_unpack_array_7_DOUBLE			_XCALABLEMP_SM_UNPACK_ARRAY_7(double)
 static void _XCALABLEMP_unpack_array_7_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_7(long double)
 
+void _XCALABLEMP_normalize_array_section(int *lower, int *upper, int *stride) {
+  // setup temporary variables
+  int l, u;
+  int s = *(stride);
+  if (s > 0) {
+    l = *lower;
+    u = *upper;
+  }
+  else if (s < 0) {
+    l = *upper;
+    u = *lower;
+  }
+  else {
+    _XCALABLEMP_fatal("the stride of <array-section> is 0");
+  }
 
-// pack shadow
-void _XCALABLEMP_pack_shadow_buffer(void *buffer, void *src,
-                                    int array_type, int array_dim, int *l, int *u, int *s, unsigned long long *d) {
+  // normalize values
+  if (s > 0) {
+    u = u - ((u - l) % s);
+    *upper = u;
+  }
+  else {
+    s = -s;
+    l = l + ((u - l) % s);
+    *lower = l;
+    *upper = u;
+    *stride = s;
+  }
+}
+
+void _XCALABLEMP_pack_array(void *buffer, void *src,
+                            int array_type, int array_dim, int *l, int *u, int *s, unsigned long long *d) {
   switch (array_type) {
- // case _XCALABLEMP_N_TYPE_BOOL:
- //   _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_BOOL: {
+        switch (array_dim) {
+          case 1: _XCALABLEMP_pack_array_1_BOOL(buffer, src, l[0], u[0], s[0]); break;
+          case 2: _XCALABLEMP_pack_array_2_BOOL(buffer, src, l, u, s, d); break;
+          case 3: _XCALABLEMP_pack_array_3_BOOL(buffer, src, l, u, s, d); break;
+          case 4: _XCALABLEMP_pack_array_4_BOOL(buffer, src, l, u, s, d); break;
+          case 5: _XCALABLEMP_pack_array_5_BOOL(buffer, src, l, u, s, d); break;
+          case 6: _XCALABLEMP_pack_array_6_BOOL(buffer, src, l, u, s, d); break;
+          case 7: _XCALABLEMP_pack_array_7_BOOL(buffer, src, l, u, s, d); break;
+          default: _XCALABLEMP_fatal("wrong array dimension");
+        }
+      } break;
     case _XCALABLEMP_N_TYPE_CHAR: {
         switch (array_dim) {
           case 1: _XCALABLEMP_pack_array_1_CHAR(buffer, src, l[0], u[0], s[0]); break;
@@ -719,12 +725,21 @@ void _XCALABLEMP_pack_shadow_buffer(void *buffer, void *src,
   }
 }
 
-// unpack shadow
-void _XCALABLEMP_unpack_shadow_buffer(void *dst, void *buffer,
-                                      int array_type, int array_dim, int *l, int *u, int *s, unsigned long long *d) {
+void _XCALABLEMP_unpack_array(void *dst, void *buffer,
+                              int array_type, int array_dim, int *l, int *u, int *s, unsigned long long *d) {
   switch (array_type) {
- // case _XCALABLEMP_N_TYPE_BOOL:
- //   _XCALABLEMP_fatal("unknown data type for reflect");
+    case _XCALABLEMP_N_TYPE_BOOL: {
+        switch (array_dim) {
+          case 1: _XCALABLEMP_unpack_array_1_BOOL(dst, buffer, l[0], u[0], s[0]); break;
+          case 2: _XCALABLEMP_unpack_array_2_BOOL(dst, buffer, l, u, s, d); break;
+          case 3: _XCALABLEMP_unpack_array_3_BOOL(dst, buffer, l, u, s, d); break;
+          case 4: _XCALABLEMP_unpack_array_4_BOOL(dst, buffer, l, u, s, d); break;
+          case 5: _XCALABLEMP_unpack_array_5_BOOL(dst, buffer, l, u, s, d); break;
+          case 6: _XCALABLEMP_unpack_array_6_BOOL(dst, buffer, l, u, s, d); break;
+          case 7: _XCALABLEMP_unpack_array_7_BOOL(dst, buffer, l, u, s, d); break;
+          default: _XCALABLEMP_fatal("wrong array dimension");
+        }
+      } break;
     case _XCALABLEMP_N_TYPE_CHAR: {
         switch (array_dim) {
           case 1: _XCALABLEMP_unpack_array_1_CHAR(dst, buffer, l[0], u[0], s[0]); break;

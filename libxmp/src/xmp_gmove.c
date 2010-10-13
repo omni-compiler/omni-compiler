@@ -1,7 +1,11 @@
 #include <stdarg.h>
 #include <string.h>
+#include "xmp_array_section.h"
 #include "xmp_constant.h"
 #include "xmp_internal.h"
+#include "xmp_math_macro.h"
+
+// ----- gmove scalar to scalar ----------------------------------------------------------
 
 #define _XCALABLEMP_M_GMOVE_BCAST_ARRAY(array, dst_addr, src_addr, type_size, src_rank) \
 { \
@@ -344,4 +348,36 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr, size_t ty
   // clean up
   _XCALABLEMP_free(dst_rank_array);
   _XCALABLEMP_free(src_rank_array);
+}
+
+// ----- gmove vector to vector ----------------------------------------------------------
+
+void _XCALABLEMP_gmove_local_copy_BASIC(void *dst, void *src, int type, size_t type_size, ...) {
+/*
+  // normalize index ref
+  _XCALABLEMP_normalize_array_section(&dst_lower0, &dst_upper0, &dst_stride0);
+  _XCALABLEMP_normalize_array_section(&dst_lower1, &dst_upper1, &dst_stride1);
+  _XCALABLEMP_normalize_array_section(&src_lower, &src_upper, &src_stride);
+
+  // alloc buffer
+  unsigned long long buffer_elmts = _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower0, dst_upper0, dst_stride0) *
+                                    _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower1, dst_upper1, dst_stride1);
+  if (buffer_elmts != _XCALABLEMP_M_COUNT_TRIPLETi(src_lower, src_upper, src_stride)) {
+    _XCALABLEMP_fatal("wrong assign statement"); // FIXME fix error msg
+  }
+
+  void *buffer = _XCALABLEMP_alloc(buffer_elmts * type_size);
+
+  // pack
+  _XCALABLEMP_pack_array(buffer, src, type, 1, &src_lower, &src_upper, &src_stride, NULL);
+  int dst_l[2], dst_u[2], dst_s[2]; unsigned long long dst_d[2];
+  dst_l[0] = dst_lower0; dst_u[0] = dst_upper0; dst_s[0] = dst_stride0; dst_d[0] = dst_dim_acc0;
+  dst_l[1] = dst_lower1; dst_u[1] = dst_upper1; dst_s[1] = dst_stride1; dst_d[1] = 1;
+
+  // unpack
+  _XCALABLEMP_unpack_array(dst, buffer, type, 2, dst_l, dst_u, dst_s, dst_d);
+
+  // free buffer
+  _XCALABLEMP_free(buffer);
+*/
 }
