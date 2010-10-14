@@ -11,7 +11,7 @@ public class XMPalignedArray {
   private Vector<Long>		_sizeVector;
   private Vector<XMPshadow>	_shadowVector;
   private Vector<Integer>	_distMannerVector;
-  private Vector<Ident>		_gtolAccIdVector;
+  private Vector<Ident>		_accIdVector;
   private Vector<Ident>		_gtolTemp0IdVector;
   private Vector<Integer>	_alignSubscriptIndexVector;
   private Vector<Xobject>	_alignSubscriptExprVector;
@@ -23,7 +23,7 @@ public class XMPalignedArray {
   private XMPtemplate		_alignedTemplate;
 
   public XMPalignedArray(String name, Xtype type, int dim,
-                         Vector<Long> sizeVector, Vector<Ident> gtolAccIdVector,
+                         Vector<Long> sizeVector, Vector<Ident> accIdVector,
                          Ident descId, Ident addrId, XMPtemplate alignedTemplate) {
     _name = name;
     _type = type;
@@ -31,7 +31,7 @@ public class XMPalignedArray {
     _sizeVector = sizeVector;
     _shadowVector = new Vector<XMPshadow>(XMP.MAX_DIM);
     _distMannerVector = new Vector<Integer>(XMP.MAX_DIM);
-    _gtolAccIdVector = gtolAccIdVector;
+    _accIdVector = accIdVector;
     _gtolTemp0IdVector = new Vector<Ident>(XMP.MAX_DIM);
     _alignSubscriptIndexVector = new Vector<Integer>(XMP.MAX_DIM);
     _alignSubscriptExprVector = new Vector<Xobject>(XMP.MAX_DIM);
@@ -82,12 +82,12 @@ public class XMPalignedArray {
     }
   }
 
-  public Vector<Ident> getGtolAccIdVector() {
-    return _gtolAccIdVector;
+  public Vector<Ident> getAccIdVector() {
+    return _accIdVector;
   }
 
-  public Ident getGtolAccIdAt(int index) {
-    return _gtolAccIdVector.get(index);
+  public Ident getAccIdAt(int index) {
+    return _accIdVector.get(index);
   }
 
   // temp0 is

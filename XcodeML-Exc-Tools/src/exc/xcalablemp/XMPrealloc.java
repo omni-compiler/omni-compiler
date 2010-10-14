@@ -35,7 +35,7 @@ public class XMPrealloc implements XobjectDefVisitor {
                                               Xcons.SizeOf(alignedArray.getType()));
           for (int i = alignedArray.getDim() - 1; i >= 0; i--)
             allocFuncArgs.add(Xcons.Cast(Xtype.unsignedlonglongType,
-                                         alignedArray.getGtolAccIdAt(i).getAddr()));
+                                         alignedArray.getAccIdAt(i).getAddr()));
 
           _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_alloc_array", allocFuncArgs);
         }

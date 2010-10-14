@@ -59,7 +59,7 @@ public class XMPtranslateGlobalPragma {
     // declare nodes object
     int nodesDim = 0;
     for (XobjArgs i = nodesDecl.getArg(2).getArgs(); i != null; i = i.nextArgs()) nodesDim++;
-    if ((nodesDim > (XMP.MAX_DIM)) || (nodesDim < 1))
+    if (nodesDim > XMP.MAX_DIM)
       throw new XMPexception("nodes dimension should be less than " + (XMP.MAX_DIM + 1));
 
     XMPnodes nodesObject = new XMPnodes(nodesName, nodesDim, nodesDescId);
@@ -194,7 +194,7 @@ public class XMPtranslateGlobalPragma {
     // declare template object
     int templateDim = 0;
     for (XobjArgs i = templateDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) templateDim++;
-    if ((templateDim > (XMP.MAX_DIM)) || (templateDim < 1))
+    if (templateDim > XMP.MAX_DIM)
       throw new XMPexception("template dimension should be less than " + (XMP.MAX_DIM + 1));
 
     XMPtemplate templateObject = new XMPtemplate(templateName, templateDim, templateDescId);
@@ -409,7 +409,7 @@ public class XMPtranslateGlobalPragma {
                                              Xtype.voidPtrType);
 
     int arrayDim = arrayType.getNumDimensions();
-    if ((arrayDim > (XMP.MAX_DIM)) || (arrayDim < 1))
+    if (arrayDim > XMP.MAX_DIM)
       throw new XMPexception("array dimension should be less than " + (XMP.MAX_DIM + 1));
 
     XobjList initArrayDescFuncArgs = Xcons.List(arrayDescId.getAddr(),
@@ -418,24 +418,29 @@ public class XMPtranslateGlobalPragma {
                                                 Xcons.SizeOf(arrayElmtType));
 
     Vector<Long> arraySizeVector = new Vector<Long>(arrayDim);
-    Vector<Ident> gtolAccIdVector = new Vector<Ident>(arrayDim);
+    Vector<Ident> accIdVector = new Vector<Ident>(arrayDim);
     for (int i = 0; i < arrayDim; i++, arrayType = arrayType.getRef()) {
       long dimSize = arrayType.getArraySize();
-      if(dimSize == 0)
+      if (dimSize == 0) {
         throw new XMPexception("array size cannot be omitted");
+      }
+      else if (dimSize == -1) {
+        // FIXME possible error in global scope???
+        throw new XMPexception("array size should be fixed");
+      }
 
       arraySizeVector.add(new Long(dimSize));
       initArrayDescFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.LongLongConstant(0, dimSize)));
 
-      Ident gtolAccId = _env.declStaticIdent(XMP.GTOL_PREFIX_ + "acc_" + arrayName + "_" + i,
-                                             Xtype.unsignedlonglongType);
-      gtolAccIdVector.add(gtolAccId);
+      Ident accId = _env.declStaticIdent(XMP.GTOL_PREFIX_ + "acc_" + arrayName + "_" + i,
+                                         Xtype.unsignedlonglongType);
+      accIdVector.add(accId);
     }
 
     _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_init_array_desc", initArrayDescFuncArgs);
 
     XMPalignedArray alignedArray = new XMPalignedArray(arrayName, arrayElmtType, arrayDim,
-                                                       arraySizeVector, gtolAccIdVector, arrayDescId, arrayAddrId,
+                                                       arraySizeVector, accIdVector, arrayDescId, arrayAddrId,
                                                        templateObj);
     _globalObjectTable.putAlignedArray(alignedArray);
 

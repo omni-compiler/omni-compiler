@@ -96,7 +96,7 @@ public class XMPtranslateLocalPragma {
     // declare nodes object
     int nodesDim = 0;
     for (XobjArgs i = nodesDecl.getArg(2).getArgs(); i != null; i = i.nextArgs()) nodesDim++;
-    if ((nodesDim > (XMP.MAX_DIM)) || (nodesDim < 1))
+    if (nodesDim > XMP.MAX_DIM)
       throw new XMPexception("nodes dimension should be less than " + (XMP.MAX_DIM + 1));
 
     XMPnodes nodesObject = new XMPnodes(nodesName, nodesDim, nodesDescId);
@@ -239,7 +239,7 @@ public class XMPtranslateLocalPragma {
     // declare template object
     int templateDim = 0;
     for (XobjArgs i = templateDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) templateDim++;
-    if ((templateDim > (XMP.MAX_DIM)) || (templateDim < 1))
+    if (templateDim > XMP.MAX_DIM)
       throw new XMPexception("template dimension should be less than " + (XMP.MAX_DIM + 1));
 
     XMPtemplate templateObject = new XMPtemplate(templateName, templateDim, templateDescId);
@@ -464,7 +464,7 @@ public class XMPtranslateLocalPragma {
     Ident arrayDescId = XMPlocalDecl.addObjectId(XMP.DESC_PREFIX_ + arrayName, pb);
 
     int arrayDim = arrayType.getNumDimensions();
-    if ((arrayDim > (XMP.MAX_DIM)) || (arrayDim < 1))
+    if (arrayDim > XMP.MAX_DIM)
       throw new XMPexception("array dimension should be less than " + (XMP.MAX_DIM + 1));
 
     XobjList initArrayDescFuncArgs = Xcons.List(arrayDescId.getAddr(),
@@ -473,18 +473,23 @@ public class XMPtranslateLocalPragma {
                                                 Xcons.SizeOf(arrayElmtType));
 
     Vector<Long> arraySizeVector = new Vector<Long>(arrayDim);
-    Vector<Ident> gtolAccIdVector = new Vector<Ident>(arrayDim);
+    Vector<Ident> accIdVector = new Vector<Ident>(arrayDim);
     for (int i = 0; i < arrayDim; i++, arrayType = arrayType.getRef()) {
       long dimSize = arrayType.getArraySize();
-      if(dimSize == 0)
+      if (dimSize == 0) {
         throw new XMPexception("array size cannot be omitted");
+      }
+      else if (dimSize == -1) {
+        // FIXME allow dynamic array
+        throw new XMPexception("dynamic array is not allowed yet");
+      }
 
       arraySizeVector.add(new Long(dimSize));
       initArrayDescFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.LongLongConstant(0, dimSize)));
 
-      Ident gtolAccId = XMPlocalDecl.addObjectId(XMP.GTOL_PREFIX_ + "acc_" + arrayName + "_" + i,
-                                                 Xtype.unsignedlonglongType, pb);
-      gtolAccIdVector.add(gtolAccId);
+      Ident accId = XMPlocalDecl.addObjectId(XMP.GTOL_PREFIX_ + "acc_" + arrayName + "_" + i,
+                                             Xtype.unsignedlonglongType, pb);
+      accIdVector.add(accId);
     }
 
     // create/destroy local descriptor
@@ -492,7 +497,7 @@ public class XMPtranslateLocalPragma {
     XMPlocalDecl.insertDestructorCall("_XCALABLEMP_finalize_array_desc", Xcons.List(arrayDescId.Ref()), pb, _globalDecl);
 
     XMPalignedArray alignedArray = new XMPalignedArray(arrayName, arrayElmtType, arrayDim,
-                                                       arraySizeVector, gtolAccIdVector, arrayDescId, arrayAddrId,
+                                                       arraySizeVector, accIdVector, arrayDescId, arrayAddrId,
                                                        templateObj);
     localObjectTable.putAlignedArray(alignedArray);
 
@@ -582,7 +587,7 @@ public class XMPtranslateLocalPragma {
                                                 arrayDescId.Ref());
     for (int i = arrayDim - 1; i >= 0; i--)
       initArrayAddrFuncArgs.add(Xcons.Cast(Xtype.unsignedlonglongType,
-                                           alignedArray.getGtolAccIdAt(i).getAddr()));
+                                           alignedArray.getAccIdAt(i).getAddr()));
 
     XMPlocalDecl.addConstructorCall("_XCALABLEMP_init_array_addr", initArrayAddrFuncArgs, pb, _globalDecl);
   }
@@ -1619,6 +1624,7 @@ public class XMPtranslateLocalPragma {
     return new XMPpair<Ident, Xtype>(id, type);
   }
 
+  // FIXME array can be a dynamic size
   public long getArrayElmtCount(Xtype type) {
     if (type.isArray()) {
       ArrayType arrayType = (ArrayType)type;
@@ -1626,6 +1632,24 @@ public class XMPtranslateLocalPragma {
       return arraySize * getArrayElmtCount(arrayType.getRef());
     }
     else return 1;
+  }
+
+  public Xobject getArrayElmtsObj(Xtype type) throws XMPexception {
+    if (type.isArray()) {
+      ArrayType arrayType = (ArrayType)type;
+
+      long arraySize = arrayType.getArraySize();
+      if (arraySize == 0) {
+        throw new XMPexception("cannot get the array size");
+      }
+      else if (arraySize == -1) {
+        return Xcons.binaryOp(Xcode.MUL_EXPR, arrayType.getArraySizeExpr(), getArrayElmtsObj(arrayType.getRef()));
+      }
+      else {
+        return Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.LongLongConstant(0, arraySize), getArrayElmtsObj(arrayType.getRef()));
+      }
+    }
+    else return Xcons.LongLongConstant(0, 1);
   }
 
   private void translateBcast(PragmaBlock pb) throws XMPexception {
@@ -1838,8 +1862,8 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception(checkBodyErrMsg);
 
     // FIXME consider in, out clause
-    XMPtriplet<Boolean, XMPalignedArray, XobjList> leftExpr = getAlignedArrayExpr(assignStmt.left(), localObjectTable);
-    XMPtriplet<Boolean, XMPalignedArray, XobjList> rightExpr = getAlignedArrayExpr(assignStmt.right(), localObjectTable);
+    XMPtriplet<Boolean, XMPalignedArray, XobjList> leftExpr = getAlignedArrayExpr(pb, assignStmt.left());
+    XMPtriplet<Boolean, XMPalignedArray, XobjList> rightExpr = getAlignedArrayExpr(pb, assignStmt.right());
     boolean hasSubArrayRef = leftExpr.getFirst().booleanValue();
     if (hasSubArrayRef) {
       throw new XMPexception("not implemented yet");
@@ -1891,14 +1915,16 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private XMPtriplet<Boolean, XMPalignedArray, XobjList> getAlignedArrayExpr(Xobject expr,
-                                                                             XMPobjectTable localObjectTable) throws XMPexception {
+  private XMPtriplet<Boolean, XMPalignedArray, XobjList> getAlignedArrayExpr(PragmaBlock pb, Xobject expr) throws XMPexception {
     if (hasSubArrayRef(expr)) {
-      XMPpair<XMPalignedArray, XobjList> pair = parseSubArrayRefExpr(expr, localObjectTable, 0, Xcons.List());
+      XobjList accList = getArrayAccList(pb, expr);
+
+      XMPpair<XMPalignedArray, XobjList> pair = parseSubArrayRefExpr(pb, expr, accList, 0, Xcons.List());
+      System.out.println("TEST:" + pair.getSecond().toString()); // FIXME delete this line
       return new XMPtriplet<Boolean, XMPalignedArray, XobjList>(new Boolean(true), pair.getFirst(), pair.getSecond());
     }
     else {
-      XMPpair<XMPalignedArray, XobjList> pair = parseArrayRefExpr(expr, localObjectTable, 0, Xcons.List());
+      XMPpair<XMPalignedArray, XobjList> pair = parseArrayRefExpr(pb, expr, 0, Xcons.List());
       return new XMPtriplet<Boolean, XMPalignedArray, XobjList>(new Boolean(false), pair.getFirst(), pair.getSecond());
     }
   }
@@ -1917,18 +1943,62 @@ public class XMPtranslateLocalPragma {
     return false;
   }
 
-  private XMPpair<XMPalignedArray, XobjList> parseSubArrayRefExpr(Xobject expr, XMPobjectTable localObjectTable, int arrayDimCount,
-                                                                  XobjList arrayRefs) throws XMPexception {
+  // XXX reversed dimension order for convenience
+  private XobjList getArrayAccList(PragmaBlock pb, Xobject expr) throws XMPexception {
+    XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
+
+    bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
+    for (iter.init(); !iter.end(); iter.next()) {
+      Xobject currentExpr = iter.getXobject();
+      if (currentExpr != null) {
+        if (currentExpr.Opcode() == Xcode.ARRAY_REF) {
+          XobjList accList = Xcons.List();
+
+          String arrayName = currentExpr.getSym();
+          XMPalignedArray alignedArray = findXMPalignedArray(arrayName, localObjectTable);
+          if (alignedArray == null) {
+            Ident arrayId = pb.findVarIdent(arrayName);
+            Xtype arrayType = arrayId.Type();
+
+            int arrayDim = arrayType.getNumDimensions();
+            if (arrayDim > XMP.MAX_DIM) {
+              throw new XMPexception("array dimension should be less than " + (XMP.MAX_DIM + 1));
+            }
+
+            arrayType = arrayType.getRef();
+            for (int i = 0; i < arrayDim - 1; i++, arrayType = arrayType.getRef()) {
+              accList.cons(getArrayElmtsObj(arrayType));
+            }
+            accList.cons(Xcons.LongLongConstant(0, 1));
+          }
+          else {
+            int arrayDim = alignedArray.getDim();
+            for (int i = 0; i < arrayDim; i++) {
+              accList.cons(alignedArray.getAccIdAt(i).Ref());
+            }
+          }
+
+          return accList;
+        }
+      }
+    }
+
+    throw new XMPexception("cannot find array ref in gmove assign statement");
+  }
+
+  private XMPpair<XMPalignedArray, XobjList> parseSubArrayRefExpr(PragmaBlock pb, Xobject expr, XobjList accList,
+                                                                  int arrayDimCount, XobjList arrayRefs) throws XMPexception {
     String syntaxErrMsg = "syntax error on array expression, expression is not appropriate for gmove directive";
     switch (expr.Opcode()) {
       case POINTER_REF:
         {
           Xobject child = expr.operand();
           if (child.Opcode() == Xcode.PLUS_EXPR) {
+            arrayRefs.cons(Xcons.Cast(Xtype.unsignedlonglongType, accList.getArg(arrayDimCount)));
             arrayRefs.cons(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
             arrayRefs.cons(Xcons.Cast(Xtype.intType, child.right()));
             arrayRefs.cons(Xcons.Cast(Xtype.intType, child.right()));
-            return parseSubArrayRefExpr(child.left(), localObjectTable, arrayDimCount + 1, arrayRefs);
+            return parseSubArrayRefExpr(pb, child.left(), accList, arrayDimCount + 1, arrayRefs);
           }
           else {
             return new XMPpair<XMPalignedArray, XobjList>(null, null);
@@ -1936,21 +2006,34 @@ public class XMPtranslateLocalPragma {
         }
       case SUB_ARRAY_REF:
         {
+          arrayRefs.cons(Xcons.Cast(Xtype.unsignedlonglongType, accList.getArg(arrayDimCount)));
           arrayRefs.cons(Xcons.Cast(Xtype.intType, expr.getArg(3).operand()));
           arrayRefs.cons(Xcons.Cast(Xtype.intType, expr.getArg(2).operand()));
           arrayRefs.cons(Xcons.Cast(Xtype.intType, expr.getArg(1).operand()));
-          return parseSubArrayRefExpr(expr.getArg(0), localObjectTable, arrayDimCount + 1, arrayRefs);
+          return parseSubArrayRefExpr(pb, expr.getArg(0), accList, arrayDimCount + 1, arrayRefs);
         }
       case ARRAY_REF:
         {
+          arrayRefs.cons(Xcons.Cast(Xtype.intType, Xcons.IntConstant(arrayDimCount)));
+
+          XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
           String arrayName = expr.getSym();
           XMPalignedArray alignedArray = findXMPalignedArray(arrayName, localObjectTable);
           if (alignedArray == null) {
-            // FIXME check array dim
-            return new XMPpair<XMPalignedArray, XobjList>(null, arrayRefs);
+            Ident arrayId = pb.findVarIdent(arrayName);
+            Xtype arrayType = arrayId.Type();
+
+            if (arrayType.getNumDimensions() == arrayDimCount) {
+              arrayRefs.cons(Xcons.Cast(Xtype.voidPtrType, arrayId.getAddr()));
+              return new XMPpair<XMPalignedArray, XobjList>(null, arrayRefs);
+            }
+            else {
+              throw new XMPexception(syntaxErrMsg);
+            }
           }
           else {
             if (alignedArray.getDim() == arrayDimCount) {
+              arrayRefs.cons(Xcons.Cast(Xtype.voidPtrType, alignedArray.getAddrId().Ref()));
               return new XMPpair<XMPalignedArray, XobjList>(alignedArray, arrayRefs);
             }
             else {
@@ -1963,8 +2046,8 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private XMPpair<XMPalignedArray, XobjList> parseArrayRefExpr(Xobject expr, XMPobjectTable localObjectTable, int arrayDimCount,
-                                                               XobjList arrayRefs) throws XMPexception {
+  private XMPpair<XMPalignedArray, XobjList> parseArrayRefExpr(PragmaBlock pb, Xobject expr,
+                                                               int arrayDimCount, XobjList arrayRefs) throws XMPexception {
     String syntaxErrMsg = "syntax error on array expression, expression is not appropriate for gmove directive";
     switch (expr.Opcode()) {
       case POINTER_REF:
@@ -1972,7 +2055,7 @@ public class XMPtranslateLocalPragma {
           Xobject child = expr.operand();
           if (child.Opcode() == Xcode.PLUS_EXPR) {
             arrayRefs.cons(Xcons.Cast(Xtype.intType, child.right()));
-            return parseArrayRefExpr(child.left(), localObjectTable, arrayDimCount + 1, arrayRefs);
+            return parseArrayRefExpr(pb, child.left(), arrayDimCount + 1, arrayRefs);
           }
           else {
             return new XMPpair<XMPalignedArray, XobjList>(null, null);
@@ -1980,6 +2063,7 @@ public class XMPtranslateLocalPragma {
         }
       case ARRAY_REF:
         {
+          XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
           String arrayName = expr.getSym();
           XMPalignedArray alignedArray = findXMPalignedArray(arrayName, localObjectTable);
           if (alignedArray == null) {
