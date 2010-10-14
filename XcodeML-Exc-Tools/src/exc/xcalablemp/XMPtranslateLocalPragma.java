@@ -1862,20 +1862,55 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception(checkBodyErrMsg);
 
     // FIXME consider in, out clause
-    XMPtriplet<Boolean, XMPalignedArray, XobjList> leftExpr = getAlignedArrayExpr(pb, assignStmt.left());
-    XMPtriplet<Boolean, XMPalignedArray, XobjList> rightExpr = getAlignedArrayExpr(pb, assignStmt.right());
-    boolean hasSubArrayRef = leftExpr.getFirst().booleanValue();
-    if (hasSubArrayRef) {
-      throw new XMPexception("not implemented yet");
+    Xobject leftExpr = assignStmt.left();
+    XMPpair<XMPalignedArray, XobjList> leftExprInfo = getAlignedArrayExpr(pb, leftExpr);
+    XMPalignedArray leftAlignedArray = leftExprInfo.getFirst();
+
+    Xobject rightExpr = assignStmt.right();
+    XMPpair<XMPalignedArray, XobjList> rightExprInfo = getAlignedArrayExpr(pb, assignStmt.right());
+    XMPalignedArray rightAlignedArray = rightExprInfo.getFirst();
+
+    boolean leftHasSubArrayRef = hasSubArrayRef(leftExpr);
+    boolean rightHasSubArrayRef = hasSubArrayRef(rightExpr);
+    if (leftHasSubArrayRef) {
+      if (rightHasSubArrayRef) {
+        if (leftAlignedArray == null) {
+          if (rightAlignedArray == null) {	// !leftIsAlignedArray && !rightIsAlignedArray  |-> local assignment (every node)
+            String arrayName = getArrayName(leftExpr);
+            Ident arrayId = pb.findVarIdent(arrayName);
+            Xtype arrayElmtType = arrayId.Type().getArrayElementType();
+
+            XobjList gmoveFuncArgs = Xcons.List(Xcons.IntConstant(arrayElmtType.getBasicType() + 200),
+                                                Xcons.SizeOf(arrayElmtType));
+            XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
+            XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
+            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_local_copy_BASIC", gmoveFuncArgs));
+          }
+          else {				// !leftIsAlignedArray &&  rightIsAlignedArray  |-> broadcast
+            // FIXME implement
+            throw new XMPexception("not implemented yet");
+          }
+        }
+        else {
+          if (rightAlignedArray == null) {	//  leftIsAlignedArray && !rightIsAlignedArray  |-> local assignment (home node)
+            // FIXME implement
+            throw new XMPexception("not implemented yet");
+          }
+          else {				//  leftIsAlignedArray &&  rightIsAlignedArray  |-> send/recv
+            // FIXME implement
+            throw new XMPexception("not implemented yet");
+          }
+        }
+      }
+      else {
+        // FIXME implement
+        throw new XMPexception("not implemented yet");
+      }
     }
     else {
-      boolean rightHasSubArrayRef = rightExpr.getFirst().booleanValue();
       if (rightHasSubArrayRef) {
         throw new XMPexception("syntax error in gmove assign statement");
       }
-
-      XMPalignedArray leftAlignedArray = leftExpr.getSecond();
-      XMPalignedArray rightAlignedArray = rightExpr.getSecond();
 
       if (leftAlignedArray == null) {
         if (rightAlignedArray == null) {	// !leftIsAlignedArray && !rightIsAlignedArray	|-> local assignment (every node)
@@ -1883,10 +1918,10 @@ public class XMPtranslateLocalPragma {
         }
         else {					// !leftIsAlignedArray &&  rightIsAlignedArray	|-> broadcast
           // FIXME left/right is not a constant
-          XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(assignStmt.left()), Xcons.AddrOf(assignStmt.right()),
+          XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(leftExpr), Xcons.AddrOf(rightExpr),
                                               Xcons.SizeOf(rightAlignedArray.getType()),
                                               rightAlignedArray.getDescId().Ref());
-          XMPutil.mergeLists(gmoveFuncArgs, rightExpr.getThird());
+          XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
 
           pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_BCAST_SCALAR", gmoveFuncArgs));
         }
@@ -1894,20 +1929,19 @@ public class XMPtranslateLocalPragma {
       else {
         if (rightAlignedArray == null) {	//  leftIsAlignedArray && !rightIsAlignedArray	|-> local assignment (home node)
           XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref());
-          XMPutil.mergeLists(gmoveFuncArgs, leftExpr.getThird());
+          XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
 
           Ident gmoveFuncId = _env.declExternIdent("_XCALABLEMP_gmove_exec_home_SCALAR", Xtype.Function(Xtype.boolType));
           pb.replace(Bcons.IF(BasicBlock.Cond(gmoveFuncId.Call(gmoveFuncArgs)),
                               gmoveBody, null));
         }
         else {					//  leftIsAlignedArray &&  rightIsAlignedArray	|-> send/recv
-          // XXX type check is not needed
           // FIXME left/right is not a constant
-          XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(assignStmt.left()), Xcons.AddrOf(assignStmt.right()),
+          XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(leftExpr), Xcons.AddrOf(rightExpr),
                                               Xcons.SizeOf(leftAlignedArray.getType()),
                                               leftAlignedArray.getDescId().Ref(), rightAlignedArray.getDescId().Ref());
-          XMPutil.mergeLists(gmoveFuncArgs, leftExpr.getThird());
-          XMPutil.mergeLists(gmoveFuncArgs, rightExpr.getThird());
+          XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
+          XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
 
           pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_SENDRECV_SCALAR", gmoveFuncArgs));
         }
@@ -1915,17 +1949,12 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private XMPtriplet<Boolean, XMPalignedArray, XobjList> getAlignedArrayExpr(PragmaBlock pb, Xobject expr) throws XMPexception {
+  private XMPpair<XMPalignedArray, XobjList> getAlignedArrayExpr(PragmaBlock pb, Xobject expr) throws XMPexception {
     if (hasSubArrayRef(expr)) {
-      XobjList accList = getArrayAccList(pb, expr);
-
-      XMPpair<XMPalignedArray, XobjList> pair = parseSubArrayRefExpr(pb, expr, accList, 0, Xcons.List());
-      System.out.println("TEST:" + pair.getSecond().toString()); // FIXME delete this line
-      return new XMPtriplet<Boolean, XMPalignedArray, XobjList>(new Boolean(true), pair.getFirst(), pair.getSecond());
+      return parseSubArrayRefExpr(pb, expr, getArrayAccList(pb, expr), 0, Xcons.List());
     }
     else {
-      XMPpair<XMPalignedArray, XobjList> pair = parseArrayRefExpr(pb, expr, 0, Xcons.List());
-      return new XMPtriplet<Boolean, XMPalignedArray, XobjList>(new Boolean(false), pair.getFirst(), pair.getSecond());
+      return parseArrayRefExpr(pb, expr, 0, Xcons.List());
     }
   }
 
@@ -1941,6 +1970,20 @@ public class XMPtranslateLocalPragma {
     }
 
     return false;
+  }
+
+  private String getArrayName(Xobject expr) throws XMPexception {
+    bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
+    for (iter.init(); !iter.end(); iter.next()) {
+      Xobject currentExpr = iter.getXobject();
+      if (currentExpr != null) {
+        if (currentExpr.Opcode() == Xcode.ARRAY_REF) {
+          return currentExpr.getSym();
+        }
+      }
+    }
+
+    throw new XMPexception("cannot find array ref");
   }
 
   // XXX reversed dimension order for convenience
@@ -2024,7 +2067,7 @@ public class XMPtranslateLocalPragma {
             Xtype arrayType = arrayId.Type();
 
             if (arrayType.getNumDimensions() == arrayDimCount) {
-              arrayRefs.cons(Xcons.Cast(Xtype.voidPtrType, arrayId.getAddr()));
+              arrayRefs.cons(Xcons.Cast(Xtype.voidPtrType, arrayId.Ref()));
               return new XMPpair<XMPalignedArray, XobjList>(null, arrayRefs);
             }
             else {
