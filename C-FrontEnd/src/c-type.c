@@ -1698,11 +1698,17 @@ resolveType_assignOp(CExprOfBinaryNode *expr)
         if(td)
             td = td1;
         else {
-            addError((CExpr*)expr, CERR_046);
-            DBGDUMPEXPR(e1);
-            DBGDUMPEXPR(e2);
-            DBGDUMPEXPR(td1);
-            DBGDUMPEXPR(td2);
+            // FIXME modified by xcalablemp
+            if(isSubArrayRef(e1) || isSubArrayRef(e2)) {
+                td = td1;
+            }
+            else {
+                addError((CExpr*)expr, CERR_046);
+                DBGDUMPEXPR(e1);
+                DBGDUMPEXPR(e2);
+                DBGDUMPEXPR(td1);
+                DBGDUMPEXPR(td2);
+            }
         }
     } else {
         td = resolveType_binaryArithOp(expr);
