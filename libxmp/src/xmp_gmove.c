@@ -1012,7 +1012,39 @@ void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION(_XCALABLEMP_array_t *dst_array, _X
     }
   }
   else {
-    // FIXME use special function
-    _XCALABLEMP_fatal("not implemented yet");
+    if (dst_array == src_array) {
+      unsigned long long dst_buffer_elmts = 1;
+      for (int i = 0; i < dst_dim; i++) {
+        dst_buffer_elmts *= _XCALABLEMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
+      }
+
+      unsigned long long src_buffer_elmts = 1;
+      for (int i = 0; i < src_dim; i++) {
+        src_buffer_elmts *= _XCALABLEMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
+      }
+
+      // alloc buffer
+      if (dst_buffer_elmts != src_buffer_elmts) {
+        _XCALABLEMP_fatal("wrong assign statement"); // FIXME fix error msg
+      }
+
+      void *buffer = _XCALABLEMP_alloc(dst_buffer_elmts * type_size);
+
+      // pack/unpack
+      if (type == _XCALABLEMP_N_TYPE_GENERAL) {
+        _XCALABLEMP_pack_array_GENERAL(buffer, src_addr, type_size, src_dim, src_l, src_u, src_s, src_d);
+        _XCALABLEMP_unpack_array_GENERAL(dst_addr, buffer, type_size, dst_dim, dst_l, dst_u, dst_s, dst_d);
+      }
+      else {
+        _XCALABLEMP_pack_array_BASIC(buffer, src_addr, type, src_dim, src_l, src_u, src_s, src_d);
+        _XCALABLEMP_unpack_array_BASIC(dst_addr, buffer, type, dst_dim, dst_l, dst_u, dst_s, dst_d);
+      }
+
+      // free buffer
+      _XCALABLEMP_free(buffer);
+    }
+    else {
+      _XCALABLEMP_fatal("not implemented yet");
+    }
   }
 }
