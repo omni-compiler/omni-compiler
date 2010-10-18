@@ -1130,15 +1130,14 @@ public class XMPtranslateLocalPragma {
     Ident hiRecvId = reflectFuncBody.declLocalIdent("_XCALABLEMP_reflect_HI_RECV_" + arrayName, arrayPtype);
 
     // pack shadow
-    Ident packFuncId = null;
+    Ident packFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pack_shadow_NORMAL");
     XobjList packFuncArgs = Xcons.List(loSendId.getAddr(), hiSendId.getAddr(), alignedArray.getAddrId().Ref(),
                                        alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
     if (arrayType.getKind() == Xtype.BASIC) {
-      packFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pack_shadow_NORMAL_" + "BASIC");
       packFuncArgs.add(Xcons.IntConstant(arrayType.getBasicType() + 200));
     }
     else {
-      packFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pack_shadow_NORMAL_" + "GENERAL");
+      packFuncArgs.add(Xcons.IntConstant(XMP.NONBASIC_TYPE));
     }
 
     reflectFuncBody.add(Bcons.Statement(packFuncId.Call(packFuncArgs)));
@@ -1152,15 +1151,14 @@ public class XMPtranslateLocalPragma {
     reflectFuncBody.add(Bcons.Statement(exchangeFuncId.Call(exchangeFuncArgs)));
 
     // unpack shadow
-    Ident unpackFuncId = null;
+    Ident unpackFuncId = _globalDecl.declExternFunc("_XCALABLEMP_unpack_shadow_NORMAL");;
     XobjList unpackFuncArgs = Xcons.List(loRecvId.Ref(), hiRecvId.Ref(), alignedArray.getAddrId().Ref(),
                                          alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
     if (arrayType.getKind() == Xtype.BASIC) {
-      unpackFuncId = _globalDecl.declExternFunc("_XCALABLEMP_unpack_shadow_NORMAL_" + "BASIC");
       unpackFuncArgs.add(Xcons.IntConstant(arrayType.getBasicType() + 200));
     }
     else {
-      unpackFuncId = _globalDecl.declExternFunc("_XCALABLEMP_unpack_shadow_NORMAL_" + "GENERAL");
+      unpackFuncArgs.add(Xcons.IntConstant(XMP.NONBASIC_TYPE));
     }
 
     reflectFuncBody.add(Bcons.Statement(unpackFuncId.Call(unpackFuncArgs)));
@@ -1880,8 +1878,15 @@ public class XMPtranslateLocalPragma {
             Ident arrayId = pb.findVarIdent(arrayName);
             Xtype arrayElmtType = arrayId.Type().getArrayElementType();
 
-            XobjList gmoveFuncArgs = Xcons.List(Xcons.IntConstant(arrayElmtType.getBasicType() + 200),
-                                                Xcons.SizeOf(arrayElmtType));
+            XobjList gmoveFuncArgs = null;
+            if (arrayElmtType.getKind() == Xtype.BASIC) {
+              gmoveFuncArgs = Xcons.List(Xcons.IntConstant(arrayElmtType.getBasicType() + 200));
+            }
+            else {
+              gmoveFuncArgs = Xcons.List(Xcons.IntConstant(XMP.NONBASIC_TYPE));
+            }
+            gmoveFuncArgs.add(Xcons.SizeOf(arrayElmtType));
+
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
             pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_local_copy", gmoveFuncArgs));
@@ -1889,9 +1894,15 @@ public class XMPtranslateLocalPragma {
           else {				// !leftIsAlignedArray &&  rightIsAlignedArray  |-> broadcast
             Xtype arrayElmtType = rightAlignedArray.getType();
 
-            XobjList gmoveFuncArgs = Xcons.List(rightAlignedArray.getDescId().Ref(),
-                                                Xcons.IntConstant(arrayElmtType.getBasicType() + 200),
-                                                Xcons.SizeOf(arrayElmtType));
+            XobjList gmoveFuncArgs = Xcons.List(rightAlignedArray.getDescId().Ref());
+            if (arrayElmtType.getKind() == Xtype.BASIC) {
+              gmoveFuncArgs.add(Xcons.IntConstant(arrayElmtType.getBasicType() + 200));
+            }
+            else {
+              gmoveFuncArgs.add(Xcons.IntConstant(XMP.NONBASIC_TYPE));
+            }
+            gmoveFuncArgs.add(Xcons.SizeOf(arrayElmtType));
+
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
             pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_BCAST_ARRAY_SECTION", gmoveFuncArgs));
@@ -1901,9 +1912,15 @@ public class XMPtranslateLocalPragma {
           if (rightAlignedArray == null) {	//  leftIsAlignedArray && !rightIsAlignedArray  |-> local assignment (home node)
             Xtype arrayElmtType = leftAlignedArray.getType();
 
-            XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref(),
-                                                Xcons.IntConstant(arrayElmtType.getBasicType() + 200),
-                                                Xcons.SizeOf(arrayElmtType));
+            XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref());
+            if (arrayElmtType.getKind() == Xtype.BASIC) {
+              gmoveFuncArgs.add(Xcons.IntConstant(arrayElmtType.getBasicType() + 200));
+            }
+            else {
+              gmoveFuncArgs.add(Xcons.IntConstant(XMP.NONBASIC_TYPE));
+            }
+            gmoveFuncArgs.add(Xcons.SizeOf(arrayElmtType));
+
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
             pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_local_copy_home", gmoveFuncArgs));
@@ -1912,9 +1929,15 @@ public class XMPtranslateLocalPragma {
             Xtype arrayElmtType = leftAlignedArray.getType();
 
             XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref(),
-                                                rightAlignedArray.getDescId().Ref(),
-                                                Xcons.IntConstant(arrayElmtType.getBasicType() + 200),
-                                                Xcons.SizeOf(arrayElmtType));
+                                                rightAlignedArray.getDescId().Ref());
+            if (arrayElmtType.getKind() == Xtype.BASIC) {
+              gmoveFuncArgs.add(Xcons.IntConstant(arrayElmtType.getBasicType() + 200));
+            }
+            else {
+              gmoveFuncArgs.add(Xcons.IntConstant(XMP.NONBASIC_TYPE));
+            }
+            gmoveFuncArgs.add(Xcons.SizeOf(arrayElmtType));
+
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
             pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION", gmoveFuncArgs));

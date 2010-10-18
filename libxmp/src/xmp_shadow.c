@@ -107,8 +107,8 @@ void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
 }
 
 // FIXME consider full shadow in other dimensions
-void _XCALABLEMP_pack_shadow_NORMAL_BASIC(void **lo_buffer, void **hi_buffer, void *array_addr,
-                                          _XCALABLEMP_array_t *array_desc, int array_index, int array_type) {
+void _XCALABLEMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_addr,
+                                    _XCALABLEMP_array_t *array_desc, int array_index, int array_type) {
   if (!(array_desc->is_allocated)) {
     return;
   }
@@ -152,7 +152,13 @@ void _XCALABLEMP_pack_shadow_NORMAL_BASIC(void **lo_buffer, void **hi_buffer, vo
       }
 
       // pack data
-      _XCALABLEMP_pack_array_BASIC(*lo_buffer, array_addr, array_type, array_dim, lower, upper, stride, dim_acc);
+      if (array_type == _XCALABLEMP_N_TYPE_GENERAL) {
+        _XCALABLEMP_pack_array_GENERAL(*lo_buffer, array_addr, array_type, array_desc->type_size,
+                                       array_dim, lower, upper, stride, dim_acc);
+      }
+      else {
+        _XCALABLEMP_pack_array_BASIC(*lo_buffer, array_addr, array_type, array_dim, lower, upper, stride, dim_acc);
+      }
     }
   }
 
@@ -185,14 +191,20 @@ void _XCALABLEMP_pack_shadow_NORMAL_BASIC(void **lo_buffer, void **hi_buffer, vo
       }
 
       // pack data
-      _XCALABLEMP_pack_array_BASIC(*hi_buffer, array_addr, array_type, array_dim, lower, upper, stride, dim_acc);
+      if (array_type == _XCALABLEMP_N_TYPE_GENERAL) {
+        _XCALABLEMP_pack_array_GENERAL(*hi_buffer, array_addr, array_type, array_desc->type_size,
+                                       array_dim, lower, upper, stride, dim_acc);
+      }
+      else {
+        _XCALABLEMP_pack_array_BASIC(*hi_buffer, array_addr, array_type, array_dim, lower, upper, stride, dim_acc);
+      }
     }
   }
 }
 
 // FIXME not consider full shadow
-void _XCALABLEMP_unpack_shadow_NORMAL_BASIC(void *lo_buffer, void *hi_buffer, void *array_addr,
-                                            _XCALABLEMP_array_t *array_desc, int array_index, int array_type) {
+void _XCALABLEMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_addr,
+                                      _XCALABLEMP_array_t *array_desc, int array_index, int array_type) {
   if (!(array_desc->is_allocated)) {
     return;
   }
@@ -233,7 +245,13 @@ void _XCALABLEMP_unpack_shadow_NORMAL_BASIC(void *lo_buffer, void *hi_buffer, vo
       }
 
       // unpack data
-      _XCALABLEMP_unpack_array_BASIC(array_addr, lo_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
+      if (array_type == _XCALABLEMP_N_TYPE_GENERAL) {
+        _XCALABLEMP_unpack_array_GENERAL(array_addr, lo_buffer, array_type, array_desc->type_size,
+                                         array_dim, lower, upper, stride, dim_acc);
+      }
+      else {
+        _XCALABLEMP_unpack_array_BASIC(array_addr, lo_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
+      }
 
       // free buffer
       _XCALABLEMP_free(lo_buffer);
@@ -266,7 +284,13 @@ void _XCALABLEMP_unpack_shadow_NORMAL_BASIC(void *lo_buffer, void *hi_buffer, vo
       }
 
       // unpack data
-      _XCALABLEMP_unpack_array_BASIC(array_addr, hi_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
+      if (array_type == _XCALABLEMP_N_TYPE_GENERAL) {
+        _XCALABLEMP_unpack_array_GENERAL(array_addr, hi_buffer, array_type, array_desc->type_size,
+                                         array_dim, lower, upper, stride, dim_acc);
+      }
+      else {
+        _XCALABLEMP_unpack_array_BASIC(array_addr, hi_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
+      }
 
       // free buffer
       _XCALABLEMP_free(hi_buffer);

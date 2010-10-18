@@ -21,7 +21,6 @@
 #define _XCALABLEMP_N_DIST_CYCLIC			102
 
 // defined in exc.object.BasicType
-#define _XCALABLEMP_N_TYPE_NONE				200
 #define _XCALABLEMP_N_TYPE_GENERAL			201
 #define _XCALABLEMP_N_TYPE_BOOL				202
 #define _XCALABLEMP_N_TYPE_CHAR				203

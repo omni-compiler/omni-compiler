@@ -8,6 +8,7 @@ import xcodeml.util.XmLog;
  */
 public class XMP {
   public final static int MAX_DIM		= 7;
+  public final static int NONBASIC_TYPE		= 201;
   public final static String DESC_PREFIX_	= "_XCALABLEMP_desc_";
   public final static String ADDR_PREFIX_	= "_XCALABLEMP_addr_";
   public final static String GTOL_PREFIX_	= "_XCALABLEMP_gtol_";
