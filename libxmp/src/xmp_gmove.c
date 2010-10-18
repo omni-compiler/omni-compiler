@@ -581,39 +581,32 @@ void _XCALABLEMP_gmove_local_copy(int type, size_t type_size, ...) {
   void *dst_addr = va_arg(args, void *);
   int dst_dim = va_arg(args, int);
   int dst_l[dst_dim], dst_u[dst_dim], dst_s[dst_dim]; unsigned long long dst_d[dst_dim];
+  unsigned long long dst_buffer_elmts = 1;
   for (int i = 0; i < dst_dim; i++) {
     dst_l[i] = va_arg(args, int);
     dst_u[i] = va_arg(args, int);
     dst_s[i] = va_arg(args, int);
     dst_d[i] = va_arg(args, unsigned long long);
+    _XCALABLEMP_normalize_array_section(&(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
+    dst_buffer_elmts *= _XCALABLEMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
   }
 
   // get src info
   void *src_addr = va_arg(args, void *);
   int src_dim = va_arg(args, int);
   int src_l[src_dim], src_u[src_dim], src_s[src_dim]; unsigned long long src_d[src_dim];
+  unsigned long long src_buffer_elmts = 1;
   for (int i = 0; i < src_dim; i++) {
     src_l[i] = va_arg(args, int);
     src_u[i] = va_arg(args, int);
     src_s[i] = va_arg(args, int);
     src_d[i] = va_arg(args, unsigned long long);
-  }
-
-  va_end(args);
-  
-  // normalize index ref
-  unsigned long long dst_buffer_elmts = 1;
-  for (int i = 0; i < dst_dim; i++) {
-    _XCALABLEMP_normalize_array_section(&(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
-    dst_buffer_elmts *= _XCALABLEMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
-  }
-
-  unsigned long long src_buffer_elmts = 1;
-  for (int i = 0; i < src_dim; i++) {
     _XCALABLEMP_normalize_array_section(&(src_l[i]), &(src_u[i]), &(src_s[i]));
     src_buffer_elmts *= _XCALABLEMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
   }
 
+  va_end(args);
+  
   // alloc buffer
   if (dst_buffer_elmts != src_buffer_elmts) {
     _XCALABLEMP_fatal("wrong assign statement"); // FIXME fix error msg
