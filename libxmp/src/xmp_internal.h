@@ -140,11 +140,11 @@ extern void *_XCALABLEMP_world_nodes;
 extern void _XCALABLEMP_normalize_array_section(int *lower, int *upper, int *stride);
 extern void _XCALABLEMP_pack_array_BASIC(void *buffer, void *src, int array_type,
                                          int array_dim, int *l, int *u, int *s, unsigned long long *d);
-extern void _XCALABLEMP_pack_array_GENERAL(void *buffer, void *src, int array_type, size_t array_type_size,
+extern void _XCALABLEMP_pack_array_GENERAL(void *buffer, void *src, size_t array_type_size,
                                            int array_dim, int *l, int *u, int *s, unsigned long long *d);
 extern void _XCALABLEMP_unpack_array_BASIC(void *dst, void *buffer, int array_type,
                                            int array_dim, int *l, int *u, int *s, unsigned long long *d);
-extern void _XCALABLEMP_unpack_array_GENERAL(void *dst, void *buffer, int array_type, size_t array_type_size,
+extern void _XCALABLEMP_unpack_array_GENERAL(void *dst, void *buffer, size_t array_type_size,
                                              int array_dim, int *l, int *u, int *s, unsigned long long *d);
 
 // xmp_barrier.c

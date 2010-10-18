@@ -401,7 +401,7 @@ static void _XCALABLEMP_unpack_array_1_DOUBLE			_XCALABLEMP_SM_UNPACK_ARRAY_1(do
 static void _XCALABLEMP_unpack_array_1_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_1(long double)
 static void _XCALABLEMP_unpack_array_1_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
                                                int dst_lower, int dst_upper, int dst_stride) {
-  memcpy(dst_addr, buf_addr, _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower, dst_upper, dst_stride));
+  memcpy(dst_addr, buf_addr, type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower, dst_upper, dst_stride));
 }
 
 // --- dimension 2
@@ -439,7 +439,7 @@ static void _XCALABLEMP_unpack_array_2_GENERAL(void *dst_addr, void *buf_addr, s
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1];
   for (int j = dst_lower0; j <= dst_upper0; j += dst_stride0) {
     void *addr = dst_addr + (j * dst_dim_acc0);
-    size_t n = _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower1, dst_upper1, dst_stride1);
+    size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower1, dst_upper1, dst_stride1);
     memcpy(dst_addr, buf_addr, n);
     buf_addr += n;
   }
@@ -485,7 +485,7 @@ static void _XCALABLEMP_unpack_array_3_GENERAL(void *dst_addr, void *buf_addr, s
   for (int k = dst_lower0; k <= dst_upper0; k += dst_stride0) {
     for (int j = dst_lower1; j <= dst_upper1; j += dst_stride1) {
       void *addr = dst_addr + (k * dst_dim_acc0) + (j * dst_dim_acc1);
-      size_t n = _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower2, dst_upper2, dst_stride2);
+      size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower2, dst_upper2, dst_stride2);
       memcpy(dst_addr, buf_addr, n);
       buf_addr += n;
     }
@@ -537,7 +537,7 @@ static void _XCALABLEMP_unpack_array_4_GENERAL(void *dst_addr, void *buf_addr, s
     for (int k = dst_lower1; k <= dst_upper1; k += dst_stride1) {
       for (int j = dst_lower2; j <= dst_upper2; j += dst_stride2) {
         void *addr = dst_addr + (l * dst_dim_acc0) + (k * dst_dim_acc1) + (j * dst_dim_acc2);
-        size_t n = _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower3, dst_upper3, dst_stride3);
+        size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower3, dst_upper3, dst_stride3);
         memcpy(dst_addr, buf_addr, n);
         buf_addr += n;
       }
@@ -595,7 +595,7 @@ static void _XCALABLEMP_unpack_array_5_GENERAL(void *dst_addr, void *buf_addr, s
       for (int k = dst_lower2; k <= dst_upper2; k += dst_stride2) {
         for (int j = dst_lower3; j <= dst_upper3; j += dst_stride3) {
           void *addr = dst_addr + (m * dst_dim_acc0) + (l * dst_dim_acc1) + (k * dst_dim_acc2) + (j * dst_dim_acc3);
-          size_t n = _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower4, dst_upper4, dst_stride4);
+          size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower4, dst_upper4, dst_stride4);
           memcpy(dst_addr, buf_addr, n);
           buf_addr += n;
         }
@@ -661,7 +661,7 @@ static void _XCALABLEMP_unpack_array_6_GENERAL(void *dst_addr, void *buf_addr, s
           for (int j = dst_lower4; j <= dst_upper4; j += dst_stride4) {
             void *addr = dst_addr + (n * dst_dim_acc0) + (m * dst_dim_acc1) + (l * dst_dim_acc2) +
                                     (k * dst_dim_acc3) + (j * dst_dim_acc4);
-            size_t n = _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower5, dst_upper5, dst_stride5);
+            size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower5, dst_upper5, dst_stride5);
             memcpy(dst_addr, buf_addr, n);
             buf_addr += n;
           }
@@ -733,7 +733,7 @@ static void _XCALABLEMP_unpack_array_7_GENERAL(void *dst_addr, void *buf_addr, s
             for (int j = dst_lower5; j <= dst_upper5; j += dst_stride5) {
               void *addr = dst_addr + (o * dst_dim_acc0) + (n * dst_dim_acc1) + (m * dst_dim_acc2) +
                                       (l * dst_dim_acc3) + (k * dst_dim_acc4) + (j * dst_dim_acc5);
-              size_t n = _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower6, dst_upper6, dst_stride6);
+              size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower6, dst_upper6, dst_stride6);
               memcpy(dst_addr, buf_addr, n);
               buf_addr += n;
             }
@@ -962,7 +962,7 @@ void _XCALABLEMP_pack_array_BASIC(void *buffer, void *src, int array_type,
   }
 }
 
-void _XCALABLEMP_pack_array_GENERAL(void *buffer, void *src, int array_type, size_t array_type_size,
+void _XCALABLEMP_pack_array_GENERAL(void *buffer, void *src, size_t array_type_size,
                                     int array_dim, int *l, int *u, int *s, unsigned long long *d) {
   switch (array_dim) {
     case 1: _XCALABLEMP_pack_array_1_GENERAL(buffer, src, array_type_size, l[0], u[0], s[0]); break;
@@ -1164,7 +1164,7 @@ void _XCALABLEMP_unpack_array_BASIC(void *dst, void *buffer, int array_type,
   }
 }
 
-void _XCALABLEMP_unpack_array_GENERAL(void *dst, void *buffer, int array_type, size_t array_type_size,
+void _XCALABLEMP_unpack_array_GENERAL(void *dst, void *buffer, size_t array_type_size,
                                       int array_dim, int *l, int *u, int *s, unsigned long long *d) {
   switch (array_dim) {
     case 1: _XCALABLEMP_unpack_array_1_GENERAL(dst, buffer, array_type_size, l[0], u[0], s[0]); break;
