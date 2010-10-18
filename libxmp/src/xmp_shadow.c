@@ -1,5 +1,4 @@
 #include <stdarg.h>
-#include "xmp_array_section.h"
 #include "xmp_constant.h"
 #include "xmp_internal.h"
 
@@ -153,7 +152,7 @@ void _XCALABLEMP_pack_shadow_NORMAL_BASIC(void **lo_buffer, void **hi_buffer, vo
       }
 
       // pack data
-      _XCALABLEMP_pack_array(*lo_buffer, array_addr, array_type, array_dim, lower, upper, stride, dim_acc);
+      _XCALABLEMP_pack_array_BASIC(*lo_buffer, array_addr, array_type, array_dim, lower, upper, stride, dim_acc);
     }
   }
 
@@ -186,7 +185,7 @@ void _XCALABLEMP_pack_shadow_NORMAL_BASIC(void **lo_buffer, void **hi_buffer, vo
       }
 
       // pack data
-      _XCALABLEMP_pack_array(*hi_buffer, array_addr, array_type, array_dim, lower, upper, stride, dim_acc);
+      _XCALABLEMP_pack_array_BASIC(*hi_buffer, array_addr, array_type, array_dim, lower, upper, stride, dim_acc);
     }
   }
 }
@@ -234,7 +233,7 @@ void _XCALABLEMP_unpack_shadow_NORMAL_BASIC(void *lo_buffer, void *hi_buffer, vo
       }
 
       // unpack data
-      _XCALABLEMP_unpack_array(array_addr, lo_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
+      _XCALABLEMP_unpack_array_BASIC(array_addr, lo_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
 
       // free buffer
       _XCALABLEMP_free(lo_buffer);
@@ -267,7 +266,7 @@ void _XCALABLEMP_unpack_shadow_NORMAL_BASIC(void *lo_buffer, void *hi_buffer, vo
       }
 
       // unpack data
-      _XCALABLEMP_unpack_array(array_addr, hi_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
+      _XCALABLEMP_unpack_array_BASIC(array_addr, hi_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
 
       // free buffer
       _XCALABLEMP_free(hi_buffer);

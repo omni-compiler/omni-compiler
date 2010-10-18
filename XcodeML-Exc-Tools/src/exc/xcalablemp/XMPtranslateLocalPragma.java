@@ -1884,21 +1884,40 @@ public class XMPtranslateLocalPragma {
                                                 Xcons.SizeOf(arrayElmtType));
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
-            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_local_copy_BASIC", gmoveFuncArgs));
+            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_local_copy", gmoveFuncArgs));
           }
           else {				// !leftIsAlignedArray &&  rightIsAlignedArray  |-> broadcast
-            // FIXME implement
-            throw new XMPexception("not implemented yet");
+            Xtype arrayElmtType = rightAlignedArray.getType();
+
+            XobjList gmoveFuncArgs = Xcons.List(rightAlignedArray.getDescId().Ref(),
+                                                Xcons.IntConstant(arrayElmtType.getBasicType() + 200),
+                                                Xcons.SizeOf(arrayElmtType));
+            XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
+            XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
+            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_BCAST_ARRAY_SECTION", gmoveFuncArgs));
           }
         }
         else {
           if (rightAlignedArray == null) {	//  leftIsAlignedArray && !rightIsAlignedArray  |-> local assignment (home node)
-            // FIXME implement
-            throw new XMPexception("not implemented yet");
+            Xtype arrayElmtType = leftAlignedArray.getType();
+
+            XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref(),
+                                                Xcons.IntConstant(arrayElmtType.getBasicType() + 200),
+                                                Xcons.SizeOf(arrayElmtType));
+            XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
+            XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
+            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_local_copy_home", gmoveFuncArgs));
           }
           else {				//  leftIsAlignedArray &&  rightIsAlignedArray  |-> send/recv
-            // FIXME implement
-            throw new XMPexception("not implemented yet");
+            Xtype arrayElmtType = leftAlignedArray.getType();
+
+            XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref(),
+                                                rightAlignedArray.getDescId().Ref(),
+                                                Xcons.IntConstant(arrayElmtType.getBasicType() + 200),
+                                                Xcons.SizeOf(arrayElmtType));
+            XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
+            XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
+            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION", gmoveFuncArgs));
           }
         }
       }

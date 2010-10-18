@@ -538,8 +538,8 @@ void _XCALABLEMP_normalize_array_section(int *lower, int *upper, int *stride) {
   }
 }
 
-void _XCALABLEMP_pack_array(void *buffer, void *src,
-                            int array_type, int array_dim, int *l, int *u, int *s, unsigned long long *d) {
+void _XCALABLEMP_pack_array_BASIC(void *buffer, void *src, int array_type,
+                                  int array_dim, int *l, int *u, int *s, unsigned long long *d) {
   switch (array_type) {
     case _XCALABLEMP_N_TYPE_BOOL: {
         switch (array_dim) {
@@ -725,8 +725,23 @@ void _XCALABLEMP_pack_array(void *buffer, void *src,
   }
 }
 
-void _XCALABLEMP_unpack_array(void *dst, void *buffer,
-                              int array_type, int array_dim, int *l, int *u, int *s, unsigned long long *d) {
+void _XCALABLEMP_pack_array_GENERAL(void *buffer, void *src, int array_type, size_t array_type_size,
+                                    int array_dim, int *l, int *u, int *s, unsigned long long *d) {
+  switch (array_dim) {
+    // FIXME implement functions for general usage
+    case 1: _XCALABLEMP_pack_array_1_LONG_DOUBLE(buffer, src, l[0], u[0], s[0]); break;
+    case 2: _XCALABLEMP_pack_array_2_LONG_DOUBLE(buffer, src, l, u, s, d); break;
+    case 3: _XCALABLEMP_pack_array_3_LONG_DOUBLE(buffer, src, l, u, s, d); break;
+    case 4: _XCALABLEMP_pack_array_4_LONG_DOUBLE(buffer, src, l, u, s, d); break;
+    case 5: _XCALABLEMP_pack_array_5_LONG_DOUBLE(buffer, src, l, u, s, d); break;
+    case 6: _XCALABLEMP_pack_array_6_LONG_DOUBLE(buffer, src, l, u, s, d); break;
+    case 7: _XCALABLEMP_pack_array_7_LONG_DOUBLE(buffer, src, l, u, s, d); break;
+    default: _XCALABLEMP_fatal("wrong array dimension");
+  }
+}
+
+void _XCALABLEMP_unpack_array_BASIC(void *dst, void *buffer, int array_type,
+                                    int array_dim, int *l, int *u, int *s, unsigned long long *d) {
   switch (array_type) {
     case _XCALABLEMP_N_TYPE_BOOL: {
         switch (array_dim) {
@@ -910,5 +925,20 @@ void _XCALABLEMP_unpack_array(void *dst, void *buffer,
  //   _XCALABLEMP_fatal("unknown data type for reflect");
     default:
       _XCALABLEMP_fatal("unknown data type for reflect");
+  }
+}
+
+void _XCALABLEMP_unpack_array_GENERAL(void *dst, void *buffer, int array_type, size_t array_type_size,
+                                      int array_dim, int *l, int *u, int *s, unsigned long long *d) {
+  switch (array_dim) {
+    // FIXME implement functions for general usage
+    case 1: _XCALABLEMP_unpack_array_1_BOOL(dst, buffer, l[0], u[0], s[0]); break;
+    case 2: _XCALABLEMP_unpack_array_2_BOOL(dst, buffer, l, u, s, d); break;
+    case 3: _XCALABLEMP_unpack_array_3_BOOL(dst, buffer, l, u, s, d); break;
+    case 4: _XCALABLEMP_unpack_array_4_BOOL(dst, buffer, l, u, s, d); break;
+    case 5: _XCALABLEMP_unpack_array_5_BOOL(dst, buffer, l, u, s, d); break;
+    case 6: _XCALABLEMP_unpack_array_6_BOOL(dst, buffer, l, u, s, d); break;
+    case 7: _XCALABLEMP_unpack_array_7_BOOL(dst, buffer, l, u, s, d); break;
+    default: _XCALABLEMP_fatal("wrong array dimension");
   }
 }

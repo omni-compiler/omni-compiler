@@ -1,6 +1,5 @@
 #include <stdarg.h>
 #include <string.h>
-#include "xmp_array_section.h"
 #include "xmp_constant.h"
 #include "xmp_internal.h"
 #include "xmp_math_macro.h"
@@ -574,7 +573,7 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr, size_t ty
 
 // ----- gmove vector to vector ----------------------------------------------------------
 
-void _XCALABLEMP_gmove_local_copy_BASIC(int type, size_t type_size, ...) {
+void _XCALABLEMP_gmove_local_copy(int type, size_t type_size, ...) {
   va_list args;
   va_start(args, type_size);
 
@@ -623,14 +622,14 @@ void _XCALABLEMP_gmove_local_copy_BASIC(int type, size_t type_size, ...) {
   void *buffer = _XCALABLEMP_alloc(dst_buffer_elmts * type_size);
 
   // pack/unpack
-  _XCALABLEMP_pack_array(buffer, src_addr, type, src_dim, src_l, src_u, src_s, src_d);
-  _XCALABLEMP_unpack_array(dst_addr, buffer, type, dst_dim, dst_l, dst_u, dst_s, dst_d);
+  _XCALABLEMP_pack_array_BASIC(buffer, src_addr, type, src_dim, src_l, src_u, src_s, src_d);
+  _XCALABLEMP_unpack_array_BASIC(dst_addr, buffer, type, dst_dim, dst_l, dst_u, dst_s, dst_d);
 
   // free buffer
   _XCALABLEMP_free(buffer);
 }
 
-void _XCALABLEMP_gmove_local_copy_home_BASIC(_XCALABLEMP_array_t *dst_array, int type, size_t type_size, ...) {
+void _XCALABLEMP_gmove_local_copy_home(_XCALABLEMP_array_t *dst_array, int type, size_t type_size, ...) {
   if (!(dst_array->is_allocated)) {
     return;
   }
@@ -709,14 +708,14 @@ void _XCALABLEMP_gmove_local_copy_home_BASIC(_XCALABLEMP_array_t *dst_array, int
   void *buffer = _XCALABLEMP_alloc(dst_buffer_elmts * type_size);
 
   // pack/unpack
-  _XCALABLEMP_pack_array(buffer, src_addr, type, src_dim, src_l, src_u, src_s, src_d);
-  _XCALABLEMP_unpack_array(dst_addr, buffer, type, dst_dim, dst_l, dst_u, dst_s, dst_d);
+  _XCALABLEMP_pack_array_BASIC(buffer, src_addr, type, src_dim, src_l, src_u, src_s, src_d);
+  _XCALABLEMP_unpack_array_BASIC(dst_addr, buffer, type, dst_dim, dst_l, dst_u, dst_s, dst_d);
 
   // free buffer
   _XCALABLEMP_free(buffer);
 }
 
-void _XCALABLEMP_gmove_BCAST_ARRAY_SECTION_BASIC(_XCALABLEMP_array_t *src_array, int type, size_t type_size, ...) {
+void _XCALABLEMP_gmove_BCAST_ARRAY_SECTION(_XCALABLEMP_array_t *src_array, int type, size_t type_size, ...) {
   va_list args;
   va_start(args, type_size);
 
@@ -794,7 +793,7 @@ void _XCALABLEMP_gmove_BCAST_ARRAY_SECTION_BASIC(_XCALABLEMP_array_t *src_array,
     }
 
     pack_buffer = _XCALABLEMP_alloc(src_buffer_elmts * type_size);
-    _XCALABLEMP_pack_array(pack_buffer, src_addr, type, src_dim, src_l, src_u, src_s, src_d);
+    _XCALABLEMP_pack_array_BASIC(pack_buffer, src_addr, type, src_dim, src_l, src_u, src_s, src_d);
   }
 
   _XCALABLEMP_nodes_t *exec_nodes = _XCALABLEMP_get_execution_nodes();
@@ -845,7 +844,7 @@ void _XCALABLEMP_gmove_BCAST_ARRAY_SECTION_BASIC(_XCALABLEMP_array_t *src_array,
       }
       MPI_Bcast(bcast_buffer, bcast_elmts, mpi_datatype, i, *exec_nodes_comm);
 
-      _XCALABLEMP_unpack_array(dst_addr, bcast_buffer, type, dst_dim, bcast_l, bcast_u, bcast_s, dst_d);
+      _XCALABLEMP_unpack_array_BASIC(dst_addr, bcast_buffer, type, dst_dim, bcast_l, bcast_u, bcast_s, dst_d);
       _XCALABLEMP_free(bcast_buffer);
     }
   }
@@ -889,7 +888,8 @@ static int _XCALABLEMP_calc_SENDRECV_owner(_XCALABLEMP_array_t *array, int *lowe
 }
 
 // FIXME does not has complete function for general usage
-void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION_BASIC(_XCALABLEMP_array_t *dst_array, _XCALABLEMP_array_t *src_array, int type, size_t type_size, ...) {
+void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION(_XCALABLEMP_array_t *dst_array, _XCALABLEMP_array_t *src_array,
+                                              int type, size_t type_size, ...) {
   va_list args;
   va_start(args, type_size);
 
@@ -960,7 +960,7 @@ void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION_BASIC(_XCALABLEMP_array_t *dst_arr
         send_elmts *= _XCALABLEMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
       }
       send_buffer = _XCALABLEMP_alloc(send_elmts * type_size);
-      _XCALABLEMP_pack_array(send_buffer, src_addr, type, src_dim, src_l, src_u, src_s, src_d);
+      _XCALABLEMP_pack_array_BASIC(send_buffer, src_addr, type, src_dim, src_l, src_u, src_s, src_d);
 
       MPI_Send(send_buffer, send_elmts, mpi_datatype, dst_rank, _XCALABLEMP_N_MPI_TAG_GMOVE, *(comm_nodes->comm));
       _XCALABLEMP_free(send_buffer);
@@ -975,7 +975,7 @@ void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION_BASIC(_XCALABLEMP_array_t *dst_arr
       MPI_Status recv_stat;
       MPI_Wait(&recv_req, &recv_stat);
 
-      _XCALABLEMP_unpack_array(dst_addr, recv_buffer, type, dst_dim, dst_l, dst_u, dst_s, dst_d);
+      _XCALABLEMP_unpack_array_BASIC(dst_addr, recv_buffer, type, dst_dim, dst_l, dst_u, dst_s, dst_d);
       _XCALABLEMP_free(recv_buffer);
     }
   }
