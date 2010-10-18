@@ -1008,11 +1008,13 @@ void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION(_XCALABLEMP_array_t *dst_array, _X
     if (dst_array == src_array) {
       unsigned long long dst_buffer_elmts = 1;
       for (int i = 0; i < dst_dim; i++) {
+        _XCALABLEMP_calc_array_local_index_triplet(dst_array, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
         dst_buffer_elmts *= _XCALABLEMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
       }
 
       unsigned long long src_buffer_elmts = 1;
       for (int i = 0; i < src_dim; i++) {
+        _XCALABLEMP_calc_array_local_index_triplet(src_array, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
         src_buffer_elmts *= _XCALABLEMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
       }
 
