@@ -526,7 +526,7 @@ static void _XCALABLEMP_unpack_array_2_GENERAL(void *dst_addr, void *buf_addr, s
     void *addr = dst_addr + (type_size * ((j * dst_dim_acc0) + dst_lower1));
     if (dst_stride1 == 1) {
       size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower1, dst_upper1, dst_stride1);
-      memcpy(dst_addr, buf_addr, n);
+      memcpy(addr, buf_addr, n);
       buf_addr += n;
     }
     else {
@@ -582,7 +582,7 @@ static void _XCALABLEMP_unpack_array_3_GENERAL(void *dst_addr, void *buf_addr, s
       void *addr = dst_addr + (type_size * ((k * dst_dim_acc0) + (j * dst_dim_acc1) + dst_lower2));
       if (dst_stride2 == 1) {
         size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower2, dst_upper2, dst_stride2);
-        memcpy(dst_addr, buf_addr, n);
+        memcpy(addr, buf_addr, n);
         buf_addr += n;
       }
       else {
@@ -644,7 +644,7 @@ static void _XCALABLEMP_unpack_array_4_GENERAL(void *dst_addr, void *buf_addr, s
         void *addr = dst_addr + (type_size * ((l * dst_dim_acc0) + (k * dst_dim_acc1) + (j * dst_dim_acc2) + dst_lower3));
         if (dst_stride3 == 1) {
           size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower3, dst_upper3, dst_stride3);
-          memcpy(dst_addr, buf_addr, n);
+          memcpy(addr, buf_addr, n);
           buf_addr += n;
         }
         else {
@@ -713,7 +713,7 @@ static void _XCALABLEMP_unpack_array_5_GENERAL(void *dst_addr, void *buf_addr, s
                                                 (j * dst_dim_acc3) + dst_lower4));
           if (dst_stride4 == 1) {
             size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower4, dst_upper4, dst_stride4);
-            memcpy(dst_addr, buf_addr, n);
+            memcpy(addr, buf_addr, n);
             buf_addr += n;
           }
           else {
@@ -789,7 +789,7 @@ static void _XCALABLEMP_unpack_array_6_GENERAL(void *dst_addr, void *buf_addr, s
                                                   (k * dst_dim_acc3) + (j * dst_dim_acc4) + dst_lower5));
             if (dst_stride5 == 1) {
               size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower5, dst_upper5, dst_stride5);
-              memcpy(dst_addr, buf_addr, n);
+              memcpy(addr, buf_addr, n);
               buf_addr += n;
             }
             else {
@@ -871,7 +871,7 @@ static void _XCALABLEMP_unpack_array_7_GENERAL(void *dst_addr, void *buf_addr, s
                                                     (l * dst_dim_acc3) + (k * dst_dim_acc4) + (j * dst_dim_acc5) + dst_lower6));
               if (dst_stride6 == 1) {
                 size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower6, dst_upper6, dst_stride6);
-                memcpy(dst_addr, buf_addr, n);
+                memcpy(addr, buf_addr, n);
                 buf_addr += n;
               }
               else {

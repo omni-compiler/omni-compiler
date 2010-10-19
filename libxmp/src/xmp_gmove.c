@@ -935,10 +935,14 @@ static void _XCALABLEMP_gmove_SENDRECV_all2all_2(void *dst_addr, void *src_addr,
     _XCALABLEMP_fatal("dst/src array should have the same dimension");
   }
 
-  MPI_Status status;
+  MPI_Status stat;
   MPI_Comm *comm = ((dst_array->align_template)->onto_nodes)->comm;
   int size = ((dst_array->align_template)->onto_nodes)->comm_size;
   int rank = ((dst_array->align_template)->onto_nodes)->comm_rank;
+
+  MPI_Datatype mpi_datatype;
+  MPI_Type_contiguous(type_size, MPI_BYTE, &mpi_datatype);
+  MPI_Type_commit(&mpi_datatype);
 
   unsigned long long buffer_elmts = 1;
   int elmts_base = _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower[0], dst_upper[0], dst_stride[0]);
@@ -968,9 +972,20 @@ static void _XCALABLEMP_gmove_SENDRECV_all2all_2(void *dst_addr, void *src_addr,
           for (int i = 0; i < dim; i++) {
             _XCALABLEMP_calc_SENDRECV_index_ref(n, dst_rank, dst_array, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
             _XCALABLEMP_calc_SENDRECV_index_ref(n, dst_rank, src_array, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
-            printf("[%d] LOCAL dim[%d] (%d:%d:%d) <- (%d:%d:%d)\n", _XCALABLEMP_world_rank, i,
-                                                                  dst_l[i], dst_u[i], dst_s[i],
-                                                                  src_l[i], src_u[i], src_s[i]);
+          }
+
+          if (type == _XCALABLEMP_N_TYPE_GENERAL) {
+            _XCALABLEMP_pack_array_GENERAL(pack_buffer, src_addr, type_size, dim, src_l, src_u, src_s, src_dim_acc);
+            _XCALABLEMP_unpack_array_GENERAL(dst_addr, pack_buffer, type_size, dim, dst_l, dst_u, dst_s, dst_dim_acc);
+          }
+          else {
+            _XCALABLEMP_pack_array_BASIC(pack_buffer, src_addr, type, dim, src_l, src_u, src_s, src_dim_acc);
+            _XCALABLEMP_unpack_array_BASIC(dst_addr, pack_buffer, type, dim, dst_l, dst_u, dst_s, dst_dim_acc);
+          }
+        }
+        else {
+          for (int i = 0; i < dim; i++) {
+            _XCALABLEMP_calc_SENDRECV_index_ref(n, dst_rank, src_array, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
           }
 
           if (type == _XCALABLEMP_N_TYPE_GENERAL) {
@@ -979,43 +994,24 @@ static void _XCALABLEMP_gmove_SENDRECV_all2all_2(void *dst_addr, void *src_addr,
           else {
             _XCALABLEMP_pack_array_BASIC(pack_buffer, src_addr, type, dim, src_l, src_u, src_s, src_dim_acc);
           }
-          if (type == _XCALABLEMP_N_TYPE_GENERAL) {
-            _XCALABLEMP_unpack_array_GENERAL(dst_addr, pack_buffer, type_size, dim, dst_l, dst_u, dst_s, dst_dim_acc);
-          }
-          else {
-            _XCALABLEMP_unpack_array_BASIC(dst_addr, pack_buffer, type, dim, dst_l, dst_u, dst_s, dst_dim_acc);
-          }
-        }
-        else {
-          for (int i = 0; i < dim; i++) {
-            _XCALABLEMP_calc_SENDRECV_index_ref(n, dst_rank, src_array, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
-//            printf("[%d] SEND dim[%d] (NODE:%d) <- (%d:%d:%d)\n", _XCALABLEMP_world_rank, i, dst_rank,
-//                                                                src_l[i], src_u[i], src_s[i]);
-          }
-          // pack data
-//          for (i = 0; i < n; i++) {
-//            for (j = 0; j < n; j++) {
-//              mpi_buffer[(i)*n + (j)] = a[(i)*n1 + (j+dst*n)];
-//            }
-          // send data
-//          MPI_Send(mpi_buffer, sizeof(fftw_complex)*n*n, MPI_BYTE, dst, 100+src, MPI_COMM_WORLD);
+
+          MPI_Send(pack_buffer, buffer_elmts, mpi_datatype, dst_rank, _XCALABLEMP_N_MPI_TAG_GMOVE, *comm);
         }
       }
     }
     else {
+      MPI_Recv(pack_buffer, buffer_elmts, mpi_datatype, src_rank, _XCALABLEMP_N_MPI_TAG_GMOVE, *comm, &stat);
+
       for (int i = 0; i < dim; i++) {
         _XCALABLEMP_calc_SENDRECV_index_ref(n, src_rank, dst_array, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
-//        printf("[%d] RECV dim[%d] (%d:%d:%d) <- (NODE:%d)\n", _XCALABLEMP_world_rank, i,
-//                                                            dst_l[i], dst_u[i], dst_s[i], src_rank);
       }
-      // recv from sender
-//      MPI_Recv(mpi_buffer, sizeof(fftw_complex)*n*n, MPI_BYTE, src, 100+src, MPI_COMM_WORLD, &status);
-      // unpack data
-//      for (i = 0; i < n; i++) {
-//        for (j = 0; j < n; j++) {
-//          a_work[(i+src*n)*n+(j)] = mpi_buffer[(i)*n+(j)];
-//        }
-//      }
+
+      if (type == _XCALABLEMP_N_TYPE_GENERAL) {
+        _XCALABLEMP_unpack_array_GENERAL(dst_addr, pack_buffer, type_size, dim, dst_l, dst_u, dst_s, dst_dim_acc);
+      }
+      else {
+        _XCALABLEMP_unpack_array_BASIC(dst_addr, pack_buffer, type, dim, dst_l, dst_u, dst_s, dst_dim_acc);
+      }
     }
   }
 
