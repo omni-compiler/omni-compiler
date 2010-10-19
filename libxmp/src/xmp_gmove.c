@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 #include "xmp_constant.h"
@@ -398,6 +399,9 @@ void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, size_t type_
 
   // clean up
   _XCALABLEMP_free(src_rank_array);
+
+  // FIXME delete after change manual bcast implementation
+  _XCALABLEMP_barrier_EXEC();
 }
 
 // FIXME change NULL check rule!!! (IMPORTANT, to all library functions)
@@ -569,6 +573,8 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr, size_t ty
   // clean up
   _XCALABLEMP_free(dst_rank_array);
   _XCALABLEMP_free(src_rank_array);
+
+  _XCALABLEMP_barrier_EXEC();
 }
 
 // ----- gmove vector to vector ----------------------------------------------------------
@@ -903,6 +909,120 @@ static int _XCALABLEMP_calc_SENDRECV_owner(_XCALABLEMP_array_t *array, int *lowe
 }
 
 // FIXME does not has complete function for general usage
+static void _XCALABLEMP_calc_SENDRECV_index_ref(int n, int target_rank, _XCALABLEMP_array_t *array, int dim_index,
+                                                int *lower, int *upper, int *stride) {
+  _XCALABLEMP_array_info_t *array_info = &(array->info[dim_index]);
+  if ((array_info->align_template_index) == _XCALABLEMP_N_NO_ALIGNED_TEMPLATE) {
+    *lower = target_rank * n;
+    *upper = ((target_rank + 1) * n) - 1;
+    *stride = 1;
+  }
+  else {
+    *lower = 0;
+    *upper = n - 1;
+    *stride = 1;
+  }
+}
+
+// FIXME does not has complete function for general usage
+static void _XCALABLEMP_gmove_SENDRECV_all2all_2(void *dst_addr, void *src_addr,
+                                                 _XCALABLEMP_array_t *dst_array, _XCALABLEMP_array_t *src_array,
+                                                 int type, size_t type_size,
+                                                 int *dst_lower, int *dst_upper, int *dst_stride, unsigned long long *dst_dim_acc,
+                                                 int *src_lower, int *src_upper, int *src_stride, unsigned long long *src_dim_acc) {
+  int dim = dst_array->dim;
+  if (dim != src_array->dim) {
+    _XCALABLEMP_fatal("dst/src array should have the same dimension");
+  }
+
+  MPI_Status status;
+  MPI_Comm *comm = ((dst_array->align_template)->onto_nodes)->comm;
+  int size = ((dst_array->align_template)->onto_nodes)->comm_size;
+  int rank = ((dst_array->align_template)->onto_nodes)->comm_rank;
+
+  unsigned long long buffer_elmts = 1;
+  int elmts_base = _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower[0], dst_upper[0], dst_stride[0]);
+  int n = elmts_base/size;
+  for (int i = 0; i < dim; i++) {
+    int dst_elmts = _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower[i], dst_upper[i], dst_stride[i]);
+    if (dst_elmts != elmts_base) {
+      _XCALABLEMP_fatal("limitation:every dimension should has the same size");
+    }
+
+    int src_elmts = _XCALABLEMP_M_COUNT_TRIPLETi(src_lower[i], src_upper[i], src_stride[i]);
+    if (src_elmts != elmts_base) {
+      _XCALABLEMP_fatal("limitation:every dimension should has the same size");
+    }
+
+    buffer_elmts *= n;
+  }
+
+  int dst_l[dim], dst_u[dim], dst_s[dim];
+  int src_l[dim], src_u[dim], src_s[dim];
+  void *pack_buffer = _XCALABLEMP_alloc(buffer_elmts * type_size);
+  for(int src_rank = 0; src_rank < size; src_rank++) {
+    if(src_rank == rank) {
+      // send my data to each node
+      for(int dst_rank = 0; dst_rank < size; dst_rank++) {
+        if(dst_rank == rank) {
+          for (int i = 0; i < dim; i++) {
+            _XCALABLEMP_calc_SENDRECV_index_ref(n, dst_rank, dst_array, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
+            _XCALABLEMP_calc_SENDRECV_index_ref(n, dst_rank, src_array, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
+            printf("[%d] LOCAL dim[%d] (%d:%d:%d) <- (%d:%d:%d)\n", _XCALABLEMP_world_rank, i,
+                                                                  dst_l[i], dst_u[i], dst_s[i],
+                                                                  src_l[i], src_u[i], src_s[i]);
+          }
+
+          if (type == _XCALABLEMP_N_TYPE_GENERAL) {
+            _XCALABLEMP_pack_array_GENERAL(pack_buffer, src_addr, type_size, dim, src_l, src_u, src_s, src_dim_acc);
+          }
+          else {
+            _XCALABLEMP_pack_array_BASIC(pack_buffer, src_addr, type, dim, src_l, src_u, src_s, src_dim_acc);
+          }
+          if (type == _XCALABLEMP_N_TYPE_GENERAL) {
+            _XCALABLEMP_unpack_array_GENERAL(dst_addr, pack_buffer, type_size, dim, dst_l, dst_u, dst_s, dst_dim_acc);
+          }
+          else {
+            _XCALABLEMP_unpack_array_BASIC(dst_addr, pack_buffer, type, dim, dst_l, dst_u, dst_s, dst_dim_acc);
+          }
+        }
+        else {
+          for (int i = 0; i < dim; i++) {
+            _XCALABLEMP_calc_SENDRECV_index_ref(n, dst_rank, src_array, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
+//            printf("[%d] SEND dim[%d] (NODE:%d) <- (%d:%d:%d)\n", _XCALABLEMP_world_rank, i, dst_rank,
+//                                                                src_l[i], src_u[i], src_s[i]);
+          }
+          // pack data
+//          for (i = 0; i < n; i++) {
+//            for (j = 0; j < n; j++) {
+//              mpi_buffer[(i)*n + (j)] = a[(i)*n1 + (j+dst*n)];
+//            }
+          // send data
+//          MPI_Send(mpi_buffer, sizeof(fftw_complex)*n*n, MPI_BYTE, dst, 100+src, MPI_COMM_WORLD);
+        }
+      }
+    }
+    else {
+      for (int i = 0; i < dim; i++) {
+        _XCALABLEMP_calc_SENDRECV_index_ref(n, src_rank, dst_array, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
+//        printf("[%d] RECV dim[%d] (%d:%d:%d) <- (NODE:%d)\n", _XCALABLEMP_world_rank, i,
+//                                                            dst_l[i], dst_u[i], dst_s[i], src_rank);
+      }
+      // recv from sender
+//      MPI_Recv(mpi_buffer, sizeof(fftw_complex)*n*n, MPI_BYTE, src, 100+src, MPI_COMM_WORLD, &status);
+      // unpack data
+//      for (i = 0; i < n; i++) {
+//        for (j = 0; j < n; j++) {
+//          a_work[(i+src*n)*n+(j)] = mpi_buffer[(i)*n+(j)];
+//        }
+//      }
+    }
+  }
+
+  _XCALABLEMP_free(pack_buffer);
+}
+
+// FIXME does not has complete function for general usage
 void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION(_XCALABLEMP_array_t *dst_array, _XCALABLEMP_array_t *src_array,
                                               int type, size_t type_size, ...) {
   va_list args;
@@ -1039,7 +1159,13 @@ void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION(_XCALABLEMP_array_t *dst_array, _X
       _XCALABLEMP_free(buffer);
     }
     else {
-      _XCALABLEMP_fatal("not implemented yet");
+      _XCALABLEMP_gmove_SENDRECV_all2all_2(dst_addr, src_addr,
+                                           dst_array, src_array,
+                                           type, type_size,
+                                           dst_l, dst_u, dst_s, dst_d,
+                                           src_l, src_u, src_s, src_d);
     }
   }
+
+  _XCALABLEMP_barrier_EXEC();
 }
