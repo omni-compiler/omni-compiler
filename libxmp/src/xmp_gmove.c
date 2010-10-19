@@ -813,7 +813,7 @@ void _XCALABLEMP_gmove_BCAST_ARRAY_SECTION(_XCALABLEMP_array_t *src_array, int t
   }
 
   _XCALABLEMP_nodes_t *exec_nodes = _XCALABLEMP_get_execution_nodes();
-  MPI_Comm * exec_nodes_comm = exec_nodes->comm;
+  MPI_Comm *exec_nodes_comm = exec_nodes->comm;
   int exec_nodes_size = exec_nodes->comm_size;
   int exec_nodes_rank = exec_nodes->comm_rank;
 
@@ -821,9 +821,6 @@ void _XCALABLEMP_gmove_BCAST_ARRAY_SECTION(_XCALABLEMP_array_t *src_array, int t
   MPI_Allgather(&is_root, 1, MPI_INT, root_nodes, 1, MPI_INT, *exec_nodes_comm);
 
   _XCALABLEMP_bcast_array_section_info_t bcast_info[dst_dim];
-  MPI_Datatype mpi_infotype;
-  MPI_Type_contiguous(sizeof(_XCALABLEMP_bcast_array_section_info_t) * dst_dim, MPI_BYTE, &mpi_infotype);
-  MPI_Type_commit(&mpi_infotype);
 
   MPI_Datatype mpi_datatype;
   MPI_Type_contiguous(type_size, MPI_BYTE, &mpi_datatype);
@@ -841,7 +838,7 @@ void _XCALABLEMP_gmove_BCAST_ARRAY_SECTION(_XCALABLEMP_array_t *src_array, int t
         }
       }
 
-      MPI_Bcast(bcast_info, 1, mpi_infotype, i, *exec_nodes_comm);
+      MPI_Bcast(bcast_info, sizeof(_XCALABLEMP_bcast_array_section_info_t) * dst_dim, MPI_BYTE, i, *exec_nodes_comm);
 
       bcast_elmts = 1;
       for (int j = 0; j < dst_dim; j++) {
@@ -1155,11 +1152,30 @@ void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION(_XCALABLEMP_array_t *dst_array, _X
       _XCALABLEMP_free(buffer);
     }
     else {
-      _XCALABLEMP_gmove_SENDRECV_all2all_2(dst_addr, src_addr,
-                                           dst_array, src_array,
-                                           type, type_size,
-                                           dst_l, dst_u, dst_s, dst_d,
-                                           src_l, src_u, src_s, src_d);
+      if (dst_dim == src_dim) {
+        if (dst_dim == 1) {
+          _XCALABLEMP_array_info_t *ai = &(dst_array->info[0]);
+
+          _XCALABLEMP_push_comm(src_array->comm);
+          _XCALABLEMP_gmove_BCAST_ARRAY_SECTION(src_array, type, type_size,
+                                                dst_addr, dst_dim, ai->local_lower, ai->local_upper, ai->local_stride, dst_d[0],
+                                                src_addr, src_dim, ai->par_lower, ai->par_upper, ai->par_stride, dst_d[0]);
+          _XCALABLEMP_pop_n_free_nodes();
+        }
+        else if (dst_dim == 2) {
+          _XCALABLEMP_gmove_SENDRECV_all2all_2(dst_addr, src_addr,
+                                               dst_array, src_array,
+                                               type, type_size,
+                                               dst_l, dst_u, dst_s, dst_d,
+                                               src_l, src_u, src_s, src_d);
+        }
+        else {
+          _XCALABLEMP_fatal("not implemented yet");
+        }
+      }
+      else {
+        _XCALABLEMP_fatal("not implemented yet");
+      }
     }
   }
 
