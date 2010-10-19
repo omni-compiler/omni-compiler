@@ -197,10 +197,20 @@ static void _XCALABLEMP_pack_array_4_GENERAL(void *buf_addr, void *src_addr, siz
   for (int l = src_lower0; l <= src_upper0; l += src_stride0) {
     for (int k = src_lower1; k <= src_upper1; k += src_stride1) {
       for (int j = src_lower2; j <= src_upper2; j += src_stride2) {
-        void *addr = src_addr + (type_size * ((l * src_dim_acc0) + (k * src_dim_acc1) + (j * src_dim_acc2)));
-        size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(src_lower3, src_upper3, src_stride3);
-        memcpy(buf_addr, addr, n);
-        buf_addr += n;
+        void *addr = src_addr + (type_size * ((l * src_dim_acc0) + (k * src_dim_acc1) + (j * src_dim_acc2) + src_lower3));
+        if (src_stride3 == 1) {
+          size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(src_lower3, src_upper3, src_stride3);
+          memcpy(buf_addr, addr, n);
+          buf_addr += n;
+        }
+        else {
+          int byte_stride = type_size * src_stride3;
+          for (int i = src_lower3; i <= src_upper3; i += src_stride3) {
+            memcpy(buf_addr, addr, type_size);
+            buf_addr += type_size;
+            addr += byte_stride;
+          }
+        }
       }
     }
   }
@@ -256,10 +266,20 @@ static void _XCALABLEMP_pack_array_5_GENERAL(void *buf_addr, void *src_addr, siz
       for (int k = src_lower2; k <= src_upper2; k += src_stride2) {
         for (int j = src_lower3; j <= src_upper3; j += src_stride3) {
           void *addr = src_addr + (type_size * ((m * src_dim_acc0) + (l * src_dim_acc1) + (k * src_dim_acc2) +
-                                                (j * src_dim_acc3)));
-          size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(src_lower4, src_upper4, src_stride4);
-          memcpy(buf_addr, addr, n);
-          buf_addr += n;
+                                                (j * src_dim_acc3) + src_lower4));
+          if (src_stride4 == 1) {
+            size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(src_lower4, src_upper4, src_stride4);
+            memcpy(buf_addr, addr, n);
+            buf_addr += n;
+          }
+          else {
+            int byte_stride = type_size * src_stride4;
+            for (int i = src_lower4; i <= src_upper4; i += src_stride4) {
+              memcpy(buf_addr, addr, type_size);
+              buf_addr += type_size;
+              addr += byte_stride;
+            }
+          }
         }
       }
     }
@@ -322,10 +342,20 @@ static void _XCALABLEMP_pack_array_6_GENERAL(void *buf_addr, void *src_addr, siz
         for (int k = src_lower3; k <= src_upper3; k += src_stride3) {
           for (int j = src_lower4; j <= src_upper4; j += src_stride4) {
             void *addr = src_addr + (type_size * ((n * src_dim_acc0) + (m * src_dim_acc1) + (l * src_dim_acc2) +
-                                                  (k * src_dim_acc3) + (j * src_dim_acc4)));
-            size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(src_lower5, src_upper5, src_stride5);
-            memcpy(buf_addr, addr, n);
-            buf_addr += n;
+                                                  (k * src_dim_acc3) + (j * src_dim_acc4) + src_lower5));
+            if (src_stride5 == 1) {
+              size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(src_lower5, src_upper5, src_stride5);
+              memcpy(buf_addr, addr, n);
+              buf_addr += n;
+            }
+            else {
+              int byte_stride = type_size * src_stride5;
+              for (int i = src_lower5; i <= src_upper5; i += src_stride5) {
+                memcpy(buf_addr, addr, type_size);
+                buf_addr += type_size;
+                addr += byte_stride;
+              }
+            }
           }
         }
       }
@@ -394,10 +424,20 @@ static void _XCALABLEMP_pack_array_7_GENERAL(void *buf_addr, void *src_addr, siz
           for (int k = src_lower4; k <= src_upper4; k += src_stride4) {
             for (int j = src_lower5; j <= src_upper5; j += src_stride5) {
               void *addr = src_addr + (type_size * ((o * src_dim_acc0) + (n * src_dim_acc1) + (m * src_dim_acc2) +
-                                                    (l * src_dim_acc3) + (k * src_dim_acc4) + (j * src_dim_acc5)));
-              size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(src_lower6, src_upper6, src_stride6);
-              memcpy(buf_addr, addr, n);
-              buf_addr += n;
+                                                    (l * src_dim_acc3) + (k * src_dim_acc4) + (j * src_dim_acc5) + src_lower6));
+              if (src_stride6 == 1) {
+                size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(src_lower6, src_upper6, src_stride6);
+                memcpy(buf_addr, addr, n);
+                buf_addr += n;
+              }
+              else {
+                int byte_stride = type_size * src_stride6;
+                for (int i = src_lower6; i <= src_upper6; i += src_stride6) {
+                  memcpy(buf_addr, addr, type_size);
+                  buf_addr += type_size;
+                  addr += byte_stride;
+                }
+              }
             }
           }
         }
@@ -601,10 +641,20 @@ static void _XCALABLEMP_unpack_array_4_GENERAL(void *dst_addr, void *buf_addr, s
   for (int l = dst_lower0; l <= dst_upper0; l += dst_stride0) {
     for (int k = dst_lower1; k <= dst_upper1; k += dst_stride1) {
       for (int j = dst_lower2; j <= dst_upper2; j += dst_stride2) {
-        void *addr = dst_addr + (type_size * ((l * dst_dim_acc0) + (k * dst_dim_acc1) + (j * dst_dim_acc2)));
-        size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower3, dst_upper3, dst_stride3);
-        memcpy(dst_addr, buf_addr, n);
-        buf_addr += n;
+        void *addr = dst_addr + (type_size * ((l * dst_dim_acc0) + (k * dst_dim_acc1) + (j * dst_dim_acc2) + dst_lower3));
+        if (dst_stride3 == 1) {
+          size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower3, dst_upper3, dst_stride3);
+          memcpy(dst_addr, buf_addr, n);
+          buf_addr += n;
+        }
+        else {
+          int byte_stride = type_size * dst_stride3;
+          for (int i = dst_lower3; i <= dst_upper3; i += dst_stride3) {
+            memcpy(addr, buf_addr, type_size);
+            addr += byte_stride;
+            buf_addr += type_size;
+          }
+        }
       }
     }
   }
@@ -660,10 +710,20 @@ static void _XCALABLEMP_unpack_array_5_GENERAL(void *dst_addr, void *buf_addr, s
       for (int k = dst_lower2; k <= dst_upper2; k += dst_stride2) {
         for (int j = dst_lower3; j <= dst_upper3; j += dst_stride3) {
           void *addr = dst_addr + (type_size * ((m * dst_dim_acc0) + (l * dst_dim_acc1) + (k * dst_dim_acc2) +
-                                                (j * dst_dim_acc3)));
-          size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower4, dst_upper4, dst_stride4);
-          memcpy(dst_addr, buf_addr, n);
-          buf_addr += n;
+                                                (j * dst_dim_acc3) + dst_lower4));
+          if (dst_stride4 == 1) {
+            size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower4, dst_upper4, dst_stride4);
+            memcpy(dst_addr, buf_addr, n);
+            buf_addr += n;
+          }
+          else {
+            int byte_stride = type_size * dst_stride4;
+            for (int i = dst_lower4; i <= dst_upper4; i += dst_stride4) {
+              memcpy(addr, buf_addr, type_size);
+              addr += byte_stride;
+              buf_addr += type_size;
+            }
+          }
         }
       }
     }
@@ -726,10 +786,20 @@ static void _XCALABLEMP_unpack_array_6_GENERAL(void *dst_addr, void *buf_addr, s
         for (int k = dst_lower3; k <= dst_upper3; k += dst_stride3) {
           for (int j = dst_lower4; j <= dst_upper4; j += dst_stride4) {
             void *addr = dst_addr + (type_size * ((n * dst_dim_acc0) + (m * dst_dim_acc1) + (l * dst_dim_acc2) +
-                                                  (k * dst_dim_acc3) + (j * dst_dim_acc4)));
-            size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower5, dst_upper5, dst_stride5);
-            memcpy(dst_addr, buf_addr, n);
-            buf_addr += n;
+                                                  (k * dst_dim_acc3) + (j * dst_dim_acc4) + dst_lower5));
+            if (dst_stride5 == 1) {
+              size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower5, dst_upper5, dst_stride5);
+              memcpy(dst_addr, buf_addr, n);
+              buf_addr += n;
+            }
+            else {
+              int byte_stride = type_size * dst_stride5;
+              for (int i = dst_lower5; i <= dst_upper5; i += dst_stride5) {
+                memcpy(addr, buf_addr, type_size);
+                addr += byte_stride;
+                buf_addr += type_size;
+              }
+            }
           }
         }
       }
@@ -798,10 +868,20 @@ static void _XCALABLEMP_unpack_array_7_GENERAL(void *dst_addr, void *buf_addr, s
           for (int k = dst_lower4; k <= dst_upper4; k += dst_stride4) {
             for (int j = dst_lower5; j <= dst_upper5; j += dst_stride5) {
               void *addr = dst_addr + (type_size * ((o * dst_dim_acc0) + (n * dst_dim_acc1) + (m * dst_dim_acc2) +
-                                                    (l * dst_dim_acc3) + (k * dst_dim_acc4) + (j * dst_dim_acc5)));
-              size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower6, dst_upper6, dst_stride6);
-              memcpy(dst_addr, buf_addr, n);
-              buf_addr += n;
+                                                    (l * dst_dim_acc3) + (k * dst_dim_acc4) + (j * dst_dim_acc5) + dst_lower6));
+              if (dst_stride6 == 1) {
+                size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower6, dst_upper6, dst_stride6);
+                memcpy(dst_addr, buf_addr, n);
+                buf_addr += n;
+              }
+              else {
+                int byte_stride = type_size * dst_stride6;
+                for (int i = dst_lower6; i <= dst_upper6; i += dst_stride6) {
+                  memcpy(addr, buf_addr, type_size);
+                  addr += byte_stride;
+                  buf_addr += type_size;
+                }
+              }
             }
           }
         }
