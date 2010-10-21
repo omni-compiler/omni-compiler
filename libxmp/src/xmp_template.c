@@ -368,7 +368,7 @@ _Bool _XCALABLEMP_exec_task_TEMPLATE_PART(int get_upper, _XCALABLEMP_template_t 
     return true;
   }
   else {
-    _XCALABLEMP_free(comm);
+    _XCALABLEMP_finalize_comm(comm);
     return false;
   }
 }

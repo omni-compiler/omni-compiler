@@ -42,7 +42,7 @@ static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array
     MPI_Comm_rank(*comm, &(ai->shadow_comm_rank));
   }
   else {
-    _XCALABLEMP_free(comm);
+    _XCALABLEMP_finalize_comm(comm);
   }
 }
 

@@ -77,7 +77,7 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NUMBER(int dim, 
     MPI_Comm_rank(*comm, &(n->comm_rank));
   }
   else {
-    _XCALABLEMP_free(comm);
+    _XCALABLEMP_finalize_comm(comm);
 
     n->comm = NULL;
     n->comm_size = 0;
@@ -118,7 +118,7 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NAMED(int dim, _
     MPI_Comm_rank(*comm, &(n->comm_rank));
   }
   else {
-    _XCALABLEMP_free(comm);
+    _XCALABLEMP_finalize_comm(comm);
 
     n->comm = NULL;
     n->comm_size = 0;
@@ -514,7 +514,7 @@ void _XCALABLEMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, int map_type, _XC
 
 void _XCALABLEMP_finalize_nodes(_XCALABLEMP_nodes_t *nodes) {
   if (nodes != NULL) {
-    _XCALABLEMP_free(nodes->comm);
+    _XCALABLEMP_finalize_comm(nodes->comm);
     _XCALABLEMP_free(nodes);
   }
 }
@@ -601,7 +601,7 @@ _Bool _XCALABLEMP_exec_task_NODES_PART(int get_upper, _XCALABLEMP_nodes_t *ref_n
     return true;
   }
   else {
-    _XCALABLEMP_free(comm);
+    _XCALABLEMP_finalize_comm(comm);
     return false;
   }
 }

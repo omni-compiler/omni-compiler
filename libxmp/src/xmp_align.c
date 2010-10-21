@@ -86,10 +86,10 @@ void _XCALABLEMP_finalize_array_desc(_XCALABLEMP_array_t *array) {
   if (array != NULL) {
     int dim = array->dim;
     for (int i = 0; i < dim; i++) {
-      _XCALABLEMP_free(array->info[i].shadow_comm);
+      _XCALABLEMP_finalize_comm(array->info[i].shadow_comm);
     }
 
-    _XCALABLEMP_free(array->comm);
+    _XCALABLEMP_finalize_comm(array->comm);
     _XCALABLEMP_free(array);
   }
 }

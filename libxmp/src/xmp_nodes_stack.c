@@ -23,7 +23,7 @@ void _XCALABLEMP_pop_nodes(void) {
 void _XCALABLEMP_pop_n_free_nodes(void) {
   _XCALABLEMP_nodes_dish_t *freed_dish = _XCALABLEMP_nodes_stack_top;
   _XCALABLEMP_nodes_stack_top = freed_dish->prev;
-  _XCALABLEMP_free(freed_dish->nodes);
+  _XCALABLEMP_finalize_nodes(freed_dish->nodes);
   _XCALABLEMP_free(freed_dish);
 }
 
@@ -54,4 +54,11 @@ void _XCALABLEMP_push_comm(MPI_Comm *comm) {
   n->info[0].rank = rank;
 
   _XCALABLEMP_push_nodes(n);
+}
+
+void _XCALABLEMP_finalize_comm(MPI_Comm *comm) {
+  if (comm != NULL) {
+    MPI_Comm_free(comm);
+    _XCALABLEMP_free(comm);
+  }
 }
