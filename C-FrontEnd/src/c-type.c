@@ -1703,11 +1703,13 @@ resolveType_assignOp(CExprOfBinaryNode *expr)
                 td = td1;
             }
             else {
-                addError((CExpr*)expr, CERR_046);
-                DBGDUMPEXPR(e1);
-                DBGDUMPEXPR(e2);
-                DBGDUMPEXPR(td1);
-                DBGDUMPEXPR(td2);
+                td = td1;
+                // FIXME temporary
+//                addError((CExpr*)expr, CERR_046);
+//                DBGDUMPEXPR(e1);
+//                DBGDUMPEXPR(e2);
+//                DBGDUMPEXPR(td1);
+//                DBGDUMPEXPR(td2);
             }
         }
     } else {
