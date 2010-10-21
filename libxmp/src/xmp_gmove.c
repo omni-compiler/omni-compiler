@@ -1159,7 +1159,7 @@ void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION(_XCALABLEMP_array_t *dst_array, _X
           _XCALABLEMP_gmove_BCAST_ARRAY_SECTION(src_array, type, type_size,
                                                 dst_addr, dst_dim, ai->local_lower, ai->local_upper, ai->local_stride, dst_d[0],
                                                 src_addr, src_dim, ai->par_lower, ai->par_upper, ai->par_stride, dst_d[0]);
-          _XCALABLEMP_pop_n_free_nodes();
+          _XCALABLEMP_pop_n_free_nodes_wo_finalize_comm();
         }
         else if (dst_dim == 2) {
           _XCALABLEMP_gmove_SENDRECV_all2all_2(dst_addr, src_addr,

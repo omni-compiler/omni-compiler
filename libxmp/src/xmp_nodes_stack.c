@@ -27,6 +27,13 @@ void _XCALABLEMP_pop_n_free_nodes(void) {
   _XCALABLEMP_free(freed_dish);
 }
 
+void _XCALABLEMP_pop_n_free_nodes_wo_finalize_comm(void) {
+  _XCALABLEMP_nodes_dish_t *freed_dish = _XCALABLEMP_nodes_stack_top;
+  _XCALABLEMP_nodes_stack_top = freed_dish->prev;
+  _XCALABLEMP_free(freed_dish->nodes);
+  _XCALABLEMP_free(freed_dish);
+}
+
 _XCALABLEMP_nodes_t *_XCALABLEMP_get_execution_nodes(void) {
   return _XCALABLEMP_nodes_stack_top->nodes;
 }
