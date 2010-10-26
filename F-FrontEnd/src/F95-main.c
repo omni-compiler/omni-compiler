@@ -39,6 +39,8 @@ int fixed_line_len_kind = FIXED_LINE_LEN_72;
 /* -save=? */
 int auto_save_attr_kb = -1;
 
+int endlineno_flag = 0;
+
 extern int      yyparse _ANSI_ARGS_((void));
 static void     check_nerrors _ANSI_ARGS_((void));
 
@@ -130,6 +132,7 @@ usage()
         "--save[=n]                add save attribute than n kbytes except",
         "                          in a recursive function and common variables.",
         "                          (default n=1)",
+	"-endlineno                output the endlineno attribute.",
         "-d                        enable debug mode.",
         "",
         "internal options:",
@@ -325,6 +328,8 @@ char *argv[];
             auto_save_attr_kb = atoi(argv[0] + 7);
             if (auto_save_attr_kb < 0)
                 cmd_error_exit("invalid value after -save.");
+        } else if (strcmp(argv[0], "-endlineno") == 0) {
+ 	    endlineno_flag = 1;
         } else if (strcmp(argv[0], "--help") == 0) {
             usage();
             exit(1);

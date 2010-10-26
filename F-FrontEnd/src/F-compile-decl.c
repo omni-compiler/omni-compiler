@@ -164,6 +164,7 @@ declare_procedure(enum name_class class,
         if(name) {
             id = declare_ident(s,CL_BLOCK);
             ID_LINE(id) = EXPR_LINE(name); /* set line_no */
+            EXT_LINE(CURRENT_EXT_ID) = EXPR_LINE(name); /* set line_no */
         }
         break;
 

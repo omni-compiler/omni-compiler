@@ -30,6 +30,7 @@ lineno_info *new_line_info(int fid,int ln)
     l = XMALLOC(lineno_info *, sizeof(*l));
     l->file_id = fid;
     l->ln_no = ln;
+    l->end_ln_no = 0;
     return l;
 }
 

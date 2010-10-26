@@ -48,9 +48,11 @@ typedef struct symbol
 extern SYMBOL	find_symbol(const char *name);
 extern SYMBOL	find_symbol_without_allocate (const char *name);
 
+extern int endlineno_flag;
 
 typedef struct {
     int ln_no;
+    int end_ln_no;
     int file_id;
 } lineno_info;
 
@@ -91,6 +93,7 @@ typedef struct expression_node
 #define EXPR_SCLASS(x)  ((STORAGE_CLASS)(EXPR_INT(x)))
 #define EXPR_TYPE_QUAL(x)       ((TYPE_QUAL)(EXPR_INT(x)))
 #define EXPR_LINE_NO(x) ((x)->e_line->ln_no)
+#define EXPR_END_LINE_NO(x) ((x)->e_line->end_ln_no)
 #define EXPR_LINE_FILE_ID(x)    ((x)->e_line->file_id)
 #define EXPR_LINE(x)    ((x)->e_line)
 #define EXPR_ORIGINAL_TOKEN(x)  ((x)->e_original_token)
@@ -150,6 +153,7 @@ typedef expr expv;
 #define EXPV_KWOPT_NAME(x)      ((x)->keyword_opt)
 #define EXPV_LINE(x)            ((x)->e_line)
 #define EXPV_LINE_NO(x)         (EXPV_LINE(x)->ln_no)
+#define EXPV_END_LINE_NO(x)     (EXPV_LINE(x)->end_ln_no)
 #define EXPV_LINE_FILE_ID(x)    (EXPV_LINE(x)->file_id)
 #define EXPV_ORIGINAL_TOKEN(x)  ((x)->e_original_token)
 #define EXPV_COMPLEX_REAL(x)    EXPV_LEFT(x)

@@ -302,6 +302,8 @@ void compile_statement1(int st_no, expr x)
     case F95_ENDMODULE_STATEMENT: /* (F95_ENDMODULE_STATEMENT) */      
     do_end_module:
         check_INDCL();
+	if (endlineno_flag)
+	  ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
         end_procedure();
         end_module();
         break;
@@ -377,8 +379,17 @@ void compile_statement1(int st_no, expr x)
 
     case F95_ENDFUNCTION_STATEMENT:  /* (F95_END_FUNCTION_STATEMENT) */
     case F95_ENDSUBROUTINE_STATEMENT:  /* (F95_END_SUBROUTINE_STATEMENT) */
+        check_INEXEC();
+	if (endlineno_flag)
+	  ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
+        end_procedure();
+        break;
+
     case F95_ENDPROGRAM_STATEMENT:  /* (F95_END_PROGRAM_STATEMENT) */
         check_INEXEC();
+	if (endlineno_flag)
+	  if (CURRENT_EXT_ID && EXT_LINE(CURRENT_EXT_ID))
+	    EXT_END_LINE_NO(CURRENT_EXT_ID) = current_line->ln_no;
         end_procedure();
         break;
     case F_END_STATEMENT:       /* (F_END_STATEMENT) */
@@ -388,6 +399,11 @@ void compile_statement1(int st_no, expr x)
             goto do_end_module;
         } else {
             check_INEXEC();
+	    if (endlineno_flag)
+	      if (CURRENT_PROCEDURE)
+		ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
+	      else if (CURRENT_EXT_ID && EXT_LINE(CURRENT_EXT_ID))
+		EXT_END_LINE_NO(CURRENT_EXT_ID) = current_line->ln_no;
             end_procedure();
         }
         break;
@@ -569,9 +585,17 @@ void compile_statement1(int st_no, expr x)
         if(CTL_TYPE(ctl_top) == CTL_IF){
             /* use current_statements */
             CTL_IF_THEN(ctl_top) = CURRENT_STATEMENTS;
+
+	    if (endlineno_flag)
+	      EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+
             pop_ctl();
         }  else if(CTL_TYPE(ctl_top) == CTL_ELSE) {
             CTL_IF_ELSE(ctl_top) = CURRENT_STATEMENTS;
+
+	    if (endlineno_flag)
+	      EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+
             pop_ctl();
         } else error("'endif', out of place");
         break;
@@ -680,11 +704,19 @@ void compile_statement1(int st_no, expr x)
         if(CTL_TYPE(ctl_top) == CTL_WHERE) {
             /* store current statements to 'then' part, and clear */
             CTL_WHERE_THEN(ctl_top) = CURRENT_STATEMENTS;
+
+	    if (endlineno_flag)
+	      EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+
             pop_ctl();
 
         } else if(CTL_TYPE(ctl_top) == CTL_ELSE_WHERE){
             /* store current statements to 'else' part, and clear */
             CTL_WHERE_ELSE(ctl_top) = CURRENT_STATEMENTS;
+
+	    if (endlineno_flag)
+	      EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+
             pop_ctl();
 
         } else error("'end where', out of place");
@@ -732,6 +764,9 @@ void compile_statement1(int st_no, expr x)
         if(CTL_TYPE(ctl_top) == CTL_SELECT) {
             CTL_SELECT_STATEMENT_BODY(ctl_top) = CURRENT_STATEMENTS;
 
+	    if (endlineno_flag)
+	      EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+
             pop_ctl();
         } else if (CTL_TYPE(ctl_top) == CTL_CASE) {
             CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
@@ -742,6 +777,9 @@ void compile_statement1(int st_no, expr x)
                 error("'end select', out of place");
 
             CTL_SELECT_STATEMENT_BODY(ctl_top) = CURRENT_STATEMENTS;
+
+	    if (endlineno_flag)
+	      EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
 
             pop_ctl();
         } else error("'end select', out of place");
@@ -2268,6 +2306,10 @@ check_DO_end(ID label)
                 }
                 CTL_DO_BODY(ctl_top) = CURRENT_STATEMENTS;
             }
+
+	    if (endlineno_flag)
+	      EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+
             pop_ctl();
         } else {
             error("'do' is not found for 'enddo'");

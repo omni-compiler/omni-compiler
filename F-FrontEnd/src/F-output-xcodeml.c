@@ -745,6 +745,7 @@ outx_lineno(lineno_info *li)
 {
     if(li) {
         outx_print(" lineno=\"%d\"", li->ln_no);
+	if (li->end_ln_no) outx_print(" endlineno=\"%d\"", li->end_ln_no);
         outx_print(" file=\"%s\"", getXmlEscapedStr(FILE_NAME(li->file_id)));
     }
 }
