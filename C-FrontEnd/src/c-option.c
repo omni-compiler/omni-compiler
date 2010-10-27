@@ -52,6 +52,7 @@ unsigned int s_useIntWchar              = 0;
 unsigned int s_transFuncInInit          = 0;
 unsigned int s_useXmp                   = 0;
 unsigned int s_debugSymbol				= 0;
+unsigned int s_arrayToPointer           = 1;
 
 #define CEXPR_OPTVAL_CHARLEN 128
 
@@ -505,6 +506,8 @@ procOptions(int argc, char **argv)
                 s_useXmp = 1;
             } else if(strcmp(arg, "-fopenmp") == 0) {
                 /* accept but no action */
+	    } else if(strcmp(arg, "--array-to-pointer") == 0) {
+	        s_arrayToPointer = 1;
             } else if(strncmp(arg, COPT_SIZE, lenOptSize) == 0) {
                 NEEDS_VALUE(COPT_SIZE);
                 if(setOptSize(arg + lenOptSize, val) == 0)
