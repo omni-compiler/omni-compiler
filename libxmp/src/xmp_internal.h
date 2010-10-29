@@ -112,6 +112,7 @@ typedef struct _XCALABLEMP_array_info_type {
 typedef struct _XCALABLEMP_array_type {
   _Bool is_allocated;
   int dim;
+  int type;
   size_t type_size;
 
   // enable when is_allocated is true

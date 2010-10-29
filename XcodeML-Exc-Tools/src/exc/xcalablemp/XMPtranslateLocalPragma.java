@@ -447,6 +447,13 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception(arrayName + " is not an array");
 
     Xtype arrayElmtType = arrayType.getArrayElementType();
+    Xobject arrayElmtTypeRef = null;
+    if (arrayElmtType.getKind() == Xtype.BASIC) {
+      arrayElmtTypeRef = Xcons.IntConstant(arrayElmtType.getBasicType() + 200);
+    }
+    else {
+      arrayElmtTypeRef = Xcons.IntConstant(XMP.NONBASIC_TYPE);
+    }
 
     // get template information
     String templateName = alignDecl.getArg(2).getString();
@@ -470,6 +477,7 @@ public class XMPtranslateLocalPragma {
     XobjList initArrayDescFuncArgs = Xcons.List(arrayDescId.getAddr(),
                                                 templateObj.getDescId().Ref(),
                                                 Xcons.IntConstant(arrayDim),
+                                                arrayElmtTypeRef,
                                                 Xcons.SizeOf(arrayElmtType));
 
     Vector<Long> arraySizeVector = new Vector<Long>(arrayDim);
@@ -1103,8 +1111,8 @@ public class XMPtranslateLocalPragma {
             createReflectNormalShadowFunc(pb, alignedArray, i, reflectFuncBody);
             break;
           case XMPshadow.SHADOW_FULL:
-            // FIXME not implemented yet
-            throw new XMPexception("not implemented yet");
+            createReflectFullShadowFunc(pb, alignedArray, i, reflectFuncBody);
+            break;
           default:
             throw new XMPexception("unknown shadow type");
         }
@@ -1119,9 +1127,7 @@ public class XMPtranslateLocalPragma {
                                              XMPalignedArray alignedArray, int arrayIndex,
                                              BlockList reflectFuncBody) {
     String arrayName = alignedArray.getName();
-    Xtype arrayType = alignedArray.getType();
-    Xtype arrayPtype = Xtype.Pointer(arrayType);
-    String arrayTypeName = XMPutil.getTypeName(arrayType);
+    Xtype arrayPtype = Xtype.Pointer(alignedArray.getType());
 
     // decl buffers
     Ident loSendId = reflectFuncBody.declLocalIdent("_XCALABLEMP_reflect_LO_SEND_" + arrayName, arrayPtype);
@@ -1133,12 +1139,6 @@ public class XMPtranslateLocalPragma {
     Ident packFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pack_shadow_NORMAL");
     XobjList packFuncArgs = Xcons.List(loSendId.getAddr(), hiSendId.getAddr(), alignedArray.getAddrId().Ref(),
                                        alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
-    if (arrayType.getKind() == Xtype.BASIC) {
-      packFuncArgs.add(Xcons.IntConstant(arrayType.getBasicType() + 200));
-    }
-    else {
-      packFuncArgs.add(Xcons.IntConstant(XMP.NONBASIC_TYPE));
-    }
 
     reflectFuncBody.add(Bcons.Statement(packFuncId.Call(packFuncArgs)));
 
@@ -1154,14 +1154,17 @@ public class XMPtranslateLocalPragma {
     Ident unpackFuncId = _globalDecl.declExternFunc("_XCALABLEMP_unpack_shadow_NORMAL");;
     XobjList unpackFuncArgs = Xcons.List(loRecvId.Ref(), hiRecvId.Ref(), alignedArray.getAddrId().Ref(),
                                          alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
-    if (arrayType.getKind() == Xtype.BASIC) {
-      unpackFuncArgs.add(Xcons.IntConstant(arrayType.getBasicType() + 200));
-    }
-    else {
-      unpackFuncArgs.add(Xcons.IntConstant(XMP.NONBASIC_TYPE));
-    }
 
     reflectFuncBody.add(Bcons.Statement(unpackFuncId.Call(unpackFuncArgs)));
+  }
+
+  private void createReflectFullShadowFunc(PragmaBlock pb,
+                                           XMPalignedArray alignedArray, int arrayIndex,
+                                           BlockList reflectFuncBody) {
+    Ident funcId = _globalDecl.declExternFunc("_XCALABLEMP_reflect_shadow_FULL");
+    XobjList funcArgs = Xcons.List(alignedArray.getAddrId().Ref(), alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
+
+    reflectFuncBody.add(Bcons.Statement(funcId.Call(funcArgs)));
   }
 
   private void translateBarrier(PragmaBlock pb) throws XMPexception {
@@ -1961,7 +1964,6 @@ public class XMPtranslateLocalPragma {
         else {					// !leftIsAlignedArray &&  rightIsAlignedArray	|-> broadcast
           // FIXME left/right is not a constant
           XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(leftExpr), Xcons.AddrOf(rightExpr),
-                                              Xcons.SizeOf(rightAlignedArray.getType()),
                                               rightAlignedArray.getDescId().Ref());
           XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
 
@@ -1980,7 +1982,6 @@ public class XMPtranslateLocalPragma {
         else {					//  leftIsAlignedArray &&  rightIsAlignedArray	|-> send/recv
           // FIXME left/right is not a constant
           XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(leftExpr), Xcons.AddrOf(rightExpr),
-                                              Xcons.SizeOf(leftAlignedArray.getType()),
                                               leftAlignedArray.getDescId().Ref(), rightAlignedArray.getDescId().Ref());
           XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
           XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());

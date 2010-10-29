@@ -378,6 +378,13 @@ public class XMPtranslateGlobalPragma {
       throw new XMPexception(arrayName + " is not an array");
 
     Xtype arrayElmtType = arrayType.getArrayElementType();
+    Xobject arrayElmtTypeRef = null;
+    if (arrayElmtType.getKind() == Xtype.BASIC) {
+      arrayElmtTypeRef = Xcons.IntConstant(arrayElmtType.getBasicType() + 200);
+    }
+    else {
+      arrayElmtTypeRef = Xcons.IntConstant(XMP.NONBASIC_TYPE);
+    }
 
     // get template information
     String templateName = alignDecl.getArg(2).getString();
@@ -415,6 +422,7 @@ public class XMPtranslateGlobalPragma {
     XobjList initArrayDescFuncArgs = Xcons.List(arrayDescId.getAddr(),
                                                 templateObj.getDescId().Ref(),
                                                 Xcons.IntConstant(arrayDim),
+                                                arrayElmtTypeRef,
                                                 Xcons.SizeOf(arrayElmtType));
 
     Vector<Long> arraySizeVector = new Vector<Long>(arrayDim);

@@ -108,11 +108,12 @@ void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
 
 // FIXME consider full shadow in other dimensions
 void _XCALABLEMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_addr,
-                                    _XCALABLEMP_array_t *array_desc, int array_index, int array_type) {
+                                    _XCALABLEMP_array_t *array_desc, int array_index) {
   if (!(array_desc->is_allocated)) {
     return;
   }
 
+  int array_type = array_desc->type;
   int array_dim = array_desc->dim;
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
   _XCALABLEMP_template_chunk_t *ti = ai->align_template_chunk;
@@ -152,7 +153,7 @@ void _XCALABLEMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *ar
       }
 
       // pack data
-      if (array_type == _XCALABLEMP_N_TYPE_GENERAL) {
+      if (array_type == _XCALABLEMP_N_TYPE_NONBASIC) {
         _XCALABLEMP_pack_array_GENERAL(*lo_buffer, array_addr, array_desc->type_size,
                                        array_dim, lower, upper, stride, dim_acc);
       }
@@ -191,7 +192,7 @@ void _XCALABLEMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *ar
       }
 
       // pack data
-      if (array_type == _XCALABLEMP_N_TYPE_GENERAL) {
+      if (array_type == _XCALABLEMP_N_TYPE_NONBASIC) {
         _XCALABLEMP_pack_array_GENERAL(*hi_buffer, array_addr, array_desc->type_size,
                                        array_dim, lower, upper, stride, dim_acc);
       }
@@ -204,11 +205,12 @@ void _XCALABLEMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *ar
 
 // FIXME not consider full shadow
 void _XCALABLEMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_addr,
-                                      _XCALABLEMP_array_t *array_desc, int array_index, int array_type) {
+                                      _XCALABLEMP_array_t *array_desc, int array_index) {
   if (!(array_desc->is_allocated)) {
     return;
   }
 
+  int array_type = array_desc->type;
   int array_dim = array_desc->dim;
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
   _XCALABLEMP_template_chunk_t *ti = ai->align_template_chunk;
@@ -245,7 +247,7 @@ void _XCALABLEMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *ar
       }
 
       // unpack data
-      if (array_type == _XCALABLEMP_N_TYPE_GENERAL) {
+      if (array_type == _XCALABLEMP_N_TYPE_NONBASIC) {
         _XCALABLEMP_unpack_array_GENERAL(array_addr, lo_buffer, array_desc->type_size,
                                          array_dim, lower, upper, stride, dim_acc);
       }
@@ -284,7 +286,7 @@ void _XCALABLEMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *ar
       }
 
       // unpack data
-      if (array_type == _XCALABLEMP_N_TYPE_GENERAL) {
+      if (array_type == _XCALABLEMP_N_TYPE_NONBASIC) {
         _XCALABLEMP_unpack_array_GENERAL(array_addr, hi_buffer, array_desc->type_size,
                                          array_dim, lower, upper, stride, dim_acc);
       }
@@ -373,4 +375,21 @@ void _XCALABLEMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_bu
       _XCALABLEMP_free(hi_send_buffer);
     }
   }
+}
+
+// FIXME not implemented yet
+void _XCALABLEMP_reflect_shadow_FULL(void *array_addr, _XCALABLEMP_array_t *array_desc, int array_index) {
+  if (!(array_desc->is_allocated)) {
+    return;
+  }
+
+  _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
+
+  // get communicator info
+  MPI_Comm *comm = ai->shadow_comm;
+  int size = ai->shadow_comm_size;
+  int rank = ai->shadow_comm_rank;
+
+  // get array info
+  int array_type = array_desc->type;
 }

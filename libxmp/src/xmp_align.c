@@ -16,11 +16,13 @@ static void _XCALABLEMP_calc_array_dim_elmts(_XCALABLEMP_array_t *array, int arr
   array->info[array_index].dim_elmts = dim_elmts;
 }
 
-void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_template_t *template, int dim, size_t type_size, ...) {
+void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_template_t *template, int dim,
+                                 int type, size_t type_size, ...) {
   _XCALABLEMP_array_t *a = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_array_t) + sizeof(_XCALABLEMP_array_info_t) * (dim - 1));
 
   a->is_allocated = template->is_owner;
   a->dim = dim;
+  a->type = type;
   a->type_size = type_size;
 
 //a->addr is calculated in _XCALABLEMP_alloc_array, _XCALABLEMP_init_array_addr
@@ -232,7 +234,7 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
   ai->align_template_chunk = chunk;
 }
 
-void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc, int datatype_size, ...) {
+void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc, ...) {
   if (!(array_desc->is_allocated)) {
     *array_addr = NULL;
     return;
@@ -241,7 +243,7 @@ void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc,
   unsigned long long total_elmts = 1;
   int dim = array_desc->dim;
   va_list args;
-  va_start(args, datatype_size);
+  va_start(args, array_desc);
   for (int i = dim - 1; i >= 0; i--) {
     unsigned long long *acc = va_arg(args, unsigned long long *);
     *acc = total_elmts;
@@ -256,7 +258,7 @@ void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc,
     _XCALABLEMP_calc_array_dim_elmts(array_desc, i);
   }
 
-  *array_addr = _XCALABLEMP_alloc(total_elmts * datatype_size);
+  *array_addr = _XCALABLEMP_alloc(total_elmts * (array_desc->type_size));
 
   // set members
   array_desc->addr = *array_addr;

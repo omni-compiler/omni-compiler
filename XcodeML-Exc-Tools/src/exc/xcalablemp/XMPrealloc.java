@@ -31,8 +31,7 @@ public class XMPrealloc implements XobjectDefVisitor {
         def.setDef(null);
         if(alignedArray.getAddrId().getStorageClass() != StorageClass.EXTERN) {
           XobjList allocFuncArgs = Xcons.List(alignedArray.getAddrId().getAddr(),
-                                              alignedArray.getDescId().Ref(),
-                                              Xcons.SizeOf(alignedArray.getType()));
+                                              alignedArray.getDescId().Ref());
           for (int i = alignedArray.getDim() - 1; i >= 0; i--)
             allocFuncArgs.add(Xcons.Cast(Xtype.unsignedlonglongType,
                                          alignedArray.getAccIdAt(i).getAddr()));

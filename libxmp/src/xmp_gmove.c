@@ -356,7 +356,10 @@ static _Bool _XCALABLEMP_gmove_check_array_ref_inclusion(_XCALABLEMP_array_info_
   }
 }
 
-void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, size_t type_size, _XCALABLEMP_array_t *array, ...) {
+void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XCALABLEMP_array_t *array, ...) {
+  // FIXME type check here?
+  size_t type_size = array->type_size;
+
   _XCALABLEMP_template_t *template = array->align_template;
   _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
 
@@ -431,8 +434,11 @@ _Bool _XCALABLEMP_gmove_exec_home_SCALAR(_XCALABLEMP_array_t *array, ...) {
   return execHere;
 }
 
-void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr, size_t type_size,
+void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
                                        _XCALABLEMP_array_t *dst_array, _XCALABLEMP_array_t *src_array, ...) {
+  // FIXME type check here?
+  size_t type_size = dst_array->type_size;
+
   va_list args;
   va_start(args, src_array);
 
@@ -620,7 +626,7 @@ void _XCALABLEMP_gmove_local_copy(int type, size_t type_size, ...) {
   void *buffer = _XCALABLEMP_alloc(dst_buffer_elmts * type_size);
 
   // pack/unpack
-  if (type == _XCALABLEMP_N_TYPE_GENERAL) {
+  if (type == _XCALABLEMP_N_TYPE_NONBASIC) {
     _XCALABLEMP_pack_array_GENERAL(buffer, src_addr, type_size, src_dim, src_l, src_u, src_s, src_d);
     _XCALABLEMP_unpack_array_GENERAL(dst_addr, buffer, type_size, dst_dim, dst_l, dst_u, dst_s, dst_d);
   }
@@ -712,7 +718,7 @@ void _XCALABLEMP_gmove_local_copy_home(_XCALABLEMP_array_t *dst_array, int type,
   void *buffer = _XCALABLEMP_alloc(dst_buffer_elmts * type_size);
 
   // pack/unpack
-  if (type == _XCALABLEMP_N_TYPE_GENERAL) {
+  if (type == _XCALABLEMP_N_TYPE_NONBASIC) {
     _XCALABLEMP_pack_array_GENERAL(buffer, src_addr, type_size, src_dim, src_l, src_u, src_s, src_d);
     _XCALABLEMP_unpack_array_GENERAL(dst_addr, buffer, type_size, dst_dim, dst_l, dst_u, dst_s, dst_d);
   }
@@ -803,7 +809,7 @@ void _XCALABLEMP_gmove_BCAST_ARRAY_SECTION(_XCALABLEMP_array_t *src_array, int t
     }
 
     pack_buffer = _XCALABLEMP_alloc(src_buffer_elmts * type_size);
-    if (type == _XCALABLEMP_N_TYPE_GENERAL) {
+    if (type == _XCALABLEMP_N_TYPE_NONBASIC) {
       _XCALABLEMP_pack_array_GENERAL(pack_buffer, src_addr, type_size, src_dim, src_l, src_u, src_s, src_d);
     }
     else {
@@ -856,7 +862,7 @@ void _XCALABLEMP_gmove_BCAST_ARRAY_SECTION(_XCALABLEMP_array_t *src_array, int t
       }
       MPI_Bcast(bcast_buffer, bcast_elmts, mpi_datatype, i, *exec_nodes_comm);
 
-      if (type == _XCALABLEMP_N_TYPE_GENERAL) {
+      if (type == _XCALABLEMP_N_TYPE_NONBASIC) {
         _XCALABLEMP_unpack_array_GENERAL(dst_addr, bcast_buffer, type_size, dst_dim, bcast_l, bcast_u, bcast_s, dst_d);
       }
       else {
@@ -970,7 +976,7 @@ static void _XCALABLEMP_gmove_SENDRECV_all2all_2(void *dst_addr, void *src_addr,
             _XCALABLEMP_calc_SENDRECV_index_ref(n, dst_rank, src_array, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
           }
 
-          if (type == _XCALABLEMP_N_TYPE_GENERAL) {
+          if (type == _XCALABLEMP_N_TYPE_NONBASIC) {
             _XCALABLEMP_pack_array_GENERAL(pack_buffer, src_addr, type_size, dim, src_l, src_u, src_s, src_dim_acc);
             _XCALABLEMP_unpack_array_GENERAL(dst_addr, pack_buffer, type_size, dim, dst_l, dst_u, dst_s, dst_dim_acc);
           }
@@ -984,7 +990,7 @@ static void _XCALABLEMP_gmove_SENDRECV_all2all_2(void *dst_addr, void *src_addr,
             _XCALABLEMP_calc_SENDRECV_index_ref(n, dst_rank, src_array, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
           }
 
-          if (type == _XCALABLEMP_N_TYPE_GENERAL) {
+          if (type == _XCALABLEMP_N_TYPE_NONBASIC) {
             _XCALABLEMP_pack_array_GENERAL(pack_buffer, src_addr, type_size, dim, src_l, src_u, src_s, src_dim_acc);
           }
           else {
@@ -1002,7 +1008,7 @@ static void _XCALABLEMP_gmove_SENDRECV_all2all_2(void *dst_addr, void *src_addr,
         _XCALABLEMP_calc_SENDRECV_index_ref(n, src_rank, dst_array, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
       }
 
-      if (type == _XCALABLEMP_N_TYPE_GENERAL) {
+      if (type == _XCALABLEMP_N_TYPE_NONBASIC) {
         _XCALABLEMP_unpack_array_GENERAL(dst_addr, pack_buffer, type_size, dim, dst_l, dst_u, dst_s, dst_dim_acc);
       }
       else {
@@ -1087,7 +1093,7 @@ void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION(_XCALABLEMP_array_t *dst_array, _X
         send_elmts *= _XCALABLEMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
       }
       send_buffer = _XCALABLEMP_alloc(send_elmts * type_size);
-      if (type == _XCALABLEMP_N_TYPE_GENERAL) {
+      if (type == _XCALABLEMP_N_TYPE_NONBASIC) {
         _XCALABLEMP_pack_array_GENERAL(send_buffer, src_addr, type_size, src_dim, src_l, src_u, src_s, src_d);
       }
       else {
@@ -1107,7 +1113,7 @@ void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION(_XCALABLEMP_array_t *dst_array, _X
       MPI_Status recv_stat;
       MPI_Wait(&recv_req, &recv_stat);
 
-      if (type == _XCALABLEMP_N_TYPE_GENERAL) {
+      if (type == _XCALABLEMP_N_TYPE_NONBASIC) {
         _XCALABLEMP_unpack_array_GENERAL(dst_addr, recv_buffer, type_size, dst_dim, dst_l, dst_u, dst_s, dst_d);
       }
       else {
@@ -1138,7 +1144,7 @@ void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION(_XCALABLEMP_array_t *dst_array, _X
       void *buffer = _XCALABLEMP_alloc(dst_buffer_elmts * type_size);
 
       // pack/unpack
-      if (type == _XCALABLEMP_N_TYPE_GENERAL) {
+      if (type == _XCALABLEMP_N_TYPE_NONBASIC) {
         _XCALABLEMP_pack_array_GENERAL(buffer, src_addr, type_size, src_dim, src_l, src_u, src_s, src_d);
         _XCALABLEMP_unpack_array_GENERAL(dst_addr, buffer, type_size, dst_dim, dst_l, dst_u, dst_s, dst_d);
       }
