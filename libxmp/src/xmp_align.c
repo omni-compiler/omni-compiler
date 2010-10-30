@@ -171,7 +171,7 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, 
     ai->par_size = par_size;
 
     ai->dist_manner = _XCALABLEMP_N_DIST_BLOCK;
-    ai->is_regular_block = (chunk->par_lower == align_subscript) && chunk->is_regular_block;
+    ai->is_regular_block = (ti->ser_lower == align_subscript) && chunk->is_regular_block;
 
     ai->local_lower = 0;
     ai->local_upper = par_size - 1;
@@ -225,7 +225,7 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
     ai->par_size = par_size;
 
     ai->dist_manner = _XCALABLEMP_N_DIST_CYCLIC;
-    ai->is_regular_block = (chunk->par_lower == align_subscript) && chunk->is_regular_block;
+    ai->is_regular_block = (ti->ser_lower == align_subscript) && chunk->is_regular_block;
 
     ai->local_lower = 0;
     ai->local_upper = par_size - 1;
@@ -270,11 +270,39 @@ void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc,
   *array_addr = _XCALABLEMP_alloc(total_elmts * (array_desc->type_size));
 
   // set members
-  array_desc->addr = *array_addr;
+  array_desc->addr = array_addr;
   array_desc->total_elmts = total_elmts;
 }
 
-void _XCALABLEMP_init_array_addr(void **array_addr, void *param_addr,
+void _XCALABLEMP_init_array_alloc_params(void **array_addr, _XCALABLEMP_array_t *array_desc, ...) {
+  if (!(array_desc->is_allocated)) {
+    return;
+  }
+
+  unsigned long long total_elmts = 1;
+  int dim = array_desc->dim;
+  va_list args;
+  va_start(args, array_desc);
+  for (int i = dim - 1; i >= 0; i--) {
+    unsigned long long *acc = va_arg(args, unsigned long long *);
+    *acc = total_elmts;
+
+    array_desc->info[i].dim_acc = total_elmts;
+
+    total_elmts *= array_desc->info[i].alloc_size;
+  }
+  va_end(args);
+
+  for (int i = 0; i < dim; i++) {
+    _XCALABLEMP_calc_array_dim_elmts(array_desc, i);
+  }
+
+  // set members
+  array_desc->addr = array_addr;
+  array_desc->total_elmts = total_elmts;
+}
+
+void _XCALABLEMP_init_array_addr(void **array_addr, void *init_addr,
                                  _XCALABLEMP_array_t *array_desc, ...) {
   if (!(array_desc->is_allocated)) {
     *array_addr = NULL;
@@ -299,10 +327,10 @@ void _XCALABLEMP_init_array_addr(void **array_addr, void *param_addr,
     _XCALABLEMP_calc_array_dim_elmts(array_desc, i);
   }
 
-  *array_addr = param_addr;
+  *array_addr = init_addr;
 
   // set members
-  array_desc->addr = *array_addr;
+  array_desc->addr = array_addr;
   array_desc->total_elmts = total_elmts;
 }
 

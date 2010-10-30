@@ -15,6 +15,7 @@ public class XMPalignedArray {
   private Vector<Ident>		_gtolTemp0IdVector;
   private Vector<Integer>	_alignSubscriptIndexVector;
   private Vector<Xobject>	_alignSubscriptExprVector;
+  private Ident			_arrayId;
   private Ident			_descId;
   private Ident			_addrId;
   private boolean		_hasShadow;
@@ -24,7 +25,8 @@ public class XMPalignedArray {
 
   public XMPalignedArray(String name, Xtype type, int dim,
                          Vector<Long> sizeVector, Vector<Ident> accIdVector,
-                         Ident descId, Ident addrId, XMPtemplate alignedTemplate) {
+                         Ident arrayId, Ident descId, Ident addrId,
+                         XMPtemplate alignedTemplate) {
     _name = name;
     _type = type;
     _dim = dim;
@@ -42,6 +44,7 @@ public class XMPalignedArray {
       _alignSubscriptIndexVector.add(null);
       _alignSubscriptExprVector.add(null);
     }
+    _arrayId = arrayId;
     _descId = descId;
     _addrId = addrId;
     _hasShadow = false;
@@ -115,6 +118,10 @@ public class XMPalignedArray {
 
   public Xobject getAlignSubscriptExprAt(int alignSourceIndex) {
     return _alignSubscriptExprVector.get(alignSourceIndex);
+  }
+
+  public Ident getArrayId() {
+    return _arrayId;
   }
 
   public Ident getDescId() {

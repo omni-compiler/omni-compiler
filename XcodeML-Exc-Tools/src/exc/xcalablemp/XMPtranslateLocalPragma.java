@@ -436,15 +436,18 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception("array '" + arrayName + "' is already aligned");
 
     Ident arrayId = funcBlockList.findLocalIdent(arrayName);
-    if (arrayId == null)
+    if (arrayId == null) {
       throw new XMPexception("array '" + arrayName + "' is not declared");
+    }
 
-    if (arrayId.getStorageClass() != StorageClass.PARAM)
+    if (arrayId.getStorageClass() != StorageClass.PARAM) {
       throw new XMPexception("array '" + arrayName + "' is not a parameter");
+    }
 
     Xtype arrayType = arrayId.Type();
-    if (arrayType.getKind() != Xtype.ARRAY)
+    if (arrayType.getKind() != Xtype.ARRAY) {
       throw new XMPexception(arrayName + " is not an array");
+    }
 
     Xtype arrayElmtType = arrayType.getArrayElementType();
     Xobject arrayElmtTypeRef = null;
@@ -505,7 +508,8 @@ public class XMPtranslateLocalPragma {
     XMPlocalDecl.insertDestructorCall("_XCALABLEMP_finalize_array_desc", Xcons.List(arrayDescId.Ref()), pb, _globalDecl);
 
     XMPalignedArray alignedArray = new XMPalignedArray(arrayName, arrayElmtType, arrayDim,
-                                                       arraySizeVector, accIdVector, arrayDescId, arrayAddrId,
+                                                       arraySizeVector, accIdVector,
+                                                       arrayId, arrayDescId, arrayAddrId,
                                                        templateObj);
     localObjectTable.putAlignedArray(alignedArray);
 

@@ -1,6 +1,8 @@
 #include <stdarg.h>
+#include <string.h>
 #include "xmp_constant.h"
 #include "xmp_internal.h"
+#include "xmp_math_macro.h"
 
 static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array_index);
 
@@ -377,6 +379,33 @@ void _XCALABLEMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_bu
   }
 }
 
+// FIXME needed???
+static void _XCALABLEMP_alloc_full_shadow_ref(int **lower, int **upper, int **stride, unsigned long long **dim_acc,
+                                              _XCALABLEMP_array_t *array_desc) {
+  int array_dim = array_desc->dim;
+
+  *lower = _XCALABLEMP_alloc(sizeof(int) * array_dim);
+  *upper = _XCALABLEMP_alloc(sizeof(int) * array_dim);
+  *stride = _XCALABLEMP_alloc(sizeof(int) * array_dim);
+  *dim_acc = _XCALABLEMP_alloc(sizeof(unsigned long long) * array_dim);
+
+  for (int i = 0; i < array_dim; i++) {
+    _XCALABLEMP_array_info_t *ai = &(array_desc->info[i]);
+    (*lower)[i] = ai->local_lower;
+    (*upper)[i] = ai->local_upper;
+    (*stride)[i] = ai->local_stride;
+    (*dim_acc)[i] = ai->dim_acc;
+  }
+}
+
+// FIXME needed???
+static void _XCALABLEMP_free_full_shadow_ref(int *lower, int *upper, int *stride, unsigned long long *dim_acc) {
+  _XCALABLEMP_free(lower);
+  _XCALABLEMP_free(upper);
+  _XCALABLEMP_free(stride);
+  _XCALABLEMP_free(dim_acc);
+}
+
 static void _XCALABLEMP_reflect_shadow_ALLGATHER(void *array_addr, _XCALABLEMP_array_t *array_desc, int array_index) {
 //  MPI_Allgather ( void *sendbuf, int sendcount, MPI_Datatype sendtype,
 //                  void *recvbuf, int recvcount, MPI_Datatype recvtype, 
@@ -384,7 +413,23 @@ static void _XCALABLEMP_reflect_shadow_ALLGATHER(void *array_addr, _XCALABLEMP_a
   assert(array_desc->dim == 1);
   assert(array_desc->info[array_index].dist_manner == _XCALABLEMP_N_DIST_BLOCK);
 
-  return;
+  _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
+
+  size_t type_size = array_desc->type_size;
+  MPI_Datatype mpi_datatype;
+  MPI_Type_contiguous(type_size, MPI_BYTE, &mpi_datatype);
+  MPI_Type_commit(&mpi_datatype);
+
+  int gather_count = ai->par_size;
+  size_t gather_byte_size = type_size * gather_count;
+  void *pack_buffer = _XCALABLEMP_alloc(gather_byte_size);
+  memcpy(pack_buffer, array_addr + (type_size * ai->local_lower), gather_byte_size);
+
+  MPI_Allgather(pack_buffer, gather_count, mpi_datatype,
+                array_addr, gather_count, mpi_datatype,
+                *(array_desc->comm));
+
+  _XCALABLEMP_free(pack_buffer);
 }
 
 // FIXME not implemented yet
@@ -405,7 +450,7 @@ void _XCALABLEMP_reflect_shadow_FULL(void *array_addr, _XCALABLEMP_array_t *arra
     }
     else {
       // use allgatherv FIXME implement
-      _XCALABLEMP_fatal("not implemented yet");
+      _XCALABLEMP_fatal("not implemented yet: not regular block");
       return;
     }
   }

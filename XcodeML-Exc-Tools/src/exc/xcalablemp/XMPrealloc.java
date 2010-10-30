@@ -25,18 +25,33 @@ public class XMPrealloc implements XobjectDefVisitor {
     if (def.isVarDecl()) {
       String varName = def.getName();
       XMPalignedArray alignedArray = _globalObjectTable.getAlignedArray(varName);
-      if(alignedArray != null) {
-        if (!(alignedArray.realloc())) return;
-
-        def.setDef(null);
-        if(alignedArray.getAddrId().getStorageClass() != StorageClass.EXTERN) {
-          XobjList allocFuncArgs = Xcons.List(alignedArray.getAddrId().getAddr(),
-                                              alignedArray.getDescId().Ref());
-          for (int i = alignedArray.getDim() - 1; i >= 0; i--)
+      if (alignedArray != null) {
+        if (alignedArray.realloc()) {
+          XobjList allocFuncArgs = Xcons.List(alignedArray.getAddrId().getAddr(), alignedArray.getDescId().Ref());
+          for (int i = alignedArray.getDim() - 1; i >= 0; i--) {
             allocFuncArgs.add(Xcons.Cast(Xtype.unsignedlonglongType,
                                          alignedArray.getAccIdAt(i).getAddr()));
+          }
 
-          _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_alloc_array", allocFuncArgs);
+          if (alignedArray.getAddrId().getStorageClass() == StorageClass.EXTERN) {
+            _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_init_array_alloc_params", allocFuncArgs);
+          }
+          else {
+            _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_alloc_array", allocFuncArgs);
+          }
+
+          def.setDef(null);
+        }
+        else {
+          XobjList allocFuncArgs = Xcons.List(alignedArray.getAddrId().getAddr(),
+                                              alignedArray.getArrayId().Ref(),
+                                              alignedArray.getDescId().Ref());
+          for (int i = alignedArray.getDim() - 1; i >= 0; i--) {
+            allocFuncArgs.add(Xcons.Cast(Xtype.unsignedlonglongType,
+                                         alignedArray.getAccIdAt(i).getAddr()));
+          }
+
+          _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_init_array_addr", allocFuncArgs);
         }
       }
     }

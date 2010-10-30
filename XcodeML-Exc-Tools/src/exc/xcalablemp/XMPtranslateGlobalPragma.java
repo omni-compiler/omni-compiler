@@ -399,17 +399,21 @@ public class XMPtranslateGlobalPragma {
 
     // declare array address pointer
     Ident arrayAddrId = null;
-    if( arrayId.getStorageClass() == StorageClass.EXTERN)
+    if (arrayId.getStorageClass() == StorageClass.EXTERN) {
       arrayAddrId = _env.declExternIdent(XMP.ADDR_PREFIX_ + arrayName,
                                          Xtype.Pointer(arrayElmtType));
-    else if (arrayId.getStorageClass() == StorageClass.STATIC)
+    }
+    else if (arrayId.getStorageClass() == StorageClass.STATIC) {
       arrayAddrId = _env.declStaticIdent(XMP.ADDR_PREFIX_ + arrayName,
                                          Xtype.Pointer(arrayElmtType));
-    else if(arrayId.getStorageClass() == StorageClass.EXTDEF)
+    }
+    else if (arrayId.getStorageClass() == StorageClass.EXTDEF) {
       arrayAddrId = _env.declGlobalIdent(XMP.ADDR_PREFIX_ + arrayName,
                                          Xtype.Pointer(arrayElmtType));
-    else
+    }
+    else {
       throw new XMPexception("cannot align array '" + arrayName +  ", wrong storage class");
+    }
 
     // declare array descriptor
     Ident arrayDescId = _env.declStaticIdent(XMP.DESC_PREFIX_ + arrayName,
@@ -448,7 +452,8 @@ public class XMPtranslateGlobalPragma {
     _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_init_array_desc", initArrayDescFuncArgs);
 
     XMPalignedArray alignedArray = new XMPalignedArray(arrayName, arrayElmtType, arrayDim,
-                                                       arraySizeVector, accIdVector, arrayDescId, arrayAddrId,
+                                                       arraySizeVector, accIdVector,
+                                                       arrayId, arrayDescId, arrayAddrId,
                                                        templateObj);
     _globalObjectTable.putAlignedArray(alignedArray);
 
