@@ -2,6 +2,7 @@
 #define _XCALABLEMP_INTERNAL
 
 // --------------- including headers  --------------------------------
+#include <assert.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include "mpi.h"
@@ -46,11 +47,12 @@ typedef struct _XCALABLEMP_template_chunk_type {
   long long par_stride;
   unsigned long long par_chunk_width;
   int dist_manner;
+  _Bool is_regular_block;
 
   // FIXME<use onto_nodex_index???> enable when dist_manner is not _XCALABLEMP_N_DIST_DUPLICATION
   int onto_nodes_index;
   _XCALABLEMP_nodes_info_t *onto_nodes_info;
-  // -------------------------------------------------------------
+  // --------------------------------------------------------------------------------------------
 } _XCALABLEMP_template_chunk_t;
 
 typedef struct _XCALABLEMP_template_type {
@@ -77,6 +79,9 @@ typedef struct _XCALABLEMP_array_info_type {
   int par_upper;
   int par_stride;
   int par_size;
+
+  int dist_manner;
+  _Bool is_regular_block;
 
   int local_lower;
   int local_upper;

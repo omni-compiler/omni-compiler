@@ -377,19 +377,36 @@ void _XCALABLEMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_bu
   }
 }
 
+static void _XCALABLEMP_reflect_shadow_ALLGATHER(void *array_addr, _XCALABLEMP_array_t *array_desc, int array_index) {
+//  MPI_Allgather ( void *sendbuf, int sendcount, MPI_Datatype sendtype,
+//                  void *recvbuf, int recvcount, MPI_Datatype recvtype, 
+//                  MPI_Comm comm )
+  assert(array_desc->dim == 1);
+  assert(array_desc->info[array_index].dist_manner == _XCALABLEMP_N_DIST_BLOCK);
+
+  return;
+}
+
 // FIXME not implemented yet
 void _XCALABLEMP_reflect_shadow_FULL(void *array_addr, _XCALABLEMP_array_t *array_desc, int array_index) {
   if (!(array_desc->is_allocated)) {
     return;
   }
 
+  int array_dim = array_desc->dim;
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
 
-  // get communicator info
-  MPI_Comm *comm = ai->shadow_comm;
-  int size = ai->shadow_comm_size;
-  int rank = ai->shadow_comm_rank;
-
-  // get array info
-  int array_type = array_desc->type;
+  // special cases
+  if ((array_dim == 1) && (ai->dist_manner == _XCALABLEMP_N_DIST_BLOCK)) {
+    if (ai->is_regular_block) {
+      // use allgather
+      _XCALABLEMP_reflect_shadow_ALLGATHER(array_addr, array_desc, array_index);
+      return;
+    }
+    else {
+      // use allgatherv FIXME implement
+      _XCALABLEMP_fatal("not implemented yet");
+      return;
+    }
+  }
 }

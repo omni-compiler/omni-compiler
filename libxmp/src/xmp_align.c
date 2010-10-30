@@ -54,6 +54,9 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
       ai->par_stride = 1;
       ai->par_size = size;
 
+      ai->dist_manner = _XCALABLEMP_N_DIST_DUPLICATION;
+      ai->is_regular_block = true;
+
       ai->local_lower = lower;
       ai->local_upper = upper;
       ai->local_stride = 1;
@@ -167,6 +170,9 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, 
     ai->par_stride = 1;
     ai->par_size = par_size;
 
+    ai->dist_manner = _XCALABLEMP_N_DIST_BLOCK;
+    ai->is_regular_block = (chunk->par_lower == align_subscript) && chunk->is_regular_block;
+
     ai->local_lower = 0;
     ai->local_upper = par_size - 1;
     ai->local_stride = 1;
@@ -217,6 +223,9 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
     ai->par_upper = par_upper;
     ai->par_stride = par_stride;
     ai->par_size = par_size;
+
+    ai->dist_manner = _XCALABLEMP_N_DIST_CYCLIC;
+    ai->is_regular_block = (chunk->par_lower == align_subscript) && chunk->is_regular_block;
 
     ai->local_lower = 0;
     ai->local_upper = par_size - 1;
