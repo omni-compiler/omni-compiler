@@ -132,7 +132,7 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, 
     _XCALABLEMP_fatal("aligned array is out of template bound");
   }
 
-  int par_lower, par_upper, par_size;
+  int par_lower = 0, par_upper = 0, par_size = 0; // XXX initialized by dummy
   if (template->is_owner) {
     long long template_lower = chunk->par_lower;
     long long template_upper = chunk->par_upper;
@@ -203,7 +203,7 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
     _XCALABLEMP_fatal("aligned array is out of template bound");
   }
 
-  int par_lower, par_upper, par_stride, par_size;
+  int par_lower = 0, par_upper = 0, par_stride = 0, par_size = 0; // initialized by dummy
   if (template->is_owner) {
     int cycle = chunk->par_stride;
     int mod = _XCALABLEMP_modi_ll_i(chunk->par_lower - align_subscript, cycle);

@@ -65,9 +65,9 @@ static int _XCALABLEMP_calc_gmove_owner_SCALAR(long long ref_index, _XCALABLEMP_
 static int _XCALABLEMP_calc_gmove_nodes_rank(int *rank_array, _XCALABLEMP_nodes_t *nodes);
 static int _XCALABLEMP_calc_gmove_target_nodes_size(_XCALABLEMP_nodes_t *nodes, int *rank_array);
 static _Bool _XCALABLEMP_calc_local_copy_template_BLOCK(_XCALABLEMP_template_chunk_t *chunk,
-                                                        long long *lower, long long *upper, long long s);
+                                                        long long *lower, long long *upper, int s);
 static _Bool _XCALABLEMP_calc_local_copy_template_CYCLIC1(_XCALABLEMP_template_chunk_t *chunk,
-                                                          long long *lower, long long u, long long *stride);
+                                                          long long *lower, long long u, int *stride);
 static _Bool _XCALABLEMP_calc_local_copy_home_ref(_XCALABLEMP_array_t *dst_array, int dst_dim_index,
                                                   int *dst_l, int *dst_u, int *dst_s,
                                                   int *src_l, int *src_u, int *src_s);
@@ -90,12 +90,13 @@ static _Bool _XCALABLEMP_check_gmove_inclusion_SCALAR(long long ref_index, _XCAL
       }
     case _XCALABLEMP_N_DIST_CYCLIC:
       {
-        long long par_stride = chunk->par_stride;
-        if (((chunk->par_lower) % par_stride) == (ref_index % par_stride)) return true;
+        int par_stride = chunk->par_stride;
+        if (_XCALABLEMP_modi_ll_i(chunk->par_lower, par_stride) == _XCALABLEMP_modi_ll_i(ref_index, par_stride)) return true;
         else return false;
       }
     default:
       _XCALABLEMP_fatal("unknown distribute manner");
+      return false; // XXX dummy
   }
 }
 
@@ -109,9 +110,10 @@ static int _XCALABLEMP_calc_gmove_owner_SCALAR(long long ref_index, _XCALABLEMP_
     case _XCALABLEMP_N_DIST_BLOCK:
       return (ref_index - (info->ser_lower)) / (chunk->par_chunk_width);
     case _XCALABLEMP_N_DIST_CYCLIC:
-      return (ref_index - (info->ser_lower)) % (chunk->par_stride);
+      return _XCALABLEMP_modi_ll_i(ref_index - (info->ser_lower), chunk->par_stride);
     default:
       _XCALABLEMP_fatal("unknown distribute manner");
+      return 0; // XXX dummy
   }
 }
 
@@ -151,16 +153,16 @@ static int _XCALABLEMP_calc_gmove_target_nodes_size(_XCALABLEMP_nodes_t *nodes, 
 }
 
 static _Bool _XCALABLEMP_calc_local_copy_template_BLOCK(_XCALABLEMP_template_chunk_t *chunk,
-                                                        long long *lower, long long *upper, long long s) {
+                                                        long long *lower, long long *upper, int s) {
   long long l = *lower;
   long long u = *upper;
   long long template_lower = chunk->par_lower;
   long long template_upper = chunk->par_upper;
 
   if (s != 1) {
-    long long dst_mod = l % s;
+    int dst_mod = _XCALABLEMP_modi_ll_i(l, s);
     // normalize template lower
-    long long lower_mod = template_lower % s;
+    int lower_mod = _XCALABLEMP_modi_ll_i(template_lower, s);
     if (lower_mod != dst_mod) {
       if (lower_mod < dst_mod) {
         template_lower += (dst_mod - lower_mod);
@@ -200,14 +202,14 @@ static _Bool _XCALABLEMP_calc_local_copy_template_BLOCK(_XCALABLEMP_template_chu
 
 // XXX used when ref_stride is 1
 static _Bool _XCALABLEMP_calc_local_copy_template_CYCLIC1(_XCALABLEMP_template_chunk_t *chunk,
-                                                          long long *lower, long long u, long long *stride) {
+                                                          long long *lower, long long u, int *stride) {
   long long l = *lower;
-  long long nodes_size = chunk->onto_nodes_info->size;
   long long template_lower = chunk->par_lower;
+  int nodes_size = chunk->onto_nodes_info->size;
 
   // calc lower
-  long long dst_mod = template_lower % nodes_size;
-  long long lower_mod = l % nodes_size;
+  int dst_mod = _XCALABLEMP_modi_ll_i(template_lower, nodes_size);
+  int lower_mod = _XCALABLEMP_modi_ll_i(l, nodes_size);
   if (lower_mod != dst_mod) {
     if (lower_mod < dst_mod) {
       l += (dst_mod - lower_mod);
@@ -245,7 +247,7 @@ static _Bool _XCALABLEMP_calc_local_copy_home_ref(_XCALABLEMP_array_t *dst_array
     long long align_subscript = dst_array_info->align_subscript;
     long long l = *dst_l + align_subscript;
     long long u = *dst_u + align_subscript;
-    long long s = *dst_s;
+    int s = *dst_s;
 
     _XCALABLEMP_template_chunk_t *chunk = dst_array_info->align_template_chunk;
     switch (chunk->dist_manner) {
@@ -268,7 +270,7 @@ static _Bool _XCALABLEMP_calc_local_copy_home_ref(_XCALABLEMP_array_t *dst_array
           }
 
           return res;
-        } break;
+        }
       case _XCALABLEMP_N_DIST_CYCLIC:
         {
           if (s == 1) {
@@ -291,10 +293,12 @@ static _Bool _XCALABLEMP_calc_local_copy_home_ref(_XCALABLEMP_array_t *dst_array
           else {
             // FIXME
             _XCALABLEMP_fatal("not implemented yet");
+            return false; // XXX dummy;
           }
-        } break;
+        }
       default:
         _XCALABLEMP_fatal("unknown distribute manner");
+        return false; // XXX dummy;
     }
   }
 }
@@ -798,7 +802,7 @@ void _XCALABLEMP_gmove_BCAST_ARRAY_SECTION(_XCALABLEMP_array_t *src_array, int t
   }
 
   // bcast data
-  void *pack_buffer;
+  void *pack_buffer = NULL;
   if (is_root) {
     for (int i = dst_dim_index; i < dst_dim; i++) {
       dst_buffer_elmts *= _XCALABLEMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
@@ -1066,8 +1070,8 @@ void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION(_XCALABLEMP_array_t *dst_array, _X
     // FIXME use execution nodes set
     _XCALABLEMP_nodes_t *comm_nodes = dst_nodes;
 
-    void *recv_buffer;
-    void *send_buffer;
+    void *recv_buffer = NULL;
+    void *send_buffer = NULL;
 
     MPI_Datatype mpi_datatype;
     MPI_Type_contiguous(type_size, MPI_BYTE, &mpi_datatype);

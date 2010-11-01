@@ -4,9 +4,9 @@
 #include "xmp_math_function.h"
 
 static void _XCALABLEMP_calc_template_size(_XCALABLEMP_template_t *t, int dim);
-static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper, long long *stride,
+static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper, int *stride,
                                               long long lb, long long ub);
-static _Bool _XCALABLEMP_check_template_ref_inclusion(long long ref_lower, long long ref_upper, long long ref_stride,
+static _Bool _XCALABLEMP_check_template_ref_inclusion(long long ref_lower, long long ref_upper, int ref_stride,
                                                       _XCALABLEMP_template_chunk_t *chunk);
 
 static void _XCALABLEMP_calc_template_size(_XCALABLEMP_template_t *t, int dim) {
@@ -22,10 +22,11 @@ static void _XCALABLEMP_calc_template_size(_XCALABLEMP_template_t *t, int dim) {
   }
 }
 
-static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper, long long *stride,
+static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper, int *stride,
                                               long long lb, long long ub) {
   // setup temporary variables
-  long long l, u, s = *(stride);
+  long long l, u;
+  int s = *stride;
   if (s > 0) {
     l = *lower;
     u = *upper;
@@ -65,7 +66,7 @@ static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper
   }
 }
 
-static _Bool _XCALABLEMP_check_template_ref_inclusion(long long ref_lower, long long ref_upper, long long ref_stride,
+static _Bool _XCALABLEMP_check_template_ref_inclusion(long long ref_lower, long long ref_upper, int ref_stride,
                                                       _XCALABLEMP_template_chunk_t *chunk) {
   switch (chunk->dist_manner) {
     case _XCALABLEMP_N_DIST_DUPLICATION:
@@ -76,9 +77,9 @@ static _Bool _XCALABLEMP_check_template_ref_inclusion(long long ref_lower, long 
         long long template_upper = chunk->par_upper;
 
         if (ref_stride != 1) {
-          long long ref_stride_mod = ref_lower % ref_stride;
+          int ref_stride_mod = _XCALABLEMP_modi_ll_i(ref_lower, ref_stride);
           /* normalize template lower */
-          long long template_lower_mod = template_lower % ref_stride;
+          int template_lower_mod = _XCALABLEMP_modi_ll_i(template_lower, ref_stride);
           if (template_lower_mod != ref_stride_mod) {
             if (template_lower_mod < ref_stride_mod) {
               template_lower += (ref_stride_mod - template_lower_mod);
@@ -93,7 +94,7 @@ static _Bool _XCALABLEMP_check_template_ref_inclusion(long long ref_lower, long 
           }
 
           /* normalize template upper FIXME needed??? */
-          long long template_upper_mod = template_upper % ref_stride;
+          int template_upper_mod = _XCALABLEMP_modi_ll_i(template_upper, ref_stride);
           if (template_upper_mod != ref_stride_mod) {
             if (ref_stride_mod < template_upper_mod) {
               template_upper -= (template_upper_mod - ref_stride_mod);
@@ -118,8 +119,8 @@ static _Bool _XCALABLEMP_check_template_ref_inclusion(long long ref_lower, long 
       {
         if (ref_stride == 1) {
           int nodes_size = (chunk->onto_nodes_info)->size;
-          int par_lower_mod = chunk->par_lower % nodes_size;
-          int ref_lower_mod = ref_lower % nodes_size;
+          int par_lower_mod = _XCALABLEMP_modi_ll_i(chunk->par_lower, nodes_size);
+          int ref_lower_mod = _XCALABLEMP_modi_ll_i(ref_lower, nodes_size);
           if (par_lower_mod != ref_lower_mod) {
             if (ref_lower_mod < par_lower_mod) ref_lower += (par_lower_mod - ref_lower_mod);
             else ref_lower += (nodes_size - ref_lower_mod + par_lower_mod);
@@ -329,7 +330,8 @@ _Bool _XCALABLEMP_exec_task_TEMPLATE_PART(int get_upper, _XCALABLEMP_template_t 
   _Bool is_member = true;
   int acc_nodes_size = 1;
   int ref_dim = ref_template->dim;
-  long long ref_lower, ref_upper, ref_stride;
+  long long ref_lower, ref_upper;
+  int ref_stride;
 
   va_list args;
   va_start(args, ref_template);
@@ -359,7 +361,7 @@ _Bool _XCALABLEMP_exec_task_TEMPLATE_PART(int get_upper, _XCALABLEMP_template_t 
       else {
         ref_upper = va_arg(args, long long);
       }
-      ref_stride = va_arg(args, long long);
+      ref_stride = va_arg(args, int);
 
       _XCALABLEMP_validate_template_ref(&ref_lower, &ref_upper, &ref_stride, info->ser_lower, info->ser_upper);
 

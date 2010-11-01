@@ -2279,10 +2279,11 @@ public class XMPtranslateLocalPragma {
               tempArgs.add(Xcons.Cast(castType, t.getArg(1)));
             }
             // stride
-            if (t.getArg(2) == null) tempArgs.add(Xcons.Cast(castType, Xcons.IntConstant(1)));
+            if (t.getArg(2) == null) tempArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
             else {
               splitComm = true;
-              tempArgs.add(Xcons.Cast(castType, t.getArg(2)));
+              // XXX stride: always int
+              tempArgs.add(Xcons.Cast(Xtype.intType, t.getArg(2)));
             }
           }
 

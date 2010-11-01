@@ -44,7 +44,7 @@ typedef struct _XCALABLEMP_template_chunk_type {
   long long par_upper;
   // ----------------------------
 
-  long long par_stride;
+  int par_stride;
   unsigned long long par_chunk_width;
   int dist_manner;
   _Bool is_regular_chunk;

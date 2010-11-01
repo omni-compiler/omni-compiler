@@ -904,6 +904,7 @@ void _XCALABLEMP_normalize_array_section(int *lower, int *upper, int *stride) {
     u = *lower;
   }
   else {
+    l = 0; u = 0; // XXX dummy
     _XCALABLEMP_fatal("the stride of <array-section> is 0");
   }
 
