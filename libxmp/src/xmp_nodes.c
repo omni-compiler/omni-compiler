@@ -196,8 +196,8 @@ void _XCALABLEMP_validate_nodes_ref(int *lower, int *upper, int *stride, int siz
     u = *lower;
   }
   else {
-    l = 0; u = 0; // XXX dummy
     _XCALABLEMP_fatal("the stride of <nodes-ref> is 0");
+    l = 0; u = 0; // XXX dummy
   }
 
   // check boundary

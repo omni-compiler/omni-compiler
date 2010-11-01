@@ -37,6 +37,7 @@ static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper
   }
   else {
     _XCALABLEMP_fatal("the stride of <template-ref> is 0");
+    l = 0; u = 0; // XXX dummy
   }
 
   // check boundary
@@ -135,10 +136,12 @@ static _Bool _XCALABLEMP_check_template_ref_inclusion(long long ref_lower, long 
         }
         else {
           _XCALABLEMP_fatal("not implemented condition: (stride is not 1 && cyclic distribution)");
+          return false; // XXX dummy
         }
       }
     default:
       _XCALABLEMP_fatal("unknown distribution manner");
+      return false; // XXX dummy
   }
 }
 

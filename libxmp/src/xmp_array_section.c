@@ -164,7 +164,7 @@ static void _XCALABLEMP_pack_array_3_GENERAL(void *buf_addr, void *src_addr, siz
   for (int l = src_lower0; l <= src_upper0; l += src_stride0) { \
     for (int k = src_lower1; k <= src_upper1; k += src_stride1) { \
       for (int j = src_lower2; j <= src_upper2; j += src_stride2) { \
-        _type *addr = src_addr + (l * src_dim_acc0) + (k * src_dim_acc1); + (j * src_dim_acc2); \
+        _type *addr = src_addr + (l * src_dim_acc0) + (k * src_dim_acc1) + (j * src_dim_acc2); \
         for (int i = src_lower3; i <= src_upper3; i += src_stride3) { \
           *buf_addr = addr[i]; \
           buf_addr++; \
@@ -229,7 +229,7 @@ static void _XCALABLEMP_pack_array_4_GENERAL(void *buf_addr, void *src_addr, siz
     for (int l = src_lower1; l <= src_upper1; l += src_stride1) { \
       for (int k = src_lower2; k <= src_upper2; k += src_stride2) { \
         for (int j = src_lower3; j <= src_upper3; j += src_stride3) { \
-          _type *addr = src_addr + (m * src_dim_acc0) + (l * src_dim_acc1); + (k * src_dim_acc2) + (j * src_dim_acc3); \
+          _type *addr = src_addr + (m * src_dim_acc0) + (l * src_dim_acc1) + (k * src_dim_acc2) + (j * src_dim_acc3); \
           for (int i = src_lower4; i <= src_upper4; i += src_stride4) { \
             *buf_addr = addr[i]; \
             buf_addr++; \
@@ -301,7 +301,7 @@ static void _XCALABLEMP_pack_array_5_GENERAL(void *buf_addr, void *src_addr, siz
       for (int l = src_lower2; l <= src_upper2; l += src_stride2) { \
         for (int k = src_lower3; k <= src_upper3; k += src_stride3) { \
           for (int j = src_lower4; j <= src_upper4; j += src_stride4) { \
-            _type *addr = src_addr + (n * src_dim_acc0) + (m * src_dim_acc1); + (l * src_dim_acc2) + \
+            _type *addr = src_addr + (n * src_dim_acc0) + (m * src_dim_acc1) + (l * src_dim_acc2) + \
                                      (k * src_dim_acc3) + (j * src_dim_acc4); \
             for (int i = src_lower5; i <= src_upper5; i += src_stride5) { \
               *buf_addr = addr[i]; \
@@ -380,8 +380,8 @@ static void _XCALABLEMP_pack_array_6_GENERAL(void *buf_addr, void *src_addr, siz
         for (int l = src_lower3; l <= src_upper3; l += src_stride3) { \
           for (int k = src_lower4; k <= src_upper4; k += src_stride4) { \
             for (int j = src_lower5; j <= src_upper5; j += src_stride5) { \
-              _type *addr = src_addr + (o * src_dim_acc0) + (n * src_dim_acc1); + (m * src_dim_acc2) + \
-                                       (l * src_dim_acc3) + (k * src_dim_acc4); + (j * src_dim_acc5); \
+              _type *addr = src_addr + (o * src_dim_acc0) + (n * src_dim_acc1) + (m * src_dim_acc2) + \
+                                       (l * src_dim_acc3) + (k * src_dim_acc4) + (j * src_dim_acc5); \
               for (int i = src_lower6; i <= src_upper6; i += src_stride6) { \
                 *buf_addr = addr[i]; \
                 buf_addr++; \
@@ -904,8 +904,8 @@ void _XCALABLEMP_normalize_array_section(int *lower, int *upper, int *stride) {
     u = *lower;
   }
   else {
-    l = 0; u = 0; // XXX dummy
     _XCALABLEMP_fatal("the stride of <array-section> is 0");
+    l = 0; u = 0; // XXX dummy
   }
 
   // normalize values
