@@ -2,7 +2,7 @@
 #include <string.h>
 #include "xmp_constant.h"
 #include "xmp_internal.h"
-#include "xmp_math_macro.h"
+#include "xmp_math_function.h"
 
 typedef struct _XCALABLEMP_bcast_array_section_info_type {
   int lower;

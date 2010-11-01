@@ -1,7 +1,7 @@
 #include <stdarg.h>
 #include "xmp_constant.h"
 #include "xmp_internal.h"
-#include "xmp_math_macro.h"
+#include "xmp_math_function.h"
 
 void _XCALABLEMP_bcast_NODES_ENTIRE_OMITTED(_XCALABLEMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size) {
   if (!(bcast_nodes->is_member)) {

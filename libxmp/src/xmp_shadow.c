@@ -2,7 +2,7 @@
 #include <string.h>
 #include "xmp_constant.h"
 #include "xmp_internal.h"
-#include "xmp_math_macro.h"
+#include "xmp_math_function.h"
 
 static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array_index);
 
@@ -407,13 +407,33 @@ static void _XCALABLEMP_free_full_shadow_ref(int *lower, int *upper, int *stride
 }
 
 static void _XCALABLEMP_reflect_shadow_ALLGATHER(void *array_addr, _XCALABLEMP_array_t *array_desc, int array_index) {
-//  MPI_Allgather ( void *sendbuf, int sendcount, MPI_Datatype sendtype,
-//                  void *recvbuf, int recvcount, MPI_Datatype recvtype, 
-//                  MPI_Comm comm )
   assert(array_desc->dim == 1);
-  assert(array_desc->info[array_index].dist_manner == _XCALABLEMP_N_DIST_BLOCK);
 
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
+  assert(ai->dist_manner == _XCALABLEMP_N_DIST_BLOCK);
+
+  size_t type_size = array_desc->type_size;
+  MPI_Datatype mpi_datatype;
+  MPI_Type_contiguous(type_size, MPI_BYTE, &mpi_datatype);
+  MPI_Type_commit(&mpi_datatype);
+
+  int gather_count = ai->par_size;
+  size_t gather_byte_size = type_size * gather_count;
+  void *pack_buffer = _XCALABLEMP_alloc(gather_byte_size);
+  memcpy(pack_buffer, array_addr + (type_size * ai->local_lower), gather_byte_size);
+
+  MPI_Allgather(pack_buffer, gather_count, mpi_datatype,
+                array_addr, gather_count, mpi_datatype,
+                *(array_desc->comm));
+
+  _XCALABLEMP_free(pack_buffer);
+}
+
+static void _XCALABLEMP_reflect_shadow_ALLGATHERV(void *array_addr, _XCALABLEMP_array_t *array_desc, int array_index) {
+  assert(array_desc->dim == 1);
+
+  _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
+  assert(ai->dist_manner == _XCALABLEMP_N_DIST_BLOCK);
 
   size_t type_size = array_desc->type_size;
   MPI_Datatype mpi_datatype;
@@ -443,14 +463,13 @@ void _XCALABLEMP_reflect_shadow_FULL(void *array_addr, _XCALABLEMP_array_t *arra
 
   // special cases
   if ((array_dim == 1) && (ai->dist_manner == _XCALABLEMP_N_DIST_BLOCK)) {
-    if (ai->is_regular_block) {
+    if (ai->is_regular_chunk) {
       // use allgather
       _XCALABLEMP_reflect_shadow_ALLGATHER(array_addr, array_desc, array_index);
       return;
     }
     else {
-      // use allgatherv FIXME implement
-      _XCALABLEMP_fatal("not implemented yet: not regular block");
+      _XCALABLEMP_reflect_shadow_ALLGATHERV(array_addr, array_desc, array_index);
       return;
     }
   }

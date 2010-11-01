@@ -1,5 +1,5 @@
-#ifndef _XCALABLEMP_MATH_MACRO
-#define _XCALABLEMP_MATH_MACRO
+#ifndef _XCALABLEMP_MATH_FUNCTION
+#define _XCALABLEMP_MATH_FUNCTION
 
 // --- integer functions
 // calculate ceil(a/b)
@@ -13,4 +13,8 @@
 #define _XCALABLEMP_M_MAX(a_, b_) ((a_) > (b_) ? (a_) : (b_))
 #define _XCALABLEMP_M_MIN(a_, b_) ((a_) > (b_) ? (b_) : (a_))
 
-#endif //_XCALABLEMP_MATH_MACRO
+// defined in xmp_math_function.c
+extern int _XCALABLEMP_modi_ll_i(long long value, int cycle);
+extern int _XCALABLEMP_modi_i_i(int value, int cycle);
+
+#endif //_XCALABLEMP_MATH_FUNCTION

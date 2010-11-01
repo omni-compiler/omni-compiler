@@ -1,7 +1,7 @@
 #include <stdarg.h>
 #include "xmp_constant.h"
 #include "xmp_internal.h"
-#include "xmp_math_macro.h"
+#include "xmp_math_function.h"
 
 // XXX nodes number is { 1-ogigin in language | 0-origin in runtime } : doing translation
 // --- exception: _XCALABLEMP_validate_nodes_ref()

@@ -1,7 +1,7 @@
 #include <stdarg.h>
 #include "xmp_constant.h"
 #include "xmp_internal.h"
-#include "xmp_math_macro.h"
+#include "xmp_math_function.h"
 
 static void _XCALABLEMP_calc_template_size(_XCALABLEMP_template_t *t, int dim);
 static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper, long long *stride,
@@ -219,7 +219,7 @@ void _XCALABLEMP_dist_template_DUPLICATION(_XCALABLEMP_template_t *template, int
   chunk->par_stride = 1;
   chunk->par_chunk_width = ti->ser_size;
   chunk->dist_manner = _XCALABLEMP_N_DIST_DUPLICATION;
-  chunk->is_regular_block = true;
+  chunk->is_regular_chunk = true;
 
   chunk->onto_nodes_index = _XCALABLEMP_N_NO_ONTO_NODES;
   chunk->onto_nodes_info = NULL;
@@ -258,10 +258,10 @@ void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int templ
   chunk->par_chunk_width = chunk_width;
   chunk->dist_manner = _XCALABLEMP_N_DIST_BLOCK;
   if ((ti->ser_size % nodes_size) == 0) {
-    chunk->is_regular_block = true;
+    chunk->is_regular_chunk = true;
   }
   else {
-    chunk->is_regular_block = false;
+    chunk->is_regular_chunk = false;
   }
 
   chunk->onto_nodes_index = nodes_index;
@@ -308,10 +308,10 @@ void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int temp
   chunk->par_chunk_width = _XCALABLEMP_M_CEILi(ti->ser_size, nodes_size);
   chunk->dist_manner = _XCALABLEMP_N_DIST_CYCLIC;
   if ((ti->ser_size % nodes_size) == 0) {
-    chunk->is_regular_block = true;
+    chunk->is_regular_chunk = true;
   }
   else {
-    chunk->is_regular_block = false;
+    chunk->is_regular_chunk = false;
   }
 
   chunk->onto_nodes_index = nodes_index;

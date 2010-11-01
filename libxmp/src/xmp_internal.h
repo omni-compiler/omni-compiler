@@ -47,7 +47,7 @@ typedef struct _XCALABLEMP_template_chunk_type {
   long long par_stride;
   unsigned long long par_chunk_width;
   int dist_manner;
-  _Bool is_regular_block;
+  _Bool is_regular_chunk;
 
   // FIXME<use onto_nodex_index???> enable when dist_manner is not _XCALABLEMP_N_DIST_DUPLICATION
   int onto_nodes_index;
@@ -81,7 +81,7 @@ typedef struct _XCALABLEMP_array_info_type {
   int par_size;
 
   int dist_manner;
-  _Bool is_regular_block;
+  _Bool is_regular_chunk;
 
   int local_lower;
   int local_upper;

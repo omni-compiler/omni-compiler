@@ -1,7 +1,7 @@
 #include <stdarg.h>
 #include "xmp_constant.h"
 #include "xmp_internal.h"
-#include "xmp_math_macro.h"
+#include "xmp_math_function.h"
 
 static void _XCALABLEMP_calc_array_dim_elmts(_XCALABLEMP_array_t *array, int array_index) {
   int dim = array->dim;
@@ -55,7 +55,7 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
       ai->par_size = size;
 
       ai->dist_manner = _XCALABLEMP_N_DIST_DUPLICATION;
-      ai->is_regular_block = true;
+      ai->is_regular_chunk = true;
 
       ai->local_lower = lower;
       ai->local_upper = upper;
@@ -171,7 +171,7 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, 
     ai->par_size = par_size;
 
     ai->dist_manner = _XCALABLEMP_N_DIST_BLOCK;
-    ai->is_regular_block = (ti->ser_lower == align_subscript) && chunk->is_regular_block;
+    ai->is_regular_chunk = (ti->ser_lower == (ai->ser_lower + align_subscript)) && chunk->is_regular_chunk;
 
     ai->local_lower = 0;
     ai->local_upper = par_size - 1;
@@ -206,8 +206,7 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
   int par_lower, par_upper, par_stride, par_size;
   if (template->is_owner) {
     int cycle = chunk->par_stride;
-    int mod = (chunk->par_lower - align_subscript) % cycle;
-    if (mod < 0) mod += cycle;
+    int mod = _XCALABLEMP_modi_ll_i(chunk->par_lower - align_subscript, cycle);
 
     int dist = (ai->ser_upper - mod) / cycle;
 
@@ -225,7 +224,7 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
     ai->par_size = par_size;
 
     ai->dist_manner = _XCALABLEMP_N_DIST_CYCLIC;
-    ai->is_regular_block = (ti->ser_lower == align_subscript) && chunk->is_regular_block;
+    ai->is_regular_chunk = (ti->ser_lower == (ai->ser_lower + align_subscript)) && chunk->is_regular_chunk;
 
     ai->local_lower = 0;
     ai->local_upper = par_size - 1;

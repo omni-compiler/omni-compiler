@@ -1,7 +1,7 @@
 #include <string.h>
 #include "xmp_constant.h"
 #include "xmp_internal.h"
-#include "xmp_math_macro.h"
+#include "xmp_math_function.h"
 
 // ----- pack array
 // --- dimension 1
