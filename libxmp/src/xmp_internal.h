@@ -20,10 +20,10 @@ typedef struct _XCALABLEMP_nodes_info_type {
 typedef struct _XCALABLEMP_nodes_type {
   _Bool is_member;
   int dim;
+  int comm_size;
 
   // enable when is_member is true
   MPI_Comm *comm;
-  int comm_size;
   int comm_rank;
   // -----------------------------
 

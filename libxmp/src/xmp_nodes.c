@@ -23,10 +23,10 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_GLOBAL(int dim) {
 
   n->is_member = true;
   n->dim = dim;
+  n->comm_size = _XCALABLEMP_world_size;
 
   n->comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_dup(MPI_COMM_WORLD, n->comm);
-  n->comm_size = _XCALABLEMP_world_size;
   n->comm_rank = _XCALABLEMP_world_rank;
 
   return n;
@@ -42,12 +42,11 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_EXEC(int dim) {
 
   n->is_member = true;
   n->dim = dim;
+  n->comm_size = size;
 
   n->comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_dup(*(exec_nodes->comm), n->comm);
-  n->comm_size = size;
   n->comm_rank = rank;
-  n->dim = dim;
 
   return n;
 }
@@ -70,17 +69,22 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NUMBER(int dim, 
 
   n->is_member = is_member;
   n->dim = dim;
+  n->comm_size = _XCALABLEMP_M_COUNT_TRIPLETi(ref_lower, ref_upper, ref_stride);
 
   if (is_member) {
     n->comm = comm;
-    MPI_Comm_size(*comm, &(n->comm_size));
     MPI_Comm_rank(*comm, &(n->comm_rank));
+
+    int split_comm_size;
+    MPI_Comm_size(*comm, &split_comm_size);
+    if (split_comm_size != n->comm_size) {
+      _XCALABLEMP_fatal("incorrect communicator size");
+    }
   }
   else {
     _XCALABLEMP_finalize_comm(comm);
 
     n->comm = NULL;
-    n->comm_size = 0;
     n->comm_rank = _XCALABLEMP_N_INVALID_RANK;
   }
 
@@ -89,9 +93,11 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NUMBER(int dim, 
 
 static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NAMED(int dim, _XCALABLEMP_nodes_t *ref_nodes,
                                                                       int *ref_lower, int *ref_upper, int *ref_stride) {
+  int comm_size = 1;
   int ref_dim = ref_nodes->dim;
   _Bool is_member = true;
   for (int i = 0; i < ref_dim; i++) {
+    comm_size *= _XCALABLEMP_M_COUNT_TRIPLETi(ref_lower[i], ref_upper[i], ref_stride[i]);
     is_member = is_member &&
                 _XCALABLEMP_check_nodes_ref_inclusion(ref_lower[i], ref_upper[i], ref_stride[i], ref_nodes->info[i].rank);
   }
@@ -111,17 +117,22 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NAMED(int dim, _
 
   n->is_member = is_member;
   n->dim = dim;
+  n->comm_size = comm_size;
 
   if (is_member) {
     n->comm = comm;
-    MPI_Comm_size(*comm, &(n->comm_size));
     MPI_Comm_rank(*comm, &(n->comm_rank));
+
+    int split_comm_size;
+    MPI_Comm_size(*comm, &split_comm_size);
+    if (split_comm_size != n->comm_size) {
+      _XCALABLEMP_fatal("incorrect communicator size");
+    }
   }
   else {
     _XCALABLEMP_finalize_comm(comm);
 
     n->comm = NULL;
-    n->comm_size = 0;
     n->comm_rank = _XCALABLEMP_N_INVALID_RANK;
   }
 
@@ -132,7 +143,10 @@ static int _XCALABLEMP_calc_nodes_rank(_XCALABLEMP_nodes_t *n, int dim, int line
   int acc_size = 1;
   for (int i = 0; i < dim; i++) {
     int dim_size = n->info[i].size;
-    n->info[i].rank = (linear_rank / acc_size) % dim_size;
+    if (n->is_member) {
+      n->info[i].rank = (linear_rank / acc_size) % dim_size;
+    }
+
     acc_size *= dim_size;
   }
 
@@ -140,6 +154,8 @@ static int _XCALABLEMP_calc_nodes_rank(_XCALABLEMP_nodes_t *n, int dim, int line
 }
 
 static void _XCALABLEMP_disable_nodes_rank(_XCALABLEMP_nodes_t *n, int dim) {
+  assert(!(n->is_member));
+
   for (int i = 0; i < dim; i++) {
     n->info[i].rank = _XCALABLEMP_N_INVALID_RANK;
   }
@@ -147,7 +163,7 @@ static void _XCALABLEMP_disable_nodes_rank(_XCALABLEMP_nodes_t *n, int dim) {
 
 static void _XCALABLEMP_check_nodes_size_STATIC(int linear_size, int acc_size) {
   if (acc_size != linear_size) {
-    _XCALABLEMP_fatal("indicated communicator size is different from the actual communicator size");
+    _XCALABLEMP_fatal("incorrect communicator size");
   }
 }
 
@@ -162,7 +178,10 @@ static void _XCALABLEMP_check_nodes_size_DYNAMIC(_XCALABLEMP_nodes_t *n, int dim
 
   int dim_size = linear_size / acc_size;
   n->info[dim-1].size = dim_size;
-  n->info[dim-1].rank = (linear_rank / acc_size) % dim_size;
+
+  if (n->is_member) {
+    n->info[dim-1].rank = (linear_rank / acc_size) % dim_size;
+  }
 }
 
 static _Bool _XCALABLEMP_check_nodes_ref_inclusion(int lower, int upper, int stride, int rank) {
