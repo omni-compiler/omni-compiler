@@ -4,6 +4,8 @@
 #include "xmp_math_function.h"
 
 void _XCALABLEMP_bcast_NODES_ENTIRE_OMITTED(_XCALABLEMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size) {
+  assert(bcast_nodes != NULL);
+
   if (!(bcast_nodes->is_member)) {
     return;
   }
@@ -14,19 +16,20 @@ void _XCALABLEMP_bcast_NODES_ENTIRE_OMITTED(_XCALABLEMP_nodes_t *bcast_nodes, vo
   MPI_Type_commit(&mpi_datatype);
 
   // bcast
-  MPI_Bcast(addr, count, mpi_datatype, 0, *(bcast_nodes->comm));
+  MPI_Bcast(addr, count, mpi_datatype, _XCALABLEMP_N_DEFAULT_ROOT_RANK, *(bcast_nodes->comm));
 }
 
 void _XCALABLEMP_bcast_NODES_ENTIRE_GLOBAL(_XCALABLEMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
                                            int from_lower, int from_upper, int from_stride) {
+  assert(bcast_nodes != NULL);
+
   if (!(bcast_nodes->is_member)) {
     return;
   }
 
   // check <from-ref>
-  _XCALABLEMP_validate_nodes_ref(&from_lower, &from_upper, &from_stride, _XCALABLEMP_world_size);
   if (_XCALABLEMP_M_COUNT_TRIPLETi(from_lower, from_upper, from_stride) != 1) {
-    _XCALABLEMP_fatal("multiple source nodes indicated in bcast directive");
+    _XCALABLEMP_fatal("broadcast failed, multiple source nodes indicated");
   }
 
   // setup type
@@ -36,15 +39,22 @@ void _XCALABLEMP_bcast_NODES_ENTIRE_GLOBAL(_XCALABLEMP_nodes_t *bcast_nodes, voi
 
   // bcast
   // XXX node number translation: 1-origin -> 0-origin
+  _XCALABLEMP_validate_nodes_ref(&from_lower, &from_upper, &from_stride, _XCALABLEMP_world_size);
   MPI_Bcast(addr, count, mpi_datatype, from_lower - 1, *(bcast_nodes->comm));
 }
 
+// FIXME read spec
 void _XCALABLEMP_bcast_NODES_ENTIRE_NODES(_XCALABLEMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
                                           _XCALABLEMP_nodes_t *from_nodes, ...) {
-  // FIXME how to implement???
-  if (bcast_nodes == NULL) return;
-  if (from_nodes == NULL) {
-    _XCALABLEMP_fatal("error on broadcast, cannot access to the source node");
+  assert(bcast_nodes != NULL);
+  assert(from_nodes != NULL);
+
+  if (!(bcast_nodes->is_member)) {
+    return;
+  }
+
+  if (!(from_nodes->is_member)) {
+    _XCALABLEMP_fatal("broadcast failed, cannot find the source node");
   }
 
   // calc source nodes number

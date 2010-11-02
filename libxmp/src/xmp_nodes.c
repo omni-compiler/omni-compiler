@@ -25,9 +25,9 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_GLOBAL(int dim) {
   n->dim = dim;
   n->comm_size = _XCALABLEMP_world_size;
 
+  n->comm_rank = _XCALABLEMP_world_rank;
   n->comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_dup(MPI_COMM_WORLD, n->comm);
-  n->comm_rank = _XCALABLEMP_world_rank;
 
   return n;
 }
@@ -44,9 +44,9 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_EXEC(int dim) {
   n->dim = dim;
   n->comm_size = size;
 
+  n->comm_rank = rank;
   n->comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_dup(*(exec_nodes->comm), n->comm);
-  n->comm_rank = rank;
 
   return n;
 }
@@ -72,8 +72,8 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NUMBER(int dim, 
   n->comm_size = _XCALABLEMP_M_COUNT_TRIPLETi(ref_lower, ref_upper, ref_stride);
 
   if (is_member) {
-    n->comm = comm;
     MPI_Comm_rank(*comm, &(n->comm_rank));
+    n->comm = comm;
 
     int split_comm_size;
     MPI_Comm_size(*comm, &split_comm_size);
@@ -84,8 +84,8 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NUMBER(int dim, 
   else {
     _XCALABLEMP_finalize_comm(comm);
 
-    n->comm = NULL;
     n->comm_rank = _XCALABLEMP_N_INVALID_RANK;
+    n->comm = NULL;
   }
 
   return n;
@@ -120,8 +120,8 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NAMED(int dim, _
   n->comm_size = comm_size;
 
   if (is_member) {
-    n->comm = comm;
     MPI_Comm_rank(*comm, &(n->comm_rank));
+    n->comm = comm;
 
     int split_comm_size;
     MPI_Comm_size(*comm, &split_comm_size);
@@ -132,8 +132,8 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NAMED(int dim, _
   else {
     _XCALABLEMP_finalize_comm(comm);
 
-    n->comm = NULL;
     n->comm_rank = _XCALABLEMP_N_INVALID_RANK;
+    n->comm = NULL;
   }
 
   return n;

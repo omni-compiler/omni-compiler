@@ -10,21 +10,12 @@ void _XCALABLEMP_init_world(int *argc, char ***argv) {
   MPI_Initialized(&flag);
   if (!flag) {
     MPI_Init(argc, argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &_XCALABLEMP_world_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &_XCALABLEMP_world_size);
 
-    // init global communicator
-    _XCALABLEMP_nodes_t *world_nodes = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_nodes_t));
-    world_nodes->comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
-    MPI_Comm_dup(MPI_COMM_WORLD, world_nodes->comm);
-    world_nodes->comm_size = _XCALABLEMP_world_size;
-    world_nodes->comm_rank = _XCALABLEMP_world_rank;
-    world_nodes->dim = 0;
+    MPI_Comm *comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
+    MPI_Comm_dup(MPI_COMM_WORLD, comm);
+    _XCALABLEMP_push_comm(comm);
 
-    // push global communicator
-    _XCALABLEMP_push_nodes(world_nodes);
-
-    _XCALABLEMP_world_nodes = world_nodes;
+    _XCALABLEMP_world_nodes = _XCALABLEMP_get_execution_nodes();
   }
 }
 

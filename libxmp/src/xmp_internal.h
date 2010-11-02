@@ -23,8 +23,8 @@ typedef struct _XCALABLEMP_nodes_type {
   int comm_size;
 
   // enable when is_member is true
-  MPI_Comm *comm;
   int comm_rank;
+  MPI_Comm *comm;
   // -----------------------------
 
   _XCALABLEMP_nodes_info_t info[1];
