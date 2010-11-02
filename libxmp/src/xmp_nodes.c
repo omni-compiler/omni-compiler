@@ -11,10 +11,10 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_EXEC(int dim);
 static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NUMBER(int dim, int ref_lower, int ref_upper, int ref_stride);
 static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NAMED(int dim, _XCALABLEMP_nodes_t *ref_nodes,
                                                                       int *ref_lower, int *ref_upper, int *ref_stride);
-static int _XCALABLEMP_calc_nodes_rank(_XCALABLEMP_nodes_t *n, int dim, int linear_rank);
-static void _XCALABLEMP_disable_nodes_rank(_XCALABLEMP_nodes_t *n, int dim);
-static void _XCALABLEMP_check_nodes_size_STATIC(int linear_size, int acc_size);
-static void _XCALABLEMP_check_nodes_size_DYNAMIC(_XCALABLEMP_nodes_t *n, int dim, int linear_size, int linear_rank, int acc_size);
+static void _XCALABLEMP_calc_nodes_rank(_XCALABLEMP_nodes_t *n, int linear_rank);
+static void _XCALABLEMP_disable_nodes_rank(_XCALABLEMP_nodes_t *n);
+static void _XCALABLEMP_check_nodes_size_STATIC(_XCALABLEMP_nodes_t *n, int linear_size);
+static void _XCALABLEMP_check_nodes_size_DYNAMIC(_XCALABLEMP_nodes_t *n, int linear_size, int linear_rank);
 static _Bool _XCALABLEMP_check_nodes_ref_inclusion(int lower, int upper, int stride, int rank);
 
 static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_GLOBAL(int dim) {
@@ -139,35 +139,46 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NAMED(int dim, _
   return n;
 }
 
-static int _XCALABLEMP_calc_nodes_rank(_XCALABLEMP_nodes_t *n, int dim, int linear_rank) {
+static void _XCALABLEMP_calc_nodes_rank(_XCALABLEMP_nodes_t *n, int linear_rank) {
+  assert(n->is_member);
+
   int acc_size = 1;
+  int dim = n->dim;
   for (int i = 0; i < dim; i++) {
     int dim_size = n->info[i].size;
-    if (n->is_member) {
-      n->info[i].rank = (linear_rank / acc_size) % dim_size;
-    }
-
+    n->info[i].rank = (linear_rank / acc_size) % dim_size;
     acc_size *= dim_size;
   }
-
-  return acc_size;
 }
 
-static void _XCALABLEMP_disable_nodes_rank(_XCALABLEMP_nodes_t *n, int dim) {
+static void _XCALABLEMP_disable_nodes_rank(_XCALABLEMP_nodes_t *n) {
   assert(!(n->is_member));
 
+  int dim = n->dim;
   for (int i = 0; i < dim; i++) {
     n->info[i].rank = _XCALABLEMP_N_INVALID_RANK;
   }
 }
 
-static void _XCALABLEMP_check_nodes_size_STATIC(int linear_size, int acc_size) {
+static void _XCALABLEMP_check_nodes_size_STATIC(_XCALABLEMP_nodes_t *n, int linear_size) {
+  int acc_size = 1;
+  int dim = n->dim;
+  for (int i = 0; i < dim; i++) {
+    acc_size *= n->info[i].size;
+  }
+
   if (acc_size != linear_size) {
     _XCALABLEMP_fatal("incorrect communicator size");
   }
 }
 
-static void _XCALABLEMP_check_nodes_size_DYNAMIC(_XCALABLEMP_nodes_t *n, int dim, int linear_size, int linear_rank, int acc_size) {
+static void _XCALABLEMP_check_nodes_size_DYNAMIC(_XCALABLEMP_nodes_t *n, int linear_size, int linear_rank) {
+  int acc_size = 1;
+  int dim = n->dim;
+  for (int i = 0; i < dim - 1; i++) {
+    acc_size *= n->info[i].size;
+  }
+
   if (acc_size > linear_size) {
     _XCALABLEMP_fatal("indicated communicator size is bigger than the actual communicator size");
   }
@@ -176,11 +187,11 @@ static void _XCALABLEMP_check_nodes_size_DYNAMIC(_XCALABLEMP_nodes_t *n, int dim
     _XCALABLEMP_fatal("cannot determine communicator size dynamically");
   }
 
-  int dim_size = linear_size / acc_size;
-  n->info[dim-1].size = dim_size;
+  int end_size = linear_size / acc_size;
+  n->info[dim-1].size = end_size;
 
   if (n->is_member) {
-    n->info[dim-1].rank = (linear_rank / acc_size) % dim_size;
+    n->info[dim-1].rank = (linear_rank / acc_size) % end_size;
   }
 }
 
@@ -264,8 +275,8 @@ void _XCALABLEMP_init_nodes_STATIC_GLOBAL(int map_type, _XCALABLEMP_nodes_t **no
   va_end(args);
 
   // is_member is always true
-  int acc_size = _XCALABLEMP_calc_nodes_rank(n, dim, _XCALABLEMP_world_rank);
-  _XCALABLEMP_check_nodes_size_STATIC(_XCALABLEMP_world_size, acc_size);
+  _XCALABLEMP_calc_nodes_rank(n, _XCALABLEMP_world_rank);
+  _XCALABLEMP_check_nodes_size_STATIC(n, _XCALABLEMP_world_size);
 
   *nodes = (void *)n;
 }
@@ -288,8 +299,8 @@ void _XCALABLEMP_init_nodes_DYNAMIC_GLOBAL(int map_type, _XCALABLEMP_nodes_t **n
   va_end(args);
 
   // is_member is always true
-  int acc_size = _XCALABLEMP_calc_nodes_rank(n, dim - 1, _XCALABLEMP_world_rank);
-  _XCALABLEMP_check_nodes_size_DYNAMIC(n, dim, _XCALABLEMP_world_size, _XCALABLEMP_world_rank, acc_size);
+  _XCALABLEMP_calc_nodes_rank(n, _XCALABLEMP_world_rank);
+  _XCALABLEMP_check_nodes_size_DYNAMIC(n, _XCALABLEMP_world_size, _XCALABLEMP_world_rank);
 
   *nodes = n;
 }
@@ -314,11 +325,11 @@ void _XCALABLEMP_init_nodes_STATIC_EXEC(int map_type, _XCALABLEMP_nodes_t **node
   va_end(args);
 
   if (n->is_member) {
-    int acc_size = _XCALABLEMP_calc_nodes_rank(n, dim, linear_rank);
-    _XCALABLEMP_check_nodes_size_STATIC(linear_size, acc_size);
+    _XCALABLEMP_calc_nodes_rank(n, linear_rank);
+    _XCALABLEMP_check_nodes_size_STATIC(n, linear_size);
   }
   else {
-    _XCALABLEMP_disable_nodes_rank(n, dim);
+    _XCALABLEMP_disable_nodes_rank(n);
   }
 
   *nodes = n;
@@ -344,11 +355,11 @@ void _XCALABLEMP_init_nodes_DYNAMIC_EXEC(int map_type, _XCALABLEMP_nodes_t **nod
   va_end(args);
 
   if (n->is_member) {
-    int acc_size = _XCALABLEMP_calc_nodes_rank(n, dim - 1, linear_rank);
-    _XCALABLEMP_check_nodes_size_DYNAMIC(n, dim, linear_size, linear_rank, acc_size);
+    _XCALABLEMP_calc_nodes_rank(n, linear_rank);
+    _XCALABLEMP_check_nodes_size_DYNAMIC(n, linear_size, linear_rank);
   }
   else {
-    _XCALABLEMP_disable_nodes_rank(n, dim);
+    _XCALABLEMP_disable_nodes_rank(n);
   }
 
   *nodes = n;
@@ -379,11 +390,11 @@ void _XCALABLEMP_init_nodes_STATIC_NODES_NUMBER(int map_type, _XCALABLEMP_nodes_
   va_end(args);
 
   if (n->is_member) {
-    int acc_size = _XCALABLEMP_calc_nodes_rank(n, dim, linear_rank);
-    _XCALABLEMP_check_nodes_size_STATIC(linear_size, acc_size);
+    _XCALABLEMP_calc_nodes_rank(n, linear_rank);
+    _XCALABLEMP_check_nodes_size_STATIC(n, linear_size);
   }
   else {
-    _XCALABLEMP_disable_nodes_rank(n, dim);
+    _XCALABLEMP_disable_nodes_rank(n);
   }
 
   *nodes = n;
@@ -414,11 +425,11 @@ void _XCALABLEMP_init_nodes_DYNAMIC_NODES_NUMBER(int map_type, _XCALABLEMP_nodes
   va_end(args);
 
   if (n->is_member) {
-    int acc_size = _XCALABLEMP_calc_nodes_rank(n, dim - 1, linear_rank);
-    _XCALABLEMP_check_nodes_size_DYNAMIC(n, dim, linear_size, linear_rank, acc_size);
+    _XCALABLEMP_calc_nodes_rank(n, linear_rank);
+    _XCALABLEMP_check_nodes_size_DYNAMIC(n, linear_size, linear_rank);
   }
   else {
-    _XCALABLEMP_disable_nodes_rank(n, dim);
+    _XCALABLEMP_disable_nodes_rank(n);
   }
 
   *nodes = n;
@@ -469,11 +480,11 @@ void _XCALABLEMP_init_nodes_STATIC_NODES_NAMED(int get_upper, int map_type, _XCA
   va_end(args);
 
   if (n->is_member) {
-    int acc_size = _XCALABLEMP_calc_nodes_rank(n, dim, linear_rank);
-    _XCALABLEMP_check_nodes_size_STATIC(linear_size, acc_size);
+    _XCALABLEMP_calc_nodes_rank(n, linear_rank);
+    _XCALABLEMP_check_nodes_size_STATIC(n, linear_size);
   }
   else {
-    _XCALABLEMP_disable_nodes_rank(n, dim);
+    _XCALABLEMP_disable_nodes_rank(n);
   }
 
   *nodes = n;
@@ -522,11 +533,11 @@ void _XCALABLEMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, int map_type, _XC
   va_end(args);
 
   if (n->is_member) {
-    int acc_size = _XCALABLEMP_calc_nodes_rank(n, dim - 1, linear_rank);
-    _XCALABLEMP_check_nodes_size_DYNAMIC(n, dim, linear_size, linear_rank, acc_size);
+    _XCALABLEMP_calc_nodes_rank(n, linear_rank);
+    _XCALABLEMP_check_nodes_size_DYNAMIC(n, linear_size, linear_rank);
   }
   else {
-    _XCALABLEMP_disable_nodes_rank(n, dim);
+    _XCALABLEMP_disable_nodes_rank(n);
   }
 
   *nodes = n;
