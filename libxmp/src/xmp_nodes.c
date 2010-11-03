@@ -93,6 +93,12 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NUMBER(int dim, 
 
 static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NAMED(int dim, _XCALABLEMP_nodes_t *ref_nodes,
                                                                       int *ref_lower, int *ref_upper, int *ref_stride) {
+  assert(ref_nodes != NULL);
+  assert(ref_lower != NULL);
+  assert(ref_upper != NULL);
+  assert(ref_stride != NULL);
+  assert(ref_nodes->is_member);
+
   int comm_size = 1;
   int ref_dim = ref_nodes->dim;
   _Bool is_member = true;
@@ -140,6 +146,7 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NAMED(int dim, _
 }
 
 static void _XCALABLEMP_calc_nodes_rank(_XCALABLEMP_nodes_t *n, int linear_rank) {
+  assert(n != NULL);
   assert(n->is_member);
 
   int acc_size = 1;
@@ -152,6 +159,7 @@ static void _XCALABLEMP_calc_nodes_rank(_XCALABLEMP_nodes_t *n, int linear_rank)
 }
 
 static void _XCALABLEMP_disable_nodes_rank(_XCALABLEMP_nodes_t *n) {
+  assert(n != NULL);
   assert(!(n->is_member));
 
   int dim = n->dim;
@@ -161,6 +169,8 @@ static void _XCALABLEMP_disable_nodes_rank(_XCALABLEMP_nodes_t *n) {
 }
 
 static void _XCALABLEMP_check_nodes_size_STATIC(_XCALABLEMP_nodes_t *n, int linear_size) {
+  assert(n != NULL);
+
   int acc_size = 1;
   int dim = n->dim;
   for (int i = 0; i < dim; i++) {
@@ -173,6 +183,8 @@ static void _XCALABLEMP_check_nodes_size_STATIC(_XCALABLEMP_nodes_t *n, int line
 }
 
 static void _XCALABLEMP_check_nodes_size_DYNAMIC(_XCALABLEMP_nodes_t *n, int linear_size, int linear_rank) {
+  assert(n != NULL);
+
   int acc_size = 1;
   int dim = n->dim;
   for (int i = 0; i < dim - 1; i++) {
@@ -212,8 +224,11 @@ static _Bool _XCALABLEMP_check_nodes_ref_inclusion(int lower, int upper, int str
   }
 }
 
+// XXX node number is 1-origin in this function
 void _XCALABLEMP_validate_nodes_ref(int *lower, int *upper, int *stride, int size) {
-  // XXX node number is 1-origin in this function
+  assert(lower != NULL);
+  assert(upper != NULL);
+  assert(stride != NULL);
 
   // setup temporary variables
   int l, u, s = *(stride);
@@ -433,6 +448,12 @@ void _XCALABLEMP_init_nodes_DYNAMIC_NODES_NUMBER(int map_type, _XCALABLEMP_nodes
 
 void _XCALABLEMP_init_nodes_STATIC_NODES_NAMED(int get_upper, int map_type, _XCALABLEMP_nodes_t **nodes, int dim,
                                                _XCALABLEMP_nodes_t *ref_nodes, ...) {
+  assert(ref_nodes != NULL);
+
+  if (!(ref_nodes->is_member)) {
+    _XCALABLEMP_fatal("cannot create a new nodes descriptor");
+  }
+
   int ref_dim = ref_nodes->dim;
   int *ref_lower = _XCALABLEMP_alloc(sizeof(int) * ref_dim);
   int *ref_upper = _XCALABLEMP_alloc(sizeof(int) * ref_dim);
@@ -486,6 +507,12 @@ void _XCALABLEMP_init_nodes_STATIC_NODES_NAMED(int get_upper, int map_type, _XCA
 
 void _XCALABLEMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, int map_type, _XCALABLEMP_nodes_t **nodes, int dim,
                                                _XCALABLEMP_nodes_t *ref_nodes, ...) {
+  assert(ref_nodes != NULL);
+
+  if (!(ref_nodes->is_member)) {
+    _XCALABLEMP_fatal("cannot create a new nodes descriptor");
+  }
+
   int ref_dim = ref_nodes->dim;
   int *ref_lower = _XCALABLEMP_alloc(sizeof(int) * ref_dim);
   int *ref_upper = _XCALABLEMP_alloc(sizeof(int) * ref_dim);
@@ -538,10 +565,10 @@ void _XCALABLEMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, int map_type, _XC
 }
 
 void _XCALABLEMP_finalize_nodes(_XCALABLEMP_nodes_t *nodes) {
-  if (nodes != NULL) {
-    _XCALABLEMP_finalize_comm(nodes->comm);
-    _XCALABLEMP_free(nodes);
-  }
+  assert(nodes != NULL);
+
+  _XCALABLEMP_finalize_comm(nodes->comm);
+  _XCALABLEMP_free(nodes);
 }
 
 _Bool _XCALABLEMP_exec_task_GLOBAL_PART(int ref_lower, int ref_upper, int ref_stride) {
@@ -563,6 +590,8 @@ _Bool _XCALABLEMP_exec_task_GLOBAL_PART(int ref_lower, int ref_upper, int ref_st
 }
 
 _Bool _XCALABLEMP_exec_task_NODES_ENTIRE(_XCALABLEMP_nodes_t *ref_nodes) {
+  assert(ref_nodes != NULL);
+
   if (ref_nodes->is_member) {
     _XCALABLEMP_push_nodes(ref_nodes);
     return true;
@@ -573,6 +602,8 @@ _Bool _XCALABLEMP_exec_task_NODES_ENTIRE(_XCALABLEMP_nodes_t *ref_nodes) {
 }
 
 _Bool _XCALABLEMP_exec_task_NODES_PART(int get_upper, _XCALABLEMP_nodes_t *ref_nodes, ...) {
+  assert(ref_nodes != NULL);
+
   if (!(ref_nodes->is_member)) {
     return false;
   }
