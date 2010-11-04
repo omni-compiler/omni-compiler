@@ -452,7 +452,7 @@ public class XMPtranslateLocalPragma {
     Xtype arrayElmtType = arrayType.getArrayElementType();
     Xobject arrayElmtTypeRef = null;
     if (arrayElmtType.getKind() == Xtype.BASIC) {
-      arrayElmtTypeRef = Xcons.IntConstant(arrayElmtType.getBasicType() + 200);
+      arrayElmtTypeRef = XMP.createBasicTypeConstantObj(arrayElmtType);
     }
     else {
       arrayElmtTypeRef = Xcons.IntConstant(XMP.NONBASIC_TYPE);
@@ -1285,7 +1285,7 @@ public class XMPtranslateLocalPragma {
       boolean isArray = false;
       Xobject specRef = null;
       Xobject count = null;
-      XobjInt elmtType = null;
+      Xobject elmtType = null;
       BasicType basicSpecType = null;
       switch (specType.getKind()) {
         case Xtype.BASIC:
@@ -1295,7 +1295,7 @@ public class XMPtranslateLocalPragma {
 
             specRef = specId.getAddr();
             count = Xcons.LongLongConstant(0, 1);
-            elmtType = Xcons.IntConstant(basicSpecType.getBasicType() + 200);
+            elmtType = XMP.createBasicTypeConstantObj(basicSpecType);
           } break;
         case Xtype.ARRAY:
           {
@@ -1329,7 +1329,7 @@ public class XMPtranslateLocalPragma {
               count = getTotalElmtFuncId.Call(Xcons.List(specAlignedArray.getDescId().Ref()));
             }
 
-            elmtType = Xcons.IntConstant(basicSpecType.getBasicType() + 200);
+            elmtType = XMP.createBasicTypeConstantObj(basicSpecType);
           } break;
         default:
           throw new XMPexception("'" + specName + "' has a wrong data type for reduction");
@@ -1550,7 +1550,7 @@ public class XMPtranslateLocalPragma {
             BasicType basicVarType = (BasicType)varType;
 
             funcArgs.add(Xcons.Cast(Xtype.voidPtrType, varId.getAddr()));
-            funcArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(basicVarType.getBasicType() + 200)));
+            funcArgs.add(Xcons.Cast(Xtype.intType, XMP.createBasicTypeConstantObj(basicVarType)));
           } break;
         case Xtype.ARRAY:
           {
@@ -1564,7 +1564,7 @@ public class XMPtranslateLocalPragma {
               throw new XMPexception("'" + varName + "' should have a integer type for reduction");
 
             funcArgs.add(Xcons.Cast(Xtype.voidPtrType, varId.Ref()));
-            funcArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(basicVarType.getBasicType() + 200)));
+            funcArgs.add(Xcons.Cast(Xtype.intType, XMP.createBasicTypeConstantObj(basicVarType)));
           } break;
         default:
           throw new XMPexception("'" + varName + "' has a wrong data type for reduction");
@@ -1887,7 +1887,7 @@ public class XMPtranslateLocalPragma {
 
             XobjList gmoveFuncArgs = null;
             if (arrayElmtType.getKind() == Xtype.BASIC) {
-              gmoveFuncArgs = Xcons.List(Xcons.IntConstant(arrayElmtType.getBasicType() + 200));
+              gmoveFuncArgs = Xcons.List(XMP.createBasicTypeConstantObj(arrayElmtType));
             }
             else {
               gmoveFuncArgs = Xcons.List(Xcons.IntConstant(XMP.NONBASIC_TYPE));
@@ -1903,7 +1903,7 @@ public class XMPtranslateLocalPragma {
 
             XobjList gmoveFuncArgs = Xcons.List(rightAlignedArray.getDescId().Ref());
             if (arrayElmtType.getKind() == Xtype.BASIC) {
-              gmoveFuncArgs.add(Xcons.IntConstant(arrayElmtType.getBasicType() + 200));
+              gmoveFuncArgs.add(XMP.createBasicTypeConstantObj(arrayElmtType));
             }
             else {
               gmoveFuncArgs.add(Xcons.IntConstant(XMP.NONBASIC_TYPE));
@@ -1921,7 +1921,7 @@ public class XMPtranslateLocalPragma {
 
             XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref());
             if (arrayElmtType.getKind() == Xtype.BASIC) {
-              gmoveFuncArgs.add(Xcons.IntConstant(arrayElmtType.getBasicType() + 200));
+              gmoveFuncArgs.add(XMP.createBasicTypeConstantObj(arrayElmtType));
             }
             else {
               gmoveFuncArgs.add(Xcons.IntConstant(XMP.NONBASIC_TYPE));
@@ -1938,7 +1938,7 @@ public class XMPtranslateLocalPragma {
             XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref(),
                                                 rightAlignedArray.getDescId().Ref());
             if (arrayElmtType.getKind() == Xtype.BASIC) {
-              gmoveFuncArgs.add(Xcons.IntConstant(arrayElmtType.getBasicType() + 200));
+              gmoveFuncArgs.add(XMP.createBasicTypeConstantObj(arrayElmtType));
             }
             else {
               gmoveFuncArgs.add(Xcons.IntConstant(XMP.NONBASIC_TYPE));

@@ -380,7 +380,7 @@ public class XMPtranslateGlobalPragma {
     Xtype arrayElmtType = arrayType.getArrayElementType();
     Xobject arrayElmtTypeRef = null;
     if (arrayElmtType.getKind() == Xtype.BASIC) {
-      arrayElmtTypeRef = Xcons.IntConstant(arrayElmtType.getBasicType() + 200);
+      arrayElmtTypeRef = XMP.createBasicTypeConstantObj(arrayElmtType);
     }
     else {
       arrayElmtTypeRef = Xcons.IntConstant(XMP.NONBASIC_TYPE);

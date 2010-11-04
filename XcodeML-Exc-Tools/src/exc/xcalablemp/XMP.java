@@ -8,7 +8,7 @@ import xcodeml.util.XmLog;
  */
 public class XMP {
   public final static int MAX_DIM		= 7;
-  public final static int NONBASIC_TYPE		= 201;
+  public final static int NONBASIC_TYPE		= 599;
   public final static String DESC_PREFIX_	= "_XCALABLEMP_desc_";
   public final static String ADDR_PREFIX_	= "_XCALABLEMP_addr_";
   public final static String GTOL_PREFIX_	= "_XCALABLEMP_gtol_";
@@ -16,6 +16,10 @@ public class XMP {
   public final static String COLON		= ": @{COLON}@";
 
   private static boolean errorFlag		= false;
+
+  public static Xobject createBasicTypeConstantObj(Xtype type) {
+    return Xcons.IntConstant(type.getBasicType() + 500);
+  }
 
   public static void exitByError() {
     if (errorFlag) System.exit(1);
