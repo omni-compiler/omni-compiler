@@ -3,8 +3,7 @@
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
-// XXX nodes number is { 1-ogigin in language | 0-origin in runtime } : doing translation
-// --- exception: _XCALABLEMP_validate_nodes_ref()
+// XXX <nodes-ref> is { 1-ogigin in language | 0-origin in runtime }, needs converting
 
 static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_GLOBAL(int dim);
 static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_EXEC(int dim);
@@ -224,7 +223,7 @@ static _Bool _XCALABLEMP_check_nodes_ref_inclusion(int lower, int upper, int str
   }
 }
 
-// XXX node number is 1-origin in this function
+// XXX args are 1-origin
 void _XCALABLEMP_validate_nodes_ref(int *lower, int *upper, int *stride, int size) {
   assert(lower != NULL);
   assert(upper != NULL);
@@ -270,6 +269,10 @@ void _XCALABLEMP_validate_nodes_ref(int *lower, int *upper, int *stride, int siz
     *upper = u;
     *stride = s;
   }
+
+  // XXX convert 1-origin to 0-origin
+  (*lower)--;
+  (*upper)--;
 }
 
 void _XCALABLEMP_init_nodes_STATIC_GLOBAL(int map_type, _XCALABLEMP_nodes_t **nodes, int dim, ...) {
@@ -382,10 +385,6 @@ void _XCALABLEMP_init_nodes_STATIC_NODES_NUMBER(int map_type, _XCALABLEMP_nodes_
                                                 int ref_lower, int ref_upper, int ref_stride, ...) {
   _XCALABLEMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, _XCALABLEMP_world_size);
 
-  // XXX node number translation: 1-origin -> 0-origin
-  ref_lower--;
-  ref_upper--;
-
   _XCALABLEMP_nodes_t *n = _XCALABLEMP_init_nodes_struct_NODES_NUMBER(dim, ref_lower, ref_upper, ref_stride);
 
   va_list args;
@@ -414,10 +413,6 @@ void _XCALABLEMP_init_nodes_STATIC_NODES_NUMBER(int map_type, _XCALABLEMP_nodes_
 void _XCALABLEMP_init_nodes_DYNAMIC_NODES_NUMBER(int map_type, _XCALABLEMP_nodes_t **nodes, int dim,
                                                  int ref_lower, int ref_upper, int ref_stride, ...) {
   _XCALABLEMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, _XCALABLEMP_world_size);
-
-  // XXX node number translation: 1-origin -> 0-origin
-  ref_lower--;
-  ref_upper--;
 
   _XCALABLEMP_nodes_t *n = _XCALABLEMP_init_nodes_struct_NODES_NUMBER(dim, ref_lower, ref_upper, ref_stride);
 
@@ -472,10 +467,6 @@ void _XCALABLEMP_init_nodes_STATIC_NODES_NAMED(int get_upper, int map_type, _XCA
     ref_stride[i] = va_arg(args, int);
 
     _XCALABLEMP_validate_nodes_ref(&(ref_lower[i]), &(ref_upper[i]), &(ref_stride[i]), ref_nodes->info[i].size);
-
-    // XXX node number translation: 1-origin -> 0-origin
-    ref_lower[i]--;
-    ref_upper[i]--;
   }
 
   _XCALABLEMP_nodes_t *n = _XCALABLEMP_init_nodes_struct_NODES_NAMED(dim, ref_nodes, ref_lower, ref_upper, ref_stride);
@@ -531,10 +522,6 @@ void _XCALABLEMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, int map_type, _XC
     ref_stride[i] = va_arg(args, int);
 
     _XCALABLEMP_validate_nodes_ref(&(ref_lower[i]), &(ref_upper[i]), &(ref_stride[i]), ref_nodes->info[i].size);
-
-    // XXX node number translation: 1-origin -> 0-origin
-    ref_lower[i]--;
-    ref_upper[i]--;
   }
 
   _XCALABLEMP_nodes_t *n = _XCALABLEMP_init_nodes_struct_NODES_NAMED(dim, ref_nodes, ref_lower, ref_upper, ref_stride);
@@ -573,10 +560,6 @@ void _XCALABLEMP_finalize_nodes(_XCALABLEMP_nodes_t *nodes) {
 
 _Bool _XCALABLEMP_exec_task_GLOBAL_PART(int ref_lower, int ref_upper, int ref_stride) {
   _XCALABLEMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, _XCALABLEMP_world_size);
-
-  // XXX node number translation: 1-origin -> 0-origin
-  ref_lower--;
-  ref_upper--;
 
   _XCALABLEMP_nodes_t *n = _XCALABLEMP_init_nodes_struct_NODES_NUMBER(0, ref_lower, ref_upper, ref_stride);
   if (n->is_member) {
@@ -634,10 +617,6 @@ _Bool _XCALABLEMP_exec_task_NODES_PART(int get_upper, _XCALABLEMP_nodes_t *ref_n
       ref_stride = va_arg(args, int);
 
       _XCALABLEMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, size);
-
-      // XXX node number translation: 1-origin -> 0-origin
-      ref_lower--;
-      ref_upper--;
 
       is_member = is_member && _XCALABLEMP_check_nodes_ref_inclusion(ref_lower, ref_upper, ref_stride, rank);
     }

@@ -23,6 +23,8 @@ void _XCALABLEMP_bcast_NODES_ENTIRE_GLOBAL(_XCALABLEMP_nodes_t *bcast_nodes, voi
                                            int from_lower, int from_upper, int from_stride) {
   assert(bcast_nodes != NULL);
 
+  _XCALABLEMP_validate_nodes_ref(&from_lower, &from_upper, &from_stride, _XCALABLEMP_world_size);
+
   if (!(bcast_nodes->is_member)) {
     return;
   }
@@ -38,9 +40,7 @@ void _XCALABLEMP_bcast_NODES_ENTIRE_GLOBAL(_XCALABLEMP_nodes_t *bcast_nodes, voi
   MPI_Type_commit(&mpi_datatype);
 
   // bcast
-  // XXX node number translation: 1-origin -> 0-origin
-  _XCALABLEMP_validate_nodes_ref(&from_lower, &from_upper, &from_stride, _XCALABLEMP_world_size);
-  MPI_Bcast(addr, count, mpi_datatype, from_lower - 1, *(bcast_nodes->comm));
+  MPI_Bcast(addr, count, mpi_datatype, from_lower, *(bcast_nodes->comm));
 }
 
 // FIXME read spec
@@ -83,8 +83,7 @@ void _XCALABLEMP_bcast_NODES_ENTIRE_NODES(_XCALABLEMP_nodes_t *bcast_nodes, void
         _XCALABLEMP_fatal("multiple source nodes indicated in bcast directive");
       }
 
-      // XXX node number translation: 1-origin -> 0-origin
-      root += (acc_nodes_size * (from_lower - 1));
+      root += (acc_nodes_size * (from_lower));
     }
 
     acc_nodes_size *= size;

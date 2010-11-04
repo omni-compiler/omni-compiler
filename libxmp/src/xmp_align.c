@@ -88,15 +88,15 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
 }
 
 void _XCALABLEMP_finalize_array_desc(_XCALABLEMP_array_t *array) {
-  if (array != NULL) {
-    int dim = array->dim;
-    for (int i = 0; i < dim; i++) {
-      _XCALABLEMP_finalize_comm(array->info[i].shadow_comm);
-    }
+  assert(array != NULL);
 
-    _XCALABLEMP_finalize_comm(array->comm);
-    _XCALABLEMP_free(array);
+  int dim = array->dim;
+  for (int i = 0; i < dim; i++) {
+    _XCALABLEMP_finalize_comm(array->info[i].shadow_comm);
   }
+
+  _XCALABLEMP_finalize_comm(array->comm);
+  _XCALABLEMP_free(array);
 }
 
 void _XCALABLEMP_align_array_DUPLICATION(_XCALABLEMP_array_t *array, int array_index, int template_index,

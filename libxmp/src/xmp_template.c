@@ -205,10 +205,10 @@ void _XCALABLEMP_init_template_chunk(_XCALABLEMP_template_t *template, _XCALABLE
 }
 
 void _XCALABLEMP_finalize_template(_XCALABLEMP_template_t *template) {
-  if (template != NULL) {
-    _XCALABLEMP_free(template->chunk);
-    _XCALABLEMP_free(template);
-  }
+  assert(template != NULL);
+
+  _XCALABLEMP_free(template->chunk);
+  _XCALABLEMP_free(template);
 }
 
 void _XCALABLEMP_dist_template_DUPLICATION(_XCALABLEMP_template_t *template, int template_index) {
