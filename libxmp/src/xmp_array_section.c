@@ -8,6 +8,9 @@
 #define _XCALABLEMP_SM_PACK_ARRAY_1(_type) \
 (_type *buf_addr, _type *src_addr, \
  int src_lower, int src_upper, int src_stride) { \
+  assert(buf_addr != NULL); \
+  assert(src_addr != NULL); \
+\
   for (int i = src_lower; i <= src_upper; i += src_stride) { \
     *buf_addr = src_addr[i]; \
     buf_addr++; \
@@ -30,6 +33,9 @@ static void _XCALABLEMP_pack_array_1_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_1(double)
 static void _XCALABLEMP_pack_array_1_LONG_DOUBLE	_XCALABLEMP_SM_PACK_ARRAY_1(long double)
 static void _XCALABLEMP_pack_array_1_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
                                              int src_lower, int src_upper, int src_stride) {
+  assert(buf_addr != NULL);
+  assert(src_addr != NULL);
+
   if (src_stride == 1) {
     memcpy(buf_addr, src_addr + (type_size * src_lower),
            type_size * _XCALABLEMP_M_COUNT_TRIPLETi(src_lower, src_upper, src_stride));
@@ -49,6 +55,13 @@ static void _XCALABLEMP_pack_array_1_GENERAL(void *buf_addr, void *src_addr, siz
 #define _XCALABLEMP_SM_PACK_ARRAY_2(_type) \
 (_type *buf_addr, _type *src_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
+  assert(buf_addr != NULL); \
+  assert(src_addr != NULL); \
+  assert(l != NULL); \
+  assert(u != NULL); \
+  assert(s != NULL); \
+  assert(d != NULL); \
+\
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0]; \
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; \
   for (int j = src_lower0; j <= src_upper0; j += src_stride0) { \
@@ -76,6 +89,13 @@ static void _XCALABLEMP_pack_array_2_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_2(double)
 static void _XCALABLEMP_pack_array_2_LONG_DOUBLE	_XCALABLEMP_SM_PACK_ARRAY_2(long double)
 static void _XCALABLEMP_pack_array_2_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
                                              int *l, int *u, int *s, unsigned long long *d) {
+  assert(buf_addr != NULL);
+  assert(src_addr != NULL);
+  assert(l != NULL);
+  assert(u != NULL);
+  assert(s != NULL);
+  assert(d != NULL);
+
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0];
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1];
   for (int j = src_lower0; j <= src_upper0; j += src_stride0) {
@@ -100,6 +120,13 @@ static void _XCALABLEMP_pack_array_2_GENERAL(void *buf_addr, void *src_addr, siz
 #define _XCALABLEMP_SM_PACK_ARRAY_3(_type) \
 (_type *buf_addr, _type *src_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
+  assert(buf_addr != NULL); \
+  assert(src_addr != NULL); \
+  assert(l != NULL); \
+  assert(u != NULL); \
+  assert(s != NULL); \
+  assert(d != NULL); \
+\
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0]; \
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; unsigned long long src_dim_acc1 = d[1]; \
   int src_lower2 = l[2]; int src_upper2 = u[2]; int src_stride2 = s[2]; \
@@ -130,6 +157,13 @@ static void _XCALABLEMP_pack_array_3_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_3(double)
 static void _XCALABLEMP_pack_array_3_LONG_DOUBLE	_XCALABLEMP_SM_PACK_ARRAY_3(long double)
 static void _XCALABLEMP_pack_array_3_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
                                              int *l, int *u, int *s, unsigned long long *d) {
+  assert(buf_addr != NULL);
+  assert(src_addr != NULL);
+  assert(l != NULL);
+  assert(u != NULL);
+  assert(s != NULL);
+  assert(d != NULL);
+
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0];
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; unsigned long long src_dim_acc1 = d[1];
   int src_lower2 = l[2]; int src_upper2 = u[2]; int src_stride2 = s[2];
@@ -157,6 +191,13 @@ static void _XCALABLEMP_pack_array_3_GENERAL(void *buf_addr, void *src_addr, siz
 #define _XCALABLEMP_SM_PACK_ARRAY_4(_type) \
 (_type *buf_addr, _type *src_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
+  assert(buf_addr != NULL); \
+  assert(src_addr != NULL); \
+  assert(l != NULL); \
+  assert(u != NULL); \
+  assert(s != NULL); \
+  assert(d != NULL); \
+\
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0]; \
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; unsigned long long src_dim_acc1 = d[1]; \
   int src_lower2 = l[2]; int src_upper2 = u[2]; int src_stride2 = s[2]; unsigned long long src_dim_acc2 = d[2]; \
@@ -190,6 +231,13 @@ static void _XCALABLEMP_pack_array_4_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_4(double)
 static void _XCALABLEMP_pack_array_4_LONG_DOUBLE	_XCALABLEMP_SM_PACK_ARRAY_4(long double)
 static void _XCALABLEMP_pack_array_4_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
                                              int *l, int *u, int *s, unsigned long long *d) {
+  assert(buf_addr != NULL);
+  assert(src_addr != NULL);
+  assert(l != NULL);
+  assert(u != NULL);
+  assert(s != NULL);
+  assert(d != NULL);
+
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0];
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; unsigned long long src_dim_acc1 = d[1];
   int src_lower2 = l[2]; int src_upper2 = u[2]; int src_stride2 = s[2]; unsigned long long src_dim_acc2 = d[2];
@@ -220,6 +268,13 @@ static void _XCALABLEMP_pack_array_4_GENERAL(void *buf_addr, void *src_addr, siz
 #define _XCALABLEMP_SM_PACK_ARRAY_5(_type) \
 (_type *buf_addr, _type *src_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
+  assert(buf_addr != NULL); \
+  assert(src_addr != NULL); \
+  assert(l != NULL); \
+  assert(u != NULL); \
+  assert(s != NULL); \
+  assert(d != NULL); \
+\
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0]; \
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; unsigned long long src_dim_acc1 = d[1]; \
   int src_lower2 = l[2]; int src_upper2 = u[2]; int src_stride2 = s[2]; unsigned long long src_dim_acc2 = d[2]; \
@@ -256,6 +311,13 @@ static void _XCALABLEMP_pack_array_5_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_5(double)
 static void _XCALABLEMP_pack_array_5_LONG_DOUBLE	_XCALABLEMP_SM_PACK_ARRAY_5(long double)
 static void _XCALABLEMP_pack_array_5_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
                                              int *l, int *u, int *s, unsigned long long *d) {
+  assert(buf_addr != NULL);
+  assert(src_addr != NULL);
+  assert(l != NULL);
+  assert(u != NULL);
+  assert(s != NULL);
+  assert(d != NULL);
+
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0];
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; unsigned long long src_dim_acc1 = d[1];
   int src_lower2 = l[2]; int src_upper2 = u[2]; int src_stride2 = s[2]; unsigned long long src_dim_acc2 = d[2];
@@ -290,6 +352,13 @@ static void _XCALABLEMP_pack_array_5_GENERAL(void *buf_addr, void *src_addr, siz
 #define _XCALABLEMP_SM_PACK_ARRAY_6(_type) \
 (_type *buf_addr, _type *src_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
+  assert(buf_addr != NULL); \
+  assert(src_addr != NULL); \
+  assert(l != NULL); \
+  assert(u != NULL); \
+  assert(s != NULL); \
+  assert(d != NULL); \
+\
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0]; \
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; unsigned long long src_dim_acc1 = d[1]; \
   int src_lower2 = l[2]; int src_upper2 = u[2]; int src_stride2 = s[2]; unsigned long long src_dim_acc2 = d[2]; \
@@ -330,6 +399,13 @@ static void _XCALABLEMP_pack_array_6_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_6(double)
 static void _XCALABLEMP_pack_array_6_LONG_DOUBLE	_XCALABLEMP_SM_PACK_ARRAY_6(long double)
 static void _XCALABLEMP_pack_array_6_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
                                              int *l, int *u, int *s, unsigned long long *d) {
+  assert(buf_addr != NULL);
+  assert(src_addr != NULL);
+  assert(l != NULL);
+  assert(u != NULL);
+  assert(s != NULL);
+  assert(d != NULL);
+
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0];
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; unsigned long long src_dim_acc1 = d[1];
   int src_lower2 = l[2]; int src_upper2 = u[2]; int src_stride2 = s[2]; unsigned long long src_dim_acc2 = d[2];
@@ -367,6 +443,13 @@ static void _XCALABLEMP_pack_array_6_GENERAL(void *buf_addr, void *src_addr, siz
 #define _XCALABLEMP_SM_PACK_ARRAY_7(_type) \
 (_type *buf_addr, _type *src_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
+  assert(buf_addr != NULL); \
+  assert(src_addr != NULL); \
+  assert(l != NULL); \
+  assert(u != NULL); \
+  assert(s != NULL); \
+  assert(d != NULL); \
+\
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0]; \
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; unsigned long long src_dim_acc1 = d[1]; \
   int src_lower2 = l[2]; int src_upper2 = u[2]; int src_stride2 = s[2]; unsigned long long src_dim_acc2 = d[2]; \
@@ -410,6 +493,13 @@ static void _XCALABLEMP_pack_array_7_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_7(double)
 static void _XCALABLEMP_pack_array_7_LONG_DOUBLE	_XCALABLEMP_SM_PACK_ARRAY_7(long double)
 static void _XCALABLEMP_pack_array_7_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
                                              int *l, int *u, int *s, unsigned long long *d) {
+  assert(buf_addr != NULL);
+  assert(src_addr != NULL);
+  assert(l != NULL);
+  assert(u != NULL);
+  assert(s != NULL);
+  assert(d != NULL);
+
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0];
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; unsigned long long src_dim_acc1 = d[1];
   int src_lower2 = l[2]; int src_upper2 = u[2]; int src_stride2 = s[2]; unsigned long long src_dim_acc2 = d[2];
@@ -452,6 +542,9 @@ static void _XCALABLEMP_pack_array_7_GENERAL(void *buf_addr, void *src_addr, siz
 #define _XCALABLEMP_SM_UNPACK_ARRAY_1(_type) \
 (_type *dst_addr, _type *buf_addr, \
  int dst_lower, int dst_upper, int dst_stride) { \
+  assert(dst_addr != NULL); \
+  assert(buf_addr != NULL); \
+\
   for (int i = dst_lower; i <= dst_upper; i += dst_stride) { \
     dst_addr[i] = *buf_addr; \
     buf_addr++; \
@@ -474,6 +567,9 @@ static void _XCALABLEMP_unpack_array_1_DOUBLE			_XCALABLEMP_SM_UNPACK_ARRAY_1(do
 static void _XCALABLEMP_unpack_array_1_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_1(long double)
 static void _XCALABLEMP_unpack_array_1_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
                                                int dst_lower, int dst_upper, int dst_stride) {
+  assert(dst_addr != NULL);
+  assert(buf_addr != NULL);
+
   if (dst_stride == 1) {
     memcpy(dst_addr + (type_size * dst_lower), buf_addr,
            type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower, dst_upper, dst_stride));
@@ -493,6 +589,13 @@ static void _XCALABLEMP_unpack_array_1_GENERAL(void *dst_addr, void *buf_addr, s
 #define _XCALABLEMP_SM_UNPACK_ARRAY_2(_type) \
 (_type *dst_addr, _type *buf_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
+  assert(dst_addr != NULL); \
+  assert(buf_addr != NULL); \
+  assert(l != NULL); \
+  assert(u != NULL); \
+  assert(s != NULL); \
+  assert(d != NULL); \
+\
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0]; \
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; \
   for (int j = dst_lower0; j <= dst_upper0; j += dst_stride0) { \
@@ -520,6 +623,13 @@ static void _XCALABLEMP_unpack_array_2_DOUBLE			_XCALABLEMP_SM_UNPACK_ARRAY_2(do
 static void _XCALABLEMP_unpack_array_2_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_2(long double)
 static void _XCALABLEMP_unpack_array_2_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
                                                int *l, int *u, int *s, unsigned long long *d) {
+  assert(dst_addr != NULL);
+  assert(buf_addr != NULL);
+  assert(l != NULL);
+  assert(u != NULL);
+  assert(s != NULL);
+  assert(d != NULL);
+
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0];
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1];
   for (int j = dst_lower0; j <= dst_upper0; j += dst_stride0) {
@@ -544,6 +654,13 @@ static void _XCALABLEMP_unpack_array_2_GENERAL(void *dst_addr, void *buf_addr, s
 #define _XCALABLEMP_SM_UNPACK_ARRAY_3(_type) \
 (_type *dst_addr, _type *buf_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
+  assert(dst_addr != NULL); \
+  assert(buf_addr != NULL); \
+  assert(l != NULL); \
+  assert(u != NULL); \
+  assert(s != NULL); \
+  assert(d != NULL); \
+\
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0]; \
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; unsigned long long dst_dim_acc1 = d[1]; \
   int dst_lower2 = l[2]; int dst_upper2 = u[2]; int dst_stride2 = s[2]; \
@@ -574,6 +691,13 @@ static void _XCALABLEMP_unpack_array_3_DOUBLE			_XCALABLEMP_SM_UNPACK_ARRAY_3(do
 static void _XCALABLEMP_unpack_array_3_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_3(long double)
 static void _XCALABLEMP_unpack_array_3_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
                                                int *l, int *u, int *s, unsigned long long *d) {
+  assert(dst_addr != NULL);
+  assert(buf_addr != NULL);
+  assert(l != NULL);
+  assert(u != NULL);
+  assert(s != NULL);
+  assert(d != NULL);
+
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0];
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; unsigned long long dst_dim_acc1 = d[1];
   int dst_lower2 = l[2]; int dst_upper2 = u[2]; int dst_stride2 = s[2];
@@ -601,6 +725,13 @@ static void _XCALABLEMP_unpack_array_3_GENERAL(void *dst_addr, void *buf_addr, s
 #define _XCALABLEMP_SM_UNPACK_ARRAY_4(_type) \
 (_type *dst_addr, _type *buf_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
+  assert(dst_addr != NULL); \
+  assert(buf_addr != NULL); \
+  assert(l != NULL); \
+  assert(u != NULL); \
+  assert(s != NULL); \
+  assert(d != NULL); \
+\
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0]; \
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; unsigned long long dst_dim_acc1 = d[1]; \
   int dst_lower2 = l[2]; int dst_upper2 = u[2]; int dst_stride2 = s[2]; unsigned long long dst_dim_acc2 = d[2]; \
@@ -634,6 +765,13 @@ static void _XCALABLEMP_unpack_array_4_DOUBLE			_XCALABLEMP_SM_UNPACK_ARRAY_4(do
 static void _XCALABLEMP_unpack_array_4_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_4(long double)
 static void _XCALABLEMP_unpack_array_4_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
                                                int *l, int *u, int *s, unsigned long long *d) {
+  assert(dst_addr != NULL);
+  assert(buf_addr != NULL);
+  assert(l != NULL);
+  assert(u != NULL);
+  assert(s != NULL);
+  assert(d != NULL);
+
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0];
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; unsigned long long dst_dim_acc1 = d[1];
   int dst_lower2 = l[2]; int dst_upper2 = u[2]; int dst_stride2 = s[2]; unsigned long long dst_dim_acc2 = d[2];
@@ -664,6 +802,13 @@ static void _XCALABLEMP_unpack_array_4_GENERAL(void *dst_addr, void *buf_addr, s
 #define _XCALABLEMP_SM_UNPACK_ARRAY_5(_type) \
 (_type *dst_addr, _type *buf_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
+  assert(dst_addr != NULL); \
+  assert(buf_addr != NULL); \
+  assert(l != NULL); \
+  assert(u != NULL); \
+  assert(s != NULL); \
+  assert(d != NULL); \
+\
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0]; \
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; unsigned long long dst_dim_acc1 = d[1]; \
   int dst_lower2 = l[2]; int dst_upper2 = u[2]; int dst_stride2 = s[2]; unsigned long long dst_dim_acc2 = d[2]; \
@@ -700,6 +845,13 @@ static void _XCALABLEMP_unpack_array_5_DOUBLE			_XCALABLEMP_SM_UNPACK_ARRAY_5(do
 static void _XCALABLEMP_unpack_array_5_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_5(long double)
 static void _XCALABLEMP_unpack_array_5_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
                                                int *l, int *u, int *s, unsigned long long *d) {
+  assert(dst_addr != NULL);
+  assert(buf_addr != NULL);
+  assert(l != NULL);
+  assert(u != NULL);
+  assert(s != NULL);
+  assert(d != NULL);
+
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0];
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; unsigned long long dst_dim_acc1 = d[1];
   int dst_lower2 = l[2]; int dst_upper2 = u[2]; int dst_stride2 = s[2]; unsigned long long dst_dim_acc2 = d[2];
@@ -734,6 +886,13 @@ static void _XCALABLEMP_unpack_array_5_GENERAL(void *dst_addr, void *buf_addr, s
 #define _XCALABLEMP_SM_UNPACK_ARRAY_6(_type) \
 (_type *dst_addr, _type *buf_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
+  assert(dst_addr != NULL); \
+  assert(buf_addr != NULL); \
+  assert(l != NULL); \
+  assert(u != NULL); \
+  assert(s != NULL); \
+  assert(d != NULL); \
+\
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0]; \
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; unsigned long long dst_dim_acc1 = d[1]; \
   int dst_lower2 = l[2]; int dst_upper2 = u[2]; int dst_stride2 = s[2]; unsigned long long dst_dim_acc2 = d[2]; \
@@ -774,6 +933,13 @@ static void _XCALABLEMP_unpack_array_6_DOUBLE			_XCALABLEMP_SM_UNPACK_ARRAY_6(do
 static void _XCALABLEMP_unpack_array_6_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_6(long double)
 static void _XCALABLEMP_unpack_array_6_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
                                                int *l, int *u, int *s, unsigned long long *d) {
+  assert(dst_addr != NULL);
+  assert(buf_addr != NULL);
+  assert(l != NULL);
+  assert(u != NULL);
+  assert(s != NULL);
+  assert(d != NULL);
+
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0];
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; unsigned long long dst_dim_acc1 = d[1];
   int dst_lower2 = l[2]; int dst_upper2 = u[2]; int dst_stride2 = s[2]; unsigned long long dst_dim_acc2 = d[2];
@@ -811,6 +977,13 @@ static void _XCALABLEMP_unpack_array_6_GENERAL(void *dst_addr, void *buf_addr, s
 #define _XCALABLEMP_SM_UNPACK_ARRAY_7(_type) \
 (_type *dst_addr, _type *buf_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
+  assert(dst_addr != NULL); \
+  assert(buf_addr != NULL); \
+  assert(l != NULL); \
+  assert(u != NULL); \
+  assert(s != NULL); \
+  assert(d != NULL); \
+\
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0]; \
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; unsigned long long dst_dim_acc1 = d[1]; \
   int dst_lower2 = l[2]; int dst_upper2 = u[2]; int dst_stride2 = s[2]; unsigned long long dst_dim_acc2 = d[2]; \
@@ -854,6 +1027,13 @@ static void _XCALABLEMP_unpack_array_7_DOUBLE			_XCALABLEMP_SM_UNPACK_ARRAY_7(do
 static void _XCALABLEMP_unpack_array_7_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_7(long double)
 static void _XCALABLEMP_unpack_array_7_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
                                                int *l, int *u, int *s, unsigned long long *d) {
+  assert(dst_addr != NULL);
+  assert(buf_addr != NULL);
+  assert(l != NULL);
+  assert(u != NULL);
+  assert(s != NULL);
+  assert(d != NULL);
+
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0];
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; unsigned long long dst_dim_acc1 = d[1];
   int dst_lower2 = l[2]; int dst_upper2 = u[2]; int dst_stride2 = s[2]; unsigned long long dst_dim_acc2 = d[2];
@@ -892,6 +1072,10 @@ static void _XCALABLEMP_unpack_array_7_GENERAL(void *dst_addr, void *buf_addr, s
 
 
 void _XCALABLEMP_normalize_array_section(int *lower, int *upper, int *stride) {
+  assert(lower != NULL);
+  assert(upper != NULL);
+  assert(stride != NULL);
+
   // setup temporary variables
   int l, u;
   int s = *(stride);
@@ -924,6 +1108,13 @@ void _XCALABLEMP_normalize_array_section(int *lower, int *upper, int *stride) {
 
 void _XCALABLEMP_pack_array_BASIC(void *buffer, void *src, int array_type,
                                   int array_dim, int *l, int *u, int *s, unsigned long long *d) {
+  assert(buffer != NULL);
+  assert(src != NULL);
+  assert(l != NULL);
+  assert(u != NULL);
+  assert(s != NULL);
+  assert(d != NULL);
+
   switch (array_type) {
     case _XCALABLEMP_N_TYPE_BOOL: {
         switch (array_dim) {
@@ -1111,6 +1302,13 @@ void _XCALABLEMP_pack_array_BASIC(void *buffer, void *src, int array_type,
 
 void _XCALABLEMP_pack_array_GENERAL(void *buffer, void *src, size_t array_type_size,
                                     int array_dim, int *l, int *u, int *s, unsigned long long *d) {
+  assert(buffer != NULL);
+  assert(src != NULL);
+  assert(l != NULL);
+  assert(u != NULL);
+  assert(s != NULL);
+  assert(d != NULL);
+
   switch (array_dim) {
     case 1: _XCALABLEMP_pack_array_1_GENERAL(buffer, src, array_type_size, l[0], u[0], s[0]); break;
     case 2: _XCALABLEMP_pack_array_2_GENERAL(buffer, src, array_type_size, l, u, s, d); break;
@@ -1125,6 +1323,13 @@ void _XCALABLEMP_pack_array_GENERAL(void *buffer, void *src, size_t array_type_s
 
 void _XCALABLEMP_unpack_array_BASIC(void *dst, void *buffer, int array_type,
                                     int array_dim, int *l, int *u, int *s, unsigned long long *d) {
+  assert(dst != NULL);
+  assert(buffer != NULL);
+  assert(l != NULL);
+  assert(u != NULL);
+  assert(s != NULL);
+  assert(d != NULL);
+
   switch (array_type) {
     case _XCALABLEMP_N_TYPE_BOOL: {
         switch (array_dim) {
@@ -1313,6 +1518,13 @@ void _XCALABLEMP_unpack_array_BASIC(void *dst, void *buffer, int array_type,
 
 void _XCALABLEMP_unpack_array_GENERAL(void *dst, void *buffer, size_t array_type_size,
                                       int array_dim, int *l, int *u, int *s, unsigned long long *d) {
+  assert(dst != NULL);
+  assert(buffer != NULL);
+  assert(l != NULL);
+  assert(u != NULL);
+  assert(s != NULL);
+  assert(d != NULL);
+
   switch (array_dim) {
     case 1: _XCALABLEMP_unpack_array_1_GENERAL(dst, buffer, array_type_size, l[0], u[0], s[0]); break;
     case 2: _XCALABLEMP_unpack_array_2_GENERAL(dst, buffer, array_type_size, l, u, s, d); break;
