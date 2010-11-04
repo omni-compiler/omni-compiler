@@ -640,3 +640,25 @@ _Bool _XCALABLEMP_exec_task_NODES_PART(int get_upper, _XCALABLEMP_nodes_t *ref_n
     return false;
   }
 }
+
+_XCALABLEMP_nodes_t *_XCALABLEMP_create_nodes_by_comm(MPI_Comm *comm) {
+  assert(comm != NULL);
+
+  int size, rank;
+  MPI_Comm_size(*comm, &size);
+  MPI_Comm_rank(*comm, &rank);
+
+  _XCALABLEMP_nodes_t *n = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_nodes_t));
+
+  n->is_member = true;
+  n->dim = 1;
+
+  n->comm = comm;
+  n->comm_size = size;
+  n->comm_rank = rank;
+
+  n->info[0].size = size;
+  n->info[0].rank = rank;
+
+  return n;
+}

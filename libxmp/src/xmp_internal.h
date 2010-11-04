@@ -137,8 +137,8 @@ typedef struct _XCALABLEMP_array_type {
 
 // --------------- variables -----------------------------------------
 // xmp_world.c
-extern int _XCALABLEMP_world_rank;
 extern int _XCALABLEMP_world_size;
+extern int _XCALABLEMP_world_rank;
 extern void *_XCALABLEMP_world_nodes;
 
 // --------------- functions -----------------------------------------
@@ -159,6 +159,7 @@ extern void _XCALABLEMP_barrier_EXEC(void);
 // xmp_nodes.c
 extern void _XCALABLEMP_validate_nodes_ref(int *lower, int *upper, int *stride, int size);
 extern void _XCALABLEMP_finalize_nodes(_XCALABLEMP_nodes_t *nodes);
+extern _XCALABLEMP_nodes_t *_XCALABLEMP_create_nodes_by_comm(MPI_Comm *comm);
 
 // xmp_nodes_stack.c
 extern void _XCALABLEMP_push_nodes(_XCALABLEMP_nodes_t *nodes);

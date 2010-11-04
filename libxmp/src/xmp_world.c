@@ -1,7 +1,7 @@
 #include "xmp_internal.h"
 
-int _XCALABLEMP_world_rank;
 int _XCALABLEMP_world_size;
+int _XCALABLEMP_world_rank;
 void *_XCALABLEMP_world_nodes;
 
 void _XCALABLEMP_init_world(int *argc, char ***argv) {
@@ -12,9 +12,14 @@ void _XCALABLEMP_init_world(int *argc, char ***argv) {
 
     MPI_Comm *comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
     MPI_Comm_dup(MPI_COMM_WORLD, comm);
-    _XCALABLEMP_push_comm(comm);
 
-    _XCALABLEMP_world_nodes = _XCALABLEMP_get_execution_nodes();
+    _XCALABLEMP_nodes_t *n = _XCALABLEMP_create_nodes_by_comm(comm);
+
+    _XCALABLEMP_world_size = n->comm_size;
+    _XCALABLEMP_world_rank = n->comm_rank;
+    _XCALABLEMP_world_nodes = n;
+
+    _XCALABLEMP_push_nodes(n);
   }
 }
 
