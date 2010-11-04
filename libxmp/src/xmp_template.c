@@ -242,6 +242,7 @@ void _XCALABLEMP_finalize_template(_XCALABLEMP_template_t *template) {
 void _XCALABLEMP_dist_template_DUPLICATION(_XCALABLEMP_template_t *template, int template_index) {
   assert(template != NULL);
   assert(template->is_fixed);
+  assert(template->is_distributed);
 
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
@@ -261,6 +262,7 @@ void _XCALABLEMP_dist_template_DUPLICATION(_XCALABLEMP_template_t *template, int
 void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int template_index, int nodes_index) {
   assert(template != NULL);
   assert(template->is_fixed);
+  assert(template->is_distributed);
 
   _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
 
@@ -307,6 +309,7 @@ void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int templ
 void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int template_index, int nodes_index) {
   assert(template != NULL);
   assert(template->is_fixed);
+  assert(template->is_distributed);
 
   _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
 
@@ -359,6 +362,14 @@ void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int temp
 
 _Bool _XCALABLEMP_exec_task_TEMPLATE_PART(int get_upper, _XCALABLEMP_template_t *ref_template, ...) {
   assert(ref_template != NULL);
+
+  if (!(ref_template->is_fixed)) {
+    _XCALABLEMP_FATAL("error in loop scheduling, template size is not fixed");
+  }
+
+  if (!(ref_template->is_distributed)) {
+    _XCALABLEMP_FATAL("error in loop scheduling, template is not distributed");
+  }
 
   if (!(ref_template->is_owner)) {
     return false;
