@@ -3,13 +3,23 @@
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
-static void _XCALABLEMP_calc_template_size(_XCALABLEMP_template_t *t, int dim);
+static void _XCALABLEMP_calc_template_size(_XCALABLEMP_template_t *t);
 static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper, int *stride,
                                               long long lb, long long ub);
 static _Bool _XCALABLEMP_check_template_ref_inclusion(long long ref_lower, long long ref_upper, int ref_stride,
                                                       _XCALABLEMP_template_chunk_t *chunk);
 
-static void _XCALABLEMP_calc_template_size(_XCALABLEMP_template_t *t, int dim) {
+static void _XCALABLEMP_calc_template_size(_XCALABLEMP_template_t *t) {
+  assert(t != NULL);
+
+  int dim;
+  if (t->is_fixed) {
+    dim = t->dim;
+  }
+  else {
+    dim = t->dim - 1;
+  }
+
   for (int i = 0; i < dim; i++) {
     int ser_lower = t->info[i].ser_lower;
     int ser_upper = t->info[i].ser_upper;
@@ -24,6 +34,10 @@ static void _XCALABLEMP_calc_template_size(_XCALABLEMP_template_t *t, int dim) {
 
 static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper, int *stride,
                                               long long lb, long long ub) {
+  assert(lower != NULL);
+  assert(upper != NULL);
+  assert(stride != NULL);
+
   // setup temporary variables
   long long l, u;
   int s = *stride;
@@ -69,6 +83,8 @@ static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper
 
 static _Bool _XCALABLEMP_check_template_ref_inclusion(long long ref_lower, long long ref_upper, int ref_stride,
                                                       _XCALABLEMP_template_chunk_t *chunk) {
+  assert(chunk != NULL);
+
   switch (chunk->dist_manner) {
     case _XCALABLEMP_N_DIST_DUPLICATION:
       return true;
@@ -94,7 +110,7 @@ static _Bool _XCALABLEMP_check_template_ref_inclusion(long long ref_lower, long 
             return false;
           }
 
-          /* normalize template upper FIXME needed??? */
+          /* normalize template upper */
           int template_upper_mod = _XCALABLEMP_modi_ll_i(template_upper, ref_stride);
           if (template_upper_mod != ref_stride_mod) {
             if (ref_stride_mod < template_upper_mod) {
@@ -166,7 +182,7 @@ void _XCALABLEMP_init_template_FIXED(_XCALABLEMP_template_t **template, int dim,
   }
   va_end(args);
 
-  _XCALABLEMP_calc_template_size(t, dim);
+  _XCALABLEMP_calc_template_size(t);
 
   *template = t;
 }
@@ -192,12 +208,15 @@ void _XCALABLEMP_init_template_UNFIXED(_XCALABLEMP_template_t **template, int di
   }
   va_end(args);
 
-  _XCALABLEMP_calc_template_size(t, dim - 1);
+  _XCALABLEMP_calc_template_size(t);
 
   *template = t;
 }
 
 void _XCALABLEMP_init_template_chunk(_XCALABLEMP_template_t *template, _XCALABLEMP_nodes_t *nodes) {
+  assert(template != NULL);
+  assert(nodes != NULL);
+
   template->is_owner = nodes->is_member;
 
   template->onto_nodes = nodes;
@@ -212,6 +231,8 @@ void _XCALABLEMP_finalize_template(_XCALABLEMP_template_t *template) {
 }
 
 void _XCALABLEMP_dist_template_DUPLICATION(_XCALABLEMP_template_t *template, int template_index) {
+  assert(template != NULL);
+
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
 
@@ -230,6 +251,8 @@ void _XCALABLEMP_dist_template_DUPLICATION(_XCALABLEMP_template_t *template, int
 }
 
 void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int template_index, int nodes_index) {
+  assert(template != NULL);
+
   _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
 
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
@@ -273,6 +296,8 @@ void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int templ
 }
 
 void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int template_index, int nodes_index) {
+  assert(template != NULL);
+
   _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
 
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
@@ -323,6 +348,8 @@ void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int temp
 }
 
 _Bool _XCALABLEMP_exec_task_TEMPLATE_PART(int get_upper, _XCALABLEMP_template_t *ref_template, ...) {
+  assert(ref_template != NULL);
+
   if (!(ref_template->is_owner)) {
     return false;
   }
