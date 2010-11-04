@@ -6,7 +6,6 @@ void *_XCALABLEMP_world_nodes;
 
 void _XCALABLEMP_init_world(int *argc, char ***argv) {
   int flag = 0;
-
   MPI_Initialized(&flag);
   if (!flag) {
     MPI_Init(argc, argv);

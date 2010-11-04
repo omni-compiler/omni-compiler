@@ -8,6 +8,8 @@ typedef struct _XCALABLEMP_nodes_dish_type {
 static _XCALABLEMP_nodes_dish_t *_XCALABLEMP_nodes_stack_top = NULL;
 
 void _XCALABLEMP_push_nodes(_XCALABLEMP_nodes_t *nodes) {
+  assert(nodes != NULL);
+
   _XCALABLEMP_nodes_dish_t *new_dish = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_nodes_dish_t));
   new_dish->nodes = nodes;
   new_dish->prev = _XCALABLEMP_nodes_stack_top;
@@ -15,12 +17,16 @@ void _XCALABLEMP_push_nodes(_XCALABLEMP_nodes_t *nodes) {
 }
 
 void _XCALABLEMP_pop_nodes(void) {
+  assert(_XCALABLEMP_nodes_stack_top != NULL);
+
   _XCALABLEMP_nodes_dish_t *freed_dish = _XCALABLEMP_nodes_stack_top;
   _XCALABLEMP_nodes_stack_top = freed_dish->prev;
   _XCALABLEMP_free(freed_dish);
 }
 
 void _XCALABLEMP_pop_n_free_nodes(void) {
+  assert(_XCALABLEMP_nodes_stack_top != NULL);
+
   _XCALABLEMP_nodes_dish_t *freed_dish = _XCALABLEMP_nodes_stack_top;
   _XCALABLEMP_nodes_stack_top = freed_dish->prev;
   _XCALABLEMP_finalize_nodes(freed_dish->nodes);
@@ -28,6 +34,8 @@ void _XCALABLEMP_pop_n_free_nodes(void) {
 }
 
 void _XCALABLEMP_pop_n_free_nodes_wo_finalize_comm(void) {
+  assert(_XCALABLEMP_nodes_stack_top != NULL);
+
   _XCALABLEMP_nodes_dish_t *freed_dish = _XCALABLEMP_nodes_stack_top;
   _XCALABLEMP_nodes_stack_top = freed_dish->prev;
   _XCALABLEMP_free(freed_dish->nodes);
@@ -35,15 +43,20 @@ void _XCALABLEMP_pop_n_free_nodes_wo_finalize_comm(void) {
 }
 
 _XCALABLEMP_nodes_t *_XCALABLEMP_get_execution_nodes(void) {
+  assert(_XCALABLEMP_nodes_stack_top != NULL);
+
   return _XCALABLEMP_nodes_stack_top->nodes;
 }
 
 int _XCALABLEMP_get_execution_nodes_rank(void) {
-  // is_member is always true
-  return (_XCALABLEMP_get_execution_nodes())->comm_rank;
+  assert(_XCALABLEMP_get_execution_nodes()->is_member);
+
+  return _XCALABLEMP_get_execution_nodes()->comm_rank;
 }
 
 void _XCALABLEMP_push_comm(MPI_Comm *comm) {
+  assert(comm != NULL);
+
   int size, rank;
   MPI_Comm_size(*comm, &size);
   MPI_Comm_rank(*comm, &rank);
@@ -63,6 +76,7 @@ void _XCALABLEMP_push_comm(MPI_Comm *comm) {
   _XCALABLEMP_push_nodes(n);
 }
 
+// FIXME use assert
 void _XCALABLEMP_finalize_comm(MPI_Comm *comm) {
   if (comm != NULL) {
     MPI_Comm_free(comm);
