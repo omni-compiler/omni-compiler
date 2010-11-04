@@ -23,38 +23,46 @@ else ser_cond -= ((ser_cond - ser_init) % ser_step);
 
 // schedule by template -------------------------------------------------------------------------------------------------------------
 // block distribution ---------------------------------------------------------------------------------------------------------------
-#define _XCALABLEMP_SM_GET_TEMPLATE_INFO_BLOCK(_type) \
-if (!(template->is_owner)) return; \
-_type template_lower = (_type)template->chunk[template_index].par_lower; \
-_type template_upper = (_type)template->chunk[template_index].par_upper;
-
-#define _XCALABLEMP_SM_NORM_TEMPLATE_BLOCK_S(_type) \
-if (ser_step != 1) { \
-  _type dst_mod = ser_init % ser_step; \
-  if (dst_mod < 0) dst_mod = (dst_mod + ser_step) % ser_step; \
-  /* normalize template lower */ \
-  _type lower_mod = template_lower % ser_step; \
-  if (lower_mod < 0) lower_mod = (lower_mod + ser_step) % ser_step; \
-  if (lower_mod != dst_mod) { \
-    if (lower_mod < dst_mod)   template_lower += (dst_mod - lower_mod); \
-    else template_lower += (ser_step - lower_mod + dst_mod); \
-  } \
-  if (template_lower > template_upper) goto no_iter; \
+#define _XCALABLEMP_SM_GET_TEMPLATE_INFO_BLOCK(_type, template, template_lower, template_upper) \
+{ \
+  if (!(template->is_owner)) goto no_iter; \
+  template_lower = (_type)template->chunk[template_index].par_lower; \
+  template_upper = (_type)template->chunk[template_index].par_upper; \
 }
 
-#define _XCALABLEMP_SM_NORM_TEMPLATE_BLOCK_U(_type) \
-if (ser_step != 1) { \
-  _type dst_mod = ser_init % ser_step; \
-  /* normalize template lower */ \
-  _type lower_mod = template_lower % ser_step; \
-  if (lower_mod != dst_mod) { \
-    if (lower_mod < dst_mod)   template_lower += (dst_mod - lower_mod); \
-    else template_lower += (ser_step - lower_mod + dst_mod); \
+#define _XCALABLEMP_SM_NORM_TEMPLATE_BLOCK_S(_type, ser_init, ser_step, template_lower, template_upper) \
+{ \
+  if (ser_step != 1) { \
+    _type dst_mod = ser_init % ser_step; \
+    if (dst_mod < 0) dst_mod = (dst_mod + ser_step) % ser_step; \
+    /* normalize template lower */ \
+    _type lower_mod = template_lower % ser_step; \
+    if (lower_mod < 0) lower_mod = (lower_mod + ser_step) % ser_step; \
+    if (lower_mod != dst_mod) { \
+      if (lower_mod < dst_mod)   template_lower += (dst_mod - lower_mod); \
+      else template_lower += (ser_step - lower_mod + dst_mod); \
+    } \
+    if (template_lower > template_upper) goto no_iter; \
   } \
-  if (template_lower > template_upper) goto no_iter; \
 }
 
-#define _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK \
+#define _XCALABLEMP_SM_NORM_TEMPLATE_BLOCK_U(_type, ser_init, ser_step, template_lower, template_upper) \
+{ \
+  if (ser_step != 1) { \
+    _type dst_mod = ser_init % ser_step; \
+    /* normalize template lower */ \
+    _type lower_mod = template_lower % ser_step; \
+    if (lower_mod != dst_mod) { \
+      if (lower_mod < dst_mod)   template_lower += (dst_mod - lower_mod); \
+      else template_lower += (ser_step - lower_mod + dst_mod); \
+    } \
+    if (template_lower > template_upper) goto no_iter; \
+  } \
+}
+
+#define _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK(ser_init, ser_cond, ser_step, par_init, par_cond, par_step, \
+                                                 template_lower, template_upper) \
+{ \
   /* calc par_init */ \
   if (ser_init < template_lower) *par_init = template_lower; \
   else if (template_upper < ser_init) goto no_iter; \
@@ -66,30 +74,44 @@ if (ser_step != 1) { \
   /* calc par_step */ \
   *par_step = ser_step; \
   return; \
-no_iter: \
-  *par_init = 0; \
-  *par_cond = 0; \
-  *par_step = 1; \
-  return;
+}
 
 #define _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_S(_type) \
 (_type ser_init, _type ser_cond, _type ser_step, \
  _type *const par_init, _type *const par_cond, _type *const par_step, \
  const _XCALABLEMP_template_t *const template, const int template_index) { \
-  _XCALABLEMP_SM_GET_TEMPLATE_INFO_BLOCK(_type) \
+  _type template_lower, template_upper; \
+\
+  _XCALABLEMP_SM_GET_TEMPLATE_INFO_BLOCK(_type, template, template_lower, template_upper) \
   _XCALABLEMP_SM_NORM_SCHED_PARAMS_S(_type) \
-  _XCALABLEMP_SM_NORM_TEMPLATE_BLOCK_S(_type) \
-  _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK \
+  _XCALABLEMP_SM_NORM_TEMPLATE_BLOCK_S(_type, ser_init, ser_step, template_lower, template_upper) \
+  _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK(ser_init, ser_cond, ser_step, par_init, par_cond, par_step, \
+                                           template_lower, template_upper) \
+\
+no_iter: \
+  *par_init = 0; \
+  *par_cond = 0; \
+  *par_step = 1; \
+  return; \
 }
 
 #define _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_U(_type) \
 (const _type ser_init, _type ser_cond, const _type ser_step, \
  _type *const par_init, _type *const par_cond, _type *const par_step, \
  const _XCALABLEMP_template_t *const template, const int template_index) { \
-  _XCALABLEMP_SM_GET_TEMPLATE_INFO_BLOCK(_type) \
+  _type template_lower, template_upper; \
+\
+  _XCALABLEMP_SM_GET_TEMPLATE_INFO_BLOCK(_type, template, template_lower, template_upper) \
   _XCALABLEMP_SM_NORM_SCHED_PARAMS_U \
-  _XCALABLEMP_SM_NORM_TEMPLATE_BLOCK_U(_type) \
-  _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK \
+  _XCALABLEMP_SM_NORM_TEMPLATE_BLOCK_U(_type, ser_init, ser_step, template_lower, template_upper) \
+  _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK(ser_init, ser_cond, ser_step, par_init, par_cond, par_step, \
+                                           template_lower, template_upper) \
+\
+no_iter: \
+  *par_init = 0; \
+  *par_cond = 0; \
+  *par_step = 1; \
+  return; \
 }
 
 void _XCALABLEMP_sched_loop_template_BLOCK_CHAR               _XCALABLEMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_S(char)
@@ -105,7 +127,7 @@ void _XCALABLEMP_sched_loop_template_BLOCK_UNSIGNED_LONGLONG  _XCALABLEMP_SM_SCH
 
 // cyclic distribution ---------------------------------------------------------------------------------------------------------------
 #define _XCALABLEMP_SM_GET_TEMPLATE_INFO_CYCLIC(_type) \
-if (!(template->is_owner)) return; \
+if (!(template->is_owner)) goto no_iter; \
 _type nodes_size = (_type)template->chunk[template_index].onto_nodes_info->size; \
 _type template_lower = (_type)template->chunk[template_index].par_lower;
 
