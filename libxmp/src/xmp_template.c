@@ -167,8 +167,9 @@ void _XCALABLEMP_init_template_FIXED(_XCALABLEMP_template_t **template, int dim,
                                                 sizeof(_XCALABLEMP_template_info_t) * (dim - 1));
 
   // calc members
-  t->is_owner = false;
   t->is_fixed = true;
+  t->is_distributed = true;
+  t->is_owner = false;
   t->dim = dim;
 
   t->onto_nodes = NULL;
@@ -193,8 +194,9 @@ void _XCALABLEMP_init_template_UNFIXED(_XCALABLEMP_template_t **template, int di
                                                 sizeof(_XCALABLEMP_template_info_t) * (dim - 1));
 
   // calc members
-  t->is_owner = false;
   t->is_fixed = false;
+  t->is_distributed = false;
+  t->is_owner = false;
   t->dim = dim;
 
   t->onto_nodes = NULL;
@@ -217,6 +219,11 @@ void _XCALABLEMP_init_template_chunk(_XCALABLEMP_template_t *template, _XCALABLE
   assert(template != NULL);
   assert(nodes != NULL);
 
+  if (!(template->is_fixed)) {
+    _XCALABLEMP_fatal("cannot distribute template, template size is not fixed");
+  }
+
+  template->is_distributed = true;
   template->is_owner = nodes->is_member;
 
   template->onto_nodes = nodes;
@@ -226,18 +233,19 @@ void _XCALABLEMP_init_template_chunk(_XCALABLEMP_template_t *template, _XCALABLE
 void _XCALABLEMP_finalize_template(_XCALABLEMP_template_t *template) {
   assert(template != NULL);
 
-  _XCALABLEMP_free(template->chunk);
+  if (template->is_distributed) {
+    _XCALABLEMP_free(template->chunk);
+  }
   _XCALABLEMP_free(template);
 }
 
 void _XCALABLEMP_dist_template_DUPLICATION(_XCALABLEMP_template_t *template, int template_index) {
   assert(template != NULL);
+  assert(template->is_fixed);
 
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
 
-  chunk->onto_nodes_index = _XCALABLEMP_N_NO_ONTO_NODES;
-  chunk->onto_nodes_info = NULL;
   chunk->par_lower = ti->ser_lower;
   chunk->par_upper = ti->ser_upper;
 
@@ -245,10 +253,14 @@ void _XCALABLEMP_dist_template_DUPLICATION(_XCALABLEMP_template_t *template, int
   chunk->par_chunk_width = ti->ser_size;
   chunk->dist_manner = _XCALABLEMP_N_DIST_DUPLICATION;
   chunk->is_regular_chunk = true;
+
+  chunk->onto_nodes_index = _XCALABLEMP_N_NO_ONTO_NODES;
+  chunk->onto_nodes_info = NULL;
 }
 
 void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int template_index, int nodes_index) {
   assert(template != NULL);
+  assert(template->is_fixed);
 
   _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
 
@@ -266,8 +278,6 @@ void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int templ
   // calc parallel members
   unsigned long long chunk_width = _XCALABLEMP_M_FLOORi(ti->ser_size, nodes_size);
 
-  chunk->onto_nodes_index = nodes_index;
-  chunk->onto_nodes_info = ni;
   if (nodes->is_member) {
     long long nodes_rank = (long long)ni->rank;
 
@@ -289,10 +299,14 @@ void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int templ
   else {
     chunk->is_regular_chunk = false;
   }
+
+  chunk->onto_nodes_index = nodes_index;
+  chunk->onto_nodes_info = ni;
 }
 
 void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int template_index, int nodes_index) {
   assert(template != NULL);
+  assert(template->is_fixed);
 
   _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
 
@@ -307,8 +321,7 @@ void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int temp
     _XCALABLEMP_fatal("template is too small to distribute");
   }
 
-  chunk->onto_nodes_index = nodes_index;
-  chunk->onto_nodes_info = ni;
+  // calc parallel members
   if (nodes->is_member) {
     long long nodes_rank = (long long)ni->rank;
     unsigned long long div = ti->ser_size / nodes_size;
@@ -339,6 +352,9 @@ void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int temp
   else {
     chunk->is_regular_chunk = false;
   }
+
+  chunk->onto_nodes_index = nodes_index;
+  chunk->onto_nodes_info = ni;
 }
 
 _Bool _XCALABLEMP_exec_task_TEMPLATE_PART(int get_upper, _XCALABLEMP_template_t *ref_template, ...) {

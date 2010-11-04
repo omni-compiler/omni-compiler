@@ -38,29 +38,32 @@ typedef struct _XCALABLEMP_template_info_type {
 } _XCALABLEMP_template_info_t;
 
 typedef struct _XCALABLEMP_template_chunk_type {
-  // enable when dist_manner is not _XCALABLEMP_N_DIST_DUPLICATION
-  int onto_nodes_index;
-  _XCALABLEMP_nodes_info_t *onto_nodes_info;
-
+  // enable when is_owner is true
   long long par_lower;
   long long par_upper;
-  // -------------------------------------------------------------
+  // ----------------------------
 
   int par_stride;
   unsigned long long par_chunk_width;
   int dist_manner;
   _Bool is_regular_chunk;
+
+  // enable when dist_manner is not _XCALABLEMP_N_DIST_DUPLICATION
+  int onto_nodes_index;
+  _XCALABLEMP_nodes_info_t *onto_nodes_info;
+  // -------------------------------------------------------------
 } _XCALABLEMP_template_chunk_t;
 
 typedef struct _XCALABLEMP_template_type {
-  _Bool is_owner;
   _Bool is_fixed;
+  _Bool is_distributed;
+  _Bool is_owner;
   int   dim;
 
-  // enable when template is distributed
+  // enable when is_distributed is true
   _XCALABLEMP_nodes_t *onto_nodes;
   _XCALABLEMP_template_chunk_t *chunk;
-  // -----------------------------------
+  // ----------------------------------
 
   _XCALABLEMP_template_info_t info[1];
 } _XCALABLEMP_template_t;
