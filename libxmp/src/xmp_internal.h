@@ -38,8 +38,10 @@ typedef struct _XCALABLEMP_template_info_type {
 } _XCALABLEMP_template_info_t;
 
 typedef struct _XCALABLEMP_template_chunk_type {
-  // FIXME not support BLOCK_CYCLIC yet
   // enable when dist_manner is not _XCALABLEMP_N_DIST_DUPLICATION
+  int onto_nodes_index;
+  _XCALABLEMP_nodes_info_t *onto_nodes_info;
+
   long long par_lower;
   long long par_upper;
   // -------------------------------------------------------------
@@ -48,11 +50,6 @@ typedef struct _XCALABLEMP_template_chunk_type {
   unsigned long long par_chunk_width;
   int dist_manner;
   _Bool is_regular_chunk;
-
-  // FIXME<use onto_nodex_index???> enable when dist_manner is not _XCALABLEMP_N_DIST_DUPLICATION
-  int onto_nodes_index;
-  _XCALABLEMP_nodes_info_t *onto_nodes_info;
-  // --------------------------------------------------------------------------------------------
 } _XCALABLEMP_template_chunk_t;
 
 typedef struct _XCALABLEMP_template_type {

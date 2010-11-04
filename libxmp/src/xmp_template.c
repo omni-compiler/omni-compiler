@@ -236,18 +236,15 @@ void _XCALABLEMP_dist_template_DUPLICATION(_XCALABLEMP_template_t *template, int
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
 
-  if (template->is_owner) {
-    chunk->par_lower = ti->ser_lower;
-    chunk->par_upper = ti->ser_upper;
-  }
+  chunk->onto_nodes_index = _XCALABLEMP_N_NO_ONTO_NODES;
+  chunk->onto_nodes_info = NULL;
+  chunk->par_lower = ti->ser_lower;
+  chunk->par_upper = ti->ser_upper;
 
   chunk->par_stride = 1;
   chunk->par_chunk_width = ti->ser_size;
   chunk->dist_manner = _XCALABLEMP_N_DIST_DUPLICATION;
   chunk->is_regular_chunk = true;
-
-  chunk->onto_nodes_index = _XCALABLEMP_N_NO_ONTO_NODES;
-  chunk->onto_nodes_info = NULL;
 }
 
 void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int template_index, int nodes_index) {
@@ -270,9 +267,10 @@ void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int templ
   // calc parallel members
   unsigned long long chunk_width = _XCALABLEMP_M_FLOORi(ti->ser_size, nodes_size);
 
+  chunk->onto_nodes_index = nodes_index;
+  chunk->onto_nodes_info = ni;
   if (template->is_owner) {
     chunk->par_lower = nodes_rank * chunk_width + ti->ser_lower;
-
     if (nodes_rank == (nodes_size - 1)) {
       chunk->par_upper = ti->ser_upper;
     }
@@ -290,9 +288,6 @@ void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int templ
   else {
     chunk->is_regular_chunk = false;
   }
-
-  chunk->onto_nodes_index = nodes_index;
-  chunk->onto_nodes_info = ni;
 }
 
 void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int template_index, int nodes_index) {
@@ -328,6 +323,8 @@ void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int temp
     }
   }
 
+  chunk->onto_nodes_index = nodes_index;
+  chunk->onto_nodes_info = ni;
   if (template->is_owner) {
     chunk->par_lower = ti->ser_lower + nodes_rank;
     chunk->par_upper = chunk->par_lower + nodes_size * (par_size - 1);
@@ -342,9 +339,6 @@ void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int temp
   else {
     chunk->is_regular_chunk = false;
   }
-
-  chunk->onto_nodes_index = nodes_index;
-  chunk->onto_nodes_info = ni;
 }
 
 _Bool _XCALABLEMP_exec_task_TEMPLATE_PART(int get_upper, _XCALABLEMP_template_t *ref_template, ...) {
