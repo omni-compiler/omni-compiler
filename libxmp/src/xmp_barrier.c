@@ -1,6 +1,8 @@
 #include "xmp_internal.h"
 
 void _XCALABLEMP_barrier_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes) {
+  assert(nodes != NULL);
+
   if (nodes->is_member) {
     MPI_Barrier(*(nodes->comm));
   }

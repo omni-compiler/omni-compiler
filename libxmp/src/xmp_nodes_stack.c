@@ -55,13 +55,14 @@ int _XCALABLEMP_get_execution_nodes_rank(void) {
 }
 
 void _XCALABLEMP_push_comm(MPI_Comm *comm) {
+  assert(comm != NULL);
+
   _XCALABLEMP_push_nodes(_XCALABLEMP_create_nodes_by_comm(comm));
 }
 
-// FIXME use assert
 void _XCALABLEMP_finalize_comm(MPI_Comm *comm) {
-  if (comm != NULL) {
-    MPI_Comm_free(comm);
-    _XCALABLEMP_free(comm);
-  }
+  assert(comm != NULL);
+
+  MPI_Comm_free(comm);
+  _XCALABLEMP_free(comm);
 }

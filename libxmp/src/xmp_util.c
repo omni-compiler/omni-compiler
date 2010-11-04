@@ -12,11 +12,16 @@ void *_XCALABLEMP_alloc(size_t size) {
   return addr;
 }
 
+// FIXME use assert
 void _XCALABLEMP_free(void *p) {
-  if (p != NULL) free(p);
+  if (p != NULL) {
+    free(p);
+  }
 }
 
 void _XCALABLEMP_fatal(char *msg) {
+  assert(msg != NULL);
+
   fprintf(stderr, "[RANK:%d] XcalableMP runtime error: %s\n", _XCALABLEMP_world_rank, msg);
   MPI_Abort(MPI_COMM_WORLD, 1);
 }

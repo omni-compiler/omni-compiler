@@ -554,7 +554,10 @@ void _XCALABLEMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, int map_type, _XC
 void _XCALABLEMP_finalize_nodes(_XCALABLEMP_nodes_t *nodes) {
   assert(nodes != NULL);
 
-  _XCALABLEMP_finalize_comm(nodes->comm);
+  if (nodes->is_member) {
+    _XCALABLEMP_finalize_comm(nodes->comm);
+  }
+
   _XCALABLEMP_free(nodes);
 }
 
