@@ -44,6 +44,8 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
 
     _XCALABLEMP_array_info_t *ai = &(a->info[i]);
 
+    ai->has_shadow = false;
+
     ai->ser_lower = lower;
     ai->ser_upper = upper;
     ai->ser_size = size;
@@ -64,10 +66,6 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
 
    // ai->dim_acc is calculated in _XCALABLEMP_alloc_array, _XCALABLEMP_init_array_addr
    // ai->dim_elmts is calculated in _XCALABLEMP_alloc_array, _XCALABLEMP_init_array_addr
-
-   // ai->shadow_comm is calculated in _XCALABLEMP_init_shadow
-   // ai->shadow_comm_size is calculated in _XCALABLEMP_init_shadow
-   // ai->shadow_comm_rank is calculated in _XCALABLEMP_init_shadow
     }
 
     ai->shadow_comm = NULL;
@@ -77,6 +75,10 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
     ai->shadow_type = _XCALABLEMP_N_SHADOW_NONE;
     ai->shadow_size_lo  = 0;
     ai->shadow_size_hi  = 0;
+
+    ai->shadow_comm = NULL;
+    ai->shadow_comm_size = 1;
+    ai->shadow_comm_rank = _XCALABLEMP_N_INVALID_RANK;
 
     ai->align_template_index = _XCALABLEMP_N_NO_ALIGNED_TEMPLATE;
     ai->align_template_info = NULL;
@@ -90,10 +92,12 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
 void _XCALABLEMP_finalize_array_desc(_XCALABLEMP_array_t *array) {
   assert(array != NULL);
 
-  if (array->is_allocated) {
-    int dim = array->dim;
-    for (int i = 0; i < dim; i++) {
-      _XCALABLEMP_finalize_comm(array->info[i].shadow_comm);
+  int dim = array->dim;
+  for (int i = 0; i < dim; i++) {
+    _XCALABLEMP_array_info_t *ai = &(array->info[i]);
+
+    if (ai->has_shadow) {
+      _XCALABLEMP_finalize_comm(ai->shadow_comm);
     }
   }
 

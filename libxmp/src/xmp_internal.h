@@ -69,6 +69,8 @@ typedef struct _XCALABLEMP_template_type {
 } _XCALABLEMP_template_t;
 
 typedef struct _XCALABLEMP_array_info_type {
+  _Bool has_shadow;
+
   int ser_lower;
   int ser_upper;
   int ser_size;
@@ -94,18 +96,19 @@ typedef struct _XCALABLEMP_array_info_type {
 
   unsigned long long dim_acc;
   unsigned long long dim_elmts;
-
-  MPI_Comm *shadow_comm;
-  int shadow_comm_size;
-  int shadow_comm_rank;
   // --------------------------------
 
   long long align_subscript;
 
-  // FIXME needs refactoring
   int shadow_type;
   int shadow_size_lo;
   int shadow_size_hi;
+
+  // enable when has_shadow is true
+  MPI_Comm *shadow_comm;
+  int shadow_comm_size;
+  int shadow_comm_rank;
+  // ------------------------------
 
   int align_template_index;
   // enable align_template_index is not _XCALABLEMP_N_NO_ALIGNED_TEMPLATE
