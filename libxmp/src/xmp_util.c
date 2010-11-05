@@ -6,17 +6,17 @@ void *_XCALABLEMP_alloc(size_t size) {
   void *addr;
 
   addr = malloc(size);
-  if (addr == NULL)
+  if (addr == NULL) {
     _XCALABLEMP_fatal("cannot allocate memory");
+  }
 
   return addr;
 }
 
-// FIXME use assert
 void _XCALABLEMP_free(void *p) {
-  if (p != NULL) {
-    free(p);
-  }
+  assert(p != NULL);
+
+  free(p);
 }
 
 void _XCALABLEMP_fatal(char *msg) {

@@ -90,12 +90,20 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
 void _XCALABLEMP_finalize_array_desc(_XCALABLEMP_array_t *array) {
   assert(array != NULL);
 
-  int dim = array->dim;
-  for (int i = 0; i < dim; i++) {
-    _XCALABLEMP_finalize_comm(array->info[i].shadow_comm);
+  if (array->is_allocated) {
+    int dim = array->dim;
+    for (int i = 0; i < dim; i++) {
+      _XCALABLEMP_finalize_comm(array->info[i].shadow_comm);
+    }
   }
 
-  _XCALABLEMP_finalize_comm(array->comm);
+  _XCALABLEMP_template_t *align_template = array->align_template;
+  assert(align_template->is_distributed); // checked by compiler
+
+  if ((align_template->onto_nodes)->is_member) {
+    _XCALABLEMP_finalize_comm(array->comm);
+  }
+
   _XCALABLEMP_free(array);
 }
 

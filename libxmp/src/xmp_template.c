@@ -233,6 +233,7 @@ void _XCALABLEMP_finalize_template(_XCALABLEMP_template_t *template) {
   if (template->is_distributed) {
     _XCALABLEMP_free(template->chunk);
   }
+
   _XCALABLEMP_free(template);
 }
 
