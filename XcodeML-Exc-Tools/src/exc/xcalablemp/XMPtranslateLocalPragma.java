@@ -885,8 +885,13 @@ public class XMPtranslateLocalPragma {
       case XMPobject.TEMPLATE:
         {
           XMPtemplate onRefTemplate = (XMPtemplate)onRefObj;
-          if (!(onRefTemplate.isDistributed()))
+          if (!onRefTemplate.isFixed()) {
+            throw new XMPexception("template '" + onRefObjName + "' is not fixed");
+          }
+
+          if (!onRefTemplate.isDistributed()) {
             throw new XMPexception("template '" + onRefObjName + "' is not distributed");
+          }
 
           callLoopSchedFuncTemplate(onRefTemplate, (XobjList)onRef.getArg(1), forBlock, schedBaseBlock);
         } break;

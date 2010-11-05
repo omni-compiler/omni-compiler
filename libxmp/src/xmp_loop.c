@@ -25,12 +25,8 @@ else ser_cond -= ((ser_cond - ser_init) % ser_step);
 // block distribution ---------------------------------------------------------------------------------------------------------------
 #define _XCALABLEMP_SM_GET_TEMPLATE_INFO_BLOCK(_type, template, template_lower, template_upper) \
 { \
-  if (!(template->is_fixed)) { \
-    _XCALABLEMP_fatal("error in loop scheduling, template size is not fixed"); \
-  } \
-  if (!(template->is_distributed)) { \
-    _XCALABLEMP_fatal("error in loop scheduling, template is not distributed"); \
-  } \
+  assert(template->is_fixed); /* checked by comiler */ \
+  assert(template->is_distributed); /* checked by comiler */ \
   if (!(template->is_owner)) goto no_iter; \
   template_lower = (_type)template->chunk[template_index].par_lower; \
   template_upper = (_type)template->chunk[template_index].par_upper; \
@@ -133,12 +129,8 @@ void _XCALABLEMP_sched_loop_template_BLOCK_UNSIGNED_LONGLONG  _XCALABLEMP_SM_SCH
 
 // cyclic distribution ---------------------------------------------------------------------------------------------------------------
 #define _XCALABLEMP_SM_GET_TEMPLATE_INFO_CYCLIC(_type) \
-if (!(template->is_fixed)) { \
-  _XCALABLEMP_fatal("error in loop scheduling, template size is not fixed"); \
-} \
-if (!(template->is_distributed)) { \
-  _XCALABLEMP_fatal("error in loop scheduling, template is not distributed"); \
-} \
+assert(template->is_fixed); /* checked by comiler */ \
+assert(template->is_distributed); /* checked by comiler */ \
 if (!(template->is_owner)) goto no_iter; \
 _type nodes_size = (_type)template->chunk[template_index].onto_nodes_info->size; \
 _type template_lower = (_type)template->chunk[template_index].par_lower;

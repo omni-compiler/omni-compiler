@@ -238,8 +238,8 @@ void _XCALABLEMP_finalize_template(_XCALABLEMP_template_t *template) {
 
 void _XCALABLEMP_dist_template_DUPLICATION(_XCALABLEMP_template_t *template, int template_index) {
   assert(template != NULL);
-  assert(template->is_fixed);
-  assert(template->is_distributed);
+  assert(template->is_fixed); // checked by compiler
+  assert(template->is_distributed); // checked by compiler
 
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
@@ -258,8 +258,8 @@ void _XCALABLEMP_dist_template_DUPLICATION(_XCALABLEMP_template_t *template, int
 
 void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int template_index, int nodes_index) {
   assert(template != NULL);
-  assert(template->is_fixed);
-  assert(template->is_distributed);
+  assert(template->is_fixed); // checked by compiler
+  assert(template->is_distributed); // checked by compiler
 
   _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
 
@@ -275,14 +275,18 @@ void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int templ
   }
 
   // calc parallel members
-  unsigned long long chunk_width = _XCALABLEMP_M_FLOORi(ti->ser_size, nodes_size);
+  unsigned long long chunk_width = _XCALABLEMP_M_CEILi(ti->ser_size, nodes_size);
 
   if (nodes->is_member) {
     long long nodes_rank = (long long)ni->rank;
+    int owner_nodes_size = _XCALABLEMP_M_CEILi(ti->ser_size, chunk_width);
 
     chunk->par_lower = nodes_rank * chunk_width + ti->ser_lower;
-    if (nodes_rank == (nodes_size - 1)) {
+    if (nodes_rank == (owner_nodes_size - 1)) {
       chunk->par_upper = ti->ser_upper;
+    }
+    else if (nodes_rank >= owner_nodes_size) {
+      template->is_owner = false;
     }
     else {
       chunk->par_upper = chunk->par_lower + chunk_width - 1;
@@ -305,8 +309,8 @@ void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int templ
 
 void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int template_index, int nodes_index) {
   assert(template != NULL);
-  assert(template->is_fixed);
-  assert(template->is_distributed);
+  assert(template->is_fixed); // checked by compiler
+  assert(template->is_distributed); // checked by compiler
 
   _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
 
