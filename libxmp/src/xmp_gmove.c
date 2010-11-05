@@ -412,7 +412,7 @@ void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XCALABLEMP_
 
 // FIXME change NULL check rule!!! (IMPORTANT, to all library functions)
 _Bool _XCALABLEMP_gmove_exec_home_SCALAR(_XCALABLEMP_array_t *array, ...) {
-  if (!(array->is_allocated)) return false;
+  if (!array->is_allocated) return false;
 
   _XCALABLEMP_template_t *ref_template = array->align_template;
 
@@ -644,7 +644,7 @@ void _XCALABLEMP_gmove_local_copy(int type, size_t type_size, ...) {
 }
 
 void _XCALABLEMP_gmove_local_copy_home(_XCALABLEMP_array_t *dst_array, int type, size_t type_size, ...) {
-  if (!(dst_array->is_allocated)) {
+  if (!dst_array->is_allocated) {
     return;
   }
 

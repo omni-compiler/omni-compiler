@@ -6,7 +6,7 @@
 void _XCALABLEMP_bcast_NODES_ENTIRE_OMITTED(_XCALABLEMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size) {
   assert(bcast_nodes != NULL);
 
-  if (!(bcast_nodes->is_member)) {
+  if (!bcast_nodes->is_member) {
     return;
   }
 
@@ -25,7 +25,7 @@ void _XCALABLEMP_bcast_NODES_ENTIRE_GLOBAL(_XCALABLEMP_nodes_t *bcast_nodes, voi
 
   _XCALABLEMP_validate_nodes_ref(&from_lower, &from_upper, &from_stride, _XCALABLEMP_world_size);
 
-  if (!(bcast_nodes->is_member)) {
+  if (!bcast_nodes->is_member) {
     return;
   }
 
@@ -49,11 +49,11 @@ void _XCALABLEMP_bcast_NODES_ENTIRE_NODES(_XCALABLEMP_nodes_t *bcast_nodes, void
   assert(bcast_nodes != NULL);
   assert(from_nodes != NULL);
 
-  if (!(bcast_nodes->is_member)) {
+  if (!bcast_nodes->is_member) {
     return;
   }
 
-  if (!(from_nodes->is_member)) {
+  if (!from_nodes->is_member) {
     _XCALABLEMP_fatal("broadcast failed, cannot find the source node");
   }
 

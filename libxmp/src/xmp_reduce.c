@@ -159,7 +159,7 @@ static void _XCALABLEMP_compare_reduce_results(_Bool *cmp_buffer, void *temp_buf
 { \
   type *buf = (type *)loc; \
   for (int i = 0; i < count; i++) { \
-    if (!(cmp_buffer[i])) { \
+    if (!cmp_buffer[i]) { \
       switch (op) { \
         case _XCALABLEMP_N_REDUCE_FIRSTMAX: \
         case _XCALABLEMP_N_REDUCE_FIRSTMIN: \
@@ -200,7 +200,7 @@ void _XCALABLEMP_reduce_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes, void *addr, int
 
   if (count == 0) return; // FIXME not good implementation
 
-  if (!(nodes->is_member)) {
+  if (!nodes->is_member) {
     return;
   }
 
@@ -231,7 +231,7 @@ void _XCALABLEMP_reduce_FLMM_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes,
 
   if (count == 0) return; // FIXME not good implementation
 
-  if (!(nodes->is_member)) {
+  if (!nodes->is_member) {
     return;
   }
 

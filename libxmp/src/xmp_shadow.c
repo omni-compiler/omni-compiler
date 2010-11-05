@@ -8,7 +8,7 @@ static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array
 
 static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array_index) {
   _XCALABLEMP_nodes_t *onto_nodes = array->align_template->onto_nodes;
-  if (!(onto_nodes->is_member)) {
+  if (!onto_nodes->is_member) {
     return;
   }
 
@@ -30,7 +30,7 @@ static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array
     acc_nodes_size *= size;
   }
 
-  if (!(array->is_allocated)) {
+  if (!array->is_allocated) {
     color = 0;
   }
 
@@ -111,7 +111,7 @@ void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
 // FIXME consider full shadow in other dimensions
 void _XCALABLEMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_addr,
                                     _XCALABLEMP_array_t *array_desc, int array_index) {
-  if (!(array_desc->is_allocated)) {
+  if (!array_desc->is_allocated) {
     return;
   }
 
@@ -207,7 +207,7 @@ void _XCALABLEMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *ar
 // FIXME not consider full shadow
 void _XCALABLEMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_addr,
                                       _XCALABLEMP_array_t *array_desc, int array_index) {
-  if (!(array_desc->is_allocated)) {
+  if (!array_desc->is_allocated) {
     return;
   }
 
@@ -305,7 +305,7 @@ void _XCALABLEMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *ar
 void _XCALABLEMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
                                         void *lo_send_buffer, void *hi_send_buffer,
                                         _XCALABLEMP_array_t *array_desc, int array_index) {
-  if (!(array_desc->is_allocated)) {
+  if (!array_desc->is_allocated) {
     return;
   }
 
@@ -454,7 +454,7 @@ static void _XCALABLEMP_reflect_shadow_ALLGATHERV(void *array_addr, _XCALABLEMP_
 
 // FIXME not implemented yet
 void _XCALABLEMP_reflect_shadow_FULL(void *array_addr, _XCALABLEMP_array_t *array_desc, int array_index) {
-  if (!(array_desc->is_allocated)) {
+  if (!array_desc->is_allocated) {
     return;
   }
 

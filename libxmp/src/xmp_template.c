@@ -366,11 +366,14 @@ _Bool _XCALABLEMP_exec_task_TEMPLATE_PART(int get_upper, _XCALABLEMP_template_t 
   assert(ref_template->is_fixed); // checked by compiler
   assert(ref_template->is_distributed); // checked by compiler
 
-  if (!(ref_template->is_owner)) {
-    return false;
+  _XCALABLEMP_nodes_t *onto_nodes = ref_template->onto_nodes;
+  if (!onto_nodes->is_member) {
+     return false;
   }
 
-  _XCALABLEMP_nodes_t *onto_nodes = ref_template->onto_nodes;
+  if (!ref_template->is_owner) {
+    return false;
+  }
 
   int color = 1;
   _Bool is_member = true;

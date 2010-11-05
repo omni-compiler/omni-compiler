@@ -159,7 +159,7 @@ static void _XCALABLEMP_calc_nodes_rank(_XCALABLEMP_nodes_t *n, int linear_rank)
 
 static void _XCALABLEMP_disable_nodes_rank(_XCALABLEMP_nodes_t *n) {
   assert(n != NULL);
-  assert(!(n->is_member));
+  assert(!n->is_member);
 
   int dim = n->dim;
   for (int i = 0; i < dim; i++) {
@@ -445,7 +445,7 @@ void _XCALABLEMP_init_nodes_STATIC_NODES_NAMED(int get_upper, int map_type, _XCA
                                                _XCALABLEMP_nodes_t *ref_nodes, ...) {
   assert(ref_nodes != NULL);
 
-  if (!(ref_nodes->is_member)) {
+  if (!ref_nodes->is_member) {
     _XCALABLEMP_fatal("cannot create a new nodes descriptor");
   }
 
@@ -500,7 +500,7 @@ void _XCALABLEMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, int map_type, _XC
                                                _XCALABLEMP_nodes_t *ref_nodes, ...) {
   assert(ref_nodes != NULL);
 
-  if (!(ref_nodes->is_member)) {
+  if (!ref_nodes->is_member) {
     _XCALABLEMP_fatal("cannot create a new nodes descriptor");
   }
 
@@ -590,7 +590,7 @@ _Bool _XCALABLEMP_exec_task_NODES_ENTIRE(_XCALABLEMP_nodes_t *ref_nodes) {
 _Bool _XCALABLEMP_exec_task_NODES_PART(int get_upper, _XCALABLEMP_nodes_t *ref_nodes, ...) {
   assert(ref_nodes != NULL);
 
-  if (!(ref_nodes->is_member)) {
+  if (!ref_nodes->is_member) {
     return false;
   }
 

@@ -243,7 +243,7 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
 }
 
 void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc, ...) {
-  if (!(array_desc->is_allocated)) {
+  if (!array_desc->is_allocated) {
     *array_addr = NULL;
     return;
   }
@@ -274,7 +274,7 @@ void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc,
 }
 
 void _XCALABLEMP_init_array_alloc_params(void **array_addr, _XCALABLEMP_array_t *array_desc, ...) {
-  if (!(array_desc->is_allocated)) {
+  if (!array_desc->is_allocated) {
     return;
   }
 
@@ -303,7 +303,7 @@ void _XCALABLEMP_init_array_alloc_params(void **array_addr, _XCALABLEMP_array_t 
 
 void _XCALABLEMP_init_array_addr(void **array_addr, void *init_addr,
                                  _XCALABLEMP_array_t *array_desc, ...) {
-  if (!(array_desc->is_allocated)) {
+  if (!array_desc->is_allocated) {
     *array_addr = NULL;
     return;
   }
@@ -336,7 +336,7 @@ void _XCALABLEMP_init_array_addr(void **array_addr, void *init_addr,
 void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
   _XCALABLEMP_template_t *align_template = array->align_template;
   _XCALABLEMP_nodes_t *onto_nodes = align_template->onto_nodes;
-  if (!(onto_nodes->is_member)) {
+  if (!onto_nodes->is_member) {
     return;
   }
 
