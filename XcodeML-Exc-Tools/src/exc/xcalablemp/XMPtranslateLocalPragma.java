@@ -319,11 +319,13 @@ public class XMPtranslateLocalPragma {
         throw new XMPexception("global template cannot be distributed in local scope");
     }
 
-    if (templateObject.isDistributed())
+    if (templateObject.isDistributed()) {
       throw new XMPexception("template '" + templateName + "' is already distributed");
+    }
 
-    if (!templateObject.isFixed())
-      throw new XMPexception("the size of template '" + templateName + "' is not fixed");
+    if (!templateObject.isFixed()) {
+      throw new XMPexception("template '" + templateName + "' is not fixed");
+    }
 
     // get nodes object
     String nodesName = distDecl.getArg(2).getString();
@@ -2229,9 +2231,17 @@ public class XMPtranslateLocalPragma {
           break;
         case XMPobject.TEMPLATE:
           {
-            XMPnodes ontoNodes = ((XMPtemplate)onRefObject).getOntoNodes();
-            if (ontoNodes == null)
+            XMPtemplate ontoTemplate = (XMPtemplate)onRefObject;
+
+            if (!ontoTemplate.isFixed()) {
+              throw new XMPexception("template '" + objectName + "' is not fixed");
+            }
+
+            if (!ontoTemplate.isDistributed()) {
               throw new XMPexception("template '" + objectName + "' is not distributed");
+            }
+
+            XMPnodes ontoNodes = ((XMPtemplate)onRefObject).getOntoNodes();
 
             ontoNodesRef = ontoNodes.getDescId().Ref();
             castType = Xtype.longlongType;

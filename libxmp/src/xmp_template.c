@@ -218,10 +218,7 @@ void _XCALABLEMP_init_template_UNFIXED(_XCALABLEMP_template_t **template, int di
 void _XCALABLEMP_init_template_chunk(_XCALABLEMP_template_t *template, _XCALABLEMP_nodes_t *nodes) {
   assert(template != NULL);
   assert(nodes != NULL);
-
-  if (!(template->is_fixed)) {
-    _XCALABLEMP_fatal("cannot distribute template, template size is not fixed");
-  }
+  assert(template->is_fixed); // checked by compiler
 
   template->is_distributed = true;
   template->is_owner = nodes->is_member;
@@ -362,14 +359,8 @@ void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int temp
 
 _Bool _XCALABLEMP_exec_task_TEMPLATE_PART(int get_upper, _XCALABLEMP_template_t *ref_template, ...) {
   assert(ref_template != NULL);
-
-  if (!(ref_template->is_fixed)) {
-    _XCALABLEMP_FATAL("error in loop scheduling, template size is not fixed");
-  }
-
-  if (!(ref_template->is_distributed)) {
-    _XCALABLEMP_FATAL("error in loop scheduling, template is not distributed");
-  }
+  assert(ref_template->is_fixed); // checked by compiler
+  assert(ref_template->is_distributed); // checked by compiler
 
   if (!(ref_template->is_owner)) {
     return false;

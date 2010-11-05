@@ -256,14 +256,17 @@ public class XMPtranslateGlobalPragma {
     // get template object
     String templateName = distDecl.getArg(0).getString();
     XMPtemplate templateObject = _globalObjectTable.getTemplate(templateName);
-    if (templateObject == null)
+    if (templateObject == null) {
       throw new XMPexception("template '" + templateName + "' is not declared");
+    }
 
-    if (templateObject.isDistributed())
+    if (templateObject.isDistributed()) {
       throw new XMPexception("template '" + templateName + "' is already distributed");
+    }
 
-    if (!templateObject.isFixed())
-      throw new XMPexception("the size of template '" + templateName + "' is not fixed");
+    if (!templateObject.isFixed()) {
+      throw new XMPexception("template '" + templateName + "' is not fixed");
+    }
 
     // get nodes object
     String nodesName = distDecl.getArg(2).getString();
