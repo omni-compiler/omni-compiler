@@ -269,11 +269,6 @@ void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int templ
 
   long long nodes_size = (long long)ni->size;
 
-  // check template size
-  if (ti->ser_size < nodes_size) {
-    _XCALABLEMP_fatal("template is too small to distribute");
-  }
-
   // calc parallel members
   unsigned long long chunk_width = _XCALABLEMP_M_CEILi(ti->ser_size, nodes_size);
 
@@ -320,31 +315,40 @@ void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int temp
 
   long long nodes_size = (long long)ni->size;
 
-  // check template size
-  if (ti->ser_size < nodes_size) {
-    _XCALABLEMP_fatal("template is too small to distribute");
-  }
-
   // calc parallel members
   if (nodes->is_member) {
     long long nodes_rank = (long long)ni->rank;
-    unsigned long long div = ti->ser_size / nodes_size;
-    unsigned long long mod = ti->ser_size % nodes_size;
-    unsigned long long par_size = 0;
-    if(mod == 0) {
-      par_size = div;
+
+    if (ti->ser_size < nodes_size) {
+      if (nodes_rank < ti->ser_size) {
+        long long par_index = ti->ser_lower + nodes_rank;
+
+        chunk->par_lower = par_index;
+        chunk->par_upper = par_index;
+      }
+      else {
+        template->is_owner = false;
+      }
     }
     else {
-      if(nodes_rank >= mod) {
+      unsigned long long div = ti->ser_size / nodes_size;
+      unsigned long long mod = ti->ser_size % nodes_size;
+      unsigned long long par_size = 0;
+      if(mod == 0) {
         par_size = div;
       }
       else {
-        par_size = div + 1;
+        if(nodes_rank >= mod) {
+          par_size = div;
+        }
+        else {
+          par_size = div + 1;
+        }
       }
-    }
 
-    chunk->par_lower = ti->ser_lower + nodes_rank;
-    chunk->par_upper = chunk->par_lower + nodes_size * (par_size - 1);
+      chunk->par_lower = ti->ser_lower + nodes_rank;
+      chunk->par_upper = chunk->par_lower + nodes_size * (par_size - 1);
+    }
   }
 
   chunk->par_stride = nodes_size;
