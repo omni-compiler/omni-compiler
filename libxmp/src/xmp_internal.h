@@ -86,7 +86,6 @@ typedef struct _XCALABLEMP_array_info_type {
   int par_stride;
   int par_size;
 
-  int dist_manner;
   _Bool is_regular_chunk;
 
   int local_lower;
@@ -112,6 +111,7 @@ typedef struct _XCALABLEMP_array_info_type {
   int shadow_comm_rank;
   // -----------------------------------------
 
+  // FIXME align_manner is not _XCALABLEMP_N_ALIGN_NOT_ALIGNED
   int align_template_index;
   // enable align_template_index is not _XCALABLEMP_N_NO_ALIGNED_TEMPLATE
   _XCALABLEMP_template_info_t *align_template_info;
