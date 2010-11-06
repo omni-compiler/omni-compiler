@@ -112,7 +112,7 @@ static void _XCALABLEMP_setup_reduce_FLMM_op(MPI_Op *mpi_op, int op) {
   }
 }
 
-#define _XCALABLEMP_M_COMPARE_REDUCE_RESULTS_MAIN(type)\
+#define _XCALABLEMP_M_COMPARE_REDUCE_RESULTS_MAIN(type) \
 { \
   type *buf1 = (type *)temp_buffer; \
   type *buf2 = (type *)addr; \
@@ -302,6 +302,7 @@ void _XCALABLEMP_reduce_FLMM_CLAUSE(void *temp_addr, void *data_addr, int count,
   assert(data_addr != NULL);
 
   _XCALABLEMP_nodes_t *nodes = _XCALABLEMP_get_execution_nodes();
+  assert(nodes->is_member);
 
   // setup information
   MPI_Datatype mpi_datatype;
@@ -310,7 +311,7 @@ void _XCALABLEMP_reduce_FLMM_CLAUSE(void *temp_addr, void *data_addr, int count,
   _XCALABLEMP_setup_reduce_type(&mpi_datatype, &datatype_size, datatype);
   _XCALABLEMP_setup_reduce_op(&mpi_op, op);
 
-  // reduce <reduction-variable
+  // reduce <reduction-variable>
   MPI_Allreduce(temp_addr, data_addr, count, mpi_datatype, mpi_op, *(nodes->comm));
 
   // compare results
@@ -345,6 +346,10 @@ void _XCALABLEMP_reduce_FLMM_CLAUSE(void *temp_addr, void *data_addr, int count,
 void _XCALABLEMP_init_reduce_comm_NODES(_XCALABLEMP_nodes_t *nodes, ...) {
   assert(nodes != NULL);
 
+  if (!nodes->is_member) {
+    _XCALABLEMP_fatal("cannot create a new communicator for reduction");
+  }
+
   int color = 1;
   int acc_nodes_size = 1;
   int nodes_dim = nodes->dim;
@@ -372,8 +377,12 @@ void _XCALABLEMP_init_reduce_comm_NODES(_XCALABLEMP_nodes_t *nodes, ...) {
 
 void _XCALABLEMP_init_reduce_comm_TEMPLATE(_XCALABLEMP_template_t *template, ...) {
   assert(template != NULL);
+  assert(template->is_distributed); // checked by compiler
 
   _XCALABLEMP_nodes_t *onto_nodes = template->onto_nodes;
+  if (!onto_nodes->is_member) {
+    _XCALABLEMP_fatal("cannot create a new communicator for reduction");
+  }
 
   int color = 1;
   int acc_nodes_size = 1;
