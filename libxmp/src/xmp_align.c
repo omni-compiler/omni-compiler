@@ -71,8 +71,8 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
     ai->local_stride = 1;
     ai->alloc_size = size;
 
- // ai->dim_acc is calculated in _XCALABLEMP_alloc_array, _XCALABLEMP_init_array_addr
- // ai->dim_elmts is calculated in _XCALABLEMP_alloc_array, _XCALABLEMP_init_array_addr
+    ai->dim_acc = 0;
+    ai->dim_elmts = 0;
 
     ai->align_subscript = 0;
 
@@ -121,6 +121,7 @@ void _XCALABLEMP_align_array_DUPLICATION(_XCALABLEMP_array_t *array, int array_i
   assert(template->is_distributed); // checked by compiler
 
   _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
+  _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
 
   ai->align_manner = _XCALABLEMP_N_ALIGN_DUPLICATION;
@@ -136,7 +137,7 @@ void _XCALABLEMP_align_array_DUPLICATION(_XCALABLEMP_array_t *array, int array_i
 
   ai->align_template_index = template_index;
   ai->align_template_info = ti;
-  ai->align_template_chunk = &(template->chunk[template_index]);
+  ai->align_template_chunk = chunk;
 }
 
 void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, int template_index,
@@ -159,54 +160,52 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, 
     _XCALABLEMP_fatal("aligned array is out of template bound");
   }
 
-  int par_lower = 0, par_upper = 0, par_size = 0; // XXX initialized by dummy
+  // calc parallel members
   if (template->is_owner) {
     long long template_lower = chunk->par_lower;
     long long template_upper = chunk->par_upper;
 
     // set par_lower
     if (align_lower < template_lower) {
-      par_lower = template_lower - align_subscript;
+      ai->par_lower = template_lower - align_subscript;
     }
     else if (template_upper < align_lower) {
       array->is_allocated = false;
+      goto EXIT_CALC_PARALLEL_MEMBERS;
     }
     else {
-      par_lower = ai->ser_lower;
+      ai->par_lower = ai->ser_lower;
     }
 
     // set par_upper
     if (align_upper < template_lower) {
       array->is_allocated = false;
+      goto EXIT_CALC_PARALLEL_MEMBERS;
     }
     else if (template_upper < align_upper) {
-      par_upper = template_upper - align_subscript;
+      ai->par_upper = template_upper - align_subscript;
     }
     else {
-      par_upper = ai->ser_upper;
+      ai->par_upper = ai->ser_upper;
     }
 
-    // set par_size
-    par_size = _XCALABLEMP_M_COUNT_TRIPLETi(par_lower, par_upper, 1);
-  }
-
-  // set members
-  if (array->is_allocated) {
-    ai->par_lower = par_lower;
-    ai->par_upper = par_upper;
+    // set other members
     ai->par_stride = 1;
-    ai->par_size = par_size;
+    ai->par_size = _XCALABLEMP_M_COUNT_TRIPLETi(ai->par_lower, ai->par_upper, 1);
 
     ai->is_regular_chunk = (ti->ser_lower == (ai->ser_lower + align_subscript)) && chunk->is_regular_chunk;
 
+    // FIXME array lower is always 0 in C
     ai->local_lower = 0;
-    ai->local_upper = par_size - 1;
+    ai->local_upper = ai->par_size - 1;
     ai->local_stride = 1;
-    ai->alloc_size = par_size;
+    ai->alloc_size = ai->par_size;
 
     *temp0 = ai->par_lower;
     ai->temp0 = temp0;
   }
+
+EXIT_CALC_PARALLEL_MEMBERS:
 
   ai->align_subscript = align_subscript;
 
@@ -236,34 +235,27 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
     _XCALABLEMP_fatal("aligned array is out of template bound");
   }
 
-  int par_lower = 0, par_upper = 0, par_stride = 0, par_size = 0; // XXX initialized by dummy
+  // calc parallel members
   if (template->is_owner) {
     int cycle = chunk->par_stride;
     int mod = _XCALABLEMP_modi_ll_i(chunk->par_lower - align_subscript, cycle);
 
     int dist = (ai->ser_upper - mod) / cycle;
 
-    par_lower = mod;
-    par_upper = mod + (dist * cycle);
-    par_stride = cycle;
-    par_size = dist + 1;
-  }
-
-  // set members
-  if (array->is_allocated) {
-    ai->par_lower = par_lower;
-    ai->par_upper = par_upper;
-    ai->par_stride = par_stride;
-    ai->par_size = par_size;
+    ai->par_lower = mod;
+    ai->par_upper = mod + (dist * cycle);
+    ai->par_stride = cycle;
+    ai->par_size = dist + 1;
 
     ai->is_regular_chunk = (ti->ser_lower == (ai->ser_lower + align_subscript)) && chunk->is_regular_chunk;
 
+    // FIXME array lower is always 0 in C
     ai->local_lower = 0;
-    ai->local_upper = par_size - 1;
+    ai->local_upper = ai->par_size - 1;
     ai->local_stride = 1;
-    ai->alloc_size = par_size;
+    ai->alloc_size = ai->par_size;
 
-    *temp0 = par_stride;
+    *temp0 = ai->par_stride;
     ai->temp0 = temp0;
   }
 
