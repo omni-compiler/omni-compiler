@@ -14,17 +14,17 @@ typedef struct _XCALABLEMP_bcast_array_section_info_type {
 
 #define _XCALABLEMP_M_GMOVE_BCAST_ARRAY(array, dst_addr, src_addr, type_size, src_rank) \
 { \
-  int my_rank = array->comm_rank; \
+  int my_rank = array->align_comm_rank; \
   if (src_rank == my_rank) { \
     memcpy(dst_addr, src_addr, type_size); \
   } \
 \
-  MPI_Bcast(dst_addr, type_size, MPI_BYTE, src_rank, *(array->comm)); \
+  MPI_Bcast(dst_addr, type_size, MPI_BYTE, src_rank, *(array->align_comm)); \
 }
 
 #define _XCALABLEMP_M_GMOVE_BCAST_EXEC(exec_nodes, array, dst_addr, src_addr, type_size, src_rank) \
 { \
-  int my_rank = array->comm_rank; \
+  int my_rank = array->align_comm_rank; \
   if (src_rank == my_rank) { \
     memcpy(dst_addr, src_addr, type_size); \
 \
@@ -101,6 +101,8 @@ static _Bool _XCALABLEMP_check_gmove_inclusion_SCALAR(long long ref_index, _XCAL
 }
 
 static int _XCALABLEMP_calc_gmove_owner_SCALAR(long long ref_index, _XCALABLEMP_template_t *template, int dim_index) {
+  assert(template != NULL);
+
   _XCALABLEMP_template_info_t *info = &(template->info[dim_index]);
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[dim_index]);
 
@@ -537,7 +539,7 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
   else {
     if (src_rank == _XCALABLEMP_N_INVALID_RANK) {
       // local copy on dst_rank
-      if (dst_rank == dst_array->comm_rank) {
+      if (dst_rank == dst_array->align_comm_rank) {
         memcpy(dst_addr, src_addr, type_size);
       }
     }
@@ -552,12 +554,12 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
 
       // irecv
       MPI_Request recv_req;
-      if (dst_rank == dst_array->comm_rank) {
+      if (dst_rank == dst_array->align_comm_rank) {
         MPI_Irecv(dst_addr, type_size, MPI_BYTE, MPI_ANY_SOURCE, _XCALABLEMP_N_MPI_TAG_GMOVE, *(comm_nodes->comm), &recv_req);
       }
 
       // send
-      if (src_rank == src_array->comm_rank) {
+      if (src_rank == src_array->align_comm_rank) {
         // FIXME master sends all
         if (src_rank == comm_nodes->comm_rank) {
           int num_targets = _XCALABLEMP_calc_gmove_target_nodes_size(dst_nodes, dst_rank_array);
@@ -572,7 +574,7 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
       }
 
       // wait
-      if (dst_rank == dst_array->comm_rank) {
+      if (dst_rank == dst_array->align_comm_rank) {
         MPI_Status recv_stat;
         MPI_Wait(&recv_req, &recv_stat);
       }
@@ -1079,7 +1081,7 @@ void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION(_XCALABLEMP_array_t *dst_array, _X
 
     // irecv
     MPI_Request recv_req;
-    if (dst_rank == dst_array->comm_rank) {
+    if (dst_rank == dst_array->align_comm_rank) {
       unsigned long long recv_elmts = 1;
       for (int i = 0; i < dst_dim; i++) {
         recv_elmts *= _XCALABLEMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
@@ -1090,7 +1092,7 @@ void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION(_XCALABLEMP_array_t *dst_array, _X
     }
 
     // pack & send
-    if (src_rank == src_array->comm_rank) {
+    if (src_rank == src_array->align_comm_rank) {
       unsigned long long send_elmts = 1;
       for (int i = 0; i < src_dim; i++) {
         _XCALABLEMP_calc_array_local_index_triplet(src_array, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
@@ -1109,7 +1111,7 @@ void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION(_XCALABLEMP_array_t *dst_array, _X
     }
 
     // wait & unpack
-    if (dst_rank == dst_array->comm_rank) {
+    if (dst_rank == dst_array->align_comm_rank) {
       for (int i = 0; i < dst_dim; i++) {
         _XCALABLEMP_calc_array_local_index_triplet(dst_array, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
       }
@@ -1165,7 +1167,7 @@ void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION(_XCALABLEMP_array_t *dst_array, _X
         if (dst_dim == 1) {
           _XCALABLEMP_array_info_t *ai = &(dst_array->info[0]);
 
-          _XCALABLEMP_push_comm(src_array->comm);
+          _XCALABLEMP_push_comm(src_array->align_comm);
           _XCALABLEMP_gmove_BCAST_ARRAY_SECTION(src_array, type, type_size,
                                                 dst_addr, dst_dim, ai->local_lower, ai->local_upper, ai->local_stride, dst_d[0],
                                                 src_addr, src_dim, ai->par_lower, ai->par_upper, ai->par_stride, dst_d[0]);

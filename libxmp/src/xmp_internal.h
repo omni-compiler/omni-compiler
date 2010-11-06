@@ -95,9 +95,7 @@ typedef struct _XCALABLEMP_array_info_type {
   int alloc_size;
 
   int *temp0;
-  // --------------------------------
 
-  // enable when is_allocated is true
   unsigned long long dim_acc;
   unsigned long long dim_elmts;
   // --------------------------------
@@ -123,6 +121,7 @@ typedef struct _XCALABLEMP_array_info_type {
 
 typedef struct _XCALABLEMP_array_type {
   _Bool is_allocated;
+  _Bool is_align_comm_member;
   int dim;
   int type;
   size_t type_size;
@@ -132,11 +131,11 @@ typedef struct _XCALABLEMP_array_type {
   unsigned long long total_elmts;
   // --------------------------------
 
-  // enable when is_member is true
-  MPI_Comm *comm;
-  int comm_size;
-  int comm_rank;
-  // -----------------------------
+  // enable when is_align_comm_member is true
+  MPI_Comm *align_comm;
+  int align_comm_size;
+  int align_comm_rank;
+  // ----------------------------------------
 
   _XCALABLEMP_template_t *align_template;
   _XCALABLEMP_array_info_t info[1];

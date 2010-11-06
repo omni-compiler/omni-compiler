@@ -5,6 +5,7 @@
 
 static void _XCALABLEMP_calc_array_dim_elmts(_XCALABLEMP_array_t *array, int array_index) {
   assert(array != NULL);
+  assert(array->is_allocated);
 
   int dim = array->dim;
 
@@ -25,6 +26,7 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
   _XCALABLEMP_array_t *a = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_array_t) + sizeof(_XCALABLEMP_array_info_t) * (dim - 1));
 
   a->is_allocated = template->is_owner;
+  a->is_align_comm_member = false;
   a->dim = dim;
   a->type = type;
   a->type_size = type_size;
@@ -32,9 +34,9 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
   a->addr = NULL;
   a->total_elmts = 0;
 
-  a->comm = NULL;
-  a->comm_size = 1;
-  a->comm_rank = _XCALABLEMP_N_INVALID_RANK;
+  a->align_comm = NULL;
+  a->align_comm_size = 1;
+  a->align_comm_rank = _XCALABLEMP_N_INVALID_RANK;
 
   a->align_template = template;
 
@@ -104,11 +106,8 @@ void _XCALABLEMP_finalize_array_desc(_XCALABLEMP_array_t *array) {
     }
   }
 
-  _XCALABLEMP_template_t *align_template = array->align_template;
-  assert(align_template->is_distributed); // checked by compiler
-
-  if ((align_template->onto_nodes)->is_member) {
-    _XCALABLEMP_finalize_comm(array->comm);
+  if (array->is_align_comm_member) {
+    _XCALABLEMP_finalize_comm(array->align_comm);
   }
 
   _XCALABLEMP_free(array);
@@ -417,9 +416,11 @@ void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
   MPI_Comm_split(*(onto_nodes->comm), color, onto_nodes->comm_rank, comm);
 
   // set members
-  array->comm = comm;
-  MPI_Comm_size(*comm, &(array->comm_size));
-  MPI_Comm_rank(*comm, &(array->comm_rank));
+  array->is_align_comm_member = true;
+
+  array->align_comm = comm;
+  MPI_Comm_size(*comm, &(array->align_comm_size));
+  MPI_Comm_rank(*comm, &(array->align_comm_rank));
 }
 
 unsigned long long _XCALABLEMP_get_array_total_elmts(_XCALABLEMP_array_t *array) {

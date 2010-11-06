@@ -409,6 +409,7 @@ static void _XCALABLEMP_free_full_shadow_ref(int *lower, int *upper, int *stride
 */
 
 static void _XCALABLEMP_reflect_shadow_ALLGATHER(void *array_addr, _XCALABLEMP_array_t *array_desc, int array_index) {
+  assert(array_desc->is_shadow_comm_member);
   assert(array_desc->dim == 1);
 
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
@@ -426,12 +427,13 @@ static void _XCALABLEMP_reflect_shadow_ALLGATHER(void *array_addr, _XCALABLEMP_a
 
   MPI_Allgather(pack_buffer, gather_count, mpi_datatype,
                 array_addr, gather_count, mpi_datatype,
-                *(array_desc->comm));
+                *(ai->shadow_comm));
 
   _XCALABLEMP_free(pack_buffer);
 }
 
 static void _XCALABLEMP_reflect_shadow_ALLGATHERV(void *array_addr, _XCALABLEMP_array_t *array_desc, int array_index) {
+  assert(array_desc->is_shadow_comm_member);
   assert(array_desc->dim == 1);
 
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
@@ -449,7 +451,7 @@ static void _XCALABLEMP_reflect_shadow_ALLGATHERV(void *array_addr, _XCALABLEMP_
 
   MPI_Allgather(pack_buffer, gather_count, mpi_datatype,
                 array_addr, gather_count, mpi_datatype,
-                *(array_desc->comm));
+                *(ai->shadow_comm));
 
   _XCALABLEMP_free(pack_buffer);
 }
@@ -462,6 +464,9 @@ void _XCALABLEMP_reflect_shadow_FULL(void *array_addr, _XCALABLEMP_array_t *arra
 
   int array_dim = array_desc->dim;
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
+  if (!ai->is_shadow_comm_member) {
+    return;
+  }
 
   // special cases
   if ((array_dim == 1) && (ai->dist_manner == _XCALABLEMP_N_DIST_BLOCK)) {
