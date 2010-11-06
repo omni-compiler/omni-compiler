@@ -69,7 +69,7 @@ typedef struct _XCALABLEMP_template_type {
 } _XCALABLEMP_template_t;
 
 typedef struct _XCALABLEMP_array_info_type {
-  _Bool has_shadow;
+  _Bool is_shadow_comm_member;
 
   int ser_lower;
   int ser_upper;
@@ -104,11 +104,11 @@ typedef struct _XCALABLEMP_array_info_type {
   int shadow_size_lo;
   int shadow_size_hi;
 
-  // enable when has_shadow is true
+  // enable when is_shadow_comm_member is true
   MPI_Comm *shadow_comm;
   int shadow_comm_size;
   int shadow_comm_rank;
-  // ------------------------------
+  // -----------------------------------------
 
   int align_template_index;
   // enable align_template_index is not _XCALABLEMP_N_NO_ALIGNED_TEMPLATE

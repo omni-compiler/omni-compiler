@@ -4,6 +4,8 @@
 #include "xmp_math_function.h"
 
 static void _XCALABLEMP_calc_array_dim_elmts(_XCALABLEMP_array_t *array, int array_index) {
+  assert(array != NULL);
+
   int dim = array->dim;
 
   unsigned long long dim_elmts = 1;
@@ -18,6 +20,8 @@ static void _XCALABLEMP_calc_array_dim_elmts(_XCALABLEMP_array_t *array, int arr
 
 void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_template_t *template, int dim,
                                  int type, size_t type_size, ...) {
+  assert(template != NULL);
+
   _XCALABLEMP_array_t *a = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_array_t) + sizeof(_XCALABLEMP_array_info_t) * (dim - 1));
 
   a->is_allocated = template->is_owner;
@@ -25,13 +29,12 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
   a->type = type;
   a->type_size = type_size;
 
-//a->addr is calculated in _XCALABLEMP_alloc_array, _XCALABLEMP_init_array_addr
-//a->total_elmts is calculated in _XCALABLEMP_alloc_array, _XCALABLEMP_init_array_addr
+  a->addr = NULL;
+  a->total_elmts = 0;
 
-//a->comm is calculated in _XCALABLEMP_init_array_comm
   a->comm = NULL;
-//a->comm_size is calculated in _XCALABLEMP_init_array_comm
-//a->comm_rank is calculated in _XCALABLEMP_init_array_comm
+  a->comm_size = 1;
+  a->comm_rank = _XCALABLEMP_N_INVALID_RANK;
 
   a->align_template = template;
 
@@ -39,37 +42,35 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
   va_start(args, type_size);
   for (int i = 0; i < dim; i++) {
     int size = va_arg(args, int);
+
+    // XXX array lower is always 0 in C
     int lower = 0;
     int upper = size - 1;
 
     _XCALABLEMP_array_info_t *ai = &(a->info[i]);
 
-    ai->has_shadow = false;
+    ai->is_shadow_comm_member = false;
 
     ai->ser_lower = lower;
     ai->ser_upper = upper;
     ai->ser_size = size;
 
-    if (a->is_allocated) {
-      ai->par_lower = lower;
-      ai->par_upper = upper;
-      ai->par_stride = 1;
-      ai->par_size = size;
+    ai->par_lower = lower;
+    ai->par_upper = upper;
+    ai->par_stride = 1;
+    ai->par_size = size;
 
-      ai->dist_manner = _XCALABLEMP_N_DIST_DUPLICATION;
-      ai->is_regular_chunk = true;
+    ai->dist_manner = _XCALABLEMP_N_DIST_DUPLICATION;
+    ai->is_regular_chunk = true;
 
-      ai->local_lower = lower;
-      ai->local_upper = upper;
-      ai->local_stride = 1;
-      ai->alloc_size = size;
+    ai->local_lower = lower;
+    ai->local_upper = upper;
+    ai->local_stride = 1;
+    ai->alloc_size = size;
 
-   // ai->dim_acc is calculated in _XCALABLEMP_alloc_array, _XCALABLEMP_init_array_addr
-   // ai->dim_elmts is calculated in _XCALABLEMP_alloc_array, _XCALABLEMP_init_array_addr
-    }
+ // ai->dim_acc is calculated in _XCALABLEMP_alloc_array, _XCALABLEMP_init_array_addr
+ // ai->dim_elmts is calculated in _XCALABLEMP_alloc_array, _XCALABLEMP_init_array_addr
 
-    ai->shadow_comm = NULL;
-    
     ai->align_subscript = 0;
 
     ai->shadow_type = _XCALABLEMP_N_SHADOW_NONE;
@@ -96,7 +97,7 @@ void _XCALABLEMP_finalize_array_desc(_XCALABLEMP_array_t *array) {
   for (int i = 0; i < dim; i++) {
     _XCALABLEMP_array_info_t *ai = &(array->info[i]);
 
-    if (ai->has_shadow) {
+    if (ai->is_shadow_comm_member) {
       _XCALABLEMP_finalize_comm(ai->shadow_comm);
     }
   }

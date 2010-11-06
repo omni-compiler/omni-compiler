@@ -39,7 +39,7 @@ static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array
 
   // set members
   if (array->is_allocated) {
-    ai->has_shadow = true;
+    ai->is_shadow_comm_member = true;
 
     ai->shadow_comm = comm;
     MPI_Comm_size(*comm, &(ai->shadow_comm_size));
