@@ -55,6 +55,8 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
     ai->ser_upper = upper;
     ai->ser_size = size;
 
+    ai->align_manner = _XCALABLEMP_N_ALIGN_NOT_ALIGNED;
+
     ai->par_lower = lower;
     ai->par_upper = upper;
     ai->par_stride = 1;
@@ -114,9 +116,16 @@ void _XCALABLEMP_finalize_array_desc(_XCALABLEMP_array_t *array) {
 
 void _XCALABLEMP_align_array_DUPLICATION(_XCALABLEMP_array_t *array, int array_index, int template_index,
                                          long long align_subscript) {
+  assert(array != NULL);
+
   _XCALABLEMP_template_t *template = array->align_template;
+  assert(template->is_fixed); // checked by compiler
+  assert(template->is_distributed); // checked by compiler
+
   _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
   _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
+
+  ai->align_manner = _XCALABLEMP_N_ALIGN_DUPLICATION;
 
   long long align_lower = ai->ser_lower + align_subscript;
   long long align_upper = ai->ser_upper + align_subscript;
@@ -134,10 +143,17 @@ void _XCALABLEMP_align_array_DUPLICATION(_XCALABLEMP_array_t *array, int array_i
 
 void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, int template_index,
                                    long long align_subscript, int *temp0) {
+  assert(array != NULL);
+
   _XCALABLEMP_template_t *template = array->align_template;
+  assert(template->is_fixed); // checked by compiler
+  assert(template->is_distributed); // checked by compiler
+
   _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
+
+  ai->align_manner = _XCALABLEMP_N_ALIGN_BLOCK;
 
   long long align_lower = ai->ser_lower + align_subscript;
   long long align_upper = ai->ser_upper + align_subscript;
@@ -204,10 +220,17 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, 
 
 void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index, int template_index,
                                     long long align_subscript, int *temp0) {
+  assert(array != NULL);
+
   _XCALABLEMP_template_t *template = array->align_template;
+  assert(template->is_fixed); // checked by compiler
+  assert(template->is_distributed); // checked by compiler
+
   _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
+
+  ai->align_manner = _XCALABLEMP_N_ALIGN_CYCLIC;
 
   long long align_lower = ai->ser_lower + align_subscript;
   long long align_upper = ai->ser_upper + align_subscript;
@@ -256,6 +279,8 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
 }
 
 void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc, ...) {
+  assert(array_desc != NULL);
+
   if (!array_desc->is_allocated) {
     *array_addr = NULL;
     return;
@@ -287,6 +312,8 @@ void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc,
 }
 
 void _XCALABLEMP_init_array_alloc_params(void **array_addr, _XCALABLEMP_array_t *array_desc, ...) {
+  assert(array_desc != NULL);
+
   if (!array_desc->is_allocated) {
     return;
   }
@@ -316,6 +343,9 @@ void _XCALABLEMP_init_array_alloc_params(void **array_addr, _XCALABLEMP_array_t 
 
 void _XCALABLEMP_init_array_addr(void **array_addr, void *init_addr,
                                  _XCALABLEMP_array_t *array_desc, ...) {
+  assert(init_addr != NULL);
+  assert(array_desc != NULL);
+
   if (!array_desc->is_allocated) {
     *array_addr = NULL;
     return;
@@ -347,6 +377,8 @@ void _XCALABLEMP_init_array_addr(void **array_addr, void *init_addr,
 }
 
 void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
+  assert(array != NULL);
+
   _XCALABLEMP_template_t *align_template = array->align_template;
   _XCALABLEMP_nodes_t *onto_nodes = align_template->onto_nodes;
   if (!onto_nodes->is_member) {
@@ -391,5 +423,7 @@ void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
 }
 
 unsigned long long _XCALABLEMP_get_array_total_elmts(_XCALABLEMP_array_t *array) {
+  assert(array != NULL);
+
   return array->total_elmts;
 }

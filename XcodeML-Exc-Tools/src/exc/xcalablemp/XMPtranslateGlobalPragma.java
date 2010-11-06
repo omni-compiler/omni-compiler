@@ -260,12 +260,12 @@ public class XMPtranslateGlobalPragma {
       throw new XMPexception("template '" + templateName + "' is not declared");
     }
 
-    if (templateObject.isDistributed()) {
-      throw new XMPexception("template '" + templateName + "' is already distributed");
-    }
-
     if (!templateObject.isFixed()) {
       throw new XMPexception("template '" + templateName + "' is not fixed");
+    }
+
+    if (templateObject.isDistributed()) {
+      throw new XMPexception("template '" + templateName + "' is already distributed");
     }
 
     // get nodes object
@@ -392,11 +392,17 @@ public class XMPtranslateGlobalPragma {
     // get template information
     String templateName = alignDecl.getArg(2).getString();
     XMPtemplate templateObj = _globalObjectTable.getTemplate(templateName);
-    if (templateObj == null)
+    if (templateObj == null) {
       throw new XMPexception("template '" + templateName + "' is not declared");
+    }
 
-    if (!(templateObj.isDistributed()))
+    if (!templateObj.isFixed()) {
+      throw new XMPexception("template '" + templateName + "' is not fixed");
+    }
+
+    if (!(templateObj.isDistributed())) {
       throw new XMPexception("template '" + templateName + "' is not distributed");
+    }
 
     int templateDim = templateObj.getDim();
 

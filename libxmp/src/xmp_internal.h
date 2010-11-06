@@ -32,9 +32,11 @@ typedef struct _XCALABLEMP_nodes_type {
 
 // template desciptor
 typedef struct _XCALABLEMP_template_info_type {
+  // enable when is_fixed is true
   long long ser_lower;
   long long ser_upper;
   unsigned long long ser_size;
+  // ----------------------------
 } _XCALABLEMP_template_info_t;
 
 typedef struct _XCALABLEMP_template_chunk_type {
@@ -56,8 +58,9 @@ typedef struct _XCALABLEMP_template_chunk_type {
 
 typedef struct _XCALABLEMP_template_type {
   _Bool is_fixed;
-  _Bool is_distributed;
-  _Bool is_owner;
+   _Bool is_distributed;
+    _Bool is_owner;
+
   int   dim;
 
   // enable when is_distributed is true
@@ -75,7 +78,8 @@ typedef struct _XCALABLEMP_array_info_type {
   int ser_upper;
   int ser_size;
 
-  // FIXME not support BLOCK_CYCLIC, GEN_BLOCK yet
+  int align_manner;
+
   // enable when is_allocated is true
   int par_lower;
   int par_upper;
@@ -90,10 +94,10 @@ typedef struct _XCALABLEMP_array_info_type {
   int local_stride;
   int alloc_size;
 
-  // enable when distribution is BLOCK/CYCLIC
   int *temp0;
-  // ----------------------------------------
+  // --------------------------------
 
+  // enable when is_allocated is true
   unsigned long long dim_acc;
   unsigned long long dim_elmts;
   // --------------------------------

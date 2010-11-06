@@ -197,6 +197,7 @@ void _XCALABLEMP_init_template_UNFIXED(_XCALABLEMP_template_t **template, int di
   t->is_fixed = false;
   t->is_distributed = false;
   t->is_owner = false;
+
   t->dim = dim;
 
   t->onto_nodes = NULL;
@@ -218,7 +219,6 @@ void _XCALABLEMP_init_template_UNFIXED(_XCALABLEMP_template_t **template, int di
 void _XCALABLEMP_init_template_chunk(_XCALABLEMP_template_t *template, _XCALABLEMP_nodes_t *nodes) {
   assert(template != NULL);
   assert(nodes != NULL);
-  assert(template->is_fixed); // checked by compiler
 
   template->is_distributed = true;
   template->is_owner = nodes->is_member;

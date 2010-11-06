@@ -319,12 +319,12 @@ public class XMPtranslateLocalPragma {
         throw new XMPexception("global template cannot be distributed in local scope");
     }
 
-    if (templateObject.isDistributed()) {
-      throw new XMPexception("template '" + templateName + "' is already distributed");
-    }
-
     if (!templateObject.isFixed()) {
       throw new XMPexception("template '" + templateName + "' is not fixed");
+    }
+
+    if (templateObject.isDistributed()) {
+      throw new XMPexception("template '" + templateName + "' is already distributed");
     }
 
     // get nodes object
@@ -464,8 +464,13 @@ public class XMPtranslateLocalPragma {
     String templateName = alignDecl.getArg(2).getString();
     XMPtemplate templateObj = getXMPtemplate(templateName, localObjectTable);
 
-    if (!(templateObj.isDistributed()))
+    if (!templateObj.isFixed()) {
+      throw new XMPexception("template '" + templateName + "' is not fixed");
+    }
+
+    if (!(templateObj.isDistributed())) {
       throw new XMPexception("template '" + templateName + "' is not distributed");
+    }
 
     int templateDim = templateObj.getDim();
 
