@@ -283,14 +283,11 @@ void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int templ
     }
     else if (nodes_rank >= owner_nodes_size) {
       template->is_owner = false;
-      goto EXIT_CALC_PARALLEL_MEMBERS;
     }
     else {
       chunk->par_upper = chunk->par_lower + chunk_width - 1;
     }
   }
-
-EXIT_CALC_PARALLEL_MEMBERS:
 
   chunk->par_stride = 1;
   chunk->par_chunk_width = chunk_width;
@@ -332,7 +329,6 @@ void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int temp
       }
       else {
         template->is_owner = false;
-        goto EXIT_CALC_PARALLEL_MEMBERS;
       }
     }
     else {
@@ -355,8 +351,6 @@ void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int temp
       chunk->par_upper = chunk->par_lower + nodes_size * (par_size - 1);
     }
   }
-
-EXIT_CALC_PARALLEL_MEMBERS:
 
   chunk->par_stride = nodes_size;
   chunk->par_chunk_width = _XCALABLEMP_M_CEILi(ti->ser_size, nodes_size);

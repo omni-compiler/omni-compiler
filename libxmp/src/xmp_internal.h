@@ -73,6 +73,7 @@ typedef struct _XCALABLEMP_template_type {
 
 typedef struct _XCALABLEMP_array_info_type {
   _Bool is_shadow_comm_member;
+  _Bool is_regular_chunk;
 
   int ser_lower;
   int ser_upper;
@@ -85,8 +86,6 @@ typedef struct _XCALABLEMP_array_info_type {
   int par_upper;
   int par_stride;
   int par_size;
-
-  _Bool is_regular_chunk;
 
   int local_lower;
   int local_upper;

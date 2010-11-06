@@ -52,6 +52,7 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
     _XCALABLEMP_array_info_t *ai = &(a->info[i]);
 
     ai->is_shadow_comm_member = false;
+    ai->is_regular_chunk = true;
 
     ai->ser_lower = lower;
     ai->ser_upper = upper;
@@ -63,8 +64,6 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
     ai->par_upper = upper;
     ai->par_stride = 1;
     ai->par_size = size;
-
-    ai->is_regular_chunk = true;
 
     ai->local_lower = lower;
     ai->local_upper = upper;
@@ -152,6 +151,8 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, 
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
 
+  ai->is_regular_chunk = (ti->ser_lower == (ai->ser_lower + align_subscript)) && chunk->is_regular_chunk;
+
   ai->align_manner = _XCALABLEMP_N_ALIGN_BLOCK;
 
   long long align_lower = ai->ser_lower + align_subscript;
@@ -193,8 +194,6 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, 
     ai->par_stride = 1;
     ai->par_size = _XCALABLEMP_M_COUNT_TRIPLETi(ai->par_lower, ai->par_upper, 1);
 
-    ai->is_regular_chunk = (ti->ser_lower == (ai->ser_lower + align_subscript)) && chunk->is_regular_chunk;
-
     // FIXME array lower is always 0 in C
     ai->local_lower = 0;
     ai->local_upper = ai->par_size - 1;
@@ -226,6 +225,8 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
 
+  ai->is_regular_chunk = (ti->ser_lower == (ai->ser_lower + align_subscript)) && chunk->is_regular_chunk;
+
   ai->align_manner = _XCALABLEMP_N_ALIGN_CYCLIC;
 
   long long align_lower = ai->ser_lower + align_subscript;
@@ -246,8 +247,6 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
     ai->par_upper = mod + (dist * cycle);
     ai->par_stride = cycle;
     ai->par_size = dist + 1;
-
-    ai->is_regular_chunk = (ti->ser_lower == (ai->ser_lower + align_subscript)) && chunk->is_regular_chunk;
 
     // FIXME array lower is always 0 in C
     ai->local_lower = 0;
@@ -368,6 +367,8 @@ void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
   assert(array != NULL);
 
   _XCALABLEMP_template_t *align_template = array->align_template;
+  assert(template->is_distributed); // checked by compiler
+
   _XCALABLEMP_nodes_t *onto_nodes = align_template->onto_nodes;
   if (!onto_nodes->is_member) {
     return;
@@ -383,12 +384,12 @@ void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
     _XCALABLEMP_template_chunk_t *chunk = &(align_template->chunk[i]);
 
     int size, rank;
-    _XCALABLEMP_nodes_info_t *onto_nodes_info = chunk->onto_nodes_info;
     if (chunk->dist_manner == _XCALABLEMP_N_DIST_DUPLICATION) {
       size = 1;
       rank = 0;
     }
     else {
+      _XCALABLEMP_nodes_info_t *onto_nodes_info = chunk->onto_nodes_info;
       size = onto_nodes_info->size;
       rank = onto_nodes_info->rank;
     }
@@ -415,5 +416,10 @@ void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
 unsigned long long _XCALABLEMP_get_array_total_elmts(_XCALABLEMP_array_t *array) {
   assert(array != NULL);
 
-  return array->total_elmts;
+  if (array->is_allocated) {
+    return array->total_elmts;
+  }
+  else {
+    return 0;
+  }
 }
