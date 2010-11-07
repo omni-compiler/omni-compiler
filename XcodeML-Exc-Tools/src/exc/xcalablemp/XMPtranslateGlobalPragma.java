@@ -577,7 +577,7 @@ public class XMPtranslateGlobalPragma {
     else alignFuncArgs.add(alignSubscriptExpr);
 
     int distManner = templateObj.getDistMannerAt(alignSubscriptIndex);
-    alignedArray.setAlignMannerAt(distManner, alignSourceIndex);
+    alignedArray.setAlignMannerAt(XMPalignedArray.convertDistMannerToAlignManner(distManner), alignSourceIndex);
 
     alignedArray.setAlignSubscriptIndexAt(alignSubscriptIndex, alignSourceIndex);
     alignedArray.setAlignSubscriptExprAt(alignSubscriptExpr, alignSourceIndex);

@@ -29,6 +29,19 @@ public class XMPalignedArray {
   private boolean		_realloc;
   private XMPtemplate		_alignedTemplate;
 
+  public static int convertDistMannerToAlignManner(int distManner) throws XMPexception {
+    switch (distManner) {
+      case XMPtemplate.DUPLICATION:
+        return DUPLICATION;
+      case XMPtemplate.BLOCK:
+        return BLOCK;
+      case XMPtemplate.CYCLIC:
+        return CYCLIC;
+      default:
+        throw new XMPexception("unknown dist manner");
+    }
+  }
+
   public XMPalignedArray(String name, Xtype type, int dim,
                          Vector<Long> sizeVector, Vector<Ident> accIdVector,
                          Ident arrayId, Ident descId, Ident addrId,
