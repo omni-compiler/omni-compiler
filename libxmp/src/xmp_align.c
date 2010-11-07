@@ -111,6 +111,13 @@ void _XCALABLEMP_finalize_array_desc(_XCALABLEMP_array_t *array) {
   _XCALABLEMP_free(array);
 }
 
+void _XCALABLEMP_align_array_NOT_ALIGN(_XCALABLEMP_array_t *array, int array_index) {
+  assert(array != NULL);
+
+  // FIXME refactoring
+  return;
+}
+
 void _XCALABLEMP_align_array_DUPLICATION(_XCALABLEMP_array_t *array, int array_index, int template_index,
                                          long long align_subscript) {
   assert(array != NULL);

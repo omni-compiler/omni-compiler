@@ -194,11 +194,11 @@ public class XMPrewriteExpr {
   }
 
   private Xobject getCalcIndexFuncRef(XMPalignedArray alignedArray, int index, Xobject indexRef) throws XMPexception {
-    int distManner = alignedArray.getDistMannerAt(index);
-    switch (distManner) {
-      case XMPtemplate.DUPLICATION:
+    switch (alignedArray.getAlignMannerAt(index)) {
+      case XMPalignedArray.NOT_ALIGNED:
+      case XMPalignedArray.DUPLICATION:
         return indexRef;
-      case XMPtemplate.BLOCK:
+      case XMPalignedArray.BLOCK:
         if (alignedArray.hasShadow()) {
           XMPshadow shadow = alignedArray.getShadowAt(index);
           switch (shadow.getType()) {
@@ -220,7 +220,7 @@ public class XMPrewriteExpr {
                                      alignedArray.getGtolTemp0IdAt(index).Ref());
           return XMP.getMacroId("_XCALABLEMP_M_CALC_INDEX_BLOCK").Call(args);
         }
-      case XMPtemplate.CYCLIC:
+      case XMPalignedArray.CYCLIC:
         if (alignedArray.hasShadow()) {
           XMPshadow shadow = alignedArray.getShadowAt(index);
           switch (shadow.getType()) {
@@ -244,7 +244,7 @@ public class XMPrewriteExpr {
           return XMP.getMacroId("_XCALABLEMP_M_CALC_INDEX_CYCLIC").Call(args);
         }
       default:
-        throw new XMPexception("unknown distribute manner for array '" + alignedArray.getName()  + "'");
+        throw new XMPexception("unknown align manner for array '" + alignedArray.getName()  + "'");
     }
   }
 

@@ -434,8 +434,9 @@ public class XMPtranslateLocalPragma {
 
     // get array information
     String arrayName = alignDecl.getArg(0).getString();
-    if (localObjectTable.getAlignedArray(arrayName) != null)
+    if (localObjectTable.getAlignedArray(arrayName) != null) {
       throw new XMPexception("array '" + arrayName + "' is already aligned");
+    }
 
     Ident arrayId = funcBlockList.findLocalIdent(arrayName);
     if (arrayId == null) {
@@ -463,7 +464,6 @@ public class XMPtranslateLocalPragma {
     // get template information
     String templateName = alignDecl.getArg(2).getString();
     XMPtemplate templateObj = getXMPtemplate(templateName, localObjectTable);
-
     if (!templateObj.isFixed()) {
       throw new XMPexception("template '" + templateName + "' is not fixed");
     }
@@ -527,17 +527,23 @@ public class XMPtranslateLocalPragma {
     XobjList alignSubscriptExprList = (XobjList)alignSubscriptList.right();
 
     // check <align-source> list
-    if (XMPutil.countElmts(alignSourceList) != arrayDim)
+    if (XMPutil.countElmts(alignSourceList) != arrayDim) {
       throw new XMPexception("the number of <align-source>s is not the same with array dimension");
+    }
+    else if (XMPutil.countElmts(alignSourceList, XMP.ASTERISK) == arrayDim) {
+      throw new XMPexception("array " + arrayName + " is not aligned on any dimension");
+    }
 
     // check <align-subscript> list
-    if (XMPutil.countElmts(alignSubscriptVarList) != templateDim)
+    if (XMPutil.countElmts(alignSubscriptVarList) != templateDim) {
       throw new XMPexception("the number of <align-subscript>s is not the same with template dimension");
+    }
 
     // check ':' source/subscript
     if (XMPutil.countElmts(alignSourceList, XMP.COLON) !=
-        XMPutil.countElmts(alignSubscriptVarList, XMP.COLON))
+        XMPutil.countElmts(alignSubscriptVarList, XMP.COLON)) {
       throw new XMPexception("the number of ':' in <align-source> list is not the same with <align-subscript> list");
+    }
 
     // create align function calls
     int alignSourceIndex = 0;
@@ -545,7 +551,7 @@ public class XMPtranslateLocalPragma {
       String alignSource = i.getArg().getString();
 
       if (alignSource.equals(XMP.ASTERISK)) {
-        // do nothing
+        declNotAlignFunc(alignedArray, alignSourceIndex, pb);
       }
       else if (alignSource.equals(XMP.COLON)) {
         if (!XMPutil.hasElmt(alignSubscriptVarList, XMP.COLON))
@@ -611,6 +617,16 @@ public class XMPtranslateLocalPragma {
     XMPlocalDecl.addConstructorCall("_XCALABLEMP_init_array_addr", initArrayAddrFuncArgs, pb, _globalDecl);
   }
 
+  private void declNotAlignFunc(XMPalignedArray alignedArray, int alignSourceIndex,
+                                PragmaBlock pb) throws XMPexception {
+    XobjList alignFuncArgs = Xcons.List(alignedArray.getDescId().Ref(),
+                                        Xcons.IntConstant(alignSourceIndex));
+
+    alignedArray.setAlignMannerAt(XMPalignedArray.NOT_ALIGNED, alignSourceIndex);
+
+    XMPlocalDecl.addConstructorCall("_XCALABLEMP_align_array_NOT_ALIGNED", alignFuncArgs, pb, _globalDecl);
+  }
+
   private void declAlignFunc(XMPalignedArray alignedArray, int alignSourceIndex,
                              XMPtemplate templateObj, int alignSubscriptIndex,
                              Xobject alignSubscriptExpr, PragmaBlock pb) throws XMPexception {
@@ -622,7 +638,7 @@ public class XMPtranslateLocalPragma {
     else alignFuncArgs.add(alignSubscriptExpr);
 
     int distManner = templateObj.getDistMannerAt(alignSubscriptIndex);
-    alignedArray.setDistMannerAt(distManner, alignSourceIndex);
+    alignedArray.setAlignMannerAt(distManner, alignSourceIndex);
 
     alignedArray.setAlignSubscriptIndexAt(alignSubscriptIndex, alignSourceIndex);
     alignedArray.setAlignSubscriptExprAt(alignSubscriptExpr, alignSourceIndex);
@@ -683,30 +699,35 @@ public class XMPtranslateLocalPragma {
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_NONE)));
 
             alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_NONE, null, null), arrayIndex);
-            break;
-          }
+          } break;
         case XMPshadow.SHADOW_NORMAL:
           {
-            if (alignedArray.getDistMannerAt(arrayIndex) == XMPtemplate.DUPLICATION)
+            if (alignedArray.getAlignMannerAt(arrayIndex) == XMPalignedArray.NOT_ALIGNED) {
+              throw new XMPexception("indicated dimension is not aligned");
+            }
+            else if (alignedArray.getAlignMannerAt(arrayIndex) == XMPalignedArray.DUPLICATION) {
               throw new XMPexception("indicated dimension is not distributed");
+            }
 
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_NORMAL)));
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowBody.left()));
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowBody.right()));
 
             alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_NORMAL, shadowBody.left(), shadowBody.right()), arrayIndex);
-            break;
-          }
+          } break;
         case XMPshadow.SHADOW_FULL:
           {
-            if (alignedArray.getDistMannerAt(arrayIndex) == XMPtemplate.DUPLICATION)
+            if (alignedArray.getAlignMannerAt(arrayIndex) == XMPalignedArray.NOT_ALIGNED) {
+              throw new XMPexception("indicated dimension is not aligned");
+            }
+            else if (alignedArray.getAlignMannerAt(arrayIndex) == XMPalignedArray.DUPLICATION) {
               throw new XMPexception("indicated dimension is not distributed");
+            }
 
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_FULL)));
 
             alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_FULL, null, null), arrayIndex);
-            break;
-          }
+          } break;
         default:
           throw new XMPexception("unknown shadow type");
       }
@@ -981,19 +1002,24 @@ public class XMPtranslateLocalPragma {
     int distManner = 0;
     String distMannerString = null;
     for (XobjArgs i = templateSubscriptList.getArgs(); i != null; i = i.nextArgs()) {
-      if (templateIndex >= templateDim)
+      if (templateIndex >= templateDim) {
         throw new XMPexception("wrong template dimensions, too many");
+      }
 
       String s = i.getArg().getString();
       if (s.equals(loopIndexName)) {
-        if (templateIndexArg != null)
+        if (templateIndexArg != null) {
           throw new XMPexception("loop index '" + loopIndexName + "' is already described");
+        }
 
         templateIndexArg = Xcons.IntConstant(templateIndex);
         distManner = templateObj.getDistMannerAt(templateIndex);
-        if (distManner == XMPtemplate.DUPLICATION) // FIXME how implement???
+        if (distManner == XMPtemplate.DUPLICATION) { // FIXME how implement???
           throw new XMPexception("indicated template dimension is not distributed");
-        else distMannerString = templateObj.getDistMannerStringAt(templateIndex);
+        }
+        else {
+          distMannerString = templateObj.getDistMannerStringAt(templateIndex);
+        }
       }
 
       templateIndex++;

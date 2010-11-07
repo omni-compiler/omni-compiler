@@ -27,7 +27,7 @@ public class XMPtemplate extends XMPobject {
 
     for (int i = 0; i < dim; i++) {
       _ontoNodesIndexVector.add(null);
-      _distMannerVector.add(new Integer(DUPLICATION));
+      _distMannerVector.add(null);
     }
 
     _lowerVector = new Vector<Xobject>();
@@ -69,11 +69,19 @@ public class XMPtemplate extends XMPobject {
     _distMannerVector.setElementAt(new Integer(manner), index);
   }
 
-  public int getDistMannerAt(int index) {
+  public int getDistMannerAt(int index) throws XMPexception {
+    if (!_isDistributed) {
+      throw new XMPexception("template " + getName() + " is not distributed");
+    }
+
     return _distMannerVector.get(index).intValue();
   }
 
   public String getDistMannerStringAt(int index) throws XMPexception {
+    if (!_isDistributed) {
+      throw new XMPexception("template " + getName() + " is not distributed");
+    }
+
     switch (getDistMannerAt(index)) {
       case DUPLICATION:
         return new String("DUPLICATION");

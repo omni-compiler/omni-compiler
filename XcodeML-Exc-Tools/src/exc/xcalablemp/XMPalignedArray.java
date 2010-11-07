@@ -5,12 +5,18 @@ import java.util.Vector;
 import java.util.Iterator;
 
 public class XMPalignedArray {
+  // defined in xmp_constant.h
+  public final static int NOT_ALIGNED	= 200;
+  public final static int DUPLICATION	= 201;
+  public final static int BLOCK		= 202;
+  public final static int CYCLIC	= 203;
+
   private String		_name;
   private Xtype			_type;
   private int			_dim;
   private Vector<Long>		_sizeVector;
   private Vector<XMPshadow>	_shadowVector;
-  private Vector<Integer>	_distMannerVector;
+  private Vector<Integer>	_alignMannerVector;
   private Vector<Ident>		_accIdVector;
   private Vector<Ident>		_gtolTemp0IdVector;
   private Vector<Integer>	_alignSubscriptIndexVector;
@@ -32,14 +38,14 @@ public class XMPalignedArray {
     _dim = dim;
     _sizeVector = sizeVector;
     _shadowVector = new Vector<XMPshadow>(XMP.MAX_DIM);
-    _distMannerVector = new Vector<Integer>(XMP.MAX_DIM);
+    _alignMannerVector = new Vector<Integer>(XMP.MAX_DIM);
     _accIdVector = accIdVector;
     _gtolTemp0IdVector = new Vector<Ident>(XMP.MAX_DIM);
     _alignSubscriptIndexVector = new Vector<Integer>(XMP.MAX_DIM);
     _alignSubscriptExprVector = new Vector<Xobject>(XMP.MAX_DIM);
     for (int i = 0; i < dim; i++) {
       _shadowVector.add(new XMPshadow(XMPshadow.SHADOW_NONE, null, null));
-      _distMannerVector.add(new Integer(XMPtemplate.DUPLICATION));
+      _alignMannerVector.add(null);
       _gtolTemp0IdVector.add(null);
       _alignSubscriptIndexVector.add(null);
       _alignSubscriptExprVector.add(null);
@@ -64,24 +70,26 @@ public class XMPalignedArray {
     return _dim;
   }
 
-  public void setDistMannerAt(int manner, int index) {
-    _distMannerVector.setElementAt(new Integer(manner), index);
+  public void setAlignMannerAt(int manner, int index) {
+    _alignMannerVector.setElementAt(new Integer(manner), index);
   }
 
-  public int getDistMannerAt(int index) {
-    return _distMannerVector.get(index).intValue();
+  public int getAlignMannerAt(int index) {
+    return _alignMannerVector.get(index).intValue();
   }
 
-  public String getDistMannerStringAt(int index) throws XMPexception {
-    switch (getDistMannerAt(index)) {
-      case XMPtemplate.DUPLICATION:
+  public String getAlignMannerStringAt(int index) throws XMPexception {
+    switch (getAlignMannerAt(index)) {
+      case NOT_ALIGNED:
+        return new String("NOT_ALIGNED");
+      case DUPLICATION:
         return new String("DUPLICATION");
-      case XMPtemplate.BLOCK:
+      case BLOCK:
         return new String("BLOCK");
-      case XMPtemplate.CYCLIC:
+      case CYCLIC:
         return new String("CYCLIC");
       default:
-        throw new XMPexception("unknown distribution manner");
+        throw new XMPexception("unknown align manner");
     }
   }
 
@@ -157,31 +165,58 @@ public class XMPalignedArray {
 
     if (_hasShadow) {
       for (int i = 0; i < _dim; i++) {
-        int distManner = getDistMannerAt(i);
-        if (distManner != XMPtemplate.DUPLICATION) {
-          XMPshadow shadow = getShadowAt(i);
-          switch (shadow.getType()) {
-            case XMPshadow.SHADOW_FULL:
-              break;
-            case XMPshadow.SHADOW_NONE:
-            case XMPshadow.SHADOW_NORMAL:
-              _reallocChecked = true;
-              _realloc = true;
-              return true;
-            default:
-              throw new XMPexception("unknown shadow type");
-          }
+        switch (getAlignMannerAt(i)) {
+          case NOT_ALIGNED:
+          case DUPLICATION:
+            break;
+          case BLOCK:
+          case CYCLIC:
+            {
+              XMPshadow shadow = getShadowAt(i);
+              switch (shadow.getType()) {
+                case XMPshadow.SHADOW_FULL:
+                  break;
+                case XMPshadow.SHADOW_NONE:
+                case XMPshadow.SHADOW_NORMAL:
+                  {
+                    _reallocChecked = true;
+                    _realloc = true;
+                    return _realloc;
+                  }
+                default:
+                  throw new XMPexception("unknown shadow type");
+              }
+            } break;
+          default:
+            throw new XMPexception("unknown align manner");
         }
       }
 
       _reallocChecked = true;
       _realloc = false;
-      return false;
+      return _realloc;
     }
     else {
+      for (int i = 0; i < _dim; i++) {
+        switch (getAlignMannerAt(i)) {
+          case NOT_ALIGNED:
+          case DUPLICATION:
+            break;
+          case BLOCK:
+          case CYCLIC:
+            {
+              _reallocChecked = true;
+              _realloc = true;
+              return _realloc;
+            }
+          default:
+            throw new XMPexception("unknown align manner");
+        }
+      }
+
       _reallocChecked = true;
-      _realloc = true;
-      return true;
+      _realloc = false;
+      return _realloc;
     }
   }
 
