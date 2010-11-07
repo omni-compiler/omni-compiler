@@ -444,7 +444,7 @@ static void _XCALABLEMP_reflect_shadow_ALLGATHER(void *array_addr, _XCALABLEMP_a
   assert(array_desc->dim == 1);
 
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
-  assert(ai->align_manner == _XCALABLEMP_N_DIST_BLOCK);
+  assert(ai->align_manner == _XCALABLEMP_N_ALIGN_BLOCK);
 
   size_t type_size = array_desc->type_size;
   MPI_Datatype mpi_datatype;
@@ -470,7 +470,7 @@ static void _XCALABLEMP_reflect_shadow_ALLGATHERV(void *array_addr, _XCALABLEMP_
   assert(array_desc->dim == 1);
 
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
-  assert(ai->align_manner == _XCALABLEMP_N_DIST_BLOCK);
+  assert(ai->align_manner == _XCALABLEMP_N_ALIGN_BLOCK);
 
   size_t type_size = array_desc->type_size;
   MPI_Datatype mpi_datatype;
@@ -505,7 +505,7 @@ void _XCALABLEMP_reflect_shadow_FULL(void *array_addr, _XCALABLEMP_array_t *arra
   }
 
   // special cases
-  if ((array_dim == 1) && (ai->align_manner == _XCALABLEMP_N_DIST_BLOCK)) {
+  if ((array_dim == 1) && (ai->align_manner == _XCALABLEMP_N_ALIGN_BLOCK)) {
     if (ai->is_regular_chunk) {
       // use allgather
       _XCALABLEMP_reflect_shadow_ALLGATHER(array_addr, array_desc, array_index);
