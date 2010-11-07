@@ -74,12 +74,11 @@ typedef struct _XCALABLEMP_template_type {
 typedef struct _XCALABLEMP_array_info_type {
   _Bool is_shadow_comm_member;
   _Bool is_regular_chunk;
+  int align_manner;
 
   int ser_lower;
   int ser_upper;
   int ser_size;
-
-  int align_manner;
 
   // enable when is_allocated is true
   int par_lower;

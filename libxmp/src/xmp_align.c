@@ -45,35 +45,14 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
   for (int i = 0; i < dim; i++) {
     int size = va_arg(args, int);
 
-    // XXX array lower is always 0 in C
-    int lower = 0;
-    int upper = size - 1;
-
     _XCALABLEMP_array_info_t *ai = &(a->info[i]);
 
     ai->is_shadow_comm_member = false;
-    ai->is_regular_chunk = true;
 
-    ai->ser_lower = lower;
-    ai->ser_upper = upper;
+    // XXX array lower is always 0 in C
+    ai->ser_lower = 0;
+    ai->ser_upper = size - 1;
     ai->ser_size = size;
-
-    ai->align_manner = _XCALABLEMP_N_ALIGN_NOT_ALIGNED;
-
-    ai->par_lower = lower;
-    ai->par_upper = upper;
-    ai->par_stride = 1;
-    ai->par_size = size;
-
-    ai->local_lower = lower;
-    ai->local_upper = upper;
-    ai->local_stride = 1;
-    ai->alloc_size = size;
-
-    ai->dim_acc = 0;
-    ai->dim_elmts = 0;
-
-    ai->align_subscript = 0;
 
     ai->shadow_type = _XCALABLEMP_N_SHADOW_NONE;
     ai->shadow_size_lo  = 0;
@@ -82,10 +61,6 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
     ai->shadow_comm = NULL;
     ai->shadow_comm_size = 1;
     ai->shadow_comm_rank = _XCALABLEMP_N_INVALID_RANK;
-
-    ai->align_template_index = _XCALABLEMP_N_NO_ALIGNED_TEMPLATE;
-    ai->align_template_info = NULL;
-    ai->align_template_chunk = NULL;
   }
   va_end(args);
 
@@ -114,8 +89,31 @@ void _XCALABLEMP_finalize_array_desc(_XCALABLEMP_array_t *array) {
 void _XCALABLEMP_align_array_NOT_ALIGN(_XCALABLEMP_array_t *array, int array_index) {
   assert(array != NULL);
 
-  // FIXME refactoring
-  return;
+  _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
+
+  int lower = ai->ser_lower;
+  int upper = ai->ser_upper;
+  int size = ai->ser_size;
+
+  // set members
+  ai->is_regular_chunk = true;
+  ai->align_manner = _XCALABLEMP_N_ALIGN_NOT_ALIGNED;
+
+  ai->par_lower = lower;
+  ai->par_upper = upper;
+  ai->par_stride = 1;
+  ai->par_size = size;
+
+  ai->local_lower = lower;
+  ai->local_upper = upper;
+  ai->local_stride = 1;
+  ai->alloc_size = size;
+
+  ai->align_subscript = 0;
+
+  ai->align_template_index = _XCALABLEMP_N_NO_ALIGNED_TEMPLATE;
+  ai->align_template_info = NULL;
+  ai->align_template_chunk = NULL;
 }
 
 void _XCALABLEMP_align_array_DUPLICATION(_XCALABLEMP_array_t *array, int array_index, int template_index,
@@ -130,15 +128,33 @@ void _XCALABLEMP_align_array_DUPLICATION(_XCALABLEMP_array_t *array, int array_i
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
 
-  ai->align_manner = _XCALABLEMP_N_ALIGN_DUPLICATION;
+  int lower = ai->ser_lower;
+  int upper = ai->ser_upper;
+  int size = ai->ser_size;
 
-  long long align_lower = ai->ser_lower + align_subscript;
-  long long align_upper = ai->ser_upper + align_subscript;
+  // check range
+  long long align_lower = lower + align_subscript;
+  long long align_upper = upper + align_subscript;
   if (((align_lower < ti->ser_lower) || (align_upper > ti->ser_upper))) {
     _XCALABLEMP_fatal("aligned array is out of template bound");
   }
 
   // set members
+  ai->is_regular_chunk = true;
+  ai->align_manner = _XCALABLEMP_N_ALIGN_DUPLICATION;
+
+  if (template->is_owner) {
+    ai->par_lower = lower;
+    ai->par_upper = upper;
+    ai->par_stride = 1;
+    ai->par_size = size;
+
+    ai->local_lower = lower;
+    ai->local_upper = upper;
+    ai->local_stride = 1;
+    ai->alloc_size = size;
+  }
+
   ai->align_subscript = align_subscript;
 
   ai->align_template_index = template_index;
@@ -158,17 +174,17 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, 
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
 
-  ai->is_regular_chunk = (ti->ser_lower == (ai->ser_lower + align_subscript)) && chunk->is_regular_chunk;
-
-  ai->align_manner = _XCALABLEMP_N_ALIGN_BLOCK;
-
+  // check range
   long long align_lower = ai->ser_lower + align_subscript;
   long long align_upper = ai->ser_upper + align_subscript;
   if (((align_lower < ti->ser_lower) || (align_upper > ti->ser_upper))) {
     _XCALABLEMP_fatal("aligned array is out of template bound");
   }
 
-  // calc parallel members
+  // set members
+  ai->is_regular_chunk = (ti->ser_lower == (ai->ser_lower + align_subscript)) && chunk->is_regular_chunk;
+  ai->align_manner = _XCALABLEMP_N_ALIGN_BLOCK;
+
   if (template->is_owner) {
     long long template_lower = chunk->par_lower;
     long long template_upper = chunk->par_upper;
@@ -197,7 +213,6 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, 
       ai->par_upper = ai->ser_upper;
     }
 
-    // set other members
     ai->par_stride = 1;
     ai->par_size = _XCALABLEMP_M_COUNT_TRIPLETi(ai->par_lower, ai->par_upper, 1);
 
@@ -232,18 +247,17 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
 
-  ai->is_regular_chunk = (ti->ser_lower == (ai->ser_lower + align_subscript)) && chunk->is_regular_chunk;
-
-  ai->align_manner = _XCALABLEMP_N_ALIGN_CYCLIC;
-
+  // check range
   long long align_lower = ai->ser_lower + align_subscript;
   long long align_upper = ai->ser_upper + align_subscript;
-
   if (((align_lower < ti->ser_lower) || (align_upper > ti->ser_upper))) {
     _XCALABLEMP_fatal("aligned array is out of template bound");
   }
 
-  // calc parallel members
+  // set members
+  ai->is_regular_chunk = (ti->ser_lower == (ai->ser_lower + align_subscript)) && chunk->is_regular_chunk;
+  ai->align_manner = _XCALABLEMP_N_ALIGN_CYCLIC;
+
   if (template->is_owner) {
     int cycle = chunk->par_stride;
     int mod = _XCALABLEMP_modi_ll_i(chunk->par_lower - align_subscript, cycle);
