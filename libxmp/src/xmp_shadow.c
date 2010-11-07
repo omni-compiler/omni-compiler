@@ -8,14 +8,20 @@ static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array
 
 static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array_index) {
   assert(array != NULL);
-
-  _XCALABLEMP_nodes_t *onto_nodes = array->align_template->onto_nodes;
+  
+  _XCALABLEMP_nodes_t *onto_nodes = (array->align_template)->onto_nodes;
   if (!onto_nodes->is_member) {
     return;
   }
 
   _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
-  int onto_nodes_index = (ai->align_template_chunk)->onto_nodes_index;
+  assert(ai->align_manner != _XCALABLEMP_N_ALIGN_NOT_ALIGNED); // checked by compiler
+  assert(ai->align_manner != _XCALABLEMP_N_ALIGN_DUPLICATION); // checked by compiler
+
+  _XCALABLEMP_template_chunk_t *chunk = ai->align_template_chunk;
+  assert(chunk->dist_manner != _XCALABLEMP_N_DIST_DUPLICATION); // align_manner is not _XCALABLEMP_N_ALIGN_DUPLICATION
+
+  int onto_nodes_index = chunk->onto_nodes_index;
 
   int color = 1;
   int acc_nodes_size = 1;
@@ -133,6 +139,7 @@ void _XCALABLEMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *ar
   int array_type = array_desc->type;
   int array_dim = array_desc->dim;
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
+  assert(ai->is_shadow_comm_member); // FIXME
 
   int size = ai->shadow_comm_size;
   int rank = ai->shadow_comm_rank;
@@ -234,6 +241,7 @@ void _XCALABLEMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *ar
   int array_type = array_desc->type;
   int array_dim = array_desc->dim;
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
+  assert(ai->is_shadow_comm_member); // FIXME
 
   int size = ai->shadow_comm_size;
   int rank = ai->shadow_comm_rank;
@@ -334,6 +342,7 @@ void _XCALABLEMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_bu
   }
 
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
+  assert(ai->is_shadow_comm_member); // FIXME
 
   // get communicator info
   MPI_Comm *comm = ai->shadow_comm;
@@ -440,6 +449,7 @@ static void _XCALABLEMP_free_full_shadow_ref(int *lower, int *upper, int *stride
 static void _XCALABLEMP_reflect_shadow_ALLGATHER(void *array_addr, _XCALABLEMP_array_t *array_desc, int array_index) {
   assert(array_addr != NULL);
   assert(array_desc != NULL);
+  assert(array_desc->is_allocated);
   assert(array_desc->is_shadow_comm_member);
   assert(array_desc->dim == 1);
 
@@ -466,6 +476,7 @@ static void _XCALABLEMP_reflect_shadow_ALLGATHER(void *array_addr, _XCALABLEMP_a
 static void _XCALABLEMP_reflect_shadow_ALLGATHERV(void *array_addr, _XCALABLEMP_array_t *array_desc, int array_index) {
   assert(array_addr != NULL);
   assert(array_desc != NULL);
+  assert(array_desc->is_allocated);
   assert(array_desc->is_shadow_comm_member);
   assert(array_desc->dim == 1);
 
@@ -500,9 +511,7 @@ void _XCALABLEMP_reflect_shadow_FULL(void *array_addr, _XCALABLEMP_array_t *arra
 
   int array_dim = array_desc->dim;
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
-  if (!ai->is_shadow_comm_member) {
-    return;
-  }
+  assert(array_desc->is_shadow_comm_member); // FIXME
 
   // special cases
   if ((array_dim == 1) && (ai->align_manner == _XCALABLEMP_N_ALIGN_BLOCK)) {

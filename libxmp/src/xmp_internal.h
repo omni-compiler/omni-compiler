@@ -109,12 +109,11 @@ typedef struct _XCALABLEMP_array_info_type {
   int shadow_comm_rank;
   // -----------------------------------------
 
-  // FIXME align_manner is not _XCALABLEMP_N_ALIGN_NOT_ALIGNED
+  // align_manner is not _XCALABLEMP_N_ALIGN_NOT_ALIGNED
   int align_template_index;
-  // enable align_template_index is not _XCALABLEMP_N_NO_ALIGNED_TEMPLATE
   _XCALABLEMP_template_info_t *align_template_info;
   _XCALABLEMP_template_chunk_t *align_template_chunk;
-  // --------------------------------------------------------------------
+  // ---------------------------------------------------
 } _XCALABLEMP_array_info_t;
 
 typedef struct _XCALABLEMP_array_type {
