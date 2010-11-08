@@ -11,8 +11,7 @@ typedef struct _XCALABLEMP_bcast_array_section_info_type {
 } _XCALABLEMP_bcast_array_section_info_t;
 
 // ----- gmove scalar to scalar ----------------------------------------------------------
-
-#define _XCALABLEMP_M_GMOVE_BCAST_ARRAY(array, dst_addr, src_addr, type_size, src_rank) \
+#define _XCALABLEMP_SM_GMOVE_BCAST_SCALAR_ARRAY(array, dst_addr, src_addr, type_size, src_rank) \
 { \
   int my_rank = array->align_comm_rank; \
   if (src_rank == my_rank) { \
@@ -22,7 +21,7 @@ typedef struct _XCALABLEMP_bcast_array_section_info_type {
   MPI_Bcast(dst_addr, type_size, MPI_BYTE, src_rank, *(array->align_comm)); \
 }
 
-#define _XCALABLEMP_M_GMOVE_BCAST_EXEC(exec_nodes, array, dst_addr, src_addr, type_size, src_rank) \
+#define _XCALABLEMP_SM_GMOVE_BCAST_SCALAR_EXEC(exec_nodes, array, dst_addr, src_addr, type_size, src_rank) \
 { \
   int my_rank = array->align_comm_rank; \
   if (src_rank == my_rank) { \
@@ -42,20 +41,20 @@ typedef struct _XCALABLEMP_bcast_array_section_info_type {
   } \
 }
 
-#define _XCALABLEMP_M_GMOVE_BCAST(array, dst_addr, src_addr, type_size, src_rank) \
+#define _XCALABLEMP_SM_GMOVE_BCAST_SCALAR(array, dst_addr, src_addr, type_size, src_rank) \
 { \
   _XCALABLEMP_nodes_t *onto_nodes = (array->align_template)->onto_nodes; \
   _XCALABLEMP_nodes_t *exec_nodes = _XCALABLEMP_get_execution_nodes(); \
 \
   if ((exec_nodes == _XCALABLEMP_world_nodes) && (exec_nodes->comm_size == onto_nodes->comm_size)) { \
-    _XCALABLEMP_M_GMOVE_BCAST_ARRAY(array, dst_addr, src_addr, type_size, src_rank); \
+    _XCALABLEMP_SM_GMOVE_BCAST_SCALAR_ARRAY(array, dst_addr, src_addr, type_size, src_rank); \
   } \
   else { \
     if (exec_nodes == onto_nodes) { \
-      _XCALABLEMP_M_GMOVE_BCAST_ARRAY(array, dst_addr, src_addr, type_size, src_rank); \
+      _XCALABLEMP_SM_GMOVE_BCAST_SCALAR_ARRAY(array, dst_addr, src_addr, type_size, src_rank); \
     } \
     else { \
-      _XCALABLEMP_M_GMOVE_BCAST_EXEC(exec_nodes, array, dst_addr, src_addr, type_size, src_rank); \
+      _XCALABLEMP_SM_GMOVE_BCAST_SCALAR_EXEC(exec_nodes, array, dst_addr, src_addr, type_size, src_rank); \
     } \
   } \
 }
@@ -402,7 +401,7 @@ void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XCALABLEMP_
   }
   else {
     // broadcast
-    _XCALABLEMP_M_GMOVE_BCAST(array, dst_addr, src_addr, type_size, src_rank);
+    _XCALABLEMP_SM_GMOVE_BCAST_SCALAR(array, dst_addr, src_addr, type_size, src_rank);
   }
 
   // clean up
@@ -533,7 +532,7 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
     }
     else {
       // broadcast
-      _XCALABLEMP_M_GMOVE_BCAST(src_array, dst_addr, src_addr, type_size, src_rank);
+      _XCALABLEMP_SM_GMOVE_BCAST_SCALAR(src_array, dst_addr, src_addr, type_size, src_rank);
     }
   }
   else {

@@ -139,7 +139,9 @@ void _XCALABLEMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *ar
   int array_type = array_desc->type;
   int array_dim = array_desc->dim;
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
-  assert(ai->is_shadow_comm_member); // FIXME??? is_allocated && NORMAL shadow
+  if (!ai->is_shadow_comm_member) {
+    _XCALABLEMP_fatal("cannot find the shadow communicator");
+  }
 
   int size = ai->shadow_comm_size;
   int rank = ai->shadow_comm_rank;
@@ -241,7 +243,9 @@ void _XCALABLEMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *ar
   int array_type = array_desc->type;
   int array_dim = array_desc->dim;
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
-  assert(ai->is_shadow_comm_member); // FIXME??? is_allocated && NORMAL shadow
+  if (!ai->is_shadow_comm_member) {
+    _XCALABLEMP_fatal("cannot find the shadow communicator");
+  }
 
   int size = ai->shadow_comm_size;
   int rank = ai->shadow_comm_rank;
@@ -342,7 +346,9 @@ void _XCALABLEMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_bu
   }
 
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
-  assert(ai->is_shadow_comm_member); // FIXME??? is_allocated && NORMAL shadow
+  if (!ai->is_shadow_comm_member) {
+    _XCALABLEMP_fatal("cannot find the shadow communicator");
+  }
 
   // get communicator info
   MPI_Comm *comm = ai->shadow_comm;
@@ -417,8 +423,10 @@ static void _XCALABLEMP_reflect_shadow_ALLGATHER(void *array_addr, _XCALABLEMP_a
   assert(array_desc->dim == 1);
 
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
-  assert(ai->is_shadow_comm_member); // FIXME??? is_allocated && FULL shadow
   assert(ai->align_manner == _XCALABLEMP_N_ALIGN_BLOCK);
+  if (!ai->is_shadow_comm_member) {
+    _XCALABLEMP_fatal("cannot find the shadow communicator");
+  }
 
   size_t type_size = array_desc->type_size;
   MPI_Datatype mpi_datatype;
@@ -444,8 +452,10 @@ static void _XCALABLEMP_reflect_shadow_ALLGATHERV(void *array_addr, _XCALABLEMP_
   assert(array_desc->dim == 1);
 
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
-  assert(ai->is_shadow_comm_member); // FIXME??? is_allocated && FULL shadow
   assert(ai->align_manner == _XCALABLEMP_N_ALIGN_BLOCK);
+  if (!ai->is_shadow_comm_member) {
+    _XCALABLEMP_fatal("cannot find the shadow communicator");
+  }
 
   size_t type_size = array_desc->type_size;
   MPI_Datatype mpi_datatype;
