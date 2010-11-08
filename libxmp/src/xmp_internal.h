@@ -7,6 +7,13 @@
 #include <stdbool.h>
 #include "mpi.h"
 
+#define _XCALABLEMP_ERR_WHEN(flag) \
+{ \
+  if (flag) { \
+    _XCALABLEMP_fatal("unexpected error in runtime"); \
+  } \
+}
+
 // --------------- structures ----------------------------------------
 // nodes descriptor
 typedef struct _XCALABLEMP_nodes_info_type {

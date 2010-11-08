@@ -139,9 +139,7 @@ void _XCALABLEMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *ar
   int array_type = array_desc->type;
   int array_dim = array_desc->dim;
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
-  if (!ai->is_shadow_comm_member) {
-    _XCALABLEMP_fatal("unexpected error in runtime");
-  }
+  _XCALABLEMP_ERR_WHEN(!ai->is_shadow_comm_member);
 
   int size = ai->shadow_comm_size;
   int rank = ai->shadow_comm_rank;
@@ -243,9 +241,7 @@ void _XCALABLEMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *ar
   int array_type = array_desc->type;
   int array_dim = array_desc->dim;
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
-  if (!ai->is_shadow_comm_member) {
-    _XCALABLEMP_fatal("unexpected error in runtime");
-  }
+  _XCALABLEMP_ERR_WHEN(!ai->is_shadow_comm_member);
 
   int size = ai->shadow_comm_size;
   int rank = ai->shadow_comm_rank;
@@ -346,9 +342,7 @@ void _XCALABLEMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_bu
   }
 
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
-  if (!ai->is_shadow_comm_member) {
-    _XCALABLEMP_fatal("unexpected error in runtime");
-  }
+  _XCALABLEMP_ERR_WHEN(!ai->is_shadow_comm_member);
 
   // get communicator info
   MPI_Comm *comm = ai->shadow_comm;
@@ -424,9 +418,7 @@ static void _XCALABLEMP_reflect_shadow_ALLGATHER(void *array_addr, _XCALABLEMP_a
 
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
   assert(ai->align_manner == _XCALABLEMP_N_ALIGN_BLOCK);
-  if (!ai->is_shadow_comm_member) {
-    _XCALABLEMP_fatal("unexpected error in runtime");
-  }
+  _XCALABLEMP_ERR_WHEN(!ai->is_shadow_comm_member);
 
   size_t type_size = array_desc->type_size;
   MPI_Datatype mpi_datatype;
@@ -453,9 +445,7 @@ static void _XCALABLEMP_reflect_shadow_ALLGATHERV(void *array_addr, _XCALABLEMP_
 
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
   assert(ai->align_manner == _XCALABLEMP_N_ALIGN_BLOCK);
-  if (!ai->is_shadow_comm_member) {
-    _XCALABLEMP_fatal("unexpected error in runtime");
-  }
+  _XCALABLEMP_ERR_WHEN(!ai->is_shadow_comm_member);
 
   size_t type_size = array_desc->type_size;
   MPI_Datatype mpi_datatype;

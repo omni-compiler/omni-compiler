@@ -25,4 +25,3 @@ void _XCALABLEMP_fatal(char *msg) {
   fprintf(stderr, "[RANK:%d] XcalableMP runtime error: %s\n", _XCALABLEMP_world_rank, msg);
   MPI_Abort(MPI_COMM_WORLD, 1);
 }
-

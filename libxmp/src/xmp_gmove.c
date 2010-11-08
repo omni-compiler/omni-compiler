@@ -22,6 +22,7 @@ static int _XCALABLEMP_calc_gmove_owner_SCALAR(long long ref_index, _XCALABLEMP_
 static int _XCALABLEMP_calc_gmove_nodes_rank(int *rank_array, _XCALABLEMP_nodes_t *nodes);
 static void _XCALABLEMP_gmove_bcast_SCALAR(_XCALABLEMP_array_t *array, void *dst_addr, void *src_addr,
                                            size_t type_size, int src_rank);
+static _Bool _XCALABLEMP_check_gmove_array_ref_inclusion_SCALAR(_XCALABLEMP_array_t *array, int array_index, int ref_index);
 static _Bool _XCALABLEMP_check_gmove_inclusion_SCALAR(long long ref_index, _XCALABLEMP_template_chunk_t *chunk);
 static int _XCALABLEMP_calc_gmove_target_nodes_size(_XCALABLEMP_nodes_t *nodes, int *rank_array);
 static _Bool _XCALABLEMP_calc_local_copy_template_BLOCK(_XCALABLEMP_template_chunk_t *chunk,
@@ -33,7 +34,6 @@ static _Bool _XCALABLEMP_calc_local_copy_home_ref(_XCALABLEMP_array_t *dst_array
                                                   int *src_l, int *src_u, int *src_s);
 static void _XCALABLEMP_calc_array_local_index_triplet(_XCALABLEMP_array_t *array,
                                                        int dim_index, int *lower, int *upper, int *stride);
-static _Bool _XCALABLEMP_gmove_check_array_ref_inclusion(_XCALABLEMP_array_info_t *array_info, int ref_index);
 
 static int _XCALABLEMP_calc_gmove_owner_SCALAR(long long ref_index, _XCALABLEMP_template_t *template, int dim_index) {
   assert(template != NULL);
@@ -73,8 +73,12 @@ static int _XCALABLEMP_calc_gmove_nodes_rank(int *rank_array, _XCALABLEMP_nodes_
     }
   }
 
-  if (is_valid) return acc_rank;
-  else          return _XCALABLEMP_N_INVALID_RANK;
+  if (is_valid) {
+    return acc_rank;
+  }
+  else {
+    return _XCALABLEMP_N_INVALID_RANK;
+  }
 }
 
 static void _XCALABLEMP_gmove_bcast_SCALAR(_XCALABLEMP_array_t *array, void *dst_addr, void *src_addr,
@@ -89,9 +93,7 @@ static void _XCALABLEMP_gmove_bcast_SCALAR(_XCALABLEMP_array_t *array, void *dst
 
   if ((exec_nodes == onto_nodes) ||
       ((exec_nodes == _XCALABLEMP_world_nodes) && (exec_nodes->comm_size == onto_nodes->comm_size))) {
-    if (!array->is_align_comm_member) {
-      _XCALABLEMP_fatal("unexpected error in runtime");
-    }
+    _XCALABLEMP_ERR_WHEN(!array->is_align_comm_member);
 
     int my_rank = array->align_comm_rank;
     if (src_rank == my_rank) {
@@ -120,7 +122,44 @@ static void _XCALABLEMP_gmove_bcast_SCALAR(_XCALABLEMP_array_t *array, void *dst
   }
 }
 
+static _Bool _XCALABLEMP_check_gmove_array_ref_inclusion_SCALAR(_XCALABLEMP_array_t *array, int array_index, int ref_index) {
+  assert(array != NULL);
+  assert(!(array->align_template)->is_owner);
+
+  _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
+  if (ai->align_manner == _XCALABLEMP_N_ALIGN_NOT_ALIGNED) {
+    return true;
+  }
+  else {
+    _XCALABLEMP_template_chunk_t *chunk = ai->align_template_chunk;
+    switch (chunk->dist_manner) {
+      case _XCALABLEMP_N_DIST_DUPLICATION:
+        return true;
+      case _XCALABLEMP_N_DIST_BLOCK:
+        {
+          long long template_lower = chunk->par_lower;
+          long long template_upper = chunk->par_upper;
+
+          if (ref_index < template_lower) return false;
+          if (template_upper < ref_index) return false;
+          return true;
+        }
+      case _XCALABLEMP_N_DIST_CYCLIC:
+        {
+          int par_stride = chunk->par_stride;
+          if (_XCALABLEMP_modi_ll_i(chunk->par_lower, par_stride) == _XCALABLEMP_modi_ll_i(ref_index, par_stride)) return true;
+          else return false;
+        }
+      default:
+        _XCALABLEMP_fatal("unknown distribute manner");
+        return false; // XXX dummy
+    }
+  }
+}
+
 static _Bool _XCALABLEMP_check_gmove_inclusion_SCALAR(long long ref_index, _XCALABLEMP_template_chunk_t *chunk) {
+  assert(chunk != NULL);
+
   switch (chunk->dist_manner) {
     case _XCALABLEMP_N_DIST_DUPLICATION:
       return true;
@@ -358,15 +397,17 @@ static void _XCALABLEMP_calc_array_local_index_triplet(_XCALABLEMP_array_t *arra
   }
 }
 
+/*
 static _Bool _XCALABLEMP_gmove_check_array_ref_inclusion(_XCALABLEMP_array_info_t *array_info, int ref_index) {
-  int template_index = array_info->align_template_index;
-  if (template_index == _XCALABLEMP_N_NO_ALIGNED_TEMPLATE) {
+  if (array_info->align_manner == _XCALABLEMP_N_ALIGN_NOT_ALIGNED) {
     return true;
   }
   else {
+    int template_index = array_info->align_template_index;
     return _XCALABLEMP_check_gmove_inclusion_SCALAR(ref_index + array_info->align_subscript, array_info->align_template_chunk);
   }
 }
+*/
 
 // ----- gmove scalar to scalar ----------------------------------------------------------
 void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XCALABLEMP_array_t *array, ...) {
@@ -428,9 +469,8 @@ _Bool _XCALABLEMP_gmove_exec_home_SCALAR(_XCALABLEMP_array_t *array, ...) {
   if (!array->is_allocated) return false;
 
   _XCALABLEMP_template_t *ref_template = array->align_template;
-
-  // FIXME how implement???
-  if (ref_template->chunk == NULL) return false;
+  assert(ref_template->is_distributed); // checked by compiler
+  _XCALABLEMP_ERR_WHEN(!ref_template->is_owner);
 
   _Bool execHere = true;
   int ref_dim = array->dim;
@@ -655,6 +695,8 @@ void _XCALABLEMP_gmove_local_copy_home(_XCALABLEMP_array_t *dst_array, int type,
     return;
   }
 
+  _XCALABLEMP_ERR_WHEN(!(dst_array->align_template)->is_owner);
+
   va_list args;
   va_start(args, type_size);
 
@@ -691,7 +733,7 @@ void _XCALABLEMP_gmove_local_copy_home(_XCALABLEMP_array_t *dst_array, int type,
   for (int i = 0; i < dst_dim; i++) {
     int dst_elmts = _XCALABLEMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
     if (dst_elmts == 1) {
-      if(!_XCALABLEMP_gmove_check_array_ref_inclusion(&(dst_array->info[i]), dst_l[i])) {
+      if(!_XCALABLEMP_check_gmove_array_ref_inclusion_SCALAR(dst_array, i, dst_l[i])) {
         return;
       }
     }
@@ -743,6 +785,8 @@ void _XCALABLEMP_gmove_local_copy_home(_XCALABLEMP_array_t *dst_array, int type,
 }
 
 void _XCALABLEMP_gmove_BCAST_ARRAY_SECTION(_XCALABLEMP_array_t *src_array, int type, size_t type_size, ...) {
+  _XCALABLEMP_ERR_WHEN(!(src_array->align_template)->is_owner);
+
   va_list args;
   va_start(args, type_size);
 
@@ -780,7 +824,7 @@ void _XCALABLEMP_gmove_BCAST_ARRAY_SECTION(_XCALABLEMP_array_t *src_array, int t
   for (int i = 0; i < src_dim; i++) {
     int src_elmts = _XCALABLEMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
     if (src_elmts == 1) {
-      if(!_XCALABLEMP_gmove_check_array_ref_inclusion(&(src_array->info[i]), src_l[i])) {
+      if(!_XCALABLEMP_check_gmove_array_ref_inclusion_SCALAR(src_array, i, src_l[i])) {
         is_root = _XCALABLEMP_N_INT_FALSE;
         break;
       }
