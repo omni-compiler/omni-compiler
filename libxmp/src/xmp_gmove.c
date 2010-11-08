@@ -90,11 +90,11 @@ static void _XCALABLEMP_gmove_bcast_SCALAR(_XCALABLEMP_array_t *array, void *dst
   _XCALABLEMP_nodes_t *exec_nodes = _XCALABLEMP_get_execution_nodes();
   assert(exec_nodes->is_member);
 
+  int my_rank = array->align_comm_rank;
   if ((exec_nodes == onto_nodes) ||
       ((exec_nodes == _XCALABLEMP_world_nodes) && (exec_nodes->comm_size == onto_nodes->comm_size))) {
     _XCALABLEMP_ERR_WHEN(!array->is_align_comm_member);
 
-    int my_rank = array->align_comm_rank;
     if (src_rank == my_rank) {
       memcpy(dst_addr, src_addr, type_size);
     }
@@ -102,22 +102,18 @@ static void _XCALABLEMP_gmove_bcast_SCALAR(_XCALABLEMP_array_t *array, void *dst
     MPI_Bcast(dst_addr, type_size, MPI_BYTE, src_rank, *(array->align_comm));
   }
   else {
-    int my_rank = array->align_comm_rank;
+    // FIXME correct implement???
+    MPI_Comm *comm = exec_nodes->comm;
+
+    int root_rank_temp = 0, root_rank = 0;
     if (src_rank == my_rank) {
       memcpy(dst_addr, src_addr, type_size);
 
-      int exec_size = exec_nodes->comm_size;
-      int exec_rank = exec_nodes->comm_rank;
-      for (int i = 0; i < exec_size; i++) {
-        if (i != exec_rank) {
-          MPI_Send(dst_addr, type_size, MPI_BYTE, i, _XCALABLEMP_N_MPI_TAG_GMOVE, *(exec_nodes->comm));
-        }
-      }
+      MPI_Comm_rank(*comm, &root_rank_temp);
     }
-    else {
-      MPI_Status stat;
-      MPI_Recv(dst_addr, type_size, MPI_BYTE, MPI_ANY_SOURCE, _XCALABLEMP_N_MPI_TAG_GMOVE, *(exec_nodes->comm), &stat);
-    }
+
+    MPI_Allreduce(&root_rank_temp, &root_rank, 1, MPI_INT, MPI_SUM, *comm);
+    MPI_Bcast(dst_addr, type_size, MPI_BYTE, root_rank, *comm);
   }
 }
 
@@ -187,6 +183,10 @@ static int _XCALABLEMP_calc_gmove_target_nodes_size(_XCALABLEMP_nodes_t *nodes, 
 
 static _Bool _XCALABLEMP_calc_local_copy_template_BLOCK(_XCALABLEMP_template_chunk_t *chunk,
                                                         long long *lower, long long *upper, int s) {
+  assert(chunk != NULL);
+  assert(lower != NULL);
+  assert(upper != NULL);
+
   long long l = *lower;
   long long u = *upper;
   long long template_lower = chunk->par_lower;
@@ -236,6 +236,10 @@ static _Bool _XCALABLEMP_calc_local_copy_template_BLOCK(_XCALABLEMP_template_chu
 // XXX used when ref_stride is 1
 static _Bool _XCALABLEMP_calc_local_copy_template_CYCLIC1(_XCALABLEMP_template_chunk_t *chunk,
                                                           long long *lower, long long u, int *stride) {
+  assert(chunk != NULL);
+  assert(lower != NULL);
+  assert(stride != NULL);
+
   long long l = *lower;
   long long template_lower = chunk->par_lower;
   int nodes_size = chunk->onto_nodes_info->size;
@@ -268,6 +272,14 @@ static _Bool _XCALABLEMP_calc_local_copy_template_CYCLIC1(_XCALABLEMP_template_c
 static _Bool _XCALABLEMP_calc_local_copy_home_ref(_XCALABLEMP_array_t *dst_array, int dst_dim_index,
                                                   int *dst_l, int *dst_u, int *dst_s,
                                                   int *src_l, int *src_u, int *src_s) {
+  assert(dst_array != NULL);
+  assert(dst_l != NULL);
+  assert(dst_u != NULL);
+  assert(dst_s != NULL);
+  assert(src_l != NULL);
+  assert(src_u != NULL);
+  assert(src_s != NULL);
+
   if (_XCALABLEMP_M_COUNT_TRIPLETi(*dst_l, *dst_u, *dst_s) != _XCALABLEMP_M_COUNT_TRIPLETi(*src_l, *src_u, *src_s)) {
     _XCALABLEMP_fatal("wrong assign statement"); // FIXME fix error msg
   }
@@ -338,6 +350,11 @@ static _Bool _XCALABLEMP_calc_local_copy_home_ref(_XCALABLEMP_array_t *dst_array
 
 static void _XCALABLEMP_calc_array_local_index_triplet(_XCALABLEMP_array_t *array,
                                                        int dim_index, int *lower, int *upper, int *stride) {
+  assert(array != NULL);
+  assert(lower != NULL);
+  assert(upper != NULL);
+  assert(stride != NULL);
+
   _XCALABLEMP_array_info_t *array_info = &(array->info[dim_index]);
   if ((array_info->align_template_index) != _XCALABLEMP_N_NO_ALIGNED_TEMPLATE) {
     int dist_manner = (array_info->align_template_chunk)->dist_manner;
@@ -437,7 +454,11 @@ void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XCALABLEMP_
 
 // FIXME change NULL check rule!!! (IMPORTANT, to all library functions)
 _Bool _XCALABLEMP_gmove_exec_home_SCALAR(_XCALABLEMP_array_t *array, ...) {
-  if (!array->is_allocated) return false;
+  assert(array != NULL);
+
+  if (!array->is_allocated) {
+    return false;
+  }
 
   _XCALABLEMP_template_t *ref_template = array->align_template;
   assert(ref_template->is_distributed); // checked by compiler
@@ -470,7 +491,9 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
   va_start(args, src_array);
 
   // calc destination rank
-  if (dst_array == NULL) return;
+  if (dst_array == NULL) {
+    return;
+  }
 
   _XCALABLEMP_template_t *dst_template = dst_array->align_template;
   if (dst_template == NULL) {
@@ -505,7 +528,9 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
   int dst_rank = _XCALABLEMP_calc_gmove_nodes_rank(dst_rank_array, dst_nodes);
 
   // calc source rank
-  if (src_array == NULL) return;
+  if (src_array == NULL) {
+    return;
+  }
 
   _XCALABLEMP_template_t *src_template = src_array->align_template;
   if (src_template == NULL) {
