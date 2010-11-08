@@ -1883,6 +1883,7 @@ public class XMPtranslateLocalPragma {
     XobjList gmoveDecl = (XobjList)pb.getClauses();
     XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(pb);
     BlockList gmoveBody = pb.getBody();
+    BlockList replaceBody = Bcons.emptyBody();
 
     // check body
     Xobject assignStmt = null;
@@ -1934,7 +1935,7 @@ public class XMPtranslateLocalPragma {
 
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
-            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_local_copy", gmoveFuncArgs));
+            replaceBody.add(createFuncCallBlock("_XCALABLEMP_gmove_local_copy", gmoveFuncArgs));
           }
           else {				// !leftIsAlignedArray &&  rightIsAlignedArray  |-> broadcast
             Xtype arrayElmtType = rightAlignedArray.getType();
@@ -1950,7 +1951,7 @@ public class XMPtranslateLocalPragma {
 
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
-            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_BCAST_ARRAY_SECTION", gmoveFuncArgs));
+            replaceBody.add(createFuncCallBlock("_XCALABLEMP_gmove_BCAST_ARRAY_SECTION", gmoveFuncArgs));
           }
         }
         else {
@@ -1968,7 +1969,7 @@ public class XMPtranslateLocalPragma {
 
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
-            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_local_copy_home", gmoveFuncArgs));
+            replaceBody.add(createFuncCallBlock("_XCALABLEMP_gmove_local_copy_home", gmoveFuncArgs));
           }
           else {				//  leftIsAlignedArray &&  rightIsAlignedArray  |-> send/recv
             Xtype arrayElmtType = leftAlignedArray.getType();
@@ -1985,7 +1986,7 @@ public class XMPtranslateLocalPragma {
 
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
-            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION", gmoveFuncArgs));
+            replaceBody.add(createFuncCallBlock("_XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION", gmoveFuncArgs));
           }
         }
       }
@@ -2001,7 +2002,7 @@ public class XMPtranslateLocalPragma {
 
       if (leftAlignedArray == null) {
         if (rightAlignedArray == null) {	// !leftIsAlignedArray && !rightIsAlignedArray	|-> local assignment (every node)
-          pb.replace(Bcons.COMPOUND(gmoveBody));
+          replaceBody.add(Bcons.COMPOUND(gmoveBody));
         }
         else {					// !leftIsAlignedArray &&  rightIsAlignedArray	|-> broadcast
           // FIXME left/right is not a constant
@@ -2009,7 +2010,7 @@ public class XMPtranslateLocalPragma {
                                               rightAlignedArray.getDescId().Ref());
           XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
 
-          pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_BCAST_SCALAR", gmoveFuncArgs));
+          replaceBody.add(createFuncCallBlock("_XCALABLEMP_gmove_BCAST_SCALAR", gmoveFuncArgs));
         }
       }
       else {
@@ -2018,8 +2019,8 @@ public class XMPtranslateLocalPragma {
           XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
 
           Ident gmoveFuncId = _env.declExternIdent("_XCALABLEMP_gmove_exec_home_SCALAR", Xtype.Function(Xtype.boolType));
-          pb.replace(Bcons.IF(BasicBlock.Cond(gmoveFuncId.Call(gmoveFuncArgs)),
-                              gmoveBody, null));
+          replaceBody.add(Bcons.IF(BasicBlock.Cond(gmoveFuncId.Call(gmoveFuncArgs)),
+                                   gmoveBody, null));
         }
         else {					//  leftIsAlignedArray &&  rightIsAlignedArray	|-> send/recv
           // FIXME left/right is not a constant
@@ -2028,10 +2029,13 @@ public class XMPtranslateLocalPragma {
           XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
           XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
 
-          pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_SENDRECV_SCALAR", gmoveFuncArgs));
+          replaceBody.add(createFuncCallBlock("_XCALABLEMP_gmove_SENDRECV_SCALAR", gmoveFuncArgs));
         }
       }
     }
+
+    replaceBody.add(createFuncCallBlock("_XCALABLEMP_barrier_EXEC", null));
+    pb.replace(Bcons.COMPOUND(replaceBody));
   }
 
   private XMPpair<XMPalignedArray, XobjList> getAlignedArrayExpr(PragmaBlock pb, Xobject expr) throws XMPexception {

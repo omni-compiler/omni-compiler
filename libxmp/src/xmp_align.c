@@ -86,7 +86,7 @@ void _XCALABLEMP_finalize_array_desc(_XCALABLEMP_array_t *array) {
   _XCALABLEMP_free(array);
 }
 
-void _XCALABLEMP_align_array_NOT_ALIGN(_XCALABLEMP_array_t *array, int array_index) {
+void _XCALABLEMP_align_array_NOT_ALIGNED(_XCALABLEMP_array_t *array, int array_index) {
   assert(array != NULL);
 
   _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);

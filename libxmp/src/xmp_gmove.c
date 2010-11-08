@@ -169,9 +169,11 @@ static _Bool _XCALABLEMP_check_gmove_array_ref_inclusion_SCALAR(_XCALABLEMP_arra
 }
 
 static int _XCALABLEMP_calc_gmove_target_nodes_size(_XCALABLEMP_nodes_t *nodes, int *rank_array) {
-  int nodes_dim = nodes->dim;
+  assert(nodes != NULL);
+  assert(rank_array != NULL);
 
   int acc = 1;
+  int nodes_dim = nodes->dim;
   for (int i = 0; i < nodes_dim; i++) {
     int rank = rank_array[i];
 
@@ -431,9 +433,6 @@ void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XCALABLEMP_
 
   // clean up
   _XCALABLEMP_free(src_rank_array);
-
-  // FIXME delete after change manual bcast implementation
-  _XCALABLEMP_barrier_EXEC();
 }
 
 // FIXME change NULL check rule!!! (IMPORTANT, to all library functions)
@@ -600,8 +599,6 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
   // clean up
   _XCALABLEMP_free(dst_rank_array);
   _XCALABLEMP_free(src_rank_array);
-
-  _XCALABLEMP_barrier_EXEC();
 }
 
 // ----- gmove vector to vector ----------------------------------------------------------
@@ -1206,6 +1203,4 @@ void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION(_XCALABLEMP_array_t *dst_array, _X
       }
     }
   }
-
-  _XCALABLEMP_barrier_EXEC();
 }
