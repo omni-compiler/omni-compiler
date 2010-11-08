@@ -10,6 +10,14 @@ typedef struct _XCALABLEMP_bcast_array_section_info_type {
   int stride;
 } _XCALABLEMP_bcast_array_section_info_t;
 
+// ----- common macro --------------------------------------------------------------------
+#define _XCALABLEMP_SM_INIT_RANK_ARRAY(rank_array, nodes_dim) \
+{ \
+  for (int i = 0; i < nodes_dim; i++) { \
+    rank_array[i] = _XCALABLEMP_N_INVALID_RANK; \
+  } \
+}
+
 // ----- gmove scalar to scalar ----------------------------------------------------------
 #define _XCALABLEMP_SM_GMOVE_BCAST_SCALAR_ARRAY(array, dst_addr, src_addr, type_size, src_rank) \
 { \
@@ -362,29 +370,33 @@ static _Bool _XCALABLEMP_gmove_check_array_ref_inclusion(_XCALABLEMP_array_info_
 }
 
 void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XCALABLEMP_array_t *array, ...) {
-  // FIXME type check here?
+  assert(dst_addr != NULL);
+  assert(src_addr != NULL);
+  assert(array != NULL);
+
   size_t type_size = array->type_size;
 
   _XCALABLEMP_template_t *template = array->align_template;
   _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
 
-  int array_dim = array->dim;
   int nodes_dim = nodes->dim;
-
-  int *src_rank_array = _XCALABLEMP_alloc(sizeof(int) * nodes_dim);
-  for (int i = 0; i < nodes_dim; i++) {
-    src_rank_array[i] = _XCALABLEMP_N_INVALID_RANK;
-  }
+  int src_rank_array[nodes_dim];
+  _XCALABLEMP_SM_INIT_RANK_ARRAY(src_rank_array, nodes_dim);
 
   va_list args;
   va_start(args, array);
+  int array_dim = array->dim;
   for (int i = 0; i < array_dim; i++) {
     int ref_index = va_arg(args, int);
 
-    int template_index = array->info[i].align_template_index;
-    if (template_index != _XCALABLEMP_N_NO_ALIGNED_TEMPLATE) {
-      int nodes_index = template->chunk[template_index].onto_nodes_index;
-      if (nodes_index != _XCALABLEMP_N_NO_ONTO_NODES) {
+    _XCALABLEMP_array_info_t *ai = &(array->info[i]);
+    if (ai->align_manner != _XCALABLEMP_N_ALIGN_NOT_ALIGNED) {
+      int template_index = ai->align_template_index;
+
+      _XCALABLEMP_template_chunk_t *chunk = ai->align_template_chunk;
+      if (chunk->dist_manner != _XCALABLEMP_N_DIST_DUPLICATION) {
+        int nodes_index = chunk->onto_nodes_index;
+
         int owner = _XCALABLEMP_calc_gmove_owner_SCALAR(ref_index, template, template_index);
         if (owner != _XCALABLEMP_N_INVALID_RANK) {
           src_rank_array[nodes_index] = owner;
@@ -460,14 +472,11 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
     _XCALABLEMP_fatal("null nodes descriptor detected");
   }
 
-  int dst_array_dim = dst_array->dim;
   int dst_nodes_dim = dst_nodes->dim;
+  int dst_rank_array[dst_nodes_dim];
+  _XCALABLEMP_SM_INIT_RANK_ARRAY(dst_rank_array, dst_nodes_dim);
 
-  int *dst_rank_array = _XCALABLEMP_alloc(sizeof(int) * dst_nodes_dim);
-  for (int i = 0; i < dst_nodes_dim; i++) {
-    dst_rank_array[i] = _XCALABLEMP_N_INVALID_RANK;
-  }
-
+  int dst_array_dim = dst_array->dim;
   for (int i = 0; i < dst_array_dim; i++) {
     int dst_ref_index = va_arg(args, int);
 
@@ -498,14 +507,11 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
     _XCALABLEMP_fatal("null nodes descriptor detected");
   }
 
-  int src_array_dim = src_array->dim;
   int src_nodes_dim = src_nodes->dim;
+  int src_rank_array[src_nodes_dim];
+  _XCALABLEMP_SM_INIT_RANK_ARRAY(src_rank_array, src_nodes_dim);
 
-  int *src_rank_array = _XCALABLEMP_alloc(sizeof(int) * src_nodes_dim);
-  for (int i = 0; i < src_nodes_dim; i++) {
-    src_rank_array[i] = _XCALABLEMP_N_INVALID_RANK;
-  }
-
+  int src_array_dim = src_array->dim;
   for (int i = 0; i < src_array_dim; i++) {
     int src_ref_index = va_arg(args, int);
 
@@ -883,14 +889,11 @@ static int _XCALABLEMP_calc_SENDRECV_owner(_XCALABLEMP_array_t *array, int *lowe
   _XCALABLEMP_template_t *template = array->align_template;
   _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
 
-  int array_dim = array->dim;
   int nodes_dim = nodes->dim;
-
   int rank_array[nodes_dim];
-  for (int i = 0; i < nodes_dim; i++) {
-    rank_array[i] = _XCALABLEMP_N_INVALID_RANK;
-  }
+  _XCALABLEMP_SM_INIT_RANK_ARRAY(rank_array, nodes_dim);
 
+  int array_dim = array->dim;
   for (int i = 0; i < array_dim; i++) {
     _XCALABLEMP_array_info_t *ai = &(array->info[i]);
     int template_index = ai->align_template_index;
