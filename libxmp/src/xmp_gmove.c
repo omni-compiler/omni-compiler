@@ -10,7 +10,7 @@ typedef struct _XCALABLEMP_bcast_array_section_info_type {
   int stride;
 } _XCALABLEMP_bcast_array_section_info_t;
 
-// ----- common macro --------------------------------------------------------------------
+// ----- macro & static functions --------------------------------------------------------------------
 #define _XCALABLEMP_SM_INIT_RANK_ARRAY(rank_array, nodes_dim) \
 { \
   for (int i = 0; i < nodes_dim; i++) { \
@@ -18,58 +18,11 @@ typedef struct _XCALABLEMP_bcast_array_section_info_type {
   } \
 }
 
-// ----- gmove scalar to scalar ----------------------------------------------------------
-#define _XCALABLEMP_SM_GMOVE_BCAST_SCALAR_ARRAY(array, dst_addr, src_addr, type_size, src_rank) \
-{ \
-  int my_rank = array->align_comm_rank; \
-  if (src_rank == my_rank) { \
-    memcpy(dst_addr, src_addr, type_size); \
-  } \
-\
-  MPI_Bcast(dst_addr, type_size, MPI_BYTE, src_rank, *(array->align_comm)); \
-}
-
-#define _XCALABLEMP_SM_GMOVE_BCAST_SCALAR_EXEC(exec_nodes, array, dst_addr, src_addr, type_size, src_rank) \
-{ \
-  int my_rank = array->align_comm_rank; \
-  if (src_rank == my_rank) { \
-    memcpy(dst_addr, src_addr, type_size); \
-\
-    int exec_size = exec_nodes->comm_size; \
-    int exec_rank = exec_nodes->comm_rank; \
-    for (int i = 0; i < exec_size; i++) { \
-      if (i != exec_rank) { \
-        MPI_Send(dst_addr, type_size, MPI_BYTE, i, _XCALABLEMP_N_MPI_TAG_GMOVE, *(exec_nodes->comm)); \
-      } \
-    } \
-  } \
-  else { \
-    MPI_Status stat; \
-    MPI_Recv(dst_addr, type_size, MPI_BYTE, MPI_ANY_SOURCE, _XCALABLEMP_N_MPI_TAG_GMOVE, *(exec_nodes->comm), &stat); \
-  } \
-}
-
-#define _XCALABLEMP_SM_GMOVE_BCAST_SCALAR(array, dst_addr, src_addr, type_size, src_rank) \
-{ \
-  _XCALABLEMP_nodes_t *onto_nodes = (array->align_template)->onto_nodes; \
-  _XCALABLEMP_nodes_t *exec_nodes = _XCALABLEMP_get_execution_nodes(); \
-\
-  if ((exec_nodes == _XCALABLEMP_world_nodes) && (exec_nodes->comm_size == onto_nodes->comm_size)) { \
-    _XCALABLEMP_SM_GMOVE_BCAST_SCALAR_ARRAY(array, dst_addr, src_addr, type_size, src_rank); \
-  } \
-  else { \
-    if (exec_nodes == onto_nodes) { \
-      _XCALABLEMP_SM_GMOVE_BCAST_SCALAR_ARRAY(array, dst_addr, src_addr, type_size, src_rank); \
-    } \
-    else { \
-      _XCALABLEMP_SM_GMOVE_BCAST_SCALAR_EXEC(exec_nodes, array, dst_addr, src_addr, type_size, src_rank); \
-    } \
-  } \
-}
-
-static _Bool _XCALABLEMP_check_gmove_inclusion_SCALAR(long long ref_index, _XCALABLEMP_template_chunk_t *chunk);
 static int _XCALABLEMP_calc_gmove_owner_SCALAR(long long ref_index, _XCALABLEMP_template_t *template, int dim_index);
 static int _XCALABLEMP_calc_gmove_nodes_rank(int *rank_array, _XCALABLEMP_nodes_t *nodes);
+static void _XCALABLEMP_gmove_bcast_SCALAR(_XCALABLEMP_array_t *array, void *dst_addr, void *src_addr,
+                                           size_t type_size, int src_rank);
+static _Bool _XCALABLEMP_check_gmove_inclusion_SCALAR(long long ref_index, _XCALABLEMP_template_chunk_t *chunk);
 static int _XCALABLEMP_calc_gmove_target_nodes_size(_XCALABLEMP_nodes_t *nodes, int *rank_array);
 static _Bool _XCALABLEMP_calc_local_copy_template_BLOCK(_XCALABLEMP_template_chunk_t *chunk,
                                                         long long *lower, long long *upper, int s);
@@ -81,6 +34,91 @@ static _Bool _XCALABLEMP_calc_local_copy_home_ref(_XCALABLEMP_array_t *dst_array
 static void _XCALABLEMP_calc_array_local_index_triplet(_XCALABLEMP_array_t *array,
                                                        int dim_index, int *lower, int *upper, int *stride);
 static _Bool _XCALABLEMP_gmove_check_array_ref_inclusion(_XCALABLEMP_array_info_t *array_info, int ref_index);
+
+static int _XCALABLEMP_calc_gmove_owner_SCALAR(long long ref_index, _XCALABLEMP_template_t *template, int dim_index) {
+  assert(template != NULL);
+  assert(template->is_fixed); // checked by compiler
+  assert(template->is_distributed); // checked by compiler
+
+  _XCALABLEMP_template_info_t *info = &(template->info[dim_index]);
+  _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[dim_index]);
+  assert(chunk->dist_manner != _XCALABLEMP_N_DIST_DUPLICATION);
+
+  switch (chunk->dist_manner) {
+    case _XCALABLEMP_N_DIST_BLOCK:
+      return (ref_index - (info->ser_lower)) / (chunk->par_chunk_width);
+    case _XCALABLEMP_N_DIST_CYCLIC:
+      return _XCALABLEMP_modi_ll_i(ref_index - (info->ser_lower), chunk->par_stride);
+    default:
+      _XCALABLEMP_fatal("unknown distribute manner");
+      return 0; // XXX dummy
+  }
+}
+
+static int _XCALABLEMP_calc_gmove_nodes_rank(int *rank_array, _XCALABLEMP_nodes_t *nodes) {
+  assert(nodes != NULL);
+
+  int nodes_dim = nodes->dim;
+
+  _Bool is_valid = false;
+  int acc_rank = 0;
+  int acc_nodes_size = 1;
+  for (int i = 0; i < nodes_dim; i++) {
+    int rank = rank_array[i];
+
+    if (rank != _XCALABLEMP_N_INVALID_RANK) {
+      is_valid = true;
+      acc_rank += rank * acc_nodes_size;
+      acc_nodes_size *= nodes->info[i].size;
+    }
+  }
+
+  if (is_valid) return acc_rank;
+  else          return _XCALABLEMP_N_INVALID_RANK;
+}
+
+static void _XCALABLEMP_gmove_bcast_SCALAR(_XCALABLEMP_array_t *array, void *dst_addr, void *src_addr,
+                                           size_t type_size, int src_rank) {
+  assert(array != NULL);
+  assert(dst_addr != NULL);
+  assert(src_addr != NULL);
+
+  _XCALABLEMP_nodes_t *onto_nodes = (array->align_template)->onto_nodes;
+  _XCALABLEMP_nodes_t *exec_nodes = _XCALABLEMP_get_execution_nodes();
+  assert(exec_nodes->is_member);
+
+  if ((exec_nodes == onto_nodes) ||
+      ((exec_nodes == _XCALABLEMP_world_nodes) && (exec_nodes->comm_size == onto_nodes->comm_size))) {
+    if (!array->is_align_comm_member) {
+      _XCALABLEMP_fatal("unexpected error in runtime");
+    }
+
+    int my_rank = array->align_comm_rank;
+    if (src_rank == my_rank) {
+      memcpy(dst_addr, src_addr, type_size);
+    }
+
+    MPI_Bcast(dst_addr, type_size, MPI_BYTE, src_rank, *(array->align_comm));
+  }
+  else {
+    int my_rank = array->align_comm_rank;
+    if (src_rank == my_rank) {
+      memcpy(dst_addr, src_addr, type_size);
+
+      int exec_size = exec_nodes->comm_size;
+      int exec_rank = exec_nodes->comm_rank;
+      for (int i = 0; i < exec_size; i++) {
+        if (i != exec_rank) {
+          MPI_Send(dst_addr, type_size, MPI_BYTE, i, _XCALABLEMP_N_MPI_TAG_GMOVE, *(exec_nodes->comm));
+        }
+      }
+    }
+    else {
+      MPI_Status stat;
+      MPI_Recv(dst_addr, type_size, MPI_BYTE, MPI_ANY_SOURCE, _XCALABLEMP_N_MPI_TAG_GMOVE, *(exec_nodes->comm), &stat);
+    }
+  }
+}
 
 static _Bool _XCALABLEMP_check_gmove_inclusion_SCALAR(long long ref_index, _XCALABLEMP_template_chunk_t *chunk) {
   switch (chunk->dist_manner) {
@@ -105,45 +143,6 @@ static _Bool _XCALABLEMP_check_gmove_inclusion_SCALAR(long long ref_index, _XCAL
       _XCALABLEMP_fatal("unknown distribute manner");
       return false; // XXX dummy
   }
-}
-
-static int _XCALABLEMP_calc_gmove_owner_SCALAR(long long ref_index, _XCALABLEMP_template_t *template, int dim_index) {
-  assert(template != NULL);
-
-  _XCALABLEMP_template_info_t *info = &(template->info[dim_index]);
-  _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[dim_index]);
-
-  switch (chunk->dist_manner) {
-    case _XCALABLEMP_N_DIST_DUPLICATION:
-      return _XCALABLEMP_N_INVALID_RANK;
-    case _XCALABLEMP_N_DIST_BLOCK:
-      return (ref_index - (info->ser_lower)) / (chunk->par_chunk_width);
-    case _XCALABLEMP_N_DIST_CYCLIC:
-      return _XCALABLEMP_modi_ll_i(ref_index - (info->ser_lower), chunk->par_stride);
-    default:
-      _XCALABLEMP_fatal("unknown distribute manner");
-      return 0; // XXX dummy
-  }
-}
-
-static int _XCALABLEMP_calc_gmove_nodes_rank(int *rank_array, _XCALABLEMP_nodes_t *nodes) {
-  int nodes_dim = nodes->dim;
-
-  _Bool is_valid = false;
-  int acc_rank = 0;
-  int acc_nodes_size = 1;
-  for (int i = 0; i < nodes_dim; i++) {
-    int rank = rank_array[i];
-
-    if (rank != _XCALABLEMP_N_INVALID_RANK) {
-      is_valid = true;
-      acc_rank += rank * acc_nodes_size;
-      acc_nodes_size *= nodes->info[i].size;
-    }
-  }
-
-  if (is_valid) return acc_rank;
-  else          return _XCALABLEMP_N_INVALID_RANK;
 }
 
 static int _XCALABLEMP_calc_gmove_target_nodes_size(_XCALABLEMP_nodes_t *nodes, int *rank_array) {
@@ -369,6 +368,7 @@ static _Bool _XCALABLEMP_gmove_check_array_ref_inclusion(_XCALABLEMP_array_info_
   }
 }
 
+// ----- gmove scalar to scalar ----------------------------------------------------------
 void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XCALABLEMP_array_t *array, ...) {
   assert(dst_addr != NULL);
   assert(src_addr != NULL);
@@ -413,7 +413,7 @@ void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XCALABLEMP_
   }
   else {
     // broadcast
-    _XCALABLEMP_SM_GMOVE_BCAST_SCALAR(array, dst_addr, src_addr, type_size, src_rank);
+    _XCALABLEMP_gmove_bcast_SCALAR(array, dst_addr, src_addr, type_size, src_rank);
   }
 
   // clean up
@@ -538,7 +538,7 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
     }
     else {
       // broadcast
-      _XCALABLEMP_SM_GMOVE_BCAST_SCALAR(src_array, dst_addr, src_addr, type_size, src_rank);
+      _XCALABLEMP_gmove_bcast_SCALAR(src_array, dst_addr, src_addr, type_size, src_rank);
     }
   }
   else {

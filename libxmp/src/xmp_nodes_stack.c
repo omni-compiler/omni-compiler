@@ -49,8 +49,6 @@ _XCALABLEMP_nodes_t *_XCALABLEMP_get_execution_nodes(void) {
 }
 
 int _XCALABLEMP_get_execution_nodes_rank(void) {
-  assert(_XCALABLEMP_get_execution_nodes()->is_member);
-
   return _XCALABLEMP_get_execution_nodes()->comm_rank;
 }
 

@@ -140,7 +140,7 @@ void _XCALABLEMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *ar
   int array_dim = array_desc->dim;
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
   if (!ai->is_shadow_comm_member) {
-    _XCALABLEMP_fatal("cannot find the shadow communicator");
+    _XCALABLEMP_fatal("unexpected error in runtime");
   }
 
   int size = ai->shadow_comm_size;
@@ -244,7 +244,7 @@ void _XCALABLEMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *ar
   int array_dim = array_desc->dim;
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
   if (!ai->is_shadow_comm_member) {
-    _XCALABLEMP_fatal("cannot find the shadow communicator");
+    _XCALABLEMP_fatal("unexpected error in runtime");
   }
 
   int size = ai->shadow_comm_size;
@@ -347,7 +347,7 @@ void _XCALABLEMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_bu
 
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
   if (!ai->is_shadow_comm_member) {
-    _XCALABLEMP_fatal("cannot find the shadow communicator");
+    _XCALABLEMP_fatal("unexpected error in runtime");
   }
 
   // get communicator info
@@ -425,7 +425,7 @@ static void _XCALABLEMP_reflect_shadow_ALLGATHER(void *array_addr, _XCALABLEMP_a
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
   assert(ai->align_manner == _XCALABLEMP_N_ALIGN_BLOCK);
   if (!ai->is_shadow_comm_member) {
-    _XCALABLEMP_fatal("cannot find the shadow communicator");
+    _XCALABLEMP_fatal("unexpected error in runtime");
   }
 
   size_t type_size = array_desc->type_size;
@@ -454,7 +454,7 @@ static void _XCALABLEMP_reflect_shadow_ALLGATHERV(void *array_addr, _XCALABLEMP_
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
   assert(ai->align_manner == _XCALABLEMP_N_ALIGN_BLOCK);
   if (!ai->is_shadow_comm_member) {
-    _XCALABLEMP_fatal("cannot find the shadow communicator");
+    _XCALABLEMP_fatal("unexpected error in runtime");
   }
 
   size_t type_size = array_desc->type_size;
