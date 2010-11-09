@@ -102,7 +102,6 @@ static void _XCALABLEMP_gmove_bcast_SCALAR(_XCALABLEMP_array_t *array, void *dst
     MPI_Bcast(dst_addr, type_size, MPI_BYTE, src_rank, *(array->align_comm));
   }
   else {
-    // FIXME correct implement???
     MPI_Comm *comm = exec_nodes->comm;
 
     int root_rank_temp = 0, root_rank = 0;
@@ -624,6 +623,9 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
   // clean up
   _XCALABLEMP_free(dst_rank_array);
   _XCALABLEMP_free(src_rank_array);
+
+  // FIXME delete this after bug fix
+  _XCALABLEMP_barrier_EXEC();
 }
 
 // ----- gmove vector to vector ----------------------------------------------------------
@@ -1228,4 +1230,7 @@ void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION(_XCALABLEMP_array_t *dst_array, _X
       }
     }
   }
+
+  // FIXME delete this after bug fix
+  _XCALABLEMP_barrier_EXEC();
 }
