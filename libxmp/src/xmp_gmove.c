@@ -534,42 +534,34 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
       }
     }
     else {
-      _XCALABLEMP_nodes_t *dst_nodes = (dst_array->align_template)->onto_nodes;
-      _XCALABLEMP_nodes_t *src_nodes = (src_array->align_template)->onto_nodes;
+      void *temp_buffer = _XCALABLEMP_alloc(type_size);
 
-      // send/recv FIXME limitation: arrays should be distributed by the same nodes
-      if (dst_nodes != src_nodes) {
-        _XCALABLEMP_fatal("arrays used in a gmove directive should be distributed by the same nodes set");
-      }
-
-      // FIXME use execution nodes set
-      _XCALABLEMP_nodes_t *comm_nodes = dst_nodes;
-
-      // irecv
-      MPI_Request recv_req;
+      int color = 0, key = 0;
       if (dst_rank == dst_array->align_comm_rank) {
-        MPI_Irecv(dst_addr, type_size, MPI_BYTE, MPI_ANY_SOURCE, _XCALABLEMP_N_MPI_TAG_GMOVE, *(comm_nodes->comm), &recv_req);
+        color = 1;
+        key = _XCALABLEMP_world_rank + 1;
       }
 
-      // send
       if (src_rank == src_array->align_comm_rank) {
-        // FIXME master sends all
-        if (src_rank == comm_nodes->comm_rank) {
-          // FIXME incomplete imp
-          MPI_Send(src_addr, type_size, MPI_BYTE, dst_rank, _XCALABLEMP_N_MPI_TAG_GMOVE, *(comm_nodes->comm));
+        color = 1;
+        memcpy(temp_buffer, src_addr, type_size);
+      }
+
+      MPI_Comm comm;
+      MPI_Comm_split(*(_XCALABLEMP_get_execution_nodes()->comm), color, key, &comm);
+
+      if (color == 1) {
+        MPI_Bcast(temp_buffer, type_size, MPI_BYTE, 0, comm);
+
+        if (dst_rank == dst_array->align_comm_rank) {
+          memcpy(dst_addr, temp_buffer, type_size);
         }
       }
 
-      // wait
-      if (dst_rank == dst_array->align_comm_rank) {
-        MPI_Status recv_stat;
-        MPI_Wait(&recv_req, &recv_stat);
-      }
+      MPI_Comm_free(&comm);
+      _XCALABLEMP_free(temp_buffer);
     }
   }
-
-  // FIXME delete this after bug fix
-  _XCALABLEMP_barrier_EXEC();
 }
 
 // ----- gmove vector to vector --------------------------------------------------------------------------------------------------
