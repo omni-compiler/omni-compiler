@@ -18,8 +18,9 @@ typedef struct _XCALABLEMP_bcast_array_section_info_type {
   } \
 }
 
-static int _XCALABLEMP_calc_gmove_owner_SCALAR(_XCALABLEMP_template_t *template, int dim_index, long long ref_index);
 static int _XCALABLEMP_calc_gmove_nodes_rank(int *rank_array, _XCALABLEMP_nodes_t *nodes);
+static int _XCALABLEMP_calc_gmove_template_owner_SCALAR(_XCALABLEMP_template_t *template, int dim_index, long long ref_index);
+static int _XCALABLEMP_calc_gmove_array_owner_rank_SCALAR(_XCALABLEMP_array_t *array, int *ref_index);
 static void _XCALABLEMP_gmove_bcast_SCALAR(_XCALABLEMP_array_t *array, void *dst_addr, void *src_addr,
                                            size_t type_size, int src_rank);
 static _Bool _XCALABLEMP_check_gmove_array_ref_inclusion_SCALAR(_XCALABLEMP_array_t *array, int array_index, int ref_index);
@@ -34,7 +35,32 @@ static _Bool _XCALABLEMP_calc_local_copy_home_ref(_XCALABLEMP_array_t *dst_array
 static void _XCALABLEMP_calc_array_local_index_triplet(_XCALABLEMP_array_t *array,
                                                        int dim_index, int *lower, int *upper, int *stride);
 
-static int _XCALABLEMP_calc_gmove_owner_SCALAR(_XCALABLEMP_template_t *template, int dim_index, long long ref_index) {
+static int _XCALABLEMP_calc_gmove_nodes_rank(int *rank_array, _XCALABLEMP_nodes_t *nodes) {
+  assert(nodes != NULL);
+
+  _Bool is_valid = false;
+  int acc_rank = 0;
+  int acc_nodes_size = 1;
+  int nodes_dim = nodes->dim;
+  for (int i = 0; i < nodes_dim; i++) {
+    int rank = rank_array[i];
+
+    if (rank != _XCALABLEMP_N_INVALID_RANK) {
+      is_valid = true;
+      acc_rank += rank * acc_nodes_size;
+      acc_nodes_size *= nodes->info[i].size;
+    }
+  }
+
+  if (is_valid) {
+    return acc_rank;
+  }
+  else {
+    return _XCALABLEMP_N_INVALID_RANK;
+  }
+}
+
+static int _XCALABLEMP_calc_gmove_template_owner_SCALAR(_XCALABLEMP_template_t *template, int dim_index, long long ref_index) {
   assert(template != NULL);
   assert(template->is_fixed); // checked by compiler
   assert(template->is_distributed); // checked by compiler
@@ -54,30 +80,36 @@ static int _XCALABLEMP_calc_gmove_owner_SCALAR(_XCALABLEMP_template_t *template,
   }
 }
 
-static int _XCALABLEMP_calc_gmove_nodes_rank(int *rank_array, _XCALABLEMP_nodes_t *nodes) {
-  assert(nodes != NULL);
+static int _XCALABLEMP_calc_gmove_array_owner_rank_SCALAR(_XCALABLEMP_array_t *array, int *ref_index) {
+  assert(array != NULL);
+  assert(ref_index != NULL);
+
+  _XCALABLEMP_template_t *template = array->align_template;
+  _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
 
   int nodes_dim = nodes->dim;
+  int rank_array[nodes_dim];
+  _XCALABLEMP_SM_INIT_RANK_ARRAY(rank_array, nodes_dim);
 
-  _Bool is_valid = false;
-  int acc_rank = 0;
-  int acc_nodes_size = 1;
-  for (int i = 0; i < nodes_dim; i++) {
-    int rank = rank_array[i];
+  int array_dim = array->dim;
+  for (int i = 0; i < array_dim; i++) {
+    _XCALABLEMP_array_info_t *ai = &(array->info[i]);
+    if (ai->align_manner != _XCALABLEMP_N_ALIGN_NOT_ALIGNED) {
+      int template_index = ai->align_template_index;
 
-    if (rank != _XCALABLEMP_N_INVALID_RANK) {
-      is_valid = true;
-      acc_rank += rank * acc_nodes_size;
-      acc_nodes_size *= nodes->info[i].size;
+      _XCALABLEMP_template_chunk_t *chunk = ai->align_template_chunk;
+      if (chunk->dist_manner != _XCALABLEMP_N_DIST_DUPLICATION) {
+        int nodes_index = chunk->onto_nodes_index;
+
+        int owner = _XCALABLEMP_calc_gmove_template_owner_SCALAR(template, template_index, ref_index[i] + ai->align_subscript);
+        if (owner != _XCALABLEMP_N_INVALID_RANK) {
+          rank_array[nodes_index] = owner;
+        }
+      }
     }
   }
 
-  if (is_valid) {
-    return acc_rank;
-  }
-  else {
-    return _XCALABLEMP_N_INVALID_RANK;
-  }
+  return _XCALABLEMP_calc_gmove_nodes_rank(rank_array, nodes);
 }
 
 static void _XCALABLEMP_gmove_bcast_SCALAR(_XCALABLEMP_array_t *array, void *dst_addr, void *src_addr,
@@ -405,39 +437,21 @@ void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XCALABLEMP_
   assert(src_addr != NULL);
   assert(array != NULL);
 
-  size_t type_size = array->type_size;
-
-  _XCALABLEMP_template_t *template = array->align_template;
-  _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
-
-  int nodes_dim = nodes->dim;
-  int src_rank_array[nodes_dim];
-  _XCALABLEMP_SM_INIT_RANK_ARRAY(src_rank_array, nodes_dim);
-
   va_list args;
   va_start(args, array);
-  int array_dim = array->dim;
-  for (int i = 0; i < array_dim; i++) {
-    int ref_index = va_arg(args, int);
-
-    _XCALABLEMP_array_info_t *ai = &(array->info[i]);
-    if (ai->align_manner != _XCALABLEMP_N_ALIGN_NOT_ALIGNED) {
-      int template_index = ai->align_template_index;
-
-      _XCALABLEMP_template_chunk_t *chunk = ai->align_template_chunk;
-      if (chunk->dist_manner != _XCALABLEMP_N_DIST_DUPLICATION) {
-        int nodes_index = chunk->onto_nodes_index;
-
-        int owner = _XCALABLEMP_calc_gmove_owner_SCALAR(template, template_index, ref_index);
-        if (owner != _XCALABLEMP_N_INVALID_RANK) {
-          src_rank_array[nodes_index] = owner;
-        }
-      }
+  int src_rank;
+  {
+    int array_dim = array->dim;
+    int ref_index[array_dim];
+    for (int i = 0; i < array_dim; i++) {
+      ref_index[i] = va_arg(args, int);
     }
+    src_rank = _XCALABLEMP_calc_gmove_array_owner_rank_SCALAR(array, ref_index);
   }
   va_end(args);
 
-  int src_rank = _XCALABLEMP_calc_gmove_nodes_rank(src_rank_array, nodes);
+  size_t type_size = array->type_size;
+
   if (src_rank == _XCALABLEMP_N_INVALID_RANK) {
     // local copy
     memcpy(dst_addr, src_addr, type_size);
@@ -446,9 +460,6 @@ void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XCALABLEMP_
     // broadcast
     _XCALABLEMP_gmove_bcast_SCALAR(array, dst_addr, src_addr, type_size, src_rank);
   }
-
-  // clean up
-  _XCALABLEMP_free(src_rank_array);
 }
 
 _Bool _XCALABLEMP_gmove_exec_home_SCALAR(_XCALABLEMP_array_t *array, ...) {
@@ -483,69 +494,32 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
   assert(dst_array != NULL);
   assert(src_array != NULL);
 
-  // FIXME type check here?
-  size_t type_size = dst_array->type_size;
-
   va_list args;
   va_start(args, src_array);
-
-  // calc destination rank
-  _XCALABLEMP_template_t *dst_template = dst_array->align_template;
-  _XCALABLEMP_nodes_t *dst_nodes = dst_template->onto_nodes;
-
-  int dst_nodes_dim = dst_nodes->dim;
-  int dst_rank_array[dst_nodes_dim];
-  _XCALABLEMP_SM_INIT_RANK_ARRAY(dst_rank_array, dst_nodes_dim);
-
-  int dst_array_dim = dst_array->dim;
-  for (int i = 0; i < dst_array_dim; i++) {
-    int dst_ref_index = va_arg(args, int);
-
-    _XCALABLEMP_array_info_t *ai = &(dst_array->info[i]);
-    if (ai->align_manner != _XCALABLEMP_N_ALIGN_NOT_ALIGNED) {
-      int dst_template_index = ai->align_template_index;
-
-      _XCALABLEMP_template_chunk_t *chunk = ai->align_template_chunk;
-      if (chunk->dist_manner != _XCALABLEMP_N_DIST_DUPLICATION) {
-        int dst_nodes_index = chunk->onto_nodes_index;
-
-        int dst_owner = _XCALABLEMP_calc_gmove_owner_SCALAR(dst_template, dst_template_index, dst_ref_index);
-        if (dst_owner != _XCALABLEMP_N_INVALID_RANK) {
-          dst_rank_array[dst_nodes_index] = dst_owner;
-        }
-      }
+  int dst_rank;
+  {
+    int dst_array_dim = dst_array->dim;
+    int dst_ref_index[dst_array_dim];
+    for (int i = 0; i < dst_array_dim; i++) {
+      dst_ref_index[i] = va_arg(args, int);
     }
+    dst_rank = _XCALABLEMP_calc_gmove_array_owner_rank_SCALAR(dst_array, dst_ref_index);
   }
 
-  int dst_rank = _XCALABLEMP_calc_gmove_nodes_rank(dst_rank_array, dst_nodes);
-
-  // calc source rank
-  _XCALABLEMP_template_t *src_template = src_array->align_template;
-  _XCALABLEMP_nodes_t *src_nodes = src_template->onto_nodes;
-
-  int src_nodes_dim = src_nodes->dim;
-  int src_rank_array[src_nodes_dim];
-  _XCALABLEMP_SM_INIT_RANK_ARRAY(src_rank_array, src_nodes_dim);
-
-  int src_array_dim = src_array->dim;
-  for (int i = 0; i < src_array_dim; i++) {
-    int src_ref_index = va_arg(args, int);
-
-    int src_template_index = src_array->info[i].align_template_index;
-    if (src_template_index != _XCALABLEMP_N_NO_ALIGNED_TEMPLATE) {
-      int src_nodes_index = src_template->chunk[src_template_index].onto_nodes_index;
-      if (src_nodes_index != _XCALABLEMP_N_NO_ONTO_NODES) {
-        int src_owner = _XCALABLEMP_calc_gmove_owner_SCALAR(src_template, src_template_index, src_ref_index);
-        if (src_owner != _XCALABLEMP_N_INVALID_RANK) {
-          src_rank_array[src_nodes_index] = src_owner;
-        }
-      }
+  int src_rank;
+  {
+    int src_array_dim = src_array->dim;
+    int src_ref_index[src_array_dim];
+    for (int i = 0; i < src_array_dim; i++) {
+      src_ref_index[i] = va_arg(args, int);
     }
+    src_rank = _XCALABLEMP_calc_gmove_array_owner_rank_SCALAR(src_array, src_ref_index);
   }
-
-  int src_rank = _XCALABLEMP_calc_gmove_nodes_rank(src_rank_array, src_nodes);
-
   va_end(args);
+
+  assert(dst_array->type == src_array->type); // FIXME checked by compiler
+  assert(dst_array->type_size == src_array->type_size); // FIXME checked by compiler
+  size_t type_size = dst_array->type_size;
 
   if (dst_rank == _XCALABLEMP_N_INVALID_RANK) {
     if (src_rank == _XCALABLEMP_N_INVALID_RANK) {
@@ -565,6 +539,9 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
       }
     }
     else {
+      _XCALABLEMP_nodes_t *dst_nodes = (dst_array->align_template)->onto_nodes;
+      _XCALABLEMP_nodes_t *src_nodes = (src_array->align_template)->onto_nodes;
+
       // send/recv FIXME limitation: arrays should be distributed by the same nodes
       if (dst_nodes != src_nodes) {
         _XCALABLEMP_fatal("arrays used in a gmove directive should be distributed by the same nodes set");
@@ -583,14 +560,8 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
       if (src_rank == src_array->align_comm_rank) {
         // FIXME master sends all
         if (src_rank == comm_nodes->comm_rank) {
-          int num_targets = _XCALABLEMP_calc_gmove_target_nodes_size(dst_nodes, dst_rank_array);
-          if (num_targets == 1) {
-            MPI_Send(src_addr, type_size, MPI_BYTE, dst_rank, _XCALABLEMP_N_MPI_TAG_GMOVE, *(comm_nodes->comm));
-          }
-          else {
-            // FIXME implement
-            _XCALABLEMP_fatal("not supported yet");
-          }
+          // FIXME incomplete imp
+          MPI_Send(src_addr, type_size, MPI_BYTE, dst_rank, _XCALABLEMP_N_MPI_TAG_GMOVE, *(comm_nodes->comm));
         }
       }
 
@@ -601,10 +572,6 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
       }
     }
   }
-
-  // clean up
-  _XCALABLEMP_free(dst_rank_array);
-  _XCALABLEMP_free(src_rank_array);
 
   // FIXME delete this after bug fix
   _XCALABLEMP_barrier_EXEC();
@@ -854,7 +821,7 @@ void _XCALABLEMP_gmove_BCAST_ARRAY_SECTION(_XCALABLEMP_array_t *src_array, int t
   int exec_nodes_size = exec_nodes->comm_size;
   int exec_nodes_rank = exec_nodes->comm_rank;
 
-  int *root_nodes = _XCALABLEMP_alloc(exec_nodes_size * sizeof(int));
+  int root_nodes[exec_nodes_size];
   MPI_Allgather(&is_root, 1, MPI_INT, root_nodes, 1, MPI_INT, *exec_nodes_comm);
 
   _XCALABLEMP_bcast_array_section_info_t bcast_info[dst_dim];
@@ -922,7 +889,7 @@ static int _XCALABLEMP_calc_SENDRECV_owner(_XCALABLEMP_array_t *array, int *lowe
       if (_XCALABLEMP_M_COUNT_TRIPLETi(lower[i], upper[i], stride[i]) == 1) {
         int nodes_index = (ai->align_template_chunk)->onto_nodes_index;
         if (nodes_index != _XCALABLEMP_N_NO_ONTO_NODES) {
-          int owner = _XCALABLEMP_calc_gmove_owner_SCALAR(template, template_index, lower[i]);
+          int owner = _XCALABLEMP_calc_gmove_template_owner_SCALAR(template, template_index, lower[i] + ai->align_subscript);
           if (owner != _XCALABLEMP_N_INVALID_RANK) {
             rank_array[nodes_index] = owner;
           }
