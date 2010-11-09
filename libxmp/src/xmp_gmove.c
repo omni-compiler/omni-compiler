@@ -10,15 +10,8 @@ typedef struct _XCALABLEMP_bcast_array_section_info_type {
   int stride;
 } _XCALABLEMP_bcast_array_section_info_t;
 
-// ----- macro & static functions --------------------------------------------------------------------
-#define _XCALABLEMP_SM_INIT_RANK_ARRAY(rank_array, nodes_dim) \
-{ \
-  for (int i = 0; i < nodes_dim; i++) { \
-    rank_array[i] = _XCALABLEMP_N_INVALID_RANK; \
-  } \
-}
-
-static int _XCALABLEMP_calc_gmove_nodes_rank(int *rank_array, _XCALABLEMP_nodes_t *nodes);
+// ----- static functions --------------------------------------------------------------------------------------------------------
+static int _XCALABLEMP_convert_rank_array_to_rank(_XCALABLEMP_nodes_t *nodes, int *rank_array);
 static int _XCALABLEMP_calc_gmove_template_owner_SCALAR(_XCALABLEMP_template_t *template, int dim_index, long long ref_index);
 static int _XCALABLEMP_calc_gmove_array_owner_rank_SCALAR(_XCALABLEMP_array_t *array, int *ref_index);
 static void _XCALABLEMP_gmove_bcast_SCALAR(_XCALABLEMP_array_t *array, void *dst_addr, void *src_addr,
@@ -35,8 +28,9 @@ static _Bool _XCALABLEMP_calc_local_copy_home_ref(_XCALABLEMP_array_t *dst_array
 static void _XCALABLEMP_calc_array_local_index_triplet(_XCALABLEMP_array_t *array,
                                                        int dim_index, int *lower, int *upper, int *stride);
 
-static int _XCALABLEMP_calc_gmove_nodes_rank(int *rank_array, _XCALABLEMP_nodes_t *nodes) {
+static int _XCALABLEMP_convert_rank_array_to_rank(_XCALABLEMP_nodes_t *nodes, int *rank_array) {
   assert(nodes != NULL);
+  assert(rank_array != NULL);
 
   _Bool is_valid = false;
   int acc_rank = 0;
@@ -89,7 +83,9 @@ static int _XCALABLEMP_calc_gmove_array_owner_rank_SCALAR(_XCALABLEMP_array_t *a
 
   int nodes_dim = nodes->dim;
   int rank_array[nodes_dim];
-  _XCALABLEMP_SM_INIT_RANK_ARRAY(rank_array, nodes_dim);
+  for (int i = 0; i < nodes_dim; i++) {
+    rank_array[i] = _XCALABLEMP_N_INVALID_RANK;
+  }
 
   int array_dim = array->dim;
   for (int i = 0; i < array_dim; i++) {
@@ -109,7 +105,7 @@ static int _XCALABLEMP_calc_gmove_array_owner_rank_SCALAR(_XCALABLEMP_array_t *a
     }
   }
 
-  return _XCALABLEMP_calc_gmove_nodes_rank(rank_array, nodes);
+  return _XCALABLEMP_convert_rank_array_to_rank(nodes, rank_array);
 }
 
 static void _XCALABLEMP_gmove_bcast_SCALAR(_XCALABLEMP_array_t *array, void *dst_addr, void *src_addr,
@@ -431,7 +427,7 @@ static void _XCALABLEMP_calc_array_local_index_triplet(_XCALABLEMP_array_t *arra
   }
 }
 
-// ----- gmove scalar to scalar ----------------------------------------------------------
+// ----- gmove scalar to scalar --------------------------------------------------------------------------------------------------
 void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XCALABLEMP_array_t *array, ...) {
   assert(dst_addr != NULL);
   assert(src_addr != NULL);
@@ -517,7 +513,6 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
   }
   va_end(args);
 
-  assert(dst_array->type == src_array->type); // FIXME checked by compiler
   assert(dst_array->type_size == src_array->type_size); // FIXME checked by compiler
   size_t type_size = dst_array->type_size;
 
@@ -577,8 +572,7 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
   _XCALABLEMP_barrier_EXEC();
 }
 
-// ----- gmove vector to vector ----------------------------------------------------------
-
+// ----- gmove vector to vector --------------------------------------------------------------------------------------------------
 void _XCALABLEMP_gmove_local_copy(int type, size_t type_size, ...) {
   va_list args;
   va_start(args, type_size);
@@ -879,7 +873,9 @@ static int _XCALABLEMP_calc_SENDRECV_owner(_XCALABLEMP_array_t *array, int *lowe
 
   int nodes_dim = nodes->dim;
   int rank_array[nodes_dim];
-  _XCALABLEMP_SM_INIT_RANK_ARRAY(rank_array, nodes_dim);
+  for (int i = 0; i < nodes_dim; i++) {
+    rank_array[i] = _XCALABLEMP_N_INVALID_RANK;
+  }
 
   int array_dim = array->dim;
   for (int i = 0; i < array_dim; i++) {
@@ -903,7 +899,7 @@ static int _XCALABLEMP_calc_SENDRECV_owner(_XCALABLEMP_array_t *array, int *lowe
     }
   }
 
-  return _XCALABLEMP_calc_gmove_nodes_rank(rank_array, nodes);
+  return _XCALABLEMP_convert_rank_array_to_rank(nodes, rank_array);
 }
 
 // FIXME does not has complete function for general usage
