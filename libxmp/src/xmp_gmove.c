@@ -534,8 +534,6 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
       }
     }
     else {
-      void *temp_buffer = _XCALABLEMP_alloc(type_size);
-
       int color = 0, key = 0;
       if (dst_rank == dst_array->align_comm_rank) {
         color = 1;
@@ -544,22 +542,46 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
 
       if (src_rank == src_array->align_comm_rank) {
         color = 1;
-        memcpy(temp_buffer, src_addr, type_size);
+        key = 0;
       }
 
       MPI_Comm comm;
       MPI_Comm_split(*(_XCALABLEMP_get_execution_nodes()->comm), color, key, &comm);
 
       if (color == 1) {
-        MPI_Bcast(temp_buffer, type_size, MPI_BYTE, 0, comm);
+        int comm_size;
+        MPI_Comm_size(comm, &comm_size);
 
-        if (dst_rank == dst_array->align_comm_rank) {
-          memcpy(dst_addr, temp_buffer, type_size);
+        if (comm_size == 1) {
+          memcpy(dst_addr, src_addr, type_size);
+        }
+        else if (comm_size == 2) {
+          if (key == 0) {
+            MPI_Send(src_addr, type_size, MPI_BYTE, 1, _XCALABLEMP_N_MPI_TAG_GMOVE, comm);
+          }
+          else {
+            MPI_Status stat;
+            MPI_Recv(dst_addr, type_size, MPI_BYTE, 0, _XCALABLEMP_N_MPI_TAG_GMOVE, comm, &stat);
+          }
+        }
+        else {
+          void *temp_buffer = _XCALABLEMP_alloc(type_size);
+
+          if (src_rank == src_array->align_comm_rank) {
+            memcpy(temp_buffer, src_addr, type_size);
+          }
+
+          MPI_Bcast(temp_buffer, type_size, MPI_BYTE, 0, comm);
+
+          if (dst_rank == dst_array->align_comm_rank) {
+            memcpy(dst_addr, temp_buffer, type_size);
+          }
+
+          _XCALABLEMP_free(temp_buffer);
         }
       }
 
       MPI_Comm_free(&comm);
-      _XCALABLEMP_free(temp_buffer);
     }
   }
 }
