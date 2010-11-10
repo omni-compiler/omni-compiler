@@ -136,17 +136,41 @@ static void _XCALABLEMP_gmove_bcast_SCALAR(_XCALABLEMP_array_t *array, void *dst
     MPI_Bcast(dst_addr, type_size, MPI_BYTE, src_rank, *(array->align_comm));
   }
   else {
-    MPI_Comm *comm = exec_nodes->comm;
+    MPI_Comm *exec_comm = exec_nodes->comm;
 
-    int root_rank_temp = 0, root_rank = 0;
+    int is_root = 0;
     if (src_rank == my_rank) {
-      memcpy(dst_addr, src_addr, type_size);
-
-      MPI_Comm_rank(*comm, &root_rank_temp);
+      is_root = 1;
     }
 
-    MPI_Allreduce(&root_rank_temp, &root_rank, 1, MPI_INT, MPI_SUM, *comm);
-    MPI_Bcast(dst_addr, type_size, MPI_BYTE, root_rank, *comm);
+    int num_roots = 0;
+    MPI_Allreduce(&is_root, &num_roots, 1, MPI_INT, MPI_SUM, *exec_comm);
+    if (num_roots == 0) {
+      _XCALABLEMP_fatal("no root for gmove broadcast");
+    }
+
+    MPI_Comm root_comm;
+    MPI_Comm_split(*exec_comm, is_root, _XCALABLEMP_world_rank, &root_comm);
+
+    int color, key;
+    if (is_root) {
+      memcpy(dst_addr, src_addr, type_size);
+
+      MPI_Comm_rank(root_comm, &color);
+      key = 0;
+    }
+    else {
+      color = _XCALABLEMP_world_rank % num_roots;
+      key = _XCALABLEMP_world_rank + 1;
+    }
+
+    MPI_Comm bcast_comm;
+    MPI_Comm_split(*exec_comm, color, key, &bcast_comm);
+
+    MPI_Bcast(dst_addr, type_size, MPI_BYTE, 0, bcast_comm);
+
+    MPI_Comm_free(&root_comm);
+    MPI_Comm_free(&bcast_comm);
   }
 }
 
@@ -540,54 +564,26 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
       }
     }
     else {
-      int color = 0, key = 0;
-      if (dst_rank == dst_array->align_comm_rank) {
-        color = 1;
-        key = _XCALABLEMP_world_rank + 1;
-      }
+      _XCALABLEMP_nodes_t *exec_nodes = _XCALABLEMP_get_execution_nodes();
+      assert(exec_nodes->is_member);
 
+      MPI_Comm *exec_comm = exec_nodes->comm;
+
+      int is_src = 0;
       if (src_rank == src_array->align_comm_rank) {
-        color = 1;
-        key = 0;
+        is_src = 1;
       }
 
-      MPI_Comm comm;
-      MPI_Comm_split(*(_XCALABLEMP_get_execution_nodes()->comm), color, key, &comm);
-
-      if (color == 1) {
-        int comm_size;
-        MPI_Comm_size(comm, &comm_size);
-
-        if (comm_size == 1) {
-          memcpy(dst_addr, src_addr, type_size);
-        }
-        else if (comm_size == 2) {
-          if (key == 0) {
-            MPI_Send(src_addr, type_size, MPI_BYTE, 1, _XCALABLEMP_N_MPI_TAG_GMOVE, comm);
-          }
-          else {
-            MPI_Status stat;
-            MPI_Recv(dst_addr, type_size, MPI_BYTE, 0, _XCALABLEMP_N_MPI_TAG_GMOVE, comm, &stat);
-          }
-        }
-        else {
-          void *temp_buffer = _XCALABLEMP_alloc(type_size);
-
-          if (src_rank == src_array->align_comm_rank) {
-            memcpy(temp_buffer, src_addr, type_size);
-          }
-
-          MPI_Bcast(temp_buffer, type_size, MPI_BYTE, 0, comm);
-
-          if (dst_rank == dst_array->align_comm_rank) {
-            memcpy(dst_addr, temp_buffer, type_size);
-          }
-
-          _XCALABLEMP_free(temp_buffer);
-        }
+      int num_srcs = 0;
+      MPI_Allreduce(&is_src, &num_srcs, 1, MPI_INT, MPI_SUM, *exec_comm);
+      if (num_srcs == 0) {
+        _XCALABLEMP_fatal("no source for gmove send/recv");
       }
 
-      MPI_Comm_free(&comm);
+      MPI_Comm src_comm;
+      MPI_Comm_split(*exec_comm, is_src, _XCALABLEMP_world_rank, &src_comm);
+
+      MPI_Comm_free(&src_comm);
     }
   }
 }
