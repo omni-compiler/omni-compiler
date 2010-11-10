@@ -16,7 +16,7 @@
 #define _XCALABLEMP_ERR_WHEN(flag) \
 { \
   if (flag) { \
-    _XCALABLEMP_fatal("unexpected error in runtime"); \
+    _XCALABLEMP_unexpected_error(); \
   } \
 }
 
@@ -191,6 +191,7 @@ extern void _XCALABLEMP_finalize_comm(MPI_Comm *comm);
 extern void *_XCALABLEMP_alloc(size_t size);
 extern void _XCALABLEMP_free(void *p);
 extern void _XCALABLEMP_fatal(char *msg);
+extern void _XCALABLEMP_unexpected_error(void);
 
 // xmp_world.c
 extern void _XCALABLEMP_init_world(int *argc, char ***argv);

@@ -164,13 +164,13 @@ static void _XCALABLEMP_gmove_bcast_SCALAR(_XCALABLEMP_array_t *array, void *dst
       key = _XCALABLEMP_world_rank + 1;
     }
 
-    MPI_Comm bcast_comm;
-    MPI_Comm_split(*exec_comm, color, key, &bcast_comm);
+    MPI_Comm gmove_comm;
+    MPI_Comm_split(*exec_comm, color, key, &gmove_comm);
 
-    MPI_Bcast(dst_addr, type_size, MPI_BYTE, 0, bcast_comm);
+    MPI_Bcast(dst_addr, type_size, MPI_BYTE, 0, gmove_comm);
 
     MPI_Comm_free(&root_comm);
-    MPI_Comm_free(&bcast_comm);
+    MPI_Comm_free(&gmove_comm);
   }
 }
 
@@ -569,21 +569,87 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
 
       MPI_Comm *exec_comm = exec_nodes->comm;
 
-      int is_src = 0;
-      if (src_rank == src_array->align_comm_rank) {
-        is_src = 1;
-      }
-
-      int num_srcs = 0;
-      MPI_Allreduce(&is_src, &num_srcs, 1, MPI_INT, MPI_SUM, *exec_comm);
-      if (num_srcs == 0) {
-        _XCALABLEMP_fatal("no source for gmove send/recv");
-      }
-
+      int is_src = 0, num_srcs = 0;
       MPI_Comm src_comm;
-      MPI_Comm_split(*exec_comm, is_src, _XCALABLEMP_world_rank, &src_comm);
+      {
+        if (src_rank == src_array->align_comm_rank) {
+          is_src = 1;
+        }
 
+        MPI_Allreduce(&is_src, &num_srcs, 1, MPI_INT, MPI_SUM, *exec_comm);
+        if (num_srcs == 0) {
+          _XCALABLEMP_fatal("no source for gmove send/recv");
+        }
+
+        MPI_Comm_split(*exec_comm, is_src, _XCALABLEMP_world_rank, &src_comm);
+      }
+
+      int is_dst = 0;
+      MPI_Comm gmove_comm;
+      {
+        int color = num_srcs, key = 0;
+        if (dst_rank == dst_array->align_comm_rank) {
+          is_dst = 1;
+
+          color = _XCALABLEMP_world_rank % num_srcs;
+          key = _XCALABLEMP_world_rank + 1;
+        }
+
+        // overwrite color, key
+        if (is_src) {
+          MPI_Comm_rank(src_comm, &color);
+          key = 0;
+        }
+
+        MPI_Comm_split(*exec_comm, color, key, &gmove_comm);
+
+        if (color == num_srcs) {
+          goto EXIT_AFTER_CLEAN_UP;
+        }
+      }
+
+      int gmove_comm_size;
+      MPI_Comm_size(gmove_comm, &gmove_comm_size);
+
+      if (gmove_comm_size == 1) {
+        if (is_dst) {
+          memcpy(dst_addr, src_addr, type_size);
+        }
+      }
+      else if (gmove_comm_size == 2) {
+        if (is_src) {
+          MPI_Send(src_addr, type_size, MPI_BYTE, 1, _XCALABLEMP_N_MPI_TAG_GMOVE, gmove_comm);
+        }
+
+        if (is_dst) {
+          if (is_src) {
+            memcpy(dst_addr, src_addr, type_size);
+          }
+          else {
+            MPI_Status stat;
+            MPI_Recv(dst_addr, type_size, MPI_BYTE, 0, _XCALABLEMP_N_MPI_TAG_GMOVE, gmove_comm, &stat);
+          }
+        }
+      }
+      else {
+        void *temp_buffer = _XCALABLEMP_alloc(type_size);
+
+        if (is_src) {
+          memcpy(temp_buffer, src_addr, type_size);
+        }
+
+        MPI_Bcast(temp_buffer, type_size, MPI_BYTE, 0, gmove_comm);
+
+        if (is_dst) {
+          memcpy(dst_addr, temp_buffer, type_size);
+        }
+
+        _XCALABLEMP_free(temp_buffer);
+      }
+
+EXIT_AFTER_CLEAN_UP:
       MPI_Comm_free(&src_comm);
+      MPI_Comm_free(&gmove_comm);
     }
   }
 }
