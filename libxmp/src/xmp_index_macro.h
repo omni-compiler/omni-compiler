@@ -1,3 +1,9 @@
+/*
+ * $TSUKUBA_Release: $
+ * $TSUKUBA_Copyright:
+ *  $
+ */
+
 #ifndef _XCALABLEMP_INDEX_MACRO
 #define _XCALABLEMP_INDEX_MACRO
 

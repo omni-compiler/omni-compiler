@@ -1,3 +1,9 @@
+/*
+ * $TSUKUBA_Release: $
+ * $TSUKUBA_Copyright:
+ *  $
+ */
+
 package exc.xcalablemp;
 
 public class XMPtriplet<T1, T2, T3> {

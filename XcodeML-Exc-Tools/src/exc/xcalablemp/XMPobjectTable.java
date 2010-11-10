@@ -1,3 +1,9 @@
+/*
+ * $TSUKUBA_Release: $
+ * $TSUKUBA_Copyright:
+ *  $
+ */
+
 package exc.xcalablemp;
 
 import java.util.HashMap;

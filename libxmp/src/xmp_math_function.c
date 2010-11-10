@@ -1,3 +1,9 @@
+/*
+ * $TSUKUBA_Release: $
+ * $TSUKUBA_Copyright:
+ *  $
+ */
+
 #include "xmp_math_function.h"
 
 int _XCALABLEMP_modi_ll_i(long long value, int cycle) {

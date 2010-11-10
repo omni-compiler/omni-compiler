@@ -1,3 +1,9 @@
+/*
+ * $TSUKUBA_Release: $
+ * $TSUKUBA_Copyright:
+ *  $
+ */
+
 #include <string.h>
 #include <stdarg.h>
 #include <limits.h>

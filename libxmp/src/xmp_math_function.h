@@ -1,3 +1,9 @@
+/*
+ * $TSUKUBA_Release: $
+ * $TSUKUBA_Copyright:
+ *  $
+ */
+
 #ifndef _XCALABLEMP_MATH_FUNCTION
 #define _XCALABLEMP_MATH_FUNCTION
 

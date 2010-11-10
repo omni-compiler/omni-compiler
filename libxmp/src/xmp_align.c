@@ -1,3 +1,9 @@
+/*
+ * $TSUKUBA_Release: $
+ * $TSUKUBA_Copyright:
+ *  $
+ */
+
 #include <stdarg.h>
 #include "xmp_constant.h"
 #include "xmp_internal.h"

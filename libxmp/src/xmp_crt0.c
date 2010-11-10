@@ -1,3 +1,9 @@
+/*
+ * $TSUKUBA_Release: $
+ * $TSUKUBA_Copyright:
+ *  $
+ */
+
 #include "xmp_internal.h"
 
 extern int _XCALABLEMP_main(int argc, char *argv[]);

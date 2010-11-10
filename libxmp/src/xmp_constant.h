@@ -1,3 +1,9 @@
+/*
+ * $TSUKUBA_Release: $
+ * $TSUKUBA_Copyright:
+ *  $
+ */
+
 #ifndef _XCALABLEMP_CONSTANT
 #define _XCALABLEMP_CONSTANT
 

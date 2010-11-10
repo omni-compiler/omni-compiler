@@ -1,3 +1,9 @@
+/*
+ * $TSUKUBA_Release: $
+ * $TSUKUBA_Copyright:
+ *  $
+ */
+
 #ifndef _XCALABLEMP_INTERNAL
 #define _XCALABLEMP_INTERNAL
 

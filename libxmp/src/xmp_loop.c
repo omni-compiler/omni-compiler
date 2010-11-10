@@ -1,3 +1,9 @@
+/*
+ * $TSUKUBA_Release: $
+ * $TSUKUBA_Copyright:
+ *  $
+ */
+
 #include "xmp_internal.h"
 
 // normalize ser_init, ser_cond, ser_step -------------------------------------------------------------------------------------------

@@ -1,3 +1,9 @@
+/*
+ * $TSUKUBA_Release: $
+ * $TSUKUBA_Copyright:
+ *  $
+ */
+
 #ifndef _XCALABLEMP_USERAPI
 #define _XCALABLEMP_USERAPI
 

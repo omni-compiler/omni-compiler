@@ -1,1 +1,1 @@
-Omni OpenMP Compiler 3
+Omni OpenMP/XcalableMP Compiler Beta Release 1

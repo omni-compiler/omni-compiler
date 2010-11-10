@@ -1,3 +1,9 @@
+/*
+ * $TSUKUBA_Release: $
+ * $TSUKUBA_Copyright:
+ *  $
+ */
+
 #include "xmp_internal.h"
 
 typedef struct _XCALABLEMP_nodes_dish_type {
