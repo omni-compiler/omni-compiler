@@ -8,7 +8,6 @@
 #define _XCALABLEMP_INTERNAL
 
 // --------------- including headers  --------------------------------
-#include <assert.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include "mpi.h"
@@ -19,6 +18,17 @@
     _XCALABLEMP_unexpected_error(); \
   } \
 }
+
+#ifdef _XCALABLEMP_DEBUG
+#define _XCALABLEMP_ASSERT(flag) \
+{ \
+  if (flag) { \
+    _XCALABLEMP_unexpected_error(); \
+  } \
+}
+#else
+#define _XCALABLEMP_ASSERT(flag)
+#endif
 
 // --------------- structures ----------------------------------------
 // nodes descriptor

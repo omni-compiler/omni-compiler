@@ -10,7 +10,7 @@
 #include "xmp_math_function.h"
 
 void _XCALABLEMP_bcast_NODES_ENTIRE_OMITTED(_XCALABLEMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size) {
-  assert(bcast_nodes != NULL);
+  _XCALABLEMP_ASSERT(bcast_nodes != NULL);
 
   if (!bcast_nodes->is_member) {
     return;
@@ -27,7 +27,7 @@ void _XCALABLEMP_bcast_NODES_ENTIRE_OMITTED(_XCALABLEMP_nodes_t *bcast_nodes, vo
 
 void _XCALABLEMP_bcast_NODES_ENTIRE_GLOBAL(_XCALABLEMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
                                            int from_lower, int from_upper, int from_stride) {
-  assert(bcast_nodes != NULL);
+  _XCALABLEMP_ASSERT(bcast_nodes != NULL);
 
   _XCALABLEMP_validate_nodes_ref(&from_lower, &from_upper, &from_stride, _XCALABLEMP_world_size);
 
@@ -52,8 +52,8 @@ void _XCALABLEMP_bcast_NODES_ENTIRE_GLOBAL(_XCALABLEMP_nodes_t *bcast_nodes, voi
 // FIXME read spec
 void _XCALABLEMP_bcast_NODES_ENTIRE_NODES(_XCALABLEMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
                                           _XCALABLEMP_nodes_t *from_nodes, ...) {
-  assert(bcast_nodes != NULL);
-  assert(from_nodes != NULL);
+  _XCALABLEMP_ASSERT(bcast_nodes != NULL);
+  _XCALABLEMP_ASSERT(from_nodes != NULL);
 
   if (!bcast_nodes->is_member) {
     return;

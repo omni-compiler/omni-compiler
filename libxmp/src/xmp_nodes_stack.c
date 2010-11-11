@@ -14,7 +14,7 @@ typedef struct _XCALABLEMP_nodes_dish_type {
 static _XCALABLEMP_nodes_dish_t *_XCALABLEMP_nodes_stack_top = NULL;
 
 void _XCALABLEMP_push_nodes(_XCALABLEMP_nodes_t *nodes) {
-  assert(nodes != NULL);
+  _XCALABLEMP_ASSERT(nodes != NULL);
 
   _XCALABLEMP_nodes_dish_t *new_dish = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_nodes_dish_t));
   new_dish->nodes = nodes;
@@ -23,7 +23,7 @@ void _XCALABLEMP_push_nodes(_XCALABLEMP_nodes_t *nodes) {
 }
 
 void _XCALABLEMP_pop_nodes(void) {
-  assert(_XCALABLEMP_nodes_stack_top != NULL);
+  _XCALABLEMP_ASSERT(_XCALABLEMP_nodes_stack_top != NULL);
 
   _XCALABLEMP_nodes_dish_t *freed_dish = _XCALABLEMP_nodes_stack_top;
   _XCALABLEMP_nodes_stack_top = freed_dish->prev;
@@ -31,7 +31,7 @@ void _XCALABLEMP_pop_nodes(void) {
 }
 
 void _XCALABLEMP_pop_n_free_nodes(void) {
-  assert(_XCALABLEMP_nodes_stack_top != NULL);
+  _XCALABLEMP_ASSERT(_XCALABLEMP_nodes_stack_top != NULL);
 
   _XCALABLEMP_nodes_dish_t *freed_dish = _XCALABLEMP_nodes_stack_top;
   _XCALABLEMP_nodes_stack_top = freed_dish->prev;
@@ -40,7 +40,7 @@ void _XCALABLEMP_pop_n_free_nodes(void) {
 }
 
 void _XCALABLEMP_pop_n_free_nodes_wo_finalize_comm(void) {
-  assert(_XCALABLEMP_nodes_stack_top != NULL);
+  _XCALABLEMP_ASSERT(_XCALABLEMP_nodes_stack_top != NULL);
 
   _XCALABLEMP_nodes_dish_t *freed_dish = _XCALABLEMP_nodes_stack_top;
   _XCALABLEMP_nodes_stack_top = freed_dish->prev;
@@ -49,7 +49,7 @@ void _XCALABLEMP_pop_n_free_nodes_wo_finalize_comm(void) {
 }
 
 _XCALABLEMP_nodes_t *_XCALABLEMP_get_execution_nodes(void) {
-  assert(_XCALABLEMP_nodes_stack_top != NULL);
+  _XCALABLEMP_ASSERT(_XCALABLEMP_nodes_stack_top != NULL);
 
   return _XCALABLEMP_nodes_stack_top->nodes;
 }
@@ -59,13 +59,13 @@ int _XCALABLEMP_get_execution_nodes_rank(void) {
 }
 
 void _XCALABLEMP_push_comm(MPI_Comm *comm) {
-  assert(comm != NULL);
+  _XCALABLEMP_ASSERT(comm != NULL);
 
   _XCALABLEMP_push_nodes(_XCALABLEMP_create_nodes_by_comm(comm));
 }
 
 void _XCALABLEMP_finalize_comm(MPI_Comm *comm) {
-  assert(comm != NULL);
+  _XCALABLEMP_ASSERT(comm != NULL);
 
   MPI_Comm_free(comm);
   _XCALABLEMP_free(comm);

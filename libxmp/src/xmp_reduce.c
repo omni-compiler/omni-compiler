@@ -17,8 +17,8 @@ static void _XCALABLEMP_compare_reduce_results(_Bool *cmp_buffer, void *temp_buf
 static void _XCALABLEMP_init_localtion_variables(void *loc, int count, int loc_datatype, _Bool *cmp_buffer, int op);
 
 static void _XCALABLEMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype) {
-  assert(mpi_datatype != NULL);
-  assert(datatype_size != NULL);
+  _XCALABLEMP_ASSERT(mpi_datatype != NULL);
+  _XCALABLEMP_ASSERT(datatype_size != NULL);
 
   switch (datatype) {
 //  case _XCALABLEMP_N_TYPE_BOOL:
@@ -67,7 +67,7 @@ static void _XCALABLEMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *da
 }
 
 static void _XCALABLEMP_setup_reduce_op(MPI_Op *mpi_op, int op) {
-  assert(mpi_op != NULL);
+  _XCALABLEMP_ASSERT(mpi_op != NULL);
 
   switch (op) {
     case _XCALABLEMP_N_REDUCE_SUM:
@@ -104,7 +104,7 @@ static void _XCALABLEMP_setup_reduce_op(MPI_Op *mpi_op, int op) {
 }
 
 static void _XCALABLEMP_setup_reduce_FLMM_op(MPI_Op *mpi_op, int op) {
-  assert(mpi_op != NULL);
+  _XCALABLEMP_ASSERT(mpi_op != NULL);
 
   switch (op) {
     case _XCALABLEMP_N_REDUCE_FIRSTMAX:
@@ -129,9 +129,9 @@ static void _XCALABLEMP_setup_reduce_FLMM_op(MPI_Op *mpi_op, int op) {
 } break;
 
 static void _XCALABLEMP_compare_reduce_results(_Bool *cmp_buffer, void *temp_buffer, void *addr, int count, int datatype) {
-  assert(cmp_buffer != NULL);
-  assert(temp_buffer != NULL);
-  assert(addr != NULL);
+  _XCALABLEMP_ASSERT(cmp_buffer != NULL);
+  _XCALABLEMP_ASSERT(temp_buffer != NULL);
+  _XCALABLEMP_ASSERT(addr != NULL);
 
   switch (datatype) {
     case _XCALABLEMP_N_TYPE_BOOL:			_XCALABLEMP_M_COMPARE_REDUCE_RESULTS_MAIN(_Bool)
@@ -181,8 +181,8 @@ static void _XCALABLEMP_compare_reduce_results(_Bool *cmp_buffer, void *temp_buf
 } break;
 
 static void _XCALABLEMP_init_localtion_variables(void *loc, int count, int loc_datatype, _Bool *cmp_buffer, int op) {
-  assert(loc != NULL);
-  assert(cmp_buffer != NULL);
+  _XCALABLEMP_ASSERT(loc != NULL);
+  _XCALABLEMP_ASSERT(cmp_buffer != NULL);
 
   switch (loc_datatype) {
     case _XCALABLEMP_N_TYPE_CHAR:		_XCALABLEMP_M_INIT_LOCATION_VARIABLES_MAIN(char, SCHAR_MIN, SCHAR_MAX)
@@ -201,8 +201,8 @@ static void _XCALABLEMP_init_localtion_variables(void *loc, int count, int loc_d
 }
 
 void _XCALABLEMP_reduce_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes, void *addr, int count, int datatype, int op) {
-  assert(nodes != NULL);
-  assert(addr != NULL);
+  _XCALABLEMP_ASSERT(nodes != NULL);
+  _XCALABLEMP_ASSERT(addr != NULL);
 
   if (count == 0) return; // FIXME not good implementation
 
@@ -232,8 +232,8 @@ void _XCALABLEMP_reduce_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes, void *addr, int
 void _XCALABLEMP_reduce_FLMM_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes,
                                           void *addr, int count, int datatype, int op,
                                           int num_locs, ...) {
-  assert(nodes != NULL);
-  assert(addr != NULL);
+  _XCALABLEMP_ASSERT(nodes != NULL);
+  _XCALABLEMP_ASSERT(addr != NULL);
 
   if (count == 0) return; // FIXME not good implementation
 
@@ -288,8 +288,8 @@ void _XCALABLEMP_reduce_FLMM_NODES_ENTIRE(_XCALABLEMP_nodes_t *nodes,
 // _XCALABLEMP_M_REDUCE_FLMM_EXEC(addr, count, datatype, op, num_locs, ...) is in xmp_comm_macro.h
 
 void _XCALABLEMP_reduce_CLAUSE(void *temp_addr, void *data_addr, int count, int datatype, int op) {
-  assert(temp_addr != NULL);
-  assert(data_addr != NULL);
+  _XCALABLEMP_ASSERT(temp_addr != NULL);
+  _XCALABLEMP_ASSERT(data_addr != NULL);
 
   // setup information
   MPI_Datatype mpi_datatype;
@@ -304,11 +304,11 @@ void _XCALABLEMP_reduce_CLAUSE(void *temp_addr, void *data_addr, int count, int 
 
 void _XCALABLEMP_reduce_FLMM_CLAUSE(void *temp_addr, void *data_addr, int count, int datatype, int op,
                                     int num_locs, ...) {
-  assert(temp_addr != NULL);
-  assert(data_addr != NULL);
+  _XCALABLEMP_ASSERT(temp_addr != NULL);
+  _XCALABLEMP_ASSERT(data_addr != NULL);
 
   _XCALABLEMP_nodes_t *nodes = _XCALABLEMP_get_execution_nodes();
-  assert(nodes->is_member);
+  _XCALABLEMP_ASSERT(nodes->is_member);
 
   // setup information
   MPI_Datatype mpi_datatype;
@@ -350,7 +350,7 @@ void _XCALABLEMP_reduce_FLMM_CLAUSE(void *temp_addr, void *data_addr, int count,
 }
 
 void _XCALABLEMP_init_reduce_comm_NODES(_XCALABLEMP_nodes_t *nodes, ...) {
-  assert(nodes != NULL);
+  _XCALABLEMP_ASSERT(nodes != NULL);
 
   if (!nodes->is_member) {
     _XCALABLEMP_fatal("cannot create a new communicator for reduction");
@@ -382,8 +382,8 @@ void _XCALABLEMP_init_reduce_comm_NODES(_XCALABLEMP_nodes_t *nodes, ...) {
 }
 
 void _XCALABLEMP_init_reduce_comm_TEMPLATE(_XCALABLEMP_template_t *template, ...) {
-  assert(template != NULL);
-  assert(template->is_distributed); // checked by compiler
+  _XCALABLEMP_ASSERT(template != NULL);
+  _XCALABLEMP_ASSERT(template->is_distributed); // checked by compiler
 
   _XCALABLEMP_nodes_t *onto_nodes = template->onto_nodes;
   if (!onto_nodes->is_member) {

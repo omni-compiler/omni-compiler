@@ -13,7 +13,7 @@
 static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array_index);
 
 static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array_index) {
-  assert(array != NULL);
+  _XCALABLEMP_ASSERT(array != NULL);
   
   _XCALABLEMP_nodes_t *onto_nodes = (array->align_template)->onto_nodes;
   if (!onto_nodes->is_member) {
@@ -21,11 +21,11 @@ static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array
   }
 
   _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
-  assert(ai->align_manner != _XCALABLEMP_N_ALIGN_NOT_ALIGNED); // checked by compiler
-  assert(ai->align_manner != _XCALABLEMP_N_ALIGN_DUPLICATION); // checked by compiler
+  _XCALABLEMP_ASSERT(ai->align_manner != _XCALABLEMP_N_ALIGN_NOT_ALIGNED); // checked by compiler
+  _XCALABLEMP_ASSERT(ai->align_manner != _XCALABLEMP_N_ALIGN_DUPLICATION); // checked by compiler
 
   _XCALABLEMP_template_chunk_t *chunk = ai->align_template_chunk;
-  assert(chunk->dist_manner != _XCALABLEMP_N_DIST_DUPLICATION); // align_manner is not _XCALABLEMP_N_ALIGN_DUPLICATION
+  _XCALABLEMP_ASSERT(chunk->dist_manner != _XCALABLEMP_N_DIST_DUPLICATION); // align_manner is not _XCALABLEMP_N_ALIGN_DUPLICATION
 
   int onto_nodes_index = chunk->onto_nodes_index;
 
@@ -65,7 +65,7 @@ static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array
 }
 
 void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
-  assert(array != NULL);
+  _XCALABLEMP_ASSERT(array != NULL);
 
   int dim = array->dim;
   va_list args;
@@ -135,8 +135,8 @@ void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
 // FIXME consider full shadow in other dimensions
 void _XCALABLEMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_addr,
                                     _XCALABLEMP_array_t *array_desc, int array_index) {
-  assert(array_addr != NULL);
-  assert(array_desc != NULL);
+  _XCALABLEMP_ASSERT(array_addr != NULL);
+  _XCALABLEMP_ASSERT(array_desc != NULL);
 
   if (!array_desc->is_allocated) {
     return;
@@ -235,10 +235,10 @@ void _XCALABLEMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *ar
 // FIXME not consider full shadow
 void _XCALABLEMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_addr,
                                       _XCALABLEMP_array_t *array_desc, int array_index) {
-  assert(lo_buffer != NULL);
-  assert(hi_buffer != NULL);
-  assert(array_addr != NULL);
-  assert(array_desc != NULL);
+  _XCALABLEMP_ASSERT(lo_buffer != NULL);
+  _XCALABLEMP_ASSERT(hi_buffer != NULL);
+  _XCALABLEMP_ASSERT(array_addr != NULL);
+  _XCALABLEMP_ASSERT(array_desc != NULL);
 
   if (!array_desc->is_allocated) {
     return;
@@ -339,9 +339,9 @@ void _XCALABLEMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *ar
 void _XCALABLEMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
                                         void *lo_send_buffer, void *hi_send_buffer,
                                         _XCALABLEMP_array_t *array_desc, int array_index) {
-  assert(lo_send_buffer != NULL);
-  assert(hi_send_buffer != NULL);
-  assert(array_desc != NULL);
+  _XCALABLEMP_ASSERT(lo_send_buffer != NULL);
+  _XCALABLEMP_ASSERT(hi_send_buffer != NULL);
+  _XCALABLEMP_ASSERT(array_desc != NULL);
 
   if (!array_desc->is_allocated) {
     return;
@@ -417,13 +417,13 @@ void _XCALABLEMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_bu
 }
 
 static void _XCALABLEMP_reflect_shadow_ALLGATHER(void *array_addr, _XCALABLEMP_array_t *array_desc, int array_index) {
-  assert(array_addr != NULL);
-  assert(array_desc != NULL);
-  assert(array_desc->is_allocated);
-  assert(array_desc->dim == 1);
+  _XCALABLEMP_ASSERT(array_addr != NULL);
+  _XCALABLEMP_ASSERT(array_desc != NULL);
+  _XCALABLEMP_ASSERT(array_desc->is_allocated);
+  _XCALABLEMP_ASSERT(array_desc->dim == 1);
 
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
-  assert(ai->align_manner == _XCALABLEMP_N_ALIGN_BLOCK);
+  _XCALABLEMP_ASSERT(ai->align_manner == _XCALABLEMP_N_ALIGN_BLOCK);
   _XCALABLEMP_ERR_WHEN(!ai->is_shadow_comm_member);
 
   size_t type_size = array_desc->type_size;
@@ -444,13 +444,13 @@ static void _XCALABLEMP_reflect_shadow_ALLGATHER(void *array_addr, _XCALABLEMP_a
 }
 
 static void _XCALABLEMP_reflect_shadow_ALLGATHERV(void *array_addr, _XCALABLEMP_array_t *array_desc, int array_index) {
-  assert(array_addr != NULL);
-  assert(array_desc != NULL);
-  assert(array_desc->is_allocated);
-  assert(array_desc->dim == 1);
+  _XCALABLEMP_ASSERT(array_addr != NULL);
+  _XCALABLEMP_ASSERT(array_desc != NULL);
+  _XCALABLEMP_ASSERT(array_desc->is_allocated);
+  _XCALABLEMP_ASSERT(array_desc->dim == 1);
 
   _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
-  assert(ai->align_manner == _XCALABLEMP_N_ALIGN_BLOCK);
+  _XCALABLEMP_ASSERT(ai->align_manner == _XCALABLEMP_N_ALIGN_BLOCK);
   _XCALABLEMP_ERR_WHEN(!ai->is_shadow_comm_member);
 
   size_t type_size = array_desc->type_size;
@@ -472,8 +472,8 @@ static void _XCALABLEMP_reflect_shadow_ALLGATHERV(void *array_addr, _XCALABLEMP_
 
 // FIXME not implemented yet
 void _XCALABLEMP_reflect_shadow_FULL(void *array_addr, _XCALABLEMP_array_t *array_desc, int array_index) {
-  assert(array_addr != NULL);
-  assert(array_desc != NULL);
+  _XCALABLEMP_ASSERT(array_addr != NULL);
+  _XCALABLEMP_ASSERT(array_desc != NULL);
 
   if (!array_desc->is_allocated) {
     return;

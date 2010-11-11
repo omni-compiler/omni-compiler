@@ -31,7 +31,7 @@ else ser_cond -= ((ser_cond - ser_init) % ser_step);
 // block distribution ---------------------------------------------------------------------------------------------------------------
 #define _XCALABLEMP_SM_GET_TEMPLATE_INFO_BLOCK(_type, template, template_lower, template_upper) \
 { \
-  assert(template->is_distributed); /* checked by comiler */ \
+  _XCALABLEMP_ASSERT(template->is_distributed); /* checked by comiler */ \
   if (!template->is_owner) goto no_iter; \
   template_lower = (_type)template->chunk[template_index].par_lower; \
   template_upper = (_type)template->chunk[template_index].par_upper; \
@@ -134,7 +134,7 @@ void _XCALABLEMP_sched_loop_template_BLOCK_UNSIGNED_LONGLONG  _XCALABLEMP_SM_SCH
 
 // cyclic distribution ---------------------------------------------------------------------------------------------------------------
 #define _XCALABLEMP_SM_GET_TEMPLATE_INFO_CYCLIC(_type) \
-assert(template->is_distributed); /* checked by comiler */ \
+_XCALABLEMP_ASSERT(template->is_distributed); /* checked by comiler */ \
 if (!template->is_owner) goto no_iter; \
 _type nodes_size = (_type)template->chunk[template_index].onto_nodes_info->size; \
 _type template_lower = (_type)template->chunk[template_index].par_lower;

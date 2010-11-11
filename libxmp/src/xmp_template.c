@@ -16,7 +16,7 @@ static _Bool _XCALABLEMP_check_template_ref_inclusion(long long ref_lower, long 
                                                       _XCALABLEMP_template_chunk_t *chunk);
 
 static void _XCALABLEMP_calc_template_size(_XCALABLEMP_template_t *t) {
-  assert(t != NULL);
+  _XCALABLEMP_ASSERT(t != NULL);
 
   int dim;
   if (t->is_fixed) {
@@ -40,9 +40,9 @@ static void _XCALABLEMP_calc_template_size(_XCALABLEMP_template_t *t) {
 
 static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper, int *stride,
                                               long long lb, long long ub) {
-  assert(lower != NULL);
-  assert(upper != NULL);
-  assert(stride != NULL);
+  _XCALABLEMP_ASSERT(lower != NULL);
+  _XCALABLEMP_ASSERT(upper != NULL);
+  _XCALABLEMP_ASSERT(stride != NULL);
 
   // setup temporary variables
   long long l, u;
@@ -89,7 +89,7 @@ static void _XCALABLEMP_validate_template_ref(long long *lower, long long *upper
 
 static _Bool _XCALABLEMP_check_template_ref_inclusion(long long ref_lower, long long ref_upper, int ref_stride,
                                                       _XCALABLEMP_template_chunk_t *chunk) {
-  assert(chunk != NULL);
+  _XCALABLEMP_ASSERT(chunk != NULL);
 
   switch (chunk->dist_manner) {
     case _XCALABLEMP_N_DIST_DUPLICATION:
@@ -223,8 +223,8 @@ void _XCALABLEMP_init_template_UNFIXED(_XCALABLEMP_template_t **template, int di
 }
 
 void _XCALABLEMP_init_template_chunk(_XCALABLEMP_template_t *template, _XCALABLEMP_nodes_t *nodes) {
-  assert(template != NULL);
-  assert(nodes != NULL);
+  _XCALABLEMP_ASSERT(template != NULL);
+  _XCALABLEMP_ASSERT(nodes != NULL);
 
   template->is_distributed = true;
   template->is_owner = nodes->is_member;
@@ -234,7 +234,7 @@ void _XCALABLEMP_init_template_chunk(_XCALABLEMP_template_t *template, _XCALABLE
 }
 
 void _XCALABLEMP_finalize_template(_XCALABLEMP_template_t *template) {
-  assert(template != NULL);
+  _XCALABLEMP_ASSERT(template != NULL);
 
   if (template->is_distributed) {
     _XCALABLEMP_free(template->chunk);
@@ -244,9 +244,9 @@ void _XCALABLEMP_finalize_template(_XCALABLEMP_template_t *template) {
 }
 
 void _XCALABLEMP_dist_template_DUPLICATION(_XCALABLEMP_template_t *template, int template_index) {
-  assert(template != NULL);
-  assert(template->is_fixed); // checked by compiler
-  assert(template->is_distributed); // checked by compiler
+  _XCALABLEMP_ASSERT(template != NULL);
+  _XCALABLEMP_ASSERT(template->is_fixed); // checked by compiler
+  _XCALABLEMP_ASSERT(template->is_distributed); // checked by compiler
 
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
@@ -264,9 +264,9 @@ void _XCALABLEMP_dist_template_DUPLICATION(_XCALABLEMP_template_t *template, int
 }
 
 void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int template_index, int nodes_index) {
-  assert(template != NULL);
-  assert(template->is_fixed); // checked by compiler
-  assert(template->is_distributed); // checked by compiler
+  _XCALABLEMP_ASSERT(template != NULL);
+  _XCALABLEMP_ASSERT(template->is_fixed); // checked by compiler
+  _XCALABLEMP_ASSERT(template->is_distributed); // checked by compiler
 
   _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
 
@@ -310,9 +310,9 @@ void _XCALABLEMP_dist_template_BLOCK(_XCALABLEMP_template_t *template, int templ
 }
 
 void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int template_index, int nodes_index) {
-  assert(template != NULL);
-  assert(template->is_fixed); // checked by compiler
-  assert(template->is_distributed); // checked by compiler
+  _XCALABLEMP_ASSERT(template != NULL);
+  _XCALABLEMP_ASSERT(template->is_fixed); // checked by compiler
+  _XCALABLEMP_ASSERT(template->is_distributed); // checked by compiler
 
   _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
 
@@ -373,9 +373,9 @@ void _XCALABLEMP_dist_template_CYCLIC(_XCALABLEMP_template_t *template, int temp
 }
 
 _Bool _XCALABLEMP_exec_task_TEMPLATE_PART(int get_upper, _XCALABLEMP_template_t *ref_template, ...) {
-  assert(ref_template != NULL);
-  assert(ref_template->is_fixed); // checked by compiler
-  assert(ref_template->is_distributed); // checked by compiler
+  _XCALABLEMP_ASSERT(ref_template != NULL);
+  _XCALABLEMP_ASSERT(ref_template->is_fixed); // checked by compiler
+  _XCALABLEMP_ASSERT(ref_template->is_distributed); // checked by compiler
 
   _XCALABLEMP_nodes_t *onto_nodes = ref_template->onto_nodes;
   if (!onto_nodes->is_member) {

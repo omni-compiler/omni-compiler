@@ -35,8 +35,8 @@ static void _XCALABLEMP_calc_array_local_index_triplet(_XCALABLEMP_array_t *arra
                                                        int dim_index, int *lower, int *upper, int *stride);
 
 static int _XCALABLEMP_convert_rank_array_to_rank(_XCALABLEMP_nodes_t *nodes, int *rank_array) {
-  assert(nodes != NULL);
-  assert(rank_array != NULL);
+  _XCALABLEMP_ASSERT(nodes != NULL);
+  _XCALABLEMP_ASSERT(rank_array != NULL);
 
   _Bool is_valid = false;
   int acc_rank = 0;
@@ -61,13 +61,13 @@ static int _XCALABLEMP_convert_rank_array_to_rank(_XCALABLEMP_nodes_t *nodes, in
 }
 
 static int _XCALABLEMP_calc_gmove_template_owner_SCALAR(_XCALABLEMP_template_t *template, int dim_index, long long ref_index) {
-  assert(template != NULL);
-  assert(template->is_fixed); // checked by compiler
-  assert(template->is_distributed); // checked by compiler
+  _XCALABLEMP_ASSERT(template != NULL);
+  _XCALABLEMP_ASSERT(template->is_fixed); // checked by compiler
+  _XCALABLEMP_ASSERT(template->is_distributed); // checked by compiler
 
   _XCALABLEMP_template_info_t *info = &(template->info[dim_index]);
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[dim_index]);
-  assert(chunk->dist_manner != _XCALABLEMP_N_DIST_DUPLICATION);
+  _XCALABLEMP_ASSERT(chunk->dist_manner != _XCALABLEMP_N_DIST_DUPLICATION);
 
   switch (chunk->dist_manner) {
     case _XCALABLEMP_N_DIST_BLOCK:
@@ -81,8 +81,8 @@ static int _XCALABLEMP_calc_gmove_template_owner_SCALAR(_XCALABLEMP_template_t *
 }
 
 static int _XCALABLEMP_calc_gmove_array_owner_rank_SCALAR(_XCALABLEMP_array_t *array, int *ref_index) {
-  assert(array != NULL);
-  assert(ref_index != NULL);
+  _XCALABLEMP_ASSERT(array != NULL);
+  _XCALABLEMP_ASSERT(ref_index != NULL);
 
   _XCALABLEMP_template_t *template = array->align_template;
   _XCALABLEMP_nodes_t *nodes = template->onto_nodes;
@@ -116,13 +116,13 @@ static int _XCALABLEMP_calc_gmove_array_owner_rank_SCALAR(_XCALABLEMP_array_t *a
 
 static void _XCALABLEMP_gmove_bcast_SCALAR(_XCALABLEMP_array_t *array, void *dst_addr, void *src_addr,
                                            size_t type_size, int src_rank) {
-  assert(array != NULL);
-  assert(dst_addr != NULL);
-  assert(src_addr != NULL);
+  _XCALABLEMP_ASSERT(array != NULL);
+  _XCALABLEMP_ASSERT(dst_addr != NULL);
+  _XCALABLEMP_ASSERT(src_addr != NULL);
 
   _XCALABLEMP_nodes_t *onto_nodes = (array->align_template)->onto_nodes;
   _XCALABLEMP_nodes_t *exec_nodes = _XCALABLEMP_get_execution_nodes();
-  assert(exec_nodes->is_member);
+  _XCALABLEMP_ASSERT(exec_nodes->is_member);
 
   int my_rank = array->align_comm_rank;
   if ((exec_nodes == onto_nodes) ||
@@ -175,8 +175,8 @@ static void _XCALABLEMP_gmove_bcast_SCALAR(_XCALABLEMP_array_t *array, void *dst
 }
 
 static _Bool _XCALABLEMP_check_gmove_array_ref_inclusion_SCALAR(_XCALABLEMP_array_t *array, int array_index, int ref_index) {
-  assert(array != NULL);
-  assert(!(array->align_template)->is_owner);
+  _XCALABLEMP_ASSERT(array != NULL);
+  _XCALABLEMP_ASSERT(!(array->align_template)->is_owner);
 
   _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
   if (ai->align_manner == _XCALABLEMP_N_ALIGN_NOT_ALIGNED) {
@@ -222,8 +222,8 @@ static _Bool _XCALABLEMP_check_gmove_array_ref_inclusion_SCALAR(_XCALABLEMP_arra
 }
 
 static int _XCALABLEMP_calc_gmove_target_nodes_size(_XCALABLEMP_nodes_t *nodes, int *rank_array) {
-  assert(nodes != NULL);
-  assert(rank_array != NULL);
+  _XCALABLEMP_ASSERT(nodes != NULL);
+  _XCALABLEMP_ASSERT(rank_array != NULL);
 
   int acc = 1;
   int nodes_dim = nodes->dim;
@@ -240,9 +240,9 @@ static int _XCALABLEMP_calc_gmove_target_nodes_size(_XCALABLEMP_nodes_t *nodes, 
 
 static _Bool _XCALABLEMP_calc_local_copy_template_BLOCK(_XCALABLEMP_template_chunk_t *chunk,
                                                         long long *lower, long long *upper, int s) {
-  assert(chunk != NULL);
-  assert(lower != NULL);
-  assert(upper != NULL);
+  _XCALABLEMP_ASSERT(chunk != NULL);
+  _XCALABLEMP_ASSERT(lower != NULL);
+  _XCALABLEMP_ASSERT(upper != NULL);
 
   long long l = *lower;
   long long u = *upper;
@@ -293,9 +293,9 @@ static _Bool _XCALABLEMP_calc_local_copy_template_BLOCK(_XCALABLEMP_template_chu
 // XXX used when ref_stride is 1
 static _Bool _XCALABLEMP_calc_local_copy_template_CYCLIC1(_XCALABLEMP_template_chunk_t *chunk,
                                                           long long *lower, long long u, int *stride) {
-  assert(chunk != NULL);
-  assert(lower != NULL);
-  assert(stride != NULL);
+  _XCALABLEMP_ASSERT(chunk != NULL);
+  _XCALABLEMP_ASSERT(lower != NULL);
+  _XCALABLEMP_ASSERT(stride != NULL);
 
   long long l = *lower;
   long long template_lower = chunk->par_lower;
@@ -329,13 +329,13 @@ static _Bool _XCALABLEMP_calc_local_copy_template_CYCLIC1(_XCALABLEMP_template_c
 static _Bool _XCALABLEMP_calc_local_copy_home_ref(_XCALABLEMP_array_t *dst_array, int dst_dim_index,
                                                   int *dst_l, int *dst_u, int *dst_s,
                                                   int *src_l, int *src_u, int *src_s) {
-  assert(dst_array != NULL);
-  assert(dst_l != NULL);
-  assert(dst_u != NULL);
-  assert(dst_s != NULL);
-  assert(src_l != NULL);
-  assert(src_u != NULL);
-  assert(src_s != NULL);
+  _XCALABLEMP_ASSERT(dst_array != NULL);
+  _XCALABLEMP_ASSERT(dst_l != NULL);
+  _XCALABLEMP_ASSERT(dst_u != NULL);
+  _XCALABLEMP_ASSERT(dst_s != NULL);
+  _XCALABLEMP_ASSERT(src_l != NULL);
+  _XCALABLEMP_ASSERT(src_u != NULL);
+  _XCALABLEMP_ASSERT(src_s != NULL);
 
   if (_XCALABLEMP_M_COUNT_TRIPLETi(*dst_l, *dst_u, *dst_s) != _XCALABLEMP_M_COUNT_TRIPLETi(*src_l, *src_u, *src_s)) {
     _XCALABLEMP_fatal("wrong assign statement"); // FIXME fix error msg
@@ -407,10 +407,10 @@ static _Bool _XCALABLEMP_calc_local_copy_home_ref(_XCALABLEMP_array_t *dst_array
 
 static void _XCALABLEMP_calc_array_local_index_triplet(_XCALABLEMP_array_t *array,
                                                        int dim_index, int *lower, int *upper, int *stride) {
-  assert(array != NULL);
-  assert(lower != NULL);
-  assert(upper != NULL);
-  assert(stride != NULL);
+  _XCALABLEMP_ASSERT(array != NULL);
+  _XCALABLEMP_ASSERT(lower != NULL);
+  _XCALABLEMP_ASSERT(upper != NULL);
+  _XCALABLEMP_ASSERT(stride != NULL);
 
   _XCALABLEMP_array_info_t *array_info = &(array->info[dim_index]);
   if ((array_info->align_template_index) != _XCALABLEMP_N_NO_ALIGNED_TEMPLATE) {
@@ -459,9 +459,9 @@ static void _XCALABLEMP_calc_array_local_index_triplet(_XCALABLEMP_array_t *arra
 
 // ----- gmove scalar to scalar --------------------------------------------------------------------------------------------------
 void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XCALABLEMP_array_t *array, ...) {
-  assert(dst_addr != NULL);
-  assert(src_addr != NULL);
-  assert(array != NULL);
+  _XCALABLEMP_ASSERT(dst_addr != NULL);
+  _XCALABLEMP_ASSERT(src_addr != NULL);
+  _XCALABLEMP_ASSERT(array != NULL);
 
   va_list args;
   va_start(args, array);
@@ -489,14 +489,14 @@ void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XCALABLEMP_
 }
 
 _Bool _XCALABLEMP_gmove_exec_home_SCALAR(_XCALABLEMP_array_t *array, ...) {
-  assert(array != NULL);
+  _XCALABLEMP_ASSERT(array != NULL);
 
   if (!array->is_allocated) {
     return false;
   }
 
   _XCALABLEMP_template_t *ref_template = array->align_template;
-  assert(ref_template->is_distributed); // checked by compiler
+  _XCALABLEMP_ASSERT(ref_template->is_distributed); // checked by compiler
   _XCALABLEMP_ERR_WHEN(!ref_template->is_owner);
 
   va_list args;
@@ -515,10 +515,10 @@ _Bool _XCALABLEMP_gmove_exec_home_SCALAR(_XCALABLEMP_array_t *array, ...) {
 
 void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
                                        _XCALABLEMP_array_t *dst_array, _XCALABLEMP_array_t *src_array, ...) {
-  assert(dst_addr != NULL);
-  assert(src_addr != NULL);
-  assert(dst_array != NULL);
-  assert(src_array != NULL);
+  _XCALABLEMP_ASSERT(dst_addr != NULL);
+  _XCALABLEMP_ASSERT(src_addr != NULL);
+  _XCALABLEMP_ASSERT(dst_array != NULL);
+  _XCALABLEMP_ASSERT(src_array != NULL);
 
   va_list args;
   va_start(args, src_array);
@@ -543,7 +543,7 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
   }
   va_end(args);
 
-  assert(dst_array->type_size == src_array->type_size); // FIXME checked by compiler
+  _XCALABLEMP_ASSERT(dst_array->type_size == src_array->type_size); // FIXME checked by compiler
   size_t type_size = dst_array->type_size;
 
   if (dst_rank == _XCALABLEMP_N_INVALID_RANK) {
@@ -565,7 +565,7 @@ void _XCALABLEMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
     }
     else {
       _XCALABLEMP_nodes_t *exec_nodes = _XCALABLEMP_get_execution_nodes();
-      assert(exec_nodes->is_member);
+      _XCALABLEMP_ASSERT(exec_nodes->is_member);
 
       MPI_Comm *exec_comm = exec_nodes->comm;
 

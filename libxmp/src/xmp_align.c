@@ -10,8 +10,8 @@
 #include "xmp_math_function.h"
 
 static void _XCALABLEMP_calc_array_dim_elmts(_XCALABLEMP_array_t *array, int array_index) {
-  assert(array != NULL);
-  assert(array->is_allocated);
+  _XCALABLEMP_ASSERT(array != NULL);
+  _XCALABLEMP_ASSERT(array->is_allocated);
 
   int dim = array->dim;
 
@@ -27,7 +27,7 @@ static void _XCALABLEMP_calc_array_dim_elmts(_XCALABLEMP_array_t *array, int arr
 
 void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_template_t *template, int dim,
                                  int type, size_t type_size, ...) {
-  assert(template != NULL);
+  _XCALABLEMP_ASSERT(template != NULL);
 
   _XCALABLEMP_array_t *a = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_array_t) + sizeof(_XCALABLEMP_array_info_t) * (dim - 1));
 
@@ -74,7 +74,7 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
 }
 
 void _XCALABLEMP_finalize_array_desc(_XCALABLEMP_array_t *array) {
-  assert(array != NULL);
+  _XCALABLEMP_ASSERT(array != NULL);
 
   int dim = array->dim;
   for (int i = 0; i < dim; i++) {
@@ -93,7 +93,7 @@ void _XCALABLEMP_finalize_array_desc(_XCALABLEMP_array_t *array) {
 }
 
 void _XCALABLEMP_align_array_NOT_ALIGNED(_XCALABLEMP_array_t *array, int array_index) {
-  assert(array != NULL);
+  _XCALABLEMP_ASSERT(array != NULL);
 
   _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
 
@@ -124,11 +124,11 @@ void _XCALABLEMP_align_array_NOT_ALIGNED(_XCALABLEMP_array_t *array, int array_i
 
 void _XCALABLEMP_align_array_DUPLICATION(_XCALABLEMP_array_t *array, int array_index, int template_index,
                                          long long align_subscript) {
-  assert(array != NULL);
+  _XCALABLEMP_ASSERT(array != NULL);
 
   _XCALABLEMP_template_t *template = array->align_template;
-  assert(template->is_fixed); // checked by compiler
-  assert(template->is_distributed); // checked by compiler
+  _XCALABLEMP_ASSERT(template->is_fixed); // checked by compiler
+  _XCALABLEMP_ASSERT(template->is_distributed); // checked by compiler
 
   _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
@@ -170,11 +170,11 @@ void _XCALABLEMP_align_array_DUPLICATION(_XCALABLEMP_array_t *array, int array_i
 
 void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, int template_index,
                                    long long align_subscript, int *temp0) {
-  assert(array != NULL);
+  _XCALABLEMP_ASSERT(array != NULL);
 
   _XCALABLEMP_template_t *template = array->align_template;
-  assert(template->is_fixed); // checked by compiler
-  assert(template->is_distributed); // checked by compiler
+  _XCALABLEMP_ASSERT(template->is_fixed); // checked by compiler
+  _XCALABLEMP_ASSERT(template->is_distributed); // checked by compiler
 
   _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
@@ -243,11 +243,11 @@ EXIT_CALC_PARALLEL_MEMBERS:
 
 void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index, int template_index,
                                     long long align_subscript, int *temp0) {
-  assert(array != NULL);
+  _XCALABLEMP_ASSERT(array != NULL);
 
   _XCALABLEMP_template_t *template = array->align_template;
-  assert(template->is_fixed); // checked by compiler
-  assert(template->is_distributed); // checked by compiler
+  _XCALABLEMP_ASSERT(template->is_fixed); // checked by compiler
+  _XCALABLEMP_ASSERT(template->is_distributed); // checked by compiler
 
   _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
   _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
@@ -293,7 +293,7 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
 }
 
 void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc, ...) {
-  assert(array_desc != NULL);
+  _XCALABLEMP_ASSERT(array_desc != NULL);
 
   if (!array_desc->is_allocated) {
     *array_addr = NULL;
@@ -326,7 +326,7 @@ void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc,
 }
 
 void _XCALABLEMP_init_array_alloc_params(void **array_addr, _XCALABLEMP_array_t *array_desc, ...) {
-  assert(array_desc != NULL);
+  _XCALABLEMP_ASSERT(array_desc != NULL);
 
   if (!array_desc->is_allocated) {
     return;
@@ -357,8 +357,8 @@ void _XCALABLEMP_init_array_alloc_params(void **array_addr, _XCALABLEMP_array_t 
 
 void _XCALABLEMP_init_array_addr(void **array_addr, void *init_addr,
                                  _XCALABLEMP_array_t *array_desc, ...) {
-  assert(init_addr != NULL);
-  assert(array_desc != NULL);
+  _XCALABLEMP_ASSERT(init_addr != NULL);
+  _XCALABLEMP_ASSERT(array_desc != NULL);
 
   if (!array_desc->is_allocated) {
     *array_addr = NULL;
@@ -391,10 +391,10 @@ void _XCALABLEMP_init_array_addr(void **array_addr, void *init_addr,
 }
 
 void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
-  assert(array != NULL);
+  _XCALABLEMP_ASSERT(array != NULL);
 
   _XCALABLEMP_template_t *align_template = array->align_template;
-  assert(template->is_distributed); // checked by compiler
+  _XCALABLEMP_ASSERT(align_template->is_distributed); // checked by compiler
 
   _XCALABLEMP_nodes_t *onto_nodes = align_template->onto_nodes;
   if (!onto_nodes->is_member) {
@@ -441,7 +441,7 @@ void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
 }
 
 unsigned long long _XCALABLEMP_get_array_total_elmts(_XCALABLEMP_array_t *array) {
-  assert(array != NULL);
+  _XCALABLEMP_ASSERT(array != NULL);
 
   if (array->is_allocated) {
     return array->total_elmts;
