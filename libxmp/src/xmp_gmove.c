@@ -488,7 +488,7 @@ void _XCALABLEMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XCALABLEMP_
   }
 }
 
-_Bool _XCALABLEMP_gmove_exec_home_SCALAR(_XCALABLEMP_array_t *array, ...) {
+_Bool _XCALABLEMP_gmove_HOMECOPY_SCALAR(_XCALABLEMP_array_t *array, ...) {
   _XCALABLEMP_ASSERT(array != NULL);
 
   if (!array->is_allocated) {
@@ -655,7 +655,7 @@ EXIT_AFTER_CLEAN_UP:
 }
 
 // ----- gmove vector to vector --------------------------------------------------------------------------------------------------
-void _XCALABLEMP_gmove_local_copy(int type, size_t type_size, ...) {
+void _XCALABLEMP_gmove_LOCALCOPY_ARRAY(int type, size_t type_size, ...) {
   va_list args;
   va_start(args, type_size);
 
@@ -710,101 +710,7 @@ void _XCALABLEMP_gmove_local_copy(int type, size_t type_size, ...) {
   _XCALABLEMP_free(buffer);
 }
 
-void _XCALABLEMP_gmove_local_copy_home(_XCALABLEMP_array_t *dst_array, int type, size_t type_size, ...) {
-  if (!dst_array->is_allocated) {
-    return;
-  }
-
-  _XCALABLEMP_ERR_WHEN(!(dst_array->align_template)->is_owner);
-
-  va_list args;
-  va_start(args, type_size);
-
-  // get dst info
-  void *dst_addr = va_arg(args, void *);
-  int dst_dim = va_arg(args, int);
-  int dst_l[dst_dim], dst_u[dst_dim], dst_s[dst_dim]; unsigned long long dst_d[dst_dim];
-  for (int i = 0; i < dst_dim; i++) {
-    dst_l[i] = va_arg(args, int);
-    dst_u[i] = va_arg(args, int);
-    dst_s[i] = va_arg(args, int);
-    dst_d[i] = va_arg(args, unsigned long long);
-    _XCALABLEMP_normalize_array_section(&(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
-  }
-
-  // get src info
-  void *src_addr = va_arg(args, void *);
-  int src_dim = va_arg(args, int);
-  int src_l[src_dim], src_u[src_dim], src_s[src_dim]; unsigned long long src_d[src_dim];
-  for (int i = 0; i < src_dim; i++) {
-    src_l[i] = va_arg(args, int);
-    src_u[i] = va_arg(args, int);
-    src_s[i] = va_arg(args, int);
-    src_d[i] = va_arg(args, unsigned long long);
-    _XCALABLEMP_normalize_array_section(&(src_l[i]), &(src_u[i]), &(src_s[i]));
-  }
-
-  va_end(args);
-
-  // calc index ref
-  int src_dim_index = 0;
-  unsigned long long dst_buffer_elmts = 1;
-  unsigned long long src_buffer_elmts = 1;
-  for (int i = 0; i < dst_dim; i++) {
-    int dst_elmts = _XCALABLEMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
-    if (dst_elmts == 1) {
-      if(!_XCALABLEMP_check_gmove_array_ref_inclusion_SCALAR(dst_array, i, dst_l[i])) {
-        return;
-      }
-    }
-    else {
-      dst_buffer_elmts *= dst_elmts;
-
-      int src_elmts;
-      do {
-        src_elmts = _XCALABLEMP_M_COUNT_TRIPLETi(src_l[src_dim_index], src_u[src_dim_index], src_s[src_dim_index]);
-        src_dim_index++;
-      } while (src_elmts == 1);
-
-      int j = src_dim_index - 1;
-      if (_XCALABLEMP_calc_local_copy_home_ref(dst_array, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]),
-                                                             &(src_l[j]), &(src_u[j]), &(src_s[j]))) {
-        src_buffer_elmts *= src_elmts;
-      }
-      else {
-        return;
-      }
-    }
-
-    _XCALABLEMP_calc_array_local_index_triplet(dst_array, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
-  }
-
-  for (int i = src_dim_index; i < src_dim; i++) {
-    src_buffer_elmts *= _XCALABLEMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
-  }
-
-  // alloc buffer
-  if (dst_buffer_elmts != src_buffer_elmts) {
-    _XCALABLEMP_fatal("wrong assign statement"); // FIXME fix error msg
-  }
-
-  void *buffer = _XCALABLEMP_alloc(dst_buffer_elmts * type_size);
-
-  // pack/unpack
-  if (type == _XCALABLEMP_N_TYPE_NONBASIC) {
-    _XCALABLEMP_pack_array_GENERAL(buffer, src_addr, type_size, src_dim, src_l, src_u, src_s, src_d);
-    _XCALABLEMP_unpack_array_GENERAL(dst_addr, buffer, type_size, dst_dim, dst_l, dst_u, dst_s, dst_d);
-  }
-  else {
-    _XCALABLEMP_pack_array_BASIC(buffer, src_addr, type, src_dim, src_l, src_u, src_s, src_d);
-    _XCALABLEMP_unpack_array_BASIC(dst_addr, buffer, type, dst_dim, dst_l, dst_u, dst_s, dst_d);
-  }
-
-  // free buffer
-  _XCALABLEMP_free(buffer);
-}
-
-void _XCALABLEMP_gmove_BCAST_ARRAY_SECTION(_XCALABLEMP_array_t *src_array, int type, size_t type_size, ...) {
+void _XCALABLEMP_gmove_BCAST_ARRAY(_XCALABLEMP_array_t *src_array, int type, size_t type_size, ...) {
   _XCALABLEMP_ERR_WHEN(!(src_array->align_template)->is_owner);
 
   va_list args;
@@ -946,6 +852,100 @@ void _XCALABLEMP_gmove_BCAST_ARRAY_SECTION(_XCALABLEMP_array_t *src_array, int t
       _XCALABLEMP_free(bcast_buffer);
     }
   }
+}
+
+void _XCALABLEMP_gmove_HOMECOPY_ARRAY(_XCALABLEMP_array_t *dst_array, int type, size_t type_size, ...) {
+  if (!dst_array->is_allocated) {
+    return;
+  }
+
+  _XCALABLEMP_ERR_WHEN(!(dst_array->align_template)->is_owner);
+
+  va_list args;
+  va_start(args, type_size);
+
+  // get dst info
+  void *dst_addr = va_arg(args, void *);
+  int dst_dim = va_arg(args, int);
+  int dst_l[dst_dim], dst_u[dst_dim], dst_s[dst_dim]; unsigned long long dst_d[dst_dim];
+  for (int i = 0; i < dst_dim; i++) {
+    dst_l[i] = va_arg(args, int);
+    dst_u[i] = va_arg(args, int);
+    dst_s[i] = va_arg(args, int);
+    dst_d[i] = va_arg(args, unsigned long long);
+    _XCALABLEMP_normalize_array_section(&(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
+  }
+
+  // get src info
+  void *src_addr = va_arg(args, void *);
+  int src_dim = va_arg(args, int);
+  int src_l[src_dim], src_u[src_dim], src_s[src_dim]; unsigned long long src_d[src_dim];
+  for (int i = 0; i < src_dim; i++) {
+    src_l[i] = va_arg(args, int);
+    src_u[i] = va_arg(args, int);
+    src_s[i] = va_arg(args, int);
+    src_d[i] = va_arg(args, unsigned long long);
+    _XCALABLEMP_normalize_array_section(&(src_l[i]), &(src_u[i]), &(src_s[i]));
+  }
+
+  va_end(args);
+
+  // calc index ref
+  int src_dim_index = 0;
+  unsigned long long dst_buffer_elmts = 1;
+  unsigned long long src_buffer_elmts = 1;
+  for (int i = 0; i < dst_dim; i++) {
+    int dst_elmts = _XCALABLEMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
+    if (dst_elmts == 1) {
+      if(!_XCALABLEMP_check_gmove_array_ref_inclusion_SCALAR(dst_array, i, dst_l[i])) {
+        return;
+      }
+    }
+    else {
+      dst_buffer_elmts *= dst_elmts;
+
+      int src_elmts;
+      do {
+        src_elmts = _XCALABLEMP_M_COUNT_TRIPLETi(src_l[src_dim_index], src_u[src_dim_index], src_s[src_dim_index]);
+        src_dim_index++;
+      } while (src_elmts == 1);
+
+      int j = src_dim_index - 1;
+      if (_XCALABLEMP_calc_local_copy_home_ref(dst_array, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]),
+                                                             &(src_l[j]), &(src_u[j]), &(src_s[j]))) {
+        src_buffer_elmts *= src_elmts;
+      }
+      else {
+        return;
+      }
+    }
+
+    _XCALABLEMP_calc_array_local_index_triplet(dst_array, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
+  }
+
+  for (int i = src_dim_index; i < src_dim; i++) {
+    src_buffer_elmts *= _XCALABLEMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
+  }
+
+  // alloc buffer
+  if (dst_buffer_elmts != src_buffer_elmts) {
+    _XCALABLEMP_fatal("wrong assign statement"); // FIXME fix error msg
+  }
+
+  void *buffer = _XCALABLEMP_alloc(dst_buffer_elmts * type_size);
+
+  // pack/unpack
+  if (type == _XCALABLEMP_N_TYPE_NONBASIC) {
+    _XCALABLEMP_pack_array_GENERAL(buffer, src_addr, type_size, src_dim, src_l, src_u, src_s, src_d);
+    _XCALABLEMP_unpack_array_GENERAL(dst_addr, buffer, type_size, dst_dim, dst_l, dst_u, dst_s, dst_d);
+  }
+  else {
+    _XCALABLEMP_pack_array_BASIC(buffer, src_addr, type, src_dim, src_l, src_u, src_s, src_d);
+    _XCALABLEMP_unpack_array_BASIC(dst_addr, buffer, type, dst_dim, dst_l, dst_u, dst_s, dst_d);
+  }
+
+  // free buffer
+  _XCALABLEMP_free(buffer);
 }
 
 // FIXME temporary implementation
@@ -1095,8 +1095,8 @@ static void _XCALABLEMP_gmove_SENDRECV_all2all_2(void *dst_addr, void *src_addr,
 }
 
 // FIXME does not has complete function for general usage
-void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION(_XCALABLEMP_array_t *dst_array, _XCALABLEMP_array_t *src_array,
-                                              int type, size_t type_size, ...) {
+void _XCALABLEMP_gmove_SENDRECV_ARRAY(_XCALABLEMP_array_t *dst_array, _XCALABLEMP_array_t *src_array,
+                                      int type, size_t type_size, ...) {
   va_list args;
   va_start(args, type_size);
 
@@ -1236,9 +1236,9 @@ void _XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION(_XCALABLEMP_array_t *dst_array, _X
           _XCALABLEMP_array_info_t *ai = &(dst_array->info[0]);
 
           _XCALABLEMP_push_comm(src_array->align_comm);
-          _XCALABLEMP_gmove_BCAST_ARRAY_SECTION(src_array, type, type_size,
-                                                dst_addr, dst_dim, ai->local_lower, ai->local_upper, ai->local_stride, dst_d[0],
-                                                src_addr, src_dim, ai->par_lower, ai->par_upper, ai->par_stride, dst_d[0]);
+          _XCALABLEMP_gmove_BCAST_ARRAY(src_array, type, type_size,
+                                        dst_addr, dst_dim, ai->local_lower, ai->local_upper, ai->local_stride, dst_d[0],
+                                        src_addr, src_dim, ai->par_lower, ai->par_upper, ai->par_stride, dst_d[0]);
           _XCALABLEMP_pop_n_free_nodes_wo_finalize_comm();
         }
         else if (dst_dim == 2) {

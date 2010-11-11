@@ -656,7 +656,8 @@ public class XMPtranslateGlobalPragma {
             alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_NORMAL, shadowBody.left(), shadowBody.right()), arrayIndex);
           } break;
         case XMPshadow.SHADOW_FULL:
-          {
+          throw new XMPexception("full shadow is not supported in this version");
+          /* {
             if (alignedArray.getAlignMannerAt(arrayIndex) == XMPalignedArray.NOT_ALIGNED) {
               throw new XMPexception("indicated dimension is not aligned");
             }
@@ -667,7 +668,7 @@ public class XMPtranslateGlobalPragma {
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_FULL)));
 
             alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_FULL, null, null), arrayIndex);
-          } break;
+          } break; */
         default:
           throw new XMPexception("unknown shadow type");
       }

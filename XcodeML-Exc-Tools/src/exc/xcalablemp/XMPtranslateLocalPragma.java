@@ -722,7 +722,8 @@ public class XMPtranslateLocalPragma {
             alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_NORMAL, shadowBody.left(), shadowBody.right()), arrayIndex);
           } break;
         case XMPshadow.SHADOW_FULL:
-          {
+          throw new XMPexception("full shadow is not supported in this version");
+          /* {
             if (alignedArray.getAlignMannerAt(arrayIndex) == XMPalignedArray.NOT_ALIGNED) {
               throw new XMPexception("indicated dimension is not aligned");
             }
@@ -733,7 +734,7 @@ public class XMPtranslateLocalPragma {
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_FULL)));
 
             alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_FULL, null, null), arrayIndex);
-          } break;
+          } break; */
         default:
           throw new XMPexception("unknown shadow type");
       }
@@ -1922,6 +1923,8 @@ public class XMPtranslateLocalPragma {
     boolean leftHasSubArrayRef = hasSubArrayRef(leftExpr);
     boolean rightHasSubArrayRef = hasSubArrayRef(rightExpr);
     if (leftHasSubArrayRef) {
+      throw new XMPexception("array section in gmove is not supported in this version");
+      /*
       if (rightHasSubArrayRef) {
         if (leftAlignedArray == null) {
           if (rightAlignedArray == null) {	// !leftIsAlignedArray && !rightIsAlignedArray  |-> local assignment (every node)
@@ -1940,7 +1943,7 @@ public class XMPtranslateLocalPragma {
 
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
-            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_local_copy", gmoveFuncArgs));
+            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_LOCALCOPY_ARRAY", gmoveFuncArgs));
           }
           else {				// !leftIsAlignedArray &&  rightIsAlignedArray  |-> broadcast
             Xtype arrayElmtType = rightAlignedArray.getType();
@@ -1956,7 +1959,7 @@ public class XMPtranslateLocalPragma {
 
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
-            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_BCAST_ARRAY_SECTION", gmoveFuncArgs));
+            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_BCAST_ARRAY", gmoveFuncArgs));
           }
         }
         else {
@@ -1974,7 +1977,7 @@ public class XMPtranslateLocalPragma {
 
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
-            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_local_copy_home", gmoveFuncArgs));
+            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_HOMECOPY_ARRAY", gmoveFuncArgs));
           }
           else {				//  leftIsAlignedArray &&  rightIsAlignedArray  |-> send/recv
             Xtype arrayElmtType = leftAlignedArray.getType();
@@ -1991,7 +1994,7 @@ public class XMPtranslateLocalPragma {
 
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
-            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_SENDRECV_ARRAY_SECTION", gmoveFuncArgs));
+            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_SENDRECV_ARRAY", gmoveFuncArgs));
           }
         }
       }
@@ -1999,6 +2002,7 @@ public class XMPtranslateLocalPragma {
         // FIXME implement
         throw new XMPexception("not implemented yet");
       }
+      */
     }
     else {
       if (rightHasSubArrayRef) {
@@ -2023,7 +2027,7 @@ public class XMPtranslateLocalPragma {
           XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref());
           XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
 
-          Ident gmoveFuncId = _env.declExternIdent("_XCALABLEMP_gmove_exec_home_SCALAR", Xtype.Function(Xtype.boolType));
+          Ident gmoveFuncId = _env.declExternIdent("_XCALABLEMP_gmove_HOMECOPY_SCALAR", Xtype.Function(Xtype.boolType));
           pb.replace(Bcons.IF(BasicBlock.Cond(gmoveFuncId.Call(gmoveFuncArgs)),
                               gmoveBody, null));
         }
