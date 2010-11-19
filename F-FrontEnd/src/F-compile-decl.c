@@ -377,6 +377,7 @@ int
 is_array_size_adjustable(TYPE_DESC tp)
 {
     assert(IS_ARRAY_TYPE(tp));
+
     while(IS_ARRAY_TYPE(tp) && TYPE_REF(tp)) {
         if(TYPE_IS_ARRAY_ADJUSTABLE(tp))
             return TRUE;
@@ -2402,8 +2403,32 @@ ret:
         return rshape;
 }
 
+
+static int
+is_descendant_coindexed(TYPE_DESC tp){
+
+  ID id;
+
+  if (!tp) return FALSE;
+
+  if (TYPE_IS_COINDEXED(tp)) return TRUE;
+
+  if (IS_STRUCT_TYPE(tp)){
+
+    FOREACH_MEMBER(id, tp){
+      if (is_descendant_coindexed(ID_TYPE(id))) return TRUE;
+    }
+
+    if (TYPE_REF(tp)) return is_descendant_coindexed(TYPE_REF(tp));
+
+  }
+
+  return FALSE;
+}
+
+
 /* type = (LIST basic_type length) 
- * decl_list = (LIST (LIST ident dims length) ...)
+ * decl_list = (LIST (LIST ident dims length codims) ...)
  * dims = (LIST dim ...)
  * dim = expr | (LIST expr expr) 
  * attributes = (LIST attribute ...)
@@ -2412,7 +2437,7 @@ void
 compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                   expr decl_list, expr attributes)
 {
-    expr x, ident, dims, leng, value;
+    expr x, ident, dims, codims, leng, value;
     TYPE_DESC tp;
     TYPE_DESC tp0 = NULL;
     int len;
@@ -2476,11 +2501,13 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
     }
 
     FOR_ITEMS_IN_LIST(lp, decl_list) {
+
         x = LIST_ITEM(lp);
-        ident = EXPR_ARG1(x);
-        dims  = EXPR_ARG2(x);
-        leng  = EXPR_ARG3(x);
-        value = EXPR_ARG4(x);
+        ident  = EXPR_ARG1(x);
+        dims   = EXPR_ARG2(x);
+        leng   = EXPR_ARG3(x);
+        value  = EXPR_ARG4(x);
+	codims = EXPR_ARG5(x);
 
         if (ident == NULL) {
             continue; /* error in parser ? */
@@ -2512,8 +2539,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                  */
                 VAR_UNCOMPILED_DECL(id) = list2(LIST, x, attributes);
                 VAR_IS_UNCOMPILED(id) = TRUE;
-                if (hasDimsInAttr == TRUE ||
-                    dims != NULL) {
+                if (hasDimsInAttr == TRUE || dims != NULL){
                     VAR_IS_UNCOMPILED_ARRAY(id) = TRUE;
                 }
                 ID_CLASS(id) = CL_VAR;
@@ -2594,6 +2620,23 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
             ID_ORDER(id) = order_sequence++;
         }
 
+	if (codims){
+
+	  if (is_descendant_coindexed(tp)){
+	    error_at_node(codims, "The derived-type of the coindexed object cannot have a coindexed member.");
+	    return;
+	  }
+
+	  codims_desc *codesc = compile_codimensions(codims, 
+						     TYPE_IS_ALLOCATABLE(tp));
+	  if (codesc)
+	    tp->codims = codesc;
+	  else {
+	    error_at_node(codims, "Wrong codimension declaration.");
+	    return;
+	  }
+	}
+
         if (id != NULL) {
              declare_id_type(id, tp);
              ID_LINE(id) = EXPR_LINE(decl_list);
@@ -2619,7 +2662,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
         }
 
         setIsOfModule(id);
-    }
+    } /* end FOR_ITEMS_IN_LIST */
 }
 
 
@@ -2818,6 +2861,87 @@ compile_dimensions(TYPE_DESC tp, expr dims)
     }
 
     return tp;
+}
+
+
+/* create codims_desc. */
+codims_desc*
+compile_codimensions(expr dims, int is_alloc){
+
+  codims_desc *codims;
+  expr x;
+  int n = 0;
+  list lp;
+
+  assert(!dims);
+
+  codims = XMALLOC(codims_desc*, sizeof(codims_desc));
+  codims->cobound_list = list0(LIST);
+
+  FOR_ITEMS_IN_LIST(lp, dims) {
+
+    expr lower = NULL, upper = NULL, step = NULL;
+
+    x = LIST_ITEM(lp);
+    if (x == NULL) {
+      if(LIST_NEXT(lp) != NULL)
+	error("only last cobound may be \"*\"");
+    }
+    else if (EXPR_CODE(x) == LIST){ /* (LIST lower upper) */
+      lower = EXPR_ARG1(x);
+      upper = EXPR_ARG2(x);
+      /* step comes from compile_array_ref() */
+      step = expr_list_get_n(x, 2);
+    }
+/*     else if (EXPR_CODE(x) == F_INDEX_RANGE) { */
+/*       lower = EXPR_ARG1(x); */
+/*       upper = EXPR_ARG2(x); */
+/*       step  = EXPR_ARG3(x); */
+/*     } */
+    else {
+      upper = x;
+    }
+
+    if (!lower && !upper && !is_alloc){
+      error("deferred coshape can be specified only for ALLOCATABLE coarrays.");
+      return NULL;
+    }
+
+    if (LIST_NEXT(lp) && upper && EXPV_CODE(upper) == F_ASTERISK){
+      error("Only last upper-cobound can be \"*\".");
+      return NULL;
+    }
+
+    if (!LIST_NEXT(lp)){
+      if (!upper){
+	;
+      }
+      else if (EXPV_CODE(upper) == F_ASTERISK){
+	upper = NULL;
+      }
+      else {
+	error("Last upper-cobound must be \"*\".");
+	return NULL;
+      }
+    }
+      
+    reduce_subscript(&lower);
+    reduce_subscript(&upper);
+    reduce_subscript(&step);
+    codims->cobound_list = list_put_last(codims->cobound_list,
+					 list3(F95_TRIPLET_EXPR, lower, upper, step));
+
+    n++;
+
+    if (n > MAX_DIM){
+      error("no more than MAX_DIM(%d) dimensions", MAX_DIM);
+      return NULL;
+    }
+  }
+
+  codims->corank = n;
+
+  return codims;
 }
 
 

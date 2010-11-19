@@ -238,14 +238,14 @@ expr st_name;
 %}
 
 %type <val> statement label 
-%type <val> expr /*expr1*/ lhs member_ref substring expr_or_null complex_const array_constructor_list
+%type <val> expr /*expr1*/ lhs member_ref lhs_alloc member_ref_alloc substring expr_or_null complex_const array_constructor_list
 %type <val> program_name dummy_arg_list dummy_args dummy_arg file_name
 %type <val> declaration_statement executable_statement action_statement action_statement_let action_statement_key assign_statement_or_null assign_statement
 %type <val> declaration_list entity_decl type_spec type_spec0 length_spec common_decl
 %type <val> common_block external_decl intrinsic_decl equivalence_decl
 %type <val> cray_pointer_list cray_pointer_pair cray_pointer_var
-%type <val> equiv_list data data_list data_val_list data_val value simple_value save_list save_item const_list const_item common_var data_var data_var_list dims dim_list dim ubound label_list implicit_decl imp_list letter_group letter_groups namelist_decl namelist_entry namelist_list ident_list access_ident_list access_ident
-%type <val> do_spec arg arg_list parenthesis_arg_list
+%type <val> equiv_list data data_list data_val_list data_val value simple_value save_list save_item const_list const_item common_var data_var data_var_list image_dims image_dim_list image_dim image_dims_alloc image_dim_list_alloc image_dim_alloc dims dim_list dim ubound label_list implicit_decl imp_list letter_group letter_groups namelist_decl namelist_entry namelist_list ident_list access_ident_list access_ident
+%type <val> do_spec arg arg_list parenthesis_arg_list image_selector cosubscript_list
 %type <val> set_expr
 %type <val> io_statement format_spec ctl_list io_clause io_list_or_null io_list io_item
 %type <val> IDENTIFIER CONSTANT const kind_parm GENERIC_SPEC USER_DEFINED_OP
@@ -653,10 +653,10 @@ declaration_list:
         ;
 
 entity_decl:
-          IDENTIFIER  dims length_spec
-        { $$ = list4(LIST,$1,$2,$3,NULL); }
-        | IDENTIFIER  dims length_spec '=' expr
-        { $$ = list4(LIST,$1,$2,$3,$5); }
+          IDENTIFIER  dims image_dims length_spec
+        { $$ = list5(LIST,$1,$2,$4,NULL,$3); }
+        | IDENTIFIER  dims image_dims length_spec '=' expr
+        { $$ = list5(LIST,$1,$2,$4,$6,$3); }
         ;
 
 type_spec: type_spec0 { $$ = $1; /* need_keyword = TRUE; */ };
@@ -905,6 +905,42 @@ data_var:         lhs
         { $$ = list2(F_IMPLIED_DO, $4, $2); }
         ;
 
+image_dims:
+        { $$ = NULL; }
+        | '[' image_dim_list ']'
+        { $$ = $2; }
+        ;
+
+image_dim_list:  image_dim
+        { $$ = list1(LIST,$1); }
+        | image_dim_list ',' image_dim
+        { $$ = list_put_last($1,$3); }
+        ;
+
+image_dim:      ubound
+        | expr ':' ubound
+        { $$ = list2(LIST,$1,$3); }
+        | ':'
+        { $$ = list2(LIST,NULL,NULL); }
+        ;
+
+image_dims_alloc:
+          '[' image_dim_list_alloc ']'
+        { $$ = $2; }
+        ;
+
+image_dim_list_alloc:  image_dim_alloc
+        { $$ = list1(LIST,$1); }
+        | image_dim_list_alloc ',' image_dim_alloc
+        { $$ = list_put_last($1,$3); }
+        ;
+
+image_dim_alloc:      ubound
+        { $$ = list3(F95_TRIPLET_EXPR,NULL,$1,NULL); }
+        | expr ':' ubound
+        { $$ = list3(F95_TRIPLET_EXPR,$1,$3,NULL); }
+        ;
+
 dims:
         { $$ = NULL; }
         | '(' dim_list ')'
@@ -1109,7 +1145,7 @@ allocation_list:
         ;
 
 allocation:
-          lhs
+          lhs_alloc
         | set_expr
         ;
 
@@ -1142,6 +1178,17 @@ arg:
          { $$ = list3(F95_TRIPLET_EXPR,$1,$3,$5); }
         ;
 
+image_selector:
+          '[' cosubscript_list ']'
+        { $$ = $2; }
+        ;
+
+cosubscript_list:  
+          expr
+        { $$ = list1(LIST,$1); }
+        | cosubscript_list ',' expr
+        { $$ = list_put_last($1,$3); }
+        ;
 /*
  * Input/Output Statements 
  */
@@ -1290,14 +1337,22 @@ expr:     lhs
 lhs:     
           IDENTIFIER
         { $$ = $1; }
+        | IDENTIFIER image_selector /* coarray */
+        { $$ = list2(XMP_COARRAY_REF,$1,$2); }
         | IDENTIFIER parenthesis_arg_list
         { $$ = list2(F_ARRAY_REF,$1,$2); }
+        | IDENTIFIER parenthesis_arg_list image_selector /* coarray */
+        { $$ = list2(XMP_COARRAY_REF, list2(F_ARRAY_REF,$1,$2), $3); }
         | IDENTIFIER parenthesis_arg_list substring
         { $$ = list2(F_ARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3); }
         | member_ref
         { $$ = $1; }
+        | member_ref image_selector /* coarray */
+        { $$ = list2(XMP_COARRAY_REF,$1,$2); }
         | member_ref parenthesis_arg_list
         { $$ = list2(F_ARRAY_REF,$1,$2); }
+        | member_ref parenthesis_arg_list image_selector /* coarray */
+        { $$ = list2(XMP_COARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3); }
         | member_ref parenthesis_arg_list substring
         { $$ = list2(F_ARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3); }
         ;
@@ -1305,12 +1360,62 @@ lhs:
 member_ref:
           IDENTIFIER '%' IDENTIFIER
         { $$ = list2(F95_MEMBER_REF,$1,$3); }
+        | IDENTIFIER image_selector '%' IDENTIFIER /* coarray */
+        { $$ = list2(F95_MEMBER_REF,list2(XMP_COARRAY_REF,$1,$2),$4); }
         | IDENTIFIER parenthesis_arg_list '%' IDENTIFIER
         { $$ = list2(F95_MEMBER_REF,list2(F_ARRAY_REF,$1,$2),$4); }
+        | IDENTIFIER parenthesis_arg_list image_selector '%' IDENTIFIER /* coarray */
+        { $$ = list2(F95_MEMBER_REF, list2(XMP_COARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3), $5); }
         | member_ref '%' IDENTIFIER
         { $$ = list2(F95_MEMBER_REF,$1,$3); }
+        | member_ref image_selector '%' IDENTIFIER /* coarray */
+        { $$ = list2(F95_MEMBER_REF,list2(XMP_COARRAY_REF,$1,$2),$4); }
         | member_ref parenthesis_arg_list '%' IDENTIFIER
         { $$ = list2(F95_MEMBER_REF,list2(F_ARRAY_REF,$1,$2),$4); }
+        | member_ref parenthesis_arg_list image_selector '%' IDENTIFIER /* coarray */
+        { $$ = list2(F95_MEMBER_REF, list2(XMP_COARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3), $5); }
+        ;
+
+lhs_alloc:     /* For allocation list only */
+          IDENTIFIER
+        { $$ = $1; }
+        | IDENTIFIER image_dims_alloc /* coarray */
+        { $$ = list2(XMP_COARRAY_REF,$1,$2); }
+        | IDENTIFIER parenthesis_arg_list
+        { $$ = list2(F_ARRAY_REF,$1,$2); }
+        | IDENTIFIER parenthesis_arg_list image_dims_alloc /* coarray */
+        { $$ = list2(XMP_COARRAY_REF, list2(F_ARRAY_REF,$1,$2), $3); }
+        | IDENTIFIER parenthesis_arg_list substring
+        { $$ = list2(F_ARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3); }
+        | member_ref_alloc
+        { $$ = $1; }
+        | member_ref_alloc image_dims_alloc /* coarray */
+        { $$ = list2(XMP_COARRAY_REF,$1,$2); }
+        | member_ref_alloc parenthesis_arg_list
+        { $$ = list2(F_ARRAY_REF,$1,$2); }
+        | member_ref_alloc parenthesis_arg_list image_dims_alloc /* coarray */
+        { $$ = list2(XMP_COARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3); }
+        | member_ref_alloc parenthesis_arg_list substring
+        { $$ = list2(F_ARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3); }
+        ;
+
+member_ref_alloc:     /* For allocation list only */
+          IDENTIFIER '%' IDENTIFIER
+        { $$ = list2(F95_MEMBER_REF,$1,$3); }
+        | IDENTIFIER image_dims_alloc '%' IDENTIFIER /* coarray */
+        { $$ = list2(F95_MEMBER_REF,list2(XMP_COARRAY_REF,$1,$2),$4); }
+        | IDENTIFIER parenthesis_arg_list '%' IDENTIFIER
+        { $$ = list2(F95_MEMBER_REF,list2(F_ARRAY_REF,$1,$2),$4); }
+        | IDENTIFIER parenthesis_arg_list image_dims_alloc '%' IDENTIFIER /* coarray */
+        { $$ = list2(F95_MEMBER_REF, list2(XMP_COARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3), $5); }
+        | member_ref_alloc '%' IDENTIFIER
+        { $$ = list2(F95_MEMBER_REF,$1,$3); }
+        | member_ref_alloc image_dims_alloc '%' IDENTIFIER /* coarray */
+        { $$ = list2(F95_MEMBER_REF,list2(XMP_COARRAY_REF,$1,$2),$4); }
+        | member_ref_alloc parenthesis_arg_list '%' IDENTIFIER
+        { $$ = list2(F95_MEMBER_REF,list2(F_ARRAY_REF,$1,$2),$4); }
+        | member_ref_alloc parenthesis_arg_list image_dims_alloc '%' IDENTIFIER /* coarray */
+        { $$ = list2(F95_MEMBER_REF, list2(XMP_COARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3), $5); }
         ;
 
 array_constructor_list:

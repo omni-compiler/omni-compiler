@@ -452,6 +452,7 @@ extern expv     compile_struct_constructor _ANSI_ARGS_((ID struct_id, expr args)
 
 extern expv     statement_function_call _ANSI_ARGS_((ID f_id, expv arglist));
 extern TYPE_DESC        compile_dimensions _ANSI_ARGS_((TYPE_DESC tp, expr dims));
+extern codims_desc* compile_codimensions _ANSI_ARGS_((expr dims, int is_alloc));
 extern void     fix_array_dimensions _ANSI_ARGS_((TYPE_DESC tp));
 extern TYPE_DESC        copy_array_type(TYPE_DESC tp);
 extern TYPE_DESC        copy_dimension(TYPE_DESC array_tp, TYPE_DESC base);
@@ -522,7 +523,8 @@ extern TYPE_DESC        type_char _ANSI_ARGS_((int len));
 extern TYPE_DESC        type_basic _ANSI_ARGS_((BASIC_DATA_TYPE t));
 extern TYPE_DESC        array_element_type _ANSI_ARGS_((TYPE_DESC tp));
 
-extern expv     compile_array_ref (ID id, expv ary, expr args, int isLeft);
+extern expv     compile_array_ref _ANSI_ARGS_((ID id, expv ary, expr args, int isLeft));
+extern expv     compile_coarray_ref _ANSI_ARGS_((expr coarrayRef));
 extern expv     expv_type_conversion _ANSI_ARGS_((TYPE_DESC tp, expv v));
 
 extern expv     expv_complex_op _ANSI_ARGS_((enum expr_code op, TYPE_DESC tp, expv left, expv right));

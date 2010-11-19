@@ -64,6 +64,12 @@ extern char *basic_type_names[];
  "module", \
 }
 
+typedef struct _codims_desc {
+  int corank;
+  expr cobound_list;
+} codims_desc;
+
+
 /* FORTRAN 77 type descriptor */
 /* FORTRAN 77 does not have nested data structure */
 /* pointer type, TYPE_UNKNOWN and ref != NULL */
@@ -116,6 +122,7 @@ typedef struct type_descriptor
         expv dim_upper, dim_lower, dim_step; /* dimension subscripts */
     } array_info; /* FOR FbasicType for Array */
     struct ident_descriptor *members; /* all members for derived type */
+    codims_desc *codims;
 } *TYPE_DESC;
 
 struct type_attr_check {
@@ -132,6 +139,7 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_LINK(tp)           ((tp)->link)
 #define TYPE_SLINK(tp)          ((tp)->struct_link)
 #define TYPE_IS_DECLARED(tp)    ((tp)->is_declared)
+#define TYPE_IS_COINDEXED(tp)   ((tp)->codims)
 #define TYPE_BASIC_TYPE(tp)     ((tp)->basic_type)
 #define TYPE_REF(tp)            ((tp)->ref)
 #define TYPE_TAGNAME(tp)        ((tp)->tagname)

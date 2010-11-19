@@ -11,8 +11,8 @@
 #include "F-front.h"
 #include <math.h>
 
-static expv     compile_args _ANSI_ARGS_((expr args));
-static expv     compile_data_args _ANSI_ARGS_((expr args));
+static expv compile_args _ANSI_ARGS_((expr args));
+static expv compile_data_args _ANSI_ARGS_((expr args));
 
 static expv compile_implied_do_expression _ANSI_ARGS_((expr x));
 static expv compile_dup_decl _ANSI_ARGS_((expv x));
@@ -136,6 +136,7 @@ compile_terminal_node(x)
         case F_PARAM:
         case F_FUNC:
         case ID_LIST:
+        case F_ASTERISK:
             ret = x;
             break;
 
@@ -279,6 +280,10 @@ compile_expression(expr x)
             }
             return compile_array_ref(id, NULL, EXPR_ARG2(x), FALSE);
         }
+
+        case XMP_COARRAY_REF: /* (XMP_COARRAY_REF expr args) */
+
+	  return compile_coarray_ref(x);
 
         /* implied do expression */
         case F_IMPLIED_DO: {     /* (F_IMPLIED_DO loop_spec do_args) */
@@ -532,8 +537,9 @@ compile_expression(expr x)
             left = compile_expression(EXPR_ARG1(x));
             right = compile_expression(EXPR_ARG2(x));
             right2 = compile_expression(EXPR_ARG3(x));
+	    if (right && EXPR_CODE(right) == F_ASTERISK) right = NULL;
             if ((EXPR_ARG1(x) && left == NULL) ||
-                (EXPR_ARG2(x) && right == NULL) ||
+                //(EXPR_ARG2(x) && right == NULL) ||
                 (EXPR_ARG3(x) && right2 == NULL)) {
                 goto err;
             }
@@ -788,6 +794,7 @@ compile_substr_ref(expr x)
  *    | (F_ARRAY_REF ident fun_arg_list)
  *    | (F_SUBSTR (F_ARRAY_REF ident fun_arg_list) substring)
  *    | (F95_MEMBER_REF expression ident)
+ *    | (XMP_COARRAY_REF expression image_selector)
  */
 expv
 compile_lhs_expression(x)
@@ -870,6 +877,9 @@ compile_lhs_expression(x)
     case F95_MEMBER_REF:
         return compile_member_ref(x);
 
+    case XMP_COARRAY_REF:
+      return compile_coarray_ref(x);
+
     default:
         fatal("compile_lhs_expression: unknown code");
         /* error ? */
@@ -903,8 +913,8 @@ expv_is_lvalue(expv v)
 {
     if (v == NULL) return FALSE;
     if (EXPV_IS_RVALUE(v) == TRUE) return FALSE;
-    if (EXPR_CODE(v) == ARRAY_REF || EXPR_CODE(v) == F_VAR
-            || EXPR_CODE(v) == F95_MEMBER_REF)
+    if (EXPR_CODE(v) == ARRAY_REF || EXPR_CODE(v) == F_VAR ||
+	EXPR_CODE(v) == F95_MEMBER_REF || EXPR_CODE(v) == XMP_COARRAY_REF)
         return TRUE;
     if (expv_is_this_func(v))
         return TRUE;
@@ -1227,6 +1237,210 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft)
 
     return expv_reduce(expv_cons(ARRAY_REF,
                                  tp, vary, subs), FALSE);
+}
+
+
+// find the coindexed, that is, rightmost id
+ID
+find_coindexed_id(expr ref){
+
+  SYMBOL s;
+  ID id;
+  
+  switch (EXPR_CODE(ref)){
+
+  case IDENT:
+
+    s = EXPR_SYM(ref);
+    id = find_ident(s);
+    
+    if (!id){
+      id = declare_ident(s, CL_UNKNOWN);
+    }
+
+    return id;
+
+  case F95_MEMBER_REF: {
+
+/*     expr parent = EXPR_ARG1(ref); */
+/*     expr child = EXPR_ARG2(ref); */
+/*     TYPE_DESC parent_type; */
+
+/*     assert(EXPR_CODE(child) == IDENT); */
+
+/* /\*     stVTyp = EXPV_TYPE(ref); *\/ */
+
+/* /\*     if (IS_ARRAY_TYPE(stVTyp)){ *\/ */
+/* /\*       stVTyp = bottom_type(stVTyp); *\/ */
+/* /\*     } *\/ */
+
+/*     if (EXPR_CODE(parent) == IDENT){ */
+/*       s = EXPR_SYM(ref); */
+/*       id = find_ident(s); */
+/*       if (!id){ */
+/* 	id = declare_ident(s, CL_UNKNOWN); */
+/*       } */
+/*       parent_type = ID_TYPE(id); */
+/*     } */
+
+/*     return find_struct_member(parent_type, EXPR_SYM(child)); */
+
+    return find_coindexed_id(EXPR_ARG2(ref));
+  }
+
+  case F_ARRAY_REF:
+
+    return find_coindexed_id(EXPR_ARG1(ref));
+
+  default:
+
+    error("wrong object coindexed");
+    return NULL;
+  }
+}
+
+
+// find the coindexed, that is, rightmost id
+TYPE_DESC
+get_rightmost_id_type(expv ref){
+
+  if (!ref) return NULL;
+
+  switch (EXPV_CODE(ref)){
+
+  case F95_MEMBER_REF: {
+
+    expr parent = EXPV_LEFT(ref);
+    expr child = EXPV_RIGHT(ref);
+    TYPE_DESC parent_type;
+    ID member_id;
+
+    assert(EXPR_CODE(child) == IDENT);
+
+    parent_type = EXPV_TYPE(parent);
+
+    if (IS_ARRAY_TYPE(parent_type)){
+      parent_type = bottom_type(parent_type);
+    }
+
+    member_id = find_struct_member(parent_type, EXPR_SYM(child));
+    return ID_TYPE(member_id);
+  }
+
+  case ARRAY_REF:
+
+    return EXPV_TYPE(EXPV_LEFT(ref));
+
+  default:
+
+    return EXPV_TYPE(ref);
+  }
+}
+
+
+int is_in_alloc = FALSE;
+
+expv
+compile_coarray_ref(expr coarrayRef){
+
+  expr ref = EXPR_ARG1(coarrayRef);
+  expr image_selector = EXPR_ARG2(coarrayRef);
+
+  TYPE_DESC tp = NULL;
+  list lp;
+
+  //
+  // (1) process the object coindexed.
+  //
+
+  expv obj = compile_expression(ref);
+
+  tp = get_rightmost_id_type(obj);
+  if (!tp) return NULL;
+  if (!tp->codims){
+    error_at_node(coarrayRef, "Only coarrays can be coindexed.");
+    return NULL;
+  }
+
+  //
+  // (2) process the cosubscripts.
+  //
+
+  expv cosubs = list0(LIST);
+  expv codims = list0(LIST);
+
+  /* get codims and cosubs*/
+  if (compile_array_ref_dimension(image_selector, codims, cosubs)){
+    return NULL;
+  }
+
+/*   tp = compile_dimensions(bottom_type(tp), codims); */
+/*   fix_array_dimensions(tp); */
+
+  int n = 0;
+  FOR_ITEMS_IN_LIST(lp, cosubs){
+
+    if (is_in_alloc){
+
+      expr x = LIST_ITEM(lp);
+      expr lower = NULL, upper = NULL;
+
+      if (!x) {
+	if (!LIST_NEXT(lp))
+	  error("only last cobound may be \"*\"");
+      }
+      else if (EXPR_CODE(x) == LIST){ /* (LIST lower upper NULL) */
+	lower = EXPR_ARG1(x);
+	upper = EXPR_ARG2(x);
+	assert(!EXPR_ARG3(x));
+      }
+      else if (EXPR_CODE(x) == F_INDEX_RANGE) {
+	lower = EXPR_ARG1(x);
+	upper = EXPR_ARG2(x);
+	assert(!EXPR_ARG3(x));
+      }
+      else {
+	upper = x;
+      }
+
+      if (LIST_NEXT(lp)){
+	if ((upper && EXPV_CODE(upper) == F_ASTERISK) || !upper)
+	  error("Only last upper-cobound can be \"*\".");
+      }
+
+      if (!LIST_NEXT(lp)){
+	if (!upper){
+	  ;
+	}
+	else if (EXPV_CODE(upper) == F_ASTERISK){
+	  upper = NULL;
+	}
+	else {
+	  error("Last upper-cobound must be \"*\".");
+	}
+      }
+    }
+
+    n++;
+  }
+
+  if (tp->codims->corank != n){
+    error_at_node(image_selector, "wrong number of cosubscript on '%s'");
+    return NULL;
+  }
+
+/*   if (id){ */
+/*     vary = expv_sym_term(F_VAR, ID_TYPE(id), ID_SYM(id)); */
+/*     ID_ADDR(id) = vary; */
+
+/*     if (TYPE_N_DIM(ID_TYPE(id)) < n){ */
+/*       error_at_node(args, "too large dimension, %d.", n); */
+/*       return NULL; */
+/*     } */
+/*   } */
+
+  return expv_reduce(expv_cons(XMP_COARRAY_REF, EXPV_TYPE(obj), obj, cosubs),
+		     FALSE);
 }
 
 

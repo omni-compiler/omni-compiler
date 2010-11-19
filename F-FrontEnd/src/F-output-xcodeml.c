@@ -151,7 +151,8 @@ xtag(enum expr_code code)
     case ARRAY_REF:                 return "FarrayRef";
     case F_SUBSTR_REF:              return "FcharacterRef";
     case F95_ARRAY_CONSTRUCTOR:     return "FarrayConstructor";
-    case F95_STRUCT_CONSTRUCTOR:     return "FstructConstructor";
+    case F95_STRUCT_CONSTRUCTOR:    return "FstructConstructor";
+    case XMP_COARRAY_REF:           return "FcoArrayRef";
 
     /*
      * operators
@@ -570,7 +571,8 @@ has_attribute_except_func_attrs(TYPE_DESC tp)
         TYPE_IS_INTERNAL_PRIVATE(tp) ||
         TYPE_IS_INTENT_IN(tp) ||
         TYPE_IS_INTENT_OUT(tp) ||
-        TYPE_IS_INTENT_INOUT(tp);
+        TYPE_IS_INTENT_INOUT(tp) ||
+        tp->codims;
 }
 
 
@@ -613,6 +615,7 @@ getBasicTypeID(BASIC_DATA_TYPE t)
     (has_attribute_except_func_attrs(tp) == FALSE) && \
     (TYPE_KIND(tp) == NULL) &&                  \
     (IS_DOUBLED_TYPE(tp) == FALSE) &&           \
+    (!tp->codims) &&                            \
     ((IS_NUMERIC(tp) ||                         \
       IS_LOGICAL(tp) ||                         \
       IS_SUBR(tp) ||                            \
@@ -1233,7 +1236,9 @@ outx_indexRange0(int l,
         outx_childrenWithTag(l1, "upperBound", upper);
     if(step)
         outx_childrenWithTag(l1, "step", step);
-    outx_close(l, xtag(F_INDEX_RANGE));
+
+
+      outx_close(l, xtag(F_INDEX_RANGE));
 }
 
 #define outx_indexRange(l, lower, upper, step) \
@@ -1259,10 +1264,9 @@ static void
 outx_indexRangeOfType(int l, TYPE_DESC tp)
 {
     TYPE_DESC rtp = TYPE_REF(tp);
-    if(IS_ARRAY_TYPE(rtp))
-        outx_indexRangeOfType(l, rtp);
+    if(IS_ARRAY_TYPE(rtp)) outx_indexRangeOfType(l, rtp);
     outx_indexRange0(l, TYPE_ARRAY_ASSUME_KIND(tp), ASSUMED_SIZE,
-        TYPE_DIM_LOWER(tp), TYPE_DIM_UPPER(tp), TYPE_DIM_STEP(tp));
+    TYPE_DIM_LOWER(tp), TYPE_DIM_UPPER(tp), TYPE_DIM_STEP(tp));
 }
 
 
@@ -1988,12 +1992,28 @@ outx_arrayRef(int l, expv v)
 
 
 /**
+ * output coarrayRef
+ */
+static void
+outx_coarrayRef(int l, expv v)
+{
+    int l1 = l + 1;
+
+    outx_tagOfExpression(l, v);
+    outx_varRef_EXPR(l1, EXPR_ARG1(v));
+    outx_arraySpec(l1, EXPR_ARG2(v));
+    outx_expvClose(l, v);
+}
+
+
+/**
  * output alloc
  */
 static void
 outx_alloc(int l, expv v)
 {
     const int l1 = l + 1;
+    list lp;
 
     outx_tag(l, "alloc");
 
@@ -2006,6 +2026,17 @@ outx_alloc(int l, expv v)
         outx_expv(l1, EXPR_ARG1(v));
         outx_arraySpec(l1, EXPR_ARG2(v));
         break;
+    case XMP_COARRAY_REF:
+      outx_varRef_EXPR(l1, EXPR_ARG1(v));
+      outx_printi(l1, "<coShape>\n"); 
+      FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)){
+	expr cobound = LIST_ITEM(lp);
+	outx_indexRange0(l+2, ASSUMED_NONE, ASSUMED_SIZE,
+			 EXPR_ARG1(cobound), EXPR_ARG2(cobound), EXPR_ARG3(cobound));
+
+      }
+      outx_close(l1, "coShape");
+      break;
     default:
         abort();
     }
@@ -2403,6 +2434,7 @@ outx_expv(int l, expv v)
     case F95_ARRAY_CONSTRUCTOR:     outx_arrayConstructor(l, v); break;
     case F95_STRUCT_CONSTRUCTOR:    outx_structConstructor(l, v); break;
 
+    case XMP_COARRAY_REF:   outx_coarrayRef(l, v); break;
     /*
      * operators
      */
@@ -2597,22 +2629,76 @@ outx_expv(int l, expv v)
 }
 
 static void mark_type_desc_in_structure(TYPE_DESC tp);
+//static void check_type_desc(TYPE_DESC tp);
 
 static void
 mark_type_desc(TYPE_DESC tp)
 {
-    if(tp == NULL || TYPE_IS_REFERENCED(tp) || IS_MODULE(tp))
-        return;
+  if (tp == NULL || TYPE_IS_REFERENCED(tp) || IS_MODULE(tp))
+    return;
 
-    TYPE_IS_REFERENCED(tp) = 1;
-    if(TYPE_REF(tp)) {
-        if(IS_ARRAY_TYPE(tp))
-            mark_type_desc(array_element_type(tp));
-        else
-            mark_type_desc(TYPE_REF(tp));
+  TYPE_IS_REFERENCED(tp) = 1;
+
+  if (TYPE_REF(tp)){
+
+    if (IS_ARRAY_TYPE(tp)){
+
+      mark_type_desc(array_element_type(tp));
+
     }
-    TYPE_LINK_ADD(tp, type_list, type_list_tail);
+    else {
+
+      mark_type_desc(TYPE_REF(tp));
+
+    }
+
+/*     if (IS_ARRAY_TYPE(tp)) */
+/*       mark_type_desc(array_element_type(tp)); */
+/*     else */
+/*       mark_type_desc(TYPE_REF(tp)); */
+  }
+
+  TYPE_LINK_ADD(tp, type_list, type_list_tail);
 }
+
+
+/* static void */
+/* check_type_desc(TYPE_DESC tp) */
+/* { */
+/*   if (tp == NULL || TYPE_IS_REFERENCED(tp) || IS_MODULE(tp)) */
+/*     return; */
+
+/*   TYPE_IS_REFERENCED(tp) = 1; */
+
+/*   if (TYPE_REF(tp)){ */
+
+/*     if (IS_ARRAY_TYPE(tp)){ */
+
+/*       if (TYPE_IS_COSHAPE(tp)){ */
+
+/* 	if (TYPE_IS_COSHAPE(TYPE_REF(tp))){ */
+/* 	  check_type_desc(TYPE_REF(tp)); */
+/* 	} */
+/* 	else { */
+
+/* 	  mark_type_desc(TYPE_REF(tp)); */
+/* 	} */
+
+/*       } */
+/*       else { */
+/* 	mark_type_desc(array_element_type(tp)); */
+/*       } */
+
+/*     } */
+/*     else { */
+
+/*       mark_type_desc(TYPE_REF(tp)); */
+
+/*     } */
+
+/*   } */
+
+/* } */
 
 
 static void
@@ -2706,6 +2792,27 @@ outx_kind(int l, TYPE_DESC tp)
 
 
 /**
+ * output basicType of coarray
+ */
+static void
+outx_coShape(int l, TYPE_DESC tp)
+{
+  list lp;
+  codims_desc *codims = tp->codims;
+
+  outx_printi(l, "<coShape>\n"); 
+
+  FOR_ITEMS_IN_LIST(lp, codims->cobound_list){
+    expr cobound = LIST_ITEM(lp);
+    outx_indexRange0(l+1, TYPE_ARRAY_ASSUME_KIND(tp), ASSUMED_SIZE,
+		     EXPR_ARG1(cobound), EXPR_ARG2(cobound), EXPR_ARG3(cobound));
+  }
+
+  outx_close(l, "coShape");
+}
+
+
+/**
  * output basicType of character
  */
 static void
@@ -2726,7 +2833,8 @@ outx_characterType(int l, TYPE_DESC tp)
 
     if (tRef) {
         outx_print(" ref=\"C" ADDRX_PRINT_FMT "\"/>\n", Addr2Uint(tRef));
-    } else if(TYPE_KIND(tp) || charLen != 1 || vcharLen != NULL) {
+    }
+    else if (TYPE_KIND(tp) || charLen != 1 || vcharLen != NULL || tp->codims){
         outx_print(" ref=\"%s\">\n", tid);
         outx_kind(l1, tp);
 
@@ -2740,6 +2848,7 @@ outx_characterType(int l, TYPE_DESC tp)
             }
             outx_close(l1, "len");
         }
+	if (tp->codims) outx_coShape(l+1, tp);
         outx_close(l, "FbasicType");
     } else {
         outx_print(" ref=\"%s\"/>\n", tid);
@@ -2756,7 +2865,13 @@ outx_basicTypeNoCharNoAry(int l, TYPE_DESC tp)
     TYPE_DESC rtp = TYPE_REF(tp);
     assert(rtp);
     outx_typeAttrs(l, tp, "FbasicType", 0);
-    outx_print(" ref=\"%s\"/>\n", getTypeID(rtp));
+    if (tp->codims){
+      outx_print(" ref=\"%s\">\n", getTypeID(rtp));
+      outx_coShape(l+1, tp);
+      outx_close(l ,"FbasicType");
+    }
+    else 
+      outx_print(" ref=\"%s\"/>\n", getTypeID(rtp));
 }
 
 
@@ -2766,12 +2881,25 @@ outx_basicTypeNoCharNoAry(int l, TYPE_DESC tp)
 static void
 outx_basicTypeNoCharNoAryNoRef(int l, TYPE_DESC tp)
 {
+
+  /* TYPE_FUNCTION comes here in the following case (maybe for the reference
+     in the argument list). This is only an ad-hoc fix.
+
+      subroutine sub(subsub)
+      implicit none
+      external subsub
+      end
+
+  */
+  if (IS_FUNCTION_TYPE(tp)) return;
+
     outx_typeAttrs(l, tp, "FbasicType", 0);
     /* tp is basic data type */
     outx_print(" ref=\"%s\"", getBasicTypeID(TYPE_BASIC_TYPE(tp)));
-    if (TYPE_KIND(tp) || IS_DOUBLED_TYPE(tp)) {
+    if (TYPE_KIND(tp) || IS_DOUBLED_TYPE(tp) || tp->codims){
         outx_print(">\n");
         outx_kind(l + 1, tp);
+	if (tp->codims) outx_coShape(l+1, tp);
         outx_close(l, "FbasicType");
     } else {
         outx_print("/>\n");
@@ -2786,10 +2914,15 @@ static void
 outx_arrayType(int l, TYPE_DESC tp)
 {
     const int l1 = l + 1;
-    outx_typeAttrs(l, tp, "FbasicType", 0);
-    outx_print(" ref=\"%s\">\n", getTypeID(array_element_type(tp)));
-    outx_indexRangeOfType(l1, tp);
-    outx_close(l ,"FbasicType");
+
+      outx_typeAttrs(l, tp, "FbasicType", 0);
+      outx_print(" ref=\"%s\">\n", getTypeID(array_element_type(tp)));
+
+      outx_indexRangeOfType(l1, tp);
+
+      if (tp->codims) outx_coShape(l1, tp);
+
+      outx_close(l ,"FbasicType");
 }
 
 
@@ -3687,8 +3820,9 @@ outx_typeTable(int l)
 
     outx_tag(l, "typeTable");
 
-    for(tp = type_list; tp != NULL; tp = TYPE_LINK(tp))
-        outx_type(l1, tp);
+    for (tp = type_list; tp != NULL; tp = TYPE_LINK(tp)){
+      outx_type(l1, tp);
+    }
 
     FOREACH_TYPE_EXT_ID(te, type_ext_id_list) {
         assert(EXT_TAG(te->ep) == STG_EXT);

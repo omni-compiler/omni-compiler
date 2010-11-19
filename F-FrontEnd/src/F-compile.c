@@ -399,11 +399,12 @@ void compile_statement1(int st_no, expr x)
             goto do_end_module;
         } else {
             check_INEXEC();
-	    if (endlineno_flag)
+	    if (endlineno_flag){
 	      if (CURRENT_PROCEDURE)
 		ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
 	      else if (CURRENT_EXT_ID && EXT_LINE(CURRENT_EXT_ID))
 		EXT_END_LINE_NO(CURRENT_EXT_ID) = current_line->ln_no;
+	    }
             end_procedure();
         }
         break;
@@ -868,59 +869,67 @@ compile_exec_statement(expr x)
     if(EXPR_CODE(x) != F_LET_STATEMENT) check_INEXEC();
 
     switch(EXPR_CODE(x)){
+
     case F_LET_STATEMENT: /* (F_LET_STATEMENT lhs rhs) */
 
-        if (CURRENT_STATE == OUTSIDE) {
-            begin_procedure();
-            declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
-        }
-        x1 = EXPR_ARG1(x);
-        switch(EXPR_CODE(x1)){
-        case F_ARRAY_REF:
+      if (CURRENT_STATE == OUTSIDE) {
+	begin_procedure();
+	declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
+      }
 
-            if(EXPR_CODE(EXPR_ARG1(x1)) == IDENT) {
-                s = EXPR_SYM(EXPR_ARG1(x1));
-                v1 = EXPR_ARG2(x1);
-                v2 = EXPR_ARG2(x);
+      x1 = EXPR_ARG1(x);
+      switch (EXPR_CODE(x1)){
 
-                /* If the first argument is a triplet,
-                 * it is not a function statement .*/
-                if(EXPR_LIST(v1) == NULL ||
-                   EXPR_ARG1(v1) == NULL ||
-                   EXPR_CODE(EXPR_ARG1(v1)) != F95_TRIPLET_EXPR) {
-                    id = find_ident(s);
-                    if(id == NULL)
-                        id = declare_ident(s,CL_UNKNOWN);
-                    if(ID_CLASS(id) == CL_UNKNOWN){
-                        if (CURRENT_STATE != INEXEC) {
-                            declare_statement_function(id,v1,v2);
-                            break;
-                        }
-                    }
-                }
-            }
-            /* fall through */
+      case F_ARRAY_REF: /* for a statement function because it looks like an array reference. */
 
-        case IDENT:
-        case F_SUBSTR_REF:
-        case F95_MEMBER_REF:
-            if(NOT_INDATA_YET) end_declaration();
-            v1 = compile_lhs_expression(x1);
-            v2 = compile_expression(EXPR_ARG2(x));
-            if(v1 == NULL || v2 == NULL) break;
-            if(!expv_is_lvalue(v1) && !expv_is_str_lvalue(v1)){
-                error_at_node(x, "bad lhs expression in assignment");
-                break;
-            }
-            if((w = expv_assignment(v1,v2)) == NULL){
-                break;
-            }
-            output_statement(w);
-            break;
-        default:
-            error("assignment to a non-variable");
-        }
-        break;
+	if (EXPR_CODE(EXPR_ARG1(x1)) == IDENT){
+	  s = EXPR_SYM(EXPR_ARG1(x1));
+	  v1 = EXPR_ARG2(x1);
+	  v2 = EXPR_ARG2(x);
+
+	  /* If the first argument is a triplet,
+	   * it is not a function statement .*/
+	  if (EXPR_LIST(v1) == NULL ||
+	      EXPR_ARG1(v1) == NULL ||
+	      EXPR_CODE(EXPR_ARG1(v1)) != F95_TRIPLET_EXPR){
+	    id = find_ident(s);
+	    if (id == NULL)
+	      id = declare_ident(s, CL_UNKNOWN);
+	    if (ID_CLASS(id) == CL_UNKNOWN){
+	      if (CURRENT_STATE != INEXEC) {
+		declare_statement_function(id,v1,v2);
+		break;
+	      }
+	    }
+	  }
+	}
+	/* fall through */
+	
+      case IDENT:
+      case F_SUBSTR_REF:
+      case F95_MEMBER_REF:
+      case XMP_COARRAY_REF:
+
+	if (NOT_INDATA_YET) end_declaration();
+	v1 = compile_lhs_expression(x1);
+	v2 = compile_expression(EXPR_ARG2(x));
+	if (v1 == NULL || v2 == NULL) break;
+	if (!expv_is_lvalue(v1) && !expv_is_str_lvalue(v1)){
+	  error_at_node(x, "bad lhs expression in assignment");
+	  break;
+	}
+	if ((w = expv_assignment(v1,v2)) == NULL){
+	  break;
+	}
+	output_statement(w);
+	break;
+
+      default:
+	error("assignment to a non-variable");
+      }
+
+      break;
+
     case F_CONTINUE_STATEMENT:
         output_statement(list0(F_CONTINUE_STATEMENT));
         break; 
@@ -1532,7 +1541,8 @@ end_declaration()
         tp = ID_TYPE(ip);
 
         if (tp) {
-            if (TYPE_IS_ALLOCATABLE(tp) && IS_ARRAY_TYPE(tp) == FALSE) {
+            if (TYPE_IS_ALLOCATABLE(tp) && IS_ARRAY_TYPE(tp) == FALSE &&
+		!tp->codims) {
                 error_at_id(ip, "ALLOCATABLE is applied only to array");
             } else
             if (TYPE_IS_OPTIONAL(tp) && ID_STORAGE(ip) != STG_ARG) {
@@ -3015,8 +3025,9 @@ compile_member_ref(expr x)
 
     if (EXPV_CODE(struct_v) != F95_MEMBER_REF
         && EXPV_CODE(struct_v) != F_VAR
-        && EXPV_CODE(struct_v) != ARRAY_REF) {
-        error("invalid left operand of '%%'", EXPV_CODE(struct_v));
+        && EXPV_CODE(struct_v) != ARRAY_REF
+	&& EXPV_CODE(struct_v) != XMP_COARRAY_REF) {
+        error("invalid left operand of '\%%'", EXPV_CODE(struct_v));
         return NULL;
     }
 
@@ -3143,6 +3154,7 @@ isVarSetTypeAttr(expv v, uint32_t typeAttrFlags)
         tp = EXPV_TYPE(v);
         return tp && ((TYPE_ATTR_FLAGS(tp) & typeAttrFlags) > 0);
     case ARRAY_REF:
+    case XMP_COARRAY_REF:
         return isVarSetTypeAttr(EXPR_ARG1(v), typeAttrFlags);
     default:
         break;
@@ -3150,6 +3162,7 @@ isVarSetTypeAttr(expv v, uint32_t typeAttrFlags)
     abort();
 }
 
+extern int is_in_alloc;
 
 static void
 compile_ALLOCATE_DEALLOCATE_statement (expr x)
@@ -3185,7 +3198,10 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
                 continue;
             }
 
+	    is_in_alloc = TRUE;
             expv ev = compile_lhs_expression(r);
+	    is_in_alloc = FALSE;
+
             if (ev == NULL)
                 continue;
 
@@ -3193,6 +3209,7 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
             case F95_MEMBER_REF:
             case F_VAR:
             case ARRAY_REF:
+	    case XMP_COARRAY_REF:
                 if(isVarSetTypeAttr(ev,
                     TYPE_ATTR_POINTER | TYPE_ATTR_ALLOCATABLE) == FALSE) {
                     error("argument is not a pointer nor allocatable type");
