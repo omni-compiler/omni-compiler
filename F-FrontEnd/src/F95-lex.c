@@ -1141,6 +1141,7 @@ classify_statement()
     case DATA:
     case DEALLOCATE:
     case DIMENSION:
+    case CODIMENSION:
     case ELSE:
     case END:
     case ENTRY:
@@ -3045,6 +3046,7 @@ struct keyword_token keywords[ ] =
     { "case",           CASE},
     { "data",           DATA },
     { "dimension",      DIMENSION  },
+    { "codimension",    CODIMENSION  },
     { "doubleprecision",  KW_DOUBLE  },
     { "doublecomplex",  KW_DCOMPLEX },  
     { "double",         KW_DBL },     /* optional */

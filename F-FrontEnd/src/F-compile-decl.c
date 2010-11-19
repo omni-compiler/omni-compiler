@@ -1389,10 +1389,34 @@ find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
 }
 
 
+static int
+is_descendant_coindexed(TYPE_DESC tp){
+
+  ID id;
+
+  if (!tp) return FALSE;
+
+  if (TYPE_IS_COINDEXED(tp)) return TRUE;
+
+  if (IS_STRUCT_TYPE(tp)){
+
+    FOREACH_MEMBER(id, tp){
+      if (is_descendant_coindexed(ID_TYPE(id))) return TRUE;
+    }
+
+    if (TYPE_REF(tp)) return is_descendant_coindexed(TYPE_REF(tp));
+
+  }
+
+  return FALSE;
+}
+
+
 /* declare type for F95 attributes */
 /* check compatibility if id's type is already declared. */
 static TYPE_DESC
-declare_type_attributes(TYPE_DESC tp, expr attributes, int ignoreDims)
+declare_type_attributes(TYPE_DESC tp, expr attributes,
+			int ignoreDims, int ignoreCodims)
 {
     expr v;
     list lp;
@@ -1416,6 +1440,22 @@ declare_type_attributes(TYPE_DESC tp, expr attributes, int ignoreDims)
                 tp = compile_dimensions(tp, EXPR_ARG1(v));
             }
             break;
+	case XMP_CODIMENSION_SPEC:
+	  if (ignoreDims) break;
+	  if (is_descendant_coindexed(tp)){
+	    error_at_node(EXPR_ARG1(v), "The derived-type of the coindexed object cannot have a coindexed member.");
+	    return NULL;
+	  }
+
+	  codims_desc *codesc = compile_codimensions(EXPR_ARG1(v), 
+						     TYPE_IS_ALLOCATABLE(tp));
+	  if (codesc)
+	    tp->codims = codesc;
+	  else {
+	    error_at_node(EXPR_ARG1(v), "Wrong codimension declaration.");
+	    return NULL;
+	  }
+	  break;
         case F95_EXTERNAL_SPEC:
             /* see compile_EXTERNAL_decl() */
             TYPE_SET_EXTERNAL(tp);
@@ -2404,29 +2444,6 @@ ret:
 }
 
 
-static int
-is_descendant_coindexed(TYPE_DESC tp){
-
-  ID id;
-
-  if (!tp) return FALSE;
-
-  if (TYPE_IS_COINDEXED(tp)) return TRUE;
-
-  if (IS_STRUCT_TYPE(tp)){
-
-    FOREACH_MEMBER(id, tp){
-      if (is_descendant_coindexed(ID_TYPE(id))) return TRUE;
-    }
-
-    if (TYPE_REF(tp)) return is_descendant_coindexed(TYPE_REF(tp));
-
-  }
-
-  return FALSE;
-}
-
-
 /* type = (LIST basic_type length) 
  * decl_list = (LIST (LIST ident dims length codims) ...)
  * dims = (LIST dim ...)
@@ -2446,6 +2463,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
     expr v;
     int hasDimsInAttr = FALSE;
     int hasPointerAttr = FALSE;
+    int hasCodimsInAttr = FALSE;
 
     /* Check dimension spec in attribute. */
     if (attributes != NULL) {
@@ -2453,9 +2471,13 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
             x = LIST_ITEM(lp);
             if (EXPR_CODE(x) == F95_DIMENSION_SPEC) {
                 hasDimsInAttr = TRUE;
-            } else if (EXPR_CODE(x) == F95_POINTER_SPEC) {
+            }
+	    else if (EXPR_CODE(x) == F95_POINTER_SPEC) {
                 hasPointerAttr = TRUE;
             }
+	    else if (EXPR_CODE(x) == XMP_CODIMENSION_SPEC) {
+	      hasCodimsInAttr = TRUE;
+	    }
         }
     }
 
@@ -2599,6 +2621,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
 
         if (attributes != NULL) {
             int ignoreDimsInAttr = FALSE;
+            int ignoreCodimsInAttr = FALSE;
             if (dims != NULL) {
                 if (hasDimsInAttr == TRUE) {
                     warning_at_node(decl_list,
@@ -2608,9 +2631,22 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                 }
                 ignoreDimsInAttr = TRUE;
             }
+
+            if (!codims){
+	      if (hasCodimsInAttr){
+		warning_at_node(decl_list,
+				"Both the attributes and '%s' have "
+				"a codimension spec.",
+				SYM_NAME(EXPR_SYM(ident)));
+                }
+                ignoreCodimsInAttr = TRUE;
+            }
+
             tp = declare_type_attributes(tp, attributes,
-                                         ignoreDimsInAttr);
+                                         ignoreDimsInAttr,
+					 ignoreCodimsInAttr);
         }
+
         if (dims != NULL) {
             /*
              * Always use dimension spec specified with identifier.

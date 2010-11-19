@@ -324,6 +324,7 @@ xtag(enum expr_code code)
     case F95_ALLOCATABLE_STATEMENT:
     case F95_GENERIC_SPEC:
     case F95_USER_DEFINED:
+    case XMP_CODIMENSION_SPEC:
     case EXPR_CODE_END:
 
         fatal("invalid exprcode : %s", EXPR_CODE_NAME(code));
@@ -2619,6 +2620,7 @@ outx_expv(int l, expv v)
     case F95_ARRAY_ALLOCATION:
     case F95_ALLOCATABLE_STATEMENT:
     case F95_GENERIC_SPEC:
+    case XMP_CODIMENSION_SPEC:
     case EXPR_CODE_END:
 
         if(debug_flag)

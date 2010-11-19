@@ -46,6 +46,7 @@
 %token CONTINUE
 %token DATA
 %token DIMENSION
+%token CODIMENSION
 %token DO
 %token ENDDO
 %token DOWHILE
@@ -613,6 +614,8 @@ attr_spec:
         { $$ = list0(F95_ALLOCATABLE_SPEC); } 
         | DIMENSION '(' dim_list ')'
         { $$ = list1(F95_DIMENSION_SPEC,$3); } 
+        | CODIMENSION '(' image_dim_list ')'
+        { $$ = list1(XMP_CODIMENSION_SPEC,$3); } 
         | EXTERNAL
         { $$ = list0(F95_EXTERNAL_SPEC); } 
         | INTENT '(' KW intent_spec ')'
