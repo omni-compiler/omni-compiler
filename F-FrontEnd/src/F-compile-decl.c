@@ -2953,14 +2953,17 @@ compile_codimensions(expr dims, int is_alloc){
 	;
       }
       else if (EXPV_CODE(upper) == F_ASTERISK){
-	upper = NULL;
+	//upper = NULL;
       }
       else {
 	error("Last upper-cobound must be \"*\".");
 	return NULL;
       }
     }
-      
+
+    if (!lower && upper && EXPV_CODE(upper) != F_ASTERISK)
+      lower = expv_constant_1;
+
     reduce_subscript(&lower);
     reduce_subscript(&upper);
     reduce_subscript(&step);

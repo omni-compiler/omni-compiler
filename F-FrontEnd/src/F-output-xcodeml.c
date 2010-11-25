@@ -2806,8 +2806,16 @@ outx_coShape(int l, TYPE_DESC tp)
 
   FOR_ITEMS_IN_LIST(lp, codims->cobound_list){
     expr cobound = LIST_ITEM(lp);
-    outx_indexRange0(l+1, TYPE_ARRAY_ASSUME_KIND(tp), ASSUMED_SIZE,
-		     EXPR_ARG1(cobound), EXPR_ARG2(cobound), EXPR_ARG3(cobound));
+    expr upper = EXPR_ARG2(cobound);
+    ARRAY_ASSUME_KIND defaultAssumeKind = ASSUMED_SHAPE;
+
+    if (upper && EXPR_CODE(upper) == F_ASTERISK){
+      upper = NULL;
+      defaultAssumeKind = ASSUMED_SIZE;
+    }
+
+    outx_indexRange0(l+1, ASSUMED_NONE, defaultAssumeKind,
+		     EXPR_ARG1(cobound), upper, EXPR_ARG3(cobound));
   }
 
   outx_close(l, "coShape");
