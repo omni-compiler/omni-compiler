@@ -361,7 +361,10 @@ public class Bcons
             }
             XmLog.fatal("build: unknown code: " + v.OpcodeName());
             return null;
-            
+
+        case GCC_ASM_STATEMENT:
+            return Statement(v);
+
         case NULL:
             return new NullBlock();
 

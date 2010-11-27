@@ -1138,10 +1138,26 @@ public class XmcXmObjToXobjectTranslator extends RVisitorBase
     @Override
     public boolean enter(XbcGccAsmOperand xmobj)
     {
+        StringObj matchObj;
+        if (xmobj.getMatch() == null) {
+          matchObj = null;
+        }
+        else {
+          matchObj = new StringObj(xmobj.getMatch());
+        }
+
+        StringObj constraintObj;
+        if (xmobj.getConstraint() == null) {
+          constraintObj = null;
+        }
+        else {
+          constraintObj = new StringObj(xmobj.getConstraint());
+        }
+
         return enterAsXobjList(xmobj, Xcode.GCC_ASM_OPERAND,
             xmobj.getExpressions(),
-            new StringObj(xmobj.getMatch()),
-            new StringObj(xmobj.getConstraint()));
+            matchObj,
+            constraintObj);
     }
 
     @Override

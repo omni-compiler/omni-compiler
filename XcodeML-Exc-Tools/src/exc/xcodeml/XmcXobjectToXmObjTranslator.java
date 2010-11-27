@@ -339,9 +339,14 @@ public class XmcXobjectToXmObjTranslator
             }
             break;
         case EXPR_STATEMENT: {
-                XbcExprStatement m = _factory.createXbcExprStatement();
-                m.setExpressions(transExpr(xobj.getArg(0)));
-                xmobj = m;
+                if (xobj.getArg(0).Opcode() == Xcode.GCC_ASM_STATEMENT) {
+                    return trans(xobj.getArg(0));
+                }
+                else {
+                    XbcExprStatement m = _factory.createXbcExprStatement();
+                    m.setExpressions(transExpr(xobj.getArg(0)));
+                    xmobj = m;
+                }
             }
             break;
         case IF_STATEMENT: {
@@ -696,8 +701,15 @@ public class XmcXobjectToXmObjTranslator
         case GCC_ASM_OPERAND: {
                 XbcGccAsmOperand m = _factory.createXbcGccAsmOperand();
                 m.setExpressions(transExpr(xobj.getArg(0)));
-                m.setMatch(xobj.getArg(1).getString());
-                m.setConstraint(xobj.getArg(2).getString());
+
+                if (xobj.getArg(1) != null) {
+                    m.setMatch(xobj.getArg(1).getString());
+                }
+
+                if (xobj.getArg(2) != null) {
+                    m.setConstraint(xobj.getArg(2).getString());
+                }
+
                 xmobj = m;
             }
             break;
