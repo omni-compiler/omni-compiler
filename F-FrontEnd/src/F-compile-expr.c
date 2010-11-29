@@ -1517,13 +1517,16 @@ compile_coarray_ref(expr coarrayRef){
 	if (!upper){
 	  ;
 	}
-	else if (EXPV_CODE(upper) == F_ASTERISK){
-	  upper = NULL;
-	}
+/* 	else if (EXPV_CODE(upper) == F_ASTERISK){ */
+/* 	  upper = NULL; */
+/* 	} */
 	else {
 	  error("Last upper-cobound must be \"*\".");
 	}
       }
+
+      if (!lower && upper && EXPV_CODE(upper) != F_ASTERISK)
+	EXPR_ARG1(x) = expv_constant_1;
     }
 
     n++;

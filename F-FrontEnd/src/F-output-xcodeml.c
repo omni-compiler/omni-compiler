@@ -2049,6 +2049,14 @@ outx_alloc(int l, expv v)
       outx_printi(l1, "<coShape>\n"); 
       FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)){
 	expr cobound = LIST_ITEM(lp);
+/* 	expr upper = EXPR_ARG2(cobound); */
+/* 	ARRAY_ASSUME_KIND defaultAssumeKind = ASSUMED_SHAPE; */
+
+/* 	if (upper && EXPR_CODE(upper) == F_ASTERISK){ */
+/* 	  upper = NULL; */
+/* 	  defaultAssumeKind = ASSUMED_SIZE; */
+/* 	} */
+
 	outx_indexRange0(l+2, ASSUMED_NONE, ASSUMED_SIZE,
 			 EXPR_ARG1(cobound), EXPR_ARG2(cobound), EXPR_ARG3(cobound));
 
