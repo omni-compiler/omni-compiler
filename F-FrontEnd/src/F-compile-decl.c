@@ -388,6 +388,20 @@ is_array_size_adjustable(TYPE_DESC tp)
 
 
 int
+is_array_shape_assumed(TYPE_DESC tp)
+{
+    assert(IS_ARRAY_TYPE(tp));
+
+    while(IS_ARRAY_TYPE(tp) && TYPE_REF(tp)) {
+        if(TYPE_IS_ARRAY_ASSUMED_SHAPE(tp))
+            return TRUE;
+        tp = TYPE_REF(tp);
+    }
+    return FALSE;
+}
+
+
+int
 is_array_size_const(TYPE_DESC tp)
 {
     expv upper;
@@ -572,12 +586,23 @@ declare_variable(ID id)
                 (!TYPE_IS_ALLOCATABLE(ID_TYPE(id))) &&
                 isSubprogram == FALSE &&
                 is_array_size_adjustable(ID_TYPE(id))) {
-                error("'%s' Looks like a local adjustable array, "
+                error("'%s' looks like a local adjustable array, "
                       "not supported yet.",
                       ID_NAME(id));
                 /* not reached. */
                 return NULL;
-            } else {
+            }
+            else if (IS_ARRAY_TYPE(ID_TYPE(id)) &&
+		     (TYPE_IS_POINTER(ID_TYPE(id)) ||
+		      TYPE_IS_ALLOCATABLE(ID_TYPE(id))) &&
+		     !is_array_shape_assumed(ID_TYPE(id))) {
+                error("'%s' has the allocatable or pointer attribute, "
+		      "but is not a dererred-shape array.",
+                      ID_NAME(id));
+                /* not reached. */
+                return NULL;
+            }
+	    else {
                 ID_STORAGE(id) = STG_AUTO;
             }
         }
@@ -1407,6 +1432,9 @@ is_descendant_coindexed(TYPE_DESC tp){
     if (TYPE_REF(tp)) return is_descendant_coindexed(TYPE_REF(tp));
 
   }
+  else if (IS_ARRAY_TYPE(tp)){
+    return is_descendant_coindexed(bottom_type(tp));
+  }
 
   return FALSE;
 }
@@ -1420,6 +1448,15 @@ declare_type_attributes(TYPE_DESC tp, expr attributes,
 {
     expr v;
     list lp;
+
+    // The ALLOCATABLE attribute must be checked in advance.
+    FOR_ITEMS_IN_LIST(lp,attributes){
+        v = LIST_ITEM(lp);
+        if (EXPR_CODE(v) == F95_ALLOCATABLE_SPEC){
+	  TYPE_SET_ALLOCATABLE(tp);
+	  break;
+	}
+    }
 
     FOR_ITEMS_IN_LIST(lp,attributes){
         v = LIST_ITEM(lp);
@@ -2632,19 +2669,22 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                 ignoreDimsInAttr = TRUE;
             }
 
-            if (!codims){
+            if (codims){
 	      if (hasCodimsInAttr){
 		warning_at_node(decl_list,
 				"Both the attributes and '%s' have "
 				"a codimension spec.",
 				SYM_NAME(EXPR_SYM(ident)));
-                }
-                ignoreCodimsInAttr = TRUE;
+	      }
+	      ignoreCodimsInAttr = TRUE;
             }
 
             tp = declare_type_attributes(tp, attributes,
                                          ignoreDimsInAttr,
 					 ignoreCodimsInAttr);
+
+	    if (!tp) return;
+
         }
 
         if (dims != NULL) {
@@ -2658,8 +2698,13 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
 
 	if (codims){
 
+	  if (CTL_TYPE(ctl_top) == CTL_STRUCT && !TYPE_IS_ALLOCATABLE(tp)){
+	    error_at_node(codims, "A coarray component must be allocatable.");
+	    return;
+	  }
+
 	  if (is_descendant_coindexed(tp)){
-	    error_at_node(codims, "The derived-type of the coindexed object cannot have a coindexed member.");
+	    error_at_node(codims, "The codimension attribute cannnot be nested.");
 	    return;
 	  }
 
@@ -2936,6 +2981,11 @@ compile_codimensions(expr dims, int is_alloc){
 /*     } */
     else {
       upper = x;
+    }
+
+    if (is_alloc && (lower || upper || step)){
+      error("An allocatable coarray must have a deferred coshape.");
+      return NULL;
     }
 
     if (!lower && !upper && !is_alloc){

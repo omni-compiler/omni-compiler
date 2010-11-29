@@ -2015,6 +2015,7 @@ outx_alloc(int l, expv v)
 {
     const int l1 = l + 1;
     list lp;
+    expr v1;
 
     outx_tag(l, "alloc");
 
@@ -2028,7 +2029,23 @@ outx_alloc(int l, expv v)
         outx_arraySpec(l1, EXPR_ARG2(v));
         break;
     case XMP_COARRAY_REF:
-      outx_varRef_EXPR(l1, EXPR_ARG1(v));
+
+      v1 = EXPR_ARG1(v);
+
+      switch (EXPR_CODE(v1)){
+
+      case F_VAR:
+      case F95_MEMBER_REF:
+        outx_expv(l1, v1);
+        break;
+      case ARRAY_REF:
+        outx_expv(l1, EXPR_ARG1(v1));
+        outx_arraySpec(l1, EXPR_ARG2(v1));
+        break;
+      default:
+	abort();
+      }
+
       outx_printi(l1, "<coShape>\n"); 
       FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)){
 	expr cobound = LIST_ITEM(lp);

@@ -614,7 +614,7 @@ attr_spec:
         { $$ = list0(F95_ALLOCATABLE_SPEC); } 
         | DIMENSION '(' dim_list ')'
         { $$ = list1(F95_DIMENSION_SPEC,$3); } 
-        | CODIMENSION '(' image_dim_list ')'
+        | CODIMENSION '[' image_dim_list ']'
         { $$ = list1(XMP_CODIMENSION_SPEC,$3); } 
         | EXTERNAL
         { $$ = list0(F95_EXTERNAL_SPEC); } 
@@ -1388,8 +1388,8 @@ lhs_alloc:     /* For allocation list only */
         { $$ = list2(F_ARRAY_REF,$1,$2); }
         | IDENTIFIER parenthesis_arg_list image_dims_alloc /* coarray */
         { $$ = list2(XMP_COARRAY_REF, list2(F_ARRAY_REF,$1,$2), $3); }
-        | IDENTIFIER parenthesis_arg_list substring
-        { $$ = list2(F_ARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3); }
+/*         | IDENTIFIER parenthesis_arg_list substring */
+/*         { $$ = list2(F_ARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3); } */
         | member_ref_alloc
         { $$ = $1; }
         | member_ref_alloc image_dims_alloc /* coarray */
@@ -1398,27 +1398,27 @@ lhs_alloc:     /* For allocation list only */
         { $$ = list2(F_ARRAY_REF,$1,$2); }
         | member_ref_alloc parenthesis_arg_list image_dims_alloc /* coarray */
         { $$ = list2(XMP_COARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3); }
-        | member_ref_alloc parenthesis_arg_list substring
-        { $$ = list2(F_ARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3); }
+/*         | member_ref_alloc parenthesis_arg_list substring */
+/*         { $$ = list2(F_ARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3); } */
         ;
 
 member_ref_alloc:     /* For allocation list only */
           IDENTIFIER '%' IDENTIFIER
         { $$ = list2(F95_MEMBER_REF,$1,$3); }
-        | IDENTIFIER image_dims_alloc '%' IDENTIFIER /* coarray */
-        { $$ = list2(F95_MEMBER_REF,list2(XMP_COARRAY_REF,$1,$2),$4); }
+/*         | IDENTIFIER image_dims_alloc '%' IDENTIFIER /\* coarray *\/ */
+/*         { $$ = list2(F95_MEMBER_REF,list2(XMP_COARRAY_REF,$1,$2),$4); } */
         | IDENTIFIER parenthesis_arg_list '%' IDENTIFIER
         { $$ = list2(F95_MEMBER_REF,list2(F_ARRAY_REF,$1,$2),$4); }
-        | IDENTIFIER parenthesis_arg_list image_dims_alloc '%' IDENTIFIER /* coarray */
-        { $$ = list2(F95_MEMBER_REF, list2(XMP_COARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3), $5); }
+/*         | IDENTIFIER parenthesis_arg_list image_dims_alloc '%' IDENTIFIER /\* coarray *\/ */
+/*         { $$ = list2(F95_MEMBER_REF, list2(XMP_COARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3), $5); } */
         | member_ref_alloc '%' IDENTIFIER
         { $$ = list2(F95_MEMBER_REF,$1,$3); }
-        | member_ref_alloc image_dims_alloc '%' IDENTIFIER /* coarray */
-        { $$ = list2(F95_MEMBER_REF,list2(XMP_COARRAY_REF,$1,$2),$4); }
+/*         | member_ref_alloc image_dims_alloc '%' IDENTIFIER /\* coarray *\/ */
+/*         { $$ = list2(F95_MEMBER_REF,list2(XMP_COARRAY_REF,$1,$2),$4); } */
         | member_ref_alloc parenthesis_arg_list '%' IDENTIFIER
         { $$ = list2(F95_MEMBER_REF,list2(F_ARRAY_REF,$1,$2),$4); }
-        | member_ref_alloc parenthesis_arg_list image_dims_alloc '%' IDENTIFIER /* coarray */
-        { $$ = list2(F95_MEMBER_REF, list2(XMP_COARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3), $5); }
+/*         | member_ref_alloc parenthesis_arg_list image_dims_alloc '%' IDENTIFIER /\* coarray *\/ */
+/*         { $$ = list2(F95_MEMBER_REF, list2(XMP_COARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3), $5); } */
         ;
 
 array_constructor_list:

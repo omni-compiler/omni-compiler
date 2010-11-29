@@ -1337,6 +1337,92 @@ get_rightmost_id_type(expv ref){
   }
 }
 
+int is_array(expv obj){
+
+  assert(EXPV_CODE(obj) == ARRAY_REF);
+
+  list lp;
+  FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(obj)){
+    expr x = LIST_ITEM(lp);
+    if (EXPR_CODE(x) == LIST || EXPR_CODE(x) == F_INDEX_RANGE){
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+
+int
+check_ancestor(expv obj){
+
+  // Note: nested coarrays should have been checked when compiling types.
+
+  assert(obj);
+
+  TYPE_DESC tp;
+
+  if (EXPV_CODE(obj) == F95_MEMBER_REF){
+
+    expv parent = EXPV_LEFT(obj);
+    if (!check_ancestor(parent)) return FALSE;
+
+    expv child = EXPV_RIGHT(obj);
+
+    assert(EXPR_CODE(child) == IDENT);
+
+    TYPE_DESC parent_type = EXPV_TYPE(parent);
+
+    if (IS_ARRAY_TYPE(parent_type)){
+      parent_type = bottom_type(parent_type);
+    }
+
+    ID member_id = find_struct_member(parent_type, EXPR_SYM(child));
+    tp = ID_TYPE(member_id);
+
+    if (IS_ARRAY_TYPE(tp) || TYPE_IS_ALLOCATABLE(tp) || TYPE_IS_POINTER(tp)) return FALSE;
+
+  }
+  else if (EXPV_CODE(obj) == ARRAY_REF){
+
+    if (is_array(obj)) return FALSE;
+
+    expv var = EXPV_LEFT(obj);
+
+    if (EXPV_CODE(var) == F95_MEMBER_REF){
+
+      expv parent = EXPV_LEFT(var);
+      if (!check_ancestor(parent)) return FALSE;
+
+      expv child = EXPV_RIGHT(var);
+
+      assert(EXPR_CODE(child) == IDENT);
+
+      TYPE_DESC parent_type = EXPV_TYPE(parent);
+
+      if (IS_ARRAY_TYPE(parent_type)){
+	parent_type = bottom_type(parent_type);
+      }
+
+      ID member_id = find_struct_member(parent_type, EXPR_SYM(child));
+      tp = ID_TYPE(member_id);
+
+    }
+    else {
+      tp = EXPV_TYPE(var);
+    }
+
+    if (TYPE_IS_ALLOCATABLE(tp) || TYPE_IS_POINTER(tp)) return FALSE;
+
+  }
+  else {
+    tp = EXPV_TYPE(obj);
+    if (IS_ARRAY_TYPE(tp) || TYPE_IS_ALLOCATABLE(tp) || TYPE_IS_POINTER(tp)) return FALSE;
+  }
+
+  return TRUE;
+}
+
 
 int is_in_alloc = FALSE;
 
@@ -1354,6 +1440,25 @@ compile_coarray_ref(expr coarrayRef){
   //
 
   expv obj = compile_expression(ref);
+
+  if (obj){
+
+    expv obj2 = obj;
+    
+    if (EXPV_CODE(obj) == ARRAY_REF){
+      obj2 = EXPV_LEFT(obj);
+    }
+
+    if (EXPV_CODE(obj2) == F95_MEMBER_REF){
+
+      expv parent = EXPV_LEFT(obj2);
+
+      if (!check_ancestor(parent)){
+	error_at_node(coarrayRef, "Each ancestor of the coarray component must be a non-allocatable, non-pointer scalar.");
+	return NULL;
+      }
+    }
+  }
 
   tp = get_rightmost_id_type(obj);
   if (!tp) return NULL;
@@ -2040,7 +2145,7 @@ compile_member_array_ref(expr x, expv v)
     } else if (IS_CHAR(tp)) {
         return compile_substr_ref(x);
     } else {
-        error_at_node(v, " is not arrray nor character");
+        error_at_node(v, "Subscripted object is neither array nor character.");
         return NULL;
     }
 }
