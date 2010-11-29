@@ -45,6 +45,7 @@ import org.xml.sax.*;
  *     <ref name="FmemberRef"/>
  *   </choice>
  *   <ref name="defModelArraySubscriptSequence0"/>
+ *   <ref name="coShape"/>
  * </element>
  * -->
  * <!-- for javadoc -->
@@ -54,16 +55,18 @@ import org.xml.sax.*;
  *     &lt;ref name="FmemberRef"/&gt;
  *   &lt;/choice&gt;
  *   &lt;ref name="defModelArraySubscriptSequence0"/&gt;
+ *   &lt;ref name="coShape"/&gt;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_F.rng (Fri Dec 04 19:18:15 JST 2009)
+ * @version XcodeML_F.rng (Mon Nov 29 15:25:56 JST 2010)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbfAlloc extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, IRVisitable, IRNode {
     private IXbfAllocChoice1 content_;
     // List<IXbfDefModelArraySubscriptChoice>
     private java.util.List defModelArraySubscript_ = new java.util.ArrayList();
+    private XbfCoShape coShape_;
     private IRNode parentRNode_;
 
     /**
@@ -200,6 +203,9 @@ public class XbfAlloc extends xcodeml.f.XmfObj implements java.io.Serializable, 
         for (int i = 0;i < size;i++) {
             addDefModelArraySubscript((IXbfDefModelArraySubscriptChoice)source.getDefModelArraySubscript(i).clone());
         }
+        if (source.coShape_ != null) {
+            setCoShape((XbfCoShape)source.getCoShape().clone());
+        }
     }
 
     /**
@@ -255,6 +261,7 @@ public class XbfAlloc extends xcodeml.f.XmfObj implements java.io.Serializable, 
                 break;
             }
         }
+        setCoShape(factory.createXbfCoShape(stack));
     }
 
     /**
@@ -286,6 +293,7 @@ public class XbfAlloc extends xcodeml.f.XmfObj implements java.io.Serializable, 
             IXbfDefModelArraySubscriptChoice value = (IXbfDefModelArraySubscriptChoice)this.defModelArraySubscript_.get(i);
             value.makeElement(element);
         }
+        this.coShape_.makeElement(element);
         parent.appendChild(element);
     }
 
@@ -531,6 +539,27 @@ public class XbfAlloc extends xcodeml.f.XmfObj implements java.io.Serializable, 
     }
 
     /**
+     * Gets the XbfCoShape property <b>coShape</b>.
+     *
+     * @return XbfCoShape
+     */
+    public final XbfCoShape getCoShape() {
+        return (coShape_);
+    }
+
+    /**
+     * Sets the XbfCoShape property <b>coShape</b>.
+     *
+     * @param coShape
+     */
+    public final void setCoShape(XbfCoShape coShape) {
+        this.coShape_ = coShape;
+        if (coShape != null) {
+            coShape.rSetParentRNode(this);
+        }
+    }
+
+    /**
      * Makes an XML text representation.
      *
      * @return String
@@ -562,6 +591,7 @@ public class XbfAlloc extends xcodeml.f.XmfObj implements java.io.Serializable, 
             IXbfDefModelArraySubscriptChoice value = (IXbfDefModelArraySubscriptChoice)this.defModelArraySubscript_.get(i);
             value.makeTextElement(buffer);
         }
+        coShape_.makeTextElement(buffer);
         buffer.append("</alloc>");
     }
 
@@ -587,6 +617,7 @@ public class XbfAlloc extends xcodeml.f.XmfObj implements java.io.Serializable, 
             IXbfDefModelArraySubscriptChoice value = (IXbfDefModelArraySubscriptChoice)this.defModelArraySubscript_.get(i);
             value.makeTextElement(buffer);
         }
+        coShape_.makeTextElement(buffer);
         buffer.write("</alloc>");
     }
 
@@ -611,6 +642,7 @@ public class XbfAlloc extends xcodeml.f.XmfObj implements java.io.Serializable, 
             IXbfDefModelArraySubscriptChoice value = (IXbfDefModelArraySubscriptChoice)this.defModelArraySubscript_.get(i);
             value.makeTextElement(buffer);
         }
+        coShape_.makeTextElement(buffer);
         buffer.print("</alloc>");
     }
 
@@ -703,6 +735,9 @@ public class XbfAlloc extends xcodeml.f.XmfObj implements java.io.Serializable, 
             classNodes.add(content_);
         }
         classNodes.addAll(defModelArraySubscript_);
+        if (coShape_ != null) {
+            classNodes.add(coShape_);
+        }
         IRNode[] nodes = new IRNode[classNodes.size()];
         return ((IRNode[])classNodes.toArray(nodes));
     }
@@ -737,6 +772,10 @@ public class XbfAlloc extends xcodeml.f.XmfObj implements java.io.Serializable, 
                 break;
             }
         }
+        if (!XbfCoShape.isMatchHungry(target)) {
+            return (false);
+        }
+        $match$ = true;
         if (!target.isEmptyElement()) {
             return (false);
         }

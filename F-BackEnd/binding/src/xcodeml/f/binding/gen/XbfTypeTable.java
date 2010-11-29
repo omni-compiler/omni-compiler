@@ -61,7 +61,7 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_F.rng (Fri Dec 04 19:18:15 JST 2009)
+ * @version XcodeML_F.rng (Mon Nov 29 15:25:55 JST 2010)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbfTypeTable extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, IRVisitable, IRNode {
@@ -240,12 +240,12 @@ public class XbfTypeTable extends xcodeml.f.XmfObj implements java.io.Serializab
         RStack stack = new RStack(element);
         content_.clear();
         while (true) {
-            if (XbfFbasicType.isMatch(stack)) {
+            if (XbfFfunctionType.isMatch(stack)) {
+                addContent(factory.createXbfFfunctionType(stack));
+            } else if (XbfFbasicType.isMatch(stack)) {
                 addContent(factory.createXbfFbasicType(stack));
             } else if (XbfFstructType.isMatch(stack)) {
                 addContent(factory.createXbfFstructType(stack));
-            } else if (XbfFfunctionType.isMatch(stack)) {
-                addContent(factory.createXbfFfunctionType(stack));
             } else {
                 break;
             }
@@ -686,11 +686,11 @@ public class XbfTypeTable extends xcodeml.f.XmfObj implements java.io.Serializab
         boolean $match$ = false;
         Element child;
         while (true) {
-            if (XbfFbasicType.isMatchHungry(target)) {
+            if (XbfFfunctionType.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfFbasicType.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbfFstructType.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfFfunctionType.isMatchHungry(target)) {
                 $match$ = true;
             } else {
                 break;

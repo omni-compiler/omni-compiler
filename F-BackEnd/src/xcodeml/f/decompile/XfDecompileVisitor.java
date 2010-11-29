@@ -452,6 +452,50 @@ public class XfDecompileVisitor extends RVisitorBase
         return true;
     }
 
+    /**
+     * Write coindex ranges of array.
+     *
+     * @param indexRangeArray
+     * @return true/false
+     * @example <div class="Example"> INTEGER value<span class="Strong">[10,
+     *          1:*]</span> </div>
+     */
+    private boolean _writeCoIndexRangeArray(XbfIndexRange[] indexRangeArray)
+    {
+        if (indexRangeArray == null) {
+            // Succeed forcibly.
+            return true;
+        }
+
+        XmfWriter writer = _context.getWriter();
+        writer.writeToken("[");
+
+        int indexRangeCount = 0;
+
+        for (IXbfDefModelArraySubscriptChoice arraySubscriptChoice : indexRangeArray) {
+            if (indexRangeCount > 0) {
+                writer.writeToken(", ");
+            }
+
+            if ((arraySubscriptChoice instanceof XbfIndexRange)
+                || (arraySubscriptChoice instanceof XbfArrayIndex)) {
+                if (invokeEnter(arraySubscriptChoice) == false) {
+                    return false;
+                }
+            } else {
+                _context
+                    .debugPrintLine("Detected discontinuous 'indexRange' or 'arrayIndex' element.");
+                _context.setLastErrorMessage(XfUtil.formatError(arraySubscriptChoice,
+                    XfError.XCODEML_SEMANTICS, XfUtil.getElementName(arraySubscriptChoice)));
+                return false;
+            }
+            ++indexRangeCount;
+        }
+        writer.writeToken("]");
+
+        return true;
+    }
+
     private void _writeDeclAttr(IXbfTypeTableChoice top, IXbfTypeTableChoice low) 
     {
         if ((top instanceof XbfFbasicType) &&
@@ -816,6 +860,12 @@ public class XfDecompileVisitor extends RVisitorBase
                     }
                 }
             }
+
+	    XbfCoShape coShape = basicTypeElem.getCoShape();
+	    if (coShape != null){
+		if (!invokeEnter(coShape)) return false;
+	    }
+
         } else if (lowTypeChoice instanceof XbfFstructType) {
             writer.writeToken(" :: ");
             writer.writeToken(symbol.getSymbolName());
@@ -1029,6 +1079,23 @@ public class XfDecompileVisitor extends RVisitorBase
     }
 
     /**
+     * Decompile child group of "FbasicType" element in XcodeML/F.
+     *
+     * @see xcodeml.f.binding.gen.RVisitorBase#enter(xcodeml.f.binding.gen.
+     *      XbfCoShape)
+     */
+    public boolean enter(XbfCoShape visitable)
+    {
+        // DONE: XbfCoShape
+        XbfIndexRange[] indexRange = visitable.getIndexRange();
+        if (indexRange != null){
+            if (!_writeCoIndexRangeArray(indexRange)) return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Decompile "FfunctionType" element in XcodeML/F.
      *
      * @see xcodeml.f.binding.gen.RVisitorBase#enter(xcodeml.f.binding.gen.
@@ -1142,6 +1209,11 @@ public class XfDecompileVisitor extends RVisitorBase
                 }
             }
         }
+
+	XbfCoShape coShape = visitable.getCoShape();
+	if (coShape != null){
+	    if (!invokeEnter(coShape)) return false;
+	}
 
         return true;
     }
@@ -1546,6 +1618,35 @@ public class XfDecompileVisitor extends RVisitorBase
         }
 
         writer.writeToken(")");
+
+        return true;
+    }
+
+    /**
+     * Decompile "FcoArrayRef" element in XcodeML/F.
+     *
+     * @example <code><div class="Example">
+     *      array = <span class="Strong">int_coarray_variable[10, 1:10, 1:, *]</span><br/>
+     * </div></code>
+     * @see xcodeml.f.binding.gen.RVisitorBase#enter(xcodeml.f.binding.gen.XbfFcoArrayRef
+     *      )
+     */
+    @Override
+    public boolean enter(XbfFcoArrayRef visitable)
+    {
+        // DONE: XbfFcoArrayRef
+        if (invokeEnter(visitable.getVarRef()) == false) {
+            return false;
+        }
+
+        XmfWriter writer = _context.getWriter();
+        writer.writeToken("[");
+
+        if (_invokeEnterAndWriteDelim(visitable.getArrayIndex(), ", ") == false) {
+            return false;
+        }
+
+        writer.writeToken("]");
 
         return true;
     }

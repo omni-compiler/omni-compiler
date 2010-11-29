@@ -52,6 +52,9 @@ import org.xml.sax.*;
  *       <ref name="defModelArraySubscriptSequence1"/>
  *     </choice>
  *   </optional>
+ *   <optional>
+ *     <ref name="coShape"/>
+ *   </optional>
  * </element>
  * -->
  * <!-- for javadoc -->
@@ -68,10 +71,13 @@ import org.xml.sax.*;
  *       &lt;ref name="defModelArraySubscriptSequence1"/&gt;
  *     &lt;/choice&gt;
  *   &lt;/optional&gt;
+ *   &lt;optional&gt;
+ *     &lt;ref name="coShape"/&gt;
+ *   &lt;/optional&gt;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_F.rng (Fri Dec 04 19:18:15 JST 2009)
+ * @version XcodeML_F.rng (Mon Nov 29 15:25:55 JST 2010)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, xcodeml.f.binding.IXbfType, IRVisitable, IRNode, IXbfTypeTableChoice {
@@ -92,6 +98,7 @@ public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializa
     private String intent_;
     private XbfKind kind_;
     private IXbfFbasicTypeChoice content_;
+    private XbfCoShape coShape_;
     private IRNode parentRNode_;
 
     /**
@@ -237,6 +244,9 @@ public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializa
         if (source.content_ != null) {
             setContent((IXbfFbasicTypeChoice)source.getContent().clone());
         }
+        if (source.coShape_ != null) {
+            setCoShape((XbfCoShape)source.getCoShape().clone());
+        }
     }
 
     /**
@@ -294,6 +304,9 @@ public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializa
         } else if (XbfDefModelArraySubscriptSequence1.isMatch(stack)) {
             setContent(factory.createXbfDefModelArraySubscriptSequence1(stack));
         } else {
+        }
+        if (XbfCoShape.isMatch(stack)) {
+            setCoShape(factory.createXbfCoShape(stack));
         }
     }
 
@@ -358,6 +371,9 @@ public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializa
         }
         if (this.content_ != null) {
             this.content_.makeElement(element);
+        }
+        if (this.coShape_ != null) {
+            this.coShape_.makeElement(element);
         }
         parent.appendChild(element);
     }
@@ -1032,6 +1048,27 @@ public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializa
     }
 
     /**
+     * Gets the XbfCoShape property <b>coShape</b>.
+     *
+     * @return XbfCoShape
+     */
+    public final XbfCoShape getCoShape() {
+        return (coShape_);
+    }
+
+    /**
+     * Sets the XbfCoShape property <b>coShape</b>.
+     *
+     * @param coShape
+     */
+    public final void setCoShape(XbfCoShape coShape) {
+        this.coShape_ = coShape;
+        if (coShape != null) {
+            coShape.rSetParentRNode(this);
+        }
+    }
+
+    /**
      * Makes an XML text representation.
      *
      * @return String
@@ -1115,6 +1152,9 @@ public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializa
         if (content_ != null) {
             content_.makeTextElement(buffer);
         }
+        if (coShape_ != null) {
+            coShape_.makeTextElement(buffer);
+        }
         buffer.append("</FbasicType>");
     }
 
@@ -1192,6 +1232,9 @@ public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializa
         if (content_ != null) {
             content_.makeTextElement(buffer);
         }
+        if (coShape_ != null) {
+            coShape_.makeTextElement(buffer);
+        }
         buffer.write("</FbasicType>");
     }
 
@@ -1267,6 +1310,9 @@ public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializa
         }
         if (content_ != null) {
             content_.makeTextElement(buffer);
+        }
+        if (coShape_ != null) {
+            coShape_.makeTextElement(buffer);
         }
         buffer.print("</FbasicType>");
     }
@@ -1560,6 +1606,9 @@ public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializa
         if (content_ != null) {
             classNodes.add(content_);
         }
+        if (coShape_ != null) {
+            classNodes.add(coShape_);
+        }
         IRNode[] nodes = new IRNode[classNodes.size()];
         return ((IRNode[])classNodes.toArray(nodes));
     }
@@ -1585,6 +1634,8 @@ public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializa
         } else if (XbfDefModelArraySubscriptSequence1.isMatchHungry(target)) {
             $match$ = true;
         } else {
+        }
+        if (XbfCoShape.isMatchHungry(target)) {
         }
         if (!target.isEmptyElement()) {
             return (false);

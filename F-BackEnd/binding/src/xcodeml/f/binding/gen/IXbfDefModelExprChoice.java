@@ -41,9 +41,9 @@ import org.xml.sax.SAXException;
 
 /**
  * <b>IXbfDefModelExprChoice</b> is generated from XcodeML_F.rng by Relaxer.
- * Concrete classes of the interface are XbfFunctionCall, XbfFarrayRef, XbfFcharacterRef, XbfFmemberRef, XbfFcharacterConstant, XbfVar, XbfVarRef, XbfPlusExpr, XbfMinusExpr, XbfLogEQExpr, XbfLogLEExpr, XbfFintConstant, XbfFrealConstant, XbfFcomplexConstant, XbfFlogicalConstant, XbfFarrayConstructor, XbfFstructConstructor, XbfMulExpr, XbfDivExpr, XbfFpowerExpr, XbfFconcatExpr, XbfLogNEQExpr, XbfLogGEExpr, XbfLogGTExpr, XbfLogLTExpr, XbfLogAndExpr, XbfLogOrExpr, XbfLogEQVExpr, XbfLogNEQVExpr, XbfUnaryMinusExpr, XbfLogNotExpr, XbfUserBinaryExpr, XbfUserUnaryExpr and XbfFdoLoop.
+ * Concrete classes of the interface are XbfFunctionCall, XbfFcharacterRef, XbfFmemberRef, XbfFcoArrayRef, XbfFdoLoop, XbfFarrayRef, XbfFintConstant, XbfFrealConstant, XbfFcharacterConstant, XbfFlogicalConstant, XbfVar, XbfFarrayConstructor, XbfFstructConstructor, XbfVarRef, XbfUnaryMinusExpr, XbfFcomplexConstant, XbfUserBinaryExpr, XbfUserUnaryExpr, XbfPlusExpr, XbfMulExpr, XbfDivExpr, XbfLogNEQExpr, XbfLogGEExpr, XbfLogOrExpr, XbfLogEQVExpr, XbfMinusExpr, XbfFpowerExpr, XbfFconcatExpr, XbfLogEQExpr, XbfLogGTExpr, XbfLogLEExpr, XbfLogLTExpr, XbfLogAndExpr, XbfLogNEQVExpr and XbfLogNotExpr.
  *
- * @version XcodeML_F.rng (Fri Dec 04 19:18:15 JST 2009)
+ * @version XcodeML_F.rng (Mon Nov 29 15:25:55 JST 2010)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public interface IXbfDefModelExprChoice extends IRVisitable, IRNode {

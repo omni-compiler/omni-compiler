@@ -330,6 +330,11 @@
     </attribute>
   </optional>
   <optional>
+    <attribute name="endlineno">
+      <data type="string"/>
+    </attribute>
+  </optional>
+  <optional>
     <attribute name="rawlineno">
       <data type="string"/>
     </attribute>
@@ -429,6 +434,7 @@
     <ref name="FarrayRef"/>
     <ref name="FcharacterRef"/>
     <ref name="FmemberRef"/>
+    <ref name="FcoArrayRef"/>
   </choice>
 </define>
 
@@ -445,6 +451,7 @@
     <ref name="FarrayRef"/>
     <ref name="FcharacterRef"/>
     <ref name="FmemberRef"/>
+    <ref name="FcoArrayRef"/>
     <ref name="varRef"/>
     <ref name="functionCall"/>
     <ref name="plusExpr"/>
@@ -573,6 +580,14 @@
   </element>
 </define>
 
+<define name="coShape">
+  <element name="coShape" java:extends="xcodeml.f.XmfObj">
+    <zeroOrMore>
+      <ref name="indexRange"/>
+    </zeroOrMore>
+  </element>
+</define>
+
 <define name="FbasicType">
   <element name="FbasicType" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.f.binding.IXbfType">
     <ref name="defAttrTypeName"/>
@@ -586,6 +601,9 @@
         <ref name="len"/>
         <ref name="defModelArraySubscriptSequence1"/>
       </choice>
+    </optional>
+    <optional>
+      <ref name="coShape"/>
     </optional>
   </element>
 </define>
@@ -1039,6 +1057,16 @@
     <ref name="defAttrTypeName"/>
     <ref name="defAttrMemberNameRef"/>
     <ref name="varRef"/>
+  </element>
+</define>
+
+<define name="FcoArrayRef">
+  <element name="FcoArrayRef" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbTypedExpr">
+    <ref name="defAttrTypeName"/>
+    <ref name="varRef"/>
+    <zeroOrMore>
+      <ref name="arrayIndex"/>
+    </zeroOrMore>
   </element>
 </define>
 
@@ -1573,6 +1601,7 @@
       <ref name="FmemberRef"/>
     </choice>
     <ref name="defModelArraySubscriptSequence0"/>
+    <ref name="coShape"/>
   </element>
 </define>
 

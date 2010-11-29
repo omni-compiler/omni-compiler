@@ -53,7 +53,7 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_F.rng (Fri Dec 04 19:18:15 JST 2009)
+ * @version XcodeML_F.rng (Mon Nov 29 15:25:56 JST 2010)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbfBody extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, IRVisitable, IRNode {
@@ -234,74 +234,74 @@ public class XbfBody extends xcodeml.f.XmfObj implements java.io.Serializable, C
         while (true) {
             if (XbfFdoStatement.isMatch(stack)) {
                 addDefModelStatement(factory.createXbfFdoStatement(stack));
-            } else if (XbfFdoWhileStatement.isMatch(stack)) {
-                addDefModelStatement(factory.createXbfFdoWhileStatement(stack));
             } else if (XbfFselectCaseStatement.isMatch(stack)) {
                 addDefModelStatement(factory.createXbfFselectCaseStatement(stack));
             } else if (XbfFcaseLabel.isMatch(stack)) {
                 addDefModelStatement(factory.createXbfFcaseLabel(stack));
-            } else if (XbfFwhereStatement.isMatch(stack)) {
-                addDefModelStatement(factory.createXbfFwhereStatement(stack));
             } else if (XbfGotoStatement.isMatch(stack)) {
                 addDefModelStatement(factory.createXbfGotoStatement(stack));
             } else if (XbfFstopStatement.isMatch(stack)) {
                 addDefModelStatement(factory.createXbfFstopStatement(stack));
             } else if (XbfFpauseStatement.isMatch(stack)) {
                 addDefModelStatement(factory.createXbfFpauseStatement(stack));
+            } else if (XbfExprStatement.isMatch(stack)) {
+                addDefModelStatement(factory.createXbfExprStatement(stack));
+            } else if (XbfFifStatement.isMatch(stack)) {
+                addDefModelStatement(factory.createXbfFifStatement(stack));
+            } else if (XbfFdoWhileStatement.isMatch(stack)) {
+                addDefModelStatement(factory.createXbfFdoWhileStatement(stack));
+            } else if (XbfFcycleStatement.isMatch(stack)) {
+                addDefModelStatement(factory.createXbfFcycleStatement(stack));
+            } else if (XbfFexitStatement.isMatch(stack)) {
+                addDefModelStatement(factory.createXbfFexitStatement(stack));
+            } else if (XbfStatementLabel.isMatch(stack)) {
+                addDefModelStatement(factory.createXbfStatementLabel(stack));
+            } else if (XbfFreadStatement.isMatch(stack)) {
+                addDefModelStatement(factory.createXbfFreadStatement(stack));
             } else if (XbfFwriteStatement.isMatch(stack)) {
                 addDefModelStatement(factory.createXbfFwriteStatement(stack));
             } else if (XbfFprintStatement.isMatch(stack)) {
                 addDefModelStatement(factory.createXbfFprintStatement(stack));
-            } else if (XbfFinquireStatement.isMatch(stack)) {
-                addDefModelStatement(factory.createXbfFinquireStatement(stack));
-            } else if (XbfExprStatement.isMatch(stack)) {
-                addDefModelStatement(factory.createXbfExprStatement(stack));
-            } else if (XbfStatementLabel.isMatch(stack)) {
-                addDefModelStatement(factory.createXbfStatementLabel(stack));
             } else if (XbfFrewindStatement.isMatch(stack)) {
                 addDefModelStatement(factory.createXbfFrewindStatement(stack));
+            } else if (XbfFendFileStatement.isMatch(stack)) {
+                addDefModelStatement(factory.createXbfFendFileStatement(stack));
             } else if (XbfFbackspaceStatement.isMatch(stack)) {
                 addDefModelStatement(factory.createXbfFbackspaceStatement(stack));
             } else if (XbfFopenStatement.isMatch(stack)) {
                 addDefModelStatement(factory.createXbfFopenStatement(stack));
             } else if (XbfFcloseStatement.isMatch(stack)) {
                 addDefModelStatement(factory.createXbfFcloseStatement(stack));
+            } else if (XbfFinquireStatement.isMatch(stack)) {
+                addDefModelStatement(factory.createXbfFinquireStatement(stack));
             } else if (XbfFformatDecl.isMatch(stack)) {
                 addDefModelStatement(factory.createXbfFformatDecl(stack));
-            } else if (XbfFdataDecl.isMatch(stack)) {
-                addDefModelStatement(factory.createXbfFdataDecl(stack));
-            } else if (XbfFnullifyStatement.isMatch(stack)) {
-                addDefModelStatement(factory.createXbfFnullifyStatement(stack));
-            } else if (XbfFcontainsStatement.isMatch(stack)) {
-                addDefModelStatement(factory.createXbfFcontainsStatement(stack));
-            } else if (XbfFassignStatement.isMatch(stack)) {
-                addDefModelStatement(factory.createXbfFassignStatement(stack));
-            } else if (XbfFpointerAssignStatement.isMatch(stack)) {
-                addDefModelStatement(factory.createXbfFpointerAssignStatement(stack));
-            } else if (XbfFreturnStatement.isMatch(stack)) {
-                addDefModelStatement(factory.createXbfFreturnStatement(stack));
-            } else if (XbfFpragmaStatement.isMatch(stack)) {
-                addDefModelStatement(factory.createXbfFpragmaStatement(stack));
-            } else if (XbfText.isMatch(stack)) {
-                addDefModelStatement(factory.createXbfText(stack));
-            } else if (XbfFifStatement.isMatch(stack)) {
-                addDefModelStatement(factory.createXbfFifStatement(stack));
-            } else if (XbfContinueStatement.isMatch(stack)) {
-                addDefModelStatement(factory.createXbfContinueStatement(stack));
-            } else if (XbfFcycleStatement.isMatch(stack)) {
-                addDefModelStatement(factory.createXbfFcycleStatement(stack));
-            } else if (XbfFexitStatement.isMatch(stack)) {
-                addDefModelStatement(factory.createXbfFexitStatement(stack));
-            } else if (XbfFreadStatement.isMatch(stack)) {
-                addDefModelStatement(factory.createXbfFreadStatement(stack));
-            } else if (XbfFendFileStatement.isMatch(stack)) {
-                addDefModelStatement(factory.createXbfFendFileStatement(stack));
             } else if (XbfFentryDecl.isMatch(stack)) {
                 addDefModelStatement(factory.createXbfFentryDecl(stack));
             } else if (XbfFallocateStatement.isMatch(stack)) {
                 addDefModelStatement(factory.createXbfFallocateStatement(stack));
             } else if (XbfFdeallocateStatement.isMatch(stack)) {
                 addDefModelStatement(factory.createXbfFdeallocateStatement(stack));
+            } else if (XbfFcontainsStatement.isMatch(stack)) {
+                addDefModelStatement(factory.createXbfFcontainsStatement(stack));
+            } else if (XbfContinueStatement.isMatch(stack)) {
+                addDefModelStatement(factory.createXbfContinueStatement(stack));
+            } else if (XbfFreturnStatement.isMatch(stack)) {
+                addDefModelStatement(factory.createXbfFreturnStatement(stack));
+            } else if (XbfFwhereStatement.isMatch(stack)) {
+                addDefModelStatement(factory.createXbfFwhereStatement(stack));
+            } else if (XbfFdataDecl.isMatch(stack)) {
+                addDefModelStatement(factory.createXbfFdataDecl(stack));
+            } else if (XbfFnullifyStatement.isMatch(stack)) {
+                addDefModelStatement(factory.createXbfFnullifyStatement(stack));
+            } else if (XbfFpragmaStatement.isMatch(stack)) {
+                addDefModelStatement(factory.createXbfFpragmaStatement(stack));
+            } else if (XbfText.isMatch(stack)) {
+                addDefModelStatement(factory.createXbfText(stack));
+            } else if (XbfFassignStatement.isMatch(stack)) {
+                addDefModelStatement(factory.createXbfFassignStatement(stack));
+            } else if (XbfFpointerAssignStatement.isMatch(stack)) {
+                addDefModelStatement(factory.createXbfFpointerAssignStatement(stack));
             } else {
                 break;
             }
@@ -744,13 +744,9 @@ public class XbfBody extends xcodeml.f.XmfObj implements java.io.Serializable, C
         while (true) {
             if (XbfFdoStatement.isMatchHungry(target)) {
                 $match$ = true;
-            } else if (XbfFdoWhileStatement.isMatchHungry(target)) {
-                $match$ = true;
             } else if (XbfFselectCaseStatement.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbfFcaseLabel.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfFwhereStatement.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbfGotoStatement.isMatchHungry(target)) {
                 $match$ = true;
@@ -758,17 +754,27 @@ public class XbfBody extends xcodeml.f.XmfObj implements java.io.Serializable, C
                 $match$ = true;
             } else if (XbfFpauseStatement.isMatchHungry(target)) {
                 $match$ = true;
+            } else if (XbfExprStatement.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfFifStatement.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfFdoWhileStatement.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfFcycleStatement.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfFexitStatement.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfStatementLabel.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfFreadStatement.isMatchHungry(target)) {
+                $match$ = true;
             } else if (XbfFwriteStatement.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbfFprintStatement.isMatchHungry(target)) {
                 $match$ = true;
-            } else if (XbfFinquireStatement.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfExprStatement.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfStatementLabel.isMatchHungry(target)) {
-                $match$ = true;
             } else if (XbfFrewindStatement.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfFendFileStatement.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbfFbackspaceStatement.isMatchHungry(target)) {
                 $match$ = true;
@@ -776,41 +782,35 @@ public class XbfBody extends xcodeml.f.XmfObj implements java.io.Serializable, C
                 $match$ = true;
             } else if (XbfFcloseStatement.isMatchHungry(target)) {
                 $match$ = true;
+            } else if (XbfFinquireStatement.isMatchHungry(target)) {
+                $match$ = true;
             } else if (XbfFformatDecl.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfFdataDecl.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfFnullifyStatement.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfFcontainsStatement.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfFassignStatement.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfFpointerAssignStatement.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfFreturnStatement.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfFpragmaStatement.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfText.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfFifStatement.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfContinueStatement.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfFcycleStatement.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfFexitStatement.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfFreadStatement.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfFendFileStatement.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbfFentryDecl.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbfFallocateStatement.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbfFdeallocateStatement.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfFcontainsStatement.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfContinueStatement.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfFreturnStatement.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfFwhereStatement.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfFdataDecl.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfFnullifyStatement.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfFpragmaStatement.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfText.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfFassignStatement.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfFpointerAssignStatement.isMatchHungry(target)) {
                 $match$ = true;
             } else {
                 break;

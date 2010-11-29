@@ -43,7 +43,7 @@ import org.xml.sax.SAXException;
  * <b>IXbfFinterfaceDeclChoice</b> is generated from XcodeML_F.rng by Relaxer.
  * Concrete classes of the interface are XbfFfunctionDecl and XbfFmoduleProcedureDecl.
  *
- * @version XcodeML_F.rng (Fri Dec 04 19:18:15 JST 2009)
+ * @version XcodeML_F.rng (Mon Nov 29 15:25:56 JST 2010)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public interface IXbfFinterfaceDeclChoice extends IRVisitable, IRNode {
@@ -186,6 +186,16 @@ public interface IXbfFinterfaceDeclChoice extends IRVisitable, IRNode {
     /**
      * @return String
      */
+    String getEndlineno();
+
+    /**
+     * @param endlineno
+     */
+    void setEndlineno(String endlineno);
+
+    /**
+     * @return String
+     */
     String getRawlineno();
 
     /**
@@ -221,6 +231,11 @@ public interface IXbfFinterfaceDeclChoice extends IRVisitable, IRNode {
     /**
      * @return String
      */
+    String getEndlinenoAsString();
+
+    /**
+     * @return String
+     */
     String getRawlinenoAsString();
 
     /**
@@ -232,6 +247,11 @@ public interface IXbfFinterfaceDeclChoice extends IRVisitable, IRNode {
      * @param string
      */
     void setLinenoByString(String string);
+
+    /**
+     * @param string
+     */
+    void setEndlinenoByString(String string);
 
     /**
      * @param string

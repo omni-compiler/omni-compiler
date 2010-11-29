@@ -79,7 +79,7 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_F.rng (Fri Dec 04 19:18:15 JST 2009)
+ * @version XcodeML_F.rng (Mon Nov 29 15:25:56 JST 2010)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbfDeclarations extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, IRVisitable, IRNode {
@@ -260,26 +260,26 @@ public class XbfDeclarations extends xcodeml.f.XmfObj implements java.io.Seriali
         while (true) {
             if (XbfFinterfaceDecl.isMatch(stack)) {
                 addContent(factory.createXbfFinterfaceDecl(stack));
-            } else if (XbfFuseDecl.isMatch(stack)) {
-                addContent(factory.createXbfFuseDecl(stack));
-            } else if (XbfFequivalenceDecl.isMatch(stack)) {
-                addContent(factory.createXbfFequivalenceDecl(stack));
-            } else if (XbfFcommonDecl.isMatch(stack)) {
-                addContent(factory.createXbfFcommonDecl(stack));
-            } else if (XbfFdataDecl.isMatch(stack)) {
-                addContent(factory.createXbfFdataDecl(stack));
             } else if (XbfVarDecl.isMatch(stack)) {
                 addContent(factory.createXbfVarDecl(stack));
-            } else if (XbfExternDecl.isMatch(stack)) {
-                addContent(factory.createXbfExternDecl(stack));
+            } else if (XbfFuseDecl.isMatch(stack)) {
+                addContent(factory.createXbfFuseDecl(stack));
             } else if (XbfFuseOnlyDecl.isMatch(stack)) {
                 addContent(factory.createXbfFuseOnlyDecl(stack));
+            } else if (XbfExternDecl.isMatch(stack)) {
+                addContent(factory.createXbfExternDecl(stack));
             } else if (XbfFnamelistDecl.isMatch(stack)) {
                 addContent(factory.createXbfFnamelistDecl(stack));
+            } else if (XbfFcommonDecl.isMatch(stack)) {
+                addContent(factory.createXbfFcommonDecl(stack));
             } else if (XbfFstructDecl.isMatch(stack)) {
                 addContent(factory.createXbfFstructDecl(stack));
             } else if (XbfFentryDecl.isMatch(stack)) {
                 addContent(factory.createXbfFentryDecl(stack));
+            } else if (XbfFequivalenceDecl.isMatch(stack)) {
+                addContent(factory.createXbfFequivalenceDecl(stack));
+            } else if (XbfFdataDecl.isMatch(stack)) {
+                addContent(factory.createXbfFdataDecl(stack));
             } else if (XbfFpragmaStatement.isMatch(stack)) {
                 addContent(factory.createXbfFpragmaStatement(stack));
             } else {
@@ -724,25 +724,25 @@ public class XbfDeclarations extends xcodeml.f.XmfObj implements java.io.Seriali
         while (true) {
             if (XbfFinterfaceDecl.isMatchHungry(target)) {
                 $match$ = true;
-            } else if (XbfFuseDecl.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfFequivalenceDecl.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfFcommonDecl.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfFdataDecl.isMatchHungry(target)) {
-                $match$ = true;
             } else if (XbfVarDecl.isMatchHungry(target)) {
                 $match$ = true;
-            } else if (XbfExternDecl.isMatchHungry(target)) {
+            } else if (XbfFuseDecl.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbfFuseOnlyDecl.isMatchHungry(target)) {
                 $match$ = true;
+            } else if (XbfExternDecl.isMatchHungry(target)) {
+                $match$ = true;
             } else if (XbfFnamelistDecl.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfFcommonDecl.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbfFstructDecl.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbfFentryDecl.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfFequivalenceDecl.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfFdataDecl.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbfFpragmaStatement.isMatchHungry(target)) {
                 $match$ = true;

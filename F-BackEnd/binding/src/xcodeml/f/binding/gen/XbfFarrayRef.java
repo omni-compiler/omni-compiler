@@ -67,10 +67,10 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_F.rng (Fri Dec 04 19:18:15 JST 2009)
+ * @version XcodeML_F.rng (Mon Nov 29 15:25:55 JST 2010)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
-public class XbfFarrayRef extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, IXbfVarRefChoice, IXbfFarrayRefChoice, xcodeml.binding.IXbTypedExpr, IRVisitable, IRNode, IXbfArgumentsChoice, IXbfDefModelExprChoice, IXbfDefModelLValueChoice {
+public class XbfFarrayRef extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, IXbfFarrayRefChoice, xcodeml.binding.IXbTypedExpr, IRVisitable, IRNode, IXbfVarRefChoice, IXbfArgumentsChoice, IXbfDefModelExprChoice, IXbfDefModelLValueChoice {
     private String type_;
     private XbfVarRef varRef_;
     // List<IXbfFarrayRefChoice>
@@ -254,10 +254,10 @@ public class XbfFarrayRef extends xcodeml.f.XmfObj implements java.io.Serializab
         setVarRef(factory.createXbfVarRef(stack));
         content_.clear();
         while (true) {
-            if (XbfFarrayRef.isMatch(stack)) {
-                addContent(factory.createXbfFarrayRef(stack));
-            } else if (XbfIndexRange.isMatch(stack)) {
+            if (XbfIndexRange.isMatch(stack)) {
                 addContent(factory.createXbfIndexRange(stack));
+            } else if (XbfFarrayRef.isMatch(stack)) {
+                addContent(factory.createXbfFarrayRef(stack));
             } else if (XbfArrayIndex.isMatch(stack)) {
                 addContent(factory.createXbfArrayIndex(stack));
             } else if (XbfFarrayConstructor.isMatch(stack)) {
@@ -788,9 +788,9 @@ public class XbfFarrayRef extends xcodeml.f.XmfObj implements java.io.Serializab
         }
         $match$ = true;
         while (true) {
-            if (XbfFarrayRef.isMatchHungry(target)) {
+            if (XbfIndexRange.isMatchHungry(target)) {
                 $match$ = true;
-            } else if (XbfIndexRange.isMatchHungry(target)) {
+            } else if (XbfFarrayRef.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbfArrayIndex.isMatchHungry(target)) {
                 $match$ = true;

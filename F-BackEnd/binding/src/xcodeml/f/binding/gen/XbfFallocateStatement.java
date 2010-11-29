@@ -57,11 +57,12 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_F.rng (Fri Dec 04 19:18:15 JST 2009)
+ * @version XcodeML_F.rng (Mon Nov 29 15:25:56 JST 2010)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbfFallocateStatement extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, xcodeml.binding.IXbStatement, IRVisitable, IRNode, IXbfDefModelStatementChoice {
     private String lineno_;
+    private String endlineno_;
     private String rawlineno_;
     private String file_;
     private String statName_;
@@ -196,6 +197,7 @@ public class XbfFallocateStatement extends xcodeml.f.XmfObj implements java.io.S
     public void setup(XbfFallocateStatement source) {
         int size;
         setLineno(source.getLineno());
+        setEndlineno(source.getEndlineno());
         setRawlineno(source.getRawlineno());
         setFile(source.getFile());
         setStatName(source.getStatName());
@@ -243,6 +245,7 @@ public class XbfFallocateStatement extends xcodeml.f.XmfObj implements java.io.S
         IXcodeML_FFactory factory = XcodeML_FFactory.getFactory();
         RStack stack = new RStack(element);
         lineno_ = URelaxer.getAttributePropertyAsString(element, "lineno");
+        endlineno_ = URelaxer.getAttributePropertyAsString(element, "endlineno");
         rawlineno_ = URelaxer.getAttributePropertyAsString(element, "rawlineno");
         file_ = URelaxer.getAttributePropertyAsString(element, "file");
         statName_ = URelaxer.getAttributePropertyAsString(element, "stat_name");
@@ -281,6 +284,9 @@ public class XbfFallocateStatement extends xcodeml.f.XmfObj implements java.io.S
         int size;
         if (this.lineno_ != null) {
             URelaxer.setAttributePropertyByString(element, "lineno", this.lineno_);
+        }
+        if (this.endlineno_ != null) {
+            URelaxer.setAttributePropertyByString(element, "endlineno", this.endlineno_);
         }
         if (this.rawlineno_ != null) {
             URelaxer.setAttributePropertyByString(element, "rawlineno", this.rawlineno_);
@@ -400,6 +406,24 @@ public class XbfFallocateStatement extends xcodeml.f.XmfObj implements java.io.S
      */
     public final void setLineno(String lineno) {
         this.lineno_ = lineno;
+    }
+
+    /**
+     * Gets the String property <b>endlineno</b>.
+     *
+     * @return String
+     */
+    public final String getEndlineno() {
+        return (endlineno_);
+    }
+
+    /**
+     * Sets the String property <b>endlineno</b>.
+     *
+     * @param endlineno
+     */
+    public final void setEndlineno(String endlineno) {
+        this.endlineno_ = endlineno;
     }
 
     /**
@@ -615,6 +639,11 @@ public class XbfFallocateStatement extends xcodeml.f.XmfObj implements java.io.S
             buffer.append(URelaxer.escapeAttrQuot(URelaxer.getString(getLineno())));
             buffer.append("\"");
         }
+        if (endlineno_ != null) {
+            buffer.append(" endlineno=\"");
+            buffer.append(URelaxer.escapeAttrQuot(URelaxer.getString(getEndlineno())));
+            buffer.append("\"");
+        }
         if (rawlineno_ != null) {
             buffer.append(" rawlineno=\"");
             buffer.append(URelaxer.escapeAttrQuot(URelaxer.getString(getRawlineno())));
@@ -653,6 +682,11 @@ public class XbfFallocateStatement extends xcodeml.f.XmfObj implements java.io.S
             buffer.write(URelaxer.escapeAttrQuot(URelaxer.getString(getLineno())));
             buffer.write("\"");
         }
+        if (endlineno_ != null) {
+            buffer.write(" endlineno=\"");
+            buffer.write(URelaxer.escapeAttrQuot(URelaxer.getString(getEndlineno())));
+            buffer.write("\"");
+        }
         if (rawlineno_ != null) {
             buffer.write(" rawlineno=\"");
             buffer.write(URelaxer.escapeAttrQuot(URelaxer.getString(getRawlineno())));
@@ -688,6 +722,11 @@ public class XbfFallocateStatement extends xcodeml.f.XmfObj implements java.io.S
         if (lineno_ != null) {
             buffer.print(" lineno=\"");
             buffer.print(URelaxer.escapeAttrQuot(URelaxer.getString(getLineno())));
+            buffer.print("\"");
+        }
+        if (endlineno_ != null) {
+            buffer.print(" endlineno=\"");
+            buffer.print(URelaxer.escapeAttrQuot(URelaxer.getString(getEndlineno())));
             buffer.print("\"");
         }
         if (rawlineno_ != null) {
@@ -753,6 +792,15 @@ public class XbfFallocateStatement extends xcodeml.f.XmfObj implements java.io.S
      *
      * @return String
      */
+    public String getEndlinenoAsString() {
+        return (URelaxer.getString(getEndlineno()));
+    }
+
+    /**
+     * Gets the property value as String.
+     *
+     * @return String
+     */
     public String getRawlinenoAsString() {
         return (URelaxer.getString(getRawlineno()));
     }
@@ -782,6 +830,15 @@ public class XbfFallocateStatement extends xcodeml.f.XmfObj implements java.io.S
      */
     public void setLinenoByString(String string) {
         setLineno(string);
+    }
+
+    /**
+     * Sets the property value by String.
+     *
+     * @param string
+     */
+    public void setEndlinenoByString(String string) {
+        setEndlineno(string);
     }
 
     /**

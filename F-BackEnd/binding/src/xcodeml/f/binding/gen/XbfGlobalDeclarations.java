@@ -63,7 +63,7 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_F.rng (Fri Dec 04 19:18:15 JST 2009)
+ * @version XcodeML_F.rng (Mon Nov 29 15:25:56 JST 2010)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbfGlobalDeclarations extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, IRVisitable, IRNode {
@@ -244,12 +244,12 @@ public class XbfGlobalDeclarations extends xcodeml.f.XmfObj implements java.io.S
         while (true) {
             if (XbfFfunctionDefinition.isMatch(stack)) {
                 addContent(factory.createXbfFfunctionDefinition(stack));
-            } else if (XbfText.isMatch(stack)) {
-                addContent(factory.createXbfText(stack));
             } else if (XbfFmoduleDefinition.isMatch(stack)) {
                 addContent(factory.createXbfFmoduleDefinition(stack));
             } else if (XbfFblockDataDefinition.isMatch(stack)) {
                 addContent(factory.createXbfFblockDataDefinition(stack));
+            } else if (XbfText.isMatch(stack)) {
+                addContent(factory.createXbfText(stack));
             } else {
                 break;
             }
@@ -692,11 +692,11 @@ public class XbfGlobalDeclarations extends xcodeml.f.XmfObj implements java.io.S
         while (true) {
             if (XbfFfunctionDefinition.isMatchHungry(target)) {
                 $match$ = true;
-            } else if (XbfText.isMatchHungry(target)) {
-                $match$ = true;
             } else if (XbfFmoduleDefinition.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbfFblockDataDefinition.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfText.isMatchHungry(target)) {
                 $match$ = true;
             } else {
                 break;

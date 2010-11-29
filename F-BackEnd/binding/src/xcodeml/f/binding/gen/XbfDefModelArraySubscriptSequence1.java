@@ -49,7 +49,7 @@ import org.w3c.dom.*;
  * &lt;/define&gt;
  * </pre>
  *
- * @version XcodeML_F.rng (Fri Dec 04 19:18:15 JST 2009)
+ * @version XcodeML_F.rng (Mon Nov 29 15:25:55 JST 2010)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbfDefModelArraySubscriptSequence1 implements java.io.Serializable, Cloneable, IRVisitable, IRNode, IXbfFbasicTypeChoice {

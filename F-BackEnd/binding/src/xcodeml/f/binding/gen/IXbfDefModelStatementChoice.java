@@ -41,9 +41,9 @@ import org.xml.sax.SAXException;
 
 /**
  * <b>IXbfDefModelStatementChoice</b> is generated from XcodeML_F.rng by Relaxer.
- * Concrete classes of the interface are XbfFdoStatement, XbfFdoWhileStatement, XbfFselectCaseStatement, XbfFcaseLabel, XbfFwhereStatement, XbfGotoStatement, XbfFstopStatement, XbfFpauseStatement, XbfFwriteStatement, XbfFprintStatement, XbfFinquireStatement, XbfExprStatement, XbfStatementLabel, XbfFrewindStatement, XbfFbackspaceStatement, XbfFopenStatement, XbfFcloseStatement, XbfFformatDecl, XbfFdataDecl, XbfFnullifyStatement, XbfFcontainsStatement, XbfFassignStatement, XbfFpointerAssignStatement, XbfFreturnStatement, XbfFpragmaStatement, XbfText, XbfFifStatement, XbfContinueStatement, XbfFcycleStatement, XbfFexitStatement, XbfFreadStatement, XbfFendFileStatement, XbfFentryDecl, XbfFallocateStatement and XbfFdeallocateStatement.
+ * Concrete classes of the interface are XbfFdoStatement, XbfFselectCaseStatement, XbfFcaseLabel, XbfGotoStatement, XbfFstopStatement, XbfFpauseStatement, XbfExprStatement, XbfFifStatement, XbfFdoWhileStatement, XbfFcycleStatement, XbfFexitStatement, XbfStatementLabel, XbfFreadStatement, XbfFwriteStatement, XbfFprintStatement, XbfFrewindStatement, XbfFendFileStatement, XbfFbackspaceStatement, XbfFopenStatement, XbfFcloseStatement, XbfFinquireStatement, XbfFformatDecl, XbfFentryDecl, XbfFallocateStatement, XbfFdeallocateStatement, XbfFcontainsStatement, XbfContinueStatement, XbfFreturnStatement, XbfFwhereStatement, XbfFdataDecl, XbfFnullifyStatement, XbfFpragmaStatement, XbfText, XbfFassignStatement and XbfFpointerAssignStatement.
  *
- * @version XcodeML_F.rng (Fri Dec 04 19:18:15 JST 2009)
+ * @version XcodeML_F.rng (Mon Nov 29 15:25:57 JST 2010)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public interface IXbfDefModelStatementChoice extends IRVisitable, IRNode {
@@ -186,6 +186,16 @@ public interface IXbfDefModelStatementChoice extends IRVisitable, IRNode {
     /**
      * @return String
      */
+    String getEndlineno();
+
+    /**
+     * @param endlineno
+     */
+    void setEndlineno(String endlineno);
+
+    /**
+     * @return String
+     */
     String getRawlineno();
 
     /**
@@ -216,6 +226,11 @@ public interface IXbfDefModelStatementChoice extends IRVisitable, IRNode {
     /**
      * @return String
      */
+    String getEndlinenoAsString();
+
+    /**
+     * @return String
+     */
     String getRawlinenoAsString();
 
     /**
@@ -227,6 +242,11 @@ public interface IXbfDefModelStatementChoice extends IRVisitable, IRNode {
      * @param string
      */
     void setLinenoByString(String string);
+
+    /**
+     * @param string
+     */
+    void setEndlinenoByString(String string);
 
     /**
      * @param string

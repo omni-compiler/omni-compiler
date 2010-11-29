@@ -33,7 +33,7 @@ import org.w3c.dom.*;
 /**
  * <b>XbfFdoStatementSequence</b> is generated from XcodeML_F.rng by Relaxer.
  *
- * @version XcodeML_F.rng (Fri Dec 04 19:18:15 JST 2009)
+ * @version XcodeML_F.rng (Mon Nov 29 15:25:56 JST 2010)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbfFdoStatementSequence implements java.io.Serializable, Cloneable, IRVisitable, IRNode {

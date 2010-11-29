@@ -61,7 +61,7 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_F.rng (Fri Dec 04 19:18:15 JST 2009)
+ * @version XcodeML_F.rng (Mon Nov 29 15:25:56 JST 2010)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbfVarList extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, IRVisitable, IRNode {
@@ -243,10 +243,10 @@ public class XbfVarList extends xcodeml.f.XmfObj implements java.io.Serializable
         name_ = URelaxer.getAttributePropertyAsString(element, "name");
         content_.clear();
         while (true) {
-            if (XbfVarRef.isMatch(stack)) {
-                addContent(factory.createXbfVarRef(stack));
-            } else if (XbfFdoLoop.isMatch(stack)) {
+            if (XbfFdoLoop.isMatch(stack)) {
                 addContent(factory.createXbfFdoLoop(stack));
+            } else if (XbfVarRef.isMatch(stack)) {
+                addContent(factory.createXbfVarRef(stack));
             } else {
                 break;
             }
@@ -741,9 +741,9 @@ public class XbfVarList extends xcodeml.f.XmfObj implements java.io.Serializable
         boolean $match$ = false;
         Element child;
         while (true) {
-            if (XbfVarRef.isMatchHungry(target)) {
+            if (XbfFdoLoop.isMatchHungry(target)) {
                 $match$ = true;
-            } else if (XbfFdoLoop.isMatchHungry(target)) {
+            } else if (XbfVarRef.isMatchHungry(target)) {
                 $match$ = true;
             } else {
                 break;

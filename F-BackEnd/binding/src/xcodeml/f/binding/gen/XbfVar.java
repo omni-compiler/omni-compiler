@@ -53,7 +53,7 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_F.rng (Fri Dec 04 19:18:15 JST 2009)
+ * @version XcodeML_F.rng (Mon Nov 29 15:25:55 JST 2010)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbfVar extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, xcodeml.binding.IXbVarRef, IRVisitable, IRNode, IXbfVarRefChoice, IXbfArgumentsChoice, IXbfDefModelExprChoice, IXbfAllocChoice1, IXbfDefModelLValueChoice {
