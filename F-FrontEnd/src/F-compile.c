@@ -689,7 +689,7 @@ void compile_statement1(int st_no, expr x)
         /* evaluate condition and make WHERE_STATEMENT clause */
         v = compile_logical_expression_with_array(EXPR_ARG1(x));
 
-        st = list3(F_WHERE_STATEMENT,v,NULL,NULL);
+        st = list5(F_WHERE_STATEMENT,v,NULL,NULL,NULL,NULL);
         output_statement(st);
 
         CTL_BLOCK(ctl_top) = CURRENT_STATEMENTS;
@@ -716,6 +716,14 @@ void compile_statement1(int st_no, expr x)
 
             /* change to CTL_ELSE_WHERE */
             CTL_TYPE(ctl_top) = CTL_ELSE_WHERE;
+
+	    if (endlineno_flag){
+	      st = list0(F_ELSEWHERE_STATEMENT);
+	      output_statement(st);
+	      CURRENT_STATEMENTS = NULL;
+	      EXPR_ARG5(CTL_WHERE_STATEMENT(ctl_top)) = st;
+	    }
+
         } else error("'elsewhere', out of place");
         break;
     case F_ENDWHERE_STATEMENT:
