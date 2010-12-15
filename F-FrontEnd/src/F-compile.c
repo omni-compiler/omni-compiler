@@ -302,8 +302,9 @@ void compile_statement1(int st_no, expr x)
     case F95_ENDMODULE_STATEMENT: /* (F95_ENDMODULE_STATEMENT) */      
     do_end_module:
         check_INDCL();
-	if (endlineno_flag)
-	  ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
+	// move into end_procedure()
+	//if (endlineno_flag)
+	//ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
         end_procedure();
         end_module();
         break;
@@ -380,16 +381,18 @@ void compile_statement1(int st_no, expr x)
     case F95_ENDFUNCTION_STATEMENT:  /* (F95_END_FUNCTION_STATEMENT) */
     case F95_ENDSUBROUTINE_STATEMENT:  /* (F95_END_SUBROUTINE_STATEMENT) */
         check_INEXEC();
-	if (endlineno_flag)
-	  ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
+	// move into end_procedure()
+	//if (endlineno_flag)
+	//ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
         end_procedure();
         break;
 
     case F95_ENDPROGRAM_STATEMENT:  /* (F95_END_PROGRAM_STATEMENT) */
         check_INEXEC();
-	if (endlineno_flag)
-	  if (CURRENT_EXT_ID && EXT_LINE(CURRENT_EXT_ID))
-	    EXT_END_LINE_NO(CURRENT_EXT_ID) = current_line->ln_no;
+	// move into end_procedure()
+	//if (endlineno_flag)
+	//if (CURRENT_EXT_ID && EXT_LINE(CURRENT_EXT_ID))
+	//EXT_END_LINE_NO(CURRENT_EXT_ID) = current_line->ln_no;
         end_procedure();
         break;
     case F_END_STATEMENT:       /* (F_END_STATEMENT) */
@@ -399,12 +402,13 @@ void compile_statement1(int st_no, expr x)
             goto do_end_module;
         } else {
             check_INEXEC();
-	    if (endlineno_flag){
-	      if (CURRENT_PROCEDURE)
-		ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
-	      else if (CURRENT_EXT_ID && EXT_LINE(CURRENT_EXT_ID))
-		EXT_END_LINE_NO(CURRENT_EXT_ID) = current_line->ln_no;
-	    }
+	    // move into end_procedure()
+	    //if (endlineno_flag){
+	    //	      if (CURRENT_PROCEDURE)
+	    //ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
+	    //else if (CURRENT_EXT_ID && EXT_LINE(CURRENT_EXT_ID))
+	    //EXT_END_LINE_NO(CURRENT_EXT_ID) = current_line->ln_no;
+	    //}
             end_procedure();
         }
         break;
@@ -531,20 +535,23 @@ void compile_statement1(int st_no, expr x)
         push_ctl(CTL_IF);
         /* evaluate condition and make IF_STATEMENT clause */
         v = compile_logical_expression(EXPR_ARG1(x));
-        st = list3(IF_STATEMENT,v,NULL,NULL);
+        st = list5(IF_STATEMENT,v,NULL,NULL,NULL,NULL);
         output_statement(st);
         CTL_BLOCK(ctl_top) = CURRENT_STATEMENTS;
         CURRENT_STATEMENTS = NULL;
 
         /* construct name */
         if (EXPR_HAS_ARG3(x)) {
-            list_put_last(st, EXPR_ARG3(x));
+	  //list_put_last(st, EXPR_ARG3(x));
+	  EXPR_ARG4(st) = EXPR_ARG3(x);
         }
         /* set current IF_STATEMENT */
         CTL_IF_STATEMENT(ctl_top) = st;
         if(EXPR_ARG2(x)){
             compile_exec_statement(EXPR_ARG2(x));
             CTL_IF_THEN(ctl_top) = CURRENT_STATEMENTS;
+	    if (endlineno_flag)
+	      EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
             pop_ctl();  /* pop and output */
             break;
         }
@@ -558,6 +565,14 @@ void compile_statement1(int st_no, expr x)
 
             /* change to CTL_ELSE */
             CTL_TYPE(ctl_top) = CTL_ELSE;
+
+	    if (endlineno_flag){
+	      st = list0(F_ELSE_STATEMENT);
+	      output_statement(st);
+	      CURRENT_STATEMENTS = NULL;
+	      EXPR_ARG5(CTL_IF_STATEMENT(ctl_top)) = st;
+	    }
+
         } else error("'else', out of place");
         break;
     case F_ELSEIF_STATEMENT: /* (F_IF_STATEMENT condition) */
@@ -569,13 +584,14 @@ void compile_statement1(int st_no, expr x)
 
             /* evaluate condition and make IF_STATEMENT clause */
             v = compile_logical_expression(EXPR_ARG1(x));
-            st = list3(IF_STATEMENT,v,NULL,NULL);
+            st = list5(IF_STATEMENT,v,NULL,NULL,NULL,NULL);
             output_statement(st);
             CTL_IF_ELSE(ctl_top) = CURRENT_STATEMENTS;
             CURRENT_STATEMENTS = NULL;
 
             /* set current IF_STATEMENT clause */
             CTL_IF_STATEMENT(ctl_top) = st;
+
         } else {
             v = compile_logical_expression(EXPR_ARG1(x)); /* error check */
             error("'elseif', out of place");
@@ -599,6 +615,7 @@ void compile_statement1(int st_no, expr x)
 
             pop_ctl();
         } else error("'endif', out of place");
+
         break;
 
     case F_DO_STATEMENT: {
@@ -743,6 +760,9 @@ void compile_statement1(int st_no, expr x)
                 CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
                 CURRENT_STATEMENTS = NULL;
 
+		if (endlineno_flag)
+		  EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+
                 pop_ctl();
             }
 
@@ -772,6 +792,10 @@ void compile_statement1(int st_no, expr x)
         } else if (CTL_TYPE(ctl_top) == CTL_CASE) {
             CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
 
+	    // For previous CASE.
+	    if (endlineno_flag)
+	      EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+
             pop_ctl();
 
             if(CTL_TYPE(ctl_top) != CTL_SELECT)
@@ -779,6 +803,7 @@ void compile_statement1(int st_no, expr x)
 
             CTL_SELECT_STATEMENT_BODY(ctl_top) = CURRENT_STATEMENTS;
 
+	    // For SELECT
 	    if (endlineno_flag)
 	      EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
 
@@ -1909,6 +1934,13 @@ end_procedure()
         end_contains();
     }
 
+    if (endlineno_flag){
+      if (CURRENT_PROCEDURE)
+	ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
+      else if (CURRENT_EXT_ID && EXT_LINE(CURRENT_EXT_ID))
+	EXT_END_LINE_NO(CURRENT_EXT_ID) = current_line->ln_no;
+    }
+
     if(NOT_INDATA_YET) end_declaration();
 
     /*
@@ -2327,6 +2359,8 @@ check_DO_end(ID label)
         return;
     }
 
+    // do - continue case
+
     while (CTL_TYPE(ctl_top) == CTL_DO && 
            CTL_DO_LABEL(ctl_top) == label) {
 
@@ -2343,6 +2377,9 @@ check_DO_end(ID label)
 	 */  
         CTL_DO_BODY(ctl_top) = CURRENT_STATEMENTS;
       }
+
+      if (endlineno_flag)
+	EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
 
       pop_ctl();
     }
@@ -2732,6 +2769,11 @@ end_interface()
     } else {
         extid_put_last(
             EXT_PROC_INTERFACES(PARENT_EXT_ID), intr);
+    }
+
+    if (endlineno_flag){
+      if (CURRENT_INTERFACE && EXT_LINE(CURRENT_INTERFACE))
+	EXT_END_LINE_NO(CURRENT_INTERFACE) = current_line->ln_no;
     }
 
     pop_unit_ctl();
@@ -3522,12 +3564,12 @@ compile_ARITHIF_statement(expr x)
             EXPV_INT_VALUE(label[i]),LAB_EXEC,FALSE);
         if(idLabel == NULL) return;
 
-        stIf = list3(IF_STATEMENT,
+        stIf = list5(IF_STATEMENT,
             expv_cons(
                 compops[i], type_LOGICAL, vTmp, expv_constant_0),
             list1(GOTO_STATEMENT,
                 expv_sym_term(IDENT, NULL, ID_SYM(idLabel))),
-            stElse);
+	    stElse, NULL, NULL);
         stElse = stIf;
     }
 

@@ -2855,6 +2855,9 @@ compile_struct_decl_end()
         return;
     }
 
+    if (endlineno_flag)
+      EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+
     pop_ctl();
 }
 

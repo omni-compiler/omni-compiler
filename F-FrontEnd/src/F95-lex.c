@@ -1890,6 +1890,11 @@ again:
 
     /* done */
 Done:
+
+    if (endlineno_flag)
+      if (current_line->ln_no != read_lineno.ln_no)
+	current_line->end_ln_no = read_lineno.ln_no;
+
     if (st_PRAGMA_flag)
         goto Last;
 
@@ -2181,6 +2186,11 @@ copy_body:
     *q = '\0';                  /* termination */
 
 Done:
+
+    if (endlineno_flag)
+      if (current_line->ln_no != read_lineno.ln_no - 1)
+	current_line->end_ln_no = read_lineno.ln_no - 1;
+
     st_PRAGMA_flag = current_st_PRAGMA_flag;
 
     if (st_PRAGMA_flag)

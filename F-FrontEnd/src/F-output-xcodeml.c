@@ -1650,9 +1650,15 @@ outx_IFWHERE_Statement(int l, expv v)
     outx_close(l1, "then");
 
     if(EXPR_ARG3(v)) {
-        outx_tag(l1, "else");
-        outx_body(l2, EXPR_ARG3(v));
-        outx_close(l1, "else");
+      if (EXPR_ARG5(v)){
+	outx_vtagLineno(l1, "else", EXPR_LINE(EXPR_ARG5(v)), NULL);
+	outx_puts(">\n");
+      }
+      else {
+	outx_tag(l1, "else");
+      }
+      outx_body(l2, EXPR_ARG3(v));
+      outx_close(l1, "else");
     }
 
     outx_expvClose(l, v);
