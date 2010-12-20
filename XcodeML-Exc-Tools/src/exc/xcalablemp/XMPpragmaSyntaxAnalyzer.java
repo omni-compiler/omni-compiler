@@ -687,25 +687,41 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
   private XobjList parse_BCAST_clause() throws XmException, XMPexception {
     XobjList varList = Xcons.List();
+
+    if (pg_tok() != '(') {
+      error("'(' is expected before bcast <variable> list");
+    }
+
     do {
-      if (pg_tok() != PG_IDENT)
+      pg_get_token();
+      if (pg_tok() != PG_IDENT) {
         error("<variable> for bcast directive is expected");
-      else varList.add(Xcons.String(pg_tok_buf()));
+      }
+      else {
+        varList.add(Xcons.String(pg_tok_buf()));
+      }
 
       pg_get_token();
       if (pg_tok() == ',') {
-        pg_get_token();
         continue;
       }
-      else break;
+      else if (pg_tok() == ')') {
+        break;
+      }
+      else {
+        error("',' or ')' is expected after bcast <variable> list");
+      }
     } while (true);
 
     XobjList fromRef = null;
+    pg_get_token();
     if (pg_is_ident("from")) {
       pg_get_token();
       fromRef = parse_ON_REF(true, false);
     }
-    else fromRef = null;
+    else {
+      fromRef = null;
+    }
 
     XobjList onRef = null;
     if (pg_is_ident("on")) {
