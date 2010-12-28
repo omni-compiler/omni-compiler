@@ -2047,8 +2047,6 @@ done:
     return(ST_INIT);
 }
 
-static int last_char_in_quote_is_quote = FALSE;
-
 /* for fixed format */
 static int
 read_fixed_format()
@@ -2170,21 +2168,11 @@ copy_body:
         }
 
     copy_body_cont:
-
         /* copy to statement buffer */
-	p = oBuf + st_len;
-
-	if (last_char_in_quote_is_quote){
-	  *p = qChar;
-	  last_char_in_quote_is_quote = FALSE;
-	  lnLen = strlen(line_buffer);
-	  memcpy(p+1, line_buffer, lnLen); /* oBuf <= line_buffer */
-	}
-	else {
-	  lnLen = strlen(line_buffer);
-	  memcpy(p, line_buffer, lnLen); /* oBuf <= line_buffer */
-	}
-
+        p = oBuf + st_len;
+        lnLen = strlen(line_buffer);
+        memcpy(p, line_buffer, lnLen); /* oBuf <= line_buffer */
+        *(p + lnLen) = '\0';
         /* oBuf => st_buffer */
         newLen = ScanFortranLine(p, oBuf, q, st_buffer, bufMax, 
                                  &inQuote, &qChar, &inH, &hLen, &p, &q);
@@ -2196,7 +2184,6 @@ copy_body:
         memcpy(oBuf, st_buffer, st_len);
     }
     *q = '\0';                  /* termination */
-    last_char_in_quote_is_quote = FALSE;
 
 Done:
 
@@ -2353,19 +2340,19 @@ next_line0:
                 return(ST_EOF);
             } else if (c == '\n') {
                 while (i < 6) stn_cols[i++] = ' ';
-		if (stn_cols[0] == 'c') /* only for comment.  */
-		  /* if not, line count is over the current.  */
-		  ungetc(c,source_file);
+        if (stn_cols[0] == 'c') /* only for comment.  */
+            /* if not, line count is over the current.  */
+            ungetc(c,source_file);
                 break;
             } else if (c == '\t') {
                 /* TAB in col 1-6 skips to column 7 */
                 while (i < 6) stn_cols[i++] = ' ';
                 break;
             } else {
-	      if (PRAGMA_flag)
-		stn_cols[i] = c;
-	      else
-		stn_cols[i] = isupper(c) ? tolower(c): c;
+        if (PRAGMA_flag)
+            stn_cols[i] = c;
+        else
+            stn_cols[i] = isupper(c) ? tolower(c): c;
             }
         }
     if (stn_cols[0] == 'c') {
@@ -2887,6 +2874,7 @@ unHollerith(cur, head, dst, dstHead, dstMax, inQuotePtr, quoteChar,
     return TRUE;
 }
 
+
 static int
 checkInQuote(cur, dst, inQuotePtr, quoteCharPtr, newCurPtr, newDstPtr)
      char *cur;
@@ -2904,10 +2892,7 @@ checkInQuote(cur, dst, inQuotePtr, quoteCharPtr, newCurPtr, newDstPtr)
     } else {
         if (*cur == *quoteCharPtr) {
             cur++;
-	    if (*cur == '\0'){
-	      last_char_in_quote_is_quote = TRUE;
-	    }
-            else if (*cur != *quoteCharPtr) {
+            if (*cur != *quoteCharPtr) {
                 *dst++ = QUOTE;
                 *inQuotePtr = FALSE;
                 *quoteCharPtr = '\0';
