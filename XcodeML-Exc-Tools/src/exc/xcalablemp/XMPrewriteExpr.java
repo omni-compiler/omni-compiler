@@ -172,12 +172,12 @@ public class XMPrewriteExpr {
     int arrayDim = alignedArray.getDim();
     Ident getAddrFuncId = null;
     if (arrayDim == arrayDimCount) {
-      getAddrFuncId = XMP.getMacroId("_XCALABLEMP_M_GET_ADDR_E_" + arrayDim, Xtype.Pointer(alignedArray.getType()));
+      getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_E_" + arrayDim, Xtype.Pointer(alignedArray.getType()));
       for (int i = 0; i < arrayDim - 1; i++)
         getAddrFuncArgs.add(alignedArray.getAccIdAt(i).Ref());
     }
     else {
-      getAddrFuncId = XMP.getMacroId("_XCALABLEMP_M_GET_ADDR_" + arrayDimCount, Xtype.Pointer(alignedArray.getType()));
+      getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_" + arrayDimCount, Xtype.Pointer(alignedArray.getType()));
       for (int i = 0; i < arrayDimCount; i++)
         getAddrFuncArgs.add(alignedArray.getAccIdAt(i).Ref());
     }
@@ -213,7 +213,7 @@ public class XMPrewriteExpr {
               {
                 XobjList args = Xcons.List(indexRef,
                                            alignedArray.getGtolTemp0IdAt(index).Ref());
-                return XMP.getMacroId("_XCALABLEMP_M_CALC_INDEX_BLOCK").Call(args);
+                return XMP.getMacroId("_XMP_M_CALC_INDEX_BLOCK").Call(args);
               }
             case XMPshadow.SHADOW_FULL:
               return indexRef;
@@ -224,7 +224,7 @@ public class XMPrewriteExpr {
         else {
           XobjList args = Xcons.List(indexRef,
                                      alignedArray.getGtolTemp0IdAt(index).Ref());
-          return XMP.getMacroId("_XCALABLEMP_M_CALC_INDEX_BLOCK").Call(args);
+          return XMP.getMacroId("_XMP_M_CALC_INDEX_BLOCK").Call(args);
         }
       case XMPalignedArray.CYCLIC:
         if (alignedArray.hasShadow()) {
@@ -234,7 +234,7 @@ public class XMPrewriteExpr {
               {
                 XobjList args = Xcons.List(indexRef,
                                            alignedArray.getGtolTemp0IdAt(index).Ref());
-                return XMP.getMacroId("_XCALABLEMP_M_CALC_INDEX_CYCLIC").Call(args);
+                return XMP.getMacroId("_XMP_M_CALC_INDEX_CYCLIC").Call(args);
               }
             case XMPshadow.SHADOW_FULL:
               return indexRef;
@@ -247,7 +247,7 @@ public class XMPrewriteExpr {
         else {
           XobjList args = Xcons.List(indexRef,
                                      alignedArray.getGtolTemp0IdAt(index).Ref());
-          return XMP.getMacroId("_XCALABLEMP_M_CALC_INDEX_CYCLIC").Call(args);
+          return XMP.getMacroId("_XMP_M_CALC_INDEX_CYCLIC").Call(args);
         }
       default:
         throw new XMPexception("unknown align manner for array '" + alignedArray.getName()  + "'");

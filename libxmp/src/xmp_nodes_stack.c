@@ -6,67 +6,67 @@
 
 #include "xmp_internal.h"
 
-typedef struct _XCALABLEMP_nodes_dish_type {
-  _XCALABLEMP_nodes_t *nodes;
-  struct _XCALABLEMP_nodes_dish_type *prev;
-} _XCALABLEMP_nodes_dish_t;
+typedef struct _XMP_nodes_dish_type {
+  _XMP_nodes_t *nodes;
+  struct _XMP_nodes_dish_type *prev;
+} _XMP_nodes_dish_t;
 
-static _XCALABLEMP_nodes_dish_t *_XCALABLEMP_nodes_stack_top = NULL;
+static _XMP_nodes_dish_t *_XMP_nodes_stack_top = NULL;
 
-void _XCALABLEMP_push_nodes(_XCALABLEMP_nodes_t *nodes) {
-  _XCALABLEMP_ASSERT(nodes != NULL);
+void _XMP_push_nodes(_XMP_nodes_t *nodes) {
+  _XMP_ASSERT(nodes != NULL);
 
-  _XCALABLEMP_nodes_dish_t *new_dish = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_nodes_dish_t));
+  _XMP_nodes_dish_t *new_dish = _XMP_alloc(sizeof(_XMP_nodes_dish_t));
   new_dish->nodes = nodes;
-  new_dish->prev = _XCALABLEMP_nodes_stack_top;
-  _XCALABLEMP_nodes_stack_top = new_dish;
+  new_dish->prev = _XMP_nodes_stack_top;
+  _XMP_nodes_stack_top = new_dish;
 }
 
-void _XCALABLEMP_pop_nodes(void) {
-  _XCALABLEMP_ASSERT(_XCALABLEMP_nodes_stack_top != NULL);
+void _XMP_pop_nodes(void) {
+  _XMP_ASSERT(_XMP_nodes_stack_top != NULL);
 
-  _XCALABLEMP_nodes_dish_t *freed_dish = _XCALABLEMP_nodes_stack_top;
-  _XCALABLEMP_nodes_stack_top = freed_dish->prev;
-  _XCALABLEMP_free(freed_dish);
+  _XMP_nodes_dish_t *freed_dish = _XMP_nodes_stack_top;
+  _XMP_nodes_stack_top = freed_dish->prev;
+  _XMP_free(freed_dish);
 }
 
-void _XCALABLEMP_pop_n_free_nodes(void) {
-  _XCALABLEMP_ASSERT(_XCALABLEMP_nodes_stack_top != NULL);
+void _XMP_pop_n_free_nodes(void) {
+  _XMP_ASSERT(_XMP_nodes_stack_top != NULL);
 
-  _XCALABLEMP_nodes_dish_t *freed_dish = _XCALABLEMP_nodes_stack_top;
-  _XCALABLEMP_nodes_stack_top = freed_dish->prev;
-  _XCALABLEMP_finalize_nodes(freed_dish->nodes);
-  _XCALABLEMP_free(freed_dish);
+  _XMP_nodes_dish_t *freed_dish = _XMP_nodes_stack_top;
+  _XMP_nodes_stack_top = freed_dish->prev;
+  _XMP_finalize_nodes(freed_dish->nodes);
+  _XMP_free(freed_dish);
 }
 
-void _XCALABLEMP_pop_n_free_nodes_wo_finalize_comm(void) {
-  _XCALABLEMP_ASSERT(_XCALABLEMP_nodes_stack_top != NULL);
+void _XMP_pop_n_free_nodes_wo_finalize_comm(void) {
+  _XMP_ASSERT(_XMP_nodes_stack_top != NULL);
 
-  _XCALABLEMP_nodes_dish_t *freed_dish = _XCALABLEMP_nodes_stack_top;
-  _XCALABLEMP_nodes_stack_top = freed_dish->prev;
-  _XCALABLEMP_free(freed_dish->nodes);
-  _XCALABLEMP_free(freed_dish);
+  _XMP_nodes_dish_t *freed_dish = _XMP_nodes_stack_top;
+  _XMP_nodes_stack_top = freed_dish->prev;
+  _XMP_free(freed_dish->nodes);
+  _XMP_free(freed_dish);
 }
 
-_XCALABLEMP_nodes_t *_XCALABLEMP_get_execution_nodes(void) {
-  _XCALABLEMP_ASSERT(_XCALABLEMP_nodes_stack_top != NULL);
+_XMP_nodes_t *_XMP_get_execution_nodes(void) {
+  _XMP_ASSERT(_XMP_nodes_stack_top != NULL);
 
-  return _XCALABLEMP_nodes_stack_top->nodes;
+  return _XMP_nodes_stack_top->nodes;
 }
 
-int _XCALABLEMP_get_execution_nodes_rank(void) {
-  return _XCALABLEMP_get_execution_nodes()->comm_rank;
+int _XMP_get_execution_nodes_rank(void) {
+  return _XMP_get_execution_nodes()->comm_rank;
 }
 
-void _XCALABLEMP_push_comm(MPI_Comm *comm) {
-  _XCALABLEMP_ASSERT(comm != NULL);
+void _XMP_push_comm(MPI_Comm *comm) {
+  _XMP_ASSERT(comm != NULL);
 
-  _XCALABLEMP_push_nodes(_XCALABLEMP_create_nodes_by_comm(comm));
+  _XMP_push_nodes(_XMP_create_nodes_by_comm(comm));
 }
 
-void _XCALABLEMP_finalize_comm(MPI_Comm *comm) {
-  _XCALABLEMP_ASSERT(comm != NULL);
+void _XMP_finalize_comm(MPI_Comm *comm) {
+  _XMP_ASSERT(comm != NULL);
 
   MPI_Comm_free(comm);
-  _XCALABLEMP_free(comm);
+  _XMP_free(comm);
 }

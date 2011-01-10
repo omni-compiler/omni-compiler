@@ -9,9 +9,9 @@
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
-static void _XCALABLEMP_calc_array_dim_elmts(_XCALABLEMP_array_t *array, int array_index) {
-  _XCALABLEMP_ASSERT(array != NULL);
-  _XCALABLEMP_ASSERT(array->is_allocated);
+static void _XMP_calc_array_dim_elmts(_XMP_array_t *array, int array_index) {
+  _XMP_ASSERT(array != NULL);
+  _XMP_ASSERT(array->is_allocated);
 
   int dim = array->dim;
 
@@ -25,11 +25,11 @@ static void _XCALABLEMP_calc_array_dim_elmts(_XCALABLEMP_array_t *array, int arr
   array->info[array_index].dim_elmts = dim_elmts;
 }
 
-void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_template_t *template, int dim,
+void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int dim,
                                  int type, size_t type_size, ...) {
-  _XCALABLEMP_ASSERT(template != NULL);
+  _XMP_ASSERT(template != NULL);
 
-  _XCALABLEMP_array_t *a = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_array_t) + sizeof(_XCALABLEMP_array_info_t) * (dim - 1));
+  _XMP_array_t *a = _XMP_alloc(sizeof(_XMP_array_t) + sizeof(_XMP_array_info_t) * (dim - 1));
 
   a->is_allocated = template->is_owner;
   a->is_align_comm_member = false;
@@ -42,7 +42,7 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
 
   a->align_comm = NULL;
   a->align_comm_size = 1;
-  a->align_comm_rank = _XCALABLEMP_N_INVALID_RANK;
+  a->align_comm_rank = _XMP_N_INVALID_RANK;
 
   a->align_template = template;
 
@@ -51,7 +51,7 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
   for (int i = 0; i < dim; i++) {
     int size = va_arg(args, int);
 
-    _XCALABLEMP_array_info_t *ai = &(a->info[i]);
+    _XMP_array_info_t *ai = &(a->info[i]);
 
     ai->is_shadow_comm_member = false;
 
@@ -60,42 +60,42 @@ void _XCALABLEMP_init_array_desc(_XCALABLEMP_array_t **array, _XCALABLEMP_templa
     ai->ser_upper = size - 1;
     ai->ser_size = size;
 
-    ai->shadow_type = _XCALABLEMP_N_SHADOW_NONE;
+    ai->shadow_type = _XMP_N_SHADOW_NONE;
     ai->shadow_size_lo  = 0;
     ai->shadow_size_hi  = 0;
 
     ai->shadow_comm = NULL;
     ai->shadow_comm_size = 1;
-    ai->shadow_comm_rank = _XCALABLEMP_N_INVALID_RANK;
+    ai->shadow_comm_rank = _XMP_N_INVALID_RANK;
   }
   va_end(args);
 
   *array = a;
 }
 
-void _XCALABLEMP_finalize_array_desc(_XCALABLEMP_array_t *array) {
-  _XCALABLEMP_ASSERT(array != NULL);
+void _XMP_finalize_array_desc(_XMP_array_t *array) {
+  _XMP_ASSERT(array != NULL);
 
   int dim = array->dim;
   for (int i = 0; i < dim; i++) {
-    _XCALABLEMP_array_info_t *ai = &(array->info[i]);
+    _XMP_array_info_t *ai = &(array->info[i]);
 
     if (ai->is_shadow_comm_member) {
-      _XCALABLEMP_finalize_comm(ai->shadow_comm);
+      _XMP_finalize_comm(ai->shadow_comm);
     }
   }
 
   if (array->is_align_comm_member) {
-    _XCALABLEMP_finalize_comm(array->align_comm);
+    _XMP_finalize_comm(array->align_comm);
   }
 
-  _XCALABLEMP_free(array);
+  _XMP_free(array);
 }
 
-void _XCALABLEMP_align_array_NOT_ALIGNED(_XCALABLEMP_array_t *array, int array_index) {
-  _XCALABLEMP_ASSERT(array != NULL);
+void _XMP_align_array_NOT_ALIGNED(_XMP_array_t *array, int array_index) {
+  _XMP_ASSERT(array != NULL);
 
-  _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
+  _XMP_array_info_t *ai = &(array->info[array_index]);
 
   int lower = ai->ser_lower;
   int upper = ai->ser_upper;
@@ -103,7 +103,7 @@ void _XCALABLEMP_align_array_NOT_ALIGNED(_XCALABLEMP_array_t *array, int array_i
 
   // set members
   ai->is_regular_chunk = true;
-  ai->align_manner = _XCALABLEMP_N_ALIGN_NOT_ALIGNED;
+  ai->align_manner = _XMP_N_ALIGN_NOT_ALIGNED;
 
   ai->par_lower = lower;
   ai->par_upper = upper;
@@ -117,22 +117,22 @@ void _XCALABLEMP_align_array_NOT_ALIGNED(_XCALABLEMP_array_t *array, int array_i
 
   ai->align_subscript = 0;
 
-  ai->align_template_index = _XCALABLEMP_N_NO_ALIGNED_TEMPLATE;
+  ai->align_template_index = _XMP_N_NO_ALIGNED_TEMPLATE;
   ai->align_template_info = NULL;
   ai->align_template_chunk = NULL;
 }
 
-void _XCALABLEMP_align_array_DUPLICATION(_XCALABLEMP_array_t *array, int array_index, int template_index,
+void _XMP_align_array_DUPLICATION(_XMP_array_t *array, int array_index, int template_index,
                                          long long align_subscript) {
-  _XCALABLEMP_ASSERT(array != NULL);
+  _XMP_ASSERT(array != NULL);
 
-  _XCALABLEMP_template_t *template = array->align_template;
-  _XCALABLEMP_ASSERT(template->is_fixed); // checked by compiler
-  _XCALABLEMP_ASSERT(template->is_distributed); // checked by compiler
+  _XMP_template_t *template = array->align_template;
+  _XMP_ASSERT(template->is_fixed); // checked by compiler
+  _XMP_ASSERT(template->is_distributed); // checked by compiler
 
-  _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
-  _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
-  _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
+  _XMP_template_info_t *ti = &(template->info[template_index]);
+  _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
+  _XMP_array_info_t *ai = &(array->info[array_index]);
 
   int lower = ai->ser_lower;
   int upper = ai->ser_upper;
@@ -142,12 +142,12 @@ void _XCALABLEMP_align_array_DUPLICATION(_XCALABLEMP_array_t *array, int array_i
   long long align_lower = lower + align_subscript;
   long long align_upper = upper + align_subscript;
   if (((align_lower < ti->ser_lower) || (align_upper > ti->ser_upper))) {
-    _XCALABLEMP_fatal("aligned array is out of template bound");
+    _XMP_fatal("aligned array is out of template bound");
   }
 
   // set members
   ai->is_regular_chunk = true;
-  ai->align_manner = _XCALABLEMP_N_ALIGN_DUPLICATION;
+  ai->align_manner = _XMP_N_ALIGN_DUPLICATION;
 
   if (template->is_owner) {
     ai->par_lower = lower;
@@ -168,28 +168,28 @@ void _XCALABLEMP_align_array_DUPLICATION(_XCALABLEMP_array_t *array, int array_i
   ai->align_template_chunk = chunk;
 }
 
-void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, int template_index,
+void _XMP_align_array_BLOCK(_XMP_array_t *array, int array_index, int template_index,
                                    long long align_subscript, int *temp0) {
-  _XCALABLEMP_ASSERT(array != NULL);
+  _XMP_ASSERT(array != NULL);
 
-  _XCALABLEMP_template_t *template = array->align_template;
-  _XCALABLEMP_ASSERT(template->is_fixed); // checked by compiler
-  _XCALABLEMP_ASSERT(template->is_distributed); // checked by compiler
+  _XMP_template_t *template = array->align_template;
+  _XMP_ASSERT(template->is_fixed); // checked by compiler
+  _XMP_ASSERT(template->is_distributed); // checked by compiler
 
-  _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
-  _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
-  _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
+  _XMP_template_info_t *ti = &(template->info[template_index]);
+  _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
+  _XMP_array_info_t *ai = &(array->info[array_index]);
 
   // check range
   long long align_lower = ai->ser_lower + align_subscript;
   long long align_upper = ai->ser_upper + align_subscript;
   if (((align_lower < ti->ser_lower) || (align_upper > ti->ser_upper))) {
-    _XCALABLEMP_fatal("aligned array is out of template bound");
+    _XMP_fatal("aligned array is out of template bound");
   }
 
   // set members
   ai->is_regular_chunk = (ti->ser_lower == (ai->ser_lower + align_subscript)) && chunk->is_regular_chunk;
-  ai->align_manner = _XCALABLEMP_N_ALIGN_BLOCK;
+  ai->align_manner = _XMP_N_ALIGN_BLOCK;
 
   if (template->is_owner) {
     long long template_lower = chunk->par_lower;
@@ -220,7 +220,7 @@ void _XCALABLEMP_align_array_BLOCK(_XCALABLEMP_array_t *array, int array_index, 
     }
 
     ai->par_stride = 1;
-    ai->par_size = _XCALABLEMP_M_COUNT_TRIPLETi(ai->par_lower, ai->par_upper, 1);
+    ai->par_size = _XMP_M_COUNT_TRIPLETi(ai->par_lower, ai->par_upper, 1);
 
     // FIXME array lower is always 0 in C
     ai->local_lower = 0;
@@ -241,32 +241,32 @@ EXIT_CALC_PARALLEL_MEMBERS:
   ai->align_template_chunk = chunk;
 }
 
-void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index, int template_index,
+void _XMP_align_array_CYCLIC(_XMP_array_t *array, int array_index, int template_index,
                                     long long align_subscript, int *temp0) {
-  _XCALABLEMP_ASSERT(array != NULL);
+  _XMP_ASSERT(array != NULL);
 
-  _XCALABLEMP_template_t *template = array->align_template;
-  _XCALABLEMP_ASSERT(template->is_fixed); // checked by compiler
-  _XCALABLEMP_ASSERT(template->is_distributed); // checked by compiler
+  _XMP_template_t *template = array->align_template;
+  _XMP_ASSERT(template->is_fixed); // checked by compiler
+  _XMP_ASSERT(template->is_distributed); // checked by compiler
 
-  _XCALABLEMP_template_info_t *ti = &(template->info[template_index]);
-  _XCALABLEMP_template_chunk_t *chunk = &(template->chunk[template_index]);
-  _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
+  _XMP_template_info_t *ti = &(template->info[template_index]);
+  _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
+  _XMP_array_info_t *ai = &(array->info[array_index]);
 
   // check range
   long long align_lower = ai->ser_lower + align_subscript;
   long long align_upper = ai->ser_upper + align_subscript;
   if (((align_lower < ti->ser_lower) || (align_upper > ti->ser_upper))) {
-    _XCALABLEMP_fatal("aligned array is out of template bound");
+    _XMP_fatal("aligned array is out of template bound");
   }
 
   // set members
   ai->is_regular_chunk = (ti->ser_lower == (ai->ser_lower + align_subscript)) && chunk->is_regular_chunk;
-  ai->align_manner = _XCALABLEMP_N_ALIGN_CYCLIC;
+  ai->align_manner = _XMP_N_ALIGN_CYCLIC;
 
   if (template->is_owner) {
     int cycle = chunk->par_stride;
-    int mod = _XCALABLEMP_modi_ll_i(chunk->par_lower - align_subscript, cycle);
+    int mod = _XMP_modi_ll_i(chunk->par_lower - align_subscript, cycle);
 
     int dist = (ai->ser_upper - mod) / cycle;
 
@@ -292,8 +292,8 @@ void _XCALABLEMP_align_array_CYCLIC(_XCALABLEMP_array_t *array, int array_index,
   ai->align_template_chunk = chunk;
 }
 
-void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc, ...) {
-  _XCALABLEMP_ASSERT(array_desc != NULL);
+void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...) {
+  _XMP_ASSERT(array_desc != NULL);
 
   if (!array_desc->is_allocated) {
     *array_addr = NULL;
@@ -315,18 +315,18 @@ void _XCALABLEMP_alloc_array(void **array_addr, _XCALABLEMP_array_t *array_desc,
   va_end(args);
 
   for (int i = 0; i < dim; i++) {
-    _XCALABLEMP_calc_array_dim_elmts(array_desc, i);
+    _XMP_calc_array_dim_elmts(array_desc, i);
   }
 
-  *array_addr = _XCALABLEMP_alloc(total_elmts * (array_desc->type_size));
+  *array_addr = _XMP_alloc(total_elmts * (array_desc->type_size));
 
   // set members
   array_desc->addr = array_addr;
   array_desc->total_elmts = total_elmts;
 }
 
-void _XCALABLEMP_init_array_alloc_params(void **array_addr, _XCALABLEMP_array_t *array_desc, ...) {
-  _XCALABLEMP_ASSERT(array_desc != NULL);
+void _XMP_init_array_alloc_params(void **array_addr, _XMP_array_t *array_desc, ...) {
+  _XMP_ASSERT(array_desc != NULL);
 
   if (!array_desc->is_allocated) {
     return;
@@ -347,7 +347,7 @@ void _XCALABLEMP_init_array_alloc_params(void **array_addr, _XCALABLEMP_array_t 
   va_end(args);
 
   for (int i = 0; i < dim; i++) {
-    _XCALABLEMP_calc_array_dim_elmts(array_desc, i);
+    _XMP_calc_array_dim_elmts(array_desc, i);
   }
 
   // set members
@@ -355,10 +355,10 @@ void _XCALABLEMP_init_array_alloc_params(void **array_addr, _XCALABLEMP_array_t 
   array_desc->total_elmts = total_elmts;
 }
 
-void _XCALABLEMP_init_array_addr(void **array_addr, void *init_addr,
-                                 _XCALABLEMP_array_t *array_desc, ...) {
-  _XCALABLEMP_ASSERT(init_addr != NULL);
-  _XCALABLEMP_ASSERT(array_desc != NULL);
+void _XMP_init_array_addr(void **array_addr, void *init_addr,
+                                 _XMP_array_t *array_desc, ...) {
+  _XMP_ASSERT(init_addr != NULL);
+  _XMP_ASSERT(array_desc != NULL);
 
   if (!array_desc->is_allocated) {
     *array_addr = NULL;
@@ -380,7 +380,7 @@ void _XCALABLEMP_init_array_addr(void **array_addr, void *init_addr,
   va_end(args);
 
   for (int i = 0; i < dim; i++) {
-    _XCALABLEMP_calc_array_dim_elmts(array_desc, i);
+    _XMP_calc_array_dim_elmts(array_desc, i);
   }
 
   *array_addr = init_addr;
@@ -390,13 +390,13 @@ void _XCALABLEMP_init_array_addr(void **array_addr, void *init_addr,
   array_desc->total_elmts = total_elmts;
 }
 
-void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
-  _XCALABLEMP_ASSERT(array != NULL);
+void _XMP_init_array_comm(_XMP_array_t *array, ...) {
+  _XMP_ASSERT(array != NULL);
 
-  _XCALABLEMP_template_t *align_template = array->align_template;
-  _XCALABLEMP_ASSERT(align_template->is_distributed); // checked by compiler
+  _XMP_template_t *align_template = array->align_template;
+  _XMP_ASSERT(align_template->is_distributed); // checked by compiler
 
-  _XCALABLEMP_nodes_t *onto_nodes = align_template->onto_nodes;
+  _XMP_nodes_t *onto_nodes = align_template->onto_nodes;
   if (!onto_nodes->is_member) {
     return;
   }
@@ -408,15 +408,15 @@ void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
   va_list args;
   va_start(args, array);
   for (int i = 0; i < template_dim; i++) {
-    _XCALABLEMP_template_chunk_t *chunk = &(align_template->chunk[i]);
+    _XMP_template_chunk_t *chunk = &(align_template->chunk[i]);
 
     int size, rank;
-    if (chunk->dist_manner == _XCALABLEMP_N_DIST_DUPLICATION) {
+    if (chunk->dist_manner == _XMP_N_DIST_DUPLICATION) {
       size = 1;
       rank = 0;
     }
     else {
-      _XCALABLEMP_nodes_info_t *onto_nodes_info = chunk->onto_nodes_info;
+      _XMP_nodes_info_t *onto_nodes_info = chunk->onto_nodes_info;
       size = onto_nodes_info->size;
       rank = onto_nodes_info->rank;
     }
@@ -429,7 +429,7 @@ void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
   }
   va_end(args);
 
-  MPI_Comm *comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
+  MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_split(*(onto_nodes->comm), color, onto_nodes->comm_rank, comm);
 
   // set members
@@ -440,8 +440,8 @@ void _XCALABLEMP_init_array_comm(_XCALABLEMP_array_t *array, ...) {
   MPI_Comm_rank(*comm, &(array->align_comm_rank));
 }
 
-unsigned long long _XCALABLEMP_get_array_total_elmts(_XCALABLEMP_array_t *array) {
-  _XCALABLEMP_ASSERT(array != NULL);
+unsigned long long _XMP_get_array_total_elmts(_XMP_array_t *array) {
+  _XMP_ASSERT(array != NULL);
 
   if (array->is_allocated) {
     return array->total_elmts;

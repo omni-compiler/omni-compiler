@@ -20,15 +20,15 @@ public class XMPglobalDecl {
   }
 
   public Ident getWorldDescId() {
-    return _env.declExternIdent("_XCALABLEMP_world_nodes", Xtype.voidPtrType);
+    return _env.declExternIdent("_XMP_world_nodes", Xtype.voidPtrType);
   }
 
   public Ident getWorldSizeId() {
-    return _env.declExternIdent("_XCALABLEMP_world_size", Xtype.intType);
+    return _env.declExternIdent("_XMP_world_size", Xtype.intType);
   }
 
   public Ident getWorldRankId() {
-    return _env.declExternIdent("_XCALABLEMP_world_rank", Xtype.intType);
+    return _env.declExternIdent("_XMP_world_rank", Xtype.intType);
   }
 
   public void setupGlobalInit() {
@@ -37,7 +37,7 @@ public class XMPglobalDecl {
     //                                                        Xtype.Function(Xtype.voidType)).Call(Xcons.List(Xcons.IntConstant(globalObjectTable.getCoarrayCount())))));
 
     _globalInitFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT,
-                                        _env.declExternIdent("_XCALABLEMP_init_world_NULL",
+                                        _env.declExternIdent("_XMP_init_world_NULL",
                                                              Xtype.Function(Xtype.voidType)).Call(null)));
 
     Xtype consType = Xtype.Function(Xtype.voidType);
@@ -45,7 +45,7 @@ public class XMPglobalDecl {
                                          Xcons.List(Xcode.GCC_ATTRIBUTE,
                                                     new Ident("constructor", null, null, null, null),
                                                     Xcons.List())));
-    Ident consId = _env.declStaticIdent("_XCALABLEMP_constructor", consType);
+    Ident consId = _env.declStaticIdent("_XMP_constructor", consType);
     _env.add(XobjectDef.Func(consId, null, null, Xcons.List(Xcode.COMPOUND_STATEMENT, (Xobject)null, null, _globalInitFuncBody)));
   }
 

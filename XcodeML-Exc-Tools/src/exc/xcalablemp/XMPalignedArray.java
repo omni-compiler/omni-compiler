@@ -121,8 +121,8 @@ public class XMPalignedArray {
   }
 
   // temp0 is
-  // block distribution:	parallel/serial lower	| _XCALABLEMP_gtol_lower_<array_name>_<array_dim>
-  // cyclic distribution:	nodes size		| _XCALABLEMP_gtol_cycle_<array_name>_<array_dim>
+  // block distribution:	parallel/serial lower	| _XMP_gtol_lower_<array_name>_<array_dim>
+  // cyclic distribution:	nodes size		| _XMP_gtol_cycle_<array_name>_<array_dim>
   public void setGtolTemp0IdAt(Ident temp0Id, int index) {
     _gtolTemp0IdVector.setElementAt(temp0Id, index);
   }

@@ -59,7 +59,7 @@ public class XMPtranslate implements XobjectDefVisitor {
 
   private void replaceMain(XobjectDef def) {
     Ident id = _env.findVarIdent("main");
-    id.setName("_XCALABLEMP_main");
-    def.setName("_XCALABLEMP_main");
+    id.setName("_XMP_main");
+    def.setName("_XMP_main");
   }
 }

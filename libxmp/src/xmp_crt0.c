@@ -6,14 +6,14 @@
 
 #include "xmp_internal.h"
 
-extern int _XCALABLEMP_main(int argc, char *argv[]);
+extern int _XMP_main(int argc, char *argv[]);
 
 int main(int argc, char *argv[]) {
-  _XCALABLEMP_init_world(&argc, &argv);
+  _XMP_init_world(&argc, &argv);
 
-  _XCALABLEMP_barrier_WORLD();
-  int ret = _XCALABLEMP_main(argc, argv);
-  _XCALABLEMP_barrier_WORLD();
+  _XMP_barrier_WORLD();
+  int ret = _XMP_main(argc, argv);
+  _XMP_barrier_WORLD();
 
-  return _XCALABLEMP_finalize_world(ret);
+  return _XMP_finalize_world(ret);
 }

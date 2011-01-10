@@ -8,30 +8,30 @@
 #include <stdlib.h>
 #include "xmp_internal.h"
 
-void *_XCALABLEMP_alloc(size_t size) {
+void *_XMP_alloc(size_t size) {
   void *addr;
 
   addr = malloc(size);
   if (addr == NULL) {
-    _XCALABLEMP_fatal("cannot allocate memory");
+    _XMP_fatal("cannot allocate memory");
   }
 
   return addr;
 }
 
-void _XCALABLEMP_free(void *p) {
-  _XCALABLEMP_ASSERT(p != NULL);
+void _XMP_free(void *p) {
+  _XMP_ASSERT(p != NULL);
 
   free(p);
 }
 
-void _XCALABLEMP_fatal(char *msg) {
-  _XCALABLEMP_ASSERT(msg != NULL);
+void _XMP_fatal(char *msg) {
+  _XMP_ASSERT(msg != NULL);
 
-  fprintf(stderr, "[RANK:%d] XcalableMP runtime error: %s\n", _XCALABLEMP_world_rank, msg);
+  fprintf(stderr, "[RANK:%d] XcalableMP runtime error: %s\n", _XMP_world_rank, msg);
   MPI_Abort(MPI_COMM_WORLD, 1);
 }
 
-void _XCALABLEMP_unexpected_error(void) {
-  _XCALABLEMP_fatal("unexpected error in runtime");
+void _XMP_unexpected_error(void) {
+  _XMP_fatal("unexpected error in runtime");
 }

@@ -40,10 +40,10 @@ public class XMPrealloc implements XobjectDefVisitor {
           }
 
           if (alignedArray.getAddrId().getStorageClass() == StorageClass.EXTERN) {
-            _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_init_array_alloc_params", allocFuncArgs);
+            _globalDecl.addGlobalInitFuncCall("_XMP_init_array_alloc_params", allocFuncArgs);
           }
           else {
-            _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_alloc_array", allocFuncArgs);
+            _globalDecl.addGlobalInitFuncCall("_XMP_alloc_array", allocFuncArgs);
           }
 
           def.setDef(null);
@@ -57,7 +57,7 @@ public class XMPrealloc implements XobjectDefVisitor {
                                          alignedArray.getAccIdAt(i).getAddr()));
           }
 
-          _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_init_array_addr", allocFuncArgs);
+          _globalDecl.addGlobalInitFuncCall("_XMP_init_array_addr", allocFuncArgs);
         }
       }
     }

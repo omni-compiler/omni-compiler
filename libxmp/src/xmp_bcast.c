@@ -9,8 +9,8 @@
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
-void _XCALABLEMP_bcast_NODES_ENTIRE_OMITTED(_XCALABLEMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size) {
-  _XCALABLEMP_ASSERT(bcast_nodes != NULL);
+void _XMP_bcast_NODES_ENTIRE_OMITTED(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size) {
+  _XMP_ASSERT(bcast_nodes != NULL);
 
   if (!bcast_nodes->is_member) {
     return;
@@ -22,22 +22,22 @@ void _XCALABLEMP_bcast_NODES_ENTIRE_OMITTED(_XCALABLEMP_nodes_t *bcast_nodes, vo
   MPI_Type_commit(&mpi_datatype);
 
   // bcast
-  MPI_Bcast(addr, count, mpi_datatype, _XCALABLEMP_N_DEFAULT_ROOT_RANK, *(bcast_nodes->comm));
+  MPI_Bcast(addr, count, mpi_datatype, _XMP_N_DEFAULT_ROOT_RANK, *(bcast_nodes->comm));
 }
 
-void _XCALABLEMP_bcast_NODES_ENTIRE_GLOBAL(_XCALABLEMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
+void _XMP_bcast_NODES_ENTIRE_GLOBAL(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
                                            int from_lower, int from_upper, int from_stride) {
-  _XCALABLEMP_ASSERT(bcast_nodes != NULL);
+  _XMP_ASSERT(bcast_nodes != NULL);
 
-  _XCALABLEMP_validate_nodes_ref(&from_lower, &from_upper, &from_stride, _XCALABLEMP_world_size);
+  _XMP_validate_nodes_ref(&from_lower, &from_upper, &from_stride, _XMP_world_size);
 
   if (!bcast_nodes->is_member) {
     return;
   }
 
   // check <from-ref>
-  if (_XCALABLEMP_M_COUNT_TRIPLETi(from_lower, from_upper, from_stride) != 1) {
-    _XCALABLEMP_fatal("broadcast failed, multiple source nodes indicated");
+  if (_XMP_M_COUNT_TRIPLETi(from_lower, from_upper, from_stride) != 1) {
+    _XMP_fatal("broadcast failed, multiple source nodes indicated");
   }
 
   // setup type
@@ -50,17 +50,17 @@ void _XCALABLEMP_bcast_NODES_ENTIRE_GLOBAL(_XCALABLEMP_nodes_t *bcast_nodes, voi
 }
 
 // FIXME read spec
-void _XCALABLEMP_bcast_NODES_ENTIRE_NODES(_XCALABLEMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
-                                          _XCALABLEMP_nodes_t *from_nodes, ...) {
-  _XCALABLEMP_ASSERT(bcast_nodes != NULL);
-  _XCALABLEMP_ASSERT(from_nodes != NULL);
+void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
+                                          _XMP_nodes_t *from_nodes, ...) {
+  _XMP_ASSERT(bcast_nodes != NULL);
+  _XMP_ASSERT(from_nodes != NULL);
 
   if (!bcast_nodes->is_member) {
     return;
   }
 
   if (!from_nodes->is_member) {
-    _XCALABLEMP_fatal("broadcast failed, cannot find the source node");
+    _XMP_fatal("broadcast failed, cannot find the source node");
   }
 
   // calc source nodes number
@@ -84,9 +84,9 @@ void _XCALABLEMP_bcast_NODES_ENTIRE_NODES(_XCALABLEMP_nodes_t *bcast_nodes, void
       from_stride = va_arg(args, int);
 
       // check <from-ref>
-      _XCALABLEMP_validate_nodes_ref(&from_lower, &from_upper, &from_stride, size);
-      if (_XCALABLEMP_M_COUNT_TRIPLETi(from_lower, from_upper, from_stride) != 1) {
-        _XCALABLEMP_fatal("multiple source nodes indicated in bcast directive");
+      _XMP_validate_nodes_ref(&from_lower, &from_upper, &from_stride, size);
+      if (_XMP_M_COUNT_TRIPLETi(from_lower, from_upper, from_stride) != 1) {
+        _XMP_fatal("multiple source nodes indicated in bcast directive");
       }
 
       root += (acc_nodes_size * (from_lower));
@@ -104,6 +104,6 @@ void _XCALABLEMP_bcast_NODES_ENTIRE_NODES(_XCALABLEMP_nodes_t *bcast_nodes, void
   MPI_Bcast(addr, count, mpi_datatype, root, *(bcast_nodes->comm));
 }
 
-// void _XCALABLEMP_M_BCAST_EXEC_OMITTED(void *addr, int count, size_t datatype_size)
-// void _XCALABLEMP_M_BCAST_EXEC_GLOBAL(void *addr, int count, size_t datatype_size, int from_lower, int from_upper, int from_stride)
-// void _XCALABLEMP_M_BCAST_EXEC_NODES(void *addr, int count, size_t datatype_size, _XCALABLEMP_nodes_t *from_nodes, ...)
+// void _XMP_M_BCAST_EXEC_OMITTED(void *addr, int count, size_t datatype_size)
+// void _XMP_M_BCAST_EXEC_GLOBAL(void *addr, int count, size_t datatype_size, int from_lower, int from_upper, int from_stride)
+// void _XMP_M_BCAST_EXEC_NODES(void *addr, int count, size_t datatype_size, _XMP_nodes_t *from_nodes, ...)

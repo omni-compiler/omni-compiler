@@ -11,55 +11,55 @@
 
 // XXX <nodes-ref> is { 1-ogigin in language | 0-origin in runtime }, needs converting
 
-static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_GLOBAL(int dim);
-static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_EXEC(int dim);
-static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NUMBER(int dim, int ref_lower, int ref_upper, int ref_stride);
-static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NAMED(int dim, _XCALABLEMP_nodes_t *ref_nodes,
+static _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim);
+static _XMP_nodes_t *_XMP_init_nodes_struct_EXEC(int dim);
+static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NUMBER(int dim, int ref_lower, int ref_upper, int ref_stride);
+static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NAMED(int dim, _XMP_nodes_t *ref_nodes,
                                                                       int *ref_lower, int *ref_upper, int *ref_stride);
-static void _XCALABLEMP_calc_nodes_rank(_XCALABLEMP_nodes_t *n, int linear_rank);
-static void _XCALABLEMP_disable_nodes_rank(_XCALABLEMP_nodes_t *n);
-static void _XCALABLEMP_check_nodes_size_STATIC(_XCALABLEMP_nodes_t *n, int linear_size);
-static void _XCALABLEMP_check_nodes_size_DYNAMIC(_XCALABLEMP_nodes_t *n, int linear_size, int linear_rank);
-static _Bool _XCALABLEMP_check_nodes_ref_inclusion(int lower, int upper, int stride, int rank);
+static void _XMP_calc_nodes_rank(_XMP_nodes_t *n, int linear_rank);
+static void _XMP_disable_nodes_rank(_XMP_nodes_t *n);
+static void _XMP_check_nodes_size_STATIC(_XMP_nodes_t *n, int linear_size);
+static void _XMP_check_nodes_size_DYNAMIC(_XMP_nodes_t *n, int linear_size, int linear_rank);
+static _Bool _XMP_check_nodes_ref_inclusion(int lower, int upper, int stride, int rank);
 
-static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_GLOBAL(int dim) {
-  _XCALABLEMP_nodes_t *n = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_nodes_t) +
-                                             sizeof(_XCALABLEMP_nodes_info_t) * (dim - 1));
+static _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim) {
+  _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) +
+                                             sizeof(_XMP_nodes_info_t) * (dim - 1));
 
   n->is_member = true;
   n->dim = dim;
-  n->comm_size = _XCALABLEMP_world_size;
+  n->comm_size = _XMP_world_size;
 
-  n->comm_rank = _XCALABLEMP_world_rank;
-  n->comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
+  n->comm_rank = _XMP_world_rank;
+  n->comm = _XMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_dup(MPI_COMM_WORLD, n->comm);
 
   return n;
 }
 
-static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_EXEC(int dim) {
-  _XCALABLEMP_nodes_t *exec_nodes = _XCALABLEMP_get_execution_nodes();
+static _XMP_nodes_t *_XMP_init_nodes_struct_EXEC(int dim) {
+  _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
   int size = exec_nodes->comm_size;
   int rank = exec_nodes->comm_rank;
 
-  _XCALABLEMP_nodes_t *n = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_nodes_t) +
-                                             sizeof(_XCALABLEMP_nodes_info_t) * (dim - 1));
+  _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) +
+                                             sizeof(_XMP_nodes_info_t) * (dim - 1));
 
   n->is_member = true;
   n->dim = dim;
   n->comm_size = size;
 
   n->comm_rank = rank;
-  n->comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
+  n->comm = _XMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_dup(*(exec_nodes->comm), n->comm);
 
   return n;
 }
 
-static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NUMBER(int dim, int ref_lower, int ref_upper, int ref_stride) {
-  _Bool is_member = _XCALABLEMP_check_nodes_ref_inclusion(ref_lower, ref_upper, ref_stride, _XCALABLEMP_world_rank);
+static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NUMBER(int dim, int ref_lower, int ref_upper, int ref_stride) {
+  _Bool is_member = _XMP_check_nodes_ref_inclusion(ref_lower, ref_upper, ref_stride, _XMP_world_rank);
 
-  MPI_Comm *comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
+  MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   int color;
   if (is_member) {
     color = 1;
@@ -67,14 +67,14 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NUMBER(int dim, 
   else {
     color = 0;
   }
-  MPI_Comm_split(MPI_COMM_WORLD, color, _XCALABLEMP_world_rank, comm);
+  MPI_Comm_split(MPI_COMM_WORLD, color, _XMP_world_rank, comm);
 
-  _XCALABLEMP_nodes_t *n = n = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_nodes_t) +
-                                                 sizeof(_XCALABLEMP_nodes_info_t) * (dim - 1));
+  _XMP_nodes_t *n = n = _XMP_alloc(sizeof(_XMP_nodes_t) +
+                                                 sizeof(_XMP_nodes_info_t) * (dim - 1));
 
   n->is_member = is_member;
   n->dim = dim;
-  n->comm_size = _XCALABLEMP_M_COUNT_TRIPLETi(ref_lower, ref_upper, ref_stride);
+  n->comm_size = _XMP_M_COUNT_TRIPLETi(ref_lower, ref_upper, ref_stride);
 
   if (is_member) {
     MPI_Comm_rank(*comm, &(n->comm_rank));
@@ -83,37 +83,37 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NUMBER(int dim, 
     int split_comm_size;
     MPI_Comm_size(*comm, &split_comm_size);
     if (split_comm_size != n->comm_size) {
-      _XCALABLEMP_fatal("incorrect communicator size");
+      _XMP_fatal("incorrect communicator size");
     }
   }
   else {
-    _XCALABLEMP_finalize_comm(comm);
+    _XMP_finalize_comm(comm);
 
-    n->comm_rank = _XCALABLEMP_N_INVALID_RANK;
+    n->comm_rank = _XMP_N_INVALID_RANK;
     n->comm = NULL;
   }
 
   return n;
 }
 
-static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NAMED(int dim, _XCALABLEMP_nodes_t *ref_nodes,
+static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NAMED(int dim, _XMP_nodes_t *ref_nodes,
                                                                       int *ref_lower, int *ref_upper, int *ref_stride) {
-  _XCALABLEMP_ASSERT(ref_nodes != NULL);
-  _XCALABLEMP_ASSERT(ref_lower != NULL);
-  _XCALABLEMP_ASSERT(ref_upper != NULL);
-  _XCALABLEMP_ASSERT(ref_stride != NULL);
-  _XCALABLEMP_ASSERT(ref_nodes->is_member);
+  _XMP_ASSERT(ref_nodes != NULL);
+  _XMP_ASSERT(ref_lower != NULL);
+  _XMP_ASSERT(ref_upper != NULL);
+  _XMP_ASSERT(ref_stride != NULL);
+  _XMP_ASSERT(ref_nodes->is_member);
 
   int comm_size = 1;
   int ref_dim = ref_nodes->dim;
   _Bool is_member = true;
   for (int i = 0; i < ref_dim; i++) {
-    comm_size *= _XCALABLEMP_M_COUNT_TRIPLETi(ref_lower[i], ref_upper[i], ref_stride[i]);
+    comm_size *= _XMP_M_COUNT_TRIPLETi(ref_lower[i], ref_upper[i], ref_stride[i]);
     is_member = is_member &&
-                _XCALABLEMP_check_nodes_ref_inclusion(ref_lower[i], ref_upper[i], ref_stride[i], ref_nodes->info[i].rank);
+                _XMP_check_nodes_ref_inclusion(ref_lower[i], ref_upper[i], ref_stride[i], ref_nodes->info[i].rank);
   }
 
-  MPI_Comm *comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
+  MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   int color;
   if (is_member) {
     color = 1;
@@ -123,8 +123,8 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NAMED(int dim, _
   }
   MPI_Comm_split(*(ref_nodes->comm), color, ref_nodes->comm_rank, comm);
 
-  _XCALABLEMP_nodes_t *n = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_nodes_t) +
-                                             sizeof(_XCALABLEMP_nodes_info_t) * (dim - 1));
+  _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) +
+                                             sizeof(_XMP_nodes_info_t) * (dim - 1));
 
   n->is_member = is_member;
   n->dim = dim;
@@ -137,22 +137,22 @@ static _XCALABLEMP_nodes_t *_XCALABLEMP_init_nodes_struct_NODES_NAMED(int dim, _
     int split_comm_size;
     MPI_Comm_size(*comm, &split_comm_size);
     if (split_comm_size != n->comm_size) {
-      _XCALABLEMP_fatal("incorrect communicator size");
+      _XMP_fatal("incorrect communicator size");
     }
   }
   else {
-    _XCALABLEMP_finalize_comm(comm);
+    _XMP_finalize_comm(comm);
 
-    n->comm_rank = _XCALABLEMP_N_INVALID_RANK;
+    n->comm_rank = _XMP_N_INVALID_RANK;
     n->comm = NULL;
   }
 
   return n;
 }
 
-static void _XCALABLEMP_calc_nodes_rank(_XCALABLEMP_nodes_t *n, int linear_rank) {
-  _XCALABLEMP_ASSERT(n != NULL);
-  _XCALABLEMP_ASSERT(n->is_member);
+static void _XMP_calc_nodes_rank(_XMP_nodes_t *n, int linear_rank) {
+  _XMP_ASSERT(n != NULL);
+  _XMP_ASSERT(n->is_member);
 
   int acc_size = 1;
   int dim = n->dim;
@@ -163,18 +163,18 @@ static void _XCALABLEMP_calc_nodes_rank(_XCALABLEMP_nodes_t *n, int linear_rank)
   }
 }
 
-static void _XCALABLEMP_disable_nodes_rank(_XCALABLEMP_nodes_t *n) {
-  _XCALABLEMP_ASSERT(n != NULL);
-  _XCALABLEMP_ASSERT(!n->is_member);
+static void _XMP_disable_nodes_rank(_XMP_nodes_t *n) {
+  _XMP_ASSERT(n != NULL);
+  _XMP_ASSERT(!n->is_member);
 
   int dim = n->dim;
   for (int i = 0; i < dim; i++) {
-    n->info[i].rank = _XCALABLEMP_N_INVALID_RANK;
+    n->info[i].rank = _XMP_N_INVALID_RANK;
   }
 }
 
-static void _XCALABLEMP_check_nodes_size_STATIC(_XCALABLEMP_nodes_t *n, int linear_size) {
-  _XCALABLEMP_ASSERT(n != NULL);
+static void _XMP_check_nodes_size_STATIC(_XMP_nodes_t *n, int linear_size) {
+  _XMP_ASSERT(n != NULL);
 
   int acc_size = 1;
   int dim = n->dim;
@@ -183,12 +183,12 @@ static void _XCALABLEMP_check_nodes_size_STATIC(_XCALABLEMP_nodes_t *n, int line
   }
 
   if (acc_size != linear_size) {
-    _XCALABLEMP_fatal("incorrect communicator size");
+    _XMP_fatal("incorrect communicator size");
   }
 }
 
-static void _XCALABLEMP_check_nodes_size_DYNAMIC(_XCALABLEMP_nodes_t *n, int linear_size, int linear_rank) {
-  _XCALABLEMP_ASSERT(n != NULL);
+static void _XMP_check_nodes_size_DYNAMIC(_XMP_nodes_t *n, int linear_size, int linear_rank) {
+  _XMP_ASSERT(n != NULL);
 
   int acc_size = 1;
   int dim = n->dim;
@@ -197,11 +197,11 @@ static void _XCALABLEMP_check_nodes_size_DYNAMIC(_XCALABLEMP_nodes_t *n, int lin
   }
 
   if (acc_size > linear_size) {
-    _XCALABLEMP_fatal("indicated communicator size is bigger than the actual communicator size");
+    _XMP_fatal("indicated communicator size is bigger than the actual communicator size");
   }
 
   if ((linear_size % acc_size) != 0) {
-    _XCALABLEMP_fatal("cannot determine communicator size dynamically");
+    _XMP_fatal("cannot determine communicator size dynamically");
   }
 
   int end_size = linear_size / acc_size;
@@ -212,7 +212,7 @@ static void _XCALABLEMP_check_nodes_size_DYNAMIC(_XCALABLEMP_nodes_t *n, int lin
   }
 }
 
-static _Bool _XCALABLEMP_check_nodes_ref_inclusion(int lower, int upper, int stride, int rank) {
+static _Bool _XMP_check_nodes_ref_inclusion(int lower, int upper, int stride, int rank) {
   if (rank < lower) {
     return false;
   }
@@ -230,10 +230,10 @@ static _Bool _XCALABLEMP_check_nodes_ref_inclusion(int lower, int upper, int str
 }
 
 // XXX args are 1-origin
-void _XCALABLEMP_validate_nodes_ref(int *lower, int *upper, int *stride, int size) {
-  _XCALABLEMP_ASSERT(lower != NULL);
-  _XCALABLEMP_ASSERT(upper != NULL);
-  _XCALABLEMP_ASSERT(stride != NULL);
+void _XMP_validate_nodes_ref(int *lower, int *upper, int *stride, int size) {
+  _XMP_ASSERT(lower != NULL);
+  _XMP_ASSERT(upper != NULL);
+  _XMP_ASSERT(stride != NULL);
 
   // setup temporary variables
   int l, u, s = *(stride);
@@ -246,21 +246,21 @@ void _XCALABLEMP_validate_nodes_ref(int *lower, int *upper, int *stride, int siz
     u = *lower;
   }
   else {
-    _XCALABLEMP_fatal("the stride of <nodes-ref> is 0");
+    _XMP_fatal("the stride of <nodes-ref> is 0");
     l = 0; u = 0; // XXX dummy
   }
 
   // check boundary
   if (1 > l) {
-    _XCALABLEMP_fatal("<nodes-ref> is out of bounds, <ref-lower> is less than 1");
+    _XMP_fatal("<nodes-ref> is out of bounds, <ref-lower> is less than 1");
   }
 
   if (l > u) {
-    _XCALABLEMP_fatal("<nodes-ref> is out of bounds, <ref-upper> is less than <ref-lower>");
+    _XMP_fatal("<nodes-ref> is out of bounds, <ref-upper> is less than <ref-lower>");
   }
 
   if (u > size) {
-    _XCALABLEMP_fatal("<nodes-ref> is out of bounds, <ref-upper> is greater than the node size");
+    _XMP_fatal("<nodes-ref> is out of bounds, <ref-upper> is greater than the node size");
   }
 
   // validate values
@@ -281,17 +281,17 @@ void _XCALABLEMP_validate_nodes_ref(int *lower, int *upper, int *stride, int siz
   (*upper)--;
 }
 
-void _XCALABLEMP_init_nodes_STATIC_GLOBAL(int map_type, _XCALABLEMP_nodes_t **nodes, int dim, ...) {
+void _XMP_init_nodes_STATIC_GLOBAL(int map_type, _XMP_nodes_t **nodes, int dim, ...) {
   // FIXME <map-type> is ignored
 
-  _XCALABLEMP_nodes_t *n = _XCALABLEMP_init_nodes_struct_GLOBAL(dim);
+  _XMP_nodes_t *n = _XMP_init_nodes_struct_GLOBAL(dim);
 
   va_list args;
   va_start(args, dim);
   for (int i = 0; i < dim; i++) {
     int dim_size = va_arg(args, int);
     if (dim_size <= 0) {
-      _XCALABLEMP_fatal("<nodes-size> should be less or equal to zero");
+      _XMP_fatal("<nodes-size> should be less or equal to zero");
     }
 
     n->info[i].size = dim_size;
@@ -299,23 +299,23 @@ void _XCALABLEMP_init_nodes_STATIC_GLOBAL(int map_type, _XCALABLEMP_nodes_t **no
   va_end(args);
 
   // is_member is always true
-  _XCALABLEMP_check_nodes_size_STATIC(n, _XCALABLEMP_world_size);
-  _XCALABLEMP_calc_nodes_rank(n, _XCALABLEMP_world_rank);
+  _XMP_check_nodes_size_STATIC(n, _XMP_world_size);
+  _XMP_calc_nodes_rank(n, _XMP_world_rank);
 
   *nodes = (void *)n;
 }
 
-void _XCALABLEMP_init_nodes_DYNAMIC_GLOBAL(int map_type, _XCALABLEMP_nodes_t **nodes, int dim, ...) {
+void _XMP_init_nodes_DYNAMIC_GLOBAL(int map_type, _XMP_nodes_t **nodes, int dim, ...) {
   // FIXME <map-type> is ignored
 
-  _XCALABLEMP_nodes_t *n = _XCALABLEMP_init_nodes_struct_GLOBAL(dim);
+  _XMP_nodes_t *n = _XMP_init_nodes_struct_GLOBAL(dim);
 
   va_list args;
   va_start(args, dim);
   for (int i = 0; i < dim - 1; i++) {
     int dim_size = va_arg(args, int);
     if (dim_size <= 0) {
-      _XCALABLEMP_fatal("<nodes-size> should be less or equal to zero");
+      _XMP_fatal("<nodes-size> should be less or equal to zero");
     }
 
     n->info[i].size = dim_size;
@@ -323,51 +323,51 @@ void _XCALABLEMP_init_nodes_DYNAMIC_GLOBAL(int map_type, _XCALABLEMP_nodes_t **n
   va_end(args);
 
   // is_member is always true
-  _XCALABLEMP_check_nodes_size_DYNAMIC(n, _XCALABLEMP_world_size, _XCALABLEMP_world_rank);
-  _XCALABLEMP_calc_nodes_rank(n, _XCALABLEMP_world_rank);
+  _XMP_check_nodes_size_DYNAMIC(n, _XMP_world_size, _XMP_world_rank);
+  _XMP_calc_nodes_rank(n, _XMP_world_rank);
 
   *nodes = n;
 }
 
-void _XCALABLEMP_init_nodes_STATIC_EXEC(int map_type, _XCALABLEMP_nodes_t **nodes, int dim, ...) {
+void _XMP_init_nodes_STATIC_EXEC(int map_type, _XMP_nodes_t **nodes, int dim, ...) {
   // FIXME <map-type> is ignored
 
-  _XCALABLEMP_nodes_t *n = _XCALABLEMP_init_nodes_struct_EXEC(dim);
+  _XMP_nodes_t *n = _XMP_init_nodes_struct_EXEC(dim);
 
   va_list args;
   va_start(args, dim);
   for (int i = 0; i < dim; i++) {
     int dim_size = va_arg(args, int);
     if (dim_size <= 0) {
-      _XCALABLEMP_fatal("<nodes-size> should be less or equal to zero");
+      _XMP_fatal("<nodes-size> should be less or equal to zero");
     }
 
     n->info[i].size = dim_size;
   }
   va_end(args);
 
-  _XCALABLEMP_check_nodes_size_STATIC(n, n->comm_size);
+  _XMP_check_nodes_size_STATIC(n, n->comm_size);
   if (n->is_member) {
-    _XCALABLEMP_calc_nodes_rank(n, n->comm_rank);
+    _XMP_calc_nodes_rank(n, n->comm_rank);
   }
   else {
-    _XCALABLEMP_disable_nodes_rank(n);
+    _XMP_disable_nodes_rank(n);
   }
 
   *nodes = n;
 }
 
-void _XCALABLEMP_init_nodes_DYNAMIC_EXEC(int map_type, _XCALABLEMP_nodes_t **nodes, int dim, ...) {
+void _XMP_init_nodes_DYNAMIC_EXEC(int map_type, _XMP_nodes_t **nodes, int dim, ...) {
   // FIXME <map-type> is ignored
 
-  _XCALABLEMP_nodes_t *n = _XCALABLEMP_init_nodes_struct_EXEC(dim);
+  _XMP_nodes_t *n = _XMP_init_nodes_struct_EXEC(dim);
 
   va_list args;
   va_start(args, dim);
   for (int i = 0; i < dim - 1; i++) {
     int dim_size = va_arg(args, int);
     if (dim_size <= 0) {
-      _XCALABLEMP_fatal("<nodes-size> should be less or equal to zero");
+      _XMP_fatal("<nodes-size> should be less or equal to zero");
     }
 
     n->info[i].size = dim_size;
@@ -376,58 +376,58 @@ void _XCALABLEMP_init_nodes_DYNAMIC_EXEC(int map_type, _XCALABLEMP_nodes_t **nod
 
   if (n->is_member) {
     int linear_rank = n->comm_rank;
-    _XCALABLEMP_check_nodes_size_DYNAMIC(n, n->comm_size, linear_rank);
-    _XCALABLEMP_calc_nodes_rank(n, linear_rank);
+    _XMP_check_nodes_size_DYNAMIC(n, n->comm_size, linear_rank);
+    _XMP_calc_nodes_rank(n, linear_rank);
   }
   else {
-    _XCALABLEMP_check_nodes_size_DYNAMIC(n, n->comm_size, _XCALABLEMP_N_INVALID_RANK);
-    _XCALABLEMP_disable_nodes_rank(n);
+    _XMP_check_nodes_size_DYNAMIC(n, n->comm_size, _XMP_N_INVALID_RANK);
+    _XMP_disable_nodes_rank(n);
   }
 
   *nodes = n;
 }
 
-void _XCALABLEMP_init_nodes_STATIC_NODES_NUMBER(int map_type, _XCALABLEMP_nodes_t **nodes, int dim,
+void _XMP_init_nodes_STATIC_NODES_NUMBER(int map_type, _XMP_nodes_t **nodes, int dim,
                                                 int ref_lower, int ref_upper, int ref_stride, ...) {
-  _XCALABLEMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, _XCALABLEMP_world_size);
+  _XMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, _XMP_world_size);
 
-  _XCALABLEMP_nodes_t *n = _XCALABLEMP_init_nodes_struct_NODES_NUMBER(dim, ref_lower, ref_upper, ref_stride);
+  _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NUMBER(dim, ref_lower, ref_upper, ref_stride);
 
   va_list args;
   va_start(args, ref_stride);
   for (int i = 0; i < dim; i++) {
     int dim_size = va_arg(args, int);
     if (dim_size <= 0) {
-      _XCALABLEMP_fatal("<nodes-size> should be less or equal to zero");
+      _XMP_fatal("<nodes-size> should be less or equal to zero");
     }
 
     n->info[i].size = dim_size;
   }
   va_end(args);
 
-  _XCALABLEMP_check_nodes_size_STATIC(n, n->comm_size);
+  _XMP_check_nodes_size_STATIC(n, n->comm_size);
   if (n->is_member) {
-    _XCALABLEMP_calc_nodes_rank(n, n->comm_rank);
+    _XMP_calc_nodes_rank(n, n->comm_rank);
   }
   else {
-    _XCALABLEMP_disable_nodes_rank(n);
+    _XMP_disable_nodes_rank(n);
   }
 
   *nodes = n;
 }
 
-void _XCALABLEMP_init_nodes_DYNAMIC_NODES_NUMBER(int map_type, _XCALABLEMP_nodes_t **nodes, int dim,
+void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(int map_type, _XMP_nodes_t **nodes, int dim,
                                                  int ref_lower, int ref_upper, int ref_stride, ...) {
-  _XCALABLEMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, _XCALABLEMP_world_size);
+  _XMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, _XMP_world_size);
 
-  _XCALABLEMP_nodes_t *n = _XCALABLEMP_init_nodes_struct_NODES_NUMBER(dim, ref_lower, ref_upper, ref_stride);
+  _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NUMBER(dim, ref_lower, ref_upper, ref_stride);
 
   va_list args;
   va_start(args, ref_stride);
   for (int i = 0; i < dim - 1; i++) {
     int dim_size = va_arg(args, int);
     if (dim_size <= 0) {
-      _XCALABLEMP_fatal("<nodes-size> should be less or equal to zero");
+      _XMP_fatal("<nodes-size> should be less or equal to zero");
     }
 
     n->info[i].size = dim_size;
@@ -436,29 +436,29 @@ void _XCALABLEMP_init_nodes_DYNAMIC_NODES_NUMBER(int map_type, _XCALABLEMP_nodes
 
   if (n->is_member) {
     int linear_rank = n->comm_rank;
-    _XCALABLEMP_check_nodes_size_DYNAMIC(n, n->comm_size, linear_rank);
-    _XCALABLEMP_calc_nodes_rank(n, linear_rank);
+    _XMP_check_nodes_size_DYNAMIC(n, n->comm_size, linear_rank);
+    _XMP_calc_nodes_rank(n, linear_rank);
   }
   else {
-    _XCALABLEMP_check_nodes_size_DYNAMIC(n, n->comm_size, _XCALABLEMP_N_INVALID_RANK);
-    _XCALABLEMP_disable_nodes_rank(n);
+    _XMP_check_nodes_size_DYNAMIC(n, n->comm_size, _XMP_N_INVALID_RANK);
+    _XMP_disable_nodes_rank(n);
   }
 
   *nodes = n;
 }
 
-void _XCALABLEMP_init_nodes_STATIC_NODES_NAMED(int get_upper, int map_type, _XCALABLEMP_nodes_t **nodes, int dim,
-                                               _XCALABLEMP_nodes_t *ref_nodes, ...) {
-  _XCALABLEMP_ASSERT(ref_nodes != NULL);
+void _XMP_init_nodes_STATIC_NODES_NAMED(int get_upper, int map_type, _XMP_nodes_t **nodes, int dim,
+                                               _XMP_nodes_t *ref_nodes, ...) {
+  _XMP_ASSERT(ref_nodes != NULL);
 
   if (!ref_nodes->is_member) {
-    _XCALABLEMP_fatal("cannot create a new nodes descriptor");
+    _XMP_fatal("cannot create a new nodes descriptor");
   }
 
   int ref_dim = ref_nodes->dim;
-  int *ref_lower = _XCALABLEMP_alloc(sizeof(int) * ref_dim);
-  int *ref_upper = _XCALABLEMP_alloc(sizeof(int) * ref_dim);
-  int *ref_stride = _XCALABLEMP_alloc(sizeof(int) * ref_dim);
+  int *ref_lower = _XMP_alloc(sizeof(int) * ref_dim);
+  int *ref_upper = _XMP_alloc(sizeof(int) * ref_dim);
+  int *ref_stride = _XMP_alloc(sizeof(int) * ref_dim);
 
   va_list args;
   va_start(args, ref_nodes);
@@ -472,48 +472,48 @@ void _XCALABLEMP_init_nodes_STATIC_NODES_NAMED(int get_upper, int map_type, _XCA
     }
     ref_stride[i] = va_arg(args, int);
 
-    _XCALABLEMP_validate_nodes_ref(&(ref_lower[i]), &(ref_upper[i]), &(ref_stride[i]), ref_nodes->info[i].size);
+    _XMP_validate_nodes_ref(&(ref_lower[i]), &(ref_upper[i]), &(ref_stride[i]), ref_nodes->info[i].size);
   }
 
-  _XCALABLEMP_nodes_t *n = _XCALABLEMP_init_nodes_struct_NODES_NAMED(dim, ref_nodes, ref_lower, ref_upper, ref_stride);
+  _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NAMED(dim, ref_nodes, ref_lower, ref_upper, ref_stride);
 
-  _XCALABLEMP_free(ref_lower);
-  _XCALABLEMP_free(ref_upper);
-  _XCALABLEMP_free(ref_stride);
+  _XMP_free(ref_lower);
+  _XMP_free(ref_upper);
+  _XMP_free(ref_stride);
 
   for (int i = 0; i < dim; i++) {
     int dim_size = va_arg(args, int);
     if (dim_size <= 0) {
-      _XCALABLEMP_fatal("<nodes-size> should be less or equal to zero");
+      _XMP_fatal("<nodes-size> should be less or equal to zero");
     }
 
     n->info[i].size = dim_size;
   }
   va_end(args);
 
-  _XCALABLEMP_check_nodes_size_STATIC(n, n->comm_size);
+  _XMP_check_nodes_size_STATIC(n, n->comm_size);
   if (n->is_member) {
-    _XCALABLEMP_calc_nodes_rank(n, n->comm_rank);
+    _XMP_calc_nodes_rank(n, n->comm_rank);
   }
   else {
-    _XCALABLEMP_disable_nodes_rank(n);
+    _XMP_disable_nodes_rank(n);
   }
 
   *nodes = n;
 }
 
-void _XCALABLEMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, int map_type, _XCALABLEMP_nodes_t **nodes, int dim,
-                                               _XCALABLEMP_nodes_t *ref_nodes, ...) {
-  _XCALABLEMP_ASSERT(ref_nodes != NULL);
+void _XMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, int map_type, _XMP_nodes_t **nodes, int dim,
+                                               _XMP_nodes_t *ref_nodes, ...) {
+  _XMP_ASSERT(ref_nodes != NULL);
 
   if (!ref_nodes->is_member) {
-    _XCALABLEMP_fatal("cannot create a new nodes descriptor");
+    _XMP_fatal("cannot create a new nodes descriptor");
   }
 
   int ref_dim = ref_nodes->dim;
-  int *ref_lower = _XCALABLEMP_alloc(sizeof(int) * ref_dim);
-  int *ref_upper = _XCALABLEMP_alloc(sizeof(int) * ref_dim);
-  int *ref_stride = _XCALABLEMP_alloc(sizeof(int) * ref_dim);
+  int *ref_lower = _XMP_alloc(sizeof(int) * ref_dim);
+  int *ref_upper = _XMP_alloc(sizeof(int) * ref_dim);
+  int *ref_stride = _XMP_alloc(sizeof(int) * ref_dim);
 
   va_list args;
   va_start(args, ref_nodes);
@@ -527,18 +527,18 @@ void _XCALABLEMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, int map_type, _XC
     }
     ref_stride[i] = va_arg(args, int);
 
-    _XCALABLEMP_validate_nodes_ref(&(ref_lower[i]), &(ref_upper[i]), &(ref_stride[i]), ref_nodes->info[i].size);
+    _XMP_validate_nodes_ref(&(ref_lower[i]), &(ref_upper[i]), &(ref_stride[i]), ref_nodes->info[i].size);
   }
 
-  _XCALABLEMP_nodes_t *n = _XCALABLEMP_init_nodes_struct_NODES_NAMED(dim, ref_nodes, ref_lower, ref_upper, ref_stride);
+  _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NAMED(dim, ref_nodes, ref_lower, ref_upper, ref_stride);
 
-  _XCALABLEMP_free(ref_lower);
-  _XCALABLEMP_free(ref_upper);
-  _XCALABLEMP_free(ref_stride);
+  _XMP_free(ref_lower);
+  _XMP_free(ref_upper);
+  _XMP_free(ref_stride);
 
   for (int i = 0; i < dim - 1; i++) {
     int dim_size = va_arg(args, int);
-    if (dim_size <= 0) _XCALABLEMP_fatal("<nodes-size> should be less or equal to zero");
+    if (dim_size <= 0) _XMP_fatal("<nodes-size> should be less or equal to zero");
 
     n->info[i].size = dim_size;
   }
@@ -546,46 +546,46 @@ void _XCALABLEMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, int map_type, _XC
 
   if (n->is_member) {
     int linear_rank = n->comm_rank;
-    _XCALABLEMP_check_nodes_size_DYNAMIC(n, n->comm_size, linear_rank);
-    _XCALABLEMP_calc_nodes_rank(n, linear_rank);
+    _XMP_check_nodes_size_DYNAMIC(n, n->comm_size, linear_rank);
+    _XMP_calc_nodes_rank(n, linear_rank);
   }
   else {
-    _XCALABLEMP_check_nodes_size_DYNAMIC(n, n->comm_size, _XCALABLEMP_N_INVALID_RANK);
-    _XCALABLEMP_disable_nodes_rank(n);
+    _XMP_check_nodes_size_DYNAMIC(n, n->comm_size, _XMP_N_INVALID_RANK);
+    _XMP_disable_nodes_rank(n);
   }
 
   *nodes = n;
 }
 
-void _XCALABLEMP_finalize_nodes(_XCALABLEMP_nodes_t *nodes) {
-  _XCALABLEMP_ASSERT(nodes != NULL);
+void _XMP_finalize_nodes(_XMP_nodes_t *nodes) {
+  _XMP_ASSERT(nodes != NULL);
 
   if (nodes->is_member) {
-    _XCALABLEMP_finalize_comm(nodes->comm);
+    _XMP_finalize_comm(nodes->comm);
   }
 
-  _XCALABLEMP_free(nodes);
+  _XMP_free(nodes);
 }
 
-_Bool _XCALABLEMP_exec_task_GLOBAL_PART(int ref_lower, int ref_upper, int ref_stride) {
-  _XCALABLEMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, _XCALABLEMP_world_size);
+_Bool _XMP_exec_task_GLOBAL_PART(int ref_lower, int ref_upper, int ref_stride) {
+  _XMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, _XMP_world_size);
 
-  _XCALABLEMP_nodes_t *n = _XCALABLEMP_init_nodes_struct_NODES_NUMBER(0, ref_lower, ref_upper, ref_stride);
+  _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NUMBER(0, ref_lower, ref_upper, ref_stride);
   if (n->is_member) {
-    _XCALABLEMP_push_nodes(n);
+    _XMP_push_nodes(n);
     return true;
   }
   else {
-    _XCALABLEMP_finalize_nodes(n);
+    _XMP_finalize_nodes(n);
     return false;
   }
 }
 
-_Bool _XCALABLEMP_exec_task_NODES_ENTIRE(_XCALABLEMP_nodes_t *ref_nodes) {
-  _XCALABLEMP_ASSERT(ref_nodes != NULL);
+_Bool _XMP_exec_task_NODES_ENTIRE(_XMP_nodes_t *ref_nodes) {
+  _XMP_ASSERT(ref_nodes != NULL);
 
   if (ref_nodes->is_member) {
-    _XCALABLEMP_push_nodes(ref_nodes);
+    _XMP_push_nodes(ref_nodes);
     return true;
   }
   else {
@@ -593,8 +593,8 @@ _Bool _XCALABLEMP_exec_task_NODES_ENTIRE(_XCALABLEMP_nodes_t *ref_nodes) {
   }
 }
 
-_Bool _XCALABLEMP_exec_task_NODES_PART(int get_upper, _XCALABLEMP_nodes_t *ref_nodes, ...) {
-  _XCALABLEMP_ASSERT(ref_nodes != NULL);
+_Bool _XMP_exec_task_NODES_PART(int get_upper, _XMP_nodes_t *ref_nodes, ...) {
+  _XMP_ASSERT(ref_nodes != NULL);
 
   if (!ref_nodes->is_member) {
     return false;
@@ -625,15 +625,15 @@ _Bool _XCALABLEMP_exec_task_NODES_PART(int get_upper, _XCALABLEMP_nodes_t *ref_n
       }
       ref_stride = va_arg(args, int);
 
-      _XCALABLEMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, size);
+      _XMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, size);
 
-      is_member = is_member && _XCALABLEMP_check_nodes_ref_inclusion(ref_lower, ref_upper, ref_stride, rank);
+      is_member = is_member && _XMP_check_nodes_ref_inclusion(ref_lower, ref_upper, ref_stride, rank);
     }
 
     acc_nodes_size *= size;
   }
 
-  MPI_Comm *comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
+  MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   if (!is_member) {
     color = 0;
   }
@@ -641,23 +641,23 @@ _Bool _XCALABLEMP_exec_task_NODES_PART(int get_upper, _XCALABLEMP_nodes_t *ref_n
   MPI_Comm_split(*(ref_nodes->comm), color, ref_nodes->comm_rank, comm);
 
   if (is_member) {
-    _XCALABLEMP_push_comm(comm);
+    _XMP_push_comm(comm);
     return true;
   }
   else {
-    _XCALABLEMP_finalize_comm(comm);
+    _XMP_finalize_comm(comm);
     return false;
   }
 }
 
-_XCALABLEMP_nodes_t *_XCALABLEMP_create_nodes_by_comm(MPI_Comm *comm) {
-  _XCALABLEMP_ASSERT(comm != NULL);
+_XMP_nodes_t *_XMP_create_nodes_by_comm(MPI_Comm *comm) {
+  _XMP_ASSERT(comm != NULL);
 
   int size, rank;
   MPI_Comm_size(*comm, &size);
   MPI_Comm_rank(*comm, &rank);
 
-  _XCALABLEMP_nodes_t *n = _XCALABLEMP_alloc(sizeof(_XCALABLEMP_nodes_t));
+  _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t));
 
   n->is_member = true;
   n->dim = 1;

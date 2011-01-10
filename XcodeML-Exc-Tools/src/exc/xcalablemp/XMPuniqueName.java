@@ -69,6 +69,6 @@ public class XMPuniqueName {
     else                       _tempInstance.changeStatus();
 
     String uniqueString =  new String(_tempInstance._buffer, 0, _tempInstance._pointer + 1);
-    return new String("_XCALABLEMP_temp_" + uniqueString);
+    return new String("_XMP_temp_" + uniqueString);
   }
 }

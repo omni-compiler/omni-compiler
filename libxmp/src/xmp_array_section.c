@@ -11,11 +11,11 @@
 
 // ----- pack array
 // --- dimension 1
-#define _XCALABLEMP_SM_PACK_ARRAY_1(_type) \
+#define _XMP_SM_PACK_ARRAY_1(_type) \
 (_type *buf_addr, _type *src_addr, \
  int src_lower, int src_upper, int src_stride) { \
-  _XCALABLEMP_ASSERT(buf_addr != NULL); \
-  _XCALABLEMP_ASSERT(src_addr != NULL); \
+  _XMP_ASSERT(buf_addr != NULL); \
+  _XMP_ASSERT(src_addr != NULL); \
 \
   for (int i = src_lower; i <= src_upper; i += src_stride) { \
     *buf_addr = src_addr[i]; \
@@ -23,28 +23,28 @@
   } \
 }
 
-static void _XCALABLEMP_pack_array_1_BOOL		_XCALABLEMP_SM_PACK_ARRAY_1(_Bool)
-static void _XCALABLEMP_pack_array_1_CHAR		_XCALABLEMP_SM_PACK_ARRAY_1(char)
-static void _XCALABLEMP_pack_array_1_UNSIGNED_CHAR	_XCALABLEMP_SM_PACK_ARRAY_1(unsigned char)
-static void _XCALABLEMP_pack_array_1_SHORT		_XCALABLEMP_SM_PACK_ARRAY_1(short)
-static void _XCALABLEMP_pack_array_1_UNSIGNED_SHORT	_XCALABLEMP_SM_PACK_ARRAY_1(unsigned short)
-static void _XCALABLEMP_pack_array_1_INT		_XCALABLEMP_SM_PACK_ARRAY_1(int)
-static void _XCALABLEMP_pack_array_1_UNSIGNED_INT	_XCALABLEMP_SM_PACK_ARRAY_1(unsigned int)
-static void _XCALABLEMP_pack_array_1_LONG		_XCALABLEMP_SM_PACK_ARRAY_1(long)
-static void _XCALABLEMP_pack_array_1_UNSIGNED_LONG	_XCALABLEMP_SM_PACK_ARRAY_1(unsigned long)
-static void _XCALABLEMP_pack_array_1_LONGLONG		_XCALABLEMP_SM_PACK_ARRAY_1(long long)
-static void _XCALABLEMP_pack_array_1_UNSIGNED_LONGLONG	_XCALABLEMP_SM_PACK_ARRAY_1(unsigned long long)
-static void _XCALABLEMP_pack_array_1_FLOAT		_XCALABLEMP_SM_PACK_ARRAY_1(float)
-static void _XCALABLEMP_pack_array_1_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_1(double)
-static void _XCALABLEMP_pack_array_1_LONG_DOUBLE	_XCALABLEMP_SM_PACK_ARRAY_1(long double)
-static void _XCALABLEMP_pack_array_1_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
+static void _XMP_pack_array_1_BOOL		_XMP_SM_PACK_ARRAY_1(_Bool)
+static void _XMP_pack_array_1_CHAR		_XMP_SM_PACK_ARRAY_1(char)
+static void _XMP_pack_array_1_UNSIGNED_CHAR	_XMP_SM_PACK_ARRAY_1(unsigned char)
+static void _XMP_pack_array_1_SHORT		_XMP_SM_PACK_ARRAY_1(short)
+static void _XMP_pack_array_1_UNSIGNED_SHORT	_XMP_SM_PACK_ARRAY_1(unsigned short)
+static void _XMP_pack_array_1_INT		_XMP_SM_PACK_ARRAY_1(int)
+static void _XMP_pack_array_1_UNSIGNED_INT	_XMP_SM_PACK_ARRAY_1(unsigned int)
+static void _XMP_pack_array_1_LONG		_XMP_SM_PACK_ARRAY_1(long)
+static void _XMP_pack_array_1_UNSIGNED_LONG	_XMP_SM_PACK_ARRAY_1(unsigned long)
+static void _XMP_pack_array_1_LONGLONG		_XMP_SM_PACK_ARRAY_1(long long)
+static void _XMP_pack_array_1_UNSIGNED_LONGLONG	_XMP_SM_PACK_ARRAY_1(unsigned long long)
+static void _XMP_pack_array_1_FLOAT		_XMP_SM_PACK_ARRAY_1(float)
+static void _XMP_pack_array_1_DOUBLE		_XMP_SM_PACK_ARRAY_1(double)
+static void _XMP_pack_array_1_LONG_DOUBLE	_XMP_SM_PACK_ARRAY_1(long double)
+static void _XMP_pack_array_1_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
                                              int src_lower, int src_upper, int src_stride) {
-  _XCALABLEMP_ASSERT(buf_addr != NULL);
-  _XCALABLEMP_ASSERT(src_addr != NULL);
+  _XMP_ASSERT(buf_addr != NULL);
+  _XMP_ASSERT(src_addr != NULL);
 
   if (src_stride == 1) {
     memcpy(buf_addr, src_addr + (type_size * src_lower),
-           type_size * _XCALABLEMP_M_COUNT_TRIPLETi(src_lower, src_upper, src_stride));
+           type_size * _XMP_M_COUNT_TRIPLETi(src_lower, src_upper, src_stride));
   }
   else {
     void *addr = src_addr + (type_size * src_lower);
@@ -58,15 +58,15 @@ static void _XCALABLEMP_pack_array_1_GENERAL(void *buf_addr, void *src_addr, siz
 }
 
 // --- dimension 2
-#define _XCALABLEMP_SM_PACK_ARRAY_2(_type) \
+#define _XMP_SM_PACK_ARRAY_2(_type) \
 (_type *buf_addr, _type *src_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
-  _XCALABLEMP_ASSERT(buf_addr != NULL); \
-  _XCALABLEMP_ASSERT(src_addr != NULL); \
-  _XCALABLEMP_ASSERT(l != NULL); \
-  _XCALABLEMP_ASSERT(u != NULL); \
-  _XCALABLEMP_ASSERT(s != NULL); \
-  _XCALABLEMP_ASSERT(d != NULL); \
+  _XMP_ASSERT(buf_addr != NULL); \
+  _XMP_ASSERT(src_addr != NULL); \
+  _XMP_ASSERT(l != NULL); \
+  _XMP_ASSERT(u != NULL); \
+  _XMP_ASSERT(s != NULL); \
+  _XMP_ASSERT(d != NULL); \
 \
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0]; \
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; \
@@ -79,35 +79,35 @@ static void _XCALABLEMP_pack_array_1_GENERAL(void *buf_addr, void *src_addr, siz
   } \
 }
 
-static void _XCALABLEMP_pack_array_2_BOOL		_XCALABLEMP_SM_PACK_ARRAY_2(_Bool)
-static void _XCALABLEMP_pack_array_2_CHAR		_XCALABLEMP_SM_PACK_ARRAY_2(char)
-static void _XCALABLEMP_pack_array_2_UNSIGNED_CHAR	_XCALABLEMP_SM_PACK_ARRAY_2(unsigned char)
-static void _XCALABLEMP_pack_array_2_SHORT		_XCALABLEMP_SM_PACK_ARRAY_2(short)
-static void _XCALABLEMP_pack_array_2_UNSIGNED_SHORT	_XCALABLEMP_SM_PACK_ARRAY_2(unsigned short)
-static void _XCALABLEMP_pack_array_2_INT		_XCALABLEMP_SM_PACK_ARRAY_2(int)
-static void _XCALABLEMP_pack_array_2_UNSIGNED_INT	_XCALABLEMP_SM_PACK_ARRAY_2(unsigned int)
-static void _XCALABLEMP_pack_array_2_LONG		_XCALABLEMP_SM_PACK_ARRAY_2(long)
-static void _XCALABLEMP_pack_array_2_UNSIGNED_LONG	_XCALABLEMP_SM_PACK_ARRAY_2(unsigned long)
-static void _XCALABLEMP_pack_array_2_LONGLONG		_XCALABLEMP_SM_PACK_ARRAY_2(long long)
-static void _XCALABLEMP_pack_array_2_UNSIGNED_LONGLONG	_XCALABLEMP_SM_PACK_ARRAY_2(unsigned long long)
-static void _XCALABLEMP_pack_array_2_FLOAT		_XCALABLEMP_SM_PACK_ARRAY_2(float)
-static void _XCALABLEMP_pack_array_2_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_2(double)
-static void _XCALABLEMP_pack_array_2_LONG_DOUBLE	_XCALABLEMP_SM_PACK_ARRAY_2(long double)
-static void _XCALABLEMP_pack_array_2_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
+static void _XMP_pack_array_2_BOOL		_XMP_SM_PACK_ARRAY_2(_Bool)
+static void _XMP_pack_array_2_CHAR		_XMP_SM_PACK_ARRAY_2(char)
+static void _XMP_pack_array_2_UNSIGNED_CHAR	_XMP_SM_PACK_ARRAY_2(unsigned char)
+static void _XMP_pack_array_2_SHORT		_XMP_SM_PACK_ARRAY_2(short)
+static void _XMP_pack_array_2_UNSIGNED_SHORT	_XMP_SM_PACK_ARRAY_2(unsigned short)
+static void _XMP_pack_array_2_INT		_XMP_SM_PACK_ARRAY_2(int)
+static void _XMP_pack_array_2_UNSIGNED_INT	_XMP_SM_PACK_ARRAY_2(unsigned int)
+static void _XMP_pack_array_2_LONG		_XMP_SM_PACK_ARRAY_2(long)
+static void _XMP_pack_array_2_UNSIGNED_LONG	_XMP_SM_PACK_ARRAY_2(unsigned long)
+static void _XMP_pack_array_2_LONGLONG		_XMP_SM_PACK_ARRAY_2(long long)
+static void _XMP_pack_array_2_UNSIGNED_LONGLONG	_XMP_SM_PACK_ARRAY_2(unsigned long long)
+static void _XMP_pack_array_2_FLOAT		_XMP_SM_PACK_ARRAY_2(float)
+static void _XMP_pack_array_2_DOUBLE		_XMP_SM_PACK_ARRAY_2(double)
+static void _XMP_pack_array_2_LONG_DOUBLE	_XMP_SM_PACK_ARRAY_2(long double)
+static void _XMP_pack_array_2_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
                                              int *l, int *u, int *s, unsigned long long *d) {
-  _XCALABLEMP_ASSERT(buf_addr != NULL);
-  _XCALABLEMP_ASSERT(src_addr != NULL);
-  _XCALABLEMP_ASSERT(l != NULL);
-  _XCALABLEMP_ASSERT(u != NULL);
-  _XCALABLEMP_ASSERT(s != NULL);
-  _XCALABLEMP_ASSERT(d != NULL);
+  _XMP_ASSERT(buf_addr != NULL);
+  _XMP_ASSERT(src_addr != NULL);
+  _XMP_ASSERT(l != NULL);
+  _XMP_ASSERT(u != NULL);
+  _XMP_ASSERT(s != NULL);
+  _XMP_ASSERT(d != NULL);
 
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0];
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1];
   for (int j = src_lower0; j <= src_upper0; j += src_stride0) {
     void *addr = src_addr + (type_size * ((j * src_dim_acc0) + src_lower1));
     if (src_stride1 == 1) {
-      size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(src_lower1, src_upper1, src_stride1);
+      size_t n = type_size * _XMP_M_COUNT_TRIPLETi(src_lower1, src_upper1, src_stride1);
       memcpy(buf_addr, addr, n);
       buf_addr += n;
     }
@@ -123,15 +123,15 @@ static void _XCALABLEMP_pack_array_2_GENERAL(void *buf_addr, void *src_addr, siz
 }
 
 // --- dimension 3
-#define _XCALABLEMP_SM_PACK_ARRAY_3(_type) \
+#define _XMP_SM_PACK_ARRAY_3(_type) \
 (_type *buf_addr, _type *src_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
-  _XCALABLEMP_ASSERT(buf_addr != NULL); \
-  _XCALABLEMP_ASSERT(src_addr != NULL); \
-  _XCALABLEMP_ASSERT(l != NULL); \
-  _XCALABLEMP_ASSERT(u != NULL); \
-  _XCALABLEMP_ASSERT(s != NULL); \
-  _XCALABLEMP_ASSERT(d != NULL); \
+  _XMP_ASSERT(buf_addr != NULL); \
+  _XMP_ASSERT(src_addr != NULL); \
+  _XMP_ASSERT(l != NULL); \
+  _XMP_ASSERT(u != NULL); \
+  _XMP_ASSERT(s != NULL); \
+  _XMP_ASSERT(d != NULL); \
 \
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0]; \
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; unsigned long long src_dim_acc1 = d[1]; \
@@ -147,28 +147,28 @@ static void _XCALABLEMP_pack_array_2_GENERAL(void *buf_addr, void *src_addr, siz
   } \
 }
 
-static void _XCALABLEMP_pack_array_3_BOOL		_XCALABLEMP_SM_PACK_ARRAY_3(_Bool)
-static void _XCALABLEMP_pack_array_3_CHAR		_XCALABLEMP_SM_PACK_ARRAY_3(char)
-static void _XCALABLEMP_pack_array_3_UNSIGNED_CHAR	_XCALABLEMP_SM_PACK_ARRAY_3(unsigned char)
-static void _XCALABLEMP_pack_array_3_SHORT		_XCALABLEMP_SM_PACK_ARRAY_3(short)
-static void _XCALABLEMP_pack_array_3_UNSIGNED_SHORT	_XCALABLEMP_SM_PACK_ARRAY_3(unsigned short)
-static void _XCALABLEMP_pack_array_3_INT		_XCALABLEMP_SM_PACK_ARRAY_3(int)
-static void _XCALABLEMP_pack_array_3_UNSIGNED_INT	_XCALABLEMP_SM_PACK_ARRAY_3(unsigned int)
-static void _XCALABLEMP_pack_array_3_LONG		_XCALABLEMP_SM_PACK_ARRAY_3(long)
-static void _XCALABLEMP_pack_array_3_UNSIGNED_LONG	_XCALABLEMP_SM_PACK_ARRAY_3(unsigned long)
-static void _XCALABLEMP_pack_array_3_LONGLONG		_XCALABLEMP_SM_PACK_ARRAY_3(long long)
-static void _XCALABLEMP_pack_array_3_UNSIGNED_LONGLONG	_XCALABLEMP_SM_PACK_ARRAY_3(unsigned long long)
-static void _XCALABLEMP_pack_array_3_FLOAT		_XCALABLEMP_SM_PACK_ARRAY_3(float)
-static void _XCALABLEMP_pack_array_3_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_3(double)
-static void _XCALABLEMP_pack_array_3_LONG_DOUBLE	_XCALABLEMP_SM_PACK_ARRAY_3(long double)
-static void _XCALABLEMP_pack_array_3_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
+static void _XMP_pack_array_3_BOOL		_XMP_SM_PACK_ARRAY_3(_Bool)
+static void _XMP_pack_array_3_CHAR		_XMP_SM_PACK_ARRAY_3(char)
+static void _XMP_pack_array_3_UNSIGNED_CHAR	_XMP_SM_PACK_ARRAY_3(unsigned char)
+static void _XMP_pack_array_3_SHORT		_XMP_SM_PACK_ARRAY_3(short)
+static void _XMP_pack_array_3_UNSIGNED_SHORT	_XMP_SM_PACK_ARRAY_3(unsigned short)
+static void _XMP_pack_array_3_INT		_XMP_SM_PACK_ARRAY_3(int)
+static void _XMP_pack_array_3_UNSIGNED_INT	_XMP_SM_PACK_ARRAY_3(unsigned int)
+static void _XMP_pack_array_3_LONG		_XMP_SM_PACK_ARRAY_3(long)
+static void _XMP_pack_array_3_UNSIGNED_LONG	_XMP_SM_PACK_ARRAY_3(unsigned long)
+static void _XMP_pack_array_3_LONGLONG		_XMP_SM_PACK_ARRAY_3(long long)
+static void _XMP_pack_array_3_UNSIGNED_LONGLONG	_XMP_SM_PACK_ARRAY_3(unsigned long long)
+static void _XMP_pack_array_3_FLOAT		_XMP_SM_PACK_ARRAY_3(float)
+static void _XMP_pack_array_3_DOUBLE		_XMP_SM_PACK_ARRAY_3(double)
+static void _XMP_pack_array_3_LONG_DOUBLE	_XMP_SM_PACK_ARRAY_3(long double)
+static void _XMP_pack_array_3_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
                                              int *l, int *u, int *s, unsigned long long *d) {
-  _XCALABLEMP_ASSERT(buf_addr != NULL);
-  _XCALABLEMP_ASSERT(src_addr != NULL);
-  _XCALABLEMP_ASSERT(l != NULL);
-  _XCALABLEMP_ASSERT(u != NULL);
-  _XCALABLEMP_ASSERT(s != NULL);
-  _XCALABLEMP_ASSERT(d != NULL);
+  _XMP_ASSERT(buf_addr != NULL);
+  _XMP_ASSERT(src_addr != NULL);
+  _XMP_ASSERT(l != NULL);
+  _XMP_ASSERT(u != NULL);
+  _XMP_ASSERT(s != NULL);
+  _XMP_ASSERT(d != NULL);
 
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0];
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; unsigned long long src_dim_acc1 = d[1];
@@ -177,7 +177,7 @@ static void _XCALABLEMP_pack_array_3_GENERAL(void *buf_addr, void *src_addr, siz
     for (int j = src_lower1; j <= src_upper1; j += src_stride1) {
       void *addr = src_addr + (type_size * ((k * src_dim_acc0) + (j * src_dim_acc1) + src_lower2));
       if (src_stride2 == 1) {
-        size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(src_lower2, src_upper2, src_stride2);
+        size_t n = type_size * _XMP_M_COUNT_TRIPLETi(src_lower2, src_upper2, src_stride2);
         memcpy(buf_addr, addr, n);
         buf_addr += n;
       }
@@ -194,15 +194,15 @@ static void _XCALABLEMP_pack_array_3_GENERAL(void *buf_addr, void *src_addr, siz
 }
 
 // --- dimension 4
-#define _XCALABLEMP_SM_PACK_ARRAY_4(_type) \
+#define _XMP_SM_PACK_ARRAY_4(_type) \
 (_type *buf_addr, _type *src_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
-  _XCALABLEMP_ASSERT(buf_addr != NULL); \
-  _XCALABLEMP_ASSERT(src_addr != NULL); \
-  _XCALABLEMP_ASSERT(l != NULL); \
-  _XCALABLEMP_ASSERT(u != NULL); \
-  _XCALABLEMP_ASSERT(s != NULL); \
-  _XCALABLEMP_ASSERT(d != NULL); \
+  _XMP_ASSERT(buf_addr != NULL); \
+  _XMP_ASSERT(src_addr != NULL); \
+  _XMP_ASSERT(l != NULL); \
+  _XMP_ASSERT(u != NULL); \
+  _XMP_ASSERT(s != NULL); \
+  _XMP_ASSERT(d != NULL); \
 \
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0]; \
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; unsigned long long src_dim_acc1 = d[1]; \
@@ -221,28 +221,28 @@ static void _XCALABLEMP_pack_array_3_GENERAL(void *buf_addr, void *src_addr, siz
   } \
 }
 
-static void _XCALABLEMP_pack_array_4_BOOL		_XCALABLEMP_SM_PACK_ARRAY_4(_Bool)
-static void _XCALABLEMP_pack_array_4_CHAR		_XCALABLEMP_SM_PACK_ARRAY_4(char)
-static void _XCALABLEMP_pack_array_4_UNSIGNED_CHAR	_XCALABLEMP_SM_PACK_ARRAY_4(unsigned char)
-static void _XCALABLEMP_pack_array_4_SHORT		_XCALABLEMP_SM_PACK_ARRAY_4(short)
-static void _XCALABLEMP_pack_array_4_UNSIGNED_SHORT	_XCALABLEMP_SM_PACK_ARRAY_4(unsigned short)
-static void _XCALABLEMP_pack_array_4_INT		_XCALABLEMP_SM_PACK_ARRAY_4(int)
-static void _XCALABLEMP_pack_array_4_UNSIGNED_INT	_XCALABLEMP_SM_PACK_ARRAY_4(unsigned int)
-static void _XCALABLEMP_pack_array_4_LONG		_XCALABLEMP_SM_PACK_ARRAY_4(long)
-static void _XCALABLEMP_pack_array_4_UNSIGNED_LONG	_XCALABLEMP_SM_PACK_ARRAY_4(unsigned long)
-static void _XCALABLEMP_pack_array_4_LONGLONG		_XCALABLEMP_SM_PACK_ARRAY_4(long long)
-static void _XCALABLEMP_pack_array_4_UNSIGNED_LONGLONG	_XCALABLEMP_SM_PACK_ARRAY_4(unsigned long long)
-static void _XCALABLEMP_pack_array_4_FLOAT		_XCALABLEMP_SM_PACK_ARRAY_4(float)
-static void _XCALABLEMP_pack_array_4_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_4(double)
-static void _XCALABLEMP_pack_array_4_LONG_DOUBLE	_XCALABLEMP_SM_PACK_ARRAY_4(long double)
-static void _XCALABLEMP_pack_array_4_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
+static void _XMP_pack_array_4_BOOL		_XMP_SM_PACK_ARRAY_4(_Bool)
+static void _XMP_pack_array_4_CHAR		_XMP_SM_PACK_ARRAY_4(char)
+static void _XMP_pack_array_4_UNSIGNED_CHAR	_XMP_SM_PACK_ARRAY_4(unsigned char)
+static void _XMP_pack_array_4_SHORT		_XMP_SM_PACK_ARRAY_4(short)
+static void _XMP_pack_array_4_UNSIGNED_SHORT	_XMP_SM_PACK_ARRAY_4(unsigned short)
+static void _XMP_pack_array_4_INT		_XMP_SM_PACK_ARRAY_4(int)
+static void _XMP_pack_array_4_UNSIGNED_INT	_XMP_SM_PACK_ARRAY_4(unsigned int)
+static void _XMP_pack_array_4_LONG		_XMP_SM_PACK_ARRAY_4(long)
+static void _XMP_pack_array_4_UNSIGNED_LONG	_XMP_SM_PACK_ARRAY_4(unsigned long)
+static void _XMP_pack_array_4_LONGLONG		_XMP_SM_PACK_ARRAY_4(long long)
+static void _XMP_pack_array_4_UNSIGNED_LONGLONG	_XMP_SM_PACK_ARRAY_4(unsigned long long)
+static void _XMP_pack_array_4_FLOAT		_XMP_SM_PACK_ARRAY_4(float)
+static void _XMP_pack_array_4_DOUBLE		_XMP_SM_PACK_ARRAY_4(double)
+static void _XMP_pack_array_4_LONG_DOUBLE	_XMP_SM_PACK_ARRAY_4(long double)
+static void _XMP_pack_array_4_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
                                              int *l, int *u, int *s, unsigned long long *d) {
-  _XCALABLEMP_ASSERT(buf_addr != NULL);
-  _XCALABLEMP_ASSERT(src_addr != NULL);
-  _XCALABLEMP_ASSERT(l != NULL);
-  _XCALABLEMP_ASSERT(u != NULL);
-  _XCALABLEMP_ASSERT(s != NULL);
-  _XCALABLEMP_ASSERT(d != NULL);
+  _XMP_ASSERT(buf_addr != NULL);
+  _XMP_ASSERT(src_addr != NULL);
+  _XMP_ASSERT(l != NULL);
+  _XMP_ASSERT(u != NULL);
+  _XMP_ASSERT(s != NULL);
+  _XMP_ASSERT(d != NULL);
 
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0];
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; unsigned long long src_dim_acc1 = d[1];
@@ -253,7 +253,7 @@ static void _XCALABLEMP_pack_array_4_GENERAL(void *buf_addr, void *src_addr, siz
       for (int j = src_lower2; j <= src_upper2; j += src_stride2) {
         void *addr = src_addr + (type_size * ((l * src_dim_acc0) + (k * src_dim_acc1) + (j * src_dim_acc2) + src_lower3));
         if (src_stride3 == 1) {
-          size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(src_lower3, src_upper3, src_stride3);
+          size_t n = type_size * _XMP_M_COUNT_TRIPLETi(src_lower3, src_upper3, src_stride3);
           memcpy(buf_addr, addr, n);
           buf_addr += n;
         }
@@ -271,15 +271,15 @@ static void _XCALABLEMP_pack_array_4_GENERAL(void *buf_addr, void *src_addr, siz
 }
 
 // --- dimension 5
-#define _XCALABLEMP_SM_PACK_ARRAY_5(_type) \
+#define _XMP_SM_PACK_ARRAY_5(_type) \
 (_type *buf_addr, _type *src_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
-  _XCALABLEMP_ASSERT(buf_addr != NULL); \
-  _XCALABLEMP_ASSERT(src_addr != NULL); \
-  _XCALABLEMP_ASSERT(l != NULL); \
-  _XCALABLEMP_ASSERT(u != NULL); \
-  _XCALABLEMP_ASSERT(s != NULL); \
-  _XCALABLEMP_ASSERT(d != NULL); \
+  _XMP_ASSERT(buf_addr != NULL); \
+  _XMP_ASSERT(src_addr != NULL); \
+  _XMP_ASSERT(l != NULL); \
+  _XMP_ASSERT(u != NULL); \
+  _XMP_ASSERT(s != NULL); \
+  _XMP_ASSERT(d != NULL); \
 \
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0]; \
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; unsigned long long src_dim_acc1 = d[1]; \
@@ -301,28 +301,28 @@ static void _XCALABLEMP_pack_array_4_GENERAL(void *buf_addr, void *src_addr, siz
   } \
 }
 
-static void _XCALABLEMP_pack_array_5_BOOL		_XCALABLEMP_SM_PACK_ARRAY_5(_Bool)
-static void _XCALABLEMP_pack_array_5_CHAR		_XCALABLEMP_SM_PACK_ARRAY_5(char)
-static void _XCALABLEMP_pack_array_5_UNSIGNED_CHAR	_XCALABLEMP_SM_PACK_ARRAY_5(unsigned char)
-static void _XCALABLEMP_pack_array_5_SHORT		_XCALABLEMP_SM_PACK_ARRAY_5(short)
-static void _XCALABLEMP_pack_array_5_UNSIGNED_SHORT	_XCALABLEMP_SM_PACK_ARRAY_5(unsigned short)
-static void _XCALABLEMP_pack_array_5_INT		_XCALABLEMP_SM_PACK_ARRAY_5(int)
-static void _XCALABLEMP_pack_array_5_UNSIGNED_INT	_XCALABLEMP_SM_PACK_ARRAY_5(unsigned int)
-static void _XCALABLEMP_pack_array_5_LONG		_XCALABLEMP_SM_PACK_ARRAY_5(long)
-static void _XCALABLEMP_pack_array_5_UNSIGNED_LONG	_XCALABLEMP_SM_PACK_ARRAY_5(unsigned long)
-static void _XCALABLEMP_pack_array_5_LONGLONG		_XCALABLEMP_SM_PACK_ARRAY_5(long long)
-static void _XCALABLEMP_pack_array_5_UNSIGNED_LONGLONG	_XCALABLEMP_SM_PACK_ARRAY_5(unsigned long long)
-static void _XCALABLEMP_pack_array_5_FLOAT		_XCALABLEMP_SM_PACK_ARRAY_5(float)
-static void _XCALABLEMP_pack_array_5_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_5(double)
-static void _XCALABLEMP_pack_array_5_LONG_DOUBLE	_XCALABLEMP_SM_PACK_ARRAY_5(long double)
-static void _XCALABLEMP_pack_array_5_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
+static void _XMP_pack_array_5_BOOL		_XMP_SM_PACK_ARRAY_5(_Bool)
+static void _XMP_pack_array_5_CHAR		_XMP_SM_PACK_ARRAY_5(char)
+static void _XMP_pack_array_5_UNSIGNED_CHAR	_XMP_SM_PACK_ARRAY_5(unsigned char)
+static void _XMP_pack_array_5_SHORT		_XMP_SM_PACK_ARRAY_5(short)
+static void _XMP_pack_array_5_UNSIGNED_SHORT	_XMP_SM_PACK_ARRAY_5(unsigned short)
+static void _XMP_pack_array_5_INT		_XMP_SM_PACK_ARRAY_5(int)
+static void _XMP_pack_array_5_UNSIGNED_INT	_XMP_SM_PACK_ARRAY_5(unsigned int)
+static void _XMP_pack_array_5_LONG		_XMP_SM_PACK_ARRAY_5(long)
+static void _XMP_pack_array_5_UNSIGNED_LONG	_XMP_SM_PACK_ARRAY_5(unsigned long)
+static void _XMP_pack_array_5_LONGLONG		_XMP_SM_PACK_ARRAY_5(long long)
+static void _XMP_pack_array_5_UNSIGNED_LONGLONG	_XMP_SM_PACK_ARRAY_5(unsigned long long)
+static void _XMP_pack_array_5_FLOAT		_XMP_SM_PACK_ARRAY_5(float)
+static void _XMP_pack_array_5_DOUBLE		_XMP_SM_PACK_ARRAY_5(double)
+static void _XMP_pack_array_5_LONG_DOUBLE	_XMP_SM_PACK_ARRAY_5(long double)
+static void _XMP_pack_array_5_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
                                              int *l, int *u, int *s, unsigned long long *d) {
-  _XCALABLEMP_ASSERT(buf_addr != NULL);
-  _XCALABLEMP_ASSERT(src_addr != NULL);
-  _XCALABLEMP_ASSERT(l != NULL);
-  _XCALABLEMP_ASSERT(u != NULL);
-  _XCALABLEMP_ASSERT(s != NULL);
-  _XCALABLEMP_ASSERT(d != NULL);
+  _XMP_ASSERT(buf_addr != NULL);
+  _XMP_ASSERT(src_addr != NULL);
+  _XMP_ASSERT(l != NULL);
+  _XMP_ASSERT(u != NULL);
+  _XMP_ASSERT(s != NULL);
+  _XMP_ASSERT(d != NULL);
 
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0];
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; unsigned long long src_dim_acc1 = d[1];
@@ -336,7 +336,7 @@ static void _XCALABLEMP_pack_array_5_GENERAL(void *buf_addr, void *src_addr, siz
           void *addr = src_addr + (type_size * ((m * src_dim_acc0) + (l * src_dim_acc1) + (k * src_dim_acc2) +
                                                 (j * src_dim_acc3) + src_lower4));
           if (src_stride4 == 1) {
-            size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(src_lower4, src_upper4, src_stride4);
+            size_t n = type_size * _XMP_M_COUNT_TRIPLETi(src_lower4, src_upper4, src_stride4);
             memcpy(buf_addr, addr, n);
             buf_addr += n;
           }
@@ -355,15 +355,15 @@ static void _XCALABLEMP_pack_array_5_GENERAL(void *buf_addr, void *src_addr, siz
 }
 
 // --- dimension 6
-#define _XCALABLEMP_SM_PACK_ARRAY_6(_type) \
+#define _XMP_SM_PACK_ARRAY_6(_type) \
 (_type *buf_addr, _type *src_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
-  _XCALABLEMP_ASSERT(buf_addr != NULL); \
-  _XCALABLEMP_ASSERT(src_addr != NULL); \
-  _XCALABLEMP_ASSERT(l != NULL); \
-  _XCALABLEMP_ASSERT(u != NULL); \
-  _XCALABLEMP_ASSERT(s != NULL); \
-  _XCALABLEMP_ASSERT(d != NULL); \
+  _XMP_ASSERT(buf_addr != NULL); \
+  _XMP_ASSERT(src_addr != NULL); \
+  _XMP_ASSERT(l != NULL); \
+  _XMP_ASSERT(u != NULL); \
+  _XMP_ASSERT(s != NULL); \
+  _XMP_ASSERT(d != NULL); \
 \
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0]; \
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; unsigned long long src_dim_acc1 = d[1]; \
@@ -389,28 +389,28 @@ static void _XCALABLEMP_pack_array_5_GENERAL(void *buf_addr, void *src_addr, siz
   } \
 }
 
-static void _XCALABLEMP_pack_array_6_BOOL		_XCALABLEMP_SM_PACK_ARRAY_6(_Bool)
-static void _XCALABLEMP_pack_array_6_CHAR		_XCALABLEMP_SM_PACK_ARRAY_6(char)
-static void _XCALABLEMP_pack_array_6_UNSIGNED_CHAR	_XCALABLEMP_SM_PACK_ARRAY_6(unsigned char)
-static void _XCALABLEMP_pack_array_6_SHORT		_XCALABLEMP_SM_PACK_ARRAY_6(short)
-static void _XCALABLEMP_pack_array_6_UNSIGNED_SHORT	_XCALABLEMP_SM_PACK_ARRAY_6(unsigned short)
-static void _XCALABLEMP_pack_array_6_INT		_XCALABLEMP_SM_PACK_ARRAY_6(int)
-static void _XCALABLEMP_pack_array_6_UNSIGNED_INT	_XCALABLEMP_SM_PACK_ARRAY_6(unsigned int)
-static void _XCALABLEMP_pack_array_6_LONG		_XCALABLEMP_SM_PACK_ARRAY_6(long)
-static void _XCALABLEMP_pack_array_6_UNSIGNED_LONG	_XCALABLEMP_SM_PACK_ARRAY_6(unsigned long)
-static void _XCALABLEMP_pack_array_6_LONGLONG		_XCALABLEMP_SM_PACK_ARRAY_6(long long)
-static void _XCALABLEMP_pack_array_6_UNSIGNED_LONGLONG	_XCALABLEMP_SM_PACK_ARRAY_6(unsigned long long)
-static void _XCALABLEMP_pack_array_6_FLOAT		_XCALABLEMP_SM_PACK_ARRAY_6(float)
-static void _XCALABLEMP_pack_array_6_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_6(double)
-static void _XCALABLEMP_pack_array_6_LONG_DOUBLE	_XCALABLEMP_SM_PACK_ARRAY_6(long double)
-static void _XCALABLEMP_pack_array_6_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
+static void _XMP_pack_array_6_BOOL		_XMP_SM_PACK_ARRAY_6(_Bool)
+static void _XMP_pack_array_6_CHAR		_XMP_SM_PACK_ARRAY_6(char)
+static void _XMP_pack_array_6_UNSIGNED_CHAR	_XMP_SM_PACK_ARRAY_6(unsigned char)
+static void _XMP_pack_array_6_SHORT		_XMP_SM_PACK_ARRAY_6(short)
+static void _XMP_pack_array_6_UNSIGNED_SHORT	_XMP_SM_PACK_ARRAY_6(unsigned short)
+static void _XMP_pack_array_6_INT		_XMP_SM_PACK_ARRAY_6(int)
+static void _XMP_pack_array_6_UNSIGNED_INT	_XMP_SM_PACK_ARRAY_6(unsigned int)
+static void _XMP_pack_array_6_LONG		_XMP_SM_PACK_ARRAY_6(long)
+static void _XMP_pack_array_6_UNSIGNED_LONG	_XMP_SM_PACK_ARRAY_6(unsigned long)
+static void _XMP_pack_array_6_LONGLONG		_XMP_SM_PACK_ARRAY_6(long long)
+static void _XMP_pack_array_6_UNSIGNED_LONGLONG	_XMP_SM_PACK_ARRAY_6(unsigned long long)
+static void _XMP_pack_array_6_FLOAT		_XMP_SM_PACK_ARRAY_6(float)
+static void _XMP_pack_array_6_DOUBLE		_XMP_SM_PACK_ARRAY_6(double)
+static void _XMP_pack_array_6_LONG_DOUBLE	_XMP_SM_PACK_ARRAY_6(long double)
+static void _XMP_pack_array_6_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
                                              int *l, int *u, int *s, unsigned long long *d) {
-  _XCALABLEMP_ASSERT(buf_addr != NULL);
-  _XCALABLEMP_ASSERT(src_addr != NULL);
-  _XCALABLEMP_ASSERT(l != NULL);
-  _XCALABLEMP_ASSERT(u != NULL);
-  _XCALABLEMP_ASSERT(s != NULL);
-  _XCALABLEMP_ASSERT(d != NULL);
+  _XMP_ASSERT(buf_addr != NULL);
+  _XMP_ASSERT(src_addr != NULL);
+  _XMP_ASSERT(l != NULL);
+  _XMP_ASSERT(u != NULL);
+  _XMP_ASSERT(s != NULL);
+  _XMP_ASSERT(d != NULL);
 
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0];
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; unsigned long long src_dim_acc1 = d[1];
@@ -426,7 +426,7 @@ static void _XCALABLEMP_pack_array_6_GENERAL(void *buf_addr, void *src_addr, siz
             void *addr = src_addr + (type_size * ((n * src_dim_acc0) + (m * src_dim_acc1) + (l * src_dim_acc2) +
                                                   (k * src_dim_acc3) + (j * src_dim_acc4) + src_lower5));
             if (src_stride5 == 1) {
-              size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(src_lower5, src_upper5, src_stride5);
+              size_t n = type_size * _XMP_M_COUNT_TRIPLETi(src_lower5, src_upper5, src_stride5);
               memcpy(buf_addr, addr, n);
               buf_addr += n;
             }
@@ -446,15 +446,15 @@ static void _XCALABLEMP_pack_array_6_GENERAL(void *buf_addr, void *src_addr, siz
 }
 
 // --- dimension 7
-#define _XCALABLEMP_SM_PACK_ARRAY_7(_type) \
+#define _XMP_SM_PACK_ARRAY_7(_type) \
 (_type *buf_addr, _type *src_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
-  _XCALABLEMP_ASSERT(buf_addr != NULL); \
-  _XCALABLEMP_ASSERT(src_addr != NULL); \
-  _XCALABLEMP_ASSERT(l != NULL); \
-  _XCALABLEMP_ASSERT(u != NULL); \
-  _XCALABLEMP_ASSERT(s != NULL); \
-  _XCALABLEMP_ASSERT(d != NULL); \
+  _XMP_ASSERT(buf_addr != NULL); \
+  _XMP_ASSERT(src_addr != NULL); \
+  _XMP_ASSERT(l != NULL); \
+  _XMP_ASSERT(u != NULL); \
+  _XMP_ASSERT(s != NULL); \
+  _XMP_ASSERT(d != NULL); \
 \
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0]; \
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; unsigned long long src_dim_acc1 = d[1]; \
@@ -483,28 +483,28 @@ static void _XCALABLEMP_pack_array_6_GENERAL(void *buf_addr, void *src_addr, siz
   } \
 }
 
-static void _XCALABLEMP_pack_array_7_BOOL		_XCALABLEMP_SM_PACK_ARRAY_7(_Bool)
-static void _XCALABLEMP_pack_array_7_CHAR		_XCALABLEMP_SM_PACK_ARRAY_7(char)
-static void _XCALABLEMP_pack_array_7_UNSIGNED_CHAR	_XCALABLEMP_SM_PACK_ARRAY_7(unsigned char)
-static void _XCALABLEMP_pack_array_7_SHORT		_XCALABLEMP_SM_PACK_ARRAY_7(short)
-static void _XCALABLEMP_pack_array_7_UNSIGNED_SHORT	_XCALABLEMP_SM_PACK_ARRAY_7(unsigned short)
-static void _XCALABLEMP_pack_array_7_INT		_XCALABLEMP_SM_PACK_ARRAY_7(int)
-static void _XCALABLEMP_pack_array_7_UNSIGNED_INT	_XCALABLEMP_SM_PACK_ARRAY_7(unsigned int)
-static void _XCALABLEMP_pack_array_7_LONG		_XCALABLEMP_SM_PACK_ARRAY_7(long)
-static void _XCALABLEMP_pack_array_7_UNSIGNED_LONG	_XCALABLEMP_SM_PACK_ARRAY_7(unsigned long)
-static void _XCALABLEMP_pack_array_7_LONGLONG		_XCALABLEMP_SM_PACK_ARRAY_7(long long)
-static void _XCALABLEMP_pack_array_7_UNSIGNED_LONGLONG	_XCALABLEMP_SM_PACK_ARRAY_7(unsigned long long)
-static void _XCALABLEMP_pack_array_7_FLOAT		_XCALABLEMP_SM_PACK_ARRAY_7(float)
-static void _XCALABLEMP_pack_array_7_DOUBLE		_XCALABLEMP_SM_PACK_ARRAY_7(double)
-static void _XCALABLEMP_pack_array_7_LONG_DOUBLE	_XCALABLEMP_SM_PACK_ARRAY_7(long double)
-static void _XCALABLEMP_pack_array_7_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
+static void _XMP_pack_array_7_BOOL		_XMP_SM_PACK_ARRAY_7(_Bool)
+static void _XMP_pack_array_7_CHAR		_XMP_SM_PACK_ARRAY_7(char)
+static void _XMP_pack_array_7_UNSIGNED_CHAR	_XMP_SM_PACK_ARRAY_7(unsigned char)
+static void _XMP_pack_array_7_SHORT		_XMP_SM_PACK_ARRAY_7(short)
+static void _XMP_pack_array_7_UNSIGNED_SHORT	_XMP_SM_PACK_ARRAY_7(unsigned short)
+static void _XMP_pack_array_7_INT		_XMP_SM_PACK_ARRAY_7(int)
+static void _XMP_pack_array_7_UNSIGNED_INT	_XMP_SM_PACK_ARRAY_7(unsigned int)
+static void _XMP_pack_array_7_LONG		_XMP_SM_PACK_ARRAY_7(long)
+static void _XMP_pack_array_7_UNSIGNED_LONG	_XMP_SM_PACK_ARRAY_7(unsigned long)
+static void _XMP_pack_array_7_LONGLONG		_XMP_SM_PACK_ARRAY_7(long long)
+static void _XMP_pack_array_7_UNSIGNED_LONGLONG	_XMP_SM_PACK_ARRAY_7(unsigned long long)
+static void _XMP_pack_array_7_FLOAT		_XMP_SM_PACK_ARRAY_7(float)
+static void _XMP_pack_array_7_DOUBLE		_XMP_SM_PACK_ARRAY_7(double)
+static void _XMP_pack_array_7_LONG_DOUBLE	_XMP_SM_PACK_ARRAY_7(long double)
+static void _XMP_pack_array_7_GENERAL(void *buf_addr, void *src_addr, size_t type_size,
                                              int *l, int *u, int *s, unsigned long long *d) {
-  _XCALABLEMP_ASSERT(buf_addr != NULL);
-  _XCALABLEMP_ASSERT(src_addr != NULL);
-  _XCALABLEMP_ASSERT(l != NULL);
-  _XCALABLEMP_ASSERT(u != NULL);
-  _XCALABLEMP_ASSERT(s != NULL);
-  _XCALABLEMP_ASSERT(d != NULL);
+  _XMP_ASSERT(buf_addr != NULL);
+  _XMP_ASSERT(src_addr != NULL);
+  _XMP_ASSERT(l != NULL);
+  _XMP_ASSERT(u != NULL);
+  _XMP_ASSERT(s != NULL);
+  _XMP_ASSERT(d != NULL);
 
   int src_lower0 = l[0]; int src_upper0 = u[0]; int src_stride0 = s[0]; unsigned long long src_dim_acc0 = d[0];
   int src_lower1 = l[1]; int src_upper1 = u[1]; int src_stride1 = s[1]; unsigned long long src_dim_acc1 = d[1];
@@ -522,7 +522,7 @@ static void _XCALABLEMP_pack_array_7_GENERAL(void *buf_addr, void *src_addr, siz
               void *addr = src_addr + (type_size * ((o * src_dim_acc0) + (n * src_dim_acc1) + (m * src_dim_acc2) +
                                                     (l * src_dim_acc3) + (k * src_dim_acc4) + (j * src_dim_acc5) + src_lower6));
               if (src_stride6 == 1) {
-                size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(src_lower6, src_upper6, src_stride6);
+                size_t n = type_size * _XMP_M_COUNT_TRIPLETi(src_lower6, src_upper6, src_stride6);
                 memcpy(buf_addr, addr, n);
                 buf_addr += n;
               }
@@ -545,11 +545,11 @@ static void _XCALABLEMP_pack_array_7_GENERAL(void *buf_addr, void *src_addr, siz
 
 // ----- unpack array
 // --- dimension 1
-#define _XCALABLEMP_SM_UNPACK_ARRAY_1(_type) \
+#define _XMP_SM_UNPACK_ARRAY_1(_type) \
 (_type *dst_addr, _type *buf_addr, \
  int dst_lower, int dst_upper, int dst_stride) { \
-  _XCALABLEMP_ASSERT(dst_addr != NULL); \
-  _XCALABLEMP_ASSERT(buf_addr != NULL); \
+  _XMP_ASSERT(dst_addr != NULL); \
+  _XMP_ASSERT(buf_addr != NULL); \
 \
   for (int i = dst_lower; i <= dst_upper; i += dst_stride) { \
     dst_addr[i] = *buf_addr; \
@@ -557,28 +557,28 @@ static void _XCALABLEMP_pack_array_7_GENERAL(void *buf_addr, void *src_addr, siz
   } \
 }
 
-static void _XCALABLEMP_unpack_array_1_BOOL			_XCALABLEMP_SM_UNPACK_ARRAY_1(_Bool)
-static void _XCALABLEMP_unpack_array_1_CHAR			_XCALABLEMP_SM_UNPACK_ARRAY_1(char)
-static void _XCALABLEMP_unpack_array_1_UNSIGNED_CHAR		_XCALABLEMP_SM_UNPACK_ARRAY_1(unsigned char)
-static void _XCALABLEMP_unpack_array_1_SHORT			_XCALABLEMP_SM_UNPACK_ARRAY_1(short)
-static void _XCALABLEMP_unpack_array_1_UNSIGNED_SHORT		_XCALABLEMP_SM_UNPACK_ARRAY_1(unsigned short)
-static void _XCALABLEMP_unpack_array_1_INT			_XCALABLEMP_SM_UNPACK_ARRAY_1(int)
-static void _XCALABLEMP_unpack_array_1_UNSIGNED_INT		_XCALABLEMP_SM_UNPACK_ARRAY_1(unsigned int)
-static void _XCALABLEMP_unpack_array_1_LONG			_XCALABLEMP_SM_UNPACK_ARRAY_1(long)
-static void _XCALABLEMP_unpack_array_1_UNSIGNED_LONG		_XCALABLEMP_SM_UNPACK_ARRAY_1(unsigned long)
-static void _XCALABLEMP_unpack_array_1_LONGLONG			_XCALABLEMP_SM_UNPACK_ARRAY_1(long long)
-static void _XCALABLEMP_unpack_array_1_UNSIGNED_LONGLONG	_XCALABLEMP_SM_UNPACK_ARRAY_1(unsigned long long)
-static void _XCALABLEMP_unpack_array_1_FLOAT			_XCALABLEMP_SM_UNPACK_ARRAY_1(float)
-static void _XCALABLEMP_unpack_array_1_DOUBLE			_XCALABLEMP_SM_UNPACK_ARRAY_1(double)
-static void _XCALABLEMP_unpack_array_1_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_1(long double)
-static void _XCALABLEMP_unpack_array_1_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
+static void _XMP_unpack_array_1_BOOL			_XMP_SM_UNPACK_ARRAY_1(_Bool)
+static void _XMP_unpack_array_1_CHAR			_XMP_SM_UNPACK_ARRAY_1(char)
+static void _XMP_unpack_array_1_UNSIGNED_CHAR		_XMP_SM_UNPACK_ARRAY_1(unsigned char)
+static void _XMP_unpack_array_1_SHORT			_XMP_SM_UNPACK_ARRAY_1(short)
+static void _XMP_unpack_array_1_UNSIGNED_SHORT		_XMP_SM_UNPACK_ARRAY_1(unsigned short)
+static void _XMP_unpack_array_1_INT			_XMP_SM_UNPACK_ARRAY_1(int)
+static void _XMP_unpack_array_1_UNSIGNED_INT		_XMP_SM_UNPACK_ARRAY_1(unsigned int)
+static void _XMP_unpack_array_1_LONG			_XMP_SM_UNPACK_ARRAY_1(long)
+static void _XMP_unpack_array_1_UNSIGNED_LONG		_XMP_SM_UNPACK_ARRAY_1(unsigned long)
+static void _XMP_unpack_array_1_LONGLONG			_XMP_SM_UNPACK_ARRAY_1(long long)
+static void _XMP_unpack_array_1_UNSIGNED_LONGLONG	_XMP_SM_UNPACK_ARRAY_1(unsigned long long)
+static void _XMP_unpack_array_1_FLOAT			_XMP_SM_UNPACK_ARRAY_1(float)
+static void _XMP_unpack_array_1_DOUBLE			_XMP_SM_UNPACK_ARRAY_1(double)
+static void _XMP_unpack_array_1_LONG_DOUBLE		_XMP_SM_UNPACK_ARRAY_1(long double)
+static void _XMP_unpack_array_1_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
                                                int dst_lower, int dst_upper, int dst_stride) {
-  _XCALABLEMP_ASSERT(dst_addr != NULL);
-  _XCALABLEMP_ASSERT(buf_addr != NULL);
+  _XMP_ASSERT(dst_addr != NULL);
+  _XMP_ASSERT(buf_addr != NULL);
 
   if (dst_stride == 1) {
     memcpy(dst_addr + (type_size * dst_lower), buf_addr,
-           type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower, dst_upper, dst_stride));
+           type_size * _XMP_M_COUNT_TRIPLETi(dst_lower, dst_upper, dst_stride));
   }
   else {
     void *addr = dst_addr + (type_size * dst_lower);
@@ -592,15 +592,15 @@ static void _XCALABLEMP_unpack_array_1_GENERAL(void *dst_addr, void *buf_addr, s
 }
 
 // --- dimension 2
-#define _XCALABLEMP_SM_UNPACK_ARRAY_2(_type) \
+#define _XMP_SM_UNPACK_ARRAY_2(_type) \
 (_type *dst_addr, _type *buf_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
-  _XCALABLEMP_ASSERT(dst_addr != NULL); \
-  _XCALABLEMP_ASSERT(buf_addr != NULL); \
-  _XCALABLEMP_ASSERT(l != NULL); \
-  _XCALABLEMP_ASSERT(u != NULL); \
-  _XCALABLEMP_ASSERT(s != NULL); \
-  _XCALABLEMP_ASSERT(d != NULL); \
+  _XMP_ASSERT(dst_addr != NULL); \
+  _XMP_ASSERT(buf_addr != NULL); \
+  _XMP_ASSERT(l != NULL); \
+  _XMP_ASSERT(u != NULL); \
+  _XMP_ASSERT(s != NULL); \
+  _XMP_ASSERT(d != NULL); \
 \
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0]; \
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; \
@@ -613,35 +613,35 @@ static void _XCALABLEMP_unpack_array_1_GENERAL(void *dst_addr, void *buf_addr, s
   } \
 }
 
-static void _XCALABLEMP_unpack_array_2_BOOL			_XCALABLEMP_SM_UNPACK_ARRAY_2(_Bool)
-static void _XCALABLEMP_unpack_array_2_CHAR			_XCALABLEMP_SM_UNPACK_ARRAY_2(char)
-static void _XCALABLEMP_unpack_array_2_UNSIGNED_CHAR		_XCALABLEMP_SM_UNPACK_ARRAY_2(unsigned char)
-static void _XCALABLEMP_unpack_array_2_SHORT			_XCALABLEMP_SM_UNPACK_ARRAY_2(short)
-static void _XCALABLEMP_unpack_array_2_UNSIGNED_SHORT		_XCALABLEMP_SM_UNPACK_ARRAY_2(unsigned short)
-static void _XCALABLEMP_unpack_array_2_INT			_XCALABLEMP_SM_UNPACK_ARRAY_2(int)
-static void _XCALABLEMP_unpack_array_2_UNSIGNED_INT		_XCALABLEMP_SM_UNPACK_ARRAY_2(unsigned int)
-static void _XCALABLEMP_unpack_array_2_LONG			_XCALABLEMP_SM_UNPACK_ARRAY_2(long)
-static void _XCALABLEMP_unpack_array_2_UNSIGNED_LONG		_XCALABLEMP_SM_UNPACK_ARRAY_2(unsigned long)
-static void _XCALABLEMP_unpack_array_2_LONGLONG			_XCALABLEMP_SM_UNPACK_ARRAY_2(long long)
-static void _XCALABLEMP_unpack_array_2_UNSIGNED_LONGLONG	_XCALABLEMP_SM_UNPACK_ARRAY_2(unsigned long long)
-static void _XCALABLEMP_unpack_array_2_FLOAT			_XCALABLEMP_SM_UNPACK_ARRAY_2(float)
-static void _XCALABLEMP_unpack_array_2_DOUBLE			_XCALABLEMP_SM_UNPACK_ARRAY_2(double)
-static void _XCALABLEMP_unpack_array_2_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_2(long double)
-static void _XCALABLEMP_unpack_array_2_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
+static void _XMP_unpack_array_2_BOOL			_XMP_SM_UNPACK_ARRAY_2(_Bool)
+static void _XMP_unpack_array_2_CHAR			_XMP_SM_UNPACK_ARRAY_2(char)
+static void _XMP_unpack_array_2_UNSIGNED_CHAR		_XMP_SM_UNPACK_ARRAY_2(unsigned char)
+static void _XMP_unpack_array_2_SHORT			_XMP_SM_UNPACK_ARRAY_2(short)
+static void _XMP_unpack_array_2_UNSIGNED_SHORT		_XMP_SM_UNPACK_ARRAY_2(unsigned short)
+static void _XMP_unpack_array_2_INT			_XMP_SM_UNPACK_ARRAY_2(int)
+static void _XMP_unpack_array_2_UNSIGNED_INT		_XMP_SM_UNPACK_ARRAY_2(unsigned int)
+static void _XMP_unpack_array_2_LONG			_XMP_SM_UNPACK_ARRAY_2(long)
+static void _XMP_unpack_array_2_UNSIGNED_LONG		_XMP_SM_UNPACK_ARRAY_2(unsigned long)
+static void _XMP_unpack_array_2_LONGLONG			_XMP_SM_UNPACK_ARRAY_2(long long)
+static void _XMP_unpack_array_2_UNSIGNED_LONGLONG	_XMP_SM_UNPACK_ARRAY_2(unsigned long long)
+static void _XMP_unpack_array_2_FLOAT			_XMP_SM_UNPACK_ARRAY_2(float)
+static void _XMP_unpack_array_2_DOUBLE			_XMP_SM_UNPACK_ARRAY_2(double)
+static void _XMP_unpack_array_2_LONG_DOUBLE		_XMP_SM_UNPACK_ARRAY_2(long double)
+static void _XMP_unpack_array_2_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
                                                int *l, int *u, int *s, unsigned long long *d) {
-  _XCALABLEMP_ASSERT(dst_addr != NULL);
-  _XCALABLEMP_ASSERT(buf_addr != NULL);
-  _XCALABLEMP_ASSERT(l != NULL);
-  _XCALABLEMP_ASSERT(u != NULL);
-  _XCALABLEMP_ASSERT(s != NULL);
-  _XCALABLEMP_ASSERT(d != NULL);
+  _XMP_ASSERT(dst_addr != NULL);
+  _XMP_ASSERT(buf_addr != NULL);
+  _XMP_ASSERT(l != NULL);
+  _XMP_ASSERT(u != NULL);
+  _XMP_ASSERT(s != NULL);
+  _XMP_ASSERT(d != NULL);
 
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0];
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1];
   for (int j = dst_lower0; j <= dst_upper0; j += dst_stride0) {
     void *addr = dst_addr + (type_size * ((j * dst_dim_acc0) + dst_lower1));
     if (dst_stride1 == 1) {
-      size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower1, dst_upper1, dst_stride1);
+      size_t n = type_size * _XMP_M_COUNT_TRIPLETi(dst_lower1, dst_upper1, dst_stride1);
       memcpy(addr, buf_addr, n);
       buf_addr += n;
     }
@@ -657,15 +657,15 @@ static void _XCALABLEMP_unpack_array_2_GENERAL(void *dst_addr, void *buf_addr, s
 }
 
 // --- dimension 3
-#define _XCALABLEMP_SM_UNPACK_ARRAY_3(_type) \
+#define _XMP_SM_UNPACK_ARRAY_3(_type) \
 (_type *dst_addr, _type *buf_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
-  _XCALABLEMP_ASSERT(dst_addr != NULL); \
-  _XCALABLEMP_ASSERT(buf_addr != NULL); \
-  _XCALABLEMP_ASSERT(l != NULL); \
-  _XCALABLEMP_ASSERT(u != NULL); \
-  _XCALABLEMP_ASSERT(s != NULL); \
-  _XCALABLEMP_ASSERT(d != NULL); \
+  _XMP_ASSERT(dst_addr != NULL); \
+  _XMP_ASSERT(buf_addr != NULL); \
+  _XMP_ASSERT(l != NULL); \
+  _XMP_ASSERT(u != NULL); \
+  _XMP_ASSERT(s != NULL); \
+  _XMP_ASSERT(d != NULL); \
 \
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0]; \
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; unsigned long long dst_dim_acc1 = d[1]; \
@@ -681,28 +681,28 @@ static void _XCALABLEMP_unpack_array_2_GENERAL(void *dst_addr, void *buf_addr, s
   } \
 }
 
-static void _XCALABLEMP_unpack_array_3_BOOL			_XCALABLEMP_SM_UNPACK_ARRAY_3(_Bool)
-static void _XCALABLEMP_unpack_array_3_CHAR			_XCALABLEMP_SM_UNPACK_ARRAY_3(char)
-static void _XCALABLEMP_unpack_array_3_UNSIGNED_CHAR		_XCALABLEMP_SM_UNPACK_ARRAY_3(unsigned char)
-static void _XCALABLEMP_unpack_array_3_SHORT			_XCALABLEMP_SM_UNPACK_ARRAY_3(short)
-static void _XCALABLEMP_unpack_array_3_UNSIGNED_SHORT		_XCALABLEMP_SM_UNPACK_ARRAY_3(unsigned short)
-static void _XCALABLEMP_unpack_array_3_INT			_XCALABLEMP_SM_UNPACK_ARRAY_3(int)
-static void _XCALABLEMP_unpack_array_3_UNSIGNED_INT		_XCALABLEMP_SM_UNPACK_ARRAY_3(unsigned int)
-static void _XCALABLEMP_unpack_array_3_LONG			_XCALABLEMP_SM_UNPACK_ARRAY_3(long)
-static void _XCALABLEMP_unpack_array_3_UNSIGNED_LONG		_XCALABLEMP_SM_UNPACK_ARRAY_3(unsigned long)
-static void _XCALABLEMP_unpack_array_3_LONGLONG			_XCALABLEMP_SM_UNPACK_ARRAY_3(long long)
-static void _XCALABLEMP_unpack_array_3_UNSIGNED_LONGLONG	_XCALABLEMP_SM_UNPACK_ARRAY_3(unsigned long long)
-static void _XCALABLEMP_unpack_array_3_FLOAT			_XCALABLEMP_SM_UNPACK_ARRAY_3(float)
-static void _XCALABLEMP_unpack_array_3_DOUBLE			_XCALABLEMP_SM_UNPACK_ARRAY_3(double)
-static void _XCALABLEMP_unpack_array_3_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_3(long double)
-static void _XCALABLEMP_unpack_array_3_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
+static void _XMP_unpack_array_3_BOOL			_XMP_SM_UNPACK_ARRAY_3(_Bool)
+static void _XMP_unpack_array_3_CHAR			_XMP_SM_UNPACK_ARRAY_3(char)
+static void _XMP_unpack_array_3_UNSIGNED_CHAR		_XMP_SM_UNPACK_ARRAY_3(unsigned char)
+static void _XMP_unpack_array_3_SHORT			_XMP_SM_UNPACK_ARRAY_3(short)
+static void _XMP_unpack_array_3_UNSIGNED_SHORT		_XMP_SM_UNPACK_ARRAY_3(unsigned short)
+static void _XMP_unpack_array_3_INT			_XMP_SM_UNPACK_ARRAY_3(int)
+static void _XMP_unpack_array_3_UNSIGNED_INT		_XMP_SM_UNPACK_ARRAY_3(unsigned int)
+static void _XMP_unpack_array_3_LONG			_XMP_SM_UNPACK_ARRAY_3(long)
+static void _XMP_unpack_array_3_UNSIGNED_LONG		_XMP_SM_UNPACK_ARRAY_3(unsigned long)
+static void _XMP_unpack_array_3_LONGLONG			_XMP_SM_UNPACK_ARRAY_3(long long)
+static void _XMP_unpack_array_3_UNSIGNED_LONGLONG	_XMP_SM_UNPACK_ARRAY_3(unsigned long long)
+static void _XMP_unpack_array_3_FLOAT			_XMP_SM_UNPACK_ARRAY_3(float)
+static void _XMP_unpack_array_3_DOUBLE			_XMP_SM_UNPACK_ARRAY_3(double)
+static void _XMP_unpack_array_3_LONG_DOUBLE		_XMP_SM_UNPACK_ARRAY_3(long double)
+static void _XMP_unpack_array_3_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
                                                int *l, int *u, int *s, unsigned long long *d) {
-  _XCALABLEMP_ASSERT(dst_addr != NULL);
-  _XCALABLEMP_ASSERT(buf_addr != NULL);
-  _XCALABLEMP_ASSERT(l != NULL);
-  _XCALABLEMP_ASSERT(u != NULL);
-  _XCALABLEMP_ASSERT(s != NULL);
-  _XCALABLEMP_ASSERT(d != NULL);
+  _XMP_ASSERT(dst_addr != NULL);
+  _XMP_ASSERT(buf_addr != NULL);
+  _XMP_ASSERT(l != NULL);
+  _XMP_ASSERT(u != NULL);
+  _XMP_ASSERT(s != NULL);
+  _XMP_ASSERT(d != NULL);
 
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0];
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; unsigned long long dst_dim_acc1 = d[1];
@@ -711,7 +711,7 @@ static void _XCALABLEMP_unpack_array_3_GENERAL(void *dst_addr, void *buf_addr, s
     for (int j = dst_lower1; j <= dst_upper1; j += dst_stride1) {
       void *addr = dst_addr + (type_size * ((k * dst_dim_acc0) + (j * dst_dim_acc1) + dst_lower2));
       if (dst_stride2 == 1) {
-        size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower2, dst_upper2, dst_stride2);
+        size_t n = type_size * _XMP_M_COUNT_TRIPLETi(dst_lower2, dst_upper2, dst_stride2);
         memcpy(addr, buf_addr, n);
         buf_addr += n;
       }
@@ -728,15 +728,15 @@ static void _XCALABLEMP_unpack_array_3_GENERAL(void *dst_addr, void *buf_addr, s
 }
 
 // --- dimension 4
-#define _XCALABLEMP_SM_UNPACK_ARRAY_4(_type) \
+#define _XMP_SM_UNPACK_ARRAY_4(_type) \
 (_type *dst_addr, _type *buf_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
-  _XCALABLEMP_ASSERT(dst_addr != NULL); \
-  _XCALABLEMP_ASSERT(buf_addr != NULL); \
-  _XCALABLEMP_ASSERT(l != NULL); \
-  _XCALABLEMP_ASSERT(u != NULL); \
-  _XCALABLEMP_ASSERT(s != NULL); \
-  _XCALABLEMP_ASSERT(d != NULL); \
+  _XMP_ASSERT(dst_addr != NULL); \
+  _XMP_ASSERT(buf_addr != NULL); \
+  _XMP_ASSERT(l != NULL); \
+  _XMP_ASSERT(u != NULL); \
+  _XMP_ASSERT(s != NULL); \
+  _XMP_ASSERT(d != NULL); \
 \
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0]; \
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; unsigned long long dst_dim_acc1 = d[1]; \
@@ -755,28 +755,28 @@ static void _XCALABLEMP_unpack_array_3_GENERAL(void *dst_addr, void *buf_addr, s
   } \
 }
 
-static void _XCALABLEMP_unpack_array_4_BOOL			_XCALABLEMP_SM_UNPACK_ARRAY_4(_Bool)
-static void _XCALABLEMP_unpack_array_4_CHAR			_XCALABLEMP_SM_UNPACK_ARRAY_4(char)
-static void _XCALABLEMP_unpack_array_4_UNSIGNED_CHAR		_XCALABLEMP_SM_UNPACK_ARRAY_4(unsigned char)
-static void _XCALABLEMP_unpack_array_4_SHORT			_XCALABLEMP_SM_UNPACK_ARRAY_4(short)
-static void _XCALABLEMP_unpack_array_4_UNSIGNED_SHORT		_XCALABLEMP_SM_UNPACK_ARRAY_4(unsigned short)
-static void _XCALABLEMP_unpack_array_4_INT			_XCALABLEMP_SM_UNPACK_ARRAY_4(int)
-static void _XCALABLEMP_unpack_array_4_UNSIGNED_INT		_XCALABLEMP_SM_UNPACK_ARRAY_4(unsigned int)
-static void _XCALABLEMP_unpack_array_4_LONG			_XCALABLEMP_SM_UNPACK_ARRAY_4(long)
-static void _XCALABLEMP_unpack_array_4_UNSIGNED_LONG		_XCALABLEMP_SM_UNPACK_ARRAY_4(unsigned long)
-static void _XCALABLEMP_unpack_array_4_LONGLONG			_XCALABLEMP_SM_UNPACK_ARRAY_4(long long)
-static void _XCALABLEMP_unpack_array_4_UNSIGNED_LONGLONG	_XCALABLEMP_SM_UNPACK_ARRAY_4(unsigned long long)
-static void _XCALABLEMP_unpack_array_4_FLOAT			_XCALABLEMP_SM_UNPACK_ARRAY_4(float)
-static void _XCALABLEMP_unpack_array_4_DOUBLE			_XCALABLEMP_SM_UNPACK_ARRAY_4(double)
-static void _XCALABLEMP_unpack_array_4_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_4(long double)
-static void _XCALABLEMP_unpack_array_4_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
+static void _XMP_unpack_array_4_BOOL			_XMP_SM_UNPACK_ARRAY_4(_Bool)
+static void _XMP_unpack_array_4_CHAR			_XMP_SM_UNPACK_ARRAY_4(char)
+static void _XMP_unpack_array_4_UNSIGNED_CHAR		_XMP_SM_UNPACK_ARRAY_4(unsigned char)
+static void _XMP_unpack_array_4_SHORT			_XMP_SM_UNPACK_ARRAY_4(short)
+static void _XMP_unpack_array_4_UNSIGNED_SHORT		_XMP_SM_UNPACK_ARRAY_4(unsigned short)
+static void _XMP_unpack_array_4_INT			_XMP_SM_UNPACK_ARRAY_4(int)
+static void _XMP_unpack_array_4_UNSIGNED_INT		_XMP_SM_UNPACK_ARRAY_4(unsigned int)
+static void _XMP_unpack_array_4_LONG			_XMP_SM_UNPACK_ARRAY_4(long)
+static void _XMP_unpack_array_4_UNSIGNED_LONG		_XMP_SM_UNPACK_ARRAY_4(unsigned long)
+static void _XMP_unpack_array_4_LONGLONG			_XMP_SM_UNPACK_ARRAY_4(long long)
+static void _XMP_unpack_array_4_UNSIGNED_LONGLONG	_XMP_SM_UNPACK_ARRAY_4(unsigned long long)
+static void _XMP_unpack_array_4_FLOAT			_XMP_SM_UNPACK_ARRAY_4(float)
+static void _XMP_unpack_array_4_DOUBLE			_XMP_SM_UNPACK_ARRAY_4(double)
+static void _XMP_unpack_array_4_LONG_DOUBLE		_XMP_SM_UNPACK_ARRAY_4(long double)
+static void _XMP_unpack_array_4_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
                                                int *l, int *u, int *s, unsigned long long *d) {
-  _XCALABLEMP_ASSERT(dst_addr != NULL);
-  _XCALABLEMP_ASSERT(buf_addr != NULL);
-  _XCALABLEMP_ASSERT(l != NULL);
-  _XCALABLEMP_ASSERT(u != NULL);
-  _XCALABLEMP_ASSERT(s != NULL);
-  _XCALABLEMP_ASSERT(d != NULL);
+  _XMP_ASSERT(dst_addr != NULL);
+  _XMP_ASSERT(buf_addr != NULL);
+  _XMP_ASSERT(l != NULL);
+  _XMP_ASSERT(u != NULL);
+  _XMP_ASSERT(s != NULL);
+  _XMP_ASSERT(d != NULL);
 
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0];
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; unsigned long long dst_dim_acc1 = d[1];
@@ -787,7 +787,7 @@ static void _XCALABLEMP_unpack_array_4_GENERAL(void *dst_addr, void *buf_addr, s
       for (int j = dst_lower2; j <= dst_upper2; j += dst_stride2) {
         void *addr = dst_addr + (type_size * ((l * dst_dim_acc0) + (k * dst_dim_acc1) + (j * dst_dim_acc2) + dst_lower3));
         if (dst_stride3 == 1) {
-          size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower3, dst_upper3, dst_stride3);
+          size_t n = type_size * _XMP_M_COUNT_TRIPLETi(dst_lower3, dst_upper3, dst_stride3);
           memcpy(addr, buf_addr, n);
           buf_addr += n;
         }
@@ -805,15 +805,15 @@ static void _XCALABLEMP_unpack_array_4_GENERAL(void *dst_addr, void *buf_addr, s
 }
 
 // --- dimension 5
-#define _XCALABLEMP_SM_UNPACK_ARRAY_5(_type) \
+#define _XMP_SM_UNPACK_ARRAY_5(_type) \
 (_type *dst_addr, _type *buf_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
-  _XCALABLEMP_ASSERT(dst_addr != NULL); \
-  _XCALABLEMP_ASSERT(buf_addr != NULL); \
-  _XCALABLEMP_ASSERT(l != NULL); \
-  _XCALABLEMP_ASSERT(u != NULL); \
-  _XCALABLEMP_ASSERT(s != NULL); \
-  _XCALABLEMP_ASSERT(d != NULL); \
+  _XMP_ASSERT(dst_addr != NULL); \
+  _XMP_ASSERT(buf_addr != NULL); \
+  _XMP_ASSERT(l != NULL); \
+  _XMP_ASSERT(u != NULL); \
+  _XMP_ASSERT(s != NULL); \
+  _XMP_ASSERT(d != NULL); \
 \
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0]; \
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; unsigned long long dst_dim_acc1 = d[1]; \
@@ -835,28 +835,28 @@ static void _XCALABLEMP_unpack_array_4_GENERAL(void *dst_addr, void *buf_addr, s
   } \
 }
 
-static void _XCALABLEMP_unpack_array_5_BOOL			_XCALABLEMP_SM_UNPACK_ARRAY_5(_Bool)
-static void _XCALABLEMP_unpack_array_5_CHAR			_XCALABLEMP_SM_UNPACK_ARRAY_5(char)
-static void _XCALABLEMP_unpack_array_5_UNSIGNED_CHAR		_XCALABLEMP_SM_UNPACK_ARRAY_5(unsigned char)
-static void _XCALABLEMP_unpack_array_5_SHORT			_XCALABLEMP_SM_UNPACK_ARRAY_5(short)
-static void _XCALABLEMP_unpack_array_5_UNSIGNED_SHORT		_XCALABLEMP_SM_UNPACK_ARRAY_5(unsigned short)
-static void _XCALABLEMP_unpack_array_5_INT			_XCALABLEMP_SM_UNPACK_ARRAY_5(int)
-static void _XCALABLEMP_unpack_array_5_UNSIGNED_INT		_XCALABLEMP_SM_UNPACK_ARRAY_5(unsigned int)
-static void _XCALABLEMP_unpack_array_5_LONG			_XCALABLEMP_SM_UNPACK_ARRAY_5(long)
-static void _XCALABLEMP_unpack_array_5_UNSIGNED_LONG		_XCALABLEMP_SM_UNPACK_ARRAY_5(unsigned long)
-static void _XCALABLEMP_unpack_array_5_LONGLONG			_XCALABLEMP_SM_UNPACK_ARRAY_5(long long)
-static void _XCALABLEMP_unpack_array_5_UNSIGNED_LONGLONG	_XCALABLEMP_SM_UNPACK_ARRAY_5(unsigned long long)
-static void _XCALABLEMP_unpack_array_5_FLOAT			_XCALABLEMP_SM_UNPACK_ARRAY_5(float)
-static void _XCALABLEMP_unpack_array_5_DOUBLE			_XCALABLEMP_SM_UNPACK_ARRAY_5(double)
-static void _XCALABLEMP_unpack_array_5_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_5(long double)
-static void _XCALABLEMP_unpack_array_5_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
+static void _XMP_unpack_array_5_BOOL			_XMP_SM_UNPACK_ARRAY_5(_Bool)
+static void _XMP_unpack_array_5_CHAR			_XMP_SM_UNPACK_ARRAY_5(char)
+static void _XMP_unpack_array_5_UNSIGNED_CHAR		_XMP_SM_UNPACK_ARRAY_5(unsigned char)
+static void _XMP_unpack_array_5_SHORT			_XMP_SM_UNPACK_ARRAY_5(short)
+static void _XMP_unpack_array_5_UNSIGNED_SHORT		_XMP_SM_UNPACK_ARRAY_5(unsigned short)
+static void _XMP_unpack_array_5_INT			_XMP_SM_UNPACK_ARRAY_5(int)
+static void _XMP_unpack_array_5_UNSIGNED_INT		_XMP_SM_UNPACK_ARRAY_5(unsigned int)
+static void _XMP_unpack_array_5_LONG			_XMP_SM_UNPACK_ARRAY_5(long)
+static void _XMP_unpack_array_5_UNSIGNED_LONG		_XMP_SM_UNPACK_ARRAY_5(unsigned long)
+static void _XMP_unpack_array_5_LONGLONG			_XMP_SM_UNPACK_ARRAY_5(long long)
+static void _XMP_unpack_array_5_UNSIGNED_LONGLONG	_XMP_SM_UNPACK_ARRAY_5(unsigned long long)
+static void _XMP_unpack_array_5_FLOAT			_XMP_SM_UNPACK_ARRAY_5(float)
+static void _XMP_unpack_array_5_DOUBLE			_XMP_SM_UNPACK_ARRAY_5(double)
+static void _XMP_unpack_array_5_LONG_DOUBLE		_XMP_SM_UNPACK_ARRAY_5(long double)
+static void _XMP_unpack_array_5_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
                                                int *l, int *u, int *s, unsigned long long *d) {
-  _XCALABLEMP_ASSERT(dst_addr != NULL);
-  _XCALABLEMP_ASSERT(buf_addr != NULL);
-  _XCALABLEMP_ASSERT(l != NULL);
-  _XCALABLEMP_ASSERT(u != NULL);
-  _XCALABLEMP_ASSERT(s != NULL);
-  _XCALABLEMP_ASSERT(d != NULL);
+  _XMP_ASSERT(dst_addr != NULL);
+  _XMP_ASSERT(buf_addr != NULL);
+  _XMP_ASSERT(l != NULL);
+  _XMP_ASSERT(u != NULL);
+  _XMP_ASSERT(s != NULL);
+  _XMP_ASSERT(d != NULL);
 
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0];
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; unsigned long long dst_dim_acc1 = d[1];
@@ -870,7 +870,7 @@ static void _XCALABLEMP_unpack_array_5_GENERAL(void *dst_addr, void *buf_addr, s
           void *addr = dst_addr + (type_size * ((m * dst_dim_acc0) + (l * dst_dim_acc1) + (k * dst_dim_acc2) +
                                                 (j * dst_dim_acc3) + dst_lower4));
           if (dst_stride4 == 1) {
-            size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower4, dst_upper4, dst_stride4);
+            size_t n = type_size * _XMP_M_COUNT_TRIPLETi(dst_lower4, dst_upper4, dst_stride4);
             memcpy(addr, buf_addr, n);
             buf_addr += n;
           }
@@ -889,15 +889,15 @@ static void _XCALABLEMP_unpack_array_5_GENERAL(void *dst_addr, void *buf_addr, s
 }
 
 // --- dimension 6
-#define _XCALABLEMP_SM_UNPACK_ARRAY_6(_type) \
+#define _XMP_SM_UNPACK_ARRAY_6(_type) \
 (_type *dst_addr, _type *buf_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
-  _XCALABLEMP_ASSERT(dst_addr != NULL); \
-  _XCALABLEMP_ASSERT(buf_addr != NULL); \
-  _XCALABLEMP_ASSERT(l != NULL); \
-  _XCALABLEMP_ASSERT(u != NULL); \
-  _XCALABLEMP_ASSERT(s != NULL); \
-  _XCALABLEMP_ASSERT(d != NULL); \
+  _XMP_ASSERT(dst_addr != NULL); \
+  _XMP_ASSERT(buf_addr != NULL); \
+  _XMP_ASSERT(l != NULL); \
+  _XMP_ASSERT(u != NULL); \
+  _XMP_ASSERT(s != NULL); \
+  _XMP_ASSERT(d != NULL); \
 \
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0]; \
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; unsigned long long dst_dim_acc1 = d[1]; \
@@ -923,28 +923,28 @@ static void _XCALABLEMP_unpack_array_5_GENERAL(void *dst_addr, void *buf_addr, s
   } \
 }
 
-static void _XCALABLEMP_unpack_array_6_BOOL			_XCALABLEMP_SM_UNPACK_ARRAY_6(_Bool)
-static void _XCALABLEMP_unpack_array_6_CHAR			_XCALABLEMP_SM_UNPACK_ARRAY_6(char)
-static void _XCALABLEMP_unpack_array_6_UNSIGNED_CHAR		_XCALABLEMP_SM_UNPACK_ARRAY_6(unsigned char)
-static void _XCALABLEMP_unpack_array_6_SHORT			_XCALABLEMP_SM_UNPACK_ARRAY_6(short)
-static void _XCALABLEMP_unpack_array_6_UNSIGNED_SHORT		_XCALABLEMP_SM_UNPACK_ARRAY_6(unsigned short)
-static void _XCALABLEMP_unpack_array_6_INT			_XCALABLEMP_SM_UNPACK_ARRAY_6(int)
-static void _XCALABLEMP_unpack_array_6_UNSIGNED_INT		_XCALABLEMP_SM_UNPACK_ARRAY_6(unsigned int)
-static void _XCALABLEMP_unpack_array_6_LONG			_XCALABLEMP_SM_UNPACK_ARRAY_6(long)
-static void _XCALABLEMP_unpack_array_6_UNSIGNED_LONG		_XCALABLEMP_SM_UNPACK_ARRAY_6(unsigned long)
-static void _XCALABLEMP_unpack_array_6_LONGLONG			_XCALABLEMP_SM_UNPACK_ARRAY_6(long long)
-static void _XCALABLEMP_unpack_array_6_UNSIGNED_LONGLONG	_XCALABLEMP_SM_UNPACK_ARRAY_6(unsigned long long)
-static void _XCALABLEMP_unpack_array_6_FLOAT			_XCALABLEMP_SM_UNPACK_ARRAY_6(float)
-static void _XCALABLEMP_unpack_array_6_DOUBLE			_XCALABLEMP_SM_UNPACK_ARRAY_6(double)
-static void _XCALABLEMP_unpack_array_6_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_6(long double)
-static void _XCALABLEMP_unpack_array_6_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
+static void _XMP_unpack_array_6_BOOL			_XMP_SM_UNPACK_ARRAY_6(_Bool)
+static void _XMP_unpack_array_6_CHAR			_XMP_SM_UNPACK_ARRAY_6(char)
+static void _XMP_unpack_array_6_UNSIGNED_CHAR		_XMP_SM_UNPACK_ARRAY_6(unsigned char)
+static void _XMP_unpack_array_6_SHORT			_XMP_SM_UNPACK_ARRAY_6(short)
+static void _XMP_unpack_array_6_UNSIGNED_SHORT		_XMP_SM_UNPACK_ARRAY_6(unsigned short)
+static void _XMP_unpack_array_6_INT			_XMP_SM_UNPACK_ARRAY_6(int)
+static void _XMP_unpack_array_6_UNSIGNED_INT		_XMP_SM_UNPACK_ARRAY_6(unsigned int)
+static void _XMP_unpack_array_6_LONG			_XMP_SM_UNPACK_ARRAY_6(long)
+static void _XMP_unpack_array_6_UNSIGNED_LONG		_XMP_SM_UNPACK_ARRAY_6(unsigned long)
+static void _XMP_unpack_array_6_LONGLONG			_XMP_SM_UNPACK_ARRAY_6(long long)
+static void _XMP_unpack_array_6_UNSIGNED_LONGLONG	_XMP_SM_UNPACK_ARRAY_6(unsigned long long)
+static void _XMP_unpack_array_6_FLOAT			_XMP_SM_UNPACK_ARRAY_6(float)
+static void _XMP_unpack_array_6_DOUBLE			_XMP_SM_UNPACK_ARRAY_6(double)
+static void _XMP_unpack_array_6_LONG_DOUBLE		_XMP_SM_UNPACK_ARRAY_6(long double)
+static void _XMP_unpack_array_6_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
                                                int *l, int *u, int *s, unsigned long long *d) {
-  _XCALABLEMP_ASSERT(dst_addr != NULL);
-  _XCALABLEMP_ASSERT(buf_addr != NULL);
-  _XCALABLEMP_ASSERT(l != NULL);
-  _XCALABLEMP_ASSERT(u != NULL);
-  _XCALABLEMP_ASSERT(s != NULL);
-  _XCALABLEMP_ASSERT(d != NULL);
+  _XMP_ASSERT(dst_addr != NULL);
+  _XMP_ASSERT(buf_addr != NULL);
+  _XMP_ASSERT(l != NULL);
+  _XMP_ASSERT(u != NULL);
+  _XMP_ASSERT(s != NULL);
+  _XMP_ASSERT(d != NULL);
 
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0];
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; unsigned long long dst_dim_acc1 = d[1];
@@ -960,7 +960,7 @@ static void _XCALABLEMP_unpack_array_6_GENERAL(void *dst_addr, void *buf_addr, s
             void *addr = dst_addr + (type_size * ((n * dst_dim_acc0) + (m * dst_dim_acc1) + (l * dst_dim_acc2) +
                                                   (k * dst_dim_acc3) + (j * dst_dim_acc4) + dst_lower5));
             if (dst_stride5 == 1) {
-              size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower5, dst_upper5, dst_stride5);
+              size_t n = type_size * _XMP_M_COUNT_TRIPLETi(dst_lower5, dst_upper5, dst_stride5);
               memcpy(addr, buf_addr, n);
               buf_addr += n;
             }
@@ -980,15 +980,15 @@ static void _XCALABLEMP_unpack_array_6_GENERAL(void *dst_addr, void *buf_addr, s
 }
 
 // --- dimension 7
-#define _XCALABLEMP_SM_UNPACK_ARRAY_7(_type) \
+#define _XMP_SM_UNPACK_ARRAY_7(_type) \
 (_type *dst_addr, _type *buf_addr, \
  int *l, int *u, int *s, unsigned long long *d) { \
-  _XCALABLEMP_ASSERT(dst_addr != NULL); \
-  _XCALABLEMP_ASSERT(buf_addr != NULL); \
-  _XCALABLEMP_ASSERT(l != NULL); \
-  _XCALABLEMP_ASSERT(u != NULL); \
-  _XCALABLEMP_ASSERT(s != NULL); \
-  _XCALABLEMP_ASSERT(d != NULL); \
+  _XMP_ASSERT(dst_addr != NULL); \
+  _XMP_ASSERT(buf_addr != NULL); \
+  _XMP_ASSERT(l != NULL); \
+  _XMP_ASSERT(u != NULL); \
+  _XMP_ASSERT(s != NULL); \
+  _XMP_ASSERT(d != NULL); \
 \
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0]; \
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; unsigned long long dst_dim_acc1 = d[1]; \
@@ -1017,28 +1017,28 @@ static void _XCALABLEMP_unpack_array_6_GENERAL(void *dst_addr, void *buf_addr, s
   } \
 }
 
-static void _XCALABLEMP_unpack_array_7_BOOL			_XCALABLEMP_SM_UNPACK_ARRAY_7(_Bool)
-static void _XCALABLEMP_unpack_array_7_CHAR			_XCALABLEMP_SM_UNPACK_ARRAY_7(char)
-static void _XCALABLEMP_unpack_array_7_UNSIGNED_CHAR		_XCALABLEMP_SM_UNPACK_ARRAY_7(unsigned char)
-static void _XCALABLEMP_unpack_array_7_SHORT			_XCALABLEMP_SM_UNPACK_ARRAY_7(short)
-static void _XCALABLEMP_unpack_array_7_UNSIGNED_SHORT		_XCALABLEMP_SM_UNPACK_ARRAY_7(unsigned short)
-static void _XCALABLEMP_unpack_array_7_INT			_XCALABLEMP_SM_UNPACK_ARRAY_7(int)
-static void _XCALABLEMP_unpack_array_7_UNSIGNED_INT		_XCALABLEMP_SM_UNPACK_ARRAY_7(unsigned int)
-static void _XCALABLEMP_unpack_array_7_LONG			_XCALABLEMP_SM_UNPACK_ARRAY_7(long)
-static void _XCALABLEMP_unpack_array_7_UNSIGNED_LONG		_XCALABLEMP_SM_UNPACK_ARRAY_7(unsigned long)
-static void _XCALABLEMP_unpack_array_7_LONGLONG			_XCALABLEMP_SM_UNPACK_ARRAY_7(long long)
-static void _XCALABLEMP_unpack_array_7_UNSIGNED_LONGLONG	_XCALABLEMP_SM_UNPACK_ARRAY_7(unsigned long long)
-static void _XCALABLEMP_unpack_array_7_FLOAT			_XCALABLEMP_SM_UNPACK_ARRAY_7(float)
-static void _XCALABLEMP_unpack_array_7_DOUBLE			_XCALABLEMP_SM_UNPACK_ARRAY_7(double)
-static void _XCALABLEMP_unpack_array_7_LONG_DOUBLE		_XCALABLEMP_SM_UNPACK_ARRAY_7(long double)
-static void _XCALABLEMP_unpack_array_7_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
+static void _XMP_unpack_array_7_BOOL			_XMP_SM_UNPACK_ARRAY_7(_Bool)
+static void _XMP_unpack_array_7_CHAR			_XMP_SM_UNPACK_ARRAY_7(char)
+static void _XMP_unpack_array_7_UNSIGNED_CHAR		_XMP_SM_UNPACK_ARRAY_7(unsigned char)
+static void _XMP_unpack_array_7_SHORT			_XMP_SM_UNPACK_ARRAY_7(short)
+static void _XMP_unpack_array_7_UNSIGNED_SHORT		_XMP_SM_UNPACK_ARRAY_7(unsigned short)
+static void _XMP_unpack_array_7_INT			_XMP_SM_UNPACK_ARRAY_7(int)
+static void _XMP_unpack_array_7_UNSIGNED_INT		_XMP_SM_UNPACK_ARRAY_7(unsigned int)
+static void _XMP_unpack_array_7_LONG			_XMP_SM_UNPACK_ARRAY_7(long)
+static void _XMP_unpack_array_7_UNSIGNED_LONG		_XMP_SM_UNPACK_ARRAY_7(unsigned long)
+static void _XMP_unpack_array_7_LONGLONG			_XMP_SM_UNPACK_ARRAY_7(long long)
+static void _XMP_unpack_array_7_UNSIGNED_LONGLONG	_XMP_SM_UNPACK_ARRAY_7(unsigned long long)
+static void _XMP_unpack_array_7_FLOAT			_XMP_SM_UNPACK_ARRAY_7(float)
+static void _XMP_unpack_array_7_DOUBLE			_XMP_SM_UNPACK_ARRAY_7(double)
+static void _XMP_unpack_array_7_LONG_DOUBLE		_XMP_SM_UNPACK_ARRAY_7(long double)
+static void _XMP_unpack_array_7_GENERAL(void *dst_addr, void *buf_addr, size_t type_size,
                                                int *l, int *u, int *s, unsigned long long *d) {
-  _XCALABLEMP_ASSERT(dst_addr != NULL);
-  _XCALABLEMP_ASSERT(buf_addr != NULL);
-  _XCALABLEMP_ASSERT(l != NULL);
-  _XCALABLEMP_ASSERT(u != NULL);
-  _XCALABLEMP_ASSERT(s != NULL);
-  _XCALABLEMP_ASSERT(d != NULL);
+  _XMP_ASSERT(dst_addr != NULL);
+  _XMP_ASSERT(buf_addr != NULL);
+  _XMP_ASSERT(l != NULL);
+  _XMP_ASSERT(u != NULL);
+  _XMP_ASSERT(s != NULL);
+  _XMP_ASSERT(d != NULL);
 
   int dst_lower0 = l[0]; int dst_upper0 = u[0]; int dst_stride0 = s[0]; unsigned long long dst_dim_acc0 = d[0];
   int dst_lower1 = l[1]; int dst_upper1 = u[1]; int dst_stride1 = s[1]; unsigned long long dst_dim_acc1 = d[1];
@@ -1056,7 +1056,7 @@ static void _XCALABLEMP_unpack_array_7_GENERAL(void *dst_addr, void *buf_addr, s
               void *addr = dst_addr + (type_size * ((o * dst_dim_acc0) + (n * dst_dim_acc1) + (m * dst_dim_acc2) +
                                                     (l * dst_dim_acc3) + (k * dst_dim_acc4) + (j * dst_dim_acc5) + dst_lower6));
               if (dst_stride6 == 1) {
-                size_t n = type_size * _XCALABLEMP_M_COUNT_TRIPLETi(dst_lower6, dst_upper6, dst_stride6);
+                size_t n = type_size * _XMP_M_COUNT_TRIPLETi(dst_lower6, dst_upper6, dst_stride6);
                 memcpy(addr, buf_addr, n);
                 buf_addr += n;
               }
@@ -1077,10 +1077,10 @@ static void _XCALABLEMP_unpack_array_7_GENERAL(void *dst_addr, void *buf_addr, s
 }
 
 
-void _XCALABLEMP_normalize_array_section(int *lower, int *upper, int *stride) {
-  _XCALABLEMP_ASSERT(lower != NULL);
-  _XCALABLEMP_ASSERT(upper != NULL);
-  _XCALABLEMP_ASSERT(stride != NULL);
+void _XMP_normalize_array_section(int *lower, int *upper, int *stride) {
+  _XMP_ASSERT(lower != NULL);
+  _XMP_ASSERT(upper != NULL);
+  _XMP_ASSERT(stride != NULL);
 
   // setup temporary variables
   int l, u;
@@ -1094,7 +1094,7 @@ void _XCALABLEMP_normalize_array_section(int *lower, int *upper, int *stride) {
     u = *lower;
   }
   else {
-    _XCALABLEMP_fatal("the stride of <array-section> is 0");
+    _XMP_fatal("the stride of <array-section> is 0");
     l = 0; u = 0; // XXX dummy
   }
 
@@ -1112,433 +1112,433 @@ void _XCALABLEMP_normalize_array_section(int *lower, int *upper, int *stride) {
   }
 }
 
-void _XCALABLEMP_pack_array_BASIC(void *buffer, void *src, int array_type,
+void _XMP_pack_array_BASIC(void *buffer, void *src, int array_type,
                                   int array_dim, int *l, int *u, int *s, unsigned long long *d) {
-  _XCALABLEMP_ASSERT(buffer != NULL);
-  _XCALABLEMP_ASSERT(src != NULL);
-  _XCALABLEMP_ASSERT(l != NULL);
-  _XCALABLEMP_ASSERT(u != NULL);
-  _XCALABLEMP_ASSERT(s != NULL);
-  _XCALABLEMP_ASSERT(d != NULL);
+  _XMP_ASSERT(buffer != NULL);
+  _XMP_ASSERT(src != NULL);
+  _XMP_ASSERT(l != NULL);
+  _XMP_ASSERT(u != NULL);
+  _XMP_ASSERT(s != NULL);
+  _XMP_ASSERT(d != NULL);
 
   switch (array_type) {
-    case _XCALABLEMP_N_TYPE_BOOL: {
+    case _XMP_N_TYPE_BOOL: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_pack_array_1_BOOL(buffer, src, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_pack_array_2_BOOL(buffer, src, l, u, s, d); break;
-          case 3: _XCALABLEMP_pack_array_3_BOOL(buffer, src, l, u, s, d); break;
-          case 4: _XCALABLEMP_pack_array_4_BOOL(buffer, src, l, u, s, d); break;
-          case 5: _XCALABLEMP_pack_array_5_BOOL(buffer, src, l, u, s, d); break;
-          case 6: _XCALABLEMP_pack_array_6_BOOL(buffer, src, l, u, s, d); break;
-          case 7: _XCALABLEMP_pack_array_7_BOOL(buffer, src, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_pack_array_1_BOOL(buffer, src, l[0], u[0], s[0]); break;
+          case 2: _XMP_pack_array_2_BOOL(buffer, src, l, u, s, d); break;
+          case 3: _XMP_pack_array_3_BOOL(buffer, src, l, u, s, d); break;
+          case 4: _XMP_pack_array_4_BOOL(buffer, src, l, u, s, d); break;
+          case 5: _XMP_pack_array_5_BOOL(buffer, src, l, u, s, d); break;
+          case 6: _XMP_pack_array_6_BOOL(buffer, src, l, u, s, d); break;
+          case 7: _XMP_pack_array_7_BOOL(buffer, src, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_CHAR: {
+    case _XMP_N_TYPE_CHAR: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_pack_array_1_CHAR(buffer, src, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_pack_array_2_CHAR(buffer, src, l, u, s, d); break;
-          case 3: _XCALABLEMP_pack_array_3_CHAR(buffer, src, l, u, s, d); break;
-          case 4: _XCALABLEMP_pack_array_4_CHAR(buffer, src, l, u, s, d); break;
-          case 5: _XCALABLEMP_pack_array_5_CHAR(buffer, src, l, u, s, d); break;
-          case 6: _XCALABLEMP_pack_array_6_CHAR(buffer, src, l, u, s, d); break;
-          case 7: _XCALABLEMP_pack_array_7_CHAR(buffer, src, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_pack_array_1_CHAR(buffer, src, l[0], u[0], s[0]); break;
+          case 2: _XMP_pack_array_2_CHAR(buffer, src, l, u, s, d); break;
+          case 3: _XMP_pack_array_3_CHAR(buffer, src, l, u, s, d); break;
+          case 4: _XMP_pack_array_4_CHAR(buffer, src, l, u, s, d); break;
+          case 5: _XMP_pack_array_5_CHAR(buffer, src, l, u, s, d); break;
+          case 6: _XMP_pack_array_6_CHAR(buffer, src, l, u, s, d); break;
+          case 7: _XMP_pack_array_7_CHAR(buffer, src, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_UNSIGNED_CHAR: {
+    case _XMP_N_TYPE_UNSIGNED_CHAR: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_pack_array_1_UNSIGNED_CHAR(buffer, src, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_pack_array_2_UNSIGNED_CHAR(buffer, src, l, u, s, d); break;
-          case 3: _XCALABLEMP_pack_array_3_UNSIGNED_CHAR(buffer, src, l, u, s, d); break;
-          case 4: _XCALABLEMP_pack_array_4_UNSIGNED_CHAR(buffer, src, l, u, s, d); break;
-          case 5: _XCALABLEMP_pack_array_5_UNSIGNED_CHAR(buffer, src, l, u, s, d); break;
-          case 6: _XCALABLEMP_pack_array_6_UNSIGNED_CHAR(buffer, src, l, u, s, d); break;
-          case 7: _XCALABLEMP_pack_array_7_UNSIGNED_CHAR(buffer, src, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_pack_array_1_UNSIGNED_CHAR(buffer, src, l[0], u[0], s[0]); break;
+          case 2: _XMP_pack_array_2_UNSIGNED_CHAR(buffer, src, l, u, s, d); break;
+          case 3: _XMP_pack_array_3_UNSIGNED_CHAR(buffer, src, l, u, s, d); break;
+          case 4: _XMP_pack_array_4_UNSIGNED_CHAR(buffer, src, l, u, s, d); break;
+          case 5: _XMP_pack_array_5_UNSIGNED_CHAR(buffer, src, l, u, s, d); break;
+          case 6: _XMP_pack_array_6_UNSIGNED_CHAR(buffer, src, l, u, s, d); break;
+          case 7: _XMP_pack_array_7_UNSIGNED_CHAR(buffer, src, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_SHORT: {
+    case _XMP_N_TYPE_SHORT: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_pack_array_1_SHORT(buffer, src, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_pack_array_2_SHORT(buffer, src, l, u, s, d); break;
-          case 3: _XCALABLEMP_pack_array_3_SHORT(buffer, src, l, u, s, d); break;
-          case 4: _XCALABLEMP_pack_array_4_SHORT(buffer, src, l, u, s, d); break;
-          case 5: _XCALABLEMP_pack_array_5_SHORT(buffer, src, l, u, s, d); break;
-          case 6: _XCALABLEMP_pack_array_6_SHORT(buffer, src, l, u, s, d); break;
-          case 7: _XCALABLEMP_pack_array_7_SHORT(buffer, src, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_pack_array_1_SHORT(buffer, src, l[0], u[0], s[0]); break;
+          case 2: _XMP_pack_array_2_SHORT(buffer, src, l, u, s, d); break;
+          case 3: _XMP_pack_array_3_SHORT(buffer, src, l, u, s, d); break;
+          case 4: _XMP_pack_array_4_SHORT(buffer, src, l, u, s, d); break;
+          case 5: _XMP_pack_array_5_SHORT(buffer, src, l, u, s, d); break;
+          case 6: _XMP_pack_array_6_SHORT(buffer, src, l, u, s, d); break;
+          case 7: _XMP_pack_array_7_SHORT(buffer, src, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_UNSIGNED_SHORT: {
+    case _XMP_N_TYPE_UNSIGNED_SHORT: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_pack_array_1_UNSIGNED_SHORT(buffer, src, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_pack_array_2_UNSIGNED_SHORT(buffer, src, l, u, s, d); break;
-          case 3: _XCALABLEMP_pack_array_3_UNSIGNED_SHORT(buffer, src, l, u, s, d); break;
-          case 4: _XCALABLEMP_pack_array_4_UNSIGNED_SHORT(buffer, src, l, u, s, d); break;
-          case 5: _XCALABLEMP_pack_array_5_UNSIGNED_SHORT(buffer, src, l, u, s, d); break;
-          case 6: _XCALABLEMP_pack_array_6_UNSIGNED_SHORT(buffer, src, l, u, s, d); break;
-          case 7: _XCALABLEMP_pack_array_7_UNSIGNED_SHORT(buffer, src, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_pack_array_1_UNSIGNED_SHORT(buffer, src, l[0], u[0], s[0]); break;
+          case 2: _XMP_pack_array_2_UNSIGNED_SHORT(buffer, src, l, u, s, d); break;
+          case 3: _XMP_pack_array_3_UNSIGNED_SHORT(buffer, src, l, u, s, d); break;
+          case 4: _XMP_pack_array_4_UNSIGNED_SHORT(buffer, src, l, u, s, d); break;
+          case 5: _XMP_pack_array_5_UNSIGNED_SHORT(buffer, src, l, u, s, d); break;
+          case 6: _XMP_pack_array_6_UNSIGNED_SHORT(buffer, src, l, u, s, d); break;
+          case 7: _XMP_pack_array_7_UNSIGNED_SHORT(buffer, src, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_INT: {
+    case _XMP_N_TYPE_INT: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_pack_array_1_INT(buffer, src, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_pack_array_2_INT(buffer, src, l, u, s, d); break;
-          case 3: _XCALABLEMP_pack_array_3_INT(buffer, src, l, u, s, d); break;
-          case 4: _XCALABLEMP_pack_array_4_INT(buffer, src, l, u, s, d); break;
-          case 5: _XCALABLEMP_pack_array_5_INT(buffer, src, l, u, s, d); break;
-          case 6: _XCALABLEMP_pack_array_6_INT(buffer, src, l, u, s, d); break;
-          case 7: _XCALABLEMP_pack_array_7_INT(buffer, src, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_pack_array_1_INT(buffer, src, l[0], u[0], s[0]); break;
+          case 2: _XMP_pack_array_2_INT(buffer, src, l, u, s, d); break;
+          case 3: _XMP_pack_array_3_INT(buffer, src, l, u, s, d); break;
+          case 4: _XMP_pack_array_4_INT(buffer, src, l, u, s, d); break;
+          case 5: _XMP_pack_array_5_INT(buffer, src, l, u, s, d); break;
+          case 6: _XMP_pack_array_6_INT(buffer, src, l, u, s, d); break;
+          case 7: _XMP_pack_array_7_INT(buffer, src, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_UNSIGNED_INT: {
+    case _XMP_N_TYPE_UNSIGNED_INT: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_pack_array_1_UNSIGNED_INT(buffer, src, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_pack_array_2_UNSIGNED_INT(buffer, src, l, u, s, d); break;
-          case 3: _XCALABLEMP_pack_array_3_UNSIGNED_INT(buffer, src, l, u, s, d); break;
-          case 4: _XCALABLEMP_pack_array_4_UNSIGNED_INT(buffer, src, l, u, s, d); break;
-          case 5: _XCALABLEMP_pack_array_5_UNSIGNED_INT(buffer, src, l, u, s, d); break;
-          case 6: _XCALABLEMP_pack_array_6_UNSIGNED_INT(buffer, src, l, u, s, d); break;
-          case 7: _XCALABLEMP_pack_array_7_UNSIGNED_INT(buffer, src, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_pack_array_1_UNSIGNED_INT(buffer, src, l[0], u[0], s[0]); break;
+          case 2: _XMP_pack_array_2_UNSIGNED_INT(buffer, src, l, u, s, d); break;
+          case 3: _XMP_pack_array_3_UNSIGNED_INT(buffer, src, l, u, s, d); break;
+          case 4: _XMP_pack_array_4_UNSIGNED_INT(buffer, src, l, u, s, d); break;
+          case 5: _XMP_pack_array_5_UNSIGNED_INT(buffer, src, l, u, s, d); break;
+          case 6: _XMP_pack_array_6_UNSIGNED_INT(buffer, src, l, u, s, d); break;
+          case 7: _XMP_pack_array_7_UNSIGNED_INT(buffer, src, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_LONG: {
+    case _XMP_N_TYPE_LONG: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_pack_array_1_LONG(buffer, src, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_pack_array_2_LONG(buffer, src, l, u, s, d); break;
-          case 3: _XCALABLEMP_pack_array_3_LONG(buffer, src, l, u, s, d); break;
-          case 4: _XCALABLEMP_pack_array_4_LONG(buffer, src, l, u, s, d); break;
-          case 5: _XCALABLEMP_pack_array_5_LONG(buffer, src, l, u, s, d); break;
-          case 6: _XCALABLEMP_pack_array_6_LONG(buffer, src, l, u, s, d); break;
-          case 7: _XCALABLEMP_pack_array_7_LONG(buffer, src, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_pack_array_1_LONG(buffer, src, l[0], u[0], s[0]); break;
+          case 2: _XMP_pack_array_2_LONG(buffer, src, l, u, s, d); break;
+          case 3: _XMP_pack_array_3_LONG(buffer, src, l, u, s, d); break;
+          case 4: _XMP_pack_array_4_LONG(buffer, src, l, u, s, d); break;
+          case 5: _XMP_pack_array_5_LONG(buffer, src, l, u, s, d); break;
+          case 6: _XMP_pack_array_6_LONG(buffer, src, l, u, s, d); break;
+          case 7: _XMP_pack_array_7_LONG(buffer, src, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_UNSIGNED_LONG: {
+    case _XMP_N_TYPE_UNSIGNED_LONG: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_pack_array_1_UNSIGNED_LONG(buffer, src, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_pack_array_2_UNSIGNED_LONG(buffer, src, l, u, s, d); break;
-          case 3: _XCALABLEMP_pack_array_3_UNSIGNED_LONG(buffer, src, l, u, s, d); break;
-          case 4: _XCALABLEMP_pack_array_4_UNSIGNED_LONG(buffer, src, l, u, s, d); break;
-          case 5: _XCALABLEMP_pack_array_5_UNSIGNED_LONG(buffer, src, l, u, s, d); break;
-          case 6: _XCALABLEMP_pack_array_6_UNSIGNED_LONG(buffer, src, l, u, s, d); break;
-          case 7: _XCALABLEMP_pack_array_7_UNSIGNED_LONG(buffer, src, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_pack_array_1_UNSIGNED_LONG(buffer, src, l[0], u[0], s[0]); break;
+          case 2: _XMP_pack_array_2_UNSIGNED_LONG(buffer, src, l, u, s, d); break;
+          case 3: _XMP_pack_array_3_UNSIGNED_LONG(buffer, src, l, u, s, d); break;
+          case 4: _XMP_pack_array_4_UNSIGNED_LONG(buffer, src, l, u, s, d); break;
+          case 5: _XMP_pack_array_5_UNSIGNED_LONG(buffer, src, l, u, s, d); break;
+          case 6: _XMP_pack_array_6_UNSIGNED_LONG(buffer, src, l, u, s, d); break;
+          case 7: _XMP_pack_array_7_UNSIGNED_LONG(buffer, src, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_LONGLONG: {
+    case _XMP_N_TYPE_LONGLONG: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_pack_array_1_LONGLONG(buffer, src, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_pack_array_2_LONGLONG(buffer, src, l, u, s, d); break;
-          case 3: _XCALABLEMP_pack_array_3_LONGLONG(buffer, src, l, u, s, d); break;
-          case 4: _XCALABLEMP_pack_array_4_LONGLONG(buffer, src, l, u, s, d); break;
-          case 5: _XCALABLEMP_pack_array_5_LONGLONG(buffer, src, l, u, s, d); break;
-          case 6: _XCALABLEMP_pack_array_6_LONGLONG(buffer, src, l, u, s, d); break;
-          case 7: _XCALABLEMP_pack_array_7_LONGLONG(buffer, src, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_pack_array_1_LONGLONG(buffer, src, l[0], u[0], s[0]); break;
+          case 2: _XMP_pack_array_2_LONGLONG(buffer, src, l, u, s, d); break;
+          case 3: _XMP_pack_array_3_LONGLONG(buffer, src, l, u, s, d); break;
+          case 4: _XMP_pack_array_4_LONGLONG(buffer, src, l, u, s, d); break;
+          case 5: _XMP_pack_array_5_LONGLONG(buffer, src, l, u, s, d); break;
+          case 6: _XMP_pack_array_6_LONGLONG(buffer, src, l, u, s, d); break;
+          case 7: _XMP_pack_array_7_LONGLONG(buffer, src, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_UNSIGNED_LONGLONG: {
+    case _XMP_N_TYPE_UNSIGNED_LONGLONG: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_pack_array_1_UNSIGNED_LONGLONG(buffer, src, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_pack_array_2_UNSIGNED_LONGLONG(buffer, src, l, u, s, d); break;
-          case 3: _XCALABLEMP_pack_array_3_UNSIGNED_LONGLONG(buffer, src, l, u, s, d); break;
-          case 4: _XCALABLEMP_pack_array_4_UNSIGNED_LONGLONG(buffer, src, l, u, s, d); break;
-          case 5: _XCALABLEMP_pack_array_5_UNSIGNED_LONGLONG(buffer, src, l, u, s, d); break;
-          case 6: _XCALABLEMP_pack_array_6_UNSIGNED_LONGLONG(buffer, src, l, u, s, d); break;
-          case 7: _XCALABLEMP_pack_array_7_UNSIGNED_LONGLONG(buffer, src, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_pack_array_1_UNSIGNED_LONGLONG(buffer, src, l[0], u[0], s[0]); break;
+          case 2: _XMP_pack_array_2_UNSIGNED_LONGLONG(buffer, src, l, u, s, d); break;
+          case 3: _XMP_pack_array_3_UNSIGNED_LONGLONG(buffer, src, l, u, s, d); break;
+          case 4: _XMP_pack_array_4_UNSIGNED_LONGLONG(buffer, src, l, u, s, d); break;
+          case 5: _XMP_pack_array_5_UNSIGNED_LONGLONG(buffer, src, l, u, s, d); break;
+          case 6: _XMP_pack_array_6_UNSIGNED_LONGLONG(buffer, src, l, u, s, d); break;
+          case 7: _XMP_pack_array_7_UNSIGNED_LONGLONG(buffer, src, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_FLOAT: {
+    case _XMP_N_TYPE_FLOAT: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_pack_array_1_FLOAT(buffer, src, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_pack_array_2_FLOAT(buffer, src, l, u, s, d); break;
-          case 3: _XCALABLEMP_pack_array_3_FLOAT(buffer, src, l, u, s, d); break;
-          case 4: _XCALABLEMP_pack_array_4_FLOAT(buffer, src, l, u, s, d); break;
-          case 5: _XCALABLEMP_pack_array_5_FLOAT(buffer, src, l, u, s, d); break;
-          case 6: _XCALABLEMP_pack_array_6_FLOAT(buffer, src, l, u, s, d); break;
-          case 7: _XCALABLEMP_pack_array_7_FLOAT(buffer, src, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_pack_array_1_FLOAT(buffer, src, l[0], u[0], s[0]); break;
+          case 2: _XMP_pack_array_2_FLOAT(buffer, src, l, u, s, d); break;
+          case 3: _XMP_pack_array_3_FLOAT(buffer, src, l, u, s, d); break;
+          case 4: _XMP_pack_array_4_FLOAT(buffer, src, l, u, s, d); break;
+          case 5: _XMP_pack_array_5_FLOAT(buffer, src, l, u, s, d); break;
+          case 6: _XMP_pack_array_6_FLOAT(buffer, src, l, u, s, d); break;
+          case 7: _XMP_pack_array_7_FLOAT(buffer, src, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_DOUBLE: {
+    case _XMP_N_TYPE_DOUBLE: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_pack_array_1_DOUBLE(buffer, src, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_pack_array_2_DOUBLE(buffer, src, l, u, s, d); break;
-          case 3: _XCALABLEMP_pack_array_3_DOUBLE(buffer, src, l, u, s, d); break;
-          case 4: _XCALABLEMP_pack_array_4_DOUBLE(buffer, src, l, u, s, d); break;
-          case 5: _XCALABLEMP_pack_array_5_DOUBLE(buffer, src, l, u, s, d); break;
-          case 6: _XCALABLEMP_pack_array_6_DOUBLE(buffer, src, l, u, s, d); break;
-          case 7: _XCALABLEMP_pack_array_7_DOUBLE(buffer, src, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_pack_array_1_DOUBLE(buffer, src, l[0], u[0], s[0]); break;
+          case 2: _XMP_pack_array_2_DOUBLE(buffer, src, l, u, s, d); break;
+          case 3: _XMP_pack_array_3_DOUBLE(buffer, src, l, u, s, d); break;
+          case 4: _XMP_pack_array_4_DOUBLE(buffer, src, l, u, s, d); break;
+          case 5: _XMP_pack_array_5_DOUBLE(buffer, src, l, u, s, d); break;
+          case 6: _XMP_pack_array_6_DOUBLE(buffer, src, l, u, s, d); break;
+          case 7: _XMP_pack_array_7_DOUBLE(buffer, src, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_LONG_DOUBLE: {
+    case _XMP_N_TYPE_LONG_DOUBLE: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_pack_array_1_LONG_DOUBLE(buffer, src, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_pack_array_2_LONG_DOUBLE(buffer, src, l, u, s, d); break;
-          case 3: _XCALABLEMP_pack_array_3_LONG_DOUBLE(buffer, src, l, u, s, d); break;
-          case 4: _XCALABLEMP_pack_array_4_LONG_DOUBLE(buffer, src, l, u, s, d); break;
-          case 5: _XCALABLEMP_pack_array_5_LONG_DOUBLE(buffer, src, l, u, s, d); break;
-          case 6: _XCALABLEMP_pack_array_6_LONG_DOUBLE(buffer, src, l, u, s, d); break;
-          case 7: _XCALABLEMP_pack_array_7_LONG_DOUBLE(buffer, src, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_pack_array_1_LONG_DOUBLE(buffer, src, l[0], u[0], s[0]); break;
+          case 2: _XMP_pack_array_2_LONG_DOUBLE(buffer, src, l, u, s, d); break;
+          case 3: _XMP_pack_array_3_LONG_DOUBLE(buffer, src, l, u, s, d); break;
+          case 4: _XMP_pack_array_4_LONG_DOUBLE(buffer, src, l, u, s, d); break;
+          case 5: _XMP_pack_array_5_LONG_DOUBLE(buffer, src, l, u, s, d); break;
+          case 6: _XMP_pack_array_6_LONG_DOUBLE(buffer, src, l, u, s, d); break;
+          case 7: _XMP_pack_array_7_LONG_DOUBLE(buffer, src, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
- // case _XCALABLEMP_N_TYPE_FLOAT_IMAGINARY:
- //   _XCALABLEMP_fatal("unknown data type for reflect");
- // case _XCALABLEMP_N_TYPE_DOUBLE_IMAGINARY:
- //   _XCALABLEMP_fatal("unknown data type for reflect");
- // case _XCALABLEMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
- //   _XCALABLEMP_fatal("unknown data type for reflect");
- // case _XCALABLEMP_N_TYPE_FLOAT_COMPLEX:
- //   _XCALABLEMP_fatal("unknown data type for reflect");
- // case _XCALABLEMP_N_TYPE_DOUBLE_COMPLEX:
- //   _XCALABLEMP_fatal("unknown data type for reflect");
- // case _XCALABLEMP_N_TYPE_LONG_DOUBLE_COMPLEX:
+ // case _XMP_N_TYPE_FLOAT_IMAGINARY:
+ //   _XMP_fatal("unknown data type for reflect");
+ // case _XMP_N_TYPE_DOUBLE_IMAGINARY:
+ //   _XMP_fatal("unknown data type for reflect");
+ // case _XMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
+ //   _XMP_fatal("unknown data type for reflect");
+ // case _XMP_N_TYPE_FLOAT_COMPLEX:
+ //   _XMP_fatal("unknown data type for reflect");
+ // case _XMP_N_TYPE_DOUBLE_COMPLEX:
+ //   _XMP_fatal("unknown data type for reflect");
+ // case _XMP_N_TYPE_LONG_DOUBLE_COMPLEX:
     default:
-      _XCALABLEMP_fatal("unknown data type for reflect");
+      _XMP_fatal("unknown data type for reflect");
   }
 }
 
-void _XCALABLEMP_pack_array_GENERAL(void *buffer, void *src, size_t array_type_size,
+void _XMP_pack_array_GENERAL(void *buffer, void *src, size_t array_type_size,
                                     int array_dim, int *l, int *u, int *s, unsigned long long *d) {
-  _XCALABLEMP_ASSERT(buffer != NULL);
-  _XCALABLEMP_ASSERT(src != NULL);
-  _XCALABLEMP_ASSERT(l != NULL);
-  _XCALABLEMP_ASSERT(u != NULL);
-  _XCALABLEMP_ASSERT(s != NULL);
-  _XCALABLEMP_ASSERT(d != NULL);
+  _XMP_ASSERT(buffer != NULL);
+  _XMP_ASSERT(src != NULL);
+  _XMP_ASSERT(l != NULL);
+  _XMP_ASSERT(u != NULL);
+  _XMP_ASSERT(s != NULL);
+  _XMP_ASSERT(d != NULL);
 
   switch (array_dim) {
-    case 1: _XCALABLEMP_pack_array_1_GENERAL(buffer, src, array_type_size, l[0], u[0], s[0]); break;
-    case 2: _XCALABLEMP_pack_array_2_GENERAL(buffer, src, array_type_size, l, u, s, d); break;
-    case 3: _XCALABLEMP_pack_array_3_GENERAL(buffer, src, array_type_size, l, u, s, d); break;
-    case 4: _XCALABLEMP_pack_array_4_GENERAL(buffer, src, array_type_size, l, u, s, d); break;
-    case 5: _XCALABLEMP_pack_array_5_GENERAL(buffer, src, array_type_size, l, u, s, d); break;
-    case 6: _XCALABLEMP_pack_array_6_GENERAL(buffer, src, array_type_size, l, u, s, d); break;
-    case 7: _XCALABLEMP_pack_array_7_GENERAL(buffer, src, array_type_size, l, u, s, d); break;
-    default: _XCALABLEMP_fatal("wrong array dimension");
+    case 1: _XMP_pack_array_1_GENERAL(buffer, src, array_type_size, l[0], u[0], s[0]); break;
+    case 2: _XMP_pack_array_2_GENERAL(buffer, src, array_type_size, l, u, s, d); break;
+    case 3: _XMP_pack_array_3_GENERAL(buffer, src, array_type_size, l, u, s, d); break;
+    case 4: _XMP_pack_array_4_GENERAL(buffer, src, array_type_size, l, u, s, d); break;
+    case 5: _XMP_pack_array_5_GENERAL(buffer, src, array_type_size, l, u, s, d); break;
+    case 6: _XMP_pack_array_6_GENERAL(buffer, src, array_type_size, l, u, s, d); break;
+    case 7: _XMP_pack_array_7_GENERAL(buffer, src, array_type_size, l, u, s, d); break;
+    default: _XMP_fatal("wrong array dimension");
   }
 }
 
-void _XCALABLEMP_unpack_array_BASIC(void *dst, void *buffer, int array_type,
+void _XMP_unpack_array_BASIC(void *dst, void *buffer, int array_type,
                                     int array_dim, int *l, int *u, int *s, unsigned long long *d) {
-  _XCALABLEMP_ASSERT(dst != NULL);
-  _XCALABLEMP_ASSERT(buffer != NULL);
-  _XCALABLEMP_ASSERT(l != NULL);
-  _XCALABLEMP_ASSERT(u != NULL);
-  _XCALABLEMP_ASSERT(s != NULL);
-  _XCALABLEMP_ASSERT(d != NULL);
+  _XMP_ASSERT(dst != NULL);
+  _XMP_ASSERT(buffer != NULL);
+  _XMP_ASSERT(l != NULL);
+  _XMP_ASSERT(u != NULL);
+  _XMP_ASSERT(s != NULL);
+  _XMP_ASSERT(d != NULL);
 
   switch (array_type) {
-    case _XCALABLEMP_N_TYPE_BOOL: {
+    case _XMP_N_TYPE_BOOL: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_unpack_array_1_BOOL(dst, buffer, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_unpack_array_2_BOOL(dst, buffer, l, u, s, d); break;
-          case 3: _XCALABLEMP_unpack_array_3_BOOL(dst, buffer, l, u, s, d); break;
-          case 4: _XCALABLEMP_unpack_array_4_BOOL(dst, buffer, l, u, s, d); break;
-          case 5: _XCALABLEMP_unpack_array_5_BOOL(dst, buffer, l, u, s, d); break;
-          case 6: _XCALABLEMP_unpack_array_6_BOOL(dst, buffer, l, u, s, d); break;
-          case 7: _XCALABLEMP_unpack_array_7_BOOL(dst, buffer, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_unpack_array_1_BOOL(dst, buffer, l[0], u[0], s[0]); break;
+          case 2: _XMP_unpack_array_2_BOOL(dst, buffer, l, u, s, d); break;
+          case 3: _XMP_unpack_array_3_BOOL(dst, buffer, l, u, s, d); break;
+          case 4: _XMP_unpack_array_4_BOOL(dst, buffer, l, u, s, d); break;
+          case 5: _XMP_unpack_array_5_BOOL(dst, buffer, l, u, s, d); break;
+          case 6: _XMP_unpack_array_6_BOOL(dst, buffer, l, u, s, d); break;
+          case 7: _XMP_unpack_array_7_BOOL(dst, buffer, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_CHAR: {
+    case _XMP_N_TYPE_CHAR: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_unpack_array_1_CHAR(dst, buffer, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_unpack_array_2_CHAR(dst, buffer, l, u, s, d); break;
-          case 3: _XCALABLEMP_unpack_array_3_CHAR(dst, buffer, l, u, s, d); break;
-          case 4: _XCALABLEMP_unpack_array_4_CHAR(dst, buffer, l, u, s, d); break;
-          case 5: _XCALABLEMP_unpack_array_5_CHAR(dst, buffer, l, u, s, d); break;
-          case 6: _XCALABLEMP_unpack_array_6_CHAR(dst, buffer, l, u, s, d); break;
-          case 7: _XCALABLEMP_unpack_array_7_CHAR(dst, buffer, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_unpack_array_1_CHAR(dst, buffer, l[0], u[0], s[0]); break;
+          case 2: _XMP_unpack_array_2_CHAR(dst, buffer, l, u, s, d); break;
+          case 3: _XMP_unpack_array_3_CHAR(dst, buffer, l, u, s, d); break;
+          case 4: _XMP_unpack_array_4_CHAR(dst, buffer, l, u, s, d); break;
+          case 5: _XMP_unpack_array_5_CHAR(dst, buffer, l, u, s, d); break;
+          case 6: _XMP_unpack_array_6_CHAR(dst, buffer, l, u, s, d); break;
+          case 7: _XMP_unpack_array_7_CHAR(dst, buffer, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_UNSIGNED_CHAR: {
+    case _XMP_N_TYPE_UNSIGNED_CHAR: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_unpack_array_1_UNSIGNED_CHAR(dst, buffer, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_unpack_array_2_UNSIGNED_CHAR(dst, buffer, l, u, s, d); break;
-          case 3: _XCALABLEMP_unpack_array_3_UNSIGNED_CHAR(dst, buffer, l, u, s, d); break;
-          case 4: _XCALABLEMP_unpack_array_4_UNSIGNED_CHAR(dst, buffer, l, u, s, d); break;
-          case 5: _XCALABLEMP_unpack_array_5_UNSIGNED_CHAR(dst, buffer, l, u, s, d); break;
-          case 6: _XCALABLEMP_unpack_array_6_UNSIGNED_CHAR(dst, buffer, l, u, s, d); break;
-          case 7: _XCALABLEMP_unpack_array_7_UNSIGNED_CHAR(dst, buffer, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_unpack_array_1_UNSIGNED_CHAR(dst, buffer, l[0], u[0], s[0]); break;
+          case 2: _XMP_unpack_array_2_UNSIGNED_CHAR(dst, buffer, l, u, s, d); break;
+          case 3: _XMP_unpack_array_3_UNSIGNED_CHAR(dst, buffer, l, u, s, d); break;
+          case 4: _XMP_unpack_array_4_UNSIGNED_CHAR(dst, buffer, l, u, s, d); break;
+          case 5: _XMP_unpack_array_5_UNSIGNED_CHAR(dst, buffer, l, u, s, d); break;
+          case 6: _XMP_unpack_array_6_UNSIGNED_CHAR(dst, buffer, l, u, s, d); break;
+          case 7: _XMP_unpack_array_7_UNSIGNED_CHAR(dst, buffer, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_SHORT: {
+    case _XMP_N_TYPE_SHORT: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_unpack_array_1_SHORT(dst, buffer, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_unpack_array_2_SHORT(dst, buffer, l, u, s, d); break;
-          case 3: _XCALABLEMP_unpack_array_3_SHORT(dst, buffer, l, u, s, d); break;
-          case 4: _XCALABLEMP_unpack_array_4_SHORT(dst, buffer, l, u, s, d); break;
-          case 5: _XCALABLEMP_unpack_array_5_SHORT(dst, buffer, l, u, s, d); break;
-          case 6: _XCALABLEMP_unpack_array_6_SHORT(dst, buffer, l, u, s, d); break;
-          case 7: _XCALABLEMP_unpack_array_7_SHORT(dst, buffer, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_unpack_array_1_SHORT(dst, buffer, l[0], u[0], s[0]); break;
+          case 2: _XMP_unpack_array_2_SHORT(dst, buffer, l, u, s, d); break;
+          case 3: _XMP_unpack_array_3_SHORT(dst, buffer, l, u, s, d); break;
+          case 4: _XMP_unpack_array_4_SHORT(dst, buffer, l, u, s, d); break;
+          case 5: _XMP_unpack_array_5_SHORT(dst, buffer, l, u, s, d); break;
+          case 6: _XMP_unpack_array_6_SHORT(dst, buffer, l, u, s, d); break;
+          case 7: _XMP_unpack_array_7_SHORT(dst, buffer, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_UNSIGNED_SHORT: {
+    case _XMP_N_TYPE_UNSIGNED_SHORT: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_unpack_array_1_UNSIGNED_SHORT(dst, buffer, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_unpack_array_2_UNSIGNED_SHORT(dst, buffer, l, u, s, d); break;
-          case 3: _XCALABLEMP_unpack_array_3_UNSIGNED_SHORT(dst, buffer, l, u, s, d); break;
-          case 4: _XCALABLEMP_unpack_array_4_UNSIGNED_SHORT(dst, buffer, l, u, s, d); break;
-          case 5: _XCALABLEMP_unpack_array_5_UNSIGNED_SHORT(dst, buffer, l, u, s, d); break;
-          case 6: _XCALABLEMP_unpack_array_6_UNSIGNED_SHORT(dst, buffer, l, u, s, d); break;
-          case 7: _XCALABLEMP_unpack_array_7_UNSIGNED_SHORT(dst, buffer, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_unpack_array_1_UNSIGNED_SHORT(dst, buffer, l[0], u[0], s[0]); break;
+          case 2: _XMP_unpack_array_2_UNSIGNED_SHORT(dst, buffer, l, u, s, d); break;
+          case 3: _XMP_unpack_array_3_UNSIGNED_SHORT(dst, buffer, l, u, s, d); break;
+          case 4: _XMP_unpack_array_4_UNSIGNED_SHORT(dst, buffer, l, u, s, d); break;
+          case 5: _XMP_unpack_array_5_UNSIGNED_SHORT(dst, buffer, l, u, s, d); break;
+          case 6: _XMP_unpack_array_6_UNSIGNED_SHORT(dst, buffer, l, u, s, d); break;
+          case 7: _XMP_unpack_array_7_UNSIGNED_SHORT(dst, buffer, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_INT: {
+    case _XMP_N_TYPE_INT: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_unpack_array_1_INT(dst, buffer, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_unpack_array_2_INT(dst, buffer, l, u, s, d); break;
-          case 3: _XCALABLEMP_unpack_array_3_INT(dst, buffer, l, u, s, d); break;
-          case 4: _XCALABLEMP_unpack_array_4_INT(dst, buffer, l, u, s, d); break;
-          case 5: _XCALABLEMP_unpack_array_5_INT(dst, buffer, l, u, s, d); break;
-          case 6: _XCALABLEMP_unpack_array_6_INT(dst, buffer, l, u, s, d); break;
-          case 7: _XCALABLEMP_unpack_array_7_INT(dst, buffer, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_unpack_array_1_INT(dst, buffer, l[0], u[0], s[0]); break;
+          case 2: _XMP_unpack_array_2_INT(dst, buffer, l, u, s, d); break;
+          case 3: _XMP_unpack_array_3_INT(dst, buffer, l, u, s, d); break;
+          case 4: _XMP_unpack_array_4_INT(dst, buffer, l, u, s, d); break;
+          case 5: _XMP_unpack_array_5_INT(dst, buffer, l, u, s, d); break;
+          case 6: _XMP_unpack_array_6_INT(dst, buffer, l, u, s, d); break;
+          case 7: _XMP_unpack_array_7_INT(dst, buffer, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_UNSIGNED_INT: {
+    case _XMP_N_TYPE_UNSIGNED_INT: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_unpack_array_1_UNSIGNED_INT(dst, buffer, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_unpack_array_2_UNSIGNED_INT(dst, buffer, l, u, s, d); break;
-          case 3: _XCALABLEMP_unpack_array_3_UNSIGNED_INT(dst, buffer, l, u, s, d); break;
-          case 4: _XCALABLEMP_unpack_array_4_UNSIGNED_INT(dst, buffer, l, u, s, d); break;
-          case 5: _XCALABLEMP_unpack_array_5_UNSIGNED_INT(dst, buffer, l, u, s, d); break;
-          case 6: _XCALABLEMP_unpack_array_6_UNSIGNED_INT(dst, buffer, l, u, s, d); break;
-          case 7: _XCALABLEMP_unpack_array_7_UNSIGNED_INT(dst, buffer, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_unpack_array_1_UNSIGNED_INT(dst, buffer, l[0], u[0], s[0]); break;
+          case 2: _XMP_unpack_array_2_UNSIGNED_INT(dst, buffer, l, u, s, d); break;
+          case 3: _XMP_unpack_array_3_UNSIGNED_INT(dst, buffer, l, u, s, d); break;
+          case 4: _XMP_unpack_array_4_UNSIGNED_INT(dst, buffer, l, u, s, d); break;
+          case 5: _XMP_unpack_array_5_UNSIGNED_INT(dst, buffer, l, u, s, d); break;
+          case 6: _XMP_unpack_array_6_UNSIGNED_INT(dst, buffer, l, u, s, d); break;
+          case 7: _XMP_unpack_array_7_UNSIGNED_INT(dst, buffer, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_LONG: {
+    case _XMP_N_TYPE_LONG: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_unpack_array_1_LONG(dst, buffer, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_unpack_array_2_LONG(dst, buffer, l, u, s, d); break;
-          case 3: _XCALABLEMP_unpack_array_3_LONG(dst, buffer, l, u, s, d); break;
-          case 4: _XCALABLEMP_unpack_array_4_LONG(dst, buffer, l, u, s, d); break;
-          case 5: _XCALABLEMP_unpack_array_5_LONG(dst, buffer, l, u, s, d); break;
-          case 6: _XCALABLEMP_unpack_array_6_LONG(dst, buffer, l, u, s, d); break;
-          case 7: _XCALABLEMP_unpack_array_7_LONG(dst, buffer, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_unpack_array_1_LONG(dst, buffer, l[0], u[0], s[0]); break;
+          case 2: _XMP_unpack_array_2_LONG(dst, buffer, l, u, s, d); break;
+          case 3: _XMP_unpack_array_3_LONG(dst, buffer, l, u, s, d); break;
+          case 4: _XMP_unpack_array_4_LONG(dst, buffer, l, u, s, d); break;
+          case 5: _XMP_unpack_array_5_LONG(dst, buffer, l, u, s, d); break;
+          case 6: _XMP_unpack_array_6_LONG(dst, buffer, l, u, s, d); break;
+          case 7: _XMP_unpack_array_7_LONG(dst, buffer, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_UNSIGNED_LONG: {
+    case _XMP_N_TYPE_UNSIGNED_LONG: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_unpack_array_1_UNSIGNED_LONG(dst, buffer, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_unpack_array_2_UNSIGNED_LONG(dst, buffer, l, u, s, d); break;
-          case 3: _XCALABLEMP_unpack_array_3_UNSIGNED_LONG(dst, buffer, l, u, s, d); break;
-          case 4: _XCALABLEMP_unpack_array_4_UNSIGNED_LONG(dst, buffer, l, u, s, d); break;
-          case 5: _XCALABLEMP_unpack_array_5_UNSIGNED_LONG(dst, buffer, l, u, s, d); break;
-          case 6: _XCALABLEMP_unpack_array_6_UNSIGNED_LONG(dst, buffer, l, u, s, d); break;
-          case 7: _XCALABLEMP_unpack_array_7_UNSIGNED_LONG(dst, buffer, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_unpack_array_1_UNSIGNED_LONG(dst, buffer, l[0], u[0], s[0]); break;
+          case 2: _XMP_unpack_array_2_UNSIGNED_LONG(dst, buffer, l, u, s, d); break;
+          case 3: _XMP_unpack_array_3_UNSIGNED_LONG(dst, buffer, l, u, s, d); break;
+          case 4: _XMP_unpack_array_4_UNSIGNED_LONG(dst, buffer, l, u, s, d); break;
+          case 5: _XMP_unpack_array_5_UNSIGNED_LONG(dst, buffer, l, u, s, d); break;
+          case 6: _XMP_unpack_array_6_UNSIGNED_LONG(dst, buffer, l, u, s, d); break;
+          case 7: _XMP_unpack_array_7_UNSIGNED_LONG(dst, buffer, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_LONGLONG: {
+    case _XMP_N_TYPE_LONGLONG: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_unpack_array_1_LONGLONG(dst, buffer, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_unpack_array_2_LONGLONG(dst, buffer, l, u, s, d); break;
-          case 3: _XCALABLEMP_unpack_array_3_LONGLONG(dst, buffer, l, u, s, d); break;
-          case 4: _XCALABLEMP_unpack_array_4_LONGLONG(dst, buffer, l, u, s, d); break;
-          case 5: _XCALABLEMP_unpack_array_5_LONGLONG(dst, buffer, l, u, s, d); break;
-          case 6: _XCALABLEMP_unpack_array_6_LONGLONG(dst, buffer, l, u, s, d); break;
-          case 7: _XCALABLEMP_unpack_array_7_LONGLONG(dst, buffer, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_unpack_array_1_LONGLONG(dst, buffer, l[0], u[0], s[0]); break;
+          case 2: _XMP_unpack_array_2_LONGLONG(dst, buffer, l, u, s, d); break;
+          case 3: _XMP_unpack_array_3_LONGLONG(dst, buffer, l, u, s, d); break;
+          case 4: _XMP_unpack_array_4_LONGLONG(dst, buffer, l, u, s, d); break;
+          case 5: _XMP_unpack_array_5_LONGLONG(dst, buffer, l, u, s, d); break;
+          case 6: _XMP_unpack_array_6_LONGLONG(dst, buffer, l, u, s, d); break;
+          case 7: _XMP_unpack_array_7_LONGLONG(dst, buffer, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_UNSIGNED_LONGLONG: {
+    case _XMP_N_TYPE_UNSIGNED_LONGLONG: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_unpack_array_1_UNSIGNED_LONGLONG(dst, buffer, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_unpack_array_2_UNSIGNED_LONGLONG(dst, buffer, l, u, s, d); break;
-          case 3: _XCALABLEMP_unpack_array_3_UNSIGNED_LONGLONG(dst, buffer, l, u, s, d); break;
-          case 4: _XCALABLEMP_unpack_array_4_UNSIGNED_LONGLONG(dst, buffer, l, u, s, d); break;
-          case 5: _XCALABLEMP_unpack_array_5_UNSIGNED_LONGLONG(dst, buffer, l, u, s, d); break;
-          case 6: _XCALABLEMP_unpack_array_6_UNSIGNED_LONGLONG(dst, buffer, l, u, s, d); break;
-          case 7: _XCALABLEMP_unpack_array_7_UNSIGNED_LONGLONG(dst, buffer, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_unpack_array_1_UNSIGNED_LONGLONG(dst, buffer, l[0], u[0], s[0]); break;
+          case 2: _XMP_unpack_array_2_UNSIGNED_LONGLONG(dst, buffer, l, u, s, d); break;
+          case 3: _XMP_unpack_array_3_UNSIGNED_LONGLONG(dst, buffer, l, u, s, d); break;
+          case 4: _XMP_unpack_array_4_UNSIGNED_LONGLONG(dst, buffer, l, u, s, d); break;
+          case 5: _XMP_unpack_array_5_UNSIGNED_LONGLONG(dst, buffer, l, u, s, d); break;
+          case 6: _XMP_unpack_array_6_UNSIGNED_LONGLONG(dst, buffer, l, u, s, d); break;
+          case 7: _XMP_unpack_array_7_UNSIGNED_LONGLONG(dst, buffer, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_FLOAT: {
+    case _XMP_N_TYPE_FLOAT: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_unpack_array_1_FLOAT(dst, buffer, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_unpack_array_2_FLOAT(dst, buffer, l, u, s, d); break;
-          case 3: _XCALABLEMP_unpack_array_3_FLOAT(dst, buffer, l, u, s, d); break;
-          case 4: _XCALABLEMP_unpack_array_4_FLOAT(dst, buffer, l, u, s, d); break;
-          case 5: _XCALABLEMP_unpack_array_5_FLOAT(dst, buffer, l, u, s, d); break;
-          case 6: _XCALABLEMP_unpack_array_6_FLOAT(dst, buffer, l, u, s, d); break;
-          case 7: _XCALABLEMP_unpack_array_7_FLOAT(dst, buffer, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_unpack_array_1_FLOAT(dst, buffer, l[0], u[0], s[0]); break;
+          case 2: _XMP_unpack_array_2_FLOAT(dst, buffer, l, u, s, d); break;
+          case 3: _XMP_unpack_array_3_FLOAT(dst, buffer, l, u, s, d); break;
+          case 4: _XMP_unpack_array_4_FLOAT(dst, buffer, l, u, s, d); break;
+          case 5: _XMP_unpack_array_5_FLOAT(dst, buffer, l, u, s, d); break;
+          case 6: _XMP_unpack_array_6_FLOAT(dst, buffer, l, u, s, d); break;
+          case 7: _XMP_unpack_array_7_FLOAT(dst, buffer, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_DOUBLE: {
+    case _XMP_N_TYPE_DOUBLE: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_unpack_array_1_DOUBLE(dst, buffer, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_unpack_array_2_DOUBLE(dst, buffer, l, u, s, d); break;
-          case 3: _XCALABLEMP_unpack_array_3_DOUBLE(dst, buffer, l, u, s, d); break;
-          case 4: _XCALABLEMP_unpack_array_4_DOUBLE(dst, buffer, l, u, s, d); break;
-          case 5: _XCALABLEMP_unpack_array_5_DOUBLE(dst, buffer, l, u, s, d); break;
-          case 6: _XCALABLEMP_unpack_array_6_DOUBLE(dst, buffer, l, u, s, d); break;
-          case 7: _XCALABLEMP_unpack_array_7_DOUBLE(dst, buffer, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_unpack_array_1_DOUBLE(dst, buffer, l[0], u[0], s[0]); break;
+          case 2: _XMP_unpack_array_2_DOUBLE(dst, buffer, l, u, s, d); break;
+          case 3: _XMP_unpack_array_3_DOUBLE(dst, buffer, l, u, s, d); break;
+          case 4: _XMP_unpack_array_4_DOUBLE(dst, buffer, l, u, s, d); break;
+          case 5: _XMP_unpack_array_5_DOUBLE(dst, buffer, l, u, s, d); break;
+          case 6: _XMP_unpack_array_6_DOUBLE(dst, buffer, l, u, s, d); break;
+          case 7: _XMP_unpack_array_7_DOUBLE(dst, buffer, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
-    case _XCALABLEMP_N_TYPE_LONG_DOUBLE: {
+    case _XMP_N_TYPE_LONG_DOUBLE: {
         switch (array_dim) {
-          case 1: _XCALABLEMP_unpack_array_1_LONG_DOUBLE(dst, buffer, l[0], u[0], s[0]); break;
-          case 2: _XCALABLEMP_unpack_array_2_LONG_DOUBLE(dst, buffer, l, u, s, d); break;
-          case 3: _XCALABLEMP_unpack_array_3_LONG_DOUBLE(dst, buffer, l, u, s, d); break;
-          case 4: _XCALABLEMP_unpack_array_4_LONG_DOUBLE(dst, buffer, l, u, s, d); break;
-          case 5: _XCALABLEMP_unpack_array_5_LONG_DOUBLE(dst, buffer, l, u, s, d); break;
-          case 6: _XCALABLEMP_unpack_array_6_LONG_DOUBLE(dst, buffer, l, u, s, d); break;
-          case 7: _XCALABLEMP_unpack_array_7_LONG_DOUBLE(dst, buffer, l, u, s, d); break;
-          default: _XCALABLEMP_fatal("wrong array dimension");
+          case 1: _XMP_unpack_array_1_LONG_DOUBLE(dst, buffer, l[0], u[0], s[0]); break;
+          case 2: _XMP_unpack_array_2_LONG_DOUBLE(dst, buffer, l, u, s, d); break;
+          case 3: _XMP_unpack_array_3_LONG_DOUBLE(dst, buffer, l, u, s, d); break;
+          case 4: _XMP_unpack_array_4_LONG_DOUBLE(dst, buffer, l, u, s, d); break;
+          case 5: _XMP_unpack_array_5_LONG_DOUBLE(dst, buffer, l, u, s, d); break;
+          case 6: _XMP_unpack_array_6_LONG_DOUBLE(dst, buffer, l, u, s, d); break;
+          case 7: _XMP_unpack_array_7_LONG_DOUBLE(dst, buffer, l, u, s, d); break;
+          default: _XMP_fatal("wrong array dimension");
         }
       } break;
- // case _XCALABLEMP_N_TYPE_FLOAT_IMAGINARY:
- //   _XCALABLEMP_fatal("unknown data type for reflect");
- // case _XCALABLEMP_N_TYPE_DOUBLE_IMAGINARY:
- //   _XCALABLEMP_fatal("unknown data type for reflect");
- // case _XCALABLEMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
- //   _XCALABLEMP_fatal("unknown data type for reflect");
- // case _XCALABLEMP_N_TYPE_FLOAT_COMPLEX:
- //   _XCALABLEMP_fatal("unknown data type for reflect");
- // case _XCALABLEMP_N_TYPE_DOUBLE_COMPLEX:
- //   _XCALABLEMP_fatal("unknown data type for reflect");
- // case _XCALABLEMP_N_TYPE_LONG_DOUBLE_COMPLEX:
- //   _XCALABLEMP_fatal("unknown data type for reflect");
+ // case _XMP_N_TYPE_FLOAT_IMAGINARY:
+ //   _XMP_fatal("unknown data type for reflect");
+ // case _XMP_N_TYPE_DOUBLE_IMAGINARY:
+ //   _XMP_fatal("unknown data type for reflect");
+ // case _XMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
+ //   _XMP_fatal("unknown data type for reflect");
+ // case _XMP_N_TYPE_FLOAT_COMPLEX:
+ //   _XMP_fatal("unknown data type for reflect");
+ // case _XMP_N_TYPE_DOUBLE_COMPLEX:
+ //   _XMP_fatal("unknown data type for reflect");
+ // case _XMP_N_TYPE_LONG_DOUBLE_COMPLEX:
+ //   _XMP_fatal("unknown data type for reflect");
     default:
-      _XCALABLEMP_fatal("unknown data type for reflect");
+      _XMP_fatal("unknown data type for reflect");
   }
 }
 
-void _XCALABLEMP_unpack_array_GENERAL(void *dst, void *buffer, size_t array_type_size,
+void _XMP_unpack_array_GENERAL(void *dst, void *buffer, size_t array_type_size,
                                       int array_dim, int *l, int *u, int *s, unsigned long long *d) {
-  _XCALABLEMP_ASSERT(dst != NULL);
-  _XCALABLEMP_ASSERT(buffer != NULL);
-  _XCALABLEMP_ASSERT(l != NULL);
-  _XCALABLEMP_ASSERT(u != NULL);
-  _XCALABLEMP_ASSERT(s != NULL);
-  _XCALABLEMP_ASSERT(d != NULL);
+  _XMP_ASSERT(dst != NULL);
+  _XMP_ASSERT(buffer != NULL);
+  _XMP_ASSERT(l != NULL);
+  _XMP_ASSERT(u != NULL);
+  _XMP_ASSERT(s != NULL);
+  _XMP_ASSERT(d != NULL);
 
   switch (array_dim) {
-    case 1: _XCALABLEMP_unpack_array_1_GENERAL(dst, buffer, array_type_size, l[0], u[0], s[0]); break;
-    case 2: _XCALABLEMP_unpack_array_2_GENERAL(dst, buffer, array_type_size, l, u, s, d); break;
-    case 3: _XCALABLEMP_unpack_array_3_GENERAL(dst, buffer, array_type_size, l, u, s, d); break;
-    case 4: _XCALABLEMP_unpack_array_4_GENERAL(dst, buffer, array_type_size, l, u, s, d); break;
-    case 5: _XCALABLEMP_unpack_array_5_GENERAL(dst, buffer, array_type_size, l, u, s, d); break;
-    case 6: _XCALABLEMP_unpack_array_6_GENERAL(dst, buffer, array_type_size, l, u, s, d); break;
-    case 7: _XCALABLEMP_unpack_array_7_GENERAL(dst, buffer, array_type_size, l, u, s, d); break;
-    default: _XCALABLEMP_fatal("wrong array dimension");
+    case 1: _XMP_unpack_array_1_GENERAL(dst, buffer, array_type_size, l[0], u[0], s[0]); break;
+    case 2: _XMP_unpack_array_2_GENERAL(dst, buffer, array_type_size, l, u, s, d); break;
+    case 3: _XMP_unpack_array_3_GENERAL(dst, buffer, array_type_size, l, u, s, d); break;
+    case 4: _XMP_unpack_array_4_GENERAL(dst, buffer, array_type_size, l, u, s, d); break;
+    case 5: _XMP_unpack_array_5_GENERAL(dst, buffer, array_type_size, l, u, s, d); break;
+    case 6: _XMP_unpack_array_6_GENERAL(dst, buffer, array_type_size, l, u, s, d); break;
+    case 7: _XMP_unpack_array_7_GENERAL(dst, buffer, array_type_size, l, u, s, d); break;
+    default: _XMP_fatal("wrong array dimension");
   }
 }

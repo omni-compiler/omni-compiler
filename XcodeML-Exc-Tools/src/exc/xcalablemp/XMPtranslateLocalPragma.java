@@ -216,13 +216,13 @@ public class XMPtranslateLocalPragma {
 
     // add constructor call
     if (nodesRef == null)
-      XMPlocalDecl.addConstructorCall("_XCALABLEMP_init_nodes_" + allocType + "_" + inheritType, nodesArgs, pb, _globalDecl);
+      XMPlocalDecl.addConstructorCall("_XMP_init_nodes_" + allocType + "_" + inheritType, nodesArgs, pb, _globalDecl);
     else
-      XMPlocalDecl.addConstructorCall("_XCALABLEMP_init_nodes_" + allocType + "_" + inheritType + "_" + nodesRefType,
+      XMPlocalDecl.addConstructorCall("_XMP_init_nodes_" + allocType + "_" + inheritType + "_" + nodesRefType,
                                       nodesArgs, pb, _globalDecl);
 
     // insert destructor call
-    XMPlocalDecl.insertDestructorCall("_XCALABLEMP_finalize_nodes", Xcons.List(nodesDescId.Ref()), pb, _globalDecl);
+    XMPlocalDecl.insertDestructorCall("_XMP_finalize_nodes", Xcons.List(nodesDescId.Ref()), pb, _globalDecl);
   }
 
   private void translateTemplate(PragmaBlock pb) throws XMPexception {
@@ -282,10 +282,10 @@ public class XMPtranslateLocalPragma {
     else fixedSurfix = "UNFIXED";
 
     // add constructor call
-    XMPlocalDecl.addConstructorCall("_XCALABLEMP_init_template_" + fixedSurfix, templateArgs, pb, _globalDecl);
+    XMPlocalDecl.addConstructorCall("_XMP_init_template_" + fixedSurfix, templateArgs, pb, _globalDecl);
 
     // insert destructor call
-    XMPlocalDecl.insertDestructorCall("_XCALABLEMP_finalize_template", Xcons.List(templateDescId.Ref()), pb, _globalDecl);
+    XMPlocalDecl.insertDestructorCall("_XMP_finalize_template", Xcons.List(templateDescId.Ref()), pb, _globalDecl);
   }
 
   private void checkObjectNameCollision(String name, BlockList scopeBL, XMPobjectTable objectTable) throws XMPexception {
@@ -340,7 +340,7 @@ public class XMPtranslateLocalPragma {
     templateObject.setOntoNodes(nodesObject);
 
     // setup chunk constructor & destructor
-    XMPlocalDecl.addConstructorCall("_XCALABLEMP_init_template_chunk",
+    XMPlocalDecl.addConstructorCall("_XMP_init_template_chunk",
                                     Xcons.List(templateObject.getDescId().Ref(),
                                                nodesObject.getDescId().Ref()),
                                     pb, _globalDecl);
@@ -424,7 +424,7 @@ public class XMPtranslateLocalPragma {
         throw new XMPexception("unknown distribute manner");
     }
 
-    XMPlocalDecl.addConstructorCall("_XCALABLEMP_dist_template_" + distMannerName, funcArgs, pb, _globalDecl);
+    XMPlocalDecl.addConstructorCall("_XMP_dist_template_" + distMannerName, funcArgs, pb, _globalDecl);
     templateObject.setDistMannerAt(distManner, templateDimIdx);
   }
 
@@ -517,8 +517,8 @@ public class XMPtranslateLocalPragma {
     }
 
     // create/destroy local descriptor
-    XMPlocalDecl.addConstructorCall("_XCALABLEMP_init_array_desc", initArrayDescFuncArgs, pb, _globalDecl);
-    XMPlocalDecl.insertDestructorCall("_XCALABLEMP_finalize_array_desc", Xcons.List(arrayDescId.Ref()), pb, _globalDecl);
+    XMPlocalDecl.addConstructorCall("_XMP_init_array_desc", initArrayDescFuncArgs, pb, _globalDecl);
+    XMPlocalDecl.insertDestructorCall("_XMP_finalize_array_desc", Xcons.List(arrayDescId.Ref()), pb, _globalDecl);
 
     XMPalignedArray alignedArray = new XMPalignedArray(arrayName, arrayElmtType, arrayDim,
                                                        arraySizeVector, accIdVector,
@@ -610,7 +610,7 @@ public class XMPtranslateLocalPragma {
       else                                     initArrayCommFuncArgs.add(Xcons.IntConstant(0));
     }
 
-    XMPlocalDecl.addConstructorCall("_XCALABLEMP_init_array_comm", initArrayCommFuncArgs, pb, _globalDecl);
+    XMPlocalDecl.addConstructorCall("_XMP_init_array_comm", initArrayCommFuncArgs, pb, _globalDecl);
 
     // init array address
     XobjList initArrayAddrFuncArgs = Xcons.List(arrayAddrId.getAddr(),
@@ -620,7 +620,7 @@ public class XMPtranslateLocalPragma {
       initArrayAddrFuncArgs.add(Xcons.Cast(Xtype.unsignedlonglongType,
                                            alignedArray.getAccIdAt(i).getAddr()));
 
-    XMPlocalDecl.addConstructorCall("_XCALABLEMP_init_array_addr", initArrayAddrFuncArgs, pb, _globalDecl);
+    XMPlocalDecl.addConstructorCall("_XMP_init_array_addr", initArrayAddrFuncArgs, pb, _globalDecl);
   }
 
   private void declNotAlignFunc(XMPalignedArray alignedArray, int alignSourceIndex,
@@ -630,7 +630,7 @@ public class XMPtranslateLocalPragma {
 
     alignedArray.setAlignMannerAt(XMPalignedArray.NOT_ALIGNED, alignSourceIndex);
 
-    XMPlocalDecl.addConstructorCall("_XCALABLEMP_align_array_NOT_ALIGNED", alignFuncArgs, pb, _globalDecl);
+    XMPlocalDecl.addConstructorCall("_XMP_align_array_NOT_ALIGNED", alignFuncArgs, pb, _globalDecl);
   }
 
   private void declAlignFunc(XMPalignedArray alignedArray, int alignSourceIndex,
@@ -666,7 +666,7 @@ public class XMPtranslateLocalPragma {
         throw new XMPexception("unknown distribute manner");
     }
 
-    XMPlocalDecl.addConstructorCall("_XCALABLEMP_align_array_" + templateObj.getDistMannerStringAt(alignSubscriptIndex),
+    XMPlocalDecl.addConstructorCall("_XMP_align_array_" + templateObj.getDistMannerStringAt(alignSubscriptIndex),
                                     alignFuncArgs, pb, _globalDecl);
   }
 
@@ -745,7 +745,7 @@ public class XMPtranslateLocalPragma {
     if (arrayIndex != arrayDim)
       throw new XMPexception("the number of <nodes/template-subscript> should be the same with the dimension");
 
-    XMPlocalDecl.addConstructorCall("_XCALABLEMP_init_shadow", shadowFuncArgs, pb, _globalDecl);
+    XMPlocalDecl.addConstructorCall("_XMP_init_shadow", shadowFuncArgs, pb, _globalDecl);
 
     // set shadow flag
     alignedArray.setHasShadow();
@@ -766,12 +766,12 @@ public class XMPtranslateLocalPragma {
 
     // setup task finalizer
     Ident finFuncId = null;
-    if (splitComm) finFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pop_n_free_nodes");
-    else           finFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pop_nodes");
+    if (splitComm) finFuncId = _globalDecl.declExternFunc("_XMP_pop_n_free_nodes");
+    else           finFuncId = _globalDecl.declExternFunc("_XMP_pop_nodes");
     setupFinalizer(taskBody, finFuncId, null);
 
     // create function call
-    Ident execFuncId = _env.declExternIdent("_XCALABLEMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
+    Ident execFuncId = _env.declExternIdent("_XMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
     pb.replace(Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), taskBody, null));
   }
 
@@ -843,11 +843,11 @@ public class XMPtranslateLocalPragma {
 
     if (initComm) {
       // setup finalizer
-      Ident finFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pop_n_free_nodes");
+      Ident finFuncId = _globalDecl.declExternFunc("_XMP_pop_n_free_nodes");
       setupFinalizer(reductionBody, finFuncId, null);
 
       // create function call
-      Ident initFuncId = _globalDecl.declExternFunc("_XCALABLEMP_init_reduce_comm_" + initFuncSurfix);
+      Ident initFuncId = _globalDecl.declExternFunc("_XMP_init_reduce_comm_" + initFuncSurfix);
       loopBody.insert(initFuncId.Call(initFuncArgs));
     }
 
@@ -883,7 +883,7 @@ public class XMPtranslateLocalPragma {
   private BlockList createReductionClauseBody(PragmaBlock pb, XobjList reductionRefList,
                                               CforBlock schedBaseBlock) throws XMPexception {
     // create init block
-    Ident getRankFuncId = _globalDecl.declExternFunc("_XCALABLEMP_get_execution_nodes_rank", Xtype.intType);
+    Ident getRankFuncId = _globalDecl.declExternFunc("_XMP_get_execution_nodes_rank", Xtype.intType);
     IfBlock reductionInitIfBlock = (IfBlock)Bcons.IF(BasicBlock.Cond(Xcons.binaryOp(Xcode.LOG_EQ_EXPR, getRankFuncId.Call(null),
                                                                                                        Xcons.IntConstant(0))),
                                                      Bcons.emptyBody(), Bcons.emptyBody());
@@ -1039,11 +1039,11 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception("wrong template dimensions, too few");
 
     Ident parallelInitId = declIdentWithBlock(schedBaseBlock,
-                                              "_XCALABLEMP_loop_init_" + loopIndexName, loopIndexType);
+                                              "_XMP_loop_init_" + loopIndexName, loopIndexType);
     Ident parallelCondId = declIdentWithBlock(schedBaseBlock,
-                                              "_XCALABLEMP_loop_cond_" + loopIndexName, loopIndexType);
+                                              "_XMP_loop_cond_" + loopIndexName, loopIndexType);
     Ident parallelStepId = declIdentWithBlock(schedBaseBlock,
-                                              "_XCALABLEMP_loop_step_" + loopIndexName, loopIndexType);
+                                              "_XMP_loop_step_" + loopIndexName, loopIndexType);
 
     forBlock.setLowerBound(parallelInitId.Ref());
     forBlock.setUpperBound(parallelCondId.Ref());
@@ -1058,7 +1058,7 @@ public class XMPtranslateLocalPragma {
     funcArgs.add(templateObj.getDescId().Ref());
     funcArgs.add(templateIndexArg);
 
-    Ident funcId = _globalDecl.declExternFunc("_XCALABLEMP_sched_loop_template_" + distMannerString + "_" + funcTypeSurfix);
+    Ident funcId = _globalDecl.declExternFunc("_XMP_sched_loop_template_" + distMannerString + "_" + funcTypeSurfix);
 
     schedBaseBlock.insert(funcId.Call(funcArgs));
   }
@@ -1104,11 +1104,11 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception("wrong nodes dimensions, too few");
 
     Ident parallelInitId = declIdentWithBlock(schedBaseBlock,
-                                              "_XCALABLEMP_loop_init_" + loopIndexName, loopIndexType);
+                                              "_XMP_loop_init_" + loopIndexName, loopIndexType);
     Ident parallelCondId = declIdentWithBlock(schedBaseBlock,
-                                              "_XCALABLEMP_loop_cond_" + loopIndexName, loopIndexType);
+                                              "_XMP_loop_cond_" + loopIndexName, loopIndexType);
     Ident parallelStepId = declIdentWithBlock(schedBaseBlock,
-                                              "_XCALABLEMP_loop_step_" + loopIndexName, loopIndexType);
+                                              "_XMP_loop_step_" + loopIndexName, loopIndexType);
 
     forBlock.setLowerBound(parallelInitId.Ref());
     forBlock.setUpperBound(parallelCondId.Ref());
@@ -1123,7 +1123,7 @@ public class XMPtranslateLocalPragma {
     funcArgs.add(nodesObj.getDescId().Ref());
     funcArgs.add(nodesIndexArg);
 
-    Ident funcId = _globalDecl.declExternFunc("_XCALABLEMP_sched_loop_nodes_" + funcTypeSurfix);
+    Ident funcId = _globalDecl.declExternFunc("_XMP_sched_loop_nodes_" + funcTypeSurfix);
 
     schedBaseBlock.insert(funcId.Call(funcArgs));
   }
@@ -1179,20 +1179,20 @@ public class XMPtranslateLocalPragma {
     Xtype arrayPtype = Xtype.Pointer(alignedArray.getType());
 
     // decl buffers
-    Ident loSendId = reflectFuncBody.declLocalIdent("_XCALABLEMP_reflect_LO_SEND_" + arrayName, arrayPtype);
-    Ident loRecvId = reflectFuncBody.declLocalIdent("_XCALABLEMP_reflect_LO_RECV_" + arrayName, arrayPtype);
-    Ident hiSendId = reflectFuncBody.declLocalIdent("_XCALABLEMP_reflect_HI_SEND_" + arrayName, arrayPtype);
-    Ident hiRecvId = reflectFuncBody.declLocalIdent("_XCALABLEMP_reflect_HI_RECV_" + arrayName, arrayPtype);
+    Ident loSendId = reflectFuncBody.declLocalIdent("_XMP_reflect_LO_SEND_" + arrayName, arrayPtype);
+    Ident loRecvId = reflectFuncBody.declLocalIdent("_XMP_reflect_LO_RECV_" + arrayName, arrayPtype);
+    Ident hiSendId = reflectFuncBody.declLocalIdent("_XMP_reflect_HI_SEND_" + arrayName, arrayPtype);
+    Ident hiRecvId = reflectFuncBody.declLocalIdent("_XMP_reflect_HI_RECV_" + arrayName, arrayPtype);
 
     // pack shadow
-    Ident packFuncId = _globalDecl.declExternFunc("_XCALABLEMP_pack_shadow_NORMAL");
+    Ident packFuncId = _globalDecl.declExternFunc("_XMP_pack_shadow_NORMAL");
     XobjList packFuncArgs = Xcons.List(loSendId.getAddr(), hiSendId.getAddr(), alignedArray.getAddrId().Ref(),
                                        alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
 
     reflectFuncBody.add(Bcons.Statement(packFuncId.Call(packFuncArgs)));
 
     // exchange shadow
-    Ident exchangeFuncId = _globalDecl.declExternFunc("_XCALABLEMP_exchange_shadow_NORMAL");
+    Ident exchangeFuncId = _globalDecl.declExternFunc("_XMP_exchange_shadow_NORMAL");
     XobjList exchangeFuncArgs = Xcons.List(loRecvId.getAddr(), hiRecvId.getAddr(), loSendId.Ref(), hiSendId.Ref());
     exchangeFuncArgs.add(alignedArray.getDescId().Ref());
     exchangeFuncArgs.add(Xcons.IntConstant(arrayIndex));
@@ -1200,7 +1200,7 @@ public class XMPtranslateLocalPragma {
     reflectFuncBody.add(Bcons.Statement(exchangeFuncId.Call(exchangeFuncArgs)));
 
     // unpack shadow
-    Ident unpackFuncId = _globalDecl.declExternFunc("_XCALABLEMP_unpack_shadow_NORMAL");;
+    Ident unpackFuncId = _globalDecl.declExternFunc("_XMP_unpack_shadow_NORMAL");;
     XobjList unpackFuncArgs = Xcons.List(loRecvId.Ref(), hiRecvId.Ref(), alignedArray.getAddrId().Ref(),
                                          alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
 
@@ -1210,7 +1210,7 @@ public class XMPtranslateLocalPragma {
   private void createReflectFullShadowFunc(PragmaBlock pb,
                                            XMPalignedArray alignedArray, int arrayIndex,
                                            BlockList reflectFuncBody) {
-    Ident funcId = _globalDecl.declExternFunc("_XCALABLEMP_reflect_shadow_FULL");
+    Ident funcId = _globalDecl.declExternFunc("_XMP_reflect_shadow_FULL");
     XobjList funcArgs = Xcons.List(alignedArray.getAddrId().Ref(), alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
 
     reflectFuncBody.add(Bcons.Statement(funcId.Call(funcArgs)));
@@ -1223,23 +1223,23 @@ public class XMPtranslateLocalPragma {
 
     // create function call
     XobjList onRef = (XobjList)barrierDecl.getArg(0);
-    if (onRef == null) pb.replace(createFuncCallBlock("_XCALABLEMP_barrier_EXEC", null));
+    if (onRef == null) pb.replace(createFuncCallBlock("_XMP_barrier_EXEC", null));
     else {
       XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(onRef, localObjectTable);
       String execFuncSurfix = execOnRefArgs.getFirst();
       boolean splitComm = execOnRefArgs.getSecond().booleanValue();
       XobjList execFuncArgs = execOnRefArgs.getThird();
       if (splitComm) {
-        BlockList barrierBody = Bcons.blockList(createFuncCallBlock("_XCALABLEMP_barrier_EXEC", null));
+        BlockList barrierBody = Bcons.blockList(createFuncCallBlock("_XMP_barrier_EXEC", null));
 
         // setup barrier finalizer
-        setupFinalizer(barrierBody, _globalDecl.declExternFunc("_XCALABLEMP_pop_n_free_nodes"), null);
+        setupFinalizer(barrierBody, _globalDecl.declExternFunc("_XMP_pop_n_free_nodes"), null);
 
         // create function call
-        Ident execFuncId = _env.declExternIdent("_XCALABLEMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
+        Ident execFuncId = _env.declExternIdent("_XMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
         pb.replace(Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), barrierBody, null));
       }
-      else pb.replace(createFuncCallBlock("_XCALABLEMP_barrier_" + execFuncSurfix, execFuncArgs));
+      else pb.replace(createFuncCallBlock("_XMP_barrier_" + execFuncSurfix, execFuncArgs));
     }
   }
 
@@ -1274,10 +1274,10 @@ public class XMPtranslateLocalPragma {
                                                                                null, reductionFuncArgsList));
 
         // setup reduction finalizer
-        setupFinalizer(reductionBody, _globalDecl.declExternFunc("_XCALABLEMP_pop_n_free_nodes"), null);
+        setupFinalizer(reductionBody, _globalDecl.declExternFunc("_XMP_pop_n_free_nodes"), null);
 
         // create function call
-        Ident execFuncId = _env.declExternIdent("_XCALABLEMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
+        Ident execFuncId = _env.declExternIdent("_XMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
         pb.replace(Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), reductionBody, null));
       }
       else {
@@ -1369,7 +1369,7 @@ public class XMPtranslateLocalPragma {
               }
 
               specRef = specAlignedArray.getAddrId().Ref();
-              Ident getTotalElmtFuncId = _globalDecl.declExternFunc("_XCALABLEMP_get_array_total_elmts",
+              Ident getTotalElmtFuncId = _globalDecl.declExternFunc("_XMP_get_array_total_elmts",
                                                                     Xtype.unsignedlonglongType);
               count = getTotalElmtFuncId.Call(Xcons.List(specAlignedArray.getDescId().Ref()));
             }
@@ -1384,7 +1384,7 @@ public class XMPtranslateLocalPragma {
 
       // declare temp variable for reduction
       if (isClause) {
-        String tempName = new String("_XCALABLEMP_reduce_temp_" + specName);
+        String tempName = new String("_XMP_reduce_temp_" + specName);
         Ident tempId = declReductionTempIdent(pb, specName, tempName, specType);
         if (isArray) {
           reductionFuncArgs.cons(tempId.Ref());
@@ -1648,8 +1648,8 @@ public class XMPtranslateLocalPragma {
   private Block createReductionFuncCallBlock(boolean isMacroFunc, String funcType,
                                              Xobject execDesc, Vector<XobjList> funcArgsList) {
     Ident funcId = null;
-    if (isMacroFunc) funcId = XMP.getMacroId("_XCALABLEMP_M_" + funcType.toUpperCase());
-    else             funcId = _globalDecl.declExternFunc("_XCALABLEMP_" + funcType);
+    if (isMacroFunc) funcId = XMP.getMacroId("_XMP_M_" + funcType.toUpperCase());
+    else             funcId = _globalDecl.declExternFunc("_XMP_" + funcType);
 
     BlockList funcCallList = Bcons.emptyBody();
     Iterator<XobjList> it = funcArgsList.iterator();
@@ -1729,10 +1729,10 @@ public class XMPtranslateLocalPragma {
                                                                        null, bcastArgsList, execFromRefArgs));
 
         // setup reduction finalizer
-        setupFinalizer(bcastBody, _globalDecl.declExternFunc("_XCALABLEMP_pop_n_free_nodes"), null);
+        setupFinalizer(bcastBody, _globalDecl.declExternFunc("_XMP_pop_n_free_nodes"), null);
 
         // create function call
-        Ident execFuncId = _env.declExternIdent("_XCALABLEMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
+        Ident execFuncId = _env.declExternIdent("_XMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
         pb.replace(Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), bcastBody, null));
       }
       else {
@@ -1795,8 +1795,8 @@ public class XMPtranslateLocalPragma {
     }
 
     Ident funcId = null;
-    if (isMacro) funcId = XMP.getMacroId("_XCALABLEMP_M_BCAST_" + funcSurfix);
-    else         funcId = _globalDecl.declExternFunc("_XCALABLEMP_bcast_" + funcSurfix);
+    if (isMacro) funcId = XMP.getMacroId("_XMP_M_BCAST_" + funcSurfix);
+    else         funcId = _globalDecl.declExternFunc("_XMP_bcast_" + funcSurfix);
 
     BlockList funcCallList = Bcons.emptyBody();
     Iterator<XobjList> it = funcArgsList.iterator();
@@ -1943,7 +1943,7 @@ public class XMPtranslateLocalPragma {
 
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
-            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_LOCALCOPY_ARRAY", gmoveFuncArgs));
+            pb.replace(createFuncCallBlock("_XMP_gmove_LOCALCOPY_ARRAY", gmoveFuncArgs));
           }
           else {				// !leftIsAlignedArray &&  rightIsAlignedArray  |-> broadcast
             Xtype arrayElmtType = rightAlignedArray.getType();
@@ -1959,7 +1959,7 @@ public class XMPtranslateLocalPragma {
 
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
-            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_BCAST_ARRAY", gmoveFuncArgs));
+            pb.replace(createFuncCallBlock("_XMP_gmove_BCAST_ARRAY", gmoveFuncArgs));
           }
         }
         else {
@@ -1977,7 +1977,7 @@ public class XMPtranslateLocalPragma {
 
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
-            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_HOMECOPY_ARRAY", gmoveFuncArgs));
+            pb.replace(createFuncCallBlock("_XMP_gmove_HOMECOPY_ARRAY", gmoveFuncArgs));
           }
           else {				//  leftIsAlignedArray &&  rightIsAlignedArray  |-> send/recv
             Xtype arrayElmtType = leftAlignedArray.getType();
@@ -1994,7 +1994,7 @@ public class XMPtranslateLocalPragma {
 
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
-            pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_SENDRECV_ARRAY", gmoveFuncArgs));
+            pb.replace(createFuncCallBlock("_XMP_gmove_SENDRECV_ARRAY", gmoveFuncArgs));
           }
         }
       }
@@ -2019,7 +2019,7 @@ public class XMPtranslateLocalPragma {
                                               rightAlignedArray.getDescId().Ref());
           XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
 
-          pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_BCAST_SCALAR", gmoveFuncArgs));
+          pb.replace(createFuncCallBlock("_XMP_gmove_BCAST_SCALAR", gmoveFuncArgs));
         }
       }
       else {
@@ -2027,7 +2027,7 @@ public class XMPtranslateLocalPragma {
           XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref());
           XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
 
-          Ident gmoveFuncId = _env.declExternIdent("_XCALABLEMP_gmove_HOMECOPY_SCALAR", Xtype.Function(Xtype.boolType));
+          Ident gmoveFuncId = _env.declExternIdent("_XMP_gmove_HOMECOPY_SCALAR", Xtype.Function(Xtype.boolType));
           pb.replace(Bcons.IF(BasicBlock.Cond(gmoveFuncId.Call(gmoveFuncArgs)),
                               gmoveBody, null));
         }
@@ -2038,7 +2038,7 @@ public class XMPtranslateLocalPragma {
           XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
           XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
 
-          pb.replace(createFuncCallBlock("_XCALABLEMP_gmove_SENDRECV_SCALAR", gmoveFuncArgs));
+          pb.replace(createFuncCallBlock("_XMP_gmove_SENDRECV_SCALAR", gmoveFuncArgs));
         }
       }
     }

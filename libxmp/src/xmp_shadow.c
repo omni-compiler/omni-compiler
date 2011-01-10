@@ -10,22 +10,22 @@
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
-static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array_index);
+static void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index);
 
-static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array_index) {
-  _XCALABLEMP_ASSERT(array != NULL);
+static void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index) {
+  _XMP_ASSERT(array != NULL);
   
-  _XCALABLEMP_nodes_t *onto_nodes = (array->align_template)->onto_nodes;
+  _XMP_nodes_t *onto_nodes = (array->align_template)->onto_nodes;
   if (!onto_nodes->is_member) {
     return;
   }
 
-  _XCALABLEMP_array_info_t *ai = &(array->info[array_index]);
-  _XCALABLEMP_ASSERT(ai->align_manner != _XCALABLEMP_N_ALIGN_NOT_ALIGNED); // checked by compiler
-  _XCALABLEMP_ASSERT(ai->align_manner != _XCALABLEMP_N_ALIGN_DUPLICATION); // checked by compiler
+  _XMP_array_info_t *ai = &(array->info[array_index]);
+  _XMP_ASSERT(ai->align_manner != _XMP_N_ALIGN_NOT_ALIGNED); // checked by compiler
+  _XMP_ASSERT(ai->align_manner != _XMP_N_ALIGN_DUPLICATION); // checked by compiler
 
-  _XCALABLEMP_template_chunk_t *chunk = ai->align_template_chunk;
-  _XCALABLEMP_ASSERT(chunk->dist_manner != _XCALABLEMP_N_DIST_DUPLICATION); // align_manner is not _XCALABLEMP_N_ALIGN_DUPLICATION
+  _XMP_template_chunk_t *chunk = ai->align_template_chunk;
+  _XMP_ASSERT(chunk->dist_manner != _XMP_N_DIST_DUPLICATION); // align_manner is not _XMP_N_ALIGN_DUPLICATION
 
   int onto_nodes_index = chunk->onto_nodes_index;
 
@@ -33,7 +33,7 @@ static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array
   int acc_nodes_size = 1;
   int nodes_dim = onto_nodes->dim;
   for (int i = 0; i < nodes_dim; i++) {
-    _XCALABLEMP_nodes_info_t *onto_nodes_info = &(onto_nodes->info[i]);
+    _XMP_nodes_info_t *onto_nodes_info = &(onto_nodes->info[i]);
     int size = onto_nodes_info->size;
     int rank = onto_nodes_info->rank;
 
@@ -48,7 +48,7 @@ static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array
     color = 0;
   }
 
-  MPI_Comm *comm = _XCALABLEMP_alloc(sizeof(MPI_Comm));
+  MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_split(*(onto_nodes->comm), color, onto_nodes->comm_rank, comm);
 
   // set members
@@ -60,42 +60,42 @@ static void _XCALABLEMP_create_shadow_comm(_XCALABLEMP_array_t *array, int array
     MPI_Comm_rank(*comm, &(ai->shadow_comm_rank));
   }
   else {
-    _XCALABLEMP_finalize_comm(comm);
+    _XMP_finalize_comm(comm);
   }
 }
 
-void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
-  _XCALABLEMP_ASSERT(array != NULL);
+void _XMP_init_shadow(_XMP_array_t *array, ...) {
+  _XMP_ASSERT(array != NULL);
 
   int dim = array->dim;
   va_list args;
   va_start(args, array);
   for (int i = 0; i < dim; i++) {
-    _XCALABLEMP_array_info_t *ai = &(array->info[i]);
+    _XMP_array_info_t *ai = &(array->info[i]);
 
     int type = va_arg(args, int);
     switch (type) {
-      case _XCALABLEMP_N_SHADOW_NONE:
-        ai->shadow_type = _XCALABLEMP_N_SHADOW_NONE;
+      case _XMP_N_SHADOW_NONE:
+        ai->shadow_type = _XMP_N_SHADOW_NONE;
         break;
-      case _XCALABLEMP_N_SHADOW_NORMAL:
+      case _XMP_N_SHADOW_NORMAL:
         {
           int lo = va_arg(args, int);
-          if (lo < 0) _XCALABLEMP_fatal("<shadow-width> should be a nonnegative integer");
+          if (lo < 0) _XMP_fatal("<shadow-width> should be a nonnegative integer");
 
           int hi = va_arg(args, int);
-          if (hi < 0) _XCALABLEMP_fatal("<shadow-width> should be a nonnegative integer");
+          if (hi < 0) _XMP_fatal("<shadow-width> should be a nonnegative integer");
 
           if ((lo == 0) && (hi == 0)) {
-            ai->shadow_type = _XCALABLEMP_N_SHADOW_NONE;
+            ai->shadow_type = _XMP_N_SHADOW_NONE;
           }
           else {
-            ai->shadow_type = _XCALABLEMP_N_SHADOW_NORMAL;
+            ai->shadow_type = _XMP_N_SHADOW_NORMAL;
             ai->shadow_size_lo = lo;
             ai->shadow_size_hi = hi;
 
             if (array->is_allocated) {
-              if (ai->align_manner == _XCALABLEMP_N_ALIGN_BLOCK) {
+              if (ai->align_manner == _XMP_N_ALIGN_BLOCK) {
                 ai->local_lower += lo;
                 ai->local_upper += lo;
              // ai->local_stride is not changed
@@ -105,16 +105,16 @@ void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
               }
               else {
                 // FIXME implement for other dist manners
-                _XCALABLEMP_fatal("not implemented yet");
+                _XMP_fatal("not implemented yet");
               }
             }
 
-            _XCALABLEMP_create_shadow_comm(array, i);
+            _XMP_create_shadow_comm(array, i);
           }
         } break;
-      case _XCALABLEMP_N_SHADOW_FULL:
+      case _XMP_N_SHADOW_FULL:
         {
-          ai->shadow_type = _XCALABLEMP_N_SHADOW_FULL;
+          ai->shadow_type = _XMP_N_SHADOW_FULL;
           // FIXME calc shadow_size_{lo/hi} size
 
           if (array->is_allocated) {
@@ -124,19 +124,19 @@ void _XCALABLEMP_init_shadow(_XCALABLEMP_array_t *array, ...) {
             ai->alloc_size = ai->ser_size;
           }
 
-          _XCALABLEMP_create_shadow_comm(array, i);
+          _XMP_create_shadow_comm(array, i);
         } break;
       default:
-        _XCALABLEMP_fatal("unknown shadow type");
+        _XMP_fatal("unknown shadow type");
     }
   }
 }
 
 // FIXME consider full shadow in other dimensions
-void _XCALABLEMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_addr,
-                                    _XCALABLEMP_array_t *array_desc, int array_index) {
-  _XCALABLEMP_ASSERT(array_addr != NULL);
-  _XCALABLEMP_ASSERT(array_desc != NULL);
+void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_addr,
+                                    _XMP_array_t *array_desc, int array_index) {
+  _XMP_ASSERT(array_addr != NULL);
+  _XMP_ASSERT(array_desc != NULL);
 
   if (!array_desc->is_allocated) {
     return;
@@ -144,8 +144,8 @@ void _XCALABLEMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *ar
 
   int array_type = array_desc->type;
   int array_dim = array_desc->dim;
-  _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
-  _XCALABLEMP_ERR_WHEN(!ai->is_shadow_comm_member);
+  _XMP_array_info_t *ai = &(array_desc->info[array_index]);
+  _XMP_ERR_WHEN(!ai->is_shadow_comm_member);
 
   int size = ai->shadow_comm_size;
   int rank = ai->shadow_comm_rank;
@@ -158,11 +158,11 @@ void _XCALABLEMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *ar
     if (ai->shadow_size_lo > 0) {
       // FIXME strict condition
       if (ai->shadow_size_lo > ai->par_size) {
-        _XCALABLEMP_fatal("shadow size is too big");
+        _XMP_fatal("shadow size is too big");
       }
 
       // alloc buffer
-      *lo_buffer = _XCALABLEMP_alloc((ai->shadow_size_lo) * (ai->dim_elmts) * (array_desc->type_size));
+      *lo_buffer = _XMP_alloc((ai->shadow_size_lo) * (ai->dim_elmts) * (array_desc->type_size));
 
       // calc index
       for (int i = 0; i < array_dim; i++) {
@@ -182,12 +182,12 @@ void _XCALABLEMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *ar
       }
 
       // pack data
-      if (array_type == _XCALABLEMP_N_TYPE_NONBASIC) {
-        _XCALABLEMP_pack_array_GENERAL(*lo_buffer, array_addr, array_desc->type_size,
+      if (array_type == _XMP_N_TYPE_NONBASIC) {
+        _XMP_pack_array_GENERAL(*lo_buffer, array_addr, array_desc->type_size,
                                        array_dim, lower, upper, stride, dim_acc);
       }
       else {
-        _XCALABLEMP_pack_array_BASIC(*lo_buffer, array_addr, array_type, array_dim, lower, upper, stride, dim_acc);
+        _XMP_pack_array_BASIC(*lo_buffer, array_addr, array_type, array_dim, lower, upper, stride, dim_acc);
       }
     }
   }
@@ -197,11 +197,11 @@ void _XCALABLEMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *ar
     if (ai->shadow_size_hi > 0) {
       // FIXME strict condition
       if (ai->shadow_size_hi > ai->par_size) {
-        _XCALABLEMP_fatal("shadow size is too big");
+        _XMP_fatal("shadow size is too big");
       }
 
       // alloc buffer
-      *hi_buffer = _XCALABLEMP_alloc((ai->shadow_size_hi) * (ai->dim_elmts) * (array_desc->type_size));
+      *hi_buffer = _XMP_alloc((ai->shadow_size_hi) * (ai->dim_elmts) * (array_desc->type_size));
 
       // calc index
       for (int i = 0; i < array_dim; i++) {
@@ -221,24 +221,24 @@ void _XCALABLEMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *ar
       }
 
       // pack data
-      if (array_type == _XCALABLEMP_N_TYPE_NONBASIC) {
-        _XCALABLEMP_pack_array_GENERAL(*hi_buffer, array_addr, array_desc->type_size,
+      if (array_type == _XMP_N_TYPE_NONBASIC) {
+        _XMP_pack_array_GENERAL(*hi_buffer, array_addr, array_desc->type_size,
                                        array_dim, lower, upper, stride, dim_acc);
       }
       else {
-        _XCALABLEMP_pack_array_BASIC(*hi_buffer, array_addr, array_type, array_dim, lower, upper, stride, dim_acc);
+        _XMP_pack_array_BASIC(*hi_buffer, array_addr, array_type, array_dim, lower, upper, stride, dim_acc);
       }
     }
   }
 }
 
 // FIXME not consider full shadow
-void _XCALABLEMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_addr,
-                                      _XCALABLEMP_array_t *array_desc, int array_index) {
-  _XCALABLEMP_ASSERT(lo_buffer != NULL);
-  _XCALABLEMP_ASSERT(hi_buffer != NULL);
-  _XCALABLEMP_ASSERT(array_addr != NULL);
-  _XCALABLEMP_ASSERT(array_desc != NULL);
+void _XMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_addr,
+                                      _XMP_array_t *array_desc, int array_index) {
+  _XMP_ASSERT(lo_buffer != NULL);
+  _XMP_ASSERT(hi_buffer != NULL);
+  _XMP_ASSERT(array_addr != NULL);
+  _XMP_ASSERT(array_desc != NULL);
 
   if (!array_desc->is_allocated) {
     return;
@@ -246,8 +246,8 @@ void _XCALABLEMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *ar
 
   int array_type = array_desc->type;
   int array_dim = array_desc->dim;
-  _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
-  _XCALABLEMP_ERR_WHEN(!ai->is_shadow_comm_member);
+  _XMP_array_info_t *ai = &(array_desc->info[array_index]);
+  _XMP_ERR_WHEN(!ai->is_shadow_comm_member);
 
   int size = ai->shadow_comm_size;
   int rank = ai->shadow_comm_rank;
@@ -260,7 +260,7 @@ void _XCALABLEMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *ar
     if (ai->shadow_size_lo > 0) {
       // FIXME strict condition
       if (ai->shadow_size_lo > ai->par_size) {
-        _XCALABLEMP_fatal("shadow size is too big");
+        _XMP_fatal("shadow size is too big");
       }
 
       // calc index
@@ -281,16 +281,16 @@ void _XCALABLEMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *ar
       }
 
       // unpack data
-      if (array_type == _XCALABLEMP_N_TYPE_NONBASIC) {
-        _XCALABLEMP_unpack_array_GENERAL(array_addr, lo_buffer, array_desc->type_size,
+      if (array_type == _XMP_N_TYPE_NONBASIC) {
+        _XMP_unpack_array_GENERAL(array_addr, lo_buffer, array_desc->type_size,
                                          array_dim, lower, upper, stride, dim_acc);
       }
       else {
-        _XCALABLEMP_unpack_array_BASIC(array_addr, lo_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
+        _XMP_unpack_array_BASIC(array_addr, lo_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
       }
 
       // free buffer
-      _XCALABLEMP_free(lo_buffer);
+      _XMP_free(lo_buffer);
     }
   }
 
@@ -299,7 +299,7 @@ void _XCALABLEMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *ar
     if (ai->shadow_size_hi > 0) {
       // FIXME strict condition
       if (ai->shadow_size_hi > ai->par_size) {
-        _XCALABLEMP_fatal("shadow size is too big");
+        _XMP_fatal("shadow size is too big");
       }
 
       // calc index
@@ -320,35 +320,35 @@ void _XCALABLEMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *ar
       }
 
       // unpack data
-      if (array_type == _XCALABLEMP_N_TYPE_NONBASIC) {
-        _XCALABLEMP_unpack_array_GENERAL(array_addr, hi_buffer, array_desc->type_size,
+      if (array_type == _XMP_N_TYPE_NONBASIC) {
+        _XMP_unpack_array_GENERAL(array_addr, hi_buffer, array_desc->type_size,
                                          array_dim, lower, upper, stride, dim_acc);
       }
       else {
-        _XCALABLEMP_unpack_array_BASIC(array_addr, hi_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
+        _XMP_unpack_array_BASIC(array_addr, hi_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
       }
 
       // free buffer
-      _XCALABLEMP_free(hi_buffer);
+      _XMP_free(hi_buffer);
     }
   }
 }
 
 // FIXME change tag
 // FIXME not consider full shadow
-void _XCALABLEMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
+void _XMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
                                         void *lo_send_buffer, void *hi_send_buffer,
-                                        _XCALABLEMP_array_t *array_desc, int array_index) {
-  _XCALABLEMP_ASSERT(lo_send_buffer != NULL);
-  _XCALABLEMP_ASSERT(hi_send_buffer != NULL);
-  _XCALABLEMP_ASSERT(array_desc != NULL);
+                                        _XMP_array_t *array_desc, int array_index) {
+  _XMP_ASSERT(lo_send_buffer != NULL);
+  _XMP_ASSERT(hi_send_buffer != NULL);
+  _XMP_ASSERT(array_desc != NULL);
 
   if (!array_desc->is_allocated) {
     return;
   }
 
-  _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
-  _XCALABLEMP_ERR_WHEN(!ai->is_shadow_comm_member);
+  _XMP_array_info_t *ai = &(array_desc->info[array_index]);
+  _XMP_ERR_WHEN(!ai->is_shadow_comm_member);
 
   // get communicator info
   MPI_Comm *comm = ai->shadow_comm;
@@ -366,27 +366,27 @@ void _XCALABLEMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_bu
 
   if (ai->shadow_size_lo > 0) {
     if (rank != 0) {
-      *lo_recv_buffer = _XCALABLEMP_alloc((ai->shadow_size_lo) * (ai->dim_elmts) * (array_desc->type_size));
+      *lo_recv_buffer = _XMP_alloc((ai->shadow_size_lo) * (ai->dim_elmts) * (array_desc->type_size));
       MPI_Irecv(*lo_recv_buffer, (ai->shadow_size_lo) * (ai->dim_elmts), mpi_datatype,
-                rank - 1, _XCALABLEMP_N_MPI_TAG_REFLECT_LO, *comm, &(recv_req[0]));
+                rank - 1, _XMP_N_MPI_TAG_REFLECT_LO, *comm, &(recv_req[0]));
     }
 
     if (rank != (size - 1)) {
       MPI_Isend(lo_send_buffer, (ai->shadow_size_lo) * (ai->dim_elmts), mpi_datatype,
-                rank + 1, _XCALABLEMP_N_MPI_TAG_REFLECT_LO, *comm, &(send_req[0]));
+                rank + 1, _XMP_N_MPI_TAG_REFLECT_LO, *comm, &(send_req[0]));
     }
   }
 
   if (ai->shadow_size_hi > 0) {
     if (rank != (size - 1)) {
-      *hi_recv_buffer = _XCALABLEMP_alloc((ai->shadow_size_hi) * (ai->dim_elmts) * (array_desc->type_size));
+      *hi_recv_buffer = _XMP_alloc((ai->shadow_size_hi) * (ai->dim_elmts) * (array_desc->type_size));
       MPI_Irecv(*hi_recv_buffer, (ai->shadow_size_hi) * (ai->dim_elmts), mpi_datatype,
-                rank + 1, _XCALABLEMP_N_MPI_TAG_REFLECT_HI, *comm, &(recv_req[1]));
+                rank + 1, _XMP_N_MPI_TAG_REFLECT_HI, *comm, &(recv_req[1]));
     }
 
     if (rank != 0) {
       MPI_Isend(hi_send_buffer, (ai->shadow_size_hi) * (ai->dim_elmts), mpi_datatype,
-                rank - 1, _XCALABLEMP_N_MPI_TAG_REFLECT_HI, *comm, &(send_req[1]));
+                rank - 1, _XMP_N_MPI_TAG_REFLECT_HI, *comm, &(send_req[1]));
     }
   }
 
@@ -400,7 +400,7 @@ void _XCALABLEMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_bu
 
     if (rank != (size - 1)) {
       MPI_Wait(&(send_req[0]), &stat);
-      _XCALABLEMP_free(lo_send_buffer);
+      _XMP_free(lo_send_buffer);
     }
   }
 
@@ -411,20 +411,20 @@ void _XCALABLEMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_bu
 
     if (rank != 0) {
       MPI_Wait(&(send_req[1]), &stat);
-      _XCALABLEMP_free(hi_send_buffer);
+      _XMP_free(hi_send_buffer);
     }
   }
 }
 
-static void _XCALABLEMP_reflect_shadow_ALLGATHER(void *array_addr, _XCALABLEMP_array_t *array_desc, int array_index) {
-  _XCALABLEMP_ASSERT(array_addr != NULL);
-  _XCALABLEMP_ASSERT(array_desc != NULL);
-  _XCALABLEMP_ASSERT(array_desc->is_allocated);
-  _XCALABLEMP_ASSERT(array_desc->dim == 1);
+static void _XMP_reflect_shadow_ALLGATHER(void *array_addr, _XMP_array_t *array_desc, int array_index) {
+  _XMP_ASSERT(array_addr != NULL);
+  _XMP_ASSERT(array_desc != NULL);
+  _XMP_ASSERT(array_desc->is_allocated);
+  _XMP_ASSERT(array_desc->dim == 1);
 
-  _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
-  _XCALABLEMP_ASSERT(ai->align_manner == _XCALABLEMP_N_ALIGN_BLOCK);
-  _XCALABLEMP_ERR_WHEN(!ai->is_shadow_comm_member);
+  _XMP_array_info_t *ai = &(array_desc->info[array_index]);
+  _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
+  _XMP_ERR_WHEN(!ai->is_shadow_comm_member);
 
   size_t type_size = array_desc->type_size;
   MPI_Datatype mpi_datatype;
@@ -433,25 +433,25 @@ static void _XCALABLEMP_reflect_shadow_ALLGATHER(void *array_addr, _XCALABLEMP_a
 
   int gather_count = ai->par_size;
   size_t gather_byte_size = type_size * gather_count;
-  void *pack_buffer = _XCALABLEMP_alloc(gather_byte_size);
+  void *pack_buffer = _XMP_alloc(gather_byte_size);
   memcpy(pack_buffer, array_addr + (type_size * ai->local_lower), gather_byte_size);
 
   MPI_Allgather(pack_buffer, gather_count, mpi_datatype,
                 array_addr, gather_count, mpi_datatype,
                 *(ai->shadow_comm));
 
-  _XCALABLEMP_free(pack_buffer);
+  _XMP_free(pack_buffer);
 }
 
-static void _XCALABLEMP_reflect_shadow_ALLGATHERV(void *array_addr, _XCALABLEMP_array_t *array_desc, int array_index) {
-  _XCALABLEMP_ASSERT(array_addr != NULL);
-  _XCALABLEMP_ASSERT(array_desc != NULL);
-  _XCALABLEMP_ASSERT(array_desc->is_allocated);
-  _XCALABLEMP_ASSERT(array_desc->dim == 1);
+static void _XMP_reflect_shadow_ALLGATHERV(void *array_addr, _XMP_array_t *array_desc, int array_index) {
+  _XMP_ASSERT(array_addr != NULL);
+  _XMP_ASSERT(array_desc != NULL);
+  _XMP_ASSERT(array_desc->is_allocated);
+  _XMP_ASSERT(array_desc->dim == 1);
 
-  _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
-  _XCALABLEMP_ASSERT(ai->align_manner == _XCALABLEMP_N_ALIGN_BLOCK);
-  _XCALABLEMP_ERR_WHEN(!ai->is_shadow_comm_member);
+  _XMP_array_info_t *ai = &(array_desc->info[array_index]);
+  _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
+  _XMP_ERR_WHEN(!ai->is_shadow_comm_member);
 
   size_t type_size = array_desc->type_size;
   MPI_Datatype mpi_datatype;
@@ -460,37 +460,37 @@ static void _XCALABLEMP_reflect_shadow_ALLGATHERV(void *array_addr, _XCALABLEMP_
 
   int gather_count = ai->par_size;
   size_t gather_byte_size = type_size * gather_count;
-  void *pack_buffer = _XCALABLEMP_alloc(gather_byte_size);
+  void *pack_buffer = _XMP_alloc(gather_byte_size);
   memcpy(pack_buffer, array_addr + (type_size * ai->local_lower), gather_byte_size);
 
   MPI_Allgather(pack_buffer, gather_count, mpi_datatype,
                 array_addr, gather_count, mpi_datatype,
                 *(ai->shadow_comm));
 
-  _XCALABLEMP_free(pack_buffer);
+  _XMP_free(pack_buffer);
 }
 
 // FIXME not implemented yet
-void _XCALABLEMP_reflect_shadow_FULL(void *array_addr, _XCALABLEMP_array_t *array_desc, int array_index) {
-  _XCALABLEMP_ASSERT(array_addr != NULL);
-  _XCALABLEMP_ASSERT(array_desc != NULL);
+void _XMP_reflect_shadow_FULL(void *array_addr, _XMP_array_t *array_desc, int array_index) {
+  _XMP_ASSERT(array_addr != NULL);
+  _XMP_ASSERT(array_desc != NULL);
 
   if (!array_desc->is_allocated) {
     return;
   }
 
   int array_dim = array_desc->dim;
-  _XCALABLEMP_array_info_t *ai = &(array_desc->info[array_index]);
+  _XMP_array_info_t *ai = &(array_desc->info[array_index]);
 
   // special cases
-  if ((array_dim == 1) && (ai->align_manner == _XCALABLEMP_N_ALIGN_BLOCK)) {
+  if ((array_dim == 1) && (ai->align_manner == _XMP_N_ALIGN_BLOCK)) {
     if (ai->is_regular_chunk) {
       // use allgather
-      _XCALABLEMP_reflect_shadow_ALLGATHER(array_addr, array_desc, array_index);
+      _XMP_reflect_shadow_ALLGATHER(array_addr, array_desc, array_index);
       return;
     }
     else {
-      _XCALABLEMP_reflect_shadow_ALLGATHERV(array_addr, array_desc, array_index);
+      _XMP_reflect_shadow_ALLGATHERV(array_addr, array_desc, array_index);
       return;
     }
   }

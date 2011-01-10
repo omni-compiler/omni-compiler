@@ -6,7 +6,7 @@
 
 #include "xmp_math_function.h"
 
-int _XCALABLEMP_modi_ll_i(long long value, int cycle) {
+int _XMP_modi_ll_i(long long value, int cycle) {
   int mod = value % cycle;
   if (mod < 0) {
     return (mod += cycle) % cycle;
@@ -16,7 +16,7 @@ int _XCALABLEMP_modi_ll_i(long long value, int cycle) {
   }
 }
 
-int _XCALABLEMP_modi_i_i(int value, int cycle) {
+int _XMP_modi_i_i(int value, int cycle) {
   int mod = value % cycle;
   if (mod < 0) {
     return (mod += cycle) % cycle;

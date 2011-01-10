@@ -4,8 +4,8 @@
  *  $
  */
 
-#ifndef _XCALABLEMP_USERAPI
-#define _XCALABLEMP_USERAPI
+#ifndef _XMP_USERAPI
+#define _XMP_USERAPI
 
 // #include "mpi.h"
 
@@ -17,4 +17,4 @@ extern int	xmp_get_world_size(void);
 extern int	xmp_get_world_rank(void);
 extern double	xmp_wtime(void);
 
-#endif // _XCALABLEMP_USERAPI
+#endif // _XMP_USERAPI

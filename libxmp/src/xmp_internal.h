@@ -4,43 +4,43 @@
  *  $
  */
 
-#ifndef _XCALABLEMP_INTERNAL
-#define _XCALABLEMP_INTERNAL
+#ifndef _XMP_INTERNAL
+#define _XMP_INTERNAL
 
 // --------------- including headers  --------------------------------
 #include <stddef.h>
 #include <stdbool.h>
 #include "mpi.h"
 
-#define _XCALABLEMP_ERR_WHEN(flag) \
+#define _XMP_ERR_WHEN(flag) \
 { \
   if (flag) { \
-    _XCALABLEMP_unexpected_error(); \
+    _XMP_unexpected_error(); \
   } \
 }
 
-#ifdef _XCALABLEMP_DEBUG
-#define _XCALABLEMP_ASSERT(flag) \
+#ifdef _XMP_DEBUG
+#define _XMP_ASSERT(flag) \
 { \
   if (flag) { \
-    _XCALABLEMP_unexpected_error(); \
+    _XMP_unexpected_error(); \
   } \
 }
 #else
-#define _XCALABLEMP_ASSERT(flag)
+#define _XMP_ASSERT(flag)
 #endif
 
 // --------------- structures ----------------------------------------
 // nodes descriptor
-typedef struct _XCALABLEMP_nodes_info_type {
+typedef struct _XMP_nodes_info_type {
   int size;
 
   // enable when is_member is true
   int rank;
   // -----------------------------
-} _XCALABLEMP_nodes_info_t;
+} _XMP_nodes_info_t;
 
-typedef struct _XCALABLEMP_nodes_type {
+typedef struct _XMP_nodes_type {
   _Bool is_member;
   int dim;
   int comm_size;
@@ -50,19 +50,19 @@ typedef struct _XCALABLEMP_nodes_type {
   MPI_Comm *comm;
   // -----------------------------
 
-  _XCALABLEMP_nodes_info_t info[1];
-} _XCALABLEMP_nodes_t;
+  _XMP_nodes_info_t info[1];
+} _XMP_nodes_t;
 
 // template desciptor
-typedef struct _XCALABLEMP_template_info_type {
+typedef struct _XMP_template_info_type {
   // enable when is_fixed is true
   long long ser_lower;
   long long ser_upper;
   unsigned long long ser_size;
   // ----------------------------
-} _XCALABLEMP_template_info_t;
+} _XMP_template_info_t;
 
-typedef struct _XCALABLEMP_template_chunk_type {
+typedef struct _XMP_template_chunk_type {
   // enable when is_owner is true
   long long par_lower;
   long long par_upper;
@@ -73,13 +73,13 @@ typedef struct _XCALABLEMP_template_chunk_type {
   int dist_manner;
   _Bool is_regular_chunk;
 
-  // enable when dist_manner is not _XCALABLEMP_N_DIST_DUPLICATION
+  // enable when dist_manner is not _XMP_N_DIST_DUPLICATION
   int onto_nodes_index;
-  _XCALABLEMP_nodes_info_t *onto_nodes_info;
+  _XMP_nodes_info_t *onto_nodes_info;
   // -------------------------------------------------------------
-} _XCALABLEMP_template_chunk_t;
+} _XMP_template_chunk_t;
 
-typedef struct _XCALABLEMP_template_type {
+typedef struct _XMP_template_type {
   _Bool is_fixed;
    _Bool is_distributed;
     _Bool is_owner;
@@ -87,14 +87,14 @@ typedef struct _XCALABLEMP_template_type {
   int   dim;
 
   // enable when is_distributed is true
-  _XCALABLEMP_nodes_t *onto_nodes;
-  _XCALABLEMP_template_chunk_t *chunk;
+  _XMP_nodes_t *onto_nodes;
+  _XMP_template_chunk_t *chunk;
   // ----------------------------------
 
-  _XCALABLEMP_template_info_t info[1];
-} _XCALABLEMP_template_t;
+  _XMP_template_info_t info[1];
+} _XMP_template_t;
 
-typedef struct _XCALABLEMP_array_info_type {
+typedef struct _XMP_array_info_type {
   _Bool is_shadow_comm_member;
   _Bool is_regular_chunk;
   int align_manner;
@@ -132,14 +132,14 @@ typedef struct _XCALABLEMP_array_info_type {
   int shadow_comm_rank;
   // -----------------------------------------
 
-  // align_manner is not _XCALABLEMP_N_ALIGN_NOT_ALIGNED
+  // align_manner is not _XMP_N_ALIGN_NOT_ALIGNED
   int align_template_index;
-  _XCALABLEMP_template_info_t *align_template_info;
-  _XCALABLEMP_template_chunk_t *align_template_chunk;
+  _XMP_template_info_t *align_template_info;
+  _XMP_template_chunk_t *align_template_chunk;
   // ---------------------------------------------------
-} _XCALABLEMP_array_info_t;
+} _XMP_array_info_t;
 
-typedef struct _XCALABLEMP_array_type {
+typedef struct _XMP_array_type {
   _Bool is_allocated;
   _Bool is_align_comm_member;
   int dim;
@@ -157,55 +157,55 @@ typedef struct _XCALABLEMP_array_type {
   int align_comm_rank;
   // ----------------------------------------
 
-  _XCALABLEMP_template_t *align_template;
-  _XCALABLEMP_array_info_t info[1];
-} _XCALABLEMP_array_t;
+  _XMP_template_t *align_template;
+  _XMP_array_info_t info[1];
+} _XMP_array_t;
 
 // --------------- variables -----------------------------------------
 // xmp_world.c
-extern int _XCALABLEMP_world_size;
-extern int _XCALABLEMP_world_rank;
-extern void *_XCALABLEMP_world_nodes;
+extern int _XMP_world_size;
+extern int _XMP_world_rank;
+extern void *_XMP_world_nodes;
 
 // --------------- functions -----------------------------------------
 // xmp_array_section.c
-extern void _XCALABLEMP_normalize_array_section(int *lower, int *upper, int *stride);
-extern void _XCALABLEMP_pack_array_BASIC(void *buffer, void *src, int array_type,
+extern void _XMP_normalize_array_section(int *lower, int *upper, int *stride);
+extern void _XMP_pack_array_BASIC(void *buffer, void *src, int array_type,
                                          int array_dim, int *l, int *u, int *s, unsigned long long *d);
-extern void _XCALABLEMP_pack_array_GENERAL(void *buffer, void *src, size_t array_type_size,
+extern void _XMP_pack_array_GENERAL(void *buffer, void *src, size_t array_type_size,
                                            int array_dim, int *l, int *u, int *s, unsigned long long *d);
-extern void _XCALABLEMP_unpack_array_BASIC(void *dst, void *buffer, int array_type,
+extern void _XMP_unpack_array_BASIC(void *dst, void *buffer, int array_type,
                                            int array_dim, int *l, int *u, int *s, unsigned long long *d);
-extern void _XCALABLEMP_unpack_array_GENERAL(void *dst, void *buffer, size_t array_type_size,
+extern void _XMP_unpack_array_GENERAL(void *dst, void *buffer, size_t array_type_size,
                                              int array_dim, int *l, int *u, int *s, unsigned long long *d);
 
 // xmp_barrier.c
-extern void _XCALABLEMP_barrier_EXEC(void);
+extern void _XMP_barrier_EXEC(void);
 
 // xmp_nodes.c
-extern void _XCALABLEMP_validate_nodes_ref(int *lower, int *upper, int *stride, int size);
-extern void _XCALABLEMP_finalize_nodes(_XCALABLEMP_nodes_t *nodes);
-extern _XCALABLEMP_nodes_t *_XCALABLEMP_create_nodes_by_comm(MPI_Comm *comm);
+extern void _XMP_validate_nodes_ref(int *lower, int *upper, int *stride, int size);
+extern void _XMP_finalize_nodes(_XMP_nodes_t *nodes);
+extern _XMP_nodes_t *_XMP_create_nodes_by_comm(MPI_Comm *comm);
 
 // xmp_nodes_stack.c
-extern void _XCALABLEMP_push_nodes(_XCALABLEMP_nodes_t *nodes);
-extern void _XCALABLEMP_pop_nodes(void);
-extern void _XCALABLEMP_pop_n_free_nodes(void);
-extern void _XCALABLEMP_pop_n_free_nodes_wo_finalize_comm(void);
-extern _XCALABLEMP_nodes_t *_XCALABLEMP_get_execution_nodes(void);
-extern int _XCALABLEMP_get_execution_nodes_rank(void);
-extern void _XCALABLEMP_push_comm(MPI_Comm *comm);
-extern void _XCALABLEMP_finalize_comm(MPI_Comm *comm);
+extern void _XMP_push_nodes(_XMP_nodes_t *nodes);
+extern void _XMP_pop_nodes(void);
+extern void _XMP_pop_n_free_nodes(void);
+extern void _XMP_pop_n_free_nodes_wo_finalize_comm(void);
+extern _XMP_nodes_t *_XMP_get_execution_nodes(void);
+extern int _XMP_get_execution_nodes_rank(void);
+extern void _XMP_push_comm(MPI_Comm *comm);
+extern void _XMP_finalize_comm(MPI_Comm *comm);
 
 // xmp_util.c
-extern void *_XCALABLEMP_alloc(size_t size);
-extern void _XCALABLEMP_free(void *p);
-extern void _XCALABLEMP_fatal(char *msg);
-extern void _XCALABLEMP_unexpected_error(void);
+extern void *_XMP_alloc(size_t size);
+extern void _XMP_free(void *p);
+extern void _XMP_fatal(char *msg);
+extern void _XMP_unexpected_error(void);
 
 // xmp_world.c
-extern void _XCALABLEMP_init_world(int *argc, char ***argv);
-extern void _XCALABLEMP_barrier_WORLD(void);
-extern int _XCALABLEMP_finalize_world(int ret);
+extern void _XMP_init_world(int *argc, char ***argv);
+extern void _XMP_barrier_WORLD(void);
+extern int _XMP_finalize_world(int ret);
 
-#endif // _XCALABLEMP_INTERNAL
+#endif // _XMP_INTERNAL

@@ -249,7 +249,7 @@ public class XcBindingVisitor extends RVisitorBase
             ident = _identTableStack.getIdent(XcSymbolKindEnum.FUNC, name);
 
             if(ident == null) {
-                if (name.startsWith("_XCALABLEMP_M_")) return new XcIdent(name);
+                if (name.startsWith("_XMP_M_")) return new XcIdent(name);
 
                 throw new XmBindingException((XmObj)xstr, "variable or function '" + name
                     + "' is not defined");

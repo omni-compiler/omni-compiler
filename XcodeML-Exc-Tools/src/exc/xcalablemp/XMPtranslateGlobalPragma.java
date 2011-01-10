@@ -182,9 +182,9 @@ public class XMPtranslateGlobalPragma {
     else		allocType = "STATIC";
 
     if (nodesRef == null)
-      _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_init_nodes_" + allocType + "_" + inheritType, nodesArgs);
+      _globalDecl.addGlobalInitFuncCall("_XMP_init_nodes_" + allocType + "_" + inheritType, nodesArgs);
     else
-      _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_init_nodes_" + allocType + "_" + inheritType + "_" + nodesRefType, nodesArgs);
+      _globalDecl.addGlobalInitFuncCall("_XMP_init_nodes_" + allocType + "_" + inheritType + "_" + nodesRefType, nodesArgs);
   }
 
   private void translateTemplate(Xobject templatePragma) throws XMPexception {
@@ -236,7 +236,7 @@ public class XMPtranslateGlobalPragma {
     }
     else fixedSurfix = "UNFIXED";
 
-    _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_init_template_" + fixedSurfix, templateArgs);
+    _globalDecl.addGlobalInitFuncCall("_XMP_init_template_" + fixedSurfix, templateArgs);
   }
 
   private void checkObjectNameCollision(String name) throws XMPexception {
@@ -283,7 +283,7 @@ public class XMPtranslateGlobalPragma {
     templateObject.setOntoNodes(nodesObject);
 
     // setup chunk constructor
-    _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_init_template_chunk",
+    _globalDecl.addGlobalInitFuncCall("_XMP_init_template_chunk",
                                       Xcons.List(templateObject.getDescId().Ref(),
                                                  nodesObject.getDescId().Ref()));
 
@@ -366,7 +366,7 @@ public class XMPtranslateGlobalPragma {
         throw new XMPexception("unknown distribute manner");
     }
 
-    _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_dist_template_" + distMannerName, funcArgs);
+    _globalDecl.addGlobalInitFuncCall("_XMP_dist_template_" + distMannerName, funcArgs);
     templateObject.setDistMannerAt(distManner, templateDimIdx);
   }
 
@@ -468,7 +468,7 @@ public class XMPtranslateGlobalPragma {
       accIdVector.add(accId);
     }
 
-    _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_init_array_desc", initArrayDescFuncArgs);
+    _globalDecl.addGlobalInitFuncCall("_XMP_init_array_desc", initArrayDescFuncArgs);
 
     XMPalignedArray alignedArray = new XMPalignedArray(arrayName, arrayElmtType, arrayDim,
                                                        arraySizeVector, accIdVector,
@@ -560,7 +560,7 @@ public class XMPtranslateGlobalPragma {
       else                                     initArrayCommFuncArgs.add(Xcons.IntConstant(0));
     }
 
-    _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_init_array_comm", initArrayCommFuncArgs);
+    _globalDecl.addGlobalInitFuncCall("_XMP_init_array_comm", initArrayCommFuncArgs);
   }
 
   private void declNotAlignFunc(XMPalignedArray alignedArray, int alignSourceIndex) throws XMPexception {
@@ -569,7 +569,7 @@ public class XMPtranslateGlobalPragma {
 
     alignedArray.setAlignMannerAt(XMPalignedArray.NOT_ALIGNED, alignSourceIndex);
 
-    _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_align_array_NOT_ALIGNED", alignFuncArgs);
+    _globalDecl.addGlobalInitFuncCall("_XMP_align_array_NOT_ALIGNED", alignFuncArgs);
   }
 
   private void declAlignFunc(XMPalignedArray alignedArray, int alignSourceIndex,
@@ -605,7 +605,7 @@ public class XMPtranslateGlobalPragma {
         throw new XMPexception("unknown distribute manner");
     }
 
-    _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_align_array_" + templateObj.getDistMannerStringAt(alignSubscriptIndex),
+    _globalDecl.addGlobalInitFuncCall("_XMP_align_array_" + templateObj.getDistMannerStringAt(alignSubscriptIndex),
                                       alignFuncArgs);
   }
 
@@ -679,7 +679,7 @@ public class XMPtranslateGlobalPragma {
     if (arrayIndex != arrayDim)
       throw new XMPexception("the number of <nodes/template-subscript> should be the same with the dimension");
 
-    _globalDecl.addGlobalInitFuncCall("_XCALABLEMP_init_shadow", shadowFuncArgs);
+    _globalDecl.addGlobalInitFuncCall("_XMP_init_shadow", shadowFuncArgs);
 
     // set shadow flag
     alignedArray.setHasShadow();
