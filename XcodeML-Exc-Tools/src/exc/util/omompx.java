@@ -100,6 +100,8 @@ public class omompx
             } else if(arg.equals("-fxmp")) {
                 xcalableMP = true;
             } else if(arg.equals("-fxmp_threads")) {
+                // XXX openMP = true;
+                xcalableMP = true;
                 xcalableMPthreads = true;
             } else if(arg.equals("-w")) {
                 if(narg == null)
@@ -217,8 +219,8 @@ public class omompx
         
         System.gc();
         
-        // XcalableMP translation XXX XMP-threads
-        if(xcalableMP || xcalableMPthreads) {
+        // XcalableMP translation
+        if(xcalableMP) {
             XMPglobalDecl globalDecl = new XMPglobalDecl(xobjFile);
             XMPtranslate xmpTranslator = new XMPtranslate(globalDecl);
             XMPrealloc xmpReallocator = new XMPrealloc(globalDecl);
