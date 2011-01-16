@@ -182,6 +182,7 @@ usage(const char *argv0)
         "--no-xinfo                suppress XcodeProgram attributes and line number",
         "                          attributes.",
         "-fxmp                     translate xmp pragma directive.",
+        "-fxmp_threads             translate xmp-threads pragma directive.",
         "--verbose                 print syntax tree transformation statistics and",
         "                          processing status.",
         "",
@@ -503,6 +504,8 @@ procOptions(int argc, char **argv)
             } else if(strcmp(arg, "--m64") == 0) {
                 setOptSizeSet(CSIZESET_M64);
             } else if(strcmp(arg, "-fxmp") == 0) {
+                s_useXmp = 1;
+            } else if(strcmp(arg, "-fxmp_threads") == 0) {
                 s_useXmp = 1;
             } else if(strcmp(arg, "-fopenmp") == 0) {
                 /* accept but no action */

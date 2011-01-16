@@ -1,1 +1,1 @@
-CMD_OPT="${CMD_OPT} -fxmp"
+CMD_OPT="${CMD_OPT} -fxmp_threads"
