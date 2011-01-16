@@ -35,15 +35,16 @@ rm -rf Makefile config.cache config.log config.status autom4te.cache
 (cd Driver;
     rm -rf Makefile etc/omc.conf etc/omf.conf \
     etc/java.conf \
-    etc/*.xmp etc/*.openmp \
-    bin/*.xmp bin/*.openmp \
+    etc/*.openmp \
+    bin/*.openmp \
     bin/oml2x bin/omx2x bin/omx2l \
     bin/ompp bin/omnative bin/omlinker \
     bin/omc2c bin/ompcc bin/omc2x bin/omcx2x bin/omx2c \
     bin/omcpp bin/omcnative bin/omclinker \
     bin/omf2f bin/ompf90 bin/omf2x bin/omfx2x bin/omx2f \
     bin/omfpp bin/omfnative bin/omflinker \
-    bin/xmpcc)
+    bin/xmpcc bin/*.xmp etc/*.xmp \
+    bin/xmpcc-threads bin/*.xmp_threads etc/*.xmp_threads)
 
 (cd libxmp;
     rm -rf src/Makefile)

@@ -142,11 +142,6 @@ if test -e "Driver/src/Makefile.am"; then
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omx2x)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omx2l)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/java.conf)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/pp.conf.xmp)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/l2x.conf.xmp)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/x2x.conf.xmp)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/native.conf.xmp)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.xmp)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/pp.conf.openmp)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/l2x.conf.openmp)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/x2x.conf.openmp)
@@ -170,7 +165,20 @@ if test -e "Driver/src/Makefile.am"; then
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omfnative)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omflinker)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/omf.conf)
+
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/xmpcc)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/pp.conf.xmp)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/l2x.conf.xmp)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/x2x.conf.xmp)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/native.conf.xmp)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.xmp)
+
+    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/xmpcc-threads)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/pp.conf.xmp_threads)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/l2x.conf.xmp_threads)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/x2x.conf.xmp_threads)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/native.conf.xmp_threads)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.xmp_threads)
 
     AC_MSG_RESULT(yes)
 else

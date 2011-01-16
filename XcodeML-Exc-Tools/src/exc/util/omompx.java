@@ -74,6 +74,7 @@ public class omompx
         String lang = "C";
         boolean openMP = false;
         boolean xcalableMP = false;
+        boolean xcalableMPthreads = false;
         boolean outputXcode = false;
         boolean outputDecomp = false;
         boolean dump = false;
@@ -98,6 +99,8 @@ public class omompx
                 openMP = true;
             } else if(arg.equals("-fxmp")) {
                 xcalableMP = true;
+            } else if(arg.equals("-fxmp_threads")) {
+                xcalableMPthreads = true;
             } else if(arg.equals("-w")) {
                 if(narg == null)
                     error("needs argument after -w");
@@ -167,6 +170,7 @@ public class omompx
         XmOption.setLanguage(XmLanguage.valueOf(lang));
         XmOption.setIsOpenMP(openMP);
         XmOption.setIsXcalableMP(xcalableMP);
+        XmOption.setIsXcalableMPthreads(xcalableMPthreads);
         
         // read XcodeML
         List<String> readErrorList = new ArrayList<String>();
@@ -213,8 +217,8 @@ public class omompx
         
         System.gc();
         
-        // XcalableMP translation
-        if(xcalableMP) {
+        // XcalableMP translation XXX XMP-threads
+        if(xcalableMP || xcalableMPthreads) {
             XMPglobalDecl globalDecl = new XMPglobalDecl(xobjFile);
             XMPtranslate xmpTranslator = new XMPtranslate(globalDecl);
             XMPrealloc xmpReallocator = new XMPrealloc(globalDecl);

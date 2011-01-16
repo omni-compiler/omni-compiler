@@ -21,6 +21,7 @@ public class XmOption
 
     /** if compiling Xcalable MP is enabled */
     private static boolean _xcalableMP = false;
+    private static boolean _xcalableMPthreads = false;
 
     /** if compiling Xcalable MP is enabled */
     private static boolean _openMP = false;
@@ -79,6 +80,26 @@ public class XmOption
     public static boolean isXcalableMP()
     {
         return _xcalableMP;
+    }
+
+    /**
+     * Sets compiler to or not to translate XcalableMP-threads directive.
+     *
+     * @param enable true then translate XcalableMP directive.
+     */
+    public static void setIsXcalableMPthreads(boolean enable)
+    {
+        _xcalableMPthreads = enable;
+    }
+
+    /**
+     * Checks does compiler translate XcalableMP-threads directive.
+     *
+     * @return true if compiler translate XcalableMP directive.
+     */
+    public static boolean isXcalableMPthreads()
+    {
+        return _xcalableMPthreads;
     }
 
     /**

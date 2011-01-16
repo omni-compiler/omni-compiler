@@ -3223,16 +3223,6 @@ if test -e "Driver/src/Makefile.am"; then
 
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/java.conf"
 
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/pp.conf.xmp"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/l2x.conf.xmp"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/x2x.conf.xmp"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/native.conf.xmp"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/linker.conf.xmp"
-
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/pp.conf.openmp"
 
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/l2x.conf.openmp"
@@ -3279,7 +3269,31 @@ if test -e "Driver/src/Makefile.am"; then
 
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/omf.conf"
 
+
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/xmpcc"
+
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/pp.conf.xmp"
+
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/l2x.conf.xmp"
+
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/x2x.conf.xmp"
+
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/native.conf.xmp"
+
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/linker.conf.xmp"
+
+
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/xmpcc-threads"
+
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/pp.conf.xmp_threads"
+
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/l2x.conf.xmp_threads"
+
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/x2x.conf.xmp_threads"
+
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/native.conf.xmp_threads"
+
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/linker.conf.xmp_threads"
 
 
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
@@ -10145,11 +10159,6 @@ do
     "$OMDRIVER_DIR/../bin/omx2x") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omx2x" ;;
     "$OMDRIVER_DIR/../bin/omx2l") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omx2l" ;;
     "$OMDRIVER_DIR/../etc/java.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/java.conf" ;;
-    "$OMDRIVER_DIR/../etc/pp.conf.xmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/pp.conf.xmp" ;;
-    "$OMDRIVER_DIR/../etc/l2x.conf.xmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/l2x.conf.xmp" ;;
-    "$OMDRIVER_DIR/../etc/x2x.conf.xmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/x2x.conf.xmp" ;;
-    "$OMDRIVER_DIR/../etc/native.conf.xmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/native.conf.xmp" ;;
-    "$OMDRIVER_DIR/../etc/linker.conf.xmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/linker.conf.xmp" ;;
     "$OMDRIVER_DIR/../etc/pp.conf.openmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/pp.conf.openmp" ;;
     "$OMDRIVER_DIR/../etc/l2x.conf.openmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/l2x.conf.openmp" ;;
     "$OMDRIVER_DIR/../etc/x2x.conf.openmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/x2x.conf.openmp" ;;
@@ -10174,6 +10183,17 @@ do
     "$OMDRIVER_DIR/../bin/omflinker") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omflinker" ;;
     "$OMDRIVER_DIR/../etc/omf.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/omf.conf" ;;
     "$OMDRIVER_DIR/../bin/xmpcc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/xmpcc" ;;
+    "$OMDRIVER_DIR/../etc/pp.conf.xmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/pp.conf.xmp" ;;
+    "$OMDRIVER_DIR/../etc/l2x.conf.xmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/l2x.conf.xmp" ;;
+    "$OMDRIVER_DIR/../etc/x2x.conf.xmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/x2x.conf.xmp" ;;
+    "$OMDRIVER_DIR/../etc/native.conf.xmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/native.conf.xmp" ;;
+    "$OMDRIVER_DIR/../etc/linker.conf.xmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/linker.conf.xmp" ;;
+    "$OMDRIVER_DIR/../bin/xmpcc-threads") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/xmpcc-threads" ;;
+    "$OMDRIVER_DIR/../etc/pp.conf.xmp_threads") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/pp.conf.xmp_threads" ;;
+    "$OMDRIVER_DIR/../etc/l2x.conf.xmp_threads") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/l2x.conf.xmp_threads" ;;
+    "$OMDRIVER_DIR/../etc/x2x.conf.xmp_threads") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/x2x.conf.xmp_threads" ;;
+    "$OMDRIVER_DIR/../etc/native.conf.xmp_threads") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/native.conf.xmp_threads" ;;
+    "$OMDRIVER_DIR/../etc/linker.conf.xmp_threads") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/linker.conf.xmp_threads" ;;
     "$LIBXMP_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_DIR/Makefile" ;;
     "$TESTS_DIR/C-test/Makefile") CONFIG_FILES="$CONFIG_FILES $TESTS_DIR/C-test/Makefile" ;;
     "$TESTS_DIR/tiny/Makefile") CONFIG_FILES="$CONFIG_FILES $TESTS_DIR/tiny/Makefile" ;;
