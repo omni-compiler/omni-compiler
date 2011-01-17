@@ -75,7 +75,8 @@ am_libxmp_a_OBJECTS = xmp_lib.$(OBJEXT) xmp_util.$(OBJEXT) \
 	xmp_barrier.$(OBJEXT) xmp_reduce.$(OBJEXT) xmp_bcast.$(OBJEXT) \
 	xmp_align.$(OBJEXT) xmp_shadow.$(OBJEXT) \
 	xmp_array_section.$(OBJEXT) xmp_loop.$(OBJEXT) \
-	xmp_gmove.$(OBJEXT) xmp_math_function.$(OBJEXT)
+	xmp_gmove.$(OBJEXT) xmp_math_function.$(OBJEXT) \
+	xmp_runtime.$(OBJEXT)
 libxmp_a_OBJECTS = $(am_libxmp_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -272,10 +273,11 @@ libxmp_a_SOURCES = xmp_internal.h xmp_math_function.h xmp_constant.h \
 				  xmp_lib.c xmp_util.c xmp_world.c xmp_nodes_stack.c \
                                   xmp_nodes.c xmp_template.c xmp_barrier.c xmp_reduce.c xmp_bcast.c \
                                   xmp_align.c xmp_shadow.c xmp_array_section.c xmp_loop.c xmp_gmove.c \
-                                  xmp_math_function.c
+                                  xmp_math_function.c xmp_runtime.c
 
-EXTRA_libxmp_a_SOURCES = xmp_crt0.c
+EXTRA_libxmp_a_SOURCES = xmp_crt0.c xmp_threads_crt0.c
 XMPCRTOBJ = xmp_crt0.o
+XMPTHREADSCRTOBJ = xmp_threads_crt0.o
 AM_CFLAGS = -std=c99
 all: all-am
 
@@ -366,8 +368,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_nodes.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_nodes_stack.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_reduce.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_runtime.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_shadow.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_template.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_threads_crt0.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_util.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_world.Po@am__quote@
 
@@ -605,14 +609,15 @@ uninstall-am: uninstall-includeHEADERS uninstall-libLIBRARIES
 	uninstall-am uninstall-includeHEADERS uninstall-libLIBRARIES
 
 
-all-local: $(XMPCRTOBJ)
+all-local: $(XMPCRTOBJ) $(XMPTHREADSCRTOBJ)
 
 clean-local:
 	rm -f *~ *.core core core.*
 
-install-exec-local: $(XMPCRTOBJ)
+install-exec-local: $(XMPCRTOBJ) $(XMPTHREADSCRTOBJ)
 	test -z "$(libdir)" || $(MKDIR_P) $(DESTDIR)$(libdir)
 	$(INSTALL_DATA) $(XMPCRTOBJ) $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) $(XMPTHREADSCRTOBJ) $(DESTDIR)$(libdir)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

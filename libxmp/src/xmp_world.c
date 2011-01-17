@@ -27,17 +27,16 @@ void _XMP_init_world(int *argc, char ***argv) {
 
     _XMP_push_nodes(n);
   }
-}
 
-void _XMP_init_world_NULL(void) {
-  _XMP_init_world(NULL, NULL);
-}
-
-void _XMP_barrier_WORLD(void) {
   MPI_Barrier(MPI_COMM_WORLD);
 }
 
-int _XMP_finalize_world(int ret) {
-  MPI_Finalize();
-  return ret;
+void _XMP_finalize_world(void) {
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  int flag = 0;
+  MPI_Finalized(&flag);
+  if (!flag) {
+    MPI_Finalize();
+  }
 }

@@ -37,7 +37,7 @@ public class XMPglobalDecl {
     //                                                        Xtype.Function(Xtype.voidType)).Call(Xcons.List(Xcons.IntConstant(globalObjectTable.getCoarrayCount())))));
 
     _globalInitFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT,
-                                        _env.declExternIdent("_XMP_init_world_NULL",
+                                        _env.declExternIdent("_XMP_init_in_constructor",
                                                              Xtype.Function(Xtype.voidType)).Call(null)));
 
     Xtype consType = Xtype.Function(Xtype.voidType);

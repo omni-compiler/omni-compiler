@@ -205,7 +205,10 @@ extern void _XMP_unexpected_error(void);
 
 // xmp_world.c
 extern void _XMP_init_world(int *argc, char ***argv);
-extern void _XMP_barrier_WORLD(void);
-extern int _XMP_finalize_world(int ret);
+extern void _XMP_finalize_world(void);
+
+// xmp_runtime.c
+extern void _XMP_init(int *argc, char ***argv);
+extern void _XMP_finalize(void);
 
 #endif // _XMP_INTERNAL
