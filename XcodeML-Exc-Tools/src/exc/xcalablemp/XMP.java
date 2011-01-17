@@ -42,7 +42,7 @@ public class XMP {
     XmLog.error(l, "[XcalableMP] " + msg);
   }
 
-  public static void warning(LineNo l, String msg) {
+  public static void warning(String msg) {
     XmLog.warning("[XcalableMP] " + msg);
   }
 

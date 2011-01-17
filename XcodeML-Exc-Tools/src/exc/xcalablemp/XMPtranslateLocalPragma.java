@@ -10,6 +10,7 @@ import exc.block.*;
 import exc.object.*;
 import java.util.Vector;
 import java.util.Iterator;
+import xcodeml.util.XmOption;
 
 public class XMPtranslateLocalPragma {
   private XMPglobalDecl		_globalDecl;
@@ -787,18 +788,38 @@ public class XMPtranslateLocalPragma {
     CforBlock schedBaseBlock = getOutermostLoopBlock(loopBody);
 
     // schedule loop
-    if (loopDecl.getArg(0) == null) translateFollowingLoop(pb, schedBaseBlock);
-    else                            translateMultipleLoop(pb, schedBaseBlock);
+    if (loopDecl.getArg(0) == null) {
+      translateFollowingLoop(pb, schedBaseBlock);
+    }
+    else {
+      translateMultipleLoop(pb, schedBaseBlock);
+    }
 
     // translate reduction clause
     XobjList reductionRefList = (XobjList)loopDecl.getArg(2);
     if (reductionRefList != null) {
       XobjList schedVarList = null;
-      if (loopDecl.getArg(0) == null) schedVarList = Xcons.List(Xcons.String(schedBaseBlock.getInductionVar().getSym()));
-      else                            schedVarList = (XobjList)loopDecl.getArg(0).copy();
+      if (loopDecl.getArg(0) == null) {
+        schedVarList = Xcons.List(Xcons.String(schedBaseBlock.getInductionVar().getSym()));
+      }
+      else {
+        schedVarList = (XobjList)loopDecl.getArg(0).copy();
+      }
 
       BlockList reductionBody = createReductionClauseBody(pb, reductionRefList, schedBaseBlock);
       schedBaseBlock.add(createReductionClauseBlock(pb, reductionBody, schedVarList));
+    }
+
+    // translate threads clause
+    XobjList threadsClause = (XobjList)loopDecl.getArg(3);
+    if (threadsClause != null) {
+      if (XmOption.isXcalableMPthreads()) {
+        // XXX implement!!!
+        schedBaseBlock.insert(Xcons.List(Xcode.PRAGMA_LINE, Xcons.String(" here omp pragma inserted by xmpcc-threads")));
+      }
+      else {
+        XMP.warning("this compiler does not supports threads clause");
+      }
     }
 
     // replace pragma

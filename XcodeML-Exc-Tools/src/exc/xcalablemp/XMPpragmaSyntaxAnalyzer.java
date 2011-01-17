@@ -644,7 +644,15 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       } while (true);
     }
 
-    return Xcons.List(loopIndexList, onRef, reductionRefList);
+    // parse [<threads-clause>], ...
+    XobjList threadsClause = null;
+    if (pg_is_ident("threads")) {
+      // XXX parse anyway
+      threadsClause = Xcons.List();
+      pg_get_token();
+    }
+
+    return Xcons.List(loopIndexList, onRef, reductionRefList, threadsClause);
 
     // check body in translator: for loop
   }
