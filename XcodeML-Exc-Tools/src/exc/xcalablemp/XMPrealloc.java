@@ -46,7 +46,8 @@ public class XMPrealloc implements XobjectDefVisitor {
             _globalDecl.addGlobalInitFuncCall("_XMP_alloc_array", allocFuncArgs);
           }
 
-          def.setDef(null);
+          def.setDef(Xcons.List(Xcode.TEXT,
+                                Xcons.String("/* array '" + varName + "' is removed by XcalableMP align directive */")));
         }
         else {
           XobjList allocFuncArgs = Xcons.List(alignedArray.getAddrId().getAddr(),
