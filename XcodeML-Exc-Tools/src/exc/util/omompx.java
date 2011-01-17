@@ -100,7 +100,7 @@ public class omompx
             } else if(arg.equals("-fxmp")) {
                 xcalableMP = true;
             } else if(arg.equals("-fxmp_threads")) {
-                // XXX openMP = true;
+                openMP = true;
                 xcalableMP = true;
                 xcalableMPthreads = true;
             } else if(arg.equals("-w")) {
