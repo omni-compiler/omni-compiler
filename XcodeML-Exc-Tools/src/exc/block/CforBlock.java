@@ -13,7 +13,7 @@ public class CforBlock extends CondBlock implements ForBlock
     private BasicBlock init_part, iter_part;
 
     // for cannonical shaped for-loop
-    private boolean is_canonical = false;
+    private boolean is_canonical;
     private Xobject ind_var;
     private Xobject lowerb, upperb, step;
     private Xobject min_upperb;
@@ -27,6 +27,8 @@ public class CforBlock extends CondBlock implements ForBlock
             init_part.parent = this;
         if(iter_part != null)
             iter_part.parent = this;
+
+        is_canonical = false;
     }
 
     @Override
@@ -65,7 +67,7 @@ public class CforBlock extends CondBlock implements ForBlock
     @Override
     public void Canonicalize()
     {
-        if (is_canonical) return;
+        is_canonical = false;
 
         Xobject e, ind_var, ub, lb, step;
         Statement s;

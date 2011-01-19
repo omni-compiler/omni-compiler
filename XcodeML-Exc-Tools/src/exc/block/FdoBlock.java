@@ -31,6 +31,8 @@ public class FdoBlock extends Block implements ForBlock
             upper_part = BasicBlock.Expr(this, idx_range.getArg(1));
             step_part = BasicBlock.Expr(this, idx_range.getArgOrNull(2));
         }
+
+        is_canonical = false;
     }
 
     @Override
