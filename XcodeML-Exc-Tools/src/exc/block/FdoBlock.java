@@ -23,6 +23,7 @@ public class FdoBlock extends Block implements ForBlock
     {
         super(Xcode.F_DO_STATEMENT, null, construct_name);
         this.body = body;
+        this.is_canonical = false;
         body.parent = this;
         ind_var_part = BasicBlock.Expr(this, ind_var);
         
@@ -31,8 +32,6 @@ public class FdoBlock extends Block implements ForBlock
             upper_part = BasicBlock.Expr(this, idx_range.getArg(1));
             step_part = BasicBlock.Expr(this, idx_range.getArgOrNull(2));
         }
-
-        is_canonical = false;
     }
 
     @Override

@@ -8,6 +8,7 @@ package exc.xcalablemp;
 
 import exc.block.*;
 import exc.object.*;
+import exc.openmp.OMPpragma;
 import java.util.Vector;
 import java.util.Iterator;
 import xcodeml.util.XmOption;
@@ -814,8 +815,10 @@ public class XMPtranslateLocalPragma {
     XobjList threadsClause = (XobjList)loopDecl.getArg(3);
     if (threadsClause != null) {
       if (XmOption.isXcalableMPthreads()) {
-        // XXX implement!!!
-        schedBaseBlock.insert(Xcons.List(Xcode.PRAGMA_LINE, Xcons.String(" here omp pragma inserted by xmpcc-threads")));
+        // XXX select target forBlock, implement omp-compatible clauses
+        schedBaseBlock.replace(createOMPpragmaBlock(OMPpragma.PARALLEL, Xcons.List(),
+                                                    createOMPpragmaBlock(OMPpragma.FOR, Xcons.List(),
+                                                                         schedBaseBlock)));
       }
       else {
         XMP.warning("this compiler does not supports threads clause");
@@ -824,6 +827,10 @@ public class XMPtranslateLocalPragma {
 
     // replace pragma
     pb.replace(Bcons.COMPOUND(loopBody));
+  }
+
+  private Block createOMPpragmaBlock(OMPpragma pragma, Xobject args, Block body) {
+    return Bcons.PRAGMA(Xcode.OMP_PRAGMA, pragma.toString(), args, Bcons.blockList(body));
   }
 
   private Block createReductionClauseBlock(PragmaBlock pb, BlockList reductionBody, XobjList schedVarList) throws XMPexception {

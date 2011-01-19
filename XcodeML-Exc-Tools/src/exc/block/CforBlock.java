@@ -21,14 +21,13 @@ public class CforBlock extends CondBlock implements ForBlock
     public CforBlock(BasicBlock init, BasicBlock cond, BasicBlock iter, BlockList body, String construct_name)
     {
         super(Xcode.FOR_STATEMENT, cond, body, construct_name);
+        this.is_canonical = false;
         this.init_part = init;
         this.iter_part = iter;
         if(init_part != null)
             init_part.parent = this;
         if(iter_part != null)
             iter_part.parent = this;
-
-        is_canonical = false;
     }
 
     @Override
