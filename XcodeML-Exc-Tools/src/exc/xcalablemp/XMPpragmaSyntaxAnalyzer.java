@@ -8,8 +8,10 @@ package exc.xcalablemp;
 
 import xcodeml.XmException;
 import exc.object.*;
+import exc.openmp.OMPpragma;
 import static exc.object.PragmaLexer.*;
-
+import exc.xcodeml.XmSymbol;
+import exc.xcodeml.XmSymbolUtil;
 
 /**
  * XcalableMP pragma lexer
@@ -647,9 +649,8 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     // parse [<threads-clause>], ...
     XobjList threadsClause = null;
     if (pg_is_ident("threads")) {
-      // XXX parse anyway
-      threadsClause = Xcons.List();
       pg_get_token();
+      threadsClause = parse_THREADS_clause();
     }
 
     return Xcons.List(loopIndexList, onRef, reductionRefList, threadsClause);
@@ -969,5 +970,82 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     else gmoveClause = Xcons.IntConstant(XMPcollective.GMOVE_NORMAL);
 
     return Xcons.List(gmoveClause);
+  }
+
+  private XobjList parse_THREADS_clause() throws XMPexception {
+    XobjList args = Xcons.List();
+
+    while (pg_tok() == PG_IDENT) {
+      if (pg_is_ident("private")) {
+        pg_get_token();
+        XobjList v = parse_THREADS_namelist_as_symbol();
+        args.add(omp_pg_list(OMPpragma.DATA_PRIVATE, v));
+      }
+      else if (pg_is_ident("firstprivate")) {
+        pg_get_token();
+        XobjList v = parse_THREADS_namelist_as_symbol();
+        args.add(omp_pg_list(OMPpragma.DATA_FIRSTPRIVATE, v));
+      } else if (pg_is_ident("lastprivate")) {
+        pg_get_token();
+        XobjList v = parse_THREADS_namelist_as_symbol();
+        args.add(omp_pg_list(OMPpragma.DATA_LASTPRIVATE, v));
+      }
+    }
+
+    return args;
+  }
+
+  private XobjList omp_pg_list(OMPpragma pg, Xobject args) {
+    return Xcons.List(Xcode.LIST, Xcons.String(pg.toString()), args);
+  }
+
+  private XobjList parse_THREADS_namelist_as_symbol() throws XMPexception {
+    return parse_THREADS_namelist(true);
+  }
+
+  private XobjList parse_THREADS_namelist_as_not_symbol() throws XMPexception {
+    return parse_THREADS_namelist(false);
+  }
+
+  private XobjList parse_THREADS_namelist(boolean asSymbol) throws XMPexception {
+    XobjList args = Xcons.List();
+
+    if (pg_tok() != '(') {
+      error("threads clause requires name list");
+    }
+
+    while (true) {
+      pg_get_token();
+
+      if (pg_tok() != PG_IDENT) {
+        error("empty name list in threads clause");
+      }
+
+      if (asSymbol) {
+        XmSymbol sym = XmSymbolUtil.lookupSymbol(_lexer.getContext(), pg_tok_buf());
+        if (sym == null) {
+          error("undefined identifier in threads clause : " + pg_tok_buf());
+        }
+        else if (!sym.isIdent() &&
+                 !sym.getSclass().equals(StorageClass.FCOMMON_NAME)) {
+          error("bad identifier in threads clause : " + pg_tok_buf());
+        }
+      }
+      args.add(Xcons.Symbol(Xcode.IDENT, pg_tok_buf()));
+
+      pg_get_token();
+      if (pg_tok() == ')') {
+        pg_get_token();
+        return args;
+      }
+      else if(pg_tok() != ',') {
+        break;
+      }
+    }
+
+    error("syntax error in threads clause");
+
+    // XXX never reach here
+    return null;
   }
 }

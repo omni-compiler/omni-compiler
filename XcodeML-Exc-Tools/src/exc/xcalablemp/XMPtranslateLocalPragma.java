@@ -819,6 +819,7 @@ public class XMPtranslateLocalPragma {
         schedBaseBlock.replace(createOMPpragmaBlock(OMPpragma.PARALLEL, Xcons.List(),
                                                     createOMPpragmaBlock(OMPpragma.FOR, Xcons.List(),
                                                                          schedBaseBlock)));
+        System.out.println("threadsClause: " + threadsClause.toString());
       }
       else {
         XMP.warning("this compiler does not supports threads clause");
