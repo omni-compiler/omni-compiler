@@ -815,11 +815,8 @@ public class XMPtranslateLocalPragma {
     XobjList threadsClause = (XobjList)loopDecl.getArg(3);
     if (threadsClause != null) {
       if (XmOption.isXcalableMPthreads()) {
-        // XXX select target forBlock, implement omp-compatible clauses
-        schedBaseBlock.replace(createOMPpragmaBlock(OMPpragma.PARALLEL, Xcons.List(),
-                                                    createOMPpragmaBlock(OMPpragma.FOR, Xcons.List(),
-                                                                         schedBaseBlock)));
-        System.out.println("threadsClause: " + threadsClause.toString());
+        Block newLoopBlock = translateThreadsClauseToOMPpragma(threadsClause, schedBaseBlock);
+        schedBaseBlock.replace(newLoopBlock);
       }
       else {
         XMP.warning("this compiler does not supports threads clause");
@@ -832,6 +829,43 @@ public class XMPtranslateLocalPragma {
 
   private Block createOMPpragmaBlock(OMPpragma pragma, Xobject args, Block body) {
     return Bcons.PRAGMA(Xcode.OMP_PRAGMA, pragma.toString(), args, Bcons.blockList(body));
+  }
+
+  // XXX only supports C language
+  private Block translateThreadsClauseToOMPpragma(XobjList threadsClause, CforBlock loopBlock) throws XMPexception {
+    XobjList forClause = Xcons.List();
+
+    for (Xobject c : threadsClause) {
+      OMPpragma p = OMPpragma.valueOf(c.getArg(0));
+      switch (p) {
+        case DATA_PRIVATE:
+        case DATA_FIRSTPRIVATE:
+        case DATA_LASTPRIVATE:
+          {
+            compile_THREADS_name_list(c.getArg(1));
+            forClause.add(c);
+          } break;
+        default:
+          throw new XMPexception("unknown threads clause");
+      }
+    }
+
+    forClause.add(omp_pg_list(OMPpragma.DIR_NOWAIT, null));
+
+    return createOMPpragmaBlock(OMPpragma.PARALLEL, Xcons.statementList(),
+                                createOMPpragmaBlock(OMPpragma.FOR, forClause,
+                                                     loopBlock));
+  }
+
+  private Xobject omp_pg_list(OMPpragma pg, Xobject args) {
+    return Xcons.List(Xcode.LIST, Xcons.String(pg.toString()), args);
+  }
+
+  // XXX not implemented yet, check variables
+  private void compile_THREADS_name_list(Xobject name_list) throws XMPexception {
+    if (name_list == null) {
+      return;
+    }
   }
 
   private Block createReductionClauseBlock(PragmaBlock pb, BlockList reductionBody, XobjList schedVarList) throws XMPexception {
