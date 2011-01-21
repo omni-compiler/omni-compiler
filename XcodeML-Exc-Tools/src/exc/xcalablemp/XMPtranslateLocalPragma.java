@@ -815,7 +815,7 @@ public class XMPtranslateLocalPragma {
     XobjList threadsClause = (XobjList)loopDecl.getArg(3);
     if (threadsClause != null) {
       if (XmOption.isXcalableMPthreads()) {
-        Block newLoopBlock = translateThreadsClauseToOMPpragma(threadsClause, schedBaseBlock);
+        Block newLoopBlock = translateThreadsClauseToOMPpragma(threadsClause, reductionRefList, schedBaseBlock);
         schedBaseBlock.replace(newLoopBlock);
       }
       else {
@@ -832,34 +832,90 @@ public class XMPtranslateLocalPragma {
   }
 
   // XXX only supports C language
-  private Block translateThreadsClauseToOMPpragma(XobjList threadsClause, CforBlock loopBlock) throws XMPexception {
+  private Block translateThreadsClauseToOMPpragma(XobjList threadsClause, XobjList reductionRefList,
+                                                  CforBlock loopBlock) throws XMPexception {
     Xobject parallelClause = Xcons.statementList();
     XobjList forClause = Xcons.List();
 
-    for (Xobject c : threadsClause) {
-      OMPpragma p = OMPpragma.valueOf(c.getArg(0));
-      switch (p) {
-        case DATA_PRIVATE:
-        case DATA_FIRSTPRIVATE:
-        case DATA_LASTPRIVATE:
-          {
-            compile_THREADS_name_list(c.getArg(1));
-            forClause.add(c);
-          } break;
-        case DATA_NUM_THREADS:
-          {
+    if (threadsClause != null) {
+      for (Xobject c : threadsClause) {
+        OMPpragma p = OMPpragma.valueOf(c.getArg(0));
+        switch (p) {
+          case DATA_PRIVATE:
+          case DATA_FIRSTPRIVATE:
+          case DATA_LASTPRIVATE:
+            {
+              compile_THREADS_name_list(c.getArg(1));
+              forClause.add(c);
+            } break;
+          case DATA_NUM_THREADS:
             parallelClause.add(c);
-          } break;
-        default:
-          throw new XMPexception("unknown threads clause");
+            break;
+          default:
+            throw new XMPexception("unknown threads clause");
+        }
       }
     }
 
     forClause.add(omp_pg_list(OMPpragma.DIR_NOWAIT, null));
 
+    addReductionClauseToOMPclause(forClause, reductionRefList);
+
     return createOMPpragmaBlock(OMPpragma.PARALLEL, parallelClause,
                                 createOMPpragmaBlock(OMPpragma.FOR, forClause,
                                                      loopBlock));
+  }
+
+  private void addReductionClauseToOMPclause(XobjList OMPclause, XobjList reductionRefList) throws XMPexception {
+    if (reductionRefList == null) {
+      return;
+    }
+
+    for (Xobject c : reductionRefList) {
+      OMPpragma redOp = null;
+
+      XobjInt reductionOp = (XobjInt)c.getArg(0);
+      switch (reductionOp.getInt()) {
+        case XMPcollective.REDUCE_SUM:
+          redOp = OMPpragma.DATA_REDUCTION_PLUS;
+          break;
+        case XMPcollective.REDUCE_PROD:
+          redOp = OMPpragma.DATA_REDUCTION_MUL;
+          break;
+        case XMPcollective.REDUCE_BAND:
+          redOp = OMPpragma.DATA_REDUCTION_BITAND;
+          break;
+        case XMPcollective.REDUCE_LAND:
+          redOp = OMPpragma.DATA_REDUCTION_LOGAND;
+          break;
+        case XMPcollective.REDUCE_BOR:
+          redOp = OMPpragma.DATA_REDUCTION_BITOR;
+          break;
+        case XMPcollective.REDUCE_LOR:
+          redOp = OMPpragma.DATA_REDUCTION_LOGOR;
+          break;
+        case XMPcollective.REDUCE_BXOR:
+          redOp = OMPpragma.DATA_REDUCTION_BITXOR;
+          break;
+        case XMPcollective.REDUCE_LXOR:
+        case XMPcollective.REDUCE_MAX:
+        case XMPcollective.REDUCE_MIN:
+        case XMPcollective.REDUCE_FIRSTMAX:
+        case XMPcollective.REDUCE_FIRSTMIN:
+        case XMPcollective.REDUCE_LASTMAX:
+        case XMPcollective.REDUCE_LASTMIN:
+          throw new XMPexception("the operation cannot be translated to OpenMP clause");
+        default:
+          throw new XMPexception("unknown reduction operation");
+      }
+
+      XobjList redVarList = Xcons.List();
+      for (Xobject x : (XobjList)c.getArg(1)) {
+        redVarList.add(Xcons.Symbol(Xcode.IDENT, x.getArg(0).getName()));
+      }
+
+      OMPclause.add(omp_pg_list(redOp, redVarList));
+    }
   }
 
   private Xobject omp_pg_list(OMPpragma pg, Xobject args) {
