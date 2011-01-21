@@ -1758,6 +1758,8 @@ is_OMP_sentinel(char **pp)
     return FALSE;
 }
 
+static int last_char_in_quote_is_quote = FALSE;
+
 static int
 read_free_format()
 {
@@ -1874,9 +1876,19 @@ again:
 
         memcpy(oBuf, st_buffer, st_len);
         pp = oBuf + st_len;
-        l = strlen(p);
-        memcpy(pp, p, l); /* oBuf <= line_buffer */
-        *(pp + l) = '\0';
+
+	if (last_char_in_quote_is_quote){
+	  *pp = qChar;
+	  last_char_in_quote_is_quote = FALSE;
+	  l = strlen(p);
+	  memcpy(pp+1, p, l); /* oBuf <= line_buffer */
+	  *(p + 1 + l) = '\0';
+	}
+	else {
+	  l = strlen(p);
+	  memcpy(pp, p, l); /* oBuf <= line_buffer */
+	  *(pp + l) = '\0';
+	}
 
         /* oBuf => st_buffer */
         q = st_buffer+st_len;
@@ -1886,6 +1898,13 @@ again:
         if (st_len >= ST_BUF_SIZE){
             goto Done;
         }
+    }
+
+    if (last_char_in_quote_is_quote){
+      *q++ = QUOTE;
+      inQuote = FALSE;
+      qChar = '\0';
+      last_char_in_quote_is_quote = FALSE;
     }
 
     /* done */
@@ -2046,8 +2065,6 @@ done:
         warning("line contains more than 132 characters");
     return(ST_INIT);
 }
-
-static int last_char_in_quote_is_quote = FALSE;
 
 /* for fixed format */
 static int
@@ -2913,7 +2930,8 @@ checkInQuote(cur, dst, inQuotePtr, quoteCharPtr, newCurPtr, newDstPtr)
     } else {
         if (*cur == *quoteCharPtr) {
             cur++;
-	    if (*cur == '\0'){
+	    if ((fixed_format_flag && *cur == '\0') ||
+		(!fixed_format_flag && *cur == '&' && *(cur+1) == '\0')){
 	      last_char_in_quote_is_quote = TRUE;
 	    }
             else if (*cur != *quoteCharPtr) {
