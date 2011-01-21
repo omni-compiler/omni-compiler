@@ -972,7 +972,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     return Xcons.List(gmoveClause);
   }
 
-  private XobjList parse_THREADS_clause() throws XMPexception {
+  private XobjList parse_THREADS_clause() throws XmException, XMPexception {
     XobjList args = Xcons.List();
 
     while (pg_tok() == PG_IDENT) {
@@ -985,10 +985,30 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         pg_get_token();
         XobjList v = parse_THREADS_namelist_as_symbol();
         args.add(omp_pg_list(OMPpragma.DATA_FIRSTPRIVATE, v));
-      } else if (pg_is_ident("lastprivate")) {
+      }
+      else if (pg_is_ident("lastprivate")) {
         pg_get_token();
         XobjList v = parse_THREADS_namelist_as_symbol();
         args.add(omp_pg_list(OMPpragma.DATA_LASTPRIVATE, v));
+      }
+      else if (pg_is_ident("num_threads")) {
+        pg_get_token();
+        if (pg_tok() != '(') {
+          throw new XMPexception("'(' is expected after 'num_threads'");
+        }
+
+        pg_get_token();
+        Xobject v = pg_parse_expr();
+        args.add(omp_pg_list(OMPpragma.DATA_NUM_THREADS, v));
+
+        if (pg_tok() != ')') {
+          throw new XMPexception("')' is expected after <num-threads>");
+        }
+
+        pg_get_token();
+      }
+      else {
+        throw new XMPexception("unknown threads clause");
       }
     }
 

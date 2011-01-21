@@ -833,6 +833,7 @@ public class XMPtranslateLocalPragma {
 
   // XXX only supports C language
   private Block translateThreadsClauseToOMPpragma(XobjList threadsClause, CforBlock loopBlock) throws XMPexception {
+    Xobject parallelClause = Xcons.statementList();
     XobjList forClause = Xcons.List();
 
     for (Xobject c : threadsClause) {
@@ -845,6 +846,10 @@ public class XMPtranslateLocalPragma {
             compile_THREADS_name_list(c.getArg(1));
             forClause.add(c);
           } break;
+        case DATA_NUM_THREADS:
+          {
+            parallelClause.add(c);
+          } break;
         default:
           throw new XMPexception("unknown threads clause");
       }
@@ -852,7 +857,7 @@ public class XMPtranslateLocalPragma {
 
     forClause.add(omp_pg_list(OMPpragma.DIR_NOWAIT, null));
 
-    return createOMPpragmaBlock(OMPpragma.PARALLEL, Xcons.statementList(),
+    return createOMPpragmaBlock(OMPpragma.PARALLEL, parallelClause,
                                 createOMPpragmaBlock(OMPpragma.FOR, forClause,
                                                      loopBlock));
   }
