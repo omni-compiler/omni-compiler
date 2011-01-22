@@ -849,6 +849,7 @@ public class XMPtranslateLocalPragma {
               forClause.add(c);
             } break;
           case DATA_NUM_THREADS:
+          case DIR_IF:
             parallelClause.add(c);
             break;
           default:

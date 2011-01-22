@@ -239,11 +239,13 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       pg_get_token();
       args = parse_GMOVE_clause();
     }
-    else
+    else {
       error("unknown XcalableMP directive, '" + pg_tok_buf() + "'");
+    }
  
-    if (pg_tok() != 0 || pragmaDir == null)
+    if (pg_tok() != 0 || pragmaDir == null) {
       error("extra arguments for XcalableMP directive");
+    }
 
     retSyntax[0] = syntax;
     retArgs[0] = args;
@@ -1002,7 +1004,23 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         args.add(omp_pg_list(OMPpragma.DATA_NUM_THREADS, v));
 
         if (pg_tok() != ')') {
-          throw new XMPexception("')' is expected after <num-threads>");
+          throw new XMPexception("')' is expected after <num_threads> clause");
+        }
+
+        pg_get_token();
+      }
+      else if (pg_is_ident("if")) {
+        pg_get_token();
+        if (pg_tok() != '(') {
+          throw new XMPexception("'(' is expected after 'if'");
+        }
+
+        pg_get_token();
+        Xobject v = pg_parse_expr();
+        args.add(omp_pg_list(OMPpragma.DIR_IF, v));
+
+        if (pg_tok() != ')') {
+          throw new XMPexception("')' is expected after <if> clause");
         }
 
         pg_get_token();
