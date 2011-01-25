@@ -24,13 +24,13 @@ public class XMPlocalDecl {
     return null;
   }
 
-  public static XMPsymbolTable getSymbolTable(Block block) {
+  public static XMPsymbolTable getXMPsymbolTable(Block block) {
     FunctionBlock fb = findParentFunctionBlock(block);
     if (fb == null) return null;
     else return (XMPsymbolTable)fb.getProp(XMP_SYMBOL_TABLE);
   }
 
-  public static XMPsymbolTable declSymbolTable(Block block) {
+  public static XMPsymbolTable declXMPsymbolTable(Block block) {
     FunctionBlock fb = findParentFunctionBlock(block);
     if (fb == null) return null;
 

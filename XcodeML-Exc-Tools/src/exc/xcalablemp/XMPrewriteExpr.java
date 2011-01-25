@@ -21,7 +21,7 @@ public class XMPrewriteExpr {
     if (fb == null) return;
 
     // rewrite expr
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declSymbolTable(fb);
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(fb);
 
     BasicBlockExprIterator iter = new BasicBlockExprIterator(fb);
     for (iter.init(); !iter.end(); iter.next()) {

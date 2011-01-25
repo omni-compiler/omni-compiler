@@ -83,7 +83,7 @@ public class XMPtranslateLocalPragma {
     XobjList nodesDecl = (XobjList)pb.getClauses();
     FunctionBlock functionBlock = XMPlocalDecl.findParentFunctionBlock(pb);
     BlockList funcBlockList = functionBlock.getBody();
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declSymbolTable(pb);
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
 
     // check <map-type> := { <undefined> | regular }
     int nodesMapType = 0;
@@ -231,7 +231,7 @@ public class XMPtranslateLocalPragma {
     XobjList templateDecl = (XobjList)pb.getClauses();
     FunctionBlock functionBlock = XMPlocalDecl.findParentFunctionBlock(pb);
     BlockList funcBlockList = functionBlock.getBody();
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declSymbolTable(pb);
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
 
     // check name collision - parameters
     String templateName = templateDecl.getArg(0).getString();
@@ -310,7 +310,7 @@ public class XMPtranslateLocalPragma {
     XobjList distDecl = (XobjList)pb.getClauses();
     FunctionBlock functionBlock = XMPlocalDecl.findParentFunctionBlock(pb);
     BlockList funcBlockList = functionBlock.getBody();
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declSymbolTable(pb);
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
 
     // get template object
     String templateName = distDecl.getArg(0).getString();
@@ -434,7 +434,7 @@ public class XMPtranslateLocalPragma {
     XobjList alignDecl = (XobjList)pb.getClauses();
     FunctionBlock functionBlock = XMPlocalDecl.findParentFunctionBlock(pb);
     BlockList funcBlockList = functionBlock.getBody();
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declSymbolTable(pb);
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
 
     // get array information
     String arrayName = alignDecl.getArg(0).getString();
@@ -675,7 +675,7 @@ public class XMPtranslateLocalPragma {
 
     // start translation
     XobjList shadowDecl = (XobjList)pb.getClauses();
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declSymbolTable(pb);
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
 
     // find aligned array
     String arrayName = shadowDecl.getArg(0).getString();
@@ -752,7 +752,7 @@ public class XMPtranslateLocalPragma {
   private void translateTask(PragmaBlock pb) throws XMPexception {
     // start translation
     XobjList taskDecl = (XobjList)pb.getClauses();
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declSymbolTable(pb);
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
     BlockList taskBody = pb.getBody();
 
     // create function arguments
@@ -934,7 +934,7 @@ public class XMPtranslateLocalPragma {
     String onRefObjName = onRef.getArg(0).getString();
     XobjList subscriptList = (XobjList)onRef.getArg(1);
 
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declSymbolTable(pb);
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
     XMPobject onRefObj = getXMPobject(onRefObjName, localXMPsymbolTable);
     String initFuncSurfix = null;
     switch (onRefObj.getKind()) {
@@ -1029,7 +1029,7 @@ public class XMPtranslateLocalPragma {
 
   private void scheduleLoop(PragmaBlock pb, CforBlock forBlock, CforBlock schedBaseBlock) throws XMPexception {
     XobjList loopDecl = (XobjList)pb.getClauses();
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declSymbolTable(schedBaseBlock);
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(schedBaseBlock);
 
     // analyze <on-ref>
     Xobject onRef = loopDecl.getArg(1);
@@ -1259,7 +1259,7 @@ public class XMPtranslateLocalPragma {
   private void translateReflect(PragmaBlock pb) throws XMPexception {
     // start translation
     XobjList reflectDecl = (XobjList)pb.getClauses();
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declSymbolTable(pb);
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
     BlockList reflectFuncBody = Bcons.emptyBody();
 
     XobjList arrayList = (XobjList)reflectDecl.getArg(0);
@@ -1340,7 +1340,7 @@ public class XMPtranslateLocalPragma {
   private void translateBarrier(PragmaBlock pb) throws XMPexception {
     // start translation
     XobjList barrierDecl = (XobjList)pb.getClauses();
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declSymbolTable(pb);
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
 
     // create function call
     XobjList onRef = (XobjList)barrierDecl.getArg(0);
@@ -1372,7 +1372,7 @@ public class XMPtranslateLocalPragma {
   private void translateReduction(PragmaBlock pb) throws XMPexception {
     // start translation
     XobjList reductionDecl = (XobjList)pb.getClauses();
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declSymbolTable(pb);
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
 
     // create function arguments
     XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
@@ -1474,7 +1474,7 @@ public class XMPtranslateLocalPragma {
             checkReductionType(specName, basicSpecType);
 
             // FIXME not good implementation
-            XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declSymbolTable(pb);
+            XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
             XMPalignedArray specAlignedArray = findXMPalignedArray(specName, localXMPsymbolTable);
             if (specAlignedArray == null) {
               specRef = specId.Ref();
@@ -1826,7 +1826,7 @@ public class XMPtranslateLocalPragma {
   private void translateBcast(PragmaBlock pb) throws XMPexception {
     // start translation
     XobjList bcastDecl = (XobjList)pb.getClauses();
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declSymbolTable(pb);
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
 
     // create function arguments
     XobjList varList = (XobjList)bcastDecl.getArg(0);
@@ -2009,7 +2009,7 @@ public class XMPtranslateLocalPragma {
   private void translateGmove(PragmaBlock pb) throws XMPexception {
     // start translation
     XobjList gmoveDecl = (XobjList)pb.getClauses();
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declSymbolTable(pb);
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
     BlockList gmoveBody = pb.getBody();
 
     // check body
@@ -2204,7 +2204,7 @@ public class XMPtranslateLocalPragma {
 
   // XXX reversed dimension order for convenience
   private XobjList getArrayAccList(PragmaBlock pb, Xobject expr) throws XMPexception {
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declSymbolTable(pb);
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
 
     bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
     for (iter.init(); !iter.end(); iter.next()) {
@@ -2275,7 +2275,7 @@ public class XMPtranslateLocalPragma {
         {
           arrayRefs.cons(Xcons.Cast(Xtype.intType, Xcons.IntConstant(arrayDimCount)));
 
-          XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declSymbolTable(pb);
+          XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
           String arrayName = expr.getSym();
           XMPalignedArray alignedArray = findXMPalignedArray(arrayName, localXMPsymbolTable);
           if (alignedArray == null) {
@@ -2322,7 +2322,7 @@ public class XMPtranslateLocalPragma {
         }
       case ARRAY_REF:
         {
-          XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declSymbolTable(pb);
+          XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
           String arrayName = expr.getSym();
           XMPalignedArray alignedArray = findXMPalignedArray(arrayName, localXMPsymbolTable);
           if (alignedArray == null) {
