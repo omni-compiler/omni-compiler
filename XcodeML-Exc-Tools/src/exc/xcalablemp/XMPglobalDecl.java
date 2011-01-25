@@ -10,12 +10,12 @@ import exc.object.*;
 
 public class XMPglobalDecl {
   private XobjectFile		_env;
-  private XMPobjectTable	_globalObjectTable;
+  private XMPsymbolTable	_globalObjectTable;
   private XobjList		_globalInitFuncBody;
 
   public XMPglobalDecl(XobjectFile env) {
     _env = env;
-    _globalObjectTable = new XMPobjectTable();
+    _globalObjectTable = new XMPsymbolTable();
     _globalInitFuncBody = Xcons.List();
   }
 

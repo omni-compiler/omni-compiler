@@ -10,7 +10,7 @@ import exc.block.*;
 import exc.object.*;
 
 public class XMPlocalDecl {
-  private final static String OBJECT_TABLE	= "XCALABLEMP_PROP_LOCAL_OBJECT_TABLE";
+  private final static String XMP_SYMBOL_TABLE	= "XCALABLEMP_PROP_LOCAL_XMP_SYMBOL_TABLE";
   private final static String OBJECT_ID_LIST	= "XCALABLEMP_PROP_LOCAL_OBJECT_ID_LIST";
   private final static String CONSTRUCTOR	= "XCALABLEMP_PROP_LOCAL_CONSTRUCTOR";
   private final static String DESTRUCTOR	= "XCALABLEMP_PROP_LOCAL_DESTRUCTOR";
@@ -24,20 +24,20 @@ public class XMPlocalDecl {
     return null;
   }
 
-  public static XMPobjectTable getObjectTable(Block block) {
+  public static XMPsymbolTable getSymbolTable(Block block) {
     FunctionBlock fb = findParentFunctionBlock(block);
     if (fb == null) return null;
-    else return (XMPobjectTable)fb.getProp(OBJECT_TABLE);
+    else return (XMPsymbolTable)fb.getProp(XMP_SYMBOL_TABLE);
   }
 
-  public static XMPobjectTable declObjectTable(Block block) {
+  public static XMPsymbolTable declSymbolTable(Block block) {
     FunctionBlock fb = findParentFunctionBlock(block);
     if (fb == null) return null;
 
-    XMPobjectTable table = (XMPobjectTable)fb.getProp(OBJECT_TABLE);
+    XMPsymbolTable table = (XMPsymbolTable)fb.getProp(XMP_SYMBOL_TABLE);
     if (table == null) {
-      table = new XMPobjectTable();
-      fb.setProp(OBJECT_TABLE, (Object)table);
+      table = new XMPsymbolTable();
+      fb.setProp(XMP_SYMBOL_TABLE, (Object)table);
     }
 
     return table;

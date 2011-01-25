@@ -21,14 +21,14 @@ public class XMPrewriteExpr {
     if (fb == null) return;
 
     // rewrite expr
-    XMPobjectTable localObjectTable = XMPlocalDecl.declObjectTable(fb);
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declSymbolTable(fb);
 
     BasicBlockExprIterator iter = new BasicBlockExprIterator(fb);
     for (iter.init(); !iter.end(); iter.next()) {
       Xobject expr = iter.getExpr();
 
       try {
-        rewriteExpr(expr, localObjectTable);
+        rewriteExpr(expr, localXMPsymbolTable);
       } catch (XMPexception e) {
         XMP.error(expr.getLineNo(), e.getMessage());
       }
@@ -42,7 +42,7 @@ public class XMPrewriteExpr {
     def.Finalize();
   }
 
-  public void rewriteExpr(Xobject expr, XMPobjectTable localObjectTable) throws XMPexception {
+  public void rewriteExpr(Xobject expr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
     if (expr == null) return;
 
     bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
@@ -59,7 +59,7 @@ public class XMPrewriteExpr {
         case ARRAY_REF:
           {
             String arrayName = myExpr.getSym();
-            XMPalignedArray alignedArray = findXMPalignedArray(arrayName, localObjectTable);
+            XMPalignedArray alignedArray = findXMPalignedArray(arrayName, localXMPsymbolTable);
             if (alignedArray != null) {
               if (alignedArray.checkRealloc()) {
                 iter.next();
@@ -252,8 +252,8 @@ public class XMPrewriteExpr {
     }
   }
 
-  private XMPalignedArray findXMPalignedArray(String arrayName, XMPobjectTable localObjectTable) throws XMPexception {
-    XMPalignedArray a = localObjectTable.getXMPalignedArray(arrayName);
+  private XMPalignedArray findXMPalignedArray(String arrayName, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+    XMPalignedArray a = localXMPsymbolTable.getXMPalignedArray(arrayName);
     if (a == null) {
       a = _globalDecl.getXMPalignedArray(arrayName);
     }
