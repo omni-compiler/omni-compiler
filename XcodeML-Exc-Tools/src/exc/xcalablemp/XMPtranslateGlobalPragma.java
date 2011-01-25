@@ -10,14 +10,10 @@ import exc.object.*;
 import java.util.Vector;
 
 public class XMPtranslateGlobalPragma {
-  private XobjectFile		_env;
   private XMPglobalDecl		_globalDecl;
-  private XMPobjectTable	_globalObjectTable;
 
   public XMPtranslateGlobalPragma(XMPglobalDecl globalDecl) {
-    _env = globalDecl.getEnv();
     _globalDecl = globalDecl;
-    _globalObjectTable = globalDecl.getGlobalObjectTable();
   }
 
   public void translate(Xobject x) {
@@ -60,7 +56,7 @@ public class XMPtranslateGlobalPragma {
     checkObjectNameCollision(nodesName);
 
     // declare nodes desciptor
-    Ident nodesDescId = _env.declStaticIdent(XMP.DESC_PREFIX_ + nodesName, Xtype.voidPtrType);
+    Ident nodesDescId = _globalDecl.declStaticIdent(XMP.DESC_PREFIX_ + nodesName, Xtype.voidPtrType);
 
     // declare nodes object
     int nodesDim = 0;
@@ -69,7 +65,7 @@ public class XMPtranslateGlobalPragma {
       throw new XMPexception("nodes dimension should be less than " + (XMP.MAX_DIM + 1));
 
     XMPnodes nodesObject = new XMPnodes(nodesName, nodesDim, nodesDescId);
-    _globalObjectTable.putObject(nodesObject);
+    _globalDecl.putXMPobject(nodesObject);
 
     // create function call
     XobjList nodesArgs = Xcons.List(Xcons.IntConstant(nodesMapType), nodesDescId.getAddr(), Xcons.IntConstant(nodesDim));
@@ -109,7 +105,7 @@ public class XMPtranslateGlobalPragma {
             nodesRefType = "NAMED";
 
             String nodesRefName = nodesRef.getArg(0).getString();
-            nodesRefObject = _globalObjectTable.getNodes(nodesRefName);
+            nodesRefObject = _globalDecl.getXMPnodes(nodesRefName);
             if (nodesRefObject == null)
               throw new XMPexception("cannot find nodes '" + nodesRefName + "'");
             else {
@@ -195,7 +191,7 @@ public class XMPtranslateGlobalPragma {
     checkObjectNameCollision(templateName);
 
     // declare template desciptor
-    Ident templateDescId = _env.declStaticIdent(XMP.DESC_PREFIX_ + templateName, Xtype.voidPtrType);
+    Ident templateDescId = _globalDecl.declStaticIdent(XMP.DESC_PREFIX_ + templateName, Xtype.voidPtrType);
 
     // declare template object
     int templateDim = 0;
@@ -204,7 +200,7 @@ public class XMPtranslateGlobalPragma {
       throw new XMPexception("template dimension should be less than " + (XMP.MAX_DIM + 1));
 
     XMPtemplate templateObject = new XMPtemplate(templateName, templateDim, templateDescId);
-    _globalObjectTable.putObject(templateObject);
+    _globalDecl.putXMPobject(templateObject);
 
     // create function call
     boolean templateIsFixed = true;
@@ -241,16 +237,16 @@ public class XMPtranslateGlobalPragma {
 
   private void checkObjectNameCollision(String name) throws XMPexception {
     // check name collision - global variables
-    if (_env.findVarIdent(name) != null)
+    if (_globalDecl.findVarIdent(name) != null)
       throw new XMPexception("'" + name + "' is already declared");
 
     // check name collision - global object table
-    if (_globalObjectTable.getObject(name) != null) {
+    if (_globalDecl.getXMPobject(name) != null) {
       throw new XMPexception("'" + name + "' is already declared");
     }
 
     // check name collision - descriptor name
-    if (_env.findVarIdent(XMP.DESC_PREFIX_ + name) != null) {
+    if (_globalDecl.findVarIdent(XMP.DESC_PREFIX_ + name) != null) {
       // FIXME generate unique name
       throw new XMPexception("cannot declare desciptor, '" + XMP.DESC_PREFIX_ + name + "' is already declared");
     }
@@ -261,7 +257,7 @@ public class XMPtranslateGlobalPragma {
 
     // get template object
     String templateName = distDecl.getArg(0).getString();
-    XMPtemplate templateObject = _globalObjectTable.getTemplate(templateName);
+    XMPtemplate templateObject = _globalDecl.getXMPtemplate(templateName);
     if (templateObject == null) {
       throw new XMPexception("template '" + templateName + "' is not declared");
     }
@@ -276,7 +272,7 @@ public class XMPtranslateGlobalPragma {
 
     // get nodes object
     String nodesName = distDecl.getArg(2).getString();
-    XMPnodes nodesObject = _globalObjectTable.getNodes(nodesName);
+    XMPnodes nodesObject = _globalDecl.getXMPnodes(nodesName);
     if (nodesObject == null)
       throw new XMPexception("nodes '" + nodesName + "' is not declared");
 
@@ -375,11 +371,11 @@ public class XMPtranslateGlobalPragma {
 
     // get array information
     String arrayName = alignDecl.getArg(0).getString();
-    if (_globalObjectTable.getAlignedArray(arrayName) != null) {
+    if (_globalDecl.getXMPalignedArray(arrayName) != null) {
       throw new XMPexception("array '" + arrayName + "' is already aligned");
     }
 
-    Ident arrayId = _env.findVarIdent(arrayName);
+    Ident arrayId = _globalDecl.findVarIdent(arrayName);
     if (arrayId == null) {
       throw new XMPexception("array '" + arrayName + "' is not declared");
     }
@@ -400,7 +396,7 @@ public class XMPtranslateGlobalPragma {
 
     // get template information
     String templateName = alignDecl.getArg(2).getString();
-    XMPtemplate templateObj = _globalObjectTable.getTemplate(templateName);
+    XMPtemplate templateObj = _globalDecl.getXMPtemplate(templateName);
     if (templateObj == null) {
       throw new XMPexception("template '" + templateName + "' is not declared");
     }
@@ -418,15 +414,15 @@ public class XMPtranslateGlobalPragma {
     // declare array address pointer
     Ident arrayAddrId = null;
     if (arrayId.getStorageClass() == StorageClass.EXTERN) {
-      arrayAddrId = _env.declExternIdent(XMP.ADDR_PREFIX_ + arrayName,
+      arrayAddrId = _globalDecl.declExternIdent(XMP.ADDR_PREFIX_ + arrayName,
                                          Xtype.Pointer(arrayElmtType));
     }
     else if (arrayId.getStorageClass() == StorageClass.STATIC) {
-      arrayAddrId = _env.declStaticIdent(XMP.ADDR_PREFIX_ + arrayName,
+      arrayAddrId = _globalDecl.declStaticIdent(XMP.ADDR_PREFIX_ + arrayName,
                                          Xtype.Pointer(arrayElmtType));
     }
     else if (arrayId.getStorageClass() == StorageClass.EXTDEF) {
-      arrayAddrId = _env.declGlobalIdent(XMP.ADDR_PREFIX_ + arrayName,
+      arrayAddrId = _globalDecl.declGlobalIdent(XMP.ADDR_PREFIX_ + arrayName,
                                          Xtype.Pointer(arrayElmtType));
     }
     else {
@@ -434,7 +430,7 @@ public class XMPtranslateGlobalPragma {
     }
 
     // declare array descriptor
-    Ident arrayDescId = _env.declStaticIdent(XMP.DESC_PREFIX_ + arrayName,
+    Ident arrayDescId = _globalDecl.declStaticIdent(XMP.DESC_PREFIX_ + arrayName,
                                              Xtype.voidPtrType);
 
     int arrayDim = arrayType.getNumDimensions();
@@ -463,7 +459,7 @@ public class XMPtranslateGlobalPragma {
       arraySizeVector.add(new Long(dimSize));
       initArrayDescFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.LongLongConstant(0, dimSize)));
 
-      Ident accId = _env.declStaticIdent(XMP.GTOL_PREFIX_ + "acc_" + arrayName + "_" + i,
+      Ident accId = _globalDecl.declStaticIdent(XMP.GTOL_PREFIX_ + "acc_" + arrayName + "_" + i,
                                          Xtype.unsignedlonglongType);
       accIdVector.add(accId);
     }
@@ -474,7 +470,7 @@ public class XMPtranslateGlobalPragma {
                                                        arraySizeVector, accIdVector,
                                                        arrayId, arrayDescId, arrayAddrId,
                                                        templateObj);
-    _globalObjectTable.putAlignedArray(alignedArray);
+    _globalDecl.putXMPalignedArray(alignedArray);
 
     // check <align-source> list, <align-subscrip> list
     XobjList alignSourceList = (XobjList)alignDecl.getArg(1);
@@ -594,7 +590,7 @@ public class XMPtranslateGlobalPragma {
       case XMPtemplate.BLOCK:
       case XMPtemplate.CYCLIC:
         {
-          Ident gtolTemp0Id = _env.declStaticIdent(XMP.GTOL_PREFIX_ + "temp0_" + alignedArray.getName() + "_" + alignSourceIndex,
+          Ident gtolTemp0Id = _globalDecl.declStaticIdent(XMP.GTOL_PREFIX_ + "temp0_" + alignedArray.getName() + "_" + alignSourceIndex,
                                                    Xtype.intType);
           alignedArray.setGtolTemp0IdAt(gtolTemp0Id, alignSourceIndex);
           alignFuncArgs.add(gtolTemp0Id.getAddr());
@@ -615,7 +611,7 @@ public class XMPtranslateGlobalPragma {
 
     // find aligned array
     String arrayName = shadowDecl.getArg(0).getString();
-    XMPalignedArray alignedArray = _globalObjectTable.getAlignedArray(arrayName);
+    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName);
     if (alignedArray == null)
       throw new XMPexception("the aligned array '" + arrayName + "' is not found");
 

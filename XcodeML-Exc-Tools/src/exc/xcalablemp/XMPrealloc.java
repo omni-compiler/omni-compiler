@@ -11,11 +11,9 @@ import java.util.Iterator;
 
 public class XMPrealloc implements XobjectDefVisitor {
   private XMPglobalDecl _globalDecl;
-  private XMPobjectTable _globalObjectTable;
 
   public XMPrealloc(XMPglobalDecl globalDecl) {
     _globalDecl = globalDecl;
-    _globalObjectTable = globalDecl.getGlobalObjectTable();
   }
 
   public void doDef(XobjectDef def) {
@@ -30,7 +28,7 @@ public class XMPrealloc implements XobjectDefVisitor {
   public void realloc(XobjectDef def) throws XMPexception {
     if (def.isVarDecl()) {
       String varName = def.getName();
-      XMPalignedArray alignedArray = _globalObjectTable.getAlignedArray(varName);
+      XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(varName);
       if (alignedArray != null) {
         if (alignedArray.realloc()) {
           XobjList allocFuncArgs = Xcons.List(alignedArray.getAddrId().getAddr(), alignedArray.getDescId().Ref());

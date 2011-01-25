@@ -32,9 +32,9 @@ public class XMPglobalDecl {
   }
 
   public void setupGlobalInit() {
-    //_globalInitFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT,
-    //                                    env.declExternIdent(XMP.PREFIX_ + "init_coarray_windows",
-    //                                                        Xtype.Function(Xtype.voidType)).Call(Xcons.List(Xcons.IntConstant(globalObjectTable.getCoarrayCount())))));
+    // _globalInitFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT,
+    // env.declExternIdent(XMP.PREFIX_ + "init_coarray_windows",
+    // Xtype.Function(Xtype.voidType)).Call(Xcons.List(Xcons.IntConstant(globalObjectTable.getCoarrayCount())))));
 
     _globalInitFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT,
                                         _env.declExternIdent("_XMP_init_in_constructor",
@@ -49,14 +49,6 @@ public class XMPglobalDecl {
     _env.add(XobjectDef.Func(consId, null, null, Xcons.List(Xcode.COMPOUND_STATEMENT, (Xobject)null, null, _globalInitFuncBody)));
   }
 
-  public XobjectFile getEnv() {
-    return _env;
-  }
-
-  public XMPobjectTable getGlobalObjectTable() {
-    return _globalObjectTable;
-  }
-
   public Ident declExternFunc(String funcName) {
     return _env.declExternIdent(funcName, Xtype.Function(Xtype.voidType));
   }
@@ -68,5 +60,50 @@ public class XMPglobalDecl {
   public void addGlobalInitFuncCall(String funcName, Xobject args) {
     Ident funcId = declExternFunc(funcName);
     _globalInitFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT, funcId.Call(args)));
+  }
+
+  public Ident declGlobalIdent(String name, Xtype t) {
+    return _env.declGlobalIdent(name, t);
+  }
+
+  public Ident declStaticIdent(String name, Xtype t) {
+    return _env.declStaticIdent(name, t);
+  }
+
+  public Ident declExternIdent(String name, Xtype t) {
+    return _env.declExternIdent(name, t);
+  }
+
+  public Ident findVarIdent(String name) {
+    return _env.findVarIdent(name);
+  }
+
+  public void putXMPobject(XMPobject obj) {
+    _globalObjectTable.putXMPobject(obj);
+  }
+
+  public XMPobject getXMPobject(String name) {
+    return _globalObjectTable.getXMPobject(name);
+  }
+
+  public XMPnodes getXMPnodes(String name) {
+    return _globalObjectTable.getXMPnodes(name);
+  }
+
+  public XMPtemplate getXMPtemplate(String name) {
+    return _globalObjectTable.getXMPtemplate(name);
+  }
+
+  public void putXMPalignedArray(XMPalignedArray array) {
+    _globalObjectTable.putXMPalignedArray(array);
+  }
+
+  public XMPalignedArray getXMPalignedArray(String name) {
+    return _globalObjectTable.getXMPalignedArray(name);
+  }
+
+  public void finalize() {
+    _env.collectAllTypes();
+    _env.fixupTypeRef();
   }
 }

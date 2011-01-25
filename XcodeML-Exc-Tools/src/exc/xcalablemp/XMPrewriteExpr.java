@@ -11,11 +11,9 @@ import exc.object.*;
 
 public class XMPrewriteExpr {
   private XMPglobalDecl		_globalDecl;
-  private XMPobjectTable	_globalObjectTable;
 
   public XMPrewriteExpr(XMPglobalDecl globalDecl) {
     _globalDecl = globalDecl;
-    _globalObjectTable = globalDecl.getGlobalObjectTable();
   }
 
   public void rewrite(FuncDefBlock def) {
@@ -255,9 +253,9 @@ public class XMPrewriteExpr {
   }
 
   private XMPalignedArray findXMPalignedArray(String arrayName, XMPobjectTable localObjectTable) throws XMPexception {
-    XMPalignedArray a = localObjectTable.getAlignedArray(arrayName);
+    XMPalignedArray a = localObjectTable.getXMPalignedArray(arrayName);
     if (a == null) {
-      a = _globalObjectTable.getAlignedArray(arrayName);
+      a = _globalDecl.getXMPalignedArray(arrayName);
     }
 
     return a;

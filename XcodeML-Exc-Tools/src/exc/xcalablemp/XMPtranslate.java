@@ -14,7 +14,7 @@ import xcodeml.util.XmOption;
  * XcalableMP AST translator
  */
 public class XMPtranslate implements XobjectDefVisitor {
-  private XobjectFile			_env;
+  private XMPglobalDecl			_globalDecl;
   private XMPtranslateGlobalPragma	_translateGlobalPragma;
   private XMPtranslateLocalPragma	_translateLocalPragma;
   private XMPrewriteExpr		_rewriteExpr;
@@ -24,15 +24,14 @@ public class XMPtranslate implements XobjectDefVisitor {
     if (!XmOption.isLanguageC())
       XMP.fatal("current version only supports C language.");
 
-    _env = globalDecl.getEnv();
+    _globalDecl = globalDecl;
     _translateGlobalPragma = new XMPtranslateGlobalPragma(globalDecl);
     _translateLocalPragma = new XMPtranslateLocalPragma(globalDecl);
     _rewriteExpr = new XMPrewriteExpr(globalDecl);
   }
 
   public void finalize() {
-    _env.collectAllTypes();
-    _env.fixupTypeRef();
+    _globalDecl.finalize();
   }
 
   public void doDef(XobjectDef def) {
@@ -58,7 +57,7 @@ public class XMPtranslate implements XobjectDefVisitor {
   }
 
   private void replaceMain(XobjectDef def) {
-    Ident id = _env.findVarIdent("main");
+    Ident id = _globalDecl.findVarIdent("main");
     id.setName("_XMP_main");
     def.setName("_XMP_main");
   }

@@ -15,13 +15,9 @@ import xcodeml.util.XmOption;
 
 public class XMPtranslateLocalPragma {
   private XMPglobalDecl		_globalDecl;
-  private XobjectFile		_env;
-  private XMPobjectTable	_globalObjectTable;
 
   public XMPtranslateLocalPragma(XMPglobalDecl globalDecl) {
     _globalDecl = globalDecl;
-    _env = globalDecl.getEnv();
-    _globalObjectTable = globalDecl.getGlobalObjectTable();
   }
 
   public void translate(FuncDefBlock def) {
@@ -108,7 +104,7 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception("nodes dimension should be less than " + (XMP.MAX_DIM + 1));
 
     XMPnodes nodesObject = new XMPnodes(nodesName, nodesDim, nodesDescId);
-    localObjectTable.putObject(nodesObject);
+    localObjectTable.putXMPobject(nodesObject);
 
     // create function call
     XobjList nodesArgs = Xcons.List(Xcons.IntConstant(nodesMapType), nodesDescId.getAddr(), Xcons.IntConstant(nodesDim));
@@ -251,7 +247,7 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception("template dimension should be less than " + (XMP.MAX_DIM + 1));
 
     XMPtemplate templateObject = new XMPtemplate(templateName, templateDim, templateDescId);
-    localObjectTable.putObject(templateObject);
+    localObjectTable.putXMPobject(templateObject);
 
     // create function call
     boolean templateIsFixed = true;
@@ -296,7 +292,7 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception("'" + name + "' is already declared");
 
     // check name collision - local object table
-    if (objectTable.getObject(name) != null)
+    if (objectTable.getXMPobject(name) != null)
       throw new XMPexception("'" + name + "' is already declared");
 
     // check name collision - descriptor name
@@ -318,9 +314,9 @@ public class XMPtranslateLocalPragma {
 
     // get template object
     String templateName = distDecl.getArg(0).getString();
-    XMPtemplate templateObject = localObjectTable.getTemplate(templateName);
+    XMPtemplate templateObject = localObjectTable.getXMPtemplate(templateName);
     if (templateObject == null) {
-      templateObject = _globalObjectTable.getTemplate(templateName);
+      templateObject = _globalDecl.getXMPtemplate(templateName);
       if (templateObject == null)
         throw new XMPexception("template '" + templateName + "' is not declared");
       else
@@ -442,7 +438,7 @@ public class XMPtranslateLocalPragma {
 
     // get array information
     String arrayName = alignDecl.getArg(0).getString();
-    if (localObjectTable.getAlignedArray(arrayName) != null) {
+    if (localObjectTable.getXMPalignedArray(arrayName) != null) {
       throw new XMPexception("array '" + arrayName + "' is already aligned");
     }
 
@@ -526,7 +522,7 @@ public class XMPtranslateLocalPragma {
                                                        arraySizeVector, accIdVector,
                                                        arrayId, arrayDescId, arrayAddrId,
                                                        templateObj);
-    localObjectTable.putAlignedArray(alignedArray);
+    localObjectTable.putXMPalignedArray(alignedArray);
 
     // check <align-source> list, <align-subscrip> list
     XobjList alignSourceList = (XobjList)alignDecl.getArg(1);
@@ -683,7 +679,7 @@ public class XMPtranslateLocalPragma {
 
     // find aligned array
     String arrayName = shadowDecl.getArg(0).getString();
-    XMPalignedArray alignedArray = localObjectTable.getAlignedArray(arrayName);
+    XMPalignedArray alignedArray = localObjectTable.getXMPalignedArray(arrayName);
     if (alignedArray == null)
       throw new XMPexception("the aligned array '" + arrayName + "' is not found in local scope");
 
@@ -773,7 +769,7 @@ public class XMPtranslateLocalPragma {
     setupFinalizer(taskBody, finFuncId, null);
 
     // create function call
-    Ident execFuncId = _env.declExternIdent("_XMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
+    Ident execFuncId = _globalDecl.declExternIdent("_XMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
     pb.replace(Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), taskBody, null));
   }
 
@@ -1361,7 +1357,7 @@ public class XMPtranslateLocalPragma {
         setupFinalizer(barrierBody, _globalDecl.declExternFunc("_XMP_pop_n_free_nodes"), null);
 
         // create function call
-        Ident execFuncId = _env.declExternIdent("_XMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
+        Ident execFuncId = _globalDecl.declExternIdent("_XMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
         pb.replace(Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), barrierBody, null));
       }
       else pb.replace(createFuncCallBlock("_XMP_barrier_" + execFuncSurfix, execFuncArgs));
@@ -1402,7 +1398,7 @@ public class XMPtranslateLocalPragma {
         setupFinalizer(reductionBody, _globalDecl.declExternFunc("_XMP_pop_n_free_nodes"), null);
 
         // create function call
-        Ident execFuncId = _env.declExternIdent("_XMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
+        Ident execFuncId = _globalDecl.declExternIdent("_XMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
         pb.replace(Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), reductionBody, null));
       }
       else {
@@ -1653,9 +1649,9 @@ public class XMPtranslateLocalPragma {
     Ident newId = null;
     Ident oldId = bl.findLocalIdent(oldName);
     if (oldId == null) {
-      oldId = _env.findVarIdent(oldName);
+      oldId = _globalDecl.findVarIdent(oldName);
       if (oldId != null)
-        newId = _env.declStaticIdent(newName, type);
+        newId = _globalDecl.declStaticIdent(newName, type);
       else
         newId = bl.declLocalIdent(newName, type);
     }
@@ -1857,7 +1853,7 @@ public class XMPtranslateLocalPragma {
         setupFinalizer(bcastBody, _globalDecl.declExternFunc("_XMP_pop_n_free_nodes"), null);
 
         // create function call
-        Ident execFuncId = _env.declExternIdent("_XMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
+        Ident execFuncId = _globalDecl.declExternIdent("_XMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
         pb.replace(Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), bcastBody, null));
       }
       else {
@@ -2038,11 +2034,11 @@ public class XMPtranslateLocalPragma {
 
     // FIXME consider in, out clause
     Xobject leftExpr = assignStmt.left();
-    XMPpair<XMPalignedArray, XobjList> leftExprInfo = getAlignedArrayExpr(pb, leftExpr);
+    XMPpair<XMPalignedArray, XobjList> leftExprInfo = getXMPalignedArrayExpr(pb, leftExpr);
     XMPalignedArray leftAlignedArray = leftExprInfo.getFirst();
 
     Xobject rightExpr = assignStmt.right();
-    XMPpair<XMPalignedArray, XobjList> rightExprInfo = getAlignedArrayExpr(pb, assignStmt.right());
+    XMPpair<XMPalignedArray, XobjList> rightExprInfo = getXMPalignedArrayExpr(pb, assignStmt.right());
     XMPalignedArray rightAlignedArray = rightExprInfo.getFirst();
 
     boolean leftHasSubArrayRef = hasSubArrayRef(leftExpr);
@@ -2152,7 +2148,7 @@ public class XMPtranslateLocalPragma {
           XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref());
           XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
 
-          Ident gmoveFuncId = _env.declExternIdent("_XMP_gmove_HOMECOPY_SCALAR", Xtype.Function(Xtype.boolType));
+          Ident gmoveFuncId = _globalDecl.declExternIdent("_XMP_gmove_HOMECOPY_SCALAR", Xtype.Function(Xtype.boolType));
           pb.replace(Bcons.IF(BasicBlock.Cond(gmoveFuncId.Call(gmoveFuncArgs)),
                               gmoveBody, null));
         }
@@ -2169,7 +2165,7 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private XMPpair<XMPalignedArray, XobjList> getAlignedArrayExpr(PragmaBlock pb, Xobject expr) throws XMPexception {
+  private XMPpair<XMPalignedArray, XobjList> getXMPalignedArrayExpr(PragmaBlock pb, Xobject expr) throws XMPexception {
     if (hasSubArrayRef(expr)) {
       return parseSubArrayRefExpr(pb, expr, getArrayAccList(pb, expr), 0, Xcons.List());
     }
@@ -2561,9 +2557,9 @@ public class XMPtranslateLocalPragma {
   }
 
   private XMPobject getXMPobject(String objectName, XMPobjectTable localObjectTable) throws XMPexception {
-    XMPobject object = localObjectTable.getObject(objectName);
+    XMPobject object = localObjectTable.getXMPobject(objectName);
     if (object == null) {
-      object = _globalObjectTable.getObject(objectName);
+      object = _globalDecl.getXMPobject(objectName);
       if (object == null)
         throw new XMPexception("cannot find '" + objectName + "' nodes/template");
     }
@@ -2572,9 +2568,9 @@ public class XMPtranslateLocalPragma {
   }
 
   private XMPtemplate getXMPtemplate(String templateName, XMPobjectTable localObjectTable) throws XMPexception {
-    XMPtemplate t = localObjectTable.getTemplate(templateName);
+    XMPtemplate t = localObjectTable.getXMPtemplate(templateName);
     if (t == null) {
-      t = _globalObjectTable.getTemplate(templateName);
+      t = _globalDecl.getXMPtemplate(templateName);
       if (t == null)
         throw new XMPexception("template '" + templateName + "' is not declared");
     }
@@ -2583,9 +2579,9 @@ public class XMPtranslateLocalPragma {
   }
 
   private XMPnodes getXMPnodes(String nodesName, XMPobjectTable localObjectTable) throws XMPexception {
-    XMPnodes n = localObjectTable.getNodes(nodesName);
+    XMPnodes n = localObjectTable.getXMPnodes(nodesName);
     if (n == null) {
-      n = _globalObjectTable.getNodes(nodesName);
+      n = _globalDecl.getXMPnodes(nodesName);
       if (n == null)
         throw new XMPexception("nodes '" + nodesName + "' is not declared");
     }
@@ -2594,9 +2590,9 @@ public class XMPtranslateLocalPragma {
   }
 
   private XMPalignedArray getXMPalignedArray(String arrayName, XMPobjectTable localObjectTable) throws XMPexception {
-    XMPalignedArray a = localObjectTable.getAlignedArray(arrayName);
+    XMPalignedArray a = localObjectTable.getXMPalignedArray(arrayName);
     if (a == null) {
-      a = _globalObjectTable.getAlignedArray(arrayName);
+      a = _globalDecl.getXMPalignedArray(arrayName);
       if (a == null)
         throw new XMPexception("array '" + arrayName + "' is not aligned");
     }
@@ -2605,9 +2601,9 @@ public class XMPtranslateLocalPragma {
   }
 
   private XMPalignedArray findXMPalignedArray(String arrayName, XMPobjectTable localObjectTable) throws XMPexception {
-    XMPalignedArray a = localObjectTable.getAlignedArray(arrayName);
+    XMPalignedArray a = localObjectTable.getXMPalignedArray(arrayName);
     if (a == null) {
-      a = _globalObjectTable.getAlignedArray(arrayName);
+      a = _globalDecl.getXMPalignedArray(arrayName);
     }
 
     return a;
