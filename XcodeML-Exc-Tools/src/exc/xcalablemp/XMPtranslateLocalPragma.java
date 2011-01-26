@@ -224,66 +224,8 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateTemplate(PragmaBlock pb) throws XMPexception {
-    // check location
     checkDeclPragmaLocation(pb);
-
-    // start translation
-    XobjList templateDecl = (XobjList)pb.getClauses();
-    FunctionBlock functionBlock = XMPlocalDecl.findParentFunctionBlock(pb);
-    BlockList funcBlockList = functionBlock.getBody();
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-
-    // check name collision - parameters
-    String templateName = templateDecl.getArg(0).getString();
-    checkObjectNameCollision(templateName, funcBlockList, localXMPsymbolTable);
-
-    // declare template desciptor
-    Ident templateDescId = XMPlocalDecl.addObjectId(XMP.DESC_PREFIX_ + templateName, pb);
-
-    // declare template object
-    int templateDim = 0;
-    for (XobjArgs i = templateDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) templateDim++;
-    if (templateDim > XMP.MAX_DIM)
-      throw new XMPexception("template dimension should be less than " + (XMP.MAX_DIM + 1));
-
-    XMPtemplate templateObject = new XMPtemplate(templateName, templateDim, templateDescId);
-    localXMPsymbolTable.putXMPobject(templateObject);
-
-    // create function call
-    boolean templateIsFixed = true;
-    XobjList templateArgs = Xcons.List(templateDescId.getAddr(), Xcons.IntConstant(templateDim));
-    for (XobjArgs i = templateDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
-      Xobject templateSpec = i.getArg();
-      if (templateSpec == null) {
-        templateIsFixed = false;
-
-        templateObject.addLower(null);
-        templateObject.addUpper(null);
-      }
-      else {
-        Xobject templateLower = templateSpec.left();
-        Xobject templateUpper = templateSpec.right();
-
-        templateArgs.add(Xcons.Cast(Xtype.longlongType, templateLower));
-        templateArgs.add(Xcons.Cast(Xtype.longlongType, templateUpper));
-
-        templateObject.addLower(templateLower);
-        templateObject.addUpper(templateUpper);
-      }
-    }
-
-    String fixedSurfix = null;
-    if (templateIsFixed) {
-      templateObject.setIsFixed();
-      fixedSurfix = "FIXED";
-    }
-    else fixedSurfix = "UNFIXED";
-
-    // add constructor call
-    XMPlocalDecl.addConstructorCall("_XMP_init_template_" + fixedSurfix, templateArgs, pb, _globalDecl);
-
-    // insert destructor call
-    XMPlocalDecl.insertDestructorCall("_XMP_finalize_template", Xcons.List(templateDescId.Ref()), pb, _globalDecl);
+    XMPtemplate.translateTemplate((XobjList)pb.getClauses(), _globalDecl, true, pb);
   }
 
   private void checkObjectNameCollision(String name, BlockList scopeBL, XMPsymbolTable objectTable) throws XMPexception {

@@ -6,6 +6,7 @@
 
 package exc.xcalablemp;
 
+import exc.block.*;
 import exc.object.*;
 import java.util.Vector;
 
@@ -106,5 +107,89 @@ public class XMPtemplate extends XMPobject {
 
   public Xobject getLowerAt(int index) {
     return _lowerVector.get(index);
+  }
+
+  public static void translateTemplate(XobjList templateDecl, XMPglobalDecl globalDecl,
+                                       boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
+    // local parameters
+    BlockList funcBlockList = null;
+    XMPsymbolTable localXMPsymbolTable = null;
+    if (isLocalPragma) {
+      funcBlockList = XMPlocalDecl.findParentFunctionBlock(pb).getBody();
+      localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+    }
+
+    // check name collision
+    String templateName = templateDecl.getArg(0).getString();
+    if (isLocalPragma) {
+      XMPlocalDecl.checkObjectNameCollision(templateName, funcBlockList, localXMPsymbolTable);
+    }
+    else {
+      globalDecl.checkObjectNameCollision(templateName);
+    }
+
+    // declare template desciptor
+    Ident templateDescId = null;
+    if (isLocalPragma) {
+      templateDescId = XMPlocalDecl.addObjectId(XMP.DESC_PREFIX_ + templateName, pb);
+    }
+    else {
+      templateDescId = globalDecl.declStaticIdent(XMP.DESC_PREFIX_ + templateName, Xtype.voidPtrType);
+    }
+
+    // declare template object
+    int templateDim = 0;
+    for (XobjArgs i = templateDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) templateDim++;
+    if (templateDim > XMP.MAX_DIM) {
+      throw new XMPexception("template dimension should be less than " + (XMP.MAX_DIM + 1));
+    }
+
+    XMPtemplate templateObject = new XMPtemplate(templateName, templateDim, templateDescId);
+    if (isLocalPragma) {
+      localXMPsymbolTable.putXMPobject(templateObject);
+    }
+    else {
+      globalDecl.putXMPobject(templateObject);
+    }
+
+    // create function call
+    boolean templateIsFixed = true;
+    XobjList templateArgs = Xcons.List(templateDescId.getAddr(), Xcons.IntConstant(templateDim));
+    for (XobjArgs i = templateDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
+      Xobject templateSpec = i.getArg();
+      if (templateSpec == null) {
+        templateIsFixed = false;
+
+        templateObject.addLower(null);
+        templateObject.addUpper(null);
+      }
+      else {
+        Xobject templateLower = templateSpec.left();
+        Xobject templateUpper = templateSpec.right();
+
+        templateArgs.add(Xcons.Cast(Xtype.longlongType, templateLower));
+        templateArgs.add(Xcons.Cast(Xtype.longlongType, templateUpper));
+
+        templateObject.addLower(templateLower);
+        templateObject.addUpper(templateUpper);
+      }
+    }
+
+    String constructorName = new String("_XMP_init_template_");
+    if (templateIsFixed) {
+      templateObject.setIsFixed();
+      constructorName += "FIXED";
+    }
+    else {
+      constructorName += "UNFIXED";
+    }
+
+    if (isLocalPragma) {
+      XMPlocalDecl.addConstructorCall(constructorName, templateArgs, pb, globalDecl);
+      XMPlocalDecl.insertDestructorCall("_XMP_finalize_template", Xcons.List(templateDescId.Ref()), pb, globalDecl);
+    }
+    else {
+      globalDecl.addGlobalInitFuncCall(constructorName, templateArgs);
+    }
   }
 }

@@ -19,6 +19,24 @@ public class XMPglobalDecl {
     _globalInitFuncBody = Xcons.List();
   }
 
+  public void checkObjectNameCollision(String name) throws XMPexception {
+    // check name collision - global variables
+    if (_env.findVarIdent(name) != null) {
+      throw new XMPexception("'" + name + "' is already declared");
+    }
+
+    // check name collision - global object table
+    if (_globalObjectTable.getXMPobject(name) != null) {
+      throw new XMPexception("'" + name + "' is already declared");
+    }
+
+    // check name collision - descriptor name
+    if (_env.findVarIdent(XMP.DESC_PREFIX_ + name) != null) {
+      // FIXME generate unique name
+      throw new XMPexception("cannot declare desciptor, '" + XMP.DESC_PREFIX_ + name + "' is already declared");
+    }
+  }
+
   public Ident getWorldDescId() {
     return _env.declExternIdent("_XMP_world_nodes", Xtype.voidPtrType);
   }

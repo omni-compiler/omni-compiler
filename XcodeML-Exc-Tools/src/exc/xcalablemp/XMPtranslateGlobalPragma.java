@@ -184,55 +184,7 @@ public class XMPtranslateGlobalPragma {
   }
 
   private void translateTemplate(Xobject templatePragma) throws XMPexception {
-    XobjList templateDecl = (XobjList)templatePragma.getArg(1);
-
-    // check name collision
-    String templateName = templateDecl.getArg(0).getString();
-    checkObjectNameCollision(templateName);
-
-    // declare template desciptor
-    Ident templateDescId = _globalDecl.declStaticIdent(XMP.DESC_PREFIX_ + templateName, Xtype.voidPtrType);
-
-    // declare template object
-    int templateDim = 0;
-    for (XobjArgs i = templateDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) templateDim++;
-    if (templateDim > XMP.MAX_DIM)
-      throw new XMPexception("template dimension should be less than " + (XMP.MAX_DIM + 1));
-
-    XMPtemplate templateObject = new XMPtemplate(templateName, templateDim, templateDescId);
-    _globalDecl.putXMPobject(templateObject);
-
-    // create function call
-    boolean templateIsFixed = true;
-    XobjList templateArgs = Xcons.List(templateDescId.getAddr(), Xcons.IntConstant(templateDim));
-    for (XobjArgs i = templateDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
-      Xobject templateSpec = i.getArg();
-      if (templateSpec == null) {
-        templateIsFixed = false;
-
-        templateObject.addLower(null);
-        templateObject.addUpper(null);
-      }
-      else {
-        Xobject templateLower = templateSpec.left();
-        Xobject templateUpper = templateSpec.right();
-
-        templateArgs.add(Xcons.Cast(Xtype.longlongType, templateLower));
-        templateArgs.add(Xcons.Cast(Xtype.longlongType, templateUpper));
-
-        templateObject.addLower(templateLower);
-        templateObject.addUpper(templateUpper);
-      }
-    }
-
-    String fixedSurfix = null;
-    if (templateIsFixed) {
-      templateObject.setIsFixed();
-      fixedSurfix = "FIXED";
-    }
-    else fixedSurfix = "UNFIXED";
-
-    _globalDecl.addGlobalInitFuncCall("_XMP_init_template_" + fixedSurfix, templateArgs);
+    XMPtemplate.translateTemplate((XobjList)templatePragma.getArg(1), _globalDecl, false, null);
   }
 
   private void checkObjectNameCollision(String name) throws XMPexception {

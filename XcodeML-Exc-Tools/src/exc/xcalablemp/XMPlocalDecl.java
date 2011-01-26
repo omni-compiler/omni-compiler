@@ -15,6 +15,22 @@ public class XMPlocalDecl {
   private final static String CONSTRUCTOR	= "XCALABLEMP_PROP_LOCAL_CONSTRUCTOR";
   private final static String DESTRUCTOR	= "XCALABLEMP_PROP_LOCAL_DESTRUCTOR";
 
+  public static void checkObjectNameCollision(String name, BlockList scopeBL, XMPsymbolTable objectTable) throws XMPexception {
+    // check name collision - parameters
+    if (scopeBL.findLocalIdent(name) != null)
+      throw new XMPexception("'" + name + "' is already declared");
+
+    // check name collision - local object table
+    if (objectTable.getXMPobject(name) != null)
+      throw new XMPexception("'" + name + "' is already declared");
+
+    // check name collision - descriptor name
+    if (scopeBL.findLocalIdent(XMP.DESC_PREFIX_ + name) != null) {
+      // FIXME generate unique name
+      throw new XMPexception("cannot declare template desciptor, '" + XMP.DESC_PREFIX_ + name + "' is already declared");
+    }
+  }
+
   public static FunctionBlock findParentFunctionBlock(Block block) {
     if (block == null) return null;
 
