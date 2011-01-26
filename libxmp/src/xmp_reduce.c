@@ -287,8 +287,7 @@ void _XMP_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes,
 
 // _XMP_M_REDUCE_FLMM_EXEC(addr, count, datatype, op, num_locs, ...) is in xmp_comm_macro.h
 
-void _XMP_reduce_CLAUSE(void *temp_addr, void *data_addr, int count, int datatype, int op) {
-  _XMP_ASSERT(temp_addr != NULL);
+void _XMP_reduce_CLAUSE(void *data_addr, int count, int datatype, int op) {
   _XMP_ASSERT(data_addr != NULL);
 
   // setup information
@@ -299,12 +298,10 @@ void _XMP_reduce_CLAUSE(void *temp_addr, void *data_addr, int count, int datatyp
   _XMP_setup_reduce_op(&mpi_op, op);
 
   // reduce
-  MPI_Allreduce(temp_addr, data_addr, count, mpi_datatype, mpi_op, *((_XMP_get_execution_nodes())->comm));
+  MPI_Allreduce(MPI_IN_PLACE, data_addr, count, mpi_datatype, mpi_op, *((_XMP_get_execution_nodes())->comm));
 }
 
-void _XMP_reduce_FLMM_CLAUSE(void *temp_addr, void *data_addr, int count, int datatype, int op,
-                                    int num_locs, ...) {
-  _XMP_ASSERT(temp_addr != NULL);
+void _XMP_reduce_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, int num_locs, ...) {
   _XMP_ASSERT(data_addr != NULL);
 
   _XMP_nodes_t *nodes = _XMP_get_execution_nodes();
@@ -318,12 +315,16 @@ void _XMP_reduce_FLMM_CLAUSE(void *temp_addr, void *data_addr, int count, int da
   _XMP_setup_reduce_op(&mpi_op, op);
 
   // reduce <reduction-variable>
-  MPI_Allreduce(temp_addr, data_addr, count, mpi_datatype, mpi_op, *(nodes->comm));
+  size_t n = datatype_size * count;
+  void *temp_buffer = _XMP_alloc(n);
+  memcpy(temp_buffer, data_addr, n);
+
+  MPI_Allreduce(temp_buffer, data_addr, count, mpi_datatype, mpi_op, *(nodes->comm));
 
   // compare results
-  size_t n = sizeof(_Bool) * count;
+  n = sizeof(_Bool) * count;
   _Bool *cmp_buffer = _XMP_alloc(n);
-  _XMP_compare_reduce_results(cmp_buffer, temp_addr, data_addr, count, datatype);
+  _XMP_compare_reduce_results(cmp_buffer, temp_buffer, data_addr, count, datatype);
 
   // reduce <location-variable>
   va_list args;
@@ -346,6 +347,7 @@ void _XMP_reduce_FLMM_CLAUSE(void *temp_addr, void *data_addr, int count, int da
   }
   va_end(args);
 
+  _XMP_free(temp_buffer);
   _XMP_free(cmp_buffer);
 }
 

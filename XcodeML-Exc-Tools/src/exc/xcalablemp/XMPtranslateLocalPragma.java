@@ -1005,9 +1005,9 @@ public class XMPtranslateLocalPragma {
                                               CforBlock schedBaseBlock) throws XMPexception {
     // create init block
     Ident getRankFuncId = _globalDecl.declExternFunc("_XMP_get_execution_nodes_rank", Xtype.intType);
-    IfBlock reductionInitIfBlock = (IfBlock)Bcons.IF(BasicBlock.Cond(Xcons.binaryOp(Xcode.LOG_EQ_EXPR, getRankFuncId.Call(null),
-                                                                                                       Xcons.IntConstant(0))),
-                                                     Bcons.emptyBody(), Bcons.emptyBody());
+    IfBlock reductionInitIfBlock = (IfBlock)Bcons.IF(BasicBlock.Cond(Xcons.binaryOp(Xcode.LOG_NEQ_EXPR, getRankFuncId.Call(null),
+                                                                                                        Xcons.IntConstant(0))),
+                                                     null, null);
 
     // create function call
     Iterator<Xobject> it = reductionRefList.iterator();
@@ -1022,7 +1022,9 @@ public class XMPtranslateLocalPragma {
                                                      null, reductionFuncArgsList));
     }
 
-    schedBaseBlock.insert(reductionInitIfBlock);
+    if (reductionInitIfBlock.getThenBody() != null) {
+      schedBaseBlock.insert(reductionInitIfBlock);
+    }
 
     return reductionBody;
   }
@@ -1505,23 +1507,8 @@ public class XMPtranslateLocalPragma {
 
       // declare temp variable for reduction
       if (isClause) {
-        String tempName = new String("_XMP_reduce_temp_" + specName);
-        Ident tempId = declReductionTempIdent(pb, specName, tempName, specType);
-        if (isArray) {
-          reductionFuncArgs.cons(tempId.Ref());
-          createReductionInitStatement(tempId, specId, true, count, basicSpecType, reductionOp.getInt(),
-                                       schedBaseBlock, reductionInitIfBlock);
-        }
-        else {
-          reductionFuncArgs.cons(tempId.getAddr());
-          createReductionInitStatement(tempId, specId, false, null, basicSpecType, reductionOp.getInt(),
-                                       schedBaseBlock, reductionInitIfBlock);
-        }
-
-        // rewrite reduction variable
-        BasicBlockExprIterator iter = new BasicBlockExprIterator(schedBaseBlock);
-        for (iter.init(); !iter.end(); iter.next())
-          rewriteSymbolName(iter.getExpr(), specName, tempName);
+        createReductionInitStatement(specId, isArray, count, basicSpecType, reductionOp.getInt(),
+                                     schedBaseBlock, reductionInitIfBlock);
       }
 
       // add extra args for (firstmax, firstmin, lastmax, lastmin) if needed
@@ -1533,32 +1520,49 @@ public class XMPtranslateLocalPragma {
     return returnVector;
   }
 
-  private void createReductionInitStatement(Ident tempId, Ident varId,
-                                            boolean isArray, Xobject count, BasicType type, int reductionOp,
-                                            CforBlock schedBaseBlock, IfBlock reductionIfBlock) throws XMPexception {
-    BlockList masterPart = reductionIfBlock.getThenBody();
-    BlockList otherPart = reductionIfBlock.getElseBody();
+  private void createReductionInitStatement(Ident varId, boolean isArray, Xobject count, BasicType type, int reductionOp,
+                                            CforBlock schedBaseBlock, IfBlock reductionInitIfBlock) throws XMPexception {
+    if (!needsInitialization(reductionOp)) {
+      return;
+    }
+
+    BlockList initPart = reductionInitIfBlock.getThenBody();
+    if (initPart == null) {
+      initPart = Bcons.emptyBody();
+      reductionInitIfBlock.setThenBody(initPart);
+    }
 
     Xobject statement = null;
     if (isArray) {
-      // master part
-      Ident masterLoopIndexId = declIdentWithBlock(schedBaseBlock, XMPuniqueName.getTempName(), Xtype.unsignedlonglongType);
-      Xobject masterInitValueObj = Xcons.PointerRef(Xcons.binaryOp(Xcode.PLUS_EXPR, Xcons.Cast(Xtype.Pointer(type), varId.Ref()),
-                                                                   masterLoopIndexId.Ref()));
-      masterPart.add(createReductionArrayInit(tempId, masterInitValueObj,
-                                              count, type, masterLoopIndexId));
-
-      // other part
-      Ident otherLoopIndexId = declIdentWithBlock(schedBaseBlock, XMPuniqueName.getTempName(), Xtype.unsignedlonglongType);
-      otherPart.add(createReductionArrayInit(tempId, createReductionInitValueObj(varId, type, reductionOp),
-                                             count, type, otherLoopIndexId));
+      Ident initLoopIndexId = declIdentWithBlock(schedBaseBlock, XMPuniqueName.getTempName(), Xtype.unsignedlonglongType);
+      initPart.add(createReductionArrayInit(varId, createReductionInitValueObj(varId, type, reductionOp),
+                                            count, type, initLoopIndexId));
     }
     else {
-      // master part
-      masterPart.add(Xcons.Set(tempId.Ref(), varId.Ref()));
+      initPart.add(Xcons.Set(varId.Ref(), createReductionInitValueObj(varId, type, reductionOp)));
+    }
+  }
 
-      // other part
-      otherPart.add(Xcons.Set(tempId.Ref(), createReductionInitValueObj(varId, type, reductionOp)));
+  private boolean needsInitialization(int reductionOp) throws XMPexception {
+    switch (reductionOp) {
+      case XMPcollective.REDUCE_SUM:
+      case XMPcollective.REDUCE_PROD:
+      case XMPcollective.REDUCE_BXOR:
+      case XMPcollective.REDUCE_LXOR:
+        return true;
+      case XMPcollective.REDUCE_BAND:
+      case XMPcollective.REDUCE_LAND:
+      case XMPcollective.REDUCE_BOR:
+      case XMPcollective.REDUCE_LOR:
+      case XMPcollective.REDUCE_MAX:
+      case XMPcollective.REDUCE_MIN:
+      case XMPcollective.REDUCE_FIRSTMAX:
+      case XMPcollective.REDUCE_FIRSTMIN:
+      case XMPcollective.REDUCE_LASTMAX:
+      case XMPcollective.REDUCE_LASTMIN:
+        return false;
+      default:
+        throw new XMPexception("unknown reduce operation");
     }
   }
 
@@ -1634,44 +1638,13 @@ public class XMPtranslateLocalPragma {
       case XMPcollective.REDUCE_FIRSTMIN:
       case XMPcollective.REDUCE_LASTMAX:
       case XMPcollective.REDUCE_LASTMIN:
-        return varRef;
+        throw new XMPexception("the operation does not need initialization");
       case XMPcollective.REDUCE_BXOR:
         return Xcons.unaryOp(Xcode.BIT_NOT_EXPR, varRef);
       case XMPcollective.REDUCE_LXOR:
         return Xcons.unaryOp(Xcode.LOG_NOT_EXPR, varRef);
       default:
         throw new XMPexception("unknown reduce operation");
-    }
-  }
-
-  private Ident declReductionTempIdent(Block b, String oldName, String newName, Xtype type) {
-    BlockList bl = b.getParent();
-    Ident newId = null;
-    Ident oldId = bl.findLocalIdent(oldName);
-    if (oldId == null) {
-      oldId = _globalDecl.findVarIdent(oldName);
-      if (oldId != null)
-        newId = _globalDecl.declStaticIdent(newName, type);
-      else
-        newId = bl.declLocalIdent(newName, type);
-    }
-    else newId = bl.declLocalIdent(newName, type);
-
-    return newId;
-  }
-
-  private void rewriteSymbolName(Xobject expr, String oldName, String newName) {
-    if (expr == null) return;
-
-    bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
-    for (iter.init(); !iter.end(); iter.next()) {
-      Xobject myExpr = iter.getXobject();
-      if (myExpr == null) continue;
-
-      if (myExpr instanceof XobjString) {
-        XobjString symbol = (XobjString)myExpr;
-        if (symbol.getSym().equals(oldName)) symbol.setSym(newName);
-      }
     }
   }
 
