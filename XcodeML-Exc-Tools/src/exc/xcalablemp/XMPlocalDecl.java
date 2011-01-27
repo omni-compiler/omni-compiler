@@ -31,6 +31,15 @@ public class XMPlocalDecl {
     }
   }
 
+  public static XMPnodes getXMPnodes(String nodesName, XMPsymbolTable localXMPsymbolTable, XMPglobalDecl globalDecl) {
+    XMPnodes n = localXMPsymbolTable.getXMPnodes(nodesName);
+    if (n == null) {
+      n = globalDecl.getXMPnodes(nodesName);
+    }
+
+    return n;
+  }
+
   public static FunctionBlock findParentFunctionBlock(Block block) {
     if (block == null) return null;
 
