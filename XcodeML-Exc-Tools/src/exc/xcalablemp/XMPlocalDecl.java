@@ -105,7 +105,7 @@ public class XMPlocalDecl {
     return addObjectId(objectName, Xtype.voidPtrType, block);
   }
 
-  public static void addConstructorCall(String funcName, Xobject funcArgs, Block block, XMPglobalDecl globalDecl) {
+  public static void addConstructorCall(String funcName, Xobject funcArgs, XMPglobalDecl globalDecl, Block block) {
     Block fb = findParentFunctionBlock(block);
 
     XobjList bodyList = (XobjList)fb.getProp(CONSTRUCTOR);
@@ -118,7 +118,7 @@ public class XMPlocalDecl {
     bodyList.add(Xcons.List(Xcode.EXPR_STATEMENT, funcId.Call(funcArgs)));
   }
 
-  public static void insertDestructorCall(String funcName, Xobject funcArgs, Block block, XMPglobalDecl globalDecl) {
+  public static void insertDestructorCall(String funcName, Xobject funcArgs, XMPglobalDecl globalDecl, Block block) {
     FunctionBlock fb = findParentFunctionBlock(block);
 
     XobjList bodyList = (XobjList)fb.getProp(DESTRUCTOR);

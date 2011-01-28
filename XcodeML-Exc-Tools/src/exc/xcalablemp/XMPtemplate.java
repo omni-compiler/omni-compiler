@@ -185,8 +185,8 @@ public class XMPtemplate extends XMPobject {
     }
 
     if (isLocalPragma) {
-      XMPlocalDecl.addConstructorCall(constructorName, templateArgs, pb, globalDecl);
-      XMPlocalDecl.insertDestructorCall("_XMP_finalize_template", Xcons.List(templateDescId.Ref()), pb, globalDecl);
+      XMPlocalDecl.addConstructorCall(constructorName, templateArgs, globalDecl, pb);
+      XMPlocalDecl.insertDestructorCall("_XMP_finalize_template", Xcons.List(templateDescId.Ref()), globalDecl, pb);
     }
     else {
       globalDecl.addGlobalInitFuncCall(constructorName, templateArgs);
@@ -252,7 +252,7 @@ public class XMPtemplate extends XMPobject {
       XMPlocalDecl.addConstructorCall("_XMP_init_template_chunk",
                                       Xcons.List(templateObject.getDescId().Ref(),
                                                  nodesObject.getDescId().Ref()),
-                                      pb, globalDecl);
+                                      globalDecl, pb);
     }
     else {
       globalDecl.addGlobalInitFuncCall("_XMP_init_template_chunk",
@@ -343,7 +343,7 @@ public class XMPtemplate extends XMPobject {
     }
 
     if (isLocalPragma) {
-      XMPlocalDecl.addConstructorCall("_XMP_dist_template_" + distMannerName, funcArgs, pb, globalDecl);
+      XMPlocalDecl.addConstructorCall("_XMP_dist_template_" + distMannerName, funcArgs, globalDecl, pb);
     }
     else {
       globalDecl.addGlobalInitFuncCall("_XMP_dist_template_" + distMannerName, funcArgs);

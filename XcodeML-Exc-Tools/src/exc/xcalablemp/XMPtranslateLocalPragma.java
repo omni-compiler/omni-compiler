@@ -183,8 +183,8 @@ public class XMPtranslateLocalPragma {
     }
 
     // create/destroy local descriptor
-    XMPlocalDecl.addConstructorCall("_XMP_init_array_desc", initArrayDescFuncArgs, pb, _globalDecl);
-    XMPlocalDecl.insertDestructorCall("_XMP_finalize_array_desc", Xcons.List(arrayDescId.Ref()), pb, _globalDecl);
+    XMPlocalDecl.addConstructorCall("_XMP_init_array_desc", initArrayDescFuncArgs, _globalDecl, pb);
+    XMPlocalDecl.insertDestructorCall("_XMP_finalize_array_desc", Xcons.List(arrayDescId.Ref()), _globalDecl, pb);
 
     XMPalignedArray alignedArray = new XMPalignedArray(arrayName, arrayElmtType, arrayDim,
                                                        arraySizeVector, accIdVector,
@@ -276,7 +276,7 @@ public class XMPtranslateLocalPragma {
       else                                     initArrayCommFuncArgs.add(Xcons.IntConstant(0));
     }
 
-    XMPlocalDecl.addConstructorCall("_XMP_init_array_comm", initArrayCommFuncArgs, pb, _globalDecl);
+    XMPlocalDecl.addConstructorCall("_XMP_init_array_comm", initArrayCommFuncArgs, _globalDecl, pb);
 
     // init array address
     XobjList initArrayAddrFuncArgs = Xcons.List(arrayAddrId.getAddr(),
@@ -286,7 +286,7 @@ public class XMPtranslateLocalPragma {
       initArrayAddrFuncArgs.add(Xcons.Cast(Xtype.unsignedlonglongType,
                                            alignedArray.getAccIdAt(i).getAddr()));
 
-    XMPlocalDecl.addConstructorCall("_XMP_init_array_addr", initArrayAddrFuncArgs, pb, _globalDecl);
+    XMPlocalDecl.addConstructorCall("_XMP_init_array_addr", initArrayAddrFuncArgs, _globalDecl, pb);
   }
 
   private void declNotAlignFunc(XMPalignedArray alignedArray, int alignSourceIndex,
@@ -296,7 +296,7 @@ public class XMPtranslateLocalPragma {
 
     alignedArray.setAlignMannerAt(XMPalignedArray.NOT_ALIGNED, alignSourceIndex);
 
-    XMPlocalDecl.addConstructorCall("_XMP_align_array_NOT_ALIGNED", alignFuncArgs, pb, _globalDecl);
+    XMPlocalDecl.addConstructorCall("_XMP_align_array_NOT_ALIGNED", alignFuncArgs, _globalDecl, pb);
   }
 
   private void declAlignFunc(XMPalignedArray alignedArray, int alignSourceIndex,
@@ -333,88 +333,13 @@ public class XMPtranslateLocalPragma {
     }
 
     XMPlocalDecl.addConstructorCall("_XMP_align_array_" + templateObj.getDistMannerStringAt(alignSubscriptIndex),
-                                    alignFuncArgs, pb, _globalDecl);
+                                    alignFuncArgs, _globalDecl, pb);
   }
 
   // FIXME incomplete, not checked
   private void translateShadow(PragmaBlock pb) throws XMPexception {
-    // check position
     checkDeclPragmaLocation(pb);
-
-    // start translation
-    XobjList shadowDecl = (XobjList)pb.getClauses();
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-
-    // find aligned array
-    String arrayName = shadowDecl.getArg(0).getString();
-    XMPalignedArray alignedArray = localXMPsymbolTable.getXMPalignedArray(arrayName);
-    if (alignedArray == null)
-      throw new XMPexception("the aligned array '" + arrayName + "' is not found in local scope");
-
-    if (alignedArray.hasShadow())
-      throw new XMPexception("the aligned array '" + arrayName + "' has the shadow declaration already");
-
-    // init shadow
-    XobjList shadowFuncArgs = Xcons.List(alignedArray.getDescId().Ref());
-    int arrayIndex = 0;
-    int arrayDim = alignedArray.getDim();
-    for (XobjArgs i = shadowDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
-      if (arrayIndex == arrayDim)
-        throw new XMPexception("wrong shadow dimension indicated, too many");
-
-      XobjList shadowObj = (XobjList)i.getArg();
-      XobjInt shadowType = (XobjInt)shadowObj.getArg(0);
-      XobjList shadowBody = (XobjList)shadowObj.getArg(1);
-      switch (shadowType.getInt()) {
-        case XMPshadow.SHADOW_NONE:
-          {
-            shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_NONE)));
-
-            alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_NONE, null, null), arrayIndex);
-          } break;
-        case XMPshadow.SHADOW_NORMAL:
-          {
-            if (alignedArray.getAlignMannerAt(arrayIndex) == XMPalignedArray.NOT_ALIGNED) {
-              throw new XMPexception("indicated dimension is not aligned");
-            }
-            else if (alignedArray.getAlignMannerAt(arrayIndex) == XMPalignedArray.DUPLICATION) {
-              throw new XMPexception("indicated dimension is not distributed");
-            }
-
-            shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_NORMAL)));
-            shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowBody.left()));
-            shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowBody.right()));
-
-            alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_NORMAL, shadowBody.left(), shadowBody.right()), arrayIndex);
-          } break;
-        case XMPshadow.SHADOW_FULL:
-          throw new XMPexception("full shadow is not supported in this version");
-          /* {
-            if (alignedArray.getAlignMannerAt(arrayIndex) == XMPalignedArray.NOT_ALIGNED) {
-              throw new XMPexception("indicated dimension is not aligned");
-            }
-            else if (alignedArray.getAlignMannerAt(arrayIndex) == XMPalignedArray.DUPLICATION) {
-              throw new XMPexception("indicated dimension is not distributed");
-            }
-
-            shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_FULL)));
-
-            alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_FULL, null, null), arrayIndex);
-          } break; */
-        default:
-          throw new XMPexception("unknown shadow type");
-      }
-
-      arrayIndex++;
-    }
-
-    if (arrayIndex != arrayDim)
-      throw new XMPexception("the number of <nodes/template-subscript> should be the same with the dimension");
-
-    XMPlocalDecl.addConstructorCall("_XMP_init_shadow", shadowFuncArgs, pb, _globalDecl);
-
-    // set shadow flag
-    alignedArray.setHasShadow();
+    XMPshadow.translateShadow((XobjList)pb.getClauses(), _globalDecl, true, pb);
   }
 
   private void translateTask(PragmaBlock pb) throws XMPexception {

@@ -201,8 +201,8 @@ public class XMPnodes extends XMPobject {
     }
 
     if (isLocalPragma) {
-      XMPlocalDecl.addConstructorCall(initFuncName, nodesArgs, pb, globalDecl);
-      XMPlocalDecl.insertDestructorCall("_XMP_finalize_nodes", Xcons.List(nodesDescId.Ref()), pb, globalDecl);
+      XMPlocalDecl.addConstructorCall(initFuncName, nodesArgs, globalDecl, pb);
+      XMPlocalDecl.insertDestructorCall("_XMP_finalize_nodes", Xcons.List(nodesDescId.Ref()), globalDecl, pb);
     }
     else {
       globalDecl.addGlobalInitFuncCall(initFuncName, nodesArgs);
