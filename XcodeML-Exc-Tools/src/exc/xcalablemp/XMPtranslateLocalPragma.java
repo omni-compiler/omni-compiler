@@ -85,22 +85,6 @@ public class XMPtranslateLocalPragma {
     XMPtemplate.translateTemplate((XobjList)pb.getClauses(), _globalDecl, true, pb);
   }
 
-  private void checkObjectNameCollision(String name, BlockList scopeBL, XMPsymbolTable objectTable) throws XMPexception {
-    // check name collision - parameters
-    if (scopeBL.findLocalIdent(name) != null)
-      throw new XMPexception("'" + name + "' is already declared");
-
-    // check name collision - local object table
-    if (objectTable.getXMPobject(name) != null)
-      throw new XMPexception("'" + name + "' is already declared");
-
-    // check name collision - descriptor name
-    if (scopeBL.findLocalIdent(XMP.DESC_PREFIX_ + name) != null) {
-      // FIXME generate unique name
-      throw new XMPexception("cannot declare template desciptor, '" + XMP.DESC_PREFIX_ + name + "' is already declared");
-    }
-  }
-
   private void translateDistribute(PragmaBlock pb) throws XMPexception {
     // check location
     checkDeclPragmaLocation(pb);
@@ -132,7 +116,9 @@ public class XMPtranslateLocalPragma {
 
     // get nodes object
     String nodesName = distDecl.getArg(2).getString();
-    XMPnodes nodesObject = getXMPnodes(nodesName, localXMPsymbolTable);
+    XMPnodes nodesObject = XMPlocalDecl.getXMPnodes(nodesName, localXMPsymbolTable, _globalDecl);
+    if (nodesObject == null)
+      throw new XMPexception("nodes '" + nodesName + "' is not declared");
 
     templateObject.setOntoNodes(nodesObject);
 
@@ -266,7 +252,11 @@ public class XMPtranslateLocalPragma {
 
     // get template information
     String templateName = alignDecl.getArg(2).getString();
-    XMPtemplate templateObj = getXMPtemplate(templateName, localXMPsymbolTable);
+    XMPtemplate templateObj = XMPlocalDecl.getXMPtemplate(templateName, localXMPsymbolTable, _globalDecl);
+    if (templateObj == null) {
+      throw new XMPexception("template '" + templateName + "' is not declared");
+    }
+
     if (!templateObj.isFixed()) {
       throw new XMPexception("template '" + templateName + "' is not fixed");
     }
@@ -734,7 +724,11 @@ public class XMPtranslateLocalPragma {
     XobjList subscriptList = (XobjList)onRef.getArg(1);
 
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-    XMPobject onRefObj = getXMPobject(onRefObjName, localXMPsymbolTable);
+    XMPobject onRefObj = XMPlocalDecl.getXMPobject(onRefObjName, localXMPsymbolTable, _globalDecl);
+    if (onRefObj == null) {
+      throw new XMPexception("cannot find '" + onRefObjName + "' nodes/template");
+    }
+
     String initFuncSurfix = null;
     switch (onRefObj.getKind()) {
       case XMPobject.TEMPLATE:
@@ -835,7 +829,11 @@ public class XMPtranslateLocalPragma {
     // analyze <on-ref>
     Xobject onRef = loopDecl.getArg(1);
     String onRefObjName = onRef.getArg(0).getString();
-    XMPobject onRefObj = getXMPobject(onRefObjName, localXMPsymbolTable);
+    XMPobject onRefObj = XMPlocalDecl.getXMPobject(onRefObjName, localXMPsymbolTable, _globalDecl);
+    if (onRefObj == null) {
+      throw new XMPexception("cannot find '" + onRefObjName + "' nodes/template");
+    }
+
     switch (onRefObj.getKind()) {
       case XMPobject.TEMPLATE:
         {
@@ -1731,7 +1729,11 @@ public class XMPtranslateLocalPragma {
 
       // check object name collision
       String objectName = fromRef.getArg(0).getString();
-      XMPobject fromRefObject = getXMPobject(objectName, localXMPsymbolTable);
+      XMPobject fromRefObject = XMPlocalDecl.getXMPobject(objectName, localXMPsymbolTable, _globalDecl);
+      if (fromRefObject == null) {
+        throw new XMPexception("cannot find '" + objectName + "' nodes/template");
+      }
+
       if (fromRefObject.getKind() == XMPobject.TEMPLATE)
         throw new XMPexception("template cannot be used in <from-ref>");
 
@@ -2159,7 +2161,10 @@ public class XMPtranslateLocalPragma {
 
       // check object name collision
       String objectName = onRef.getArg(0).getString();
-      XMPobject onRefObject = getXMPobject(objectName, localXMPsymbolTable);
+      XMPobject onRefObject = XMPlocalDecl.getXMPobject(objectName, localXMPsymbolTable, _globalDecl);
+      if (onRefObject == null) {
+        throw new XMPexception("cannot find '" + objectName + "' nodes/template");
+      }
 
       Xobject ontoNodesRef = null;
       Xtype castType = null;
@@ -2326,39 +2331,6 @@ public class XMPtranslateLocalPragma {
 */
     // XXX delete this
     return;
-  }
-
-  private XMPobject getXMPobject(String objectName, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
-    XMPobject object = localXMPsymbolTable.getXMPobject(objectName);
-    if (object == null) {
-      object = _globalDecl.getXMPobject(objectName);
-      if (object == null)
-        throw new XMPexception("cannot find '" + objectName + "' nodes/template");
-    }
-
-    return object;
-  }
-
-  private XMPtemplate getXMPtemplate(String templateName, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
-    XMPtemplate t = localXMPsymbolTable.getXMPtemplate(templateName);
-    if (t == null) {
-      t = _globalDecl.getXMPtemplate(templateName);
-      if (t == null)
-        throw new XMPexception("template '" + templateName + "' is not declared");
-    }
-
-    return t;
-  }
-
-  private XMPnodes getXMPnodes(String nodesName, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
-    XMPnodes n = localXMPsymbolTable.getXMPnodes(nodesName);
-    if (n == null) {
-      n = _globalDecl.getXMPnodes(nodesName);
-      if (n == null)
-        throw new XMPexception("nodes '" + nodesName + "' is not declared");
-    }
-
-    return n;
   }
 
   private XMPalignedArray getXMPalignedArray(String arrayName, XMPsymbolTable localXMPsymbolTable) throws XMPexception {

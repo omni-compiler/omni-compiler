@@ -51,23 +51,6 @@ public class XMPtranslateGlobalPragma {
     XMPtemplate.translateTemplate((XobjList)templatePragma.getArg(1), _globalDecl, false, null);
   }
 
-  private void checkObjectNameCollision(String name) throws XMPexception {
-    // check name collision - global variables
-    if (_globalDecl.findVarIdent(name) != null)
-      throw new XMPexception("'" + name + "' is already declared");
-
-    // check name collision - global object table
-    if (_globalDecl.getXMPobject(name) != null) {
-      throw new XMPexception("'" + name + "' is already declared");
-    }
-
-    // check name collision - descriptor name
-    if (_globalDecl.findVarIdent(XMP.DESC_PREFIX_ + name) != null) {
-      // FIXME generate unique name
-      throw new XMPexception("cannot declare desciptor, '" + XMP.DESC_PREFIX_ + name + "' is already declared");
-    }
-  }
-
   private void translateDistribute(Xobject distributePragma) throws XMPexception {
     XobjList distDecl = (XobjList)distributePragma.getArg(1);
 

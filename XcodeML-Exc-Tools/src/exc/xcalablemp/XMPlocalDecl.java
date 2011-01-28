@@ -31,6 +31,15 @@ public class XMPlocalDecl {
     }
   }
 
+  public static XMPobject getXMPobject(String objectName, XMPsymbolTable localXMPsymbolTable, XMPglobalDecl globalDecl) {
+    XMPobject o = localXMPsymbolTable.getXMPobject(objectName);
+    if (o == null) {
+      o = globalDecl.getXMPobject(objectName);
+    }
+
+    return o;
+  }
+
   public static XMPnodes getXMPnodes(String nodesName, XMPsymbolTable localXMPsymbolTable, XMPglobalDecl globalDecl) {
     XMPnodes n = localXMPsymbolTable.getXMPnodes(nodesName);
     if (n == null) {
@@ -38,6 +47,15 @@ public class XMPlocalDecl {
     }
 
     return n;
+  }
+
+  public static XMPtemplate getXMPtemplate(String templateName, XMPsymbolTable localXMPsymbolTable, XMPglobalDecl globalDecl) {
+    XMPtemplate t = localXMPsymbolTable.getXMPtemplate(templateName);
+    if (t == null) {
+      t = globalDecl.getXMPtemplate(templateName);
+    }
+
+    return t;
   }
 
   public static FunctionBlock findParentFunctionBlock(Block block) {
