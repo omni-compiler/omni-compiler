@@ -274,7 +274,7 @@ public class XMPalignedArray {
       arrayId = funcBlockList.findLocalIdent(arrayName);
     }
     else {
-      globalDecl.findVarIdent(arrayName);
+      arrayId = globalDecl.findVarIdent(arrayName);
     }
 
     if (arrayId == null) {
