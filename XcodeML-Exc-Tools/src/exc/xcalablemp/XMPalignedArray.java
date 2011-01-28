@@ -272,6 +272,11 @@ public class XMPalignedArray {
     Ident arrayId = null;
     if (isLocalPragma) {
       arrayId = funcBlockList.findLocalIdent(arrayName);
+      if (arrayId != null) {
+        if (arrayId.getStorageClass() != StorageClass.PARAM) {
+          throw new XMPexception("array '" + arrayName + "' is not a parameter");
+        }
+      }
     }
     else {
       arrayId = globalDecl.findVarIdent(arrayName);
@@ -279,10 +284,6 @@ public class XMPalignedArray {
 
     if (arrayId == null) {
       throw new XMPexception("array '" + arrayName + "' is not declared");
-    }
-
-    if (arrayId.getStorageClass() != StorageClass.PARAM) {
-      throw new XMPexception("array '" + arrayName + "' is not a parameter");
     }
 
     Xtype arrayType = arrayId.Type();
