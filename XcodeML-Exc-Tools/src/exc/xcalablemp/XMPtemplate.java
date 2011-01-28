@@ -192,4 +192,163 @@ public class XMPtemplate extends XMPobject {
       globalDecl.addGlobalInitFuncCall(constructorName, templateArgs);
     }
   }
+
+  public static void translateDistribute(XobjList distDecl, XMPglobalDecl globalDecl,
+                                         boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
+    // local parameters
+    BlockList funcBlockList = null;
+    XMPsymbolTable localXMPsymbolTable = null;
+    if (isLocalPragma) {
+      funcBlockList = XMPlocalDecl.findParentFunctionBlock(pb).getBody();
+      localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+    }
+
+    // get template object
+    String templateName = distDecl.getArg(0).getString();
+    XMPtemplate templateObject = null;
+    if (isLocalPragma) {
+      templateObject = localXMPsymbolTable.getXMPtemplate(templateName);
+      if (templateObject == null) {
+        templateObject = globalDecl.getXMPtemplate(templateName);
+        if (templateObject != null) {
+          throw new XMPexception("global template cannot be distributed in local scope");
+        }
+      }
+    }
+    else {
+      templateObject = globalDecl.getXMPtemplate(templateName);
+    }
+
+    if (templateObject == null) {
+      throw new XMPexception("template '" + templateName + "' is not declared");
+    }
+
+    if (!templateObject.isFixed()) {
+      throw new XMPexception("template '" + templateName + "' is not fixed");
+    }
+
+    if (templateObject.isDistributed()) {
+      throw new XMPexception("template '" + templateName + "' is already distributed");
+    }
+
+    // get nodes object
+    String nodesName = distDecl.getArg(2).getString();
+    XMPnodes nodesObject = null;
+    if (isLocalPragma) {
+      nodesObject = XMPlocalDecl.getXMPnodes(nodesName, localXMPsymbolTable, globalDecl);
+    }
+    else {
+      nodesObject = globalDecl.getXMPnodes(nodesName);
+    }
+
+    if (nodesObject == null) {
+      throw new XMPexception("nodes '" + nodesName + "' is not declared");
+    }
+
+    templateObject.setOntoNodes(nodesObject);
+
+    // setup chunk constructor
+    if (isLocalPragma) {
+      XMPlocalDecl.addConstructorCall("_XMP_init_template_chunk",
+                                      Xcons.List(templateObject.getDescId().Ref(),
+                                                 nodesObject.getDescId().Ref()),
+                                      pb, globalDecl);
+    }
+    else {
+      globalDecl.addGlobalInitFuncCall("_XMP_init_template_chunk",
+                                        Xcons.List(templateObject.getDescId().Ref(),
+                                                   nodesObject.getDescId().Ref()));
+    }
+
+    // create distribute function calls
+    int templateDim = templateObject.getDim();
+    int templateDimIdx = 0;
+    int nodesDim = nodesObject.getDim();
+    int nodesDimIdx = 0;
+    for (XobjArgs i = distDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
+      if (templateDimIdx == templateDim) {
+        throw new XMPexception("wrong template dimension indicated, too many");
+      }
+
+      int distManner = i.getArg().getInt();
+      // FIXME support cyclic(w), gblock
+      switch (distManner) {
+        case XMPtemplate.DUPLICATION:
+          setupDistribution(distManner, templateObject, templateDimIdx, -1, globalDecl, isLocalPragma, pb);
+          break;
+        case XMPtemplate.BLOCK:
+        case XMPtemplate.CYCLIC:
+          {
+            if (nodesDimIdx == nodesDim) {
+              throw new XMPexception("the number of <dist-format> (except '*') should be the same with the nodes dimension");
+            }
+
+            setupDistribution(distManner, templateObject, templateDimIdx, nodesDimIdx, globalDecl, isLocalPragma, pb);
+            nodesDimIdx++;
+            break;
+          }
+        default:
+          throw new XMPexception("unknown distribute manner");
+      }
+
+      templateDimIdx++;
+    }
+
+    // check nodes, template dimension
+    if (nodesDimIdx != nodesDim) {
+      throw new XMPexception("the number of <dist-format> (except '*') should be the same with the nodes dimension");
+    }
+
+    if (templateDimIdx != templateDim) {
+      throw new XMPexception("wrong template dimension indicated, too few");
+    }
+
+    // set distributed
+    templateObject.setIsDistributed();
+  }
+
+  private static void setupDistribution(int distManner, XMPtemplate templateObject,
+                                        int templateDimIdx, int nodesDimIdx,
+                                        XMPglobalDecl globalDecl, boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
+    XobjList funcArgs = null;
+    String distMannerName = null;
+    switch (distManner) {
+      case XMPtemplate.DUPLICATION:
+        {
+          distMannerName = "DUPLICATION";
+          funcArgs = Xcons.List(templateObject.getDescId().Ref(),
+                                Xcons.IntConstant(templateDimIdx));
+          break;
+        }
+      case XMPtemplate.BLOCK:
+        {
+          distMannerName = "BLOCK";
+          funcArgs = Xcons.List(templateObject.getDescId().Ref(),
+                                Xcons.IntConstant(templateDimIdx),
+                                Xcons.IntConstant(nodesDimIdx));
+          templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
+          break;
+        }
+      case XMPtemplate.CYCLIC:
+        {
+          distMannerName = "CYCLIC";
+          funcArgs = Xcons.List(templateObject.getDescId().Ref(),
+                                Xcons.IntConstant(templateDimIdx),
+                                Xcons.IntConstant(nodesDimIdx));
+          templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
+          break;
+        }
+      default:
+        throw new XMPexception("unknown distribute manner");
+    }
+
+    if (isLocalPragma) {
+      XMPlocalDecl.addConstructorCall("_XMP_dist_template_" + distMannerName, funcArgs, pb, globalDecl);
+    }
+    else {
+      globalDecl.addGlobalInitFuncCall("_XMP_dist_template_" + distMannerName, funcArgs);
+    }
+
+    templateObject.setDistMannerAt(distManner, templateDimIdx);
+  }
 }
