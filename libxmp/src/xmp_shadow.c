@@ -81,10 +81,14 @@ void _XMP_init_shadow(_XMP_array_t *array, ...) {
       case _XMP_N_SHADOW_NORMAL:
         {
           int lo = va_arg(args, int);
-          if (lo < 0) _XMP_fatal("<shadow-width> should be a nonnegative integer");
+          if (lo < 0) {
+            _XMP_fatal("<shadow-width> should be a nonnegative integer");
+          }
 
           int hi = va_arg(args, int);
-          if (hi < 0) _XMP_fatal("<shadow-width> should be a nonnegative integer");
+          if (hi < 0) {
+            _XMP_fatal("<shadow-width> should be a nonnegative integer");
+          }
 
           if ((lo == 0) && (hi == 0)) {
             ai->shadow_type = _XMP_N_SHADOW_NONE;
@@ -111,13 +115,17 @@ void _XMP_init_shadow(_XMP_array_t *array, ...) {
 
             _XMP_create_shadow_comm(array, i);
           }
-        } break;
+
+          break;
+        }
       case _XMP_N_SHADOW_FULL:
         {
           ai->shadow_type = _XMP_N_SHADOW_FULL;
-          // FIXME calc shadow_size_{lo/hi} size
 
           if (array->is_allocated) {
+            ai->shadow_size_lo = ai->par_lower - ai->ser_lower;
+            ai->shadow_size_hi = ai->ser_upper - ai->par_upper;
+
             ai->local_lower = ai->par_lower;
             ai->local_upper = ai->par_upper;
             ai->local_stride = ai->par_stride;
@@ -125,7 +133,8 @@ void _XMP_init_shadow(_XMP_array_t *array, ...) {
           }
 
           _XMP_create_shadow_comm(array, i);
-        } break;
+          break;
+        }
       default:
         _XMP_fatal("unknown shadow type");
     }
@@ -134,7 +143,7 @@ void _XMP_init_shadow(_XMP_array_t *array, ...) {
 
 // FIXME consider full shadow in other dimensions
 void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_addr,
-                                    _XMP_array_t *array_desc, int array_index) {
+                             _XMP_array_t *array_desc, int array_index) {
   _XMP_ASSERT(array_addr != NULL);
   _XMP_ASSERT(array_desc != NULL);
 
@@ -234,7 +243,7 @@ void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_add
 
 // FIXME not consider full shadow
 void _XMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_addr,
-                                      _XMP_array_t *array_desc, int array_index) {
+                               _XMP_array_t *array_desc, int array_index) {
   _XMP_ASSERT(lo_buffer != NULL);
   _XMP_ASSERT(hi_buffer != NULL);
   _XMP_ASSERT(array_addr != NULL);
@@ -337,8 +346,8 @@ void _XMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_add
 // FIXME change tag
 // FIXME not consider full shadow
 void _XMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
-                                        void *lo_send_buffer, void *hi_send_buffer,
-                                        _XMP_array_t *array_desc, int array_index) {
+                                 void *lo_send_buffer, void *hi_send_buffer,
+                                 _XMP_array_t *array_desc, int array_index) {
   _XMP_ASSERT(lo_send_buffer != NULL);
   _XMP_ASSERT(hi_send_buffer != NULL);
   _XMP_ASSERT(array_desc != NULL);
@@ -416,7 +425,7 @@ void _XMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
   }
 }
 
-static void _XMP_reflect_shadow_ALLGATHER(void *array_addr, _XMP_array_t *array_desc, int array_index) {
+static void _XMP_reflect_shadow_FULL_ALLGATHER(void *array_addr, _XMP_array_t *array_desc, int array_index) {
   _XMP_ASSERT(array_addr != NULL);
   _XMP_ASSERT(array_desc != NULL);
   _XMP_ASSERT(array_desc->is_allocated);
@@ -443,7 +452,7 @@ static void _XMP_reflect_shadow_ALLGATHER(void *array_addr, _XMP_array_t *array_
   _XMP_free(pack_buffer);
 }
 
-static void _XMP_reflect_shadow_ALLGATHERV(void *array_addr, _XMP_array_t *array_desc, int array_index) {
+static void _XMP_reflect_shadow_FULL_ALLGATHERV(void *array_addr, _XMP_array_t *array_desc, int array_index) {
   _XMP_ASSERT(array_addr != NULL);
   _XMP_ASSERT(array_desc != NULL);
   _XMP_ASSERT(array_desc->is_allocated);
@@ -471,6 +480,15 @@ static void _XMP_reflect_shadow_ALLGATHERV(void *array_addr, _XMP_array_t *array
 }
 
 // FIXME not implemented yet
+static void _XMP_reflect_shadow_FULL_BCAST(void *array_addr, _XMP_array_t *array_desc, int array_index) {
+  _XMP_ASSERT(array_addr != NULL);
+  _XMP_ASSERT(array_desc != NULL);
+  _XMP_ASSERT(array_desc->is_allocated);
+
+  _XMP_array_info_t *ai = &(array_desc->info[array_index]);
+  _XMP_ERR_WHEN(!ai->is_shadow_comm_member);
+}
+
 void _XMP_reflect_shadow_FULL(void *array_addr, _XMP_array_t *array_desc, int array_index) {
   _XMP_ASSERT(array_addr != NULL);
   _XMP_ASSERT(array_desc != NULL);
@@ -482,16 +500,16 @@ void _XMP_reflect_shadow_FULL(void *array_addr, _XMP_array_t *array_desc, int ar
   int array_dim = array_desc->dim;
   _XMP_array_info_t *ai = &(array_desc->info[array_index]);
 
-  // special cases
+  // using allgather/allgatherv in special cases
   if ((array_dim == 1) && (ai->align_manner == _XMP_N_ALIGN_BLOCK)) {
     if (ai->is_regular_chunk) {
-      // use allgather
-      _XMP_reflect_shadow_ALLGATHER(array_addr, array_desc, array_index);
-      return;
+      _XMP_reflect_shadow_FULL_ALLGATHER(array_addr, array_desc, array_index);
     }
     else {
-      _XMP_reflect_shadow_ALLGATHERV(array_addr, array_desc, array_index);
-      return;
+      _XMP_reflect_shadow_FULL_ALLGATHERV(array_addr, array_desc, array_index);
     }
+  }
+  else {
+    _XMP_reflect_shadow_FULL_BCAST(array_addr, array_desc, array_index);
   }
 }
