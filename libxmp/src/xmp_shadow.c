@@ -497,48 +497,90 @@ static void _XMP_reflect_shadow_FULL_BCAST(void *array_addr, _XMP_array_t *array
   int rank = ai->shadow_comm_rank;
 
   _XMP_template_chunk_t *chunk = ai->align_template_chunk;
+  unsigned long long chunk_width = chunk->par_chunk_width;
+
+  // setup type
+  MPI_Datatype mpi_datatype;
+  MPI_Type_contiguous(array_type_size, MPI_BYTE, &mpi_datatype);
+  MPI_Type_commit(&mpi_datatype);
 
   // alloc buffer
-  void *bcast_buffer = _XMP_alloc((chunk->par_chunk_width) * (ai->dim_elmts) * (array_type_size));
+  void *bcast_buffer = _XMP_alloc(chunk_width * (ai->dim_elmts) * array_type_size);
 
   // calc index
-  int pack_lower[array_dim], pack_upper[array_dim], pack_stride[array_dim];
-  int unpack_lower[array_dim], unpack_upper[array_dim], unpack_stride[array_dim];
+  int pack_lower[array_dim], pack_upper[array_dim];
+  int unpack_lower[array_dim], unpack_upper[array_dim];
+  int stride[array_dim];
   unsigned long long dim_acc[array_dim];
   for (int i = 0; i < array_dim; i++) {
     pack_lower[i] = array_desc->info[i].local_lower;
     pack_upper[i] = array_desc->info[i].local_upper;
-    pack_stride[i] = array_desc->info[i].local_stride;
 
     unpack_lower[i] = pack_lower[i];
     unpack_upper[i] = pack_upper[i];
-    unpack_stride[i] = pack_stride[i];
 
+    stride[i] = array_desc->info[i].local_stride;
     dim_acc[i] = array_desc->info[i].dim_acc;
   }
 
   for (int i = 0; i < size; i++) {
+    int bcast_width = 0;
     if (i == rank) {
       // pack data
       _XMP_pack_array(bcast_buffer, array_addr, array_type, array_type_size,
-                      array_dim, pack_lower, pack_upper, pack_stride, dim_acc);
+                      array_dim, pack_lower, pack_upper, stride, dim_acc);
+
+      bcast_width = _XMP_M_COUNT_TRIPLETi(pack_lower[array_index], pack_upper[array_index], stride[array_index]);
     }
     else {
       // calc unpack index
-      unpack_lower[array_index] = 0;
-      unpack_upper[array_index] = 0;
-      unpack_stride[array_index] = 0;
+      switch (ai->align_manner) {
+        case _XMP_N_ALIGN_BLOCK:
+          {
+            unpack_lower[array_index] = i * chunk_width;
+
+            if (i == (size - 1)) {
+              unpack_upper[array_index] = ai->ser_upper;
+            }
+            else {
+              unpack_upper[array_index] = unpack_lower[array_index] + chunk_width - 1;
+            }
+
+            break;
+          }
+        case _XMP_N_ALIGN_CYCLIC:
+          {
+            unpack_lower[array_index] = i;
+
+            int cycle = ai->par_stride;
+            int mod = ai->ser_upper % cycle;
+            if (i > mod) {
+              unpack_upper[array_index] = i + (cycle * (chunk_width - 2));
+            }
+            else {
+              unpack_upper[array_index] = i + (cycle * (chunk_width - 1));
+            }
+
+            break;
+          }
+        default:
+          _XMP_fatal("unknown align manner");
+      }
+
+      bcast_width = _XMP_M_COUNT_TRIPLETi(unpack_lower[array_index], unpack_upper[array_index], stride[array_index]);
     }
 
     // bcast data
-    // MPI_Bcast(bcast_buffer, int count, MPI_Datatype datatype, rank, *(ai->shadow_comm));
+    MPI_Bcast(bcast_buffer, bcast_width * ai->dim_elmts, mpi_datatype, i, *(ai->shadow_comm));
 
     if (i != rank) {
       // unpack data
       _XMP_unpack_array(array_addr, bcast_buffer, array_type, array_type_size,
-                        array_dim, unpack_lower, unpack_upper, unpack_stride, dim_acc);
+                        array_dim, unpack_lower, unpack_upper, stride, dim_acc);
     }
   }
+
+  _XMP_free(bcast_buffer);
 }
 
 void _XMP_reflect_shadow_FULL(void *array_addr, _XMP_array_t *array_desc, int array_index) {
