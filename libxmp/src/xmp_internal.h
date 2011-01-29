@@ -170,6 +170,7 @@ extern void *_XMP_world_nodes;
 // --------------- functions -----------------------------------------
 // xmp_array_section.c
 extern void _XMP_normalize_array_section(int *lower, int *upper, int *stride);
+// FIXME make these static
 extern void _XMP_pack_array_BASIC(void *buffer, void *src, int array_type,
                                          int array_dim, int *l, int *u, int *s, unsigned long long *d);
 extern void _XMP_pack_array_GENERAL(void *buffer, void *src, size_t array_type_size,
@@ -178,6 +179,10 @@ extern void _XMP_unpack_array_BASIC(void *dst, void *buffer, int array_type,
                                            int array_dim, int *l, int *u, int *s, unsigned long long *d);
 extern void _XMP_unpack_array_GENERAL(void *dst, void *buffer, size_t array_type_size,
                                              int array_dim, int *l, int *u, int *s, unsigned long long *d);
+extern void _XMP_pack_array(void *buffer, void *src, int array_type, size_t array_type_size,
+                            int array_dim, int *l, int *u, int *s, unsigned long long *d);
+extern void _XMP_unpack_array(void *dst, void *buffer, int array_type, size_t array_type_size,
+                              int array_dim, int *l, int *u, int *s, unsigned long long *d);
 
 // xmp_barrier.c
 extern void _XMP_barrier_EXEC(void);

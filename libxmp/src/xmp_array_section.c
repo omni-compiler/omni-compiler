@@ -1542,3 +1542,23 @@ void _XMP_unpack_array_GENERAL(void *dst, void *buffer, size_t array_type_size,
     default: _XMP_fatal("wrong array dimension");
   }
 }
+
+void _XMP_pack_array(void *buffer, void *src, int array_type, size_t array_type_size,
+                     int array_dim, int *l, int *u, int *s, unsigned long long *d) {
+  if (array_type == _XMP_N_TYPE_NONBASIC) {
+    _XMP_pack_array_GENERAL(buffer, src, array_type_size, array_dim, l, u, s, d);
+  }
+  else {
+    _XMP_pack_array_BASIC(buffer, src, array_type, array_dim, l, u, s, d);
+  }
+}
+
+void _XMP_unpack_array(void *dst, void *buffer, int array_type, size_t array_type_size,
+                       int array_dim, int *l, int *u, int *s, unsigned long long *d) {
+  if (array_type == _XMP_N_TYPE_NONBASIC) {
+    _XMP_unpack_array_GENERAL(dst, buffer, array_type_size, array_dim, l, u, s, d);
+  }
+  else {
+    _XMP_unpack_array_BASIC(dst, buffer, array_type, array_dim, l, u, s, d);
+  }
+}

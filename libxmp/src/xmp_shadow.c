@@ -485,8 +485,60 @@ static void _XMP_reflect_shadow_FULL_BCAST(void *array_addr, _XMP_array_t *array
   _XMP_ASSERT(array_desc != NULL);
   _XMP_ASSERT(array_desc->is_allocated);
 
+  int array_type = array_desc->type;
+  size_t array_type_size = array_desc->type_size; 
+  int array_dim = array_desc->dim;
   _XMP_array_info_t *ai = &(array_desc->info[array_index]);
+  _XMP_ASSERT(ai->align_manner != _XMP_N_ALIGN_NOT_ALIGNED); // checked by compiler
+  _XMP_ASSERT(ai->align_manner != _XMP_N_ALIGN_DUPLICATION); // checked by compiler
   _XMP_ERR_WHEN(!ai->is_shadow_comm_member);
+
+  int size = ai->shadow_comm_size;
+  int rank = ai->shadow_comm_rank;
+
+  _XMP_template_chunk_t *chunk = ai->align_template_chunk;
+
+  // alloc buffer
+  void *bcast_buffer = _XMP_alloc((chunk->par_chunk_width) * (ai->dim_elmts) * (array_type_size));
+
+  // calc index
+  int pack_lower[array_dim], pack_upper[array_dim], pack_stride[array_dim];
+  int unpack_lower[array_dim], unpack_upper[array_dim], unpack_stride[array_dim];
+  unsigned long long dim_acc[array_dim];
+  for (int i = 0; i < array_dim; i++) {
+    pack_lower[i] = array_desc->info[i].local_lower;
+    pack_upper[i] = array_desc->info[i].local_upper;
+    pack_stride[i] = array_desc->info[i].local_stride;
+
+    unpack_lower[i] = pack_lower[i];
+    unpack_upper[i] = pack_upper[i];
+    unpack_stride[i] = pack_stride[i];
+
+    dim_acc[i] = array_desc->info[i].dim_acc;
+  }
+
+  for (int i = 0; i < size; i++) {
+    if (i == rank) {
+      // pack data
+      _XMP_pack_array(bcast_buffer, array_addr, array_type, array_type_size,
+                      array_dim, pack_lower, pack_upper, pack_stride, dim_acc);
+    }
+    else {
+      // calc unpack index
+      unpack_lower[array_index] = 0;
+      unpack_upper[array_index] = 0;
+      unpack_stride[array_index] = 0;
+    }
+
+    // bcast data
+    // MPI_Bcast(bcast_buffer, int count, MPI_Datatype datatype, rank, *(ai->shadow_comm));
+
+    if (i != rank) {
+      // unpack data
+      _XMP_unpack_array(array_addr, bcast_buffer, array_type, array_type_size,
+                        array_dim, unpack_lower, unpack_upper, unpack_stride, dim_acc);
+    }
+  }
 }
 
 void _XMP_reflect_shadow_FULL(void *array_addr, _XMP_array_t *array_desc, int array_index) {
