@@ -12,22 +12,15 @@
 #include <stdbool.h>
 #include "mpi.h"
 
-#define _XMP_ERR_WHEN(flag) \
-{ \
-  if (flag) { \
-    _XMP_unexpected_error(); \
-  } \
-}
-
 #ifdef _XMP_DEBUG
-#define _XMP_ASSERT(flag) \
+#define _XMP_ASSERT(_flag) \
 { \
-  if (flag) { \
+  if (!(_flag)) { \
     _XMP_unexpected_error(); \
   } \
 }
 #else
-#define _XMP_ASSERT(flag)
+#define _XMP_ASSERT(_flag)
 #endif
 
 // --------------- structures ----------------------------------------
@@ -76,7 +69,7 @@ typedef struct _XMP_template_chunk_type {
   // enable when dist_manner is not _XMP_N_DIST_DUPLICATION
   int onto_nodes_index;
   _XMP_nodes_info_t *onto_nodes_info;
-  // -------------------------------------------------------------
+  // ------------------------------------------------------
 } _XMP_template_chunk_t;
 
 typedef struct _XMP_template_type {
@@ -136,7 +129,7 @@ typedef struct _XMP_array_info_type {
   int align_template_index;
   _XMP_template_info_t *align_template_info;
   _XMP_template_chunk_t *align_template_chunk;
-  // ---------------------------------------------------
+  // --------------------------------------------
 } _XMP_array_info_t;
 
 typedef struct _XMP_array_type {

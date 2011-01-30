@@ -403,7 +403,7 @@ void _XMP_init_reduce_comm_NODES(_XMP_nodes_t *nodes, ...) {
 
 void _XMP_init_reduce_comm_TEMPLATE(_XMP_template_t *template, ...) {
   _XMP_ASSERT(template != NULL);
-  _XMP_ASSERT(template->is_distributed); // checked by compiler
+  _XMP_ASSERT(template->is_distributed);
 
   _XMP_nodes_t *onto_nodes = template->onto_nodes;
   if (!onto_nodes->is_member) {

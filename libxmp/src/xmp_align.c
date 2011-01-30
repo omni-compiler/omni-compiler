@@ -127,8 +127,8 @@ void _XMP_align_array_DUPLICATION(_XMP_array_t *array, int array_index, int temp
   _XMP_ASSERT(array != NULL);
 
   _XMP_template_t *template = array->align_template;
-  _XMP_ASSERT(template->is_fixed); // checked by compiler
-  _XMP_ASSERT(template->is_distributed); // checked by compiler
+  _XMP_ASSERT(template->is_fixed);
+  _XMP_ASSERT(template->is_distributed);
 
   _XMP_template_info_t *ti = &(template->info[template_index]);
   _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
@@ -173,8 +173,8 @@ void _XMP_align_array_BLOCK(_XMP_array_t *array, int array_index, int template_i
   _XMP_ASSERT(array != NULL);
 
   _XMP_template_t *template = array->align_template;
-  _XMP_ASSERT(template->is_fixed); // checked by compiler
-  _XMP_ASSERT(template->is_distributed); // checked by compiler
+  _XMP_ASSERT(template->is_fixed);
+  _XMP_ASSERT(template->is_distributed);
 
   _XMP_template_info_t *ti = &(template->info[template_index]);
   _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
@@ -246,8 +246,8 @@ void _XMP_align_array_CYCLIC(_XMP_array_t *array, int array_index, int template_
   _XMP_ASSERT(array != NULL);
 
   _XMP_template_t *template = array->align_template;
-  _XMP_ASSERT(template->is_fixed); // checked by compiler
-  _XMP_ASSERT(template->is_distributed); // checked by compiler
+  _XMP_ASSERT(template->is_fixed);
+  _XMP_ASSERT(template->is_distributed);
 
   _XMP_template_info_t *ti = &(template->info[template_index]);
   _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
@@ -394,7 +394,7 @@ void _XMP_init_array_comm(_XMP_array_t *array, ...) {
   _XMP_ASSERT(array != NULL);
 
   _XMP_template_t *align_template = array->align_template;
-  _XMP_ASSERT(align_template->is_distributed); // checked by compiler
+  _XMP_ASSERT(align_template->is_distributed);
 
   _XMP_nodes_t *onto_nodes = align_template->onto_nodes;
   if (!onto_nodes->is_member) {

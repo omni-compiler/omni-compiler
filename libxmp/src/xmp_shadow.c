@@ -21,11 +21,11 @@ static void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index) {
   }
 
   _XMP_array_info_t *ai = &(array->info[array_index]);
-  _XMP_ASSERT(ai->align_manner != _XMP_N_ALIGN_NOT_ALIGNED); // checked by compiler
-  _XMP_ASSERT(ai->align_manner != _XMP_N_ALIGN_DUPLICATION); // checked by compiler
+  _XMP_ASSERT(ai->align_manner != _XMP_N_ALIGN_NOT_ALIGNED);
+  _XMP_ASSERT(ai->align_manner != _XMP_N_ALIGN_DUPLICATION);
 
   _XMP_template_chunk_t *chunk = ai->align_template_chunk;
-  _XMP_ASSERT(chunk->dist_manner != _XMP_N_DIST_DUPLICATION); // align_manner is not _XMP_N_ALIGN_DUPLICATION
+  _XMP_ASSERT(chunk->dist_manner != _XMP_N_DIST_DUPLICATION);
 
   int onto_nodes_index = chunk->onto_nodes_index;
 
@@ -80,6 +80,8 @@ void _XMP_init_shadow(_XMP_array_t *array, ...) {
         break;
       case _XMP_N_SHADOW_NORMAL:
         {
+          _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
+
           int lo = va_arg(args, int);
           if (lo < 0) {
             _XMP_fatal("<shadow-width> should be a nonnegative integer");
@@ -99,18 +101,12 @@ void _XMP_init_shadow(_XMP_array_t *array, ...) {
             ai->shadow_size_hi = hi;
 
             if (array->is_allocated) {
-              if (ai->align_manner == _XMP_N_ALIGN_BLOCK) {
-                ai->local_lower += lo;
-                ai->local_upper += lo;
-             // ai->local_stride is not changed
-                ai->alloc_size += lo + hi;
+              ai->local_lower += lo;
+              ai->local_upper += lo;
+           // ai->local_stride is not changed
+              ai->alloc_size += lo + hi;
 
-                *(ai->temp0) -= lo;
-              }
-              else {
-                // FIXME implement for other dist manners
-                _XMP_fatal("not implemented yet");
-              }
+              *(ai->temp0) -= lo;
             }
 
             _XMP_create_shadow_comm(array, i);
@@ -141,7 +137,6 @@ void _XMP_init_shadow(_XMP_array_t *array, ...) {
   }
 }
 
-// FIXME consider full shadow in other dimensions
 void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_addr,
                              _XMP_array_t *array_desc, int array_index) {
   _XMP_ASSERT(array_addr != NULL);
@@ -154,7 +149,8 @@ void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_add
   int array_type = array_desc->type;
   int array_dim = array_desc->dim;
   _XMP_array_info_t *ai = &(array_desc->info[array_index]);
-  _XMP_ERR_WHEN(!ai->is_shadow_comm_member);
+  _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
+  _XMP_ASSERT(ai->is_shadow_comm_member);
 
   int size = ai->shadow_comm_size;
   int rank = ai->shadow_comm_rank;
@@ -176,7 +172,6 @@ void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_add
       // calc index
       for (int i = 0; i < array_dim; i++) {
         if (i == array_index) {
-          // XXX shadow is allowed in BLOCK distribution
           lower[i] = array_desc->info[i].local_upper - array_desc->info[i].shadow_size_lo + 1;
           upper[i] = lower[i] + array_desc->info[i].shadow_size_lo - 1;
           stride[i] = 1;
@@ -215,7 +210,6 @@ void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_add
       // calc index
       for (int i = 0; i < array_dim; i++) {
         if (i == array_index) {
-          // FIXME shadow is allowed in BLOCK distribution
           lower[i] = array_desc->info[i].local_lower;
           upper[i] = lower[i] + array_desc->info[i].shadow_size_hi - 1;
           stride[i] = 1;
@@ -241,7 +235,6 @@ void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_add
   }
 }
 
-// FIXME not consider full shadow
 void _XMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_addr,
                                _XMP_array_t *array_desc, int array_index) {
   _XMP_ASSERT(lo_buffer != NULL);
@@ -256,7 +249,8 @@ void _XMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_add
   int array_type = array_desc->type;
   int array_dim = array_desc->dim;
   _XMP_array_info_t *ai = &(array_desc->info[array_index]);
-  _XMP_ERR_WHEN(!ai->is_shadow_comm_member);
+  _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
+  _XMP_ASSERT(ai->is_shadow_comm_member);
 
   int size = ai->shadow_comm_size;
   int rank = ai->shadow_comm_rank;
@@ -275,7 +269,6 @@ void _XMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_add
       // calc index
       for (int i = 0; i < array_dim; i++) {
         if (i == array_index) {
-          // FIXME shadow is allowed in BLOCK distribution
           lower[i] = 0;
           upper[i] = array_desc->info[i].shadow_size_lo - 1;
           stride[i] = 1;
@@ -314,7 +307,6 @@ void _XMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_add
       // calc index
       for (int i = 0; i < array_dim; i++) {
         if (i == array_index) {
-          // FIXME shadow is allowed in BLOCK distribution
           lower[i] = array_desc->info[i].local_upper + 1;
           upper[i] = lower[i] + array_desc->info[i].shadow_size_hi - 1;
           stride[i] = 1;
@@ -343,8 +335,6 @@ void _XMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_add
   }
 }
 
-// FIXME change tag
-// FIXME not consider full shadow
 void _XMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
                                  void *lo_send_buffer, void *hi_send_buffer,
                                  _XMP_array_t *array_desc, int array_index) {
@@ -357,7 +347,8 @@ void _XMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
   }
 
   _XMP_array_info_t *ai = &(array_desc->info[array_index]);
-  _XMP_ERR_WHEN(!ai->is_shadow_comm_member);
+  _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
+  _XMP_ASSERT(ai->is_shadow_comm_member);
 
   // get communicator info
   MPI_Comm *comm = ai->shadow_comm;
@@ -433,7 +424,7 @@ static void _XMP_reflect_shadow_FULL_ALLGATHER(void *array_addr, _XMP_array_t *a
 
   _XMP_array_info_t *ai = &(array_desc->info[array_index]);
   _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
-  _XMP_ERR_WHEN(!ai->is_shadow_comm_member);
+  _XMP_ASSERT(ai->is_shadow_comm_member);
 
   size_t type_size = array_desc->type_size;
   MPI_Datatype mpi_datatype;
@@ -460,7 +451,7 @@ static void _XMP_reflect_shadow_FULL_ALLGATHERV(void *array_addr, _XMP_array_t *
 
   _XMP_array_info_t *ai = &(array_desc->info[array_index]);
   _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
-  _XMP_ERR_WHEN(!ai->is_shadow_comm_member);
+  _XMP_ASSERT(ai->is_shadow_comm_member);
 
   size_t type_size = array_desc->type_size;
   MPI_Datatype mpi_datatype;
@@ -479,7 +470,6 @@ static void _XMP_reflect_shadow_FULL_ALLGATHERV(void *array_addr, _XMP_array_t *
   _XMP_free(pack_buffer);
 }
 
-// FIXME not implemented yet
 static void _XMP_reflect_shadow_FULL_BCAST(void *array_addr, _XMP_array_t *array_desc, int array_index) {
   _XMP_ASSERT(array_addr != NULL);
   _XMP_ASSERT(array_desc != NULL);
@@ -489,9 +479,9 @@ static void _XMP_reflect_shadow_FULL_BCAST(void *array_addr, _XMP_array_t *array
   size_t array_type_size = array_desc->type_size; 
   int array_dim = array_desc->dim;
   _XMP_array_info_t *ai = &(array_desc->info[array_index]);
-  _XMP_ASSERT(ai->align_manner != _XMP_N_ALIGN_NOT_ALIGNED); // checked by compiler
-  _XMP_ASSERT(ai->align_manner != _XMP_N_ALIGN_DUPLICATION); // checked by compiler
-  _XMP_ERR_WHEN(!ai->is_shadow_comm_member);
+  _XMP_ASSERT(ai->align_manner != _XMP_N_ALIGN_NOT_ALIGNED);
+  _XMP_ASSERT(ai->align_manner != _XMP_N_ALIGN_DUPLICATION);
+  _XMP_ASSERT(ai->is_shadow_comm_member);
 
   int size = ai->shadow_comm_size;
   int rank = ai->shadow_comm_rank;

@@ -245,8 +245,8 @@ void _XMP_finalize_template(_XMP_template_t *template) {
 
 void _XMP_dist_template_DUPLICATION(_XMP_template_t *template, int template_index) {
   _XMP_ASSERT(template != NULL);
-  _XMP_ASSERT(template->is_fixed); // checked by compiler
-  _XMP_ASSERT(template->is_distributed); // checked by compiler
+  _XMP_ASSERT(template->is_fixed);
+  _XMP_ASSERT(template->is_distributed);
 
   _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XMP_template_info_t *ti = &(template->info[template_index]);
@@ -265,8 +265,8 @@ void _XMP_dist_template_DUPLICATION(_XMP_template_t *template, int template_inde
 
 void _XMP_dist_template_BLOCK(_XMP_template_t *template, int template_index, int nodes_index) {
   _XMP_ASSERT(template != NULL);
-  _XMP_ASSERT(template->is_fixed); // checked by compiler
-  _XMP_ASSERT(template->is_distributed); // checked by compiler
+  _XMP_ASSERT(template->is_fixed);
+  _XMP_ASSERT(template->is_distributed);
 
   _XMP_nodes_t *nodes = template->onto_nodes;
 
@@ -311,8 +311,8 @@ void _XMP_dist_template_BLOCK(_XMP_template_t *template, int template_index, int
 
 void _XMP_dist_template_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index) {
   _XMP_ASSERT(template != NULL);
-  _XMP_ASSERT(template->is_fixed); // checked by compiler
-  _XMP_ASSERT(template->is_distributed); // checked by compiler
+  _XMP_ASSERT(template->is_fixed);
+  _XMP_ASSERT(template->is_distributed);
 
   _XMP_nodes_t *nodes = template->onto_nodes;
 
@@ -374,8 +374,8 @@ void _XMP_dist_template_CYCLIC(_XMP_template_t *template, int template_index, in
 
 _Bool _XMP_exec_task_TEMPLATE_PART(int get_upper, _XMP_template_t *ref_template, ...) {
   _XMP_ASSERT(ref_template != NULL);
-  _XMP_ASSERT(ref_template->is_fixed); // checked by compiler
-  _XMP_ASSERT(ref_template->is_distributed); // checked by compiler
+  _XMP_ASSERT(ref_template->is_fixed);
+  _XMP_ASSERT(ref_template->is_distributed);
 
   _XMP_nodes_t *onto_nodes = ref_template->onto_nodes;
   if (!onto_nodes->is_member) {

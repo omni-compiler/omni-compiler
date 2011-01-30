@@ -92,6 +92,10 @@ public class XMPshadow {
               throw new XMPexception("indicated dimension is not distributed");
             }
 
+            if (alignedArray.getAlignMannerAt(arrayIndex) != XMPalignedArray.BLOCK) {
+              throw new XMPexception("shadow should be declared on block distbirution");
+            }
+
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_NORMAL)));
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowBody.left()));
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowBody.right()));

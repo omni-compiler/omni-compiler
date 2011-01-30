@@ -62,8 +62,8 @@ static int _XMP_convert_rank_array_to_rank(_XMP_nodes_t *nodes, int *rank_array)
 
 static int _XMP_calc_gmove_template_owner_SCALAR(_XMP_template_t *template, int dim_index, long long ref_index) {
   _XMP_ASSERT(template != NULL);
-  _XMP_ASSERT(template->is_fixed); // checked by compiler
-  _XMP_ASSERT(template->is_distributed); // checked by compiler
+  _XMP_ASSERT(template->is_fixed);
+  _XMP_ASSERT(template->is_distributed);
 
   _XMP_template_info_t *info = &(template->info[dim_index]);
   _XMP_template_chunk_t *chunk = &(template->chunk[dim_index]);
@@ -127,7 +127,7 @@ static void _XMP_gmove_bcast_SCALAR(_XMP_array_t *array, void *dst_addr, void *s
   int my_rank = array->align_comm_rank;
   if ((exec_nodes == onto_nodes) ||
       ((exec_nodes == _XMP_world_nodes) && (exec_nodes->comm_size == onto_nodes->comm_size))) {
-    _XMP_ERR_WHEN(!array->is_align_comm_member);
+    _XMP_ASSERT(array->is_align_comm_member);
 
     if (src_rank == my_rank) {
       memcpy(dst_addr, src_addr, type_size);
@@ -496,8 +496,8 @@ _Bool _XMP_gmove_HOMECOPY_SCALAR(_XMP_array_t *array, ...) {
   }
 
   _XMP_template_t *ref_template = array->align_template;
-  _XMP_ASSERT(ref_template->is_distributed); // checked by compiler
-  _XMP_ERR_WHEN(!ref_template->is_owner);
+  _XMP_ASSERT(ref_template->is_distributed);
+  _XMP_ASSERT(ref_template->is_owner);
 
   va_list args;
   va_start(args, array);
@@ -711,7 +711,7 @@ void _XMP_gmove_LOCALCOPY_ARRAY(int type, size_t type_size, ...) {
 }
 
 void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size, ...) {
-  _XMP_ERR_WHEN(!(src_array->align_template)->is_owner);
+  _XMP_ASSERT((src_array->align_template)->is_owner);
 
   va_list args;
   va_start(args, type_size);
@@ -859,7 +859,7 @@ void _XMP_gmove_HOMECOPY_ARRAY(_XMP_array_t *dst_array, int type, size_t type_si
     return;
   }
 
-  _XMP_ERR_WHEN(!(dst_array->align_template)->is_owner);
+  _XMP_ASSERT((dst_array->align_template)->is_owner);
 
   va_list args;
   va_start(args, type_size);
