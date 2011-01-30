@@ -10,7 +10,6 @@
 #include "xmp_math_function.h"
 
 static void _XMP_calc_array_dim_elmts(_XMP_array_t *array, int array_index) {
-  _XMP_ASSERT(array != NULL);
   _XMP_ASSERT(array->is_allocated);
 
   int dim = array->dim;
@@ -27,8 +26,6 @@ static void _XMP_calc_array_dim_elmts(_XMP_array_t *array, int array_index) {
 
 void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int dim,
                                  int type, size_t type_size, ...) {
-  _XMP_ASSERT(template != NULL);
-
   _XMP_array_t *a = _XMP_alloc(sizeof(_XMP_array_t) + sizeof(_XMP_array_info_t) * (dim - 1));
 
   a->is_allocated = template->is_owner;
@@ -74,8 +71,6 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
 }
 
 void _XMP_finalize_array_desc(_XMP_array_t *array) {
-  _XMP_ASSERT(array != NULL);
-
   int dim = array->dim;
   for (int i = 0; i < dim; i++) {
     _XMP_array_info_t *ai = &(array->info[i]);
@@ -93,8 +88,6 @@ void _XMP_finalize_array_desc(_XMP_array_t *array) {
 }
 
 void _XMP_align_array_NOT_ALIGNED(_XMP_array_t *array, int array_index) {
-  _XMP_ASSERT(array != NULL);
-
   _XMP_array_info_t *ai = &(array->info[array_index]);
 
   int lower = ai->ser_lower;
@@ -124,8 +117,6 @@ void _XMP_align_array_NOT_ALIGNED(_XMP_array_t *array, int array_index) {
 
 void _XMP_align_array_DUPLICATION(_XMP_array_t *array, int array_index, int template_index,
                                          long long align_subscript) {
-  _XMP_ASSERT(array != NULL);
-
   _XMP_template_t *template = array->align_template;
   _XMP_ASSERT(template->is_fixed);
   _XMP_ASSERT(template->is_distributed);
@@ -170,8 +161,6 @@ void _XMP_align_array_DUPLICATION(_XMP_array_t *array, int array_index, int temp
 
 void _XMP_align_array_BLOCK(_XMP_array_t *array, int array_index, int template_index,
                                    long long align_subscript, int *temp0) {
-  _XMP_ASSERT(array != NULL);
-
   _XMP_template_t *template = array->align_template;
   _XMP_ASSERT(template->is_fixed);
   _XMP_ASSERT(template->is_distributed);
@@ -243,8 +232,6 @@ EXIT_CALC_PARALLEL_MEMBERS:
 
 void _XMP_align_array_CYCLIC(_XMP_array_t *array, int array_index, int template_index,
                                     long long align_subscript, int *temp0) {
-  _XMP_ASSERT(array != NULL);
-
   _XMP_template_t *template = array->align_template;
   _XMP_ASSERT(template->is_fixed);
   _XMP_ASSERT(template->is_distributed);
@@ -293,8 +280,6 @@ void _XMP_align_array_CYCLIC(_XMP_array_t *array, int array_index, int template_
 }
 
 void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...) {
-  _XMP_ASSERT(array_desc != NULL);
-
   if (!array_desc->is_allocated) {
     *array_addr = NULL;
     return;
@@ -326,8 +311,6 @@ void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...) {
 }
 
 void _XMP_init_array_alloc_params(void **array_addr, _XMP_array_t *array_desc, ...) {
-  _XMP_ASSERT(array_desc != NULL);
-
   if (!array_desc->is_allocated) {
     return;
   }
@@ -357,9 +340,6 @@ void _XMP_init_array_alloc_params(void **array_addr, _XMP_array_t *array_desc, .
 
 void _XMP_init_array_addr(void **array_addr, void *init_addr,
                                  _XMP_array_t *array_desc, ...) {
-  _XMP_ASSERT(init_addr != NULL);
-  _XMP_ASSERT(array_desc != NULL);
-
   if (!array_desc->is_allocated) {
     *array_addr = NULL;
     return;
@@ -391,8 +371,6 @@ void _XMP_init_array_addr(void **array_addr, void *init_addr,
 }
 
 void _XMP_init_array_comm(_XMP_array_t *array, ...) {
-  _XMP_ASSERT(array != NULL);
-
   _XMP_template_t *align_template = array->align_template;
   _XMP_ASSERT(align_template->is_distributed);
 
@@ -441,8 +419,6 @@ void _XMP_init_array_comm(_XMP_array_t *array, ...) {
 }
 
 unsigned long long _XMP_get_array_total_elmts(_XMP_array_t *array) {
-  _XMP_ASSERT(array != NULL);
-
   if (array->is_allocated) {
     return array->total_elmts;
   }

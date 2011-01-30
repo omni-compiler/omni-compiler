@@ -20,14 +20,10 @@ void *_XMP_alloc(size_t size) {
 }
 
 void _XMP_free(void *p) {
-  _XMP_ASSERT(p != NULL);
-
   free(p);
 }
 
 void _XMP_fatal(char *msg) {
-  _XMP_ASSERT(msg != NULL);
-
   fprintf(stderr, "[RANK:%d] XcalableMP runtime error: %s\n", _XMP_world_rank, msg);
   MPI_Abort(MPI_COMM_WORLD, 1);
 }

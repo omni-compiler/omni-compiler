@@ -7,8 +7,6 @@
 #include "xmp_internal.h"
 
 void _XMP_barrier_NODES_ENTIRE(_XMP_nodes_t *nodes) {
-  _XMP_ASSERT(nodes != NULL);
-
   if (nodes->is_member) {
     MPI_Barrier(*(nodes->comm));
   }
