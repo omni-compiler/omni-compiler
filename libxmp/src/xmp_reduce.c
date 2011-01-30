@@ -17,9 +17,6 @@ static void _XMP_compare_reduce_results(_Bool *cmp_buffer, void *temp_buffer, vo
 static void _XMP_init_localtion_variables(void *loc, int count, int loc_datatype, _Bool *cmp_buffer, int op);
 
 static void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype) {
-  _XMP_ASSERT(mpi_datatype != NULL);
-  _XMP_ASSERT(datatype_size != NULL);
-
   switch (datatype) {
 //  case _XMP_N_TYPE_BOOL:
 //    { *mpi_datatype = MPI_C_BOOL;			*datatype_size = sizeof(_Bool); 			break; }
@@ -67,8 +64,6 @@ static void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_
 }
 
 static void _XMP_setup_reduce_op(MPI_Op *mpi_op, int op) {
-  _XMP_ASSERT(mpi_op != NULL);
-
   switch (op) {
     case _XMP_N_REDUCE_SUM:
       *mpi_op = MPI_SUM;
@@ -118,8 +113,6 @@ static void _XMP_setup_reduce_op(MPI_Op *mpi_op, int op) {
 }
 
 static void _XMP_setup_reduce_FLMM_op(MPI_Op *mpi_op, int op) {
-  _XMP_ASSERT(mpi_op != NULL);
-
   switch (op) {
     case _XMP_N_REDUCE_FIRSTMAX:
     case _XMP_N_REDUCE_FIRSTMIN:
@@ -146,10 +139,6 @@ static void _XMP_setup_reduce_FLMM_op(MPI_Op *mpi_op, int op) {
 }
 
 static void _XMP_compare_reduce_results(_Bool *cmp_buffer, void *temp_buffer, void *addr, int count, int datatype) {
-  _XMP_ASSERT(cmp_buffer != NULL);
-  _XMP_ASSERT(temp_buffer != NULL);
-  _XMP_ASSERT(addr != NULL);
-
   switch (datatype) {
     case _XMP_N_TYPE_BOOL:			_XMP_M_COMPARE_REDUCE_RESULTS_MAIN(_Bool);
     case _XMP_N_TYPE_CHAR:			_XMP_M_COMPARE_REDUCE_RESULTS_MAIN(char);
@@ -201,9 +190,6 @@ static void _XMP_compare_reduce_results(_Bool *cmp_buffer, void *temp_buffer, vo
 }
 
 static void _XMP_init_localtion_variables(void *loc, int count, int loc_datatype, _Bool *cmp_buffer, int op) {
-  _XMP_ASSERT(loc != NULL);
-  _XMP_ASSERT(cmp_buffer != NULL);
-
   switch (loc_datatype) {
     case _XMP_N_TYPE_CHAR:		_XMP_M_INIT_LOCATION_VARIABLES_MAIN(char, SCHAR_MIN, SCHAR_MAX);
     case _XMP_N_TYPE_UNSIGNED_CHAR:	_XMP_M_INIT_LOCATION_VARIABLES_MAIN(unsigned char, 0, UCHAR_MAX);
@@ -221,9 +207,6 @@ static void _XMP_init_localtion_variables(void *loc, int count, int loc_datatype
 }
 
 void _XMP_reduce_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op) {
-  _XMP_ASSERT(nodes != NULL);
-  _XMP_ASSERT(addr != NULL);
-
   if (count == 0) {
     return; // FIXME not good implementation
   }
@@ -248,9 +231,6 @@ void _XMP_reduce_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int da
 void _XMP_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes,
                                    void *addr, int count, int datatype, int op,
                                    int num_locs, ...) {
-  _XMP_ASSERT(nodes != NULL);
-  _XMP_ASSERT(addr != NULL);
-
   if (count == 0) {
     return; // FIXME not good implementation
   }
@@ -306,8 +286,6 @@ void _XMP_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes,
 // _XMP_M_REDUCE_FLMM_EXEC(addr, count, datatype, op, num_locs, ...) is in xmp_comm_macro.h
 
 void _XMP_reduce_CLAUSE(void *data_addr, int count, int datatype, int op) {
-  _XMP_ASSERT(data_addr != NULL);
-
   // setup information
   MPI_Datatype mpi_datatype;
   size_t datatype_size; // not used in this function
@@ -320,8 +298,6 @@ void _XMP_reduce_CLAUSE(void *data_addr, int count, int datatype, int op) {
 }
 
 void _XMP_reduce_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, int num_locs, ...) {
-  _XMP_ASSERT(data_addr != NULL);
-
   _XMP_nodes_t *nodes = _XMP_get_execution_nodes();
   _XMP_ASSERT(nodes->is_member);
 
@@ -370,8 +346,6 @@ void _XMP_reduce_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, i
 }
 
 void _XMP_init_reduce_comm_NODES(_XMP_nodes_t *nodes, ...) {
-  _XMP_ASSERT(nodes != NULL);
-
   if (!nodes->is_member) {
     _XMP_fatal("cannot create a new communicator for reduction");
   }
@@ -402,7 +376,6 @@ void _XMP_init_reduce_comm_NODES(_XMP_nodes_t *nodes, ...) {
 }
 
 void _XMP_init_reduce_comm_TEMPLATE(_XMP_template_t *template, ...) {
-  _XMP_ASSERT(template != NULL);
   _XMP_ASSERT(template->is_distributed);
 
   _XMP_nodes_t *onto_nodes = template->onto_nodes;

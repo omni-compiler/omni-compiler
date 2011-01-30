@@ -98,10 +98,6 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NUMBER(int dim, int ref_lower,
 
 static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NAMED(int dim, _XMP_nodes_t *ref_nodes,
                                                                       int *ref_lower, int *ref_upper, int *ref_stride) {
-  _XMP_ASSERT(ref_nodes != NULL);
-  _XMP_ASSERT(ref_lower != NULL);
-  _XMP_ASSERT(ref_upper != NULL);
-  _XMP_ASSERT(ref_stride != NULL);
   _XMP_ASSERT(ref_nodes->is_member);
 
   int comm_size = 1;
@@ -151,7 +147,6 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NAMED(int dim, _XMP_nodes_t *r
 }
 
 static void _XMP_calc_nodes_rank(_XMP_nodes_t *n, int linear_rank) {
-  _XMP_ASSERT(n != NULL);
   _XMP_ASSERT(n->is_member);
 
   int acc_size = 1;
@@ -164,7 +159,6 @@ static void _XMP_calc_nodes_rank(_XMP_nodes_t *n, int linear_rank) {
 }
 
 static void _XMP_disable_nodes_rank(_XMP_nodes_t *n) {
-  _XMP_ASSERT(n != NULL);
   _XMP_ASSERT(!n->is_member);
 
   int dim = n->dim;
@@ -174,8 +168,6 @@ static void _XMP_disable_nodes_rank(_XMP_nodes_t *n) {
 }
 
 static void _XMP_check_nodes_size_STATIC(_XMP_nodes_t *n, int linear_size) {
-  _XMP_ASSERT(n != NULL);
-
   int acc_size = 1;
   int dim = n->dim;
   for (int i = 0; i < dim; i++) {
@@ -188,8 +180,6 @@ static void _XMP_check_nodes_size_STATIC(_XMP_nodes_t *n, int linear_size) {
 }
 
 static void _XMP_check_nodes_size_DYNAMIC(_XMP_nodes_t *n, int linear_size, int linear_rank) {
-  _XMP_ASSERT(n != NULL);
-
   int acc_size = 1;
   int dim = n->dim;
   for (int i = 0; i < dim - 1; i++) {
@@ -231,10 +221,6 @@ static _Bool _XMP_check_nodes_ref_inclusion(int lower, int upper, int stride, in
 
 // XXX args are 1-origin
 void _XMP_validate_nodes_ref(int *lower, int *upper, int *stride, int size) {
-  _XMP_ASSERT(lower != NULL);
-  _XMP_ASSERT(upper != NULL);
-  _XMP_ASSERT(stride != NULL);
-
   // setup temporary variables
   int l, u, s = *(stride);
   if (s > 0) {
@@ -449,8 +435,6 @@ void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(int map_type, _XMP_nodes_t **nodes, in
 
 void _XMP_init_nodes_STATIC_NODES_NAMED(int get_upper, int map_type, _XMP_nodes_t **nodes, int dim,
                                                _XMP_nodes_t *ref_nodes, ...) {
-  _XMP_ASSERT(ref_nodes != NULL);
-
   if (!ref_nodes->is_member) {
     _XMP_fatal("cannot create a new nodes descriptor");
   }
@@ -504,8 +488,6 @@ void _XMP_init_nodes_STATIC_NODES_NAMED(int get_upper, int map_type, _XMP_nodes_
 
 void _XMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, int map_type, _XMP_nodes_t **nodes, int dim,
                                                _XMP_nodes_t *ref_nodes, ...) {
-  _XMP_ASSERT(ref_nodes != NULL);
-
   if (!ref_nodes->is_member) {
     _XMP_fatal("cannot create a new nodes descriptor");
   }
@@ -558,8 +540,6 @@ void _XMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, int map_type, _XMP_nodes
 }
 
 void _XMP_finalize_nodes(_XMP_nodes_t *nodes) {
-  _XMP_ASSERT(nodes != NULL);
-
   if (nodes->is_member) {
     _XMP_finalize_comm(nodes->comm);
   }
@@ -582,8 +562,6 @@ _Bool _XMP_exec_task_GLOBAL_PART(int ref_lower, int ref_upper, int ref_stride) {
 }
 
 _Bool _XMP_exec_task_NODES_ENTIRE(_XMP_nodes_t *ref_nodes) {
-  _XMP_ASSERT(ref_nodes != NULL);
-
   if (ref_nodes->is_member) {
     _XMP_push_nodes(ref_nodes);
     return true;
@@ -594,8 +572,6 @@ _Bool _XMP_exec_task_NODES_ENTIRE(_XMP_nodes_t *ref_nodes) {
 }
 
 _Bool _XMP_exec_task_NODES_PART(int get_upper, _XMP_nodes_t *ref_nodes, ...) {
-  _XMP_ASSERT(ref_nodes != NULL);
-
   if (!ref_nodes->is_member) {
     return false;
   }
@@ -651,8 +627,6 @@ _Bool _XMP_exec_task_NODES_PART(int get_upper, _XMP_nodes_t *ref_nodes, ...) {
 }
 
 _XMP_nodes_t *_XMP_create_nodes_by_comm(MPI_Comm *comm) {
-  _XMP_ASSERT(comm != NULL);
-
   int size, rank;
   MPI_Comm_size(*comm, &size);
   MPI_Comm_rank(*comm, &rank);

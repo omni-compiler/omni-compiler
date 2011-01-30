@@ -16,8 +16,6 @@ static _Bool _XMP_check_template_ref_inclusion(long long ref_lower, long long re
                                                       _XMP_template_chunk_t *chunk);
 
 static void _XMP_calc_template_size(_XMP_template_t *t) {
-  _XMP_ASSERT(t != NULL);
-
   int dim;
   if (t->is_fixed) {
     dim = t->dim;
@@ -40,10 +38,6 @@ static void _XMP_calc_template_size(_XMP_template_t *t) {
 
 static void _XMP_validate_template_ref(long long *lower, long long *upper, int *stride,
                                               long long lb, long long ub) {
-  _XMP_ASSERT(lower != NULL);
-  _XMP_ASSERT(upper != NULL);
-  _XMP_ASSERT(stride != NULL);
-
   // setup temporary variables
   long long l, u;
   int s = *stride;
@@ -89,8 +83,6 @@ static void _XMP_validate_template_ref(long long *lower, long long *upper, int *
 
 static _Bool _XMP_check_template_ref_inclusion(long long ref_lower, long long ref_upper, int ref_stride,
                                                       _XMP_template_chunk_t *chunk) {
-  _XMP_ASSERT(chunk != NULL);
-
   switch (chunk->dist_manner) {
     case _XMP_N_DIST_DUPLICATION:
       return true;
@@ -223,9 +215,6 @@ void _XMP_init_template_UNFIXED(_XMP_template_t **template, int dim, ...) {
 }
 
 void _XMP_init_template_chunk(_XMP_template_t *template, _XMP_nodes_t *nodes) {
-  _XMP_ASSERT(template != NULL);
-  _XMP_ASSERT(nodes != NULL);
-
   template->is_distributed = true;
   template->is_owner = nodes->is_member;
 
@@ -234,8 +223,6 @@ void _XMP_init_template_chunk(_XMP_template_t *template, _XMP_nodes_t *nodes) {
 }
 
 void _XMP_finalize_template(_XMP_template_t *template) {
-  _XMP_ASSERT(template != NULL);
-
   if (template->is_distributed) {
     _XMP_free(template->chunk);
   }
@@ -244,7 +231,6 @@ void _XMP_finalize_template(_XMP_template_t *template) {
 }
 
 void _XMP_dist_template_DUPLICATION(_XMP_template_t *template, int template_index) {
-  _XMP_ASSERT(template != NULL);
   _XMP_ASSERT(template->is_fixed);
   _XMP_ASSERT(template->is_distributed);
 
@@ -264,7 +250,6 @@ void _XMP_dist_template_DUPLICATION(_XMP_template_t *template, int template_inde
 }
 
 void _XMP_dist_template_BLOCK(_XMP_template_t *template, int template_index, int nodes_index) {
-  _XMP_ASSERT(template != NULL);
   _XMP_ASSERT(template->is_fixed);
   _XMP_ASSERT(template->is_distributed);
 
@@ -310,7 +295,6 @@ void _XMP_dist_template_BLOCK(_XMP_template_t *template, int template_index, int
 }
 
 void _XMP_dist_template_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index) {
-  _XMP_ASSERT(template != NULL);
   _XMP_ASSERT(template->is_fixed);
   _XMP_ASSERT(template->is_distributed);
 
@@ -373,7 +357,6 @@ void _XMP_dist_template_CYCLIC(_XMP_template_t *template, int template_index, in
 }
 
 _Bool _XMP_exec_task_TEMPLATE_PART(int get_upper, _XMP_template_t *ref_template, ...) {
-  _XMP_ASSERT(ref_template != NULL);
   _XMP_ASSERT(ref_template->is_fixed);
   _XMP_ASSERT(ref_template->is_distributed);
 
