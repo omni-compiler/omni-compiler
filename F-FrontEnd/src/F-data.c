@@ -612,36 +612,65 @@ isValidDataDecl(expr x)
 #endif /* DATA_C_IMPL */
 
 
+/* static void */
+/* fixIdTypesInDataDecl(expr vList) */
+/* { */
+/*     list lp; */
+/*     expr x; */
+/*     expr iX; */
+/*     ID id; */
+
+/*     FOR_ITEMS_IN_LIST(lp, vList) { */
+/*         iX = NULL; */
+/*         x = LIST_ITEM(lp); */
+/*         switch (EXPR_CODE(x)) { */
+/*             case IDENT: { */
+/*                 iX = x; */
+/*                 break; */
+/*             } */
+/*             case F_ARRAY_REF: { */
+/*                 iX = EXPR_ARG1(x); */
+/*                 break; */
+/*             } */
+/*             default: { */
+/*                 break; */
+/*             } */
+/*         } */
+/*         if (iX == NULL || EXPR_CODE(iX) != IDENT) { */
+/*             continue; */
+/*         } */
+/*         id = find_ident(EXPR_SYM(iX)); */
+/*         fix_type(id); */
+/*     } */
+/* } */
+
 static void
-fixIdTypesInDataDecl(expr vList)
+fixIdTypesInDataDecl(expr x)
 {
-    list lp;
-    expr x;
     expr iX;
     ID id;
 
-    FOR_ITEMS_IN_LIST(lp, vList) {
-        iX = NULL;
-        x = LIST_ITEM(lp);
-        switch (EXPR_CODE(x)) {
-            case IDENT: {
-                iX = x;
-                break;
-            }
-            case F_ARRAY_REF: {
-                iX = EXPR_ARG1(x);
-                break;
-            }
-            default: {
-                break;
-            }
-        }
-        if (iX == NULL || EXPR_CODE(iX) != IDENT) {
-            continue;
-        }
-        id = find_ident(EXPR_SYM(iX));
-        fix_type(id);
+    switch (EXPR_CODE(x)) {
+    case IDENT: {
+      iX = x;
+      break;
     }
+    case F_ARRAY_REF: {
+      iX = EXPR_ARG1(x);
+      break;
+    }
+    default: {
+      break;
+    }
+    }
+
+    if (iX == NULL || EXPR_CODE(iX) != IDENT) {
+      return;
+    }
+
+    id = find_ident(EXPR_SYM(iX));
+    if (!id) id = declare_ident(EXPR_SYM(iX), CL_VAR);
+    fix_type(id);
 }
 
 
@@ -688,14 +717,17 @@ compile_DATA_decl(expr x)
 
     /*
      * x: (LIST (LIST (IDENT+) LIST (VALUES)))
+     * x => (LIST ((LIST m n) (LIST 5 6)) ((LIST p) (LIST 7)))
      */
 
     FOR_ITEMS_IN_LIST(lp, x) {
-        varAndVal = LIST_ITEM(lp); 
+        varAndVal = LIST_ITEM(lp);
+	/* varAndVal => ((LIST m n) (LIST 5 6)) */
 
-        FOR_ITEMS_IN_LIST(lp1, EXPR_ARG1(varAndVal)) {
-            lx = LIST_ITEM(lp1);
-            fixIdTypesInDataDecl(lx);
+	FOR_ITEMS_IN_LIST(lp1, EXPR_ARG1(varAndVal)) {
+	  lx = LIST_ITEM(lp1);
+	  /* lx => m */
+	  fixIdTypesInDataDecl(lx);
         }
 
 #ifdef DATA_C_IMPL
