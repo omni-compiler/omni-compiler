@@ -550,8 +550,14 @@ void compile_statement1(int st_no, expr x)
         if(EXPR_ARG2(x)){
             compile_exec_statement(EXPR_ARG2(x));
             CTL_IF_THEN(ctl_top) = CURRENT_STATEMENTS;
-	    if (endlineno_flag)
-	      EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+	    if (endlineno_flag){
+	      if (current_line->end_ln_no){
+		EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->end_ln_no;
+	      }
+	      else {
+		EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+	      }
+	    }
             pop_ctl();  /* pop and output */
             break;
         }

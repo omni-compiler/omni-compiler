@@ -2105,25 +2105,31 @@ top:
     st_PRAGMA_flag = FALSE;
     st_OMP_flag = FALSE;
 
-    if (strncasecmp(&stn_cols[1],"$omp",4) == 0) {
+    if (stn_cols[0] == 'c'){
+
+      if (strncasecmp(&stn_cols[1],"$omp",4) == 0){
         st_OMP_flag = TRUE;
         set_pragma_str(&stn_cols[2]);
         append_pragma_str (line_buffer);
         goto copy_body;
-
-    } else if (stn_cols[1] == '$') {
+      }
+      else if (stn_cols[1] == '$' && stn_cols[2] != '$'){
         st_PRAGMA_flag = TRUE;
         set_pragma_str(&stn_cols[2]);
         append_pragma_str (line_buffer);
         if (debug_flag)
-            printf("pragmaString(%s)\n", pragmaString);
+	  printf("pragmaString(%s)\n", pragmaString);
         goto copy_body;
+      }
+      else { /* comment line */
+	goto top;
+      }
     }
 
-    if (strncasecmp(&stn_cols[1],"$omp",4) == 0) {
-        st_OMP_flag = TRUE;
-	goto copy_body;
-    }
+/*     if (strncasecmp(&stn_cols[1],"$omp",4) == 0) { */
+/*         st_OMP_flag = TRUE; */
+/* 	goto copy_body; */
+/*     } */
 
     /* get line number */
     for (p = stn_cols, i = 0; *p != '\0' && i < 5; p++, i++) {
@@ -2213,6 +2219,11 @@ copy_body:
         }
         /* oBuf <= st_buffer, copy back */
         memcpy(oBuf, st_buffer, st_len);
+
+    if (endlineno_flag)
+      if (current_line->ln_no != read_lineno.ln_no)
+	current_line->end_ln_no = read_lineno.ln_no;
+
     }
 
     if (last_char_in_quote_is_quote){
@@ -2225,10 +2236,6 @@ copy_body:
     *q = '\0';                  /* termination */
 
 Done:
-
-    if (endlineno_flag)
-      if (current_line->ln_no != read_lineno.ln_no - 1)
-	current_line->end_ln_no = read_lineno.ln_no - 1;
 
     st_PRAGMA_flag = current_st_PRAGMA_flag;
 
@@ -2363,7 +2370,8 @@ next_line0:
         return(ST_EOF);
     case '\n':
         /* blank line */
-        goto next_line;
+      //goto next_line;
+      return ST_INIT;
     default:
         /* read line number column */
         ungetc(c,source_file);
@@ -2384,8 +2392,24 @@ next_line0:
 		  ungetc(c,source_file);
                 break;
             } else if (c == '\t') {
+
+	      while (i < 5) stn_cols[i++] = ' ';
+
+	      c = getc(source_file);
+
+	      if (c >= '1' && c <= '9'){
+		/* TAB + digit indicates a continuation line */
+		stn_cols[i] = '1';
+	      }
+	      else {
+                /* skips to column 7 */
+		stn_cols[i] = ' ';
+		ungetc(c, source_file);
+	      }
+
                 /* TAB in col 1-6 skips to column 7 */
-                while (i < 6) stn_cols[i++] = ' ';
+                //while (i < 6) stn_cols[i++] = ' ';
+
                 break;
             } else {
 	      if (PRAGMA_flag)
