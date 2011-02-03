@@ -2113,15 +2113,16 @@ top:
         append_pragma_str (line_buffer);
         goto copy_body;
       }
-      else if (stn_cols[1] == '$' && stn_cols[2] != '$'){
-        st_PRAGMA_flag = TRUE;
-        set_pragma_str(&stn_cols[2]);
-        append_pragma_str (line_buffer);
-        if (debug_flag)
-	  printf("pragmaString(%s)\n", pragmaString);
-        goto copy_body;
-      }
+/*       else if (stn_cols[1] == '$' && stn_cols[2] != '$'){ */
+/*         st_PRAGMA_flag = TRUE; */
+/*         set_pragma_str(&stn_cols[2]); */
+/*         append_pragma_str (line_buffer); */
+/*         if (debug_flag) */
+/* 	  printf("pragmaString(%s)\n", pragmaString); */
+/*         goto copy_body; */
+/*       } */
       else { /* comment line */
+	pre_read = 0;
 	goto top;
       }
     }
@@ -2370,8 +2371,7 @@ next_line0:
         return(ST_EOF);
     case '\n':
         /* blank line */
-      //goto next_line;
-      return ST_INIT;
+      goto next_line;
     default:
         /* read line number column */
         ungetc(c,source_file);
