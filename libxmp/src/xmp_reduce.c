@@ -10,12 +10,6 @@
 #include "xmp_constant.h"
 #include "xmp_internal.h"
 
-static void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype);
-static void _XMP_setup_reduce_op(MPI_Op *mpi_op, int op);
-static void _XMP_setup_reduce_FLMM_op(MPI_Op *mpi_op, int op);
-static void _XMP_compare_reduce_results(_Bool *cmp_buffer, void *temp_buffer, void *addr, int count, int datatype);
-static void _XMP_init_localtion_variables(void *loc, int count, int loc_datatype, _Bool *cmp_buffer, int op);
-
 static void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype) {
   switch (datatype) {
 //  case _XMP_N_TYPE_BOOL:

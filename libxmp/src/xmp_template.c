@@ -9,12 +9,6 @@
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
-static void _XMP_calc_template_size(_XMP_template_t *t);
-static void _XMP_validate_template_ref(long long *lower, long long *upper, int *stride,
-                                              long long lb, long long ub);
-static _Bool _XMP_check_template_ref_inclusion(long long ref_lower, long long ref_upper, int ref_stride,
-                                                      _XMP_template_chunk_t *chunk);
-
 static void _XMP_calc_template_size(_XMP_template_t *t) {
   int dim;
   if (t->is_fixed) {

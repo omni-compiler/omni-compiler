@@ -16,24 +16,6 @@ typedef struct _XMP_bcast_array_section_info_type {
   int stride;
 } _XMP_bcast_array_section_info_t;
 
-// ----- static functions --------------------------------------------------------------------------------------------------------
-static int _XMP_convert_rank_array_to_rank(_XMP_nodes_t *nodes, int *rank_array);
-static int _XMP_calc_gmove_template_owner_SCALAR(_XMP_template_t *template, int dim_index, long long ref_index);
-static int _XMP_calc_gmove_array_owner_rank_SCALAR(_XMP_array_t *array, int *ref_index);
-static void _XMP_gmove_bcast_SCALAR(_XMP_array_t *array, void *dst_addr, void *src_addr,
-                                           size_t type_size, int src_rank);
-static _Bool _XMP_check_gmove_array_ref_inclusion_SCALAR(_XMP_array_t *array, int array_index, int ref_index);
-static int _XMP_calc_gmove_target_nodes_size(_XMP_nodes_t *nodes, int *rank_array);
-static _Bool _XMP_calc_local_copy_template_BLOCK(_XMP_template_chunk_t *chunk,
-                                                        long long *lower, long long *upper, int s);
-static _Bool _XMP_calc_local_copy_template_CYCLIC1(_XMP_template_chunk_t *chunk,
-                                                          long long *lower, long long u, int *stride);
-static _Bool _XMP_calc_local_copy_home_ref(_XMP_array_t *dst_array, int dst_dim_index,
-                                                  int *dst_l, int *dst_u, int *dst_s,
-                                                  int *src_l, int *src_u, int *src_s);
-static void _XMP_calc_array_local_index_triplet(_XMP_array_t *array,
-                                                       int dim_index, int *lower, int *upper, int *stride);
-
 static int _XMP_convert_rank_array_to_rank(_XMP_nodes_t *nodes, int *rank_array) {
   _Bool is_valid = false;
   int acc_rank = 0;
@@ -108,7 +90,7 @@ static int _XMP_calc_gmove_array_owner_rank_SCALAR(_XMP_array_t *array, int *ref
 }
 
 static void _XMP_gmove_bcast_SCALAR(_XMP_array_t *array, void *dst_addr, void *src_addr,
-                                           size_t type_size, int src_rank) {
+                                    size_t type_size, int src_rank) {
   _XMP_nodes_t *onto_nodes = (array->align_template)->onto_nodes;
   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
   _XMP_ASSERT(exec_nodes->is_member);
@@ -224,7 +206,7 @@ static int _XMP_calc_gmove_target_nodes_size(_XMP_nodes_t *nodes, int *rank_arra
 }
 
 static _Bool _XMP_calc_local_copy_template_BLOCK(_XMP_template_chunk_t *chunk,
-                                                        long long *lower, long long *upper, int s) {
+                                                 long long *lower, long long *upper, int s) {
   long long l = *lower;
   long long u = *upper;
   long long template_lower = chunk->par_lower;
@@ -273,7 +255,7 @@ static _Bool _XMP_calc_local_copy_template_BLOCK(_XMP_template_chunk_t *chunk,
 
 // XXX used when ref_stride is 1
 static _Bool _XMP_calc_local_copy_template_CYCLIC1(_XMP_template_chunk_t *chunk,
-                                                          long long *lower, long long u, int *stride) {
+                                                   long long *lower, long long u, int *stride) {
   long long l = *lower;
   long long template_lower = chunk->par_lower;
   int nodes_size = chunk->onto_nodes_info->size;
@@ -304,8 +286,8 @@ static _Bool _XMP_calc_local_copy_template_CYCLIC1(_XMP_template_chunk_t *chunk,
 }
 
 static _Bool _XMP_calc_local_copy_home_ref(_XMP_array_t *dst_array, int dst_dim_index,
-                                                  int *dst_l, int *dst_u, int *dst_s,
-                                                  int *src_l, int *src_u, int *src_s) {
+                                           int *dst_l, int *dst_u, int *dst_s,
+                                           int *src_l, int *src_u, int *src_s) {
   if (_XMP_M_COUNT_TRIPLETi(*dst_l, *dst_u, *dst_s) != _XMP_M_COUNT_TRIPLETi(*src_l, *src_u, *src_s)) {
     _XMP_fatal("wrong assign statement"); // FIXME fix error msg
   }
@@ -375,7 +357,7 @@ static _Bool _XMP_calc_local_copy_home_ref(_XMP_array_t *dst_array, int dst_dim_
 }
 
 static void _XMP_calc_array_local_index_triplet(_XMP_array_t *array,
-                                                       int dim_index, int *lower, int *upper, int *stride) {
+                                                int dim_index, int *lower, int *upper, int *stride) {
   _XMP_array_info_t *array_info = &(array->info[dim_index]);
   if ((array_info->align_template_index) != _XMP_N_NO_ALIGNED_TEMPLATE) {
     int dist_manner = (array_info->align_template_chunk)->dist_manner;
@@ -939,7 +921,7 @@ static int _XMP_calc_SENDRECV_owner(_XMP_array_t *array, int *lower, int *upper,
 
 // FIXME does not has complete function for general usage
 static void _XMP_calc_SENDRECV_index_ref(int n, int target_rank, _XMP_array_t *array, int dim_index,
-                                                int *lower, int *upper, int *stride) {
+                                         int *lower, int *upper, int *stride) {
   _XMP_array_info_t *array_info = &(array->info[dim_index]);
   if ((array_info->align_template_index) == _XMP_N_NO_ALIGNED_TEMPLATE) {
     *lower = target_rank * n;

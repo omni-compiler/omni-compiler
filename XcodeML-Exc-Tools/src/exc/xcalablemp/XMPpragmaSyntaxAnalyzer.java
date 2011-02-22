@@ -239,6 +239,13 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       pg_get_token();
       args = parse_GMOVE_clause();
     }
+    else if (pg_is_ident("coarray")) {
+      pragmaDir = XMPpragma.COARRAY;
+      syntax = PragmaSyntax.SYN_DECL;
+
+      pg_get_token();
+      args = parse_COARRAY_clause();
+    }
     else {
       error("unknown XcalableMP directive, '" + pg_tok_buf() + "'");
     }
@@ -705,11 +712,11 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
     do {
       pg_get_token();
-      if (pg_tok() != PG_IDENT) {
-        error("<variable> for bcast directive is expected");
+      if (pg_tok() == PG_IDENT) {
+        varList.add(Xcons.String(pg_tok_buf()));
       }
       else {
-        varList.add(Xcons.String(pg_tok_buf()));
+        error("<variable> for bcast directive is expected");
       }
 
       pg_get_token();
@@ -972,6 +979,36 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     else gmoveClause = Xcons.IntConstant(XMPcollective.GMOVE_NORMAL);
 
     return Xcons.List(gmoveClause);
+  }
+
+  private XobjList parse_COARRAY_clause() throws XmException, XMPexception {
+    XobjString coarrayName = null;
+    if (pg_tok() == PG_IDENT) {
+      coarrayName = Xcons.String(pg_tok_buf());
+    }
+    else {
+      error("<coarray-name> for coarray directive is expected");
+    }
+
+    Xobject coarrayDim = null;
+    pg_get_token();
+    if (pg_tok() == '[') {
+      pg_get_token();
+      if (pg_tok() == '*') {
+        pg_get_token();
+      }
+      else {
+        coarrayDim = pg_parse_expr();
+      }
+
+      if (pg_tok() != ']') {
+        error("']' is expected after <coarray-dim>");
+      }
+
+      pg_get_token();
+    }
+
+    return Xcons.List(coarrayName, coarrayDim);
   }
 
   private XobjList parse_THREADS_clause() throws XmException, XMPexception {

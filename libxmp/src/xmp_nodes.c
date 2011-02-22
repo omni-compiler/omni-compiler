@@ -11,20 +11,25 @@
 
 // XXX <nodes-ref> is { 1-ogigin in language | 0-origin in runtime }, needs converting
 
-static _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim);
-static _XMP_nodes_t *_XMP_init_nodes_struct_EXEC(int dim);
-static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NUMBER(int dim, int ref_lower, int ref_upper, int ref_stride);
-static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NAMED(int dim, _XMP_nodes_t *ref_nodes,
-                                                                      int *ref_lower, int *ref_upper, int *ref_stride);
-static void _XMP_calc_nodes_rank(_XMP_nodes_t *n, int linear_rank);
-static void _XMP_disable_nodes_rank(_XMP_nodes_t *n);
-static void _XMP_check_nodes_size_STATIC(_XMP_nodes_t *n, int linear_size);
-static void _XMP_check_nodes_size_DYNAMIC(_XMP_nodes_t *n, int linear_size, int linear_rank);
-static _Bool _XMP_check_nodes_ref_inclusion(int lower, int upper, int stride, int rank);
+static _Bool _XMP_check_nodes_ref_inclusion(int lower, int upper, int stride, int rank) {
+  if (rank < lower) {
+    return false;
+  }
+
+  if (rank > upper) {
+    return false;
+  }
+
+  if (((rank - lower) % stride) == 0) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
 
 static _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim) {
-  _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) +
-                                             sizeof(_XMP_nodes_info_t) * (dim - 1));
+  _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) + sizeof(_XMP_nodes_info_t) * (dim - 1));
 
   n->is_member = true;
   n->dim = dim;
@@ -42,8 +47,7 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_EXEC(int dim) {
   int size = exec_nodes->comm_size;
   int rank = exec_nodes->comm_rank;
 
-  _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) +
-                                             sizeof(_XMP_nodes_info_t) * (dim - 1));
+  _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) + sizeof(_XMP_nodes_info_t) * (dim - 1));
 
   n->is_member = true;
   n->dim = dim;
@@ -69,8 +73,7 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NUMBER(int dim, int ref_lower,
   }
   MPI_Comm_split(MPI_COMM_WORLD, color, _XMP_world_rank, comm);
 
-  _XMP_nodes_t *n = n = _XMP_alloc(sizeof(_XMP_nodes_t) +
-                                                 sizeof(_XMP_nodes_info_t) * (dim - 1));
+  _XMP_nodes_t *n = n = _XMP_alloc(sizeof(_XMP_nodes_t) + sizeof(_XMP_nodes_info_t) * (dim - 1));
 
   n->is_member = is_member;
   n->dim = dim;
@@ -97,7 +100,7 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NUMBER(int dim, int ref_lower,
 }
 
 static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NAMED(int dim, _XMP_nodes_t *ref_nodes,
-                                                                      int *ref_lower, int *ref_upper, int *ref_stride) {
+                                                        int *ref_lower, int *ref_upper, int *ref_stride) {
   _XMP_ASSERT(ref_nodes->is_member);
 
   int comm_size = 1;
@@ -199,23 +202,6 @@ static void _XMP_check_nodes_size_DYNAMIC(_XMP_nodes_t *n, int linear_size, int 
 
   if (n->is_member) {
     n->info[dim-1].rank = (linear_rank / acc_size) % end_size;
-  }
-}
-
-static _Bool _XMP_check_nodes_ref_inclusion(int lower, int upper, int stride, int rank) {
-  if (rank < lower) {
-    return false;
-  }
-
-  if (rank > upper) {
-    return false;
-  }
-
-  if (((rank - lower) % stride) == 0) {
-    return true;
-  }
-  else {
-    return false;
   }
 }
 

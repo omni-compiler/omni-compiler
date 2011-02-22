@@ -7,6 +7,7 @@
 package exc.xcalablemp;
 
 import exc.object.*;
+import exc.block.*;
 import java.util.Vector;
 
 public class XMPcoarray {
@@ -63,5 +64,37 @@ public class XMPcoarray {
 
   public int getWinId() {
     return _winId;
+  }
+
+  public static void translateCoarray(XobjList coarrayDecl, XMPglobalDecl globalDecl,
+                                      boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
+    // FIXME delete this after implementing
+    if (isLocalPragma) {
+      throw new XMPexception("coarray is now allowed in a function");
+    }
+
+    // start translation
+    XMPsymbolTable localXMPsymbolTable = null;
+    if (isLocalPragma) {
+      localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+    }
+
+    // find aligned array
+    String coarrayName = coarrayDecl.getArg(0).getString();
+    XMPalignedArray alignedArray = null;
+    if (isLocalPragma) {
+      alignedArray = localXMPsymbolTable.getXMPalignedArray(coarrayName);
+    }
+    else {
+      alignedArray = globalDecl.getXMPalignedArray(coarrayName);
+    }
+
+    // FIXME??? allow an aligned array to be a coarray?
+    if (alignedArray != null) {
+      throw new XMPexception("an aligned array cannot be declared as a coarray");
+    }
+
+    // FIXME delete this
+    System.out.println("coarray: " + coarrayName + "[" + coarrayDecl.getArg(1).toString() + "]");
   }
 }

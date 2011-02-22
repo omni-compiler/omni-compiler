@@ -10,11 +10,6 @@
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
-static void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index);
-static void _XMP_reflect_shadow_FULL_ALLGATHER(void *array_addr, _XMP_array_t *array_desc, int array_index);
-static void _XMP_reflect_shadow_FULL_ALLGATHERV(void *array_addr, _XMP_array_t *array_desc, int array_index);
-static void _XMP_reflect_shadow_FULL_BCAST(void *array_addr, _XMP_array_t *array_desc, int array_index);
-
 static void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index) {
   _XMP_nodes_t *onto_nodes = (array->align_template)->onto_nodes;
   if (!onto_nodes->is_member) {

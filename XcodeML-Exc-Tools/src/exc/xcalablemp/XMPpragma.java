@@ -26,6 +26,7 @@ public enum XMPpragma {
   BARRIER,
   REDUCTION,
   BCAST,
+  COARRAY,
   ;
 
   private String name = null;

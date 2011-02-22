@@ -29,15 +29,23 @@ public class XMPtranslateGlobalPragma {
 
     switch (XMPpragma.valueOf(pragmaName)) {
       case NODES:
-        { translateNodes(x);		break; }
+        translateNodes(x);
+        break;
       case TEMPLATE:
-        { translateTemplate(x);		break; }
+        translateTemplate(x);
+        break;
       case DISTRIBUTE:
-        { translateDistribute(x);	break; }
+        translateDistribute(x);
+        break;
       case ALIGN:
-        { translateAlign(x);		break; }
+        translateAlign(x);
+        break;
       case SHADOW:
-        { translateShadow(x);		break; }
+        translateShadow(x);
+        break;
+      case COARRAY:
+        translateCoarray(x);
+        break;
       default:
         throw new XMPexception("'" + pragmaName.toLowerCase() + "' directive is not supported yet");
     }
@@ -61,5 +69,9 @@ public class XMPtranslateGlobalPragma {
 
   private void translateShadow(Xobject shadowPragma) throws XMPexception {
     XMPshadow.translateShadow((XobjList)shadowPragma.getArg(1), _globalDecl, false, null);
+  }
+
+  private void translateCoarray(Xobject coarrayPragma) throws XMPexception {
+    XMPcoarray.translateCoarray((XobjList)coarrayPragma.getArg(1), _globalDecl, false, null);
   }
 }
