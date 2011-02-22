@@ -72,6 +72,48 @@ public class XMPtranslateGlobalPragma {
   }
 
   private void translateCoarray(Xobject coarrayPragma) throws XMPexception {
-    XMPcoarray.translateCoarray((XobjList)coarrayPragma.getArg(1), _globalDecl, false, null);
+    XobjList coarrayDecl = (XobjList)coarrayPragma.getArg(1);
+
+    String coarrayName = coarrayDecl.getArg(0).getString();
+    if(_globalDecl.getXMPcoarray(coarrayName) != null) {
+      throw new XMPexception("coarray " + coarrayName + " is already declared");
+    }
+
+    // FIXME allow an aligned array to be a coarray? check the specifications
+    if (_globalDecl.getXMPalignedArray(coarrayName) != null) {
+      throw new XMPexception("an aligned array cannot be declared as a coarray");
+    }
+
+    Ident varId = _globalDecl.findVarIdent(coarrayName);
+    if (varId == null) {
+      throw new XMPexception("coarray '" + coarrayName + "' is not declared");
+    }
+
+    Xtype elmtType = null;
+    Xtype varType = varId.Type();
+    if (varType.getKind() == Xtype.ARRAY) {
+      elmtType = varType.getArrayElementType();
+    }
+    else {
+      elmtType = varType;
+    }
+
+    // decl descriptors
+    Ident XMPdescId = _globalDecl.declStaticIdent(XMP.CAF_DESC_PREFIX_ + coarrayName, Xtype.voidPtrType);
+    Ident commDescId = null;
+    if (varId.getStorageClass() == StorageClass.EXTERN) {
+      commDescId = _globalDecl.declExternIdent(XMP.CAF_COMM_PREFIX_ + coarrayName, Xtype.voidPtrType);
+    }
+    else if (varId.getStorageClass() == StorageClass.STATIC) {
+      commDescId = _globalDecl.declStaticIdent(XMP.CAF_COMM_PREFIX_ + coarrayName, Xtype.voidPtrType);
+    }
+    else if (varId.getStorageClass() == StorageClass.EXTDEF) {
+      commDescId = _globalDecl.declGlobalIdent(XMP.CAF_COMM_PREFIX_ + coarrayName, Xtype.voidPtrType);
+    }
+    else {
+      throw new XMPexception("cannot declare coarray descriptor, '" + coarrayName +  "' has a wrong storage class");
+    }
+
+    // call init function
   }
 }

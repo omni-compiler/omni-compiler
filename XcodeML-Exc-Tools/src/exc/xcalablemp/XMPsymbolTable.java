@@ -11,10 +11,12 @@ import java.util.HashMap;
 public class XMPsymbolTable {
   private HashMap<String, XMPobject> _XMPobjectTable;
   private HashMap<String, XMPalignedArray> _XMPalignedArrayTable;
+  private HashMap<String, XMPcoarray> _XMPcoarrayTable;
 
   public XMPsymbolTable() {
     _XMPobjectTable = new HashMap<String, XMPobject>();
     _XMPalignedArrayTable = new HashMap<String, XMPalignedArray>();
+    _XMPcoarrayTable = new HashMap<String, XMPcoarray>();
   }
 
   public void putXMPobject(XMPobject o) {
@@ -47,5 +49,13 @@ public class XMPsymbolTable {
 
   public XMPalignedArray getXMPalignedArray(String name) {
     return _XMPalignedArrayTable.get(name);
+  }
+
+  public void putXMPcoarray(XMPcoarray array) {
+    _XMPcoarrayTable.put(array.getName(), array);
+  }
+
+  public XMPcoarray getXMPcoarray(String name) {
+    return _XMPcoarrayTable.get(name);
   }
 }

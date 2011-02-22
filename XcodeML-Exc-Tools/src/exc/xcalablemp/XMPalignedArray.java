@@ -274,7 +274,7 @@ public class XMPalignedArray {
       arrayId = funcBlockList.findLocalIdent(arrayName);
       if (arrayId != null) {
         if (arrayId.getStorageClass() != StorageClass.PARAM) {
-          throw new XMPexception("array '" + arrayName + "' is not a parameter");
+          throw new XMPexception("array '" + arrayName + "' is not a parameter of a function");
         }
       }
     }
@@ -343,7 +343,7 @@ public class XMPalignedArray {
         arrayAddrId = globalDecl.declGlobalIdent(XMP.ADDR_PREFIX_ + arrayName, Xtype.Pointer(arrayElmtType));
       }
       else {
-        throw new XMPexception("cannot align array '" + arrayName +  ", wrong storage class");
+        throw new XMPexception("cannot align array '" + arrayName + "', wrong storage class");
       }
 
       arrayDescId = globalDecl.declStaticIdent(XMP.DESC_PREFIX_ + arrayName, Xtype.voidPtrType);

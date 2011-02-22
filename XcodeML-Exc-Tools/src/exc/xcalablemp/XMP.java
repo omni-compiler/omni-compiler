@@ -15,9 +15,11 @@ import xcodeml.util.XmLog;
 public class XMP {
   public final static int MAX_DIM		= 7;
   public final static int NONBASIC_TYPE		= 599;
-  public final static String DESC_PREFIX_	= "_XMP_desc_";
-  public final static String ADDR_PREFIX_	= "_XMP_addr_";
-  public final static String GTOL_PREFIX_	= "_XMP_gtol_";
+  public final static String DESC_PREFIX_	= "_XMP_DESC_";
+  public final static String CAF_DESC_PREFIX_	= "_XMP_CAF_DESC_";
+  public final static String CAF_COMM_PREFIX_	= "_XMP_CAF_COMM_";
+  public final static String ADDR_PREFIX_	= "_XMP_ADDR_";
+  public final static String GTOL_PREFIX_	= "_XMP_GTOL_";
   public final static String ASTERISK		= "* @{ASTERISK}@";
   public final static String COLON		= ": @{COLON}@";
 

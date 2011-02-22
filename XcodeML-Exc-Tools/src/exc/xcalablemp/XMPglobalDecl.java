@@ -120,6 +120,14 @@ public class XMPglobalDecl {
     return _globalObjectTable.getXMPalignedArray(name);
   }
 
+  public void putXMPcoarray(XMPcoarray array) {
+    _globalObjectTable.putXMPcoarray(array);
+  }
+
+  public XMPcoarray getXMPcoarray(String name) {
+    return _globalObjectTable.getXMPcoarray(name);
+  }
+
   public void finalize() {
     _env.collectAllTypes();
     _env.fixupTypeRef();
