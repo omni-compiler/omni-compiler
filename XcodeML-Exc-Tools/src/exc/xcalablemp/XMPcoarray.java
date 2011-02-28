@@ -17,16 +17,18 @@ public class XMPcoarray {
   private Xtype			_elmtType;
   private int			_varDim;
   private Vector<Long>		_sizeVector;
+  private Xobject		_varAddr;
   private Ident			_varId;
   private Ident			_XMPdescId;
   private Ident			_CommDescId;
 
   public XMPcoarray(String name, Xtype elmtType, int varDim, Vector<Long> sizeVector,
-                    Ident varId, Ident XMPdescId, Ident CommDescId) {
+                    Xobject varAddr, Ident varId, Ident XMPdescId, Ident CommDescId) {
     _name = name;
     _elmtType = elmtType;
     _varDim = varDim;
     _sizeVector = sizeVector;
+    _varAddr = varAddr;
     _varId = varId;
     _XMPdescId = XMPdescId;
     _CommDescId = CommDescId;
@@ -46,6 +48,10 @@ public class XMPcoarray {
 
   public int getSizeAt(int index) {
     return _sizeVector.get(index).intValue();
+  }
+
+  public Xobject getVarAddr() {
+    return _varAddr;
   }
 
   public Ident getVarId() {

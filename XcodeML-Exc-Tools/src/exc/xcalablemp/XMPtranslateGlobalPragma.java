@@ -93,13 +93,16 @@ public class XMPtranslateGlobalPragma {
     int varDim = 0;
     Xtype elmtType = null;
     Xtype varType = varId.Type();
+    Xobject varAddr = null;
     if (varType.getKind() == Xtype.ARRAY) {
       isArray = true;
       varDim = varType.getNumDimensions();
       elmtType = varType.getArrayElementType();
+      varAddr = varId.Ref();
     } else {
       varDim = 1;
       elmtType = varType;
+      varAddr = varId.getAddr();
     }
 
     Xobject elmtTypeRef = null;
@@ -123,7 +126,7 @@ public class XMPtranslateGlobalPragma {
     }
 
     // call init desc function
-    XobjList initDescFuncArgs = Xcons.List(descId.getAddr(), varId.Ref(),
+    XobjList initDescFuncArgs = Xcons.List(descId.getAddr(), varAddr,
                                            elmtTypeRef, Xcons.SizeOf(elmtType));
 
     String initDescFuncName = null;
@@ -157,9 +160,12 @@ public class XMPtranslateGlobalPragma {
     }
 
     XMPcoarray coarrayEntry = new XMPcoarray(coarrayName, elmtType, varDim, sizeVector,
-                                             varId, descId, commId);
+                                             varAddr, varId, descId, commId);
 
     _globalDecl.putXMPcoarray(coarrayEntry);
     _globalDecl.addGlobalInitFuncCall(initDescFuncName, initDescFuncArgs);
+
+    // call init comm function
+    _globalDecl.addGlobalInitFuncCall("_XMP_init_coarray_COMM", Xcons.List(commId.getAddr(), descId.Ref()));
   }
 }
