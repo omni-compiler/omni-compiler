@@ -15,23 +15,21 @@ public class XMPcoarray {
 
   private String		_name;
   private Xtype			_elmtType;
-  private int			_dim;
-  private Vector<Integer>	_sizeVector;
+  private int			_varDim;
+  private Vector<Long>		_sizeVector;
   private Ident			_varId;
   private Ident			_XMPdescId;
   private Ident			_CommDescId;
-  private boolean		_isArray;
 
-  public XMPcoarray(String name, Xtype elmtType, int dim, Vector<Integer> sizeVector,
-                    Ident varId, Ident XMPdescId, Ident CommDescId, boolean isArray) {
+  public XMPcoarray(String name, Xtype elmtType, int varDim, Vector<Long> sizeVector,
+                    Ident varId, Ident XMPdescId, Ident CommDescId) {
     _name = name;
     _elmtType = elmtType;
-    _dim = dim;
+    _varDim = varDim;
     _sizeVector = sizeVector;
     _varId = varId;
     _XMPdescId = XMPdescId;
     _CommDescId = CommDescId;
-    _isArray = isArray;
   }
 
   public String getName() {
@@ -42,8 +40,8 @@ public class XMPcoarray {
     return _elmtType;
   }
 
-  public int getDim() {
-    return _dim;
+  public int getVarDim() {
+    return _varDim;
   }
 
   public int getSizeAt(int index) {
@@ -60,9 +58,5 @@ public class XMPcoarray {
 
   public Ident getCommDescId() {
     return _CommDescId;
-  }
-
-  public boolean isArray() {
-    return _isArray;
   }
 }

@@ -87,6 +87,7 @@ typedef struct _XMP_template_type {
   _XMP_template_info_t info[1];
 } _XMP_template_t;
 
+// aligned array descriptor
 typedef struct _XMP_array_info_type {
   _Bool is_shadow_comm_member;
   _Bool is_regular_chunk;
@@ -140,7 +141,7 @@ typedef struct _XMP_array_type {
   size_t type_size;
 
   // enable when is_allocated is true
-  void **addr;
+  void *addr;
   unsigned long long total_elmts;
   // --------------------------------
 
@@ -153,6 +154,24 @@ typedef struct _XMP_array_type {
   _XMP_template_t *align_template;
   _XMP_array_info_t info[1];
 } _XMP_array_t;
+
+// coarray descriptor
+typedef struct _XMP_coarray_info_type {
+  int size;
+  int rank;
+} _XMP_coarray_info_t;
+
+typedef struct _XMP_coarray_type {
+  int type;
+  size_t type_size;
+
+  void *addr;
+  unsigned long long total_elmts;
+
+  _XMP_coarray_info_t info[1];
+} _XMP_coarray_t;
+
+#define _XMP_coarray_COMM_t void
 
 // --------------- variables -----------------------------------------
 // xmp_world.c

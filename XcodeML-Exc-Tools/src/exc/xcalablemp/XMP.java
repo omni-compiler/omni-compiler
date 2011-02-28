@@ -13,17 +13,17 @@ import xcodeml.util.XmLog;
  * all static members are defined here
  */
 public class XMP {
-  public final static int MAX_DIM		= 7;
-  public final static int NONBASIC_TYPE		= 599;
-  public final static String DESC_PREFIX_	= "_XMP_DESC_";
-  public final static String CAF_DESC_PREFIX_	= "_XMP_CAF_DESC_";
-  public final static String CAF_COMM_PREFIX_	= "_XMP_CAF_COMM_";
-  public final static String ADDR_PREFIX_	= "_XMP_ADDR_";
-  public final static String GTOL_PREFIX_	= "_XMP_GTOL_";
-  public final static String ASTERISK		= "* @{ASTERISK}@";
-  public final static String COLON		= ": @{COLON}@";
+  public final static int MAX_DIM			= 7;
+  public final static int NONBASIC_TYPE			= 599;
+  public final static String DESC_PREFIX_		= "_XMP_DESC_";
+  public final static String COARRAY_DESC_PREFIX_	= "_XMP_COARRAY_DESC_";
+  public final static String COARRAY_COMM_PREFIX_	= "_XMP_COARRAY_COMM_";
+  public final static String ADDR_PREFIX_		= "_XMP_ADDR_";
+  public final static String GTOL_PREFIX_		= "_XMP_GTOL_";
+  public final static String ASTERISK			= "* @{ASTERISK}@";
+  public final static String COLON			= ": @{COLON}@";
 
-  private static boolean errorFlag		= false;
+  private static boolean errorFlag			= false;
 
   public static Xobject createBasicTypeConstantObj(Xtype type) {
     return Xcons.IntConstant(type.getBasicType() + 500);
