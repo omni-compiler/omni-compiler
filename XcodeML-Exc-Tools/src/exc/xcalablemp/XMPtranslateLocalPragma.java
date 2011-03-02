@@ -166,7 +166,7 @@ public class XMPtranslateLocalPragma {
         schedBaseBlock.replace(newLoopBlock);
       }
       else {
-        XMP.warning("this compiler does not supports threads clause");
+        XMP.warning("this compiler does not support threads clause");
       }
     }
 

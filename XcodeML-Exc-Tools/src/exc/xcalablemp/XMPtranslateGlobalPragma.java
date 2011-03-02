@@ -131,9 +131,9 @@ public class XMPtranslateGlobalPragma {
 
     String initDescFuncName = null;
     if (coarrayDecl.getArg(1) == null) {
-      initDescFuncName = new String("_XMP_init_coarray_DYNAMIC");
+      initDescFuncName = new String("_XMP_init_coarray_DESC_DYNAMIC");
     } else {
-      initDescFuncName = new String("_XMP_init_coarray_STATIC");
+      initDescFuncName = new String("_XMP_init_coarray_DESC_STATIC");
       initDescFuncArgs.add(coarrayDecl.getArg(1));
     }
 
@@ -145,8 +145,7 @@ public class XMPtranslateGlobalPragma {
         long dimSize = varType.getArraySize();
         if (dimSize == 0) {
           throw new XMPexception("array size cannot be omitted");
-        }
-        else if (dimSize == -1) {
+        } else if (dimSize == -1) {
           // FIXME possible error in global scope???
           throw new XMPexception("array size should be fixed");
         }
@@ -167,5 +166,8 @@ public class XMPtranslateGlobalPragma {
 
     // call init comm function
     _globalDecl.addGlobalInitFuncCall("_XMP_init_coarray_COMM", Xcons.List(commId.getAddr(), descId.Ref()));
+
+    // call finalize function
+    _globalDecl.addGlobalFinalizeFuncCall("_XMP_finalize_coarray", Xcons.List(commId.Ref(), descId.Ref()));
   }
 }

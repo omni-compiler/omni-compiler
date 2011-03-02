@@ -11,12 +11,14 @@ import exc.object.*;
 public class XMPglobalDecl {
   private XobjectFile		_env;
   private XMPsymbolTable	_globalObjectTable;
-  private XobjList		_globalInitFuncBody;
+  private XobjList		_globalConstructorFuncBody;
+  private XobjList		_globalDestructorFuncBody;
 
   public XMPglobalDecl(XobjectFile env) {
     _env = env;
     _globalObjectTable = new XMPsymbolTable();
-    _globalInitFuncBody = Xcons.List();
+    _globalConstructorFuncBody = Xcons.List();
+    _globalDestructorFuncBody = Xcons.List();
   }
 
   public void checkObjectNameCollision(String name) throws XMPexception {
@@ -49,22 +51,34 @@ public class XMPglobalDecl {
     return _env.declExternIdent("_XMP_world_rank", Xtype.intType);
   }
 
-  public void setupGlobalInit() {
-    // _globalInitFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT,
-    // env.declExternIdent(XMP.PREFIX_ + "init_coarray_windows",
-    // Xtype.Function(Xtype.voidType)).Call(Xcons.List(Xcons.IntConstant(globalObjectTable.getCoarrayCount())))));
+  public void setupGlobalConstructor() {
+    _globalConstructorFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT,
+                                               _env.declExternIdent("_XMP_init",
+                                                                    Xtype.Function(Xtype.voidType)).Call(null)));
 
-    _globalInitFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT,
-                                        _env.declExternIdent("_XMP_init_in_constructor",
-                                                             Xtype.Function(Xtype.voidType)).Call(null)));
-
-    Xtype consType = Xtype.Function(Xtype.voidType);
-    consType.setGccAttributes(Xcons.List(Xcode.GCC_ATTRIBUTES,
+    Xtype funcType = Xtype.Function(Xtype.voidType);
+    funcType.setGccAttributes(Xcons.List(Xcode.GCC_ATTRIBUTES,
                                          Xcons.List(Xcode.GCC_ATTRIBUTE,
                                                     new Ident("constructor", null, null, null, null),
                                                     Xcons.List())));
-    Ident consId = _env.declStaticIdent("_XMP_constructor", consType);
-    _env.add(XobjectDef.Func(consId, null, null, Xcons.List(Xcode.COMPOUND_STATEMENT, (Xobject)null, null, _globalInitFuncBody)));
+    Ident funcId = _env.declStaticIdent("_XMP_constructor", funcType);
+    _env.add(XobjectDef.Func(funcId, null, null, Xcons.List(Xcode.COMPOUND_STATEMENT,
+                             (Xobject)null, null, _globalConstructorFuncBody)));
+  }
+
+  public void setupGlobalDestructor() {
+    _globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT,
+                                             _env.declExternIdent("_XMP_finalize",
+                                                                  Xtype.Function(Xtype.voidType)).Call(null)));
+
+    Xtype funcType = Xtype.Function(Xtype.voidType);
+    funcType.setGccAttributes(Xcons.List(Xcode.GCC_ATTRIBUTES,
+                                         Xcons.List(Xcode.GCC_ATTRIBUTE,
+                                                    new Ident("destructor", null, null, null, null),
+                                                    Xcons.List())));
+    Ident funcId = _env.declStaticIdent("_XMP_destructor", funcType);
+    _env.add(XobjectDef.Func(funcId, null, null, Xcons.List(Xcode.COMPOUND_STATEMENT,
+                             (Xobject)null, null, _globalDestructorFuncBody)));
   }
 
   public Ident declExternFunc(String funcName) {
@@ -77,7 +91,12 @@ public class XMPglobalDecl {
 
   public void addGlobalInitFuncCall(String funcName, Xobject args) {
     Ident funcId = declExternFunc(funcName);
-    _globalInitFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT, funcId.Call(args)));
+    _globalConstructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT, funcId.Call(args)));
+  }
+
+  public void addGlobalFinalizeFuncCall(String funcName, Xobject args) {
+    Ident funcId = declExternFunc(funcName);
+    _globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT, funcId.Call(args)));
   }
 
   public Ident declGlobalIdent(String name, Xtype t) {

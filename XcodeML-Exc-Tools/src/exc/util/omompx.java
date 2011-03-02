@@ -229,7 +229,8 @@ public class omompx
             XMP.exitByError();
             xobjFile.iterateDef(xmpReallocator);
             XMP.exitByError();
-            globalDecl.setupGlobalInit();
+            globalDecl.setupGlobalConstructor();
+            globalDecl.setupGlobalDestructor();
             XMP.exitByError();
             xobjFile.addHeaderLine("include \"xmp.h\"");
             xobjFile.addHeaderLine("include \"xmp_index_macro.h\"");

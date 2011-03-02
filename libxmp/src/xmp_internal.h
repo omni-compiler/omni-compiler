@@ -225,7 +225,7 @@ extern void _XMP_init_world(int *argc, char ***argv);
 extern void _XMP_finalize_world(void);
 
 // xmp_runtime.c
-extern void _XMP_init(int *argc, char ***argv);
+extern void _XMP_init(void);
 extern void _XMP_finalize(void);
 
 #endif // _XMP_INTERNAL
