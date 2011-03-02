@@ -156,22 +156,22 @@ typedef struct _XMP_array_type {
 } _XMP_array_t;
 
 // coarray descriptor
+#define _XMP_coarray_COMM_t void
+
 typedef struct _XMP_coarray_info_type {
   int size;
   int rank;
 } _XMP_coarray_info_t;
 
 typedef struct _XMP_coarray_type {
+  void *addr;
   int type;
   size_t type_size;
-
-  void *addr;
   unsigned long long total_elmts;
 
+  _XMP_coarray_COMM_t *comm;
   _XMP_coarray_info_t info[1];
 } _XMP_coarray_t;
-
-#define _XMP_coarray_COMM_t void
 
 // --------------- variables -----------------------------------------
 // xmp_world.c

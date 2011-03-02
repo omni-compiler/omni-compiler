@@ -112,28 +112,15 @@ public class XMPtranslateGlobalPragma {
       elmtTypeRef = Xcons.IntConstant(XMP.NONBASIC_TYPE);
     }
 
-    // decl descriptors
+    // init descriptor
     Ident descId = _globalDecl.declStaticIdent(XMP.COARRAY_DESC_PREFIX_ + coarrayName, Xtype.voidPtrType);
-    Ident commId = null;
-    if (varId.getStorageClass() == StorageClass.EXTERN) {
-      commId = _globalDecl.declExternIdent(XMP.COARRAY_COMM_PREFIX_ + coarrayName, Xtype.voidPtrType);
-    } else if (varId.getStorageClass() == StorageClass.STATIC) {
-      commId = _globalDecl.declStaticIdent(XMP.COARRAY_COMM_PREFIX_ + coarrayName, Xtype.voidPtrType);
-    } else if (varId.getStorageClass() == StorageClass.EXTDEF) {
-      commId = _globalDecl.declGlobalIdent(XMP.COARRAY_COMM_PREFIX_ + coarrayName, Xtype.voidPtrType);
-    } else {
-      throw new XMPexception("cannot declare coarray descriptor, '" + coarrayName +  "' has a wrong storage class");
-    }
-
-    // call init desc function
-    XobjList initDescFuncArgs = Xcons.List(descId.getAddr(), varAddr,
-                                           elmtTypeRef, Xcons.SizeOf(elmtType));
+    XobjList initDescFuncArgs = Xcons.List(descId.getAddr(), varAddr, elmtTypeRef, Xcons.SizeOf(elmtType));
 
     String initDescFuncName = null;
     if (coarrayDecl.getArg(1) == null) {
-      initDescFuncName = new String("_XMP_init_coarray_DESC_DYNAMIC");
+      initDescFuncName = new String("_XMP_init_coarray_DYNAMIC");
     } else {
-      initDescFuncName = new String("_XMP_init_coarray_DESC_STATIC");
+      initDescFuncName = new String("_XMP_init_coarray_STATIC");
       initDescFuncArgs.add(coarrayDecl.getArg(1));
     }
 
@@ -158,16 +145,12 @@ public class XMPtranslateGlobalPragma {
       initDescFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
     }
 
-    XMPcoarray coarrayEntry = new XMPcoarray(coarrayName, elmtType, varDim, sizeVector,
-                                             varAddr, varId, descId, commId);
+    XMPcoarray coarrayEntry = new XMPcoarray(coarrayName, elmtType, varDim, sizeVector, varAddr, varId, descId);
 
     _globalDecl.putXMPcoarray(coarrayEntry);
     _globalDecl.addGlobalInitFuncCall(initDescFuncName, initDescFuncArgs);
 
-    // call init comm function
-    _globalDecl.addGlobalInitFuncCall("_XMP_init_coarray_COMM", Xcons.List(commId.getAddr(), descId.Ref()));
-
     // call finalize function
-    _globalDecl.addGlobalFinalizeFuncCall("_XMP_finalize_coarray", Xcons.List(commId.Ref(), descId.Ref()));
+    _globalDecl.addGlobalFinalizeFuncCall("_XMP_finalize_coarray", Xcons.List(descId.Ref()));
   }
 }

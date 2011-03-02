@@ -19,19 +19,17 @@ public class XMPcoarray {
   private Vector<Long>		_sizeVector;
   private Xobject		_varAddr;
   private Ident			_varId;
-  private Ident			_XMPdescId;
-  private Ident			_CommDescId;
+  private Ident			_descId;
 
   public XMPcoarray(String name, Xtype elmtType, int varDim, Vector<Long> sizeVector,
-                    Xobject varAddr, Ident varId, Ident XMPdescId, Ident CommDescId) {
+                    Xobject varAddr, Ident varId, Ident descId) {
     _name = name;
     _elmtType = elmtType;
     _varDim = varDim;
     _sizeVector = sizeVector;
     _varAddr = varAddr;
     _varId = varId;
-    _XMPdescId = XMPdescId;
-    _CommDescId = CommDescId;
+    _descId = descId;
   }
 
   public String getName() {
@@ -58,11 +56,7 @@ public class XMPcoarray {
     return _varId;
   }
 
-  public Ident getXMPdescId() {
-    return _XMPdescId;
-  }
-
-  public Ident getCommDescId() {
-    return _CommDescId;
+  public Ident getDescId() {
+    return _descId;
   }
 }

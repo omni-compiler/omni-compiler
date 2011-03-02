@@ -71,6 +71,12 @@ public class XMPrewriteExpr {
             iter.next();
             break;
           }
+        // XXX delete this
+        case CO_ARRAY_REF:
+          {
+            System.out.println(myExpr.toString());
+            break;
+          }
         default:
           iter.next();
       }
