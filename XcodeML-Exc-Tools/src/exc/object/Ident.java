@@ -60,11 +60,31 @@ public class Ident extends Xobject
             this.name = name.intern();
         this.stg_class = stg_class;
         this.value = v;
+        this.declared = false;
         this.bit_field = bit_field;
         this.bit_field_expr = bit_field_expr;
         this.gcc_attrs = gccAttrs;
         this.enum_value = enum_value;
         this.fparam_value = fparam_value;
+    }
+
+    // constructor
+    public Ident(String name, StorageClass stg_class, Xtype type, Xobject v,
+                 boolean declared, int optionalFlags, Xobject gccAttrs,
+                 int bit_field, Xobject bit_field_expr, Xobject enum_value, Xobject fparam_value) {
+      super(null, type, optionalFlags);
+      if(name != null) {
+        this.name = name.intern();
+      }
+
+      this.stg_class = stg_class;
+      this.value = v;
+      this.declared = declared;
+      this.bit_field = bit_field;
+      this.bit_field_expr = bit_field_expr;
+      this.gcc_attrs = gccAttrs;
+      this.enum_value = enum_value;
+      this.fparam_value = fparam_value;
     }
 
     // constructor for temporary variable
@@ -180,11 +200,9 @@ public class Ident extends Xobject
     }
     
     @Override
-    public Xobject copy()
-    {
-        return new Ident(name, stg_class, type,
-            value, getOptionalFlags(), gcc_attrs,
-            bit_field, bit_field_expr, enum_value, fparam_value);
+    public Xobject copy() {
+      return new Ident(name, stg_class, type, value, declared, getOptionalFlags(),
+                       gcc_attrs, bit_field, bit_field_expr, enum_value, fparam_value);
     }
 
     @Override
