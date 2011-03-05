@@ -701,6 +701,7 @@ PPTGT
 MM5TGT
 CPU
 OS
+LIBXMP_THREADS_DIR
 LIBXMP_DIR
 OMDRIVER_DIR
 XCODEML_EXC_TOOLS_DIR
@@ -3309,7 +3310,12 @@ fi
 #----
 
 LIBXMP_DIR=libxmp/src
+LIBXMP_THREADS_DIR=libxmp/src_threads
+
 ac_config_files="$ac_config_files $LIBXMP_DIR/Makefile"
+
+ac_config_files="$ac_config_files $LIBXMP_THREADS_DIR/Makefile"
+
 
 
 
@@ -10195,6 +10201,7 @@ do
     "$OMDRIVER_DIR/../etc/native.conf.xmp_threads") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/native.conf.xmp_threads" ;;
     "$OMDRIVER_DIR/../etc/linker.conf.xmp_threads") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/linker.conf.xmp_threads" ;;
     "$LIBXMP_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_DIR/Makefile" ;;
+    "$LIBXMP_THREADS_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_THREADS_DIR/Makefile" ;;
     "$TESTS_DIR/C-test/Makefile") CONFIG_FILES="$CONFIG_FILES $TESTS_DIR/C-test/Makefile" ;;
     "$TESTS_DIR/tiny/Makefile") CONFIG_FILES="$CONFIG_FILES $TESTS_DIR/tiny/Makefile" ;;
     "$TESTS_DIR/clinpack/Makefile") CONFIG_FILES="$CONFIG_FILES $TESTS_DIR/clinpack/Makefile" ;;

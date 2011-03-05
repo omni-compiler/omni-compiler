@@ -174,12 +174,14 @@ typedef struct _XMP_coarray_type {
 } _XMP_coarray_t;
 
 // --------------- variables -----------------------------------------
+// ----- libxmp ------------------------------------------------------
 // xmp_world.c
 extern int _XMP_world_size;
 extern int _XMP_world_rank;
 extern void *_XMP_world_nodes;
 
 // --------------- functions -----------------------------------------
+// ----- libxmp ------------------------------------------------------
 // xmp_array_section.c
 extern void _XMP_normalize_array_section(int *lower, int *upper, int *stride);
 // FIXME make these static
@@ -227,5 +229,9 @@ extern void _XMP_finalize_world(void);
 // xmp_runtime.c
 extern void _XMP_init(void);
 extern void _XMP_finalize(void);
+
+// ----- libxmp_threads ----------------------------------------------
+extern void _XMP_threads_init(int, char **argv);
+extern void _XMP_threads_finalize(int);
 
 #endif // _XMP_INTERNAL
