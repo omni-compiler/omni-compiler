@@ -1,7 +1,6 @@
 XMP_INC_DIR=../include
 CC=@MPI_CMD@
 
-include_HEADERS			= xmp.h xmp_index_macro.h xmp_comm_macro.h
 lib_LIBRARIES			= libxmp.a
 libxmp_a_SOURCES		= $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h \
                                   xmp_math_function.h \

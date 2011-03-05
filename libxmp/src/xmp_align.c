@@ -5,6 +5,7 @@
  */
 
 #include <stdarg.h>
+#include "mpi.h"
 #include "xmp_constant.h"
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
@@ -409,7 +410,7 @@ void _XMP_init_array_comm(_XMP_array_t *array, ...) {
   va_end(args);
 
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
-  MPI_Comm_split(*(onto_nodes->comm), color, onto_nodes->comm_rank, comm);
+  MPI_Comm_split(*((MPI_Comm *)onto_nodes->comm), color, onto_nodes->comm_rank, comm);
 
   // set members
   array->is_align_comm_member = true;

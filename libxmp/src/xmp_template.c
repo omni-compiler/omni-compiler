@@ -5,6 +5,7 @@
  */
 
 #include <stdarg.h>
+#include "mpi.h"
 #include "xmp_constant.h"
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
@@ -413,7 +414,7 @@ _Bool _XMP_exec_task_TEMPLATE_PART(int get_upper, _XMP_template_t *ref_template,
     color = 0;
   }
 
-  MPI_Comm_split(*(onto_nodes->comm), color, onto_nodes->comm_rank, comm);
+  MPI_Comm_split(*((MPI_Comm *)onto_nodes->comm), color, onto_nodes->comm_rank, comm);
 
   if (is_member) {
     _XMP_push_comm(comm);

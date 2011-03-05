@@ -6,6 +6,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include "mpi.h"
 #include "xmp_constant.h"
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
@@ -104,7 +105,7 @@ static void _XMP_gmove_bcast_SCALAR(_XMP_array_t *array, void *dst_addr, void *s
       memcpy(dst_addr, src_addr, type_size);
     }
 
-    MPI_Bcast(dst_addr, type_size, MPI_BYTE, src_rank, *(array->align_comm));
+    MPI_Bcast(dst_addr, type_size, MPI_BYTE, src_rank, *((MPI_Comm *)array->align_comm));
   }
   else {
     MPI_Comm *exec_comm = exec_nodes->comm;
@@ -1091,7 +1092,8 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
       }
       recv_buffer = _XMP_alloc(recv_elmts * type_size);
 
-      MPI_Irecv(recv_buffer, recv_elmts, mpi_datatype, MPI_ANY_SOURCE, _XMP_N_MPI_TAG_GMOVE, *(comm_nodes->comm), &recv_req);
+      MPI_Irecv(recv_buffer, recv_elmts, mpi_datatype, MPI_ANY_SOURCE, _XMP_N_MPI_TAG_GMOVE,
+                *((MPI_Comm *)comm_nodes->comm), &recv_req);
     }
 
     // pack & send
@@ -1109,7 +1111,7 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
         _XMP_pack_array_BASIC(send_buffer, src_addr, type, src_dim, src_l, src_u, src_s, src_d);
       }
 
-      MPI_Send(send_buffer, send_elmts, mpi_datatype, dst_rank, _XMP_N_MPI_TAG_GMOVE, *(comm_nodes->comm));
+      MPI_Send(send_buffer, send_elmts, mpi_datatype, dst_rank, _XMP_N_MPI_TAG_GMOVE, *((MPI_Comm *)comm_nodes->comm));
       _XMP_free(send_buffer);
     }
 

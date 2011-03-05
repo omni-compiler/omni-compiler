@@ -10,7 +10,6 @@
 // --------------- including headers  --------------------------------
 #include <stddef.h>
 #include <stdbool.h>
-#include "mpi.h"
 
 #ifdef _XMP_DEBUG
 #define _XMP_ASSERT(_flag) \
@@ -24,6 +23,8 @@
 #endif
 
 // --------------- structures ----------------------------------------
+#define _XMP_comm void
+
 // nodes descriptor
 typedef struct _XMP_nodes_info_type {
   int size;
@@ -40,7 +41,7 @@ typedef struct _XMP_nodes_type {
 
   // enable when is_member is true
   int comm_rank;
-  MPI_Comm *comm;
+  _XMP_comm *comm;
   // -----------------------------
 
   _XMP_nodes_info_t info[1];
@@ -121,7 +122,7 @@ typedef struct _XMP_array_info_type {
   int shadow_size_hi;
 
   // enable when is_shadow_comm_member is true
-  MPI_Comm *shadow_comm;
+  _XMP_comm *shadow_comm;
   int shadow_comm_size;
   int shadow_comm_rank;
   // -----------------------------------------
@@ -146,7 +147,7 @@ typedef struct _XMP_array_type {
   // --------------------------------
 
   // enable when is_align_comm_member is true
-  MPI_Comm *align_comm;
+  _XMP_comm *align_comm;
   int align_comm_size;
   int align_comm_rank;
   // ----------------------------------------
@@ -173,14 +174,6 @@ typedef struct _XMP_coarray_type {
   _XMP_coarray_info_t info[1];
 } _XMP_coarray_t;
 
-// --------------- variables -----------------------------------------
-// ----- libxmp ------------------------------------------------------
-// xmp_world.c
-extern int _XMP_world_size;
-extern int _XMP_world_rank;
-extern void *_XMP_world_nodes;
-
-// --------------- functions -----------------------------------------
 // ----- libxmp ------------------------------------------------------
 // xmp_array_section.c
 extern void _XMP_normalize_array_section(int *lower, int *upper, int *stride);
@@ -204,7 +197,7 @@ extern void _XMP_barrier_EXEC(void);
 // xmp_nodes.c
 extern void _XMP_validate_nodes_ref(int *lower, int *upper, int *stride, int size);
 extern void _XMP_finalize_nodes(_XMP_nodes_t *nodes);
-extern _XMP_nodes_t *_XMP_create_nodes_by_comm(MPI_Comm *comm);
+extern _XMP_nodes_t *_XMP_create_nodes_by_comm(_XMP_comm *comm);
 
 // xmp_nodes_stack.c
 extern void _XMP_push_nodes(_XMP_nodes_t *nodes);
@@ -213,8 +206,8 @@ extern void _XMP_pop_n_free_nodes(void);
 extern void _XMP_pop_n_free_nodes_wo_finalize_comm(void);
 extern _XMP_nodes_t *_XMP_get_execution_nodes(void);
 extern int _XMP_get_execution_nodes_rank(void);
-extern void _XMP_push_comm(MPI_Comm *comm);
-extern void _XMP_finalize_comm(MPI_Comm *comm);
+extern void _XMP_push_comm(_XMP_comm *comm);
+extern void _XMP_finalize_comm(_XMP_comm *comm);
 
 // xmp_util.c
 extern void *_XMP_alloc(size_t size);
@@ -223,6 +216,10 @@ extern void _XMP_fatal(char *msg);
 extern void _XMP_unexpected_error(void);
 
 // xmp_world.c
+extern int _XMP_world_size;
+extern int _XMP_world_rank;
+extern void *_XMP_world_nodes;
+
 extern void _XMP_init_world(int *argc, char ***argv);
 extern void _XMP_finalize_world(void);
 
@@ -231,7 +228,15 @@ extern void _XMP_init(void);
 extern void _XMP_finalize(void);
 
 // ----- libxmp_threads ----------------------------------------------
+// xmp_threads_runtime.c
 extern void _XMP_threads_init(int, char **argv);
 extern void _XMP_threads_finalize(int);
+
+// ----- libxmp_gpu --------------------------------------------------
+// xmp_gpu_runtime.c
+extern int _XMP_gpu_device_count;
+
+extern void _XMP_gpu_init(void);
+extern void _XMP_gpu_finalize(void);
 
 #endif // _XMP_INTERNAL

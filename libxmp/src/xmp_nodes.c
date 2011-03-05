@@ -5,6 +5,7 @@
  */
 
 #include <stdarg.h>
+#include "mpi.h"
 #include "xmp_constant.h"
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
@@ -55,7 +56,7 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_EXEC(int dim) {
 
   n->comm_rank = rank;
   n->comm = _XMP_alloc(sizeof(MPI_Comm));
-  MPI_Comm_dup(*(exec_nodes->comm), n->comm);
+  MPI_Comm_dup(*((MPI_Comm *)exec_nodes->comm), n->comm);
 
   return n;
 }
@@ -120,7 +121,7 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NAMED(int dim, _XMP_nodes_t *r
   else {
     color = 0;
   }
-  MPI_Comm_split(*(ref_nodes->comm), color, ref_nodes->comm_rank, comm);
+  MPI_Comm_split(*((MPI_Comm *)ref_nodes->comm), color, ref_nodes->comm_rank, comm);
 
   _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) +
                                              sizeof(_XMP_nodes_info_t) * (dim - 1));
@@ -600,7 +601,7 @@ _Bool _XMP_exec_task_NODES_PART(int get_upper, _XMP_nodes_t *ref_nodes, ...) {
     color = 0;
   }
 
-  MPI_Comm_split(*(ref_nodes->comm), color, ref_nodes->comm_rank, comm);
+  MPI_Comm_split(*((MPI_Comm *)ref_nodes->comm), color, ref_nodes->comm_rank, comm);
 
   if (is_member) {
     _XMP_push_comm(comm);
@@ -612,10 +613,10 @@ _Bool _XMP_exec_task_NODES_PART(int get_upper, _XMP_nodes_t *ref_nodes, ...) {
   }
 }
 
-_XMP_nodes_t *_XMP_create_nodes_by_comm(MPI_Comm *comm) {
+_XMP_nodes_t *_XMP_create_nodes_by_comm(_XMP_comm *comm) {
   int size, rank;
-  MPI_Comm_size(*comm, &size);
-  MPI_Comm_rank(*comm, &rank);
+  MPI_Comm_size(*((MPI_Comm *)comm), &size);
+  MPI_Comm_rank(*((MPI_Comm *)comm), &rank);
 
   _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t));
 

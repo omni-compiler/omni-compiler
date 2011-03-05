@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <limits.h>
+#include "mpi.h"
 #include "xmp_constant.h"
 #include "xmp_internal.h"
 
@@ -217,7 +218,7 @@ void _XMP_reduce_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int da
   _XMP_setup_reduce_op(&mpi_op, op);
 
   // reduce
-  MPI_Allreduce(MPI_IN_PLACE, addr, count, mpi_datatype, mpi_op, *(nodes->comm));
+  MPI_Allreduce(MPI_IN_PLACE, addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm));
 }
 
 // _XMP_M_REDUCE_EXEC(addr, count, datatype, op) is in xmp_comm_macro.h
@@ -245,7 +246,7 @@ void _XMP_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes,
   void *temp_buffer = _XMP_alloc(n);
   memcpy(temp_buffer, addr, n);
 
-  MPI_Allreduce(temp_buffer, addr, count, mpi_datatype, mpi_op, *(nodes->comm));
+  MPI_Allreduce(temp_buffer, addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm));
 
   // compare results
   n = sizeof(_Bool) * count;
@@ -267,7 +268,7 @@ void _XMP_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes,
     void *loc_temp = _XMP_alloc(n);
     memcpy(loc_temp, loc, n);
 
-    MPI_Allreduce(loc_temp, loc, count, mpi_datatype, mpi_op, *(nodes->comm));
+    MPI_Allreduce(loc_temp, loc, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm));
 
     _XMP_free(loc_temp);
   }
@@ -288,7 +289,7 @@ void _XMP_reduce_CLAUSE(void *data_addr, int count, int datatype, int op) {
   _XMP_setup_reduce_op(&mpi_op, op);
 
   // reduce
-  MPI_Allreduce(MPI_IN_PLACE, data_addr, count, mpi_datatype, mpi_op, *((_XMP_get_execution_nodes())->comm));
+  MPI_Allreduce(MPI_IN_PLACE, data_addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)(_XMP_get_execution_nodes())->comm));
 }
 
 void _XMP_reduce_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, int num_locs, ...) {
@@ -307,7 +308,7 @@ void _XMP_reduce_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, i
   void *temp_buffer = _XMP_alloc(n);
   memcpy(temp_buffer, data_addr, n);
 
-  MPI_Allreduce(temp_buffer, data_addr, count, mpi_datatype, mpi_op, *(nodes->comm));
+  MPI_Allreduce(temp_buffer, data_addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm));
 
   // compare results
   n = sizeof(_Bool) * count;
@@ -329,7 +330,7 @@ void _XMP_reduce_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, i
     void *loc_temp = _XMP_alloc(n);
     memcpy(loc_temp, loc, n);
 
-    MPI_Allreduce(loc_temp, loc, count, mpi_datatype, mpi_op, *(nodes->comm));
+    MPI_Allreduce(loc_temp, loc, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm));
 
     _XMP_free(loc_temp);
   }
@@ -363,7 +364,7 @@ void _XMP_init_reduce_comm_NODES(_XMP_nodes_t *nodes, ...) {
   va_end(args);
 
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
-  MPI_Comm_split(*(nodes->comm), color, nodes->comm_rank, comm);
+  MPI_Comm_split(*((MPI_Comm *)nodes->comm), color, nodes->comm_rank, comm);
 
   // create a new nodes descriptor
   _XMP_push_comm(comm);
@@ -406,7 +407,7 @@ void _XMP_init_reduce_comm_TEMPLATE(_XMP_template_t *template, ...) {
   va_end(args);
 
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
-  MPI_Comm_split(*(onto_nodes->comm), color, onto_nodes->comm_rank, comm);
+  MPI_Comm_split(*((MPI_Comm *)onto_nodes->comm), color, onto_nodes->comm_rank, comm);
 
   // create a new nodes descriptor
   _XMP_push_comm(comm);

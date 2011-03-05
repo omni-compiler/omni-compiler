@@ -48,11 +48,11 @@ int _XMP_get_execution_nodes_rank(void) {
   return _XMP_get_execution_nodes()->comm_rank;
 }
 
-void _XMP_push_comm(MPI_Comm *comm) {
+void _XMP_push_comm(_XMP_comm *comm) {
   _XMP_push_nodes(_XMP_create_nodes_by_comm(comm));
 }
 
-void _XMP_finalize_comm(MPI_Comm *comm) {
+void _XMP_finalize_comm(_XMP_comm *comm) {
   MPI_Comm_free(comm);
   _XMP_free(comm);
 }

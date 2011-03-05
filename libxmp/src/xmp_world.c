@@ -4,6 +4,7 @@
  *  $
  */
 
+#include "mpi.h"
 #include "xmp_internal.h"
 
 int _XMP_world_size;

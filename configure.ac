@@ -190,14 +190,20 @@ AC_SUBST(OMDRIVER_DIR)
 
 #----
 
+LIBXMP_HEADER_DIR=libxmp/include
 LIBXMP_DIR=libxmp/src
 LIBXMP_THREADS_DIR=libxmp/src_threads
+LIBXMP_GPU_DIR=libxmp/src_gpu
 
+AC_CONFIG_FILES($LIBXMP_HEADER_DIR/Makefile)
 AC_CONFIG_FILES($LIBXMP_DIR/Makefile)
 AC_CONFIG_FILES($LIBXMP_THREADS_DIR/Makefile)
+AC_CONFIG_FILES($LIBXMP_GPU_DIR/Makefile)
 
+AC_SUBST(LIBXMP_HEADER_DIR)
 AC_SUBST(LIBXMP_DIR)
 AC_SUBST(LIBXMP_THREADS_DIR)
+AC_SUBST(LIBXMP_GPU_DIR)
 
 #----
 
@@ -1230,6 +1236,17 @@ AC_ARG_WITH(mpi_cmd,
     [MPI_CMD=$withval], [MPI_CMD="mpicc"])
 
 AC_SUBST(MPI_CMD)
+
+# --------------------------------------------------------------------
+
+# --------------------------------------------------------------------
+# specify GPU compiler command
+
+AC_ARG_WITH(gpu_cmd,
+    [  --with-gpucc=CMD        specify GPU compiler (default: nvcc)],
+    [GPU_CMD=$withval], [GPU_CMD="nvcc"])
+
+AC_SUBST(GPU_CMD)
 
 # --------------------------------------------------------------------
 

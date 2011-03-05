@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "mpi.h"
 #include "xmp_internal.h"
 
 void *_XMP_alloc(size_t size) {

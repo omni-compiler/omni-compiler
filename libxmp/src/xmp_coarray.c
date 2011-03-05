@@ -1,4 +1,5 @@
 #include <stdarg.h>
+#include "mpi.h"
 #include "xmp_internal.h"
 
 static void _XMP_init_coarray_comm(_XMP_coarray_t *coarray) {

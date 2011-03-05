@@ -6,6 +6,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include "mpi.h"
 #include "xmp_constant.h"
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
@@ -45,7 +46,7 @@ static void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index) {
   }
 
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
-  MPI_Comm_split(*(onto_nodes->comm), color, onto_nodes->comm_rank, comm);
+  MPI_Comm_split(*((MPI_Comm *)onto_nodes->comm), color, onto_nodes->comm_rank, comm);
 
   // set members
   if (array->is_allocated) {
@@ -80,7 +81,7 @@ static void _XMP_reflect_shadow_FULL_ALLGATHER(void *array_addr, _XMP_array_t *a
 
   MPI_Allgather(pack_buffer, gather_count, mpi_datatype,
                 array_addr, gather_count, mpi_datatype,
-                *(ai->shadow_comm));
+                *((MPI_Comm *)ai->shadow_comm));
 
   _XMP_free(pack_buffer);
 }
@@ -105,7 +106,7 @@ static void _XMP_reflect_shadow_FULL_ALLGATHERV(void *array_addr, _XMP_array_t *
 
   MPI_Allgather(pack_buffer, gather_count, mpi_datatype,
                 array_addr, gather_count, mpi_datatype,
-                *(ai->shadow_comm));
+                *((MPI_Comm *)ai->shadow_comm));
 
   _XMP_free(pack_buffer);
 }
@@ -199,7 +200,7 @@ static void _XMP_reflect_shadow_FULL_BCAST(void *array_addr, _XMP_array_t *array
     }
 
     // bcast data
-    MPI_Bcast(bcast_buffer, bcast_width * ai->dim_elmts, mpi_datatype, i, *(ai->shadow_comm));
+    MPI_Bcast(bcast_buffer, bcast_width * ai->dim_elmts, mpi_datatype, i, *((MPI_Comm *)ai->shadow_comm));
 
     if (i != rank) {
       // unpack data

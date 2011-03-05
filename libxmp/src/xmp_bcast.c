@@ -5,6 +5,7 @@
  */
 
 #include <stdarg.h>
+#include "mpi.h"
 #include "xmp_constant.h"
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
@@ -20,7 +21,7 @@ void _XMP_bcast_NODES_ENTIRE_OMITTED(_XMP_nodes_t *bcast_nodes, void *addr, int 
   MPI_Type_commit(&mpi_datatype);
 
   // bcast
-  MPI_Bcast(addr, count, mpi_datatype, _XMP_N_DEFAULT_ROOT_RANK, *(bcast_nodes->comm));
+  MPI_Bcast(addr, count, mpi_datatype, _XMP_N_DEFAULT_ROOT_RANK, *((MPI_Comm *)bcast_nodes->comm));
 }
 
 void _XMP_bcast_NODES_ENTIRE_GLOBAL(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
@@ -42,7 +43,7 @@ void _XMP_bcast_NODES_ENTIRE_GLOBAL(_XMP_nodes_t *bcast_nodes, void *addr, int c
   MPI_Type_commit(&mpi_datatype);
 
   // bcast
-  MPI_Bcast(addr, count, mpi_datatype, from_lower, *(bcast_nodes->comm));
+  MPI_Bcast(addr, count, mpi_datatype, from_lower, *((MPI_Comm *)bcast_nodes->comm));
 }
 
 // FIXME read spec
@@ -94,7 +95,7 @@ void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int co
   MPI_Type_commit(&mpi_datatype);
 
   // bcast
-  MPI_Bcast(addr, count, mpi_datatype, root, *(bcast_nodes->comm));
+  MPI_Bcast(addr, count, mpi_datatype, root, *((MPI_Comm *)bcast_nodes->comm));
 }
 
 // void _XMP_M_BCAST_EXEC_OMITTED(void *addr, int count, size_t datatype_size)

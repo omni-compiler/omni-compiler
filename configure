@@ -608,6 +608,7 @@ OM_EXEC_C_COMPILER
 OM_EXEC_C_PP
 OM_DRIVER_CONF_DIR
 OMNI_HOME
+GPU_CMD
 MPI_CMD
 LIBXML_PREFIX
 omniQRealFillGap
@@ -701,8 +702,10 @@ PPTGT
 MM5TGT
 CPU
 OS
+LIBXMP_GPU_DIR
 LIBXMP_THREADS_DIR
 LIBXMP_DIR
+LIBXMP_HEADER_DIR
 OMDRIVER_DIR
 XCODEML_EXC_TOOLS_DIR
 F_BACKEND_DIR
@@ -787,6 +790,7 @@ with_gmpIncDir
 with_precision
 with_libxml_prefix
 with_mpi_cmd
+with_gpu_cmd
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1437,6 +1441,7 @@ Optional Packages:
   --with-precision=NUM    specify the default precision of real*16 in bits (128).
   --with-libxmlDir=DIR    specify libxml install directory (default: /usr/local)
   --with-mpicc=CMD        specify MPI compiler (default: mpicc)
+  --with-gpucc=CMD        specify GPU compiler (default: nvcc)
 
 Some influential environment variables:
   CC          C compiler command
@@ -3309,12 +3314,20 @@ fi
 
 #----
 
+LIBXMP_HEADER_DIR=libxmp/include
 LIBXMP_DIR=libxmp/src
 LIBXMP_THREADS_DIR=libxmp/src_threads
+LIBXMP_GPU_DIR=libxmp/src_gpu
+
+ac_config_files="$ac_config_files $LIBXMP_HEADER_DIR/Makefile"
 
 ac_config_files="$ac_config_files $LIBXMP_DIR/Makefile"
 
 ac_config_files="$ac_config_files $LIBXMP_THREADS_DIR/Makefile"
+
+ac_config_files="$ac_config_files $LIBXMP_GPU_DIR/Makefile"
+
+
 
 
 
@@ -9379,6 +9392,22 @@ fi
 # --------------------------------------------------------------------
 
 # --------------------------------------------------------------------
+# specify GPU compiler command
+
+
+# Check whether --with-gpu_cmd was given.
+if test "${with_gpu_cmd+set}" = set; then :
+  withval=$with_gpu_cmd; GPU_CMD=$withval
+else
+  GPU_CMD="nvcc"
+fi
+
+
+
+
+# --------------------------------------------------------------------
+
+# --------------------------------------------------------------------
 # Export Omni Config Variable
 
 OMNI_HOME=$prefix
@@ -10200,8 +10229,10 @@ do
     "$OMDRIVER_DIR/../etc/x2x.conf.xmp_threads") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/x2x.conf.xmp_threads" ;;
     "$OMDRIVER_DIR/../etc/native.conf.xmp_threads") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/native.conf.xmp_threads" ;;
     "$OMDRIVER_DIR/../etc/linker.conf.xmp_threads") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/linker.conf.xmp_threads" ;;
+    "$LIBXMP_HEADER_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_HEADER_DIR/Makefile" ;;
     "$LIBXMP_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_DIR/Makefile" ;;
     "$LIBXMP_THREADS_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_THREADS_DIR/Makefile" ;;
+    "$LIBXMP_GPU_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_GPU_DIR/Makefile" ;;
     "$TESTS_DIR/C-test/Makefile") CONFIG_FILES="$CONFIG_FILES $TESTS_DIR/C-test/Makefile" ;;
     "$TESTS_DIR/tiny/Makefile") CONFIG_FILES="$CONFIG_FILES $TESTS_DIR/tiny/Makefile" ;;
     "$TESTS_DIR/clinpack/Makefile") CONFIG_FILES="$CONFIG_FILES $TESTS_DIR/clinpack/Makefile" ;;
