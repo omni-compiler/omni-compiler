@@ -19,6 +19,8 @@ extern int	xmp_get_world_rank(void);
 extern double	xmp_wtime(void);
 
 // ----- libxmp_gpu
+#ifdef _XMP_ENABLE_GPU
 extern int	xmp_get_gpu_count(void);
+#endif
 
 #endif // _XMP_USERAPI

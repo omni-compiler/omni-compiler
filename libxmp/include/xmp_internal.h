@@ -11,7 +11,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#ifdef _XMP_DEBUG
+#ifdef DEBUG
 #define _XMP_ASSERT(_flag) \
 { \
   if (!(_flag)) { \

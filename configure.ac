@@ -431,6 +431,8 @@ debCppFlags=""
 userCppFlags=""
 mustCppFlags=""
 
+xmpGpuFlags=""
+
 ccCom=""
 AC_ARG_WITH(cflag,
     [  --with-cflag=OPT        specify C compiler options for optimization],
@@ -439,6 +441,10 @@ AC_ARG_WITH(cflag,
 AC_ARG_ENABLE(debug,
     [  --enable-debug          enable generate executable with debug symbol (false default).],
     [doDebug=$enableval], [doDebug=no])
+
+AC_ARG_ENABLE(xmpgpu,
+    [  --enable-xmpgpu         enable XcalableMP-GPU (false default).],
+    [doXmpGpu=$enableval], [doXmpGpu=no])
 
 AC_ARG_WITH(cppflag,
     [  --with-cppflag=OPT      specify C preprocessor options],
@@ -456,6 +462,14 @@ else
     optCFlags="-O2"
     debCppFlags="-DNDEBUG"
 fi
+
+if test "x${doXmpGpu}" = "xyes"; then
+    xmpGpuFlags="-D_XMP_ENABLE_GPU"
+else
+    xmpGpuFlags="-D_XMP_DISABLE_GPU"
+fi
+
+AM_CONDITIONAL(ENABLE_XMP_GPU, test "x${doXmpGpu}" = "xyes")
 
 # check gcc version
 AC_MSG_CHECKING(gcc version)
@@ -481,7 +495,7 @@ OSDEF=-DOMNI_OS_`echo $OS | tr '[a-z]' '[A-Z]'`
 CPPFLAGS="${CPUDEF} ${OSDEF} ${debCppFlags} ${userCppFlags} ${mustCppFlags}"
 AC_SUBST(CPPFLAGS)
 
-CFLAGS="${debCFlags} ${userCFlags} ${optCFlags} ${mustCFlags} ${CFLAGS}"
+CFLAGS="${debCFlags} ${userCFlags} ${optCFlags} ${mustCFlags} ${CFLAGS} ${xmpGpuFlags}"
 CXXFLAGS=$CFLAGS
 AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)

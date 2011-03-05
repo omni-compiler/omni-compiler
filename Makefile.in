@@ -31,6 +31,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
+@ENABLE_XMP_GPU_TRUE@am__append_1 = @LIBXMP_GPU_DIR@
 subdir = .
 DIST_COMMON = $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(top_srcdir)/configure \
@@ -62,7 +63,11 @@ AM_RECURSIVE_TARGETS = $(RECURSIVE_TARGETS:-recursive=) \
 	distdir dist dist-all distcheck
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = $(SUBDIRS)
+DIST_SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ @C_BACKEND_DIR@ \
+	@F_FRONTEND_DIR@ @F_BACKEND_DIR@ @XCODEML_EXC_TOOLS_DIR@ \
+	@OMDRIVER_DIR@ @LIBOMPC_DIR@ @LIBTLOG_DIR@ @LIBXMP_HEADER_DIR@ \
+	@LIBXMP_DIR@ @LIBXMP_THREADS_DIR@ @LIBXMP_GPU_DIR@ \
+	$(am__empty)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -283,14 +288,10 @@ top_srcdir = @top_srcdir@
 # $TSUKUBA_Copyright:
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
-SUBDIRS = @XCODEML_COMMON_DIR@ \
-	@C_FRONTEND_DIR@ @C_BACKEND_DIR@ \
-	@F_FRONTEND_DIR@ @F_BACKEND_DIR@ \
-	@XCODEML_EXC_TOOLS_DIR@ \
-	@OMDRIVER_DIR@ \
-	@LIBOMPC_DIR@ @LIBTLOG_DIR@ \
-	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ @LIBXMP_THREADS_DIR@
-
+SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ @C_BACKEND_DIR@ \
+	@F_FRONTEND_DIR@ @F_BACKEND_DIR@ @XCODEML_EXC_TOOLS_DIR@ \
+	@OMDRIVER_DIR@ @LIBOMPC_DIR@ @LIBTLOG_DIR@ @LIBXMP_HEADER_DIR@ \
+	@LIBXMP_DIR@ @LIBXMP_THREADS_DIR@ $(am__append_1)
 all: all-recursive
 
 .SUFFIXES:
@@ -773,7 +774,6 @@ uninstall-am:
 	maintainer-clean-generic mostlyclean mostlyclean-generic pdf \
 	pdf-am ps ps-am tags tags-recursive uninstall uninstall-am
 
-#@LIBXMP_GPU_DIR@
 
 #install-data-local:
 #	if test -e "./doc"; then\

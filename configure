@@ -672,6 +672,8 @@ BECC
 OMC_CONF_LNK_OPT
 OMC_CONF_NTV_OPT
 OMC_CONF_LX2X_OPT
+ENABLE_XMP_GPU_FALSE
+ENABLE_XMP_GPU_TRUE
 am__fastdepCXX_FALSE
 am__fastdepCXX_TRUE
 CXXDEPMODE
@@ -781,6 +783,7 @@ with_thread
 with_lock
 with_cflag
 enable_debug
+enable_xmpgpu
 with_cppflag
 enable_dependency_tracking
 with_relaxerHome
@@ -1424,6 +1427,7 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-debug          enable generate executable with debug symbol (false default).
+  --enable-xmpgpu         enable XcalableMP-GPU (false default).
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
   --enable-mreal          enable multiple precision real (and real*16) support of Fortran 77 (false default).
@@ -3577,6 +3581,8 @@ debCppFlags=""
 userCppFlags=""
 mustCppFlags=""
 
+xmpGpuFlags=""
+
 ccCom=""
 
 # Check whether --with-cflag was given.
@@ -3592,6 +3598,14 @@ if test "${enable_debug+set}" = set; then :
   enableval=$enable_debug; doDebug=$enableval
 else
   doDebug=no
+fi
+
+
+# Check whether --enable-xmpgpu was given.
+if test "${enable_xmpgpu+set}" = set; then :
+  enableval=$enable_xmpgpu; doXmpGpu=$enableval
+else
+  doXmpGpu=no
 fi
 
 
@@ -4979,6 +4993,21 @@ else
     debCppFlags="-DNDEBUG"
 fi
 
+if test "x${doXmpGpu}" = "xyes"; then
+    xmpGpuFlags="-D_XMP_ENABLE_GPU"
+else
+    xmpGpuFlags="-D_XMP_DISABLE_GPU"
+fi
+
+ if test "x${doXmpGpu}" = "xyes"; then
+  ENABLE_XMP_GPU_TRUE=
+  ENABLE_XMP_GPU_FALSE='#'
+else
+  ENABLE_XMP_GPU_TRUE='#'
+  ENABLE_XMP_GPU_FALSE=
+fi
+
+
 # check gcc version
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking gcc version" >&5
 $as_echo_n "checking gcc version... " >&6; }
@@ -5003,7 +5032,7 @@ OSDEF=-DOMNI_OS_`echo $OS | tr 'a-z' 'A-Z'`
 CPPFLAGS="${CPUDEF} ${OSDEF} ${debCppFlags} ${userCppFlags} ${mustCppFlags}"
 
 
-CFLAGS="${debCFlags} ${userCFlags} ${optCFlags} ${mustCFlags} ${CFLAGS}"
+CFLAGS="${debCFlags} ${userCFlags} ${optCFlags} ${mustCFlags} ${CFLAGS} ${xmpGpuFlags}"
 CXXFLAGS=$CFLAGS
 
 
@@ -9572,6 +9601,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCXX_TRUE}" && test -z "${am__fastdepCXX_FALSE}"; then
   as_fn_error "conditional \"am__fastdepCXX\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_XMP_GPU_TRUE}" && test -z "${ENABLE_XMP_GPU_FALSE}"; then
+  as_fn_error "conditional \"ENABLE_XMP_GPU\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
