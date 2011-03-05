@@ -4,6 +4,7 @@
  *  $
  */
 
+#include "mpi.h"
 #include "xmp_internal.h"
 
 // FIXME utility functions

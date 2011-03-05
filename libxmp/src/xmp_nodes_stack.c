@@ -4,6 +4,7 @@
  *  $
  */
 
+#include "mpi.h"
 #include "xmp_internal.h"
 
 typedef struct _XMP_nodes_dish_type {

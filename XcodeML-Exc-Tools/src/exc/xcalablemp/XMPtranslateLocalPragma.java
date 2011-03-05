@@ -1380,8 +1380,6 @@ public class XMPtranslateLocalPragma {
     boolean leftHasSubArrayRef = hasSubArrayRef(leftExpr);
     boolean rightHasSubArrayRef = hasSubArrayRef(rightExpr);
     if (leftHasSubArrayRef) {
-      throw new XMPexception("array section in gmove is not supported in this version");
-      /*
       if (rightHasSubArrayRef) {
         if (leftAlignedArray == null) {
           if (rightAlignedArray == null) {	// !leftIsAlignedArray && !rightIsAlignedArray  |-> local assignment (every node)
@@ -1459,7 +1457,6 @@ public class XMPtranslateLocalPragma {
         // FIXME implement
         throw new XMPexception("not implemented yet");
       }
-      */
     }
     else {
       if (rightHasSubArrayRef) {

@@ -289,7 +289,7 @@ SUBDIRS = @XCODEML_COMMON_DIR@ \
 	@XCODEML_EXC_TOOLS_DIR@ \
 	@OMDRIVER_DIR@ \
 	@LIBOMPC_DIR@ @LIBTLOG_DIR@ \
-	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ @LIBXMP_THREADS_DIR@ @LIBXMP_GPU_DIR@
+	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ @LIBXMP_THREADS_DIR@
 
 all: all-recursive
 
@@ -773,6 +773,7 @@ uninstall-am:
 	maintainer-clean-generic mostlyclean mostlyclean-generic pdf \
 	pdf-am ps ps-am tags tags-recursive uninstall uninstall-am
 
+#@LIBXMP_GPU_DIR@
 
 #install-data-local:
 #	if test -e "./doc"; then\
