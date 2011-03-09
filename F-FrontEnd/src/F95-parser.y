@@ -555,9 +555,9 @@ array_allocation_list:
 
 array_allocation:
           IDENTIFIER
-        { $$ = list4(F95_ARRAY_ALLOCATION, $1, NULL, NULL, NULL); }
+        { $$ = list5(F95_ARRAY_ALLOCATION, $1, NULL, NULL, NULL, NULL); }
         | IDENTIFIER '(' defered_shape_list ')'
-        { $$ = list4(F95_ARRAY_ALLOCATION, $1, $3, NULL, NULL); }
+        { $$ = list5(F95_ARRAY_ALLOCATION, $1, $3, NULL, NULL, NULL); }
         ;
 
 defered_shape_list:

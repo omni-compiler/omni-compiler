@@ -2602,6 +2602,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                     VAR_IS_UNCOMPILED_ARRAY(id) = TRUE;
                 }
                 ID_CLASS(id) = CL_VAR;
+		ID_LINE(id) = EXPR_LINE(decl_list);
                 continue;
             }
         } else {
@@ -2720,7 +2721,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
 
         if (id != NULL) {
              declare_id_type(id, tp);
-             ID_LINE(id) = EXPR_LINE(decl_list);
+             if (!ID_LINE(id)) ID_LINE(id) = EXPR_LINE(decl_list);
              if (TYPE_IS_PARAMETER(tp)) {
                  ID_CLASS(id) = CL_PARAM;
              }
