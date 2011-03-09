@@ -436,7 +436,7 @@ xmpGpuFlags=""
 ccCom=""
 AC_ARG_WITH(cflag,
     [  --with-cflag=OPT        specify C compiler options for optimization],
-    [userCFlags=$withval], [userCFlags=""])
+    [userCFlags="${withval}"], [userCFlags=""])
 
 AC_ARG_ENABLE(debug,
     [  --enable-debug          enable generate executable with debug symbol (false default).],
@@ -448,7 +448,7 @@ AC_ARG_ENABLE(xmpgpu,
 
 AC_ARG_WITH(cppflag,
     [  --with-cppflag=OPT      specify C preprocessor options],
-    [userCppFlags=$withval], [userCppFlags=""])
+    [userCppFlags="${withval}"], [userCppFlags=""])
 
 AC_PROG_CC
 AC_PROG_CXX
@@ -757,20 +757,21 @@ ANTCOM="JAVA_HOME=$JAVA_HOME ${ANTCOM}"
 AC_SUBST(ANTCOM)
 
 # check relaxer
-AC_MSG_CHECKING([for relaxer])
-AC_ARG_WITH(relaxerHome,
-    [  --with-relaxerHome=DIR  specify where the Relaxer is installed.],
-    [relaxerHome=$withval], [relaxerHome=/usr/local/relaxer])
-
-if test -e "${relaxerHome}/Relaxer.jar" ; then
-    AC_MSG_RESULT($relaxerHome)
-    RELAXER_HOME="${relaxerHome}"
-else
-    AC_MSG_RESULT(no)
-    RELAXER_HOME=""
-fi
-
-AC_SUBST(RELAXER_HOME)
+#relaxerDir=/usr/local/relaxer
+#AC_MSG_CHECKING([for relaxer])
+#AC_ARG_WITH(relaxerDir,
+#    [  --with-relaxerDir=DIR  specify where the Relaxer is installed.],
+#    [relaxerDir=$withval], [relaxerDir=/usr/local/relaxer])
+#
+#if test -e "${relaxerHome}/Relaxer.jar" ; then
+#    AC_MSG_RESULT($relaxerDir)
+#    RELAXER_DIR="${relaxerDir}"
+#else
+#    AC_MSG_RESULT(no)
+#    RELAXER_DIR=""
+#fi
+#
+#AC_SUBST(RELAXER_DIR)
 
 # set java library install dir to install target of java_DATA
 javadir='${prefix}/java'
@@ -1234,31 +1235,31 @@ AC_SUBST(omniQRealFillGap)
 # --------------------------------------------------------------------
 # specify libxmp path
 
-AC_ARG_WITH(libxml_prefix,
+AC_ARG_WITH(libxmlDir,
     [  --with-libxmlDir=DIR    specify libxml install directory (default: /usr/local)],
-    [LIBXML_PREFIX=$withval], [LIBXML_PREFIX="/usr/local"])
+    [LIBXML_PREFIX="${withval}"], [LIBXML_PREFIX="/usr/local"])
 
 AC_SUBST(LIBXML_PREFIX)
 
 # --------------------------------------------------------------------
 
 # --------------------------------------------------------------------
-# specify MPI compiler command
+# specify MPI C compiler
 
-AC_ARG_WITH(mpi_cmd,
-    [  --with-mpicc=CMD        specify MPI compiler (default: mpicc)],
-    [MPI_CMD=$withval], [MPI_CMD="mpicc"])
+AC_ARG_WITH(mpicc,
+    [  --with-mpicc=CMD        specify MPI C compiler (default: mpicc)],
+    [MPI_CMD="${withval}"], [MPI_CMD="mpicc"])
 
 AC_SUBST(MPI_CMD)
 
 # --------------------------------------------------------------------
 
 # --------------------------------------------------------------------
-# specify GPU compiler command
+# specify GPU C compiler
 
-AC_ARG_WITH(gpu_cmd,
-    [  --with-gpucc=CMD        specify GPU compiler (default: nvcc)],
-    [GPU_CMD=$withval], [GPU_CMD="nvcc"])
+AC_ARG_WITH(gpucc,
+    [  --with-gpucc=CMD        specify GPU C compiler (default: nvcc)],
+    [GPU_CMD="${withval}"], [GPU_CMD="nvcc"])
 
 AC_SUBST(GPU_CMD)
 

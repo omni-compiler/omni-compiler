@@ -1,0 +1,17 @@
+Omni XcalableMP Compiler RELEASE NOTES
+
+<CHANGES>
+ver 0.5		2010/11/13
+ This is the first release of Omni XcalableMP Compiler.
+
+ver 0.5.1	2011/03/09
+ 1. gmove directive
+  gmove between aligned array and duplicated array using array section is suppoted.
+   ex)
+    #pragma xmp align a[i] with t(i)
+
+    #pragma xmp gmove
+      local[:] = a[:];
+
+ 2. reflect directive
+  full shadow reflect is implemented.

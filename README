@@ -1,0 +1,80 @@
+Omni XcalableMP Compiler README
+
+I. Getting Started
+ 1. You will need the following softwares to build Omni XcalableMP Compiler.
+  - Lex, Yacc
+  - A C Compiler (supports C99)
+  - A Java Compiler (latest)
+  - Apache Ant (1.8.1 or later)
+  - A MPI Implementation (supports MPI-2)
+
+ 2. Install Step
+  A. Configure Omni XcalableMP Compiler
+   ex)
+    ./configure --prefix=/home/you/XMP
+
+   if your MPI C compiler command is not "mpicc",
+    ./configure --with-mpicc=MPICC_CMD
+
+  B. Build the compiler
+   ex)
+    make
+    make install
+
+II. Implementation Status
+  This is the alpha release of Omni XcalableMP compiler.
+ Some features in the language specification are not supported in this release.
+ (You can download the specification of XcalableMP from "http://www.xcalablemp.org".)
+
+ 1. Language
+  Current version only supports C language.
+
+ 2. Global-view Model
+  A. Nodes Directive
+   <map-type> "regular" is not implemented.
+
+  B. Template Directive
+   ':' cannot be used for <template-spec>.
+   ("template_fix" ditective is not supported in this release)
+
+  C. Distribute Directive
+   "gblock", Block-cyclic("cyclic(w)") distribution is not implemented.
+
+  D. Template_fix Directive
+   Not supported in this release
+
+  E. Tasks Directive
+   Not supported in this release
+
+  F. Gmove Directive
+   gmove between aligned arrays using array section may not work correctly
+
+ I. Reduction Directive
+  <defined reduce operations>
+   '+', "sum", "SUM"		sum
+   '*', "prod", "PROD"		product
+   '&', "band", "BAND"		bit-wise and
+   "&&", "land", "LAND"		logical and
+   '|', "bor", "BOR"		bit-wise or
+   "||", "lor", "LOR"		logical or
+   '^', "bxor", "BXOR"		bit-wise xor
+   "lxor", "LXOR"		logical xor
+   "max", "MAX"			maximum
+   "min", "MIN"			minimum
+   "firstmax", "FIRSTMAX"	first location of maximum
+   "firstmin", "FIRSTMIN"	first location of minimum
+   "lastmax", "LASTMAX"		last location of maximum
+   "lastmin", "LASTMIN"		last location of minumum
+
+ 3. Local-view Model
+  Local-view model is not supported in this release.
+
+ 4. User API Functions (defined in xmp.h)
+  A. int xmp_get_rank(void);
+   returns MPI rank of the current communicator
+
+  B. int xmp_get_size(void);
+   returns MPI size of the current communicator
+
+  C. double xmp_wtime(void);
+   returns current time

@@ -641,7 +641,6 @@ GREP
 CPP
 JAVA_OPT
 javadir
-RELAXER_HOME
 ANTCOM
 javaType
 isSunJava6
@@ -786,14 +785,13 @@ enable_debug
 enable_xmpgpu
 with_cppflag
 enable_dependency_tracking
-with_relaxerHome
 enable_mreal
 with_gmpLibDir
 with_gmpIncDir
 with_precision
-with_libxml_prefix
-with_mpi_cmd
-with_gpu_cmd
+with_libxmlDir
+with_mpicc
+with_gpucc
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1439,13 +1437,12 @@ Optional Packages:
   --with-lock             type of openmp lock
   --with-cflag=OPT        specify C compiler options for optimization
   --with-cppflag=OPT      specify C preprocessor options
-  --with-relaxerHome=DIR  specify where the Relaxer is installed.
   --with-gmpLibDir=DIR    specify where the GNU-MP library is for quad-real support.
   --with-gmpIncDir=DIR    specify where the GNU-MP include headers are for quad-real support.
   --with-precision=NUM    specify the default precision of real*16 in bits (128).
   --with-libxmlDir=DIR    specify libxml install directory (default: /usr/local)
-  --with-mpicc=CMD        specify MPI compiler (default: mpicc)
-  --with-gpucc=CMD        specify GPU compiler (default: nvcc)
+  --with-mpicc=CMD        specify MPI C compiler (default: mpicc)
+  --with-gpucc=CMD        specify GPU C compiler (default: nvcc)
 
 Some influential environment variables:
   CC          C compiler command
@@ -3587,7 +3584,7 @@ ccCom=""
 
 # Check whether --with-cflag was given.
 if test "${with_cflag+set}" = set; then :
-  withval=$with_cflag; userCFlags=$withval
+  withval=$with_cflag; userCFlags="${withval}"
 else
   userCFlags=""
 fi
@@ -3612,7 +3609,7 @@ fi
 
 # Check whether --with-cppflag was given.
 if test "${with_cppflag+set}" = set; then :
-  withval=$with_cppflag; userCppFlags=$withval
+  withval=$with_cppflag; userCppFlags="${withval}"
 else
   userCppFlags=""
 fi
@@ -6315,28 +6312,21 @@ ANTCOM="JAVA_HOME=$JAVA_HOME ${ANTCOM}"
 
 
 # check relaxer
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for relaxer" >&5
-$as_echo_n "checking for relaxer... " >&6; }
-
-# Check whether --with-relaxerHome was given.
-if test "${with_relaxerHome+set}" = set; then :
-  withval=$with_relaxerHome; relaxerHome=$withval
-else
-  relaxerHome=/usr/local/relaxer
-fi
-
-
-if test -e "${relaxerHome}/Relaxer.jar" ; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $relaxerHome" >&5
-$as_echo "$relaxerHome" >&6; }
-    RELAXER_HOME="${relaxerHome}"
-else
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-    RELAXER_HOME=""
-fi
-
-
+#relaxerDir=/usr/local/relaxer
+#AC_MSG_CHECKING([for relaxer])
+#AC_ARG_WITH(relaxerDir,
+#    [  --with-relaxerDir=DIR  specify where the Relaxer is installed.],
+#    [relaxerDir=$withval], [relaxerDir=/usr/local/relaxer])
+#
+#if test -e "${relaxerHome}/Relaxer.jar" ; then
+#    AC_MSG_RESULT($relaxerDir)
+#    RELAXER_DIR="${relaxerDir}"
+#else
+#    AC_MSG_RESULT(no)
+#    RELAXER_DIR=""
+#fi
+#
+#AC_SUBST(RELAXER_DIR)
 
 # set java library install dir to install target of java_DATA
 javadir='${prefix}/java'
@@ -9392,9 +9382,9 @@ fi
 # specify libxmp path
 
 
-# Check whether --with-libxml_prefix was given.
-if test "${with_libxml_prefix+set}" = set; then :
-  withval=$with_libxml_prefix; LIBXML_PREFIX=$withval
+# Check whether --with-libxmlDir was given.
+if test "${with_libxmlDir+set}" = set; then :
+  withval=$with_libxmlDir; LIBXML_PREFIX="${withval}"
 else
   LIBXML_PREFIX="/usr/local"
 fi
@@ -9405,12 +9395,12 @@ fi
 # --------------------------------------------------------------------
 
 # --------------------------------------------------------------------
-# specify MPI compiler command
+# specify MPI C compiler
 
 
-# Check whether --with-mpi_cmd was given.
-if test "${with_mpi_cmd+set}" = set; then :
-  withval=$with_mpi_cmd; MPI_CMD=$withval
+# Check whether --with-mpicc was given.
+if test "${with_mpicc+set}" = set; then :
+  withval=$with_mpicc; MPI_CMD="${withval}"
 else
   MPI_CMD="mpicc"
 fi
@@ -9421,12 +9411,12 @@ fi
 # --------------------------------------------------------------------
 
 # --------------------------------------------------------------------
-# specify GPU compiler command
+# specify GPU C compiler
 
 
-# Check whether --with-gpu_cmd was given.
-if test "${with_gpu_cmd+set}" = set; then :
-  withval=$with_gpu_cmd; GPU_CMD=$withval
+# Check whether --with-gpucc was given.
+if test "${with_gpucc+set}" = set; then :
+  withval=$with_gpucc; GPU_CMD="${withval}"
 else
   GPU_CMD="nvcc"
 fi

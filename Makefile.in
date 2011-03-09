@@ -33,7 +33,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 @ENABLE_XMP_GPU_TRUE@am__append_1 = @LIBXMP_GPU_DIR@
 subdir = .
-DIST_COMMON = $(am__configure_deps) $(srcdir)/Makefile.am \
+DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(top_srcdir)/configure \
 	$(top_srcdir)/include/config.h.in depcomp install-sh missing \
 	ylwrap
@@ -204,7 +204,6 @@ PERL5 = @PERL5@
 POW_LIB = @POW_LIB@
 PPTGT = @PPTGT@
 RANLIB = @RANLIB@
-RELAXER_HOME = @RELAXER_HOME@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 SIZEOF_DOUBLE = @SIZEOF_DOUBLE@
