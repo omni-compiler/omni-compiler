@@ -160,6 +160,14 @@ public class XMPalignedArray {
     return _addrId;
   }
 
+  public Xobject getAddrIdVoidRef() {
+    return Xcons.Cast(Xtype.voidPtrType, _addrId.Ref());
+  }
+
+  public Xobject getAddrIdVoidAddr() {
+    return Xcons.Cast(Xtype.Pointer(Xtype.voidPtrType), _addrId.getAddr());
+  }
+
   public void setHasShadow() {
     _hasShadow = true;
   }
@@ -513,7 +521,7 @@ public class XMPalignedArray {
                                                   arrayId.getAddr(),
                                                   arrayDescId.Ref());
       for (int i = arrayDim - 1; i >= 0; i--) {
-        initArrayAddrFuncArgs.add(Xcons.Cast(Xtype.unsignedlonglongType,
+        initArrayAddrFuncArgs.add(Xcons.Cast(Xtype.Pointer(Xtype.unsignedlonglongType),
                                              alignedArray.getAccIdAt(i).getAddr()));
       }
 

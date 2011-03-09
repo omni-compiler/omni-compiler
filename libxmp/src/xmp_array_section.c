@@ -929,7 +929,7 @@ void _XMP_normalize_array_section(int *lower, int *upper, int *stride) {
 }
 
 void _XMP_pack_array_BASIC(void *buffer, void *src, int array_type,
-                                  int array_dim, int *l, int *u, int *s, unsigned long long *d) {
+                           int array_dim, int *l, int *u, int *s, unsigned long long *d) {
   switch (array_type) {
     case _XMP_N_TYPE_BOOL: {
         switch (array_dim) {
@@ -1116,7 +1116,7 @@ void _XMP_pack_array_BASIC(void *buffer, void *src, int array_type,
 }
 
 void _XMP_pack_array_GENERAL(void *buffer, void *src, size_t array_type_size,
-                                    int array_dim, int *l, int *u, int *s, unsigned long long *d) {
+                             int array_dim, int *l, int *u, int *s, unsigned long long *d) {
   switch (array_dim) {
     case 1: _XMP_pack_array_1_GENERAL(buffer, src, array_type_size, l[0], u[0], s[0]); break;
     case 2: _XMP_pack_array_2_GENERAL(buffer, src, array_type_size, l, u, s, d); break;
@@ -1130,7 +1130,7 @@ void _XMP_pack_array_GENERAL(void *buffer, void *src, size_t array_type_size,
 }
 
 void _XMP_unpack_array_BASIC(void *dst, void *buffer, int array_type,
-                                    int array_dim, int *l, int *u, int *s, unsigned long long *d) {
+                             int array_dim, int *l, int *u, int *s, unsigned long long *d) {
   switch (array_type) {
     case _XMP_N_TYPE_BOOL: {
         switch (array_dim) {
@@ -1318,7 +1318,7 @@ void _XMP_unpack_array_BASIC(void *dst, void *buffer, int array_type,
 }
 
 void _XMP_unpack_array_GENERAL(void *dst, void *buffer, size_t array_type_size,
-                                      int array_dim, int *l, int *u, int *s, unsigned long long *d) {
+                               int array_dim, int *l, int *u, int *s, unsigned long long *d) {
   switch (array_dim) {
     case 1: _XMP_unpack_array_1_GENERAL(dst, buffer, array_type_size, l[0], u[0], s[0]); break;
     case 2: _XMP_unpack_array_2_GENERAL(dst, buffer, array_type_size, l, u, s, d); break;

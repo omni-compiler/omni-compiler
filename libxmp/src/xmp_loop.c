@@ -68,7 +68,7 @@ else ser_cond -= ((ser_cond - ser_init) % ser_step);
 }
 
 #define _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK(ser_init, ser_cond, ser_step, par_init, par_cond, par_step, \
-                                                 template_lower, template_upper) \
+                                          template_lower, template_upper) \
 { \
   /* calc par_init */ \
   if (ser_init < template_lower) *par_init = template_lower; \

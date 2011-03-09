@@ -120,7 +120,7 @@ public class XMPtranslateLocalPragma {
     setupFinalizer(taskBody, finFuncId, null);
 
     // create function call
-    Ident execFuncId = _globalDecl.declExternIdent("_XMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
+    Ident execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.boolType);
     pb.replace(Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), taskBody, null));
   }
 
@@ -668,7 +668,7 @@ public class XMPtranslateLocalPragma {
 
     // pack shadow
     Ident packFuncId = _globalDecl.declExternFunc("_XMP_pack_shadow_NORMAL");
-    XobjList packFuncArgs = Xcons.List(loSendId.getAddr(), hiSendId.getAddr(), alignedArray.getAddrId().Ref(),
+    XobjList packFuncArgs = Xcons.List(loSendId.getAddr(), hiSendId.getAddr(), alignedArray.getAddrIdVoidRef(),
                                        alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
 
     reflectFuncBody.add(Bcons.Statement(packFuncId.Call(packFuncArgs)));
@@ -683,7 +683,7 @@ public class XMPtranslateLocalPragma {
 
     // unpack shadow
     Ident unpackFuncId = _globalDecl.declExternFunc("_XMP_unpack_shadow_NORMAL");;
-    XobjList unpackFuncArgs = Xcons.List(loRecvId.Ref(), hiRecvId.Ref(), alignedArray.getAddrId().Ref(),
+    XobjList unpackFuncArgs = Xcons.List(loRecvId.Ref(), hiRecvId.Ref(), alignedArray.getAddrIdVoidRef(),
                                          alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
 
     reflectFuncBody.add(Bcons.Statement(unpackFuncId.Call(unpackFuncArgs)));
@@ -693,7 +693,7 @@ public class XMPtranslateLocalPragma {
                                            XMPalignedArray alignedArray, int arrayIndex,
                                            BlockList reflectFuncBody) {
     Ident funcId = _globalDecl.declExternFunc("_XMP_reflect_shadow_FULL");
-    XobjList funcArgs = Xcons.List(alignedArray.getAddrId().Ref(), alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
+    XobjList funcArgs = Xcons.List(alignedArray.getAddrIdVoidRef(), alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
 
     reflectFuncBody.add(Bcons.Statement(funcId.Call(funcArgs)));
   }
@@ -718,7 +718,7 @@ public class XMPtranslateLocalPragma {
         setupFinalizer(barrierBody, _globalDecl.declExternFunc("_XMP_pop_n_free_nodes"), null);
 
         // create function call
-        Ident execFuncId = _globalDecl.declExternIdent("_XMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
+        Ident execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.boolType);
         pb.replace(Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), barrierBody, null));
       }
       else pb.replace(createFuncCallBlock("_XMP_barrier_" + execFuncSurfix, execFuncArgs));
@@ -759,7 +759,7 @@ public class XMPtranslateLocalPragma {
         setupFinalizer(reductionBody, _globalDecl.declExternFunc("_XMP_pop_n_free_nodes"), null);
 
         // create function call
-        Ident execFuncId = _globalDecl.declExternIdent("_XMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
+        Ident execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.boolType);
         pb.replace(Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), reductionBody, null));
       }
       else {
@@ -850,7 +850,7 @@ public class XMPtranslateLocalPragma {
                 throw new XMPexception("arrays which have shadow cannot be used in reduction directive/clause");
               }
 
-              specRef = specAlignedArray.getAddrId().Ref();
+              specRef = specAlignedArray.getAddrIdVoidRef();
               Ident getTotalElmtFuncId = _globalDecl.declExternFunc("_XMP_get_array_total_elmts",
                                                                     Xtype.unsignedlonglongType);
               count = getTotalElmtFuncId.Call(Xcons.List(specAlignedArray.getDescId().Ref()));
@@ -1185,7 +1185,7 @@ public class XMPtranslateLocalPragma {
         setupFinalizer(bcastBody, _globalDecl.declExternFunc("_XMP_pop_n_free_nodes"), null);
 
         // create function call
-        Ident execFuncId = _globalDecl.declExternIdent("_XMP_exec_task_" + execFuncSurfix, Xtype.Function(Xtype.boolType));
+        Ident execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.boolType);
         pb.replace(Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), bcastBody, null));
       }
       else {
@@ -1481,7 +1481,7 @@ public class XMPtranslateLocalPragma {
           XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref());
           XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
 
-          Ident gmoveFuncId = _globalDecl.declExternIdent("_XMP_gmove_HOMECOPY_SCALAR", Xtype.Function(Xtype.boolType));
+          Ident gmoveFuncId = _globalDecl.declExternFunc("_XMP_gmove_HOMECOPY_SCALAR", Xtype.boolType);
           pb.replace(Bcons.IF(BasicBlock.Cond(gmoveFuncId.Call(gmoveFuncArgs)),
                               gmoveBody, null));
         }
@@ -1625,7 +1625,7 @@ public class XMPtranslateLocalPragma {
           }
           else {
             if (alignedArray.getDim() == arrayDimCount) {
-              arrayRefs.cons(Xcons.Cast(Xtype.voidPtrType, alignedArray.getAddrId().Ref()));
+              arrayRefs.cons(alignedArray.getAddrIdVoidRef());
               return new XMPpair<XMPalignedArray, XobjList>(alignedArray, arrayRefs);
             }
             else {

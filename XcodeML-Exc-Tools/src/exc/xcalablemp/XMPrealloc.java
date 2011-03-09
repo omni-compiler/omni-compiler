@@ -31,7 +31,7 @@ public class XMPrealloc implements XobjectDefVisitor {
       XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(varName);
       if (alignedArray != null) {
         if (alignedArray.realloc()) {
-          XobjList allocFuncArgs = Xcons.List(alignedArray.getAddrId().getAddr(), alignedArray.getDescId().Ref());
+          XobjList allocFuncArgs = Xcons.List(alignedArray.getAddrIdVoidAddr(), alignedArray.getDescId().Ref());
           for (int i = alignedArray.getDim() - 1; i >= 0; i--) {
             allocFuncArgs.add(Xcons.Cast(Xtype.unsignedlonglongType,
                                          alignedArray.getAccIdAt(i).getAddr()));
@@ -48,7 +48,7 @@ public class XMPrealloc implements XobjectDefVisitor {
                                 Xcons.String("/* array '" + varName + "' is removed by XcalableMP align directive */")));
         }
         else {
-          XobjList allocFuncArgs = Xcons.List(alignedArray.getAddrId().getAddr(),
+          XobjList allocFuncArgs = Xcons.List(alignedArray.getAddrIdVoidAddr(),
                                               alignedArray.getArrayId().Ref(),
                                               alignedArray.getDescId().Ref());
           for (int i = alignedArray.getDim() - 1; i >= 0; i--) {

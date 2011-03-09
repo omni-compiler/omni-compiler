@@ -233,6 +233,7 @@ public class omompx
             globalDecl.setupGlobalDestructor();
             XMP.exitByError();
             xobjFile.addHeaderLine("include \"xmp.h\"");
+            xobjFile.addHeaderLine("include \"xmp_func_decl.h\"");
             xobjFile.addHeaderLine("include \"xmp_index_macro.h\"");
             xobjFile.addHeaderLine("include \"xmp_comm_macro.h\"");
             xmpTranslator.finalize();

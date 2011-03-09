@@ -82,11 +82,11 @@ public class XMPglobalDecl {
   }
 
   public Ident declExternFunc(String funcName) {
-    return _env.declExternIdent(funcName, Xtype.Function(Xtype.voidType));
+    return XMP.getMacroId(funcName, Xtype.Function(Xtype.voidType));
   }
 
   public Ident declExternFunc(String funcName, Xtype type) {
-    return _env.declExternIdent(funcName, Xtype.Function(type));
+    return XMP.getMacroId(funcName, Xtype.Function(type));
   }
 
   public void addGlobalInitFuncCall(String funcName, Xobject args) {

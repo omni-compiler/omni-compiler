@@ -361,7 +361,7 @@ void _XMP_init_nodes_DYNAMIC_EXEC(int map_type, _XMP_nodes_t **nodes, int dim, .
 }
 
 void _XMP_init_nodes_STATIC_NODES_NUMBER(int map_type, _XMP_nodes_t **nodes, int dim,
-                                                int ref_lower, int ref_upper, int ref_stride, ...) {
+                                         int ref_lower, int ref_upper, int ref_stride, ...) {
   _XMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, _XMP_world_size);
 
   _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NUMBER(dim, ref_lower, ref_upper, ref_stride);
@@ -390,7 +390,7 @@ void _XMP_init_nodes_STATIC_NODES_NUMBER(int map_type, _XMP_nodes_t **nodes, int
 }
 
 void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(int map_type, _XMP_nodes_t **nodes, int dim,
-                                                 int ref_lower, int ref_upper, int ref_stride, ...) {
+                                          int ref_lower, int ref_upper, int ref_stride, ...) {
   _XMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, _XMP_world_size);
 
   _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NUMBER(dim, ref_lower, ref_upper, ref_stride);
@@ -421,7 +421,7 @@ void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(int map_type, _XMP_nodes_t **nodes, in
 }
 
 void _XMP_init_nodes_STATIC_NODES_NAMED(int get_upper, int map_type, _XMP_nodes_t **nodes, int dim,
-                                               _XMP_nodes_t *ref_nodes, ...) {
+                                        _XMP_nodes_t *ref_nodes, ...) {
   if (!ref_nodes->is_member) {
     _XMP_fatal("cannot create a new nodes descriptor");
   }
@@ -474,7 +474,7 @@ void _XMP_init_nodes_STATIC_NODES_NAMED(int get_upper, int map_type, _XMP_nodes_
 }
 
 void _XMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, int map_type, _XMP_nodes_t **nodes, int dim,
-                                               _XMP_nodes_t *ref_nodes, ...) {
+                                         _XMP_nodes_t *ref_nodes, ...) {
   if (!ref_nodes->is_member) {
     _XMP_fatal("cannot create a new nodes descriptor");
   }

@@ -455,7 +455,7 @@ _Bool _XMP_gmove_HOMECOPY_SCALAR(_XMP_array_t *array, ...) {
 }
 
 void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
-                                       _XMP_array_t *dst_array, _XMP_array_t *src_array, ...) {
+                                _XMP_array_t *dst_array, _XMP_array_t *src_array, ...) {
   va_list args;
   va_start(args, src_array);
   int dst_rank;
@@ -1032,7 +1032,7 @@ static void _XMP_gmove_SENDRECV_all2all_2(void *dst_addr, void *src_addr,
 
 // FIXME does not has complete function for general usage
 void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
-                                      int type, size_t type_size, ...) {
+                               int type, size_t type_size, ...) {
   va_list args;
   va_start(args, type_size);
 

@@ -25,7 +25,7 @@ void _XMP_bcast_NODES_ENTIRE_OMITTED(_XMP_nodes_t *bcast_nodes, void *addr, int 
 }
 
 void _XMP_bcast_NODES_ENTIRE_GLOBAL(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
-                                           int from_lower, int from_upper, int from_stride) {
+                                    int from_lower, int from_upper, int from_stride) {
   _XMP_validate_nodes_ref(&from_lower, &from_upper, &from_stride, _XMP_world_size);
 
   if (!bcast_nodes->is_member) {
@@ -48,7 +48,7 @@ void _XMP_bcast_NODES_ENTIRE_GLOBAL(_XMP_nodes_t *bcast_nodes, void *addr, int c
 
 // FIXME read spec
 void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
-                                          _XMP_nodes_t *from_nodes, ...) {
+                                   _XMP_nodes_t *from_nodes, ...) {
   if (!bcast_nodes->is_member) {
     return;
   }
