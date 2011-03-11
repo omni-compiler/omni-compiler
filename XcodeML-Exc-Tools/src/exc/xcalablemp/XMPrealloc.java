@@ -33,7 +33,7 @@ public class XMPrealloc implements XobjectDefVisitor {
         if (alignedArray.realloc()) {
           XobjList allocFuncArgs = Xcons.List(alignedArray.getAddrIdVoidAddr(), alignedArray.getDescId().Ref());
           for (int i = alignedArray.getDim() - 1; i >= 0; i--) {
-            allocFuncArgs.add(Xcons.Cast(Xtype.unsignedlonglongType,
+            allocFuncArgs.add(Xcons.Cast(Xtype.Pointer(Xtype.unsignedlonglongType),
                                          alignedArray.getAccIdAt(i).getAddr()));
           }
 
@@ -52,7 +52,7 @@ public class XMPrealloc implements XobjectDefVisitor {
                                               alignedArray.getArrayId().Ref(),
                                               alignedArray.getDescId().Ref());
           for (int i = alignedArray.getDim() - 1; i >= 0; i--) {
-            allocFuncArgs.add(Xcons.Cast(Xtype.unsignedlonglongType,
+            allocFuncArgs.add(Xcons.Cast(Xtype.Pointer(Xtype.unsignedlonglongType),
                                          alignedArray.getAccIdAt(i).getAddr()));
           }
 
