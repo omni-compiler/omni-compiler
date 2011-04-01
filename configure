@@ -695,7 +695,8 @@ CPPFLAGS
 LDFLAGS
 CFLAGS
 CC
-LIBTLOG_DIR
+LIBTLOG_MPI_DIR
+LIBTLOG_THREADS_DIR
 LIBOMPC_DIR
 OMP_LOCK_TYPE
 OMP_THREAD_TYPE
@@ -3555,8 +3556,12 @@ genLibTargetTmpl () {
 LIBOMPC_DIR="libompc/src"
 ac_config_files="$ac_config_files $LIBOMPC_DIR/Makefile"
 
-LIBTLOG_DIR="libtlog/src"
-ac_config_files="$ac_config_files $LIBTLOG_DIR/Makefile"
+LIBTLOG_THREADS_DIR="libtlog/src_threads"
+ac_config_files="$ac_config_files $LIBTLOG_THREADS_DIR/Makefile"
+
+LIBTLOG_MPI_DIR="libtlog/src_mpi"
+ac_config_files="$ac_config_files $LIBTLOG_MPI_DIR/Makefile"
+ac_config_files="$ac_config_files $LIBTLOG_MPI_DIR/bin/tlogview"
 
 genLibTargetTmpl $LIBOMPC_DIR
 
@@ -10261,7 +10266,8 @@ do
     "$TESTS_DIR/clinpack/Makefile") CONFIG_FILES="$CONFIG_FILES $TESTS_DIR/clinpack/Makefile" ;;
     "$TESTS_DIR/F-test/OMP-test/Makefile") CONFIG_FILES="$CONFIG_FILES $TESTS_DIR/F-test/OMP-test/Makefile" ;;
     "$LIBOMPC_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBOMPC_DIR/Makefile" ;;
-    "$LIBTLOG_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBTLOG_DIR/Makefile" ;;
+    "$LIBTLOG_THREADS_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBTLOG_THREADS_DIR/Makefile" ;;
+    "$LIBTLOG_MPI_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBTLOG_MPI_DIR/Makefile" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
 

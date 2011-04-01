@@ -1,0 +1,3 @@
+#!/bin/sh
+PREFIX=@OMNI_HOME@
+java -classpath ${PREFIX}/bin/tlogview.jar tlogview $*

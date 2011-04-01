@@ -1,0 +1,89 @@
+tlog fileのフォーマット:
+
+tlog fileのフォーマットは、次の16バイトのevent recordが連続している
+ものである。
+
+  typedef struct {
+    short proc_id;	/* processor id */
+    char log_type;	/* major type */
+    char arg1;		/* minor type */
+    int arg2;
+    double time_stamp;
+  } tlog_exec_event;
+
+log_typeにはイベント番号、proc_idはMPIのrankが入る。arg1, arg2は使わ
+れていない。time_stampにはイベントが起こった時間がtlog_initalizeして
+からの経過時間(秒)で記録されている。(tlog_initにおいて、全てのプロセッ
+サの相対時間を計算し、adjustしている)
+
+   ＊ なお、tlogのtime_stampは,javaの表示のために、big endianで記録さ
+      れている。little endianのマシン(x86)で直接読み込む場合は、バイト
+      スワップすること。なるべく下記の解析ルーチンを使うことを推奨する。
+     解析ルーチンでは、この処理をやってある。＊
+
+また、proc_idごとには時間順に記録されているが、proc_idが異なるイベン
+トごとには時間順序が保証されていないので注意すること。
+(実際、tlog_finalizeで前プロセッサから集めるので、実際にはプロセッサ
+ごとになっている)
+  
+tlog_logでは、メモリ上にイベント記録用の領域を取りながら記録している。
+そのため、イベント取得のオーバーヘッドは相対的に小さいが、細かくイベン
+トを取った場合、メモリが消費され、場合によっては実行できなくなる可能性
+があるので、どの位の解像度でイベントを取るかについては考慮する必要があ
+る。
+
+tlog 解析のためのルーチン：
+
+解析のためのルーチンとして以下のライブラリが、tloglib.aにある。
+データ構造のためのincludeファイルは、tlog_event.hなので、これをinclude
+する。
+
+tlog_exec_profile *tlog_read_file(char *fname,int n_node);
+
+tlogファイル fname を読み込む。ノード数をn_nodeで指定。
+logにアクセスするための構造体tlog_exec_fileへのポインタを返す。
+
+int tlog_get_N_events(tlog_exec_profile *ep, int node);
+
+ノード番号nodeのイベント数を返す。
+tlog_exec_profileへのポインタとノード番号nodeを引数とする。
+
+tlog_exec_event *tlog_get_event(tlog_exec_profile *ep,int node, int i);
+ノード番号nodeのi番目のeventへのpointerを返す。
+
+使い方の例：
+
+たとえば、64プロセッサのファイルtrace.logを読み込み全てのデータを書き
+出すプログラムは以下のようになる。
+
+#include <stdio.h>
+#include "tlog.h"
+#include "tlog_event.h"
+
+main()
+{
+  tlog_exec_profile *epp;
+  tlog_exec_event *ep;
+  int n,n_node;
+  int n_data,i;
+
+  n_node = 64;
+  epp = tlog_read_file("trace.log",n_node);
+  for(n = 0; n < n_node; n++){
+    n_data = tlog_get_N_events(epp,n);
+    printf("--- Tlog exec profile dump: proc=%d, #data=%d\n",n,n_data);
+    for(i = 0; i < n_data; i++){
+      ep = tlog_get_event(epp,n,i);
+      printf("%d:proc_id=%d, log_type=%d, time=%g\n",
+	     i,ep->proc_id, ep->log_type,ep->time_stamp);
+    }
+  }
+  exit(0);
+}
+
+このプログラム sample.cとデータを、samplenのdirectoryにあるので参考の
+こと。
+
+tlogviewのディレクトリに、javaで書かれたtlogデータのdumpプログラム
+   tlogDump.java
+があるので、参考のこと。

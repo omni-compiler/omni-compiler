@@ -1,0 +1,41 @@
+Tlogについて: (ver 1.1)
+
+tlogとは、time logの略で、イベント毎のlogを取るライブラリlibtlog.a
+とtlogの可視化ツールtlogviewからなる。この環境はもともと、Omni OpenMP
+Compilerのプロファイルを取るための環境として開発したものである。
+
+・ イベントの種類について
+イベントには、単発のイベントと、区間を持つイベントがある。
+区間を持つイベントは、開始のイベントと終了のイベントの２つから構成され
+ており、これらは取得時にはネストしていなくてはならない。
+tlogviewでは、区間のイベントはその区間を塗りつぶして表示されるのに対し
+て、単発のイベントは縦の線で表示される。
+
+
+・ tlogライブラリ
+ tlogライブラリは,ログを取得するためのライブラリで、被プロファイルプロ
+グラムに埋め込まれる。ログは、tlog_finalizeで、実行directoryの
+trace.logというファイルに出力される。 このファイルは、tlog_log_filename(char *name)
+で変えることができる。
+
+  void tlog_initialize()
+   tlogライブラリを初期化する。MPI_initの後で呼ぶこと。
+
+  void tlog_log(int event_number)
+   event_numberによるイベントをlogする。
+
+  void tlog_finalize()
+   tlogライブラリを終了する。MPI_finalizeの前に呼ぶこと。
+   ログは、trace.logに出力される。
+
+   void tlog_log_filename(char *name)
+   logのファイル名を指定する。defaultは、"trace.log"となっている。
+  特に指定しない場合にはこの名前が用いられる。
+
+   void tlog_flush(void);
+   呼ばれた時点でのログをフラッシュする。
+
+
+-- 以上
+
+

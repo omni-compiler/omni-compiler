@@ -1,0 +1,26 @@
+tlogviewについて：
+
+  tlogviewは、tlogファイルを可視化するプログラムである。
+
+  カスタマイズ：
+   event番号と実際に可視化するイベントを対応ずけておかなくてはならない。
+   tlogInit.javaのinitにおいて、設定する。 
+   区間を持つイベントは、
+     tlogData.defineEvent2Type(開始のイベント番号,終了のイベント番号,
+          legendの表示の文字列, 表示色)
+   で指定する。
+
+   単発のイベントは
+     tlogData.defineEventType(イベント番号,legendの表示の文字列, 表示色)
+   で指定する。
+   なお、checkoutしたdefaultの設定では、10から27までは区間を持つイベント
+   31から、39までは単発のイベントになっている。表示色については、実際
+   のファイルとtlogでのlegendの表示を確認のこと。
+  
+  コンパイル： javaで作成されているので、JDKのセットアップをして、
+       javac *.java
+    でコンパイルする。
+
+  起動： CLASSPATHを設定して、
+       java tlogview ログファイル
+    
