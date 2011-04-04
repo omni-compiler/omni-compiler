@@ -269,6 +269,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 XMP_INC_DIR = ../include
+TLOG_INC_DIR = $(top_builddir)/@LIBTLOG_MPI_DIR@
 lib_LIBRARIES = libxmp.a
 libxmp_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h \
                                   xmp_math_function.h \
@@ -280,7 +281,9 @@ libxmp_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h \
 EXTRA_libxmp_a_SOURCES = xmp_crt0.c xmp_threads_crt0.c
 XMPCRTOBJ = xmp_crt0.o
 XMPTHREADSCRTOBJ = xmp_threads_crt0.o
-AM_CFLAGS = -Wall -std=c99 -I$(XMP_INC_DIR)
+XMPTLOGCRTOBJ = xmp_tlog_crt0.o
+XMPSCALASCACRTOBJ = xmp_scalasca_crt0.o
+AM_CFLAGS = -Wall -std=c99 -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR)
 all: all-am
 
 .SUFFIXES:
@@ -593,15 +596,17 @@ uninstall-am: uninstall-libLIBRARIES
 	uninstall-am uninstall-libLIBRARIES
 
 
-all-local: $(XMPCRTOBJ) $(XMPTHREADSCRTOBJ)
+all-local: $(XMPCRTOBJ) $(XMPTHREADSCRTOBJ) $(XMPTLOGCRTOBJ) $(XMPSCALASCACRTOBJ)
 
 clean-local:
 	rm -f *~ *.core core core.*
 
-install-exec-local: $(XMPCRTOBJ) $(XMPTHREADSCRTOBJ)
+install-exec-local: $(XMPCRTOBJ) $(XMPTHREADSCRTOBJ) $(XMPTLOGCRTOBJ) $(XMPSCALASCACRTOBJ)
 	test -z "$(libdir)" || $(MKDIR_P) $(DESTDIR)$(libdir)
 	$(INSTALL_DATA) $(XMPCRTOBJ) $(DESTDIR)$(libdir)
 	$(INSTALL_DATA) $(XMPTHREADSCRTOBJ) $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) $(XMPTLOGCRTOBJ) $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) $(XMPSCALASCACRTOBJ) $(DESTDIR)$(libdir)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

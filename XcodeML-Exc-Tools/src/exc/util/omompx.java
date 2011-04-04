@@ -59,6 +59,11 @@ public class omompx
             "  -dxcode      output Xcode file as <input file>.x",
             "  -dump        output Xcode file and decompiled file to standard output.",
             "  -domp        enable output OpenMP translation debug message.",
+	    " Profiling Options:",
+            "  -profile         Emit XMP directive profiling code only for specified directives.",
+            "  -allprofile      Emit XMP directive profiling code for all directives.",
+            "  -with-scalasca   Emit Scalasca instrumentation.",
+            "  -with-tlog       Emit tlog insturumentation."
         };
         
         for(String line : lines) {
@@ -79,6 +84,10 @@ public class omompx
         boolean outputDecomp = false;
         boolean dump = false;
         boolean indent = false;
+	boolean all_profile = false;
+        boolean selective_profile = false;
+        boolean doScalasca = false;
+        boolean doTlog = false;
         int maxColumns = 0;
         
         for(int i = 0; i < args.length; ++i) {
@@ -132,6 +141,14 @@ public class omompx
                 XmOption.setCompilerVendor(XmOption.COMP_VENDOR_GNU);
             } else if(arg.equals("-intel")) {
                 XmOption.setCompilerVendor(XmOption.COMP_VENDOR_INTEL);
+	    } else if(arg.equals("-allprofile")) {
+                all_profile = true;
+            } else if(arg.equals("-profile")) {
+                selective_profile = true;
+            } else if (arg.equals("-with-scalasca")) {
+                doScalasca = true;
+            } else if (arg.equals("-with-tlog")) {
+                doTlog = true;
             } else if(arg.startsWith("-")){
                 error("unknown option " + arg);
             } else if(inXmlFile == null) {
@@ -141,6 +158,12 @@ public class omompx
             }
         }
         
+	if (all_profile == true || selective_profile == true) {
+            if (doScalasca == false && doTlog == false) {
+                doScalasca = true;
+            }
+        }
+
         Reader reader = null;
         Writer xmlWriter = null;
         Writer xcodeWriter = null;
@@ -225,6 +248,16 @@ public class omompx
             XMPtranslate xmpTranslator = new XMPtranslate(globalDecl);
             XMPrealloc xmpReallocator = new XMPrealloc(globalDecl);
 
+	    // For profile                                                                            
+            if(all_profile){
+                xmpTranslator.set_all_profile();
+            }
+            if(selective_profile){
+                xmpTranslator.set_selective_profile();
+            }
+	    xmpTranslator.setScalascaEnabled(doScalasca);
+            xmpTranslator.setTlogEnabled(doTlog);
+
             xobjFile.iterateDef(xmpTranslator);
             XMP.exitByError();
             xobjFile.iterateDef(xmpReallocator);
@@ -236,6 +269,13 @@ public class omompx
             xobjFile.addHeaderLine("include \"xmp_func_decl.h\"");
             xobjFile.addHeaderLine("include \"xmp_index_macro.h\"");
             xobjFile.addHeaderLine("include \"xmp_comm_macro.h\"");
+	    if(all_profile || selective_profile){
+                if (doScalasca == true) {
+		    xobjFile.addHeaderLine("include \"xmp_scalasca.h\"");
+		}else if (doTlog == true) {
+                    xobjFile.addHeaderLine("include \"xmp_tlog.h\"");
+                }
+            }
             xmpTranslator.finalize();
 
             if(xcodeWriter != null) {

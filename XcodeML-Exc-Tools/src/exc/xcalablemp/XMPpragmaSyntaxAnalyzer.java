@@ -590,12 +590,21 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   }
 
   private XobjList parse_TASK_clause() throws XmException, XMPexception {
+    Xobject onRef = null;
     if (!pg_is_ident("on"))
       error("task directive has no <on-ref>");
 
     // parse <on-ref>
     pg_get_token();
-    return Xcons.List(parse_ON_REF(true, false));
+    onRef = parse_ON_REF(true, false);
+
+    Xobject profileClause = null;
+    if (pg_is_ident("profile")) {
+	profileClause = Xcons.StringConstant("profile");
+	pg_get_token();
+    }
+    
+    return Xcons.List(onRef, profileClause);
   }
 
   private XobjList parse_TASKS_clause() {
@@ -661,8 +670,15 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       pg_get_token();
       threadsClause = parse_THREADS_clause();
     }
+    
+    // parse [profile]                                                                                                   
+    Xobject profileClause = null;
+    if (pg_is_ident("profile")) {
+        profileClause = Xcons.StringConstant("profile");
+        pg_get_token();
+    }
 
-    return Xcons.List(loopIndexList, onRef, reductionRefList, threadsClause);
+    return Xcons.List(loopIndexList, onRef, reductionRefList, threadsClause, profileClause);
 
     // check body in translator: for loop
   }
@@ -682,25 +698,47 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       else break;
     } while (true);
 
-    return Xcons.List(arrayNameList);
+    Xobject profileClause = null;
+    if (pg_is_ident("profile")) {
+        profileClause = Xcons.StringConstant("profile");
+        pg_get_token();
+    }
+
+    return Xcons.List(arrayNameList, profileClause);
   }
 
   private XobjList parse_BARRIER_clause() throws XmException, XMPexception {
+    Xobject onRef = null;
     if (pg_is_ident("on")) {
       pg_get_token();
-      return Xcons.List(parse_ON_REF(true, false));
+      onRef = parse_ON_REF(true, false);
     }
-    else return Xcons.List((Xobject)null);
+
+    Xobject profileClause = null;
+    if (pg_is_ident("profile")) {
+	profileClause = Xcons.StringConstant("profile");
+	pg_get_token();
+    }
+
+    return Xcons.List(onRef, profileClause);
   }
 
   private XobjList parse_REDUCTION_clause() throws XmException, XMPexception {
     XobjList reductionRef = parse_REDUCTION_REF();
+    Xobject onRef = null;
 
     if (pg_is_ident("on")) {
       pg_get_token();
-      return Xcons.List(reductionRef, parse_ON_REF(true, false));
+      onRef = parse_ON_REF(true, false);
     }
-    else return Xcons.List(reductionRef, null);
+
+    Xobject profileClause = null;
+    if (pg_is_ident("profile")) {
+	    profileClause = Xcons.StringConstant("profile");
+	    pg_get_token();
+	}
+
+    return Xcons.List(reductionRef, onRef, profileClause);
   }
 
   private XobjList parse_BCAST_clause() throws XmException, XMPexception {
@@ -748,7 +786,13 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     }
     else onRef = null;
 
-    return Xcons.List(varList, fromRef, onRef);
+    Xobject profileClause = null;
+    if (pg_is_ident("profile")) {
+        profileClause = Xcons.StringConstant("profile");
+        pg_get_token();
+    }
+
+    return Xcons.List(varList, fromRef, onRef, profileClause);
   }
 
   private XobjList parse_ON_REF(boolean isExecPragma, boolean isLoopPragma) throws XmException, XMPexception {
@@ -978,7 +1022,13 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     }
     else gmoveClause = Xcons.IntConstant(XMPcollective.GMOVE_NORMAL);
 
-    return Xcons.List(gmoveClause);
+    Xobject profileClause = null;
+    if (pg_is_ident("profile")) {
+        profileClause = Xcons.StringConstant("profile");
+        pg_get_token();
+    }
+
+    return Xcons.List(gmoveClause, profileClause);
   }
 
   private XobjList parse_COARRAY_clause() throws XmException, XMPexception {

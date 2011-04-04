@@ -1,4 +1,5 @@
 XMP_INC_DIR=../include
+TLOG_INC_DIR=$(top_builddir)/@LIBTLOG_MPI_DIR@
 CC=@MPI_CMD@
 
 lib_LIBRARIES			= libxmp.a
@@ -12,15 +13,19 @@ libxmp_a_SOURCES		= $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h 
 EXTRA_libxmp_a_SOURCES		= xmp_crt0.c xmp_threads_crt0.c
 XMPCRTOBJ			= xmp_crt0.o
 XMPTHREADSCRTOBJ		= xmp_threads_crt0.o
+XMPTLOGCRTOBJ			= xmp_tlog_crt0.o
+XMPSCALASCACRTOBJ		= xmp_scalasca_crt0.o
 
-AM_CFLAGS   			= -Wall -std=c99 -I$(XMP_INC_DIR)
+AM_CFLAGS   			= -Wall -std=c99 -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR)
 
-all-local: $(XMPCRTOBJ) $(XMPTHREADSCRTOBJ)
+all-local: $(XMPCRTOBJ) $(XMPTHREADSCRTOBJ) $(XMPTLOGCRTOBJ) $(XMPSCALASCACRTOBJ)
 
 clean-local:
 	rm -f *~ *.core core core.*
 
-install-exec-local: $(XMPCRTOBJ) $(XMPTHREADSCRTOBJ)
+install-exec-local: $(XMPCRTOBJ) $(XMPTHREADSCRTOBJ) $(XMPTLOGCRTOBJ) $(XMPSCALASCACRTOBJ)
 	test -z "$(libdir)" || $(MKDIR_P) $(DESTDIR)$(libdir)
 	$(INSTALL_DATA) $(XMPCRTOBJ) $(DESTDIR)$(libdir)
 	$(INSTALL_DATA) $(XMPTHREADSCRTOBJ) $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) $(XMPTLOGCRTOBJ) $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) $(XMPSCALASCACRTOBJ) $(DESTDIR)$(libdir)

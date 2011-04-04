@@ -18,6 +18,8 @@ public class XMPtranslate implements XobjectDefVisitor {
   private XMPtranslateGlobalPragma	_translateGlobalPragma;
   private XMPtranslateLocalPragma	_translateLocalPragma;
   private XMPrewriteExpr		_rewriteExpr;
+  private boolean                       _all_profile;
+  private boolean                       _selective_profile;
 
   public XMPtranslate(XMPglobalDecl globalDecl) {
     // FIXME current implementation only supports C language
@@ -28,6 +30,9 @@ public class XMPtranslate implements XobjectDefVisitor {
     _translateGlobalPragma = new XMPtranslateGlobalPragma(globalDecl);
     _translateLocalPragma = new XMPtranslateLocalPragma(globalDecl);
     _rewriteExpr = new XMPrewriteExpr(globalDecl);
+
+    _all_profile = false;
+    _selective_profile = false;
   }
 
   public void finalize() {
@@ -60,5 +65,23 @@ public class XMPtranslate implements XobjectDefVisitor {
     Ident id = _globalDecl.findVarIdent("main");
     id.setName("_XMP_main");
     def.setName("_XMP_main");
+  }
+    
+  public void set_all_profile(){
+      _all_profile = true;
+      _translateLocalPragma.set_all_profile();
+  }
+
+  public void set_selective_profile(){
+      _selective_profile = true;
+      _translateLocalPragma.set_selective_profile();
+  }
+
+  public void setScalascaEnabled(boolean v) {
+      _translateLocalPragma.setScalascaEnabled(v);
+  }
+
+  public void setTlogEnabled(boolean v) {
+      _translateLocalPragma.setTlogEnabled(v);
   }
 }
