@@ -2418,64 +2418,68 @@ next_line0:
 		stn_cols[i] = isupper(c) ? tolower(c): c;
             }
         }
-    if (stn_cols[0] == 'c') {
-        if (strncasecmp(&stn_cols[1], "$omp", 4) == 0) {
-        /*  OpenMP sentinel no doubt */
-        goto KeepOnGoin;
-        }
-        if (stn_cols[1] == '$') {
-        /* Check OpenMP fixed source form conditional compilation. */
-        int numSpace = 0;
-        int numDigit = 0;
 
-        st_PRAGMA_flag = TRUE;
-        if (OMP_flag) {
-            check_cont = TRUE;
-            /* erase leading "c$" for conditional compilation.  */
-            memset(stn_cols, ' ', 2);
-        } else
-            check_cont = FALSE;
+	if (stn_cols[0] == 'c') {
+	  if (strncasecmp(&stn_cols[1], "$omp", 4) == 0) {
+	    /*  OpenMP sentinel no doubt */
+	    goto KeepOnGoin;
+	  }
+	  if (stn_cols[1] == '$') {
+	    /* Check OpenMP fixed source form conditional compilation. */
+	    int numSpace = 0;
+	    int numDigit = 0;
+	    
+	    st_PRAGMA_flag = TRUE;
+	    if (OMP_flag) {
+	      check_cont = TRUE;
+	      /* erase leading "c$" for conditional compilation.  */
+	      memset(stn_cols, ' ', 2);
+	    } else
+	      check_cont = FALSE;
 
-        /*
-         * If there are any non-numerical character within
-         * column three to five, this line is just a comment.
-         */
-        for (i = 2; i < 5; i++) {
-            if (stn_cols[i] == ' ') {
-            numSpace++;
-            } else if (isdigit((int)stn_cols[i])) {
-            numDigit++;
-            }
-        }
+	    /*
+	     * If there are any non-numerical character within
+	     * column three to five, this line is just a comment.
+	     */
+	    for (i = 2; i < 5; i++) {
+	      if (stn_cols[i] == ' ') {
+		numSpace++;
+	      } else if (isdigit((int)stn_cols[i])) {
+		numDigit++;
+	      }
+	    }
 
-        if (!OMP_flag)
-            goto KeepOnGoin;
-        if (numSpace == 3) {
-            /* OpenMP conditional compile */
-            goto KeepOnGoin;
-        } else if ((numSpace + numDigit) == 3) {
-            if (IS_CONT_LINE(stn_cols)) {
-            /*
-             * Invalid continuation line. treat as a
-             * comment.
-             */
-            warning("statement label in continuation line in OpenMP conditional compilation. ignored as a comment.");
-            goto read_comment;
-            }
-            goto KeepOnGoin;
-        }
-/* no need to warning for another key insted of !$omp.  */
+	    if (!OMP_flag)
+	      goto read_comment;
+	      //	      goto KeepOnGoin;
+
+	    if (numSpace == 3) {
+	      /* OpenMP conditional compile */
+	      goto KeepOnGoin;
+	    } else if ((numSpace + numDigit) == 3) {
+	      if (IS_CONT_LINE(stn_cols)) {
+		/*
+		 * Invalid continuation line. treat as a
+		 * comment.
+		 */
+		warning("statement label in continuation line in OpenMP conditional compilation. ignored as a comment.");
+		goto read_comment;
+	      }
+	      goto KeepOnGoin;
+	    }
+
+	    /* no need to warning for another key insted of !$omp.  */
 #if 0
 		/*
 		 * This line seemed to be an OpenMP sentinel/conditional
 		 * compilation, but it is not :)
 		 */
-		warning("unknown sentinel/directive 'c$%s'",
-			&stn_cols[2]);
+	    warning("unknown sentinel/directive 'c$%s'",
+		    &stn_cols[2]);
 #endif /* 0 */
-        }
-        goto read_comment;
-    }
+	  }
+	  goto read_comment;
+	}
     }
 
 KeepOnGoin:
