@@ -49,7 +49,7 @@ II. Implementation Status
   F. Gmove Directive
    gmove between aligned arrays using array section may not work correctly
 
- I. Reduction Directive
+  G. Reduction Directive
   <defined reduce operations>
    '+', "sum", "SUM"		sum
    '*', "prod", "PROD"		product
@@ -78,3 +78,22 @@ II. Implementation Status
 
   C. double xmp_wtime(void);
    returns current time
+ 
+III. Profiling Options
+  XMP supports profiler interfaces of Scalasca and tlog.
+  The tlog is included in XMP.
+  If you want to use the profiler interface of Scalasca,
+  you need to download and compile it from Scalasca website.
+  Moreover you need to set an environmental variable as below,
+    $ export SCALASCA_HOME = <install-path-scalasca>
+
+  If you want to specify directives for profiling,
+  please add "profile" to directive.
+    example) #pragma xmp loop on t(i) profile
+
+  When you want to compile XMP source code with profiling,
+  please add some of below options.
+   -profile         Emit XMP directive profiling code only for specified directives
+   -allprofile      Emit XMP directive profiling code for all directives
+   -with-scalasca   Emit Scalasca instrumentation
+   -with-tlog       Emit tlog insturumentation
