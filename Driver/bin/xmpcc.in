@@ -21,7 +21,7 @@ doScalasca=0
 doTlog=0
 doProf=0
 args=''
-for i in ${1+"$@"}; do
+for i in "$@"; do
     case "${i}" in
         -profile|-allprofile|-with-scalasca|-with-tlog)
             case "${i}" in
@@ -75,6 +75,6 @@ fi
 
 set -- ${args}
 
-exec ${BINDIR}/omdriver --xc -Txmp ${1+"$@"}
+exec ${BINDIR}/omdriver --xc -Txmp "$@"
 
 exit $?
