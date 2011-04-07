@@ -406,6 +406,13 @@ void disp_help( void )
         "    -o [outputfile]     specify output file path.",
         "    --Wl[option]        pass [option] as an option to the Linker.",
         "",
+        "Profiling Options (for XcalableMP)",
+        "",
+        "    -profile            profile specified directives",
+        "    -allprofile         profile all directives",
+        "    -with-scalasca      output results in a scalasca format",
+        "    -with-tlog          output results in a tlog format",
+        "",
     };
 
     printf( "usage: %s <OPTIONS> <INPUTFILE> ...\n", NORMAL_MSG_COMMAND );
