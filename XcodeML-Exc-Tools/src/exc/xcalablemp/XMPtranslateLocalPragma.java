@@ -724,13 +724,12 @@ public class XMPtranslateLocalPragma {
                                              XMPalignedArray alignedArray, int arrayIndex,
                                              BlockList reflectFuncBody) {
     String arrayName = alignedArray.getName();
-    Xtype arrayPtype = Xtype.Pointer(alignedArray.getType());
 
     // decl buffers
-    Ident loSendId = reflectFuncBody.declLocalIdent("_XMP_reflect_LO_SEND_" + arrayName, arrayPtype);
-    Ident loRecvId = reflectFuncBody.declLocalIdent("_XMP_reflect_LO_RECV_" + arrayName, arrayPtype);
-    Ident hiSendId = reflectFuncBody.declLocalIdent("_XMP_reflect_HI_SEND_" + arrayName, arrayPtype);
-    Ident hiRecvId = reflectFuncBody.declLocalIdent("_XMP_reflect_HI_RECV_" + arrayName, arrayPtype);
+    Ident loSendId = reflectFuncBody.declLocalIdent("_XMP_reflect_LO_SEND_" + arrayName, Xtype.voidPtrType);
+    Ident loRecvId = reflectFuncBody.declLocalIdent("_XMP_reflect_LO_RECV_" + arrayName, Xtype.voidPtrType);
+    Ident hiSendId = reflectFuncBody.declLocalIdent("_XMP_reflect_HI_SEND_" + arrayName, Xtype.voidPtrType);
+    Ident hiRecvId = reflectFuncBody.declLocalIdent("_XMP_reflect_HI_RECV_" + arrayName, Xtype.voidPtrType);
 
     // pack shadow
     Ident packFuncId = _globalDecl.declExternFunc("_XMP_pack_shadow_NORMAL");
