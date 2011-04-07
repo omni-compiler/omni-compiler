@@ -25,7 +25,7 @@
 ((_i1) * (_acc1) + (_i2) * (_acc2) + (_i3))
 
 #define _XMP_M_GET_INDEX_4(_i1, _i2, _i3, _i4, _acc1, _acc2, _acc3) \
-((_i1) * (_acc1) + (_i2) * (_acc2) + (_i3) + (_acc3) + (_i4))
+((_i1) * (_acc1) + (_i2) * (_acc2) + (_i3) * (_acc3) + (_i4))
 
 #define _XMP_M_GET_INDEX_5(_i1, _i2, _i3, _i4, _i5, _acc1, _acc2, _acc3, _acc4) \
 ((_i1) * (_acc1) + (_i2) * (_acc2) + (_i3) * (_acc3) + (_i4) * (_acc4) + (_i5))

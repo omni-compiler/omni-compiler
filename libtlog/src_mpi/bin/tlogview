@@ -1,3 +1,3 @@
 #!/bin/sh
-PREFIX=/home/mnakao/workdir/xmp
+PREFIX=/home/jinpil/XMP
 java -classpath ${PREFIX}/bin/tlogview.jar tlogview $*

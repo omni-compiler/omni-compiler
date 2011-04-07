@@ -209,7 +209,7 @@ public class CpragmaLexer extends PragmaLexer
                     error("syntax error near ']' in pragma expression");
                     return null; // syntax error
                 }
-                e = Xcons.List(Xcode.PLUS_EXPR, e.Type().getRef(), e, ee);
+                e = Xcons.PointerRef(Xcons.binaryOp(Xcode.PLUS_EXPR, e, ee));
                 pg_get_token();
                 break;
 
