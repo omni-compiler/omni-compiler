@@ -85,6 +85,15 @@ public class XMPshadow {
           }
         case XMPshadow.SHADOW_NORMAL:
           {
+            Xobject shadowLo = shadowBody.left();
+            Xobject shadowHi = shadowBody.right();
+
+            if (XMPutil.isZeroIntegerObj(shadowLo) && XMPutil.isZeroIntegerObj(shadowHi)) {
+              shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_NONE)));
+              alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_NONE, null, null), arrayIndex);
+              break;
+            }
+
             if (alignedArray.getAlignMannerAt(arrayIndex) == XMPalignedArray.NOT_ALIGNED) {
               throw new XMPexception("indicated dimension is not aligned");
             }
@@ -97,9 +106,9 @@ public class XMPshadow {
             }
 
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_NORMAL)));
-            shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowBody.left()));
-            shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowBody.right()));
-            alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_NORMAL, shadowBody.left(), shadowBody.right()), arrayIndex);
+            shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowLo));
+            shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowHi));
+            alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_NORMAL, shadowLo, shadowHi), arrayIndex);
             break;
           }
         case XMPshadow.SHADOW_FULL:
