@@ -1,4 +1,4 @@
-#include "tlog-mpi.h"
+#include "tlog_mpi.h"
 
 void _tlog_block_swap_bytes(TLOG_DATA *dp)
 {

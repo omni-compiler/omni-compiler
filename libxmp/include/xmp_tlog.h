@@ -7,7 +7,7 @@
 #ifndef _XMP_TLOG_H_n
 #define _XMP_TLOG_H_
 
-#include "tlog-mpi.h"
+#include "tlog_mpi.h"
 
 #define _XMP_M_TLOG_TASK_IN(dummy)      tlog_log(TLOG_EVENT_1_IN)
 #define _XMP_M_TLOG_TASK_OUT(dummy)     tlog_log(TLOG_EVENT_1_OUT)

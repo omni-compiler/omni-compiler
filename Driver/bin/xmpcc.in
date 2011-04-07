@@ -88,7 +88,7 @@ elif test ${doTlog} -eq 1; then
 fi
 
 if test ${doProf} -eq 1; then
-    args="${args} --Wl-ltlog-mpi"
+    args="${args} --Wl-ltlog_mpi"
 fi
 
 set -- ${args}

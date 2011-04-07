@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "tlog-mpi.h"
+#include "tlog_mpi.h"
 #include "tlog_event.h"
 
 main(int argc, char *argv[])

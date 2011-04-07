@@ -7,6 +7,7 @@ I. Getting Started
   - A Java Compiler (latest)
   - Apache Ant (1.8.1 or later)
   - A MPI Implementation (supports MPI-2)
+  - libxml2
 
  2. Install Step
   A. Configure Omni XcalableMP Compiler

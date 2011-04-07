@@ -409,12 +409,16 @@ genLibTargetTmpl () {
 
 LIBOMPC_DIR="libompc/src"
 AC_CONFIG_FILES($LIBOMPC_DIR/Makefile)
-LIBTLOG_DIR="libtlog/src"
+LIBTLOG_DIR="libtlog/src_threads"
 AC_CONFIG_FILES($LIBTLOG_DIR/Makefile)
+LIBTLOG_MPI_DIR="libtlog/src_mpi"
+AC_CONFIG_FILES($LIBTLOG_MPI_DIR/Makefile)
+AC_CONFIG_FILES($LIBTLOG_MPI_DIR/bin/tlogview)
 genLibTargetTmpl $LIBOMPC_DIR
 
 AC_SUBST(LIBOMPC_DIR)
 AC_SUBST(LIBTLOG_DIR)
+AC_SUBST(LIBTLOG_MPI_DIR)
 
 # --------------------------------------------------------------------
 # check what CC will be used, and set compile flags

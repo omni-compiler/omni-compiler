@@ -1,5 +1,5 @@
 /* 
- * $Id: tlog-mpi.h,v 1.1.1.1 2005/06/20 09:56:18 msato Exp $
+ * $Id: tlog_mpi.h,v 1.1.1.1 2005/06/20 09:56:18 msato Exp $
  * $PCCC_Release$
  * $PCCC_Copyright$
  */

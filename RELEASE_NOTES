@@ -17,4 +17,7 @@ ver 0.5.1	2011/03/09
   full shadow reflect is implemented.
 
 ver 0.5.2	2011/03/11
- Fixed a critical bug in runtime
+ Fixed bugs in runtime
+
+ver 0.5.3	2011/04/08
+ Fixed problems with rewriting expressions

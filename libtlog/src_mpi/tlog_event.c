@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
-#include "tlog-mpi.h"
+#include "tlog_mpi.h"
 #include "tlog_event.h"
 
 union {

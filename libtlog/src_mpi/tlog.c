@@ -13,7 +13,7 @@ static char rcsid[] = "$Id: tlog.c,v 1.1.1.1 2005/06/20 09:56:18 msato Exp $";
 #include <string.h>
 
 #include "mpi.h"
-#include "tlog-mpi.h"
+#include "tlog_mpi.h"
 
 int tlog_debug = FALSE;
 
