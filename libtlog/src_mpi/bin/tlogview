@@ -1,3 +1,0 @@
-#!/bin/sh
-PREFIX=/home/jinpil/XMP
-java -classpath ${PREFIX}/bin/tlogview.jar tlogview $*
