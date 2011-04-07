@@ -51,6 +51,24 @@ if test ${doTlog} -eq 1 -a ${doScalasca} -eq 1; then
     exit 1
 fi
 
+# xmpcc -with-scalasca hoge.c -o hoge
+#  -> xmpcc -with-scalasca hoge.c -o hoge -allprofile
+if test ${doScalasca} -eq 1; then
+    if test ${all_profile} -eq 0 -a ${selective_profile} -eq 0; then
+        all_profile=1
+	args="${args} --Wx-allprofile"
+    fi
+fi
+
+# xmpcc -with-tlog hoge.c -o hoge
+#  -> xmpcc -with-tlog hoge.c -o hoge -allprofile
+if test ${doTlog} -eq 1; then
+    if test ${all_profile} -eq 0 -a ${selective_profile} -eq 0; then
+        all_profile=1
+	args="${args} --Wx-allprofile"
+    fi
+fi
+
 if test ${doProf} -eq 1; then
     if test ${doTlog} -eq 0 -a ${doScalasca} -eq 0; then
         doScalasca=1
