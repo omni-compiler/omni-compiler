@@ -22,6 +22,8 @@ void _XMP_bcast_NODES_ENTIRE_OMITTED(_XMP_nodes_t *bcast_nodes, void *addr, int 
 
   // bcast
   MPI_Bcast(addr, count, mpi_datatype, _XMP_N_DEFAULT_ROOT_RANK, *((MPI_Comm *)bcast_nodes->comm));
+
+  MPI_Type_free(&mpi_datatype);
 }
 
 void _XMP_bcast_NODES_ENTIRE_GLOBAL(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
@@ -44,6 +46,8 @@ void _XMP_bcast_NODES_ENTIRE_GLOBAL(_XMP_nodes_t *bcast_nodes, void *addr, int c
 
   // bcast
   MPI_Bcast(addr, count, mpi_datatype, from_lower, *((MPI_Comm *)bcast_nodes->comm));
+
+  MPI_Type_free(&mpi_datatype);
 }
 
 // FIXME read spec
@@ -96,6 +100,8 @@ void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int co
 
   // bcast
   MPI_Bcast(addr, count, mpi_datatype, root, *((MPI_Comm *)bcast_nodes->comm));
+
+  MPI_Type_free(&mpi_datatype);
 }
 
 // void _XMP_M_BCAST_EXEC_OMITTED(void *addr, int count, size_t datatype_size)

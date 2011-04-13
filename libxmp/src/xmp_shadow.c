@@ -84,6 +84,7 @@ static void _XMP_reflect_shadow_FULL_ALLGATHER(_XMP_array_t *array_desc, int arr
                 array_addr, gather_count, mpi_datatype,
                 *((MPI_Comm *)ai->shadow_comm));
 
+  MPI_Type_free(&mpi_datatype);
   _XMP_free(pack_buffer);
 }
 
@@ -110,6 +111,7 @@ static void _XMP_reflect_shadow_FULL_ALLGATHERV(_XMP_array_t *array_desc, int ar
                 array_addr, gather_count, mpi_datatype,
                 *((MPI_Comm *)ai->shadow_comm));
 
+  MPI_Type_free(&mpi_datatype);
   _XMP_free(pack_buffer);
 }
 
@@ -212,6 +214,7 @@ static void _XMP_reflect_shadow_FULL_BCAST(_XMP_array_t *array_desc, int array_i
     }
   }
 
+  MPI_Type_free(&mpi_datatype);
   _XMP_free(bcast_buffer);
 }
 
@@ -553,6 +556,8 @@ void _XMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
       _XMP_free(hi_send_buffer);
     }
   }
+
+  MPI_Type_free(&mpi_datatype);
 }
 
 void _XMP_reflect_shadow_FULL(_XMP_array_t *array_desc, int array_index) {

@@ -192,6 +192,7 @@ static _Bool _XMP_check_gmove_array_ref_inclusion_SCALAR(_XMP_array_t *array, in
   }
 }
 
+/*
 static int _XMP_calc_gmove_target_nodes_size(_XMP_nodes_t *nodes, int *rank_array) {
   int acc = 1;
   int nodes_dim = nodes->dim;
@@ -205,6 +206,7 @@ static int _XMP_calc_gmove_target_nodes_size(_XMP_nodes_t *nodes, int *rank_arra
 
   return acc;
 }
+*/
 
 static _Bool _XMP_calc_local_copy_template_BLOCK(_XMP_template_chunk_t *chunk,
                                                  long long *lower, long long *upper, int s) {
@@ -436,9 +438,8 @@ _Bool _XMP_gmove_HOMECOPY_SCALAR(_XMP_array_t *array, ...) {
     return false;
   }
 
-  _XMP_template_t *ref_template = array->align_template;
-  _XMP_ASSERT(ref_template->is_distributed);
-  _XMP_ASSERT(ref_template->is_owner);
+  _XMP_ASSERT((array->align_template)->is_distributed);
+  _XMP_ASSERT((array->align_template)->is_owner);
 
   va_list args;
   va_start(args, array);
@@ -788,6 +789,8 @@ void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size,
       _XMP_free(bcast_buffer);
     }
   }
+
+  MPI_Type_free(&mpi_datatype);
 }
 
 void _XMP_gmove_HOMECOPY_ARRAY(_XMP_array_t *dst_array, int type, size_t type_size, ...) {
@@ -1027,6 +1030,7 @@ static void _XMP_gmove_SENDRECV_all2all_2(void *dst_addr, void *src_addr,
     }
   }
 
+  MPI_Type_free(&mpi_datatype);
   _XMP_free(pack_buffer);
 }
 
@@ -1132,6 +1136,8 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
       }
       _XMP_free(recv_buffer);
     }
+
+    MPI_Type_free(&mpi_datatype);
   }
   else {
     if (dst_array == src_array) {
