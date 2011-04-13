@@ -61,7 +61,7 @@ static void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index) {
   }
 }
 
-static void _XMP_reflect_shadow_FULL_ALLGATHER(void *array_addr, _XMP_array_t *array_desc, int array_index) {
+static void _XMP_reflect_shadow_FULL_ALLGATHER(_XMP_array_t *array_desc, int array_index) {
   _XMP_ASSERT(array_desc->is_allocated);
   _XMP_ASSERT(array_desc->dim == 1);
 
@@ -69,6 +69,7 @@ static void _XMP_reflect_shadow_FULL_ALLGATHER(void *array_addr, _XMP_array_t *a
   _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
   _XMP_ASSERT(ai->is_shadow_comm_member);
 
+  void *array_addr = array_desc->addr;
   size_t type_size = array_desc->type_size;
   MPI_Datatype mpi_datatype;
   MPI_Type_contiguous(type_size, MPI_BYTE, &mpi_datatype);
@@ -86,7 +87,7 @@ static void _XMP_reflect_shadow_FULL_ALLGATHER(void *array_addr, _XMP_array_t *a
   _XMP_free(pack_buffer);
 }
 
-static void _XMP_reflect_shadow_FULL_ALLGATHERV(void *array_addr, _XMP_array_t *array_desc, int array_index) {
+static void _XMP_reflect_shadow_FULL_ALLGATHERV(_XMP_array_t *array_desc, int array_index) {
   _XMP_ASSERT(array_desc->is_allocated);
   _XMP_ASSERT(array_desc->dim == 1);
 
@@ -94,6 +95,7 @@ static void _XMP_reflect_shadow_FULL_ALLGATHERV(void *array_addr, _XMP_array_t *
   _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
   _XMP_ASSERT(ai->is_shadow_comm_member);
 
+  void *array_addr = array_desc->addr;
   size_t type_size = array_desc->type_size;
   MPI_Datatype mpi_datatype;
   MPI_Type_contiguous(type_size, MPI_BYTE, &mpi_datatype);
@@ -111,9 +113,10 @@ static void _XMP_reflect_shadow_FULL_ALLGATHERV(void *array_addr, _XMP_array_t *
   _XMP_free(pack_buffer);
 }
 
-static void _XMP_reflect_shadow_FULL_BCAST(void *array_addr, _XMP_array_t *array_desc, int array_index) {
+static void _XMP_reflect_shadow_FULL_BCAST(_XMP_array_t *array_desc, int array_index) {
   _XMP_ASSERT(array_desc->is_allocated);
 
+  void *array_addr = array_desc->addr;
   int array_type = array_desc->type;
   size_t array_type_size = array_desc->type_size;
   int array_dim = array_desc->dim;
@@ -283,12 +286,13 @@ void _XMP_init_shadow(_XMP_array_t *array, ...) {
   }
 }
 
-void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_addr,
+void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer,
                              _XMP_array_t *array_desc, int array_index) {
   if (!array_desc->is_allocated) {
     return;
   }
 
+  void *array_addr = array_desc->addr;
   int array_type = array_desc->type;
   int array_dim = array_desc->dim;
   _XMP_array_info_t *ai = &(array_desc->info[array_index]);
@@ -378,12 +382,13 @@ void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_add
   }
 }
 
-void _XMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_addr,
+void _XMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer,
                                _XMP_array_t *array_desc, int array_index) {
   if (!array_desc->is_allocated) {
     return;
   }
 
+  void *array_addr = array_desc->addr;
   int array_type = array_desc->type;
   int array_dim = array_desc->dim;
   _XMP_array_info_t *ai = &(array_desc->info[array_index]);
@@ -550,7 +555,7 @@ void _XMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
   }
 }
 
-void _XMP_reflect_shadow_FULL(void *array_addr, _XMP_array_t *array_desc, int array_index) {
+void _XMP_reflect_shadow_FULL(_XMP_array_t *array_desc, int array_index) {
   if (!array_desc->is_allocated) {
     return;
   }
@@ -561,13 +566,13 @@ void _XMP_reflect_shadow_FULL(void *array_addr, _XMP_array_t *array_desc, int ar
   // using allgather/allgatherv in special cases
   if ((array_dim == 1) && (ai->align_manner == _XMP_N_ALIGN_BLOCK)) {
     if (ai->is_regular_chunk) {
-      _XMP_reflect_shadow_FULL_ALLGATHER(array_addr, array_desc, array_index);
+      _XMP_reflect_shadow_FULL_ALLGATHER(array_desc, array_index);
     }
     else {
-      _XMP_reflect_shadow_FULL_ALLGATHERV(array_addr, array_desc, array_index);
+      _XMP_reflect_shadow_FULL_ALLGATHERV(array_desc, array_index);
     }
   }
   else {
-    _XMP_reflect_shadow_FULL_BCAST(array_addr, array_desc, array_index);
+    _XMP_reflect_shadow_FULL_BCAST(array_desc, array_index);
   }
 }
