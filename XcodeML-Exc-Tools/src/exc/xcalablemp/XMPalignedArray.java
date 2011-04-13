@@ -517,15 +517,15 @@ public class XMPalignedArray {
       XMPlocalDecl.addConstructorCall("_XMP_init_array_comm", initArrayCommFuncArgs, globalDecl, pb);
 
       // init array address
-      XobjList initArrayAddrFuncArgs = Xcons.List(arrayAddrId.getAddr(),
-                                                  arrayId.getAddr(),
+      XobjList initArrayAddrFuncArgs = Xcons.List(alignedArray.getAddrIdVoidAddr(),
+                                                  arrayId.Ref(),
                                                   arrayDescId.Ref());
       for (int i = arrayDim - 1; i >= 0; i--) {
         initArrayAddrFuncArgs.add(Xcons.Cast(Xtype.Pointer(Xtype.unsignedlonglongType),
                                              alignedArray.getAccIdAt(i).getAddr()));
       }
 
-      XMPlocalDecl.addConstructorCall("_XMP_init_array_addr", initArrayAddrFuncArgs, globalDecl, pb);
+      XMPlocalDecl.addAllocCall("_XMP_init_array_addr", initArrayAddrFuncArgs, globalDecl, pb);
     }
     else {
       globalDecl.addGlobalInitFuncCall("_XMP_init_array_comm", initArrayCommFuncArgs);

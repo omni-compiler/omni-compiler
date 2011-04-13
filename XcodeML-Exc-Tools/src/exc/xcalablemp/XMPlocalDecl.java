@@ -13,6 +13,7 @@ public class XMPlocalDecl {
   private final static String XMP_SYMBOL_TABLE	= "XCALABLEMP_PROP_LOCAL_XMP_SYMBOL_TABLE";
   private final static String OBJECT_ID_LIST	= "XCALABLEMP_PROP_LOCAL_OBJECT_ID_LIST";
   private final static String CONSTRUCTOR	= "XCALABLEMP_PROP_LOCAL_CONSTRUCTOR";
+  private final static String ALLOC		= "XCALABLEMP_PROP_LOCAL_ALLOC";
   private final static String DESTRUCTOR	= "XCALABLEMP_PROP_LOCAL_DESTRUCTOR";
 
   public static void checkObjectNameCollision(String name, BlockList scopeBL, XMPsymbolTable objectTable) throws XMPexception {
@@ -118,6 +119,19 @@ public class XMPlocalDecl {
     bodyList.add(Xcons.List(Xcode.EXPR_STATEMENT, funcId.Call(funcArgs)));
   }
 
+  public static void addAllocCall(String funcName, Xobject funcArgs, XMPglobalDecl globalDecl, Block block) {
+    Block fb = findParentFunctionBlock(block);
+
+    XobjList bodyList = (XobjList)fb.getProp(ALLOC);
+    if(bodyList == null) {
+      bodyList = Xcons.List(Xcode.LIST);
+      fb.setProp(ALLOC, (Object)bodyList);
+    }
+
+    Ident funcId = globalDecl.declExternFunc(funcName);
+    bodyList.add(Xcons.List(Xcode.EXPR_STATEMENT, funcId.Call(funcArgs)));
+  }
+
   public static void insertDestructorCall(String funcName, Xobject funcArgs, XMPglobalDecl globalDecl, Block block) {
     FunctionBlock fb = findParentFunctionBlock(block);
 
@@ -144,10 +158,16 @@ public class XMPlocalDecl {
 
   public static void setupConstructor(FunctionBlock functionBlock)
   {
+    BlockList funcStmtList = functionBlock.getBody().getTail().getBody();
+
+    XobjList alloc = (XobjList)functionBlock.getProp(ALLOC);
+    if (alloc != null) {
+      funcStmtList.insert(Bcons.buildBlock(Xcons.List(Xcode.COMPOUND_STATEMENT, (Xobject)null, null, alloc)));
+    }
+
     XobjList constructor = (XobjList)functionBlock.getProp(CONSTRUCTOR);
     if (constructor != null) {
-      Block funcStmts = functionBlock.getBody().getTail();
-      funcStmts.getBody().insert(Bcons.buildBlock(Xcons.List(Xcode.COMPOUND_STATEMENT, (Xobject)null, null, constructor)));
+      funcStmtList.insert(Bcons.buildBlock(Xcons.List(Xcode.COMPOUND_STATEMENT, (Xobject)null, null, constructor)));
     }
   }
 
