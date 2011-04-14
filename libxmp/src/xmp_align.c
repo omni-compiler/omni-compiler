@@ -35,7 +35,6 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
   a->type = type;
   a->type_size = type_size;
 
-  a->addr = NULL;
   a->total_elmts = 0;
 
   a->align_comm = NULL;
@@ -308,7 +307,6 @@ void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...) {
   *array_addr = _XMP_alloc(total_elmts * (array_desc->type_size));
 
   // set members
-  array_desc->addr = *array_addr;
   array_desc->total_elmts = total_elmts;
 }
 
@@ -336,7 +334,6 @@ void _XMP_init_array_alloc_params(void **array_addr, _XMP_array_t *array_desc, .
   }
 
   // set members
-  array_desc->addr = *array_addr;
   array_desc->total_elmts = total_elmts;
 }
 
@@ -368,7 +365,6 @@ void _XMP_init_array_addr(void **array_addr, void *init_addr,
   *array_addr = init_addr;
 
   // set members
-  array_desc->addr = init_addr;
   array_desc->total_elmts = total_elmts;
 }
 

@@ -733,7 +733,7 @@ public class XMPtranslateLocalPragma {
 
     // pack shadow
     Ident packFuncId = _globalDecl.declExternFunc("_XMP_pack_shadow_NORMAL");
-    XobjList packFuncArgs = Xcons.List(loSendId.getAddr(), hiSendId.getAddr(),
+    XobjList packFuncArgs = Xcons.List(loSendId.getAddr(), hiSendId.getAddr(), alignedArray.getAddrIdVoidRef(),
                                        alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
 
     reflectFuncBody.add(Bcons.Statement(packFuncId.Call(packFuncArgs)));
@@ -748,7 +748,7 @@ public class XMPtranslateLocalPragma {
 
     // unpack shadow
     Ident unpackFuncId = _globalDecl.declExternFunc("_XMP_unpack_shadow_NORMAL");;
-    XobjList unpackFuncArgs = Xcons.List(loRecvId.Ref(), hiRecvId.Ref(),
+    XobjList unpackFuncArgs = Xcons.List(loRecvId.Ref(), hiRecvId.Ref(), alignedArray.getAddrIdVoidRef(),
                                          alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
 
     reflectFuncBody.add(Bcons.Statement(unpackFuncId.Call(unpackFuncArgs)));
@@ -758,7 +758,7 @@ public class XMPtranslateLocalPragma {
                                            XMPalignedArray alignedArray, int arrayIndex,
                                            BlockList reflectFuncBody) {
     Ident funcId = _globalDecl.declExternFunc("_XMP_reflect_shadow_FULL");
-    XobjList funcArgs = Xcons.List(alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
+    XobjList funcArgs = Xcons.List(alignedArray.getAddrIdVoidRef(), alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
 
     reflectFuncBody.add(Bcons.Statement(funcId.Call(funcArgs)));
   }

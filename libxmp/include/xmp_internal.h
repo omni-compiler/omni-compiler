@@ -142,7 +142,6 @@ typedef struct _XMP_array_type {
   size_t type_size;
 
   // enable when is_allocated is true
-  void *addr;
   unsigned long long total_elmts;
   // --------------------------------
 
