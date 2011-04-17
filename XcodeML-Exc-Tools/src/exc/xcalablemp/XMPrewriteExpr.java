@@ -20,9 +20,13 @@ public class XMPrewriteExpr {
     FunctionBlock fb = def.getBlock();
     if (fb == null) return;
 
-    // rewrite expr
+    // get symbol table
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(fb);
 
+    // rewrite parameters
+    rewriteParams(fb, localXMPsymbolTable);
+
+    // rewrite expr
     BasicBlockExprIterator iter = new BasicBlockExprIterator(fb);
     for (iter.init(); !iter.end(); iter.next()) {
       Xobject expr = iter.getExpr();
@@ -42,7 +46,22 @@ public class XMPrewriteExpr {
     def.Finalize();
   }
 
-  public void rewriteExpr(Xobject expr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+  private void rewriteParams(FunctionBlock funcBlock, XMPsymbolTable localSymbolTable) {
+    XobjList identList = funcBlock.getBody().getIdentList();
+    if (identList == null) {
+      return;
+    } else {
+      for(Xobject x : identList) {
+        Ident id = (Ident)x;
+        XMPalignedArray alignedArray = localSymbolTable.getXMPalignedArray(id.getName());
+        if (alignedArray != null) {
+          id.setType(Xtype.Pointer(alignedArray.getType()));
+        }
+      }
+    }
+  }
+
+  private void rewriteExpr(Xobject expr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
     if (expr == null) return;
 
     bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
