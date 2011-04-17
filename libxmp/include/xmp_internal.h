@@ -11,6 +11,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+// --------------- macro functions -----------------------------------
 #ifdef DEBUG
 #define _XMP_ASSERT(_flag) \
 { \
@@ -21,6 +22,13 @@
 #else
 #define _XMP_ASSERT(_flag)
 #endif
+
+#define _XMP_RETURN_IF_SINGLE \
+{ \
+  if (_XMP_world_rank == 1) { \
+    return; \
+  } \
+}
 
 // --------------- structures ----------------------------------------
 #define _XMP_comm void

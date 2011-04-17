@@ -288,6 +288,8 @@ void _XMP_init_shadow(_XMP_array_t *array, ...) {
 
 void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_addr,
                              _XMP_array_t *array_desc, int array_index) {
+  _XMP_RETURN_IF_SINGLE;
+
   if (!array_desc->is_allocated) {
     return;
   }
@@ -383,6 +385,8 @@ void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_add
 
 void _XMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_addr,
                                _XMP_array_t *array_desc, int array_index) {
+  _XMP_RETURN_IF_SINGLE;
+
   if (!array_desc->is_allocated) {
     return;
   }
@@ -479,6 +483,8 @@ void _XMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_add
 void _XMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
                                  void *lo_send_buffer, void *hi_send_buffer,
                                  _XMP_array_t *array_desc, int array_index) {
+  _XMP_RETURN_IF_SINGLE;
+
   if (!array_desc->is_allocated) {
     return;
   }
@@ -556,6 +562,8 @@ void _XMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
 }
 
 void _XMP_reflect_shadow_FULL(void *array_addr, _XMP_array_t *array_desc, int array_index) {
+  _XMP_RETURN_IF_SINGLE;
+
   if (!array_desc->is_allocated) {
     return;
   }
