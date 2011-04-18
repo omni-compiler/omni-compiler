@@ -9,15 +9,12 @@ bin_SCRIPTS=\
 	../bin/omcnative ../bin/omclinker \
 	../bin/omf2f ../bin/ompf90 ../bin/omf2x ../bin/omfx2x ../bin/omx2f ../bin/omfpp \
 	../bin/omfnative ../bin/omflinker \
-	../bin/xmpcc \
-	../bin/xmpcc-threads
+	../bin/xmpcc
 
 sysconf_DATA=../etc/omc.conf ../etc/omf.conf \
 	../etc/java.conf \
 	../etc/pp.conf.openmp ../etc/native.conf.openmp ../etc/linker.conf.openmp ../etc/l2x.conf.openmp ../etc/x2x.conf.openmp \
-	../etc/pp.conf.xmp ../etc/native.conf.xmp ../etc/linker.conf.xmp ../etc/l2x.conf.xmp ../etc/x2x.conf.xmp \
-	../etc/pp.conf.xmp_threads ../etc/native.conf.xmp_threads ../etc/linker.conf.xmp_threads \
-	../etc/l2x.conf.xmp_threads ../etc/x2x.conf.xmp_threads
+	../etc/pp.conf.xmp ../etc/native.conf.xmp ../etc/linker.conf.xmp ../etc/l2x.conf.xmp ../etc/x2x.conf.xmp
 
 omdriver_SOURCES=omdriver.c
 

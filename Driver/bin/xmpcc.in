@@ -36,8 +36,12 @@ for i in "$@"; do
             esac
             doProf=1
             args="${args} --Wx${i}";;
-        -with-gpu)
-            args="${args} --Wx${i}";;
+        -enable-gpu)
+            if test @XMP_ENABLE_GPU@ -eq 1; then
+                args="${args} --Wx${i} --Wl-lxmp_gpu"
+            else
+                echo "warning: -enable-gpu option is unavailable, rebuild the compiler with ./configure --enable-xmpgpu"
+            fi;;
         *)
             args="${args} ${i}";;
     esac

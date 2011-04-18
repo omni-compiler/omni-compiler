@@ -173,13 +173,6 @@ if test -e "Driver/src/Makefile.am"; then
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/native.conf.xmp)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.xmp)
 
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/xmpcc-threads)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/pp.conf.xmp_threads)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/l2x.conf.xmp_threads)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/x2x.conf.xmp_threads)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/native.conf.xmp_threads)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.xmp_threads)
-
     AC_MSG_RESULT(yes)
 else
     OMDRIVER_DIR=''
@@ -467,13 +460,16 @@ else
     debCppFlags="-DNDEBUG"
 fi
 
+XMP_ENABLE_GPU=0
 if test "x${doXmpGpu}" = "xyes"; then
     xmpGpuFlags="-D_XMP_ENABLE_GPU"
+    XMP_ENABLE_GPU=1
 else
     xmpGpuFlags="-D_XMP_DISABLE_GPU"
 fi
 
 AM_CONDITIONAL(ENABLE_XMP_GPU, test "x${doXmpGpu}" = "xyes")
+AC_SUBST(XMP_ENABLE_GPU)
 
 # check gcc version
 AC_MSG_CHECKING(gcc version)

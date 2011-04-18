@@ -113,7 +113,7 @@ public class omompx
                 openMP = true;
                 xcalableMP = true;
                 xcalableMPthreads = true;
-            } else if(arg.equals("-with-gpu")) {
+            } else if(arg.equals("-enable-gpu")) {
                 xcalableMPGPU = true;
             } else if(arg.equals("-w")) {
                 if(narg == null)
