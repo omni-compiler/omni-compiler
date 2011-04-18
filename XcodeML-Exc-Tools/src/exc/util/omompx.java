@@ -80,6 +80,7 @@ public class omompx
         boolean openMP = false;
         boolean xcalableMP = false;
         boolean xcalableMPthreads = false;
+        boolean xcalableMPGPU = false;
         boolean outputXcode = false;
         boolean outputDecomp = false;
         boolean dump = false;
@@ -112,6 +113,8 @@ public class omompx
                 openMP = true;
                 xcalableMP = true;
                 xcalableMPthreads = true;
+            } else if(arg.equals("-with-gpu")) {
+                xcalableMPGPU = true;
             } else if(arg.equals("-w")) {
                 if(narg == null)
                     error("needs argument after -w");
@@ -196,6 +199,7 @@ public class omompx
         XmOption.setIsOpenMP(openMP);
         XmOption.setIsXcalableMP(xcalableMP);
         XmOption.setIsXcalableMPthreads(xcalableMPthreads);
+        XmOption.setIsXcalableMPGPU(xcalableMPGPU);
         
         // read XcodeML
         List<String> readErrorList = new ArrayList<String>();

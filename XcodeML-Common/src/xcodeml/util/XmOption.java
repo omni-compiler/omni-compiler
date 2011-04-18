@@ -22,6 +22,7 @@ public class XmOption
     /** if compiling Xcalable MP is enabled */
     private static boolean _xcalableMP = false;
     private static boolean _xcalableMPthreads = false;
+    private static boolean _xcalableMPGPU = false;
 
     /** if compiling Xcalable MP is enabled */
     private static boolean _openMP = false;
@@ -84,8 +85,6 @@ public class XmOption
 
     /**
      * Sets compiler to or not to translate XcalableMP-threads directive.
-     *
-     * @param enable true then translate XcalableMP directive.
      */
     public static void setIsXcalableMPthreads(boolean enable)
     {
@@ -94,12 +93,26 @@ public class XmOption
 
     /**
      * Checks does compiler translate XcalableMP-threads directive.
-     *
-     * @return true if compiler translate XcalableMP directive.
      */
     public static boolean isXcalableMPthreads()
     {
         return _xcalableMPthreads;
+    }
+
+    /**
+     * Sets compiler to or not to translate XcalableMP-GPU directive.
+     */
+    public static void setIsXcalableMPGPU(boolean enable)
+    {
+        _xcalableMPGPU = enable;
+    }
+
+    /**
+     * Checks does compiler translate XcalableMP-GPU directive.
+     */
+    public static boolean isXcalableMPGPU()
+    {
+        return _xcalableMPGPU;
     }
 
     /**

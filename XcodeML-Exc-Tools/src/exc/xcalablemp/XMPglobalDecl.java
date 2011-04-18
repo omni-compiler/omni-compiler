@@ -7,6 +7,7 @@
 package exc.xcalablemp;
 
 import exc.object.*;
+import xcodeml.util.XmOption;
 
 public class XMPglobalDecl {
   private XobjectFile		_env;
@@ -52,6 +53,12 @@ public class XMPglobalDecl {
   }
 
   public void setupGlobalConstructor() {
+    if (XmOption.isXcalableMPGPU()) {
+      _globalConstructorFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT,
+                                                 _env.declExternIdent("_XMP_gpu_init",
+                                                                      Xtype.Function(Xtype.voidType)).Call(null)));
+    }
+
     _globalConstructorFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT,
                                                _env.declExternIdent("_XMP_init",
                                                                     Xtype.Function(Xtype.voidType)).Call(null)));
@@ -67,6 +74,12 @@ public class XMPglobalDecl {
   }
 
   public void setupGlobalDestructor() {
+    if (XmOption.isXcalableMPGPU()) {
+      _globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT,
+                                               _env.declExternIdent("_XMP_gpu_finalize",
+                                                                    Xtype.Function(Xtype.voidType)).Call(null)));
+    }
+
     _globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT,
                                              _env.declExternIdent("_XMP_finalize",
                                                                   Xtype.Function(Xtype.voidType)).Call(null)));

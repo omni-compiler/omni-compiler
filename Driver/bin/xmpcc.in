@@ -36,6 +36,8 @@ for i in "$@"; do
             esac
             doProf=1
             args="${args} --Wx${i}";;
+        -with-gpu)
+            args="${args} --Wx${i}";;
         *)
             args="${args} ${i}";;
     esac
