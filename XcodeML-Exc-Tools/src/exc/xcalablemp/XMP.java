@@ -16,6 +16,7 @@ public class XMP {
   public final static int MAX_DIM			= 7;
   public final static int NONBASIC_TYPE			= 599;
   public final static String DESC_PREFIX_		= "_XMP_DESC_";
+  public final static String GPU_DESC_PREFIX_		= "_XMP_GPU_DESC_";
   public final static String COARRAY_DESC_PREFIX_	= "_XMP_COARRAY_DESC_";
   public final static String ADDR_PREFIX_		= "_XMP_ADDR_";
   public final static String GTOL_PREFIX_		= "_XMP_GTOL_";

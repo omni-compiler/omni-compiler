@@ -2128,6 +2128,7 @@ public class XMPtranslateLocalPragma {
         return Bcons.COMPOUND(funcCallList);
     }
 
+  // FIXME not implemented yet
   private void translateGpudata(PragmaBlock pb) throws XMPexception {
     if (!XmOption.isXcalableMPGPU()) {
       XMP.warning("use -enable-gpu option to use 'gpudata' directive");
@@ -2139,7 +2140,59 @@ public class XMPtranslateLocalPragma {
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
     BlockList gpudataBody = pb.getBody();
 
-    System.out.println("gpu data: " + gpudataDecl.toString());
-    System.out.println("gpu data body: " + gpudataBody.toString());
+    BlockList gpudataConstructorBody = Bcons.emptyBody();
+    BlockList gpudataDestructorBody = Bcons.emptyBody();
+
+    BlockList replaceBody = Bcons.blockList(Bcons.COMPOUND(gpudataConstructorBody),
+                                            Bcons.COMPOUND(gpudataBody),
+                                            Bcons.COMPOUND(gpudataDestructorBody));
+
+    XobjList varList = (XobjList)gpudataDecl.getArg(0);
+    for (XobjArgs i = varList.getArgs(); i != null; i = i.nextArgs()) {
+      String varName = i.getArg().getString();
+      XMPpair<Ident, Xtype> typedSpec = findTypedVar(varName, pb);
+      Ident varId = typedSpec.getFirst();
+      Xtype varType = typedSpec.getSecond();
+
+      Ident gpudataDescId = replaceBody.declLocalIdent(XMP.GPU_DESC_PREFIX_ + varName, Xtype.voidPtrType);
+
+      XMPalignedArray alignedArray = findXMPalignedArray(varName, localXMPsymbolTable);
+      if (alignedArray == null) {
+        Xobject sizeObj = null;
+        switch (varType.getKind()) {
+          case Xtype.BASIC:
+          case Xtype.STRUCT:                             
+          case Xtype.UNION:
+            {
+              sizeObj = Xcons.SizeOf(varType);
+            } break;
+          case Xtype.ARRAY:
+            {
+              ArrayType arrayVarType = (ArrayType)varType;
+              switch (arrayVarType.getArrayElementType().getKind()) {
+                case Xtype.BASIC:
+                case Xtype.STRUCT:
+                case Xtype.UNION:
+                  break;
+                default:
+                  throw new XMPexception("array '" + varName + "' has has a wrong data type for gpudata");
+              }
+
+              sizeObj = Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.LongLongConstant(0, getArrayElmtCount(arrayVarType)),
+                                                       Xcons.SizeOf(((ArrayType)varType).getArrayElementType()));
+            } break;
+          default:
+            throw new XMPexception("'" + varName + "' has a wrong data type for broadcast");
+        }
+
+        gpudataConstructorBody.add(createFuncCallBlock("_XMP_gpu_init_gpudata_NOT_ALIGNED", Xcons.List(gpudataDescId.getAddr(), sizeObj)));
+      } else {
+        throw new XMPexception("aligned array is not allowed in 'gpudata' directive");
+      }
+
+      gpudataDestructorBody.add(createFuncCallBlock("_XMP_gpu_finalize_gpudata", Xcons.List(gpudataDescId.Ref())));
+    }
+
+    pb.replace(Bcons.COMPOUND(replaceBody));
   }
 }

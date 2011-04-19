@@ -1204,6 +1204,6 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     } while (true);
 
     pg_get_token();
-    return varList;
+    return Xcons.List(varList);
   }
 }
