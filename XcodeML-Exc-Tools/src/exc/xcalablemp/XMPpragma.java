@@ -27,6 +27,7 @@ public enum XMPpragma {
   REDUCTION,
   BCAST,
   COARRAY,
+  GPUDATA,
   ;
 
   private String name = null;

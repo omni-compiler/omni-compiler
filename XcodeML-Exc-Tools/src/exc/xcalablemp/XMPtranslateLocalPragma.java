@@ -74,6 +74,8 @@ public class XMPtranslateLocalPragma {
         { translateBcast(pb);		break; }
       case GMOVE:
         { translateGmove(pb);           break; }
+      case GPUDATA:
+        { translateGpudata(pb);         break; }
       default:
         throw new XMPexception("'" + pragmaName.toLowerCase() + "' directive is not supported yet");
     }
@@ -2125,5 +2127,19 @@ public class XMPtranslateLocalPragma {
         funcCallList.add(Bcons.Statement(macroId.Call(funcArgs)));
         return Bcons.COMPOUND(funcCallList);
     }
-  
+
+  private void translateGpudata(PragmaBlock pb) throws XMPexception {
+    if (!XmOption.isXcalableMPGPU()) {
+      XMP.warning("use -enable-gpu option to use 'gpudata' directive");
+      return;
+    }
+
+    // start translation
+    XobjList gpudataDecl = (XobjList)pb.getClauses();
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+    BlockList gpudataBody = pb.getBody();
+
+    System.out.println("gpu data: " + gpudataDecl.toString());
+    System.out.println("gpu data body: " + gpudataBody.toString());
+  }
 }

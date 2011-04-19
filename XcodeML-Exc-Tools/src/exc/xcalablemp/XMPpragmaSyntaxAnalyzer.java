@@ -7,6 +7,7 @@
 package exc.xcalablemp;
 
 import xcodeml.XmException;
+import xcodeml.util.XmOption;
 import exc.object.*;
 import exc.openmp.OMPpragma;
 import static exc.object.PragmaLexer.*;
@@ -245,6 +246,13 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
       pg_get_token();
       args = parse_COARRAY_clause();
+    }
+    else if (pg_is_ident("gpudata")) {
+      pragmaDir = XMPpragma.GPUDATA;
+      syntax = PragmaSyntax.SYN_PREFIX;
+
+      pg_get_token();
+      args = parse_GPUDATA_clause();
     }
     else {
       error("unknown XcalableMP directive, '" + pg_tok_buf() + "'");
@@ -1165,5 +1173,37 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
     // XXX never reach here
     return null;
+  }
+
+  private XobjList parse_GPUDATA_clause() throws XMPexception {
+    XobjList varList = Xcons.List();
+
+    if (pg_tok() != '(') {
+      error("'(' is expected before gpudata <variable> list");
+    }
+
+    do {
+      pg_get_token();
+      if (pg_tok() == PG_IDENT) {
+        varList.add(Xcons.String(pg_tok_buf()));
+      }
+      else {
+        error("<variable> for gpudata directive is expected");
+      }
+
+      pg_get_token();
+      if (pg_tok() == ',') {
+        continue;
+      }
+      else if (pg_tok() == ')') {
+        break;
+      }
+      else {
+        error("',' or ')' is expected after gpudata <variable> list");
+      }
+    } while (true);
+
+    pg_get_token();
+    return varList;
   }
 }
