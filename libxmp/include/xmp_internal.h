@@ -181,6 +181,10 @@ typedef struct _XMP_coarray_type {
   _XMP_coarray_info_t info[1];
 } _XMP_coarray_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // ----- libxmp ------------------------------------------------------
 // xmp_array_section.c
 extern void _XMP_normalize_array_section(int *lower, int *upper, int *stride);
@@ -238,5 +242,9 @@ extern void _XMP_finalize(void);
 // xmp_threads_runtime.c
 extern void _XMP_threads_init(int, char **argv);
 extern void _XMP_threads_finalize(int);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _XMP_INTERNAL

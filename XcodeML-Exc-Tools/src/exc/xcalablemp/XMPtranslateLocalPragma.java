@@ -2158,12 +2158,14 @@ public class XMPtranslateLocalPragma {
 
       XMPalignedArray alignedArray = findXMPalignedArray(varName, localXMPsymbolTable);
       if (alignedArray == null) {
+        Xobject descAddrObj = null;
         Xobject sizeObj = null;
         switch (varType.getKind()) {
           case Xtype.BASIC:
           case Xtype.STRUCT:                             
           case Xtype.UNION:
             {
+              descAddrObj = varId.getAddr();
               sizeObj = Xcons.SizeOf(varType);
             } break;
           case Xtype.ARRAY:
@@ -2178,6 +2180,7 @@ public class XMPtranslateLocalPragma {
                   throw new XMPexception("array '" + varName + "' has has a wrong data type for gpudata");
               }
 
+              descAddrObj = varId.Ref();
               sizeObj = Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.LongLongConstant(0, getArrayElmtCount(arrayVarType)),
                                                        Xcons.SizeOf(((ArrayType)varType).getArrayElementType()));
             } break;
@@ -2185,7 +2188,7 @@ public class XMPtranslateLocalPragma {
             throw new XMPexception("'" + varName + "' has a wrong data type for broadcast");
         }
 
-        gpudataConstructorBody.add(createFuncCallBlock("_XMP_gpu_init_gpudata_NOT_ALIGNED", Xcons.List(gpudataDescId.getAddr(), sizeObj)));
+        gpudataConstructorBody.add(createFuncCallBlock("_XMP_gpu_init_gpudata_NOT_ALIGNED", Xcons.List(gpudataDescId.getAddr(), descAddrObj, sizeObj)));
       } else {
         throw new XMPexception("aligned array is not allowed in 'gpudata' directive");
       }
