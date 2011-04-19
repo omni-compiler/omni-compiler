@@ -66,7 +66,8 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LIBRARIES = $(lib_LIBRARIES)
 libxmp_gpu_a_AR = $(AR) $(ARFLAGS)
-libxmp_gpu_a_DEPENDENCIES = xmp_gpu_runtime.o
+libxmp_gpu_a_DEPENDENCIES = xmp_gpu_runtime.o xmp_gpu_util.o \
+	xmp_gpu_data.o
 am_libxmp_gpu_a_OBJECTS = xmp_gpu_lib.$(OBJEXT)
 libxmp_gpu_a_OBJECTS = $(am_libxmp_gpu_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
@@ -266,10 +267,10 @@ top_srcdir = @top_srcdir@
 XMP_INC_DIR = ../include
 GPUCC = @GPU_CMD@
 lib_LIBRARIES = libxmp_gpu.a
-libxmp_gpu_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h \
+libxmp_gpu_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h xmp_gpu_internal.h \
                                   xmp_gpu_lib.c
 
-libxmp_gpu_a_LIBADD = xmp_gpu_runtime.o
+libxmp_gpu_a_LIBADD = xmp_gpu_runtime.o xmp_gpu_util.o xmp_gpu_data.o
 AM_CFLAGS = -Wall -std=c99 -I$(XMP_INC_DIR)
 all: all-am
 
@@ -564,7 +565,7 @@ uninstall-am: uninstall-libLIBRARIES
 
 
 .cu.o:
-	$(GPUCC) -O2 -c $@ $<
+	$(GPUCC) -I$(XMP_INC_DIR) -O2 -c $@ $<
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

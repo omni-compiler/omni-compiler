@@ -210,9 +210,18 @@ extern void _XMP_finalize_world(void);
 extern void _XMP_threads_init(int argc, char *argv[]);
 extern void _XMP_threads_finalize(int ret);
 
-// ----- libxmp_gpu
-// xmp_gpu_runtime.c
+#ifdef _XMP_ENABLE_GPU
+// xmp_gpu_runtime.cu
 extern void _XMP_gpu_init(void);
 extern void _XMP_gpu_finalize(void);
+
+// xmp_gpu_util.cu
+extern void _XMP_gpu_alloc(void **addr, size_t size);
+extern void _XMP_gpu_free(void *addr);
+
+// xmp_gpu_data.cu
+extern void _XMP_gpu_init_gpudata_NOT_ALIGNED(void **desc, void *addr, size_t size);
+extern void _XMP_gpu_finalize_gpudata(void *desc);
+#endif // _XMP_ENABLE_GPU
 
 #endif // _XMP_RUNTIME_FUNC_DECL

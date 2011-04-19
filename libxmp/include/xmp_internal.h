@@ -239,11 +239,4 @@ extern void _XMP_finalize(void);
 extern void _XMP_threads_init(int, char **argv);
 extern void _XMP_threads_finalize(int);
 
-// ----- libxmp_gpu --------------------------------------------------
-// xmp_gpu_runtime.c
-extern int _XMP_gpu_device_count;
-
-extern void _XMP_gpu_init(void);
-extern void _XMP_gpu_finalize(void);
-
 #endif // _XMP_INTERNAL
