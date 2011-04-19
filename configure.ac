@@ -1266,6 +1266,17 @@ AC_SUBST(GPU_CMD)
 # --------------------------------------------------------------------
 
 # --------------------------------------------------------------------
+# specify libgpu path
+
+AC_ARG_WITH(gpuDir,
+    [  --with-gpuDir=DIR    specify GPGPU tooklit install directory (default: /usr/local/cuda)],
+    [GPGPU_PREFIX="${withval}"], [GPGPU_PREFIX="/usr/local/cuda"])
+
+AC_SUBST(GPGPU_PREFIX)
+
+# --------------------------------------------------------------------
+
+# --------------------------------------------------------------------
 # Export Omni Config Variable
 
 OMNI_HOME=$prefix

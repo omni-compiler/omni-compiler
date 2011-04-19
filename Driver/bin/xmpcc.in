@@ -14,6 +14,7 @@ error() {
 }
 
 BINDIR=`dirname $0`
+GPGPU_PREFIX=@GPGPU_PREFIX@
 
 selective_profile=0
 all_profile=0
@@ -38,7 +39,7 @@ for i in "$@"; do
             args="${args} --Wx${i}";;
         -enable-gpu)
             if test @XMP_ENABLE_GPU@ -eq 1; then
-                args="${args} --Wx${i} --Wl-lxmp_gpu"
+                args="${args} --Wx${i} --Wl-L${GPGPU_PREFIX}/lib64 --Wl-lxmp_gpu --Wl-lcudart"
             else
                 echo "warning: -enable-gpu option is unavailable, rebuild the compiler with ./configure --enable-xmpgpu"
             fi;;

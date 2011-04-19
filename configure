@@ -608,6 +608,7 @@ OM_EXEC_C_COMPILER
 OM_EXEC_C_PP
 OM_DRIVER_CONF_DIR
 OMNI_HOME
+GPGPU_PREFIX
 GPU_CMD
 MPI_CMD
 LIBXML_PREFIX
@@ -794,6 +795,7 @@ with_precision
 with_libxmlDir
 with_mpicc
 with_gpucc
+with_gpuDir
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1446,6 +1448,7 @@ Optional Packages:
   --with-libxmlDir=DIR    specify libxml install directory (default: /usr/local)
   --with-mpicc=CMD        specify MPI C compiler (default: mpicc)
   --with-gpucc=CMD        specify GPU C compiler (default: nvcc)
+  --with-gpuDir=DIR    specify GPGPU tooklit install directory (default: /usr/local/cuda)
 
 Some influential environment variables:
   CC          C compiler command
@@ -9397,6 +9400,22 @@ if test "${with_gpucc+set}" = set; then :
   withval=$with_gpucc; GPU_CMD="${withval}"
 else
   GPU_CMD="nvcc"
+fi
+
+
+
+
+# --------------------------------------------------------------------
+
+# --------------------------------------------------------------------
+# specify libgpu path
+
+
+# Check whether --with-gpuDir was given.
+if test "${with_gpuDir+set}" = set; then :
+  withval=$with_gpuDir; GPGPU_PREFIX="${withval}"
+else
+  GPGPU_PREFIX="/usr/local/cuda"
 fi
 
 
