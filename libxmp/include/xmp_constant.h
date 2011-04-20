@@ -8,7 +8,7 @@
 #define _XMP_CONSTANT
 
 #define _XMP_N_INT_TRUE				1
-#define _XMP_N_INT_FALSE				0
+#define _XMP_N_INT_FALSE			0
 #define _XMP_N_MAX_DIM				7
 
 // constants for mpi tag
@@ -20,7 +20,7 @@
 #define _XMP_N_INVALID_RANK			-1
 #define _XMP_N_NO_ALIGNED_TEMPLATE		-1
 #define _XMP_N_NO_ONTO_NODES			-1
-#define _XMP_N_DEFAULT_ROOT_RANK			0
+#define _XMP_N_DEFAULT_ROOT_RANK		0
 
 // defined in exc.xcalablemp.XMPtemplate
 #define _XMP_N_DIST_DUPLICATION			100
@@ -28,8 +28,8 @@
 #define _XMP_N_DIST_CYCLIC			102
 
 // FIXME defined in exc.xcalablemp.XMP???
-#define _XMP_N_ALIGN_NOT_ALIGNED			200
-#define _XMP_N_ALIGN_DUPLICATION			201
+#define _XMP_N_ALIGN_NOT_ALIGNED		200
+#define _XMP_N_ALIGN_DUPLICATION		201
 #define _XMP_N_ALIGN_BLOCK			202
 #define _XMP_N_ALIGN_CYCLIC			203
 
@@ -55,14 +55,14 @@
 #define _XMP_N_SHADOW_FULL			402
 
 // defined in exc.object.BasicType + 500
-#define _XMP_N_TYPE_BOOL				502
-#define _XMP_N_TYPE_CHAR				503
+#define _XMP_N_TYPE_BOOL			502
+#define _XMP_N_TYPE_CHAR			503
 #define _XMP_N_TYPE_UNSIGNED_CHAR		504
 #define _XMP_N_TYPE_SHORT			505
 #define _XMP_N_TYPE_UNSIGNED_SHORT		506
 #define _XMP_N_TYPE_INT				507
-#define _XMP_N_TYPE_UNSIGNED_INT			508
-#define _XMP_N_TYPE_LONG				509
+#define _XMP_N_TYPE_UNSIGNED_INT		508
+#define _XMP_N_TYPE_LONG			509
 #define _XMP_N_TYPE_UNSIGNED_LONG		510
 #define _XMP_N_TYPE_LONGLONG			511
 #define _XMP_N_TYPE_UNSIGNED_LONGLONG		512
@@ -76,5 +76,9 @@
 #define _XMP_N_TYPE_DOUBLE_COMPLEX		520
 #define _XMP_N_TYPE_LONG_DOUBLE_COMPLEX		521
 #define _XMP_N_TYPE_NONBASIC			599
+
+// defined in exc.xcalablemp.XMPgpudata
+#define _XMP_N_GPUSYNC_IN			600
+#define _XMP_N_GPUSYNC_OUT			601
 
 #endif // _XMP_CONSTANT

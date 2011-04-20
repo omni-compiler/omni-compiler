@@ -9,6 +9,9 @@ package exc.xcalablemp;
 import exc.object.*;
 
 public class XMPgpudata {
+  public static int GPUSYNC_IN = 600;
+  public static int GPUSYNC_OUT = 601;
+
   private String		_name;
   private Ident			_descId;
   private boolean		_isAlignedArray;

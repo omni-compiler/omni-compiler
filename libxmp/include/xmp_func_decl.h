@@ -218,6 +218,9 @@ extern void _XMP_gpu_finalize(void);
 // xmp_gpu_data.cu
 extern void _XMP_gpu_init_gpudata_NOT_ALIGNED(void **desc, void *addr, size_t size);
 extern void _XMP_gpu_finalize_gpudata(void *desc);
+
+// xmp_gpu_sync.cu
+extern void _XMP_gpu_sync(void *desc, int direction);
 #endif // _XMP_ENABLE_GPU
 
 #endif // _XMP_RUNTIME_FUNC_DECL

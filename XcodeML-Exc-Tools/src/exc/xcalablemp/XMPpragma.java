@@ -28,6 +28,7 @@ public enum XMPpragma {
   BCAST,
   COARRAY,
   GPUDATA,
+  GPUSYNC,
   ;
 
   private String name = null;

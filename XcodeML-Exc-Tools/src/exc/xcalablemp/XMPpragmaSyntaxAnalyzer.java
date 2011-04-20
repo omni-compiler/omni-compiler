@@ -253,8 +253,13 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
       pg_get_token();
       args = parse_GPUDATA_clause();
-    }
-    else {
+    } else if (pg_is_ident("gpusync")) {
+      pragmaDir = XMPpragma.GPUSYNC;
+      syntax = PragmaSyntax.SYN_EXEC;
+
+      pg_get_token();
+      args = parse_GPUSYNC_clause();
+    } else {
       error("unknown XcalableMP directive, '" + pg_tok_buf() + "'");
     }
  
@@ -1205,5 +1210,45 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
     pg_get_token();
     return Xcons.List(varList);
+  }
+
+  private XobjList parse_GPUSYNC_clause() throws XMPexception {
+    XobjList varList = Xcons.List();
+
+    if (pg_tok() != '(') {
+      error("'(' is expected before gpudata <variable> list");
+    }
+
+    do {
+      pg_get_token();
+      if (pg_tok() == PG_IDENT) {
+        varList.add(Xcons.String(pg_tok_buf()));
+      }
+      else {
+        error("<variable> for gpudata directive is expected");
+      }
+
+      pg_get_token();
+      if (pg_tok() == ',') {
+        continue;
+      }
+      else if (pg_tok() == ')') {
+        break;
+      }
+      else {
+        error("',' or ')' is expected after gpudata <variable> list");
+      }
+    } while (true);
+
+    pg_get_token();
+    XobjString clause = null;
+    if (pg_is_ident("in") || pg_is_ident("out")) {
+      clause = Xcons.String(pg_tok_buf());
+    } else {
+      error("'in' or 'out' clause is required in gpusync directive");
+    }
+
+    pg_get_token();
+    return Xcons.List(varList, clause);
   }
 }

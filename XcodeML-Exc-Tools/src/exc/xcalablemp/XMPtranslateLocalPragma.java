@@ -76,6 +76,8 @@ public class XMPtranslateLocalPragma {
         { translateGmove(pb);           break; }
       case GPUDATA:
         { translateGpudata(pb);         break; }
+      case GPUSYNC:
+        { translateGpusync(pb);         break; }
       default:
         throw new XMPexception("'" + pragmaName.toLowerCase() + "' directive is not supported yet");
     }
@@ -2205,6 +2207,42 @@ public class XMPtranslateLocalPragma {
       gpudataDestructorBody.add(createFuncCallBlock("_XMP_gpu_finalize_gpudata", Xcons.List(gpudataDescId.Ref())));
 
       localXMPsymbolTable.putXMPgpudata(new XMPgpudata(varName, gpudataDescId, alignedArray));
+    }
+
+    pb.replace(Bcons.COMPOUND(replaceBody));
+  }
+
+  private void translateGpusync(PragmaBlock pb) throws XMPexception {
+    if (!XmOption.isXcalableMPGPU()) {
+      XMP.warning("use -enable-gpu option to use 'gpusync' directive");
+      return;
+    }
+
+    // start translation
+    XobjList gpusyncDecl = (XobjList)pb.getClauses();
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+
+    BlockList replaceBody = Bcons.emptyBody();
+
+    Xobject directionArg = null;
+    String clause = gpusyncDecl.getArg(1).getString();
+    if (clause.equals("in")) {
+      directionArg = Xcons.IntConstant(XMPgpudata.GPUSYNC_IN);
+    } else if (clause.equals("out")) {
+      directionArg = Xcons.IntConstant(XMPgpudata.GPUSYNC_OUT);
+    } else {
+      throw new XMPexception("unknown clause for 'gpusync'");
+    }
+
+    XobjList varList = (XobjList)gpusyncDecl.getArg(0);
+    for (XobjArgs i = varList.getArgs(); i != null; i = i.nextArgs()) {
+      String varName = i.getArg().getString();
+      XMPgpudata gpudata = localXMPsymbolTable.getXMPgpudata(varName);
+      if (gpudata == null) {
+        throw new XMPexception("gpudata '" + varName + "' is not declared");
+      } else {
+        replaceBody.add(createFuncCallBlock("_XMP_gpu_sync", Xcons.List(gpudata.getDescId().Ref(), directionArg)));
+      }
     }
 
     pb.replace(Bcons.COMPOUND(replaceBody));
