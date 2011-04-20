@@ -1,10 +1,17 @@
 #ifndef _XMP_GPU_INTERNAL
 
 #include <stddef.h>
+#include "xmp_internal.h"
 
 typedef struct _XMP_gpudata_type {
+  _Bool is_aligned_array;
+
   void *host_addr;
   void *device_addr;
+
+  struct _XMP_gpudata_type *device_gpudata_desc;
+  _XMP_array_t *device_array_desc;
+
   size_t size;
 } _XMP_gpudata_t;
 

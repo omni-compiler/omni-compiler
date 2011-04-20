@@ -1,4 +1,4 @@
-#include "xmp_internal.h"
+#include "xmp_gpu_internal.h"
 
 void _XMP_gpu_alloc(void **addr, size_t size) {
   if (cudaMalloc(addr, size) != cudaSuccess) {
