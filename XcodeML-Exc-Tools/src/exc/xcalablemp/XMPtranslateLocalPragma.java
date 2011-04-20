@@ -2150,6 +2150,13 @@ public class XMPtranslateLocalPragma {
     XobjList varList = (XobjList)gpudataDecl.getArg(0);
     for (XobjArgs i = varList.getArgs(); i != null; i = i.nextArgs()) {
       String varName = i.getArg().getString();
+
+      // FIXME check gpudataTable FIXME do not allow gpudata to be nested
+      XMPgpudata gpudata = localXMPsymbolTable.getXMPgpudata(varName);
+      if (gpudata != null) {
+        throw new XMPexception("gpudata '" + varName + "' is already declared");
+      }
+
       XMPpair<Ident, Xtype> typedSpec = findTypedVar(varName, pb);
       Ident varId = typedSpec.getFirst();
       Xtype varType = typedSpec.getSecond();
@@ -2196,6 +2203,8 @@ public class XMPtranslateLocalPragma {
       }
 
       gpudataDestructorBody.add(createFuncCallBlock("_XMP_gpu_finalize_gpudata", Xcons.List(gpudataDescId.Ref())));
+
+      localXMPsymbolTable.putXMPgpudata(new XMPgpudata(varName, gpudataDescId, alignedArray));
     }
 
     pb.replace(Bcons.COMPOUND(replaceBody));
