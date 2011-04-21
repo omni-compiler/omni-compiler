@@ -655,6 +655,9 @@ int validate_src( void )
                 } else if (strcmp( extension, EXTENSION_O ) == 0) {
                     io->is_valid = TRUE;
                     io->is_compiled = TRUE;
+                } else if (strcmp( extension, EXTENSION_A ) == 0) {
+                    io->is_valid = TRUE;
+                    io->is_compiled = TRUE;
                 } else {
                     io->is_valid = FALSE;
                 }
@@ -670,6 +673,9 @@ int validate_src( void )
                     io->is_valid = TRUE;
                     io->is_preped = TRUE;
                 } else if (strcmp( extension, EXTENSION_O ) == 0) {
+                    io->is_valid = TRUE;
+                    io->is_compiled = TRUE;
+                } else if (strcmp( extension, EXTENSION_A ) == 0) {
                     io->is_valid = TRUE;
                     io->is_compiled = TRUE;
                 } else {
