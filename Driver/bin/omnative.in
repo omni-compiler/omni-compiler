@@ -30,11 +30,12 @@ if [ ! -z "${OM_TRANSLATORS}" ]; then
     done;
 fi
 
+INPFILE_BASENAME=`basename ${INPFILE}`
 newOpts=''
 for i in ${OM_OPTIONS}; do
     case ${i} in
         -tmp)
-            cp ${INPFILE} tmp.c;;
+            cp ${INPFILE} __omni_tmp_${INPFILE_BASENAME};;
         *)
             newOpts="${newOpts} ${i}";;
     esac

@@ -408,7 +408,7 @@ void disp_help( void )
         "",
         "XcalableMP Options",
         "",
-        "    -tmp                output parallel code (tmp.c)",
+        "    -tmp                output parallel code (__omni_tmp_SRCNAME.c)",
         "",
         "    -profile            profile specified directives",
         "    -allprofile         profile all directives",
