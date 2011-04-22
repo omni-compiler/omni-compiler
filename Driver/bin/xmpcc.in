@@ -43,6 +43,8 @@ for i in "$@"; do
             else
                 echo "warning: -enable-gpu option is unavailable, rebuild the compiler with ./configure --enable-xmpgpu"
             fi;;
+        -tmp)
+            args="${args} --Wn${i}";;
         *)
             args="${args} ${i}";;
     esac

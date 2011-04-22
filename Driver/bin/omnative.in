@@ -30,6 +30,17 @@ if [ ! -z "${OM_TRANSLATORS}" ]; then
     done;
 fi
 
+newOpts=''
+for i in ${OM_OPTIONS}; do
+    case ${i} in
+        -tmp)
+            cp ${INPFILE} tmp.c;;
+        *)
+            newOpts="${newOpts} ${i}";;
+    esac
+done
+OM_OPTIONS="${newOpts}"
+
 CMD="${COMPILER} ${OM_OPTIONS} -c ${INPFILE} -o ${OUTFILE}"
 
 if [ "${OM_VERBOSE}" = "1" ]; then
