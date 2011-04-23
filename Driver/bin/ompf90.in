@@ -6,7 +6,20 @@
 #  $
 
 BINDIR=`dirname $0`
-${BINDIR}/omdriver --xf -Topenmp $@
+
+args=''
+for i in "$@"; do
+    case "${i}" in
+        -tmp)
+            args="${args} --Wn${i}";;
+        *)
+            args="${args} ${i}";;
+    esac
+done
+
+set -- ${args}
+
+${BINDIR}/omdriver --xf -Topenmp "$@"
 
 exit $?
 
