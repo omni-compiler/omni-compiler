@@ -246,19 +246,38 @@ public class XMPtranslateLocalPragma {
   }
 
   private XMPpair<String, XobjList> createGPUparallelRegion(CforBlock loopBlock) {
-    String funcName = _globalDecl.genSym("_XMP_GPU_FUNC");
-    Ident funcId = _globalDecl.declStaticIdent(funcName, Xtype.Function(Xtype.voidType));
+    Ident funcId = _globalDecl.declStaticIdent(_globalDecl.genSym(XMP.GPU_FUNC_PREFIX),
+                                               Xtype.Function(Xtype.voidType));
 
     setupGPUparallelFunc(funcId, loopBlock);
 
-    return new XMPpair(funcName, null);
+    return new XMPpair(funcId.getName(), null);
   }
 
   private void setupGPUparallelFunc(Ident funcId, CforBlock loopBlock) {
-    XobjList paramIdList = Xcons.List();
+    XobjList paramIdList = getGPUfuncParams(loopBlock);
 
     ((FunctionType)funcId.Type()).setFuncParamIdList(paramIdList);
     currentDef.insertBeforeThis(XobjectDef.Func(funcId, paramIdList, null, loopBlock.getBody().toXobject()));
+  }
+
+  private XobjList getGPUfuncParams(CforBlock loopBlock) {
+    BasicBlockExprIterator iter = new BasicBlockExprIterator(loopBlock.getBody());
+    for (iter.init(); !iter.end(); iter.next()) {
+      Xobject expr = iter.getExpr();
+      bottomupXobjectIterator exprIter = new bottomupXobjectIterator(expr);
+      for (exprIter.init(); !exprIter.end(); exprIter.next()) {
+        Xobject x = exprIter.getXobject();
+        switch (x.Opcode()) {
+          case VAR:
+          case ARRAY_REF:
+            System.out.println(x.getSym().toString());
+          default:
+        }
+      }
+    }
+
+    return Xcons.List();
   }
 
   private Block createOMPpragmaBlock(OMPpragma pragma, Xobject args, Block body) {
