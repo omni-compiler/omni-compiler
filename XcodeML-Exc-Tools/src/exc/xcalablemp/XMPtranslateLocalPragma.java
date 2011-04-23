@@ -2196,7 +2196,6 @@ public class XMPtranslateLocalPragma {
         return Bcons.COMPOUND(funcCallList);
     }
 
-  // FIXME not implemented yet
   private void translateGpudata(PragmaBlock pb) throws XMPexception {
     BlockList gpudataBody = pb.getBody();
 
@@ -2209,6 +2208,7 @@ public class XMPtranslateLocalPragma {
     // start translation
     XobjList gpudataDecl = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+    XMPgpudataTable gpudataTable = new XMPgpudataTable();
 
     BlockList gpudataConstructorBody = Bcons.emptyBody();
     BlockList gpudataDestructorBody = Bcons.emptyBody();
@@ -2222,7 +2222,7 @@ public class XMPtranslateLocalPragma {
       String varName = i.getArg().getString();
 
       // FIXME check gpudataTable FIXME do not allow gpudata to be nested
-      XMPgpudata gpudata = localXMPsymbolTable.getXMPgpudata(varName);
+      XMPgpudata gpudata = gpudataTable.getXMPgpudata(varName);
       if (gpudata != null) {
         throw new XMPexception("gpudata '" + varName + "' is already declared");
       }
@@ -2274,10 +2274,13 @@ public class XMPtranslateLocalPragma {
 
       gpudataDestructorBody.add(createFuncCallBlock("_XMP_gpu_finalize_gpudata", Xcons.List(gpudataDescId.Ref())));
 
-      localXMPsymbolTable.putXMPgpudata(new XMPgpudata(varName, gpudataDescId, alignedArray));
+      gpudataTable.putXMPgpudata(new XMPgpudata(varName, gpudataDescId, alignedArray));
     }
 
-    pb.replace(Bcons.COMPOUND(replaceBody));
+    Block replaceBlock = Bcons.COMPOUND(replaceBody);
+    replaceBlock.setProp(XMPgpudataTable.PROP, gpudataTable);
+
+    pb.replace(replaceBlock);
   }
 
   private void translateGpusync(PragmaBlock pb) throws XMPexception {
@@ -2305,7 +2308,7 @@ public class XMPtranslateLocalPragma {
     XobjList varList = (XobjList)gpusyncDecl.getArg(0);
     for (XobjArgs i = varList.getArgs(); i != null; i = i.nextArgs()) {
       String varName = i.getArg().getString();
-      XMPgpudata gpudata = localXMPsymbolTable.getXMPgpudata(varName);
+      XMPgpudata gpudata = findXMPgpudata(varName, pb);
       if (gpudata == null) {
         throw new XMPexception("gpudata '" + varName + "' is not declared");
       } else {
@@ -2314,5 +2317,31 @@ public class XMPtranslateLocalPragma {
     }
 
     pb.replace(Bcons.COMPOUND(replaceBody));
+  }
+
+  private XMPgpudata findXMPgpudata(String varName, Block block) {
+    if (block == null) {
+      return null;
+    }
+
+    for (Block b = block; b != null; b = b.getParentBlock()) {
+      switch (b.Opcode()) {
+        case COMPOUND_STATEMENT:
+          {
+            XMPgpudataTable gpudataTable = (XMPgpudataTable)b.getProp(XMPgpudataTable.PROP);
+            if (gpudataTable != null) {
+              XMPgpudata gpudata = gpudataTable.getXMPgpudata(varName);
+              if (gpudata != null) {
+                return gpudata;
+              }
+            }
+          } break;
+        case FUNCTION_DEFINITION:
+          return null;
+        default:
+      }
+    }
+
+    return null;
   }
 }

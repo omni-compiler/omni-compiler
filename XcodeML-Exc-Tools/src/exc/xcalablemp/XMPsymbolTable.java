@@ -12,13 +12,11 @@ public class XMPsymbolTable {
   private HashMap<String, XMPobject> _XMPobjectTable;
   private HashMap<String, XMPalignedArray> _XMPalignedArrayTable;
   private HashMap<String, XMPcoarray> _XMPcoarrayTable;
-  private HashMap<String, XMPgpudata> _XMPgpudataTable;
 
   public XMPsymbolTable() {
     _XMPobjectTable = new HashMap<String, XMPobject>();
     _XMPalignedArrayTable = new HashMap<String, XMPalignedArray>();
     _XMPcoarrayTable = new HashMap<String, XMPcoarray>();
-    _XMPgpudataTable = new HashMap<String, XMPgpudata>();
   }
 
   public void putXMPobject(XMPobject o) {
@@ -59,13 +57,5 @@ public class XMPsymbolTable {
 
   public XMPcoarray getXMPcoarray(String name) {
     return _XMPcoarrayTable.get(name);
-  }
-
-  public void putXMPgpudata(XMPgpudata gpudata) {
-    _XMPgpudataTable.put(gpudata.getName(), gpudata);
-  }
-
-  public XMPgpudata getXMPgpudata(String name) {
-    return _XMPgpudataTable.get(name);
   }
 }
