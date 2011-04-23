@@ -182,6 +182,22 @@ public class XMPutil {
     return false;
   }
 
+  public static boolean hasIdent(XobjList list, String string) {
+    Iterator<Xobject> it = list.iterator();
+    while (it.hasNext()) {
+      Ident id = (Ident)it.next();
+      if (id == null) {
+        continue;
+      }
+      
+      if (id.getName().equals(string)) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
   public static int getFirstIndex(XobjList list, int constant) throws XMPexception {
     int index = 0;
     Iterator<Xobject> it = list.iterator();
