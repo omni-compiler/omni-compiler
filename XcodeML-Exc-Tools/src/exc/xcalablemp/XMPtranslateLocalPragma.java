@@ -19,6 +19,7 @@ public class XMPtranslateLocalPragma {
   private boolean               _selective_profile = false;
   private boolean               doScalasca = false;
   private boolean               doTlog = false;
+  private XobjectDef            currentDef;
 
   public XMPtranslateLocalPragma(XMPglobalDecl globalDecl) {
     _globalDecl = globalDecl;
@@ -26,6 +27,7 @@ public class XMPtranslateLocalPragma {
 
   public void translate(FuncDefBlock def) {
     FunctionBlock fb = def.getBlock();
+    currentDef = def.getDef();
 
     BlockIterator i = new topdownBlockIterator(fb);
     for (i.init(); !i.end(); i.next()) {
@@ -195,7 +197,8 @@ public class XMPtranslateLocalPragma {
 
       if (devName.equals("gpu")) {
         if (XmOption.isXcalableMPGPU()) {
-          System.out.println("GPU clause detected");
+          Block newLoopBlock = translateGpuClause(devArgs, reductionRefList, schedBaseBlock);
+          schedBaseBlock.replace(newLoopBlock);
         } else {
           XMP.warning("use '-enable-gpu' compiler option to use gpu clause");
         }
@@ -206,6 +209,8 @@ public class XMPtranslateLocalPragma {
         } else {
           XMP.warning("this compiler does not support threads clause");
         }
+      } else {
+        throw new XMPexception("unknown clause in loop directive");
       }
     }
 
@@ -231,6 +236,29 @@ public class XMPtranslateLocalPragma {
         loopFuncCallBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
         loopFuncCallBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
     }
+  }
+
+  // XXX only supports C language
+  private Block translateGpuClause(XobjList gpuClause, XobjList reductionRefList,
+                                   CforBlock loopBlock) throws XMPexception {
+    XMPpair<String, XobjList> parallelFunc = createGPUparallelRegion(loopBlock);
+    return createFuncCallBlock(parallelFunc.getFirst(), parallelFunc.getSecond());
+  }
+
+  private XMPpair<String, XobjList> createGPUparallelRegion(CforBlock loopBlock) {
+    String funcName = _globalDecl.genSym("_XMP_GPU_FUNC");
+    Ident funcId = _globalDecl.declStaticIdent(funcName, Xtype.Function(Xtype.voidType));
+
+    setupGPUparallelFunc(funcId, loopBlock);
+
+    return new XMPpair(funcName, null);
+  }
+
+  private void setupGPUparallelFunc(Ident funcId, CforBlock loopBlock) {
+    XobjList paramIdList = Xcons.List();
+
+    ((FunctionType)funcId.Type()).setFuncParamIdList(paramIdList);
+    currentDef.insertBeforeThis(XobjectDef.Func(funcId, paramIdList, null, loopBlock.getBody().toXobject()));
   }
 
   private Block createOMPpragmaBlock(OMPpragma pragma, Xobject args, Block body) {
@@ -2142,15 +2170,17 @@ public class XMPtranslateLocalPragma {
 
   // FIXME not implemented yet
   private void translateGpudata(PragmaBlock pb) throws XMPexception {
+    BlockList gpudataBody = pb.getBody();
+
     if (!XmOption.isXcalableMPGPU()) {
       XMP.warning("use -enable-gpu option to use 'gpudata' directive");
+      pb.replace(Bcons.COMPOUND(gpudataBody));
       return;
     }
 
     // start translation
     XobjList gpudataDecl = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-    BlockList gpudataBody = pb.getBody();
 
     BlockList gpudataConstructorBody = Bcons.emptyBody();
     BlockList gpudataDestructorBody = Bcons.emptyBody();

@@ -40,6 +40,10 @@ public class XMPglobalDecl {
     }
   }
 
+  public String genSym(String prefix) {
+    return _env.genSym(prefix);
+  }
+
   public Ident getWorldDescId() {
     return _env.declExternIdent("_XMP_world_nodes", Xtype.voidPtrType);
   }
