@@ -187,15 +187,25 @@ public class XMPtranslateLocalPragma {
       schedBaseBlock.add(createReductionClauseBlock(pb, reductionBody, schedVarList));
     }
 
-    // translate threads clause
-    XobjList threadsClause = (XobjList)loopDecl.getArg(3);
-    if (threadsClause != null) {
-      if (XmOption.isXcalableMPthreads()) {
-        Block newLoopBlock = translateThreadsClauseToOMPpragma(threadsClause, reductionRefList, schedBaseBlock);
-        schedBaseBlock.replace(newLoopBlock);
-      }
-      else {
-        XMP.warning("this compiler does not support threads clause");
+    // translate multicore clause
+    XobjList multicoreClause = (XobjList)loopDecl.getArg(3);
+    if (multicoreClause != null) {
+      String devName = multicoreClause.getArg(0).getString();
+      XobjList devArgs = (XobjList)multicoreClause.getArg(1);
+
+      if (devName.equals("gpu")) {
+        if (XmOption.isXcalableMPGPU()) {
+          System.out.println("GPU clause detected");
+        } else {
+          XMP.warning("use '-enable-gpu' compiler option to use gpu clause");
+        }
+      } else if (devName.equals("threads")) {
+        if (XmOption.isXcalableMPthreads()) {
+          Block newLoopBlock = translateThreadsClauseToOMPpragma(devArgs, reductionRefList, schedBaseBlock);
+          schedBaseBlock.replace(newLoopBlock);
+        } else {
+          XMP.warning("this compiler does not support threads clause");
+        }
       }
     }
 

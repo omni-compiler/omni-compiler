@@ -670,11 +670,22 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       } while (true);
     }
 
-    // parse [<threads-clause>], ...
-    XobjList threadsClause = null;
-    if (pg_is_ident("threads")) {
+    XobjList multicoreClause = null;
+
+    // parse [<gpu-clause>], ...
+    if (pg_is_ident("gpu")) {
       pg_get_token();
-      threadsClause = parse_THREADS_clause();
+      multicoreClause = Xcons.List(Xcons.String("gpu"), parse_GPU_clause());
+    }
+
+    // parse [<threads-clause>], ...
+    if (pg_is_ident("threads")) {
+      if (multicoreClause != null) {
+        error("'gpu' and 'threads' clauses cannot be used in the same directive");
+      }
+
+      pg_get_token();
+      multicoreClause = Xcons.List(Xcons.String("threads"), parse_THREADS_clause());
     }
     
     // parse [profile]                                                                                                   
@@ -684,7 +695,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         pg_get_token();
     }
 
-    return Xcons.List(loopIndexList, onRef, reductionRefList, threadsClause, profileClause);
+    return Xcons.List(loopIndexList, onRef, reductionRefList, multicoreClause, profileClause);
 
     // check body in translator: for loop
   }
@@ -1065,6 +1076,10 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     }
 
     return Xcons.List(coarrayName, coarrayDim);
+  }
+
+  private XobjList parse_GPU_clause() {
+    return Xcons.List();
   }
 
   private XobjList parse_THREADS_clause() throws XmException, XMPexception {
