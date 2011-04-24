@@ -249,16 +249,24 @@ public class XMPtranslateLocalPragma {
     Ident funcId = _globalDecl.declStaticIdent(_globalDecl.genSym(XMP.GPU_FUNC_PREFIX),
                                                Xtype.Function(Xtype.voidType));
 
-    setupGPUparallelFunc(funcId, loopBlock);
+    XobjList funcArgs = setupGPUparallelFunc(funcId, loopBlock);
 
-    return new XMPpair(funcId.getName(), null);
+    return new XMPpair(funcId.getName(), funcArgs);
   }
 
-  private void setupGPUparallelFunc(Ident funcId, CforBlock loopBlock) throws XMPexception {
+  private XobjList setupGPUparallelFunc(Ident funcId, CforBlock loopBlock) throws XMPexception {
     XobjList paramIdList = getGPUfuncParams(loopBlock);
 
     ((FunctionType)funcId.Type()).setFuncParamIdList(paramIdList);
     currentDef.insertBeforeThis(XobjectDef.Func(funcId, paramIdList, null, loopBlock.getBody().toXobject()));
+
+    XobjList funcArgs = Xcons.List();
+    for (XobjArgs i = paramIdList.getArgs(); i != null; i = i.nextArgs()) {
+      Ident id = (Ident)i.getArg();
+      funcArgs.add(id.Ref());
+    }
+
+    return funcArgs;
   }
 
   private XobjList getGPUfuncParams(CforBlock loopBlock) throws XMPexception {
@@ -2308,7 +2316,7 @@ public class XMPtranslateLocalPragma {
     XobjList varList = (XobjList)gpusyncDecl.getArg(0);
     for (XobjArgs i = varList.getArgs(); i != null; i = i.nextArgs()) {
       String varName = i.getArg().getString();
-      XMPgpudata gpudata = findXMPgpudata(varName, pb);
+      XMPgpudata gpudata = XMPgpudataTable.findXMPgpudata(varName, pb);
       if (gpudata == null) {
         throw new XMPexception("gpudata '" + varName + "' is not declared");
       } else {
@@ -2317,31 +2325,5 @@ public class XMPtranslateLocalPragma {
     }
 
     pb.replace(Bcons.COMPOUND(replaceBody));
-  }
-
-  private XMPgpudata findXMPgpudata(String varName, Block block) {
-    if (block == null) {
-      return null;
-    }
-
-    for (Block b = block; b != null; b = b.getParentBlock()) {
-      switch (b.Opcode()) {
-        case COMPOUND_STATEMENT:
-          {
-            XMPgpudataTable gpudataTable = (XMPgpudataTable)b.getProp(XMPgpudataTable.PROP);
-            if (gpudataTable != null) {
-              XMPgpudata gpudata = gpudataTable.getXMPgpudata(varName);
-              if (gpudata != null) {
-                return gpudata;
-              }
-            }
-          } break;
-        case FUNCTION_DEFINITION:
-          return null;
-        default:
-      }
-    }
-
-    return null;
   }
 }

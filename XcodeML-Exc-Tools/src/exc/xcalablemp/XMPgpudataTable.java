@@ -6,6 +6,7 @@
 
 package exc.xcalablemp;
 
+import exc.block.*;
 import java.util.HashMap;
 
 public class XMPgpudataTable {
@@ -23,5 +24,23 @@ public class XMPgpudataTable {
 
   public XMPgpudata getXMPgpudata(String name) {
     return _XMPgpudataTable.get(name);
+  }
+
+  public static XMPgpudata findXMPgpudata(String varName, Block block) {
+    if (block == null) {
+      return null;
+    }
+
+    for (Block b = block; b != null; b = b.getParentBlock()) {
+      XMPgpudataTable gpudataTable = (XMPgpudataTable)b.getProp(XMPgpudataTable.PROP);
+      if (gpudataTable != null) {
+        XMPgpudata gpudata = gpudataTable.getXMPgpudata(varName);
+        if (gpudata != null) {
+          return gpudata;
+        }
+      }
+    }
+
+    return null;
   }
 }
