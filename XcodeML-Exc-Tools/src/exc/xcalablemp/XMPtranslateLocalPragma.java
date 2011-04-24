@@ -263,7 +263,17 @@ public class XMPtranslateLocalPragma {
     XobjList funcArgs = Xcons.List();
     for (XobjArgs i = paramIdList.getArgs(); i != null; i = i.nextArgs()) {
       Ident id = (Ident)i.getArg();
-      funcArgs.add(id.Ref());
+      XMPgpudata gpudata = XMPgpudataTable.findXMPgpudata(id.getName(), loopBlock);
+      if (gpudata == null) {
+        funcArgs.add(id.Ref());
+      } else {
+        XMPalignedArray alignedArray = gpudata.getAlignedArray();
+        if (alignedArray == null) {
+          funcArgs.add(id.Ref());
+        } else {
+          funcArgs.add(alignedArray.getAddrId().Ref());
+        }
+      }
     }
 
     return funcArgs;
@@ -280,7 +290,6 @@ public class XMPtranslateLocalPragma {
         Xobject x = exprIter.getXobject();
         switch (x.Opcode()) {
           case VAR:
-          case ARRAY_REF:
             {
               String varName = x.getName();
               if (!XMPutil.hasIdent(params, varName)) {
@@ -288,7 +297,24 @@ public class XMPtranslateLocalPragma {
                 params.add(Ident.Param(varName, id.Type()));
               }
             } break;
-//            throw new XMPexception("ARRAY is now allowed now!");
+          case ARRAY_REF:
+            {
+              String varName = x.getName();
+              if (!XMPutil.hasIdent(params, varName)) {
+                XMPgpudata gpudata = XMPgpudataTable.findXMPgpudata(varName, loopBlock);
+                if (gpudata == null) {
+                  throw new XMPexception("array '" + varName + "' shoud be declared as a gpudata");
+                } else {
+                  XMPalignedArray alignedArray = gpudata.getAlignedArray();
+                  if (alignedArray == null) {
+                    Ident id = loopBlock.findVarIdent(varName);
+                    params.add(Ident.Param(varName, id.Type()));
+                  } else {
+                    params.add(Ident.Param(varName, alignedArray.getAddrId().Type()));
+                  }
+                }
+              }
+            } break;
           default:
         }
       }
