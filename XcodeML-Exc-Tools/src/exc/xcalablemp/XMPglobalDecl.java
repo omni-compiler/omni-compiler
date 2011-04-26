@@ -40,6 +40,10 @@ public class XMPglobalDecl {
     }
   }
 
+  public XobjectFile getEnv() {
+    return _env;
+  }
+
   public String genSym(String prefix) {
     return _env.genSym(prefix);
   }

@@ -9,8 +9,7 @@ package exc.xcalablemp;
 import exc.block.*;
 import exc.object.*;
 import exc.openmp.OMPpragma;
-import java.util.Vector;
-import java.util.Iterator;
+import java.util.*;
 import xcodeml.util.XmOption;
 
 public class XMPtranslateLocalPragma {
@@ -258,7 +257,13 @@ public class XMPtranslateLocalPragma {
     XobjList paramIdList = getGPUfuncParams(loopBlock);
 
     ((FunctionType)funcId.Type()).setFuncParamIdList(paramIdList);
-    currentDef.insertBeforeThis(XobjectDef.Func(funcId, paramIdList, null, loopBlock.getBody().toXobject()));
+    // FIXME
+    XobjectDef def = XobjectDef.Func(funcId, paramIdList, null, loopBlock.getBody().toXobject());
+    currentDef.insertBeforeThis(def);
+
+    LinkedList<XobjectDef> defList = new LinkedList<XobjectDef>();
+    defList.add(def);
+    XMPgpuDecompiler.decompile(defList, _globalDecl.getEnv());
 
     XobjList funcArgs = Xcons.List();
     for (XobjArgs i = paramIdList.getArgs(); i != null; i = i.nextArgs()) {
