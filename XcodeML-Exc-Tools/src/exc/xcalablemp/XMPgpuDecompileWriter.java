@@ -19,8 +19,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
   }
 
   public void print(XobjectDef def) {
-//    printWithIdentList(def.getDef(), _env.getGlobalIdentList());
-    System.out.println(def.getDef().toString());
+    printWithIdentList(def.getDef(), _env.getGlobalIdentList());
   }
 
   private void fatal(String msg) {
@@ -93,7 +92,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
             printDeclList(v.getArg(2), v.getArg(1));
           }
 
-          printBody(v.getArg(3), 0);
+          printBody(v.getArg(3));
           println();
         } break;
       case VAR_DECL:
@@ -115,23 +114,19 @@ public class XMPgpuDecompileWriter extends PrintWriter {
           }
         } break;
       default:
-        print(v, 0);
+        print(v);
         break;
     }
   }
 
-  private void print(Xobject v,int l){
+  private void print(Xobject v){
     String op;
     if(v == null) return;
-
-    /* indent */
-    //  for(int i = 0; i < l; i++) print("  ");
-    //  l++;
 
     switch(v.Opcode()){
     case LIST:    /* nested */
       for(XobjArgs a = v.getArgs(); a != null; a = a.nextArgs())
-        print(a.getArg(),l);
+        print(a.getArg());
       break;
       // 
       // Statement
@@ -142,7 +137,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       println("{");
       printIdentList(v.getArg(0));
       printDeclList(v.getArg(1),v.getArg(0));
-      print(v.getArg(2),l);
+      print(v.getArg(2));
       println(); print("}");
       break;
 
@@ -151,10 +146,10 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       print("if(");
       print(v.getArg(0));
       print(")");
-      printBody(v.getArg(1),l);
+      printBody(v.getArg(1));
       if(v.getArg(2) != null){
         print(" else ");
-        printBody(v.getArg(2),l);
+        printBody(v.getArg(2));
       }
       break;
 
@@ -163,7 +158,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       print("while(");
       print(v.getArg(0));
       print(")");
-      printBody(v.getArg(1),l);
+      printBody(v.getArg(1));
       break;
 
     case FOR_STATEMENT:  /* (FOR init cond iter body) */
@@ -175,13 +170,13 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       print(";");
       print(v.getArg(2));  /* iter */
       print(")");
-      printBody(v.getArg(3),l);  /* body */
+      printBody(v.getArg(3));  /* body */
       break;
 
     case DO_STATEMENT: /* (DO_STATEMENT body cond) */
       printLineNo(v);
       print("do ");
-      printBody(v.getArg(0),l);
+      printBody(v.getArg(0));
       print(" while(");
       print(v.getArg(1));
       print(");");
@@ -210,7 +205,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       print("switch(");
       print(v.getArg(0));
       print(")");
-      printBody(v.getArg(1),l);
+      printBody(v.getArg(1));
       break;
     case CASE_LABEL:              /* (CASE_LABEL value) */
       printLineNo(v);
@@ -345,19 +340,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       break;
 
     case ARRAY_REF:       /* (ARRAY_REF x n) */
-      print(v.getArg(0));
-      if(v.getArg(1).Opcode() == Xcode.LIST){
-        for(XobjArgs a = v.getArg(1).getArgs();
-            a != null; a = a.nextArgs()){
-          print("[");
-          print(a.getArg());
-          print("]");
-        }
-      } else {
-        print("[");
-        print(v.getArg(1));
-        print("]");
-      }
+      print(v.getSym());
       break;
 
     case ADDR_OF: /* & operator */
@@ -568,18 +551,88 @@ public class XMPgpuDecompileWriter extends PrintWriter {
     print(makeTypeName(type));
   }
 
-  // FIXME
-  private String makeTypeName(Xtype type){
-    return new String("void");
+  private String makeTypeName(Xtype type) {
+    String typename = "";
+
+    // replace true reference
+    if (type.copied != null) {
+      type = type.copied;
+    }
+
+    switch (type.getKind()) {
+      case Xtype.BASIC:
+        switch(type.getBasicType()){
+          case BasicType.VOID:
+            typename += "void"; break;
+          case BasicType.CHAR:
+            typename += "char"; break;
+          case BasicType.SHORT:
+            typename += "short"; break;
+          case BasicType.LONG:
+            typename += "long"; break;
+          case BasicType.LONGLONG:
+            typename += "long long"; break;
+          case BasicType.UNSIGNED_CHAR:
+            typename += "unsigned char"; break;
+          case BasicType.UNSIGNED_SHORT:
+            typename += "unsigned short"; break;
+          case BasicType.UNSIGNED_LONG:
+            typename += "unsigned long"; break;
+          case BasicType.UNSIGNED_LONGLONG:
+            typename += "unsigned long long"; break;
+          case BasicType.FLOAT:
+            typename += "float"; break;
+          case BasicType.DOUBLE:
+            typename += "double"; break;
+          case BasicType.LONG_DOUBLE:
+            typename += "long double"; break;
+          case BasicType.UNSIGNED_INT:
+            typename += "unsigned"; break;
+          case BasicType.INT:
+            typename += "int"; break;
+          default:
+            fatal("makeTypeName: bad basic type "+type);
+            break;
+        }
+        return typename;
+      case Xtype.STRUCT:
+        {
+          typename += "struct ";
+          if (type.getTagName() != null) {
+             typename += type.getTagName();
+          } else {
+            typename += "_S" + Integer.toHexString(Integer.parseInt(type.Id()));
+          }
+        } break;
+      case Xtype.UNION:
+        {
+          typename += "union ";
+          if (type.getTagName() != null) {
+            typename += type.getTagName();
+          } else {
+            typename += "_U" + Integer.toHexString(Integer.parseInt(type.Id()));
+          }
+        } break;
+      case Xtype.ENUM:
+        {
+          typename += "enum ";
+          if (type.getTagName() != null) {
+            typename += type.getTagName();
+          } else {
+            typename += "_E" + Integer.toHexString(Integer.parseInt(type.Id()));
+          }
+        } break;
+      default:
+        fatal("makeTypeName: undefined Type found");
+        break;
+    }
+
+    return typename;
   }
 
   private Ident findIdent(Xobject id_list, Xobject s) {
     if (id_list == null || s == null) {
       return null;
-    }
-
-    if (s.Opcode() != Xcode.IDENT) {
-      fatal("findIdent: not IDENT");
     }
 
     for (XobjArgs a = id_list.getArgs(); a != null; a = a.nextArgs()) {
@@ -933,7 +986,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
     print(")");
   }
 
-  private void printBody(Xobject v, int l) {
+  private void printBody(Xobject v) {
     if (v == null) {
       print("{}");  // null body
       return;
@@ -941,11 +994,11 @@ public class XMPgpuDecompileWriter extends PrintWriter {
 
     if (v.Opcode() == Xcode.LIST) {
       print("{");
-      print(v, l);
+      print(v);
       println();
       print("}");
     } else {
-      print(v, l);
+      print(v);
     }
   }
 

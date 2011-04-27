@@ -1106,4 +1106,9 @@ public class Xtype
     		return copied.getTagIdent();
     	return tag;
     }
+
+    public String getTagName() {
+      Ident id = getTagIdent();
+      return id == null ? null : id.getName();
+    }
 }
