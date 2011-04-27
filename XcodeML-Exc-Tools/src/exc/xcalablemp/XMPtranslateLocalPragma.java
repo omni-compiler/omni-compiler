@@ -260,10 +260,7 @@ public class XMPtranslateLocalPragma {
     // FIXME
     XobjectDef def = XobjectDef.Func(funcId, paramIdList, null, loopBlock.getBody().toXobject());
     currentDef.insertBeforeThis(def);
-
-    LinkedList<XobjectDef> defList = new LinkedList<XobjectDef>();
-    defList.add(def);
-    XMPgpuDecompiler.decompile(defList, _globalDecl.getEnv());
+    XMPgpuDecompiler.decompile(def, _globalDecl.getEnv());
 
     XobjList funcArgs = Xcons.List();
     for (XobjArgs i = paramIdList.getArgs(); i != null; i = i.nextArgs()) {

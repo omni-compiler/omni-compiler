@@ -8,16 +8,21 @@ package exc.xcalablemp;
 
 import exc.object.*;
 import java.io.*;
-import java.util.*;
 
 public class XMPgpuDecompiler {
-  public static void decompile(LinkedList<XobjectDef> defList, XobjectFile env) {
-    XMPgpuDecompileWriter out = new XMPgpuDecompileWriter(env);
+  public static void decompile(XobjectDef def, XobjectFile env) throws XMPexception {
+    // FIXME
+    try {
+      Writer w = new BufferedWriter(new FileWriter("gpu_tmp.c"), 4096);
+      XMPgpuDecompileWriter out = new XMPgpuDecompileWriter(w, env);
 
-    Iterator<XobjectDef> it = defList.iterator();
-    while (it.hasNext()) {
-      out.print(it.next());
+      out.print(def);
       out.println();
+      out.flush();
+
+      w.close();
+    } catch (IOException e) {
+      throw new XMPexception("error in gpu decompiler: " + e.getMessage());
     }
   }
 }
