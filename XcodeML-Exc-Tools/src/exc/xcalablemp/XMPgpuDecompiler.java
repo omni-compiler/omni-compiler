@@ -13,12 +13,13 @@ public class XMPgpuDecompiler {
   private static final int BUFFER_SIZE = 4096;
   private static final String GPU_SRC_EXTENSION = ".cu";
 
-  public static void decompile(XobjectDef def, XobjectFile env) throws XMPexception {
+  public static void decompile(XobjectDef def, Ident id, XobjectFile env) throws XMPexception {
     try {
       Writer w = new BufferedWriter(new FileWriter("__omni_xmpgpu_" + env.getSourceFileName() + GPU_SRC_EXTENSION), BUFFER_SIZE);
       XMPgpuDecompileWriter out = new XMPgpuDecompileWriter(w, env);
 
-      out.print(def);
+      // decompile kernel function
+      out.printKernelFunc(def, id);
       out.println();
       out.flush();
 

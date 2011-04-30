@@ -240,27 +240,20 @@ public class XMPtranslateLocalPragma {
   // XXX only supports C language
   private Block translateGpuClause(XobjList gpuClause, XobjList reductionRefList,
                                    CforBlock loopBlock) throws XMPexception {
-    XMPpair<String, XobjList> parallelFunc = createGPUparallelRegion(loopBlock);
-    return createFuncCallBlock(parallelFunc.getFirst(), parallelFunc.getSecond());
-  }
-
-  private XMPpair<String, XobjList> createGPUparallelRegion(CforBlock loopBlock) throws XMPexception {
-    Ident funcId = _globalDecl.declStaticIdent(_globalDecl.genSym(XMP.GPU_FUNC_PREFIX),
+    Ident funcId = _globalDecl.declExternIdent(_globalDecl.genSym(XMP.GPU_FUNC_PREFIX),
                                                Xtype.Function(Xtype.voidType));
 
     XobjList funcArgs = setupGPUparallelFunc(funcId, loopBlock);
 
-    return new XMPpair(funcId.getName(), funcArgs);
+    return createFuncCallBlock(funcId.getName(), funcArgs);
   }
 
   private XobjList setupGPUparallelFunc(Ident funcId, CforBlock loopBlock) throws XMPexception {
     XobjList paramIdList = getGPUfuncParams(loopBlock);
 
     ((FunctionType)funcId.Type()).setFuncParamIdList(paramIdList);
-    // FIXME
     XobjectDef def = XobjectDef.Func(funcId, paramIdList, null, loopBlock.getBody().toXobject());
-    currentDef.insertBeforeThis(def);
-    XMPgpuDecompiler.decompile(def, _globalDecl.getEnv());
+    XMPgpuDecompiler.decompile(def, funcId, _globalDecl.getEnv());
 
     XobjList funcArgs = Xcons.List();
     for (XobjArgs i = paramIdList.getArgs(); i != null; i = i.nextArgs()) {

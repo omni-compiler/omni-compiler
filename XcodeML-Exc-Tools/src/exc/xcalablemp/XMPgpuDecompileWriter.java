@@ -18,8 +18,12 @@ public class XMPgpuDecompileWriter extends PrintWriter {
     _env = env;
   }
 
+  public void printKernelFunc(XobjectDef def, Ident id) {
+    printWithIdentList(def.getDef(), _env.getGlobalIdentList(), true, id);
+  }
+
   public void print(XobjectDef def) {
-    printWithIdentList(def.getDef(), _env.getGlobalIdentList());
+    printWithIdentList(def.getDef(), _env.getGlobalIdentList(), false, null);
   }
 
   private void fatal(String msg) {
@@ -27,7 +31,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
     System.exit(1);
   }
 
-  private void printWithIdentList(Xobject v, Xobject id_list) {
+  private void printWithIdentList(Xobject v, Xobject id_list, boolean isKernelFunc, Ident kernelFuncId) {
     Ident id = null, arg_id = null;
     String func_args = null;
     if (v == null) {
@@ -35,16 +39,19 @@ public class XMPgpuDecompileWriter extends PrintWriter {
     }
 
     switch (v.Opcode()) {
-      case LIST:
-        {
-          for (XobjArgs a = v.getArgs(); a != null; a = a.nextArgs()) {
-            printWithIdentList(a.getArg(), id_list);
-          }
-        } break;
       case FUNCTION_DEFINITION:
         {
-          if ((id = findIdent(id_list,v.getArg(0))) == null) {
-            fatal("Function id is not found");
+          if (isKernelFunc) {
+            id = kernelFuncId;
+          } else {
+            if ((id = findIdent(id_list,v.getArg(0))) == null) {
+              fatal("Function id is not found");
+            }
+          }
+
+          String funcName = id.getName();
+          if (isKernelFunc) {
+            funcName = new String(funcName + "_kernel");
           }
 
           if (id.Type().isFuncProto() && id.Type().getFuncParam() != null) {
@@ -71,8 +78,12 @@ public class XMPgpuDecompileWriter extends PrintWriter {
               }
               func_args += ")";
             }
-            printStorageClass(id);
-            printDeclType(id.Type().getRef(), id.getName() + func_args);
+            if (isKernelFunc) {
+              print("static ");
+            } else {
+              printStorageClass(id);
+            }
+            printDeclType(id.Type().getRef(), funcName + func_args);
           } else {
             func_args = "(";
             if (v.getArg(1) != null) {
@@ -85,8 +96,12 @@ public class XMPgpuDecompileWriter extends PrintWriter {
               }
             }
             func_args += ")";
-            printStorageClass(id);
-            printDeclType(id.Type().getRef(), id.getName() + func_args);
+            if (isKernelFunc) {
+              print("static ");
+            } else {
+              printStorageClass(id);
+            }
+            printDeclType(id.Type().getRef(), funcName + func_args);
 
             printIdentList(v.getArg(1));
             printDeclList(v.getArg(2), v.getArg(1));
@@ -95,26 +110,8 @@ public class XMPgpuDecompileWriter extends PrintWriter {
           printBody(v.getArg(3));
           println();
         } break;
-      case VAR_DECL:
-        {
-          printLineNo(v);
-          printDeclList(v,id_list);
-        } break;
-      case PRAGMA_LINE:
-        {
-          printLineNo(v);
-          String ptn = "__ompc_output";
-          String str = v.getArg(0).getString();
-          String arg0 = str.substring(0, ptn.length());
-          char spr = str.charAt(ptn.length());
-          if ((arg0.compareTo(ptn) == 0) && ((spr == ' ') || (spr == '\t'))) {
-            print(str.substring(ptn.length() + 1));
-          } else {
-            print("#pragma " + str);
-          }
-        } break;
       default:
-        print(v);
+        fatal("wrong operation");
         break;
     }
   }
