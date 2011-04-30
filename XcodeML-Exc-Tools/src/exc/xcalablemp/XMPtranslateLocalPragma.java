@@ -1113,7 +1113,7 @@ public class XMPtranslateLocalPragma {
 
     Xobject statement = null;
     if (isArray) {
-      Ident initLoopIndexId = declIdentWithBlock(schedBaseBlock, XMPuniqueName.getTempName(), Xtype.unsignedlonglongType);
+      Ident initLoopIndexId = declIdentWithBlock(schedBaseBlock, _globalDecl.genSym(XMP.TEMP_PREFIX), Xtype.unsignedlonglongType);
       initPart.add(createReductionArrayInit(varId, createReductionInitValueObj(varId, type, reductionOp),
                                             count, type, initLoopIndexId));
     }

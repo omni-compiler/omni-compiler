@@ -15,6 +15,7 @@ import xcodeml.util.XmLog;
 public class XMP {
   public final static int MAX_DIM			= 7;
   public final static int NONBASIC_TYPE			= 599;
+  public final static String TEMP_PREFIX		= "_XMP_TEMP";
   public final static String DESC_PREFIX_		= "_XMP_DESC_";
   public final static String GPU_DESC_PREFIX_		= "_XMP_GPU_DESC_";
   public final static String GPU_FUNC_PREFIX		= "_XMP_GPU_FUNC";

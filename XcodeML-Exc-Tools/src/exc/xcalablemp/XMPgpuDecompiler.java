@@ -10,10 +10,12 @@ import exc.object.*;
 import java.io.*;
 
 public class XMPgpuDecompiler {
+  private static final int BUFFER_SIZE = 4096;
+  private static final String GPU_SRC_EXTENSION = ".cu";
+
   public static void decompile(XobjectDef def, XobjectFile env) throws XMPexception {
-    // FIXME
     try {
-      Writer w = new BufferedWriter(new FileWriter("gpu_tmp.c"), 4096);
+      Writer w = new BufferedWriter(new FileWriter("__omni_xmpgpu_" + env.getSourceFileName() + GPU_SRC_EXTENSION), BUFFER_SIZE);
       XMPgpuDecompileWriter out = new XMPgpuDecompileWriter(w, env);
 
       out.print(def);
