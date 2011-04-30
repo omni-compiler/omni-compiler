@@ -39,7 +39,7 @@ for i in "$@"; do
             args="${args} --Wx${i}";;
         -enable-gpu)
             if test @XMP_ENABLE_GPU@ -eq 1; then
-                args="${args} --Wx${i} --Wl-L${GPGPU_PREFIX}/lib64 --Wl-lxmp_gpu --Wl-lcudart"
+                args="${args} --Wx${i} --Wl-L${GPGPU_PREFIX}/lib64 --Wl-lxmp_gpu --Wl-lcudart --Wn-enable-gpu"
             else
                 echo "warning: -enable-gpu option is unavailable, rebuild the compiler with ./configure --enable-xmpgpu"
             fi;;

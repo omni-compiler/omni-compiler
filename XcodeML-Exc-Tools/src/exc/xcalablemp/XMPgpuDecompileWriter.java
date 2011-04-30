@@ -79,7 +79,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
               func_args += ")";
             }
             if (isKernelFunc) {
-              print("static ");
+              print("__global__ static ");
             } else {
               printStorageClass(id);
             }
@@ -97,7 +97,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
             }
             func_args += ")";
             if (isKernelFunc) {
-              print("static ");
+              print("__global__ static ");
             } else {
               printStorageClass(id);
             }

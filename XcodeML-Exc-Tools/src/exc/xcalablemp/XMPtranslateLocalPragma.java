@@ -252,8 +252,8 @@ public class XMPtranslateLocalPragma {
     XobjList paramIdList = getGPUfuncParams(loopBlock);
 
     ((FunctionType)funcId.Type()).setFuncParamIdList(paramIdList);
-    XobjectDef def = XobjectDef.Func(funcId, paramIdList, null, loopBlock.getBody().toXobject());
-    XMPgpuDecompiler.decompile(def, funcId, _globalDecl.getEnv());
+
+    XMPgpuDecompiler.decompile(funcId, paramIdList, loopBlock.getBody().toXobject(), _globalDecl.getEnv());
 
     XobjList funcArgs = Xcons.List();
     for (XobjArgs i = paramIdList.getArgs(); i != null; i = i.nextArgs()) {
