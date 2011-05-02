@@ -10,6 +10,8 @@ import exc.object.*;
 import java.io.*;
 
 public class XMPgpuDecompiler {
+  public static final String GPU_FUNC_CONF = "XCALABLEMP_GPU_FUNC_CONF_PROP";
+
   private static XMPgpuDecompileWriter out = null;
   private static final int BUFFER_SIZE = 4096;
   private static final String GPU_SRC_EXTENSION = ".cu";
@@ -26,9 +28,13 @@ public class XMPgpuDecompiler {
       out.printDeviceFunc(deviceDef, id);
       out.println();
 
-      // decompiler wrapping function
+      // generate wrapping function
       Ident hostFuncId = XMP.getMacroId(id.getName() + "_DEVICE");
-      Xobject hostBodyObj = Xcons.CompoundStatement(hostFuncId.Call(genFuncArgs(paramIdList)));
+      Xobject hostFuncCall = hostFuncId.Call(genFuncArgs(paramIdList));
+      // FIXME
+      hostFuncCall.setProp(GPU_FUNC_CONF, (Object)Xcons.List());
+
+      Xobject hostBodyObj = Xcons.CompoundStatement(hostFuncCall);
       XobjectDef hostDef = XobjectDef.Func(id, paramIdList, null, hostBodyObj);
       out.printHostFunc(hostDef);
       out.println();

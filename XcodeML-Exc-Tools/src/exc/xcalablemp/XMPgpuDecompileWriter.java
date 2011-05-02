@@ -129,8 +129,8 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       // Statement
       //
     case COMPOUND_STATEMENT:
+      println();
       /* (COMPOUND_STATEMENT id-list decl statement-list) */
-      printLineNo(v);
       println("{");
       printIdentList(v.getArg(0));
       printDeclList(v.getArg(1),v.getArg(0));
@@ -139,7 +139,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       break;
 
     case IF_STATEMENT: /* (IF_STATMENT cond then-part else-part) */
-      printLineNo(v);
+      println();
       print("if(");
       print(v.getArg(0));
       print(")");
@@ -151,7 +151,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       break;
 
     case WHILE_STATEMENT: /* (WHILE_STATEMENT cond body) */
-      printLineNo(v);
+      println();
       print("while(");
       print(v.getArg(0));
       print(")");
@@ -159,7 +159,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       break;
 
     case FOR_STATEMENT:  /* (FOR init cond iter body) */
-      printLineNo(v);
+      println();
       print("for(");
       print(v.getArg(0));       /* init */
       print(";");
@@ -171,7 +171,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       break;
 
     case DO_STATEMENT: /* (DO_STATEMENT body cond) */
-      printLineNo(v);
+      println();
       print("do ");
       printBody(v.getArg(0));
       print(" while(");
@@ -179,49 +179,49 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       print(");");
       break;
     case BREAK_STATEMENT:  /* (BREAK_STATEMENT) */
-      printLineNo(v);
+      println();
       print("break; ");
       break;
     case CONTINUE_STATEMENT: /* (CONTINUE_STATEMENT) */
-      printLineNo(v);
+      println();
       print("continue; ");
       break;
     case GOTO_STATEMENT:  /* (GOTO_STATEMENT label) */
-      printLineNo(v);
+      println();
       print("goto ");
       print(v.getArg(0).getSym());
       print(";");
       break;
     case STATEMENT_LABEL: /* (STATEMENT_LABEL label_ident) */
-      printLineNo(v);
+      println();
       print(v.getArg(0).getSym());
       print(":;");
       break;
     case SWITCH_STATEMENT: /* (SWITCH_STATEMENT value body) */
-      printLineNo(v);
+      println();
       print("switch(");
       print(v.getArg(0));
       print(")");
       printBody(v.getArg(1));
       break;
     case CASE_LABEL:              /* (CASE_LABEL value) */
-      printLineNo(v);
+      println();
       print("case ");
       print(v.getArg(0));
       print(":");
       break;
     case DEFAULT_LABEL: /* (DEFAULT_LABEL) */
-      printLineNo(v);
+      println();
       print("default:");
       break;
     case RETURN_STATEMENT: /* (RETURN_STATEMENT value) */
-      printLineNo(v);
+      println();
       print("return ");
       if(v.getArg(0) != null) print(v.getArg(0));
       print(";");
       break;
     case EXPR_STATEMENT:
-      printLineNo(v);
+      println();
       print(v.getArg(0));
       print(";");
       break;
@@ -356,36 +356,6 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       break;
 
     case FUNCTION_CALL: /* (FUNCTION_CALL function args-list) */
-      // add for va_list
-      if (v.left().Opcode() == Xcode.FUNC_ADDR) {
-        if (v.left().getSym() == "__ompc_output") {
-          if (v.right() != null) {
-            Xobject  arg0 = v.right().getArgs().getArg();
-            XobjArgs args = v.right().getArgs().nextArgs();
-            String   fmt  = arg0.getString();
-
-            for (int from = 0; from < fmt.length(); ) {
-              int index = fmt.indexOf("%", from);
-              if (index == -1) {
-                print(fmt.substring(from));
-                break;
-              } else {
-                print(fmt.substring(from,index));
-                from = index + 2;
-                if (fmt.charAt(index+1) == 's') {
-                  print (args.getArg());
-                } else if (fmt.charAt(index+1) == 't') {
-                  printDeclType (args.getArg().Type(), "");
-                }
-                args = args.nextArgs();
-              }
-            }
-          }
-          break;
-        }
-      }
-      // add for va_list : end
-
       if(v.left().Opcode() == Xcode.FUNC_ADDR){
         print(v.left().getSym());
       } else {
@@ -393,6 +363,13 @@ public class XMPgpuDecompileWriter extends PrintWriter {
         print(v.left());
         print(")");
       }
+
+      // FIXME
+      XobjList prop = (XobjList)v.getProp(XMPgpuDecompiler.GPU_FUNC_CONF);
+      if (prop != null) {
+        print("<<<16, 16>>>");
+      }
+
       printArgList(v.right());
       print(";");
       break;
@@ -1041,15 +1018,5 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       default:
         break;
     }
-  }
-
-  private void printLineNo(Xobject v) {
-    LineNo ln = v.getLineNo();
-    if (ln == null) {
-      return;
-    }
-
-    println();
-    println("# " + ln.lineNo() + " \"" + ln.fileName() + "\"");
   }
 }
