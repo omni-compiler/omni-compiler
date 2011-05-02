@@ -260,13 +260,15 @@ public class XMPtranslateLocalPragma {
       Ident id = (Ident)i.getArg();
       XMPgpudata gpudata = XMPgpudataTable.findXMPgpudata(id.getName(), loopBlock);
       if (gpudata == null) {
+        // FIXME check if array
         funcArgs.add(id.Ref());
       } else {
         XMPalignedArray alignedArray = gpudata.getAlignedArray();
         if (alignedArray == null) {
-          funcArgs.add(id.Ref());
+          funcArgs.add(gpudata.getDeviceAddrId().Ref());
         } else {
-          funcArgs.add(alignedArray.getAddrId().Ref());
+          // FIXME add device_array_desc to args?
+          funcArgs.add(gpudata.getDeviceAddrId().Ref());
         }
       }
     }
@@ -2260,7 +2262,9 @@ public class XMPtranslateLocalPragma {
       Ident varId = typedSpec.getFirst();
       Xtype varType = typedSpec.getSecond();
 
-      Ident gpudataDescId = replaceBody.declLocalIdent(XMP.GPU_DESC_PREFIX_ + varName, Xtype.voidPtrType);
+      Ident gpudataHostDescId = replaceBody.declLocalIdent(XMP.GPU_HOST_DESC_PREFIX_ + varName, Xtype.voidPtrType);
+      Ident gpudataDeviceDescId = replaceBody.declLocalIdent(XMP.GPU_DEVICE_DESC_PREFIX_ + varName, Xtype.voidPtrType);
+      Ident gpudataDeviceAddrId = replaceBody.declLocalIdent(XMP.GPU_DEVICE_ADDR_PREFIX_ + varName, Xtype.voidPtrType);
 
       XMPalignedArray alignedArray = findXMPalignedArray(varName, localXMPsymbolTable);
       if (alignedArray == null) {
@@ -2294,16 +2298,18 @@ public class XMPtranslateLocalPragma {
             throw new XMPexception("'" + varName + "' has a wrong data type for broadcast");
         }
 
-        gpudataConstructorBody.add(createFuncCallBlock("_XMP_gpu_init_gpudata_NOT_ALIGNED", Xcons.List(gpudataDescId.getAddr(), addrObj, sizeObj)));
+        gpudataConstructorBody.add(createFuncCallBlock("_XMP_gpu_init_gpudata_NOT_ALIGNED",
+                                                       Xcons.List(gpudataHostDescId.getAddr(), gpudataDeviceDescId.getAddr(), gpudataDeviceAddrId.getAddr(),
+                                                                  addrObj, sizeObj)));
       } else {
-        gpudataConstructorBody.add(createFuncCallBlock("_XMP_gpu_init_gpudata_ALIGNED", Xcons.List(gpudataDescId.getAddr(),
-                                                                                                   alignedArray.getAddrIdVoidRef(),
-                                                                                                   alignedArray.getDescId().Ref())));
+        gpudataConstructorBody.add(createFuncCallBlock("_XMP_gpu_init_gpudata_ALIGNED",
+                                                       Xcons.List(gpudataHostDescId.getAddr(), gpudataDeviceDescId.getAddr(), gpudataDeviceAddrId.getAddr(),
+                                                                  alignedArray.getAddrIdVoidRef(), alignedArray.getDescId().Ref())));
       }
 
-      gpudataDestructorBody.add(createFuncCallBlock("_XMP_gpu_finalize_gpudata", Xcons.List(gpudataDescId.Ref())));
+      gpudataDestructorBody.add(createFuncCallBlock("_XMP_gpu_finalize_gpudata", Xcons.List(gpudataHostDescId.Ref())));
 
-      gpudataTable.putXMPgpudata(new XMPgpudata(varName, gpudataDescId, alignedArray));
+      gpudataTable.putXMPgpudata(new XMPgpudata(varName, gpudataHostDescId, gpudataDeviceDescId, gpudataDeviceAddrId, alignedArray));
     }
 
     Block replaceBlock = Bcons.COMPOUND(replaceBody);
@@ -2341,7 +2347,7 @@ public class XMPtranslateLocalPragma {
       if (gpudata == null) {
         throw new XMPexception("gpudata '" + varName + "' is not declared");
       } else {
-        replaceBody.add(createFuncCallBlock("_XMP_gpu_sync", Xcons.List(gpudata.getDescId().Ref(), directionArg)));
+        replaceBody.add(createFuncCallBlock("_XMP_gpu_sync", Xcons.List(gpudata.getHostDescId().Ref(), directionArg)));
       }
     }
 

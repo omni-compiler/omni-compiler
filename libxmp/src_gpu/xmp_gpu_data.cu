@@ -1,9 +1,6 @@
-// FIXME for debug
-#include <stdio.h>
-
 #include "xmp_gpu_internal.h"
 
-extern "C" void _XMP_gpu_init_gpudata_NOT_ALIGNED(_XMP_gpudata_t **desc, void *addr, size_t size) {
+extern "C" void _XMP_gpu_init_gpudata_NOT_ALIGNED(_XMP_gpudata_t **host_desc, _XMP_gpudata_t **device_desc, void **device_addr, void *addr, size_t size) {
   _XMP_gpudata_t *host_d = NULL;
   _XMP_gpudata_t *device_d = NULL;
 
@@ -22,16 +19,15 @@ extern "C" void _XMP_gpu_init_gpudata_NOT_ALIGNED(_XMP_gpudata_t **desc, void *a
 
   host_d->size = size;
 
-  *desc = host_d;
+  *host_desc = host_d;
+  *device_desc = device_d;
+  *device_addr = host_d->device_addr;
 
   // init device descriptor
   cudaMemcpy(device_d, host_d, sizeof(_XMP_gpudata_t), cudaMemcpyHostToDevice);
-
-// FIXME for debug
-  printf("[%d] gpu alloc = %lu\n", _XMP_world_rank, size);
 }
 
-extern "C" void _XMP_gpu_init_gpudata_ALIGNED(_XMP_gpudata_t **gpudata_desc, void *addr, _XMP_array_t *array_desc) {
+extern "C" void _XMP_gpu_init_gpudata_ALIGNED(_XMP_gpudata_t **host_gpudata_desc, _XMP_gpudata_t **device_gpudata_desc, void **device_addr, void *addr, _XMP_array_t *array_desc) {
   _XMP_gpudata_t *host_d = NULL;
   _XMP_gpudata_t *device_d = NULL;
   _XMP_array_t *device_a = NULL;
@@ -55,14 +51,13 @@ extern "C" void _XMP_gpu_init_gpudata_ALIGNED(_XMP_gpudata_t **gpudata_desc, voi
 
   host_d->size = array_size;
 
-  *gpudata_desc = host_d;
+  *host_gpudata_desc = host_d;
+  *device_gpudata_desc = device_d;
+  *device_addr = host_d->device_addr;
 
   // init device descriptor
   cudaMemcpy(device_d, host_d, sizeof(_XMP_gpudata_t), cudaMemcpyHostToDevice);
   cudaMemcpy(device_a, array_desc, array_desc_size, cudaMemcpyHostToDevice);
-
-// FIXME for debug
-  printf("[%d] gpu alloc = %lu\n", _XMP_world_rank, array_size);
 }
 
 extern "C" void _XMP_gpu_finalize_gpudata(_XMP_gpudata_t *desc) {

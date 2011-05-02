@@ -216,7 +216,8 @@ extern void _XMP_gpu_init(void);
 extern void _XMP_gpu_finalize(void);
 
 // xmp_gpu_data.cu
-extern void _XMP_gpu_init_gpudata_NOT_ALIGNED(void **desc, void *addr, size_t size);
+extern void _XMP_gpu_init_gpudata_NOT_ALIGNED(void **host_desc, void **device_desc, void **device_addr, void *addr, size_t size);
+extern void _XMP_gpu_init_gpudata_ALIGNED(void **host_gpudata_desc, void **device_gpudata_desc, void **device_addr, void *addr, void *array_desc);
 extern void _XMP_gpu_finalize_gpudata(void *desc);
 
 // xmp_gpu_sync.cu
