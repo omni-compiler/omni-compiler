@@ -18,11 +18,11 @@ public class XMPgpuDecompileWriter extends PrintWriter {
     _env = env;
   }
 
-  public void printKernelFunc(XobjectDef def, Ident id) {
+  public void printDeviceFunc(XobjectDef def, Ident id) {
     printWithIdentList(def.getDef(), _env.getGlobalIdentList(), true, id);
   }
 
-  public void print(XobjectDef def) {
+  public void printHostFunc(XobjectDef def) {
     printWithIdentList(def.getDef(), _env.getGlobalIdentList(), false, null);
   }
 
@@ -31,7 +31,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
     System.exit(1);
   }
 
-  private void printWithIdentList(Xobject v, Xobject id_list, boolean isKernelFunc, Ident kernelFuncId) {
+  private void printWithIdentList(Xobject v, Xobject id_list, boolean isDeviceFunc, Ident deviceFuncId) {
     Ident id = null, arg_id = null;
     String func_args = null;
     if (v == null) {
@@ -41,8 +41,8 @@ public class XMPgpuDecompileWriter extends PrintWriter {
     switch (v.Opcode()) {
       case FUNCTION_DEFINITION:
         {
-          if (isKernelFunc) {
-            id = kernelFuncId;
+          if (isDeviceFunc) {
+            id = deviceFuncId;
           } else {
             if ((id = findIdent(id_list,v.getArg(0))) == null) {
               fatal("Function id is not found");
@@ -50,8 +50,8 @@ public class XMPgpuDecompileWriter extends PrintWriter {
           }
 
           String funcName = id.getName();
-          if (isKernelFunc) {
-            funcName = new String(funcName + "_kernel");
+          if (isDeviceFunc) {
+            funcName = new String(funcName + "_DEVICE");
           }
 
           if (id.Type().isFuncProto() && id.Type().getFuncParam() != null) {
@@ -78,10 +78,10 @@ public class XMPgpuDecompileWriter extends PrintWriter {
               }
               func_args += ")";
             }
-            if (isKernelFunc) {
+            if (isDeviceFunc) {
               print("__global__ static ");
             } else {
-              printStorageClass(id);
+              print("extern \"C\" ");
             }
             printDeclType(id.Type().getRef(), funcName + func_args);
           } else {
@@ -96,10 +96,10 @@ public class XMPgpuDecompileWriter extends PrintWriter {
               }
             }
             func_args += ")";
-            if (isKernelFunc) {
+            if (isDeviceFunc) {
               print("__global__ static ");
             } else {
-              printStorageClass(id);
+              print("extern \"C\" ");
             }
             printDeclType(id.Type().getRef(), funcName + func_args);
 
@@ -394,6 +394,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
         print(")");
       }
       printArgList(v.right());
+      print(";");
       break;
 
     case POST_INCR_EXPR:
