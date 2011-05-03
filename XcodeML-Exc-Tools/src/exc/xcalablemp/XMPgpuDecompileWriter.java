@@ -367,7 +367,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       // FIXME
       XobjList prop = (XobjList)v.getProp(XMPgpuDecompiler.GPU_FUNC_CONF);
       if (prop != null) {
-        print("<<<16, 16>>>");
+        print("<<<1, 100>>>");
       }
 
       printArgList(v.right());

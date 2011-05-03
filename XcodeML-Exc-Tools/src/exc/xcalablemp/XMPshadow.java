@@ -145,4 +145,87 @@ public class XMPshadow {
     // set shadow flag
     alignedArray.setHasShadow();
   }
+
+  public static Block translateReflect(PragmaBlock pb, XMPglobalDecl globalDecl) throws XMPexception {
+    // start translation
+    XobjList reflectDecl = (XobjList)pb.getClauses();
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+    BlockList reflectFuncBody = Bcons.emptyBody();
+
+    XobjList arrayList = (XobjList)reflectDecl.getArg(0);
+    for (XobjArgs iter = arrayList.getArgs(); iter != null; iter = iter.nextArgs()) {
+      String arrayName = iter.getArg().getString();
+      XMPalignedArray alignedArray = XMPutil.getXMPalignedArray(arrayName, localXMPsymbolTable, globalDecl);
+
+      if (!alignedArray.hasShadow()) {
+        throw new XMPexception("the aligned array '" + arrayName + "' has no shadow declaration");
+      }
+
+      int arrayDim = alignedArray.getDim();
+      for (int i = 0; i < arrayDim; i++) {
+        XMPshadow shadowObj = alignedArray.getShadowAt(i);
+        switch (shadowObj.getType()) {
+          case XMPshadow.SHADOW_NONE:
+            break;
+          case XMPshadow.SHADOW_NORMAL:
+            createReflectNormalShadowFunc(pb, globalDecl, alignedArray, i, reflectFuncBody);
+            break;
+          case XMPshadow.SHADOW_FULL:
+            createReflectFullShadowFunc(pb, globalDecl, alignedArray, i, reflectFuncBody);
+            break;
+          default:
+            throw new XMPexception("unknown shadow type");
+        }
+      }
+    }
+
+    Block reflectFuncCallBlock = Bcons.COMPOUND(reflectFuncBody);
+    pb.replace(reflectFuncCallBlock);
+
+    return reflectFuncCallBlock;
+  }
+
+  // FIXME implementing now
+  private static void createReflectNormalShadowFunc(PragmaBlock pb, XMPglobalDecl globalDecl,
+                                                    XMPalignedArray alignedArray, int arrayIndex,
+                                                    BlockList reflectFuncBody) {
+    String arrayName = alignedArray.getName();
+
+    // decl buffers
+    Ident loSendId = reflectFuncBody.declLocalIdent("_XMP_reflect_LO_SEND_" + arrayName, Xtype.voidPtrType);
+    Ident loRecvId = reflectFuncBody.declLocalIdent("_XMP_reflect_LO_RECV_" + arrayName, Xtype.voidPtrType);
+    Ident hiSendId = reflectFuncBody.declLocalIdent("_XMP_reflect_HI_SEND_" + arrayName, Xtype.voidPtrType);
+    Ident hiRecvId = reflectFuncBody.declLocalIdent("_XMP_reflect_HI_RECV_" + arrayName, Xtype.voidPtrType);
+
+    // pack shadow
+    Ident packFuncId = globalDecl.declExternFunc("_XMP_pack_shadow_NORMAL");
+    XobjList packFuncArgs = Xcons.List(loSendId.getAddr(), hiSendId.getAddr(), alignedArray.getAddrIdVoidRef(),
+                                       alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
+
+    reflectFuncBody.add(Bcons.Statement(packFuncId.Call(packFuncArgs)));
+
+    // exchange shadow
+    Ident exchangeFuncId = globalDecl.declExternFunc("_XMP_exchange_shadow_NORMAL");
+    XobjList exchangeFuncArgs = Xcons.List(loRecvId.getAddr(), hiRecvId.getAddr(), loSendId.Ref(), hiSendId.Ref());
+    exchangeFuncArgs.add(alignedArray.getDescId().Ref());
+    exchangeFuncArgs.add(Xcons.IntConstant(arrayIndex));
+
+    reflectFuncBody.add(Bcons.Statement(exchangeFuncId.Call(exchangeFuncArgs)));
+
+    // unpack shadow
+    Ident unpackFuncId = globalDecl.declExternFunc("_XMP_unpack_shadow_NORMAL");;
+    XobjList unpackFuncArgs = Xcons.List(loRecvId.Ref(), hiRecvId.Ref(), alignedArray.getAddrIdVoidRef(),
+                                         alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
+
+    reflectFuncBody.add(Bcons.Statement(unpackFuncId.Call(unpackFuncArgs)));
+  }
+
+  private static void createReflectFullShadowFunc(PragmaBlock pb, XMPglobalDecl globalDecl,
+                                                  XMPalignedArray alignedArray, int arrayIndex,
+                                                  BlockList reflectFuncBody) {
+    Ident funcId = globalDecl.declExternFunc("_XMP_reflect_shadow_FULL");
+    XobjList funcArgs = Xcons.List(alignedArray.getAddrIdVoidRef(), alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
+
+    reflectFuncBody.add(Bcons.Statement(funcId.Call(funcArgs)));
+  }
 }

@@ -31,7 +31,7 @@ public class XMPgpuDecompiler {
       // generate wrapping function
       Ident hostFuncId = XMP.getMacroId(id.getName() + "_DEVICE");
       Xobject hostFuncCall = hostFuncId.Call(genFuncArgs(paramIdList));
-      // FIXME
+      // FIXME add configuration parameters
       hostFuncCall.setProp(GPU_FUNC_CONF, (Object)Xcons.List());
 
       Xobject hostBodyObj = Xcons.CompoundStatement(hostFuncCall);

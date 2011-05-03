@@ -50,35 +50,35 @@ public class XMPtranslateLocalPragma {
 
     switch (XMPpragma.valueOf(pragmaName)) {
       case NODES:
-        { translateNodes(pb);		break; }
+        { translateNodes(pb);			break; }
       case TEMPLATE:
-        { translateTemplate(pb);	break; }
+        { translateTemplate(pb);		break; }
       case DISTRIBUTE:
-        { translateDistribute(pb);	break; }
+        { translateDistribute(pb);		break; }
       case ALIGN:
-        { translateAlign(pb);		break; }
+        { translateAlign(pb);			break; }
       case SHADOW:
-        { translateShadow(pb);		break; }
+        { translateShadow(pb);			break; }
       case TASK:
-        { translateTask(pb);		break; }
+        { translateTask(pb);			break; }
       case TASKS:
-        { translateTasks(pb);		break; }
+        { translateTasks(pb);			break; }
       case LOOP:
-        { translateLoop(pb);		break; }
+        { translateLoop(pb);			break; }
       case REFLECT:
-        { translateReflect(pb);		break; }
+        { translateReflect(pb);			break; }
       case BARRIER:
-        { translateBarrier(pb);		break; }
+        { translateBarrier(pb);			break; }
       case REDUCTION:
-        { translateReduction(pb);	break; }
+        { translateReduction(pb);		break; }
       case BCAST:
-        { translateBcast(pb);		break; }
+        { translateBcast(pb);			break; }
       case GMOVE:
-        { translateGmove(pb);           break; }
+        { translateGmove(pb);			break; }
       case GPUDATA:
-        { translateGpudata(pb);         break; }
+        { translateGpudata(pb);			break; }
       case GPUSYNC:
-        { translateGpusync(pb);         break; }
+        { translateGpusync(pb);			break; }
       default:
         throw new XMPexception("'" + pragmaName.toLowerCase() + "' directive is not supported yet");
     }
@@ -107,6 +107,28 @@ public class XMPtranslateLocalPragma {
   private void translateShadow(PragmaBlock pb) throws XMPexception {
     checkDeclPragmaLocation(pb);
     XMPshadow.translateShadow((XobjList)pb.getClauses(), _globalDecl, true, pb);
+  }
+
+  private void translateReflect(PragmaBlock pb) throws XMPexception {
+    Block reflectFuncCallBlock = XMPshadow.translateReflect(pb, _globalDecl);
+    // add function calls for profiling            
+    Xobject profileClause = pb.getClauses().getArg(1);
+    if( _all_profile || (profileClause != null && _selective_profile)){
+        if (doScalasca == true) {
+            XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp reflect:" + pb.getLineNo()));
+            reflectFuncCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
+            reflectFuncCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
+        } else if (doTlog == true) {
+            reflectFuncCallBlock.insert(
+                                        createTlogMacroInvoke("_XMP_M_TLOG_REFLECT_IN", null));
+            reflectFuncCallBlock.add(
+                                     createTlogMacroInvoke("_XMP_M_TLOG_REFLECT_OUT", null));
+        }
+    } else if(profileClause == null && _selective_profile && doTlog == false){
+        XobjList profileFuncArgs = null;
+        reflectFuncCallBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
+        reflectFuncCallBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
+    }
   }
 
   private void translateTask(PragmaBlock pb) throws XMPexception {
@@ -257,11 +279,22 @@ public class XMPtranslateLocalPragma {
 
     XobjList funcArgs = Xcons.List();
     for (XobjArgs i = paramIdList.getArgs(); i != null; i = i.nextArgs()) {
-      Ident id = (Ident)i.getArg();
-      XMPgpudata gpudata = XMPgpudataTable.findXMPgpudata(id.getName(), loopBlock);
+      Ident paramId = (Ident)i.getArg();
+      String paramName = paramId.getName();
+      XMPgpudata gpudata = XMPgpudataTable.findXMPgpudata(paramId.getName(), loopBlock);
       if (gpudata == null) {
-        // FIXME check if array
-        funcArgs.add(id.Ref());
+        if (paramId.Type().isArray()) {
+          throw new XMPexception("array '" + paramName + "' should be declared as a gpudata");
+        } else {
+          Xobject indVarObj = loopBlock.getInductionVar();
+          String indVarName = indVarObj.getName();
+          if (indVarName.equals(paramName)) {
+            System.out.println("indVar: " + indVarName);
+            funcArgs.add(paramId.Ref());
+          } else {
+            funcArgs.add(paramId.Ref());
+          }
+        }
       } else {
         XMPalignedArray alignedArray = gpudata.getAlignedArray();
         if (alignedArray == null) {
@@ -761,107 +794,6 @@ public class XMPtranslateLocalPragma {
 
     // FIXME consider variable scope
     return bl.declLocalIdent(identName, type);
-  }
-
-  private void translateReflect(PragmaBlock pb) throws XMPexception {
-    // start translation
-    XobjList reflectDecl = (XobjList)pb.getClauses();
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-    BlockList reflectFuncBody = Bcons.emptyBody();
-
-    XobjList arrayList = (XobjList)reflectDecl.getArg(0);
-    for (XobjArgs iter = arrayList.getArgs(); iter != null; iter = iter.nextArgs()) {
-      String arrayName = iter.getArg().getString();
-      XMPalignedArray alignedArray = getXMPalignedArray(arrayName, localXMPsymbolTable);
-
-      if (!alignedArray.hasShadow()) {
-        throw new XMPexception("the aligned array '" + arrayName + "' has no shadow declaration");
-      }
-
-      int arrayDim = alignedArray.getDim();
-      for (int i = 0; i < arrayDim; i++) {
-        XMPshadow shadowObj = alignedArray.getShadowAt(i);
-        switch (shadowObj.getType()) {
-          case XMPshadow.SHADOW_NONE:
-            break;
-          case XMPshadow.SHADOW_NORMAL:
-            createReflectNormalShadowFunc(pb, alignedArray, i, reflectFuncBody);
-            break;
-          case XMPshadow.SHADOW_FULL:
-            createReflectFullShadowFunc(pb, alignedArray, i, reflectFuncBody);
-            break;
-          default:
-            throw new XMPexception("unknown shadow type");
-        }
-      }
-    }
-
-    Block reflectFuncCallBlock = Bcons.COMPOUND(reflectFuncBody);
-    pb.replace(reflectFuncCallBlock);
-
-    // add function calls for profiling            
-    Xobject profileClause = reflectDecl.getArg(1);
-    if( _all_profile || (profileClause != null && _selective_profile)){
-        if (doScalasca == true) {
-            XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp reflect:" + pb.getLineNo()));
-            reflectFuncCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
-            reflectFuncCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
-        } else if (doTlog == true) {
-            reflectFuncCallBlock.insert(
-					createTlogMacroInvoke("_XMP_M_TLOG_REFLECT_IN", null));
-            reflectFuncCallBlock.add(
-				     createTlogMacroInvoke("_XMP_M_TLOG_REFLECT_OUT", null));
-        }
-    } else if(profileClause == null && _selective_profile && doTlog == false){
-        XobjList profileFuncArgs = null;
-        reflectFuncCallBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
-        reflectFuncCallBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
-    }
-
-  }
-
-  // FIXME implementing now
-  private void createReflectNormalShadowFunc(PragmaBlock pb,
-                                             XMPalignedArray alignedArray, int arrayIndex,
-                                             BlockList reflectFuncBody) {
-    String arrayName = alignedArray.getName();
-
-    // decl buffers
-    Ident loSendId = reflectFuncBody.declLocalIdent("_XMP_reflect_LO_SEND_" + arrayName, Xtype.voidPtrType);
-    Ident loRecvId = reflectFuncBody.declLocalIdent("_XMP_reflect_LO_RECV_" + arrayName, Xtype.voidPtrType);
-    Ident hiSendId = reflectFuncBody.declLocalIdent("_XMP_reflect_HI_SEND_" + arrayName, Xtype.voidPtrType);
-    Ident hiRecvId = reflectFuncBody.declLocalIdent("_XMP_reflect_HI_RECV_" + arrayName, Xtype.voidPtrType);
-
-    // pack shadow
-    Ident packFuncId = _globalDecl.declExternFunc("_XMP_pack_shadow_NORMAL");
-    XobjList packFuncArgs = Xcons.List(loSendId.getAddr(), hiSendId.getAddr(), alignedArray.getAddrIdVoidRef(),
-                                       alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
-
-    reflectFuncBody.add(Bcons.Statement(packFuncId.Call(packFuncArgs)));
-
-    // exchange shadow
-    Ident exchangeFuncId = _globalDecl.declExternFunc("_XMP_exchange_shadow_NORMAL");
-    XobjList exchangeFuncArgs = Xcons.List(loRecvId.getAddr(), hiRecvId.getAddr(), loSendId.Ref(), hiSendId.Ref());
-    exchangeFuncArgs.add(alignedArray.getDescId().Ref());
-    exchangeFuncArgs.add(Xcons.IntConstant(arrayIndex));
-
-    reflectFuncBody.add(Bcons.Statement(exchangeFuncId.Call(exchangeFuncArgs)));
-
-    // unpack shadow
-    Ident unpackFuncId = _globalDecl.declExternFunc("_XMP_unpack_shadow_NORMAL");;
-    XobjList unpackFuncArgs = Xcons.List(loRecvId.Ref(), hiRecvId.Ref(), alignedArray.getAddrIdVoidRef(),
-                                         alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
-
-    reflectFuncBody.add(Bcons.Statement(unpackFuncId.Call(unpackFuncArgs)));
-  }
-
-  private void createReflectFullShadowFunc(PragmaBlock pb,
-                                           XMPalignedArray alignedArray, int arrayIndex,
-                                           BlockList reflectFuncBody) {
-    Ident funcId = _globalDecl.declExternFunc("_XMP_reflect_shadow_FULL");
-    XobjList funcArgs = Xcons.List(alignedArray.getAddrIdVoidRef(), alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
-
-    reflectFuncBody.add(Bcons.Statement(funcId.Call(funcArgs)));
   }
 
   private void translateBarrier(PragmaBlock pb) throws XMPexception {
