@@ -11,19 +11,6 @@ import exc.object.*;
 import java.util.Iterator;
 
 public class XMPutil {
-  public static XMPalignedArray getXMPalignedArray(String arrayName,
-                                                   XMPsymbolTable localXMPsymbolTable,
-                                                   XMPglobalDecl globalDecl) throws XMPexception {
-    XMPalignedArray a = localXMPsymbolTable.getXMPalignedArray(arrayName);
-    if (a == null) {
-      a = globalDecl.getXMPalignedArray(arrayName);
-      if (a == null)
-        throw new XMPexception("array '" + arrayName + "' is not aligned");
-    }
-
-    return a;
-  }
-
   public static boolean hasCommXMPpragma(BlockList bl) {
     BlockIterator i = new bottomupBlockIterator(bl);
     for(i.init(); !i.end(); i.next()) {

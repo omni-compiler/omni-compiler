@@ -983,7 +983,7 @@ public class XMPtranslateLocalPragma {
 
             // FIXME not good implementation
             XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-            XMPalignedArray specAlignedArray = findXMPalignedArray(specName, localXMPsymbolTable);
+            XMPalignedArray specAlignedArray = _globalDecl.getXMPalignedArray(specName, localXMPsymbolTable);
             if (specAlignedArray == null) {
               specRef = specId.Ref();
               count = Xcons.LongLongConstant(0, getArrayElmtCount(arraySpecType));
@@ -1739,7 +1739,7 @@ public class XMPtranslateLocalPragma {
           XobjList accList = Xcons.List();
 
           String arrayName = currentExpr.getSym();
-          XMPalignedArray alignedArray = findXMPalignedArray(arrayName, localXMPsymbolTable);
+          XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
           if (alignedArray == null) {
             Ident arrayId = pb.findVarIdent(arrayName);
             Xtype arrayType = arrayId.Type();
@@ -1802,7 +1802,7 @@ public class XMPtranslateLocalPragma {
 
           XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
           String arrayName = expr.getSym();
-          XMPalignedArray alignedArray = findXMPalignedArray(arrayName, localXMPsymbolTable);
+          XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
           if (alignedArray == null) {
             Ident arrayId = pb.findVarIdent(arrayName);
             Xtype arrayType = arrayId.Type();
@@ -1849,7 +1849,7 @@ public class XMPtranslateLocalPragma {
         {
           XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
           String arrayName = expr.getSym();
-          XMPalignedArray alignedArray = findXMPalignedArray(arrayName, localXMPsymbolTable);
+          XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
           if (alignedArray == null) {
             return new XMPpair<XMPalignedArray, XobjList>(null, null);
           }
@@ -2084,26 +2084,6 @@ public class XMPtranslateLocalPragma {
     return;
   }
 
-  private XMPalignedArray getXMPalignedArray(String arrayName, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
-    XMPalignedArray a = localXMPsymbolTable.getXMPalignedArray(arrayName);
-    if (a == null) {
-      a = _globalDecl.getXMPalignedArray(arrayName);
-      if (a == null)
-        throw new XMPexception("array '" + arrayName + "' is not aligned");
-    }
-
-    return a;
-  }
-
-  private XMPalignedArray findXMPalignedArray(String arrayName, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
-    XMPalignedArray a = localXMPsymbolTable.getXMPalignedArray(arrayName);
-    if (a == null) {
-      a = _globalDecl.getXMPalignedArray(arrayName);
-    }
-
-    return a;
-  }
-
   public void set_all_profile(){
       _all_profile = true;
   }
@@ -2198,7 +2178,7 @@ public class XMPtranslateLocalPragma {
       Ident gpudataDeviceDescId = replaceBody.declLocalIdent(XMP.GPU_DEVICE_DESC_PREFIX_ + varName, Xtype.voidPtrType);
       Ident gpudataDeviceAddrId = replaceBody.declLocalIdent(XMP.GPU_DEVICE_ADDR_PREFIX_ + varName, Xtype.voidPtrType);
 
-      XMPalignedArray alignedArray = findXMPalignedArray(varName, localXMPsymbolTable);
+      XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(varName, localXMPsymbolTable);
       if (alignedArray == null) {
         Xobject addrObj = null;
         Xobject sizeObj = null;

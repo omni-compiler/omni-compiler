@@ -160,6 +160,15 @@ public class XMPglobalDecl {
     return _globalObjectTable.getXMPalignedArray(name);
   }
 
+  public XMPalignedArray getXMPalignedArray(String name, XMPsymbolTable localXMPsymbolTable) {
+    XMPalignedArray a = localXMPsymbolTable.getXMPalignedArray(name);
+    if (a == null) {
+      a = getXMPalignedArray(name);
+    }
+
+    return a;
+  }
+
   public void putXMPcoarray(XMPcoarray array) {
     _globalObjectTable.putXMPcoarray(array);
   }

@@ -57,7 +57,7 @@ public class XMPshadow {
     }
 
     if (alignedArray == null) {
-      throw new XMPexception("the aligned array '" + arrayName + "' is not found in local scope");
+      throw new XMPexception("the aligned array '" + arrayName + "' is not found");
     }
 
     if (alignedArray.hasShadow()) {
@@ -155,7 +155,10 @@ public class XMPshadow {
     XobjList arrayList = (XobjList)reflectDecl.getArg(0);
     for (XobjArgs iter = arrayList.getArgs(); iter != null; iter = iter.nextArgs()) {
       String arrayName = iter.getArg().getString();
-      XMPalignedArray alignedArray = XMPutil.getXMPalignedArray(arrayName, localXMPsymbolTable, globalDecl);
+      XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+      if (alignedArray == null) {
+        throw new XMPexception("the aligned array '" + arrayName + "' is not found");
+      }
 
       if (!alignedArray.hasShadow()) {
         throw new XMPexception("the aligned array '" + arrayName + "' has no shadow declaration");
