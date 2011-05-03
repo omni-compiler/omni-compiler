@@ -302,7 +302,7 @@ public class XMPtranslateLocalPragma {
           funcArgs.add(paramId.Ref());
         }
       } else {
-        XMPalignedArray alignedArray = gpudata.getAlignedArray();
+        XMPalignedArray alignedArray = gpudata.getXMPalignedArray();
         if (alignedArray == null) {
           funcArgs.add(gpudata.getDeviceAddrId().Ref());
         } else {
@@ -359,7 +359,7 @@ public class XMPtranslateLocalPragma {
                 if (gpudata == null) {
                   throw new XMPexception("array '" + varName + "' shoud be declared as a gpudata");
                 } else {
-                  XMPalignedArray alignedArray = gpudata.getAlignedArray();
+                  XMPalignedArray alignedArray = gpudata.getXMPalignedArray();
                   if (alignedArray == null) {
                     Ident id = loopBlock.findVarIdent(varName);
                     params.add(Ident.Param(varName, id.Type()));

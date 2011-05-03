@@ -18,7 +18,6 @@ public class XMPgpudata {
   private Ident			_hostDescId;
   private Ident			_deviceDescId;
   private Ident			_deviceAddrId;
-  private boolean		_isAlignedArray;
   private XMPalignedArray	_alignedArray;
 
   public XMPgpudata(String name, Ident hostDescId, Ident deviceDescId, Ident deviceAddrId,
@@ -29,11 +28,6 @@ public class XMPgpudata {
     _deviceDescId = deviceDescId;
     _deviceAddrId = deviceAddrId;
 
-    if (alignedArray == null) {
-      _isAlignedArray = false;
-    } else {
-      _isAlignedArray = true;
-    }
     _alignedArray = alignedArray;
   }
 
@@ -53,11 +47,7 @@ public class XMPgpudata {
     return _deviceAddrId;
   }
 
-  public boolean isAlignedArray() {
-    return _isAlignedArray;
-  }
-
-  public XMPalignedArray getAlignedArray() {
+  public XMPalignedArray getXMPalignedArray() {
     return _alignedArray;
   }
 

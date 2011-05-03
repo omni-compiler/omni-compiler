@@ -67,7 +67,7 @@ am__installdirs = "$(DESTDIR)$(libdir)"
 LIBRARIES = $(lib_LIBRARIES)
 libxmp_gpu_a_AR = $(AR) $(ARFLAGS)
 libxmp_gpu_a_DEPENDENCIES = xmp_gpu_runtime.o xmp_gpu_util.o \
-	xmp_gpu_data.o xmp_gpu_sync.o
+	xmp_gpu_data.o xmp_gpu_sync.o xmp_gpu_schedule.o
 am_libxmp_gpu_a_OBJECTS = xmp_gpu_lib.$(OBJEXT)
 libxmp_gpu_a_OBJECTS = $(am_libxmp_gpu_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
@@ -270,7 +270,7 @@ lib_LIBRARIES = libxmp_gpu.a
 libxmp_gpu_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h xmp_gpu_internal.h \
                                   xmp_gpu_lib.c
 
-libxmp_gpu_a_LIBADD = xmp_gpu_runtime.o xmp_gpu_util.o xmp_gpu_data.o xmp_gpu_sync.o
+libxmp_gpu_a_LIBADD = xmp_gpu_runtime.o xmp_gpu_util.o xmp_gpu_data.o xmp_gpu_sync.o xmp_gpu_schedule.o
 AM_CFLAGS = -Wall -std=c99 -I$(XMP_INC_DIR)
 all: all-am
 
