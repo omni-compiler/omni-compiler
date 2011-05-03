@@ -14,11 +14,12 @@ import xcodeml.util.XmOption;
 
 public class XMPtranslateLocalPragma {
   private XMPglobalDecl		_globalDecl;
-  private boolean               _all_profile = false;
-  private boolean               _selective_profile = false;
-  private boolean               doScalasca = false;
-  private boolean               doTlog = false;
-  private XobjectDef            currentDef;
+  private boolean		_all_profile = false;
+  private boolean		_selective_profile = false;
+  private boolean		doScalasca = false;
+  private boolean		doTlog = false;
+  private XobjectDef		currentDef;
+  private final String		LOOP_ITER = "XCALABLEMP_LOOP_ITER_PROP";
 
   public XMPtranslateLocalPragma(XMPglobalDecl globalDecl) {
     _globalDecl = globalDecl;
@@ -279,12 +280,16 @@ public class XMPtranslateLocalPragma {
   }
 
   private XobjList setupGPUparallelFunc(Ident funcId, CforBlock loopBlock) throws XMPexception {
-    XobjList paramIdList = getGPUfuncParams(loopBlock);
+    // get params
+    XMPpair<XobjList, XobjList> ret = getGPUfuncParams(loopBlock);
+    XobjList paramIdList = ret.getFirst();
+    XobjList localVars = ret.getSecond();
 
+    // setup & decompile GPU function body
     ((FunctionType)funcId.Type()).setFuncParamIdList(paramIdList);
+    XMPgpuDecompiler.decompile(funcId, paramIdList, localVars, loopBlock, _globalDecl.getEnv());
 
-    XMPgpuDecompiler.decompile(funcId, paramIdList, loopBlock.getBody().toXobject(), _globalDecl.getEnv());
-
+    // generate func args
     XobjList funcArgs = Xcons.List();
     for (XobjArgs i = paramIdList.getArgs(); i != null; i = i.nextArgs()) {
       Ident paramId = (Ident)i.getArg();
@@ -294,14 +299,7 @@ public class XMPtranslateLocalPragma {
         if (paramId.Type().isArray()) {
           throw new XMPexception("array '" + paramName + "' should be declared as a gpudata");
         } else {
-          Xobject indVarObj = loopBlock.getInductionVar();
-          String indVarName = indVarObj.getName();
-          if (indVarName.equals(paramName)) {
-            System.out.println("indVar: " + indVarName);
-            funcArgs.add(paramId.Ref());
-          } else {
-            funcArgs.add(paramId.Ref());
-          }
+          funcArgs.add(paramId.Ref());
         }
       } else {
         XMPalignedArray alignedArray = gpudata.getAlignedArray();
@@ -317,8 +315,9 @@ public class XMPtranslateLocalPragma {
     return funcArgs;
   }
 
-  private XobjList getGPUfuncParams(CforBlock loopBlock) throws XMPexception {
+  private XMPpair<XobjList, XobjList> getGPUfuncParams(CforBlock loopBlock) throws XMPexception {
     XobjList params = Xcons.List();
+    XobjList localVars = Xcons.List();
 
     BasicBlockExprIterator iter = new BasicBlockExprIterator(loopBlock.getBody());
     for (iter.init(); !iter.end(); iter.next()) {
@@ -330,9 +329,26 @@ public class XMPtranslateLocalPragma {
           case VAR:
             {
               String varName = x.getName();
-              if (!XMPutil.hasIdent(params, varName)) {
+              if (!(XMPutil.hasIdent(params, varName) ||
+                   (XMPutil.hasIdent(localVars, varName)))) {
                 Ident id = loopBlock.findVarIdent(varName);
-                params.add(Ident.Param(varName, id.Type()));
+                String indVarName = loopBlock.getInductionVar().getName();
+                if (indVarName.equals(varName)) {
+                  XobjList loopIter = getLoopIter(loopBlock, indVarName);
+
+                  Ident initId = (Ident)loopIter.getArg(0);
+                  params.add(Ident.Param(initId.getName(), initId.Type()));
+
+                  Ident condId = (Ident)loopIter.getArg(1);
+                  params.add(Ident.Param(condId.getName(), condId.Type()));
+
+                  Ident stepId = (Ident)loopIter.getArg(2);
+                  params.add(Ident.Param(stepId.getName(), stepId.Type()));
+
+                  localVars.add(Ident.Local(id.getName(), id.Type()));
+                } else {
+                  params.add(Ident.Param(varName, id.Type()));
+                }
               }
             } break;
           case ARRAY_REF:
@@ -358,7 +374,7 @@ public class XMPtranslateLocalPragma {
       }
     }
 
-    return params;
+    return new XMPpair<XobjList, XobjList>(params, localVars);
   }
 
   private Block createOMPpragmaBlock(OMPpragma pragma, Xobject args, Block body) {
@@ -656,6 +672,25 @@ public class XMPtranslateLocalPragma {
     throw new XMPexception("cannot find the loop statement");
   }
 
+  private void putLoopIter(CforBlock b, String indVarName, XobjList loopIter) {
+    HashMap<String, XobjList> loopIterTable = (HashMap<String, XobjList>)b.getProp(LOOP_ITER);
+    if (loopIterTable == null) {
+      loopIterTable = new HashMap<String, XobjList>();
+      b.setProp(LOOP_ITER, (Object)loopIterTable);
+    }
+
+    loopIterTable.put(indVarName, loopIter);
+  }
+
+  private XobjList getLoopIter(CforBlock b, String indVarName) {
+    HashMap<String, XobjList> loopIterTable = (HashMap<String, XobjList>)b.getProp(LOOP_ITER);
+    if (loopIterTable == null) {
+      return null;
+    } else {
+      return loopIterTable.get(indVarName);
+    }
+  }
+
   private void callLoopSchedFuncTemplate(XMPtemplate templateObj, XobjList templateSubscriptList,
                                          CforBlock forBlock, CforBlock schedBaseBlock) throws XMPexception {
     Xobject loopIndex = forBlock.getInductionVar();
@@ -713,6 +748,8 @@ public class XMPtranslateLocalPragma {
                                               "_XMP_loop_cond_" + loopIndexName, loopIndexType);
     Ident parallelStepId = declIdentWithBlock(schedBaseBlock,
                                               "_XMP_loop_step_" + loopIndexName, loopIndexType);
+
+    putLoopIter(schedBaseBlock, loopIndexName, Xcons.List(parallelInitId, parallelCondId, parallelStepId));
 
     forBlock.setLowerBound(parallelInitId.Ref());
     forBlock.setUpperBound(parallelCondId.Ref());
@@ -778,6 +815,8 @@ public class XMPtranslateLocalPragma {
                                               "_XMP_loop_cond_" + loopIndexName, loopIndexType);
     Ident parallelStepId = declIdentWithBlock(schedBaseBlock,
                                               "_XMP_loop_step_" + loopIndexName, loopIndexType);
+
+    putLoopIter(schedBaseBlock, loopIndexName, Xcons.List(parallelInitId, parallelCondId, parallelStepId));
 
     forBlock.setLowerBound(parallelInitId.Ref());
     forBlock.setUpperBound(parallelCondId.Ref());

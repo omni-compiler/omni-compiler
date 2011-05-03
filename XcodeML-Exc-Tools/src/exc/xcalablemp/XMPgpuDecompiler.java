@@ -6,8 +6,10 @@
 
 package exc.xcalablemp;
 
+import exc.block.*;
 import exc.object.*;
 import java.io.*;
+import java.util.*;
 
 public class XMPgpuDecompiler {
   public static final String GPU_FUNC_CONF = "XCALABLEMP_GPU_FUNC_CONF_PROP";
@@ -16,7 +18,9 @@ public class XMPgpuDecompiler {
   private static final int BUFFER_SIZE = 4096;
   private static final String GPU_SRC_EXTENSION = ".cu";
 
-  public static void decompile(Ident id, XobjList paramIdList, Xobject deviceBodyObj, XobjectFile env) throws XMPexception {
+  public static void decompile(Ident id, XobjList paramIdList, XobjList localVarIdList, CforBlock loopBlock, XobjectFile env) throws XMPexception {
+    Xobject deviceBodyObj = loopBlock.getBody().toXobject();
+
     try {
       if (out == null) {
         Writer w = new BufferedWriter(new FileWriter(getSrcName(env.getSourceFileName()) + GPU_SRC_EXTENSION), BUFFER_SIZE);
@@ -24,7 +28,7 @@ public class XMPgpuDecompiler {
       }
 
       // decompile device function
-      XobjectDef deviceDef = XobjectDef.Func(id, paramIdList, null, deviceBodyObj);
+      XobjectDef deviceDef = XobjectDef.Func(id, paramIdList, localVarIdList, deviceBodyObj);
       out.printDeviceFunc(deviceDef, id);
       out.println();
 

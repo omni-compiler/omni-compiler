@@ -79,9 +79,9 @@ public class XMPgpuDecompileWriter extends PrintWriter {
               func_args += ")";
             }
             if (isDeviceFunc) {
-              print("__global__ static ");
+              println("__global__ static");
             } else {
-              print("extern \"C\" ");
+              println("extern \"C\"");
             }
             printDeclType(id.Type().getRef(), funcName + func_args);
           } else {
@@ -97,9 +97,9 @@ public class XMPgpuDecompileWriter extends PrintWriter {
             }
             func_args += ")";
             if (isDeviceFunc) {
-              print("__global__ static ");
+              println("__global__ static");
             } else {
-              print("extern \"C\" ");
+              println("extern \"C\"");
             }
             printDeclType(id.Type().getRef(), funcName + func_args);
 
