@@ -131,6 +131,14 @@ public class XMPtranslateLocalPragma {
     }
   }
 
+  private void translateGpudata(PragmaBlock pb) throws XMPexception {
+    XMPgpudata.translateGpudata(pb, _globalDecl);
+  }
+
+  private void translateGpusync(PragmaBlock pb) throws XMPexception {
+    XMPgpudata.translateGpusync(pb, _globalDecl);
+  }
+
   private void translateTask(PragmaBlock pb) throws XMPexception {
     // start translation
     XobjList taskDecl = (XobjList)pb.getClauses();
@@ -267,7 +275,7 @@ public class XMPtranslateLocalPragma {
 
     XobjList funcArgs = setupGPUparallelFunc(funcId, loopBlock);
 
-    return createFuncCallBlock(funcId.getName(), funcArgs);
+    return _globalDecl.createFuncCallBlock(funcId.getName(), funcArgs);
   }
 
   private XobjList setupGPUparallelFunc(Ident funcId, CforBlock loopBlock) throws XMPexception {
@@ -805,7 +813,7 @@ public class XMPtranslateLocalPragma {
     Block barrierFuncCallBlock = null;
     XobjList onRef = (XobjList)barrierDecl.getArg(0);
     if (onRef == null) {
-	barrierFuncCallBlock = createFuncCallBlock("_XMP_barrier_EXEC", null);
+      barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null);
     }
     else {
       XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
@@ -813,7 +821,7 @@ public class XMPtranslateLocalPragma {
       boolean splitComm = execOnRefArgs.getSecond().booleanValue();
       XobjList execFuncArgs = execOnRefArgs.getThird();
       if (splitComm) {
-        BlockList barrierBody = Bcons.blockList(createFuncCallBlock("_XMP_barrier_EXEC", null));
+        BlockList barrierBody = Bcons.blockList(_globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null));
 
         // setup barrier finalizer
         setupFinalizer(barrierBody, _globalDecl.declExternFunc("_XMP_pop_n_free_nodes"), null);
@@ -823,7 +831,7 @@ public class XMPtranslateLocalPragma {
 	barrierFuncCallBlock = Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), barrierBody, null);
       }
       else{
-	barrierFuncCallBlock = createFuncCallBlock("_XMP_barrier_" + execFuncSurfix, execFuncArgs);
+	barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_" + execFuncSurfix, execFuncArgs);
       }
     }
 
@@ -848,11 +856,6 @@ public class XMPtranslateLocalPragma {
 	barrierFuncCallBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
     }
 
-  }
-
-  private Block createFuncCallBlock(String funcName, XobjList funcArgs) {
-    Ident funcId = _globalDecl.declExternFunc(funcName);
-    return Bcons.Statement(funcId.Call(funcArgs));
   }
 
   private void translateReduction(PragmaBlock pb) throws XMPexception {
@@ -952,7 +955,7 @@ public class XMPtranslateLocalPragma {
       XobjList reductionSpec = (XobjList)i.getArg();
       String specName = reductionSpec.getArg(0).getString();
 
-      XMPpair<Ident, Xtype> typedSpec = findTypedVar(specName, pb);
+      XMPpair<Ident, Xtype> typedSpec = XMPutil.findTypedVar(specName, pb);
       Ident specId = typedSpec.getFirst();
       Xtype specType = typedSpec.getSecond();
 
@@ -986,7 +989,7 @@ public class XMPtranslateLocalPragma {
             XMPalignedArray specAlignedArray = _globalDecl.getXMPalignedArray(specName, localXMPsymbolTable);
             if (specAlignedArray == null) {
               specRef = specId.Ref();
-              count = Xcons.LongLongConstant(0, getArrayElmtCount(arraySpecType));
+              count = Xcons.LongLongConstant(0, XMPutil.getArrayElmtCount(arraySpecType));
             }
             else {
               if (isClause) {
@@ -1182,7 +1185,7 @@ public class XMPtranslateLocalPragma {
     for (XobjArgs i = locationVars.getArgs(); i != null; i = i.nextArgs()) {
       String varName = i.getArg().getString();
 
-      XMPpair<Ident, Xtype> typedVar = findTypedVar(varName, pb);
+      XMPpair<Ident, Xtype> typedVar = XMPutil.findTypedVar(varName, pb);
       Ident varId = typedVar.getFirst();
       Xtype varType = typedVar.getSecond();
 
@@ -1260,28 +1263,6 @@ public class XMPtranslateLocalPragma {
       funcCallList.add(Bcons.Statement(funcId.Call(funcArgs)));
     }
     return Bcons.COMPOUND(funcCallList);
-  }
-
-  private XMPpair<Ident, Xtype> findTypedVar(String name, PragmaBlock pb) throws XMPexception {
-    Ident id = pb.findVarIdent(name);
-    if (id == null)
-      throw new XMPexception("cannot find '" + name + "'");
-
-    Xtype type = id.Type();
-    if (type == null)
-      throw new XMPexception("'" + name + "' has no type");
-
-    return new XMPpair<Ident, Xtype>(id, type);
-  }
-
-  // FIXME array can be a dynamic size
-  public long getArrayElmtCount(Xtype type) {
-    if (type.isArray()) {
-      ArrayType arrayType = (ArrayType)type;
-      long arraySize = arrayType.getArraySize();
-      return arraySize * getArrayElmtCount(arrayType.getRef());
-    }
-    else return 1;
   }
 
   public Xobject getArrayElmtsObj(Xtype type) throws XMPexception {
@@ -1371,7 +1352,7 @@ public class XMPtranslateLocalPragma {
     for (XobjArgs i = varList.getArgs(); i != null; i = i.nextArgs()) {
       String varName = i.getArg().getString();
 
-      XMPpair<Ident, Xtype> typedSpec = findTypedVar(varName, pb);
+      XMPpair<Ident, Xtype> typedSpec = XMPutil.findTypedVar(varName, pb);
       Ident varId = typedSpec.getFirst();
       Xtype varType = typedSpec.getSecond();
 
@@ -1396,7 +1377,7 @@ public class XMPtranslateLocalPragma {
                 throw new XMPexception("array '" + varName + "' has has a wrong data type for broadcast");
             }
 
-            count = Xcons.LongLongConstant(0, getArrayElmtCount(arrayVarType));
+            count = Xcons.LongLongConstant(0, XMPutil.getArrayElmtCount(arrayVarType));
             returnVector.add(Xcons.List(varId.Ref(), count, Xcons.SizeOf(((ArrayType)varType).getArrayElementType())));
           } break;
         default:
@@ -1569,7 +1550,7 @@ public class XMPtranslateLocalPragma {
 
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
-	    gmoveFuncCallBlock = createFuncCallBlock("_XMP_gmove_LOCALCOPY_ARRAY", gmoveFuncArgs);
+	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_gmove_LOCALCOPY_ARRAY", gmoveFuncArgs);
           }
           else {				// !leftIsAlignedArray &&  rightIsAlignedArray  |-> broadcast
             Xtype arrayElmtType = rightAlignedArray.getType();
@@ -1585,7 +1566,7 @@ public class XMPtranslateLocalPragma {
 
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
-	    gmoveFuncCallBlock = createFuncCallBlock("_XMP_gmove_BCAST_ARRAY", gmoveFuncArgs);
+	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_gmove_BCAST_ARRAY", gmoveFuncArgs);
           }
         }
         else {
@@ -1603,7 +1584,7 @@ public class XMPtranslateLocalPragma {
 
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
-	    gmoveFuncCallBlock = createFuncCallBlock("_XMP_gmove_HOMECOPY_ARRAY", gmoveFuncArgs);
+	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_gmove_HOMECOPY_ARRAY", gmoveFuncArgs);
           }
           else {				//  leftIsAlignedArray &&  rightIsAlignedArray  |-> send/recv
             Xtype arrayElmtType = leftAlignedArray.getType();
@@ -1620,7 +1601,7 @@ public class XMPtranslateLocalPragma {
 
             XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
             XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
-	    gmoveFuncCallBlock = createFuncCallBlock("_XMP_gmove_SENDRECV_ARRAY", gmoveFuncArgs);
+	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_gmove_SENDRECV_ARRAY", gmoveFuncArgs);
           }
         }
       }
@@ -1644,7 +1625,7 @@ public class XMPtranslateLocalPragma {
                                               rightAlignedArray.getDescId().Ref());
           XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
 
-	  gmoveFuncCallBlock = createFuncCallBlock("_XMP_gmove_BCAST_SCALAR", gmoveFuncArgs);
+	  gmoveFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_gmove_BCAST_SCALAR", gmoveFuncArgs);
         }
       }
       else {
@@ -1662,7 +1643,7 @@ public class XMPtranslateLocalPragma {
           XMPutil.mergeLists(gmoveFuncArgs, leftExprInfo.getSecond());
           XMPutil.mergeLists(gmoveFuncArgs, rightExprInfo.getSecond());
 
-	  gmoveFuncCallBlock = createFuncCallBlock("_XMP_gmove_SENDRECV_SCALAR", gmoveFuncArgs);
+	  gmoveFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_gmove_SENDRECV_SCALAR", gmoveFuncArgs);
         }
       }
     }
@@ -2138,131 +2119,4 @@ public class XMPtranslateLocalPragma {
         funcCallList.add(Bcons.Statement(macroId.Call(funcArgs)));
         return Bcons.COMPOUND(funcCallList);
     }
-
-  private void translateGpudata(PragmaBlock pb) throws XMPexception {
-    BlockList gpudataBody = pb.getBody();
-
-    if (!XmOption.isXcalableMPGPU()) {
-      XMP.warning("use -enable-gpu option to use 'gpudata' directive");
-      pb.replace(Bcons.COMPOUND(gpudataBody));
-      return;
-    }
-
-    // start translation
-    XobjList gpudataDecl = (XobjList)pb.getClauses();
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-    XMPgpudataTable gpudataTable = new XMPgpudataTable();
-
-    BlockList gpudataConstructorBody = Bcons.emptyBody();
-    BlockList gpudataDestructorBody = Bcons.emptyBody();
-
-    BlockList replaceBody = Bcons.blockList(Bcons.COMPOUND(gpudataConstructorBody),
-                                            Bcons.COMPOUND(gpudataBody),
-                                            Bcons.COMPOUND(gpudataDestructorBody));
-
-    XobjList varList = (XobjList)gpudataDecl.getArg(0);
-    for (XobjArgs i = varList.getArgs(); i != null; i = i.nextArgs()) {
-      String varName = i.getArg().getString();
-
-      // FIXME check gpudataTable FIXME do not allow gpudata to be nested
-      XMPgpudata gpudata = gpudataTable.getXMPgpudata(varName);
-      if (gpudata != null) {
-        throw new XMPexception("gpudata '" + varName + "' is already declared");
-      }
-
-      XMPpair<Ident, Xtype> typedSpec = findTypedVar(varName, pb);
-      Ident varId = typedSpec.getFirst();
-      Xtype varType = typedSpec.getSecond();
-
-      Ident gpudataHostDescId = replaceBody.declLocalIdent(XMP.GPU_HOST_DESC_PREFIX_ + varName, Xtype.voidPtrType);
-      Ident gpudataDeviceDescId = replaceBody.declLocalIdent(XMP.GPU_DEVICE_DESC_PREFIX_ + varName, Xtype.voidPtrType);
-      Ident gpudataDeviceAddrId = replaceBody.declLocalIdent(XMP.GPU_DEVICE_ADDR_PREFIX_ + varName, Xtype.voidPtrType);
-
-      XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(varName, localXMPsymbolTable);
-      if (alignedArray == null) {
-        Xobject addrObj = null;
-        Xobject sizeObj = null;
-        switch (varType.getKind()) {
-          case Xtype.BASIC:
-          case Xtype.STRUCT:                             
-          case Xtype.UNION:
-            {
-              addrObj = varId.getAddr();
-              sizeObj = Xcons.SizeOf(varType);
-            } break;
-          case Xtype.ARRAY:
-            {
-              ArrayType arrayVarType = (ArrayType)varType;
-              switch (arrayVarType.getArrayElementType().getKind()) {
-                case Xtype.BASIC:
-                case Xtype.STRUCT:
-                case Xtype.UNION:
-                  break;
-                default:
-                  throw new XMPexception("array '" + varName + "' has has a wrong data type for gpudata");
-              }
-
-              addrObj = varId.Ref();
-              sizeObj = Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.LongLongConstant(0, getArrayElmtCount(arrayVarType)),
-                                                       Xcons.SizeOf(((ArrayType)varType).getArrayElementType()));
-            } break;
-          default:
-            throw new XMPexception("'" + varName + "' has a wrong data type for broadcast");
-        }
-
-        gpudataConstructorBody.add(createFuncCallBlock("_XMP_gpu_init_gpudata_NOT_ALIGNED",
-                                                       Xcons.List(gpudataHostDescId.getAddr(), gpudataDeviceDescId.getAddr(), gpudataDeviceAddrId.getAddr(),
-                                                                  addrObj, sizeObj)));
-      } else {
-        gpudataConstructorBody.add(createFuncCallBlock("_XMP_gpu_init_gpudata_ALIGNED",
-                                                       Xcons.List(gpudataHostDescId.getAddr(), gpudataDeviceDescId.getAddr(), gpudataDeviceAddrId.getAddr(),
-                                                                  alignedArray.getAddrIdVoidRef(), alignedArray.getDescId().Ref())));
-      }
-
-      gpudataDestructorBody.add(createFuncCallBlock("_XMP_gpu_finalize_gpudata", Xcons.List(gpudataHostDescId.Ref())));
-
-      gpudataTable.putXMPgpudata(new XMPgpudata(varName, gpudataHostDescId, gpudataDeviceDescId, gpudataDeviceAddrId, alignedArray));
-    }
-
-    Block replaceBlock = Bcons.COMPOUND(replaceBody);
-    replaceBlock.setProp(XMPgpudataTable.PROP, gpudataTable);
-
-    pb.replace(replaceBlock);
-  }
-
-  private void translateGpusync(PragmaBlock pb) throws XMPexception {
-    if (!XmOption.isXcalableMPGPU()) {
-      XMP.warning("use -enable-gpu option to use 'gpusync' directive");
-      return;
-    }
-
-    // start translation
-    XobjList gpusyncDecl = (XobjList)pb.getClauses();
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-
-    BlockList replaceBody = Bcons.emptyBody();
-
-    Xobject directionArg = null;
-    String clause = gpusyncDecl.getArg(1).getString();
-    if (clause.equals("in")) {
-      directionArg = Xcons.IntConstant(XMPgpudata.GPUSYNC_IN);
-    } else if (clause.equals("out")) {
-      directionArg = Xcons.IntConstant(XMPgpudata.GPUSYNC_OUT);
-    } else {
-      throw new XMPexception("unknown clause for 'gpusync'");
-    }
-
-    XobjList varList = (XobjList)gpusyncDecl.getArg(0);
-    for (XobjArgs i = varList.getArgs(); i != null; i = i.nextArgs()) {
-      String varName = i.getArg().getString();
-      XMPgpudata gpudata = XMPgpudataTable.findXMPgpudata(varName, pb);
-      if (gpudata == null) {
-        throw new XMPexception("gpudata '" + varName + "' is not declared");
-      } else {
-        replaceBody.add(createFuncCallBlock("_XMP_gpu_sync", Xcons.List(gpudata.getHostDescId().Ref(), directionArg)));
-      }
-    }
-
-    pb.replace(Bcons.COMPOUND(replaceBody));
-  }
 }

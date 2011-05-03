@@ -11,6 +11,28 @@ import exc.object.*;
 import java.util.Iterator;
 
 public class XMPutil {
+  // FIXME array can be a dynamic size
+  public static long getArrayElmtCount(Xtype type) {
+    if (type.isArray()) {
+      ArrayType arrayType = (ArrayType)type;
+      long arraySize = arrayType.getArraySize();
+      return arraySize * getArrayElmtCount(arrayType.getRef());
+    }
+    else return 1;
+  }
+
+  public static XMPpair<Ident, Xtype> findTypedVar(String name, PragmaBlock pb) throws XMPexception {
+    Ident id = pb.findVarIdent(name);
+    if (id == null)
+      throw new XMPexception("cannot find '" + name + "'");
+
+    Xtype type = id.Type();
+    if (type == null)
+      throw new XMPexception("'" + name + "' has no type");
+
+    return new XMPpair<Ident, Xtype>(id, type);
+  }
+
   public static boolean hasCommXMPpragma(BlockList bl) {
     BlockIterator i = new bottomupBlockIterator(bl);
     for(i.init(); !i.end(); i.next()) {

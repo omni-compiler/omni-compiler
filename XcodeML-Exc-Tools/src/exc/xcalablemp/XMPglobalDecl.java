@@ -7,6 +7,7 @@
 package exc.xcalablemp;
 
 import exc.object.*;
+import exc.block.*;
 import xcodeml.util.XmOption;
 
 public class XMPglobalDecl {
@@ -134,6 +135,11 @@ public class XMPglobalDecl {
 
   public Ident findVarIdent(String name) {
     return _env.findVarIdent(name);
+  }
+
+  public Block createFuncCallBlock(String funcName, XobjList funcArgs) {
+    Ident funcId = declExternFunc(funcName);
+    return Bcons.Statement(funcId.Call(funcArgs));
   }
 
   public void putXMPobject(XMPobject obj) {
