@@ -87,32 +87,6 @@ static void _XMP_reflect_shadow_FULL_ALLGATHER(void *array_addr, _XMP_array_t *a
   _XMP_free(pack_buffer);
 }
 
-static void _XMP_reflect_shadow_FULL_ALLGATHERV(void *array_addr, _XMP_array_t *array_desc, int array_index) {
-  _XMP_ASSERT(array_desc->is_allocated);
-  _XMP_ASSERT(array_desc->dim == 1);
-
-  _XMP_array_info_t *ai = &(array_desc->info[array_index]);
-  _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
-  _XMP_ASSERT(ai->is_shadow_comm_member);
-
-  size_t type_size = array_desc->type_size;
-  MPI_Datatype mpi_datatype;
-  MPI_Type_contiguous(type_size, MPI_BYTE, &mpi_datatype);
-  MPI_Type_commit(&mpi_datatype);
-
-  int gather_count = ai->par_size;
-  size_t gather_byte_size = type_size * gather_count;
-  void *pack_buffer = _XMP_alloc(gather_byte_size);
-  memcpy(pack_buffer, array_addr + (type_size * ai->local_lower), gather_byte_size);
-
-  MPI_Allgather(pack_buffer, gather_count, mpi_datatype,
-                array_addr, gather_count, mpi_datatype,
-                *((MPI_Comm *)ai->shadow_comm));
-
-  MPI_Type_free(&mpi_datatype);
-  _XMP_free(pack_buffer);
-}
-
 static void _XMP_reflect_shadow_FULL_BCAST(void *array_addr, _XMP_array_t *array_desc, int array_index) {
   _XMP_ASSERT(array_desc->is_allocated);
 
@@ -572,13 +546,8 @@ void _XMP_reflect_shadow_FULL(void *array_addr, _XMP_array_t *array_desc, int ar
   _XMP_array_info_t *ai = &(array_desc->info[array_index]);
 
   // using allgather/allgatherv in special cases
-  if ((array_dim == 1) && (ai->align_manner == _XMP_N_ALIGN_BLOCK)) {
-    if (ai->is_regular_chunk) {
-      _XMP_reflect_shadow_FULL_ALLGATHER(array_addr, array_desc, array_index);
-    }
-    else {
-      _XMP_reflect_shadow_FULL_ALLGATHERV(array_addr, array_desc, array_index);
-    }
+  if ((array_dim == 1) && (ai->align_manner == _XMP_N_ALIGN_BLOCK) && (ai->is_regular_chunk)) {
+    _XMP_reflect_shadow_FULL_ALLGATHER(array_addr, array_desc, array_index);
   }
   else {
     _XMP_reflect_shadow_FULL_BCAST(array_addr, array_desc, array_index);
