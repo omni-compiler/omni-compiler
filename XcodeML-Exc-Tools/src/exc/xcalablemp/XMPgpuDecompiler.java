@@ -19,12 +19,21 @@ public class XMPgpuDecompiler {
   private static final String GPU_SRC_EXTENSION = ".cu";
 
   public static void decompile(Ident id, XobjList paramIdList, XobjList localVarIdList, CforBlock loopBlock, XobjectFile env) throws XMPexception {
-    BlockList loopBody = loopBlock.getBody().getHead().getBody();
+    BlockList loopBody = loopBlock.getBody();
 
     // schedule iteration
     Iterator<Xobject> iter = localVarIdList.iterator();
     while(iter.hasNext()) {
       Ident localVarId = (Ident)iter.next();
+      loopBody.addIdent(localVarId);
+      Xobject loopDecls = loopBody.getDecls();
+      if (loopDecls == null) {
+        loopDecls = Xcons.List();
+        loopBody.setDecls(loopDecls);
+      }
+
+      loopDecls.add(Xcons.List(Xcode.VAR_DECL, localVarId, null, null));
+
       XobjList loopIter = XMPutil.getLoopIter(loopBlock, localVarId.getName());
       if (loopIter != null) {
         loopBody.insert(createFuncCallBlock("_XMP_gpu_calc_thread_id", Xcons.List(localVarId.getAddr())));
@@ -44,7 +53,7 @@ public class XMPgpuDecompiler {
       out.println();
 
       // decompile device function
-      XobjectDef deviceDef = XobjectDef.Func(id, paramIdList, localVarIdList, deviceBodyObj);
+      XobjectDef deviceDef = XobjectDef.Func(id, paramIdList, null, deviceBodyObj);
       out.printDeviceFunc(deviceDef, id);
       out.println();
 
