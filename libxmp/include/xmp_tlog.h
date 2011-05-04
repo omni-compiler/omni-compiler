@@ -4,7 +4,7 @@
  *  $
  */
 
-#ifndef _XMP_TLOG_H_n
+#ifndef _XMP_TLOG_H_
 #define _XMP_TLOG_H_
 
 #include "tlog_mpi.h"

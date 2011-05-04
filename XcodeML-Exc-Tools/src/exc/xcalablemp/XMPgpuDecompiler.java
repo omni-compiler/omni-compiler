@@ -19,13 +19,29 @@ public class XMPgpuDecompiler {
   private static final String GPU_SRC_EXTENSION = ".cu";
 
   public static void decompile(Ident id, XobjList paramIdList, XobjList localVarIdList, CforBlock loopBlock, XobjectFile env) throws XMPexception {
-    Xobject deviceBodyObj = loopBlock.getBody().toXobject();
+    BlockList loopBody = loopBlock.getBody().getHead().getBody();
+
+    // schedule iteration
+    Iterator<Xobject> iter = localVarIdList.iterator();
+    while(iter.hasNext()) {
+      Ident localVarId = (Ident)iter.next();
+      XobjList loopIter = XMPutil.getLoopIter(loopBlock, localVarId.getName());
+      if (loopIter != null) {
+        loopBody.insert(createFuncCallBlock("_XMP_gpu_calc_thread_id", Xcons.List(localVarId.getAddr())));
+      }
+    }
+
+    Xobject deviceBodyObj = loopBody.toXobject();
 
     try {
       if (out == null) {
         Writer w = new BufferedWriter(new FileWriter(getSrcName(env.getSourceFileName()) + GPU_SRC_EXTENSION), BUFFER_SIZE);
         out = new XMPgpuDecompileWriter(w, env);
       }
+
+      // add header include line
+      out.println("#include \"xmp_gpu_func.hpp\"");
+      out.println();
 
       // decompile device function
       XobjectDef deviceDef = XobjectDef.Func(id, paramIdList, localVarIdList, deviceBodyObj);
@@ -38,6 +54,7 @@ public class XMPgpuDecompiler {
       // FIXME add configuration parameters
       hostFuncCall.setProp(GPU_FUNC_CONF, (Object)Xcons.List());
 
+      // decompie wrapping function
       Xobject hostBodyObj = Xcons.CompoundStatement(hostFuncCall);
       XobjectDef hostDef = XobjectDef.Func(id, paramIdList, null, hostBodyObj);
       out.printHostFunc(hostDef);
@@ -47,6 +64,11 @@ public class XMPgpuDecompiler {
     } catch (IOException e) {
       throw new XMPexception("error in gpu decompiler: " + e.getMessage());
     }
+  }
+
+  private static Block createFuncCallBlock(String funcName, XobjList funcArgs) {
+    Ident funcId = XMP.getMacroId(funcName);
+    return Bcons.Statement(funcId.Call(funcArgs));
   }
 
   private static String getSrcName(String srcName) {

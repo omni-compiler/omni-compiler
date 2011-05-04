@@ -19,7 +19,6 @@ public class XMPtranslateLocalPragma {
   private boolean		doScalasca = false;
   private boolean		doTlog = false;
   private XobjectDef		currentDef;
-  private final String		LOOP_ITER = "XCALABLEMP_LOOP_ITER_PROP";
 
   public XMPtranslateLocalPragma(XMPglobalDecl globalDecl) {
     _globalDecl = globalDecl;
@@ -334,7 +333,7 @@ public class XMPtranslateLocalPragma {
                 Ident id = loopBlock.findVarIdent(varName);
                 String indVarName = loopBlock.getInductionVar().getName();
                 if (indVarName.equals(varName)) {
-                  XobjList loopIter = getLoopIter(loopBlock, indVarName);
+                  XobjList loopIter = XMPutil.getLoopIter(loopBlock, indVarName);
 
                   Ident initId = (Ident)loopIter.getArg(0);
                   params.add(Ident.Param(initId.getName(), initId.Type()));
@@ -672,25 +671,6 @@ public class XMPtranslateLocalPragma {
     throw new XMPexception("cannot find the loop statement");
   }
 
-  private void putLoopIter(CforBlock b, String indVarName, XobjList loopIter) {
-    HashMap<String, XobjList> loopIterTable = (HashMap<String, XobjList>)b.getProp(LOOP_ITER);
-    if (loopIterTable == null) {
-      loopIterTable = new HashMap<String, XobjList>();
-      b.setProp(LOOP_ITER, (Object)loopIterTable);
-    }
-
-    loopIterTable.put(indVarName, loopIter);
-  }
-
-  private XobjList getLoopIter(CforBlock b, String indVarName) {
-    HashMap<String, XobjList> loopIterTable = (HashMap<String, XobjList>)b.getProp(LOOP_ITER);
-    if (loopIterTable == null) {
-      return null;
-    } else {
-      return loopIterTable.get(indVarName);
-    }
-  }
-
   private void callLoopSchedFuncTemplate(XMPtemplate templateObj, XobjList templateSubscriptList,
                                          CforBlock forBlock, CforBlock schedBaseBlock) throws XMPexception {
     Xobject loopIndex = forBlock.getInductionVar();
@@ -749,7 +729,7 @@ public class XMPtranslateLocalPragma {
     Ident parallelStepId = declIdentWithBlock(schedBaseBlock,
                                               "_XMP_loop_step_" + loopIndexName, loopIndexType);
 
-    putLoopIter(schedBaseBlock, loopIndexName, Xcons.List(parallelInitId, parallelCondId, parallelStepId));
+    XMPutil.putLoopIter(schedBaseBlock, loopIndexName, Xcons.List(parallelInitId, parallelCondId, parallelStepId));
 
     forBlock.setLowerBound(parallelInitId.Ref());
     forBlock.setUpperBound(parallelCondId.Ref());
@@ -816,7 +796,7 @@ public class XMPtranslateLocalPragma {
     Ident parallelStepId = declIdentWithBlock(schedBaseBlock,
                                               "_XMP_loop_step_" + loopIndexName, loopIndexType);
 
-    putLoopIter(schedBaseBlock, loopIndexName, Xcons.List(parallelInitId, parallelCondId, parallelStepId));
+    XMPutil.putLoopIter(schedBaseBlock, loopIndexName, Xcons.List(parallelInitId, parallelCondId, parallelStepId));
 
     forBlock.setLowerBound(parallelInitId.Ref());
     forBlock.setUpperBound(parallelCondId.Ref());

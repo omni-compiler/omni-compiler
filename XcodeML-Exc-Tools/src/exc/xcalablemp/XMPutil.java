@@ -8,9 +8,30 @@ package exc.xcalablemp;
 
 import exc.block.*;
 import exc.object.*;
-import java.util.Iterator;
+import java.util.*;
 
 public class XMPutil {
+  private static final String LOOP_ITER = "XCALABLEMP_LOOP_ITER_PROP";
+
+  public static void putLoopIter(CforBlock b, String indVarName, XobjList loopIter) {
+    HashMap<String, XobjList> loopIterTable = (HashMap<String, XobjList>)b.getProp(LOOP_ITER);
+    if (loopIterTable == null) {
+      loopIterTable = new HashMap<String, XobjList>();
+      b.setProp(LOOP_ITER, (Object)loopIterTable);
+    }
+
+    loopIterTable.put(indVarName, loopIter);
+  }
+
+  public static XobjList getLoopIter(CforBlock b, String indVarName) {
+    HashMap<String, XobjList> loopIterTable = (HashMap<String, XobjList>)b.getProp(LOOP_ITER);
+    if (loopIterTable == null) {
+      return null;
+    } else {
+      return loopIterTable.get(indVarName);
+    }
+  }
+
   // FIXME array can be a dynamic size
   public static long getArrayElmtCount(Xtype type) {
     if (type.isArray()) {
