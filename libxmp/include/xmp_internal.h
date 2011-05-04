@@ -25,7 +25,7 @@
 
 #define _XMP_RETURN_IF_SINGLE \
 { \
-  if (_XMP_world_rank == 1) { \
+  if (_XMP_world_size == 1) { \
     return; \
   } \
 }
