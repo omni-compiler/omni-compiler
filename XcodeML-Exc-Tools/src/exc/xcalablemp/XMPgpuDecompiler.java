@@ -60,11 +60,34 @@ public class XMPgpuDecompiler {
       // generate wrapping function
       Ident hostFuncId = XMP.getMacroId(id.getName() + "_DEVICE");
       Xobject hostFuncCall = hostFuncId.Call(genFuncArgs(paramIdList));
+      Xobject hostBodyObj = Xcons.CompoundStatement(hostFuncCall);
+
       // FIXME add configuration parameters
-      hostFuncCall.setProp(GPU_FUNC_CONF, (Object)Xcons.List());
+      Ident blockXid = Ident.Local("_XMP_GPU_DIM3_block_x", Xtype.intType);
+      Ident blockYid = Ident.Local("_XMP_GPU_DIM3_block_y", Xtype.intType);
+      Ident blockZid = Ident.Local("_XMP_GPU_DIM3_block_z", Xtype.intType);
+      Ident threadXid = Ident.Local("_XMP_GPU_DIM3_thread_x", Xtype.intType);
+      Ident threadYid = Ident.Local("_XMP_GPU_DIM3_thread_y", Xtype.intType);
+      Ident threadZid = Ident.Local("_XMP_GPU_DIM3_thread_z", Xtype.intType);
+
+      hostFuncCall.setProp(GPU_FUNC_CONF,
+                           (Object)Xcons.List(blockXid, blockYid, blockZid,
+                                              threadXid, threadYid, threadZid));
+
+      hostBodyObj.getArg(0).add(blockXid);
+      hostBodyObj.getArg(0).add(blockYid);
+      hostBodyObj.getArg(0).add(blockZid);
+      hostBodyObj.getArg(0).add(threadXid);
+      hostBodyObj.getArg(0).add(threadYid);
+      hostBodyObj.getArg(0).add(threadZid);
+      hostBodyObj.getArg(1).add(Xcons.List(Xcode.VAR_DECL, blockXid, null, null));
+      hostBodyObj.getArg(1).add(Xcons.List(Xcode.VAR_DECL, blockYid, null, null));
+      hostBodyObj.getArg(1).add(Xcons.List(Xcode.VAR_DECL, blockZid, null, null));
+      hostBodyObj.getArg(1).add(Xcons.List(Xcode.VAR_DECL, threadXid, null, null));
+      hostBodyObj.getArg(1).add(Xcons.List(Xcode.VAR_DECL, threadYid, null, null));
+      hostBodyObj.getArg(1).add(Xcons.List(Xcode.VAR_DECL, threadZid, null, null));
 
       // decompie wrapping function
-      Xobject hostBodyObj = Xcons.CompoundStatement(hostFuncCall);
       XobjectDef hostDef = XobjectDef.Func(id, paramIdList, null, hostBodyObj);
       out.printHostFunc(hostDef);
       out.println();

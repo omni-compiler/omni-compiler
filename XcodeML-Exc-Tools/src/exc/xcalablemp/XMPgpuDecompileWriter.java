@@ -356,6 +356,13 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       break;
 
     case FUNCTION_CALL: /* (FUNCTION_CALL function args-list) */
+      XobjList prop = (XobjList)v.getProp(XMPgpuDecompiler.GPU_FUNC_CONF);
+      if (prop != null) {
+        println("{");
+        println("dim3 _XMP_GPU_DIM3_block(" + prop.getArg(0).getName() + ", " + prop.getArg(1).getName() + ", " + prop.getArg(2).getName() + ");");
+        println("dim3 _XMP_GPU_DIM3_thread(" + prop.getArg(3).getName() + ", " + prop.getArg(4).getName() + ", " + prop.getArg(5).getName() + ");");
+      }
+
       if(v.left().Opcode() == Xcode.FUNC_ADDR){
         print(v.left().getSym());
       } else {
@@ -365,13 +372,17 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       }
 
       // FIXME
-      XobjList prop = (XobjList)v.getProp(XMPgpuDecompiler.GPU_FUNC_CONF);
       if (prop != null) {
-        print("<<<1, 100>>>");
+        print("<<<_XMP_GPU_DIM3_block, _XMP_GPU_DIM3_thread>>>");
       }
 
       printArgList(v.right());
       print(";");
+
+      if (prop != null) {
+        println();
+        print("}");
+      }
       break;
 
     case POST_INCR_EXPR:
