@@ -123,7 +123,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
     switch(v.Opcode()){
     case LIST:    /* nested */
       for(XobjArgs a = v.getArgs(); a != null; a = a.nextArgs())
-        print(a.getArg());
+        println(a.getArg());
       break;
       // 
       // Statement
@@ -495,6 +495,11 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       /* fatal("print: unknown decopmile = "+v); */
       printUserCode(v);
     }
+  }
+
+  private void println(Xobject v) {
+    print(v);
+    println();
   }
 
   private void printStorageClass(Ident id) {
