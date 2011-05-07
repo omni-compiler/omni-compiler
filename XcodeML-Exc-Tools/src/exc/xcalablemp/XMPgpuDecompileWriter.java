@@ -123,7 +123,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
     switch(v.Opcode()){
     case LIST:    /* nested */
       for(XobjArgs a = v.getArgs(); a != null; a = a.nextArgs())
-        println(a.getArg());
+        print(a.getArg());
       break;
       // 
       // Statement
@@ -358,6 +358,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
     case FUNCTION_CALL: /* (FUNCTION_CALL function args-list) */
       XobjList prop = (XobjList)v.getProp(XMPgpuDecompiler.GPU_FUNC_CONF);
       if (prop != null) {
+        println();
         println("{");
         println("dim3 _XMP_GPU_DIM3_block(" + prop.getArg(0).getName() + ", " + prop.getArg(1).getName() + ", " + prop.getArg(2).getName() + ");");
         println("dim3 _XMP_GPU_DIM3_thread(" + prop.getArg(3).getName() + ", " + prop.getArg(4).getName() + ", " + prop.getArg(5).getName() + ");");
@@ -495,11 +496,6 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       /* fatal("print: unknown decopmile = "+v); */
       printUserCode(v);
     }
-  }
-
-  private void println(Xobject v) {
-    print(v);
-    println();
   }
 
   private void printStorageClass(Ident id) {

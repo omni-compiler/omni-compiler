@@ -1078,8 +1078,57 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     return Xcons.List(coarrayName, coarrayDim);
   }
 
-  private XobjList parse_GPU_clause() {
-    return Xcons.List();
+  private XobjList parse_GPU_clause() throws XmException, XMPexception {
+    XobjList args = Xcons.List();
+
+    while (pg_tok() == PG_IDENT) {
+      if (pg_is_ident("private")) {
+        pg_get_token();
+        XobjList v = parse_XMP_symbol_list("gpu private clause");
+        args.add(xmp_pg_list(XMPpragma.GPU_PRIVATE, v));
+      } else if (pg_is_ident("firstprivate")) {
+        pg_get_token();
+        XobjList v = parse_XMP_symbol_list("gpu firstprivate clause");
+        args.add(xmp_pg_list(XMPpragma.GPU_FIRSTPRIVATE, v));
+      } else if (pg_is_ident("num_threads")) {
+        pg_get_token();
+        if (pg_tok() != '(') {
+          throw new XMPexception("'(' is expected after 'num_threads'");
+        }
+
+        pg_get_token();
+        Xobject threadX = pg_parse_expr();
+        Xobject threadY = null;
+        Xobject threadZ = null;
+
+        if (pg_tok() == ',') {
+          pg_get_token();
+          threadY = pg_parse_expr();
+
+          if (pg_tok() == ',') {
+            pg_get_token();
+            threadZ = pg_parse_expr();
+          } else {
+            threadZ = Xcons.IntConstant(1);
+          }
+        } else {
+          threadY = Xcons.IntConstant(1);
+          threadZ = Xcons.IntConstant(1);
+        }
+
+        args.add(xmp_pg_list(XMPpragma.GPU_NUM_THREADS, Xcons.List(threadX, threadY, threadZ)));
+
+        if (pg_tok() != ')') {
+          throw new XMPexception("')' is expected after <num_threads> clause");
+        }
+
+        pg_get_token();
+      } else {
+        throw new XMPexception("unknown threads clause");
+      }
+    }
+
+    return args;
   }
 
   private XobjList parse_THREADS_clause() throws XmException, XMPexception {
@@ -1142,6 +1191,10 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   }
 
   private XobjList omp_pg_list(OMPpragma pg, Xobject args) {
+    return Xcons.List(Xcode.LIST, Xcons.String(pg.toString()), args);
+  }
+
+  private XobjList xmp_pg_list(XMPpragma pg, Xobject args) {
     return Xcons.List(Xcode.LIST, Xcons.String(pg.toString()), args);
   }
 
@@ -1265,5 +1318,37 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
     pg_get_token();
     return Xcons.List(varList, clause);
+  }
+
+  private XobjList parse_XMP_symbol_list(String name) throws XMPexception {
+    XobjList varList = Xcons.List();
+
+    if (pg_tok() != '(') {
+      throw new XMPexception("'(' is expected before " + name + " <variable> list");
+    }
+
+    do {
+      pg_get_token();
+      if (pg_tok() == PG_IDENT) {
+        varList.add(Xcons.String(pg_tok_buf()));
+      }
+      else {
+        throw new XMPexception("<variable> for " + name + " is expected");
+      }
+
+      pg_get_token();
+      if (pg_tok() == ',') {
+        continue;
+      }
+      else if (pg_tok() == ')') {
+        break;
+      }
+      else {
+        throw new XMPexception("',' or ')' is expected after " + name + " <variable> list");
+      }
+    } while (true);
+
+    pg_get_token();
+    return varList;
   }
 }

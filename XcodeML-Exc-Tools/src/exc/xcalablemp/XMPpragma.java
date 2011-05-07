@@ -29,6 +29,11 @@ public enum XMPpragma {
   COARRAY,
   GPUDATA,
   GPUSYNC,
+
+  // clause
+  GPU_PRIVATE,
+  GPU_FIRSTPRIVATE,
+  GPU_NUM_THREADS,
   ;
 
   private String name = null;

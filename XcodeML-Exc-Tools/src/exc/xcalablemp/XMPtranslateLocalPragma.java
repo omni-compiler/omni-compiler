@@ -270,6 +270,8 @@ public class XMPtranslateLocalPragma {
   // XXX only supports C language
   private Block translateGpuClause(XobjList gpuClause, XobjList reductionRefList,
                                    CforBlock loopBlock) throws XMPexception {
+    System.out.println(gpuClause.toString());
+
     Ident funcId = _globalDecl.declExternIdent(_globalDecl.genSym(XMP.GPU_FUNC_PREFIX),
                                                Xtype.Function(Xtype.voidType));
 
