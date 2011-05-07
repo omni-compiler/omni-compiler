@@ -273,12 +273,12 @@ public class XMPtranslateLocalPragma {
     Ident funcId = _globalDecl.declExternIdent(_globalDecl.genSym(XMP.GPU_FUNC_PREFIX),
                                                Xtype.Function(Xtype.voidType));
 
-    XobjList funcArgs = setupGPUparallelFunc(funcId, loopBlock);
+    XobjList funcArgs = setupGPUparallelFunc(funcId, loopBlock, gpuClause);
 
     return _globalDecl.createFuncCallBlock(funcId.getName(), funcArgs);
   }
 
-  private XobjList setupGPUparallelFunc(Ident funcId, CforBlock loopBlock) throws XMPexception {
+  private XobjList setupGPUparallelFunc(Ident funcId, CforBlock loopBlock, XobjList gpuClause) throws XMPexception {
     // get params
     XMPpair<XobjList, XobjList> ret = getGPUfuncParams(loopBlock);
     XobjList paramIdList = ret.getFirst();
@@ -286,7 +286,7 @@ public class XMPtranslateLocalPragma {
 
     // setup & decompile GPU function body
     ((FunctionType)funcId.Type()).setFuncParamIdList(paramIdList);
-    XMPgpuDecompiler.decompile(funcId, paramIdList, localVars, loopBlock, _globalDecl.getEnv());
+    XMPgpuDecompiler.decompile(funcId, paramIdList, localVars, loopBlock, gpuClause, _globalDecl.getEnv());
 
     // generate func args
     XobjList funcArgs = Xcons.List();

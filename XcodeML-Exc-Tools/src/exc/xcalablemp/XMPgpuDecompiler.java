@@ -18,7 +18,8 @@ public class XMPgpuDecompiler {
   private static final int BUFFER_SIZE = 4096;
   private static final String GPU_SRC_EXTENSION = ".cu";
 
-  public static void decompile(Ident id, XobjList paramIdList, XobjList localVarIdList, CforBlock loopBlock, XobjectFile env) throws XMPexception {
+  public static void decompile(Ident id, XobjList paramIdList, XobjList localVarIdList,
+                               CforBlock loopBlock, XobjList gpuClause, XobjectFile env) throws XMPexception {
     BlockList loopBody = loopBlock.getBody();
 
     // schedule iteration
@@ -75,9 +76,18 @@ public class XMPgpuDecompiler {
       Ident threadYid = Ident.Local("_XMP_GPU_DIM3_thread_y", Xtype.intType);
       Ident threadZid = Ident.Local("_XMP_GPU_DIM3_thread_z", Xtype.intType);
 
-      Ident confParamFuncId = XMP.getMacroId("_XMP_gpu_calc_config_params");
+      String confParamFuncName = null;
+      XobjList numThreads = getNumThreads(gpuClause);
+      if (numThreads == null) {
+        confParamFuncName = new String("_XMP_gpu_calc_config_params");
+      } else {
+        confParamFuncName = new String("_XMP_gpu_calc_config_params_NUM_THREADS");
+      }
+
+      Ident confParamFuncId = XMP.getMacroId(confParamFuncName);
       XobjList confParamFuncArgs = Xcons.List(blockXid.getAddr(), blockYid.getAddr(), blockZid.getAddr(),
                                               threadXid.getAddr(), threadYid.getAddr(), threadZid.getAddr());
+      XMPutil.mergeLists(confParamFuncArgs, numThreads);
       XMPutil.mergeLists(confParamFuncArgs, loopIterRefList);
       Xobject confParamFuncCall = confParamFuncId.Call(confParamFuncArgs);
 
@@ -134,5 +144,20 @@ public class XMPgpuDecompiler {
     }
 
     return new XMPpair<XobjList, XobjList>(funcParams, funcArgs);
+  }
+
+  private static XobjList getNumThreads(XobjList gpuClause) {
+    XobjList numThreads = null;
+
+    for (Xobject c : gpuClause) {
+      XMPpragma p = XMPpragma.valueOf(c.getArg(0));
+      switch (p) {
+        case GPU_NUM_THREADS:
+          numThreads = (XobjList)c.getArg(1);
+        default:
+      }
+    }
+
+    return numThreads;
   }
 }

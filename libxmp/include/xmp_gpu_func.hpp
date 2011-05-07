@@ -36,4 +36,17 @@ void _XMP_gpu_calc_config_params(int *block_x, int *block_y, int *block_z,
   *thread_z = 1;
 }
 
+template<typename T>
+void _XMP_gpu_calc_config_params_NUM_THREADS(int *block_x, int *block_y, int *block_z,
+                                             int *thread_x, int *thread_y, int *thread_z,
+                                             int thread_x_v, int thread_y_v, int thread_z_v,
+                                             T lower, T upper, T stride) {
+  *block_x = 1;
+  *block_y = 1;
+  *block_z = 1;
+  *thread_x = thread_x_v;
+  *thread_y = thread_y_v;
+  *thread_z = thread_z_v;
+}
+
 #endif // _XMP_GPU_RUNTIME_FUNC_DECL
