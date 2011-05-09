@@ -27,8 +27,9 @@ public enum XMPpragma {
   REDUCTION,
   BCAST,
   COARRAY,
-  GPUDATA,
-  GPUSYNC,
+  GPU_DATA,
+  GPU_SYNC,
+  GPU_BARRIER,
 
   // clause
   GPU_PRIVATE,

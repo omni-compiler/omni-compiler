@@ -21,7 +21,12 @@
 
 template<typename T>
 __device__ void _XMP_gpu_calc_thread_id(T *index) {
-  *index = threadIdx.x;
+  *index = threadIdx.x +
+          (threadIdx.y * blockDim.x) +
+          (threadIdx.z * blockDim.x * blockDim.y) +
+         ((blockIdx.x +
+          (blockIdx.y * gridDim.x) +
+          (blockIdx.z * gridDim.x * gridDim.y)) * (blockDim.z * blockDim.y * blockDim.x));
 }
 
 template<typename T>

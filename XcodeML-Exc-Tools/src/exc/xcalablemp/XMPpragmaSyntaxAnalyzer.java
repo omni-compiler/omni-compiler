@@ -247,19 +247,25 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       pg_get_token();
       args = parse_COARRAY_clause();
     }
-    else if (pg_is_ident("gpudata")) {
-      pragmaDir = XMPpragma.GPUDATA;
+    else if (pg_is_ident("gpuData")) {
+      pragmaDir = XMPpragma.GPU_DATA;
       syntax = PragmaSyntax.SYN_PREFIX;
 
       pg_get_token();
-      args = parse_GPUDATA_clause();
+      args = parse_GPU_DATA_clause();
     } else if (pg_is_ident("gpusync")) {
-      pragmaDir = XMPpragma.GPUSYNC;
+      pragmaDir = XMPpragma.GPU_SYNC;
       syntax = PragmaSyntax.SYN_EXEC;
 
       pg_get_token();
-      args = parse_GPUSYNC_clause();
-    } else {
+      args = parse_GPU_SYNC_clause();
+    } else if (pg_is_ident("gpubarrier")) {
+      pragmaDir = XMPpragma.GPU_BARRIER;
+      syntax = PragmaSyntax.SYN_EXEC;
+
+      pg_get_token();
+      args = Xcons.List();
+    }  else {
       error("unknown XcalableMP directive, '" + pg_tok_buf() + "'");
     }
  
@@ -1248,11 +1254,11 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     return null;
   }
 
-  private XobjList parse_GPUDATA_clause() throws XMPexception {
+  private XobjList parse_GPU_DATA_clause() throws XMPexception {
     XobjList varList = Xcons.List();
 
     if (pg_tok() != '(') {
-      error("'(' is expected before gpudata <variable> list");
+      error("'(' is expected before gpuData <variable> list");
     }
 
     do {
@@ -1261,7 +1267,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         varList.add(Xcons.String(pg_tok_buf()));
       }
       else {
-        error("<variable> for gpudata directive is expected");
+        error("<variable> for gpuData directive is expected");
       }
 
       pg_get_token();
@@ -1272,7 +1278,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         break;
       }
       else {
-        error("',' or ')' is expected after gpudata <variable> list");
+        error("',' or ')' is expected after gpuData <variable> list");
       }
     } while (true);
 
@@ -1280,11 +1286,11 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     return Xcons.List(varList);
   }
 
-  private XobjList parse_GPUSYNC_clause() throws XMPexception {
+  private XobjList parse_GPU_SYNC_clause() throws XMPexception {
     XobjList varList = Xcons.List();
 
     if (pg_tok() != '(') {
-      error("'(' is expected before gpudata <variable> list");
+      error("'(' is expected before gpuData <variable> list");
     }
 
     do {
@@ -1293,7 +1299,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         varList.add(Xcons.String(pg_tok_buf()));
       }
       else {
-        error("<variable> for gpudata directive is expected");
+        error("<variable> for gpuData directive is expected");
       }
 
       pg_get_token();
@@ -1304,7 +1310,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         break;
       }
       else {
-        error("',' or ')' is expected after gpudata <variable> list");
+        error("',' or ')' is expected after gpuData <variable> list");
       }
     } while (true);
 

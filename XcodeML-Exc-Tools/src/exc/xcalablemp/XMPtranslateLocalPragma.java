@@ -75,9 +75,9 @@ public class XMPtranslateLocalPragma {
         { translateBcast(pb);			break; }
       case GMOVE:
         { translateGmove(pb);			break; }
-      case GPUDATA:
-        { translateGpudata(pb);			break; }
-      case GPUSYNC:
+      case GPU_DATA:
+        { translateGpuData(pb);			break; }
+      case GPU_SYNC:
         { translateGpusync(pb);			break; }
       default:
         throw new XMPexception("'" + pragmaName.toLowerCase() + "' directive is not supported yet");
@@ -131,12 +131,12 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private void translateGpudata(PragmaBlock pb) throws XMPexception {
-    XMPgpudata.translateGpudata(pb, _globalDecl);
+  private void translateGpuData(PragmaBlock pb) throws XMPexception {
+    XMPgpuData.translateGpuData(pb, _globalDecl);
   }
 
   private void translateGpusync(PragmaBlock pb) throws XMPexception {
-    XMPgpudata.translateGpusync(pb, _globalDecl);
+    XMPgpuData.translateGpusync(pb, _globalDecl);
   }
 
   private void translateTask(PragmaBlock pb) throws XMPexception {
@@ -293,20 +293,20 @@ public class XMPtranslateLocalPragma {
     for (XobjArgs i = paramIdList.getArgs(); i != null; i = i.nextArgs()) {
       Ident paramId = (Ident)i.getArg();
       String paramName = paramId.getName();
-      XMPgpudata gpudata = XMPgpudataTable.findXMPgpudata(paramId.getName(), loopBlock);
-      if (gpudata == null) {
+      XMPgpuData gpuData = XMPgpuDataTable.findXMPgpuData(paramId.getName(), loopBlock);
+      if (gpuData == null) {
         if (paramId.Type().isArray()) {
-          throw new XMPexception("array '" + paramName + "' should be declared as a gpudata");
+          throw new XMPexception("array '" + paramName + "' should be declared as a gpuData");
         } else {
           funcArgs.add(paramId.Ref());
         }
       } else {
-        XMPalignedArray alignedArray = gpudata.getXMPalignedArray();
+        XMPalignedArray alignedArray = gpuData.getXMPalignedArray();
         if (alignedArray == null) {
-          funcArgs.add(gpudata.getDeviceAddrId().Ref());
+          funcArgs.add(gpuData.getDeviceAddrId().Ref());
         } else {
           // FIXME add device_array_desc to args?
-          funcArgs.add(gpudata.getDeviceAddrId().Ref());
+          funcArgs.add(gpuData.getDeviceAddrId().Ref());
         }
       }
     }
@@ -354,11 +354,11 @@ public class XMPtranslateLocalPragma {
             {
               String varName = x.getName();
               if (!XMPutil.hasIdent(params, varName)) {
-                XMPgpudata gpudata = XMPgpudataTable.findXMPgpudata(varName, loopBlock);
-                if (gpudata == null) {
-                  throw new XMPexception("array '" + varName + "' shoud be declared as a gpudata");
+                XMPgpuData gpuData = XMPgpuDataTable.findXMPgpuData(varName, loopBlock);
+                if (gpuData == null) {
+                  throw new XMPexception("array '" + varName + "' shoud be declared as a gpuData");
                 } else {
-                  XMPalignedArray alignedArray = gpudata.getXMPalignedArray();
+                  XMPalignedArray alignedArray = gpuData.getXMPalignedArray();
                   if (alignedArray == null) {
                     Ident id = loopBlock.findVarIdent(varName);
                     params.add(Ident.Param(varName, id.Type()));

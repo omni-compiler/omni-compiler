@@ -10,9 +10,9 @@ import xcodeml.util.XmOption;
 import exc.object.*;
 import exc.block.*;
 
-public class XMPgpudata {
-  public static int GPUSYNC_IN = 600;
-  public static int GPUSYNC_OUT = 601;
+public class XMPgpuData {
+  public static int GPU_SYNC_IN = 600;
+  public static int GPU_SYNC_OUT = 601;
 
   private String		_name;
   private Ident			_hostDescId;
@@ -20,7 +20,7 @@ public class XMPgpudata {
   private Ident			_deviceAddrId;
   private XMPalignedArray	_alignedArray;
 
-  public XMPgpudata(String name, Ident hostDescId, Ident deviceDescId, Ident deviceAddrId,
+  public XMPgpuData(String name, Ident hostDescId, Ident deviceDescId, Ident deviceAddrId,
                     XMPalignedArray alignedArray) {
     _name = name;
 
@@ -51,44 +51,44 @@ public class XMPgpudata {
     return _alignedArray;
   }
 
-  public static void translateGpudata(PragmaBlock pb, XMPglobalDecl globalDecl) throws XMPexception {
-    BlockList gpudataBody = pb.getBody();
+  public static void translateGpuData(PragmaBlock pb, XMPglobalDecl globalDecl) throws XMPexception {
+    BlockList gpuDataBody = pb.getBody();
 
     if (!XmOption.isXcalableMPGPU()) {
-      XMP.warning("use -enable-gpu option to use 'gpudata' directive");
-      pb.replace(Bcons.COMPOUND(gpudataBody));
+      XMP.warning("use -enable-gpu option to use 'gpuData' directive");
+      pb.replace(Bcons.COMPOUND(gpuDataBody));
       return;
     }
 
     // start translation
-    XobjList gpudataDecl = (XobjList)pb.getClauses();
+    XobjList gpuDataDecl = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-    XMPgpudataTable gpudataTable = new XMPgpudataTable();
+    XMPgpuDataTable gpuDataTable = new XMPgpuDataTable();
 
-    BlockList gpudataConstructorBody = Bcons.emptyBody();
-    BlockList gpudataDestructorBody = Bcons.emptyBody();
+    BlockList gpuDataConstructorBody = Bcons.emptyBody();
+    BlockList gpuDataDestructorBody = Bcons.emptyBody();
 
-    BlockList replaceBody = Bcons.blockList(Bcons.COMPOUND(gpudataConstructorBody),
-                                            Bcons.COMPOUND(gpudataBody),
-                                            Bcons.COMPOUND(gpudataDestructorBody));
+    BlockList replaceBody = Bcons.blockList(Bcons.COMPOUND(gpuDataConstructorBody),
+                                            Bcons.COMPOUND(gpuDataBody),
+                                            Bcons.COMPOUND(gpuDataDestructorBody));
 
-    XobjList varList = (XobjList)gpudataDecl.getArg(0);
+    XobjList varList = (XobjList)gpuDataDecl.getArg(0);
     for (XobjArgs i = varList.getArgs(); i != null; i = i.nextArgs()) {
       String varName = i.getArg().getString();
 
-      // FIXME check gpudataTable FIXME do not allow gpudata to be nested
-      XMPgpudata gpudata = gpudataTable.getXMPgpudata(varName);
-      if (gpudata != null) {
-        throw new XMPexception("gpudata '" + varName + "' is already declared");
+      // FIXME check gpuDataTable FIXME do not allow gpuData to be nested
+      XMPgpuData gpuData = gpuDataTable.getXMPgpuData(varName);
+      if (gpuData != null) {
+        throw new XMPexception("gpuData '" + varName + "' is already declared");
       }
 
       XMPpair<Ident, Xtype> typedSpec = XMPutil.findTypedVar(varName, pb);
       Ident varId = typedSpec.getFirst();
       Xtype varType = typedSpec.getSecond();
 
-      Ident gpudataHostDescId = replaceBody.declLocalIdent(XMP.GPU_HOST_DESC_PREFIX_ + varName, Xtype.voidPtrType);
-      Ident gpudataDeviceDescId = replaceBody.declLocalIdent(XMP.GPU_DEVICE_DESC_PREFIX_ + varName, Xtype.voidPtrType);
-      Ident gpudataDeviceAddrId = replaceBody.declLocalIdent(XMP.GPU_DEVICE_ADDR_PREFIX_ + varName, Xtype.voidPtrType);
+      Ident gpuDataHostDescId = replaceBody.declLocalIdent(XMP.GPU_HOST_DESC_PREFIX_ + varName, Xtype.voidPtrType);
+      Ident gpuDataDeviceDescId = replaceBody.declLocalIdent(XMP.GPU_DEVICE_DESC_PREFIX_ + varName, Xtype.voidPtrType);
+      Ident gpuDataDeviceAddrId = replaceBody.declLocalIdent(XMP.GPU_DEVICE_ADDR_PREFIX_ + varName, Xtype.voidPtrType);
 
       XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(varName, localXMPsymbolTable);
       if (alignedArray == null) {
@@ -111,7 +111,7 @@ public class XMPgpudata {
                 case Xtype.UNION:
                   break;
                 default:
-                  throw new XMPexception("array '" + varName + "' has has a wrong data type for gpudata");
+                  throw new XMPexception("array '" + varName + "' has has a wrong data type for gpuData");
               }
 
               addrObj = varId.Ref();
@@ -122,22 +122,22 @@ public class XMPgpudata {
             throw new XMPexception("'" + varName + "' has a wrong data type for broadcast");
         }
 
-        gpudataConstructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_init_gpudata_NOT_ALIGNED",
-                                                                  Xcons.List(gpudataHostDescId.getAddr(), gpudataDeviceDescId.getAddr(), gpudataDeviceAddrId.getAddr(),
+        gpuDataConstructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_init_gpuData_NOT_ALIGNED",
+                                                                  Xcons.List(gpuDataHostDescId.getAddr(), gpuDataDeviceDescId.getAddr(), gpuDataDeviceAddrId.getAddr(),
                                                                              addrObj, sizeObj)));
       } else {
-        gpudataConstructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_init_gpudata_ALIGNED",
-                                                                  Xcons.List(gpudataHostDescId.getAddr(), gpudataDeviceDescId.getAddr(), gpudataDeviceAddrId.getAddr(),
+        gpuDataConstructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_init_gpuData_ALIGNED",
+                                                                  Xcons.List(gpuDataHostDescId.getAddr(), gpuDataDeviceDescId.getAddr(), gpuDataDeviceAddrId.getAddr(),
                                                                              alignedArray.getAddrIdVoidRef(), alignedArray.getDescId().Ref())));
       }
 
-      gpudataDestructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_finalize_gpudata", Xcons.List(gpudataHostDescId.Ref())));
+      gpuDataDestructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_finalize_gpuData", Xcons.List(gpuDataHostDescId.Ref())));
 
-      gpudataTable.putXMPgpudata(new XMPgpudata(varName, gpudataHostDescId, gpudataDeviceDescId, gpudataDeviceAddrId, alignedArray));
+      gpuDataTable.putXMPgpuData(new XMPgpuData(varName, gpuDataHostDescId, gpuDataDeviceDescId, gpuDataDeviceAddrId, alignedArray));
     }
 
     Block replaceBlock = Bcons.COMPOUND(replaceBody);
-    replaceBlock.setProp(XMPgpudataTable.PROP, gpudataTable);
+    replaceBlock.setProp(XMPgpuDataTable.PROP, gpuDataTable);
 
     pb.replace(replaceBlock);
   }
@@ -157,9 +157,9 @@ public class XMPgpudata {
     Xobject directionArg = null;
     String clause = gpusyncDecl.getArg(1).getString();
     if (clause.equals("in")) {
-      directionArg = Xcons.IntConstant(XMPgpudata.GPUSYNC_IN);
+      directionArg = Xcons.IntConstant(XMPgpuData.GPU_SYNC_IN);
     } else if (clause.equals("out")) {
-      directionArg = Xcons.IntConstant(XMPgpudata.GPUSYNC_OUT);
+      directionArg = Xcons.IntConstant(XMPgpuData.GPU_SYNC_OUT);
     } else {
       throw new XMPexception("unknown clause for 'gpusync'");
     }
@@ -167,11 +167,11 @@ public class XMPgpudata {
     XobjList varList = (XobjList)gpusyncDecl.getArg(0);
     for (XobjArgs i = varList.getArgs(); i != null; i = i.nextArgs()) {
       String varName = i.getArg().getString();
-      XMPgpudata gpudata = XMPgpudataTable.findXMPgpudata(varName, pb);
-      if (gpudata == null) {
-        throw new XMPexception("gpudata '" + varName + "' is not declared");
+      XMPgpuData gpuData = XMPgpuDataTable.findXMPgpuData(varName, pb);
+      if (gpuData == null) {
+        throw new XMPexception("gpuData '" + varName + "' is not declared");
       } else {
-        replaceBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_sync", Xcons.List(gpudata.getHostDescId().Ref(), directionArg)));
+        replaceBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_sync", Xcons.List(gpuData.getHostDescId().Ref(), directionArg)));
       }
     }
 
