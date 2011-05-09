@@ -77,7 +77,7 @@
 #define _XMP_N_TYPE_LONG_DOUBLE_COMPLEX		521
 #define _XMP_N_TYPE_NONBASIC			599
 
-// defined in exc.xcalablemp.XMPgpudata
+// defined in exc.xcalablemp.XMPgpuData
 #define _XMP_N_GPUSYNC_IN			600
 #define _XMP_N_GPUSYNC_OUT			601
 

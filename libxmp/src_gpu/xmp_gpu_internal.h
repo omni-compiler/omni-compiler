@@ -3,17 +3,17 @@
 #include <stddef.h>
 #include "xmp_internal.h"
 
-typedef struct _XMP_gpudata_type {
+typedef struct _XMP_gpu_data_type {
   _Bool is_aligned_array;
 
   void *host_addr;
   void *device_addr;
 
-  struct _XMP_gpudata_type *device_gpudata_desc;
+  struct _XMP_gpu_data_type *device_gpu_data_desc;
   _XMP_array_t *device_array_desc;
 
   size_t size;
-} _XMP_gpudata_t;
+} _XMP_gpu_data_t;
 
 // xmp_gpu_runtime.cu
 extern int _XMP_gpu_device_count;

@@ -122,16 +122,16 @@ public class XMPgpuData {
             throw new XMPexception("'" + varName + "' has a wrong data type for broadcast");
         }
 
-        gpuDataConstructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_init_gpudata_NOT_ALIGNED",
+        gpuDataConstructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_init_data_NOT_ALIGNED",
                                                                   Xcons.List(gpuDataHostDescId.getAddr(), gpuDataDeviceDescId.getAddr(), gpuDataDeviceAddrId.getAddr(),
                                                                              addrObj, sizeObj)));
       } else {
-        gpuDataConstructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_init_gpudata_ALIGNED",
+        gpuDataConstructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_init_data_ALIGNED",
                                                                   Xcons.List(gpuDataHostDescId.getAddr(), gpuDataDeviceDescId.getAddr(), gpuDataDeviceAddrId.getAddr(),
                                                                              alignedArray.getAddrIdVoidRef(), alignedArray.getDescId().Ref())));
       }
 
-      gpuDataDestructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_finalize_gpudata", Xcons.List(gpuDataHostDescId.Ref())));
+      gpuDataDestructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_finalize_data", Xcons.List(gpuDataHostDescId.Ref())));
 
       gpuDataTable.putXMPgpuData(new XMPgpuData(varName, gpuDataHostDescId, gpuDataDeviceDescId, gpuDataDeviceAddrId, alignedArray));
     }
