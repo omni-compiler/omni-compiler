@@ -11,6 +11,6 @@ extern "C" void _XMP_gpu_sync(_XMP_gpudata_t *desc, int direction) {
   } else if (direction == _XMP_N_GPUSYNC_OUT) {
     cudaMemcpy(host_addr, device_addr, size, cudaMemcpyDeviceToHost);
   } else {
-    _XMP_fatal("unknown clause in 'gpusync' directive");
+    _XMP_fatal("unknown clause in 'gpu sync' directive");
   }
 }

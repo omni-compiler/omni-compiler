@@ -247,25 +247,30 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       pg_get_token();
       args = parse_COARRAY_clause();
     }
-    else if (pg_is_ident("gpuData")) {
-      pragmaDir = XMPpragma.GPU_DATA;
-      syntax = PragmaSyntax.SYN_PREFIX;
-
+    else if (pg_is_ident("gpu")) {
       pg_get_token();
-      args = parse_GPU_DATA_clause();
-    } else if (pg_is_ident("gpusync")) {
-      pragmaDir = XMPpragma.GPU_SYNC;
-      syntax = PragmaSyntax.SYN_EXEC;
+      if (pg_is_ident("data")) {
+        pragmaDir = XMPpragma.GPU_DATA;
+        syntax = PragmaSyntax.SYN_PREFIX;
 
-      pg_get_token();
-      args = parse_GPU_SYNC_clause();
-    } else if (pg_is_ident("gpubarrier")) {
-      pragmaDir = XMPpragma.GPU_BARRIER;
-      syntax = PragmaSyntax.SYN_EXEC;
+        pg_get_token();
+        args = parse_GPU_DATA_clause();
+      } else if (pg_is_ident("sync")) {
+        pragmaDir = XMPpragma.GPU_SYNC;
+        syntax = PragmaSyntax.SYN_EXEC;
 
-      pg_get_token();
-      args = Xcons.List();
-    }  else {
+        pg_get_token();
+        args = parse_GPU_SYNC_clause();
+      } else if (pg_is_ident("barrier")) {
+        pragmaDir = XMPpragma.GPU_BARRIER;
+        syntax = PragmaSyntax.SYN_EXEC;
+
+        pg_get_token();
+        args = Xcons.List();
+      } else {
+        error("unknown XcalableMP-GPU directive, '" + pg_tok_buf() + "'");
+      }
+    } else {
       error("unknown XcalableMP directive, '" + pg_tok_buf() + "'");
     }
  
@@ -1319,7 +1324,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     if (pg_is_ident("in") || pg_is_ident("out")) {
       clause = Xcons.String(pg_tok_buf());
     } else {
-      error("'in' or 'out' clause is required in gpusync directive");
+      error("'in' or 'out' clause is required in gpu sync directive");
     }
 
     pg_get_token();

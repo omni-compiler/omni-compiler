@@ -122,16 +122,16 @@ public class XMPgpuData {
             throw new XMPexception("'" + varName + "' has a wrong data type for broadcast");
         }
 
-        gpuDataConstructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_init_gpuData_NOT_ALIGNED",
+        gpuDataConstructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_init_gpudata_NOT_ALIGNED",
                                                                   Xcons.List(gpuDataHostDescId.getAddr(), gpuDataDeviceDescId.getAddr(), gpuDataDeviceAddrId.getAddr(),
                                                                              addrObj, sizeObj)));
       } else {
-        gpuDataConstructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_init_gpuData_ALIGNED",
+        gpuDataConstructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_init_gpudata_ALIGNED",
                                                                   Xcons.List(gpuDataHostDescId.getAddr(), gpuDataDeviceDescId.getAddr(), gpuDataDeviceAddrId.getAddr(),
                                                                              alignedArray.getAddrIdVoidRef(), alignedArray.getDescId().Ref())));
       }
 
-      gpuDataDestructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_finalize_gpuData", Xcons.List(gpuDataHostDescId.Ref())));
+      gpuDataDestructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_finalize_gpudata", Xcons.List(gpuDataHostDescId.Ref())));
 
       gpuDataTable.putXMPgpuData(new XMPgpuData(varName, gpuDataHostDescId, gpuDataDeviceDescId, gpuDataDeviceAddrId, alignedArray));
     }
@@ -144,27 +144,27 @@ public class XMPgpuData {
 
   public static void translateGpusync(PragmaBlock pb, XMPglobalDecl globalDecl) throws XMPexception {
     if (!XmOption.isXcalableMPGPU()) {
-      XMP.warning("use -enable-gpu option to use 'gpusync' directive");
+      XMP.warning("use -enable-gpu option to use 'gpu sync' directive");
       return;
     }
 
     // start translation
-    XobjList gpusyncDecl = (XobjList)pb.getClauses();
+    XobjList gpuSyncDecl = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
 
     BlockList replaceBody = Bcons.emptyBody();
 
     Xobject directionArg = null;
-    String clause = gpusyncDecl.getArg(1).getString();
+    String clause = gpuSyncDecl.getArg(1).getString();
     if (clause.equals("in")) {
       directionArg = Xcons.IntConstant(XMPgpuData.GPU_SYNC_IN);
     } else if (clause.equals("out")) {
       directionArg = Xcons.IntConstant(XMPgpuData.GPU_SYNC_OUT);
     } else {
-      throw new XMPexception("unknown clause for 'gpusync'");
+      throw new XMPexception("unknown clause for 'gpu sync'");
     }
 
-    XobjList varList = (XobjList)gpusyncDecl.getArg(0);
+    XobjList varList = (XobjList)gpuSyncDecl.getArg(0);
     for (XobjArgs i = varList.getArgs(); i != null; i = i.nextArgs()) {
       String varName = i.getArg().getString();
       XMPgpuData gpuData = XMPgpuDataTable.findXMPgpuData(varName, pb);
