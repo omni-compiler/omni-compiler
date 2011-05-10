@@ -256,7 +256,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       break;
 
     case FLOAT_CONSTANT:
-      print(v.getFloat());
+      print(v.getFloatString());
       break;
 
     case LONGLONG_CONSTANT:
@@ -382,6 +382,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
 
       if (prop != null) {
         println();
+        println("cudaThreadSynchronize();");
         print("}");
       }
       break;

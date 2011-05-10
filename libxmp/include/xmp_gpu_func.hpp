@@ -42,7 +42,7 @@ void _XMP_gpu_calc_config_params(unsigned long long *total_iter,
                                  int *block_x, int *block_y, int *block_z,
                                  int *thread_x, int *thread_y, int *thread_z,
                                  T lower, T upper, T stride) {
-  unsigned long long total_iter_v = _XMP_M_COUNT_TRIPLETi(lower, upper, stride);
+  unsigned long long total_iter_v = _XMP_M_COUNT_TRIPLETi(lower, (upper - 1), stride);
 
   *total_iter = total_iter_v;
 
@@ -90,7 +90,7 @@ void _XMP_gpu_calc_config_params_NUM_THREADS(unsigned long long *total_iter,
                                              int *thread_x, int *thread_y, int *thread_z,
                                              int thread_x_v, int thread_y_v, int thread_z_v,
                                              T lower, T upper, T stride) {
-  unsigned long long total_iter_v = _XMP_M_COUNT_TRIPLETi(lower, upper, stride);
+  unsigned long long total_iter_v = _XMP_M_COUNT_TRIPLETi(lower, (upper - 1), stride);
   unsigned long long num_threads = thread_x_v * thread_y_v * thread_z_v;
 
   *total_iter = total_iter_v;
