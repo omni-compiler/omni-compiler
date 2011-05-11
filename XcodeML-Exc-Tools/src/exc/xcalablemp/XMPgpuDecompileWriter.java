@@ -511,7 +511,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
   private void printStorageClass(Ident id) {
     switch(id.getStorageClass()){
       case AUTO:
-        print("auto ");
+        // print("auto ");
         break;
       case SNULL: // member
         {
@@ -838,7 +838,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
   private void printIdentDecl(Ident id) {
     switch (id.getStorageClass()) {
       case AUTO:
-        print("auto ");
+        // print("auto ");
         break;
       case SNULL:
         printDeclType(id.Type(), id.getName());

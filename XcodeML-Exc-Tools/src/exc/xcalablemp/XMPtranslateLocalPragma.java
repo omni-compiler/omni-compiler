@@ -332,8 +332,8 @@ public class XMPtranslateLocalPragma {
               String varName = x.getName();
               if (!(XMPutil.hasIdent(params, varName) ||
                    (XMPutil.hasIdent(localVars, varName)))) {
-                Ident id = loopBlock.findVarIdent(varName);
-                String indVarName = loopBlock.getInductionVar().getName();
+                Xobject indVarObj = loopBlock.getInductionVar();
+                String indVarName = indVarObj.getName();
                 if (indVarName.equals(varName)) {
                   XobjList loopIter = XMPutil.getLoopIter(loopBlock, indVarName);
 
@@ -346,9 +346,12 @@ public class XMPtranslateLocalPragma {
                   Ident stepId = (Ident)loopIter.getArg(2);
                   params.add(Ident.Param(stepId.getName(), stepId.Type()));
 
-                  localVars.add(Ident.Local(id.getName(), id.Type()));
+                  localVars.add(Ident.Local(indVarName, indVarObj.Type()));
                 } else {
-                  params.add(Ident.Param(varName, id.Type()));
+                  Ident id = loopBlock.findVarIdent(varName);
+                  if (id != null) {
+                    params.add(Ident.Param(varName, id.Type()));
+                  }
                 }
               }
             } break;
