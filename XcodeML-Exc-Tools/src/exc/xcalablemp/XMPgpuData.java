@@ -142,7 +142,7 @@ public class XMPgpuData {
     pb.replace(replaceBlock);
   }
 
-  public static void translateGpusync(PragmaBlock pb, XMPglobalDecl globalDecl) throws XMPexception {
+  public static void translateGpuSync(PragmaBlock pb, XMPglobalDecl globalDecl) throws XMPexception {
     if (!XmOption.isXcalableMPGPU()) {
       XMP.warning("use -enable-gpu option to use 'gpu sync' directive");
       return;

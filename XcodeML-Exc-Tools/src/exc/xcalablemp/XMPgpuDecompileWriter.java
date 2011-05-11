@@ -382,7 +382,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
 
       if (prop != null) {
         println();
-        println("cudaThreadSynchronize();");
+        println("_XMP_GPU_M_BARRIER_KERNEL();");
         print("}");
       }
       break;
@@ -489,8 +489,17 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       op = "!";  printUnaryExpr(op,v.left()); break;
     case OMP_PRAGMA:
     case XMP_PRAGMA:
-      // System.err.println("OpenMP/XcalableMP pragma is ignored!!!");
-      print(v.getArg(2));
+      {
+        String pragmaName = v.getArg(0).getString();
+        switch (XMPpragma.valueOf(pragmaName)) {
+          case GPU_BARRIER:
+            println();
+            print("_XMP_GPU_M_BARRIER_THREADS();");
+            break;
+          default:
+            fatal(pragmaName + " directive is not available in GPU kernel");
+        }
+      }
       break;
 
     default:

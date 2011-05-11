@@ -19,6 +19,10 @@
 #define _XMP_M_MAX(a_, b_) ((a_) > (b_) ? (a_) : (b_))
 #define _XMP_M_MIN(a_, b_) ((a_) > (b_) ? (b_) : (a_))
 
+// --- cuda barrier func
+#define _XMP_GPU_M_BARRIER_THREADS() __syncthreads()
+#define _XMP_GPU_M_BARRIER_KERNEL() cudaThreadSynchronize()
+
 extern "C" void _XMP_fatal(char *msg);
 
 extern int _XMP_gpu_max_thread;
