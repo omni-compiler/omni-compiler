@@ -41,3 +41,13 @@ void _XMP_finalize_world(void) {
     MPI_Finalize();
   }
 }
+
+int _XMP_split_world_by_color(int color) {
+  int new_comm_rank;
+  MPI_Comm new_comm;
+  MPI_Comm_split(MPI_COMM_WORLD, color, _XMP_world_rank, &new_comm);
+  MPI_Comm_rank(new_comm, &new_comm_rank);
+  MPI_Comm_free(&new_comm);
+
+  return new_comm_rank;
+}

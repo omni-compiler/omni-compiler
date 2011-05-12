@@ -233,6 +233,7 @@ extern void *_XMP_world_nodes;
 
 extern void _XMP_init_world(int *argc, char ***argv);
 extern void _XMP_finalize_world(void);
+extern int _XMP_split_world_by_color(int color);
 
 // xmp_runtime.c
 extern void _XMP_init(void);
