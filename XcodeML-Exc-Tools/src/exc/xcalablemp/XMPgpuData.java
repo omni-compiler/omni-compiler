@@ -81,10 +81,7 @@ public class XMPgpuData {
 
     BlockList gpuDataConstructorBody = Bcons.emptyBody();
     BlockList gpuDataDestructorBody = Bcons.emptyBody();
-
-    BlockList replaceBody = Bcons.blockList(Bcons.COMPOUND(gpuDataConstructorBody),
-                                            Bcons.COMPOUND(gpuDataBody),
-                                            Bcons.COMPOUND(gpuDataDestructorBody));
+    BlockList replaceBody = Bcons.emptyBody();
 
     XobjList varList = (XobjList)gpuDataDecl.getArg(0);
     for (XobjArgs i = varList.getArgs(); i != null; i = i.nextArgs()) {
@@ -163,6 +160,9 @@ public class XMPgpuData {
                                                 alignedArray, alignTemplate));
     }
 
+    replaceBody.add(Bcons.COMPOUND(gpuDataConstructorBody));
+    replaceBody.add(Bcons.COMPOUND(gpuDataBody));
+    replaceBody.add(Bcons.COMPOUND(gpuDataDestructorBody));
     Block replaceBlock = Bcons.COMPOUND(replaceBody);
     replaceBlock.setProp(XMPgpuDataTable.PROP, gpuDataTable);
 
