@@ -11,6 +11,8 @@ int _XMP_gpu_max_block_dim_x;
 int _XMP_gpu_max_block_dim_y;
 int _XMP_gpu_max_block_dim_z;
 
+static void *_XMP_gpu_dummy;
+
 static int _XMP_gpu_select_device(void) {
   char host_name[BUF_LEN];
   if (gethostname(host_name, BUF_LEN) < 0) {
@@ -55,8 +57,11 @@ extern "C" void _XMP_gpu_init(void) {
   _XMP_gpu_max_block_dim_x = dev_prop.maxGridSize[0];
   _XMP_gpu_max_block_dim_y = dev_prop.maxGridSize[1];
   _XMP_gpu_max_block_dim_z = dev_prop.maxGridSize[2];
+
+  _XMP_gpu_alloc(&_XMP_gpu_dummy, sizeof(int));
 }
 
 extern "C" void _XMP_gpu_finalize(void) {
+  _XMP_gpu_free(_XMP_gpu_dummy);
   return;
 }

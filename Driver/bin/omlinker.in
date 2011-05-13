@@ -29,7 +29,9 @@ newOpts=''
 for i in ${OM_OPTIONS}; do
     case ${i} in
         -enable-gpu)
-            INPFILES="${INPFILES} *.xmpgpu.o";;
+            if [ -f "*.xmpgpu.o" ]; then
+              INPFILES="${INPFILES} *.xmpgpu.o"
+            fi;;
         *)
             newOpts="${newOpts} ${i}";;
     esac

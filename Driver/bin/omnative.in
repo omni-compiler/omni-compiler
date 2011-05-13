@@ -37,7 +37,9 @@ newOpts=''
 for i in ${OM_OPTIONS}; do
     case ${i} in
         -enable-gpu)
-            ${GPU_CMD} -I${OMNI_HOME}/include -c ${INPFILE_FILENAME}.cu -o ${INPFILE_FILENAME}.xmpgpu.o;;
+            if [ -f "${INPFILE_FILENAME}.cu" ]; then
+                ${GPU_CMD} -I${OMNI_HOME}/include -c ${INPFILE_FILENAME}.cu -o ${INPFILE_FILENAME}.xmpgpu.o
+            fi;;
         -tmp)
             cp ${INPFILE} __omni_tmp_${INPFILE_BASENAME};;
         *)
