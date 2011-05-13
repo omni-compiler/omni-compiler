@@ -282,13 +282,11 @@ public class XMPtranslateLocalPragma {
 
   private XobjList setupGPUparallelFunc(Ident funcId, CforBlock loopBlock, PragmaBlock pb) throws XMPexception {
     // get params
-    XMPpair<XobjList, XobjList> ret = getGPUfuncParams(loopBlock);
-    XobjList paramIdList = ret.getFirst();
-    XobjList localVars = ret.getSecond();
+    XobjList paramIdList = getGPUfuncParams(loopBlock);
 
     // setup & decompile GPU function body
     ((FunctionType)funcId.Type()).setFuncParamIdList(paramIdList);
-    XMPgpuDecompiler.decompile(funcId, paramIdList, localVars, loopBlock, pb, _globalDecl.getEnv());
+    XMPgpuDecompiler.decompile(funcId, paramIdList, loopBlock, pb, _globalDecl.getEnv());
 
     // generate func args
     XobjList funcArgs = Xcons.List();
@@ -316,9 +314,9 @@ public class XMPtranslateLocalPragma {
     return funcArgs;
   }
 
-  private XMPpair<XobjList, XobjList> getGPUfuncParams(CforBlock loopBlock) throws XMPexception {
+  private XobjList getGPUfuncParams(CforBlock loopBlock) throws XMPexception {
     XobjList params = Xcons.List();
-    XobjList localVars = Xcons.List();
+    XobjList loopVars = Xcons.List();
 
     BasicBlockExprIterator iter = new BasicBlockExprIterator(loopBlock.getBody());
     for (iter.init(); !iter.end(); iter.next()) {
@@ -331,12 +329,14 @@ public class XMPtranslateLocalPragma {
             {
               String varName = x.getName();
               if (!(XMPutil.hasIdent(params, varName) ||
-                   (XMPutil.hasIdent(localVars, varName)))) {
-                Xobject indVarObj = loopBlock.getInductionVar();
-                String indVarName = indVarObj.getName();
-                if (indVarName.equals(varName)) {
-                  XobjList loopIter = XMPutil.getLoopIter(loopBlock, indVarName);
-
+                    XMPutil.hasElmt(loopVars, varName))) {
+                XobjList loopIter = XMPutil.getLoopIter(loopBlock, varName);
+                if (loopIter == null) {
+                  Ident id = loopBlock.findVarIdent(varName);
+                  if (id != null) {
+                    params.add(Ident.Param(varName, id.Type()));
+                  }
+                } else {
                   Ident initId = (Ident)loopIter.getArg(0);
                   params.add(Ident.Param(initId.getName(), initId.Type()));
 
@@ -346,12 +346,7 @@ public class XMPtranslateLocalPragma {
                   Ident stepId = (Ident)loopIter.getArg(2);
                   params.add(Ident.Param(stepId.getName(), stepId.Type()));
 
-                  localVars.add(Ident.Local(indVarName, indVarObj.Type()));
-                } else {
-                  Ident id = loopBlock.findVarIdent(varName);
-                  if (id != null) {
-                    params.add(Ident.Param(varName, id.Type()));
-                  }
+                  loopVars.add(Xcons.String(varName));
                 }
               }
             } break;
@@ -378,7 +373,7 @@ public class XMPtranslateLocalPragma {
       }
     }
 
-    return new XMPpair<XobjList, XobjList>(params, localVars);
+    return params;
   }
 
   private Block createOMPpragmaBlock(OMPpragma pragma, Xobject args, Block body) {
