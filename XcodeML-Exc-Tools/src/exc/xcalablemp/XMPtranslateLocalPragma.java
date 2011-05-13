@@ -224,17 +224,17 @@ public class XMPtranslateLocalPragma {
     XobjList multicoreClause = (XobjList)loopDecl.getArg(3);
     if (multicoreClause != null) {
       String devName = multicoreClause.getArg(0).getString();
-      XobjList devArgs = (XobjList)multicoreClause.getArg(1);
 
       if (devName.equals("gpu")) {
         if (XmOption.isXcalableMPGPU()) {
-          Block newLoopBlock = translateGpuClause(devArgs, reductionRefList, schedBaseBlock);
+          Block newLoopBlock = translateGpuClause(pb, reductionRefList, schedBaseBlock);
           schedBaseBlock.replace(newLoopBlock);
         } else {
           XMP.warning("use '-enable-gpu' compiler option to use gpu clause");
         }
       } else if (devName.equals("threads")) {
         if (XmOption.isXcalableMPthreads()) {
+          XobjList devArgs = (XobjList)multicoreClause.getArg(1);
           Block newLoopBlock = translateThreadsClauseToOMPpragma(devArgs, reductionRefList, schedBaseBlock);
           schedBaseBlock.replace(newLoopBlock);
         } else {
@@ -270,17 +270,17 @@ public class XMPtranslateLocalPragma {
   }
 
   // XXX only supports C language
-  private Block translateGpuClause(XobjList gpuClause, XobjList reductionRefList,
+  private Block translateGpuClause(PragmaBlock pb, XobjList reductionRefList,
                                    CforBlock loopBlock) throws XMPexception {
     Ident funcId = _globalDecl.declExternIdent(_globalDecl.genSym(XMP.GPU_FUNC_PREFIX),
                                                Xtype.Function(Xtype.voidType));
 
-    XobjList funcArgs = setupGPUparallelFunc(funcId, loopBlock, gpuClause);
+    XobjList funcArgs = setupGPUparallelFunc(funcId, loopBlock, pb);
 
     return _globalDecl.createFuncCallBlock(funcId.getName(), funcArgs);
   }
 
-  private XobjList setupGPUparallelFunc(Ident funcId, CforBlock loopBlock, XobjList gpuClause) throws XMPexception {
+  private XobjList setupGPUparallelFunc(Ident funcId, CforBlock loopBlock, PragmaBlock pb) throws XMPexception {
     // get params
     XMPpair<XobjList, XobjList> ret = getGPUfuncParams(loopBlock);
     XobjList paramIdList = ret.getFirst();
@@ -288,7 +288,7 @@ public class XMPtranslateLocalPragma {
 
     // setup & decompile GPU function body
     ((FunctionType)funcId.Type()).setFuncParamIdList(paramIdList);
-    XMPgpuDecompiler.decompile(funcId, paramIdList, localVars, loopBlock, gpuClause, _globalDecl.getEnv());
+    XMPgpuDecompiler.decompile(funcId, paramIdList, localVars, loopBlock, pb, _globalDecl.getEnv());
 
     // generate func args
     XobjList funcArgs = Xcons.List();

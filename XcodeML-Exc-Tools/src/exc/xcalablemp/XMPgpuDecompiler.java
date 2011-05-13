@@ -19,7 +19,8 @@ public class XMPgpuDecompiler {
   private static final String GPU_SRC_EXTENSION = ".cu";
 
   public static void decompile(Ident id, XobjList paramIdList, XobjList localVarIdList,
-                               CforBlock loopBlock, XobjList gpuClause, XobjectFile env) throws XMPexception {
+                               CforBlock loopBlock, PragmaBlock pb, XobjectFile env) throws XMPexception {
+    XobjList gpuClause = (XobjList)pb.getClauses().getArg(3).getArg(1);
     BlockList loopBody = loopBlock.getBody();
 
     // FIXME decl & use thread id (local var)
