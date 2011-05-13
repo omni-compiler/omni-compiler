@@ -34,7 +34,7 @@ public class XMPalignedArray {
   private boolean		_hasShadow;
   private boolean		_reallocChecked;
   private boolean		_realloc;
-  private XMPtemplate		_alignedTemplate;
+  private XMPtemplate		_alignTemplate;
 
   public static int convertDistMannerToAlignManner(int distManner) throws XMPexception {
     switch (distManner) {
@@ -52,7 +52,7 @@ public class XMPalignedArray {
   public XMPalignedArray(String name, Xtype type, int dim,
                          Vector<Long> sizeVector, Vector<Ident> accIdVector,
                          Ident arrayId, Ident descId, Ident addrId,
-                         XMPtemplate alignedTemplate) {
+                         XMPtemplate alignTemplate) {
     _name = name;
     _type = type;
     _dim = dim;
@@ -75,7 +75,7 @@ public class XMPalignedArray {
     _addrId = addrId;
     _hasShadow = false;
     _reallocChecked = false;
-    _alignedTemplate = alignedTemplate;
+    _alignTemplate = alignTemplate;
   }
 
   public String getName() {
@@ -184,8 +184,8 @@ public class XMPalignedArray {
     return _shadowVector.get(index);
   }
 
-  public XMPtemplate getAlignedTemplate() {
-    return _alignedTemplate;
+  public XMPtemplate getAlignTemplate() {
+    return _alignTemplate;
   }
 
   public boolean checkRealloc() throws XMPexception {

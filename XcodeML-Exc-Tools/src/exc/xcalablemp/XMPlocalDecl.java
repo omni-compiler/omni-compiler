@@ -33,12 +33,16 @@ public class XMPlocalDecl {
   }
 
   public static XMPobject getXMPobject(String objectName, XMPsymbolTable localXMPsymbolTable, XMPglobalDecl globalDecl) {
-    XMPobject o = localXMPsymbolTable.getXMPobject(objectName);
-    if (o == null) {
-      o = globalDecl.getXMPobject(objectName);
+    XMPobject o = null;
+    if (localXMPsymbolTable != null) {
+      o = localXMPsymbolTable.getXMPobject(objectName);
     }
 
-    return o;
+    if (o == null) {
+      return globalDecl.getXMPobject(objectName);
+    } else {
+      return o;
+    }
   }
 
   public static XMPnodes getXMPnodes(String nodesName, XMPsymbolTable localXMPsymbolTable, XMPglobalDecl globalDecl) {
