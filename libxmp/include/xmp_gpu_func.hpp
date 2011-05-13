@@ -38,7 +38,54 @@ __device__ void _XMP_gpu_calc_thread_id(T *index) {
           (threadIdx.z * blockDim.x * blockDim.y) +
          ((blockIdx.x +
           (blockIdx.y * gridDim.x) +
-          (blockIdx.z * gridDim.x * gridDim.y)) * (blockDim.z * blockDim.y * blockDim.x));
+          (blockIdx.z * gridDim.x * gridDim.y)) * (blockDim.x * blockDim.y * blockDim.z));
+}
+
+#define _XMP_GPU_M_CALC_CONFIG_PARAMS(_x, _y, _z) \
+{ \
+  unsigned long long num_threads = _x * _y * _z; \
+\
+  *total_iter = total_iter_v; \
+\
+  *thread_x = _x; \
+  *thread_y = _y; \
+  *thread_z = _z; \
+\
+  if (num_threads > _XMP_gpu_max_thread) { \
+    _XMP_fatal("too many threads are requested for GPU"); \
+  } \
+\
+  if (num_threads >= total_iter_v) { \
+    *block_x = 1; \
+    *block_y = 1; \
+    *block_z = 1; \
+    return; \
+  } \
+\
+  total_iter_v = _XMP_M_CEILi(total_iter_v, num_threads); \
+\
+  if (total_iter_v > _XMP_gpu_max_block_dim_x) { \
+    *block_x = _XMP_gpu_max_block_dim_x; \
+\
+    total_iter_v = _XMP_M_CEILi(total_iter_v, _XMP_gpu_max_block_dim_x); \
+    if (total_iter_v > _XMP_gpu_max_block_dim_y) { \
+      *block_y = _XMP_gpu_max_block_dim_y; \
+\
+      total_iter_v = _XMP_M_CEILi(total_iter_v, _XMP_gpu_max_block_dim_y); \
+      if (total_iter_v > _XMP_gpu_max_block_dim_z) { \
+        _XMP_fatal("data is too big for GPU"); \
+      } else { \
+        *block_z = total_iter_v; \
+      } \
+    } else { \
+      *block_y = total_iter_v; \
+      *block_z = 1; \
+    } \
+  } else { \
+    *block_x = total_iter_v; \
+    *block_y = 1; \
+    *block_z = 1; \
+  } \
 }
 
 template<typename T>
@@ -47,45 +94,7 @@ void _XMP_gpu_calc_config_params(unsigned long long *total_iter,
                                  int *thread_x, int *thread_y, int *thread_z,
                                  T lower, T upper, T stride) {
   unsigned long long total_iter_v = _XMP_M_COUNT_TRIPLETi(lower, (upper - 1), stride);
-
-  *total_iter = total_iter_v;
-
-  *thread_x = 16;
-  *thread_y = 16;
-  *thread_z = 1;
-
-  if ((16 * 16) >= total_iter_v) {
-    *block_x = 1;
-    *block_y = 1;
-    *block_z = 1;
-    return;
-  }
-
-  total_iter_v = _XMP_M_CEILi(total_iter_v, (16 * 16));
-
-  // calc block_x, block_y, block_z
-  if (total_iter_v > _XMP_gpu_max_block_dim_x) {
-    *block_x = _XMP_gpu_max_block_dim_x;
-
-    total_iter_v = _XMP_M_CEILi(total_iter_v, _XMP_gpu_max_block_dim_x);
-    if (total_iter_v > _XMP_gpu_max_block_dim_y) {
-      *block_y = _XMP_gpu_max_block_dim_y;
-
-      total_iter_v = _XMP_M_CEILi(total_iter_v, _XMP_gpu_max_block_dim_y);
-      if (total_iter_v > _XMP_gpu_max_block_dim_z) {
-        _XMP_fatal("data is too big for GPU");
-      } else {
-        *block_z = total_iter_v;
-      }
-    } else {
-      *block_y = total_iter_v;
-      *block_z = 1;
-    }
-  } else {
-    *block_x = total_iter_v;
-    *block_y = 1;
-    *block_z = 1;
-  }
+  _XMP_GPU_M_CALC_CONFIG_PARAMS(16, 16, 1);
 }
 
 template<typename T>
@@ -95,50 +104,7 @@ void _XMP_gpu_calc_config_params_NUM_THREADS(unsigned long long *total_iter,
                                              int thread_x_v, int thread_y_v, int thread_z_v,
                                              T lower, T upper, T stride) {
   unsigned long long total_iter_v = _XMP_M_COUNT_TRIPLETi(lower, (upper - 1), stride);
-  unsigned long long num_threads = thread_x_v * thread_y_v * thread_z_v;
-
-  *total_iter = total_iter_v;
-
-  *thread_x = thread_x_v;
-  *thread_y = thread_y_v;
-  *thread_z = thread_z_v;
-
-  if (num_threads > _XMP_gpu_max_thread) {
-    _XMP_fatal("too many threads are requested for GPU");
-  }
-
-  if (num_threads >= total_iter_v) {
-    *block_x = 1;
-    *block_y = 1;
-    *block_z = 1;
-    return;
-  }
-
-  total_iter_v = _XMP_M_CEILi(total_iter_v, num_threads);
-
-  // calc block_x, block_y, block_z
-  if (total_iter_v > _XMP_gpu_max_block_dim_x) {
-    *block_x = _XMP_gpu_max_block_dim_x;
-    
-    total_iter_v = _XMP_M_CEILi(total_iter_v, _XMP_gpu_max_block_dim_x);
-    if (total_iter_v > _XMP_gpu_max_block_dim_y) {
-      *block_y = _XMP_gpu_max_block_dim_y;
-
-      total_iter_v = _XMP_M_CEILi(total_iter_v, _XMP_gpu_max_block_dim_y);
-      if (total_iter_v > _XMP_gpu_max_block_dim_z) {
-        _XMP_fatal("data is too big for GPU");
-      } else {
-        *block_z = total_iter_v;
-      }
-    } else {
-      *block_y = total_iter_v;
-      *block_z = 1;
-    }
-  } else {
-    *block_x = total_iter_v;
-    *block_y = 1;
-    *block_z = 1;
-  }
+  _XMP_GPU_M_CALC_CONFIG_PARAMS(thread_x_v, thread_y_v, thread_z_v);
 }
 
 #endif // _XMP_GPU_RUNTIME_FUNC_DECL

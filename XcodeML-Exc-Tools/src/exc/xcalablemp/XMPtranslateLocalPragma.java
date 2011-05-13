@@ -199,6 +199,7 @@ public class XMPtranslateLocalPragma {
 
     // schedule loop
     if (loopDecl.getArg(0) == null) {
+      loopDecl.setArg(0, Xcons.List(Xcons.String(schedBaseBlock.getInductionVar().getName())));
       translateFollowingLoop(pb, schedBaseBlock);
     }
     else {

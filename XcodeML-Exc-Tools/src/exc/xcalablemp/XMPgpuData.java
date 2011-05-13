@@ -111,7 +111,7 @@ public class XMPgpuData {
                 case Xtype.UNION:
                   break;
                 default:
-                  throw new XMPexception("array '" + varName + "' has has a wrong data type for gpuData");
+                  throw new XMPexception("array '" + varName + "' has has a wrong data type for gpu data");
               }
 
               addrObj = varId.Ref();
@@ -119,7 +119,7 @@ public class XMPgpuData {
                                                        Xcons.SizeOf(((ArrayType)varType).getArrayElementType()));
             } break;
           default:
-            throw new XMPexception("'" + varName + "' has a wrong data type for broadcast");
+            throw new XMPexception("'" + varName + "' has a wrong data type for gpu data");
         }
 
         gpuDataConstructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_init_data_NOT_ALIGNED",
