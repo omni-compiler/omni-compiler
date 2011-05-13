@@ -286,7 +286,6 @@ public class XMPtranslateLocalPragma {
     XobjList paramIdList = getGPUfuncParams(loopBlock);
 
     // setup & decompile GPU function body
-    ((FunctionType)funcId.Type()).setFuncParamIdList(paramIdList);
     XMPgpuDecompiler.decompile(funcId, paramIdList, loopBlock, pb, _globalDecl.getEnv());
 
     // generate func args
@@ -338,15 +337,6 @@ public class XMPtranslateLocalPragma {
                     params.add(Ident.Param(varName, id.Type()));
                   }
                 } else {
-                  Ident initId = (Ident)loopIter.getArg(0);
-                  params.add(Ident.Param(initId.getName(), initId.Type()));
-
-                  Ident condId = (Ident)loopIter.getArg(1);
-                  params.add(Ident.Param(condId.getName(), condId.Type()));
-
-                  Ident stepId = (Ident)loopIter.getArg(2);
-                  params.add(Ident.Param(stepId.getName(), stepId.Type()));
-
                   loopVars.add(Xcons.String(varName));
                 }
               }

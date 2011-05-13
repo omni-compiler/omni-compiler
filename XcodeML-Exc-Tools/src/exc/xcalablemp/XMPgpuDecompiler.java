@@ -40,12 +40,20 @@ public class XMPgpuDecompiler {
       localDecls.add(Xcons.List(Xcode.VAR_DECL, loopVarId, null, null));
 
       XobjList loopIter = XMPutil.getLoopIter(loopBlock, loopVarName);
-      if (loopIter != null) {
-        // FIXME consider array dimension
-        loopIterRefList.add(((Ident)(loopIter.getArg(0))).Ref());
-        loopIterRefList.add(((Ident)(loopIter.getArg(1))).Ref());
-        loopIterRefList.add(((Ident)(loopIter.getArg(2))).Ref());
-      }
+
+      Ident initId = (Ident)loopIter.getArg(0);
+      paramIdList.add(Ident.Param(initId.getName(), initId.Type()));
+
+      Ident condId = (Ident)loopIter.getArg(1);
+      paramIdList.add(Ident.Param(condId.getName(), condId.Type()));
+
+      Ident stepId = (Ident)loopIter.getArg(2);
+      paramIdList.add(Ident.Param(stepId.getName(), stepId.Type()));
+
+      // FIXME consider array dimension
+      loopIterRefList.add(initId.Ref());
+      loopIterRefList.add(condId.Ref());
+      loopIterRefList.add(stepId.Ref());
     }
 
     XMPpair<XobjList, XobjList> deviceFuncParamArgs = genDeviceFuncParamArgs(paramIdList);
@@ -97,6 +105,7 @@ public class XMPgpuDecompiler {
 
     // create Defs
     Xobject hostBodyObj = Xcons.CompoundStatement(hostBodyIdList, hostBodyDecls, Xcons.List(confParamFuncCall, deviceFuncCall));
+    ((FunctionType)id.Type()).setFuncParamIdList(paramIdList);
     XobjectDef hostDef = XobjectDef.Func(id, paramIdList, null, hostBodyObj);
 
     Ident threadNumId = Ident.Local("_XMP_GPU_THREAD_ID", Xtype.unsignedlonglongType);
