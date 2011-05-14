@@ -18,8 +18,8 @@ public class XMPgpuDecompileWriter extends PrintWriter {
     _env = env;
   }
 
-  public void printDeviceFunc(XobjectDef def, Ident id) {
-    printWithIdentList(def.getDef(), _env.getGlobalIdentList(), true, id);
+  public void printDeviceFunc(XobjectDef def, Ident deviceFuncId) {
+    printWithIdentList(def.getDef(), _env.getGlobalIdentList(), true, deviceFuncId);
   }
 
   public void printHostFunc(XobjectDef def) {
@@ -50,10 +50,6 @@ public class XMPgpuDecompileWriter extends PrintWriter {
           }
 
           String funcName = id.getName();
-          if (isDeviceFunc) {
-            funcName = new String(funcName + "_DEVICE");
-          }
-
           if (id.Type().isFuncProto() && id.Type().getFuncParam() != null) {
             XobjArgs a = id.Type().getFuncParam().getArgs();
             XobjArgs n = v.getArg(1).getArgs();

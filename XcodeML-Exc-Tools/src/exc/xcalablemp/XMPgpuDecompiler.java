@@ -18,7 +18,7 @@ public class XMPgpuDecompiler {
   private static final int BUFFER_SIZE = 4096;
   private static final String GPU_SRC_EXTENSION = ".cu";
 
-  public static void decompile(Ident id, XobjList paramIdList,
+  public static void decompile(Ident hostFuncId, XobjList paramIdList,
                                CforBlock loopBlock, PragmaBlock pb, XobjectFile env) throws XMPexception {
     XobjList loopDecl = (XobjList)pb.getClauses();
     XobjList gpuClause = (XobjList)loopDecl.getArg(3).getArg(1);
@@ -82,7 +82,8 @@ public class XMPgpuDecompiler {
     XMPutil.mergeLists(confParamFuncArgs, loopIterRefList);
     Xobject confParamFuncCall = confParamFuncId.Call(confParamFuncArgs);
 
-    Ident deviceFuncId = XMP.getMacroId(id.getName() + "_DEVICE");
+    Ident deviceFuncId = XMP.getMacroId(hostFuncId.getName() + "_DEVICE");
+    ((FunctionType)deviceFuncId.Type()).setFuncParamIdList(deviceFuncParams);
     Xobject deviceFuncCall = deviceFuncId.Call(deviceFuncArgs);
     deviceFuncCall.setProp(GPU_FUNC_CONF,
                            (Object)Xcons.List(blockXid, blockYid, blockZid,
@@ -99,8 +100,8 @@ public class XMPgpuDecompiler {
 
     // create Defs
     Xobject hostBodyObj = Xcons.CompoundStatement(hostBodyIdList, hostBodyDecls, Xcons.List(confParamFuncCall, deviceFuncCall));
-    ((FunctionType)id.Type()).setFuncParamIdList(paramIdList);
-    XobjectDef hostDef = XobjectDef.Func(id, paramIdList, null, hostBodyObj);
+    ((FunctionType)hostFuncId.Type()).setFuncParamIdList(paramIdList);
+    XobjectDef hostDef = XobjectDef.Func(hostFuncId, paramIdList, null, hostBodyObj);
 
     Ident threadNumId = Ident.Local("_XMP_GPU_THREAD_ID", Xtype.unsignedlonglongType);
     localVars.add(threadNumId);
@@ -108,15 +109,15 @@ public class XMPgpuDecompiler {
     BlockList newLoopBlockList = Bcons.emptyBody(localVars, localDecls);
 
     XobjList calcIterFuncArgs = Xcons.List(threadNumId.Ref());
-//    XMPutil.mergeLists(calcIterFuncArgs, loopIterRefList);
-//    XMPutil.mergeLists(calcIterFuncArgs, loopIndexAddrList);
+    XMPutil.mergeLists(calcIterFuncArgs, loopIterRefList);
+    XMPutil.mergeLists(calcIterFuncArgs, loopIndexAddrList);
     newLoopBlockList.insert(createFuncCallBlock("_XMP_gpu_calc_iter", calcIterFuncArgs));
 
     newLoopBlockList.insert(createFuncCallBlock("_XMP_gpu_calc_thread_id", Xcons.List(threadNumId.getAddr())));
     newLoopBlockList.add(Xcons.List(Xcode.IF_STATEMENT, Xcons.binaryOp(Xcode.LOG_LT_EXPR, threadNumId.Ref(), totalIterId.Ref()), loopBody.toXobject(), null));
 
     Xobject deviceBodyObj = newLoopBlockList.toXobject();
-    XobjectDef deviceDef = XobjectDef.Func(id, deviceFuncParams, null, deviceBodyObj);
+    XobjectDef deviceDef = XobjectDef.Func(deviceFuncId, deviceFuncParams, null, deviceBodyObj);
 
     try {
       if (out == null) {
@@ -129,7 +130,7 @@ public class XMPgpuDecompiler {
       out.println();
 
       // decompile device function
-      out.printDeviceFunc(deviceDef, id);
+      out.printDeviceFunc(deviceDef, deviceFuncId);
       out.println();
 
       // decompie wrapping function
