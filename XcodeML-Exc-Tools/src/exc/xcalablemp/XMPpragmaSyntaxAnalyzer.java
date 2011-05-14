@@ -267,6 +267,12 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
         pg_get_token();
         args = Xcons.List();
+      } else if (pg_is_ident("loop")) {
+        pragmaDir = XMPpragma.GPU_LOOP;
+        syntax = PragmaSyntax.SYN_PREFIX;
+
+        pg_get_token();
+        args = parse_GPU_LOOP_clause();
       } else {
         error("unknown XcalableMP-GPU directive, '" + pg_tok_buf() + "'");
       }
@@ -1260,75 +1266,29 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   }
 
   private XobjList parse_GPU_DATA_clause() throws XMPexception {
-    XobjList varList = Xcons.List();
-
-    if (pg_tok() != '(') {
-      error("'(' is expected before gpuData <variable> list");
-    }
-
-    do {
-      pg_get_token();
-      if (pg_tok() == PG_IDENT) {
-        varList.add(Xcons.String(pg_tok_buf()));
-      }
-      else {
-        error("<variable> for gpuData directive is expected");
-      }
-
-      pg_get_token();
-      if (pg_tok() == ',') {
-        continue;
-      }
-      else if (pg_tok() == ')') {
-        break;
-      }
-      else {
-        error("',' or ')' is expected after gpuData <variable> list");
-      }
-    } while (true);
-
-    pg_get_token();
+    XobjList varList = parse_XMP_symbol_list("gpu data");
     return Xcons.List(varList);
   }
 
   private XobjList parse_GPU_SYNC_clause() throws XMPexception {
-    XobjList varList = Xcons.List();
+    XobjList varList = parse_XMP_symbol_list("gpu sync");
 
-    if (pg_tok() != '(') {
-      error("'(' is expected before gpuData <variable> list");
-    }
-
-    do {
-      pg_get_token();
-      if (pg_tok() == PG_IDENT) {
-        varList.add(Xcons.String(pg_tok_buf()));
-      }
-      else {
-        error("<variable> for gpuData directive is expected");
-      }
-
-      pg_get_token();
-      if (pg_tok() == ',') {
-        continue;
-      }
-      else if (pg_tok() == ')') {
-        break;
-      }
-      else {
-        error("',' or ')' is expected after gpuData <variable> list");
-      }
-    } while (true);
-
-    pg_get_token();
     XobjString clause = null;
     if (pg_is_ident("in") || pg_is_ident("out")) {
       clause = Xcons.String(pg_tok_buf());
     } else {
-      error("'in' or 'out' clause is required in gpu sync directive");
+      throw new XMPexception("'in' or 'out' clause is required in gpu sync directive");
     }
 
     pg_get_token();
     return Xcons.List(varList, clause);
+  }
+
+  private XobjList parse_GPU_LOOP_clause() throws XmException, XMPexception {
+    XobjList loopVarList = parse_XMP_symbol_list("gpu loop");
+    XobjList clause = parse_GPU_clause();
+
+    return Xcons.List(loopVarList, clause);
   }
 
   private XobjList parse_XMP_symbol_list(String name) throws XMPexception {

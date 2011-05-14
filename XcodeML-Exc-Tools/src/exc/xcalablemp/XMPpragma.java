@@ -30,6 +30,7 @@ public enum XMPpragma {
   GPU_DATA,
   GPU_SYNC,
   GPU_BARRIER,
+  GPU_LOOP,
 
   // clause
   GPU_PRIVATE,

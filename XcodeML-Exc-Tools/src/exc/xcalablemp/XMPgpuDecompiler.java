@@ -165,7 +165,12 @@ public class XMPgpuDecompiler {
       Ident id = (Ident)i.getArg();
 
       funcParams.add(id);
-      funcArgs.add(id.Ref());
+
+      if (id.Type().isArray()) {
+        funcArgs.add(id.getValue());
+      } else {
+        funcArgs.add(id.Ref());
+      }
     }
 
     Ident totalIterId = Ident.Param("_XMP_GPU_TOTAL_ITER", Xtype.unsignedlonglongType);
@@ -214,10 +219,7 @@ public class XMPgpuDecompiler {
             String varName = myExpr.getString();
             XMPgpuData gpuData = XMPgpuDataTable.findXMPgpuData(varName, loopBlock);
             XMPalignedArray alignedArray = gpuData.getXMPalignedArray();
-            if (alignedArray == null) {
-              // FIXME
-              throw new XMPexception("not supported yet");
-            } else {
+            if (alignedArray != null) {
               if (alignedArray.realloc()) {
                 parseArrayExpr(iter, threadNumId);
               }

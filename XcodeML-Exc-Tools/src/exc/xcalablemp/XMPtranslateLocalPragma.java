@@ -81,6 +81,8 @@ public class XMPtranslateLocalPragma {
         { translateGpuSync(pb);			break; }
       case GPU_BARRIER:
         { break; }
+      case GPU_LOOP:
+        { translateGpuLoop(pb);			break; }
       default:
         throw new XMPexception("'" + pragmaName.toLowerCase() + "' directive is not supported yet");
     }
@@ -139,6 +141,13 @@ public class XMPtranslateLocalPragma {
 
   private void translateGpuSync(PragmaBlock pb) throws XMPexception {
     XMPgpuData.translateGpuSync(pb, _globalDecl);
+  }
+
+  private void translateGpuLoop(PragmaBlock pb) throws XMPexception {
+    // FIXME
+    XobjList gpuLoopDecl = (XobjList)pb.getClauses();
+    System.out.println("GPU_LOOP:" + gpuLoopDecl.toString());
+    throw new XMPexception("not implemented yet");
   }
 
   private void translateTask(PragmaBlock pb) throws XMPexception {
