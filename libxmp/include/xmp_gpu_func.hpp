@@ -41,6 +41,13 @@ __device__ void _XMP_gpu_calc_thread_id(T *index) {
           (blockIdx.z * gridDim.x * gridDim.y)) * (blockDim.x * blockDim.y * blockDim.z));
 }
 
+template<typename T>
+__device__ void _XMP_gpu_calc_iter(unsigned long long tid,
+                                   T lower, T upper, T stride,
+                                   T *iter) {
+  *iter = lower + (((T)tid) * stride);
+}
+
 #define _XMP_GPU_M_CALC_CONFIG_PARAMS(_x, _y, _z) \
 { \
   unsigned long long num_threads = _x * _y * _z; \

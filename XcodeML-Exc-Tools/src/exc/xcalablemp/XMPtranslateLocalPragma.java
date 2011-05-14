@@ -283,7 +283,7 @@ public class XMPtranslateLocalPragma {
 
   private XobjList setupGPUparallelFunc(Ident funcId, CforBlock loopBlock, PragmaBlock pb) throws XMPexception {
     // get params
-    XobjList paramIdList = getGPUfuncParams(loopBlock);
+    XobjList paramIdList = getGPUfuncParams(loopBlock, pb);
 
     // setup & decompile GPU function body
     XMPgpuDecompiler.decompile(funcId, paramIdList, loopBlock, pb, _globalDecl.getEnv());
@@ -314,7 +314,7 @@ public class XMPtranslateLocalPragma {
     return funcArgs;
   }
 
-  private XobjList getGPUfuncParams(CforBlock loopBlock) throws XMPexception {
+  private XobjList getGPUfuncParams(CforBlock loopBlock, PragmaBlock pb) throws XMPexception {
     XobjList params = Xcons.List();
     XobjList loopVars = Xcons.List();
 
@@ -362,6 +362,21 @@ public class XMPtranslateLocalPragma {
           default:
         }
       }
+    }
+
+    // FIXME consider the order
+    XobjList loopIndexList = (XobjList)pb.getClauses().getArg(0);
+    for (Xobject loopIndex : loopIndexList) {
+      XobjList loopIter = XMPutil.getLoopIter(loopBlock, loopIndex.getName()); 
+
+      Ident initId = (Ident)loopIter.getArg(0);
+      params.add(Ident.Param(initId.getName(), initId.Type()));
+
+      Ident condId = (Ident)loopIter.getArg(1);
+      params.add(Ident.Param(condId.getName(), condId.Type()));
+
+      Ident stepId = (Ident)loopIter.getArg(2);
+      params.add(Ident.Param(stepId.getName(), stepId.Type()));
     }
 
     return params;

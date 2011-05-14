@@ -30,6 +30,7 @@ public class XMPgpuDecompiler {
 
     // schedule iteration
     XobjList loopIndexList = (XobjList)loopDecl.getArg(0);
+    XobjList loopIndexAddrList = Xcons.List();
     XobjList loopIterRefList = Xcons.List();
     Iterator<Xobject> iter = loopIndexList.iterator();
     while(iter.hasNext()) {
@@ -42,15 +43,11 @@ public class XMPgpuDecompiler {
       XobjList loopIter = XMPutil.getLoopIter(loopBlock, loopVarName);
 
       Ident initId = (Ident)loopIter.getArg(0);
-      paramIdList.add(Ident.Param(initId.getName(), initId.Type()));
-
       Ident condId = (Ident)loopIter.getArg(1);
-      paramIdList.add(Ident.Param(condId.getName(), condId.Type()));
-
       Ident stepId = (Ident)loopIter.getArg(2);
-      paramIdList.add(Ident.Param(stepId.getName(), stepId.Type()));
 
       // FIXME consider array dimension
+      loopIndexAddrList.add(loopVarId.getAddr());
       loopIterRefList.add(initId.Ref());
       loopIterRefList.add(condId.Ref());
       loopIterRefList.add(stepId.Ref());
@@ -61,10 +58,6 @@ public class XMPgpuDecompiler {
     XobjList deviceFuncArgs = deviceFuncParamArgs.getSecond();
 
     // generate wrapping function
-    Ident totalIterId = Ident.Local("_XMP_GPU_TOTAL_ITER", Xtype.unsignedlonglongType);
-    deviceFuncParams.add(totalIterId);
-    deviceFuncArgs.add(totalIterId.Ref());
-
     Ident blockXid = Ident.Local("_XMP_GPU_DIM3_block_x", Xtype.intType);
     Ident blockYid = Ident.Local("_XMP_GPU_DIM3_block_y", Xtype.intType);
     Ident blockZid = Ident.Local("_XMP_GPU_DIM3_block_z", Xtype.intType);
@@ -80,6 +73,7 @@ public class XMPgpuDecompiler {
       confParamFuncName = new String("_XMP_gpu_calc_config_params_NUM_THREADS");
     }
 
+    Ident totalIterId = Ident.Local("_XMP_GPU_TOTAL_ITER", Xtype.unsignedlonglongType);
     Ident confParamFuncId = XMP.getMacroId(confParamFuncName);
     XobjList confParamFuncArgs = Xcons.List(totalIterId.getAddr(),
                                             blockXid.getAddr(), blockYid.getAddr(), blockZid.getAddr(),
@@ -112,6 +106,12 @@ public class XMPgpuDecompiler {
     localVars.add(threadNumId);
     localDecls.add(Xcons.List(Xcode.VAR_DECL, threadNumId, null, null));
     BlockList newLoopBlockList = Bcons.emptyBody(localVars, localDecls);
+
+    XobjList calcIterFuncArgs = Xcons.List(threadNumId.Ref());
+//    XMPutil.mergeLists(calcIterFuncArgs, loopIterRefList);
+//    XMPutil.mergeLists(calcIterFuncArgs, loopIndexAddrList);
+    newLoopBlockList.insert(createFuncCallBlock("_XMP_gpu_calc_iter", calcIterFuncArgs));
+
     newLoopBlockList.insert(createFuncCallBlock("_XMP_gpu_calc_thread_id", Xcons.List(threadNumId.getAddr())));
     newLoopBlockList.add(Xcons.List(Xcode.IF_STATEMENT, Xcons.binaryOp(Xcode.LOG_LT_EXPR, threadNumId.Ref(), totalIterId.Ref()), loopBody.toXobject(), null));
 
@@ -162,11 +162,14 @@ public class XMPgpuDecompiler {
     XobjList funcArgs = Xcons.List();
     for (XobjArgs i = paramIdList.getArgs(); i != null; i = i.nextArgs()) {
       Ident id = (Ident)i.getArg();
-      if (!id.getName().startsWith("_XMP_loop_")) {
-        funcParams.add(id);
-        funcArgs.add(id.Ref());
-      }
+
+      funcParams.add(id);
+      funcArgs.add(id.Ref());
     }
+
+    Ident totalIterId = Ident.Param("_XMP_GPU_TOTAL_ITER", Xtype.unsignedlonglongType);
+    funcParams.add(totalIterId);
+    funcArgs.add(totalIterId.Ref());
 
     return new XMPpair<XobjList, XobjList>(funcParams, funcArgs);
   }
