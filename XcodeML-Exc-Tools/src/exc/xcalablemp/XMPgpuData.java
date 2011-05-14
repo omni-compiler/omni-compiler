@@ -20,12 +20,11 @@ public class XMPgpuData {
   private Ident			_deviceDescId;
   private Ident			_deviceAddrId;
   private XMPalignedArray	_alignedArray;
-  private XMPtemplate		_alignTemplate;
 
   public XMPgpuData(String name,
                     Ident hostDescId, Ident hostId,
                     Ident deviceDescId, Ident deviceAddrId,
-                    XMPalignedArray alignedArray, XMPtemplate alignTemplate) {
+                    XMPalignedArray alignedArray) {
     _name = name;
 
     _hostDescId = hostDescId;
@@ -34,7 +33,6 @@ public class XMPgpuData {
     _deviceAddrId = deviceAddrId;
 
     _alignedArray = alignedArray;
-    _alignTemplate = alignTemplate;
   }
 
   public String getName() {
@@ -59,10 +57,6 @@ public class XMPgpuData {
 
   public XMPalignedArray getXMPalignedArray() {
     return _alignedArray;
-  }
-
-  public XMPtemplate getAlignTemplate() {
-    return _alignTemplate;
   }
 
   public static void translateGpuData(PragmaBlock pb, XMPglobalDecl globalDecl) throws XMPexception {
@@ -109,7 +103,6 @@ public class XMPgpuData {
       Ident gpuDataDeviceDescId = replaceBody.declLocalIdent(XMP.GPU_DEVICE_DESC_PREFIX_ + varName, Xtype.voidPtrType);
       Ident gpuDataDeviceAddrId = replaceBody.declLocalIdent(XMP.GPU_DEVICE_ADDR_PREFIX_ + varName, Xtype.voidPtrType);
 
-      XMPtemplate alignTemplate = null;
       XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(varName, localXMPsymbolTable);
       if (alignedArray == null) {
         Xobject addrObj = null;
@@ -146,7 +139,6 @@ public class XMPgpuData {
                                                                   Xcons.List(gpuDataHostDescId.getAddr(), gpuDataDeviceDescId.getAddr(), gpuDataDeviceAddrId.getAddr(),
                                                                              addrObj, sizeObj)));
       } else {
-        alignTemplate = alignedArray.getAlignTemplate();
         gpuDataConstructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_init_data_ALIGNED",
                                                                   Xcons.List(gpuDataHostDescId.getAddr(), gpuDataDeviceDescId.getAddr(), gpuDataDeviceAddrId.getAddr(),
                                                                              alignedArray.getAddrIdVoidRef(), alignedArray.getDescId().Ref())));
@@ -157,7 +149,7 @@ public class XMPgpuData {
       gpuDataTable.putXMPgpuData(new XMPgpuData(varName,
                                                 gpuDataHostDescId, varId,
                                                 gpuDataDeviceDescId, gpuDataDeviceAddrId,
-                                                alignedArray, alignTemplate));
+                                                alignedArray));
     }
 
     replaceBody.add(Bcons.COMPOUND(gpuDataConstructorBody));

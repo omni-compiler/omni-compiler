@@ -22,7 +22,6 @@ public class XMPgpuDecompiler {
                                CforBlock loopBlock, PragmaBlock pb, XobjectFile env) throws XMPexception {
     XobjList loopDecl = (XobjList)pb.getClauses();
     XobjList gpuClause = (XobjList)loopDecl.getArg(3).getArg(1);
-    BlockList loopBody = loopBlock.getBody();
 
     // FIXME decl & use thread id (local var)
     XobjList localVars = Xcons.List();
@@ -112,9 +111,10 @@ public class XMPgpuDecompiler {
     XMPutil.mergeLists(calcIterFuncArgs, loopIterRefList);
     XMPutil.mergeLists(calcIterFuncArgs, loopIndexAddrList);
     newLoopBlockList.insert(createFuncCallBlock("_XMP_gpu_calc_iter", calcIterFuncArgs));
-
     newLoopBlockList.insert(createFuncCallBlock("_XMP_gpu_calc_thread_id", Xcons.List(threadNumId.getAddr())));
-    newLoopBlockList.add(Xcons.List(Xcode.IF_STATEMENT, Xcons.binaryOp(Xcode.LOG_LT_EXPR, threadNumId.Ref(), totalIterId.Ref()), loopBody.toXobject(), null));
+
+    rewriteLoopBody(loopBlock, threadNumId);
+    newLoopBlockList.add(Xcons.List(Xcode.IF_STATEMENT, Xcons.binaryOp(Xcode.LOG_LT_EXPR, threadNumId.Ref(), totalIterId.Ref()), loopBlock.getBody().toXobject(), null));
 
     Xobject deviceBodyObj = newLoopBlockList.toXobject();
     XobjectDef deviceDef = XobjectDef.Func(deviceFuncId, deviceFuncParams, null, deviceBodyObj);
@@ -188,5 +188,72 @@ public class XMPgpuDecompiler {
     }
 
     return numThreads;
+  }
+
+  private static void rewriteLoopBody(CforBlock loopBlock, Ident threadNumId) throws XMPexception {
+    BasicBlockExprIterator iter = new BasicBlockExprIterator(loopBlock.getBody());
+    for (iter.init(); !iter.end(); iter.next()) {
+      rewriteExpr(iter.getExpr(), loopBlock, threadNumId);
+    }
+  }
+
+  // FIXME only for one dimension
+  private static void rewriteExpr(Xobject expr, CforBlock loopBlock, Ident threadNumId) throws XMPexception {
+    if (expr == null) return;
+
+    bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
+    for (iter.init(); !iter.end(); iter.next()) {
+      Xobject myExpr = iter.getXobject();
+      if (myExpr == null) {
+        continue;
+      }
+
+      switch (myExpr.Opcode()) {
+        case ARRAY_REF:
+          {
+            String varName = myExpr.getString();
+            XMPgpuData gpuData = XMPgpuDataTable.findXMPgpuData(varName, loopBlock);
+            XMPalignedArray alignedArray = gpuData.getXMPalignedArray();
+            if (alignedArray == null) {
+              // FIXME
+              throw new XMPexception("not supported yet");
+            } else {
+              if (alignedArray.realloc()) {
+                parseArrayExpr(iter, threadNumId);
+              }
+            }
+          } break;
+        default:
+      }
+    }
+  }
+
+  // FIXME only for one dimension
+  private static void parseArrayExpr(bottomupXobjectIterator iter, Ident threadNumId) throws XMPexception {
+    Xobject myExpr = iter.getXobject();
+    switch (myExpr.Opcode()) {
+      case ARRAY_REF:
+        iter.next();
+        parseArrayExpr(iter, threadNumId);
+        return;
+      case PLUS_EXPR:
+        {
+          Xobject left = myExpr.left();
+          if (left.Opcode() == Xcode.ARRAY_REF) {
+            myExpr.setRight(threadNumId.Ref());
+          } else {
+            Xobject right = myExpr.right();
+            if (right.Opcode() == Xcode.ARRAY_REF) {
+              myExpr.setLeft(threadNumId.Ref());
+            } else {
+              throw new XMPexception("wrong array expr");
+            }
+          }
+
+          iter.setXobject(myExpr);
+        } return;
+      default:
+        throw new XMPexception("wrong array expr");
+    }
   }
 }
