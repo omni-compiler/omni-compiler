@@ -157,10 +157,11 @@ public class XMPtranslateLocalPragma {
     CforBlock schedBaseBlock = getOutermostLoopBlock(loopBody);
 
     // analyze loop
-    XobjList loopVarList = (XobjList)loopDecl.getArg(0);
-    if (loopVarList == null) {
-      loopVarList = Xcons.List(Xcons.String(schedBaseBlock.getInductionVar().getName()));
-      loopDecl.setArg(0, loopVarList);
+    if (loopDecl.getArg(0) == null) {
+      loopDecl.setArg(0, Xcons.List(Xcons.String(schedBaseBlock.getInductionVar().getName())));
+      analyzeFollowingGpuLoop(pb, schedBaseBlock);
+    } else {
+      analyzeMultipleGpuLoop(pb, schedBaseBlock);
     }
 
     // translate
@@ -171,6 +172,53 @@ public class XMPtranslateLocalPragma {
     // replace pragma
     Block loopFuncCallBlock = Bcons.COMPOUND(loopBody);
     pb.replace(loopFuncCallBlock);
+  }
+
+  private void analyzeFollowingGpuLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {
+    // schedule loop
+    analyzeGpuLoop(pb, schedBaseBlock, schedBaseBlock);
+  }
+
+  private void analyzeMultipleGpuLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {
+    // start translation
+    XobjList loopDecl = (XobjList)pb.getClauses();
+    BlockList loopBody = pb.getBody();
+
+    // iterate index variable list
+    XobjList loopVarList = (XobjList)loopDecl.getArg(0);
+    Vector<CforBlock> loopVector = new Vector<CforBlock>(XMPutil.countElmts(loopVarList));
+    for (XobjArgs i = loopVarList.getArgs(); i != null; i = i.nextArgs()) {
+      loopVector.add(findLoopBlock(loopBody, i.getArg().getString()));
+    }
+
+    // schedule loop
+    Iterator<CforBlock> it = loopVector.iterator();
+    while (it.hasNext()) {
+      CforBlock forBlock = it.next();
+      analyzeGpuLoop(pb, forBlock, schedBaseBlock);
+    }
+  }
+
+  private void analyzeGpuLoop(PragmaBlock pb, CforBlock forBlock, CforBlock schedBaseBlock) throws XMPexception {
+    Xobject loopIndex = forBlock.getInductionVar();
+    String loopIndexName = loopIndex.getSym();
+    Xtype loopIndexType = loopIndex.Type();
+    if (!XMPutil.isIntegerType(loopIndexType)) {
+      throw new XMPexception("loop index variable has a non-integer type");
+    }
+
+    Ident initId = declIdentWithBlock(schedBaseBlock,
+                                      "_XMP_loop_init_" + loopIndexName, loopIndexType);
+    Ident condId = declIdentWithBlock(schedBaseBlock,
+                                      "_XMP_loop_cond_" + loopIndexName, loopIndexType);
+    Ident stepId = declIdentWithBlock(schedBaseBlock,
+                                      "_XMP_loop_step_" + loopIndexName, loopIndexType);
+
+    schedBaseBlock.insert(Xcons.Set(initId.Ref(), forBlock.getLowerBound()));
+    schedBaseBlock.insert(Xcons.Set(condId.Ref(), forBlock.getUpperBound()));
+    schedBaseBlock.insert(Xcons.Set(stepId.Ref(), forBlock.getStep()));
+
+    XMPutil.putLoopIter(schedBaseBlock, loopIndexName, Xcons.List(initId, condId, stepId));
   }
 
   private void translateTask(PragmaBlock pb) throws XMPexception {
