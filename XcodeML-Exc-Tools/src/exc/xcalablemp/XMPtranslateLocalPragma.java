@@ -144,10 +144,33 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateGpuLoop(PragmaBlock pb) throws XMPexception {
-    // FIXME
-    XobjList gpuLoopDecl = (XobjList)pb.getClauses();
-    System.out.println("GPU_LOOP:" + gpuLoopDecl.toString());
-    throw new XMPexception("not implemented yet");
+    XobjList loopDecl = (XobjList)pb.getClauses();
+    BlockList loopBody = pb.getBody();
+
+    if (!XmOption.isXcalableMPGPU()) {
+      XMP.warning("use -enable-gpu option to use 'gpu loop' directive");
+      pb.replace(Bcons.COMPOUND(loopBody));
+      return;
+    }
+
+    // get block to schedule
+    CforBlock schedBaseBlock = getOutermostLoopBlock(loopBody);
+
+    // analyze loop
+    XobjList loopVarList = (XobjList)loopDecl.getArg(0);
+    if (loopVarList == null) {
+      loopVarList = Xcons.List(Xcons.String(schedBaseBlock.getInductionVar().getName()));
+      loopDecl.setArg(0, loopVarList);
+    }
+
+    // translate
+    // FIXME implement reduction
+    Block newLoopBlock = translateGpuClause(pb, null, schedBaseBlock);
+    schedBaseBlock.replace(newLoopBlock);
+
+    // replace pragma
+    Block loopFuncCallBlock = Bcons.COMPOUND(loopBody);
+    pb.replace(loopFuncCallBlock);
   }
 
   private void translateTask(PragmaBlock pb) throws XMPexception {

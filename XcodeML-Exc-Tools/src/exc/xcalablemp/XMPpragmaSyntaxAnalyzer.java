@@ -1285,10 +1285,16 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   }
 
   private XobjList parse_GPU_LOOP_clause() throws XmException, XMPexception {
-    XobjList loopVarList = parse_XMP_symbol_list("gpu loop");
-    XobjList clause = parse_GPU_clause();
+    XobjList loopVarList = null;
+    if (pg_tok() == '(') {
+      loopVarList = parse_XMP_symbol_list("gpu loop");
+    }
 
-    return Xcons.List(loopVarList, clause);
+    // FIXME needs reduction clause
+    XobjList gpuClause = parse_GPU_clause();
+
+    // XMP loop gpu clause format
+    return Xcons.List(loopVarList, null, null, Xcons.List(Xcons.String("gpu"), gpuClause));
   }
 
   private XobjList parse_XMP_symbol_list(String name) throws XMPexception {
