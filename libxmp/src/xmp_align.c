@@ -220,6 +220,7 @@ void _XMP_align_array_BLOCK(_XMP_array_t *array, int array_index, int template_i
 
     *temp0 = ai->par_lower;
     ai->temp0 = temp0;
+    ai->temp0_v = *temp0;
   }
 
 EXIT_CALC_PARALLEL_MEMBERS:
@@ -271,6 +272,7 @@ void _XMP_align_array_CYCLIC(_XMP_array_t *array, int array_index, int template_
 
     *temp0 = ai->par_stride;
     ai->temp0 = temp0;
+    ai->temp0_v = *temp0;
   }
 
   ai->align_subscript = align_subscript;

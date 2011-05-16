@@ -7,6 +7,88 @@
 #ifndef _XMP_GPU_RUNTIME_FUNC_DECL
 #define _XMP_GPU_RUNTIME_FUNC_DECL
 
+// FIXME include header
+#include <stdbool.h>
+// aligned array descriptor
+typedef struct _XMP_array_info_type {
+  _Bool is_shadow_comm_member;
+  _Bool is_regular_chunk;
+  int align_manner;
+
+  int ser_lower;
+  int ser_upper;
+  int ser_size;
+
+  // enable when is_allocated is true
+  int par_lower;
+  int par_upper;
+  int par_stride;
+  int par_size;
+
+  int local_lower;
+  int local_upper;
+  int local_stride;
+  int alloc_size;
+
+  int *temp0;
+  int temp0_v;
+
+  unsigned long long dim_acc;
+  unsigned long long dim_elmts;
+  // --------------------------------
+
+  long long align_subscript;
+
+  int shadow_type;
+  int shadow_size_lo;
+  int shadow_size_hi;
+
+  // enable when is_shadow_comm_member is true
+  void *shadow_comm;
+  int shadow_comm_size;
+  int shadow_comm_rank;
+  // -----------------------------------------
+
+  // align_manner is not _XMP_N_ALIGN_NOT_ALIGNED
+  int align_template_index;
+  void *align_template_info;
+  void *align_template_chunk;
+  // --------------------------------------------
+} _XMP_array_info_t;
+
+typedef struct _XMP_array_type {
+  _Bool is_allocated;
+  _Bool is_align_comm_member;
+  int dim;
+  int type;
+  size_t type_size;
+
+  // enable when is_allocated is true
+  unsigned long long total_elmts;
+  // --------------------------------
+
+  // enable when is_align_comm_member is true
+  void *align_comm;
+  int align_comm_size;
+  int align_comm_rank;
+  // ----------------------------------------
+
+  void *align_template;
+  _XMP_array_info_t info[1];
+} _XMP_array_t;
+
+typedef struct _XMP_gpu_data_type {
+  _Bool is_aligned_array;
+
+  void *host_addr;
+  void *device_addr;
+
+  struct _XMP_gpu_data_type *device_gpu_data_desc;
+  _XMP_array_t *device_array_desc;
+
+  size_t size;
+} _XMP_gpu_data_t;
+
 // --- integer functions
 // calculate ceil(a/b)
 #define _XMP_M_CEILi(a_, b_) (((a_) % (b_)) == 0 ? ((a_) / (b_)) : ((a_) / (b_)) + 1)
@@ -30,6 +112,12 @@ extern int _XMP_gpu_max_thread;
 extern int _XMP_gpu_max_block_dim_x;
 extern int _XMP_gpu_max_block_dim_y;
 extern int _XMP_gpu_max_block_dim_z;
+
+template<typename T>
+__device__ void _XMP_gpu_calc_index(unsigned long long *index, T t, void *gpu_data_desc) {
+  _XMP_array_t *array_desc = ((_XMP_gpu_data_t *)gpu_data_desc)->device_array_desc;
+  *index = t - array_desc->info[0].temp0_v;
+}
 
 template<typename T>
 __device__ void _XMP_gpu_calc_thread_id(T *index) {

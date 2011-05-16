@@ -118,6 +118,7 @@ typedef struct _XMP_array_info_type {
   int alloc_size;
 
   int *temp0;
+  int temp0_v;
 
   unsigned long long dim_acc;
   unsigned long long dim_elmts;

@@ -230,6 +230,7 @@ void _XMP_init_shadow(_XMP_array_t *array, ...) {
               ai->alloc_size += lo + hi;
 
               *(ai->temp0) -= lo;
+              ai->temp0_v -= lo;
             }
 
             _XMP_create_shadow_comm(array, i);
