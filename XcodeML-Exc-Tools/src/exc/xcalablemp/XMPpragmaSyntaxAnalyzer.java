@@ -690,9 +690,9 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     XobjList multicoreClause = null;
 
     // parse [<gpu-clause>], ...
-    if (pg_is_ident("gpu")) {
+    if (pg_is_ident("acc")) {
       pg_get_token();
-      multicoreClause = Xcons.List(Xcons.String("gpu"), parse_GPU_clause());
+      multicoreClause = Xcons.List(Xcons.String("acc"), parse_GPU_clause());
     }
 
     // parse [<threads-clause>], ...

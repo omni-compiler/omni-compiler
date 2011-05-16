@@ -306,7 +306,7 @@ public class XMPtranslateLocalPragma {
     if (multicoreClause != null) {
       String devName = multicoreClause.getArg(0).getString();
 
-      if (devName.equals("gpu")) {
+      if (devName.equals("acc")) {
         if (XmOption.isXcalableMPGPU()) {
           Block newLoopBlock = translateGpuClause(pb, reductionRefList, schedBaseBlock);
           schedBaseBlock.replace(newLoopBlock);
