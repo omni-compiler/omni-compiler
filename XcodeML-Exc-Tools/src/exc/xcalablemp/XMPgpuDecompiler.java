@@ -111,9 +111,9 @@ public class XMPgpuDecompiler {
     XobjList calcIterFuncArgs = Xcons.List(threadNumId.Ref());
     XMPutil.mergeLists(calcIterFuncArgs, loopIterRefList);
     XMPutil.mergeLists(calcIterFuncArgs, loopIndexAddrList);
-    newLoopBlockList.insert(createFuncCallBlock("_XMP_gpu_calc_iter", calcIterFuncArgs));
-    newLoopBlockList.insert(createFuncCallBlock("_XMP_gpu_calc_thread_id", Xcons.List(threadNumId.getAddr())));
 
+    newLoopBlockList.add(createFuncCallBlock("_XMP_gpu_calc_thread_id", Xcons.List(threadNumId.getAddr())));
+    newLoopBlockList.add(createFuncCallBlock("_XMP_gpu_calc_iter", calcIterFuncArgs));
     rewriteLoopBody(loopBlock, newLoopBlockList);
     newLoopBlockList.add(Xcons.List(Xcode.IF_STATEMENT, Xcons.binaryOp(Xcode.LOG_LT_EXPR, threadNumId.Ref(), totalIterId.Ref()), loopBlock.getBody().toXobject(), null));
 
@@ -278,8 +278,8 @@ public class XMPgpuDecompiler {
             gpuIndexTable.put("XMP_DUMMY", indexId);
 
             XMPgpuData gpuData = XMPgpuDataTable.findXMPgpuData(varName, loopBlock);
-            bl.insert(createFuncCallBlock("_XMP_gpu_calc_index",
-                                          Xcons.List(indexId.getAddr(), indexRef, gpuData.getDeviceDescId().Ref())));
+            bl.add(createFuncCallBlock("_XMP_gpu_calc_index",
+                                       Xcons.List(indexId.getAddr(), indexRef, gpuData.getDeviceDescId().Ref())));
           }
 
           left = myExpr.left();
