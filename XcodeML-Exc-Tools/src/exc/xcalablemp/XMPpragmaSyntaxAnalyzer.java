@@ -247,7 +247,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       pg_get_token();
       args = parse_COARRAY_clause();
     }
-    else if (pg_is_ident("gpu")) {
+    else if (pg_is_ident("acc")) {
       pg_get_token();
       if (pg_is_ident("data")) {
         pragmaDir = XMPpragma.GPU_DATA;
@@ -1266,18 +1266,18 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   }
 
   private XobjList parse_GPU_DATA_clause() throws XMPexception {
-    XobjList varList = parse_XMP_symbol_list("gpu data");
+    XobjList varList = parse_XMP_symbol_list("acc data");
     return Xcons.List(varList);
   }
 
   private XobjList parse_GPU_SYNC_clause() throws XMPexception {
-    XobjList varList = parse_XMP_symbol_list("gpu sync");
+    XobjList varList = parse_XMP_symbol_list("acc sync");
 
     XobjString clause = null;
     if (pg_is_ident("in") || pg_is_ident("out")) {
       clause = Xcons.String(pg_tok_buf());
     } else {
-      throw new XMPexception("'in' or 'out' clause is required in gpu sync directive");
+      throw new XMPexception("'in' or 'out' clause is required in acc sync directive");
     }
 
     pg_get_token();
@@ -1287,7 +1287,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   private XobjList parse_GPU_LOOP_clause() throws XmException, XMPexception {
     XobjList loopVarList = null;
     if (pg_tok() == '(') {
-      loopVarList = parse_XMP_symbol_list("gpu loop");
+      loopVarList = parse_XMP_symbol_list("acc loop");
     }
 
     // FIXME needs reduction clause

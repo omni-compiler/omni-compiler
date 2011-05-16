@@ -985,18 +985,14 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       return;
     }
 
-//    if (v.Opcode() == Xcode.LIST) {
-//      print("{");
-//      print(v);
-//      println();
-//      print("}");
-//    } else {
-//      print(v);
-//    }
-    print("{");
-    print(v);
-    println();
-    print("}");
+    if (v.Opcode() == Xcode.LIST) {
+      print("{");
+      print(v);
+      println();
+      print("}");
+    } else {
+      print(v);
+    }
   }
 
   private void printDeclList(Xobject v, Xobject id_list) {

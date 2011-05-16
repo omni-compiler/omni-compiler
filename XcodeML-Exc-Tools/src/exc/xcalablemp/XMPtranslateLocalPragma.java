@@ -148,7 +148,7 @@ public class XMPtranslateLocalPragma {
     BlockList loopBody = pb.getBody();
 
     if (!XmOption.isXcalableMPGPU()) {
-      XMP.warning("use -enable-gpu option to use 'gpu loop' directive");
+      XMP.warning("use -enable-gpu option to use 'acc loop' directive");
       pb.replace(Bcons.COMPOUND(loopBody));
       return;
     }
@@ -382,12 +382,7 @@ public class XMPtranslateLocalPragma {
         }
       } else {
         XMPalignedArray alignedArray = gpuData.getXMPalignedArray();
-        if (alignedArray == null) {
-          funcArgs.add(gpuData.getDeviceAddrId().Ref());
-        } else {
-          // FIXME add device_array_desc to args?
-          funcArgs.add(gpuData.getDeviceAddrId().Ref());
-        }
+        funcArgs.add(gpuData.getDeviceAddrId().Ref());
       }
     }
 
@@ -435,6 +430,7 @@ public class XMPtranslateLocalPragma {
                     params.add(Ident.Param(varName, id.Type()));
                   } else {
                     params.add(Ident.Param(varName, alignedArray.getAddrId().Type()));
+                    params.add(Ident.Param(XMP.GPU_DEVICE_DESC_PREFIX_ + varName, Xtype.voidPtrType));
                   }
                 }
               }
