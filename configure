@@ -3582,8 +3582,6 @@ debCppFlags=""
 userCppFlags=""
 mustCppFlags=""
 
-xmpGpuFlags=""
-
 ccCom=""
 
 # Check whether --with-cflag was given.
@@ -4995,10 +4993,7 @@ fi
 
 XMP_ENABLE_GPU=0
 if test "x${doXmpGpu}" = "xyes"; then
-    xmpGpuFlags="-D_XMP_ENABLE_GPU"
     XMP_ENABLE_GPU=1
-else
-    xmpGpuFlags="-D_XMP_DISABLE_GPU"
 fi
 
  if test "x${doXmpGpu}" = "xyes"; then
@@ -5035,7 +5030,7 @@ OSDEF=-DOMNI_OS_`echo $OS | tr 'a-z' 'A-Z'`
 CPPFLAGS="${CPUDEF} ${OSDEF} ${debCppFlags} ${userCppFlags} ${mustCppFlags}"
 
 
-CFLAGS="${debCFlags} ${userCFlags} ${optCFlags} ${mustCFlags} ${CFLAGS} ${xmpGpuFlags}"
+CFLAGS="${debCFlags} ${userCFlags} ${optCFlags} ${mustCFlags} ${CFLAGS}"
 CXXFLAGS=$CFLAGS
 
 

@@ -160,7 +160,6 @@ typedef struct _XMP_coarray_type {
   _XMP_coarray_info_t info[1];
 } _XMP_coarray_t;
 
-#ifdef _XMP_ENABLE_GPU
 typedef struct _XMP_gpu_data_type {
   _Bool is_aligned_array;
 
@@ -172,6 +171,5 @@ typedef struct _XMP_gpu_data_type {
 
   size_t size;
 } _XMP_gpu_data_t;
-#endif // _XMP_ENABLE_GPU
 
 #endif // _XMP_DATA_STRUCT

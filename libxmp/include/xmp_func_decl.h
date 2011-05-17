@@ -210,7 +210,6 @@ extern void _XMP_finalize_world(void);
 extern void _XMP_threads_init(int argc, char *argv[]);
 extern void _XMP_threads_finalize(int ret);
 
-#ifdef _XMP_ENABLE_GPU
 // xmp_gpu_runtime.cu
 extern void _XMP_gpu_init(void);
 extern void _XMP_gpu_finalize(void);
@@ -222,6 +221,5 @@ extern void _XMP_gpu_finalize_data(void *desc);
 
 // xmp_gpu_sync.cu
 extern void _XMP_gpu_sync(void *desc, int direction);
-#endif // _XMP_ENABLE_GPU
 
 #endif // _XMP_RUNTIME_FUNC_DECL

@@ -428,8 +428,6 @@ debCppFlags=""
 userCppFlags=""
 mustCppFlags=""
 
-xmpGpuFlags=""
-
 ccCom=""
 AC_ARG_WITH(cflag,
     [  --with-cflag=OPT        specify C compiler options for optimization],
@@ -462,10 +460,7 @@ fi
 
 XMP_ENABLE_GPU=0
 if test "x${doXmpGpu}" = "xyes"; then
-    xmpGpuFlags="-D_XMP_ENABLE_GPU"
     XMP_ENABLE_GPU=1
-else
-    xmpGpuFlags="-D_XMP_DISABLE_GPU"
 fi
 
 AM_CONDITIONAL(ENABLE_XMP_GPU, test "x${doXmpGpu}" = "xyes")
@@ -495,7 +490,7 @@ OSDEF=-DOMNI_OS_`echo $OS | tr '[a-z]' '[A-Z]'`
 CPPFLAGS="${CPUDEF} ${OSDEF} ${debCppFlags} ${userCppFlags} ${mustCppFlags}"
 AC_SUBST(CPPFLAGS)
 
-CFLAGS="${debCFlags} ${userCFlags} ${optCFlags} ${mustCFlags} ${CFLAGS} ${xmpGpuFlags}"
+CFLAGS="${debCFlags} ${userCFlags} ${optCFlags} ${mustCFlags} ${CFLAGS}"
 CXXFLAGS=$CFLAGS
 AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
