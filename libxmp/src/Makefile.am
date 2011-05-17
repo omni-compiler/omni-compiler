@@ -4,6 +4,7 @@ CC=@MPI_CMD@
 
 lib_LIBRARIES			= libxmp.a
 libxmp_a_SOURCES		= $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h \
+                                  $(XMP_INC_DIR)/xmp_data_struct.h \
                                   xmp_math_function.h \
 				  xmp_lib.c xmp_util.c xmp_world.c xmp_nodes_stack.c \
                                   xmp_nodes.c xmp_template.c xmp_barrier.c xmp_reduce.c xmp_bcast.c \
