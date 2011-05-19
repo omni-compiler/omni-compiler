@@ -80,7 +80,7 @@ public class XMPgpuDecompiler {
                                             threadXid.getAddr(), threadYid.getAddr(), threadZid.getAddr());
     XMPutil.mergeLists(confParamFuncArgs, numThreads);
     XMPutil.mergeLists(confParamFuncArgs, loopIterRefList);
-    Xobject confParamFuncCall = confParamFuncId.Call(confParamFuncArgs);
+    Xobject confParamFuncCall = Xcons.List(Xcode.EXPR_STATEMENT, confParamFuncId.Call(confParamFuncArgs));
 
     Ident deviceFuncId = XMP.getMacroId(hostFuncId.getName() + "_DEVICE");
     ((FunctionType)deviceFuncId.Type()).setFuncParamIdList(deviceFuncParams);

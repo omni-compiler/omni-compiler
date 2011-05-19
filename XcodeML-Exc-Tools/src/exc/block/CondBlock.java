@@ -75,6 +75,7 @@ public class CondBlock extends Block
             break;
         case SWITCH_STATEMENT:
         case WHILE_STATEMENT:
+        case FOR_STATEMENT:
             x = new XobjList(code, cond_x, body.toXobject());
             break;
         case F_DO_WHILE_STATEMENT:

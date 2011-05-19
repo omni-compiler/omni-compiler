@@ -374,10 +374,9 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       }
 
       printArgList(v.right());
-      print(";");
 
       if (prop != null) {
-        println();
+        println(";");
         println("_XMP_GPU_M_BARRIER_KERNEL();");
         print("}");
       }
