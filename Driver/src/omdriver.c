@@ -1069,7 +1069,8 @@ int get_all_obj_files( char *dst )
     for (i = 0; i<in_file_cnt; i++) {
         get_extension( ext, io->in_file );
 
-        if (strcmp( ext, EXTENSION_O ) == 0) {
+        if ((strcmp( ext, EXTENSION_O ) == 0) ||
+            (strcmp( ext, EXTENSION_A ) == 0)) {
             strcat( dst + next_src_idx, io->in_file );
             next_src_idx += strlen( io->in_file );
         } else {
