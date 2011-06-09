@@ -249,18 +249,18 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     }
     else if (pg_is_ident("acc")) {
       pg_get_token();
-      if (pg_is_ident("data")) {
-        pragmaDir = XMPpragma.GPU_DATA;
+      if (pg_is_ident("replicate")) {
+        pragmaDir = XMPpragma.GPU_REPLICATE;
         syntax = PragmaSyntax.SYN_PREFIX;
 
         pg_get_token();
-        args = parse_GPU_DATA_clause();
-      } else if (pg_is_ident("sync")) {
-        pragmaDir = XMPpragma.GPU_SYNC;
+        args = parse_GPU_REPLICATE_clause();
+      } else if (pg_is_ident("replicate_sync")) {
+        pragmaDir = XMPpragma.GPU_REPLICATE_SYNC;
         syntax = PragmaSyntax.SYN_EXEC;
 
         pg_get_token();
-        args = parse_GPU_SYNC_clause();
+        args = parse_GPU_REPLICATE_SYNC_clause();
       } else if (pg_is_ident("barrier")) {
         pragmaDir = XMPpragma.GPU_BARRIER;
         syntax = PragmaSyntax.SYN_EXEC;
@@ -1265,23 +1265,32 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     return null;
   }
 
-  private XobjList parse_GPU_DATA_clause() throws XMPexception {
-    XobjList varList = parse_XMP_symbol_list("acc data");
+  private XobjList parse_GPU_REPLICATE_clause() throws XMPexception {
+    XobjList varList = parse_XMP_symbol_list("acc replicate");
     return Xcons.List(varList);
   }
 
-  private XobjList parse_GPU_SYNC_clause() throws XMPexception {
-    XobjList varList = parse_XMP_symbol_list("acc sync");
+  private XobjList parse_GPU_REPLICATE_SYNC_clause() throws XMPexception {
+    XobjList clauseList = Xcons.List();
 
-    XobjString clause = null;
-    if (pg_is_ident("in") || pg_is_ident("out")) {
-      clause = Xcons.String(pg_tok_buf());
-    } else {
-      throw new XMPexception("'in' or 'out' clause is required in acc sync directive");
+    while (true) {
+      if (pg_is_ident("in") || pg_is_ident("out")) {
+        XobjString clauseName = Xcons.String(pg_tok_buf());
+
+        pg_get_token();
+        XobjList varList = parse_XMP_symbol_list("acc replicate_sync");
+
+        clauseList.add(Xcons.List(clauseName, varList));
+      } else {
+        throw new XMPexception("'in' or 'out' clause is required in acc replicate_sync directive");
+      }
+
+      if (!(pg_is_ident("in") || pg_is_ident("out"))) {
+        break;
+      }
     }
 
-    pg_get_token();
-    return Xcons.List(varList, clause);
+    return clauseList;
   }
 
   private XobjList parse_GPU_LOOP_clause() throws XmException, XMPexception {

@@ -75,9 +75,9 @@ public class XMPtranslateLocalPragma {
         { translateBcast(pb);			break; }
       case GMOVE:
         { translateGmove(pb);			break; }
-      case GPU_DATA:
+      case GPU_REPLICATE:
         { translateGpuData(pb);			break; }
-      case GPU_SYNC:
+      case GPU_REPLICATE_SYNC:
         { translateGpuSync(pb);			break; }
       case GPU_BARRIER:
         { break; }

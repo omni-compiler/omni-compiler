@@ -63,7 +63,7 @@ public class XMPgpuData {
     BlockList gpuDataBody = pb.getBody();
 
     if (!XmOption.isXcalableMPGPU()) {
-      XMP.warning("use -enable-gpu option to use 'acc data' directive");
+      XMP.warning("use -enable-gpu option to use 'acc replicate' directive");
       pb.replace(Bcons.COMPOUND(gpuDataBody));
       return;
     }
@@ -84,7 +84,7 @@ public class XMPgpuData {
       // check gpuDataTable in the same pragma
       XMPgpuData gpuData = gpuDataTable.getXMPgpuData(varName);
       if (gpuData != null) {
-        throw new XMPexception("acc data '" + varName + "' is already declared");
+        throw new XMPexception("acc replicate '" + varName + "' is already declared");
       }
 
       XMPpair<Ident, Xtype> typedSpec = XMPutil.findTypedVar(varName, pb);
@@ -95,7 +95,7 @@ public class XMPgpuData {
       gpuData = XMPgpuDataTable.findXMPgpuData(varName, pb.getParentBlock());
       if (gpuData != null) {
         if (gpuData.getHostId() == varId) {
-          throw new XMPexception("acc data '" + varName + "' is already declared");
+          throw new XMPexception("acc replicate '" + varName + "' is already declared");
         }
       }
 
@@ -124,7 +124,7 @@ public class XMPgpuData {
                 case Xtype.UNION:
                   break;
                 default:
-                  throw new XMPexception("array '" + varName + "' has has a wrong data type for acc data");
+                  throw new XMPexception("array '" + varName + "' has has a wrong data type for acc replicate");
               }
 
               addrObj = varId.Ref();
@@ -132,7 +132,7 @@ public class XMPgpuData {
                                                        Xcons.SizeOf(((ArrayType)varType).getArrayElementType()));
             } break;
           default:
-            throw new XMPexception("'" + varName + "' has a wrong data type for acc data");
+            throw new XMPexception("'" + varName + "' has a wrong data type for acc replicate");
         }
 
         gpuDataConstructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_init_data_NOT_ALIGNED",
@@ -163,7 +163,7 @@ public class XMPgpuData {
 
   public static void translateGpuSync(PragmaBlock pb, XMPglobalDecl globalDecl) throws XMPexception {
     if (!XmOption.isXcalableMPGPU()) {
-      XMP.warning("use -enable-gpu option to use 'acc sync' directive");
+      XMP.warning("use -enable-gpu option to use 'acc replicate_sync' directive");
       return;
     }
 
@@ -173,24 +173,28 @@ public class XMPgpuData {
 
     BlockList replaceBody = Bcons.emptyBody();
 
-    Xobject directionArg = null;
-    String clause = gpuSyncDecl.getArg(1).getString();
-    if (clause.equals("in")) {
-      directionArg = Xcons.IntConstant(XMPgpuData.GPU_SYNC_IN);
-    } else if (clause.equals("out")) {
-      directionArg = Xcons.IntConstant(XMPgpuData.GPU_SYNC_OUT);
-    } else {
-      throw new XMPexception("unknown clause for 'acc sync'");
-    }
+    for (XobjArgs c = gpuSyncDecl.getArgs(); c != null; c = c.nextArgs()) {
+      XobjList gpuSyncClause = (XobjList)c.getArg();
 
-    XobjList varList = (XobjList)gpuSyncDecl.getArg(0);
-    for (XobjArgs i = varList.getArgs(); i != null; i = i.nextArgs()) {
-      String varName = i.getArg().getString();
-      XMPgpuData gpuData = XMPgpuDataTable.findXMPgpuData(varName, pb);
-      if (gpuData == null) {
-        throw new XMPexception("acc data '" + varName + "' is not declared");
+      Xobject directionArg = null;
+      String clauseName = gpuSyncClause.getArg(0).getString();
+      if (clauseName.equals("in")) {
+        directionArg = Xcons.IntConstant(XMPgpuData.GPU_SYNC_IN);
+      } else if (clauseName.equals("out")) {
+        directionArg = Xcons.IntConstant(XMPgpuData.GPU_SYNC_OUT);
       } else {
-        replaceBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_sync", Xcons.List(gpuData.getHostDescId().Ref(), directionArg)));
+        throw new XMPexception("unknown clause for 'acc replicate_sync'");
+      }
+
+      XobjList varList = (XobjList)gpuSyncClause.getArg(1);
+      for (XobjArgs i = varList.getArgs(); i != null; i = i.nextArgs()) {
+        String varName = i.getArg().getString();
+        XMPgpuData gpuData = XMPgpuDataTable.findXMPgpuData(varName, pb);
+        if (gpuData == null) {
+          throw new XMPexception("acc replicate '" + varName + "' is not declared");
+        } else {
+          replaceBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_sync", Xcons.List(gpuData.getHostDescId().Ref(), directionArg)));
+        }
       }
     }
 
