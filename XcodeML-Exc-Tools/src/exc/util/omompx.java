@@ -109,9 +109,8 @@ public class omompx
                 openMP = true;
             } else if(arg.equals("-fxmp")) {
                 xcalableMP = true;
-            } else if(arg.equals("-fxmp_threads")) {
+            } else if(arg.equals("-enable-threads")) {
                 openMP = true;
-                xcalableMP = true;
                 xcalableMPthreads = true;
             } else if(arg.equals("-enable-gpu")) {
                 xcalableMPGPU = true;
