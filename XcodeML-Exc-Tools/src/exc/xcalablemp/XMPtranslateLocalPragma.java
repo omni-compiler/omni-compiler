@@ -462,7 +462,14 @@ public class XMPtranslateLocalPragma {
                     Ident id = loopBlock.findVarIdent(varName);
                     params.add(Ident.Param(varName, id.Type()));
                   } else {
-                    params.add(Ident.Param(varName, alignedArray.getAddrId().Type()));
+                    Xtype alignedArrayParamType = null;
+                    if (alignedArray.realloc()) {
+                      alignedArrayParamType = alignedArray.getAddrId().Type();
+                    } else {
+                      alignedArrayParamType = alignedArray.getArrayId().Type();
+                    }
+
+                    params.add(Ident.Param(varName, alignedArrayParamType));
                     params.add(Ident.Param(XMP.GPU_DEVICE_DESC_PREFIX_ + varName, Xtype.voidPtrType));
                   }
                 }

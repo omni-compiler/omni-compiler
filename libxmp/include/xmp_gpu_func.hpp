@@ -35,6 +35,7 @@ extern int _XMP_gpu_max_block_dim_z;
 
 template<typename T>
 __device__ void _XMP_gpu_calc_index(unsigned long long *index, T t, void *gpu_data_desc) {
+  // FIXME not general
   _XMP_array_t *array_desc = ((_XMP_gpu_data_t *)gpu_data_desc)->device_array_desc;
   *index = t - array_desc->info[0].temp0_v;
 }
@@ -62,9 +63,13 @@ __device__ void _XMP_gpu_calc_iter(unsigned long long tid,
                                    T lower1, T upper1, T stride1,
                                    T *iter0,
                                    T *iter1) {
-  // FIXME not correct implementation
-  *iter0 = lower0 + (((T)tid) * stride0);
-  *iter1 = lower1 + (((T)tid) * stride1);
+  T count0 = _XMP_M_COUNT_TRIPLETi(lower0, (upper0 - 1), stride0);
+
+  T index0 = tid % count0;
+  T index1 = tid / count0;
+
+  *iter0 = lower0 + (index0 * stride0);
+  *iter1 = lower1 + (index1 * stride1);
 }
 
 #define _XMP_GPU_M_CALC_CONFIG_PARAMS(_x, _y, _z) \
