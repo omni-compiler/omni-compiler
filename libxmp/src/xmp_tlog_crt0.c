@@ -22,11 +22,9 @@ __xmp_tlog_finalize(void) {
 extern int _XMP_main(int argc, char *argv[]);
 
 int main(int argc, char *argv[]) {
-  _XMP_init();
   __xmp_tlog_initialize();
   int ret = _XMP_main(argc, argv);
   __xmp_tlog_finalize();
-  _XMP_finalize();
 
   return ret;
 }

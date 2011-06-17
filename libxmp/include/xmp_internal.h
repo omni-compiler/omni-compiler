@@ -93,8 +93,8 @@ extern void _XMP_finalize(void);
 
 // ----- libxmp_threads ----------------------------------------------
 // xmp_threads_runtime.c
-extern void _XMP_threads_init(int, char **argv);
-extern void _XMP_threads_finalize(int);
+extern void _XMP_threads_init(void);
+extern void _XMP_threads_finalize(void);
 
 #ifdef __cplusplus
 }

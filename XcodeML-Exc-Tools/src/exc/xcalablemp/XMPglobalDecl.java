@@ -68,6 +68,12 @@ public class XMPglobalDecl {
                                                                       Xtype.Function(Xtype.voidType)).Call(null)));
     }
 
+    if (XmOption.isXcalableMPthreads()) {
+      _globalConstructorFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT,
+                                                 _env.declExternIdent("_XMP_threads_init",
+                                                                      Xtype.Function(Xtype.voidType)).Call(null)));
+    }
+
     _globalConstructorFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT,
                                                _env.declExternIdent("_XMP_init",
                                                                     Xtype.Function(Xtype.voidType)).Call(null)));
@@ -86,6 +92,12 @@ public class XMPglobalDecl {
     if (XmOption.isXcalableMPGPU()) {
       _globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT,
                                                _env.declExternIdent("_XMP_gpu_finalize",
+                                                                    Xtype.Function(Xtype.voidType)).Call(null)));
+    }
+
+    if (XmOption.isXcalableMPthreads()) {
+      _globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT,
+                                               _env.declExternIdent("_XMP_threads_finalize",
                                                                     Xtype.Function(Xtype.voidType)).Call(null)));
     }
 

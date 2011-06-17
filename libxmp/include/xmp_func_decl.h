@@ -207,8 +207,8 @@ extern void _XMP_finalize_world(void);
 
 // ----- libxmp_threads
 // xmp_threads_runtime.c
-extern void _XMP_threads_init(int argc, char *argv[]);
-extern void _XMP_threads_finalize(int ret);
+extern void _XMP_threads_init(void);
+extern void _XMP_threads_finalize(void);
 
 // xmp_gpu_runtime.cu
 extern void _XMP_gpu_init(void);

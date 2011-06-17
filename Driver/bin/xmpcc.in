@@ -38,7 +38,7 @@ for i in "$@"; do
             doProf=1
             args="${args} --Wx${i}";;
         -enable-threads)
-            args="${args} --Wx${i} --Wl-lxmp_threads";;
+            args="${args} --Wx${i} --Wl${i} --Wl-lxmp_threads --Wn-D_OPENMP=200203";;
         -enable-gpu)
             if test @XMP_ENABLE_GPU@ -eq 1; then
                 args="${args} --Wx${i} --Wl${i} --Wl-L${GPGPU_PREFIX}/lib64 --Wl-lxmp_gpu --Wl-lcudart --Wn${i}"

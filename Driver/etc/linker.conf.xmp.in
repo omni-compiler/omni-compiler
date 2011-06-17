@@ -2,8 +2,14 @@ hasScalasca=0
 hasTlog=0
 newOpts=''
 
+LOCK_TYPE=@OMP_LOCK_TYPE@
+LIB_THREAD=@OMP_THREAD_TYPE@
+LIB_OMPC=ompc_${LOCK_TYPE}_${LIB_THREAD}
+
 for i in ${OM_OPTIONS}; do
     case ${i} in
+        -enable-threads)
+            LIBS="${LIBS} -l${LIB_OMPC} -l${LIB_THREAD} -ltlog";;
         -prof-scalasca)
             hasScalasca=1;;
         -prof-tlog)
