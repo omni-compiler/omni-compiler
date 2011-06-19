@@ -7,7 +7,7 @@
 package exc.xcalablemp;
 
 import exc.object.*;
-import java.util.Vector;
+import java.util.*;
 
 public class XMPtranslateGlobalPragma {
   private XMPglobalDecl		_globalDecl;
@@ -64,11 +64,29 @@ public class XMPtranslateGlobalPragma {
   }
 
   private void translateAlign(Xobject alignPragma) throws XMPexception {
-    XMPalignedArray.translateAlign((XobjList)alignPragma.getArg(1), _globalDecl, false, null);
+    XobjList alignDecl = (XobjList)alignPragma.getArg(1);
+    XobjList alignNameList = (XobjList)alignDecl.getArg(0);
+    XobjList alignDeclCopy = (XobjList)alignDecl.copy();
+
+    Iterator<Xobject> iter = alignNameList.iterator();
+    while (iter.hasNext()) {
+      Xobject x = iter.next();
+      alignDeclCopy.setArg(0, x);
+      XMPalignedArray.translateAlign(alignDeclCopy, _globalDecl, false, null);
+    }
   }
 
   private void translateShadow(Xobject shadowPragma) throws XMPexception {
-    XMPshadow.translateShadow((XobjList)shadowPragma.getArg(1), _globalDecl, false, null);
+    XobjList shadowDecl = (XobjList)shadowPragma.getArg(1);
+    XobjList shadowNameList = (XobjList)shadowDecl.getArg(0);
+    XobjList shadowDeclCopy = (XobjList)shadowDecl.copy();
+
+    Iterator<Xobject> iter = shadowNameList.iterator();
+    while (iter.hasNext()) {
+      Xobject x = iter.next();
+      shadowDeclCopy.setArg(0, x);
+      XMPshadow.translateShadow(shadowDeclCopy, _globalDecl, false, null);
+    }
   }
 
   private void translateCoarray(Xobject coarrayPragma) throws XMPexception {

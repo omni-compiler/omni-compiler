@@ -450,17 +450,21 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   }
 
   private XobjList parse_ALIGN_clause() throws XmException, XMPexception {
-    // parse <array-name>
-    if (pg_tok() != PG_IDENT)
-      error("align directive has no <array-name>");
+    boolean parseNameList = false;
+    XobjList arrayNameList = null;
 
-    XobjString arrayName = Xcons.String(pg_tok_buf());
+    // parse <array-name>
+    if (pg_tok() == PG_IDENT) {
+      arrayNameList = Xcons.List(Xcons.String(pg_tok_buf()));
+      pg_get_token();
+    } else {
+      parseNameList = true;
+    }
 
     // parse [align-source] ...
     XobjList alignSourceList = Xcons.List();
-    pg_get_token();
     if (pg_tok() != '[')
-      error("'[' is expected after <array-name>");
+      error("'[' is expected");
 
     pg_get_token();
     parse_ALIGN_SOURCE(alignSourceList);
@@ -507,7 +511,21 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     } while (true);
 
     pg_get_token();
-    return Xcons.List(arrayName, alignSourceList, templateName, alignSubscriptList);
+    if (parseNameList) {
+      if (pg_tok() == ':') {
+        pg_get_token();
+        if (pg_tok() == ':') {
+          pg_get_token();
+          arrayNameList = parse_XMP_obj_name_list("align");
+        } else {
+          error("align directive has no <array-name>");
+        }
+      } else {
+        error("align directive has no <array-name>");
+      }
+    }
+
+    return Xcons.List(arrayNameList, alignSourceList, templateName, alignSubscriptList);
   }
 
   private void parse_ALIGN_SOURCE(XobjList alignSourceList) throws XMPexception {
@@ -557,17 +575,21 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   }
 
   private XobjList parse_SHADOW_clause() throws XmException, XMPexception {
-    // parse <array-name>
-    if (pg_tok() != PG_IDENT)
-      error("shadow directive has no <array-name>");
+    boolean parseNameList = false;
+    XobjList arrayNameList = null;
 
-    XobjString arrayName = Xcons.String(pg_tok_buf());
+    // parse <array-name>
+    if (pg_tok() == PG_IDENT) {
+      arrayNameList = Xcons.List(Xcons.String(pg_tok_buf()));
+      pg_get_token();
+    } else {
+      parseNameList = true;
+    }
 
     // parse [shadow-width] ...
-    pg_get_token();
     XobjList shadowWidthList = Xcons.List();
     if (pg_tok() != '[')
-      error("'[' is expected after <array-name>");
+      error("'[' is expected");
 
     pg_get_token();
     parse_SHADOW_WIDTH(shadowWidthList);
@@ -587,7 +609,21 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       else break;
     } while (true);
 
-    return Xcons.List(arrayName, shadowWidthList);
+    if (parseNameList) {
+      if (pg_tok() == ':') {
+        pg_get_token();
+        if (pg_tok() == ':') {
+          pg_get_token();
+          arrayNameList = parse_XMP_obj_name_list("shadow");
+        } else {
+          error("shadow directive has no <array-name>");
+        }
+      } else {
+        error("shadow directive has no <array-name>");
+      }
+    }
+
+    return Xcons.List(arrayNameList, shadowWidthList);
   }
 
   private void parse_SHADOW_WIDTH(XobjList shadowWidthList) throws XmException, XMPexception {
@@ -1331,6 +1367,29 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       }
       else {
         throw new XMPexception("',' or ')' is expected after " + name + " <variable> list");
+      }
+    } while (true);
+
+    pg_get_token();
+    return varList;
+  }
+
+  private XobjList parse_XMP_obj_name_list(String name) throws XMPexception {
+    XobjList varList = Xcons.List();
+
+    do {
+      if (pg_tok() == PG_IDENT) {
+        varList.add(Xcons.String(pg_tok_buf()));
+      } else {
+        throw new XMPexception("<variable> for " + name + " is expected");
+      }
+
+      pg_get_token();
+      if (pg_tok() == ',') {
+        pg_get_token();
+        continue;
+      } else {
+        break;
       }
     } while (true);
 

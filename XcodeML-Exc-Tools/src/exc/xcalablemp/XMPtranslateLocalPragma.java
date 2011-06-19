@@ -105,12 +105,32 @@ public class XMPtranslateLocalPragma {
 
   private void translateAlign(PragmaBlock pb) throws XMPexception {
     checkDeclPragmaLocation(pb);
-    XMPalignedArray.translateAlign((XobjList)pb.getClauses(), _globalDecl, true, pb);
+
+    XobjList alignDecl = (XobjList)pb.getClauses();
+    XobjList alignNameList = (XobjList)alignDecl.getArg(0);
+    XobjList alignDeclCopy = (XobjList)alignDecl.copy();
+
+    Iterator<Xobject> iter = alignNameList.iterator();
+    while (iter.hasNext()) {
+      Xobject x = iter.next();
+      alignDeclCopy.setArg(0, x);
+      XMPalignedArray.translateAlign(alignDeclCopy, _globalDecl, true, pb);
+    }
   }
 
   private void translateShadow(PragmaBlock pb) throws XMPexception {
     checkDeclPragmaLocation(pb);
-    XMPshadow.translateShadow((XobjList)pb.getClauses(), _globalDecl, true, pb);
+
+    XobjList shadowDecl = (XobjList)pb.getClauses();
+    XobjList shadowNameList = (XobjList)shadowDecl.getArg(0);
+    XobjList shadowDeclCopy = (XobjList)shadowDecl.copy();
+
+    Iterator<Xobject> iter = shadowNameList.iterator();
+    while (iter.hasNext()) {
+      Xobject x = iter.next();
+      shadowDeclCopy.setArg(0, x);
+      XMPshadow.translateShadow(shadowDeclCopy, _globalDecl, true, pb);
+    }
   }
 
   private void translateReflect(PragmaBlock pb) throws XMPexception {
