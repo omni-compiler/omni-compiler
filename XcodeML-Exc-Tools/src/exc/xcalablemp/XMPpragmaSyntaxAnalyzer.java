@@ -358,16 +358,21 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   }
 
   private XobjList parse_TEMPLATE_clause() throws XmException, XMPexception {
-    // parse <template-name>
-    if (pg_tok() != PG_IDENT)
-      error("template directive has no <template-name>");
+    boolean parseNameList = false;
+    XobjList templateNameList = null;
 
-    XobjString templateName = Xcons.String(pg_tok_buf());
+    // parse <template-name>
+    if (pg_tok() == PG_IDENT) {
+      templateNameList = Xcons.List(Xcons.String(pg_tok_buf()));
+      pg_get_token();
+    } else {
+      parseNameList = true;
+    }
 
     // parse (<template-spec>, ...)
-    pg_get_token();
-    if (pg_tok() != '(')
+    if (pg_tok() != '(') {
       error("'(' is expected after <template-name>");
+    }
 
     XobjList templateSpecList = Xcons.List();
     do {
@@ -398,18 +403,36 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     } while (true);
 
     pg_get_token();
-    return Xcons.List(templateName, templateSpecList);
+    if (parseNameList) {
+      if (pg_tok() == ':') {
+        pg_get_token();
+        if (pg_tok() == ':') {
+          pg_get_token();
+          templateNameList = parse_XMP_obj_name_list("template");
+        } else {
+          error("template directive has no <template-name>");
+        }
+      } else {
+        error("template directive has no <template-name>");
+      }
+    }
+
+    return Xcons.List(templateNameList, templateSpecList);
   }
 
   private XobjList parse_DISTRIBUTE_clause() throws XMPexception {
-    // parse <template-name>
-    if (pg_tok() != PG_IDENT)
-      error("distribute directive has no <template-name>");
+    boolean parseNameList = false;
+    XobjList templateNameList = null;
 
-    XobjString templateName = Xcons.String(pg_tok_buf());
+    // parse <template-name>
+    if (pg_tok() == PG_IDENT) {
+      templateNameList = Xcons.List(Xcons.String(pg_tok_buf()));
+      pg_get_token();
+    } else {
+      parseNameList = true;
+    }
 
     // parse (<dist-format>, ...)
-    pg_get_token();
     if (pg_tok() != '(')
       error("'(' is expected after <template-name>");
 
@@ -446,7 +469,21 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       error("<nodes-name> is expected after 'onto'");
 
     pg_get_token();
-    return Xcons.List(templateName, distFormatList, nodesName);
+    if (parseNameList) {
+      if (pg_tok() == ':') {
+        pg_get_token();
+        if (pg_tok() == ':') {
+          pg_get_token();
+          templateNameList = parse_XMP_obj_name_list("distribute");
+        } else {
+          error("distribute directive has no <template-name>");
+        }
+      } else {
+        error("distribute directive has no <template-name>");
+      }
+    }
+
+    return Xcons.List(templateNameList, distFormatList, nodesName);
   }
 
   private XobjList parse_ALIGN_clause() throws XmException, XMPexception {

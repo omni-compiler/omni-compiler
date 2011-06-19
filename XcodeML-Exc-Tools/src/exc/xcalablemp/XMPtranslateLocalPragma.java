@@ -95,12 +95,32 @@ public class XMPtranslateLocalPragma {
 
   private void translateTemplate(PragmaBlock pb) throws XMPexception {
     checkDeclPragmaLocation(pb);
-    XMPtemplate.translateTemplate((XobjList)pb.getClauses(), _globalDecl, true, pb);
+
+    XobjList templateDecl = (XobjList)pb.getClauses();
+    XobjList templateNameList = (XobjList)templateDecl.getArg(0);
+    XobjList templateDeclCopy = (XobjList)templateDecl.copy();
+
+    Iterator<Xobject> iter = templateNameList.iterator();
+    while (iter.hasNext()) {
+      Xobject x = iter.next();
+      templateDeclCopy.setArg(0, x);
+      XMPtemplate.translateTemplate(templateDeclCopy, _globalDecl, true, pb);
+    }
   }
 
   private void translateDistribute(PragmaBlock pb) throws XMPexception {
     checkDeclPragmaLocation(pb);
-    XMPtemplate.translateDistribute((XobjList)pb.getClauses(), _globalDecl, true, pb);
+
+    XobjList distributeDecl = (XobjList)pb.getClauses();
+    XobjList distributeNameList = (XobjList)distributeDecl.getArg(0);
+    XobjList distributeDeclCopy = (XobjList)distributeDecl.copy();
+
+    Iterator<Xobject> iter = distributeNameList.iterator();
+    while (iter.hasNext()) {
+      Xobject x = iter.next();
+      distributeDeclCopy.setArg(0, x);
+      XMPtemplate.translateDistribute(distributeDeclCopy, _globalDecl, true, pb);
+    }
   }
 
   private void translateAlign(PragmaBlock pb) throws XMPexception {

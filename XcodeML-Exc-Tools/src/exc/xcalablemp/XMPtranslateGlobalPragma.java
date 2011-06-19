@@ -56,11 +56,29 @@ public class XMPtranslateGlobalPragma {
   }
 
   private void translateTemplate(Xobject templatePragma) throws XMPexception {
-    XMPtemplate.translateTemplate((XobjList)templatePragma.getArg(1), _globalDecl, false, null);
+    XobjList templateDecl = (XobjList)templatePragma.getArg(1);
+    XobjList templateNameList = (XobjList)templateDecl.getArg(0);
+    XobjList templateDeclCopy = (XobjList)templateDecl.copy();
+
+    Iterator<Xobject> iter = templateNameList.iterator();
+    while (iter.hasNext()) {
+      Xobject x = iter.next();
+      templateDeclCopy.setArg(0, x);
+      XMPtemplate.translateTemplate(templateDeclCopy, _globalDecl, false, null);
+    }
   }
 
   private void translateDistribute(Xobject distributePragma) throws XMPexception {
-    XMPtemplate.translateDistribute((XobjList)distributePragma.getArg(1), _globalDecl, false, null);
+    XobjList distributeDecl = (XobjList)distributePragma.getArg(1);
+    XobjList distributeNameList = (XobjList)distributeDecl.getArg(0);
+    XobjList distributeDeclCopy = (XobjList)distributeDecl.copy();
+
+    Iterator<Xobject> iter = distributeNameList.iterator();
+    while (iter.hasNext()) {
+      Xobject x = iter.next();
+      distributeDeclCopy.setArg(0, x);
+      XMPtemplate.translateDistribute(distributeDeclCopy, _globalDecl, false, null);
+    }
   }
 
   private void translateAlign(Xobject alignPragma) throws XMPexception {
