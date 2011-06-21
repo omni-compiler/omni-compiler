@@ -24,6 +24,7 @@
 // --- cuda barrier func
 #define _XMP_GPU_M_BARRIER_THREADS() __syncthreads()
 #define _XMP_GPU_M_BARRIER_KERNEL() cudaThreadSynchronize()
+#define _XMP_GPU_M_GET_ARRAY_ELMT(addr_, index_) (*(addr_ + index_))
 
 extern "C" void _XMP_fatal(char *msg);
 
@@ -33,19 +34,15 @@ extern int _XMP_gpu_max_block_dim_x;
 extern int _XMP_gpu_max_block_dim_y;
 extern int _XMP_gpu_max_block_dim_z;
 
-template<typename Ta>
-__device__ Ta *_XMP_gpu_calc_addr(void *desc, unsigned long long i) {
+__device__ unsigned long long _XMP_gpu_calc_index(void *desc, unsigned long long i) {
   _XMP_gpu_data_t *gpu_desc = (_XMP_gpu_data_t *)desc;
-  Ta *addr = (T *)gpu_desc->device_addr;
   _XMP_array_t *array_desc = gpu_desc->device_array_desc;
-  return addr + (i - array_desc->info[0].temp0_v);
+  return (i - array_desc->info[0].temp0_v);
 }
 
-template<typename Ta>
-__device__ Ta *_XMP_gpu_calc_addr(void *desc, unsigned long long i, unsigned long long j) {
+__device__ unsigned long long _XMP_gpu_calc_index(void *desc, unsigned long long i, unsigned long long j) {
   _XMP_gpu_data_t *gpu_desc = (_XMP_gpu_data_t *)desc;
-  Ta *addr = (T *)gpu_desc->device_addr;
-  return addr;
+  return 0;
 }
 
 template<typename T>

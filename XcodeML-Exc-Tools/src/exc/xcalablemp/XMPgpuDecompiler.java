@@ -237,11 +237,11 @@ public class XMPgpuDecompiler {
 
   private static void rewriteAlignedArrayExpr(bottomupXobjectIterator iter, XMPgpuData gpuData) throws XMPexception {
     XobjList funcArgs = Xcons.List(gpuData.getDeviceDescId().Ref());
-    parseArrayExpr(iter, gpuData.getXMPalignedArray(), 0, funcArgs);
+    parseArrayExpr(iter, gpuData, 0, funcArgs);
   }
 
   private static void parseArrayExpr(bottomupXobjectIterator iter,
-                                     XMPalignedArray alignedArray, int arrayDimCount, XobjList args) throws XMPexception {
+                                     XMPgpuData gpuData, int arrayDimCount, XobjList args) throws XMPexception {
     String syntaxErrMsg = "syntax error on array expression, cannot rewrite distributed array";
     Xobject prevExpr = iter.getPrevXobject();
     Xcode prevExprOpcode = prevExpr.Opcode();
@@ -265,14 +265,14 @@ public class XMPgpuDecompiler {
           if (parentExpr.Opcode() == Xcode.POINTER_REF) {
             args.add(Xcons.Cast(Xtype.unsignedlonglongType, myExpr.right()));
             iter.next();
-            parseArrayExpr(iter, alignedArray, arrayDimCount + 1, args);
+            parseArrayExpr(iter, gpuData, arrayDimCount + 1, args);
           } else {
-            if (alignedArray.getDim() == arrayDimCount) {
-              Xobject funcCall = createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args, Xcode.POINTER_REF);
+            if (gpuData.getXMPalignedArray().getDim() == arrayDimCount) {
+              Xobject funcCall = createRewriteAlignedArrayFunc(gpuData, arrayDimCount, args, Xcode.POINTER_REF);
               myExpr.setLeft(funcCall);
             } else {
               args.add(Xcons.Cast(Xtype.unsignedlonglongType, myExpr.right()));
-              Xobject funcCall = createRewriteAlignedArrayFunc(alignedArray, arrayDimCount + 1, args, Xcode.PLUS_EXPR);
+              Xobject funcCall = createRewriteAlignedArrayFunc(gpuData, arrayDimCount + 1, args, Xcode.PLUS_EXPR);
               iter.setXobject(funcCall);
             }
 
@@ -291,7 +291,7 @@ public class XMPgpuDecompiler {
           }
 
           iter.next();
-          parseArrayExpr(iter, alignedArray, arrayDimCount, args);
+          parseArrayExpr(iter, gpuData, arrayDimCount, args);
           return;
         }
       default:
@@ -309,25 +309,25 @@ public class XMPgpuDecompiler {
               throw new XMPexception(syntaxErrMsg);
           }
 
-          Xobject funcCall = createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args, prevExprOpcode);
+          Xobject funcCall = createRewriteAlignedArrayFunc(gpuData, arrayDimCount, args, prevExprOpcode);
           iter.setPrevXobject(funcCall);
           return;
         }
     }
   }
 
-  private static Xobject createRewriteAlignedArrayFunc(XMPalignedArray alignedArray, int arrayDimCount,
-                                                       XobjList getAddrFuncArgs, Xcode opcode) throws XMPexception {
+  private static Xobject createRewriteAlignedArrayFunc(XMPgpuData gpuData, int arrayDimCount,
+                                                       XobjList getIndexFuncArgs, Xcode opcode) throws XMPexception {
+    XMPalignedArray alignedArray = gpuData.getXMPalignedArray();
     int arrayDim = alignedArray.getDim();
-    Ident getAddrFuncId = null;
+    Ident getIndexFuncId = null;
     if (arrayDim == arrayDimCount) {
-      getAddrFuncId = XMP.getMacroId("_XMP_gpu_calc_addr", Xtype.Pointer(alignedArray.getType()));
+      getIndexFuncId = XMP.getMacroId("_XMP_gpu_calc_index", Xtype.unsignedlonglongType);
     } else {
       // FIXME not implemented now
       throw new XMPexception("not implemented now");
     }
 
-    Xobject retObj = getAddrFuncId.Call(getAddrFuncArgs);
     switch (opcode) {
       case ARRAY_REF:
       case PLUS_EXPR:
@@ -335,7 +335,8 @@ public class XMPgpuDecompiler {
         throw new XMPexception("not implemented now");
       case POINTER_REF:
         if (arrayDim == arrayDimCount) {
-          return Xcons.List(Xcode.POINTER_REF, retObj.Type(), retObj);
+          Ident getAddrFuncId = XMP.getMacroId("_XMP_GPU_M_GET_ARRAY_ELMT");
+          return getAddrFuncId.Call(Xcons.List(alignedArray.getArrayId().getAddr(), getIndexFuncId.Call(getIndexFuncArgs)));
         } else {
           // FIXME not implemented now
           throw new XMPexception("not implemented now");
