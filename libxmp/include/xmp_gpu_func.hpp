@@ -7,6 +7,7 @@
 #ifndef _XMP_GPU_RUNTIME_FUNC_DECL
 #define _XMP_GPU_RUNTIME_FUNC_DECL
 
+#include "xmp_constant.h"
 #include "xmp_data_struct.h"
 
 // --- integer functions
@@ -35,14 +36,47 @@ extern int _XMP_gpu_max_block_dim_y;
 extern int _XMP_gpu_max_block_dim_z;
 
 __device__ unsigned long long _XMP_gpu_calc_index(void *desc, unsigned long long i) {
-  _XMP_gpu_data_t *gpu_desc = (_XMP_gpu_data_t *)desc;
-  _XMP_array_t *array_desc = gpu_desc->device_array_desc;
-  return (i - array_desc->info[0].temp0_v);
+  _XMP_array_info_t *ai = &((((_XMP_gpu_data_t *)desc)->device_array_desc)->info[0]);
+  switch (ai->align_manner) {
+    case _XMP_N_ALIGN_BLOCK:
+      return (i - (ai->temp0_v));
+    case _XMP_N_ALIGN_CYCLIC:
+      return (i / (ai->temp0_v));
+    default:
+      return i;
+  }
 }
 
 __device__ unsigned long long _XMP_gpu_calc_index(void *desc, unsigned long long i, unsigned long long j) {
-  _XMP_gpu_data_t *gpu_desc = (_XMP_gpu_data_t *)desc;
-  return 0;
+  unsigned long long index = 0;
+
+  _XMP_array_info_t *ai = &((((_XMP_gpu_data_t *)desc)->device_array_desc)->info[0]);
+  switch (ai->align_manner) {
+    case _XMP_N_ALIGN_BLOCK:
+      index = (i - (ai->temp0_v));
+      break;
+    case _XMP_N_ALIGN_CYCLIC:
+      index = (i / (ai->temp0_v));
+      break;
+    default:
+      index = i;
+  }
+
+  index *= ai->dim_acc;
+
+  ai++;
+  switch (ai->align_manner) {
+    case _XMP_N_ALIGN_BLOCK:
+      index += (j - (ai->temp0_v));
+      break;
+    case _XMP_N_ALIGN_CYCLIC:
+      index += (j / (ai->temp0_v));
+      break;
+    default:
+      index += j;
+  }
+
+  return index;
 }
 
 template<typename T>
