@@ -33,11 +33,19 @@ extern int _XMP_gpu_max_block_dim_x;
 extern int _XMP_gpu_max_block_dim_y;
 extern int _XMP_gpu_max_block_dim_z;
 
-template<typename T>
-__device__ void _XMP_gpu_calc_index(unsigned long long *index, T t, void *gpu_data_desc) {
-  // FIXME not general
-  _XMP_array_t *array_desc = ((_XMP_gpu_data_t *)gpu_data_desc)->device_array_desc;
-  *index = t - array_desc->info[0].temp0_v;
+template<typename Ta>
+__device__ Ta *_XMP_gpu_calc_addr(void *desc, unsigned long long i) {
+  _XMP_gpu_data_t *gpu_desc = (_XMP_gpu_data_t *)desc;
+  Ta *addr = (T *)gpu_desc->device_addr;
+  _XMP_array_t *array_desc = gpu_desc->device_array_desc;
+  return addr + (i - array_desc->info[0].temp0_v);
+}
+
+template<typename Ta>
+__device__ Ta *_XMP_gpu_calc_addr(void *desc, unsigned long long i, unsigned long long j) {
+  _XMP_gpu_data_t *gpu_desc = (_XMP_gpu_data_t *)desc;
+  Ta *addr = (T *)gpu_desc->device_addr;
+  return addr;
 }
 
 template<typename T>

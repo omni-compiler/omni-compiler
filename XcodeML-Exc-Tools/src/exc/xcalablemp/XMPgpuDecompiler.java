@@ -225,7 +225,8 @@ public class XMPgpuDecompiler {
             XMPalignedArray alignedArray = gpuData.getXMPalignedArray();
             if (alignedArray != null) {
               if (alignedArray.realloc()) {
-                parseArrayExpr(iter, bl, symGen, loopBlock);
+                iter.next();
+                rewriteAlignedArrayExpr(iter, gpuData);
               }
             }
           } break;
@@ -234,7 +235,118 @@ public class XMPgpuDecompiler {
     }
   }
 
+  private static void rewriteAlignedArrayExpr(bottomupXobjectIterator iter, XMPgpuData gpuData) throws XMPexception {
+    XobjList funcArgs = Xcons.List(gpuData.getDeviceDescId().Ref());
+    parseArrayExpr(iter, gpuData.getXMPalignedArray(), 0, funcArgs);
+  }
+
+  private static void parseArrayExpr(bottomupXobjectIterator iter,
+                                     XMPalignedArray alignedArray, int arrayDimCount, XobjList args) throws XMPexception {
+    String syntaxErrMsg = "syntax error on array expression, cannot rewrite distributed array";
+    Xobject prevExpr = iter.getPrevXobject();
+    Xcode prevExprOpcode = prevExpr.Opcode();
+    Xobject myExpr = iter.getXobject();
+    Xobject parentExpr = iter.getParent();
+    switch (myExpr.Opcode()) {
+      case PLUS_EXPR:
+        {
+          switch (prevExprOpcode) {
+            case ARRAY_REF:
+              {
+                if (arrayDimCount != 0)
+                  throw new XMPexception(syntaxErrMsg);
+              } break;
+            case POINTER_REF:
+              break;
+            default:
+              throw new XMPexception(syntaxErrMsg);
+          }
+
+          if (parentExpr.Opcode() == Xcode.POINTER_REF) {
+            args.add(Xcons.Cast(Xtype.unsignedlonglongType, myExpr.right()));
+            iter.next();
+            parseArrayExpr(iter, alignedArray, arrayDimCount + 1, args);
+          } else {
+            if (alignedArray.getDim() == arrayDimCount) {
+              Xobject funcCall = createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args, Xcode.POINTER_REF);
+              myExpr.setLeft(funcCall);
+            } else {
+              args.add(Xcons.Cast(Xtype.unsignedlonglongType, myExpr.right()));
+              Xobject funcCall = createRewriteAlignedArrayFunc(alignedArray, arrayDimCount + 1, args, Xcode.PLUS_EXPR);
+              iter.setXobject(funcCall);
+            }
+
+            iter.next();
+          }
+
+          return;
+        }
+      case POINTER_REF:
+        {
+          switch (prevExprOpcode) {
+            case PLUS_EXPR:
+              break;
+            default:
+              throw new XMPexception(syntaxErrMsg);
+          }
+
+          iter.next();
+          parseArrayExpr(iter, alignedArray, arrayDimCount, args);
+          return;
+        }
+      default:
+        {
+          switch (prevExprOpcode) {
+            case ARRAY_REF:
+              {
+                if (arrayDimCount != 0)
+                  throw new XMPexception(syntaxErrMsg);
+              } break;
+            case PLUS_EXPR:
+            case POINTER_REF:
+              break;
+            default:
+              throw new XMPexception(syntaxErrMsg);
+          }
+
+          Xobject funcCall = createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args, prevExprOpcode);
+          iter.setPrevXobject(funcCall);
+          return;
+        }
+    }
+  }
+
+  private static Xobject createRewriteAlignedArrayFunc(XMPalignedArray alignedArray, int arrayDimCount,
+                                                       XobjList getAddrFuncArgs, Xcode opcode) throws XMPexception {
+    int arrayDim = alignedArray.getDim();
+    Ident getAddrFuncId = null;
+    if (arrayDim == arrayDimCount) {
+      getAddrFuncId = XMP.getMacroId("_XMP_gpu_calc_addr", Xtype.Pointer(alignedArray.getType()));
+    } else {
+      // FIXME not implemented now
+      throw new XMPexception("not implemented now");
+    }
+
+    Xobject retObj = getAddrFuncId.Call(getAddrFuncArgs);
+    switch (opcode) {
+      case ARRAY_REF:
+      case PLUS_EXPR:
+        // FIXME not implemented now
+        throw new XMPexception("not implemented now");
+      case POINTER_REF:
+        if (arrayDim == arrayDimCount) {
+          return Xcons.List(Xcode.POINTER_REF, retObj.Type(), retObj);
+        } else {
+          // FIXME not implemented now
+          throw new XMPexception("not implemented now");
+        }
+      default:
+        throw new XMPexception("unknown operation in createRewriteAlignedArrayFunc()");
+    }
+  }
+
   // FIXME only for one dimension
+/*
   private static void parseArrayExpr(bottomupXobjectIterator iter, BlockList bl, XMPgenSym symGen,
                                      CforBlock loopBlock) throws XMPexception {
     Xobject myExpr = iter.getXobject();
@@ -300,4 +412,5 @@ public class XMPgpuDecompiler {
         throw new XMPexception("wrong array expr");
     }
   }
+*/
 }
