@@ -252,7 +252,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-include_HEADERS = xmp.h xmp_index_macro.h xmp_comm_macro.h xmp_func_decl.h xmp_tlog.h xmp_scalasca.h xmp_gpu_func.hpp xmp_data_struct.h
+include_HEADERS = xmp.h xmp_index_macro.h xmp_comm_macro.h xmp_func_decl.h xmp_tlog.h xmp_scalasca.h xmp_gpu_func.hpp xmp_data_struct.h xmp_constant.h
 all: all-am
 
 .SUFFIXES:
