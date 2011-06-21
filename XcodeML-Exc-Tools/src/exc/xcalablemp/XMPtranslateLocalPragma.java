@@ -318,7 +318,8 @@ public class XMPtranslateLocalPragma {
     CforBlock schedBaseBlock = getOutermostLoopBlock(loopBody);
 
     // schedule loop
-    if (loopDecl.getArg(0) == null) {
+    XobjList loopIterList = (XobjList)loopDecl.getArg(0);
+    if (loopIterList == null) {
       loopDecl.setArg(0, Xcons.List(Xcons.String(schedBaseBlock.getInductionVar().getName())));
       translateFollowingLoop(pb, schedBaseBlock);
     }
@@ -356,7 +357,7 @@ public class XMPtranslateLocalPragma {
       } else if (devName.equals("threads")) {
         if (XmOption.isXcalableMPthreads()) {
           XobjList devArgs = (XobjList)multicoreClause.getArg(1);
-          Block newLoopBlock = translateThreadsClauseToOMPpragma(devArgs, reductionRefList, schedBaseBlock);
+          Block newLoopBlock = translateThreadsClauseToOMPpragma(devArgs, reductionRefList, schedBaseBlock, loopIterList);
           schedBaseBlock.replace(newLoopBlock);
         } else {
           XMP.warning("this compiler does not support threads clause");
@@ -544,7 +545,7 @@ public class XMPtranslateLocalPragma {
 
   // XXX only supports C language
   private Block translateThreadsClauseToOMPpragma(XobjList threadsClause, XobjList reductionRefList,
-                                                  CforBlock loopBlock) throws XMPexception {
+                                                  CforBlock loopBlock, XobjList loopIterList) throws XMPexception {
     Xobject parallelClause = Xcons.statementList();
     XobjList forClause = Xcons.List();
 
@@ -569,7 +570,26 @@ public class XMPtranslateLocalPragma {
       }
     }
 
-    forClause.add(omp_pg_list(OMPpragma.DIR_NOWAIT, null));
+    // FIXME compare loopIterList with private, firstprivate var list
+    if (loopIterList != null) {
+      String schedLoopIterName = loopBlock.getInductionVar().getSym();
+      XobjList privateList = Xcons.List();
+      XobjList firstPrivateList = Xcons.List();
+      Iterator<Xobject> iter = loopIterList.iterator();
+      while (iter.hasNext()) {
+        Xobject x = iter.next();
+        String iterName = x.getName();
+        if (!iterName.equals(schedLoopIterName)) {
+          privateList.add(Xcons.Symbol(Xcode.IDENT, iterName));
+          firstPrivateList.add(Xcons.Symbol(Xcode.IDENT, "_XMP_loop_init_" + iterName));
+          firstPrivateList.add(Xcons.Symbol(Xcode.IDENT, "_XMP_loop_cond_" + iterName));
+          firstPrivateList.add(Xcons.Symbol(Xcode.IDENT, "_XMP_loop_step_" + iterName));
+        }
+      }
+
+      forClause.add(Xcons.List(Xcode.LIST, Xcons.String(OMPpragma.DATA_PRIVATE.toString()), privateList));
+      forClause.add(Xcons.List(Xcode.LIST, Xcons.String(OMPpragma.DATA_FIRSTPRIVATE.toString()), firstPrivateList));
+    }
 
     addReductionClauseToOMPclause(forClause, reductionRefList);
 
