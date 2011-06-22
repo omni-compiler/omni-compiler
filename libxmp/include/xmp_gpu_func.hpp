@@ -51,29 +51,37 @@ __device__ unsigned long long _XMP_gpu_calc_index(void *desc, unsigned long long
   unsigned long long index = 0;
 
   _XMP_array_info_t *ai = &((((_XMP_gpu_data_t *)desc)->device_array_desc)->info[0]);
-  switch (ai->align_manner) {
-    case _XMP_N_ALIGN_BLOCK:
-      index = (i - (ai->temp0_v));
-      break;
-    case _XMP_N_ALIGN_CYCLIC:
-      index = (i / (ai->temp0_v));
-      break;
-    default:
-      index = i;
+  if (ai->shadow_type == _XMP_N_SHADOW_FULL) {
+    index = i;
+  } else {
+    switch (ai->align_manner) {
+      case _XMP_N_ALIGN_BLOCK:
+        index = (i - (ai->temp0_v));
+        break;
+      case _XMP_N_ALIGN_CYCLIC:
+        index = (i / (ai->temp0_v));
+        break;
+      default:
+        index = i;
+    }
   }
 
   index *= ai->dim_acc;
 
   ai++;
-  switch (ai->align_manner) {
-    case _XMP_N_ALIGN_BLOCK:
-      index += (j - (ai->temp0_v));
-      break;
-    case _XMP_N_ALIGN_CYCLIC:
-      index += (j / (ai->temp0_v));
-      break;
-    default:
-      index += j;
+  if (ai->shadow_type == _XMP_N_SHADOW_FULL) {
+    index += j;
+  } else {
+    switch (ai->align_manner) {
+      case _XMP_N_ALIGN_BLOCK:
+        index += (j - (ai->temp0_v));
+        break;
+      case _XMP_N_ALIGN_CYCLIC:
+        index += (j / (ai->temp0_v));
+        break;
+      default:
+        index += j;
+    }
   }
 
   return index;
