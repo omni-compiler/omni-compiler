@@ -26,6 +26,11 @@
 #define _XMP_GPU_M_BARRIER_THREADS() __syncthreads()
 #define _XMP_GPU_M_BARRIER_KERNEL() cudaThreadSynchronize()
 #define _XMP_GPU_M_GET_ARRAY_ELMT(addr_, index_) (*(addr_ + index_))
+#define _XMP_GPU_CONFIG_CACHE(flag_, func_) \
+if (flag_) { \
+  flag_ = 0; \
+  cudaFuncSetCacheConfig(func_, cudaFuncCachePreferL1); \
+}
 
 extern "C" void _XMP_fatal(char *msg);
 

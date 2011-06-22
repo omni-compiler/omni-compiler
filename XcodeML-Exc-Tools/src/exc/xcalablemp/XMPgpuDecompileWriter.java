@@ -353,22 +353,26 @@ public class XMPgpuDecompileWriter extends PrintWriter {
 
     case FUNCTION_CALL: /* (FUNCTION_CALL function args-list) */
       XobjList prop = (XobjList)v.getProp(XMPgpuDecompiler.GPU_FUNC_CONF);
+
+      String funcName = null;
+      if(v.left().Opcode() == Xcode.FUNC_ADDR){
+        funcName = v.left().getSym();
+      } else {
+        fatal("cannot decompile XMP-ACC code");
+      }
+
       if (prop != null) {
         println();
         println("{");
+        println("static int _XMP_GPU_CONFIG_CACHE_FLAG = 1;");
         println("dim3 _XMP_GPU_DIM3_block(" + prop.getArg(0).getName() + ", " + prop.getArg(1).getName() + ", " + prop.getArg(2).getName() + ");");
         println("dim3 _XMP_GPU_DIM3_thread(" + prop.getArg(3).getName() + ", " + prop.getArg(4).getName() + ", " + prop.getArg(5).getName() + ");");
+        println("_XMP_GPU_CONFIG_CACHE(_XMP_GPU_CONFIG_CACHE_FLAG, " + funcName + ");");
       }
 
-      if(v.left().Opcode() == Xcode.FUNC_ADDR){
-        print(v.left().getSym());
-      } else {
-        print("(");  // bug fix
-        print(v.left());
-        print(")");
-      }
+      print(funcName);
 
-      // FIXME
+      // FIXME implement stream???
       if (prop != null) {
         print("<<<_XMP_GPU_DIM3_block, _XMP_GPU_DIM3_thread>>>");
       }
