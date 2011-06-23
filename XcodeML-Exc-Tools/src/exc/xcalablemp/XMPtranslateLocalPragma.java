@@ -913,9 +913,21 @@ public class XMPtranslateLocalPragma {
 
     XMPutil.putLoopIter(schedBaseBlock, loopIndexName, Xcons.List(parallelInitId, parallelCondId, parallelStepId));
 
-    forBlock.setLowerBound(parallelInitId.Ref());
-    forBlock.setUpperBound(parallelCondId.Ref());
-    forBlock.setStep(parallelStepId.Ref());
+    switch (distManner) {
+      case XMPtemplate.DUPLICATION:
+      case XMPtemplate.BLOCK:
+        forBlock.setLowerBound(parallelInitId.Ref());
+        forBlock.setUpperBound(parallelCondId.Ref());
+        // forBlock.setStep(parallelStepId.Ref());
+        break;
+      case XMPtemplate.CYCLIC:
+        forBlock.setLowerBound(parallelInitId.Ref());
+        // forBlock.setUpperBound(parallelCondId.Ref());
+        forBlock.setStep(parallelStepId.Ref());
+        break;
+      default:
+        throw new XMPexception("unknown distribute manner");
+    }
 
     forBlock.getCondBBlock().setExpr(Xcons.binaryOp(Xcode.LOG_LT_EXPR, loopIndex, parallelCondId.Ref()));
 
