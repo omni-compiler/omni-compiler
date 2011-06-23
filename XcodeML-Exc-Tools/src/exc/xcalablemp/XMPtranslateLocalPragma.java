@@ -887,8 +887,8 @@ public class XMPtranslateLocalPragma {
 
         templateIndexArg = Xcons.IntConstant(templateIndex);
         distManner = templateObj.getDistMannerAt(templateIndex);
-        if (distManner == XMPtemplate.DUPLICATION) { // FIXME how implement???
-          throw new XMPexception("indicated template dimension is not distributed");
+        if (distManner == XMPtemplate.DUPLICATION) {
+          distMannerString = XMPtemplate.getDistMannerString(XMPtemplate.BLOCK);
         }
         else {
           distMannerString = templateObj.getDistMannerStringAt(templateIndex);

@@ -109,6 +109,19 @@ public class XMPtemplate extends XMPobject {
     return _lowerVector.get(index);
   }
 
+  public static String getDistMannerString(int manner) throws XMPexception {
+    switch (manner) {
+      case DUPLICATION:
+        return new String("DUPLICATION");
+      case BLOCK:
+        return new String("BLOCK");
+      case CYCLIC:
+        return new String("CYCLIC");
+      default:
+        throw new XMPexception("unknown distribute manner");
+    }
+  }
+
   public static void translateTemplate(XobjList templateDecl, XMPglobalDecl globalDecl,
                                        boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
     // local parameters
