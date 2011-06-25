@@ -160,15 +160,16 @@ typedef struct _XMP_coarray_type {
   _XMP_coarray_info_t info[1];
 } _XMP_coarray_t;
 
+typedef struct _XMP_gpu_array_type {
+  int gtol;
+  unsigned long long acc;
+} _XMP_gpu_array_t;
+
 typedef struct _XMP_gpu_data_type {
   _Bool is_aligned_array;
-
   void *host_addr;
   void *device_addr;
-
-  struct _XMP_gpu_data_type *device_gpu_data_desc;
-  _XMP_array_t *device_array_desc;
-
+  _XMP_gpu_array_t *device_array_desc;
   size_t size;
 } _XMP_gpu_data_t;
 

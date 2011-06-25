@@ -40,58 +40,6 @@ extern int _XMP_gpu_max_block_dim_x;
 extern int _XMP_gpu_max_block_dim_y;
 extern int _XMP_gpu_max_block_dim_z;
 
-__device__ unsigned long long _XMP_gpu_calc_index(void *desc, unsigned long long i) {
-  _XMP_array_info_t *ai = &((((_XMP_gpu_data_t *)desc)->device_array_desc)->info[0]);
-  switch (ai->align_manner) {
-    case _XMP_N_ALIGN_BLOCK:
-      return (i - (ai->temp0_v));
-    case _XMP_N_ALIGN_CYCLIC:
-      return (i / (ai->temp0_v));
-    default:
-      return i;
-  }
-}
-
-__device__ unsigned long long _XMP_gpu_calc_index(void *desc, unsigned long long i, unsigned long long j) {
-  unsigned long long index = 0;
-
-  _XMP_array_info_t *ai = &((((_XMP_gpu_data_t *)desc)->device_array_desc)->info[0]);
-  if (ai->shadow_type == _XMP_N_SHADOW_FULL) {
-    index = i;
-  } else {
-    switch (ai->align_manner) {
-      case _XMP_N_ALIGN_BLOCK:
-        index = (i - (ai->temp0_v));
-        break;
-      case _XMP_N_ALIGN_CYCLIC:
-        index = (i / (ai->temp0_v));
-        break;
-      default:
-        index = i;
-    }
-  }
-
-  index *= ai->dim_acc;
-
-  ai++;
-  if (ai->shadow_type == _XMP_N_SHADOW_FULL) {
-    index += j;
-  } else {
-    switch (ai->align_manner) {
-      case _XMP_N_ALIGN_BLOCK:
-        index += (j - (ai->temp0_v));
-        break;
-      case _XMP_N_ALIGN_CYCLIC:
-        index += (j / (ai->temp0_v));
-        break;
-      default:
-        index += j;
-    }
-  }
-
-  return index;
-}
-
 template<typename T>
 __device__ void _XMP_gpu_calc_thread_id(T *index) {
   *index = threadIdx.x +

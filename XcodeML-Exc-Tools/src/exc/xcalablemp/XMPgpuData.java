@@ -39,12 +39,12 @@ public class XMPgpuData {
     return _name;
   }
 
-  public Ident getHostId() {
-    return _hostId;
-  }
-
   public Ident getHostDescId() {
     return _hostDescId;
+  }
+
+  public Ident getHostId() {
+    return _hostId;
   }
 
   public Ident getDeviceDescId() {
@@ -100,7 +100,7 @@ public class XMPgpuData {
       }
 
       Ident gpuDataHostDescId = replaceBody.declLocalIdent(XMP.GPU_HOST_DESC_PREFIX_ + varName, Xtype.voidPtrType);
-      Ident gpuDataDeviceDescId = replaceBody.declLocalIdent(XMP.GPU_DEVICE_DESC_PREFIX_ + varName, Xtype.voidPtrType);
+      Ident gpuDataDeviceDescId = null;
       Ident gpuDataDeviceAddrId = replaceBody.declLocalIdent(XMP.GPU_DEVICE_ADDR_PREFIX_ + varName, Xtype.voidPtrType);
 
       XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(varName, localXMPsymbolTable);
@@ -136,12 +136,16 @@ public class XMPgpuData {
         }
 
         gpuDataConstructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_init_data_NOT_ALIGNED",
-                                                                  Xcons.List(gpuDataHostDescId.getAddr(), gpuDataDeviceDescId.getAddr(), gpuDataDeviceAddrId.getAddr(),
-                                                                             addrObj, sizeObj)));
+                                                                  Xcons.List(gpuDataHostDescId.getAddr(),
+                                                                             gpuDataDeviceAddrId.getAddr(), addrObj, sizeObj)));
       } else {
+        gpuDataDeviceDescId = replaceBody.declLocalIdent(XMP.GPU_DEVICE_DESC_PREFIX_ + varName, Xtype.voidPtrType);
         gpuDataConstructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_init_data_ALIGNED",
-                                                                  Xcons.List(gpuDataHostDescId.getAddr(), gpuDataDeviceDescId.getAddr(), gpuDataDeviceAddrId.getAddr(),
-                                                                             alignedArray.getAddrIdVoidRef(), alignedArray.getDescId().Ref())));
+                                                                  Xcons.List(gpuDataHostDescId.getAddr(),
+                                                                             gpuDataDeviceDescId.getAddr(),
+                                                                             gpuDataDeviceAddrId.getAddr(),
+                                                                             alignedArray.getAddrIdVoidRef(),
+                                                                             alignedArray.getDescId().Ref())));
       }
 
       gpuDataDestructorBody.add(globalDecl.createFuncCallBlock("_XMP_gpu_finalize_data", Xcons.List(gpuDataHostDescId.Ref())));

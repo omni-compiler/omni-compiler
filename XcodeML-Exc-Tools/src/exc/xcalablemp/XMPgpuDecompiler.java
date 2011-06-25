@@ -263,7 +263,7 @@ public class XMPgpuDecompiler {
           }
 
           if (parentExpr.Opcode() == Xcode.POINTER_REF) {
-            args.add(Xcons.Cast(Xtype.unsignedlonglongType, myExpr.right()));
+            args.add(getCalcIndexFuncRef(gpuData, arrayDimCount, myExpr.right()));
             iter.next();
             parseArrayExpr(iter, gpuData, arrayDimCount + 1, args);
           } else {
@@ -271,7 +271,7 @@ public class XMPgpuDecompiler {
               Xobject funcCall = createRewriteAlignedArrayFunc(gpuData, arrayDimCount, args, Xcode.POINTER_REF);
               myExpr.setLeft(funcCall);
             } else {
-              args.add(Xcons.Cast(Xtype.unsignedlonglongType, myExpr.right()));
+              args.add(getCalcIndexFuncRef(gpuData, arrayDimCount, myExpr.right()));
               Xobject funcCall = createRewriteAlignedArrayFunc(gpuData, arrayDimCount + 1, args, Xcode.PLUS_EXPR);
               iter.setXobject(funcCall);
             }
@@ -317,32 +317,81 @@ public class XMPgpuDecompiler {
   }
 
   private static Xobject createRewriteAlignedArrayFunc(XMPgpuData gpuData, int arrayDimCount,
-                                                       XobjList getIndexFuncArgs, Xcode opcode) throws XMPexception {
+                                                       XobjList getAddrFuncArgs, Xcode opcode) throws XMPexception {
     XMPalignedArray alignedArray = gpuData.getXMPalignedArray();
     int arrayDim = alignedArray.getDim();
-    Ident getIndexFuncId = null;
+    Ident getAddrFuncId = null;
     if (arrayDim == arrayDimCount) {
-      getIndexFuncId = XMP.getMacroId("_XMP_gpu_calc_index", Xtype.unsignedlonglongType);
+      getAddrFuncId = XMP.getMacroId("_XMP_GPU_M_GET_ADDR_E_" + arrayDim, Xtype.Pointer(alignedArray.getType()));
     } else {
-      // FIXME not implemented now
-      throw new XMPexception("not implemented now");
+      getAddrFuncId = XMP.getMacroId("_XMP_GPU_M_GET_ADDR_" + arrayDimCount, Xtype.Pointer(alignedArray.getType()));
     }
 
+    Xobject retObj = getAddrFuncId.Call(getAddrFuncArgs);
     switch (opcode) {
       case ARRAY_REF:
       case PLUS_EXPR:
-        // FIXME not implemented now
-        throw new XMPexception("not implemented now");
+        return retObj;
       case POINTER_REF:
         if (arrayDim == arrayDimCount) {
-          Ident getAddrFuncId = XMP.getMacroId("_XMP_GPU_M_GET_ARRAY_ELMT");
-          return getAddrFuncId.Call(Xcons.List(alignedArray.getArrayId().getAddr(), getIndexFuncId.Call(getIndexFuncArgs)));
+          return Xcons.List(Xcode.POINTER_REF, retObj.Type(), retObj);
         } else {
-          // FIXME not implemented now
-          throw new XMPexception("not implemented now");
+          return retObj;
         }
       default:
         throw new XMPexception("unknown operation in createRewriteAlignedArrayFunc()");
+    }
+  }
+
+  private static Xobject getCalcIndexFuncRef(XMPgpuData gpuData, int index, Xobject indexRef) throws XMPexception {
+    XMPalignedArray alignedArray = gpuData.getXMPalignedArray();
+    switch (alignedArray.getAlignMannerAt(index)) {
+      case XMPalignedArray.NOT_ALIGNED:
+      case XMPalignedArray.DUPLICATION:
+        return indexRef;
+      case XMPalignedArray.BLOCK:
+        if (alignedArray.hasShadow()) {
+          XMPshadow shadow = alignedArray.getShadowAt(index);
+          switch (shadow.getType()) {
+            case XMPshadow.SHADOW_NONE:
+            case XMPshadow.SHADOW_NORMAL:
+              {
+                XobjList args = Xcons.List(gpuData.getDeviceDescId().Ref(), Xcons.IntConstant(index), indexRef);
+                return XMP.getMacroId("_XMP_GPU_M_CALC_INDEX_BLOCK").Call(args);
+              }
+            case XMPshadow.SHADOW_FULL:
+              return indexRef;
+            default:
+              throw new XMPexception("unknown shadow type");
+          }
+        }
+        else {
+          XobjList args = Xcons.List(gpuData.getDeviceDescId().Ref(), Xcons.IntConstant(index), indexRef);
+          return XMP.getMacroId("_XMP_GPU_M_CALC_INDEX_BLOCK").Call(args);
+        }
+      case XMPalignedArray.CYCLIC:
+        if (alignedArray.hasShadow()) {
+          XMPshadow shadow = alignedArray.getShadowAt(index);
+          switch (shadow.getType()) {
+            case XMPshadow.SHADOW_NONE:
+              {
+                XobjList args = Xcons.List(gpuData.getDeviceDescId().Ref(), Xcons.IntConstant(index), indexRef);
+                return XMP.getMacroId("_XMP_GPU_M_CALC_INDEX_CYCLIC").Call(args);
+              }
+            case XMPshadow.SHADOW_FULL:
+              return indexRef;
+            case XMPshadow.SHADOW_NORMAL:
+              throw new XMPexception("only block distribution allows shadow");
+            default:
+              throw new XMPexception("unknown shadow type");
+          }
+        }
+        else {
+          XobjList args = Xcons.List(gpuData.getDeviceDescId().Ref(), Xcons.IntConstant(index), indexRef);
+          return XMP.getMacroId("_XMP_GPU_M_CALC_INDEX_CYCLIC").Call(args);
+        }
+      default:
+        throw new XMPexception("unknown align manner for array '" + alignedArray.getName()  + "'");
     }
   }
 
