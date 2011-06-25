@@ -11,7 +11,7 @@
 #include "xmp_data_struct.h"
 #include "xmp_index_macro.h"
 
-// --- index functions
+// - index functions -----------------------------------------------------------------------------------------------
 #define _XMP_GPU_M_GTOL(_desc, _dim) \
 (((_XMP_gpu_array_t *)_desc)[_dim].gtol)
 #define _XMP_GPU_M_ACC(_desc, _dim) \
@@ -22,17 +22,42 @@ _XMP_M_CALC_INDEX_BLOCK(_index, _XMP_GPU_M_GTOL(_desc, _dim))
 #define _XMP_GPU_M_CALC_INDEX_CYCLIC(_desc, _dim, _index) \
 _XMP_M_CALC_INDEX_CYCLIC(_index, _XMP_GPU_M_GTOL(_desc, _dim))
 
+
+// - _XMP_GPU_M_GET_ADDR_E -----------------------------------------------------------------------------------------
 #define _XMP_GPU_M_GET_ADDR_E_1(_addr, _desc, _i0) \
 _XMP_M_GET_ADDR_E_1(_addr, _i0)
+
 #define _XMP_GPU_M_GET_ADDR_E_2(_addr, _desc, _i0, _i1) \
 _XMP_M_GET_ADDR_E_2(_addr, _i0, _i1, _XMP_GPU_M_ACC(_desc, 0))
 
+#define _XMP_GPU_M_GET_ADDR_E_3(_addr, _desc, _i0, _i1, _i2) \
+_XMP_M_GET_ADDR_E_3(_addr, _i0, _i1, _i2, _XMP_GPU_M_ACC(_desc, 0), _XMP_GPU_M_ACC(_desc, 1))
+
+#define _XMP_GPU_M_GET_ADDR_E_4(_addr, _desc, _i0, _i1, _i2, _i3) \
+_XMP_M_GET_ADDR_E_4(_addr, _i0, _i1, _i2, _i3, _XMP_GPU_M_ACC(_desc, 0), _XMP_GPU_M_ACC(_desc, 1), _XMP_GPU_M_ACC(_desc, 2))
+
+#define _XMP_GPU_M_GET_ADDR_E_5(_addr, _desc, _i0, _i1, _i2, _i3, _i4) \
+_XMP_M_GET_ADDR_E_5(_addr, _i0, _i1, _i2, _i3, _i4, _XMP_GPU_M_ACC(_desc, 0), _XMP_GPU_M_ACC(_desc, 1), _XMP_GPU_M_ACC(_desc, 2), _XMP_GPU_M_ACC(_desc, 3))
+
+// - _XMP_GPU_M_GET_ADDR -------------------------------------------------------------------------------------------
 #define _XMP_GPU_M_GET_ADDR_0(_addr, _desc) \
 _XMP_M_GET_ADDR_0(_addr)
+
 #define _XMP_GPU_M_GET_ADDR_1(_addr, _desc, _i0) \
 _XMP_M_GET_ADDR_1(_addr, _i0, _XMP_GPU_M_ACC(_desc, 0))
+
 #define _XMP_GPU_M_GET_ADDR_2(_addr, _desc, _i0, _i1) \
 _XMP_M_GET_ADDR_2(_addr, _i0, _i1, _XMP_GPU_M_ACC(_desc, 0), _XMP_GPU_M_ACC(_desc, 1))
+
+#define _XMP_GPU_M_GET_ADDR_3(_addr, _desc, _i0, _i1, _i2) \
+_XMP_M_GET_ADDR_3(_addr, _i0, _i1, _i2, _XMP_GPU_M_ACC(_desc, 0), _XMP_GPU_M_ACC(_desc, 1), _XMP_GPU_M_ACC(_desc, 2))
+
+#define _XMP_GPU_M_GET_ADDR_4(_addr, _desc, _i0, _i1, _i2, _i3) \
+_XMP_M_GET_ADDR_4(_addr, _i0, _i1, _i2, _i3, _XMP_GPU_M_ACC(_desc, 0), _XMP_GPU_M_ACC(_desc, 1), _XMP_GPU_M_ACC(_desc, 2), _XMP_GPU_M_ACC(_desc, 3))
+
+#define _XMP_GPU_M_GET_ADDR_5(_addr, _desc, _i0, _i1, _i2, _i3, _i4) \
+_XMP_M_GET_ADDR_5(_addr, _i0, _i1, _i2, _i3, _i4, _XMP_GPU_M_ACC(_desc, 0), _XMP_GPU_M_ACC(_desc, 1), _XMP_GPU_M_ACC(_desc, 2), _XMP_GPU_M_ACC(_desc, 3), _XMP_GPU_M_ACC(_desc, 4))
+
 
 // --- integer functions
 // calculate ceil(a/b)
@@ -78,7 +103,7 @@ template<typename T>
 __device__ void _XMP_gpu_calc_iter(unsigned long long tid,
                                    T lower0, T upper0, T stride0,
                                    T *iter0) {
-  *iter0 = lower0 + (((T)tid) * stride0);
+  *iter0 = lower0 + (tid * stride0);
 }
 
 template<typename T>
@@ -89,11 +114,25 @@ __device__ void _XMP_gpu_calc_iter(unsigned long long tid,
                                    T *iter1) {
   T count0 = _XMP_M_COUNT_TRIPLETi(lower0, (upper0 - 1), stride0);
 
-  T index0 = tid % count0;
-  T index1 = tid / count0;
+  *iter0 = lower0 + ((tid % count0) * stride0);
+  *iter1 = lower1 + ((tid / count0) * stride1);
+}
 
-  *iter0 = lower0 + (index0 * stride0);
-  *iter1 = lower1 + (index1 * stride1);
+template<typename T>
+__device__ void _XMP_gpu_calc_iter(unsigned long long tid,
+                                   T lower0, T upper0, T stride0,
+                                   T lower1, T upper1, T stride1,
+                                   T lower2, T upper2, T stride2,
+                                   T *iter0,
+                                   T *iter1,
+                                   T *iter2) {
+  T count0 = _XMP_M_COUNT_TRIPLETi(lower0, (upper0 - 1), stride0);
+  T count1 = _XMP_M_COUNT_TRIPLETi(lower1, (upper1 - 1), stride1);
+
+  T temp1 = tid / count0;
+  *iter0 = lower0 + ((tid % count0) * stride0);
+  *iter1 = lower1 + ((temp1 % count1) * stride1);
+  *iter2 = lower2 + ((temp1 / count1) * stride2);
 }
 
 #define _XMP_GPU_M_CALC_CONFIG_PARAMS(_x, _y, _z) \
