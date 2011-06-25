@@ -9,6 +9,30 @@
 
 #include "xmp_constant.h"
 #include "xmp_data_struct.h"
+#include "xmp_index_macro.h"
+
+// --- index functions
+#define _XMP_GPU_M_GTOL(_desc, _dim) \
+(((_XMP_gpu_array_t *)_desc)[_dim].gtol)
+#define _XMP_GPU_M_ACC(_desc, _dim) \
+(((_XMP_gpu_array_t *)_desc)[_dim].acc)
+
+#define _XMP_GPU_M_CALC_INDEX_BLOCK(_desc, _dim, _index) \
+_XMP_M_CALC_INDEX_BLOCK(_index, _XMP_GPU_M_GTOL(_desc, _dim))
+#define _XMP_GPU_M_CALC_INDEX_CYCLIC(_desc, _dim, _index) \
+_XMP_M_CALC_INDEX_CYCLIC(_index, _XMP_GPU_M_GTOL(_desc, _dim))
+
+#define _XMP_GPU_M_GET_ADDR_E_1(_addr, _desc, _i0) \
+_XMP_M_GET_ADDR_E_1(_addr, _i0)
+#define _XMP_GPU_M_GET_ADDR_E_2(_addr, _desc, _i0, _i1) \
+_XMP_M_GET_ADDR_E_2(_addr, _i0, _i1, _XMP_GPU_M_ACC(_desc, 0))
+
+#define _XMP_GPU_M_GET_ADDR_0(_addr, _desc) \
+_XMP_M_GET_ADDR_0(_addr)
+#define _XMP_GPU_M_GET_ADDR_1(_addr, _desc, _i0) \
+_XMP_M_GET_ADDR_1(_addr, _i0, _XMP_GPU_M_ACC(_desc, 0))
+#define _XMP_GPU_M_GET_ADDR_2(_addr, _desc, _i0, _i1) \
+_XMP_M_GET_ADDR_2(_addr, _i0, _i1, _XMP_GPU_M_ACC(_desc, 0), _XMP_GPU_M_ACC(_desc, 1))
 
 // --- integer functions
 // calculate ceil(a/b)

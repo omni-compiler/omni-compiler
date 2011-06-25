@@ -236,7 +236,7 @@ public class XMPgpuDecompiler {
   }
 
   private static void rewriteAlignedArrayExpr(bottomupXobjectIterator iter, XMPgpuData gpuData) throws XMPexception {
-    XobjList funcArgs = Xcons.List(gpuData.getDeviceDescId().Ref());
+    XobjList funcArgs = Xcons.List(gpuData.getHostId().getAddr(), gpuData.getDeviceDescId().Ref());
     parseArrayExpr(iter, gpuData, 0, funcArgs);
   }
 

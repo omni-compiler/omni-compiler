@@ -25,10 +25,11 @@ extern "C" void _XMP_gpu_init_data_ALIGNED(_XMP_gpu_data_t **host_data_desc, _XM
 
   int array_dim = array_desc->dim;
   size_t array_size = (array_desc->total_elmts) * (array_desc->type_size);
+  size_t device_array_desc_size = sizeof(_XMP_gpu_array_t) * (array_dim);
 
   // alloc desciptors
   host_data_d = (_XMP_gpu_data_t *)_XMP_alloc(sizeof(_XMP_gpu_data_t));
-  _XMP_gpu_alloc((void **)&(device_array_d), sizeof(_XMP_gpu_array_t) * (array_dim));
+  _XMP_gpu_alloc((void **)&(device_array_d), device_array_desc_size);
 
   // init host descriptor
   host_data_d->is_aligned_array = true;
@@ -41,10 +42,15 @@ extern "C" void _XMP_gpu_init_data_ALIGNED(_XMP_gpu_data_t **host_data_desc, _XM
   *device_addr = host_data_d->device_addr;
 
   // init device descriptor
+  _XMP_gpu_array_t *host_array_d = (_XMP_gpu_array_t *)_XMP_alloc(device_array_desc_size);
   for (int i = 0; i < array_dim; i++) {
-    device_array_d[i].gtol = 0;
-    device_array_d[i].acc = 0;
+    _XMP_array_info_t *ai = &(array_desc->info[i]);
+    host_array_d[i].gtol = ai->temp0_v;
+    host_array_d[i].acc = ai->dim_acc;
   }
+
+  cudaMemcpy(device_array_d, host_array_d, device_array_desc_size, cudaMemcpyHostToDevice);
+  _XMP_free(host_array_d);
 }
 
 extern "C" void _XMP_gpu_finalize_data(_XMP_gpu_data_t *desc) {

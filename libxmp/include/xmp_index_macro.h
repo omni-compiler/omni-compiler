@@ -99,7 +99,7 @@
 #define _XMP_M_GET_ADDR_E_6(_addr, _i1, _i2, _i3, _i4, _i5, i6, _acc1, _acc2, _acc3, _acc4, _acc5) \
 ((_addr) + _XMP_M_GET_INDEX_6(_i1, _i2, _i3, _i4, _i5, _i6, _acc1, _acc2, _acc3, _acc4, _acc5))
 
-#define _XMP_M_GET_ADDR_E_7(_addr, _i1, _i2, _i3, _i4, _i5, i6, _7, _acc1, _acc2, _acc3, _acc4, _acc5, _acc6) \
+#define _XMP_M_GET_ADDR_E_7(_addr, _i1, _i2, _i3, _i4, _i5, i6, _i7, _acc1, _acc2, _acc3, _acc4, _acc5, _acc6) \
 ((_addr) + _XMP_M_GET_INDEX_7(_i1, _i2, _i3, _i4, _i5, _i6, _i7, _acc1, _acc2, _acc3, _acc4, _acc5, _acc6))
 
 // ------------------------------------------------------------------------------------------------------------------------------
@@ -124,7 +124,7 @@
 #define _XMP_M_GET_ADDR_6(_addr, _i1, _i2, _i3, _i4, _i5, i6, _acc1, _acc2, _acc3, _acc4, _acc5, _acc6) \
 ((_addr) + _XMP_M_GET_INDEX_6_N(_i1, _i2, _i3, _i4, _i5, _i6, _acc1, _acc2, _acc3, _acc4, _acc5, _acc6))
 
-#define _XMP_M_GET_ADDR_7(_addr, _i1, _i2, _i3, _i4, _i5, i6, _7, _acc1, _acc2, _acc3, _acc4, _acc5, _acc6, _acc7) \
+#define _XMP_M_GET_ADDR_7(_addr, _i1, _i2, _i3, _i4, _i5, i6, _i7, _acc1, _acc2, _acc3, _acc4, _acc5, _acc6, _acc7) \
 ((_addr) + _XMP_M_GET_INDEX_7_N(_i1, _i2, _i3, _i4, _i5, _i6, _i7, _acc1, _acc2, _acc3, _acc4, _acc5, _acc6, _acc7))
 
 // ------------------------------------------------------------------------------------------------------------------------------
