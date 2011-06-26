@@ -412,7 +412,8 @@ public class XMPtranslateLocalPragma {
     XobjList paramIdList = getGPUfuncParams(loopBlock, pb);
 
     // setup & decompile GPU function body
-    XMPgpuDecompiler.decompile(funcId, paramIdList, loopBlock, pb, _globalDecl.getEnv());
+    XMPgpuDecompiler.decompile(funcId, paramIdList, getXMPalignedArrays(loopBlock),
+                               loopBlock, pb, _globalDecl.getEnv());
 
     // generate func args
     XobjList funcArgs = Xcons.List();
@@ -461,6 +462,42 @@ public class XMPtranslateLocalPragma {
       default:
         return;
     }
+  }
+
+  private ArrayList<XMPalignedArray> getXMPalignedArrays(CforBlock loopBlock) throws XMPexception {
+    ArrayList<XMPalignedArray> alignedArrayList = new ArrayList<XMPalignedArray>();
+    XobjList arrayNameList = Xcons.List();
+
+    BasicBlockExprIterator iter = new BasicBlockExprIterator(loopBlock.getBody());
+    for (iter.init(); !iter.end(); iter.next()) {
+      Xobject expr = iter.getExpr();
+      topdownXobjectIterator exprIter = new topdownXobjectIterator(expr);
+      for (exprIter.init(); !exprIter.end(); exprIter.next()) {
+        Xobject x = exprIter.getXobject();
+        switch (x.Opcode()) {
+          case ARRAY_REF:
+            {
+              String varName = x.getName();
+              if (!XMPutil.hasElmt(arrayNameList, varName)) {
+                arrayNameList.add(Xcons.String(varName));
+
+                XMPgpuData gpuData = XMPgpuDataTable.findXMPgpuData(varName, loopBlock);
+                if (gpuData == null) {
+                  throw new XMPexception("array '" + varName + "' shoud be declared as a gpuData");
+                } else {
+                  XMPalignedArray alignedArray = gpuData.getXMPalignedArray();
+                  if (alignedArray != null) {
+                    alignedArrayList.add(alignedArray);
+                  }
+                }
+              }
+            } break;
+          default:
+        }
+      }
+    }
+
+    return alignedArrayList;
   }
 
   private XobjList getGPUfuncParams(CforBlock loopBlock, PragmaBlock pb) throws XMPexception {

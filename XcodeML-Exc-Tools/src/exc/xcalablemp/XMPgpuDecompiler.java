@@ -19,14 +19,26 @@ public class XMPgpuDecompiler {
   private static final int BUFFER_SIZE = 4096;
   private static final String GPU_SRC_EXTENSION = ".cu";
 
-  public static void decompile(Ident hostFuncId, XobjList paramIdList,
+  public static void decompile(Ident hostFuncId, XobjList paramIdList, ArrayList<XMPalignedArray> alignedArrayList,
                                CforBlock loopBlock, PragmaBlock pb, XobjectFile env) throws XMPexception {
     XobjList loopDecl = (XobjList)pb.getClauses();
     XobjList gpuClause = (XobjList)loopDecl.getArg(3).getArg(1);
 
-    // FIXME decl & use thread id (local var)
-    XobjList localVars = Xcons.List();
-    XobjList localDecls = Xcons.List();
+    XMPpair<XobjList, XobjList> localVars = new XMPpair<XobjList, XobjList>(Xcons.List(), Xcons.List());
+
+    for (XMPalignedArray alignedArray : alignedArrayList) {
+      int dim = alignedArray.getDim();
+      for (int i = 0; i < dim - 1; i++) {
+        Ident accId = Ident.Local(new String("_XMP_GPU_" + alignedArray.getName() + "_ACC_" + i), Xtype.unsignedlonglongType);
+        addLocalVar(accId, localVars);
+
+        Ident gtolId = Ident.Local(new String("_XMP_GPU_" + alignedArray.getName() + "_GTOL_" + i), Xtype.intType);
+        addLocalVar(gtolId, localVars);
+      }
+
+      Ident gtolId = Ident.Local(new String("_XMP_GPU_" + alignedArray.getName() + "_GTOL_" + (dim - 1)), Xtype.intType);
+      addLocalVar(gtolId, localVars);
+    }
 
     // schedule iteration
     XobjList loopIndexList = (XobjList)loopDecl.getArg(0);
@@ -37,8 +49,7 @@ public class XMPgpuDecompiler {
       String loopVarName = iter.next().getString();
       Ident loopVarId = loopBlock.findVarIdent(loopVarName);
 
-      localVars.add(loopVarId);
-      localDecls.add(Xcons.List(Xcode.VAR_DECL, loopVarId, null, null));
+      addLocalVar(loopVarId, localVars);
 
       XobjList loopIter = XMPutil.getLoopIter(loopBlock, loopVarName);
 
@@ -46,7 +57,6 @@ public class XMPgpuDecompiler {
       Ident condId = (Ident)loopIter.getArg(1);
       Ident stepId = (Ident)loopIter.getArg(2);
 
-      // FIXME consider array dimension
       loopIndexAddrList.add(loopVarId.getAddr());
       loopIterRefList.add(initId.Ref());
       loopIterRefList.add(condId.Ref());
@@ -104,9 +114,8 @@ public class XMPgpuDecompiler {
     XobjectDef hostDef = XobjectDef.Func(hostFuncId, paramIdList, null, hostBodyObj);
 
     Ident threadNumId = Ident.Local("_XMP_GPU_THREAD_ID", Xtype.unsignedlonglongType);
-    localVars.add(threadNumId);
-    localDecls.add(Xcons.List(Xcode.VAR_DECL, threadNumId, null, null));
-    BlockList newLoopBlockList = Bcons.emptyBody(localVars, localDecls);
+    addLocalVar(threadNumId, localVars);
+    BlockList newLoopBlockList = Bcons.emptyBody(localVars.getFirst(), localVars.getSecond());
 
     XobjList calcIterFuncArgs = Xcons.List(threadNumId.Ref());
     XMPutil.mergeLists(calcIterFuncArgs, loopIterRefList);
@@ -115,7 +124,9 @@ public class XMPgpuDecompiler {
     newLoopBlockList.add(createFuncCallBlock("_XMP_gpu_calc_thread_id", Xcons.List(threadNumId.getAddr())));
     newLoopBlockList.add(createFuncCallBlock("_XMP_gpu_calc_iter", calcIterFuncArgs));
     rewriteLoopBody(loopBlock, newLoopBlockList);
-    newLoopBlockList.add(Xcons.List(Xcode.IF_STATEMENT, Xcons.binaryOp(Xcode.LOG_LT_EXPR, threadNumId.Ref(), totalIterId.Ref()), loopBlock.getBody().toXobject(), null));
+    newLoopBlockList.add(Xcons.List(Xcode.IF_STATEMENT,
+                                    Xcons.binaryOp(Xcode.LOG_LT_EXPR, threadNumId.Ref(), totalIterId.Ref()),
+                                                   loopBlock.getBody().toXobject(), null));
 
     Xobject deviceBodyObj = newLoopBlockList.toXobject();
     XobjectDef deviceDef = XobjectDef.Func(deviceFuncId, deviceFuncParams, null, deviceBodyObj);
@@ -142,6 +153,11 @@ public class XMPgpuDecompiler {
     } catch (IOException e) {
       throw new XMPexception("error in gpu decompiler: " + e.getMessage());
     }
+  }
+
+  private static void addLocalVar(Ident id, XMPpair<XobjList, XobjList> vars) {
+    vars.getFirst().add(id);
+    vars.getSecond().add(Xcons.List(Xcode.VAR_DECL, id, null, null));
   }
 
   private static Block createFuncCallBlock(String funcName, XobjList funcArgs) {
