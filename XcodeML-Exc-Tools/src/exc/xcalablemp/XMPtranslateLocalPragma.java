@@ -404,16 +404,15 @@ public class XMPtranslateLocalPragma {
 
   private XobjList setupGPUparallelFunc(Ident funcId, CforBlock loopBlock, PragmaBlock pb) throws XMPexception {
     XobjList loopVarList = (XobjList)((XobjList)(pb.getClauses())).getArg(0);
-    if (loopVarList != null) {
-      setupGpuLoopBlock(loopVarList, loopBlock.getBody().getHead());
-    }
+    XobjList newLoopVarList = setupGpuLoopBlock(Xcons.List(Xcons.String(loopBlock.getInductionVar().getName())),
+                                                loopVarList, loopBlock.getBody().getHead());
 
     // get params
     XobjList paramIdList = getGPUfuncParams(loopBlock, pb);
 
     // setup & decompile GPU function body
     XMPgpuDecompiler.decompile(funcId, paramIdList, getXMPalignedArrays(loopBlock),
-                               loopBlock, pb, _globalDecl.getEnv());
+                               loopBlock, newLoopVarList, pb, _globalDecl.getEnv());
 
     // generate func args
     XobjList funcArgs = Xcons.List();
@@ -436,11 +435,7 @@ public class XMPtranslateLocalPragma {
     return funcArgs;
   }
 
-  private void setupGpuLoopBlock(XobjList loopVarList, Block b) throws XMPexception {
-    if (b == null) {
-      return;
-    }
-
+  private XobjList setupGpuLoopBlock(XobjList newLoopVarList, XobjList loopVarList, Block b) throws XMPexception {
     switch (b.Opcode()) {
       case FOR_STATEMENT:
         {
@@ -450,17 +445,18 @@ public class XMPtranslateLocalPragma {
           }
 
           Block bodyBlock = b.getBody().getHead();
-          if (XMPutil.hasElmt(loopVarList, loopBlock.getInductionVar().getSym())) {
+          String loopVarName = loopBlock.getInductionVar().getSym();
+          if (XMPutil.hasElmt(loopVarList, loopVarName)) {
+            newLoopVarList.insert(Xcons.String(loopVarName));
             b.getParentBlock().setBody(loopBlock.getBody());
           }
 
-          setupGpuLoopBlock(loopVarList, bodyBlock);
-        } break;
+          return setupGpuLoopBlock(newLoopVarList, loopVarList, bodyBlock);
+        }
       case COMPOUND_STATEMENT:
-        setupGpuLoopBlock(loopVarList, b.getBody().getHead());
-        break;
+        return setupGpuLoopBlock(newLoopVarList, loopVarList, b.getBody().getHead());
       default:
-        return;
+        return newLoopVarList;
     }
   }
 

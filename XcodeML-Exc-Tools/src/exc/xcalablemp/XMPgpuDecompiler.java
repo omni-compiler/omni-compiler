@@ -23,7 +23,7 @@ public class XMPgpuDecompiler {
   private static HashMap<String, XobjList> _accIdHash = null;
 
   public static void decompile(Ident hostFuncId, XobjList paramIdList, ArrayList<XMPalignedArray> alignedArrayList,
-                               CforBlock loopBlock, PragmaBlock pb, XobjectFile env) throws XMPexception {
+                               CforBlock loopBlock, XobjList loopIndexList, PragmaBlock pb, XobjectFile env) throws XMPexception {
     XobjList loopDecl = (XobjList)pb.getClauses();
     XobjList gpuClause = (XobjList)loopDecl.getArg(3).getArg(1);
 
@@ -53,7 +53,6 @@ public class XMPgpuDecompiler {
     }
 
     // schedule iteration
-    XobjList loopIndexList = (XobjList)loopDecl.getArg(0);
     XobjList loopIndexAddrList = Xcons.List();
     XobjList loopIterRefList = Xcons.List();
     Iterator<Xobject> iter = loopIndexList.iterator();
@@ -174,12 +173,16 @@ public class XMPgpuDecompiler {
       newLoopBlockList.add(createFuncCallBlock("_XMP_GPU_M_GET_ARRAY_ACC", args));
     }
 
+    // add: function calculating thread id
+    newLoopBlockList.add(createFuncCallBlock("_XMP_gpu_calc_thread_id", Xcons.List(threadNumId.getAddr())));
+
+    // add: function mapping iteration space
     XobjList calcIterFuncArgs = Xcons.List(threadNumId.Ref());
     XMPutil.mergeLists(calcIterFuncArgs, loopIterRefList);
     XMPutil.mergeLists(calcIterFuncArgs, loopIndexAddrList);
-
-    newLoopBlockList.add(createFuncCallBlock("_XMP_gpu_calc_thread_id", Xcons.List(threadNumId.getAddr())));
     newLoopBlockList.add(createFuncCallBlock("_XMP_gpu_calc_iter", calcIterFuncArgs));
+
+    // add: loop statement
     newLoopBlockList.add(Xcons.List(Xcode.IF_STATEMENT,
                                     Xcons.binaryOp(Xcode.LOG_LT_EXPR, threadNumId.Ref(), totalIterId.Ref()),
                                                    loopBlock.getBody().toXobject(), null));
@@ -195,7 +198,6 @@ public class XMPgpuDecompiler {
 
       // add header include line
       out.println("#include \"xmp_gpu_func.hpp\"");
-      out.println();
       out.println("#include \"xmp_index_macro.h\"");
       out.println();
 
