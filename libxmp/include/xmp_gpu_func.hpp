@@ -29,14 +29,48 @@
 #define _XMP_M_MAX(a_, b_) ((a_) > (b_) ? (a_) : (b_))
 #define _XMP_M_MIN(a_, b_) ((a_) > (b_) ? (b_) : (a_))
 
-// --- cuda barrier func
+// --- cuda barrier functions
 #define _XMP_GPU_M_BARRIER_THREADS() __syncthreads()
 #define _XMP_GPU_M_BARRIER_KERNEL() cudaThreadSynchronize()
-#define _XMP_GPU_M_GET_ARRAY_ELMT(addr_, index_) (*(addr_ + index_))
+
+// --- misc functions
 #define _XMP_GPU_CONFIG_CACHE(flag_, func_) \
 if (flag_) { \
   flag_ = 0; \
   cudaFuncSetCacheConfig(func_, cudaFuncCachePreferL1); \
+}
+
+// --- get array info functions
+#define _XMP_GPU_M_GET_ARRAY_INFO_1(_desc, _gtol0) \
+{ \
+  _gtol0 = _XMP_GPU_M_GTOL(_desc, 0); \
+}
+
+#define _XMP_GPU_M_GET_ARRAY_INFO_2(_desc, _gtol0, _gtol1, _acc0) \
+{ \
+  _gtol0 = _XMP_GPU_M_GTOL(_desc, 0); \
+  _gtol1 = _XMP_GPU_M_GTOL(_desc, 1); \
+  _acc0 = _XMP_GPU_M_ACC(_desc, 0); \
+}
+
+#define _XMP_GPU_M_GET_ARRAY_INFO_3(_desc, _gtol0, _gtol1, _gtol2, _acc0, _acc1) \
+{ \
+  _gtol0 = _XMP_GPU_M_GTOL(_desc, 0); \
+  _gtol1 = _XMP_GPU_M_GTOL(_desc, 1); \
+  _gtol2 = _XMP_GPU_M_GTOL(_desc, 2); \
+  _acc0 = _XMP_GPU_M_ACC(_desc, 0); \
+  _acc1 = _XMP_GPU_M_ACC(_desc, 1); \
+}
+
+#define _XMP_GPU_M_GET_ARRAY_INFO_4(_desc, _gtol0, _gtol1, _gtol2, _gtol3, _acc0, _acc1, _acc2) \
+{ \
+  _gtol0 = _XMP_GPU_M_GTOL(_desc, 0); \
+  _gtol1 = _XMP_GPU_M_GTOL(_desc, 1); \
+  _gtol2 = _XMP_GPU_M_GTOL(_desc, 2); \
+  _gtol3 = _XMP_GPU_M_GTOL(_desc, 3); \
+  _acc0 = _XMP_GPU_M_ACC(_desc, 0); \
+  _acc1 = _XMP_GPU_M_ACC(_desc, 1); \
+  _acc2 = _XMP_GPU_M_ACC(_desc, 2); \
 }
 
 extern "C" void _XMP_fatal(char *msg);

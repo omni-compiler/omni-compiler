@@ -19,8 +19,8 @@ public class XMPgpuDecompiler {
   private static final int BUFFER_SIZE = 4096;
   private static final String GPU_SRC_EXTENSION = ".cu";
 
-  private static HashMap<String, XobjList> _accIdHash = null;
   private static HashMap<String, XobjList> _gtolIdHash = null;
+  private static HashMap<String, XobjList> _accIdHash = null;
 
   public static void decompile(Ident hostFuncId, XobjList paramIdList, ArrayList<XMPalignedArray> alignedArrayList,
                                CforBlock loopBlock, PragmaBlock pb, XobjectFile env) throws XMPexception {
@@ -29,29 +29,29 @@ public class XMPgpuDecompiler {
 
     XMPpair<XobjList, XobjList> localVars = new XMPpair<XobjList, XobjList>(Xcons.List(), Xcons.List());
 
-    _accIdHash = new HashMap<String, XobjList>();
     _gtolIdHash = new HashMap<String, XobjList>();
+    _accIdHash = new HashMap<String, XobjList>();
     for (XMPalignedArray alignedArray : alignedArrayList) {
       int dim = alignedArray.getDim();
       String alignedArrayName = alignedArray.getName();
 
-      XobjList accIdList = Xcons.List();
       XobjList gtolIdList = Xcons.List();
+      XobjList accIdList = Xcons.List();
 
       for (int i = 0; i < dim; i++) {
+        Ident gtolId = Ident.Local(new String("_XMP_GPU_" + alignedArrayName + "_GTOL_" + i), Xtype.intType);
+        addLocalVar(gtolId, localVars);
+        gtolIdList.add(gtolId);
+
         if (i != (dim - 1)) {
           Ident accId = Ident.Local(new String("_XMP_GPU_" + alignedArrayName + "_ACC_" + i), Xtype.unsignedlonglongType);
           addLocalVar(accId, localVars);
           accIdList.add(accId);
         }
-
-        Ident gtolId = Ident.Local(new String("_XMP_GPU_" + alignedArrayName + "_GTOL_" + i), Xtype.intType);
-        addLocalVar(gtolId, localVars);
-        gtolIdList.add(gtolId);
       }
 
-      _accIdHash.put(alignedArrayName, accIdList);
       _gtolIdHash.put(alignedArrayName, gtolIdList);
+      _accIdHash.put(alignedArrayName, accIdList);
     }
 
     // schedule iteration
@@ -134,6 +134,25 @@ public class XMPgpuDecompiler {
     XobjList calcIterFuncArgs = Xcons.List(threadNumId.Ref());
     XMPutil.mergeLists(calcIterFuncArgs, loopIterRefList);
     XMPutil.mergeLists(calcIterFuncArgs, loopIndexAddrList);
+
+    for (XMPalignedArray alignedArray : alignedArrayList) {
+      String alignedArrayName = alignedArray.getName();
+
+      XMPgpuData gpuData = XMPgpuDataTable.findXMPgpuData(alignedArrayName, loopBlock);
+      XobjList getArrayInfoFuncArgs = Xcons.List(gpuData.getDeviceDescId().Ref());
+      XobjList gtolIdList = _gtolIdHash.get(alignedArrayName);
+      for (Xobject x : gtolIdList) {
+        getArrayInfoFuncArgs.add(((Ident)x).Ref());
+      }
+
+      XobjList accIdList = _accIdHash.get(alignedArrayName);
+      for (Xobject x : accIdList) {
+        getArrayInfoFuncArgs.add(((Ident)x).Ref());
+      }
+
+      newLoopBlockList.add(createFuncCallBlock(new String("_XMP_GPU_M_GET_ARRAY_INFO_" + alignedArray.getDim()),
+                                               getArrayInfoFuncArgs));
+    }
 
     newLoopBlockList.add(createFuncCallBlock("_XMP_gpu_calc_thread_id", Xcons.List(threadNumId.getAddr())));
     newLoopBlockList.add(createFuncCallBlock("_XMP_gpu_calc_iter", calcIterFuncArgs));
