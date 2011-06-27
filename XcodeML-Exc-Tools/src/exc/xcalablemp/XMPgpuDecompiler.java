@@ -19,6 +19,9 @@ public class XMPgpuDecompiler {
   private static final int BUFFER_SIZE = 4096;
   private static final String GPU_SRC_EXTENSION = ".cu";
 
+  private static HashMap<String, XobjList> _accIdHash = null;
+  private static HashMap<String, XobjList> _gtolIdHash = null;
+
   public static void decompile(Ident hostFuncId, XobjList paramIdList, ArrayList<XMPalignedArray> alignedArrayList,
                                CforBlock loopBlock, PragmaBlock pb, XobjectFile env) throws XMPexception {
     XobjList loopDecl = (XobjList)pb.getClauses();
@@ -26,18 +29,29 @@ public class XMPgpuDecompiler {
 
     XMPpair<XobjList, XobjList> localVars = new XMPpair<XobjList, XobjList>(Xcons.List(), Xcons.List());
 
+    _accIdHash = new HashMap<String, XobjList>();
+    _gtolIdHash = new HashMap<String, XobjList>();
     for (XMPalignedArray alignedArray : alignedArrayList) {
       int dim = alignedArray.getDim();
-      for (int i = 0; i < dim - 1; i++) {
-        Ident accId = Ident.Local(new String("_XMP_GPU_" + alignedArray.getName() + "_ACC_" + i), Xtype.unsignedlonglongType);
-        addLocalVar(accId, localVars);
+      String alignedArrayName = alignedArray.getName();
 
-        Ident gtolId = Ident.Local(new String("_XMP_GPU_" + alignedArray.getName() + "_GTOL_" + i), Xtype.intType);
+      XobjList accIdList = Xcons.List();
+      XobjList gtolIdList = Xcons.List();
+
+      for (int i = 0; i < dim; i++) {
+        if (i != (dim - 1)) {
+          Ident accId = Ident.Local(new String("_XMP_GPU_" + alignedArrayName + "_ACC_" + i), Xtype.unsignedlonglongType);
+          addLocalVar(accId, localVars);
+          accIdList.add(accId);
+        }
+
+        Ident gtolId = Ident.Local(new String("_XMP_GPU_" + alignedArrayName + "_GTOL_" + i), Xtype.intType);
         addLocalVar(gtolId, localVars);
+        gtolIdList.add(gtolId);
       }
 
-      Ident gtolId = Ident.Local(new String("_XMP_GPU_" + alignedArray.getName() + "_GTOL_" + (dim - 1)), Xtype.intType);
-      addLocalVar(gtolId, localVars);
+      _accIdHash.put(alignedArrayName, accIdList);
+      _gtolIdHash.put(alignedArrayName, gtolIdList);
     }
 
     // schedule iteration
@@ -139,6 +153,8 @@ public class XMPgpuDecompiler {
 
       // add header include line
       out.println("#include \"xmp_gpu_func.hpp\"");
+      out.println();
+      out.println("#include \"xmp_index_macro.h\"");
       out.println();
 
       // decompile device function
@@ -252,7 +268,7 @@ public class XMPgpuDecompiler {
   }
 
   private static void rewriteAlignedArrayExpr(bottomupXobjectIterator iter, XMPgpuData gpuData) throws XMPexception {
-    XobjList funcArgs = Xcons.List(gpuData.getHostId().getAddr(), gpuData.getDeviceDescId().Ref());
+    XobjList funcArgs = Xcons.List(gpuData.getHostId().getAddr());
     parseArrayExpr(iter, gpuData, 0, funcArgs);
   }
 
@@ -336,11 +352,18 @@ public class XMPgpuDecompiler {
                                                        XobjList getAddrFuncArgs, Xcode opcode) throws XMPexception {
     XMPalignedArray alignedArray = gpuData.getXMPalignedArray();
     int arrayDim = alignedArray.getDim();
+    XobjList accIdList = _accIdHash.get(alignedArray.getName());
     Ident getAddrFuncId = null;
     if (arrayDim == arrayDimCount) {
-      getAddrFuncId = XMP.getMacroId("_XMP_GPU_M_GET_ADDR_E_" + arrayDim, Xtype.Pointer(alignedArray.getType()));
+      getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_E_" + arrayDim, Xtype.Pointer(alignedArray.getType()));
+      for (int i = 0; i < arrayDim - 1; i++) {
+        getAddrFuncArgs.add(((Ident)(accIdList.getArg(i))).Ref());
+      }
     } else {
-      getAddrFuncId = XMP.getMacroId("_XMP_GPU_M_GET_ADDR_" + arrayDimCount, Xtype.Pointer(alignedArray.getType()));
+      getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_" + arrayDimCount, Xtype.Pointer(alignedArray.getType()));
+      for (int i = 0; i < arrayDimCount; i++) {
+        getAddrFuncArgs.add(((Ident)(accIdList.getArg(i))).Ref());
+      }
     }
 
     Xobject retObj = getAddrFuncId.Call(getAddrFuncArgs);
@@ -361,6 +384,8 @@ public class XMPgpuDecompiler {
 
   private static Xobject getCalcIndexFuncRef(XMPgpuData gpuData, int index, Xobject indexRef) throws XMPexception {
     XMPalignedArray alignedArray = gpuData.getXMPalignedArray();
+    XobjList gtolIdList = _gtolIdHash.get(alignedArray.getName());
+
     switch (alignedArray.getAlignMannerAt(index)) {
       case XMPalignedArray.NOT_ALIGNED:
       case XMPalignedArray.DUPLICATION:
@@ -372,18 +397,17 @@ public class XMPgpuDecompiler {
             case XMPshadow.SHADOW_NONE:
             case XMPshadow.SHADOW_NORMAL:
               {
-                XobjList args = Xcons.List(gpuData.getDeviceDescId().Ref(), Xcons.IntConstant(index), indexRef);
-                return XMP.getMacroId("_XMP_GPU_M_CALC_INDEX_BLOCK").Call(args);
+                XobjList args = Xcons.List(indexRef, ((Ident)(gtolIdList.getArg(index))).Ref());
+                return XMP.getMacroId("_XMP_M_CALC_INDEX_BLOCK").Call(args);
               }
             case XMPshadow.SHADOW_FULL:
               return indexRef;
             default:
               throw new XMPexception("unknown shadow type");
           }
-        }
-        else {
-          XobjList args = Xcons.List(gpuData.getDeviceDescId().Ref(), Xcons.IntConstant(index), indexRef);
-          return XMP.getMacroId("_XMP_GPU_M_CALC_INDEX_BLOCK").Call(args);
+        } else {
+          XobjList args = Xcons.List(indexRef, ((Ident)(gtolIdList.getArg(index))).Ref());
+          return XMP.getMacroId("_XMP_M_CALC_INDEX_BLOCK").Call(args);
         }
       case XMPalignedArray.CYCLIC:
         if (alignedArray.hasShadow()) {
@@ -391,8 +415,8 @@ public class XMPgpuDecompiler {
           switch (shadow.getType()) {
             case XMPshadow.SHADOW_NONE:
               {
-                XobjList args = Xcons.List(gpuData.getDeviceDescId().Ref(), Xcons.IntConstant(index), indexRef);
-                return XMP.getMacroId("_XMP_GPU_M_CALC_INDEX_CYCLIC").Call(args);
+                XobjList args = Xcons.List(indexRef, ((Ident)(gtolIdList.getArg(index))).Ref());
+                return XMP.getMacroId("_XMP_M_CALC_INDEX_CYCLIC").Call(args);
               }
             case XMPshadow.SHADOW_FULL:
               return indexRef;
@@ -401,10 +425,9 @@ public class XMPgpuDecompiler {
             default:
               throw new XMPexception("unknown shadow type");
           }
-        }
-        else {
-          XobjList args = Xcons.List(gpuData.getDeviceDescId().Ref(), Xcons.IntConstant(index), indexRef);
-          return XMP.getMacroId("_XMP_GPU_M_CALC_INDEX_CYCLIC").Call(args);
+        } else {
+          XobjList args = Xcons.List(indexRef, ((Ident)(gtolIdList.getArg(index))).Ref());
+          return XMP.getMacroId("_XMP_M_CALC_INDEX_CYCLIC").Call(args);
         }
       default:
         throw new XMPexception("unknown align manner for array '" + alignedArray.getName()  + "'");
