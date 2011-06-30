@@ -791,19 +791,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   }
 
   private XobjList parse_REFLECT_clause() throws XmException, XMPexception {
-    XobjList arrayNameList = Xcons.List();
-    do {
-      if (pg_tok() == PG_IDENT) arrayNameList.add(Xcons.String(pg_tok_buf()));
-      else
-        error("<array-name> is not found");
-
-      pg_get_token();
-      if (pg_tok() == ',') {
-        pg_get_token();
-        continue;
-      }
-      else break;
-    } while (true);
+    XobjList arrayNameList = parse_XMP_symbol_list("reflect");
 
     Xobject profileClause = null;
     if (pg_is_ident("profile")) {
@@ -849,35 +837,9 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   }
 
   private XobjList parse_BCAST_clause() throws XmException, XMPexception {
-    XobjList varList = Xcons.List();
-
-    if (pg_tok() != '(') {
-      error("'(' is expected before bcast <variable> list");
-    }
-
-    do {
-      pg_get_token();
-      if (pg_tok() == PG_IDENT) {
-        varList.add(Xcons.String(pg_tok_buf()));
-      }
-      else {
-        error("<variable> for bcast directive is expected");
-      }
-
-      pg_get_token();
-      if (pg_tok() == ',') {
-        continue;
-      }
-      else if (pg_tok() == ')') {
-        break;
-      }
-      else {
-        error("',' or ')' is expected after bcast <variable> list");
-      }
-    } while (true);
+    XobjList varList = parse_XMP_symbol_list("bcast");
 
     XobjList fromRef = null;
-    pg_get_token();
     if (pg_is_ident("from")) {
       pg_get_token();
       fromRef = parse_ON_REF(true, false);
