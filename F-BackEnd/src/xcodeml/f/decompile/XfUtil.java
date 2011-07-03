@@ -82,5 +82,4 @@ class XfUtil
     {
         return ((s == null) || (s.isEmpty() != false));
     }
-
 }

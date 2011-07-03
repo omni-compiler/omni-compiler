@@ -53,6 +53,8 @@ extern int Addr2Uint(void *x);
 #include "F-ident.h"
 #include <inttypes.h>
 
+#include "C-OMP.h"
+
 extern int lineno;
 extern int need_keyword;
 extern int need_type_len;
@@ -146,6 +148,7 @@ enum control_type {
     CTL_SELECT,
     CTL_CASE,
     CTL_STRUCT,
+    CTL_OMP,
 };
 
 #define CONTROL_TYPE_NAMES {\
@@ -158,6 +161,7 @@ enum control_type {
     "CTL_SELECT",\
     "CTL_CASE",\
     "CTL_STRUCT",\
+    "CTL_OMP",\
 }
 
 /* control */
@@ -189,6 +193,11 @@ typedef struct control
 
 #define CTL_SELECT_STATEMENT_BODY(l)    (EXPR_ARG2((l)->v1))
 #define CTL_CASE_BLOCK(l)     (EXPR_ARG2((l)->v1))
+
+#define CTL_OMP_ARG(l)	((l)->v2)
+#define CTL_OMP_ARG_DIR(l) (EXPR_INT(EXPR_ARG1((l)->v2)))
+#define CTL_OMP_ARG_PCLAUSE(l) (EXPR_ARG2((l)->v2))
+#define CTL_OMP_ARG_DCLAUSE(l) (EXPR_ARG3((l)->v2))
 
 /* control stack and it pointer */
 #define MAX_CTL 50
@@ -692,6 +701,9 @@ extern int      expr_is_specification(expv x);
 
 /* create expr hold implict declaration information. */
 extern expr     create_implicit_decl_expv(TYPE_DESC tp, char * first, char * second);
+
+extern void compile_OMP_directive(expr v);
+int OMP_reduction_op(expr v);
 
 #include "xcodeml-module.h"
 

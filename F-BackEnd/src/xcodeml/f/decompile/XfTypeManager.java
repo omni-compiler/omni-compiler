@@ -459,3 +459,4 @@ class XfTypeManager
         return sb.toString();
     }
 }
+

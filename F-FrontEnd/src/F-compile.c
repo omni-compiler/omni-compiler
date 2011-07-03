@@ -167,6 +167,8 @@ initialize_compile_procedure()
     /* control stack */
     ctl_top = ctls;
     CTL_TYPE(ctl_top) = CTL_NONE;
+
+    init_for_OMP_pragma();
 }
 
 void
@@ -225,6 +227,8 @@ compile_statement(st_no,x)
         fprintf(debug_fp,"##line(%d):\n",st_no);
         expr_print(x,debug_fp);
     }
+
+    check_for_OMP_pragma(x);
 
     if (st_no != 0) {
         this_label = declare_label(st_no, LAB_UNKNOWN, TRUE);

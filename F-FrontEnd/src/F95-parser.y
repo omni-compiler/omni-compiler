@@ -204,6 +204,38 @@
  
 /* OpenMP directives */
 %token OMPKW_LINE
+%token OMPKW_PARALLEL
+%token OMPKW_END
+%token OMPKW_PRIVATE
+%token OMPKW_SHARED
+%token OMPKW_DEFAULT
+%token OMPKW_NONE
+%token OMPKW_FIRSTPRIVATE
+%token OMPKW_REDUCTION
+%token OMPKW_IF
+%token OMPKW_COPYIN
+%token OMPKW_DO
+%token OMPKW_LASTPRIVATE
+%token OMPKW_SCHEDULE
+%token OMPKW_STATIC
+%token OMPKW_DYNAMIC
+%token OMPKW_GUIDED
+%token OMPKW_ORDERED
+%token OMPKW_RUNTIME
+%token OMPKW_AFFINITY
+%token OMPKW_SECTIONS
+%token OMPKW_SECTION
+%token OMPKW_NOWAIT
+%token OMPKW_SINGLE
+%token OMPKW_MASTER
+%token OMPKW_CRITICAL
+%token OMPKW_BARRIER
+%token OMPKW_ATOMIC
+%token OMPKW_FLUSH
+%token OMPKW_THREADPRIVATE
+
+%type <val> omp_directive omp_nowait_option omp_clause_option omp_clause_list omp_clause omp_list omp_common_list omp_default_attr omp_copyin_list omp_schedule_arg
+%type <code> omp_schedule_attr omp_reduction_op
 
 %{
 #include "F-front.h"
@@ -231,7 +263,6 @@ static void append_pragma_str _ANSI_ARGS_((char *p));
 
 #define GEN_NODE(TYPE, VALUE) make_enode((TYPE), ((void *)((_omAddrInt_t)(VALUE))))
 #define OMP_LIST(op, args) list2(LIST, GEN_NODE(INT_CONSTANT, op), args)
-
 
 /* statement name */
 expr st_name;
@@ -275,14 +306,8 @@ one_statement:
           STATEMENT_LABEL_NO  /* null statement */
         | STATEMENT_LABEL_NO statement
         { compile_statement(st_no,$2);}
-        | OMPKW_LINE  PRAGMA_SLINE /* like !$omp ... */
-        { 
-	    compile_statement(
-		st_no,
-		list1(F_PRAGMA_STATEMENT,
-		      GEN_NODE(STRING_CONSTANT, pragmaString)));
-	    pragmaString = NULL;
-	}
+	| OMPKW_LINE omp_directive
+	{ compile_OMP_directive($2); }
         | PRAGMA_HEAD  PRAGMA_SLINE /* like !$ ... */
 	{ 
 	    if (pragmaString != NULL)
@@ -1482,6 +1507,301 @@ scene_range: expr
         | expr_or_null ':' expr_or_null
         { $$ = list3(F_SCENE_RANGE_EXPR,NULL,$1,$3); }
         ;
+
+/* 
+ * OpenMP directives 
+ */
+omp_directive:
+	  OMPKW_PARALLEL omp_clause_option
+	  { $$ = OMP_LIST(OMP_F_PARALLEL,$2); }
+	| OMPKW_END OMPKW_PARALLEL
+	  { $$ = OMP_LIST(OMP_F_END_PARALLEL,NULL); }
+	| OMPKW_DO omp_clause_option
+	  { $$ = OMP_LIST(OMP_F_DO,$2); }
+	| OMPKW_END OMPKW_DO omp_nowait_option
+	  { $$ = OMP_LIST(OMP_F_END_DO,$3); }
+	| OMPKW_PARALLEL OMPKW_DO omp_clause_option
+	  { $$ = OMP_LIST(OMP_F_PARALLEL_DO,$3); }
+	| OMPKW_END OMPKW_PARALLEL OMPKW_DO omp_nowait_option
+	  { $$ = OMP_LIST(OMP_F_END_PARALLEL_DO,$4); }
+	| OMPKW_SECTIONS omp_clause_option
+	  { $$ = OMP_LIST(OMP_F_SECTIONS,$2); }
+	| OMPKW_END OMPKW_SECTIONS omp_nowait_option
+	  { $$ = OMP_LIST(OMP_F_END_SECTIONS,$3); }
+	| OMPKW_PARALLEL OMPKW_SECTIONS omp_clause_option
+	  { $$ = OMP_LIST(OMP_F_PARALLEL_SECTIONS,$3); }
+	| OMPKW_END OMPKW_PARALLEL OMPKW_SECTIONS omp_nowait_option
+	  { $$ = OMP_LIST(OMP_F_END_PARALLEL_SECTIONS,$4); }
+	| OMPKW_SECTION
+	  { $$ = OMP_LIST(OMP_F_SECTION,NULL); }
+	| OMPKW_SINGLE omp_clause_option
+	  { $$ = OMP_LIST(OMP_F_SINGLE,$2); }
+	| OMPKW_END OMPKW_SINGLE omp_nowait_option
+	  { $$ = OMP_LIST(OMP_F_END_SINGLE,$3); }
+	| OMPKW_MASTER
+	  { $$ = OMP_LIST(OMP_F_MASTER,NULL); }
+	| OMPKW_END OMPKW_MASTER
+	  { $$ = OMP_LIST(OMP_F_END_MASTER,NULL); }
+	| OMPKW_CRITICAL
+	  { $$ = OMP_LIST(OMP_F_CRITICAL,NULL); }
+	| OMPKW_END OMPKW_CRITICAL
+	  { $$ = OMP_LIST(OMP_F_END_CRITICAL,NULL); }
+	| OMPKW_CRITICAL '(' IDENTIFIER ')'
+	  { $$ = OMP_LIST(OMP_F_CRITICAL,list1(LIST,$3)); }
+	| OMPKW_END OMPKW_CRITICAL '(' IDENTIFIER ')'
+	  { $$ = OMP_LIST(OMP_F_END_CRITICAL,list1(LIST,$4)); }
+	| OMPKW_BARRIER
+	  { $$ = OMP_LIST(OMP_F_BARRIER,NULL); }
+	| OMPKW_ATOMIC
+	  { $$ = OMP_LIST(OMP_F_ATOMIC,NULL); }
+	| OMPKW_FLUSH
+	  { $$ = OMP_LIST(OMP_F_FLUSH,NULL); }
+	| OMPKW_FLUSH '(' omp_list ')'
+	  { $$ = OMP_LIST(OMP_F_FLUSH,$3); }
+	| OMPKW_ORDERED
+	  { $$ = OMP_LIST(OMP_F_ORDERED,NULL); }
+	| OMPKW_END OMPKW_ORDERED
+	  { $$ = OMP_LIST(OMP_F_END_ORDERED,NULL); }
+	| OMPKW_THREADPRIVATE '(' omp_common_list ')'
+	  { $$ = OMP_LIST(OMP_F_THREADPRIVATE,$3); }
+	;
+
+omp_nowait_option:
+	{ $$ = NULL; }
+	| OMPKW_NOWAIT
+	{ $$ = OMP_LIST(OMP_DIR_NOWAIT,NULL); }
+	;
+
+omp_clause_option:
+	{ $$ = NULL; }
+	| omp_clause_list
+	;
+
+omp_clause_list:
+	  omp_clause
+	 { $$ = list1(LIST,$1); }
+	| omp_clause_list ',' omp_clause
+	 { $$ = list_put_last($1,$3); }
+	| omp_clause_list omp_clause
+	 { $$ = list_put_last($1,$2); }
+	;
+
+omp_clause: 
+	  OMPKW_PRIVATE '(' omp_list ')'
+	  { $$ = OMP_LIST(OMP_DATA_PRIVATE,$3); }
+	| OMPKW_SHARED '(' omp_list ')'
+	  { $$ = OMP_LIST(OMP_DATA_SHARED,$3); }
+	| OMPKW_DEFAULT '(' { need_keyword = TRUE; } omp_default_attr ')'
+	  { $$ = OMP_LIST(OMP_DATA_DEFAULT,$4); }
+	| OMPKW_FIRSTPRIVATE '(' omp_list ')'
+	  { $$ = OMP_LIST(OMP_DATA_FIRSTPRIVATE,$3); }
+	| OMPKW_LASTPRIVATE '(' omp_list ')'
+	  { $$ = OMP_LIST(OMP_DATA_LASTPRIVATE,$3); }
+	| OMPKW_COPYIN '(' omp_copyin_list ')'
+	  { $$ = OMP_LIST(OMP_DATA_COPYIN,$3); }
+	| OMPKW_REDUCTION '(' omp_reduction_op ':' omp_list ')'
+	  { $$ = OMP_LIST($3,$5); }
+	| OMPKW_IF '(' expr ')'
+	  { $$ = OMP_LIST(OMP_DIR_IF,$3); }
+	| OMPKW_SCHEDULE '(' { need_keyword = TRUE; } omp_schedule_arg ')'
+	  { $$ = $4; }
+	| OMPKW_ORDERED
+	  { $$ = OMP_LIST(OMP_DIR_ORDERED,NULL); }
+	;
+
+omp_reduction_op:
+	  '+' { $$ = (int) OMP_DATA_REDUCTION_PLUS; }
+	| '-' { $$ = (int) OMP_DATA_REDUCTION_MINUS; }
+	| '*' { $$ = (int) OMP_DATA_REDUCTION_MUL; }
+	| AND { $$ = (int) OMP_DATA_REDUCTION_LOGAND; }
+	| OR  { $$ = (int) OMP_DATA_REDUCTION_LOGOR; }
+	| EQV { $$ = (int) OMP_DATA_REDUCTION_EQV; }
+	| NEQV { $$ = (int) OMP_DATA_REDUCTION_NEQV; }
+	| IDENTIFIER { $$ = OMP_reduction_op($1); }
+	;
+
+omp_list:
+	  IDENTIFIER
+	  { $$ = list1(LIST,$1); }
+	| omp_list ',' IDENTIFIER
+	  { $$ = list_put_last($1,$3); }
+	;
+
+omp_common_list:
+	  '/' IDENTIFIER '/'
+	 { $$ = list1(LIST,list1(LIST,$2)); }
+	| omp_common_list ',' '/' IDENTIFIER '/'
+	 { $$ = list_put_last($1,list1(LIST,$4)); }
+	;
+
+omp_copyin_list:
+	  IDENTIFIER
+	  { $$ = list1(LIST,$1); }
+	| omp_copyin_list ',' IDENTIFIER
+	  { $$ = list_put_last($1,$3); }
+	| '/' IDENTIFIER '/'
+	 { $$ = list1(LIST,list1(LIST,$2)); }
+	| omp_copyin_list ',' '/' IDENTIFIER '/'
+	 { $$ = list_put_last($1,list1(LIST,$4)); }
+	;
+
+omp_schedule_arg:
+	  omp_schedule_attr 
+	  { $$ = OMP_LIST(OMP_DIR_SCHEDULE,OMP_LIST($1,NULL)); }
+	| omp_schedule_attr ',' expr 
+	  { $$ = OMP_LIST(OMP_DIR_SCHEDULE,OMP_LIST($1,$3)); }
+	;
+
+omp_schedule_attr:
+	  OMPKW_STATIC { $$ = (int) OMP_SCHED_STATIC; }
+	| OMPKW_DYNAMIC { $$ = (int) OMP_SCHED_DYNAMIC; }
+	| OMPKW_GUIDED  { $$ = (int) OMP_SCHED_GUIDED; }
+	| OMPKW_RUNTIME { $$ = (int) OMP_SCHED_RUNTIME; }
+	;
+
+omp_default_attr:
+	  OMPKW_SHARED { $$ = OMP_LIST(OMP_DEFAULT_SHARED,NULL); }
+	| OMPKW_PRIVATE { $$ = OMP_LIST(OMP_DEFAULT_PRIVATE,NULL); }
+	| OMPKW_NONE { $$ = $$ = OMP_LIST(OMP_DEFAULT_NONE,NULL); }
+	;
+
+/* 
+ * XcalableMP directives 
+ */
+xmp_directive:
+	    XMPKW_NODES IDENTIFIER '(' xmp_node_spec_list ')'
+	  | XMPKW_NODES IDENTIFIER '(' xmp_node_spec_list ')' '=' '*'
+	  | XMPKW_NODES IDENTIFIER '(' xmp_node_spec_list ')' '=' xmp_node_ref
+	  | XMPKW_TEMPLATE IDENTIFIER '(' xmp_subscript_list ')'
+	  | XMPKW_DISTRIBUTE IDENTIFIER '(' xmp_dist_fmt_list ')' 
+  	    XMPKW_ON IDENTIFIER
+	  | XMPKW_ALIGN IDENTIFIER '(' xmp_align_subscript_list ')' 
+  	    XMPKW_WITH IDENTIFIER '(' xmp_align_subscript_list ')' 
+	  | XMPKW_SHADOW IDENTIFIER '(' xmp_shadow_width_list ')' 
+	  | XMPKW_TEMPLATE_FIX  /* not yet*/
+	  | XMPKW_TASK XMPKW_ON xmp_node_ref
+	  | XMPKW_TASK XMPKW_ON xmp_template_ref
+	  | XMPKW_TASKS 
+	  | XMPKW_TASKS XMPKW_NOWAIT
+	  | XMPKW_LOOP XMPKW_ON xmp_on_ref xmp_reduction_opt
+	  | XMPKW_LOOP '(' xmp_subscript_list ')' XMPKW_ON xmp_on_ref
+	        xmp_reduction_opt
+	  | XMPKW_REFLECT '(' xmp_expr_list ')' xmp_async_opt
+	  | XMPKW_GMOVE  xmp_async_opt
+	  | XMPKW_GMOVE  xmp_gmove_opt xmp_async_opt
+	  | XMPKW_BARRIER 
+	  | XMPKW_BARRIER XMPKW_ON xmp_on_ref
+	  | XMPKW_REDUCTION 
+	  | XMPKW_BCAST '(' xmp_expr_list ')' xmp_async_opt
+	  | XMPKW_COARRAY
+	  ;
+
+xmp_node_spec_list: 
+            xmp_node_spec
+	  { $$ = list1(LIST,$1); }
+	  | xmp_node_spec_list ',' xmp_node_spec
+	  { $$ = list_put_last($1,$3); }
+	  ;
+
+xmp_node_spec:
+	   expr
+	  | '*'
+	  ; 
+
+xmp_nodes_ref:
+	  '(' xmp_script ')
+	  | IDENTIFIER '(' xmp_script_list ')'
+	  ;
+		
+xmp_subscript_list: 
+            xmp_subscript
+	  { $$ = list1(LIST,$1); }
+	  | xmp_subscript_list ',' xmp_subscript
+	  { $$ = list_put_last($1,$3); }
+	  ;
+
+xmp_subscript:
+	    expr_or_null
+	  | expr_or_null ':' expr_or_null
+	  | expr_or_null ':' expr_or_null ': expr
+	  | '*'
+	  ;
+
+xmp_dist_fmt_list:
+           {keyword_required = TURE;} xmp_dist_fmt
+	  { $$ = list1(LIST,$1); }
+	  | xmp_dist_fmt_list ',' {keyword_required = TURE;} xmp_dist_fmt
+	  { $$ = list_put_last($1,$3); }
+	  ;
+
+xmp_dist_fmt:
+	   '*'
+	  | XMPKW_BLOCK
+	  | XMPKW_CYCLIC
+	  | XMPKW_CYCLIC '(' expr ')'
+	  | XMPKW_GBLOCK '(' '*' ')'
+	  | XMPKW_GBLOCK '(' expr ')'
+	  ;
+
+xmp_align_subscript_list:
+           xmp_align_subscript
+	  { $$ = list1(LIST,$1); }
+	  | xmp_align_subscrpt_list ',' xmp_align_subscript
+	  { $$ = list_put_last($1,$3); }
+	  ;
+
+xmp_align_subscript:
+	   expr
+	  | '*'
+	  | ':'
+	  ;
+
+xmp_shadow_width_list:
+           xmp_shadow_width
+	  { $$ = list1(LIST,$1); }
+	  | xmp_shadow_width_list ',' xmp_shadow_width
+	  { $$ = list_put_last($1,$3); }
+	  ;
+
+xmp_shadow_width:
+	    expr
+	  | expr ':' expr 
+	  | '*'
+	  ;
+
+xmp_on_ref:
+	     xmp_node_ref
+	   | xmp_template_ref
+	   :
+
+xmp_reduction_opt:
+	     /* empty */
+        | XMPKW_REDUCTION xmp_reduction_spec
+	;
+
+xmp_reduction_spec:
+	'(' xmp_redution_op ':' xmp_expr_list ')'
+	;
+
+xmp_reduction_op:
+	  '+' { $$ = (int) XMP_DATA_REDUCTION_PLUS; }
+	| '-' { $$ = (int) XMP_DATA_REDUCTION_MINUS; }
+	| '*' { $$ = (int) XMP_DATA_REDUCTION_MUL; }
+	| AND { $$ = (int) XMP_DATA_REDUCTION_LOGAND; }
+	| OR  { $$ = (int) XMP_DATA_REDUCTION_LOGOR; }
+	| EQV { $$ = (int) XMP_DATA_REDUCTION_EQV; }
+	| NEQV { $$ = (int) XMP_DATA_REDUCTION_NEQV; }
+	| IDENTIFIER { $$ = XMP_reduction_op($1); }
+	;
+
+xmp_expr_list:
+	  expr
+	  { $$ = list1(LIST,$1); }
+	  | xmp_expr_list ',' expr
+	  { $$ = list_put_last($1,$3); }
+	  ;
+
+
 
 %%
 #include "F95-lex.c"

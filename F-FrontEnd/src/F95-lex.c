@@ -94,21 +94,29 @@ enum lex_state
     LEX_NEW_STATEMENT = 0,
     LEX_FIRST_TOKEN,    
     LEX_OTHER_TOKEN,    
+    LEX_PRAGMA_TOKEN,
     LEX_OMP_TOKEN,
-    LEX_RET_EOS 
+    LEX_XMP_TOKEN,
+    LEX_RET_EOS
 };
 
+int st_PRAGMA_flag;
 int st_OMP_flag;
+int st_XMP_flag;
 
 enum lex_state lexstate;
-int st_PRAGMA_flag;
+
+/* buffer for progma with pragma key and rest of line.  */
+static char pragmaBuf[512];
+
+extern struct keyword_token OMP_keywords[];
+extern struct keyword_token XMP_keywords[];
 
 /* read_line return value */
 #define ST_EOF  0
 #define ST_INIT 1
 #define ST_CONT 2
 #define ST_ONE  ST_INIT
-
 
 /* file position of initial line tail read last */
 long last_initial_line_pos = 0;
@@ -145,19 +153,18 @@ static int      read_free_format _ANSI_ARGS_((void));
 static int      readline_free_format _ANSI_ARGS_((void));
 static int      readline_fixed_format _ANSI_ARGS_((void));
 static int      is_PRAGMA_sentinel _ANSI_ARGS_((char **));
-static int	    is_OMP_sentinel _ANSI_ARGS_((char **));
+static int	is_OMP_sentinel _ANSI_ARGS_((char **));
 static int      find_last_ampersand _ANSI_ARGS_((char *buf,int *len));
 
 static void     save_format_str _ANSI_ARGS_((void));
 
-
-
+static int OMP_lex_token();
+static int XMP_lex_token();
 
 /* for free format.  */
 /* pragma string setter. */
 static void     set_pragma_str _ANSI_ARGS_((char *));
 static void     append_pragma_str _ANSI_ARGS_((char *));
-
 
 static void     restore_file(void);
 
@@ -222,7 +229,7 @@ initialize_lex()
     paren_level = 0;
 }
 
-/* #define LEX_DEBUG */
+// #define LEX_DEBUG
 static int yylast;
 
 /* lexical analyer */
@@ -240,7 +247,7 @@ yylex()
 static int
 yylex0()
 {
-    int t;
+  int t;
     static int tkn_cnt; 
 
     switch(lexstate){
@@ -256,13 +263,14 @@ yylex0()
         
         /* set bufptr st_buffer */
         bufptr = st_buffer;
-        if(st_OMP_flag){
+        if(st_OMP_flag && OMP_flag){
             lexstate = LEX_OMP_TOKEN;
+	    /* bufptr = pragmaBuf+3; *//* skip omp */
             return OMPKW_LINE;
         }
-        if (st_PRAGMA_flag && !OMP_flag) {
-            lexstate = LEX_OMP_TOKEN;
-            return PRAGMA_HEAD;
+        if (st_PRAGMA_flag || st_OMP_flag) {
+	  lexstate = LEX_PRAGMA_TOKEN;
+	  return PRAGMA_HEAD;
         }
         tkn_cnt = 0;
         lexstate = LEX_FIRST_TOKEN;
@@ -319,8 +327,20 @@ yylex0()
         return(EOS);
 
     case LEX_OMP_TOKEN:
+      t = OMP_lex_token();
+      if(t == EOS) lexstate = LEX_NEW_STATEMENT;
+      return t;
+
+    case LEX_XMP_TOKEN:
+      t = XMP_lex_token();
+      if(t == EOS) lexstate = LEX_NEW_STATEMENT;
+      return t;
+
+    case LEX_PRAGMA_TOKEN:
+      /*
         if (!fixed_format_flag)
             append_pragma_str(st_buffer_org);
+      */
         lexstate = LEX_RET_EOS;
         return PRAGMA_SLINE;
 
@@ -357,8 +377,6 @@ save_format_str()
 
 
 
-/* buffer for progma with pragma key and rest of line.  */
-static char pragmaBuf[512];
 
 static void
 set_pragma_str(char *p)
@@ -1758,6 +1776,33 @@ is_OMP_sentinel(char **pp)
     return FALSE;
 }
 
+static int 
+is_XMP_sentinel(char **pp)
+{
+    int i;
+    char *p;
+
+    p = *pp;
+    memset(stn_cols, ' ', 6);
+    while(isspace(*p)) p++;     /* skip space */
+    if(*p == '!'){
+	/* check sentinels */
+	for(i = 0; i < 6; i++,p++){
+	    if(*p == '\0' || isspace(*p)) break;
+	    if (PRAGMA_flag)
+		stn_cols[i] = *p;
+	    else
+		stn_cols[i] = TOLOWER(*p);
+	}
+	stn_cols[i] = '\0';
+	if (strcasecmp(stn_cols,"!$xmp") == 0) {
+	    *pp = p;
+	    return TRUE;
+	}
+    }
+    return FALSE;
+}
+
 static int last_char_in_quote_is_quote = FALSE;
 
 static int
@@ -1816,6 +1861,7 @@ again:
         if (is_OMP_sentinel(&p)) { 
             st_OMP_flag = TRUE;
             set_pragma_str(&stn_cols[2]); /* save head of pragma line.  */
+            append_pragma_str(bufptr); /* append the rest of line. ??msato */
         }
         else if(is_PRAGMA_sentinel(&p)) {
             st_PRAGMA_flag = TRUE;
@@ -3234,6 +3280,113 @@ struct keyword_token end_keywords[ ] =
     { "type",           ENDTYPE },
     { "where",          ENDWHERE },
     { 0, 0 }};
+
+/*
+ * lex for OpenMP part
+ */
+static int
+OMP_lex_token()
+{
+  int t;
+    while(isspace(*bufptr)) bufptr++;  /* skip white space */
+    
+    if(isalpha(*bufptr)){
+	  if(need_keyword == TRUE || paren_level == 0) {  /* require keyword */
+	    need_keyword = FALSE;
+	    t = get_keyword(OMP_keywords);
+	    if(t != UNKNOWN) return t;
+	  }
+    } 
+    return token();
+}
+
+
+struct keyword_token OMP_keywords[ ] = 
+{
+    {"parallel",	OMPKW_PARALLEL },
+    {"end",		OMPKW_END },
+    {"private",		OMPKW_PRIVATE },
+    {"shared",		OMPKW_SHARED },
+    {"default",		OMPKW_DEFAULT },
+    {"none",		OMPKW_NONE },
+    {"firstprivate",	OMPKW_FIRSTPRIVATE },
+    {"reduction",	OMPKW_REDUCTION },
+    {"if",		OMPKW_IF },
+    {"copyin",		OMPKW_COPYIN },
+    {"do",		OMPKW_DO },
+    {"lastprivate",	OMPKW_LASTPRIVATE },
+    {"schedule",	OMPKW_SCHEDULE },
+    {"static",		OMPKW_STATIC },
+    {"dynamic",		OMPKW_DYNAMIC },
+    {"guided",		OMPKW_GUIDED },
+    {"ordered",		OMPKW_ORDERED },
+    {"runtime",		OMPKW_RUNTIME },
+    {"sections",	OMPKW_SECTIONS },
+    {"section",		OMPKW_SECTION },
+    {"nowait",		OMPKW_NOWAIT },
+    {"single",		OMPKW_SINGLE },
+    {"master",		OMPKW_MASTER },
+    {"critical",	OMPKW_CRITICAL},
+    {"barrier",		OMPKW_BARRIER},
+    {"atomic",		OMPKW_ATOMIC},
+    {"flush",		OMPKW_FLUSH },
+    {"threadprivate",	OMPKW_THREADPRIVATE},
+
+    { 0, 0 }
+};
+
+/*
+ * lex for XcalableMP part
+ */
+static int
+XMP_lex_token()
+{
+  int t;
+    while(isspace(*bufptr)) bufptr++;  /* skip white space */
+    
+    if(isalpha(*bufptr)){
+	  if(need_keyword == TRUE || paren_level == 0) {  /* require keyword */
+	    need_keyword = FALSE;
+	    t = get_keyword(XMP_keywords);
+	    if(t != UNKNOWN) return t;
+	  }
+    } 
+    return token();
+}
+
+struct keyword_token XMP_keywords[ ] = 
+{
+    {"parallel",	XMPKW_PARALLEL },
+    {"end",		XMPKW_END },
+    {"private",		XMPKW_PRIVATE },
+    {"shared",		XMPKW_SHARED },
+    {"default",		XMPKW_DEFAULT },
+    {"none",		XMPKW_NONE },
+    {"firstprivate",	XMPKW_FIRSTPRIVATE },
+    {"reduction",	XMPKW_REDUCTION },
+    {"if",		XMPKW_IF },
+    {"copyin",		XMPKW_COPYIN },
+    {"do",		XMPKW_DO },
+    {"lastprivate",	XMPKW_LASTPRIVATE },
+    {"schedule",	XMPKW_SCHEDULE },
+    {"static",		XMPKW_STATIC },
+    {"dynamic",		XMPKW_DYNAMIC },
+    {"guided",		XMPKW_GUIDED },
+    {"ordered",		XMPKW_ORDERED },
+    {"runtime",		XMPKW_RUNTIME },
+    {"sections",	XMPKW_SECTIONS },
+    {"section",		XMPKW_SECTION },
+    {"nowait",		XMPKW_NOWAIT },
+    {"single",		XMPKW_SINGLE },
+    {"master",		XMPKW_MASTER },
+    {"critical",	XMPKW_CRITICAL},
+    {"barrier",		XMPKW_BARRIER},
+    {"atomic",		XMPKW_ATOMIC},
+    {"flush",		XMPKW_FLUSH },
+    {"threadprivate",	XMPKW_THREADPRIVATE},
+
+    { 0, 0 }
+};
 
 /* EOF */
 

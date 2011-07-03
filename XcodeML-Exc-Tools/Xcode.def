@@ -108,8 +108,8 @@ L   ARRAY_AREF
 
 # -----------------
 # C: Directive
-L   PRAGMA_LINE                XbcPragma                    XbfFpragmaStatement
-L   TEXT                       XbcText
+T   PRAGMA_LINE                XbcPragma                    XbfFpragmaStatement
+T   TEXT                       XbcText
 
 # -----------------
 # C: GCC Syntax

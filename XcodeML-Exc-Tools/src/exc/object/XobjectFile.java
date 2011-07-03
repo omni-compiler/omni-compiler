@@ -10,7 +10,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * This object is a container for an object file represnted in Xobject Format.
+ * This object is a container for an object file represented in Xobject Format.
  * This contains: - type informations used in this file. - global symbol table -
  * information of global data - codes for functions
  */

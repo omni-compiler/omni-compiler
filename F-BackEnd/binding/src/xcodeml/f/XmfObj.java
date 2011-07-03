@@ -20,3 +20,4 @@ public abstract class XmfObj extends XmObj
     {
     }
 }
+

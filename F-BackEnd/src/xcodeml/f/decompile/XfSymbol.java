@@ -47,3 +47,4 @@ class XfSymbol
         return _derivedName;
     }
 }
+

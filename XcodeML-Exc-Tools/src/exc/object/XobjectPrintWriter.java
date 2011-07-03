@@ -152,6 +152,8 @@ public class XobjectPrintWriter extends PrintWriter
             case STRING:
             case STRING_CONSTANT:
             case F_CHARACTER_CONSTATNT:
+	    case TEXT:
+	    case PRAGMA_LINE:
                 print(" \"" + v.getString() + "\")");
                 return;
             }

@@ -328,6 +328,12 @@ xtag(enum expr_code code)
     case EXPR_CODE_END:
 
         fatal("invalid exprcode : %s", EXPR_CODE_NAME(code));
+
+    case OMP_PRAGMA:
+      return "OMPPragma";
+
+    default:
+      fatal("unknown exprcode : %d", code);
     }
 
     return NULL;
@@ -2253,6 +2259,121 @@ outx_pragmaStatement(int l, expv v)
     outx_expvClose(0, v);
 }
 
+/* outx_expv with <list> ...</list> */
+static void
+outx_expv_withListTag(int l,expv v)
+{
+  list lp;
+  if(EXPV_CODE(v) == LIST){
+    outx_tag(l, "list");
+    FOR_ITEMS_IN_LIST(lp, v)
+      outx_expv_withListTag(l+1, LIST_ITEM(lp));
+    outx_close(l, "list");
+  } else 
+    outx_expv(l,v);
+}
+
+/**
+ * output OMP pragma statement
+ */
+static void outx_OMP_dir_string(int l,expv v);
+static void outx_OMP_dir_clause_list(int l,expv v);
+
+static void
+outx_OMP_pragma(int l, expv v)
+{
+    const int l1 = l + 1;
+    outx_tagOfStatement(l, v);
+    outx_OMP_dir_string(l1,EXPR_ARG1(v));
+    // outx_expv_withListTag(l1, EXPR_ARG1(v));
+
+    outx_OMP_dir_clause_list(l1,EXPR_ARG2(v));
+    // outx_expv_withListTag(l1, EXPR_ARG2(v));
+
+    /* output body */
+    outx_expv_withListTag(l1, EXPR_ARG3(v));
+    outx_expvClose(l, v);
+}
+
+static void
+outx_OMP_dir_string(int l,expv v)
+{
+  char *s;
+  if(EXPV_CODE(v) != INT_CONSTANT) 
+    fatal("outx_OMP_dir_string: not INT_CONSTANT");
+  switch(EXPV_INT_VALUE(v)){
+  case OMP_PARALLEL: s = "PARALLEL"; break;
+  case OMP_FOR: s = "FOR"; break;
+  case OMP_SECTIONS:s = "SECTIONS"; break;
+  case OMP_SECTION: s = "SECTION"; break;
+  case OMP_SINGLE: s = "SINGLE"; break;
+  case OMP_MASTER: s = "MASTER"; break;
+  case OMP_CRITICAL: s = "CRITICAL"; break;
+  case OMP_BARRIER: s = "BARRIER"; break;
+  case OMP_ATOMIC: s = "ATOMIC"; break;
+  case OMP_FLUSH: s = "FLUSH"; break;
+  case OMP_ORDERED: s = "ORDERED"; break;
+  case OMP_THREADPRIVATE: s = "THREADPRIVATE"; break;
+  default:
+    fatal("out_OMP_dir_string: unknown value=%\n",EXPV_INT_VALUE(v));
+  }
+  outx_printi(l, "<string>%s</string>\n", s);
+}
+
+static void
+outx_OMP_dir_clause_list(int l,expv v)
+{
+  struct list_node *lp;
+  const int l1 = l + 1;
+  expv vv,dir;
+  char *s;
+
+  if(EXPV_CODE(v) != LIST) 
+    fatal("outx_OMP_dir_clause_list: not LIST");
+  outx_printi(l,"<list>\n");
+  
+  FOR_ITEMS_IN_LIST(lp, v) {
+    vv = LIST_ITEM(lp);
+    if(EXPV_CODE(vv) != LIST) 
+      fatal("outx_OMP_dir_clause_list: not LIST2");
+
+    outx_printi(l1,"<list>\n");
+
+    dir = EXPR_ARG1(vv);
+    if(EXPV_CODE(dir) != INT_CONSTANT) 
+      fatal("outx_OMP_dir_clause_list: clause not INT_CONSTANT");
+    switch(EXPV_INT_VALUE(dir)){
+    case OMP_DATA_DEFAULT: s = "DATA_DEFAULT"; break;
+    case OMP_DATA_PRIVATE: s = "DATA_PRIVATE"; break;
+    case OMP_DATA_SHARED: s = "DATA_SHARED"; break;
+    case OMP_DATA_FIRSTPRIVATE: s = "DATA_FIRSTPRIVATE"; break;
+    case OMP_DATA_LASTPRIVATE: s = "DATA_LASTPRIVATE"; break;
+    case OMP_DATA_COPYIN: s = "DATA_COPYIN"; break;
+    case OMP_DATA_REDUCTION_PLUS: s = "DATA_REDUCTION_PLUS"; break;
+    case OMP_DATA_REDUCTION_MINUS: s = "DATA_REDUCTION_MINUS"; break;
+    case OMP_DATA_REDUCTION_MUL: s = "DATA_REDUCTION_MUL"; break;
+    case OMP_DATA_REDUCTION_BITAND: s = "DATA_REDUCTION_BITAND"; break;
+    case OMP_DATA_REDUCTION_BITOR: s = "DATA_REDUCTION_BITOR"; break;
+    case OMP_DATA_REDUCTION_BITXOR: s = "DATA_REDUCITON_BITXOR"; break;
+    case OMP_DATA_REDUCTION_LOGAND: s = "DATA_REDUCITON_LOGAND"; break;
+    case OMP_DATA_REDUCTION_LOGOR: s = "DATA_REDUCTION_LOGOR"; break;
+    case OMP_DATA_REDUCTION_MIN: s = "DATA_REDUCTION_MIN"; break;
+    case OMP_DATA_REDUCTION_MAX: s = "DATA_REDUCTION_MAX"; break;
+    case OMP_DATA_REDUCTION_EQV: s = "DATA_REDUCTION_EQV"; break;
+    case OMP_DATA_REDUCTION_NEQV: s = "DATA_REDUCTION_NEQV"; break;
+    case OMP_DIR_ORDERED: s = "DIR_ORDERED"; break;
+    case OMP_DIR_IF: s = "DIR_IF"; break;
+    case OMP_DIR_NOWAIT: s = "DIR_NOWAIT"; break;
+    case OMP_DIR_SCHEDULE: s = "DIR_SCHEDULE"; break;
+    default:
+      fatal("out_OMP_dir_clause: unknown value=%\n",EXPV_INT_VALUE(v));
+    }
+    outx_printi(l+2, "<string>%s</string>\n", s);
+    outx_expv_withListTag(l+2, EXPR_ARG2(vv));
+    outx_printi(l1,"</list>\n");
+  }
+  outx_printi(l,"</list>\n");
+}
 
 /**
  * output FassignStatement
@@ -2515,10 +2636,11 @@ outx_expv(int l, expv v)
     /*
      * child elements
      */
-    case LIST: {
+    case LIST: 
+	{
             list lp;
             FOR_ITEMS_IN_LIST(lp, v)
-                outx_expv(l, LIST_ITEM(lp));
+                outx_expv(l+1, LIST_ITEM(lp));
         }
         break;
 
@@ -2657,6 +2779,14 @@ outx_expv(int l, expv v)
         if(debug_flag)
             expv_output(v, stderr);
         fatal("invalid exprcode : %s", EXPR_CODE_NAME(code));
+        abort();
+
+    case OMP_PRAGMA:
+      outx_OMP_pragma(l, v);
+      break;
+      
+    default:
+        fatal("unkown exprcode : %d", code);
         abort();
     }
 }
