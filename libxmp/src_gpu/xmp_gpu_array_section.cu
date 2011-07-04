@@ -159,7 +159,7 @@ void _XMP_gpu_pack_array(_XMP_gpu_array_t *device_desc, void *host_shadow_buffer
   // pack shadow on GPU
   _XMP_gpu_pack_array_kernel<<<dim3(block_x, block_y, block_z), dim3(16, 16, 1)>>>(device_desc, (char *)gpu_shadow_buffer, (char *)gpu_array_addr,
                                                                                    type_size, total_elmts, array_dim,
-                                                                                   lower, upper, stride);
+                                                                                   gpu_lower, gpu_upper, gpu_stride);
   cudaThreadSynchronize();
 
   // copy shadow buffer to host
@@ -201,7 +201,7 @@ void _XMP_gpu_unpack_array(_XMP_gpu_array_t *device_desc, void *gpu_array_addr, 
   // pack shadow on GPU
   _XMP_gpu_unpack_array_kernel<<<dim3(block_x, block_y, block_z), dim3(16, 16, 1)>>>(device_desc, (char *)gpu_array_addr, (char *)gpu_shadow_buffer,
                                                                                      type_size, total_elmts, array_dim,
-                                                                                     lower, upper, stride);
+                                                                                     gpu_lower, gpu_upper, gpu_stride);
   cudaThreadSynchronize();
 
   // free GPU buffers
