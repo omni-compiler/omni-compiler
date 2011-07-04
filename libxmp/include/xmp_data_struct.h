@@ -169,6 +169,7 @@ typedef struct _XMP_gpu_data_type {
   _Bool is_aligned_array;
   void *host_addr;
   void *device_addr;
+  _XMP_array_t *host_array_desc;
   _XMP_gpu_array_t *device_array_desc;
   size_t size;
 } _XMP_gpu_data_t;

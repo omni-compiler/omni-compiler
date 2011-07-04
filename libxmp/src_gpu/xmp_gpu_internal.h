@@ -15,7 +15,8 @@ extern void _XMP_gpu_alloc(void **addr, size_t size);
 extern void _XMP_gpu_free(void *addr);
 
 // xmp_gpu_array_section.cu
-extern void _XMP_gpu_pack_array(void *host_buffer, void *array_addr, size_t type_size, size_t alloc_size,
-                                int array_dim, int *lower, int *upper, int *stride, unsigned long long *dim_acc);
+extern void _XMP_gpu_pack_array(_XMP_gpu_array_t *device_desc, void *host_shadow_buffer, void *gpu_array_addr,
+                                size_t type_size, size_t alloc_size, int array_dim,
+                                int *lower, int *upper, int *stride);
 
 #endif // _XMP_GPU_INTERNAL

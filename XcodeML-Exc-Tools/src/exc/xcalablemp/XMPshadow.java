@@ -293,8 +293,7 @@ public class XMPshadow {
 
     // pack shadow
     Ident packFuncId = globalDecl.declExternFunc("_XMP_gpu_pack_shadow_NORMAL");
-    XobjList packFuncArgs = Xcons.List(loSendId.getAddr(), hiSendId.getAddr(), alignedArray.getAddrIdVoidRef(),
-                                       alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
+    XobjList packFuncArgs = Xcons.List(gpuData.getHostDescId().Ref(), loSendId.getAddr(), hiSendId.getAddr(), Xcons.IntConstant(arrayIndex));
 
     reflectFuncBody.add(Bcons.Statement(packFuncId.Call(packFuncArgs)));
 
@@ -308,8 +307,7 @@ public class XMPshadow {
 
     // unpack shadow
     Ident unpackFuncId = globalDecl.declExternFunc("_XMP_gpu_unpack_shadow_NORMAL");;
-    XobjList unpackFuncArgs = Xcons.List(loRecvId.Ref(), hiRecvId.Ref(), alignedArray.getAddrIdVoidRef(),
-                                         alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
+    XobjList unpackFuncArgs = Xcons.List(gpuData.getHostDescId().Ref(), loRecvId.Ref(), hiRecvId.Ref(), Xcons.IntConstant(arrayIndex));
 
     reflectFuncBody.add(Bcons.Statement(unpackFuncId.Call(unpackFuncArgs)));
   }

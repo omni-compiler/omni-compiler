@@ -8,14 +8,15 @@
 #include "xmp_gpu_internal.h"
 #include "xmp_internal.h"
 
-void _XMP_gpu_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_addr,
-                                 _XMP_array_t *array_desc, int array_index) {
+void _XMP_gpu_pack_shadow_NORMAL(_XMP_gpu_data_t *desc, void **lo_buffer, void **hi_buffer, int array_index) {
   _XMP_RETURN_IF_SINGLE;
 
+  _XMP_array_t *array_desc = desc->host_array_desc;
   if (!array_desc->is_allocated) {
     return;
   }
 
+  void *device_array_addr = desc->device_addr;
   int array_dim = array_desc->dim;
   size_t array_type_size = array_desc->type_size;
   _XMP_array_info_t *ai = &(array_desc->info[array_index]);
@@ -57,8 +58,9 @@ void _XMP_gpu_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array
       }
 
       // pack data
-      _XMP_gpu_pack_array(*lo_buffer, array_addr, array_type_size, alloc_size, 
-                          array_dim, lower, upper, stride, dim_acc);
+      _XMP_gpu_pack_array(desc->device_array_desc, *lo_buffer, device_array_addr,
+                          array_type_size, alloc_size, array_dim,
+                          lower, upper, stride);
     }
   }
 
@@ -91,13 +93,14 @@ void _XMP_gpu_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array
       }
 
       // pack data
-      _XMP_gpu_pack_array(*hi_buffer, array_addr, array_type_size, alloc_size,
-                          array_dim, lower, upper, stride, dim_acc);
+      _XMP_gpu_pack_array(desc->device_array_desc, *hi_buffer, device_array_addr,
+                          array_type_size, alloc_size, array_dim,
+                          lower, upper, stride);
     }
   }
 }
 
-void _XMP_gpu_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_addr,
+void _XMP_gpu_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, _XMP_gpu_data_t *desc,
                                    _XMP_array_t *array_desc, int array_index) {
   _XMP_RETURN_IF_SINGLE;
 
@@ -105,6 +108,7 @@ void _XMP_gpu_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array
     return;
   }
 
+  void *array_addr = desc->device_addr;
   int array_dim = array_desc->dim;
   _XMP_array_info_t *ai = &(array_desc->info[array_index]);
   _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);

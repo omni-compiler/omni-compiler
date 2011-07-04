@@ -11,6 +11,7 @@ extern "C" void _XMP_gpu_init_data_NOT_ALIGNED(_XMP_gpu_data_t **host_data_desc,
   host_data_d->is_aligned_array = false;
   host_data_d->host_addr = addr;
   _XMP_gpu_alloc(&(host_data_d->device_addr), size);
+  host_data_d->host_array_desc = NULL;
   host_data_d->device_array_desc = NULL;
   host_data_d->size = size;
 
@@ -36,6 +37,7 @@ extern "C" void _XMP_gpu_init_data_ALIGNED(_XMP_gpu_data_t **host_data_desc, _XM
   host_data_d->is_aligned_array = true;
   host_data_d->host_addr = addr;
   _XMP_gpu_alloc(&(host_data_d->device_addr), array_size);
+  host_data_d->host_array_desc = array_desc;
   host_data_d->device_array_desc = device_array_d;
   host_data_d->size = array_size;
 

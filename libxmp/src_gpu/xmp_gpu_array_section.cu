@@ -8,7 +8,6 @@
 
 #define _XMP_M_CEILi(a_, b_) (((a_) % (b_)) == 0 ? ((a_) / (b_)) : ((a_) / (b_)) + 1)
 #define _XMP_M_FLOORi(a_, b_) ((a_) / (b_))
-#define _XMP_M_COUNTi(a_, b_) ((b_) - (a_) + 1)
 #define _XMP_M_COUNT_TRIPLETi(l_, u_, s_) (_XMP_M_FLOORi(((u_) - (l_)), s_) + 1)
 
 static void _XMP_gpu_config_block(unsigned long long total_elmts, int *block_x, int *block_y, int *block_z) {
@@ -60,26 +59,50 @@ __device__ static void _XMP_gpu_calc_thread_id(unsigned long long *index) {
           (blockIdx.z * gridDim.x * gridDim.y)) * (blockDim.x * blockDim.y * blockDim.z));
 }
 
-__global__ static void _XMP_gpu_pack_array_kernel(char *gpu_buffer, char *array_addr, size_t type_size, unsigned long long total_elmts,
-                                                  int array_dim, int *lower, int *upper, int *stride, unsigned long long *dim_acc) {
+__global__ static void _XMP_gpu_pack_array_kernel(_XMP_gpu_array_t *desc, char *shadow_buffer, char *array_addr,
+                                                  size_t type_size, unsigned long long total_elmts, int array_dim,
+                                                  int *lower, int *upper, int *stride) {
   unsigned long long tid;
   _XMP_gpu_calc_thread_id(&tid);
 
   if (tid < total_elmts) {
-    __syncthreads();
+    // calc array addr
+    unsigned long long temp = tid;
+    for (int i = 0; i < array_dim; i++) {
+      int lowerI = lower[i];
+      int upperI = upper[i];
+      int strideI = stride[i];
+      int countI = _XMP_M_COUNT_TRIPLETi(lowerI, upperI, strideI);
+
+      // calc index
+      unsigned long long indexI = lowerI + ((temp % countI) * strideI);
+      temp /= countI;
+
+      // move array addr
+      array_addr += indexI * type_size * (desc[i].acc);
+    }
+
+    // calc shadow buffer
+    shadow_buffer += tid * type_size;
+
+    // memory copy
+    for (int i = 0; i < type_size; i++) {
+      shadow_buffer[i] = array_addr[i];
+    }
   }
 }
 
-void _XMP_gpu_pack_array(void *host_buffer, void *array_addr, size_t type_size, size_t alloc_size,
-                         int array_dim, int *lower, int *upper, int *stride, unsigned long long *dim_acc) {
+void _XMP_gpu_pack_array(_XMP_gpu_array_t *device_desc, void *host_shadow_buffer, void *gpu_array_addr,
+                         size_t type_size, size_t alloc_size, int array_dim,
+                         int *lower, int *upper, int *stride) {
   // config block parameters
   unsigned long long total_elmts = alloc_size / type_size;
   int block_x, block_y, block_z;
   _XMP_gpu_config_block(total_elmts, &block_x, &block_y, &block_z);
 
-  // alloc GPU buffer
-  void *gpu_buffer;
-  _XMP_gpu_alloc(&gpu_buffer, alloc_size);
+  // alloc GPU shadow buffer
+  void *gpu_shadow_buffer;
+  _XMP_gpu_alloc(&gpu_shadow_buffer, alloc_size);
 
   // init shadow data on GPU
   int *gpu_lower, *gpu_upper, *gpu_stride;
@@ -91,19 +114,18 @@ void _XMP_gpu_pack_array(void *host_buffer, void *array_addr, size_t type_size, 
   cudaMemcpy(gpu_upper, upper, lus_size, cudaMemcpyHostToDevice);
   cudaMemcpy(gpu_stride, stride, lus_size, cudaMemcpyHostToDevice);
 
-  unsigned long long *gpu_dim_acc;
-  size_t da_size = sizeof(unsigned long long) * array_dim;
-  _XMP_gpu_alloc((void **)&gpu_dim_acc, da_size);
-  cudaMemcpy(gpu_dim_acc, dim_acc, da_size, cudaMemcpyHostToDevice);
-
   // pack shadow on GPU
-  _XMP_gpu_pack_array_kernel<<<dim3(block_x, block_y, block_z), dim3(16, 16, 1)>>>((char *)gpu_buffer, (char *)array_addr, type_size, total_elmts,
-                                                                                   array_dim, lower, upper, stride, dim_acc);
+  _XMP_gpu_pack_array_kernel<<<dim3(block_x, block_y, block_z), dim3(16, 16, 1)>>>(device_desc, (char *)gpu_shadow_buffer, (char *)gpu_array_addr,
+                                                                                   type_size, total_elmts, array_dim,
+                                                                                   lower, upper, stride);
   cudaThreadSynchronize();
 
   // copy shadow buffer to host
-  cudaMemcpy(host_buffer, gpu_buffer, alloc_size, cudaMemcpyDeviceToHost);
+  cudaMemcpy(host_shadow_buffer, gpu_shadow_buffer, alloc_size, cudaMemcpyDeviceToHost);
 
-  // free GPU buffer
-  _XMP_gpu_free(gpu_buffer);
+  // free GPU buffers
+  _XMP_gpu_free(gpu_shadow_buffer);
+  _XMP_gpu_free(gpu_lower);
+  _XMP_gpu_free(gpu_upper);
+  _XMP_gpu_free(gpu_stride);
 }
