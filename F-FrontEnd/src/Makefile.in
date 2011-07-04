@@ -53,11 +53,11 @@ am_F_Front_OBJECTS = F95-main.$(OBJEXT) C-expr-mem.$(OBJEXT) \
 	F-output-xcodeml.$(OBJEXT) F-io-xcodeml.$(OBJEXT) \
 	F-data.$(OBJEXT) F-datasub.$(OBJEXT) F-equiv.$(OBJEXT) \
 	F-varutil.$(OBJEXT) F-intrinsic.$(OBJEXT) \
-	F-intrinsics-table.$(OBJEXT) xcodeml-node.$(OBJEXT) \
-	xcodeml-parse.$(OBJEXT) xcodeml-util.$(OBJEXT) \
-	xcodeml-type.$(OBJEXT) xcodeml-traverse.$(OBJEXT) \
-	xcodeml-output-F.$(OBJEXT) F-dump.$(OBJEXT) \
-	F-type-attr-tbl.$(OBJEXT)
+	F-intrinsics-table.$(OBJEXT) F-OMP.$(OBJEXT) \
+	xcodeml-node.$(OBJEXT) xcodeml-parse.$(OBJEXT) \
+	xcodeml-util.$(OBJEXT) xcodeml-type.$(OBJEXT) \
+	xcodeml-traverse.$(OBJEXT) xcodeml-output-F.$(OBJEXT) \
+	F-dump.$(OBJEXT) F-type-attr-tbl.$(OBJEXT)
 F_Front_OBJECTS = $(am_F_Front_OBJECTS)
 F_Front_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
@@ -260,7 +260,7 @@ F_Front_SOURCES = F95-main.c C-expr-mem.c C-exprcode.c \
 	F95-parser.y F-mem.c F-compile.c F-compile-decl.c F-compile-expr.c \
 	F-opt-expv.c F-output-xcodeml.c F-io-xcodeml.c \
 	F-data.c F-datasub.c F-equiv.c F-varutil.c \
-	F-intrinsic.c F-intrinsics-table.c \
+	F-intrinsic.c F-intrinsics-table.c F-OMP.c \
 	xcodeml-node.c xcodeml-parse.c \
 	 xcodeml-util.c xcodeml-type.c xcodeml-traverse.c xcodeml-output-F.c \
 	F-dump.c F-type-attr-tbl.c
@@ -351,6 +351,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/C-expr-mem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/C-exprcode.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/F-OMP.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/F-compile-decl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/F-compile-expr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/F-compile.Po@am__quote@

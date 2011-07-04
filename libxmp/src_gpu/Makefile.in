@@ -68,7 +68,8 @@ LIBRARIES = $(lib_LIBRARIES)
 libxmp_gpu_a_AR = $(AR) $(ARFLAGS)
 libxmp_gpu_a_DEPENDENCIES = xmp_gpu_runtime.o xmp_gpu_util.o \
 	xmp_gpu_data.o xmp_gpu_sync.o
-am_libxmp_gpu_a_OBJECTS = xmp_gpu_lib.$(OBJEXT)
+am_libxmp_gpu_a_OBJECTS = xmp_gpu_lib.$(OBJEXT) \
+	xmp_gpu_shadow.$(OBJEXT)
 libxmp_gpu_a_OBJECTS = $(am_libxmp_gpu_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -269,7 +270,7 @@ GPUCC = @GPU_CMD@
 lib_LIBRARIES = libxmp_gpu.a
 libxmp_gpu_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h \
                                   $(XMP_INC_DIR)/xmp_data_struct.h xmp_gpu_internal.h \
-                                  xmp_gpu_lib.c
+                                  xmp_gpu_lib.c xmp_gpu_shadow.c
 
 libxmp_gpu_a_LIBADD = xmp_gpu_runtime.o xmp_gpu_util.o xmp_gpu_data.o xmp_gpu_sync.o
 AM_CFLAGS = -Wall -std=c99 -I$(XMP_INC_DIR)
@@ -351,6 +352,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_gpu_lib.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_gpu_shadow.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

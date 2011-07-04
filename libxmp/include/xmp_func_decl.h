@@ -224,4 +224,8 @@ extern void _XMP_gpu_finalize_data(void *desc);
 // xmp_gpu_sync.cu
 extern void _XMP_gpu_sync(void *desc, int direction);
 
+// xmp_gpu_shadow.c
+extern void _XMP_gpu_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_addr, void *array_desc, int array_index);
+extern void _XMP_gpu_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_addr, void *array_desc, int array_index);
+
 #endif // _XMP_RUNTIME_FUNC_DECL
