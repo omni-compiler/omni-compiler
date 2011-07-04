@@ -79,11 +79,7 @@ __global__ static void _XMP_gpu_pack_array_kernel(_XMP_gpu_array_t *desc, char *
       temp /= countI;
 
       // move array addr
-      if (i == (array_dim - 1)) {
-        array_addr += indexI * type_size;
-      } else {
-        array_addr += indexI * type_size * (desc[i+1].acc);
-      }
+      array_addr += indexI * type_size * (desc[i].acc);
     }
 
     // calc shadow buffer
@@ -116,11 +112,7 @@ __global__ static void _XMP_gpu_unpack_array_kernel(_XMP_gpu_array_t *desc, char
       temp /= countI;
 
       // move array addr
-      if (i == (array_dim - 1)) {
-        array_addr += indexI * type_size;
-      } else {
-        array_addr += indexI * type_size * (desc[i+1].acc);
-      }
+      array_addr += indexI * type_size * (desc[i].acc);
     }
 
     // calc shadow buffer
