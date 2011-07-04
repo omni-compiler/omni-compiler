@@ -29,6 +29,7 @@ public enum XMPpragma {
   COARRAY,
   GPU_REPLICATE,
   GPU_REPLICATE_SYNC,
+  GPU_REFLECT,
   GPU_BARRIER,
   GPU_LOOP,
 

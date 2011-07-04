@@ -261,6 +261,12 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
         pg_get_token();
         args = parse_GPU_REPLICATE_SYNC_clause();
+      } else if (pg_is_ident("reflect")) {
+        pragmaDir = XMPpragma.GPU_REFLECT;
+        syntax = PragmaSyntax.SYN_EXEC;
+
+        pg_get_token();
+        args = parse_REFLECT_clause();
       } else if (pg_is_ident("barrier")) {
         pragmaDir = XMPpragma.GPU_BARRIER;
         syntax = PragmaSyntax.SYN_EXEC;

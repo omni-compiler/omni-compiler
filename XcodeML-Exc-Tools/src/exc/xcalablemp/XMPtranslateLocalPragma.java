@@ -79,6 +79,8 @@ public class XMPtranslateLocalPragma {
         { translateGpuData(pb);			break; }
       case GPU_REPLICATE_SYNC:
         { translateGpuSync(pb);			break; }
+      case GPU_REFLECT:
+        { translateGpuReflect(pb);		break; }
       case GPU_BARRIER:
         { break; }
       case GPU_LOOP:
@@ -181,6 +183,10 @@ public class XMPtranslateLocalPragma {
 
   private void translateGpuSync(PragmaBlock pb) throws XMPexception {
     XMPgpuData.translateGpuSync(pb, _globalDecl);
+  }
+
+  private void translateGpuReflect(PragmaBlock pb) throws XMPexception {
+    XMPshadow.translateGpuReflect(pb, _globalDecl);
   }
 
   private void translateGpuLoop(PragmaBlock pb) throws XMPexception {
