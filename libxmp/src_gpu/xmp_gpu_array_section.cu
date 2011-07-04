@@ -79,7 +79,11 @@ __global__ static void _XMP_gpu_pack_array_kernel(_XMP_gpu_array_t *desc, char *
       temp /= countI;
 
       // move array addr
-      array_addr += indexI * type_size * (desc[i].acc);
+      if (i == (array_dim - 1)) {
+        array_addr += indexI * type_size;
+      } else {
+        array_addr += indexI * type_size * (desc[i+1].acc);
+      }
     }
 
     // calc shadow buffer
@@ -112,7 +116,11 @@ __global__ static void _XMP_gpu_unpack_array_kernel(_XMP_gpu_array_t *desc, char
       temp /= countI;
 
       // move array addr
-      array_addr += indexI * type_size * (desc[i].acc);
+      if (i == (array_dim - 1)) {
+        array_addr += indexI * type_size;
+      } else {
+        array_addr += indexI * type_size * (desc[i+1].acc);
+      }
     }
 
     // calc shadow buffer
@@ -125,6 +133,7 @@ __global__ static void _XMP_gpu_unpack_array_kernel(_XMP_gpu_array_t *desc, char
   }
 }
 
+extern "C"
 void _XMP_gpu_pack_array(_XMP_gpu_array_t *device_desc, void *host_shadow_buffer, void *gpu_array_addr,
                          size_t type_size, size_t alloc_size, int array_dim,
                          int *lower, int *upper, int *stride) {
@@ -163,6 +172,7 @@ void _XMP_gpu_pack_array(_XMP_gpu_array_t *device_desc, void *host_shadow_buffer
   _XMP_gpu_free(gpu_stride);
 }
 
+extern "C"
 void _XMP_gpu_unpack_array(_XMP_gpu_array_t *device_desc, void *gpu_array_addr, void *host_shadow_buffer,
                            size_t type_size, size_t alloc_size, int array_dim,
                            int *lower, int *upper, int *stride) {

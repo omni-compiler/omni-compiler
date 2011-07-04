@@ -5,8 +5,14 @@
  */
 
 #include "xmp_constant.h"
-#include "xmp_gpu_internal.h"
 #include "xmp_internal.h"
+
+extern void _XMP_gpu_pack_array(_XMP_gpu_array_t *device_desc, void *host_shadow_buffer, void *gpu_array_addr,
+                                size_t type_size, size_t alloc_size, int array_dim,
+                                int *lower, int *upper, int *stride);
+extern void _XMP_gpu_unpack_array(_XMP_gpu_array_t *device_desc, void *gpu_array_addr, void *host_shadow_buffer,
+                                  size_t type_size, size_t alloc_size, int array_dim,
+                                  int *lower, int *upper, int *stride);
 
 void _XMP_gpu_pack_shadow_NORMAL(_XMP_gpu_data_t *desc, void **lo_buffer, void **hi_buffer, int array_index) {
   _XMP_RETURN_IF_SINGLE;
