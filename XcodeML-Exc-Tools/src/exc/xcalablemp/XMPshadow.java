@@ -231,6 +231,7 @@ public class XMPshadow {
     reflectFuncBody.add(Bcons.Statement(funcId.Call(funcArgs)));
   }
 
+  // FIXME implement full shadow
   public static Block translateGpuReflect(PragmaBlock pb, XMPglobalDecl globalDecl) throws XMPexception {
     // start translation
     XobjList reflectDecl = (XobjList)pb.getClauses();
@@ -240,7 +241,13 @@ public class XMPshadow {
     XobjList arrayList = (XobjList)reflectDecl.getArg(0);
     for (XobjArgs iter = arrayList.getArgs(); iter != null; iter = iter.nextArgs()) {
       String arrayName = iter.getArg().getString();
-      XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+
+      XMPgpuData gpuData = XMPgpuDataTable.findXMPgpuData(arrayName, pb);
+      if (gpuData == null) {
+        throw new XMPexception("'" + arrayName + "' is not allocated on the accelerator");
+      }
+
+      XMPalignedArray alignedArray = gpuData.getXMPalignedArray();
       if (alignedArray == null) {
         throw new XMPexception("the aligned array '" + arrayName + "' is not found");
       }
@@ -256,11 +263,10 @@ public class XMPshadow {
           case XMPshadow.SHADOW_NONE:
             break;
           case XMPshadow.SHADOW_NORMAL:
-            createReflectNormalShadowFunc(pb, globalDecl, alignedArray, i, reflectFuncBody);
+            createGpuReflectNormalShadowFunc(pb, globalDecl, gpuData, i, reflectFuncBody);
             break;
           case XMPshadow.SHADOW_FULL:
-            createReflectFullShadowFunc(pb, globalDecl, alignedArray, i, reflectFuncBody);
-            break;
+            throw new XMPexception("not implemented yet");
           default:
             throw new XMPexception("unknown shadow type");
         }
@@ -271,5 +277,40 @@ public class XMPshadow {
     pb.replace(reflectFuncCallBlock);
 
     return reflectFuncCallBlock;
+  }
+
+  private static void createGpuReflectNormalShadowFunc(PragmaBlock pb, XMPglobalDecl globalDecl,
+                                                       XMPgpuData gpuData, int arrayIndex,
+                                                       BlockList reflectFuncBody) {
+    XMPalignedArray alignedArray = gpuData.getXMPalignedArray();
+    String arrayName = alignedArray.getName();
+
+    // decl buffers
+    Ident loSendId = reflectFuncBody.declLocalIdent("_XMP_gpu_reflect_LO_SEND_" + arrayName, Xtype.voidPtrType);
+    Ident loRecvId = reflectFuncBody.declLocalIdent("_XMP_gpu_reflect_LO_RECV_" + arrayName, Xtype.voidPtrType);
+    Ident hiSendId = reflectFuncBody.declLocalIdent("_XMP_gpu_reflect_HI_SEND_" + arrayName, Xtype.voidPtrType);
+    Ident hiRecvId = reflectFuncBody.declLocalIdent("_XMP_gpu_reflect_HI_RECV_" + arrayName, Xtype.voidPtrType);
+
+    // pack shadow
+    Ident packFuncId = globalDecl.declExternFunc("_XMP_gpu_pack_shadow_NORMAL");
+    XobjList packFuncArgs = Xcons.List(loSendId.getAddr(), hiSendId.getAddr(), alignedArray.getAddrIdVoidRef(),
+                                       alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
+
+    reflectFuncBody.add(Bcons.Statement(packFuncId.Call(packFuncArgs)));
+
+    // exchange shadow (using HOST library)
+    Ident exchangeFuncId = globalDecl.declExternFunc("_XMP_exchange_shadow_NORMAL");
+    XobjList exchangeFuncArgs = Xcons.List(loRecvId.getAddr(), hiRecvId.getAddr(), loSendId.Ref(), hiSendId.Ref());
+    exchangeFuncArgs.add(alignedArray.getDescId().Ref());
+    exchangeFuncArgs.add(Xcons.IntConstant(arrayIndex));
+
+    reflectFuncBody.add(Bcons.Statement(exchangeFuncId.Call(exchangeFuncArgs)));
+
+    // unpack shadow
+    Ident unpackFuncId = globalDecl.declExternFunc("_XMP_gpu_unpack_shadow_NORMAL");;
+    XobjList unpackFuncArgs = Xcons.List(loRecvId.Ref(), hiRecvId.Ref(), alignedArray.getAddrIdVoidRef(),
+                                         alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
+
+    reflectFuncBody.add(Bcons.Statement(unpackFuncId.Call(unpackFuncArgs)));
   }
 }
