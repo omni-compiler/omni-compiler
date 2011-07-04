@@ -27,7 +27,6 @@ void _XMP_gpu_pack_shadow_NORMAL(_XMP_gpu_data_t *desc, void **lo_buffer, void *
   int rank = ai->shadow_comm_rank;
 
   int lower[array_dim], upper[array_dim], stride[array_dim];
-  unsigned long long dim_acc[array_dim];
 
   // pack lo shadow
   if (rank != (size - 1)) {
@@ -53,8 +52,6 @@ void _XMP_gpu_pack_shadow_NORMAL(_XMP_gpu_data_t *desc, void **lo_buffer, void *
           upper[i] = array_desc->info[i].local_upper;
           stride[i] = array_desc->info[i].local_stride;
         }
-
-        dim_acc[i] = array_desc->info[i].dim_acc;
       }
 
       // pack data
@@ -88,8 +85,6 @@ void _XMP_gpu_pack_shadow_NORMAL(_XMP_gpu_data_t *desc, void **lo_buffer, void *
           upper[i] = array_desc->info[i].local_upper;
           stride[i] = array_desc->info[i].local_stride;
         }
-
-        dim_acc[i] = array_desc->info[i].dim_acc;
       }
 
       // pack data
@@ -100,16 +95,17 @@ void _XMP_gpu_pack_shadow_NORMAL(_XMP_gpu_data_t *desc, void **lo_buffer, void *
   }
 }
 
-void _XMP_gpu_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, _XMP_gpu_data_t *desc,
-                                   _XMP_array_t *array_desc, int array_index) {
+void _XMP_gpu_unpack_shadow_NORMAL(_XMP_gpu_data_t *desc, void *lo_buffer, void *hi_buffer, int array_index) {
   _XMP_RETURN_IF_SINGLE;
 
+  _XMP_array_t *array_desc = desc->host_array_desc;
   if (!array_desc->is_allocated) {
     return;
   }
 
-  void *array_addr = desc->device_addr;
+  void *device_array_addr = desc->device_addr;
   int array_dim = array_desc->dim;
+  size_t array_type_size = array_desc->type_size;
   _XMP_array_info_t *ai = &(array_desc->info[array_index]);
   _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
   _XMP_ASSERT(ai->is_shadow_comm_member);
@@ -118,7 +114,6 @@ void _XMP_gpu_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, _XMP_gpu_da
   int rank = ai->shadow_comm_rank;
 
   int lower[array_dim], upper[array_dim], stride[array_dim];
-  unsigned long long dim_acc[array_dim];
 
   // unpack lo shadow
   if (rank != 0) {
@@ -127,6 +122,8 @@ void _XMP_gpu_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, _XMP_gpu_da
       if (ai->shadow_size_lo > ai->par_size) {
         _XMP_fatal("shadow size is too big");
       }
+
+      size_t alloc_size = (ai->shadow_size_lo) * (ai->dim_elmts) * (array_type_size);
 
       // calc index
       for (int i = 0; i < array_dim; i++) {
@@ -140,13 +137,12 @@ void _XMP_gpu_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, _XMP_gpu_da
           upper[i] = array_desc->info[i].local_upper;
           stride[i] = array_desc->info[i].local_stride;
         }
-
-        dim_acc[i] = array_desc->info[i].dim_acc;
       }
 
       // unpack data
-      _XMP_gpu_unpack_array(array_addr, lo_buffer, array_desc->type_size,
-                            array_dim, lower, upper, stride, dim_acc);
+      _XMP_gpu_unpack_array(desc->device_array_desc, device_array_addr, lo_buffer,
+                            array_type_size, alloc_size, array_dim,
+                            lower, upper, stride);
 
       // free buffer
       _XMP_free(lo_buffer);
@@ -161,6 +157,8 @@ void _XMP_gpu_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, _XMP_gpu_da
         _XMP_fatal("shadow size is too big");
       }
 
+      size_t alloc_size = (ai->shadow_size_hi) * (ai->dim_elmts) * (array_type_size);
+
       // calc index
       for (int i = 0; i < array_dim; i++) {
         if (i == array_index) {
@@ -173,13 +171,12 @@ void _XMP_gpu_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, _XMP_gpu_da
           upper[i] = array_desc->info[i].local_upper;
           stride[i] = array_desc->info[i].local_stride;
         }
-
-        dim_acc[i] = array_desc->info[i].dim_acc;
       }
 
       // unpack data
-      _XMP_gpu_unpack_array(array_addr, hi_buffer, array_desc->type_size,
-                            array_dim, lower, upper, stride, dim_acc);
+      _XMP_gpu_unpack_array(desc->device_array_desc, device_array_addr, hi_buffer,
+                            array_type_size, alloc_size, array_dim,
+                            lower, upper, stride);
 
       // free buffer
       _XMP_free(hi_buffer);
