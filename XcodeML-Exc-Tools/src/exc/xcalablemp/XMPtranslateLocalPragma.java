@@ -186,7 +186,12 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateGpuReflect(PragmaBlock pb) throws XMPexception {
-    XMPshadow.translateGpuReflect(pb, _globalDecl);
+    if (!XmOption.isXcalableMPGPU()) {
+      XMP.warning("use -enable-gpu option to enable 'acc relfect' directive");
+      translateReflect(pb);
+    } else {
+      XMPshadow.translateGpuReflect(pb, _globalDecl);
+    }
   }
 
   private void translateGpuLoop(PragmaBlock pb) throws XMPexception {
