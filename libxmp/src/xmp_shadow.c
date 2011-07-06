@@ -269,14 +269,18 @@ void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_add
     return;
   }
 
-  int array_type = array_desc->type;
-  int array_dim = array_desc->dim;
   _XMP_array_info_t *ai = &(array_desc->info[array_index]);
   _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
   _XMP_ASSERT(ai->is_shadow_comm_member);
 
   int size = ai->shadow_comm_size;
+  if (size == 1) {
+    return;
+  }
+
   int rank = ai->shadow_comm_rank;
+  int array_type = array_desc->type;
+  int array_dim = array_desc->dim;
 
   int lower[array_dim], upper[array_dim], stride[array_dim];
   unsigned long long dim_acc[array_dim];
@@ -366,14 +370,18 @@ void _XMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_add
     return;
   }
 
-  int array_type = array_desc->type;
-  int array_dim = array_desc->dim;
   _XMP_array_info_t *ai = &(array_desc->info[array_index]);
   _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
   _XMP_ASSERT(ai->is_shadow_comm_member);
 
   int size = ai->shadow_comm_size;
+  if (size == 1) {
+    return;
+  }
+
   int rank = ai->shadow_comm_rank;
+  int array_type = array_desc->type;
+  int array_dim = array_desc->dim;
 
   int lower[array_dim], upper[array_dim], stride[array_dim];
   unsigned long long dim_acc[array_dim];
@@ -469,9 +477,13 @@ void _XMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
   _XMP_ASSERT(ai->is_shadow_comm_member);
 
   // get communicator info
-  MPI_Comm *comm = ai->shadow_comm;
   int size = ai->shadow_comm_size;
+  if (size == 1) {
+    return;
+  }
+
   int rank = ai->shadow_comm_rank;
+  MPI_Comm *comm = ai->shadow_comm;
 
   // setup type
   MPI_Datatype mpi_datatype;
@@ -543,8 +555,12 @@ void _XMP_reflect_shadow_FULL(void *array_addr, _XMP_array_t *array_desc, int ar
     return;
   }
 
-  int array_dim = array_desc->dim;
   _XMP_array_info_t *ai = &(array_desc->info[array_index]);
+  if ((ai->shadow_comm_size) == 1) {
+    return;
+  }
+
+  int array_dim = array_desc->dim;
 
   // using allgather/allgatherv in special cases
   if ((array_dim == 1) && (ai->align_manner == _XMP_N_ALIGN_BLOCK) && (ai->is_regular_chunk)) {

@@ -22,15 +22,19 @@ void _XMP_gpu_pack_shadow_NORMAL(_XMP_gpu_data_t *desc, void **lo_buffer, void *
     return;
   }
 
-  void *device_array_addr = desc->device_addr;
-  int array_dim = array_desc->dim;
-  size_t array_type_size = array_desc->type_size;
   _XMP_array_info_t *ai = &(array_desc->info[array_index]);
   _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
   _XMP_ASSERT(ai->is_shadow_comm_member);
 
   int size = ai->shadow_comm_size;
+  if (size == 1) {
+    return;
+  }
+
   int rank = ai->shadow_comm_rank;
+  void *device_array_addr = desc->device_addr;
+  int array_dim = array_desc->dim;
+  size_t array_type_size = array_desc->type_size;
 
   int lower[array_dim], upper[array_dim], stride[array_dim];
 
@@ -109,15 +113,19 @@ void _XMP_gpu_unpack_shadow_NORMAL(_XMP_gpu_data_t *desc, void *lo_buffer, void 
     return;
   }
 
-  void *device_array_addr = desc->device_addr;
-  int array_dim = array_desc->dim;
-  size_t array_type_size = array_desc->type_size;
   _XMP_array_info_t *ai = &(array_desc->info[array_index]);
   _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
   _XMP_ASSERT(ai->is_shadow_comm_member);
 
   int size = ai->shadow_comm_size;
+  if (size == 1) {
+    return;
+  }
+
   int rank = ai->shadow_comm_rank;
+  void *device_array_addr = desc->device_addr;
+  int array_dim = array_desc->dim;
+  size_t array_type_size = array_desc->type_size;
 
   int lower[array_dim], upper[array_dim], stride[array_dim];
 
