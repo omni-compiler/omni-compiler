@@ -28,13 +28,6 @@
 #define _XMP_GPU_M_BARRIER_THREADS() __syncthreads()
 #define _XMP_GPU_M_BARRIER_KERNEL() cudaThreadSynchronize()
 
-// --- misc functions
-#define _XMP_GPU_CONFIG_CACHE(flag_, func_) \
-if (flag_) { \
-  flag_ = 0; \
-  cudaFuncSetCacheConfig(func_, cudaFuncCachePreferL1); \
-}
-
 // --- get array info functions
 #define _XMP_GPU_M_GET_ARRAY_GTOL(_gtol, _desc, _dim) \
 _gtol = _XMP_GPU_M_GTOL(_desc, _dim)
