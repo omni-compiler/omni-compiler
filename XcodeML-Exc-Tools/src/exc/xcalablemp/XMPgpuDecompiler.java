@@ -53,6 +53,7 @@ public class XMPgpuDecompiler {
     }
 
     // schedule iteration
+    XobjList loopIndexRefList = Xcons.List();
     XobjList loopIndexAddrList = Xcons.List();
     XobjList loopIterRefList = Xcons.List();
     Iterator<Xobject> iter = loopIndexList.iterator();
@@ -68,6 +69,7 @@ public class XMPgpuDecompiler {
       Ident condId = (Ident)loopIter.getArg(1);
       Ident stepId = (Ident)loopIter.getArg(2);
 
+      loopIndexRefList.add(loopVarId.Ref());
       loopIndexAddrList.add(loopVarId.getAddr());
       loopIterRefList.add(initId.Ref());
       loopIterRefList.add(condId.Ref());
@@ -109,7 +111,7 @@ public class XMPgpuDecompiler {
 
         confParamFuncCall = Xcons.List(Xcode.EXPR_STATEMENT, confParamFuncId.Call(confParamFuncArgs));
       } else {
-        confParamFuncName = new String("_XMP_gpu_calc_config_params_NUM_THREADS");
+        confParamFuncName = new String("_XMP_gpu_calc_config_params_MAP_THREADS");
         Ident confParamFuncId = XMP.getMacroId(confParamFuncName);
         XobjList confParamFuncArgs = Xcons.List(blockXid.getAddr(), blockYid.getAddr(), blockZid.getAddr(),
                                                 threadXid.getAddr(), threadYid.getAddr(), threadZid.getAddr());
@@ -207,6 +209,19 @@ public class XMPgpuDecompiler {
                                  Xcons.binaryOp(Xcode.LOG_LT_EXPR, threadNumId.Ref(), totalIterId.Ref()),
                                                 loopBlock.getBody().toXobject(), null);
     } else {
+      int mapDim = 0;
+      for (Xobject mapList : mapThreads) {
+        if (mapList != null) {
+          mapDim++;
+        }
+      }
+
+      XobjList calcIterFuncArgs = Xcons.List();
+      XMPutil.mergeLists(calcIterFuncArgs, loopIterRefList);
+      XMPutil.mergeLists(calcIterFuncArgs, loopIndexRefList);
+      newLoopBlockList.add(createFuncCallBlock(new String("_XMP_gpu_calc_iter_MAP_THREADS_" + mapDim),
+                                               calcIterFuncArgs));
+
       kernelFuncObj = loopBlock.getBody().toXobject();
     }
 

@@ -88,6 +88,32 @@ __device__ void _XMP_gpu_calc_iter(unsigned long long tid,
   *iter2 = lower2 + ((temp1 / count1) * stride2);
 }
 
+#define _XMP_gpu_calc_iter_MAP_THREADS_1(_l0, _u0, _s0, _i0) \
+{ \
+  _i0 = _l0 + ((blockIdx.x * blockDim.x + threadIdx.x) * _s0); \
+  if (_i0 >= _u0) return; \
+}
+
+#define _XMP_gpu_calc_iter_MAP_THREADS_2(_l0, _u0, _s0, _l1, _u1, _s1, _i0, _i1) \
+{ \
+  _i0 = _l0 + ((blockIdx.x * blockDim.x + threadIdx.x) * _s0); \
+  _i1 = _l1 + ((blockIdx.y * blockDim.y + threadIdx.y) * _s1); \
+  \
+  if (_i0 >= _u0) return; \
+  if (_i1 >= _u1) return; \
+}
+
+#define _XMP_gpu_calc_iter_MAP_THREADS_3(_l0, _u0, _s0, _l1, _u1, _s1, _l2, _u2, _s2, _i0, _i1, _i2) \
+{ \
+  _i0 = _l0 + ((blockIdx.x * blockDim.x + threadIdx.x) * _s0); \
+  _i1 = _l1 + ((blockIdx.y * blockDim.y + threadIdx.y) * _s1); \
+  _i2 = _l2 + ((blockIdx.z * blockDim.z + threadIdx.z) * _s2); \
+  \
+  if (_i0 >= _u0) return; \
+  if (_i1 >= _u1) return; \
+  if (_i2 >= _u2) return; \
+}
+
 #define _XMP_GPU_M_CALC_CONFIG_PARAMS(_x, _y, _z) \
 { \
   unsigned long long num_threads = _x * _y * _z; \
@@ -169,7 +195,7 @@ void _XMP_gpu_calc_config_params(unsigned long long *total_iter,
 }
 
 template<typename T>
-void _XMP_gpu_calc_config_params_NUM_THREADS(int *block_x, int *block_y, int *block_z,
+void _XMP_gpu_calc_config_params_MAP_THREADS(int *block_x, int *block_y, int *block_z,
                                              int *thread_x, int *thread_y, int *thread_z,
                                              int thread_x_v,
                                              T lower0, T upper0, T stride0) {
@@ -185,7 +211,7 @@ void _XMP_gpu_calc_config_params_NUM_THREADS(int *block_x, int *block_y, int *bl
 }
 
 template<typename T>
-void _XMP_gpu_calc_config_params_NUM_THREADS(int *block_x, int *block_y, int *block_z,
+void _XMP_gpu_calc_config_params_MAP_THREADS(int *block_x, int *block_y, int *block_z,
                                              int *thread_x, int *thread_y, int *thread_z,
                                              int thread_x_v, int thread_y_v,
                                              T lower0, T upper0, T stride0,
@@ -203,7 +229,7 @@ void _XMP_gpu_calc_config_params_NUM_THREADS(int *block_x, int *block_y, int *bl
 }
 
 template<typename T>
-void _XMP_gpu_calc_config_params_NUM_THREADS(int *block_x, int *block_y, int *block_z,
+void _XMP_gpu_calc_config_params_MAP_THREADS(int *block_x, int *block_y, int *block_z,
                                              int *thread_x, int *thread_y, int *thread_z,
                                              int thread_x_v, int thread_y_v, int thread_z_v,
                                              T lower0, T upper0, T stride0,
