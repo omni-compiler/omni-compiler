@@ -13,7 +13,6 @@
 
 #include <sys/wait.h>
 
-
 /* program unit control stack */
 UNIT_CTL unit_ctls[MAX_UNIT_CTL];
 int unit_ctl_level;
@@ -105,6 +104,13 @@ static void fix_array_dimensions_recursive(ID ip);
 static void fix_pointer_pointee_recursive(TYPE_DESC tp);
 static TYPE_DESC new_type_subr(void);
 
+
+void init_for_OMP_pragma();
+void check_for_OMP_pragma(expr x);
+
+void init_for_XMP_pragma();
+void check_for_XMP_pragma(expr x);
+
 void
 initialize_compile()
 {
@@ -169,6 +175,7 @@ initialize_compile_procedure()
     CTL_TYPE(ctl_top) = CTL_NONE;
 
     init_for_OMP_pragma();
+    init_for_XMP_pragma();
 }
 
 void
@@ -229,6 +236,7 @@ compile_statement(st_no,x)
     }
 
     check_for_OMP_pragma(x);
+    check_for_XMP_pragma(x);
 
     if (st_no != 0) {
         this_label = declare_label(st_no, LAB_UNKNOWN, TRUE);

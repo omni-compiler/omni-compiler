@@ -53,7 +53,8 @@ extern int Addr2Uint(void *x);
 #include "F-ident.h"
 #include <inttypes.h>
 
-#include "C-OMP.h"
+#include "C-OMP.h"  /* OpenMP */
+#include "C-XMP.h"  /* XcalableMP */
 
 extern int lineno;
 extern int need_keyword;
@@ -704,6 +705,9 @@ extern expr     create_implicit_decl_expv(TYPE_DESC tp, char * first, char * sec
 
 extern void compile_OMP_directive(expr v);
 int OMP_reduction_op(expr v);
+
+extern void compile_XMP_directive(expr v);
+int XMP_reduction_op(expr v);
 
 #include "xcodeml-module.h"
 

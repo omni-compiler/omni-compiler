@@ -2299,6 +2299,7 @@ static void
 outx_OMP_dir_string(int l,expv v)
 {
   char *s;
+
   if(EXPV_CODE(v) != INT_CONSTANT) 
     fatal("outx_OMP_dir_string: not INT_CONSTANT");
   switch(EXPV_INT_VALUE(v)){

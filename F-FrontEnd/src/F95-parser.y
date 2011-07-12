@@ -237,6 +237,48 @@
 %type <val> omp_directive omp_nowait_option omp_clause_option omp_clause_list omp_clause omp_list omp_common_list omp_default_attr omp_copyin_list omp_schedule_arg
 %type <code> omp_schedule_attr omp_reduction_op
 
+/* XcalableMP directive */
+%token XMPKW_LINE
+
+%token XMPKW_END
+%token XMPKW_NODES
+%token XMPKW_TEMPLATE
+%token XMPKW_TEMPLATE_FIX
+%token XMPKW_DISTRIBUTE
+%token XMPKW_ALIGN
+%token XMPKW_SHADOW
+%token XMPKW_TASK
+%token XMPKW_TASKS
+%token XMPKW_LOOP
+%token XMPKW_REFLECT
+%token XMPKW_GMOVE
+%token XMPKW_BARRIER
+%token XMPKW_REDUCTION
+%token XMPKW_BCAST
+%token XMPKW_COARRAY
+%token XMPKW_WAIT
+%token XMPKW_POST
+%token XMPKW_CRITICAL
+
+%token XMPKW_ON
+%token XMPKW_ONTO
+%token XMPKW_WITH
+%token XMPKW_FROM
+
+%token XMPKW_BLOCK
+%token XMPKW_CYCLIC
+%token XMPKW_GBLOCK
+
+%token XMPKW_ASYNC
+%token XMPKW_NOWAIT
+%token XMPKW_MASTER
+
+%token XMPKW_IN
+%token XMPKW_OUT
+
+%type <val> xmp_directive xmp_nodes_clause xmp_template_clause xmp_distribute_clause xmp_align_clause xmp_shadow_clause xmp_task_clause xmp_loop_clause xmp_reflect_clause xmp_gmove_clause xmp_barrier_clause xmp_bcast_clause xmp_reduction_clause xmp_node_spec_list xmp_node_spec xmp_nodes_ref xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_align_subscript_list xmp_align_subscript xmp_shadow_width_list xmp_shadow_width xmp_on_ref xmp_reduction_opt xmp_reduction_spec xmp_gmove_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one
+%type <code> xmp_reduction_op
+
 %{
 #include "F-front.h"
 static int st_no;
@@ -263,6 +305,7 @@ static void append_pragma_str _ANSI_ARGS_((char *p));
 
 #define GEN_NODE(TYPE, VALUE) make_enode((TYPE), ((void *)((_omAddrInt_t)(VALUE))))
 #define OMP_LIST(op, args) list2(LIST, GEN_NODE(INT_CONSTANT, op), args)
+#define XMP_LIST(op, args) list2(LIST, GEN_NODE(INT_CONSTANT, op), args)
 
 /* statement name */
 expr st_name;
@@ -308,6 +351,8 @@ one_statement:
         { compile_statement(st_no,$2);}
 	| OMPKW_LINE omp_directive
 	{ compile_OMP_directive($2); }
+	| XMPKW_LINE xmp_directive
+	{ compile_XMP_directive($2); }
         | PRAGMA_HEAD  PRAGMA_SLINE /* like !$ ... */
 	{ 
 	    if (pragmaString != NULL)
@@ -1669,33 +1714,134 @@ omp_default_attr:
  * XcalableMP directives 
  */
 xmp_directive:
-	    XMPKW_NODES IDENTIFIER '(' xmp_node_spec_list ')'
-	  | XMPKW_NODES IDENTIFIER '(' xmp_node_spec_list ')' '=' '*'
-	  | XMPKW_NODES IDENTIFIER '(' xmp_node_spec_list ')' '=' xmp_node_ref
-	  | XMPKW_TEMPLATE IDENTIFIER '(' xmp_subscript_list ')'
-	  | XMPKW_DISTRIBUTE IDENTIFIER '(' xmp_dist_fmt_list ')' 
-  	    XMPKW_ON IDENTIFIER
-	  | XMPKW_ALIGN IDENTIFIER '(' xmp_align_subscript_list ')' 
-  	    XMPKW_WITH IDENTIFIER '(' xmp_align_subscript_list ')' 
-	  | XMPKW_SHADOW IDENTIFIER '(' xmp_shadow_width_list ')' 
+	    XMPKW_NODES xmp_nodes_clause
+	    { $$ = XMP_LIST(XMP_NODES,$2); }
+	  | XMPKW_TEMPLATE xmp_template_clause
+	    { $$ = XMP_LIST(XMP_TEMPLATE,$2); }
+	  | XMPKW_DISTRIBUTE xmp_distribute_clause
+	    { $$ = XMP_LIST(XMP_DISTRIBUTE,$2); }
+	  | XMPKW_ALIGN xmp_align_clause
+	    { $$ = XMP_LIST(XMP_ALIGN,$2); }
+	  | XMPKW_SHADOW xmp_shadow_clause
+	    { $$ = XMP_LIST(XMP_SHADOW,$2); }
 	  | XMPKW_TEMPLATE_FIX  /* not yet*/
-	  | XMPKW_TASK XMPKW_ON xmp_node_ref
-	  | XMPKW_TASK XMPKW_ON xmp_template_ref
-	  | XMPKW_TASKS 
+	    { $$ = XMP_LIST(XMP_TEMPLATE_FIX,NULL); }
+	  | XMPKW_TASK xmp_task_clause
+	    { $$ = XMP_LIST(XMP_TASK,$2); }
+	  | XMPKW_END XMPKW_TASK
+	    { $$ = XMP_LIST(XMP_END_TASK,NULL); }
+	  | XMPKW_TASKS
+	    { $$ = XMP_LIST(XMP_TASKS,NULL); }
 	  | XMPKW_TASKS XMPKW_NOWAIT
-	  | XMPKW_LOOP XMPKW_ON xmp_on_ref xmp_reduction_opt
-	  | XMPKW_LOOP '(' xmp_subscript_list ')' XMPKW_ON xmp_on_ref
-	        xmp_reduction_opt
-	  | XMPKW_REFLECT '(' xmp_expr_list ')' xmp_async_opt
-	  | XMPKW_GMOVE  xmp_async_opt
-	  | XMPKW_GMOVE  xmp_gmove_opt xmp_async_opt
-	  | XMPKW_BARRIER 
-	  | XMPKW_BARRIER XMPKW_ON xmp_on_ref
-	  | XMPKW_REDUCTION 
-	  | XMPKW_BCAST '(' xmp_expr_list ')' xmp_async_opt
-	  | XMPKW_COARRAY
+	    { $$ = XMP_LIST(XMP_TASKS,
+	                    GEN_NODE(INT_CONSTANT, XMP_OPT_NOWAIT)); }
+	  | XMPKW_END XMPKW_TASKS
+	    { $$ = XMP_LIST(XMP_END_TASKS,NULL); }
+	  | XMPKW_LOOP xmp_loop_clause
+	    { $$ = XMP_LIST(XMP_LOOP,$2); }
+	  | XMPKW_REFLECT xmp_reflect_clause
+	    { $$ = XMP_LIST(XMP_REFLECT,$2); }
+	  | XMPKW_GMOVE xmp_gmove_clause
+	    { $$ = XMP_LIST(XMP_GMOVE,$2); }
+	  | XMPKW_BARRIER xmp_barrier_clause
+	    { $$ = XMP_LIST(XMP_BARRIER,$2); }
+	  | XMPKW_REDUCTION xmp_reduction_clause
+	    { $$ = XMP_LIST(XMP_REDUCTION,$2); }
+	  | XMPKW_BCAST xmp_bcast_clause
+	    { $$ = XMP_LIST(XMP_REDUCTION,$2); }
+/*	  | XMPKW_COARRAY */
 	  ;
 
+xmp_nodes_clause:
+	    IDENTIFIER '(' xmp_node_spec_list ')'
+	      { $$ = list4(LIST,NULL,$1,$3,NULL); }
+	  | IDENTIFIER '(' xmp_node_spec_list ')' '=' '*'
+	    { $$ = list4(LIST,NULL,$1,$3,XMP_LIST(XMP_NODES_INHERIT_EXEC,NULL)); }
+	  | IDENTIFIER '(' xmp_node_spec_list ')' '=' xmp_nodes_ref
+	    { $$ = list4(LIST,NULL,$1,$3,XMP_LIST(XMP_NODES_INHERIT_NODES,$6)); }
+  	  ;
+
+xmp_template_clause:
+	    IDENTIFIER '(' xmp_subscript_list ')'
+             { $$=list2(LIST,list1(LIST,$1),$3); }
+	  | '(' xmp_subscript_list ')' COL2 xmp_name_list
+	     { $$=list2(LIST,$5,$2); }
+	  ;
+
+xmp_distribute_clause:
+	    IDENTIFIER '(' xmp_dist_fmt_list ')' XMPKW_ONTO IDENTIFIER
+	     { $$ = list3(LIST,list1(LIST,$1),$3,$6); }
+	  | '(' xmp_dist_fmt_list ')' XMPKW_ONTO IDENTIFIER COL2 xmp_name_list
+	     { $$ = list3(LIST,$7,$2,$5); }
+	  ;
+
+xmp_align_clause:
+	    IDENTIFIER '(' xmp_align_subscript_list ')' XMPKW_WITH 
+  	      IDENTIFIER '(' xmp_align_subscript_list ')' 
+	    { $$ = list4(LIST,list1(LIST,$1),$3,$6,$8); }
+	  | '(' xmp_align_subscript_list ')' XMPKW_WITH 
+  	    IDENTIFIER '(' xmp_align_subscript_list ')' COL2 xmp_name_list
+            { $$ = list4(LIST,$10,$2,$5,$7); }
+	  ;
+
+xmp_shadow_clause:
+	    IDENTIFIER '(' xmp_shadow_width_list ')' 
+	    { $$ = list2(LIST,list1(LIST,$1),$3); }
+	  |  '(' xmp_shadow_width_list ')' COL2 xmp_name_list
+            { $$ = list2(LIST,$5,$2); }
+          ;
+
+xmp_task_clause:
+	    XMPKW_ON xmp_on_ref xmp_clause_opt
+	    { $$= list2(LIST,$2,$3); }
+          ;
+
+xmp_loop_clause:
+	    XMPKW_ON xmp_on_ref xmp_reduction_opt xmp_clause_opt
+	    { $$ = list4(LIST,NULL,$2,$3,$4); }
+	  | '(' xmp_subscript_list ')' XMPKW_ON xmp_on_ref
+	    	xmp_reduction_opt xmp_clause_opt
+	    { $$ = list4(LIST,$2,$5,$5,$7); }
+	  ;
+
+xmp_reflect_clause:
+	   '(' xmp_expr_list ')' xmp_clause_opt
+	     { $$= list2(LIST,$2,$4); }
+	   ;
+
+xmp_gmove_clause:
+	     xmp_gmove_opt xmp_clause_opt
+	     { $$ = list2(LIST,$1,$2); }
+	   ;
+
+xmp_barrier_clause:
+	     XMPKW_ON xmp_on_ref xmp_clause_opt
+	      { $$ = list2(LIST,$2,$3); }
+	   | xmp_clause_opt
+	      { $$ = list2(LIST,NULL,$1); }
+	   ;
+
+xmp_bcast_clause:
+	     '(' xmp_expr_list ')' xmp_clause_opt
+	      { $$ = list4(LIST,$2,NULL,NULL,$4); }
+   	   | '(' xmp_expr_list ')' XMPKW_FROM xmp_nodes_ref xmp_clause_opt
+	      { $$ = list4(LIST,$2,$5,NULL,$6); }
+	   | '(' xmp_expr_list ')' XMPKW_ON xmp_nodes_ref xmp_clause_opt
+	      { $$ = list4(LIST,$2,NULL,$5,$6); }
+   	   | '(' xmp_expr_list ')' XMPKW_FROM xmp_nodes_ref 
+	           XMPKW_ON xmp_on_ref xmp_clause_opt
+	      { $$ = list4(LIST,$2,$5,$7,$8); }
+            ;
+
+xmp_reduction_clause:
+	       xmp_reduction_spec xmp_clause_opt
+	        { $$ = list3(LIST,$1,NULL,$2); }
+	     | xmp_reduction_spec XMPKW_ON xmp_on_ref xmp_clause_opt
+                { $$ = list3(LIST,$1,$3,$4); }
+	     ;
+
+/* 
+*/
 xmp_node_spec_list: 
             xmp_node_spec
 	  { $$ = list1(LIST,$1); }
@@ -1705,14 +1851,16 @@ xmp_node_spec_list:
 
 xmp_node_spec:
 	   expr
-	  | '*'
+	  | '*' { $$ = NULL; }
 	  ; 
 
 xmp_nodes_ref:
-	  '(' xmp_script ')
-	  | IDENTIFIER '(' xmp_script_list ')'
+	  '(' xmp_subscript ')' 
+	   { $$ = list2(LIST,NULL,$2); }
+	  | IDENTIFIER '(' xmp_subscript_list ')'
+	   { $$ = list2(LIST,$1,$3); }
 	  ;
-		
+
 xmp_subscript_list: 
             xmp_subscript
 	  { $$ = list1(LIST,$1); }
@@ -1722,38 +1870,47 @@ xmp_subscript_list:
 
 xmp_subscript:
 	    expr_or_null
+	    { $$ = list3(LIST,$1,NULL,NULL); }
 	  | expr_or_null ':' expr_or_null
-	  | expr_or_null ':' expr_or_null ': expr
+	    { $$ = list3(LIST,$1,$3,NULL); }
+	  | expr_or_null ':' expr_or_null ':' expr
+	    { $$ = list3(LIST,$1,$3,$5); }
 	  | '*'
+	    { $$ = NULL; }
 	  ;
 
 xmp_dist_fmt_list:
-           {keyword_required = TURE;} xmp_dist_fmt
-	  { $$ = list1(LIST,$1); }
-	  | xmp_dist_fmt_list ',' {keyword_required = TURE;} xmp_dist_fmt
-	  { $$ = list_put_last($1,$3); }
+           {need_keyword = TRUE;} xmp_dist_fmt
+	  { $$ = list1(LIST,$2); }
+	  | xmp_dist_fmt_list ',' {need_keyword = TRUE;} xmp_dist_fmt
+	  { $$ = list_put_last($1,$4); }
 	  ;
 
 xmp_dist_fmt:
-	   '*'
+	   '*' { $$ = NULL; }
 	  | XMPKW_BLOCK
+	    { $$ = XMP_LIST(XMP_DIST_BLOCK,NULL); }
 	  | XMPKW_CYCLIC
+	    { $$ = XMP_LIST(XMP_DIST_CYCLIC,NULL); }
 	  | XMPKW_CYCLIC '(' expr ')'
+	    { $$ = XMP_LIST(XMP_DIST_CYCLIC,$3); }
 	  | XMPKW_GBLOCK '(' '*' ')'
+	    { $$ = XMP_LIST(XMP_DIST_GBLOCK,NULL); }
 	  | XMPKW_GBLOCK '(' expr ')'
+	    { $$ = XMP_LIST(XMP_DIST_GBLOCK,$3); }
 	  ;
 
 xmp_align_subscript_list:
            xmp_align_subscript
 	  { $$ = list1(LIST,$1); }
-	  | xmp_align_subscrpt_list ',' xmp_align_subscript
+	  | xmp_align_subscript_list ',' xmp_align_subscript
 	  { $$ = list_put_last($1,$3); }
 	  ;
 
 xmp_align_subscript:
 	   expr
-	  | '*'
-	  | ':'
+	  | '*' { $$ = NULL; }
+	  | ':' { $$ = list1(LIST,NULL); }
 	  ;
 
 xmp_shadow_width_list:
@@ -1764,35 +1921,41 @@ xmp_shadow_width_list:
 	  ;
 
 xmp_shadow_width:
-	    expr
-	  | expr ':' expr 
-	  | '*'
+	    expr { $$ = list2(LIST,$1,NULL); }
+	  | expr ':' expr {$$ = list2(LIST,$1,$3); }
+	  | '*' { $$ = NULL; }
 	  ;
 
 xmp_on_ref:
-	     xmp_node_ref
-	   | xmp_template_ref
-	   :
+	     xmp_nodes_ref
+	  /* | xmp_template_ref */
+	   ;
 
 xmp_reduction_opt:
-	     /* empty */
-        | XMPKW_REDUCTION xmp_reduction_spec
+	     /* empty */ { $$ = NULL; }
+        | XMPKW_REDUCTION xmp_reduction_spec { $$=$2; }
 	;
 
 xmp_reduction_spec:
-	'(' xmp_redution_op ':' xmp_expr_list ')'
+	'(' xmp_reduction_op ':' xmp_expr_list ')'
+	 { $$ = list2(LIST,GEN_NODE(INT_CONSTANT,$2),$4); }
 	;
 
 xmp_reduction_op:
-	  '+' { $$ = (int) XMP_DATA_REDUCTION_PLUS; }
-	| '-' { $$ = (int) XMP_DATA_REDUCTION_MINUS; }
-	| '*' { $$ = (int) XMP_DATA_REDUCTION_MUL; }
-	| AND { $$ = (int) XMP_DATA_REDUCTION_LOGAND; }
-	| OR  { $$ = (int) XMP_DATA_REDUCTION_LOGOR; }
-	| EQV { $$ = (int) XMP_DATA_REDUCTION_EQV; }
-	| NEQV { $$ = (int) XMP_DATA_REDUCTION_NEQV; }
+	  '+' { $$ = (int) XMP_DATA_REDUCE_SUM; }
+	| '*' { $$ = (int) XMP_DATA_REDUCE_PROD; }
+	| AND { $$ = (int) XMP_DATA_REDUCE_LAND; }
+	| OR  { $$ = (int) XMP_DATA_REDUCE_LOR; }
+	| EQV { $$ = (int) XMP_DATA_REDUCE_EQV; }
+	| NEQV { $$ = (int) XMP_DATA_REDUCE_NEQV; }
 	| IDENTIFIER { $$ = XMP_reduction_op($1); }
 	;
+
+xmp_gmove_opt:
+	  /* NULL */ { $$= NULL; }
+	 | XMPKW_IN { $$ = GEN_NODE(INT_CONSTANT, XMP_GMOVE_IN); }
+	 | XMPKW_OUT { $$ = GEN_NODE(INT_CONSTANT, XMP_GMOVE_OUT); }
+	 ;
 
 xmp_expr_list:
 	  expr
@@ -1801,7 +1964,29 @@ xmp_expr_list:
 	  { $$ = list_put_last($1,$3); }
 	  ;
 
+xmp_name_list:
+	  IDENTIFIER
+	  { $$ = list1(LIST,$1); }
+	  | xmp_name_list ',' IDENTIFIER
+	  { $$ = list_put_last($1,$3); }
+	  ;
 
+xmp_clause_opt:
+	   /* NULL */{ $$ = NULL; }
+	   | xmp_clause_list
+	   ;
+
+xmp_clause_list:
+	  xmp_clause_one
+	  { $$ = list1(LIST,$1); }
+	  | xmp_clause_list xmp_clause_one
+	  { $$ = list_put_last($1,$2); }
+	  ;
+
+xmp_clause_one:
+	    XMPKW_ASYNC '(' IDENTIFIER ')'
+	   { $$ = XMP_LIST(XMP_OPT_ASYNC, $3); }
+	   ;
 
 %%
 #include "F95-lex.c"

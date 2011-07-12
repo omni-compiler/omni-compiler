@@ -154,6 +154,7 @@ static int      readline_free_format _ANSI_ARGS_((void));
 static int      readline_fixed_format _ANSI_ARGS_((void));
 static int      is_PRAGMA_sentinel _ANSI_ARGS_((char **));
 static int	is_OMP_sentinel _ANSI_ARGS_((char **));
+static int	is_XMP_sentinel _ANSI_ARGS_((char **));
 static int      find_last_ampersand _ANSI_ARGS_((char *buf,int *len));
 
 static void     save_format_str _ANSI_ARGS_((void));
@@ -1776,32 +1777,7 @@ is_OMP_sentinel(char **pp)
     return FALSE;
 }
 
-static int 
-is_XMP_sentinel(char **pp)
-{
-    int i;
-    char *p;
 
-    p = *pp;
-    memset(stn_cols, ' ', 6);
-    while(isspace(*p)) p++;     /* skip space */
-    if(*p == '!'){
-	/* check sentinels */
-	for(i = 0; i < 6; i++,p++){
-	    if(*p == '\0' || isspace(*p)) break;
-	    if (PRAGMA_flag)
-		stn_cols[i] = *p;
-	    else
-		stn_cols[i] = TOLOWER(*p);
-	}
-	stn_cols[i] = '\0';
-	if (strcasecmp(stn_cols,"!$xmp") == 0) {
-	    *pp = p;
-	    return TRUE;
-	}
-    }
-    return FALSE;
-}
 
 static int last_char_in_quote_is_quote = FALSE;
 
@@ -1862,7 +1838,12 @@ again:
             st_OMP_flag = TRUE;
             set_pragma_str(&stn_cols[2]); /* save head of pragma line.  */
             append_pragma_str(bufptr); /* append the rest of line. ??msato */
-        }
+        } 
+        else if (is_XMP_sentinel(&p)) { 
+            st_XMP_flag = TRUE;
+            set_pragma_str(&stn_cols[2]); /* save head of pragma line.  */
+            append_pragma_str(bufptr); /* append the rest of line. ??msato */
+        } 
         else if(is_PRAGMA_sentinel(&p)) {
             st_PRAGMA_flag = TRUE;
             set_pragma_str(&stn_cols[2]); /* save head of pragma line.  */
@@ -1906,6 +1887,12 @@ again:
         if(st_OMP_flag){
             if(!is_OMP_sentinel(&p)){
                 error("bad OMP sentinel continuation line");
+                goto Done;
+            }
+	}
+	else if(st_XMP_flag){
+            if(!is_XMP_sentinel(&p)){
+                error("bad XMP sentinel continuation line");
                 goto Done;
             }
         } else {
@@ -3354,39 +3341,77 @@ XMP_lex_token()
     return token();
 }
 
+static int 
+is_XMP_sentinel(char **pp)
+{
+    int i;
+    char *p;
+
+    p = *pp;
+    memset(stn_cols, ' ', 6);
+    while(isspace(*p)) p++;     /* skip space */
+    if(*p == '!'){
+	/* check sentinels */
+	for(i = 0; i < 6; i++,p++){
+	    if(*p == '\0' || isspace(*p)) break;
+	    if (PRAGMA_flag)
+		stn_cols[i] = *p;
+	    else
+		stn_cols[i] = TOLOWER(*p);
+	}
+	stn_cols[i] = '\0';
+	if (strcasecmp(stn_cols,"!$xmp") == 0) {
+	    *pp = p;
+	    return TRUE;
+	}
+    }
+    return FALSE;
+}
+
+
 struct keyword_token XMP_keywords[ ] = 
 {
-    {"parallel",	XMPKW_PARALLEL },
-    {"end",		XMPKW_END },
-    {"private",		XMPKW_PRIVATE },
-    {"shared",		XMPKW_SHARED },
-    {"default",		XMPKW_DEFAULT },
-    {"none",		XMPKW_NONE },
-    {"firstprivate",	XMPKW_FIRSTPRIVATE },
+    {"end",	XMPKW_END },
+    {"nodes",	XMPKW_NODES },
+    {"template",XMPKW_TEMPLATE },
+    {"distribute",	XMPKW_DISTRIBUTE },
+    {"align",	XMPKW_ALIGN },
+    {"shadow",	XMPKW_SHADOW },
+    {"task",	XMPKW_TASK },
+    {"task",	XMPKW_TASK },
+    {"loop",	XMPKW_LOOP },
+    {"reflect",	XMPKW_REFLECT },
+    {"gmove",	XMPKW_GMOVE },
+    {"barrier",	XMPKW_BARRIER},
     {"reduction",	XMPKW_REDUCTION },
-    {"if",		XMPKW_IF },
-    {"copyin",		XMPKW_COPYIN },
-    {"do",		XMPKW_DO },
-    {"lastprivate",	XMPKW_LASTPRIVATE },
-    {"schedule",	XMPKW_SCHEDULE },
-    {"static",		XMPKW_STATIC },
-    {"dynamic",		XMPKW_DYNAMIC },
-    {"guided",		XMPKW_GUIDED },
-    {"ordered",		XMPKW_ORDERED },
-    {"runtime",		XMPKW_RUNTIME },
-    {"sections",	XMPKW_SECTIONS },
-    {"section",		XMPKW_SECTION },
-    {"nowait",		XMPKW_NOWAIT },
-    {"single",		XMPKW_SINGLE },
-    {"master",		XMPKW_MASTER },
-    {"critical",	XMPKW_CRITICAL},
-    {"barrier",		XMPKW_BARRIER},
-    {"atomic",		XMPKW_ATOMIC},
-    {"flush",		XMPKW_FLUSH },
-    {"threadprivate",	XMPKW_THREADPRIVATE},
+    {"bcast",	XMPKW_BCAST },
+    {"coarray",	XMPKW_COARRAY },
+
+    {"in",	XMPKW_IN },
+    {"out",	XMPKW_OUT },
+
+    {"on",	XMPKW_ON },
+    {"onto",	XMPKW_ONTO },
+    {"with",	XMPKW_WITH },
+    {"from",	XMPKW_FROM },
+
+    {"nowait",	XMPKW_NOWAIT },
+    {"async",	XMPKW_ASYNC },
+
+    {"master",	XMPKW_MASTER },
+    {"critical",XMPKW_CRITICAL},
+    {"wait",	XMPKW_WAIT},
+    {"post",	XMPKW_POST },
 
     { 0, 0 }
 };
+
+/* dummy */
+void init_for_XMP_pragma() { } 
+void check_for_XMP_pragma(expr x) {  } 
+void compile_XMP_directive(expr x){  }
+int XMP_reduction_op(expr v){ return 0; }
+
 
 /* EOF */
 
