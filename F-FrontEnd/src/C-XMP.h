@@ -1,0 +1,74 @@
+/*
+ * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
+ * $TSUKUBA_Copyright:
+ *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
+ *  $
+ */
+#ifndef _C_XMP_H
+#define _C_XMP_H
+
+enum XMP_pragma {
+  XMP_NODES,
+  XMP_TEMPLATE,
+  XMP_DISTRIBUTE,
+  XMP_ALIGN,
+  XMP_SHADOW,
+  XMP_TASK,
+  XMP_TASKS,
+  XMP_LOOP,
+  XMP_REFLECT,
+  XMP_GMOVE,
+  XMP_BARRIER,
+  XMP_REDUCTION,
+  XMP_BCAST,
+  XMP_COARRAY,
+  XMP_TEMPLATE_FIX,
+
+  XMP_END_TASK,
+  XMP_END_TASKS,
+
+  XMP_DIR_END
+};
+
+enum XMP_pragma_clause {
+  XMP_NODES_INHERIT_GLOBAL = 10,
+  XMP_NODES_INHERIT_EXEC = 11,
+  XMP_NODES_INHERIT_NODES = 12,
+
+  XMP_MAP_UNDEF = 20,
+  XMP_MAP_REGULAR = 21,
+
+  XMP_DIST_BLOCK = 202,
+  XMP_DIST_CYCLIC = 203,
+  XMP_DIST_GBLOCK = 204,
+
+  XMP_OPT_NOWAIT = 100,
+  XMP_OPT_ASYNC = 101,
+
+  XMP_GMOVE_NORMAL  = 400,
+  XMP_GMOVE_IN      = 401,
+  XMP_GMOVE_OUT     = 402,
+  
+  XMP_DATA_REDUCE_SUM            = 300,
+  XMP_DATA_REDUCE_PROD           = 301,
+  XMP_DATA_REDUCE_BAND           = 302,
+  XMP_DATA_REDUCE_LAND           = 303,
+  XMP_DATA_REDUCE_BOR            = 304,
+  XMP_DATA_REDUCE_LOR            = 305,
+  XMP_DATA_REDUCE_BXOR           = 306,
+  XMP_DATA_REDUCE_LXOR           = 307,
+  XMP_DATA_REDUCE_MAX            = 308,
+  XMP_DATA_REDUCE_MIN            = 309,
+  XMP_DATA_REDUCE_FIRSTMAX       = 310,
+  XMP_DATA_REDUCE_FIRSTMIN       = 311,
+  XMP_DATA_REDUCE_LASTMAX        = 312,
+  XMP_DATA_REDUCE_LASTMIN        = 313,
+  XMP_DATA_REDUCE_EQV       = 314,
+  XMP_DATA_REDUCE_NEQV        = 315,
+};
+
+#endif
+
+  // defined in xmp_constant.h                                                          
+
+
