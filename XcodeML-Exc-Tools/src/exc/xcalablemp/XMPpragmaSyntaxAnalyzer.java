@@ -1148,36 +1148,69 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         pg_get_token();
         XobjList v = parse_XMP_symbol_list("gpu firstprivate clause");
         args.add(xmp_pg_list(XMPpragma.GPU_FIRSTPRIVATE, v));
-      } else if (pg_is_ident("num_threads")) {
+      } else if (pg_is_ident("map_threads")) {
         pg_get_token();
         if (pg_tok() != '(') {
-          throw new XMPexception("'(' is expected after 'num_threads'");
+          throw new XMPexception("'(' is expected after 'map_threads'");
+        }
+
+        XobjList threadX = null;
+        XobjList threadY = null;
+        XobjList threadZ = null;
+
+        pg_get_token();
+        if (pg_tok() == PG_IDENT) {
+          threadX = Xcons.List(Xcons.String(pg_tok_buf()));
+        } else {
+          throw new XMPexception("a loop variable is needed in 'map_threads'");
         }
 
         pg_get_token();
-        Xobject threadX = pg_parse_expr();
-        Xobject threadY = null;
-        Xobject threadZ = null;
+	if (pg_tok() == ':') {
+          pg_get_token();
+          threadX.add(pg_parse_expr());
+        } else {
+          throw new XMPexception("':' is needed after a loop variable in 'map_threads'");
+        }
 
         if (pg_tok() == ',') {
           pg_get_token();
-          threadY = pg_parse_expr();
+          if (pg_tok() == PG_IDENT) {
+            threadY = Xcons.List(Xcons.String(pg_tok_buf()));
+          } else {
+            throw new XMPexception("a loop variable is needed in 'map_threads'");
+          }
+
+          pg_get_token();
+          if (pg_tok() == ':') {
+            pg_get_token();
+            threadY.add(pg_parse_expr());
+          } else {
+            throw new XMPexception("':' is needed after a loop variable in 'map_threads'");
+          }
 
           if (pg_tok() == ',') {
             pg_get_token();
-            threadZ = pg_parse_expr();
-          } else {
-            threadZ = Xcons.IntConstant(1);
+            if (pg_tok() == PG_IDENT) {
+              threadZ = Xcons.List(Xcons.String(pg_tok_buf()));
+            } else {
+              throw new XMPexception("a loop variable is needed in 'map_threads'");
+            }
+
+            pg_get_token();
+            if (pg_tok() == ':') {
+              pg_get_token();
+              threadZ.add(pg_parse_expr());
+            } else {
+              throw new XMPexception("':' is needed after a loop variable in 'map_threads'");
+            }
           }
-        } else {
-          threadY = Xcons.IntConstant(1);
-          threadZ = Xcons.IntConstant(1);
         }
 
-        args.add(xmp_pg_list(XMPpragma.GPU_NUM_THREADS, Xcons.List(threadX, threadY, threadZ)));
+        args.add(xmp_pg_list(XMPpragma.GPU_MAP_THREADS, Xcons.List(threadX, threadY, threadZ)));
 
         if (pg_tok() != ')') {
-          throw new XMPexception("')' is expected after <num_threads> clause");
+          throw new XMPexception("')' is expected after <map_threads> clause");
         }
 
         pg_get_token();

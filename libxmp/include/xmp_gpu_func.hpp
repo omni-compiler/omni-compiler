@@ -169,39 +169,57 @@ void _XMP_gpu_calc_config_params(unsigned long long *total_iter,
 }
 
 template<typename T>
-void _XMP_gpu_calc_config_params_NUM_THREADS(unsigned long long *total_iter,
-                                             int *block_x, int *block_y, int *block_z,
+void _XMP_gpu_calc_config_params_NUM_THREADS(int *block_x, int *block_y, int *block_z,
                                              int *thread_x, int *thread_y, int *thread_z,
-                                             int thread_x_v, int thread_y_v, int thread_z_v,
+                                             int thread_x_v,
                                              T lower0, T upper0, T stride0) {
-  unsigned long long total_iter_v = _XMP_M_COUNT_TRIPLETi(lower0, (upper0 - 1), stride0);
-  _XMP_GPU_M_CALC_CONFIG_PARAMS(thread_x_v, thread_y_v, thread_z_v);
+  T iter_x = _XMP_M_COUNT_TRIPLETi(lower0, (upper0 - 1), stride0);
+
+  *thread_x = thread_x_v;
+  *thread_y = 1;
+  *thread_z = 1;
+
+  *block_x = _XMP_M_CEILi(iter_x, thread_x_v);
+  *block_y = 1;
+  *block_z = 1;
 }
 
 template<typename T>
-void _XMP_gpu_calc_config_params_NUM_THREADS(unsigned long long *total_iter,
-                                             int *block_x, int *block_y, int *block_z,
+void _XMP_gpu_calc_config_params_NUM_THREADS(int *block_x, int *block_y, int *block_z,
                                              int *thread_x, int *thread_y, int *thread_z,
-                                             int thread_x_v, int thread_y_v, int thread_z_v,
+                                             int thread_x_v, int thread_y_v,
                                              T lower0, T upper0, T stride0,
                                              T lower1, T upper1, T stride1) {
-  unsigned long long total_iter_v = _XMP_M_COUNT_TRIPLETi(lower0, (upper0 - 1), stride0)
-                                  * _XMP_M_COUNT_TRIPLETi(lower1, (upper1 - 1), stride1);
-  _XMP_GPU_M_CALC_CONFIG_PARAMS(thread_x_v, thread_y_v, thread_z_v);
+  T iter_x = _XMP_M_COUNT_TRIPLETi(lower0, (upper0 - 1), stride0);
+  T iter_y = _XMP_M_COUNT_TRIPLETi(lower1, (upper1 - 1), stride1);
+
+  *thread_x = thread_x_v;
+  *thread_y = thread_y_v;
+  *thread_z = 1;
+
+  *block_x = _XMP_M_CEILi(iter_x, thread_x_v);
+  *block_y = _XMP_M_CEILi(iter_y, thread_y_v);
+  *block_z = 1;
 }
 
 template<typename T>
-void _XMP_gpu_calc_config_params_NUM_THREADS(unsigned long long *total_iter,
-                                             int *block_x, int *block_y, int *block_z,
+void _XMP_gpu_calc_config_params_NUM_THREADS(int *block_x, int *block_y, int *block_z,
                                              int *thread_x, int *thread_y, int *thread_z,
                                              int thread_x_v, int thread_y_v, int thread_z_v,
                                              T lower0, T upper0, T stride0,
                                              T lower1, T upper1, T stride1,
                                              T lower2, T upper2, T stride2) {
-  unsigned long long total_iter_v = _XMP_M_COUNT_TRIPLETi(lower0, (upper0 - 1), stride0)
-                                  * _XMP_M_COUNT_TRIPLETi(lower1, (upper1 - 1), stride1)
-                                  * _XMP_M_COUNT_TRIPLETi(lower2, (upper2 - 1), stride2);
-  _XMP_GPU_M_CALC_CONFIG_PARAMS(thread_x_v, thread_y_v, thread_z_v);
+  T iter_x = _XMP_M_COUNT_TRIPLETi(lower0, (upper0 - 1), stride0);
+  T iter_y = _XMP_M_COUNT_TRIPLETi(lower1, (upper1 - 1), stride1);
+  T iter_z = _XMP_M_COUNT_TRIPLETi(lower2, (upper2 - 1), stride2);
+
+  *thread_x = thread_x_v;
+  *thread_y = thread_y_v;
+  *thread_z = thread_z_v;
+
+  *block_x = _XMP_M_CEILi(iter_x, thread_x_v);
+  *block_y = _XMP_M_CEILi(iter_y, thread_y_v);
+  *block_z = _XMP_M_CEILi(iter_z, thread_z_v);
 }
 
 #endif // _XMP_GPU_RUNTIME_FUNC_DECL

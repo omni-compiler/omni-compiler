@@ -36,7 +36,7 @@ public enum XMPpragma {
   // clause
   GPU_PRIVATE,
   GPU_FIRSTPRIVATE,
-  GPU_NUM_THREADS,
+  GPU_MAP_THREADS,
   ;
 
   private String name = null;

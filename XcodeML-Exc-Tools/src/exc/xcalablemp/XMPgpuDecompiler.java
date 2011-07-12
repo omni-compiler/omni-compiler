@@ -91,11 +91,11 @@ public class XMPgpuDecompiler {
                                         Xcons.List(Xcode.VAR_DECL, threadYid, null, null),
                                         Xcons.List(Xcode.VAR_DECL, threadZid, null, null));
 
-    XobjList numThreads = getNumThreads(gpuClause);
+    XobjList mapThreads = getNumThreads(gpuClause);
     Xobject confParamFuncCall = null;
-    { // create confParamFuncCall, totalIterId (if numThreads == null)
+    { // create confParamFuncCall, totalIterId (if mapThreads == null)
       String confParamFuncName = null;
-      if (numThreads == null) {
+      if (mapThreads == null) {
         totalIterId = Ident.Local("_XMP_GPU_TOTAL_ITER", Xtype.unsignedlonglongType);
         hostBodyIdList.add(totalIterId);
         hostBodyDecls.add(Xcons.List(Xcode.VAR_DECL, totalIterId, null, null));
@@ -113,8 +113,12 @@ public class XMPgpuDecompiler {
         Ident confParamFuncId = XMP.getMacroId(confParamFuncName);
         XobjList confParamFuncArgs = Xcons.List(blockXid.getAddr(), blockYid.getAddr(), blockZid.getAddr(),
                                                 threadXid.getAddr(), threadYid.getAddr(), threadZid.getAddr());
-        // FIXME consider numThreads format
-        XMPutil.mergeLists(confParamFuncArgs, numThreads);
+        for (Xobject mapList : mapThreads) {
+          if (mapList != null) {
+            confParamFuncArgs.add(((XobjList)mapList).getArg(1));
+          }
+        }
+
         XMPutil.mergeLists(confParamFuncArgs, loopIterRefList);
 
         confParamFuncCall = Xcons.List(Xcode.EXPR_STATEMENT, confParamFuncId.Call(confParamFuncArgs));
@@ -122,7 +126,7 @@ public class XMPgpuDecompiler {
     }
 
     // create device function
-    XMPpair<XobjList, XobjList> deviceFuncParamArgs = genDeviceFuncParamArgs(paramIdList, numThreads);
+    XMPpair<XobjList, XobjList> deviceFuncParamArgs = genDeviceFuncParamArgs(paramIdList, mapThreads);
     XobjList deviceFuncParams = deviceFuncParamArgs.getFirst();
     XobjList deviceFuncArgs = deviceFuncParamArgs.getSecond();
 
@@ -176,7 +180,7 @@ public class XMPgpuDecompiler {
     XobjectDef hostDef = XobjectDef.Func(hostFuncId, paramIdList, null, hostBodyObj);
 
     Ident threadNumId = null;
-    if (numThreads == null) {
+    if (mapThreads == null) {
       threadNumId = Ident.Local("_XMP_GPU_THREAD_ID", Xtype.unsignedlonglongType);
       addLocalVar(threadNumId, localVars);
     }
@@ -191,7 +195,7 @@ public class XMPgpuDecompiler {
 
     // add: function mapping iteration space, create: kernel func body
     Xobject kernelFuncObj = null;
-    if (numThreads == null) {
+    if (mapThreads == null) {
       newLoopBlockList.add(createFuncCallBlock("_XMP_gpu_calc_thread_id", Xcons.List(threadNumId.getAddr())));
 
       XobjList calcIterFuncArgs = Xcons.List(threadNumId.Ref());
@@ -257,7 +261,7 @@ public class XMPgpuDecompiler {
     return name;
   }
 
-  private static XMPpair<XobjList, XobjList> genDeviceFuncParamArgs(XobjList paramIdList, XobjList numThreads) {
+  private static XMPpair<XobjList, XobjList> genDeviceFuncParamArgs(XobjList paramIdList, XobjList mapThreads) {
     XobjList funcParams = Xcons.List();
     XobjList funcArgs = Xcons.List();
     for (XobjArgs i = paramIdList.getArgs(); i != null; i = i.nextArgs()) {
@@ -272,7 +276,7 @@ public class XMPgpuDecompiler {
       }
     }
 
-    if (numThreads == null) {
+    if (mapThreads == null) {
       Ident totalIterId = Ident.Param("_XMP_GPU_TOTAL_ITER", Xtype.unsignedlonglongType);
       funcParams.add(totalIterId);
       funcArgs.add(totalIterId.Ref());
@@ -282,18 +286,18 @@ public class XMPgpuDecompiler {
   }
 
   private static XobjList getNumThreads(XobjList gpuClause) {
-    XobjList numThreads = null;
+    XobjList mapThreads = null;
 
     for (Xobject c : gpuClause) {
       XMPpragma p = XMPpragma.valueOf(c.getArg(0));
       switch (p) {
-        case GPU_NUM_THREADS:
-          numThreads = (XobjList)c.getArg(1);
+        case GPU_MAP_THREADS:
+          mapThreads = (XobjList)c.getArg(1);
         default:
       }
     }
 
-    return numThreads;
+    return mapThreads;
   }
 
   // FIXME localVars, localDecls delete
