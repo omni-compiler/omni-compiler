@@ -90,28 +90,29 @@ __device__ void _XMP_gpu_calc_iter(unsigned long long tid,
 
 #define _XMP_gpu_calc_iter_MAP_THREADS_1(_l0, _u0, _s0, _i0) \
 { \
+  if ((blockIdx.x * blockDim.x + threadIdx.x) >= _XMP_M_COUNT_TRIPLETi(_l0, (_u0 - 1), _s0)) return; \
+  \
   _i0 = _l0 + ((blockIdx.x * blockDim.x + threadIdx.x) * _s0); \
-  if (_i0 >= _u0) return; \
 }
 
 #define _XMP_gpu_calc_iter_MAP_THREADS_2(_l0, _u0, _s0, _l1, _u1, _s1, _i0, _i1) \
 { \
+  if ((blockIdx.x * blockDim.x + threadIdx.x) >= _XMP_M_COUNT_TRIPLETi(_l0, (_u0 - 1), _s0)) return; \
+  if ((blockIdx.y * blockDim.y + threadIdx.y) >= _XMP_M_COUNT_TRIPLETi(_l1, (_u1 - 1), _s1)) return; \
+  \
   _i0 = _l0 + ((blockIdx.x * blockDim.x + threadIdx.x) * _s0); \
   _i1 = _l1 + ((blockIdx.y * blockDim.y + threadIdx.y) * _s1); \
-  \
-  if (_i0 >= _u0) return; \
-  if (_i1 >= _u1) return; \
 }
 
 #define _XMP_gpu_calc_iter_MAP_THREADS_3(_l0, _u0, _s0, _l1, _u1, _s1, _l2, _u2, _s2, _i0, _i1, _i2) \
 { \
+  if ((blockIdx.x * blockDim.x + threadIdx.x) >= _XMP_M_COUNT_TRIPLETi(_l0, (_u0 - 1), _s0)) return; \
+  if ((blockIdx.y * blockDim.y + threadIdx.y) >= _XMP_M_COUNT_TRIPLETi(_l1, (_u1 - 1), _s1)) return; \
+  if ((blockIdx.z * blockDim.z + threadIdx.z) >= _XMP_M_COUNT_TRIPLETi(_l2, (_u2 - 1), _s2)) return; \
+  \
   _i0 = _l0 + ((blockIdx.x * blockDim.x + threadIdx.x) * _s0); \
   _i1 = _l1 + ((blockIdx.y * blockDim.y + threadIdx.y) * _s1); \
   _i2 = _l2 + ((blockIdx.z * blockDim.z + threadIdx.z) * _s2); \
-  \
-  if (_i0 >= _u0) return; \
-  if (_i1 >= _u1) return; \
-  if (_i2 >= _u2) return; \
 }
 
 #define _XMP_GPU_M_CALC_CONFIG_PARAMS(_x, _y, _z) \
