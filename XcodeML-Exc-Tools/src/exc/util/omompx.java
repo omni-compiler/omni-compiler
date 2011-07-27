@@ -19,6 +19,7 @@ import exc.xcalablemp.XMP;
 import exc.xcalablemp.XMPglobalDecl;
 import exc.xcalablemp.XMPtranslate;
 import exc.xcalablemp.XMPrealloc;
+import exc.xcodeml.XcodeMLtools_F;
 
 import xcodeml.XmLanguage;
 import xcodeml.XmObj;
@@ -200,23 +201,40 @@ public class omompx
         XmOption.setIsXcalableMPthreads(xcalableMPthreads);
         XmOption.setIsXcalableMPGPU(xcalableMPGPU);
         
-        // read XcodeML
-        List<String> readErrorList = new ArrayList<String>();
-        XmXcodeProgram xmProg = toolFactory.createXcodeProgram();
-        XmValidator validator = toolFactory.createValidator();
-    
-        if(!validator.read(reader, xmProg, readErrorList)) {
-            for (String error : readErrorList) {
-                System.err.println(error);
-                System.exit(1);
-            }
+        XobjectFile xobjFile;
+        String srcPath = inXmlFile;
+        if (XmOption.getLanguage() == XmLanguage.F) {
+            // read XcodeML/Fortran
+            XcodeMLtools_F tools = new XcodeMLtools_F();
+            xobjFile = tools.read(reader);
+            if (inXmlFile != null) {
+                reader.close();
+      }
+        } else {
+            // read XcodeML/C
+            List<String> readErrorList = new ArrayList<String>();
+            XmXcodeProgram xmProg = toolFactory.createXcodeProgram();
+            XmValidator validator = toolFactory.createValidator();
+
+            if(!validator.read(reader, xmProg, readErrorList)) {
+                for (String error : readErrorList) {
+                    System.err.println(error);
+                    System.exit(1);
         }
+      }
     
-        if(inXmlFile != null) {
-            reader.close();
-        }
+            if(inXmlFile != null) {
+                reader.close();
+      }
         
-        String srcPath = xmProg.getSource();
+            srcPath = xmProg.getSource();
+
+            // translate XcodeML to Xcode
+            XmXmObjToXobjectTranslator xm2xc_translator = toolFactory.createXmObjToXobjectTranslator();
+            xobjFile = (XobjectFile)xm2xc_translator.translate((XmObj)xmProg);
+            xmProg = null;
+    }      
+        
         String baseName = null;
         if(dump || srcPath == null || srcPath.indexOf("<") >= 0 ) {
         	srcPath = null;
@@ -225,14 +243,9 @@ public class omompx
             int idx = fileName.indexOf(".");
             if(idx < 0) {
                 XmLog.fatal("invalid source file name : " + fileName);
-            }
+      }
             baseName = fileName.substring(0, idx);
-        }
-        
-        // translate XcodeML to Xcode
-        XmXmObjToXobjectTranslator xm2xc_translator = toolFactory.createXmObjToXobjectTranslator();
-        XobjectFile xobjFile = (XobjectFile)xm2xc_translator.translate((XmObj)xmProg);
-        xmProg = null;
+    }
         
         if(xobjFile == null)
             System.exit(1);
