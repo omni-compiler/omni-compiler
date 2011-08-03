@@ -138,16 +138,16 @@ extern int _XMP_modi_i_i(int value, int cycle);
 
 // xmp_nodes.c
 extern void _XMP_validate_nodes_ref(int *lower, int *upper, int *stride, int size);
-extern void _XMP_init_nodes_STATIC_GLOBAL(int map_type, void **nodes, int dim, ...);
-extern void _XMP_init_nodes_DYNAMIC_GLOBAL(int map_type, void **nodes, int dim, ...);
-extern void _XMP_init_nodes_STATIC_EXEC(int map_type, void **nodes, int dim, ...);
-extern void _XMP_init_nodes_DYNAMIC_EXEC(int map_type, void **nodes, int dim, ...);
-extern void _XMP_init_nodes_STATIC_NODES_NUMBER(int map_type, void **nodes, int dim,
+extern void _XMP_init_nodes_STATIC_GLOBAL(void **nodes, int dim, ...);
+extern void _XMP_init_nodes_DYNAMIC_GLOBAL(void **nodes, int dim, ...);
+extern void _XMP_init_nodes_STATIC_EXEC(void **nodes, int dim, ...);
+extern void _XMP_init_nodes_DYNAMIC_EXEC(void **nodes, int dim, ...);
+extern void _XMP_init_nodes_STATIC_NODES_NUMBER(void **nodes, int dim,
                                                 int ref_lower, int ref_upper, int ref_stride, ...);
-extern void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(int map_type, void **nodes, int dim,
+extern void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(void **nodes, int dim,
                                                  int ref_lower, int ref_upper, int ref_stride, ...);
-extern void _XMP_init_nodes_STATIC_NODES_NAMED(int get_upper, int map_type, void **nodes, int dim, void *ref_nodes, ...);
-extern void _XMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, int map_type, void **nodes, int dim, void *ref_nodes, ...);
+extern void _XMP_init_nodes_STATIC_NODES_NAMED(int get_upper, void **nodes, int dim, void *ref_nodes, ...);
+extern void _XMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, void **nodes, int dim, void *ref_nodes, ...);
 extern void _XMP_finalize_nodes(void *nodes);
 extern _Bool _XMP_exec_task_GLOBAL_PART(int ref_lower, int ref_upper, int ref_stride);
 extern _Bool _XMP_exec_task_NODES_ENTIRE(void *ref_nodes);

@@ -31,18 +31,8 @@ public class XMPnodes extends XMPobject {
       localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
     }
 
-    // check <map-type> := { <undefined> | regular }
-    int nodesMapType = 0;
-    if (nodesDecl.getArg(0) == null) {
-      nodesMapType = XMPnodes.MAP_UNDEFINED;
-    }
-    else {
-      XMP.warning("'regular' is not supported in this version");
-      nodesMapType = XMPnodes.MAP_REGULAR;
-    }
-
     // check name collision
-    String nodesName = nodesDecl.getArg(1).getString();
+    String nodesName = nodesDecl.getArg(0).getString();
     if (isLocalPragma) {
       XMPlocalDecl.checkObjectNameCollision(nodesName, funcBlockList, localXMPsymbolTable);
     }
@@ -61,7 +51,7 @@ public class XMPnodes extends XMPobject {
 
     // declare nodes object
     int nodesDim = 0;
-    for (XobjArgs i = nodesDecl.getArg(2).getArgs(); i != null; i = i.nextArgs()) nodesDim++;
+    for (XobjArgs i = nodesDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) nodesDim++;
     if (nodesDim > XMP.MAX_DIM) {
       throw new XMPexception("nodes dimension should be less than " + (XMP.MAX_DIM + 1));
     }
@@ -75,9 +65,9 @@ public class XMPnodes extends XMPobject {
     }
 
     // create function call
-    XobjList nodesArgs = Xcons.List(Xcons.IntConstant(nodesMapType), nodesDescId.getAddr(), Xcons.IntConstant(nodesDim));
+    XobjList nodesArgs = Xcons.List(nodesDescId.getAddr(), Xcons.IntConstant(nodesDim));
 
-    XobjList inheritDecl = (XobjList)nodesDecl.getArg(3);
+    XobjList inheritDecl = (XobjList)nodesDecl.getArg(2);
     String inheritType = null;
     String nodesRefType = null;
     XobjList nodesRef = null;
@@ -179,7 +169,7 @@ public class XMPnodes extends XMPobject {
     }
 
     boolean isDynamic = false;
-    for (XobjArgs i = nodesDecl.getArg(2).getArgs(); i != null; i = i.nextArgs()) {
+    for (XobjArgs i = nodesDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
       Xobject nodesSize = i.getArg();
       if (nodesSize == null) isDynamic = true;
       else nodesArgs.add(Xcons.Cast(Xtype.intType, nodesSize));

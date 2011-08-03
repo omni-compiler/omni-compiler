@@ -297,23 +297,6 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   }
 
   private XobjList parse_NODES_clause() throws XmException, XMPexception {
-    // parse [<map-type>]
-    XobjInt mapType = null;
-    if (pg_tok() == '(') {
-      pg_get_token();
-      if (pg_is_ident("regular")) {
-        mapType = Xcons.IntConstant(XMPnodes.MAP_REGULAR);
-
-        pg_get_token();
-        if (pg_tok() != ')')
-          error("')' is expected after <map-type>");
-        else pg_get_token();
-      }
-      else
-        error("'" + pg_tok_buf() + "' is not allowed for <map-type>");
-    }
-    else mapType = null;
-
     // parse <nodes-name>
     if (pg_tok() != PG_IDENT)
       error("nodes directive has no <nodes-name>");
@@ -360,7 +343,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     }
     else inheritedNodes = Xcons.List(Xcons.IntConstant(XMPnodes.INHERIT_GLOBAL));
 
-    return Xcons.List(mapType, nodesName, nodesSizeList, inheritedNodes);
+    return Xcons.List(nodesName, nodesSizeList, inheritedNodes);
   }
 
   private XobjList parse_TEMPLATE_clause() throws XmException, XMPexception {

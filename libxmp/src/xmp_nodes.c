@@ -254,9 +254,7 @@ void _XMP_validate_nodes_ref(int *lower, int *upper, int *stride, int size) {
   (*upper)--;
 }
 
-void _XMP_init_nodes_STATIC_GLOBAL(int map_type, _XMP_nodes_t **nodes, int dim, ...) {
-  // FIXME <map-type> is ignored
-
+void _XMP_init_nodes_STATIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...) {
   _XMP_nodes_t *n = _XMP_init_nodes_struct_GLOBAL(dim);
 
   va_list args;
@@ -278,9 +276,7 @@ void _XMP_init_nodes_STATIC_GLOBAL(int map_type, _XMP_nodes_t **nodes, int dim, 
   *nodes = (void *)n;
 }
 
-void _XMP_init_nodes_DYNAMIC_GLOBAL(int map_type, _XMP_nodes_t **nodes, int dim, ...) {
-  // FIXME <map-type> is ignored
-
+void _XMP_init_nodes_DYNAMIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...) {
   _XMP_nodes_t *n = _XMP_init_nodes_struct_GLOBAL(dim);
 
   va_list args;
@@ -302,9 +298,7 @@ void _XMP_init_nodes_DYNAMIC_GLOBAL(int map_type, _XMP_nodes_t **nodes, int dim,
   *nodes = n;
 }
 
-void _XMP_init_nodes_STATIC_EXEC(int map_type, _XMP_nodes_t **nodes, int dim, ...) {
-  // FIXME <map-type> is ignored
-
+void _XMP_init_nodes_STATIC_EXEC(_XMP_nodes_t **nodes, int dim, ...) {
   _XMP_nodes_t *n = _XMP_init_nodes_struct_EXEC(dim);
 
   va_list args;
@@ -330,9 +324,7 @@ void _XMP_init_nodes_STATIC_EXEC(int map_type, _XMP_nodes_t **nodes, int dim, ..
   *nodes = n;
 }
 
-void _XMP_init_nodes_DYNAMIC_EXEC(int map_type, _XMP_nodes_t **nodes, int dim, ...) {
-  // FIXME <map-type> is ignored
-
+void _XMP_init_nodes_DYNAMIC_EXEC(_XMP_nodes_t **nodes, int dim, ...) {
   _XMP_nodes_t *n = _XMP_init_nodes_struct_EXEC(dim);
 
   va_list args;
@@ -360,7 +352,7 @@ void _XMP_init_nodes_DYNAMIC_EXEC(int map_type, _XMP_nodes_t **nodes, int dim, .
   *nodes = n;
 }
 
-void _XMP_init_nodes_STATIC_NODES_NUMBER(int map_type, _XMP_nodes_t **nodes, int dim,
+void _XMP_init_nodes_STATIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
                                          int ref_lower, int ref_upper, int ref_stride, ...) {
   _XMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, _XMP_world_size);
 
@@ -389,7 +381,7 @@ void _XMP_init_nodes_STATIC_NODES_NUMBER(int map_type, _XMP_nodes_t **nodes, int
   *nodes = n;
 }
 
-void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(int map_type, _XMP_nodes_t **nodes, int dim,
+void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
                                           int ref_lower, int ref_upper, int ref_stride, ...) {
   _XMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, _XMP_world_size);
 
@@ -420,7 +412,7 @@ void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(int map_type, _XMP_nodes_t **nodes, in
   *nodes = n;
 }
 
-void _XMP_init_nodes_STATIC_NODES_NAMED(int get_upper, int map_type, _XMP_nodes_t **nodes, int dim,
+void _XMP_init_nodes_STATIC_NODES_NAMED(int get_upper, _XMP_nodes_t **nodes, int dim,
                                         _XMP_nodes_t *ref_nodes, ...) {
   if (!ref_nodes->is_member) {
     _XMP_fatal("cannot create a new nodes descriptor");
@@ -473,7 +465,7 @@ void _XMP_init_nodes_STATIC_NODES_NAMED(int get_upper, int map_type, _XMP_nodes_
   *nodes = n;
 }
 
-void _XMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, int map_type, _XMP_nodes_t **nodes, int dim,
+void _XMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, _XMP_nodes_t **nodes, int dim,
                                          _XMP_nodes_t *ref_nodes, ...) {
   if (!ref_nodes->is_member) {
     _XMP_fatal("cannot create a new nodes descriptor");
