@@ -215,6 +215,33 @@ public class BlockList
       return id;
     }
 
+    // used by xcalablemp package
+    public Ident declLocalIdent(String name, Xtype type, StorageClass sclass, Xobject init) {
+      Ident id = Ident.Local(name, type);
+      id.setStorageClass(sclass);
+
+      XobjList idList = (XobjList)this.getIdentList();
+      if (idList == null) {
+        idList = Xcons.List();
+        this.setIdentList(idList);
+      }
+
+      idList.add(id);
+
+      if (init != null) {
+        id.Declared();
+        XobjList declList = (XobjList)this.getDecls();
+        if (declList == null) {
+          declList = Xcons.List();
+          this.setDecls(declList);
+        }
+
+        declList.add(Xcons.List(Xcode.VAR_DECL, id, init, null));
+      }
+
+      return id;
+    }
+
     public void addIdent(Ident id)
     {
         if(id_list == null)

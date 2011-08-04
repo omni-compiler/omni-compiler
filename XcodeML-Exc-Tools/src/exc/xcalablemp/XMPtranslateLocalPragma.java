@@ -292,10 +292,14 @@ public class XMPtranslateLocalPragma {
     setupFinalizer(taskBody, finFuncId, null);
 
     // create function call
+    BlockList taskFuncCallBlockList = Bcons.emptyBody();
+    Ident taskDescId = taskFuncCallBlockList.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.STATIC,
+                                                            Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
+    execFuncArgs.cons(taskDescId.getAddr());
     Ident execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.boolType);
-    Block taskFuncCallBlock = null;
-    taskFuncCallBlock = Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), taskBody, null);
-    pb.replace(taskFuncCallBlock);
+    Block taskFuncCallBlock = Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), taskBody, null);
+    taskFuncCallBlockList.add(taskFuncCallBlock);
+    pb.replace(Bcons.COMPOUND(taskFuncCallBlockList));
 
     // add function calls for profiling                                                              
     Xobject profileClause = taskDecl.getArg(1);

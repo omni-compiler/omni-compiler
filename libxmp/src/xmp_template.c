@@ -351,7 +351,7 @@ void _XMP_dist_template_CYCLIC(_XMP_template_t *template, int template_index, in
   chunk->onto_nodes_info = ni;
 }
 
-_Bool _XMP_exec_task_TEMPLATE_PART(int get_upper, _XMP_template_t *ref_template, ...) {
+_Bool _XMP_exec_task_TEMPLATE_PART(void **task_desc, int get_upper, _XMP_template_t *ref_template, ...) {
   _XMP_ASSERT(ref_template->is_fixed);
   _XMP_ASSERT(ref_template->is_distributed);
 

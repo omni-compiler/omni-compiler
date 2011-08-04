@@ -526,7 +526,7 @@ void _XMP_finalize_nodes(_XMP_nodes_t *nodes) {
   _XMP_free(nodes);
 }
 
-_Bool _XMP_exec_task_GLOBAL_PART(int ref_lower, int ref_upper, int ref_stride) {
+_Bool _XMP_exec_task_GLOBAL_PART(void **task_desc, int ref_lower, int ref_upper, int ref_stride) {
   _XMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, _XMP_world_size);
 
   _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NUMBER(0, ref_lower, ref_upper, ref_stride);
@@ -540,7 +540,7 @@ _Bool _XMP_exec_task_GLOBAL_PART(int ref_lower, int ref_upper, int ref_stride) {
   }
 }
 
-_Bool _XMP_exec_task_NODES_ENTIRE(_XMP_nodes_t *ref_nodes) {
+_Bool _XMP_exec_task_NODES_ENTIRE(void **task_desc, _XMP_nodes_t *ref_nodes) {
   if (ref_nodes->is_member) {
     _XMP_push_nodes(ref_nodes);
     return true;
@@ -550,7 +550,7 @@ _Bool _XMP_exec_task_NODES_ENTIRE(_XMP_nodes_t *ref_nodes) {
   }
 }
 
-_Bool _XMP_exec_task_NODES_PART(int get_upper, _XMP_nodes_t *ref_nodes, ...) {
+_Bool _XMP_exec_task_NODES_PART(void **task_desc, int get_upper, _XMP_nodes_t *ref_nodes, ...) {
   if (!ref_nodes->is_member) {
     return false;
   }
