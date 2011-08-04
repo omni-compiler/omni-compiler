@@ -142,6 +142,11 @@ typedef struct _XMP_array_type {
   _XMP_array_info_t info[1];
 } _XMP_array_t;
 
+typedef struct _XMP_task_desc_type {
+  int execute;
+  _XMP_nodes_t *nodes;
+} _XMP_task_desc_t;
+
 // coarray descriptor
 #define _XMP_coarray_COMM_t void
 

@@ -282,13 +282,10 @@ public class XMPtranslateLocalPragma {
     XobjList onRef = (XobjList)taskDecl.getArg(0);
     XMPtriplet<String, Boolean, XobjList> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
     String execFuncSurfix = execOnRefArgs.getFirst();
-    boolean splitComm = execOnRefArgs.getSecond().booleanValue();
     XobjList execFuncArgs = execOnRefArgs.getThird();
 
     // setup task finalizer
-    Ident finFuncId = null;
-    if (splitComm) finFuncId = _globalDecl.declExternFunc("_XMP_pop_n_free_nodes");
-    else           finFuncId = _globalDecl.declExternFunc("_XMP_pop_nodes");
+    Ident finFuncId = _globalDecl.declExternFunc("_XMP_pop_nodes");
     setupFinalizer(taskBody, finFuncId, null);
 
     // create function call
@@ -1065,6 +1062,24 @@ public class XMPtranslateLocalPragma {
     return bl.declLocalIdent(identName, type);
   }
 
+  private Block createCommTaskBlock(BlockList body, String execFuncSurfix, XobjList execFuncArgs) throws XMPexception {
+    // setup barrier finalizer
+    setupFinalizer(body, _globalDecl.declExternFunc("_XMP_pop_nodes"), null);
+
+    // create function call
+    BlockList taskBody = Bcons.emptyBody();
+    Ident taskDescId = taskBody.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.STATIC,
+                                               Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
+    execFuncArgs.cons(taskDescId.getAddr());
+    Ident execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.boolType);
+
+    // form blocks
+    Block execBlock = Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), body, null);
+    taskBody.add(execBlock);
+
+    return Bcons.COMPOUND(taskBody);
+  }
+
   private void translateBarrier(PragmaBlock pb) throws XMPexception {
     // start translation
     XobjList barrierDecl = (XobjList)pb.getClauses();
@@ -1083,15 +1098,8 @@ public class XMPtranslateLocalPragma {
       XobjList execFuncArgs = execOnRefArgs.getThird();
       if (splitComm) {
         BlockList barrierBody = Bcons.blockList(_globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null));
-
-        // setup barrier finalizer
-        setupFinalizer(barrierBody, _globalDecl.declExternFunc("_XMP_pop_n_free_nodes"), null);
-
-        // create function call
-        Ident execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.boolType);
-	barrierFuncCallBlock = Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), barrierBody, null);
-      }
-      else{
+	barrierFuncCallBlock = createCommTaskBlock(barrierBody, execFuncSurfix, execFuncArgs);
+      } else{
 	barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_" + execFuncSurfix, execFuncArgs);
       }
     }
@@ -1144,17 +1152,11 @@ public class XMPtranslateLocalPragma {
       if (splitComm) {
         BlockList reductionBody = Bcons.blockList(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC",
                                                                                null, reductionFuncArgsList));
-
-        // setup reduction finalizer
-        setupFinalizer(reductionBody, _globalDecl.declExternFunc("_XMP_pop_n_free_nodes"), null);
-
-        // create function call
-        Ident execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.boolType);
-	reductionFuncCallBlock = Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), reductionBody, null);
+	reductionFuncCallBlock = createCommTaskBlock(reductionBody, execFuncSurfix, execFuncArgs);
       }
       else {
-	  reductionFuncCallBlock = createReductionFuncCallBlock(false, reductionFuncType + "_" + execFuncSurfix,
-								execFuncArgs.operand(), reductionFuncArgsList);
+        reductionFuncCallBlock = createReductionFuncCallBlock(false, reductionFuncType + "_" + execFuncSurfix,
+                                                              execFuncArgs.operand(), reductionFuncArgsList);
       }
     }
     
@@ -1571,13 +1573,7 @@ public class XMPtranslateLocalPragma {
       if (splitComm) {
         BlockList bcastBody = Bcons.blockList(createBcastFuncCallBlock(true, "EXEC",
                                                                        null, bcastArgsList, execFromRefArgs));
-
-        // setup reduction finalizer
-        setupFinalizer(bcastBody, _globalDecl.declExternFunc("_XMP_pop_n_free_nodes"), null);
-
-        // create function call
-        Ident execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.boolType);
-	bcastFuncCallBlock = Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), bcastBody, null);
+	bcastFuncCallBlock = createCommTaskBlock(bcastBody, execFuncSurfix, execFuncArgs);
       }
       else {
 	bcastFuncCallBlock = createBcastFuncCallBlock(false, execFuncSurfix,

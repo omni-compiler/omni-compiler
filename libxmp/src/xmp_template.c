@@ -351,78 +351,100 @@ void _XMP_dist_template_CYCLIC(_XMP_template_t *template, int template_index, in
   chunk->onto_nodes_info = ni;
 }
 
-_Bool _XMP_exec_task_TEMPLATE_PART(void **task_desc, int get_upper, _XMP_template_t *ref_template, ...) {
-  _XMP_ASSERT(ref_template->is_fixed);
-  _XMP_ASSERT(ref_template->is_distributed);
+int _XMP_exec_task_TEMPLATE_PART(_XMP_task_desc_t **task_desc, int get_upper, _XMP_template_t *ref_template, ...) {
+  if (*task_desc == NULL) {
+    _XMP_task_desc_t *desc = (_XMP_task_desc_t *)_XMP_alloc(sizeof(_XMP_task_desc_t));
+    *task_desc = desc;
 
-  _XMP_nodes_t *onto_nodes = ref_template->onto_nodes;
-  if (!onto_nodes->is_member) {
-     return false;
-  }
+    _XMP_ASSERT(ref_template->is_fixed);
+    _XMP_ASSERT(ref_template->is_distributed);
 
-  _Bool is_member = true;
-  int color = 1;
-  if (!ref_template->is_owner) {
-    is_member = false;
-  }
-  else {
-    int acc_nodes_size = 1;
-    int ref_dim = ref_template->dim;
-    long long ref_lower, ref_upper;
-    int ref_stride;
+    _XMP_nodes_t *onto_nodes = ref_template->onto_nodes;
+    if (!onto_nodes->is_member) {
+       desc->execute = _XMP_N_INT_FALSE;
+       desc->nodes = NULL;
 
-    va_list args;
-    va_start(args, ref_template);
-    for (int i = 0; i < ref_dim; i++) {
-      _XMP_template_info_t *info = &(ref_template->info[i]);
-      _XMP_template_chunk_t *chunk = &(ref_template->chunk[i]);
+       return _XMP_N_INT_FALSE;
+    }
 
-      int size, rank;
-      if (chunk->dist_manner == _XMP_N_DIST_DUPLICATION) {
-        size = 1;
-        rank = 0;
-      }
-      else {
-        _XMP_nodes_info_t *onto_nodes_info = chunk->onto_nodes_info;
-        size = onto_nodes_info->size;
-        rank = onto_nodes_info->rank;
-      }
+    _Bool is_member = true;
+    int color = 1;
+    if (!ref_template->is_owner) {
+      is_member = false;
+    } else {
+      int acc_nodes_size = 1;
+      int ref_dim = ref_template->dim;
+      long long ref_lower, ref_upper;
+      int ref_stride;
 
-      if (va_arg(args, int) == 1) {
-        color += (acc_nodes_size * rank);
-      }
-      else {
-        ref_lower = va_arg(args, long long);
-        if ((i == (ref_dim - 1)) && (get_upper == 1)) {
-          ref_upper = info->ser_upper;
+      va_list args;
+      va_start(args, ref_template);
+      for (int i = 0; i < ref_dim; i++) {
+        _XMP_template_info_t *info = &(ref_template->info[i]);
+        _XMP_template_chunk_t *chunk = &(ref_template->chunk[i]);
+
+        int size, rank;
+        if (chunk->dist_manner == _XMP_N_DIST_DUPLICATION) {
+          size = 1;
+          rank = 0;
         }
         else {
-          ref_upper = va_arg(args, long long);
+          _XMP_nodes_info_t *onto_nodes_info = chunk->onto_nodes_info;
+          size = onto_nodes_info->size;
+          rank = onto_nodes_info->rank;
         }
-        ref_stride = va_arg(args, int);
 
-        _XMP_validate_template_ref(&ref_lower, &ref_upper, &ref_stride, info->ser_lower, info->ser_upper);
+        if (va_arg(args, int) == 1) {
+          color += (acc_nodes_size * rank);
+        }
+        else {
+          ref_lower = va_arg(args, long long);
+          if ((i == (ref_dim - 1)) && (get_upper == 1)) {
+            ref_upper = info->ser_upper;
+          }
+          else {
+            ref_upper = va_arg(args, long long);
+          }
+          ref_stride = va_arg(args, int);
 
-        is_member = is_member && _XMP_check_template_ref_inclusion(ref_lower, ref_upper, ref_stride, chunk);
+          _XMP_validate_template_ref(&ref_lower, &ref_upper, &ref_stride, info->ser_lower, info->ser_upper);
+
+          is_member = is_member && _XMP_check_template_ref_inclusion(ref_lower, ref_upper, ref_stride, chunk);
+        }
+
+        acc_nodes_size *= size;
       }
-
-      acc_nodes_size *= size;
     }
-  }
 
-  MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
-  if (!is_member) {
-    color = 0;
-  }
+    MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
+    if (!is_member) {
+      color = 0;
+    }
 
-  MPI_Comm_split(*((MPI_Comm *)onto_nodes->comm), color, onto_nodes->comm_rank, comm);
+    MPI_Comm_split(*((MPI_Comm *)onto_nodes->comm), color, onto_nodes->comm_rank, comm);
 
-  if (is_member) {
-    _XMP_push_comm(comm);
-    return true;
-  }
-  else {
-    _XMP_finalize_comm(comm);
-    return false;
+    if (is_member) {
+      _XMP_nodes_t *n = _XMP_create_nodes_by_comm(comm);
+
+      desc->execute = _XMP_N_INT_TRUE;
+      desc->nodes = n;
+
+      _XMP_push_nodes(n);
+      return _XMP_N_INT_TRUE;
+    }
+    else {
+      desc->execute = _XMP_N_INT_FALSE;
+      desc->nodes = NULL;
+      
+      _XMP_finalize_comm(comm);
+      return _XMP_N_INT_FALSE;
+    }
+  } else {
+    if ((*task_desc)->execute) {
+      _XMP_push_nodes((*task_desc)->nodes);
+      return _XMP_N_INT_TRUE;
+    } else {
+      return _XMP_N_INT_FALSE;
+    }
   }
 }
