@@ -10,15 +10,44 @@ import exc.block.*;
 import exc.object.*;
 
 public class XMPnodes extends XMPobject {
+  public final static int INHERIT_NULL		= -1;
   public final static int INHERIT_GLOBAL	= 10;
   public final static int INHERIT_EXEC		= 11;
   public final static int INHERIT_NODES		= 12;
 
-  public final static int MAP_UNDEFINED		= 20;
-  public final static int MAP_REGULAR		= 21;
+  private int _inheritType;
+  private boolean _inheritNamedNodes;
+  private XMPnodes _inheritNodes;
 
   public XMPnodes(String name, int dim, Ident descId) {
     super(XMPobject.NODES, name, dim, descId);
+    _inheritType = INHERIT_NULL;
+    _inheritNamedNodes = false;
+    _inheritNodes = null;
+  }
+
+  private int getInheritType() {
+    return _inheritType;
+  }
+
+  private void setInheritType(int type) {
+    _inheritType = type;
+  }
+  
+  private boolean checkInheritNamedNodes() {
+    return _inheritNamedNodes;
+  }
+
+  private void setInheritNamedNodes() {
+    _inheritNamedNodes = true;
+  }
+
+  private XMPnodes getInheritNodes() {
+    return _inheritNodes;
+  }
+
+  private void setInheritNodes(XMPnodes nodes) {
+    _inheritNodes = nodes;
   }
 
   public static void translateNodes(XobjList nodesDecl, XMPglobalDecl globalDecl,
@@ -35,8 +64,7 @@ public class XMPnodes extends XMPobject {
     String nodesName = nodesDecl.getArg(0).getString();
     if (isLocalPragma) {
       XMPlocalDecl.checkObjectNameCollision(nodesName, funcBlockList, localXMPsymbolTable);
-    }
-    else {
+    } else {
       globalDecl.checkObjectNameCollision(nodesName);
     }
 
@@ -44,8 +72,7 @@ public class XMPnodes extends XMPobject {
     Ident nodesDescId = null;
     if (isLocalPragma) {
       nodesDescId = XMPlocalDecl.addObjectId(XMP.DESC_PREFIX_ + nodesName, pb);
-    }
-    else {
+    } else {
       nodesDescId = globalDecl.declStaticIdent(XMP.DESC_PREFIX_ + nodesName, Xtype.voidPtrType);
     }
 
@@ -59,8 +86,7 @@ public class XMPnodes extends XMPobject {
     XMPnodes nodesObject = new XMPnodes(nodesName, nodesDim, nodesDescId);
     if (isLocalPragma) {
       localXMPsymbolTable.putXMPobject(nodesObject);
-    }
-    else {
+    } else {
       globalDecl.putXMPobject(nodesObject);
     }
 
@@ -68,18 +94,18 @@ public class XMPnodes extends XMPobject {
     XobjList nodesArgs = Xcons.List(nodesDescId.getAddr(), Xcons.IntConstant(nodesDim));
 
     XobjList inheritDecl = (XobjList)nodesDecl.getArg(2);
+    nodesObject.setInheritType(inheritDecl.getArg(0).getInt());
     String inheritType = null;
     String nodesRefType = null;
     XobjList nodesRef = null;
-    XMPnodes nodesRefObject = null;
-    switch (inheritDecl.getArg(0).getInt()) {
-      case XMPnodes.INHERIT_GLOBAL:
+    switch (nodesObject.getInheritType()) {
+      case INHERIT_GLOBAL:
         inheritType = "GLOBAL";
         break;
-      case XMPnodes.INHERIT_EXEC:
+      case INHERIT_EXEC:
         inheritType = "EXEC";
         break;
-      case XMPnodes.INHERIT_NODES:
+      case INHERIT_NODES:
         {
           inheritType = "NODES";
 
@@ -99,19 +125,22 @@ public class XMPnodes extends XMPobject {
             else nodesArgs.add(nodeNumberTriplet.getArg(2));
           }
           else {
+            XMPnodes nodesRefObject = null;
             nodesRefType = "NAMED";
+            nodesObject.setInheritNamedNodes();
 
             String nodesRefName = nodesRef.getArg(0).getString();
 
             if (isLocalPragma) {
               nodesRefObject = XMPlocalDecl.getXMPnodes(nodesRefName, localXMPsymbolTable, globalDecl);
-            }
-            else {
+            } else {
               nodesRefObject = globalDecl.getXMPnodes(nodesRefName);
             }
 
             if (nodesRefObject == null) {
               throw new XMPexception("cannot find nodes '" + nodesRefName + "'");
+            } else {
+              nodesObject.setInheritNodes(nodesRefObject);
             }
 
             nodesArgs.add(nodesRefObject.getDescId().Ref());
