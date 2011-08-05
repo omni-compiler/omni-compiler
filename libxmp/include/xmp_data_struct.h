@@ -8,6 +8,7 @@
 #define _XMP_DATA_STRUCT
 
 #include <stdbool.h>
+#include "xmp_constant.h"
 
 #define _XMP_comm void
 
@@ -145,6 +146,10 @@ typedef struct _XMP_array_type {
 typedef struct _XMP_task_desc_type {
   int execute;
   _XMP_nodes_t *nodes;
+  int dim;
+  long long lower[_XMP_N_MAX_DIM];
+  long long upper[_XMP_N_MAX_DIM];
+  unsigned long long stride[_XMP_N_MAX_DIM];
 } _XMP_task_desc_t;
 
 // coarray descriptor

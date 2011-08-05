@@ -294,10 +294,14 @@ public class XMPtranslateLocalPragma {
     Ident taskDescId = taskFuncCallBlockList.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.STATIC,
                                                             Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
     Ident execFuncId = null;
-    if (onRefObject.checkInheritExec()) {
-      execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix + "_EXEC", Xtype.intType);
-    } else {
+    if (onRefObject == null) {
       execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.intType);
+    } else {
+      if (onRefObject.checkInheritExec()) {
+        execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix + "_EXEC", Xtype.intType);
+      } else {
+        execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.intType);
+      }
     }
 
     execFuncArgs.cons(taskDescId.getAddr());
