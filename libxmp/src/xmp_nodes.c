@@ -539,9 +539,16 @@ static int _XMP_compare_task_exec_range(_XMP_task_desc_t *task_desc, int *lower,
   return _XMP_N_INT_TRUE;
 }
 
-static void _XMP_task_set_exec_OFF(_XMP_task_desc_t *desc) {
-  desc->execute = _XMP_N_INT_FALSE;
-  desc->nodes = NULL;
+static void _XMP_set_task_desc(_XMP_task_desc_t *desc, int execute, _XMP_nodes_t *n,
+                               int dim, int *lower, int *upper, int *stride) {
+  desc->execute = execute;
+  desc->nodes = n;
+  desc->dim = dim;
+  for (int i = 0; i < dim; i++) {
+    desc->lower[i] = lower[i];
+    desc->upper[i] = upper[i];
+    desc->stride[i] = stride[i];
+  }
 }
 
 int _XMP_exec_task_GLOBAL_PART(_XMP_task_desc_t **task_desc, int ref_lower, int ref_upper, int ref_stride) {
@@ -574,17 +581,11 @@ int _XMP_exec_task_GLOBAL_PART(_XMP_task_desc_t **task_desc, int ref_lower, int 
 
   _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NUMBER(0, ref_lower, ref_upper, ref_stride);
   if (n->is_member) {
-    desc->execute = _XMP_N_INT_TRUE;
-    desc->nodes = n;
-    desc->dim = 1;
-    desc->lower[0] = lower[0];
-    desc->upper[0] = upper[0];
-    desc->stride[0] = stride[0];
-
+    _XMP_set_task_desc(desc, _XMP_N_INT_TRUE, n, 1, lower, upper, stride);
     _XMP_push_nodes(n);
     return _XMP_N_INT_TRUE;
   } else {
-    _XMP_task_set_exec_OFF(desc);
+    _XMP_set_task_desc(desc, _XMP_N_INT_FALSE, NULL, 1, lower, upper, stride);
     _XMP_finalize_nodes(n);
     return _XMP_N_INT_FALSE;
   }
@@ -640,7 +641,7 @@ int _XMP_exec_task_NODES_PART(_XMP_task_desc_t **task_desc, int get_upper, _XMP_
   }
 
   if (!ref_nodes->is_member) {
-    _XMP_task_set_exec_OFF(desc);
+    _XMP_set_task_desc(desc, _XMP_N_INT_FALSE, NULL, ref_dim, lower, upper, stride);
     return _XMP_N_INT_FALSE;
   }
 
@@ -680,20 +681,11 @@ int _XMP_exec_task_NODES_PART(_XMP_task_desc_t **task_desc, int get_upper, _XMP_
 
   if (is_member) {
     _XMP_nodes_t *n = _XMP_create_nodes_by_comm(comm);
-
-    desc->execute = _XMP_N_INT_TRUE;
-    desc->nodes = n;
-    desc->dim = ref_dim;
-    for (int i = 0; i < ref_dim; i++) {
-      desc->lower[i] = lower[i];
-      desc->upper[i] = upper[i];
-      desc->stride[i] = stride[i];
-    }
-
+    _XMP_set_task_desc(desc, _XMP_N_INT_TRUE, n, ref_dim, lower, upper, stride);
     _XMP_push_nodes(n);
     return _XMP_N_INT_TRUE;
   } else {
-    _XMP_task_set_exec_OFF(desc);
+    _XMP_set_task_desc(desc, _XMP_N_INT_FALSE, NULL, ref_dim, lower, upper, stride);
     _XMP_finalize_comm(comm);
     return _XMP_N_INT_FALSE;
   }
