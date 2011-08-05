@@ -50,4 +50,8 @@ public class XMPobject {
   public Xobject getUpperAt(int index) {
     return _upperVector.get(index);
   }
+
+  public boolean checkInheritExec() {
+    throw new UnsupportedOperationException();
+  }
 }

@@ -122,6 +122,11 @@ public class XMPtemplate extends XMPobject {
     }
   }
 
+  @Override
+  public boolean checkInheritExec() {
+    return _ontoNodes.checkInheritExec();
+  }
+
   public static void translateTemplate(XobjList templateDecl, XMPglobalDecl globalDecl,
                                        boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
     // local parameters

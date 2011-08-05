@@ -50,6 +50,19 @@ public class XMPnodes extends XMPobject {
     _inheritNodes = nodes;
   }
 
+  @Override
+  public boolean checkInheritExec() {
+    if (_inheritNamedNodes) {
+      return _inheritNodes.checkInheritExec();
+    } else {
+      if (_inheritType == INHERIT_EXEC) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+
   public static void translateNodes(XobjList nodesDecl, XMPglobalDecl globalDecl,
                                     boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
     // local parameters
