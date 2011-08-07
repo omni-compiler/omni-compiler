@@ -169,8 +169,8 @@ extern void _XMP_reduce_NODES_ENTIRE(void *nodes, void *addr, int count, int dat
 extern void _XMP_reduce_FLMM_NODES_ENTIRE(void *nodes, void *addr, int count, int datatype, int op, int num_locs, ...);
 extern void _XMP_reduce_CLAUSE(void *data_addr, int count, int datatype, int op);
 extern void _XMP_reduce_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, int num_locs, ...);
-extern void _XMP_init_reduce_comm_NODES(void *nodes, ...);
-extern void _XMP_init_reduce_comm_TEMPLATE(void *template, ...);
+extern int _XMP_init_reduce_comm_NODES(void *nodes, ...);
+extern int _XMP_init_reduce_comm_TEMPLATE(void *template, ...);
 
 // xmp_runtime.c
 extern void _XMP_init(void);

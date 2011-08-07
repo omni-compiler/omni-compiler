@@ -72,7 +72,7 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NUMBER(int dim, int ref_lower,
   else {
     color = 0;
   }
-  MPI_Comm_split(MPI_COMM_WORLD, color, _XMP_world_rank, comm);
+  MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, _XMP_world_rank, comm);
 
   _XMP_nodes_t *n = n = _XMP_alloc(sizeof(_XMP_nodes_t) + sizeof(_XMP_nodes_info_t) * (dim - 1));
 
@@ -121,7 +121,7 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NAMED(int dim, _XMP_nodes_t *r
   else {
     color = 0;
   }
-  MPI_Comm_split(*((MPI_Comm *)ref_nodes->comm), color, ref_nodes->comm_rank, comm);
+  MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, ref_nodes->comm_rank, comm);
 
   _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) +
                                              sizeof(_XMP_nodes_info_t) * (dim - 1));
@@ -677,7 +677,7 @@ int _XMP_exec_task_NODES_PART(_XMP_task_desc_t **task_desc, int get_upper, _XMP_
     color = 0;
   }
 
-  MPI_Comm_split(*((MPI_Comm *)ref_nodes->comm), color, ref_nodes->comm_rank, comm);
+  MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, ref_nodes->comm_rank, comm);
 
   if (is_member) {
     _XMP_nodes_t *n = _XMP_create_nodes_by_comm(comm);

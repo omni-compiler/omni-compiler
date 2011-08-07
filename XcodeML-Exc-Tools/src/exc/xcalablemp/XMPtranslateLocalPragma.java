@@ -719,8 +719,6 @@ public class XMPtranslateLocalPragma {
 
   private Block createReductionClauseBlock(PragmaBlock pb, BlockList reductionBody, XobjList schedVarList) throws XMPexception {
     XobjList loopDecl = (XobjList)pb.getClauses();
-    BlockList loopBody = pb.getBody();
-
     XobjList onRef = (XobjList)loopDecl.getArg(1);
     String onRefObjName = onRef.getArg(0).getString();
     XobjList subscriptList = (XobjList)onRef.getArg(1);
@@ -763,11 +761,12 @@ public class XMPtranslateLocalPragma {
       setupFinalizer(reductionBody, finFuncId, null);
 
       // create function call
-      Ident initFuncId = _globalDecl.declExternFunc("_XMP_init_reduce_comm_" + initFuncSurfix);
-      loopBody.insert(initFuncId.Call(initFuncArgs));
-    }
+      Ident initFuncId = _globalDecl.declExternFunc("_XMP_init_reduce_comm_" + initFuncSurfix, Xtype.intType);
 
-    return Bcons.COMPOUND(reductionBody);
+      return Bcons.IF(BasicBlock.Cond(initFuncId.Call(initFuncArgs)), reductionBody, null);
+    } else {
+      return Bcons.COMPOUND(reductionBody);
+    }
   }
 
   private void translateFollowingLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {

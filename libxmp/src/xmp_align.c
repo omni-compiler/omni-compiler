@@ -408,7 +408,7 @@ void _XMP_init_array_comm(_XMP_array_t *array, ...) {
   va_end(args);
 
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
-  MPI_Comm_split(*((MPI_Comm *)onto_nodes->comm), color, onto_nodes->comm_rank, comm);
+  MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, onto_nodes->comm_rank, comm);
 
   // set members
   array->is_align_comm_member = true;

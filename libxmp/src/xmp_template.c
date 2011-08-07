@@ -421,7 +421,7 @@ int _XMP_exec_task_TEMPLATE_PART(_XMP_task_desc_t **task_desc, int get_upper, _X
       color = 0;
     }
 
-    MPI_Comm_split(*((MPI_Comm *)onto_nodes->comm), color, onto_nodes->comm_rank, comm);
+    MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, onto_nodes->comm_rank, comm);
 
     if (is_member) {
       _XMP_nodes_t *n = _XMP_create_nodes_by_comm(comm);

@@ -340,9 +340,9 @@ void _XMP_reduce_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, i
   _XMP_free(cmp_buffer);
 }
 
-void _XMP_init_reduce_comm_NODES(_XMP_nodes_t *nodes, ...) {
+int _XMP_init_reduce_comm_NODES(_XMP_nodes_t *nodes, ...) {
   if (!nodes->is_member) {
-    _XMP_fatal("cannot create a new communicator for reduction");
+    return _XMP_N_INT_FALSE;
   }
 
   int color = 1;
@@ -364,18 +364,19 @@ void _XMP_init_reduce_comm_NODES(_XMP_nodes_t *nodes, ...) {
   va_end(args);
 
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
-  MPI_Comm_split(*((MPI_Comm *)nodes->comm), color, nodes->comm_rank, comm);
+  MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, nodes->comm_rank, comm);
 
   // create a new nodes descriptor
   _XMP_push_comm(comm);
+  return _XMP_N_INT_TRUE;
 }
 
-void _XMP_init_reduce_comm_TEMPLATE(_XMP_template_t *template, ...) {
+int _XMP_init_reduce_comm_TEMPLATE(_XMP_template_t *template, ...) {
   _XMP_ASSERT(template->is_distributed);
 
   _XMP_nodes_t *onto_nodes = template->onto_nodes;
   if (!onto_nodes->is_member) {
-    _XMP_fatal("cannot create a new communicator for reduction");
+    return _XMP_N_INT_FALSE;
   }
 
   int color = 1;
@@ -407,8 +408,9 @@ void _XMP_init_reduce_comm_TEMPLATE(_XMP_template_t *template, ...) {
   va_end(args);
 
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
-  MPI_Comm_split(*((MPI_Comm *)onto_nodes->comm), color, onto_nodes->comm_rank, comm);
+  MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, onto_nodes->comm_rank, comm);
 
   // create a new nodes descriptor
   _XMP_push_comm(comm);
+  return _XMP_N_INT_TRUE;
 }
