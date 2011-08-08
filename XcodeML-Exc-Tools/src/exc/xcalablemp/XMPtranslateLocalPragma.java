@@ -738,10 +738,10 @@ public class XMPtranslateLocalPragma {
     for (XobjArgs i = subscriptList.getArgs(); i != null; i = i.nextArgs()) {
       String subscript = i.getArg().getString();
       if (XMPutil.hasElmt(schedVarList, subscript))
-        initFuncArgs.add(Xcons.IntConstant(0));
+        initFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
       else {
         initComm = true;
-        initFuncArgs.add(Xcons.IntConstant(1));
+        initFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
       }
     }
 
@@ -2220,11 +2220,11 @@ public class XMPtranslateLocalPragma {
               tempArgs.add(Xcons.Cast(castType, t.getArg(1)));
             }
             // stride
-            if (t.getArg(2) == null) tempArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+            if (t.getArg(2) == null) tempArgs.add(Xcons.Cast(castType, Xcons.IntConstant(1)));
             else {
               splitComm = true;
               // XXX stride: always int
-              tempArgs.add(Xcons.Cast(Xtype.intType, t.getArg(2)));
+              tempArgs.add(Xcons.Cast(castType, t.getArg(2)));
             }
           }
 

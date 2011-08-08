@@ -151,7 +151,7 @@ typedef struct _XMP_task_desc_type {
   int dim;
   long long lower[_XMP_N_MAX_DIM];
   long long upper[_XMP_N_MAX_DIM];
-  unsigned long long stride[_XMP_N_MAX_DIM];
+  long long stride[_XMP_N_MAX_DIM];
 } _XMP_task_desc_t;
 
 // coarray descriptor
