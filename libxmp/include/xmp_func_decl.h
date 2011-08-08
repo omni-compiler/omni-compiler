@@ -137,7 +137,6 @@ extern int _XMP_modi_ll_i(long long value, int cycle);
 extern int _XMP_modi_i_i(int value, int cycle);
 
 // xmp_nodes.c
-extern void _XMP_validate_nodes_ref(int *lower, int *upper, int *stride, int size);
 extern void _XMP_init_nodes_STATIC_GLOBAL(void **nodes, int dim, ...);
 extern void _XMP_init_nodes_DYNAMIC_GLOBAL(void **nodes, int dim, ...);
 extern void _XMP_init_nodes_STATIC_EXEC(void **nodes, int dim, ...);

@@ -50,7 +50,57 @@ static _XMP_nodes_t *_XMP_create_new_nodes(_Bool is_member, int dim, int comm_si
   return n;
 }
 
-static _Bool _XMP_check_nodes_ref_inclusion(int lower, int upper, int stride, int rank) {
+// XXX args are 1-origin
+static void _XMP_validate_nodes_ref(int *lower, int *upper, int *stride, int size) {
+  // setup temporary variables
+  int l, u, s = *(stride);
+  if (s > 0) {
+    l = *lower;
+    u = *upper;
+  }
+  else if (s < 0) {
+    l = *upper;
+    u = *lower;
+  }
+  else {
+    _XMP_fatal("the stride of <nodes-ref> is 0");
+    l = 0; u = 0; // XXX dummy
+  }
+
+  // check boundary
+  if (1 > l) {
+    _XMP_fatal("<nodes-ref> is out of bounds, <ref-lower> is less than 1");
+  }
+
+  if (l > u) {
+    _XMP_fatal("<nodes-ref> is out of bounds, <ref-upper> is less than <ref-lower>");
+  }
+
+  if (u > size) {
+    _XMP_fatal("<nodes-ref> is out of bounds, <ref-upper> is greater than the node size");
+  }
+
+  // validate values
+  if (s > 0) {
+    u = u - ((u - l) % s);
+    *upper = u;
+  }
+  else {
+    s = -s;
+    l = l + ((u - l) % s);
+    *lower = l;
+    *upper = u;
+    *stride = s;
+  }
+
+  // XXX convert 1-origin to 0-origin
+  (*lower)--;
+  (*upper)--;
+}
+
+static _Bool _XMP_check_nodes_ref_inclusion(int lower, int upper, int stride, int size, int rank) {
+  _XMP_validate_nodes_ref(&lower, &upper, &stride, size);
+
   if (rank < lower) {
     return false;
   }
@@ -86,7 +136,7 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_EXEC(int dim) {
 
 static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NUMBER(int dim, int ref_lower, int ref_upper, int ref_stride) {
   int color;
-  _Bool is_member = _XMP_check_nodes_ref_inclusion(ref_lower, ref_upper, ref_stride, _XMP_world_rank);
+  _Bool is_member = _XMP_check_nodes_ref_inclusion(ref_lower, ref_upper, ref_stride, _XMP_world_size, _XMP_world_rank);
   if (is_member) {
     color = 1;
   } else {
@@ -115,7 +165,7 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NAMED(int dim, _XMP_nodes_t *r
   for (int i = 0; i < ref_dim; i++) {
     comm_size *= _XMP_M_COUNT_TRIPLETi(ref_lower[i], ref_upper[i], ref_stride[i]);
     if (is_ref_nodes_member) {
-      is_member = is_member && _XMP_check_nodes_ref_inclusion(ref_lower[i], ref_upper[i], ref_stride[i], ref_nodes->info[i].rank);
+      is_member = is_member && _XMP_check_nodes_ref_inclusion(ref_lower[i], ref_upper[i], ref_stride[i], ref_nodes->info[i].size, ref_nodes->info[i].rank);
     }
   }
 
@@ -221,54 +271,6 @@ static int _XMP_compare_task_exec_cond(_XMP_task_desc_t *task_desc, int *lower, 
   return _XMP_N_INT_TRUE;
 }
 
-// XXX args are 1-origin
-void _XMP_validate_nodes_ref(int *lower, int *upper, int *stride, int size) {
-  // setup temporary variables
-  int l, u, s = *(stride);
-  if (s > 0) {
-    l = *lower;
-    u = *upper;
-  }
-  else if (s < 0) {
-    l = *upper;
-    u = *lower;
-  }
-  else {
-    _XMP_fatal("the stride of <nodes-ref> is 0");
-    l = 0; u = 0; // XXX dummy
-  }
-
-  // check boundary
-  if (1 > l) {
-    _XMP_fatal("<nodes-ref> is out of bounds, <ref-lower> is less than 1");
-  }
-
-  if (l > u) {
-    _XMP_fatal("<nodes-ref> is out of bounds, <ref-upper> is less than <ref-lower>");
-  }
-
-  if (u > size) {
-    _XMP_fatal("<nodes-ref> is out of bounds, <ref-upper> is greater than the node size");
-  }
-
-  // validate values
-  if (s > 0) {
-    u = u - ((u - l) % s);
-    *upper = u;
-  }
-  else {
-    s = -s;
-    l = l + ((u - l) % s);
-    *lower = l;
-    *upper = u;
-    *stride = s;
-  }
-
-  // XXX convert 1-origin to 0-origin
-  (*lower)--;
-  (*upper)--;
-}
-
 void _XMP_init_nodes_STATIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...) {
   _XMP_nodes_t *n = _XMP_init_nodes_struct_GLOBAL(dim);
 
@@ -367,8 +369,6 @@ void _XMP_init_nodes_DYNAMIC_EXEC(_XMP_nodes_t **nodes, int dim, ...) {
 
 void _XMP_init_nodes_STATIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
                                          int ref_lower, int ref_upper, int ref_stride, ...) {
-  _XMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, _XMP_world_size);
-
   _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NUMBER(dim, ref_lower, ref_upper, ref_stride);
 
   va_list args;
@@ -396,8 +396,6 @@ void _XMP_init_nodes_STATIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
 
 void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
                                           int ref_lower, int ref_upper, int ref_stride, ...) {
-  _XMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, _XMP_world_size);
-
   _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NUMBER(dim, ref_lower, ref_upper, ref_stride);
 
   va_list args;
@@ -445,8 +443,6 @@ void _XMP_init_nodes_STATIC_NODES_NAMED(int get_upper, _XMP_nodes_t **nodes, int
       ref_upper[i] = va_arg(args, int);
     }
     ref_stride[i] = va_arg(args, int);
-
-    _XMP_validate_nodes_ref(&(ref_lower[i]), &(ref_upper[i]), &(ref_stride[i]), ref_nodes->info[i].size);
   }
 
   _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NAMED(dim, ref_nodes, ref_lower, ref_upper, ref_stride);
@@ -498,8 +494,6 @@ void _XMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, _XMP_nodes_t **nodes, in
       ref_upper[i] = va_arg(args, int);
     }
     ref_stride[i] = va_arg(args, int);
-
-    _XMP_validate_nodes_ref(&(ref_lower[i]), &(ref_upper[i]), &(ref_stride[i]), ref_nodes->info[i].size);
   }
 
   _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NAMED(dim, ref_nodes, ref_lower, ref_upper, ref_stride);
@@ -561,9 +555,8 @@ int _XMP_exec_task_GLOBAL_PART(_XMP_task_desc_t **task_desc, int ref_lower, int 
     }
   }
 
-  _XMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, _XMP_world_size);
-
-  _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NUMBER(0, ref_lower, ref_upper, ref_stride);
+  _XMP_nodes_t *n = NULL;
+  _XMP_init_nodes_STATIC_NODES_NUMBER(&n, 1, ref_lower, ref_upper, ref_stride, _XMP_M_COUNT_TRIPLETi(ref_lower, ref_upper, ref_stride));
   if (n->is_member) {
     _XMP_set_task_desc(desc, _XMP_N_INT_TRUE, n, 1, lower, upper, stride);
     _XMP_push_nodes(n);
@@ -648,9 +641,7 @@ int _XMP_exec_task_NODES_PART(_XMP_task_desc_t **task_desc, int get_upper, _XMP_
       }
       ref_stride = stride[i];
 
-      _XMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, size);
-
-      is_member = is_member && _XMP_check_nodes_ref_inclusion(ref_lower, ref_upper, ref_stride, rank);
+      is_member = is_member && _XMP_check_nodes_ref_inclusion(ref_lower, ref_upper, ref_stride, size, rank);
     }
 
     acc_nodes_size *= size;
@@ -661,7 +652,7 @@ int _XMP_exec_task_NODES_PART(_XMP_task_desc_t **task_desc, int get_upper, _XMP_
     color = 0;
   }
 
-  MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, ref_nodes->comm_rank, comm);
+  MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, _XMP_world_rank, comm);
 
   if (is_member) {
     _XMP_nodes_t *n = _XMP_create_nodes_by_comm(comm);

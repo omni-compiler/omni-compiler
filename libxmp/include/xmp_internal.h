@@ -58,7 +58,6 @@ extern void _XMP_unpack_array(void *dst, void *buffer, int array_type, size_t ar
 extern void _XMP_barrier_EXEC(void);
 
 // xmp_nodes.c
-extern void _XMP_validate_nodes_ref(int *lower, int *upper, int *stride, int size);
 extern void _XMP_finalize_nodes(_XMP_nodes_t *nodes);
 extern _XMP_nodes_t *_XMP_create_nodes_by_comm(_XMP_comm *comm);
 

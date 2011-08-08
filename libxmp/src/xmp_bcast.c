@@ -32,8 +32,6 @@ void _XMP_bcast_NODES_ENTIRE_GLOBAL(_XMP_nodes_t *bcast_nodes, void *addr, int c
                                     int from_lower, int from_upper, int from_stride) {
   _XMP_RETURN_IF_SINGLE;
 
-  _XMP_validate_nodes_ref(&from_lower, &from_upper, &from_stride, _XMP_world_size);
-
   if (!bcast_nodes->is_member) {
     return;
   }
@@ -88,7 +86,6 @@ void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int co
       from_stride = va_arg(args, int);
 
       // check <from-ref>
-      _XMP_validate_nodes_ref(&from_lower, &from_upper, &from_stride, size);
       if (_XMP_M_COUNT_TRIPLETi(from_lower, from_upper, from_stride) != 1) {
         _XMP_fatal("multiple source nodes indicated in bcast directive");
       }
