@@ -23,7 +23,7 @@ typedef struct _XMP_nodes_info_type {
 
 typedef struct _XMP_nodes_type {
   unsigned long long nodes_id;
-  _Bool is_member;
+  int is_member;
   int dim;
   int comm_size;
 
