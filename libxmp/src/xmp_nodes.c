@@ -15,14 +15,39 @@
 
 static unsigned long long _XMP_nodes_id_counter = 0;
 
-static unsigned long long _XMP_get_new_nodes_id(void) {
-  unsigned long long ret = _XMP_nodes_id_counter;
-  if (ret == ULLONG_MAX) {
+static _XMP_nodes_t *_XMP_create_new_nodes(_Bool is_member, int dim, int comm_size, _XMP_comm *comm) {
+  _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) + sizeof(_XMP_nodes_info_t) * (dim - 1));
+
+  if (_XMP_nodes_id_counter == ULLONG_MAX) {
     _XMP_fatal("cannot create a new nodes descriptor: too many nodes");
+  } else {
+    n->nodes_id = _XMP_nodes_id_counter;
+    _XMP_nodes_id_counter++;
+  }
+  
+  n->is_member = is_member;
+  n->dim = dim;
+  n->comm_size = comm_size;
+
+  if (is_member) {
+    int size, rank;
+    MPI_Comm_size(*((MPI_Comm *)comm), &size);
+    MPI_Comm_rank(*((MPI_Comm *)comm), &rank);
+
+    if (size != comm_size) {
+      _XMP_fatal("cannot create a new nodes descriptor: communicator size is not correct");
+    }
+
+    n->comm_rank = rank;
+    n->comm = comm;
+  } else {
+    _XMP_finalize_comm(comm);
+
+    n->comm_rank = _XMP_N_INVALID_RANK;
+    n->comm = NULL;
   }
 
-  _XMP_nodes_id_counter++;
-  return ret;
+  return n;
 }
 
 static _Bool _XMP_check_nodes_ref_inclusion(int lower, int upper, int stride, int rank) {
@@ -43,127 +68,68 @@ static _Bool _XMP_check_nodes_ref_inclusion(int lower, int upper, int stride, in
 }
 
 static _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim) {
-  _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) + sizeof(_XMP_nodes_info_t) * (dim - 1));
+  MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
+  MPI_Comm_dup(MPI_COMM_WORLD, comm);
 
-  n->nodes_id = _XMP_get_new_nodes_id();
-  n->is_member = true;
-  n->dim = dim;
-  n->comm_size = _XMP_world_size;
-
-  n->comm_rank = _XMP_world_rank;
-  n->comm = _XMP_alloc(sizeof(MPI_Comm));
-  MPI_Comm_dup(MPI_COMM_WORLD, n->comm);
-
-  return n;
+  return _XMP_create_new_nodes(true, dim, _XMP_world_size, (_XMP_comm *)comm);
 }
 
 static _XMP_nodes_t *_XMP_init_nodes_struct_EXEC(int dim) {
   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
   int size = exec_nodes->comm_size;
-  int rank = exec_nodes->comm_rank;
 
-  _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) + sizeof(_XMP_nodes_info_t) * (dim - 1));
+  MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
+  MPI_Comm_dup(*((MPI_Comm *)exec_nodes->comm), comm);
 
-  n->nodes_id = _XMP_get_new_nodes_id();
-  n->is_member = true;
-  n->dim = dim;
-  n->comm_size = size;
-
-  n->comm_rank = rank;
-  n->comm = _XMP_alloc(sizeof(MPI_Comm));
-  MPI_Comm_dup(*((MPI_Comm *)exec_nodes->comm), n->comm);
-
-  return n;
+  return _XMP_create_new_nodes(true, dim, size, (_XMP_comm *)comm);
 }
 
 static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NUMBER(int dim, int ref_lower, int ref_upper, int ref_stride) {
-  _Bool is_member = _XMP_check_nodes_ref_inclusion(ref_lower, ref_upper, ref_stride, _XMP_world_rank);
-
-  MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   int color;
+  _Bool is_member = _XMP_check_nodes_ref_inclusion(ref_lower, ref_upper, ref_stride, _XMP_world_rank);
   if (is_member) {
     color = 1;
-  }
-  else {
+  } else {
     color = 0;
   }
+
+  MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, _XMP_world_rank, comm);
 
-  _XMP_nodes_t *n = n = _XMP_alloc(sizeof(_XMP_nodes_t) + sizeof(_XMP_nodes_info_t) * (dim - 1));
-
-  n->nodes_id = _XMP_get_new_nodes_id();
-  n->is_member = is_member;
-  n->dim = dim;
-  n->comm_size = _XMP_M_COUNT_TRIPLETi(ref_lower, ref_upper, ref_stride);
-
-  if (is_member) {
-    MPI_Comm_rank(*comm, &(n->comm_rank));
-    n->comm = comm;
-
-    int split_comm_size;
-    MPI_Comm_size(*comm, &split_comm_size);
-    if (split_comm_size != n->comm_size) {
-      _XMP_fatal("incorrect communicator size");
-    }
-  }
-  else {
-    _XMP_finalize_comm(comm);
-
-    n->comm_rank = _XMP_N_INVALID_RANK;
-    n->comm = NULL;
-  }
-
-  return n;
+  return _XMP_create_new_nodes(is_member, dim, _XMP_M_COUNT_TRIPLETi(ref_lower, ref_upper, ref_stride), (_XMP_comm *)comm);
 }
 
 static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NAMED(int dim, _XMP_nodes_t *ref_nodes,
                                                         int *ref_lower, int *ref_upper, int *ref_stride) {
-  _XMP_ASSERT(ref_nodes->is_member);
-
   int comm_size = 1;
   int ref_dim = ref_nodes->dim;
-  _Bool is_member = true;
-  for (int i = 0; i < ref_dim; i++) {
-    comm_size *= _XMP_M_COUNT_TRIPLETi(ref_lower[i], ref_upper[i], ref_stride[i]);
-    is_member = is_member &&
-                _XMP_check_nodes_ref_inclusion(ref_lower[i], ref_upper[i], ref_stride[i], ref_nodes->info[i].rank);
+  _Bool is_ref_nodes_member = ref_nodes->is_member;
+
+  _Bool is_member;
+  if (is_ref_nodes_member) {
+    is_member = true;
+  } else {
+    is_member = false;
   }
 
-  MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
+  for (int i = 0; i < ref_dim; i++) {
+    comm_size *= _XMP_M_COUNT_TRIPLETi(ref_lower[i], ref_upper[i], ref_stride[i]);
+    if (is_ref_nodes_member) {
+      is_member = is_member && _XMP_check_nodes_ref_inclusion(ref_lower[i], ref_upper[i], ref_stride[i], ref_nodes->info[i].rank);
+    }
+  }
+
   int color;
   if (is_member) {
     color = 1;
-  }
-  else {
+  } else {
     color = 0;
   }
-  MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, ref_nodes->comm_rank, comm);
 
-  _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) + sizeof(_XMP_nodes_info_t) * (dim - 1));
+  MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
+  MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, _XMP_world_rank, comm);
 
-  n->nodes_id = _XMP_get_new_nodes_id();
-  n->is_member = is_member;
-  n->dim = dim;
-  n->comm_size = comm_size;
-
-  if (is_member) {
-    MPI_Comm_rank(*comm, &(n->comm_rank));
-    n->comm = comm;
-
-    int split_comm_size;
-    MPI_Comm_size(*comm, &split_comm_size);
-    if (split_comm_size != n->comm_size) {
-      _XMP_fatal("incorrect communicator size");
-    }
-  }
-  else {
-    _XMP_finalize_comm(comm);
-
-    n->comm_rank = _XMP_N_INVALID_RANK;
-    n->comm = NULL;
-  }
-
-  return n;
+  return _XMP_create_new_nodes(is_member, dim, comm_size, (_XMP_comm *)comm);
 }
 
 static void _XMP_calc_nodes_rank(_XMP_nodes_t *n, int linear_rank) {
@@ -187,9 +153,10 @@ static void _XMP_disable_nodes_rank(_XMP_nodes_t *n) {
   }
 }
 
-static void _XMP_check_nodes_size_STATIC(_XMP_nodes_t *n, int linear_size) {
+static void _XMP_check_nodes_size_STATIC(_XMP_nodes_t *n) {
   int acc_size = 1;
   int dim = n->dim;
+  int linear_size = n->comm_size;
   for (int i = 0; i < dim; i++) {
     acc_size *= n->info[i].size;
   }
@@ -199,9 +166,11 @@ static void _XMP_check_nodes_size_STATIC(_XMP_nodes_t *n, int linear_size) {
   }
 }
 
-static void _XMP_check_nodes_size_DYNAMIC(_XMP_nodes_t *n, int linear_size, int linear_rank) {
+static void _XMP_check_nodes_size_DYNAMIC(_XMP_nodes_t *n) {
   int acc_size = 1;
   int dim = n->dim;
+  int linear_size = n->comm_size;
+  int linear_rank = n->comm_rank;
   for (int i = 0; i < dim - 1; i++) {
     acc_size *= n->info[i].size;
   }
@@ -316,7 +285,7 @@ void _XMP_init_nodes_STATIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...) {
   va_end(args);
 
   // is_member is always true
-  _XMP_check_nodes_size_STATIC(n, _XMP_world_size);
+  _XMP_check_nodes_size_STATIC(n);
   _XMP_calc_nodes_rank(n, _XMP_world_rank);
 
   *nodes = (void *)n;
@@ -338,7 +307,7 @@ void _XMP_init_nodes_DYNAMIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...) {
   va_end(args);
 
   // is_member is always true
-  _XMP_check_nodes_size_DYNAMIC(n, _XMP_world_size, _XMP_world_rank);
+  _XMP_check_nodes_size_DYNAMIC(n);
   _XMP_calc_nodes_rank(n, _XMP_world_rank);
 
   *nodes = n;
@@ -359,7 +328,7 @@ void _XMP_init_nodes_STATIC_EXEC(_XMP_nodes_t **nodes, int dim, ...) {
   }
   va_end(args);
 
-  _XMP_check_nodes_size_STATIC(n, n->comm_size);
+  _XMP_check_nodes_size_STATIC(n);
   if (n->is_member) {
     _XMP_calc_nodes_rank(n, n->comm_rank);
   }
@@ -385,13 +354,11 @@ void _XMP_init_nodes_DYNAMIC_EXEC(_XMP_nodes_t **nodes, int dim, ...) {
   }
   va_end(args);
 
+  _XMP_check_nodes_size_DYNAMIC(n);
   if (n->is_member) {
-    int linear_rank = n->comm_rank;
-    _XMP_check_nodes_size_DYNAMIC(n, n->comm_size, linear_rank);
-    _XMP_calc_nodes_rank(n, linear_rank);
+    _XMP_calc_nodes_rank(n, n->comm_rank);
   }
   else {
-    _XMP_check_nodes_size_DYNAMIC(n, n->comm_size, _XMP_N_INVALID_RANK);
     _XMP_disable_nodes_rank(n);
   }
 
@@ -416,7 +383,7 @@ void _XMP_init_nodes_STATIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
   }
   va_end(args);
 
-  _XMP_check_nodes_size_STATIC(n, n->comm_size);
+  _XMP_check_nodes_size_STATIC(n);
   if (n->is_member) {
     _XMP_calc_nodes_rank(n, n->comm_rank);
   }
@@ -445,13 +412,11 @@ void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
   }
   va_end(args);
 
+  _XMP_check_nodes_size_DYNAMIC(n);
   if (n->is_member) {
-    int linear_rank = n->comm_rank;
-    _XMP_check_nodes_size_DYNAMIC(n, n->comm_size, linear_rank);
-    _XMP_calc_nodes_rank(n, linear_rank);
+    _XMP_calc_nodes_rank(n, n->comm_rank);
   }
   else {
-    _XMP_check_nodes_size_DYNAMIC(n, n->comm_size, _XMP_N_INVALID_RANK);
     _XMP_disable_nodes_rank(n);
   }
 
@@ -500,7 +465,7 @@ void _XMP_init_nodes_STATIC_NODES_NAMED(int get_upper, _XMP_nodes_t **nodes, int
   }
   va_end(args);
 
-  _XMP_check_nodes_size_STATIC(n, n->comm_size);
+  _XMP_check_nodes_size_STATIC(n);
   if (n->is_member) {
     _XMP_calc_nodes_rank(n, n->comm_rank);
   }
@@ -551,13 +516,11 @@ void _XMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, _XMP_nodes_t **nodes, in
   }
   va_end(args);
 
+  _XMP_check_nodes_size_DYNAMIC(n);
   if (n->is_member) {
-    int linear_rank = n->comm_rank;
-    _XMP_check_nodes_size_DYNAMIC(n, n->comm_size, linear_rank);
-    _XMP_calc_nodes_rank(n, linear_rank);
+    _XMP_calc_nodes_rank(n, n->comm_rank);
   }
   else {
-    _XMP_check_nodes_size_DYNAMIC(n, n->comm_size, _XMP_N_INVALID_RANK);
     _XMP_disable_nodes_rank(n);
   }
 
@@ -713,22 +676,13 @@ int _XMP_exec_task_NODES_PART(_XMP_task_desc_t **task_desc, int get_upper, _XMP_
 }
 
 _XMP_nodes_t *_XMP_create_nodes_by_comm(_XMP_comm *comm) {
-  int size, rank;
+  int size;
   MPI_Comm_size(*((MPI_Comm *)comm), &size);
-  MPI_Comm_rank(*((MPI_Comm *)comm), &rank);
 
-  _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t));
-
-  n->nodes_id = _XMP_get_new_nodes_id();
-  n->is_member = true;
-  n->dim = 1;
-
-  n->comm = comm;
-  n->comm_size = size;
-  n->comm_rank = rank;
+  _XMP_nodes_t *n = _XMP_create_new_nodes(true, 1, size, comm);
 
   n->info[0].size = size;
-  n->info[0].rank = rank;
+  MPI_Comm_rank(*((MPI_Comm *)comm), &(n->info[0].rank));
 
   return n;
 }
