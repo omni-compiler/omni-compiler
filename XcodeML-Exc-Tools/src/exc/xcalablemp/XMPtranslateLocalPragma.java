@@ -293,18 +293,8 @@ public class XMPtranslateLocalPragma {
     BlockList taskFuncCallBlockList = Bcons.emptyBody();
     Ident taskDescId = taskFuncCallBlockList.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.STATIC,
                                                             Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
-    Ident execFuncId = null;
-    if (onRefObject == null) {
-      execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.intType);
-    } else {
-      if (onRefObject.checkInheritExec()) {
-        execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix + "_EXEC", Xtype.intType);
-      } else {
-        execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.intType);
-      }
-    }
-
     execFuncArgs.cons(taskDescId.getAddr());
+    Ident execFuncId = execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.intType);
     Block taskFuncCallBlock = Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), taskBody, null);
     taskFuncCallBlockList.add(taskFuncCallBlock);
     pb.replace(Bcons.COMPOUND(taskFuncCallBlockList));
@@ -1082,8 +1072,6 @@ public class XMPtranslateLocalPragma {
                                                Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
     execFuncArgs.cons(taskDescId.getAddr());
     Ident execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.intType);
-
-    // form blocks
     Block execBlock = Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), body, null);
     taskBody.add(execBlock);
 

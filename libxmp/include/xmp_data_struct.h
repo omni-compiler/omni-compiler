@@ -22,6 +22,7 @@ typedef struct _XMP_nodes_info_type {
 } _XMP_nodes_info_t;
 
 typedef struct _XMP_nodes_type {
+  unsigned long long nodes_id;
   _Bool is_member;
   int dim;
   int comm_size;
@@ -144,6 +145,7 @@ typedef struct _XMP_array_type {
 } _XMP_array_t;
 
 typedef struct _XMP_task_desc_type {
+  unsigned long long inherit_nodes_id;
   int execute;
   _XMP_nodes_t *nodes;
   int dim;

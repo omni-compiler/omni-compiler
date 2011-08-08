@@ -4,6 +4,7 @@
  *  $
  */
 
+#include <limits.h>
 #include <stdarg.h>
 #include "mpi.h"
 #include "xmp_constant.h"
@@ -11,6 +12,18 @@
 #include "xmp_math_function.h"
 
 // XXX <nodes-ref> is { 1-ogigin in language | 0-origin in runtime }, needs converting
+
+static unsigned long long _XMP_nodes_id_counter = 0;
+
+static unsigned long long _XMP_get_new_nodes_id(void) {
+  unsigned long long ret = _XMP_nodes_id_counter;
+  if (ret == ULLONG_MAX) {
+    _XMP_fatal("cannot create a new nodes descriptor: too many nodes");
+  }
+
+  _XMP_nodes_id_counter++;
+  return ret;
+}
 
 static _Bool _XMP_check_nodes_ref_inclusion(int lower, int upper, int stride, int rank) {
   if (rank < lower) {
@@ -32,6 +45,7 @@ static _Bool _XMP_check_nodes_ref_inclusion(int lower, int upper, int stride, in
 static _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim) {
   _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) + sizeof(_XMP_nodes_info_t) * (dim - 1));
 
+  n->nodes_id = _XMP_get_new_nodes_id();
   n->is_member = true;
   n->dim = dim;
   n->comm_size = _XMP_world_size;
@@ -50,6 +64,7 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_EXEC(int dim) {
 
   _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) + sizeof(_XMP_nodes_info_t) * (dim - 1));
 
+  n->nodes_id = _XMP_get_new_nodes_id();
   n->is_member = true;
   n->dim = dim;
   n->comm_size = size;
@@ -76,6 +91,7 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NUMBER(int dim, int ref_lower,
 
   _XMP_nodes_t *n = n = _XMP_alloc(sizeof(_XMP_nodes_t) + sizeof(_XMP_nodes_info_t) * (dim - 1));
 
+  n->nodes_id = _XMP_get_new_nodes_id();
   n->is_member = is_member;
   n->dim = dim;
   n->comm_size = _XMP_M_COUNT_TRIPLETi(ref_lower, ref_upper, ref_stride);
@@ -123,9 +139,9 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NAMED(int dim, _XMP_nodes_t *r
   }
   MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, ref_nodes->comm_rank, comm);
 
-  _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) +
-                                             sizeof(_XMP_nodes_info_t) * (dim - 1));
+  _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) + sizeof(_XMP_nodes_info_t) * (dim - 1));
 
+  n->nodes_id = _XMP_get_new_nodes_id();
   n->is_member = is_member;
   n->dim = dim;
   n->comm_size = comm_size;
@@ -204,6 +220,36 @@ static void _XMP_check_nodes_size_DYNAMIC(_XMP_nodes_t *n, int linear_size, int 
   if (n->is_member) {
     n->info[dim-1].rank = (linear_rank / acc_size) % end_size;
   }
+}
+
+static void _XMP_set_task_desc(_XMP_task_desc_t *desc, int execute, _XMP_nodes_t *n,
+                               int dim, int *lower, int *upper, int *stride) {
+  desc->inherit_nodes_id = _XMP_get_execution_nodes()->nodes_id;
+  desc->execute = execute;
+  desc->nodes = n;
+  desc->dim = dim;
+  for (int i = 0; i < dim; i++) {
+    desc->lower[i] = lower[i];
+    desc->upper[i] = upper[i];
+    desc->stride[i] = stride[i];
+  }
+}
+
+static int _XMP_compare_task_exec_cond(_XMP_task_desc_t *task_desc, int *lower, int *upper, int *stride) {
+  int dim = task_desc->dim;
+
+  if ((_XMP_get_execution_nodes()->nodes_id) != (task_desc->inherit_nodes_id)) {
+    return _XMP_N_INT_FALSE;
+  }
+
+  for (int i = 0; i < dim; i++) {
+    if (((int)(task_desc->lower[i]) != lower[i]) || (int)((task_desc->upper[i]) != upper[i]) ||
+        ((int)(task_desc->stride[i]) != stride[i])) {
+      return _XMP_N_INT_FALSE;
+    }
+  }
+
+  return _XMP_N_INT_TRUE;
 }
 
 // XXX args are 1-origin
@@ -526,31 +572,6 @@ void _XMP_finalize_nodes(_XMP_nodes_t *nodes) {
   _XMP_free(nodes);
 }
 
-static int _XMP_compare_task_exec_range(_XMP_task_desc_t *task_desc, int *lower, int *upper, int *stride) {
-  int dim = task_desc->dim;
-
-  for (int i = 0; i < dim; i++) {
-    if (((int)(task_desc->lower[i]) != lower[i]) || (int)((task_desc->upper[i]) != upper[i]) ||
-        ((int)(task_desc->stride[i]) != stride[i])) {
-      return _XMP_N_INT_FALSE;
-    }
-  }
-
-  return _XMP_N_INT_TRUE;
-}
-
-static void _XMP_set_task_desc(_XMP_task_desc_t *desc, int execute, _XMP_nodes_t *n,
-                               int dim, int *lower, int *upper, int *stride) {
-  desc->execute = execute;
-  desc->nodes = n;
-  desc->dim = dim;
-  for (int i = 0; i < dim; i++) {
-    desc->lower[i] = lower[i];
-    desc->upper[i] = upper[i];
-    desc->stride[i] = stride[i];
-  }
-}
-
 int _XMP_exec_task_GLOBAL_PART(_XMP_task_desc_t **task_desc, int ref_lower, int ref_upper, int ref_stride) {
   int lower[1], upper[1], stride[1];
   lower[0] = ref_lower;
@@ -563,7 +584,7 @@ int _XMP_exec_task_GLOBAL_PART(_XMP_task_desc_t **task_desc, int ref_lower, int 
     *task_desc = desc;
   } else {
     desc = *task_desc;
-    if (_XMP_compare_task_exec_range(desc, lower, upper, stride)) {
+    if (_XMP_compare_task_exec_cond(desc, lower, upper, stride)) {
       if (desc->execute) {
         _XMP_push_nodes(desc->nodes);
         return _XMP_N_INT_TRUE;
@@ -626,7 +647,7 @@ int _XMP_exec_task_NODES_PART(_XMP_task_desc_t **task_desc, int get_upper, _XMP_
     *task_desc = desc;
   } else {
     desc = *task_desc;
-    if (_XMP_compare_task_exec_range(desc, lower, upper, stride)) {
+    if (_XMP_compare_task_exec_cond(desc, lower, upper, stride)) {
       if (desc->execute) {
         _XMP_push_nodes(desc->nodes);
         return _XMP_N_INT_TRUE;
@@ -698,6 +719,7 @@ _XMP_nodes_t *_XMP_create_nodes_by_comm(_XMP_comm *comm) {
 
   _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t));
 
+  n->nodes_id = _XMP_get_new_nodes_id();
   n->is_member = true;
   n->dim = 1;
 
