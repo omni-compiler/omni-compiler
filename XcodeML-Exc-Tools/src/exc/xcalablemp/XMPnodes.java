@@ -180,19 +180,25 @@ public class XMPnodes extends XMPobject {
                   throw new XMPexception("wrong nodes dimension indicated, too many");
 
                 XobjList subscriptTriplet = (XobjList)i.getArg();
-                // lower
-                if (subscriptTriplet.getArg(0) == null) nodesArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
-                else nodesArgs.add(Xcons.Cast(Xtype.intType, subscriptTriplet.getArg(0)));
-                // upper
-                if (subscriptTriplet.getArg(1) == null) {
-                  Xobject nodesRefSize = nodesRefObject.getUpperAt(nodesRefIndex);
-                  if (nodesRefSize == null) isDynamicNodesRef = true;
-                  else nodesArgs.add(Xcons.Cast(Xtype.intType, nodesRefSize));
+                if (subscriptTriplet == null) {
+                  nodesArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+                } else {
+                  nodesArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
+
+                  // lower
+                  if (subscriptTriplet.getArg(0) == null) nodesArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+                  else nodesArgs.add(Xcons.Cast(Xtype.intType, subscriptTriplet.getArg(0)));
+                  // upper
+                  if (subscriptTriplet.getArg(1) == null) {
+                    Xobject nodesRefSize = nodesRefObject.getUpperAt(nodesRefIndex);
+                    if (nodesRefSize == null) isDynamicNodesRef = true;
+                    else nodesArgs.add(Xcons.Cast(Xtype.intType, nodesRefSize));
+                  }
+                  else nodesArgs.add(Xcons.Cast(Xtype.intType, subscriptTriplet.getArg(1)));
+                  // stride
+                  if (subscriptTriplet.getArg(2) == null) nodesArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+                  else nodesArgs.add(Xcons.Cast(Xtype.intType, subscriptTriplet.getArg(2)));
                 }
-                else nodesArgs.add(Xcons.Cast(Xtype.intType, subscriptTriplet.getArg(1)));
-                // stride
-                if (subscriptTriplet.getArg(2) == null) nodesArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
-                else nodesArgs.add(Xcons.Cast(Xtype.intType, subscriptTriplet.getArg(2)));
 
                 nodesRefIndex++;
               }
