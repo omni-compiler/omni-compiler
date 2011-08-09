@@ -339,7 +339,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
         pg_get_token();
       }
-      else inheritedNodes = Xcons.List(Xcons.IntConstant(XMPnodes.INHERIT_NODES), parse_ON_REF(false, false));
+      else inheritedNodes = Xcons.List(Xcons.IntConstant(XMPnodes.INHERIT_NODES), parse_ON_REF(false));
     }
     else inheritedNodes = Xcons.List(Xcons.IntConstant(XMPnodes.INHERIT_GLOBAL));
 
@@ -681,7 +681,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
     // parse <on-ref>
     pg_get_token();
-    onRef = parse_ON_REF(true, false);
+    onRef = parse_ON_REF(false);
 
     Xobject profileClause = null;
     if (pg_is_ident("profile")) {
@@ -730,7 +730,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
     // parse <on-ref>
     pg_get_token();
-    XobjList onRef = parse_ON_REF(true, true);
+    XobjList onRef = parse_ON_REF(true);
 
     // parse [<reduction-ref>], ...
     XobjList reductionRefList = null;
@@ -795,7 +795,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     Xobject onRef = null;
     if (pg_is_ident("on")) {
       pg_get_token();
-      onRef = parse_ON_REF(true, false);
+      onRef = parse_ON_REF(false);
     }
 
     Xobject profileClause = null;
@@ -813,7 +813,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
     if (pg_is_ident("on")) {
       pg_get_token();
-      onRef = parse_ON_REF(true, false);
+      onRef = parse_ON_REF(false);
     }
 
     Xobject profileClause = null;
@@ -831,7 +831,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     XobjList fromRef = null;
     if (pg_is_ident("from")) {
       pg_get_token();
-      fromRef = parse_ON_REF(true, false);
+      fromRef = parse_ON_REF(false);
     }
     else {
       fromRef = null;
@@ -840,7 +840,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     XobjList onRef = null;
     if (pg_is_ident("on")) {
       pg_get_token();
-      onRef = parse_ON_REF(true, false);
+      onRef = parse_ON_REF(false);
     }
     else onRef = null;
 
@@ -853,31 +853,36 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     return Xcons.List(varList, fromRef, onRef, profileClause);
   }
 
-  private XobjList parse_ON_REF(boolean isExecPragma, boolean isLoopPragma) throws XmException, XMPexception {
+  private XobjList parse_ON_REF(boolean isLoopPragma) throws XmException, XMPexception {
     if (pg_tok() == PG_IDENT) {
       // parse <named-obj-ref>
       XobjString objName = Xcons.String(pg_tok_buf());
 
       pg_get_token();
-      if (pg_tok() != '(') return Xcons.List(objName, null);
+      if (pg_tok() != '(') {
+        return Xcons.List(objName, null);
+      }
 
       XobjList objSubscriptList = Xcons.List();
       do {
         pg_get_token();
-        parse_OBJ_SUBSCRIPT(objSubscriptList, isExecPragma, isLoopPragma);
+        parse_OBJ_SUBSCRIPT(objSubscriptList, isLoopPragma);
 
-        if (pg_tok() == ')') break;
-        else if (pg_tok() == ',') continue;
-        else
+        if (pg_tok() == ')') {
+          break;
+        } else if (pg_tok() == ',') {
+          continue;
+        } else {
           error("')' or ',' is expected after <nodes/template-subscript>");
+        }
       } while (true);
 
       pg_get_token();
       return Xcons.List(objName, objSubscriptList);
-    }
-    else {
-      if (isLoopPragma)
+    } else {
+      if (isLoopPragma) {
         error("<node-number-ref> cannot be used in for directive");
+      }
 
       // parse <node-number-ref>
       XobjList nodeNumberRef = null;
@@ -885,11 +890,12 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         pg_get_token();
         nodeNumberRef = pg_parse_int_triplet(false);
 
-        if (pg_tok() == ')') pg_get_token();
-        else
+        if (pg_tok() == ')') {
+          pg_get_token();
+        } else {
           error("')' is expected after <triplet>");
-      }
-      else {
+        }
+      } else {
         Xobject nodeNumber = pg_parse_int_expr();
         nodeNumberRef = Xcons.List(nodeNumber, nodeNumber, Xcons.IntConstant(1));
       }
@@ -898,31 +904,28 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     }
   }
 
-  private void parse_OBJ_SUBSCRIPT(XobjList nodesSubscriptList,
-                                   boolean isExecPragma, boolean isLoopPragma) throws XmException, XMPexception {
+  private void parse_OBJ_SUBSCRIPT(XobjList nodesSubscriptList, boolean isLoopPragma) throws XmException, XMPexception {
     if (isLoopPragma) {
-      if (pg_tok() == '*') nodesSubscriptList.add(Xcons.String(XMP.ASTERISK));
-      else if (pg_tok() == ':') nodesSubscriptList.add(Xcons.String(XMP.COLON));
-      else {
-        if (pg_tok() == PG_IDENT) nodesSubscriptList.add(Xcons.String(pg_tok_buf()));
-        else error("syntax error on <nodes/template-subscript> in for directive");
+      if (pg_tok() == '*') {
+        nodesSubscriptList.add(Xcons.String(XMP.ASTERISK));
+      } else if (pg_tok() == ':') {
+        nodesSubscriptList.add(Xcons.String(XMP.COLON));
+      } else {
+        if (pg_tok() == PG_IDENT) {
+          nodesSubscriptList.add(Xcons.String(pg_tok_buf()));
+        } else {
+          error("syntax error on <nodes/template-subscript> in for directive");
+        }
       }
 
       pg_get_token();
       return;
-    }
-    else {
+    } else {
       if (pg_tok() == '*') {
-        if (isExecPragma) {
-          nodesSubscriptList.add(null);
-
-          pg_get_token();
-          return;
-        }
-        else
-          error("'*' can be used only in execution directives");
-      }
-      else {
+        nodesSubscriptList.add(null);
+        pg_get_token();
+        return;
+      } else {
         nodesSubscriptList.add(pg_parse_int_triplet(true));
         return;
       }
