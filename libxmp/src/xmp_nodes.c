@@ -160,11 +160,12 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NAMED(int dim, _XMP_nodes_t *r
         color += (acc_nodes_size * rank);
       } else {
         is_member = is_member && _XMP_check_nodes_ref_inclusion(ref_lower[i], ref_upper[i], ref_stride[i],
-                                                                ref_nodes->info[i].size, ref_nodes->info[i].rank);
+                                                                size, rank);
+
+        comm_size *= _XMP_M_COUNT_TRIPLETi(ref_lower[i], ref_upper[i], ref_stride[i]);
       }
 
       acc_nodes_size *= size;
-      comm_size *= _XMP_M_COUNT_TRIPLETi(ref_lower[i], ref_upper[i], ref_stride[i]);
     }
 
     if (!is_member) {
@@ -509,10 +510,6 @@ void _XMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, _XMP_nodes_t **nodes, in
   }
 
   _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NAMED(dim, ref_nodes, shrink, ref_lower, ref_upper, ref_stride);
-
-  _XMP_free(ref_lower);
-  _XMP_free(ref_upper);
-  _XMP_free(ref_stride);
 
   for (int i = 0; i < dim - 1; i++) {
     int dim_size = va_arg(args, int);
