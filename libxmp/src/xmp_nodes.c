@@ -24,26 +24,20 @@ static _XMP_nodes_t *_XMP_create_new_nodes(int is_member, int dim, int comm_size
     _XMP_nodes_id_counter++;
   }
   
+  int size, rank;
+  MPI_Comm_size(*((MPI_Comm *)comm), &size);
+  MPI_Comm_rank(*((MPI_Comm *)comm), &rank);
+
   n->is_member = is_member;
   n->dim = dim;
-  n->comm_size = comm_size;
+  n->comm_size = size;
+  n->comm_rank = rank;
+  n->comm = comm;
 
   if (is_member) {
-    int size, rank;
-    MPI_Comm_size(*((MPI_Comm *)comm), &size);
-    MPI_Comm_rank(*((MPI_Comm *)comm), &rank);
-
     if (size != comm_size) {
       _XMP_fatal("cannot create a new nodes descriptor: communicator size is not correct");
     }
-
-    n->comm_rank = rank;
-    n->comm = comm;
-  } else {
-    _XMP_finalize_comm(comm);
-
-    n->comm_rank = _XMP_N_INVALID_RANK;
-    n->comm = NULL;
   }
 
   return n;
@@ -530,10 +524,7 @@ void _XMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, _XMP_nodes_t **nodes, in
 }
 
 void _XMP_finalize_nodes(_XMP_nodes_t *nodes) {
-  if (nodes->is_member) {
-    _XMP_finalize_comm(nodes->comm);
-  }
-
+  _XMP_finalize_comm(nodes->comm);
   _XMP_free(nodes);
 }
 
