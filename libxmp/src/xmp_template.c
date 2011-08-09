@@ -6,7 +6,6 @@
 
 #include <stdarg.h>
 #include "mpi.h"
-#include "xmp_constant.h"
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
@@ -483,7 +482,7 @@ int _XMP_exec_task_TEMPLATE_PART(_XMP_task_desc_t **task_desc, int get_upper, _X
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, _XMP_world_rank, comm);
 
-  _XMP_nodes_t *n = _XMP_create_nodes_by_comm(comm);
+  _XMP_nodes_t *n = _XMP_create_nodes_by_comm(is_member, comm);
   _XMP_set_task_desc(desc, is_member, n, ref_dim, lower, upper, stride);
   if (is_member) {
     _XMP_push_nodes(n);

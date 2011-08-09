@@ -7,7 +7,6 @@
 #include <limits.h>
 #include <stdarg.h>
 #include "mpi.h"
-#include "xmp_constant.h"
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
@@ -646,14 +645,16 @@ int _XMP_exec_task_NODES_PART(_XMP_task_desc_t **task_desc, int get_upper, _XMP_
   }
 }
 
-_XMP_nodes_t *_XMP_create_nodes_by_comm(_XMP_comm *comm) {
+_XMP_nodes_t *_XMP_create_nodes_by_comm(int is_member, _XMP_comm *comm) {
   int size;
   MPI_Comm_size(*((MPI_Comm *)comm), &size);
 
-  _XMP_nodes_t *n = _XMP_create_new_nodes(_XMP_N_INT_TRUE, 1, size, comm);
+  _XMP_nodes_t *n = _XMP_create_new_nodes(is_member, 1, size, comm);
 
   n->info[0].size = size;
-  MPI_Comm_rank(*((MPI_Comm *)comm), &(n->info[0].rank));
+  if (is_member) {
+    MPI_Comm_rank(*((MPI_Comm *)comm), &(n->info[0].rank));
+  }
 
   return n;
 }

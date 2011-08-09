@@ -50,7 +50,7 @@ int _XMP_get_execution_nodes_rank(void) {
 }
 
 void _XMP_push_comm(_XMP_comm *comm) {
-  _XMP_push_nodes(_XMP_create_nodes_by_comm(comm));
+  _XMP_push_nodes(_XMP_create_nodes_by_comm(_XMP_N_INT_TRUE, comm));
 }
 
 void _XMP_finalize_comm(_XMP_comm *comm) {

@@ -59,7 +59,7 @@ extern void _XMP_barrier_EXEC(void);
 
 // xmp_nodes.c
 extern void _XMP_finalize_nodes(_XMP_nodes_t *nodes);
-extern _XMP_nodes_t *_XMP_create_nodes_by_comm(_XMP_comm *comm);
+extern _XMP_nodes_t *_XMP_create_nodes_by_comm(int is_member, _XMP_comm *comm);
 
 // xmp_nodes_stack.c
 extern void _XMP_push_nodes(_XMP_nodes_t *nodes);

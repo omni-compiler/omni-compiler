@@ -8,7 +8,6 @@
 #include <stdarg.h>
 #include <limits.h>
 #include "mpi.h"
-#include "xmp_constant.h"
 #include "xmp_internal.h"
 
 static void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype) {
