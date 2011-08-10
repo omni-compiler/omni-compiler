@@ -288,12 +288,12 @@ public class XMPtemplate extends XMPobject {
         throw new XMPexception("wrong template dimension indicated, too many");
       }
 
-      int distManner = i.getArg().getInt();
-      // FIXME support cyclic(w), gblock
-      switch (distManner) {
-        case XMPtemplate.DUPLICATION:
-          setupDistribution(distManner, templateObject, templateDimIdx, -1, globalDecl, isLocalPragma, pb);
-          break;
+      XobjList distManner = (XobjList)i.getArg();
+      setupDistribution(distManner, templateObject, templateDimIdx, nodesDimIdx, globalDecl, isLocalPragma, pb);
+
+      int distMannerValue = distManner.getArg(0).getInt();
+      // FIXME support gblock
+      switch (distMannerValue) {
         case XMPtemplate.BLOCK:
         case XMPtemplate.CYCLIC:
           {
@@ -301,12 +301,10 @@ public class XMPtemplate extends XMPobject {
               throw new XMPexception("the number of <dist-format> (except '*') should be the same with the nodes dimension");
             }
 
-            setupDistribution(distManner, templateObject, templateDimIdx, nodesDimIdx, globalDecl, isLocalPragma, pb);
             nodesDimIdx++;
             break;
           }
         default:
-          throw new XMPexception("unknown distribute manner");
       }
 
       templateDimIdx++;
@@ -325,12 +323,13 @@ public class XMPtemplate extends XMPobject {
     templateObject.setIsDistributed();
   }
 
-  private static void setupDistribution(int distManner, XMPtemplate templateObject,
+  private static void setupDistribution(XobjList distManner, XMPtemplate templateObject,
                                         int templateDimIdx, int nodesDimIdx,
                                         XMPglobalDecl globalDecl, boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
     XobjList funcArgs = null;
+    int distMannerValue = distManner.getArg(0).getInt();
     String distMannerName = null;
-    switch (distManner) {
+    switch (distMannerValue) {
       case XMPtemplate.DUPLICATION:
         {
           distMannerName = "DUPLICATION";
@@ -349,11 +348,17 @@ public class XMPtemplate extends XMPobject {
         }
       case XMPtemplate.CYCLIC:
         {
-          distMannerName = "CYCLIC";
-          funcArgs = Xcons.List(templateObject.getDescId().Ref(),
-                                Xcons.IntConstant(templateDimIdx),
-                                Xcons.IntConstant(nodesDimIdx));
-          templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
+          Xobject distMannerWidth = distManner.getArg(1);
+          if (distMannerWidth == null) {
+            distMannerName = "CYCLIC";
+            funcArgs = Xcons.List(templateObject.getDescId().Ref(),
+                                  Xcons.IntConstant(templateDimIdx),
+                                  Xcons.IntConstant(nodesDimIdx));
+            templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
+          } else {
+            throw new XMPexception("cyclic(w) is not supported yet");
+          }
+
           break;
         }
       default:
@@ -367,6 +372,6 @@ public class XMPtemplate extends XMPobject {
       globalDecl.addGlobalInitFuncCall("_XMP_dist_template_" + distMannerName, funcArgs);
     }
 
-    templateObject.setDistMannerAt(distManner, templateDimIdx);
+    templateObject.setDistMannerAt(distMannerValue, templateDimIdx);
   }
 }

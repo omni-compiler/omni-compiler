@@ -409,7 +409,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     return Xcons.List(templateNameList, templateSpecList);
   }
 
-  private XobjList parse_DISTRIBUTE_clause() throws XMPexception {
+  private XobjList parse_DISTRIBUTE_clause() throws XMPexception, XmException {
     boolean parseNameList = false;
     XobjList templateNameList = null;
 
@@ -427,19 +427,35 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
     XobjList distFormatList = Xcons.List();
     do {
-      // FIXME support cyclic(w), gblock
+      // FIXME support gblock
       // parse <dist-format> := { * | block | cyclic }
       pg_get_token();
-      if (pg_tok() == '*')
-        distFormatList.add(Xcons.IntConstant(XMPtemplate.DUPLICATION));
-      else if (pg_is_ident("block") || pg_is_ident("BLOCK"))
-        distFormatList.add(Xcons.IntConstant(XMPtemplate.BLOCK));
-      else if (pg_is_ident("cyclic") || pg_is_ident("CYCLIC"))
-        distFormatList.add(Xcons.IntConstant(XMPtemplate.CYCLIC));
-      else
-        error("unknown distribution manner");
+      if (pg_tok() == '*') {
+        pg_get_token();
+        distFormatList.add(Xcons.List(Xcons.IntConstant(XMPtemplate.DUPLICATION), null));
+      } else if (pg_is_ident("block") || pg_is_ident("BLOCK")) {
+        pg_get_token();
+        distFormatList.add(Xcons.List(Xcons.IntConstant(XMPtemplate.BLOCK), null));
+      } else if (pg_is_ident("cyclic") || pg_is_ident("CYCLIC")) {
+        Xobject width = null;
 
-      pg_get_token();
+        pg_get_token();
+        if (pg_tok() == '(') {
+          pg_get_token();
+          width = pg_parse_int_expr();
+
+          if (pg_tok() != ')') {
+            error("')' is needed after <cyclic-width>");
+          } else {
+            pg_get_token();
+          }
+        }
+
+        distFormatList.add(Xcons.List(Xcons.IntConstant(XMPtemplate.CYCLIC), width));
+      } else {
+        error("unknown distribution manner");
+      }
+
       if (pg_tok() == ')') break;
       else if (pg_tok() == ',') continue;
       else
