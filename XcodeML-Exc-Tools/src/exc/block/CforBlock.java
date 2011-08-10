@@ -62,6 +62,20 @@ public class CforBlock extends CondBlock implements ForBlock
         v.visit(iter_part);
     }
 
+    // used by Canonicalize()
+    private Xobject getTranslatedForBlockIndVarDecl(String indVarName)
+    {
+        Xobject decl = null;
+        BlockList bl = this.getParent();
+        if ((decl = bl.findLocalDecl(indVarName)) != null) {
+            if (bl.getHead() == this) {
+                return decl;
+            }
+        }
+
+        return null;
+    }
+
     // check the canonical form, "for(..., v = lb; v < up; v++)"
     @Override
     public void Canonicalize()
@@ -95,22 +109,36 @@ public class CforBlock extends CondBlock implements ForBlock
         ub = e.right();
 
         // check init part. the tail must be v=lb
-        if(init_part.getHead() == null)
+        if (init_part.getHead() == null) {
+          // modified for XcalableMP
+          Xobject ind_var_decl = this.getTranslatedForBlockIndVarDecl(ind_var.getName());
+          if (ind_var_decl == null) {
             return;
-        e = init_part.getHead().getExpr();
-        if(e.Opcode() == Xcode.COMMA_EXPR) {
+          } else {
+            Xobject lb_obj = ind_var_decl.getArg(1);
+            if (lb_obj == null) {
+              return;
+            } else {
+              init_part.add(Xcons.Set(ind_var, lb_obj));
+              lb = lb_obj;
+            }
+          }
+        } else {
+          e = init_part.getHead().getExpr();
+          if(e.Opcode() == Xcode.COMMA_EXPR) {
             // expand comma expression
             s = init_part.getHead();
             for(XobjArgs a = e.getArgs(); a != null; a = a.nextArgs())
-                s = s.add(a.getArg());
+              s = s.add(a.getArg());
             init_part.getHead().remove(); // remove original comma expr
+          }
+          e = init_part.getTail().getExpr();
+          if(e.Opcode() != Xcode.ASSIGN_EXPR)
+            return;
+          if(!e.left().equals(ind_var))
+            return;
+          lb = e.right();
         }
-        e = init_part.getTail().getExpr();
-        if(e.Opcode() != Xcode.ASSIGN_EXPR)
-            return;
-        if(!e.left().equals(ind_var))
-            return;
-        lb = e.right();
 
         // check iteration expression, and canonicalize
         // only first expression is recognized as iteration expression

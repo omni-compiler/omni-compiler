@@ -193,6 +193,20 @@ public class BlockList
         return null;
     }
 
+    public Xobject findLocalDecl(String s)
+    {
+        if(decls == null)
+            return null;
+        for(Xobject d : (XobjList)decls) {
+            if(d.Opcode() != Xcode.VAR_DECL)
+                continue;
+
+            if(s.equals(d.getArg(0).getName()))
+                return d;
+        }
+        return null;
+    }
+
     public Ident findLocalIdent(Xtype type)
     {
         if(id_list == null)
