@@ -970,6 +970,12 @@ public class XMPtranslateLocalPragma {
         // forBlock.setUpperBound(parallelCondId.Ref());
         forBlock.setStep(parallelStepId.Ref());
         break;
+      // FIXME correct implementation ???
+      case XMPtemplate.BLOCK_CYCLIC:
+        forBlock.setLowerBound(parallelInitId.Ref());
+        forBlock.setUpperBound(parallelCondId.Ref());
+        forBlock.setStep(parallelStepId.Ref());
+        break;
       default:
         throw new XMPexception("unknown distribute manner");
     }

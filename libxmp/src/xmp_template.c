@@ -384,6 +384,11 @@ void _XMP_dist_template_CYCLIC(_XMP_template_t *template, int template_index, in
   chunk->onto_nodes_info = ni;
 }
 
+// FIXME implement
+void _XMP_dist_template_BLOCK_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index, unsigned long long width) {
+  _XMP_fatal("not implement yet");
+}
+
 int _XMP_exec_task_TEMPLATE_PART(_XMP_task_desc_t **task_desc, int get_upper, _XMP_template_t *ref_template, ...) {
   int ref_dim = ref_template->dim;
   int shrink[ref_dim];

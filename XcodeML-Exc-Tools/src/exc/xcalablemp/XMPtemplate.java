@@ -15,6 +15,7 @@ public class XMPtemplate extends XMPobject {
   public final static int DUPLICATION	= 100;
   public final static int BLOCK		= 101;
   public final static int CYCLIC	= 102;
+  public final static int BLOCK_CYCLIC	= 103;
 
   private boolean		_isFixed;
   private boolean		_isDistributed;
@@ -87,17 +88,8 @@ public class XMPtemplate extends XMPobject {
   public String getDistMannerStringAt(int index) throws XMPexception {
     if (!_isDistributed) {
       throw new XMPexception("template " + getName() + " is not distributed");
-    }
-
-    switch (getDistMannerAt(index)) {
-      case DUPLICATION:
-        return new String("DUPLICATION");
-      case BLOCK:
-        return new String("BLOCK");
-      case CYCLIC:
-        return new String("CYCLIC");
-      default:
-        throw new XMPexception("unknown distribute manner");
+    } else {
+      return getDistMannerString(getDistMannerAt(index));
     }
   }
 
@@ -117,6 +109,8 @@ public class XMPtemplate extends XMPobject {
         return new String("BLOCK");
       case CYCLIC:
         return new String("CYCLIC");
+      case BLOCK_CYCLIC:
+        return new String("BLOCK_CYCLIC");
       default:
         throw new XMPexception("unknown distribute manner");
     }
@@ -296,6 +290,7 @@ public class XMPtemplate extends XMPobject {
       switch (distMannerValue) {
         case XMPtemplate.BLOCK:
         case XMPtemplate.CYCLIC:
+        case XMPtemplate.BLOCK_CYCLIC:
           {
             if (nodesDimIdx == nodesDim) {
               throw new XMPexception("the number of <dist-format> (except '*') should be the same with the nodes dimension");
@@ -328,18 +323,16 @@ public class XMPtemplate extends XMPobject {
                                         XMPglobalDecl globalDecl, boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
     XobjList funcArgs = null;
     int distMannerValue = distManner.getArg(0).getInt();
-    String distMannerName = null;
+    String distMannerName = getDistMannerString(distMannerValue);
     switch (distMannerValue) {
       case XMPtemplate.DUPLICATION:
         {
-          distMannerName = "DUPLICATION";
           funcArgs = Xcons.List(templateObject.getDescId().Ref(),
                                 Xcons.IntConstant(templateDimIdx));
           break;
         }
       case XMPtemplate.BLOCK:
         {
-          distMannerName = "BLOCK";
           funcArgs = Xcons.List(templateObject.getDescId().Ref(),
                                 Xcons.IntConstant(templateDimIdx),
                                 Xcons.IntConstant(nodesDimIdx));
@@ -348,17 +341,19 @@ public class XMPtemplate extends XMPobject {
         }
       case XMPtemplate.CYCLIC:
         {
-          Xobject distMannerWidth = distManner.getArg(1);
-          if (distMannerWidth == null) {
-            distMannerName = "CYCLIC";
-            funcArgs = Xcons.List(templateObject.getDescId().Ref(),
-                                  Xcons.IntConstant(templateDimIdx),
-                                  Xcons.IntConstant(nodesDimIdx));
-            templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
-          } else {
-            throw new XMPexception("cyclic(w) is not supported yet");
-          }
-
+          funcArgs = Xcons.List(templateObject.getDescId().Ref(),
+                                Xcons.IntConstant(templateDimIdx),
+                                Xcons.IntConstant(nodesDimIdx));
+          templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
+          break;
+        }
+      case XMPtemplate.BLOCK_CYCLIC:
+        {
+          funcArgs = Xcons.List(templateObject.getDescId().Ref(),
+                                Xcons.IntConstant(templateDimIdx),
+                                Xcons.IntConstant(nodesDimIdx),
+                                distManner.getArg(1));
+          templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
           break;
         }
       default:

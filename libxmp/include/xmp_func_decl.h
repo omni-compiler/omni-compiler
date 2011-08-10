@@ -191,6 +191,7 @@ extern void _XMP_finalize_template(void *template);
 extern void _XMP_dist_template_DUPLICATION(void *template, int template_index);
 extern void _XMP_dist_template_BLOCK(void *template, int template_index, int nodes_index);
 extern void _XMP_dist_template_CYCLIC(void *template, int template_index, int nodes_index);
+extern void _XMP_dist_template_BLOCK_CYCLIC(void *template, int template_index, int nodes_index, unsigned long long width);
 extern int _XMP_exec_task_TEMPLATE_PART(void **task_desc, int get_upper, void *ref_template, ...);
 
 // xmp_util.c

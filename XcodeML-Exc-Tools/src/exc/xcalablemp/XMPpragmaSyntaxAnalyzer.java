@@ -437,21 +437,20 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         pg_get_token();
         distFormatList.add(Xcons.List(Xcons.IntConstant(XMPtemplate.BLOCK), null));
       } else if (pg_is_ident("cyclic") || pg_is_ident("CYCLIC")) {
-        Xobject width = null;
-
         pg_get_token();
         if (pg_tok() == '(') {
           pg_get_token();
-          width = pg_parse_int_expr();
+          Xobject width = pg_parse_int_expr();
 
           if (pg_tok() != ')') {
             error("')' is needed after <cyclic-width>");
           } else {
             pg_get_token();
+            distFormatList.add(Xcons.List(Xcons.IntConstant(XMPtemplate.BLOCK_CYCLIC), width));
           }
+        } else {
+          distFormatList.add(Xcons.List(Xcons.IntConstant(XMPtemplate.CYCLIC), null));
         }
-
-        distFormatList.add(Xcons.List(Xcons.IntConstant(XMPtemplate.CYCLIC), width));
       } else {
         error("unknown distribution manner");
       }
