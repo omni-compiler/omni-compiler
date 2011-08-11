@@ -107,7 +107,7 @@ public class XMPgpuDecompiler {
         XobjList confParamFuncArgs = Xcons.List(totalIterId.getAddr(),
                                                 blockXid.getAddr(), blockYid.getAddr(), blockZid.getAddr(),
                                                 threadXid.getAddr(), threadYid.getAddr(), threadZid.getAddr());
-        XMPutil.mergeLists(confParamFuncArgs, loopIterRefList);
+        confParamFuncArgs.mergeList(loopIterRefList);
 
         confParamFuncCall = Xcons.List(Xcode.EXPR_STATEMENT, confParamFuncId.Call(confParamFuncArgs));
       } else {
@@ -121,7 +121,7 @@ public class XMPgpuDecompiler {
           }
         }
 
-        XMPutil.mergeLists(confParamFuncArgs, loopIterRefList);
+        confParamFuncArgs.mergeList(loopIterRefList);
 
         confParamFuncCall = Xcons.List(Xcode.EXPR_STATEMENT, confParamFuncId.Call(confParamFuncArgs));
       }
@@ -201,8 +201,8 @@ public class XMPgpuDecompiler {
       newLoopBlockList.add(createFuncCallBlock("_XMP_gpu_calc_thread_id", Xcons.List(threadNumId.getAddr())));
 
       XobjList calcIterFuncArgs = Xcons.List(threadNumId.Ref());
-      XMPutil.mergeLists(calcIterFuncArgs, loopIterRefList);
-      XMPutil.mergeLists(calcIterFuncArgs, loopIndexAddrList);
+      calcIterFuncArgs.mergeList(loopIterRefList);
+      calcIterFuncArgs.mergeList(loopIndexAddrList);
       newLoopBlockList.add(createFuncCallBlock("_XMP_gpu_calc_iter", calcIterFuncArgs));
 
       kernelFuncObj = Xcons.List(Xcode.IF_STATEMENT,
@@ -217,8 +217,8 @@ public class XMPgpuDecompiler {
       }
 
       XobjList calcIterFuncArgs = Xcons.List();
-      XMPutil.mergeLists(calcIterFuncArgs, loopIterRefList);
-      XMPutil.mergeLists(calcIterFuncArgs, loopIndexRefList);
+      calcIterFuncArgs.mergeList(loopIterRefList);
+      calcIterFuncArgs.mergeList(loopIndexRefList);
       newLoopBlockList.add(createFuncCallBlock(new String("_XMP_gpu_calc_iter_MAP_THREADS_" + mapDim),
                                                calcIterFuncArgs));
 

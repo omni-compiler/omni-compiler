@@ -340,7 +340,6 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       pg_get_token();
       if (pg_tok() == '*') {
         inheritedNodes = Xcons.List(Xcons.IntConstant(XMPnodes.INHERIT_EXEC), null);
-
         pg_get_token();
       }
       else inheritedNodes = Xcons.List(Xcons.IntConstant(XMPnodes.INHERIT_NODES), parse_ON_REF(false));

@@ -144,14 +144,6 @@ public class XMPutil {
     }
   }
 
-  public static void mergeLists(XobjList dstList, XobjList srcList) {
-    if (srcList == null) return;
-    if (dstList == null) dstList = Xcons.List();
-
-    for (XobjArgs i = srcList.getArgs(); i != null; i = i.nextArgs())
-      dstList.add(i.getArg());
-  }
-
   public static int countElmts(XobjList list) {
     int count = 0;
     Iterator<Xobject> it = list.iterator();
