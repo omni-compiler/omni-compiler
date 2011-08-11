@@ -52,7 +52,16 @@ public class XMPtranslateGlobalPragma {
   }
 
   private void translateNodes(Xobject nodesPragma) throws XMPexception {
-    XMPnodes.translateNodes((XobjList)nodesPragma.getArg(1), _globalDecl, false, null);
+    XobjList nodesDecl = (XobjList)nodesPragma.getArg(1);
+    XobjList nodesNameList = (XobjList)nodesDecl.getArg(0);
+    XobjList nodesDeclCopy = (XobjList)nodesDecl.copy();
+
+    Iterator<Xobject> iter = nodesNameList.iterator();
+    while (iter.hasNext()) {
+      Xobject x = iter.next();
+      nodesDeclCopy.setArg(0, x);
+      XMPnodes.translateNodes(nodesDeclCopy, _globalDecl, false, null);
+    }
   }
 
   private void translateTemplate(Xobject templatePragma) throws XMPexception {

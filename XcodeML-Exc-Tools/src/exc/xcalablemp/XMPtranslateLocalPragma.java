@@ -92,7 +92,17 @@ public class XMPtranslateLocalPragma {
 
   private void translateNodes(PragmaBlock pb) throws XMPexception {
     checkDeclPragmaLocation(pb);
-    XMPnodes.translateNodes((XobjList)pb.getClauses(), _globalDecl, true, pb);
+
+    XobjList nodesDecl = (XobjList)pb.getClauses();
+    XobjList nodesNameList = (XobjList)nodesDecl.getArg(0);
+    XobjList nodesDeclCopy = (XobjList)nodesDecl.copy();
+
+    Iterator<Xobject> iter = nodesNameList.iterator();
+    while (iter.hasNext()) {
+      Xobject x = iter.next();
+      nodesDeclCopy.setArg(0, x);
+      XMPnodes.translateNodes(nodesDeclCopy, _globalDecl, true, pb);
+    }
   }
 
   private void translateTemplate(PragmaBlock pb) throws XMPexception {

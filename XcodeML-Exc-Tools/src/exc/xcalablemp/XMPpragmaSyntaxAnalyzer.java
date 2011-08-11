@@ -297,14 +297,18 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   }
 
   private XobjList parse_NODES_clause() throws XmException, XMPexception {
-    // parse <nodes-name>
-    if (pg_tok() != PG_IDENT)
-      error("nodes directive has no <nodes-name>");
+    boolean parseNameList = false;
+    XobjList nodesNameList = null;
 
-    XobjString nodesName = Xcons.String(pg_tok_buf());
+    // parse <nodes-name>
+    if (pg_tok() == PG_IDENT) {
+      nodesNameList = Xcons.List(Xcons.String(pg_tok_buf()));
+      pg_get_token();
+    } else {
+      parseNameList = true;
+    }
 
     // parse (<nodes-size>, ...)
-    pg_get_token();
     if (pg_tok() != '(')
       error("'(' is expected after <nodes-name>");
 
@@ -343,7 +347,21 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     }
     else inheritedNodes = Xcons.List(Xcons.IntConstant(XMPnodes.INHERIT_GLOBAL));
 
-    return Xcons.List(nodesName, nodesSizeList, inheritedNodes);
+    if (parseNameList) {
+      if (pg_tok() == ':') {
+        pg_get_token();
+        if (pg_tok() == ':') {
+          pg_get_token();
+          nodesNameList = parse_XMP_obj_name_list("nodes");
+        }
+      }
+    }
+
+    if (nodesNameList == null) {
+      error("nodes directive has no <nodes-name>");
+    }
+
+    return Xcons.List(nodesNameList, nodesSizeList, inheritedNodes);
   }
 
   private XobjList parse_TEMPLATE_clause() throws XmException, XMPexception {
@@ -398,12 +416,12 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         if (pg_tok() == ':') {
           pg_get_token();
           templateNameList = parse_XMP_obj_name_list("template");
-        } else {
-          error("template directive has no <template-name>");
         }
-      } else {
-        error("template directive has no <template-name>");
       }
+    }
+
+    if (templateNameList == null) {
+      error("template directive has no <template-name>");
     }
 
     return Xcons.List(templateNameList, templateSpecList);
@@ -479,12 +497,12 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         if (pg_tok() == ':') {
           pg_get_token();
           templateNameList = parse_XMP_obj_name_list("distribute");
-        } else {
-          error("distribute directive has no <template-name>");
         }
-      } else {
-        error("distribute directive has no <template-name>");
       }
+    }
+
+    if (templateNameList == null) {
+      error("distribute directive has no <template-name>");
     }
 
     return Xcons.List(templateNameList, distFormatList, nodesName);
@@ -558,12 +576,12 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         if (pg_tok() == ':') {
           pg_get_token();
           arrayNameList = parse_XMP_obj_name_list("align");
-        } else {
-          error("align directive has no <array-name>");
         }
-      } else {
-        error("align directive has no <array-name>");
       }
+    }
+
+    if (arrayNameList == null) {
+      error("align directive has no <array-name>");
     }
 
     return Xcons.List(arrayNameList, alignSourceList, templateName, alignSubscriptList);
@@ -656,12 +674,12 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         if (pg_tok() == ':') {
           pg_get_token();
           arrayNameList = parse_XMP_obj_name_list("shadow");
-        } else {
-          error("shadow directive has no <array-name>");
         }
-      } else {
-        error("shadow directive has no <array-name>");
       }
+    }
+
+    if (arrayNameList == null) {
+      error("shadow directive has no <array-name>");
     }
 
     return Xcons.List(arrayNameList, shadowWidthList);
