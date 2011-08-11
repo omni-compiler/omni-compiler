@@ -220,7 +220,7 @@ public class XobjectDef extends PropObject implements IXobject, XobjectVisitable
     }
 
     @Override
-    public ILineNo getLineNo()
+    public LineNo getLineNo()
     {
         return (def != null) ? def.getLineNo() : null;
     }

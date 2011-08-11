@@ -20,8 +20,7 @@ public class XMPrealloc implements XobjectDefVisitor {
     try {
       realloc(def);
     } catch (XMPexception e) {
-      // FIXME get line number
-      XMP.error(e.getMessage());
+      XMP.error(def.getLineNo(), e.getMessage());
     }
   }
 

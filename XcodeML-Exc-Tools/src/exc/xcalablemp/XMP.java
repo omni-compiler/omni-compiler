@@ -37,12 +37,6 @@ public class XMP {
     if (errorFlag) System.exit(1);
   }
 
-  // FIXME no line number
-  public static void error(String msg) {
-    errorFlag = true;
-    System.out.println("[XcalableMP] " + msg);
-  }
-
   public static void error(LineNo l, String msg) {
     errorFlag = true;
     XmLog.error(l, "[XcalableMP] " + msg);

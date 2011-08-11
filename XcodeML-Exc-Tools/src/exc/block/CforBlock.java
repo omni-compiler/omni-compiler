@@ -121,6 +121,7 @@ public class CforBlock extends CondBlock implements ForBlock
             } else {
               init_part.add(Xcons.Set(ind_var, lb_obj));
               lb = lb_obj;
+              ind_var_decl.setArg(1, null);
             }
           }
         } else {

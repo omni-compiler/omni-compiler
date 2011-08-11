@@ -26,17 +26,8 @@ public class XMPrewriteExpr {
     // rewrite parameters
     rewriteParams(fb, localXMPsymbolTable);
 
-    // rewrite expr
-    BasicBlockExprIterator iter = new BasicBlockExprIterator(fb);
-    for (iter.init(); !iter.end(); iter.next()) {
-      Xobject expr = iter.getExpr();
-
-      try {
-        rewriteExpr(expr, localXMPsymbolTable);
-      } catch (XMPexception e) {
-        XMP.error(expr.getLineNo(), e.getMessage());
-      }
-    }
+    // rewrite Function Exprs
+    rewriteFuncExprs(fb, localXMPsymbolTable);
 
     // create local object descriptors, constructors and desctructors
     XMPlocalDecl.setupObjectId(fb);
@@ -46,17 +37,30 @@ public class XMPrewriteExpr {
     def.Finalize();
   }
 
-  private void rewriteParams(FunctionBlock funcBlock, XMPsymbolTable localSymbolTable) {
+  private void rewriteParams(FunctionBlock funcBlock, XMPsymbolTable localXMPsymbolTable) {
     XobjList identList = funcBlock.getBody().getIdentList();
     if (identList == null) {
       return;
     } else {
       for(Xobject x : identList) {
         Ident id = (Ident)x;
-        XMPalignedArray alignedArray = localSymbolTable.getXMPalignedArray(id.getName());
+        XMPalignedArray alignedArray = localXMPsymbolTable.getXMPalignedArray(id.getName());
         if (alignedArray != null) {
           id.setType(Xtype.Pointer(alignedArray.getType()));
         }
+      }
+    }
+  }
+
+  private void rewriteFuncExprs(FunctionBlock funcBlock, XMPsymbolTable localXMPsymbolTable) {
+    BasicBlockExprIterator iter = new BasicBlockExprIterator(funcBlock);
+    for (iter.init(); !iter.end(); iter.next()) {
+      Xobject expr = iter.getExpr();
+
+      try {
+        rewriteExpr(expr, localXMPsymbolTable);
+      } catch (XMPexception e) {
+        XMP.error(expr.getLineNo(), e.getMessage());
       }
     }
   }
