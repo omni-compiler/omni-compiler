@@ -187,6 +187,72 @@ static int _XMP_compare_task_exec_cond(_XMP_task_desc_t *task_desc, long long *l
   return _XMP_N_INT_TRUE;
 }
 
+static void _XMP_dist_template_CYCLIC_WIDTH(_XMP_template_t *template, int template_index, int nodes_index,
+                                            unsigned long long width) {
+  _XMP_ASSERT(template->is_fixed);
+  _XMP_ASSERT(template->is_distributed);
+
+  _XMP_nodes_t *nodes = template->onto_nodes;
+
+  _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
+  _XMP_template_info_t *ti = &(template->info[template_index]);
+  _XMP_nodes_info_t *ni = &(nodes->info[nodes_index]);
+
+  unsigned long long nodes_size = ni->size;
+  unsigned long long template_size = (ti->ser_size) / width;
+
+  // calc parallel members
+  if (nodes->is_member) {
+    unsigned long long nodes_rank = ni->rank;
+
+    if (template_size < nodes_size) {
+      if (nodes_rank < template_size) {
+        long long par_index = ti->ser_lower + nodes_rank;
+
+        chunk->par_lower = par_index;
+        chunk->par_upper = par_index;
+      }
+      else {
+        template->is_owner = false;
+      }
+    }
+    else {
+      unsigned long long div = template_size / nodes_size;
+      unsigned long long mod = template_size % nodes_size;
+      unsigned long long par_size = 0;
+      if(mod == 0) {
+        par_size = div;
+      }
+      else {
+        if(nodes_rank >= mod) {
+          par_size = div;
+        }
+        else {
+          par_size = div + 1;
+        }
+      }
+
+      chunk->par_lower = ti->ser_lower + nodes_rank;
+      chunk->par_upper = chunk->par_lower + nodes_size * (par_size - 1);
+    }
+  }
+
+  chunk->par_width = width;
+
+  chunk->par_stride = nodes_size;
+  chunk->par_chunk_width = _XMP_M_CEILi(template_size, nodes_size);
+  chunk->dist_manner = _XMP_N_DIST_CYCLIC;
+  if ((template_size % nodes_size) == 0) {
+    chunk->is_regular_chunk = true;
+  }
+  else {
+    chunk->is_regular_chunk = false;
+  }
+
+  chunk->onto_nodes_index = nodes_index;
+  chunk->onto_nodes_info = ni;
+}
+
 void _XMP_init_template_FIXED(_XMP_template_t **template, int dim, ...) {
   // alloc descriptor
   _XMP_template_t *t = _XMP_alloc(sizeof(_XMP_template_t) +
@@ -267,6 +333,7 @@ void _XMP_dist_template_DUPLICATION(_XMP_template_t *template, int template_inde
 
   chunk->par_lower = ti->ser_lower;
   chunk->par_upper = ti->ser_upper;
+  chunk->par_width = 1;
 
   chunk->par_stride = 1;
   chunk->par_chunk_width = ti->ser_size;
@@ -287,14 +354,14 @@ void _XMP_dist_template_BLOCK(_XMP_template_t *template, int template_index, int
   _XMP_template_info_t *ti = &(template->info[template_index]);
   _XMP_nodes_info_t *ni = &(nodes->info[nodes_index]);
 
-  long long nodes_size = (long long)ni->size;
+  unsigned long long nodes_size = ni->size;
 
   // calc parallel members
   unsigned long long chunk_width = _XMP_M_CEILi(ti->ser_size, nodes_size);
 
   if (nodes->is_member) {
-    long long nodes_rank = (long long)ni->rank;
-    int owner_nodes_size = _XMP_M_CEILi(ti->ser_size, chunk_width);
+    unsigned long long nodes_rank = ni->rank;
+    unsigned long long owner_nodes_size = _XMP_M_CEILi(ti->ser_size, chunk_width);
 
     chunk->par_lower = nodes_rank * chunk_width + ti->ser_lower;
     if (nodes_rank == (owner_nodes_size - 1)) {
@@ -307,6 +374,8 @@ void _XMP_dist_template_BLOCK(_XMP_template_t *template, int template_index, int
       chunk->par_upper = chunk->par_lower + chunk_width - 1;
     }
   }
+
+  chunk->par_width = 1;
 
   chunk->par_stride = 1;
   chunk->par_chunk_width = chunk_width;
@@ -323,70 +392,11 @@ void _XMP_dist_template_BLOCK(_XMP_template_t *template, int template_index, int
 }
 
 void _XMP_dist_template_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index) {
-  _XMP_ASSERT(template->is_fixed);
-  _XMP_ASSERT(template->is_distributed);
-
-  _XMP_nodes_t *nodes = template->onto_nodes;
-
-  _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
-  _XMP_template_info_t *ti = &(template->info[template_index]);
-  _XMP_nodes_info_t *ni = &(nodes->info[nodes_index]);
-
-  long long nodes_size = (long long)ni->size;
-
-  // calc parallel members
-  if (nodes->is_member) {
-    long long nodes_rank = (long long)ni->rank;
-
-    if (ti->ser_size < nodes_size) {
-      if (nodes_rank < ti->ser_size) {
-        long long par_index = ti->ser_lower + nodes_rank;
-
-        chunk->par_lower = par_index;
-        chunk->par_upper = par_index;
-      }
-      else {
-        template->is_owner = false;
-      }
-    }
-    else {
-      unsigned long long div = ti->ser_size / nodes_size;
-      unsigned long long mod = ti->ser_size % nodes_size;
-      unsigned long long par_size = 0;
-      if(mod == 0) {
-        par_size = div;
-      }
-      else {
-        if(nodes_rank >= mod) {
-          par_size = div;
-        }
-        else {
-          par_size = div + 1;
-        }
-      }
-
-      chunk->par_lower = ti->ser_lower + nodes_rank;
-      chunk->par_upper = chunk->par_lower + nodes_size * (par_size - 1);
-    }
-  }
-
-  chunk->par_stride = nodes_size;
-  chunk->par_chunk_width = _XMP_M_CEILi(ti->ser_size, nodes_size);
-  chunk->dist_manner = _XMP_N_DIST_CYCLIC;
-  if ((ti->ser_size % nodes_size) == 0) {
-    chunk->is_regular_chunk = true;
-  }
-  else {
-    chunk->is_regular_chunk = false;
-  }
-
-  chunk->onto_nodes_index = nodes_index;
-  chunk->onto_nodes_info = ni;
+  _XMP_dist_template_CYCLIC_WIDTH(template, template_index, nodes_index, 1);
 }
 
-// FIXME implement
 void _XMP_dist_template_BLOCK_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index, unsigned long long width) {
-  _XMP_fatal("not implement yet");
+  _XMP_dist_template_CYCLIC_WIDTH(template, template_index, nodes_index, width);
 }
 
 int _XMP_exec_task_TEMPLATE_PART(_XMP_task_desc_t **task_desc, int get_upper, _XMP_template_t *ref_template, ...) {

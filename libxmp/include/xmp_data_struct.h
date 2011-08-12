@@ -48,6 +48,7 @@ typedef struct _XMP_template_chunk_type {
   // enable when is_owner is true
   long long par_lower;
   long long par_upper;
+  unsigned long long par_width;
   // ----------------------------
 
   int par_stride;
