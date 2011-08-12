@@ -340,76 +340,85 @@ void _XMP_reduce_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, i
 }
 
 int _XMP_init_reduce_comm_NODES(_XMP_nodes_t *nodes, ...) {
-  if (!nodes->is_member) {
-    return _XMP_N_INT_FALSE;
-  }
-
   int color = 1;
-  int acc_nodes_size = 1;
-  int nodes_dim = nodes->dim;
+  if (nodes->is_member) {
+    int acc_nodes_size = 1;
+    int nodes_dim = nodes->dim;
 
-  va_list args;
-  va_start(args, nodes);
-  for (int i = 0; i < nodes_dim; i++) {
-    int size = nodes->info[i].size;
-    int rank = nodes->info[i].rank;
+    va_list args;
+    va_start(args, nodes);
+    for (int i = 0; i < nodes_dim; i++) {
+      int size = nodes->info[i].size;
+      int rank = nodes->info[i].rank;
 
-    if (va_arg(args, int) == 1) {
-      color += (acc_nodes_size * rank);
+      if (va_arg(args, int) == 1) {
+        color += (acc_nodes_size * rank);
+      }
+
+      acc_nodes_size *= size;
     }
-
-    acc_nodes_size *= size;
+    va_end(args);
+  } else {
+    color = 0;
   }
-  va_end(args);
 
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
-  MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, nodes->comm_rank, comm);
+  MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, _XMP_world_rank, comm);
 
-  // create a new nodes descriptor
-  _XMP_push_comm(comm);
-  return _XMP_N_INT_TRUE;
+  if (color == 0) {
+    _XMP_finalize_comm(comm);
+    return _XMP_N_INT_FALSE;
+  } else {
+    _XMP_push_comm(comm);
+    return _XMP_N_INT_TRUE;
+  }
 }
 
 int _XMP_init_reduce_comm_TEMPLATE(_XMP_template_t *template, ...) {
   _XMP_ASSERT(template->is_distributed);
 
   _XMP_nodes_t *onto_nodes = template->onto_nodes;
-  if (!onto_nodes->is_member) {
-    return _XMP_N_INT_FALSE;
-  }
 
   int color = 1;
-  int acc_nodes_size = 1;
-  int template_dim = template->dim;
+  if (onto_nodes->is_member) {
+    int acc_nodes_size = 1;
+    int template_dim = template->dim;
 
-  va_list args;
-  va_start(args, template);
-  for (int i = 0; i < template_dim; i++) {
-    _XMP_template_chunk_t *chunk = &(template->chunk[i]);
+    va_list args;
+    va_start(args, template);
+    for (int i = 0; i < template_dim; i++) {
+      _XMP_template_chunk_t *chunk = &(template->chunk[i]);
 
-    int size, rank;
-    if (chunk->dist_manner == _XMP_N_DIST_DUPLICATION) {
-      size = 1;
-      rank = 0;
+      int size, rank;
+      if (chunk->dist_manner == _XMP_N_DIST_DUPLICATION) {
+        size = 1;
+        rank = 0;
+      }
+      else {
+        _XMP_nodes_info_t *onto_nodes_info = chunk->onto_nodes_info;
+        size = onto_nodes_info->size;
+        rank = onto_nodes_info->rank;
+      }
+
+      if (va_arg(args, int) == 1) {
+        color += (acc_nodes_size * rank);
+      }
+
+      acc_nodes_size *= size;
     }
-    else {
-      _XMP_nodes_info_t *onto_nodes_info = chunk->onto_nodes_info;
-      size = onto_nodes_info->size;
-      rank = onto_nodes_info->rank;
-    }
-
-    if (va_arg(args, int) == 1) {
-      color += (acc_nodes_size * rank);
-    }
-
-    acc_nodes_size *= size;
+    va_end(args);
+  } else {
+    color = 0;
   }
-  va_end(args);
 
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
-  MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, onto_nodes->comm_rank, comm);
+  MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, _XMP_world_rank, comm);
 
-  // create a new nodes descriptor
-  _XMP_push_comm(comm);
-  return _XMP_N_INT_TRUE;
+  if (color == 0) {
+    _XMP_finalize_comm(comm);
+    return _XMP_N_INT_FALSE;
+  } else {
+    _XMP_push_comm(comm);
+    return _XMP_N_INT_TRUE;
+  }
 }

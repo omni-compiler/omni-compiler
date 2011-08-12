@@ -12,40 +12,41 @@
 
 static void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index) {
   _XMP_nodes_t *onto_nodes = (array->align_template)->onto_nodes;
-  if (!onto_nodes->is_member) {
-    return;
-  }
-
   _XMP_array_info_t *ai = &(array->info[array_index]);
-  _XMP_ASSERT(ai->align_manner != _XMP_N_ALIGN_NOT_ALIGNED);
-  _XMP_ASSERT(ai->align_manner != _XMP_N_ALIGN_DUPLICATION);
-
-  _XMP_template_chunk_t *chunk = ai->align_template_chunk;
-  _XMP_ASSERT(chunk->dist_manner != _XMP_N_DIST_DUPLICATION);
-
-  int onto_nodes_index = chunk->onto_nodes_index;
 
   int color = 1;
-  int acc_nodes_size = 1;
-  int nodes_dim = onto_nodes->dim;
-  for (int i = 0; i < nodes_dim; i++) {
-    _XMP_nodes_info_t *onto_nodes_info = &(onto_nodes->info[i]);
-    int size = onto_nodes_info->size;
-    int rank = onto_nodes_info->rank;
+  if (onto_nodes->is_member) {
+    _XMP_ASSERT(ai->align_manner != _XMP_N_ALIGN_NOT_ALIGNED);
+    _XMP_ASSERT(ai->align_manner != _XMP_N_ALIGN_DUPLICATION);
 
-    if (i != onto_nodes_index) {
-      color += (acc_nodes_size * rank);
+    _XMP_template_chunk_t *chunk = ai->align_template_chunk;
+    _XMP_ASSERT(chunk->dist_manner != _XMP_N_DIST_DUPLICATION);
+
+    int onto_nodes_index = chunk->onto_nodes_index;
+
+    int acc_nodes_size = 1;
+    int nodes_dim = onto_nodes->dim;
+    for (int i = 0; i < nodes_dim; i++) {
+      _XMP_nodes_info_t *onto_nodes_info = &(onto_nodes->info[i]);
+      int size = onto_nodes_info->size;
+      int rank = onto_nodes_info->rank;
+
+      if (i != onto_nodes_index) {
+        color += (acc_nodes_size * rank);
+      }
+
+      acc_nodes_size *= size;
     }
 
-    acc_nodes_size *= size;
-  }
-
-  if (!array->is_allocated) {
+    if (!array->is_allocated) {
+      color = 0;
+    }
+  } else {
     color = 0;
   }
 
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
-  MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, onto_nodes->comm_rank, comm);
+  MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, _XMP_world_rank, comm);
 
   // set members
   if (array->is_allocated) {
@@ -54,8 +55,7 @@ static void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index) {
     ai->shadow_comm = comm;
     MPI_Comm_size(*comm, &(ai->shadow_comm_size));
     MPI_Comm_rank(*comm, &(ai->shadow_comm_rank));
-  }
-  else {
+  } else {
     _XMP_finalize_comm(comm);
   }
 }

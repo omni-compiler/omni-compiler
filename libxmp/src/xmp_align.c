@@ -374,40 +374,40 @@ void _XMP_init_array_comm(_XMP_array_t *array, ...) {
   _XMP_ASSERT(align_template->is_distributed);
 
   _XMP_nodes_t *onto_nodes = align_template->onto_nodes;
-  if (!onto_nodes->is_member) {
-    return;
-  }
 
   int color = 1;
-  int acc_nodes_size = 1;
-  int template_dim = align_template->dim;
+  if (onto_nodes->is_member) {
+    int acc_nodes_size = 1;
+    int template_dim = align_template->dim;
 
-  va_list args;
-  va_start(args, array);
-  for (int i = 0; i < template_dim; i++) {
-    _XMP_template_chunk_t *chunk = &(align_template->chunk[i]);
+    va_list args;
+    va_start(args, array);
+    for (int i = 0; i < template_dim; i++) {
+      _XMP_template_chunk_t *chunk = &(align_template->chunk[i]);
 
-    int size, rank;
-    if (chunk->dist_manner == _XMP_N_DIST_DUPLICATION) {
-      size = 1;
-      rank = 0;
+      int size, rank;
+      if (chunk->dist_manner == _XMP_N_DIST_DUPLICATION) {
+        size = 1;
+        rank = 0;
+      } else {
+        _XMP_nodes_info_t *onto_nodes_info = chunk->onto_nodes_info;
+        size = onto_nodes_info->size;
+        rank = onto_nodes_info->rank;
+      }
+
+      if (va_arg(args, int) == 1) {
+        color += (acc_nodes_size * rank);
+      }
+
+      acc_nodes_size *= size;
     }
-    else {
-      _XMP_nodes_info_t *onto_nodes_info = chunk->onto_nodes_info;
-      size = onto_nodes_info->size;
-      rank = onto_nodes_info->rank;
-    }
-
-    if (va_arg(args, int) == 1) {
-      color += (acc_nodes_size * rank);
-    }
-
-    acc_nodes_size *= size;
+    va_end(args);
+  } else {
+    color = 0;
   }
-  va_end(args);
 
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
-  MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, onto_nodes->comm_rank, comm);
+  MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, _XMP_world_rank, comm);
 
   // set members
   array->is_align_comm_member = true;
