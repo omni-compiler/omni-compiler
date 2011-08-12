@@ -971,15 +971,7 @@ public class XMPtranslateLocalPragma {
     switch (distManner) {
       case XMPtemplate.DUPLICATION:
       case XMPtemplate.BLOCK:
-        forBlock.setLowerBound(parallelInitId.Ref());
-        forBlock.setUpperBound(parallelCondId.Ref());
-        // forBlock.setStep(parallelStepId.Ref());
-        break;
       case XMPtemplate.CYCLIC:
-        forBlock.setLowerBound(parallelInitId.Ref());
-        // forBlock.setUpperBound(parallelCondId.Ref());
-        forBlock.setStep(parallelStepId.Ref());
-        break;
       // FIXME correct implementation ???
       case XMPtemplate.BLOCK_CYCLIC:
         forBlock.setLowerBound(parallelInitId.Ref());

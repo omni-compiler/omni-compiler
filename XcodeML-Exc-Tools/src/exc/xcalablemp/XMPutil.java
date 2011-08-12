@@ -54,30 +54,6 @@ public class XMPutil {
     return new XMPpair<Ident, Xtype>(id, type);
   }
 
-  public static boolean hasCommXMPpragma(BlockList bl) {
-    BlockIterator i = new bottomupBlockIterator(bl);
-    for(i.init(); !i.end(); i.next()) {
-      Block b = i.getBlock();
-      if (b.Opcode() == Xcode.XMP_PRAGMA) {
-        PragmaBlock pb = (PragmaBlock)b;
-        String pragmaName = pb.getPragma();
-
-        switch (XMPpragma.valueOf(pragmaName)) {
-          // FIXME case REFLECT: needed???
-          case BARRIER:
-          case REDUCTION:
-          case BCAST:
-          // FIXME case GMOVE: needed???
-            return true;
-          default:
-            break;
-        }
-      }
-    }
-
-    return false;
-  }
-
   public static boolean isIntegerType(Xtype type) {
     if (type.getKind() == Xtype.BASIC) {
       switch (type.getBasicType()) {
