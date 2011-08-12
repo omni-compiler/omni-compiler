@@ -26,6 +26,7 @@
 #define _XMP_N_DIST_DUPLICATION			100
 #define _XMP_N_DIST_BLOCK			101
 #define _XMP_N_DIST_CYCLIC			102
+#define _XMP_N_DIST_BLOCK_CYCLIC		103
 
 // FIXME defined in exc.xcalablemp.XMP???
 #define _XMP_N_ALIGN_NOT_ALIGNED		200

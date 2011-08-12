@@ -241,11 +241,15 @@ static void _XMP_dist_template_CYCLIC_WIDTH(_XMP_template_t *template, int templ
 
   chunk->par_stride = nodes_size;
   chunk->par_chunk_width = _XMP_M_CEILi(template_size, nodes_size);
-  chunk->dist_manner = _XMP_N_DIST_CYCLIC;
+  if (width == 1) {
+    chunk->dist_manner = _XMP_N_DIST_CYCLIC;
+  } else {
+    chunk->dist_manner = _XMP_N_DIST_BLOCK_CYCLIC;
+  }
+  // FIXME consider block width
   if ((template_size % nodes_size) == 0) {
     chunk->is_regular_chunk = true;
-  }
-  else {
+  } else {
     chunk->is_regular_chunk = false;
   }
 
