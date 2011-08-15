@@ -75,20 +75,6 @@ public class XMPutil {
     else return false;
   }
 
-  public static boolean isZeroIntegerObj(Xobject x) {
-    switch (x.Opcode()) {
-      case INT_CONSTANT:
-        if (x.getInt() == 0) {
-          return true;
-        }
-        else {
-          return false;
-        }
-      default:
-        return false;
-    }
-  }
-
   public static String getTypeName(Xtype type) {
     if (type.getKind() == Xtype.BASIC) {
       switch (type.getBasicType()) {

@@ -88,7 +88,7 @@ public class XMPshadow {
             Xobject shadowLo = shadowBody.left();
             Xobject shadowHi = shadowBody.right();
 
-            if (XMPutil.isZeroIntegerObj(shadowLo) && XMPutil.isZeroIntegerObj(shadowHi)) {
+            if (shadowLo.isZeroConstant() && shadowHi.isZeroConstant()) {
               shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_NONE)));
               alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_NONE, null, null), arrayIndex);
               break;

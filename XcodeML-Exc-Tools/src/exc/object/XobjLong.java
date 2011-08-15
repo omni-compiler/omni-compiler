@@ -87,4 +87,22 @@ public class XobjLong extends XobjConst
     {
         return "(" + OpcodeName() + " 0x" + Long.toHexString(high) + " 0x" + Long.toHexString(low) + ")";
     }
+
+    @Override
+    public boolean isZeroConstant() {
+      if ((high == 0) && (low == 0)) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    @Override
+    public boolean isOneConstant() {
+      if ((high == 0) && (low == 1)) {
+        return true;
+      } else {
+        return false;
+      }
+    }
 }

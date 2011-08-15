@@ -689,16 +689,14 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
         return false;
     }
 
-    /** return true if this object is zero constant. */
-    public boolean isZeroConstant()
-    {
-        return code == Xcode.INT_CONSTANT && getInt() == 0;
+    /** return true if this object is zero integer constant. */
+    public boolean isZeroConstant() {
+      return false;
     }
 
-    /** return true if this object is one constant. */
-    public boolean isOneConstant()
-    {
-        return code == Xcode.INT_CONSTANT && getInt() == 1;
+    /** return true if this object is one integer constant. */
+    public boolean isOneConstant() {
+      return false;
     }
 
     /** return true if this object is integer constant */

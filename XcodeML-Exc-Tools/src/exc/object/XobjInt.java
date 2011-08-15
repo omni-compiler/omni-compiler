@@ -53,4 +53,22 @@ public class XobjInt extends XobjConst
     {
         return "(" + OpcodeName() + " 0x" + Long.toHexString(value) + ")";
     }
+
+    @Override
+    public boolean isZeroConstant() {
+      if (value == 0) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    @Override
+    public boolean isOneConstant() {
+      if (value == 1) {
+        return true;
+      } else {
+        return false;
+      }
+    }
 }
