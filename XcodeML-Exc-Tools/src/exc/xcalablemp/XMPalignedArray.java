@@ -28,6 +28,7 @@ public class XMPalignedArray {
   private Vector<Ident>		_gtolTemp0IdVector;
   private Vector<Integer>	_alignSubscriptIndexVector;
   private Vector<Xobject>	_alignSubscriptExprVector;
+  private Vector<Xobject>	_alignNormExprVector;
   private Ident			_arrayId;
   private Ident			_descId;
   private Ident			_addrId;
@@ -63,12 +64,14 @@ public class XMPalignedArray {
     _gtolTemp0IdVector = new Vector<Ident>(XMP.MAX_DIM);
     _alignSubscriptIndexVector = new Vector<Integer>(XMP.MAX_DIM);
     _alignSubscriptExprVector = new Vector<Xobject>(XMP.MAX_DIM);
+    _alignNormExprVector = new Vector<Xobject>(XMP.MAX_DIM);
     for (int i = 0; i < dim; i++) {
       _shadowVector.add(new XMPshadow(XMPshadow.SHADOW_NONE, null, null));
       _alignMannerVector.add(null);
       _gtolTemp0IdVector.add(null);
       _alignSubscriptIndexVector.add(null);
       _alignSubscriptExprVector.add(null);
+      _alignNormExprVector.add(null);
     }
     _arrayId = arrayId;
     _descId = descId;
@@ -146,6 +149,14 @@ public class XMPalignedArray {
 
   public Xobject getAlignSubscriptExprAt(int alignSourceIndex) {
     return _alignSubscriptExprVector.get(alignSourceIndex);
+  }
+
+  public void setAlignNormExprAt(Xobject alignNormExpr, int index) {
+    _alignNormExprVector.setElementAt(alignNormExpr, index);
+  }
+
+  public Xobject getAlignNormExprAt(int index) {
+    return _alignNormExprVector.get(index);
   }
 
   public Ident getArrayId() {
@@ -458,7 +469,8 @@ public class XMPalignedArray {
         int alignSubscriptIndex = XMPutil.getLastIndex(alignSubscriptVarList, XMP.COLON);
         alignSubscriptVarList.setArg(alignSubscriptIndex, null);
 
-        declAlignFunc(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex, null, globalDecl, isLocalPragma, pb);
+        declAlignFunc(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex,
+                      Xcons.IntConstant(0), globalDecl, isLocalPragma, pb);
       }
       else {
         if (XMPutil.countElmts(alignSourceList, alignSource) != 1) {
@@ -555,18 +567,17 @@ public class XMPalignedArray {
                                         Xcons.IntConstant(alignSourceIndex),
                                         Xcons.IntConstant(alignSubscriptIndex));
 
-    if (alignSubscriptExpr == null) {
-      alignFuncArgs.add(Xcons.IntConstant(0));
-    }
-    else {
-      alignFuncArgs.add(alignSubscriptExpr);
-    }
+    alignFuncArgs.add(alignSubscriptExpr);
 
     int distManner = templateObj.getDistMannerAt(alignSubscriptIndex);
     alignedArray.setAlignMannerAt(XMPalignedArray.convertDistMannerToAlignManner(distManner), alignSourceIndex);
 
     alignedArray.setAlignSubscriptIndexAt(alignSubscriptIndex, alignSourceIndex);
     alignedArray.setAlignSubscriptExprAt(alignSubscriptExpr, alignSourceIndex);
+
+    Xobject alignNormExpr = Xcons.binaryOp(Xcode.MINUS_EXPR,
+                                           alignSubscriptExpr, templateObj.getLowerAt(alignSubscriptIndex));
+    alignedArray.setAlignNormExprAt(alignNormExpr, alignSourceIndex);
 
     switch (distManner) {
       case XMPtemplate.DUPLICATION: // FIXME how implement???
