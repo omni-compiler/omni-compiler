@@ -362,10 +362,6 @@ public class Xcons
         switch(code) {
         case PLUS_EXPR:
         case MINUS_EXPR:
-            if(y.isZeroConstant())
-                return x;
-            if(code == Xcode.PLUS_EXPR && x.isZeroConstant())
-                return y;
             if(lt.isPointer() && rt.isIntegral()) {
                 t = lt;
                 break;
@@ -495,6 +491,32 @@ public class Xcons
             fatal("BinaryOp: bad type");
         default:
             fatal("BinaryOp: bad code");
+        }
+        // reduce phase
+        switch(code) {
+        case PLUS_EXPR:
+            if(x.isIntConstant() && y.isIntConstant())
+                return Int(Xcode.INT_CONSTANT, t, x.getInt() + y.getInt());
+            if(x.isZeroConstant()) {
+                if (rt.equals(t))
+                    return y;
+                else
+                    return Xcons.Cast(t, y);
+            }
+            // go through
+        case MINUS_EXPR:
+            if(code == Xcode.MINUS_EXPR) {
+                if(x.isIntConstant() && y.isIntConstant())
+                    return Int(Xcode.INT_CONSTANT, t, x.getInt() - y.getInt());
+                if(x.isZeroConstant())
+                    return Xcons.List(Xcode.UNARY_MINUS_EXPR, t, y);
+            }
+            if(y.isZeroConstant()) {
+                if (lt.equals(t))
+                    return x;
+                else
+                    return Xcons.Cast(t, x);
+            }
         }
         return Xcons.List(code, t, x, y);
     }
