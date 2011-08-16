@@ -554,6 +554,27 @@ public class XmcXmObjToXobjectTranslator extends RVisitorBase
         }
     }
     
+    private void setCommonAttributes(Xobject xobj, XmObj xmobj)
+    {
+        if(xmobj instanceof IXbLineNo) {
+            IXbLineNo i = (IXbLineNo)xmobj;
+            if(i.getLineno() != null) {
+                xobj.setLineNo(new LineNo(i.getFile(), Integer.parseInt(i.getLineno())));
+            }
+        }
+        
+        if(xmobj instanceof IXbcAnnotation) {
+            IXbcAnnotation i = (IXbcAnnotation)xmobj;
+            xobj.setIsGccSyntax(toBool(xmobj, i.getIsGccSyntax()));
+            xobj.setIsSyntaxModified(toBool(xmobj, i.getIsModified()));
+        }
+        
+        if(xmobj instanceof IXbcHasGccExtension) {
+            IXbcHasGccExtension i = (IXbcHasGccExtension)xmobj;
+            xobj.setIsGccExtension(toBool(xmobj, i.getIsGccExtension()));
+        }
+    }
+    
     private boolean enterUnaryExpr(Xcode code, IXbcUnaryExpr xmobj)
     {
         return enterAsXobjList((XmObj)xmobj, code, xmobj.getExpressions());
@@ -637,10 +658,20 @@ public class XmcXmObjToXobjectTranslator extends RVisitorBase
         return true;
     }
 
+    private Xobject toXobject(XbcArrayAddr xmobj)
+    {
+        Xobject xobj = Xcons.Symbol(Xcode.ARRAY_ADDR, getType(xmobj),
+                                    xmobj.getContent(), VarScope.get(xmobj.getScope()));
+        setCommonAttributes(xobj, xmobj);
+        return xobj;
+    }
+
     @Override
     public boolean enter(XbcArrayRef xmobj)
     {
-        enterVar(Xcode.ARRAY_REF, xmobj);
+        _xobj = Xcons.List(Xcode.ARRAY_REF, getType(xmobj),
+                           toXobject(xmobj.getArrayAddr()),
+                           toXobjList(Xcode.LIST, getType(xmobj), xmobj.getExpressions()));
         return true;
     }
 
@@ -1678,29 +1709,28 @@ public class XmcXmObjToXobjectTranslator extends RVisitorBase
     @Override
     public boolean enter(XbcSubArrayRef xmobj)
     {
-        return enterAsXobjList(xmobj, Xcode.SUB_ARRAY_REF,
-            xmobj.getExpressions(),
-            xmobj.getSubArrayRefLowerBound(),
-            xmobj.getSubArrayRefUpperBound(),
-            xmobj.getSubArrayRefStep());
+        _xobj = Xcons.List(Xcode.SUB_ARRAY_REF, getType(xmobj),
+                           toXobject(xmobj.getArrayAddr()),
+                           toXobjList(Xcode.LIST, getType(xmobj), xmobj.getSubArrayDimension()));
+        return true;
     }
 
     @Override
-    public boolean enter(XbcSubArrayRefLowerBound xmobj)
+    public boolean enter(XbcLowerBound xmobj)
     {
-        return enterAsXobjList(xmobj, Xcode.SUBA_LOWER_BOUND, xmobj.getExpressions());
+        return enterAsXobjList(xmobj, Xcode.LOWER_BOUND, xmobj.getExpressions());
     }
 
     @Override
-    public boolean enter(XbcSubArrayRefStep xmobj)
+    public boolean enter(XbcStep xmobj)
     {
-        return enterAsXobjList(xmobj, Xcode.SUBA_STEP, xmobj.getExpressions());
+        return enterAsXobjList(xmobj, Xcode.STEP, xmobj.getExpressions());
     }
 
     @Override
-    public boolean enter(XbcSubArrayRefUpperBound xmobj)
+    public boolean enter(XbcUpperBound xmobj)
     {
-        return enterAsXobjList(xmobj, Xcode.SUBA_UPPER_BOUND, xmobj.getExpressions());
+        return enterAsXobjList(xmobj, Xcode.UPPER_BOUND, xmobj.getExpressions());
     }
 
     @Override

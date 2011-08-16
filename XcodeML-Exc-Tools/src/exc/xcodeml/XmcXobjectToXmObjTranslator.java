@@ -206,10 +206,7 @@ public class XmcXobjectToXmObjTranslator
             case Xtype.FUNCTION:
                 sc = _factory.createXbcFuncAddr();
                 break;
-            case Xtype.ARRAY:
-                sc = _factory.createXbcArrayRef();
-                ((XbcArrayRef)sc).setScope(i.getScope() != null ? i.getScope().toXcodeString() : null);
-                break;
+            // case Xtype.ARRAY: FIXME needed???
             default:
                 sc = _factory.createXbcVar();
                 ((XbcVar)sc).setScope(i.getScope() != null ? i.getScope().toXcodeString() : null);
@@ -489,7 +486,7 @@ public class XmcXobjectToXmObjTranslator
                 case VAR_ADDR:
                     m = _factory.createXbcVarAddr();
                     break;
-                case ARRAY_REF:
+                //case ARRAY_REF:
                 case ARRAY_ADDR: /* illegal but convert */
                     m = _factory.createXbcArrayAddr();
                     break;
@@ -629,7 +626,7 @@ public class XmcXobjectToXmObjTranslator
 
         case VAR:
         case VAR_ADDR:
-        case ARRAY_REF:
+        // case ARRAY_REF:
         case ARRAY_ADDR: {
                 xmobj = (XmObj)transVarRef(xobj);
             }
@@ -753,30 +750,37 @@ public class XmcXobjectToXmObjTranslator
             break;
             
         // xmp syntax
-        
+        case ARRAY_REF: {
+                XbcArrayRef m = _factory.createXbcArrayRef();
+                m.setArrayAddr((XbcArrayAddr)trans(xobj.getArg(0)));
+                // FIXME correct???
+                m.setExpressions(transExpr(xobj.getArg(1)));
+                xmobj = m;
+            }
+            break;
+ 
         case SUB_ARRAY_REF: {
                 XbcSubArrayRef m = _factory.createXbcSubArrayRef();
-                m.setExpressions(transExpr(xobj.getArg(0)));
-                m.setSubArrayRefLowerBound((XbcSubArrayRefLowerBound)trans(xobj.getArg(1)));
-                m.setSubArrayRefUpperBound((XbcSubArrayRefUpperBound)trans(xobj.getArg(2)));
-                m.setSubArrayRefStep((XbcSubArrayRefStep)trans(xobj.getArg(3)));
+                m.setArrayAddr((XbcArrayAddr)trans(xobj.getArg(0)));
+                // FIXME correct???
+                m.setSubArrayDimension((IXbcSubArrayDimensionChoice)trans(xobj.getArg(1)));
                 xmobj = m;
             }
             break;
-        case SUBA_LOWER_BOUND: {
-                XbcSubArrayRefLowerBound m = _factory.createXbcSubArrayRefLowerBound();
-                m.setExpressions(transExpr(xobj.getArg(0)));
-                xmobj = m;
-            }
-            break;
-        case SUBA_UPPER_BOUND: {
-                XbcSubArrayRefUpperBound m = _factory.createXbcSubArrayRefUpperBound();
+        case LOWER_BOUND: {
+                XbcLowerBound m = _factory.createXbcLowerBound();
                 m.setExpressions(transExpr(xobj.getArg(0)));
                 xmobj = m;
             }
             break;
-        case SUBA_STEP: {
-                XbcSubArrayRefStep m = _factory.createXbcSubArrayRefStep();
+        case UPPER_BOUND: {
+                XbcUpperBound m = _factory.createXbcUpperBound();
+                m.setExpressions(transExpr(xobj.getArg(0)));
+                xmobj = m;
+            }
+            break;
+        case STEP: {
+                XbcStep m = _factory.createXbcStep();
                 m.setExpressions(transExpr(xobj.getArg(0)));
                 xmobj = m;
             }

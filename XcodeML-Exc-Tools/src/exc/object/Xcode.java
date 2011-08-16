@@ -138,9 +138,9 @@ public enum Xcode
      // -----------------
      // C: XcalableMP Syntax
     SUB_ARRAY_REF                   (  99, 'L', XbcSubArrayRef.class, null),
-    SUBA_LOWER_BOUND                ( 100, 'L', XbcSubArrayRefLowerBound.class, null),
-    SUBA_UPPER_BOUND                ( 101, 'L', XbcSubArrayRefUpperBound.class, null),
-    SUBA_STEP                       ( 102, 'L', XbcSubArrayRefStep.class, null),
+    LOWER_BOUND                     ( 100, 'L', XbcLowerBound.class, null),
+    UPPER_BOUND                     ( 101, 'L', XbcUpperBound.class, null),
+    STEP                            ( 102, 'L', XbcStep.class, null),
     CO_ARRAY_REF                    ( 103, 'L', XbcCoArrayRef.class, null),
     CO_ARRAY_ASSIGN_EXPR            ( 104, 'L', XbcCoArrayAssignExpr.class, null),
      // -----------------
