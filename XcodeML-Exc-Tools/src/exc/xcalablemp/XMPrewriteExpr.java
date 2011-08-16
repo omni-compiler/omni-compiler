@@ -26,6 +26,9 @@ public class XMPrewriteExpr {
     // rewrite parameters
     rewriteParams(fb, localXMPsymbolTable);
 
+    // rewrite declarations
+    rewriteDecls(fb, localXMPsymbolTable);
+
     // rewrite Function Exprs
     rewriteFuncExprs(fb, localXMPsymbolTable);
 
@@ -52,6 +55,27 @@ public class XMPrewriteExpr {
     }
   }
 
+  private void rewriteDecls(FunctionBlock funcBlock, XMPsymbolTable localXMPsymbolTable) {
+    topdownBlockIterator iter = new topdownBlockIterator(funcBlock);
+    for (iter.init(); !iter.end(); iter.next()) {
+      Block b = iter.getBlock();
+      BlockList bl = b.getBody();
+
+      if (bl != null) {
+        XobjList decls = (XobjList)bl.getDecls();
+        if (decls != null) {
+          try {
+            for (Xobject x : decls) {
+              rewriteExpr(x, localXMPsymbolTable);
+            }
+          } catch (XMPexception e) {
+            XMP.error(b.getLineNo(), e.getMessage());
+          }
+        }
+      }
+    }
+  }
+
   private void rewriteFuncExprs(FunctionBlock funcBlock, XMPsymbolTable localXMPsymbolTable) {
     BasicBlockExprIterator iter = new BasicBlockExprIterator(funcBlock);
     for (iter.init(); !iter.end(); iter.next()) {
@@ -70,7 +94,6 @@ public class XMPrewriteExpr {
 
     topdownXobjectIterator iter = new topdownXobjectIterator(expr);
     for (iter.init(); !iter.end(); iter.next()) {
-      Xobject newExpr = null;
       Xobject myExpr = iter.getXobject();
       if (myExpr == null) {
         continue;
