@@ -18,7 +18,7 @@ public final class XcExprStmtObj extends XcStmtObj
 {
     private XcExprObj _expr;
 
-    private boolean _needCoArrayGuard = true;
+    private boolean _needCoArrayGuard = false;
 
     /**
      * Creates XcExprStmtObj.
@@ -93,20 +93,21 @@ public final class XcExprStmtObj extends XcStmtObj
     @Override
     public final void appendCode(XmcWriter w) throws XmException
     {
-        if(_isSubArrayStmt()) {
-            XcExprObj expr = XcXmpFactory.createSuAAsgFuncCall(this);
-            w.add(expr).eos();
+//         if(_isSubArrayStmt()) {
+//             XcExprObj expr = XcXmpFactory.createSuAAsgFuncCall(this);
+//             w.add(expr).eos();
 
-        } else if(_needCoArrayGuard == false) {
-            appendNoXmpCode(w);
+//         } else
+	 if(_needCoArrayGuard == false) {
+             appendNoXmpCode(w);
 
-        } else {
+         } else {
             XcStmtObj _xmpGuardStmt = XcXmpFactory.createXmpStmt(this);
 
             _needCoArrayGuard = false;
 
             w.add(_xmpGuardStmt);
-        }
+         }
     }
 
     /**
@@ -130,12 +131,12 @@ public final class XcExprStmtObj extends XcStmtObj
                 return true;
             else
                 return false;
-        } else if(_expr instanceof XcXmpCoArrayAssignObj) {
+//         } else if(_expr instanceof XcXmpCoArrayAssignObj) {
 
-            if(((XcXmpCoArrayAssignObj)_expr).getDst() instanceof XcXmpSubArrayRefObj)
-                return true;
-            else
-                return false;
+//             if(((XcXmpCoArrayAssignObj)_expr).getDst() instanceof XcXmpSubArrayRefObj)
+//                 return true;
+//             else
+//                 return false;
         }
         return false;
     }

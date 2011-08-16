@@ -846,8 +846,10 @@ public class XmcXmObjToXobjectTranslator extends RVisitorBase
     @Override
     public boolean enter(XbcCoArrayRef xmobj)
     {
+        //boolean r = enterAsXobjList(xmobj, Xcode.CO_ARRAY_REF,
+	//new SymbolObj(xmobj.getName()));
         boolean r = enterAsXobjList(xmobj, Xcode.CO_ARRAY_REF,
-            new SymbolObj(xmobj.getName()));
+				    xmobj.getContent());
         Xobject exprs = Xcons.List();
         for(IRVisitable v : xmobj.getExpressions()) {
             exprs.add(toXobject(v));

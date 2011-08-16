@@ -4742,8 +4742,9 @@ getPriorityTypeForAssignExpr(CExprOfTypeDesc *td1, CExpr *e1,
     int a1 = ETYP_IS_ARRAY(tdo1);
     int a2 = ETYP_IS_ARRAY(tdo2);
 
-    if(a1 && a2 == 0)
-        return NULL;
+/*     if(a1 && a2 == 0) */
+/*         return NULL; */
+    if (!a1 && a2) return NULL;
 
     if(a1 && a2 && (isSubArrayRef(e1) == 0 || isSubArrayRef(e2) == 0))
         return NULL;

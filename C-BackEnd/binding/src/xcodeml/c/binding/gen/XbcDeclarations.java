@@ -63,7 +63,7 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_C.rng (Thu Sep 24 16:30:19 JST 2009)
+ * @version XcodeML_C.rng (Mon Aug 15 15:55:18 JST 2011)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbcDeclarations extends xcodeml.c.obj.XmcObj implements java.io.Serializable, Cloneable, xcodeml.c.binding.IXbcStatement, IRVisitable, IRNode {
@@ -266,12 +266,12 @@ public class XbcDeclarations extends xcodeml.c.obj.XmcObj implements java.io.Ser
         isModified_ = URelaxer.getAttributePropertyAsString(element, "is_modified");
         content_.clear();
         while (true) {
-            if (XbcFunctionDecl.isMatch(stack)) {
-                addContent(factory.createXbcFunctionDecl(stack));
+            if (XbcFunctionDefinition.isMatch(stack)) {
+                addContent(factory.createXbcFunctionDefinition(stack));
             } else if (XbcVarDecl.isMatch(stack)) {
                 addContent(factory.createXbcVarDecl(stack));
-            } else if (XbcFunctionDefinition.isMatch(stack)) {
-                addContent(factory.createXbcFunctionDefinition(stack));
+            } else if (XbcFunctionDecl.isMatch(stack)) {
+                addContent(factory.createXbcFunctionDecl(stack));
             } else {
                 break;
             }
@@ -982,11 +982,11 @@ public class XbcDeclarations extends xcodeml.c.obj.XmcObj implements java.io.Ser
         boolean $match$ = false;
         Element child;
         while (true) {
-            if (XbcFunctionDecl.isMatchHungry(target)) {
+            if (XbcFunctionDefinition.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbcVarDecl.isMatchHungry(target)) {
                 $match$ = true;
-            } else if (XbcFunctionDefinition.isMatchHungry(target)) {
+            } else if (XbcFunctionDecl.isMatchHungry(target)) {
                 $match$ = true;
             } else {
                 break;

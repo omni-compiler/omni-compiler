@@ -52,7 +52,7 @@ unsigned int s_useIntWchar              = 0;
 unsigned int s_transFuncInInit          = 0;
 unsigned int s_useXmp                   = 0;
 unsigned int s_debugSymbol				= 0;
-unsigned int s_arrayToPointer           = 1;
+unsigned int s_arrayToPointer           = 0;
 
 #define CEXPR_OPTVAL_CHARLEN 128
 

@@ -762,22 +762,46 @@ public class XmcNodeFactory extends AbstractXcodeML_CFactory
     }
 
     @Override
-    public XbcSubArrayRefLowerBound createXbcSubArrayRefLowerBound()
+    public XbcIndexRange createXbcIndexRange()
     {
-        return new XmcSubArrayRefLowerBound();
+        return new XmcIndexRange();
     }
 
     @Override
-    public XbcSubArrayRefStep createXbcSubArrayRefStep()
+    public XbcLowerBound createXbcLowerBound()
     {
-        return new XmcSubArrayRefStep();
+        return new XmcLowerBound();
     }
 
     @Override
-    public XbcSubArrayRefUpperBound createXbcSubArrayRefUpperBound()
+    public XbcUpperBound createXbcUpperBound()
     {
-        return new XmcSubArrayRefUpperBound();
+        return new XmcUpperBound();
     }
+
+    @Override
+    public XbcStep createXbcStep()
+    {
+        return new XmcStep();
+    }
+
+//     @Override
+//     public XbcSubArrayRefLowerBound createXbcSubArrayRefLowerBound()
+//     {
+//         return new XmcSubArrayRefLowerBound();
+//     }
+
+//     @Override
+//     public XbcSubArrayRefStep createXbcSubArrayRefStep()
+//     {
+//         return new XmcSubArrayRefStep();
+//     }
+
+//     @Override
+//     public XbcSubArrayRefUpperBound createXbcSubArrayRefUpperBound()
+//     {
+//         return new XmcSubArrayRefUpperBound();
+//     }
 
     @Override
     public XbcCoArrayAssignExpr createXbcCoArrayAssignExpr()

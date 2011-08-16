@@ -3656,6 +3656,25 @@ isSubArrayRef(CExpr *expr)
 }
 
 
+int
+isSubArrayRef2(CExpr *expr)
+{
+  if (EXPR_CODE(expr) != EC_ARRAY_REF)
+    return 0;
+
+  CExpr *aryExpr = EXPR_B(expr)->e_nodes[0];
+  CExpr *dim = EXPR_B(expr)->e_nodes[1];
+
+  if (EXPR_CODE(dim) != EC_ARRAY_DIMENSION)
+    return 0;
+
+  if (EXPR_L_SIZE(dim) <= 1)
+    return isSubArrayRef2(aryExpr);
+
+  return 1;
+}
+
+
 PRIVATE_STATIC CExpr*
 exprCoarrayRef0(CExpr *prim, CExpr *dims, int addPtrRef)
 {
@@ -3675,12 +3694,18 @@ exprCoarrayRef0(CExpr *prim, CExpr *dims, int addPtrRef)
                 return coExpr;
             }
         }
-    case EC_ARRAY_REF: {
+      /*    case EC_ARRAY_REF: {
             CExpr *aryExpr = EXPR_B(prim)->e_nodes[0];
             CExpr *coExpr = exprCoarrayRef0(aryExpr, dims, 0);
             EXPR_B(prim)->e_nodes[0] = coExpr;
             return prim;
-        }
+	    }*/
+    case EC_ARRAY_REF:
+    case EC_MEMBER_REF: {
+      //EXPR_UNREF(prim);
+      CExpr *coExpr = exprBinary(EC_XMP_COARRAY_REF, prim, dims);
+      return coExpr;
+    }
     default:
         addError(prim, CERR_105);
         return prim;

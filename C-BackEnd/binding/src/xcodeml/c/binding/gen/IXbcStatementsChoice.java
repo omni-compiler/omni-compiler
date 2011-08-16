@@ -41,9 +41,9 @@ import org.xml.sax.SAXException;
 
 /**
  * <b>IXbcStatementsChoice</b> is generated from XcodeML_C.rng by Relaxer.
- * Concrete classes of the interface are XbcForStatement, XbcCompoundStatement, XbcIfStatement, XbcWhileStatement, XbcDoStatement, XbcSwitchStatement, XbcGccRangedCaseLabel, XbcCaseLabel, XbcGccAsmStatement, XbcStatementLabel, XbcBreakStatement, XbcContinueStatement, XbcReturnStatement, XbcGotoStatement, XbcDefaultLabel, XbcText, XbcPragma and XbcExprStatement.
+ * Concrete classes of the interface are XbcGccAsmStatement, XbcForStatement, XbcCompoundStatement, XbcIfStatement, XbcWhileStatement, XbcDoStatement, XbcSwitchStatement, XbcGccRangedCaseLabel, XbcStatementLabel, XbcCaseLabel, XbcBreakStatement, XbcContinueStatement, XbcReturnStatement, XbcGotoStatement, XbcDefaultLabel, XbcPragma, XbcText and XbcExprStatement.
  *
- * @version XcodeML_C.rng (Thu Sep 24 16:30:19 JST 2009)
+ * @version XcodeML_C.rng (Mon Aug 15 15:55:18 JST 2011)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public interface IXbcStatementsChoice extends IRVisitable, IRNode {

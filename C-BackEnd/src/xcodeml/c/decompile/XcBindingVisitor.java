@@ -249,7 +249,7 @@ public class XcBindingVisitor extends RVisitorBase
             ident = _identTableStack.getIdent(XcSymbolKindEnum.FUNC, name);
 
             if(ident == null) {
-                if (name.startsWith("_XMP_")) return new XcIdent(name);
+                if (name.startsWith("_XCALABLEMP_M_")) return new XcIdent(name);
 
                 throw new XmBindingException((XmObj)xstr, "variable or function '" + name
                     + "' is not defined");
@@ -1732,7 +1732,23 @@ public class XcBindingVisitor extends RVisitorBase
     @Override
     public boolean enter(XbcArrayRef visitable)
     {
-        return _enterVar(visitable);
+
+        XcArrayRefObj obj = new XcArrayRefObj();
+
+	XbcArrayAddr array = visitable.getArrayAddr();
+
+	XcIdent ident = _getIdent(XcSymbolKindEnum.VAR, array);
+	XcVarObj arrayObj = new XcVarObj(ident);
+
+	obj.setType(ident.getType());
+	obj.setElementType(ident.getType().getRefType());
+	obj.setArrayAddr(arrayObj);
+
+        XcBindingVisitor visitor = _setAsNode(obj, visitable);
+
+        return _enter(visitor, visitable.getExpressions());
+
+        //return _enterVar(visitable);
     }
 
     @Override
@@ -2228,6 +2244,7 @@ public class XcBindingVisitor extends RVisitorBase
     {
         XcXmpCoArrayRefObj obj = new XcXmpCoArrayRefObj();
 
+	/*
         XbcName xname = visitable.getName();
         String name = XmStringUtil.trim(xname.getContent());
         _ensureAttr(xname, name, "name");
@@ -2241,23 +2258,85 @@ public class XcBindingVisitor extends RVisitorBase
         if((obj.getElementType().getTypeEnum() == XcTypeEnum.ARRAY) == false) {
             content = new XcRefObj.Addr(content);
         }
+	*/
 
-        obj.setContent(content);
+	IXbcCoArrayRefChoice1 coarray = visitable.getContent();
+
+	if (coarray instanceof XbcVar){
+	    XcIdent ident = _getIdent(XcSymbolKindEnum.VAR, (XbcVar)coarray);
+	    XcVarObj content = new XcVarObj(ident);
+	    obj.setType(ident.getType());
+	    obj.setElementType(ident.getType().getRefType());
+	    obj.setContent(content);
+	}
+	else if (coarray instanceof XbcArrayRef){
+	    XcArrayRefObj content = new XcArrayRefObj();
+
+	    XbcArrayAddr array = ((XbcArrayRef)coarray).getArrayAddr();
+	    XcIdent ident = _getIdent(XcSymbolKindEnum.VAR, array);
+	    XcVarObj arrayObj = new XcVarObj(ident);
+
+	    content.setType(ident.getType());
+	    content.setElementType(ident.getType().getRefType());
+	    content.setArrayAddr(arrayObj);
+
+	    XcBindingVisitor visitor = new XcBindingVisitor(_identTableStack, (XcNode)content, _scopeEnum);
+	    _enter(visitor, ((XbcArrayRef)coarray).getExpressions());
+	    
+	    obj.setType(ident.getType());
+	    obj.setElementType(ident.getType().getRefType());
+	    obj.setContent(content);
+
+        }
+	else if (coarray instanceof XbcSubArrayRef){
+	    XcXmpSubArrayRefObj content = new XcXmpSubArrayRefObj();
+
+	    XbcArrayAddr array = ((XbcSubArrayRef)coarray).getArrayAddr();
+	    XcIdent ident = _getIdent(XcSymbolKindEnum.VAR, array);
+	    XcVarObj arrayObj = new XcVarObj(ident);
+
+	    content.setType(ident.getType());
+	    content.setElementType(ident.getType().getRefType());
+	    content.setArrayAddr(arrayObj);
+
+	    XcBindingVisitor visitor = new XcBindingVisitor(_identTableStack, (XcNode)content, _scopeEnum);
+
+	    _enter(visitor, ((XbcSubArrayRef)coarray).getSubArrayDimension());
+
+	    obj.setType(ident.getType());
+	    obj.setElementType(ident.getType().getRefType());
+	    obj.setContent(content);
+
+	}
+	else if (coarray instanceof XbcMemberRef){
+	    XcIdent ident = _getIdentCompositeTypeMember((XbcMemberRef)coarray);
+	    XcRefObj.MemberRef content = new XcRefObj.MemberRef(ident);
+
+	    XcBindingVisitor visitor = new XcBindingVisitor(_identTableStack, (XcNode)content, _scopeEnum);
+	    _enter(visitor, ((XbcMemberRef)coarray).getExpressions());
+
+	    obj.setType(ident.getType());
+	    obj.setElementType(ident.getType().getRefType());
+	    obj.setContent(content);
+	}
+	else {
+            throw new XmBindingException(visitable, "content must be either Var, ArrayRef, SubArrayRef, or MemberRef.");
+	}
 
         XcBindingVisitor visitor = _setAsNode(obj, visitable);
 
         return _enter(visitor, visitable.getExpressions());
     }
 
-    @Override
-    public boolean enter(XbcCoArrayAssignExpr visitable)
-    {
-        XcXmpCoArrayAssignObj obj = new XcXmpCoArrayAssignObj();
+//     @Override
+//     public boolean enter(XbcCoArrayAssignExpr visitable)
+//     {
+//         XcXmpCoArrayAssignObj obj = new XcXmpCoArrayAssignObj();
 
-        XcBindingVisitor visitor = _setAsNode(obj, visitable);
+//         XcBindingVisitor visitor = _setAsNode(obj, visitable);
 
-        return _enter(visitor, visitable.getExpressions1(), visitable.getExpressions2());
-    }
+//         return _enter(visitor, visitable.getExpressions1(), visitable.getExpressions2());
+//     }
 
     @Override
     public boolean enter(XbcCoArrayType visitable)
@@ -2270,61 +2349,124 @@ public class XcBindingVisitor extends RVisitorBase
         return _enterArrayType((XcArrayLikeType)type, (IXbcArrayType)visitable);
     }
 
+//     @Override
+//     public boolean enter(XbcSubArrayRef visitable)
+//     {
+//         XcXmpSubArrayRefObj obj = new XcXmpSubArrayRefObj();
+
+//         String typeId = _getChildTypeId(visitable.getExpressions());
+
+//         XcType type = null;
+//         try {
+//             type = _identTableStack.getRealType(_identTableStack.getType(typeId));
+//         } catch(XmException e) {
+//             throw new XmBindingException(visitable, e);
+//         }
+
+//         if(type == null || type.getTypeEnum() != XcTypeEnum.ARRAY)
+//             throw new XmBindingException(visitable, "invalid expression.");
+
+//         obj.setArrayType(type);
+
+//         XcBindingVisitor visitor = _setAsNode(obj, visitable);
+
+//         _enter(visitor, visitable.getExpressions());
+//         _enter(visitor, visitable.getSubArrayRefLowerBound());
+//         _enter(visitor, visitable.getSubArrayRefUpperBound());
+//         _enter(visitor, visitable.getSubArrayRefStep());
+
+//         return true;
+//     }
+
     @Override
     public boolean enter(XbcSubArrayRef visitable)
     {
         XcXmpSubArrayRefObj obj = new XcXmpSubArrayRefObj();
 
-        String typeId = _getChildTypeId(visitable.getExpressions());
+	XbcArrayAddr array = visitable.getArrayAddr();
 
-        XcType type = null;
-        try {
-            type = _identTableStack.getRealType(_identTableStack.getType(typeId));
-        } catch(XmException e) {
-            throw new XmBindingException(visitable, e);
-        }
+	XcIdent ident = _getIdent(XcSymbolKindEnum.VAR, array);
+	XcVarObj arrayObj = new XcVarObj(ident);
 
-        if(type == null || type.getTypeEnum() != XcTypeEnum.ARRAY)
-            throw new XmBindingException(visitable, "invalid expression.");
-
-        obj.setArrayType(type);
+	obj.setType(ident.getType());
+	obj.setElementType(ident.getType().getRefType());
+	obj.setArrayAddr(arrayObj);
 
         XcBindingVisitor visitor = _setAsNode(obj, visitable);
 
-        _enter(visitor, visitable.getExpressions());
-        _enter(visitor, visitable.getSubArrayRefLowerBound());
-        _enter(visitor, visitable.getSubArrayRefUpperBound());
-        _enter(visitor, visitable.getSubArrayRefStep());
+	//        _enter(visitor, visitable.getArrayAddr());
+        _enter(visitor, visitable.getSubArrayDimension());
 
         return true;
     }
 
     @Override
-    public boolean enter(XbcSubArrayRefUpperBound visitable)
+    public boolean enter(XbcIndexRange visitable)
     {
-        XcXmpSubArrayRefObj.UpperBound obj = new XcXmpSubArrayRefObj.UpperBound();
+        XcIndexRangeObj obj = new XcIndexRangeObj();
+
+        XcBindingVisitor visitor = _setAsNode(obj, visitable);
+
+	_enter(visitor, visitable.getLowerBound());
+	_enter(visitor, visitable.getUpperBound());
+	_enter(visitor, visitable.getStep());
+
+        return true;
+    }
+
+    @Override
+    public boolean enter(XbcLowerBound visitable)
+    {
+        XcIndexRangeObj.LowerBound obj = new XcIndexRangeObj.LowerBound();
         XcBindingVisitor visitor = new XcBindingVisitor(_identTableStack, obj, _scopeEnum);
         _enter(visitor, visitable.getExpressions());
         return _setAsLeaf(obj, visitable);
     }
 
     @Override
-    public boolean enter(XbcSubArrayRefLowerBound visitable)
+    public boolean enter(XbcUpperBound visitable)
     {
-        XcXmpSubArrayRefObj.LowerBound obj = new XcXmpSubArrayRefObj.LowerBound();
+        XcIndexRangeObj.UpperBound obj = new XcIndexRangeObj.UpperBound();
         XcBindingVisitor visitor = new XcBindingVisitor(_identTableStack, obj, _scopeEnum);
         _enter(visitor, visitable.getExpressions());
         return _setAsLeaf(obj, visitable);
     }
 
     @Override
-    public boolean enter(XbcSubArrayRefStep visitable)
+    public boolean enter(XbcStep visitable)
     {
-        XcXmpSubArrayRefObj.Step obj = new XcXmpSubArrayRefObj.Step();
+        XcIndexRangeObj.Step obj = new XcIndexRangeObj.Step();
         XcBindingVisitor visitor = new XcBindingVisitor(_identTableStack, obj, _scopeEnum);
         _enter(visitor, visitable.getExpressions());
         return _setAsLeaf(obj, visitable);
     }
+
+//     @Override
+//     public boolean enter(XbcSubArrayRefUpperBound visitable)
+//     {
+//         XcXmpSubArrayRefObj.UpperBound obj = new XcXmpSubArrayRefObj.UpperBound();
+//         XcBindingVisitor visitor = new XcBindingVisitor(_identTableStack, obj, _scopeEnum);
+//         _enter(visitor, visitable.getExpressions());
+//         return _setAsLeaf(obj, visitable);
+//     }
+
+//     @Override
+//     public boolean enter(XbcSubArrayRefLowerBound visitable)
+//     {
+//         XcXmpSubArrayRefObj.LowerBound obj = new XcXmpSubArrayRefObj.LowerBound();
+//         XcBindingVisitor visitor = new XcBindingVisitor(_identTableStack, obj, _scopeEnum);
+//         _enter(visitor, visitable.getExpressions());
+//         return _setAsLeaf(obj, visitable);
+//     }
+
+//     @Override
+//     public boolean enter(XbcSubArrayRefStep visitable)
+//     {
+//         XcXmpSubArrayRefObj.Step obj = new XcXmpSubArrayRefObj.Step();
+//         XcBindingVisitor visitor = new XcBindingVisitor(_identTableStack, obj, _scopeEnum);
+//         _enter(visitor, visitable.getExpressions());
+//         return _setAsLeaf(obj, visitable);
+//     }
     
     public void pushParamListIdentTable(XcParamList paramList)
     {

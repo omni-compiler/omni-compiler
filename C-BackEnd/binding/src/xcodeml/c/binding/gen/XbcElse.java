@@ -53,7 +53,7 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_C.rng (Thu Sep 24 16:30:19 JST 2009)
+ * @version XcodeML_C.rng (Mon Aug 15 15:55:18 JST 2011)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbcElse extends xcodeml.c.obj.XmcObj implements java.io.Serializable, Cloneable, IRVisitable, IRNode {
@@ -227,7 +227,9 @@ public class XbcElse extends xcodeml.c.obj.XmcObj implements java.io.Serializabl
     private void init(Element element) {
         IXcodeML_CFactory factory = XcodeML_CFactory.getFactory();
         RStack stack = new RStack(element);
-        if (XbcForStatement.isMatch(stack)) {
+        if (XbcGccAsmStatement.isMatch(stack)) {
+            setStatements(factory.createXbcGccAsmStatement(stack));
+        } else if (XbcForStatement.isMatch(stack)) {
             setStatements(factory.createXbcForStatement(stack));
         } else if (XbcCompoundStatement.isMatch(stack)) {
             setStatements(factory.createXbcCompoundStatement(stack));
@@ -241,10 +243,10 @@ public class XbcElse extends xcodeml.c.obj.XmcObj implements java.io.Serializabl
             setStatements(factory.createXbcSwitchStatement(stack));
         } else if (XbcGccRangedCaseLabel.isMatch(stack)) {
             setStatements(factory.createXbcGccRangedCaseLabel(stack));
+        } else if (XbcStatementLabel.isMatch(stack)) {
+            setStatements(factory.createXbcStatementLabel(stack));
         } else if (XbcCaseLabel.isMatch(stack)) {
             setStatements(factory.createXbcCaseLabel(stack));
-        } else if (XbcGccAsmStatement.isMatch(stack)) {
-            setStatements(factory.createXbcGccAsmStatement(stack));
         } else if (XbcBreakStatement.isMatch(stack)) {
             setStatements(factory.createXbcBreakStatement(stack));
         } else if (XbcContinueStatement.isMatch(stack)) {
@@ -255,14 +257,12 @@ public class XbcElse extends xcodeml.c.obj.XmcObj implements java.io.Serializabl
             setStatements(factory.createXbcGotoStatement(stack));
         } else if (XbcDefaultLabel.isMatch(stack)) {
             setStatements(factory.createXbcDefaultLabel(stack));
-        } else if (XbcText.isMatch(stack)) {
-            setStatements(factory.createXbcText(stack));
         } else if (XbcPragma.isMatch(stack)) {
             setStatements(factory.createXbcPragma(stack));
+        } else if (XbcText.isMatch(stack)) {
+            setStatements(factory.createXbcText(stack));
         } else if (XbcExprStatement.isMatch(stack)) {
             setStatements(factory.createXbcExprStatement(stack));
-        } else if (XbcStatementLabel.isMatch(stack)) {
-            setStatements(factory.createXbcStatementLabel(stack));
         } else {
         }
     }
@@ -574,7 +574,9 @@ public class XbcElse extends xcodeml.c.obj.XmcObj implements java.io.Serializabl
         RStack target = new RStack(element);
         boolean $match$ = false;
         Element child;
-        if (XbcForStatement.isMatchHungry(target)) {
+        if (XbcGccAsmStatement.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcForStatement.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcCompoundStatement.isMatchHungry(target)) {
             $match$ = true;
@@ -588,9 +590,9 @@ public class XbcElse extends xcodeml.c.obj.XmcObj implements java.io.Serializabl
             $match$ = true;
         } else if (XbcGccRangedCaseLabel.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcCaseLabel.isMatchHungry(target)) {
+        } else if (XbcStatementLabel.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcGccAsmStatement.isMatchHungry(target)) {
+        } else if (XbcCaseLabel.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcBreakStatement.isMatchHungry(target)) {
             $match$ = true;
@@ -602,13 +604,11 @@ public class XbcElse extends xcodeml.c.obj.XmcObj implements java.io.Serializabl
             $match$ = true;
         } else if (XbcDefaultLabel.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcText.isMatchHungry(target)) {
-            $match$ = true;
         } else if (XbcPragma.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcExprStatement.isMatchHungry(target)) {
+        } else if (XbcText.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcStatementLabel.isMatchHungry(target)) {
+        } else if (XbcExprStatement.isMatchHungry(target)) {
             $match$ = true;
         } else {
         }

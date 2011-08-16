@@ -40,51 +40,25 @@ import org.xml.sax.*;
  * 
  * <!-- for programmer
  * <element java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr" name="subArrayRef">
- *   <ref name="expressions"/>
- *   <optional>
- *     <element java:extends="xcodeml.c.obj.XmcObj" name="lowerBound">
- *       <ref name="expressions"/>
- *     </element>
- *   </optional>
- *   <optional>
- *     <element java:extends="xcodeml.c.obj.XmcObj" name="upperBound">
- *       <ref name="expressions"/>
- *     </element>
- *   </optional>
- *   <optional>
- *     <element java:extends="xcodeml.c.obj.XmcObj" name="step">
- *       <ref name="expressions"/>
- *     </element>
- *   </optional>
  *   <ref name="BaseExpression"/>
+ *   <ref name="varRefExpression"/>
+ *   <ref name="arrayAddr"/>
+ *   <ref name="subArrayDimension"/>
  * </element>
  * -->
  * <!-- for javadoc -->
  * <pre> &lt;element java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr" name="subArrayRef"&gt;
- *   &lt;ref name="expressions"/&gt;
- *   &lt;optional&gt;
- *     &lt;element java:extends="xcodeml.c.obj.XmcObj" name="lowerBound"&gt;
- *       &lt;ref name="expressions"/&gt;
- *     &lt;/element&gt;
- *   &lt;/optional&gt;
- *   &lt;optional&gt;
- *     &lt;element java:extends="xcodeml.c.obj.XmcObj" name="upperBound"&gt;
- *       &lt;ref name="expressions"/&gt;
- *     &lt;/element&gt;
- *   &lt;/optional&gt;
- *   &lt;optional&gt;
- *     &lt;element java:extends="xcodeml.c.obj.XmcObj" name="step"&gt;
- *       &lt;ref name="expressions"/&gt;
- *     &lt;/element&gt;
- *   &lt;/optional&gt;
  *   &lt;ref name="BaseExpression"/&gt;
+ *   &lt;ref name="varRefExpression"/&gt;
+ *   &lt;ref name="arrayAddr"/&gt;
+ *   &lt;ref name="subArrayDimension"/&gt;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_C.rng (Thu Sep 24 16:30:18 JST 2009)
+ * @version XcodeML_C.rng (Mon Aug 15 15:55:17 JST 2011)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
-public class XbcSubArrayRef extends xcodeml.c.obj.XmcObj implements java.io.Serializable, Cloneable, xcodeml.c.binding.IXbcTypedExpr, IRVisitable, IRNode, IXbcExpressionsChoice, IXbcBuiltinOpChoice, IXbcValueChoice, IXbcCastExprChoice, IXbcExprOrTypeChoice, IXbcDesignatedValueChoice, IXbcCompoundLiteralChoice, IXbcGotoStatementChoice {
+public class XbcSubArrayRef extends xcodeml.c.obj.XmcObj implements java.io.Serializable, Cloneable, IXbcValueChoice, IXbcCoArrayRefChoice1, IXbcCastExprChoice, IXbcExprOrTypeChoice, IXbcCompoundLiteralChoice, IXbcDesignatedValueChoice, IXbcGotoStatementChoice, IXbcSubArrayDimensionChoice, xcodeml.c.binding.IXbcTypedExpr, IRVisitable, IRNode, IXbcBuiltinOpChoice, IXbcExpressionsChoice {
     public static final String ISGCCSYNTAX_0 = "0";
     public static final String ISGCCSYNTAX_1 = "1";
     public static final String ISGCCSYNTAX_TRUE = "true";
@@ -93,14 +67,17 @@ public class XbcSubArrayRef extends xcodeml.c.obj.XmcObj implements java.io.Seri
     public static final String ISMODIFIED_1 = "1";
     public static final String ISMODIFIED_TRUE = "true";
     public static final String ISMODIFIED_FALSE = "false";
+    public static final String SCOPE_GLOBAL = "global";
+    public static final String SCOPE_LOCAL = "local";
+    public static final String SCOPE_PARAM = "param";
 
     private String type_;
     private String isGccSyntax_;
     private String isModified_;
-    private IXbcExpressionsChoice expressions_;
-    private XbcSubArrayRefLowerBound subArrayRefLowerBound_;
-    private XbcSubArrayRefUpperBound subArrayRefUpperBound_;
-    private XbcSubArrayRefStep subArrayRefStep_;
+    private String scope_;
+    private XbcArrayAddr arrayAddr_;
+    // List<IXbcSubArrayDimensionChoice>
+    private java.util.List subArrayDimension_ = new java.util.ArrayList();
     private IRNode parentRNode_;
 
     /**
@@ -232,17 +209,14 @@ public class XbcSubArrayRef extends xcodeml.c.obj.XmcObj implements java.io.Seri
         setType(source.getType());
         setIsGccSyntax(source.getIsGccSyntax());
         setIsModified(source.getIsModified());
-        if (source.expressions_ != null) {
-            setExpressions((IXbcExpressionsChoice)source.getExpressions().clone());
+        setScope(source.getScope());
+        if (source.arrayAddr_ != null) {
+            setArrayAddr((XbcArrayAddr)source.getArrayAddr().clone());
         }
-        if (source.subArrayRefLowerBound_ != null) {
-            setSubArrayRefLowerBound((XbcSubArrayRefLowerBound)source.getSubArrayRefLowerBound().clone());
-        }
-        if (source.subArrayRefUpperBound_ != null) {
-            setSubArrayRefUpperBound((XbcSubArrayRefUpperBound)source.getSubArrayRefUpperBound().clone());
-        }
-        if (source.subArrayRefStep_ != null) {
-            setSubArrayRefStep((XbcSubArrayRefStep)source.getSubArrayRefStep().clone());
+        this.subArrayDimension_.clear();
+        size = source.subArrayDimension_.size();
+        for (int i = 0;i < size;i++) {
+            addSubArrayDimension((IXbcSubArrayDimensionChoice)source.getSubArrayDimension(i).clone());
         }
     }
 
@@ -285,147 +259,145 @@ public class XbcSubArrayRef extends xcodeml.c.obj.XmcObj implements java.io.Seri
         type_ = URelaxer.getAttributePropertyAsString(element, "type");
         isGccSyntax_ = URelaxer.getAttributePropertyAsString(element, "is_gccSyntax");
         isModified_ = URelaxer.getAttributePropertyAsString(element, "is_modified");
-        if (XbcBuiltinOp.isMatch(stack)) {
-            setExpressions(factory.createXbcBuiltinOp(stack));
-        } else if (XbcFunctionCall.isMatch(stack)) {
-            setExpressions(factory.createXbcFunctionCall(stack));
-        } else if (XbcGccCompoundExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcGccCompoundExpr(stack));
-        } else if (XbcCoArrayRef.isMatch(stack)) {
-            setExpressions(factory.createXbcCoArrayRef(stack));
-        } else if (XbcStringConstant.isMatch(stack)) {
-            setExpressions(factory.createXbcStringConstant(stack));
-        } else if (XbcVar.isMatch(stack)) {
-            setExpressions(factory.createXbcVar(stack));
-        } else if (XbcArrayRef.isMatch(stack)) {
-            setExpressions(factory.createXbcArrayRef(stack));
-        } else if (XbcArrayAddr.isMatch(stack)) {
-            setExpressions(factory.createXbcArrayAddr(stack));
-        } else if (XbcCastExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcCastExpr(stack));
-        } else if (XbcCompoundValueExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcCompoundValueExpr(stack));
-        } else if (XbcCompoundValueAddrExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcCompoundValueAddrExpr(stack));
-        } else if (XbcVarAddr.isMatch(stack)) {
-            setExpressions(factory.createXbcVarAddr(stack));
-        } else if (XbcCommaExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcCommaExpr(stack));
-        } else if (XbcIntConstant.isMatch(stack)) {
-            setExpressions(factory.createXbcIntConstant(stack));
-        } else if (XbcFloatConstant.isMatch(stack)) {
-            setExpressions(factory.createXbcFloatConstant(stack));
-        } else if (XbcLonglongConstant.isMatch(stack)) {
-            setExpressions(factory.createXbcLonglongConstant(stack));
-        } else if (XbcMoeConstant.isMatch(stack)) {
-            setExpressions(factory.createXbcMoeConstant(stack));
-        } else if (XbcFuncAddr.isMatch(stack)) {
-            setExpressions(factory.createXbcFuncAddr(stack));
-        } else if (XbcSizeOfExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcSizeOfExpr(stack));
-        } else if (XbcGccAlignOfExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcGccAlignOfExpr(stack));
-        } else if (XbcGccLabelAddr.isMatch(stack)) {
-            setExpressions(factory.createXbcGccLabelAddr(stack));
-        } else if (XbcCoArrayAssignExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcCoArrayAssignExpr(stack));
-        } else if (XbcSubArrayRef.isMatch(stack)) {
-            setExpressions(factory.createXbcSubArrayRef(stack));
-        } else if (XbcMemberAddr.isMatch(stack)) {
-            setExpressions(factory.createXbcMemberAddr(stack));
-        } else if (XbcMemberRef.isMatch(stack)) {
-            setExpressions(factory.createXbcMemberRef(stack));
-        } else if (XbcMemberArrayRef.isMatch(stack)) {
-            setExpressions(factory.createXbcMemberArrayRef(stack));
-        } else if (XbcMemberArrayAddr.isMatch(stack)) {
-            setExpressions(factory.createXbcMemberArrayAddr(stack));
-        } else if (XbcBitXorExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcBitXorExpr(stack));
-        } else if (XbcPointerRef.isMatch(stack)) {
-            setExpressions(factory.createXbcPointerRef(stack));
-        } else if (XbcAssignExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAssignExpr(stack));
-        } else if (XbcPlusExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcPlusExpr(stack));
-        } else if (XbcMinusExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcMinusExpr(stack));
-        } else if (XbcMulExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcMulExpr(stack));
-        } else if (XbcDivExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcDivExpr(stack));
-        } else if (XbcModExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcModExpr(stack));
-        } else if (XbcLshiftExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLshiftExpr(stack));
-        } else if (XbcRshiftExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcRshiftExpr(stack));
-        } else if (XbcBitAndExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcBitAndExpr(stack));
-        } else if (XbcBitOrExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcBitOrExpr(stack));
-        } else if (XbcAsgPlusExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgPlusExpr(stack));
-        } else if (XbcAsgMinusExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgMinusExpr(stack));
-        } else if (XbcAsgMulExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgMulExpr(stack));
-        } else if (XbcAsgDivExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgDivExpr(stack));
-        } else if (XbcAsgModExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgModExpr(stack));
-        } else if (XbcAsgLshiftExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgLshiftExpr(stack));
-        } else if (XbcAsgRshiftExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgRshiftExpr(stack));
-        } else if (XbcAsgBitAndExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgBitAndExpr(stack));
-        } else if (XbcAsgBitOrExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgBitOrExpr(stack));
-        } else if (XbcAsgBitXorExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgBitXorExpr(stack));
-        } else if (XbcLogEQExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogEQExpr(stack));
-        } else if (XbcLogNEQExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogNEQExpr(stack));
-        } else if (XbcLogGEExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogGEExpr(stack));
-        } else if (XbcLogGTExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogGTExpr(stack));
-        } else if (XbcLogLEExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogLEExpr(stack));
-        } else if (XbcLogLTExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogLTExpr(stack));
-        } else if (XbcLogAndExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogAndExpr(stack));
-        } else if (XbcLogOrExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogOrExpr(stack));
-        } else if (XbcUnaryMinusExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcUnaryMinusExpr(stack));
-        } else if (XbcBitNotExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcBitNotExpr(stack));
-        } else if (XbcLogNotExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogNotExpr(stack));
-        } else if (XbcPostIncrExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcPostIncrExpr(stack));
-        } else if (XbcPostDecrExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcPostDecrExpr(stack));
-        } else if (XbcPreIncrExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcPreIncrExpr(stack));
-        } else if (XbcPreDecrExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcPreDecrExpr(stack));
-        } else if (XbcCondExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcCondExpr(stack));
-        } else {
-            throw (new IllegalArgumentException());
-        }
-        if (XbcSubArrayRefLowerBound.isMatch(stack)) {
-            setSubArrayRefLowerBound(factory.createXbcSubArrayRefLowerBound(stack));
-        }
-        if (XbcSubArrayRefUpperBound.isMatch(stack)) {
-            setSubArrayRefUpperBound(factory.createXbcSubArrayRefUpperBound(stack));
-        }
-        if (XbcSubArrayRefStep.isMatch(stack)) {
-            setSubArrayRefStep(factory.createXbcSubArrayRefStep(stack));
+        scope_ = URelaxer.getAttributePropertyAsString(element, "scope");
+        setArrayAddr(factory.createXbcArrayAddr(stack));
+        subArrayDimension_.clear();
+        while (true) {
+            if (XbcBuiltinOp.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcBuiltinOp(stack));
+            } else if (XbcArrayRef.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcArrayRef(stack));
+            } else if (XbcFunctionCall.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcFunctionCall(stack));
+            } else if (XbcGccCompoundExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcGccCompoundExpr(stack));
+            } else if (XbcSubArrayRef.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcSubArrayRef(stack));
+            } else if (XbcCoArrayRef.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcCoArrayRef(stack));
+            } else if (XbcCastExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcCastExpr(stack));
+            } else if (XbcStringConstant.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcStringConstant(stack));
+            } else if (XbcVar.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcVar(stack));
+            } else if (XbcVarAddr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcVarAddr(stack));
+            } else if (XbcArrayAddr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcArrayAddr(stack));
+            } else if (XbcCompoundValueExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcCompoundValueExpr(stack));
+            } else if (XbcCompoundValueAddrExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcCompoundValueAddrExpr(stack));
+            } else if (XbcIndexRange.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcIndexRange(stack));
+            } else if (XbcIntConstant.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcIntConstant(stack));
+            } else if (XbcFloatConstant.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcFloatConstant(stack));
+            } else if (XbcLonglongConstant.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcLonglongConstant(stack));
+            } else if (XbcMoeConstant.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcMoeConstant(stack));
+            } else if (XbcFuncAddr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcFuncAddr(stack));
+            } else if (XbcSizeOfExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcSizeOfExpr(stack));
+            } else if (XbcGccAlignOfExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcGccAlignOfExpr(stack));
+            } else if (XbcGccLabelAddr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcGccLabelAddr(stack));
+            } else if (XbcCoArrayAssignExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcCoArrayAssignExpr(stack));
+            } else if (XbcMemberAddr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcMemberAddr(stack));
+            } else if (XbcMemberRef.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcMemberRef(stack));
+            } else if (XbcMemberArrayRef.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcMemberArrayRef(stack));
+            } else if (XbcMemberArrayAddr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcMemberArrayAddr(stack));
+            } else if (XbcPointerRef.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcPointerRef(stack));
+            } else if (XbcAssignExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcAssignExpr(stack));
+            } else if (XbcPlusExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcPlusExpr(stack));
+            } else if (XbcMinusExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcMinusExpr(stack));
+            } else if (XbcMulExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcMulExpr(stack));
+            } else if (XbcDivExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcDivExpr(stack));
+            } else if (XbcModExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcModExpr(stack));
+            } else if (XbcLshiftExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcLshiftExpr(stack));
+            } else if (XbcRshiftExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcRshiftExpr(stack));
+            } else if (XbcBitAndExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcBitAndExpr(stack));
+            } else if (XbcBitOrExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcBitOrExpr(stack));
+            } else if (XbcBitXorExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcBitXorExpr(stack));
+            } else if (XbcAsgPlusExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcAsgPlusExpr(stack));
+            } else if (XbcAsgMinusExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcAsgMinusExpr(stack));
+            } else if (XbcAsgMulExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcAsgMulExpr(stack));
+            } else if (XbcAsgDivExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcAsgDivExpr(stack));
+            } else if (XbcAsgModExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcAsgModExpr(stack));
+            } else if (XbcAsgLshiftExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcAsgLshiftExpr(stack));
+            } else if (XbcAsgRshiftExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcAsgRshiftExpr(stack));
+            } else if (XbcAsgBitAndExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcAsgBitAndExpr(stack));
+            } else if (XbcAsgBitOrExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcAsgBitOrExpr(stack));
+            } else if (XbcAsgBitXorExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcAsgBitXorExpr(stack));
+            } else if (XbcLogEQExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcLogEQExpr(stack));
+            } else if (XbcLogNEQExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcLogNEQExpr(stack));
+            } else if (XbcLogGEExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcLogGEExpr(stack));
+            } else if (XbcLogGTExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcLogGTExpr(stack));
+            } else if (XbcLogLEExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcLogLEExpr(stack));
+            } else if (XbcLogLTExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcLogLTExpr(stack));
+            } else if (XbcLogAndExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcLogAndExpr(stack));
+            } else if (XbcLogOrExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcLogOrExpr(stack));
+            } else if (XbcUnaryMinusExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcUnaryMinusExpr(stack));
+            } else if (XbcBitNotExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcBitNotExpr(stack));
+            } else if (XbcLogNotExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcLogNotExpr(stack));
+            } else if (XbcCommaExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcCommaExpr(stack));
+            } else if (XbcPostIncrExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcPostIncrExpr(stack));
+            } else if (XbcPostDecrExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcPostDecrExpr(stack));
+            } else if (XbcPreIncrExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcPreIncrExpr(stack));
+            } else if (XbcPreDecrExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcPreDecrExpr(stack));
+            } else if (XbcCondExpr.isMatch(stack)) {
+                addSubArrayDimension(factory.createXbcCondExpr(stack));
+            } else {
+                break;
+            }
         }
     }
 
@@ -461,15 +433,14 @@ public class XbcSubArrayRef extends xcodeml.c.obj.XmcObj implements java.io.Seri
         if (this.isModified_ != null) {
             URelaxer.setAttributePropertyByString(element, "is_modified", this.isModified_);
         }
-        this.expressions_.makeElement(element);
-        if (this.subArrayRefLowerBound_ != null) {
-            this.subArrayRefLowerBound_.makeElement(element);
+        if (this.scope_ != null) {
+            URelaxer.setAttributePropertyByString(element, "scope", this.scope_);
         }
-        if (this.subArrayRefUpperBound_ != null) {
-            this.subArrayRefUpperBound_.makeElement(element);
-        }
-        if (this.subArrayRefStep_ != null) {
-            this.subArrayRefStep_.makeElement(element);
+        this.arrayAddr_.makeElement(element);
+        size = this.subArrayDimension_.size();
+        for (int i = 0;i < size;i++) {
+            IXbcSubArrayDimensionChoice value = (IXbcSubArrayDimensionChoice)this.subArrayDimension_.get(i);
+            value.makeElement(element);
         }
         parent.appendChild(element);
     }
@@ -614,87 +585,177 @@ public class XbcSubArrayRef extends xcodeml.c.obj.XmcObj implements java.io.Seri
     }
 
     /**
-     * Gets the IXbcExpressionsChoice property <b>expressions</b>.
+     * Gets the String property <b>scope</b>.
      *
-     * @return IXbcExpressionsChoice
+     * @return String
      */
-    public final IXbcExpressionsChoice getExpressions() {
-        return (expressions_);
+    public final String getScope() {
+        return (scope_);
     }
 
     /**
-     * Sets the IXbcExpressionsChoice property <b>expressions</b>.
+     * Sets the String property <b>scope</b>.
      *
-     * @param expressions
+     * @param scope
      */
-    public final void setExpressions(IXbcExpressionsChoice expressions) {
-        this.expressions_ = expressions;
-        if (expressions != null) {
-            expressions.rSetParentRNode(this);
+    public final void setScope(String scope) {
+        this.scope_ = scope;
+    }
+
+    /**
+     * Gets the XbcArrayAddr property <b>arrayAddr</b>.
+     *
+     * @return XbcArrayAddr
+     */
+    public final XbcArrayAddr getArrayAddr() {
+        return (arrayAddr_);
+    }
+
+    /**
+     * Sets the XbcArrayAddr property <b>arrayAddr</b>.
+     *
+     * @param arrayAddr
+     */
+    public final void setArrayAddr(XbcArrayAddr arrayAddr) {
+        this.arrayAddr_ = arrayAddr;
+        if (arrayAddr != null) {
+            arrayAddr.rSetParentRNode(this);
         }
     }
 
     /**
-     * Gets the XbcSubArrayRefLowerBound property <b>subArrayRefLowerBound</b>.
+     * Gets the IXbcSubArrayDimensionChoice property <b>subArrayDimension</b>.
      *
-     * @return XbcSubArrayRefLowerBound
+     * @return IXbcSubArrayDimensionChoice[]
      */
-    public final XbcSubArrayRefLowerBound getSubArrayRefLowerBound() {
-        return (subArrayRefLowerBound_);
+    public final IXbcSubArrayDimensionChoice[] getSubArrayDimension() {
+        IXbcSubArrayDimensionChoice[] array = new IXbcSubArrayDimensionChoice[subArrayDimension_.size()];
+        return ((IXbcSubArrayDimensionChoice[])subArrayDimension_.toArray(array));
     }
 
     /**
-     * Sets the XbcSubArrayRefLowerBound property <b>subArrayRefLowerBound</b>.
+     * Sets the IXbcSubArrayDimensionChoice property <b>subArrayDimension</b>.
      *
-     * @param subArrayRefLowerBound
+     * @param subArrayDimension
      */
-    public final void setSubArrayRefLowerBound(XbcSubArrayRefLowerBound subArrayRefLowerBound) {
-        this.subArrayRefLowerBound_ = subArrayRefLowerBound;
-        if (subArrayRefLowerBound != null) {
-            subArrayRefLowerBound.rSetParentRNode(this);
+    public final void setSubArrayDimension(IXbcSubArrayDimensionChoice[] subArrayDimension) {
+        this.subArrayDimension_.clear();
+        for (int i = 0;i < subArrayDimension.length;i++) {
+            addSubArrayDimension(subArrayDimension[i]);
+        }
+        for (int i = 0;i < subArrayDimension.length;i++) {
+            subArrayDimension[i].rSetParentRNode(this);
         }
     }
 
     /**
-     * Gets the XbcSubArrayRefUpperBound property <b>subArrayRefUpperBound</b>.
+     * Sets the IXbcSubArrayDimensionChoice property <b>subArrayDimension</b>.
      *
-     * @return XbcSubArrayRefUpperBound
+     * @param subArrayDimension
      */
-    public final XbcSubArrayRefUpperBound getSubArrayRefUpperBound() {
-        return (subArrayRefUpperBound_);
-    }
-
-    /**
-     * Sets the XbcSubArrayRefUpperBound property <b>subArrayRefUpperBound</b>.
-     *
-     * @param subArrayRefUpperBound
-     */
-    public final void setSubArrayRefUpperBound(XbcSubArrayRefUpperBound subArrayRefUpperBound) {
-        this.subArrayRefUpperBound_ = subArrayRefUpperBound;
-        if (subArrayRefUpperBound != null) {
-            subArrayRefUpperBound.rSetParentRNode(this);
+    public final void setSubArrayDimension(IXbcSubArrayDimensionChoice subArrayDimension) {
+        this.subArrayDimension_.clear();
+        addSubArrayDimension(subArrayDimension);
+        if (subArrayDimension != null) {
+            subArrayDimension.rSetParentRNode(this);
         }
     }
 
     /**
-     * Gets the XbcSubArrayRefStep property <b>subArrayRefStep</b>.
+     * Adds the IXbcSubArrayDimensionChoice property <b>subArrayDimension</b>.
      *
-     * @return XbcSubArrayRefStep
+     * @param subArrayDimension
      */
-    public final XbcSubArrayRefStep getSubArrayRefStep() {
-        return (subArrayRefStep_);
+    public final void addSubArrayDimension(IXbcSubArrayDimensionChoice subArrayDimension) {
+        this.subArrayDimension_.add(subArrayDimension);
+        if (subArrayDimension != null) {
+            subArrayDimension.rSetParentRNode(this);
+        }
     }
 
     /**
-     * Sets the XbcSubArrayRefStep property <b>subArrayRefStep</b>.
+     * Adds the IXbcSubArrayDimensionChoice property <b>subArrayDimension</b>.
      *
-     * @param subArrayRefStep
+     * @param subArrayDimension
      */
-    public final void setSubArrayRefStep(XbcSubArrayRefStep subArrayRefStep) {
-        this.subArrayRefStep_ = subArrayRefStep;
-        if (subArrayRefStep != null) {
-            subArrayRefStep.rSetParentRNode(this);
+    public final void addSubArrayDimension(IXbcSubArrayDimensionChoice[] subArrayDimension) {
+        for (int i = 0;i < subArrayDimension.length;i++) {
+            addSubArrayDimension(subArrayDimension[i]);
         }
+        for (int i = 0;i < subArrayDimension.length;i++) {
+            subArrayDimension[i].rSetParentRNode(this);
+        }
+    }
+
+    /**
+     * Gets number of the IXbcSubArrayDimensionChoice property <b>subArrayDimension</b>.
+     *
+     * @return int
+     */
+    public final int sizeSubArrayDimension() {
+        return (subArrayDimension_.size());
+    }
+
+    /**
+     * Gets the IXbcSubArrayDimensionChoice property <b>subArrayDimension</b> by index.
+     *
+     * @param index
+     * @return IXbcSubArrayDimensionChoice
+     */
+    public final IXbcSubArrayDimensionChoice getSubArrayDimension(int index) {
+        return ((IXbcSubArrayDimensionChoice)subArrayDimension_.get(index));
+    }
+
+    /**
+     * Sets the IXbcSubArrayDimensionChoice property <b>subArrayDimension</b> by index.
+     *
+     * @param index
+     * @param subArrayDimension
+     */
+    public final void setSubArrayDimension(int index, IXbcSubArrayDimensionChoice subArrayDimension) {
+        this.subArrayDimension_.set(index, subArrayDimension);
+        if (subArrayDimension != null) {
+            subArrayDimension.rSetParentRNode(this);
+        }
+    }
+
+    /**
+     * Adds the IXbcSubArrayDimensionChoice property <b>subArrayDimension</b> by index.
+     *
+     * @param index
+     * @param subArrayDimension
+     */
+    public final void addSubArrayDimension(int index, IXbcSubArrayDimensionChoice subArrayDimension) {
+        this.subArrayDimension_.add(index, subArrayDimension);
+        if (subArrayDimension != null) {
+            subArrayDimension.rSetParentRNode(this);
+        }
+    }
+
+    /**
+     * Remove the IXbcSubArrayDimensionChoice property <b>subArrayDimension</b> by index.
+     *
+     * @param index
+     */
+    public final void removeSubArrayDimension(int index) {
+        this.subArrayDimension_.remove(index);
+    }
+
+    /**
+     * Remove the IXbcSubArrayDimensionChoice property <b>subArrayDimension</b> by object.
+     *
+     * @param subArrayDimension
+     */
+    public final void removeSubArrayDimension(IXbcSubArrayDimensionChoice subArrayDimension) {
+        this.subArrayDimension_.remove(subArrayDimension);
+    }
+
+    /**
+     * Clear the IXbcSubArrayDimensionChoice property <b>subArrayDimension</b>.
+     *
+     */
+    public final void clearSubArrayDimension() {
+        this.subArrayDimension_.clear();
     }
 
     /**
@@ -731,17 +792,22 @@ public class XbcSubArrayRef extends xcodeml.c.obj.XmcObj implements java.io.Seri
             buffer.append(URelaxer.escapeAttrQuot(URelaxer.getString(getIsModified())));
             buffer.append("\"");
         }
-        expressions_.makeTextAttribute(buffer);
+        if (scope_ != null) {
+            buffer.append(" scope=\"");
+            buffer.append(URelaxer.escapeAttrQuot(URelaxer.getString(getScope())));
+            buffer.append("\"");
+        }
+        size = this.subArrayDimension_.size();
+        for (int i = 0;i < size;i++) {
+            IXbcSubArrayDimensionChoice value = (IXbcSubArrayDimensionChoice)this.subArrayDimension_.get(i);
+            value.makeTextAttribute(buffer);
+        }
         buffer.append(">");
-        expressions_.makeTextElement(buffer);
-        if (subArrayRefLowerBound_ != null) {
-            subArrayRefLowerBound_.makeTextElement(buffer);
-        }
-        if (subArrayRefUpperBound_ != null) {
-            subArrayRefUpperBound_.makeTextElement(buffer);
-        }
-        if (subArrayRefStep_ != null) {
-            subArrayRefStep_.makeTextElement(buffer);
+        arrayAddr_.makeTextElement(buffer);
+        size = this.subArrayDimension_.size();
+        for (int i = 0;i < size;i++) {
+            IXbcSubArrayDimensionChoice value = (IXbcSubArrayDimensionChoice)this.subArrayDimension_.get(i);
+            value.makeTextElement(buffer);
         }
         buffer.append("</subArrayRef>");
     }
@@ -770,17 +836,22 @@ public class XbcSubArrayRef extends xcodeml.c.obj.XmcObj implements java.io.Seri
             buffer.write(URelaxer.escapeAttrQuot(URelaxer.getString(getIsModified())));
             buffer.write("\"");
         }
-        expressions_.makeTextAttribute(buffer);
+        if (scope_ != null) {
+            buffer.write(" scope=\"");
+            buffer.write(URelaxer.escapeAttrQuot(URelaxer.getString(getScope())));
+            buffer.write("\"");
+        }
+        size = this.subArrayDimension_.size();
+        for (int i = 0;i < size;i++) {
+            IXbcSubArrayDimensionChoice value = (IXbcSubArrayDimensionChoice)this.subArrayDimension_.get(i);
+            value.makeTextAttribute(buffer);
+        }
         buffer.write(">");
-        expressions_.makeTextElement(buffer);
-        if (subArrayRefLowerBound_ != null) {
-            subArrayRefLowerBound_.makeTextElement(buffer);
-        }
-        if (subArrayRefUpperBound_ != null) {
-            subArrayRefUpperBound_.makeTextElement(buffer);
-        }
-        if (subArrayRefStep_ != null) {
-            subArrayRefStep_.makeTextElement(buffer);
+        arrayAddr_.makeTextElement(buffer);
+        size = this.subArrayDimension_.size();
+        for (int i = 0;i < size;i++) {
+            IXbcSubArrayDimensionChoice value = (IXbcSubArrayDimensionChoice)this.subArrayDimension_.get(i);
+            value.makeTextElement(buffer);
         }
         buffer.write("</subArrayRef>");
     }
@@ -808,17 +879,22 @@ public class XbcSubArrayRef extends xcodeml.c.obj.XmcObj implements java.io.Seri
             buffer.print(URelaxer.escapeAttrQuot(URelaxer.getString(getIsModified())));
             buffer.print("\"");
         }
-        expressions_.makeTextAttribute(buffer);
+        if (scope_ != null) {
+            buffer.print(" scope=\"");
+            buffer.print(URelaxer.escapeAttrQuot(URelaxer.getString(getScope())));
+            buffer.print("\"");
+        }
+        size = this.subArrayDimension_.size();
+        for (int i = 0;i < size;i++) {
+            IXbcSubArrayDimensionChoice value = (IXbcSubArrayDimensionChoice)this.subArrayDimension_.get(i);
+            value.makeTextAttribute(buffer);
+        }
         buffer.print(">");
-        expressions_.makeTextElement(buffer);
-        if (subArrayRefLowerBound_ != null) {
-            subArrayRefLowerBound_.makeTextElement(buffer);
-        }
-        if (subArrayRefUpperBound_ != null) {
-            subArrayRefUpperBound_.makeTextElement(buffer);
-        }
-        if (subArrayRefStep_ != null) {
-            subArrayRefStep_.makeTextElement(buffer);
+        arrayAddr_.makeTextElement(buffer);
+        size = this.subArrayDimension_.size();
+        for (int i = 0;i < size;i++) {
+            IXbcSubArrayDimensionChoice value = (IXbcSubArrayDimensionChoice)this.subArrayDimension_.get(i);
+            value.makeTextElement(buffer);
         }
         buffer.print("</subArrayRef>");
     }
@@ -876,6 +952,15 @@ public class XbcSubArrayRef extends xcodeml.c.obj.XmcObj implements java.io.Seri
     }
 
     /**
+     * Gets the property value as String.
+     *
+     * @return String
+     */
+    public String getScopeAsString() {
+        return (URelaxer.getString(getScope()));
+    }
+
+    /**
      * Sets the property value by String.
      *
      * @param string
@@ -900,6 +985,15 @@ public class XbcSubArrayRef extends xcodeml.c.obj.XmcObj implements java.io.Seri
      */
     public void setIsModifiedByString(String string) {
         setIsModified(string);
+    }
+
+    /**
+     * Sets the property value by String.
+     *
+     * @param string
+     */
+    public void setScopeByString(String string) {
+        setScope(string);
     }
 
     /**
@@ -962,18 +1056,10 @@ public class XbcSubArrayRef extends xcodeml.c.obj.XmcObj implements java.io.Seri
      */
     public IRNode[] rGetRNodes() {
         java.util.List classNodes = new java.util.ArrayList();
-        if (expressions_ != null) {
-            classNodes.add(expressions_);
+        if (arrayAddr_ != null) {
+            classNodes.add(arrayAddr_);
         }
-        if (subArrayRefLowerBound_ != null) {
-            classNodes.add(subArrayRefLowerBound_);
-        }
-        if (subArrayRefUpperBound_ != null) {
-            classNodes.add(subArrayRefUpperBound_);
-        }
-        if (subArrayRefStep_ != null) {
-            classNodes.add(subArrayRefStep_);
-        }
+        classNodes.addAll(subArrayDimension_);
         IRNode[] nodes = new IRNode[classNodes.size()];
         return ((IRNode[])classNodes.toArray(nodes));
     }
@@ -992,31 +1078,37 @@ public class XbcSubArrayRef extends xcodeml.c.obj.XmcObj implements java.io.Seri
         RStack target = new RStack(element);
         boolean $match$ = false;
         Element child;
+        if (!XbcArrayAddr.isMatchHungry(target)) {
+            return (false);
+        }
+        $match$ = true;
         if (XbcBuiltinOp.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcArrayRef.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcFunctionCall.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcGccCompoundExpr.isMatchHungry(target)) {
             $match$ = true;
+        } else if (XbcSubArrayRef.isMatchHungry(target)) {
+            $match$ = true;
         } else if (XbcCoArrayRef.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcCastExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcStringConstant.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcVar.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcArrayRef.isMatchHungry(target)) {
+        } else if (XbcVarAddr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcArrayAddr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcCastExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcCompoundValueExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcCompoundValueAddrExpr.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcVarAddr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcCommaExpr.isMatchHungry(target)) {
+        } else if (XbcIndexRange.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcIntConstant.isMatchHungry(target)) {
             $match$ = true;
@@ -1036,8 +1128,6 @@ public class XbcSubArrayRef extends xcodeml.c.obj.XmcObj implements java.io.Seri
             $match$ = true;
         } else if (XbcCoArrayAssignExpr.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcSubArrayRef.isMatchHungry(target)) {
-            $match$ = true;
         } else if (XbcMemberAddr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcMemberRef.isMatchHungry(target)) {
@@ -1045,8 +1135,6 @@ public class XbcSubArrayRef extends xcodeml.c.obj.XmcObj implements java.io.Seri
         } else if (XbcMemberArrayRef.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcMemberArrayAddr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcBitXorExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcPointerRef.isMatchHungry(target)) {
             $match$ = true;
@@ -1069,6 +1157,8 @@ public class XbcSubArrayRef extends xcodeml.c.obj.XmcObj implements java.io.Seri
         } else if (XbcBitAndExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcBitOrExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcBitXorExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcAsgPlusExpr.isMatchHungry(target)) {
             $match$ = true;
@@ -1112,6 +1202,8 @@ public class XbcSubArrayRef extends xcodeml.c.obj.XmcObj implements java.io.Seri
             $match$ = true;
         } else if (XbcLogNotExpr.isMatchHungry(target)) {
             $match$ = true;
+        } else if (XbcCommaExpr.isMatchHungry(target)) {
+            $match$ = true;
         } else if (XbcPostIncrExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcPostDecrExpr.isMatchHungry(target)) {
@@ -1125,11 +1217,142 @@ public class XbcSubArrayRef extends xcodeml.c.obj.XmcObj implements java.io.Seri
         } else {
             return (false);
         }
-        if (XbcSubArrayRefLowerBound.isMatchHungry(target)) {
-        }
-        if (XbcSubArrayRefUpperBound.isMatchHungry(target)) {
-        }
-        if (XbcSubArrayRefStep.isMatchHungry(target)) {
+        while (true) {
+            if (XbcBuiltinOp.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcArrayRef.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcFunctionCall.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcGccCompoundExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcSubArrayRef.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcCoArrayRef.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcCastExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcStringConstant.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcVar.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcVarAddr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcArrayAddr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcCompoundValueExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcCompoundValueAddrExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcIndexRange.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcIntConstant.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcFloatConstant.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcLonglongConstant.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcMoeConstant.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcFuncAddr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcSizeOfExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcGccAlignOfExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcGccLabelAddr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcCoArrayAssignExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcMemberAddr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcMemberRef.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcMemberArrayRef.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcMemberArrayAddr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcPointerRef.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcAssignExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcPlusExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcMinusExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcMulExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcDivExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcModExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcLshiftExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcRshiftExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcBitAndExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcBitOrExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcBitXorExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcAsgPlusExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcAsgMinusExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcAsgMulExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcAsgDivExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcAsgModExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcAsgLshiftExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcAsgRshiftExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcAsgBitAndExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcAsgBitOrExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcAsgBitXorExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcLogEQExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcLogNEQExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcLogGEExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcLogGTExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcLogLEExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcLogLTExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcLogAndExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcLogOrExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcUnaryMinusExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcBitNotExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcLogNotExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcCommaExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcPostIncrExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcPostDecrExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcPreIncrExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcPreDecrExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcCondExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else {
+                break;
+            }
         }
         if (!target.isEmptyElement()) {
             return (false);

@@ -73,12 +73,22 @@ public class XcXmpCoArrayRefObj extends XcObj implements XcExprObj
     @Override
     public void appendCode(XmcWriter w) throws XmException
     {
-        if(_tempVar != null) {
-            XcExprObj obj = XcXmpFactory.createCoAGetFuncCall(this);
-            w.add(obj);
-        } else {
-            w.add(_content);
-        }
+	w.add(_content);
+	w.add(":");
+	for (XcExprObj i : _dimList){
+	    w.add("[").add(i).add("]");
+	}
+
+//         if(_tempVar != null) {
+//             XcExprObj obj = XcXmpFactory.createCoAGetFuncCall(this);
+//             w.add(obj);
+//         } else {
+//             w.add(_content);
+// 	    w.add(":");
+//             for (XcExprObj i : _dimList){
+// 		w.add("[").add(i).add("]");
+// 	    }
+//         }
     }
 
     @Override

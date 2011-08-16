@@ -783,7 +783,8 @@ public class XmcXobjectToXmObjTranslator
             break;
         case CO_ARRAY_REF: {
                 XbcCoArrayRef m = _factory.createXbcCoArrayRef();
-                m.setName(transName(xobj.getArg(0)));
+                //m.setName(transName(xobj.getArg(0)));
+		m.setContent((IXbcCoArrayRefChoice1)transExpr(xobj.getArg(0)));
                 for(Xobject a : (XobjList)xobj.getArg(1)) {
                     m.addExpressions(transExpr(a));
                 }

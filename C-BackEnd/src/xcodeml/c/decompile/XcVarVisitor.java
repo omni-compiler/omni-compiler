@@ -89,14 +89,14 @@ public class XcVarVisitor extends XcScanningVisitor
         return true;
     }
 
-    @Override
-    public boolean enter(XbcArrayRef visitable)
-    {
-        if(_variables != null)
-            _variables.add(visitable.getContent());
+//     @Override
+//     public boolean enter(XbcArrayRef visitable)
+//     {
+//         if(_variables != null)
+//             _variables.add(visitable.getContent());
 
-        return true;
-    }
+//         return true;
+//     }
 
     @Override
     public boolean enter(XbcMemberRef visitable)

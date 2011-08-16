@@ -424,11 +424,20 @@
     </element>
   </define>
 
+<!--   <define name="arrayRef"> -->
+<!--     <element name="arrayRef" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcVar"> -->
+<!--       <ref name="BaseExpression"/> -->
+<!--       <ref name="varRefExpression"/> -->
+<!--       <data type="string"/> -->
+<!--     </element> -->
+<!--   </define> -->
+
   <define name="arrayRef">
-    <element name="arrayRef" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcVar">
+    <element name="arrayRef" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr">
       <ref name="BaseExpression"/>
       <ref name="varRefExpression"/>
-      <data type="string"/>
+      <ref name="arrayAddr"/>
+      <ref name="arrayDimension"/>
     </element>
   </define>
 
@@ -438,6 +447,12 @@
       <ref name="varRefExpression"/>
       <data type="string"/>
     </element>
+  </define>
+
+  <define name="arrayDimension">
+    <oneOrMore>
+      <ref name="expressions"/>
+    </oneOrMore>
   </define>
 
   <define name="memberAddr">
@@ -1345,30 +1360,75 @@
 
   <!-- subarray extension -->
 
+<!--   <define name="subArrayRef"> -->
+<!--     <element name="subArrayRef" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr"> -->
+<!--       <ref name="expressions"/> -->
+<!--       <optional> -->
+<!--         <element name="lowerBound" java:extends="xcodeml.c.obj.XmcObj"> -->
+<!--           <ref name="expressions"/> -->
+<!--         </element> -->
+<!--       </optional> -->
+<!--       <optional> -->
+<!--         <element name="upperBound" java:extends="xcodeml.c.obj.XmcObj"> -->
+<!--           <ref name="expressions"/> -->
+<!--         </element> -->
+<!--       </optional> -->
+<!--       <optional> -->
+<!--         <element name="step" java:extends="xcodeml.c.obj.XmcObj"> -->
+<!--           <ref name="expressions"/> -->
+<!--         </element> -->
+<!--       </optional> -->
+<!--       <ref name="BaseExpression"/> -->
+<!--     </element> -->
+<!--   </define> -->
+
   <define name="subArrayRef">
     <element name="subArrayRef" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr">
-      <ref name="expressions"/>
-      <optional>
-        <element name="lowerBound" java:extends="xcodeml.c.obj.XmcObj">
-          <ref name="expressions"/>
-        </element>
-      </optional>
-      <optional>
-        <element name="upperBound" java:extends="xcodeml.c.obj.XmcObj">
-          <ref name="expressions"/>
-        </element>
-      </optional>
-      <optional>
-        <element name="step" java:extends="xcodeml.c.obj.XmcObj">
-          <ref name="expressions"/>
-        </element>
-      </optional>
       <ref name="BaseExpression"/>
+      <ref name="varRefExpression"/>
+      <ref name="arrayAddr"/>
+      <ref name="subArrayDimension"/>
+    </element>
+  </define>
+
+  <define name="subArrayDimension">
+    <oneOrMore>
+      <choice>
+	<ref name="indexRange"/>
+	<ref name="expressions"/>
+      </choice>
+    </oneOrMore>
+  </define>
+
+  <define name="indexRange">
+    <element name="indexRange" java:extends="xcodeml.c.obj.XmcObj">
+      <ref name="lowerBound"/>
+      <ref name="upperBound"/>
+      <ref name="step"/>
+    </element>
+  </define>
+
+  <define name="lowerBound">
+    <element name="lowerBound" java:extends="xcodeml.c.obj.XmcObj">
+      <ref name="expressions"/>
+    </element>
+  </define>
+
+  <define name="upperBound">
+    <element name="upperBound" java:extends="xcodeml.c.obj.XmcObj">
+      <ref name="expressions"/>
+    </element>
+  </define>
+
+  <define name="step">
+    <element name="step" java:extends="xcodeml.c.obj.XmcObj">
+      <ref name="expressions"/>
     </element>
   </define>
 
   <!-- coArray extension -->
 
+<!--
   <define name="coArrayRef">
     <element name="coArrayRef" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr">
       <ref name="BaseExpression"/>
@@ -1377,11 +1437,26 @@
       <ref name="coArrayDimension"/>
     </element>
   </define>
+-->
+
+  <define name="coArrayRef">
+    <element name="coArrayRef" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr">
+      <ref name="BaseExpression"/>
+      <ref name="varRefExpression"/>
+      <choice>
+	<ref name="Var"/>
+	<ref name="arrayRef"/>
+	<ref name="subArrayRef"/>
+	<ref name="memberRef"/>
+      </choice>
+      <ref name="coArrayDimension"/>
+    </element>
+  </define>
 
   <define name="coArrayDimension">
-    <zeroOrMore>
+    <oneOrMore>
       <ref name="expressions"/>
-    </zeroOrMore>
+    </oneOrMore>
   </define>
 
   <define name="coArrayAssignExpr">

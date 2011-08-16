@@ -1171,6 +1171,7 @@ extern void                   exprSetExprsType(CExpr *expr, CExprOfTypeDesc *td)
 extern CExpr*                 exprSubArrayDimension(CExpr *el, CExpr *eu, CExpr *es);
 extern CExpr*                 exprCoarrayRef(CExpr *prim, CExpr *dims);
 extern int                    isSubArrayRef(CExpr *expr);
+extern int                    isSubArrayRef2(CExpr *expr);
 
 //! alloc CExprOfList with no child
 #define exprList(c)                         ((CExpr*)allocExprOfList(c))

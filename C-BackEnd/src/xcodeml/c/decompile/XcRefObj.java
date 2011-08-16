@@ -393,71 +393,71 @@ public abstract class XcRefObj extends XcObj implements XcExprObj, XcXmpCoArrayP
         }
     }
     
-    /**
-    * no corresponding element in XcodeML
-    */
-    public static final class ArrayElem extends XcRefObj
-    {
-        private XcExprObj _indexExpr;
-        
-        public ArrayElem()
-        {
-            super(XcRefEnum.ARRAY_ELEM);
-        }
-        
-        public ArrayElem(XcExprObj expr, XcExprObj indexExpr)
-        {
-            super(XcRefEnum.ARRAY_ELEM, expr);
-            _indexExpr = indexExpr;
-        }
-
-        @Override
-        public void addChild(XcNode child)
-        {
-            if(child instanceof XcExprObj) {
-                if(getExpr() == null)
-                    setExpr((XcExprObj)child);
-                else if(_indexExpr == null)
-                    _indexExpr = (XcExprObj)child;
-                else
-                    throw new IllegalArgumentException();
-            } else
-                throw new IllegalArgumentException();
-        }
-
-        @Override
-        public void checkChild()
-        {
-            if(getExpr() == null)
-                throw new IllegalArgumentException("no expression");
-            if(_indexExpr == null)
-                throw new IllegalArgumentException("no index expression");
-        }
-
-        @Override
-        public XcNode[] getChild()
-        {
-            return toNodeArray(getExpr(), _indexExpr);
-        }
-
-        @Override
-        public final void setChild(int index, XcNode child)
-        {
-            switch(index) {
-            case 0:
-                setExpr((XcExprObj)child);
-                break;
-            case 1:
-                _indexExpr = (XcExprObj)child;
-                break;
-            default:
-                throw new IllegalArgumentException(index + ":" + child.getClass().getName());
-            }
-        }
-        @Override
-        public final void appendCode(XmcWriter w) throws XmException
-        {
-            w.addBrace(getExpr()).add("[").add(_indexExpr).add("]");
-        }
-    }
+//     /**
+//     * no corresponding element in XcodeML
+//     */
+//     public static final class ArrayElem extends XcRefObj
+//     {
+//         private XcExprObj _indexExpr;
+//
+//         public ArrayElem()
+//         {
+//             super(XcRefEnum.ARRAY_ELEM);
+//         }
+//
+//         public ArrayElem(XcExprObj expr, XcExprObj indexExpr)
+//         {
+//             super(XcRefEnum.ARRAY_ELEM, expr);
+//             _indexExpr = indexExpr;
+//         }
+//
+//         @Override
+//         public void addChild(XcNode child)
+//         {
+//             if(child instanceof XcExprObj) {
+//                 if(getExpr() == null)
+//                     setExpr((XcExprObj)child);
+//                 else if(_indexExpr == null)
+//                     _indexExpr = (XcExprObj)child;
+//                 else
+//                     throw new IllegalArgumentException();
+//             } else
+//                 throw new IllegalArgumentException();
+//         }
+//
+//         @Override
+//         public void checkChild()
+//         {
+//             if(getExpr() == null)
+//                 throw new IllegalArgumentException("no expression");
+//             if(_indexExpr == null)
+//                 throw new IllegalArgumentException("no index expression");
+//         }
+//
+//         @Override
+//         public XcNode[] getChild()
+//         {
+//             return toNodeArray(getExpr(), _indexExpr);
+//         }
+//
+//         @Override
+//         public final void setChild(int index, XcNode child)
+//         {
+//             switch(index) {
+//             case 0:
+//                 setExpr((XcExprObj)child);
+//                 break;
+//             case 1:
+//                 _indexExpr = (XcExprObj)child;
+//                 break;
+//             default:
+//                 throw new IllegalArgumentException(index + ":" + child.getClass().getName());
+//             }
+//         }
+//         @Override
+//         public final void appendCode(XmcWriter w) throws XmException
+//         {
+//             w.addBrace(getExpr()).add("[").add(_indexExpr).add("]");
+//         }
+//     }
 }

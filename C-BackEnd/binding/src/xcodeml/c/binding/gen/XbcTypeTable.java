@@ -53,7 +53,7 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_C.rng (Thu Sep 24 16:30:18 JST 2009)
+ * @version XcodeML_C.rng (Mon Aug 15 15:55:17 JST 2011)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbcTypeTable extends xcodeml.c.obj.XmcObj implements java.io.Serializable, Cloneable, IRVisitable, IRNode {
@@ -232,18 +232,18 @@ public class XbcTypeTable extends xcodeml.c.obj.XmcObj implements java.io.Serial
         RStack stack = new RStack(element);
         types_.clear();
         while (true) {
-            if (XbcArrayType.isMatch(stack)) {
-                addTypes(factory.createXbcArrayType(stack));
-            } else if (XbcFunctionType.isMatch(stack)) {
+            if (XbcFunctionType.isMatch(stack)) {
                 addTypes(factory.createXbcFunctionType(stack));
+            } else if (XbcArrayType.isMatch(stack)) {
+                addTypes(factory.createXbcArrayType(stack));
             } else if (XbcBasicType.isMatch(stack)) {
                 addTypes(factory.createXbcBasicType(stack));
             } else if (XbcPointerType.isMatch(stack)) {
                 addTypes(factory.createXbcPointerType(stack));
-            } else if (XbcUnionType.isMatch(stack)) {
-                addTypes(factory.createXbcUnionType(stack));
             } else if (XbcStructType.isMatch(stack)) {
                 addTypes(factory.createXbcStructType(stack));
+            } else if (XbcUnionType.isMatch(stack)) {
+                addTypes(factory.createXbcUnionType(stack));
             } else if (XbcEnumType.isMatch(stack)) {
                 addTypes(factory.createXbcEnumType(stack));
             } else if (XbcCoArrayType.isMatch(stack)) {
@@ -688,17 +688,17 @@ public class XbcTypeTable extends xcodeml.c.obj.XmcObj implements java.io.Serial
         boolean $match$ = false;
         Element child;
         while (true) {
-            if (XbcArrayType.isMatchHungry(target)) {
+            if (XbcFunctionType.isMatchHungry(target)) {
                 $match$ = true;
-            } else if (XbcFunctionType.isMatchHungry(target)) {
+            } else if (XbcArrayType.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbcBasicType.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbcPointerType.isMatchHungry(target)) {
                 $match$ = true;
-            } else if (XbcUnionType.isMatchHungry(target)) {
-                $match$ = true;
             } else if (XbcStructType.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcUnionType.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbcEnumType.isMatchHungry(target)) {
                 $match$ = true;

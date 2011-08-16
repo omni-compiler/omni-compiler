@@ -53,7 +53,7 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_C.rng (Thu Sep 24 16:30:19 JST 2009)
+ * @version XcodeML_C.rng (Mon Aug 15 15:55:18 JST 2011)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbcBody extends xcodeml.c.obj.XmcObj implements java.io.Serializable, Cloneable, IRVisitable, IRNode {
@@ -232,7 +232,9 @@ public class XbcBody extends xcodeml.c.obj.XmcObj implements java.io.Serializabl
         RStack stack = new RStack(element);
         statements_.clear();
         while (true) {
-            if (XbcForStatement.isMatch(stack)) {
+            if (XbcGccAsmStatement.isMatch(stack)) {
+                addStatements(factory.createXbcGccAsmStatement(stack));
+            } else if (XbcForStatement.isMatch(stack)) {
                 addStatements(factory.createXbcForStatement(stack));
             } else if (XbcCompoundStatement.isMatch(stack)) {
                 addStatements(factory.createXbcCompoundStatement(stack));
@@ -246,12 +248,10 @@ public class XbcBody extends xcodeml.c.obj.XmcObj implements java.io.Serializabl
                 addStatements(factory.createXbcSwitchStatement(stack));
             } else if (XbcGccRangedCaseLabel.isMatch(stack)) {
                 addStatements(factory.createXbcGccRangedCaseLabel(stack));
-            } else if (XbcCaseLabel.isMatch(stack)) {
-                addStatements(factory.createXbcCaseLabel(stack));
-            } else if (XbcGccAsmStatement.isMatch(stack)) {
-                addStatements(factory.createXbcGccAsmStatement(stack));
             } else if (XbcStatementLabel.isMatch(stack)) {
                 addStatements(factory.createXbcStatementLabel(stack));
+            } else if (XbcCaseLabel.isMatch(stack)) {
+                addStatements(factory.createXbcCaseLabel(stack));
             } else if (XbcBreakStatement.isMatch(stack)) {
                 addStatements(factory.createXbcBreakStatement(stack));
             } else if (XbcContinueStatement.isMatch(stack)) {
@@ -262,10 +262,10 @@ public class XbcBody extends xcodeml.c.obj.XmcObj implements java.io.Serializabl
                 addStatements(factory.createXbcGotoStatement(stack));
             } else if (XbcDefaultLabel.isMatch(stack)) {
                 addStatements(factory.createXbcDefaultLabel(stack));
-            } else if (XbcText.isMatch(stack)) {
-                addStatements(factory.createXbcText(stack));
             } else if (XbcPragma.isMatch(stack)) {
                 addStatements(factory.createXbcPragma(stack));
+            } else if (XbcText.isMatch(stack)) {
+                addStatements(factory.createXbcText(stack));
             } else if (XbcExprStatement.isMatch(stack)) {
                 addStatements(factory.createXbcExprStatement(stack));
             } else {
@@ -708,7 +708,9 @@ public class XbcBody extends xcodeml.c.obj.XmcObj implements java.io.Serializabl
         boolean $match$ = false;
         Element child;
         while (true) {
-            if (XbcForStatement.isMatchHungry(target)) {
+            if (XbcGccAsmStatement.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcForStatement.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbcCompoundStatement.isMatchHungry(target)) {
                 $match$ = true;
@@ -722,11 +724,9 @@ public class XbcBody extends xcodeml.c.obj.XmcObj implements java.io.Serializabl
                 $match$ = true;
             } else if (XbcGccRangedCaseLabel.isMatchHungry(target)) {
                 $match$ = true;
-            } else if (XbcCaseLabel.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbcGccAsmStatement.isMatchHungry(target)) {
-                $match$ = true;
             } else if (XbcStatementLabel.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcCaseLabel.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbcBreakStatement.isMatchHungry(target)) {
                 $match$ = true;
@@ -738,9 +738,9 @@ public class XbcBody extends xcodeml.c.obj.XmcObj implements java.io.Serializabl
                 $match$ = true;
             } else if (XbcDefaultLabel.isMatchHungry(target)) {
                 $match$ = true;
-            } else if (XbcText.isMatchHungry(target)) {
-                $match$ = true;
             } else if (XbcPragma.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcText.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbcExprStatement.isMatchHungry(target)) {
                 $match$ = true;

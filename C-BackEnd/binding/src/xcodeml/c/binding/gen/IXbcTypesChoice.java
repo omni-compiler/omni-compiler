@@ -41,9 +41,9 @@ import org.xml.sax.SAXException;
 
 /**
  * <b>IXbcTypesChoice</b> is generated from XcodeML_C.rng by Relaxer.
- * Concrete classes of the interface are XbcArrayType, XbcFunctionType, XbcBasicType, XbcPointerType, XbcUnionType, XbcStructType, XbcEnumType and XbcCoArrayType.
+ * Concrete classes of the interface are XbcFunctionType, XbcArrayType, XbcBasicType, XbcPointerType, XbcStructType, XbcUnionType, XbcEnumType and XbcCoArrayType.
  *
- * @version XcodeML_C.rng (Thu Sep 24 16:30:19 JST 2009)
+ * @version XcodeML_C.rng (Mon Aug 15 15:55:18 JST 2011)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public interface IXbcTypesChoice extends IRVisitable, IRNode {

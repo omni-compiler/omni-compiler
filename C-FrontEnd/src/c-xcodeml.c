@@ -83,6 +83,8 @@ PRIVATE_STATIC void outx_INITIALIZERS(FILE *fp, int indent, CExpr *expr);
 PRIVATE_STATIC void outx_CAST(FILE *fp, int indent, CExprOfBinaryNode *expr);
 PRIVATE_STATIC void outx_POINTS_AT(FILE *fp, int indent, CExprOfBinaryNode *expr);
 PRIVATE_STATIC void outx_ARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *expr);
+PRIVATE_STATIC void outx_SUBARRAY_REF(FILE*, int, CExprOfBinaryNode*);
+PRIVATE_STATIC void outx_ARRAY_REF2(FILE*, int, CExprOfBinaryNode*);
 PRIVATE_STATIC void outx_COARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *expr);
 PRIVATE_STATIC void outx_GCC_BLTIN_OFFSETOF(FILE *fp, int indent, CExprOfBinaryNode *expr);
 PRIVATE_STATIC void outx_GCC_REALPART(FILE *fp, int indent, CExpr *expr);
@@ -1817,7 +1819,8 @@ isAddrOfChild(CExpr *expr, CExpr *parentExpr, CExpr **outParentExpr)
         return isAddrOfChild(parentExpr, EXPR_PARENT(parentExpr), outParentExpr);
     if(outParentExpr)
         *outParentExpr = parentExpr;
-    return (pec == EC_ADDR_OF) || (pec == EC_GCC_LABEL_ADDR);
+    return (pec == EC_ADDR_OF) || (pec == EC_GCC_LABEL_ADDR) ||
+                                  (pec == EC_ARRAY_REF);
 }
 
 
@@ -1844,7 +1847,8 @@ outx_IDENT(FILE *fp, int indent, CExprOfSymbol *sym)
         isConverted = EXPR_ISCONVERTED(sym);
         switch(td->e_tdKind) {
         case TD_ARRAY:
-            tag = (isAddr ? "arrayAddr" : "arrayRef"); break;
+	  //            tag = (isAddr ? "arrayAddr" : "arrayRef"); break;
+            tag = "arrayAddr"; break;
         case TD_COARRAY:
             tag = "name"; scope = NULL; break;
         default:
@@ -2280,71 +2284,207 @@ outx_POINTS_AT(FILE *fp, int indent, CExprOfBinaryNode *pointsAt)
 }
 
 
+/* PRIVATE_STATIC void */
+/* outx_ARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef) */
+/* { */
+/*     CExpr *aryExpr = aryRef->e_nodes[0]; */
+/*     CExprOfTypeDesc *aryTd = EXPRS_TYPE(aryExpr); */
+/*     CExprOfTypeDesc *aryTdo = getRefType(aryTd); */
+/*     CExpr *dim = aryRef->e_nodes[1]; */
+/*     CExpr *dimLwr = exprListHeadData(dim); */
+
+/*     if(EXPR_L_SIZE(dim) > 1) { */
+/*         //sub array */
+/*         CExpr *dimUpr = exprListNextNData(dim, 1); */
+/*         CExpr *dimStp = exprListNextNData(dim, 2); */
+/*         CExprOfTypeDesc *dimTd = EXPR_T(exprListNextNData(dim, 3)); */
+
+/*         outxPrint(fp, indent, "<subArrayRef type=\"%s\">\n", dimTd->e_typeId); */
+/*         outxContext(fp, indent + 1, aryExpr); */
+/*         outxContextWithTag(fp, indent + 1, dimLwr, "lowerBound"); */
+
+/*         CExpr *tmpUpr = NULL; */
+/*         if(EXPR_ISNULL(dimUpr)) { */
+/*             dimUpr = aryTdo->e_len.eln_lenExpr; */
+/*             if(dimUpr) { */
+/*                 // complete subarray ref upper bound */
+/*                 if(dimUpr && EXPR_CODE(dimUpr) == EC_NUMBER_CONST) { */
+/*                     tmpUpr = (CExpr*)allocExprOfNumberConst2( */
+/*                         getNumberConstAsLong(dimUpr) - 1, BT_INT); */
+/*                 } else { */
+/*                     tmpUpr = exprBinary(EC_MINUS, dimUpr, */
+/*                         (CExpr*)allocExprOfNumberConst2(1, BT_INT)); */
+/*                 } */
+/*             } */
+/*             dimUpr = tmpUpr; */
+/*         } */
+/*         if(dimUpr) */
+/*             outxContextWithTag(fp, indent + 1, dimUpr, "upperBound"); */
+/*         outxContextWithTag(fp, indent + 1, dimStp, "step"); */
+/*         outxPrint(fp, indent, "</subArrayRef>\n"); */
+
+/*         if(tmpUpr) */
+/*             freeExpr(tmpUpr); */
+/*     } else { */
+/*         //normal array */
+/*         CExpr *parent = EXPR_PARENT(aryRef); */
+/*         CExprCodeEnum pec = EXPR_CODE(parent); */
+/*         int pref = (pec != EC_ADDR_OF); */
+/*         int indent1 = pref ? indent: indent - 1; */
+/*         const char *pointerRefTag = "pointerRef"; */
+/*         const char *plusExprTag = "plusExpr"; */
+
+/*         if(pref) */
+/*             outxTag1(fp, indent, (CExpr*)aryRef, pointerRefTag, XATTR_TYPE); */
+
+/*         CExprOfTypeDesc *plusExprTd = ETYP_IS_ARRAY(aryTdo) ? */
+/*             EXPR_T(aryTdo->e_paramExpr) : aryTd; */
+
+/*         outxTag(fp, indent1 + 1, (CExpr*)aryRef, plusExprTag, XATTR_COMMON, */
+/*             " type=\"%s\"", plusExprTd->e_typeId); */
+/*         outxContext(fp, indent1 + 2, aryExpr); */
+/*         outxContext(fp, indent1 + 2, dimLwr); */
+/*         outxTagClose(fp, indent1 + 1, plusExprTag); */
+
+/*         if(pref) */
+/*             outxTagClose(fp, indent, pointerRefTag); */
+/*     } */
+/* } */
+
+extern unsigned int s_arrayToPointer;
+
 PRIVATE_STATIC void
 outx_ARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
 {
-    CExpr *aryExpr = aryRef->e_nodes[0];
+  CExpr *aryExpr = aryRef->e_nodes[0];
+  CExprOfTypeDesc *aryTd = EXPRS_TYPE(aryExpr);
+  CExprOfTypeDesc *aryTdo = getRefType(aryTd);
+
+  CExpr *dim = aryRef->e_nodes[1];
+  CExpr *dimLwr = exprListHeadData(dim);
+
+  if (isSubArrayRef2((CExpr*)aryRef)){
+    //sub array
+/*     CExprOfTypeDesc *dimTd = EXPR_T(exprListNextNData(dim, 3)); */
+/*     outxPrint(fp, indent, "<subArrayRef type=\"%s\">\n", dimTd->e_typeId); */
+    outxPrint(fp, indent, "<subArrayRef type=\"%s\">\n", EXPR_TYPEID(aryRef));
+    outx_SUBARRAY_REF(fp, indent + 1, aryRef);
+    outxPrint(fp, indent, "</subArrayRef>\n");
+  }
+  else {
+
+    //normal array
+
+    if (s_arrayToPointer){
+
+      CExpr *parent = EXPR_PARENT(aryRef);
+      CExprCodeEnum pec = EXPR_CODE(parent);
+      int pref = (pec != EC_ADDR_OF);
+      int indent1 = pref ? indent: indent - 1;
+      const char *pointerRefTag = "pointerRef";
+      const char *plusExprTag = "plusExpr";
+    
+      if (pref)
+	outxTag1(fp, indent, (CExpr*)aryRef, pointerRefTag, XATTR_TYPE);
+
+      CExprOfTypeDesc *plusExprTd = ETYP_IS_ARRAY(aryTdo) ?
+	EXPR_T(aryTdo->e_paramExpr) : aryTd;
+
+      outxTag(fp, indent1 + 1, (CExpr*)aryRef, plusExprTag, XATTR_COMMON,
+	      " type=\"%s\"", plusExprTd->e_typeId);
+      outxContext(fp, indent1 + 2, aryExpr);
+      outxContext(fp, indent1 + 2, dimLwr);
+      outxTagClose(fp, indent1 + 1, plusExprTag);
+    
+      if (pref)
+	outxTagClose(fp, indent, pointerRefTag);
+    }
+    else {
+/*       outxPrint(fp, indent, "<arrayRef type=\"%s\">\n", */
+/* 		EXPR_T(aryTdo->e_paramExpr)->e_typeId); */
+      outxPrint(fp, indent, "<arrayRef type=\"%s\">\n", EXPR_TYPEID(aryRef));
+      outx_ARRAY_REF2(fp, indent + 1, aryRef);
+      outxPrint(fp, indent, "</arrayRef>\n");
+    }
+  }
+}
+
+
+PRIVATE_STATIC void
+outx_SUBARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
+{
+  if (EXPR_CODE((CExpr*)aryRef) != EC_ARRAY_REF){
+    outxContext(fp, indent, (CExpr*)aryRef);
+    return;
+  }
+
+  CExpr *aryExpr = aryRef->e_nodes[0];
+
+  outx_SUBARRAY_REF(fp, indent, EXPR_B(aryExpr));
+
+  CExpr *dim = aryRef->e_nodes[1];
+  CExpr *dimLwr = exprListHeadData(dim);
+
+  if (EXPR_L_SIZE(dim) <= 1){
+    outxContext(fp, indent, dimLwr);
+  }
+  else {
+
+    outxPrint(fp, indent, "<indexRange>\n");
+
     CExprOfTypeDesc *aryTd = EXPRS_TYPE(aryExpr);
     CExprOfTypeDesc *aryTdo = getRefType(aryTd);
-    CExpr *dim = aryRef->e_nodes[1];
-    CExpr *dimLwr = exprListHeadData(dim);
 
-    if(EXPR_L_SIZE(dim) > 1) {
-        //sub array
-        CExpr *dimUpr = exprListNextNData(dim, 1);
-        CExpr *dimStp = exprListNextNData(dim, 2);
-        CExprOfTypeDesc *dimTd = EXPR_T(exprListNextNData(dim, 3));
+    CExpr *dimUpr = exprListNextNData(dim, 1);
+    CExpr *dimStp = exprListNextNData(dim, 2);
 
-        outxPrint(fp, indent, "<subArrayRef type=\"%s\">\n", dimTd->e_typeId);
-        outxContext(fp, indent + 1, aryExpr);
-        outxContextWithTag(fp, indent + 1, dimLwr, "lowerBound");
+    outxContextWithTag(fp, indent + 1, dimLwr, "lowerBound");
 
-        CExpr *tmpUpr = NULL;
-        if(EXPR_ISNULL(dimUpr)) {
-            dimUpr = aryTdo->e_len.eln_lenExpr;
-            if(dimUpr) {
-                // complete subarray ref upper bound
-                if(dimUpr && EXPR_CODE(dimUpr) == EC_NUMBER_CONST) {
-                    tmpUpr = (CExpr*)allocExprOfNumberConst2(
-                        getNumberConstAsLong(dimUpr) - 1, BT_INT);
-                } else {
-                    tmpUpr = exprBinary(EC_MINUS, dimUpr,
-                        (CExpr*)allocExprOfNumberConst2(1, BT_INT));
-                }
-            }
-            dimUpr = tmpUpr;
-        }
-        if(dimUpr)
-            outxContextWithTag(fp, indent + 1, dimUpr, "upperBound");
-        outxContextWithTag(fp, indent + 1, dimStp, "step");
-        outxPrint(fp, indent, "</subArrayRef>\n");
+    CExpr *tmpUpr = NULL;
 
-        if(tmpUpr)
-            freeExpr(tmpUpr);
-    } else {
-        //normal array
-        CExpr *parent = EXPR_PARENT(aryRef);
-        CExprCodeEnum pec = EXPR_CODE(parent);
-        int pref = (pec != EC_ADDR_OF);
-        int indent1 = pref ? indent: indent - 1;
-        const char *pointerRefTag = "pointerRef";
-        const char *plusExprTag = "plusExpr";
-
-        if(pref)
-            outxTag1(fp, indent, (CExpr*)aryRef, pointerRefTag, XATTR_TYPE);
-
-        CExprOfTypeDesc *plusExprTd = ETYP_IS_ARRAY(aryTdo) ?
-            EXPR_T(aryTdo->e_paramExpr) : aryTd;
-
-        outxTag(fp, indent1 + 1, (CExpr*)aryRef, plusExprTag, XATTR_COMMON,
-            " type=\"%s\"", plusExprTd->e_typeId);
-        outxContext(fp, indent1 + 2, aryExpr);
-        outxContext(fp, indent1 + 2, dimLwr);
-        outxTagClose(fp, indent1 + 1, plusExprTag);
-
-        if(pref)
-            outxTagClose(fp, indent, pointerRefTag);
+    if (EXPR_ISNULL(dimUpr)) {
+      dimUpr = aryTdo->e_len.eln_lenExpr;
+      if (dimUpr) {
+	// complete subarray ref upper bound
+	if (dimUpr && EXPR_CODE(dimUpr) == EC_NUMBER_CONST) {
+	  tmpUpr = (CExpr*)allocExprOfNumberConst2(
+			     getNumberConstAsLong(dimUpr) - 1, BT_INT);
+	}
+	else {
+	  tmpUpr = exprBinary(EC_MINUS, dimUpr,
+			      (CExpr*)allocExprOfNumberConst2(1, BT_INT));
+	}
+      }
+      dimUpr = tmpUpr;
     }
+    
+    if (dimUpr)
+      outxContextWithTag(fp, indent + 1, dimUpr, "upperBound");
+
+    outxContextWithTag(fp, indent + 1, dimStp, "step");
+    
+    outxPrint(fp, indent, "</indexRange>\n");
+
+    if (tmpUpr)
+      freeExpr(tmpUpr);
+  }
+}
+
+
+PRIVATE_STATIC void
+outx_ARRAY_REF2(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
+{
+  if (EXPR_CODE((CExpr*)aryRef) != EC_ARRAY_REF){
+    outxContext(fp, indent, (CExpr*)aryRef);
+    return;
+  }
+
+  CExpr *aryExpr = aryRef->e_nodes[0];
+  outx_ARRAY_REF2(fp, indent, EXPR_B(aryExpr));
+
+  CExpr *dim = aryRef->e_nodes[1];
+  CExpr *dimLwr = exprListHeadData(dim);
+  outxContext(fp, indent, dimLwr);
 }
 
 
@@ -2353,10 +2493,12 @@ outx_COARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
 {
     CExpr *sym = EXPR_B(aryRef)->e_nodes[0];
     CExpr *coDims = EXPR_B(aryRef)->e_nodes[1];
-    const char *scope = getScope(EXPR_SYMBOL(sym));
+    //const char *scope = getScope(EXPR_SYMBOL(sym));
+
     CExprOfTypeDesc *td = EXPRS_TYPE(aryRef);
 
-    outxPrint(fp, indent, "<coArrayRef type=\"%s\" scope=\"%s\">\n", td->e_typeId, scope);
+    //outxPrint(fp, indent, "<coArrayRef type=\"%s\" scope=\"%s\">\n", td->e_typeId, scope);
+    outxPrint(fp, indent, "<coArrayRef type=\"%s\">\n", td->e_typeId);
     outxContext(fp, indent + 1, sym);
     outxChildren(fp, indent + 1, coDims);
     outxPrint(fp, indent, "</coArrayRef>\n");

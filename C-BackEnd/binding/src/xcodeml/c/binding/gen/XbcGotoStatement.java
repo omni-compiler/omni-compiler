@@ -57,7 +57,7 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_C.rng (Thu Sep 24 16:30:19 JST 2009)
+ * @version XcodeML_C.rng (Mon Aug 15 15:55:18 JST 2011)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbcGotoStatement extends xcodeml.c.obj.XmcObj implements java.io.Serializable, Cloneable, xcodeml.c.binding.IXbcStatement, IRVisitable, IRNode, IXbcStatementsChoice {
@@ -255,14 +255,16 @@ public class XbcGotoStatement extends xcodeml.c.obj.XmcObj implements java.io.Se
         file_ = URelaxer.getAttributePropertyAsString(element, "file");
         isGccSyntax_ = URelaxer.getAttributePropertyAsString(element, "is_gccSyntax");
         isModified_ = URelaxer.getAttributePropertyAsString(element, "is_modified");
-        if (XbcSubArrayRef.isMatch(stack)) {
-            setContent(factory.createXbcSubArrayRef(stack));
-        } else if (XbcBuiltinOp.isMatch(stack)) {
+        if (XbcBuiltinOp.isMatch(stack)) {
             setContent(factory.createXbcBuiltinOp(stack));
+        } else if (XbcArrayRef.isMatch(stack)) {
+            setContent(factory.createXbcArrayRef(stack));
         } else if (XbcFunctionCall.isMatch(stack)) {
             setContent(factory.createXbcFunctionCall(stack));
         } else if (XbcGccCompoundExpr.isMatch(stack)) {
             setContent(factory.createXbcGccCompoundExpr(stack));
+        } else if (XbcSubArrayRef.isMatch(stack)) {
+            setContent(factory.createXbcSubArrayRef(stack));
         } else if (XbcCoArrayRef.isMatch(stack)) {
             setContent(factory.createXbcCoArrayRef(stack));
         } else if (XbcCastExpr.isMatch(stack)) {
@@ -271,18 +273,14 @@ public class XbcGotoStatement extends xcodeml.c.obj.XmcObj implements java.io.Se
             setContent(factory.createXbcStringConstant(stack));
         } else if (XbcVar.isMatch(stack)) {
             setContent(factory.createXbcVar(stack));
-        } else if (XbcArrayRef.isMatch(stack)) {
-            setContent(factory.createXbcArrayRef(stack));
+        } else if (XbcVarAddr.isMatch(stack)) {
+            setContent(factory.createXbcVarAddr(stack));
         } else if (XbcArrayAddr.isMatch(stack)) {
             setContent(factory.createXbcArrayAddr(stack));
         } else if (XbcCompoundValueExpr.isMatch(stack)) {
             setContent(factory.createXbcCompoundValueExpr(stack));
         } else if (XbcCompoundValueAddrExpr.isMatch(stack)) {
             setContent(factory.createXbcCompoundValueAddrExpr(stack));
-        } else if (XbcVarAddr.isMatch(stack)) {
-            setContent(factory.createXbcVarAddr(stack));
-        } else if (XbcCommaExpr.isMatch(stack)) {
-            setContent(factory.createXbcCommaExpr(stack));
         } else if (XbcIntConstant.isMatch(stack)) {
             setContent(factory.createXbcIntConstant(stack));
         } else if (XbcFloatConstant.isMatch(stack)) {
@@ -301,8 +299,6 @@ public class XbcGotoStatement extends xcodeml.c.obj.XmcObj implements java.io.Se
             setContent(factory.createXbcGccLabelAddr(stack));
         } else if (XbcCoArrayAssignExpr.isMatch(stack)) {
             setContent(factory.createXbcCoArrayAssignExpr(stack));
-        } else if (XbcCondExpr.isMatch(stack)) {
-            setContent(factory.createXbcCondExpr(stack));
         } else if (XbcName.isMatch(stack)) {
             setContent(factory.createXbcName(stack));
         } else if (XbcMemberAddr.isMatch(stack)) {
@@ -313,8 +309,6 @@ public class XbcGotoStatement extends xcodeml.c.obj.XmcObj implements java.io.Se
             setContent(factory.createXbcMemberArrayRef(stack));
         } else if (XbcMemberArrayAddr.isMatch(stack)) {
             setContent(factory.createXbcMemberArrayAddr(stack));
-        } else if (XbcBitXorExpr.isMatch(stack)) {
-            setContent(factory.createXbcBitXorExpr(stack));
         } else if (XbcPointerRef.isMatch(stack)) {
             setContent(factory.createXbcPointerRef(stack));
         } else if (XbcAssignExpr.isMatch(stack)) {
@@ -337,6 +331,8 @@ public class XbcGotoStatement extends xcodeml.c.obj.XmcObj implements java.io.Se
             setContent(factory.createXbcBitAndExpr(stack));
         } else if (XbcBitOrExpr.isMatch(stack)) {
             setContent(factory.createXbcBitOrExpr(stack));
+        } else if (XbcBitXorExpr.isMatch(stack)) {
+            setContent(factory.createXbcBitXorExpr(stack));
         } else if (XbcAsgPlusExpr.isMatch(stack)) {
             setContent(factory.createXbcAsgPlusExpr(stack));
         } else if (XbcAsgMinusExpr.isMatch(stack)) {
@@ -379,6 +375,8 @@ public class XbcGotoStatement extends xcodeml.c.obj.XmcObj implements java.io.Se
             setContent(factory.createXbcBitNotExpr(stack));
         } else if (XbcLogNotExpr.isMatch(stack)) {
             setContent(factory.createXbcLogNotExpr(stack));
+        } else if (XbcCommaExpr.isMatch(stack)) {
+            setContent(factory.createXbcCommaExpr(stack));
         } else if (XbcPostIncrExpr.isMatch(stack)) {
             setContent(factory.createXbcPostIncrExpr(stack));
         } else if (XbcPostDecrExpr.isMatch(stack)) {
@@ -387,6 +385,8 @@ public class XbcGotoStatement extends xcodeml.c.obj.XmcObj implements java.io.Se
             setContent(factory.createXbcPreIncrExpr(stack));
         } else if (XbcPreDecrExpr.isMatch(stack)) {
             setContent(factory.createXbcPreDecrExpr(stack));
+        } else if (XbcCondExpr.isMatch(stack)) {
+            setContent(factory.createXbcCondExpr(stack));
         } else {
             throw (new IllegalArgumentException());
         }
@@ -955,13 +955,15 @@ public class XbcGotoStatement extends xcodeml.c.obj.XmcObj implements java.io.Se
         RStack target = new RStack(element);
         boolean $match$ = false;
         Element child;
-        if (XbcSubArrayRef.isMatchHungry(target)) {
+        if (XbcBuiltinOp.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcBuiltinOp.isMatchHungry(target)) {
+        } else if (XbcArrayRef.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcFunctionCall.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcGccCompoundExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcSubArrayRef.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcCoArrayRef.isMatchHungry(target)) {
             $match$ = true;
@@ -971,17 +973,13 @@ public class XbcGotoStatement extends xcodeml.c.obj.XmcObj implements java.io.Se
             $match$ = true;
         } else if (XbcVar.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcArrayRef.isMatchHungry(target)) {
+        } else if (XbcVarAddr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcArrayAddr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcCompoundValueExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcCompoundValueAddrExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcVarAddr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcCommaExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcIntConstant.isMatchHungry(target)) {
             $match$ = true;
@@ -1001,8 +999,6 @@ public class XbcGotoStatement extends xcodeml.c.obj.XmcObj implements java.io.Se
             $match$ = true;
         } else if (XbcCoArrayAssignExpr.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcCondExpr.isMatchHungry(target)) {
-            $match$ = true;
         } else if (XbcName.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcMemberAddr.isMatchHungry(target)) {
@@ -1012,8 +1008,6 @@ public class XbcGotoStatement extends xcodeml.c.obj.XmcObj implements java.io.Se
         } else if (XbcMemberArrayRef.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcMemberArrayAddr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcBitXorExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcPointerRef.isMatchHungry(target)) {
             $match$ = true;
@@ -1036,6 +1030,8 @@ public class XbcGotoStatement extends xcodeml.c.obj.XmcObj implements java.io.Se
         } else if (XbcBitAndExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcBitOrExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcBitXorExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcAsgPlusExpr.isMatchHungry(target)) {
             $match$ = true;
@@ -1079,6 +1075,8 @@ public class XbcGotoStatement extends xcodeml.c.obj.XmcObj implements java.io.Se
             $match$ = true;
         } else if (XbcLogNotExpr.isMatchHungry(target)) {
             $match$ = true;
+        } else if (XbcCommaExpr.isMatchHungry(target)) {
+            $match$ = true;
         } else if (XbcPostIncrExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcPostDecrExpr.isMatchHungry(target)) {
@@ -1086,6 +1084,8 @@ public class XbcGotoStatement extends xcodeml.c.obj.XmcObj implements java.io.Se
         } else if (XbcPreIncrExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcPreDecrExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcCondExpr.isMatchHungry(target)) {
             $match$ = true;
         } else {
             return (false);

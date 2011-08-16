@@ -41,9 +41,9 @@ import org.xml.sax.SAXException;
 
 /**
  * <b>IXbcDeclarationsChoice</b> is generated from XcodeML_C.rng by Relaxer.
- * Concrete classes of the interface are XbcFunctionDecl, XbcVarDecl and XbcFunctionDefinition.
+ * Concrete classes of the interface are XbcFunctionDefinition, XbcVarDecl and XbcFunctionDecl.
  *
- * @version XcodeML_C.rng (Thu Sep 24 16:30:19 JST 2009)
+ * @version XcodeML_C.rng (Mon Aug 15 15:55:18 JST 2011)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public interface IXbcDeclarationsChoice extends IRVisitable, IRNode {
