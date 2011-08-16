@@ -1815,7 +1815,7 @@ isAddrOfChild(CExpr *expr, CExpr *parentExpr, CExpr **outParentExpr)
 {
     assertExpr(expr, parentExpr);
     CExprCodeEnum pec = EXPR_CODE(parentExpr);
-    if(pec == EC_EXPRS)
+    if(pec == EC_EXPRS || pec == EC_ARRAY_REF)
         return isAddrOfChild(parentExpr, EXPR_PARENT(parentExpr), outParentExpr);
     if(outParentExpr)
         *outParentExpr = parentExpr;

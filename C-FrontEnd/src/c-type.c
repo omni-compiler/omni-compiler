@@ -2425,7 +2425,8 @@ resolveType_subArrayRef(CExprOfBinaryNode *expr)
         ite2 = CCOL_DL_NEXT(ite2);
     }
 
-    td = EXPRS_TYPE(expr);
+    //    td = EXPRS_TYPE(expr);
+    td = elemTd;
 
   end:
 
