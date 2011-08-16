@@ -206,7 +206,10 @@ public class XmcXobjectToXmObjTranslator
             case Xtype.FUNCTION:
                 sc = _factory.createXbcFuncAddr();
                 break;
-            // case Xtype.ARRAY: FIXME needed???
+            case Xtype.ARRAY:
+                sc = _factory.createXbcArrayAddr();
+                ((XbcArrayAddr)sc).setScope(i.getScope() != null ? i.getScope().toXcodeString() : null);
+                break;
             default:
                 sc = _factory.createXbcVar();
                 ((XbcVar)sc).setScope(i.getScope() != null ? i.getScope().toXcodeString() : null);
