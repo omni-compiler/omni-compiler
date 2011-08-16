@@ -79,6 +79,7 @@ public class XMPrewriteExpr {
       }
 
       switch (myExpr.Opcode()) {
+/*
         case ARRAY_REF:
           {
             String arrayName = myExpr.getSym();
@@ -100,6 +101,10 @@ public class XMPrewriteExpr {
             System.out.println(myExpr.toString());
             break;
           }
+*/
+        case ARRAY_REF:
+        case SUB_ARRAY_REF:
+          System.out.println(myExpr.toString());
         default:
           iter.next();
       }
