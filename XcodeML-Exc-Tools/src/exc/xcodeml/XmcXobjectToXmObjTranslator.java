@@ -753,17 +753,30 @@ public class XmcXobjectToXmObjTranslator
         case ARRAY_REF: {
                 XbcArrayRef m = _factory.createXbcArrayRef();
                 m.setArrayAddr((XbcArrayAddr)trans(xobj.getArg(0)));
-                // FIXME correct???
-                m.setExpressions(transExpr(xobj.getArg(1)));
+
+                XobjList exprList = (XobjList)xobj.getArg(1);
+                int exprListSize = exprList.Nargs();
+                IXbcExpressionsChoice[] exprs = new IXbcExpressionsChoice[exprListSize];
+                for (int i = 0; i < exprListSize; i++) {
+                  exprs[i] = transExpr(exprList.getArg(i));
+                }
+
+                m.setExpressions(exprs);
                 xmobj = m;
             }
             break;
- 
         case SUB_ARRAY_REF: {
                 XbcSubArrayRef m = _factory.createXbcSubArrayRef();
                 m.setArrayAddr((XbcArrayAddr)trans(xobj.getArg(0)));
-                // FIXME correct???
-                m.setSubArrayDimension((IXbcSubArrayDimensionChoice)trans(xobj.getArg(1)));
+
+                XobjList exprList = (XobjList)xobj.getArg(1);
+                int exprListSize = exprList.Nargs();
+                IXbcSubArrayDimensionChoice[] exprs = new IXbcSubArrayDimensionChoice[exprListSize];
+                for (int i = 0; i < exprListSize; i++) {
+                  exprs[i] = (IXbcSubArrayDimensionChoice)trans(exprList.getArg(i));
+                }
+
+                m.setSubArrayDimension(exprs);
                 xmobj = m;
             }
             break;
@@ -823,6 +836,14 @@ public class XmcXobjectToXmObjTranslator
         case XMP_PRAGMA: {
                 XbcText m = _factory.createXbcText();
                 m.setContent("/* ignored Xcode." + xobj.Opcode().toXcodeString() + " */");
+                xmobj = m;
+            }
+            break;
+        case INDEX_RANGE: {
+                XbcIndexRange m = _factory.createXbcIndexRange();
+                m.setLowerBound((XbcLowerBound)trans(xobj.getArg(0)));
+                m.setUpperBound((XbcUpperBound)trans(xobj.getArg(1)));
+                m.setStep((XbcStep)trans(xobj.getArg(2)));
                 xmobj = m;
             }
             break;
