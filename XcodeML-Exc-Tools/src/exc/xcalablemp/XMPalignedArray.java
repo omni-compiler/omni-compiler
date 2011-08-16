@@ -470,7 +470,7 @@ public class XMPalignedArray {
         alignSubscriptVarList.setArg(alignSubscriptIndex, null);
 
         declAlignFunc(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex,
-                      Xcons.IntConstant(0), globalDecl, isLocalPragma, pb);
+                      alignSubscriptExprList.getArg(alignSubscriptIndex), globalDecl, isLocalPragma, pb);
       }
       else {
         if (XMPutil.countElmts(alignSourceList, alignSource) != 1) {

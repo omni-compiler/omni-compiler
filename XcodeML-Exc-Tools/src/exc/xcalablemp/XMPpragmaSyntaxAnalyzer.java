@@ -602,13 +602,13 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   private void parse_ALIGN_SUBSCRIPT(XobjList alignSubscriptList) throws XmException, XMPexception {
     if (pg_tok() == '*') {
       alignSubscriptList.left().add(Xcons.String(XMP.ASTERISK));
-      alignSubscriptList.right().add(null);
+      alignSubscriptList.right().add(Xcons.IntConstant(0));
       pg_get_token();
       return;
     }
     else if (pg_tok() == ':') {
       alignSubscriptList.left().add(Xcons.String(XMP.COLON));
-      alignSubscriptList.right().add(null);
+      alignSubscriptList.right().add(Xcons.IntConstant(0));
       pg_get_token();
       return;
     }
@@ -623,7 +623,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         expr = pg_parse_int_expr();
       }
       else if (pg_tok() == '-') expr = pg_parse_int_expr();
-      else expr = null;
+      else expr = Xcons.IntConstant(0);
       alignSubscriptList.right().add(expr);
 
       return;
