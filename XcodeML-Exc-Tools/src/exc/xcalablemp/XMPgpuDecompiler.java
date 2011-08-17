@@ -315,14 +315,6 @@ public class XMPgpuDecompiler {
     return mapThreads;
   }
 
-  // FIXME localVars, localDecls delete
-  private static void rewriteLoopBody(CforBlock loopBlock) throws XMPexception {
-    BasicBlockExprIterator iter = new BasicBlockExprIterator(loopBlock.getBody());
-    for (iter.init(); !iter.end(); iter.next()) {
-      rewriteExpr(iter.getExpr(), loopBlock);
-    }
-  }
-
   private static boolean hasVarRef(String varName, CforBlock loopBlock) throws XMPexception {
     BasicBlockExprIterator iter = new BasicBlockExprIterator(loopBlock.getBody());
     for (iter.init(); !iter.end(); iter.next()) {
@@ -347,6 +339,39 @@ public class XMPgpuDecompiler {
     }
 
     return false;
+  }
+
+  // FIXME localVars, localDecls delete
+  private static void rewriteLoopBody(CforBlock loopBlock) throws XMPexception {
+    // rewrite declarations
+    rewriteDecls(loopBlock);
+
+    // rewrite loop
+    BasicBlockExprIterator iter = new BasicBlockExprIterator(loopBlock.getBody());
+    for (iter.init(); !iter.end(); iter.next()) {
+      rewriteExpr(iter.getExpr(), loopBlock);
+    }
+  }
+
+  private static void rewriteDecls(CforBlock loopBlock) {
+    topdownBlockIterator iter = new topdownBlockIterator(loopBlock);
+    for (iter.init(); !iter.end(); iter.next()) {
+      Block b = iter.getBlock();
+      BlockList bl = b.getBody();
+
+      if (bl != null) {
+        XobjList decls = (XobjList)bl.getDecls();
+        if (decls != null) {
+          try {
+            for (Xobject x : decls) {
+              rewriteExpr(x, loopBlock);
+            }
+          } catch (XMPexception e) {
+            XMP.error(b.getLineNo(), e.getMessage());
+          }
+        }
+      }
+    }
   }
 
   private static void rewriteExpr(Xobject expr, CforBlock loopBlock) throws XMPexception {
