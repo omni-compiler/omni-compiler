@@ -333,7 +333,18 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       break;
 
     case ARRAY_REF:       /* (ARRAY_REF x n) */
-      print(v.getSym());
+      // FIXME support new ARRAY_REF indexRange
+      {
+        print(v.getArg(0).getSym());
+        XobjList refList = (XobjList)v.getArg(1);
+        if (refList != null) {
+          for (Xobject ref : refList) {
+            print("[");
+            print(ref);
+            print("]");
+          }
+        }
+      }
       break;
 
     case ADDR_OF: /* & operator */

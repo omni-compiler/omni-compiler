@@ -352,7 +352,7 @@ public class XMPgpuDecompiler {
   private static void rewriteExpr(Xobject expr, CforBlock loopBlock) throws XMPexception {
     if (expr == null) return;
 
-    bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
+    topdownXobjectIterator iter = new topdownXobjectIterator(expr);
     for (iter.init(); !iter.end(); iter.next()) {
       Xobject myExpr = iter.getXobject();
       if (myExpr == null) {
@@ -362,13 +362,16 @@ public class XMPgpuDecompiler {
       switch (myExpr.Opcode()) {
         case ARRAY_REF:
           {
-            String varName = myExpr.getString();
+            String varName = myExpr.getArg(0).getSym();
             XMPgpuData gpuData = XMPgpuDataTable.findXMPgpuData(varName, loopBlock);
+            if (gpuData == null) {
+              throw new XMPexception("array '" + varName + "' is not allocated on the device memory");
+            }
+
             XMPalignedArray alignedArray = gpuData.getXMPalignedArray();
             if (alignedArray != null) {
               if (alignedArray.realloc()) {
-                iter.next();
-                rewriteAlignedArrayExpr(iter, gpuData);
+                iter.setXobject(rewriteAlignedArrayExpr((XobjList)myExpr.getArg(1), gpuData));
               }
             }
           } break;
@@ -377,94 +380,30 @@ public class XMPgpuDecompiler {
     }
   }
 
-  private static void rewriteAlignedArrayExpr(bottomupXobjectIterator iter, XMPgpuData gpuData) throws XMPexception {
-    XobjList funcArgs = Xcons.List(gpuData.getHostId().getAddr());
-    parseArrayExpr(iter, gpuData, 0, funcArgs);
-  }
-
-  private static void parseArrayExpr(bottomupXobjectIterator iter,
-                                     XMPgpuData gpuData, int arrayDimCount, XobjList args) throws XMPexception {
-    String syntaxErrMsg = "syntax error on array expression, cannot rewrite distributed array";
-    Xobject prevExpr = iter.getPrevXobject();
-    Xcode prevExprOpcode = prevExpr.Opcode();
-    Xobject myExpr = iter.getXobject();
-    Xobject parentExpr = iter.getParent();
-    switch (myExpr.Opcode()) {
-      case PLUS_EXPR:
-        {
-          switch (prevExprOpcode) {
-            case ARRAY_REF:
-              {
-                if (arrayDimCount != 0)
-                  throw new XMPexception(syntaxErrMsg);
-              } break;
-            case POINTER_REF:
-              break;
-            default:
-              throw new XMPexception(syntaxErrMsg);
-          }
-
-          if (parentExpr.Opcode() == Xcode.POINTER_REF) {
-            args.add(getCalcIndexFuncRef(gpuData, arrayDimCount, myExpr.right()));
-            iter.next();
-            parseArrayExpr(iter, gpuData, arrayDimCount + 1, args);
-          } else {
-            if (gpuData.getXMPalignedArray().getDim() == arrayDimCount) {
-              Xobject funcCall = createRewriteAlignedArrayFunc(gpuData, arrayDimCount, args, Xcode.POINTER_REF);
-              myExpr.setLeft(funcCall);
-            } else {
-              args.add(getCalcIndexFuncRef(gpuData, arrayDimCount, myExpr.right()));
-              Xobject funcCall = createRewriteAlignedArrayFunc(gpuData, arrayDimCount + 1, args, Xcode.PLUS_EXPR);
-              iter.setXobject(funcCall);
-            }
-
-            iter.next();
-          }
-
-          return;
-        }
-      case POINTER_REF:
-        {
-          switch (prevExprOpcode) {
-            case PLUS_EXPR:
-              break;
-            default:
-              throw new XMPexception(syntaxErrMsg);
-          }
-
-          iter.next();
-          parseArrayExpr(iter, gpuData, arrayDimCount, args);
-          return;
-        }
-      default:
-        {
-          switch (prevExprOpcode) {
-            case ARRAY_REF:
-              {
-                if (arrayDimCount != 0)
-                  throw new XMPexception(syntaxErrMsg);
-              } break;
-            case PLUS_EXPR:
-            case POINTER_REF:
-              break;
-            default:
-              throw new XMPexception(syntaxErrMsg);
-          }
-
-          Xobject funcCall = createRewriteAlignedArrayFunc(gpuData, arrayDimCount, args, prevExprOpcode);
-          iter.setPrevXobject(funcCall);
-          return;
-        }
+  private static Xobject rewriteAlignedArrayExpr(XobjList refExprList,
+                                                 XMPgpuData gpuData) throws XMPexception {
+    int arrayDimCount = 0;
+    XobjList args = Xcons.List(gpuData.getHostId().getAddr());
+    if (refExprList != null) {
+      for (Xobject x : refExprList) {
+        args.add(getCalcIndexFuncRef(gpuData, arrayDimCount, x));
+        arrayDimCount++;
+      }
     }
+
+    return createRewriteAlignedArrayFunc(gpuData, arrayDimCount, args);
   }
 
   private static Xobject createRewriteAlignedArrayFunc(XMPgpuData gpuData, int arrayDimCount,
-                                                       XobjList getAddrFuncArgs, Xcode opcode) throws XMPexception {
+                                                       XobjList getAddrFuncArgs) throws XMPexception {
     XMPalignedArray alignedArray = gpuData.getXMPalignedArray();
     int arrayDim = alignedArray.getDim();
     XobjList accIdList = _accIdHash.get(alignedArray.getName());
     Ident getAddrFuncId = null;
-    if (arrayDim == arrayDimCount) {
+
+    if (arrayDim < arrayDimCount) {
+      throw new XMPexception("wrong array ref");
+    } else if (arrayDim == arrayDimCount) {
       getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_E_" + arrayDim, Xtype.Pointer(alignedArray.getType()));
       for (int i = 0; i < arrayDim - 1; i++) {
         getAddrFuncArgs.add(((Ident)(accIdList.getArg(i))).Ref());
@@ -477,18 +416,10 @@ public class XMPgpuDecompiler {
     }
 
     Xobject retObj = getAddrFuncId.Call(getAddrFuncArgs);
-    switch (opcode) {
-      case ARRAY_REF:
-      case PLUS_EXPR:
-        return retObj;
-      case POINTER_REF:
-        if (arrayDim == arrayDimCount) {
-          return Xcons.List(Xcode.POINTER_REF, retObj.Type(), retObj);
-        } else {
-          return retObj;
-        }
-      default:
-        throw new XMPexception("unknown operation in createRewriteAlignedArrayFunc()");
+    if (arrayDim == arrayDimCount) {
+      return Xcons.List(Xcode.POINTER_REF, retObj.Type(), retObj);
+    } else {
+      return retObj;
     }
   }
 

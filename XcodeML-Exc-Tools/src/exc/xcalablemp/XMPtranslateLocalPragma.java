@@ -496,7 +496,7 @@ public class XMPtranslateLocalPragma {
         switch (x.Opcode()) {
           case ARRAY_REF:
             {
-              String varName = x.getName();
+              String varName = x.getArg(0).getSym();
               if (!XMPutil.hasElmt(arrayNameList, varName)) {
                 arrayNameList.add(Xcons.String(varName));
 
@@ -548,7 +548,7 @@ public class XMPtranslateLocalPragma {
             } break;
           case ARRAY_REF:
             {
-              String varName = x.getName();
+              String varName = x.getArg(0).getSym();
               if (!XMPutil.hasIdent(params, varName)) {
                 XMPgpuData gpuData = XMPgpuDataTable.findXMPgpuData(varName, loopBlock);
                 if (gpuData == null) {
@@ -1963,7 +1963,7 @@ public class XMPtranslateLocalPragma {
       Xobject currentExpr = iter.getXobject();
       if (currentExpr != null) {
         if (currentExpr.Opcode() == Xcode.ARRAY_REF) {
-          return currentExpr.getSym();
+          return currentExpr.getArg(0).getSym();
         }
       }
     }
@@ -1982,7 +1982,7 @@ public class XMPtranslateLocalPragma {
         if (currentExpr.Opcode() == Xcode.ARRAY_REF) {
           XobjList accList = Xcons.List();
 
-          String arrayName = currentExpr.getSym();
+          String arrayName = currentExpr.getArg(0).getSym();
           XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
           if (alignedArray == null) {
             Ident arrayId = pb.findVarIdent(arrayName);
@@ -2045,7 +2045,7 @@ public class XMPtranslateLocalPragma {
           arrayRefs.cons(Xcons.Cast(Xtype.intType, Xcons.IntConstant(arrayDimCount)));
 
           XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-          String arrayName = expr.getSym();
+          String arrayName = expr.getArg(0).getSym();
           XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
           if (alignedArray == null) {
             Ident arrayId = pb.findVarIdent(arrayName);
@@ -2092,7 +2092,7 @@ public class XMPtranslateLocalPragma {
       case ARRAY_REF:
         {
           XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-          String arrayName = expr.getSym();
+          String arrayName = expr.getArg(0).getSym();
           XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
           if (alignedArray == null) {
             return new XMPpair<XMPalignedArray, XobjList>(null, null);

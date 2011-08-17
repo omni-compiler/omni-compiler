@@ -106,7 +106,7 @@ public class XMPrewriteExpr {
             XMPalignedArray alignedArray = findXMPalignedArray(arrayName, localXMPsymbolTable);
             if (alignedArray != null) {
               if (alignedArray.checkRealloc()) {
-                iter.setXobject(rewriteAlignedArrayExpr(myExpr, alignedArray));
+                iter.setXobject(rewriteAlignedArrayExpr((XobjList)myExpr.getArg(1), alignedArray));
               }
             }
           } break;
@@ -118,16 +118,15 @@ public class XMPrewriteExpr {
     }
   }
 
-  private Xobject rewriteAlignedArrayExpr(Xobject refExpr,
+  private Xobject rewriteAlignedArrayExpr(XobjList refExprList,
                                           XMPalignedArray alignedArray) throws XMPexception {
-    Xobject arrayAddr = refExpr.getArg(0);
-    XobjList arrayRefList = (XobjList)refExpr.getArg(1);
-
     int arrayDimCount = 0;
     XobjList args = Xcons.List(alignedArray.getAddrId().Ref());
-    for (Xobject x : arrayRefList) {
-      args.add(getCalcIndexFuncRef(alignedArray, arrayDimCount, x));
-      arrayDimCount++;
+    if (refExprList != null) {
+      for (Xobject x : refExprList) {
+        args.add(getCalcIndexFuncRef(alignedArray, arrayDimCount, x));
+        arrayDimCount++;
+      }
     }
 
     return createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
