@@ -427,7 +427,7 @@ public class XMPtranslateLocalPragma {
 
   private XobjList setupGPUparallelFunc(Ident funcId, CforBlock loopBlock, PragmaBlock pb) throws XMPexception {
     XobjList loopVarList = (XobjList)((XobjList)(pb.getClauses())).getArg(0);
-    XobjList newLoopVarList = setupGpuLoopBlock(Xcons.List(Xcons.String(loopBlock.getInductionVar().getName())),
+    XobjList newLoopVarList = setupGpuLoopBlock(Xcons.List(loopBlock.findVarIdent(loopBlock.getInductionVar().getSym())),
                                                 loopVarList, loopBlock.getBody().getHead());
 
     // get params
@@ -470,7 +470,7 @@ public class XMPtranslateLocalPragma {
           Block bodyBlock = b.getBody().getHead();
           String loopVarName = loopBlock.getInductionVar().getSym();
           if (XMPutil.hasElmt(loopVarList, loopVarName)) {
-            newLoopVarList.insert(Xcons.String(loopVarName));
+            newLoopVarList.insert(b.findVarIdent(loopVarName));
             b.getParentBlock().setBody(loopBlock.getBody());
           }
 

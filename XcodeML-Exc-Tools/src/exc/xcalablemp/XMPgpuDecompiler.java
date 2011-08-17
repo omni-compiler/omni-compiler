@@ -58,8 +58,8 @@ public class XMPgpuDecompiler {
     XobjList loopIterRefList = Xcons.List();
     Iterator<Xobject> iter = loopIndexList.iterator();
     while(iter.hasNext()) {
-      String loopVarName = iter.next().getString();
-      Ident loopVarId = loopBlock.findVarIdent(loopVarName);
+      Ident loopVarId = (Ident)iter.next();
+      String loopVarName = loopVarId.getSym();
 
       addLocalVar(loopVarId, localVars);
 
