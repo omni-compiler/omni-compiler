@@ -66,7 +66,7 @@ public class XMPrewriteExpr {
         if (decls != null) {
           try {
             for (Xobject x : decls) {
-              rewriteExpr(x, localXMPsymbolTable);
+              rewriteExpr(x.getArg(1), localXMPsymbolTable);
             }
           } catch (XMPexception e) {
             XMP.error(b.getLineNo(), e.getMessage());

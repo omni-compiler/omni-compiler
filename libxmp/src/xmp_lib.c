@@ -8,15 +8,15 @@
 #include "xmp_internal.h"
 
 // FIXME utility functions
-void xmp_get_comm(void **comm) {
+void xmp_MPI_comm(void **comm) {
   *comm = _XMP_get_execution_nodes()->comm;
 }
 
-int xmp_get_size(void) {
+int xmp_num_nodes(void) {
   return _XMP_get_execution_nodes()->comm_size;
 }
 
-int xmp_get_rank(void) {
+int xmp_node_num(void) {
   return _XMP_get_execution_nodes()->comm_rank;
 }
 
@@ -24,11 +24,11 @@ void xmp_barrier(void) {
   _XMP_barrier_EXEC();
 }
 
-int xmp_get_world_size(void) {
+int xmp_all_num_nodes(void) {
   return _XMP_world_size;
 }
 
-int xmp_get_world_rank(void) {
+int xmp_all_node_num(void) {
   return _XMP_world_rank;
 }
 

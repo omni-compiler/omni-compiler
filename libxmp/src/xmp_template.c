@@ -453,12 +453,6 @@ int _XMP_exec_task_TEMPLATE_PART(_XMP_task_desc_t **task_desc, int get_upper, _X
   _XMP_ASSERT(ref_template->is_fixed);
   _XMP_ASSERT(ref_template->is_distributed);
 
-  _XMP_nodes_t *onto_nodes = ref_template->onto_nodes;
-  if (!onto_nodes->is_member) {
-     _XMP_set_task_desc(desc, _XMP_N_INT_FALSE, NULL, ref_dim, lower, upper, stride);
-     return _XMP_N_INT_FALSE;
-  }
-
   int color = 1;
   int is_member = _XMP_N_INT_TRUE;
   if (ref_template->is_owner) {

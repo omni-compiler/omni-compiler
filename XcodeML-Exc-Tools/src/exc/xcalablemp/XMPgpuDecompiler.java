@@ -364,7 +364,7 @@ public class XMPgpuDecompiler {
         if (decls != null) {
           try {
             for (Xobject x : decls) {
-              rewriteExpr(x, loopBlock);
+              rewriteExpr(x.getArg(1), loopBlock);
             }
           } catch (XMPexception e) {
             XMP.error(b.getLineNo(), e.getMessage());
