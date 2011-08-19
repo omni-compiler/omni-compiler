@@ -613,4 +613,9 @@ public class XMPalignedArray {
                                        alignFuncArgs);
     }
   }
+
+  // FIXME implement
+  public static void translateLocalAlias(XobjList localAliasDecl, XMPglobalDecl globalDecl, boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
+    System.out.println("LOCAL_ALIAS:" + localAliasDecl.toString());
+  }
 }

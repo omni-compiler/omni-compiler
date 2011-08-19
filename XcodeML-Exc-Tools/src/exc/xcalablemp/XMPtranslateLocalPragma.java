@@ -75,6 +75,8 @@ public class XMPtranslateLocalPragma {
         { translateBcast(pb);			break; }
       case GMOVE:
         { translateGmove(pb);			break; }
+      case LOCAL_ALIAS:
+        { translateLocalAlias(pb);		break; }
       case GPU_REPLICATE:
         { translateGpuData(pb);			break; }
       case GPU_REPLICATE_SYNC:
@@ -148,6 +150,11 @@ public class XMPtranslateLocalPragma {
       alignDeclCopy.setArg(0, x);
       XMPalignedArray.translateAlign(alignDeclCopy, _globalDecl, true, pb);
     }
+  }
+
+  private void translateLocalAlias(PragmaBlock pb) throws XMPexception {
+    checkDeclPragmaLocation(pb);
+    XMPalignedArray.translateLocalAlias((XobjList)pb.getClauses(), _globalDecl, true, pb);
   }
 
   private void translateShadow(PragmaBlock pb) throws XMPexception {

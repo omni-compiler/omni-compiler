@@ -46,6 +46,9 @@ public class XMPtranslateGlobalPragma {
       case COARRAY:
         translateCoarray(x);
         break;
+      case LOCAL_ALIAS:
+        translateLocalAlias(x);
+        break;
       default:
         throw new XMPexception("'" + pragmaName.toLowerCase() + "' directive is not supported yet");
     }
@@ -101,6 +104,10 @@ public class XMPtranslateGlobalPragma {
       alignDeclCopy.setArg(0, x);
       XMPalignedArray.translateAlign(alignDeclCopy, _globalDecl, false, null);
     }
+  }
+
+  private void translateLocalAlias(Xobject localAliasPragma) throws XMPexception {
+    XMPalignedArray.translateLocalAlias((XobjList)localAliasPragma.getArg(1), _globalDecl, false, null);
   }
 
   private void translateShadow(Xobject shadowPragma) throws XMPexception {

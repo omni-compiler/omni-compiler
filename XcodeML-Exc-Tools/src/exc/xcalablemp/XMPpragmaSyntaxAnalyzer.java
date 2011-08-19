@@ -246,8 +246,13 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
       pg_get_token();
       args = parse_COARRAY_clause();
-    }
-    else if (pg_is_ident("acc")) {
+    } else if (pg_is_ident("local_alias")) {
+      pragmaDir = XMPpragma.LOCAL_ALIAS;
+      syntax = PragmaSyntax.SYN_DECL;
+
+      pg_get_token();
+      args = parse_LOCAL_ALIAS_clause();
+    } else if (pg_is_ident("acc")) {
       pg_get_token();
       if (pg_is_ident("replicate")) {
         pragmaDir = XMPpragma.GPU_REPLICATE;
@@ -1152,6 +1157,36 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     }
 
     return Xcons.List(coarrayName, coarrayDim);
+  }
+
+  private XobjList parse_LOCAL_ALIAS_clause() throws XMPexception {
+    XobjString localArrayName = null;
+    if (pg_tok() == PG_IDENT) {
+      localArrayName = Xcons.String(pg_tok_buf());
+    } else {
+      error("<local-array-name> is not indicated");
+    }
+
+    pg_get_token();
+    if (pg_tok() != '=') {
+      error("'=>' is expected after <local-array-name>");
+    }
+
+    pg_get_token();
+    if (pg_tok() != '>') {
+      error("'=>' is expected after <local-array-name>");
+    }
+
+    XobjString globalArrayName = null;
+    pg_get_token();
+    if (pg_tok() == PG_IDENT) {
+      globalArrayName = Xcons.String(pg_tok_buf());
+    } else {
+      error("<local-array-name> is not indicated");
+    }
+
+    pg_get_token();
+    return Xcons.List(localArrayName, globalArrayName);
   }
 
   private XobjList parse_GPU_clause() throws XmException, XMPexception {
