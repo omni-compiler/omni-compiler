@@ -13,6 +13,20 @@ import java.util.*;
 public class XMPutil {
   private static final String LOOP_ITER = "XCALABLEMP_LOOP_ITER_PROP";
 
+  public static XMPalignedArray findXMPalignedArray(String arrayName, XMPglobalDecl globalDecl, XMPsymbolTable localXMPsymbolTable) {
+    XMPalignedArray alignedArray = null;
+
+    if (localXMPsymbolTable != null) {
+      alignedArray = localXMPsymbolTable.getXMPalignedArray(arrayName);
+    }
+
+    if (alignedArray == null) {
+      alignedArray = globalDecl.getXMPalignedArray(arrayName);
+    }
+
+    return alignedArray;
+  }
+
   public static void putLoopIter(CforBlock b, String indVarName, XobjList loopIter) {
     HashMap<String, XobjList> loopIterTable = (HashMap<String, XobjList>)b.getProp(LOOP_ITER);
     if (loopIterTable == null) {

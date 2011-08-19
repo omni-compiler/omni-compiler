@@ -616,6 +616,27 @@ public class XMPalignedArray {
 
   // FIXME implement
   public static void translateLocalAlias(XobjList localAliasDecl, XMPglobalDecl globalDecl, boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
-    System.out.println("LOCAL_ALIAS:" + localAliasDecl.toString());
+    // start translation
+    XMPsymbolTable localXMPsymbolTable = null;
+    if (isLocalPragma) {
+      localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+    }
+
+    // check local array
+    String localArrayName = localAliasDecl.getArg(0).getString();
+    if (XMPutil.findXMPalignedArray(localArrayName, globalDecl, localXMPsymbolTable) != null) {
+      throw new XMPexception("array '" + localArrayName + "' is declared as an aligned array");
+    }
+
+    // check pointer
+
+    // check global array
+    String globalArrayName = localAliasDecl.getArg(1).getString();
+    XMPalignedArray alignedArray = XMPutil.findXMPalignedArray(globalArrayName, globalDecl, localXMPsymbolTable);
+    if (alignedArray == null) {
+      throw new XMPexception("the aligned array '" + globalArrayName + "' is not found");
+    }
+
+    // create runtime func call
   }
 }
