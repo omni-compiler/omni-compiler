@@ -126,13 +126,13 @@ static void _XMP_setup_reduce_FLMM_op(MPI_Op *mpi_op, int op) {
   type *buf1 = (type *)temp_buffer; \
   type *buf2 = (type *)addr; \
   for (int i = 0; i < count; i++) { \
-    if (buf1[i] == buf2[i]) cmp_buffer[i] = true; \
-    else                    cmp_buffer[i] = false; \
+    if (buf1[i] == buf2[i]) cmp_buffer[i] = _XMP_N_INT_TRUE; \
+    else                    cmp_buffer[i] = _XMP_N_INT_FALSE; \
   } \
   break; \
 }
 
-static void _XMP_compare_reduce_results(_Bool *cmp_buffer, void *temp_buffer, void *addr, int count, int datatype) {
+static void _XMP_compare_reduce_results(int *cmp_buffer, void *temp_buffer, void *addr, int count, int datatype) {
   switch (datatype) {
     case _XMP_N_TYPE_BOOL:			_XMP_M_COMPARE_REDUCE_RESULTS_MAIN(_Bool);
     case _XMP_N_TYPE_CHAR:			_XMP_M_COMPARE_REDUCE_RESULTS_MAIN(char);
@@ -183,7 +183,7 @@ static void _XMP_compare_reduce_results(_Bool *cmp_buffer, void *temp_buffer, vo
   break; \
 }
 
-static void _XMP_init_localtion_variables(void *loc, int count, int loc_datatype, _Bool *cmp_buffer, int op) {
+static void _XMP_init_localtion_variables(void *loc, int count, int loc_datatype, int *cmp_buffer, int op) {
   switch (loc_datatype) {
     case _XMP_N_TYPE_CHAR:		_XMP_M_INIT_LOCATION_VARIABLES_MAIN(char, SCHAR_MIN, SCHAR_MAX);
     case _XMP_N_TYPE_UNSIGNED_CHAR:	_XMP_M_INIT_LOCATION_VARIABLES_MAIN(unsigned char, 0, UCHAR_MAX);
@@ -248,8 +248,8 @@ void _XMP_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes,
   MPI_Allreduce(temp_buffer, addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm));
 
   // compare results
-  n = sizeof(_Bool) * count;
-  _Bool *cmp_buffer = _XMP_alloc(n);
+  n = sizeof(int) * count;
+  int *cmp_buffer = _XMP_alloc(n);
   _XMP_compare_reduce_results(cmp_buffer, temp_buffer, addr, count, datatype);
 
   // reduce <location-variable>
@@ -310,8 +310,8 @@ void _XMP_reduce_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, i
   MPI_Allreduce(temp_buffer, data_addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm));
 
   // compare results
-  n = sizeof(_Bool) * count;
-  _Bool *cmp_buffer = _XMP_alloc(n);
+  n = sizeof(int) * count;
+  int *cmp_buffer = _XMP_alloc(n);
   _XMP_compare_reduce_results(cmp_buffer, temp_buffer, data_addr, count, datatype);
 
   // reduce <location-variable>
