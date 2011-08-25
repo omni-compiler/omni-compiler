@@ -37,7 +37,7 @@ public class XMPrealloc implements XobjectDefVisitor {
           }
 
           if (alignedArray.getAddrId().getStorageClass() == StorageClass.EXTERN) {
-            _globalDecl.addGlobalInitFuncCall("_XMP_init_array_alloc_params", allocFuncArgs);
+            _globalDecl.addGlobalInitFuncCall("_XMP_alloc_array_EXTERN", allocFuncArgs);
           }
           else {
             _globalDecl.addGlobalInitFuncCall("_XMP_alloc_array", allocFuncArgs);

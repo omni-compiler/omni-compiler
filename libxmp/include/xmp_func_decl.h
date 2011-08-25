@@ -20,7 +20,7 @@ extern void _XMP_align_array_DUPLICATION(void *array, int array_index, int templ
 extern void _XMP_align_array_BLOCK(void *array, int array_index, int template_index, long long align_subscript, int *temp0);
 extern void _XMP_align_array_CYCLIC(void *array, int array_index, int template_index, long long align_subscript, int *temp0);
 extern void _XMP_alloc_array(void **array_addr, void *array_desc, ...);
-extern void _XMP_init_array_alloc_params(void **array_addr, void *array_desc, ...);
+extern void _XMP_alloc_array_EXTERN(void **array_addr, void *array_desc, ...);
 extern void _XMP_init_array_addr(void **array_addr, void *init_addr, void *array_desc, ...);
 extern void _XMP_init_array_comm(void *array, ...);
 extern unsigned long long _XMP_get_array_total_elmts(void *array);
