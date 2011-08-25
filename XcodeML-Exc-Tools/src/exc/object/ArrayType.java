@@ -60,7 +60,12 @@ public class ArrayType extends Xtype
     {
         return sizeExpr;
     }
-    
+   
+    public void setArraySize(long s)
+    {
+        size = s;
+    }
+ 
     public void setArraySizeExpr(Xobject x)
     {
         sizeExpr = x;

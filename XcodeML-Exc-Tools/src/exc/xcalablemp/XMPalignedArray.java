@@ -20,8 +20,8 @@ public class XMPalignedArray {
 
   private String		_name;
   private Xtype			_type;
+  private ArrayType		_arrayType;
   private int			_dim;
-  private Vector<Long>		_sizeVector;
   private Vector<XMPshadow>	_shadowVector;
   private Vector<Integer>	_alignMannerVector;
   private Vector<Ident>		_accIdVector;
@@ -50,14 +50,14 @@ public class XMPalignedArray {
     }
   }
 
-  public XMPalignedArray(String name, Xtype type, int dim,
-                         Vector<Long> sizeVector, Vector<Ident> accIdVector,
+  public XMPalignedArray(String name, Xtype type, ArrayType arrayType,
+                         int dim, Vector<Ident> accIdVector,
                          Ident arrayId, Ident descId, Ident addrId,
                          XMPtemplate alignTemplate) {
     _name = name;
     _type = type;
+    _arrayType = arrayType;
     _dim = dim;
-    _sizeVector = sizeVector;
     _shadowVector = new Vector<XMPshadow>(XMP.MAX_DIM);
     _alignMannerVector = new Vector<Integer>(XMP.MAX_DIM);
     _accIdVector = accIdVector;
@@ -264,6 +264,16 @@ public class XMPalignedArray {
     else                 return checkRealloc();
   }
 
+  public void setArraySize(int index, Xobject sizeExpr) throws XMPexception {
+    ArrayType type = this._arrayType;
+    for (int i = 0; i < index; i++) {
+      type = (ArrayType)type.getRef();
+    }
+
+    type.setArraySize(-1);
+    type.setArraySizeExpr(sizeExpr);
+  }
+
   public static void translateAlign(XobjList alignDecl, XMPglobalDecl globalDecl,
                                     boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
     // local parameters
@@ -379,7 +389,6 @@ public class XMPalignedArray {
                                                 arrayElmtTypeRef,
                                                 Xcons.SizeOf(arrayElmtType));
 
-    Vector<Long> arraySizeVector = new Vector<Long>(arrayDim);
     Vector<Ident> accIdVector = new Vector<Ident>(arrayDim);
     for (int i = 0; i < arrayDim; i++, arrayType = arrayType.getRef()) {
       long dimSize = arrayType.getArraySize();
@@ -387,7 +396,6 @@ public class XMPalignedArray {
         throw new XMPexception("array size should be declared statically");
       }
 
-      arraySizeVector.add(new Long(dimSize));
       initArrayDescFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.LongLongConstant(0, dimSize)));
 
       Ident accId = null;
@@ -403,8 +411,8 @@ public class XMPalignedArray {
       accIdVector.add(accId);
     }
 
-    alignedArray = new XMPalignedArray(arrayName, arrayElmtType, arrayDim,
-                                       arraySizeVector, accIdVector,
+    alignedArray = new XMPalignedArray(arrayName, arrayElmtType, (ArrayType)arrayId.Type(),
+                                       arrayDim, accIdVector,
                                        arrayId, arrayDescId, arrayAddrId,
                                        templateObj);
 
