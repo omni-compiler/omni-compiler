@@ -46,14 +46,18 @@ public class XMPutil {
     }
   }
 
-  // FIXME array can be a dynamic size
-  public static long getArrayElmtCount(Xtype type) {
+  public static long getArrayElmtCount(Xtype type) throws XMPexception {
     if (type.isArray()) {
       ArrayType arrayType = (ArrayType)type;
       long arraySize = arrayType.getArraySize();
-      return arraySize * getArrayElmtCount(arrayType.getRef());
+      if ((arraySize == 0) || (arraySize == -1)) {
+        throw new XMPexception("array size should be declared statically");
+      } else {
+        return arraySize * getArrayElmtCount(arrayType.getRef());
+      }
+    } else {
+      return 1;
     }
-    else return 1;
   }
 
   public static XMPpair<Ident, Xtype> findTypedVar(String name, PragmaBlock pb) throws XMPexception {

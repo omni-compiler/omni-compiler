@@ -182,11 +182,8 @@ public class XMPtranslateGlobalPragma {
     if (isArray) {
       for (int i = 0; i < varDim; i++, varType = varType.getRef()) {
         long dimSize = varType.getArraySize();
-        if (dimSize == 0) {
-          throw new XMPexception("array size cannot be omitted");
-        } else if (dimSize == -1) {
-          // FIXME possible error in global scope???
-          throw new XMPexception("array size should be fixed");
+        if ((dimSize == 0) || (dimSize == -1)) {
+          throw new XMPexception("array size should be declared statically");
         }
 
         sizeVector.add(new Long(dimSize));

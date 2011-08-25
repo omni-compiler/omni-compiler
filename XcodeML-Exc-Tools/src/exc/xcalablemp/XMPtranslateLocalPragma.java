@@ -1546,13 +1546,9 @@ public class XMPtranslateLocalPragma {
       ArrayType arrayType = (ArrayType)type;
 
       long arraySize = arrayType.getArraySize();
-      if (arraySize == 0) {
-        throw new XMPexception("cannot get the array size");
-      }
-      else if (arraySize == -1) {
-        return Xcons.binaryOp(Xcode.MUL_EXPR, arrayType.getArraySizeExpr(), getArrayElmtsObj(arrayType.getRef()));
-      }
-      else {
+      if ((arraySize == 0) || (arraySize == -1)) {
+        throw new XMPexception("array size should be declared statically");
+      } else {
         return Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.LongLongConstant(0, arraySize), getArrayElmtsObj(arrayType.getRef()));
       }
     }

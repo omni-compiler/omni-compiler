@@ -383,18 +383,8 @@ public class XMPalignedArray {
     Vector<Ident> accIdVector = new Vector<Ident>(arrayDim);
     for (int i = 0; i < arrayDim; i++, arrayType = arrayType.getRef()) {
       long dimSize = arrayType.getArraySize();
-      if (dimSize == 0) {
-        throw new XMPexception("array size cannot be omitted");
-      }
-      else if (dimSize == -1) {
-        if (isLocalPragma) {
-          // FIXME allow dynamic array
-          throw new XMPexception("dynamic array is not allowed yet");
-        }
-        else {
-          // FIXME possible error in global scope???
-          throw new XMPexception("array size should be fixed");
-        }
+      if ((dimSize == 0) || (dimSize == -1)) {
+        throw new XMPexception("array size should be declared statically");
       }
 
       arraySizeVector.add(new Long(dimSize));
