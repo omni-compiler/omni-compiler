@@ -17,6 +17,7 @@ public class XMPobject {
   private String		_name;
   private int			_dim;
   private Ident			_descId;
+  private Vector<Xobject>	_lowerVector;
   private Vector<Xobject>	_upperVector;
 
   public XMPobject(int kind, String name, int dim, Ident descId) {
@@ -24,6 +25,7 @@ public class XMPobject {
     _name = name;
     _dim = dim;
     _descId = descId;
+    _lowerVector = new Vector<Xobject>();
     _upperVector = new Vector<Xobject>();
   }
 
@@ -41,6 +43,14 @@ public class XMPobject {
 
   public Ident getDescId() {
     return _descId;
+  }
+
+  public void addLower(Xobject lower) {
+    _lowerVector.add(lower);
+  }
+
+  public Xobject getLowerAt(int index) {
+    return _lowerVector.get(index);
   }
 
   public void addUpper(Xobject upper) {

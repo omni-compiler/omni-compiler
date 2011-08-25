@@ -2215,8 +2215,9 @@ public class XMPtranslateLocalPragma {
             tempArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
 
             // lower
-            if (t.getArg(0) == null) tempArgs.add(Xcons.Cast(castType, Xcons.IntConstant(1)));
-            else {
+            if (t.getArg(0) == null) {
+              tempArgs.add(Xcons.Cast(castType, onRefObject.getLowerAt(refIndex)));
+            } else {
               splitComm = true;
               tempArgs.add(Xcons.Cast(castType, t.getArg(0)));
             }

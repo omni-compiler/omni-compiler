@@ -24,6 +24,10 @@ public class XMPnodes extends XMPobject {
     _inheritType = INHERIT_NULL;
     _inheritNamedNodes = false;
     _inheritNodes = null;
+
+    for (int i = 0; i < dim; i++) {
+      this.addLower(Xcons.IntConstant(1));
+    }
   }
 
   private int getInheritType() {
@@ -164,11 +168,11 @@ public class XMPnodes extends XMPobject {
             if (subscriptList == null) {
               for (int nodesRefIndex = 0; nodesRefIndex < nodesRefDim; nodesRefIndex++) {
                 // lower
-                nodesArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+                nodesArgs.add(Xcons.Cast(Xtype.intType, nodesRefObject.getLowerAt(nodesRefIndex)));
                 // upper
-                Xobject nodesRefSize = nodesRefObject.getUpperAt(nodesRefIndex);
-                if (nodesRefSize == null) isDynamicNodesRef = true;
-                else nodesArgs.add(Xcons.Cast(Xtype.intType, nodesRefSize));
+                Xobject nodesRefUpper = nodesRefObject.getUpperAt(nodesRefIndex);
+                if (nodesRefUpper == null) isDynamicNodesRef = true;
+                else nodesArgs.add(Xcons.Cast(Xtype.intType, nodesRefUpper));
                 // stride
                 nodesArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
               }
@@ -186,13 +190,16 @@ public class XMPnodes extends XMPobject {
                   nodesArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
 
                   // lower
-                  if (subscriptTriplet.getArg(0) == null) nodesArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
-                  else nodesArgs.add(Xcons.Cast(Xtype.intType, subscriptTriplet.getArg(0)));
+                  if (subscriptTriplet.getArg(0) == null) {
+                    nodesArgs.add(Xcons.Cast(Xtype.intType, nodesRefObject.getLowerAt(nodesRefIndex)));
+                  } else {
+                    nodesArgs.add(Xcons.Cast(Xtype.intType, subscriptTriplet.getArg(0)));
+                  }
                   // upper
                   if (subscriptTriplet.getArg(1) == null) {
-                    Xobject nodesRefSize = nodesRefObject.getUpperAt(nodesRefIndex);
-                    if (nodesRefSize == null) isDynamicNodesRef = true;
-                    else nodesArgs.add(Xcons.Cast(Xtype.intType, nodesRefSize));
+                    Xobject nodesRefUpper = nodesRefObject.getUpperAt(nodesRefIndex);
+                    if (nodesRefUpper == null) isDynamicNodesRef = true;
+                    else nodesArgs.add(Xcons.Cast(Xtype.intType, nodesRefUpper));
                   }
                   else nodesArgs.add(Xcons.Cast(Xtype.intType, subscriptTriplet.getArg(1)));
                   // stride

@@ -22,7 +22,6 @@ public class XMPtemplate extends XMPobject {
   private XMPnodes		_ontoNodes;
   private Vector<XobjInt>	_ontoNodesIndexVector;
   private Vector<Integer>	_distMannerVector;
-  private Vector<Xobject>	_lowerVector;
 
   public XMPtemplate(String name, int dim, Ident descId) {
     super(XMPobject.TEMPLATE, name, dim, descId);
@@ -37,8 +36,6 @@ public class XMPtemplate extends XMPobject {
       _ontoNodesIndexVector.add(null);
       _distMannerVector.add(null);
     }
-
-    _lowerVector = new Vector<Xobject>();
   }
 
   public void setIsFixed() {
@@ -91,14 +88,6 @@ public class XMPtemplate extends XMPobject {
     } else {
       return getDistMannerString(getDistMannerAt(index));
     }
-  }
-
-  public void addLower(Xobject lower) {
-    _lowerVector.add(lower);
-  }
-
-  public Xobject getLowerAt(int index) {
-    return _lowerVector.get(index);
   }
 
   public static String getDistMannerString(int manner) throws XMPexception {
