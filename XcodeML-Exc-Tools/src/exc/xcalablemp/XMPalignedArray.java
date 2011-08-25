@@ -264,14 +264,20 @@ public class XMPalignedArray {
     else                 return checkRealloc();
   }
 
-  public void setArraySize(int index, Xobject sizeExpr) throws XMPexception {
+  public void normArraySize(int index, Xobject normExpr) throws XMPexception {
     ArrayType type = this._arrayType;
     for (int i = 0; i < index; i++) {
       type = (ArrayType)type.getRef();
     }
 
-    type.setArraySize(-1);
-    type.setArraySizeExpr(sizeExpr);
+    // FIXME case (size == 0) ???
+    long size = type.getArraySize();
+    if (size == -1) {
+      type.setArraySizeExpr(Xcons.binaryOp(Xcode.PLUS_EXPR, type.getArraySizeExpr(), normExpr));
+    } else {
+      type.setArraySize(-1);
+      type.setArraySizeExpr(Xcons.binaryOp(Xcode.PLUS_EXPR, Xcons.LongLongConstant(0, size), normExpr));
+    }
   }
 
   public static void translateAlign(XobjList alignDecl, XMPglobalDecl globalDecl,
@@ -557,10 +563,33 @@ public class XMPalignedArray {
     }
   }
 
+  private static Xobject normArray(XMPalignedArray alignedArray, int alignSourceIndex,
+                                   XMPtemplate templateObj, int alignSubscriptIndex,
+                                   Xobject alignSubscriptExpr,
+                                   XMPglobalDecl globalDecl, boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
+    Xobject templateLower = templateObj.getLowerAt(alignSubscriptIndex);
+    Xobject alignNormExpr = Xcons.binaryOp(Xcode.MINUS_EXPR,
+                                           alignSubscriptExpr, templateLower);
+    alignedArray.setAlignNormExprAt(alignNormExpr, alignSourceIndex);
+
+    // normalize 1. array size on src code: += normExpr
+    alignedArray.normArraySize(alignSourceIndex, alignNormExpr);
+
+    // normalize 2. runtime data
+    // FIXME implement
+
+    // normalize 3. alignSubscriptExpr: templateLower
+    return templateLower;
+  }
+
   private static void declAlignFunc(XMPalignedArray alignedArray, int alignSourceIndex,
                                     XMPtemplate templateObj, int alignSubscriptIndex,
                                     Xobject alignSubscriptExpr,
                                     XMPglobalDecl globalDecl, boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
+    // normalize array
+    alignSubscriptExpr = normArray(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex,
+                                   alignSubscriptExpr, globalDecl, isLocalPragma, pb);
+
     XobjList alignFuncArgs = Xcons.List(alignedArray.getDescId().Ref(),
                                         Xcons.IntConstant(alignSourceIndex),
                                         Xcons.IntConstant(alignSubscriptIndex));
@@ -572,10 +601,6 @@ public class XMPalignedArray {
 
     alignedArray.setAlignSubscriptIndexAt(alignSubscriptIndex, alignSourceIndex);
     alignedArray.setAlignSubscriptExprAt(alignSubscriptExpr, alignSourceIndex);
-
-    Xobject alignNormExpr = Xcons.binaryOp(Xcode.MINUS_EXPR,
-                                           alignSubscriptExpr, templateObj.getLowerAt(alignSubscriptIndex));
-    alignedArray.setAlignNormExprAt(alignNormExpr, alignSourceIndex);
 
     switch (distManner) {
       case XMPtemplate.DUPLICATION: // FIXME how implement???
