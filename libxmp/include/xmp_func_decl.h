@@ -74,21 +74,21 @@ extern void _XMP_gmove_SENDRECV_ARRAY(void *dst_array, void *src_array, int type
  _type *const par_init, _type *const par_cond, _type *const par_step, \
  const void *const template, const int template_index)
 
-extern void _XMP_sched_loop_template_BLOCK_INT                _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_S(int);
+extern void _XMP_sched_loop_template_BLOCK _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_S(int);
 
 #define _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_S(_type) \
 (_type ser_init, _type ser_cond, _type ser_step, \
  _type *const par_init, _type *const par_cond, _type *const par_step, \
  const void *const template, const int template_index)
 
-extern void _XMP_sched_loop_template_CYCLIC_INT                _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_S(int);
+extern void _XMP_sched_loop_template_CYCLIC _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_S(int);
 
 #define _XMP_SM_SCHED_LOOP_NODES_S(_type) \
 (_type ser_init, _type ser_cond, _type ser_step, \
  _type *const par_init, _type *const par_cond, _type *const par_step, \
  const void *const nodes, const int nodes_index)
 
-extern void _XMP_sched_loop_nodes_INT                _XMP_SM_SCHED_LOOP_NODES_S(int);
+extern void _XMP_sched_loop_nodes _XMP_SM_SCHED_LOOP_NODES_S(int);
 
 // xmp_math_function.c
 extern int _XMP_modi_ll_i(long long value, int cycle);

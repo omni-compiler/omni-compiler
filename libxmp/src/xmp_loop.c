@@ -83,7 +83,7 @@ no_iter: \
   return; \
 }
 
-void _XMP_sched_loop_template_BLOCK_INT                _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_S(int)
+void _XMP_sched_loop_template_BLOCK _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_S(int)
 
 // cyclic distribution ---------------------------------------------------------------------------------------------------------------
 #define _XMP_SM_GET_TEMPLATE_INFO_CYCLIC(_type) \
@@ -130,7 +130,7 @@ no_iter: \
   return; \
 }
 
-void _XMP_sched_loop_template_CYCLIC_INT                _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_S(int)
+void _XMP_sched_loop_template_CYCLIC _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_S(int)
 
 // schedule by nodes ----------------------------------------------------------------------------------------------------------------
 #define _XMP_SM_SCHED_LOOP_NODES(_type, ser_init, ser_cond, ser_step, par_init, par_cond, par_step, \
@@ -163,4 +163,4 @@ no_iter: \
   return; \
 }
 
-void _XMP_sched_loop_nodes_INT                _XMP_SM_SCHED_LOOP_NODES_S(int)
+void _XMP_sched_loop_nodes _XMP_SM_SCHED_LOOP_NODES_S(int)

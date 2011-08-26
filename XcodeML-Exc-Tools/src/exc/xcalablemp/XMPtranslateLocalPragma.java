@@ -270,17 +270,13 @@ public class XMPtranslateLocalPragma {
   private void analyzeGpuLoop(PragmaBlock pb, CforBlock forBlock, CforBlock schedBaseBlock) throws XMPexception {
     Xobject loopIndex = forBlock.getInductionVar();
     String loopIndexName = loopIndex.getSym();
-    Xtype loopIndexType = loopIndex.Type();
-    if (!XMPutil.isIntegerType(loopIndexType)) {
-      throw new XMPexception("loop index variable has a non-integer type");
-    }
 
     Ident initId = declIdentWithBlock(schedBaseBlock,
-                                      "_XMP_loop_init_" + loopIndexName, loopIndexType);
+                                      "_XMP_loop_init_" + loopIndexName, Xtype.intType);
     Ident condId = declIdentWithBlock(schedBaseBlock,
-                                      "_XMP_loop_cond_" + loopIndexName, loopIndexType);
+                                      "_XMP_loop_cond_" + loopIndexName, Xtype.intType);
     Ident stepId = declIdentWithBlock(schedBaseBlock,
-                                      "_XMP_loop_step_" + loopIndexName, loopIndexType);
+                                      "_XMP_loop_step_" + loopIndexName, Xtype.intType);
 
     schedBaseBlock.insert(Xcons.Set(initId.Ref(), forBlock.getLowerBound()));
     schedBaseBlock.insert(Xcons.Set(condId.Ref(), forBlock.getUpperBound()));
@@ -918,12 +914,6 @@ public class XMPtranslateLocalPragma {
   private void callLoopSchedFuncTemplate(XMPtemplate templateObj, XobjList templateSubscriptList,
                                          CforBlock forBlock, CforBlock schedBaseBlock) throws XMPexception {
     Xobject loopIndex = forBlock.getInductionVar();
-    Xtype loopIndexType = loopIndex.Type();
-
-    if (!XMPutil.isIntegerType(loopIndexType))
-      throw new XMPexception("loop index variable has a non-integer type");
-
-    String funcTypeSurfix = XMPutil.getTypeName(loopIndexType);
     String loopIndexName = loopIndex.getSym();
 
     XobjList funcArgs = Xcons.List();
@@ -967,11 +957,11 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception("wrong template dimensions, too few");
 
     Ident parallelInitId = declIdentWithBlock(schedBaseBlock,
-                                              "_XMP_loop_init_" + loopIndexName, loopIndexType);
+                                              "_XMP_loop_init_" + loopIndexName, Xtype.intType);
     Ident parallelCondId = declIdentWithBlock(schedBaseBlock,
-                                              "_XMP_loop_cond_" + loopIndexName, loopIndexType);
+                                              "_XMP_loop_cond_" + loopIndexName, Xtype.intType);
     Ident parallelStepId = declIdentWithBlock(schedBaseBlock,
-                                              "_XMP_loop_step_" + loopIndexName, loopIndexType);
+                                              "_XMP_loop_step_" + loopIndexName, Xtype.intType);
 
     XMPutil.putLoopIter(schedBaseBlock, loopIndexName, Xcons.List(parallelInitId, parallelCondId, parallelStepId));
 
@@ -998,7 +988,7 @@ public class XMPtranslateLocalPragma {
     funcArgs.add(templateObj.getDescId().Ref());
     funcArgs.add(templateIndexArg);
 
-    Ident funcId = _globalDecl.declExternFunc("_XMP_sched_loop_template_" + distMannerString + "_" + funcTypeSurfix);
+    Ident funcId = _globalDecl.declExternFunc("_XMP_sched_loop_template_" + distMannerString);
 
     schedBaseBlock.insert(funcId.Call(funcArgs));
   }
@@ -1011,7 +1001,6 @@ public class XMPtranslateLocalPragma {
     if (!XMPutil.isIntegerType(loopIndexType))
       throw new XMPexception("loop index variable has a non-integer type");
 
-    String funcTypeSurfix = XMPutil.getTypeName(loopIndexType);
     String loopIndexName = loopIndex.getSym();
 
     XobjList funcArgs = Xcons.List();
@@ -1065,7 +1054,7 @@ public class XMPtranslateLocalPragma {
     funcArgs.add(nodesObj.getDescId().Ref());
     funcArgs.add(nodesIndexArg);
 
-    Ident funcId = _globalDecl.declExternFunc("_XMP_sched_loop_nodes_" + funcTypeSurfix);
+    Ident funcId = _globalDecl.declExternFunc("_XMP_sched_loop_nodes");
 
     schedBaseBlock.insert(funcId.Call(funcArgs));
   }
