@@ -74,63 +74,21 @@ extern void _XMP_gmove_SENDRECV_ARRAY(void *dst_array, void *src_array, int type
  _type *const par_init, _type *const par_cond, _type *const par_step, \
  const void *const template, const int template_index)
 
-#define _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_U(_type) \
-(const _type ser_init, _type ser_cond, const _type ser_step, \
- _type *const par_init, _type *const par_cond, _type *const par_step, \
- const void *const template, const int template_index)
-
-extern void _XMP_sched_loop_template_BLOCK_CHAR               _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_S(char);
-extern void _XMP_sched_loop_template_BLOCK_UNSIGNED_CHAR      _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_U(unsigned char);
-extern void _XMP_sched_loop_template_BLOCK_SHORT              _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_S(short);
-extern void _XMP_sched_loop_template_BLOCK_UNSIGNED_SHORT     _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_U(unsigned short);
 extern void _XMP_sched_loop_template_BLOCK_INT                _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_S(int);
-extern void _XMP_sched_loop_template_BLOCK_UNSIGNED_INT       _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_U(unsigned int);
-extern void _XMP_sched_loop_template_BLOCK_LONG               _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_S(long);
-extern void _XMP_sched_loop_template_BLOCK_UNSIGNED_LONG      _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_U(unsigned long);
-extern void _XMP_sched_loop_template_BLOCK_LONGLONG           _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_S(long long);
-extern void _XMP_sched_loop_template_BLOCK_UNSIGNED_LONGLONG  _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_U(unsigned long long);
 
 #define _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_S(_type) \
 (_type ser_init, _type ser_cond, _type ser_step, \
  _type *const par_init, _type *const par_cond, _type *const par_step, \
  const void *const template, const int template_index)
 
-#define _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_U(_type) \
-(const _type ser_init, _type ser_cond, const _type ser_step, \
- _type *const par_init, _type *const par_cond, _type *const par_step, \
- const void *const template, const int template_index)
-
-extern void _XMP_sched_loop_template_CYCLIC_CHAR               _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_S(char);
-extern void _XMP_sched_loop_template_CYCLIC_UNSIGNED_CHAR      _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_U(unsigned char);
-extern void _XMP_sched_loop_template_CYCLIC_SHORT              _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_S(short);
-extern void _XMP_sched_loop_template_CYCLIC_UNSIGNED_SHORT     _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_U(unsigned short);
 extern void _XMP_sched_loop_template_CYCLIC_INT                _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_S(int);
-extern void _XMP_sched_loop_template_CYCLIC_UNSIGNED_INT       _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_U(unsigned int);
-extern void _XMP_sched_loop_template_CYCLIC_LONG               _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_S(long);
-extern void _XMP_sched_loop_template_CYCLIC_UNSIGNED_LONG      _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_U(unsigned long);
-extern void _XMP_sched_loop_template_CYCLIC_LONGLONG           _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_S(long long);
-extern void _XMP_sched_loop_template_CYCLIC_UNSIGNED_LONGLONG  _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_U(unsigned long long);
 
 #define _XMP_SM_SCHED_LOOP_NODES_S(_type) \
 (_type ser_init, _type ser_cond, _type ser_step, \
  _type *const par_init, _type *const par_cond, _type *const par_step, \
  const void *const nodes, const int nodes_index)
 
-#define _XMP_SM_SCHED_LOOP_NODES_U(_type) \
-(_type ser_init, _type ser_cond, _type ser_step, \
- _type *const par_init, _type *const par_cond, _type *const par_step, \
- const void *const nodes, const int nodes_index)
-
-extern void _XMP_sched_loop_nodes_CHAR               _XMP_SM_SCHED_LOOP_NODES_S(char);
-extern void _XMP_sched_loop_nodes_UNSIGNED_CHAR      _XMP_SM_SCHED_LOOP_NODES_U(unsigned char);
-extern void _XMP_sched_loop_nodes_SHORT              _XMP_SM_SCHED_LOOP_NODES_S(short);
-extern void _XMP_sched_loop_nodes_UNSIGNED_SHORT     _XMP_SM_SCHED_LOOP_NODES_U(unsigned short);
 extern void _XMP_sched_loop_nodes_INT                _XMP_SM_SCHED_LOOP_NODES_S(int);
-extern void _XMP_sched_loop_nodes_UNSIGNED_INT       _XMP_SM_SCHED_LOOP_NODES_U(unsigned int);
-extern void _XMP_sched_loop_nodes_LONG               _XMP_SM_SCHED_LOOP_NODES_S(long);
-extern void _XMP_sched_loop_nodes_UNSIGNED_LONG      _XMP_SM_SCHED_LOOP_NODES_U(unsigned long);
-extern void _XMP_sched_loop_nodes_LONGLONG           _XMP_SM_SCHED_LOOP_NODES_S(long long);
-extern void _XMP_sched_loop_nodes_UNSIGNED_LONGLONG  _XMP_SM_SCHED_LOOP_NODES_U(unsigned long long);
 
 // xmp_math_function.c
 extern int _XMP_modi_ll_i(long long value, int cycle);
