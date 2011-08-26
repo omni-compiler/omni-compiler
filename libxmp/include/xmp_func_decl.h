@@ -69,15 +69,12 @@ extern void _XMP_gmove_HOMECOPY_ARRAY(void *dst_array, int type, size_t type_siz
 extern void _XMP_gmove_SENDRECV_ARRAY(void *dst_array, void *src_array, int type, size_t type_size, ...);
 
 // xmp_loop.c
-#define _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_S(_type) \
-(_type ser_init, _type ser_cond, _type ser_step, \
- _type *const par_init, _type *const par_cond, _type *const par_step, \
- const void *const template, const int template_index)
-
 extern void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
                                            int *par_init, int *par_cond, int *par_step,
                                            void *template, int template_index);
-extern void _XMP_sched_loop_template_CYCLIC _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_S(int);
+extern void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_step,
+                                            int *par_init, int *par_cond, int *par_step,
+                                            void *template, int template_index);
 extern void _XMP_sched_loop_nodes(int ser_init, int ser_cond, int ser_step,
                                   int *par_init, int *par_cond, int *par_step,
                                   void *nodes, int nodes_index);

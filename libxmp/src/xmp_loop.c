@@ -80,18 +80,12 @@ no_iter:
 }
 
 // cyclic distribution ---------------------------------------------------------------------------------------------------------------
-#define _XMP_SM_GET_TEMPLATE_INFO_CYCLIC(_type) \
-_XMP_ASSERT(template->is_distributed); \
-if (!template->is_owner) goto no_iter; \
-_type nodes_size = (_type)template->chunk[template_index].onto_nodes_info->size; \
-_type template_lower = (_type)template->chunk[template_index].par_lower;
-
-#define _XMP_SM_CALC_PAR_INIT_CYCLIC_S1_S(_type) \
+#define _XMP_SM_CALC_PAR_INIT_CYCLIC_C1 \
 { \
-  _type par_init_temp = ser_init; \
-  _type dst_mod = template_lower % nodes_size; \
+  int par_init_temp = ser_init; \
+  int dst_mod = template_lower % nodes_size; \
   if (dst_mod < 0) dst_mod = (dst_mod + nodes_size) % nodes_size; \
-  _type init_mod = par_init_temp % nodes_size; \
+  int init_mod = par_init_temp % nodes_size; \
   if (init_mod < 0) init_mod = (init_mod + nodes_size) % nodes_size; \
   if (init_mod != dst_mod) { \
     if (init_mod < dst_mod) par_init_temp += (dst_mod - init_mod); \
@@ -101,30 +95,34 @@ _type template_lower = (_type)template->chunk[template_index].par_lower;
   *par_init = par_init_temp; \
 }
 
-#define _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_S(_type) \
-(_type ser_init, _type ser_cond, _type ser_step, \
- _type *const par_init, _type *const par_cond, _type *const par_step, \
- const _XMP_template_t *const template, const int template_index) { \
-  _XMP_SM_GET_TEMPLATE_INFO_CYCLIC(_type) \
-  _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step) \
-  if (ser_step == 1) { \
-    /* calc par_init */ \
-    _XMP_SM_CALC_PAR_INIT_CYCLIC_S1_S(_type) \
-    /* calc par_cond */ \
-    *par_cond = ser_cond + 1; /* restore normalized value */ \
-    /* calc par_step */ \
-    *par_step = nodes_size; \
-  } \
-  else _XMP_fatal("not implemented condition: (loop step is not 1 && cyclic distribution)"); \
-  return; \
-no_iter: \
-  *par_init = 0; \
-  *par_cond = 0; \
-  *par_step = 1; \
-  return; \
-}
+void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_step,
+                                     int *par_init, int *par_cond, int *par_step,
+                                     _XMP_template_t *template, int template_index) {
+  _XMP_ASSERT(template->is_distributed);
 
-void _XMP_sched_loop_template_CYCLIC _XMP_SM_SCHED_LOOP_TEMPLATE_CYCLIC_S(int)
+  if (!template->is_owner) {
+    goto no_iter;
+  }
+
+  int nodes_size = template->chunk[template_index].onto_nodes_info->size;
+  int template_lower = template->chunk[template_index].par_lower;
+
+  _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step)
+
+  if (ser_step == 1) {
+    _XMP_SM_CALC_PAR_INIT_CYCLIC_C1
+    *par_cond = ser_cond + 1; /* restore normalized value */
+    *par_step = nodes_size;
+    return;
+  } else {
+    _XMP_fatal("not implemented condition: (loop step is not 1 && cyclic distribution)");
+  }
+
+no_iter:
+  *par_init = 0;
+  *par_cond = 0;
+  *par_step = 1;
+}
 
 // schedule by nodes ----------------------------------------------------------------------------------------------------------------
 void _XMP_sched_loop_nodes(int ser_init, int ser_cond, int ser_step,
