@@ -396,14 +396,7 @@ public class XMPalignedArray {
                                                 Xcons.SizeOf(arrayElmtType));
 
     Vector<Ident> accIdVector = new Vector<Ident>(arrayDim);
-    for (int i = 0; i < arrayDim; i++, arrayType = arrayType.getRef()) {
-      long dimSize = arrayType.getArraySize();
-      if ((dimSize == 0) || (dimSize == -1)) {
-        throw new XMPexception("array size should be declared statically");
-      }
-
-      initArrayDescFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.LongLongConstant(0, dimSize)));
-
+    for (int i = 0; i < arrayDim; i++) {
       Ident accId = null;
       if (isLocalPragma) {
         accId = XMPlocalDecl.addObjectId(XMP.GTOL_PREFIX_ + "acc_" + arrayName + "_" + i,
@@ -417,7 +410,7 @@ public class XMPalignedArray {
       accIdVector.add(accId);
     }
 
-    alignedArray = new XMPalignedArray(arrayName, arrayElmtType, (ArrayType)arrayId.Type(),
+    alignedArray = new XMPalignedArray(arrayName, arrayElmtType, (ArrayType)arrayType,
                                        arrayDim, accIdVector,
                                        arrayId, arrayDescId, arrayAddrId,
                                        templateObj);
@@ -516,6 +509,18 @@ public class XMPalignedArray {
       }
     }
 
+    // add array size to args: do this after declAlignFunc()
+    for (int i = 0; i < arrayDim; i++, arrayType = arrayType.getRef()) {
+      long dimSize = arrayType.getArraySize();
+      if (dimSize == 0) {
+        throw new XMPexception("array size should be declared statically");
+      } else if (dimSize == -1) {
+        initArrayDescFuncArgs.add(Xcons.Cast(Xtype.intType, arrayType.getArraySizeExpr()));
+      } else {
+        initArrayDescFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.LongLongConstant(0, dimSize)));
+      }
+    }
+
     // init array communicator
     XobjList initArrayCommFuncArgs = Xcons.List(alignedArray.getDescId().Ref());
     for (XobjArgs i = alignSubscriptVarList.getArgs(); i != null; i = i.nextArgs()) {
@@ -575,10 +580,7 @@ public class XMPalignedArray {
     // normalize 1. array size on src code: += normExpr
     alignedArray.normArraySize(alignSourceIndex, alignNormExpr);
 
-    // normalize 2. runtime data
-    // FIXME implement
-
-    // normalize 3. alignSubscriptExpr: templateLower
+    // normalize 2. alignSubscriptExpr: templateLower
     return templateLower;
   }
 
