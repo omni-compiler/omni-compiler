@@ -348,8 +348,7 @@ public class XMPtranslateLocalPragma {
     if (loopIterList == null) {
       loopDecl.setArg(0, Xcons.List(Xcons.String(schedBaseBlock.getInductionVar().getName())));
       translateFollowingLoop(pb, schedBaseBlock);
-    }
-    else {
+    } else {
       translateMultipleLoop(pb, schedBaseBlock);
     }
 
@@ -359,8 +358,7 @@ public class XMPtranslateLocalPragma {
       XobjList schedVarList = null;
       if (loopDecl.getArg(0) == null) {
         schedVarList = Xcons.List(Xcons.String(schedBaseBlock.getInductionVar().getSym()));
-      }
-      else {
+      } else {
         schedVarList = (XobjList)loopDecl.getArg(0).copy();
       }
 
@@ -750,9 +748,9 @@ public class XMPtranslateLocalPragma {
     boolean initComm = false;
     for (XobjArgs i = subscriptList.getArgs(); i != null; i = i.nextArgs()) {
       String subscript = i.getArg().getString();
-      if (XMPutil.hasElmt(schedVarList, subscript))
+      if (XMPutil.hasElmt(schedVarList, subscript)) {
         initFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
-      else {
+      } else {
         initComm = true;
         initFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
       }
@@ -787,8 +785,9 @@ public class XMPtranslateLocalPragma {
     // iterate index variable list
     XobjList loopVarList = (XobjList)loopDecl.getArg(0);
     Vector<CforBlock> loopVector = new Vector<CforBlock>(XMPutil.countElmts(loopVarList));
-    for (XobjArgs i = loopVarList.getArgs(); i != null; i = i.nextArgs())
+    for (XobjArgs i = loopVarList.getArgs(); i != null; i = i.nextArgs()) {
       loopVector.add(findLoopBlock(loopBody, i.getArg().getString()));
+    }
 
     // schedule loop
     Iterator<CforBlock> it = loopVector.iterator();
@@ -867,18 +866,21 @@ public class XMPtranslateLocalPragma {
         LineNo blockLnObj = b.getLineNo();
 
         // XXX too strict?
-        if (b.getNext() != null)
+        if (b.getNext() != null) {
           throw new XMPexception("only one loop statement is allowed in loop directive");
+        }
 
         CforBlock forBlock = (CforBlock)b;
         forBlock.Canonicalize();
-        if (!(forBlock.isCanonical()))
+        if (forBlock.isCanonical()) {
+          return forBlock;
+        } else {
           throw new XMPexception("loop statement is not canonical");
-
-        return forBlock;
+        }
       }
-      else if (b.Opcode() == Xcode.COMPOUND_STATEMENT)
+      else if (b.Opcode() == Xcode.COMPOUND_STATEMENT) {
         return getOutermostLoopBlock(b.getBody());
+      }
     }
 
     throw new XMPexception("cannot find the loop statement");
@@ -892,13 +894,15 @@ public class XMPtranslateLocalPragma {
           {
             CforBlock forBlock = (CforBlock)b;
             forBlock.Canonicalize();
-            if (!(forBlock.isCanonical()))
+            if (!(forBlock.isCanonical())) {
               throw new XMPexception("loop is not canonical");
+            }
 
-            if (forBlock.getInductionVar().getSym().equals(loopVarName))
+            if (forBlock.getInductionVar().getSym().equals(loopVarName)) {
               return (CforBlock)b;
-            else
+            } else {
               return findLoopBlock(forBlock.getBody(), loopVarName);
+            }
           }
         case COMPOUND_STATEMENT:
           return findLoopBlock(b.getBody(), loopVarName);
@@ -941,8 +945,7 @@ public class XMPtranslateLocalPragma {
         distManner = templateObj.getDistMannerAt(templateIndex);
         if (distManner == XMPtemplate.DUPLICATION) {
           distMannerString = XMPtemplate.getDistMannerString(XMPtemplate.BLOCK);
-        }
-        else {
+        } else {
           distMannerString = templateObj.getDistMannerStringAt(templateIndex);
         }
       }
@@ -950,11 +953,13 @@ public class XMPtranslateLocalPragma {
       templateIndex++;
     }
 
-    if(templateIndexArg == null)
+    if(templateIndexArg == null) {
       throw new XMPexception("cannot find index '" + loopIndexName + "' reference in <on-ref>");
+    }
 
-    if(templateIndex != templateDim)
+    if(templateIndex != templateDim) {
       throw new XMPexception("wrong template dimensions, too few");
+    }
 
     Ident parallelInitId = declIdentWithBlock(schedBaseBlock,
                                               "_XMP_loop_init_" + loopIndexName, Xtype.intType);
@@ -969,7 +974,6 @@ public class XMPtranslateLocalPragma {
       case XMPtemplate.DUPLICATION:
       case XMPtemplate.BLOCK:
       case XMPtemplate.CYCLIC:
-      // FIXME correct implementation ???
       case XMPtemplate.BLOCK_CYCLIC:
         forBlock.setLowerBound(parallelInitId.Ref());
         forBlock.setUpperBound(parallelCondId.Ref());
@@ -998,8 +1002,9 @@ public class XMPtranslateLocalPragma {
     Xobject loopIndex = forBlock.getInductionVar();
     Xtype loopIndexType = loopIndex.Type();
 
-    if (!XMPutil.isIntegerType(loopIndexType))
+    if (!XMPutil.isIntegerType(loopIndexType)) {
       throw new XMPexception("loop index variable has a non-integer type");
+    }
 
     String loopIndexName = loopIndex.getSym();
 
@@ -1012,13 +1017,15 @@ public class XMPtranslateLocalPragma {
     int nodesDim = nodesObj.getDim();
     XobjInt nodesIndexArg = null;
     for (XobjArgs i = nodesSubscriptList.getArgs(); i != null; i = i.nextArgs()) {
-      if (nodesIndex >= nodesDim)
+      if (nodesIndex >= nodesDim) {
         throw new XMPexception("wrong nodes dimensions, too many");
+      }
 
       String s = i.getArg().getString();
       if (s.equals(loopIndexName)) {
-        if (nodesIndexArg != null)
+        if (nodesIndexArg != null) {
           throw new XMPexception("loop index '" + loopIndexName + "' is already described");
+        }
 
         nodesIndexArg = Xcons.IntConstant(nodesIndex);
       }
@@ -1026,11 +1033,13 @@ public class XMPtranslateLocalPragma {
       nodesIndex++;
     }
 
-    if(nodesIndexArg == null)
+    if (nodesIndexArg == null) {
       throw new XMPexception("cannot find index '" + loopIndexName + "' reference in <on-ref>");
+    }
 
-    if(nodesIndex != nodesDim)
+    if (nodesIndex != nodesDim) {
       throw new XMPexception("wrong nodes dimensions, too few");
+    }
 
     Ident parallelInitId = declIdentWithBlock(schedBaseBlock,
                                               "_XMP_loop_init_" + loopIndexName, loopIndexType);
@@ -1092,8 +1101,7 @@ public class XMPtranslateLocalPragma {
     XobjList onRef = (XobjList)barrierDecl.getArg(0);
     if (onRef == null) {
       barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null);
-    }
-    else {
+    } else {
       XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
       String execFuncSurfix = execOnRefArgs.getFirst();
       boolean splitComm = execOnRefArgs.getSecond().booleanValue();
@@ -1101,7 +1109,7 @@ public class XMPtranslateLocalPragma {
       if (splitComm) {
         BlockList barrierBody = Bcons.blockList(_globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null));
 	barrierFuncCallBlock = createCommTaskBlock(barrierBody, execFuncSurfix, execFuncArgs);
-      } else{
+      } else {
 	barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_" + execFuncSurfix, execFuncArgs);
       }
     }
@@ -1110,7 +1118,7 @@ public class XMPtranslateLocalPragma {
 
     // add function calls for profiling                                                                                
     Xobject profileClause = barrierDecl.getArg(1);
-    if( _all_profile || (profileClause != null && _selective_profile)){
+    if ( _all_profile || (profileClause != null && _selective_profile)){
 	if (doScalasca == true) {
 	    XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp barrier:" + pb.getLineNo()));
 	    barrierFuncCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
@@ -1121,7 +1129,7 @@ public class XMPtranslateLocalPragma {
 	    barrierFuncCallBlock.add(
 				     createTlogMacroInvoke("_XMP_M_TLOG_BARRIER_OUT", null));
 	}
-    } else if(profileClause == null && _selective_profile && doTlog == false){
+    } else if (profileClause == null && _selective_profile && doTlog == false){
 	XobjList profileFuncArgs = null;
 	barrierFuncCallBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
 	barrierFuncCallBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
