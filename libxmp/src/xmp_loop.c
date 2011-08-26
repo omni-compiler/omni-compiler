@@ -24,21 +24,13 @@ else { \
 
 // schedule by template -------------------------------------------------------------------------------------------------------------
 // block distribution ---------------------------------------------------------------------------------------------------------------
-#define _XMP_SM_GET_TEMPLATE_INFO_BLOCK(_type, template, template_lower, template_upper) \
-{ \
-  _XMP_ASSERT(template->is_distributed); \
-  if (!template->is_owner) goto no_iter; \
-  template_lower = (_type)template->chunk[template_index].par_lower; \
-  template_upper = (_type)template->chunk[template_index].par_upper; \
-}
-
-#define _XMP_SM_NORM_TEMPLATE_BLOCK_S(_type, ser_init, ser_step, template_lower, template_upper) \
+#define _XMP_SM_NORM_TEMPLATE_BLOCK(ser_init, ser_step, template_lower, template_upper) \
 { \
   if (ser_step != 1) { \
-    _type dst_mod = ser_init % ser_step; \
+    int dst_mod = ser_init % ser_step; \
     if (dst_mod < 0) dst_mod = (dst_mod + ser_step) % ser_step; \
     /* normalize template lower */ \
-    _type lower_mod = template_lower % ser_step; \
+    int lower_mod = template_lower % ser_step; \
     if (lower_mod < 0) lower_mod = (lower_mod + ser_step) % ser_step; \
     if (lower_mod != dst_mod) { \
       if (lower_mod < dst_mod)   template_lower += (dst_mod - lower_mod); \
@@ -64,26 +56,28 @@ else { \
   return; \
 }
 
-#define _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_S(_type) \
-(_type ser_init, _type ser_cond, _type ser_step, \
- _type *const par_init, _type *const par_cond, _type *const par_step, \
- const _XMP_template_t *const template, const int template_index) { \
-  _type template_lower, template_upper; \
-\
-  _XMP_SM_GET_TEMPLATE_INFO_BLOCK(_type, template, template_lower, template_upper) \
-  _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step) \
-  _XMP_SM_NORM_TEMPLATE_BLOCK_S(_type, ser_init, ser_step, template_lower, template_upper) \
-  _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK(ser_init, ser_cond, ser_step, par_init, par_cond, par_step, \
-                                           template_lower, template_upper) \
-\
-no_iter: \
-  *par_init = 0; \
-  *par_cond = 0; \
-  *par_step = 1; \
-  return; \
-}
+void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
+                                    int *par_init, int *par_cond, int *par_step,
+                                    _XMP_template_t *template, int template_index) {
+  _XMP_ASSERT(template->is_distributed); // FIXME too strict?
 
-void _XMP_sched_loop_template_BLOCK _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK_S(int)
+  if (!template->is_owner) {
+    goto no_iter;
+  }
+
+  int template_lower = template->chunk[template_index].par_lower;
+  int template_upper = template->chunk[template_index].par_upper;
+
+  _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step)
+  _XMP_SM_NORM_TEMPLATE_BLOCK(ser_init, ser_step, template_lower, template_upper)
+  _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK(ser_init, ser_cond, ser_step, par_init, par_cond, par_step,
+                                    template_lower, template_upper)
+
+no_iter:
+  *par_init = 0;
+  *par_cond = 0;
+  *par_step = 1;
+}
 
 // cyclic distribution ---------------------------------------------------------------------------------------------------------------
 #define _XMP_SM_GET_TEMPLATE_INFO_CYCLIC(_type) \
