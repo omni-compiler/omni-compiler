@@ -824,6 +824,11 @@ public class Xcons
         }
         return Xcons.Symbol(code, t, ident.getName(), ident.getScope());
     }
+
+    public static Xobject arrayRef(Xtype type, Xobject arrayAddr, XobjList arrayRefList)
+    {
+        return Xcons.List(Xcode.ARRAY_REF, type, arrayAddr, arrayRefList);
+    }
     
     public static Xobject CompoundStatement(Xobject id_list, Xobject decl_list, Xobject body)
     {

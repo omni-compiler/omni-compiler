@@ -102,11 +102,15 @@ public class XMPrewriteExpr {
       switch (myExpr.Opcode()) {
         case ARRAY_REF:
           {
-            String arrayName = myExpr.getArg(0).getSym();
+            Xobject arrayAddr = myExpr.getArg(0);
+            String arrayName = arrayAddr.getSym();
             XMPalignedArray alignedArray = findXMPalignedArray(arrayName, localXMPsymbolTable);
             if (alignedArray != null) {
+              XobjList arrayRefList = normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
               if (alignedArray.checkRealloc()) {
-                iter.setXobject(rewriteAlignedArrayExpr((XobjList)myExpr.getArg(1), alignedArray));
+                iter.setXobject(rewriteAlignedArrayExpr(arrayRefList, alignedArray));
+              } else {
+                iter.setXobject(Xcons.arrayRef(myExpr.Type(), arrayAddr, arrayRefList));
               }
             }
           } break;
@@ -115,6 +119,29 @@ public class XMPrewriteExpr {
           break;
         default:
       }
+    }
+  }
+
+  private XobjList normArrayRefList(XobjList refExprList,
+                                    XMPalignedArray alignedArray) {
+    if (refExprList == null) {
+      return null;
+    } else {
+      XobjList newRefExprList = Xcons.List();
+
+      int arrayIndex = 0;
+      for (Xobject x : refExprList) {
+        Xobject normExpr = alignedArray.getAlignNormExprAt(arrayIndex);
+        if (normExpr != null) {
+          newRefExprList.add(Xcons.binaryOp(Xcode.PLUS_EXPR, x, normExpr));
+        } else {
+          newRefExprList.add(x);
+        }
+
+        arrayIndex++;
+      }
+
+      return newRefExprList;
     }
   }
 
