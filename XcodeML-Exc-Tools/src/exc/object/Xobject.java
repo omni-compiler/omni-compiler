@@ -36,6 +36,7 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
     public static final int OPT_ATOMIC_STMT         = 1 << 9;
     public static final int OPT_F_MODULE_VAR        = 1 << 10;
     public static final int OPT_INDUCTION_VAR       = 1 << 11;
+    public static final int OPT_REWRITTED_XMP       = 1 << 12;
     
     /**
      * Constructs an Xobject with code and type. This constructor is usually
@@ -202,6 +203,16 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
     public final void setIsInductionVar(boolean enabled)
     {
         setOptionalFlag(OPT_INDUCTION_VAR, enabled);
+    }
+    
+    public final boolean isRewrittedByXmp()
+    {
+        return getOptionalFlag(OPT_REWRITTED_XMP);
+    }
+    
+    public final void setIsRewrittedByXmp(boolean enabled)
+    {
+        setOptionalFlag(OPT_REWRITTED_XMP, enabled);
     }
     
     public VarScope getScope()

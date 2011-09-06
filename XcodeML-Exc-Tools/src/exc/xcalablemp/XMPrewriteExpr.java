@@ -97,6 +97,8 @@ public class XMPrewriteExpr {
       Xobject myExpr = iter.getXobject();
       if (myExpr == null) {
         continue;
+      } else if (myExpr.isRewrittedByXmp()) {
+        continue;
       }
 
       switch (myExpr.Opcode()) {

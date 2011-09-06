@@ -7,6 +7,9 @@
 #include "xmp_internal.h"
 
 // normalize ser_init, ser_cond, ser_step -------------------------------------------------------------------------------------------
+#define _XMP_M_GTOL_BLOCK(_i, _w) \
+((_i) % (_w))
+
 #define _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step) \
 { \
   if (ser_step == 0) _XMP_fatal("loop step is 0"); \
@@ -51,11 +54,10 @@
   else  *par_init = ser_init; \
   /* calc par_cond */ \
   if (ser_cond < template_lower) goto no_iter; \
-  else if (template_upper < ser_cond) *par_cond = template_upper + 1; /* exprcode is LT(<) */ \
-  else *par_cond = ser_cond + 1; /* exprcode is LT(<) */ \
+  else if (template_upper < ser_cond) *par_cond = template_upper; \
+  else *par_cond = ser_cond; \
   /* calc par_step */ \
   *par_step = ser_step; \
-  return; \
 }
 
 void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
@@ -67,13 +69,22 @@ void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
     goto no_iter;
   }
 
-  int template_lower = template->chunk[template_index].par_lower;
-  int template_upper = template->chunk[template_index].par_upper;
+  _XMP_template_chunk_t *template_chunk = &(template->chunk[template_index]);
+  int template_lower = template_chunk->par_lower;
+  int template_upper = template_chunk->par_upper;
 
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step)
   _XMP_SM_NORM_TEMPLATE_BLOCK(ser_init, ser_step, template_lower, template_upper)
   _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK(ser_init, ser_cond, ser_step, par_init, par_cond, par_step,
                                     template_lower, template_upper)
+
+  // GtoL
+  int width = template_chunk->par_chunk_width;
+  *par_init = _XMP_M_GTOL_BLOCK(*par_init, width);
+  *par_cond = _XMP_M_GTOL_BLOCK(*par_cond, width) + 1; // for (i = par_init; i < par_cond; i += par_step) . . .
+  // par_step: no translation
+
+  return;
 
 no_iter:
   *par_init = 0;
