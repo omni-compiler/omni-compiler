@@ -11,8 +11,11 @@
 #define _XMP_M_CALC_INDEX_BLOCK(_i, _x) \
 ((_i) - (_x))
 
-#define _XMP_M_CALC_INDEX_CYCLIC(_i, _x) \
-((_i) / (_x))
+#define _XMP_M_CALC_INDEX_CYCLIC(_i, _p) \
+((_i) / (_p))
+
+#define _XMP_M_CALC_INDEX_BLOCK_CYCLIC(_i, _p, _w) \
+((_w * (_i / (_p * _w))) + (_i % _w))
 
 // ------------------------------------------------------------------------------------------------------------------------------
 #define _XMP_M_GET_INDEX_1(_i1) \
