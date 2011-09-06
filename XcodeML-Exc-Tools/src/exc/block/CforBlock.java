@@ -125,14 +125,14 @@ public class CforBlock extends CondBlock implements ForBlock
             }
           }
         } else {
-          e = init_part.getHead().getExpr();
-          if(e.Opcode() == Xcode.COMMA_EXPR) {
-            // expand comma expression
-            s = init_part.getHead();
-            for(XobjArgs a = e.getArgs(); a != null; a = a.nextArgs())
-              s = s.add(a.getArg());
-            init_part.getHead().remove(); // remove original comma expr
-          }
+//          e = init_part.getHead().getExpr();
+//          if(e.Opcode() == Xcode.COMMA_EXPR) {
+//            // expand comma expression
+//            s = init_part.getHead();
+//            for(XobjArgs a = e.getArgs(); a != null; a = a.nextArgs())
+//              s = s.add(a.getArg());
+//            init_part.getHead().remove(); // remove original comma expr
+//          }
           e = init_part.getTail().getExpr();
           if(e.Opcode() != Xcode.ASSIGN_EXPR)
             return;
@@ -198,14 +198,14 @@ public class CforBlock extends CondBlock implements ForBlock
         if(e.Opcode() != Xcode.ASG_PLUS_EXPR) {
             iter_part.getHead().setExpr(Xcons.asgOp(Xcode.ASG_PLUS_EXPR, ind_var, step));
         }
-        if(!iter_part.isSingle()) {
-            BasicBlock bb = new BasicBlock();
-            while((s = iter_part.getHead().getNext()) != null) {
-                s.remove();
-                bb.add(s);
-            }
-            body.add(bb);
-        }
+//        if(!iter_part.isSingle()) {
+//            BasicBlock bb = new BasicBlock();
+//            while((s = iter_part.getHead().getNext()) != null) {
+//                s.remove();
+//                bb.add(s);
+//            }
+//            body.add(bb);
+//        }
 
         // canonicalize conditional expression
         e = cond.getExpr();

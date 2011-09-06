@@ -600,7 +600,6 @@ public class XMPtranslateLocalPragma {
     return Bcons.PRAGMA(Xcode.OMP_PRAGMA, pragma.toString(), args, Bcons.blockList(body));
   }
 
-  // XXX only supports C language
   private Block translateThreadsClauseToOMPpragma(XobjList threadsClause, XobjList reductionRefList,
                                                   CforBlock loopBlock, XobjList loopIterList) throws XMPexception {
     Xobject parallelClause = Xcons.statementList();
@@ -641,6 +640,7 @@ public class XMPtranslateLocalPragma {
           firstPrivateList.add(Xcons.Symbol(Xcode.IDENT, "_XMP_loop_init_" + iterName));
           firstPrivateList.add(Xcons.Symbol(Xcode.IDENT, "_XMP_loop_cond_" + iterName));
           firstPrivateList.add(Xcons.Symbol(Xcode.IDENT, "_XMP_loop_step_" + iterName));
+          firstPrivateList.add(Xcons.Symbol(Xcode.IDENT, "_XMP_loop_local_" + iterName));
         }
       }
 
@@ -967,8 +967,11 @@ public class XMPtranslateLocalPragma {
                                               "_XMP_loop_cond_" + loopIndexName, Xtype.intType);
     Ident parallelStepId = declIdentWithBlock(schedBaseBlock,
                                               "_XMP_loop_step_" + loopIndexName, Xtype.intType);
+    Ident parallelLocalId = declIdentWithBlock(schedBaseBlock,
+                                               "_XMP_loop_local_" + loopIndexName, Xtype.intType);
 
-    XMPutil.putLoopIter(schedBaseBlock, loopIndexName, Xcons.List(parallelInitId, parallelCondId, parallelStepId));
+    XMPutil.putLoopIter(schedBaseBlock, loopIndexName,
+                        Xcons.List(parallelInitId, parallelCondId, parallelStepId, parallelLocalId));
 
     switch (distManner) {
       case XMPtemplate.DUPLICATION:
@@ -1047,8 +1050,11 @@ public class XMPtranslateLocalPragma {
                                               "_XMP_loop_cond_" + loopIndexName, loopIndexType);
     Ident parallelStepId = declIdentWithBlock(schedBaseBlock,
                                               "_XMP_loop_step_" + loopIndexName, loopIndexType);
+    Ident parallelLocalId = declIdentWithBlock(schedBaseBlock,
+                                               "_XMP_loop_local_" + loopIndexName, Xtype.intType);
 
-    XMPutil.putLoopIter(schedBaseBlock, loopIndexName, Xcons.List(parallelInitId, parallelCondId, parallelStepId));
+    XMPutil.putLoopIter(schedBaseBlock, loopIndexName,
+                        Xcons.List(parallelInitId, parallelCondId, parallelStepId, parallelLocalId));
 
     forBlock.setLowerBound(parallelInitId.Ref());
     forBlock.setUpperBound(parallelCondId.Ref());

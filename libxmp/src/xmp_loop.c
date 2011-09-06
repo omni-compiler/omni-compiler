@@ -8,17 +8,19 @@
 
 // normalize ser_init, ser_cond, ser_step -------------------------------------------------------------------------------------------
 #define _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step) \
-if (ser_step == 0) _XMP_fatal("loop step is 0"); \
-if (ser_step == 1) ser_cond--; \
-else { \
-  if (ser_step > 0) ser_cond -= ((ser_cond - ser_init) % ser_step); \
+{ \
+  if (ser_step == 0) _XMP_fatal("loop step is 0"); \
+  if (ser_step == 1) ser_cond--; \
   else { \
-    ser_step = -ser_step; \
-    ser_cond++; \
-    ser_cond += ((ser_init - ser_cond) % ser_step); \
-    int swap_temp = ser_init; \
-    ser_init = ser_cond; \
-    ser_cond = swap_temp; \
+    if (ser_step > 0) ser_cond -= ((ser_cond - ser_init) % ser_step); \
+    else { \
+      ser_step = -ser_step; \
+      ser_cond++; \
+      ser_cond += ((ser_init - ser_cond) % ser_step); \
+      int swap_temp = ser_init; \
+      ser_init = ser_cond; \
+      ser_cond = swap_temp; \
+    } \
   } \
 }
 
