@@ -22,6 +22,7 @@ public class XMPtemplate extends XMPobject {
   private XMPnodes		_ontoNodes;
   private Vector<XobjInt>	_ontoNodesIndexVector;
   private Vector<Integer>	_distMannerVector;
+  private Vector<Xobject>       _sizeVector;
 
   public XMPtemplate(String name, int dim, Ident descId) {
     super(XMPobject.TEMPLATE, name, dim, descId);
@@ -31,6 +32,7 @@ public class XMPtemplate extends XMPobject {
     _ontoNodes = null;
     _ontoNodesIndexVector = new Vector<XobjInt>();
     _distMannerVector = new Vector<Integer>();
+    _sizeVector = new Vector<Xobject>();
 
     for (int i = 0; i < dim; i++) {
       _ontoNodesIndexVector.add(null);
@@ -88,6 +90,20 @@ public class XMPtemplate extends XMPobject {
     } else {
       return getDistMannerString(getDistMannerAt(index));
     }
+  }
+
+  public void createSizeVector() {
+    for (int i = 0; i < this.getDim(); i++) {
+      _sizeVector.add(Xcons.binaryOp(Xcode.PLUS_EXPR,
+                                     Xcons.binaryOp(Xcode.MINUS_EXPR,
+                                                    this.getUpperAt(i),
+                                                    this.getLowerAt(i)),
+                                     Xcons.IntConstant(1)));
+    }
+  }
+
+  public Xobject getSizeAt(int index) {
+    return _sizeVector.get(index);
   }
 
   public static String getDistMannerString(int manner) throws XMPexception {
@@ -172,6 +188,8 @@ public class XMPtemplate extends XMPobject {
         templateObject.addUpper(templateUpper);
       }
     }
+
+    templateObject.createSizeVector();
 
     String constructorName = new String("_XMP_init_template_");
     if (templateIsFixed) {

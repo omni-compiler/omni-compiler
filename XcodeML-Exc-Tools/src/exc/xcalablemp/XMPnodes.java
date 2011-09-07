@@ -57,6 +57,10 @@ public class XMPnodes extends XMPobject {
     _inheritNodes = nodes;
   }
 
+  public Xobject getSizeAt(int index) {
+    return getUpperAt(index);
+  }
+
   @Override
   public boolean checkInheritExec() {
     if (_inheritNamedNodes) {
