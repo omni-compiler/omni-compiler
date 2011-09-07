@@ -23,6 +23,7 @@ public class XMPtemplate extends XMPobject {
   private Vector<XobjInt>	_ontoNodesIndexVector;
   private Vector<Integer>	_distMannerVector;
   private Vector<Xobject>       _sizeVector;
+  private Vector<Xobject>       _widthVector;
 
   public XMPtemplate(String name, int dim, Ident descId) {
     super(XMPobject.TEMPLATE, name, dim, descId);
@@ -33,10 +34,12 @@ public class XMPtemplate extends XMPobject {
     _ontoNodesIndexVector = new Vector<XobjInt>();
     _distMannerVector = new Vector<Integer>();
     _sizeVector = new Vector<Xobject>();
+    _widthVector = new Vector<Xobject>();
 
     for (int i = 0; i < dim; i++) {
       _ontoNodesIndexVector.add(null);
       _distMannerVector.add(null);
+      _widthVector.add(null);
     }
   }
 
@@ -104,6 +107,14 @@ public class XMPtemplate extends XMPobject {
 
   public Xobject getSizeAt(int index) {
     return _sizeVector.get(index);
+  }
+
+  public void setWidthAt(Xobject width, int index) {
+    _widthVector.setElementAt(width, index);
+  }
+
+  public Xobject getWidthAt(int index) throws XMPexception {
+    return _widthVector.get(index);
   }
 
   public static String getDistMannerString(int manner) throws XMPexception {
@@ -351,11 +362,13 @@ public class XMPtemplate extends XMPobject {
         }
       case XMPtemplate.BLOCK_CYCLIC:
         {
+          Xobject width = distManner.getArg(1);
           funcArgs = Xcons.List(templateObject.getDescId().Ref(),
                                 Xcons.IntConstant(templateDimIdx),
                                 Xcons.IntConstant(nodesDimIdx),
-                                distManner.getArg(1));
+                                width);
           templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
+          templateObject.setWidthAt(width, templateDimIdx);
           break;
         }
       default:

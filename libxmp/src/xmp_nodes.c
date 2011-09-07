@@ -304,11 +304,17 @@ void _XMP_init_nodes_STATIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...) {
 
     n->info[i].size = dim_size;
   }
-  va_end(args);
 
   // is_member is always true
   _XMP_check_nodes_size_STATIC(n);
   _XMP_calc_nodes_rank(n, _XMP_world_rank);
+
+  for (int i = 0; i < dim; i++) {
+    int *rank_p = va_arg(args, int *);
+    *rank_p = n->info[i].rank;
+    printf("[%d] rank(%d) = %d\n", _XMP_world_rank, i, *rank_p);
+  }
+  va_end(args);
 
   *nodes = (void *)n;
 }
@@ -355,7 +361,6 @@ void _XMP_init_nodes_STATIC_EXEC(_XMP_nodes_t **nodes, int dim, ...) {
 
     n->info[i].size = dim_size;
   }
-  va_end(args);
 
   _XMP_check_nodes_size_STATIC(n);
   if (n->is_member) {
@@ -364,6 +369,12 @@ void _XMP_init_nodes_STATIC_EXEC(_XMP_nodes_t **nodes, int dim, ...) {
   else {
     _XMP_disable_nodes_rank(n);
   }
+
+  for (int i = 0; i < dim; i++) {
+    int *rank_p = va_arg(args, int *);
+    *rank_p = n->info[i].rank;
+  }
+  va_end(args);
 
   *nodes = n;
 }
@@ -415,7 +426,6 @@ void _XMP_init_nodes_STATIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
 
     n->info[i].size = dim_size;
   }
-  va_end(args);
 
   _XMP_check_nodes_size_STATIC(n);
   if (n->is_member) {
@@ -424,6 +434,12 @@ void _XMP_init_nodes_STATIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
   else {
     _XMP_disable_nodes_rank(n);
   }
+
+  for (int i = 0; i < dim; i++) {
+    int *rank_p = va_arg(args, int *);
+    *rank_p = n->info[i].rank;
+  }
+  va_end(args);
 
   *nodes = n;
 }
@@ -490,12 +506,18 @@ void _XMP_init_nodes_STATIC_NODES_NAMED(_XMP_nodes_t **nodes, int dim,
       dim_size[i] = dim_size_temp;
     }
   }
-  va_end(args);
 
   _XMP_init_nodes_STATIC_NODES_NAMED_MAIN(nodes, dim,
                                           ref_nodes,
                                           shrink, ref_lower, ref_upper, ref_stride,
                                           dim_size);
+
+  _XMP_nodes_t *n = *nodes;
+  for (int i = 0; i < dim; i++) {
+    int *rank_p = va_arg(args, int *);
+    *rank_p = n->info[i].rank;
+  }
+  va_end(args);
 }
 
 void _XMP_init_nodes_DYNAMIC_NODES_NAMED(_XMP_nodes_t **nodes, int dim,

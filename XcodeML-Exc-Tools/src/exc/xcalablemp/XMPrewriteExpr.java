@@ -327,17 +327,30 @@ public class XMPrewriteExpr {
     }
   }
 
-  private static Xobject calcLtoG(XMPtemplate templateObj, int templateIndex, Xobject expr) throws XMPexception {
-    switch (templateObj.getDistMannerAt(templateIndex)) {
+  private static Xobject calcLtoG(XMPtemplate t, int ti, Xobject expr) throws XMPexception {
+    XMPnodes n = t.getOntoNodes();
+    int ni = t.getOntoNodesIndexAt(ti).getInt();
+
+    XobjList args = null;
+    switch (t.getDistMannerAt(ti)) {
       case XMPtemplate.DUPLICATION:
         return expr;
       case XMPtemplate.BLOCK:
+        // _XMP_M_LTOG_TEMPLATE_BLOCK(_l, _m, _N, _P, _p)
+        args = Xcons.List(expr, t.getLowerAt(ti), t.getSizeAt(ti), n.getSizeAt(ni), n.getRankAt(ni));
+        break;
       case XMPtemplate.CYCLIC:
+        // _XMP_M_LTOG_TEMPLATE_CYCLIC(_l, _m, _P, _p)
+        args = Xcons.List(expr, t.getLowerAt(ti), n.getSizeAt(ni), n.getRankAt(ni));
+        break;
       case XMPtemplate.BLOCK_CYCLIC:
-        // FIXME implement
-        return XMP.getMacroId("_XMP_M_gtol_TEMPLATE", Xtype.intType).Call(Xcons.List(expr));
+        // _XMP_M_LTOG_TEMPLATE_BLOCK_CYCLIC(_l, _b, _m, _P, _p)
+        args = Xcons.List(expr, t.getWidthAt(ti), t.getLowerAt(ti), n.getSizeAt(ni), n.getRankAt(ni));
+        break;
       default:
         throw new XMPexception("unknown distribution manner");
     }
+
+    return XMP.getMacroId("_XMP_M_LTOG_TEMPLATE_" + t.getDistMannerStringAt(ti), Xtype.intType).Call(args);
   }
 }
