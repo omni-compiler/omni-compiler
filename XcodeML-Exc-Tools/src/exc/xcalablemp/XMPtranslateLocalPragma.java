@@ -1043,12 +1043,44 @@ public class XMPtranslateLocalPragma {
     XobjList args = Xcons.List(alignedArray.getAddrId().Ref());
     if (refExprList != null) {
       for (Xobject x : refExprList) {
-        args.add(x);
+        args.add(getCalcIndexFuncRef(alignedArray, arrayDimCount, x));
         arrayDimCount++;
       }
     }
 
     return XMPrewriteExpr.createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
+  }
+
+  // FIXME not fully implemented
+  private Xobject getCalcIndexFuncRef(XMPalignedArray alignedArray, int index, Xobject indexRef) throws XMPexception {
+    switch (alignedArray.getAlignMannerAt(index)) {
+      case XMPalignedArray.NOT_ALIGNED:
+      case XMPalignedArray.DUPLICATION:
+        throw new XMPexception("not supported yet");
+      case XMPalignedArray.BLOCK:
+      case XMPalignedArray.CYCLIC:
+        if (alignedArray.hasShadow()) {
+          XMPshadow shadow = alignedArray.getShadowAt(index);
+          switch (shadow.getType()) {
+            case XMPshadow.SHADOW_NONE:
+              return indexRef;
+            case XMPshadow.SHADOW_NORMAL:
+              {
+                XobjList args = Xcons.List(indexRef,
+                                           alignedArray.getGtolTemp0IdAt(index).Ref());
+                return XMP.getMacroId("_XMP_M_CALC_INDEX_SHADOW").Call(args);
+              }
+            case XMPshadow.SHADOW_FULL:
+              throw new XMPexception("not supported yet");
+            default:
+              throw new XMPexception("unknown shadow type");
+          }
+        } else {
+          return indexRef;
+        }
+      default:
+        throw new XMPexception("unknown align manner for array '" + alignedArray.getName()  + "'");
+    }
   }
 
   private void callLoopSchedFuncNodes(XMPnodes nodesObj, XobjList nodesSubscriptList,
