@@ -253,4 +253,81 @@ public class XMPrewriteExpr {
 
     return a;
   }
+
+  public static void rewriteArrayRefInLoop(XobjList loopIterList, Xobject expr,
+                                           XMPglobalDecl globalDecl, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+    if (expr == null) return;
+
+    topdownXobjectIterator iter = new topdownXobjectIterator(expr);
+    for (iter.init(); !iter.end(); iter.next()) {
+      Xobject myExpr = iter.getXobject();
+      if (myExpr == null) {
+        continue;
+      } else if (myExpr.isRewrittedByXmp()) {
+        continue;
+      }
+
+      switch (myExpr.Opcode()) {
+        case ARRAY_REF:
+          {
+            Xobject arrayAddr = myExpr.getArg(0);
+            String arrayName = arrayAddr.getSym();
+            XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+            if (alignedArray != null) {
+              Xobject newExpr = null;
+              XobjList arrayRefList = XMPrewriteExpr.normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
+              if (alignedArray.checkRealloc()) {
+                newExpr = XMPrewriteExpr.rewriteAlignedArrayExprInLoop(loopIterList, arrayRefList, alignedArray);
+              } else {
+                newExpr = Xcons.arrayRef(myExpr.Type(), arrayAddr, arrayRefList);
+              }
+
+              newExpr.setIsRewrittedByXmp(true);
+              iter.setXobject(newExpr);
+            }
+          } break;
+        default:
+      }
+    }
+  }
+
+  private static Xobject rewriteAlignedArrayExprInLoop(XobjList loopIterList, XobjList refExprList,
+                                                       XMPalignedArray alignedArray) throws XMPexception {
+    int arrayDimCount = 0;
+    XobjList args = Xcons.List(alignedArray.getAddrId().Ref());
+    if (refExprList != null) {
+      for (Xobject x : refExprList) {
+        args.add(x);
+        arrayDimCount++;
+      }
+    }
+
+    return XMPrewriteExpr.createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
+  }
+
+  public static void markLoopIndexVarRewritted(XobjList loopIterList, Xobject expr) {
+    switch (expr.Opcode()) {
+      case VAR:
+        {
+          if (XMPutil.hasElmt(loopIterList, expr.getString())) {
+            expr.setIsRewrittedByXmp(true);
+          }
+        } break;
+      default:
+    }
+  }
+
+  public static Xobject calcLtoG(XMPtemplate templateObj, int templateIndex, Xobject expr) throws XMPexception {
+    switch (templateObj.getDistMannerAt(templateIndex)) {
+      case XMPtemplate.DUPLICATION:
+        return expr;
+      case XMPtemplate.BLOCK:
+      case XMPtemplate.CYCLIC:
+      case XMPtemplate.BLOCK_CYCLIC:
+        // FIXME implement
+        return XMP.getMacroId("_XMP_M_gtol_TEMPLATE").Call(Xcons.List(expr));
+      default:
+        throw new XMPexception("unknown distribution manner");
+    }
+  }
 }

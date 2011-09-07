@@ -395,7 +395,7 @@ public class XMPtranslateLocalPragma {
     // rewrite loop
     BasicBlockExprIterator iter = new BasicBlockExprIterator(getLoopBody(schedBaseBlock));
     for (iter.init(); !iter.end(); iter.next()) {
-      rewriteExpr(loopIterList, iter.getExpr(), XMPlocalDecl.getXMPsymbolTable(pb));
+      XMPrewriteExpr.rewriteArrayRefInLoop(loopIterList, iter.getExpr(), _globalDecl, XMPlocalDecl.getXMPsymbolTable(pb));
     }
 
     // replace pragma
@@ -1012,120 +1012,6 @@ public class XMPtranslateLocalPragma {
     Ident funcId = _globalDecl.declExternFunc("_XMP_sched_loop_template_" + distMannerString);
 
     schedBaseBlock.insert(funcId.Call(funcArgs));
-  }
-  
-  private void rewriteExpr(XobjList loopIterList, Xobject expr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
-    if (expr == null) return;
-
-    topdownXobjectIterator iter = new topdownXobjectIterator(expr);
-    for (iter.init(); !iter.end(); iter.next()) {
-      Xobject myExpr = iter.getXobject();
-      if (myExpr == null) {
-        continue;
-      } else if (myExpr.isRewrittedByXmp()) {
-        continue;
-      }
-
-      switch (myExpr.Opcode()) {
-        case VAR:
-          {
-            if (XMPutil.hasElmt(loopIterList, myExpr.getString())) {
-              XobjList args = Xcons.List(myExpr);
-              iter.setXobject(XMP.getMacroId("_XMP_M_LTOG_TEMPLATE").Call(args));
-            }
-          } break;
-        case ARRAY_REF:
-          {
-            Xobject arrayAddr = myExpr.getArg(0);
-            String arrayName = arrayAddr.getSym();
-            XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
-            if (alignedArray != null) {
-              Xobject newExpr = null;
-              XobjList arrayRefList = XMPrewriteExpr.normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
-              if (alignedArray.checkRealloc()) {
-                newExpr = rewriteAlignedArrayExpr(loopIterList, arrayRefList, alignedArray);
-              } else {
-                // FIXME need ltog
-                // newExpr = Xcons.arrayRef(myExpr.Type(), arrayAddr, arrayRefList);
-                throw new XMPexception("not supported yet");
-              }
-
-              newExpr.setIsRewrittedByXmp(true);
-              iter.setXobject(newExpr);
-            }
-          } break;
-        default:
-      }
-    }
-  }
-
-  private Xobject rewriteAlignedArrayExpr(XobjList loopIterList, XobjList refExprList,
-                                          XMPalignedArray alignedArray) throws XMPexception {
-    int arrayDimCount = 0;
-    XobjList args = Xcons.List(alignedArray.getAddrId().Ref());
-    if (refExprList != null) {
-      for (Xobject x : refExprList) {
-        markLoopIndexVarRewritted(loopIterList, x);
-        args.add(getCalcIndexFuncRef(alignedArray, arrayDimCount, x));
-        arrayDimCount++;
-      }
-    }
-
-    return XMPrewriteExpr.createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
-  }
-
-  private void markLoopIndexVarRewritted(XobjList loopIterList, Xobject expr) {
-    topdownXobjectIterator iter = new topdownXobjectIterator(expr);
-    for (iter.init(); !iter.end(); iter.next()) {
-      Xobject myExpr = iter.getXobject();
-      if (myExpr == null) {
-        continue;
-      } else if (myExpr.isRewrittedByXmp()) {
-        continue;
-      }
-
-      switch (myExpr.Opcode()) {
-        case VAR:
-          {
-            if (XMPutil.hasElmt(loopIterList, myExpr.getString())) {
-              myExpr.setIsRewrittedByXmp(true);
-            }
-          } break;
-        default:
-      }
-    }
-  }
-
-  // FIXME not fully implemented
-  private Xobject getCalcIndexFuncRef(XMPalignedArray alignedArray, int index, Xobject indexRef) throws XMPexception {
-    switch (alignedArray.getAlignMannerAt(index)) {
-      case XMPalignedArray.NOT_ALIGNED:
-      case XMPalignedArray.DUPLICATION:
-        throw new XMPexception("not supported yet");
-      case XMPalignedArray.BLOCK:
-      case XMPalignedArray.CYCLIC:
-        if (alignedArray.hasShadow()) {
-          XMPshadow shadow = alignedArray.getShadowAt(index);
-          switch (shadow.getType()) {
-            case XMPshadow.SHADOW_NONE:
-              return indexRef;
-            case XMPshadow.SHADOW_NORMAL:
-              {
-                XobjList args = Xcons.List(indexRef,
-                                           alignedArray.getGtolTemp0IdAt(index).Ref());
-                return XMP.getMacroId("_XMP_M_CALC_INDEX_SHADOW").Call(args);
-              }
-            case XMPshadow.SHADOW_FULL:
-              throw new XMPexception("not supported yet");
-            default:
-              throw new XMPexception("unknown shadow type");
-          }
-        } else {
-          return indexRef;
-        }
-      default:
-        throw new XMPexception("unknown align manner for array '" + alignedArray.getName()  + "'");
-    }
   }
 
   private void callLoopSchedFuncNodes(XMPnodes nodesObj, XobjList nodesSubscriptList,
