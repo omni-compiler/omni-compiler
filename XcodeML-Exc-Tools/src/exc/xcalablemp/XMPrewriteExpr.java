@@ -254,7 +254,7 @@ public class XMPrewriteExpr {
     return a;
   }
 
-  public static void rewriteArrayRefInLoop(XobjList loopIterList, Xobject expr,
+  public static void rewriteArrayRefInLoop(Xobject expr,
                                            XMPglobalDecl globalDecl, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
     if (expr == null) return;
 
@@ -277,7 +277,7 @@ public class XMPrewriteExpr {
               Xobject newExpr = null;
               XobjList arrayRefList = XMPrewriteExpr.normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
               if (alignedArray.checkRealloc()) {
-                newExpr = XMPrewriteExpr.rewriteAlignedArrayExprInLoop(loopIterList, arrayRefList, alignedArray);
+                newExpr = XMPrewriteExpr.rewriteAlignedArrayExprInLoop(arrayRefList, alignedArray);
               } else {
                 newExpr = Xcons.arrayRef(myExpr.Type(), arrayAddr, arrayRefList);
               }
@@ -291,7 +291,7 @@ public class XMPrewriteExpr {
     }
   }
 
-  private static Xobject rewriteAlignedArrayExprInLoop(XobjList loopIterList, XobjList refExprList,
+  private static Xobject rewriteAlignedArrayExprInLoop(XobjList refExprList,
                                                        XMPalignedArray alignedArray) throws XMPexception {
     int arrayDimCount = 0;
     XobjList args = Xcons.List(alignedArray.getAddrId().Ref());

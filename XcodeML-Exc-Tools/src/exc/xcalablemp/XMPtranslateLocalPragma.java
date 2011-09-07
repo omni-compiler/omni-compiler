@@ -392,10 +392,10 @@ public class XMPtranslateLocalPragma {
       }
     }
 
-    // rewrite loop
+    // rewrite array refs in loop
     BasicBlockExprIterator iter = new BasicBlockExprIterator(getLoopBody(schedBaseBlock));
     for (iter.init(); !iter.end(); iter.next()) {
-      XMPrewriteExpr.rewriteArrayRefInLoop(loopIterList, iter.getExpr(), _globalDecl, XMPlocalDecl.getXMPsymbolTable(pb));
+      XMPrewriteExpr.rewriteArrayRefInLoop(iter.getExpr(), _globalDecl, XMPlocalDecl.getXMPsymbolTable(pb));
     }
 
     // replace pragma
