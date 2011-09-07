@@ -391,6 +391,12 @@ public class XMPtranslateLocalPragma {
       }
     }
 
+    // rewrite loop
+    BasicBlockExprIterator iter = new BasicBlockExprIterator(getLoopBody(schedBaseBlock));
+    for (iter.init(); !iter.end(); iter.next()) {
+      rewriteExpr(iter.getExpr(), XMPlocalDecl.getXMPsymbolTable(pb));
+    }
+
     // replace pragma
     Block loopFuncCallBlock = Bcons.COMPOUND(loopBody);
     pb.replace(loopFuncCallBlock);
@@ -885,6 +891,16 @@ public class XMPtranslateLocalPragma {
     throw new XMPexception("cannot find the loop statement");
   }
 
+  private static Block getLoopBody(Block b) throws XMPexception {
+    switch (b.Opcode()) {
+      case FOR_STATEMENT:
+      case COMPOUND_STATEMENT:
+        return getLoopBody(b.getBody().getHead());
+      default:
+        return b;
+    }
+  }
+
   private static CforBlock findLoopBlock(BlockList body, String loopVarName) throws XMPexception {
     Block b = body.getHead();
     if (b != null) {
@@ -995,17 +1011,9 @@ public class XMPtranslateLocalPragma {
     Ident funcId = _globalDecl.declExternFunc("_XMP_sched_loop_template_" + distMannerString);
 
     schedBaseBlock.insert(funcId.Call(funcArgs));
-
-    // rewrite loop
-    BasicBlockExprIterator iter = new BasicBlockExprIterator(forBlock);
-    for (iter.init(); !iter.end(); iter.next()) {
-      rewriteExpr(loopIndexName, distMannerString,
-                  iter.getExpr(), XMPlocalDecl.getXMPsymbolTable(forBlock));
-    }
   }
   
-  private void rewriteExpr(String loopIndexName, String distMannerString,
-                           Xobject expr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+  private void rewriteExpr(Xobject expr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
     if (expr == null) return;
 
     topdownXobjectIterator iter = new topdownXobjectIterator(expr);
@@ -1018,21 +1026,6 @@ public class XMPtranslateLocalPragma {
       }
 
       switch (myExpr.Opcode()) {
-        case VAR:
-          {
-            if (myExpr.getSym().equals(loopIndexName)) {
-              // FIXME not implemented
-              Xobject newExpr = XMP.getMacroId("_XMP_M_CALC_TEMPLATE_GTOL_" + distMannerString).Call(Xcons.List(myExpr));
-              iter.setXobject(newExpr);
-            }
-          } break;
-        case VAR_ADDR:
-          {
-            // FIXME not tested
-            if (myExpr.getSym().equals(loopIndexName)) {
-              throw new XMPexception("pointer ref of loop index is not allowed");
-            }
-          } break;
         case ARRAY_REF:
           {
             Xobject arrayAddr = myExpr.getArg(0);
@@ -1042,7 +1035,7 @@ public class XMPtranslateLocalPragma {
               Xobject newExpr = null;
               XobjList arrayRefList = XMPrewriteExpr.normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
               if (alignedArray.checkRealloc()) {
-                newExpr = rewriteAlignedArrayExpr(loopIndexName, arrayRefList, alignedArray);
+                newExpr = rewriteAlignedArrayExpr(arrayRefList, alignedArray);
               } else {
                 newExpr = Xcons.arrayRef(myExpr.Type(), arrayAddr, arrayRefList);
               }
@@ -1056,13 +1049,12 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private Xobject rewriteAlignedArrayExpr(String loopIndexName, XobjList refExprList,
+  private Xobject rewriteAlignedArrayExpr(XobjList refExprList,
                                           XMPalignedArray alignedArray) throws XMPexception {
     int arrayDimCount = 0;
     XobjList args = Xcons.List(alignedArray.getAddrId().Ref());
     if (refExprList != null) {
       for (Xobject x : refExprList) {
-        markLoopIndexVar(loopIndexName, x);
         args.add(getCalcIndexFuncRef(alignedArray, arrayDimCount, x));
         arrayDimCount++;
       }
@@ -1070,7 +1062,7 @@ public class XMPtranslateLocalPragma {
 
     return XMPrewriteExpr.createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
   }
-
+/*
   private void markLoopIndexVar(String loopIndexName, Xobject expr) {
     topdownXobjectIterator iter = new topdownXobjectIterator(expr);
     for (iter.init(); !iter.end(); iter.next()) {
@@ -1092,7 +1084,7 @@ public class XMPtranslateLocalPragma {
       }
     }
   }
-
+*/
   // FIXME not fully implemented
   private Xobject getCalcIndexFuncRef(XMPalignedArray alignedArray, int index, Xobject indexRef) throws XMPexception {
     switch (alignedArray.getAlignMannerAt(index)) {
