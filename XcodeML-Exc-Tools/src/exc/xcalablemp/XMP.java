@@ -17,6 +17,8 @@ public class XMP {
   public final static int NONBASIC_TYPE			= 599;
   public final static String TEMP_PREFIX		= "_XMP_TEMP";
   public final static String DESC_PREFIX_		= "_XMP_DESC_";
+  public final static String NODES_SIZE_PREFIX_		= "_XMP_NODES_SIZE_";
+  public final static String NODES_RANK_PREFIX_		= "_XMP_NODES_RANK_";
   public final static String GPU_HOST_DESC_PREFIX_	= "_XMP_GPU_HOST_DESC_";
   public final static String GPU_DEVICE_DESC_PREFIX_	= "_XMP_GPU_DEVICE_DESC_";
   public final static String GPU_DEVICE_ADDR_PREFIX_	= "_XMP_GPU_DEVICE_ADDR_";

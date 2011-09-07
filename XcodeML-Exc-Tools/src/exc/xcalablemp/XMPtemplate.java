@@ -160,11 +160,8 @@ public class XMPtemplate extends XMPobject {
       Xobject templateSpec = i.getArg();
       if (templateSpec == null) {
         templateIsFixed = false;
-
-        templateObject.addLower(null);
-        templateObject.addUpper(null);
-      }
-      else {
+        throw new XMPexception("template should has fixed size in this version");
+      } else {
         Xobject templateLower = templateSpec.left();
         Xobject templateUpper = templateSpec.right();
 
@@ -180,16 +177,14 @@ public class XMPtemplate extends XMPobject {
     if (templateIsFixed) {
       templateObject.setIsFixed();
       constructorName += "FIXED";
-    }
-    else {
+    } else {
       constructorName += "UNFIXED";
     }
 
     if (isLocalPragma) {
       XMPlocalDecl.addConstructorCall(constructorName, templateArgs, globalDecl, pb);
       XMPlocalDecl.insertDestructorCall("_XMP_finalize_template", Xcons.List(templateDescId.Ref()), globalDecl, pb);
-    }
-    else {
+    } else {
       globalDecl.addGlobalInitFuncCall(constructorName, templateArgs);
     }
   }

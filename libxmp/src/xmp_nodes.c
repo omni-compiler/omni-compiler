@@ -327,13 +327,17 @@ void _XMP_init_nodes_DYNAMIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...) {
     n->info[i].size = dim_size;
   }
   int *last_dim_size_p = va_arg(args, int *);
-  va_end(args);
 
   // is_member is always true
   _XMP_check_nodes_size_DYNAMIC(n);
   _XMP_calc_nodes_rank(n, _XMP_world_rank);
 
   *last_dim_size_p = n->info[dim - 1].size;
+  for (int i = 0; i < dim; i++) {
+    int *rank_p = va_arg(args, int *);
+    *rank_p = n->info[i].rank;
+  }
+  va_end(args);
 
   *nodes = n;
 }
@@ -378,7 +382,6 @@ void _XMP_init_nodes_DYNAMIC_EXEC(_XMP_nodes_t **nodes, int dim, ...) {
     n->info[i].size = dim_size;
   }
   int *last_dim_size_p = va_arg(args, int *);
-  va_end(args);
 
   _XMP_check_nodes_size_DYNAMIC(n);
   if (n->is_member) {
@@ -389,6 +392,11 @@ void _XMP_init_nodes_DYNAMIC_EXEC(_XMP_nodes_t **nodes, int dim, ...) {
   }
 
   *last_dim_size_p = n->info[dim - 1].size;
+  for (int i = 0; i < dim; i++) {
+    int *rank_p = va_arg(args, int *);
+    *rank_p = n->info[i].rank;
+  }
+  va_end(args);
 
   *nodes = n;
 }
@@ -435,7 +443,6 @@ void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
     n->info[i].size = dim_size;
   }
   int *last_dim_size_p = va_arg(args, int *);
-  va_end(args);
 
   _XMP_check_nodes_size_DYNAMIC(n);
   if (n->is_member) {
@@ -446,6 +453,11 @@ void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
   }
 
   *last_dim_size_p = n->info[dim - 1].size;
+  for (int i = 0; i < dim; i++) {
+    int *rank_p = va_arg(args, int *);
+    *rank_p = n->info[i].rank;
+  }
+  va_end(args);
 
   *nodes = n;
 }
@@ -514,7 +526,6 @@ void _XMP_init_nodes_DYNAMIC_NODES_NAMED(_XMP_nodes_t **nodes, int dim,
     n->info[i].size = dim_size;
   }
   int *last_dim_size_p = va_arg(args, int *);
-  va_end(args);
 
   _XMP_check_nodes_size_DYNAMIC(n);
   if (n->is_member) {
@@ -525,6 +536,11 @@ void _XMP_init_nodes_DYNAMIC_NODES_NAMED(_XMP_nodes_t **nodes, int dim,
   }
 
   *last_dim_size_p = n->info[dim - 1].size;
+  for (int i = 0; i < dim; i++) {
+    int *rank_p = va_arg(args, int *);
+    *rank_p = n->info[i].rank;
+  }
+  va_end(args);
 
   *nodes = n;
 }

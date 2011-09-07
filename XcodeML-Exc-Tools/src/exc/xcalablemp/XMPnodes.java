@@ -8,6 +8,7 @@ package exc.xcalablemp;
 
 import exc.block.*;
 import exc.object.*;
+import java.util.Vector;
 
 public class XMPnodes extends XMPobject {
   public final static int INHERIT_NULL		= -1;
@@ -18,12 +19,14 @@ public class XMPnodes extends XMPobject {
   private int _inheritType;
   private boolean _inheritNamedNodes;
   private XMPnodes _inheritNodes;
+  private Vector<Xobject> _rankVector;
 
   public XMPnodes(String name, int dim, Ident descId) {
     super(XMPobject.NODES, name, dim, descId);
     _inheritType = INHERIT_NULL;
     _inheritNamedNodes = false;
     _inheritNodes = null;
+    _rankVector = new Vector<Xobject>();
 
     for (int i = 0; i < dim; i++) {
       this.addLower(Xcons.IntConstant(1));
@@ -65,6 +68,14 @@ public class XMPnodes extends XMPobject {
         return false;
       }
     }
+  }
+
+  public void addRank(Xobject rank) {
+    _rankVector.add(rank);
+  }
+
+  public Xobject getRankAt(int index) {
+    return _rankVector.get(index);
   }
 
   public static void translateNodes(XobjList nodesDecl, XMPglobalDecl globalDecl,
@@ -223,9 +234,9 @@ public class XMPnodes extends XMPobject {
 
         Ident nodesSizeId = null;
         if (isLocalPragma) {
-          nodesSizeId = XMPlocalDecl.addObjectId("_XMP_NODES_SIZE_" + nodesName, Xtype.intType, pb);
+          nodesSizeId = XMPlocalDecl.addObjectId(XMP.NODES_SIZE_PREFIX_ + nodesName, Xtype.intType, pb);
         } else {
-          nodesSizeId = globalDecl.declStaticIdent("_XMP_NODES_SIZE_" + nodesName, Xtype.intType);
+          nodesSizeId = globalDecl.declStaticIdent(XMP.NODES_SIZE_PREFIX_ + nodesName, Xtype.intType);
         }
 
         nodesArgs.add(Xcons.Cast(Xtype.Pointer(Xtype.intType), nodesSizeId.getAddr()));
@@ -235,6 +246,18 @@ public class XMPnodes extends XMPobject {
       }
 
       nodesObject.addUpper(nodesSize);
+    }
+
+    for (int i = 0; i < nodesDim; i++) {
+      Ident nodesRankId = null;
+      if (isLocalPragma) {
+        nodesRankId = XMPlocalDecl.addObjectId(XMP.NODES_RANK_PREFIX_ + nodesName + "_" + i, Xtype.intType, pb);
+      } else {
+        nodesRankId = globalDecl.declStaticIdent(XMP.NODES_RANK_PREFIX_ + nodesName + "_" + i, Xtype.intType);
+      }
+
+      nodesArgs.add(Xcons.Cast(Xtype.Pointer(Xtype.intType), nodesRankId.getAddr()));
+      nodesObject.addRank(nodesRankId.Ref());
     }
 
     // add constructor call
