@@ -995,6 +995,60 @@ public class XMPtranslateLocalPragma {
     Ident funcId = _globalDecl.declExternFunc("_XMP_sched_loop_template_" + distMannerString);
 
     schedBaseBlock.insert(funcId.Call(funcArgs));
+
+    // rewrite loop
+    BasicBlockExprIterator iter = new BasicBlockExprIterator(forBlock);
+    for (iter.init(); !iter.end(); iter.next()) {
+      rewriteExpr(iter.getExpr(), XMPlocalDecl.getXMPsymbolTable(forBlock));
+    }
+  }
+  
+  private void rewriteExpr(Xobject expr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+    if (expr == null) return;
+
+    topdownXobjectIterator iter = new topdownXobjectIterator(expr);
+    for (iter.init(); !iter.end(); iter.next()) {
+      Xobject myExpr = iter.getXobject();
+      if (myExpr == null) {
+        continue;
+      }
+
+      switch (myExpr.Opcode()) {
+        case ARRAY_REF:
+          {
+            Xobject arrayAddr = myExpr.getArg(0);
+            String arrayName = arrayAddr.getSym();
+            XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+            if (alignedArray != null) {
+              Xobject newExpr = null;
+              XobjList arrayRefList = XMPrewriteExpr.normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
+              if (alignedArray.checkRealloc()) {
+                newExpr = rewriteAlignedArrayExpr(arrayRefList, alignedArray);
+              } else {
+                newExpr = Xcons.arrayRef(myExpr.Type(), arrayAddr, arrayRefList);
+              }
+
+              newExpr.setIsRewrittedByXmp(true);
+              iter.setXobject(newExpr);
+            }
+          } break;
+        default:
+      }
+    }
+  }
+
+  private Xobject rewriteAlignedArrayExpr(XobjList refExprList,
+                                          XMPalignedArray alignedArray) throws XMPexception {
+    int arrayDimCount = 0;
+    XobjList args = Xcons.List(alignedArray.getAddrId().Ref());
+    if (refExprList != null) {
+      for (Xobject x : refExprList) {
+        args.add(x);
+        arrayDimCount++;
+      }
+    }
+
+    return XMPrewriteExpr.createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
   }
 
   private void callLoopSchedFuncNodes(XMPnodes nodesObj, XobjList nodesSubscriptList,

@@ -179,7 +179,12 @@ public class XMPglobalDecl {
   }
 
   public XMPalignedArray getXMPalignedArray(String name, XMPsymbolTable localXMPsymbolTable) {
-    XMPalignedArray a = localXMPsymbolTable.getXMPalignedArray(name);
+    XMPalignedArray a = null;
+
+    if (localXMPsymbolTable != null) {
+      a = localXMPsymbolTable.getXMPalignedArray(name);
+    }
+
     if (a == null) {
       a = getXMPalignedArray(name);
     }

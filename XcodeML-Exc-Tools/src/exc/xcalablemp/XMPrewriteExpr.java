@@ -124,8 +124,8 @@ public class XMPrewriteExpr {
     }
   }
 
-  private XobjList normArrayRefList(XobjList refExprList,
-                                    XMPalignedArray alignedArray) {
+  public static XobjList normArrayRefList(XobjList refExprList,
+                                          XMPalignedArray alignedArray) {
     if (refExprList == null) {
       return null;
     } else {
@@ -161,8 +161,8 @@ public class XMPrewriteExpr {
     return createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
   }
 
-  private Xobject createRewriteAlignedArrayFunc(XMPalignedArray alignedArray, int arrayDimCount,
-                                                XobjList getAddrFuncArgs) throws XMPexception {
+  public static Xobject createRewriteAlignedArrayFunc(XMPalignedArray alignedArray, int arrayDimCount,
+                                                      XobjList getAddrFuncArgs) throws XMPexception {
     int arrayDim = alignedArray.getDim();
     Ident getAddrFuncId = null;
 
