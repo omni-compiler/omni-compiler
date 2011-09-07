@@ -297,7 +297,8 @@ public class XMPrewriteExpr {
   }
 
   public static void rewriteLoopIndexInLoop(Xobject expr, String loopIndexName,
-                                            XMPtemplate templateObj, int templateIndex) throws XMPexception {
+                                            XMPtemplate templateObj, int templateIndex,
+                                            XMPglobalDecl globalDecl, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
     if (expr == null) return;
 
     topdownXobjectIterator iter = new topdownXobjectIterator(expr);
@@ -317,8 +318,39 @@ public class XMPrewriteExpr {
             }
           } break;
         case ARRAY_REF:
-          markLoopIndexVarRewritted(loopIndexName, myExpr);
-          break;
+          {
+            XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(myExpr.getArg(0).getSym(), localXMPsymbolTable);
+            if (alignedArray == null) {
+              rewriteLoopIndexVar(templateObj, templateIndex, loopIndexName, myExpr);
+            } else {
+              markLoopIndexVarRewritted(loopIndexName, myExpr);
+            }
+          } break;
+        default:
+      }
+    }
+  }
+
+  private static void rewriteLoopIndexVar(XMPtemplate templateObj, int templateIndex,
+                                          String loopIndexName, Xobject expr) throws XMPexception {
+    topdownXobjectIterator iter = new topdownXobjectIterator(expr);
+    for (iter.init(); !iter.end(); iter.next()) {
+      Xobject myExpr = iter.getXobject();
+      if (myExpr == null) {
+        continue;
+      } else if (myExpr.isRewrittedByXmp()) {
+        continue;
+      }
+
+      switch (myExpr.Opcode()) {
+        case VAR:
+          {
+            if (loopIndexName.equals(myExpr.getString())) {
+              myExpr.setIsRewrittedByXmp(true);
+              Xobject newExpr = calcLtoG(templateObj, templateIndex, myExpr);
+              iter.setXobject(newExpr);
+            }
+          } break;
         default:
       }
     }
