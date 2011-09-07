@@ -2329,7 +2329,6 @@ public class XMPtranslateLocalPragma {
         boolean splitComm = false;
         int refIndex = 0;
         int refDim = onRefObject.getDim();
-        boolean getUpper = false;
         XobjList tempArgs = Xcons.List();
         for (XobjArgs i = onRef.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
           if (refIndex == refDim)
@@ -2352,9 +2351,7 @@ public class XMPtranslateLocalPragma {
             }
             // upper
             if (t.getArg(1) == null) {
-              Xobject onRefUpper = onRefObject.getUpperAt(refIndex);
-              if (onRefUpper == null) getUpper = true;
-              else tempArgs.add(Xcons.Cast(castType, onRefUpper));
+              tempArgs.add(Xcons.Cast(castType, onRefObject.getUpperAt(refIndex)));
             }
             else {
               splitComm = true;
@@ -2391,9 +2388,6 @@ public class XMPtranslateLocalPragma {
             default:
               throw new XMPexception("unknown object type");
           }
-
-          if (getUpper) execFuncArgs.cons(Xcons.IntConstant(1));
-          else          execFuncArgs.cons(Xcons.IntConstant(0));
 
           return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSurfix, new Boolean(splitComm), execFuncArgs, onRefObject);
         }

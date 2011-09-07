@@ -163,16 +163,13 @@ public class XMPnodes extends XMPobject {
             nodesArgs.add(nodesRefObject.getDescId().Ref());
 
             int nodesRefDim = nodesRefObject.getDim();
-            boolean isDynamicNodesRef = false;
             XobjList subscriptList = (XobjList)nodesRef.getArg(1);
             if (subscriptList == null) {
               for (int nodesRefIndex = 0; nodesRefIndex < nodesRefDim; nodesRefIndex++) {
                 // lower
                 nodesArgs.add(Xcons.Cast(Xtype.intType, nodesRefObject.getLowerAt(nodesRefIndex)));
                 // upper
-                Xobject nodesRefUpper = nodesRefObject.getUpperAt(nodesRefIndex);
-                if (nodesRefUpper == null) isDynamicNodesRef = true;
-                else nodesArgs.add(Xcons.Cast(Xtype.intType, nodesRefUpper));
+                nodesArgs.add(Xcons.Cast(Xtype.intType, nodesRefObject.getUpperAt(nodesRefIndex)));
                 // stride
                 nodesArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
               }
@@ -197,9 +194,7 @@ public class XMPnodes extends XMPobject {
                   }
                   // upper
                   if (subscriptTriplet.getArg(1) == null) {
-                    Xobject nodesRefUpper = nodesRefObject.getUpperAt(nodesRefIndex);
-                    if (nodesRefUpper == null) isDynamicNodesRef = true;
-                    else nodesArgs.add(Xcons.Cast(Xtype.intType, nodesRefUpper));
+                    nodesArgs.add(Xcons.Cast(Xtype.intType, nodesRefObject.getUpperAt(nodesRefIndex)));
                   }
                   else nodesArgs.add(Xcons.Cast(Xtype.intType, subscriptTriplet.getArg(1)));
                   // stride
@@ -213,9 +208,6 @@ public class XMPnodes extends XMPobject {
               if (nodesRefIndex != nodesRefDim)
                 throw new XMPexception("the number of <nodes-subscript> should be the same with the nodes dimension");
             }
-
-            if (isDynamicNodesRef) nodesArgs.cons(Xcons.IntConstant(1));
-            else                   nodesArgs.cons(Xcons.IntConstant(0));
           }
           break;
         }
@@ -223,18 +215,27 @@ public class XMPnodes extends XMPobject {
         throw new XMPexception("cannot create sub node set, unknown operation in nodes directive");
     }
 
-    boolean isDynamic = false;
+    String allocType = "STATIC";
     for (XobjArgs i = nodesDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
       Xobject nodesSize = i.getArg();
-      if (nodesSize == null) isDynamic = true;
-      else nodesArgs.add(Xcons.Cast(Xtype.intType, nodesSize));
+      if (nodesSize == null) {
+        allocType = "DYNAMIC";
+
+        Ident nodesSizeId = null;
+        if (isLocalPragma) {
+          nodesSizeId = XMPlocalDecl.addObjectId("_XMP_NODES_SIZE_" + nodesName, Xtype.intType, pb);
+        } else {
+          nodesSizeId = globalDecl.declStaticIdent("_XMP_NODES_SIZE_" + nodesName, Xtype.intType);
+        }
+
+        nodesArgs.add(Xcons.Cast(Xtype.Pointer(Xtype.intType), nodesSizeId.getAddr()));
+        nodesSize = nodesSizeId.Ref();
+      } else {
+        nodesArgs.add(Xcons.Cast(Xtype.intType, nodesSize));
+      }
 
       nodesObject.addUpper(nodesSize);
     }
-
-    String allocType = null;
-    if (isDynamic)      allocType = "DYNAMIC";
-    else                allocType = "STATIC";
 
     // add constructor call
     String initFuncName = null;

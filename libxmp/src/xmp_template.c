@@ -403,7 +403,7 @@ void _XMP_dist_template_BLOCK_CYCLIC(_XMP_template_t *template, int template_ind
   _XMP_dist_template_CYCLIC_WIDTH(template, template_index, nodes_index, width);
 }
 
-int _XMP_exec_task_TEMPLATE_PART(_XMP_task_desc_t **task_desc, int get_upper, _XMP_template_t *ref_template, ...) {
+int _XMP_exec_task_TEMPLATE_PART(_XMP_task_desc_t **task_desc, _XMP_template_t *ref_template, ...) {
   int ref_dim = ref_template->dim;
   int shrink[ref_dim];
   long long lower[ref_dim], upper[ref_dim], stride[ref_dim];
@@ -420,11 +420,7 @@ int _XMP_exec_task_TEMPLATE_PART(_XMP_task_desc_t **task_desc, int get_upper, _X
       stride[i] = 1;
     } else {
       lower[i] = va_arg(args, long long);
-      if ((i == (ref_dim - 1)) && (get_upper == 1)) {
-        upper[i] = info->ser_upper;
-      } else {
-        upper[i] = va_arg(args, long long);
-      }
+      upper[i] = va_arg(args, long long);
       stride[i] = va_arg(args, long long);
     }
   }

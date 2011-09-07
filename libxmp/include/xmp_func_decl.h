@@ -92,12 +92,12 @@ extern void _XMP_init_nodes_STATIC_NODES_NUMBER(void **nodes, int dim,
                                                 int ref_lower, int ref_upper, int ref_stride, ...);
 extern void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(void **nodes, int dim,
                                                  int ref_lower, int ref_upper, int ref_stride, ...);
-extern void _XMP_init_nodes_STATIC_NODES_NAMED(int get_upper, void **nodes, int dim, void *ref_nodes, ...);
-extern void _XMP_init_nodes_DYNAMIC_NODES_NAMED(int get_upper, void **nodes, int dim, void *ref_nodes, ...);
+extern void _XMP_init_nodes_STATIC_NODES_NAMED(void **nodes, int dim, void *ref_nodes, ...);
+extern void _XMP_init_nodes_DYNAMIC_NODES_NAMED(void **nodes, int dim, void *ref_nodes, ...);
 extern void _XMP_finalize_nodes(void *nodes);
 extern int _XMP_exec_task_GLOBAL_PART(void **task_desc, int ref_lower, int ref_upper, int ref_stride);
 extern int _XMP_exec_task_NODES_ENTIRE(void **task_desc, void *ref_nodes);
-extern int _XMP_exec_task_NODES_PART(void **task_desc, int get_upper, void *ref_nodes, ...);
+extern int _XMP_exec_task_NODES_PART(void **task_desc, void *ref_nodes, ...);
 
 // xmp_nodes_stack.c
 extern void _XMP_push_nodes(void *nodes);
@@ -139,7 +139,7 @@ extern void _XMP_dist_template_DUPLICATION(void *template, int template_index);
 extern void _XMP_dist_template_BLOCK(void *template, int template_index, int nodes_index);
 extern void _XMP_dist_template_CYCLIC(void *template, int template_index, int nodes_index);
 extern void _XMP_dist_template_BLOCK_CYCLIC(void *template, int template_index, int nodes_index, unsigned long long width);
-extern int _XMP_exec_task_TEMPLATE_PART(void **task_desc, int get_upper, void *ref_template, ...);
+extern int _XMP_exec_task_TEMPLATE_PART(void **task_desc, void *ref_template, ...);
 
 // xmp_util.c
 extern void *_XMP_alloc(size_t size);
