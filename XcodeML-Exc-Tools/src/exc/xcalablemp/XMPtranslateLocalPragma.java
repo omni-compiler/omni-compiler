@@ -959,11 +959,7 @@ public class XMPtranslateLocalPragma {
 
         templateIndexArg = Xcons.IntConstant(templateIndex);
         distManner = templateObj.getDistMannerAt(templateIndex);
-        if (distManner == XMPtemplate.DUPLICATION) {
-          distMannerString = XMPtemplate.getDistMannerString(XMPtemplate.BLOCK);
-        } else {
-          distMannerString = templateObj.getDistMannerStringAt(templateIndex);
-        }
+        distMannerString = templateObj.getDistMannerStringAt(templateIndex);
       }
 
       templateIndex++;
@@ -1012,6 +1008,14 @@ public class XMPtranslateLocalPragma {
     Ident funcId = _globalDecl.declExternFunc("_XMP_sched_loop_template_" + distMannerString);
 
     schedBaseBlock.insert(funcId.Call(funcArgs));
+
+    // rewrite loop index in loop
+    BasicBlockExprIterator iter = new BasicBlockExprIterator(getLoopBody(forBlock));
+    for (iter.init(); !iter.end(); iter.next()) {
+      XMPrewriteExpr.rewriteLoopIndexInLoop(iter.getExpr(), loopIndexName,
+                                            templateObj, templateIndexArg.getInt(),
+                                            _globalDecl, XMPlocalDecl.getXMPsymbolTable(forBlock));
+    }
   }
 
   private void callLoopSchedFuncNodes(XMPnodes nodesObj, XobjList nodesSubscriptList,

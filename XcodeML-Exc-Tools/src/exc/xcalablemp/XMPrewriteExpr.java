@@ -106,7 +106,7 @@ public class XMPrewriteExpr {
           {
             Xobject arrayAddr = myExpr.getArg(0);
             String arrayName = arrayAddr.getSym();
-            XMPalignedArray alignedArray = findXMPalignedArray(arrayName, localXMPsymbolTable);
+            XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
             if (alignedArray != null) {
               Xobject newExpr = null;
               XobjList arrayRefList = normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
@@ -245,15 +245,6 @@ public class XMPrewriteExpr {
     }
   }
 
-  private XMPalignedArray findXMPalignedArray(String arrayName, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
-    XMPalignedArray a = localXMPsymbolTable.getXMPalignedArray(arrayName);
-    if (a == null) {
-      a = _globalDecl.getXMPalignedArray(arrayName);
-    }
-
-    return a;
-  }
-
   public static void rewriteArrayRefInLoop(Xobject expr,
                                            XMPglobalDecl globalDecl, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
     if (expr == null) return;
@@ -305,19 +296,38 @@ public class XMPrewriteExpr {
     return XMPrewriteExpr.createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
   }
 
-  public static void markLoopIndexVarRewritted(XobjList loopIterList, Xobject expr) {
-    switch (expr.Opcode()) {
-      case VAR:
-        {
-          if (XMPutil.hasElmt(loopIterList, expr.getString())) {
-            expr.setIsRewrittedByXmp(true);
+  // FIXME implement
+  public static void rewriteLoopIndexInLoop(Xobject expr, String loopIndexName,
+                                            XMPtemplate templateObj, int templateIndex,
+                                            XMPglobalDecl globalDecl, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+    if (expr == null) return;
+
+    topdownXobjectIterator iter = new topdownXobjectIterator(expr);
+    for (iter.init(); !iter.end(); iter.next()) {
+      Xobject myExpr = iter.getXobject();
+      if (myExpr == null) {
+        continue;
+      } else if (myExpr.isRewrittedByXmp()) {
+        continue;
+      }
+
+      switch (myExpr.Opcode()) {
+        case VAR:
+          {
+            if (loopIndexName.equals(myExpr.getSym())) {
+              iter.setXobject(calcLtoG(templateObj, templateIndex, myExpr));
+            }
+          } break;
+        case ARRAY_REF:
+          {
+            XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(myExpr.getArg(0).getString(), localXMPsymbolTable);
           }
-        } break;
-      default:
+        default:
+      }
     }
   }
 
-  public static Xobject calcLtoG(XMPtemplate templateObj, int templateIndex, Xobject expr) throws XMPexception {
+  private static Xobject calcLtoG(XMPtemplate templateObj, int templateIndex, Xobject expr) throws XMPexception {
     switch (templateObj.getDistMannerAt(templateIndex)) {
       case XMPtemplate.DUPLICATION:
         return expr;
@@ -325,7 +335,7 @@ public class XMPrewriteExpr {
       case XMPtemplate.CYCLIC:
       case XMPtemplate.BLOCK_CYCLIC:
         // FIXME implement
-        return XMP.getMacroId("_XMP_M_gtol_TEMPLATE").Call(Xcons.List(expr));
+        return XMP.getMacroId("_XMP_M_gtol_TEMPLATE", Xtype.intType).Call(Xcons.List(expr));
       default:
         throw new XMPexception("unknown distribution manner");
     }

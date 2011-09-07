@@ -92,6 +92,35 @@ no_iter:
   *par_step = 1;
 }
 
+void _XMP_sched_loop_template_DUPLICATION(int ser_init, int ser_cond, int ser_step,
+                                          int *par_init, int *par_cond, int *par_step,
+                                          _XMP_template_t *template, int template_index) {
+  _XMP_ASSERT(template->is_distributed); // FIXME too strict?
+
+  if (!template->is_owner) {
+    goto no_iter;
+  }
+
+  _XMP_template_chunk_t *template_chunk = &(template->chunk[template_index]);
+  int template_lower = template_chunk->par_lower;
+  int template_upper = template_chunk->par_upper;
+
+  _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step)
+  _XMP_SM_NORM_TEMPLATE_BLOCK(ser_init, ser_step, template_lower, template_upper)
+  _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK(ser_init, ser_cond, ser_step, par_init, par_cond, par_step,
+                                    template_lower, template_upper)
+
+  // no GtoL is needed
+  *par_cond = *par_cond + 1; // for (i = par_init; i < par_cond; i += par_step) . . .
+
+  return;
+
+no_iter:
+  *par_init = 0;
+  *par_cond = 0;
+  *par_step = 1;
+}
+
 // cyclic distribution ---------------------------------------------------------------------------------------------------------------
 #define _XMP_SM_CALC_PAR_INIT_CYCLIC_C1 \
 { \
