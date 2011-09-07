@@ -1013,8 +1013,7 @@ public class XMPtranslateLocalPragma {
     BasicBlockExprIterator iter = new BasicBlockExprIterator(getLoopBody(forBlock));
     for (iter.init(); !iter.end(); iter.next()) {
       XMPrewriteExpr.rewriteLoopIndexInLoop(iter.getExpr(), loopIndexName,
-                                            templateObj, templateIndexArg.getInt(),
-                                            _globalDecl, XMPlocalDecl.getXMPsymbolTable(forBlock));
+                                            templateObj, templateIndexArg.getInt());
     }
   }
 

@@ -296,10 +296,8 @@ public class XMPrewriteExpr {
     return XMPrewriteExpr.createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
   }
 
-  // FIXME implement
   public static void rewriteLoopIndexInLoop(Xobject expr, String loopIndexName,
-                                            XMPtemplate templateObj, int templateIndex,
-                                            XMPglobalDecl globalDecl, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+                                            XMPtemplate templateObj, int templateIndex) throws XMPexception {
     if (expr == null) return;
 
     topdownXobjectIterator iter = new topdownXobjectIterator(expr);
@@ -319,9 +317,30 @@ public class XMPrewriteExpr {
             }
           } break;
         case ARRAY_REF:
+          markLoopIndexVarRewritted(loopIndexName, myExpr);
+          break;
+        default:
+      }
+    }
+  }
+
+  private static void markLoopIndexVarRewritted(String loopIndexName, Xobject expr) {
+    topdownXobjectIterator iter = new topdownXobjectIterator(expr);
+    for (iter.init(); !iter.end(); iter.next()) {
+      Xobject myExpr = iter.getXobject();
+      if (myExpr == null) {
+        continue;
+      } else if (myExpr.isRewrittedByXmp()) {
+        continue;
+      }
+
+      switch (myExpr.Opcode()) {
+        case VAR:
           {
-            XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(myExpr.getArg(0).getString(), localXMPsymbolTable);
-          }
+            if (loopIndexName.equals(myExpr.getString())) {
+              myExpr.setIsRewrittedByXmp(true);
+            }
+          } break;
         default:
       }
     }

@@ -312,7 +312,6 @@ void _XMP_init_nodes_STATIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...) {
   for (int i = 0; i < dim; i++) {
     int *rank_p = va_arg(args, int *);
     *rank_p = n->info[i].rank;
-    printf("[%d] rank(%d) = %d\n", _XMP_world_rank, i, *rank_p);
   }
   va_end(args);
 
