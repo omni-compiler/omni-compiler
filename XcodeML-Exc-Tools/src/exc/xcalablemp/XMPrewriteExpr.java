@@ -108,12 +108,16 @@ public class XMPrewriteExpr {
             String arrayName = arrayAddr.getSym();
             XMPalignedArray alignedArray = findXMPalignedArray(arrayName, localXMPsymbolTable);
             if (alignedArray != null) {
+              Xobject newExpr = null;
               XobjList arrayRefList = normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
               if (alignedArray.checkRealloc()) {
-                iter.setXobject(rewriteAlignedArrayExpr(arrayRefList, alignedArray));
+                newExpr = rewriteAlignedArrayExpr(arrayRefList, alignedArray);
               } else {
-                iter.setXobject(Xcons.arrayRef(myExpr.Type(), arrayAddr, arrayRefList));
+                newExpr = Xcons.arrayRef(myExpr.Type(), arrayAddr, arrayRefList);
               }
+
+              newExpr.setIsRewrittedByXmp(true);
+              iter.setXobject(newExpr);
             }
           } break;
         case SUB_ARRAY_REF:

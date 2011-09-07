@@ -999,11 +999,13 @@ public class XMPtranslateLocalPragma {
     // rewrite loop
     BasicBlockExprIterator iter = new BasicBlockExprIterator(forBlock);
     for (iter.init(); !iter.end(); iter.next()) {
-      rewriteExpr(iter.getExpr(), XMPlocalDecl.getXMPsymbolTable(forBlock));
+      rewriteExpr(loopIndexName, distMannerString,
+                  iter.getExpr(), XMPlocalDecl.getXMPsymbolTable(forBlock));
     }
   }
   
-  private void rewriteExpr(Xobject expr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+  private void rewriteExpr(String loopIndexName, String distMannerString,
+                           Xobject expr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
     if (expr == null) return;
 
     topdownXobjectIterator iter = new topdownXobjectIterator(expr);
@@ -1011,9 +1013,26 @@ public class XMPtranslateLocalPragma {
       Xobject myExpr = iter.getXobject();
       if (myExpr == null) {
         continue;
+      } else if (myExpr.isRewrittedByXmp()) {
+        continue;
       }
 
       switch (myExpr.Opcode()) {
+        case VAR:
+          {
+            if (myExpr.getSym().equals(loopIndexName)) {
+              // FIXME not implemented
+              Xobject newExpr = XMP.getMacroId("_XMP_M_CALC_TEMPLATE_GTOL_" + distMannerString).Call(Xcons.List(myExpr));
+              iter.setXobject(newExpr);
+            }
+          } break;
+        case VAR_ADDR:
+          {
+            // FIXME not tested
+            if (myExpr.getSym().equals(loopIndexName)) {
+              throw new XMPexception("pointer ref of loop index is not allowed");
+            }
+          } break;
         case ARRAY_REF:
           {
             Xobject arrayAddr = myExpr.getArg(0);
@@ -1023,7 +1042,7 @@ public class XMPtranslateLocalPragma {
               Xobject newExpr = null;
               XobjList arrayRefList = XMPrewriteExpr.normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
               if (alignedArray.checkRealloc()) {
-                newExpr = rewriteAlignedArrayExpr(arrayRefList, alignedArray);
+                newExpr = rewriteAlignedArrayExpr(loopIndexName, arrayRefList, alignedArray);
               } else {
                 newExpr = Xcons.arrayRef(myExpr.Type(), arrayAddr, arrayRefList);
               }
@@ -1037,18 +1056,41 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private Xobject rewriteAlignedArrayExpr(XobjList refExprList,
+  private Xobject rewriteAlignedArrayExpr(String loopIndexName, XobjList refExprList,
                                           XMPalignedArray alignedArray) throws XMPexception {
     int arrayDimCount = 0;
     XobjList args = Xcons.List(alignedArray.getAddrId().Ref());
     if (refExprList != null) {
       for (Xobject x : refExprList) {
+        markLoopIndexVar(loopIndexName, x);
         args.add(getCalcIndexFuncRef(alignedArray, arrayDimCount, x));
         arrayDimCount++;
       }
     }
 
     return XMPrewriteExpr.createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
+  }
+
+  private void markLoopIndexVar(String loopIndexName, Xobject expr) {
+    topdownXobjectIterator iter = new topdownXobjectIterator(expr);
+    for (iter.init(); !iter.end(); iter.next()) {
+      Xobject myExpr = iter.getXobject();
+      if (myExpr == null) {
+        continue;
+      } else if (myExpr.isRewrittedByXmp()) {
+        continue;
+      }
+
+      switch (myExpr.Opcode()) {
+        case VAR:
+          {
+            if (myExpr.getSym().equals(loopIndexName)) {
+              myExpr.setIsRewrittedByXmp(true);
+            }
+          } break;
+        default:
+      }
+    }
   }
 
   // FIXME not fully implemented
