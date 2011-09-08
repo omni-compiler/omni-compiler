@@ -51,7 +51,7 @@
                                             template_lower, template_upper, \
                                             width, template_ser_upper) \
 { \
-  int template_upper_width = template_upper + width; \
+  int template_upper_width = template_upper + width - 1; \
   if (template_upper_width > template_ser_upper) { \
     template_upper_width = template_ser_upper; \
   } \

@@ -207,7 +207,7 @@ static void _XMP_dist_template_CYCLIC_WIDTH(_XMP_template_t *template, int templ
 
     if (template_size < nodes_size) {
       if (nodes_rank < template_size) {
-        long long par_index = ti->ser_lower + nodes_rank;
+        long long par_index = ti->ser_lower + (nodes_rank * width);
 
         chunk->par_lower = par_index;
         chunk->par_upper = par_index;
@@ -232,15 +232,15 @@ static void _XMP_dist_template_CYCLIC_WIDTH(_XMP_template_t *template, int templ
         }
       }
 
-      chunk->par_lower = ti->ser_lower + nodes_rank;
-      chunk->par_upper = chunk->par_lower + nodes_size * (par_size - 1);
+      chunk->par_lower = ti->ser_lower + (nodes_rank * width);
+      chunk->par_upper = chunk->par_lower + (nodes_size * (par_size - 1) * width);
     }
   }
 
   chunk->par_width = width;
 
-  chunk->par_stride = nodes_size;
-  chunk->par_chunk_width = _XMP_M_CEILi(template_size, nodes_size);
+  chunk->par_stride = nodes_size * width;
+  chunk->par_chunk_width = _XMP_M_CEILi(template_size, nodes_size) * width;
   if (width == 1) {
     chunk->dist_manner = _XMP_N_DIST_CYCLIC;
   } else {
