@@ -7,8 +7,12 @@
 #include "xmp_internal.h"
 
 // normalize ser_init, ser_cond, ser_step -------------------------------------------------------------------------------------------
-#define _XMP_M_GTOL_BLOCK(_i, _w) \
-((_i) % (_w))
+#define _XMP_SM_GTOL_BLOCK(_i, _m, _w) \
+(((_i) - (_m)) % (_w))
+
+#define _XMP_SM_GTOL_CYCLIC(_i, _m, _P) \
+(((_i) - (_m)) / (_P))
+
 
 #define _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step) \
 { \
@@ -27,26 +31,8 @@
   } \
 }
 
-// schedule by template -------------------------------------------------------------------------------------------------------------
-// block distribution ---------------------------------------------------------------------------------------------------------------
-#define _XMP_SM_NORM_TEMPLATE_BLOCK(ser_init, ser_step, template_lower, template_upper) \
-{ \
-  if (ser_step != 1) { \
-    int dst_mod = ser_init % ser_step; \
-    if (dst_mod < 0) dst_mod = (dst_mod + ser_step) % ser_step; \
-    /* normalize template lower */ \
-    int lower_mod = template_lower % ser_step; \
-    if (lower_mod < 0) lower_mod = (lower_mod + ser_step) % ser_step; \
-    if (lower_mod != dst_mod) { \
-      if (lower_mod < dst_mod)   template_lower += (dst_mod - lower_mod); \
-      else template_lower += (ser_step - lower_mod + dst_mod); \
-    } \
-    if (template_lower > template_upper) goto no_iter; \
-  } \
-}
-
-#define _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK(ser_init, ser_cond, ser_step, par_init, par_cond, par_step, \
-                                          template_lower, template_upper) \
+#define _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH1(ser_init, ser_cond, par_init, par_cond, \
+                                           template_lower, template_upper) \
 { \
   /* calc par_init */ \
   if (ser_init < template_lower) *par_init = template_lower; \
@@ -56,8 +42,24 @@
   if (ser_cond < template_lower) goto no_iter; \
   else if (template_upper < ser_cond) *par_cond = template_upper; \
   else *par_cond = ser_cond; \
-  /* calc par_step */ \
-  *par_step = ser_step; \
+}
+
+// schedule by template -------------------------------------------------------------------------------------------------------------
+// block distribution ---------------------------------------------------------------------------------------------------------------
+#define _XMP_SM_NORM_TEMPLATE_BLOCK(ser_init, ser_step, template_lower, template_upper) \
+{ \
+  if (ser_step != 1) { \
+    int dst_mod = ser_init % ser_step; \
+    if (dst_mod < 0) dst_mod += ser_step; \
+    /* normalize template lower */ \
+    int lower_mod = template_lower % ser_step; \
+    if (lower_mod < 0) lower_mod += ser_step; \
+    if (lower_mod != dst_mod) { \
+      if (lower_mod < dst_mod) template_lower += (dst_mod - lower_mod); \
+      else template_lower += (ser_step - lower_mod + dst_mod); \
+    } \
+    if (template_lower > template_upper) goto no_iter; \
+  } \
 }
 
 void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
@@ -69,20 +71,25 @@ void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
     goto no_iter;
   }
 
+  if (ser_step != 1) {
+    _XMP_fatal("loop step is not 1: unsupported case");
+  }
+
   _XMP_template_chunk_t *template_chunk = &(template->chunk[template_index]);
   int template_lower = template_chunk->par_lower;
   int template_upper = template_chunk->par_upper;
 
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step)
-  _XMP_SM_NORM_TEMPLATE_BLOCK(ser_init, ser_step, template_lower, template_upper)
-  _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK(ser_init, ser_cond, ser_step, par_init, par_cond, par_step,
-                                    template_lower, template_upper)
+  _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH1(ser_init, ser_cond, par_init, par_cond,
+                                     template_lower, template_upper)
 
   // GtoL
   int width = template_chunk->par_chunk_width;
-  *par_init = _XMP_M_GTOL_BLOCK(*par_init, width);
-  *par_cond = _XMP_M_GTOL_BLOCK(*par_cond, width) + 1; // for (i = par_init; i < par_cond; i += par_step) . . .
-  // par_step: no translation
+  *par_init = _XMP_SM_GTOL_BLOCK(*par_init, template_lower, width);
+  *par_cond = _XMP_SM_GTOL_BLOCK(*par_cond, template_lower, width) + 1; // for (i = par_init; i < par_cond; i += par_step) ...
+
+  // calc par_step
+  *par_step = ser_step;
 
   return;
 
@@ -101,17 +108,23 @@ void _XMP_sched_loop_template_DUPLICATION(int ser_init, int ser_cond, int ser_st
     goto no_iter;
   }
 
+  if (ser_step != 1) {
+    _XMP_fatal("loop step is not 1: unsupported case");
+  }
+
   _XMP_template_chunk_t *template_chunk = &(template->chunk[template_index]);
   int template_lower = template_chunk->par_lower;
   int template_upper = template_chunk->par_upper;
 
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step)
-  _XMP_SM_NORM_TEMPLATE_BLOCK(ser_init, ser_step, template_lower, template_upper)
-  _XMP_SM_SCHED_LOOP_TEMPLATE_BLOCK(ser_init, ser_cond, ser_step, par_init, par_cond, par_step,
-                                    template_lower, template_upper)
+  _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH1(ser_init, ser_cond, par_init, par_cond,
+                                     template_lower, template_upper)
 
   // no GtoL is needed
-  *par_cond = *par_cond + 1; // for (i = par_init; i < par_cond; i += par_step) . . .
+  *par_cond = *par_cond + 1; // for (i = par_init; i < par_cond; i += par_step) ...
+
+  // calc par_step
+  *par_step = ser_step;
 
   return;
 
@@ -122,21 +135,6 @@ no_iter:
 }
 
 // cyclic distribution ---------------------------------------------------------------------------------------------------------------
-#define _XMP_SM_CALC_PAR_INIT_CYCLIC_C1 \
-{ \
-  int par_init_temp = ser_init; \
-  int dst_mod = template_lower % nodes_size; \
-  if (dst_mod < 0) dst_mod = (dst_mod + nodes_size) % nodes_size; \
-  int init_mod = par_init_temp % nodes_size; \
-  if (init_mod < 0) init_mod = (init_mod + nodes_size) % nodes_size; \
-  if (init_mod != dst_mod) { \
-    if (init_mod < dst_mod) par_init_temp += (dst_mod - init_mod); \
-    else par_init_temp += (nodes_size - init_mod + dst_mod); \
-  } \
-  if (ser_cond < par_init_temp) goto no_iter; \
-  *par_init = par_init_temp; \
-}
-
 void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_step,
                                      int *par_init, int *par_cond, int *par_step,
                                      _XMP_template_t *template, int template_index) {
@@ -146,19 +144,27 @@ void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_step,
     goto no_iter;
   }
 
-  int nodes_size = template->chunk[template_index].onto_nodes_info->size;
-  int template_lower = template->chunk[template_index].par_lower;
+  if (ser_step != 1) {
+    _XMP_fatal("loop step is not 1: unsupported case");
+  }
+
+  _XMP_template_chunk_t *template_chunk = &(template->chunk[template_index]);
+  int template_lower = template_chunk->par_lower;
+  int template_upper = template_chunk->par_upper;
 
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step)
+  _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH1(ser_init, ser_cond, par_init, par_cond,
+                                     template_lower, template_upper)
 
-  if (ser_step == 1) {
-    _XMP_SM_CALC_PAR_INIT_CYCLIC_C1
-    *par_cond = ser_cond + 1; /* restore normalized value */
-    *par_step = nodes_size;
-    return;
-  } else {
-    _XMP_fatal("not implemented condition: (loop step is not 1 && cyclic distribution)");
-  }
+  // GtoL
+  int nodes_size = (template_chunk->onto_nodes_info)->size;
+  *par_init = _XMP_SM_GTOL_CYCLIC(*par_init, template_lower, nodes_size);
+  *par_cond = _XMP_SM_GTOL_CYCLIC(*par_cond, template_lower, nodes_size) + 1; // for (i = par_init; i < par_cond; i += par_step) ...
+
+  // calc par_step
+  *par_step = 1;
+
+  return;
 
 no_iter:
   *par_init = 0;
