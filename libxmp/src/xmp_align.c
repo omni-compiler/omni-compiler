@@ -52,7 +52,7 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
 
     ai->is_shadow_comm_member = false;
 
-    // XXX array lower is always 0 in C
+    // array lower is always 0 in C
     ai->ser_lower = 0;
     ai->ser_upper = size - 1;
     ai->ser_size = size;
@@ -211,7 +211,7 @@ void _XMP_align_array_BLOCK(_XMP_array_t *array, int array_index, int template_i
     ai->par_stride = 1;
     ai->par_size = _XMP_M_COUNT_TRIPLETi(ai->par_lower, ai->par_upper, 1);
 
-    // FIXME array lower is always 0 in C
+    // array lower is always 0 in C
     ai->local_lower = 0;
     ai->local_upper = ai->par_size - 1;
     ai->local_stride = 1;
@@ -263,12 +263,59 @@ void _XMP_align_array_CYCLIC(_XMP_array_t *array, int array_index, int template_
     ai->par_stride = cycle;
     ai->par_size = dist + 1;
 
-    // FIXME array lower is always 0 in C
+    // array lower is always 0 in C
     ai->local_lower = 0;
     ai->local_upper = ai->par_size - 1;
     ai->local_stride = 1;
     ai->alloc_size = ai->par_size;
 
+    *temp0 = ai->par_stride;
+    ai->temp0 = temp0;
+    ai->temp0_v = *temp0;
+  }
+
+  ai->align_subscript = align_subscript;
+
+  ai->align_template_index = template_index;
+  ai->align_template_info = ti;
+  ai->align_template_chunk = chunk;
+}
+
+void _XMP_align_array_BLOCK_CYCLIC(_XMP_array_t *array, int array_index, int template_index,
+                                   long long align_subscript, int *temp0) {
+  _XMP_template_t *template = array->align_template;
+  _XMP_ASSERT(template->is_fixed);
+  _XMP_ASSERT(template->is_distributed);
+
+  _XMP_template_info_t *ti = &(template->info[template_index]);
+  _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
+  _XMP_array_info_t *ai = &(array->info[array_index]);
+
+  // check range
+  long long align_lower = ai->ser_lower + align_subscript;
+  long long align_upper = ai->ser_upper + align_subscript;
+  if (((align_lower < ti->ser_lower) || (align_upper > ti->ser_upper))) {
+    _XMP_fatal("aligned array is out of template bound");
+  }
+
+  // set members
+  ai->is_regular_chunk = _XMP_N_INT_TRUE;
+  ai->align_manner = _XMP_N_ALIGN_BLOCK_CYCLIC;
+
+  if (template->is_owner) {
+    ai->par_lower = chunk->par_lower - ti->ser_lower;
+    ai->par_upper = chunk->par_upper - ti->ser_lower;
+    ai->par_stride = chunk->par_stride;
+    ai->par_size = chunk->par_chunk_width;
+
+    // array lower is always 0 in C
+    // FIXME works when only data is divided equally
+    ai->local_lower = 0;
+    ai->local_upper = ai->par_size - 1;
+    ai->local_stride = 1;
+    ai->alloc_size = ai->par_size;
+
+    // FIXME needs more variables
     *temp0 = ai->par_stride;
     ai->temp0 = temp0;
     ai->temp0_v = *temp0;

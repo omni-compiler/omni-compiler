@@ -33,6 +33,7 @@
 #define _XMP_N_ALIGN_DUPLICATION		201
 #define _XMP_N_ALIGN_BLOCK			202
 #define _XMP_N_ALIGN_CYCLIC			203
+#define _XMP_N_ALIGN_BLOCK_CYCLIC		204
 
 // defined in exc.xcalablemp.XMPcollective
 #define _XMP_N_REDUCE_SUM			300
