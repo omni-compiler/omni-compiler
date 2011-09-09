@@ -199,7 +199,7 @@ static void _XMP_dist_template_CYCLIC_WIDTH(_XMP_template_t *template, int templ
   _XMP_nodes_info_t *ni = &(nodes->info[nodes_index]);
 
   unsigned long long nodes_size = ni->size;
-  unsigned long long template_size = (ti->ser_size) / width;
+  unsigned long long template_size = _XMP_M_CEILi(ti->ser_size, width);
 
   // calc parallel members
   if (nodes->is_member) {
