@@ -87,20 +87,23 @@
 
 #define _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_N(ser_init, ser_cond, par_init, par_cond, \
                                             template_lower, template_upper, template_stride, \
-                                            width, template_ser_upper) \
+                                            width, template_ser_lower) \
 { \
-  int template_upper_width = template_upper + width - 1; \
-  if (template_upper_width > template_ser_upper) { \
-    template_upper_width = template_ser_upper; \
-  } \
-  /* calc par_init */ \
-  if (ser_init <= template_lower) *par_init = template_lower; \
-  else if (template_upper_width < ser_init) goto no_iter; \
-  else _XMP_SM_NORM_INIT(ser_init, par_init, template_lower, template_stride) \
-  /* calc par_cond */ \
-  if (ser_cond < template_lower) goto no_iter; \
-  else if (template_upper_width <= ser_cond) *par_cond = template_upper_width; \
-  else _XMP_SM_NORM_COND(ser_cond, par_cond, template_upper, template_stride) \
+  int tl = ((template_lower - template_ser_lower) / width) + template_ser_lower; \
+  int tu = ((template_upper - template_ser_lower) / width) + template_ser_lower; \
+  int ts = template_stride / width; \
+  int si = ((ser_init - template_ser_lower) / width) + template_ser_lower; \
+  int sc = ((ser_cond - template_ser_lower) / width) + template_ser_lower; \
+\
+  _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_1(si, sc, par_init, par_cond, tl, tu, ts) \
+\
+  int par_init_temp = ((*par_init - template_ser_lower) * width) + template_ser_lower; \
+  if (par_init_temp < ser_init) *par_init = ser_init; \
+  else *par_init = par_init_temp; \
+\
+  int par_cond_temp = ((*par_cond - template_ser_lower) * width) + template_ser_lower + width - 1; \
+  if (par_cond_temp > ser_cond) *par_cond = ser_cond; \
+  else *par_cond = par_cond_temp; \
 }
 
 // schedule by template -------------------------------------------------------------------------------------------------------------
@@ -238,12 +241,12 @@ void _XMP_sched_loop_template_BLOCK_CYCLIC(int ser_init, int ser_cond, int ser_s
   int template_upper = template_chunk->par_upper;
   int template_stride = template_chunk->par_stride;
   int width = template_chunk->par_width;
-  int template_ser_upper = template->info[template_index].ser_upper;
+  int template_ser_lower = template->info[template_index].ser_lower;
 
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step)
   _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_N(ser_init, ser_cond, par_init, par_cond,
                                       template_lower, template_upper, template_stride,
-                                      width, template_ser_upper)
+                                      width, template_ser_lower)
 
   // GtoL
   int nodes_size = (template_chunk->onto_nodes_info)->size;
@@ -252,8 +255,6 @@ void _XMP_sched_loop_template_BLOCK_CYCLIC(int ser_init, int ser_cond, int ser_s
 
   // calc par_step
   *par_step = 1;
-
-  printf("[%d] (%d:%d:%d)\n", _XMP_world_rank, *par_init, *par_cond, *par_step);
 
   return;
 
