@@ -34,17 +34,54 @@
   } \
 }
 
+#define _XMP_SM_NORM_INIT(ser_init, par_init, template_lower, template_stride) \
+{ \
+  if (template_stride == 1) *par_init = ser_init; \
+  else { \
+    int par_init_temp = ser_init; \
+    int dst_mod = template_lower % template_stride; \
+    if (dst_mod < 0) dst_mod += template_stride; \
+    int lower_mod = par_init_temp % template_stride; \
+    if (lower_mod < 0) lower_mod += template_stride; \
+\
+    if (lower_mod != dst_mod) { \
+      if (lower_mod < dst_mod) par_init_temp += (dst_mod - lower_mod); \
+      else par_init_temp += (template_stride - lower_mod + dst_mod); \
+    } \
+\
+    *par_init = par_init_temp; \
+  } \
+}
+
+#define _XMP_SM_NORM_COND(ser_cond, par_cond, template_upper, template_stride) \
+{ \
+  if (template_stride == 1) *par_cond = ser_cond; \
+  else { \
+    int par_cond_temp = ser_cond; \
+    int dst_mod = template_upper % template_stride; \
+    if (dst_mod < 0) dst_mod += template_stride; \
+    int upper_mod = par_cond_temp % template_stride; \
+    if (upper_mod < 0) upper_mod += template_stride; \
+\
+    if (upper_mod != dst_mod) { \
+      if (upper_mod < dst_mod) par_cond_temp -= (dst_mod - upper_mod); \
+      else par_cond_temp -= (template_stride - upper_mod + dst_mod); \
+    } \
+    *par_cond = par_cond_temp; \
+  } \
+}
+
 #define _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_1(ser_init, ser_cond, par_init, par_cond, \
-                                            template_lower, template_upper) \
+                                            template_lower, template_upper, template_stride) \
 { \
   /* calc par_init */ \
-  if (ser_init < template_lower) *par_init = template_lower; \
+  if (ser_init <= template_lower) *par_init = template_lower; \
   else if (template_upper < ser_init) goto no_iter; \
-  else  *par_init = ser_init; \
+  else _XMP_SM_NORM_INIT(ser_init, par_init, template_lower, template_stride) \
   /* calc par_cond */ \
   if (ser_cond < template_lower) goto no_iter; \
-  else if (template_upper < ser_cond) *par_cond = template_upper; \
-  else *par_cond = ser_cond; \
+  else if (template_upper <= ser_cond) *par_cond = template_upper; \
+  else _XMP_SM_NORM_COND(ser_cond, par_cond, template_upper, template_stride) \
 }
 
 #define _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_N(ser_init, ser_cond, par_init, par_cond, \
@@ -56,12 +93,12 @@
     template_upper_width = template_ser_upper; \
   } \
   /* calc par_init */ \
-  if (ser_init < template_lower) *par_init = template_lower; \
+  if (ser_init <= template_lower) *par_init = template_lower; \
   else if (template_upper_width < ser_init) goto no_iter; \
   else  *par_init = ser_init; \
   /* calc par_cond */ \
   if (ser_cond < template_lower) goto no_iter; \
-  else if (template_upper_width < ser_cond) *par_cond = template_upper_width; \
+  else if (template_upper_width <= ser_cond) *par_cond = template_upper_width; \
   else *par_cond = ser_cond; \
 }
 
@@ -83,10 +120,11 @@ void _XMP_sched_loop_template_DUPLICATION(int ser_init, int ser_cond, int ser_st
   _XMP_template_chunk_t *template_chunk = &(template->chunk[template_index]);
   int template_lower = template_chunk->par_lower;
   int template_upper = template_chunk->par_upper;
+  int template_stride = template_chunk->par_stride;
 
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step)
   _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_1(ser_init, ser_cond, par_init, par_cond,
-                                      template_lower, template_upper)
+                                      template_lower, template_upper, template_stride)
 
   // no GtoL is needed
   *par_cond = *par_cond + 1; // for (i = par_init; i < par_cond; i += par_step) ...
@@ -103,22 +141,6 @@ no_iter:
 }
 
 // block distribution ---------------------------------------------------------------------------------------------------------------
-#define _XMP_SM_NORM_TEMPLATE_BLOCK(ser_init, ser_step, template_lower, template_upper) \
-{ \
-  if (ser_step != 1) { \
-    int dst_mod = ser_init % ser_step; \
-    if (dst_mod < 0) dst_mod += ser_step; \
-    /* normalize template lower */ \
-    int lower_mod = template_lower % ser_step; \
-    if (lower_mod < 0) lower_mod += ser_step; \
-    if (lower_mod != dst_mod) { \
-      if (lower_mod < dst_mod) template_lower += (dst_mod - lower_mod); \
-      else template_lower += (ser_step - lower_mod + dst_mod); \
-    } \
-    if (template_lower > template_upper) goto no_iter; \
-  } \
-}
-
 void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
                                     int *par_init, int *par_cond, int *par_step,
                                     _XMP_template_t *template, int template_index) {
@@ -135,10 +157,11 @@ void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
   _XMP_template_chunk_t *template_chunk = &(template->chunk[template_index]);
   int template_lower = template_chunk->par_lower;
   int template_upper = template_chunk->par_upper;
+  int template_stride = template_chunk->par_stride;
 
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step)
   _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_1(ser_init, ser_cond, par_init, par_cond,
-                                      template_lower, template_upper)
+                                      template_lower, template_upper, template_stride)
 
   // GtoL
   int width = template_chunk->par_chunk_width;
@@ -173,10 +196,11 @@ void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_step,
   _XMP_template_chunk_t *template_chunk = &(template->chunk[template_index]);
   int template_lower = template_chunk->par_lower;
   int template_upper = template_chunk->par_upper;
+  int template_stride = template_chunk->par_stride;
 
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step)
   _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_1(ser_init, ser_cond, par_init, par_cond,
-                                      template_lower, template_upper)
+                                      template_lower, template_upper, template_stride)
 
   // GtoL
   int nodes_size = (template_chunk->onto_nodes_info)->size;
