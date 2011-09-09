@@ -117,21 +117,17 @@ void _XMP_sched_loop_template_DUPLICATION(int ser_init, int ser_cond, int ser_st
     goto no_iter;
   }
 
-  if (ser_step != 1) {
-    _XMP_fatal("loop step is not 1: unsupported case");
-  }
-
   _XMP_template_chunk_t *template_chunk = &(template->chunk[template_index]);
   int template_lower = template_chunk->par_lower;
   int template_upper = template_chunk->par_upper;
   int template_stride = template_chunk->par_stride;
 
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step)
+
+  // calc par_init, par_cond
   _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_1(ser_init, ser_cond, par_init, par_cond,
                                       template_lower, template_upper, template_stride)
-
-  // no GtoL is needed
-  *par_cond = *par_cond + 1; // for (i = par_init; i < par_cond; i += par_step) ...
+  *par_cond = *par_cond + 1;
 
   // calc par_step
   *par_step = ser_step;
@@ -154,23 +150,19 @@ void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
     goto no_iter;
   }
 
-  if (ser_step != 1) {
-    _XMP_fatal("loop step is not 1: unsupported case");
-  }
-
   _XMP_template_chunk_t *template_chunk = &(template->chunk[template_index]);
   int template_lower = template_chunk->par_lower;
   int template_upper = template_chunk->par_upper;
   int template_stride = template_chunk->par_stride;
+  int width = template_chunk->par_chunk_width;
 
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step)
+
+  // calc par_init, par_cond
   _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_1(ser_init, ser_cond, par_init, par_cond,
                                       template_lower, template_upper, template_stride)
-
-  // GtoL
-  int width = template_chunk->par_chunk_width;
   *par_init = _XMP_SM_GTOL_BLOCK(*par_init, template_lower, width);
-  *par_cond = _XMP_SM_GTOL_BLOCK(*par_cond, template_lower, width) + 1; // for (i = par_init; i < par_cond; i += par_step) ...
+  *par_cond = _XMP_SM_GTOL_BLOCK(*par_cond, template_lower, width) + 1;
 
   // calc par_step
   *par_step = ser_step;
@@ -198,18 +190,18 @@ void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_step,
   }
 
   _XMP_template_chunk_t *template_chunk = &(template->chunk[template_index]);
+  int nodes_size = (template_chunk->onto_nodes_info)->size;
   int template_lower = template_chunk->par_lower;
   int template_upper = template_chunk->par_upper;
   int template_stride = template_chunk->par_stride;
 
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step)
+
+  // calc par_init, par_cond
   _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_1(ser_init, ser_cond, par_init, par_cond,
                                       template_lower, template_upper, template_stride)
-
-  // GtoL
-  int nodes_size = (template_chunk->onto_nodes_info)->size;
   *par_init = _XMP_SM_GTOL_CYCLIC(*par_init, template_lower, nodes_size);
-  *par_cond = _XMP_SM_GTOL_CYCLIC(*par_cond, template_lower, nodes_size) + 1; // for (i = par_init; i < par_cond; i += par_step) ...
+  *par_cond = _XMP_SM_GTOL_CYCLIC(*par_cond, template_lower, nodes_size) + 1;
 
   // calc par_step
   *par_step = 1;
@@ -237,6 +229,7 @@ void _XMP_sched_loop_template_BLOCK_CYCLIC(int ser_init, int ser_cond, int ser_s
   }
 
   _XMP_template_chunk_t *template_chunk = &(template->chunk[template_index]);
+  int nodes_size = (template_chunk->onto_nodes_info)->size;
   int template_lower = template_chunk->par_lower;
   int template_upper = template_chunk->par_upper;
   int template_stride = template_chunk->par_stride;
@@ -244,14 +237,13 @@ void _XMP_sched_loop_template_BLOCK_CYCLIC(int ser_init, int ser_cond, int ser_s
   int template_ser_lower = template->info[template_index].ser_lower;
 
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step)
+
+  // calc par_init, par_cond
   _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_N(ser_init, ser_cond, par_init, par_cond,
                                       template_lower, template_upper, template_stride,
                                       width, template_ser_lower)
-
-  // GtoL
-  int nodes_size = (template_chunk->onto_nodes_info)->size;
   *par_init = _XMP_SM_GTOL_BLOCK_CYCLIC(width, *par_init, template_lower, nodes_size);
-  *par_cond = _XMP_SM_GTOL_BLOCK_CYCLIC(width, *par_cond, template_lower, nodes_size) + 1; // for (i = par_init; i < par_cond; i += par_step) ...
+  *par_cond = _XMP_SM_GTOL_BLOCK_CYCLIC(width, *par_cond, template_lower, nodes_size) + 1;
 
   // calc par_step
   *par_step = 1;
