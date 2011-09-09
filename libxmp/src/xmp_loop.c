@@ -34,7 +34,7 @@
   } \
 }
 
-#define _XMP_SM_NORM_INIT(ser_init, par_init, template_lower, template_stride, width) \
+#define _XMP_SM_NORM_INIT(ser_init, par_init, template_lower, template_stride) \
 { \
   if (template_stride == 1) *par_init = ser_init; \
   else { \
@@ -49,13 +49,11 @@
       else par_init_temp += (template_stride - lower_mod + dst_mod); \
     } \
 \
-    par_init_temp -= (width - 1); \
-    if (par_init_temp < ser_init) *par_init = ser_init; \
-    else *par_init = par_init_temp; \
+    *par_init = par_init_temp; \
   } \
 }
 
-#define _XMP_SM_NORM_COND(ser_cond, par_cond, template_upper, template_stride, width) \
+#define _XMP_SM_NORM_COND(ser_cond, par_cond, template_upper, template_stride) \
 { \
   if (template_stride == 1) *par_cond = ser_cond; \
   else { \
@@ -70,9 +68,7 @@
       else par_cond_temp -= (template_stride - dst_mod + upper_mod); \
     } \
 \
-    par_cond_temp += (width - 1); \
-    if (par_cond_temp > ser_cond) *par_cond = ser_cond; \
-    else *par_cond = par_cond_temp; \
+    *par_cond = par_cond_temp; \
   } \
 }
 
@@ -82,11 +78,11 @@
   /* calc par_init */ \
   if (ser_init <= template_lower) *par_init = template_lower; \
   else if (template_upper < ser_init) goto no_iter; \
-  else _XMP_SM_NORM_INIT(ser_init, par_init, template_lower, template_stride, 1) \
+  else _XMP_SM_NORM_INIT(ser_init, par_init, template_lower, template_stride) \
   /* calc par_cond */ \
   if (ser_cond < template_lower) goto no_iter; \
   else if (template_upper <= ser_cond) *par_cond = template_upper; \
-  else _XMP_SM_NORM_COND(ser_cond, par_cond, template_upper, template_stride, 1) \
+  else _XMP_SM_NORM_COND(ser_cond, par_cond, template_upper, template_stride) \
 }
 
 #define _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_N(ser_init, ser_cond, par_init, par_cond, \
@@ -100,11 +96,11 @@
   /* calc par_init */ \
   if (ser_init <= template_lower) *par_init = template_lower; \
   else if (template_upper_width < ser_init) goto no_iter; \
-  else _XMP_SM_NORM_INIT(ser_init, par_init, template_lower, template_stride, width) \
+  else _XMP_SM_NORM_INIT(ser_init, par_init, template_lower, template_stride) \
   /* calc par_cond */ \
   if (ser_cond < template_lower) goto no_iter; \
   else if (template_upper_width <= ser_cond) *par_cond = template_upper_width; \
-  else _XMP_SM_NORM_COND(ser_cond, par_cond, template_upper, template_stride, width) \
+  else _XMP_SM_NORM_COND(ser_cond, par_cond, template_upper, template_stride) \
 }
 
 // schedule by template -------------------------------------------------------------------------------------------------------------
