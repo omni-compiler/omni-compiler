@@ -64,8 +64,8 @@
     if (upper_mod < 0) upper_mod += template_stride; \
 \
     if (upper_mod != dst_mod) { \
-      if (upper_mod < dst_mod) par_cond_temp -= (dst_mod - upper_mod); \
-      else par_cond_temp -= (template_stride - upper_mod + dst_mod); \
+      if (upper_mod > dst_mod) par_cond_temp -= (upper_mod - dst_mod); \
+      else par_cond_temp -= (template_stride - dst_mod + upper_mod); \
     } \
     par_cond_temp += (width - 1); \
     if (par_cond_temp > ser_cond) *par_cond = ser_cond; \
