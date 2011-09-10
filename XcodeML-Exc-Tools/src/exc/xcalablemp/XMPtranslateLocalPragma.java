@@ -996,8 +996,6 @@ public class XMPtranslateLocalPragma {
         throw new XMPexception("unknown distribute manner");
     }
 
-    forBlock.getCondBBlock().setExpr(Xcons.binaryOp(Xcode.LOG_LT_EXPR, loopIndex, parallelCondId.Ref()));
-
     funcArgs.add(parallelInitId.getAddr());
     funcArgs.add(parallelCondId.getAddr());
     funcArgs.add(parallelStepId.getAddr());
