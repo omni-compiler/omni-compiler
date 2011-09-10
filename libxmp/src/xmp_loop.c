@@ -37,6 +37,12 @@
   } \
 }
 
+#define _XMP_SM_NORM_ITER_TEMPLATE(template_ser_lower, template_ser_upper, ser_init, ser_cond) \
+{ \
+  if (ser_init < template_ser_lower) ser_init = template_ser_lower; \
+  if (ser_cond > template_ser_upper) ser_cond = template_ser_upper; \
+}
+
 #define _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter) \
 { \
   if (reverse_iter) { \
@@ -111,6 +117,7 @@ void _XMP_sched_loop_template_DUPLICATION(int ser_init, int ser_cond, int ser_st
 
   int reverse_iter = _XMP_N_INT_FALSE;
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step, reverse_iter)
+  // _XMP_SM_NORM_ITER_TEMPLATE(template_ser_lower, template_ser_upper, ser_init, ser_cond)
 
   // calc par_init, par_cond, par_step
   _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_1(ser_init, ser_cond, ser_step, par_init, par_cond,
@@ -131,7 +138,7 @@ no_iter:
 void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
                                     int *par_init, int *par_cond, int *par_step,
                                     _XMP_template_t *template, int template_index) {
-  _XMP_ASSERT(template->is_distributed); // FIXME too strict?
+  _XMP_ASSERT(template->is_distributed);
 
   if (!template->is_owner) {
     goto no_iter;
@@ -145,6 +152,7 @@ void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
 
   int reverse_iter = _XMP_N_INT_FALSE;
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step, reverse_iter)
+  // _XMP_SM_NORM_ITER_TEMPLATE(template_ser_lower, template_ser_upper, ser_init, ser_cond)
 
   // calc par_init, par_cond, par_step
   _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_1(ser_init, ser_cond, ser_step, par_init, par_cond,
@@ -181,6 +189,7 @@ void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_step,
 
   int reverse_iter = _XMP_N_INT_FALSE;
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step, reverse_iter)
+  // _XMP_SM_NORM_ITER_TEMPLATE(template_ser_lower, template_ser_upper, ser_init, ser_cond)
 
   // calc par_init, par_cond, par_step
   _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_1(ser_init, ser_cond, ser_step, par_init, par_cond,
@@ -209,16 +218,20 @@ void _XMP_sched_loop_template_BLOCK_CYCLIC(int ser_init, int ser_cond, int ser_s
     goto no_iter;
   }
 
+  _XMP_template_info_t *template_info = &(template->info[template_index]);
+  int template_ser_lower = template_info->ser_lower;
+  int template_ser_upper = template_info->ser_upper;
+
   _XMP_template_chunk_t *template_chunk = &(template->chunk[template_index]);
   int nodes_size = (template_chunk->onto_nodes_info)->size;
   int template_lower = template_chunk->par_lower;
   int template_upper = template_chunk->par_upper;
   int template_stride = template_chunk->par_stride;
   int width = template_chunk->par_width;
-  int template_ser_lower = template->info[template_index].ser_lower;
 
   int reverse_iter = _XMP_N_INT_FALSE;
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step, reverse_iter)
+  _XMP_SM_NORM_ITER_TEMPLATE(template_ser_lower, template_ser_upper, ser_init, ser_cond)
 
   // calc par_init, par_cond, par_step
   _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_N(ser_init, ser_cond, ser_step, par_init, par_cond,
