@@ -75,11 +75,11 @@
                                             template_lower, template_upper, template_stride, \
                                             width, template_ser_lower, template_ser_upper) \
 { \
+  int si = ((ser_init - template_ser_lower) / width) + template_ser_lower; \
+  int sc = ((ser_cond - template_ser_lower) / width) + template_ser_lower; \
   int tl = ((template_lower - template_ser_lower) / width) + template_ser_lower; \
   int tu = ((template_upper - template_ser_lower) / width) + template_ser_lower; \
   int ts = template_stride / width; \
-  int si = ((ser_init - template_ser_lower) / width) + template_ser_lower; \
-  int sc = ((ser_cond - template_ser_lower) / width) + template_ser_lower; \
 \
   /* FIXME HOW IMPLEMENT??? */ \
   _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_1(si, sc, 1, par_init, par_cond, tl, tu, ts) \

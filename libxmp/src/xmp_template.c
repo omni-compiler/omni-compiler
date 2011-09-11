@@ -5,6 +5,7 @@
  */
 
 #include <stdarg.h>
+#include <math.h>
 #include "mpi.h"
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
@@ -74,6 +75,46 @@ static void _XMP_validate_template_ref(long long *lower, long long *upper, long 
   }
 }
 
+static int _XMP_check_template_ref_inclusion_width_1(int ref_lower, int ref_upper, int ref_stride,
+                                                     int template_lower, int template_upper, int template_stride) {
+  if (ref_stride != 1) {
+    _XMP_fatal("ref stride is not 1, -1: unsupported case");
+  }
+
+  int x, x_max = (int)floor(((double)(template_upper - template_lower)) / ((double)template_stride));
+
+  // check ref_lower
+  x = (int)ceil(((double)(ref_lower - template_lower)) / (double)(template_stride));
+  if (x > x_max) return _XMP_N_INT_FALSE;
+
+  // check ref_upper
+  x = (int)floor(((double)(ref_upper - template_lower)) / ((double)template_stride));
+  if (x < 0) return _XMP_N_INT_FALSE;
+
+  return _XMP_N_INT_TRUE;
+}
+
+static int _XMP_check_template_ref_inclusion_width_N(int ref_lower, int ref_upper, int ref_stride,
+                                                     _XMP_template_t *t, int index) {
+  _XMP_template_info_t *info = &(t->info[index]);
+  int template_ser_lower = info->ser_lower;
+
+  _XMP_template_chunk_t *chunk = &(t->chunk[index]);
+  int template_lower = chunk->par_lower;
+  int template_upper = chunk->par_upper;
+  int template_stride = chunk->par_stride;
+  int width = chunk->par_width;
+
+  int rl = ((ref_lower - template_ser_lower) / width) + template_ser_lower;
+  int ru = ((ref_upper - template_ser_lower) / width) + template_ser_lower;
+  int tl = ((template_lower - template_ser_lower) / width) + template_ser_lower;
+  int tu = ((template_upper - template_ser_lower) / width) + template_ser_lower;
+  int ts = template_stride / width; \
+
+  // FIXME HOW IMPLEMENT???
+  return _XMP_check_template_ref_inclusion_width_1(rl, ru, 1, tl, tu, ts);
+}
+
 static int _XMP_check_template_ref_inclusion(long long ref_lower, long long ref_upper, long long ref_stride,
                                              _XMP_template_t *t, int index) {
   _XMP_template_info_t *info = &(t->info[index]);
@@ -85,72 +126,11 @@ static int _XMP_check_template_ref_inclusion(long long ref_lower, long long ref_
     case _XMP_N_DIST_DUPLICATION:
       return _XMP_N_INT_TRUE;
     case _XMP_N_DIST_BLOCK:
-      {
-        long long template_lower = chunk->par_lower;
-        long long template_upper = chunk->par_upper;
-
-        if (ref_stride != 1) {
-          int ref_stride_mod = _XMP_modi_ll_i(ref_lower, ref_stride);
-          /* normalize template lower */
-          int template_lower_mod = _XMP_modi_ll_i(template_lower, ref_stride);
-          if (template_lower_mod != ref_stride_mod) {
-            if (template_lower_mod < ref_stride_mod) {
-              template_lower += (ref_stride_mod - template_lower_mod);
-            }
-            else {
-              template_lower += (ref_stride - template_lower_mod + ref_stride_mod);
-            }
-          }
-
-          if (template_lower > template_upper) {
-            return _XMP_N_INT_FALSE;
-          }
-
-          /* normalize template upper */
-          int template_upper_mod = _XMP_modi_ll_i(template_upper, ref_stride);
-          if (template_upper_mod != ref_stride_mod) {
-            if (ref_stride_mod < template_upper_mod) {
-              template_upper -= (template_upper_mod - ref_stride_mod);
-            }
-            else {
-              template_upper -= (ref_stride - ref_stride_mod + template_upper_mod);
-            }
-          }
-        }
-
-        if (ref_upper < template_lower) {
-          return _XMP_N_INT_FALSE;
-        }
-
-        if (template_upper < ref_lower) {
-          return _XMP_N_INT_FALSE;
-        }
-
-        return _XMP_N_INT_TRUE;
-      }
     case _XMP_N_DIST_CYCLIC:
-      {
-        if (ref_stride == 1) {
-          int nodes_size = (chunk->onto_nodes_info)->size;
-          int par_lower_mod = _XMP_modi_ll_i(chunk->par_lower, nodes_size);
-          int ref_lower_mod = _XMP_modi_ll_i(ref_lower, nodes_size);
-          if (par_lower_mod != ref_lower_mod) {
-            if (ref_lower_mod < par_lower_mod) ref_lower += (par_lower_mod - ref_lower_mod);
-            else ref_lower += (nodes_size - ref_lower_mod + par_lower_mod);
-          }
-
-          if (ref_upper < ref_lower) {
-            return _XMP_N_INT_FALSE;
-          }
-          else {
-            return _XMP_N_INT_TRUE;
-          }
-        }
-        else {
-          _XMP_fatal("not implemented condition: (stride is not 1 && cyclic distribution)");
-          return _XMP_N_INT_FALSE; // XXX dummy
-        }
-      }
+      return _XMP_check_template_ref_inclusion_width_1(ref_lower, ref_upper, ref_stride,
+                                                       chunk->par_lower, chunk->par_upper, chunk->par_stride);
+    case _XMP_N_DIST_BLOCK_CYCLIC:
+      return _XMP_check_template_ref_inclusion_width_N(ref_lower, ref_upper, ref_stride, t, index);
     default:
       _XMP_fatal("unknown distribution manner");
       return _XMP_N_INT_FALSE; // XXX dummy
