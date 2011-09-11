@@ -240,6 +240,34 @@ public class XMPrewriteExpr {
                                      alignedArray.getGtolTemp0IdAt(index).Ref());
           return XMP.getMacroId("_XMP_M_CALC_INDEX_CYCLIC").Call(args);
         }
+      case XMPalignedArray.BLOCK_CYCLIC:
+        {
+          XMPtemplate t = alignedArray.getAlignTemplate();
+          int ti = alignedArray.getAlignSubscriptIndexAt(index).intValue();
+          XMPnodes n = t.getOntoNodes();
+          int ni = t.getOntoNodesIndexAt(ti).getInt();
+
+          if (alignedArray.hasShadow()) {
+            XMPshadow shadow = alignedArray.getShadowAt(index);
+            switch (shadow.getType()) {
+              case XMPshadow.SHADOW_NONE:
+                {
+                  XobjList args = Xcons.List(indexRef, n.getSizeAt(ni), t.getWidthAt(ti));
+                  return XMP.getMacroId("_XMP_M_CALC_INDEX_BLOCK_CYCLIC").Call(args);
+                }
+              case XMPshadow.SHADOW_FULL:
+                return indexRef;
+              case XMPshadow.SHADOW_NORMAL:
+                throw new XMPexception("only block distribution allows shadow");
+              default:
+                throw new XMPexception("unknown shadow type");
+            }
+          }
+          else {
+            XobjList args = Xcons.List(indexRef, n.getSizeAt(ni), t.getWidthAt(ti));
+            return XMP.getMacroId("_XMP_M_CALC_INDEX_BLOCK_CYCLIC").Call(args);
+          }
+        }
       default:
         throw new XMPexception("unknown align manner for array '" + alignedArray.getName()  + "'");
     }

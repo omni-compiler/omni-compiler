@@ -17,6 +17,7 @@ public class XMPalignedArray {
   public final static int DUPLICATION	= 201;
   public final static int BLOCK		= 202;
   public final static int CYCLIC	= 203;
+  public final static int BLOCK_CYCLIC	= 204;
 
   private String		_name;
   private Xtype			_type;
@@ -45,6 +46,8 @@ public class XMPalignedArray {
         return BLOCK;
       case XMPtemplate.CYCLIC:
         return CYCLIC;
+      case XMPtemplate.BLOCK_CYCLIC:
+        return BLOCK_CYCLIC;
       default:
         throw new XMPexception("unknown dist manner");
     }
@@ -111,6 +114,8 @@ public class XMPalignedArray {
         return new String("BLOCK");
       case CYCLIC:
         return new String("CYCLIC");
+      case BLOCK_CYCLIC:
+        return new String("BLOCK_CYCLIC");
       default:
         throw new XMPexception("unknown align manner");
     }
@@ -210,6 +215,7 @@ public class XMPalignedArray {
             break;
           case BLOCK:
           case CYCLIC:
+          case BLOCK_CYCLIC:
             {
               XMPshadow shadow = getShadowAt(i);
               switch (shadow.getType()) {
@@ -243,6 +249,7 @@ public class XMPalignedArray {
             break;
           case BLOCK:
           case CYCLIC:
+          case BLOCK_CYCLIC:
             {
               _reallocChecked = true;
               _realloc = true;
@@ -609,6 +616,7 @@ public class XMPalignedArray {
         break;
       case XMPtemplate.BLOCK:
       case XMPtemplate.CYCLIC:
+      case XMPtemplate.BLOCK_CYCLIC:
         {
           Ident gtolTemp0Id = null;
           if (isLocalPragma) {
