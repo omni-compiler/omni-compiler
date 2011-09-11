@@ -81,17 +81,21 @@ static int _XMP_check_template_ref_inclusion_width_1(int ref_lower, int ref_uppe
     _XMP_fatal("ref stride is not 1, -1: unsupported case");
   }
 
-  int x, x_max = (int)floor(((double)(template_upper - template_lower)) / ((double)template_stride));
+  int x_max = (int)floor(((double)(template_upper - template_lower)) / ((double)template_stride));
 
   // check ref_lower
-  x = (int)ceil(((double)(ref_lower - template_lower)) / (double)(template_stride));
-  if (x > x_max) return _XMP_N_INT_FALSE;
+  int x_st = (int)ceil(((double)(ref_lower - template_lower)) / (double)(template_stride));
+  if (x_st > x_max) return _XMP_N_INT_FALSE;
 
   // check ref_upper
-  x = (int)floor(((double)(ref_upper - template_lower)) / ((double)template_stride));
-  if (x < 0) return _XMP_N_INT_FALSE;
+  int x_ed = (int)floor(((double)(ref_upper - template_lower)) / ((double)template_stride));
+  if (x_ed < 0) return _XMP_N_INT_FALSE;
 
-  return _XMP_N_INT_TRUE;
+  if (x_st <= x_ed) {
+    return _XMP_N_INT_TRUE;
+  } else {
+    return _XMP_N_INT_FALSE;
+  }
 }
 
 static int _XMP_check_template_ref_inclusion_width_N(int ref_lower, int ref_upper, int ref_stride,
