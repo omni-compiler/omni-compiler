@@ -31,10 +31,9 @@ static void _XMP_calc_template_size(_XMP_template_t *t) {
   }
 }
 
-static void _XMP_validate_template_ref(long long *lower, long long *upper, long long *stride,
-                                       long long lb, long long ub) {
+static void _XMP_validate_template_ref(int *lower, int *upper, int *stride, int lb, int ub) {
   // setup temporary variables
-  long long l, u, s = *stride;
+  int l, u, s = *stride;
   if (s > 0) {
     l = *lower;
     u = *upper;
@@ -117,28 +116,6 @@ static int _XMP_check_template_ref_inclusion_width_N(int ref_lower, int ref_uppe
 
   // FIXME HOW IMPLEMENT???
   return _XMP_check_template_ref_inclusion_width_1(rl, ru, 1, tl, tu, ts);
-}
-
-static int _XMP_check_template_ref_inclusion(long long ref_lower, long long ref_upper, long long ref_stride,
-                                             _XMP_template_t *t, int index) {
-  _XMP_template_info_t *info = &(t->info[index]);
-  _XMP_template_chunk_t *chunk = &(t->chunk[index]);
-
-  _XMP_validate_template_ref(&ref_lower, &ref_upper, &ref_stride, info->ser_lower, info->ser_upper);
-
-  switch (chunk->dist_manner) {
-    case _XMP_N_DIST_DUPLICATION:
-      return _XMP_N_INT_TRUE;
-    case _XMP_N_DIST_BLOCK:
-    case _XMP_N_DIST_CYCLIC:
-      return _XMP_check_template_ref_inclusion_width_1(ref_lower, ref_upper, ref_stride,
-                                                       chunk->par_lower, chunk->par_upper, chunk->par_stride);
-    case _XMP_N_DIST_BLOCK_CYCLIC:
-      return _XMP_check_template_ref_inclusion_width_N(ref_lower, ref_upper, ref_stride, t, index);
-    default:
-      _XMP_fatal("unknown distribution manner");
-      return _XMP_N_INT_FALSE; // XXX dummy
-  }
 }
 
 static void _XMP_set_task_desc(_XMP_task_desc_t *desc, int execute, _XMP_nodes_t *n,
@@ -241,6 +218,28 @@ static void _XMP_dist_template_CYCLIC_WIDTH(_XMP_template_t *template, int templ
   chunk->onto_nodes_info = ni;
 }
 
+int _XMP_check_template_ref_inclusion(int ref_lower, int ref_upper, int ref_stride,
+                                      _XMP_template_t *t, int index) {
+  _XMP_template_info_t *info = &(t->info[index]);
+  _XMP_template_chunk_t *chunk = &(t->chunk[index]);
+
+  _XMP_validate_template_ref(&ref_lower, &ref_upper, &ref_stride, info->ser_lower, info->ser_upper);
+
+  switch (chunk->dist_manner) {
+    case _XMP_N_DIST_DUPLICATION:
+      return _XMP_N_INT_TRUE;
+    case _XMP_N_DIST_BLOCK:
+    case _XMP_N_DIST_CYCLIC:
+      return _XMP_check_template_ref_inclusion_width_1(ref_lower, ref_upper, ref_stride,
+                                                       chunk->par_lower, chunk->par_upper, chunk->par_stride);
+    case _XMP_N_DIST_BLOCK_CYCLIC:
+      return _XMP_check_template_ref_inclusion_width_N(ref_lower, ref_upper, ref_stride, t, index);
+    default:
+      _XMP_fatal("unknown distribution manner");
+      return _XMP_N_INT_FALSE; // XXX dummy
+  }
+}
+
 void _XMP_init_template_FIXED(_XMP_template_t **template, int dim, ...) {
   // alloc descriptor
   _XMP_template_t *t = _XMP_alloc(sizeof(_XMP_template_t) +
@@ -271,7 +270,7 @@ void _XMP_init_template_FIXED(_XMP_template_t **template, int dim, ...) {
 void _XMP_init_template_UNFIXED(_XMP_template_t **template, int dim, ...) {
   // alloc descriptor
   _XMP_template_t *t = _XMP_alloc(sizeof(_XMP_template_t) +
-                                                sizeof(_XMP_template_info_t) * (dim - 1));
+                                  sizeof(_XMP_template_info_t) * (dim - 1));
 
   // calc members
   t->is_fixed = false;

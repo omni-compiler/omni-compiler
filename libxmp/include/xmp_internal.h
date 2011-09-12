@@ -71,6 +71,10 @@ extern int _XMP_get_execution_nodes_rank(void);
 extern void _XMP_push_comm(_XMP_comm *comm);
 extern void _XMP_finalize_comm(_XMP_comm *comm);
 
+// xmp_template.c
+extern int _XMP_check_template_ref_inclusion(int ref_lower, int ref_upper, int ref_stride,
+                                             _XMP_template_t *t, int index);
+
 // xmp_util.c
 extern void *_XMP_alloc(size_t size);
 extern void _XMP_free(void *p);
