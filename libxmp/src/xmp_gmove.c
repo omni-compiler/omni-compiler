@@ -401,9 +401,9 @@ void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XMP_array_t *array
   }
 }
 
-_Bool _XMP_gmove_HOMECOPY_SCALAR(_XMP_array_t *array, ...) {
+int _XMP_gmove_HOMECOPY_SCALAR(_XMP_array_t *array, ...) {
   if (!array->is_allocated) {
-    return false;
+    return _XMP_N_INT_FALSE;
   }
 
   _XMP_ASSERT((array->align_template)->is_distributed);
@@ -411,7 +411,7 @@ _Bool _XMP_gmove_HOMECOPY_SCALAR(_XMP_array_t *array, ...) {
 
   va_list args;
   va_start(args, array);
-  _Bool execHere = true;
+  int execHere = _XMP_N_INT_TRUE;
   int ref_dim = array->dim;
   for (int i = 0; i < ref_dim; i++) {
     int ref_index = va_arg(args, int);

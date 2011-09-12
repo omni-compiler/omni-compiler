@@ -1916,7 +1916,7 @@ public class XMPtranslateLocalPragma {
           XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref());
           gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
 
-          Ident gmoveFuncId = _globalDecl.declExternFunc("_XMP_gmove_HOMECOPY_SCALAR", Xtype.boolType);
+          Ident gmoveFuncId = _globalDecl.declExternFunc("_XMP_gmove_HOMECOPY_SCALAR", Xtype.intType);
 	  gmoveFuncCallBlock = Bcons.IF(BasicBlock.Cond(gmoveFuncId.Call(gmoveFuncArgs)), gmoveBody, null);
         }
         else {					//  leftIsAlignedArray &&  rightIsAlignedArray	|-> send/recv

@@ -62,7 +62,7 @@ extern void _XMP_coarray_put(void *addr, void *coarray);
 
 // xmp_gmove.c
 extern void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, void *array, ...);
-extern _Bool _XMP_gmove_HOMECOPY_SCALAR(void *array, ...);
+extern int _XMP_gmove_HOMECOPY_SCALAR(void *array, ...);
 extern void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr, void *dst_array, void *src_array, ...);
 extern void _XMP_gmove_LOCALCOPY_ARRAY(int type, size_t type_size, ...);
 extern void _XMP_gmove_BCAST_ARRAY(void *src_array, int type, size_t type_size, ...);
