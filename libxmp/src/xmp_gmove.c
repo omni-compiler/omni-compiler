@@ -51,10 +51,15 @@ static int _XMP_calc_gmove_template_owner_SCALAR(_XMP_template_t *template, int 
     case _XMP_N_DIST_BLOCK:
       return (ref_index - (info->ser_lower)) / (chunk->par_chunk_width);
     case _XMP_N_DIST_CYCLIC:
-      return _XMP_modi_ll_i(ref_index - (info->ser_lower), chunk->par_stride);
+      return (ref_index - (info->ser_lower)) % (chunk->par_stride);
+    case _XMP_N_DIST_BLOCK_CYCLIC:
+      {
+        int width = chunk->par_width;
+        return ((ref_index - (info->ser_lower)) / width) % ((chunk->par_stride) / width);
+      }
     default:
       _XMP_fatal("unknown distribute manner");
-      return 0; // XXX dummy
+      return _XMP_N_INVALID_RANK; // XXX dummy
   }
 }
 
@@ -77,11 +82,8 @@ static int _XMP_calc_gmove_array_owner_rank_SCALAR(_XMP_array_t *array, int *ref
       _XMP_template_chunk_t *chunk = ai->align_template_chunk;
       if (chunk->dist_manner != _XMP_N_DIST_DUPLICATION) {
         int nodes_index = chunk->onto_nodes_index;
-
-        int owner = _XMP_calc_gmove_template_owner_SCALAR(template, template_index, ref_index[i] + ai->align_subscript);
-        if (owner != _XMP_N_INVALID_RANK) {
-          rank_array[nodes_index] = owner;
-        }
+        rank_array[nodes_index] = _XMP_calc_gmove_template_owner_SCALAR(template, template_index,
+                                                                        ref_index[i] + ai->align_subscript);
       }
     }
   }

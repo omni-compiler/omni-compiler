@@ -1957,9 +1957,8 @@ public class XMPtranslateLocalPragma {
   private XMPpair<XMPalignedArray, XobjList> getXMPalignedArrayExpr(PragmaBlock pb, Xobject expr) throws XMPexception {
     if (hasSubArrayRef(expr)) {
       return parseSubArrayRefExpr(pb, expr, getArrayAccList(pb, expr), 0, Xcons.List());
-    }
-    else {
-      return parseArrayRefExpr(pb, expr, 0, Xcons.List());
+    } else {
+      return parseArrayRefExpr(pb, expr);
     }
   }
 
@@ -2094,40 +2093,27 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private XMPpair<XMPalignedArray, XobjList> parseArrayRefExpr(PragmaBlock pb, Xobject expr,
-                                                               int arrayDimCount, XobjList arrayRefs) throws XMPexception {
-    String syntaxErrMsg = "syntax error on array expression, expression is not appropriate for gmove directive";
-    switch (expr.Opcode()) {
-      case POINTER_REF:
-        {
-          Xobject child = expr.operand();
-          if (child.Opcode() == Xcode.PLUS_EXPR) {
-            arrayRefs.cons(Xcons.Cast(Xtype.intType, child.right()));
-            return parseArrayRefExpr(pb, child.left(), arrayDimCount + 1, arrayRefs);
-          }
-          else {
-            return new XMPpair<XMPalignedArray, XobjList>(null, null);
-          }
+  private XMPpair<XMPalignedArray, XobjList> parseArrayRefExpr(PragmaBlock pb, Xobject expr) throws XMPexception {
+    if (expr.Opcode() != Xcode.ARRAY_REF) {
+      return new XMPpair<XMPalignedArray, XobjList>(null, null);
+    }
+
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+    String arrayName = expr.getArg(0).getSym();
+    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+    if (alignedArray == null) {
+      return new XMPpair<XMPalignedArray, XobjList>(null, null);
+    } else {
+      XobjList arrayRefs = (XobjList)expr.getArg(1);
+
+      XobjList castedArrayRefs = Xcons.List();
+      if (arrayRefs != null) {
+        for (Xobject x : arrayRefs) {
+          castedArrayRefs.add(Xcons.Cast(Xtype.intType, x));
         }
-      case ARRAY_REF:
-        {
-          XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-          String arrayName = expr.getArg(0).getSym();
-          XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
-          if (alignedArray == null) {
-            return new XMPpair<XMPalignedArray, XobjList>(null, null);
-          }
-          else {
-            if (alignedArray.getDim() == arrayDimCount) {
-              return new XMPpair<XMPalignedArray, XobjList>(alignedArray, arrayRefs);
-            }
-            else {
-              throw new XMPexception(syntaxErrMsg);
-            }
-          }
-        }
-      default:
-        return new XMPpair<XMPalignedArray, XobjList>(null, null);
+      }
+
+      return new XMPpair<XMPalignedArray, XobjList>(alignedArray, castedArrayRefs);
     }
   }
 
