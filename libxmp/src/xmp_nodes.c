@@ -141,9 +141,8 @@ static _XMP_nodes_inherit_info_t *_XMP_calc_inherit_info_by_ref(_XMP_nodes_t *n,
       inherit_info[i].lower = lower[i];
       inherit_info[i].upper = upper[i];
       inherit_info[i].stride = stride[i];
+      inherit_info[i].size = _XMP_M_COUNT_TRIPLETi(lower[i], upper[i], stride[i]);
     }
-
-    inherit_info[i].size = _XMP_M_COUNT_TRIPLETi(lower[i], upper[i], stride[i]);
   }
 
   return inherit_info;
