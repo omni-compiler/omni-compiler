@@ -13,6 +13,17 @@
 #define _XMP_comm void
 
 // nodes descriptor
+typedef struct _XMP_nodes_inherit_info_type {
+  int is_enable;
+  // enable when is_enable is true
+  int lower;
+  int upper;
+  int stride;
+  // -----------------------------
+
+  int size;
+} _XMP_nodes_inherit_info_t;
+
 typedef struct _XMP_nodes_info_type {
   int size;
 
@@ -32,6 +43,7 @@ typedef struct _XMP_nodes_type {
   _XMP_comm *comm;
   // -----------------------------
 
+  _XMP_nodes_inherit_info_t *inherit_info;
   _XMP_nodes_info_t info[1];
 } _XMP_nodes_t;
 

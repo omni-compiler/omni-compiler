@@ -95,8 +95,6 @@ static void _XMP_validate_nodes_ref(int *lower, int *upper, int *stride, int siz
 }
 
 static int _XMP_check_nodes_ref_inclusion(int lower, int upper, int stride, int size, int rank) {
-  _XMP_validate_nodes_ref(&lower, &upper, &stride, size);
-
   if (rank < lower) {
     return _XMP_N_INT_FALSE;
   }
@@ -112,11 +110,58 @@ static int _XMP_check_nodes_ref_inclusion(int lower, int upper, int stride, int 
   }
 }
 
+static _XMP_nodes_inherit_info_t *_XMP_calc_inherit_info(_XMP_nodes_t *n) {
+  int dim = n->dim;
+  _XMP_nodes_inherit_info_t *inherit_info = _XMP_alloc(sizeof(_XMP_nodes_inherit_info_t) * dim);
+
+  for (int i = 0; i < dim; i++) {
+    int size = n->inherit_info[i].size;
+
+    inherit_info[i].is_enable = _XMP_N_INT_TRUE;
+    inherit_info[i].lower = 0;
+    inherit_info[i].upper = size - 1;
+    inherit_info[i].stride = 1;
+
+    inherit_info[i].size = size;
+  }
+
+  return inherit_info;
+}
+
+static _XMP_nodes_inherit_info_t *_XMP_calc_inherit_info_by_ref(_XMP_nodes_t *n,
+                                                                int *shrink, int *lower, int *upper, int *stride) {
+  int dim = n->dim;
+  _XMP_nodes_inherit_info_t *inherit_info = _XMP_alloc(sizeof(_XMP_nodes_inherit_info_t) * dim);
+
+  for (int i = 0; i < dim; i++) {
+    if (shrink[i]) {
+      inherit_info[i].is_enable = _XMP_N_INT_FALSE;
+    } else {
+      int n_lower = n->inherit_info[i].lower;
+      int n_stride = n->inherit_info[i].stride;
+
+      inherit_info[i].is_enable = _XMP_N_INT_TRUE;
+      inherit_info[i].lower = (n_stride * (lower[i])) + n_lower;
+      inherit_info[i].upper = (n_stride * (upper[i])) + n_lower;
+      inherit_info[i].stride = n_stride * (stride[i]);
+    }
+
+    inherit_info[i].size = _XMP_M_COUNT_TRIPLETi(lower[i], upper[i], stride[i]);
+  }
+
+  return inherit_info;
+}
+
 static _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim) {
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_dup(MPI_COMM_WORLD, comm);
 
-  return _XMP_create_new_nodes(_XMP_N_INT_TRUE, dim, _XMP_world_size, (_XMP_comm *)comm);
+  _XMP_nodes_t *n = _XMP_create_new_nodes(_XMP_N_INT_TRUE, dim, _XMP_world_size, (_XMP_comm *)comm);
+
+  // calc inherit info
+  n->inherit_info = _XMP_calc_inherit_info(n);
+
+  return n;
 }
 
 static _XMP_nodes_t *_XMP_init_nodes_struct_EXEC(int dim) {
@@ -126,21 +171,45 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_EXEC(int dim) {
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_dup(*((MPI_Comm *)exec_nodes->comm), comm);
 
-  return _XMP_create_new_nodes(_XMP_N_INT_TRUE, dim, size, (_XMP_comm *)comm);
+  _XMP_nodes_t *n = _XMP_create_new_nodes(_XMP_N_INT_TRUE, dim, size, (_XMP_comm *)comm);
+
+  // calc inherit info
+  n->inherit_info = _XMP_calc_inherit_info(_XMP_get_execution_nodes());
+
+  return n;
 }
 
 static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NUMBER(int dim, int ref_lower, int ref_upper, int ref_stride) {
+  // validate refs
+  _XMP_validate_nodes_ref(&ref_lower, &ref_upper, &ref_stride, _XMP_world_size);
+
   int is_member = _XMP_check_nodes_ref_inclusion(ref_lower, ref_upper, ref_stride, _XMP_world_size, _XMP_world_rank);
 
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), is_member, _XMP_world_rank, comm);
 
-  return _XMP_create_new_nodes(is_member, dim, _XMP_M_COUNT_TRIPLETi(ref_lower, ref_upper, ref_stride), (_XMP_comm *)comm);
+  _XMP_nodes_t *n = _XMP_create_new_nodes(is_member, dim, _XMP_M_COUNT_TRIPLETi(ref_lower, ref_upper, ref_stride),
+                                          (_XMP_comm *)comm);
+
+  // calc inherit info
+  int shrink[1] = {_XMP_N_INT_FALSE};
+  int l[1] = {ref_lower};
+  int u[1] = {ref_upper};
+  int s[1] = {ref_stride};
+  n->inherit_info = _XMP_calc_inherit_info_by_ref(_XMP_world_nodes, shrink, l, u, s);
+
+  return n;
 }
 
 static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NAMED(int dim, _XMP_nodes_t *ref_nodes,
                                                         int *shrink, int *ref_lower, int *ref_upper, int *ref_stride) {
   int ref_dim = ref_nodes->dim;
+
+  // validate refs
+  for (int i = 0; i < ref_dim; i++) {
+    _XMP_validate_nodes_ref(&(ref_lower[i]), &(ref_upper[i]), &(ref_stride[i]), ref_nodes->info[i].size);
+  }
+
   int is_ref_nodes_member = ref_nodes->is_member;
 
   int color = 1;
@@ -289,6 +358,8 @@ static void _XMP_init_nodes_STATIC_NODES_NAMED_MAIN(_XMP_nodes_t **nodes, int di
   }
 
   *nodes = n;
+
+  _XMP_calc_inherit_info_by_ref(ref_nodes, shrink, ref_lower, ref_upper, ref_stride);
 }
 
 void _XMP_init_nodes_STATIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...) {
@@ -670,6 +741,7 @@ int _XMP_exec_task_NODES_PART(_XMP_task_desc_t **task_desc, _XMP_nodes_t *ref_no
   }
 }
 
+// FIXME do not use this function
 _XMP_nodes_t *_XMP_create_nodes_by_comm(int is_member, _XMP_comm *comm) {
   int size;
   MPI_Comm_size(*((MPI_Comm *)comm), &size);
