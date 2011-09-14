@@ -135,7 +135,13 @@ static _XMP_nodes_inherit_info_t *_XMP_calc_inherit_info_by_ref(_XMP_nodes_t *n,
 
   for (int i = 0; i < dim; i++) {
     if (shrink[i]) {
+      int size = n->info[i].size;
+
       inherit_info[i].is_enable = _XMP_N_INT_FALSE;
+      inherit_info[i].lower = 0;
+      inherit_info[i].upper = size - 1;;
+      inherit_info[i].stride = 1;
+      inherit_info[i].size = size;
     } else {
       inherit_info[i].is_enable = _XMP_N_INT_TRUE;
       inherit_info[i].lower = lower[i];
@@ -754,4 +760,39 @@ _XMP_nodes_t *_XMP_create_nodes_by_comm(int is_member, _XMP_comm *comm) {
   n->inherit_info = NULL;
 
   return n;
+}
+
+int _XMP_calc_linear_rank(_XMP_nodes_t *n, int *ranks) {
+  _XMP_nodes_t *inherit_nodes = n->inherit_nodes;
+  if (inherit_nodes == NULL) {
+    int acc_rank = 0;
+    int acc_nodes_size = 1;
+
+    int nodes_dim = n->dim;
+    for (int i = 0; i < nodes_dim; i++) {
+      acc_rank += (ranks[i]) * acc_nodes_size;
+      acc_nodes_size *= n->info[i].size;
+    }
+
+    return acc_rank;
+  } else {
+    int inherit_nodes_dim = inherit_nodes->dim;
+    int *new_ranks = _XMP_alloc(sizeof(int) * inherit_nodes_dim);
+    _XMP_nodes_inherit_info_t *inherit_info = n->inherit_info;
+
+    int j = 0;
+    for (int i = 0; i < inherit_nodes_dim; i++) {
+      if (inherit_info[i].is_enable) {
+        new_ranks[i] = ((inherit_info[i].stride) * ranks[j]) + (inherit_info[i].lower);
+        j++;
+      } else {
+        // FIXME how implement ???
+        new_ranks[i] = 0;
+      }
+    }
+
+    int ret = _XMP_calc_linear_rank(inherit_nodes, new_ranks);
+    _XMP_free(new_ranks);
+    return ret;
+  }
 }
