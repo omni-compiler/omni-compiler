@@ -115,7 +115,7 @@ static _XMP_nodes_inherit_info_t *_XMP_calc_inherit_info(_XMP_nodes_t *n) {
   _XMP_nodes_inherit_info_t *inherit_info = _XMP_alloc(sizeof(_XMP_nodes_inherit_info_t) * dim);
 
   for (int i = 0; i < dim; i++) {
-    int size = n->inherit_info[i].size;
+    int size = n->info[i].size;
 
     inherit_info[i].is_enable = _XMP_N_INT_TRUE;
     inherit_info[i].lower = 0;
@@ -137,13 +137,10 @@ static _XMP_nodes_inherit_info_t *_XMP_calc_inherit_info_by_ref(_XMP_nodes_t *n,
     if (shrink[i]) {
       inherit_info[i].is_enable = _XMP_N_INT_FALSE;
     } else {
-      int n_lower = n->inherit_info[i].lower;
-      int n_stride = n->inherit_info[i].stride;
-
       inherit_info[i].is_enable = _XMP_N_INT_TRUE;
-      inherit_info[i].lower = (n_stride * (lower[i])) + n_lower;
-      inherit_info[i].upper = (n_stride * (upper[i])) + n_lower;
-      inherit_info[i].stride = n_stride * (stride[i]);
+      inherit_info[i].lower = lower[i];
+      inherit_info[i].upper = upper[i];
+      inherit_info[i].stride = stride[i];
     }
 
     inherit_info[i].size = _XMP_M_COUNT_TRIPLETi(lower[i], upper[i], stride[i]);
@@ -159,7 +156,8 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim) {
   _XMP_nodes_t *n = _XMP_create_new_nodes(_XMP_N_INT_TRUE, dim, _XMP_world_size, (_XMP_comm *)comm);
 
   // calc inherit info
-  n->inherit_info = _XMP_calc_inherit_info(_XMP_world_nodes);
+  n->inherit_nodes = NULL;
+  n->inherit_info = NULL;
 
   return n;
 }
@@ -174,7 +172,9 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_EXEC(int dim) {
   _XMP_nodes_t *n = _XMP_create_new_nodes(_XMP_N_INT_TRUE, dim, size, (_XMP_comm *)comm);
 
   // calc inherit info
-  n->inherit_info = _XMP_calc_inherit_info(_XMP_get_execution_nodes());
+  _XMP_nodes_t *inherit_nodes = _XMP_get_execution_nodes();
+  n->inherit_nodes = inherit_nodes;
+  n->inherit_info = _XMP_calc_inherit_info(inherit_nodes);
 
   return n;
 }
@@ -194,6 +194,7 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NUMBER(int dim, int ref_lower,
   int l[1] = {ref_lower};
   int u[1] = {ref_upper};
   int s[1] = {ref_stride};
+  n->inherit_nodes = _XMP_world_nodes;
   n->inherit_info = _XMP_calc_inherit_info_by_ref(_XMP_world_nodes, shrink, l, u, s);
 
   return n;
@@ -352,6 +353,8 @@ static void _XMP_init_nodes_STATIC_NODES_NAMED_MAIN(_XMP_nodes_t **nodes, int di
 
   *nodes = n;
 
+  // calc inherit info
+  n->inherit_nodes = ref_nodes;
   n->inherit_info = _XMP_calc_inherit_info_by_ref(ref_nodes, shrink, ref_lower, ref_upper, ref_stride);
 }
 
@@ -748,16 +751,8 @@ _XMP_nodes_t *_XMP_create_nodes_by_comm(int is_member, _XMP_comm *comm) {
   }
 
   // calc inherit info
-  _XMP_nodes_inherit_info_t *inherit_info = _XMP_alloc(sizeof(_XMP_nodes_inherit_info_t));
-
-  inherit_info[0].is_enable = _XMP_N_INT_TRUE;
-  inherit_info[0].lower = 0;
-  inherit_info[0].upper = size - 1;
-  inherit_info[0].stride = 1;
-
-  inherit_info[0].size = size;
-
-  n->inherit_info = inherit_info;
+  n->inherit_nodes = NULL;
+  n->inherit_info = NULL;
 
   return n;
 }

@@ -43,7 +43,10 @@ typedef struct _XMP_nodes_type {
   _XMP_comm *comm;
   // -----------------------------
 
+  struct _XMP_nodes_type *inherit_nodes;
+  // enable when inherit_nodes is not NULL
   _XMP_nodes_inherit_info_t *inherit_info;
+  // -------------------------------------
   _XMP_nodes_info_t info[1];
 } _XMP_nodes_t;
 
