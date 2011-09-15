@@ -16,6 +16,40 @@ typedef struct _XMP_bcast_array_section_info_type {
   int stride;
 } _XMP_bcast_array_section_info_t;
 
+static int _XMP_calc_linear_rank_on_exec_nodes(_XMP_nodes_t *n, int *ranks, _XMP_nodes_t *exec_nodes) {
+  if ((n == exec_nodes) ||
+      ((exec_nodes->comm_size == _XMP_world_size) && (exec_nodes->comm_size == n->comm_size))) {
+    return _XMP_calc_linear_rank(n, ranks);
+  } else {
+    _XMP_nodes_t *inherit_nodes = n->inherit_nodes;
+    if (inherit_nodes == NULL) {
+      // FIXME implement
+      _XMP_fatal("unsupported case: gmove");
+      return _XMP_N_INVALID_RANK; // XXX dummy;
+    } else {
+      int inherit_nodes_dim = inherit_nodes->dim;
+      int *new_ranks = _XMP_alloc(sizeof(int) * inherit_nodes_dim);
+      _XMP_nodes_inherit_info_t *inherit_info = n->inherit_info;
+
+      int j = 0;
+      for (int i = 0; i < inherit_nodes_dim; i++) {
+        if (inherit_info[i].is_enable) {
+          new_ranks[i] = ((inherit_info[i].stride) * ranks[j]) + (inherit_info[i].lower);
+          j++;
+        } else {
+          // FIXME how implement ???
+          new_ranks[i] = 0;
+        }
+      }
+
+      int ret = _XMP_calc_linear_rank_on_exec_nodes(inherit_nodes, new_ranks, exec_nodes);
+      _XMP_free(new_ranks);
+      return ret;
+    }
+  }
+}
+
+// FIXME do not use this function
 static int _XMP_convert_rank_array_to_rank(_XMP_nodes_t *nodes, int *rank_array) {
   _Bool is_valid = false;
   int acc_rank = 0;
@@ -88,7 +122,7 @@ static int _XMP_calc_gmove_array_owner_rank_SCALAR(_XMP_array_t *array, int *ref
     }
   }
 
-  return _XMP_convert_rank_array_to_rank(nodes, rank_array);
+  return _XMP_calc_linear_rank_on_exec_nodes(nodes, rank_array, _XMP_get_execution_nodes());
 }
 
 static void _XMP_gmove_bcast_SCALAR(_XMP_array_t *array, void *dst_addr, void *src_addr,
