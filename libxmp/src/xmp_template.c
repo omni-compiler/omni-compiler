@@ -429,27 +429,30 @@ int _XMP_exec_task_TEMPLATE_PART(_XMP_task_desc_t **task_desc, _XMP_template_t *
   _XMP_nodes_t *onto_nodes = ref_template->onto_nodes;
   int onto_nodes_dim = onto_nodes->dim;
 
-  int onto_nodes_shrinks[onto_nodes_dim];
+  int onto_nodes_shrink[onto_nodes_dim];
   int onto_nodes_ref_lower[onto_nodes_dim];
   int onto_nodes_ref_upper[onto_nodes_dim];
   int onto_nodes_ref_stride[onto_nodes_dim];
   for (int i = 0; i < onto_nodes_dim; i++) {
-    onto_nodes_shrinks[i] = 1;
-    onto_nodes_ref_stride[i] = 1;
+    onto_nodes_shrink[i] = 1;
   }
 
   int acc_dim_size = 1;
   for (int i = 0; i < ref_dim; i++) {
-    _XMP_template_chunk_t *chunk = &(ref_template->chunk[i]);
+    if (shrink[i]) {
+      continue;
+    }
 
+    _XMP_template_chunk_t *chunk = &(ref_template->chunk[i]);
     int onto_nodes_index = chunk->onto_nodes_index;
     if (onto_nodes_index != _XMP_N_NO_ONTO_NODES) {
-      int size = (chunk->onto_nodes_info)->size;
+      onto_nodes_shrink[onto_nodes_index] = 0;
 
-      onto_nodes_shrinks[onto_nodes_index] = 0;
-      // FIXME calc onto_nodes_ref_lower, onto_nodes_ref_upper acc_dim_size by using lower, upper
+      int size = (chunk->onto_nodes_info)->size;
+      // FIXME calc onto_nodes_ref_lower, onto_nodes_ref_upper, onto_nodes_ref_stride
       onto_nodes_ref_lower[onto_nodes_index] = 1;
       onto_nodes_ref_upper[onto_nodes_index] = size;
+      onto_nodes_ref_stride[i] = 1;
       acc_dim_size *= _XMP_M_COUNT_TRIPLETi(1, size, 1);
     }
   }
@@ -457,7 +460,7 @@ int _XMP_exec_task_TEMPLATE_PART(_XMP_task_desc_t **task_desc, _XMP_template_t *
   _XMP_nodes_t *n = NULL;
   _XMP_init_nodes_STATIC_NODES_NAMED_MAIN(&n, 1,
                                           onto_nodes,
-                                          onto_nodes_shrinks,
+                                          onto_nodes_shrink,
                                           onto_nodes_ref_lower, onto_nodes_ref_upper, onto_nodes_ref_stride,
                                           &acc_dim_size);
   _XMP_set_task_desc(desc, n->is_member, n, ref_dim, lower, upper, stride);
