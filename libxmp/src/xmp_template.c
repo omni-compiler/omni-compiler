@@ -483,3 +483,27 @@ int _XMP_exec_task_TEMPLATE_PART(_XMP_task_desc_t **task_desc, _XMP_template_t *
     return _XMP_N_INT_FALSE;
   }
 }
+
+int _XMP_calc_template_owner_SCALAR(_XMP_template_t *template, int dim_index, long long ref_index) {
+  _XMP_ASSERT(template->is_fixed);
+  _XMP_ASSERT(template->is_distributed);
+
+  _XMP_template_info_t *info = &(template->info[dim_index]);
+  _XMP_template_chunk_t *chunk = &(template->chunk[dim_index]);
+  _XMP_ASSERT(chunk->dist_manner != _XMP_N_DIST_DUPLICATION);
+
+  switch (chunk->dist_manner) {
+    case _XMP_N_DIST_BLOCK:
+      return (ref_index - (info->ser_lower)) / (chunk->par_chunk_width);
+    case _XMP_N_DIST_CYCLIC:
+      return (ref_index - (info->ser_lower)) % (chunk->par_stride);
+    case _XMP_N_DIST_BLOCK_CYCLIC:
+      {
+        int width = chunk->par_width;
+        return ((ref_index - (info->ser_lower)) / width) % ((chunk->par_stride) / width);
+      }
+    default:
+      _XMP_fatal("unknown distribute manner");
+      return _XMP_N_INVALID_RANK; // XXX dummy
+  }
+}

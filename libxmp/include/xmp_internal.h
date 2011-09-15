@@ -61,6 +61,7 @@ extern void _XMP_barrier_EXEC(void);
 extern void _XMP_finalize_nodes(_XMP_nodes_t *nodes);
 extern _XMP_nodes_t *_XMP_create_nodes_by_comm(int is_member, _XMP_comm *comm);
 extern int _XMP_calc_linear_rank(_XMP_nodes_t *n, int *ranks);
+extern int _XMP_calc_linear_rank_on_exec_nodes(_XMP_nodes_t *n, int *ranks, _XMP_nodes_t *exec_nodes);
 
 // xmp_nodes_stack.c
 extern void _XMP_push_nodes(_XMP_nodes_t *nodes);
@@ -75,6 +76,7 @@ extern void _XMP_finalize_comm(_XMP_comm *comm);
 // xmp_template.c
 extern int _XMP_check_template_ref_inclusion(int ref_lower, int ref_upper, int ref_stride,
                                              _XMP_template_t *t, int index);
+extern int _XMP_calc_template_owner_SCALAR(_XMP_template_t *template, int dim_index, long long ref_index);
 
 // xmp_util.c
 extern void *_XMP_alloc(size_t size);
