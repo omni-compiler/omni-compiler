@@ -137,22 +137,6 @@ static int _XMP_check_gmove_array_ref_inclusion_SCALAR(_XMP_array_t *array, int 
   }
 }
 
-/*
-static int _XMP_calc_gmove_target_nodes_size(_XMP_nodes_t *nodes, int *rank_array) {
-  int acc = 1;
-  int nodes_dim = nodes->dim;
-  for (int i = 0; i < nodes_dim; i++) {
-    int rank = rank_array[i];
-
-    if (rank == _XMP_N_INVALID_RANK) {
-      acc *= nodes->info[i].size;
-    }
-  }
-
-  return acc;
-}
-*/
-
 static _Bool _XMP_calc_local_copy_template_BLOCK(_XMP_template_chunk_t *chunk,
                                                  long long *lower, long long *upper, int s) {
   long long l = *lower;

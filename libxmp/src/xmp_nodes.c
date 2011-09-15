@@ -339,10 +339,10 @@ static int _XMP_compare_task_exec_cond(_XMP_task_desc_t *task_desc, int *lower, 
   return _XMP_N_INT_TRUE;
 }
 
-static void _XMP_init_nodes_STATIC_NODES_NAMED_MAIN(_XMP_nodes_t **nodes, int dim,
-                                                    _XMP_nodes_t *ref_nodes,
-                                                    int *shrink, int *ref_lower, int *ref_upper, int *ref_stride,
-                                                    int *dim_size) {
+void _XMP_init_nodes_STATIC_NODES_NAMED_MAIN(_XMP_nodes_t **nodes, int dim,
+                                             _XMP_nodes_t *ref_nodes,
+                                             int *shrink, int *ref_lower, int *ref_upper, int *ref_stride,
+                                             int *dim_size) {
   _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NAMED(dim, ref_nodes, shrink, ref_lower, ref_upper, ref_stride);
 
   for (int i = 0; i < dim; i++) {

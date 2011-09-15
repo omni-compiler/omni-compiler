@@ -70,10 +70,11 @@ typedef struct _XMP_template_chunk_type {
   int dist_manner;
   _Bool is_regular_chunk;
 
-  // enable when dist_manner is not _XMP_N_DIST_DUPLICATION
+  // FIXME delete this line?: enable when dist_manner is not _XMP_N_DIST_DUPLICATION
   int onto_nodes_index;
+  // enable when onto_nodes_index is not _XMP_N_NO_ONTO_NODES
   _XMP_nodes_info_t *onto_nodes_info;
-  // ------------------------------------------------------
+  // --------------------------------------------------------
 } _XMP_template_chunk_t;
 
 typedef struct _XMP_template_type {
