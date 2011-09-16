@@ -328,6 +328,7 @@ int _XMP_gmove_HOMECOPY_SCALAR(_XMP_array_t *array, ...) {
   return execHere;
 }
 
+// FIXME not finished: src_rank may send data to multiple nodes
 void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
                                 _XMP_array_t *dst_array, _XMP_array_t *src_array, ...) {
   va_list args;

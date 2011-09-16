@@ -59,9 +59,9 @@ extern "C" void _XMP_gpu_init(void) {
   _XMP_gpu_max_block_dim_z = dev_prop.maxGridSize[2];
 
   _XMP_gpu_alloc(&_XMP_gpu_dummy, sizeof(int));
+  _XMP_gpu_free(_XMP_gpu_dummy);
 }
 
 extern "C" void _XMP_gpu_finalize(void) {
-  _XMP_gpu_free(_XMP_gpu_dummy);
   return;
 }
