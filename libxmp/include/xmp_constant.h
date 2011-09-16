@@ -18,7 +18,7 @@
 
 // constants used in runtime functions
 #define _XMP_N_INVALID_RANK			-1
-#define _XMP_N_NO_ALIGNED_TEMPLATE		-1
+#define _XMP_N_NO_ALIGN_TEMPLATE		-1
 #define _XMP_N_NO_ONTO_NODES			-1
 #define _XMP_N_DEFAULT_ROOT_RANK		0
 

@@ -225,7 +225,7 @@ static _Bool _XMP_calc_local_copy_home_ref(_XMP_array_t *dst_array, int dst_dim_
   }
 
   _XMP_array_info_t *dst_array_info = &(dst_array->info[dst_dim_index]);
-  if ((dst_array_info->align_template_index) == _XMP_N_NO_ALIGNED_TEMPLATE) {
+  if ((dst_array_info->align_template_index) == _XMP_N_NO_ALIGN_TEMPLATE) {
     return true;
   }
   else {
@@ -291,7 +291,7 @@ static _Bool _XMP_calc_local_copy_home_ref(_XMP_array_t *dst_array, int dst_dim_
 static void _XMP_calc_array_local_index_triplet(_XMP_array_t *array,
                                                 int dim_index, int *lower, int *upper, int *stride) {
   _XMP_array_info_t *array_info = &(array->info[dim_index]);
-  if ((array_info->align_template_index) != _XMP_N_NO_ALIGNED_TEMPLATE) {
+  if ((array_info->align_template_index) != _XMP_N_NO_ALIGN_TEMPLATE) {
     int dist_manner = (array_info->align_template_chunk)->dist_manner;
     switch (array_info->shadow_type) {
       case _XMP_N_SHADOW_NONE:
@@ -831,7 +831,7 @@ static int _XMP_calc_SENDRECV_owner(_XMP_array_t *array, int *lower, int *upper,
   for (int i = 0; i < array_dim; i++) {
     _XMP_array_info_t *ai = &(array->info[i]);
     int template_index = ai->align_template_index;
-    if (template_index != _XMP_N_NO_ALIGNED_TEMPLATE) {
+    if (template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
       if (_XMP_M_COUNT_TRIPLETi(lower[i], upper[i], stride[i]) == 1) {
         int nodes_index = (ai->align_template_chunk)->onto_nodes_index;
         if (nodes_index != _XMP_N_NO_ONTO_NODES) {
@@ -856,7 +856,7 @@ static int _XMP_calc_SENDRECV_owner(_XMP_array_t *array, int *lower, int *upper,
 static void _XMP_calc_SENDRECV_index_ref(int n, int target_rank, _XMP_array_t *array, int dim_index,
                                          int *lower, int *upper, int *stride) {
   _XMP_array_info_t *array_info = &(array->info[dim_index]);
-  if ((array_info->align_template_index) == _XMP_N_NO_ALIGNED_TEMPLATE) {
+  if ((array_info->align_template_index) == _XMP_N_NO_ALIGN_TEMPLATE) {
     *lower = target_rank * n;
     *upper = ((target_rank + 1) * n) - 1;
     *stride = 1;

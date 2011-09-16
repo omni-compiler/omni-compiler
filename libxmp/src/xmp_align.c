@@ -110,7 +110,7 @@ void _XMP_align_array_NOT_ALIGNED(_XMP_array_t *array, int array_index) {
 
   ai->align_subscript = 0;
 
-  ai->align_template_index = _XMP_N_NO_ALIGNED_TEMPLATE;
+  ai->align_template_index = _XMP_N_NO_ALIGN_TEMPLATE;
   ai->align_template_info = NULL;
   ai->align_template_chunk = NULL;
 }
@@ -480,7 +480,7 @@ void _XMP_init_array_nodes(_XMP_array_t *array) {
   for (int i = 0; i < array_dim; i++) {
     _XMP_array_info_t *info = &(array->info[i]);
     int align_template_index = info->align_template_index;
-    if (align_template_index != _XMP_N_NO_ALIGNED_TEMPLATE) {
+    if (align_template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
       align_template_shrink[align_template_index] = 0;
 
       align_template_lower[align_template_index] = info->ser_lower + info->align_subscript;
