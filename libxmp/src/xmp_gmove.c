@@ -42,30 +42,26 @@ static int _XMP_convert_rank_array_to_rank(_XMP_nodes_t *nodes, int *rank_array)
 
 static int _XMP_calc_gmove_array_owner_rank_SCALAR(_XMP_array_t *array, int *ref_index) {
   _XMP_template_t *template = array->align_template;
-  _XMP_nodes_t *nodes = template->onto_nodes;
+  _XMP_nodes_t *array_nodes = array->array_nodes;
 
-  int nodes_dim = nodes->dim;
-  int rank_array[nodes_dim];
-  for (int i = 0; i < nodes_dim; i++) {
-    rank_array[i] = _XMP_N_INVALID_RANK;
-  }
+  int array_nodes_dim = array_nodes->dim;
+  int rank_array[array_nodes_dim];
 
   int array_dim = array->dim;
   for (int i = 0; i < array_dim; i++) {
     _XMP_array_info_t *ai = &(array->info[i]);
-    if (ai->align_manner != _XMP_N_ALIGN_NOT_ALIGNED) {
-      int template_index = ai->align_template_index;
-
+    int template_index = ai->align_template_index;
+    if (template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
       _XMP_template_chunk_t *chunk = ai->align_template_chunk;
-      if (chunk->dist_manner != _XMP_N_DIST_DUPLICATION) {
-        int nodes_index = chunk->onto_nodes_index;
-        rank_array[nodes_index] = _XMP_calc_template_owner_SCALAR(template, template_index,
-                                                                  ref_index[i] + ai->align_subscript);
+      int array_nodes_index = chunk->onto_nodes_index;
+      if (array_nodes_index != _XMP_N_NO_ONTO_NODES) {
+        rank_array[array_nodes_index] = _XMP_calc_template_owner_SCALAR(template, template_index,
+                                                                        ref_index[i] + ai->align_subscript);
       }
     }
   }
 
-  return _XMP_calc_linear_rank_on_exec_nodes(nodes, rank_array, _XMP_get_execution_nodes());
+  return _XMP_calc_linear_rank_on_exec_nodes(array_nodes, rank_array, _XMP_get_execution_nodes());
 }
 
 static void _XMP_gmove_bcast_SCALAR(_XMP_array_t *array, void *dst_addr, void *src_addr,
