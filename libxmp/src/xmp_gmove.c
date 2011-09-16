@@ -66,58 +66,14 @@ static int _XMP_calc_gmove_array_owner_rank_SCALAR(_XMP_array_t *array, int *ref
 
 static void _XMP_gmove_bcast_SCALAR(_XMP_array_t *array, void *dst_addr, void *src_addr,
                                     size_t type_size, int src_rank) {
-  _XMP_nodes_t *onto_nodes = (array->align_template)->onto_nodes;
   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
   _XMP_ASSERT(exec_nodes->is_member);
 
-  int my_rank = array->align_comm_rank;
-  if ((exec_nodes == onto_nodes) ||
-      ((exec_nodes == _XMP_world_nodes) && (exec_nodes->comm_size == onto_nodes->comm_size))) {
-    _XMP_ASSERT(array->is_align_comm_member);
-
-    if (src_rank == my_rank) {
-      memcpy(dst_addr, src_addr, type_size);
-    }
-
-    MPI_Bcast(dst_addr, type_size, MPI_BYTE, src_rank, *((MPI_Comm *)array->align_comm));
+  if (src_rank == (exec_nodes->comm_rank)) {
+    memcpy(dst_addr, src_addr, type_size);
   }
-  else {
-    MPI_Comm *exec_comm = exec_nodes->comm;
 
-    int is_root = 0;
-    if (src_rank == my_rank) {
-      is_root = 1;
-    }
-
-    int num_roots = 0;
-    MPI_Allreduce(&is_root, &num_roots, 1, MPI_INT, MPI_SUM, *exec_comm);
-    if (num_roots == 0) {
-      _XMP_fatal("no root for gmove broadcast");
-    }
-
-    MPI_Comm root_comm;
-    MPI_Comm_split(*exec_comm, is_root, _XMP_world_rank, &root_comm);
-
-    int color, key;
-    if (is_root) {
-      memcpy(dst_addr, src_addr, type_size);
-
-      MPI_Comm_rank(root_comm, &color);
-      key = 0;
-    }
-    else {
-      color = _XMP_world_rank % num_roots;
-      key = _XMP_world_rank + 1;
-    }
-
-    MPI_Comm gmove_comm;
-    MPI_Comm_split(*exec_comm, color, key, &gmove_comm);
-
-    MPI_Bcast(dst_addr, type_size, MPI_BYTE, 0, gmove_comm);
-
-    MPI_Comm_free(&root_comm);
-    MPI_Comm_free(&gmove_comm);
-  }
+  MPI_Bcast(dst_addr, type_size, MPI_BYTE, src_rank, *((MPI_Comm *)exec_nodes->comm));
 }
 
 static int _XMP_check_gmove_array_ref_inclusion_SCALAR(_XMP_array_t *array, int array_index, int ref_index) {
@@ -346,16 +302,8 @@ void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XMP_array_t *array
   }
   va_end(args);
 
-  size_t type_size = array->type_size;
-
-  if (src_rank == _XMP_N_INVALID_RANK) {
-    // local copy
-    memcpy(dst_addr, src_addr, type_size);
-  }
-  else {
-    // broadcast
-    _XMP_gmove_bcast_SCALAR(array, dst_addr, src_addr, type_size, src_rank);
-  }
+  // broadcast
+  _XMP_gmove_bcast_SCALAR(array, dst_addr, src_addr, array->type_size, src_rank);
 }
 
 int _XMP_gmove_HOMECOPY_SCALAR(_XMP_array_t *array, ...) {
