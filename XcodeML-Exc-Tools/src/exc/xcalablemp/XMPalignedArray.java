@@ -543,6 +543,7 @@ public class XMPalignedArray {
 
     if (isLocalPragma) {
       XMPlocalDecl.addConstructorCall("_XMP_init_array_comm", initArrayCommFuncArgs, globalDecl, pb);
+      XMPlocalDecl.addConstructorCall("_XMP_init_array_nodes", Xcons.List(alignedArray.getDescId().Ref()), globalDecl, pb);
 
       // init array address
       XobjList initArrayAddrFuncArgs = Xcons.List(alignedArray.getAddrIdVoidAddr(),
@@ -557,6 +558,7 @@ public class XMPalignedArray {
     }
     else {
       globalDecl.addGlobalInitFuncCall("_XMP_init_array_comm", initArrayCommFuncArgs);
+      globalDecl.addGlobalInitFuncCall("_XMP_init_array_nodes", Xcons.List(alignedArray.getDescId().Ref()));
     }
   }
 

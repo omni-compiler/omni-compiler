@@ -24,6 +24,7 @@ extern void _XMP_alloc_array(void **array_addr, void *array_desc, ...);
 extern void _XMP_alloc_array_EXTERN(void **array_addr, void *array_desc, ...);
 extern void _XMP_init_array_addr(void **array_addr, void *init_addr, void *array_desc, ...);
 extern void _XMP_init_array_comm(void *array, ...);
+extern void _XMP_init_array_nodes(void *array);
 extern unsigned long long _XMP_get_array_total_elmts(void *array);
 
 // xmp_array_section.c

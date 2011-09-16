@@ -158,6 +158,8 @@ typedef struct _XMP_array_type {
 
   _XMP_template_t *align_template;
   _XMP_array_info_t info[1];
+
+  _XMP_nodes_t *array_nodes;
 } _XMP_array_t;
 
 typedef struct _XMP_task_desc_type {
