@@ -375,8 +375,6 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
     MPI_Wait(&gmove_request, MPI_STATUS_IGNORE);
   }
 
-  printf("[%d] dst = %d <=== src = %d\n", _XMP_world_rank, dst_rank, src_rank);
-
   _XMP_barrier_EXEC();
 }
 

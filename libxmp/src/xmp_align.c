@@ -487,7 +487,7 @@ void _XMP_init_array_nodes(_XMP_array_t *array) {
       align_template_lower[align_template_index] = info->ser_lower + info->align_subscript;
       align_template_upper[align_template_index] = info->ser_upper + info->align_subscript;
       align_template_stride[align_template_index] = 1;
-    } 
+    }
   }
 
   array->array_nodes = _XMP_create_nodes_by_template_ref(align_template, align_template_shrink,

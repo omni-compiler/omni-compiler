@@ -402,6 +402,9 @@ _XMP_nodes_t *_XMP_create_nodes_by_template_ref(_XMP_template_t *template, int *
     onto_nodes_shrink[i] = 1;
   }
 
+  int new_nodes_dim = 0;
+  int new_nodes_dim_size[_XMP_N_MAX_DIM];
+
   int acc_dim_size = 1;
   int template_dim = template->dim;
   for (int i = 0; i < template_dim; i++) {
@@ -421,21 +424,27 @@ _XMP_nodes_t *_XMP_create_nodes_by_template_ref(_XMP_template_t *template, int *
         onto_nodes_ref_lower[onto_nodes_index] = j;
         onto_nodes_ref_upper[onto_nodes_index] = j;
         onto_nodes_ref_stride[onto_nodes_index] = 1;
+
+        new_nodes_dim_size[new_nodes_dim] = 1;
       } else {
         onto_nodes_ref_lower[onto_nodes_index] = 1;
         onto_nodes_ref_upper[onto_nodes_index] = size;
         onto_nodes_ref_stride[onto_nodes_index] = 1;
         acc_dim_size *= _XMP_M_COUNT_TRIPLETi(1, size, 1);
+
+        new_nodes_dim_size[new_nodes_dim] = size;
       }
+
+      new_nodes_dim++;
     }
   }
 
   _XMP_nodes_t *n = NULL;
-  _XMP_init_nodes_STATIC_NODES_NAMED_MAIN(&n, 1,
+  _XMP_init_nodes_STATIC_NODES_NAMED_MAIN(&n, new_nodes_dim,
                                           onto_nodes,
                                           onto_nodes_shrink,
                                           onto_nodes_ref_lower, onto_nodes_ref_upper, onto_nodes_ref_stride,
-                                          &acc_dim_size);
+                                          new_nodes_dim_size);
 
   return n;
 }
