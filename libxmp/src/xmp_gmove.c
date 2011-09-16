@@ -356,112 +356,28 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
   _XMP_ASSERT(dst_array->type_size == src_array->type_size); // FIXME checked by compiler
   size_t type_size = dst_array->type_size;
 
-  if (dst_rank == _XMP_N_INVALID_RANK) {
-    if (src_rank == _XMP_N_INVALID_RANK) {
-      // local copy
-      memcpy(dst_addr, src_addr, type_size);
-    }
-    else {
-      // broadcast
-      _XMP_gmove_bcast_SCALAR(src_array, dst_addr, src_addr, type_size, src_rank);
-    }
+  _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
+  _XMP_ASSERT(exec_nodes->is_member);
+
+  int exec_rank = exec_nodes->comm_rank;
+  MPI_Comm *exec_comm = exec_nodes->comm;
+ 
+  MPI_Request gmove_request; 
+  if (dst_rank == exec_rank) {
+    MPI_Irecv(dst_addr, type_size, MPI_BYTE, src_rank, _XMP_N_MPI_TAG_GMOVE, *exec_comm, &gmove_request);
   }
-  else {
-    if (src_rank == _XMP_N_INVALID_RANK) {
-      // local copy on dst_rank
-      if (dst_rank == dst_array->align_comm_rank) {
-        memcpy(dst_addr, src_addr, type_size);
-      }
-    }
-    else {
-      _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
-      _XMP_ASSERT(exec_nodes->is_member);
 
-      MPI_Comm *exec_comm = exec_nodes->comm;
-
-      int is_src = 0, num_srcs = 0;
-      MPI_Comm src_comm;
-      {
-        if (src_rank == src_array->align_comm_rank) {
-          is_src = 1;
-        }
-
-        MPI_Allreduce(&is_src, &num_srcs, 1, MPI_INT, MPI_SUM, *exec_comm);
-        if (num_srcs == 0) {
-          _XMP_fatal("no source for gmove send/recv");
-        }
-
-        MPI_Comm_split(*exec_comm, is_src, _XMP_world_rank, &src_comm);
-      }
-
-      int is_dst = 0;
-      MPI_Comm gmove_comm;
-      {
-        int color = num_srcs, key = 0;
-        if (dst_rank == dst_array->align_comm_rank) {
-          is_dst = 1;
-
-          color = _XMP_world_rank % num_srcs;
-          key = _XMP_world_rank + 1;
-        }
-
-        // overwrite color, key
-        if (is_src) {
-          MPI_Comm_rank(src_comm, &color);
-          key = 0;
-        }
-
-        MPI_Comm_split(*exec_comm, color, key, &gmove_comm);
-
-        if (color == num_srcs) {
-          goto EXIT_AFTER_CLEAN_UP;
-        }
-      }
-
-      int gmove_comm_size;
-      MPI_Comm_size(gmove_comm, &gmove_comm_size);
-
-      if (gmove_comm_size == 1) {
-        if (is_dst) {
-          memcpy(dst_addr, src_addr, type_size);
-        }
-      }
-      else if (gmove_comm_size == 2) {
-        if (is_src) {
-          MPI_Send(src_addr, type_size, MPI_BYTE, 1, _XMP_N_MPI_TAG_GMOVE, gmove_comm);
-        }
-
-        if (is_dst) {
-          if (is_src) {
-            memcpy(dst_addr, src_addr, type_size);
-          }
-          else {
-            MPI_Status stat;
-            MPI_Recv(dst_addr, type_size, MPI_BYTE, 0, _XMP_N_MPI_TAG_GMOVE, gmove_comm, &stat);
-          }
-        }
-      }
-      else {
-        void *temp_buffer = _XMP_alloc(type_size);
-
-        if (is_src) {
-          memcpy(temp_buffer, src_addr, type_size);
-        }
-
-        MPI_Bcast(temp_buffer, type_size, MPI_BYTE, 0, gmove_comm);
-
-        if (is_dst) {
-          memcpy(dst_addr, temp_buffer, type_size);
-        }
-
-        _XMP_free(temp_buffer);
-      }
-
-EXIT_AFTER_CLEAN_UP:
-      MPI_Comm_free(&src_comm);
-      MPI_Comm_free(&gmove_comm);
-    }
+  if (src_rank == exec_rank) {
+    MPI_Send(src_addr, type_size, MPI_BYTE, dst_rank, _XMP_N_MPI_TAG_GMOVE, *exec_comm);
   }
+
+  if (dst_rank == exec_rank) {
+    MPI_Wait(&gmove_request, MPI_STATUS_IGNORE);
+  }
+
+  printf("[%d] dst = %d <=== src = %d\n", _XMP_world_rank, dst_rank, src_rank);
+
+  _XMP_barrier_EXEC();
 }
 
 // ----- gmove vector to vector --------------------------------------------------------------------------------------------------

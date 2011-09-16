@@ -416,10 +416,17 @@ _XMP_nodes_t *_XMP_create_nodes_by_template_ref(_XMP_template_t *template, int *
 
       int size = (chunk->onto_nodes_info)->size;
       // FIXME calc onto_nodes_ref_lower, onto_nodes_ref_upper, onto_nodes_ref_stride
-      onto_nodes_ref_lower[onto_nodes_index] = 1;
-      onto_nodes_ref_upper[onto_nodes_index] = size;
-      onto_nodes_ref_stride[onto_nodes_index] = 1;
-      acc_dim_size *= _XMP_M_COUNT_TRIPLETi(1, size, 1);
+      if (_XMP_M_COUNT_TRIPLETi(lower[i], upper[i], stride[i]) == 1) {
+        int j = _XMP_calc_template_owner_SCALAR(template, i, lower[i]) + 1;
+        onto_nodes_ref_lower[onto_nodes_index] = j;
+        onto_nodes_ref_upper[onto_nodes_index] = j;
+        onto_nodes_ref_stride[onto_nodes_index] = 1;
+      } else {
+        onto_nodes_ref_lower[onto_nodes_index] = 1;
+        onto_nodes_ref_upper[onto_nodes_index] = size;
+        onto_nodes_ref_stride[onto_nodes_index] = 1;
+        acc_dim_size *= _XMP_M_COUNT_TRIPLETi(1, size, 1);
+      }
     }
   }
 

@@ -84,6 +84,7 @@ void _XMP_finalize_array_desc(_XMP_array_t *array) {
     _XMP_finalize_comm(array->align_comm);
   }
 
+  _XMP_finalize_nodes(array->array_nodes);
   _XMP_free(array);
 }
 
