@@ -262,15 +262,6 @@ static void _XMP_calc_nodes_rank(_XMP_nodes_t *n, int linear_rank) {
   }
 }
 
-static void _XMP_disable_nodes_rank(_XMP_nodes_t *n) {
-  _XMP_ASSERT(!n->is_member);
-
-  int dim = n->dim;
-  for (int i = 0; i < dim; i++) {
-    n->info[i].rank = _XMP_N_INVALID_RANK;
-  }
-}
-
 static void _XMP_check_nodes_size_STATIC(_XMP_nodes_t *n) {
   int acc_size = 1;
   int dim = n->dim;
@@ -352,8 +343,6 @@ void _XMP_init_nodes_STATIC_NODES_NAMED_MAIN(_XMP_nodes_t **nodes, int dim,
   _XMP_check_nodes_size_STATIC(n);
   if (n->is_member) {
     _XMP_calc_nodes_rank(n, n->comm_rank);
-  } else {
-    _XMP_disable_nodes_rank(n);
   }
 
   *nodes = n;
@@ -437,9 +426,6 @@ void _XMP_init_nodes_STATIC_EXEC(_XMP_nodes_t **nodes, int dim, ...) {
   if (n->is_member) {
     _XMP_calc_nodes_rank(n, n->comm_rank);
   }
-  else {
-    _XMP_disable_nodes_rank(n);
-  }
 
   for (int i = 0; i < dim; i++) {
     int *rank_p = va_arg(args, int *);
@@ -468,9 +454,6 @@ void _XMP_init_nodes_DYNAMIC_EXEC(_XMP_nodes_t **nodes, int dim, ...) {
   _XMP_check_nodes_size_DYNAMIC(n);
   if (n->is_member) {
     _XMP_calc_nodes_rank(n, n->comm_rank);
-  }
-  else {
-    _XMP_disable_nodes_rank(n);
   }
 
   *last_dim_size_p = n->info[dim - 1].size;
@@ -502,9 +485,6 @@ void _XMP_init_nodes_STATIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
   if (n->is_member) {
     _XMP_calc_nodes_rank(n, n->comm_rank);
   }
-  else {
-    _XMP_disable_nodes_rank(n);
-  }
 
   for (int i = 0; i < dim; i++) {
     int *rank_p = va_arg(args, int *);
@@ -534,9 +514,6 @@ void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
   _XMP_check_nodes_size_DYNAMIC(n);
   if (n->is_member) {
     _XMP_calc_nodes_rank(n, n->comm_rank);
-  }
-  else {
-    _XMP_disable_nodes_rank(n);
   }
 
   *last_dim_size_p = n->info[dim - 1].size;
@@ -623,9 +600,6 @@ void _XMP_init_nodes_DYNAMIC_NODES_NAMED(_XMP_nodes_t **nodes, int dim,
   _XMP_check_nodes_size_DYNAMIC(n);
   if (n->is_member) {
     _XMP_calc_nodes_rank(n, n->comm_rank);
-  }
-  else {
-    _XMP_disable_nodes_rank(n);
   }
 
   *last_dim_size_p = n->info[dim - 1].size;
