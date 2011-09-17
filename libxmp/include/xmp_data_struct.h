@@ -49,6 +49,11 @@ typedef struct _XMP_nodes_type {
   _XMP_nodes_info_t info[1];
 } _XMP_nodes_t;
 
+typedef struct _XMP_nodes_ref_type {
+  _XMP_nodes_t *nodes;
+  int *ref;
+} _XMP_nodes_ref_t;
+
 // template desciptor
 typedef struct _XMP_template_info_type {
   // enable when is_fixed is true

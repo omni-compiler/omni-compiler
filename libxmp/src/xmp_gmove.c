@@ -61,7 +61,7 @@ static int _XMP_calc_gmove_array_owner_rank_SCALAR(_XMP_array_t *array, int *ref
     }
   }
 
-  return _XMP_calc_linear_rank_on_exec_nodes(array_nodes, rank_array, _XMP_get_execution_nodes());
+  return _XMP_calc_linear_rank_on_target_nodes(array_nodes, rank_array, _XMP_get_execution_nodes());
 }
 
 static void _XMP_gmove_bcast_SCALAR(_XMP_array_t *array, void *dst_addr, void *src_addr,
