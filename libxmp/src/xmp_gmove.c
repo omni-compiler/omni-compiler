@@ -40,12 +40,8 @@ static int _XMP_convert_rank_array_to_rank(_XMP_nodes_t *nodes, int *rank_array)
   }
 }
 
-static int *_XMP_create_gmove_rank_array_SCALAR(_XMP_array_t *array, int *ref_index) {
+static void _XMP_calc_gmove_rank_array_SCALAR(_XMP_array_t *array, int *ref_index, int *rank_array) {
   _XMP_template_t *template = array->align_template;
-  _XMP_nodes_t *array_nodes = array->array_nodes;
-
-  int array_nodes_dim = array_nodes->dim;
-  int *rank_array = _XMP_alloc(sizeof(int) * array_nodes_dim);
 
   int array_dim = array->dim;
   for (int i = 0; i < array_dim; i++) {
@@ -60,17 +56,26 @@ static int *_XMP_create_gmove_rank_array_SCALAR(_XMP_array_t *array, int *ref_in
       }
     }
   }
-
-  return rank_array;
 }
 
 static int _XMP_calc_gmove_array_owner_linear_rank_SCALAR(_XMP_array_t *array, int *ref_index) {
   _XMP_nodes_t *array_nodes = array->array_nodes;
-  int *rank_array = _XMP_create_gmove_rank_array_SCALAR(array, ref_index);
+  int array_nodes_dim = array_nodes->dim;
+  int rank_array[array_nodes_dim];
 
-  int rank = _XMP_calc_linear_rank_on_target_nodes(array_nodes, rank_array, _XMP_get_execution_nodes());
-  _XMP_free(rank_array);
-  return rank;
+  _XMP_calc_gmove_rank_array_SCALAR(array, ref_index, rank_array);
+
+  return _XMP_calc_linear_rank_on_target_nodes(array_nodes, rank_array, _XMP_get_execution_nodes());
+}
+
+static _XMP_nodes_ref_t *_XMP_create_gmove_nodes_ref_SCALAR(_XMP_array_t *array, int *ref_index) {
+  _XMP_nodes_t *array_nodes = array->array_nodes;
+  int array_nodes_dim = array_nodes->dim;
+  int rank_array[array_nodes_dim];
+
+  _XMP_calc_gmove_rank_array_SCALAR(array, ref_index, rank_array);
+
+  return _XMP_create_nodes_ref_for_target_nodes(array_nodes, rank_array, _XMP_get_execution_nodes());
 }
 
 static void _XMP_gmove_bcast_SCALAR(_XMP_array_t *array, void *dst_addr, void *src_addr,
@@ -342,24 +347,24 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
                                 _XMP_array_t *dst_array, _XMP_array_t *src_array, ...) {
   va_list args;
   va_start(args, src_array);
-  int dst_rank;
+  _XMP_nodes_ref_t *dst_ref;
   {
     int dst_array_dim = dst_array->dim;
     int dst_ref_index[dst_array_dim];
     for (int i = 0; i < dst_array_dim; i++) {
       dst_ref_index[i] = va_arg(args, int);
     }
-    dst_rank = _XMP_calc_gmove_array_owner_linear_rank_SCALAR(dst_array, dst_ref_index);
+    dst_ref = _XMP_create_gmove_nodes_ref_SCALAR(dst_array, dst_ref_index);
   }
 
-  int src_rank;
+  _XMP_nodes_ref_t *src_ref;
   {
     int src_array_dim = src_array->dim;
     int src_ref_index[src_array_dim];
     for (int i = 0; i < src_array_dim; i++) {
       src_ref_index[i] = va_arg(args, int);
     }
-    src_rank = _XMP_calc_gmove_array_owner_linear_rank_SCALAR(src_array, src_ref_index);
+    src_ref = _XMP_create_gmove_nodes_ref_SCALAR(src_array, src_ref_index);
   }
   va_end(args);
 
@@ -371,20 +376,34 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
 
   int exec_rank = exec_nodes->comm_rank;
   MPI_Comm *exec_comm = exec_nodes->comm;
- 
-  MPI_Request gmove_request; 
-  if (dst_rank == exec_rank) {
-    MPI_Irecv(dst_addr, type_size, MPI_BYTE, src_rank, _XMP_N_MPI_TAG_GMOVE, *exec_comm, &gmove_request);
+
+  int dst_shrink_nodes_size = dst_ref->shrink_nodes_size;
+  int src_shrink_nodes_size = src_ref->shrink_nodes_size;
+
+  int dst_rank, src_rank;
+  if ((dst_shrink_nodes_size == 1) && (src_shrink_nodes_size == 1)) {
+    dst_rank = _XMP_calc_linear_rank(dst_ref->nodes, dst_ref->ref);
+    src_rank = _XMP_calc_linear_rank(src_ref->nodes, src_ref->ref);
+
+    MPI_Request gmove_request;
+    if (dst_rank == exec_rank) {
+      MPI_Irecv(dst_addr, type_size, MPI_BYTE, src_rank, _XMP_N_MPI_TAG_GMOVE, *exec_comm, &gmove_request);
+    }
+
+    if (src_rank == exec_rank) {
+      MPI_Send(src_addr, type_size, MPI_BYTE, dst_rank, _XMP_N_MPI_TAG_GMOVE, *exec_comm);
+    }
+
+    if (dst_rank == exec_rank) {
+      MPI_Wait(&gmove_request, MPI_STATUS_IGNORE);
+    }
+  } else {
+    // FIXME implement
+    _XMP_fatal("unsupported case: gmove send_recv pattern");
   }
 
-  if (src_rank == exec_rank) {
-    MPI_Send(src_addr, type_size, MPI_BYTE, dst_rank, _XMP_N_MPI_TAG_GMOVE, *exec_comm);
-  }
-
-  if (dst_rank == exec_rank) {
-    MPI_Wait(&gmove_request, MPI_STATUS_IGNORE);
-  }
-
+  _XMP_free(dst_ref);
+  _XMP_free(src_ref);
   _XMP_barrier_EXEC();
 }
 
