@@ -783,12 +783,17 @@ _XMP_nodes_ref_t *_XMP_init_nodes_ref(_XMP_nodes_t *n, int *ranks) {
   int dim = n->dim;
   int *new_ranks = _XMP_alloc(sizeof(int) * dim);
 
+  int shrink_nodes_size = 1;
   for (int i = 0; i < dim; i++) {
     new_ranks[i] = ranks[i];
+    if (new_ranks[i] == _XMP_N_UNSPECIFIED_RANK) {
+      shrink_nodes_size *= (n->info[i].size);
+    }
   }
 
   nodes_ref->nodes = n;
   nodes_ref->ref = new_ranks;
+  nodes_ref->shrink_nodes_size = shrink_nodes_size;
 
   return nodes_ref;
 }

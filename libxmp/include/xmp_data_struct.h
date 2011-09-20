@@ -53,6 +53,7 @@ typedef struct _XMP_nodes_type {
 typedef struct _XMP_nodes_ref_type {
   _XMP_nodes_t *nodes;
   int *ref;
+  int shrink_nodes_size;
 } _XMP_nodes_ref_t;
 
 // template desciptor

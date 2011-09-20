@@ -40,12 +40,12 @@ static int _XMP_convert_rank_array_to_rank(_XMP_nodes_t *nodes, int *rank_array)
   }
 }
 
-static int _XMP_calc_gmove_array_owner_rank_SCALAR(_XMP_array_t *array, int *ref_index) {
+static int *_XMP_create_gmove_rank_array_SCALAR(_XMP_array_t *array, int *ref_index) {
   _XMP_template_t *template = array->align_template;
   _XMP_nodes_t *array_nodes = array->array_nodes;
 
   int array_nodes_dim = array_nodes->dim;
-  int rank_array[array_nodes_dim];
+  int *rank_array = _XMP_alloc(sizeof(int) * array_nodes_dim);
 
   int array_dim = array->dim;
   for (int i = 0; i < array_dim; i++) {
@@ -61,7 +61,16 @@ static int _XMP_calc_gmove_array_owner_rank_SCALAR(_XMP_array_t *array, int *ref
     }
   }
 
-  return _XMP_calc_linear_rank_on_target_nodes(array_nodes, rank_array, _XMP_get_execution_nodes());
+  return rank_array;
+}
+
+static int _XMP_calc_gmove_array_owner_linear_rank_SCALAR(_XMP_array_t *array, int *ref_index) {
+  _XMP_nodes_t *array_nodes = array->array_nodes;
+  int *rank_array = _XMP_create_gmove_rank_array_SCALAR(array, ref_index);
+
+  int rank = _XMP_calc_linear_rank_on_target_nodes(array_nodes, rank_array, _XMP_get_execution_nodes());
+  _XMP_free(rank_array);
+  return rank;
 }
 
 static void _XMP_gmove_bcast_SCALAR(_XMP_array_t *array, void *dst_addr, void *src_addr,
@@ -298,7 +307,7 @@ void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XMP_array_t *array
     for (int i = 0; i < array_dim; i++) {
       ref_index[i] = va_arg(args, int);
     }
-    src_rank = _XMP_calc_gmove_array_owner_rank_SCALAR(array, ref_index);
+    src_rank = _XMP_calc_gmove_array_owner_linear_rank_SCALAR(array, ref_index);
   }
   va_end(args);
 
@@ -340,7 +349,7 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
     for (int i = 0; i < dst_array_dim; i++) {
       dst_ref_index[i] = va_arg(args, int);
     }
-    dst_rank = _XMP_calc_gmove_array_owner_rank_SCALAR(dst_array, dst_ref_index);
+    dst_rank = _XMP_calc_gmove_array_owner_linear_rank_SCALAR(dst_array, dst_ref_index);
   }
 
   int src_rank;
@@ -350,7 +359,7 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
     for (int i = 0; i < src_array_dim; i++) {
       src_ref_index[i] = va_arg(args, int);
     }
-    src_rank = _XMP_calc_gmove_array_owner_rank_SCALAR(src_array, src_ref_index);
+    src_rank = _XMP_calc_gmove_array_owner_linear_rank_SCALAR(src_array, src_ref_index);
   }
   va_end(args);
 
