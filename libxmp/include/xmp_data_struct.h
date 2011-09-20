@@ -14,13 +14,14 @@
 
 // nodes descriptor
 typedef struct _XMP_nodes_inherit_info_type {
-  int is_enable;
-  // enable when is_enable is true
+  int shrink;
+  // enable when shrink is false
   int lower;
   int upper;
   int stride;
+  // ---------------------------
+
   int size;
-  // -----------------------------
 } _XMP_nodes_inherit_info_t;
 
 typedef struct _XMP_nodes_info_type {
