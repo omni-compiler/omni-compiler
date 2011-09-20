@@ -303,6 +303,13 @@ static void _XMP_calc_array_local_index_triplet(_XMP_array_t *array,
 
 // ----- gmove scalar to scalar --------------------------------------------------------------------------------------------------
 void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XMP_array_t *array, ...) {
+  int type_size = array->type_size;
+
+  if(_XMP_IS_SINGLE) {
+    memcpy(dst_addr, src_addr, type_size);
+    return;
+  }
+
   va_list args;
   va_start(args, array);
   int src_rank;
@@ -317,10 +324,14 @@ void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XMP_array_t *array
   va_end(args);
 
   // broadcast
-  _XMP_gmove_bcast_SCALAR(array, dst_addr, src_addr, array->type_size, src_rank);
+  _XMP_gmove_bcast_SCALAR(array, dst_addr, src_addr, type_size, src_rank);
 }
 
 int _XMP_gmove_HOMECOPY_SCALAR(_XMP_array_t *array, ...) {
+  if (_XMP_IS_SINGLE) {
+    return _XMP_N_INT_TRUE;
+  }
+
   if (!array->is_allocated) {
     return _XMP_N_INT_FALSE;
   }
@@ -345,6 +356,14 @@ int _XMP_gmove_HOMECOPY_SCALAR(_XMP_array_t *array, ...) {
 // FIXME not finished: src_rank may send data to multiple nodes
 void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
                                 _XMP_array_t *dst_array, _XMP_array_t *src_array, ...) {
+  _XMP_ASSERT(dst_array->type_size == src_array->type_size); // FIXME checked by compiler
+  size_t type_size = dst_array->type_size;
+
+  if(_XMP_IS_SINGLE) {
+    memcpy(dst_addr, src_addr, type_size);
+    return;
+  }
+
   va_list args;
   va_start(args, src_array);
   _XMP_nodes_ref_t *dst_ref;
@@ -376,9 +395,6 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
     _XMP_free(dst_ref);
     goto END_GMOVE;
   }
-
-  _XMP_ASSERT(dst_array->type_size == src_array->type_size); // FIXME checked by compiler
-  size_t type_size = dst_array->type_size;
 
   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
   _XMP_ASSERT(exec_nodes->is_member);

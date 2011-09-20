@@ -29,6 +29,9 @@
   } \
 }
 
+#define _XMP_IS_SINGLE \
+(_XMP_world_size == 1)
+
 // --------------- structures ----------------------------------------
 #define _XMP_comm void
 #include "xmp_data_struct.h"
