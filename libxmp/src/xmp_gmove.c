@@ -357,6 +357,10 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
     dst_ref = _XMP_create_gmove_nodes_ref_SCALAR(dst_array, dst_ref_index);
   }
 
+  if (dst_ref == NULL) {
+    goto END_GMOVE;
+  }
+
   _XMP_nodes_ref_t *src_ref;
   {
     int src_array_dim = src_array->dim;
@@ -368,6 +372,11 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
   }
   va_end(args);
 
+  if (src_ref == NULL) {
+    _XMP_free(dst_ref);
+    goto END_GMOVE;
+  }
+
   _XMP_ASSERT(dst_array->type_size == src_array->type_size); // FIXME checked by compiler
   size_t type_size = dst_array->type_size;
 
@@ -377,33 +386,53 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
   int exec_rank = exec_nodes->comm_rank;
   MPI_Comm *exec_comm = exec_nodes->comm;
 
+  // calc dst_rank
   int dst_shrink_nodes_size = dst_ref->shrink_nodes_size;
-  int src_shrink_nodes_size = src_ref->shrink_nodes_size;
-
-  int dst_rank, src_rank;
-  if ((dst_shrink_nodes_size == 1) && (src_shrink_nodes_size == 1)) {
-    dst_rank = _XMP_calc_linear_rank(dst_ref->nodes, dst_ref->ref);
-    src_rank = _XMP_calc_linear_rank(src_ref->nodes, src_ref->ref);
-
-    MPI_Request gmove_request;
-    if (dst_rank == exec_rank) {
-      MPI_Irecv(dst_addr, type_size, MPI_BYTE, src_rank, _XMP_N_MPI_TAG_GMOVE, *exec_comm, &gmove_request);
-    }
-
-    if (src_rank == exec_rank) {
-      MPI_Send(src_addr, type_size, MPI_BYTE, dst_rank, _XMP_N_MPI_TAG_GMOVE, *exec_comm);
-    }
-
-    if (dst_rank == exec_rank) {
-      MPI_Wait(&gmove_request, MPI_STATUS_IGNORE);
-    }
+  int *dst_rank = _XMP_alloc(sizeof(int) * dst_shrink_nodes_size);
+  if (dst_shrink_nodes_size == 1) {
+    dst_rank[0] = _XMP_calc_linear_rank(dst_ref->nodes, dst_ref->ref);
   } else {
     // FIXME implement
-    _XMP_fatal("unsupported case: gmove send_recv pattern");
+    _XMP_fatal("unsupported case: gmove send-recv pattern");
   }
 
+  // calc src_rank
+  int src_shrink_nodes_size = src_ref->shrink_nodes_size;
+  int *src_rank = _XMP_alloc(sizeof(int) * src_shrink_nodes_size);
+  if (src_shrink_nodes_size == 1) {
+    src_rank[0] = _XMP_calc_linear_rank(src_ref->nodes, src_ref->ref);
+  } else {
+    // FIXME implement
+    _XMP_fatal("unsupported case: gmove send-recv pattern");
+  }
+
+  int wait_recv = _XMP_N_INT_FALSE;
+  MPI_Request gmove_request;
+  for (int i = 0; i < dst_shrink_nodes_size; i++) {
+    if (dst_rank[i] == exec_rank) {
+      wait_recv = _XMP_N_INT_TRUE;
+      // FIXME calc i for src_rank[i]
+      MPI_Irecv(dst_addr, type_size, MPI_BYTE, src_rank[0], _XMP_N_MPI_TAG_GMOVE, *exec_comm, &gmove_request);
+    }
+  }
+
+  for (int i = 0; i < src_shrink_nodes_size; i++) {
+    if (src_rank[i] == exec_rank) {
+      // FIXME calc i for dst_rank[i]
+      MPI_Send(src_addr, type_size, MPI_BYTE, dst_rank[0], _XMP_N_MPI_TAG_GMOVE, *exec_comm);
+    }
+  }
+
+  if (wait_recv) {
+    MPI_Wait(&gmove_request, MPI_STATUS_IGNORE);
+  }
+
+  _XMP_free(dst_rank);
+  _XMP_free(src_rank);
   _XMP_free(dst_ref);
   _XMP_free(src_ref);
+
+END_GMOVE:
   _XMP_barrier_EXEC();
 }
 
