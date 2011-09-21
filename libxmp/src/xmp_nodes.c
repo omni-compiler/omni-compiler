@@ -326,6 +326,53 @@ static int _XMP_compare_task_exec_cond(_XMP_task_desc_t *task_desc, int *lower, 
   return _XMP_N_INT_TRUE;
 }
 
+static int _XMP_compare_nodes(_XMP_nodes_t *a, _XMP_nodes_t *b) {
+  if (a == b) {
+    return _XMP_N_INT_TRUE;
+  }
+
+  int dim = a->dim;
+  if (dim != b->dim) {
+    return _XMP_N_INT_FALSE;
+  }
+
+  // compare nodes size
+  for (int i = 0; i < dim; i++) {
+    if (a->info[i].size != b->info[i].size) {
+      return _XMP_N_INT_FALSE;
+    }
+  }
+
+  // compare inherit nodes
+  _XMP_nodes_t *inherit_nodes = a->inherit_nodes;
+  if (inherit_nodes != b->inherit_nodes) {
+    return _XMP_N_INT_FALSE;
+  }
+
+  if (inherit_nodes != NULL) {
+    int inherit_nodes_dim = inherit_nodes->dim;
+    for (int i = 0; i < inherit_nodes_dim; i++) {
+      _XMP_nodes_inherit_info_t *a_inherit_info = &(a->inherit_info[i]);
+      _XMP_nodes_inherit_info_t *b_inherit_info = &(b->inherit_info[i]);
+
+      int shrink = a_inherit_info->shrink;
+      if (shrink != b_inherit_info->shrink) {
+        return _XMP_N_INT_FALSE;
+      }
+
+      if (!shrink) {
+        if ((a_inherit_info->lower != b_inherit_info->lower) ||
+            (a_inherit_info->upper != b_inherit_info->upper) ||
+            (a_inherit_info->stride != b_inherit_info->stride)) {
+          return _XMP_N_INT_FALSE;
+        }
+      }
+    }
+  }
+
+  return _XMP_N_INT_TRUE;
+}
+
 void _XMP_init_nodes_STATIC_NODES_NAMED_MAIN(_XMP_nodes_t **nodes, int dim,
                                              _XMP_nodes_t *ref_nodes,
                                              int *shrink, int *ref_lower, int *ref_upper, int *ref_stride,
@@ -746,8 +793,8 @@ int _XMP_calc_linear_rank(_XMP_nodes_t *n, int *rank_array) {
 }
 
 int _XMP_calc_linear_rank_on_target_nodes(_XMP_nodes_t *n, int *rank_array, _XMP_nodes_t *target_nodes) {
-  if ((n == target_nodes) ||
-      ((target_nodes->comm_size == _XMP_world_size) && (target_nodes->comm_size == n->comm_size))) {
+  if (((target_nodes->comm_size == _XMP_world_size) && (target_nodes->comm_size == n->comm_size)) ||
+      _XMP_compare_nodes(n, target_nodes)) {
     return _XMP_calc_linear_rank(n, rank_array);
   } else {
     _XMP_nodes_t *inherit_nodes = n->inherit_nodes;
@@ -804,7 +851,7 @@ void _XMP_finalize_nodes_ref(_XMP_nodes_ref_t *nodes_ref) {
 }
 
 _XMP_nodes_ref_t *_XMP_create_nodes_ref_for_target_nodes(_XMP_nodes_t *n, int *rank_array, _XMP_nodes_t *target_nodes) {
-  if (n == target_nodes) {
+  if (_XMP_compare_nodes(n, target_nodes)) {
     return _XMP_init_nodes_ref(n, rank_array);
   } else {
     _XMP_nodes_t *inherit_nodes = n->inherit_nodes;
