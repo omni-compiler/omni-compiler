@@ -26,6 +26,5 @@ clean-local:
 install-exec-local: $(XMPCRTOBJ) $(XMPTLOGCRTOBJ) $(XMPSCALASCACRTOBJ)
 	test -z "$(libdir)" || $(MKDIR_P) $(DESTDIR)$(libdir)
 	$(INSTALL_DATA) $(XMPCRTOBJ) $(DESTDIR)$(libdir)
-	$(INSTALL_DATA) $(XMPTHREADSCRTOBJ) $(DESTDIR)$(libdir)
 	$(INSTALL_DATA) $(XMPTLOGCRTOBJ) $(DESTDIR)$(libdir)
 	$(INSTALL_DATA) $(XMPSCALASCACRTOBJ) $(DESTDIR)$(libdir)
