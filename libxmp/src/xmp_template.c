@@ -118,29 +118,37 @@ static int _XMP_check_template_ref_inclusion_width_N(int ref_lower, int ref_uppe
   return _XMP_check_template_ref_inclusion_width_1(rl, ru, 1, tl, tu, ts);
 }
 
-static void _XMP_set_task_desc(_XMP_task_desc_t *desc, int execute, _XMP_nodes_t *n,
-                               int dim, long long *lower, long long *upper, long long *stride) {
-  desc->inherit_nodes_id = _XMP_get_execution_nodes()->nodes_id;
-  desc->execute = execute;
+static void _XMP_set_task_desc(_XMP_task_desc_t *desc, _XMP_nodes_t *n, int execute,
+                               _XMP_template_t *ref_template, long long *ref_lower, long long *ref_upper, long long *ref_stride) {
   desc->nodes = n;
-  desc->dim = dim;
+  desc->execute = execute;
+
+  desc->on_ref = _XMP_N_TEMPLATE_REF;
+  desc->ref_template = ref_template;
+  int dim = ref_template->dim;
   for (int i = 0; i < dim; i++) {
-    desc->lower[i] = lower[i];
-    desc->upper[i] = upper[i];
-    desc->stride[i] = stride[i];
+    desc->ref_lower[i] = ref_lower[i];
+    desc->ref_upper[i] = ref_upper[i];
+    desc->ref_stride[i] = ref_stride[i];
   }
 }
 
-static int _XMP_compare_task_exec_cond(_XMP_task_desc_t *task_desc, long long *lower, long long *upper, long long *stride) {
-  int dim = task_desc->dim;
-
-  if ((_XMP_get_execution_nodes()->nodes_id) != (task_desc->inherit_nodes_id)) {
+static int _XMP_compare_task_exec_cond(_XMP_task_desc_t *task_desc,
+                                       _XMP_template_t *ref_template,
+                                       long long *ref_lower, long long *ref_upper, long long *ref_stride) {
+  if (task_desc->on_ref != _XMP_N_TEMPLATE_REF) {
     return _XMP_N_INT_FALSE;
   }
 
+  if (ref_template != task_desc->ref_template) {
+    return _XMP_N_INT_FALSE;
+  }
+
+  int dim = ref_template->dim;
   for (int i = 0; i < dim; i++) {
-    if (((int)(task_desc->lower[i]) != lower[i]) || (int)((task_desc->upper[i]) != upper[i]) ||
-        ((int)(task_desc->stride[i]) != stride[i])) {
+    if ((task_desc->ref_lower[i] != (int)ref_lower[i]) ||
+        (task_desc->ref_upper[i] != (int)ref_upper[i]) ||
+        (task_desc->ref_stride[i] != (int)ref_stride[i])) {
       return _XMP_N_INT_FALSE;
     }
   }
@@ -472,7 +480,7 @@ int _XMP_exec_task_TEMPLATE_PART(_XMP_task_desc_t **task_desc, _XMP_template_t *
     *task_desc = desc;
   } else {
     desc = *task_desc;
-    if (_XMP_compare_task_exec_cond(desc, lower, upper, stride)) {
+    if (_XMP_compare_task_exec_cond(desc, ref_template, lower, upper, stride)) {
       if (desc->execute) {
         _XMP_push_nodes(desc->nodes);
         return _XMP_N_INT_TRUE;
@@ -487,7 +495,7 @@ int _XMP_exec_task_TEMPLATE_PART(_XMP_task_desc_t **task_desc, _XMP_template_t *
   }
 
   _XMP_nodes_t *n = _XMP_create_nodes_by_template_ref(ref_template, shrink, lower, upper, stride);
-  _XMP_set_task_desc(desc, n->is_member, n, ref_dim, lower, upper, stride);
+  _XMP_set_task_desc(desc, n, n->is_member, ref_template, lower, upper, stride);
   if (n->is_member) {
     _XMP_push_nodes(n);
     return _XMP_N_INT_TRUE;

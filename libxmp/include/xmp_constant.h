@@ -16,6 +16,10 @@
 #define _XMP_N_MPI_TAG_REFLECT_LO		11
 #define _XMP_N_MPI_TAG_REFLECT_HI		12
 
+// used by task
+#define _XMP_N_NODES_REF			20
+#define _XMP_N_TEMPLATE_REF			21
+
 // constants used in runtime functions
 #define _XMP_N_INVALID_RANK			-1
 #define _XMP_N_UNSPECIFIED_RANK			-2

@@ -33,7 +33,6 @@ typedef struct _XMP_nodes_info_type {
 } _XMP_nodes_info_t;
 
 typedef struct _XMP_nodes_type {
-  unsigned long long nodes_id;
   int is_member;
   int dim;
   int comm_size;
@@ -172,13 +171,15 @@ typedef struct _XMP_array_type {
 } _XMP_array_t;
 
 typedef struct _XMP_task_desc_type {
-  unsigned long long inherit_nodes_id;
-  int execute;
   _XMP_nodes_t *nodes;
-  int dim;
-  long long lower[_XMP_N_MAX_DIM];
-  long long upper[_XMP_N_MAX_DIM];
-  long long stride[_XMP_N_MAX_DIM];
+  int execute;
+
+  int on_ref;
+  _XMP_nodes_t *ref_nodes;
+  _XMP_template_t *ref_template;
+  int ref_lower[_XMP_N_MAX_DIM];
+  int ref_upper[_XMP_N_MAX_DIM];
+  int ref_stride[_XMP_N_MAX_DIM];
 } _XMP_task_desc_t;
 
 // coarray descriptor
