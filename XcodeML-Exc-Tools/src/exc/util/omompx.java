@@ -64,7 +64,10 @@ public class omompx
             "  -profile         Emit XMP directive profiling code only for specified directives.",
             "  -allprofile      Emit XMP directive profiling code for all directives.",
             "  -with-scalasca   Emit Scalasca instrumentation.",
-            "  -with-tlog       Emit tlog insturumentation."
+            "  -with-tlog       Emit tlog insturumentation.",
+            "",
+            "  -enable-threads	enable 'threads' clause",
+            "  -enable-gpu	enable xmp-dev directive/clauses"
         };
         
         for(String line : lines) {
