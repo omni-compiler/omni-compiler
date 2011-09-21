@@ -75,7 +75,7 @@ am_libxmp_a_OBJECTS = xmp_lib.$(OBJEXT) xmp_util.$(OBJEXT) \
 	xmp_array_section.$(OBJEXT) xmp_loop.$(OBJEXT) \
 	xmp_gmove.$(OBJEXT) xmp_math_function.$(OBJEXT) \
 	xmp_runtime.$(OBJEXT) xmp_coarray.$(OBJEXT) \
-	xmp_coarray_RMA.$(OBJEXT)
+	xmp_coarray_RMA.$(OBJEXT) xmp_tlog_runtime.$(OBJEXT)
 libxmp_a_OBJECTS = $(am_libxmp_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -85,8 +85,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(libxmp_a_SOURCES) $(EXTRA_libxmp_a_SOURCES)
-DIST_SOURCES = $(libxmp_a_SOURCES) $(EXTRA_libxmp_a_SOURCES)
+SOURCES = $(libxmp_a_SOURCES)
+DIST_SOURCES = $(libxmp_a_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -280,12 +280,8 @@ libxmp_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h \
 				  xmp_lib.c xmp_util.c xmp_world.c xmp_nodes_stack.c \
                                   xmp_nodes.c xmp_template.c xmp_barrier.c xmp_reduce.c xmp_bcast.c \
                                   xmp_align.c xmp_shadow.c xmp_array_section.c xmp_loop.c xmp_gmove.c \
-                                  xmp_math_function.c xmp_runtime.c xmp_coarray.c xmp_coarray_RMA.c
+                                  xmp_math_function.c xmp_runtime.c xmp_coarray.c xmp_coarray_RMA.c xmp_tlog_runtime.c
 
-EXTRA_libxmp_a_SOURCES = xmp_crt0.c
-XMPCRTOBJ = xmp_crt0.o
-XMPTLOGCRTOBJ = xmp_tlog_crt0.o
-XMPSCALASCACRTOBJ = xmp_scalasca_crt0.o
 AM_CFLAGS = -Wall -std=c99 -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR)
 all: all-am
 
@@ -370,7 +366,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_bcast.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_coarray.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_coarray_RMA.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_crt0.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_gmove.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_lib.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_loop.Po@am__quote@
@@ -381,6 +376,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_runtime.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_shadow.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_template.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_tlog_runtime.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_util.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_world.Po@am__quote@
 
@@ -482,7 +478,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(LIBRARIES) all-local
+all-am: Makefile $(LIBRARIES)
 installdirs:
 	for dir in "$(DESTDIR)$(libdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
@@ -540,7 +536,7 @@ install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-exec-local install-libLIBRARIES
+install-exec-am: install-libLIBRARIES
 
 install-html: install-html-am
 
@@ -583,31 +579,22 @@ uninstall-am: uninstall-libLIBRARIES
 
 .MAKE: install-am install-strip
 
-.PHONY: CTAGS GTAGS all all-am all-local check check-am clean \
-	clean-generic clean-libLIBRARIES clean-local ctags distclean \
+.PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
+	clean-libLIBRARIES clean-local ctags distclean \
 	distclean-compile distclean-generic distclean-tags distdir dvi \
 	dvi-am html html-am info info-am install install-am \
 	install-data install-data-am install-dvi install-dvi-am \
-	install-exec install-exec-am install-exec-local install-html \
-	install-html-am install-info install-info-am \
-	install-libLIBRARIES install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic pdf pdf-am ps ps-am tags uninstall \
-	uninstall-am uninstall-libLIBRARIES
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-libLIBRARIES install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am uninstall-libLIBRARIES
 
-
-all-local: $(XMPCRTOBJ) $(XMPTLOGCRTOBJ) $(XMPSCALASCACRTOBJ)
 
 clean-local:
 	rm -f *~ *.core core core.*
-
-install-exec-local: $(XMPCRTOBJ) $(XMPTLOGCRTOBJ) $(XMPSCALASCACRTOBJ)
-	test -z "$(libdir)" || $(MKDIR_P) $(DESTDIR)$(libdir)
-	$(INSTALL_DATA) $(XMPCRTOBJ) $(DESTDIR)$(libdir)
-	$(INSTALL_DATA) $(XMPTLOGCRTOBJ) $(DESTDIR)$(libdir)
-	$(INSTALL_DATA) $(XMPSCALASCACRTOBJ) $(DESTDIR)$(libdir)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
