@@ -91,6 +91,7 @@ extern _XMP_nodes_t *_XMP_create_nodes_by_template_ref(_XMP_template_t *template
 extern int _XMP_calc_template_owner_SCALAR(_XMP_template_t *template, int dim_index, long long ref_index);
 
 // xmp_util.c
+extern unsigned long long _XMP_get_on_ref_id(void);
 extern void *_XMP_alloc(size_t size);
 extern void _XMP_free(void *p);
 extern void _XMP_fatal(char *msg);

@@ -10,6 +10,26 @@
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
+static _XMP_template_t *_XMP_create_template_desc(int dim, _Bool is_fixed) {
+  // alloc descriptor
+  _XMP_template_t *t = _XMP_alloc(sizeof(_XMP_template_t) +
+                                  sizeof(_XMP_template_info_t) * (dim - 1));
+
+  // calc members
+  t->on_ref_id = _XMP_get_on_ref_id();
+
+  t->is_fixed = is_fixed;
+  t->is_distributed = false;
+  t->is_owner = false;
+
+  t->dim = dim;
+
+  t->onto_nodes = NULL;
+  t->chunk = NULL;
+
+  return t;
+}
+
 static void _XMP_calc_template_size(_XMP_template_t *t) {
   int dim;
   if (t->is_fixed) {
@@ -250,18 +270,9 @@ int _XMP_check_template_ref_inclusion(int ref_lower, int ref_upper, int ref_stri
 
 void _XMP_init_template_FIXED(_XMP_template_t **template, int dim, ...) {
   // alloc descriptor
-  _XMP_template_t *t = _XMP_alloc(sizeof(_XMP_template_t) +
-                                                sizeof(_XMP_template_info_t) * (dim - 1));
+  _XMP_template_t *t = _XMP_create_template_desc(dim, true);
 
-  // calc members
-  t->is_fixed = true;
-  t->is_distributed = true;
-  t->is_owner = false;
-  t->dim = dim;
-
-  t->onto_nodes = NULL;
-  t->chunk = NULL;
-
+  // calc info
   va_list args;
   va_start(args, dim);
   for (int i = 0; i < dim; i++) {
@@ -277,19 +288,9 @@ void _XMP_init_template_FIXED(_XMP_template_t **template, int dim, ...) {
 
 void _XMP_init_template_UNFIXED(_XMP_template_t **template, int dim, ...) {
   // alloc descriptor
-  _XMP_template_t *t = _XMP_alloc(sizeof(_XMP_template_t) +
-                                  sizeof(_XMP_template_info_t) * (dim - 1));
+  _XMP_template_t *t = _XMP_create_template_desc(dim, false);
 
-  // calc members
-  t->is_fixed = false;
-  t->is_distributed = false;
-  t->is_owner = false;
-
-  t->dim = dim;
-
-  t->onto_nodes = NULL;
-  t->chunk = NULL;
-
+  // calc info
   va_list args;
   va_start(args, dim);
   for(int i = 0; i < dim - 1; i++) {
