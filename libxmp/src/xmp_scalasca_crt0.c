@@ -10,9 +10,5 @@
 extern int _XMP_main(int argc, char *argv[]);
 
 int main(int argc, char *argv[]) {
-  _XMP_init();
-  int ret = _XMP_main(argc, argv);
-  _XMP_finalize();
-
-  return ret;
+  return _XMP_main(argc, argv);
 }
