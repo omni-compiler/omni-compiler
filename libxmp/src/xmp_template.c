@@ -391,12 +391,12 @@ void _XMP_dist_template_BLOCK_CYCLIC(_XMP_template_t *template, int template_ind
   _XMP_dist_template_CYCLIC_WIDTH(template, template_index, nodes_index, width);
 }
 
-_XMP_nodes_t *_XMP_create_nodes_by_template_ref(_XMP_template_t *template, int *shrink,
-                                                long long *lower, long long *upper, long long *stride) {
-  _XMP_ASSERT(template->is_fixed);
-  _XMP_ASSERT(template->is_distributed);
+_XMP_nodes_t *_XMP_create_nodes_by_template_ref(_XMP_template_t *ref_template, int *shrink,
+                                                long long *ref_lower, long long *ref_upper, long long *ref_stride) {
+  _XMP_ASSERT(ref_template->is_fixed);
+  _XMP_ASSERT(ref_template->is_distributed);
 
-  _XMP_nodes_t *onto_nodes = template->onto_nodes;
+  _XMP_nodes_t *onto_nodes = ref_template->onto_nodes;
   int onto_nodes_dim = onto_nodes->dim;
 
   int onto_nodes_shrink[onto_nodes_dim];
@@ -411,21 +411,21 @@ _XMP_nodes_t *_XMP_create_nodes_by_template_ref(_XMP_template_t *template, int *
   int new_nodes_dim_size[_XMP_N_MAX_DIM];
 
   int acc_dim_size = 1;
-  int template_dim = template->dim;
-  for (int i = 0; i < template_dim; i++) {
+  int ref_template_dim = ref_template->dim;
+  for (int i = 0; i < ref_template_dim; i++) {
     if (shrink[i]) {
       continue;
     }
 
-    _XMP_template_chunk_t *chunk = &(template->chunk[i]);
+    _XMP_template_chunk_t *chunk = &(ref_template->chunk[i]);
     int onto_nodes_index = chunk->onto_nodes_index;
     if (onto_nodes_index != _XMP_N_NO_ONTO_NODES) {
       onto_nodes_shrink[onto_nodes_index] = 0;
 
       int size = (chunk->onto_nodes_info)->size;
       // FIXME calc onto_nodes_ref_lower, onto_nodes_ref_upper, onto_nodes_ref_stride
-      if (_XMP_M_COUNT_TRIPLETi(lower[i], upper[i], stride[i]) == 1) {
-        int j = _XMP_calc_template_owner_SCALAR(template, i, lower[i]) + 1;
+      if (_XMP_M_COUNT_TRIPLETi(ref_lower[i], ref_upper[i], ref_stride[i]) == 1) {
+        int j = _XMP_calc_template_owner_SCALAR(ref_template, i, ref_lower[i]) + 1;
         onto_nodes_ref_lower[onto_nodes_index] = j;
         onto_nodes_ref_upper[onto_nodes_index] = j;
         onto_nodes_ref_stride[onto_nodes_index] = 1;

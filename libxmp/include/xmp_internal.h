@@ -86,9 +86,9 @@ extern void _XMP_finalize_comm(_XMP_comm *comm);
 // xmp_template.c
 extern int _XMP_check_template_ref_inclusion(int ref_lower, int ref_upper, int ref_stride,
                                              _XMP_template_t *t, int index);
-extern _XMP_nodes_t *_XMP_create_nodes_by_template_ref(_XMP_template_t *template, int *shrink,
-                                                       long long *lower, long long *upper, long long *stride);
-extern int _XMP_calc_template_owner_SCALAR(_XMP_template_t *template, int dim_index, long long ref_index);
+extern _XMP_nodes_t *_XMP_create_nodes_by_template_ref(_XMP_template_t *ref_template, int *shrink,
+                                                       long long *ref_lower, long long *ref_upper, long long *ref_stride);
+extern int _XMP_calc_template_owner_SCALAR(_XMP_template_t *ref_template, int dim_index, long long ref_index);
 
 // xmp_util.c
 extern unsigned long long _XMP_get_on_ref_id(void);

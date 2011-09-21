@@ -1,9 +1,0 @@
-LINKER=@MPI_CMD@
-OM_OPTIONS="${OM_OPTIONS} -L${OMNI_HOME}/lib"
-
-LOCK_TYPE=@OMP_LOCK_TYPE@
-LIB_THREAD=@OMP_THREAD_TYPE@
-LIB_OMPC=ompc_${LOCK_TYPE}_${LIB_THREAD}
-
-LIBS="${LIBS} -lxmp -lxmp_threads -l${LIB_OMPC} -l${LIB_THREAD} -ltlog"
-INPFILES="${INPFILES} ${OMNI_HOME}/lib/xmp_threads_crt0.o"
