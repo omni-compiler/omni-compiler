@@ -143,8 +143,8 @@ static void _XMP_set_task_desc(_XMP_task_desc_t *desc, _XMP_nodes_t *n, int exec
   desc->nodes = n;
   desc->execute = execute;
 
-  desc->on_ref = _XMP_N_TEMPLATE_REF;
-  desc->ref_template = ref_template;
+  desc->on_ref_id = ref_template->on_ref_id;
+
   int dim = ref_template->dim;
   for (int i = 0; i < dim; i++) {
     desc->ref_lower[i] = ref_lower[i];
@@ -156,11 +156,7 @@ static void _XMP_set_task_desc(_XMP_task_desc_t *desc, _XMP_nodes_t *n, int exec
 static int _XMP_compare_task_exec_cond(_XMP_task_desc_t *task_desc,
                                        _XMP_template_t *ref_template,
                                        long long *ref_lower, long long *ref_upper, long long *ref_stride) {
-  if (task_desc->on_ref != _XMP_N_TEMPLATE_REF) {
-    return _XMP_N_INT_FALSE;
-  }
-
-  if (ref_template != task_desc->ref_template) {
+  if (ref_template->on_ref_id != task_desc->on_ref_id) {
     return _XMP_N_INT_FALSE;
   }
 

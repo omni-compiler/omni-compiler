@@ -4,7 +4,6 @@
  *  $
  */
 
-#include <limits.h>
 #include <stdarg.h>
 #include "mpi.h"
 #include "xmp_internal.h"
@@ -294,9 +293,7 @@ static void _XMP_set_task_desc(_XMP_task_desc_t *desc, _XMP_nodes_t *n, int exec
   desc->nodes = n;
   desc->execute = execute;
 
-  desc->on_ref = _XMP_N_NODES_REF;
-  desc->ref_nodes = ref_nodes;
-  desc->ref_template = NULL;
+  desc->on_ref_id = ref_nodes->on_ref_id;
 
   int dim = ref_nodes->dim;
   for (int i = 0; i < dim; i++) {
@@ -309,12 +306,8 @@ static void _XMP_set_task_desc(_XMP_task_desc_t *desc, _XMP_nodes_t *n, int exec
 static int _XMP_compare_task_exec_cond(_XMP_task_desc_t *task_desc,
                                        _XMP_nodes_t *ref_nodes,
                                        int *ref_lower, int *ref_upper, int *ref_stride) {
-  if (task_desc->on_ref != _XMP_N_NODES_REF) {
-    return _XMP_N_INT_FALSE;
-  }
-
   // FIXME can use compare_nodes?
-  if (ref_nodes != task_desc->ref_nodes) {
+  if (ref_nodes->on_ref_id != task_desc->on_ref_id) {
     return _XMP_N_INT_FALSE;
   }
 
@@ -331,7 +324,7 @@ static int _XMP_compare_task_exec_cond(_XMP_task_desc_t *task_desc,
 }
 
 static int _XMP_compare_nodes(_XMP_nodes_t *a, _XMP_nodes_t *b) {
-  if (a == b) {
+  if (a->on_ref_id == b->on_ref_id) {
     return _XMP_N_INT_TRUE;
   }
 

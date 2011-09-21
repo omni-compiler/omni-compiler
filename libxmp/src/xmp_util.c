@@ -4,6 +4,7 @@
  *  $
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "mpi.h"
@@ -12,6 +13,10 @@
 static unsigned long long _XMP_on_ref_id_count = 0;
 
 unsigned long long _XMP_get_on_ref_id(void) {
+  if (_XMP_on_ref_id_count == ULLONG_MAX) {
+    _XMP_fatal("cannot create a new nodes/template: too many");
+  }
+
   return _XMP_on_ref_id_count++;
 }
 

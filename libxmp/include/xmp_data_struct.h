@@ -178,9 +178,8 @@ typedef struct _XMP_task_desc_type {
   _XMP_nodes_t *nodes;
   int execute;
 
-  int on_ref;
-  _XMP_nodes_t *ref_nodes;
-  _XMP_template_t *ref_template;
+  unsigned long long on_ref_id;
+
   int ref_lower[_XMP_N_MAX_DIM];
   int ref_upper[_XMP_N_MAX_DIM];
   int ref_stride[_XMP_N_MAX_DIM];
