@@ -64,19 +64,16 @@ public class XMPglobalDecl {
   public void setupGlobalConstructor() {
     if (XmOption.isXcalableMPGPU()) {
       _globalConstructorFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT,
-                                                 _env.declExternIdent("_XMP_gpu_init",
-                                                                      Xtype.Function(Xtype.voidType)).Call(null)));
+                                                 declExternFunc("_XMP_gpu_init").Call(null)));
     }
 
     if (XmOption.isXcalableMPthreads()) {
       _globalConstructorFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT,
-                                                 _env.declExternIdent("_XMP_threads_init",
-                                                                      Xtype.Function(Xtype.voidType)).Call(null)));
+                                                 declExternFunc("_XMP_threads_init").Call(null)));
     }
 
     _globalConstructorFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT,
-                                               _env.declExternIdent("_XMP_init",
-                                                                    Xtype.Function(Xtype.voidType)).Call(null)));
+                                               declExternFunc("_XMP_init").Call(null)));
 
     Xtype funcType = Xtype.Function(Xtype.voidType);
     funcType.setGccAttributes(Xcons.List(Xcode.GCC_ATTRIBUTES,
@@ -91,19 +88,16 @@ public class XMPglobalDecl {
   public void setupGlobalDestructor() {
     if (XmOption.isXcalableMPGPU()) {
       _globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT,
-                                               _env.declExternIdent("_XMP_gpu_finalize",
-                                                                    Xtype.Function(Xtype.voidType)).Call(null)));
+                                               declExternFunc("_XMP_gpu_finalize").Call(null)));
     }
 
     if (XmOption.isXcalableMPthreads()) {
       _globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT,
-                                               _env.declExternIdent("_XMP_threads_finalize",
-                                                                    Xtype.Function(Xtype.voidType)).Call(null)));
+                                               declExternFunc("_XMP_threads_finalize").Call(null)));
     }
 
     _globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT,
-                                             _env.declExternIdent("_XMP_finalize",
-                                                                  Xtype.Function(Xtype.voidType)).Call(null)));
+                                             declExternFunc("_XMP_finalize").Call(null)));
 
     Xtype funcType = Xtype.Function(Xtype.voidType);
     funcType.setGccAttributes(Xcons.List(Xcode.GCC_ATTRIBUTES,

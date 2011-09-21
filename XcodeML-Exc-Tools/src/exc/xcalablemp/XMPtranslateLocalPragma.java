@@ -385,7 +385,7 @@ public class XMPtranslateLocalPragma {
           Block newLoopBlock = translateThreadsClauseToOMPpragma(devArgs, reductionRefList, schedBaseBlock, loopIterList);
           schedBaseBlock.replace(newLoopBlock);
         } else {
-          XMP.warning("this compiler does not support threads clause");
+          XMP.warning("use '-enable-threads' compiler option to use 'threads' clause");
         }
       } else {
         throw new XMPexception("unknown clause in loop directive");
