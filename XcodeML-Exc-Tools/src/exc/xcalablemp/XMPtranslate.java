@@ -50,8 +50,6 @@ public class XMPtranslate implements XobjectDefVisitor {
       return;
     }
         
-    if (def.getName().equals("main")) replaceMain(def);
-
     FuncDefBlock fd = new FuncDefBlock(def);
 
     // translate directives
@@ -61,12 +59,6 @@ public class XMPtranslate implements XobjectDefVisitor {
     _rewriteExpr.rewrite(fd);
   }
 
-  private void replaceMain(XobjectDef def) {
-    Ident id = _globalDecl.findVarIdent("main");
-    id.setName("_XMP_main");
-    def.setName("_XMP_main");
-  }
-    
   public void set_all_profile(){
       _all_profile = true;
       _translateLocalPragma.set_all_profile();

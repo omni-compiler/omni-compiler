@@ -9,6 +9,7 @@ LIB_OMPC=ompc_${LOCK_TYPE}_${LIB_THREAD}
 for i in ${OM_OPTIONS}; do
     case ${i} in
         -enable-threads)
+            INPFILES="${INPFILES} ${OMNI_HOME}/lib/omp${OM_LANGID}_main.o"
             LIBS="${LIBS} -l${LIB_OMPC} -l${LIB_THREAD} -ltlog";;
         -prof-scalasca)
             hasScalasca=1;;
@@ -26,15 +27,5 @@ if test ${hasScalasca} -eq 1; then
     LINKER="scalasca --instrument @MPI_CMD@"
 fi
 
-crt0=${OMNI_HOME}/lib/xmp_crt0.o
-if test ${hasTlog} -eq 1; then
-   crt0=${OMNI_HOME}/lib/xmp_tlog_crt0.o 
-elif test ${hasScalasca} -eq 1; then
-   crt0=${OMNI_HOME}/lib/xmp_scalasca_crt0.o
-fi
-
 OM_OPTIONS="${newOpts} -L${OMNI_HOME}/lib"
 LIBS="${LIBS} -lxmp"
-INPFILES="${INPFILES} ${crt0}"
-
-
