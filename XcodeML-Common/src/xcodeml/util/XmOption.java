@@ -24,6 +24,8 @@ public class XmOption
     private static boolean _xcalableMPthreads = false;
     private static boolean _xcalableMPGPU = false;
 
+    private static boolean _tlog = false;
+
     /** if compiling Xcalable MP is enabled */
     private static boolean _openMP = false;
 
@@ -113,6 +115,22 @@ public class XmOption
     public static boolean isXcalableMPGPU()
     {
         return _xcalableMPGPU;
+    }
+
+    /**
+     * Sets compiler to or not to use tlog for MPI.
+     */
+    public static void setTlogMPIisEnable(boolean enable)
+    {
+        _tlog = enable;
+    }
+
+    /**
+     * Checks does compiler use tlog for MPI.
+     */
+    public static boolean tlogMPIisEnable()
+    {
+        return _tlog;
     }
 
     /**

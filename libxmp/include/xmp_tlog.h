@@ -30,7 +30,7 @@
 #define _XMP_M_TLOG_GMOVE_IN(dummy)     tlog_log(TLOG_EVENT_7_IN)
 #define _XMP_M_TLOG_GMOVE_OUT(dummy)    tlog_log(TLOG_EVENT_7_OUT)
 
-extern void _XMP_tlog_initialize(void);
+extern void _XMP_tlog_init(void);
 extern void _XMP_tlog_finalize(void);
 
 #endif /* _XMP_TLOG_H_ */

@@ -6,7 +6,7 @@
 
 #include "xmp_tlog.h"
 
-void _XMP_tlog_initialize(void) {
+void _XMP_tlog_init(void) {
   tlog_initialize();
 }
 

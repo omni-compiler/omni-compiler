@@ -203,7 +203,8 @@ public class omompx
         XmOption.setIsXcalableMP(xcalableMP);
         XmOption.setIsXcalableMPthreads(xcalableMPthreads);
         XmOption.setIsXcalableMPGPU(xcalableMPGPU);
-        
+        XmOption.setTlogMPIisEnable(doTlog);
+
         XobjectFile xobjFile;
         String srcPath = inXmlFile;
         if (XmOption.getLanguage() == XmLanguage.F) {

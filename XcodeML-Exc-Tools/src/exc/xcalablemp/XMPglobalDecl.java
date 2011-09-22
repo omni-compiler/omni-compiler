@@ -62,6 +62,11 @@ public class XMPglobalDecl {
   }
 
   public void setupGlobalConstructor() {
+    if (XmOption.tlogMPIisEnable()) {
+      _globalConstructorFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT,
+                                                 declExternFunc("_XMP_tlog_init").Call(null)));
+    }
+
     if (XmOption.isXcalableMPGPU()) {
       _globalConstructorFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT,
                                                  declExternFunc("_XMP_gpu_init").Call(null)));
@@ -86,6 +91,11 @@ public class XMPglobalDecl {
   }
 
   public void setupGlobalDestructor() {
+    if (XmOption.tlogMPIisEnable()) {
+      _globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT,
+                                               declExternFunc("_XMP_tlog_finalize").Call(null)));
+    }
+
     if (XmOption.isXcalableMPGPU()) {
       _globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT,
                                                declExternFunc("_XMP_gpu_finalize").Call(null)));
