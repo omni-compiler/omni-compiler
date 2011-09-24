@@ -6,6 +6,8 @@ LOCK_TYPE=@OMP_LOCK_TYPE@
 LIB_THREAD=@OMP_THREAD_TYPE@
 LIB_OMPC=ompc_${LOCK_TYPE}_${LIB_THREAD}
 
+LIBS="${LIBS} -lxmp"
+
 for i in ${OM_OPTIONS}; do
     case ${i} in
         -enable-threads)
@@ -28,4 +30,3 @@ if test ${hasScalasca} -eq 1; then
 fi
 
 OM_OPTIONS="${newOpts} -L${OMNI_HOME}/lib"
-LIBS="${LIBS} -lxmp"
