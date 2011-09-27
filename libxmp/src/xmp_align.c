@@ -356,6 +356,7 @@ void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...) {
   *array_addr = _XMP_alloc(total_elmts * (array_desc->type_size));
 
   // set members
+  array_desc->array_addr_p = array_addr;
   array_desc->total_elmts = total_elmts;
 }
 
@@ -383,6 +384,7 @@ void _XMP_alloc_array_EXTERN(void **array_addr, _XMP_array_t *array_desc, ...) {
   }
 
   // set members
+  array_desc->array_addr_p = array_addr;
   array_desc->total_elmts = total_elmts;
 }
 
@@ -414,6 +416,7 @@ void _XMP_init_array_addr(void **array_addr, void *init_addr,
   *array_addr = init_addr;
 
   // set members
+  array_desc->array_addr_p = array_addr;
   array_desc->total_elmts = total_elmts;
 }
 
