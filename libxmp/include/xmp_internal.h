@@ -72,6 +72,7 @@ extern int _XMP_calc_linear_rank_on_target_nodes(_XMP_nodes_t *n, int *rank_arra
 extern _XMP_nodes_ref_t *_XMP_init_nodes_ref(_XMP_nodes_t *n, int *rank_array);
 extern void _XMP_finalize_nodes_ref(_XMP_nodes_ref_t *nodes_ref);
 extern _XMP_nodes_ref_t *_XMP_create_nodes_ref_for_target_nodes(_XMP_nodes_t *n, int *rank_array, _XMP_nodes_t *target_nodes);
+extern void _XMP_calc_nodes_rank_array(_XMP_nodes_t *nodes, int *dst, int *src, int unknown_nodes_size);
 
 // xmp_nodes_stack.c
 extern void _XMP_push_nodes(_XMP_nodes_t *nodes);

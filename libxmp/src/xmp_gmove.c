@@ -408,8 +408,11 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
   if (dst_shrink_nodes_size == 1) {
     dst_rank[0] = _XMP_calc_linear_rank(dst_ref->nodes, dst_ref->ref);
   } else {
-    // FIXME implement
-    _XMP_fatal("unsupported case: gmove send-recv pattern");
+    _XMP_calc_nodes_rank_array(dst_ref->nodes, dst_rank, dst_ref->ref, dst_shrink_nodes_size);
+    for (int i = 0; i < dst_shrink_nodes_size; i++) {
+      printf("[%d] dst_rank[%d] = %d\n", _XMP_world_rank, i, dst_rank[i]);
+    }
+    _XMP_fatal("not supported\n");
   }
 
   // calc src_rank
@@ -418,8 +421,11 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
   if (src_shrink_nodes_size == 1) {
     src_rank[0] = _XMP_calc_linear_rank(src_ref->nodes, src_ref->ref);
   } else {
-    // FIXME implement
-    _XMP_fatal("unsupported case: gmove send-recv pattern");
+    _XMP_calc_nodes_rank_array(src_ref->nodes, src_rank, src_ref->ref, src_shrink_nodes_size);
+    for (int i = 0; i < src_shrink_nodes_size; i++) {
+      printf("[%d] src_rank[%d] = %d\n", _XMP_world_rank, i, src_rank[i]);
+    }
+    _XMP_fatal("not supported\n");
   }
 
   int wait_recv = _XMP_N_INT_FALSE;

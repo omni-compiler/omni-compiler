@@ -878,3 +878,23 @@ _XMP_nodes_ref_t *_XMP_create_nodes_ref_for_target_nodes(_XMP_nodes_t *n, int *r
     }
   }
 }
+
+void _XMP_calc_nodes_rank_array(_XMP_nodes_t *nodes, int *dst, int *src, int unknown_nodes_size) {
+  int calc_flag = _XMP_N_INT_TRUE;
+  int nodes_dim = nodes->dim;
+  for (int i = 0; i < nodes_dim; i++) {
+    if (src[i] == _XMP_N_UNSPECIFIED_RANK) {
+      calc_flag = _XMP_N_INT_FALSE;
+      int nodes_size = nodes->info[i].size;
+      int new_unknown_nodes_size = unknown_nodes_size / nodes_size;
+      for (int j = 0; j < nodes_size; j++) {
+        src[i] = j;
+        _XMP_calc_nodes_rank_array(nodes, dst + (j * new_unknown_nodes_size), src, new_unknown_nodes_size);
+      }
+    }
+  }
+
+  if (calc_flag) {
+    *dst = _XMP_calc_linear_rank(nodes, src);
+  }
+}
