@@ -353,7 +353,6 @@ int _XMP_gmove_HOMECOPY_SCALAR(_XMP_array_t *array, ...) {
   return execHere;
 }
 
-// FIXME not finished: src_rank may send data to multiple nodes
 void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
                                 _XMP_array_t *dst_array, _XMP_array_t *src_array, ...) {
   _XMP_ASSERT(dst_array->type_size == src_array->type_size); // FIXME checked by compiler
@@ -409,7 +408,6 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
     dst_ranks[0] = _XMP_calc_linear_rank(dst_ref->nodes, dst_ref->ref);
   } else {
     _XMP_translate_nodes_rank_array_to_ranks(dst_ref->nodes, dst_ranks, dst_ref->ref, dst_shrink_nodes_size);
-    _XMP_fatal("not supported\n");
   }
 
   // calc src_ranks
@@ -419,7 +417,6 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
     src_ranks[0] = _XMP_calc_linear_rank(src_ref->nodes, src_ref->ref);
   } else {
     _XMP_translate_nodes_rank_array_to_ranks(src_ref->nodes, src_ranks, src_ref->ref, src_shrink_nodes_size);
-    _XMP_fatal("not supported\n");
   }
 
   int wait_recv = _XMP_N_INT_FALSE;
@@ -427,15 +424,32 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
   for (int i = 0; i < dst_shrink_nodes_size; i++) {
     if (dst_ranks[i] == exec_rank) {
       wait_recv = _XMP_N_INT_TRUE;
-      // FIXME calc i for src_ranks[i]
-      MPI_Irecv(dst_addr, type_size, MPI_BYTE, src_ranks[0], _XMP_N_MPI_TAG_GMOVE, *exec_comm, &gmove_request);
+
+      int src_rank;
+      if ((dst_shrink_nodes_size == src_shrink_nodes_size) ||
+          (dst_shrink_nodes_size <  src_shrink_nodes_size)) {
+        src_rank = src_ranks[i];
+      } else {
+        src_rank = src_ranks[i % src_shrink_nodes_size];
+      }
+
+      MPI_Irecv(dst_addr, type_size, MPI_BYTE, src_rank, _XMP_N_MPI_TAG_GMOVE, *exec_comm, &gmove_request);
     }
   }
 
   for (int i = 0; i < src_shrink_nodes_size; i++) {
     if (src_ranks[i] == exec_rank) {
-      // FIXME calc i for dst_ranks[i]
-      MPI_Send(src_addr, type_size, MPI_BYTE, dst_ranks[0], _XMP_N_MPI_TAG_GMOVE, *exec_comm);
+      if ((dst_shrink_nodes_size == src_shrink_nodes_size) ||
+          (dst_shrink_nodes_size <  src_shrink_nodes_size)) {
+        if (i < dst_shrink_nodes_size) {
+          MPI_Send(src_addr, type_size, MPI_BYTE, dst_ranks[i], _XMP_N_MPI_TAG_GMOVE, *exec_comm);
+        }
+      } else {
+        for (int j = i; j < dst_shrink_nodes_size; j += src_shrink_nodes_size) {
+         // FIXME use Isend 
+         MPI_Send(src_addr, type_size, MPI_BYTE, dst_ranks[j], _XMP_N_MPI_TAG_GMOVE, *exec_comm);
+        } 
+      }
     }
   }
 
