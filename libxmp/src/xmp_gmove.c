@@ -445,10 +445,17 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
           MPI_Send(src_addr, type_size, MPI_BYTE, dst_ranks[i], _XMP_N_MPI_TAG_GMOVE, *exec_comm);
         }
       } else {
+        int request_size = _XMP_M_COUNT_TRIPLETi(i, dst_shrink_nodes_size, src_shrink_nodes_size);
+        MPI_Request *requests = _XMP_alloc(sizeof(MPI_Request) * request_size);
+
+        int request_count = 0;
         for (int j = i; j < dst_shrink_nodes_size; j += src_shrink_nodes_size) {
-         // FIXME use Isend 
-         MPI_Send(src_addr, type_size, MPI_BYTE, dst_ranks[j], _XMP_N_MPI_TAG_GMOVE, *exec_comm);
-        } 
+          MPI_Isend(src_addr, type_size, MPI_BYTE, dst_ranks[j], _XMP_N_MPI_TAG_GMOVE, *exec_comm, requests + request_count);
+          request_count++;
+        }
+
+        MPI_Waitall(request_size, requests, MPI_STATUSES_IGNORE);
+        _XMP_free(requests);
       }
     }
   }
