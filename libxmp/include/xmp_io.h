@@ -22,7 +22,6 @@
 
 // --------------- including headers  --------------------------------
 #include "mpi.h"
-//#include "xmp_internal.h"
 
 // --------------- structures ----------------------------------------
 typedef struct xmp_file_t {
