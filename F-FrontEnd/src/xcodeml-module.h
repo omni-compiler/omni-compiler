@@ -8,6 +8,9 @@
  * \file xcodeml-module.h
  */
 
+#ifndef _XCODEML_MODULE_H_
+#define _XCODEML_MODULE_H_
+
 extern int use_module(const char * module_filename, const char * fortran_filename);
 extern int use_module_to(const char * module_filename, FILE * fd);
 
@@ -39,3 +42,5 @@ extern void symbol_filter_addElem(symbol_filter * filter, char * use, char * loc
 extern char * apply_filter(symbol_filter * filter, char * symbol);
 extern int is_use_symbol(char *symbol);
 extern char * convert_to_non_use_symbol(char *orgname);
+
+#endif /* _XCODEML_MODULE_H_ */

@@ -159,18 +159,40 @@ xcodeml_GetElementValue(XcodeMLNode *ndPtr) {
     return "";
 }
 
+#include "F-front.h"
 
 XcodeMLNode *
 xcodeml_ParseFile(const char *fileName) {
+
+    char buff[MAX_PATH_LEN];
+    xmlDocPtr doc;
+    extern char *includeDirv[];
+    extern int includeDirvI;
+    int i;
+
     XcodeMLNode *ret = NULL;
     xmlNode *rootNode = NULL;
     bool succeeded = false;
 
-    xmlDocPtr doc = xmlReadFile(fileName, NULL,
-                                XML_PARSE_NOBLANKS | XML_PARSE_NONET);
+    doc = xmlReadFile(fileName, NULL, XML_PARSE_NOBLANKS | XML_PARSE_NONET);
+
+    if (!doc){
+
+      for (i = 0; i < includeDirvI; i++) {
+
+	strcpy(buff, includeDirv[i]);
+	strcat(buff, "/");
+	strcat(buff, fileName);
+
+	doc = xmlReadFile(buff, NULL, XML_PARSE_NOBLANKS | XML_PARSE_NONET);
+	if (doc) break;
+	
+      }
+    }
+
     if (doc == NULL) {
-        fprintf(stderr, "Can't parse \"%s\".\n", fileName);
-        goto Done;
+      fprintf(stderr, "Can't parse \"%s\".\n", fileName);
+      goto Done;
     }
 
     rootNode = xmlDocGetRootElement(doc);
