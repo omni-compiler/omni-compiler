@@ -26,7 +26,7 @@ package xcodeml.c.binding.gen;
 import xcodeml.binding.*;
 
 /**
- * @version XcodeML_C.rng 1.0 (Mon Aug 15 15:55:19 JST 2011)
+ * @version XcodeML_C.rng 1.0 (Fri Oct 07 17:51:14 JST 2011)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public interface IRVisitor {
@@ -149,21 +149,6 @@ public interface IRVisitor {
      * @param visitable
      */
     void leave(XbcArrayAddr visitable);
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    boolean enter(XbcSubArrayRef visitable);
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    void leave(XbcSubArrayRef visitable);
 
     /**
      * Visits this node for enter behavior.
@@ -306,6 +291,21 @@ public interface IRVisitor {
      * @param visitable
      * @return boolean
      */
+    boolean enter(XbcSubArrayRef visitable);
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    void leave(XbcSubArrayRef visitable);
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
     boolean enter(XbcCoArrayRef visitable);
 
     /**
@@ -321,21 +321,6 @@ public interface IRVisitor {
      * @param visitable
      * @return boolean
      */
-    boolean enter(XbcVar visitable);
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    void leave(XbcVar visitable);
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
     boolean enter(XbcMemberRef visitable);
 
     /**
@@ -344,6 +329,21 @@ public interface IRVisitor {
      * @param visitable
      */
     void leave(XbcMemberRef visitable);
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    boolean enter(XbcVar visitable);
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    void leave(XbcVar visitable);
 
     /**
      * Visits this node for enter behavior.
@@ -419,6 +419,36 @@ public interface IRVisitor {
      * @param visitable
      */
     void leave(XbcCompoundValueAddrExpr visitable);
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    boolean enter(XbcCoArrayAssignExpr visitable);
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    void leave(XbcCoArrayAssignExpr visitable);
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    boolean enter(XbcAddrOfExpr visitable);
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    void leave(XbcAddrOfExpr visitable);
 
     /**
      * Visits this node for enter behavior.
@@ -516,14 +546,14 @@ public interface IRVisitor {
      * @param visitable
      * @return boolean
      */
-    boolean enter(XbcGccAlignOfExpr visitable);
+    boolean enter(XbcMemberArrayAddr visitable);
 
     /**
      * Visits this node for leave behavior.
      *
      * @param visitable
      */
-    void leave(XbcGccAlignOfExpr visitable);
+    void leave(XbcMemberArrayAddr visitable);
 
     /**
      * Visits this node for enter behavior.
@@ -531,14 +561,14 @@ public interface IRVisitor {
      * @param visitable
      * @return boolean
      */
-    boolean enter(XbcGccLabelAddr visitable);
+    boolean enter(XbcCommaExpr visitable);
 
     /**
      * Visits this node for leave behavior.
      *
      * @param visitable
      */
-    void leave(XbcGccLabelAddr visitable);
+    void leave(XbcCommaExpr visitable);
 
     /**
      * Visits this node for enter behavior.
@@ -546,14 +576,14 @@ public interface IRVisitor {
      * @param visitable
      * @return boolean
      */
-    boolean enter(XbcCoArrayAssignExpr visitable);
+    boolean enter(XbcCondExpr visitable);
 
     /**
      * Visits this node for leave behavior.
      *
      * @param visitable
      */
-    void leave(XbcCoArrayAssignExpr visitable);
+    void leave(XbcCondExpr visitable);
 
     /**
      * Visits this node for enter behavior.
@@ -591,14 +621,14 @@ public interface IRVisitor {
      * @param visitable
      * @return boolean
      */
-    boolean enter(XbcMemberArrayAddr visitable);
+    boolean enter(XbcUnaryMinusExpr visitable);
 
     /**
      * Visits this node for leave behavior.
      *
      * @param visitable
      */
-    void leave(XbcMemberArrayAddr visitable);
+    void leave(XbcUnaryMinusExpr visitable);
 
     /**
      * Visits this node for enter behavior.
@@ -606,14 +636,119 @@ public interface IRVisitor {
      * @param visitable
      * @return boolean
      */
-    boolean enter(XbcTypeName visitable);
+    boolean enter(XbcBitNotExpr visitable);
 
     /**
      * Visits this node for leave behavior.
      *
      * @param visitable
      */
-    void leave(XbcTypeName visitable);
+    void leave(XbcBitNotExpr visitable);
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    boolean enter(XbcLogNotExpr visitable);
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    void leave(XbcLogNotExpr visitable);
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    boolean enter(XbcPostIncrExpr visitable);
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    void leave(XbcPostIncrExpr visitable);
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    boolean enter(XbcPostDecrExpr visitable);
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    void leave(XbcPostDecrExpr visitable);
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    boolean enter(XbcPreIncrExpr visitable);
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    void leave(XbcPreIncrExpr visitable);
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    boolean enter(XbcPreDecrExpr visitable);
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    void leave(XbcPreDecrExpr visitable);
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    boolean enter(XbcGccAlignOfExpr visitable);
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    void leave(XbcGccAlignOfExpr visitable);
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    boolean enter(XbcGccLabelAddr visitable);
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    void leave(XbcGccLabelAddr visitable);
 
     /**
      * Visits this node for enter behavior.
@@ -629,6 +764,21 @@ public interface IRVisitor {
      * @param visitable
      */
     void leave(XbcPointerRef visitable);
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    boolean enter(XbcTypeName visitable);
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    void leave(XbcTypeName visitable);
 
     /**
      * Visits this node for enter behavior.
@@ -1071,14 +1221,14 @@ public interface IRVisitor {
      * @param visitable
      * @return boolean
      */
-    boolean enter(XbcUnaryMinusExpr visitable);
+    boolean enter(XbcIndexRange visitable);
 
     /**
      * Visits this node for leave behavior.
      *
      * @param visitable
      */
-    void leave(XbcUnaryMinusExpr visitable);
+    void leave(XbcIndexRange visitable);
 
     /**
      * Visits this node for enter behavior.
@@ -1086,14 +1236,14 @@ public interface IRVisitor {
      * @param visitable
      * @return boolean
      */
-    boolean enter(XbcBitNotExpr visitable);
+    boolean enter(XbcLowerBound visitable);
 
     /**
      * Visits this node for leave behavior.
      *
      * @param visitable
      */
-    void leave(XbcBitNotExpr visitable);
+    void leave(XbcLowerBound visitable);
 
     /**
      * Visits this node for enter behavior.
@@ -1101,14 +1251,14 @@ public interface IRVisitor {
      * @param visitable
      * @return boolean
      */
-    boolean enter(XbcLogNotExpr visitable);
+    boolean enter(XbcUpperBound visitable);
 
     /**
      * Visits this node for leave behavior.
      *
      * @param visitable
      */
-    void leave(XbcLogNotExpr visitable);
+    void leave(XbcUpperBound visitable);
 
     /**
      * Visits this node for enter behavior.
@@ -1116,104 +1266,14 @@ public interface IRVisitor {
      * @param visitable
      * @return boolean
      */
-    boolean enter(XbcCommaExpr visitable);
+    boolean enter(XbcStep visitable);
 
     /**
      * Visits this node for leave behavior.
      *
      * @param visitable
      */
-    void leave(XbcCommaExpr visitable);
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    boolean enter(XbcPostIncrExpr visitable);
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    void leave(XbcPostIncrExpr visitable);
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    boolean enter(XbcPostDecrExpr visitable);
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    void leave(XbcPostDecrExpr visitable);
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    boolean enter(XbcPreIncrExpr visitable);
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    void leave(XbcPreIncrExpr visitable);
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    boolean enter(XbcPreDecrExpr visitable);
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    void leave(XbcPreDecrExpr visitable);
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    boolean enter(XbcCondExpr visitable);
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    void leave(XbcCondExpr visitable);
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    boolean enter(XbcCompoundValue visitable);
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    void leave(XbcCompoundValue visitable);
+    void leave(XbcStep visitable);
 
     /**
      * Visits this node for enter behavior.
@@ -1229,6 +1289,21 @@ public interface IRVisitor {
      * @param visitable
      */
     void leave(XbcDesignatedValue visitable);
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    boolean enter(XbcCompoundValue visitable);
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    void leave(XbcCompoundValue visitable);
 
     /**
      * Visits this node for enter behavior.
@@ -1724,66 +1799,6 @@ public interface IRVisitor {
      * @param visitable
      */
     void leave(XbcFunctionDecl visitable);
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    boolean enter(XbcIndexRange visitable);
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    void leave(XbcIndexRange visitable);
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    boolean enter(XbcLowerBound visitable);
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    void leave(XbcLowerBound visitable);
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    boolean enter(XbcUpperBound visitable);
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    void leave(XbcUpperBound visitable);
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    boolean enter(XbcStep visitable);
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    void leave(XbcStep visitable);
 
     /**
      * Visits this node for enter behavior.

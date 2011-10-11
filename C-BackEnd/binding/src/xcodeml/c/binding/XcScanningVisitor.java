@@ -196,6 +196,12 @@ public class XcScanningVisitor extends RVisitorBase
     }
 
     @Override
+    public boolean enter(XbcAddrOfExpr visitable)
+    {
+        return _enterChildren((IRNode)visitable);
+    }
+
+    @Override
     public boolean enter(XbcBitNotExpr visitable)
     {
         return _enterChildren((IRNode)visitable);

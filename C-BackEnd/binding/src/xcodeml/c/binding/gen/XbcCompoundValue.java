@@ -51,10 +51,10 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_C.rng (Mon Aug 15 15:55:18 JST 2011)
+ * @version XcodeML_C.rng (Fri Oct 07 17:51:13 JST 2011)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
-public class XbcCompoundValue extends xcodeml.c.obj.XmcObj implements java.io.Serializable, Cloneable, IXbcDesignatedValueChoice, IXbcCompoundLiteralChoice, xcodeml.c.binding.IXbcAnnotation, IRVisitable, IRNode, IXbcValueChoice {
+public class XbcCompoundValue extends xcodeml.c.obj.XmcObj implements java.io.Serializable, Cloneable, IXbcCompoundLiteralChoice, xcodeml.c.binding.IXbcAnnotation, IRVisitable, IRNode, IXbcDesignatedValueChoice, IXbcValueChoice {
     public static final String ISGCCSYNTAX_0 = "0";
     public static final String ISGCCSYNTAX_1 = "1";
     public static final String ISGCCSYNTAX_TRUE = "true";
@@ -247,18 +247,20 @@ public class XbcCompoundValue extends xcodeml.c.obj.XmcObj implements java.io.Se
         while (true) {
             if (XbcBuiltinOp.isMatch(stack)) {
                 addCompoundLiteral(factory.createXbcBuiltinOp(stack));
-            } else if (XbcArrayRef.isMatch(stack)) {
-                addCompoundLiteral(factory.createXbcArrayRef(stack));
             } else if (XbcSubArrayRef.isMatch(stack)) {
                 addCompoundLiteral(factory.createXbcSubArrayRef(stack));
-            } else if (XbcCoArrayRef.isMatch(stack)) {
-                addCompoundLiteral(factory.createXbcCoArrayRef(stack));
+            } else if (XbcArrayRef.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcArrayRef(stack));
             } else if (XbcFunctionCall.isMatch(stack)) {
                 addCompoundLiteral(factory.createXbcFunctionCall(stack));
             } else if (XbcGccCompoundExpr.isMatch(stack)) {
                 addCompoundLiteral(factory.createXbcGccCompoundExpr(stack));
+            } else if (XbcCoArrayRef.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcCoArrayRef(stack));
             } else if (XbcCastExpr.isMatch(stack)) {
                 addCompoundLiteral(factory.createXbcCastExpr(stack));
+            } else if (XbcMemberRef.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcMemberRef(stack));
             } else if (XbcStringConstant.isMatch(stack)) {
                 addCompoundLiteral(factory.createXbcStringConstant(stack));
             } else if (XbcVar.isMatch(stack)) {
@@ -271,10 +273,24 @@ public class XbcCompoundValue extends xcodeml.c.obj.XmcObj implements java.io.Se
                 addCompoundLiteral(factory.createXbcCompoundValueExpr(stack));
             } else if (XbcCompoundValueAddrExpr.isMatch(stack)) {
                 addCompoundLiteral(factory.createXbcCompoundValueAddrExpr(stack));
-            } else if (XbcSizeOfExpr.isMatch(stack)) {
-                addCompoundLiteral(factory.createXbcSizeOfExpr(stack));
-            } else if (XbcGccAlignOfExpr.isMatch(stack)) {
-                addCompoundLiteral(factory.createXbcGccAlignOfExpr(stack));
+            } else if (XbcAddrOfExpr.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcAddrOfExpr(stack));
+            } else if (XbcDesignatedValue.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcDesignatedValue(stack));
+            } else if (XbcMemberAddr.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcMemberAddr(stack));
+            } else if (XbcMemberArrayRef.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcMemberArrayRef(stack));
+            } else if (XbcMemberArrayAddr.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcMemberArrayAddr(stack));
+            } else if (XbcUnaryMinusExpr.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcUnaryMinusExpr(stack));
+            } else if (XbcLogNotExpr.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcLogNotExpr(stack));
+            } else if (XbcPreDecrExpr.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcPreDecrExpr(stack));
+            } else if (XbcCoArrayAssignExpr.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcCoArrayAssignExpr(stack));
             } else if (XbcIntConstant.isMatch(stack)) {
                 addCompoundLiteral(factory.createXbcIntConstant(stack));
             } else if (XbcFloatConstant.isMatch(stack)) {
@@ -285,24 +301,28 @@ public class XbcCompoundValue extends xcodeml.c.obj.XmcObj implements java.io.Se
                 addCompoundLiteral(factory.createXbcMoeConstant(stack));
             } else if (XbcFuncAddr.isMatch(stack)) {
                 addCompoundLiteral(factory.createXbcFuncAddr(stack));
+            } else if (XbcSizeOfExpr.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcSizeOfExpr(stack));
+            } else if (XbcGccAlignOfExpr.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcGccAlignOfExpr(stack));
             } else if (XbcGccLabelAddr.isMatch(stack)) {
                 addCompoundLiteral(factory.createXbcGccLabelAddr(stack));
-            } else if (XbcCoArrayAssignExpr.isMatch(stack)) {
-                addCompoundLiteral(factory.createXbcCoArrayAssignExpr(stack));
-            } else if (XbcDesignatedValue.isMatch(stack)) {
-                addCompoundLiteral(factory.createXbcDesignatedValue(stack));
-            } else if (XbcCompoundValue.isMatch(stack)) {
-                addCompoundLiteral(factory.createXbcCompoundValue(stack));
-            } else if (XbcMemberAddr.isMatch(stack)) {
-                addCompoundLiteral(factory.createXbcMemberAddr(stack));
-            } else if (XbcMemberRef.isMatch(stack)) {
-                addCompoundLiteral(factory.createXbcMemberRef(stack));
-            } else if (XbcMemberArrayRef.isMatch(stack)) {
-                addCompoundLiteral(factory.createXbcMemberArrayRef(stack));
-            } else if (XbcMemberArrayAddr.isMatch(stack)) {
-                addCompoundLiteral(factory.createXbcMemberArrayAddr(stack));
+            } else if (XbcCommaExpr.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcCommaExpr(stack));
+            } else if (XbcCondExpr.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcCondExpr(stack));
             } else if (XbcPointerRef.isMatch(stack)) {
                 addCompoundLiteral(factory.createXbcPointerRef(stack));
+            } else if (XbcBitNotExpr.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcBitNotExpr(stack));
+            } else if (XbcPostIncrExpr.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcPostIncrExpr(stack));
+            } else if (XbcPostDecrExpr.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcPostDecrExpr(stack));
+            } else if (XbcPreIncrExpr.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcPreIncrExpr(stack));
+            } else if (XbcCompoundValue.isMatch(stack)) {
+                addCompoundLiteral(factory.createXbcCompoundValue(stack));
             } else if (XbcAssignExpr.isMatch(stack)) {
                 addCompoundLiteral(factory.createXbcAssignExpr(stack));
             } else if (XbcPlusExpr.isMatch(stack)) {
@@ -361,24 +381,6 @@ public class XbcCompoundValue extends xcodeml.c.obj.XmcObj implements java.io.Se
                 addCompoundLiteral(factory.createXbcLogAndExpr(stack));
             } else if (XbcLogOrExpr.isMatch(stack)) {
                 addCompoundLiteral(factory.createXbcLogOrExpr(stack));
-            } else if (XbcUnaryMinusExpr.isMatch(stack)) {
-                addCompoundLiteral(factory.createXbcUnaryMinusExpr(stack));
-            } else if (XbcBitNotExpr.isMatch(stack)) {
-                addCompoundLiteral(factory.createXbcBitNotExpr(stack));
-            } else if (XbcLogNotExpr.isMatch(stack)) {
-                addCompoundLiteral(factory.createXbcLogNotExpr(stack));
-            } else if (XbcCommaExpr.isMatch(stack)) {
-                addCompoundLiteral(factory.createXbcCommaExpr(stack));
-            } else if (XbcPostIncrExpr.isMatch(stack)) {
-                addCompoundLiteral(factory.createXbcPostIncrExpr(stack));
-            } else if (XbcPostDecrExpr.isMatch(stack)) {
-                addCompoundLiteral(factory.createXbcPostDecrExpr(stack));
-            } else if (XbcPreIncrExpr.isMatch(stack)) {
-                addCompoundLiteral(factory.createXbcPreIncrExpr(stack));
-            } else if (XbcPreDecrExpr.isMatch(stack)) {
-                addCompoundLiteral(factory.createXbcPreDecrExpr(stack));
-            } else if (XbcCondExpr.isMatch(stack)) {
-                addCompoundLiteral(factory.createXbcCondExpr(stack));
             } else {
                 break;
             }
@@ -929,17 +931,19 @@ public class XbcCompoundValue extends xcodeml.c.obj.XmcObj implements java.io.Se
         while (true) {
             if (XbcBuiltinOp.isMatchHungry(target)) {
                 $match$ = true;
-            } else if (XbcArrayRef.isMatchHungry(target)) {
-                $match$ = true;
             } else if (XbcSubArrayRef.isMatchHungry(target)) {
                 $match$ = true;
-            } else if (XbcCoArrayRef.isMatchHungry(target)) {
+            } else if (XbcArrayRef.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbcFunctionCall.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbcGccCompoundExpr.isMatchHungry(target)) {
                 $match$ = true;
+            } else if (XbcCoArrayRef.isMatchHungry(target)) {
+                $match$ = true;
             } else if (XbcCastExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcMemberRef.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbcStringConstant.isMatchHungry(target)) {
                 $match$ = true;
@@ -953,9 +957,23 @@ public class XbcCompoundValue extends xcodeml.c.obj.XmcObj implements java.io.Se
                 $match$ = true;
             } else if (XbcCompoundValueAddrExpr.isMatchHungry(target)) {
                 $match$ = true;
-            } else if (XbcSizeOfExpr.isMatchHungry(target)) {
+            } else if (XbcAddrOfExpr.isMatchHungry(target)) {
                 $match$ = true;
-            } else if (XbcGccAlignOfExpr.isMatchHungry(target)) {
+            } else if (XbcDesignatedValue.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcMemberAddr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcMemberArrayRef.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcMemberArrayAddr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcUnaryMinusExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcLogNotExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcPreDecrExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcCoArrayAssignExpr.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbcIntConstant.isMatchHungry(target)) {
                 $match$ = true;
@@ -967,23 +985,27 @@ public class XbcCompoundValue extends xcodeml.c.obj.XmcObj implements java.io.Se
                 $match$ = true;
             } else if (XbcFuncAddr.isMatchHungry(target)) {
                 $match$ = true;
+            } else if (XbcSizeOfExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcGccAlignOfExpr.isMatchHungry(target)) {
+                $match$ = true;
             } else if (XbcGccLabelAddr.isMatchHungry(target)) {
                 $match$ = true;
-            } else if (XbcCoArrayAssignExpr.isMatchHungry(target)) {
+            } else if (XbcCommaExpr.isMatchHungry(target)) {
                 $match$ = true;
-            } else if (XbcDesignatedValue.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbcCompoundValue.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbcMemberAddr.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbcMemberRef.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbcMemberArrayRef.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbcMemberArrayAddr.isMatchHungry(target)) {
+            } else if (XbcCondExpr.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbcPointerRef.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcBitNotExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcPostIncrExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcPostDecrExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcPreIncrExpr.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbcCompoundValue.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbcAssignExpr.isMatchHungry(target)) {
                 $match$ = true;
@@ -1042,24 +1064,6 @@ public class XbcCompoundValue extends xcodeml.c.obj.XmcObj implements java.io.Se
             } else if (XbcLogAndExpr.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbcLogOrExpr.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbcUnaryMinusExpr.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbcBitNotExpr.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbcLogNotExpr.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbcCommaExpr.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbcPostIncrExpr.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbcPostDecrExpr.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbcPreIncrExpr.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbcPreDecrExpr.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbcCondExpr.isMatchHungry(target)) {
                 $match$ = true;
             } else {
                 break;

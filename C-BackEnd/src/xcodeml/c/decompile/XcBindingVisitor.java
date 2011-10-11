@@ -1943,6 +1943,14 @@ public class XcBindingVisitor extends RVisitorBase
     }
 
     @Override
+    public boolean enter(XbcAddrOfExpr visitable)
+    {
+        XcOperatorObj obj = new XcOperatorObj(XcOperatorEnum.ADDROF);
+        XcBindingVisitor visitor = _setAsNode(obj, (XmObj)visitable);
+        return _enter(visitor, visitable.getExpressions());
+    }
+
+    @Override
     public boolean enter(XbcGccAlignOfExpr visitable)
     {
         return _enterExprOrType((IXbcSizeOrAlignExpr)visitable, visitable.getExprOrType(), XcOperatorEnum.ALIGNOF);

@@ -29,7 +29,7 @@ public enum XcOperatorEnum
      *  (comma operator)
      *      commaExpr
      *  (sizeof, alignof operators)
-     *      sizeOfExpr, gccAlignOfExpr
+     *      sizeOfExpr, addrOfExpr, gccAlignOfExpr
      *  (label operator)
      *      labelAddr
      */
@@ -73,6 +73,7 @@ public enum XcOperatorEnum
     COND            (XcOperatorTypeEnum.COND, "?"),
     COMMA           (XcOperatorTypeEnum.COMMA, ","),
     SIZEOF          (XcOperatorTypeEnum.SIZEOF, "sizeof"),
+    ADDROF          (XcOperatorTypeEnum.SIZEOF, "&"),
     ALIGNOF         (XcOperatorTypeEnum.SIZEOF, "__alignof__"),
     LABELADDR       (XcOperatorTypeEnum.LABELADDR, "&&"),
     ;

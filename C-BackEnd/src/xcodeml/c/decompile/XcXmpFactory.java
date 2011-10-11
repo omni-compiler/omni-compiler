@@ -96,6 +96,11 @@ public final class XcXmpFactory
         return new XcSizeOfExprObj(XcOperatorEnum.SIZEOF, type);
     }
 
+    private static XcAddrOfExprObj _createAddrOf(XcExprObj expr)
+    {
+        return new XcAddrOfExprObj(XcOperatorEnum.ADDROF, expr);
+    }
+
 //     /**
 //      * Creates __xmp_coarray_dim_t array.
 //      */

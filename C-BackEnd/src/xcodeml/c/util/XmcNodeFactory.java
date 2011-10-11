@@ -614,6 +614,11 @@ public class XmcNodeFactory extends AbstractXcodeML_CFactory
         return new XmcSizeOfExpr();
     }
 
+    @Override
+    public XbcAddrOfExpr createXbcAddrOfExpr()
+    {
+        return new XmcAddrOfExpr();
+    }
 
     @Override
     public XbcBuiltinOp createXbcBuiltinOp()

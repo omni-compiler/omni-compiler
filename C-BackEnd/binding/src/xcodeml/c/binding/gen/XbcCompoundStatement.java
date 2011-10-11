@@ -55,7 +55,7 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_C.rng (Mon Aug 15 15:55:17 JST 2011)
+ * @version XcodeML_C.rng (Fri Oct 07 17:51:13 JST 2011)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbcCompoundStatement extends xcodeml.c.obj.XmcObj implements java.io.Serializable, Cloneable, IXbcStatementsChoice, xcodeml.c.binding.IXbcStatement, IRVisitable, IRNode {

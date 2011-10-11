@@ -57,10 +57,10 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_C.rng (Mon Aug 15 15:55:17 JST 2011)
+ * @version XcodeML_C.rng (Fri Oct 07 17:51:13 JST 2011)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
-public class XbcGccCompoundExpr extends xcodeml.c.obj.XmcObj implements java.io.Serializable, Cloneable, IXbcValueChoice, IXbcCastExprChoice, IXbcExprOrTypeChoice, IXbcCompoundLiteralChoice, IXbcDesignatedValueChoice, IXbcGotoStatementChoice, xcodeml.c.binding.IXbcTypedExpr,xcodeml.c.binding.IXbcHasGccExtension, IRVisitable, IRNode, IXbcSubArrayDimensionChoice, IXbcBuiltinOpChoice, IXbcExpressionsChoice {
+public class XbcGccCompoundExpr extends xcodeml.c.obj.XmcObj implements java.io.Serializable, Cloneable, IXbcSubArrayDimensionChoice, IXbcCastExprChoice, IXbcExprOrTypeChoice, IXbcValueChoice, IXbcDesignatedValueChoice, IXbcCompoundLiteralChoice, IXbcGotoStatementChoice, xcodeml.c.binding.IXbcTypedExpr,xcodeml.c.binding.IXbcHasGccExtension, IRVisitable, IRNode, IXbcBuiltinOpChoice, IXbcExpressionsChoice {
     public static final String ISGCCSYNTAX_0 = "0";
     public static final String ISGCCSYNTAX_1 = "1";
     public static final String ISGCCSYNTAX_TRUE = "true";
