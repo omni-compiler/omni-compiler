@@ -850,6 +850,12 @@ public class XmcXobjectToXmObjTranslator
                 xmobj = m;
             }
             break;
+        case ADDR_OF_EXPR: {
+                XbcAddrOfExpr m = _factory.createXbcAddrOfExpr();
+                m.setExpressions(transExpr(xobj.getArg(0)));
+                xmobj = m;
+            }
+            break;
         default: {
                 fatal_dump("cannot convert Xcode to XcodeML.", xobj);
             }

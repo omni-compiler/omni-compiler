@@ -1724,6 +1724,11 @@ public class XmcXmObjToXobjectTranslator extends RVisitorBase
     }
 
     @Override
+    public boolean enter(XbcAddrOfExpr xmobj) {
+        return enterAsXobjList(xmobj, Xcode.ADDR_OF_EXPR, xmobj.getExpressions());
+    }
+
+    @Override
     public boolean enter(XbcLowerBound xmobj)
     {
         return enterAsXobjList(xmobj, Xcode.LOWER_BOUND, xmobj.getExpressions());

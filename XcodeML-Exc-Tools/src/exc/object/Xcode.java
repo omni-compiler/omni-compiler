@@ -264,6 +264,7 @@ public enum Xcode
     XMP_PRAGMA                      ( 193, 'L', null, null),
      // for ARRAY_REF, SUB_ARRAY_REF, etc ...
     INDEX_RANGE                     ( 194, 'L', XbcIndexRange.class, null),
+    ADDR_OF_EXPR                    ( 195, 'L', XbcAddrOfExpr.class, null),
      // -----------------
      // Codes dynamically assignable
     DYN_1                           ( 1001, 'L', null, null),
