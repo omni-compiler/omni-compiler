@@ -58,8 +58,10 @@ extern void _XMP_init_coarray_DYNAMIC(void **coarray, void *addr, int type, size
 extern void _XMP_finalize_coarray(void *coarray);
 
 // xmp_coarray_RMA.c
-extern void _XMP_coarray_get(void *coarray, void *addr);
-extern void _XMP_coarray_put(void *addr, void *coarray);
+extern void _XMP_coarray_get_SCALAR(void *coarray, void *addr);
+extern void _XMP_coarray_get_ARRAY(void *coarray, void *addr);
+extern void _XMP_coarray_put_SCALAR(void *addr, void *coarray);
+extern void _XMP_coarray_put_ARRAY(void *addr, void *coarray);
 
 // xmp_gmove.c
 extern void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, void *array, ...);

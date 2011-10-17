@@ -5,9 +5,7 @@
 static void _XMP_init_coarray_comm(_XMP_coarray_t *coarray) {
   size_t type_size = coarray->type_size;
 
-  // XXX create comm layer for other comm libraries
   MPI_Win *win = _XMP_alloc(sizeof(MPI_Win));
-
   MPI_Win_create(coarray->addr, coarray->total_elmts * type_size, type_size,
                  MPI_INFO_NULL, MPI_COMM_WORLD, win);
 
@@ -79,10 +77,7 @@ void _XMP_init_coarray_DYNAMIC(_XMP_coarray_t **coarray, void *addr,
 }
 
 void _XMP_finalize_coarray(_XMP_coarray_t *coarray) {
-  // XXX create comm layer for other comm libraries
   MPI_Win_free(coarray->comm);
-
   _XMP_free(coarray->comm);
-
   _XMP_free(coarray);
 }
