@@ -64,6 +64,10 @@ extern void _XMP_init_nodes_STATIC_NODES_NAMED_MAIN(_XMP_nodes_t **nodes, int di
                                                     _XMP_nodes_t *ref_nodes,
                                                     int *shrink, int *ref_lower, int *ref_upper, int *ref_stride,
                                                     int *dim_size);
+extern void _XMP_init_nodes_DYNAMIC_NODES_NAMED_MAIN(_XMP_nodes_t **nodes, int dim,
+                                                     _XMP_nodes_t *ref_nodes,
+                                                     int *shrink, int *ref_lower, int *ref_upper, int *ref_stride,
+                                                     int *dim_size);
 extern void _XMP_finalize_nodes(_XMP_nodes_t *nodes);
 extern _XMP_nodes_t *_XMP_create_nodes_by_comm(int is_member, _XMP_comm_t *comm);
 extern int _XMP_calc_linear_rank(_XMP_nodes_t *n, int *rank_array);

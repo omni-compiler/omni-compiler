@@ -394,6 +394,24 @@ void _XMP_init_nodes_STATIC_NODES_NAMED_MAIN(_XMP_nodes_t **nodes, int dim,
   *nodes = n;
 }
 
+void _XMP_init_nodes_DYNAMIC_NODES_NAMED_MAIN(_XMP_nodes_t **nodes, int dim,
+                                              _XMP_nodes_t *ref_nodes,
+                                              int *shrink, int *ref_lower, int *ref_upper, int *ref_stride,
+                                              int *dim_size) {
+  _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NAMED(dim, ref_nodes, shrink, ref_lower, ref_upper, ref_stride);
+
+  for (int i = 0; i < dim - 1; i++) {
+    n->info[i].size = dim_size[i];
+  }
+
+  _XMP_check_nodes_size_DYNAMIC(n);
+  if (n->is_member) {
+    _XMP_calc_nodes_rank(n, n->comm_rank);
+  }
+
+  *nodes = n;
+}
+
 void _XMP_init_nodes_STATIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...) {
   _XMP_nodes_t *n = _XMP_init_nodes_struct_GLOBAL(dim);
 
@@ -617,6 +635,7 @@ void _XMP_init_nodes_DYNAMIC_NODES_NAMED(_XMP_nodes_t **nodes, int dim,
   int ref_lower[ref_dim];
   int ref_upper[ref_dim];
   int ref_stride[ref_dim];
+  int dim_size[dim - 1];
 
   va_list args;
   va_start(args, ref_nodes);
@@ -629,29 +648,30 @@ void _XMP_init_nodes_DYNAMIC_NODES_NAMED(_XMP_nodes_t **nodes, int dim,
     }
   }
 
-  _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NAMED(dim, ref_nodes, shrink, ref_lower, ref_upper, ref_stride);
-
   for (int i = 0; i < dim - 1; i++) {
-    int dim_size = va_arg(args, int);
-    if (dim_size <= 0) _XMP_fatal("<nodes-size> should be less or equal to zero");
-
-    n->info[i].size = dim_size;
+    int dim_size_temp = va_arg(args, int);
+    if (dim_size_temp <= 0) {
+      _XMP_fatal("<nodes-size> should be less or equal to zero");
+    } else {
+      dim_size[i] = dim_size_temp;
+    }
   }
+
+  _XMP_init_nodes_DYNAMIC_NODES_NAMED_MAIN(nodes, dim,
+                                           ref_nodes,
+                                           shrink, ref_lower, ref_upper, ref_stride,
+                                           dim_size);
+
+  _XMP_nodes_t *n = *nodes;
+
   int *last_dim_size_p = va_arg(args, int *);
-
-  _XMP_check_nodes_size_DYNAMIC(n);
-  if (n->is_member) {
-    _XMP_calc_nodes_rank(n, n->comm_rank);
-  }
-
   *last_dim_size_p = n->info[dim - 1].size;
+
   for (int i = 0; i < dim; i++) {
     int *rank_p = va_arg(args, int *);
     *rank_p = n->info[i].rank;
   }
   va_end(args);
-
-  *nodes = n;
 }
 
 void _XMP_finalize_nodes(_XMP_nodes_t *nodes) {
