@@ -60,6 +60,10 @@ extern void _XMP_unpack_array(void *dst, void *buffer, int array_type, size_t ar
 extern void _XMP_barrier_EXEC(void);
 
 // xmp_nodes.c
+extern void _XMP_init_nodes_STATIC_NODES_NUMBER_MAIN(_XMP_nodes_t **nodes, int dim,
+                                                     int ref_lower, int ref_upper, int ref_stride, int *dim_size);
+extern void _XMP_init_nodes_DYNAMIC_NODES_NUMBER_MAIN(_XMP_nodes_t **nodes, int dim,
+                                                      int ref_lower, int ref_upper, int ref_stride, int *dim_size);
 extern void _XMP_init_nodes_STATIC_NODES_NAMED_MAIN(_XMP_nodes_t **nodes, int dim,
                                                     _XMP_nodes_t *ref_nodes,
                                                     int *shrink, int *ref_lower, int *ref_upper, int *ref_stride,
