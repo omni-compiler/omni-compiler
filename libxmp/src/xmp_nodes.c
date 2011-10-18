@@ -235,7 +235,13 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NAMED(int dim, _XMP_nodes_t *r
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, _XMP_world_rank, comm);
 
-  return _XMP_create_new_nodes(is_member, dim, comm_size, (_XMP_comm_t *)comm);
+  _XMP_nodes_t *n = _XMP_create_new_nodes(is_member, dim, comm_size, (_XMP_comm_t *)comm);
+
+  // calc inherit info
+  n->inherit_nodes = ref_nodes;
+  n->inherit_info = _XMP_calc_inherit_info_by_ref(ref_nodes, shrink, ref_lower, ref_upper, ref_stride);
+
+  return n;
 }
 
 static void _XMP_calc_nodes_rank(_XMP_nodes_t *n, int linear_rank) {
@@ -386,10 +392,6 @@ void _XMP_init_nodes_STATIC_NODES_NAMED_MAIN(_XMP_nodes_t **nodes, int dim,
   }
 
   *nodes = n;
-
-  // calc inherit info
-  n->inherit_nodes = ref_nodes;
-  n->inherit_info = _XMP_calc_inherit_info_by_ref(ref_nodes, shrink, ref_lower, ref_upper, ref_stride);
 }
 
 void _XMP_init_nodes_STATIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...) {
