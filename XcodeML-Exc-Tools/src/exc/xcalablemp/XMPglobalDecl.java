@@ -166,12 +166,54 @@ public class XMPglobalDecl {
     return _globalObjectTable.getXMPobject(name);
   }
 
+  public XMPobject getXMPobject(String name, XMPsymbolTable localXMPsymbolTable) {
+    XMPobject o = null;
+
+    if (localXMPsymbolTable != null) {
+      o = localXMPsymbolTable.getXMPobject(name);
+    }
+
+    if (o == null) {
+      o = getXMPobject(name);
+    }
+
+    return o;
+  }
+
   public XMPnodes getXMPnodes(String name) {
     return _globalObjectTable.getXMPnodes(name);
   }
 
+  public XMPnodes getXMPnodes(String name, XMPsymbolTable localXMPsymbolTable) {
+    XMPnodes n = null;
+
+    if (localXMPsymbolTable != null) {
+      n = localXMPsymbolTable.getXMPnodes(name);
+    }
+
+    if (n == null) {
+      n = getXMPnodes(name);
+    }
+
+    return n;
+  }
+
   public XMPtemplate getXMPtemplate(String name) {
     return _globalObjectTable.getXMPtemplate(name);
+  }
+
+  public XMPtemplate getXMPtemplate(String name, XMPsymbolTable localXMPsymbolTable) {
+    XMPtemplate t = null;
+
+    if (localXMPsymbolTable != null) {
+      t = localXMPsymbolTable.getXMPtemplate(name);
+    }
+
+    if (t == null) {
+      t = getXMPtemplate(name);
+    }
+
+    return t;
   }
 
   public void putXMPalignedArray(XMPalignedArray array) {
@@ -202,6 +244,20 @@ public class XMPglobalDecl {
 
   public XMPcoarray getXMPcoarray(String name) {
     return _globalObjectTable.getXMPcoarray(name);
+  }
+
+  public XMPcoarray getXMPcoarray(String name, XMPsymbolTable localXMPsymbolTable) {
+    XMPcoarray c = null;
+
+    if (localXMPsymbolTable != null) {
+      c = localXMPsymbolTable.getXMPcoarray(name);
+    }
+
+    if (c == null) {
+      c = getXMPcoarray(name);
+    }
+
+    return c;
   }
 
   public void finalize() {

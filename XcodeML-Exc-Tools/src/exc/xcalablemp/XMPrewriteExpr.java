@@ -82,11 +82,56 @@ public class XMPrewriteExpr {
       Xobject expr = iter.getExpr();
 
       try {
-        rewriteExpr(expr, localXMPsymbolTable);
+        switch (expr.Opcode()) {
+          case ASSIGN_EXPR:
+            iter.setExpr(rewriteAssignExpr(expr, localXMPsymbolTable));
+            break;
+          default:
+            rewriteExpr(expr, localXMPsymbolTable);
+            break;
+        }
       } catch (XMPexception e) {
         XMP.error(expr.getLineNo(), e.getMessage());
       }
     }
+  }
+
+  private Xobject rewriteAssignExpr(Xobject myExpr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+    Xobject leftExpr = myExpr.getArg(0);
+    Xobject rightExpr = myExpr.getArg(1);
+
+    if ((leftExpr.Opcode() == Xcode.CO_ARRAY_REF) ||
+        (rightExpr.Opcode() == Xcode.CO_ARRAY_REF)) {
+      return rewriteCoArrayAssignExpr(myExpr, localXMPsymbolTable);
+    } else {
+      return myExpr;
+    }
+  }
+
+  private Xobject rewriteCoArrayAssignExpr(Xobject myExpr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+    Xobject leftExpr = myExpr.getArg(0);
+    Xobject rightExpr = myExpr.getArg(1);
+
+    System.out.println(myExpr.toString());
+
+    Xobject newExpr = null;
+    if (leftExpr.Opcode() == Xcode.CO_ARRAY_REF) {
+      if (rightExpr.Opcode() == Xcode.CO_ARRAY_REF) {	// a:[0] = x:[1];	syntax error	throw exception
+        throw new XMPexception("unknown co-array expression");
+      } else {						// a:[0] = x;		RMA put		rewrite expr
+        newExpr = XMP.getMacroId("_XMP_put").Call(null);
+        newExpr.setIsRewrittedByXmp(true);
+      }
+    } else {
+      if (rightExpr.Opcode() == Xcode.CO_ARRAY_REF) {	// a = x:[1];		RMA get		rewrite expr
+        newExpr = XMP.getMacroId("_XMP_get").Call(null);
+        newExpr.setIsRewrittedByXmp(true);
+      } else {						// a = x;		ASSIGN		do nothing
+        newExpr = myExpr;
+      }
+    }
+
+    return newExpr;
   }
 
   private void rewriteExpr(Xobject expr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
@@ -103,28 +148,33 @@ public class XMPrewriteExpr {
 
       switch (myExpr.Opcode()) {
         case ARRAY_REF:
-          {
-            Xobject arrayAddr = myExpr.getArg(0);
-            String arrayName = arrayAddr.getSym();
-            XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
-            if (alignedArray != null) {
-              Xobject newExpr = null;
-              XobjList arrayRefList = normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
-              if (alignedArray.checkRealloc()) {
-                newExpr = rewriteAlignedArrayExpr(arrayRefList, alignedArray);
-              } else {
-                newExpr = Xcons.arrayRef(myExpr.Type(), arrayAddr, arrayRefList);
-              }
-
-              newExpr.setIsRewrittedByXmp(true);
-              iter.setXobject(newExpr);
-            }
-          } break;
+          iter.setXobject(rewriteArrayRef(myExpr, localXMPsymbolTable));
+          break;
         case SUB_ARRAY_REF:
           System.out.println(myExpr.toString());
           break;
         default:
       }
+    }
+  }
+
+  private Xobject rewriteArrayRef(Xobject myExpr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+    Xobject arrayAddr = myExpr.getArg(0);
+    String arrayName = arrayAddr.getSym();
+    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+    if (alignedArray == null) {
+      return myExpr;
+    } else {
+      Xobject newExpr = null;
+      XobjList arrayRefList = normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
+      if (alignedArray.checkRealloc()) {
+        newExpr = rewriteAlignedArrayExpr(arrayRefList, alignedArray);
+      } else {
+        newExpr = Xcons.arrayRef(myExpr.Type(), arrayAddr, arrayRefList);
+      }
+
+      newExpr.setIsRewrittedByXmp(true);
+      return newExpr;
     }
   }
 

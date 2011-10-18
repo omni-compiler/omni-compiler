@@ -131,7 +131,6 @@ public class XMPtranslateGlobalPragma {
       throw new XMPexception("coarray " + coarrayName + " is already declared");
     }
 
-    // FIXME allow an aligned array to be a coarray? check the specifications
     if (_globalDecl.getXMPalignedArray(coarrayName) != null) {
       throw new XMPexception("an aligned array cannot be declared as a coarray");
     }

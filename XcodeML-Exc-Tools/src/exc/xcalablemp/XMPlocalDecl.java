@@ -16,6 +16,7 @@ public class XMPlocalDecl {
   private final static String ALLOC		= "XCALABLEMP_PROP_LOCAL_ALLOC";
   private final static String DESTRUCTOR	= "XCALABLEMP_PROP_LOCAL_DESTRUCTOR";
 
+  // FIXME move to this func to XMPglobalDecl
   public static void checkObjectNameCollision(String name, BlockList scopeBL, XMPsymbolTable objectTable) throws XMPexception {
     // check name collision - parameters
     if (scopeBL.findLocalIdent(name) != null)
@@ -30,37 +31,6 @@ public class XMPlocalDecl {
       // FIXME generate unique name
       throw new XMPexception("cannot declare template desciptor, '" + XMP.DESC_PREFIX_ + name + "' is already declared");
     }
-  }
-
-  public static XMPobject getXMPobject(String objectName, XMPsymbolTable localXMPsymbolTable, XMPglobalDecl globalDecl) {
-    XMPobject o = null;
-    if (localXMPsymbolTable != null) {
-      o = localXMPsymbolTable.getXMPobject(objectName);
-    }
-
-    if (o == null) {
-      return globalDecl.getXMPobject(objectName);
-    } else {
-      return o;
-    }
-  }
-
-  public static XMPnodes getXMPnodes(String nodesName, XMPsymbolTable localXMPsymbolTable, XMPglobalDecl globalDecl) {
-    XMPnodes n = localXMPsymbolTable.getXMPnodes(nodesName);
-    if (n == null) {
-      n = globalDecl.getXMPnodes(nodesName);
-    }
-
-    return n;
-  }
-
-  public static XMPtemplate getXMPtemplate(String templateName, XMPsymbolTable localXMPsymbolTable, XMPglobalDecl globalDecl) {
-    XMPtemplate t = localXMPsymbolTable.getXMPtemplate(templateName);
-    if (t == null) {
-      t = globalDecl.getXMPtemplate(templateName);
-    }
-
-    return t;
   }
 
   public static FunctionBlock findParentFunctionBlock(Block block) {

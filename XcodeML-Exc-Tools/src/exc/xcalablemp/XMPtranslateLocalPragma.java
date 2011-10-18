@@ -731,7 +731,7 @@ public class XMPtranslateLocalPragma {
     XobjList subscriptList = (XobjList)onRef.getArg(1);
 
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-    XMPobject onRefObj = XMPlocalDecl.getXMPobject(onRefObjName, localXMPsymbolTable, _globalDecl);
+    XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, localXMPsymbolTable);
     if (onRefObj == null) {
       throw new XMPexception("cannot find '" + onRefObjName + "' nodes/template");
     }
@@ -838,7 +838,7 @@ public class XMPtranslateLocalPragma {
     // analyze <on-ref>
     Xobject onRef = loopDecl.getArg(1);
     String onRefObjName = onRef.getArg(0).getString();
-    XMPobject onRefObj = XMPlocalDecl.getXMPobject(onRefObjName, localXMPsymbolTable, _globalDecl);
+    XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, localXMPsymbolTable);
     if (onRefObj == null) {
       throw new XMPexception("cannot find '" + onRefObjName + "' nodes/template");
     }
@@ -1725,7 +1725,7 @@ public class XMPtranslateLocalPragma {
 
       // check object name collision
       String objectName = fromRef.getArg(0).getString();
-      XMPobject fromRefObject = XMPlocalDecl.getXMPobject(objectName, localXMPsymbolTable, _globalDecl);
+      XMPobject fromRefObject = _globalDecl.getXMPobject(objectName, localXMPsymbolTable);
       if (fromRefObject == null) {
         throw new XMPexception("cannot find '" + objectName + "' nodes/template");
       }
@@ -2151,7 +2151,7 @@ public class XMPtranslateLocalPragma {
 
       // check object name collision
       String objectName = onRef.getArg(0).getString();
-      XMPobject onRefObject = XMPlocalDecl.getXMPobject(objectName, localXMPsymbolTable, _globalDecl);
+      XMPobject onRefObject = _globalDecl.getXMPobject(objectName, localXMPsymbolTable);
       if (onRefObject == null) {
         throw new XMPexception("cannot find '" + objectName + "' nodes/template");
       }

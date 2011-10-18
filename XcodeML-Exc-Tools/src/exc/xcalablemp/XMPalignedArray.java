@@ -342,16 +342,15 @@ public class XMPalignedArray {
       arrayElmtTypeRef = Xcons.IntConstant(XMP.NONBASIC_TYPE);
     }
 
+    // check coarray table
+    if (globalDecl.getXMPcoarray(arrayName, localXMPsymbolTable) != null) {
+      throw new XMPexception("array '" + arrayName + "' is declared as a coarray, cannot be aligned");
+    }
+
     // get template information
     String templateName = alignDecl.getArg(2).getString();
     XMPtemplate templateObj = null;
-    if (isLocalPragma) {
-      templateObj = XMPlocalDecl.getXMPtemplate(templateName, localXMPsymbolTable, globalDecl);
-    }
-    else {
-      templateObj = globalDecl.getXMPtemplate(templateName);
-    }
-
+    templateObj = globalDecl.getXMPtemplate(templateName, localXMPsymbolTable);
     if (templateObj == null) {
       throw new XMPexception("template '" + templateName + "' is not declared");
     }

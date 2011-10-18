@@ -259,13 +259,7 @@ public class XMPtemplate extends XMPobject {
     // get nodes object
     String nodesName = distDecl.getArg(2).getString();
     XMPnodes nodesObject = null;
-    if (isLocalPragma) {
-      nodesObject = XMPlocalDecl.getXMPnodes(nodesName, localXMPsymbolTable, globalDecl);
-    }
-    else {
-      nodesObject = globalDecl.getXMPnodes(nodesName);
-    }
-
+    nodesObject = globalDecl.getXMPnodes(nodesName, localXMPsymbolTable);
     if (nodesObject == null) {
       throw new XMPexception("nodes '" + nodesName + "' is not declared");
     }

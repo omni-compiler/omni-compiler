@@ -163,12 +163,7 @@ public class XMPnodes extends XMPobject {
 
             String nodesRefName = nodesRef.getArg(0).getString();
 
-            if (isLocalPragma) {
-              nodesRefObject = XMPlocalDecl.getXMPnodes(nodesRefName, localXMPsymbolTable, globalDecl);
-            } else {
-              nodesRefObject = globalDecl.getXMPnodes(nodesRefName);
-            }
-
+            nodesRefObject = globalDecl.getXMPnodes(nodesRefName, localXMPsymbolTable);
             if (nodesRefObject == null) {
               throw new XMPexception("cannot find nodes '" + nodesRefName + "'");
             } else {
