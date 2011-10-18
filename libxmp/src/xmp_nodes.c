@@ -11,7 +11,7 @@
 
 // XXX <nodes-ref> is { 1-ogigin in language | 0-origin in runtime }, needs converting
 
-static _XMP_nodes_t *_XMP_create_new_nodes(int is_member, int dim, int comm_size, _XMP_comm *comm) {
+static _XMP_nodes_t *_XMP_create_new_nodes(int is_member, int dim, int comm_size, _XMP_comm_t *comm) {
   _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) + sizeof(_XMP_nodes_info_t) * (dim - 1));
 
   n->on_ref_id = _XMP_get_on_ref_id();
@@ -146,7 +146,7 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim) {
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_dup(MPI_COMM_WORLD, comm);
 
-  _XMP_nodes_t *n = _XMP_create_new_nodes(_XMP_N_INT_TRUE, dim, _XMP_world_size, (_XMP_comm *)comm);
+  _XMP_nodes_t *n = _XMP_create_new_nodes(_XMP_N_INT_TRUE, dim, _XMP_world_size, (_XMP_comm_t *)comm);
 
   // calc inherit info
   n->inherit_nodes = NULL;
@@ -162,7 +162,7 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_EXEC(int dim) {
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_dup(*((MPI_Comm *)exec_nodes->comm), comm);
 
-  _XMP_nodes_t *n = _XMP_create_new_nodes(_XMP_N_INT_TRUE, dim, size, (_XMP_comm *)comm);
+  _XMP_nodes_t *n = _XMP_create_new_nodes(_XMP_N_INT_TRUE, dim, size, (_XMP_comm_t *)comm);
 
   // calc inherit info
   _XMP_nodes_t *inherit_nodes = _XMP_get_execution_nodes();
@@ -180,7 +180,7 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NUMBER(int dim, int ref_lower,
   MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), is_member, _XMP_world_rank, comm);
 
   _XMP_nodes_t *n = _XMP_create_new_nodes(is_member, dim, _XMP_M_COUNT_TRIPLETi(ref_lower, ref_upper, ref_stride),
-                                          (_XMP_comm *)comm);
+                                          (_XMP_comm_t *)comm);
 
   // calc inherit info
   int shrink[1] = {_XMP_N_INT_FALSE};
@@ -235,7 +235,7 @@ static _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NAMED(int dim, _XMP_nodes_t *r
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, _XMP_world_rank, comm);
 
-  return _XMP_create_new_nodes(is_member, dim, comm_size, (_XMP_comm *)comm);
+  return _XMP_create_new_nodes(is_member, dim, comm_size, (_XMP_comm_t *)comm);
 }
 
 static void _XMP_calc_nodes_rank(_XMP_nodes_t *n, int linear_rank) {
@@ -758,7 +758,7 @@ int _XMP_exec_task_NODES_PART(_XMP_task_desc_t **task_desc, _XMP_nodes_t *ref_no
 }
 
 // FIXME do not use this function
-_XMP_nodes_t *_XMP_create_nodes_by_comm(int is_member, _XMP_comm *comm) {
+_XMP_nodes_t *_XMP_create_nodes_by_comm(int is_member, _XMP_comm_t *comm) {
   int size;
   MPI_Comm_size(*((MPI_Comm *)comm), &size);
 

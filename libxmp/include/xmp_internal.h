@@ -33,7 +33,6 @@
 (_XMP_world_size == 1)
 
 // --------------- structures ----------------------------------------
-#define _XMP_comm void
 #include "xmp_data_struct.h"
 
 #ifdef __cplusplus
@@ -66,7 +65,7 @@ extern void _XMP_init_nodes_STATIC_NODES_NAMED_MAIN(_XMP_nodes_t **nodes, int di
                                                     int *shrink, int *ref_lower, int *ref_upper, int *ref_stride,
                                                     int *dim_size);
 extern void _XMP_finalize_nodes(_XMP_nodes_t *nodes);
-extern _XMP_nodes_t *_XMP_create_nodes_by_comm(int is_member, _XMP_comm *comm);
+extern _XMP_nodes_t *_XMP_create_nodes_by_comm(int is_member, _XMP_comm_t *comm);
 extern int _XMP_calc_linear_rank(_XMP_nodes_t *n, int *rank_array);
 extern int _XMP_calc_linear_rank_on_target_nodes(_XMP_nodes_t *n, int *rank_array, _XMP_nodes_t *target_nodes);
 extern _XMP_nodes_ref_t *_XMP_init_nodes_ref(_XMP_nodes_t *n, int *rank_array);
@@ -81,8 +80,8 @@ extern void _XMP_pop_n_free_nodes(void);
 extern void _XMP_pop_n_free_nodes_wo_finalize_comm(void);
 extern _XMP_nodes_t *_XMP_get_execution_nodes(void);
 extern int _XMP_get_execution_nodes_rank(void);
-extern void _XMP_push_comm(_XMP_comm *comm);
-extern void _XMP_finalize_comm(_XMP_comm *comm);
+extern void _XMP_push_comm(_XMP_comm_t *comm);
+extern void _XMP_finalize_comm(_XMP_comm_t *comm);
 
 // xmp_template.c
 extern int _XMP_check_template_ref_inclusion(int ref_lower, int ref_upper, int ref_stride,

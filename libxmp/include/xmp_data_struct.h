@@ -10,7 +10,7 @@
 #include <stdbool.h>
 #include "xmp_constant.h"
 
-#define _XMP_comm void
+#define _XMP_comm_t void
 
 // nodes descriptor
 typedef struct _XMP_nodes_inherit_info_type {
@@ -41,7 +41,7 @@ typedef struct _XMP_nodes_type {
 
   // enable when is_member is true
   int comm_rank;
-  _XMP_comm *comm;
+  _XMP_comm_t *comm;
   // -----------------------------
 
   struct _XMP_nodes_type *inherit_nodes;
@@ -137,7 +137,7 @@ typedef struct _XMP_array_info_type {
   int shadow_size_hi;
 
   // enable when is_shadow_comm_member is true
-  _XMP_comm *shadow_comm;
+  _XMP_comm_t *shadow_comm;
   int shadow_comm_size;
   int shadow_comm_rank;
   // -----------------------------------------
@@ -164,7 +164,7 @@ typedef struct _XMP_array_type {
 
   // FIXME do not use these members
   // enable when is_align_comm_member is true
-  _XMP_comm *align_comm;
+  _XMP_comm_t *align_comm;
   int align_comm_size;
   int align_comm_rank;
   // ----------------------------------------
@@ -187,7 +187,7 @@ typedef struct _XMP_task_desc_type {
 } _XMP_task_desc_t;
 
 // coarray descriptor
-#define _XMP_coarray_COMM_t void
+#define _XMP_coarray_comm_t void
 
 typedef struct _XMP_coarray_info_type {
   int size;
@@ -198,9 +198,8 @@ typedef struct _XMP_coarray_type {
   void *addr;
   int type;
   size_t type_size;
-  unsigned long long total_elmts;
 
-  _XMP_coarray_COMM_t *comm;
+  _XMP_coarray_comm_t *comm;
   _XMP_coarray_info_t info[1];
 } _XMP_coarray_t;
 

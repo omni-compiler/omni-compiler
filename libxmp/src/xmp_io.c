@@ -39,7 +39,6 @@ xmp_file_t *xmp_fopen_all(const char *fname, const char *amode)
 {
   xmp_file_t *pstXmp_file = NULL;
   int         iMode = 0;
-  int         iRet;
   size_t      modelen = 0;
 
 

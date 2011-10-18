@@ -163,28 +163,6 @@ public class XMPtranslateGlobalPragma {
       elmtTypeRef = Xcons.IntConstant(XMP.NONBASIC_TYPE);
     }
 
-    // init descriptor
-    Ident descId = _globalDecl.declStaticIdent(XMP.COARRAY_DESC_PREFIX_ + coarrayName, Xtype.voidPtrType);
-    XobjList initDescFuncArgs = Xcons.List(descId.getAddr(), varAddr, elmtTypeRef, Xcons.SizeOf(elmtType));
-
-    initDescFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(varDim)));
-
-    Vector<Long> sizeVector = new Vector<Long>(varDim);
-    if (isArray) {
-      for (int i = 0; i < varDim; i++, varType = varType.getRef()) {
-        long dimSize = varType.getArraySize();
-        if ((dimSize == 0) || (dimSize == -1)) {
-          throw new XMPexception("array size should be declared statically");
-        }
-
-        sizeVector.add(new Long(dimSize));
-        initDescFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.LongLongConstant(0, dimSize)));
-      }
-    } else {
-      sizeVector.add(new Long(1));
-      initDescFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
-    }
-
     XobjList coarrayDimSizeList = (XobjList)coarrayDecl.getArg(1);
     int coarrayDim = coarrayDimSizeList.Nargs();
     if (coarrayDim > XMP.MAX_DIM) {
@@ -198,19 +176,43 @@ public class XMPtranslateGlobalPragma {
       initDescFuncName = new String("_XMP_init_coarray_STATIC");
     }
 
-    initDescFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(coarrayDim)));
+    // init descriptor
+    Ident descId = _globalDecl.declStaticIdent(XMP.COARRAY_DESC_PREFIX_ + coarrayName, Xtype.voidPtrType);
+    XobjList initDescFuncArgs = Xcons.List(descId.getAddr(), varAddr, elmtTypeRef, Xcons.SizeOf(elmtType),
+                                           Xcons.IntConstant(coarrayDim));
     for (Xobject coarrayDimSize : coarrayDimSizeList) {
       if (coarrayDimSize != null) {
         initDescFuncArgs.add(Xcons.Cast(Xtype.intType, coarrayDimSize));
       }
     }
 
-    XMPcoarray coarrayEntry = new XMPcoarray(coarrayName, elmtType, varDim, sizeVector, varAddr, varId, descId);
-
-    _globalDecl.putXMPcoarray(coarrayEntry);
+    // call init desc function
     _globalDecl.addGlobalInitFuncCall(initDescFuncName, initDescFuncArgs);
 
-    // call finalize function
-    _globalDecl.addGlobalFinalizeFuncCall("_XMP_finalize_coarray", Xcons.List(descId.Ref()));
+    // call init comm function
+    XobjList initCommFuncArgs = Xcons.List(descId.Ref(), Xcons.IntConstant(varDim));
+    Vector<Long> sizeVector = new Vector<Long>(varDim);
+    if (isArray) {
+      for (int i = 0; i < varDim; i++, varType = varType.getRef()) {
+        long dimSize = varType.getArraySize();
+        if ((dimSize == 0) || (dimSize == -1)) {
+          throw new XMPexception("array size should be declared statically");
+        }
+
+        sizeVector.add(new Long(dimSize));
+        initCommFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.LongLongConstant(0, dimSize)));
+      }
+    } else {
+      sizeVector.add(new Long(1));
+      initCommFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+    }
+
+    _globalDecl.addGlobalInitFuncCall("_XMP_init_coarray_comm", initCommFuncArgs);
+
+    // call finalize comm function
+    _globalDecl.addGlobalFinalizeFuncCall("_XMP_finalize_coarray_comm", Xcons.List(descId.Ref()));
+
+    XMPcoarray coarrayEntry = new XMPcoarray(coarrayName, elmtType, varDim, sizeVector, varAddr, varId, descId);
+    _globalDecl.putXMPcoarray(coarrayEntry);
   }
 }
