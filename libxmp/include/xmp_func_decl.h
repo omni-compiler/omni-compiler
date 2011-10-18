@@ -53,8 +53,8 @@ extern void _XMP_bcast_NODES_ENTIRE_GLOBAL(void *bcast_nodes, void *addr, int co
 extern void _XMP_bcast_NODES_ENTIRE_NODES(void *bcast_nodes, void *addr, int count, size_t datatype_size, void *from_nodes, ...);
 
 // xmp_coarray.c
-extern void _XMP_init_coarray_STATIC(void **coarray, void *addr, int type, size_t type_size, int coarray_size, int dim, ...);
-extern void _XMP_init_coarray_DYNAMIC(void **coarray, void *addr, int type, size_t type_size, int dim, ...);
+extern void _XMP_init_coarray_STATIC(void **coarray, void *addr, int type, size_t type_size, ...);
+extern void _XMP_init_coarray_DYNAMIC(void **coarray, void *addr, int type, size_t type_size, ...);
 extern void _XMP_finalize_coarray(void *coarray);
 
 // xmp_coarray_RMA.c

@@ -1133,30 +1133,68 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     XobjString coarrayName = null;
     if (pg_tok() == PG_IDENT) {
       coarrayName = Xcons.String(pg_tok_buf());
-    }
-    else {
+    } else {
       error("<coarray-name> for coarray directive is expected");
     }
 
-    Xobject coarrayDim = null;
     pg_get_token();
-    if (pg_tok() == '[') {
-      pg_get_token();
-      if (pg_tok() == '*') {
-        pg_get_token();
-      }
-      else {
-        coarrayDim = pg_parse_expr();
-      }
-
-      if (pg_tok() != ']') {
-        error("']' is expected after <coarray-dim>");
-      }
-
-      pg_get_token();
+    if (pg_tok() != ':') {
+      error("':' is expected before <coarray-dimensions>");
     }
 
-    return Xcons.List(coarrayName, coarrayDim);
+    boolean parsedLastDim = false;
+    XobjList coarrayDims = Xcons.List();
+
+    pg_get_token();
+    if (pg_tok() != '[') {
+      error("'[' is expected before <coarray-dim>");
+    }
+
+    pg_get_token();
+    if (pg_tok() == '*') {
+      parsedLastDim = true;
+      coarrayDims.add(null);
+      pg_get_token();
+    } else {
+      coarrayDims.add(pg_parse_expr());
+    }
+
+    if (pg_tok() != ']') {
+      error("']' is expected after <coarray-dim>");
+    }
+    
+
+    while (true) {
+      pg_get_token();
+      if (pg_tok() == '[') {
+        if (parsedLastDim) {
+          error("'*' in <coarray-dimension> is used in a wrong place");
+        }
+
+        pg_get_token();
+        if (pg_tok() == '*') {
+          parsedLastDim = true;
+          coarrayDims.add(null);
+          pg_get_token();
+        } else {
+          coarrayDims.add(pg_parse_expr());
+        }
+
+        if (pg_tok() != ']') {
+          error("']' is expected after <coarray-dim>");
+        }
+      } else {
+        break;
+      }
+    }
+
+    Xobject onRef = null;
+    if (pg_is_ident("on")) {
+      pg_get_token();
+      onRef = parse_ON_REF(false);
+    }
+
+    return Xcons.List(coarrayName, coarrayDims, onRef);
   }
 
   private XobjList parse_LOCAL_ALIAS_clause() throws XMPexception {

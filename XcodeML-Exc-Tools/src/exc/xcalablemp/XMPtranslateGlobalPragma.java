@@ -167,15 +167,7 @@ public class XMPtranslateGlobalPragma {
     Ident descId = _globalDecl.declStaticIdent(XMP.COARRAY_DESC_PREFIX_ + coarrayName, Xtype.voidPtrType);
     XobjList initDescFuncArgs = Xcons.List(descId.getAddr(), varAddr, elmtTypeRef, Xcons.SizeOf(elmtType));
 
-    String initDescFuncName = null;
-    if (coarrayDecl.getArg(1) == null) {
-      initDescFuncName = new String("_XMP_init_coarray_DYNAMIC");
-    } else {
-      initDescFuncName = new String("_XMP_init_coarray_STATIC");
-      initDescFuncArgs.add(coarrayDecl.getArg(1));
-    }
-
-    initDescFuncArgs.add(Xcons.IntConstant(varDim));
+    initDescFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(varDim)));
 
     Vector<Long> sizeVector = new Vector<Long>(varDim);
     if (isArray) {
@@ -191,6 +183,26 @@ public class XMPtranslateGlobalPragma {
     } else {
       sizeVector.add(new Long(1));
       initDescFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+    }
+
+    XobjList coarrayDimSizeList = (XobjList)coarrayDecl.getArg(1);
+    int coarrayDim = coarrayDimSizeList.Nargs();
+    if (coarrayDim > XMP.MAX_DIM) {
+      throw new XMPexception("coarray dimension should be less than " + (XMP.MAX_DIM + 1));
+    }
+
+    String initDescFuncName = null;
+    if (coarrayDecl.getArg(1).getArg(coarrayDim - 1) == null) {
+      initDescFuncName = new String("_XMP_init_coarray_DYNAMIC");
+    } else {
+      initDescFuncName = new String("_XMP_init_coarray_STATIC");
+    }
+
+    initDescFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(coarrayDim)));
+    for (Xobject coarrayDimSize : coarrayDimSizeList) {
+      if (coarrayDimSize != null) {
+        initDescFuncArgs.add(Xcons.Cast(Xtype.intType, coarrayDimSize));
+      }
     }
 
     XMPcoarray coarrayEntry = new XMPcoarray(coarrayName, elmtType, varDim, sizeVector, varAddr, varId, descId);
