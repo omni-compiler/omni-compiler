@@ -181,6 +181,8 @@ public class XMPnodes extends XMPobject {
             XobjList subscriptList = (XobjList)nodesRef.getArg(1);
             if (subscriptList == null) {
               for (int nodesRefIndex = 0; nodesRefIndex < nodesRefDim; nodesRefIndex++) {
+                // shrink
+                nodesArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
                 // lower
                 nodesArgs.add(Xcons.Cast(Xtype.intType, nodesRefObject.getLowerAt(nodesRefIndex)));
                 // upper
@@ -197,8 +199,10 @@ public class XMPnodes extends XMPobject {
 
                 XobjList subscriptTriplet = (XobjList)i.getArg();
                 if (subscriptTriplet == null) {
+                  // shrink
                   nodesArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
                 } else {
+                  // shrink
                   nodesArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
 
                   // lower

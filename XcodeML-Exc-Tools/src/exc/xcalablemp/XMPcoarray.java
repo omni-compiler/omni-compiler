@@ -116,17 +116,18 @@ public class XMPcoarray {
     Ident descId = globalDecl.declStaticIdent(XMP.COARRAY_DESC_PREFIX_ + coarrayName, Xtype.voidPtrType);
     XobjList initDescFuncArgs = Xcons.List(descId.getAddr(), varAddr, elmtTypeRef, Xcons.SizeOf(elmtType),
                                            Xcons.IntConstant(coarrayDim));
-    for (Xobject coarrayDimSize : coarrayDimSizeList) {
-      if (coarrayDimSize != null) {
-        initDescFuncArgs.add(Xcons.Cast(Xtype.intType, coarrayDimSize));
-      }
-    }
 
     // check on-ref
     XobjList inheritDecl = (XobjList)coarrayDecl.getArg(2);
     XMPpair<String, XobjList> inheritInfo = XMPnodes.getInheritInfo(inheritDecl, globalDecl, localXMPsymbolTable);
     initDescFuncName += ("_" + inheritInfo.getFirst());
     initDescFuncArgs.mergeList(inheritInfo.getSecond());
+
+    for (Xobject coarrayDimSize : coarrayDimSizeList) {
+      if (coarrayDimSize != null) {
+        initDescFuncArgs.add(Xcons.Cast(Xtype.intType, coarrayDimSize));
+      }
+    }
 
     // call init desc function
     globalDecl.addGlobalInitFuncCall(initDescFuncName, initDescFuncArgs);
