@@ -444,14 +444,9 @@ _XMP_nodes_t *_XMP_create_nodes_by_template_ref(_XMP_template_t *ref_template, i
     }
   }
 
-  _XMP_nodes_t *n = NULL;
-  _XMP_init_nodes_STATIC_NODES_NAMED_MAIN(&n, new_nodes_dim,
-                                          onto_nodes,
-                                          onto_nodes_shrink,
-                                          onto_nodes_ref_lower, onto_nodes_ref_upper, onto_nodes_ref_stride,
-                                          new_nodes_dim_size);
-
-  return n;
+  return _XMP_init_nodes_struct_NODES_NAMED(new_nodes_dim, onto_nodes, onto_nodes_shrink,
+                                            onto_nodes_ref_lower, onto_nodes_ref_upper, onto_nodes_ref_stride,
+                                            new_nodes_dim_size, _XMP_N_INT_TRUE);
 }
 
 int _XMP_exec_task_TEMPLATE_PART(_XMP_task_desc_t **task_desc, _XMP_template_t *ref_template, ...) {
