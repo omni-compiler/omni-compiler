@@ -189,18 +189,13 @@ typedef struct _XMP_task_desc_type {
 // coarray descriptor
 #define _XMP_coarray_comm_t void
 
-typedef struct _XMP_coarray_info_type {
-  int size;
-  int rank;
-} _XMP_coarray_info_t;
-
 typedef struct _XMP_coarray_type {
   void *addr;
   int type;
   size_t type_size;
 
+  _XMP_nodes_t *nodes;
   _XMP_coarray_comm_t *comm;
-  _XMP_coarray_info_t info[1];
 } _XMP_coarray_t;
 
 typedef struct _XMP_gpu_array_type {
