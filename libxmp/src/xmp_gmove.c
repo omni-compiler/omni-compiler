@@ -510,20 +510,16 @@ void _XMP_gmove_LOCALCOPY_ARRAY(int type, size_t type_size, ...) {
   
   // alloc buffer
   if (dst_buffer_elmts != src_buffer_elmts) {
-    _XMP_fatal("wrong assign statement"); // FIXME fix error msg
+    _XMP_fatal("bad assign statement for gmove");
   }
 
   void *buffer = _XMP_alloc(dst_buffer_elmts * type_size);
 
-  // pack/unpack
-  if (type == _XMP_N_TYPE_NONBASIC) {
-    _XMP_pack_array_GENERAL(buffer, src_addr, type_size, src_dim, src_l, src_u, src_s, src_d);
-    _XMP_unpack_array_GENERAL(dst_addr, buffer, type_size, dst_dim, dst_l, dst_u, dst_s, dst_d);
-  }
-  else {
-    _XMP_pack_array_BASIC(buffer, src_addr, type, src_dim, src_l, src_u, src_s, src_d);
-    _XMP_unpack_array_BASIC(dst_addr, buffer, type, dst_dim, dst_l, dst_u, dst_s, dst_d);
-  }
+  // pack
+  _XMP_pack_array(buffer, src_addr, type, type_size, src_dim, src_l, src_u, src_s, src_d);
+
+  // unpack
+  _XMP_unpack_array(dst_addr, buffer, type, type_size, dst_dim, dst_l, dst_u, dst_s, dst_d);
 
   // free buffer
   _XMP_free(buffer);

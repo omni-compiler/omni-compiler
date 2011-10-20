@@ -312,13 +312,8 @@ void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_add
       }
 
       // pack data
-      if (array_type == _XMP_N_TYPE_NONBASIC) {
-        _XMP_pack_array_GENERAL(*lo_buffer, array_addr, array_desc->type_size,
-                                       array_dim, lower, upper, stride, dim_acc);
-      }
-      else {
-        _XMP_pack_array_BASIC(*lo_buffer, array_addr, array_type, array_dim, lower, upper, stride, dim_acc);
-      }
+      _XMP_pack_array(*lo_buffer, array_addr, array_type, array_desc->type_size,
+                      array_dim, lower, upper, stride, dim_acc);
     }
   }
 
@@ -350,13 +345,8 @@ void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_add
       }
 
       // pack data
-      if (array_type == _XMP_N_TYPE_NONBASIC) {
-        _XMP_pack_array_GENERAL(*hi_buffer, array_addr, array_desc->type_size,
-                                       array_dim, lower, upper, stride, dim_acc);
-      }
-      else {
-        _XMP_pack_array_BASIC(*hi_buffer, array_addr, array_type, array_dim, lower, upper, stride, dim_acc);
-      }
+      _XMP_pack_array(*hi_buffer, array_addr, array_type, array_desc->type_size,
+                      array_dim, lower, upper, stride, dim_acc);
     }
   }
 }
@@ -410,13 +400,8 @@ void _XMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_add
       }
 
       // unpack data
-      if (array_type == _XMP_N_TYPE_NONBASIC) {
-        _XMP_unpack_array_GENERAL(array_addr, lo_buffer, array_desc->type_size,
-                                         array_dim, lower, upper, stride, dim_acc);
-      }
-      else {
-        _XMP_unpack_array_BASIC(array_addr, lo_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
-      }
+      _XMP_unpack_array(array_addr, lo_buffer, array_type, array_desc->type_size,
+                        array_dim, lower, upper, stride, dim_acc);
 
       // free buffer
       _XMP_free(lo_buffer);
@@ -448,13 +433,8 @@ void _XMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_add
       }
 
       // unpack data
-      if (array_type == _XMP_N_TYPE_NONBASIC) {
-        _XMP_unpack_array_GENERAL(array_addr, hi_buffer, array_desc->type_size,
-                                         array_dim, lower, upper, stride, dim_acc);
-      }
-      else {
-        _XMP_unpack_array_BASIC(array_addr, hi_buffer, array_type, array_dim, lower, upper, stride, dim_acc);
-      }
+      _XMP_unpack_array(array_addr, hi_buffer, array_type, array_desc->type_size,
+                        array_dim, lower, upper, stride, dim_acc);
 
       // free buffer
       _XMP_free(hi_buffer);
