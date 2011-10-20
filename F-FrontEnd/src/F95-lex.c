@@ -1915,7 +1915,7 @@ again:
 	  last_char_in_quote_is_quote = FALSE;
 	  l = strlen(p);
 	  memcpy(pp+1, p, l); /* oBuf <= line_buffer */
-	  *(p + 1 + l) = '\0';
+	  *(pp + l + 1) = '\0';
 	}
 	else {
 	  l = strlen(p);

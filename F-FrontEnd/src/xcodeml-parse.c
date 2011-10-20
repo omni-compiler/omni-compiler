@@ -174,7 +174,7 @@ xcodeml_ParseFile(const char *fileName) {
     xmlNode *rootNode = NULL;
     bool succeeded = false;
 
-    doc = xmlReadFile(fileName, NULL, XML_PARSE_NOBLANKS | XML_PARSE_NONET);
+    doc = xmlReadFile(fileName, NULL, XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOWARNING);
 
     if (!doc){
 
@@ -184,7 +184,7 @@ xcodeml_ParseFile(const char *fileName) {
 	strcat(buff, "/");
 	strcat(buff, fileName);
 
-	doc = xmlReadFile(buff, NULL, XML_PARSE_NOBLANKS | XML_PARSE_NONET);
+	doc = xmlReadFile(buff, NULL, XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOWARNING);
 	if (doc) break;
 	
       }
