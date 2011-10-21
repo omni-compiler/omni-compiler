@@ -2044,8 +2044,10 @@ public class XMPtranslateLocalPragma {
       }
     }
 
-    castedArrayRefs.cons(Xcons.Cast(Xtype.intType, Xcons.IntConstant(dim)));
-    castedArrayRefs.cons(Xcons.Cast(Xtype.voidPtrType, arrayAddr));
+    if (alignedArray == null) {
+      castedArrayRefs.cons(Xcons.Cast(Xtype.intType, Xcons.IntConstant(dim)));
+      castedArrayRefs.cons(Xcons.Cast(Xtype.voidPtrType, arrayAddr));
+    }
 
     return new XMPpair<XMPalignedArray, XobjList>(alignedArray, castedArrayRefs);
   }

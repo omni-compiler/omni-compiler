@@ -589,8 +589,8 @@ void _XMP_gmove_HOMECOPY_ARRAY(_XMP_array_t *dst_array, int type, size_t type_si
   va_start(args, type_size);
 
   // get dst info
-  void *dst_addr = va_arg(args, void *);
-  int dst_dim = va_arg(args, int);
+  void *dst_addr = *(dst_array->array_addr_p);
+  int dst_dim = dst_array->dim;
   int dst_l[dst_dim], dst_u[dst_dim], dst_s[dst_dim]; unsigned long long dst_d[dst_dim];
   for (int i = 0; i < dst_dim; i++) {
     dst_l[i] = va_arg(args, int);
@@ -630,7 +630,7 @@ void _XMP_gmove_HOMECOPY_ARRAY(_XMP_array_t *dst_array, int type, size_t type_si
       int src_elmts;
       do {
         src_elmts = _XMP_M_COUNT_TRIPLETi(src_l[src_dim_index], src_u[src_dim_index], src_s[src_dim_index]);
-        if (src_elmts == 1) {
+        if (src_elmts != 1) {
           break;
         } else if (src_dim_index < src_dim) {
           src_dim_index++;
