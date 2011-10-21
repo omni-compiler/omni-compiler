@@ -513,8 +513,10 @@ public class XobjList extends Xobject implements Iterable<Xobject>, XobjContaine
 
     // used by xcalablemp
     public void mergeList(XobjList l) {
-      for (Xobject x : l) {
-        this.add(x);
+      if (l != null) {
+        for (Xobject x : l) {
+          this.add(x);
+        }
       }
     }
 }

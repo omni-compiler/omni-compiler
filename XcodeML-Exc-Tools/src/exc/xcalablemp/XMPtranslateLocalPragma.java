@@ -1945,7 +1945,7 @@ public class XMPtranslateLocalPragma {
 
   private XMPpair<XMPalignedArray, XobjList> getXMPalignedArrayExpr(PragmaBlock pb, Xobject expr) throws XMPexception {
     if (hasSubArrayRef(expr)) {
-      return parseSubArrayRefExpr(pb, expr, getArrayAccList(pb, expr), 0, Xcons.List());
+      return parseSubArrayRefExpr(pb, expr, getArrayAccList(pb, expr));
     } else {
       return parseArrayRefExpr(pb, expr);
     }
@@ -1970,7 +1970,8 @@ public class XMPtranslateLocalPragma {
     for (iter.init(); !iter.end(); iter.next()) {
       Xobject currentExpr = iter.getXobject();
       if (currentExpr != null) {
-        if (currentExpr.Opcode() == Xcode.ARRAY_REF) {
+        if ((currentExpr.Opcode() == Xcode.ARRAY_REF) ||
+            (currentExpr.Opcode() == Xcode.SUB_ARRAY_REF)) {
           return currentExpr.getArg(0).getSym();
         }
       }
@@ -1979,107 +1980,74 @@ public class XMPtranslateLocalPragma {
     throw new XMPexception("cannot find array ref");
   }
 
-  // XXX reversed dimension order for convenience
   private XobjList getArrayAccList(PragmaBlock pb, Xobject expr) throws XMPexception {
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
 
-    bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
-    for (iter.init(); !iter.end(); iter.next()) {
-      Xobject currentExpr = iter.getXobject();
-      if (currentExpr != null) {
-        if (currentExpr.Opcode() == Xcode.ARRAY_REF) {
-          XobjList accList = Xcons.List();
+    XobjList accList = Xcons.List();
 
-          String arrayName = currentExpr.getArg(0).getSym();
-          XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
-          if (alignedArray == null) {
-            Ident arrayId = pb.findVarIdent(arrayName);
-            Xtype arrayType = arrayId.Type();
+    String arrayName = expr.getArg(0).getSym();
+    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+    if (alignedArray == null) {
+      Ident arrayId = pb.findVarIdent(arrayName);
+      Xtype arrayType = arrayId.Type();
 
-            int arrayDim = arrayType.getNumDimensions();
-            if (arrayDim > XMP.MAX_DIM) {
-              throw new XMPexception("array dimension should be less than " + (XMP.MAX_DIM + 1));
-            }
+      int arrayDim = arrayType.getNumDimensions();
+      if (arrayDim > XMP.MAX_DIM) {
+        throw new XMPexception("array dimension should be less than " + (XMP.MAX_DIM + 1));
+      }
 
-            arrayType = arrayType.getRef();
-            for (int i = 0; i < arrayDim - 1; i++, arrayType = arrayType.getRef()) {
-              accList.cons(getArrayElmtsObj(arrayType));
-            }
-            accList.cons(Xcons.LongLongConstant(0, 1));
-          }
-          else {
-            int arrayDim = alignedArray.getDim();
-            for (int i = 0; i < arrayDim; i++) {
-              accList.cons(alignedArray.getAccIdAt(i).Ref());
-            }
-          }
-
-          return accList;
-        }
+      arrayType = arrayType.getRef();
+      for (int i = 0; i < arrayDim - 1; i++, arrayType = arrayType.getRef()) {
+        accList.add(getArrayElmtsObj(arrayType));
+      }
+      accList.add(Xcons.IntConstant(1));
+    } else {
+      int arrayDim = alignedArray.getDim();
+      for (int i = 0; i < arrayDim; i++) {
+        accList.add(alignedArray.getAccIdAt(i).Ref());
       }
     }
 
-    throw new XMPexception("cannot find array ref in gmove assign statement");
+    return accList;
   }
 
-  private XMPpair<XMPalignedArray, XobjList> parseSubArrayRefExpr(PragmaBlock pb, Xobject expr, XobjList accList,
-                                                                  int arrayDimCount, XobjList arrayRefs) throws XMPexception {
-    String syntaxErrMsg = "syntax error on array expression, expression is not appropriate for gmove directive";
-    switch (expr.Opcode()) {
-      case POINTER_REF:
-        {
-          Xobject child = expr.operand();
-          if (child.Opcode() == Xcode.PLUS_EXPR) {
-            arrayRefs.cons(Xcons.Cast(Xtype.unsignedlonglongType, accList.getArg(arrayDimCount)));
-            arrayRefs.cons(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
-            arrayRefs.cons(Xcons.Cast(Xtype.intType, child.right()));
-            arrayRefs.cons(Xcons.Cast(Xtype.intType, child.right()));
-            return parseSubArrayRefExpr(pb, child.left(), accList, arrayDimCount + 1, arrayRefs);
-          }
-          else {
-            return new XMPpair<XMPalignedArray, XobjList>(null, null);
-          }
-        }
-      case SUB_ARRAY_REF:
-        {
-          arrayRefs.cons(Xcons.Cast(Xtype.unsignedlonglongType, accList.getArg(arrayDimCount)));
-          arrayRefs.cons(Xcons.Cast(Xtype.intType, expr.getArg(3).operand()));
-          arrayRefs.cons(Xcons.Cast(Xtype.intType, expr.getArg(2).operand()));
-          arrayRefs.cons(Xcons.Cast(Xtype.intType, expr.getArg(1).operand()));
-          return parseSubArrayRefExpr(pb, expr.getArg(0), accList, arrayDimCount + 1, arrayRefs);
-        }
-      case ARRAY_REF:
-        {
-          arrayRefs.cons(Xcons.Cast(Xtype.intType, Xcons.IntConstant(arrayDimCount)));
-
-          XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-          String arrayName = expr.getArg(0).getSym();
-          XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
-          if (alignedArray == null) {
-            Ident arrayId = pb.findVarIdent(arrayName);
-            Xtype arrayType = arrayId.Type();
-
-            if (arrayType.getNumDimensions() == arrayDimCount) {
-              arrayRefs.cons(Xcons.Cast(Xtype.voidPtrType, arrayId.Ref()));
-              return new XMPpair<XMPalignedArray, XobjList>(null, arrayRefs);
-            }
-            else {
-              throw new XMPexception(syntaxErrMsg);
-            }
-          }
-          else {
-            if (alignedArray.getDim() == arrayDimCount) {
-              arrayRefs.cons(alignedArray.getAddrIdVoidRef());
-              return new XMPpair<XMPalignedArray, XobjList>(alignedArray, arrayRefs);
-            }
-            else {
-              throw new XMPexception(syntaxErrMsg);
-            }
-          }
-        }
-      default:
-        return new XMPpair<XMPalignedArray, XobjList>(null, null);
+  private XMPpair<XMPalignedArray, XobjList> parseSubArrayRefExpr(PragmaBlock pb,
+                                                                  Xobject expr, XobjList accList) throws XMPexception {
+    if (expr.Opcode() != Xcode.SUB_ARRAY_REF) {
+      return new XMPpair<XMPalignedArray, XobjList>(null, null);
     }
+
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+    Xobject arrayAddr = expr.getArg(0);
+    String arrayName = arrayAddr.getSym();
+    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+
+    XobjList arrayRefs = (XobjList)expr.getArg(1);
+    XobjList castedArrayRefs = Xcons.List();
+
+    int dim = 0;
+    if (arrayRefs != null) {
+      for (Xobject x : arrayRefs) {
+        if (x.Opcode() == Xcode.INDEX_RANGE) {
+          castedArrayRefs.add(Xcons.Cast(Xtype.intType, x.getArg(0).getArg(0)));
+          castedArrayRefs.add(Xcons.Cast(Xtype.intType, x.getArg(1).getArg(0)));
+          castedArrayRefs.add(Xcons.Cast(Xtype.intType, x.getArg(2).getArg(0)));
+          castedArrayRefs.add(Xcons.Cast(Xtype.unsignedlonglongType, accList.getArg(dim)));
+        } else {
+          castedArrayRefs.add(Xcons.Cast(Xtype.intType, x));
+          castedArrayRefs.add(Xcons.Cast(Xtype.intType, x));
+          castedArrayRefs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+          castedArrayRefs.add(Xcons.Cast(Xtype.unsignedlonglongType, accList.getArg(dim)));
+        }
+
+        dim++;
+      }
+    }
+
+    castedArrayRefs.cons(Xcons.Cast(Xtype.intType, Xcons.IntConstant(dim)));
+    castedArrayRefs.cons(Xcons.Cast(Xtype.voidPtrType, arrayAddr));
+
+    return new XMPpair<XMPalignedArray, XobjList>(alignedArray, castedArrayRefs);
   }
 
   private XMPpair<XMPalignedArray, XobjList> parseArrayRefExpr(PragmaBlock pb, Xobject expr) throws XMPexception {
