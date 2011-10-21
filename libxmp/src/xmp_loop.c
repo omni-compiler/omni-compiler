@@ -49,49 +49,74 @@
   } \
 }
 
-#define _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_1(ser_init, ser_cond, ser_step, par_init, par_cond, \
-                                            template_lower, template_upper, template_stride) \
-{ \
-  if (ser_step != 1) { \
-    _XMP_fatal("loop step is not 1, -1: unsupported case"); \
-  } \
-\
-  int x, x_max = (int)floor(((double)(template_upper - template_lower)) / ((double)template_stride)); \
-\
-  /* calc par_init */ \
-  x = (int)ceil(((double)(ser_init - template_lower)) / (double)(template_stride)); \
-  if (x < 0) *par_init = template_lower; \
-  else if (x > x_max) goto no_iter; \
-  else *par_init = (x * template_stride) + template_lower; \
-\
-  /* calc par_cond */ \
-  x = (int)floor(((double)(ser_cond - template_lower)) / ((double)template_stride)); \
-  if (x < 0) goto no_iter; \
-  else if (x > x_max) *par_cond = template_upper; \
-  else *par_cond = (x * template_stride) + template_lower; \
+int _XMP_sched_loop_template_width_1(int ser_init, int ser_cond, int ser_step,
+                                     int *par_init, int *par_cond,
+                                     int template_lower, int template_upper, int template_stride) {
+  if (ser_step != 1) {
+    _XMP_fatal("loop step is not 1, -1: unsupported case");
+  }
+
+  int x, x_max = (int)floor(((double)(template_upper - template_lower)) / ((double)template_stride));
+
+  /* calc par_init */
+  x = (int)ceil(((double)(ser_init - template_lower)) / (double)(template_stride));
+  if (x < 0) {
+    *par_init = template_lower;
+  } else if (x > x_max) {
+    return _XMP_N_INT_FALSE;
+  } else {
+    *par_init = (x * template_stride) + template_lower;
+  }
+
+  /* calc par_cond */
+  x = (int)floor(((double)(ser_cond - template_lower)) / ((double)template_stride));
+  if (x < 0) {
+    return _XMP_N_INT_FALSE;
+  } else if (x > x_max) {
+    *par_cond = template_upper;
+  } else {
+    *par_cond = (x * template_stride) + template_lower;
+  }
+
+  return _XMP_N_INT_TRUE;
 }
 
-#define _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_N(ser_init, ser_cond, ser_step, par_init, par_cond, \
-                                            template_lower, template_upper, template_stride, \
-                                            width, template_ser_lower, template_ser_upper) \
-{ \
-  int si = ((ser_init - template_ser_lower) / width) + template_ser_lower; \
-  int sc = ((ser_cond - template_ser_lower) / width) + template_ser_lower; \
-  int tl = ((template_lower - template_ser_lower) / width) + template_ser_lower; \
-  int tu = ((template_upper - template_ser_lower) / width) + template_ser_lower; \
-  int ts = template_stride / width; \
-\
-  /* FIXME HOW IMPLEMENT??? */ \
-  _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_1(si, sc, 1, par_init, par_cond, tl, tu, ts) \
-\
-  int par_init_temp = ((*par_init - template_ser_lower) * width) + template_ser_lower; \
-  if (par_init_temp < ser_init) *par_init = ser_init; \
-  else *par_init = par_init_temp; \
-\
-  int par_cond_temp = ((*par_cond - template_ser_lower) * width) + template_ser_lower + width - 1; \
-  if (par_cond_temp > template_ser_upper) par_cond_temp = template_ser_upper; \
-  if (par_cond_temp > ser_cond) *par_cond = ser_cond; \
-  else *par_cond = par_cond_temp; \
+int _XMP_sched_loop_template_width_N(int ser_init, int ser_cond, int ser_step,
+                                     int *par_init, int *par_cond,
+                                     int template_lower, int template_upper, int template_stride,
+                                     int width, int template_ser_lower, int template_ser_upper) {
+  int si = ((ser_init - template_ser_lower) / width) + template_ser_lower;
+  int sc = ((ser_cond - template_ser_lower) / width) + template_ser_lower;
+  int tl = ((template_lower - template_ser_lower) / width) + template_ser_lower;
+  int tu = ((template_upper - template_ser_lower) / width) + template_ser_lower;
+  int ts = template_stride / width;
+
+  /* FIXME HOW IMPLEMENT??? */
+  if (_XMP_sched_loop_template_width_1(si, sc, 1, par_init, par_cond, tl, tu, ts)) {
+    // init par_init
+    int par_init_temp = ((*par_init - template_ser_lower) * width) + template_ser_lower;
+    if (par_init_temp < ser_init) {
+      *par_init = ser_init;
+    } else {
+      *par_init = par_init_temp;
+    }
+
+    // init par_cond
+    int par_cond_temp = ((*par_cond - template_ser_lower) * width) + template_ser_lower + width - 1;
+    if (par_cond_temp > template_ser_upper) {
+      par_cond_temp = template_ser_upper;
+    }
+
+    if (par_cond_temp > ser_cond) {
+      *par_cond = ser_cond;
+    } else {
+      *par_cond = par_cond_temp;
+    }
+
+    return _XMP_N_INT_TRUE;
+  } else {
+    return _XMP_N_INT_FALSE;
+  }
 }
 
 // schedule by template -------------------------------------------------------------------------------------------------------------
@@ -114,18 +139,18 @@ void _XMP_sched_loop_template_DUPLICATION(int ser_init, int ser_cond, int ser_st
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step, reverse_iter)
 
   // calc par_init, par_cond, par_step
-  _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_1(ser_init, ser_cond, ser_step, par_init, par_cond,
-                                      template_lower, template_upper, template_stride)
-  *par_step = ser_step;
+  if (_XMP_sched_loop_template_width_1(ser_init, ser_cond, ser_step, par_init, par_cond,
+                                       template_lower, template_upper, template_stride)) {
+    *par_step = ser_step;
 
-  // finalize iter
-  _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
-  return;
-
+    // finalize iter
+    _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
+  } else {
 no_iter:
-  *par_init = 0;
-  *par_cond = 0;
-  *par_step = 1;
+    *par_init = 0;
+    *par_cond = 0;
+    *par_step = 1;
+  }
 }
 
 // block distribution ---------------------------------------------------------------------------------------------------------------
@@ -148,20 +173,20 @@ void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step, reverse_iter)
 
   // calc par_init, par_cond, par_step
-  _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_1(ser_init, ser_cond, ser_step, par_init, par_cond,
-                                      template_lower, template_upper, template_stride)
-  *par_init = _XMP_SM_GTOL_BLOCK(*par_init, template_lower, width);
-  *par_cond = _XMP_SM_GTOL_BLOCK(*par_cond, template_lower, width);
-  *par_step = ser_step;
+  if (_XMP_sched_loop_template_width_1(ser_init, ser_cond, ser_step, par_init, par_cond,
+                                       template_lower, template_upper, template_stride)) {
+    *par_init = _XMP_SM_GTOL_BLOCK(*par_init, template_lower, width);
+    *par_cond = _XMP_SM_GTOL_BLOCK(*par_cond, template_lower, width);
+    *par_step = ser_step;
 
-  // finalize iter
-  _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
-  return;
-
+    // finalize iter
+    _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
+  } else {
 no_iter:
-  *par_init = 0;
-  *par_cond = 0;
-  *par_step = 1;
+    *par_init = 0;
+    *par_cond = 0;
+    *par_step = 1;
+  }
 }
 
 // cyclic distribution ---------------------------------------------------------------------------------------------------------------
@@ -184,20 +209,20 @@ void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_step,
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step, reverse_iter)
 
   // calc par_init, par_cond, par_step
-  _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_1(ser_init, ser_cond, ser_step, par_init, par_cond,
-                                      template_lower, template_upper, template_stride)
-  *par_init = _XMP_SM_GTOL_CYCLIC(*par_init, template_lower, nodes_size);
-  *par_cond = _XMP_SM_GTOL_CYCLIC(*par_cond, template_lower, nodes_size);
-  *par_step = 1;
+  if (_XMP_sched_loop_template_width_1(ser_init, ser_cond, ser_step, par_init, par_cond,
+                                       template_lower, template_upper, template_stride)) {
+    *par_init = _XMP_SM_GTOL_CYCLIC(*par_init, template_lower, nodes_size);
+    *par_cond = _XMP_SM_GTOL_CYCLIC(*par_cond, template_lower, nodes_size);
+    *par_step = 1;
 
-  // finalize iter
-  _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
-  return;
-
+    // finalize iter
+    _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
+  } else {
 no_iter:
-  *par_init = 0;
-  *par_cond = 0;
-  *par_step = 1;
+    *par_init = 0;
+    *par_cond = 0;
+    *par_step = 1;
+  }
 }
 
 // block-cyclic distribution ---------------------------------------------------------------------------------------------------------
@@ -225,21 +250,21 @@ void _XMP_sched_loop_template_BLOCK_CYCLIC(int ser_init, int ser_cond, int ser_s
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step, reverse_iter)
 
   // calc par_init, par_cond, par_step
-  _XMP_SM_SCHED_LOOP_TEMPLATE_WIDTH_N(ser_init, ser_cond, ser_step, par_init, par_cond,
-                                      template_lower, template_upper, template_stride,
-                                      width, template_ser_lower, template_ser_upper)
-  *par_init = _XMP_SM_GTOL_BLOCK_CYCLIC(width, *par_init, template_lower, nodes_size);
-  *par_cond = _XMP_SM_GTOL_BLOCK_CYCLIC(width, *par_cond, template_lower, nodes_size);
-  *par_step = 1;
+  if (_XMP_sched_loop_template_width_N(ser_init, ser_cond, ser_step, par_init, par_cond,
+                                       template_lower, template_upper, template_stride,
+                                       width, template_ser_lower, template_ser_upper)) {
+    *par_init = _XMP_SM_GTOL_BLOCK_CYCLIC(width, *par_init, template_lower, nodes_size);
+    *par_cond = _XMP_SM_GTOL_BLOCK_CYCLIC(width, *par_cond, template_lower, nodes_size);
+    *par_step = 1;
 
-  // finalize iter
-  _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
-  return;
-
+    // finalize iter
+    _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
+  } else {
 no_iter:
-  *par_init = 0;
-  *par_cond = 0;
-  *par_step = 1;
+    *par_init = 0;
+    *par_cond = 0;
+    *par_step = 1;
+  }
 }
 
 // schedule by nodes ----------------------------------------------------------------------------------------------------------------
@@ -262,11 +287,10 @@ void _XMP_sched_loop_nodes(int ser_init, int ser_cond, int ser_step,
     *par_init = rank1O;
     *par_cond = rank1O + 1;
     *par_step = ser_step;
-    return;
-  }
-
+  } else {
 no_iter:
-  *par_init = 0;
-  *par_cond = 0;
-  *par_step = 1;
+    *par_init = 0;
+    *par_cond = 0;
+    *par_step = 1;
+  }
 }

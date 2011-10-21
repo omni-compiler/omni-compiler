@@ -59,6 +59,15 @@ extern void _XMP_unpack_array(void *dst, void *buffer, int array_type, size_t ar
 // xmp_barrier.c
 extern void _XMP_barrier_EXEC(void);
 
+// xmp_loop.c
+extern int _XMP_sched_loop_template_width_1(int ser_init, int ser_cond, int ser_step,
+                                            int *par_init, int *par_cond,
+                                            int template_lower, int template_upper, int template_stride);
+extern int _XMP_sched_loop_template_width_N(int ser_init, int ser_cond, int ser_step,
+                                            int *par_init, int *par_cond,
+                                            int template_lower, int template_upper, int template_stride,
+                                            int width, int template_ser_lower, int template_ser_upper);
+
 // xmp_nodes.c
 extern _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim, int *dim_size, int is_static);
 extern _XMP_nodes_t *_XMP_init_nodes_struct_EXEC(int dim, int *dim_size, int is_static);
