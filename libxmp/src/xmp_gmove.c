@@ -103,99 +103,60 @@ static int _XMP_check_gmove_array_ref_inclusion_SCALAR(_XMP_array_t *array, int 
   }
 }
 
-static _Bool _XMP_calc_local_copy_template_BLOCK(_XMP_template_chunk_t *chunk,
-                                                 long long *lower, long long *upper, int s) {
-  long long l = *lower;
-  long long u = *upper;
-  long long template_lower = chunk->par_lower;
-  long long template_upper = chunk->par_upper;
+static int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_index,
+                                           int *dst_l, int *dst_u, int *dst_s,
+                                           int *src_l, int *src_u, int *src_s) {
+  int src_lower = *src_l; int src_upper = *src_u; int src_stride = *src_s;
+  int dst_lower = *dst_l; int dst_upper = *dst_u; int dst_stride = *dst_s;
 
-  if (s != 1) {
-    int dst_mod = _XMP_modi_ll_i(l, s);
-    // normalize template lower
-    int lower_mod = _XMP_modi_ll_i(template_lower, s);
-    if (lower_mod != dst_mod) {
-      if (lower_mod < dst_mod) {
-        template_lower += (dst_mod - lower_mod);
-      }
-      else {
-        template_lower += (s - lower_mod + dst_mod);
-      }
-    }
-
-    if (template_lower > template_upper) return false;
-  }
-
-  // calc lower
-  if (l < template_lower) {
-    *lower = template_lower;
-  }
-  else if (template_upper < l) {
-    return false;
-  }
-  else  {
-    *lower = l;
-  }
-
-  // calc upper
-  if (u < template_lower) {
-    return false;
-  }
-  else if (template_upper < u) {
-    *upper = template_upper;
-  }
-  else {
-    *upper = u;
-  }
-
-  return true;
-}
-
-// XXX used when ref_stride is 1
-static _Bool _XMP_calc_local_copy_template_CYCLIC1(_XMP_template_chunk_t *chunk,
-                                                   long long *lower, long long u, int *stride) {
-  long long l = *lower;
-  long long template_lower = chunk->par_lower;
-  int nodes_size = chunk->onto_nodes_info->size;
-
-  // calc lower
-  int dst_mod = _XMP_modi_ll_i(template_lower, nodes_size);
-  int lower_mod = _XMP_modi_ll_i(l, nodes_size);
-  if (lower_mod != dst_mod) {
-    if (lower_mod < dst_mod) {
-      l += (dst_mod - lower_mod);
-    }
-    else {
-      l += (nodes_size - lower_mod + dst_mod);
-    }
-  }
-
-  if (u < l) {
-    return false;
-  }
-  else {
-    *lower = l;
-  }
-
-  // calc stride;
-  *stride = nodes_size;
-
-  return true;
-}
-
-static _Bool _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_index,
-                                             int *dst_l, int *dst_u, int *dst_s,
-                                             int *src_l, int *src_u, int *src_s) {
-  if (_XMP_M_COUNT_TRIPLETi(*dst_l, *dst_u, *dst_s) != _XMP_M_COUNT_TRIPLETi(*src_l, *src_u, *src_s)) {
+  if (_XMP_M_COUNT_TRIPLETi(dst_lower, dst_upper, dst_stride) !=
+      _XMP_M_COUNT_TRIPLETi(src_lower, src_upper, src_stride)) {
     _XMP_fatal("bad assign statement for gmove");
   }
 
   _XMP_array_info_t *ai = &(dst_array->info[dst_dim_index]);
-
   _XMP_template_t *t = dst_array->align_template;
+
+  int ret = _XMP_N_INT_FALSE;
   int align_template_index = ai->align_template_index;
-  _XMP_template_info_t *ti = &(t->info[align_template_index]);
-  _XMP_template_chunk_t *tc = &(t->chunk[align_template_index]);
+  if (align_template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
+    _XMP_template_info_t *ti = &(t->info[align_template_index]);
+    _XMP_template_chunk_t *tc = &(t->chunk[align_template_index]);
+    int align_subscript = ai->align_subscript;
+
+    switch (tc->dist_manner) {
+      case _XMP_N_DIST_DUPLICATION:
+        return _XMP_N_INT_TRUE;
+      case _XMP_N_DIST_BLOCK:
+      case _XMP_N_DIST_CYCLIC:
+        {
+          // calc dst_l, dst_u, dst_s
+          ret = _XMP_sched_loop_template_width_1(dst_lower - align_subscript,
+                                                 dst_upper - align_subscript,
+                                                 dst_stride - align_subscript,
+                                                 dst_l, dst_u,
+                                                 tc->par_lower, tc->par_upper, tc->par_stride);
+          *dst_l += align_subscript;
+          *dst_u += align_subscript;
+        } break;
+      case _XMP_N_DIST_BLOCK_CYCLIC:
+        {
+          // calc dst_l, dst_u, dst_s
+          ret = _XMP_sched_loop_template_width_N(dst_lower - align_subscript,
+                                                 dst_upper - align_subscript,
+                                                 dst_stride - align_subscript,
+                                                 dst_l, dst_u,
+                                                 tc->par_lower, tc->par_upper, tc->par_stride,
+                                                 tc->par_width, ti->ser_lower, ti->ser_upper);
+          *dst_l += align_subscript;
+          *dst_u += align_subscript;
+        } break;
+      default:
+        _XMP_fatal("unknown distribution manner");
+    }
+  }
+
+  return ret;
 }
 
 static void _XMP_convert_array_ref_global2local(_XMP_array_t *array,
