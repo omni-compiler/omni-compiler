@@ -142,12 +142,7 @@ typedef struct _XMP_array_info_type {
   int shadow_comm_rank;
   // -----------------------------------------
 
-  // FIXME delete this line?: align_manner is not _XMP_N_ALIGN_NOT_ALIGNED
   int align_template_index;
-  // enable when align_template_index is not _XMP_N_NO_ALIGN_TEMPLATE
-  _XMP_template_info_t *align_template_info;
-  _XMP_template_chunk_t *align_template_chunk;
-  // ----------------------------------------------------------------
 } _XMP_array_info_t;
 
 typedef struct _XMP_array_type {

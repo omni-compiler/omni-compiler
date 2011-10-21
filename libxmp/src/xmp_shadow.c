@@ -14,12 +14,14 @@ static void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index) {
   _XMP_nodes_t *onto_nodes = (array->align_template)->onto_nodes;
   _XMP_array_info_t *ai = &(array->info[array_index]);
 
+  _XMP_template_t *align_template = array->align_template;
+
   int color = 1;
   if (onto_nodes->is_member) {
     _XMP_ASSERT(ai->align_manner != _XMP_N_ALIGN_NOT_ALIGNED);
     _XMP_ASSERT(ai->align_manner != _XMP_N_ALIGN_DUPLICATION);
 
-    _XMP_template_chunk_t *chunk = ai->align_template_chunk;
+    _XMP_template_chunk_t *chunk = &(align_template->chunk[ai->align_template_index]);
     _XMP_ASSERT(chunk->dist_manner != _XMP_N_DIST_DUPLICATION);
 
     int onto_nodes_index = chunk->onto_nodes_index;
@@ -89,6 +91,8 @@ static void _XMP_reflect_shadow_FULL_ALLGATHER(void *array_addr, _XMP_array_t *a
 static void _XMP_reflect_shadow_FULL_BCAST(void *array_addr, _XMP_array_t *array_desc, int array_index) {
   _XMP_ASSERT(array_desc->is_allocated);
 
+  _XMP_template_t *align_template = array_desc->align_template;
+
   int array_type = array_desc->type;
   size_t array_type_size = array_desc->type_size;
   int array_dim = array_desc->dim;
@@ -100,7 +104,7 @@ static void _XMP_reflect_shadow_FULL_BCAST(void *array_addr, _XMP_array_t *array
   int size = ai->shadow_comm_size;
   int rank = ai->shadow_comm_rank;
 
-  _XMP_template_chunk_t *chunk = ai->align_template_chunk;
+  _XMP_template_chunk_t *chunk = &(align_template->chunk[ai->align_template_index]);;
   unsigned long long chunk_width = chunk->par_chunk_width;
 
   // setup type

@@ -48,7 +48,7 @@ static void _XMP_calc_gmove_rank_array_SCALAR(_XMP_array_t *array, int *ref_inde
     _XMP_array_info_t *ai = &(array->info[i]);
     int template_index = ai->align_template_index;
     if (template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
-      _XMP_template_chunk_t *chunk = ai->align_template_chunk;
+      _XMP_template_chunk_t *chunk = &(template->chunk[ai->align_template_index]);
       int array_nodes_index = chunk->onto_nodes_index;
       if (array_nodes_index != _XMP_N_NO_ONTO_NODES) {
         rank_array[array_nodes_index] = _XMP_calc_template_owner_SCALAR(template, template_index,
@@ -187,78 +187,25 @@ static _Bool _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_di
                                              int *dst_l, int *dst_u, int *dst_s,
                                              int *src_l, int *src_u, int *src_s) {
   if (_XMP_M_COUNT_TRIPLETi(*dst_l, *dst_u, *dst_s) != _XMP_M_COUNT_TRIPLETi(*src_l, *src_u, *src_s)) {
-    _XMP_fatal("wrong assign statement"); // FIXME fix error msg
+    _XMP_fatal("bad assign statement for gmove");
   }
 
-  _XMP_array_info_t *dst_array_info = &(dst_array->info[dst_dim_index]);
-  if ((dst_array_info->align_template_index) == _XMP_N_NO_ALIGN_TEMPLATE) {
-    return true;
-  }
-  else {
-    long long align_subscript = dst_array_info->align_subscript;
-    long long l = *dst_l + align_subscript;
-    long long u = *dst_u + align_subscript;
-    int s = *dst_s;
+  _XMP_array_info_t *ai = &(dst_array->info[dst_dim_index]);
 
-    _XMP_template_chunk_t *chunk = dst_array_info->align_template_chunk;
-    switch (chunk->dist_manner) {
-      case _XMP_N_DIST_DUPLICATION:
-        return true;
-      case _XMP_N_DIST_BLOCK:
-        {
-          _Bool res = _XMP_calc_local_copy_template_BLOCK(chunk, &l, &u, s);
-          if (res) {
-            int new_dst_l = l - align_subscript;
-            int new_dst_u = u - align_subscript;
-
-            // update src ref
-            *src_l += (((new_dst_l - (*dst_l)) / (*dst_s)) * (*src_s));
-            *src_u = (*src_l) + ((_XMP_M_COUNT_TRIPLETi(new_dst_l, new_dst_u, s) - 1) * (*src_s));
-
-            // update dst ref
-            *dst_l = new_dst_l;
-            *dst_u = new_dst_u;
-          }
-
-          return res;
-        }
-      case _XMP_N_DIST_CYCLIC:
-        {
-          if (s == 1) {
-            _Bool res = _XMP_calc_local_copy_template_CYCLIC1(chunk, &l, u, &s);
-            if (res) {
-              int new_dst_l = l - align_subscript;
-              int new_dst_s = s;
-
-              // update src ref
-              *src_l += ((new_dst_l - (*dst_l)) * (*src_s));
-              *src_s *= new_dst_s;
-
-              // update dst ref
-              *dst_l = new_dst_l;
-              *dst_s = new_dst_s;
-            }
-
-            return res;
-          }
-          else {
-            // FIXME
-            _XMP_fatal("not implemented yet");
-            return false; // XXX dummy;
-          }
-        }
-      default:
-        _XMP_fatal("unknown distribute manner");
-        return false; // XXX dummy;
-    }
-  }
+  _XMP_template_t *t = dst_array->align_template;
+  int align_template_index = ai->align_template_index;
+  _XMP_template_info_t *ti = &(t->info[align_template_index]);
+  _XMP_template_chunk_t *tc = &(t->chunk[align_template_index]);
 }
 
 static void _XMP_convert_array_ref_global2local(_XMP_array_t *array,
                                                 int dim_index, int *lower, int *upper, int *stride) {
   _XMP_array_info_t *array_info = &(array->info[dim_index]);
-  if ((array_info->align_template_index) != _XMP_N_NO_ALIGN_TEMPLATE) {
-    int dist_manner = (array_info->align_template_chunk)->dist_manner;
+  _XMP_template_t *align_template = array->align_template;
+
+  int align_template_index = array_info->align_template_index;
+  if (align_template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
+    int dist_manner = align_template->chunk[align_template_index].dist_manner;
     switch (array_info->shadow_type) {
       case _XMP_N_SHADOW_NONE:
         {
@@ -771,7 +718,7 @@ static int _XMP_calc_SENDRECV_owner(_XMP_array_t *array, int *lower, int *upper,
     int template_index = ai->align_template_index;
     if (template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
       if (_XMP_M_COUNT_TRIPLETi(lower[i], upper[i], stride[i]) == 1) {
-        int nodes_index = (ai->align_template_chunk)->onto_nodes_index;
+        int nodes_index = template->chunk[template_index].onto_nodes_index;
         if (nodes_index != _XMP_N_NO_ONTO_NODES) {
           int owner = _XMP_calc_template_owner_SCALAR(template, template_index, lower[i] + ai->align_subscript);
           if (owner != _XMP_N_INVALID_RANK) {
@@ -780,7 +727,7 @@ static int _XMP_calc_SENDRECV_owner(_XMP_array_t *array, int *lower, int *upper,
         }
       }
       else {
-        if (((ai->align_template_chunk)->dist_manner) != _XMP_N_DIST_DUPLICATION) {
+        if ((template->chunk[template_index].dist_manner) != _XMP_N_DIST_DUPLICATION) {
           return _XMP_N_INVALID_RANK;
         }
       }

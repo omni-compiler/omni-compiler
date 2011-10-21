@@ -112,8 +112,6 @@ void _XMP_align_array_NOT_ALIGNED(_XMP_array_t *array, int array_index) {
   ai->align_subscript = 0;
 
   ai->align_template_index = _XMP_N_NO_ALIGN_TEMPLATE;
-  ai->align_template_info = NULL;
-  ai->align_template_chunk = NULL;
 }
 
 void _XMP_align_array_DUPLICATION(_XMP_array_t *array, int array_index, int template_index,
@@ -123,7 +121,6 @@ void _XMP_align_array_DUPLICATION(_XMP_array_t *array, int array_index, int temp
   _XMP_ASSERT(template->is_distributed);
 
   _XMP_template_info_t *ti = &(template->info[template_index]);
-  _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XMP_array_info_t *ai = &(array->info[array_index]);
 
   int lower = ai->ser_lower;
@@ -156,8 +153,6 @@ void _XMP_align_array_DUPLICATION(_XMP_array_t *array, int array_index, int temp
   ai->align_subscript = align_subscript;
 
   ai->align_template_index = template_index;
-  ai->align_template_info = ti;
-  ai->align_template_chunk = chunk;
 }
 
 void _XMP_align_array_BLOCK(_XMP_array_t *array, int array_index, int template_index,
@@ -228,8 +223,6 @@ EXIT_CALC_PARALLEL_MEMBERS:
   ai->align_subscript = align_subscript;
 
   ai->align_template_index = template_index;
-  ai->align_template_info = ti;
-  ai->align_template_chunk = chunk;
 }
 
 void _XMP_align_array_CYCLIC(_XMP_array_t *array, int array_index, int template_index,
@@ -278,8 +271,6 @@ void _XMP_align_array_CYCLIC(_XMP_array_t *array, int array_index, int template_
   ai->align_subscript = align_subscript;
 
   ai->align_template_index = template_index;
-  ai->align_template_info = ti;
-  ai->align_template_chunk = chunk;
 }
 
 void _XMP_align_array_BLOCK_CYCLIC(_XMP_array_t *array, int array_index, int template_index,
@@ -325,8 +316,6 @@ void _XMP_align_array_BLOCK_CYCLIC(_XMP_array_t *array, int array_index, int tem
   ai->align_subscript = align_subscript;
 
   ai->align_template_index = template_index;
-  ai->align_template_info = ti;
-  ai->align_template_chunk = chunk;
 }
 
 void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...) {
