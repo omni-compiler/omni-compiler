@@ -112,8 +112,6 @@ public class XMPrewriteExpr {
     Xobject leftExpr = myExpr.getArg(0);
     Xobject rightExpr = myExpr.getArg(1);
 
-    System.out.println(myExpr.toString());
-
     Xobject newExpr = null;
     if (leftExpr.Opcode() == Xcode.CO_ARRAY_REF) {
       if (rightExpr.Opcode() == Xcode.CO_ARRAY_REF) {	// a:[0] = x:[1];	syntax error	throw exception

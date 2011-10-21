@@ -489,7 +489,9 @@ public class XmcXobjectToXmObjTranslator
                 case VAR_ADDR:
                     m = _factory.createXbcVarAddr();
                     break;
-                //case ARRAY_REF:
+                case ARRAY_REF:
+                    // fall through
+                    break;
                 case ARRAY_ADDR: /* illegal but convert */
                     m = _factory.createXbcArrayAddr();
                     break;
@@ -510,8 +512,12 @@ public class XmcXobjectToXmObjTranslator
                 default:
                     fatal("cannot apply ADDR_OF to " + operand.toString());
                 }
-                
-                if(m != null) {
+
+                if (operand.Opcode() == Xcode.ARRAY_REF) {
+                    XbcAddrOfExpr arrayRefObj = _factory.createXbcAddrOfExpr();
+                    arrayRefObj.setExpressions(transExpr(xobj.getArg(0)));
+                    xmobj = arrayRefObj;
+                } else if(m != null) {
                     m.setContent(operand.getName());
                     xmobj = (XmObj)m;
                 } else {
