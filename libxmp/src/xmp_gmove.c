@@ -266,12 +266,12 @@ void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XMP_array_t *array
 }
 
 int _XMP_gmove_HOMECOPY_SCALAR(_XMP_array_t *array, ...) {
-  if (_XMP_IS_SINGLE) {
-    return _XMP_N_INT_TRUE;
-  }
-
   if (!array->is_allocated) {
     return _XMP_N_INT_FALSE;
+  }
+
+  if (_XMP_IS_SINGLE) {
+    return _XMP_N_INT_TRUE;
   }
 
   _XMP_ASSERT((array->align_template)->is_distributed);
@@ -477,8 +477,18 @@ void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size,
 
   va_end(args);
 
-  _XMP_template_t *align_template = src_array->align_template;
-  _XMP_nodes_t *onto_nodes = align_template->onto_nodes;
+  if (_XMP_IS_SINGLE) {
+    for (int i = 0; i < src_dim; i++) {
+      _XMP_gtol_array_ref_triplet(src_array, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
+    }
+
+    _XMP_gmove_localcopy_ARRAY(type, type_size,
+                               dst_addr, dst_dim, dst_l, dst_u, dst_s, dst_d,
+                               src_addr, src_dim, src_l, src_u, src_s, src_d);
+  }
+
+//  _XMP_template_t *align_template = src_array->align_template;
+//  _XMP_nodes_t *onto_nodes = align_template->onto_nodes;
 }
 
 void _XMP_gmove_HOMECOPY_ARRAY(_XMP_array_t *dst_array, int type, size_t type_size, ...) {
@@ -514,6 +524,16 @@ void _XMP_gmove_HOMECOPY_ARRAY(_XMP_array_t *dst_array, int type, size_t type_si
   }
 
   va_end(args);
+
+  if (_XMP_IS_SINGLE) {
+    for (int i = 0; i < dst_dim; i++) {
+      _XMP_gtol_array_ref_triplet(dst_array, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
+    }
+
+    _XMP_gmove_localcopy_ARRAY(type, type_size,
+                               dst_addr, dst_dim, dst_l, dst_u, dst_s, dst_d,
+                               src_addr, src_dim, src_l, src_u, src_s, src_d);
+  }
 
   // calc index ref
   int src_dim_index = 0;
