@@ -66,7 +66,8 @@ public class XMPrewriteExpr {
         if (decls != null) {
           try {
             for (Xobject x : decls) {
-              rewriteExpr(x.getArg(1), localXMPsymbolTable);
+              Xobject declInitExpr = x.getArg(1);
+              x.setArg(1, rewriteExpr(declInitExpr, localXMPsymbolTable));
             }
           } catch (XMPexception e) {
             XMP.error(b.getLineNo(), e.getMessage());
@@ -87,7 +88,7 @@ public class XMPrewriteExpr {
             iter.setExpr(rewriteAssignExpr(expr, localXMPsymbolTable));
             break;
           default:
-            rewriteExpr(expr, localXMPsymbolTable);
+            iter.setExpr(rewriteExpr(expr, localXMPsymbolTable));
             break;
         }
       } catch (XMPexception e) {
@@ -104,7 +105,7 @@ public class XMPrewriteExpr {
         (rightExpr.Opcode() == Xcode.CO_ARRAY_REF)) {
       return rewriteCoArrayAssignExpr(myExpr, localXMPsymbolTable);
     } else {
-      return myExpr;
+      return rewriteExpr(myExpr, localXMPsymbolTable);
     }
   }
 
@@ -132,27 +133,38 @@ public class XMPrewriteExpr {
     return newExpr;
   }
 
-  private void rewriteExpr(Xobject expr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
-    if (expr == null) return;
+  private Xobject rewriteExpr(Xobject expr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+    if (expr == null) {
+      return null;
+    }
 
-    topdownXobjectIterator iter = new topdownXobjectIterator(expr);
-    for (iter.init(); !iter.end(); iter.next()) {
-      Xobject myExpr = iter.getXobject();
-      if (myExpr == null) {
-        continue;
-      } else if (myExpr.isRewrittedByXmp()) {
-        continue;
-      }
+    switch (expr.Opcode()) {
+      case ARRAY_REF:
+        return rewriteArrayRef(expr, localXMPsymbolTable);
+      default:
+        {
+          topdownXobjectIterator iter = new topdownXobjectIterator(expr);
+          for (iter.init(); !iter.end(); iter.next()) {
+            Xobject myExpr = iter.getXobject();
+            if (myExpr == null) {
+              continue;
+            } else if (myExpr.isRewrittedByXmp()) {
+              continue;
+            }
 
-      switch (myExpr.Opcode()) {
-        case ARRAY_REF:
-          iter.setXobject(rewriteArrayRef(myExpr, localXMPsymbolTable));
-          break;
-        case SUB_ARRAY_REF:
-          System.out.println(myExpr.toString());
-          break;
-        default:
-      }
+            switch (myExpr.Opcode()) {
+              case ARRAY_REF:
+                iter.setXobject(rewriteArrayRef(myExpr, localXMPsymbolTable));
+                break;
+              case SUB_ARRAY_REF:
+                System.out.println(myExpr.toString());
+                break;
+              default:
+            }
+          }
+
+          return expr;
+        }
     }
   }
 
