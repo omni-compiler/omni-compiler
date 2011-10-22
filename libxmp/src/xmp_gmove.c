@@ -188,6 +188,32 @@ static int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_
   return ret;
 }
 
+static int _XMP_calc_global_index_BCAST(_XMP_array_t *src_array, int *src_array_nodes_ref,
+                                        int *dst_lower, int *dst_upper, int *dst_stride,
+                                        int *src_lower, int *src_upper, int *src_stride) {
+  _XMP_nodes_t *array_nodes = src_array->array_nodes;
+  int array_nodes_dim = array_nodes->dim;
+
+  _XMP_template_t *template = src_array->align_template;
+  int template_dim = template->dim;
+
+  int array_nodes_dim_count = 0;
+  int array_dim = src_array->dim;
+  for (int i = 0; i < array_dim; i++) {
+    int template_index = src_array->info[i].align_template_index;
+    if (template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
+      int rank = src_array_nodes_ref[array_nodes_dim_count];
+
+      int template_lower, template_upper, template_stride;
+      _XMP_calc_template_par_triplet(template, i, rank, &template_lower, &template_upper, &template_stride);
+
+      array_nodes_dim_count++;
+    }
+  }
+
+  return _XMP_N_INT_TRUE;
+}
+
 // FIXME not completed
 static void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
                                         int dim_index, int *lower, int *upper, int *stride) {
@@ -487,8 +513,18 @@ void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size,
                                src_addr, src_dim, src_l, src_u, src_s, src_d);
   }
 
-//  _XMP_template_t *align_template = src_array->align_template;
-//  _XMP_nodes_t *onto_nodes = align_template->onto_nodes;
+  _XMP_nodes_t *array_nodes = src_array->array_nodes;
+  int array_nodes_dim = array_nodes->dim;
+  int array_nodes_ref[array_nodes_dim];
+  for (int i = 0; i < array_nodes_dim; i++) {
+    array_nodes_ref[i] = 0;
+  }
+
+  int dst_lower[dst_dim], dst_upper[dst_dim], dst_stride[dst_dim];
+  int src_lower[src_dim], src_upper[src_dim], src_stride[src_dim];
+  do {
+    printf("[%d] now scan %d\n", _XMP_world_rank, _XMP_calc_linear_rank(array_nodes, array_nodes_ref));
+  } while (_XMP_calc_next_next_rank(array_nodes, array_nodes_ref));
 }
 
 void _XMP_gmove_HOMECOPY_ARRAY(_XMP_array_t *dst_array, int type, size_t type_size, ...) {

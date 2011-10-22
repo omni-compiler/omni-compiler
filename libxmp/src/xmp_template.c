@@ -519,3 +519,36 @@ int _XMP_calc_template_owner_SCALAR(_XMP_template_t *template, int dim_index, lo
       return _XMP_N_INVALID_RANK; // XXX dummy
   }
 }
+
+// FIXME support other dist manners
+void _XMP_calc_template_par_triplet(_XMP_template_t *template, int template_index, int rank,
+                                    int *template_lower, int *template_upper, int *template_stride) {
+  _XMP_ASSERT(template->is_distributed);
+
+  int lower, upper, stride;
+
+  _XMP_template_info_t *info = &(template->info[template_index]);
+  _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
+  switch (chunk->dist_manner) {
+    case _XMP_N_DIST_BLOCK:
+      {
+        // calc lower
+        lower = info->ser_lower + (chunk->par_chunk_width * rank);
+
+        // calc upper
+        upper = lower + chunk->par_chunk_width;
+        if (upper > info->ser_upper) {
+          upper = info->ser_upper;
+        }
+
+        // calc stride
+        stride = 1;
+      } break;
+    default:
+      _XMP_fatal("unknown distribution manner");
+  }
+
+  *template_lower = lower;
+  *template_upper = upper;
+  *template_stride = stride;
+}

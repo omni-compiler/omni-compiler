@@ -84,6 +84,7 @@ extern _XMP_nodes_ref_t *_XMP_init_nodes_ref(_XMP_nodes_t *n, int *rank_array);
 extern void _XMP_finalize_nodes_ref(_XMP_nodes_ref_t *nodes_ref);
 extern _XMP_nodes_ref_t *_XMP_create_nodes_ref_for_target_nodes(_XMP_nodes_t *n, int *rank_array, _XMP_nodes_t *target_nodes);
 extern void _XMP_translate_nodes_rank_array_to_ranks(_XMP_nodes_t *nodes, int *ranks, int *rank_array, int shrink_nodes_size);
+extern int _XMP_calc_next_next_rank(_XMP_nodes_t *nodes, int *rank_array);
 
 // xmp_nodes_stack.c
 extern void _XMP_push_nodes(_XMP_nodes_t *nodes);
@@ -101,6 +102,8 @@ extern int _XMP_check_template_ref_inclusion(int ref_lower, int ref_upper, int r
 extern _XMP_nodes_t *_XMP_create_nodes_by_template_ref(_XMP_template_t *ref_template, int *shrink,
                                                        long long *ref_lower, long long *ref_upper, long long *ref_stride);
 extern int _XMP_calc_template_owner_SCALAR(_XMP_template_t *ref_template, int dim_index, long long ref_index);
+extern void _XMP_calc_template_par_triplet(_XMP_template_t *template, int template_index, int rank,
+                                           int *template_lower, int *template_upper, int *template_stride);
 
 // xmp_util.c
 extern unsigned long long _XMP_get_on_ref_id(void);

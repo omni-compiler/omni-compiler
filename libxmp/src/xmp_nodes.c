@@ -868,3 +868,22 @@ void _XMP_translate_nodes_rank_array_to_ranks(_XMP_nodes_t *nodes, int *ranks, i
     *ranks = _XMP_calc_linear_rank(nodes, rank_array);
   }
 }
+
+int _XMP_calc_next_next_rank(_XMP_nodes_t *nodes, int *rank_array) {
+  int i, dim = nodes->dim;
+  for (i = 0; i < dim; i++) {
+    int size = nodes->info[i].size;
+    (rank_array[i])++;
+    if (rank_array[i] == size) {
+      rank_array[i] = 0;
+    } else {
+      break;
+    }
+  }
+
+  if (i == dim) {
+    return _XMP_N_INT_FALSE;
+  } else {
+    return _XMP_N_INT_TRUE;
+  }
+}
