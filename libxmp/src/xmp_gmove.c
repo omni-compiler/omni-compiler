@@ -188,26 +188,41 @@ static int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_
   return ret;
 }
 
-static int _XMP_calc_global_index_BCAST(_XMP_array_t *src_array, int *src_array_nodes_ref,
-                                        int *dst_lower, int *dst_upper, int *dst_stride,
-                                        int *src_lower, int *src_upper, int *src_stride) {
-  _XMP_nodes_t *array_nodes = src_array->array_nodes;
-  int array_nodes_dim = array_nodes->dim;
-
+static int _XMP_calc_global_index_BCAST(_XMP_array_t *src_array, int *src_array_nodes_ref, int dst_dim,
+                                        int *dst_l, int *dst_u, int *dst_s,
+                                        int *src_l, int *src_u, int *src_s) {
   _XMP_template_t *template = src_array->align_template;
-  int template_dim = template->dim;
 
+  int dst_dim_index = 0;
   int array_nodes_dim_count = 0;
   int array_dim = src_array->dim;
   for (int i = 0; i < array_dim; i++) {
     int template_index = src_array->info[i].align_template_index;
     if (template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
       int rank = src_array_nodes_ref[array_nodes_dim_count];
+      // FIXME _XMP_ASSERT
 
+      // calc template info
       int template_lower, template_upper, template_stride;
       _XMP_calc_template_par_triplet(template, i, rank, &template_lower, &template_upper, &template_stride);
 
-      array_nodes_dim_count++;
+      do {
+        if (_XMP_M_COUNT_TRIPLETi(dst_l[dst_dim_index], dst_u[dst_dim_index], dst_s[dst_dim_index]) != 1) {
+          if (_XMP_calc_global_index_HOMECOPY(src_array, i,
+                                              &(src_l[i]), &(src_u[i]), &(src_s[i]),
+                                              &(dst_l[dst_dim_index]), &(dst_u[dst_dim_index]), &(dst_s[dst_dim_index]))) {
+            dst_dim_index++;
+            array_nodes_dim_count++;
+            break;
+          } else {
+            return _XMP_N_INT_FALSE;
+          }
+        } else if (dst_dim_index < dst_dim) {
+          dst_dim_index++;
+        } else {
+          _XMP_fatal("bad assign statement for gmove");
+        }
+      } while (1);
     }
   }
 
@@ -523,7 +538,27 @@ void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size,
   int dst_lower[dst_dim], dst_upper[dst_dim], dst_stride[dst_dim];
   int src_lower[src_dim], src_upper[src_dim], src_stride[src_dim];
   do {
-    printf("[%d] now scan %d\n", _XMP_world_rank, _XMP_calc_linear_rank(array_nodes, array_nodes_ref));
+    for (int i = 0; i < dst_dim; i++) {
+      dst_lower[i] = dst_l[i]; dst_upper[i] = dst_u[i]; dst_stride[i] = dst_s[i];
+    }
+
+    for (int i = 0; i < src_dim; i++) {
+      src_lower[i] = src_l[i]; src_upper[i] = src_u[i]; src_stride[i] = src_s[i];
+    }
+
+    if(_XMP_calc_global_index_BCAST(src_array, array_nodes_ref, dst_dim,
+                                    dst_lower, dst_upper, dst_stride,
+                                    src_lower, src_upper, src_stride)) {
+      if (_XMP_world_rank == 0) {
+        int root = _XMP_calc_linear_rank(array_nodes, array_nodes_ref);
+        for (int i = 0; i < src_dim; i++) {
+          printf("[%d] root[%d] i[%d] src(%d:%d:%d)\n", _XMP_world_rank, root, i, src_lower[i], src_upper[i], src_stride[i]);
+        }
+        for (int i = 0; i < dst_dim; i++) {
+          printf("[%d] root[%d] i[%d] dst(%d:%d:%d)\n", _XMP_world_rank, root, i, dst_lower[i], dst_upper[i], dst_stride[i]);
+        }
+      }
+    }
   } while (_XMP_calc_next_next_rank(array_nodes, array_nodes_ref));
 }
 
