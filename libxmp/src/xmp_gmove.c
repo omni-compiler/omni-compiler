@@ -128,9 +128,10 @@ static void _XMP_gmove_localcopy_ARRAY(int type, int type_size,
   _XMP_free(buffer);
 }
 
-static int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_index,
-                                           int *dst_l, int *dst_u, int *dst_s,
-                                           int *src_l, int *src_u, int *src_s) {
+static int _XMP_sched_gmove_triplet_1(int template_lower, int template_upper, int template_stride,
+                                      _XMP_array_t *dst_array, int dst_dim_index,
+                                      int *dst_l, int *dst_u, int *dst_s,
+                                      int *src_l, int *src_u, int *src_s) {
   int src_lower = *src_l; int src_upper = *src_u; int src_stride = *src_s;
   int dst_lower = *dst_l; int dst_upper = *dst_u; int dst_stride = *dst_s;
 
@@ -142,7 +143,7 @@ static int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_
   _XMP_array_info_t *ai = &(dst_array->info[dst_dim_index]);
   _XMP_template_t *t = dst_array->align_template;
 
-  int ret = _XMP_N_INT_FALSE;
+  int ret = _XMP_N_INT_TRUE;
   int align_template_index = ai->align_template_index;
   if (align_template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
     _XMP_template_info_t *ti = &(t->info[align_template_index]);
@@ -160,7 +161,7 @@ static int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_
                                                  dst_upper - align_subscript,
                                                  dst_stride - align_subscript,
                                                  dst_l, dst_u,
-                                                 tc->par_lower, tc->par_upper, tc->par_stride);
+                                                 template_lower, template_upper, template_stride);
           *dst_l += align_subscript;
           *dst_u += align_subscript;
         } break;
@@ -171,7 +172,7 @@ static int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_
                                                  dst_upper - align_subscript,
                                                  dst_stride - align_subscript,
                                                  dst_l, dst_u,
-                                                 tc->par_lower, tc->par_upper, tc->par_stride,
+                                                 template_lower, template_upper, template_stride,
                                                  tc->par_width, ti->ser_lower, ti->ser_upper);
           *dst_l += align_subscript;
           *dst_u += align_subscript;
@@ -183,9 +184,25 @@ static int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_
     // calc src_l, src_u, src_s (src_s does not change)
     *src_l = (src_stride * ((*dst_l - dst_lower) / dst_stride)) + src_lower;
     *src_u = (src_stride * ((*dst_u - dst_lower) / dst_stride)) + src_lower;
-  }
+  } // FIXME else how implement???
 
   return ret;
+}
+
+static int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_index,
+                                           int *dst_l, int *dst_u, int *dst_s,
+                                           int *src_l, int *src_u, int *src_s) {
+  int align_template_index = dst_array->info[dst_dim_index].align_template_index;
+  if (align_template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
+    _XMP_template_chunk_t *tc = &((dst_array->align_template)->chunk[align_template_index]);
+    return _XMP_sched_gmove_triplet_1(tc->par_lower, tc->par_upper, tc->par_stride,
+                                      dst_array, dst_dim_index,
+                                      dst_l, dst_u, dst_s,
+                                      src_l, src_u, src_s);
+  } else {
+    // FIXME else how implement???
+    return _XMP_N_INT_TRUE;
+  }
 }
 
 static int _XMP_calc_global_index_BCAST(_XMP_array_t *src_array, int *src_array_nodes_ref, int dst_dim,
@@ -208,9 +225,10 @@ static int _XMP_calc_global_index_BCAST(_XMP_array_t *src_array, int *src_array_
 
       do {
         if (_XMP_M_COUNT_TRIPLETi(dst_l[dst_dim_index], dst_u[dst_dim_index], dst_s[dst_dim_index]) != 1) {
-          if (_XMP_calc_global_index_HOMECOPY(src_array, i,
-                                              &(src_l[i]), &(src_u[i]), &(src_s[i]),
-                                              &(dst_l[dst_dim_index]), &(dst_u[dst_dim_index]), &(dst_s[dst_dim_index]))) {
+          if (_XMP_sched_gmove_triplet_1(template_lower, template_upper, template_stride,
+                                         src_array, i,
+                                         &(src_l[i]), &(src_u[i]), &(src_s[i]),
+                                         &(dst_l[dst_dim_index]), &(dst_u[dst_dim_index]), &(dst_s[dst_dim_index]))) {
             dst_dim_index++;
             array_nodes_dim_count++;
             break;
