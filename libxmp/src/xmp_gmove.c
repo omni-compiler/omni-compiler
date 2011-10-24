@@ -158,7 +158,7 @@ static void _XMP_gmove_bcast_ARRAY(void *dst_addr, int dst_dim,
                                    int *dst_l, int *dst_u, int *dst_s, unsigned long long *dst_d,
                                    void *src_addr, int src_dim,
                                    int *src_l, int *src_u, int *src_s, unsigned long long *src_d,
-                                   _XMP_array_t *src_array, int type, size_t type_size, int root_rank) {
+                                   int type, size_t type_size, int root_rank) {
   unsigned long long dst_buffer_elmts = 1;
   for (int i = 0; i < dst_dim; i++) {
     dst_buffer_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
@@ -179,12 +179,6 @@ static void _XMP_gmove_bcast_ARRAY(void *dst_addr, int dst_dim,
   _XMP_ASSERT(exec_nodes->is_member);
 
   if (root_rank == (exec_nodes->comm_rank)) {
-    for (int i = 0; i < src_dim; i++) {
-      printf("bcast[%d] [%d] bef(%d:%d:%d)\n", root_rank, i, src_l[i], src_u[i], src_s[i]);
-      _XMP_gtol_array_ref_triplet(src_array, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
-      printf("bcast[%d] [%d] aft(%d:%d:%d)\n", root_rank, i, src_l[i], src_u[i], src_s[i]);
-    }
-
     _XMP_pack_array(buffer, src_addr, type, type_size, src_dim, src_l, src_u, src_s, src_d);
   }
 
@@ -325,7 +319,7 @@ static int _XMP_calc_global_index_BCAST(_XMP_array_t *src_array, int *src_array_
 
       // calc template info
       int template_lower, template_upper, template_stride;
-      _XMP_calc_template_par_triplet(template, i, rank, &template_lower, &template_upper, &template_stride);
+      _XMP_calc_template_par_triplet(template, template_index, rank, &template_lower, &template_upper, &template_stride);
 
       do {
         if (_XMP_M_COUNT_TRIPLETi(dst_l[dst_dim_index], dst_u[dst_dim_index], dst_s[dst_dim_index]) != 1) {
@@ -600,6 +594,8 @@ void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size,
   }
 
   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
+  _XMP_ASSERT(exec_nodes->is_member);
+
   _XMP_nodes_t *array_nodes = src_array->array_nodes;
   int array_nodes_dim = array_nodes->dim;
   int array_nodes_ref[array_nodes_dim];
@@ -622,9 +618,23 @@ void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size,
                                     dst_lower, dst_upper, dst_stride,
                                     src_lower, src_upper, src_stride)) {
       int root_rank = _XMP_calc_linear_rank_on_target_nodes(array_nodes, array_nodes_ref, exec_nodes);
+
+      for (int i = 0; i < dst_dim; i++) {
+        printf("[%d] BCAST(%d): dst[%d](%d:%d:%d) <- src[%d](%d:%d:%d)\n",
+               _XMP_world_rank, root_rank,
+               i, dst_lower[i], dst_upper[i], dst_stride[i],
+               i, src_lower[i], src_upper[i], src_stride[i]);
+      }
+
+      if (root_rank == (exec_nodes->comm_rank)) {
+        for (int i = 0; i < src_dim; i++) {
+          _XMP_gtol_array_ref_triplet(src_array, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
+        }
+      }
+
       _XMP_gmove_bcast_ARRAY(dst_addr, dst_dim, dst_lower, dst_upper, dst_stride, dst_d,
                              src_addr, src_dim, src_lower, src_upper, src_stride, src_d,
-                             src_array, type, type_size, root_rank);
+                             type, type_size, root_rank);
     }
   } while (_XMP_calc_next_next_rank(array_nodes, array_nodes_ref));
 }
