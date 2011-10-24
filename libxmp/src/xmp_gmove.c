@@ -40,6 +40,57 @@ static int _XMP_convert_rank_array_to_rank(_XMP_nodes_t *nodes, int *rank_array)
   }
 }
 
+// FIXME not completed
+static void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
+                                        int dim_index, int *lower, int *upper, int *stride) {
+  _XMP_array_info_t *array_info = &(array->info[dim_index]);
+  _XMP_template_t *align_template = array->align_template;
+
+  int align_template_index = array_info->align_template_index;
+  if (align_template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
+    int dist_manner = align_template->chunk[align_template_index].dist_manner;
+    switch (array_info->shadow_type) {
+      case _XMP_N_SHADOW_NONE:
+        {
+          switch (dist_manner) {
+            case _XMP_N_DIST_BLOCK:
+              {
+                *lower -= (*(array_info->temp0));
+                *upper -= (*(array_info->temp0));
+                *stride = 1;
+              } break;
+            case _XMP_N_DIST_CYCLIC:
+              {
+                *lower /= (*(array_info->temp0));
+                *upper /= (*(array_info->temp0));
+                *stride = 1;
+              } break;
+            default:
+              _XMP_fatal("wrong distribute manner for normal shadow");
+          }
+        } break;
+      case _XMP_N_SHADOW_NORMAL:
+        {
+          switch (dist_manner) {
+            case _XMP_N_DIST_BLOCK:
+              {
+                *lower -= (*(array_info->temp0));
+                *upper -= (*(array_info->temp0));
+                *stride = 1;
+              } break;
+            // FIXME normal shadow is not allowed in cyclic distribution
+            default:
+              _XMP_fatal("wrong distribute manner for normal shadow");
+          }
+        } break;
+      case _XMP_N_SHADOW_FULL:
+        return;
+      default:
+        _XMP_fatal("unknown shadow type");
+    }
+  }
+}
+
 static void _XMP_calc_gmove_rank_array_SCALAR(_XMP_array_t *array, int *ref_index, int *rank_array) {
   _XMP_template_t *template = array->align_template;
 
@@ -107,7 +158,7 @@ static void _XMP_gmove_bcast_ARRAY(void *dst_addr, int dst_dim,
                                    int *dst_l, int *dst_u, int *dst_s, unsigned long long *dst_d,
                                    void *src_addr, int src_dim,
                                    int *src_l, int *src_u, int *src_s, unsigned long long *src_d,
-                                   int type, size_t type_size, int root_rank) {
+                                   _XMP_array_t *src_array, int type, size_t type_size, int root_rank) {
   unsigned long long dst_buffer_elmts = 1;
   for (int i = 0; i < dst_dim; i++) {
     dst_buffer_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
@@ -128,6 +179,12 @@ static void _XMP_gmove_bcast_ARRAY(void *dst_addr, int dst_dim,
   _XMP_ASSERT(exec_nodes->is_member);
 
   if (root_rank == (exec_nodes->comm_rank)) {
+    for (int i = 0; i < src_dim; i++) {
+      printf("bcast[%d] [%d] bef(%d:%d:%d)\n", root_rank, i, src_l[i], src_u[i], src_s[i]);
+      _XMP_gtol_array_ref_triplet(src_array, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
+      printf("bcast[%d] [%d] aft(%d:%d:%d)\n", root_rank, i, src_l[i], src_u[i], src_s[i]);
+    }
+
     _XMP_pack_array(buffer, src_addr, type, type_size, src_dim, src_l, src_u, src_s, src_d);
   }
 
@@ -292,57 +349,6 @@ static int _XMP_calc_global_index_BCAST(_XMP_array_t *src_array, int *src_array_
   }
 
   return _XMP_N_INT_TRUE;
-}
-
-// FIXME not completed
-static void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
-                                        int dim_index, int *lower, int *upper, int *stride) {
-  _XMP_array_info_t *array_info = &(array->info[dim_index]);
-  _XMP_template_t *align_template = array->align_template;
-
-  int align_template_index = array_info->align_template_index;
-  if (align_template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
-    int dist_manner = align_template->chunk[align_template_index].dist_manner;
-    switch (array_info->shadow_type) {
-      case _XMP_N_SHADOW_NONE:
-        {
-          switch (dist_manner) {
-            case _XMP_N_DIST_BLOCK:
-              {
-                *lower -= (*(array_info->temp0));
-                *upper -= (*(array_info->temp0));
-                *stride = 1;
-              } break;
-            case _XMP_N_DIST_CYCLIC:
-              {
-                *lower /= (*(array_info->temp0));
-                *upper /= (*(array_info->temp0));
-                *stride = 1;
-              } break;
-            default:
-              _XMP_fatal("wrong distribute manner for normal shadow");
-          }
-        } break;
-      case _XMP_N_SHADOW_NORMAL:
-        {
-          switch (dist_manner) {
-            case _XMP_N_DIST_BLOCK:
-              {
-                *lower -= (*(array_info->temp0));
-                *upper -= (*(array_info->temp0));
-                *stride = 1;
-              } break;
-            // FIXME normal shadow is not allowed in cyclic distribution
-            default:
-              _XMP_fatal("wrong distribute manner for normal shadow");
-          }
-        } break;
-      case _XMP_N_SHADOW_FULL:
-        return;
-      default:
-        _XMP_fatal("unknown shadow type");
-    }
-  }
 }
 
 // ----- gmove scalar to scalar --------------------------------------------------------------------------------------------------
@@ -615,12 +621,10 @@ void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size,
     if(_XMP_calc_global_index_BCAST(src_array, array_nodes_ref, dst_dim,
                                     dst_lower, dst_upper, dst_stride,
                                     src_lower, src_upper, src_stride)) {
-      if (_XMP_world_rank == 0) {
-        int root_rank = _XMP_calc_linear_rank_on_target_nodes(array_nodes, array_nodes_ref, exec_nodes);
-        _XMP_gmove_bcast_ARRAY(dst_addr, dst_dim, dst_l, dst_u, dst_s, dst_d,
-                               src_addr, src_dim, src_l, src_u, src_s, src_d,
-                               type, type_size, root_rank);
-      }
+      int root_rank = _XMP_calc_linear_rank_on_target_nodes(array_nodes, array_nodes_ref, exec_nodes);
+      _XMP_gmove_bcast_ARRAY(dst_addr, dst_dim, dst_lower, dst_upper, dst_stride, dst_d,
+                             src_addr, src_dim, src_lower, src_upper, src_stride, src_d,
+                             src_array, type, type_size, root_rank);
     }
   } while (_XMP_calc_next_next_rank(array_nodes, array_nodes_ref));
 }
