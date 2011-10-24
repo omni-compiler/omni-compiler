@@ -887,3 +887,25 @@ int _XMP_calc_next_next_rank(_XMP_nodes_t *nodes, int *rank_array) {
     return _XMP_N_INT_TRUE;
   }
 }
+
+int _XMP_calc_nodes_index_from_inherit_nodes_index(_XMP_nodes_t *nodes, int inherit_nodes_index) {
+  if (nodes->inherit_nodes == NULL) {
+    _XMP_fatal("inherit nodes is NULL");
+  }
+
+  int nodes_index = 0;
+  int inherit_nodes_index_count = 0;
+  int nodes_dim = nodes->dim;
+  for (int i = 0; i < nodes_dim; i++, inherit_nodes_index_count++) {
+    if (inherit_nodes_index_count == inherit_nodes_index) {
+      return nodes_index;
+    } else {
+      if (!nodes->inherit_info[i].shrink) {
+        nodes_index++;
+      }
+    }
+  }
+
+  _XMP_fatal("the function does not reach here");
+  return 0;
+}

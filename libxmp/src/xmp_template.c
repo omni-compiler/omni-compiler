@@ -525,7 +525,7 @@ void _XMP_calc_template_par_triplet(_XMP_template_t *template, int template_inde
                                     int *template_lower, int *template_upper, int *template_stride) {
   _XMP_ASSERT(template->is_distributed);
 
-  int lower, upper, stride;
+  int lower = 0, upper = 0, stride = 0;
 
   _XMP_template_info_t *info = &(template->info[template_index]);
   _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
