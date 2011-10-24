@@ -343,7 +343,9 @@ static int _XMP_calc_global_index_BCAST(_XMP_array_t *src_array, int *src_array_
 
       // calc template info
       int template_lower, template_upper, template_stride;
-      _XMP_calc_template_par_triplet(template, template_index, rank, &template_lower, &template_upper, &template_stride);
+      if (!_XMP_calc_template_par_triplet(template, template_index, rank, &template_lower, &template_upper, &template_stride)) {
+        return _XMP_N_INT_FALSE;
+      }
 
       do {
         if (_XMP_M_COUNT_TRIPLETi(dst_l[dst_dim_index], dst_u[dst_dim_index], dst_s[dst_dim_index]) != 1) {

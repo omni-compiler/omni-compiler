@@ -520,35 +520,89 @@ int _XMP_calc_template_owner_SCALAR(_XMP_template_t *template, int dim_index, lo
   }
 }
 
-// FIXME support other dist manners
-void _XMP_calc_template_par_triplet(_XMP_template_t *template, int template_index, int rank,
-                                    int *template_lower, int *template_upper, int *template_stride) {
+int _XMP_calc_template_par_triplet(_XMP_template_t *template, int template_index, int nodes_rank,
+                                   int *template_lower, int *template_upper, int *template_stride) {
   _XMP_ASSERT(template->is_distributed);
 
-  int lower = 0, upper = 0, stride = 0;
+  int par_lower = 0, par_upper = 0, par_stride = 0;
 
-  _XMP_template_info_t *info = &(template->info[template_index]);
-  _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
-  switch (chunk->dist_manner) {
+  _XMP_template_info_t *ti = &(template->info[template_index]);
+  int ser_lower = ti->ser_lower;
+  int ser_upper = ti->ser_upper;
+  int ser_size = ti->ser_size;
+
+  _XMP_template_chunk_t *tc = &(template->chunk[template_index]);
+  int par_width = tc->par_width;
+  int par_chunk_width = tc->par_chunk_width;
+
+  switch (tc->dist_manner) {
+    case _XMP_N_DIST_DUPLICATION:
+      {
+        par_lower = ser_lower;
+        par_upper = ser_upper;
+
+        par_stride = 1;
+      } break;
     case _XMP_N_DIST_BLOCK:
       {
-        // calc lower
-        lower = info->ser_lower + (chunk->par_chunk_width * rank);
-
-        // calc upper
-        upper = lower + chunk->par_chunk_width - 1;
-        if (upper > info->ser_upper) {
-          upper = info->ser_upper;
+        par_lower = nodes_rank * par_chunk_width + ser_lower;
+        int owner_nodes_size = _XMP_M_CEILi(ser_size, par_chunk_width);
+        if (nodes_rank == (owner_nodes_size - 1)) {
+          par_upper = ser_upper;
+        } else if (nodes_rank >= owner_nodes_size) {
+          return _XMP_N_INT_FALSE;
+        } else {
+          par_upper = par_lower + par_chunk_width - 1;
         }
 
-        // calc stride
-        stride = 1;
+        par_stride = 1;
+      } break;
+    case _XMP_N_DIST_CYCLIC:
+    case _XMP_N_DIST_BLOCK_CYCLIC:
+      {
+        _XMP_ASSERT(tc->onto_nodes_index != _XMP_N_NO_ONTO_NODES);
+        _XMP_nodes_info_t *ni = tc->onto_nodes_info;
+
+        int nodes_size = ni->size;
+        int template_size = _XMP_M_CEILi(ser_size, par_width);
+
+        if (template_size < nodes_size) {
+          if (nodes_rank < template_size) {
+            int par_index = ser_lower + (nodes_rank * par_width);
+
+            par_lower = par_index;
+            par_upper = par_index;
+          } else {
+            return _XMP_N_INT_FALSE;
+          }
+        } else {
+          int div = template_size / nodes_size;
+          int mod = template_size % nodes_size;
+          int par_size = 0;
+          if(mod == 0) {
+            par_size = div;
+          } else {
+            if(nodes_rank >= mod) {
+              par_size = div;
+            } else {
+              par_size = div + 1;
+            }
+          }
+
+          par_lower = ser_lower + (nodes_rank * par_width);
+          par_upper = par_lower + (nodes_size * (par_size - 1) * par_width);
+        }
+
+        par_stride = nodes_size * par_width;
       } break;
     default:
       _XMP_fatal("unknown distribution manner");
   }
 
-  *template_lower = lower;
-  *template_upper = upper;
-  *template_stride = stride;
+  // return triplet
+  *template_lower = par_lower;
+  *template_upper = par_upper;
+  *template_stride = par_stride;
+
+  return _XMP_N_INT_TRUE;
 }
