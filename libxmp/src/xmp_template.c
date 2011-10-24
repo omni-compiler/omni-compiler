@@ -536,7 +536,7 @@ void _XMP_calc_template_par_triplet(_XMP_template_t *template, int template_inde
         lower = info->ser_lower + (chunk->par_chunk_width * rank);
 
         // calc upper
-        upper = lower + chunk->par_chunk_width;
+        upper = lower + chunk->par_chunk_width - 1;
         if (upper > info->ser_upper) {
           upper = info->ser_upper;
         }
