@@ -100,6 +100,7 @@ static void _XMP_calc_gmove_rank_array_SCALAR(_XMP_array_t *array, int *ref_inde
     int template_index = ai->align_template_index;
     if (template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
       _XMP_template_chunk_t *chunk = &(template->chunk[ai->align_template_index]);
+      // FIXME correct implementation???
       int array_nodes_index = chunk->onto_nodes_index;
       if (array_nodes_index != _XMP_N_NO_ONTO_NODES) {
         rank_array[array_nodes_index] = _XMP_calc_template_owner_SCALAR(template, template_index,
@@ -309,13 +310,16 @@ static int _XMP_calc_global_index_BCAST(_XMP_array_t *src_array, int *src_array_
   _XMP_template_t *template = src_array->align_template;
 
   int dst_dim_index = 0;
-  int array_nodes_dim_count = 0;
   int array_dim = src_array->dim;
   for (int i = 0; i < array_dim; i++) {
     int template_index = src_array->info[i].align_template_index;
     if (template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
-      int rank = src_array_nodes_ref[array_nodes_dim_count];
-      // FIXME _XMP_ASSERT
+      // FIXME correct implementation???
+      int rank = 0;
+      int array_nodes_index = template->chunk[template_index].onto_nodes_index;
+      if (array_nodes_index != _XMP_N_NO_ONTO_NODES) {
+        rank = src_array_nodes_ref[array_nodes_index];
+      }
 
       // calc template info
       int template_lower, template_upper, template_stride;
@@ -328,7 +332,6 @@ static int _XMP_calc_global_index_BCAST(_XMP_array_t *src_array, int *src_array_
                                          &(src_l[i]), &(src_u[i]), &(src_s[i]),
                                          &(dst_l[dst_dim_index]), &(dst_u[dst_dim_index]), &(dst_s[dst_dim_index]))) {
             dst_dim_index++;
-            array_nodes_dim_count++;
             break;
           } else {
             return _XMP_N_INT_FALSE;
