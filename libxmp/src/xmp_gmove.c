@@ -10,6 +10,15 @@
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
+#define _XMP_SM_GTOL_BLOCK(_i, _m, _w) \
+(((_i) - (_m)) % (_w))
+
+#define _XMP_SM_GTOL_CYCLIC(_i, _m, _P) \
+(((_i) - (_m)) / (_P))
+
+#define _XMP_SM_GTOL_BLOCK_CYCLIC(_b, _i, _m, _P) \
+(((((_i) - (_m)) / (((_P) * (_b)))) * (_b)) + (((_i) - (_m)) % (_b)))
+
 typedef struct _XMP_bcast_array_section_info_type {
   int lower;
   int upper;
@@ -48,46 +57,58 @@ static void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
 
   int align_template_index = array_info->align_template_index;
   if (align_template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
-    int dist_manner = align_template->chunk[align_template_index].dist_manner;
-    switch (array_info->shadow_type) {
-      case _XMP_N_SHADOW_NONE:
+    int align_subscript = array_info->align_subscript;
+
+    int t_lower = *lower - align_subscript,
+        t_upper = *upper - align_subscript,
+        t_stride = *stride;
+
+    _XMP_template_info_t *ti = &(align_template->info[align_template_index]);
+    int template_ser_lower = ti->ser_lower;
+
+    _XMP_template_chunk_t *tc = &(align_template->chunk[align_template_index]);
+    int template_par_width = tc->par_width;
+    int template_par_nodes_size = (tc->onto_nodes_info)->size;
+    int template_par_chunk_width = tc->par_chunk_width;
+
+    // FIXME make a function for doing this
+    switch (tc->dist_manner) {
+      case _XMP_N_DIST_DUPLICATION:
+        // do nothing
+        break;
+      case _XMP_N_DIST_BLOCK:
         {
-          switch (dist_manner) {
-            case _XMP_N_DIST_BLOCK:
-              {
-                *lower -= (*(array_info->temp0));
-                *upper -= (*(array_info->temp0));
-                *stride = 1;
-              } break;
-            case _XMP_N_DIST_CYCLIC:
-              {
-                *lower /= (*(array_info->temp0));
-                *upper /= (*(array_info->temp0));
-                *stride = 1;
-              } break;
-            default:
-              _XMP_fatal("wrong distribute manner for normal shadow");
-          }
+          t_lower = _XMP_SM_GTOL_BLOCK(t_lower, template_ser_lower, template_par_chunk_width);
+          t_upper = _XMP_SM_GTOL_BLOCK(t_upper, template_ser_lower, template_par_chunk_width);
+          // t_stride does not change
         } break;
-      case _XMP_N_SHADOW_NORMAL:
+      case _XMP_N_DIST_CYCLIC:
         {
-          switch (dist_manner) {
-            case _XMP_N_DIST_BLOCK:
-              {
-                *lower -= (*(array_info->temp0));
-                *upper -= (*(array_info->temp0));
-                *stride = 1;
-              } break;
-            // FIXME normal shadow is not allowed in cyclic distribution
-            default:
-              _XMP_fatal("wrong distribute manner for normal shadow");
-          }
+          t_lower = _XMP_SM_GTOL_CYCLIC(t_lower, template_ser_lower, template_par_nodes_size);
+          t_upper = _XMP_SM_GTOL_CYCLIC(t_upper, template_ser_lower, template_par_nodes_size);
+          t_stride = 1; // FIXME how implement???
         } break;
-      case _XMP_N_SHADOW_FULL:
-        return;
+      case _XMP_N_DIST_BLOCK_CYCLIC:
+        {
+          t_lower = _XMP_SM_GTOL_BLOCK_CYCLIC(template_par_width, t_lower, template_ser_lower, template_par_nodes_size);
+          t_upper = _XMP_SM_GTOL_BLOCK_CYCLIC(template_par_width, t_upper, template_ser_lower, template_par_nodes_size);
+          t_stride = 1; // FIXME how implement???
+        } break;
       default:
-        _XMP_fatal("unknown shadow type");
+        _XMP_fatal("wrong distribute manner for normal shadow");
     }
+
+    *lower = t_lower + align_subscript;
+    *upper = t_upper + align_subscript;
+    *stride = t_stride;
+  }
+
+  switch (array_info->shadow_type) {
+    case _XMP_N_SHADOW_NONE:
+      // do nothing
+      break;
+    default:
+      _XMP_fatal("gmove does not suppory shadow array now");
   }
 }
 

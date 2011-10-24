@@ -163,11 +163,14 @@ void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
     goto no_iter;
   }
 
+  _XMP_template_info_t *template_info = &(template->info[template_index]);
+  int template_ser_lower = template_info->ser_lower;
+
   _XMP_template_chunk_t *template_chunk = &(template->chunk[template_index]);
   int template_lower = template_chunk->par_lower;
   int template_upper = template_chunk->par_upper;
   int template_stride = template_chunk->par_stride;
-  int width = template_chunk->par_chunk_width;
+  int chunk_width = template_chunk->par_chunk_width;
 
   int reverse_iter = _XMP_N_INT_FALSE;
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step, reverse_iter)
@@ -175,8 +178,8 @@ void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
   // calc par_init, par_cond, par_step
   if (_XMP_sched_loop_template_width_1(ser_init, ser_cond, ser_step, par_init, par_cond,
                                        template_lower, template_upper, template_stride)) {
-    *par_init = _XMP_SM_GTOL_BLOCK(*par_init, template_lower, width);
-    *par_cond = _XMP_SM_GTOL_BLOCK(*par_cond, template_lower, width);
+    *par_init = _XMP_SM_GTOL_BLOCK(*par_init, template_ser_lower, chunk_width);
+    *par_cond = _XMP_SM_GTOL_BLOCK(*par_cond, template_ser_lower, chunk_width);
     *par_step = ser_step;
 
     // finalize iter
@@ -199,6 +202,9 @@ void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_step,
     goto no_iter;
   }
 
+  _XMP_template_info_t *template_info = &(template->info[template_index]);
+  int template_ser_lower = template_info->ser_lower;
+
   _XMP_template_chunk_t *template_chunk = &(template->chunk[template_index]);
   int nodes_size = (template_chunk->onto_nodes_info)->size;
   int template_lower = template_chunk->par_lower;
@@ -211,8 +217,8 @@ void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_step,
   // calc par_init, par_cond, par_step
   if (_XMP_sched_loop_template_width_1(ser_init, ser_cond, ser_step, par_init, par_cond,
                                        template_lower, template_upper, template_stride)) {
-    *par_init = _XMP_SM_GTOL_CYCLIC(*par_init, template_lower, nodes_size);
-    *par_cond = _XMP_SM_GTOL_CYCLIC(*par_cond, template_lower, nodes_size);
+    *par_init = _XMP_SM_GTOL_CYCLIC(*par_init, template_ser_lower, nodes_size);
+    *par_cond = _XMP_SM_GTOL_CYCLIC(*par_cond, template_ser_lower, nodes_size);
     *par_step = 1;
 
     // finalize iter
@@ -253,8 +259,8 @@ void _XMP_sched_loop_template_BLOCK_CYCLIC(int ser_init, int ser_cond, int ser_s
   if (_XMP_sched_loop_template_width_N(ser_init, ser_cond, ser_step, par_init, par_cond,
                                        template_lower, template_upper, template_stride,
                                        width, template_ser_lower, template_ser_upper)) {
-    *par_init = _XMP_SM_GTOL_BLOCK_CYCLIC(width, *par_init, template_lower, nodes_size);
-    *par_cond = _XMP_SM_GTOL_BLOCK_CYCLIC(width, *par_cond, template_lower, nodes_size);
+    *par_init = _XMP_SM_GTOL_BLOCK_CYCLIC(width, *par_init, template_ser_lower, nodes_size);
+    *par_cond = _XMP_SM_GTOL_BLOCK_CYCLIC(width, *par_cond, template_ser_lower, nodes_size);
     *par_step = 1;
 
     // finalize iter
