@@ -61,10 +61,10 @@ extern void _XMP_barrier_EXEC(void);
 
 // xmp_loop.c
 extern int _XMP_sched_loop_template_width_1(int ser_init, int ser_cond, int ser_step,
-                                            int *par_init, int *par_cond,
+                                            int *par_init, int *par_cond, int *par_step,
                                             int template_lower, int template_upper, int template_stride);
 extern int _XMP_sched_loop_template_width_N(int ser_init, int ser_cond, int ser_step,
-                                            int *par_init, int *par_cond,
+                                            int *par_init, int *par_cond, int *par_step,
                                             int template_lower, int template_upper, int template_stride,
                                             int width, int template_ser_lower, int template_ser_upper);
 

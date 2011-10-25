@@ -276,11 +276,10 @@ static int _XMP_sched_gmove_triplet_1(int template_lower, int template_upper, in
           ret = _XMP_sched_loop_template_width_1(dst_lower - align_subscript,
                                                  dst_upper - align_subscript,
                                                  dst_stride - align_subscript,
-                                                 dst_l, dst_u,
+                                                 dst_l, dst_u, dst_s,
                                                  template_lower, template_upper, template_stride);
           *dst_l += align_subscript;
           *dst_u += align_subscript;
-          *dst_s = template_stride;
         } break;
       case _XMP_N_DIST_BLOCK_CYCLIC:
         {
@@ -288,7 +287,7 @@ static int _XMP_sched_gmove_triplet_1(int template_lower, int template_upper, in
           ret = _XMP_sched_loop_template_width_N(dst_lower - align_subscript,
                                                  dst_upper - align_subscript,
                                                  dst_stride - align_subscript,
-                                                 dst_l, dst_u,
+                                                 dst_l, dst_u, dst_s,
                                                  template_lower, template_upper, template_stride,
                                                  tc->par_width, ti->ser_lower, ti->ser_upper);
           *dst_l += align_subscript;
@@ -301,7 +300,7 @@ static int _XMP_sched_gmove_triplet_1(int template_lower, int template_upper, in
     // calc src_l, src_u, src_s
     *src_l = (src_stride * ((*dst_l - dst_lower) / dst_stride)) + src_lower;
     *src_u = (src_stride * ((*dst_u - dst_lower) / dst_stride)) + src_lower;
-    *src_s = *dst_s; // FIXME consider when stride is not 1
+    *src_s = *dst_s; // FIXME consider when stride is not 1, how implement???
   } // FIXME else how implement???
 
   return ret;
