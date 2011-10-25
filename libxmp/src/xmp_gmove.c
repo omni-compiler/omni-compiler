@@ -186,22 +186,22 @@ static void _XMP_gmove_bcast_ARRAY(void *dst_addr, int dst_dim,
     dst_buffer_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
   }
 
-  unsigned long long src_buffer_elmts = 1;
-  for (int i = 0; i < src_dim; i++) {
-    src_buffer_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
-  }
-
-  if (dst_buffer_elmts != src_buffer_elmts) {
-    _XMP_fatal("bad assign statement for gmove");
-  }
-
   void *buffer = _XMP_alloc(dst_buffer_elmts * type_size);
 
   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
   _XMP_ASSERT(exec_nodes->is_member);
 
   if (root_rank == (exec_nodes->comm_rank)) {
-    _XMP_pack_array(buffer, src_addr, type, type_size, src_dim, src_l, src_u, src_s, src_d);
+    unsigned long long src_buffer_elmts = 1;
+    for (int i = 0; i < src_dim; i++) {
+      src_buffer_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
+    }
+
+    if (dst_buffer_elmts != src_buffer_elmts) {
+      _XMP_fatal("bad assign statement for gmove");
+    } else {
+      _XMP_pack_array(buffer, src_addr, type, type_size, src_dim, src_l, src_u, src_s, src_d);
+    }
   }
 
   _XMP_gmove_bcast(buffer, type_size, dst_buffer_elmts, root_rank);
@@ -252,13 +252,8 @@ static int _XMP_sched_gmove_triplet_1(int template_lower, int template_upper, in
                                       _XMP_array_t *dst_array, int dst_dim_index,
                                       int *dst_l, int *dst_u, int *dst_s,
                                       int *src_l, int *src_u, int *src_s) {
-  int src_lower = *src_l; int src_upper = *src_u; int src_stride = *src_s;
+  int src_lower = *src_l;                         int src_stride = *src_s;
   int dst_lower = *dst_l; int dst_upper = *dst_u; int dst_stride = *dst_s;
-
-  if (_XMP_M_COUNT_TRIPLETi(dst_lower, dst_upper, dst_stride) !=
-      _XMP_M_COUNT_TRIPLETi(src_lower, src_upper, src_stride)) {
-    _XMP_fatal("bad assign statement for gmove");
-  }
 
   _XMP_array_info_t *ai = &(dst_array->info[dst_dim_index]);
   _XMP_template_t *t = dst_array->align_template;
@@ -277,6 +272,7 @@ static int _XMP_sched_gmove_triplet_1(int template_lower, int template_upper, in
       case _XMP_N_DIST_BLOCK:
       case _XMP_N_DIST_CYCLIC:
         {
+          // FIXME consider when stride is not 1
           ret = _XMP_sched_loop_template_width_1(dst_lower - align_subscript,
                                                  dst_upper - align_subscript,
                                                  dst_stride - align_subscript,
@@ -284,6 +280,7 @@ static int _XMP_sched_gmove_triplet_1(int template_lower, int template_upper, in
                                                  template_lower, template_upper, template_stride);
           *dst_l += align_subscript;
           *dst_u += align_subscript;
+          *dst_s = template_stride;
         } break;
       case _XMP_N_DIST_BLOCK_CYCLIC:
         {
@@ -301,9 +298,10 @@ static int _XMP_sched_gmove_triplet_1(int template_lower, int template_upper, in
         _XMP_fatal("unknown distribution manner");
     }
 
-    // calc src_l, src_u, src_s (src_s does not change)
+    // calc src_l, src_u, src_s
     *src_l = (src_stride * ((*dst_l - dst_lower) / dst_stride)) + src_lower;
     *src_u = (src_stride * ((*dst_u - dst_lower) / dst_stride)) + src_lower;
+    *src_s = *dst_s; // FIXME consider when stride is not 1
   } // FIXME else how implement???
 
   return ret;
@@ -750,14 +748,8 @@ void _XMP_gmove_HOMECOPY_ARRAY(_XMP_array_t *dst_array, int type, size_t type_si
   }
 
   void *buffer = _XMP_alloc(dst_buffer_elmts * type_size);
-
-  // pack
   _XMP_pack_array(buffer, src_addr, type, type_size, src_dim, src_l, src_u, src_s, src_d);
-
-  // unpack
   _XMP_unpack_array(dst_addr, buffer, type, type_size, dst_dim, dst_l, dst_u, dst_s, dst_d);
-
-  // free buffer
   _XMP_free(buffer);
 }
 
