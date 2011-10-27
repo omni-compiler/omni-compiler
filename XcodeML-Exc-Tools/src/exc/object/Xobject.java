@@ -636,8 +636,6 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
             return false;
         
         switch(code) {
-        case ARRAY_REF:
-            return true;
         case VAR:
             return (isScopeParam() && type.isArray());
         case VAR_ADDR:
@@ -667,7 +665,6 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
             return false;
         
         switch(code) {
-        case ARRAY_REF:
         case ARRAY_ADDR:
         case FUNC_ADDR:
         case VAR_ADDR:
@@ -692,7 +689,6 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
         switch(code) {
         case VAR:
         case VAR_ADDR:
-        case ARRAY_REF:
         case ARRAY_ADDR:
             return true;
         }

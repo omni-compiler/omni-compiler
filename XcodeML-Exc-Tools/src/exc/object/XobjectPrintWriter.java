@@ -126,7 +126,6 @@ public class XobjectPrintWriter extends PrintWriter
             case IDENT: /* NAME */
             case VAR_ADDR: /* ICON */
             case VAR:
-            case ARRAY_REF:
             case ARRAY_ADDR:
             case FUNC_ADDR:
             case MOE_CONSTANT:

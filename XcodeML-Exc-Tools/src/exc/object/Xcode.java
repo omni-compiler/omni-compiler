@@ -107,7 +107,7 @@ public enum Xcode
      // C: Symbol Reference
     VAR                             (  73, 'T', XbcVar.class, XbfVar.class),
     VAR_ADDR                        (  74, 'T', XbcVarAddr.class, null),
-    ARRAY_REF                       (  75, 'T', XbcArrayRef.class, null),
+    ARRAY_REF                       (  75, 'L', XbcArrayRef.class, null),
     ARRAY_ADDR                      (  76, 'T', XbcArrayAddr.class, null),
     FUNC_ADDR                       (  77, 'T', XbcFuncAddr.class, XbfFfunction.class),
     MEMBER_REF                      (  78, 'P', XbcMemberRef.class, XbfFmemberRef.class),

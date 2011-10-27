@@ -397,7 +397,7 @@ public class OMPtransPragmaBlock extends OMPtransPragma
                     
                     Xcode c = v.Opcode();
                     boolean isLocalVarAddr = v.isScopeLocal() &&
-                        (c == Xcode.VAR_ADDR || c == Xcode.ARRAY_REF || c == Xcode.ARRAY_ADDR);
+                        (c == Xcode.VAR_ADDR || c == Xcode.ARRAY_ADDR);
                     boolean isParamVarAddr = v.isScopeParam() &&
                         (c == Xcode.VAR_ADDR);
                     
