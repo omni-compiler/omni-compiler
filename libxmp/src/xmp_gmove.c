@@ -53,6 +53,10 @@ static int _XMP_convert_rank_array_to_rank(_XMP_nodes_t *nodes, int *rank_array)
 static void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
                                         int dim_index, int *lower, int *upper, int *stride) {
   _XMP_array_info_t *array_info = &(array->info[dim_index]);
+  if (array_info->shadow_type == _XMP_N_SHADOW_FULL) {
+    return;
+  }
+
   _XMP_template_t *align_template = array->align_template;
 
   int align_template_index = array_info->align_template_index;
@@ -103,12 +107,30 @@ static void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
     *stride = t_stride;
   }
 
+  _XMP_ASSERT(array_info->shadow_type != _XMP_N_SHADOW_FULL);
   switch (array_info->shadow_type) {
     case _XMP_N_SHADOW_NONE:
       // do nothing
       break;
+    case _XMP_N_SHADOW_NORMAL:
+      switch (array_info->align_manner) {
+        case _XMP_N_ALIGN_NOT_ALIGNED:
+        case _XMP_N_ALIGN_DUPLICATION:
+        case _XMP_N_ALIGN_BLOCK:
+          {
+            int shadow_size_lo = array_info->shadow_size_lo;
+            *lower += shadow_size_lo;
+            *upper += shadow_size_lo;
+          } break;
+        case _XMP_N_ALIGN_CYCLIC:
+          // FIXME not supported now
+        case _XMP_N_ALIGN_BLOCK_CYCLIC:
+          // FIXME not supported now
+        default:
+          _XMP_fatal("gmove does not support shadow region for cyclic or block-cyclic distribution");
+      } break;
     default:
-      _XMP_fatal("gmove does not suppory shadow array now");
+      _XMP_fatal("unknown shadow type");
   }
 }
 

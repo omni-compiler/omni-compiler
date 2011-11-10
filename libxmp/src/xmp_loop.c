@@ -6,6 +6,7 @@
 
 #include <math.h>
 #include "xmp_internal.h"
+#include "xmp_math_function.h"
 
 // normalize ser_init, ser_cond, ser_step -------------------------------------------------------------------------------------------
 #define _XMP_SM_GTOL_BLOCK(_i, _m, _w) \
@@ -52,36 +53,62 @@
 int _XMP_sched_loop_template_width_1(int ser_init, int ser_cond, int ser_step,
                                      int *par_init, int *par_cond, int *par_step,
                                      int template_lower, int template_upper, int template_stride) {
-  // FIXME implement
-  if (ser_step != 1) {
-    _XMP_fatal("loop step is not 1, -1: unsupported case");
-  }
-
   int x, x_max = (int)floor(((double)(template_upper - template_lower)) / ((double)template_stride));
+  if (ser_step == 1) {
+    // calc par_init
+    x = (int)ceil(((double)(ser_init - template_lower)) / (double)(template_stride));
+    if (x < 0) {
+      *par_init = template_lower;
+    } else if (x > x_max) {
+      return _XMP_N_INT_FALSE;
+    } else {
+      *par_init = (x * template_stride) + template_lower;
+    }
 
-  // calc par_init
-  x = (int)ceil(((double)(ser_init - template_lower)) / (double)(template_stride));
-  if (x < 0) {
-    *par_init = template_lower;
-  } else if (x > x_max) {
-    return _XMP_N_INT_FALSE;
+    // calc par_cond
+    x = (int)floor(((double)(ser_cond - template_lower)) / ((double)template_stride));
+    if (x < 0) {
+      return _XMP_N_INT_FALSE;
+    } else if (x > x_max) {
+      *par_cond = template_upper;
+    } else {
+      *par_cond = (x * template_stride) + template_lower;
+    }
+
+    // calc par_step
+    *par_step = template_stride;
   } else {
-    *par_init = (x * template_stride) + template_lower;
-  }
+    // calc par_init
+    if ((template_upper < ser_init) || (ser_cond < template_lower)) {
+      return _XMP_N_INT_FALSE;
+    }
 
-  // calc par_cond
-  x = (int)floor(((double)(ser_cond - template_lower)) / ((double)template_stride));
-  if (x < 0) {
+    for (int i = template_lower; i <= template_upper; i += template_stride) {
+      if (i < ser_init) {
+        continue;
+      } else if (((i - ser_init) % ser_step) == 0) {
+        *par_init = i;
+        goto calc_par_cond;
+      }
+    }
     return _XMP_N_INT_FALSE;
-  } else if (x > x_max) {
-    *par_cond = template_upper;
-  } else {
-    *par_cond = (x * template_stride) + template_lower;
-  }
+calc_par_cond:
 
-  // calc par_step
-  // FIXME consider ser_step is not 1
-  *par_step = template_stride;
+    // calc par_cond
+    for (int i = template_upper; i >= template_lower; i -= template_stride) {
+      if (i > ser_cond) {
+        continue;
+      } else if (((i - ser_init) % ser_step) == 0) {
+        *par_cond = i;
+        goto calc_par_step;
+      }
+    }
+    return _XMP_N_INT_FALSE;
+calc_par_step:
+
+    // calc par_step
+    *par_step = _XMP_lcm(ser_step, template_stride);
+  }
 
   return _XMP_N_INT_TRUE;
 }
@@ -97,6 +124,10 @@ int _XMP_sched_loop_template_width_N(int ser_init, int ser_cond, int ser_step,
   int ts = template_stride / width;
 
   /* FIXME HOW IMPLEMENT??? */
+  if (ser_step != 1) {
+    _XMP_fatal("loop step is not 1, -1: unsupported case");
+  }
+
   if (_XMP_sched_loop_template_width_1(si, sc, 1, par_init, par_cond, par_step, tl, tu, ts)) {
     // init par_init
     int par_init_temp = ((*par_init - template_ser_lower) * width) + template_ser_lower;

@@ -25,3 +25,16 @@ int _XMP_modi_i_i(int value, int cycle) {
     return mod;
   }
 }
+
+int _XMP_gcd(int a, int b) {
+  int r = a % b;
+  if (r == 0) {
+    return b;
+  } else {
+    return _XMP_gcd(b, r);
+  }
+}
+
+int _XMP_lcm(int a, int b) {
+  return (a * b) / _XMP_gcd(a, b);
+}
