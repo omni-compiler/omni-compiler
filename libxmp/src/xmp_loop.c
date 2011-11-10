@@ -78,11 +78,11 @@ int _XMP_sched_loop_template_width_1(int ser_init, int ser_cond, int ser_step,
     // calc par_step
     *par_step = template_stride;
   } else {
-    // calc par_init
     if ((template_upper < ser_init) || (ser_cond < template_lower)) {
       return _XMP_N_INT_FALSE;
     }
 
+    // calc par_init
     for (int i = template_lower; i <= template_upper; i += template_stride) {
       if (i < ser_init) {
         continue;
