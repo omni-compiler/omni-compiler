@@ -21,3 +21,6 @@ ver 0.5.2	2011/03/11
 
 ver 0.5.3	2011/04/08
  Fixed problems with rewriting expressions
+
+ver 0.5.4	2011/11/11
+ supports block-cyclic distribution in distribute directive
