@@ -10,6 +10,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.List;
 import java.util.ArrayList;
+import org.w3c.dom.Document;
 
 import xcodeml.XmException;
 import xcodeml.binding.XmXcodeProgram;
@@ -55,6 +56,14 @@ public class XmcDecompiler implements XmDecompiler
     public void decompile(XmDecompilerContext context, XmXcodeProgram xmprog, Writer writer) throws XmException
     {
         XcProgramObj prog = XcBindingVisitor.createXcProgramObj((XbcXcodeProgram)xmprog);
+        XmcWriter xmcWriter = new XmcWriter(writer);
+        prog.writeTo(xmcWriter);
+        xmcWriter.flush();
+    }
+
+    @Override
+    public void decompile(XmDecompilerContext context, Document xcode, Writer writer) throws XmException {
+        XcProgramObj prog = new XmcXcodeToXcTranslator().trans(xcode);
         XmcWriter xmcWriter = new XmcWriter(writer);
         prog.writeTo(xmcWriter);
         xmcWriter.flush();

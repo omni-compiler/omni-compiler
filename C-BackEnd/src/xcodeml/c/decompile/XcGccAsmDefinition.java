@@ -32,7 +32,7 @@ public final class XcGccAsmDefinition extends XcObj implements XcDecAndDefObj
      *  
      * @param isGccExtension true if the asm code is used with __extension__.
      */
-    void setIsGccExtension(boolean isGccExtension)
+    public void setIsGccExtension(boolean isGccExtension)
     {
         _isGccExtension = isGccExtension;
     }
@@ -42,7 +42,7 @@ public final class XcGccAsmDefinition extends XcObj implements XcDecAndDefObj
      * 
      * @return true if the asm code is used with __extension__.
      */
-    boolean isGccExtension()
+    public boolean isGccExtension()
     {
         return _isGccExtension;
     }

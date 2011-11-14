@@ -51,13 +51,15 @@ import xcodeml.c.type.XcUnionType;
 import xcodeml.c.type.XcVarKindEnum;
 import xcodeml.c.type.XcVoidType;
 import xcodeml.c.util.XmcBindingUtil;
+import xcodeml.c.util.XcLazyVisitor;
 import xcodeml.util.XmBindingException;
 import xcodeml.util.XmStringUtil;
+
 
 /**
  * Converter of XcodeML's binding object to internal AST object (XmObj).
  */
-public class XcBindingVisitor extends RVisitorBase
+public class XcBindingVisitor extends RVisitorBase implements XcLazyVisitor
 {
     private XcNode _parentNode;
 
@@ -2228,6 +2230,7 @@ public class XcBindingVisitor extends RVisitorBase
      * 
      * @param lazyType has XcodeML binding objects are not visited by XcBindingVisitor.
      */
+    @Override
     public void lazyEnter(XcLazyEvalType lazyType) {
         if(lazyType.isLazyEvalType() == false)
             return;

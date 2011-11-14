@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import xcodeml.XmException;
-import xcodeml.c.decompile.XcBindingVisitor;
+import xcodeml.c.util.XcLazyVisitor;
 
 /**
  * represents stack of symbol table
@@ -115,7 +115,7 @@ public final class XcIdentTableStack
         it.addAnonIdent(ident);
     }
 
-    public void resolveDependency(XcBindingVisitor visitor) throws XmException
+    public void resolveDependency(XcLazyVisitor visitor) throws XmException
     {
         //_lazyListEval();
 

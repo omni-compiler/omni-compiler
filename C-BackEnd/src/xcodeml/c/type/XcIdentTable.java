@@ -16,12 +16,12 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 import xcodeml.XmException;
-import xcodeml.c.decompile.XcBindingVisitor;
 import xcodeml.c.decompile.XcDecAndDefObj;
 import xcodeml.c.decompile.XcDeclObj;
 import xcodeml.c.decompile.XcDeclsObj;
 import xcodeml.c.decompile.XcFuncDefObj;
 import xcodeml.c.util.XmcWriter;
+import xcodeml.c.util.XcLazyVisitor;
 
 /**
  * represents symbol table
@@ -85,7 +85,7 @@ public final class XcIdentTable
         _defineTypeSet.addAnonIdent(ident);
     }
 
-    public void _lazyEval(XcBindingVisitor visitor, XcType type)
+    public void _lazyEval(XcLazyVisitor visitor, XcType type)
     {
         if(type == null)
             return;
@@ -125,7 +125,7 @@ public final class XcIdentTable
         }
     }
 
-    public void resolveDependency(XcBindingVisitor visitor) throws XmException
+    public void resolveDependency(XcLazyVisitor visitor) throws XmException
     {
         Iterator<Entry<String, XcIdent>> iter = _mainSymMap.entrySet().iterator();
 
@@ -135,7 +135,7 @@ public final class XcIdentTable
         }
 
         for(XcIdent ident : _defineTypeSet.getIdentList()) {
-             ident.lazyEval(visitor);
+            ident.lazyEval(visitor);
              ident.gatherVar();
              _removeExternVar(ident);
         }

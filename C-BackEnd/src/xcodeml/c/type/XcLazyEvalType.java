@@ -48,6 +48,22 @@ public interface XcLazyEvalType
      */
     public void setLazyBindings(IRVisitable[] bindings);
 
+    /** 
+     * return xcodeml DOM nodes which is not evaluated.
+     * objects which translated from these bindings 
+     * must be child of this {type, ident}.
+     *
+     * @return xcodeml DOM nodes which is not evaluated.
+     */
+    public org.w3c.dom.Node[] getLazyBindingNodes();
+
+    /**
+     * Sets xcodeml DOM nodes need to be evaluated after.
+     *
+     * @param xcodeml DOM nodes.
+     */
+    public void setLazyBindings(org.w3c.dom.Node[] nodes);
+
     /**
      * Gets symbol name of variables which is used to define type.
      *

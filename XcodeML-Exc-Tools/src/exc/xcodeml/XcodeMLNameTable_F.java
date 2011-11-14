@@ -1,5 +1,7 @@
 package exc.xcodeml;
 
+import java.util.Arrays;
+
 import exc.object.*;
 
 public class XcodeMLNameTable_F extends XcodeMLNameTable {
@@ -118,13 +120,27 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 
 			new XcodeMLName(Xcode.PRAGMA_LINE, "FpragmaStatement"),
 
-			
 			new XcodeMLName(Xcode.OMP_PRAGMA, "OMPPragma"),
 	};
 
 	// constructor
 	public XcodeMLNameTable_F() {
 		initHTable(table);
+
+        // For Xobject -> XcodeML translation.
+        XcodeMLName[] additionalTable = {
+            new XcodeMLName(Xcode.WHILE_STATEMENT, "FdoWhileStatement"),
+            new XcodeMLName(Xcode.IF_STATEMENT, "FifStatement"),
+            new XcodeMLName(Xcode.FUNC_ADDR, "Ffunction"),
+            new XcodeMLName(Xcode.LONGLONG_CONSTANT, "FintConstant"),
+            new XcodeMLName(Xcode.STRING_CONSTANT, "stringConstant"),
+        };
+
+        XcodeMLName newTable[] = Arrays.copyOf(table,
+                                               table.length + additionalTable.length);
+        System.arraycopy(additionalTable, 0,
+                         newTable, table.length, additionalTable.length);
+        initOpcodeToNameTable(newTable);
 	}
 
 	// test

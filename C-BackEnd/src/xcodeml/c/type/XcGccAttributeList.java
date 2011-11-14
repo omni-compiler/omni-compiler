@@ -30,6 +30,8 @@ public class XcGccAttributeList extends XcObj implements XcLazyEvalType
 
     private IRVisitable[] _bindings;
 
+    private org.w3c.dom.Node[] _bindingNodes;
+
     private boolean _isLazyEvalType;
 
     private Set<String>           _dependVariables = new HashSet<String>();
@@ -42,6 +44,12 @@ public class XcGccAttributeList extends XcObj implements XcLazyEvalType
     public XcGccAttributeList(XbcGccAttributes xbcAttrs)
     {
         _bindings = xbcAttrs.getGccAttribute();
+        _isLazyEvalType = true;
+    }
+
+    public XcGccAttributeList(org.w3c.dom.Node attrsNode)
+    {
+        _bindingNodes = xcodeml.util.XmDomUtil.collectElements(attrsNode, "gccAttribute");
         _isLazyEvalType = true;
     }
 
@@ -134,6 +142,11 @@ public class XcGccAttributeList extends XcObj implements XcLazyEvalType
     }
 
     @Override
+    public org.w3c.dom.Node[] getLazyBindingNodes() {
+        return _bindingNodes;
+    }
+
+    @Override
     public boolean isLazyEvalType()
     {
         return _isLazyEvalType;
@@ -149,6 +162,11 @@ public class XcGccAttributeList extends XcObj implements XcLazyEvalType
     public void setLazyBindings(IRVisitable[] bindings)
     {
         _bindings = bindings;
+    }
+
+    @Override
+    public void setLazyBindings(org.w3c.dom.Node[] nodes) {
+        _bindingNodes = nodes;
     }
 
     public void addAttr(String name)

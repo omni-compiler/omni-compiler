@@ -34,6 +34,8 @@ public abstract class XcArrayLikeType extends XcExtType implements XcLazyEvalTyp
 
     private IRVisitable[]         _arraySizeBindings;
 
+    private org.w3c.dom.Node[]    _arraySizeBindingNodes;
+
     private Set<String>           _dependVariable = new HashSet<String>();
     
     public XcArrayLikeType(XcTypeEnum typeEnum, String typeId)
@@ -184,8 +186,18 @@ public abstract class XcArrayLikeType extends XcExtType implements XcLazyEvalTyp
     }
 
     @Override
+    public void setLazyBindings(org.w3c.dom.Node[] nodes) {
+        _arraySizeBindingNodes = nodes;
+    }
+
+    @Override
     public IRVisitable[] getLazyBindings() {
         return _arraySizeBindings;
+    }
+
+    @Override
+    public org.w3c.dom.Node[] getLazyBindingNodes() {
+        return _arraySizeBindingNodes;
     }
 
     @Override

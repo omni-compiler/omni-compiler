@@ -11,11 +11,11 @@ import java.util.HashSet;
 
 import xcodeml.XmException;
 import xcodeml.c.binding.gen.IRVisitable;
-import xcodeml.c.decompile.XcBindingVisitor;
 import xcodeml.c.decompile.XcExprObj;
 import xcodeml.c.decompile.XcObj;
 import xcodeml.c.obj.XcNode;
 import xcodeml.c.util.XmcWriter;
+import xcodeml.c.util.XcLazyVisitor;
 
 /**
  * Internal object represent identifier.
@@ -69,6 +69,8 @@ public class XcIdent extends XcObj implements XcExprObj, XcGccAttributable, XcLa
     private boolean               _isIncompleteType;
 
     private IRVisitable[]         _arraySizeBindings;
+
+    private org.w3c.dom.Node[]    _arraySizeBindingNodes;
 
     /* GCC attribute */
     private XcGccAttributeList    _gccAttrs;
@@ -486,6 +488,15 @@ public class XcIdent extends XcObj implements XcExprObj, XcGccAttributable, XcLa
         return _arraySizeBindings;
     }
 
+    @Override
+    public org.w3c.dom.Node[] getLazyBindingNodes() {
+        return _arraySizeBindingNodes;
+    }
+
+    public void setLazyBindings(org.w3c.dom.Node[] nodes) {
+        _arraySizeBindingNodes = nodes;
+    }
+
     public void setIsIncomplete(boolean enable)
     {
         _isIncompleteType = enable;
@@ -522,7 +533,7 @@ public class XcIdent extends XcObj implements XcExprObj, XcGccAttributable, XcLa
         _isDeclared = true;
     }
 
-    private void _lazyEval(XcType type, XcBindingVisitor visitor)
+    private void _lazyEval(XcType type, XcLazyVisitor visitor)
     {
         if((type == null) || (type instanceof XcBaseType))
             return;
@@ -540,7 +551,7 @@ public class XcIdent extends XcObj implements XcExprObj, XcGccAttributable, XcLa
         _lazyEval(type, visitor);
     }
 
-    private void _lazyEval(XcIdent ident, XcBindingVisitor visitor)
+    private void _lazyEval(XcIdent ident, XcLazyVisitor visitor)
     {
         if(ident == null)
             return;
@@ -555,7 +566,7 @@ public class XcIdent extends XcObj implements XcExprObj, XcGccAttributable, XcLa
         _lazyEval(type, visitor);
     }
 
-    public void lazyEval(XcBindingVisitor visitor)
+    public void lazyEval(XcLazyVisitor visitor)
     {
         XcType type = _type;
 

@@ -8,27 +8,37 @@
 
 package exc.xcodeml;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.OutputStreamWriter;
+import static xcodeml.util.XmDomUtil.getAttr;
+import static xcodeml.util.XmDomUtil.getAttrBool;
+import static xcodeml.util.XmDomUtil.getContent;
+import static xcodeml.util.XmDomUtil.getContentText;
+import static xcodeml.util.XmDomUtil.getElement;
+
 import java.io.Reader;
-import java.io.Writer;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import exc.object.*;
-import exc.util.XobjectRecursiveVisitor;
-import exc.util.XobjectVisitor;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
-import org.w3c.dom.*;
+import exc.object.BasicType;
+import exc.object.FarrayType;
+import exc.object.FunctionType;
+import exc.object.Ident;
+import exc.object.StorageClass;
+import exc.object.StructType;
+import exc.object.VarScope;
+import exc.object.Xcode;
+import exc.object.Xcons;
+import exc.object.XobjList;
+import exc.object.XobjString;
+import exc.object.Xobject;
+import exc.object.XobjectFile;
+import exc.object.Xtype;
 
-import xcodeml.IXobject;
-import xcodeml.XmException;
-import xcodeml.util.XmBindingException;
-import xcodeml.util.XmLog;
 
 /**
  * tools for XcodeML/Fortran to Xcode translation.
@@ -201,21 +211,6 @@ public class XcodeMLtools_F extends XcodeMLtools {
 			xobjFile.getGlobalIdentList().add(id);
 		} else
 			fatal("Unknown node in globalSybmols: " + n);
-	}
-
-	/**
-	 * set common attributes to Xobject.
-	 * @param n node of XcodeML/F
-	 * @param object Xobject
-	 * @return parameter object.
-	 */
-	private Xobject setCommonAttributes(Node n, Xobject object) {
-		String file = getAttr(n, "file");
-		String lineno = getAttr(n, "lineno");
-		if (lineno != null) {
-			object.setLineNo(new LineNo(file, Integer.parseInt(lineno)));
-		}
-		return object;
 	}
 
 	void enterGlobalDecl(Node n) {
@@ -607,23 +602,6 @@ public class XcodeMLtools_F extends XcodeMLtools {
 		}
 		return setCommonAttributes(n, xobjs);
 		}
-	}
-
-	private XobjList getChildList(Node n) {
-		return getChildList(n, null);
-	}
-	private XobjList getChildList(Node n, XobjList x) {
-		if (x == null) {
-			x = new XobjList();
-		}
-		NodeList list = n.getChildNodes();
-		for (int i = 0; i < list.getLength(); i++) {
-			Node nn = list.item(i);
-			if (nn.getNodeType() != Node.ELEMENT_NODE)
-				continue;
-			x.add(toXobject(nn));
-		}
-		return x;
 	}
 
 	private XobjString getSymbol(Node n, String attr) {

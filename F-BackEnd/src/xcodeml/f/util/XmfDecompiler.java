@@ -11,6 +11,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.List;
 import java.util.ArrayList;
+import org.w3c.dom.Document;
 
 import xcodeml.XmException;
 import xcodeml.binding.XmXcodeProgram;
@@ -64,5 +65,10 @@ public class XmfDecompiler implements XmDecompiler
             throw new XmException(fcontext.getLastErrorMessage(), fcontext.getLastCause());
         }
         fwriter.flush();
+    }
+
+    @Override
+    public void decompile(XmDecompilerContext context, Document xcode, Writer writer) throws XmException {
+        throw new XmException("not implemented yet.");
     }
 }

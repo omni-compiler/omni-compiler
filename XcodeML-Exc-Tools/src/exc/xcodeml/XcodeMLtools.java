@@ -15,11 +15,13 @@ import org.xml.sax.InputSource;
 
 import javax.xml.parsers.*;
 import javax.xml.transform.dom.*;
-import javax.xml.transform.stream.StreamSource;
-
 import exc.object.*;
 
 import xcodeml.IXobject;
+
+import static xcodeml.util.XmDomUtil.getElement;
+import static xcodeml.util.XmDomUtil.getAttr;
+
 
 /**
  * basse tools class for XcodeML
@@ -65,65 +67,6 @@ public abstract class XcodeMLtools {
 		return doc;
 	}
 
-	Node getElement(Node n, String name) {
-		if (n == null)
-			return null;
-
-		NodeList list = n.getChildNodes();
-		for (int i = 0; i < list.getLength(); i++) {
-			Node thisNode = list.item(i);
-			if (thisNode.getNodeType() != Node.ELEMENT_NODE)
-				continue;
-			if (thisNode.getNodeName() == name)
-				return thisNode;
-		}
-		return null;
-	}
-
-	Node getContent(Node n) {
-		if (n == null)
-			return null;
-
-		NodeList list = n.getChildNodes();
-		for (int i = 0; i < list.getLength(); i++) {
-			Node thisNode = list.item(i);
-			if (thisNode.getNodeType() != Node.ELEMENT_NODE)
-				continue;
-			return thisNode;
-		}
-		return null;
-	}
-
-	String getContentText(Node n) {
-		if (n == null)
-			return null;
-		if (n.getFirstChild() == null) {
-		    return "";
-		}
-
-		return n.getFirstChild().getNodeValue();
-	}
-
-	String getAttr(Node n, String name) {
-		if (n == null)
-			return null;
-
-		Node nn = n.getAttributes().getNamedItem(name);
-		if (nn != null)
-			return nn.getNodeValue();
-		return null;
-	}
-
-	boolean getAttrBool(Node n, String name) {
-		if (n == null)
-			return false;
-
-		Node nn = n.getAttributes().getNamedItem(name);
-		if (nn != null)
-			return true;
-		return false;
-	}
-
 	Xobject getAttrIntFlag(Node n, String name) {
 		if (n == null)
 			return Xcons.Int(Xcode.INT_CONSTANT, 0);
@@ -157,7 +100,7 @@ public abstract class XcodeMLtools {
 
 		xobjFile.setProgramAttributes(getAttr(rootNode, "source"),
 				getAttr(rootNode, "language"),
-				getAttr(rootNode, "compile-info"),
+				getAttr(rootNode, "compiler-info"),
 				getAttr(rootNode, "version"), getAttr(rootNode, "time"));
 
 		Node n, nn;
@@ -217,7 +160,8 @@ public abstract class XcodeMLtools {
 			if (decls == null)
 				continue;
 			for (Xobject decl : (XobjList) decls) {
-				if (decl.Opcode() == Xcode.VAR_DECL) {
+				//if (decl.Opcode() == Xcode.VAR_DECL) {
+				if (decl != null && decl.Opcode() == Xcode.VAR_DECL) {
 					String name = decl.getArg(0).getName();
 					Ident id = def.findIdent(name, IXobject.FINDKIND_VAR);
 					if (id != null && id.Type() != null
@@ -231,6 +175,38 @@ public abstract class XcodeMLtools {
 
 	Xtype getType(String tid) {
 		return xobjFile.findType(tid);
+	}
+
+	/**
+     * set common attributes to Xobject.
+     * @param n node of XcodeML/F
+	 * @param object Xobject
+	 * @return parameter object.
+	 */
+	Xobject setCommonAttributes(Node n, Xobject object) {
+		String file = getAttr(n, "file");
+		String lineno = getAttr(n, "lineno");
+		if (lineno != null) {
+			object.setLineNo(new LineNo(file, Integer.parseInt(lineno)));
+		}
+		return object;
+	}
+
+	XobjList getChildList(Node n) {
+		return getChildList(n, null);
+	}
+	XobjList getChildList(Node n, XobjList x) {
+		if (x == null) {
+			x = new XobjList();
+		}
+		NodeList list = n.getChildNodes();
+		for (int i = 0; i < list.getLength(); i++) {
+			Node nn = list.item(i);
+			if (nn.getNodeType() != Node.ELEMENT_NODE)
+				continue;
+			x.add(toXobject(nn));
+		}
+		return x;
 	}
 
 	// for debug

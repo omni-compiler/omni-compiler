@@ -44,4 +44,29 @@ public class XmcBindingUtil
         
         return obj;
     }
+
+	public static XcConstObj.LongLongConst createLongLongConst(String valuesText,
+															   String typeId) {
+		String[] values = XmStringUtil.trim(valuesText).split(" ");
+		if (values.length != 2)
+			return null;
+
+		XcBaseTypeEnum btEnum;
+		if (typeId == null)
+			btEnum = XcBaseTypeEnum.LONGLONG;
+		else
+			btEnum = XcBaseTypeEnum.getByXcode(typeId);
+
+		if (btEnum == null)
+			return null;
+
+		XcConstObj.LongLongConst obj;
+
+		try {
+			obj = new XcConstObj.LongLongConst(values[0], values[1], btEnum);
+		} catch(XmException e) {
+			return null;
+		}
+		return obj;
+	}
 }
