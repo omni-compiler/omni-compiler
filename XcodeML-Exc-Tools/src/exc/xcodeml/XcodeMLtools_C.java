@@ -121,7 +121,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
 
         Xcode code = nameTable.getXcode(n.getNodeName());
         if (code == null) {
-            fatal("unknwon Xcode=" + n);
+            fatal("unknown Xcode=" + n);
         }
 
         Xtype type = null;
