@@ -120,6 +120,7 @@ public class XcodeMLNameTable_C extends XcodeMLNameTable {
 		new XcodeMLName(Xcode.GCC_RANGED_CASE_LABEL, "gccRangedCaseLabel"),
 
 		new XcodeMLName(Xcode.SUB_ARRAY_REF, "subArrayRef"),
+		new XcodeMLName(Xcode.INDEX_RANGE, "indexRange"),
 		new XcodeMLName(Xcode.LOWER_BOUND, "lowerBound"),
 		new XcodeMLName(Xcode.UPPER_BOUND, "upperBound"),
 		new XcodeMLName(Xcode.STEP, "step"),
@@ -127,6 +128,7 @@ public class XcodeMLNameTable_C extends XcodeMLNameTable {
 		new XcodeMLName(Xcode.CO_ARRAY_ASSIGN_EXPR, "coArrayAssignExpr"),
 
 		new XcodeMLName(Xcode.OMP_PRAGMA, "OMPPragma"),
+		new XcodeMLName(Xcode.XMP_PRAGMA, "XMPPragma"),
 	};
 
 	// constructor

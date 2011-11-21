@@ -49,11 +49,13 @@ public abstract class XmXobjectToXcodeTranslator {
             Element typeTableNode = transTypeTable(xobjFile.getTypeList());
             Element globalSymbolsNode =
                 transGlobalSymbols(xobjFile.getGlobalIdentList());
-            Element globalDeclNode = transGlobalDeclarations(xobjFile);
+            Element globalDeclNode = createElement("globalDeclarations");
 
             // header lines
             addChildNodes(globalDeclNode,
                           transLines(xobjFile.getHeaderLines()));
+
+            transGlobalDeclarations(globalDeclNode, xobjFile);
 
             // type table, symbol table, global declarations
             addChildNodes(root,
@@ -82,7 +84,7 @@ public abstract class XmXobjectToXcodeTranslator {
         return doc.createTextNode(str);
     }
 
-    abstract Element transGlobalDeclarations(XobjectDefEnv defList);
+    abstract void transGlobalDeclarations(Element globalDecl, XobjectDefEnv defList);
 
     abstract protected Element transType(Xtype type);
 
@@ -154,7 +156,8 @@ public abstract class XmXobjectToXcodeTranslator {
                 }
                 String[] splines = line.split("\n");
                 for (String spline : splines) {
-                    textList.add(doc.createTextNode(spline));
+                    textList.add(addChildNode(createElement("text"),
+                                              doc.createTextNode(spline)));
                 }
             }
         }

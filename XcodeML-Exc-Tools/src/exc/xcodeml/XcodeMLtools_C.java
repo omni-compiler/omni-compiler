@@ -44,6 +44,8 @@ import static xcodeml.util.XmDomUtil.getAttr;
 import static xcodeml.util.XmDomUtil.getContent;
 import static xcodeml.util.XmDomUtil.getContentText;
 import static xcodeml.util.XmDomUtil.getAttrBool;
+import static xcodeml.util.XmDomUtil.collectChildNodes;
+import static xcodeml.util.XmDomUtil.collectElementsExclude;
 
 /**
  * tools for XcodeML/C to Xcode translation.
@@ -352,36 +354,8 @@ public class XcodeMLtools_C extends XcodeMLtools {
                                 getContentText(n),
                                 VarScope.get(getAttr(n, "scope")));
 
-        case ARRAY_REF: {
-            Node exprNode = null;
-            Node arrayAddrNode = null;
-            NodeList childNodeList = n.getChildNodes();
-            for (int i = 0; i < childNodeList.getLength(); ++i) {
-                Node childNode = childNodeList.item(i);
-                if (childNode.getNodeType() != Node.ELEMENT_NODE) {
-                    continue;
-                }
-                final String name = childNode.getNodeName();
-                if ("arrayAddr".equals(name)) {
-                    arrayAddrNode = childNode;
-                } else {
-                    exprNode = childNode;
-                }
-            }
-            if (exprNode == null || arrayAddrNode == null) {
-                fatal("Invalid arrayRef.");
-            }
-
-            XobjList objList = enterAsXobjList(n,
-                                               code,
-                                               type,
-                                               arrayAddrNode);
-            objList.add(enterAsXobjList(n,
-                                        Xcode.LIST,
-                                        getType(getAttr(n, "type")),
-                                        exprNode));
-            return objList;
-        }
+        case ARRAY_REF:
+            return enterArrayRef(code, type, n);
 
         case FUNC_ADDR:
             return Xcons.Symbol(code,
@@ -430,6 +404,32 @@ public class XcodeMLtools_C extends XcodeMLtools {
                                                type,
                                                getElement(n, "compoundStatement"));
             _pScopeStack.pop();
+            return objList;
+        }
+
+        case SUB_ARRAY_REF:
+            return enterArrayRef(code, type, n);
+
+        case CO_ARRAY_REF: {
+            ArrayList<Node> childNodes = collectChildNodes(n);
+            Node contentNode = childNodes.remove(0);
+            String contentNodeName = contentNode.getNodeName();
+            if (("Var".equals(contentNodeName) ||
+                 "arrayRef".equals(contentNodeName) ||
+                 "subArrayRef".equals(contentNodeName) ||
+                 "memberRef".equals(contentNodeName)) == false) {
+                fatal("Invalid coArrayRef");
+            }
+            XobjList objList = enterAsXobjList(n,
+                                               code,
+                                               type,
+                                               contentNode);
+            Xobject exprs = Xcons.List();
+            for (Node childNode : childNodes) {
+                exprs.add(toXobject(childNode));
+            }
+            objList.add(exprs);
+            objList.setScope(VarScope.get(getAttr(n, "scope")));
             return objList;
         }
 
@@ -638,6 +638,22 @@ public class XcodeMLtools_C extends XcodeMLtools {
         XobjList child = Xcons.List(Xcode.TYPE_NAME, argType);
         XobjList objList = Xcons.List(code, type);
         objList.add(child);
+        return objList;
+    }
+
+    /** process arrayRef, subArrayRef. */
+    private XobjList enterArrayRef(Xcode code, Xtype type, Node arrayRefNode) {
+        ArrayList<Node> childNodes = collectElementsExclude(arrayRefNode,
+                                                            "arrayAddr");
+        Node arrayAddrNode = getElement(arrayRefNode, "arrayAddr");
+        XobjList objList = enterAsXobjList(arrayRefNode,
+                                           code,
+                                           type,
+                                           arrayAddrNode);
+        objList.add(enterAsXobjList(arrayRefNode,
+                                    Xcode.LIST,
+                                    getType(getAttr(arrayRefNode, "type")),
+                                    childNodes.toArray(new Node[0])));
         return objList;
     }
 

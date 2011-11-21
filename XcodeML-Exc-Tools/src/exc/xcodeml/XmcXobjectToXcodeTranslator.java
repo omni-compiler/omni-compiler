@@ -348,7 +348,7 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
     }
 
     @Override
-    Element transGlobalDeclarations(XobjectDefEnv defList) {
+    void transGlobalDeclarations(Element globalDecl, XobjectDefEnv defList) {
         XobjList declList = getDeclForNotDeclared((XobjList)defList.getGlobalIdentList());
         if (declList != null) {
             declList.reverse();
@@ -357,7 +357,6 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             }
         }
 
-        Element e = createElement("globalDeclarations");
         for (XobjectDef def : defList) {
             if (def == null) {
                 fatal("def is null");
@@ -369,9 +368,8 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             } else {
                 n = transOrError(defObj);
             }
-            addChildNodes(e, n);
+            addChildNodes(globalDecl, n);
         }
-        return e;
     }
 
     @Override

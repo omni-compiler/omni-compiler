@@ -623,6 +623,8 @@ public class XmcXcodeToXcTranslator {
             obj.setMember(getAttr(n, "member"));
             addChild(parent, obj);
             transChildren(tc, n, obj);
+            enterNodesWithNull(tc, obj,
+                               getContent(n));
         }
     }
 
@@ -795,7 +797,8 @@ public class XmcXcodeToXcTranslator {
     class ConditionVisitor extends XcodeNodeVisitor {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
-            transChildren(tc, n, parent);
+            enterNodesWithNull(tc, parent,
+                               getContent(n));
         }
     }
 
@@ -803,7 +806,8 @@ public class XmcXcodeToXcTranslator {
     class InitVisitor extends XcodeNodeVisitor {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
-            transChildren(tc, n, parent);
+            enterNodesWithNull(tc, parent,
+                               getContent(n));
         }
     }
 
@@ -811,7 +815,8 @@ public class XmcXcodeToXcTranslator {
     class IterVisitor extends XcodeNodeVisitor {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
-            transChildren(tc, n, parent);
+            enterNodes(tc, parent,
+                       getContent(n));
         }
     }
 
@@ -908,7 +913,8 @@ public class XmcXcodeToXcTranslator {
             XcControlStmtObj.Return obj = new XcControlStmtObj.Return();
             setSourcePos(obj, n);
             addChild(parent, obj);
-            transChildren(tc, n, obj);
+            enterNodesWithNull(tc, obj,
+                               getContent(n));
         }
     }
 
@@ -1997,11 +2003,24 @@ public class XmcXcodeToXcTranslator {
 
 
     void enterNodes(TranslationContext tc, XcNode obj, Node ... nodes) {
+        enterNodes(tc, obj, false, nodes);
+    }
+
+    void enterNodes(TranslationContext tc, XcNode obj, boolean isAllowNull,
+                    Node ... nodes) {
         for (Node n : nodes) {
-            if (n != null) {
+            if (n == null) {
+                if (isAllowNull) {
+                    addChild(obj, XcNullExpr.createXcNullExpr());
+                }
+            } else {
                 trans(tc, n, obj);
             }
         }
+    }
+
+    void enterNodesWithNull(TranslationContext tc, XcNode obj, Node ... nodes) {
+        enterNodes(tc, obj, true, nodes);
     }
 
     void setSourcePos(XcSourcePositioned obj, Node n) {

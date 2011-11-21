@@ -46,19 +46,17 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
     private XcodeMLNameTable_F nameTable = new XcodeMLNameTable_F();
 
     @Override
-    Element transGlobalDeclarations(XobjectDefEnv defList) {
+    void transGlobalDeclarations(Element globalDecl, XobjectDefEnv defList) {
         addDeclForNotDeclared(defList,
                               (XobjList)defList.getGlobalIdentList(),
                               null);
 
-        Element e = createElement("globalDeclarations");
         for (XobjectDef def : defList) {
             if (def == null) {
                 fatal("def is null");
             }
-            addChildNodes(e, transDef(def));
+            addChildNodes(globalDecl, transDef(def));
         }
-        return e;
     }
 
     @Override
