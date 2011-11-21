@@ -51,7 +51,7 @@ public class XmcVarCollector {
                 }
             }
         } catch (XPathExpressionException e) {
-            throw new XmTranslationException(e);
+            throw new XmTranslationException(node, e);
         }
     }
 

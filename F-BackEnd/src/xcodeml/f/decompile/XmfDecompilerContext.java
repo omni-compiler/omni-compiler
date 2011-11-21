@@ -20,12 +20,14 @@ public class XmfDecompilerContext implements XmDecompilerContext
 
     private XmfWriter  _writer;
     private XfTypeManager _typeManager;
-    
+    private XfTypeManagerForDom _typeManagerForDom;
+
     private Exception _lastCause;
 
     public XmfDecompilerContext()
     {
         _typeManager = new XfTypeManager();
+        _typeManagerForDom = new XfTypeManagerForDom();
     }
 
     @Override
@@ -114,6 +116,15 @@ public class XmfDecompilerContext implements XmDecompilerContext
     public XfTypeManager getTypeManager()
     {
         return _typeManager;
+    }
+
+    /**
+     * Get type manager.
+     * @return Instance of XfTypeManager.
+     */
+    public XfTypeManagerForDom getTypeManagerForDom()
+    {
+        return _typeManagerForDom;
     }
 
     public boolean hasError()

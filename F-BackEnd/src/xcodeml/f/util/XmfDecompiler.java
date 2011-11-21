@@ -18,6 +18,7 @@ import xcodeml.binding.XmXcodeProgram;
 import xcodeml.f.binding.gen.XbfXcodeProgram;
 import xcodeml.f.binding.gen.XcodeML_FFactory;
 import xcodeml.f.decompile.XfDecompileVisitor;
+import xcodeml.f.decompile.XfDecompileDomVisitor;
 import xcodeml.f.decompile.XmfDecompilerContext;
 import xcodeml.util.XmDecompiler;
 import xcodeml.util.XmDecompilerContext;
@@ -69,6 +70,12 @@ public class XmfDecompiler implements XmDecompiler
 
     @Override
     public void decompile(XmDecompilerContext context, Document xcode, Writer writer) throws XmException {
-        throw new XmException("not implemented yet.");
+        XmfDecompilerContext fcontext = (XmfDecompilerContext)context;
+        XmfWriter fwriter = new XmfWriter(new PrintWriter(writer));
+        fwriter.setMaxColumnCount(fcontext.getMaxColumnCount());
+        fcontext.setWriter(fwriter);
+
+        XfDecompileDomVisitor visitor = new XfDecompileDomVisitor(fcontext);
+        visitor.invokeEnter(xcode);
     }
 }

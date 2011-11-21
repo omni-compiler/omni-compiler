@@ -52,6 +52,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
+import java.util.ArrayList;
 
 /**
  * Translator of XcodeML DOM nodes to internal AST node.
@@ -2268,13 +2269,13 @@ public class XmcXcodeToXcTranslator {
         XcFuncType funcType = (XcFuncType)type;
         XcParamList paramList = funcType.getParamList();
 
-        Node[] paramNameNodes = null;
+        ArrayList<Node> paramNameNodes = null;
         if (paramsNode != null) {
             paramNameNodes = XmDomUtil.collectElements(paramsNode, "name");
         }
         if (paramList.isEmpty() == false) {
             // TODO strict parameter check
-            int sizeName = (paramNameNodes != null) ? paramNameNodes.length : 0;
+            int sizeName = (paramNameNodes != null) ? paramNameNodes.size() : 0;
             if (paramList.isVoid() == false && (sizeName != paramList.size())) {
                 
                 throw new XmTranslationException(paramsNode,

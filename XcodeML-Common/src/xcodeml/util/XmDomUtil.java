@@ -8,6 +8,7 @@ package xcodeml.util;
 
 import org.w3c.dom.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 public class XmDomUtil {
     public static Node getElement(Node n, String name) {
@@ -69,9 +70,17 @@ public class XmDomUtil {
         return false;
     }
 
-    public static Node[] collectElements(Node n, String name) {
+    public static Node[] collectElementsAsArray(Node n, String name) {
         if (n == null) {
             return new Node[0];
+        }
+
+        return collectElements(n, name).toArray(new Node[0]);
+    }
+
+    public static ArrayList<Node> collectElements(Node n, String ... names) {
+        if (n == null) {
+            return null;
         }
 
         NodeList list = n.getChildNodes();
@@ -80,10 +89,37 @@ public class XmDomUtil {
             Node childNode = list.item(i);
             if (childNode.getNodeType() != Node.ELEMENT_NODE)
                 continue;
-            if (childNode.getNodeName().equals(name))
-                nodes.add(childNode);
+            for (String name : names) {
+                if (childNode.getNodeName().equals(name)) {
+                    nodes.add(childNode);
+                }
+            }
         }
-        return nodes.toArray(new Node[0]);
+        return nodes;
+    }
+
+    public static ArrayList<Node> collectElementsExclude(Node n,
+                                                         String ... names) {
+        if (n == null) {
+            return null;
+        }
+
+        HashSet<String> excludes = new HashSet<String>();
+        for (String name : names) {
+            excludes.add(name);
+        }
+
+        NodeList list = n.getChildNodes();
+        ArrayList<Node> nodes = new ArrayList<Node>();
+        for (int i = 0; i < list.getLength(); i++) {
+            Node childNode = list.item(i);
+            if (childNode.getNodeType() != Node.ELEMENT_NODE)
+                continue;
+            if (!excludes.contains(childNode.getNodeName())) {
+                nodes.add(childNode);
+            }
+        }
+        return nodes;
     }
 
     public static ArrayList<Node> collectChildNodes(Node n) {

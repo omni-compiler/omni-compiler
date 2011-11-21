@@ -31,7 +31,7 @@ import xcodeml.util.*;
 
 // For removing Relaxer
 import exc.xcodeml.XmXobjectToXcodeTranslator;
-//import exc.xcodeml.XmfXobjectToXcodeTranslator;
+import exc.xcodeml.XmfXobjectToXcodeTranslator;
 import exc.xcodeml.XmcXobjectToXcodeTranslator;
 import org.w3c.dom.Document;
 import javax.xml.transform.OutputKeys;
@@ -375,7 +375,7 @@ public class omompx
         XmXobjectToXmObjTranslator xc2xm_translator = toolFactory.createXobjectToXmObjTranslator();
         XmXcodeProgram xmprog = null;
         Document xcodeDoc = null;
-        if (useRelaxerTranslatorOutput || lang.equals("F")) {
+        if (useRelaxerTranslatorOutput) {
         xmprog = (XmXcodeProgram)xc2xm_translator.translate(xobjFile);
         xobjFile = null;
         // Output XcodeML
@@ -398,7 +398,7 @@ public class omompx
         } else { // useRelaxer
             XmXobjectToXcodeTranslator xc2xcodeTranslator = null;
             if (lang.equals("F")) {
-                //xc2xcodeTranslator = new XmfXobjectToXcodeTranslator();
+                xc2xcodeTranslator = new XmfXobjectToXcodeTranslator();
             } else {
                 xc2xcodeTranslator = new XmcXobjectToXcodeTranslator();
             }
@@ -482,7 +482,7 @@ public class omompx
             }
             
             XmDecompiler decompiler = toolFactory.createDecompiler();
-            if (useRelaxerDecompilerIutput || lang.equals("F")) {
+            if (useRelaxerDecompilerIutput) {
                 decompiler.decompile(context, xmprog, decompWriter);
             } else {
                 if (xcodeDoc == null) {

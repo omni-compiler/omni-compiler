@@ -49,7 +49,7 @@ public class XcGccAttributeList extends XcObj implements XcLazyEvalType
 
     public XcGccAttributeList(org.w3c.dom.Node attrsNode)
     {
-        _bindingNodes = xcodeml.util.XmDomUtil.collectElements(attrsNode, "gccAttribute");
+        _bindingNodes = xcodeml.util.XmDomUtil.collectElementsAsArray(attrsNode, "gccAttribute");
         _isLazyEvalType = true;
     }
 
