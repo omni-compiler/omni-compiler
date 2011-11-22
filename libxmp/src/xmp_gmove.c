@@ -360,6 +360,115 @@ static int _XMP_calc_global_index_BCAST(int dst_dim, int *dst_l, int *dst_u, int
   return _XMP_N_INT_TRUE;
 }
 
+static void _XMP_sendrecv_ARRAY(unsigned long long gmove_total_elmts,
+                                int type, int type_size, MPI_Datatype *mpi_datatype,
+                                _XMP_nodes_t *exec_nodes,
+                                _XMP_nodes_t *dst_array_nodes, int *dst_array_nodes_ref,
+                                _XMP_array_t *dst_array, int *dst_lower, int *dst_upper, int *dst_stride,
+                                unsigned long long *dst_dim_acc,
+                                _XMP_nodes_t *src_array_nodes, int *src_array_nodes_ref,
+                                _XMP_array_t *src_array, int *src_lower, int *src_upper, int *src_stride,
+                                unsigned long long *src_dim_acc) {
+  void *dst_addr = *(dst_array->array_addr_p);
+  void *src_addr = *(src_array->array_addr_p);
+  int dst_dim = dst_array->dim;
+  int src_dim = src_array->dim;
+
+  _XMP_ASSERT(exec_nodes->is_member);
+
+  int exec_rank = exec_nodes->comm_rank;
+  MPI_Comm *exec_comm = exec_nodes->comm;
+
+  // calc dst_ranks
+  _XMP_nodes_ref_t *dst_ref = _XMP_create_nodes_ref_for_target_nodes(dst_array_nodes, dst_array_nodes_ref, exec_nodes);
+  int dst_shrink_nodes_size = dst_ref->shrink_nodes_size;
+  int *dst_ranks = _XMP_alloc(sizeof(int) * dst_shrink_nodes_size);
+  if (dst_shrink_nodes_size == 1) {
+    dst_ranks[0] = _XMP_calc_linear_rank(dst_ref->nodes, dst_ref->ref);
+  } else {
+    _XMP_translate_nodes_rank_array_to_ranks(dst_ref->nodes, dst_ranks, dst_ref->ref, dst_shrink_nodes_size);
+  }
+
+  // calc src_ranks
+  _XMP_nodes_ref_t *src_ref = _XMP_create_nodes_ref_for_target_nodes(src_array_nodes, src_array_nodes_ref, exec_nodes);
+  int src_shrink_nodes_size = src_ref->shrink_nodes_size;
+  int *src_ranks = _XMP_alloc(sizeof(int) * src_shrink_nodes_size);
+  if (src_shrink_nodes_size == 1) {
+    src_ranks[0] = _XMP_calc_linear_rank(src_ref->nodes, src_ref->ref);
+  } else {
+    _XMP_translate_nodes_rank_array_to_ranks(src_ref->nodes, src_ranks, src_ref->ref, src_shrink_nodes_size);
+  }
+
+  // recv phase
+  void *recv_buffer = NULL;
+  int wait_recv = _XMP_N_INT_FALSE;
+  MPI_Request gmove_request;
+  for (int i = 0; i < dst_shrink_nodes_size; i++) {
+    if (dst_ranks[i] == exec_rank) {
+      wait_recv = _XMP_N_INT_TRUE;
+
+      int src_rank;
+      if ((dst_shrink_nodes_size == src_shrink_nodes_size) ||
+          (dst_shrink_nodes_size <  src_shrink_nodes_size)) {
+        src_rank = src_ranks[i];
+      } else {
+        src_rank = src_ranks[i % src_shrink_nodes_size];
+      }
+
+      recv_buffer = _XMP_alloc(gmove_total_elmts * type_size);
+      MPI_Irecv(recv_buffer, gmove_total_elmts, *mpi_datatype, src_rank, _XMP_N_MPI_TAG_GMOVE, *exec_comm, &gmove_request);
+    }
+  }
+
+  // send phase
+  for (int i = 0; i < src_shrink_nodes_size; i++) {
+    if (src_ranks[i] == exec_rank) {
+      void *send_buffer = _XMP_alloc(gmove_total_elmts * type_size);
+      for (int j = 0; j < src_dim; j++) {
+        _XMP_gtol_array_ref_triplet(src_array, j, &(src_lower[j]), &(src_upper[j]), &(src_stride[j]));
+      }
+      _XMP_pack_array(send_buffer, src_addr, type, type_size, src_dim, src_lower, src_upper, src_stride, src_dim_acc);
+
+      if ((dst_shrink_nodes_size == src_shrink_nodes_size) ||
+          (dst_shrink_nodes_size <  src_shrink_nodes_size)) {
+        if (i < dst_shrink_nodes_size) {
+          MPI_Send(send_buffer, gmove_total_elmts, *mpi_datatype, dst_ranks[i], _XMP_N_MPI_TAG_GMOVE, *exec_comm);
+        }
+      } else {
+        int request_size = _XMP_M_COUNT_TRIPLETi(i, dst_shrink_nodes_size, src_shrink_nodes_size);
+        MPI_Request *requests = _XMP_alloc(sizeof(MPI_Request) * request_size);
+
+        int request_count = 0;
+        for (int j = i; j < dst_shrink_nodes_size; j += src_shrink_nodes_size) {
+          MPI_Isend(send_buffer, gmove_total_elmts, *mpi_datatype, dst_ranks[j], _XMP_N_MPI_TAG_GMOVE, *exec_comm,
+                    requests + request_count);
+          request_count++;
+        }
+
+        MPI_Waitall(request_size, requests, MPI_STATUSES_IGNORE);
+        _XMP_free(requests);
+      }
+
+      _XMP_free(send_buffer);
+    }
+  }
+
+  // wait recv phase
+  if (wait_recv) {
+    MPI_Wait(&gmove_request, MPI_STATUS_IGNORE);
+    for (int i = 0; i < dst_dim; i++) {
+      _XMP_gtol_array_ref_triplet(dst_array, i, &(dst_lower[i]), &(dst_upper[i]), &(dst_stride[i]));
+    }
+    _XMP_unpack_array(dst_addr, recv_buffer, type, type_size, dst_dim, dst_lower, dst_upper, dst_stride, dst_dim_acc);
+    _XMP_free(recv_buffer);
+  }
+
+  _XMP_free(dst_ranks);
+  _XMP_free(src_ranks);
+  _XMP_free(dst_ref);
+  _XMP_free(src_ref);
+}
+
 // ----- gmove scalar to scalar --------------------------------------------------------------------------------------------------
 void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XMP_array_t *array, ...) {
   int type_size = array->type_size;
@@ -833,6 +942,10 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
   _XMP_ASSERT(exec_nodes->is_member);
 
+  MPI_Datatype mpi_datatype;
+  MPI_Type_contiguous(type_size, MPI_BYTE, &mpi_datatype);
+  MPI_Type_commit(&mpi_datatype);
+
   _XMP_nodes_t *dst_array_nodes = dst_array->array_nodes;
   int dst_array_nodes_dim = dst_array_nodes->dim;
   int dst_array_nodes_ref[dst_array_nodes_dim];
@@ -874,7 +987,7 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
 
         if(_XMP_calc_global_index_BCAST(dst_dim, recv_lower, recv_upper, recv_stride,
                                         src_array, src_array_nodes_ref, send_lower, send_upper, send_stride)) {
-          /*
+          /* XXX for debug
           for (int i = 0; i < dst_dim; i++) {
             printf("[%d] recv(%d) (%d:%d:%d) <-\n", _XMP_world_rank,
                    _XMP_calc_linear_rank(dst_array_nodes, dst_array_nodes_ref),
@@ -886,8 +999,14 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
                    send_lower[i], send_upper[i], send_stride[i]);
           }
           */
-          _XMP_nodes_ref_t *dst_ref = _XMP_create_nodes_ref_for_target_nodes(dst_array_nodes, dst_array_nodes_ref, exec_nodes);
-          _XMP_nodes_ref_t *src_ref = _XMP_create_nodes_ref_for_target_nodes(src_array_nodes, src_array_nodes_ref, exec_nodes);
+          // send & recv
+          _XMP_sendrecv_ARRAY(gmove_total_elmts,
+                              type, type_size, &mpi_datatype,
+                              exec_nodes,
+                              dst_array_nodes, dst_array_nodes_ref,
+                              dst_array, recv_lower, recv_upper, recv_stride, dst_d,
+                              src_array_nodes, src_array_nodes_ref,
+                              src_array, send_lower, send_upper, send_stride, src_d);
         }
       } while (_XMP_calc_next_next_rank(src_array_nodes, src_array_nodes_ref));
     }
