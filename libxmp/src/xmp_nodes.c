@@ -818,7 +818,8 @@ void _XMP_finalize_nodes_ref(_XMP_nodes_ref_t *nodes_ref) {
 }
 
 _XMP_nodes_ref_t *_XMP_create_nodes_ref_for_target_nodes(_XMP_nodes_t *n, int *rank_array, _XMP_nodes_t *target_nodes) {
-  if (_XMP_compare_nodes(n, target_nodes)) {
+  if (((target_nodes->comm_size == _XMP_world_size) && (target_nodes->comm_size == n->comm_size)) ||
+      _XMP_compare_nodes(n, target_nodes)) {
     return _XMP_init_nodes_ref(n, rank_array);
   } else {
     _XMP_nodes_t *inherit_nodes = n->inherit_nodes;

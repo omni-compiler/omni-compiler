@@ -753,8 +753,8 @@ void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size,
       src_lower[i] = src_l[i]; src_upper[i] = src_u[i]; src_stride[i] = src_s[i];
     }
 
-    if(_XMP_calc_global_index_BCAST(dst_dim, dst_lower, dst_upper, dst_stride,
-                                    src_array, array_nodes_ref, src_lower, src_upper, src_stride)) {
+    if (_XMP_calc_global_index_BCAST(dst_dim, dst_lower, dst_upper, dst_stride,
+                                     src_array, array_nodes_ref, src_lower, src_upper, src_stride)) {
       int root_rank = _XMP_calc_linear_rank_on_target_nodes(array_nodes, array_nodes_ref, exec_nodes);
       if (root_rank == (exec_nodes->comm_rank)) {
         for (int i = 0; i < src_dim; i++) {
@@ -880,7 +880,6 @@ void _XMP_gmove_HOMECOPY_ARRAY(_XMP_array_t *dst_array, int type, size_t type_si
   _XMP_free(buffer);
 }
 
-// FIXME implement
 void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
                                int type, size_t type_size, ...) {
   unsigned long long gmove_total_elmts = 0;
@@ -965,8 +964,8 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
       src_lower[i] = src_l[i]; src_upper[i] = src_u[i]; src_stride[i] = src_s[i];
     }
 
-    if(_XMP_calc_global_index_BCAST(src_dim, src_lower, src_upper, src_stride,
-                                    dst_array, dst_array_nodes_ref, dst_lower, dst_upper, dst_stride)) {
+    if (_XMP_calc_global_index_BCAST(src_dim, src_lower, src_upper, src_stride,
+                                     dst_array, dst_array_nodes_ref, dst_lower, dst_upper, dst_stride)) {
       for (int i = 0; i < src_array_nodes_dim; i++) {
         src_array_nodes_ref[i] = 0;
       }
@@ -982,8 +981,8 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
           send_lower[i] = src_lower[i]; send_upper[i] = src_upper[i]; send_stride[i] = src_stride[i];
         }
 
-        if(_XMP_calc_global_index_BCAST(dst_dim, recv_lower, recv_upper, recv_stride,
-                                        src_array, src_array_nodes_ref, send_lower, send_upper, send_stride)) {
+        if (_XMP_calc_global_index_BCAST(dst_dim, recv_lower, recv_upper, recv_stride,
+                                         src_array, src_array_nodes_ref, send_lower, send_upper, send_stride)) {
           /* XXX for debug
           for (int i = 0; i < dst_dim; i++) {
             printf("[%d] recv(%d) (%d:%d:%d) <-\n", _XMP_world_rank,
