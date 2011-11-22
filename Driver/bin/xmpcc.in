@@ -52,6 +52,8 @@ for i in "$@"; do
     esac
 done
 
+args="${args} --Wx-use-relaxer"
+
 if test ${selective_profile} -eq 1 -a ${all_profile} -eq 1; then
     error "Please select only one, \"-profile\" or \"-allprofile\"."
     exit 1

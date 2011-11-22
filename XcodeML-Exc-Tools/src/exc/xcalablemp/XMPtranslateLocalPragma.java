@@ -1944,7 +1944,6 @@ public class XMPtranslateLocalPragma {
   }
 
   private XMPpair<XMPalignedArray, XobjList> getXMPalignedArrayExpr(PragmaBlock pb, Xobject expr) throws XMPexception {
-    System.out.println(expr.toString());
     switch (expr.Opcode()) {
       case ARRAY_REF:
         return parseArrayRefExpr(pb, expr);
