@@ -67,9 +67,8 @@ extern void _XMP_init_coarray_comm(void *coarray, int dim, ...);
 extern void _XMP_finalize_coarray_comm(void *coarray);
 
 // xmp_coarray_RMA.c
-extern void _XMP_coarray_get_SCALAR(void *coarray, void *addr);
+extern void _XMP_coarray_rma_SCALAR(int rma_code, void *coarray, void *addr, ...);
 extern void _XMP_coarray_get_ARRAY(void *coarray, void *addr);
-extern void _XMP_coarray_put_SCALAR(void *addr, void *coarray);
 extern void _XMP_coarray_put_ARRAY(void *addr, void *coarray);
 
 // xmp_gmove.c

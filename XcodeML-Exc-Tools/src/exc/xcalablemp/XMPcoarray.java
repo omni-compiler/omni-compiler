@@ -11,6 +11,10 @@ import exc.block.*;
 import java.util.Vector;
 
 public class XMPcoarray {
+  public final static int GET = 700;
+  public final static int PUT = 701;
+
+  // FIXME supported in coarray fortran???
   public final static int ACC_BIT_XOR	= 1;
 
   private String		_name;

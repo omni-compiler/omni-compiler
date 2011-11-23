@@ -88,4 +88,8 @@
 #define _XMP_N_GPUSYNC_IN			600
 #define _XMP_N_GPUSYNC_OUT			601
 
+// defined in exc.xcalablemp.XMP
+#define _XMP_N_COARRAY_GET			700
+#define _XMP_N_COARRAY_PUT			701
+
 #endif // _XMP_CONSTANT

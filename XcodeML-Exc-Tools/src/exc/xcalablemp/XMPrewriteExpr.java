@@ -113,24 +113,50 @@ public class XMPrewriteExpr {
     Xobject leftExpr = myExpr.getArg(0);
     Xobject rightExpr = myExpr.getArg(1);
 
-    Xobject newExpr = null;
+    // FIXME type check
+
+    boolean isCoarrayRef = false;
+    XMPcoarray coarray = null;
+    XobjList coarrayFuncArgs = null;
     if (leftExpr.Opcode() == Xcode.CO_ARRAY_REF) {
       if (rightExpr.Opcode() == Xcode.CO_ARRAY_REF) {	// a:[0] = x:[1];	syntax error	throw exception
         throw new XMPexception("unknown co-array expression");
       } else {						// a:[0] = x;		RMA put		rewrite expr
-        newExpr = XMP.getMacroId("_XMP_put").Call(null);
-        newExpr.setIsRewrittedByXmp(true);
+        isCoarrayRef = true;
+        String coarrayName = leftExpr.getArg(0).getSym();
+        coarray = _globalDecl.getXMPcoarray(coarrayName, localXMPsymbolTable);
+        if (coarray == null) {
+          throw new XMPexception("cannot find coarray '" + coarrayName + "'");
+        }
+
+        // FIXME right expr may be a constant
+        coarrayFuncArgs = Xcons.List(Xcons.IntConstant(XMPcoarray.PUT),
+                                     coarray.getDescId(), Xcons.AddrOf(rightExpr));
+        coarrayFuncArgs.mergeList((XobjList)(leftExpr.getArg(1)));
       }
     } else {
       if (rightExpr.Opcode() == Xcode.CO_ARRAY_REF) {	// a = x:[1];		RMA get		rewrite expr
-        newExpr = XMP.getMacroId("_XMP_get").Call(null);
-        newExpr.setIsRewrittedByXmp(true);
-      } else {						// a = x;		ASSIGN		do nothing
-        newExpr = myExpr;
+        isCoarrayRef = true;
+        String coarrayName = rightExpr.getArg(0).getSym();
+        coarray = _globalDecl.getXMPcoarray(coarrayName, localXMPsymbolTable);
+        if (coarray == null) {
+          throw new XMPexception("cannot find coarray '" + coarrayName + "'");
+        }
+
+        coarrayFuncArgs = Xcons.List(Xcons.IntConstant(XMPcoarray.GET),
+                                     coarray.getDescId(), Xcons.AddrOf(leftExpr));
+        coarrayFuncArgs.mergeList((XobjList)(rightExpr.getArg(1)));
       }
     }
 
-    return newExpr;
+    if (isCoarrayRef) {
+      Ident coarrayFuncId = _globalDecl.declExternFunc("_XMP_coarray_rma_SCALAR");
+      Xobject newExpr = coarrayFuncId.Call(coarrayFuncArgs);
+      newExpr.setIsRewrittedByXmp(true);
+      return newExpr;
+    } else {
+      return myExpr;
+    }
   }
 
   private Xobject rewriteExpr(Xobject expr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
