@@ -638,7 +638,7 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
   _XMP_free(src_ref);
 
 END_GMOVE:
-  _XMP_barrier_EXEC();
+  return;
 }
 
 // ----- gmove vector to vector --------------------------------------------------------------------------------------------------
@@ -983,19 +983,6 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
 
         if (_XMP_calc_global_index_BCAST(dst_dim, recv_lower, recv_upper, recv_stride,
                                          src_array, src_array_nodes_ref, send_lower, send_upper, send_stride)) {
-          /* XXX for debug
-          for (int i = 0; i < dst_dim; i++) {
-            printf("[%d] recv(%d) (%d:%d:%d) <-\n", _XMP_world_rank,
-                   _XMP_calc_linear_rank(dst_array_nodes, dst_array_nodes_ref),
-                   recv_lower[i], recv_upper[i], recv_stride[i]); 
-          }
-          for (int i = 0; i < src_dim; i++) {
-            printf("[%d] <- send(%d) (%d:%d:%d)\n", _XMP_world_rank,
-                   _XMP_calc_linear_rank(src_array_nodes, src_array_nodes_ref),
-                   send_lower[i], send_upper[i], send_stride[i]);
-          }
-          */
-          // send & recv
           _XMP_sendrecv_ARRAY(gmove_total_elmts,
                               type, type_size, &mpi_datatype,
                               dst_array, dst_array_nodes_ref,
@@ -1006,6 +993,4 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
       } while (_XMP_calc_next_next_rank(src_array_nodes, src_array_nodes_ref));
     }
   } while (_XMP_calc_next_next_rank(dst_array_nodes, dst_array_nodes_ref));
-
-  _XMP_barrier_EXEC();
 }

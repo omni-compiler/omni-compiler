@@ -1919,26 +1919,25 @@ public class XMPtranslateLocalPragma {
         }
       }
     }
-    
-    pb.replace(gmoveFuncCallBlock);
+
+    Block gmoveBlock = Bcons.COMPOUND(Bcons.blockList(gmoveFuncCallBlock, _globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null)));
+    pb.replace(gmoveBlock);
 
     // add function calls for profiling                                                                                    
     Xobject profileClause = gmoveDecl.getArg(1);
     if( _all_profile || (profileClause != null && _selective_profile)){
         if (doScalasca == true) {
             XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp gmove:" + pb.getLineNo()));
-            gmoveFuncCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
-            gmoveFuncCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
+            gmoveBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
+            gmoveBlock.add(createScalascaEndProfileCall(profileFuncArgs));
         } else if (doTlog == true) {
-            gmoveFuncCallBlock.insert(
-				      createTlogMacroInvoke("_XMP_M_TLOG_GMOVE_IN", null));
-            gmoveFuncCallBlock.add(
-				   createTlogMacroInvoke("_XMP_M_TLOG_GMOVE_OUT", null));
+            gmoveBlock.insert(createTlogMacroInvoke("_XMP_M_TLOG_GMOVE_IN", null));
+            gmoveBlock.add(createTlogMacroInvoke("_XMP_M_TLOG_GMOVE_OUT", null));
         }
     } else if(profileClause == null && _selective_profile && doTlog == false){
         XobjList profileFuncArgs = null;
-        gmoveFuncCallBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
-        gmoveFuncCallBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
+        gmoveBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
+        gmoveBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
     }
     
   }
