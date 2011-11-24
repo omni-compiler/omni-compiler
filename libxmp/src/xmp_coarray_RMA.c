@@ -14,7 +14,8 @@ void _XMP_coarray_rma_SCALAR(int rma_code, _XMP_coarray_t *coarray, void *offset
   va_list args;
   va_start(args, rma_addr);
   for (int i = 0; i < coarray_nodes_dim; i++) {
-    coarray_nodes_ref[i] = va_arg(args, int);
+    // XXX translate 1-origin to 0-rigin
+    coarray_nodes_ref[i] = va_arg(args, int) - 1;
   }
   va_end(args);
 

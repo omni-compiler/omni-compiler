@@ -1194,15 +1194,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       }
     }
 
-    Xobject inheritDecl = null;
-    if (pg_is_ident("on")) {
-      pg_get_token();
-      inheritDecl = Xcons.List(Xcons.IntConstant(XMPnodes.INHERIT_NODES), parse_ON_REF(false));
-    } else {
-      inheritDecl = Xcons.List(Xcons.IntConstant(XMPnodes.INHERIT_EXEC), null);
-    }
-
-    return Xcons.List(coarrayName, coarrayDims, inheritDecl);
+    return Xcons.List(coarrayName, coarrayDims);
   }
 
   private XobjList parse_LOCAL_ALIAS_clause() throws XMPexception {
