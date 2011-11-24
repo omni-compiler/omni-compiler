@@ -14,7 +14,7 @@ void _XMP_coarray_rma_SCALAR(int rma_code, _XMP_coarray_t *coarray, void *offset
   va_list args;
   va_start(args, rma_addr);
   for (int i = 0; i < coarray_nodes_dim; i++) {
-    // XXX translate 1-origin to 0-rigin
+    // translate 1-origin to 0-rigin
     coarray_nodes_ref[i] = va_arg(args, int) - 1;
   }
   va_end(args);
@@ -38,7 +38,42 @@ void _XMP_coarray_rma_SCALAR(int rma_code, _XMP_coarray_t *coarray, void *offset
   }
 }
 
+// FIXME not implemented
 void _XMP_coarray_rma_ARRAY(int rma_code, _XMP_coarray_t *coarray, void *rma_addr, ...) {
+  va_list args;
+  va_start(args, rma_addr);
+
+  // get coarray info
+  int coarray_dim = va_arg(args, int);
+  int coarray_lower[coarray_dim], coarray_upper[coarray_dim], coarray_stride[coarray_dim];
+  unsigned long long coarray_dim_acc[coarray_dim];
+  for (int i = 0; i < coarray_dim; i++) {
+    coarray_lower[i] = va_arg(args, int);
+    coarray_upper[i] = va_arg(args, int);
+    coarray_stride[i] = va_arg(args, int);
+    coarray_dim_acc[i] = va_arg(args, unsigned long long);
+  }
+
+  // get rma_array info
+  int rma_array_dim = va_arg(args, int);
+  int rma_array_lower[rma_array_dim], rma_array_upper[rma_array_dim], rma_array_stride[rma_array_dim];
+  unsigned long long rma_array_dim_acc[rma_array_dim];
+  for (int i = 0; i < rma_array_dim; i++) {
+    rma_array_lower[i] = va_arg(args, int);
+    rma_array_upper[i] = va_arg(args, int);
+    rma_array_stride[i] = va_arg(args, int);
+    rma_array_dim_acc[i] = va_arg(args, unsigned long long);
+  }
+
+  // get coarray ref info
+  _XMP_nodes_t *coarray_nodes = coarray->nodes;
+  int coarray_nodes_dim = coarray_nodes->dim;
+  int coarray_nodes_ref[coarray_nodes_dim];
+  for (int i = 0; i < coarray_nodes_dim; i++) {
+    // translate 1-origin to 0-rigin
+    coarray_nodes_ref[i] = va_arg(args, int) - 1;
+  }
+  va_end(args);
 }
 
 void _XMP_coarray_sync(void) {
