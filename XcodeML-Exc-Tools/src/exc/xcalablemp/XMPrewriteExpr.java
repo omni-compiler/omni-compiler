@@ -131,7 +131,7 @@ public class XMPrewriteExpr {
 
         // FIXME right expr may be a constant
         coarrayFuncArgs = Xcons.List(Xcons.IntConstant(XMPcoarray.PUT),
-                                     coarray.getDescId(), Xcons.AddrOf(rightExpr));
+                                     coarray.getDescId(), Xcons.AddrOf(leftExpr.getArg(0)), Xcons.AddrOf(rightExpr));
         coarrayFuncArgs.mergeList((XobjList)(leftExpr.getArg(1)));
       }
     } else {
@@ -144,7 +144,7 @@ public class XMPrewriteExpr {
         }
 
         coarrayFuncArgs = Xcons.List(Xcons.IntConstant(XMPcoarray.GET),
-                                     coarray.getDescId(), Xcons.AddrOf(leftExpr));
+                                     coarray.getDescId(), Xcons.AddrOf(rightExpr.getArg(0)), Xcons.AddrOf(leftExpr));
         coarrayFuncArgs.mergeList((XobjList)(rightExpr.getArg(1)));
       }
     }

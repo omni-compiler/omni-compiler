@@ -3,13 +3,16 @@
 #include "xmp_constant.h"
 #include "xmp_internal.h"
 
-void _XMP_coarray_rma_SCALAR(int rma_code, _XMP_coarray_t *coarray, void *addr, ...) {
+#define _XMP_SM_CALC_RMA_OFFSET(offset_addr, coarray_addr, type_size) \
+(((offset_addr) - (coarray_addr)) / (type_size))
+
+void _XMP_coarray_rma_SCALAR(int rma_code, _XMP_coarray_t *coarray, void *offset_addr, void *rma_addr, ...) {
   _XMP_nodes_t *coarray_nodes = coarray->nodes;
   int coarray_nodes_dim = coarray_nodes->dim;
   int coarray_nodes_ref[coarray_nodes_dim];
 
   va_list args;
-  va_start(args, addr);
+  va_start(args, rma_addr);
   for (int i = 0; i < coarray_nodes_dim; i++) {
     coarray_nodes_ref[i] = va_arg(args, int);
   }
@@ -20,20 +23,24 @@ void _XMP_coarray_rma_SCALAR(int rma_code, _XMP_coarray_t *coarray, void *addr, 
   int type_size = coarray->type_size;
   switch (rma_code) {
     case _XMP_N_COARRAY_GET:
-      MPI_Get(addr, type_size, MPI_BYTE, coarray_rank, 0, type_size, MPI_BYTE, *((MPI_Win *)coarray->comm));
+      MPI_Get(rma_addr, type_size, MPI_BYTE, coarray_rank,
+              _XMP_SM_CALC_RMA_OFFSET(offset_addr, coarray->addr, type_size),
+              type_size, MPI_BYTE, *((MPI_Win *)coarray->comm));
       break;
     case _XMP_N_COARRAY_PUT:
-      MPI_Put(addr, type_size, MPI_BYTE, coarray_rank, 0, type_size, MPI_BYTE, *((MPI_Win *)coarray->comm));
+      MPI_Put(rma_addr, type_size, MPI_BYTE, coarray_rank,
+              _XMP_SM_CALC_RMA_OFFSET(offset_addr, coarray->addr, type_size),
+              type_size, MPI_BYTE, *((MPI_Win *)coarray->comm));
       break;
     default:
       _XMP_fatal("unknown coarray rma expression");
   }
 }
 
-void _XMP_coarray_get_ARRAY(void *coarray, void *addr) {
+void _XMP_coarray_get_ARRAY(void *coarray, void *rma_addr) {
 }
 
-void _XMP_coarray_put_ARRAY(void *addr, void *coarray) {
+void _XMP_coarray_put_ARRAY(void *rma_addr, void *coarray) {
 }
 
 void _XMP_coarray_sync(void) {
