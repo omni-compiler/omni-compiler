@@ -2,6 +2,24 @@
 #include "mpi.h"
 #include "xmp_internal.h"
 
+_XMP_coarray_list_t *_XMP_coarray_list_head = NULL;
+_XMP_coarray_list_t *_XMP_coarray_list_tail = NULL;
+
+static void _XMP_add_coarray(_XMP_coarray_t *coarray) {
+  _XMP_coarray_list_t *coarray_list = _XMP_alloc(sizeof(_XMP_coarray_list_t));
+
+  coarray_list->coarray = coarray;
+  coarray_list->next = NULL;
+
+  if (_XMP_coarray_list_head == NULL) {
+    _XMP_coarray_list_head = coarray_list;
+    _XMP_coarray_list_tail = coarray_list;
+  } else {
+    _XMP_coarray_list_tail->next = coarray_list;
+    _XMP_coarray_list_tail = coarray_list;
+  }
+}
+
 static _XMP_coarray_t *_XMP_alloc_coarray_desc(void *addr, int type, size_t type_size) {
   _XMP_coarray_t *c = _XMP_alloc(sizeof(_XMP_coarray_t));
 
@@ -200,14 +218,27 @@ void _XMP_init_coarray_comm(_XMP_coarray_t *coarray, int dim, ...) {
 
   va_end(args);
 
+  _XMP_nodes_t *coarray_nodes = coarray->nodes;
+
   MPI_Win *win = _XMP_alloc(sizeof(MPI_Win));
   MPI_Win_create(coarray->addr, total_elmts * type_size, type_size,
-                 MPI_INFO_NULL, MPI_COMM_WORLD, win);
+                 MPI_INFO_NULL, *((MPI_Comm *)coarray_nodes->comm), win);
 
   coarray->comm = win;
+
+  if (coarray_nodes->is_member) {
+    MPI_Win_fence(0, *win);
+  }
+
+  // FIXME correct implementation???
+  _XMP_add_coarray(coarray);
 }
 
 void _XMP_finalize_coarray_comm(_XMP_coarray_t *coarray) {
+  if ((coarray->nodes)->is_member) {
+    MPI_Win_fence(0, *((MPI_Win *)coarray->comm));
+  }
+
   if (coarray != NULL) {
     if (coarray->comm != NULL) {
       MPI_Win_free(coarray->comm);

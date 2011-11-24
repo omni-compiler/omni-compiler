@@ -20,17 +20,14 @@ void _XMP_coarray_rma_SCALAR(int rma_code, _XMP_coarray_t *coarray, void *addr, 
   int type_size = coarray->type_size;
   switch (rma_code) {
     case _XMP_N_COARRAY_GET:
-      MPI_Get(coarray->addr, type_size, MPI_BYTE, coarray_rank, 0, type_size, MPI_BYTE, *((MPI_Win *)coarray->comm));
+      MPI_Get(addr, type_size, MPI_BYTE, coarray_rank, 0, type_size, MPI_BYTE, *((MPI_Win *)coarray->comm));
       break;
     case _XMP_N_COARRAY_PUT:
-      MPI_Put(coarray->addr, type_size, MPI_BYTE, coarray_rank, 0, type_size, MPI_BYTE, *((MPI_Win *)coarray->comm));
+      MPI_Put(addr, type_size, MPI_BYTE, coarray_rank, 0, type_size, MPI_BYTE, *((MPI_Win *)coarray->comm));
       break;
     default:
       _XMP_fatal("unknown coarray rma expression");
   }
-
-  // FIXME for debug
-  MPI_Win_fence(0, *((MPI_Win *)coarray->comm));
 }
 
 void _XMP_coarray_get_ARRAY(void *coarray, void *addr) {
@@ -40,6 +37,12 @@ void _XMP_coarray_put_ARRAY(void *addr, void *coarray) {
 }
 
 void _XMP_coarray_sync(void) {
-  // FIXME fence all rma messaged
+  for (_XMP_coarray_list_t *coarray_list = _XMP_coarray_list_head; coarray_list != NULL; coarray_list = coarray_list->next) {
+    _XMP_coarray_t *coarray = coarray_list->coarray;
+    if ((coarray->nodes)->is_member) {
+      MPI_Win_fence(0, *((MPI_Win *)coarray->comm));
+    }
+  }
+
   _XMP_barrier_EXEC();
 }

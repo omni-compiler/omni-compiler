@@ -59,6 +59,15 @@ extern void _XMP_unpack_array(void *dst, void *buffer, int array_type, size_t ar
 // xmp_barrier.c
 extern void _XMP_barrier_EXEC(void);
 
+// xmp_coarray.c
+typedef struct _XMP_coarray_list_type {
+  _XMP_coarray_t *coarray;
+  struct _XMP_coarray_list_type *next;
+} _XMP_coarray_list_t;
+
+extern _XMP_coarray_list_t *_XMP_coarray_list_head;
+extern _XMP_coarray_list_t *_XMP_coarray_list_tail;
+
 // xmp_loop.c
 extern int _XMP_sched_loop_template_width_1(int ser_init, int ser_cond, int ser_step,
                                             int *par_init, int *par_cond, int *par_step,
