@@ -124,6 +124,15 @@ public class XMPtranslateGlobalPragma {
   }
 
   private void translateCoarray(Xobject coarrayPragma) throws XMPexception {
-    XMPcoarray.translateCoarray((XobjList)coarrayPragma.getArg(1), _globalDecl, false, null);
+    XobjList coarrayDecl = (XobjList)coarrayPragma.getArg(1);
+    XobjList coarrayNameList = (XobjList)coarrayDecl.getArg(0);
+    XobjList coarrayDeclCopy = (XobjList)coarrayDecl.copy();
+
+    Iterator<Xobject> iter = coarrayNameList.iterator();
+    while (iter.hasNext()) {
+      Xobject x = iter.next();
+      coarrayDeclCopy.setArg(0, x);
+      XMPcoarray.translateCoarray(coarrayDeclCopy, _globalDecl, false, null);
+    }
   }
 }

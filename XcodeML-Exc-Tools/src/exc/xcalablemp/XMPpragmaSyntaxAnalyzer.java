@@ -1136,14 +1136,8 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   }
 
   private XobjList parse_COARRAY_clause() throws XmException, XMPexception {
-    XobjString coarrayName = null;
-    if (pg_tok() == PG_IDENT) {
-      coarrayName = Xcons.String(pg_tok_buf());
-    } else {
-      error("<coarray-name> for coarray directive is expected");
-    }
+    XobjList coarrayNameList = parse_XMP_obj_name_list("coarray");
 
-    pg_get_token();
     if (pg_tok() != ':') {
       error("':' is expected before <coarray-dimensions>");
     }
@@ -1194,7 +1188,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       }
     }
 
-    return Xcons.List(coarrayName, coarrayDims);
+    return Xcons.List(coarrayNameList, coarrayDims);
   }
 
   private XobjList parse_LOCAL_ALIAS_clause() throws XMPexception {
@@ -1518,11 +1512,8 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         pg_get_token();
         continue;
       } else {
-        break;
+        return varList;
       }
     } while (true);
-
-    pg_get_token();
-    return varList;
   }
 }
