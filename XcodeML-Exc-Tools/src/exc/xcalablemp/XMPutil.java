@@ -13,11 +13,38 @@ import java.util.*;
 public class XMPutil {
   private static final String LOOP_ITER = "XCALABLEMP_LOOP_ITER_PROP";
 
+  public static XobjList castList(Xtype type, XobjList list) {
+    XobjList newList = Xcons.List();
+    Iterator<Xobject> it = list.iterator();
+    while (it.hasNext()) {
+      Xobject x = it.next();
+      newList.add(Xcons.Cast(type, x));
+    }
+
+    return newList;
+  }
+
+  public static Xobject getArrayElmtsObj(Xtype type) throws XMPexception {
+    if (type.isArray()) {
+      ArrayType arrayType = (ArrayType)type;
+
+      long arraySize = arrayType.getArraySize();
+      if ((arraySize == 0) || (arraySize == -1)) {
+        throw new XMPexception("array size should be declared statically");
+      } else {
+        return Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.LongLongConstant(0, arraySize), getArrayElmtsObj(arrayType.getRef()));
+      }
+    } else {
+      return Xcons.LongLongConstant(0, 1);
+    }
+  }
+
   public static String getXobjSymbolName(Xobject x) throws XMPexception {
     switch (x.Opcode()) {
       case VAR:
         return x.getSym();
       case ARRAY_REF:
+      case SUB_ARRAY_REF:
         return x.getArg(0).getSym();
       default:
         throw new XMPexception("cannot get the symbol name of " + x.toString());

@@ -38,10 +38,7 @@ void _XMP_coarray_rma_SCALAR(int rma_code, _XMP_coarray_t *coarray, void *offset
   }
 }
 
-void _XMP_coarray_get_ARRAY(void *coarray, void *rma_addr) {
-}
-
-void _XMP_coarray_put_ARRAY(void *rma_addr, void *coarray) {
+void _XMP_coarray_rma_ARRAY(int rma_code, _XMP_coarray_t *coarray, void *rma_addr, ...) {
 }
 
 void _XMP_coarray_sync(void) {

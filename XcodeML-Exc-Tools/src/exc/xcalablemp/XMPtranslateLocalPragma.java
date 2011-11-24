@@ -1564,20 +1564,6 @@ public class XMPtranslateLocalPragma {
     return Bcons.COMPOUND(funcCallList);
   }
 
-  public Xobject getArrayElmtsObj(Xtype type) throws XMPexception {
-    if (type.isArray()) {
-      ArrayType arrayType = (ArrayType)type;
-
-      long arraySize = arrayType.getArraySize();
-      if ((arraySize == 0) || (arraySize == -1)) {
-        throw new XMPexception("array size should be declared statically");
-      } else {
-        return Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.LongLongConstant(0, arraySize), getArrayElmtsObj(arrayType.getRef()));
-      }
-    }
-    else return Xcons.LongLongConstant(0, 1);
-  }
-
   private void translateBcast(PragmaBlock pb) throws XMPexception {
     // start translation
     XobjList bcastDecl = (XobjList)pb.getClauses();
@@ -1987,7 +1973,7 @@ public class XMPtranslateLocalPragma {
 
       arrayType = arrayType.getRef();
       for (int i = 0; i < arrayDim - 1; i++, arrayType = arrayType.getRef()) {
-        accList.add(getArrayElmtsObj(arrayType));
+        accList.add(XMPutil.getArrayElmtsObj(arrayType));
       }
       accList.add(Xcons.IntConstant(1));
     } else {
