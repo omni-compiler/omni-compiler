@@ -13,6 +13,17 @@ import java.util.*;
 public class XMPutil {
   private static final String LOOP_ITER = "XCALABLEMP_LOOP_ITER_PROP";
 
+  public static String getXobjSymbolName(Xobject x) throws XMPexception {
+    switch (x.Opcode()) {
+      case VAR:
+        return x.getSym();
+      case ARRAY_REF:
+        return x.getArg(0).getSym();
+      default:
+        throw new XMPexception("cannot get the symbol name of " + x.toString());
+    }
+  }
+
   public static XMPalignedArray findXMPalignedArray(String arrayName, XMPglobalDecl globalDecl, XMPsymbolTable localXMPsymbolTable) {
     XMPalignedArray alignedArray = null;
 

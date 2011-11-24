@@ -123,7 +123,7 @@ public class XMPrewriteExpr {
         throw new XMPexception("unknown co-array expression");
       } else {						// a:[0] = x;		RMA put		rewrite expr
         isCoarrayRef = true;
-        String coarrayName = leftExpr.getArg(0).getSym();
+        String coarrayName = XMPutil.getXobjSymbolName(leftExpr.getArg(0));
         coarray = _globalDecl.getXMPcoarray(coarrayName, localXMPsymbolTable);
         if (coarray == null) {
           throw new XMPexception("cannot find coarray '" + coarrayName + "'");
@@ -137,7 +137,7 @@ public class XMPrewriteExpr {
     } else {
       if (rightExpr.Opcode() == Xcode.CO_ARRAY_REF) {	// a = x:[1];		RMA get		rewrite expr
         isCoarrayRef = true;
-        String coarrayName = rightExpr.getArg(0).getSym();
+        String coarrayName = XMPutil.getXobjSymbolName(rightExpr.getArg(0));
         coarray = _globalDecl.getXMPcoarray(coarrayName, localXMPsymbolTable);
         if (coarray == null) {
           throw new XMPexception("cannot find coarray '" + coarrayName + "'");
