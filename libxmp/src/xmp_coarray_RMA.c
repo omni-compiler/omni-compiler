@@ -20,8 +20,8 @@ void _XMP_coarray_rma_SCALAR(int rma_code, _XMP_coarray_t *coarray, void *offset
   va_end(args);
 
   int coarray_rank = _XMP_calc_linear_rank(coarray_nodes, coarray_nodes_ref);
-
   int type_size = coarray->type_size;
+
   switch (rma_code) {
     case _XMP_N_COARRAY_GET:
       MPI_Get(rma_addr, type_size, MPI_BYTE, coarray_rank,
@@ -74,6 +74,29 @@ void _XMP_coarray_rma_ARRAY(int rma_code, _XMP_coarray_t *coarray, void *rma_add
     coarray_nodes_ref[i] = va_arg(args, int) - 1;
   }
   va_end(args);
+
+  int coarray_rank = _XMP_calc_linear_rank(coarray_nodes, coarray_nodes_ref);
+
+  MPI_Datatype *data_type = (MPI_Datatype *)coarray->data_type;
+  if ((coarray_dim == 1) && (rma_array_dim == 1) &&
+      (coarray_stride[0] == 1) && (rma_array_stride[0] == 1)) {
+    switch (rma_code) {
+      case _XMP_N_COARRAY_GET:
+        MPI_Get(rma_addr + rma_array_lower[0], rma_array_upper[0] - rma_array_lower[0] + 1, *data_type,
+                coarray_rank, coarray_lower[0], coarray_upper[0] - coarray_lower[0] + 1, *data_type,
+                *((MPI_Win *)coarray->comm));
+        break;
+      case _XMP_N_COARRAY_PUT:
+        MPI_Put(rma_addr + rma_array_lower[0], rma_array_upper[0] - rma_array_lower[0] + 1, *data_type,
+                coarray_rank, coarray_lower[0], coarray_upper[0] - coarray_lower[0] + 1, *data_type,
+                *((MPI_Win *)coarray->comm));
+        break;
+      default:
+        _XMP_fatal("unknown coarray rma expression");
+    }
+  } else {
+    _XMP_fatal("unsupported case: coarray");
+  }
 }
 
 void _XMP_coarray_sync(void) {

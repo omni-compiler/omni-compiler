@@ -50,6 +50,11 @@ void _XMP_init_coarray_STATIC(_XMP_coarray_t **coarray, void *addr,
   c->nodes = _XMP_init_nodes_struct_GLOBAL(dim, dim_size, _XMP_N_INT_TRUE);
   c->comm = NULL;
 
+  MPI_Datatype *mpi_datatype = _XMP_alloc(sizeof(MPI_Datatype));
+  MPI_Type_contiguous(type_size, MPI_BYTE, mpi_datatype);
+  MPI_Type_commit(mpi_datatype);
+  c->data_type = (void *)mpi_datatype;
+
   *coarray = c;
 }
 
@@ -110,15 +115,18 @@ void _XMP_init_coarray_comm(_XMP_coarray_t *coarray, int dim, ...) {
   _XMP_add_coarray(coarray);
 }
 
-void _XMP_finalize_coarray_comm(_XMP_coarray_t *coarray) {
+void _XMP_finalize_coarray(_XMP_coarray_t *coarray) {
   if ((coarray->nodes)->is_member) {
     MPI_Win_fence(0, *((MPI_Win *)coarray->comm));
   }
 
-  if (coarray != NULL) {
-    if (coarray->comm != NULL) {
-      MPI_Win_free(coarray->comm);
-      _XMP_free(coarray->comm);
-    }
-  }
+  _XMP_finalize_nodes(coarray->nodes);
+
+  MPI_Win_free(coarray->comm);
+  _XMP_free(coarray->comm);
+
+  MPI_Type_free(coarray->data_type);
+  _XMP_free(coarray->data_type);
+
+  _XMP_free(coarray);
 }

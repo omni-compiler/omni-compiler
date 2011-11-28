@@ -56,7 +56,7 @@ extern void _XMP_bcast_NODES_ENTIRE_NODES(void *bcast_nodes, void *addr, int cou
 extern void _XMP_init_coarray_STATIC(void **coarray, void *addr, int type, size_t type_size, int dim, ...);
 extern void _XMP_init_coarray_DYNAMIC(void **coarray, void *addr, int type, size_t type_size, int dim, ...);
 extern void _XMP_init_coarray_comm(void *coarray, int dim, ...); 
-extern void _XMP_finalize_coarray_comm(void *coarray);
+extern void _XMP_finalize_coarray(void *coarray);
 
 // xmp_coarray_RMA.c
 extern void _XMP_coarray_rma_SCALAR(int rma_code, void *coarray, void *offser_addr, void *rma_addr, ...);

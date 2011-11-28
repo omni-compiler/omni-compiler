@@ -993,4 +993,6 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
       } while (_XMP_calc_next_next_rank(src_array_nodes, src_array_nodes_ref));
     }
   } while (_XMP_calc_next_next_rank(dst_array_nodes, dst_array_nodes_ref));
+
+  MPI_Type_free(&mpi_datatype);
 }

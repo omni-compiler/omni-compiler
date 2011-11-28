@@ -150,8 +150,8 @@ public class XMPcoarray {
 
     globalDecl.addGlobalInitFuncCall("_XMP_init_coarray_comm", initCommFuncArgs);
 
-    // call finalize comm function
-    globalDecl.addGlobalFinalizeFuncCall("_XMP_finalize_coarray_comm", Xcons.List(descId.Ref()));
+    // call finalize desc function
+    globalDecl.addGlobalFinalizeFuncCall("_XMP_finalize_coarray", Xcons.List(descId.Ref()));
 
     XMPcoarray coarrayEntry = new XMPcoarray(coarrayName, elmtType, varDim, sizeVector, varAddr, varId, descId);
     globalDecl.putXMPcoarray(coarrayEntry);

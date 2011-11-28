@@ -11,6 +11,8 @@
 #include "xmp_constant.h"
 
 #define _XMP_comm_t void
+#define _XMP_coarray_comm_t void
+#define _XMP_data_type_t void
 
 // nodes descriptor
 typedef struct _XMP_nodes_inherit_info_type {
@@ -182,8 +184,6 @@ typedef struct _XMP_task_desc_type {
 } _XMP_task_desc_t;
 
 // coarray descriptor
-#define _XMP_coarray_comm_t void
-
 typedef struct _XMP_coarray_type {
   void *addr;
   int type;
@@ -191,6 +191,7 @@ typedef struct _XMP_coarray_type {
 
   _XMP_nodes_t *nodes;
   _XMP_coarray_comm_t *comm;
+  _XMP_data_type_t *data_type;
 } _XMP_coarray_t;
 
 typedef struct _XMP_gpu_array_type {
