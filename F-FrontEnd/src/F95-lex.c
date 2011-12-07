@@ -49,6 +49,8 @@ struct keyword_token {
 extern struct keyword_token dot_keywords[],keywords[];
 extern struct keyword_token end_keywords[];
 
+extern int ocl_flag;
+
 int exposed_comma,exposed_eql;
 int paren_level;
 char *bufptr;                   /* pointer running in st_buffer */
@@ -152,6 +154,7 @@ static int      read_fixed_format _ANSI_ARGS_((void));
 static int      read_free_format _ANSI_ARGS_((void));
 static int      readline_free_format _ANSI_ARGS_((void));
 static int      readline_fixed_format _ANSI_ARGS_((void));
+static int      is_OCL_sentinel _ANSI_ARGS_((char **));
 static int      is_PRAGMA_sentinel _ANSI_ARGS_((char **));
 static int	is_OMP_sentinel _ANSI_ARGS_((char **));
 static int	is_XMP_sentinel _ANSI_ARGS_((char **));
@@ -1724,6 +1727,33 @@ find_last_ampersand(char *buf,int *len)
 }
 
 static int 
+is_OCL_sentinel(char **pp)
+{
+  int i;
+  char *p;
+
+  p = *pp;
+  memset(stn_cols, ' ', 6);
+  while (isspace(*p)) p++;     /* skip space */
+  if (*p == '!'){
+    /* check sentinels */
+    for (i = 0; i < 6; i++,p++){
+      if (*p == '\0' || isspace(*p)) break;
+      if (PRAGMA_flag)
+	stn_cols[i] = *p;
+      else
+	stn_cols[i] = TOLOWER(*p);
+    }
+    stn_cols[i] = '\0';
+    if (strncasecmp(stn_cols,"!ocl", 4) == 0){
+      *pp = p;
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+static int 
 is_PRAGMA_sentinel(char **pp)
 {
     int i;
@@ -1820,7 +1850,7 @@ again:
                 if (!fixed_format_flag) {
                     /* save head of pragma line.  */
                     set_pragma_str(&stn_cols[2]);
-                    append_pragma_str(bufptr); /* append the rest of line.  */
+                    append_pragma_str(p); /* append the rest of line.  */
                 }
             }
             else goto again;  /* comment line */
@@ -1837,17 +1867,22 @@ again:
         if (is_OMP_sentinel(&p)) { 
             st_OMP_flag = TRUE;
             set_pragma_str(&stn_cols[2]); /* save head of pragma line.  */
-            append_pragma_str(bufptr); /* append the rest of line. ??msato */
+            append_pragma_str(p); /* append the rest of line. ??msato */
         } 
         else if (is_XMP_sentinel(&p)) { 
             st_XMP_flag = TRUE;
             set_pragma_str(&stn_cols[2]); /* save head of pragma line.  */
-            append_pragma_str(bufptr); /* append the rest of line. ??msato */
+            append_pragma_str(p); /* append the rest of line. ??msato */
         } 
         else if(is_PRAGMA_sentinel(&p)) {
             st_PRAGMA_flag = TRUE;
             set_pragma_str(&stn_cols[2]); /* save head of pragma line.  */
-            append_pragma_str(bufptr); /* append the rest of line.  */
+            append_pragma_str(p); /* append the rest of line.  */
+        }
+        else if(ocl_flag && is_OCL_sentinel(&p)) {
+            st_PRAGMA_flag = TRUE;
+            set_pragma_str(&stn_cols[1]); /* save head of pragma line.  */
+            append_pragma_str(p); /* append the rest of line.  */
         }
         else goto again;  /* comment line */
     }
@@ -2146,6 +2181,14 @@ top:
         append_pragma_str (line_buffer);
         goto copy_body;
       }
+      else if (ocl_flag && strncasecmp(&stn_cols[1],"ocl ",4) == 0){
+        st_PRAGMA_flag = TRUE;
+        set_pragma_str(&stn_cols[1]);
+        append_pragma_str (line_buffer);
+        if (debug_flag)
+	  printf("pragmaString(%s)\n", pragmaString);
+        goto copy_body;
+      }
 /*       else if (stn_cols[1] == '$' && stn_cols[2] != '$'){ */
 /*         st_PRAGMA_flag = TRUE; */
 /*         set_pragma_str(&stn_cols[2]); */
@@ -2372,10 +2415,15 @@ next_line0:
         } else warning("bad # line");
         goto next_line0;
         
+    case '!':
+        if (PRAGMA_flag) {
+	  ungetc ('c',source_file);
+	  goto read_num_column;
+	}
+
     case 'c':
     case 'C':
     case '*':
-    case '!':
         if (PRAGMA_flag) {
             c = getc(source_file);
             if (c == '$') {
@@ -2455,6 +2503,11 @@ next_line0:
 	if (stn_cols[0] == 'c') {
 	  if (strncasecmp(&stn_cols[1], "$omp", 4) == 0) {
 	    /*  OpenMP sentinel no doubt */
+	    goto KeepOnGoin;
+	  }
+	  if (ocl_flag && strncasecmp(&stn_cols[1], "ocl ", 4) == 0) {
+	    /*  OCL sentinel no doubt */
+	    check_cont = FALSE;
 	    goto KeepOnGoin;
 	  }
 	  if (stn_cols[1] == '$') {
