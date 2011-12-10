@@ -12,6 +12,7 @@
 
 /* lexical analyzer, enable open mp.  */
 int OMP_flag = FALSE;
+int XMP_flag = FALSE;
 
 /* lexical analyzer */
 /* enable to parse  for progma.  */
@@ -792,7 +793,7 @@ read_identifier()
 	bufptr++;
     /* need to change this for compile phase in Front?  */
     if(t != USER_DEFINED_OP) {
-        enum expr_code code;
+        enum expr_code code = ERROR_NODE;
         switch (t) {
         case '=' :    code = F95_ASSIGNOP; break;
         case '.' :    code = F95_DOTOP; break;
@@ -3458,13 +3459,6 @@ struct keyword_token XMP_keywords[ ] =
 
     { 0, 0 }
 };
-
-/* dummy */
-void init_for_XMP_pragma() { } 
-void check_for_XMP_pragma(expr x) {  } 
-void compile_XMP_directive(expr x){  }
-int XMP_reduction_op(expr v){ return 0; }
-
 
 /* EOF */
 
