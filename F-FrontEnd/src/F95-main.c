@@ -121,6 +121,7 @@ usage()
         "-o [outputfile]           specify output file path.",
         "-I [dirpath]              specify include directory path.",
         "-fopenmp                  enable openmp translation.",
+        "-fxmp                     enable XcalableMP translation.",
         "-force-fixed-format       read file as fixed format.",
         "-force-free-format        read file as free format.",
         "-fixed-line-length-132    set max columns to 132 in a line in fixed format.",
@@ -221,6 +222,8 @@ char *argv[];
             }
         } else if (strcmp(argv[0],"-fopenmp") == 0){
             OMP_flag = TRUE;   /* enable openmp */
+        } else if (strcmp(argv[0],"-fxmp") == 0){
+	    XMP_flag = TRUE;   /* enable XcalableMP */
         } else if (strcmp(argv[0], "-fixed-line-length-132") == 0) {
             extern int fixed_line_len;
             fixed_line_len = 132;

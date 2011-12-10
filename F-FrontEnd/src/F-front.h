@@ -150,6 +150,7 @@ enum control_type {
     CTL_CASE,
     CTL_STRUCT,
     CTL_OMP,
+    CTL_XMP,
 };
 
 #define CONTROL_TYPE_NAMES {\
@@ -163,6 +164,7 @@ enum control_type {
     "CTL_CASE",\
     "CTL_STRUCT",\
     "CTL_OMP",\
+    "CTL_XMP",\
 }
 
 /* control */
@@ -199,6 +201,10 @@ typedef struct control
 #define CTL_OMP_ARG_DIR(l) (EXPR_INT(EXPR_ARG1((l)->v2)))
 #define CTL_OMP_ARG_PCLAUSE(l) (EXPR_ARG2((l)->v2))
 #define CTL_OMP_ARG_DCLAUSE(l) (EXPR_ARG3((l)->v2))
+
+#define CTL_XMP_ARG(l)	((l)->v2)
+#define CTL_XMP_ARG_DIR(l) (EXPR_INT(EXPR_ARG1((l)->v2)))
+#define CTL_XMP_ARG_CLAUSE(l) (EXPR_ARG2((l)->v2))
 
 /* control stack and it pointer */
 #define MAX_CTL 50
@@ -334,9 +340,9 @@ extern expv expv_constant_1,expv_constant_0,expv_constant_m1;
 extern expv expv_float_0;
 
 extern int OMP_flag;
+extern int XMP_flag;
 
 #define EMPTY_LIST list0(LIST)
-
 
 /*
  * I/O information specifiers

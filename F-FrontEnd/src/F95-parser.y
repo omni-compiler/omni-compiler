@@ -265,10 +265,6 @@
 %token XMPKW_WITH
 %token XMPKW_FROM
 
-%token XMPKW_BLOCK
-%token XMPKW_CYCLIC
-%token XMPKW_GBLOCK
-
 %token XMPKW_ASYNC
 %token XMPKW_NOWAIT
 %token XMPKW_MASTER
@@ -305,7 +301,7 @@ static void append_pragma_str _ANSI_ARGS_((char *p));
 
 #define GEN_NODE(TYPE, VALUE) make_enode((TYPE), ((void *)((_omAddrInt_t)(VALUE))))
 #define OMP_LIST(op, args) list2(LIST, GEN_NODE(INT_CONSTANT, op), args)
-#define XMP_LIST(op, args) list2(LIST, GEN_NODE(INT_CONSTANT, op), args)
+#define XMP_LIST(op, args) list2(XMP_PRAGMA, GEN_NODE(INT_CONSTANT, op), args)
 
 /* statement name */
 expr st_name;
@@ -1880,24 +1876,20 @@ xmp_subscript:
 	  ;
 
 xmp_dist_fmt_list:
-           {need_keyword = TRUE;} xmp_dist_fmt
-	  { $$ = list1(LIST,$2); }
-	  | xmp_dist_fmt_list ',' {need_keyword = TRUE;} xmp_dist_fmt
-	  { $$ = list_put_last($1,$4); }
+            xmp_dist_fmt
+	  { $$ = list1(LIST,$1); }
+	  | xmp_dist_fmt_list ',' xmp_dist_fmt
+	  { $$ = list_put_last($1,$3); }
 	  ;
 
 xmp_dist_fmt:
 	   '*' { $$ = NULL; }
-	  | XMPKW_BLOCK
-	    { $$ = XMP_LIST(XMP_DIST_BLOCK,NULL); }
-	  | XMPKW_CYCLIC
-	    { $$ = XMP_LIST(XMP_DIST_CYCLIC,NULL); }
-	  | XMPKW_CYCLIC '(' expr ')'
-	    { $$ = XMP_LIST(XMP_DIST_CYCLIC,$3); }
-	  | XMPKW_GBLOCK '(' '*' ')'
-	    { $$ = XMP_LIST(XMP_DIST_GBLOCK,NULL); }
-	  | XMPKW_GBLOCK '(' expr ')'
-	    { $$ = XMP_LIST(XMP_DIST_GBLOCK,$3); }
+	  | IDENTIFIER
+	    { $$ = list2(LIST,$1,NULL); }
+	  | IDENTIFIER '(' expr ')'
+	    { $$ = list2(LIST,$1,$3); }
+	  | IDENTIFIER '(' '*' ')'
+	    { $$ = list2(LIST,$1,NULL); }
 	  ;
 
 xmp_align_subscript_list:

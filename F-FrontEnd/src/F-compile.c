@@ -3853,7 +3853,7 @@ compile_OPTIONAL_statement(expr x)
 {
     list lp;
     expr ident;
-    ID id;
+    ID id = NULL;
 
     assert(EXPR_CODE(x) == F95_OPTIONAL_STATEMENT);
 
