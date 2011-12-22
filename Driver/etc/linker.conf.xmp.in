@@ -12,7 +12,9 @@ for i in ${OM_OPTIONS}; do
     case ${i} in
         -enable-threads)
             INPFILES="${INPFILES} ${OMNI_HOME}/lib/omp${OM_LANGID}_main.o"
-            LIBS="${LIBS} -l${LIB_OMPC} -l${LIB_THREAD} -ltlog";;
+            LIBS="${LIBS} -lxmp_threads -l${LIB_OMPC} -l${LIB_THREAD} -ltlog";;
+        -enable-gpu)
+            LIBS="${LIBS} -L${GPGPU_PREFIX}/lib64 -lxmp_gpu -lcudart";;
         -prof-scalasca)
             hasScalasca=1;;
         -prof-tlog)

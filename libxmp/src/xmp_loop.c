@@ -92,8 +92,8 @@ int _XMP_sched_loop_template_width_1(int ser_init, int ser_cond, int ser_step,
       }
     }
     return _XMP_N_INT_FALSE;
-calc_par_cond:
 
+calc_par_cond:
     // calc par_cond
     for (int i = template_upper; i >= template_lower; i -= template_stride) {
       if (i > ser_cond) {
@@ -104,8 +104,8 @@ calc_par_cond:
       }
     }
     return _XMP_N_INT_FALSE;
-calc_par_step:
 
+calc_par_step:
     // calc par_step
     *par_step = _XMP_lcm(ser_step, template_stride);
   }
