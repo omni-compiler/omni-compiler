@@ -10,7 +10,7 @@
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
-static _XMP_template_t *_XMP_create_template_desc(int dim, _Bool is_fixed) {
+_XMP_template_t *_XMP_create_template_desc(int dim, _Bool is_fixed) {
   // alloc descriptor
   _XMP_template_t *t = _XMP_alloc(sizeof(_XMP_template_t) +
                                   sizeof(_XMP_template_info_t) * (dim - 1));
@@ -30,7 +30,7 @@ static _XMP_template_t *_XMP_create_template_desc(int dim, _Bool is_fixed) {
   return t;
 }
 
-static void _XMP_calc_template_size(_XMP_template_t *t) {
+void _XMP_calc_template_size(_XMP_template_t *t) {
   int dim;
   if (t->is_fixed) {
     dim = t->dim;

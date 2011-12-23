@@ -405,11 +405,11 @@ void _XMP_init_nodes_STATIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...) {
     if (dim_size_temp <= 0) {
       _XMP_fatal("<nodes-size> should be less or equal to zero");
     }
-
     dim_size[i] = dim_size_temp;
   }
 
-  _XMP_nodes_t *n = _XMP_init_nodes_struct_GLOBAL(dim, dim_size, _XMP_N_INT_TRUE);
+  _XMP_nodes_t *n = 
+    _XMP_init_nodes_struct_GLOBAL(dim, dim_size, _XMP_N_INT_TRUE);
   *nodes = n;
 
   for (int i = 0; i < dim; i++) {
@@ -433,7 +433,8 @@ void _XMP_init_nodes_DYNAMIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...) {
     dim_size[i] = dim_size_temp;
   }
 
-  _XMP_nodes_t *n = _XMP_init_nodes_struct_GLOBAL(dim, dim_size, _XMP_N_INT_FALSE);
+  _XMP_nodes_t *n = 
+    _XMP_init_nodes_struct_GLOBAL(dim, dim_size, _XMP_N_INT_FALSE);
   *nodes = n;
 
   int *last_dim_size_p = va_arg(args, int *);
@@ -459,7 +460,8 @@ void _XMP_init_nodes_STATIC_EXEC(_XMP_nodes_t **nodes, int dim, ...) {
     dim_size[i] = dim_size_temp;
   }
 
-  _XMP_nodes_t *n = _XMP_init_nodes_struct_EXEC(dim, dim_size, _XMP_N_INT_TRUE);
+  _XMP_nodes_t *n = 
+    _XMP_init_nodes_struct_EXEC(dim, dim_size, _XMP_N_INT_TRUE);
   *nodes = n;
 
   for (int i = 0; i < dim; i++) {
@@ -496,7 +498,8 @@ void _XMP_init_nodes_DYNAMIC_EXEC(_XMP_nodes_t **nodes, int dim, ...) {
 }
 
 void _XMP_init_nodes_STATIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
-                                         int ref_lower, int ref_upper, int ref_stride, ...) {
+                                         int ref_lower, int ref_upper, 
+					 int ref_stride, ...) {
   int dim_size[dim];
 
   va_list args;
@@ -510,7 +513,9 @@ void _XMP_init_nodes_STATIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
     dim_size[i] = dim_size_temp;
   }
 
-  _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NUMBER(dim, ref_lower, ref_upper, ref_stride, dim_size, _XMP_N_INT_TRUE);
+  _XMP_nodes_t *n = 
+    _XMP_init_nodes_struct_NODES_NUMBER(dim, ref_lower, ref_upper, 
+					ref_stride, dim_size, _XMP_N_INT_TRUE);
   *nodes = n;
 
   for (int i = 0; i < dim; i++) {
@@ -521,7 +526,8 @@ void _XMP_init_nodes_STATIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
 }
 
 void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
-                                          int ref_lower, int ref_upper, int ref_stride, ...) {
+                                          int ref_lower, int ref_upper, 
+					  int ref_stride, ...) {
   int dim_size[dim - 1];
 
   va_list args;
@@ -535,7 +541,9 @@ void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
     dim_size[i] = dim_size_temp;
   }
 
-  _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NUMBER(dim, ref_lower, ref_upper, ref_stride, dim_size, _XMP_N_INT_FALSE);
+  _XMP_nodes_t *n = 
+    _XMP_init_nodes_struct_NODES_NUMBER(dim, ref_lower, ref_upper, 
+					ref_stride, dim_size, _XMP_N_INT_FALSE);
   *nodes = n;
 
   int *last_dim_size_p = va_arg(args, int *);
@@ -577,8 +585,10 @@ void _XMP_init_nodes_STATIC_NODES_NAMED(_XMP_nodes_t **nodes, int dim,
     }
   }
 
-  _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NAMED(dim, ref_nodes, shrink, ref_lower, ref_upper, ref_stride,
-                                                       dim_size, _XMP_N_INT_TRUE);
+  _XMP_nodes_t *n = 
+    _XMP_init_nodes_struct_NODES_NAMED(dim, ref_nodes, shrink, 
+				       ref_lower, ref_upper, ref_stride,
+				       dim_size, _XMP_N_INT_TRUE);
   *nodes = n;
 
   for (int i = 0; i < dim; i++) {
@@ -765,7 +775,8 @@ int _XMP_calc_linear_rank(_XMP_nodes_t *n, int *rank_array) {
   return acc_rank;
 }
 
-int _XMP_calc_linear_rank_on_target_nodes(_XMP_nodes_t *n, int *rank_array, _XMP_nodes_t *target_nodes) {
+int _XMP_calc_linear_rank_on_target_nodes(_XMP_nodes_t *n, int *rank_array, 
+					  _XMP_nodes_t *target_nodes) {
   if (_XMP_compare_nodes(n, target_nodes)) {
     return _XMP_calc_linear_rank(n, rank_array);
   } else {
