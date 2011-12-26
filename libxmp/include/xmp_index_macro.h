@@ -57,7 +57,7 @@
 ((_i1) * (_acc1))
 
 #define _XMP_M_GET_INDEX_2_N(_i1, _i2, _acc1, _acc2) \
-((_i1) * (_acc1) + (_i1) * (_acc2))
+((_i1) * (_acc1) + (_i2) * (_acc2))
 
 #define _XMP_M_GET_INDEX_3_N(_i1, _i2, _i3, _acc1, _acc2, _acc3) \
 ((_i1) * (_acc1) + (_i2) * (_acc2) + (_i3) * (_acc3))
