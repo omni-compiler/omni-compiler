@@ -111,6 +111,8 @@ void check_for_OMP_pragma(expr x);
 void init_for_XMP_pragma();
 void check_for_XMP_pragma(expr x);
 
+void set_parent_implicit_decls(void);
+
 void
 initialize_compile()
 {
@@ -1095,6 +1097,8 @@ begin_procedure()
     CURRENT_STATE = INSIDE;
     CURRENT_PROC_CLASS = CL_MAIN;       /* default */
     current_proc_state = P_DEFAULT;
+
+    if (unit_ctl_level > 0) set_parent_implicit_decls();
 }
 
 /* now this is not called.  */
@@ -2068,7 +2072,7 @@ end_procedure()
                 implicit_declaration(id);
                 ep = declare_external_proc_id(ID_SYM(id), ID_TYPE(id), FALSE);
                 PROC_EXT_ID(id) = ep;
-                EXT_IS_DEFINED(PROC_EXT_ID(id)) = TRUE;
+		EXT_IS_DEFINED(PROC_EXT_ID(id)) = TRUE;
             }
 #endif
         }
@@ -3853,7 +3857,7 @@ compile_OPTIONAL_statement(expr x)
 {
     list lp;
     expr ident;
-    ID id = NULL;
+    ID id;
 
     assert(EXPR_CODE(x) == F95_OPTIONAL_STATEMENT);
 
@@ -4041,23 +4045,24 @@ cleanup_unit_ctl(UNIT_CTL uc)
     UNIT_CTL_IMPLICIT_DECLS(uc) = list0(LIST);
     UNIT_CTL_EQUIV_DECLS(uc) = list0(LIST);
     UNIT_CTL_USE_DECLS(uc) = list0(LIST);
+
     /* UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(uc) is not cleared */
-    if (unit_ctl_level == 0) { /* for main */
-        if (doImplicitUndef == TRUE) {
-            set_implicit_type_uc(uc, NULL, 'a', 'z');
-            list_put_last(UNIT_CTL_IMPLICIT_DECLS(uc), create_implicit_decl_expv(NULL, "a", "z"));
-        } else {
-            /* default implicit type */
-            /* a - z : initialize all to real. */
-            set_implicit_type_uc(uc, BASIC_TYPE_DESC(defaultSingleRealType), 'a', 'z');
-            list_put_last(UNIT_CTL_IMPLICIT_DECLS(uc),
-                          create_implicit_decl_expv(BASIC_TYPE_DESC(defaultSingleRealType), "a", "z"));
-            /* i - n : initialize to int. */
-            set_implicit_type_uc(uc, BASIC_TYPE_DESC(TYPE_INT), 'i', 'n');
-            list_put_last(UNIT_CTL_IMPLICIT_DECLS(uc),
-                          create_implicit_decl_expv(BASIC_TYPE_DESC(TYPE_INT), "i", "n"));
-        }
-    }
+    //if (unit_ctl_level == 0) { /* for main */
+      if (doImplicitUndef == TRUE) {
+	set_implicit_type_uc(uc, NULL, 'a', 'z');
+	list_put_last(UNIT_CTL_IMPLICIT_DECLS(uc), create_implicit_decl_expv(NULL, "a", "z"));
+      } else {
+	/* default implicit type */
+	/* a - z : initialize all to real. */
+	set_implicit_type_uc(uc, BASIC_TYPE_DESC(defaultSingleRealType), 'a', 'z');
+	list_put_last(UNIT_CTL_IMPLICIT_DECLS(uc),
+		      create_implicit_decl_expv(BASIC_TYPE_DESC(defaultSingleRealType), "a", "z"));
+	/* i - n : initialize to int. */
+	set_implicit_type_uc(uc, BASIC_TYPE_DESC(TYPE_INT), 'i', 'n');
+	list_put_last(UNIT_CTL_IMPLICIT_DECLS(uc),
+		      create_implicit_decl_expv(BASIC_TYPE_DESC(TYPE_INT), "i", "n"));
+      }
+      //    }
     set_implicit_storage_uc(uc, default_stg, 'a', 'z');        /* set class */
 }
 
