@@ -373,7 +373,6 @@ typedef enum {
     "long double complex",\
 }
 
-
 /**
  * \brief
  * number value kinds
@@ -642,7 +641,6 @@ typedef CExprCommon *cec_t;
 #define EXPR_ISCOMPLETED(x)         EXPR_C(x)->e_isCompleted
 #define EXPR_ISDELETING(x)          EXPR_C(x)->e_isDeleting
 
-
 /**
  * \brief
  * CExpr for general list
@@ -655,6 +653,10 @@ typedef struct CExprOfList {
     CCOL_DList          e_dlist;
     //! EC_INITIALIZERS : member designator's symbol
     struct CExprOfSymbol *e_symbol;
+
+    //! annoted aux info (extended for pragma, ...)
+    int e_aux;
+    struct CExpr *e_aux_info;
 
 } CExprOfList;
 
@@ -877,6 +879,9 @@ typedef struct CExprOfDirective {
     char                *e_direcName;
     //! directive arguments
     char                *e_direcArgs;
+
+  // for OpenMP, e_direcType=DT_PRAGMA, e_direcName="omp"
+  CExprOfList *e_direcInfo;
 
 } CExprOfDirective;
 

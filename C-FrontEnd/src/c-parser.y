@@ -9,6 +9,7 @@
 #include "c-expr.h"
 #include "c-lexyacc.h"
 #include "c-option.h"
+#include "c-pragma.h"
 
 #define YYDEBUG 1
 
@@ -37,8 +38,11 @@ PRIVATE_STATIC const CExprCodeEnum s_CAssignEnumToExprCodeEnum[]       = CAssign
 %token FOR          SWITCH      CASE            DEFAULT
 %token BREAK        CONTINUE    RETURN          GOTO
 %token SIZEOF
-%token PRAGMA      PRAGMA_ARG   DIRECTIVE       PRAGMA_PACK
 %token ARITH_LE     ARITH_GE    ARITH_EQ        ARITH_NE
+
+ /* PRAGMA_ARG???*/
+%token PRAGMA      PRAGMA_ARG   DIRECTIVE       PRAGMA_PACK
+%token PRAGMA_EXEC PRAGMA_PREFIX
 %token <expr> XMP_COARRAY_DECLARATION   XMP_CRITICAL    XMP_FUNC_CALL
 
 /* gcc */
@@ -73,6 +77,7 @@ PRIVATE_STATIC const CExprCodeEnum s_CAssignEnumToExprCodeEnum[]       = CAssign
 %type <expr> IDENTIFIER CONSTANT STRING TYPENAME SCSPEC TYPEQUAL TYPESPEC
 %type <expr> STATIC STRUCT UNION ENUM LABEL DEFAULT
 %type <expr> DIRECTIVE PRAGMA_ARG PRAGMA_PACK
+%type <expr> PRAGMA_EXEC PRAGMA_PREFIX
 
 %type <expr> ident idents string
 %type <expr> typename label_idents
@@ -162,6 +167,8 @@ ext_def:
             { STAT_TRACE(("{ext_def#4}")); $$ = exprSetExtension($2); }
     | directive
             { STAT_TRACE(("{ext_def#5}")); $$ = $1; }
+    | PRAGMA_EXEC
+            { STAT_TRACE(("{ext_def#6}")); $$ = $1; }
     ;
 
 data_def:
@@ -1643,6 +1650,10 @@ stmt_nocomp:
 stmt:
       loc stmt_1
         { $$ = $2; }
+    | loc PRAGMA_PREFIX stmt_1
+        { $$ = exprList1(EC_COMP_STMT,$3);((CExprOfList *)$$)->e_aux_info=$2;}
+    | loc PRAGMA_EXEC
+        { $$ = exprList(EC_COMP_STMT);((CExprOfList *)$$)->e_aux_info=$2;}
     ;
 
 stmt_1:
@@ -1958,14 +1969,11 @@ asm_string:
     ;
 
 /* directive */
-
 directive:
       DIRECTIVE
             { STAT_TRACE(("{directive#1}")); $$ = $1; }
     | PRAGMA_PACK
             { STAT_TRACE(("{directive#2}")); $$ = $1; }
-    | XMP_COARRAY_DECLARATION
-            { STAT_TRACE(("{directive#3}")); $$ = $1; }
     ;
 
 %%

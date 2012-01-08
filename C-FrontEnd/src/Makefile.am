@@ -32,7 +32,7 @@ MKDIR_P = @MKDIR_P@
 C_Front_SOURCES=\
 	c-parser.y c-lexer.l c-expr.c c-token.c c-exprcode.c \
 	c-dump.c c-comp.c c-reduce.c c-xcodeml.c c-const.c \
-    c-gcctype.c c-option.c c-pragma.c c-type.c c-convert.c \
+    c-gcctype.c c-option.c c-pragma.c c-omp-pragma.c c-type.c c-convert.c \
 	ccol-list.c ccol-hash.c c-main.c
 
 ccol.h: ccol-list.h ccol-hash.h
@@ -47,6 +47,7 @@ c-lexer.l: c-cmn.h c-lexyacc.h c-expr.h c-token.h c-parser.h
 c-option.c: c-option.h
 c-gcctype.c: c-gcctype.h
 c-pragma.c: c-pragma.h
+c-omp-pragma.c: c-pragma.h
 c-convert.c: c-expr.h
 c-xcodeml.c: c-expr.h
 c-const.c: c-expr.h c-const.h
@@ -72,7 +73,7 @@ c-lexer.c : c-lexer.l
 debug: C_debugfront
 
 C_debugfront: $(C_Front_OBJECTS) c-dbgmain.o
-	$(LINK) $(C_Front_LDADD) $(LIBS) c-parser.o c-lexer.o c-expr.o c-token.o c-exprcode.o c-dump.o c-comp.o c-reduce.o c-xcodeml.o c-const.o c-gcctype.o c-option.o c-pragma.o c-type.o c-convert.o ccol-list.o ccol-hash.o c-dbgmain.o
+	$(LINK) $(C_Front_LDADD) $(LIBS) c-parser.o c-lexer.o c-expr.o c-token.o c-exprcode.o c-dump.o c-comp.o c-reduce.o c-xcodeml.o c-const.o c-gcctype.o c-option.o c-pragma.o c-omp-pragma.o c-type.o c-convert.o ccol-list.o ccol-hash.o c-dbgmain.o
 
 clean-local:
 	rm -f C_debugfront tags *.o *.log *.output c-lexer.c

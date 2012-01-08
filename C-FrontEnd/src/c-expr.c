@@ -1681,9 +1681,10 @@ CExprOfList*
 allocExprOfList(CExprCodeEnum exprCode)
 {
     EXPR_ALLOC(CExprOfList, expr, exprCode);
+    expr->e_aux = 0; // clear
+    expr->e_aux_info = NULL;
     return expr;
 }
-
 
 /**
  * \brief

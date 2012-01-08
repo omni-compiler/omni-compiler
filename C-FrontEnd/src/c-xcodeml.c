@@ -13,6 +13,7 @@
 #include <wchar.h>
 #include "c-comp.h"
 #include "c-option.h"
+#include "c-omp.h"
 
 #define MAX_TYPEID_SIZE     256
 
@@ -94,6 +95,8 @@ PRIVATE_STATIC void outx_GCC_ASM_EXPR(FILE *fp, int indent, CExpr *expr);
 PRIVATE_STATIC void outx_GCC_ASM_EXPR_asAsmDef(FILE *fp, int indent, CExpr *expr);
 PRIVATE_STATIC void outx_GCC_ASM_OPE(FILE *fp, int indent, CExpr *expr);
 
+PRIVATE_STATIC void out_PRAGMA_COMP_STMT(FILE *fp, int indent, CExpr* expr);
+PRIVATE_STATIC void outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause);
 
 PRIVATE_STATIC void
 xstrcat(char **p, const char *s)
@@ -521,7 +524,11 @@ outxContext(FILE *fp, int indent, CExpr *expr)
     // Statements
     #define OUTX_SIMPLE_STMT(tag) outxChildrenForStmt(fp, indent, expr, tag);
     case EC_COMP_STMT:
-        outx_COMP_STMT(fp, indent, expr); break;
+	if(((CExprOfList *)expr)->e_aux_info != NULL){
+	    out_PRAGMA_COMP_STMT(fp, indent, expr);
+	    break;
+	}
+	outx_COMP_STMT(fp, indent, expr); break;
     case EC_IF_STMT:
         outx_IF_STMT(fp, indent, expr); break;
     case EC_WHILE_STMT:
@@ -1954,7 +1961,6 @@ outx_FUNC_DEF(FILE *fp, int indent, CExpr *funcDef)
     outxTagClose(fp, indent, funcDefTag);
 }
 
-
 PRIVATE_STATIC void
 outx_DIRECTIVE(FILE *fp, int indent, CExprOfDirective *directive)
 {
@@ -1966,6 +1972,9 @@ outx_DIRECTIVE(FILE *fp, int indent, CExprOfDirective *directive)
             XATTR_NORETURN, NULL);
         outxEscapedStr(fp, directive->e_direcArgs);
         outxTagCloseNoIndent(fp, pragmaTag);
+    } 
+    else if(strcmp(directive->e_direcName, "omp") == 0){
+	abort(); /* not yet */
     } else {
         outxTagForStmt(fp, indent, (CExpr*)directive, textTag,
             XATTR_NORETURN, NULL);
@@ -1976,6 +1985,52 @@ outx_DIRECTIVE(FILE *fp, int indent, CExprOfDirective *directive)
     }
 }
 
+PRIVATE_STATIC void
+out_PRAGMA_COMP_STMT(FILE *fp, int indent, CExpr* expr)
+{
+    CExprOfList *body = (CExprOfList *)expr;
+    const char *ompPragmaTag = "OMPPragma";
+
+    /* only for OpenMP */
+    CExprOfList *clauseList = (CExprOfList *)body->e_aux_info;
+    int indent1 = indent + 1;
+    CExprOfList *namelist;
+    CCOL_DListNode *ite;
+    outxTagForStmt(fp, indent,(CExpr*)clauseList, ompPragmaTag,0, NULL);
+    outxPrint(fp,indent1,"<string>%s</string>\n",
+	      ompDirectiveName(clauseList->e_aux));
+    namelist = (CExprOfList *)exprListHeadData((CExpr *)clauseList);
+    if(namelist != NULL){
+	EXPR_FOREACH(ite, namelist){
+	    CExpr *node = EXPR_L_DATA(ite);
+	    outx_OMP_Clause(fp,indent1,(CExprOfList *)node);
+	}
+    }
+    if(EXPR_L_SIZE(expr) != 0) outxChildren(fp,indent1,expr);
+    outxTagClose(fp, indent,ompPragmaTag);
+}
+
+
+PRIVATE_STATIC void
+outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
+{
+  int indent1 = indent+1;
+  CCOL_DListNode *ite;
+  outxPrint(fp,indent,"<list>\n");
+  outxPrint(fp,indent1,"<string>%s</string>\n",
+	    ompClauseName(clause->e_aux));
+  if(EXPR_L_SIZE(clause) != 0){
+    outxPrint(fp,indent1,"<list>\n");
+    EXPR_FOREACH(ite, clause) {
+      CExpr *node = EXPR_L_DATA(ite);
+      // outx_IDENT(fp,indent1+1,(CExprOfSymbol *)node);
+      outxPrint(fp,indent1+1,"<Var>%s</Var>\n",
+	       ((CExprOfSymbol *)node)->e_symName);
+    }
+    outxPrint(fp,indent1,"</list>\n");
+  }
+  outxPrint(fp,indent,"</list>\n");
+}
 
 PRIVATE_STATIC void
 outx_INIT_DECL(FILE *fp, int indent, CExpr *initDecl)

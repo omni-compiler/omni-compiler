@@ -9,26 +9,30 @@
  */
 
 #include <sys/param.h>
+#include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 #include <limits.h>
+#include <stdlib.h>
 
 #include "c-pragma.h"
 #include "c-parser.h"
 #include "c-const.h"
 #include "c-option.h"
 
+#include "c-omp.h"
 
-//! pointer to parsing string
-PRIVATE_STATIC char    *pg_cp;
+//! Pointer to parsing string
+char    *pg_cp;
 //! current token
-PRIVATE_STATIC char    pg_tok;
+char    pg_tok;
 //! token buffer
-PRIVATE_STATIC char    pg_tok_buf[MAX_NAME_SIZ];
+char    pg_tok_buf[MAX_NAME_SIZ];
+
 //! has error at parsing
-PRIVATE_STATIC int     pg_hasError;
+int     pg_hasError;
 //! token value
-PRIVATE_STATIC CExpr*  pg_tok_val = NULL;
+CExpr*  pg_tok_val = NULL;
 
 PRIVATE_STATIC CExpr* pg_parse_number(void);
 PRIVATE_STATIC CExpr* pg_parse_string_constant(void);
@@ -38,7 +42,6 @@ PRIVATE_STATIC CExpr* pg_term_expr(int pre, int endToken);
 PRIVATE_STATIC CExpr* pg_factor_expr(int endToken);
 PRIVATE_STATIC CExpr* pg_unary_expr(int endToken);
 PRIVATE_STATIC CExpr* pg_primary_expr(int endToken);
-
 
 
 /**
@@ -118,7 +121,7 @@ lexSkipSpaceP(char *p)
  * @return
  *      skipped char pointer
  */
-PRIVATE_STATIC char*
+char*
 lexSkipWord(char *p)
 {
     while(is_token_separator(*p) == 0) ++p;
@@ -136,7 +139,7 @@ lexSkipWord(char *p)
  * @return
  *      skipped char pointer
  */
-PRIVATE_STATIC char*
+char*
 lexSkipWordP(char *p)
 {
     while(is_token_separatorP(*p) == 0) ++p;
@@ -216,6 +219,8 @@ getPragmaKind(char *p)
 
     if(equals_tokenP("pack", p))
         return PK_PACK;
+    else if(equals_tokenP("omp", p)) /* openmp */
+        return PK_OMP;
     else
         return PK_NOT_PARSABLE;
 }
@@ -261,16 +266,13 @@ pg_get_token()
     while(isspace((int)*pg_cp)) pg_cp++;
 
     if(*pg_cp == '_' || isalpha((int)*pg_cp)){
-        int len = 1;
         *cp++ = *pg_cp++;
         while(isalnum((int)*pg_cp) || *pg_cp == '_') {
             *cp++= *pg_cp++;
-            ++len;
         }
-        char *buf = (char*)malloc(len + 1);
-        buf[len] = 0;
-        memcpy(buf, pg_tok_buf, len);
-        pg_tok_val = (CExpr*)allocExprOfSymbol(EC_IDENT, buf);
+	*cp = '\0';
+        pg_tok_val = (CExpr*)
+	    allocExprOfSymbol(EC_IDENT,ccol_strdup(pg_tok_buf, MAX_NAME_SIZ));
         pg_tok = PG_IDENT;        /* identifier */
         return;
     }
@@ -1144,6 +1146,9 @@ lexParsePragma(char *p, int *token)
     if(pk == PK_PACK) {
         *token = PRAGMA_PACK;
         return lexParsePragmaPack(p);
+    }
+    else if(pk == PK_OMP) {
+      return lexParsePragmaOMP(p,token);
     }
     else if(pk == PK_NOT_PARSABLE) {
         *token = DIRECTIVE;

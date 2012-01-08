@@ -2077,6 +2077,7 @@ compile1(CExpr *expr, CExpr *parent)
     case EC_PRAGMA_PACK:
         expr = compile_pragmaPack(expr, parent);
         goto end;
+
     default:
         if(isScopedStmt(expr)) {
             if(parent && EXPR_CODE(parent) == EC_FUNC_DEF) {
