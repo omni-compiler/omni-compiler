@@ -86,13 +86,16 @@ typedef enum {
     INTR_ABS,
     INTR_AIMAG,
     INTR_AINT,
+    INTR_ANINT,
     INTR_CMPLX,
     INTR_DCMPLX,
     INTR_CONJG,
     INTR_DCONJG,
     INTR_DABS,
     INTR_DBLE,
+    INTR_DIM,
     INTR_DIMAG,
+    INTR_DPROD,
     INTR_INT,
     INTR_MAX,
     INTR_MIN,
@@ -103,19 +106,28 @@ typedef enum {
 
     /* Mathematical functions. */
     INTR_ACOS,
+    INTR_ASIN,
     INTR_ATAN,
+    INTR_ATAN2,
     INTR_COS,
+    INTR_COSH,
     INTR_EXP,
     INTR_LOG,
     INTR_LOG10,
     INTR_SIN,
     INTR_SINH,
     INTR_SQRT,
+    INTR_TAN,
+    INTR_TANH,
 
     /* Character functions. */
     INTR_CHAR,
     INTR_ICHAR,
     INTR_INDEX,
+    INTR_LGE,
+    INTR_LGT,
+    INTR_LLE,
+    INTR_LLT,
 
     /* Character inquiry functions. */
     INTR_LEN,
@@ -123,12 +135,15 @@ typedef enum {
     /* F90 numeric functions. */
     INTR_CEILING,
     INTR_FLOOR,
+    INTR_MODULO,
 
     /* F90 character functions. */
     INTR_ACHAR,
     INTR_ADJUSTL,
+    INTR_ADJUSTR,
     INTR_IACHAR,
     INTR_LEN_TRIM,
+    INTR_REPEAT,
     INTR_SCAN,
     INTR_TRIM,
     INTR_VERIFY,
@@ -138,28 +153,44 @@ typedef enum {
     INTR_SELECTED_INT_KIND,
     INTR_SELECTED_REAL_KIND,
 
+    /* 7. Logical function */
+
+    INTR_LOGICAL,
+
     /* F90 numeric inquiry functions. */
     INTR_DIGITS,
     INTR_EPSILON,
     INTR_HUGE,
     INTR_MAXEXPONENT,
+    INTR_MINEXPONENT,
+    INTR_PRECISION,
+    INTR_RADIX,
+    INTR_RANGE,
     INTR_TINY,
 
     /* F90 bit inquiry functions. */
     INTR_BIT_SIZE,
     INTR_BTEST,
     INTR_IAND,
+    INTR_IBCLR,
     INTR_IBITS,
     INTR_IBSET,
+    INTR_IEOR,
     INTR_IOR,
     INTR_ISHFT,
+    INTR_ISHFTC,
+    INTR_NOT,
 
     /* F90 transfer functions. */
     INTR_TRANSFER,
 
     /* F90 floating-point manipulation functions. */
     INTR_EXPONENT,
+    INTR_FRACTION,
+    INTR_NEAREST,
+    INTR_RRSPACING,
     INTR_SCALE,
+    INTR_SET_EXPONENT,
     INTR_SPACING,
 
     /* F90 vector and matrix multiply functions. */
@@ -184,7 +215,9 @@ typedef enum {
 
     /* F90 array construction functions. */
     INTR_MERGE,
+    INTR_PACK,
     INTR_SPREAD,
+    INTR_UNPACK,
 
     /* F90 array reshape functions. */
     INTR_RESHAPE,
@@ -195,17 +228,24 @@ typedef enum {
 
     /* F90 array location functions. */
     INTR_MINLOC,
+    INTR_MAXLOC,
 
     /* F90 pointer association status functions. */
     INTR_ASSOCIATED,
 
     /* F90 intrinsic subroutines. */
     INTR_DATE_AND_TIME,
+    INTR_MVBITS,
+    INTR_RANDOM_NUMBER,
+    INTR_RANDOM_SEED,
     INTR_SYSTEM_CLOCK,
 
     /* F95 intrinsic functions. */
     INTR_PRESENT,
     INTR_EOSHIFT,
+
+    /* 20. Pointer association status functions */
+    INTR_NULL,
 
     /* F95 intrinsic subroutines. */
     INTR_CPU_TIME,

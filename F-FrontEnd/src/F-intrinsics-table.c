@@ -28,36 +28,51 @@ intrinsic_entry intrinsic_table[] = {
     // ABS (A)
     { INTR_ABS,         INTR_NAME_GENERIC,      "abs",          0,      {INTR_TYPE_NUMERICS},   INTR_TYPE_NUMERICS,     1,  0, LANGSPEC_F77 },
     { INTR_ABS,         INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_COMPLEX},    INTR_TYPE_REAL,         1, -1, LANGSPEC_F77 },
-    { INTR_ABS,         INTR_NAME_SPECIFIC,     "dabs",         0,      {INTR_TYPE_ALL_REAL},   INTR_TYPE_REAL,         1,  0, LANGSPEC_F77 },
+    { INTR_ABS,         INTR_NAME_SPECIFIC,     "dabs",         0,      {INTR_TYPE_DREAL},      INTR_TYPE_DREAL,        1,  0, LANGSPEC_F77 },
     { INTR_ABS,         INTR_NAME_SPECIFIC,     "iabs",         0,      {INTR_TYPE_INT},        INTR_TYPE_INT,          1,  0, LANGSPEC_F77 },
     { INTR_ABS,         INTR_NAME_SPECIFIC,     "cabs",         0,      {INTR_TYPE_COMPLEX},    INTR_TYPE_REAL,         1, -1, LANGSPEC_F77 },
 
     // AIMAG (Z)
     { INTR_AIMAG,       INTR_NAME_SPECIFIC,     "aimag",        0,      {INTR_TYPE_COMPLEX},    INTR_TYPE_REAL,         1, -5, LANGSPEC_F77 },
+
     // DIMAG (Z)
-    { INTR_DIMAG,       INTR_NAME_GENERIC,     "dimag",        0,      {INTR_TYPE_DCOMPLEX},   INTR_TYPE_DREAL,        1, -5, LANGSPEC_NONSTD },
-    { INTR_DIMAG,       INTR_NAME_GENERIC,     "",             0,      {INTR_TYPE_COMPLEX},    INTR_TYPE_REAL,         1, -5, LANGSPEC_NONSTD },
+    { INTR_DIMAG,       INTR_NAME_GENERIC,      "dimag",        0,      {INTR_TYPE_DCOMPLEX},   INTR_TYPE_DREAL,        1, -5, LANGSPEC_NONSTD },
+    { INTR_DIMAG,       INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_COMPLEX},    INTR_TYPE_REAL,         1, -5, LANGSPEC_NONSTD },
 
     // AINT (A  [, KIND])
     { INTR_AINT,        INTR_NAME_GENERIC,      "aint",         1,      {INTR_TYPE_REAL},       INTR_TYPE_REAL,         1, -1, LANGSPEC_F77 },
     { INTR_AINT,        INTR_NAME_GENERIC,      "",             1,      {INTR_TYPE_DREAL},      INTR_TYPE_DREAL,        1, -1, LANGSPEC_F77 },
     { INTR_AINT,        INTR_NAME_SPECIFIC,     "dint",         1,      {INTR_TYPE_DREAL},      INTR_TYPE_DREAL,        1, -1, LANGSPEC_F77 },
 
+    // ANINT (A [, KIND])
+    { INTR_ANINT,       INTR_NAME_GENERIC,      "anint",        1,      {INTR_TYPE_REAL},       INTR_TYPE_REAL,         1, -1, LANGSPEC_F77 },
+    { INTR_ANINT,       INTR_NAME_GENERIC,      "",             1,      {INTR_TYPE_DREAL},      INTR_TYPE_DREAL,        1, -1, LANGSPEC_F77 },
+    { INTR_ANINT,       INTR_NAME_SPECIFIC,     "dnint",        1,      {INTR_TYPE_DREAL},      INTR_TYPE_DREAL,        1, -1, LANGSPEC_F77 },
+
     // CMPLX (X [, Y][, KIND])
     { INTR_CMPLX,       INTR_NAME_GENERIC,      "cmplx",        1,      {INTR_TYPE_ALL_NUMERICS},                       INTR_TYPE_COMPLEX,      1, -1, LANGSPEC_F77 },
     { INTR_CMPLX,       INTR_NAME_GENERIC,      "",             1,      {INTR_TYPE_NUMERICS, INTR_TYPE_NUMERICS},       INTR_TYPE_COMPLEX,      2, -1, LANGSPEC_F77 },
     { INTR_CMPLX,       INTR_NAME_GENERIC,      "",             1,      {INTR_TYPE_NUMERICS, INTR_TYPE_NUMERICS, INTR_TYPE_NUMERICS},       INTR_TYPE_COMPLEX,      3, -1, LANGSPEC_F77 },
-    { INTR_DCMPLX,      INTR_NAME_GENERIC,     "dcmplx",        1,      {INTR_TYPE_NUMERICS},                           INTR_TYPE_DCOMPLEX,     1, -1, LANGSPEC_NONSTD },
-    { INTR_DCMPLX,      INTR_NAME_GENERIC,      "",             1,      {INTR_TYPE_NUMERICS, INTR_TYPE_NUMERICS},       INTR_TYPE_DCOMPLEX,     2, -1, LANGSPEC_NONSTD },
+    { INTR_DCMPLX,      INTR_NAME_SPECIFIC,     "dcmplx",       1,      {INTR_TYPE_NUMERICS},                           INTR_TYPE_DCOMPLEX,     1, -1, LANGSPEC_NONSTD },
+    { INTR_DCMPLX,      INTR_NAME_SPECIFIC,     "",             1,      {INTR_TYPE_NUMERICS, INTR_TYPE_NUMERICS},       INTR_TYPE_DCOMPLEX,     2, -1, LANGSPEC_NONSTD },
 
-    // CONJG (Z)
+    // CONJG (Z)  ???
     { INTR_CONJG,       INTR_NAME_SPECIFIC,     "conjg",        0,      {INTR_TYPE_COMPLEX},                    INTR_TYPE_COMPLEX,      1, 0, LANGSPEC_F77 },
 
-    // DCONJG (Z)
-    { INTR_DCONJG,      INTR_NAME_SPECIFIC,     "dconjg",        0,      {INTR_TYPE_COMPLEX},                   INTR_TYPE_COMPLEX,      1, 0, LANGSPEC_F77 },
+    // DCONJG (Z) ???
+    { INTR_DCONJG,      INTR_NAME_SPECIFIC,     "dconjg",       0,      {INTR_TYPE_COMPLEX},                   INTR_TYPE_COMPLEX,      1, 0, LANGSPEC_F77 },
 
     // DBLE (A)
     { INTR_DBLE,        INTR_NAME_GENERIC,      "dble",         0,      {INTR_TYPE_ALL_NUMERICS},               INTR_TYPE_DREAL,        1, -1, LANGSPEC_F77 },
+
+    // DIM (X, Y)
+    { INTR_DIM,         INTR_NAME_GENERIC,      "dim",          0,      {INTR_TYPE_NUMERICS, INTR_TYPE_NUMERICS},       INTR_TYPE_NUMERICS,     2, 0, LANGSPEC_F77 },
+    { INTR_DIM,         INTR_NAME_SPECIFIC,     "idim",         0,      {INTR_TYPE_INT, INTR_TYPE_INT},                 INTR_TYPE_INT,          2, 0, LANGSPEC_F77 },
+    { INTR_DIM,         INTR_NAME_SPECIFIC,     "ddim",         0,      {INTR_TYPE_DREAL, INTR_TYPE_DREAL},             INTR_TYPE_DREAL,        2, 0, LANGSPEC_F77 },
+
+    // DPROD (X, Y)
+    { INTR_DPROD,       INTR_NAME_GENERIC,      "dprod",        0,      {INTR_TYPE_REAL, INTR_TYPE_REAL},               INTR_TYPE_DREAL,        2, -1, LANGSPEC_F77 },
+    { INTR_DPROD,       INTR_NAME_SPECIFIC,     "",             0,      {INTR_TYPE_REAL, INTR_TYPE_REAL},               INTR_TYPE_DREAL,        2, -1, LANGSPEC_F77 },
 
     // INT (A [, KIND])
     { INTR_INT,         INTR_NAME_GENERIC,      "int",          1,      {INTR_TYPE_ALL_NUMERICS},               INTR_TYPE_INT,  1, -1, LANGSPEC_F77 },
@@ -114,10 +129,20 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_ACOS,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL},      INTR_TYPE_DREAL,        1, 0, LANGSPEC_F77 },
     { INTR_ACOS,        INTR_NAME_SPECIFIC,     "dacos",        0,      {INTR_TYPE_DREAL},      INTR_TYPE_DREAL,        1, 0, LANGSPEC_F77 },
 
+    // ASIN (X)
+    { INTR_ASIN,        INTR_NAME_GENERIC,      "asin",         0,      {INTR_TYPE_REAL},       INTR_TYPE_REAL,         1, 0, LANGSPEC_F77 },
+    { INTR_ASIN,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL},      INTR_TYPE_DREAL,        1, 0, LANGSPEC_F77 },
+    { INTR_ASIN,        INTR_NAME_SPECIFIC,     "dasin",        0,      {INTR_TYPE_DREAL},      INTR_TYPE_DREAL,        1, 0, LANGSPEC_F77 },
+
     // ATAN (X)
     { INTR_ATAN,        INTR_NAME_GENERIC,      "atan",         0,      {INTR_TYPE_REAL},       INTR_TYPE_REAL,         1, 0, LANGSPEC_F77 },
     { INTR_ATAN,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL},      INTR_TYPE_DREAL,        1, 0, LANGSPEC_F77 },
     { INTR_ATAN,        INTR_NAME_SPECIFIC,     "datan",        0,      {INTR_TYPE_DREAL},      INTR_TYPE_DREAL,        1, 0, LANGSPEC_F77 },
+
+    // ATAN2 (Y, X)
+    { INTR_ATAN2,       INTR_NAME_GENERIC,      "atan2",        0,      {INTR_TYPE_REAL, INTR_TYPE_REAL},       INTR_TYPE_REAL,         2, 0, LANGSPEC_F77 },
+    { INTR_ATAN2,       INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL, INTR_TYPE_DREAL},     INTR_TYPE_DREAL,        2, 0, LANGSPEC_F77 },
+    { INTR_ATAN2,       INTR_NAME_SPECIFIC,     "datan2",       0,      {INTR_TYPE_DREAL, INTR_TYPE_DREAL},     INTR_TYPE_DREAL,        1, 0, LANGSPEC_F77 },
 
     // COS (X)
     { INTR_COS,         INTR_NAME_GENERIC,      "cos",          0,      {INTR_TYPE_REAL},       INTR_TYPE_REAL,         1, 0, LANGSPEC_F77 },
@@ -125,6 +150,11 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_COS,         INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_COMPLEX},    INTR_TYPE_COMPLEX,      1, 0, LANGSPEC_F77 },
     { INTR_COS,         INTR_NAME_SPECIFIC,     "dcos",         0,      {INTR_TYPE_DREAL},      INTR_TYPE_DREAL,        1, 0, LANGSPEC_F77 },
     { INTR_COS,         INTR_NAME_SPECIFIC,     "ccos",         0,      {INTR_TYPE_COMPLEX},    INTR_TYPE_COMPLEX,      1, 0, LANGSPEC_F77 },
+
+    // COSH (X)
+    { INTR_COSH,        INTR_NAME_GENERIC,      "cosh",         0,      {INTR_TYPE_REAL},       INTR_TYPE_REAL,         1, 0, LANGSPEC_F77 },
+    { INTR_COSH,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL},      INTR_TYPE_DREAL,        1, 0, LANGSPEC_F77 },
+    { INTR_COSH,        INTR_NAME_SPECIFIC,     "dcosh",        0,      {INTR_TYPE_DREAL},      INTR_TYPE_DREAL,        1, 0, LANGSPEC_F77 },
 
     // EXP (X)
     { INTR_EXP,         INTR_NAME_GENERIC,      "exp",          0,      {INTR_TYPE_REAL},       INTR_TYPE_REAL,         1, 0, LANGSPEC_F77 },
@@ -163,9 +193,19 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_SQRT,        INTR_NAME_GENERIC,      "sqrt",         0,      {INTR_TYPE_REAL},       INTR_TYPE_REAL,         1, 0, LANGSPEC_F77 },
     { INTR_SQRT,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL},     INTR_TYPE_DREAL,         1, 0, LANGSPEC_F77 },
     { INTR_SQRT,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_COMPLEX},    INTR_TYPE_COMPLEX,      1, 0, LANGSPEC_F77 },
-    { INTR_SQRT,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ALL_NUMERICS},INTR_TYPE_COMPLEX,      1, 0, LANGSPEC_F77 },
+    { INTR_SQRT,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ALL_NUMERICS},INTR_TYPE_COMPLEX,     1, 0, LANGSPEC_F77 },
     { INTR_SQRT,        INTR_NAME_SPECIFIC,     "dsqrt",        0,      {INTR_TYPE_DREAL},     INTR_TYPE_DREAL,         1, 0, LANGSPEC_F77 },
     { INTR_SQRT,        INTR_NAME_SPECIFIC,     "csqrt",        0,      {INTR_TYPE_COMPLEX},    INTR_TYPE_COMPLEX,      1, 0, LANGSPEC_F77 },
+
+    // TAN (X)
+    { INTR_TAN,        INTR_NAME_GENERIC,       "tan",          0,      {INTR_TYPE_REAL},      INTR_TYPE_REAL,          1, 0, LANGSPEC_F77 },
+    { INTR_TAN,        INTR_NAME_GENERIC,       "",             0,      {INTR_TYPE_DREAL},     INTR_TYPE_DREAL,         1, 0, LANGSPEC_F77 },
+    { INTR_TAN,        INTR_NAME_SPECIFIC,      "dtan",         0,      {INTR_TYPE_DREAL},     INTR_TYPE_DREAL,         1, 0, LANGSPEC_F77 },
+
+    // TANH (X)
+    { INTR_TANH,        INTR_NAME_GENERIC,      "tanh",         0,      {INTR_TYPE_REAL},      INTR_TYPE_REAL,          1, 0, LANGSPEC_F77 },
+    { INTR_TANH,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL},     INTR_TYPE_DREAL,         1, 0, LANGSPEC_F77 },
+    { INTR_TANH,        INTR_NAME_SPECIFIC,     "dtanh",        0,      {INTR_TYPE_DREAL},     INTR_TYPE_DREAL,         1, 0, LANGSPEC_F77 },
 
 
 
@@ -183,6 +223,22 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_INDEX,       INTR_NAME_GENERIC,      "index",        0,      {INTR_TYPE_CHAR, INTR_TYPE_CHAR},                       INTR_TYPE_INT,  2, -1, LANGSPEC_F77 },
     { INTR_INDEX,       INTR_NAME_SPECIFIC,     "",             0,      {INTR_TYPE_CHAR, INTR_TYPE_CHAR},                       INTR_TYPE_INT,  2, -1, LANGSPEC_F77 },
     { INTR_INDEX,       INTR_NAME_SPECIFIC,     "",             0,      {INTR_TYPE_CHAR, INTR_TYPE_CHAR, INTR_TYPE_LOGICAL},    INTR_TYPE_INT,  3, -1, LANGSPEC_F77 },
+
+    // LGE (STRING_A, STRING_B)
+    { INTR_LGE,         INTR_NAME_GENERIC,      "lge",          0,      {INTR_TYPE_CHAR, INTR_TYPE_CHAR},                       INTR_TYPE_LOGICAL,  2, -1, LANGSPEC_F77 },
+    { INTR_LGE,         INTR_NAME_SPECIFIC_NA,  "",             0,      {INTR_TYPE_CHAR, INTR_TYPE_CHAR},                       INTR_TYPE_LOGICAL,  2, -1, LANGSPEC_F77 },
+
+    // LGT (STRING_A, STRING_B)
+    { INTR_LGT,         INTR_NAME_GENERIC,      "lgt",          0,      {INTR_TYPE_CHAR, INTR_TYPE_CHAR},                       INTR_TYPE_LOGICAL,  2, -1, LANGSPEC_F77 },
+    { INTR_LGT,         INTR_NAME_SPECIFIC_NA,  "",             0,      {INTR_TYPE_CHAR, INTR_TYPE_CHAR},                       INTR_TYPE_LOGICAL,  2, -1, LANGSPEC_F77 },
+
+    // LLE (STRING_A, STRING_B)
+    { INTR_LLE,         INTR_NAME_GENERIC,      "lle",          0,      {INTR_TYPE_CHAR, INTR_TYPE_CHAR},                       INTR_TYPE_LOGICAL,  2, -1, LANGSPEC_F77 },
+    { INTR_LLE,         INTR_NAME_SPECIFIC_NA,  "",             0,      {INTR_TYPE_CHAR, INTR_TYPE_CHAR},                       INTR_TYPE_LOGICAL,  2, -1, LANGSPEC_F77 },
+
+    // LLT (STRING_A, STRING_B)
+    { INTR_LLT,         INTR_NAME_GENERIC,      "llt",          0,      {INTR_TYPE_CHAR, INTR_TYPE_CHAR},                       INTR_TYPE_LOGICAL,  2, -1, LANGSPEC_F77 },
+    { INTR_LLT,         INTR_NAME_SPECIFIC_NA,  "",             0,      {INTR_TYPE_CHAR, INTR_TYPE_CHAR},                       INTR_TYPE_LOGICAL,  2, -1, LANGSPEC_F77 },
 
 
 
@@ -209,6 +265,9 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_FLOOR,       INTR_NAME_GENERIC,      "floor",        1,      {INTR_TYPE_REAL},       INTR_TYPE_INT,  1, -1, LANGSPEC_F90 },
     { INTR_FLOOR,       INTR_NAME_GENERIC,      "",             1,      {INTR_TYPE_DREAL},      INTR_TYPE_INT,  1, -1, LANGSPEC_F90 },
 
+    // MODULO (A, P)
+    { INTR_MODULO,         INTR_NAME_GENERIC,   "modulo",       0,      {INTR_TYPE_NUMERICS, INTR_TYPE_NUMERICS},       INTR_TYPE_NUMERICS,     2, 0, LANGSPEC_F90 },
+
 
 
     /* 4. Character functions */
@@ -219,11 +278,17 @@ intrinsic_entry intrinsic_table[] = {
     // ADJUSTL (STRING)
     { INTR_ADJUSTL,     INTR_NAME_GENERIC,      "adjustl",      0,      {INTR_TYPE_CHAR},       INTR_TYPE_CHAR, 1, 0, LANGSPEC_F90 },
 
+    // ADJUSTR (STRING)
+    { INTR_ADJUSTR,     INTR_NAME_GENERIC,      "adjustr",      0,      {INTR_TYPE_CHAR},       INTR_TYPE_CHAR, 1, 0, LANGSPEC_F90 },
+
     // IACHAR (C)
     { INTR_IACHAR,      INTR_NAME_GENERIC,      "iachar",       0,      {INTR_TYPE_CHAR},       INTR_TYPE_INT,  1, -1, LANGSPEC_F90 },
 
     // LEN_TRIM (STRING)
     { INTR_LEN_TRIM,    INTR_NAME_GENERIC,      "len_trim",     0,      {INTR_TYPE_CHAR},       INTR_TYPE_INT,  1, -1, LANGSPEC_F90 },
+
+    // REPEAT (STRING, NCOPIES)
+    { INTR_REPEAT,  INTR_NAME_GENERIC,          "repeat",       0,      {INTR_TYPE_CHAR, INTR_TYPE_INT},       INTR_TYPE_INT,  2, 0, LANGSPEC_F90 },
 
     // SCAN (STRING, SET [, BACK])
     { INTR_SCAN,        INTR_NAME_GENERIC,      "scan",         0,      {INTR_TYPE_CHAR, INTR_TYPE_CHAR},                       INTR_TYPE_INT,  2, -1, LANGSPEC_F90 },
@@ -250,6 +315,13 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_SELECTED_REAL_KIND,  INTR_NAME_GENERIC,      "selected_real_kind",   0,      {},                             INTR_TYPE_INT,  0, -6, LANGSPEC_F90 },
     { INTR_SELECTED_REAL_KIND,  INTR_NAME_GENERIC,      "",                     0,      {INTR_TYPE_INT},                INTR_TYPE_INT,  1, 0, LANGSPEC_F90 },
     { INTR_SELECTED_REAL_KIND,  INTR_NAME_GENERIC,      "",                     0,      {INTR_TYPE_INT, INTR_TYPE_INT}, INTR_TYPE_INT,  2, 0, LANGSPEC_F90 },
+
+
+
+    /* 7. Logical function */
+
+    // LOGICAL (L [, KIND])
+    { INTR_LOGICAL,     INTR_NAME_GENERIC,      "logical",      1,      {INTR_TYPE_LOGICAL},            INTR_TYPE_LOGICAL,  1, -1, LANGSPEC_F90 },
 
 
 
@@ -280,6 +352,28 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_MAXEXPONENT, INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL},              INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
     { INTR_MAXEXPONENT, INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL_ARRAY},        INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
 
+    // MINEXPONENT (X)
+    { INTR_MINEXPONENT, INTR_NAME_GENERIC,      "minexponent",  0,      {INTR_TYPE_REAL},               INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_MINEXPONENT, INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_REAL_ARRAY},         INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_MINEXPONENT, INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL},              INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_MINEXPONENT, INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL_ARRAY},        INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+
+    // PRECISION (X)
+    { INTR_PRECISION,   INTR_NAME_GENERIC,      "precision",    0,      {INTR_TYPE_ALL_REAL},           INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_PRECISION,   INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ALL_REAL_ARRAY},     INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_PRECISION,   INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ALL_COMPLEX},        INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_PRECISION,   INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ALL_COMPLEX_ARRAY},  INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+
+    // RADIX (X)
+    { INTR_RADIX,       INTR_NAME_GENERIC,      "radix",        0,      {INTR_TYPE_ALL_REAL},           INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_RADIX,       INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ALL_REAL_ARRAY},     INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_RADIX,       INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_INT},                INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_RADIX,       INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_INT_ARRAY},          INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+
+    // RANGE (X)
+    { INTR_RANGE,       INTR_NAME_GENERIC,      "range",        0,      {INTR_TYPE_ALL_NUMERICS},            INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_RANGE,       INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ALL_NUMERICS_ARRAY},      INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+
     // TINY (X)
     { INTR_TINY,        INTR_NAME_GENERIC,      "tiny",         0,      {INTR_TYPE_REAL},               INTR_TYPE_REAL,         1, 0, LANGSPEC_F90 },
     { INTR_TINY,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_REAL_ARRAY},         INTR_TYPE_REAL,         1, -6, LANGSPEC_F90 },
@@ -298,10 +392,13 @@ intrinsic_entry intrinsic_table[] = {
     /* 10. Bit manipulation functions */
 
     // BTEST (I, POS)
-    { INTR_BTEST,       INTR_NAME_GENERIC,      "btest",         0,      {INTR_TYPE_INT, INTR_TYPE_INT},         INTR_TYPE_LOGICAL,  2, -1, LANGSPEC_F90 | LANGSPEC_NONSTD },
+    { INTR_BTEST,       INTR_NAME_GENERIC,      "btest",        0,      {INTR_TYPE_INT, INTR_TYPE_INT},         INTR_TYPE_LOGICAL,  2, -1, LANGSPEC_F90 | LANGSPEC_NONSTD },
 
     // IAND (I, J)
     { INTR_IAND,        INTR_NAME_GENERIC,      "iand",         0,      {INTR_TYPE_INT, INTR_TYPE_INT},         INTR_TYPE_INT,  2, 0, LANGSPEC_F90 | LANGSPEC_NONSTD },
+
+    // IBCLR (I, POS)
+    { INTR_IBCLR,       INTR_NAME_GENERIC,      "ibclr",        0,      {INTR_TYPE_INT, INTR_TYPE_INT},         INTR_TYPE_INT,  2, 0, LANGSPEC_F90 },
 
     // IBITS (I, POS, LEN)
     { INTR_IBITS,       INTR_NAME_GENERIC,      "ibits",        0,      {INTR_TYPE_INT, INTR_TYPE_INT, INTR_TYPE_INT},  INTR_TYPE_INT,  3, 0, LANGSPEC_F90 },
@@ -309,11 +406,21 @@ intrinsic_entry intrinsic_table[] = {
     // IBSET (I, POS)
     { INTR_IBSET,       INTR_NAME_GENERIC,      "ibset",        0,      {INTR_TYPE_INT, INTR_TYPE_INT},         INTR_TYPE_INT,  2, 0, LANGSPEC_F90 },
 
+    // IEOR (I, J)
+    { INTR_IEOR,        INTR_NAME_GENERIC,      "ieor",         0,      {INTR_TYPE_INT, INTR_TYPE_INT},         INTR_TYPE_INT,  2, 0, LANGSPEC_F90 | LANGSPEC_NONSTD },
+
     // IOR (I, J)
     { INTR_IOR,         INTR_NAME_GENERIC,      "ior",          0,      {INTR_TYPE_INT, INTR_TYPE_INT},         INTR_TYPE_INT,  2, 0, LANGSPEC_F90 },
 
     // ISHFT (I, SHIFT)
     { INTR_ISHFT,       INTR_NAME_GENERIC,      "ishft",        0,      {INTR_TYPE_INT, INTR_TYPE_INT},         INTR_TYPE_INT,  2, 0, LANGSPEC_F90 },
+
+    // ISHFTC (I, SHIFT [, SIZE])
+    { INTR_ISHFTC,       INTR_NAME_GENERIC,      "ishftc",      0,      {INTR_TYPE_INT, INTR_TYPE_INT},         INTR_TYPE_INT,  2, 0, LANGSPEC_F90 },
+    { INTR_ISHFTC,       INTR_NAME_GENERIC,      "ishftc",      0,      {INTR_TYPE_INT, INTR_TYPE_INT, INTR_TYPE_INT},         INTR_TYPE_INT,  3, 0, LANGSPEC_F90 },
+
+    // NOT (I)
+    { INTR_NOT,          INTR_NAME_GENERIC,      "not",         0,      {INTR_TYPE_INT},         INTR_TYPE_INT,  1, 0, LANGSPEC_F90 },
 
 
 
@@ -335,12 +442,24 @@ intrinsic_entry intrinsic_table[] = {
     /* 12. Floating-point manipulation functions */
 
     // EXPONENT (X)
-    { INTR_EXPONENT,    INTR_NAME_GENERIC,      "exponent",     0,      {INTR_TYPE_REAL},               INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_EXPONENT,    INTR_NAME_GENERIC,      "exponent",     0,      {INTR_TYPE_REAL},              INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
     { INTR_EXPONENT,    INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL},             INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+
+    // FRACTION (X)
+    { INTR_FRACTION,    INTR_NAME_GENERIC,      "fraction",     0,      {INTR_TYPE_ALL_REAL},          INTR_TYPE_ALL_REAL,  1, 0, LANGSPEC_F90 },
+
+    // NEAREST (X, S)
+    { INTR_NEAREST,     INTR_NAME_GENERIC,      "nearest",      0,      {INTR_TYPE_ALL_REAL, INTR_TYPE_ALL_REAL},        INTR_TYPE_ALL_REAL,         2, 0, LANGSPEC_F90 },
+
+    // RRSPACING (X)
+    { INTR_RRSPACING,   INTR_NAME_GENERIC,      "rrspacing",    0,      {INTR_TYPE_ALL_REAL},          INTR_TYPE_ALL_REAL,  1, 0, LANGSPEC_F90 },
 
     // SCALE (X, I)
     { INTR_SCALE,       INTR_NAME_GENERIC,      "scale",        0,      {INTR_TYPE_REAL, INTR_TYPE_INT},        INTR_TYPE_REAL,         2, 0, LANGSPEC_F90 },
     { INTR_SCALE,       INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL, INTR_TYPE_INT},       INTR_TYPE_DREAL,        2, 0, LANGSPEC_F90 },
+
+    // SET_EXPONENT (X, I)
+    { INTR_SET_EXPONENT, INTR_NAME_GENERIC,     "set_exponent", 0,      {INTR_TYPE_ALL_REAL, INTR_TYPE_INT},        INTR_TYPE_ALL_REAL,         2, 0, LANGSPEC_F90 },
 
     // SPACING (X)
     { INTR_SPACING,     INTR_NAME_GENERIC,      "spacing",      0,      {INTR_TYPE_REAL},               INTR_TYPE_REAL,         1, 0, LANGSPEC_F90 },
@@ -443,9 +562,16 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_MERGE,       INTR_NAME_GENERIC,      "merge",        0,      { INTR_TYPE_ANY, INTR_TYPE_ANY, INTR_TYPE_LOGICAL },                    INTR_TYPE_ANY,          3, 0, LANGSPEC_F90 },
     { INTR_MERGE,       INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL },        INTR_TYPE_ANY_ARRAY,    3, 0, LANGSPEC_F90 },
 
+    // PACK (ARRAY, MASK [, VECTOR])
+    { INTR_PACK,        INTR_NAME_GENERIC,      "pack",         0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL_ARRAY, },              INTR_TYPE_ANY_ARRAY,            2, -1, LANGSPEC_F90 },
+    { INTR_PACK,        INTR_NAME_GENERIC,      "pack",         0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_ANY_ARRAY},              INTR_TYPE_ANY_ARRAY,            3, -1, LANGSPEC_F90 },
+
     // SPREAD (SOURCE, DIM, NCOPIES)
     { INTR_SPREAD,      INTR_NAME_GENERIC,      "spread",       0,      { INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT },                INTR_TYPE_ANY_DYNAMIC_ARRAY,    3, -1, LANGSPEC_F90 },
     { INTR_SPREAD,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT, INTR_TYPE_INT },          INTR_TYPE_ANY_DYNAMIC_ARRAY,    3, -1, LANGSPEC_F90 },
+
+    // UNPACK (VECTOR, MASK, FIELD)
+    { INTR_UNPACK,      INTR_NAME_GENERIC,      "unpack",       0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_ANY_ARRAY},              INTR_TYPE_ANY_ARRAY,            3, -1, LANGSPEC_F90 },
 
 
 
@@ -476,9 +602,15 @@ intrinsic_entry intrinsic_table[] = {
 
     // MINLOC (ARRAY [, MASK])
     { INTR_MINLOC,      INTR_NAME_GENERIC,      "minloc",       0,      { INTR_TYPE_INT_ARRAY },                                INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90 },
-    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_REAL_ARRAY },                               INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90 },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY },                           INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90 },
     { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_LOGICAL_ARRAY },       INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90 },
-    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY },      INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90 },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY },  INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90 },
+
+    // MAXLOC (ARRAY [, MASK])
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "maxloc",       0,      { INTR_TYPE_INT_ARRAY },                                INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90 },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY },                           INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90 },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_LOGICAL_ARRAY },       INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90 },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY },  INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90 },
 
 
 
@@ -498,6 +630,19 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_DATE_AND_TIME,       INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_CHAR, INTR_TYPE_CHAR },                     INTR_TYPE_NONE, 2, -1, LANGSPEC_F90 },
     { INTR_DATE_AND_TIME,       INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_CHAR, INTR_TYPE_CHAR, INTR_TYPE_CHAR },     INTR_TYPE_NONE, 3, -1, LANGSPEC_F90 },
     { INTR_DATE_AND_TIME,       INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_CHAR, INTR_TYPE_CHAR, INTR_TYPE_CHAR, INTR_TYPE_INT_ARRAY },        INTR_TYPE_NONE, 4, -1, LANGSPEC_F90 },
+
+    // MVBITS (FROM, FROMPOS, LEN, TO, TOPOS)
+    { INTR_MVBITS,              INTR_NAME_GENERIC,      "mvbits",               0,      { INTR_TYPE_INT, INTR_TYPE_INT, INTR_TYPE_INT, INTR_TYPE_INT, INTR_TYPE_INT },        INTR_TYPE_NONE, 5, -1, LANGSPEC_F90 },
+
+    // RANDOM_NUMBER (HARVEST)
+    { INTR_RANDOM_NUMBER,      INTR_NAME_GENERIC,      "random_number",        0,      { INTR_TYPE_ALL_REAL },                                 INTR_TYPE_NONE, 1, -1, LANGSPEC_F90 },
+    { INTR_RANDOM_NUMBER,      INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_ALL_REAL_ARRAY },                           INTR_TYPE_NONE, 1, -1, LANGSPEC_F90 },
+
+    // RANDOM_SEED ([SIZE, PUT, GET])
+    { INTR_RANDOM_SEED,         INTR_NAME_GENERIC,      "random_seed",          0,      {},                                                     INTR_TYPE_NONE, 0, -1, LANGSPEC_F90 },
+    { INTR_RANDOM_SEED,         INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_INT },                                      INTR_TYPE_NONE, 1, -1, LANGSPEC_F90 },
+    { INTR_RANDOM_SEED,         INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_INT, INTR_TYPE_INT_ARRAY },                  INTR_TYPE_NONE, 2, -1, LANGSPEC_F90 },
+    { INTR_RANDOM_SEED,         INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_INT, INTR_TYPE_INT_ARRAY, INTR_TYPE_INT_ARRAY },     INTR_TYPE_NONE, 3, -1, LANGSPEC_F90 },
 
 
 
@@ -530,6 +675,14 @@ intrinsic_entry intrinsic_table[] = {
      * Fortran95 intrinsic
      */
 
+    /* 20. Pointer association status functions */
+
+    // NULL ([MOLD])
+    { INTR_NULL,       INTR_NAME_GENERIC,      "null",          0,      { },                                    INTR_TYPE_ANY_ARRAY, 0, -1, LANGSPEC_F95 },
+    { INTR_NULL,       INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_POINTER },                  INTR_TYPE_ANY_ARRAY, 1, 0,  LANGSPEC_F95 },
+    { INTR_NULL,       INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_ANY_ARRAY_ALLOCATABLE },              INTR_TYPE_ANY_ARRAY, 1, 0,  LANGSPEC_F95 },
+
+
     /* 21. Intrinsic subroutines */
 
     // CPU_TIME (TIME)
@@ -538,99 +691,3 @@ intrinsic_entry intrinsic_table[] = {
 
     { INTR_END }
 };
-
-
-
-/*********************/
-/* Non yet supported */       
-/*********************/
-
- /*
-  * FORTRAN77 intrinsic
-  */
-
-/* 2. Numeric functions */
-
-// ANINT (A [, KIND])
-// DIM (X, Y)
-// DPROD (X, Y)
-
-/* 3. Mathematical functions */
-
-// ASIN (X)
-// ATAN2 (Y, X)
-// COSH (X)
-// TAN (X)
-// TANH (X)
-
-/* 4. Character functions */
-
-// LGE (STRING_A, STRING_B)
-// LGT (STRING_A, STRING_B)
-// LLE (STRING_A, STRING_B)
-// LLT (STRING_A, STRING_B)
-
-/*
- * Fortran90 intrinsics
- */
-
-/* 2. Numeric functions */
-
-// MODULO (A, P)
-
-/* 4. Character functions */
-
-// ADJUSTR (STRING)
-// REPEAT (STRING, NCOPIES)
-
-/* 7. Logical function */
-
-// LOGICAL (L [, KIND])
-
-/* 8. Numeric inquiry functions */
-
-// MINEXPONENT (X)
-// PRECISION (X)
-// RADIX (X)
-// RANGE (X)
-
-/* 10. Bit manipulation functions */
-
-// IBCLR (I, POS)
-// IEOR (I, J)
-// ISHFTC (I, SHIFT [, SIZE])
-// NOT (I)
-
-/* 12. Floating-point manipulation functions */
-
-// FRACTION (X)
-// NEAREST (X, S)
-// RRSPACING (X)
-// SET_EXPONENT (X, I)
-
-/* 16. Array construction functions */
-
-// PACK (ARRAY, MASK [, VECTOR])
-// UNPACK (VECTOR, MASK, FIELD)
-
-
-/* 19. Array location functions */
-
-// MAXLOC (ARRAY, DIM [, MASK])
-// MAXLOC (ARRAY [, MASK])
-
-/* 21. Intrinsic subroutines */
-
-// MVBITS (FROM, FROMPOS, LEN, TO, TOPOS)
-// RANDOM_NUMBER (HARVEST)
-// RANDOM_SEED ([SIZE, PUT, GET])
-
-/*
- * Fortran95 intrinsics
- */
-
-/* 20. Pointer association status functions */
-
-// NULL ([MOLD])
-
-
