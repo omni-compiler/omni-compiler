@@ -273,7 +273,12 @@ yylex0()
 	    /* bufptr = pragmaBuf+3; *//* skip omp */
             return OMPKW_LINE;
         }
-        if (st_PRAGMA_flag || st_OMP_flag) {
+        if(st_XMP_flag && XMP_flag){
+            lexstate = LEX_XMP_TOKEN;
+	    /* bufptr = pragmaBuf+3; *//* skip omp */
+            return XMPKW_LINE;
+        }
+        if (st_PRAGMA_flag || st_OMP_flag || st_XMP_flag) {
 	  lexstate = LEX_PRAGMA_TOKEN;
 	  return PRAGMA_HEAD;
         }
@@ -1840,6 +1845,7 @@ again:
     while(isspace(*p)) p++;     /* skip space */
     st_no = 0;
     st_OMP_flag = FALSE;
+    st_XMP_flag = FALSE;
     st_PRAGMA_flag = FALSE;
     if (flag_force_c_comment && /* enabel c-comment?  */
         p - line_buffer < 6) {
@@ -2173,11 +2179,17 @@ top:
     st_len = 0;
     st_PRAGMA_flag = FALSE;
     st_OMP_flag = FALSE;
+    st_XMP_flag = FALSE;
 
     if (stn_cols[0] == 'c'){
-
-      if (strncasecmp(&stn_cols[1],"$omp",4) == 0){
-        st_OMP_flag = TRUE;
+	if (OMP_flag && strncasecmp(&stn_cols[1],"$omp",4) == 0){
+	    st_OMP_flag = TRUE;
+	    set_pragma_str(&stn_cols[2]);
+	    append_pragma_str (line_buffer);
+	    goto copy_body;
+      }
+      else if (XMP_flag && strncasecmp(&stn_cols[1],"$xmp",4) == 0){
+        st_XMP_flag = TRUE;
         set_pragma_str(&stn_cols[2]);
         append_pragma_str (line_buffer);
         goto copy_body;
@@ -2253,6 +2265,18 @@ copy_body:
             break;
         } else if (st_OMP_flag) {
             error("continue line follows OMP sentinels, ignored");
+            break;
+	}
+        else if (strncasecmp(&stn_cols[1],"$xmp",4) == 0) {
+            if (st_XMP_flag) {
+                append_pragma_str (" ");
+                append_pragma_str (line_buffer);
+                goto copy_body_cont;
+            }
+            error("XMP sentinels missing initial line, ignored");
+            break;
+        } else if (st_XMP_flag) {
+            error("continue line follows XMP sentinels, ignored");
             break;
         } else if (st_PRAGMA_flag) {
             set_pragma_str (&stn_cols[2]);
@@ -2504,6 +2528,9 @@ next_line0:
 	if (stn_cols[0] == 'c') {
 	  if (strncasecmp(&stn_cols[1], "$omp", 4) == 0) {
 	    /*  OpenMP sentinel no doubt */
+	    goto KeepOnGoin;
+	  }
+	  if (strncasecmp(&stn_cols[1], "$xmp", 4) == 0) {
 	    goto KeepOnGoin;
 	  }
 	  if (ocl_flag && strncasecmp(&stn_cols[1], "ocl ", 4) == 0) {
@@ -3444,8 +3471,8 @@ struct keyword_token XMP_keywords[ ] =
     {"in",	XMPKW_IN },
     {"out",	XMPKW_OUT },
 
-    {"on",	XMPKW_ON },
     {"onto",	XMPKW_ONTO },
+    {"on",	XMPKW_ON },
     {"with",	XMPKW_WITH },
     {"from",	XMPKW_FROM },
 
