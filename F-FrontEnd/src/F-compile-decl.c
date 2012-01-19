@@ -1671,7 +1671,10 @@ type_is_compatible(TYPE_DESC tp,TYPE_DESC tq)
     if(tp == NULL || tq == NULL ||
        IS_ARRAY_TYPE(tp) || IS_ARRAY_TYPE(tq)) return FALSE;
     if(TYPE_BASIC_TYPE(tp) != TYPE_BASIC_TYPE(tq)) {
-        if(TYPE_BASIC_TYPE(tp) == TYPE_DREAL || TYPE_BASIC_TYPE(tq) == TYPE_DREAL) {
+      if(TYPE_BASIC_TYPE(tp) == TYPE_GENERIC || TYPE_BASIC_TYPE(tq) == TYPE_GENERIC){
+	return TRUE;
+      }
+      else if(TYPE_BASIC_TYPE(tp) == TYPE_DREAL || TYPE_BASIC_TYPE(tq) == TYPE_DREAL) {
             TYPE_DESC tt;
             tt = (TYPE_BASIC_TYPE(tp) == TYPE_DREAL)?tq:tp;
             if(TYPE_BASIC_TYPE(tt) == TYPE_REAL &&
@@ -3049,7 +3052,7 @@ void
 fix_array_dimensions(TYPE_DESC tp)
 {
     ARRAY_ASSUME_KIND assumeKind = ASSUMED_NONE;
-    expv size = NULL, upper = NULL, lower = NULL;
+    expv size = NULL, upper = NULL, lower = NULL, step = NULL;
 
     if(tp == NULL) return;
     if(IS_ARRAY_TYPE(tp) == FALSE) return;
@@ -3065,6 +3068,9 @@ fix_array_dimensions(TYPE_DESC tp)
 
     if(TYPE_DIM_LOWER(tp))
         lower = expv_reduce(compile_expression(TYPE_DIM_LOWER(tp)), FALSE);
+
+    step = TYPE_DIM_STEP(tp) ?
+      expv_reduce(compile_expression(TYPE_DIM_STEP(tp)), FALSE) : expv_constant_1;
 
     if(TYPE_DIM_UPPER(tp) == NULL) {
         /* n(lower:) */
@@ -3083,19 +3089,43 @@ fix_array_dimensions(TYPE_DESC tp)
             if(lower == NULL)
                 lower = expv_constant_1;
 
-            if(EXPV_CODE(upper) == INT_CONSTANT &&
-                EXPV_CODE(lower) == INT_CONSTANT) {
-                int s = EXPV_INT_VALUE(upper) - EXPV_INT_VALUE(lower) + 1;
-                if(s < 0)
-                    error_at_node(TYPE_DIM_UPPER(tp),
-                                  "upper bound must be larger than lower bound");
-                size = expv_int_term(INT_CONSTANT, type_INT, s);
-            } else {
-                if(lower == expv_constant_1) size = upper;
-                else size = expv_cons(PLUS_EXPR,type_INT,
-                                      expv_cons(MINUS_EXPR,type_INT,upper,lower),
-                                      expv_constant_1);
-            }
+/* 	    if(EXPV_CODE(upper) == INT_CONSTANT && */
+/* 	       EXPV_CODE(lower) == INT_CONSTANT) { */
+/* 	      int s = EXPV_INT_VALUE(upper) - EXPV_INT_VALUE(lower) + 1; */
+/* 	      if(s < 0) */
+/* 		error_at_node(TYPE_DIM_UPPER(tp), */
+/* 			      "upper bound must be larger than lower bound"); */
+/* 	      size = expv_int_term(INT_CONSTANT, type_INT, s); */
+/* 	    } else { */
+/* 	      if(lower == expv_constant_1) size = upper; */
+/* 	      else size = expv_cons(PLUS_EXPR,type_INT, */
+/* 				    expv_cons(MINUS_EXPR,type_INT,upper,lower), */
+/* 				    expv_constant_1); */
+/* 	    } */
+
+	    if (EXPV_CODE(upper) == INT_CONSTANT &&
+		EXPV_CODE(lower) == INT_CONSTANT &&
+		EXPV_CODE(step) == INT_CONSTANT){
+	      int cs = EXPV_INT_VALUE(step);
+	      if (cs != 0){
+		int s = (EXPV_INT_VALUE(upper) - EXPV_INT_VALUE(lower) + cs) / cs;
+		if (s < 0)
+		  // Fix the error message ' "??", line ??: '
+		  error_at_node(TYPE_DIM_UPPER(tp),
+				"upper bound must be larger than lower bound when step > 0 and vice versa.");
+		size = expv_int_term(INT_CONSTANT, type_INT, s);
+	      }
+	      else
+		// Fix the error message ' "??", line ??: '
+		error_at_node(TYPE_DIM_STEP(tp), "step must not be zero");
+	    }
+	    else
+	      size = expv_cons(DIV_EXPR, type_INT,
+			       expv_cons(PLUS_EXPR, type_INT,
+					 expv_cons(MINUS_EXPR, type_INT,
+						   upper, lower),
+					 step),
+			       step);
         }
     }
 

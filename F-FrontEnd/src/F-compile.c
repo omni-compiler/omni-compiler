@@ -1964,6 +1964,52 @@ end_procedure()
         end_contains();
     }
 
+/*     /\* Since module procedures may be defined not only in contains block but */
+/*        also in used modules, the following code is moved from end_contains. *\/ */
+
+/*     /\* check if module procedures are defined in contains block *\/ */
+/*     EXT_ID intr, intrDef, ep; */
+
+/*     FOREACH_EXT_ID(intr, EXT_PROC_INTERFACES(CURRENT_EXT_ID)){ */
+
+/*       int hasSub = FALSE, hasFunc = FALSE; */
+
+/*       if (EXT_IS_BLANK_NAME(intr)) continue; */
+
+/*       FOREACH_EXT_ID(intrDef, EXT_PROC_INTR_DEF_EXT_IDS(intr)){ */
+
+/* 	if (EXT_PROC_IS_MODULE_PROCEDURE(intrDef)){ */
+/* 	  ep = find_ext_id(EXT_SYM(intrDef)); */
+/* 	  if (ep == NULL || EXT_TAG(ep) != STG_EXT || */
+/* 	      EXT_PROC_TYPE(ep) == NULL){ */
+/* 	    error("%s is not defined in the scoping unit", */
+/* 		  SYM_NAME(EXT_SYM(intrDef))); */
+/* 	    goto next; */
+/* 	  } */
+/* 	} */
+/* 	else { */
+/* 	  ep = intrDef; */
+/* 	} */
+
+/* 	if (IS_GENERIC_TYPE(EXT_PROC_TYPE(ep))){ */
+/* 	  continue; */
+/* 	} */
+/* 	else if (IS_SUBR(EXT_PROC_TYPE(ep))){ */
+/* 	  hasSub = TRUE; */
+/* 	} */
+/* 	else { */
+/* 	  hasFunc = TRUE; */
+/* 	} */
+/*       } */
+
+/*       if (hasSub && hasFunc){ */
+/* 	error("function does not belong in a generic subroutine interface"); */
+/* 	goto next; */
+/*       } */
+/*     } */
+
+/*  next: */
+
     if (endlineno_flag){
       if (CURRENT_PROCEDURE)
 	ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;

@@ -1627,7 +1627,8 @@ compile_function_call(ID f_id, expr args) {
 #endif
             v = list3(FUNCTION_CALL, ID_ADDR(f_id), a,
                 expv_any_term(F_EXTFUNC, f_id));
-            EXPV_TYPE(v) = type_GNUMERIC_ALL;
+            //EXPV_TYPE(v) = type_GNUMERIC_ALL;
+	    EXPV_TYPE(v) = IS_GENERIC_TYPE(tp) ? type_GNUMERIC_ALL : tp;
             break;
 
         case P_THISPROC:

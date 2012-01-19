@@ -526,17 +526,19 @@ static void
 generate_expand_shape_expr(TYPE_DESC tp, expr dimSpec, expr extDim, int dim) {
     expv dimElm;
 
-    if ((TYPE_REF(tp) == NULL) || !IS_ARRAY_TYPE(tp))
-        return;
+    //    if ((TYPE_REF(tp) == NULL) || !IS_ARRAY_TYPE(tp))
+    //        return;
 
-    dimElm = list3(LIST, TYPE_DIM_LOWER(tp), TYPE_DIM_UPPER(tp), TYPE_DIM_STEP(tp));
+    //    dimElm = list3(LIST, TYPE_DIM_LOWER(tp), TYPE_DIM_UPPER(tp), TYPE_DIM_STEP(tp));
 
     if (dim == 0) {
         generate_shape_expr(tp, dimSpec);
         list_put_last(dimSpec, extDim);
     }  else {
-        generate_contracted_shape_expr(TYPE_REF(tp), dimSpec, dim - 1);
-        list_put_last(dimSpec, dimElm);
+        //generate_contracted_shape_expr(TYPE_REF(tp), dimSpec, dim - 1);
+      dimElm = list3(LIST, TYPE_DIM_LOWER(tp), TYPE_DIM_UPPER(tp), TYPE_DIM_STEP(tp));
+      generate_expand_shape_expr(TYPE_REF(tp), dimSpec, extDim, dim - 1);
+      list_put_last(dimSpec, dimElm);
     }
 }
 
