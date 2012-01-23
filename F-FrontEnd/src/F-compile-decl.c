@@ -2421,8 +2421,8 @@ expv
 max_shape(expv lshape, expv rshape, int select)
 {
     list l_lp, r_lp;
-    expv l_upper, l_lower, l_step;
-    expv r_upper, r_lower, r_step;
+    int l_upper, l_lower, l_step;
+    int r_upper, r_lower, r_step;
     int l_size, r_size;
 
     if(EXPR_LIST(lshape) == NULL ||
@@ -2454,26 +2454,34 @@ max_shape(expv lshape, expv rshape, int select)
         l_lp = LIST_NEXT(l_lp),
         r_lp = LIST_NEXT(r_lp)) {
 
-        l_upper = EXPR_ARG1(LIST_ITEM(l_lp));
-        l_lower = EXPR_ARG2(LIST_ITEM(l_lp));
-        l_step  = EXPR_ARG3(LIST_ITEM(l_lp));
+	l_upper = EXPV_INT_VALUE(EXPR_ARG1(LIST_ITEM(l_lp)));
+	l_lower = EXPV_INT_VALUE(EXPR_ARG2(LIST_ITEM(l_lp)));
+	l_step = !EXPR_ARG3(LIST_ITEM(l_lp)) ?
+	         1 : EXPV_INT_VALUE(EXPR_ARG3(LIST_ITEM(l_lp)));
 
-        r_upper = EXPR_ARG1(LIST_ITEM(r_lp));
-        r_lower = EXPR_ARG2(LIST_ITEM(r_lp));
-        r_step  = EXPR_ARG3(LIST_ITEM(r_lp));
+	r_upper = EXPV_INT_VALUE(EXPR_ARG1(LIST_ITEM(r_lp)));
+	r_lower = EXPV_INT_VALUE(EXPR_ARG2(LIST_ITEM(r_lp)));
+	r_step = !EXPR_ARG3(LIST_ITEM(r_lp)) ?
+	         1 : EXPV_INT_VALUE(EXPR_ARG3(LIST_ITEM(r_lp)));
 
-        l_size = EXPV_INT_VALUE(l_upper) - EXPV_INT_VALUE(l_lower) + 1;
-        if(l_step != NULL) {
-            l_size = (EXPV_INT_VALUE(l_step));
-        }
+	l_size = (l_upper - l_lower + l_step) / l_step;
+	r_size = (r_upper - r_lower + r_step) / r_step;
 
-        r_size = EXPV_INT_VALUE(r_upper) - EXPV_INT_VALUE(r_lower) + 1;
-        if(r_step != NULL) {
-            r_size = (EXPV_INT_VALUE(r_step));
-        }
+	if (l_size != r_size) return NULL;
 
-        if(l_step != r_step)
-            return NULL;
+	// completely wrong.
+/*         l_size = EXPV_INT_VALUE(l_upper) - EXPV_INT_VALUE(l_lower) + 1; */
+/*         if(l_step != NULL) { */
+/*             l_size = (EXPV_INT_VALUE(l_step)); */
+/*         } */
+
+/*         r_size = EXPV_INT_VALUE(r_upper) - EXPV_INT_VALUE(r_lower) + 1; */
+/*         if(r_step != NULL) { */
+/*             r_size = (EXPV_INT_VALUE(r_step)); */
+/*         } */
+
+/*         if(l_step != r_step) */
+/*             return NULL; */
     }
 
 ret:

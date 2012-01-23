@@ -449,6 +449,7 @@ compile_expression(expr x)
                 if(shape == NULL) {
                     delete_list(lshape);
                     delete_list(rshape);
+		    error("operation between non-conformable arrays. ");
                     goto err;
                 }
 
@@ -1628,7 +1629,13 @@ compile_function_call(ID f_id, expr args) {
             v = list3(FUNCTION_CALL, ID_ADDR(f_id), a,
                 expv_any_term(F_EXTFUNC, f_id));
             //EXPV_TYPE(v) = type_GNUMERIC_ALL;
-	    EXPV_TYPE(v) = IS_GENERIC_TYPE(tp) ? type_GNUMERIC_ALL : tp;
+	    if (IS_GENERIC_TYPE(tp) || TYPE_BASIC_TYPE(tp) == TYPE_UNKNOWN){
+	      EXPV_TYPE(v) = type_GNUMERIC_ALL;
+	    }
+	    else {
+	      EXPV_TYPE(v) = tp;
+	    }
+
             break;
 
         case P_THISPROC:
