@@ -53,10 +53,10 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_F.rng (Mon Nov 29 15:25:55 JST 2010)
+ * @version XcodeML_F.rng (Mon Jan 23 20:53:32 JST 2012)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
-public class XbfVar extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, xcodeml.binding.IXbVarRef, IRVisitable, IRNode, IXbfVarRefChoice, IXbfArgumentsChoice, IXbfDefModelExprChoice, IXbfAllocChoice1, IXbfDefModelLValueChoice {
+public class XbfVar extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, xcodeml.binding.IXbVarRef, IRVisitable, IRNode, IXbfVarRefChoice, IXbfDefModelExprChoice, IXbfArgumentsChoice, IXbfDefModelLValueChoice, IXbfAllocChoice1 {
     public static final String SCOPE_LOCAL = "local";
     public static final String SCOPE_GLOBAL = "global";
     public static final String SCOPE_PARAM = "param";

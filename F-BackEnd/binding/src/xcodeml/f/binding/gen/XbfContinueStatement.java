@@ -51,7 +51,7 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_F.rng (Mon Nov 29 15:25:57 JST 2010)
+ * @version XcodeML_F.rng (Mon Jan 23 20:53:32 JST 2012)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbfContinueStatement extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, xcodeml.binding.IXbStatement, IRVisitable, IRNode, IXbfDefModelStatementChoice {

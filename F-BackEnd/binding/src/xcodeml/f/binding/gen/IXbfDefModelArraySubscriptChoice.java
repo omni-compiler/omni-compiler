@@ -43,7 +43,7 @@ import org.xml.sax.SAXException;
  * <b>IXbfDefModelArraySubscriptChoice</b> is generated from XcodeML_F.rng by Relaxer.
  * Concrete classes of the interface are XbfIndexRange and XbfArrayIndex.
  *
- * @version XcodeML_F.rng (Mon Nov 29 15:25:55 JST 2010)
+ * @version XcodeML_F.rng (Mon Jan 23 20:53:32 JST 2012)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public interface IXbfDefModelArraySubscriptChoice extends IRVisitable, IRNode {

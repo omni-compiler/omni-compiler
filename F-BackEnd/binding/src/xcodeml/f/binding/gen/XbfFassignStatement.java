@@ -49,7 +49,7 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_F.rng (Mon Nov 29 15:25:57 JST 2010)
+ * @version XcodeML_F.rng (Mon Jan 23 20:53:32 JST 2012)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbfFassignStatement extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, xcodeml.binding.IXbStatement, IRVisitable, IRNode, IXbfDefModelStatementChoice {
@@ -239,14 +239,14 @@ public class XbfFassignStatement extends xcodeml.f.XmfObj implements java.io.Ser
         endlineno_ = URelaxer.getAttributePropertyAsString(element, "endlineno");
         rawlineno_ = URelaxer.getAttributePropertyAsString(element, "rawlineno");
         file_ = URelaxer.getAttributePropertyAsString(element, "file");
-        if (XbfFarrayRef.isMatch(stack)) {
-            setDefModelLValue(factory.createXbfFarrayRef(stack));
-        } else if (XbfFcharacterRef.isMatch(stack)) {
+        if (XbfFcharacterRef.isMatch(stack)) {
             setDefModelLValue(factory.createXbfFcharacterRef(stack));
         } else if (XbfFmemberRef.isMatch(stack)) {
             setDefModelLValue(factory.createXbfFmemberRef(stack));
         } else if (XbfFcoArrayRef.isMatch(stack)) {
             setDefModelLValue(factory.createXbfFcoArrayRef(stack));
+        } else if (XbfFarrayRef.isMatch(stack)) {
+            setDefModelLValue(factory.createXbfFarrayRef(stack));
         } else if (XbfVar.isMatch(stack)) {
             setDefModelLValue(factory.createXbfVar(stack));
         } else {
@@ -254,16 +254,28 @@ public class XbfFassignStatement extends xcodeml.f.XmfObj implements java.io.Ser
         }
         if (XbfFunctionCall.isMatch(stack)) {
             setDefModelExpr(factory.createXbfFunctionCall(stack));
+        } else if (XbfUserBinaryExpr.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfUserBinaryExpr(stack));
+        } else if (XbfFarrayRef.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfFarrayRef(stack));
         } else if (XbfFcharacterRef.isMatch(stack)) {
             setDefModelExpr(factory.createXbfFcharacterRef(stack));
         } else if (XbfFmemberRef.isMatch(stack)) {
             setDefModelExpr(factory.createXbfFmemberRef(stack));
         } else if (XbfFcoArrayRef.isMatch(stack)) {
             setDefModelExpr(factory.createXbfFcoArrayRef(stack));
+        } else if (XbfFcomplexConstant.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfFcomplexConstant(stack));
+        } else if (XbfUserUnaryExpr.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfUserUnaryExpr(stack));
         } else if (XbfFdoLoop.isMatch(stack)) {
             setDefModelExpr(factory.createXbfFdoLoop(stack));
-        } else if (XbfFarrayRef.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfFarrayRef(stack));
+        } else if (XbfFpowerExpr.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfFpowerExpr(stack));
+        } else if (XbfLogAndExpr.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfLogAndExpr(stack));
+        } else if (XbfLogEQVExpr.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfLogEQVExpr(stack));
         } else if (XbfFintConstant.isMatch(stack)) {
             setDefModelExpr(factory.createXbfFintConstant(stack));
         } else if (XbfFrealConstant.isMatch(stack)) {
@@ -272,56 +284,44 @@ public class XbfFassignStatement extends xcodeml.f.XmfObj implements java.io.Ser
             setDefModelExpr(factory.createXbfFcharacterConstant(stack));
         } else if (XbfFlogicalConstant.isMatch(stack)) {
             setDefModelExpr(factory.createXbfFlogicalConstant(stack));
-        } else if (XbfVar.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfVar(stack));
-        } else if (XbfVarRef.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfVarRef(stack));
         } else if (XbfFarrayConstructor.isMatch(stack)) {
             setDefModelExpr(factory.createXbfFarrayConstructor(stack));
         } else if (XbfFstructConstructor.isMatch(stack)) {
             setDefModelExpr(factory.createXbfFstructConstructor(stack));
-        } else if (XbfFcomplexConstant.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfFcomplexConstant(stack));
-        } else if (XbfUserBinaryExpr.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfUserBinaryExpr(stack));
-        } else if (XbfUserUnaryExpr.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfUserUnaryExpr(stack));
-        } else if (XbfPlusExpr.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfPlusExpr(stack));
-        } else if (XbfMulExpr.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfMulExpr(stack));
-        } else if (XbfDivExpr.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfDivExpr(stack));
-        } else if (XbfLogNEQExpr.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfLogNEQExpr(stack));
-        } else if (XbfLogGEExpr.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfLogGEExpr(stack));
-        } else if (XbfLogOrExpr.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfLogOrExpr(stack));
-        } else if (XbfLogEQVExpr.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfLogEQVExpr(stack));
-        } else if (XbfMinusExpr.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfMinusExpr(stack));
-        } else if (XbfFpowerExpr.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfFpowerExpr(stack));
-        } else if (XbfFconcatExpr.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfFconcatExpr(stack));
-        } else if (XbfLogEQExpr.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfLogEQExpr(stack));
-        } else if (XbfLogGTExpr.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfLogGTExpr(stack));
-        } else if (XbfLogLEExpr.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfLogLEExpr(stack));
-        } else if (XbfLogLTExpr.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfLogLTExpr(stack));
-        } else if (XbfLogAndExpr.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfLogAndExpr(stack));
-        } else if (XbfLogNEQVExpr.isMatch(stack)) {
-            setDefModelExpr(factory.createXbfLogNEQVExpr(stack));
+        } else if (XbfVar.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfVar(stack));
+        } else if (XbfVarRef.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfVarRef(stack));
         } else if (XbfUnaryMinusExpr.isMatch(stack)) {
             setDefModelExpr(factory.createXbfUnaryMinusExpr(stack));
         } else if (XbfLogNotExpr.isMatch(stack)) {
             setDefModelExpr(factory.createXbfLogNotExpr(stack));
+        } else if (XbfLogNEQExpr.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfLogNEQExpr(stack));
+        } else if (XbfPlusExpr.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfPlusExpr(stack));
+        } else if (XbfMinusExpr.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfMinusExpr(stack));
+        } else if (XbfMulExpr.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfMulExpr(stack));
+        } else if (XbfDivExpr.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfDivExpr(stack));
+        } else if (XbfFconcatExpr.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfFconcatExpr(stack));
+        } else if (XbfLogEQExpr.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfLogEQExpr(stack));
+        } else if (XbfLogGEExpr.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfLogGEExpr(stack));
+        } else if (XbfLogLEExpr.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfLogLEExpr(stack));
+        } else if (XbfLogLTExpr.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfLogLTExpr(stack));
+        } else if (XbfLogOrExpr.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfLogOrExpr(stack));
+        } else if (XbfLogGTExpr.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfLogGTExpr(stack));
+        } else if (XbfLogNEQVExpr.isMatch(stack)) {
+            setDefModelExpr(factory.createXbfLogNEQVExpr(stack));
         } else {
             throw (new IllegalArgumentException());
         }
@@ -867,13 +867,13 @@ public class XbfFassignStatement extends xcodeml.f.XmfObj implements java.io.Ser
         RStack target = new RStack(element);
         boolean $match$ = false;
         Element child;
-        if (XbfFarrayRef.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbfFcharacterRef.isMatchHungry(target)) {
+        if (XbfFcharacterRef.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbfFmemberRef.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbfFcoArrayRef.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbfFarrayRef.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbfVar.isMatchHungry(target)) {
             $match$ = true;
@@ -882,15 +882,27 @@ public class XbfFassignStatement extends xcodeml.f.XmfObj implements java.io.Ser
         }
         if (XbfFunctionCall.isMatchHungry(target)) {
             $match$ = true;
+        } else if (XbfUserBinaryExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbfFarrayRef.isMatchHungry(target)) {
+            $match$ = true;
         } else if (XbfFcharacterRef.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbfFmemberRef.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbfFcoArrayRef.isMatchHungry(target)) {
             $match$ = true;
+        } else if (XbfFcomplexConstant.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbfUserUnaryExpr.isMatchHungry(target)) {
+            $match$ = true;
         } else if (XbfFdoLoop.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbfFarrayRef.isMatchHungry(target)) {
+        } else if (XbfFpowerExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbfLogAndExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbfLogEQVExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbfFintConstant.isMatchHungry(target)) {
             $match$ = true;
@@ -900,55 +912,43 @@ public class XbfFassignStatement extends xcodeml.f.XmfObj implements java.io.Ser
             $match$ = true;
         } else if (XbfFlogicalConstant.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbfVar.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbfVarRef.isMatchHungry(target)) {
-            $match$ = true;
         } else if (XbfFarrayConstructor.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbfFstructConstructor.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbfFcomplexConstant.isMatchHungry(target)) {
+        } else if (XbfVar.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbfUserBinaryExpr.isMatchHungry(target)) {
+        } else if (XbfVarRef.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbfUserUnaryExpr.isMatchHungry(target)) {
+        } else if (XbfUnaryMinusExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbfLogNotExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbfLogNEQExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbfPlusExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbfMinusExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbfMulExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbfDivExpr.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbfLogNEQExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbfLogGEExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbfLogOrExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbfLogEQVExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbfMinusExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbfFpowerExpr.isMatchHungry(target)) {
-            $match$ = true;
         } else if (XbfFconcatExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbfLogEQExpr.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbfLogGTExpr.isMatchHungry(target)) {
+        } else if (XbfLogGEExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbfLogLEExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbfLogLTExpr.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbfLogAndExpr.isMatchHungry(target)) {
+        } else if (XbfLogOrExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbfLogGTExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbfLogNEQVExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbfUnaryMinusExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbfLogNotExpr.isMatchHungry(target)) {
             $match$ = true;
         } else {
             return (false);

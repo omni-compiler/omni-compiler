@@ -582,9 +582,9 @@
 
 <define name="coShape">
   <element name="coShape" java:extends="xcodeml.f.XmfObj">
-    <zeroOrMore>
+    <oneOrMore>
       <ref name="indexRange"/>
-    </zeroOrMore>
+    </oneOrMore>
   </element>
 </define>
 
@@ -1601,7 +1601,9 @@
       <ref name="FmemberRef"/>
     </choice>
     <ref name="defModelArraySubscriptSequence0"/>
-    <ref name="coShape"/>
+    <optional>
+      <ref name="coShape"/>
+    </optional>
   </element>
 </define>
 

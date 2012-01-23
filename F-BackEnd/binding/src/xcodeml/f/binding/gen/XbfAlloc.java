@@ -45,7 +45,9 @@ import org.xml.sax.*;
  *     <ref name="FmemberRef"/>
  *   </choice>
  *   <ref name="defModelArraySubscriptSequence0"/>
- *   <ref name="coShape"/>
+ *   <optional>
+ *     <ref name="coShape"/>
+ *   </optional>
  * </element>
  * -->
  * <!-- for javadoc -->
@@ -55,11 +57,13 @@ import org.xml.sax.*;
  *     &lt;ref name="FmemberRef"/&gt;
  *   &lt;/choice&gt;
  *   &lt;ref name="defModelArraySubscriptSequence0"/&gt;
- *   &lt;ref name="coShape"/&gt;
+ *   &lt;optional&gt;
+ *     &lt;ref name="coShape"/&gt;
+ *   &lt;/optional&gt;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_F.rng (Mon Nov 29 15:25:56 JST 2010)
+ * @version XcodeML_F.rng (Mon Jan 23 20:53:33 JST 2012)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbfAlloc extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, IRVisitable, IRNode {
@@ -261,7 +265,9 @@ public class XbfAlloc extends xcodeml.f.XmfObj implements java.io.Serializable, 
                 break;
             }
         }
-        setCoShape(factory.createXbfCoShape(stack));
+        if (XbfCoShape.isMatch(stack)) {
+            setCoShape(factory.createXbfCoShape(stack));
+        }
     }
 
     /**
@@ -293,7 +299,9 @@ public class XbfAlloc extends xcodeml.f.XmfObj implements java.io.Serializable, 
             IXbfDefModelArraySubscriptChoice value = (IXbfDefModelArraySubscriptChoice)this.defModelArraySubscript_.get(i);
             value.makeElement(element);
         }
-        this.coShape_.makeElement(element);
+        if (this.coShape_ != null) {
+            this.coShape_.makeElement(element);
+        }
         parent.appendChild(element);
     }
 
@@ -591,7 +599,9 @@ public class XbfAlloc extends xcodeml.f.XmfObj implements java.io.Serializable, 
             IXbfDefModelArraySubscriptChoice value = (IXbfDefModelArraySubscriptChoice)this.defModelArraySubscript_.get(i);
             value.makeTextElement(buffer);
         }
-        coShape_.makeTextElement(buffer);
+        if (coShape_ != null) {
+            coShape_.makeTextElement(buffer);
+        }
         buffer.append("</alloc>");
     }
 
@@ -617,7 +627,9 @@ public class XbfAlloc extends xcodeml.f.XmfObj implements java.io.Serializable, 
             IXbfDefModelArraySubscriptChoice value = (IXbfDefModelArraySubscriptChoice)this.defModelArraySubscript_.get(i);
             value.makeTextElement(buffer);
         }
-        coShape_.makeTextElement(buffer);
+        if (coShape_ != null) {
+            coShape_.makeTextElement(buffer);
+        }
         buffer.write("</alloc>");
     }
 
@@ -642,7 +654,9 @@ public class XbfAlloc extends xcodeml.f.XmfObj implements java.io.Serializable, 
             IXbfDefModelArraySubscriptChoice value = (IXbfDefModelArraySubscriptChoice)this.defModelArraySubscript_.get(i);
             value.makeTextElement(buffer);
         }
-        coShape_.makeTextElement(buffer);
+        if (coShape_ != null) {
+            coShape_.makeTextElement(buffer);
+        }
         buffer.print("</alloc>");
     }
 
@@ -772,10 +786,8 @@ public class XbfAlloc extends xcodeml.f.XmfObj implements java.io.Serializable, 
                 break;
             }
         }
-        if (!XbfCoShape.isMatchHungry(target)) {
-            return (false);
+        if (XbfCoShape.isMatchHungry(target)) {
         }
-        $match$ = true;
         if (!target.isEmptyElement()) {
             return (false);
         }

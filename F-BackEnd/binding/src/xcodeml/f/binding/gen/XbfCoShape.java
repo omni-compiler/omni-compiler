@@ -40,20 +40,20 @@ import org.xml.sax.*;
  * 
  * <!-- for programmer
  * <element java:extends="xcodeml.f.XmfObj" name="coShape">
- *   <zeroOrMore>
+ *   <oneOrMore>
  *     <ref name="indexRange"/>
- *   </zeroOrMore>
+ *   </oneOrMore>
  * </element>
  * -->
  * <!-- for javadoc -->
  * <pre> &lt;element java:extends="xcodeml.f.XmfObj" name="coShape"&gt;
- *   &lt;zeroOrMore&gt;
+ *   &lt;oneOrMore&gt;
  *     &lt;ref name="indexRange"/&gt;
- *   &lt;/zeroOrMore&gt;
+ *   &lt;/oneOrMore&gt;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_F.rng (Mon Nov 29 15:25:55 JST 2010)
+ * @version XcodeML_F.rng (Mon Jan 23 20:53:32 JST 2012)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbfCoShape extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, IRVisitable, IRNode {
@@ -658,6 +658,10 @@ public class XbfCoShape extends xcodeml.f.XmfObj implements java.io.Serializable
         RStack target = new RStack(element);
         boolean $match$ = false;
         Element child;
+        if (!XbfIndexRange.isMatchHungry(target)) {
+            return (false);
+        }
+        $match$ = true;
         while (true) {
             if (!XbfIndexRange.isMatchHungry(target)) {
                 break;

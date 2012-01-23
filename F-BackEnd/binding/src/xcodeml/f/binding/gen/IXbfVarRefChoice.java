@@ -41,9 +41,9 @@ import org.xml.sax.SAXException;
 
 /**
  * <b>IXbfVarRefChoice</b> is generated from XcodeML_F.rng by Relaxer.
- * Concrete classes of the interface are XbfFarrayRef, XbfFcharacterRef, XbfFmemberRef, XbfFcoArrayRef and XbfVar.
+ * Concrete classes of the interface are XbfFcharacterRef, XbfFmemberRef, XbfFcoArrayRef, XbfFarrayRef and XbfVar.
  *
- * @version XcodeML_F.rng (Mon Nov 29 15:25:55 JST 2010)
+ * @version XcodeML_F.rng (Mon Jan 23 20:53:32 JST 2012)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public interface IXbfVarRefChoice extends IRVisitable, IRNode {

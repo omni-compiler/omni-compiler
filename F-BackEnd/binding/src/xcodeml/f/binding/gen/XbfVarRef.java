@@ -55,10 +55,10 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_F.rng (Mon Nov 29 15:25:55 JST 2010)
+ * @version XcodeML_F.rng (Mon Jan 23 20:53:32 JST 2012)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
-public class XbfVarRef extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, xcodeml.binding.IXbTypedExpr, IRVisitable, IRNode, IXbfArgumentsChoice, IXbfDefModelExprChoice, IXbfVarListChoice {
+public class XbfVarRef extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, xcodeml.binding.IXbTypedExpr, IRVisitable, IRNode, IXbfDefModelExprChoice, IXbfArgumentsChoice, IXbfVarListChoice {
     private String type_;
     private IXbfVarRefChoice content_;
     private IRNode parentRNode_;
@@ -232,14 +232,14 @@ public class XbfVarRef extends xcodeml.f.XmfObj implements java.io.Serializable,
         IXcodeML_FFactory factory = XcodeML_FFactory.getFactory();
         RStack stack = new RStack(element);
         type_ = URelaxer.getAttributePropertyAsString(element, "type");
-        if (XbfFarrayRef.isMatch(stack)) {
-            setContent(factory.createXbfFarrayRef(stack));
-        } else if (XbfFcharacterRef.isMatch(stack)) {
+        if (XbfFcharacterRef.isMatch(stack)) {
             setContent(factory.createXbfFcharacterRef(stack));
         } else if (XbfFmemberRef.isMatch(stack)) {
             setContent(factory.createXbfFmemberRef(stack));
         } else if (XbfFcoArrayRef.isMatch(stack)) {
             setContent(factory.createXbfFcoArrayRef(stack));
+        } else if (XbfFarrayRef.isMatch(stack)) {
+            setContent(factory.createXbfFarrayRef(stack));
         } else if (XbfVar.isMatch(stack)) {
             setContent(factory.createXbfVar(stack));
         } else {
@@ -594,13 +594,13 @@ public class XbfVarRef extends xcodeml.f.XmfObj implements java.io.Serializable,
         RStack target = new RStack(element);
         boolean $match$ = false;
         Element child;
-        if (XbfFarrayRef.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbfFcharacterRef.isMatchHungry(target)) {
+        if (XbfFcharacterRef.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbfFmemberRef.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbfFcoArrayRef.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbfFarrayRef.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbfVar.isMatchHungry(target)) {
             $match$ = true;

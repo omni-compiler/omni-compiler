@@ -67,10 +67,10 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_F.rng (Mon Nov 29 15:25:55 JST 2010)
+ * @version XcodeML_F.rng (Mon Jan 23 20:53:32 JST 2012)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
-public class XbfFarrayRef extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, IXbfFarrayRefChoice, xcodeml.binding.IXbTypedExpr, IRVisitable, IRNode, IXbfVarRefChoice, IXbfArgumentsChoice, IXbfDefModelExprChoice, IXbfDefModelLValueChoice {
+public class XbfFarrayRef extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, IXbfVarRefChoice, IXbfFarrayRefChoice, xcodeml.binding.IXbTypedExpr, IRVisitable, IRNode, IXbfDefModelExprChoice, IXbfArgumentsChoice, IXbfDefModelLValueChoice {
     private String type_;
     private XbfVarRef varRef_;
     // List<IXbfFarrayRefChoice>
@@ -254,14 +254,14 @@ public class XbfFarrayRef extends xcodeml.f.XmfObj implements java.io.Serializab
         setVarRef(factory.createXbfVarRef(stack));
         content_.clear();
         while (true) {
-            if (XbfIndexRange.isMatch(stack)) {
-                addContent(factory.createXbfIndexRange(stack));
-            } else if (XbfFarrayRef.isMatch(stack)) {
+            if (XbfFarrayRef.isMatch(stack)) {
                 addContent(factory.createXbfFarrayRef(stack));
-            } else if (XbfArrayIndex.isMatch(stack)) {
-                addContent(factory.createXbfArrayIndex(stack));
             } else if (XbfFarrayConstructor.isMatch(stack)) {
                 addContent(factory.createXbfFarrayConstructor(stack));
+            } else if (XbfIndexRange.isMatch(stack)) {
+                addContent(factory.createXbfIndexRange(stack));
+            } else if (XbfArrayIndex.isMatch(stack)) {
+                addContent(factory.createXbfArrayIndex(stack));
             } else {
                 break;
             }
@@ -788,13 +788,13 @@ public class XbfFarrayRef extends xcodeml.f.XmfObj implements java.io.Serializab
         }
         $match$ = true;
         while (true) {
-            if (XbfIndexRange.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfFarrayRef.isMatchHungry(target)) {
-                $match$ = true;
-            } else if (XbfArrayIndex.isMatchHungry(target)) {
+            if (XbfFarrayRef.isMatchHungry(target)) {
                 $match$ = true;
             } else if (XbfFarrayConstructor.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfIndexRange.isMatchHungry(target)) {
+                $match$ = true;
+            } else if (XbfArrayIndex.isMatchHungry(target)) {
                 $match$ = true;
             } else {
                 break;

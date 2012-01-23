@@ -41,9 +41,9 @@ import org.xml.sax.SAXException;
 
 /**
  * <b>IXbfDefModelStatementChoice</b> is generated from XcodeML_F.rng by Relaxer.
- * Concrete classes of the interface are XbfFdoStatement, XbfFselectCaseStatement, XbfFcaseLabel, XbfGotoStatement, XbfFstopStatement, XbfFpauseStatement, XbfExprStatement, XbfFifStatement, XbfFdoWhileStatement, XbfFcycleStatement, XbfFexitStatement, XbfStatementLabel, XbfFreadStatement, XbfFwriteStatement, XbfFprintStatement, XbfFrewindStatement, XbfFendFileStatement, XbfFbackspaceStatement, XbfFopenStatement, XbfFcloseStatement, XbfFinquireStatement, XbfFformatDecl, XbfFentryDecl, XbfFallocateStatement, XbfFdeallocateStatement, XbfFcontainsStatement, XbfContinueStatement, XbfFreturnStatement, XbfFwhereStatement, XbfFdataDecl, XbfFnullifyStatement, XbfFpragmaStatement, XbfText, XbfFassignStatement and XbfFpointerAssignStatement.
+ * Concrete classes of the interface are XbfGotoStatement, XbfFpauseStatement, XbfFcycleStatement, XbfFreadStatement, XbfFcloseStatement, XbfFopenStatement, XbfFassignStatement, XbfExprStatement, XbfFpointerAssignStatement, XbfFifStatement, XbfFdoStatement, XbfFdoWhileStatement, XbfContinueStatement, XbfFexitStatement, XbfFreturnStatement, XbfStatementLabel, XbfFselectCaseStatement, XbfFcaseLabel, XbfFwhereStatement, XbfFstopStatement, XbfFwriteStatement, XbfFprintStatement, XbfFrewindStatement, XbfFendFileStatement, XbfFbackspaceStatement, XbfFinquireStatement, XbfFformatDecl, XbfFdataDecl, XbfFentryDecl, XbfFallocateStatement, XbfFdeallocateStatement, XbfFnullifyStatement, XbfFpragmaStatement, XbfFcontainsStatement and XbfText.
  *
- * @version XcodeML_F.rng (Mon Nov 29 15:25:57 JST 2010)
+ * @version XcodeML_F.rng (Mon Jan 23 20:53:33 JST 2012)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public interface IXbfDefModelStatementChoice extends IRVisitable, IRNode {

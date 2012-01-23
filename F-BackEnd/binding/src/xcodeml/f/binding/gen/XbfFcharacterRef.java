@@ -57,10 +57,10 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_F.rng (Mon Nov 29 15:25:55 JST 2010)
+ * @version XcodeML_F.rng (Mon Jan 23 20:53:32 JST 2012)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
-public class XbfFcharacterRef extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, IXbfVarRefChoice, xcodeml.binding.IXbTypedExpr, IRVisitable, IRNode, IXbfArgumentsChoice, IXbfDefModelExprChoice, IXbfDefModelLValueChoice {
+public class XbfFcharacterRef extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, xcodeml.binding.IXbTypedExpr, IRVisitable, IRNode, IXbfVarRefChoice, IXbfDefModelExprChoice, IXbfArgumentsChoice, IXbfDefModelLValueChoice {
     private String type_;
     private XbfVarRef varRef_;
     private XbfIndexRange indexRange_;

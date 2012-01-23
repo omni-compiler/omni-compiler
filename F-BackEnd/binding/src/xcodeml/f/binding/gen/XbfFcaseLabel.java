@@ -65,7 +65,7 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_F.rng (Mon Nov 29 15:25:56 JST 2010)
+ * @version XcodeML_F.rng (Mon Jan 23 20:53:33 JST 2012)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbfFcaseLabel extends xcodeml.f.XmfObj implements java.io.Serializable, Cloneable, xcodeml.binding.IXbStatement, IRVisitable, IRNode, IXbfDefModelStatementChoice {
@@ -263,10 +263,10 @@ public class XbfFcaseLabel extends xcodeml.f.XmfObj implements java.io.Serializa
         constructName_ = URelaxer.getAttributePropertyAsString(element, "construct_name");
         content_.clear();
         while (true) {
-            if (XbfIndexRange.isMatch(stack)) {
-                addContent(factory.createXbfIndexRange(stack));
-            } else if (XbfValue.isMatch(stack)) {
+            if (XbfValue.isMatch(stack)) {
                 addContent(factory.createXbfValue(stack));
+            } else if (XbfIndexRange.isMatch(stack)) {
+                addContent(factory.createXbfIndexRange(stack));
             } else {
                 break;
             }
@@ -1006,9 +1006,9 @@ public class XbfFcaseLabel extends xcodeml.f.XmfObj implements java.io.Serializa
         boolean $match$ = false;
         Element child;
         while (true) {
-            if (XbfIndexRange.isMatchHungry(target)) {
+            if (XbfValue.isMatchHungry(target)) {
                 $match$ = true;
-            } else if (XbfValue.isMatchHungry(target)) {
+            } else if (XbfIndexRange.isMatchHungry(target)) {
                 $match$ = true;
             } else {
                 break;

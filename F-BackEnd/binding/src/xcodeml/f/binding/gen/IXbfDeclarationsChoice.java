@@ -41,9 +41,9 @@ import org.xml.sax.SAXException;
 
 /**
  * <b>IXbfDeclarationsChoice</b> is generated from XcodeML_F.rng by Relaxer.
- * Concrete classes of the interface are XbfFinterfaceDecl, XbfVarDecl, XbfFuseDecl, XbfFuseOnlyDecl, XbfExternDecl, XbfFnamelistDecl, XbfFcommonDecl, XbfFstructDecl, XbfFentryDecl, XbfFequivalenceDecl, XbfFdataDecl and XbfFpragmaStatement.
+ * Concrete classes of the interface are XbfVarDecl, XbfExternDecl, XbfFuseDecl, XbfFuseOnlyDecl, XbfFinterfaceDecl, XbfFnamelistDecl, XbfFequivalenceDecl, XbfFcommonDecl, XbfFstructDecl, XbfFentryDecl, XbfFdataDecl and XbfFpragmaStatement.
  *
- * @version XcodeML_F.rng (Mon Nov 29 15:25:56 JST 2010)
+ * @version XcodeML_F.rng (Mon Jan 23 20:53:32 JST 2012)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public interface IXbfDeclarationsChoice extends IRVisitable, IRNode {

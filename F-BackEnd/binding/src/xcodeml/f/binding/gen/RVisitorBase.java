@@ -26,7 +26,7 @@ package xcodeml.f.binding.gen;
 import xcodeml.binding.*;
 
 /**
- * @version XcodeML_F.rng 1.0 (Mon Nov 29 15:25:59 JST 2010)
+ * @version XcodeML_F.rng 1.0 (Mon Jan 23 20:53:33 JST 2012)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class RVisitorBase implements IRVisitor {
@@ -163,7 +163,7 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbfFunctionCall visitable) {
+    public boolean enter(XbfFarrayRef visitable) {
         return (true);
     }
 
@@ -172,43 +172,7 @@ public class RVisitorBase implements IRVisitor {
      *
      * @param visitable
      */
-    public void leave(XbfFunctionCall visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbfArguments visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfArguments visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbfFcharacterRef visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfFcharacterRef visitable) {
+    public void leave(XbfFarrayRef visitable) {
     }
 
     /**
@@ -235,7 +199,7 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbfFarrayRef visitable) {
+    public boolean enter(XbfFcharacterRef visitable) {
         return (true);
     }
 
@@ -244,7 +208,7 @@ public class RVisitorBase implements IRVisitor {
      *
      * @param visitable
      */
-    public void leave(XbfFarrayRef visitable) {
+    public void leave(XbfFcharacterRef visitable) {
     }
 
     /**
@@ -325,42 +289,6 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbfArrayIndex visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfArrayIndex visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbfFarrayConstructor visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfFarrayConstructor visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
     public boolean enter(XbfFmemberRef visitable) {
         return (true);
     }
@@ -397,6 +325,24 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
+    public boolean enter(XbfArrayIndex visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfArrayIndex visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
     public boolean enter(XbfVar visitable) {
         return (true);
     }
@@ -407,6 +353,24 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      */
     public void leave(XbfVar visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbfFarrayConstructor visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfFarrayConstructor visitable) {
     }
 
     /**
@@ -461,24 +425,6 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      */
     public void leave(XbfRepeatCount visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbfNamedValue visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfNamedValue visitable) {
     }
 
     /**
@@ -595,7 +541,7 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbfPlusExpr visitable) {
+    public boolean enter(XbfFunctionCall visitable) {
         return (true);
     }
 
@@ -604,7 +550,7 @@ public class RVisitorBase implements IRVisitor {
      *
      * @param visitable
      */
-    public void leave(XbfPlusExpr visitable) {
+    public void leave(XbfFunctionCall visitable) {
     }
 
     /**
@@ -613,7 +559,7 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbfMulExpr visitable) {
+    public boolean enter(XbfArguments visitable) {
         return (true);
     }
 
@@ -622,7 +568,7 @@ public class RVisitorBase implements IRVisitor {
      *
      * @param visitable
      */
-    public void leave(XbfMulExpr visitable) {
+    public void leave(XbfArguments visitable) {
     }
 
     /**
@@ -631,7 +577,7 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbfLogNEQExpr visitable) {
+    public boolean enter(XbfNamedValue visitable) {
         return (true);
     }
 
@@ -640,61 +586,7 @@ public class RVisitorBase implements IRVisitor {
      *
      * @param visitable
      */
-    public void leave(XbfLogNEQExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbfLogGEExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfLogGEExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbfLogOrExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfLogOrExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbfUserBinaryExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfUserBinaryExpr visitable) {
+    public void leave(XbfNamedValue visitable) {
     }
 
     /**
@@ -721,6 +613,42 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
+    public boolean enter(XbfUserBinaryExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfUserBinaryExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbfLogNotExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfLogNotExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
     public boolean enter(XbfFfunction visitable) {
         return (true);
     }
@@ -739,7 +667,7 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbfDivExpr visitable) {
+    public boolean enter(XbfLogNEQExpr visitable) {
         return (true);
     }
 
@@ -748,7 +676,7 @@ public class RVisitorBase implements IRVisitor {
      *
      * @param visitable
      */
-    public void leave(XbfDivExpr visitable) {
+    public void leave(XbfLogNEQExpr visitable) {
     }
 
     /**
@@ -757,7 +685,7 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbfLogEQVExpr visitable) {
+    public boolean enter(XbfLogGTExpr visitable) {
         return (true);
     }
 
@@ -766,7 +694,43 @@ public class RVisitorBase implements IRVisitor {
      *
      * @param visitable
      */
-    public void leave(XbfLogEQVExpr visitable) {
+    public void leave(XbfLogGTExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbfLogNEQVExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfLogNEQVExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbfPlusExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfPlusExpr visitable) {
     }
 
     /**
@@ -785,6 +749,42 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      */
     public void leave(XbfMinusExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbfMulExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfMulExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbfDivExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfDivExpr visitable) {
     }
 
     /**
@@ -847,7 +847,7 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbfLogGTExpr visitable) {
+    public boolean enter(XbfLogGEExpr visitable) {
         return (true);
     }
 
@@ -856,7 +856,7 @@ public class RVisitorBase implements IRVisitor {
      *
      * @param visitable
      */
-    public void leave(XbfLogGTExpr visitable) {
+    public void leave(XbfLogGEExpr visitable) {
     }
 
     /**
@@ -919,7 +919,7 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbfLogNEQVExpr visitable) {
+    public boolean enter(XbfLogOrExpr visitable) {
         return (true);
     }
 
@@ -928,7 +928,25 @@ public class RVisitorBase implements IRVisitor {
      *
      * @param visitable
      */
-    public void leave(XbfLogNEQVExpr visitable) {
+    public void leave(XbfLogOrExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbfLogEQVExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfLogEQVExpr visitable) {
     }
 
     /**
@@ -947,24 +965,6 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      */
     public void leave(XbfUnaryMinusExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbfLogNotExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfLogNotExpr visitable) {
     }
 
     /**
@@ -1135,60 +1135,6 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbfFinterfaceDecl visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfFinterfaceDecl visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbfFfunctionDecl visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfFfunctionDecl visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbfFmoduleProcedureDecl visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfFmoduleProcedureDecl visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
     public boolean enter(XbfVarDecl visitable) {
         return (true);
     }
@@ -1199,6 +1145,24 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      */
     public void leave(XbfVarDecl visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbfExternDecl visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfExternDecl visitable) {
     }
 
     /**
@@ -1279,7 +1243,7 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbfExternDecl visitable) {
+    public boolean enter(XbfFinterfaceDecl visitable) {
         return (true);
     }
 
@@ -1288,7 +1252,43 @@ public class RVisitorBase implements IRVisitor {
      *
      * @param visitable
      */
-    public void leave(XbfExternDecl visitable) {
+    public void leave(XbfFinterfaceDecl visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbfFfunctionDecl visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfFfunctionDecl visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbfFmoduleProcedureDecl visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfFmoduleProcedureDecl visitable) {
     }
 
     /**
@@ -1325,6 +1325,24 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      */
     public void leave(XbfVarList visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbfFequivalenceDecl visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfFequivalenceDecl visitable) {
     }
 
     /**
@@ -1379,24 +1397,6 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      */
     public void leave(XbfFentryDecl visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbfFequivalenceDecl visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfFequivalenceDecl visitable) {
     }
 
     /**
@@ -1477,60 +1477,6 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbfFdoStatement visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfFdoStatement visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbfFselectCaseStatement visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfFselectCaseStatement visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbfFcaseLabel visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfFcaseLabel visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
     public boolean enter(XbfGotoStatement visitable) {
         return (true);
     }
@@ -1541,24 +1487,6 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      */
     public void leave(XbfGotoStatement visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbfFstopStatement visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfFstopStatement visitable) {
     }
 
     /**
@@ -1585,6 +1513,114 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
+    public boolean enter(XbfFcycleStatement visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfFcycleStatement visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbfFreadStatement visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfFreadStatement visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbfNamedValueList visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfNamedValueList visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbfFcloseStatement visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfFcloseStatement visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbfFopenStatement visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfFopenStatement visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbfFassignStatement visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfFassignStatement visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
     public boolean enter(XbfExprStatement visitable) {
         return (true);
     }
@@ -1595,6 +1631,24 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      */
     public void leave(XbfExprStatement visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbfFpointerAssignStatement visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfFpointerAssignStatement visitable) {
     }
 
     /**
@@ -1675,6 +1729,24 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
+    public boolean enter(XbfFdoStatement visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfFdoStatement visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
     public boolean enter(XbfFdoWhileStatement visitable) {
         return (true);
     }
@@ -1693,7 +1765,7 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbfFcycleStatement visitable) {
+    public boolean enter(XbfContinueStatement visitable) {
         return (true);
     }
 
@@ -1702,7 +1774,7 @@ public class RVisitorBase implements IRVisitor {
      *
      * @param visitable
      */
-    public void leave(XbfFcycleStatement visitable) {
+    public void leave(XbfContinueStatement visitable) {
     }
 
     /**
@@ -1729,6 +1801,24 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
+    public boolean enter(XbfFreturnStatement visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfFreturnStatement visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
     public boolean enter(XbfStatementLabel visitable) {
         return (true);
     }
@@ -1747,7 +1837,7 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbfFreadStatement visitable) {
+    public boolean enter(XbfFselectCaseStatement visitable) {
         return (true);
     }
 
@@ -1756,7 +1846,7 @@ public class RVisitorBase implements IRVisitor {
      *
      * @param visitable
      */
-    public void leave(XbfFreadStatement visitable) {
+    public void leave(XbfFselectCaseStatement visitable) {
     }
 
     /**
@@ -1765,7 +1855,7 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbfNamedValueList visitable) {
+    public boolean enter(XbfFcaseLabel visitable) {
         return (true);
     }
 
@@ -1774,7 +1864,43 @@ public class RVisitorBase implements IRVisitor {
      *
      * @param visitable
      */
-    public void leave(XbfNamedValueList visitable) {
+    public void leave(XbfFcaseLabel visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbfFwhereStatement visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfFwhereStatement visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbfFstopStatement visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfFstopStatement visitable) {
     }
 
     /**
@@ -1873,42 +1999,6 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbfFopenStatement visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfFopenStatement visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbfFcloseStatement visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfFcloseStatement visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
     public boolean enter(XbfFinquireStatement visitable) {
         return (true);
     }
@@ -1999,78 +2089,6 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbfFcontainsStatement visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfFcontainsStatement visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbfContinueStatement visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfContinueStatement visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbfFreturnStatement visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfFreturnStatement visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbfFwhereStatement visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfFwhereStatement visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
     public boolean enter(XbfFnullifyStatement visitable) {
         return (true);
     }
@@ -2089,6 +2107,24 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
+    public boolean enter(XbfFcontainsStatement visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfFcontainsStatement visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
     public boolean enter(XbfText visitable) {
         return (true);
     }
@@ -2099,42 +2135,6 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      */
     public void leave(XbfText visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbfFassignStatement visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfFassignStatement visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbfFpointerAssignStatement visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfFpointerAssignStatement visitable) {
     }
 
     /**
@@ -2233,24 +2233,6 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbfFdoStatementSequence visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbfFdoStatementSequence visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
     public boolean enter(XbfGotoStatementSequence visitable) {
         return (true);
     }
@@ -2261,5 +2243,23 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      */
     public void leave(XbfGotoStatementSequence visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbfFdoStatementSequence visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbfFdoStatementSequence visitable) {
     }
 }
