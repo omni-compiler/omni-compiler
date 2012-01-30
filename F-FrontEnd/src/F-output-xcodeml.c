@@ -332,6 +332,9 @@ xtag(enum expr_code code)
     case OMP_PRAGMA:
       return "OMPPragma";
 
+    case XMP_PRAGMA:
+      return "XMPPragma";
+
     default:
       fatal("unknown exprcode : %d", code);
     }
@@ -2299,7 +2302,7 @@ static void
 outx_OMP_dir_string(int l,expv v)
 {
   char *s;
-
+  s = NULL;
   if(EXPV_CODE(v) != INT_CONSTANT) 
     fatal("outx_OMP_dir_string: not INT_CONSTANT");
   switch(EXPV_INT_VALUE(v)){
@@ -2327,7 +2330,7 @@ outx_OMP_dir_clause_list(int l,expv v)
   struct list_node *lp;
   const int l1 = l + 1;
   expv vv,dir;
-  char *s;
+  char *s = NULL;
 
   if(EXPV_CODE(v) != LIST) 
     fatal("outx_OMP_dir_clause_list: not LIST");
@@ -2375,6 +2378,80 @@ outx_OMP_dir_clause_list(int l,expv v)
   }
   outx_printi(l,"</list>\n");
 }
+
+
+/**
+ * output XMP pragma statement
+ */
+static void outx_XMP_dir_string(int l,expv v);
+static void outx_XMP_dir_clause_list(int l,expv v);
+
+static void
+outx_XMP_pragma(int l, expv v)
+{
+    const int l1 = l + 1;
+    outx_tagOfStatement(l, v);
+    outx_XMP_dir_string(l1,EXPR_ARG1(v));
+    outx_XMP_dir_clause_list(l1,EXPR_ARG2(v));
+
+    /* output body */
+    if(EXPR_HAS_ARG3(v))
+	outx_expv_withListTag(l1, EXPR_ARG3(v));
+    outx_expvClose(l, v);
+}
+
+static void
+outx_XMP_dir_string(int l,expv v)
+{
+  char *s = NULL;
+
+  if(EXPV_CODE(v) != INT_CONSTANT) 
+    fatal("outx_XMP_dir_string: not INT_CONSTANT");
+  switch(EXPV_INT_VALUE(v)){
+  case XMP_NODES: s = "NODES"; break;
+  case XMP_TEMPLATE: s = "TEMPLATE"; break;
+  case XMP_DISTRIBUTE: s = "DISTRIBUTE"; break;
+  case XMP_ALIGN: s = "ALIGN"; break;
+  case XMP_SHADOW: s = "SHADOW"; break;
+  case XMP_TASK: s = "TASK"; break;
+  case XMP_TASKS: s = "TASKS"; break;
+  case XMP_LOOP: s = "LOOP"; break;
+  case XMP_REFLECT: s = "REFLECT"; break;
+  case XMP_GMOVE: s = "GMOVE"; break;
+  case XMP_BARRIER: s = "BARRIER"; break;
+  case XMP_REDUCTION: s = "REDUCTION"; break;
+  case XMP_BCAST: s = "BCAST"; break;
+  case XMP_COARRAY: s = "COARRAY"; break;
+  case XMP_TEMPLATE_FIX: s = "TEMPLATE_FIX"; break;
+
+  default:
+    fatal("out_XMP_dir_string: unknown value=%\n",EXPV_INT_VALUE(v));
+  }
+  outx_printi(l, "<string>%s</string>\n", s);
+}
+
+void
+outx_XMP_dir_clause_list(int l,expv v)
+{
+  struct list_node *lp;
+  const int l1 = l + 1;
+  expv vv;
+
+  if(EXPV_CODE(v) != LIST) 
+    fatal("outx_XMP_dir_clause_list: not LIST");
+  outx_printi(l,"<list>\n");
+  FOR_ITEMS_IN_LIST(lp, v) {
+      vv = LIST_ITEM(lp);
+      if(vv == NULL) 
+	  outx_printi(l1,"<list/>\n");
+      else if(EXPR_CODE(vv) == LIST)
+	  outx_XMP_dir_clause_list(l1,vv);
+      else
+	  outx_expv(l1,vv);
+  }
+  outx_printi(l,"</list>\n");
+}
+
 
 /**
  * output FassignStatement
@@ -2785,7 +2862,11 @@ outx_expv(int l, expv v)
     case OMP_PRAGMA:
       outx_OMP_pragma(l, v);
       break;
-      
+
+    case XMP_PRAGMA:
+      outx_XMP_pragma(l, v);
+      break;
+
     default:
         fatal("unkown exprcode : %d", code);
         abort();
