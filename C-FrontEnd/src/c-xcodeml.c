@@ -480,6 +480,8 @@ outxContext(FILE *fp, int indent, CExpr *expr)
         outx_TYPE_DESC(fp, indent, EXPR_T(expr)); break;
     case EC_XMP_COARRAY_REF:
         outx_COARRAY_REF(fp, indent, EXPR_B(expr)); break;
+    case EC_XMP_DESC_OF:
+        OUTX_OP("xmpDescOf"); break;
 
     // Operators
     case EC_UNARY_MINUS:    OUTX_OP("unaryMinusExpr"); break;

@@ -230,6 +230,8 @@ ULLSfx      {USfx}{LLSfx}|{LLSfx}{USfx}
 "switch"       { count(); return SWITCH; }
 "while"        { count(); return WHILE; }
 
+"xmp_desc_of"       { count(); return XMP_DESC_OF; }
+
                         /* ------ constant literals ------ */
 
 {Word}              { count(); yylval.expr = lexAllocSymbol(); return IDENTIFIER; }

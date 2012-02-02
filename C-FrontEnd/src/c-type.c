@@ -847,6 +847,7 @@ isTypeDescKindChildOf(CExpr *expr, CTypeDescKindEnum tk)
         return tk == TD_UNDEF || (EXPR_T(parent)->e_tdKind == tk);
     case EC_SIZE_OF:
     case EC_GCC_ALIGN_OF:
+    case EC_XMP_DESC_OF:
     case EC_GCC_BLTIN_OFFSET_OF:
         return 0;
     default:
@@ -3922,6 +3923,7 @@ resolveType(CExpr *expr)
         if(checkExprsTypeDescOfChildren(expr))
             td = resolveType(EXPR_B(expr)->e_nodes[1]);
         break;
+    case EC_XMP_DESC_OF:
     case EC_GCC_ALIGN_OF:
     case EC_GCC_BLTIN_TYPES_COMPATIBLE_P:
         if(checkExprsTypeDescOfChildren(expr))

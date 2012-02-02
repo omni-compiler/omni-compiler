@@ -552,7 +552,9 @@ getConstNumValue(CExpr *expr, CNumValueWithType *result)
     case STRUCT_CExprOfUnaryNode: {
             CExpr *node = EXPR_U(expr)->e_node;
 
-            if(EXPR_CODE(expr) == EC_SIZE_OF || EXPR_CODE(expr) == EC_GCC_ALIGN_OF) {
+            if(EXPR_CODE(expr) == EC_SIZE_OF || 
+	       EXPR_CODE(expr) == EC_GCC_ALIGN_OF ||
+	       EXPR_CODE(expr) == EC_XMP_DESC_OF) {
                 CExprOfTypeDesc *td = resolveType(node);
 
                 if(td == NULL)
@@ -561,7 +563,8 @@ getConstNumValue(CExpr *expr, CNumValueWithType *result)
                 result->nvt_isConstButMutable = 1;
                 result->nvt_basicType = BT_INT;
                 result->nvt_numKind = getNumValueKind(result->nvt_basicType);
-                if(EXPR_CODE(expr) == EC_SIZE_OF)
+                if(EXPR_CODE(expr) == EC_SIZE_OF ||
+		   EXPR_CODE(expr) == EC_XMP_DESC_OF)
                     result->nvt_numValue.ll = getTypeSize(td);
                 else {
                     assertExpr((CExpr*)td, getTypeAlign(td));
@@ -958,6 +961,7 @@ isConstExpr(CExpr *e, int allowSymbolAddr)
     switch(EXPR_CODE(e)) {
     case EC_SIZE_OF:
     case EC_GCC_ALIGN_OF:
+    case EC_XMP_DESC_OF:
         goto end;
     case EC_FUNCTION_CALL: {
             if(isUnreducableConst(e, allowSymbolAddr) == 0)

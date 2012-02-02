@@ -6,7 +6,7 @@ typedef struct {
 	const int code;
 } CTokenInfo;
 
-#define CTOKENINFO_SIZE 60
+#define CTOKENINFO_SIZE 61
 
 extern const CTokenInfo s_CTokenInfos[CTOKENINFO_SIZE];
 
