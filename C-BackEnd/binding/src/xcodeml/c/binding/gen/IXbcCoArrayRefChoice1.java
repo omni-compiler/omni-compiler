@@ -41,9 +41,9 @@ import org.xml.sax.SAXException;
 
 /**
  * <b>IXbcCoArrayRefChoice1</b> is generated from XcodeML_C.rng by Relaxer.
- * Concrete classes of the interface are XbcSubArrayRef, XbcArrayRef, XbcMemberRef and XbcVar.
+ * Concrete classes of the interface are XbcArrayRef, XbcSubArrayRef, XbcVar and XbcMemberRef.
  *
- * @version XcodeML_C.rng (Fri Oct 07 17:51:13 JST 2011)
+ * @version XcodeML_C.rng (Thu Feb 02 16:55:18 JST 2012)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public interface IXbcCoArrayRefChoice1 extends IRVisitable, IRNode {

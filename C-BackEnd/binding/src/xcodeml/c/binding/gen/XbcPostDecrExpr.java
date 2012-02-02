@@ -49,7 +49,7 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_C.rng (Fri Oct 07 17:51:13 JST 2011)
+ * @version XcodeML_C.rng (Thu Feb 02 16:55:19 JST 2012)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class XbcPostDecrExpr extends xcodeml.c.obj.XmcObj implements java.io.Serializable, Cloneable, xcodeml.c.binding.IXbcUnaryExpr, IRVisitable, IRNode, IXbcExprOrTypeChoice, IXbcCastExprChoice, IXbcSubArrayDimensionChoice, IXbcCompoundLiteralChoice, IXbcDesignatedValueChoice, IXbcValueChoice, IXbcGotoStatementChoice, IXbcBuiltinOpChoice, IXbcExpressionsChoice {
@@ -243,20 +243,82 @@ public class XbcPostDecrExpr extends xcodeml.c.obj.XmcObj implements java.io.Ser
         isModified_ = URelaxer.getAttributePropertyAsString(element, "is_modified");
         if (XbcBuiltinOp.isMatch(stack)) {
             setExpressions(factory.createXbcBuiltinOp(stack));
-        } else if (XbcSubArrayRef.isMatch(stack)) {
-            setExpressions(factory.createXbcSubArrayRef(stack));
         } else if (XbcArrayRef.isMatch(stack)) {
             setExpressions(factory.createXbcArrayRef(stack));
+        } else if (XbcSubArrayRef.isMatch(stack)) {
+            setExpressions(factory.createXbcSubArrayRef(stack));
+        } else if (XbcCoArrayRef.isMatch(stack)) {
+            setExpressions(factory.createXbcCoArrayRef(stack));
+        } else if (XbcCondExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcCondExpr(stack));
         } else if (XbcFunctionCall.isMatch(stack)) {
             setExpressions(factory.createXbcFunctionCall(stack));
         } else if (XbcGccCompoundExpr.isMatch(stack)) {
             setExpressions(factory.createXbcGccCompoundExpr(stack));
-        } else if (XbcCoArrayRef.isMatch(stack)) {
-            setExpressions(factory.createXbcCoArrayRef(stack));
         } else if (XbcCastExpr.isMatch(stack)) {
             setExpressions(factory.createXbcCastExpr(stack));
-        } else if (XbcMemberRef.isMatch(stack)) {
-            setExpressions(factory.createXbcMemberRef(stack));
+        } else if (XbcCoArrayAssignExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcCoArrayAssignExpr(stack));
+        } else if (XbcAssignExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAssignExpr(stack));
+        } else if (XbcPlusExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcPlusExpr(stack));
+        } else if (XbcModExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcModExpr(stack));
+        } else if (XbcBitOrExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcBitOrExpr(stack));
+        } else if (XbcAsgPlusExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAsgPlusExpr(stack));
+        } else if (XbcAsgMulExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAsgMulExpr(stack));
+        } else if (XbcAsgModExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAsgModExpr(stack));
+        } else if (XbcAsgBitOrExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAsgBitOrExpr(stack));
+        } else if (XbcLogGTExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcLogGTExpr(stack));
+        } else if (XbcLogLEExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcLogLEExpr(stack));
+        } else if (XbcLogAndExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcLogAndExpr(stack));
+        } else if (XbcLogOrExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcLogOrExpr(stack));
+        } else if (XbcMinusExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcMinusExpr(stack));
+        } else if (XbcMulExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcMulExpr(stack));
+        } else if (XbcDivExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcDivExpr(stack));
+        } else if (XbcLshiftExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcLshiftExpr(stack));
+        } else if (XbcRshiftExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcRshiftExpr(stack));
+        } else if (XbcBitXorExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcBitXorExpr(stack));
+        } else if (XbcAsgMinusExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAsgMinusExpr(stack));
+        } else if (XbcAsgDivExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAsgDivExpr(stack));
+        } else if (XbcAsgLshiftExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAsgLshiftExpr(stack));
+        } else if (XbcAsgRshiftExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAsgRshiftExpr(stack));
+        } else if (XbcAsgBitAndExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAsgBitAndExpr(stack));
+        } else if (XbcAsgBitXorExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAsgBitXorExpr(stack));
+        } else if (XbcLogEQExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcLogEQExpr(stack));
+        } else if (XbcLogNEQExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcLogNEQExpr(stack));
+        } else if (XbcLogGEExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcLogGEExpr(stack));
+        } else if (XbcLogLTExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcLogLTExpr(stack));
+        } else if (XbcMemberAddr.isMatch(stack)) {
+            setExpressions(factory.createXbcMemberAddr(stack));
+        } else if (XbcMemberArrayRef.isMatch(stack)) {
+            setExpressions(factory.createXbcMemberArrayRef(stack));
         } else if (XbcStringConstant.isMatch(stack)) {
             setExpressions(factory.createXbcStringConstant(stack));
         } else if (XbcVar.isMatch(stack)) {
@@ -271,22 +333,30 @@ public class XbcPostDecrExpr extends xcodeml.c.obj.XmcObj implements java.io.Ser
             setExpressions(factory.createXbcCompoundValueAddrExpr(stack));
         } else if (XbcAddrOfExpr.isMatch(stack)) {
             setExpressions(factory.createXbcAddrOfExpr(stack));
-        } else if (XbcMemberAddr.isMatch(stack)) {
-            setExpressions(factory.createXbcMemberAddr(stack));
-        } else if (XbcMemberArrayRef.isMatch(stack)) {
-            setExpressions(factory.createXbcMemberArrayRef(stack));
+        } else if (XbcXmpDescOf.isMatch(stack)) {
+            setExpressions(factory.createXbcXmpDescOf(stack));
+        } else if (XbcGccAlignOfExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcGccAlignOfExpr(stack));
+        } else if (XbcCommaExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcCommaExpr(stack));
+        } else if (XbcSizeOfExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcSizeOfExpr(stack));
+        } else if (XbcBitAndExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcBitAndExpr(stack));
+        } else if (XbcMemberRef.isMatch(stack)) {
+            setExpressions(factory.createXbcMemberRef(stack));
         } else if (XbcMemberArrayAddr.isMatch(stack)) {
             setExpressions(factory.createXbcMemberArrayAddr(stack));
-        } else if (XbcCondExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcCondExpr(stack));
+        } else if (XbcPointerRef.isMatch(stack)) {
+            setExpressions(factory.createXbcPointerRef(stack));
         } else if (XbcUnaryMinusExpr.isMatch(stack)) {
             setExpressions(factory.createXbcUnaryMinusExpr(stack));
         } else if (XbcLogNotExpr.isMatch(stack)) {
             setExpressions(factory.createXbcLogNotExpr(stack));
-        } else if (XbcPreDecrExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcPreDecrExpr(stack));
-        } else if (XbcCoArrayAssignExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcCoArrayAssignExpr(stack));
+        } else if (XbcPostIncrExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcPostIncrExpr(stack));
+        } else if (XbcPreIncrExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcPreIncrExpr(stack));
         } else if (XbcIntConstant.isMatch(stack)) {
             setExpressions(factory.createXbcIntConstant(stack));
         } else if (XbcFloatConstant.isMatch(stack)) {
@@ -297,82 +367,14 @@ public class XbcPostDecrExpr extends xcodeml.c.obj.XmcObj implements java.io.Ser
             setExpressions(factory.createXbcMoeConstant(stack));
         } else if (XbcFuncAddr.isMatch(stack)) {
             setExpressions(factory.createXbcFuncAddr(stack));
-        } else if (XbcSizeOfExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcSizeOfExpr(stack));
-        } else if (XbcGccAlignOfExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcGccAlignOfExpr(stack));
         } else if (XbcGccLabelAddr.isMatch(stack)) {
             setExpressions(factory.createXbcGccLabelAddr(stack));
-        } else if (XbcCommaExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcCommaExpr(stack));
-        } else if (XbcPointerRef.isMatch(stack)) {
-            setExpressions(factory.createXbcPointerRef(stack));
         } else if (XbcBitNotExpr.isMatch(stack)) {
             setExpressions(factory.createXbcBitNotExpr(stack));
-        } else if (XbcPostIncrExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcPostIncrExpr(stack));
         } else if (XbcPostDecrExpr.isMatch(stack)) {
             setExpressions(factory.createXbcPostDecrExpr(stack));
-        } else if (XbcPreIncrExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcPreIncrExpr(stack));
-        } else if (XbcAssignExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAssignExpr(stack));
-        } else if (XbcPlusExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcPlusExpr(stack));
-        } else if (XbcMinusExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcMinusExpr(stack));
-        } else if (XbcMulExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcMulExpr(stack));
-        } else if (XbcDivExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcDivExpr(stack));
-        } else if (XbcModExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcModExpr(stack));
-        } else if (XbcLshiftExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLshiftExpr(stack));
-        } else if (XbcRshiftExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcRshiftExpr(stack));
-        } else if (XbcBitAndExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcBitAndExpr(stack));
-        } else if (XbcBitOrExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcBitOrExpr(stack));
-        } else if (XbcBitXorExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcBitXorExpr(stack));
-        } else if (XbcAsgPlusExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgPlusExpr(stack));
-        } else if (XbcAsgMinusExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgMinusExpr(stack));
-        } else if (XbcAsgMulExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgMulExpr(stack));
-        } else if (XbcAsgDivExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgDivExpr(stack));
-        } else if (XbcAsgModExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgModExpr(stack));
-        } else if (XbcAsgLshiftExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgLshiftExpr(stack));
-        } else if (XbcAsgRshiftExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgRshiftExpr(stack));
-        } else if (XbcAsgBitAndExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgBitAndExpr(stack));
-        } else if (XbcAsgBitOrExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgBitOrExpr(stack));
-        } else if (XbcAsgBitXorExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgBitXorExpr(stack));
-        } else if (XbcLogEQExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogEQExpr(stack));
-        } else if (XbcLogNEQExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogNEQExpr(stack));
-        } else if (XbcLogGEExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogGEExpr(stack));
-        } else if (XbcLogGTExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogGTExpr(stack));
-        } else if (XbcLogLEExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogLEExpr(stack));
-        } else if (XbcLogLTExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogLTExpr(stack));
-        } else if (XbcLogAndExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogAndExpr(stack));
-        } else if (XbcLogOrExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogOrExpr(stack));
+        } else if (XbcPreDecrExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcPreDecrExpr(stack));
         } else {
             throw (new IllegalArgumentException());
         }
@@ -835,19 +837,81 @@ public class XbcPostDecrExpr extends xcodeml.c.obj.XmcObj implements java.io.Ser
         Element child;
         if (XbcBuiltinOp.isMatchHungry(target)) {
             $match$ = true;
+        } else if (XbcArrayRef.isMatchHungry(target)) {
+            $match$ = true;
         } else if (XbcSubArrayRef.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcArrayRef.isMatchHungry(target)) {
+        } else if (XbcCoArrayRef.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcCondExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcFunctionCall.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcGccCompoundExpr.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcCoArrayRef.isMatchHungry(target)) {
-            $match$ = true;
         } else if (XbcCastExpr.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcMemberRef.isMatchHungry(target)) {
+        } else if (XbcCoArrayAssignExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcAssignExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcPlusExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcModExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcBitOrExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcAsgPlusExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcAsgMulExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcAsgModExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcAsgBitOrExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcLogGTExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcLogLEExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcLogAndExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcLogOrExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcMinusExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcMulExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcDivExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcLshiftExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcRshiftExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcBitXorExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcAsgMinusExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcAsgDivExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcAsgLshiftExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcAsgRshiftExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcAsgBitAndExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcAsgBitXorExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcLogEQExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcLogNEQExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcLogGEExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcLogLTExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcMemberAddr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcMemberArrayRef.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcStringConstant.isMatchHungry(target)) {
             $match$ = true;
@@ -863,21 +927,29 @@ public class XbcPostDecrExpr extends xcodeml.c.obj.XmcObj implements java.io.Ser
             $match$ = true;
         } else if (XbcAddrOfExpr.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcMemberAddr.isMatchHungry(target)) {
+        } else if (XbcXmpDescOf.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcMemberArrayRef.isMatchHungry(target)) {
+        } else if (XbcGccAlignOfExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcCommaExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcSizeOfExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcBitAndExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcMemberRef.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcMemberArrayAddr.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcCondExpr.isMatchHungry(target)) {
+        } else if (XbcPointerRef.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcUnaryMinusExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcLogNotExpr.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcPreDecrExpr.isMatchHungry(target)) {
+        } else if (XbcPostIncrExpr.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcCoArrayAssignExpr.isMatchHungry(target)) {
+        } else if (XbcPreIncrExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcIntConstant.isMatchHungry(target)) {
             $match$ = true;
@@ -889,81 +961,13 @@ public class XbcPostDecrExpr extends xcodeml.c.obj.XmcObj implements java.io.Ser
             $match$ = true;
         } else if (XbcFuncAddr.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcSizeOfExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcGccAlignOfExpr.isMatchHungry(target)) {
-            $match$ = true;
         } else if (XbcGccLabelAddr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcCommaExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcPointerRef.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcBitNotExpr.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcPostIncrExpr.isMatchHungry(target)) {
-            $match$ = true;
         } else if (XbcPostDecrExpr.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcPreIncrExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcAssignExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcPlusExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcMinusExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcMulExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcDivExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcModExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcLshiftExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcRshiftExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcBitAndExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcBitOrExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcBitXorExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcAsgPlusExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcAsgMinusExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcAsgMulExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcAsgDivExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcAsgModExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcAsgLshiftExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcAsgRshiftExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcAsgBitAndExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcAsgBitOrExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcAsgBitXorExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcLogEQExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcLogNEQExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcLogGEExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcLogGTExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcLogLEExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcLogLTExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcLogAndExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcLogOrExpr.isMatchHungry(target)) {
+        } else if (XbcPreDecrExpr.isMatchHungry(target)) {
             $match$ = true;
         } else {
             return (false);

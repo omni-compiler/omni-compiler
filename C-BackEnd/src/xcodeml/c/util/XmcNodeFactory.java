@@ -621,6 +621,12 @@ public class XmcNodeFactory extends AbstractXcodeML_CFactory
     }
 
     @Override
+    public XbcXmpDescOf createXbcXmpDescOf()
+    {
+        return new XmcXmpDescOf();
+    }
+
+    @Override
     public XbcBuiltinOp createXbcBuiltinOp()
     {
         return new XmcBuiltinOp();

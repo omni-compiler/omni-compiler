@@ -1635,6 +1635,15 @@ public class XmcXcodeToXcTranslator {
         }
     }
 
+    // xmpDescOf
+    class XmpDescOfVisitor extends XcodeNodeVisitor {
+        @Override
+        public void enter(TranslationContext tc, Node n, XcNode parent) {
+            XcOperatorObj obj = new XcOperatorObj(XcOperatorEnum.XMPDESCOF);
+            transChildren(tc, n, obj);
+        }
+    }
+
     // gccLabelAddr
     class GccLabelAddrVisitor extends XcodeNodeVisitor {
         @Override
@@ -2647,6 +2656,7 @@ public class XmcXcodeToXcTranslator {
         new Pair("sizeOfExpr", new SizeOfExprVisitor()),
         new Pair("addrOfExpr", new AddrOfExprVisitor()),
         new Pair("gccAlignOfExpr", new GccAlignOfExprVisitor()),
+        new Pair("xmpDescOf", new XmpDescOfVisitor()),
         new Pair("gccLabelAddr", new GccLabelAddrVisitor()),
         new Pair("gccAsmDefinition", new GccAsmDefinitionVisitor()),
         new Pair("pragma", new PragmaVisitor()),

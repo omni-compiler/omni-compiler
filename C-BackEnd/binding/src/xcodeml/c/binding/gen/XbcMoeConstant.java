@@ -51,10 +51,10 @@ import org.xml.sax.*;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_C.rng (Fri Oct 07 17:51:13 JST 2011)
+ * @version XcodeML_C.rng (Thu Feb 02 16:55:18 JST 2012)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
-public class XbcMoeConstant extends xcodeml.c.obj.XmcObj implements java.io.Serializable, Cloneable, xcodeml.c.binding.IXbcConstant, IRVisitable, IRNode, IXbcCastExprChoice, IXbcExprOrTypeChoice, IXbcSubArrayDimensionChoice, IXbcDesignatedValueChoice, IXbcCompoundLiteralChoice, IXbcValueChoice, IXbcGotoStatementChoice, IXbcBuiltinOpChoice, IXbcExpressionsChoice {
+public class XbcMoeConstant extends xcodeml.c.obj.XmcObj implements java.io.Serializable, Cloneable, xcodeml.c.binding.IXbcConstant, IRVisitable, IRNode, IXbcCastExprChoice, IXbcExprOrTypeChoice, IXbcSubArrayDimensionChoice, IXbcValueChoice, IXbcDesignatedValueChoice, IXbcCompoundLiteralChoice, IXbcGotoStatementChoice, IXbcBuiltinOpChoice, IXbcExpressionsChoice {
     public static final String ISGCCSYNTAX_0 = "0";
     public static final String ISGCCSYNTAX_1 = "1";
     public static final String ISGCCSYNTAX_TRUE = "true";

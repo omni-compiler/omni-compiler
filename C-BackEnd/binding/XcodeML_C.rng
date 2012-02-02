@@ -343,6 +343,7 @@
       <ref name="condExpr"/>
       <ref name="sizeOfExpr"/>
       <ref name="addrOfExpr"/>
+      <ref name="xmpDescOf"/>
       <ref name="compoundValueExpr"/>
       <ref name="compoundValueAddrExpr"/>
       <!-- gcc extension -->
@@ -777,6 +778,13 @@
 
   <define name="addrOfExpr">
     <element name="addrOfExpr" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr">
+      <ref name="BaseExpression"/>
+      <ref name="expressions"/>
+    </element>
+  </define>
+
+  <define name="xmpDescOf">
+    <element name="xmpDescOf" java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr">
       <ref name="BaseExpression"/>
       <ref name="expressions"/>
     </element>

@@ -101,6 +101,11 @@ public final class XcXmpFactory
         return new XcAddrOfExprObj(XcOperatorEnum.ADDROF, expr);
     }
 
+    private static XcXmpDescOfObj _createDescof(XcExprObj expr)
+    {
+        return new XcXmpDescOfObj(XcOperatorEnum.XMPDESCOF, expr);
+    }
+
 //     /**
 //      * Creates __xmp_coarray_dim_t array.
 //      */

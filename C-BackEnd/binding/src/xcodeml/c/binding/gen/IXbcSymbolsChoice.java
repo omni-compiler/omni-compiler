@@ -43,7 +43,7 @@ import org.xml.sax.SAXException;
  * <b>IXbcSymbolsChoice</b> is generated from XcodeML_C.rng by Relaxer.
  * Concrete classes of the interface are XbcId, XbcPragma and XbcText.
  *
- * @version XcodeML_C.rng (Fri Oct 07 17:51:13 JST 2011)
+ * @version XcodeML_C.rng (Thu Feb 02 16:55:19 JST 2012)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public interface IXbcSymbolsChoice extends IRVisitable, IRNode {

@@ -35,106 +35,101 @@ import org.w3c.dom.*;
 import org.xml.sax.*;
 
 /**
- * <b>XbcGccAsmOperand</b> is generated from XcodeML_C.rng by Relaxer.
+ * <b>XbcXmpDescOf</b> is generated from XcodeML_C.rng by Relaxer.
  * This class is derived from:
  * 
  * <!-- for programmer
- * <element java:extends="xcodeml.c.obj.XmcObj" name="gccAsmOperand">
- *   <optional>
- *     <attribute name="match">
- *       <data type="string"/>
- *     </attribute>
- *   </optional>
- *   <attribute name="constraint">
- *     <data type="string"/>
- *   </attribute>
+ * <element java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr" name="xmpDescOf">
+ *   <ref name="BaseExpression"/>
  *   <ref name="expressions"/>
  * </element>
  * -->
  * <!-- for javadoc -->
- * <pre> &lt;element java:extends="xcodeml.c.obj.XmcObj" name="gccAsmOperand"&gt;
- *   &lt;optional&gt;
- *     &lt;attribute name="match"&gt;
- *       &lt;data type="string"/&gt;
- *     &lt;/attribute&gt;
- *   &lt;/optional&gt;
- *   &lt;attribute name="constraint"&gt;
- *     &lt;data type="string"/&gt;
- *   &lt;/attribute&gt;
+ * <pre> &lt;element java:extends="xcodeml.c.obj.XmcObj" java:implements="xcodeml.c.binding.IXbcTypedExpr" name="xmpDescOf"&gt;
+ *   &lt;ref name="BaseExpression"/&gt;
  *   &lt;ref name="expressions"/&gt;
  * &lt;/element&gt;
  * </pre>
  *
- * @version XcodeML_C.rng (Thu Feb 02 16:55:19 JST 2012)
+ * @version XcodeML_C.rng (Thu Feb 02 16:55:18 JST 2012)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
-public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Serializable, Cloneable, IRVisitable, IRNode {
-    private String match_;
-    private String constraint_;
+public class XbcXmpDescOf extends xcodeml.c.obj.XmcObj implements java.io.Serializable, Cloneable, xcodeml.c.binding.IXbcTypedExpr, IRVisitable, IRNode, IXbcCastExprChoice, IXbcExprOrTypeChoice, IXbcSubArrayDimensionChoice, IXbcValueChoice, IXbcDesignatedValueChoice, IXbcCompoundLiteralChoice, IXbcGotoStatementChoice, IXbcBuiltinOpChoice, IXbcExpressionsChoice {
+    public static final String ISGCCSYNTAX_0 = "0";
+    public static final String ISGCCSYNTAX_1 = "1";
+    public static final String ISGCCSYNTAX_TRUE = "true";
+    public static final String ISGCCSYNTAX_FALSE = "false";
+    public static final String ISMODIFIED_0 = "0";
+    public static final String ISMODIFIED_1 = "1";
+    public static final String ISMODIFIED_TRUE = "true";
+    public static final String ISMODIFIED_FALSE = "false";
+
+    private String type_;
+    private String isGccSyntax_;
+    private String isModified_;
     private IXbcExpressionsChoice expressions_;
     private IRNode parentRNode_;
 
     /**
-     * Creates a <code>XbcGccAsmOperand</code>.
+     * Creates a <code>XbcXmpDescOf</code>.
      *
      */
-    public XbcGccAsmOperand() {
-        constraint_ = "";
+    public XbcXmpDescOf() {
     }
 
     /**
-     * Creates a <code>XbcGccAsmOperand</code>.
+     * Creates a <code>XbcXmpDescOf</code>.
      *
      * @param source
      */
-    public XbcGccAsmOperand(XbcGccAsmOperand source) {
+    public XbcXmpDescOf(XbcXmpDescOf source) {
         setup(source);
     }
 
     /**
-     * Creates a <code>XbcGccAsmOperand</code> by the Stack <code>stack</code>
+     * Creates a <code>XbcXmpDescOf</code> by the Stack <code>stack</code>
      * that contains Elements.
      * This constructor is supposed to be used internally
      * by the Relaxer system.
      *
      * @param stack
      */
-    public XbcGccAsmOperand(RStack stack) {
+    public XbcXmpDescOf(RStack stack) {
         setup(stack);
     }
 
     /**
-     * Creates a <code>XbcGccAsmOperand</code> by the Document <code>doc</code>.
+     * Creates a <code>XbcXmpDescOf</code> by the Document <code>doc</code>.
      *
      * @param doc
      */
-    public XbcGccAsmOperand(Document doc) {
+    public XbcXmpDescOf(Document doc) {
         setup(doc.getDocumentElement());
     }
 
     /**
-     * Creates a <code>XbcGccAsmOperand</code> by the Element <code>element</code>.
+     * Creates a <code>XbcXmpDescOf</code> by the Element <code>element</code>.
      *
      * @param element
      */
-    public XbcGccAsmOperand(Element element) {
+    public XbcXmpDescOf(Element element) {
         setup(element);
     }
 
     /**
-     * Creates a <code>XbcGccAsmOperand</code> by the File <code>file</code>.
+     * Creates a <code>XbcXmpDescOf</code> by the File <code>file</code>.
      *
      * @param file
      * @exception IOException
      * @exception SAXException
      * @exception ParserConfigurationException
      */
-    public XbcGccAsmOperand(File file) throws IOException, SAXException, ParserConfigurationException {
+    public XbcXmpDescOf(File file) throws IOException, SAXException, ParserConfigurationException {
         setup(file);
     }
 
     /**
-     * Creates a <code>XbcGccAsmOperand</code>
+     * Creates a <code>XbcXmpDescOf</code>
      * by the String representation of URI <code>uri</code>.
      *
      * @param uri
@@ -142,74 +137,75 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
      * @exception SAXException
      * @exception ParserConfigurationException
      */
-    public XbcGccAsmOperand(String uri) throws IOException, SAXException, ParserConfigurationException {
+    public XbcXmpDescOf(String uri) throws IOException, SAXException, ParserConfigurationException {
         setup(uri);
     }
 
     /**
-     * Creates a <code>XbcGccAsmOperand</code> by the URL <code>url</code>.
+     * Creates a <code>XbcXmpDescOf</code> by the URL <code>url</code>.
      *
      * @param url
      * @exception IOException
      * @exception SAXException
      * @exception ParserConfigurationException
      */
-    public XbcGccAsmOperand(URL url) throws IOException, SAXException, ParserConfigurationException {
+    public XbcXmpDescOf(URL url) throws IOException, SAXException, ParserConfigurationException {
         setup(url);
     }
 
     /**
-     * Creates a <code>XbcGccAsmOperand</code> by the InputStream <code>in</code>.
+     * Creates a <code>XbcXmpDescOf</code> by the InputStream <code>in</code>.
      *
      * @param in
      * @exception IOException
      * @exception SAXException
      * @exception ParserConfigurationException
      */
-    public XbcGccAsmOperand(InputStream in) throws IOException, SAXException, ParserConfigurationException {
+    public XbcXmpDescOf(InputStream in) throws IOException, SAXException, ParserConfigurationException {
         setup(in);
     }
 
     /**
-     * Creates a <code>XbcGccAsmOperand</code> by the InputSource <code>is</code>.
+     * Creates a <code>XbcXmpDescOf</code> by the InputSource <code>is</code>.
      *
      * @param is
      * @exception IOException
      * @exception SAXException
      * @exception ParserConfigurationException
      */
-    public XbcGccAsmOperand(InputSource is) throws IOException, SAXException, ParserConfigurationException {
+    public XbcXmpDescOf(InputSource is) throws IOException, SAXException, ParserConfigurationException {
         setup(is);
     }
 
     /**
-     * Creates a <code>XbcGccAsmOperand</code> by the Reader <code>reader</code>.
+     * Creates a <code>XbcXmpDescOf</code> by the Reader <code>reader</code>.
      *
      * @param reader
      * @exception IOException
      * @exception SAXException
      * @exception ParserConfigurationException
      */
-    public XbcGccAsmOperand(Reader reader) throws IOException, SAXException, ParserConfigurationException {
+    public XbcXmpDescOf(Reader reader) throws IOException, SAXException, ParserConfigurationException {
         setup(reader);
     }
 
     /**
-     * Initializes the <code>XbcGccAsmOperand</code> by the XbcGccAsmOperand <code>source</code>.
+     * Initializes the <code>XbcXmpDescOf</code> by the XbcXmpDescOf <code>source</code>.
      *
      * @param source
      */
-    public void setup(XbcGccAsmOperand source) {
+    public void setup(XbcXmpDescOf source) {
         int size;
-        setMatch(source.getMatch());
-        setConstraint(source.getConstraint());
+        setType(source.getType());
+        setIsGccSyntax(source.getIsGccSyntax());
+        setIsModified(source.getIsModified());
         if (source.expressions_ != null) {
             setExpressions((IXbcExpressionsChoice)source.getExpressions().clone());
         }
     }
 
     /**
-     * Initializes the <code>XbcGccAsmOperand</code> by the Document <code>doc</code>.
+     * Initializes the <code>XbcXmpDescOf</code> by the Document <code>doc</code>.
      *
      * @param doc
      */
@@ -218,7 +214,7 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
     }
 
     /**
-     * Initializes the <code>XbcGccAsmOperand</code> by the Element <code>element</code>.
+     * Initializes the <code>XbcXmpDescOf</code> by the Element <code>element</code>.
      *
      * @param element
      */
@@ -227,7 +223,7 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
     }
 
     /**
-     * Initializes the <code>XbcGccAsmOperand</code> by the Stack <code>stack</code>
+     * Initializes the <code>XbcXmpDescOf</code> by the Stack <code>stack</code>
      * that contains Elements.
      * This constructor is supposed to be used internally
      * by the Relaxer system.
@@ -244,24 +240,21 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
     private void init(Element element) {
         IXcodeML_CFactory factory = XcodeML_CFactory.getFactory();
         RStack stack = new RStack(element);
-        match_ = URelaxer.getAttributePropertyAsString(element, "match");
-        constraint_ = URelaxer.getAttributePropertyAsString(element, "constraint");
+        type_ = URelaxer.getAttributePropertyAsString(element, "type");
+        isGccSyntax_ = URelaxer.getAttributePropertyAsString(element, "is_gccSyntax");
+        isModified_ = URelaxer.getAttributePropertyAsString(element, "is_modified");
         if (XbcBuiltinOp.isMatch(stack)) {
             setExpressions(factory.createXbcBuiltinOp(stack));
-        } else if (XbcSubArrayRef.isMatch(stack)) {
-            setExpressions(factory.createXbcSubArrayRef(stack));
         } else if (XbcArrayRef.isMatch(stack)) {
             setExpressions(factory.createXbcArrayRef(stack));
         } else if (XbcFunctionCall.isMatch(stack)) {
             setExpressions(factory.createXbcFunctionCall(stack));
         } else if (XbcGccCompoundExpr.isMatch(stack)) {
             setExpressions(factory.createXbcGccCompoundExpr(stack));
+        } else if (XbcSubArrayRef.isMatch(stack)) {
+            setExpressions(factory.createXbcSubArrayRef(stack));
         } else if (XbcCoArrayRef.isMatch(stack)) {
             setExpressions(factory.createXbcCoArrayRef(stack));
-        } else if (XbcCastExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcCastExpr(stack));
-        } else if (XbcCoArrayAssignExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcCoArrayAssignExpr(stack));
         } else if (XbcStringConstant.isMatch(stack)) {
             setExpressions(factory.createXbcStringConstant(stack));
         } else if (XbcVar.isMatch(stack)) {
@@ -270,36 +263,14 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
             setExpressions(factory.createXbcVarAddr(stack));
         } else if (XbcArrayAddr.isMatch(stack)) {
             setExpressions(factory.createXbcArrayAddr(stack));
+        } else if (XbcCastExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcCastExpr(stack));
         } else if (XbcCompoundValueExpr.isMatch(stack)) {
             setExpressions(factory.createXbcCompoundValueExpr(stack));
         } else if (XbcCompoundValueAddrExpr.isMatch(stack)) {
             setExpressions(factory.createXbcCompoundValueAddrExpr(stack));
-        } else if (XbcAddrOfExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAddrOfExpr(stack));
-        } else if (XbcXmpDescOf.isMatch(stack)) {
-            setExpressions(factory.createXbcXmpDescOf(stack));
-        } else if (XbcMinusExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcMinusExpr(stack));
-        } else if (XbcLshiftExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLshiftExpr(stack));
-        } else if (XbcRshiftExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcRshiftExpr(stack));
-        } else if (XbcAsgMulExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgMulExpr(stack));
-        } else if (XbcAsgModExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgModExpr(stack));
-        } else if (XbcAsgBitOrExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgBitOrExpr(stack));
-        } else if (XbcAsgBitXorExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgBitXorExpr(stack));
-        } else if (XbcLogNEQExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogNEQExpr(stack));
-        } else if (XbcLogGEExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogGEExpr(stack));
-        } else if (XbcLogGTExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogGTExpr(stack));
-        } else if (XbcLogOrExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogOrExpr(stack));
+        } else if (XbcCoArrayAssignExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcCoArrayAssignExpr(stack));
         } else if (XbcIntConstant.isMatch(stack)) {
             setExpressions(factory.createXbcIntConstant(stack));
         } else if (XbcFloatConstant.isMatch(stack)) {
@@ -312,48 +283,14 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
             setExpressions(factory.createXbcFuncAddr(stack));
         } else if (XbcSizeOfExpr.isMatch(stack)) {
             setExpressions(factory.createXbcSizeOfExpr(stack));
+        } else if (XbcAddrOfExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAddrOfExpr(stack));
+        } else if (XbcXmpDescOf.isMatch(stack)) {
+            setExpressions(factory.createXbcXmpDescOf(stack));
         } else if (XbcGccAlignOfExpr.isMatch(stack)) {
             setExpressions(factory.createXbcGccAlignOfExpr(stack));
         } else if (XbcGccLabelAddr.isMatch(stack)) {
             setExpressions(factory.createXbcGccLabelAddr(stack));
-        } else if (XbcAssignExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAssignExpr(stack));
-        } else if (XbcPlusExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcPlusExpr(stack));
-        } else if (XbcMulExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcMulExpr(stack));
-        } else if (XbcDivExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcDivExpr(stack));
-        } else if (XbcModExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcModExpr(stack));
-        } else if (XbcBitAndExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcBitAndExpr(stack));
-        } else if (XbcBitOrExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcBitOrExpr(stack));
-        } else if (XbcBitXorExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcBitXorExpr(stack));
-        } else if (XbcAsgPlusExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgPlusExpr(stack));
-        } else if (XbcAsgMinusExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgMinusExpr(stack));
-        } else if (XbcAsgDivExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgDivExpr(stack));
-        } else if (XbcAsgLshiftExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgLshiftExpr(stack));
-        } else if (XbcAsgRshiftExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgRshiftExpr(stack));
-        } else if (XbcAsgBitAndExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcAsgBitAndExpr(stack));
-        } else if (XbcLogEQExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogEQExpr(stack));
-        } else if (XbcLogLEExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogLEExpr(stack));
-        } else if (XbcLogLTExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogLTExpr(stack));
-        } else if (XbcLogAndExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcLogAndExpr(stack));
-        } else if (XbcCondExpr.isMatch(stack)) {
-            setExpressions(factory.createXbcCondExpr(stack));
         } else if (XbcMemberAddr.isMatch(stack)) {
             setExpressions(factory.createXbcMemberAddr(stack));
         } else if (XbcMemberRef.isMatch(stack)) {
@@ -364,6 +301,64 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
             setExpressions(factory.createXbcMemberArrayAddr(stack));
         } else if (XbcPointerRef.isMatch(stack)) {
             setExpressions(factory.createXbcPointerRef(stack));
+        } else if (XbcAssignExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAssignExpr(stack));
+        } else if (XbcPlusExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcPlusExpr(stack));
+        } else if (XbcMinusExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcMinusExpr(stack));
+        } else if (XbcMulExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcMulExpr(stack));
+        } else if (XbcDivExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcDivExpr(stack));
+        } else if (XbcModExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcModExpr(stack));
+        } else if (XbcLshiftExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcLshiftExpr(stack));
+        } else if (XbcRshiftExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcRshiftExpr(stack));
+        } else if (XbcBitAndExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcBitAndExpr(stack));
+        } else if (XbcBitOrExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcBitOrExpr(stack));
+        } else if (XbcBitXorExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcBitXorExpr(stack));
+        } else if (XbcAsgPlusExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAsgPlusExpr(stack));
+        } else if (XbcAsgMinusExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAsgMinusExpr(stack));
+        } else if (XbcAsgMulExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAsgMulExpr(stack));
+        } else if (XbcAsgDivExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAsgDivExpr(stack));
+        } else if (XbcAsgModExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAsgModExpr(stack));
+        } else if (XbcAsgLshiftExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAsgLshiftExpr(stack));
+        } else if (XbcAsgRshiftExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAsgRshiftExpr(stack));
+        } else if (XbcAsgBitAndExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAsgBitAndExpr(stack));
+        } else if (XbcAsgBitOrExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAsgBitOrExpr(stack));
+        } else if (XbcAsgBitXorExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcAsgBitXorExpr(stack));
+        } else if (XbcLogEQExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcLogEQExpr(stack));
+        } else if (XbcLogNEQExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcLogNEQExpr(stack));
+        } else if (XbcLogGEExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcLogGEExpr(stack));
+        } else if (XbcLogGTExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcLogGTExpr(stack));
+        } else if (XbcLogLEExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcLogLEExpr(stack));
+        } else if (XbcLogLTExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcLogLTExpr(stack));
+        } else if (XbcLogAndExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcLogAndExpr(stack));
+        } else if (XbcLogOrExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcLogOrExpr(stack));
         } else if (XbcUnaryMinusExpr.isMatch(stack)) {
             setExpressions(factory.createXbcUnaryMinusExpr(stack));
         } else if (XbcBitNotExpr.isMatch(stack)) {
@@ -380,6 +375,8 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
             setExpressions(factory.createXbcPreIncrExpr(stack));
         } else if (XbcPreDecrExpr.isMatch(stack)) {
             setExpressions(factory.createXbcPreDecrExpr(stack));
+        } else if (XbcCondExpr.isMatch(stack)) {
+            setExpressions(factory.createXbcCondExpr(stack));
         } else {
             throw (new IllegalArgumentException());
         }
@@ -390,7 +387,7 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
      */
     public Object clone() {
         IXcodeML_CFactory factory = XcodeML_CFactory.getFactory();
-        return (factory.createXbcGccAsmOperand(this));
+        return (factory.createXbcXmpDescOf(this));
     }
 
     /**
@@ -406,20 +403,23 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
         } else {
             doc = parent.getOwnerDocument();
         }
-        Element element = doc.createElement("gccAsmOperand");
+        Element element = doc.createElement("xmpDescOf");
         int size;
-        if (this.match_ != null) {
-            URelaxer.setAttributePropertyByString(element, "match", this.match_);
+        if (this.type_ != null) {
+            URelaxer.setAttributePropertyByString(element, "type", this.type_);
         }
-        if (this.constraint_ != null) {
-            URelaxer.setAttributePropertyByString(element, "constraint", this.constraint_);
+        if (this.isGccSyntax_ != null) {
+            URelaxer.setAttributePropertyByString(element, "is_gccSyntax", this.isGccSyntax_);
+        }
+        if (this.isModified_ != null) {
+            URelaxer.setAttributePropertyByString(element, "is_modified", this.isModified_);
         }
         this.expressions_.makeElement(element);
         parent.appendChild(element);
     }
 
     /**
-     * Initializes the <code>XbcGccAsmOperand</code> by the File <code>file</code>.
+     * Initializes the <code>XbcXmpDescOf</code> by the File <code>file</code>.
      *
      * @param file
      * @exception IOException
@@ -431,7 +431,7 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
     }
 
     /**
-     * Initializes the <code>XbcGccAsmOperand</code>
+     * Initializes the <code>XbcXmpDescOf</code>
      * by the String representation of URI <code>uri</code>.
      *
      * @param uri
@@ -444,7 +444,7 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
     }
 
     /**
-     * Initializes the <code>XbcGccAsmOperand</code> by the URL <code>url</code>.
+     * Initializes the <code>XbcXmpDescOf</code> by the URL <code>url</code>.
      *
      * @param url
      * @exception IOException
@@ -456,7 +456,7 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
     }
 
     /**
-     * Initializes the <code>XbcGccAsmOperand</code> by the InputStream <code>in</code>.
+     * Initializes the <code>XbcXmpDescOf</code> by the InputStream <code>in</code>.
      *
      * @param in
      * @exception IOException
@@ -468,7 +468,7 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
     }
 
     /**
-     * Initializes the <code>XbcGccAsmOperand</code> by the InputSource <code>is</code>.
+     * Initializes the <code>XbcXmpDescOf</code> by the InputSource <code>is</code>.
      *
      * @param is
      * @exception IOException
@@ -480,7 +480,7 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
     }
 
     /**
-     * Initializes the <code>XbcGccAsmOperand</code> by the Reader <code>reader</code>.
+     * Initializes the <code>XbcXmpDescOf</code> by the Reader <code>reader</code>.
      *
      * @param reader
      * @exception IOException
@@ -504,39 +504,57 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
     }
 
     /**
-     * Gets the String property <b>match</b>.
+     * Gets the String property <b>type</b>.
      *
      * @return String
      */
-    public final String getMatch() {
-        return (match_);
+    public final String getType() {
+        return (type_);
     }
 
     /**
-     * Sets the String property <b>match</b>.
+     * Sets the String property <b>type</b>.
      *
-     * @param match
+     * @param type
      */
-    public final void setMatch(String match) {
-        this.match_ = match;
+    public final void setType(String type) {
+        this.type_ = type;
     }
 
     /**
-     * Gets the String property <b>constraint</b>.
+     * Gets the String property <b>isGccSyntax</b>.
      *
      * @return String
      */
-    public final String getConstraint() {
-        return (constraint_);
+    public final String getIsGccSyntax() {
+        return (isGccSyntax_);
     }
 
     /**
-     * Sets the String property <b>constraint</b>.
+     * Sets the String property <b>isGccSyntax</b>.
      *
-     * @param constraint
+     * @param isGccSyntax
      */
-    public final void setConstraint(String constraint) {
-        this.constraint_ = constraint;
+    public final void setIsGccSyntax(String isGccSyntax) {
+        this.isGccSyntax_ = isGccSyntax;
+    }
+
+    /**
+     * Gets the String property <b>isModified</b>.
+     *
+     * @return String
+     */
+    public final String getIsModified() {
+        return (isModified_);
+    }
+
+    /**
+     * Sets the String property <b>isModified</b>.
+     *
+     * @param isModified
+     */
+    public final void setIsModified(String isModified) {
+        this.isModified_ = isModified;
     }
 
     /**
@@ -578,21 +596,26 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
      */
     public void makeTextElement(StringBuffer buffer) {
         int size;
-        buffer.append("<gccAsmOperand");
-        if (match_ != null) {
-            buffer.append(" match=\"");
-            buffer.append(URelaxer.escapeAttrQuot(URelaxer.getString(getMatch())));
+        buffer.append("<xmpDescOf");
+        if (type_ != null) {
+            buffer.append(" type=\"");
+            buffer.append(URelaxer.escapeAttrQuot(URelaxer.getString(getType())));
             buffer.append("\"");
         }
-        if (constraint_ != null) {
-            buffer.append(" constraint=\"");
-            buffer.append(URelaxer.escapeAttrQuot(URelaxer.getString(getConstraint())));
+        if (isGccSyntax_ != null) {
+            buffer.append(" is_gccSyntax=\"");
+            buffer.append(URelaxer.escapeAttrQuot(URelaxer.getString(getIsGccSyntax())));
+            buffer.append("\"");
+        }
+        if (isModified_ != null) {
+            buffer.append(" is_modified=\"");
+            buffer.append(URelaxer.escapeAttrQuot(URelaxer.getString(getIsModified())));
             buffer.append("\"");
         }
         expressions_.makeTextAttribute(buffer);
         buffer.append(">");
         expressions_.makeTextElement(buffer);
-        buffer.append("</gccAsmOperand>");
+        buffer.append("</xmpDescOf>");
     }
 
     /**
@@ -603,21 +626,26 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
      */
     public void makeTextElement(Writer buffer) throws IOException {
         int size;
-        buffer.write("<gccAsmOperand");
-        if (match_ != null) {
-            buffer.write(" match=\"");
-            buffer.write(URelaxer.escapeAttrQuot(URelaxer.getString(getMatch())));
+        buffer.write("<xmpDescOf");
+        if (type_ != null) {
+            buffer.write(" type=\"");
+            buffer.write(URelaxer.escapeAttrQuot(URelaxer.getString(getType())));
             buffer.write("\"");
         }
-        if (constraint_ != null) {
-            buffer.write(" constraint=\"");
-            buffer.write(URelaxer.escapeAttrQuot(URelaxer.getString(getConstraint())));
+        if (isGccSyntax_ != null) {
+            buffer.write(" is_gccSyntax=\"");
+            buffer.write(URelaxer.escapeAttrQuot(URelaxer.getString(getIsGccSyntax())));
+            buffer.write("\"");
+        }
+        if (isModified_ != null) {
+            buffer.write(" is_modified=\"");
+            buffer.write(URelaxer.escapeAttrQuot(URelaxer.getString(getIsModified())));
             buffer.write("\"");
         }
         expressions_.makeTextAttribute(buffer);
         buffer.write(">");
         expressions_.makeTextElement(buffer);
-        buffer.write("</gccAsmOperand>");
+        buffer.write("</xmpDescOf>");
     }
 
     /**
@@ -627,21 +655,26 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
      */
     public void makeTextElement(PrintWriter buffer) {
         int size;
-        buffer.print("<gccAsmOperand");
-        if (match_ != null) {
-            buffer.print(" match=\"");
-            buffer.print(URelaxer.escapeAttrQuot(URelaxer.getString(getMatch())));
+        buffer.print("<xmpDescOf");
+        if (type_ != null) {
+            buffer.print(" type=\"");
+            buffer.print(URelaxer.escapeAttrQuot(URelaxer.getString(getType())));
             buffer.print("\"");
         }
-        if (constraint_ != null) {
-            buffer.print(" constraint=\"");
-            buffer.print(URelaxer.escapeAttrQuot(URelaxer.getString(getConstraint())));
+        if (isGccSyntax_ != null) {
+            buffer.print(" is_gccSyntax=\"");
+            buffer.print(URelaxer.escapeAttrQuot(URelaxer.getString(getIsGccSyntax())));
+            buffer.print("\"");
+        }
+        if (isModified_ != null) {
+            buffer.print(" is_modified=\"");
+            buffer.print(URelaxer.escapeAttrQuot(URelaxer.getString(getIsModified())));
             buffer.print("\"");
         }
         expressions_.makeTextAttribute(buffer);
         buffer.print(">");
         expressions_.makeTextElement(buffer);
-        buffer.print("</gccAsmOperand>");
+        buffer.print("</xmpDescOf>");
     }
 
     /**
@@ -674,8 +707,8 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
      *
      * @return String
      */
-    public String getMatchAsString() {
-        return (URelaxer.getString(getMatch()));
+    public String getTypeAsString() {
+        return (URelaxer.getString(getType()));
     }
 
     /**
@@ -683,8 +716,17 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
      *
      * @return String
      */
-    public String getConstraintAsString() {
-        return (URelaxer.getString(getConstraint()));
+    public String getIsGccSyntaxAsString() {
+        return (URelaxer.getString(getIsGccSyntax()));
+    }
+
+    /**
+     * Gets the property value as String.
+     *
+     * @return String
+     */
+    public String getIsModifiedAsString() {
+        return (URelaxer.getString(getIsModified()));
     }
 
     /**
@@ -692,8 +734,8 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
      *
      * @param string
      */
-    public void setMatchByString(String string) {
-        setMatch(string);
+    public void setTypeByString(String string) {
+        setType(string);
     }
 
     /**
@@ -701,8 +743,17 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
      *
      * @param string
      */
-    public void setConstraintByString(String string) {
-        setConstraint(string);
+    public void setIsGccSyntaxByString(String string) {
+        setIsGccSyntax(string);
+    }
+
+    /**
+     * Sets the property value by String.
+     *
+     * @param string
+     */
+    public void setIsModifiedByString(String string) {
+        setIsModified(string);
     }
 
     /**
@@ -774,25 +825,19 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
 
     /**
      * Tests if a Element <code>element</code> is valid
-     * for the <code>XbcGccAsmOperand</code>.
+     * for the <code>XbcXmpDescOf</code>.
      *
      * @param element
      * @return boolean
      */
     public static boolean isMatch(Element element) {
-        if (!URelaxer.isTargetElement(element, "gccAsmOperand")) {
+        if (!URelaxer.isTargetElement(element, "xmpDescOf")) {
             return (false);
         }
         RStack target = new RStack(element);
         boolean $match$ = false;
         Element child;
-        if (!URelaxer.hasAttributeHungry(target, "constraint")) {
-            return (false);
-        }
-        $match$ = true;
         if (XbcBuiltinOp.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcSubArrayRef.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcArrayRef.isMatchHungry(target)) {
             $match$ = true;
@@ -800,11 +845,9 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
             $match$ = true;
         } else if (XbcGccCompoundExpr.isMatchHungry(target)) {
             $match$ = true;
+        } else if (XbcSubArrayRef.isMatchHungry(target)) {
+            $match$ = true;
         } else if (XbcCoArrayRef.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcCastExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcCoArrayAssignExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcStringConstant.isMatchHungry(target)) {
             $match$ = true;
@@ -814,35 +857,13 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
             $match$ = true;
         } else if (XbcArrayAddr.isMatchHungry(target)) {
             $match$ = true;
+        } else if (XbcCastExpr.isMatchHungry(target)) {
+            $match$ = true;
         } else if (XbcCompoundValueExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcCompoundValueAddrExpr.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcAddrOfExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcXmpDescOf.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcMinusExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcLshiftExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcRshiftExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcAsgMulExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcAsgModExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcAsgBitOrExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcAsgBitXorExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcLogNEQExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcLogGEExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcLogGTExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcLogOrExpr.isMatchHungry(target)) {
+        } else if (XbcCoArrayAssignExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcIntConstant.isMatchHungry(target)) {
             $match$ = true;
@@ -856,19 +877,39 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
             $match$ = true;
         } else if (XbcSizeOfExpr.isMatchHungry(target)) {
             $match$ = true;
+        } else if (XbcAddrOfExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcXmpDescOf.isMatchHungry(target)) {
+            $match$ = true;
         } else if (XbcGccAlignOfExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcGccLabelAddr.isMatchHungry(target)) {
             $match$ = true;
+        } else if (XbcMemberAddr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcMemberRef.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcMemberArrayRef.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcMemberArrayAddr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcPointerRef.isMatchHungry(target)) {
+            $match$ = true;
         } else if (XbcAssignExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcPlusExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcMinusExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcMulExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcDivExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcModExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcLshiftExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcRshiftExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcBitAndExpr.isMatchHungry(target)) {
             $match$ = true;
@@ -880,7 +921,11 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
             $match$ = true;
         } else if (XbcAsgMinusExpr.isMatchHungry(target)) {
             $match$ = true;
+        } else if (XbcAsgMulExpr.isMatchHungry(target)) {
+            $match$ = true;
         } else if (XbcAsgDivExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcAsgModExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcAsgLshiftExpr.isMatchHungry(target)) {
             $match$ = true;
@@ -888,7 +933,17 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
             $match$ = true;
         } else if (XbcAsgBitAndExpr.isMatchHungry(target)) {
             $match$ = true;
+        } else if (XbcAsgBitOrExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcAsgBitXorExpr.isMatchHungry(target)) {
+            $match$ = true;
         } else if (XbcLogEQExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcLogNEQExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcLogGEExpr.isMatchHungry(target)) {
+            $match$ = true;
+        } else if (XbcLogGTExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcLogLEExpr.isMatchHungry(target)) {
             $match$ = true;
@@ -896,17 +951,7 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
             $match$ = true;
         } else if (XbcLogAndExpr.isMatchHungry(target)) {
             $match$ = true;
-        } else if (XbcCondExpr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcMemberAddr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcMemberRef.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcMemberArrayRef.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcMemberArrayAddr.isMatchHungry(target)) {
-            $match$ = true;
-        } else if (XbcPointerRef.isMatchHungry(target)) {
+        } else if (XbcLogOrExpr.isMatchHungry(target)) {
             $match$ = true;
         } else if (XbcUnaryMinusExpr.isMatchHungry(target)) {
             $match$ = true;
@@ -924,6 +969,8 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
             $match$ = true;
         } else if (XbcPreDecrExpr.isMatchHungry(target)) {
             $match$ = true;
+        } else if (XbcCondExpr.isMatchHungry(target)) {
+            $match$ = true;
         } else {
             return (false);
         }
@@ -935,7 +982,7 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
 
     /**
      * Tests if elements contained in a Stack <code>stack</code>
-     * is valid for the <code>XbcGccAsmOperand</code>.
+     * is valid for the <code>XbcXmpDescOf</code>.
      * This mehtod is supposed to be used internally
      * by the Relaxer system.
      *
@@ -952,7 +999,7 @@ public class XbcGccAsmOperand extends xcodeml.c.obj.XmcObj implements java.io.Se
 
     /**
      * Tests if elements contained in a Stack <code>stack</code>
-     * is valid for the <code>XbcGccAsmOperand</code>.
+     * is valid for the <code>XbcXmpDescOf</code>.
      * This method consumes the stack contents during matching operation.
      * This mehtod is supposed to be used internally
      * by the Relaxer system.

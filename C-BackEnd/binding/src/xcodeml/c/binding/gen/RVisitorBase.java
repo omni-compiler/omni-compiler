@@ -26,7 +26,7 @@ package xcodeml.c.binding.gen;
 import xcodeml.binding.*;
 
 /**
- * @version XcodeML_C.rng 1.0 (Fri Oct 07 17:51:14 JST 2011)
+ * @version XcodeML_C.rng 1.0 (Thu Feb 02 16:55:20 JST 2012)
  * @author  Relaxer 1.0 (http://www.relaxer.org)
  */
 public class RVisitorBase implements IRVisitor {
@@ -379,24 +379,6 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbcMemberRef visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcMemberRef visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
     public boolean enter(XbcVar visitable) {
         return (true);
     }
@@ -407,6 +389,24 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      */
     public void leave(XbcVar visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcMemberRef visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcMemberRef visitable) {
     }
 
     /**
@@ -505,7 +505,7 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbcCoArrayAssignExpr visitable) {
+    public boolean enter(XbcXmpDescOf visitable) {
         return (true);
     }
 
@@ -514,25 +514,7 @@ public class RVisitorBase implements IRVisitor {
      *
      * @param visitable
      */
-    public void leave(XbcCoArrayAssignExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcAddrOfExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcAddrOfExpr visitable) {
+    public void leave(XbcXmpDescOf visitable) {
     }
 
     /**
@@ -649,7 +631,7 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbcMemberArrayAddr visitable) {
+    public boolean enter(XbcCoArrayAssignExpr visitable) {
         return (true);
     }
 
@@ -658,7 +640,493 @@ public class RVisitorBase implements IRVisitor {
      *
      * @param visitable
      */
-    public void leave(XbcMemberArrayAddr visitable) {
+    public void leave(XbcCoArrayAssignExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcModExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcModExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcBitOrExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcBitOrExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcLogOrExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcLogOrExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcPlusExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcPlusExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcAsgPlusExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcAsgPlusExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcAsgModExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcAsgModExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcAsgBitOrExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcAsgBitOrExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcLogGTExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcLogGTExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcCondExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcCondExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcMinusExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcMinusExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcAddrOfExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcAddrOfExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcLshiftExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcLshiftExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcRshiftExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcRshiftExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcAsgBitXorExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcAsgBitXorExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcLogEQExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcLogEQExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcLogNEQExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcLogNEQExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcLogGEExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcLogGEExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcLogLTExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcLogLTExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcGccAlignOfExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcGccAlignOfExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcAssignExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcAssignExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcMulExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcMulExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcDivExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcDivExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcAsgMulExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcAsgMulExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcAsgRshiftExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcAsgRshiftExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcAsgBitAndExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcAsgBitAndExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcLogLEExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcLogLEExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcLogAndExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcLogAndExpr visitable) {
     }
 
     /**
@@ -685,7 +1153,7 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      * @return boolean
      */
-    public boolean enter(XbcCondExpr visitable) {
+    public boolean enter(XbcAsgDivExpr visitable) {
         return (true);
     }
 
@@ -694,7 +1162,97 @@ public class RVisitorBase implements IRVisitor {
      *
      * @param visitable
      */
-    public void leave(XbcCondExpr visitable) {
+    public void leave(XbcAsgDivExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcGccLabelAddr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcGccLabelAddr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcBitAndExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcBitAndExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcBitXorExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcBitXorExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcAsgMinusExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcAsgMinusExpr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcAsgLshiftExpr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcAsgLshiftExpr visitable) {
     }
 
     /**
@@ -731,6 +1289,60 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      */
     public void leave(XbcMemberArrayRef visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcMemberArrayAddr visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcMemberArrayAddr visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcTypeName visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcTypeName visitable) {
+    }
+
+    /**
+     * Visits this node for enter behavior.
+     *
+     * @param visitable
+     * @return boolean
+     */
+    public boolean enter(XbcPointerRef visitable) {
+        return (true);
+    }
+
+    /**
+     * Visits this node for leave behavior.
+     *
+     * @param visitable
+     */
+    public void leave(XbcPointerRef visitable) {
     }
 
     /**
@@ -857,600 +1469,6 @@ public class RVisitorBase implements IRVisitor {
      * @param visitable
      */
     public void leave(XbcPreDecrExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcGccAlignOfExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcGccAlignOfExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcGccLabelAddr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcGccLabelAddr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcPointerRef visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcPointerRef visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcTypeName visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcTypeName visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcAssignExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcAssignExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcPlusExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcPlusExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcMinusExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcMinusExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcMulExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcMulExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcDivExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcDivExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcModExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcModExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcLshiftExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcLshiftExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcRshiftExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcRshiftExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcBitAndExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcBitAndExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcBitOrExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcBitOrExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcBitXorExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcBitXorExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcAsgPlusExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcAsgPlusExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcAsgMinusExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcAsgMinusExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcAsgMulExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcAsgMulExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcAsgDivExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcAsgDivExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcAsgModExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcAsgModExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcAsgLshiftExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcAsgLshiftExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcAsgRshiftExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcAsgRshiftExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcAsgBitAndExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcAsgBitAndExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcAsgBitOrExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcAsgBitOrExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcAsgBitXorExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcAsgBitXorExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcLogEQExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcLogEQExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcLogNEQExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcLogNEQExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcLogGEExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcLogGEExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcLogGTExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcLogGTExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcLogLEExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcLogLEExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcLogLTExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcLogLTExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcLogAndExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcLogAndExpr visitable) {
-    }
-
-    /**
-     * Visits this node for enter behavior.
-     *
-     * @param visitable
-     * @return boolean
-     */
-    public boolean enter(XbcLogOrExpr visitable) {
-        return (true);
-    }
-
-    /**
-     * Visits this node for leave behavior.
-     *
-     * @param visitable
-     */
-    public void leave(XbcLogOrExpr visitable) {
     }
 
     /**

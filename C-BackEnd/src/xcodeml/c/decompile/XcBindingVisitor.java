@@ -1769,7 +1769,9 @@ public class XcBindingVisitor extends RVisitorBase implements XcLazyVisitor
     @Override
     public boolean enter(XbcArrayAddr visitable)
     {
-        return _enterSymbolAddr(visitable);
+        //return _enterSymbolAddr(visitable);
+        XcIdent ident = _getIdentVarOrFunc(visitable);
+        return _setAsLeaf(ident, (XmObj)visitable);
     }
 
     private XcExprObj _shiftUpCoArray(XcRefObj refObj, IXbcTypedExpr visitable)
@@ -1956,6 +1958,14 @@ public class XcBindingVisitor extends RVisitorBase implements XcLazyVisitor
     public boolean enter(XbcGccAlignOfExpr visitable)
     {
         return _enterExprOrType((IXbcSizeOrAlignExpr)visitable, visitable.getExprOrType(), XcOperatorEnum.ALIGNOF);
+    }
+
+    @Override
+    public boolean enter(XbcXmpDescOf visitable)
+    {
+        XcOperatorObj obj = new XcOperatorObj(XcOperatorEnum.XMPDESCOF);
+        XcBindingVisitor visitor = _setAsNode(obj, (XmObj)visitable);
+        return _enter(visitor, visitable.getExpressions());
     }
 
     @Override
