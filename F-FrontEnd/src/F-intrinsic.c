@@ -29,6 +29,7 @@ static TYPE_DESC        get_intrinsic_return_type(intrinsic_entry *ep,
                                                   expv args);
 static BASIC_DATA_TYPE	intr_type_to_basic_type(INTR_DATA_TYPE iType);
 
+expv doubledKind = NULL;
 
 
 void
@@ -717,7 +718,7 @@ static TYPE_DESC
 get_intrinsic_return_type(intrinsic_entry *ep, expv args) {
     TYPE_DESC ret = NULL;
     expv a = NULL;
-
+    
     if (INTR_RETURN_TYPE(ep) == INTR_TYPE_NONE) {
         return NULL;
     }
@@ -987,7 +988,16 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args) {
                 if (!(isValidTypedExpv(a)))
                     return NULL;
                 ret = type_basic(intr_type_to_basic_type(INTR_RETURN_TYPE(ep)));
-                TYPE_KIND(ret) = TYPE_KIND(get_bottom_ref_type(EXPV_TYPE(a)));
+
+		if (!doubledKind)
+		  doubledKind = expv_int_term(INT_CONSTANT, type_INT,
+					       KIND_PARAM_DOUBLE);
+
+		TYPE_KIND(ret) = IS_DOUBLED_TYPE(EXPV_TYPE(a)) ?
+	                         doubledKind :
+		                 TYPE_KIND(get_bottom_ref_type(EXPV_TYPE(a)));
+
+		//TYPE_KIND(ret) = TYPE_KIND(get_bottom_ref_type(EXPV_TYPE(a)));
                 ret = intr_convert_to_dimension_ifneeded(ep, args, ret);
                 break;
             }

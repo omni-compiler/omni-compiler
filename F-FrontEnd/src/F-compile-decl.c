@@ -1765,6 +1765,7 @@ compile_type(expr x)
     TYPE_DESC tp = NULL;
     expr rkind = NULL, rcharLen = NULL;
     expv vkind = NULL, vkind2 = NULL, vcharLen = NULL, vcharLen1 = NULL;
+    expv org_vkind = NULL;
 
     if(x == NULL) return NULL;
 
@@ -1816,7 +1817,8 @@ compile_type(expr x)
          *	SUPER BOGUS FLAG ALERT !
          */
         is_in_kind_compilation_flag_for_declare_ident = TRUE;
-        vkind = compile_expression(rkind);
+	org_vkind = vkind = compile_expression(rkind);
+        //vkind = compile_expression(rkind);
         is_in_kind_compilation_flag_for_declare_ident = FALSE;
         if(vkind == NULL)
             return NULL;
@@ -1834,7 +1836,7 @@ compile_type(expr x)
                         return NULL;
                     }
                     kind /= 2;
-                    vkind = expv_int_term(INT_CONSTANT, type_INT, kind);
+                    org_vkind = vkind = expv_int_term(INT_CONSTANT, type_INT, kind);
                 }
             } else if(kindByLen) {
                 error("cannot reduce length parameter");
@@ -1986,7 +1988,8 @@ compile_type(expr x)
 
     if(tp == NULL) {
         tp = type_basic(t);
-        TYPE_KIND(tp) = vkind;
+	TYPE_KIND(tp) = org_vkind ? org_vkind : vkind;
+	//TYPE_KIND(tp) = vkind;
     }
 
     return tp;

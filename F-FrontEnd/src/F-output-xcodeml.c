@@ -73,6 +73,8 @@ static int          is_outputed_module = FALSE;
     (EXT_LINE(ep) ? EXT_LINE(ep) : \
     EXT_PROC_ID_LIST(ep) ? ID_LINE(EXT_PROC_ID_LIST(ep)) : NULL)
 
+extern expv doubledKind;
+
 static const char*
 xtag(enum expr_code code)
 {
@@ -3019,14 +3021,14 @@ mark_type_desc_in_id_list(ID ids)
 static void
 outx_kind(int l, TYPE_DESC tp)
 {
-    static expv doubeledKind = NULL;
+  //    static expv doubeledKind = NULL;
     expv vkind;
     
-    if(doubeledKind == NULL)
-        doubeledKind = expv_int_term(INT_CONSTANT, type_INT, KIND_PARAM_DOUBLE);
+    if(doubledKind == NULL)
+        doubledKind = expv_int_term(INT_CONSTANT, type_INT, KIND_PARAM_DOUBLE);
 
     if(IS_DOUBLED_TYPE(tp))
-        vkind = doubeledKind;
+        vkind = doubledKind;
     else if(tp && TYPE_KIND(tp))
         vkind = TYPE_KIND(tp);
     else

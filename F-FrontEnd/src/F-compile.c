@@ -1716,6 +1716,18 @@ define_external_function_id(ID id) {
         tp = ID_TYPE(id);
     }
 
+    /* inherits the public or private attribute from the parent */
+    if (!tp){
+      tp = new_type_desc();
+      TYPE_BASIC_TYPE(tp) = TYPE_GNUMERIC_ALL;
+      ID_TYPE(id) = tp;
+    }
+    ID pid;
+    if (tp && (pid = find_ident_parent(ID_SYM(id)))){
+      if (TYPE_IS_PUBLIC(pid)) TYPE_SET_PUBLIC(tp);
+      else if (TYPE_IS_PRIVATE(pid)) TYPE_SET_PRIVATE(tp);
+    }
+
     args = EMPTY_LIST;
     /* make external entry */
     ext_id = declare_external_proc_id(ID_SYM(id), tp, TRUE);

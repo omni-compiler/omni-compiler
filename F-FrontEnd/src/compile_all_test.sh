@@ -36,7 +36,7 @@ echo > errors.txt
 
 for f in $testdata/*.f $testdata/*.f90; do
     b=`basename $f`
-    $frontend -I $testdata $f -o $b.xml > $b.out 2>&1
+    $frontend -fopenmp -I $testdata $f -o $b.xml > $b.out 2>&1
     if [ $? = 0 ]; then
         $backend $b.xml -o $b.dec.f90 >> $b.out 2>&1
         if [ $? = 0 ]; then
