@@ -61,4 +61,3 @@ rm -rf Makefile config.cache config.log config.status autom4te.cache
 
 echo 'Now run ./configure'
 
-
