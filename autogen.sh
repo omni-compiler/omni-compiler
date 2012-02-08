@@ -60,3 +60,4 @@ rm -rf Makefile config.cache config.log config.status autom4te.cache
     rm -rf C-test/Makefile tiny/Makefile clinkpack/Makefile)
 
 echo 'Now run ./configure'
+
