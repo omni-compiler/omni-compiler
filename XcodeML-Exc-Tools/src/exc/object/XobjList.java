@@ -243,13 +243,14 @@ public class XobjList extends Xobject implements Iterable<Xobject>, XobjContaine
     public Xobject getArg(int i)
     {
         XobjArgs a = args;
+	int j = i;
         while(i > 0) {
             a = a.nextArgs();
             i--;
         }
         if(a == null) {
             throw new NullPointerException(
-                "i=" + i + ", args=" + (args != null ? args.arg.toString() : "null"));
+                "i=" + j + ", args=" + (args != null ? args.toString() : "null"));
         }
         return a.getArg();
     }

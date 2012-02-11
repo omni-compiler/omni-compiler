@@ -378,11 +378,11 @@ public class Bcons
             
         case OMP_PRAGMA:
             return PRAGMA(Xcode.OMP_PRAGMA, v.getArg(0).getString(), v.getArg(1),
-                buildList(v.getArg(2)));
+                buildList(v.getArgOrNull(2)));
 
         case XMP_PRAGMA:
             return PRAGMA(Xcode.XMP_PRAGMA, v.getArg(0).getString(), v.getArg(1),
-                buildList(v.getArg(2)));
+                buildList(v.getArgOrNull(2)));
 
         case IF_STATEMENT: /* (IF_STATMENT cond then-part else-part) */
             return IF(BasicBlock.Cond(v.getArg(0)), buildList(v.getArg(1)),
