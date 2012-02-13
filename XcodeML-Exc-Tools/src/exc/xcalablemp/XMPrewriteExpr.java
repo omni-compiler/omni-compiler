@@ -315,7 +315,7 @@ public class XMPrewriteExpr {
     if (alignedArray == null) 
       throw new XMPexception("Must be global array name for xmp_desc_of()");
     Ident XmpDescOfFuncId = 
-      _globalDecl.declExternFunc("_XMP_desc_Of",myExpr.Type());
+      _globalDecl.declExternFunc("_XMP_desc_of",myExpr.Type());
     Xobject e = XmpDescOfFuncId.Call(Xcons.List(alignedArray.getDescId()));
     return e;
   }
