@@ -1716,21 +1716,18 @@ public class XmcXmObjToXobjectTranslator extends RVisitorBase
     @Override
     public boolean enter(XbcSubArrayRef xmobj)
     {
-        _xobj = Xcons.List(Xcode.SUB_ARRAY_REF, getType(xmobj),
-                           toXobject(xmobj.getArrayAddr()),
-			   xmobj.getSubArrayDimension());
-//         _xobj = Xcons.List(Xcode.SUB_ARRAY_REF, getType(xmobj),
-//                            toXobject(xmobj.getArrayAddr()),
-//                           toXobjList(Xcode.LIST, getType(xmobj), xmobj.getSubArrayDimension()));
+      _xobj = Xcons.List(Xcode.SUB_ARRAY_REF, getType(xmobj),
+			 toXobject(xmobj.getArrayAddr()),
+			 toXobjList(Xcode.LIST, getType(xmobj), xmobj.getSubArrayDimension()));
         return true;
     }
 
     @Override
     public boolean enter(XbcIndexRange xmobj) {
       return enterAsXobjList(xmobj, Xcode.LIST /*Xcode.INDEX_RANGE*/,
-                               xmobj.getLowerBound(),
-                               xmobj.getUpperBound(),
-                               xmobj.getStep());
+			     xmobj.getLowerBound().getExpressions(),
+			     xmobj.getUpperBound().getExpressions(),
+			     xmobj.getStep().getExpressions());
     }
 
     @Override
