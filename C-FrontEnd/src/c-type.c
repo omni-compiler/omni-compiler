@@ -3924,6 +3924,9 @@ resolveType(CExpr *expr)
             td = resolveType(EXPR_B(expr)->e_nodes[1]);
         break;
     case EC_XMP_DESC_OF:
+        if(checkExprsTypeDescOfChildren(expr))
+            td = &s_charPtrTypeDesc;
+        break;
     case EC_GCC_ALIGN_OF:
     case EC_GCC_BLTIN_TYPES_COMPATIBLE_P:
         if(checkExprsTypeDescOfChildren(expr))

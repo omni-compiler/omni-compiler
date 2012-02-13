@@ -303,11 +303,11 @@ public class XMPgpuDecompileWriter extends PrintWriter {
         print(")");
       }
       break;
-    case ARRAY_AREF:
-      print("*(");
-      print(v.left());
-      print(")");
-      break;
+//     case ARRAY_AREF:
+//       print("*(");
+//       print(v.left());
+//       print(")");
+//      break;
 
     case MEMBER_REF:      /* (MEMBER_REF v member), v.member */
       print("((");

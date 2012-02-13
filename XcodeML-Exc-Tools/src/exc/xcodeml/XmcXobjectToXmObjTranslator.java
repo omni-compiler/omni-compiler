@@ -789,24 +789,24 @@ public class XmcXobjectToXmObjTranslator
                 xmobj = m;
             }
             break;
-        case LOWER_BOUND: {
-                XbcLowerBound m = _factory.createXbcLowerBound();
-                m.setExpressions(transExpr(xobj.getArg(0)));
-                xmobj = m;
-            }
-            break;
-        case UPPER_BOUND: {
-                XbcUpperBound m = _factory.createXbcUpperBound();
-                m.setExpressions(transExpr(xobj.getArg(0)));
-                xmobj = m;
-            }
-            break;
-        case STEP: {
-                XbcStep m = _factory.createXbcStep();
-                m.setExpressions(transExpr(xobj.getArg(0)));
-                xmobj = m;
-            }
-            break;
+//         case LOWER_BOUND: {
+//                 XbcLowerBound m = _factory.createXbcLowerBound();
+//                 m.setExpressions(transExpr(xobj.getArg(0)));
+//                 xmobj = m;
+//             }
+//             break;
+//         case UPPER_BOUND: {
+//                 XbcUpperBound m = _factory.createXbcUpperBound();
+//                 m.setExpressions(transExpr(xobj.getArg(0)));
+//                 xmobj = m;
+//             }
+//             break;
+//         case STEP: {
+//                 XbcStep m = _factory.createXbcStep();
+//                 m.setExpressions(transExpr(xobj.getArg(0)));
+//                 xmobj = m;
+//             }
+//             break;
         case CO_ARRAY_REF: {
                 XbcCoArrayRef m = _factory.createXbcCoArrayRef();
                 //m.setName(transName(xobj.getArg(0)));
@@ -848,20 +848,20 @@ public class XmcXobjectToXmObjTranslator
                 xmobj = m;
             }
             break;
-        case INDEX_RANGE: {
-                XbcIndexRange m = _factory.createXbcIndexRange();
-                m.setLowerBound((XbcLowerBound)trans(xobj.getArg(0)));
-                m.setUpperBound((XbcUpperBound)trans(xobj.getArg(1)));
-                m.setStep((XbcStep)trans(xobj.getArg(2)));
-                xmobj = m;
-            }
-            break;
-        case ADDR_OF_EXPR: {
-                XbcAddrOfExpr m = _factory.createXbcAddrOfExpr();
-                m.setExpressions(transExpr(xobj.getArg(0)));
-                xmobj = m;
-            }
-            break;
+//         case INDEX_RANGE: {
+//                 XbcIndexRange m = _factory.createXbcIndexRange();
+//                 m.setLowerBound((XbcLowerBound)trans(xobj.getArg(0)));
+//                 m.setUpperBound((XbcUpperBound)trans(xobj.getArg(1)));
+//                 m.setStep((XbcStep)trans(xobj.getArg(2)));
+//                 xmobj = m;
+//             }
+//             break;
+//         case ADDR_OF_EXPR: {
+//                 XbcAddrOfExpr m = _factory.createXbcAddrOfExpr();
+//                 m.setExpressions(transExpr(xobj.getArg(0)));
+//                 xmobj = m;
+//             }
+//             break;
         default: {
                 fatal_dump("cannot convert Xcode to XcodeML.", xobj);
             }

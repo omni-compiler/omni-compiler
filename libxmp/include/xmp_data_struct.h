@@ -91,9 +91,9 @@ typedef struct _XMP_template_type {
   unsigned long long on_ref_id;
 
   _Bool is_fixed;
-   _Bool is_distributed;
-    _Bool is_owner;
-
+  _Bool is_distributed;
+  _Bool is_owner;
+  
   int   dim;
 
   // enable when is_distributed is true

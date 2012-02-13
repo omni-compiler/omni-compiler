@@ -292,15 +292,32 @@ public class XMPrewriteExpr {
                 iter.setXobject(rewriteArrayRef(myExpr, localXMPsymbolTable));
                 break;
               case SUB_ARRAY_REF:
-                System.out.println(myExpr.toString());
+                System.out.println("sub_array_ref="+myExpr.toString());
                 break;
+  	      case XMP_DESC_OF:
+		iter.setXobject(rewriteXmpDescOf(myExpr, localXMPsymbolTable));
+		break;
               default:
             }
           }
-
           return expr;
         }
     }
+  }
+
+  private Xobject rewriteXmpDescOf(Xobject myExpr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+    Xobject arrayAddr = myExpr.getArg(0);
+    if(arrayAddr.Opcode() != Xcode.ARRAY_ADDR)
+      throw new XMPexception("Bad array name for xmp_desc_of()");
+    String arrayName = arrayAddr.getSym();
+    XMPalignedArray alignedArray = 
+      _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+    if (alignedArray == null) 
+      throw new XMPexception("Must be global array name for xmp_desc_of()");
+    Ident XmpDescOfFuncId = 
+      _globalDecl.declExternFunc("_XMP_desc_Of",myExpr.Type());
+    Xobject e = XmpDescOfFuncId.Call(Xcons.List(alignedArray.getDescId()));
+    return e;
   }
 
   private Xobject rewriteArrayRef(Xobject myExpr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {

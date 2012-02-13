@@ -485,7 +485,8 @@ void _XMP_init_nodes_DYNAMIC_EXEC(_XMP_nodes_t **nodes, int dim, ...) {
     dim_size[i] = dim_size_temp;
   }
 
-  _XMP_nodes_t *n = _XMP_init_nodes_struct_EXEC(dim, dim_size, _XMP_N_INT_FALSE);
+  _XMP_nodes_t *n = 
+    _XMP_init_nodes_struct_EXEC(dim, dim_size, _XMP_N_INT_FALSE);
   *nodes = n;
 
   int *last_dim_size_p = va_arg(args, int *);
@@ -543,7 +544,8 @@ void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
 
   _XMP_nodes_t *n = 
     _XMP_init_nodes_struct_NODES_NUMBER(dim, ref_lower, ref_upper, 
-					ref_stride, dim_size, _XMP_N_INT_FALSE);
+					ref_stride, dim_size, 
+					_XMP_N_INT_FALSE);
   *nodes = n;
 
   int *last_dim_size_p = va_arg(args, int *);
@@ -627,8 +629,10 @@ void _XMP_init_nodes_DYNAMIC_NODES_NAMED(_XMP_nodes_t **nodes, int dim,
     }
   }
 
-  _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NAMED(dim, ref_nodes, shrink, ref_lower, ref_upper, ref_stride,
-                                                       dim_size, _XMP_N_INT_FALSE);
+  _XMP_nodes_t *n = 
+    _XMP_init_nodes_struct_NODES_NAMED(dim, ref_nodes, shrink, 
+				       ref_lower, ref_upper, ref_stride,
+				       dim_size, _XMP_N_INT_FALSE);
   *nodes = n;
 
   int *last_dim_size_p = va_arg(args, int *);

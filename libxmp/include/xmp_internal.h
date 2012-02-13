@@ -107,13 +107,23 @@ extern void _XMP_push_comm(_XMP_comm_t *comm);
 extern void _XMP_finalize_comm(_XMP_comm_t *comm);
 
 // xmp_template.c
+extern _XMP_template_t *_XMP_create_template_desc(int dim, _Bool is_fixed);
 extern int _XMP_check_template_ref_inclusion(int ref_lower, int ref_upper, int ref_stride,
                                              _XMP_template_t *t, int index);
 extern _XMP_nodes_t *_XMP_create_nodes_by_template_ref(_XMP_template_t *ref_template, int *shrink,
                                                        long long *ref_lower, long long *ref_upper, long long *ref_stride);
+
+extern void _XMP_calc_template_size(_XMP_template_t *t);
+extern void _XMP_init_template_chunk(_XMP_template_t *template, _XMP_nodes_t *nodes);
 extern int _XMP_calc_template_owner_SCALAR(_XMP_template_t *ref_template, int dim_index, long long ref_index);
 extern int _XMP_calc_template_par_triplet(_XMP_template_t *template, int template_index, int nodes_rank,
                                           int *template_lower, int *template_upper, int *template_stride);
+
+void _XMP_dist_template_DUPLICATION(_XMP_template_t *template, int template_index);
+void _XMP_dist_template_BLOCK(_XMP_template_t *template, int template_index, int nodes_index);
+void _XMP_dist_template_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index) ;
+void _XMP_dist_template_BLOCK_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index, unsigned long long width);
+
 
 // xmp_util.c
 extern unsigned long long _XMP_get_on_ref_id(void);

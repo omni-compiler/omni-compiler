@@ -867,6 +867,13 @@ public class XmcXmObjToXobjectTranslator extends RVisitorBase
     }
 
     @Override
+    public boolean enter(XbcXmpDescOf xmobj)
+    {
+        return enterAsXobjList((XmObj)xmobj, Xcode.XMP_DESC_OF, 
+			       xmobj.getExpressions());
+    }
+
+    @Override
     public boolean enter(XbcCoArrayAssignExpr xmobj)
     {
         return enterAsXobjList(xmobj, Xcode.CO_ARRAY_ASSIGN_EXPR,
@@ -1711,13 +1718,16 @@ public class XmcXmObjToXobjectTranslator extends RVisitorBase
     {
         _xobj = Xcons.List(Xcode.SUB_ARRAY_REF, getType(xmobj),
                            toXobject(xmobj.getArrayAddr()),
-                           toXobjList(Xcode.LIST, getType(xmobj), xmobj.getSubArrayDimension()));
+			   xmobj.getSubArrayDimension());
+//         _xobj = Xcons.List(Xcode.SUB_ARRAY_REF, getType(xmobj),
+//                            toXobject(xmobj.getArrayAddr()),
+//                           toXobjList(Xcode.LIST, getType(xmobj), xmobj.getSubArrayDimension()));
         return true;
     }
 
     @Override
     public boolean enter(XbcIndexRange xmobj) {
-        return enterAsXobjList(xmobj, Xcode.INDEX_RANGE,
+      return enterAsXobjList(xmobj, Xcode.LIST /*Xcode.INDEX_RANGE*/,
                                xmobj.getLowerBound(),
                                xmobj.getUpperBound(),
                                xmobj.getStep());
@@ -1725,26 +1735,26 @@ public class XmcXmObjToXobjectTranslator extends RVisitorBase
 
     @Override
     public boolean enter(XbcAddrOfExpr xmobj) {
-        return enterAsXobjList(xmobj, Xcode.ADDR_OF_EXPR, xmobj.getExpressions());
+        return enterAsXobjList(xmobj, Xcode.ADDR_OF, xmobj.getExpressions());
     }
 
-    @Override
-    public boolean enter(XbcLowerBound xmobj)
-    {
-        return enterAsXobjList(xmobj, Xcode.LOWER_BOUND, xmobj.getExpressions());
-    }
+//     @Override
+//     public boolean enter(XbcLowerBound xmobj)
+//     {
+//         return enterAsXobjList(xmobj, Xcode.LOWER_BOUND, xmobj.getExpressions());
+//     }
 
-    @Override
-    public boolean enter(XbcStep xmobj)
-    {
-        return enterAsXobjList(xmobj, Xcode.STEP, xmobj.getExpressions());
-    }
+//     @Override
+//     public boolean enter(XbcStep xmobj)
+//     {
+//         return enterAsXobjList(xmobj, Xcode.STEP, xmobj.getExpressions());
+//     }
 
-    @Override
-    public boolean enter(XbcUpperBound xmobj)
-    {
-        return enterAsXobjList(xmobj, Xcode.UPPER_BOUND, xmobj.getExpressions());
-    }
+//     @Override
+//     public boolean enter(XbcUpperBound xmobj)
+//     {
+//         return enterAsXobjList(xmobj, Xcode.UPPER_BOUND, xmobj.getExpressions());
+//     }
 
     @Override
     public boolean enter(XbcSwitchStatement xmobj)

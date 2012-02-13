@@ -872,18 +872,18 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             }
         }
             break;
-        case LOWER_BOUND:
-            e = addChildNodes(createElement(name),
-                              transExpr(xobj.getArg(0)));
-            break;
-        case UPPER_BOUND:
-            e = addChildNodes(createElement(name),
-                              transExpr(xobj.getArg(0)));
-            break;
-        case STEP:
-            e = addChildNodes(createElement(name),
-                              transExpr(xobj.getArg(0)));
-            break;
+//         case LOWER_BOUND:
+//             e = addChildNodes(createElement(name),
+//                               transExpr(xobj.getArg(0)));
+//             break;
+//         case UPPER_BOUND:
+//             e = addChildNodes(createElement(name),
+//                               transExpr(xobj.getArg(0)));
+//             break;
+//         case STEP:
+//             e = addChildNodes(createElement(name),
+//                               transExpr(xobj.getArg(0)));
+//             break;
         case CO_ARRAY_REF:
             e = addChildNodes(createElement(name),
                               transExpr(xobj.getArg(0)));
@@ -916,16 +916,16 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = addChildNodes(createElement("text"),
                               trans("/* ignored Xcode." + xobj.Opcode().toXcodeString() + " */"));
             break;
-        case INDEX_RANGE:
-            e = addChildNodes(createElement(name),
-                              trans(xobj.getArg(0)),
-                              trans(xobj.getArg(1)),
-                              trans(xobj.getArg(2)));
-            break;
-        case ADDR_OF_EXPR:
-            e = addChildNodes(createElement(name),
-                              transExpr(xobj.getArg(0)));
-            break;
+//         case INDEX_RANGE:
+//             e = addChildNodes(createElement(name),
+//                               trans(xobj.getArg(0)),
+//                               trans(xobj.getArg(1)),
+//                               trans(xobj.getArg(2)));
+//             break;
+//         case ADDR_OF_EXPR:
+//             e = addChildNodes(createElement(name),
+//                               transExpr(xobj.getArg(0)));
+//             break;
         default:
             fatal_dump("cannot convert Xcode to XcodeML.", xobj);
         }

@@ -97,19 +97,19 @@ L   TYPE_NAME                  XbcTypeName
 # C: Symbol Reference
 T   VAR                        XbcVar                       XbfVar
 T   VAR_ADDR                   XbcVarAddr
-T   ARRAY_REF                  XbcArrayRef
 T   ARRAY_ADDR                 XbcArrayAddr
 T   FUNC_ADDR                  XbcFuncAddr                  XbfFfunction
 P   MEMBER_REF                 XbcMemberRef                 XbfFmemberRef
 L   MEMBER_ARRAY_REF           XbcMemberArrayRef
 L   MEMBER_ADDR                XbcMemberAddr
 L   MEMBER_ARRAY_ADDR          XbcMemberArrayAddr
-L   ARRAY_AREF               
+L   ARRAY_REF                  XbcArrayRef
+#L   ARRAY_AREF               
 
 # -----------------
 # C: Directive
-T   PRAGMA_LINE                XbcPragma                    XbfFpragmaStatement
-T   TEXT                       XbcText
+L   PRAGMA_LINE                XbcPragma                    XbfFpragmaStatement
+L   TEXT                       XbcText
 
 # -----------------
 # C: GCC Syntax
@@ -131,9 +131,9 @@ L   GCC_RANGED_CASE_LABEL      XbcGccRangedCaseLabel
 # -----------------
 # C: XcalableMP Syntax
 L   SUB_ARRAY_REF              XbcSubArrayRef
-L   SUBA_LOWER_BOUND           XbcSubArrayRefLowerBound
-L   SUBA_UPPER_BOUND           XbcSubArrayRefUpperBound
-L   SUBA_STEP                  XbcSubArrayRefStep
+# L   SUBA_LOWER_BOUND           
+# L   SUBA_UPPER_BOUND           
+# L   SUBA_STEP                  
 L   CO_ARRAY_REF               XbcCoArrayRef
 L   CO_ARRAY_ASSIGN_EXPR       XbcCoArrayAssignExpr
 
@@ -271,6 +271,7 @@ B   JOIN
 # -----------------
 # XcalableMP Pragma
 L   XMP_PRAGMA
+U   XMP_DESC_OF
 
 # -----------------
 # Codes dynamically assignable
