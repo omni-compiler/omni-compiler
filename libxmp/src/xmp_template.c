@@ -5,7 +5,6 @@
  */
 
 #include <stdarg.h>
-#include <math.h>
 #include "mpi.h"
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
@@ -100,14 +99,14 @@ static int _XMP_check_template_ref_inclusion_width_1(int ref_lower, int ref_uppe
     _XMP_fatal("ref stride is not 1, -1: unsupported case");
   }
 
-  int x_max = (int)floor(((double)(template_upper - template_lower)) / ((double)template_stride));
+  int x_max = _XMP_floori((template_upper - template_lower), template_stride);
 
   // check ref_lower
-  int x_st = (int)ceil(((double)(ref_lower - template_lower)) / (double)(template_stride));
+  int x_st = _XMP_ceili((ref_lower - template_lower), template_stride);
   if (x_st > x_max) return _XMP_N_INT_FALSE;
 
   // check ref_upper
-  int x_ed = (int)floor(((double)(ref_upper - template_lower)) / ((double)template_stride));
+  int x_ed = _XMP_floori((ref_upper - template_lower), template_stride);
   if (x_ed < 0) return _XMP_N_INT_FALSE;
 
   if (x_st <= x_ed) {

@@ -22,6 +22,8 @@
 // defined in xmp_math_function.c
 extern int _XMP_modi_ll_i(long long value, int cycle);
 extern int _XMP_modi_i_i(int value, int cycle);
+extern int _XMP_ceili(int a, int b);
+extern int _XMP_floori(int a, int b);
 extern int _XMP_gcd(int a, int b);
 extern int _XMP_lcm(int a, int b);
 

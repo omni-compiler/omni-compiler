@@ -26,6 +26,34 @@ int _XMP_modi_i_i(int value, int cycle) {
   }
 }
 
+int _XMP_ceili(int a, int b) {
+  int div = a / b;
+
+  if ((a < 0) || (b < 0)) {
+    return div;
+  } else {
+    if ((a % b) == 0) {
+      return div;
+    } else {
+      return div + 1;
+    }
+  }
+}
+
+int _XMP_floori(int a, int b) {
+  int div = a / b;
+
+  if ((a < 0) || (b < 0)) {
+    if ((a % b) == 0) {
+      return div;
+    } else {
+      return div - 1;
+    }
+  } else {
+    return div;
+  }
+}
+
 int _XMP_gcd(int a, int b) {
   int r = a % b;
   if (r == 0) {

@@ -4,7 +4,6 @@
  *  $
  */
 
-#include <math.h>
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
@@ -53,10 +52,10 @@
 int _XMP_sched_loop_template_width_1(int ser_init, int ser_cond, int ser_step,
                                      int *par_init, int *par_cond, int *par_step,
                                      int template_lower, int template_upper, int template_stride) {
-  int x, x_max = (int)floor(((double)(template_upper - template_lower)) / ((double)template_stride));
+  int x, x_max = _XMP_floori((template_upper - template_lower), template_stride);
   if (ser_step == 1) {
     // calc par_init
-    x = (int)ceil(((double)(ser_init - template_lower)) / (double)(template_stride));
+    x = _XMP_ceili((ser_init - template_lower), template_stride);
     if (x < 0) {
       *par_init = template_lower;
     } else if (x > x_max) {
@@ -66,7 +65,7 @@ int _XMP_sched_loop_template_width_1(int ser_init, int ser_cond, int ser_step,
     }
 
     // calc par_cond
-    x = (int)floor(((double)(ser_cond - template_lower)) / ((double)template_stride));
+    x = _XMP_floori((ser_cond - template_lower), template_stride);
     if (x < 0) {
       return _XMP_N_INT_FALSE;
     } else if (x > x_max) {
