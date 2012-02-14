@@ -47,7 +47,7 @@ public class XMPrealloc implements XobjectDefVisitor {
                                 Xcons.String("/* array '" + varName + "' is removed by XcalableMP align directive */")));
         } else {
           XobjList allocFuncArgs = Xcons.List(alignedArray.getAddrIdVoidAddr(),
-                                              alignedArray.getArrayId().Ref(),
+                                              alignedArray.getArrayId().getValue(),
                                               alignedArray.getDescId().Ref());
           for (int i = alignedArray.getDim() - 1; i >= 0; i--) {
             allocFuncArgs.add(Xcons.Cast(Xtype.Pointer(Xtype.unsignedlonglongType),

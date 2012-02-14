@@ -8,9 +8,9 @@
 #define _XMP_MATH_FUNCTION
 
 // --- integer functions
-// calculate ceil(a/b)
+// calculate ceil(a/b) for positive integers
 #define _XMP_M_CEILi(a_, b_) (((a_) % (b_)) == 0 ? ((a_) / (b_)) : ((a_) / (b_)) + 1)
-// calculate floor(a/b)
+// calculate floor(a/b) for positive integers
 #define _XMP_M_FLOORi(a_, b_) ((a_) / (b_))
 #define _XMP_M_COUNTi(a_, b_) ((b_) - (a_) + 1)
 #define _XMP_M_COUNT_TRIPLETi(l_, u_, s_) (_XMP_M_FLOORi(((u_) - (l_)), s_) + 1)

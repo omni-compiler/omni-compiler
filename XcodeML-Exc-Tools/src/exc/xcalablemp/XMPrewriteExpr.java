@@ -288,6 +288,9 @@ public class XMPrewriteExpr {
             }
 
             switch (myExpr.Opcode()) {
+              case ARRAY_ADDR:
+                iter.setXobject(rewriteArrayAddr(myExpr, localXMPsymbolTable));
+                break;
               case ARRAY_REF:
                 iter.setXobject(rewriteArrayRef(myExpr, localXMPsymbolTable));
                 break;
@@ -318,6 +321,18 @@ public class XMPrewriteExpr {
       _globalDecl.declExternFunc("_XMP_desc_of",myExpr.Type());
     Xobject e = XmpDescOfFuncId.Call(Xcons.List(alignedArray.getDescId()));
     return e;
+  }
+
+  private Xobject rewriteArrayAddr(Xobject arrayAddr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayAddr.getSym(),
+                                                                  localXMPsymbolTable);
+    if (alignedArray == null) {
+      return arrayAddr;
+    } else {
+      Xobject newExpr = alignedArray.getAddrId().Ref();
+      newExpr.setIsRewrittedByXmp(true);
+      return newExpr;
+    }
   }
 
   private Xobject rewriteArrayRef(Xobject myExpr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
