@@ -126,6 +126,7 @@ extern int _XMP_init_reduce_comm_TEMPLATE(void *template, ...);
 // xmp_runtime.c
 extern void _XMP_init(void);
 extern void _XMP_finalize(void);
+extern char *_XMP_desc_of(void *p);
 
 // xmp_shadow.c
 extern void _XMP_init_shadow(void *array, ...);

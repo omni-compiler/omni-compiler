@@ -17,3 +17,7 @@ void _XMP_finalize(void) {
     _XMP_runtime_working = _XMP_N_INT_FALSE;
   }
 }
+
+char *_XMP_desc_of(void *p) {
+  return (char *)p;
+}
