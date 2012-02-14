@@ -1999,22 +1999,19 @@ public class XMPtranslateLocalPragma {
     int dim = 0;
     if (arrayRefs != null) {
       for (Xobject x : arrayRefs) {
+        if (x.Opcode() == Xcode.LIST) {
+          castedArrayRefs.add(Xcons.Cast(Xtype.intType, x.getArg(0).getArg(0)));
+          castedArrayRefs.add(Xcons.Cast(Xtype.intType, x.getArg(1).getArg(0)));
+          castedArrayRefs.add(Xcons.Cast(Xtype.intType, x.getArg(2).getArg(0)));
+          castedArrayRefs.add(Xcons.Cast(Xtype.unsignedlonglongType, accList.getArg(dim)));
+        } else {
+          castedArrayRefs.add(Xcons.Cast(Xtype.intType, x));
+          castedArrayRefs.add(Xcons.Cast(Xtype.intType, x));
+          castedArrayRefs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+          castedArrayRefs.add(Xcons.Cast(Xtype.unsignedlonglongType, accList.getArg(dim)));
+        }
 
-        throw new XMPexception("INDEX_RANGE is not defined in this version!!");
-
-//         if (x.Opcode() == Xcode.INDEX_RANGE) {
-//           castedArrayRefs.add(Xcons.Cast(Xtype.intType, x.getArg(0).getArg(0)));
-//           castedArrayRefs.add(Xcons.Cast(Xtype.intType, x.getArg(1).getArg(0)));
-//           castedArrayRefs.add(Xcons.Cast(Xtype.intType, x.getArg(2).getArg(0)));
-//           castedArrayRefs.add(Xcons.Cast(Xtype.unsignedlonglongType, accList.getArg(dim)));
-//         } else {
-//           castedArrayRefs.add(Xcons.Cast(Xtype.intType, x));
-//           castedArrayRefs.add(Xcons.Cast(Xtype.intType, x));
-//           castedArrayRefs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
-//           castedArrayRefs.add(Xcons.Cast(Xtype.unsignedlonglongType, accList.getArg(dim)));
-//         }
-
-//        dim++;
+       dim++;
       }
     }
 
