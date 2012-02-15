@@ -9,6 +9,8 @@
 
 // #include "mpi.h"
 
+typedef void *xmp_desc_t;
+
 // ----- libxmp
 extern void	xmp_MPI_comm(void **comm);
 extern int	xmp_num_nodes(void);
