@@ -2000,9 +2000,9 @@ public class XMPtranslateLocalPragma {
     if (arrayRefs != null) {
       for (Xobject x : arrayRefs) {
         if (x.Opcode() == Xcode.LIST) {
-          castedArrayRefs.add(Xcons.Cast(Xtype.intType, x.getArg(0).getArg(0)));
-          castedArrayRefs.add(Xcons.Cast(Xtype.intType, x.getArg(1).getArg(0)));
-          castedArrayRefs.add(Xcons.Cast(Xtype.intType, x.getArg(2).getArg(0)));
+          castedArrayRefs.add(Xcons.Cast(Xtype.intType, x.getArg(0)));
+          castedArrayRefs.add(Xcons.Cast(Xtype.intType, x.getArg(1)));
+          castedArrayRefs.add(Xcons.Cast(Xtype.intType, x.getArg(2)));
           castedArrayRefs.add(Xcons.Cast(Xtype.unsignedlonglongType, accList.getArg(dim)));
         } else {
           castedArrayRefs.add(Xcons.Cast(Xtype.intType, x));
