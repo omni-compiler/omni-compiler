@@ -149,15 +149,15 @@ public class XMPrewriteExpr {
     arrayType = arrayType.getRef();
     XobjList arrayRefList = (XobjList)expr.getArg(1);
     for (int i = 0; i < arrayDim - 1; i++, arrayType = arrayType.getRef()) {
-      args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(i).getArg(0).getArg(0)));
-      args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(i).getArg(1).getArg(0)));
-      args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(i).getArg(2).getArg(0)));
+      args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(i).getArg(0)));
+      args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(i).getArg(1)));
+      args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(i).getArg(2)));
       args.add(Xcons.Cast(Xtype.unsignedlonglongType, XMPutil.getArrayElmtsObj(arrayType)));
     }
 
-    args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(arrayDim - 1).getArg(0).getArg(0)));
-    args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(arrayDim - 1).getArg(1).getArg(0)));
-    args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(arrayDim - 1).getArg(2).getArg(0)));
+    args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(arrayDim - 1).getArg(0)));
+    args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(arrayDim - 1).getArg(1)));
+    args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(arrayDim - 1).getArg(2)));
     args.add(Xcons.Cast(Xtype.unsignedlonglongType, Xcons.IntConstant(1)));
 
     return args;
