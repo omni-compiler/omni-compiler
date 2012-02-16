@@ -78,6 +78,11 @@ void _XMP_init_coarray_DYNAMIC(_XMP_coarray_t **coarray, void *addr,
   c->nodes = _XMP_init_nodes_struct_GLOBAL(dim, dim_size, _XMP_N_INT_FALSE);
   c->comm = NULL;
 
+  MPI_Datatype *mpi_datatype = _XMP_alloc(sizeof(MPI_Datatype));
+  MPI_Type_contiguous(type_size, MPI_BYTE, mpi_datatype);
+  MPI_Type_commit(mpi_datatype);
+  c->data_type = (void *)mpi_datatype;
+
   *coarray = c;
 }
 
