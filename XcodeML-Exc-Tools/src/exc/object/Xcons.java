@@ -199,6 +199,7 @@ public class Xcons
         if(type != null && type.isPointer())
             type = type.getRef();
         switch(x.Opcode()) {
+        case ARRAY_ADDR:
         case VAR_ADDR:
             return Xcons.Symbol(Xcode.VAR, type, x.getSym());
         case FUNC_ADDR:

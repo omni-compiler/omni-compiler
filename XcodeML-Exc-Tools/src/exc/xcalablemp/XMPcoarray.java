@@ -89,7 +89,7 @@ public class XMPcoarray {
       isArray = true;
       varDim = varType.getNumDimensions();
       elmtType = varType.getArrayElementType();
-      varAddr = varId.getValue();
+      varAddr = varId.Ref();
     } else {
       varDim = 1;
       elmtType = varType;

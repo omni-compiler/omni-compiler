@@ -546,7 +546,7 @@ public class XMPalignedArray {
 
       // init array address
       XobjList initArrayAddrFuncArgs = Xcons.List(alignedArray.getAddrIdVoidAddr(),
-                                                  arrayId.getValue(),
+                                                  arrayId.Ref(),
                                                   arrayDescId.Ref());
       for (int i = arrayDim - 1; i >= 0; i--) {
         initArrayAddrFuncArgs.add(Xcons.Cast(Xtype.Pointer(Xtype.unsignedlonglongType),
