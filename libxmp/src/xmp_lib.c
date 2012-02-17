@@ -85,7 +85,11 @@ void xmp_array_lead_dim(xmp_desc_t d, int *lead_dim){
 
   _XMP_array_t *a = (_XMP_array_t *)d;
 
-  *lead_dim = a->info[1].par_size;
+  if (a->dim == 1){
+     *lead_dim = a->info[0].par_size;
+  } else if (a->dim > 1){
+     *lead_dim = a->info[a->dim -1].par_size;
+  }
 
 }
 
