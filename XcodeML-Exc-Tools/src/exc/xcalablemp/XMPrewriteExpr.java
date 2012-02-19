@@ -411,7 +411,7 @@ public class XMPrewriteExpr {
 
     Xobject retObj = getAddrFuncId.Call(getAddrFuncArgs);
     if (arrayDim == arrayDimCount) {
-      return Xcons.List(Xcode.POINTER_REF, retObj.Type().getRef(), retObj);
+      return Xcons.PointerRef(retObj);
     } else {
       return retObj;
     }
