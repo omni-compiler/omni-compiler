@@ -20,7 +20,7 @@
 (((((_i) - (_m)) / (((_P) * (_b)))) * (_b)) + (((_i) - (_m)) % (_b)))
 
 // FIXME not completed
-static void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
+void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
                                         int dim_index, int *lower, int *upper, int *stride) {
   _XMP_array_info_t *array_info = &(array->info[dim_index]);
   if (array_info->shadow_type == _XMP_N_SHADOW_FULL) {
@@ -123,7 +123,7 @@ static void _XMP_calc_gmove_rank_array_SCALAR(_XMP_array_t *array, int *ref_inde
   }
 }
 
-static int _XMP_calc_gmove_array_owner_linear_rank_SCALAR(_XMP_array_t *array, int *ref_index) {
+int _XMP_calc_gmove_array_owner_linear_rank_SCALAR(_XMP_array_t *array, int *ref_index) {
   _XMP_nodes_t *array_nodes = array->array_nodes;
   int array_nodes_dim = array_nodes->dim;
   int rank_array[array_nodes_dim];
@@ -156,7 +156,7 @@ static void _XMP_gmove_bcast(void *buffer, size_t type_size, unsigned long long 
   MPI_Type_free(&mpi_datatype);
 }
 
-static void _XMP_gmove_bcast_SCALAR(void *dst_addr, void *src_addr,
+void _XMP_gmove_bcast_SCALAR(void *dst_addr, void *src_addr,
                                     size_t type_size, int root_rank) {
   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
   _XMP_ASSERT(exec_nodes->is_member);
@@ -217,7 +217,7 @@ static int _XMP_check_gmove_array_ref_inclusion_SCALAR(_XMP_array_t *array, int 
   }
 }
 
-static void _XMP_gmove_localcopy_ARRAY(int type, int type_size,
+void _XMP_gmove_localcopy_ARRAY(int type, int type_size,
                                        void *dst_addr, int dst_dim,
                                        int *dst_l, int *dst_u, int *dst_s, unsigned long long *dst_d,
                                        void *src_addr, int src_dim,
@@ -316,7 +316,7 @@ static int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_
   }
 }
 
-static int _XMP_calc_global_index_BCAST(int dst_dim, int *dst_l, int *dst_u, int *dst_s,
+int _XMP_calc_global_index_BCAST(int dst_dim, int *dst_l, int *dst_u, int *dst_s,
                                         _XMP_array_t *src_array, int *src_array_nodes_ref, int *src_l, int *src_u, int *src_s) {
   _XMP_template_t *template = src_array->align_template;
 
@@ -360,7 +360,7 @@ static int _XMP_calc_global_index_BCAST(int dst_dim, int *dst_l, int *dst_u, int
   return _XMP_N_INT_TRUE;
 }
 
-static void _XMP_sendrecv_ARRAY(unsigned long long gmove_total_elmts,
+void _XMP_sendrecv_ARRAY(unsigned long long gmove_total_elmts,
                                 int type, int type_size, MPI_Datatype *mpi_datatype,
                                 _XMP_array_t *dst_array, int *dst_array_nodes_ref,
                                 int *dst_lower, int *dst_upper, int *dst_stride, unsigned long long *dst_dim_acc,

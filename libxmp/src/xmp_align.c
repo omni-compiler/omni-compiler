@@ -9,7 +9,7 @@
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
-static void _XMP_calc_array_dim_elmts(_XMP_array_t *array, int array_index) {
+void _XMP_calc_array_dim_elmts(_XMP_array_t *array, int array_index) {
   _XMP_ASSERT(array->is_allocated);
 
   int dim = array->dim;

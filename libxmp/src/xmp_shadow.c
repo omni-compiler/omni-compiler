@@ -10,7 +10,7 @@
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
-static void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index) {
+void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index) {
   _XMP_nodes_t *onto_nodes = (array->align_template)->onto_nodes;
   _XMP_array_info_t *ai = &(array->info[array_index]);
 
@@ -78,7 +78,7 @@ static void _XMP_reflect_shadow_FULL_ALLGATHER(void *array_addr, _XMP_array_t *a
   int gather_count = ai->par_size;
   size_t gather_byte_size = type_size * gather_count;
   void *pack_buffer = _XMP_alloc(gather_byte_size);
-  memcpy(pack_buffer, array_addr + (type_size * ai->local_lower), gather_byte_size);
+  memcpy(pack_buffer, (char *)array_addr + (type_size * ai->local_lower), gather_byte_size);
 
   MPI_Allgather(pack_buffer, gather_count, mpi_datatype,
                 array_addr, gather_count, mpi_datatype,
