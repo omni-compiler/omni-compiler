@@ -1477,7 +1477,12 @@ outx_functionCall0(int l, expv v)
     list lp;
     expv arg, v2;
     int opt = 0;
+    TYPE_DESC tp;
     int isIntrinsic = (SYM_TYPE(EXPV_NAME(EXPR_ARG1(v))) == S_INTR);
+
+    if (isIntrinsic && (tp = EXPV_TYPE(EXPR_ARG1(v)))){
+      isIntrinsic = !TYPE_IS_EXTERNAL(tp);
+    }
 
     if (isIntrinsic)
         opt |= TOPT_INTRINSIC;

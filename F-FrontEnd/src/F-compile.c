@@ -1911,7 +1911,18 @@ redefine_procedures(EXT_ID proc, EXT_ID defined_proc)
             proc = procedure_defined(id, defined_proc);
             if (proc == NULL) {
                 PROC_CLASS(id)  = P_EXTERNAL;
-                proc = declare_external_proc_id(ID_SYM(id), ID_TYPE(id), TRUE);
+
+		EXT_ID ep;
+		FOREACH_EXT_ID(ep, EXTERNAL_SYMBOLS){
+		  if (EXT_SYM(ep) == ID_SYM(id)){
+		    proc = ep;
+		    break;
+		  }
+		}
+
+		if (!proc)
+		  proc = declare_external_proc_id(ID_SYM(id), ID_TYPE(id), TRUE);
+
                 EXT_TAG(proc) = STG_EXT;
                 PROC_EXT_ID(id) = proc;
             } else {
