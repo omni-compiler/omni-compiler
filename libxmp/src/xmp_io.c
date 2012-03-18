@@ -1,21 +1,8 @@
-/*==================================================================*/
-/* xmp_io.c                                                         */
-/* Copyright (C) 2011, University of TSUKUBA                        */
-/*==================================================================*\
-  This library is free software; you can redistribute it and/or
-  modify it under the terms of the GNU Lesser General Public
-  License as published by the Free Software Foundation;
-  version 2.1 published by the Free Software Foundation.
-
-  This library is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  Lesser General Public License for more details.
-
-  You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-\*==================================================================*/
+/*
+ * $TSUKUBA_Release: $
+ * $TSUKUBA_Copyright:
+ *  $
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -31,7 +18,15 @@
 #include "xmp_io.h"
 
 //#define DEBUG
-
+/* ------------------------------------------------------------------ */
+#ifdef ORIGINAL
+#else /* RIST */
+static int MPI_Type_create_resized1(MPI_Datatype oldtype,
+			     MPI_Aint     lb,
+			     MPI_Aint     extent,
+			     MPI_Datatype *newtype);
+#endif
+/* ------------------------------------------------------------------ */
 #ifdef ORIGINAL
 #else /* RIST */
 /* ================================================================== */
@@ -1599,12 +1594,21 @@ int xmp_fread_darray_unpack(fp, apd, rpd)
    int           size;
    int           array_size;
    int           i, j;
+#ifdef ORIGINAL
+#else /* RIST */
+   int *block_width_addr = NULL;
+   int *align_manner_addr = NULL;
+   int **bc2_result = NULL;
+#endif
 
 #ifdef ORIGINAL
 #else /* RIST */
+   xmp_desc_t tempd = xmp_align_template(apd);
    xmp_array_t ap = (xmp_array_t)apd; /* for backward compatibility */
    xmp_range_t *rp = (xmp_range_t *)rpd; /* for backward compatibility */
+   size_t array_type_size;
 #endif
+
    array_t = (_XMP_array_t*)ap;
 
 #ifdef ORIGINAL
@@ -1640,7 +1644,18 @@ int xmp_fread_darray_unpack(fp, apd, rpd)
    }
 #ifdef ORIGINAL
 #else /* RIST */
-   int **bc2_result = (int**)malloc(sizeof(int*)*RP_DIMS);
+/*    int block_width_addr[RP_DIMS]; */
+/*    int align_manner_addr[RP_DIMS]; */
+   block_width_addr = (int*)malloc(sizeof(int)*RP_DIMS);
+   align_manner_addr = (int*)malloc(sizeof(int)*RP_DIMS);
+   if(!block_width_addr || !align_manner_addr){
+      ret = -1;
+      goto FunctionExit;
+   }
+   xmp_dist_size(tempd, block_width_addr);
+   xmp_dist_format(tempd, align_manner_addr);
+
+   bc2_result = (int**)malloc(sizeof(int*)*RP_DIMS);
    if(!bc2_result){
       ret = -1;
       goto FunctionExit;
@@ -1648,16 +1663,6 @@ int xmp_fread_darray_unpack(fp, apd, rpd)
    for(i=0; i<RP_DIMS; i++){ bc2_result[i]=NULL; }
 #endif
   
-#ifdef ORIGINAL
-#else /* RIST */
-   xmp_desc_t tempd = xmp_align_template(apd);
-
-   int block_width_addr[RP_DIMS];
-   xmp_dist_size(tempd, block_width_addr);
-
-   int align_manner_addr[RP_DIMS];
-   xmp_dist_format(tempd, align_manner_addr);
-#endif
    /* calculate the number of rotations */
    buf_size = 1;
    for(i=0; i<RP_DIMS; i++){
@@ -1730,7 +1735,7 @@ int xmp_fread_darray_unpack(fp, apd, rpd)
 		align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC){
 	int bw_i = block_width_addr[i];
 	int cycle_i = xmp_dist_stride(tempd, i);
-	ierr = _xmp_io_block_cyclic_2(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
+	int ierr = _xmp_io_block_cyclic_2(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
 				      RP_LB(i) /* in */, RP_UB(i) /* in */, RP_STEP(i) /* in */,
 				      &cnt[i] /* out */, &bc2_result[i] /* out */);
 	if (ierr != MPI_SUCCESS){ ret = -1; goto FunctionExit; }
@@ -1751,9 +1756,9 @@ int xmp_fread_darray_unpack(fp, apd, rpd)
    }
   
 #ifdef ORIGINAL
-   size_t array_type_size = array_t->type_size;
+   array_type_size = array_t->type_size;
 #else /* RIST */
-   size_t array_type_size = xmp_array_type_size(apd); /* array_t->type_size */
+   array_type_size = xmp_array_type_size(apd);
 #endif
    /* allocate buffer */
    if(buf_size == 0){
@@ -1827,7 +1832,7 @@ int xmp_fread_darray_unpack(fp, apd, rpd)
        } else if(align_manner_i == _XMP_N_ALIGN_CYCLIC ||
 		 align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC){
 	 int local_index;
-	 ierr = _xmp_io_block_cyclic_3(ub[i] /* in */, bc2_result[i] /* in */,
+	 int ierr = _xmp_io_block_cyclic_3(ub[i] /* in */, bc2_result[i] /* in */,
 				       &local_index /* out */);
 	 if (ierr != MPI_SUCCESS){ ret = -1; goto FunctionExit; }
 	 disp += (local_index + local_lower_i) * array_size;
@@ -1849,6 +1854,8 @@ int xmp_fread_darray_unpack(fp, apd, rpd)
    if(cnt) free(cnt);
 #ifdef ORIGINAL
 #else /* RIST */
+   if (block_width_addr) free(block_width_addr);
+   if (align_manner_addr) free(align_manner_addr);
    if(bc2_result){
      for(i=0; i<RP_DIMS; i++){ if(bc2_result[i]){ free(bc2_result[i]); } }
    }
@@ -1898,6 +1905,7 @@ size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
   MPI_Aint tmp1, tmp2;
   MPI_Datatype dataType[2];
   int i = 0;
+
 #ifdef DEBUG
   int rank, nproc;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -1907,7 +1915,7 @@ size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
 #ifdef ORIGINAL
 #else /* RIST */
   xmp_array_t  ap = (xmp_array_t)apd;  /* for backward compatibility */
-  xmp_range_t *rp = (xmp_range_t *)rp;  /* for backward compatibility */
+  xmp_range_t *rp = (xmp_range_t *)rpd;  /* for backward compatibility */
 #endif
 
 #ifdef ORIGINAL
@@ -1933,7 +1941,11 @@ size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
   /* case unpack is required */
   for (i = RP_DIMS - 1; i >= 0; i--){
      if(RP_STEP(i) < 0){
+#ifdef ORIGINAL
         int ret = xmp_fread_darray_unpack(pstXmp_file, ap, rp);
+#else /* RIST */
+        int ret = xmp_fread_darray_unpack(pstXmp_file, apd, rpd);
+#endif
         return ret;
      }
   }
@@ -1959,12 +1971,11 @@ printf("READ(%d/%d) dims=%d\n", rank, nproc, RP_DIMS);
 
 #ifdef ORIGINAL
 #else /* RIST */
-   xmp_desc_t tempd = xmp_align_template(apd);
-
   int block_width_addr[RP_DIMS];
-  xmp_dist_size(tempd, block_width_addr);
-
   int align_manner_addr[RP_DIMS];
+
+  xmp_desc_t tempd = xmp_align_template(apd);
+  xmp_dist_size(tempd, block_width_addr);
   xmp_dist_format(tempd, align_manner_addr);
 #endif
   // loop for each dimension
@@ -2156,7 +2167,7 @@ printf("READ(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
     {
       int bw_i = block_width_addr[i];
       int cycle_i = xmp_dist_stride(tempd, i);
-      ierr = _xmp_io_block_cyclic_1(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
+      int ierr = _xmp_io_block_cyclic_1(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
 				    RP_LB(i) /* in */, RP_UB(i) /* in */, RP_STEP(i) /* in */,
 				    local_lower_i /* in */,
 				    alloc_size_i /* in */,
@@ -2263,6 +2274,10 @@ int xmp_fwrite_darray_pack(fp, apd, rpd)
 #else /* RIST */
    xmp_array_t ap = apd; /* for backward compatibility */
    xmp_range_t *rp = rpd; /* for backward compatibility */
+   int **bc2_result = NULL;
+   int *block_width_addr = NULL;
+   int *align_manner_addr = NULL;
+   xmp_desc_t tempd = xmp_align_template(apd);
 #endif
 
    array_t = (_XMP_array_t*)ap;
@@ -2299,7 +2314,7 @@ int xmp_fwrite_darray_pack(fp, apd, rpd)
    }
 #ifdef ORIGINAL
 #else /* RIST */
-   int **bc2_result = (int**)malloc(sizeof(int*)*RP_DIMS);
+   bc2_result = (int**)malloc(sizeof(int*)*RP_DIMS);
    if(!bc2_result){
       ret = -1;
       goto FunctionExit;
@@ -2309,12 +2324,15 @@ int xmp_fwrite_darray_pack(fp, apd, rpd)
   
 #ifdef ORIGINAL
 #else /* RIST */
-   xmp_desc_t tempd = xmp_align_template(apd);
-
-   int block_width_addr[RP_DIMS];
+/*    int block_width_addr[RP_DIMS]; */
+/*    int align_manner_addr[RP_DIMS]; */
+   block_width_addr = (int*)malloc(sizeof(int)*RP_DIMS);
+   align_manner_addr = (int*)malloc(sizeof(int)*RP_DIMS);
+   if(!block_width_addr || !align_manner_addr){
+      ret = -1;
+      goto FunctionExit;
+   }
    xmp_dist_size(tempd, block_width_addr);
-
-   int align_manner_addr[RP_DIMS];
    xmp_dist_format(tempd, align_manner_addr);
 #endif
    /* calculate the number of rotaions */
@@ -2391,7 +2409,7 @@ int xmp_fwrite_darray_pack(fp, apd, rpd)
 		align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC ){
 	int bw_i = block_width_addr[i];
 	int cycle_i = xmp_dist_stride(tempd, i);
-	ierr = _xmp_io_block_cyclic_2(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
+	int ierr = _xmp_io_block_cyclic_2(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
 				      RP_LB(i) /* in */, RP_UB(i) /* in */, RP_STEP(i) /* in */,
 				      &cnt[i] /* out */, &bc2_result[i] /* out */);
 	if (ierr != MPI_SUCCESS){ ret = -1; goto FunctionExit; }
@@ -2429,8 +2447,8 @@ int xmp_fwrite_darray_pack(fp, apd, rpd)
 
 #ifdef ORIGINAL
 #else /* RIST */
-   int align_manner_addr[RP_DIMS];
-   xmp_dist_format(xmp_desc_t d, align_manner_addr);
+/*    int align_manner_addr[RP_DIMS]; */
+/*    xmp_dist_format(tempd, align_manner_addr); */
 #endif
    /* pack data */
    cp = buf;
@@ -2472,7 +2490,7 @@ int xmp_fwrite_darray_pack(fp, apd, rpd)
        } else if(align_manner_i == _XMP_N_ALIGN_CYCLIC ||
 		 align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC){
 	 int local_index;
-	 ierr = _xmp_io_block_cyclic_3(ub[i] /* in */, bc2_result[i] /* in */,
+	 int ierr = _xmp_io_block_cyclic_3(ub[i] /* in */, bc2_result[i] /* in */,
 				       &local_index /* out */);
 	 if (ierr != MPI_SUCCESS){ ret = -1; goto FunctionExit; }
 	 disp += (local_index + local_lower_i) * array_size;
@@ -2510,6 +2528,8 @@ int xmp_fwrite_darray_pack(fp, apd, rpd)
    if(cnt) free(cnt);
 #ifdef ORIGINAL
 #else /* RIST */
+   if(block_width_addr) free(block_width_addr);
+   if(align_manner_addr) free(align_manner_addr);
    if(bc2_result){
      for(i=0; i<RP_DIMS; i++){ if(bc2_result[i]){ free(bc2_result[i]); } }
    }
@@ -2611,7 +2631,11 @@ printf("WRITE(%d/%d) dims=%d\n",rank, nproc, RP_DIMS);
   /* case pack is required */
   for (i = RP_DIMS - 1; i >= 0; i--){
      if(RP_STEP(i) < 0){
+#ifdef ORIGINAL
         int ret = xmp_fwrite_darray_pack(pstXmp_file, ap, rp);
+#else /* RIST */
+        int ret = xmp_fwrite_darray_pack(pstXmp_file, apd, rpd);
+#endif
         return ret;
      }
   }
@@ -2838,7 +2862,7 @@ printf("WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper);
     {
       int bw_i = block_width_addr[i];
       int cycle_i = xmp_dist_stride(tempd, i);
-      ierr = _xmp_io_block_cyclic_1(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
+      int ierr = _xmp_io_block_cyclic_1(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
 				    RP_LB(i) /* in */, RP_UB(i) /* in */, RP_STEP(i) /* in */,
 				    local_lower_i /* in */,
 				    alloc_size_i /* in */,
@@ -3149,10 +3173,10 @@ int xmp_file_set_view_all(xmp_file_t  *pstXmp_file,
 #define RP_UB(i)    (rp->ub[(i)])
 #define RP_STEP(i)  (rp->step[(i)])
 #else /* RIST */
-   int rp_dims = _xmp_range_get_dims(xmp_desc_t rpd);
-   int *rp_lb_addr = _xmp_range_get_lb_addr(xmp_desc_t rpd);
-   int *rp_ub_addr = _xmp_range_get_ub_addr(xmp_desc_t rpd);
-   int *rp_step_addr = _xmp_range_get_step_addr(xmp_desc_t rpd);
+   int rp_dims = _xmp_range_get_dims(rpd);
+   int *rp_lb_addr = _xmp_range_get_lb_addr(rpd);
+   int *rp_ub_addr = _xmp_range_get_ub_addr(rpd);
+   int *rp_step_addr = _xmp_range_get_step_addr(rpd);
 #define RP_DIMS     (rp_dims)
 #define RP_LB(i)    (rp_lb_addr[(i)])
 #define RP_UB(i)    (rp_ub_addr[(i)])
@@ -3407,7 +3431,7 @@ printf("VIEW(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
     {
       int bw_i = block_width_addr[i];
       int cycle_i = xmp_dist_stride(tempd, i);
-      ierr = _xmp_io_block_cyclic_0(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
+      int ierr = _xmp_io_block_cyclic_0(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
 				    RP_LB(i) /* in */, RP_UB(i) /* in */, RP_STEP(i) /* in */,
 				    type_size /* in: byte size for dataType[0] */,
 				    dataType[0] /* in */,
@@ -3490,10 +3514,17 @@ int xmp_file_clear_view_all(xmp_file_t  *pstXmp_file, long long disp)
 /*  FUNCTION NAME : MPI_Type_create_resized1                                 */
 /*                                                                           */
 /*****************************************************************************/
+#ifdef ORIGINAL
 int MPI_Type_create_resized1(MPI_Datatype oldtype,
 			     MPI_Aint     lb,
 			     MPI_Aint     extent,
 			     MPI_Datatype *newtype)
+#else /* RIST */
+static int MPI_Type_create_resized1(MPI_Datatype oldtype,
+			     MPI_Aint     lb,
+			     MPI_Aint     extent,
+			     MPI_Datatype *newtype)
+#endif
 {
         int          mpiRet;
         int          b[3];
