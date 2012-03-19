@@ -42,8 +42,8 @@ extern size_t     xmp_fread_all(xmp_file_t*, void*, size_t, size_t);
 extern size_t     xmp_fread_darray_all(xmp_file_t*, xmp_array_t, xmp_range_t*);
 extern size_t     xmp_fwrite_darray_all(xmp_file_t*, xmp_array_t, xmp_range_t*);
 #else /* RIST */
-extern size_t     xmp_fread_darray_all(xmp_file_t*, xmp_desc_t, xmp_desc_t);
-extern size_t     xmp_fwrite_darray_all(xmp_file_t*, xmp_desc_t, xmp_desc_t);
+extern size_t     xmp_fread_darray_all(xmp_file_t*, xmp_desc_t, xmp_range_t*);
+extern size_t     xmp_fwrite_darray_all(xmp_file_t*, xmp_desc_t, xmp_range_t*);
 #endif
 
 extern size_t     xmp_fwrite_all(xmp_file_t*, void*, size_t, size_t);
@@ -55,9 +55,16 @@ extern size_t     xmp_fwrite(xmp_file_t*, void*, size_t, size_t);
 #ifdef ORIGINAL
 extern int        xmp_file_set_view_all(xmp_file_t*, long long, xmp_array_t, xmp_range_t*);
 #else /* RIST */
-extern int        xmp_file_set_view_all(xmp_file_t*, long long, xmp_desc_t, xmp_desc_t);
+extern int        xmp_file_set_view_all(xmp_file_t*, long long, xmp_desc_t, xmp_range_t*);
 #endif
 
 extern int        xmp_file_clear_view_all(xmp_file_t*, long long);
+
+#ifdef ORIGINAL
+#else /* RIST */
+extern xmp_range_t *xmp_allocate_range(int);
+extern void xmp_set_range(xmp_range_t*, int, int, int, int);
+extern void xmp_free_range(xmp_range_t*);
+#endif
 
 #endif // _XMP_IO

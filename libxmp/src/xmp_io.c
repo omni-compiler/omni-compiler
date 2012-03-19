@@ -31,10 +31,6 @@ static int MPI_Type_create_resized1(MPI_Datatype oldtype,
 #else /* RIST */
 /* ================================================================== */
 /* beginning of inc_xmp_io.c */
-/* #define DEBUG */
-/* #include <stdio.h> */
-/* #include <stdlib.h> */
-/* #include "mpi.h" */
 #define MIN(a,b)  ( (a)<(b) ? (a) : (b) )
 #define MAX(a,b)  ( (a)>(b) ? (a) : (b) )
 #define func_m(p, q)  ((q) >= 0 ? -(q)/(p) : ((p) >= 0 ? (-(q)+(p)-1)/(p) : (-(q)-(p)-1)/(p) ))
@@ -1061,24 +1057,41 @@ static int _xmp_io_block_cyclic_3
   return MPI_SUCCESS;
 }
 /* ================================================================== */
-/* xmp_range_t *xmp_allocate_range(int n_dim) */
-xmp_desc_t xmp_allocate_range(int n_dim)
+/*****************************************************************************/
+/*  FUNCTION NAME : xmp_allocate_range                                       */
+/*  DESCRIPTION   : xmp_allocate_range is used to allocate memory.           */
+/*  ARGUMENT      : n_dim[IN] : the number of dimensions.                    */
+/*  RETURN VALUES : Upon successful completion, return the descriptor of     */
+/*                  array section. NULL is returned when a program abend.    */
+/*                                                                           */
+/*****************************************************************************/
+xmp_range_t *xmp_allocate_range(int n_dim)
 {
   xmp_range_t *rp = NULL;
-  if (n_dim <= 0){ return (xmp_desc_t)rp; }
+  if (n_dim <= 0){ return rp; }
   rp = (xmp_range_t *)malloc(sizeof(xmp_range_t));
   rp->dims = n_dim;
   rp->lb = (int*)malloc(sizeof(int)*rp->dims);
   rp->ub = (int*)malloc(sizeof(int)*rp->dims);
   rp->step = (int*)malloc(sizeof(int)*rp->dims);
-  if(!rp->lb || !rp->ub || !rp->step){ return (xmp_desc_t)rp; }
-  return (xmp_desc_t)rp;
+  if(!rp->lb || !rp->ub || !rp->step){ return rp; }
+  return rp;
 }
-/* ------------------------------------------------------------------ */
-/* void xmp_set_range(xmp_range_t *rp, int i_dim,int lb, int length, int step) */
-void xmp_set_range(xmp_desc_t rpd, int i_dim, int lb, int length, int step)
+
+/*****************************************************************************/
+/*  FUNCTION NAME : xmp_set_range                                            */
+/*  DESCRIPTION   : xmp_set_range is used to set ranges of an array section. */
+/*  ARGUMENT      : rp[IN] : descriptor of array section.                    */
+/*               i_dim[IN] : target dimension.                               */
+/*                  lb[IN] : lower bound of array section in the dimension   */
+/*                           i_dim.                                          */
+/*              length[IN] : length of array section in the dimension i_dim. */
+/*                step[IN] : stride of array section in the dimension i_dim. */
+/*  RETURN VALUES : None.                                                    */
+/*                                                                           */
+/*****************************************************************************/
+void xmp_set_range(xmp_range_t *rp, int i_dim, int lb, int length, int step)
 {
-  xmp_range_t *rp = (xmp_range_t *)rpd;
   if (rp == NULL){ return; }
   if (step == 0){ return; }
   if (i_dim-1 < 0 || i_dim-1 >= rp->dims){ return; }
@@ -1089,10 +1102,16 @@ void xmp_set_range(xmp_desc_t rpd, int i_dim, int lb, int length, int step)
   rp->ub[i_dim-1] = lb + length - 1;
   rp->step[i_dim-1] = step;
 }
-/* ------------------------------------------------------------------ */
-void xmp_free_range(xmp_desc_t rpd)
+
+/*****************************************************************************/
+/*  FUNCTION NAME : xmp_free_range                                           */
+/*  DESCRIPTION   : xmp_free_range release the memory for the descriptor.    */
+/*  ARGUMENT      : rp[IN] : descriptor of array section.                    */
+/*  RETURN VALUES : None.                                                    */
+/*                                                                           */
+/*****************************************************************************/
+void xmp_free_range(xmp_range_t *rp)
 {
-  xmp_range_t *rp = (xmp_range_t *)rpd;
   int i;
   if (rp == NULL){ return; }
   for(i=0; i<rp->dims; i++){
@@ -1103,30 +1122,26 @@ void xmp_free_range(xmp_desc_t rpd)
   free(rp);
 }
 /* ------------------------------------------------------------------ */
-static int _xmp_range_get_dims(xmp_desc_t rpd)
+static int _xmp_range_get_dims(xmp_range_t *rp)
 {
-  xmp_range_t *rp = (xmp_range_t *)rpd;
   if (rp == NULL){ return -1; }
   return rp->dims;
 }
 /* ------------------------------------------------------------------ */
-static int *_xmp_range_get_lb_addr(xmp_desc_t rpd)
+static int *_xmp_range_get_lb_addr(xmp_range_t *rp)
 {
-  xmp_range_t *rp = (xmp_range_t *)rpd;
   if (rp == NULL){ return NULL; }
   return rp->lb;
 }
 /* ------------------------------------------------------------------ */
-static int *_xmp_range_get_ub_addr(xmp_desc_t rpd)
+static int *_xmp_range_get_ub_addr(xmp_range_t *rp)
 {
-  xmp_range_t *rp = (xmp_range_t *)rpd;
   if (rp == NULL){ return NULL; }
   return rp->ub;
 }
 /* ------------------------------------------------------------------ */
-static int *_xmp_range_get_step_addr(xmp_desc_t rpd)
+static int *_xmp_range_get_step_addr(xmp_range_t *rp)
 {
-  xmp_range_t *rp = (xmp_range_t *)rpd;
   if (rp == NULL){ return NULL; }
   return rp->step;
 }
@@ -1562,10 +1577,10 @@ size_t xmp_fwrite_all(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t
 /*  DESCRIPTION   : xmp_fread_darray_unpack reads data cooperatively to the  */
 /*                  global array from the position of the shared file        */
 /*                  pointer. Data is read from the file to distributed apd   */
-/*                  limited to range rpd.                                    */
+/*                  limited to range rp.                                     */
 /*  ARGUMENT      : fp[IN] : file structure.                                 */
 /*                  apd[IN/OUT] : distributed array descriptor.              */
-/*                  rpd[IN] : range descriptor.                              */
+/*                  rp[IN] : range descriptor.                               */
 /*  RETURN VALUES : Upon successful completion, return the byte size of      */
 /*                  loading data. Otherwise, negative number shall be        */
 /*                  returned.                                                */
@@ -1577,41 +1592,55 @@ int xmp_fread_darray_unpack(fp, ap, rp)
      xmp_array_t ap;
      xmp_range_t *rp;
 #else /* RIST */
-int xmp_fread_darray_unpack(fp, apd, rpd)
+int xmp_fread_darray_unpack(fp, apd, rp)
      xmp_file_t *fp;
-                     xmp_desc_t apd;
-                     xmp_desc_t rpd;
+     xmp_desc_t apd;
+     xmp_range_t *rp;
 #endif
 {
-   MPI_Status    status;
-   _XMP_array_t *array_t;
-   char         *array_addr;
-   char         *buf=NULL;
-   char         *cp;
-   int          *lb=NULL;
-   int          *ub=NULL;
-   int          *step=NULL;
-   int          *cnt=NULL;
-   int           buf_size;
-   int           ret=0;
-   int           disp;
-   int           size;
-   int           array_size;
-   int           i, j;
+  MPI_Status    status;
+  char         *array_addr;
+  char         *buf=NULL;
+  char         *cp;
+  int          *lb=NULL;
+  int          *ub=NULL;
+  int          *step=NULL;
+  int          *cnt=NULL;
+  int           buf_size;
+  int           ret=0;
+  int           disp;
+  int           size;
+  int           array_size;
+  int           i, j;
 #ifdef ORIGINAL
+  _XMP_array_t *array_t;
 #else /* RIST */
-   int **bc2_result = NULL;
+  xmp_desc_t tempd = NULL;
+  int **bc2_result = NULL;
+  size_t array_type_size;
+  int rp_dims;
+  int *rp_lb_addr = NULL;
+  int *rp_ub_addr = NULL;
+  int *rp_step_addr = NULL;
+  int array_ndim;
 #endif
 
+  // check argument
+  if (fp == NULL){ ret = -1; goto FunctionExit; }
 #ifdef ORIGINAL
+  if (ap == NULL){ ret = -1; goto FunctionExit; }
 #else /* RIST */
-   xmp_desc_t tempd = xmp_align_template(apd);
-   xmp_array_t ap = (xmp_array_t)apd; /* for backward compatibility */
-   xmp_range_t *rp = (xmp_range_t *)rpd; /* for backward compatibility */
-   size_t array_type_size;
+  if (apd == NULL){ ret = -1; goto FunctionExit; }
 #endif
+  if (rp == NULL){ ret = -1; goto FunctionExit; }
 
-   array_t = (_XMP_array_t*)ap;
+#ifdef ORIGINAL
+  array_t = (_XMP_array_t*)ap;
+#else /* RIST */
+  tempd = xmp_align_template(apd);
+  if (tempd == NULL){ ret = -1; goto FunctionExit; }
+  array_ndim = xmp_array_ndim(apd);
+#endif
 
 #ifdef ORIGINAL
 #define RP_DIMS     (rp->dims)
@@ -1619,10 +1648,11 @@ int xmp_fread_darray_unpack(fp, apd, rpd)
 #define RP_UB(i)    (rp->ub[(i)])
 #define RP_STEP(i)  (rp->step[(i)])
 #else /* RIST */
-   int rp_dims = _xmp_range_get_dims(rpd);
-   int *rp_lb_addr = _xmp_range_get_lb_addr(rpd);
-   int *rp_ub_addr = _xmp_range_get_ub_addr(rpd);
-   int *rp_step_addr = _xmp_range_get_step_addr(rpd);
+  rp_dims = _xmp_range_get_dims(rp);
+  rp_lb_addr = _xmp_range_get_lb_addr(rp);
+  rp_ub_addr = _xmp_range_get_ub_addr(rp);
+  rp_step_addr = _xmp_range_get_step_addr(rp);
+  if (!rp_lb_addr || !rp_ub_addr || !rp_step_addr){ ret = -1; goto FunctionExit; }
 #define RP_DIMS     (rp_dims)
 #define RP_LB(i)    (rp_lb_addr[(i)])
 #define RP_UB(i)    (rp_ub_addr[(i)])
@@ -1631,7 +1661,7 @@ int xmp_fread_darray_unpack(fp, apd, rpd)
 
 #ifdef ORIGINAL
 #else /* RIST */
-   int array_ndim = xmp_array_ndim(apd);
+  // check number of dimensions
    if (array_ndim != RP_DIMS){ ret = -1; goto FunctionExit; }
 #endif
 
@@ -1753,9 +1783,9 @@ int xmp_fread_darray_unpack(fp, apd, rpd)
 #endif
    /* allocate buffer */
    if(buf_size == 0){
-      buf = (char*)malloc(array_type_size /* array_t->type_size */);
+      buf = (char*)malloc(array_type_size);
    } else {
-      buf = (char*)malloc(buf_size * array_type_size /* array_t->type_size */);
+      buf = (char*)malloc(buf_size * array_type_size);
    }
    if(!buf){
       ret = -1;
@@ -1764,7 +1794,7 @@ int xmp_fread_darray_unpack(fp, apd, rpd)
 
    // write
    if(buf_size > 0){
-      if (MPI_File_read(fp->fh, buf, buf_size * array_type_size /* array_t->type_size */, MPI_BYTE, &status) != MPI_SUCCESS) {
+      if (MPI_File_read(fp->fh, buf, buf_size * array_type_size, MPI_BYTE, &status) != MPI_SUCCESS) {
          ret = -1;
          goto FunctionExit;
       }
@@ -1857,10 +1887,10 @@ int xmp_fread_darray_unpack(fp, apd, rpd)
 /*  DESCRIPTION   : xmp_fread_darray_all reads data cooperatively to the     */
 /*                  global array from the position of the shared file        */
 /*                  pointer. Data is read from the file to distributed apd   */
-/*                  limited to range rpd.                                    */
+/*                  limited to range rp.                                     */
 /*  ARGUMENT      : pstXmp_file[IN] : file structure.                        */
 /*                  apd[IN/OUT] : distributed array descriptor.              */
-/*                  rpd[IN] : range descriptor.                              */
+/*                  rp[IN] : range descriptor.                               */
 /*  RETURN VALUES : Upon successful completion, return the byte size of      */
 /*                  loading data. Otherwise, negative number shall be        */
 /*                  returned.                                                */
@@ -1873,10 +1903,9 @@ size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
 #else /* RIST */
 size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
                             xmp_desc_t  apd,
-                            xmp_desc_t  rpd)
+                            xmp_range_t *rp)
 #endif
 {
-  _XMP_array_t *XMP_array_t;
   MPI_Status status;        // MPI status
   int readCount;            // read bytes
   int mpiRet;               // return value of MPI functions
@@ -1889,6 +1918,17 @@ size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
   MPI_Aint tmp1, tmp2;
   MPI_Datatype dataType[2];
   int i = 0;
+#ifdef ORIGINAL
+  _XMP_array_t *XMP_array_t;
+#else /* RIST */
+  xmp_desc_t tempd;
+  int rp_dims;
+  int *rp_lb_addr = NULL;
+  int *rp_ub_addr = NULL;
+  int *rp_step_addr = NULL;
+#endif
+  int array_ndim;
+  size_t array_type_size;
 
 #ifdef DEBUG
   int rank, nproc;
@@ -1896,10 +1936,24 @@ size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
   MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 #endif
 
+  // check argument
+  if (pstXmp_file == NULL) { return -1; }
 #ifdef ORIGINAL
+  if (ap == NULL)          { return -1; }
 #else /* RIST */
-  xmp_array_t  ap = (xmp_array_t)apd;  /* for backward compatibility */
-  xmp_range_t *rp = (xmp_range_t *)rpd;  /* for backward compatibility */
+  if (apd == NULL)         { return -1; }
+#endif
+  if (rp == NULL)          { return -1; }
+
+#ifdef ORIGINAL
+  XMP_array_t = (_XMP_array_t*)ap; 
+  array_ndim = XMP_array_t->dim;
+  array_type_size = XMP_array_t->type_size;
+#else /* RIST */
+  tempd = xmp_align_template(apd);
+  if (tempd == NULL){ return -1; }
+  array_ndim = xmp_array_ndim(apd);
+  array_type_size = xmp_array_type_size(apd);
 #endif
 
 #ifdef ORIGINAL
@@ -1908,19 +1962,19 @@ size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
 #define RP_UB(i)    (rp->ub[(i)])
 #define RP_STEP(i)  (rp->step[(i)])
 #else /* RIST */
-   int rp_dims = _xmp_range_get_dims(rpd);
-   int *rp_lb_addr = _xmp_range_get_lb_addr(rpd);
-   int *rp_ub_addr = _xmp_range_get_ub_addr(rpd);
-   int *rp_step_addr = _xmp_range_get_step_addr(rpd);
+  rp_dims = _xmp_range_get_dims(rp);
+  rp_lb_addr = _xmp_range_get_lb_addr(rp);
+  rp_ub_addr = _xmp_range_get_ub_addr(rp);
+  rp_step_addr = _xmp_range_get_step_addr(rp);
+  if (!rp_lb_addr || !rp_ub_addr || !rp_step_addr){ return -1; }
 #define RP_DIMS     (rp_dims)
 #define RP_LB(i)    (rp_lb_addr[(i)])
 #define RP_UB(i)    (rp_ub_addr[(i)])
 #define RP_STEP(i)  (rp_step_addr[(i)])
 #endif
-  // check argument
-  if (pstXmp_file == NULL) { return -1; }
-  if (ap == NULL)          { return -1; }
-  if (rp == NULL)          { return -1; }
+
+  // check number of dimensions
+  if (array_ndim != RP_DIMS) { return -1; }
 
   /* case unpack is required */
   for (i = RP_DIMS - 1; i >= 0; i--){
@@ -1928,23 +1982,11 @@ size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
 #ifdef ORIGINAL
         int ret = xmp_fread_darray_unpack(pstXmp_file, ap, rp);
 #else /* RIST */
-        int ret = xmp_fread_darray_unpack(pstXmp_file, apd, rpd);
+        int ret = xmp_fread_darray_unpack(pstXmp_file, apd, rp);
 #endif
         return ret;
      }
   }
-
-  XMP_array_t = (_XMP_array_t*)ap; 
-
-#ifdef ORIGINAL
-  int array_ndim = XMP_array_t->dim;
-  int array_type_size = XMP_array_t->type_size;
-#else /* RIST */
-  int array_ndim = xmp_array_ndim(apd);
-  int array_type_size = xmp_array_type_size(apd);
-#endif
-  // check number of dimensions
-  if (array_ndim != RP_DIMS) { return -1; }
 
 #ifdef DEBUG
 printf("READ(%d/%d) dims=%d\n", rank, nproc, RP_DIMS);
@@ -1953,10 +1995,6 @@ printf("READ(%d/%d) dims=%d\n", rank, nproc, RP_DIMS);
   // create basic data type
   MPI_Type_contiguous(array_type_size, MPI_BYTE, &dataType[0]);
 
-#ifdef ORIGINAL
-#else /* RIST */
-  xmp_desc_t tempd = xmp_align_template(apd);
-#endif
   // loop for each dimension
   for (i = RP_DIMS - 1; i >= 0; i--)
   {
@@ -2212,10 +2250,10 @@ printf("READ(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
 /*  DESCRIPTION   : xmp_fwrite_darray_pack writes data cooperatively from    */
 /*                  the global array to the position of the shared file      */
 /*                  pointer. Data is written from distributed apd limited to */
-/*                  range rpd to the file.                                   */
+/*                  range rp to the file.                                    */
 /*  ARGUMENT      : fp[IN] : file structure.                                 */
 /*                  apd[IN] : distributed array descriptor.                  */
-/*                  rpd[IN] : range descriptor.                              */
+/*                  rp[IN] : range descriptor.                               */
 /*  RETURN VALUES : Upon successful completion, return the byte size of      */
 /*                  storing data. Otherwise, negative number shall be        */
 /*                  returned.                                                */
@@ -2227,14 +2265,13 @@ int xmp_fwrite_darray_pack(fp, ap, rp)
      xmp_array_t ap;
      xmp_range_t *rp;
 #else /* RIST */
-int xmp_fwrite_darray_pack(fp, apd, rpd)
+int xmp_fwrite_darray_pack(fp, apd, rp)
      xmp_file_t *fp;
-                     xmp_desc_t  apd;
-                     xmp_desc_t  rpd;
+     xmp_desc_t  apd;
+     xmp_range_t *rp;
 #endif
 {
    MPI_Status    status;
-   _XMP_array_t *array_t;
    char         *array_addr;
    char         *buf=NULL;
    char         *cp;
@@ -2248,21 +2285,27 @@ int xmp_fwrite_darray_pack(fp, apd, rpd)
    int           size;
    int           array_size;
    int           i, j;
-
+   size_t array_type_size;
 #ifdef ORIGINAL
+   _XMP_array_t *array_t;
 #else /* RIST */
-   xmp_array_t ap = apd; /* for backward compatibility */
-   xmp_range_t *rp = rpd; /* for backward compatibility */
+   xmp_desc_t tempd = NULL;
    int **bc2_result = NULL;
-   xmp_desc_t tempd = xmp_align_template(apd);
+   int rp_dims;
+   int *rp_lb_addr = NULL;
+   int *rp_ub_addr = NULL;
+   int *rp_step_addr = NULL;
+   int array_ndim;
 #endif
 
-   array_t = (_XMP_array_t*)ap;
-  
 #ifdef ORIGINAL
-   int array_type_size = array_t->type_size;
+   array_t = (_XMP_array_t*)ap;
+   array_type_size = array_t->type_size;
 #else /* RIST */
-   int array_type_size = xmp_array_type_size(apd);
+   tempd = xmp_align_template(apd);
+   if (tempd == NULL){ ret = -1; goto FunctionExit; }
+   array_type_size = xmp_array_type_size(apd);
+   array_ndim = xmp_array_ndim(apd);
 #endif
 
 #ifdef ORIGINAL
@@ -2271,16 +2314,24 @@ int xmp_fwrite_darray_pack(fp, apd, rpd)
 #define RP_UB(i)    (rp->ub[(i)])
 #define RP_STEP(i)  (rp->step[(i)])
 #else /* RIST */
-   int rp_dims = _xmp_range_get_dims(rpd);
-   int *rp_lb_addr = _xmp_range_get_lb_addr(rpd);
-   int *rp_ub_addr = _xmp_range_get_ub_addr(rpd);
-   int *rp_step_addr = _xmp_range_get_step_addr(rpd);
+   rp_dims = _xmp_range_get_dims(rp);
+   rp_lb_addr = _xmp_range_get_lb_addr(rp);
+   rp_ub_addr = _xmp_range_get_ub_addr(rp);
+   rp_step_addr = _xmp_range_get_step_addr(rp);
+   if (!rp_lb_addr || !rp_ub_addr || !rp_step_addr){ ret = -1; goto FunctionExit; }
 #define RP_DIMS     (rp_dims)
 #define RP_LB(i)    (rp_lb_addr[(i)])
 #define RP_UB(i)    (rp_ub_addr[(i)])
 #define RP_STEP(i)  (rp_step_addr[(i)])
 #endif
-   /* 回転数を示す配列確保 */
+
+#ifdef ORIGINAL
+#else /* RIST */
+  // check number of dimensions
+   if (array_ndim != RP_DIMS){ ret = -1; goto FunctionExit; }
+#endif
+
+   /* allocate arrays for the number of rotations */
    lb = (int*)malloc(sizeof(int)*RP_DIMS);
    ub = (int*)malloc(sizeof(int)*RP_DIMS);
    step = (int*)malloc(sizeof(int)*RP_DIMS);
@@ -2504,10 +2555,10 @@ int xmp_fwrite_darray_pack(fp, apd, rpd)
 /*  DESCRIPTION   : xmp_fwrite_darray_all writes data cooperatively from     */
 /*                  the global array to the position of the shared file      */
 /*                  pointer. Data is written from distributed apd limited to */
-/*                  range rpd to the file.                                   */
+/*                  range rp to the file.                                    */
 /*  ARGUMENT      : pstXmp_file[IN] : file structure.                        */
 /*                  apd[IN] : distributed array descriptor.                  */
-/*                  rpd[IN] : range descriptor.                              */
+/*                  rp[IN] : range descriptor.                               */
 /*  RETURN VALUES : Upon successful completion, return the byte size of      */
 /*                  storing data. Otherwise, negative number shall be        */
 /*                  returned.                                                */
@@ -2520,10 +2571,9 @@ size_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
 #else /* RIST */
 size_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
                              xmp_desc_t apd,
-                             xmp_desc_t rpd)
+                             xmp_range_t *rp)
 #endif
 {
-  _XMP_array_t *XMP_array_t;
   MPI_Status status;        // MPI status
   int writeCount;           // write btye
   int mpiRet;               // return value of MPI functions
@@ -2536,16 +2586,42 @@ size_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
   MPI_Aint tmp1, tmp2;
   MPI_Datatype dataType[2];
   int i = 0;
+#ifdef ORIGINAL
+  _XMP_array_t *XMP_array_t;
+#else /* RIST */
+  xmp_desc_t tempd;
+  int rp_dims;
+  int *rp_lb_addr = NULL;
+  int *rp_ub_addr = NULL;
+  int *rp_step_addr = NULL;
+#endif
+  int array_ndim;
+  size_t array_type_size;
+
 #ifdef DEBUG
   int rank, nproc;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 #endif
 
+  // check argument
+  if (pstXmp_file == NULL) { return -1; }
 #ifdef ORIGINAL
+  if (ap == NULL)          { return -1; }
 #else /* RIST */
-  xmp_array_t ap = (xmp_array_t)apd; /* for backward compatibility */
-  xmp_range_t *rp = (xmp_range_t *)rpd; /* for backward compatibility */
+  if (apd == NULL)         { return -1; }
+#endif
+  if (rp == NULL)          { return -1; }
+
+#ifdef ORIGINAL
+  XMP_array_t = (_XMP_array_t*)ap;
+  array_ndim = XMP_array_t->dim;
+  array_type_size = XMP_array_t->type_size;
+#else /* RIST */
+  tempd = xmp_align_template(apd);
+  if (tempd == NULL){ return -1; }
+  array_ndim = xmp_array_ndim(apd);
+  array_type_size = xmp_array_type_size(apd);
 #endif
 
 #ifdef ORIGINAL
@@ -2554,28 +2630,15 @@ size_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
 #define RP_UB(i)    (rp->ub[(i)])
 #define RP_STEP(i)  (rp->step[(i)])
 #else /* RIST */
-   int rp_dims = _xmp_range_get_dims(rpd);
-   int *rp_lb_addr = _xmp_range_get_lb_addr(rpd);
-   int *rp_ub_addr = _xmp_range_get_ub_addr(rpd);
-   int *rp_step_addr = _xmp_range_get_step_addr(rpd);
+  rp_dims = _xmp_range_get_dims(rp);
+  rp_lb_addr = _xmp_range_get_lb_addr(rp);
+  rp_ub_addr = _xmp_range_get_ub_addr(rp);
+  rp_step_addr = _xmp_range_get_step_addr(rp);
+  if (!rp_lb_addr || !rp_ub_addr || !rp_step_addr){ return -1; }
 #define RP_DIMS     (rp_dims)
 #define RP_LB(i)    (rp_lb_addr[(i)])
 #define RP_UB(i)    (rp_ub_addr[(i)])
 #define RP_STEP(i)  (rp_step_addr[(i)])
-#endif
-  // 引数チェック
-  if (pstXmp_file == NULL) { return -1; }
-  if (ap == NULL)          { return -1; }
-  if (rp == NULL)          { return -1; }
-
-  XMP_array_t = (_XMP_array_t*)ap;
-
-#ifdef ORIGINAL
-   int array_ndim = XMP_array_t->dim;
-   size_t array_type_size = XMP_array_t->type_size;
-#else /* RIST */
-   int array_ndim = xmp_array_ndim(apd);
-   size_t array_type_size = xmp_array_type_size(apd);
 #endif
 
   // check number of dimensions
@@ -2591,7 +2654,7 @@ printf("WRITE(%d/%d) dims=%d\n",rank, nproc, RP_DIMS);
 #ifdef ORIGINAL
         int ret = xmp_fwrite_darray_pack(pstXmp_file, ap, rp);
 #else /* RIST */
-        int ret = xmp_fwrite_darray_pack(pstXmp_file, apd, rpd);
+        int ret = xmp_fwrite_darray_pack(pstXmp_file, apd, rp);
 #endif
         return ret;
      }
@@ -2600,10 +2663,6 @@ printf("WRITE(%d/%d) dims=%d\n",rank, nproc, RP_DIMS);
   // create basic data type
   MPI_Type_contiguous(array_type_size, MPI_BYTE, &dataType[0]);
 
-#ifdef ORIGINAL
-#else /* RIST */
-  xmp_desc_t tempd = xmp_align_template(apd);
-#endif
   // loop for each dimension
   for (i = RP_DIMS - 1; i >= 0; i--)
   {
@@ -3074,13 +3133,13 @@ size_t xmp_fwrite(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t cou
 /*  FUNCTION NAME : xmp_file_set_view_all                                    */
 /*  DESCRIPTION   : xmp_file_set_view_all sets a file view to the file.      */
 /*                  Collective (global) execution. The file view of          */
-/*                  distributed apd limited to range rpd is set into file    */
+/*                  distributed apd limited to range rp is set into file     */
 /*                  structure.                                               */
 /*  ARGUMENT      : pstXmp_file[IN] : file structure.                        */
 /*                  disp[IN] : displacement in byte from the beginning of    */
 /*                             the file.                                     */
 /*                  apd[IN] : distributed array descriptor.                  */
-/*                  rpd[IN] : range descriptor.                              */
+/*                  rp[IN] : range descriptor.                               */
 /*  RETURN VALUES : 0: normal termination.                                   */
 /*                  an integer other than 0: abnormal termination.           */
 /*                                                                           */
@@ -3094,10 +3153,9 @@ int xmp_file_set_view_all(xmp_file_t  *pstXmp_file,
 int xmp_file_set_view_all(xmp_file_t  *pstXmp_file,
                           long long    disp,
                           xmp_desc_t   apd,
-                          xmp_desc_t   rpd)
+                          xmp_range_t *rp)
 #endif
 {
-  _XMP_array_t *XMP_array_t;
   int i = 0;
   int mpiRet;               // return value of MPI functions
   int lower;                // lower bound accessed by this node
@@ -3106,16 +3164,43 @@ int xmp_file_set_view_all(xmp_file_t  *pstXmp_file,
   MPI_Datatype dataType[2];
   int type_size;
   MPI_Aint tmp1, tmp2;
+#ifdef ORIGINAL
+  _XMP_array_t *XMP_array_t;
+#else /* RIST */
+  xmp_desc_t tempd;
+  int rp_dims;
+  int *rp_lb_addr = NULL;
+  int *rp_ub_addr = NULL;
+  int *rp_step_addr = NULL;
+#endif
+  int array_ndim;
+  size_t array_type_size;
+
 #ifdef DEBUG
   int rank, nproc;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 #endif
 
+  // check argument
+  if (pstXmp_file == NULL) { return 1; }
 #ifdef ORIGINAL
+  if (ap == NULL)          { return 1; }
 #else /* RIST */
-  xmp_array_t  ap = (xmp_array_t)apd; /* for backward compatibility */
-  xmp_range_t *rp = (xmp_range_t *)rpd; /* for backward compatibility */
+  if (apd == NULL)         { return 1; }
+#endif
+  if (rp == NULL)          { return 1; }
+  if (disp  < 0)           { return 1; }
+
+#ifdef ORIGINAL
+  XMP_array_t = (_XMP_array_t*)ap; 
+  array_ndim = XMP_array_t->dim;
+  array_type_size = XMP_array_t->type_size;
+#else /* RIST */
+  tempd = xmp_align_template(apd);
+  if (tempd == NULL){ return 1; }
+  array_ndim = xmp_array_ndim(apd);
+  array_type_size = xmp_array_type_size(apd);
 #endif
 
 #ifdef ORIGINAL
@@ -3124,30 +3209,17 @@ int xmp_file_set_view_all(xmp_file_t  *pstXmp_file,
 #define RP_UB(i)    (rp->ub[(i)])
 #define RP_STEP(i)  (rp->step[(i)])
 #else /* RIST */
-   int rp_dims = _xmp_range_get_dims(rpd);
-   int *rp_lb_addr = _xmp_range_get_lb_addr(rpd);
-   int *rp_ub_addr = _xmp_range_get_ub_addr(rpd);
-   int *rp_step_addr = _xmp_range_get_step_addr(rpd);
+  rp_dims = _xmp_range_get_dims(rp);
+  rp_lb_addr = _xmp_range_get_lb_addr(rp);
+  rp_ub_addr = _xmp_range_get_ub_addr(rp);
+  rp_step_addr = _xmp_range_get_step_addr(rp);
+  if (!rp_lb_addr || !rp_ub_addr || !rp_step_addr){ return 1; }
 #define RP_DIMS     (rp_dims)
 #define RP_LB(i)    (rp_lb_addr[(i)])
 #define RP_UB(i)    (rp_ub_addr[(i)])
 #define RP_STEP(i)  (rp_step_addr[(i)])
 #endif
-  // check argument
-  if (pstXmp_file == NULL) { return 1; }
-  if (ap == NULL)          { return 1; }
-  if (rp == NULL)          { return 1; }
-  if (disp  < 0)           { return 1; }
 
-  XMP_array_t = (_XMP_array_t*)ap; 
-
-#ifdef ORIGINAL
-  int array_ndim = XMP_array_t->dim;
-  size_t array_type_size = XMP_array_t->type_size;
-#else /* RIST */
-  int array_ndim = xmp_array_ndim(apd);
-  size_t array_type_size = xmp_array_type_size(apd);
-#endif
   // check number of dimensions
   if (array_ndim != RP_DIMS) { return 1; }
 
@@ -3158,10 +3230,6 @@ printf("VIEW(%d/%d) dims=%d\n", rank, nproc, RP_DIMS);
   // create basic data type
   MPI_Type_contiguous(array_type_size, MPI_BYTE, &dataType[0]);
 
-#ifdef ORIGINAL
-#else /* RIST */
-   xmp_desc_t tempd = xmp_align_template(apd);
-#endif
   // loop for each dimension
   for (i = RP_DIMS - 1; i >= 0; i--)
   {
