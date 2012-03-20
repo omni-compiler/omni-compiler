@@ -17,6 +17,8 @@
 #include "xmp_data_struct.h"
 #include "xmp_io.h"
 
+extern void _XMP_fatal(char *msg);
+
 //#define DEBUG
 /* ------------------------------------------------------------------ */
 #ifdef ORIGINAL
@@ -25,6 +27,15 @@ static int MPI_Type_create_resized1(MPI_Datatype oldtype,
 			     MPI_Aint     lb,
 			     MPI_Aint     extent,
 			     MPI_Datatype *newtype);
+/* ------------------------------------------------------------------ */
+static int _get_align_manner(xmp_desc_t ap, int dim)
+{
+  _XMP_array_t *array_t = (_XMP_array_t*)(ap);
+  _XMP_array_info_t *ai = &(array_t->info[dim-1]);
+/*   int align_manner = ai->align_manner; */
+  return ai->align_manner;
+}
+/* ------------------------------------------------------------------ */
 #endif
 /* ------------------------------------------------------------------ */
 #ifdef ORIGINAL
@@ -1092,10 +1103,12 @@ xmp_range_t *xmp_allocate_range(int n_dim)
 /*****************************************************************************/
 void xmp_set_range(xmp_range_t *rp, int i_dim, int lb, int length, int step)
 {
-  if (rp == NULL){ return; }
-  if (step == 0){ return; }
-  if (i_dim-1 < 0 || i_dim-1 >= rp->dims){ return; }
-  if(!rp->lb || !rp->ub || !rp->step){ return; }
+
+  if (rp == NULL){ _XMP_fatal("xmp_set_range: descriptor is NULL"); }
+  if (step == 0){ _XMP_fatal("xmp_set_range: step == 0"); }
+  if (i_dim-1 < 0 || i_dim-1 >= rp->dims){ _XMP_fatal("xmp_set_range: i_dim is out of range"); }
+  if(!rp->lb || !rp->ub || !rp->step){ _XMP_fatal("xmp_set_range: null pointer"); }
+  if (step != 0 && length == 0){ _XMP_fatal("xmp_set_range: invalid combination of length and step\n"); }
   rp->lb[i_dim-1] = lb;
   /* length = ub - lb + 1 */
   /* ub = lb + length - 1 */
@@ -1113,13 +1126,14 @@ void xmp_set_range(xmp_range_t *rp, int i_dim, int lb, int length, int step)
 void xmp_free_range(xmp_range_t *rp)
 {
   int i;
-  if (rp == NULL){ return; }
-  for(i=0; i<rp->dims; i++){
+  if (rp == NULL){
+    return;
+  }else{
     if (rp->lb){ free(rp->lb); }
     if (rp->ub){ free(rp->ub); }
     if (rp->step){ free(rp->step); }
+    free(rp);
   }
-  free(rp);
 }
 /* ------------------------------------------------------------------ */
 static int _xmp_range_get_dims(xmp_range_t *rp)
@@ -1758,7 +1772,7 @@ int xmp_fread_darray_unpack(fp, apd, rp)
 	int cycle_i = xmp_dist_stride(tempd, i+1);
 	int ierr = _xmp_io_block_cyclic_2(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
 				      RP_LB(i) /* in */, RP_UB(i) /* in */, RP_STEP(i) /* in */,
-				      &cnt[i] /* out */, &bc2_result[i] /* out */);
+						(int *)(&cnt[i]) /* out */, (int **)(&bc2_result[i]) /* out */);
 	if (ierr != MPI_SUCCESS){ ret = -1; goto FunctionExit; }
 #endif
       } else {
@@ -1930,11 +1944,11 @@ size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
   int array_ndim;
   size_t array_type_size;
 
-#ifdef DEBUG
+/* #ifdef DEBUG */
   int rank, nproc;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-#endif
+/* #endif */
 
   // check argument
   if (pstXmp_file == NULL) { return -1; }
@@ -2007,7 +2021,8 @@ printf("READ(%d/%d) dims=%d\n", rank, nproc, RP_DIMS);
 #else /* RIST */
     int par_lower_i = xmp_array_gcllbound(apd, i+1);
     int par_upper_i = xmp_array_gclubound(apd, i+1);
-    int align_manner_i = xmp_dist_format(tempd, i+1);
+/*     int align_manner_i = xmp_dist_format(tempd, i+1); */
+    int align_manner_i = _get_align_manner(apd, i+1);
     int local_lower_i = xmp_array_lcllbound(apd, i+1);
     int alloc_size_i = xmp_array_lsize(apd, i+1);
 #endif
@@ -2018,8 +2033,9 @@ printf("READ(%d/%d) (par_lower,par_upper)=(%d,%d)\n",
        rank, nproc, par_lower_i, par_upper_i);
 #endif
     // no distribution
-    if (/* align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED || */
-        align_manner_i == _XMP_N_DIST_DUPLICATION /* _XMP_N_ALIGN_DUPLICATION */)
+/*     if (align_manner_i == _XMP_N_DIST_DUPLICATION) */
+    if (align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED ||
+        align_manner_i == _XMP_N_ALIGN_DUPLICATION)
     {
       // upper after distribution < lower
       if (par_upper_i < RP_LB(i)) { return -1; }
@@ -2086,7 +2102,8 @@ printf("READ(%d/%d) total_size=%d\n", rank, nproc, total_size);
       }
     }
      // block distribution
-    else if (align_manner_i == _XMP_N_DIST_BLOCK /* _XMP_N_ALIGN_BLOCK */)
+/*     else if (align_manner_i == _XMP_N_DIST_BLOCK) */
+    else if (align_manner_i == _XMP_N_ALIGN_BLOCK)
     {
       // increment is negative
       if ( RP_STEP(i) < 0)
@@ -2121,12 +2138,19 @@ printf("READ(%d/%d) total_size=%d\n", rank, nproc, total_size);
 
           // continuous size
           continuous_size = (upper - lower + RP_STEP(i)) / RP_STEP(i);
+
+/* 	  printf("fread_darray_all: rank = %d: lower = %d  upper = %d  continuous_size = %d\n", */
+/* 		 rank, lower, upper, continuous_size); */
         }
 
         // get extent of data type
         mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &tmp2);
         if (mpiRet !=  MPI_SUCCESS) { return -1; }  
         type_size = (int)tmp2;
+
+/* 	printf("fread_darray_all: rank = %d: type_size = %d   RP_STEP(i) = %d\n", */
+/* 	       rank,type_size, RP_STEP(i)); */
+
 
         // create basic data type
         mpiRet = MPI_Type_create_hvector(continuous_size,
@@ -2162,6 +2186,9 @@ printf("READ(%d/%d) total_size=%d\n", rank, nproc, total_size);
         // free MPI_Datatype out of use
         MPI_Type_free(&dataType[1]);
 
+/* 	printf("fread_darray_all: rank = %d:  space_size = %d  total_size = %d\n", */
+/* 	       rank,space_size,total_size); */
+
 #ifdef DEBUG
 printf("READ(%d/%d) ALIGN_BLOCK\n", rank, nproc);
 printf("READ(%d/%d) continuous_size=%d\n", rank, nproc, continuous_size);
@@ -2173,14 +2200,17 @@ printf("READ(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
     }
 #ifdef ORIGINAL
     // cyclic distribution
-    else if (align_manner_i == _XMP_N_DIST_CYCLIC /* _XMP_N_ALIGN_CYCLIC */)
+/*     else if (align_manner_i == _XMP_N_DIST_CYCLIC ) */
+    else if (align_manner_i == _XMP_N_ALIGN_CYCLIC)
     {
       return -1;
     }
 #else /* RIST */
     // cyclic or block-cyclic distribution
-    else if (align_manner_i == _XMP_N_DIST_CYCLIC /* _XMP_N_ALIGN_CYCLIC */ ||
-	     align_manner_i == _XMP_N_DIST_BLOCK_CYCLIC /* _XMP_N_ALIGN_BLOCK_CYCLIC */)
+/*     else if (align_manner_i == _XMP_N_DIST_CYCLIC || */
+/* 	     align_manner_i == _XMP_N_DIST_BLOCK_CYCLIC) */
+    else if (align_manner_i == _XMP_N_ALIGN_CYCLIC ||
+	     align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC)
     {
       int bw_i = xmp_dist_size(tempd, i+1);
       int cycle_i = xmp_dist_stride(tempd, i+1);
@@ -2199,8 +2229,9 @@ printf("READ(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
     // other
     else
     {
+      _XMP_fatal("xmp_fread_darray_all: invalid align manner");
       return -1;
-    }
+    } /* align_manner_i */
   }
 
   // commit
@@ -2214,8 +2245,13 @@ printf("READ(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
 #else /* RIST */
   char *array_addr = (char*)xmp_array_laddr(apd);
 #endif
+/*   printf("fread_darray_all: rank = %d: array_addr = %p\n",rank,array_addr); */
+
   // read
   MPI_Type_size(dataType[0], &type_size);
+
+/*   printf("fread_darray_all: type_size = %d\n",type_size); */
+
   if(type_size > 0){
      if (MPI_File_read(pstXmp_file->fh,
                        array_addr,
@@ -2426,7 +2462,7 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
 	int cycle_i = xmp_dist_stride(tempd, i+1);
 	int ierr = _xmp_io_block_cyclic_2(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
 				      RP_LB(i) /* in */, RP_UB(i) /* in */, RP_STEP(i) /* in */,
-				      &cnt[i] /* out */, &bc2_result[i] /* out */);
+						(int *)&(cnt[i]) /* out */, (int **)(&bc2_result[i]) /* out */);
 	if (ierr != MPI_SUCCESS){ ret = -1; goto FunctionExit; }
 #endif
       } else {
@@ -2598,20 +2634,20 @@ size_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
   int array_ndim;
   size_t array_type_size;
 
-#ifdef DEBUG
+/* #ifdef DEBUG */
   int rank, nproc;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-#endif
+/* #endif */
 
   // check argument
-  if (pstXmp_file == NULL) { return -1; }
+  if (pstXmp_file == NULL) { return -1101; }
 #ifdef ORIGINAL
-  if (ap == NULL)          { return -1; }
+  if (ap == NULL)          { return -1102; }
 #else /* RIST */
-  if (apd == NULL)         { return -1; }
+  if (apd == NULL)         { return -1103; }
 #endif
-  if (rp == NULL)          { return -1; }
+  if (rp == NULL)          { return -1104; }
 
 #ifdef ORIGINAL
   XMP_array_t = (_XMP_array_t*)ap;
@@ -2619,7 +2655,7 @@ size_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
   array_type_size = XMP_array_t->type_size;
 #else /* RIST */
   tempd = xmp_align_template(apd);
-  if (tempd == NULL){ return -1; }
+  if (tempd == NULL){ return -1105; }
   array_ndim = xmp_array_ndim(apd);
   array_type_size = xmp_array_type_size(apd);
 #endif
@@ -2634,7 +2670,7 @@ size_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
   rp_lb_addr = _xmp_range_get_lb_addr(rp);
   rp_ub_addr = _xmp_range_get_ub_addr(rp);
   rp_step_addr = _xmp_range_get_step_addr(rp);
-  if (!rp_lb_addr || !rp_ub_addr || !rp_step_addr){ return -1; }
+  if (!rp_lb_addr || !rp_ub_addr || !rp_step_addr){ return -1106; }
 #define RP_DIMS     (rp_dims)
 #define RP_LB(i)    (rp_lb_addr[(i)])
 #define RP_UB(i)    (rp_ub_addr[(i)])
@@ -2642,7 +2678,7 @@ size_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
 #endif
 
   // check number of dimensions
-  if (array_ndim != RP_DIMS) { return -1; }
+  if (array_ndim != RP_DIMS) { return -1107; }
 
 #ifdef DEBUG
 printf("WRITE(%d/%d) dims=%d\n",rank, nproc, RP_DIMS);
@@ -2680,7 +2716,8 @@ printf("WRITE(%d/%d) dims=%d\n",rank, nproc, RP_DIMS);
 #else /* RIST */
     int par_lower_i = xmp_array_gcllbound(apd, i+1);
     int par_upper_i = xmp_array_gclubound(apd, i+1);
-    int align_manner_i = xmp_dist_format(tempd, i+1);
+/*     int align_manner_i = xmp_dist_format(tempd, i+1); */
+    int align_manner_i = _get_align_manner(apd, i+1);
     int alloc_size_i = xmp_array_lsize(apd, i+1);
     int ser_lower_i = xmp_array_gcglbound(apd, i+1);
     int ser_upper_i = xmp_array_gcgubound(apd, i+1);
@@ -2701,13 +2738,14 @@ printf("WRITE(%d/%d) (shadow_size_lo,shadow_size_hi)=(%d,%d)\n",
 #endif
 
     // no distribution
-    if (/* align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED || */
-        align_manner_i == _XMP_N_DIST_DUPLICATION /* _XMP_N_ALIGN_DUPLICATION */)
+/*     if (align_manner_i == _XMP_N_DIST_DUPLICATION) */
+    if (align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED ||
+        align_manner_i == _XMP_N_ALIGN_DUPLICATION)
     {
       // upper after distribution < lower
-      if (par_upper_i < RP_LB(i)) { return -1; }
+      if (par_upper_i < RP_LB(i)) { return -1108; }
       // lower after distribution > upper
-      if (par_lower_i > RP_UB(i)) { return -1; }
+      if (par_lower_i > RP_UB(i)) { return -1109; }
 
       // incremnet is negative
       if ( RP_STEP(i) < 0)
@@ -2721,7 +2759,7 @@ printf("WRITE(%d/%d) (shadow_size_lo,shadow_size_hi)=(%d,%d)\n",
 
         // get extent of data type
         mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &tmp2);
-        if (mpiRet !=  MPI_SUCCESS) { return -1; }  
+        if (mpiRet !=  MPI_SUCCESS) { return -1110; }  
         type_size = (int)tmp2;
 
         // create basic data type
@@ -2735,7 +2773,7 @@ printf("WRITE(%d/%d) (shadow_size_lo,shadow_size_hi)=(%d,%d)\n",
         MPI_Type_free(&dataType[0]);
 
         // on error in MPI_Type_contiguous
-        if (mpiRet != MPI_SUCCESS) { return -1; }
+        if (mpiRet != MPI_SUCCESS) { return -1111; }
 
         // total size
         total_size
@@ -2755,7 +2793,7 @@ printf("WRITE(%d/%d) (shadow_size_lo,shadow_size_hi)=(%d,%d)\n",
                                          &dataType[0]);
 
         // on error in MPI_Type_create_resized1
-        if (mpiRet != MPI_SUCCESS) { return -1; }
+        if (mpiRet != MPI_SUCCESS) { return -1112; }
 
         // free MPI_Datatype out of use
         MPI_Type_free(&dataType[1]);
@@ -2770,7 +2808,8 @@ printf("WRITE(%d/%d) total_size=%d\n",rank, nproc, total_size);
       }
     }
      // block distribution
-    else if (align_manner_i == _XMP_N_DIST_BLOCK /* _XMP_N_ALIGN_BLOCK */)
+/*     else if (align_manner_i == _XMP_N_DIST_BLOCK) */
+    else if (align_manner_i == _XMP_N_ALIGN_BLOCK)
     {
       // increment is negative
       if ( RP_STEP(i) < 0)
@@ -2809,7 +2848,7 @@ printf("WRITE(%d/%d) total_size=%d\n",rank, nproc, total_size);
 
         // get extent of data type
         mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &tmp2);
-        if (mpiRet !=  MPI_SUCCESS) { return -1; }  
+        if (mpiRet !=  MPI_SUCCESS) { return -1113; }  
         type_size = (int)tmp2;
         if(lower > upper){
            type_size = 0;
@@ -2826,7 +2865,7 @@ printf("WRITE(%d/%d) total_size=%d\n",rank, nproc, total_size);
         MPI_Type_free(&dataType[0]);
 
         // on error in MPI_Type_create_hvector
-        if (mpiRet != MPI_SUCCESS) { return -1; }
+        if (mpiRet != MPI_SUCCESS) { return -1114; }
 
         // space size
         space_size
@@ -2844,7 +2883,7 @@ printf("WRITE(%d/%d) total_size=%d\n",rank, nproc, total_size);
                                          &dataType[0]);
 
         // on error in MPI_Type_create_resized1
-        if (mpiRet != MPI_SUCCESS) { return -1; }
+        if (mpiRet != MPI_SUCCESS) { return -1115; }
 
         // free MPI_Datatype out of use
         MPI_Type_free(&dataType[1]);
@@ -2861,14 +2900,17 @@ printf("WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper);
     }
 #ifdef ORIGINAL
     // cyclic distribution
-    else if (align_manner_i == _XMP_N_DIST_CYCLIC /* _XMP_N_ALIGN_CYCLIC */)
+/*     else if (align_manner_i == _XMP_N_DIST_CYCLIC) */
+    else if (align_manner_i == _XMP_N_ALIGN_CYCLIC)
     {
-      return -1;
+      return -1116;
     }
 #else /* RIST */
     // cyclic or block-cyclic distribution
-    else if (align_manner_i == _XMP_N_DIST_CYCLIC /* _XMP_N_ALIGN_CYCLIC */ ||
-	     align_manner_i == _XMP_N_DIST_BLOCK_CYCLIC /* _XMP_N_ALIGN_BLOCK_CYCLIC */)
+/*     else if (align_manner_i == _XMP_N_DIST_CYCLIC || */
+/* 	     align_manner_i == _XMP_N_DIST_BLOCK_CYCLIC) */
+    else if (align_manner_i == _XMP_N_ALIGN_CYCLIC ||
+	     align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC)
     {
       int bw_i = xmp_dist_size(tempd, i+1);
       int cycle_i = xmp_dist_stride(tempd, i+1);
@@ -2879,7 +2921,7 @@ printf("WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper);
 				    type_size /* in: byte size for dataType[0] */,
 				    dataType[0] /* in */,
 				    &dataType[1] /* out */);
-      if (ierr != MPI_SUCCESS) { return -1; }
+      if (ierr != MPI_SUCCESS) { return -1117; }
       MPI_Type_free(&dataType[0]);
       dataType[0] = dataType[1];
     }
@@ -2887,21 +2929,23 @@ printf("WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper);
     // other
     else
     {
-      return -1;
-    }
+      _XMP_fatal("xmp_fwrite_darray_all: invalid align manner");
+      return -1118;
+    } /* align_manner_i */
   }
 
   // commit
   mpiRet = MPI_Type_commit(&dataType[0]);
 
   // on error in commit
-  if (mpiRet != MPI_SUCCESS) { return 1; }
+  if (mpiRet != MPI_SUCCESS) { return 1119; }
  
 #ifdef ORIGINAL
   char *array_addr = (*XMP_array_t->array_addr_p);
 #else /* RIST */
   char *array_addr = (char*)xmp_array_laddr(apd);
 #endif
+/*   printf("fwrite_darray_all: rank = %d: array_addr = %p\n",rank,array_addr); */
 
   // write
   MPI_Type_size(dataType[0], &type_size);
@@ -2913,7 +2957,7 @@ printf("WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper);
                         &status)
          != MPI_SUCCESS)
         {
-           return -1;
+           return -1120;
         }
   } else {
      return 0;
@@ -2925,7 +2969,7 @@ printf("WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper);
   // number of btyes written
   if (MPI_Get_count(&status, MPI_BYTE, &writeCount) != MPI_SUCCESS)
   {
-    return -1;
+    return -1121;
   }
   return writeCount;
 #undef RP_DIMS
@@ -3176,21 +3220,21 @@ int xmp_file_set_view_all(xmp_file_t  *pstXmp_file,
   int array_ndim;
   size_t array_type_size;
 
-#ifdef DEBUG
+/* #ifdef DEBUG */
   int rank, nproc;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-#endif
+/* #endif */
 
   // check argument
-  if (pstXmp_file == NULL) { return 1; }
+  if (pstXmp_file == NULL) { return 1001; }
 #ifdef ORIGINAL
-  if (ap == NULL)          { return 1; }
+  if (ap == NULL)          { return 1002; }
 #else /* RIST */
-  if (apd == NULL)         { return 1; }
+  if (apd == NULL)         { return 1002; }
 #endif
-  if (rp == NULL)          { return 1; }
-  if (disp  < 0)           { return 1; }
+  if (rp == NULL)          { return 1004; }
+  if (disp  < 0)           { return 1005; }
 
 #ifdef ORIGINAL
   XMP_array_t = (_XMP_array_t*)ap; 
@@ -3221,7 +3265,7 @@ int xmp_file_set_view_all(xmp_file_t  *pstXmp_file,
 #endif
 
   // check number of dimensions
-  if (array_ndim != RP_DIMS) { return 1; }
+  if (array_ndim != RP_DIMS) { return 1006; }
 
 #ifdef DEBUG
 printf("VIEW(%d/%d) dims=%d\n", rank, nproc, RP_DIMS);
@@ -3240,11 +3284,12 @@ printf("VIEW(%d/%d) dims=%d\n", rank, nproc, RP_DIMS);
 #else /* RIST */
     int par_lower_i = xmp_array_gcllbound(apd, i+1);
     int par_upper_i = xmp_array_gclubound(apd, i+1);
-    int align_manner_i = xmp_dist_format(tempd, i+1);
+/*     int align_manner_i = xmp_dist_format(tempd, i+1); */
+    int align_manner_i = _get_align_manner(apd, i+1);
 #endif
     // get extent of data type
     mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &tmp2);
-    if (mpiRet !=  MPI_SUCCESS) { return -1; }  
+    if (mpiRet !=  MPI_SUCCESS) { return -1007; }
     type_size = (int)tmp2;
 
 #ifdef DEBUG
@@ -3254,8 +3299,9 @@ printf("VIEW(%d/%d) (par_lower,par_upper)=(%d,%d)\n",
         rank, nproc, par_lower_i, par_upper_i);
 #endif
     // no distribution
-    if (/* align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED || */
-        align_manner_i == _XMP_N_DIST_DUPLICATION /* _XMP_N_ALIGN_DUPLICATION */)
+/*     if (align_manner_i == _XMP_N_DIST_DUPLICATION) */
+    if (align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED ||
+        align_manner_i == _XMP_N_ALIGN_DUPLICATION)
     {
       // continuous size
       continuous_size = (RP_UB(i) - RP_LB(i)) / RP_STEP(i) + 1;
@@ -3268,7 +3314,7 @@ printf("VIEW(%d/%d) (par_lower,par_upper)=(%d,%d)\n",
       dataType[0] = dataType[1];
 
       // on error in MPI_Type_contiguous
-      if (mpiRet != MPI_SUCCESS) { return 1; }
+      if (mpiRet != MPI_SUCCESS) { return 1008; }
 
 #ifdef DEBUG
 printf("VIEW(%d/%d) NOT_ALIGNED\n", rank, nproc);
@@ -3276,7 +3322,8 @@ printf("VIEW(%d/%d) continuous_size=%d\n", rank, nproc, continuous_size);
 #endif
     }
     // block distribution
-    else if (align_manner_i == _XMP_N_DIST_BLOCK /* _XMP_N_ALIGN_BLOCK */)
+/*     else if (align_manner_i == _XMP_N_DIST_BLOCK) */
+    else if (align_manner_i == _XMP_N_ALIGN_BLOCK)
     {
       int space_size;
       int total_size;
@@ -3287,7 +3334,7 @@ printf("VIEW(%d/%d) continuous_size=%d\n", rank, nproc, continuous_size);
         // lower > upper
         if (RP_LB(i) > RP_UB(i))
         {
-          return 1;
+          return 1009; /* return 1;  */
         }
         // upper after distribution < lower
         else if (par_upper_i < RP_LB(i))
@@ -3319,6 +3366,10 @@ printf("VIEW(%d/%d) continuous_size=%d\n", rank, nproc, continuous_size);
           // space size
           space_size
             = ((lower - RP_LB(i)) / RP_STEP(i)) * type_size;
+
+/* 	  printf("set_view_all: rank = %d: lower = %d  upper = %d  continuous_size = %d  space_size = %d\n", */
+/* 		 rank,lower, upper, continuous_size, space_size); */
+
         }
 
         // total size
@@ -3332,7 +3383,7 @@ printf("VIEW(%d/%d) continuous_size=%d\n", rank, nproc, continuous_size);
         MPI_Type_free(&dataType[0]);
 
         // on error in MPI_Type_contiguous
-        if (mpiRet != MPI_SUCCESS) { return 1; }
+        if (mpiRet != MPI_SUCCESS) { return 1010; }
 
         // create new file type
         mpiRet = MPI_Type_create_resized1(dataType[1],
@@ -3341,11 +3392,13 @@ printf("VIEW(%d/%d) continuous_size=%d\n", rank, nproc, continuous_size);
                                          &dataType[0]);
 
         // on error in MPI_Type_create_resized1
-        if (mpiRet != MPI_SUCCESS) { return 1; }
+        if (mpiRet != MPI_SUCCESS) { return 1011; }
 
 
         // free MPI_Datatype out of use
         MPI_Type_free(&dataType[1]);
+
+/* 	printf("set_view_all: rank = %d: total_size = %d\n",rank,total_size); */
 
 #ifdef DEBUG
 printf("VIEW(%d/%d) ALIGN_BLOCK\n", rank, nproc );
@@ -3363,7 +3416,7 @@ printf("\n");
         // lower < upper
         if (RP_LB(i) < RP_UB(i))
         {
-          return 1;
+          return 1012;
         }
         // lower after distribution < upper
         else if (par_lower_i < RP_UB(i))
@@ -3407,8 +3460,8 @@ printf("\n");
         // free MPI_Datatype out of use
         MPI_Type_free(&dataType[0]);
 
-        // MPI_Type_contiguousがエラーの場合
-        if (mpiRet != MPI_SUCCESS) { return 1; }
+	// on error in MPI_Type_contiguous
+        if (mpiRet != MPI_SUCCESS) { return 1013; }
 
         // create new file type
         mpiRet = MPI_Type_create_resized1(dataType[1],
@@ -3417,7 +3470,7 @@ printf("\n");
                                          &dataType[0]);
 
         // on error in MPI_Type_create_resized1
-        if (mpiRet != MPI_SUCCESS) { return 1; }
+        if (mpiRet != MPI_SUCCESS) { return 1014; }
 
         // free MPI_Datatype out of use
         MPI_Type_free(&dataType[1]);
@@ -3433,14 +3486,17 @@ printf("VIEW(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
     }
 #ifdef ORIGINAL
     // cyclic distribution
-    else if (align_manner_i == _XMP_N_DIST_CYCLIC /* _XMP_N_ALIGN_CYCLIC */)
+/*     else if (align_manner_i == _XMP_N_DIST_CYCLIC) */
+    else if (align_manner_i == _XMP_N_ALIGN_CYCLIC)
     {
       return 1;
     }
 #else /* RIST */
     // cyclic or block-cyclic distribution
-    else if (align_manner_i == _XMP_N_DIST_CYCLIC /* _XMP_N_ALIGN_CYCLIC */ ||
-	     align_manner_i == _XMP_N_DIST_BLOCK_CYCLIC /* _XMP_N_ALIGN_BLOCK_CYCLIC */)
+/*     else if (align_manner_i == _XMP_N_DIST_CYCLIC || */
+/* 	     align_manner_i == _XMP_N_DIST_BLOCK_CYCLIC) */
+    else if (align_manner_i == _XMP_N_ALIGN_CYCLIC ||
+	     align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC)
     {
       int bw_i = xmp_dist_size(tempd, i+1);
       int cycle_i = xmp_dist_stride(tempd, i+1);
@@ -3449,7 +3505,7 @@ printf("VIEW(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
 				    type_size /* in: byte size for dataType[0] */,
 				    dataType[0] /* in */,
 				    &dataType[1] /* out */);
-      if (ierr != MPI_SUCCESS) { return -1; }
+      if (ierr != MPI_SUCCESS) { return -1015; }
       MPI_Type_free(&dataType[0]);
       dataType[0] = dataType[1];
     }
@@ -3457,7 +3513,8 @@ printf("VIEW(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
     // other
     else
     {
-      return 1;
+/*       printf("set_view_all: align_manner_i = %d\n",align_manner_i); */
+      return 1016;
     }
   }
 
@@ -3465,7 +3522,7 @@ printf("VIEW(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
   mpiRet = MPI_Type_commit(&dataType[0]);
 
   // on erro in commit
-  if (mpiRet != MPI_SUCCESS) { return 1; }
+  if (mpiRet != MPI_SUCCESS) { return 1017; }
   
   // set view
   mpiRet = MPI_File_set_view(pstXmp_file->fh,
@@ -3480,7 +3537,7 @@ printf("VIEW(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
   //MPI_Type_free(&dataType[0]);
 
   // on erro in set view
-  if (mpiRet != MPI_SUCCESS) { return 1; }
+  if (mpiRet != MPI_SUCCESS) { return 1018; }
 
   return 0;
 #undef RP_DIMS
