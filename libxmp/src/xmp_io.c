@@ -1827,7 +1827,7 @@ int xmp_fread_darray_unpack(fp, apd, rp)
 #ifdef ORIGINAL
    array_addr = (char*)(*array_t->array_addr_p);
 #else /* RIST */
-   array_addr = (char*)xmp_array_laddr(apd);
+   array_addr = (char*)(*(xmp_array_laddr(apd)));
 #endif
    for(j=0; j<buf_size; j++){
      disp = 0;
@@ -2243,13 +2243,11 @@ printf("READ(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
 #ifdef ORIGINAL
   char *array_addr = (char*)(*XMP_array_t->array_addr_p);
 #else /* RIST */
-  char *array_addr = (char*)xmp_array_laddr(apd);
+  char *array_addr = (char*)(*(xmp_array_laddr(apd)));
 #endif
-/*   printf("fread_darray_all: rank = %d: array_addr = %p\n",rank,array_addr); */
 
   // read
   MPI_Type_size(dataType[0], &type_size);
-
 /*   printf("fread_darray_all: type_size = %d\n",type_size); */
 
   if(type_size > 0){
@@ -2501,7 +2499,7 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
 #ifdef ORIGINAL
    array_addr = (char*)(*array_t->array_addr_p);
 #else /* RIST */
-   array_addr = (char*)xmp_array_laddr(apd);
+   array_addr = (char*)(*(xmp_array_laddr(apd)));
 #endif
    for(j=0; j<buf_size; j++){
      disp = 0;
@@ -2943,9 +2941,8 @@ printf("WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper);
 #ifdef ORIGINAL
   char *array_addr = (*XMP_array_t->array_addr_p);
 #else /* RIST */
-  char *array_addr = (char*)xmp_array_laddr(apd);
+  char *array_addr = (char*)(*(xmp_array_laddr(apd)));
 #endif
-/*   printf("fwrite_darray_all: rank = %d: array_addr = %p\n",rank,array_addr); */
 
   // write
   MPI_Type_size(dataType[0], &type_size);
