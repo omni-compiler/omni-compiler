@@ -35,58 +35,6 @@ static int MPI_Type_create_resized1(MPI_Datatype oldtype,
 /* ------------------------------------------------------------------ */
 #ifdef ORIGINAL
 #else /* RIST */
-/* ------------------------------------------------------------------ */
-static int _get_align_manner(xmp_desc_t ap, int dim)
-{
-  _XMP_array_t *array_t = (_XMP_array_t*)(ap);
-  _XMP_array_info_t *ai = &(array_t->info[dim-1]);
-/*   int align_manner = ai->align_manner; */
-  return ai->align_manner;
-}
-/* ------------------------------------------------------------------ */
-static int xmp_dist_size_debug(xmp_desc_t apd, int dim)
-{
-  int ival;
-  _XMP_array_t *array_t = (_XMP_array_t*)(apd);
-  _XMP_array_info_t *ai = &(array_t->info[dim-1]);
-  int align_manner = ai->align_manner;
-/*   printf("xmp_dist_size_debug: align_manner = %d\n",align_manner); */
-  xmp_desc_t tempd =  xmp_align_template(apd);
-  _XMP_template_t *t = (_XMP_template_t *)tempd;
-  _XMP_template_chunk_t *tc = &(t->chunk[dim-1]);
-
-/*  _XMP_N_ALIGN_NOT_ALIGNED              200 */
-/*  _XMP_N_ALIGN_DUPLICATION              201 */
-/*  _XMP_N_ALIGN_BLOCK                    202 */
-/*  _XMP_N_ALIGN_CYCLIC                   203 */
-/*  _XMP_N_ALIGN_BLOCK_CYCLIC             204 */
-  if (align_manner == _XMP_N_ALIGN_NOT_ALIGNED){
-    ival = tc->par_chunk_width;
-
-  }else if (align_manner == _XMP_N_ALIGN_DUPLICATION){
-    ival = tc->par_chunk_width;
-
-  }else if (align_manner == _XMP_N_ALIGN_BLOCK){
-    ival = tc->par_chunk_width;
-
-  }else if (align_manner == _XMP_N_ALIGN_CYCLIC){
-/*     ival = tc->par_width; */
-    ival = 1; /* dummy */
-
-  }else if (align_manner == _XMP_N_ALIGN_BLOCK_CYCLIC){
-    ival = tc->par_width;
-    _XMP_fatal("xmp_dist_size_debug: not implemented");
-
-  }else{
-    _XMP_fatal("xmp_dist_size_debug: invalid align_manner");
-  }
-  return ival;
-}
-/* ------------------------------------------------------------------ */
-#endif
-/* ------------------------------------------------------------------ */
-#ifdef ORIGINAL
-#else /* RIST */
 /* ================================================================== */
 /* beginning of inc_xmp_io.c */
 #define MIN(a,b)  ( (a)<(b) ? (a) : (b) )
@@ -1809,8 +1757,7 @@ int xmp_fread_darray_unpack(fp, apd, rp)
 #else /* RIST */
      int par_lower_i = xmp_array_gcllbound(apd, i+1);
      int par_upper_i = xmp_array_gclubound(apd, i+1);
-/*      int align_manner_i = xmp_dist_format(tempd, i+1); */
-     int align_manner_i = _get_align_manner(apd, i+1);
+     int align_manner_i = xmp_align_format(apd, i+1);
 #endif
       /* error check */
       if(RP_STEP(i) > 0 && RP_LB(i) > RP_UB(i)){
@@ -1821,8 +1768,8 @@ int xmp_fread_darray_unpack(fp, apd, rp)
          ret = -1;
          goto FunctionExit;
       }
-      if (/* align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED || */
-          align_manner_i == _XMP_N_DIST_DUPLICATION /* _XMP_N_ALIGN_DUPLICATION */) {
+      if (align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED ||
+          align_manner_i == _XMP_N_ALIGN_DUPLICATION) {
          lb[i] = RP_LB(i);
          ub[i] = RP_UB(i);
          step[i] = RP_STEP(i);
@@ -1830,7 +1777,7 @@ int xmp_fread_darray_unpack(fp, apd, rp)
 #else /* RIST */
 	 cnt[i] = (ub[i]-lb[i]+step[i])/step[i];
 #endif
-      } else if(align_manner_i == _XMP_N_DIST_BLOCK /* _XMP_N_ALIGN_BLOCK */){
+      } else if(align_manner_i == _XMP_N_ALIGN_BLOCK){
          if(RP_STEP(i) > 0){
             if(par_upper_i < RP_LB(i) ||
                par_lower_i > RP_UB(i)){
@@ -1868,11 +1815,16 @@ int xmp_fread_darray_unpack(fp, apd, rp)
 #endif
 #ifdef ORIGINAL
 #else /* RIST */
-      } else if(align_manner_i == _XMP_N_DIST_CYCLIC /* _XMP_N_ALIGN_CYCLIC */||
-		align_manner_i == _XMP_N_DIST_BLOCK_CYCLIC /* _XMP_N_ALIGN_BLOCK_CYCLIC */){
-/* 	int bw_i = xmp_dist_size(tempd, i+1); */
-	int bw_i = xmp_dist_size_debug(apd, i+1);
-
+      } else if(align_manner_i == _XMP_N_ALIGN_CYCLIC ||
+		align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC){
+	int bw_i = xmp_dist_size(tempd, i+1);
+	if (bw_i <= 0){
+	  _XMP_fatal("xmp_fread_darray_unpack: invalid block width");
+	  ret = -1; goto FunctionExit; 
+	}else if(align_manner_i == _XMP_N_ALIGN_CYCLIC && bw_i != 1){
+	  _XMP_fatal("xmp_fread_darray_unpack: invalid block width for cyclic distribution");
+	  ret = -1; goto FunctionExit; 
+	}
 	int cycle_i = xmp_dist_stride(tempd, i+1);
 	int ierr = _xmp_io_block_cyclic_2(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
 					  RP_LB(i) /* in */, RP_UB(i) /* in */, RP_STEP(i) /* in */,
@@ -1931,8 +1883,7 @@ int xmp_fread_darray_unpack(fp, apd, rp)
 #ifdef ORIGINAL
    array_addr = (char*)(*array_t->array_addr_p);
 #else /* RIST */
-/*    array_addr = (char*)xmp_array_laddr(apd); /\* WRONG *\/ */
-   array_addr = (char*)(*(xmp_array_laddr(apd)));  /* CORRECT */
+   array_addr = (char*)(*(xmp_array_laddr(apd)));
 #endif
    for(j=0; j<buf_size; j++){
      disp = 0;
@@ -1954,26 +1905,25 @@ int xmp_fread_darray_unpack(fp, apd, rp)
        int local_lower_i = ai->local_lower;
 #else /* RIST */
        int par_lower_i = xmp_array_gcllbound(apd, i+1);
-/*        int align_manner_i = xmp_dist_format(tempd, i+1); */
-       int align_manner_i = _get_align_manner(apd, i+1);
+       int align_manner_i = xmp_align_format(apd, i+1);
        int ser_size_i = xmp_array_gsize(apd, i+1);
        int alloc_size_i = xmp_array_lsize(apd, i+1);
        int local_lower_i = xmp_array_lcllbound(apd, i+1);
 #endif
        ub[i] = (j/size)%cnt[i];
-       if (/* align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED || */
-	   align_manner_i == _XMP_N_DIST_DUPLICATION /* _XMP_N_ALIGN_DUPLICATION */) {
+       if (align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED ||
+	   align_manner_i == _XMP_N_ALIGN_DUPLICATION) {
 	 disp += (lb[i]+ub[i]*step[i])*array_size;
 	 array_size *= ser_size_i;
 
-       } else if(align_manner_i == _XMP_N_DIST_BLOCK /* _XMP_N_ALIGN_BLOCK */){
+       } else if(align_manner_i == _XMP_N_ALIGN_BLOCK){
 	 disp += (lb[i] + ub[i]*step[i] + local_lower_i - par_lower_i)*array_size;
 	 array_size *= alloc_size_i;
 
 #ifdef ORIGINAL
 #else /* RIST */
-       } else if(align_manner_i == _XMP_N_DIST_CYCLIC /* _XMP_N_ALIGN_CYCLIC */ ||
-		 align_manner_i == _XMP_N_DIST_BLOCK_CYCLIC /* _XMP_N_ALIGN_BLOCK_CYCLIC */){
+       } else if(align_manner_i == _XMP_N_ALIGN_CYCLIC ||
+		 align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC){
 	 int local_index;
 	 int ierr = _xmp_io_block_cyclic_3(ub[i] /* in */, bc2_result[i] /* in */,
 				       &local_index /* out */);
@@ -2141,8 +2091,7 @@ printf("READ(%d/%d) dims=%d\n", rank, nproc, RP_DIMS);
 #else /* RIST */
     int par_lower_i = xmp_array_gcllbound(apd, i+1);
     int par_upper_i = xmp_array_gclubound(apd, i+1);
-/*     int align_manner_i = xmp_dist_format(tempd, i+1); */
-    int align_manner_i = _get_align_manner(apd, i+1);
+    int align_manner_i = xmp_align_format(apd, i+1);
     int local_lower_i = xmp_array_lcllbound(apd, i+1);
     int alloc_size_i = xmp_array_lsize(apd, i+1);
 #endif
@@ -2153,7 +2102,6 @@ printf("READ(%d/%d) (par_lower,par_upper)=(%d,%d)\n",
        rank, nproc, par_lower_i, par_upper_i);
 #endif
     // no distribution
-/*     if (align_manner_i == _XMP_N_DIST_DUPLICATION) */
     if (align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED ||
         align_manner_i == _XMP_N_ALIGN_DUPLICATION)
     {
@@ -2222,7 +2170,6 @@ printf("READ(%d/%d) total_size=%d\n", rank, nproc, total_size);
       }
     }
      // block distribution
-/*     else if (align_manner_i == _XMP_N_DIST_BLOCK) */
     else if (align_manner_i == _XMP_N_ALIGN_BLOCK)
     {
       // increment is negative
@@ -2318,21 +2265,23 @@ printf("READ(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
     }
 #ifdef ORIGINAL
     // cyclic distribution
-/*     else if (align_manner_i == _XMP_N_DIST_CYCLIC ) */
     else if (align_manner_i == _XMP_N_ALIGN_CYCLIC)
     {
       return -1;
     }
 #else /* RIST */
     // cyclic or block-cyclic distribution
-/*     else if (align_manner_i == _XMP_N_DIST_CYCLIC || */
-/* 	     align_manner_i == _XMP_N_DIST_BLOCK_CYCLIC) */
     else if (align_manner_i == _XMP_N_ALIGN_CYCLIC ||
 	     align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC)
     {
-/*       int bw_i = xmp_dist_size(tempd, i+1); */
-      int bw_i = xmp_dist_size_debug(apd, i+1);
-
+      int bw_i = xmp_dist_size(tempd, i+1);
+      if (bw_i <= 0){
+	_XMP_fatal("xmp_fread_darray_all: invalid block width");
+	return -1;
+      }else if(align_manner_i == _XMP_N_ALIGN_CYCLIC && bw_i != 1){
+	_XMP_fatal("xmp_fread_darray_all: invalid block width for cyclic distribution");
+	return -1;
+      }
       int cycle_i = xmp_dist_stride(tempd, i+1);
       int ierr = _xmp_io_block_cyclic_1(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
 					RP_LB(i) /* in */, RP_UB(i) /* in */, RP_STEP(i) /* in */,
@@ -2518,8 +2467,7 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
 #else /* RIST */
      int par_lower_i = xmp_array_gcllbound(apd, i+1);
      int par_upper_i = xmp_array_gclubound(apd, i+1);
-/*      int align_manner_i = xmp_dist_format(tempd, i+1); */
-     int align_manner_i = _get_align_manner(apd, i+1);
+     int align_manner_i = xmp_align_format(apd, i+1);
 #endif
       /* error check */
       if(RP_STEP(i) > 0 && RP_LB(i) > RP_UB(i)){
@@ -2530,8 +2478,8 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
          ret = -1;
          goto FunctionExit;
       }
-      if (/* align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED || */
-          align_manner_i == _XMP_N_DIST_DUPLICATION /* _XMP_N_ALIGN_DUPLICATION */) {
+      if (align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED ||
+          align_manner_i == _XMP_N_ALIGN_DUPLICATION) {
          lb[i] = RP_LB(i);
          ub[i] = RP_UB(i);
          step[i] = RP_STEP(i);
@@ -2540,7 +2488,7 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
 #else /* RIST */
 #endif
   
-      } else if(align_manner_i == _XMP_N_DIST_BLOCK /* _XMP_N_ALIGN_BLOCK */){
+      } else if(align_manner_i == _XMP_N_ALIGN_BLOCK){
          if(RP_STEP(i) > 0){
             if(par_upper_i < RP_LB(i) ||
                par_lower_i > RP_UB(i)){
@@ -2579,11 +2527,16 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
 
 #ifdef ORIGINAL
 #else /* RIST */
-      } else if(align_manner_i == _XMP_N_DIST_CYCLIC /* _XMP_N_ALIGN_CYCLIC */ ||
-		align_manner_i == _XMP_N_DIST_BLOCK_CYCLIC /* _XMP_N_ALIGN_BLOCK_CYCLIC  */){
-/* 	int bw_i = xmp_dist_size(tempd, i+1); */
-	int bw_i = xmp_dist_size_debug(apd, i+1);
-
+      } else if(align_manner_i == _XMP_N_ALIGN_CYCLIC ||
+		align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC){
+	int bw_i = xmp_dist_size(tempd, i+1);
+	if (bw_i <= 0){
+	  _XMP_fatal("xmp_fwrite_darray_pack: invalid block width");
+	  ret = -1; goto FunctionExit;
+	}else if(align_manner_i == _XMP_N_ALIGN_CYCLIC && bw_i != 1){
+	  _XMP_fatal("xmp_fwrite_darray_pack: invalid block width for cyclic distribution");
+	  ret = -1; goto FunctionExit;
+	}
 	int cycle_i = xmp_dist_stride(tempd, i+1);
 	int ierr = _xmp_io_block_cyclic_2(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
 					  RP_LB(i) /* in */, RP_UB(i) /* in */, RP_STEP(i) /* in */,
@@ -2626,8 +2579,7 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
 #ifdef ORIGINAL
    array_addr = (char*)(*array_t->array_addr_p);
 #else /* RIST */
-/*    array_addr = (char*)xmp_array_laddr(apd); /\* WRONG *\/ */
-   array_addr = (char*)(*(xmp_array_laddr(apd)));  /* CORRECT */
+   array_addr = (char*)(*(xmp_array_laddr(apd)));
 #endif
    for(j=0; j<buf_size; j++){
      disp = 0;
@@ -2649,26 +2601,25 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
        int alloc_size_i = ai->alloc_size;
 #else /* RIST */
        int par_lower_i = xmp_array_gcllbound(apd, i+1);
-/*        int align_manner_i = xmp_dist_format(tempd, i+1); */
-       int align_manner_i = _get_align_manner(apd, i+1);
+       int align_manner_i = xmp_align_format(apd, i+1);
        int local_lower_i = xmp_array_lcllbound(apd, i+1);
        int ser_size_i = xmp_array_gsize(apd, i+1);
        int alloc_size_i = xmp_array_lsize(apd, i+1);
 #endif
        ub[i] = (j/size)%cnt[i];
-       if (/* align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED || */
-	   align_manner_i == _XMP_N_DIST_DUPLICATION /* _XMP_N_ALIGN_DUPLICATION */) {
+       if (align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED ||
+	   align_manner_i == _XMP_N_ALIGN_DUPLICATION) {
 	 disp += (lb[i]+ub[i]*step[i])*array_size;
 	 array_size *= ser_size_i;
 
-       } else if(align_manner_i == _XMP_N_DIST_BLOCK /* _XMP_N_ALIGN_BLOCK */){
+       } else if(align_manner_i == _XMP_N_ALIGN_BLOCK){
 	 disp += (lb[i]+ub[i]*step[i] + local_lower_i - par_lower_i)*array_size;
 	 array_size *= alloc_size_i;
 
 #ifdef ORIGINAL
 #else /* RIST */
-       } else if(align_manner_i == _XMP_N_DIST_CYCLIC /* _XMP_N_ALIGN_CYCLIC */ ||
-		 align_manner_i == _XMP_N_DIST_BLOCK_CYCLIC /* _XMP_N_ALIGN_BLOCK_CYCLIC */){
+       } else if(align_manner_i == _XMP_N_ALIGN_CYCLIC ||
+		 align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC){
 	 int local_index;
 	 int ierr = _xmp_io_block_cyclic_3(ub[i] /* in */, bc2_result[i] /* in */,
 				       &local_index /* out */);
@@ -2865,8 +2816,7 @@ printf("WRITE(%d/%d) dims=%d\n",rank, nproc, RP_DIMS);
 #else /* RIST */
     int par_lower_i = xmp_array_gcllbound(apd, i+1);
     int par_upper_i = xmp_array_gclubound(apd, i+1);
-/*     int align_manner_i = xmp_dist_format(tempd, i+1); */
-    int align_manner_i = _get_align_manner(apd, i+1);
+    int align_manner_i = xmp_align_format(apd, i+1);
     int alloc_size_i = xmp_array_lsize(apd, i+1);
     int ser_lower_i = xmp_array_gcglbound(apd, i+1);
     int ser_upper_i = xmp_array_gcgubound(apd, i+1);
@@ -2887,7 +2837,6 @@ printf("WRITE(%d/%d) (shadow_size_lo,shadow_size_hi)=(%d,%d)\n",
 #endif
 
     // no distribution
-/*     if (align_manner_i == _XMP_N_DIST_DUPLICATION) */
     if (align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED ||
         align_manner_i == _XMP_N_ALIGN_DUPLICATION)
     {
@@ -2957,7 +2906,6 @@ printf("WRITE(%d/%d) total_size=%d\n",rank, nproc, total_size);
       }
     }
      // block distribution
-/*     else if (align_manner_i == _XMP_N_DIST_BLOCK) */
     else if (align_manner_i == _XMP_N_ALIGN_BLOCK)
     {
       // increment is negative
@@ -3049,21 +2997,23 @@ printf("WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper);
     }
 #ifdef ORIGINAL
     // cyclic distribution
-/*     else if (align_manner_i == _XMP_N_DIST_CYCLIC) */
     else if (align_manner_i == _XMP_N_ALIGN_CYCLIC)
     {
       return -1116;
     }
 #else /* RIST */
     // cyclic or block-cyclic distribution
-/*     else if (align_manner_i == _XMP_N_DIST_CYCLIC || */
-/* 	     align_manner_i == _XMP_N_DIST_BLOCK_CYCLIC) */
     else if (align_manner_i == _XMP_N_ALIGN_CYCLIC ||
 	     align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC)
     {
-/*       int bw_i = xmp_dist_size(tempd, i+1); */
-      int bw_i = xmp_dist_size_debug(apd, i+1);
-
+      int bw_i = xmp_dist_size(tempd, i+1);
+      if (bw_i <= 0){
+	_XMP_fatal("xmp_fwrite_darray_all: invalid block width");
+	return -1122;
+      }else if(align_manner_i == _XMP_N_ALIGN_CYCLIC && bw_i != 1){
+	_XMP_fatal("xmp_fwrite_darray_all: invalid block width for cyclic distribution");
+	return -1122;
+      }
       int cycle_i = xmp_dist_stride(tempd, i+1);
       int ierr = _xmp_io_block_cyclic_1(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
 					RP_LB(i) /* in */, RP_UB(i) /* in */, RP_STEP(i) /* in */,
@@ -3440,8 +3390,7 @@ printf("VIEW(%d/%d) dims=%d\n", rank, nproc, RP_DIMS);
 #else /* RIST */
     int par_lower_i = xmp_array_gcllbound(apd, i+1);
     int par_upper_i = xmp_array_gclubound(apd, i+1);
-/*     int align_manner_i = xmp_dist_format(tempd, i+1); */
-    int align_manner_i = _get_align_manner(apd, i+1);
+    int align_manner_i = xmp_align_format(apd, i+1);
 #endif
     // get extent of data type
     mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &tmp2);
@@ -3455,7 +3404,6 @@ printf("VIEW(%d/%d) (par_lower,par_upper)=(%d,%d)\n",
         rank, nproc, par_lower_i, par_upper_i);
 #endif
     // no distribution
-/*     if (align_manner_i == _XMP_N_DIST_DUPLICATION) */
     if (align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED ||
         align_manner_i == _XMP_N_ALIGN_DUPLICATION)
     {
@@ -3478,7 +3426,6 @@ printf("VIEW(%d/%d) continuous_size=%d\n", rank, nproc, continuous_size);
 #endif
     }
     // block distribution
-/*     else if (align_manner_i == _XMP_N_DIST_BLOCK) */
     else if (align_manner_i == _XMP_N_ALIGN_BLOCK)
     {
       int space_size;
@@ -3642,21 +3589,23 @@ printf("VIEW(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
     }
 #ifdef ORIGINAL
     // cyclic distribution
-/*     else if (align_manner_i == _XMP_N_DIST_CYCLIC) */
     else if (align_manner_i == _XMP_N_ALIGN_CYCLIC)
     {
       return 1;
     }
 #else /* RIST */
     // cyclic or block-cyclic distribution
-/*     else if (align_manner_i == _XMP_N_DIST_CYCLIC || */
-/* 	     align_manner_i == _XMP_N_DIST_BLOCK_CYCLIC) */
     else if (align_manner_i == _XMP_N_ALIGN_CYCLIC ||
 	     align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC)
     {
-/*       int bw_i = xmp_dist_size(tempd, i+1); */
-      int bw_i = xmp_dist_size_debug(apd, i+1);
-
+      int bw_i = xmp_dist_size(tempd, i+1);
+      if (bw_i <= 0){
+	_XMP_fatal("xmp_file_set_view_all: invalid block width");
+	return 1021;
+      }else if(align_manner_i == _XMP_N_ALIGN_CYCLIC && bw_i != 1){
+	_XMP_fatal("xmp_file_set_view_all: invalid block width for cyclic distribution");
+	return 1021;
+      }
       int cycle_i = xmp_dist_stride(tempd, i+1);
       int ierr = _xmp_io_block_cyclic_0(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
 					RP_LB(i) /* in */, RP_UB(i) /* in */, RP_STEP(i) /* in */,
@@ -3771,28 +3720,3 @@ static int MPI_Type_create_resized1(MPI_Datatype oldtype,
 
         return mpiRet;
 }
-#ifdef ORIGINAL
-/* int MPI_Type_create_resized(MPI_Datatype oldtype, */
-/* 			     MPI_Aint     lb, */
-/* 			     MPI_Aint     extent, */
-/* 			     MPI_Datatype *newtype) */
-/* { */
-/*         int          mpiRet; */
-/*         int          b[3]; */
-/*         MPI_Aint     d[3]; */
-/*         MPI_Datatype t[3]; */
-
-/*         b[0] = b[1] = b[2] = 1; */
-/*         d[0] = 0; */
-/*         d[1] = lb; */
-/*         d[2] = extent; */
-/*         t[0] = MPI_LB; */
-/*         t[1] = oldtype; */
-/*         t[2] = MPI_UB; */
-
-/*         mpiRet = MPI_Type_create_struct(3, b, d, t, newtype); */
-
-/*         return mpiRet; */
-/* } */
-#else /* RIST */
-#endif
