@@ -215,6 +215,14 @@ int xmp_align_offset(xmp_desc_t d, int dim){
 
 }
 
+int xmp_align_format(xmp_desc_t d, int dim){
+
+  _XMP_array_t *a = (_XMP_array_t *)d;
+
+  return a->info[dim-1].align_manner;
+
+}
+
 xmp_desc_t xmp_align_template(xmp_desc_t d){
 
   _XMP_array_t *a = (_XMP_array_t *)d;
