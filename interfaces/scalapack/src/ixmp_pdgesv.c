@@ -6,7 +6,6 @@ void ixmp_pdgesv(int *n,int *nrhs,double *a,int *ia,int *ja,xmp_desc_t da,int *i
 
   int desca[9],descb[9];
   int andim, bndim, *aidx, *bidx;
-  xmp_desc_t dat,dbt;
 
   andim=xmp_array_ndim(da);
   aidx = (int *)malloc(sizeof(int)* andim);
@@ -19,9 +18,8 @@ void ixmp_pdgesv(int *n,int *nrhs,double *a,int *ia,int *ja,xmp_desc_t da,int *i
   desca[2]=xmp_array_gsize(da,2);
   desca[3]=xmp_array_gsize(da,1);
 
-  dat = xmp_align_template(da);
-  desca[4]=xmp_dist_size(dat,2);
-  desca[5]=xmp_dist_size(dat,1);
+  desca[4]=xmp_align_size(da,2);
+  desca[5]=xmp_align_size(da,1);
 
   xmp_array_first_idx_node_index(da, aidx);
   desca[6]=aidx[1];
@@ -41,13 +39,12 @@ void ixmp_pdgesv(int *n,int *nrhs,double *a,int *ia,int *ja,xmp_desc_t da,int *i
      descb[3]=xmp_array_gsize(db,1);
   }
 
-  dbt = xmp_align_template(db);
   if (bndim == 1) {
-     descb[4]=xmp_dist_size(dbt,1);
+     descb[4]=xmp_align_size(db,1);
      descb[5]=1;
   }else if (bndim == 2) {
-     descb[4]=xmp_dist_size(dbt,2);
-     descb[5]=xmp_dist_size(dbt,1);
+     descb[4]=xmp_align_size(db,2);
+     descb[5]=xmp_align_size(db,1);
   }
 
   xmp_array_first_idx_node_index(db, bidx);

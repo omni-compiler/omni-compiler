@@ -6,7 +6,6 @@ void ixmp_pdlahqr(_Bool *wantt,_Bool *wantz,int *n,int *ilo,int *ihi,double *a,x
 
   int desca[9],descz[9];
   int andim, zndim, *aidx, *zidx;
-  xmp_desc_t dat,dzt;
 
   andim=xmp_array_ndim(da);
   aidx = (int *)malloc(sizeof(int)* andim);
@@ -19,9 +18,8 @@ void ixmp_pdlahqr(_Bool *wantt,_Bool *wantz,int *n,int *ilo,int *ihi,double *a,x
   desca[2]=xmp_array_gsize(da,2);
   desca[3]=xmp_array_gsize(da,1);
 
-  dat = xmp_align_template(da);
-  desca[4]=xmp_dist_size(dat,2);
-  desca[5]=xmp_dist_size(dat,1);
+  desca[4]=xmp_align_size(da,2);
+  desca[5]=xmp_align_size(da,1);
 
   xmp_array_first_idx_node_index(da, aidx);
   desca[6]=aidx[1];
@@ -36,9 +34,8 @@ void ixmp_pdlahqr(_Bool *wantt,_Bool *wantz,int *n,int *ilo,int *ihi,double *a,x
   descz[2]=xmp_array_gsize(dz,2);
   descz[3]=xmp_array_gsize(dz,1);
 
-  dzt = xmp_align_template(dz);
-  descz[4]=xmp_dist_size(dzt,2);
-  descz[5]=xmp_dist_size(dzt,1);
+  descz[4]=xmp_align_size(dz,2);
+  descz[5]=xmp_align_size(dz,1);
 
   xmp_array_first_idx_node_index(dz, zidx);
   descz[6]=zidx[1];
