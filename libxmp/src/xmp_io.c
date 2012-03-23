@@ -1817,7 +1817,7 @@ int xmp_fread_darray_unpack(fp, apd, rp)
 #else /* RIST */
       } else if(align_manner_i == _XMP_N_ALIGN_CYCLIC ||
 		align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC){
-	int bw_i = xmp_dist_size(tempd, i+1);
+	int bw_i = xmp_align_size(apd, i+1);
 	if (bw_i <= 0){
 	  _XMP_fatal("xmp_fread_darray_unpack: invalid block width");
 	  ret = -1; goto FunctionExit; 
@@ -2274,7 +2274,7 @@ printf("READ(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
     else if (align_manner_i == _XMP_N_ALIGN_CYCLIC ||
 	     align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC)
     {
-      int bw_i = xmp_dist_size(tempd, i+1);
+      int bw_i = xmp_align_size(apd, i+1);
       if (bw_i <= 0){
 	_XMP_fatal("xmp_fread_darray_all: invalid block width");
 	return -1;
@@ -2529,7 +2529,7 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
 #else /* RIST */
       } else if(align_manner_i == _XMP_N_ALIGN_CYCLIC ||
 		align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC){
-	int bw_i = xmp_dist_size(tempd, i+1);
+	int bw_i = xmp_align_size(apd, i+1);
 	if (bw_i <= 0){
 	  _XMP_fatal("xmp_fwrite_darray_pack: invalid block width");
 	  ret = -1; goto FunctionExit;
@@ -3006,7 +3006,7 @@ printf("WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper);
     else if (align_manner_i == _XMP_N_ALIGN_CYCLIC ||
 	     align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC)
     {
-      int bw_i = xmp_dist_size(tempd, i+1);
+      int bw_i = xmp_align_size(apd, i+1);
       if (bw_i <= 0){
 	_XMP_fatal("xmp_fwrite_darray_all: invalid block width");
 	return -1122;
@@ -3598,7 +3598,7 @@ printf("VIEW(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
     else if (align_manner_i == _XMP_N_ALIGN_CYCLIC ||
 	     align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC)
     {
-      int bw_i = xmp_dist_size(tempd, i+1);
+      int bw_i = xmp_align_size(apd, i+1);
       if (bw_i <= 0){
 	_XMP_fatal("xmp_file_set_view_all: invalid block width");
 	return 1021;
