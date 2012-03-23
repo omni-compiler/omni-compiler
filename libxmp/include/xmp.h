@@ -38,6 +38,7 @@ extern int      xmp_array_lead_dim(xmp_desc_t d);
 extern int      xmp_align_axis(xmp_desc_t d, int dim);
 extern int      xmp_align_offset(xmp_desc_t d, int dim);
 extern int      xmp_align_format(xmp_desc_t d, int dim);
+extern int      xmp_align_size(xmp_desc_t d, int dim);
 extern xmp_desc_t xmp_align_template(xmp_desc_t d);
 extern _Bool    xmp_template_fixed(xmp_desc_t d);
 extern int      xmp_template_ndim(xmp_desc_t d);

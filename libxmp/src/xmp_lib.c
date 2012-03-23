@@ -203,7 +203,7 @@ int xmp_align_axis(xmp_desc_t d, int dim){
 
   _XMP_array_t *a = (_XMP_array_t *)d;
 
-  return a->info[dim-1].align_template_index;
+  return a->info[dim-1].align_template_index + 1;
 
 }
 
@@ -221,6 +221,35 @@ int xmp_align_format(xmp_desc_t d, int dim){
 
   return a->info[dim-1].align_manner;
 
+}
+
+int xmp_align_size(xmp_desc_t d, int dim){
+
+  int format, ival=0, idim;
+  xmp_desc_t dt;
+
+  _XMP_array_t *a = (_XMP_array_t *)d;
+
+  format = xmp_align_format(d,dim);
+  idim = xmp_align_axis(d,dim);
+  dt = xmp_align_template(d);
+
+  _XMP_template_t *t = (_XMP_template_t *)dt;
+
+  if (format == _XMP_N_ALIGN_BLOCK){
+    ival = t->chunk[idim-1].par_chunk_width;
+  }else if (format == _XMP_N_ALIGN_CYCLIC){
+    ival = t->chunk[idim-1].par_width;
+  }else if (format == _XMP_N_ALIGN_BLOCK_CYCLIC){
+    ival = t->chunk[idim-1].par_width;
+  }else if (format == _XMP_N_ALIGN_DUPLICATION){
+    ival = t->chunk[idim-1].par_chunk_width;
+  }else if (format == _XMP_N_ALIGN_NOT_ALIGNED){
+    ival = a->info[dim-1].par_size;
+  }else
+    ival = -1;
+
+  return ival;
 }
 
 xmp_desc_t xmp_align_template(xmp_desc_t d){
@@ -273,20 +302,22 @@ int xmp_dist_format(xmp_desc_t d, int dim){
 
 int xmp_dist_size(xmp_desc_t d, int dim){
 
-  int dist_format,ival=0;
+  int format,ival=0;
 
   _XMP_template_t *t = (_XMP_template_t *)d;
 
-  dist_format = xmp_dist_format(d,dim);
+  format = xmp_dist_format(d,dim);
 
-  if (dist_format == _XMP_N_DIST_BLOCK){
+  if (format == _XMP_N_DIST_BLOCK){
     ival = t->chunk[dim-1].par_chunk_width;
-  }else if (dist_format == _XMP_N_DIST_CYCLIC){
+  }else if (format == _XMP_N_DIST_CYCLIC){
     ival = t->chunk[dim-1].par_width;
-  }else if (dist_format == _XMP_N_DIST_BLOCK_CYCLIC){
+  }else if (format == _XMP_N_DIST_BLOCK_CYCLIC){
     ival = t->chunk[dim-1].par_width;
-  }else if (dist_format == _XMP_N_DIST_DUPLICATION){
+  }else if (format == _XMP_N_DIST_DUPLICATION){
     ival = t->chunk[dim-1].par_chunk_width;
+  }else{
+    ival = -1;
   }
 
   return ival;
