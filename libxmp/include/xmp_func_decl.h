@@ -81,6 +81,9 @@ extern void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_s
 extern void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_step,
                                             int *par_init, int *par_cond, int *par_step,
                                             void *template, int template_index);
+extern void _XMP_sched_loop_template_BLOCK_CYCLIC(int ser_init, int ser_cond, int ser_step,
+                                           int *par_init, int *par_cond, int *par_step,
+                                           _XMP_template_t *template, int template_index);
 extern void _XMP_sched_loop_nodes(int ser_init, int ser_cond, int ser_step,
                                   int *par_init, int *par_cond, int *par_step,
                                   void *nodes, int nodes_index);

@@ -63,8 +63,14 @@ static int _xmp_io_block_cyclic_0
   if (mpiRet !=  MPI_SUCCESS) { return -1113; }  
   type_size = (int)tmp2;
 
-  printf("_xmp_io_block_cyclic_0: rmyank = %d:  par_lower = %d  par_upper = %d  bw = %d  cycle = %d\n",
+  int byte_dataType0;
+  MPI_Type_size(dataType0, &byte_dataType0);
+#ifdef DEBUG
+  printf("_xmp_io_block_cyclic_0: myrank = %d: byte_dataType0=%d  lb=%d  extent_dataType0=%d\n",
+	 myrank, byte_dataType0, (int)tmp1, (int)type_size);
+  printf("_xmp_io_block_cyclic_0: myrank = %d:  par_lower = %d  par_upper = %d  bw = %d  cycle = %d\n",
 	 myrank,par_lower,par_upper,bw,cycle);
+#endif /* DEBUG */
 
   if (bw <= 0){ _XMP_fatal("_xmp_io_block_cyclic_0: block width must be pisitive."); }
   if (cycle == 0){ _XMP_fatal("_xmp_io_block_cyclic_0: cycle must be non-zero."); }
@@ -138,129 +144,69 @@ static int _xmp_io_block_cyclic_0
         if (mpiRet != MPI_SUCCESS) { return 1; }
 
       }else{
-	int mcnt=4;
-	mcnt=MAX(mcnt, abs(a1)+2);
-	mcnt=MAX(mcnt, abs(bw*b1)+2);
-	int b[mcnt]; MPI_Aint d[mcnt]; MPI_Datatype t[mcnt];
 	int ista=bw*x_l+ib_l;
 	int iend=bw*x_u+ib_u +1;
 	int y_sta = func_m( step, 0 );
 	int y_end = func_m( (-step), (- rp_lb + rp_ub) );
+	int mcnt=4;
+	mcnt=MAX(mcnt, abs(a1)+2);
+	mcnt=MAX(mcnt, abs(bw*b1)+2);
+	mcnt=MAX(mcnt, abs( (iend-ista) )+2);
+	int b[mcnt]; MPI_Aint d[mcnt]; MPI_Datatype t[mcnt];
 #ifdef DEBUG
 	printf("y_sta=%d  y_end=%d\n", y_sta, y_end);
 #endif /* DEBUG */
 	int y_base1 = y_sta;
 	int i_base1 = ista;
 	MPI_Datatype newtype2a; int byte_newtype2a; MPI_Aint lb_newtype2a, extent_newtype2a;
-	MPI_Datatype newtype2b; int byte_newtype2b; MPI_Aint lb_newtype2b, extent_newtype2b;
 	MPI_Datatype newtype2c; int byte_newtype2c; MPI_Aint lb_newtype2c, extent_newtype2c;
 	{
 	  int cnt=0;
-	  b[cnt]=1; d[cnt]=0;      t[cnt]=MPI_LB;  cnt++;
 	  int first=1;
 	  int i;
-	  for (i=ista; i<iend-(iend-ista) %(bw*b1); i++){
+	  for (i=ista; i<iend; i++){
 	    int x = i / bw;
 	    int ib = i - bw * x;
 	    int z=a*x+par_lower+ib;
 	    if ( (z-rp_lb) % step == 0 ){
 	      int y = (z-rp_lb) / step;
 	      if (first){ y_base1 = y; i_base1 = i; first=0; }
-	      if ((i-ista)/(bw*b1) == 0){
-		b[cnt]=1; d[cnt]=(y - y_base1)*type_size; t[cnt]=dataType0; cnt++;
-#ifdef DEBUG
-		printf("y - y_base1=%d\n",y - y_base1);
-#endif /* DEBUG */
-	      }else{
-		break;
-	      }
-	    }else{
+	      b[cnt]=1; d[cnt]=(y - y_base1)*type_size; t[cnt]=dataType0; cnt++;
 	    }
 	  }/* i */
-	  b[cnt]=1; d[cnt]=( a1 )*type_size; t[cnt]=MPI_UB;  cnt++;
-#ifdef DEBUG
-	  printf("UB1: %d\n",a1);
-#endif /* DEBUG */
 	  mpiRet = MPI_Type_create_struct(cnt, b, d, t, &newtype2a);
 	  if (mpiRet != MPI_SUCCESS) { return 1; }
-/* 	  MPI_Type_commit(&newtype2a); */
 	  MPI_Type_size(newtype2a, &byte_newtype2a);
 	  MPI_Type_get_extent(newtype2a, &lb_newtype2a, &extent_newtype2a);
 #ifdef DEBUG
-	  printf("newtype2a: byte_newtype2a=%d bytes  lb=%d bytes  extent=%d bytes\n",
-		 byte_newtype2a, (int)lb_newtype2a, (int)extent_newtype2a);
+	  printf("myrank=%d: newtype2a: byte_newtype2a=%d bytes  lb=%d bytes  extent=%d bytes\n",
+		 myrank, byte_newtype2a, (int)lb_newtype2a, (int)extent_newtype2a);
 #endif /* DEBUG */
 	}
-	int y_base2 = y_sta;
-	int i_base2 = ista;
-	int pos = 0;
 	{
-	  int cnt=0;
-	  b[cnt]=1; d[cnt]=0;      t[cnt]=MPI_LB;  cnt++;
-	  int first=1;
-	  int i;
-	  for (i=iend-(iend-ista) %(bw*b1); i<iend; i++){
-	    int x = i / bw;
-	    int ib = i - bw * x;
-	    int z=a*x+par_lower+ib;
-	    if ( (z-rp_lb) % step == 0 ){
-	      int y = (z-rp_lb) / step;
-	      if (first){ y_base2 = y; i_base2 = i; first=0; }
-	      b[cnt]=1; d[cnt]=(y - y_base2)*type_size;  t[cnt]=dataType0; cnt++;
-	      pos = y - y_base2;
-#ifdef DEBUG
-	      printf("y - y_base2=%d\n",y - y_base2);
-#endif /* DEBUG */
-	    }else{
-	    }
-	  }/* i */
-	  b[cnt]=1; d[cnt]=(pos+1)*type_size; t[cnt]=MPI_UB;  cnt++;
-#ifdef DEBUG
-	  printf("UB2: %d\n",pos+1);
-#endif /* DEBUG */
-	  mpiRet = MPI_Type_create_struct(cnt, b, d, t, &newtype2b);
-	  if (mpiRet != MPI_SUCCESS) { return 1; }
-/* 	  MPI_Type_commit(&newtype2b); */
-	  MPI_Type_size(newtype2b, &byte_newtype2b);
-	  MPI_Type_get_extent(newtype2b, &lb_newtype2b, &extent_newtype2b);
-#ifdef DEBUG
-	  printf("newtype2b: byte_newtype2b=%d bytes  lb=%d bytes  extent=%d bytes\n",
-		 byte_newtype2b, (int)lb_newtype2b, (int)extent_newtype2b);
-#endif /* DEBUG */
-	}
-#ifdef DEBUG
-	printf("y_base1=%d  y_base2=%d\n", y_base1, y_base2);
-	printf("i_base1=%d  i_base2=%d\n", i_base1, i_base2);
-#endif /* DEBUG */
-	{
-	  int cnt=0;
-	  b[cnt]=1; d[cnt]=0;      t[cnt]=MPI_LB;  cnt++;
-	  if (byte_newtype2a > 0){
-/* 	    b[cnt]=abs( (iend-ista) / (bw*b1) ) ; d[cnt]=(y_base1-y_sta)*type_size; t[cnt]=newtype2a; cnt++; */
-	    b[cnt]=abs( (iend-ista) / (bw*b1) ) ; d[cnt]=(y_base1-y_base1)*type_size; t[cnt]=newtype2a; cnt++;
-	  }
-	  if (byte_newtype2b > 0){
-/* 	    b[cnt]=1; d[cnt]=(y_base2-y_sta)*type_size; t[cnt]=newtype2b; cnt++; */
-	    b[cnt]=1; d[cnt]=(y_base2-y_base1)*type_size; t[cnt]=newtype2b; cnt++;
-	  }
-	  mpiRet = MPI_Type_create_struct(cnt, b, d, t, &newtype2c);
-	  if (mpiRet != MPI_SUCCESS) { return 1; }
-/* 	  MPI_Type_commit(&newtype2c); */
+	  newtype2c = newtype2a;
+	  dataType_tmp = newtype2c;
 	  MPI_Type_size(newtype2c, &byte_newtype2c);
 	  MPI_Type_get_extent(newtype2c, &lb_newtype2c, &extent_newtype2c);
 #ifdef DEBUG
-	  printf("newtype2c: byte_newtype2c=%d bytes  lb=%d bytes  extent=%d bytes\n",
-		 byte_newtype2c, (int)lb_newtype2c, (int)extent_newtype2c);
+	  printf("myrank=%d: newtype2c: byte_newtype2c=%d bytes  lb=%d bytes  extent=%d bytes\n",
+		 myrank, byte_newtype2c, (int)lb_newtype2c, (int)extent_newtype2c);
 #endif /* DEBUG */
-	}
-	{
-	  MPI_Type_free(&newtype2a);
-	  MPI_Type_free(&newtype2b);
-	  dataType_tmp = newtype2c;
+
 	  continuous_size = byte_newtype2c / type_size;
-	  /* space_size = y_l * type_size; */
 	  space_size = (y_l - y_sta) * type_size;
 	  total_size = ((rp_ub-rp_lb)/step + 1) * type_size;
+#ifdef DEBUG
+	  printf("myrank=%d: (extent_newtype2c + space_size) - total_size =%d\n",
+		 myrank,(int)(extent_newtype2c + space_size) - (int)total_size);
+#endif /* DEBUG */
+	  if (extent_newtype2c + space_size > total_size){
+#ifdef DEBUG
+	    printf("_xmp_io_block_cyclic_0: myrank=%d: extent_newtype2c + space_size > total_size\n",
+		   myrank);
+#endif /* DEBUG */
+	    _XMP_fatal("_xmp_io_block_cyclic_0: data type is incorrect");
+	  }
 	}
 
       } /* ib_l */ /* ib_u */
@@ -268,7 +214,8 @@ static int _xmp_io_block_cyclic_0
     } /* if (rp_lb > rp_ub) */
     {
 #ifdef DEBUG
-      printf("space_size=%d  total_size=%d\n", space_size, total_size);
+      printf("_xmp_io_block_cyclic_0: myrank=%d: space_size=%d  total_size=%d\n",
+	     myrank, space_size, total_size);
 #endif /* DEBUG */
       int b[3]; MPI_Aint d[3]; MPI_Datatype t[3];
       b[0]=1; d[0]=0;          t[0]=MPI_LB;
@@ -276,13 +223,23 @@ static int _xmp_io_block_cyclic_0
       b[2]=1; d[2]=total_size; t[2]=MPI_UB;
       mpiRet = MPI_Type_create_struct(3, b, d, t, _dataType1);
       if (mpiRet != MPI_SUCCESS) { return 1; }
-#ifdef DEBUG
       int byte_dataType1; MPI_Aint lb_dataType1, extent_dataType1;
       MPI_Type_size(*_dataType1, &byte_dataType1);
       MPI_Type_get_extent(*_dataType1, &lb_dataType1, &extent_dataType1);
-      printf("dataType1: byte_dataType1=%d bytes  lb=%d bytes  extent=%d bytes\n",
-	     byte_dataType1, (int)lb_dataType1, (int)extent_dataType1);
+#ifdef DEBUG
+      printf("_xmp_io_block_cyclic_0: after bc: "
+	     "myrank=%d: dataType1: byte_dataType1=%d bytes  lb=%d bytes  extent=%d bytes"
+	     " ; space_size=%d  total_size=%d\n",
+	     myrank, byte_dataType1, (int)lb_dataType1, (int)extent_dataType1,
+	     space_size, total_size);
 #endif /* DEBUG */
+      if (total_size != extent_dataType1){
+#ifdef DEBUG
+	printf("_xmp_io_block_cyclic_0: myrank=%d: total_size != extent_dataType1: %d  %d\n",
+	       myrank, (int)total_size, (int)extent_dataType1);
+#endif /* DEBUG */
+	_XMP_fatal("_xmp_io_block_cyclic_0: extent is wrong");
+      }
       MPI_Type_free(&dataType_tmp);
     }
 
@@ -357,14 +314,15 @@ static int _xmp_io_block_cyclic_0
         if (mpiRet != MPI_SUCCESS) { return 1; }
 
       }else{ /* ib_l */ /* ib_u */
-	int mcnt=4;
-	mcnt=MAX(mcnt, abs(a1)+2);
-	mcnt=MAX(mcnt, abs(bw*b1)+2);
-	int b[mcnt]; MPI_Aint d[mcnt]; MPI_Datatype t[mcnt];
 	int iend=bw*x_l+ib_l +1;
 	int ista=bw*x_u+ib_u;
 	int y_sta = func_m( -step, 0 );
 	int y_end = func_m( step, (rp_lb - rp_ub) );
+	int mcnt=4;
+	mcnt=MAX(mcnt, abs(a1)+2);
+	mcnt=MAX(mcnt, abs(bw*b1)+2);
+	mcnt=MAX(mcnt, abs( (iend-ista) )+2);
+	int b[mcnt]; MPI_Aint d[mcnt]; MPI_Datatype t[mcnt];
 #ifdef DEBUG
 	printf("ista=%d  iend=%d  iend-ista=%d  (iend-ista) / (bw*b1)=%d  (iend-ista) %% (bw*b1)=%d\n",
 	       ista, iend, iend-ista, (iend-ista) / (bw*b1), (iend-ista) % (bw*b1));
@@ -373,39 +331,24 @@ static int _xmp_io_block_cyclic_0
 	printf("y_l=%d  y_u=%d\n", y_l, y_u);
 #endif /* DEBUG */
 	MPI_Datatype newtype2a; int byte_newtype2a; MPI_Aint lb_newtype2a, extent_newtype2a;
-	MPI_Datatype newtype2b; int byte_newtype2b; MPI_Aint lb_newtype2b, extent_newtype2b;
 	MPI_Datatype newtype2c; int byte_newtype2c; MPI_Aint lb_newtype2c, extent_newtype2c;
 	int i;
 	int y_base1 = y_end;
 	{
 	  int cnt=0;
-	  b[cnt]=1; d[cnt]=0;      t[cnt]=MPI_LB;  cnt++;
 	  int first=1;
-	  for(i=ista; i<iend-(iend-ista) % (bw*b1); i++){
+	  for(i=ista; i<iend; i++){
 	    int x = i / bw;
 	    int ib = i - bw * x;
 	    int z=a*x+par_lower+ib;
 	    if ( (z-rp_lb) % step == 0 ){
 	      int y = (z-rp_lb) / step;
 	      if (first){ y_base1 = y; first=0; }
-	      if ((i-ista)/(bw*b1) == 0){
-		b[cnt]=1; d[cnt]=(y_base1 - y)*type_size; t[cnt]=dataType0; cnt++;
-#ifdef DEBUG
-		printf("y_base1 - y=%d\n",y_base1 - y);
-#endif /* DEBUG */
-	      }else{
-		break;
-	      }
-	    }else{
+	      b[cnt]=1; d[cnt]=(y_base1 - y)*type_size; t[cnt]=dataType0; cnt++;
 	    }
 	  }/* i */
-	  b[cnt]=1; d[cnt]=( a1 )*type_size; t[cnt]=MPI_UB;  cnt++;
-#ifdef DEBUG
-	  printf("UB1: %d\n",a1);
-#endif /* DEBUG */
 	  mpiRet = MPI_Type_create_struct(cnt, b, d, t, &newtype2a);
 	  if (mpiRet != MPI_SUCCESS) { return 1; }
-	  /* MPI_Type_commit(&newtype2a); */
 	  MPI_Type_size(newtype2a, &byte_newtype2a);
 	  MPI_Type_get_extent(newtype2a, &lb_newtype2a, &extent_newtype2a);
 #ifdef DEBUG
@@ -413,79 +356,22 @@ static int _xmp_io_block_cyclic_0
 		 byte_newtype2a, (int)lb_newtype2a, (int)extent_newtype2a);
 #endif /* DEBUG */
 	}
-	int y_base2 = y_end;
-	int pos = 0;
 	{
-	  int cnt=0;
-	  b[cnt]=1; d[cnt]=0;      t[cnt]=MPI_LB;  cnt++;
-	  int first=1;
-	  for(i=iend-(iend-ista) % (bw*b1); i<iend; i++){
-	    int x = i / bw;
-	    int ib = i - bw * x;
-	    int z=a*x+par_lower+ib;
-	    if ( (z-rp_lb) % step == 0 ){
-	      int y = (z-rp_lb) / step;
-	      if (first){ y_base2 = y; first=0; }
-	      b[cnt]=1; d[cnt]=(y_base2 - y)*type_size; t[cnt]=dataType0; cnt++;
-	      pos = y_base2 - y;
-#ifdef DEBUG
-	      printf("y_base2 - y=%d\n",y_base2 - y);
-#endif /* DEBUG */
-	    }else{
-	    }
-	  }/* i */
-	  b[cnt]=1; d[cnt]=(pos+1)*type_size; t[cnt]=MPI_UB;  cnt++;
-#ifdef DEBUG
-	  printf("UB2: %d\n",pos+1);
-#endif /* DEBUG */
-	  mpiRet = MPI_Type_create_struct(cnt, b, d, t, &newtype2b);
-	  if (mpiRet != MPI_SUCCESS) { return 1; }
-	  /* MPI_Type_commit(&newtype2b); */
-	  MPI_Type_size(newtype2b, &byte_newtype2b);
-	  MPI_Type_get_extent(newtype2b, &lb_newtype2b, &extent_newtype2b);
-#ifdef DEBUG
-	  printf("newtype2b: byte_newtype2b=%d bytes  lb=%d bytes  extent=%d bytes\n",
-		 byte_newtype2b, (int)lb_newtype2b, (int)extent_newtype2b);
-#endif /* DEBUG */
-	}
-#ifdef DEBUG
-	printf("y_base1=%d  y_base2=%d\n", y_base1, y_base2);
-#endif /* DEBUG */
-	{
-	  /* int b[10]; MPI_Aint d[10]; MPI_Datatype t[10]; */
-	  int cnt=0;
-	  b[cnt]=1; d[cnt]=0;      t[cnt]=MPI_LB;  cnt++;
-	  if (byte_newtype2a > 0){
-	    /* b[cnt]=abs( (iend-ista) / (bw*b1) ) ; d[cnt]=(y_end-y_base1)*type_size; t[cnt]=newtype2a; cnt++; */
-	    b[cnt]=abs( (iend-ista) / (bw*b1) ) ; d[cnt]=(y_base1-y_base1)*type_size; t[cnt]=newtype2a; cnt++;
-#ifdef DEBUG
-	    printf("** y_base1-y_base1=%d\n",y_base1-y_base1);
-#endif /* DEBUG */
-	  }
-	  if (byte_newtype2b > 0){
-	    /* b[cnt]=1; d[cnt]=(y_end-y_base2)*type_size; t[cnt]=newtype2b; cnt++; */
-	    b[cnt]=1; d[cnt]=(y_base1-y_base2)*type_size; t[cnt]=newtype2b; cnt++;
-#ifdef DEBUG
-	    printf("** y_base1-y_base2=%d\n",y_base1-y_base2);
-#endif /* DEBUG */
-	  }
-	  mpiRet = MPI_Type_create_struct(cnt, b, d, t, &newtype2c);
-	  if (mpiRet != MPI_SUCCESS) { return 1; }
-	  /* MPI_Type_commit(&newtype2c); */
+	  newtype2c = newtype2a;
+	  dataType_tmp = newtype2c;
 	  MPI_Type_size(newtype2c, &byte_newtype2c);
 	  MPI_Type_get_extent(newtype2c, &lb_newtype2c, &extent_newtype2c);
 #ifdef DEBUG
 	  printf("newtype2c: byte_newtype2c=%d bytes  lb=%d bytes  extent=%d bytes\n",
 		 byte_newtype2c, (int)lb_newtype2c, (int)extent_newtype2c);
 #endif /* DEBUG */
-	}
-	{
-	  MPI_Type_free(&newtype2a);
-	  MPI_Type_free(&newtype2b);
-	  dataType_tmp = newtype2c;
+
 	  continuous_size = byte_newtype2c / type_size;
 	  space_size = (y_end - y_base1) * type_size;
 	  total_size = ((rp_ub-rp_lb)/step + 1) * type_size;
+	  if (extent_newtype2c + space_size > total_size){
+	    _XMP_fatal("_xmp_io_block_cyclic_0: data type is incorrect");
+	  }
 	}
 
       } /* ib_l */ /* ib_u */
@@ -501,13 +387,16 @@ static int _xmp_io_block_cyclic_0
       b[2]=1; d[2]=total_size; t[2]=MPI_UB;
       mpiRet = MPI_Type_create_struct(3, b, d, t, _dataType1);
       if (mpiRet != MPI_SUCCESS) { return 1; }
-#ifdef DEBUG
       int byte_dataType1; MPI_Aint lb_dataType1, extent_dataType1;
       MPI_Type_size(*_dataType1, &byte_dataType1);
       MPI_Type_get_extent(*_dataType1, &lb_dataType1, &extent_dataType1);
-      printf("dataType1: byte_dataType1=%d bytes  lb=%d bytes  extent=%d bytes\n",
+#ifdef DEBUG
+      printf("_xmp_io_block_cyclic_0: dataType1: byte_dataType1=%d bytes  lb=%d bytes  extent=%d bytes\n",
 	     byte_dataType1, (int)lb_dataType1, (int)extent_dataType1);
 #endif /* DEBUG */
+      if (total_size != extent_dataType1){
+	_XMP_fatal("_xmp_io_block_cyclic_0: extent is wrong");
+      }
       MPI_Type_free(&dataType_tmp);
     }
 
@@ -516,7 +405,6 @@ static int _xmp_io_block_cyclic_0
   else{ return 1; /* dummy */
   }
   /* ++++++++++++++++++++++++++++++++++++++++ */
-/*   printf("------------------------------ _xmp_io_block_cyclic_0: NORMAL END\n"); */
   return MPI_SUCCESS;
 }
 /* ------------------------------------------------------------------ */
@@ -544,8 +432,11 @@ static int _xmp_io_block_cyclic_1
   if (mpiRet !=  MPI_SUCCESS) { return -1113; }  
   type_size = (int)tmp2;
 
-  printf("_xmp_io_block_cyclic_1: rmyank = %d:  par_lower = %d  par_upper = %d  bw = %d  cycle = %d  alloc_size = %d  type_size = %d\n",
+#ifdef DEBUG
+  printf("_xmp_io_block_cyclic_1: rmyank = %d:  par_lower = %d  par_upper = %d"
+	 "  bw = %d  cycle = %d  alloc_size = %d  type_size = %d\n",
 	 myrank,par_lower,par_upper,bw,cycle, alloc_size,type_size);
+#endif /* DEBUG */
 
   if (bw <= 0){ _XMP_fatal("_xmp_io_block_cyclic_1: block width must be pisitive."); }
   if (cycle == 0){ _XMP_fatal("_xmp_io_block_cyclic_1: cycle must be non-zero."); }
@@ -621,14 +512,15 @@ static int _xmp_io_block_cyclic_1
         if (mpiRet != MPI_SUCCESS) { return 1; }
 
       }else{ /* ib_l */ /* ib_u */
-	int mcnt=4;
-	mcnt=MAX(mcnt, abs(a1)+2);
-	mcnt=MAX(mcnt, abs(bw*b1)+2);
-	int b[mcnt]; MPI_Aint d[mcnt]; MPI_Datatype t[mcnt];
 	int ista=bw*x_l+ib_l;
 	int iend=bw*x_u+ib_u +1;
 	int y_sta = func_m( step, 0 );
 	int y_end = func_m( (-step), (- rp_lb + rp_ub) );
+	int mcnt=4;
+	mcnt=MAX(mcnt, abs(a1)+2);
+	mcnt=MAX(mcnt, abs(bw*b1)+2);
+	mcnt=MAX(mcnt, abs( (iend-ista) )+2);
+	int b[mcnt]; MPI_Aint d[mcnt]; MPI_Datatype t[mcnt];
 #ifdef DEBUG
 	printf("y_sta=%d  y_end=%d\n", y_sta, y_end);
 #endif /* DEBUG */
@@ -639,119 +531,56 @@ static int _xmp_io_block_cyclic_1
 	MPI_Datatype newtype3c; int byte_newtype3c; MPI_Aint lb_newtype3c, extent_newtype3c;
 	{
 	  int cnt=0;
-	  b[cnt]=1; d[cnt]=0;      t[cnt]=MPI_LB;  cnt++;
 	  int first=1;
 	  int i;
 #ifdef DEBUG
 	  printf("ista = %d  iend = %d  (iend-ista) %(bw*b1) = %d  (bw*b1)\n",
 		 ista,iend,(iend-ista) %(bw*b1),(bw*b1));
 #endif /* DEBUG */
-	  for (i=ista; i<iend-(iend-ista) %(bw*b1); i++){
+	  for (i=ista; i<iend; i++){
 	    int x = i / bw;
 	    int ib = i - bw * x;
 	    int z=a*x+par_lower+ib;
 	    if ( (z-rp_lb) % step == 0 ){
 	      int y = (z-rp_lb) / step;
 	      if (first){ y_base1 = y; i_base1 = i; first=0; }
-	      if ((i-ista)/(bw*b1) == 0){
-		b[cnt]=1; d[cnt]=(i - i_base1)*type_size; t[cnt]=dataType0; cnt++;
-#ifdef DEBUG
-		printf("i - i_base1=%d\n", i - i_base1);
-#endif /* DEBUG */
-	      }else{
-		break;
-	      }
-	    }else{
+	      b[cnt]=1; d[cnt]=(i - i_base1)*type_size; t[cnt]=dataType0; cnt++;
 	    }
 	  }/* i */
-	  b[cnt]=1; d[cnt]=( abs(bw*b1) )*type_size; t[cnt]=MPI_UB;  cnt++;
-#ifdef DEBUG
-	  printf("UB1: %d\n", abs(bw*b1));
-#endif /* DEBUG */
 	  mpiRet = MPI_Type_create_struct(cnt, b, d, t, &newtype3a);
 	  if (mpiRet != MPI_SUCCESS) { return 1; }
-/* 	  MPI_Type_commit(&newtype3a); */
 	  MPI_Type_size(newtype3a, &byte_newtype3a);
 	  MPI_Type_get_extent(newtype3a, &lb_newtype3a, &extent_newtype3a);
 #ifdef DEBUG
-	  printf("newtype3a: byte_newtype3a=%d bytes  lb=%d bytes  extent=%d bytes\n",
-		 byte_newtype3a, (int)lb_newtype3a, (int)extent_newtype3a);
-#endif /* DEBUG */
-	}
-	int y_base2 = y_sta;
-	int i_base2 = ista;
-	{
-	  int pos=0;
-	  int cnt=0;
-	  b[cnt]=1; d[cnt]=0;      t[cnt]=MPI_LB;  cnt++;
-	  int first=1;
-	  int i;
-
-
-	  for (i=iend-(iend-ista) %(bw*b1); i<iend; i++){
-	    int x = i / bw;
-	    int ib = i - bw * x;
-	    int z=a*x+par_lower+ib;
-	    if ( (z-rp_lb) % step == 0 ){
-	      int y = (z-rp_lb) / step;
-	      if (first){ y_base2 = y; i_base2 = i; first=0; }
-	      b[cnt]=1; d[cnt]=(i - i_base2)*type_size;  t[cnt]=dataType0; cnt++;
-	      pos = i - i_base2;
-#ifdef DEBUG
-	      printf("i - i_base2=%d\n", i - i_base2);
-#endif /* DEBUG */
-	    }else{
-	    }
-	  }/* i */
-	  b[cnt]=1; d[cnt]=( pos+1 )*type_size; t[cnt]=MPI_UB;  cnt++;
-#ifdef DEBUG
-	  printf("UB2: %d\n", pos+1);
-#endif /* DEBUG */
-	  mpiRet = MPI_Type_create_struct(cnt, b, d, t, &newtype3b);
-	  if (mpiRet != MPI_SUCCESS) { return 1; }
-/* 	  MPI_Type_commit(&newtype3b); */
-	  MPI_Type_size(newtype3b, &byte_newtype3b);
-	  MPI_Type_get_extent(newtype3b, &lb_newtype3b, &extent_newtype3b);
-#ifdef DEBUG
-	  printf("newtype3b: byte_newtype3b=%d bytes  lb=%d bytes  extent=%d bytes\n",
-		 byte_newtype3b, (int)lb_newtype3b, (int)extent_newtype3b);
-#endif /* DEBUG */
-	}
-#ifdef DEBUG
-	printf("y_base1=%d  y_base2=%d\n", y_base1, y_base2);
-	printf("i_base1=%d  i_base2=%d\n", i_base1, i_base2);
-#endif /* DEBUG */
-	{
-	  int cnt=0;
-	  b[cnt]=1; d[cnt]=0;      t[cnt]=MPI_LB;  cnt++;
-	  if (byte_newtype3a > 0){
-/* 	    b[cnt]=abs( (iend-ista) / (bw*b1) ) ; d[cnt]=(i_base1)*type_size; t[cnt]=newtype3a; cnt++; */
-	    b[cnt]=abs( (iend-ista) / (bw*b1) ) ; d[cnt]=(i_base1 - i_base1)*type_size; t[cnt]=newtype3a; cnt++;
-	  }
-	  if (byte_newtype3b > 0){
-/* 	    b[cnt]=1; d[cnt]=(i_base2)*type_size; t[cnt]=newtype3b; cnt++; */
-	    b[cnt]=1; d[cnt]=(i_base2 - i_base1)*type_size; t[cnt]=newtype3b; cnt++;
-	  }
-	  mpiRet = MPI_Type_create_struct(cnt, b, d, t, &newtype3c);
-	  if (mpiRet != MPI_SUCCESS) { return 1; }
-/* 	  MPI_Type_commit(&newtype3c); */
-	  MPI_Type_size(newtype3c, &byte_newtype3c);
-	  MPI_Type_get_extent(newtype3c, &lb_newtype3c, &extent_newtype3c);
-#ifdef DEBUG
-	  printf("newtype3c: byte_newtype3c=%d bytes  lb=%d bytes  extent=%d bytes\n",
-		 byte_newtype3c, (int)lb_newtype3c, (int)extent_newtype3c);
+	  printf("myrank=%d: newtype3a: byte_newtype3a=%d bytes  lb=%d bytes  extent=%d bytes\n",
+		 myrank, byte_newtype3a, (int)lb_newtype3a, (int)extent_newtype3a);
 #endif /* DEBUG */
 	}
 	{
 #ifdef DEBUG
 	  printf("alloc_size=%d  type_size=%d\n", alloc_size, type_size);
 #endif /* DEBUG */
-	  MPI_Type_free(&newtype3a);
-	  MPI_Type_free(&newtype3b);
+	  newtype3c = newtype3a;
 	  dataType_tmp = newtype3c;
+	  MPI_Type_size(newtype3c, &byte_newtype3c);
+	  MPI_Type_get_extent(newtype3c, &lb_newtype3c, &extent_newtype3c);
+#ifdef DEBUG
+	  printf("myrank=%d: newtype3c: byte_newtype3c=%d bytes  lb=%d bytes  extent=%d bytes\n",
+		 myrank, byte_newtype3c, (int)lb_newtype3c, (int)extent_newtype3c);
+#endif /* DEBUG */
+
 	  continuous_size = byte_newtype3c / type_size;
 	  space_size = (ista + local_lower) * type_size;
 	  total_size = alloc_size * type_size;
+
+	  if (extent_newtype3c + space_size > total_size){
+#ifdef DEBUG
+	    printf("_xmp_io_block_cyclic_1: myrank=%d: extent_newtype3c + space_size > total_size\n",
+		   myrank);
+#endif /* DEBUG */
+	    _XMP_fatal("_xmp_io_block_cyclic_1: data type is incorrect");
+	  }
+
 	}
 
       } /* ib_l */ /* ib_u */
@@ -759,7 +588,8 @@ static int _xmp_io_block_cyclic_1
     } /* if (rp_lb > rp_ub) */
     {
 #ifdef DEBUG
-      printf("space_size=%d  total_size=%d\n", space_size, total_size);
+      printf("_xmp_io_block_cyclic_1: myrank=%d: space_size=%d  total_size=%d\n",
+	     myrank, space_size, total_size);
 #endif /* DEBUG */
       int b[3]; MPI_Aint d[3]; MPI_Datatype t[3];
       b[0]=1; d[0]=0;          t[0]=MPI_LB;
@@ -767,13 +597,16 @@ static int _xmp_io_block_cyclic_1
       b[2]=1; d[2]=total_size; t[2]=MPI_UB;
       mpiRet = MPI_Type_create_struct(3, b, d, t, _dataType1);
       if (mpiRet != MPI_SUCCESS) { return 1; }
-#ifdef DEBUG
       int byte_dataType1; MPI_Aint lb_dataType1, extent_dataType1;
       MPI_Type_size(*_dataType1, &byte_dataType1);
       MPI_Type_get_extent(*_dataType1, &lb_dataType1, &extent_dataType1);
-      printf("dataType1: byte_dataType1=%d bytes  lb=%d bytes  extent=%d bytes\n",
-	     byte_dataType1, (int)lb_dataType1, (int)extent_dataType1);
+#ifdef DEBUG
+      printf("_xmp_io_block_cyclic_1: myrank=%d: dataType1: byte_dataType1=%d bytes  lb=%d bytes  extent=%d bytes\n",
+	     myrank, byte_dataType1, (int)lb_dataType1, (int)extent_dataType1);
 #endif /* DEBUG */
+      if (total_size != extent_dataType1){
+	_XMP_fatal("_xmp_io_block_cyclic_1: extent is wrong");
+      }
       MPI_Type_free(&dataType_tmp);
     }
 
@@ -789,7 +622,6 @@ static int _xmp_io_block_cyclic_1
   else{ return 1; /* dummy */
   }
   /* ++++++++++++++++++++++++++++++++++++++++ */
-/*   printf("-------------------- _xmp_io_block_cyclic_1: NORMAL END\n"); */
   return MPI_SUCCESS;
 }
 /* ------------------------------------------------------------------ */
@@ -1746,10 +1578,6 @@ int xmp_fread_darray_unpack(fp, apd, rp)
    buf_size = 1;
    for(i=0; i<RP_DIMS; i++){
 #ifdef ORIGINAL
-/*      int par_lower_i = array_t->info[i].par_lower; */
-/*      int par_upper_i = array_t->info[i].par_upper; */
-/*      int align_manner_i = array_t->info[i].align_manner; */
-
      _XMP_array_info_t *ai = &(array_t->info[i]);
      int par_lower_i = ai->par_lower;
      int par_upper_i = ai->par_upper;
@@ -1815,7 +1643,7 @@ int xmp_fread_darray_unpack(fp, apd, rp)
 #endif
 #ifdef ORIGINAL
 #else /* RIST */
-      } else if(align_manner_i == _XMP_N_ALIGN_CYCLIC ||
+      } else if(align_manner_i == _XMP_N_ALIGN_CYCLIC||
 		align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC){
 	int bw_i = xmp_align_size(apd, i+1);
 	if (bw_i <= 0){
@@ -1883,7 +1711,8 @@ int xmp_fread_darray_unpack(fp, apd, rp)
 #ifdef ORIGINAL
    array_addr = (char*)(*array_t->array_addr_p);
 #else /* RIST */
-   array_addr = (char*)(*(xmp_array_laddr(apd)));
+/*    array_addr = (char*)xmp_array_laddr(apd); /\* WRONG *\/ */
+   array_addr = (char*)(*(xmp_array_laddr(apd)));  /* CORRECT */
 #endif
    for(j=0; j<buf_size; j++){
      disp = 0;
@@ -1891,12 +1720,6 @@ int xmp_fread_darray_unpack(fp, apd, rp)
      array_size = 1;
      for(i=RP_DIMS-1; i>=0; i--){
 #ifdef ORIGINAL
-/*        int par_lower_i = array_t->info[i].par_lower; */
-/*        int align_manner_i = array_t->info[i].align_manner; */
-/*        int ser_size_i = array_t->info[i].ser_size; */
-/*        int alloc_size_i = array_t->info[i].alloc_size; */
-/*        int local_lower_i = array_t->info[i].local_lower; */
-
        _XMP_array_info_t *ai = &(array_t->info[i]);
        int par_lower_i = ai->par_lower;
        int align_manner_i = ai->align_manner;
@@ -2076,12 +1899,6 @@ printf("READ(%d/%d) dims=%d\n", rank, nproc, RP_DIMS);
   for (i = RP_DIMS - 1; i >= 0; i--)
   {
 #ifdef ORIGINAL
-/*     int par_lower_i = XMP_array_t->info[i].par_lower; */
-/*     int par_upper_i = XMP_array_t->info[i].par_upper; */
-/*     int align_manner_i = XMP_array_t->info[i].align_manner; */
-/*     int local_lower_i = XMP_array_t->info[i].local_lower; */
-/*     int alloc_size_i = XMP_array_t->info[i].alloc_size; */
-
     _XMP_array_info_t *ai = &(XMP_array_t->info[i]);
     int par_lower_i = ai->par_lower;
     int par_upper_i = ai->par_upper;
@@ -2456,10 +2273,6 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
    buf_size = 1;
    for(i=0; i<RP_DIMS; i++){
 #ifdef ORIGINAL
-/*      int par_lower_i = array_t->info[i].par_lower; */
-/*      int par_upper_i = array_t->info[i].par_upper; */
-/*      int align_manner_i = array_t->info[i].align_manner; */
-
      _XMP_array_info_t *ai = &(array_t->info[i]);
      int par_lower_i = ai->par_lower;
      int par_upper_i = ai->par_upper;
@@ -2579,7 +2392,8 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
 #ifdef ORIGINAL
    array_addr = (char*)(*array_t->array_addr_p);
 #else /* RIST */
-   array_addr = (char*)(*(xmp_array_laddr(apd)));
+/*    array_addr = (char*)xmp_array_laddr(apd); /\* WRONG *\/ */
+   array_addr = (char*)(*(xmp_array_laddr(apd)));  /* CORRECT */
 #endif
    for(j=0; j<buf_size; j++){
      disp = 0;
@@ -2587,12 +2401,6 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
      array_size = 1;
      for(i=RP_DIMS-1; i>=0; i--){
 #ifdef ORIGINAL
-/*        int par_lower_i = array_t->info[i].par_lower; */
-/*        int align_manner_i = array_t->info[i].align_manner; */
-/*        int local_lower_i = array_t->info[i].local_lower; */
-/*        int ser_size_i = array_t->info[i].ser_size; */
-/*        int alloc_size_i = array_t->info[i].alloc_size; */
-
        _XMP_array_info_t *ai = &(array_t->info[i]);
        int par_lower_i = ai->par_lower;
        int align_manner_i = ai->align_manner;
@@ -2791,17 +2599,6 @@ printf("WRITE(%d/%d) dims=%d\n",rank, nproc, RP_DIMS);
   for (i = RP_DIMS - 1; i >= 0; i--)
   {
 #ifdef ORIGINAL
-/*     int par_lower_i = XMP_array_t->info[i].par_lower; */
-/*     int par_upper_i = XMP_array_t->info[i].par_upper; */
-/*     int align_manner_i = XMP_array_t->info[i].align_manner; */
-/*     int alloc_size_i = XMP_array_t->info[i].alloc_size; */
-/*     int ser_lower_i = XMP_array_t->info[i].ser_lower; */
-/*     int ser_upper_i = XMP_array_t->info[i].ser_upper; */
-/*     int local_lower_i = XMP_array_t->info[i].local_lower; */
-/*     int local_upper_i = XMP_array_t->info[i].local_upper; */
-/*     int shadow_size_lo_i = XMP_array_t->info[i].shadow_size_lo; */
-/*     int shadow_size_hi_i = XMP_array_t->info[i].shadow_size_hi; */
-
     _XMP_array_info_t *ai = &(XMP_array_t->info[i]);
     int par_lower_i = ai->par_lower;
     int par_upper_i = ai->par_upper;
@@ -3048,16 +2845,24 @@ printf("WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper);
 
   // write
   MPI_Type_size(dataType[0], &type_size);
-/*   printf("fwrite_darray_all: type_size = %d\n",type_size); */
+#ifdef DEBUG
+  printf("fwrite_darray_all: rank=%d: type_size = %d\n",rank,type_size);
+#endif /* DEBUG */
 
   if(type_size > 0){
-     if (MPI_File_write(pstXmp_file->fh,
+    int ierr;
+    if ((ierr = MPI_File_write(pstXmp_file->fh,
                         array_addr,
                         1,
                         dataType[0],
-                        &status)
+				 &status))
          != MPI_SUCCESS)
         {
+#ifdef DEBUG
+	  char str[MPI_MAX_ERROR_STRING]; int resultlen;
+	  MPI_Error_string(ierr, str, &resultlen);
+	  printf("fwrite_darray_all: rank=%d: ierr=%d: %s\n",rank,ierr,str);
+#endif /* DEBUG */
            return -1120;
         }
   } else {
@@ -3072,7 +2877,6 @@ printf("WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper);
   {
     return -1121;
   }
-/*   printf("------------------------------ fwrite_darray_all: NORMAL END\n"); */
   return writeCount;
 #undef RP_DIMS
 #undef RP_LB
@@ -3378,10 +3182,6 @@ printf("VIEW(%d/%d) dims=%d\n", rank, nproc, RP_DIMS);
   for (i = RP_DIMS - 1; i >= 0; i--)
   {
 #ifdef ORIGINAL
-/*     int par_lower_i = XMP_array_t->info[i].par_lower; */
-/*     int par_upper_i = XMP_array_t->info[i].par_upper; */
-/*     int align_manner_i = XMP_array_t->info[i].align_manner; */
-
     _XMP_array_t *XMP_array_t = (_XMP_array_t*)ap; 
     _XMP_array_info_t *ai = &(XMP_array_t->info[i]);
     int par_lower_i = ai->par_lower;
@@ -3396,6 +3196,12 @@ printf("VIEW(%d/%d) dims=%d\n", rank, nproc, RP_DIMS);
     mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &tmp2);
     if (mpiRet !=  MPI_SUCCESS) { return -1009; }
     type_size = (int)tmp2;
+
+    int byte_dataType0; MPI_Type_size(dataType[0], &byte_dataType0);
+#ifdef DEBUG
+    printf("xmp_file_set_view_all: rank=%d: i=%d  align_manner_i=%d  type_size=%d  byte_dataType0=%d\n",
+	   rank, i, align_manner_i, type_size, byte_dataType0);
+#endif /* DEBUG */
 
 #ifdef DEBUG
 printf("VIEW(%d/%d) (lb,ub,step)=(%d,%d,%d)\n",
@@ -3497,12 +3303,22 @@ printf("VIEW(%d/%d) continuous_size=%d\n", rank, nproc, continuous_size);
         // on error in MPI_Type_create_resized1
         if (mpiRet != MPI_SUCCESS) { return 1013; }
 
+/* 	printf("file_set_view_all: rank=%d:  space_size=%d  total_size=%d\n", */
+/* 	       rank,space_size,total_size); */
 
         // free MPI_Datatype out of use
         MPI_Type_free(&dataType[1]);
 
 /* 	printf("set_view_all: rank = %d: total_size = %d\n",rank,total_size); */
 
+	int byte_dataType0; MPI_Aint lb_dataType0, extent_dataType0;
+  MPI_Type_size(dataType[0], &byte_dataType0);
+  MPI_Type_get_extent(dataType[0], &lb_dataType0, &extent_dataType0);
+#ifdef DEBUG
+	printf("set_view_all: after block: myrank=%d: byte_dataType0=%d  lb=%d  extent=%d ; space_size=%d  total_size=%d\n",
+	       rank, (int)byte_dataType0, (int)lb_dataType0, (int)extent_dataType0,
+	       space_size,total_size);
+#endif /* DEBUG */
 #ifdef DEBUG
 printf("VIEW(%d/%d) ALIGN_BLOCK\n", rank, nproc );
 printf("VIEW(%d/%d) type_size=%d\n", rank, nproc , type_size);
@@ -3645,7 +3461,6 @@ printf("VIEW(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
 
   // on erro in set view
   if (mpiRet != MPI_SUCCESS) { return 1020; }
-/*   printf("------------------------------ xmp_file_set_view_all: NORMAL END\n"); */
   return 0;
 #undef RP_DIMS
 #undef RP_LB
