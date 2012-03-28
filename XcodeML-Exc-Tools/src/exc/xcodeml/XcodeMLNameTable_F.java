@@ -121,6 +121,7 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.PRAGMA_LINE, "FpragmaStatement"),
 
 			new XcodeMLName(Xcode.OMP_PRAGMA, "OMPPragma"),
+			new XcodeMLName(Xcode.XMP_PRAGMA, "XMPPragma"),
 	};
 
 	// constructor

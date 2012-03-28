@@ -30,6 +30,7 @@ import exc.object.XobjContainer;
 import exc.object.XobjList;
 import exc.object.XobjLong;
 import exc.object.Xobject;
+import exc.object.XobjArgs;
 import exc.object.XobjectDef;
 import exc.object.XobjectDefEnv;
 import exc.object.XobjectFile;
@@ -617,8 +618,12 @@ public class XmfXobjectToXmObjTranslator
         case F_ALLOCATE_STATEMENT: {
             XbfFallocateStatement m = _factory.createXbfFallocateStatement();
             xmobj = m;
-            m.setStatName(getArg0Name(xobj));
-            for(Xobject a : (XobjList)xobj.getArg(1)) {
+            //m.setStatName("alloc");// m.setStatName(getArg0Name(xobj));
+            for(Xobject a : (XobjList)xobj) {
+	      if(a.Opcode() == Xcode.LIST){
+		for(Xobject aa : (XobjList)a)
+		  m.addAlloc((XbfAlloc)trans(aa));
+	      } else 
                 m.addAlloc((XbfAlloc)trans(a));
             }
             break;
@@ -644,8 +649,15 @@ public class XmfXobjectToXmObjTranslator
             XbfAlloc m = _factory.createXbfAlloc();
             xmobj = m;
             m.setContent((IXbfAllocChoice1)trans(xobj.getArg(0)));
-            if(xobj.getArgOrNull(1) != null) {
-                for(Xobject a : (XobjList)xobj.getArgOrNull(1)) {
+	    XobjArgs args;
+	    /* (F_ALLOC v (LIST range ...)) or (F_ALLOC v range range) */
+	    if(xobj.getArg(1).Opcode() == Xcode.LIST)
+	      args = xobj.getArg(1).getArgs();
+	    else
+	      args = xobj.getArgs().nextArgs();
+            if(args != null) {
+	      for(; args != null; args = args.nextArgs()){
+		Xobject a = args.getArg();
                     m.addDefModelArraySubscript((IXbfDefModelArraySubscriptChoice)trans(a));
                 }
             }

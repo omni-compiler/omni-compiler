@@ -435,6 +435,8 @@ public class XcodeMLtools_C extends XcodeMLtools {
 
         default: // default action, make list
             XobjList xobjs = new XobjList(code, type);
+	    //if(code == Xcode.LIST && list.getLength() == 0)
+	    //  return null;
             setCommonAttributes(n, xobjs);
             return getChildList(n, xobjs);
         }

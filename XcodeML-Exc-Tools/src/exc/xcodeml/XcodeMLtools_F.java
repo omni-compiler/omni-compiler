@@ -592,8 +592,10 @@ public class XcodeMLtools_F extends XcodeMLtools {
 		}
 
 		default: // default action, make list
-		XobjList xobjs = new XobjList(code, type);
 		NodeList list = n.getChildNodes();
+		if(code == Xcode.LIST && list.getLength() == 0)
+		  return null;
+		XobjList xobjs = new XobjList(code, type);
 		for (int i = 0; i < list.getLength(); i++) {
 			Node nn = list.item(i);
 			if (nn.getNodeType() != Node.ELEMENT_NODE)

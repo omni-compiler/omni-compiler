@@ -557,7 +557,7 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
         if(type == null)
             return code.toString();
         else
-            return code.toString() + ":" + type.toString();
+	  return code.toString() + ":" + type.toString();
     }
 
     @Override

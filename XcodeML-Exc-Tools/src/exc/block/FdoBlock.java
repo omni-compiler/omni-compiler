@@ -101,6 +101,13 @@ public class FdoBlock extends Block implements ForBlock
     }
 
     @Override
+    public void setBody(BlockList s)
+    {
+        body = s;
+        s.parent = this;
+    }
+
+    @Override
     public BasicBlock getInitBBlock()
     {
         return null;
