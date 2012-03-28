@@ -9,6 +9,8 @@
 
 // --------------- including headers  --------------------------------
 #include "mpi.h"
+#include "xmp.h"
+#include "xmp_data_struct.h"
 
 // --------------- structures ----------------------------------------
 typedef struct xmp_file_t {
