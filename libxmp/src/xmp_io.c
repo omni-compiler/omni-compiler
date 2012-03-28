@@ -1692,7 +1692,7 @@ int xmp_fread_darray_unpack(fp, apd, rp)
 
    // write
    if(buf_size > 0){
-      if (MPI_File_read(fp->fh, buf, buf_size * array_type_size, MPI_BYTE, &status) != MPI_SUCCESS) {
+      if (MPI_File_read_all(fp->fh, buf, buf_size * array_type_size, MPI_BYTE, &status) != MPI_SUCCESS) {
          ret = -1;
          goto FunctionExit;
       }
@@ -2136,7 +2136,7 @@ printf("READ(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
 /*   printf("fread_darray_all: type_size = %d\n",type_size); */
 
   if(type_size > 0){
-     if (MPI_File_read(pstXmp_file->fh,
+     if (MPI_File_read_all(pstXmp_file->fh,
                        array_addr,
                        1,
                        dataType[0],
@@ -2445,7 +2445,7 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
 
   // write
    if(buf_size > 0){
-      if (MPI_File_write(fp->fh, buf, buf_size * array_type_size, MPI_BYTE, &status) != MPI_SUCCESS) {
+      if (MPI_File_write_all(fp->fh, buf, buf_size * array_type_size, MPI_BYTE, &status) != MPI_SUCCESS) {
          ret = -1;
          goto FunctionExit;
       }
@@ -2851,7 +2851,7 @@ printf("WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper);
 
   if(type_size > 0){
     int ierr;
-    if ((ierr = MPI_File_write(pstXmp_file->fh,
+    if ((ierr = MPI_File_write_all(pstXmp_file->fh,
                         array_addr,
                         1,
                         dataType[0],
