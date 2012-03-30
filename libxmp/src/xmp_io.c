@@ -41,7 +41,25 @@ static int MPI_Type_create_resized1(MPI_Datatype oldtype,
 #define MAX(a,b)  ( (a)>(b) ? (a) : (b) )
 #define func_m(p, q)  ((q) >= 0 ? -(q)/(p) : ((p) >= 0 ? (-(q)+(p)-1)/(p) : (-(q)-(p)-1)/(p) ))
 /* ------------------------------------------------------------------ */
-static int _xmp_io_block_cyclic_0
+/*****************************************************************************/
+/*  FUNCTION NAME : _xmp_io_set_view_block_cyclic                            */
+/*  DESCRIPTION   : This function is used to create data type for file view  */
+/*                  for cyclic and block-cyclic distribution. This function  */
+/*                  is only for internal use in this file.                   */
+/*  ARGUMENT      : par_lower[IN] : global lower bound of array.             */
+/*                  par_upper[IN] : global upper bound of array.             */
+/*                  bw[IN] : block width.                                    */
+/*                  cycle[IN] : cycle width.                                 */
+/*                  rp_lb[IN] : global lower bound of array section.         */
+/*                  rp_ub[IN] : global upper bound of array section.         */
+/*                  step[IN] : stride of array section.                      */
+/*                  dataType0[IN] : basic data type on input.                */
+/*                  _dataType1[OUT] : data type for file view.               */
+/*  RETURN VALUES : MPI_SUCCESS: normal termination.                         */
+/*                  an integer other than MPI_SUCCESS: abnormal termination. */
+/*                                                                           */
+/*****************************************************************************/
+static int _xmp_io_set_view_block_cyclic
 (
  int par_lower /* in */, int par_upper /* in */, int bw /* in */, int cycle /* in */,
  int rp_lb /* in */, int rp_ub /* in */, int step /* in */,
@@ -50,7 +68,7 @@ static int _xmp_io_block_cyclic_0
 )
 {
   MPI_Datatype dataType_tmp;
-  int continuous_size, space_size, total_size;
+  long continuous_size, space_size, total_size;
   int mpiRet;
 
   int nprocs, myrank;
@@ -58,22 +76,21 @@ static int _xmp_io_block_cyclic_0
   MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
   // get extent of data type
-  MPI_Aint tmp1, tmp2; int type_size;
-  mpiRet =MPI_Type_get_extent(dataType0, &tmp1, &tmp2);
+  MPI_Aint tmp1, type_size;
+  mpiRet =MPI_Type_get_extent(dataType0, &tmp1, &type_size);
   if (mpiRet !=  MPI_SUCCESS) { return -1113; }  
-  type_size = (int)tmp2;
 
   int byte_dataType0;
   MPI_Type_size(dataType0, &byte_dataType0);
 #ifdef DEBUG
-  printf("_xmp_io_block_cyclic_0: myrank = %d: byte_dataType0=%d  lb=%d  extent_dataType0=%d\n",
-	 myrank, byte_dataType0, (int)tmp1, (int)type_size);
-  printf("_xmp_io_block_cyclic_0: myrank = %d:  par_lower = %d  par_upper = %d  bw = %d  cycle = %d\n",
+  printf("_xmp_io_set_view_block_cyclic: myrank = %d: byte_dataType0=%d  lb=%ld  extent_dataType0=%ld\n",
+	 myrank, byte_dataType0, (long)tmp1, (long)type_size);
+  printf("_xmp_io_set_view_block_cyclic: myrank = %d:  par_lower = %d  par_upper = %d  bw = %d  cycle = %d\n",
 	 myrank,par_lower,par_upper,bw,cycle);
 #endif /* DEBUG */
 
-  if (bw <= 0){ _XMP_fatal("_xmp_io_block_cyclic_0: block width must be pisitive."); }
-  if (cycle == 0){ _XMP_fatal("_xmp_io_block_cyclic_0: cycle must be non-zero."); }
+  if (bw <= 0){ _XMP_fatal("_xmp_io_set_view_block_cyclic: block width must be pisitive."); }
+  if (cycle == 0){ _XMP_fatal("_xmp_io_set_view_block_cyclic: cycle must be non-zero."); }
   /* ++++++++++++++++++++++++++++++++++++++++ */
   if (step > 0){
     if (rp_lb > rp_ub){
@@ -179,8 +196,8 @@ static int _xmp_io_block_cyclic_0
 	  MPI_Type_size(newtype2a, &byte_newtype2a);
 	  MPI_Type_get_extent(newtype2a, &lb_newtype2a, &extent_newtype2a);
 #ifdef DEBUG
-	  printf("myrank=%d: newtype2a: byte_newtype2a=%d bytes  lb=%d bytes  extent=%d bytes\n",
-		 myrank, byte_newtype2a, (int)lb_newtype2a, (int)extent_newtype2a);
+	  printf("myrank=%d: newtype2a: byte_newtype2a=%d bytes  lb=%ld bytes  extent=%ld bytes\n",
+		 myrank, byte_newtype2a, (long)lb_newtype2a, (long)extent_newtype2a);
 #endif /* DEBUG */
 	}
 	{
@@ -189,23 +206,23 @@ static int _xmp_io_block_cyclic_0
 	  MPI_Type_size(newtype2c, &byte_newtype2c);
 	  MPI_Type_get_extent(newtype2c, &lb_newtype2c, &extent_newtype2c);
 #ifdef DEBUG
-	  printf("myrank=%d: newtype2c: byte_newtype2c=%d bytes  lb=%d bytes  extent=%d bytes\n",
-		 myrank, byte_newtype2c, (int)lb_newtype2c, (int)extent_newtype2c);
+	  printf("myrank=%d: newtype2c: byte_newtype2c=%d bytes  lb=%ld bytes  extent=%ld bytes\n",
+		 myrank, byte_newtype2c, (long)lb_newtype2c, (long)extent_newtype2c);
 #endif /* DEBUG */
 
 	  continuous_size = byte_newtype2c / type_size;
 	  space_size = (y_l - y_sta) * type_size;
 	  total_size = ((rp_ub-rp_lb)/step + 1) * type_size;
 #ifdef DEBUG
-	  printf("myrank=%d: (extent_newtype2c + space_size) - total_size =%d\n",
-		 myrank,(int)(extent_newtype2c + space_size) - (int)total_size);
+	  printf("myrank=%d: (extent_newtype2c + space_size) - total_size =%ld\n",
+		 myrank, (long)(extent_newtype2c + space_size) - (long)total_size);
 #endif /* DEBUG */
 	  if (extent_newtype2c + space_size > total_size){
 #ifdef DEBUG
-	    printf("_xmp_io_block_cyclic_0: myrank=%d: extent_newtype2c + space_size > total_size\n",
+	    printf("_xmp_io_set_view_block_cyclic: myrank=%d: extent_newtype2c + space_size > total_size\n",
 		   myrank);
 #endif /* DEBUG */
-	    _XMP_fatal("_xmp_io_block_cyclic_0: data type is incorrect");
+	    _XMP_fatal("_xmp_io_set_view_block_cyclic: data type is incorrect");
 	  }
 	}
 
@@ -214,7 +231,7 @@ static int _xmp_io_block_cyclic_0
     } /* if (rp_lb > rp_ub) */
     {
 #ifdef DEBUG
-      printf("_xmp_io_block_cyclic_0: myrank=%d: space_size=%d  total_size=%d\n",
+      printf("_xmp_io_set_view_block_cyclic: myrank=%d: space_size=%d  total_size=%d\n",
 	     myrank, space_size, total_size);
 #endif /* DEBUG */
       int b[3]; MPI_Aint d[3]; MPI_Datatype t[3];
@@ -227,18 +244,18 @@ static int _xmp_io_block_cyclic_0
       MPI_Type_size(*_dataType1, &byte_dataType1);
       MPI_Type_get_extent(*_dataType1, &lb_dataType1, &extent_dataType1);
 #ifdef DEBUG
-      printf("_xmp_io_block_cyclic_0: after bc: "
-	     "myrank=%d: dataType1: byte_dataType1=%d bytes  lb=%d bytes  extent=%d bytes"
-	     " ; space_size=%d  total_size=%d\n",
-	     myrank, byte_dataType1, (int)lb_dataType1, (int)extent_dataType1,
+      printf("_xmp_io_set_view_block_cyclic: after bc: "
+	     "myrank=%d: dataType1: byte_dataType1=%d bytes  lb=%ld bytes  extent=%ld bytes"
+	     " ; space_size=%ld  total_size=%ld\n",
+	     myrank, byte_dataType1, (long)lb_dataType1, (long)extent_dataType1,
 	     space_size, total_size);
 #endif /* DEBUG */
       if (total_size != extent_dataType1){
 #ifdef DEBUG
-	printf("_xmp_io_block_cyclic_0: myrank=%d: total_size != extent_dataType1: %d  %d\n",
-	       myrank, (int)total_size, (int)extent_dataType1);
+	printf("_xmp_io_set_view_block_cyclic: myrank=%d: total_size != extent_dataType1: %ld  %ld\n",
+	       myrank, (long)total_size, (long)extent_dataType1);
 #endif /* DEBUG */
-	_XMP_fatal("_xmp_io_block_cyclic_0: extent is wrong");
+	_XMP_fatal("_xmp_io_set_view_block_cyclic: extent is wrong");
       }
       MPI_Type_free(&dataType_tmp);
     }
@@ -352,8 +369,8 @@ static int _xmp_io_block_cyclic_0
 	  MPI_Type_size(newtype2a, &byte_newtype2a);
 	  MPI_Type_get_extent(newtype2a, &lb_newtype2a, &extent_newtype2a);
 #ifdef DEBUG
-	  printf("newtype2a: byte_newtype2a=%d bytes  lb=%d bytes  extent=%d bytes\n",
-		 byte_newtype2a, (int)lb_newtype2a, (int)extent_newtype2a);
+	  printf("newtype2a: byte_newtype2a=%d bytes  lb=%ld bytes  extent=%ld bytes\n",
+		 byte_newtype2a, (long)lb_newtype2a, (long)extent_newtype2a);
 #endif /* DEBUG */
 	}
 	{
@@ -362,15 +379,15 @@ static int _xmp_io_block_cyclic_0
 	  MPI_Type_size(newtype2c, &byte_newtype2c);
 	  MPI_Type_get_extent(newtype2c, &lb_newtype2c, &extent_newtype2c);
 #ifdef DEBUG
-	  printf("newtype2c: byte_newtype2c=%d bytes  lb=%d bytes  extent=%d bytes\n",
-		 byte_newtype2c, (int)lb_newtype2c, (int)extent_newtype2c);
+	  printf("newtype2c: byte_newtype2c=%d bytes  lb=%ld bytes  extent=%ld bytes\n",
+		 byte_newtype2c, (long)lb_newtype2c, (long)extent_newtype2c);
 #endif /* DEBUG */
 
 	  continuous_size = byte_newtype2c / type_size;
 	  space_size = (y_end - y_base1) * type_size;
 	  total_size = ((rp_ub-rp_lb)/step + 1) * type_size;
 	  if (extent_newtype2c + space_size > total_size){
-	    _XMP_fatal("_xmp_io_block_cyclic_0: data type is incorrect");
+	    _XMP_fatal("_xmp_io_set_view_block_cyclic: data type is incorrect");
 	  }
 	}
 
@@ -391,11 +408,11 @@ static int _xmp_io_block_cyclic_0
       MPI_Type_size(*_dataType1, &byte_dataType1);
       MPI_Type_get_extent(*_dataType1, &lb_dataType1, &extent_dataType1);
 #ifdef DEBUG
-      printf("_xmp_io_block_cyclic_0: dataType1: byte_dataType1=%d bytes  lb=%d bytes  extent=%d bytes\n",
-	     byte_dataType1, (int)lb_dataType1, (int)extent_dataType1);
+      printf("_xmp_io_set_view_block_cyclic: dataType1: byte_dataType1=%d bytes  lb=%ld bytes  extent=%ld bytes\n",
+	     byte_dataType1, (long)lb_dataType1, (long)extent_dataType1);
 #endif /* DEBUG */
       if (total_size != extent_dataType1){
-	_XMP_fatal("_xmp_io_block_cyclic_0: extent is wrong");
+	_XMP_fatal("_xmp_io_set_view_block_cyclic: extent is wrong");
       }
       MPI_Type_free(&dataType_tmp);
     }
@@ -408,7 +425,27 @@ static int _xmp_io_block_cyclic_0
   return MPI_SUCCESS;
 }
 /* ------------------------------------------------------------------ */
-static int _xmp_io_block_cyclic_1
+/*****************************************************************************/
+/*  FUNCTION NAME : _xmp_io_write_read_block_cyclic                          */
+/*  DESCRIPTION   : This function is used to create data type for local array*/
+/*                  in memory for cyclic and block-cyclic distribution. This */
+/*                  function is only for internal use in this file.          */
+/*  ARGUMENT      : par_lower[IN] : global lower bound of array.             */
+/*                  par_upper[IN] : global upper bound of array.             */
+/*                  bw[IN] : block width.                                    */
+/*                  cycle[IN] : cycle width.                                 */
+/*                  rp_lb[IN] : global lower bound of array section.         */
+/*                  rp_ub[IN] : global upper bound of array section.         */
+/*                  step[IN] : stride of array section.                      */
+/*                  local_lower[IN] : lower bound of local array.            */
+/*                  alloc_size[IN] : size in element of local array.         */
+/*                  dataType0[IN] : basic data type on input.                */
+/*                  _dataType1[OUT] : data type for local array in memory.   */
+/*  RETURN VALUES : MPI_SUCCESS: normal termination.                         */
+/*                  an integer other than MPI_SUCCESS: abnormal termination. */
+/*                                                                           */
+/*****************************************************************************/
+static int _xmp_io_write_read_block_cyclic
 (
  int par_lower /* in */, int par_upper /* in */, int bw /* in */, int cycle /* in */,
  int rp_lb /* in */, int rp_ub /* in */, int step /* in */,
@@ -419,7 +456,7 @@ static int _xmp_io_block_cyclic_1
 )
 {
   MPI_Datatype dataType_tmp;
-  int continuous_size, space_size, total_size;
+  long continuous_size, space_size, total_size;
   int mpiRet;
 
   int nprocs, myrank;
@@ -427,19 +464,17 @@ static int _xmp_io_block_cyclic_1
   MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
   // get extent of data type
-  MPI_Aint tmp1, tmp2; int type_size;
-  mpiRet = MPI_Type_get_extent(dataType0, &tmp1, &tmp2);
+  MPI_Aint tmp1, type_size;
+  mpiRet = MPI_Type_get_extent(dataType0, &tmp1, &type_size);
   if (mpiRet !=  MPI_SUCCESS) { return -1113; }  
-  type_size = (int)tmp2;
-
 #ifdef DEBUG
-  printf("_xmp_io_block_cyclic_1: rmyank = %d:  par_lower = %d  par_upper = %d"
+  printf("_xmp_io_write_read_block_cyclic: rmyank = %d:  par_lower = %d  par_upper = %d"
 	 "  bw = %d  cycle = %d  alloc_size = %d  type_size = %d\n",
 	 myrank,par_lower,par_upper,bw,cycle, alloc_size,type_size);
 #endif /* DEBUG */
 
-  if (bw <= 0){ _XMP_fatal("_xmp_io_block_cyclic_1: block width must be pisitive."); }
-  if (cycle == 0){ _XMP_fatal("_xmp_io_block_cyclic_1: cycle must be non-zero."); }
+  if (bw <= 0){ _XMP_fatal("_xmp_io_write_read_block_cyclic: block width must be pisitive."); }
+  if (cycle == 0){ _XMP_fatal("_xmp_io_write_read_block_cyclic: cycle must be non-zero."); }
   /* ++++++++++++++++++++++++++++++++++++++++ */
   if (step > 0){
     if (rp_lb > rp_ub){
@@ -552,8 +587,8 @@ static int _xmp_io_block_cyclic_1
 	  MPI_Type_size(newtype3a, &byte_newtype3a);
 	  MPI_Type_get_extent(newtype3a, &lb_newtype3a, &extent_newtype3a);
 #ifdef DEBUG
-	  printf("myrank=%d: newtype3a: byte_newtype3a=%d bytes  lb=%d bytes  extent=%d bytes\n",
-		 myrank, byte_newtype3a, (int)lb_newtype3a, (int)extent_newtype3a);
+	  printf("myrank=%d: newtype3a: byte_newtype3a=%d bytes  lb=%ld bytes  extent=%ld bytes\n",
+		 myrank, byte_newtype3a, (long)lb_newtype3a, (long)extent_newtype3a);
 #endif /* DEBUG */
 	}
 	{
@@ -565,8 +600,8 @@ static int _xmp_io_block_cyclic_1
 	  MPI_Type_size(newtype3c, &byte_newtype3c);
 	  MPI_Type_get_extent(newtype3c, &lb_newtype3c, &extent_newtype3c);
 #ifdef DEBUG
-	  printf("myrank=%d: newtype3c: byte_newtype3c=%d bytes  lb=%d bytes  extent=%d bytes\n",
-		 myrank, byte_newtype3c, (int)lb_newtype3c, (int)extent_newtype3c);
+	  printf("myrank=%d: newtype3c: byte_newtype3c=%d bytes  lb=%ld bytes  extent=%ld bytes\n",
+		 myrank, byte_newtype3c, (long)lb_newtype3c, (long)extent_newtype3c);
 #endif /* DEBUG */
 
 	  continuous_size = byte_newtype3c / type_size;
@@ -575,10 +610,10 @@ static int _xmp_io_block_cyclic_1
 
 	  if (extent_newtype3c + space_size > total_size){
 #ifdef DEBUG
-	    printf("_xmp_io_block_cyclic_1: myrank=%d: extent_newtype3c + space_size > total_size\n",
+	    printf("_xmp_io_write_read_block_cyclic: myrank=%d: extent_newtype3c + space_size > total_size\n",
 		   myrank);
 #endif /* DEBUG */
-	    _XMP_fatal("_xmp_io_block_cyclic_1: data type is incorrect");
+	    _XMP_fatal("_xmp_io_write_read_block_cyclic: data type is incorrect");
 	  }
 
 	}
@@ -588,7 +623,7 @@ static int _xmp_io_block_cyclic_1
     } /* if (rp_lb > rp_ub) */
     {
 #ifdef DEBUG
-      printf("_xmp_io_block_cyclic_1: myrank=%d: space_size=%d  total_size=%d\n",
+      printf("_xmp_io_write_read_block_cyclic: myrank=%d: space_size=%d  total_size=%d\n",
 	     myrank, space_size, total_size);
 #endif /* DEBUG */
       int b[3]; MPI_Aint d[3]; MPI_Datatype t[3];
@@ -601,11 +636,11 @@ static int _xmp_io_block_cyclic_1
       MPI_Type_size(*_dataType1, &byte_dataType1);
       MPI_Type_get_extent(*_dataType1, &lb_dataType1, &extent_dataType1);
 #ifdef DEBUG
-      printf("_xmp_io_block_cyclic_1: myrank=%d: dataType1: byte_dataType1=%d bytes  lb=%d bytes  extent=%d bytes\n",
-	     myrank, byte_dataType1, (int)lb_dataType1, (int)extent_dataType1);
+      printf("_xmp_io_write_read_block_cyclic: myrank=%d: dataType1: byte_dataType1=%d bytes  lb=%ld bytes  extent=%ld bytes\n",
+	     myrank, byte_dataType1, (long)lb_dataType1, (long)extent_dataType1);
 #endif /* DEBUG */
       if (total_size != extent_dataType1){
-	_XMP_fatal("_xmp_io_block_cyclic_1: extent is wrong");
+	_XMP_fatal("_xmp_io_write_read_block_cyclic: extent is wrong");
       }
       MPI_Type_free(&dataType_tmp);
     }
@@ -625,7 +660,29 @@ static int _xmp_io_block_cyclic_1
   return MPI_SUCCESS;
 }
 /* ------------------------------------------------------------------ */
-static int _xmp_io_block_cyclic_2
+/*****************************************************************************/
+/*  FUNCTION NAME : _xmp_io_pack_unpack_block_cyclic_aux1                    */
+/*  DESCRIPTION   : This function is used to obtain data structure which hold*/
+/*                  information on calculating index to local array for the  */
+/*                  case of cyclic and block-cyclic distribution.  This      */
+/*                  function is only for internal use in this file.          */
+/*  ARGUMENT      : par_lower[IN] : global lower bound of array.             */
+/*                  par_upper[IN] : global upper bound of array.             */
+/*                  bw[IN] : block width.                                    */
+/*                  cycle[IN] : cycle width.                                 */
+/*                  rp_lb[IN] : global lower bound of array section.         */
+/*                  rp_ub[IN] : global upper bound of array section.         */
+/*                  step[IN] : stride of array section.                      */
+/*                  _cnt[OUT] : number of indices in the range of array      */
+/*                              section.                                     */
+/*                  _bc2_result[OUT] : data structure which hold information */
+/*                             on calculating index to local array for the   */
+/*                             case of cyclic and block-cyclic distribution. */
+/*  RETURN VALUES : MPI_SUCCESS: normal termination.                         */
+/*                  an integer other than MPI_SUCCESS: abnormal termination. */
+/*                                                                           */
+/*****************************************************************************/
+static int _xmp_io_pack_unpack_block_cyclic_aux1
 (
  int par_lower /* in */, int par_upper /* in */, int bw /* in */, int cycle /* in */,
  int rp_lb /* in */, int rp_ub /* in */, int step /* in */,
@@ -635,11 +692,11 @@ static int _xmp_io_block_cyclic_2
   int nprocs, myrank;
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
   MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-  printf("_xmp_io_block_cyclic_2: rmyank = %d:  par_lower = %d  par_upper = %d  bw = %d  cycle = %d\n",
+  printf("_xmp_io_pack_unpack_block_cyclic_aux1: rmyank = %d:  par_lower = %d  par_upper = %d  bw = %d  cycle = %d\n",
 	 myrank,par_lower,par_upper,bw,cycle);
 
-  if (bw <= 0){ _XMP_fatal("_xmp_io_block_cyclic_2: block width must be pisitive."); }
-  if (cycle == 0){ _XMP_fatal("_xmp_io_block_cyclic_2: cycle must be non-zero."); }
+  if (bw <= 0){ _XMP_fatal("_xmp_io_pack_unpack_block_cyclic_aux1: block width must be pisitive."); }
+  if (cycle == 0){ _XMP_fatal("_xmp_io_pack_unpack_block_cyclic_aux1: cycle must be non-zero."); }
   /* ++++++++++++++++++++++++++++++++++++++++ */
   if (step > 0){
     if (rp_lb > rp_ub){
@@ -922,7 +979,24 @@ static int _xmp_io_block_cyclic_2
   return MPI_SUCCESS;
 }
 /* ------------------------------------------------------------------ */
-static int _xmp_io_block_cyclic_3
+/*****************************************************************************/
+/*  FUNCTION NAME : _xmp_io_pack_unpack_block_cyclic_aux2                    */
+/*  DESCRIPTION   : This function is used to obtain index to local array     */
+/*                  corresponding to index in target dimention corresponding */
+/*                  to index of read/write buffer. This function is only for */
+/*                  internal use in this file.                               */
+/*  ARGUMENT      : j[IN] : index in target dimention corresponding to index */
+/*                          of read/write buffer.                            */
+/*                  bc2_result[IN] : data structure which hold information   */
+/*                          on calculating index to local array for the      */
+/*                          case of cyclic and block-cyclic distribution.    */
+/*                  _local_index[OUT] : index to local array corresponding   */
+/*                          to index j.                                      */
+/*  RETURN VALUES : MPI_SUCCESS: normal termination.                         */
+/*                  an integer other than MPI_SUCCESS: abnormal termination. */
+/*                                                                           */
+/*****************************************************************************/
+static int _xmp_io_pack_unpack_block_cyclic_aux2
 (
  int j /* in */, int *bc2_result /* in */,
  int *_local_index /* out */
@@ -1654,7 +1728,7 @@ int xmp_fread_darray_unpack(fp, apd, rp)
 	  ret = -1; goto FunctionExit; 
 	}
 	int cycle_i = xmp_dist_stride(tempd, i+1);
-	int ierr = _xmp_io_block_cyclic_2(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
+	int ierr = _xmp_io_pack_unpack_block_cyclic_aux1(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
 					  RP_LB(i) /* in */, RP_UB(i) /* in */, RP_STEP(i) /* in */,
 					  (int *)(&cnt[i]) /* out */, (int **)(&bc2_result[i]) /* out */);
 	if (ierr != MPI_SUCCESS){ ret = -1; goto FunctionExit; }
@@ -1748,7 +1822,7 @@ int xmp_fread_darray_unpack(fp, apd, rp)
        } else if(align_manner_i == _XMP_N_ALIGN_CYCLIC ||
 		 align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC){
 	 int local_index;
-	 int ierr = _xmp_io_block_cyclic_3(ub[i] /* in */, bc2_result[i] /* in */,
+	 int ierr = _xmp_io_pack_unpack_block_cyclic_aux2(ub[i] /* in */, bc2_result[i] /* in */,
 				       &local_index /* out */);
 	 if (ierr != MPI_SUCCESS){ ret = -1; goto FunctionExit; }
 	 disp += (local_index + local_lower_i) * array_size;
@@ -1811,11 +1885,10 @@ size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
   int mpiRet;               // return value of MPI functions
   int lower;                // lower bound accessed by this node
   int upper;                // upper bound accessed by this node
-  int continuous_size;      // continuous size
-  int space_size;           // space size
-  int total_size;           // total size
-  int type_size;
-  MPI_Aint tmp1, tmp2;
+  long continuous_size;      // continuous size
+  long space_size;           // space size
+  long total_size;           // total size
+  MPI_Aint tmp1, type_size;
   MPI_Datatype dataType[2];
   int i = 0;
 #ifdef ORIGINAL
@@ -1938,9 +2011,8 @@ printf("READ(%d/%d) (par_lower,par_upper)=(%d,%d)\n",
         continuous_size = (RP_UB(i) - RP_LB(i)) / RP_STEP(i) + 1;
 
         // get extent of data type
-        mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &tmp2);
+        mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &type_size);
         if (mpiRet !=  MPI_SUCCESS) { return -1; }  
-        type_size = (int)tmp2;
 
         // create basic data type
         mpiRet = MPI_Type_create_hvector(continuous_size,
@@ -2028,9 +2100,8 @@ printf("READ(%d/%d) total_size=%d\n", rank, nproc, total_size);
         }
 
         // get extent of data type
-        mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &tmp2);
+        mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &type_size);
         if (mpiRet !=  MPI_SUCCESS) { return -1; }  
-        type_size = (int)tmp2;
 
 /* 	printf("fread_darray_all: rank = %d: type_size = %d   RP_STEP(i) = %d\n", */
 /* 	       rank,type_size, RP_STEP(i)); */
@@ -2100,7 +2171,7 @@ printf("READ(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
 	return -1;
       }
       int cycle_i = xmp_dist_stride(tempd, i+1);
-      int ierr = _xmp_io_block_cyclic_1(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
+      int ierr = _xmp_io_write_read_block_cyclic(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
 					RP_LB(i) /* in */, RP_UB(i) /* in */, RP_STEP(i) /* in */,
 					local_lower_i /* in */,
 					alloc_size_i /* in */,
@@ -2351,7 +2422,7 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
 	  ret = -1; goto FunctionExit;
 	}
 	int cycle_i = xmp_dist_stride(tempd, i+1);
-	int ierr = _xmp_io_block_cyclic_2(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
+	int ierr = _xmp_io_pack_unpack_block_cyclic_aux1(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
 					  RP_LB(i) /* in */, RP_UB(i) /* in */, RP_STEP(i) /* in */,
 					  (int *)&(cnt[i]) /* out */, (int **)(&bc2_result[i]) /* out */);
 	if (ierr != MPI_SUCCESS){ ret = -1; goto FunctionExit; }
@@ -2429,7 +2500,7 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
        } else if(align_manner_i == _XMP_N_ALIGN_CYCLIC ||
 		 align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC){
 	 int local_index;
-	 int ierr = _xmp_io_block_cyclic_3(ub[i] /* in */, bc2_result[i] /* in */,
+	 int ierr = _xmp_io_pack_unpack_block_cyclic_aux2(ub[i] /* in */, bc2_result[i] /* in */,
 				       &local_index /* out */);
 	 if (ierr != MPI_SUCCESS){ ret = -1; goto FunctionExit; }
 	 disp += (local_index + local_lower_i) * array_size;
@@ -2508,11 +2579,10 @@ size_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
   int mpiRet;               // return value of MPI functions
   int lower;                // lower bound accessed by this node
   int upper;                // upper bound accessed by this node
-  int continuous_size;      // continuous size
-  int space_size;           // space size
-  int total_size;           // total size
-  int type_size;
-  MPI_Aint tmp1, tmp2;
+  long continuous_size;      // continuous size
+  long space_size;           // space size
+  long total_size;           // total size
+  MPI_Aint tmp1, type_size;
   MPI_Datatype dataType[2];
   int i = 0;
 #ifdef ORIGINAL
@@ -2653,9 +2723,8 @@ printf("WRITE(%d/%d) (shadow_size_lo,shadow_size_hi)=(%d,%d)\n",
         continuous_size = (RP_UB(i) - RP_LB(i)) / RP_STEP(i) + 1;
 
         // get extent of data type
-        mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &tmp2);
+        mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &type_size);
         if (mpiRet !=  MPI_SUCCESS) { return -1110; }  
-        type_size = (int)tmp2;
 
         // create basic data type
         mpiRet = MPI_Type_create_hvector(continuous_size,
@@ -2741,9 +2810,8 @@ printf("WRITE(%d/%d) total_size=%d\n",rank, nproc, total_size);
         }
 
         // get extent of data type
-        mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &tmp2);
+        mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &type_size);
         if (mpiRet !=  MPI_SUCCESS) { return -1113; }  
-        type_size = (int)tmp2;
         if(lower > upper){
            type_size = 0;
         }
@@ -2812,7 +2880,7 @@ printf("WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper);
 	return -1122;
       }
       int cycle_i = xmp_dist_stride(tempd, i+1);
-      int ierr = _xmp_io_block_cyclic_1(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
+      int ierr = _xmp_io_write_read_block_cyclic(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
 					RP_LB(i) /* in */, RP_UB(i) /* in */, RP_STEP(i) /* in */,
 					local_lower_i /* in */,
 					alloc_size_i /* in */,
@@ -3109,10 +3177,9 @@ int xmp_file_set_view_all(xmp_file_t  *pstXmp_file,
   int mpiRet;               // return value of MPI functions
   int lower;                // lower bound accessed by this node
   int upper;                // upper bound accessed by this node
-  int continuous_size;      // continuous size
+  long continuous_size;      // continuous size
   MPI_Datatype dataType[2];
-  int type_size;
-  MPI_Aint tmp1, tmp2;
+  MPI_Aint tmp1, type_size;
 #ifdef ORIGINAL
   _XMP_array_t *XMP_array_t;
 #else /* RIST */
@@ -3193,14 +3260,13 @@ printf("VIEW(%d/%d) dims=%d\n", rank, nproc, RP_DIMS);
     int align_manner_i = xmp_align_format(apd, i+1);
 #endif
     // get extent of data type
-    mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &tmp2);
+    mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &type_size);
     if (mpiRet !=  MPI_SUCCESS) { return -1009; }
-    type_size = (int)tmp2;
 
     int byte_dataType0; MPI_Type_size(dataType[0], &byte_dataType0);
 #ifdef DEBUG
-    printf("xmp_file_set_view_all: rank=%d: i=%d  align_manner_i=%d  type_size=%d  byte_dataType0=%d\n",
-	   rank, i, align_manner_i, type_size, byte_dataType0);
+    printf("xmp_file_set_view_all: rank=%d: i=%d  align_manner_i=%d  type_size=%ld  byte_dataType0=%d\n",
+	   rank, i, align_manner_i, (long)type_size, byte_dataType0);
 #endif /* DEBUG */
 
 #ifdef DEBUG
@@ -3234,8 +3300,8 @@ printf("VIEW(%d/%d) continuous_size=%d\n", rank, nproc, continuous_size);
     // block distribution
     else if (align_manner_i == _XMP_N_ALIGN_BLOCK)
     {
-      int space_size;
-      int total_size;
+      long space_size;
+      long total_size;
 
       // increment is positive
       if (RP_STEP(i) >= 0)
@@ -3294,6 +3360,15 @@ printf("VIEW(%d/%d) continuous_size=%d\n", rank, nproc, continuous_size);
         // on error in MPI_Type_contiguous
         if (mpiRet != MPI_SUCCESS) { return 1012; }
 
+	{
+	  int byte_datatype1; MPI_Aint lb_datatype1, extent_datatype1;
+	  MPI_Type_size(dataType[1], &byte_datatype1);
+	  MPI_Type_get_extent(dataType[1], &lb_datatype1, &extent_datatype1);
+	  if (extent_datatype1 + space_size > total_size){
+	    _XMP_fatal("xmp_file_set_view_all (block): data type is incorrect");
+	  }
+	}
+
         // create new file type
         mpiRet = MPI_TYPE_CREATE_RESIZED1(dataType[1],
                                          space_size,
@@ -3303,28 +3378,23 @@ printf("VIEW(%d/%d) continuous_size=%d\n", rank, nproc, continuous_size);
         // on error in MPI_Type_create_resized1
         if (mpiRet != MPI_SUCCESS) { return 1013; }
 
-/* 	printf("file_set_view_all: rank=%d:  space_size=%d  total_size=%d\n", */
-/* 	       rank,space_size,total_size); */
-
         // free MPI_Datatype out of use
         MPI_Type_free(&dataType[1]);
 
-/* 	printf("set_view_all: rank = %d: total_size = %d\n",rank,total_size); */
-
 	int byte_dataType0; MPI_Aint lb_dataType0, extent_dataType0;
-  MPI_Type_size(dataType[0], &byte_dataType0);
-  MPI_Type_get_extent(dataType[0], &lb_dataType0, &extent_dataType0);
+	MPI_Type_size(dataType[0], &byte_dataType0);
+	MPI_Type_get_extent(dataType[0], &lb_dataType0, &extent_dataType0);
 #ifdef DEBUG
-	printf("set_view_all: after block: myrank=%d: byte_dataType0=%d  lb=%d  extent=%d ; space_size=%d  total_size=%d\n",
-	       rank, (int)byte_dataType0, (int)lb_dataType0, (int)extent_dataType0,
-	       space_size,total_size);
+	printf("set_view_all: after block: myrank=%d: byte_dataType0=%d  lb=%ld  extent=%ld ; space_size=%ld  total_size=%ld\n",
+	       rank, byte_dataType0, (long)lb_dataType0, (long)extent_dataType0,
+	       space_size, total_size);
 #endif /* DEBUG */
 #ifdef DEBUG
 printf("VIEW(%d/%d) ALIGN_BLOCK\n", rank, nproc );
-printf("VIEW(%d/%d) type_size=%d\n", rank, nproc , type_size);
-printf("VIEW(%d/%d) continuous_size=%d\n", rank, nproc , continuous_size);
-printf("VIEW(%d/%d) space_size=%d\n", rank, nproc , space_size);
-printf("VIEW(%d/%d) total_size=%d\n", rank, nproc , total_size);
+printf("VIEW(%d/%d) type_size=%ld\n", rank, nproc , (long)type_size);
+printf("VIEW(%d/%d) continuous_size=%ld\n", rank, nproc , continuous_size);
+printf("VIEW(%d/%d) space_size=%ld\n", rank, nproc , space_size);
+printf("VIEW(%d/%d) total_size=%ld\n", rank, nproc , total_size);
 printf("VIEW(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc , lower, upper);
 printf("\n");
 #endif
@@ -3382,6 +3452,15 @@ printf("\n");
 	// on error in MPI_Type_contiguous
         if (mpiRet != MPI_SUCCESS) { return 1015; }
 
+	{
+	  int byte_datatype1; MPI_Aint lb_datatype1, extent_datatype1;
+	  MPI_Type_size(dataType[1], &byte_datatype1);
+	  MPI_Type_get_extent(dataType[1], &lb_datatype1, &extent_datatype1);
+	  if (extent_datatype1 + space_size > total_size){
+	    _XMP_fatal("xmp_file_set_view_all (block): data type is incorrect");
+	  }
+	}
+
         // create new file type
         mpiRet = MPI_TYPE_CREATE_RESIZED1(dataType[1],
                                          space_size,
@@ -3396,9 +3475,9 @@ printf("\n");
 
 #ifdef DEBUG
 printf("VIEW(%d/%d) ALIGN_BLOCK\n", rank, nproc);
-printf("VIEW(%d/%d) continuous_size=%d\n", rank, nproc, continuous_size);
-printf("VIEW(%d/%d) space_size=%d\n", rank, nproc, space_size);
-printf("VIEW(%d/%d) total_size=%d\n", rank, nproc, total_size);
+printf("VIEW(%d/%d) continuous_size=%ld\n", rank, nproc, continuous_size);
+printf("VIEW(%d/%d) space_size=%ld\n", rank, nproc, space_size);
+printf("VIEW(%d/%d) total_size=%ld\n", rank, nproc, total_size);
 printf("VIEW(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
 #endif
       }
@@ -3423,7 +3502,7 @@ printf("VIEW(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
 	return 1021;
       }
       int cycle_i = xmp_dist_stride(tempd, i+1);
-      int ierr = _xmp_io_block_cyclic_0(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
+      int ierr = _xmp_io_set_view_block_cyclic(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
 					RP_LB(i) /* in */, RP_UB(i) /* in */, RP_STEP(i) /* in */,
 					dataType[0] /* in */,
 					&dataType[1] /* out */);
@@ -3435,7 +3514,6 @@ printf("VIEW(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
     // other
     else
     {
-/*       printf("set_view_all: align_manner_i = %d\n",align_manner_i); */
       _XMP_fatal("xmp_file_set_view_all: invalid align manner");
       return 1018;
     } /* align_manner_i */
@@ -3457,7 +3535,7 @@ printf("VIEW(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
 
 
   // free MPI_Datatype out of use
-  //MPI_Type_free(&dataType[0]);
+  MPI_Type_free(&dataType[0]);
 
   // on erro in set view
   if (mpiRet != MPI_SUCCESS) { return 1020; }
