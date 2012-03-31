@@ -1055,17 +1055,21 @@ xmp_range_t *xmp_allocate_range(int n_dim)
 /*****************************************************************************/
 void xmp_set_range(xmp_range_t *rp, int i_dim, int lb, int length, int step)
 {
-
   if (rp == NULL){ _XMP_fatal("xmp_set_range: descriptor is NULL"); }
-  if (step == 0){ _XMP_fatal("xmp_set_range: step == 0"); }
+  if (step == 0){ _XMP_fatal("xmp_set_range: step must be non-zero"); }
   if (i_dim-1 < 0 || i_dim-1 >= rp->dims){ _XMP_fatal("xmp_set_range: i_dim is out of range"); }
   if(!rp->lb || !rp->ub || !rp->step){ _XMP_fatal("xmp_set_range: null pointer"); }
   if (step != 0 && length == 0){ _XMP_fatal("xmp_set_range: invalid combination of length and step\n"); }
+  if (length < 0){ _XMP_fatal("xmp_set_range: length must be >= 0\n"); }
   rp->lb[i_dim-1] = lb;
-  /* length = ub - lb + 1 */
-  /* ub = lb + length - 1 */
-  rp->ub[i_dim-1] = lb + length - 1;
   rp->step[i_dim-1] = step;
+  if(step > 0){
+    rp->ub[i_dim-1] = lb + length - 1;
+  }else if (step < 0){
+    rp->ub[i_dim-1] = lb - length + 1;
+  }else{
+    _XMP_fatal("xmp_set_range: step must be non-zero");
+  }
 }
 
 /*****************************************************************************/
@@ -1569,12 +1573,12 @@ int xmp_fread_darray_unpack(fp, apd, rp)
   int          *ub=NULL;
   int          *step=NULL;
   int          *cnt=NULL;
-  int           buf_size;
+  long           buf_size, j;
   int           ret=0;
-  int           disp;
-  int           size;
-  int           array_size;
-  int           i, j;
+  long           disp;
+  long           size;
+  long           array_size;
+  int           i;
 #ifdef ORIGINAL
   _XMP_array_t *array_t;
   size_t array_type_size;
@@ -1728,10 +1732,13 @@ int xmp_fread_darray_unpack(fp, apd, rp)
 	  ret = -1; goto FunctionExit; 
 	}
 	int cycle_i = xmp_dist_stride(tempd, i+1);
+	int zzcnt; int *zzptr;
 	int ierr = _xmp_io_pack_unpack_block_cyclic_aux1(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
 					  RP_LB(i) /* in */, RP_UB(i) /* in */, RP_STEP(i) /* in */,
-					  (int *)(&cnt[i]) /* out */, (int **)(&bc2_result[i]) /* out */);
+					  &zzcnt /* out */, &zzptr /* out */);
 	if (ierr != MPI_SUCCESS){ ret = -1; goto FunctionExit; }
+	cnt[i] = zzcnt;
+	bc2_result[i] = zzptr;
 #endif
       } else {
          ret = -1;
@@ -2269,12 +2276,12 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
    int          *ub=NULL;
    int          *step=NULL;
    int          *cnt=NULL;
-   int           buf_size;
+   long           buf_size, j;
    int           ret=0;
-   int           disp;
-   int           size;
-   int           array_size;
-   int           i, j;
+   long           disp;
+   long           size;
+   long           array_size;
+   int           i;
    size_t array_type_size;
 #ifdef ORIGINAL
    _XMP_array_t *array_t;
@@ -2287,6 +2294,10 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
    int *rp_step_addr = NULL;
    int array_ndim;
 #endif
+
+   int myrank, nprocs;
+   MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
 #ifdef ORIGINAL
    array_t = (_XMP_array_t*)ap;
@@ -2368,8 +2379,8 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
          ub[i] = RP_UB(i);
          step[i] = RP_STEP(i);
 #ifdef ORIGINAL
-	 cnt[i] = (ub[i]-lb[i]+step[i])/step[i];
 #else /* RIST */
+	 cnt[i] = (ub[i]-lb[i]+step[i])/step[i];
 #endif
   
       } else if(align_manner_i == _XMP_N_ALIGN_BLOCK){
@@ -2405,8 +2416,8 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
             }
          }
 #ifdef ORIGINAL
-	 cnt[i] = (ub[i]-lb[i]+step[i])/step[i];
 #else /* RIST */
+	 cnt[i] = (ub[i]-lb[i]+step[i])/step[i];
 #endif
 
 #ifdef ORIGINAL
@@ -2422,10 +2433,13 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
 	  ret = -1; goto FunctionExit;
 	}
 	int cycle_i = xmp_dist_stride(tempd, i+1);
+	int zzcnt; int *zzptr;
 	int ierr = _xmp_io_pack_unpack_block_cyclic_aux1(par_lower_i /* in */, par_upper_i /* in */, bw_i /* in */, cycle_i /* in */,
 					  RP_LB(i) /* in */, RP_UB(i) /* in */, RP_STEP(i) /* in */,
-					  (int *)&(cnt[i]) /* out */, (int **)(&bc2_result[i]) /* out */);
+					  &zzcnt /* out */, &zzptr /* out */);
 	if (ierr != MPI_SUCCESS){ ret = -1; goto FunctionExit; }
+	cnt[i] = zzcnt;
+	bc2_result[i] = zzptr;
 #endif
       } else {
          ret = -1;
@@ -2920,9 +2934,9 @@ printf("WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper);
   if(type_size > 0){
     int ierr;
     if ((ierr = MPI_File_write_all(pstXmp_file->fh,
-                        array_addr,
-                        1,
-                        dataType[0],
+				   array_addr,
+				   1,
+				   dataType[0],
 				 &status))
          != MPI_SUCCESS)
         {
@@ -3435,8 +3449,13 @@ printf("\n");
           continuous_size = (upper - lower) / RP_STEP(i) + 1;
 
           // space size
+#ifdef ORIGINAL
           space_size
             = ((lower - RP_LB(i)) / RP_STEP(i)) * type_size;
+#else /* RIST */
+          space_size
+            = ( - (upper - RP_UB(i)) / RP_STEP(i)) * type_size;
+#endif
         }
 
         // create basic data type
