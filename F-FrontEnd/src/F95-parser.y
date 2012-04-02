@@ -272,7 +272,14 @@
 %token XMPKW_IN
 %token XMPKW_OUT
 
-%type <val> xmp_directive xmp_nodes_clause xmp_template_clause xmp_distribute_clause xmp_align_clause xmp_shadow_clause xmp_task_clause xmp_loop_clause xmp_reflect_clause xmp_gmove_clause xmp_barrier_clause xmp_bcast_clause xmp_reduction_clause xmp_node_spec_list xmp_node_spec xmp_nodes_ref xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_align_subscript_list xmp_align_subscript xmp_shadow_width_list xmp_shadow_width xmp_on_ref xmp_reduction_opt xmp_reduction_spec xmp_gmove_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one
+%token XMPKW_BEGIN
+%token XMPKW_MASTER_IO
+%token XMPKW_GLOBAL_IO
+
+%token XMPKW_ATOMIC
+%token XMPKW_DIRECT
+
+%type <val> xmp_directive xmp_nodes_clause xmp_template_clause xmp_distribute_clause xmp_align_clause xmp_shadow_clause xmp_task_clause xmp_loop_clause xmp_reflect_clause xmp_gmove_clause xmp_barrier_clause xmp_bcast_clause xmp_reduction_clause xmp_node_spec_list xmp_node_spec xmp_nodes_ref xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_align_subscript_list xmp_align_subscript xmp_shadow_width_list xmp_shadow_width xmp_on_ref xmp_reduction_opt xmp_reduction_spec xmp_gmove_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options
 %type <code> xmp_reduction_op
 
 %{
@@ -1745,6 +1752,17 @@ xmp_directive:
 	    { $$ = XMP_LIST(XMP_REDUCTION,$2); }
 	  | XMPKW_BCAST xmp_bcast_clause
 	    { $$ = XMP_LIST(XMP_REDUCTION,$2); }
+
+	  | XMPKW_MASTER_IO xmp_master_io_options
+	    { $$ = XMP_LIST(XMP_MASTER_IO_BEGIN, $2); }
+	  | XMPKW_END XMPKW_MASTER_IO
+	    { $$ = XMP_LIST(XMP_END_MASTER_IO, NULL); }
+
+	  | XMPKW_GLOBAL_IO xmp_global_io_options
+	    { $$ = XMP_LIST(XMP_GLOBAL_IO_BEGIN, $2); }
+	  | XMPKW_END XMPKW_GLOBAL_IO
+	    { $$ = XMP_LIST(XMP_END_GLOBAL_IO, NULL); }
+
 /*	  | XMPKW_COARRAY */
 	  ;
 
@@ -1979,6 +1997,45 @@ xmp_clause_one:
 	    XMPKW_ASYNC '(' IDENTIFIER ')'
 	   { $$ = XMP_LIST(XMP_OPT_ASYNC, $3); }
 	   ;
+
+/*
+ * (flag, mode)
+ *
+ *	flag:	1: require an I/O statement.
+ *		> 1: require I/O stetements.
+ *
+ *	mode:	NULL: master I/O.
+ *		XMP_GLOBAL_IO_DIRECT: global I/O direct.
+ *		XMP_GLOBAL_IO_ATOMIC: global I/O atomic.
+ *		XMP_GLOBAL_IO_COLLECTIVE: global I/O collective.
+ */
+xmp_master_io_options:
+	  /* NULL */
+	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, 1), NULL); }
+	  | XMPKW_BEGIN
+	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, INT_MAX), NULL); }
+	  ;
+
+xmp_global_io_options:
+	  /* NULL */ 
+	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, 1),
+			 GEN_NODE(INT_CONSTANT, XMP_GLOBAL_IO_COLLECTIVE)); }
+	  | XMPKW_BEGIN
+	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, INT_MAX),
+			 GEN_NODE(INT_CONSTANT, XMP_GLOBAL_IO_COLLECTIVE)); }
+	  | XMPKW_ATOMIC
+	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, 1),
+			 GEN_NODE(INT_CONSTANT, XMP_GLOBAL_IO_ATOMIC)); }
+	  | XMPKW_ATOMIC XMPKW_BEGIN
+	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, INT_MAX),
+			 GEN_NODE(INT_CONSTANT, XMP_GLOBAL_IO_ATOMIC)); }
+	  | XMPKW_DIRECT
+	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, 1),
+			 GEN_NODE(INT_CONSTANT, XMP_GLOBAL_IO_DIRECT)); }
+	  | XMPKW_DIRECT XMPKW_BEGIN
+	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, INT_MAX),
+			 GEN_NODE(INT_CONSTANT, XMP_GLOBAL_IO_DIRECT)); }
+	  ;
 
 %%
 #include "F95-lex.c"

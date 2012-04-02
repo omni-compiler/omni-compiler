@@ -109,7 +109,7 @@ void init_for_OMP_pragma();
 void check_for_OMP_pragma(expr x);
 
 void init_for_XMP_pragma();
-void check_for_XMP_pragma(expr x);
+int check_for_XMP_pragma(int st_no, expr x);
 
 void set_parent_implicit_decls(void);
 
@@ -230,6 +230,7 @@ compile_statement(st_no,x)
      int st_no;
      expr x;
 {
+    int doCont = 0;
     if(x == NULL) return; /* error recovery */
 
     if(debug_flag){
@@ -238,9 +239,9 @@ compile_statement(st_no,x)
     }
 
     check_for_OMP_pragma(x);
-    check_for_XMP_pragma(x);
+    doCont = check_for_XMP_pragma(st_no, x);
 
-    if (st_no != 0) {
+    if (st_no != 0 && doCont == 1) {
         this_label = declare_label(st_no, LAB_UNKNOWN, TRUE);
         if (LAB_TYPE(this_label) != LAB_FORMAT) {
             output_statement(list1(STATEMENT_LABEL, ID_ADDR(this_label)));
@@ -248,7 +249,8 @@ compile_statement(st_no,x)
     } else this_label = NULL;
 
     set_function_disappear();
-    compile_statement1(st_no,x);
+    if (doCont == 1)
+	compile_statement1(st_no,x);
 
     /* check do range */
     if(this_label) check_DO_end(this_label);

@@ -1,5 +1,4 @@
-# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
-# $TSUKUBA_Copyright:
+# $TSUKUBA_Release: Omni OpenMP Compiler 3 $ # $TSUKUBA_Copyright:
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
 bin_PROGRAMS=F_Front
@@ -17,7 +16,7 @@ AM_YFLAGS=-v
 
 AM_CFLAGS=-DBUGFIX -D__XCODEML__ -DYYDEBUG -I$(LIBXML_PREFIX)/include/libxml2 -Wall
 
-AM_LDFLAGS=-L$(LIBXML_PREFIX)/lib -lxml2 -lm
+F_Front_LDADD=-L$(LIBXML_PREFIX)/lib -lxml2 -lm
 
 C-exprcode.h: C-exprcode.def C-exprcode.h.awk
 	$(AWK) -f C-exprcode.h.awk < C-exprcode.def > C-exprcode.h

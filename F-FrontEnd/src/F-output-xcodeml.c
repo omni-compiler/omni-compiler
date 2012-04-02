@@ -2430,9 +2430,11 @@ outx_XMP_dir_string(int l,expv v)
   case XMP_BCAST: s = "BCAST"; break;
   case XMP_COARRAY: s = "COARRAY"; break;
   case XMP_TEMPLATE_FIX: s = "TEMPLATE_FIX"; break;
+  case XMP_MASTER_IO: s = "XMP_MASTER_IO"; break;
+  case XMP_GLOBAL_IO: s = "XMP_GLOBAL_IO"; break;
 
   default:
-    fatal("out_XMP_dir_string: unknown value=%\n",EXPV_INT_VALUE(v));
+    fatal("out_XMP_dir_string: unknown value=%d\n",EXPV_INT_VALUE(v));
   }
   outx_printi(l, "<string>%s</string>\n", s);
 }

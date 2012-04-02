@@ -8,11 +8,13 @@
 
 expv XMP_check_TASK(expr x);
 expv XMP_pragma_list(enum XMP_pragma pragma,expv arg1,expv arg2);
+static int	close_XMP_IO_closure(int st_no, expr x);
 
 // void compile_XMP_name_list(expr x);
 
 int XMP_do_required;
 int XMP_gmove_required;
+int XMP_io_desired_statements = 0;
 expv XMP_gmove_directive;
 
 int XMP_reduction_op(expr v)
@@ -44,6 +46,7 @@ void init_for_XMP_pragma()
 {
     XMP_do_required = FALSE;
     XMP_gmove_required = FALSE;
+    XMP_io_desired_statements = 0;
 }
 
 /*
@@ -199,30 +202,105 @@ void compile_XMP_directive(expr x)
       output_statement(x);
       break;
 
+    case XMP_GLOBAL_IO_BEGIN:
+    case XMP_MASTER_IO_BEGIN:
+      check_INEXEC();
+      XMP_io_desired_statements = EXPR_INT(EXPR_ARG1(EXPR_ARG2(x)));
+      push_ctl(CTL_XMP);
+      CTL_XMP_ARG(ctl_top) = x;
+      EXPR_LINE(CTL_XMP_ARG(ctl_top)) = current_line;
+      break;
+
+    case XMP_END_GLOBAL_IO:
+      if (CTL_TYPE(ctl_top) == CTL_XMP) {
+	if (CTL_XMP_ARG_DIR(ctl_top) == XMP_GLOBAL_IO_BEGIN) {
+	  (void)close_XMP_IO_closure(0, CURRENT_STATEMENTS);
+	} else {
+	  error("about to close \"global_io begin\" with "
+		"\"end master_io\"");
+	}
+      } else {
+	error("a closure for a global_io is not yet opened.");
+      }
+      XMP_io_desired_statements = 0;
+      break;
+
+    case XMP_END_MASTER_IO:
+      if (CTL_TYPE(ctl_top) == CTL_XMP) {
+	if (CTL_XMP_ARG_DIR(ctl_top) == XMP_MASTER_IO_BEGIN) {
+	  (void)close_XMP_IO_closure(0, CURRENT_STATEMENTS);
+	} else {
+	  error("about to close \"master_io begin\" with "
+		"\"end global_io\"");
+	}
+      } else {
+	error("a closure for a master_io is not yet opened.");
+      }
+      XMP_io_desired_statements = 0;
+      break;
+
     default:
-	fatal("unknown OMP pragma");
+	fatal("unknown XMP pragma");
     }
+}
+
+static int
+isIOStatement(expr x)
+{
+  return (EXPR_CODE(x) == F_PRINT_STATEMENT ||
+	  EXPR_CODE(x) == F_WRITE_STATEMENT ||
+	  EXPR_CODE(x) == F_READ_STATEMENT ||
+	  EXPR_CODE(x) == F_READ1_STATEMENT ||
+	  EXPR_CODE(x) == F_OPEN_STATEMENT ||
+	  EXPR_CODE(x) == F_CLOSE_STATEMENT ||
+	  EXPR_CODE(x) == F_BACKSPACE_STATEMENT ||
+	  EXPR_CODE(x) == F_ENDFILE_STATEMENT ||
+	  EXPR_CODE(x) == F_REWIND_STATEMENT ||
+	  EXPR_CODE(x) == F_INQUIRE_STATEMENT) ? 1 : 0;
 }
 
 /* 
  * called before every statement 
  */
-void check_for_XMP_pragma(expr x)
+/**
+ * Check an expression for previously opened XMP clausure.
+ *
+ *	@param [in] st_no	A statement number.
+ *	@param [in] x		An expression.
+ *
+ *	@retval	0
+ *		The caller doesn't need to perform futher compilation of he x.
+ *	@retval 1
+ *		The caller need to perform futher compilation of he x.
+ */
+int check_for_XMP_pragma(int st_no, expr x)
 {
   expv statements;
-  
+  int ret = 1;
+
   if(XMP_do_required){
     if(EXPR_CODE(x) != F_DO_STATEMENT)
       error("XMP LOOP directives must be followed by do statement");
     XMP_do_required = FALSE;
-    return;
+    ret = 0;
+    goto done;
   }
   
   if(XMP_gmove_required){
     if(EXPR_CODE(x) != F_LET_STATEMENT)
       error("XMP GMOVE directives must be followed by assignment");
     XMP_gmove_required = FALSE;
-    return;
+    ret = 0;
+    goto done;
+  }
+
+  if (XMP_io_desired_statements > 0) {
+      if (isIOStatement(x) != 1) {
+	  error("XMP IO directives must be followed by I/O statements.");
+	  XMP_io_desired_statements = 0;
+	  ret = 0;
+	  goto done;
+      }
   }
 
   /* check DO directive, close it */
@@ -241,7 +319,72 @@ void check_for_XMP_pragma(expr x)
 		      statements);
     EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_XMP_ARG(ctl_top));
     pop_ctl();
+    ret = 1;
+    goto done;
   }
+
+  if (XMP_io_desired_statements == 1) {
+      ret = close_XMP_IO_closure(st_no, x);
+  }
+
+done:
+  return ret;
+}
+
+/*
+ * Close XMP_{MASTER|GLOBAL}_IO_BEGIN closure.
+ */
+static int
+close_XMP_IO_closure(int st_no, expr x) {
+    int ret = 1;
+    extern ID this_label;
+
+    if (CTL_TYPE(ctl_top) == CTL_XMP &&
+	(CTL_XMP_ARG_DIR(ctl_top) == XMP_MASTER_IO_BEGIN ||
+	 CTL_XMP_ARG_DIR(ctl_top) == XMP_GLOBAL_IO_BEGIN)) {
+
+	enum XMP_pragma p = XMP_DIR_END;
+	expv arg = NULL;
+
+	switch (CTL_XMP_ARG_DIR(ctl_top)) {
+	    case XMP_MASTER_IO_BEGIN:
+		p = XMP_MASTER_IO;
+		arg = list0(LIST);	/* dummy */
+		break;
+	    case XMP_GLOBAL_IO_BEGIN:
+		p = XMP_GLOBAL_IO;
+		arg = list1(
+		    LIST,
+		    expv_int_term(
+			INT_CONSTANT, NULL,
+			EXPR_INT(EXPR_ARG2(CTL_XMP_ARG_CLAUSE(ctl_top)))));
+		break;
+	    default:
+		fatal("must not happen.");
+		break;
+	}
+
+	if (st_no > 0) {
+	    if (LAB_TYPE(this_label) != LAB_FORMAT) {
+		output_statement(list1(STATEMENT_LABEL,
+				       ID_ADDR(this_label)));
+	    }
+	} else {
+	    this_label = NULL;
+	}
+	CTL_BLOCK(ctl_top) =
+	    XMP_pragma_list(p, arg,
+			    (XMP_io_desired_statements > 1) ?
+			    x : list1(LIST, x));
+	EXPR_LINE(CTL_BLOCK(ctl_top)) = (XMP_io_desired_statements > 1) ?
+	    current_line : EXPR_LINE(CTL_XMP_ARG(ctl_top));
+	pop_ctl();
+	XMP_io_desired_statements = 0;
+
+	ret = 0;
+    }
+
+    return ret;
 }
 
 expv XMP_check_TASK(expr x)

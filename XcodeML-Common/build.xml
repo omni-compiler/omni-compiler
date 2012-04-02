@@ -66,14 +66,16 @@
 
   <target name="compile-test" depends="compile">
     <mkdir dir="${testclasses.dir}"/>
-    <javac srcdir="${tests.dir}" destdir="${testclasses.dir}" debug="${debug}">
+    <javac srcdir="${tests.dir}" destdir="${testclasses.dir}" debug="${debug}"
+	   encoding="utf8">
       <classpath refid="test.class.path"/>
     </javac>
   </target>
 
   <target name="compile">
     <mkdir dir="${classes.dir}"/>
-    <javac srcdir="${src.dir}" destdir="${classes.dir}" debug="${debug}">
+    <javac srcdir="${src.dir}" destdir="${classes.dir}" debug="${debug}"
+	   encoding="utf8">
       <classpath refid="class.path"/>
     </javac>
   </target>

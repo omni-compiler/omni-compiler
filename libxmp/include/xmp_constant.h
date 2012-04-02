@@ -92,4 +92,11 @@
 #define _XMP_N_COARRAY_GET			700
 #define _XMP_N_COARRAY_PUT			701
 
+/*
+ * defined in F-FrontEnd/src/C-XMP.h
+ */
+#define _XMP_GLOBAL_IO_DIRECT			800
+#define _XMP_GLOBAL_IO_ATOMIC			801
+#define _XMP_GLOBAL_IO_COLLECTIVE		802
+
 #endif // _XMP_CONSTANT

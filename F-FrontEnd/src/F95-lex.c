@@ -3454,7 +3454,7 @@ struct keyword_token XMP_keywords[ ] =
 {
     {"end",	XMPKW_END },
     {"nodes",	XMPKW_NODES },
-    {"template",XMPKW_TEMPLATE },
+    {"template",	XMPKW_TEMPLATE },
     {"distribute",	XMPKW_DISTRIBUTE },
     {"align",	XMPKW_ALIGN },
     {"shadow",	XMPKW_SHADOW },
@@ -3480,9 +3480,15 @@ struct keyword_token XMP_keywords[ ] =
     {"async",	XMPKW_ASYNC },
 
     {"master",	XMPKW_MASTER },
-    {"critical",XMPKW_CRITICAL},
-    {"wait",	XMPKW_WAIT},
+    {"critical",XMPKW_CRITICAL },
+    {"wait",	XMPKW_WAIT },
     {"post",	XMPKW_POST },
+
+    { "begin",		XMPKW_BEGIN },
+    { "master_io",	XMPKW_MASTER_IO },
+    { "global_io",	XMPKW_GLOBAL_IO },
+    { "atomic",		XMPKW_ATOMIC },
+    { "direct",		XMPKW_DIRECT },
 
     { 0, 0 }
 };
