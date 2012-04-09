@@ -236,7 +236,6 @@ static int _xmp_io_set_view_block_cyclic
 	}
 	int y_base2 = y_sta;
 	int i_base2 = ista;
-	int pos = 0;
 	{
 	  int cnt=0;
 	  int first=1;
@@ -249,7 +248,6 @@ static int _xmp_io_set_view_block_cyclic
 	      int y = (z-rp_lb) / step;
 	      if (first){ y_base2 = y; i_base2 = i; first=0; }
 	      b[cnt]=1; d[cnt]=(y - y_base2)*type_size;  t[cnt]=dataType0; cnt++;
-	      pos = y - y_base2;
 	    }else{
 	    }
 	  }/* i */
@@ -479,7 +477,6 @@ static int _xmp_io_set_view_block_cyclic
 	  }
 	}
 	int y_base2 = y_end;
-	int pos = 0;
 	{
 	  int cnt=0;
 	  int first=1;
@@ -491,7 +488,6 @@ static int _xmp_io_set_view_block_cyclic
 	      int y = (z-rp_lb) / step;
 	      if (first){ y_base2 = y; first=0; }
 	      b[cnt]=1; d[cnt]=(y_base2 - y)*type_size; t[cnt]=dataType0; cnt++;
-	      pos = y_base2 - y;
 	    }else{
 	    }
 	  }/* i */
@@ -775,7 +771,6 @@ static int _xmp_io_write_read_block_cyclic
 	int y_base2 = y_sta;
 	int i_base2 = ista;
 	{
-	  int pos=0;
 	  int cnt=0;
 	  int first=1;
 	  int i;
@@ -787,7 +782,6 @@ static int _xmp_io_write_read_block_cyclic
 	      int y = (z-rp_lb) / step;
 	      if (first){ y_base2 = y; i_base2 = i; first=0; }
 	      b[cnt]=1; d[cnt]=(i - i_base2)*type_size;  t[cnt]=dataType0; cnt++;
-	      pos = i - i_base2;
 	    }else{
 	    }
 	  }/* i */
@@ -1000,9 +994,9 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
 #endif /* DEBUG */
 	int y_base1 = y_sta;
 	int i_base1 = ista;
-	*_bc2_result = (int *)malloc(sizeof(int)*(6+abs(bw*b1*2)));
+	*_bc2_result = (int *)malloc(sizeof(int)*(7+abs(bw*b1*2)));
 	int ncnt1=0, ncnt2=0;
-	int *di1 = *_bc2_result + 6;
+	int *di1 = *_bc2_result + 7;
 	{
 	  int first=1;
 	  int i;
@@ -1054,12 +1048,13 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
 	{
 	  int pp = (iend-ista) / (bw*b1);
 	  int *bc2_res = *_bc2_result;
-	  bc2_res[0] = 6 + abs(bw*b1*2); /* alloc size */
+	  bc2_res[0] = 7 + abs(bw*b1*2); /* alloc size */
 	  bc2_res[1] = ncnt1;
 	  bc2_res[2] = ncnt2;
 	  bc2_res[3] = pp*ncnt1; /* pp_ncnt1 */
 	  bc2_res[4] = bw*b1; /* bw_b1 */
 	  bc2_res[5] = i_base1;
+	  bc2_res[6] = i_base2;
 	  *_cnt = pp*ncnt1 + ncnt2;
 	}
       } /* ib_l */ /* ib_u */
@@ -1138,9 +1133,9 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
 	int i_base1 = ista;
 	int y_base2 = y_sta;
 	int i_base2 = ista;
-	*_bc2_result = (int *)malloc(sizeof(int)*(6+abs(bw*b1*2)));
+	*_bc2_result = (int *)malloc(sizeof(int)*(7+abs(bw*b1*2)));
 	int ncnt1=0, ncnt2=0;
-	int *di1 = *_bc2_result + 6;
+	int *di1 = *_bc2_result + 7;
 	int i;
 	{
 	  int first=1;
@@ -1189,12 +1184,13 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
 	{
 	  int pp = (iend-ista) / (bw*b1);
 	  int *bc2_res = *_bc2_result;
-	  bc2_res[0] = 6 + abs(bw*b1*2); /* alloc size */
+	  bc2_res[0] = 7 + abs(bw*b1*2); /* alloc size */
 	  bc2_res[1] = ncnt1;
 	  bc2_res[2] = ncnt2;
 	  bc2_res[3] = pp*ncnt1; /* pp_ncnt1 */
 	  bc2_res[4] = bw*b1; /* bw_b1 */
 	  bc2_res[5] = i_base1;
+	  bc2_res[6] = i_base2;
 	  *_cnt = pp*ncnt1 + ncnt2;
 	}
       } /* ib_l */ /* ib_u */
@@ -1238,13 +1234,19 @@ static int _xmp_io_pack_unpack_block_cyclic_aux2
     int pp_ncnt1 = bc2_result[3];
     int bw_b1    = bc2_result[4];
     int i_base1  = bc2_result[5];
-    int *di1    = &bc2_result[6];
-    int p = (ncnt1>0 ? j/ncnt1: 0);
-    int q = (j<pp_ncnt1 ? j % ncnt1 : j-pp_ncnt1);
-    int i = p * (bw_b1) + di1[q] + i_base1;
-#ifdef DEBUG
-    printf("j=%d  p=%d  q=%d  i=%d\n", j, p, q, i);
-#endif /* DEBUG */
+    int i_base2  = bc2_result[6];
+    int *di1     = bc2_result + 7;
+    int p, q, i;
+    if (j < pp_ncnt1){
+      p = (ncnt1>0 ? j/ncnt1: 0);
+      q =  j % ncnt1;
+      i = p * (bw_b1) + di1[q] + i_base1;
+    }else{
+      p = 0;
+      q = j-pp_ncnt1;
+      i = di1[q] + i_base2;
+    }
+    *_local_index = i;
   }
   return MPI_SUCCESS;
 }
