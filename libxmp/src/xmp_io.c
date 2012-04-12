@@ -27,7 +27,6 @@ static int MPI_Type_create_resized1(MPI_Datatype oldtype,
 /* ------------------------------------------------------------------ */
 static int xmp_array_gclubound_tmp(xmp_desc_t d, int dim)
 {
-  _XMP_array_t *a = (_XMP_array_t *)d;
   int par_upper = xmp_array_gclubound(d, dim);
   int align_manner = xmp_align_format(d, dim);
   if (align_manner == _XMP_N_ALIGN_BLOCK_CYCLIC){
@@ -109,8 +108,8 @@ static int _xmp_io_set_view_block_cyclic
       int ub_tmp = MIN(par_upper, rp_ub);
       int a = cycle, b = step;
       int ib;
-      int z_l = MAX(par_upper,rp_ub) + 1; int ib_l = bw; int x_l; int y_l;
-      int z_u = MIN(par_lower,rp_lb) - 1; int ib_u = -1; int x_u; int y_u;
+      int z_l = MAX(par_upper,rp_ub) + 1; int ib_l = bw; int x_l = 0; /* dummy */ int y_l = 0; /* dummy */
+      int z_u = MIN(par_lower,rp_lb) - 1; int ib_u = -1; int x_u = 0; /* dummy */ int y_u = 0; /* dummy */
       int a1, b1;
       for (ib=0; ib<bw; ib++){
 	int k = rp_lb - par_lower - ib;
@@ -184,7 +183,6 @@ static int _xmp_io_set_view_block_cyclic
 	       myrank, x_l, ib_l, x_u, ib_u, ista, iend);
 #endif /* DEBUG */
 	int y_base1 = y_sta;
-	int i_base1 = ista;
 	MPI_Datatype newtype2a; int byte_newtype2a; MPI_Aint lb_newtype2a, extent_newtype2a;
 	MPI_Datatype newtype2aa;int byte_newtype2aa;MPI_Aint lb_newtype2aa,extent_newtype2aa;
 	MPI_Datatype newtype2b; int byte_newtype2b; MPI_Aint lb_newtype2b, extent_newtype2b;
@@ -199,7 +197,7 @@ static int _xmp_io_set_view_block_cyclic
 	    int z=a*x+par_lower+ib;
 	    if ( (z-rp_lb) % step == 0 ){
 	      int y = (z-rp_lb) / step;
-	      if (first){ y_base1 = y; i_base1 = i; first=0; }
+	      if (first){ y_base1 = y; first=0; }
 	      if ((i-ista)/(bw*b1) == 0){
 		b[cnt]=1; d[cnt]=(y - y_base1)*type_size; t[cnt]=dataType0; cnt++;
 	      }else{
@@ -235,7 +233,6 @@ static int _xmp_io_set_view_block_cyclic
 	  }
 	}
 	int y_base2 = y_sta;
-	int i_base2 = ista;
 	{
 	  int cnt=0;
 	  int first=1;
@@ -246,7 +243,7 @@ static int _xmp_io_set_view_block_cyclic
 	    int z=a*x+par_lower+ib;
 	    if ( (z-rp_lb) % step == 0 ){
 	      int y = (z-rp_lb) / step;
-	      if (first){ y_base2 = y; i_base2 = i; first=0; }
+	      if (first){ y_base2 = y; first=0; }
 	      b[cnt]=1; d[cnt]=(y - y_base2)*type_size;  t[cnt]=dataType0; cnt++;
 	    }else{
 	    }
@@ -262,7 +259,6 @@ static int _xmp_io_set_view_block_cyclic
 	}
 #ifdef DEBUG
 	printf("y_base1=%d  y_base2=%d\n", y_base1, y_base2);
-	printf("i_base1=%d  i_base2=%d\n", i_base1, i_base2);
 #endif /* DEBUG */
 	{
 	  int cnt=0;
@@ -358,8 +354,8 @@ static int _xmp_io_set_view_block_cyclic
       int ub_tmp = MAX( par_lower, rp_ub );
       int a = cycle, b = step;
       int ib;
-      int z_l = MIN(par_lower, rp_ub)-1; int ib_l = -1; int x_l; int y_l;
-      int z_u = MAX(par_upper, rp_lb)+1; int ib_u = bw; int x_u; int y_u;
+      int z_l = MIN(par_lower, rp_ub)-1; int ib_l = -1; int x_l = 0; /* dummy */ int y_l = 0; /* dummy */
+      int z_u = MAX(par_upper, rp_lb)+1; int ib_u = bw; int x_u = 0; /* dummy */ int y_u = 0; /* dummy */
       int a1, b1;
       for (ib=0; ib<bw; ib++){
 	int k = rp_lb - par_lower - ib;
@@ -644,8 +640,8 @@ static int _xmp_io_write_read_block_cyclic
       int ub_tmp = MIN(par_upper, rp_ub);
       int a = cycle, b = step;
       int ib;
-      int z_l = MAX(par_upper,rp_ub) + 1; int ib_l = bw; int x_l; int y_l;
-      int z_u = MIN(par_lower,rp_lb) - 1; int ib_u = -1; int x_u; int y_u;
+      int z_l = MAX(par_upper,rp_ub) + 1; int ib_l = bw; int x_l = 0; /* dummy */ int y_l = 0; /* dummy */
+      int z_u = MIN(par_lower,rp_lb) - 1; int ib_u = -1; int x_u = 0; /* dummy */ int y_u = 0; /* dummy */
       int a1, b1;
       for (ib=0; ib<bw; ib++){
 	int k = rp_lb - par_lower - ib;
@@ -713,7 +709,6 @@ static int _xmp_io_write_read_block_cyclic
 #ifdef DEBUG
 	printf("y_sta=%d  y_end=%d\n", y_sta, y_end);
 #endif /* DEBUG */
-	int y_base1 = y_sta;
 	int i_base1 = ista;
 	MPI_Datatype newtype3a; int byte_newtype3a; MPI_Aint lb_newtype3a, extent_newtype3a;
 	MPI_Datatype newtype3aa;int byte_newtype3aa;MPI_Aint lb_newtype3aa,extent_newtype3aa;
@@ -733,7 +728,7 @@ static int _xmp_io_write_read_block_cyclic
 	    int z=a*x+par_lower+ib;
 	    if ( (z-rp_lb) % step == 0 ){
 	      int y = (z-rp_lb) / step;
-	      if (first){ y_base1 = y; i_base1 = i; first=0; }
+	      if (first){ i_base1 = i; first=0; }
 	      if ((i-ista)/(bw*b1) == 0){
 		b[cnt]=1; d[cnt]=(i - i_base1)*type_size; t[cnt]=dataType0; cnt++;
 	      }else{
@@ -768,7 +763,6 @@ static int _xmp_io_write_read_block_cyclic
 #endif /* DEBUG */
 	  }
 	}
-	int y_base2 = y_sta;
 	int i_base2 = ista;
 	{
 	  int cnt=0;
@@ -780,7 +774,7 @@ static int _xmp_io_write_read_block_cyclic
 	    int z=a*x+par_lower+ib;
 	    if ( (z-rp_lb) % step == 0 ){
 	      int y = (z-rp_lb) / step;
-	      if (first){ y_base2 = y; i_base2 = i; first=0; }
+	      if (first){ i_base2 = i; first=0; }
 	      b[cnt]=1; d[cnt]=(i - i_base2)*type_size;  t[cnt]=dataType0; cnt++;
 	    }else{
 	    }
@@ -795,7 +789,6 @@ static int _xmp_io_write_read_block_cyclic
 #endif /* DEBUG */
 	}
 #ifdef DEBUG
-	printf("y_base1=%d  y_base2=%d\n", y_base1, y_base2);
 	printf("i_base1=%d  i_base2=%d\n", i_base1, i_base2);
 #endif /* DEBUG */
 	{
@@ -936,8 +929,8 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
       int ub_tmp = MIN(par_upper, rp_ub);
       int a = cycle, b = step;
       int ib;
-      int z_l = MAX(par_upper,rp_ub) + 1; int ib_l = bw; int x_l; int y_l;
-      int z_u = MIN(par_lower,rp_lb) - 1; int ib_u = -1; int x_u; int y_u;
+      int z_l = MAX(par_upper,rp_ub) + 1; int ib_l = bw; int x_l = 0; /* dummy */ int y_l = 0; /* dummy */
+      int z_u = MIN(par_lower,rp_lb) - 1; int ib_u = -1; int x_u = 0; /* dummy */ int y_u = 0; /* dummy */
       int a1, b1;
       for (ib=0; ib<bw; ib++){
 	int k = rp_lb - par_lower - ib;
@@ -992,7 +985,6 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
 #ifdef DEBUG
 	printf("y_sta=%d  y_end=%d\n", y_sta, y_end);
 #endif /* DEBUG */
-	int y_base1 = y_sta;
 	int i_base1 = ista;
 	*_bc2_result = (int *)malloc(sizeof(int)*(7+abs(bw*b1*2)));
 	int ncnt1=0, ncnt2=0;
@@ -1006,7 +998,7 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
 	    int z=a*x+par_lower+ib;
 	    if ( (z-rp_lb) % step == 0 ){
 	      int y = (z-rp_lb) / step;
-	      if (first){ y_base1 = y; i_base1 = i; first=0; }
+	      if (first){ i_base1 = i; first=0; }
 	      if ((i-ista)/(bw*b1) == 0){
 		di1[ncnt1++] = i-i_base1;
 #ifdef DEBUG
@@ -1019,7 +1011,6 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
 	    }
 	  }/* i */
 	}
-	int y_base2 = y_sta;
 	int i_base2 = ista;
 	{
 	  int first=1;
@@ -1030,7 +1021,7 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
 	    int z=a*x+par_lower+ib;
 	    if ( (z-rp_lb) % step == 0 ){
 	      int y = (z-rp_lb) / step;
-	      if (first){ y_base2 = y; i_base2 = i; first=0; }
+	      if (first){ i_base2 = i; first=0; }
 	      di1[ncnt1+ncnt2++] = i-i_base2;
 #ifdef DEBUG
 	      printf("di1[%d]=%d\n", ncnt1+ncnt2-1, di1[ncnt1+ncnt2-1]);
@@ -1040,7 +1031,6 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
 	  }/* i */
 	}
 #ifdef DEBUG
-	printf("y_base1=%d  y_base2=%d\n", y_base1, y_base2);
 	printf("i_base1=%d  i_base2=%d\n", i_base1, i_base2);
 	printf("ncnt1=%d  ncnt2=%d  ((iend-ista) / (bw*b1))*ncnt1 + ncnt2=%d\n",
 	       ncnt1, ncnt2, ((iend-ista) / (bw*b1))*ncnt1 + ncnt2);
@@ -1072,8 +1062,8 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
       int ub_tmp = MAX( par_lower, rp_ub );
       int a = cycle, b = step;
       int ib;
-      int z_l = MIN(par_lower, rp_ub)-1; int ib_l = -1; int x_l; int y_l;
-      int z_u = MAX(par_upper, rp_lb)+1; int ib_u = bw; int x_u; int y_u;
+      int z_l = MIN(par_lower, rp_ub)-1; int ib_l = -1; int x_l = 0; /* dummy */ int y_l = 0; /* dummy */
+      int z_u = MAX(par_upper, rp_lb)+1; int ib_u = bw; int x_u = 0; /* dummy */ int y_u = 0; /* dummy */
       int a1, b1;
       for (ib=0; ib<bw; ib++){
 	int k = rp_lb - par_lower - ib;
@@ -1129,9 +1119,7 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
 #ifdef DEBUG
 	printf("y_sta=%d  y_end=%d\n", y_sta, y_end);
 #endif /* DEBUG */
-	int y_base1 = y_sta;
 	int i_base1 = ista;
-	int y_base2 = y_sta;
 	int i_base2 = ista;
 	*_bc2_result = (int *)malloc(sizeof(int)*(7+abs(bw*b1*2)));
 	int ncnt1=0, ncnt2=0;
@@ -1145,7 +1133,7 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
 	    int z=a*x+par_lower+ib;
 	    if ( (z-rp_lb) % step == 0 ){
 	      int y = (z-rp_lb) / step;
-	      if (first){ y_base1 = y; i_base1 = i; first=0; }
+	      if (first){ i_base1 = i; first=0; }
 	      if ((i-ista)/(bw*b1) == 0){
 		di1[ncnt1++] = i-i_base1;
 #ifdef DEBUG
@@ -1166,7 +1154,7 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
 	    int z=a*x+par_lower+ib;
 	    if ( (z-rp_lb) % step == 0 ){
 	      int y = (z-rp_lb) / step;
-	      if (first){ y_base2 = y; i_base2 = i; first=0; /* FALSE */ }
+	      if (first){ i_base2 = i; first=0; /* FALSE */ }
 	      di1[ncnt1+ncnt2++] = i-i_base2;
 #ifdef DEBUG
 	      printf("di1[%d]=%d\n", ncnt1+ncnt2-1, di1[ncnt1+ncnt2-1]);
@@ -1176,7 +1164,6 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
 	  }/* i */
 	}
 #ifdef DEBUG
-	printf("y_base1=%d  y_base2=%d\n", y_base1, y_base2);
 	printf("i_base1=%d  i_base2=%d\n", i_base1, i_base2);
 	printf("ncnt1=%d  ncnt2=%d  ((iend-ista) / (bw*b1))*ncnt1 + ncnt2=%d\n",
 	       ncnt1, ncnt2, ((iend-ista) / (bw*b1))*ncnt1 + ncnt2);
@@ -2032,8 +2019,6 @@ size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
   MPI_Status status;        // MPI status
   int readCount;            // read bytes
   int mpiRet;               // return value of MPI functions
-  int lower;                // lower bound accessed by this node
-  int upper;                // upper bound accessed by this node
   long continuous_size;      // continuous size
   long space_size;           // space size
   long total_size;           // total size
@@ -2182,43 +2167,40 @@ printf("READ(%d/%d) total_size=%d\n", rank, nproc, total_size);
       // increment is positive
       else
       {
+        // get extent of data type
+        mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &type_size);
+        if (mpiRet !=  MPI_SUCCESS) { return -1; }  
+
         // upper after distribution < lower
         if (par_upper_i < RP_LB(i))
         {
-          continuous_size = 0;
+          continuous_size = space_size = 0;
         }
         // lower after distribution > upper
         else if (par_lower_i > RP_UB(i))
         {
-          continuous_size = 0;
+          continuous_size = space_size = 0;
         }
         // other
         else
         {
           // lower in this node
-          lower
+          int lower
             = (par_lower_i > RP_LB(i)) ?
               RP_LB(i) + ((par_lower_i - 1 - RP_LB(i)) / RP_STEP(i) + 1) * RP_STEP(i)
             : RP_LB(i);
 
           // upper in this node
-          upper
+          int upper
             = (par_upper_i < RP_UB(i)) ?
                par_upper_i : RP_UB(i);
 
           // continuous size
           continuous_size = (upper - lower + RP_STEP(i)) / RP_STEP(i);
 
-/* 	  printf("fread_darray_all: rank = %d: lower = %d  upper = %d  continuous_size = %d\n", */
-/* 		 rank, lower, upper, continuous_size); */
+	  // space size
+	  space_size = (local_lower_i + (lower - par_lower_i)) * type_size;
         }
-
-        // get extent of data type
-        mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &type_size);
-        if (mpiRet !=  MPI_SUCCESS) { return -1; }  
-
-/* 	printf("fread_darray_all: rank = %d: type_size = %ld   RP_STEP(i) = %d\n", */
-/* 	       rank, (long)type_size, RP_STEP(i)); */
 
         // create basic data type
         mpiRet = MPI_Type_create_hvector(continuous_size,
@@ -2232,12 +2214,6 @@ printf("READ(%d/%d) total_size=%d\n", rank, nproc, total_size);
 
         // on error in MPI_Type_create_hvector
         if (mpiRet != MPI_SUCCESS) { return -1; }
-
-        // space size
-        space_size
-          = (local_lower_i 
-          + (lower - par_lower_i))
-          * type_size;
 
         // total size
         total_size = (alloc_size_i)* type_size;
@@ -2508,7 +2484,6 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
    /* allocate buffer */
    if(buf_size == 0){
       buf = (char*)malloc(array_type_size);
-/*       fprintf(stderr, "size = 0\n"); */
    } else {
       buf = (char*)malloc(buf_size * array_type_size);
    }
@@ -2612,8 +2587,6 @@ size_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
   MPI_Status status;        // MPI status
   int writeCount;           // write btye
   int mpiRet;               // return value of MPI functions
-  int lower;                // lower bound accessed by this node
-  int upper;                // upper bound accessed by this node
   long continuous_size;      // continuous size
   long space_size;           // space size
   long total_size;           // total size
@@ -2681,18 +2654,18 @@ printf("WRITE(%d/%d) dims=%d\n",rank, nproc, RP_DIMS);
     int ser_lower_i = xmp_array_gcglbound(apd, i+1);
     int ser_upper_i = xmp_array_gcgubound(apd, i+1);
     int local_lower_i = xmp_array_lcllbound(apd, i+1);
-    int local_upper_i = xmp_array_lclubound(apd, i+1);
-    int shadow_size_lo_i = xmp_array_lshadow(apd, i+1);
-    int shadow_size_hi_i = xmp_array_ushadow(apd, i+1);
+/*     int local_upper_i = xmp_array_lclubound(apd, i+1); */
+/*     int shadow_size_lo_i = xmp_array_lshadow(apd, i+1); */
+/*     int shadow_size_hi_i = xmp_array_ushadow(apd, i+1); */
 #ifdef DEBUG
 printf("WRITE(%d/%d) (lb,ub,step)=(%d,%d,%d)\n",
        rank, nproc, RP_LB(i),  RP_UB(i), RP_STEP(i));
 printf("WRITE(%d/%d) (par_lower,par_upper)=(%d,%d)\n",
        rank, nproc, par_lower_i, par_upper_i);
-printf("WRITE(%d/%d) (local_lower,local_upper,alloc_size)=(%d,%d,%d)\n",
-       rank, nproc, local_lower_i, local_upper_i, alloc_size_i);
-printf("WRITE(%d/%d) (shadow_size_lo,shadow_size_hi)=(%d,%d)\n",
-       rank, nproc, shadow_size_lo_i, shadow_size_hi_i);
+/* printf("WRITE(%d/%d) (local_lower,local_upper,alloc_size)=(%d,%d,%d)\n", */
+/*        rank, nproc, local_lower_i, local_upper_i, alloc_size_i); */
+/* printf("WRITE(%d/%d) (shadow_size_lo,shadow_size_hi)=(%d,%d)\n", */
+/*        rank, nproc, shadow_size_lo_i, shadow_size_hi_i); */
 #endif
 
     // no distribution
@@ -2773,39 +2746,40 @@ printf("WRITE(%d/%d) total_size=%ld\n",rank, nproc, total_size);
       // increment is positive
       else
       {
+        // get extent of data type
+        mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &type_size);
+        if (mpiRet !=  MPI_SUCCESS) { return -1113; }  
+
         // upper after distribution < lower
         if (par_upper_i < RP_LB(i))
         {
-          continuous_size = 0;
+          continuous_size = space_size = 0;
         }
         // lower after distribution > upper
         else if (par_lower_i > RP_UB(i))
         {
-          continuous_size = 0;
+          continuous_size = space_size = 0;
         }
         // other
         else
         {
           // lower in this node
-          lower
+          int lower
             = (par_lower_i > RP_LB(i)) ?
               RP_LB(i) + ((par_lower_i - 1 - RP_LB(i)) / RP_STEP(i) + 1) * RP_STEP(i)
             : RP_LB(i);
 
           // upper in this node
-          upper
+          int upper
             = (par_upper_i < RP_UB(i)) ?
                par_upper_i : RP_UB(i);
 
           // continuous size
           continuous_size = (upper - lower + RP_STEP(i)) / RP_STEP(i);
-        }
 
-        // get extent of data type
-        mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &type_size);
-        if (mpiRet !=  MPI_SUCCESS) { return -1113; }  
-        if(lower > upper){
-           type_size = 0;
+	  if(lower > upper){ type_size = 0; }
+	  // space size
+	  space_size = (local_lower_i + (lower - par_lower_i)) * type_size;
         }
 
         // create basic data type
@@ -2820,12 +2794,6 @@ printf("WRITE(%d/%d) total_size=%ld\n",rank, nproc, total_size);
 
         // on error in MPI_Type_create_hvector
         if (mpiRet != MPI_SUCCESS) { return -1114; }
-
-        // space size
-        space_size
-          = (local_lower_i
-          + (lower - par_lower_i))
-          * type_size;
 
         // total size
         total_size = (alloc_size_i)* type_size;
