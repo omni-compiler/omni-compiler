@@ -282,7 +282,6 @@ int check_for_XMP_pragma(int st_no, expr x)
     if(EXPR_CODE(x) != F_DO_STATEMENT)
       error("XMP LOOP directives must be followed by do statement");
     XMP_do_required = FALSE;
-    ret = 0;
     goto done;
   }
   
@@ -290,7 +289,6 @@ int check_for_XMP_pragma(int st_no, expr x)
     if(EXPR_CODE(x) != F_LET_STATEMENT)
       error("XMP GMOVE directives must be followed by assignment");
     XMP_gmove_required = FALSE;
-    ret = 0;
     goto done;
   }
 
@@ -319,7 +317,6 @@ int check_for_XMP_pragma(int st_no, expr x)
 		      statements);
     EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_XMP_ARG(ctl_top));
     pop_ctl();
-    ret = 1;
     goto done;
   }
 

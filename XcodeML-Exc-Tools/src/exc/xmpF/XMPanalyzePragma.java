@@ -154,6 +154,11 @@ public class XMPanalyzePragma
     }
   }
 
+  private static boolean isEqualVar(Xobject v1, Xobject v2){
+    return (v1.isVariable() && v2.isVariable() &&
+	    v1.getName().equals(v2.getName()));
+  }
+
   /* 
    * analyze Loop directive:
    *  loopDecl = (on_ref | ...)
@@ -175,7 +180,8 @@ public class XMPanalyzePragma
       for(Xobject x: loopIterList){
 	ForBlock loopBlock = getOutermostLoopBlock(loopBody);
 	if(loopBlock == null) return;
-	if(!loopBlock.getInductionVar().equals(x)){
+	if(x.Opcode() == Xcode.LIST) x = x.getArg(0);
+	if(!isEqualVar(loopBlock.getInductionVar(),x)){
 	  XMP.error("loop index is different from loop varaible");
 	  return;
 	}
@@ -220,7 +226,7 @@ public class XMPanalyzePragma
 	// find varaible 
 	int idx = -1;
 	for(int i = 0; i < dims.size(); i++){
-	  if(v.getName().equals(dims.elementAt(i).getLoopVar().getName())){
+	  if(isEqualVar(v,dims.elementAt(i).getLoopVar())){
 	    idx = i;
 	    break;
 	  }

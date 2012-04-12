@@ -159,18 +159,23 @@ public class XMParray {
 
     int templateDim = template.getDim();
 
-    // declare array address pointer, array descriptor
-    descId = env.declObjectId(XMP.DESC_PREFIX_ + name, pb);
-    elementType = type.getRef();
-    localType = Xtype.Farray(elementType,Xcons.FindexRangeOfAssumedShape());
-    localType.setTypeQualFlags(Xtype.TQ_FALLOCATABLE);
-    localId = env.declObjectId(XMP.PREFIX_+name,localType,pb); // the same type?
-
     int arrayDim = type.getNumDimensions();
     if (arrayDim > XMP.MAX_DIM) {
       XMP.error("array dimension should be less than " + (XMP.MAX_DIM + 1));
       return;
     }
+
+    // declare array address pointer, array descriptor
+    descId = env.declObjectId(XMP.DESC_PREFIX_ + name, pb);
+    elementType = type.getRef();
+    
+    Xobject sizeExprs[] = new Xobject[arrayDim];
+    for(int i = 0; i < arrayDim; i++)
+      sizeExprs[i] = Xcons.FindexRangeOfAssumedShape();
+    //localType = new FarrayType(null,elementType,0,sizeExprs);
+    localType = Xtype.Farray(elementType,sizeExprs);
+    localType.setTypeQualFlags(Xtype.TQ_FALLOCATABLE);
+    localId = env.declObjectId(XMP.PREFIX_+name,localType,pb); //the same type?
 
     Vector<XMPdimInfo> src_dims = XMPdimInfo.parseSubscripts(alignSourceList);
     Vector<XMPdimInfo> tmpl_dims = XMPdimInfo.parseSubscripts(alignScriptList);
@@ -258,8 +263,8 @@ public class XMParray {
    *  ! _xmpf_array_range__(a_desc,i_dim,lower_b,upper_b,t_idx,off)
    *  ! _xmpf_array_init__(a_desc)
    *
-   *  ! _xmpf_array_get_local_size(a_desc,size)
-   *  allocate ( A_local(0:a_1_size-1) )
+   *  ! _xmpf_array_get_local_size(a_desc,i_dim,size)
+   *  allocate ( A_local(0:a_1_size-1, 0:...) )
    *  ! _xmpf_array_set_local_array(a_desc,a_local)
    */
 
@@ -298,13 +303,20 @@ public class XMParray {
     bb.add(Xcons.List(Xcode.EXPR_STATEMENT,f.Call(Xcons.List(descId.Ref()))));
 
     // allocate size variable
-    Ident size_v = Ident.Local(XMP.genSym("XMP_size_"),Xtype.FintType);
-    f = def.declExternIdent(XMP.array_get_local_size_f,Xtype.FsubroutineType);
-    bb.add(Xcons.List(Xcode.EXPR_STATEMENT,f.Call(Xcons.List(descId.Ref(),size_v.Ref()))));
-    
+    XobjList alloc_args = Xcons.List();
+    for(int i = 0; i < dims.size(); i++){
+      Ident size_v = Ident.Local(XMP.genSym("XMP_size_"),Xtype.FintType);
+      f = def.declExternIdent(XMP.array_get_local_size_f,
+			      Xtype.FsubroutineType);
+      bb.add(Xcons.List(Xcode.EXPR_STATEMENT,
+			f.Call(Xcons.List(descId.Ref(),
+					  Xcons.IntConstant(i),
+					  size_v.Ref()))));
+      alloc_args.add(Xcons.FindexRange(Xcons.IntConstant(0),size_v.Ref()));
+    }
+
     // allocatable
-    bb.add(Xcons.Fallocate(localId.Ref(),
-			   Xcons.FindexRange(Xcons.IntConstant(0),size_v.Ref())));
+    bb.add(Xcons.FallocateByList(localId.Ref(),alloc_args));
     
     // set
     f = def.declExternIdent(XMP.array_set_local_array_f,Xtype.FsubroutineType);

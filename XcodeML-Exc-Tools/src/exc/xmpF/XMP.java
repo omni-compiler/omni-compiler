@@ -62,11 +62,12 @@ public class XMP {
   public final static String array_get_local_size_f = "xmpf_array_get_local_size_";
   public final static String array_set_local_array_f = "xmpf_array_set_local_array_";
 
-  public final static String onref_alloc_f = "xmpf_onref_alloc_";
-  public final static String onref_set_info_f = "xmpf_onref_set_info_";
-  public final static String onref_init_f = "xmpf_onref_init_";
+  public final static String ref_templ_alloc_f = "xmpf_ref_templ_alloc_";
+  public final static String ref_nodes_alloc_f = "xmpf_ref_nodes_alloc_";
+  public final static String ref_set_info_f = "xmpf_ref_set_info_";
+  public final static String ref_init_f = "xmpf_ref_init_";
 
-  public final static String loop_test_f = "xmp_loop_test_";
+  public final static String loop_test_f = "xmpf_loop_test_";
   
   public final static String arrayProp = "XMParrayProp";
 

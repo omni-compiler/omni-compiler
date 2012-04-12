@@ -51,7 +51,8 @@ public class XMPinfo
 
   public int getLoopDim() { return loop_dims.size(); }
   
-  public Xobject getLoopIndex(int i) { return loop_dims.elementAt(i).getIndex(); }
+  public Xobject getLoopVar(int i) 
+  { return loop_dims.elementAt(i).getLoopVar(); }
 
   public XMPobjectsRef getLoopOnRef() { return loop_on_ref; }
   

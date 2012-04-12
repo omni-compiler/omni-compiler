@@ -90,15 +90,18 @@ public class XMPrewriteExpr
       case F_ARRAY_REF:
 	{
 	  Xobject a = x.getArg(0);
+	  System.out.println("array_ref="+x);
 	  if(a.Opcode() != Xcode.F_VAR_REF)
 	    XMP.fatal("not F_VAR_REF for F_ARRAY_REF");
 	  a = a.getArg(0);
 	  XMParray array = (XMParray) a.getProp(XMP.arrayProp);
-	  if(array != null){
-	    Xobject index_calc = arrayIndexCalc(array,(XobjList)x.getArg(1));
-	    if(index_calc != null){
-	      x.setArg(1,Xcons.List(Xcons.List(Xcode.F_ARRAY_INDEX,index_calc)));
-	    }
+	  if(array == null) break;
+
+	  int dim_i = 0;
+	  for(XobjArgs args = x.getArg(1).getArgs(); args != null;
+	      args = args.nextArgs()){
+	    Xobject index_calc = arrayIndexCalc(array,dim_i++,args.getArg());
+	    if(index_calc != null) args.setArg(index_calc);
 	  }
 	  break;
 	}
@@ -112,24 +115,22 @@ public class XMPrewriteExpr
     }
   }
 
-  Xobject arrayIndexCalc(XMParray a, XobjList index_list){
-    XobjList args = Xcons.List();
-    args.add(a.getDescId());
-    int i = 0;
-    for(Xobject x: index_list){
-      i++;
-      switch(x.Opcode()){
-      case F_ARRAY_INDEX:
-	args.add(x.getArg(0));
-	break;
-	/* what to do for array_range expression */
-      default:
+  Xobject arrayIndexCalc(XMParray a, int dim_i, Xobject i){
+    System.out.println("i="+i);
+    switch(i.Opcode()){
+    case F_ARRAY_INDEX:
+      Ident f = current_def.declExternIdent("xmpf_local_idx_",
+					    Xtype.Function(Xtype.intType));
+      Xobject x = f.Call(Xcons.List(a.getDescId(),
+				    Xcons.IntConstant(dim_i),
+				    i.getArg(0)));
+      i.setArg(0,x);
+      return i;
+
+      /* what to do for array_range expression */
+    default:
 	XMP.error("bad expression in XMP array index");
 	return null;
-      }
     }
-    Ident f = current_def.declExternIdent("xmpf_local_idx_"+i, 
-					  Xtype.Function(Xtype.intType));
-    return f.Call(args);
   }
 }

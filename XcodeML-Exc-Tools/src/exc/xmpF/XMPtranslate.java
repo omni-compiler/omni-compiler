@@ -22,7 +22,7 @@ public class XMPtranslate implements XobjectDefVisitor
   XMPrewriteExpr rewriteExpr = new XMPrewriteExpr();
   XMPtransPragma transPragma = new XMPtransPragma();
     
-  final String XMPmainFunc = "xmp_main";
+  final String XMPmainFunc = "xmpf_main";
 
   public XMPtranslate() {
   }

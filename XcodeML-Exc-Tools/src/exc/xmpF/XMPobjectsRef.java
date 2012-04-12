@@ -71,11 +71,12 @@ public class XMPobjectsRef {
   public Block buildConstructor(XobjectDef def){
     Block b = Bcons.emptyBlock();
     BasicBlock bb = b.getBasicBlock();
-    Ident f = def.declExternIdent(XMP.onref_alloc_f,Xtype.FsubroutineType);
-    Xobject args = Xcons.List(descId.Ref(),Xcons.IntConstant(subscripts.size()));
+    Ident f = def.declExternIdent(XMP.ref_templ_alloc_f,Xtype.FsubroutineType);
+    Xobject args = Xcons.List(descId.Ref(),refObject.getDescId().Ref(),
+			      Xcons.IntConstant(subscripts.size()));
     bb.add(Xcons.List(Xcode.EXPR_STATEMENT,f.Call(args)));
 
-    f = def.declExternIdent(XMP.onref_set_info_f,Xtype.FsubroutineType);
+    f = def.declExternIdent(XMP.ref_set_info_f,Xtype.FsubroutineType);
     for(int i = 0; i < subscripts.size(); i++){
       XMPdimInfo info = subscripts.elementAt(i);
       Xobject off = info.getLoopOnRefOffset();
@@ -85,16 +86,19 @@ public class XMPobjectsRef {
       bb.add(Xcons.List(Xcode.EXPR_STATEMENT,f.Call(args)));
     }
     
-    f = def.declExternIdent(XMP.onref_init_f,Xtype.FsubroutineType);
+    f = def.declExternIdent(XMP.ref_init_f,Xtype.FsubroutineType);
     bb.add(Xcons.List(Xcode.EXPR_STATEMENT,f.Call(Xcons.List(descId.Ref()))));
     
     return b;
   }
 
   public Xobject buildLoopTestFuncCall(XobjectDef def, XMPinfo info){
-    Ident f = def.declExternIdent(XMP.loop_test_f,Xtype.FlogicalFunctionType);
+
+    Ident f = def.declExternIdent(XMP.loop_test_f+info.getLoopDim(),
+				  Xtype.FlogicalFunctionType);
     Xobject args = Xcons.List(descId);
-    for(int i = 0; i < info.getLoopDim(); i++) args.add(info.getLoopIndex(i));
+    for(int i = 0; i < info.getLoopDim(); i++) 
+      args.add(info.getLoopVar(i));
     return f.Call(args);
   }
 }

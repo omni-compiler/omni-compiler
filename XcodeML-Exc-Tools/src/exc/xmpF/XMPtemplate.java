@@ -265,10 +265,9 @@ package exc.xmpF;
 
    /* rewrite for template directive:
     *  ! _xmpf_template_alloc__(t_desc,#dim)
-    *  ! _xmpf_template_dim_size__(t_desc,i_dim,lower_b,upper_b)
-    *
+    *  ! _xmpf_template_dim_info__(t_desc,i_dim,lower_b,upper_b,
+    *                                     dist_manner,n_idx,chunk)
     *  !  xmpf_template_init__(t_desc,n_desc)
-    *  ! xmpf_template_dist__(t_desc,t_idx,dist_manner,0,0,0) ! dist_manner=BLOCK(101)
     */
    public Block buildConstructor(XobjectDef def){
      Block b = Bcons.emptyBlock();
