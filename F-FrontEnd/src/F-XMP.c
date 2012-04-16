@@ -78,10 +78,9 @@ void compile_XMP_directive(expr x)
 
     dir = EXPR_ARG1(x);  /* direcive name */
 
-#ifdef not
-    if(EXPR_INT(dir) != XMP_TASKS && EXPR_INT(dir) != XMP_TASK)
+    if(EXPR_INT(dir) != XMP_END_TASKS && 
+       EXPR_INT(dir) != XMP_END_TASK)
 	check_for_XMP_pragma(NULL);  /* close DO directives if any */
-#endif	
 
     switch(EXPR_INT(dir)){
       
