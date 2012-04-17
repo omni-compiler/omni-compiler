@@ -9,6 +9,9 @@ AC_PREREQ(2.60)
 
 AC_INIT([Omni XcalableMP Compiler], [1], [BUG-REPORT-ADDRESS], [omni_xmp])
 
+AC_CONFIG_AUX_DIR([buildutils])
+AC_CONFIG_MACRO_DIR([buildutils])
+
 AC_CANONICAL_TARGET
 
 AM_INIT_AUTOMAKE([foreign])

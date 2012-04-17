@@ -82,7 +82,7 @@ am_libtlog_mpi_a_OBJECTS = tlog.$(OBJEXT) tlog_conv.$(OBJEXT) \
 	tlog_dump.$(OBJEXT)
 libtlog_mpi_a_OBJECTS = $(am_libtlog_mpi_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
-depcomp = $(SHELL) $(top_srcdir)/depcomp
+depcomp = $(SHELL) $(top_srcdir)/buildutils/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
