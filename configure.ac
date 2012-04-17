@@ -8,6 +8,9 @@ AC_PREREQ(2.60)
 # Let the initiation begin....
 
 AC_INIT([Omni XcalableMP Compiler], [1], [BUG-REPORT-ADDRESS], [omni_xmp])
+
+AC_CANONICAL_TARGET
+
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([include/exc_platform.h])
 AC_CONFIG_HEADER([include/config.h])
@@ -597,20 +600,54 @@ BASH=""
 AC_PATH_PROGS(BASH, bash, ${PATH}:/bin:/usr/bin:/usr/local/bin:/opt/bin:/opt/local/bin)
 AC_SUBST(BASH)
 
-# check ranlib
-AC_PROG_RANLIB
-if test "x${isGcc}" = "xno"; then
-    case $OS in
-    solaris*|irix*)
-        RANLIB=':';;
-    esac
+# check ranlib & ar
+if test "$target" != "$host"; then
+
+   case "$target" in
+	Kcomputer-linux-gnu)
+		AC_CHECK_TOOL([RANLIB], [ranlibpx], [:])
+		AC_CHECK_TOOL([AR], [arpx], [:])
+		ARFLAGS="cru"
+		AC_SUBST(ARFLAGS) ;;
+	*)
+		AC_CHECK_TARGET_TOOL([RANLIB], [ranlib], [:])
+		AC_CHECK_TARGET_TOOL([AR], [ar], [:]) ;;
+   esac
+
+else
+
+   AC_PROG_RANLIB
+   if test "x${isGcc}" = "xno"; then
+      case $OS in
+          solaris*|irix*)
+	  RANLIB=':';;
+      esac
+   fi
+
+   AC_CHECK_TOOL([AR], [ar], [:])
+   ARFLAGS="cru"
+   AC_SUBST(ARFLAGS)
+
 fi
 
-# check ar
+# check CC for libraries
 
-AC_CHECK_TOOL([AR], [ar], [:])
-ARFLAGS="cru"
-AC_SUBST(ARFLAGS)
+if test "$target" != "$host"; then
+
+   case "$target" in
+	Kcomputer-linux-gnu)
+		CC_LIB="fccpx -Xg -std=gnu99"
+		AC_SUBST(CC_LIB) ;;
+	*)
+		AC_CHECK_TARGET_TOOL([CC_LIB], [cc], [:]) ;;
+   esac
+
+else
+
+   CC_LIB=${CC}
+   AC_SUBST(CC_LIB)
+
+fi
 
 # check zip
 
@@ -1228,11 +1265,21 @@ AC_SUBST(omniQRealPrecInLimb)
 AC_SUBST(omniQRealFillGap)
 
 # --------------------------------------------------------------------
+
+if test "$target" == "Kcomputer-linux-gnu"; then
+   default_libxmlDir="/usr"
+   default_mpicc="mpifccpx -Xg -std=gnu99"
+else
+   default_libxmlDir="/usr/local"
+   default_mpicc="mpicc"
+fi
+
+# --------------------------------------------------------------------
 # specify libxmp path
 
 AC_ARG_WITH(libxmlDir,
     [  --with-libxmlDir=DIR    specify libxml install directory (default: /usr/local)],
-    [LIBXML_PREFIX="${withval}"], [LIBXML_PREFIX="/usr/local"])
+    [LIBXML_PREFIX="${withval}"], [LIBXML_PREFIX="${default_libxmlDir}"])
 
 AC_SUBST(LIBXML_PREFIX)
 
@@ -1243,7 +1290,7 @@ AC_SUBST(LIBXML_PREFIX)
 
 AC_ARG_WITH(mpicc,
     [  --with-mpicc=CMD        specify MPI C compiler (default: mpicc)],
-    [MPI_CMD="${withval}"], [MPI_CMD="mpicc"])
+    [MPI_CMD="${withval}"], [MPI_CMD="${default_mpicc}"])
 
 AC_SUBST(MPI_CMD)
 
