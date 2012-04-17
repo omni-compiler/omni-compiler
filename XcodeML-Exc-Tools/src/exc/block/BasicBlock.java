@@ -337,8 +337,9 @@ public class BasicBlock extends PropObject implements Iterable<Statement>
         if(head == tail && exp == null) {
             Xobject expr = head.getExpr();
             if(XmOption.isLanguageF()) {
-                if(!expr.Opcode().isFstatement())
-                    expr = Xcons.List(Xcode.EXPR_STATEMENT, expr);
+                if(!expr.Opcode().isFstatement() &&
+		   expr.Opcode() != Xcode.EXPR_STATEMENT)
+		  expr = Xcons.List(Xcode.EXPR_STATEMENT, expr);
             }
             return expr;
         }

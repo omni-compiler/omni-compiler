@@ -175,7 +175,6 @@ package exc.xmpF;
    public static void analyzeDistribute(Xobject templ, Xobject distArgs,
 					  Xobject nodes, XMPenv env,
 					  PragmaBlock pb) {
-     System.out.println("translateDistribute...");
      // get template object
      String templateName = templ.getString();
      XMPtemplate templateObject = null;
@@ -260,7 +259,7 @@ package exc.xmpF;
 
      // set distributed
      templateObject.setIsDistributed();
-     System.out.println("distribute="+templateObject);
+     if(XMP.debugFlag) System.out.println("distribute="+templateObject);
    }
 
    /* rewrite for template directive:
@@ -274,28 +273,26 @@ package exc.xmpF;
      BasicBlock bb = b.getBasicBlock();
      Ident f = def.declExternIdent(XMP.template_alloc_f,Xtype.FsubroutineType);
      Xobject args = Xcons.List(_descId.Ref(),Xcons.IntConstant(_dim));
-     bb.add(Xcons.List(Xcode.EXPR_STATEMENT,f.Call(args)));
+     bb.add(f.callSubroutine(args));
 
      /* template size */
      f = def.declExternIdent(XMP.template_dim_info_f,Xtype.FsubroutineType);
      for(int i = 0; i < _dim; i++){
        XMPdimInfo info = scripts.elementAt(i);
        Xobject dist_arg = info.getDistArg();
-       System.out.println("upper="+info.getUpper()+",info="+info);
 
        if(dist_arg == null) dist_arg = Xcons.IntConstant(0);
        args = Xcons.List(_descId.Ref(),Xcons.IntConstant(i),
 			 info.getLower(),info.getUpper(),
 			 Xcons.IntConstant(info.getDistManner()),
 			 dist_arg);
-	bb.add(Xcons.List(Xcode.EXPR_STATEMENT,f.Call(args)));
-      }
+       bb.add(f.callSubroutine(args));
+     }
 
      /* init */
      f = def.declExternIdent(XMP.template_init_f,Xtype.FsubroutineType);
-     bb.add(Xcons.List(Xcode.EXPR_STATEMENT,
-		       f.Call(Xcons.List(_descId.Ref(),
-					 ontoNodes.getDescId().Ref()))));
+     bb.add(f.callSubroutine(Xcons.List(_descId.Ref(),
+					ontoNodes.getDescId().Ref())));
      return b;
    }
 }

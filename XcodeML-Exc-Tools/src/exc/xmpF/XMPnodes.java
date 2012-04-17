@@ -129,23 +129,23 @@ public class XMPnodes extends XMPobject {
     BasicBlock bb = b.getBasicBlock();
     Ident f = def.declExternIdent(XMP.nodes_alloc_f,Xtype.FsubroutineType);
     Xobject args = Xcons.List(_descId.Ref(),Xcons.IntConstant(_dim));
-    bb.add(Xcons.List(Xcode.EXPR_STATEMENT,f.Call(args)));
+    bb.add(f.callSubroutine(args));
 
-     f = def.declExternIdent(XMP.nodes_dim_size_f,Xtype.FsubroutineType);
-     for(int i = 0; i < _dim; i++){
-       args = Xcons.List(_descId.Ref(),Xcons.IntConstant(i),
+    f = def.declExternIdent(XMP.nodes_dim_size_f,Xtype.FsubroutineType);
+    for(int i = 0; i < _dim; i++){
+      args = Xcons.List(_descId.Ref(),Xcons.IntConstant(i),
  			_sizeVector.elementAt(i).getSize());
-       bb.add(Xcons.List(Xcode.EXPR_STATEMENT,f.Call(args)));
+       bb.add(f.callSubroutine(args));
      }
 
     switch(inheritType){
     case INHERIT_GLOBAL:
       f = def.declExternIdent(XMP.nodes_init_GLOBAL_f,Xtype.FsubroutineType);
-      bb.add(Xcons.List(Xcode.EXPR_STATEMENT,f.Call(Xcons.List(_descId.Ref()))));
+      bb.add(f.callSubroutine(Xcons.List(_descId.Ref())));
       break;
     case INHERIT_EXEC:
       f = def.declExternIdent(XMP.nodes_init_EXEC_f,Xtype.FsubroutineType);
-      bb.add(Xcons.List(Xcode.EXPR_STATEMENT,f.Call(Xcons.List(_descId.Ref()))));
+      bb.add(f.callSubroutine(Xcons.List(_descId.Ref())));
       break;
     case INHERIT_NODES:
       // create nodeRef ...

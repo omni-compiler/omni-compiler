@@ -66,10 +66,10 @@ public class XMPtransPragma
   // pass3:
   // write pragma
   Block transPragma(PragmaBlock pb) {
-    XMPinfo i = (XMPinfo)pb.getProp(XMP.prop);
-    if(i == null) return null;
+    XMPinfo info = (XMPinfo)pb.getProp(XMP.prop);
+    if(info == null) return null;
 
-    switch (i.pragma){
+    switch (info.pragma){
     case NODES:
     case TEMPLATE:
     case DISTRIBUTE:
@@ -80,22 +80,23 @@ public class XMPtransPragma
       return Bcons.emptyBlock();
 
     case LOOP:
-      return translateLoop(pb,i);
+      return translateLoop(pb,info);
+
+    case REFLECT:
+      return translateReflect(pb,info);
+    case BARRIER:
+      return translateBarrier(pb,info);
+    case REDUCTION:
+      return translateReduction(pb,info);
+    case BCAST:
+      return translateBcast(pb,info);     
 
     case TASK:
-      return translateTask(pb,i);
+      return translateTask(pb,info);
     case TASKS:
-      return translateTasks(pb,i);
-    case REFLECT:
-      return translateReflect(pb,i);
-    case BARRIER:
-      return translateBarrier(pb,i);
-    case REDUCTION:
-      return translateReduction(pb,i);	
-    case BCAST:
-      return translateBcast(pb,i);     
+      return translateTasks(pb,info);
     case GMOVE:
-      return translateGmove(pb,i);
+      return translateGmove(pb,info);
     default:
       // XMP.fatal("unknown pragma");
       // ignore it
@@ -112,7 +113,7 @@ public class XMPtransPragma
       // DO I = lb, up, step ; if(xmp_is_loop_1(i,on_desc)) body
       // create on_desc, only use loop_on_ref
       BlockList ret_body = Bcons.emptyBody();
-      XMPobjectsRef on_ref = info.getLoopOnRef();
+      XMPobjectsRef on_ref = info.getOnRef();
       ret_body.add(on_ref.buildConstructor(current_def));
 
       ForBlock for_block = (ForBlock)pb.getBody().getHead();
@@ -196,33 +197,95 @@ public class XMPtransPragma
     return Bcons.COMPOUND(ret_body);
   }
 
-  private Block translateReflect(PragmaBlock pb, XMPinfo i){
-    XMP.fatal("translateReflect");
-    return null;
+  private Block translateReflect(PragmaBlock pb, XMPinfo info){
+    Block b = Bcons.emptyBlock();
+    BasicBlock bb = b.getBasicBlock();
+    Ident f;
+
+    f = current_def.declExternIdent(XMP.reflect_f,Xtype.FsubroutineType);
+    
+    // no width option is supported yet.
+    Vector<XMParray> reflectArrays = info.getReflectArrays();
+    for(XMParray a: reflectArrays){
+      bb.add(f.callSubroutine(Xcons.List(a.getDescId().Ref())));
+    }
+
+    return b;
   }
 
-  private Block translateTask(PragmaBlock pb, XMPinfo i){
+  private Block translateBarrier(PragmaBlock pb, XMPinfo i) {
+    Block b = Bcons.emptyBlock();
+    BasicBlock bb = b.getBasicBlock();
+    Ident f = current_def.declExternIdent(XMP.barrier_f,
+					  Xtype.FsubroutineType);
+    // don't care about on_ref
+    bb.add(f.callSubroutine(Xcons.List(Xcons.IntConstant(0))));
+    return b;
+  }
+
+  private Block translateReduction(PragmaBlock pb, XMPinfo info){
+    Block b = Bcons.emptyBlock();
+    BasicBlock bb = b.getBasicBlock();
+
+    // object size
+    int op = info.getReductionOp();
+    Ident f = current_def.declExternIdent(XMP.reduction_f,
+					  Xtype.FsubroutineType);
+    for(Ident id: info.getInfoVarIdents()){
+      Xtype type = id.Type();
+      Xobject size_expr = Xcons.IntConstant(1);
+      if(type.isFarray()){
+	for(Xobject s: type.getFarraySizeExpr()){
+	  size_expr = Xcons.binaryOp(Xcode.MUL_EXPR,size_expr,s);
+	}
+	type = type.getRef();
+      }
+      if(!type.isBasic()){
+	XMP.fatal("reduction for non-basic type ="+type);
+      }
+      Xobject args = Xcons.List(id.Ref(),size_expr,
+				Xcons.IntConstant(type.getBasicType()),
+				Xcons.IntConstant(op),
+				Xcons.IntConstant(0));
+      bb.add(f.callSubroutine(args));
+    }
+    return b;
+  }
+
+  private Block translateBcast(PragmaBlock pb, XMPinfo info){
+    Block b = Bcons.emptyBlock();
+    BasicBlock bb = b.getBasicBlock();
+
+    Ident f = current_def.declExternIdent(XMP.bcast_f,
+					  Xtype.FsubroutineType);
+    for(Ident id: info.getInfoVarIdents()){
+      Xtype type = id.Type();
+      Xobject size_expr = Xcons.IntConstant(1);
+      if(type.isFarray()){
+	for(Xobject s: type.getFarraySizeExpr()){
+	  size_expr = Xcons.binaryOp(Xcode.MUL_EXPR,size_expr,s);
+	}
+	type = type.getRef();
+      }
+      if(!type.isBasic()){
+	XMP.fatal("bcast for non-basic type ="+type);
+      }
+      Xobject args = Xcons.List(id.Ref(),size_expr,
+				Xcons.IntConstant(type.getBasicType()),
+				Xcons.IntConstant(0),
+				Xcons.IntConstant(0));
+      bb.add(f.callSubroutine(args));
+    }
+    return b;
+  }
+
+  private Block translateTask(PragmaBlock pb, XMPinfo info){
     XMP.fatal("translateTask");
     return null;
   }
 
   private Block translateTasks(PragmaBlock pb, XMPinfo i) {
     XMP.fatal("translateTasks");
-    return null;
-  }
-
-  private Block translateBarrier(PragmaBlock pb, XMPinfo i) {
-    XMP.fatal("translateBarrier");
-    return null;
-  }
-
-  private Block translateReduction(PragmaBlock pb, XMPinfo i){
-    XMP.fatal("translateReduction");
-    return null;
-  }
-
-  private Block translateBcast(PragmaBlock pb, XMPinfo i){
-    XMP.fatal("translateBcast");
     return null;
   }
 

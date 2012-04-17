@@ -29,12 +29,9 @@ public class XMPdimInfo {
   final static int ALIGN_ANY = 2; /* for '*' */
 
   // shadow for array
-  int shadow_status;
-  Xobject shadow_left, shadow_right;
-  
-  public final static int SHADOW_NONE	= 0;
-  public final static int SHADOW_SET	= 1;
-  public final static int SHADOW_FULL	= 2;
+  boolean is_full_shadow;
+  int shadow_left;
+  int shadow_right;
 
   // for loop
   Xobject loop_var;
@@ -44,7 +41,6 @@ public class XMPdimInfo {
   int on_ref_index;
   Xobject on_ref_offset;
 
-
   // null constructor
   public XMPdimInfo() { 
     distManner = 0;
@@ -53,6 +49,10 @@ public class XMPdimInfo {
     upper = null;
     stride = null;
     on_ref_index = -1;
+
+    is_full_shadow = false;
+    shadow_left  = 0;
+    shadow_right = 0;
   }  
   
   public Xobject getLower() { 
@@ -65,6 +65,10 @@ public class XMPdimInfo {
   public Xobject getSize() { 
     if(lower == null) return upper;
     else return Xcons.binaryOp(Xcode.PLUS_EXPR,upper,lower); 
+  }
+
+  public boolean hasStride() { 
+    return stride != null;
   }
 
   public Xobject getStride() { 
@@ -109,7 +113,6 @@ public class XMPdimInfo {
   
   public boolean isAlignAny() { return  align_status == ALIGN_ANY; }
 
-
   /*
    * parse dim expression
    */
@@ -130,10 +133,10 @@ public class XMPdimInfo {
     } else {
       upper = decl.getArg(0);
       lower = decl.getArg(1);
-      stride = decl.getArg(2);
+      stride = decl.getArgOrNull(2);
     }
   }
-
+  
   public static Vector<XMPdimInfo> parseSubscripts(Xobject subscriptList){
     Vector<XMPdimInfo> subscripts = new Vector<XMPdimInfo>();
     for (XobjArgs i = subscriptList.getArgs(); i != null; i = i.nextArgs()) 

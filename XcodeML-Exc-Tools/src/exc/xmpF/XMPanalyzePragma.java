@@ -51,9 +51,11 @@ public class XMPanalyzePragma
     String pragmaName = pb.getPragma();
 
     // debug
-    System.out.println("Pragma: "+pragmaName);
-    System.out.println(" Clause= "+pb.getClauses());
-    System.out.println(" Body= "+pb.getBody());
+    if(XMP.debugFlag){
+      System.out.println("Pragma: "+pragmaName);
+      System.out.println(" Clause= "+pb.getClauses());
+      System.out.println(" Body= "+pb.getBody());
+    }
 
     XMPinfo outer = null;
     for(Block bp = pb.getParentBlock(); bp != null; bp = bp.getParentBlock()) {
@@ -72,82 +74,89 @@ public class XMPanalyzePragma
 	XMPnodes.analyzePragma(clauses, env, pb);
       }
       break;
+
     case TEMPLATE:
       {
 	Xobject templateDecl = pb.getClauses();
 	XobjList templateNameList = (XobjList)templateDecl.getArg(0);
 	  
-	Iterator<Xobject> iter = templateNameList.iterator();
-	while (iter.hasNext()) {
-	  Xobject xx = iter.next();
+	for(Xobject xx:templateNameList){
 	  XMPtemplate.analyzeTemplate(xx,templateDecl.getArg(1), env, pb);
 	}
       }
       break;
+
     case DISTRIBUTE:
       {
 	Xobject distributeDecl = pb.getClauses();
 	XobjList distributeNameList = (XobjList)distributeDecl.getArg(0);
 	Xobject distributeDeclCopy = distributeDecl.copy();
 
-	Iterator<Xobject> iter = distributeNameList.iterator();
-	while (iter.hasNext()) {
-	  Xobject xx = iter.next();
+	for(Xobject xx:distributeNameList){
 	  XMPtemplate.analyzeDistribute(xx,distributeDecl.getArg(1),
 					distributeDecl.getArg(2),env, pb);
 	}
       }
       break;
+
     case ALIGN:
       {
 	Xobject alignDecl = pb.getClauses();
 	XobjList alignNameList = (XobjList)alignDecl.getArg(0);
 
-	Iterator<Xobject> iter = alignNameList.iterator();
-	while (iter.hasNext()) {
-	  Xobject xx = iter.next();
+	for(Xobject xx: alignNameList){
 	  XMParray.analyzeAlign(xx, alignDecl.getArg(1),
 				  alignDecl.getArg(2),
 				  alignDecl.getArg(3),
 				  env, pb);
+	  if(XMP.hasError()) break;
 	}
       }
       break;
+
     case SHADOW:
       {
-// 	Xobject shadowDecl = pb.getClauses();
-// 	XobjList shadowNameList = (XobjList) shadowDecl.getArg(0);
-// 	Xobject shadowDeclCopy = shadowDecl.copy();
+ 	Xobject shadowDecl = pb.getClauses();
+ 	XobjList shadowNameList = (XobjList) shadowDecl.getArg(0);
+	Xobject shadow_w_list = shadowDecl.getArg(1);
 
-// 	Iterator<Xobject> iter = shadowNameList.iterator();
-// 	while (iter.hasNext()) {
-// 	  Xobject xx = iter.next();
-// 	  shadowDeclCopy.setArg(0, xx);
-// 	  XMPshadow.analyzeShadow(shadowDeclCopy, env , pb);
-// 	}
+	for(Xobject xx: shadowNameList){
+	  XMParray.analyzeShadow(xx,shadow_w_list,env,pb);
+	  if(XMP.hasError()) break;
+ 	}
       }
-      break;
-    case COARRAY:
-      // translateCoarrayDecl(x);
       break;
 
     case LOOP:
-      { analyzeLoop(pb,info);			break; }
+      analyzeLoop(pb.getClauses(), pb.getBody(), pb,info);
+      break; 
+
+    case REFLECT:
+      analyzeReflect(pb.getClauses(),info,pb);
+      break;
+
+    case BARRIER:
+      analyzeBarrier(pb.getClauses(),info,pb);
+      break;
+
+    case REDUCTION:
+      analyzeReduction(pb.getClauses(),info,pb);
+      break;
+
+    case BCAST:
+      analyzeBcast(pb.getClauses(),info,pb);
+      break;
 
     case TASK:
       { analyzeTask(pb);			break; }
     case TASKS:
       { analyzeTasks(pb);			break; }
-    case REFLECT:
-      { analyzeReflect(pb);			break; }
-    case BARRIER:
-      { analyzeBarrier(pb);			break; }
-    case REDUCTION:
-      { analyzeReduction(pb);		break; }
-    case BCAST:
-      { analyzeBcast(pb);			break; }
     case GMOVE:
       { analyzeGmove(pb);			break; }
+
+    case COARRAY:
+      // { translateCoarrayDecl(x);   		break; }
+
     default:
       XMP.fatal("'" + pragmaName.toLowerCase() + 
 		"' directive is not supported yet");
@@ -163,10 +172,8 @@ public class XMPanalyzePragma
    * analyze Loop directive:
    *  loopDecl = (on_ref | ...)
    */
-  private void analyzeLoop(PragmaBlock pb, XMPinfo info) {
-    XobjList loopDecl = (XobjList)pb.getClauses();
-    BlockList loopBody = pb.getBody();
-
+  void analyzeLoop(Xobject loopDecl, BlockList loopBody,
+		   PragmaBlock pb, XMPinfo info) {
     // get block to schedule
     Vector<XMPdimInfo> dims = new Vector<XMPdimInfo>();
     
@@ -267,12 +274,105 @@ public class XMPanalyzePragma
     return null;
   }
 
-  private void analyzeCoarray(Xobject coarrayPragma){
-    XMP.fatal("analyzeCoarray");
+  private void analyzeReflect(Xobject reflectDecl, 
+			      XMPinfo info, PragmaBlock pb){
+    XobjList reflectNameList = (XobjList) reflectDecl.getArg(0);
+    Xobject reflectOpt = reflectDecl.getArg(1);
+
+    if(reflectOpt != null){
+      XMP.fatal("reflect opt is not supported yet, sorry!");
+      return;
+    }
+
+    Vector<XMParray> reflectArrays = new Vector<XMParray>();
+    // check array
+    for(Xobject x: reflectNameList){
+      if(!x.isVariable()){
+	XMP.error("Bad array name in reflect name list");
+	continue;
+      }
+      String name = x.getName();
+      XMParray array = env.getXMParray(name, pb);
+      if(array == null){
+	XMP.error("array '" + name + "'for reflect is not declared");
+	continue;
+      }
+      reflectArrays.add(array);
+    }
+    info.setReflectArrays(reflectArrays);
   }
 
-  private void analyzeReflect(PragmaBlock pb){
-    XMP.fatal("analyzeReflect");
+  void analyzeBarrier(Xobject barrierDecl, 
+		      XMPinfo info, PragmaBlock pb) {
+    Xobject barrierOnRef = barrierDecl.getArg(0);
+    Xobject barrierOpt = barrierDecl.getArg(1);
+
+    if(barrierOpt != null){
+      System.out.println("opt="+barrierOpt);
+      XMP.fatal("barrier opt is not supported yet, sorry!");
+      return;
+    }
+
+    info.setOnRef(XMPobjectsRef.parseDecl(barrierOnRef,env,pb));
+  }
+
+  void analyzeReduction(Xobject reductionDecl, 
+			XMPinfo info, PragmaBlock pb){
+    Xobject reductionSpec = reductionDecl.getArg(0);
+    Xobject reductionOnRef = reductionDecl.getArg(1);
+    Xobject reductionOpt = reductionDecl.getArg(2);
+
+    if(reductionOpt != null){
+      XMP.fatal("redution opt is not supported yet, sorry!");
+      return;
+    }
+
+    Xobject op = reductionSpec.getArg(0);
+    if(!op.isIntConstant()) XMP.fatal("reduction: op is not INT");
+
+    Vector<Ident> reduction_vars = new Vector<Ident>();
+    for(Xobject v: (XobjList)reductionSpec.getArg(1)){
+      if(!v.isVariable()){
+	XMP.error("not variable in reduction spec list");
+      }
+      Ident id = env.findVarIdent(v.getName(),pb);
+      if(id == null){
+	XMP.error("variable '"+v.getName()+"' in reduction is not found");
+      }
+      reduction_vars.add(id);
+    }
+    info.setReductionInfo(op.getInt(),reduction_vars);
+    
+    info.setOnRef(XMPobjectsRef.parseDecl(reductionOnRef,env,pb));
+  }
+
+  private void analyzeBcast(Xobject bcastDecl, 
+			XMPinfo info, PragmaBlock pb){
+    XobjList bcastNameList = (XobjList) bcastDecl.getArg(0);
+    Xobject fromRef = bcastDecl.getArg(1);
+    Xobject toRef = bcastDecl.getArg(2);
+    Xobject bcastOpt = bcastDecl.getArg(3);
+
+    if(bcastOpt != null){
+      XMP.fatal("bcast opt is not supported yet, sorry!");
+      return;
+    }
+
+    Vector<Ident> bcast_vars = new Vector<Ident>();
+    for(Xobject v: bcastNameList){
+      if(!v.isVariable()){
+	XMP.error("not variable in bcast variable list");
+      }
+      Ident id = env.findVarIdent(v.getName(),pb);
+      if(id == null){
+	XMP.error("variable '"+v.getName()+"' in reduction is not found");
+      }
+      bcast_vars.add(id);
+    }
+    
+    info.setBcastInfo(XMPobjectsRef.parseDecl(fromRef,env,pb),
+		      XMPobjectsRef.parseDecl(toRef,env,pb),
+		      bcast_vars);
   }
 
   private void analyzeTask(PragmaBlock pb){
@@ -283,19 +383,13 @@ public class XMPanalyzePragma
     XMP.fatal("analyzeTasks");
   }
 
-  private void analyzeBarrier(PragmaBlock pb) {
-    XMP.fatal("analyzeBarrier");
-  }
-
-  private void analyzeReduction(PragmaBlock pb){
-    XMP.fatal("analyzeReduction");
-  }
-
-  private void analyzeBcast(PragmaBlock pb){
-    XMP.fatal("analyzeBcast");
-  }
 
   private void analyzeGmove(PragmaBlock pb) {
     XMP.fatal("analyzeGmove");
   }
+
+  private void analyzeCoarray(Xobject coarrayPragma){
+    XMP.fatal("analyzeCoarray");
+  }
+
 }

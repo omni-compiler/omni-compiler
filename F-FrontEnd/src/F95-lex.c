@@ -234,7 +234,7 @@ initialize_lex()
     paren_level = 0;
 }
 
-// #define LEX_DEBUG
+//#define LEX_DEBUG
 static int yylast;
 
 /* lexical analyer */

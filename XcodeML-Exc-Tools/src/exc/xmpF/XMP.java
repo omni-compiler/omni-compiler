@@ -15,7 +15,7 @@ import xcodeml.util.XmLog;
 public class XMP {
 
   final static String prop = "XMPprop";
-  public static boolean debugFlag = true;
+  public static boolean debugFlag = false;
 
   // defined in xmp_constant.h
   public final static int REDUCE_SUM		= 300;
@@ -61,6 +61,7 @@ public class XMP {
   public final static String array_init_f = "xmpf_array_init_";
   public final static String array_get_local_size_f = "xmpf_array_get_local_size_";
   public final static String array_set_local_array_f = "xmpf_array_set_local_array_";
+  public final static String array_init_shadow_f = "xmpf_array_init_shadow_";
 
   public final static String ref_templ_alloc_f = "xmpf_ref_templ_alloc_";
   public final static String ref_nodes_alloc_f = "xmpf_ref_nodes_alloc_";
@@ -68,6 +69,11 @@ public class XMP {
   public final static String ref_init_f = "xmpf_ref_init_";
 
   public final static String loop_test_f = "xmpf_loop_test_";
+
+  public final static String reflect_f = "xmpf_reflect_";
+  public final static String barrier_f = "xmpf_barrier_";
+  public final static String reduction_f = "xmpf_reduction_";
+  public final static String bcast_f = "xmpf_bcast_";
   
   public final static String arrayProp = "XMParrayProp";
 

@@ -26,8 +26,6 @@ public class XMParray {
   private Ident			descId;  // descriptor
   private Ident 		localId; // local ident
 
-  
-  private boolean		hasShadow;
   private XMPtemplate		template;
 
   // null constructor
@@ -69,6 +67,40 @@ public class XMParray {
     return dims.elementAt(index).align_subscript_expr;
   }
 
+  public void setShadow(int left, int right, int index) {
+    dims.elementAt(index).shadow_left = left;
+    dims.elementAt(index).shadow_right = right;
+  }
+
+  public void setFullShadow(int index) {
+    dims.elementAt(index).is_full_shadow = true;
+  }
+
+  public boolean isFullShadow(int index){
+    return dims.elementAt(index).is_full_shadow;
+  }
+
+  public boolean hasShadow(int index){
+    return (dims.elementAt(index).is_full_shadow ||
+	    dims.elementAt(index).shadow_left != 0 ||
+	    dims.elementAt(index).shadow_right != 0);
+  }
+
+  public boolean hasShadow(){
+    for(int i = 0; i < dims.size(); i++){
+      if(hasShadow(i)) return true;
+    }
+    return false;
+  }
+
+  public int getShadowLeft(int index) {
+    return dims.elementAt(index).shadow_left;
+  }
+
+  public int getShadowRight(int index) {
+    return dims.elementAt(index).shadow_right;
+  }
+
   public Ident getArrayId() {
     return arrayId;
   }
@@ -81,13 +113,6 @@ public class XMParray {
     return localId;
   }
 
-  public void setHasShadow() {
-    hasShadow = true;
-  }
-
-  public boolean hasShadow() {
-    return hasShadow;
-  }
 
   public XMPtemplate getAlignTemplate() {
     return template;
@@ -102,7 +127,6 @@ public class XMParray {
     XMParray arrayObject = new XMParray();
     arrayObject.parseAlign(a,arrayArgs,templ,tempArgs,env,pb);
     env.putXMParray(arrayObject,pb);
-    System.out.println("align="+arrayObject);
   }
 
   void parseAlign(Xobject a, Xobject alignSourceList,
@@ -131,7 +155,7 @@ public class XMParray {
 //           throw new XMPexception("array '" + arrayName + 
 // 				 "' must be external/global array or  a parameter of a function");
 //     }
-    System.out.println("arrayId="+arrayId);
+    if(XMP.debugFlag) System.out.println("arrayId="+arrayId);
     
     type  = arrayId.Type();
     if (type.getKind() != Xtype.F_ARRAY) {
@@ -187,15 +211,16 @@ public class XMParray {
 	XMP.error("bad syntax in align source script");
       t = i.getIndex();
       if(t.isVariable()){
-	for(XMPdimInfo j: src_dims)  // cross check!
+	for(XMPdimInfo j: src_dims){  // cross check!
+	  if(j.isStar()) continue;
 	  if(t != j.getIndex() && t.equals(j.getIndex())){
 	    XMP.error("same variable is found for '"+t.getName()+"'");
 	    break;
 	  }
+	}
 	if(XMP.hasError()) break;
       } else 
 	XMP.error("align source script must be variable");
-
     }
 
     // check tmpl_dims
@@ -230,7 +255,12 @@ public class XMParray {
       dims.add(XMPdimInfo.createFromRange(x));
 
     for(int i = 0; i < src_dims.size(); i++){
-      t = src_dims.elementAt(i).getIndex(); // must be variable
+      XMPdimInfo d_info = src_dims.elementAt(i);
+      if(d_info.isStar()) {
+	dims.elementAt(i).setAlignSubscript(-1,null);
+	continue;
+      }
+      t = d_info.getIndex(); // must be variable
       // find the associated variable in align-script
       int idx = -1;
       Xobject idxOffset = null;
@@ -257,6 +287,54 @@ public class XMParray {
     }
   }
 
+  public static void analyzeShadow(Xobject a, Xobject shadow_w_list,
+				   XMPenv env, PragmaBlock pb){
+    if(!a.isVariable()){
+      XMP.error("shadow cannot applied to non-array");
+      return;
+    }
+    String name = a.getString();
+    XMParray array = env.getXMParray(name, pb);
+    if (array == null) {
+      XMP.error("array '" + name + "'for shadow  is not declared");
+      return;
+    }
+    Vector<XMPdimInfo> dims = XMPdimInfo.parseSubscripts(shadow_w_list);
+    if(dims.size() != array.getDim()){
+      XMP.error("shadow dimension size is different from array dimension");
+      return;
+    }
+    for(int i = 0; i < dims.size(); i++){
+      XMPdimInfo d_info = dims.elementAt(i);
+      int right = 0;
+      int left = 0;
+      if(d_info.isStar())
+	array.setFullShadow(i);
+      else {
+	if(d_info.hasStride()){
+	  XMP.error("bad syntax in shadow");
+	  continue;
+	}
+	if(d_info.getLower() != null){
+	  if(d_info.getLower().isIntConstant())
+	    left = d_info.getLower().getInt();
+	  else
+	    XMP.error("shadow width(right) is not integer constant");
+	  if(d_info.getUpper().isIntConstant())
+	    right = d_info.getUpper().getInt();
+	  else
+	    XMP.error("shadow width(left) is not integer constant");
+	} else {
+	  if(d_info.getIndex().isIntConstant())
+	    left = right = d_info.getIndex().getInt();
+	  else 
+	    XMP.error("shadow width is not integer constant");
+	}
+	array.setShadow(left,right,i);
+      }
+    }
+  }
+
   /* !$xmp align A(i) with t(i+off)
    *
    *  ! _xmpf_array_alloc(a_desc,#dim,type,t_desc)
@@ -278,7 +356,7 @@ public class XMParray {
     args = Xcons.List(descId.Ref(),Xcons.IntConstant(dims.size()),
 		     XMP.typeIntConstant(elementType),
 		     template.getDescId().Ref());
-    bb.add(Xcons.List(Xcode.EXPR_STATEMENT,f.Call(args)));
+    bb.add(f.callSubroutine(args));
 
     f = def.declExternIdent(XMP.array_align_info_f,Xtype.FsubroutineType);
     for(int i = 0; i < dims.size(); i++){
@@ -296,23 +374,39 @@ public class XMParray {
 			  Xcons.IntConstant(info.getAlignSubscriptIndex()),
 			  off);
       }
-      bb.add(Xcons.List(Xcode.EXPR_STATEMENT,f.Call(args)));
+      bb.add(f.callSubroutine(args));
+    }
+
+    if(hasShadow()){
+      f = def.declExternIdent(XMP.array_init_shadow_f,Xtype.FsubroutineType);
+      for(int i = 0; i < dims.size(); i++){
+	if(hasShadow(i)){
+	  int left = getShadowLeft(i);
+	  int right = getShadowRight(i);
+	  if(isFullShadow(i)) left = right = -1;
+	  args = Xcons.List(descId.Ref(),
+			    Xcons.IntConstant(i),
+			    Xcons.IntConstant(left),
+			    Xcons.IntConstant(right));
+	  bb.add(f.callSubroutine(args));
+	}
+      }
     }
 
     f = def.declExternIdent(XMP.array_init_f,Xtype.FsubroutineType);
-    bb.add(Xcons.List(Xcode.EXPR_STATEMENT,f.Call(Xcons.List(descId.Ref()))));
+    bb.add(f.callSubroutine(Xcons.List(descId.Ref())));
 
     // allocate size variable
     XobjList alloc_args = Xcons.List();
     for(int i = 0; i < dims.size(); i++){
-      Ident size_v = Ident.Local(XMP.genSym("XMP_size_"),Xtype.FintType);
+      Ident ub = Ident.Local(XMP.genSym("XMP_ub_"),Xtype.FintType);
+      Ident lb = Ident.Local(XMP.genSym("XMP_lb_"),Xtype.FintType);
       f = def.declExternIdent(XMP.array_get_local_size_f,
 			      Xtype.FsubroutineType);
-      bb.add(Xcons.List(Xcode.EXPR_STATEMENT,
-			f.Call(Xcons.List(descId.Ref(),
-					  Xcons.IntConstant(i),
-					  size_v.Ref()))));
-      alloc_args.add(Xcons.FindexRange(Xcons.IntConstant(0),size_v.Ref()));
+      bb.add(f.callSubroutine(Xcons.List(descId.Ref(),
+					 Xcons.IntConstant(i),
+					 lb.Ref(),ub.Ref())));
+      alloc_args.add(Xcons.FindexRange(lb.Ref(),ub.Ref()));
     }
 
     // allocatable
@@ -320,7 +414,7 @@ public class XMParray {
     
     // set
     f = def.declExternIdent(XMP.array_set_local_array_f,Xtype.FsubroutineType);
-    bb.add(Xcons.List(Xcode.EXPR_STATEMENT,f.Call(Xcons.List(descId.Ref(),localId.Ref()))));
+    bb.add(f.callSubroutine(Xcons.List(descId.Ref(),localId.Ref())));
 
     return b;
   }

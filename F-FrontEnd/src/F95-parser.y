@@ -1751,7 +1751,7 @@ xmp_directive:
 	  | XMPKW_REDUCTION xmp_reduction_clause
 	    { $$ = XMP_LIST(XMP_REDUCTION,$2); }
 	  | XMPKW_BCAST xmp_bcast_clause
-	    { $$ = XMP_LIST(XMP_REDUCTION,$2); }
+	    { $$ = XMP_LIST(XMP_BCAST,$2); }
 
 	  | XMPKW_MASTER_IO xmp_master_io_options
 	    { $$ = XMP_LIST(XMP_MASTER_IO_BEGIN, $2); }
@@ -1838,11 +1838,11 @@ xmp_barrier_clause:
 xmp_bcast_clause:
 	     '(' xmp_expr_list ')' xmp_clause_opt
 	      { $$ = list4(LIST,$2,NULL,NULL,$4); }
-   	   | '(' xmp_expr_list ')' XMPKW_FROM xmp_nodes_ref xmp_clause_opt
+   	   | '(' xmp_expr_list ')' XMPKW_FROM xmp_on_ref xmp_clause_opt
 	      { $$ = list4(LIST,$2,$5,NULL,$6); }
-	   | '(' xmp_expr_list ')' XMPKW_ON xmp_nodes_ref xmp_clause_opt
+	   | '(' xmp_expr_list ')' XMPKW_ON xmp_on_ref xmp_clause_opt
 	      { $$ = list4(LIST,$2,NULL,$5,$6); }
-   	   | '(' xmp_expr_list ')' XMPKW_FROM xmp_nodes_ref 
+   	   | '(' xmp_expr_list ')' XMPKW_FROM xmp_on_ref 
 	           XMPKW_ON xmp_on_ref xmp_clause_opt
 	      { $$ = list4(LIST,$2,$5,$7,$8); }
             ;

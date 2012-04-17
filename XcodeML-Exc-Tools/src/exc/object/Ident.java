@@ -482,4 +482,15 @@ public class Ident extends Xobject
     {
         this.fparam_value = value;
     }
+
+    // for Fortran subroutine
+    public Xobject callSubroutine()
+    {
+      return Xcons.List(Xcode.EXPR_STATEMENT,Call());
+    }
+
+    public Xobject callSubroutine(Xobject args)
+    {
+      return Xcons.List(Xcode.EXPR_STATEMENT,Call(args));
+    }
 }

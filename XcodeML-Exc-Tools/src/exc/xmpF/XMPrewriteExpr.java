@@ -45,12 +45,17 @@ public class XMPrewriteExpr
 
   private void rewriteParams(FunctionBlock funcBlock){
     XobjList identList = funcBlock.getBody().getIdentList();
-    System.out.println("identList="+identList);
-    System.out.println("decl="+funcBlock.getBody().getDecls());
+
+    if(XMP.debugFlag){
+      System.out.println("identList="+identList);
+      System.out.println("decl="+funcBlock.getBody().getDecls());
+    }
+
     if (identList == null) {
       return;
     } else {
-      for(XobjArgs args = identList.getArgs(); args != null; args = args.nextArgs()){
+      for(XobjArgs args = identList.getArgs(); args != null; 
+	  args = args.nextArgs()){
 	Xobject x = args.getArg();
         XMParray array = 
 	  env.getXMParray(x.getName(),funcBlock);
@@ -90,7 +95,6 @@ public class XMPrewriteExpr
       case F_ARRAY_REF:
 	{
 	  Xobject a = x.getArg(0);
-	  System.out.println("array_ref="+x);
 	  if(a.Opcode() != Xcode.F_VAR_REF)
 	    XMP.fatal("not F_VAR_REF for F_ARRAY_REF");
 	  a = a.getArg(0);
@@ -116,7 +120,6 @@ public class XMPrewriteExpr
   }
 
   Xobject arrayIndexCalc(XMParray a, int dim_i, Xobject i){
-    System.out.println("i="+i);
     switch(i.Opcode()){
     case F_ARRAY_INDEX:
       Ident f = current_def.declExternIdent("xmpf_local_idx_",

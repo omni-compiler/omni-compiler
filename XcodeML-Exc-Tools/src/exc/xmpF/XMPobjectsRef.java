@@ -37,6 +37,7 @@ public class XMPobjectsRef {
    */
   
   public static XMPobjectsRef parseDecl(Xobject decl,XMPenv env, PragmaBlock pb){
+    if(decl == null) return null;
     XMPobjectsRef objRef = new XMPobjectsRef();
     objRef.parse(decl,env,pb);
     return objRef;
@@ -74,7 +75,7 @@ public class XMPobjectsRef {
     Ident f = def.declExternIdent(XMP.ref_templ_alloc_f,Xtype.FsubroutineType);
     Xobject args = Xcons.List(descId.Ref(),refObject.getDescId().Ref(),
 			      Xcons.IntConstant(subscripts.size()));
-    bb.add(Xcons.List(Xcode.EXPR_STATEMENT,f.Call(args)));
+    bb.add(f.callSubroutine(args));
 
     f = def.declExternIdent(XMP.ref_set_info_f,Xtype.FsubroutineType);
     for(int i = 0; i < subscripts.size(); i++){
@@ -83,11 +84,11 @@ public class XMPobjectsRef {
       if(off == null) off = Xcons.IntConstant(0);
       args = Xcons.List(descId.Ref(),Xcons.IntConstant(i),
 			Xcons.IntConstant(info.getLoopOnRefIndex()), off);
-      bb.add(Xcons.List(Xcode.EXPR_STATEMENT,f.Call(args)));
+      bb.add(f.callSubroutine(args));
     }
     
     f = def.declExternIdent(XMP.ref_init_f,Xtype.FsubroutineType);
-    bb.add(Xcons.List(Xcode.EXPR_STATEMENT,f.Call(Xcons.List(descId.Ref()))));
+    bb.add(f.callSubroutine(Xcons.List(descId.Ref())));
     
     return b;
   }

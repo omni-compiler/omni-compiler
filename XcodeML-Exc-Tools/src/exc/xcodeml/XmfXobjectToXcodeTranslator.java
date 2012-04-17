@@ -455,11 +455,16 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_ALLOCATE_STATEMENT:
-            e = createElement(name,
-                              "stat_name", getArg0Name(xobj));
-            for (Xobject a : (XobjList)xobj.getArg(1)) {
-                addChildNode(e, trans(a));
-            }
+	  System.out.println("xobj="+xobj);
+//              e = createElement(name,
+// 			       "stat_name", getArg0Name(xobj));
+//             for (Xobject a : (XobjList)xobj.getArg(1)) {
+//                 addChildNode(e, trans(a));
+//             }
+	  e = createElement(name);
+	  for (Xobject a : (XobjList)xobj.getArg(0)) {
+	    addChildNode(e, trans(a));
+	  }
             break;
 
         case F_DEALLOCATE_STATEMENT:
