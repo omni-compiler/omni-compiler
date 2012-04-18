@@ -104,9 +104,8 @@ void xmpf_reduction__(void *data_addr, int *count, int *datatype, int *op,
 //
 // bcast
 //
-void xmpf_bcast__(_XMP_object_ref_t **on_desc,
-		  void *addr, int *count, size_t *datatype_size,
-		  _XMP_object_ref_t **from_desc)
+void xmpf_bcast__(void *addr, int *count, size_t *datatype_size,
+		  _XMP_object_ref_t **on_desc, _XMP_object_ref_t **from_desc)
 {
   _XMP_nodes_t *on;
   _XMP_nodes_t *from;

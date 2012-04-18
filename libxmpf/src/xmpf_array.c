@@ -151,11 +151,19 @@ void xmpf_init_shadow__(_XMP_array_t **a_desc, int *i_dim,
 
 
 /* get local size */
-void xmpf_array_get_local_size__(_XMP_array_t **a_desc, int *i_dim, int *size)
+//void xmpf_array_get_local_size__(_XMP_array_t **a_desc, int *i_dim, int *size)
+//{
+//  _XMP_array_t *a = *a_desc;
+//  *size = a->info[*i_dim].alloc_size;
+//  xmpf_dbg_printf("array_get_size=%d\n",*size);
+//}
+void xmpf_array_get_local_size__(_XMP_array_t **a_desc, int *i_dim, int *lb, int *ub)
 {
-  _XMP_array_t *a = *a_desc;
-  *size = a->info[*i_dim].alloc_size;
-  xmpf_dbg_printf("array_get_size=%d\n",*size);
+  _XMP_array_t *array = *a_desc;
+  _XMP_array_info_t *ai = &(array->info[*i_dim]);
+  *lb = - ai->shadow_size_lo;
+  *ub = ai->alloc_size - ai->shadow_size_lo - 1;
+  xmpf_dbg_printf("array_get_size = (%d:%d)\n", *lb, *ub);
 }
 
 

@@ -120,7 +120,7 @@ void xmpf_ref_nodes_alloc__(_XMP_object_ref_t **r_desc,
 	_XMP_fatal("ref_alloc: cannot alloc memory");
     rp->ref_kind = XMP_OBJ_REF_NODES;
     rp->offset = ip;
-    rp->t_desc = *n_desc;
+    rp->n_desc = *n_desc;
     rp->index = iq;
     *r_desc = rp;
 }
