@@ -239,7 +239,7 @@ public class XMPenv {
   }
 
   public Ident declObjectId(String objectName, Block block) {
-    return declObjectId(objectName, Xtype.Fint4Type, block);
+    return declObjectId(objectName, Xtype.Fint8Type, block);
   }
 
   public Ident declObjectId(String objectName, Xtype type, Block block) {

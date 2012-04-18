@@ -272,7 +272,8 @@ package exc.xmpF;
      Block b = Bcons.emptyBlock();
      BasicBlock bb = b.getBasicBlock();
      Ident f = def.declExternIdent(XMP.template_alloc_f,Xtype.FsubroutineType);
-     Xobject args = Xcons.List(_descId.Ref(),Xcons.IntConstant(_dim));
+     Xobject args = Xcons.List(_descId.Ref(),Xcons.IntConstant(_dim),
+			       Xcons.IntConstant(1)); // fixed only
      bb.add(f.callSubroutine(args));
 
      /* template size */

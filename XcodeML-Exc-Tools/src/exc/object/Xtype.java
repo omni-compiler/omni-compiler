@@ -139,6 +139,8 @@ public class Xtype
         intType;
     public static final BasicType Fint4Type =
         new BasicType(BasicType.INT, null, 0, null, Xcons.IntConstant(4), null);
+    public static final BasicType Fint8Type =
+        new BasicType(BasicType.INT, null, 0, null, Xcons.IntConstant(8), null);
     public static final BasicType FcharacterType =
         new BasicType(BasicType.F_CHARACTER);
     public static final BasicType FcharacterWithLenType =
