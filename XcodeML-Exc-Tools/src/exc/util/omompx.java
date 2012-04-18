@@ -164,7 +164,7 @@ public class omompx
       } else if(arg.equals("-domp")) {
 	OMP.debugFlag = true;
       } else if(arg.equals("-dxmp")) {
-	XMP.debugFlag = true;
+	exc.xmpF.XMP.debugFlag = true;
       } else if(arg.equals("-o")) {
 	if(narg == null)
 	  error("needs argument after -o");
