@@ -131,6 +131,8 @@ FC = @FC@
 FCFLAGS = @FCFLAGS@
 F_BACKEND_DIR = @F_BACKEND_DIR@
 F_FRONTEND_DIR = @F_FRONTEND_DIR@
+GASNET_CONDUIT = @GASNET_CONDUIT@
+GASNET_PREFIX = @GASNET_PREFIX@
 GPGPU_PREFIX = @GPGPU_PREFIX@
 GPU_CMD = @GPU_CMD@
 GREP = @GREP@
@@ -290,6 +292,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 XMP_INC_DIR = ../include
 TLOG_INC_DIR = $(top_builddir)/@LIBTLOG_MPI_DIR@
+GASNET_INC_DIR = @GASNET_PREFIX@/include
+GASNET_CONDUIT_DIR = $(GASNET_INC_DIR)/@GASNET_CONDUIT@-conduit
 lib_LIBRARIES = libxmp.a
 libxmp_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h \
                                   $(XMP_INC_DIR)/xmp_data_struct.h \
@@ -299,7 +303,7 @@ libxmp_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h \
                                   xmp_align.c xmp_shadow.c xmp_array_section.c xmp_loop.c xmp_gmove.c \
                                   xmp_math_function.c xmp_runtime.c xmp_coarray.c xmp_coarray_RMA.c xmp_tlog_runtime.c xmp_io.c
 
-AM_CFLAGS = -Wall -Wpointer-arith -std=c99 -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR)
+AM_CFLAGS = -Wall -Wpointer-arith -std=c99 -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR) -I$(GASNET_INC_DIR) -I$(GASNET_CONDUIT_DIR)
 all: all-am
 
 .SUFFIXES:

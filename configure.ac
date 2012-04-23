@@ -1269,11 +1269,10 @@ AC_SUBST(omniQRealFillGap)
 
 # --------------------------------------------------------------------
 
+default_libxmlDir="/usr"
 if test "$target" == "Kcomputer-linux-gnu"; then
-   default_libxmlDir="/usr"
    default_mpicc="mpifccpx -Xg -std=gnu99"
 else
-   default_libxmlDir="/usr/local"
    default_mpicc="mpicc"
 fi
 
@@ -1281,12 +1280,44 @@ fi
 # specify libxmp path
 
 AC_ARG_WITH(libxmlDir,
-    [  --with-libxmlDir=DIR    specify libxml install directory (default: /usr/local)],
+    [  --with-libxmlDir=DIR    specify libxml install directory (default: /usr)],
     [LIBXML_PREFIX="${withval}"], [LIBXML_PREFIX="${default_libxmlDir}"])
+
+if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
+   AC_MSG_ERROR([parser.h not found. Please attach or check --with-libxmlDir])
+fi
 
 AC_SUBST(LIBXML_PREFIX)
 
 # --------------------------------------------------------------------
+# specify GASNet path
+
+default_gasnetDir="/usr"
+
+AC_ARG_WITH(gasnetDir,
+    [  --with-gasnetDir=DIR    specify GASNet install directory (default: /usr)],
+    [GASNET_PREFIX="${withval}"], [GASNET_PREFIX="${default_gasnetDir}"])
+
+if ! test -f $GASNET_PREFIX/include/gasnet.h; then
+   AC_MSG_ERROR([gasnet.h not found. Please attach or check --with-gasnetDir])
+fi
+
+AC_SUBST(GASNET_PREFIX)
+
+# --------------------------------------------------------------------
+# specify GASNet conduit
+
+default_gasnet_conduit="mpi"
+
+AC_ARG_WITH(gasnet_conduit,
+    [  --with-gasnet-conduit=NAME    specify GASNet conduit (default: mpi)],
+    [GASNET_CONDUIT="${withval}"], [GASNET_CONDUIT="${default_gasnet_conduit}"])
+
+if ! test -d $GASNET_PREFIX/include/${GASNET_CONDUIT}-conduit; then
+   AC_MSG_ERROR([${GASNET_CONDUIT}-conduit not found. Please attach or check --with-gasnet-conduit])
+fi
+
+AC_SUBST(GASNET_CONDUIT)
 
 # --------------------------------------------------------------------
 # specify MPI C compiler
