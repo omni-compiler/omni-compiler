@@ -611,8 +611,6 @@ OMNI_HOME
 GPGPU_PREFIX
 GPU_CMD
 MPI_CMD
-GASNET_CONDUIT
-GASNET_PREFIX
 LIBXML_PREFIX
 omniQRealFillGap
 omniQRealPrecInLimb
@@ -808,8 +806,6 @@ with_gmpLibDir
 with_gmpIncDir
 with_precision
 with_libxmlDir
-with_gasnetDir
-with_gasnet_conduit
 with_mpicc
 with_gpucc
 with_gpuDir
@@ -1468,8 +1464,6 @@ Optional Packages:
   --with-gmpIncDir=DIR    specify where the GNU-MP include headers are for quad-real support.
   --with-precision=NUM    specify the default precision of real*16 in bits (128).
   --with-libxmlDir=DIR    specify libxml install directory (default: /usr)
-  --with-gasnetDir=DIR    specify GASNet install directory (default: /usr)
-  --with-gasnet-conduit=NAME    specify GASNet conduit (default: mpi)
   --with-mpicc=CMD        specify MPI C compiler (default: mpicc)
   --with-gpucc=CMD        specify GPU C compiler (default: nvcc)
   --with-gpuDir=DIR    specify GPGPU tooklit install directory (default: /usr/local/cuda)
@@ -9990,42 +9984,32 @@ fi
 # --------------------------------------------------------------------
 # specify GASNet path
 
-default_gasnetDir="/usr"
+#default_gasnetDir="/usr"
 
+#AC_ARG_WITH(gasnetDir,
+#    [  --with-gasnetDir=DIR    specify GASNet install directory (default: /usr)],
+#    [GASNET_PREFIX="${withval}"], [GASNET_PREFIX="${default_gasnetDir}"])
 
-# Check whether --with-gasnetDir was given.
-if test "${with_gasnetDir+set}" = set; then :
-  withval=$with_gasnetDir; GASNET_PREFIX="${withval}"
-else
-  GASNET_PREFIX="${default_gasnetDir}"
-fi
+#if ! test -f $GASNET_PREFIX/include/gasnet.h; then
+#   AC_MSG_ERROR([gasnet.h not found. Please attach or check --with-gasnetDir])
+#fi
 
-
-if ! test -f $GASNET_PREFIX/include/gasnet.h; then
-   as_fn_error $? "gasnet.h not found. Please attach or check --with-gasnetDir" "$LINENO" 5
-fi
-
-
+#AC_SUBST(GASNET_PREFIX)
 
 # --------------------------------------------------------------------
 # specify GASNet conduit
 
-default_gasnet_conduit="mpi"
+#default_gasnet_conduit="mpi"
 
+#AC_ARG_WITH(gasnet_conduit,
+#    [  --with-gasnet-conduit=NAME    specify GASNet conduit (default: mpi)],
+#    [GASNET_CONDUIT="${withval}"], [GASNET_CONDUIT="${default_gasnet_conduit}"])
 
-# Check whether --with-gasnet_conduit was given.
-if test "${with_gasnet_conduit+set}" = set; then :
-  withval=$with_gasnet_conduit; GASNET_CONDUIT="${withval}"
-else
-  GASNET_CONDUIT="${default_gasnet_conduit}"
-fi
+#if ! test -d $GASNET_PREFIX/include/${GASNET_CONDUIT}-conduit; then
+#   AC_MSG_ERROR([${GASNET_CONDUIT}-conduit not found. Please attach or check --with-gasnet-conduit])
+#fi
 
-
-if ! test -d $GASNET_PREFIX/include/${GASNET_CONDUIT}-conduit; then
-   as_fn_error $? "${GASNET_CONDUIT}-conduit not found. Please attach or check --with-gasnet-conduit" "$LINENO" 5
-fi
-
-
+#AC_SUBST(GASNET_CONDUIT)
 
 # --------------------------------------------------------------------
 # specify MPI C compiler
