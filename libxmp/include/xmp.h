@@ -8,6 +8,7 @@
 #define _XMP_USERAPI
 
 // #include "mpi.h"
+#include "stddef.h"
 
 typedef void *xmp_desc_t;
 

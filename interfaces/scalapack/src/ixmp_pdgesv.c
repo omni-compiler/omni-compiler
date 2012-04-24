@@ -50,7 +50,7 @@ void ixmp_pdgesv(int *n,int *nrhs,double *a,int *ia,int *ja,xmp_desc_t da,int *i
   xmp_array_first_idx_node_index(db, bidx);
   if (bndim == 1) {
      descb[6]=bidx[0];
-     descb[7]=1;
+     descb[7]=0;
   }else if (bndim == 2) {
      descb[6]=bidx[1];
      descb[7]=bidx[0];
