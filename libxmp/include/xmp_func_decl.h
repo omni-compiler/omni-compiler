@@ -10,6 +10,7 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdbool.h>
+#inclide "xmp_data_struct.h"
 
 // ----- libxml
 // xmp_align.c
