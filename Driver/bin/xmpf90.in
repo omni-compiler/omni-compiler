@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
+# $TSUKUBA_Copyright:
+#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
+#  $
+
+BINDIR=`dirname $0`
+
+args=''
+for i in "$@"; do
+    case "${i}" in
+        -tmp)
+            args="${args} --Wn${i}";;
+        *)
+            args="${args} ${i}";;
+    esac
+done
+
+set -- ${args}
+
+${BINDIR}/omdriver --xf -Txmpf "$@"
+
+exit $?
+

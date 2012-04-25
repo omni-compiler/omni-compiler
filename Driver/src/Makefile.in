@@ -152,6 +152,8 @@ LIBS = @LIBS@
 LIBTLOG_DIR = @LIBTLOG_DIR@
 LIBTLOG_MPI_DIR = @LIBTLOG_MPI_DIR@
 LIBXML_PREFIX = @LIBXML_PREFIX@
+LIBXMPF_DIR = @LIBXMPF_DIR@
+LIBXMPF_HEADER_DIR = @LIBXMPF_HEADER_DIR@
 LIBXMP_DIR = @LIBXMP_DIR@
 LIBXMP_GPU_DIR = @LIBXMP_GPU_DIR@
 LIBXMP_HEADER_DIR = @LIBXMP_HEADER_DIR@
@@ -161,6 +163,7 @@ MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
 MM5TGT = @MM5TGT@
 MPI_CMD = @MPI_CMD@
+MPI_F90 = @MPI_F90@
 OBJEXT = @OBJEXT@
 OMC_CONF_LNK_OPT = @OMC_CONF_LNK_OPT@
 OMC_CONF_LX2X_OPT = @OMC_CONF_LX2X_OPT@
@@ -290,12 +293,13 @@ bin_SCRIPTS = \
 	../bin/omcnative ../bin/omclinker \
 	../bin/omf2f ../bin/ompf90 ../bin/omf2x ../bin/omfx2x ../bin/omx2f ../bin/omfpp \
 	../bin/omfnative ../bin/omflinker \
-	../bin/xmpcc
+	../bin/xmpcc ../bin/xmpf90
 
 sysconf_DATA = ../etc/omc.conf ../etc/omf.conf \
 	../etc/java.conf \
 	../etc/pp.conf.openmp ../etc/native.conf.openmp ../etc/linker.conf.openmp ../etc/l2x.conf.openmp ../etc/x2x.conf.openmp \
-	../etc/pp.conf.xmp ../etc/native.conf.xmp ../etc/linker.conf.xmp ../etc/l2x.conf.xmp ../etc/x2x.conf.xmp
+	../etc/pp.conf.xmp ../etc/native.conf.xmp ../etc/linker.conf.xmp ../etc/l2x.conf.xmp ../etc/x2x.conf.xmp \
+	../etc/pp.conf.xmpf ../etc/native.conf.xmpf ../etc/linker.conf.xmpf ../etc/l2x.conf.xmpf ../etc/x2x.conf.xmpf
 
 omdriver_SOURCES = omdriver.c
 AM_CFLAGS = -std=c99 -Wall

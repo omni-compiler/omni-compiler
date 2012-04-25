@@ -1,0 +1,34 @@
+hasScalasca=0
+hasTlog=0
+newOpts=''
+
+LOCK_TYPE=@OMP_LOCK_TYPE@
+LIB_THREAD=@OMP_THREAD_TYPE@
+LIB_OMPC=ompc_${LOCK_TYPE}_${LIB_THREAD}
+
+LIBS="@OMNI_HOME@/lib/xmpf_main.o ${LIBS} -lxmpf -lxmp"
+
+for i in ${OM_OPTIONS}; do
+    case ${i} in
+        -enable-threads)
+            INPFILES="${INPFILES} ${OMNI_HOME}/lib/omp${OM_LANGID}_main.o"
+            LIBS="${LIBS} -lxmp_threads -l${LIB_OMPC} -l${LIB_THREAD} -ltlog";;
+        -enable-gpu)
+            LIBS="${LIBS} -L${GPGPU_PREFIX}/lib64 -lxmp_gpu -lcudart";;
+        -prof-scalasca)
+            hasScalasca=1;;
+        -prof-tlog)
+            hasTlog=1;;
+        -l*)
+            LIBS="${LIBS} ${i}";;
+        *)
+            newOpts="${newOpts} ${i}";;
+    esac
+done
+
+LINKER=@MPI_F90@
+if test ${hasScalasca} -eq 1; then
+    LINKER="scalasca --instrument @MPI_F90@"
+fi
+
+OM_OPTIONS="${newOpts} -L${OMNI_HOME}/lib"
