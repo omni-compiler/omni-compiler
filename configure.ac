@@ -179,6 +179,13 @@ if test -e "Driver/src/Makefile.am"; then
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/native.conf.xmp)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.xmp)
 
+    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/xmpf90)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/pp.conf.xmpf)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/l2x.conf.xmpf)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/x2x.conf.xmpf)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/native.conf.xmpf)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.xmpf)
+
     AC_MSG_RESULT(yes)
 else
     OMDRIVER_DIR=''
@@ -203,6 +210,23 @@ AC_SUBST(LIBXMP_HEADER_DIR)
 AC_SUBST(LIBXMP_DIR)
 AC_SUBST(LIBXMP_THREADS_DIR)
 AC_SUBST(LIBXMP_GPU_DIR)
+
+#----
+
+LIBXMPF_HEADER_DIR=libxmpf/include
+LIBXMPF_DIR=libxmpf/src
+#LIBXMPF_THREADS_DIR=libxmpf/src_threads
+#LIBXMPF_GPU_DIR=libxmpf/src_gpu
+
+AC_CONFIG_FILES($LIBXMPF_HEADER_DIR/Makefile)
+AC_CONFIG_FILES($LIBXMPF_DIR/Makefile)
+#AC_CONFIG_FILES($LIBXMPF_THREADS_DIR/Makefile)
+#AC_CONFIG_FILES($LIBXMPF_GPU_DIR/Makefile)
+
+AC_SUBST(LIBXMPF_HEADER_DIR)
+AC_SUBST(LIBXMPF_DIR)
+#AC_SUBST(LIBXMPF_THREADS_DIR)
+#AC_SUBST(LIBXMPF_GPU_DIR)
 
 #----
 
@@ -1272,8 +1296,10 @@ AC_SUBST(omniQRealFillGap)
 default_libxmlDir="/usr"
 if test "$target" == "Kcomputer-linux-gnu"; then
    default_mpicc="mpifccpx -Xg -std=gnu99"
+   default_mpif90="mpif90px"
 else
    default_mpicc="mpicc"
+   default_mpif90="mpif90"
 fi
 
 # --------------------------------------------------------------------
@@ -1327,6 +1353,15 @@ AC_ARG_WITH(mpicc,
     [MPI_CMD="${withval}"], [MPI_CMD="${default_mpicc}"])
 
 AC_SUBST(MPI_CMD)
+
+# --------------------------------------------------------------------
+# specify MPI F90 compiler
+
+AC_ARG_WITH(mpif90,
+    [  --with-mpif90=CMD        specify MPI F90 compiler (default: mpif90)],
+    [MPI_F90="${withval}"], [MPI_F90="${default_mpif90}"])
+
+AC_SUBST(MPI_F90)
 
 # --------------------------------------------------------------------
 

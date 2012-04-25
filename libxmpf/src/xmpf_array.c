@@ -1,4 +1,5 @@
 #include "xmpf_internal.h"
+#include "config.h"
 
 /*
  * array APIs
@@ -8,15 +9,65 @@
 void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
 			_XMP_template_t **t_desc)
 {
-  xmpf_dbg_printf("xmpf_array_alloc starts\n");
-
   _XMP_array_t *a = _XMP_alloc(sizeof(_XMP_array_t) + sizeof(_XMP_array_info_t) * (*n_dim - 1));
 
   a->is_allocated = (*t_desc)->is_owner;
   a->is_align_comm_member = false;
   a->dim = *n_dim;
   a->type = *type;
-  a->type_size = 0; // Now, type_size is alway 0, which should be fixed.
+
+  // size of each type is obtained from config.h.
+  // Note: need to fix when building a cross compiler.
+  switch (a->type){
+
+  case _XMP_N_TYPE_BOOL:
+    a->type_size = SIZEOF__BOOL; break;
+
+  case _XMP_N_TYPE_CHAR:
+  case _XMP_N_TYPE_UNSIGNED_CHAR:
+    a->type_size = SIZEOF_UNSIGNED_CHAR; break;
+
+  case _XMP_N_TYPE_SHORT:
+  case _XMP_N_TYPE_UNSIGNED_SHORT:
+    a->type_size = SIZEOF_UNSIGNED_SHORT; break;
+
+  case _XMP_N_TYPE_INT:
+  case _XMP_N_TYPE_UNSIGNED_INT:
+    a->type_size = SIZEOF_UNSIGNED_INT; break;
+
+  case _XMP_N_TYPE_LONG:
+  case _XMP_N_TYPE_UNSIGNED_LONG:
+    a->type_size = SIZEOF_UNSIGNED_LONG; break;
+
+  case _XMP_N_TYPE_LONGLONG:
+  case _XMP_N_TYPE_UNSIGNED_LONGLONG:
+    a->type_size = SIZEOF_UNSIGNED_LONG_LONG; break;
+
+  case _XMP_N_TYPE_FLOAT:
+  case _XMP_N_TYPE_FLOAT_IMAGINARY:
+    a->type_size = SIZEOF_FLOAT; break;
+
+  case _XMP_N_TYPE_DOUBLE:
+  case _XMP_N_TYPE_DOUBLE_IMAGINARY:
+    a->type_size = SIZEOF_DOUBLE; break;
+
+  case _XMP_N_TYPE_LONG_DOUBLE:
+  case _XMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
+    a->type_size = SIZEOF_LONG_DOUBLE; break;
+
+  case _XMP_N_TYPE_FLOAT_COMPLEX:
+    a->type_size = SIZEOF_FLOAT * 2; break;
+
+  case _XMP_N_TYPE_DOUBLE_COMPLEX:
+    a->type_size = SIZEOF_DOUBLE * 2; break;
+
+  case _XMP_N_TYPE_LONG_DOUBLE_COMPLEX:
+    a->type_size = SIZEOF_LONG_DOUBLE * 2; break;
+
+  case _XMP_N_TYPE_NONBASIC: // should be fixed for structures.
+  default:
+    a->type_size = 0; break;
+  }
 
   a->total_elmts = 0;
 
@@ -46,7 +97,7 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
     ai->shadow_comm_rank = _XMP_N_INVALID_RANK;
   }
 
-  xmpf_dbg_printf("xmpf_array_alloc ends\n");
+  //xmpf_dbg_printf("xmpf_array_alloc ends\n");
 }
 
 
@@ -94,16 +145,16 @@ void xmpf_array_init__(_XMP_array_t **a_desc)
 
   /* debug */
   _XMP_array_t *ap = *a_desc;
-  xmpf_dbg_printf("array ser[%d,%d] par[%d,%d]\n",
-  		  ap->info[0].ser_lower,
-		  ap->info[0].ser_upper, 
-		  ap->info[0].par_lower,
-		  ap->info[0].par_upper);
+  //xmpf_dbg_printf("array ser[%d,%d] par[%d,%d]\n",
+  //		  ap->info[0].ser_lower,
+  //	          ap->info[0].ser_upper, 
+  //		  ap->info[0].par_lower,
+  //		  ap->info[0].par_upper);
 }
 
 
-void xmpf_init_shadow__(_XMP_array_t **a_desc, int *i_dim,
-			int *lshadow, int *ushadow)
+void xmpf_array_init_shadow__(_XMP_array_t **a_desc, int *i_dim,
+			      int *lshadow, int *ushadow)
 {
   _XMP_array_t *array = *a_desc;
   _XMP_array_info_t *ai = &(array->info[*i_dim]);
@@ -163,18 +214,19 @@ void xmpf_array_get_local_size__(_XMP_array_t **a_desc, int *i_dim, int *lb, int
   _XMP_array_info_t *ai = &(array->info[*i_dim]);
   *lb = - ai->shadow_size_lo;
   *ub = ai->alloc_size - ai->shadow_size_lo - 1;
-  xmpf_dbg_printf("array_get_size = (%d:%d)\n", *lb, *ub);
+  //xmpf_dbg_printf("array_get_size = (%d:%d)\n", *lb, *ub);
 }
 
+void *tmp[2];
+int jjj = 0;
 
-void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void **array_addr, 
-				  void *init_addr)
+void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr)
 {
   _XMP_array_t *a = *a_desc;
 
   unsigned long long total_elmts = 1;
   int dim = a->dim;
-  for (int i = dim - 1; i >= 0; i--) {
+  for (int i = 0; i < dim; i++) {
     a->info[i].dim_acc = total_elmts;
     total_elmts *= a->info[i].alloc_size;
   }
@@ -184,6 +236,7 @@ void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void **array_addr,
   }
   a->total_elmts = total_elmts;
 
-  *array_addr = init_addr;
-  a->array_addr_p = array_addr;
+  tmp[jjj] = array_addr;
+  a->array_addr_p = &tmp[jjj];
+  jjj++;
 }

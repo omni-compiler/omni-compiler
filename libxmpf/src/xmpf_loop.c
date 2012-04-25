@@ -53,14 +53,21 @@ void xmpf_sched_loop_template_local__(int *global_lb, int *global_ub, int *globa
 int xmpf_loop_test_1_(_XMP_object_ref_t **r_desc, int *i)
 {
     _XMP_object_ref_t *rp = *r_desc;
-    int index = *i-rp->offset[0];
+    int index = *i - rp->offset[0];
     _XMP_template_t *tp = rp->t_desc;
     _XMP_template_chunk_t *cp = &tp->chunk[0];
     return (cp->par_lower <= index && index <= cp->par_upper);
 }
 
 
-int xmpf_loop_test_2_(_XMP_object_ref_t **r_desc, int *i0, int i1)
+int xmpf_loop_test_2_(_XMP_object_ref_t **r_desc, int *i1, int *i0)
 {
-    _XMP_fatal("xmp_loop_test_2");
+    _XMP_object_ref_t *rp = *r_desc;
+    int index0 = *i0 - rp->offset[0];
+    int index1 = *i1 - rp->offset[1];
+    _XMP_template_t *tp = rp->t_desc;
+    _XMP_template_chunk_t *cp0 = &tp->chunk[0];
+    _XMP_template_chunk_t *cp1 = &tp->chunk[1];
+    return (cp0->par_lower <= index0 && index0 <= cp0->par_upper &&
+	    cp1->par_lower <= index1 && index1 <= cp1->par_upper);
 }

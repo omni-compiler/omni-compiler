@@ -43,7 +43,8 @@ void _XMP_G2L(long long int global_idx,int *local_idx,
     *local_idx = global_idx-base;
     break;
   case _XMP_N_DIST_BLOCK:
-    *local_idx = (global_idx - base)%chunk->par_chunk_width;
+    //*local_idx = (global_idx - base)%chunk->par_chunk_width;
+    *local_idx = (global_idx - base) - chunk->onto_nodes_info->rank * chunk->par_chunk_width;
     break;
   case _XMP_N_DIST_CYCLIC:
     *local_idx = (global_idx - base)/n_info->size;

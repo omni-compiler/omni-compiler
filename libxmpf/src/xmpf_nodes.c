@@ -12,7 +12,7 @@ static int _xmpf_nodes_ref_stride[XMPF_MAX_DIM];
 /* allocate nodes */
 void xmpf_nodes_alloc__(_XMP_nodes_t **n_desc,int *n_dim)
 {
-  printf("[%d] xmpf_nodes_alloc...\n",_XMP_world_rank);
+  //printf("[%d] xmpf_nodes_alloc...\n",_XMP_world_rank);
   /* do nothing for n_desc */
   _xmpf_nodes_n_dim = *n_dim;
 }
