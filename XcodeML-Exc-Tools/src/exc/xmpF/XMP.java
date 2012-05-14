@@ -69,6 +69,9 @@ public class XMP {
   public final static String ref_init_f = "xmpf_ref_init_";
 
   public final static String loop_test_f = "xmpf_loop_test_";
+  public final static String loop_test_skip_f = "xmpf_loop_test_skip_";
+  public final static String loop_sched_f = "xmpf_loop_sched_";
+  public final static String l2g_f = "xmpf_l2g_";
 
   public final static String reflect_f = "xmpf_reflect_";
   public final static String barrier_f = "xmpf_barrier_";

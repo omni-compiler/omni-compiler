@@ -202,7 +202,7 @@ public class BasicBlock extends PropObject implements Iterable<Statement>
         if(block instanceof ForBlock) {
             if(block.prev == null) {
                 BlockList bl = block.getParent();
-                Block b = new SimpleBlock(Xcode.EXPR_STATEMENT, new BasicBlock());
+                Block b = new SimpleBlock(Xcode.LIST, new BasicBlock());
                 if(bl.head != block) {
                     System.err.println("ForBlock is not first Block in BlockList");
                     System.exit(1);
@@ -260,7 +260,7 @@ public class BasicBlock extends PropObject implements Iterable<Statement>
         if(block instanceof ForBlock || block instanceof IfBlock) {
             if(block.getParent() instanceof BlockList) {
                 BlockList bl = block.getParent();
-                Block b = new SimpleBlock(Xcode.EXPR_STATEMENT, new BasicBlock());
+                Block b = new SimpleBlock(Xcode.LIST, new BasicBlock());
                 if(bl.head == block) {
                     bl.head = b;
                     b.next = block;
@@ -338,13 +338,15 @@ public class BasicBlock extends PropObject implements Iterable<Statement>
             Xobject expr = head.getExpr();
             if(XmOption.isLanguageF()) {
                 if(!expr.Opcode().isFstatement() &&
-		   expr.Opcode() != Xcode.EXPR_STATEMENT)
+		   expr.Opcode() != Xcode.EXPR_STATEMENT){
 		  expr = Xcons.List(Xcode.EXPR_STATEMENT, expr);
+		}
             }
             return expr;
         }
         
-        Xobject l = Xcons.List(XmOption.isLanguageC() ? Xcode.COMMA_EXPR : Xcode.F_STATEMENT_LIST);
+        Xobject l = Xcons.List(XmOption.isLanguageC() ? 
+			       Xcode.COMMA_EXPR : Xcode.F_STATEMENT_LIST);
         
         for(Statement s = head; s != null; s = s.getNext())
             if(s.getExpr() != null)

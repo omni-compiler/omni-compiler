@@ -184,16 +184,40 @@ public class XMPanalyzePragma
       dims.add(XMPdimInfo.loopInfo(loopBlock));
       loopBody = loopBlock.getBody();
     } else {
-      for(Xobject x: loopIterList){
+      while(true){
 	ForBlock loopBlock = getOutermostLoopBlock(loopBody);
-	if(loopBlock == null) return;
-	if(x.Opcode() == Xcode.LIST) x = x.getArg(0);
-	if(!isEqualVar(loopBlock.getInductionVar(),x)){
-	  XMP.error("loop index is different from loop varaible");
-	  return;
+	if(loopBlock == null) break;
+	boolean is_found = false;
+	for(Xobject x: loopIterList){
+	  if(x.Opcode() == Xcode.LIST) x = x.getArg(0);
+	  if(isEqualVar(loopBlock.getInductionVar(),x)){
+	    is_found = true;
+	    break;
+	  }
 	}
-	dims.add(XMPdimInfo.loopInfo(loopBlock));
+	if(is_found)
+	  dims.add(XMPdimInfo.loopInfo(loopBlock));
 	loopBody = loopBlock.getBody();
+      }
+
+      /* check loopIterList */
+      for(Xobject x: loopIterList){
+	if(x.Opcode() == Xcode.LIST){
+	  if(x.getArgOrNull(1) != null ||
+	     x.getArgOrNull(2) != null){
+	    XMP.error("bad syntax in loop directive");
+	  }
+	  x = x.getArg(0);
+	}
+	boolean is_found = false;
+	for(XMPdimInfo d_info: dims){
+	  if(isEqualVar(d_info.getLoopVar(),x)){
+	    is_found = true;
+	    break;
+	  }
+	}
+	if(!is_found)
+	  XMP.error("loop index is not found in loop varaibles");
       }
     }
     
@@ -201,7 +225,10 @@ public class XMPanalyzePragma
     if(XMP.hasError()) return;
 
     /* check on ref: it should be v+off */
-    for(XMPdimInfo d_info: on_ref.getSubscripts()){
+    int on_ref_idx = 0;
+    Vector<XMPdimInfo> on_ref_dims = on_ref.getSubscripts();
+    for(int k = 0; k < on_ref_dims.size(); k++){
+      XMPdimInfo d_info = on_ref_dims.elementAt(k);
       if(d_info.isStar()) continue;
       if(d_info.isTriplet()){
 	XMP.error("on-ref in loop must not be triplet");
@@ -235,18 +262,24 @@ public class XMPanalyzePragma
 	for(int i = 0; i < dims.size(); i++){
 	  if(isEqualVar(v,dims.elementAt(i).getLoopVar())){
 	    idx = i;
+	    dims.elementAt(i).setLoopOnIndex(k);
 	    break;
 	  }
 	}
-	if(idx < 0) XMP.error("loop variable is not found in on_ref: '"+v.getName()+"'");
+	if(idx < 0)
+	  XMP.error("loop variable is not found in on_ref: '"+v.getName()+"'");
 	d_info.setLoopOnRefInfo(idx,off);
       }
     }
-
+    
     Xobject reductionRef = loopDecl.getArg(2);
     // should check reduction clause
 
-    info.setBody(loopBody);
+    on_ref.setLoopDimInfo(dims);  // set back pointer
+    
+    checkLocalizableLoop(dims,on_ref);
+
+    info.setBody(loopBody);  // inner most body
     info.setLoopInfo(dims, on_ref, reductionRef);
   }
 
@@ -272,6 +305,40 @@ public class XMPanalyzePragma
       XMP.error("cannot find a loop statement");
     }
     return null;
+  }
+
+  /*
+   * distributed loop is localizable if:
+   * (1) step is 1
+   * (2) distribution is BLOCK
+   */
+  private static void checkLocalizableLoop(Vector<XMPdimInfo> dims,
+				       XMPobjectsRef on_ref){
+    for(int i = 0; i < dims.size(); i++){
+      boolean localizable = false;
+      XMPdimInfo d_info = dims.elementAt(i);
+      if(d_info.getStride().isOneConstant()) 
+	localizable = true;
+      else {
+	if(!(on_ref.getRefObject() instanceof XMPtemplate))
+	  continue;
+	XMPtemplate tmpl = (XMPtemplate)on_ref.getRefObject();
+	if(tmpl.getDistMannerAt(d_info.getLoopOnIndex()) == XMPtemplate.BLOCK)
+	  localizable = true;
+      }
+
+      if(XMP.debugFlag)
+	System.out.println("localizable(i="+i+")="+localizable);
+
+      if(localizable){
+	Xobject loop_var = d_info.getLoopVar();
+	/* if localiable, allocate local */
+	Ident local_loop_var = 
+	  Ident.Local(XMP.genSym(loop_var.getName()),
+		      loop_var.Type());
+	d_info.setLoopLocalVar(local_loop_var);
+      }
+    }
   }
 
   private void analyzeReflect(Xobject reflectDecl, 

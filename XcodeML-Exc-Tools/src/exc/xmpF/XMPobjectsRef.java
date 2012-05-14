@@ -22,8 +22,15 @@ public class XMPobjectsRef {
   XMPobject refObject;	// nodes or template
 
   Vector<XMPdimInfo> subscripts;
+  Vector<XMPdimInfo> loop_dims;  // back pointer to loop_dims
 
   public XMPobjectsRef() {} // null constructor
+
+  public Ident getDescId() { return descId; }
+
+  public XMPtemplate getTemplate() { return (XMPtemplate)refObject; }
+
+  public XMPnodes getNodes() { return (XMPnodes)refObject; }
 
   /* 
    * Nodes Reference:
@@ -36,7 +43,8 @@ public class XMPobjectsRef {
    * or Template Ref:
    */
   
-  public static XMPobjectsRef parseDecl(Xobject decl,XMPenv env, PragmaBlock pb){
+  public static XMPobjectsRef parseDecl(Xobject decl,XMPenv env, 
+					PragmaBlock pb){
     if(decl == null) return null;
     XMPobjectsRef objRef = new XMPobjectsRef();
     objRef.parse(decl,env,pb);
@@ -46,6 +54,14 @@ public class XMPobjectsRef {
   public XMPobject getRefObject() { return refObject; }
 
   public Vector<XMPdimInfo> getSubscripts() { return subscripts; }
+
+  public int getLoopIndex(int i){
+    return subscripts.elementAt(i).getOnRefLoopIndex();
+  }
+
+  public Xobject getLoopOffset(int i){
+    return subscripts.elementAt(i).getOnRefOffset();
+  }
 
   void parse(Xobject decl, XMPenv env, PragmaBlock pb) {
     if (decl.getArg(0) == null) {
@@ -68,6 +84,8 @@ public class XMPobjectsRef {
     descId = env.declObjectId(XMP.genSym(refName), pb);
   }
 
+  public void setLoopDimInfo(Vector<XMPdimInfo> dims) { loop_dims = dims;}
+
   // make contructor
   public Block buildConstructor(XobjectDef def){
     Block b = Bcons.emptyBlock();
@@ -78,12 +96,12 @@ public class XMPobjectsRef {
     bb.add(f.callSubroutine(args));
 
     f = def.declExternIdent(XMP.ref_set_info_f,Xtype.FsubroutineType);
-    for(int i = 0; i < subscripts.size(); i++){
-      XMPdimInfo info = subscripts.elementAt(i);
-      Xobject off = info.getLoopOnRefOffset();
+    for(int i = 0; i < loop_dims.size(); i++){
+      int idx = loop_dims.elementAt(i).getLoopOnIndex();
+      Xobject off = subscripts.elementAt(idx).getOnRefOffset();
       if(off == null) off = Xcons.IntConstant(0);
       args = Xcons.List(descId.Ref(),Xcons.IntConstant(i),
-			Xcons.IntConstant(info.getLoopOnRefIndex()), off);
+			Xcons.IntConstant(idx), off);
       bb.add(f.callSubroutine(args));
     }
     
@@ -100,6 +118,15 @@ public class XMPobjectsRef {
     Xobject args = Xcons.List(descId);
     for(int i = 0; i < info.getLoopDim(); i++) 
       args.add(info.getLoopVar(i));
+    return f.Call(args);
+  }
+
+  public Xobject buildLoopTestSkipFuncCall(XobjectDef def, XMPinfo info,
+					   int k){
+    Ident f = def.declExternIdent(XMP.loop_test_skip_f,
+				  Xtype.FlogicalFunctionType);
+    Xobject args = Xcons.List(descId,Xcons.IntConstant(k),
+			      info.getLoopVar(k));
     return f.Call(args);
   }
 }

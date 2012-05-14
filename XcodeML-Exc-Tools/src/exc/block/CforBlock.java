@@ -111,7 +111,8 @@ public class CforBlock extends CondBlock implements ForBlock
         // check init part. the tail must be v=lb
         if (init_part.getHead() == null) {
           // modified for XcalableMP
-          Xobject ind_var_decl = this.getTranslatedForBlockIndVarDecl(ind_var.getName());
+          Xobject ind_var_decl = 
+	    this.getTranslatedForBlockIndVarDecl(ind_var.getName());
           if (ind_var_decl == null) {
             return;
           } else {

@@ -104,24 +104,26 @@ public class XMPtransPragma
     }
   }
 
-  static boolean loop_opt_enable = false;
+  static boolean loop_opt_enable = true;
 
   private Block translateLoop(PragmaBlock pb, XMPinfo info){
+    BlockList ret_body = Bcons.emptyBody();
+    XMPobjectsRef on_ref = info.getOnRef();
+
+    // generate on_ref object
+    // create on_desc, only use loop_on_ref
+    ret_body.add(on_ref.buildConstructor(current_def));
+
     if(!loop_opt_enable){
       // default loop transformation (non-opt)
       // just guard body
       // DO I = lb, up, step ; if(xmp_is_loop_1(i,on_desc)) body
-      // create on_desc, only use loop_on_ref
-      BlockList ret_body = Bcons.emptyBody();
-      XMPobjectsRef on_ref = info.getOnRef();
-      ret_body.add(on_ref.buildConstructor(current_def));
-
       ForBlock for_block = (ForBlock)pb.getBody().getHead();
       BlockList loopBody = info.getBody();
       FdoBlock for_inner = (FdoBlock)loopBody.getParent();
+      Xobject test_expr = on_ref.buildLoopTestFuncCall(current_def,info);
       Block new_body = 
-	Bcons.IF(BasicBlock.Cond(on_ref.buildLoopTestFuncCall(current_def,info)),
-		 loopBody,null);
+	Bcons.IF(BasicBlock.Cond(test_expr),loopBody,null);
       for_inner.setBody(new BlockList(new_body));
       ret_body.add((Block)for_block);
       return Bcons.COMPOUND(ret_body);
@@ -130,71 +132,92 @@ public class XMPtransPragma
     // default loop transformation (convert to local index)
     // DO I = lb, up, step ; body
     // to:----
-    // call loop_on_desc(on_desc,#dim); call loop_on_disc_set(on_desc,src,dst,off); 
-    // DO I = lb, up, step ; if(xmp_is_loop_1(i,on_desc)) body
-
-    ForBlock for_block = (ForBlock)pb.getBody().getHead();
+    // set on_ref object 
+    // sched_loop(lb,up,step,local_lb,local_up,local_step)
+    // DO i_local = loca_lb, local_up, local_step ;
     
-    BlockList loop_body = Bcons.emptyBody();
-    CompoundBlock comp_block = (CompoundBlock)Bcons.COMPOUND(loop_body);
-    Xobject ind_var = for_block.getInductionVar();
-    BlockList ret_body = Bcons.emptyBody();
+    Block entry_block = Bcons.emptyBlock();
+    BasicBlock entry_bb = entry_block.getBasicBlock();
 
-    // addDataSetupBlock(ret_body, i);
-    Xtype indvarType = Xtype.FuintPtrType;
-    Xtype btype = indvarType;
-    Xtype step_type = Xtype.intType;
+    for(int k = 0; k < info.getLoopDim(); k++){
+      XMPdimInfo d_info = info.getLoopDimInfo(k);
+      Ident local_loop_var = d_info.getLoopLocalVar();
 
-    Ident lb_var = Ident.Local(env.genSym(ind_var.getName()), btype);
-    Ident ub_var = Ident.Local(env.genSym(ind_var.getName()), btype);
-    Ident step_var = Ident.Local(env.genSym(ind_var.getName()), step_type);
+      ForBlock for_block = d_info.getLoopBlock();
+      Xtype step_type = Xtype.intType;
 
-    ret_body.addIdent(lb_var);
-    ret_body.addIdent(ub_var);
-    ret_body.addIdent(step_var);
-    Xobject step_addr = step_var.getAddr();
-    Xobject step_ref = step_var.Ref();
+      if(local_loop_var == null){
+	// cannot be localized
+	Xobject test_expr = 
+	  on_ref.buildLoopTestSkipFuncCall(current_def,info,k);
+	Block skip_block = 
+	  Bcons.IF(BasicBlock.Cond(test_expr),
+		   Bcons.blockList(Bcons.Fcycle()),null);
+	for_block.getBody().insert(skip_block);
+	continue;
+      }
 
-    // indvar_t type (void pointer type) variables
-    Ident vlb_var = null, vub_var = null;
-    Xobject vlb, vub, vlb_addr, vub_addr;
+      // transform
+      Xtype btype = local_loop_var.Type();
+      Ident lb_var = Ident.Local(env.genSym("lb"), btype);
+      Ident ub_var = Ident.Local(env.genSym("ub"), btype);
+      Ident step_var = Ident.Local(env.genSym("step"), step_type);
+      
+      Xobject org_loop_ind_var = for_block.getInductionVar();
 
-    vlb = lb_var.Ref();
-    vub = ub_var.Ref();
-    vlb_addr = lb_var.getAddr();
-    vub_addr = ub_var.getAddr();
-    loop_body.add((Block)for_block);
-        
-    BasicBlock bb = new BasicBlock();
-    ret_body.add(bb);
-        
-    if(for_block.getInitBBlock() != null) {
-      for(Statement s : for_block.getInitBBlock()) {
-	if(s.getNext() == null)
-	  break;
-	s.remove();
-	bb.add(s); // move s to bb
+      // note, in case of C, must replace induction variable with local one
+      ((FdoBlock)for_block).setInductionVar(local_loop_var.Ref());
+      
+      entry_bb.add(Xcons.Set(lb_var.Ref(), for_block.getLowerBound()));
+      entry_bb.add(Xcons.Set(ub_var.Ref(), for_block.getUpperBound()));
+      entry_bb.add(Xcons.Set(step_var.Ref(), for_block.getStep()));
+
+      Ident schd_f = 
+	current_def.declExternIdent(XMP.loop_sched_f,Xtype.FsubroutineType);
+      Xobject args = Xcons.List(lb_var.Ref(), ub_var.Ref(), step_var.Ref(),
+				Xcons.IntConstant(k),
+				on_ref.getDescId().Ref());
+      entry_bb.add(schd_f.callSubroutine(args));
+
+      for_block.setLowerBound(lb_var.Ref());
+      for_block.setUpperBound(ub_var.Ref());
+      for_block.setStep(step_var.Ref());
+      
+      if(isVarUsed(for_block.getBody(),org_loop_ind_var)){
+	// if global variable is used in this block, convert local to global
+	Ident l2g_f = 
+	  current_def.declExternIdent(XMP.l2g_f,Xtype.FsubroutineType);
+	args = Xcons.List(org_loop_ind_var,
+			  local_loop_var.Ref(),
+			  Xcons.IntConstant(k),
+			  on_ref.getDescId().Ref());
+	for_block.getBody().insert(l2g_f.callSubroutine(args));
       }
     }
-        
-    bb.add(Xcons.Set(lb_var.Ref(), for_block.getLowerBound()));
-    bb.add(Xcons.Set(ub_var.Ref(), for_block.getUpperBound()));
-    bb.add(Xcons.Set(step_var.Ref(), for_block.getStep()));
 
-    for_block.setLowerBound(lb_var.Ref());
-    for_block.setUpperBound(ub_var.Ref());
-    for_block.setStep(step_ref);
-
-    // schedule
-    bb.add(XMPfuncIdent("xmpf_sched").
-	   Call(Xcons.List(vlb_addr, vub_addr, step_addr)));
-    ret_body.add(comp_block);
-
-    // bp = dataUpdateBlock(i);
-    // if(bp != null)
-    // ret_body.add(bp);
-
+    ret_body.add(pb.getBody().getHead()); // loop
     return Bcons.COMPOUND(ret_body);
+  }
+
+
+  boolean isVarUsed(BlockList body,Xobject v){
+    BasicBlockExprIterator iter = new BasicBlockExprIterator(body);
+    for (iter.init(); !iter.end(); iter.next()) {
+      Xobject expr = iter.getExpr();
+      if(expr != null){
+	XobjectIterator expr_iter = new bottomupXobjectIterator(expr);
+	for(expr_iter.init(); !expr_iter.end(); expr_iter.next()){
+	  Xobject e = expr_iter.getXobject();
+	  if(e == null) continue;
+	  switch(e.Opcode()){
+	  case VAR:
+	  case VAR_ADDR:
+	    if(e.getName().equals(v.getName())) return true;
+	  }
+	}
+      }
+    }
+    return false;
   }
 
   private Block translateReflect(PragmaBlock pb, XMPinfo info){

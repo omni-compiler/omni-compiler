@@ -49,22 +49,28 @@ public class XMParray {
     return dims.size();
   }
 
+  public boolean isDistributed(int index){
+    int idx = dims.elementAt(index).getAlignSubscriptIndex();
+    if(idx < 0) return false; // not distributed
+    return template.getDistMannerAt(idx) != XMPtemplate.DUPLICATION;
+  }
+
   public void setAlignSubscriptIndexAt(int alignSubscriptIndex, 
 				       int index) {
     dims.elementAt(index).align_subscript_index = alignSubscriptIndex;
   }
 
-  public Integer getAlignSubscriptIndexAt(int index) {
+  public int getAlignSubscriptIndexAt(int index) {
     return dims.elementAt(index).align_subscript_index;
   }
 
-  public void setAlignSubscriptExprAt(Xobject alignSubscriptExpr, 
+  public void setAlignSubscriptOffsetAt(Xobject alignSubscriptOffset, 
 				      int index) {
-    dims.elementAt(index).align_subscript_expr = alignSubscriptExpr;
+    dims.elementAt(index).align_subscript_offset = alignSubscriptOffset;
   }
 
-  public Xobject getAlignSubscriptExprAt(int index) {
-    return dims.elementAt(index).align_subscript_expr;
+  public Xobject getAlignSubscriptOffsetAt(int index) {
+    return dims.elementAt(index).align_subscript_offset;
   }
 
   public void setShadow(int left, int right, int index) {
@@ -367,7 +373,7 @@ public class XMParray {
 			  Xcons.IntConstant(-1),
 			  Xcons.IntConstant(0));
       } else {
-	Xobject off = info.getAlignSubscriptExpr();
+	Xobject off = info.getAlignSubscriptOffset();
 	if(off == null) off = Xcons.IntConstant(0);
 	args = Xcons.List(descId.Ref(),Xcons.IntConstant(i),
 			  info.getLower(),info.getUpper(),

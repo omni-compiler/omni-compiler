@@ -411,7 +411,8 @@ public class BlockList
                     if(s.getExpr() == null)
                         continue;
                     Xobject x = null;
-                    if(s.getExpr().Opcode().isFstatement()) {
+                    if(s.getExpr().Opcode().isFstatement() ||
+		       s.getExpr().Opcode() == Xcode.EXPR_STATEMENT) {
                         x = s.getExpr();
                     } else {
                         x = new XobjList(Xcode.EXPR_STATEMENT, s.getExpr());

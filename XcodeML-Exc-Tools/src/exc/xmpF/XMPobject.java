@@ -9,6 +9,9 @@ package exc.xmpF;
 import exc.object.*;
 import exc.block.*;
 
+/*
+ * Base class of XMPnodes and XMPtemplate
+ */
 public class XMPobject {
   public final static int NODES		= 100;
   public final static int TEMPLATE	= 101;

@@ -58,6 +58,9 @@ public class XMPinfo
 
   public Vector<Ident> getInfoVarIdents() { return info_vars; }
 
+  /* 
+   * for loop
+   */
   public void setLoopInfo(Vector<XMPdimInfo> dims, XMPobjectsRef ref,
 			  Xobject reduction_ref){
     loop_dims = dims;
@@ -67,6 +70,8 @@ public class XMPinfo
 
   public int getLoopDim() { return loop_dims.size(); }
   
+  public XMPdimInfo getLoopDimInfo(int i) { return loop_dims.elementAt(i); }
+
   public Xobject getLoopVar(int i) { 
     return loop_dims.elementAt(i).getLoopVar(); 
   }

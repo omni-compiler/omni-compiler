@@ -22,7 +22,7 @@ public class XMPdimInfo {
   // align for array
   int align_status;
   int align_subscript_index;
-  Xobject align_subscript_expr;
+  Xobject align_subscript_offset;
 
   final static int ALIGN_NONE = 0;
   final static int ALIGN_SET = 1;
@@ -36,9 +36,11 @@ public class XMPdimInfo {
   // for loop
   Xobject loop_var;
   ForBlock loop_block;
+  Ident loop_local_var;
+  int loop_on_index;
 
   // on_ref for loop
-  int on_ref_index;
+  int on_ref_loop_index;
   Xobject on_ref_offset;
 
   // null constructor
@@ -48,7 +50,9 @@ public class XMPdimInfo {
     lower = null;
     upper = null;
     stride = null;
-    on_ref_index = -1;
+
+    loop_on_index = -1;
+    on_ref_loop_index = -1;
 
     is_full_shadow = false;
     shadow_left  = 0;
@@ -102,14 +106,14 @@ public class XMPdimInfo {
   public void setAlignSubscript(int idx, Xobject expr){
     align_status = ALIGN_SET;
     align_subscript_index = idx;
-    align_subscript_expr = expr;
+    align_subscript_offset = expr;
   }
 
   public void setAlignAny() { align_status = ALIGN_ANY; }
 
   public int getAlignSubscriptIndex() { return align_subscript_index; }
   
-  public Xobject getAlignSubscriptExpr() { return align_subscript_expr; }
+  public Xobject getAlignSubscriptOffset() { return align_subscript_offset; }
   
   public boolean isAlignAny() { return  align_status == ALIGN_ANY; }
 
@@ -155,6 +159,9 @@ public class XMPdimInfo {
     return i;
   }
 
+  /*
+   * For loop
+   */
   public static XMPdimInfo loopInfo(ForBlock block){
     XMPdimInfo i = new XMPdimInfo();
     i.loop_block = block;
@@ -169,14 +176,25 @@ public class XMPdimInfo {
   
   public ForBlock getLoopBlock() { return loop_block; }
 
+  public void setLoopLocalVar(Ident id) { loop_local_var = id; }
+
+  public Ident getLoopLocalVar() { return loop_local_var; }
+
+  public void setLoopOnIndex(int index) { loop_on_index = index; }
+  
+  public int getLoopOnIndex() { return loop_on_index; }
+
+  /*
+   * For on_ref
+   */
   public void setLoopOnRefInfo(int index, Xobject offset){
-    on_ref_index = index;
+    on_ref_loop_index = index;
     on_ref_offset = offset;
   }
 
-  public int getLoopOnRefIndex() { return on_ref_index; }
+  public int getOnRefLoopIndex() { return on_ref_loop_index; }
   
-  public Xobject getLoopOnRefOffset() { return  on_ref_offset; }
+  public Xobject getOnRefOffset() { return  on_ref_offset; }
 
   public String toString(){
     String s = "<";
@@ -195,7 +213,7 @@ public class XMPdimInfo {
       if(align_status == ALIGN_ANY){
 	s += ",align(*)";
       } else {
-	s += ",align("+align_subscript_index+","+align_subscript_expr+")";
+	s += ",align("+align_subscript_index+","+align_subscript_offset+")";
       }
     }
     s += ">";

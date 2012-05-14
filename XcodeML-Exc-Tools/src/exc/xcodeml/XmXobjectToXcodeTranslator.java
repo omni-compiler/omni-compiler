@@ -161,7 +161,6 @@ public abstract class XmXobjectToXcodeTranslator {
                 }
             }
         }
-
         return textList.toArray(new Node[0]);
     }
 

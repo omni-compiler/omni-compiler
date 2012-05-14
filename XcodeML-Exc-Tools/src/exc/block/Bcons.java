@@ -225,6 +225,12 @@ public class Bcons
         return new SimpleBlock(Xcode.CONTINUE_STATEMENT);
     }
 
+    /** create Fortran 'cycle' statement block */
+    public static Block Fcycle()
+    {
+        return new SimpleBlock(Xcode.F_CYCLE_STATEMENT);
+    }
+
     /** create 'goto' statement block */
     public static Block GOTO(Xobject label)
     {

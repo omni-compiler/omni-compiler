@@ -392,10 +392,12 @@ public class omompx
     }
         
     // translate Xcode to XcodeML
-    XmXobjectToXmObjTranslator xc2xm_translator = toolFactory.createXobjectToXmObjTranslator();
     XmXcodeProgram xmprog = null;
     Document xcodeDoc = null;
+
     if (useRelaxerTranslatorOutput) {
+      XmXobjectToXmObjTranslator xc2xm_translator = 
+	toolFactory.createXobjectToXmObjTranslator();
       xmprog = (XmXcodeProgram)xc2xm_translator.translate(xobjFile);
       xobjFile = null;
       // Output XcodeML
@@ -417,6 +419,7 @@ public class omompx
       }
     } else { // useRelaxer
       XmXobjectToXcodeTranslator xc2xcodeTranslator = null;
+
       if (lang.equals("F")) {
 	xc2xcodeTranslator = new XmfXobjectToXcodeTranslator();
       } else {

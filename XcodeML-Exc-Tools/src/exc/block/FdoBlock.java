@@ -129,6 +129,12 @@ public class FdoBlock extends Block implements ForBlock
         v.visit(bblock);
     }
 
+  // only for FdoBlock
+    public void setInductionVar(Xobject ind_var)
+    {
+        ind_var_part.setExpr(ind_var);
+    }
+
     @Override
     public Xobject toXobject()
     {

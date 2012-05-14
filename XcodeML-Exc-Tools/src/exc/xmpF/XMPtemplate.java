@@ -78,7 +78,6 @@ package exc.xmpF;
        XMP.error("template " + getName() + " is not distributed");
        return 0;
      }
-
      return scripts.elementAt(index).getDistManner();
    }
 
