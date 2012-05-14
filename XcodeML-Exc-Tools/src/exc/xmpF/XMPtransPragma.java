@@ -195,6 +195,7 @@ public class XMPtransPragma
       }
     }
 
+    ret_body.add(entry_block);
     ret_body.add(pb.getBody().getHead()); // loop
     return Bcons.COMPOUND(ret_body);
   }
