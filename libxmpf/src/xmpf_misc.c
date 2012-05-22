@@ -1,4 +1,5 @@
 #include "xmpf_internal.h"
+#include "config.h"
 
 /*
  * For xmpf, initialize all
@@ -66,6 +67,75 @@ void xmpf_array___(_XMP_array_t **a_desc)
 }
 
 
+void dumy(void)
+{
+  _XMP_pack_array(NULL, NULL, 0, 0, 0, NULL, NULL, NULL, NULL);
+  _XMP_unpack_array(NULL, NULL, 0, 0, 0, NULL, NULL, NULL, NULL);
+}
+
+
+size_t _XMP_get_datatype_size(int datatype)
+{
+  size_t size;
+
+  // size of each type is obtained from config.h.
+  // Note: need to fix when building a cross compiler.
+  switch (datatype){
+
+  case _XMP_N_TYPE_BOOL:
+    size = SIZEOF__BOOL; break;
+
+  case _XMP_N_TYPE_CHAR:
+  case _XMP_N_TYPE_UNSIGNED_CHAR:
+    size = SIZEOF_UNSIGNED_CHAR; break;
+
+  case _XMP_N_TYPE_SHORT:
+  case _XMP_N_TYPE_UNSIGNED_SHORT:
+    size = SIZEOF_UNSIGNED_SHORT; break;
+
+  case _XMP_N_TYPE_INT:
+  case _XMP_N_TYPE_UNSIGNED_INT:
+    size = SIZEOF_UNSIGNED_INT; break;
+
+  case _XMP_N_TYPE_LONG:
+  case _XMP_N_TYPE_UNSIGNED_LONG:
+    size = SIZEOF_UNSIGNED_LONG; break;
+
+  case _XMP_N_TYPE_LONGLONG:
+  case _XMP_N_TYPE_UNSIGNED_LONGLONG:
+    size = SIZEOF_UNSIGNED_LONG_LONG; break;
+
+  case _XMP_N_TYPE_FLOAT:
+  case _XMP_N_TYPE_FLOAT_IMAGINARY:
+    size = SIZEOF_FLOAT; break;
+
+  case _XMP_N_TYPE_DOUBLE:
+  case _XMP_N_TYPE_DOUBLE_IMAGINARY:
+    size = SIZEOF_DOUBLE; break;
+
+  case _XMP_N_TYPE_LONG_DOUBLE:
+  case _XMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
+    size = SIZEOF_LONG_DOUBLE; break;
+
+  case _XMP_N_TYPE_FLOAT_COMPLEX:
+    size = SIZEOF_FLOAT * 2; break;
+
+  case _XMP_N_TYPE_DOUBLE_COMPLEX:
+    size = SIZEOF_DOUBLE * 2; break;
+
+  case _XMP_N_TYPE_LONG_DOUBLE_COMPLEX:
+    size = SIZEOF_LONG_DOUBLE * 2; break;
+
+  case _XMP_N_TYPE_NONBASIC: // should be fixed for structures.
+  default:
+    size = 0; break;
+  }
+
+  return size;
+}
+
+
+/*
 void _XMP_pack_array_2_DOUBLE(double *buf_addr, double *src_addr,
 			      int *l, int *u, int *s, unsigned long long *d)
 {
@@ -78,23 +148,11 @@ void _XMP_pack_array_2_DOUBLE(double *buf_addr, double *src_addr,
     double *addr = src_addr + (j * src_dim_acc1);
 
     for (int i = src_lower0; i <= src_upper0; i += src_stride0) {
-      //xmpf_dbg_printf("(i,j) = (%d,%d), %f\n", i, j, addr[i]);
       *buf_addr = addr[i];
       buf_addr++;
     }
   }
 
-  /*
-  if (_XMP_world_rank == 1){
-    for (int j = 0; j <= 513; j++){
-      double *addr = src_addr + (j * src_dim_acc1);
-      for (int i = 0; i <= 513; i++){
-	xmpf_dbg_printf("a(%3d,%3d) = %f\n", i, j, addr[i]);
-      }
-    }
-  }
-  */
-  
 }
 
 
@@ -111,46 +169,8 @@ void _XMP_unpack_array_2_DOUBLE(double *dst_addr, double *buf_addr,
     for (int i = dst_lower0; i <= dst_upper0; i += dst_stride0) {
       addr[i] = *buf_addr;
       buf_addr++;
-      //xmpf_dbg_printf("(i,j) = (%d,%d), %f\n", i, j, addr[i]);
     }
   }
-
-  /*
-  if (_XMP_world_rank == 0){
-    for (int j = 0; j <= 513; j++){
-      double *addr = src_addr + (j * src_dim_acc1);
-      for (int i = 0; i <= 513; i++){
-	xmpf_dbg_printf("a(%3d,%3d) = %f\n", i, j, addr[i]);
-      }
-    }
-  }
-  */
-
-  /*
-  if (_XMP_world_rank == 0){
-    int i, j;
-    double *addr;
-    j = 512;
-    addr = dst_addr + (j * dst_dim_acc1);
-    i = 511;
-    xmpf_dbg_printf("a(%3d,%3d) = %f\n", i, j, addr[i]);
-
-    j = 512;
-    addr = dst_addr + (j * dst_dim_acc1);
-    i = 513;
-    xmpf_dbg_printf("a(%3d,%3d) = %f\n", i, j, addr[i]);
-
-    j = 511;
-    addr = dst_addr + (j * dst_dim_acc1);
-    i = 512;
-    xmpf_dbg_printf("a(%3d,%3d) = %f\n", i, j, addr[i]);
-
-    j = 513;
-    addr = dst_addr + (j * dst_dim_acc1);
-    i = 512;
-    xmpf_dbg_printf("a(%3d,%3d) = %f\n", i, j, addr[i]);
-
-  }
-  */
 
 }
+*/

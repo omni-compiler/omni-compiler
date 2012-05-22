@@ -23,7 +23,13 @@ void xmpf_template_dim_info__(_XMP_template_t **t_desc, int *i_dim,
   t->info[*i_dim].ser_lower = *lb;
   t->info[*i_dim].ser_upper = *ub;
   xmpf_template_dist_manner[*i_dim] = *dist_manner;
-  xmpf_template_dist_chunk[*i_dim] = *dist_chunk;
+
+  if (*dist_chunk == 0){
+    xmpf_template_dist_chunk[*i_dim] = 1;
+  }
+  else {
+    xmpf_template_dist_chunk[*i_dim] = *dist_chunk;
+  }
 
   /*  xmpf_dbg_printf("template: i_dim=%d, [%d,%d]\n",*i_dim,*lb,*ub);
       xmpf_dbg_printf("template??: [%lld,%lld]\n",
@@ -35,7 +41,7 @@ void xmpf_template_dim_info__(_XMP_template_t **t_desc, int *i_dim,
 
 void xmpf_template_init__(_XMP_template_t **t_desc,_XMP_nodes_t  **n_desc)
 {
-  int t_idx, n_idx,chunk_size;
+  int t_idx, n_idx, chunk_size;
 
   _XMP_template_t *t = *t_desc;
 
@@ -65,9 +71,9 @@ void xmpf_template_init__(_XMP_template_t **t_desc,_XMP_nodes_t  **n_desc)
       break;
     case _XMP_N_DIST_CYCLIC:
       if (chunk_size == 1) _XMP_dist_template_CYCLIC(t, t_idx, n_idx);
-      else if (chunk_size <= 0) 
+      else if (chunk_size <= 0)
 	_XMP_fatal("chunk size is nagative in DIST_CYCLIC");
-      else 
+      else
 	_XMP_dist_template_BLOCK_CYCLIC(t, t_idx, n_idx, chunk_size);
       n_idx++;
       break;
@@ -87,7 +93,7 @@ void xmpf_template_init__(_XMP_template_t **t_desc,_XMP_nodes_t  **n_desc)
 
 
 void xmpf_ref_templ_alloc__(_XMP_object_ref_t **r_desc,
-			    _XMP_template_t **t_desc,int *n_dim)
+			    _XMP_template_t **t_desc, int *n_dim)
 {
     _XMP_object_ref_t *rp;
     int *ip,*iq;
@@ -99,6 +105,7 @@ void xmpf_ref_templ_alloc__(_XMP_object_ref_t **r_desc,
     if(rp == NULL || ip == NULL || iq == NULL) 
 	_XMP_fatal("ref_alloc: cannot alloc memory");
     rp->ref_kind = XMP_OBJ_REF_TEMPL;
+    rp->ndims = n;
     rp->offset = ip;
     rp->t_desc = *t_desc;
     rp->index = iq;
@@ -107,7 +114,7 @@ void xmpf_ref_templ_alloc__(_XMP_object_ref_t **r_desc,
 
 
 void xmpf_ref_nodes_alloc__(_XMP_object_ref_t **r_desc,
-			    _XMP_nodes_t **n_desc,int *n_dim)
+			    _XMP_nodes_t **n_desc, int *n_dim)
 {
     _XMP_object_ref_t *rp;
     int *ip,*iq;
@@ -119,6 +126,7 @@ void xmpf_ref_nodes_alloc__(_XMP_object_ref_t **r_desc,
     if(rp == NULL || ip == NULL || iq == NULL) 
 	_XMP_fatal("ref_alloc: cannot alloc memory");
     rp->ref_kind = XMP_OBJ_REF_NODES;
+    rp->ndims = n;
     rp->offset = ip;
     rp->n_desc = *n_desc;
     rp->index = iq;

@@ -1,5 +1,4 @@
 #include "xmpf_internal.h"
-#include "config.h"
 
 /*
  * array APIs
@@ -15,60 +14,7 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
   a->is_align_comm_member = false;
   a->dim = *n_dim;
   a->type = *type;
-
-  // size of each type is obtained from config.h.
-  // Note: need to fix when building a cross compiler.
-  switch (a->type){
-
-  case _XMP_N_TYPE_BOOL:
-    a->type_size = SIZEOF__BOOL; break;
-
-  case _XMP_N_TYPE_CHAR:
-  case _XMP_N_TYPE_UNSIGNED_CHAR:
-    a->type_size = SIZEOF_UNSIGNED_CHAR; break;
-
-  case _XMP_N_TYPE_SHORT:
-  case _XMP_N_TYPE_UNSIGNED_SHORT:
-    a->type_size = SIZEOF_UNSIGNED_SHORT; break;
-
-  case _XMP_N_TYPE_INT:
-  case _XMP_N_TYPE_UNSIGNED_INT:
-    a->type_size = SIZEOF_UNSIGNED_INT; break;
-
-  case _XMP_N_TYPE_LONG:
-  case _XMP_N_TYPE_UNSIGNED_LONG:
-    a->type_size = SIZEOF_UNSIGNED_LONG; break;
-
-  case _XMP_N_TYPE_LONGLONG:
-  case _XMP_N_TYPE_UNSIGNED_LONGLONG:
-    a->type_size = SIZEOF_UNSIGNED_LONG_LONG; break;
-
-  case _XMP_N_TYPE_FLOAT:
-  case _XMP_N_TYPE_FLOAT_IMAGINARY:
-    a->type_size = SIZEOF_FLOAT; break;
-
-  case _XMP_N_TYPE_DOUBLE:
-  case _XMP_N_TYPE_DOUBLE_IMAGINARY:
-    a->type_size = SIZEOF_DOUBLE; break;
-
-  case _XMP_N_TYPE_LONG_DOUBLE:
-  case _XMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
-    a->type_size = SIZEOF_LONG_DOUBLE; break;
-
-  case _XMP_N_TYPE_FLOAT_COMPLEX:
-    a->type_size = SIZEOF_FLOAT * 2; break;
-
-  case _XMP_N_TYPE_DOUBLE_COMPLEX:
-    a->type_size = SIZEOF_DOUBLE * 2; break;
-
-  case _XMP_N_TYPE_LONG_DOUBLE_COMPLEX:
-    a->type_size = SIZEOF_LONG_DOUBLE * 2; break;
-
-  case _XMP_N_TYPE_NONBASIC: // should be fixed for structures.
-  default:
-    a->type_size = 0; break;
-  }
-
+  a->type_size = _XMP_get_datatype_size(a->type);
   a->total_elmts = 0;
 
   a->align_comm = NULL;
@@ -144,7 +90,7 @@ void xmpf_array_init__(_XMP_array_t **a_desc)
   _XMP_init_array_nodes(*a_desc);
 
   /* debug */
-  _XMP_array_t *ap = *a_desc;
+  //_XMP_array_t *ap = *a_desc;
   //xmpf_dbg_printf("array ser[%d,%d] par[%d,%d]\n",
   //		  ap->info[0].ser_lower,
   //	          ap->info[0].ser_upper, 
@@ -217,7 +163,7 @@ void xmpf_array_get_local_size__(_XMP_array_t **a_desc, int *i_dim, int *lb, int
   //xmpf_dbg_printf("array_get_size = (%d:%d)\n", *lb, *ub);
 }
 
-void *tmp[2];
+void *tmp[1024];
 int jjj = 0;
 
 void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr)

@@ -73,7 +73,7 @@ libxmpf_a_LIBADD =
 am_libxmpf_a_OBJECTS = xmpf_array.$(OBJEXT) xmpf_gcomm.$(OBJEXT) \
 	xmpf_gmove.$(OBJEXT) xmpf_index.$(OBJEXT) xmpf_lib.$(OBJEXT) \
 	xmpf_loop.$(OBJEXT) xmpf_misc.$(OBJEXT) xmpf_nodes.$(OBJEXT) \
-	xmpf_template.$(OBJEXT)
+	xmpf_pack.$(OBJEXT) xmpf_template.$(OBJEXT)
 libxmpf_a_OBJECTS = $(am_libxmpf_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/buildutils/depcomp
@@ -294,7 +294,8 @@ XMPF_INC_DIR = ../include
 lib_LIBRARIES = libxmpf.a
 libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h \
 		xmpf_array.c  xmpf_gcomm.c  xmpf_gmove.c  xmpf_index.c  \
-		xmpf_lib.c  xmpf_loop.c  xmpf_misc.c  xmpf_nodes.c  xmpf_template.c
+		xmpf_lib.c  xmpf_loop.c  xmpf_misc.c  xmpf_nodes.c  \
+		xmpf_pack.c xmpf_template.c
 
 AM_CFLAGS = -Wall -Wpointer-arith -std=c99 -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) -I$(XMP_SRC_DIR) -I$(TLOG_INC_DIR)
 all: all-am
@@ -382,6 +383,7 @@ include ./$(DEPDIR)/xmpf_lib.Po
 include ./$(DEPDIR)/xmpf_loop.Po
 include ./$(DEPDIR)/xmpf_misc.Po
 include ./$(DEPDIR)/xmpf_nodes.Po
+include ./$(DEPDIR)/xmpf_pack.Po
 include ./$(DEPDIR)/xmpf_template.Po
 
 .c.o:

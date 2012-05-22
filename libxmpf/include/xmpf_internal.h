@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define XMPF_MAX_DIM  7
 
@@ -17,21 +18,37 @@
 
 
 typedef struct _XMP_object_ref_type {
-    int ref_kind; 
-    _XMP_template_t *t_desc;
-    _XMP_nodes_t *n_desc;
+  int ref_kind; 
+  _XMP_template_t *t_desc;
+  _XMP_nodes_t *n_desc;
     
-    int *offset;
-    int *index;
+  int ndims;
+  int *offset;
+  int *index;
 } _XMP_object_ref_t;
 
 
+typedef struct _XMP_object_ref_type2 {
+  int ref_kind; 
+  _XMP_template_t *t_desc;
+  _XMP_nodes_t *n_desc;
+    
+  int ndims;
+  int *lb;
+  int *ub;
+  int *st;
+} _XMP_object_ref_t2;
+
+
+/* From xmpf_index.c */
 void _XMP_L2G(int local_idx, long long int *global_idx,
 	      _XMP_template_t *template, int template_index);
 void _XMP_G2L(long long int global_idx,int *local_idx,
 	      _XMP_template_t *template, int template_index);
 
-void xmpf_dbg_printf(char *fmt,...);
+/* From xmpf_misc.c */
+void xmpf_dbg_printf(char *fmt, ...);
+size_t _XMP_get_datatype_size(int datatype);
 
 /* From xmp_align.c */
 _XMP_template_t *_XMP_create_template_desc(int dim, _Bool is_fixed);
