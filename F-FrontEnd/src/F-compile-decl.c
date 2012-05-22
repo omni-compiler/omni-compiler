@@ -1671,7 +1671,9 @@ type_is_compatible(TYPE_DESC tp,TYPE_DESC tq)
     if(tp == NULL || tq == NULL ||
        IS_ARRAY_TYPE(tp) || IS_ARRAY_TYPE(tq)) return FALSE;
     if(TYPE_BASIC_TYPE(tp) != TYPE_BASIC_TYPE(tq)) {
-      if(TYPE_BASIC_TYPE(tp) == TYPE_GENERIC || TYPE_BASIC_TYPE(tq) == TYPE_GENERIC){
+      if (TYPE_BASIC_TYPE(tp) == TYPE_GENERIC || TYPE_BASIC_TYPE(tq) == TYPE_GENERIC ||
+	  TYPE_BASIC_TYPE(tp) == TYPE_GNUMERIC_ALL ||
+	  TYPE_BASIC_TYPE(tq) == TYPE_GNUMERIC_ALL){
 	return TRUE;
       }
       else if(TYPE_BASIC_TYPE(tp) == TYPE_DREAL || TYPE_BASIC_TYPE(tq) == TYPE_DREAL) {
