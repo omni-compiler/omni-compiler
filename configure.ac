@@ -1296,7 +1296,7 @@ AC_SUBST(omniQRealFillGap)
 default_libxmlDir="/usr"
 if test "$target" == "Kcomputer-linux-gnu"; then
    default_mpicc="mpifccpx -Xg -std=gnu99"
-   default_mpif90="mpif90px"
+   default_mpif90="mpifrtpx"
 else
    default_mpicc="mpicc"
    default_mpif90="mpif90"
