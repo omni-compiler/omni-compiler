@@ -272,6 +272,7 @@ public class XMParray {
       Xobject idxOffset = null;
       for(int j = 0; j < tmpl_dims.size(); j++){
 	tt = tmpl_dims.elementAt(j).getIndex();
+	if(tt == null) continue;
 	if(tt.isVariable()){
 	  if(tt.equals(t)){
 	    idx = j;

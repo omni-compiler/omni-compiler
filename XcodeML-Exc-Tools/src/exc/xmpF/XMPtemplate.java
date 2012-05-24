@@ -218,7 +218,7 @@ package exc.xmpF;
        int distManner = XMPtemplate.DUPLICATION;
        if(i.getArg() == null)
 	 distManner = XMPtemplate.DUPLICATION;
-       if(i.getArg().isIntConstant())
+       else if(i.getArg().isIntConstant())
 	 distManner = i.getArg().getInt();
        else {
 	 String dist_fmt = i.getArg().getArg(0).getString();

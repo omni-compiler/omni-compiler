@@ -234,6 +234,7 @@ public class XMPanalyzePragma
 	XMP.error("on-ref in loop must not be triplet");
       } else {
 	Xobject t = d_info.getIndex();
+	if(t == null) continue;
 	Xobject v = null;
 	Xobject off = null;
 	if(t.isVariable()){
