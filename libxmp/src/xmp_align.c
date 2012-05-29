@@ -104,8 +104,11 @@ void _XMP_align_array_NOT_ALIGNED(_XMP_array_t *array, int array_index) {
   ai->par_stride = 1;
   ai->par_size = size;
 
-  ai->local_lower = lower;
-  ai->local_upper = upper;
+  // must be translated to as 0-origin in XMP/F.
+  //ai->local_lower = lower;
+  //ai->local_upper = upper;
+  ai->local_lower = 0;
+  ai->local_upper = upper - lower;
   ai->local_stride = 1;
   ai->alloc_size = size;
 

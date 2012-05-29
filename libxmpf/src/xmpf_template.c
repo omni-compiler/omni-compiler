@@ -24,7 +24,7 @@ void xmpf_template_dim_info__(_XMP_template_t **t_desc, int *i_dim,
   t->info[*i_dim].ser_upper = *ub;
   xmpf_template_dist_manner[*i_dim] = *dist_manner;
 
-  if (*dist_chunk == 0){
+  if (*dist_chunk == 0 && *dist_manner == _XMP_N_DIST_CYCLIC){
     xmpf_template_dist_chunk[*i_dim] = 1;
   }
   else {

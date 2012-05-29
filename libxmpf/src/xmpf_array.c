@@ -158,8 +158,17 @@ void xmpf_array_get_local_size__(_XMP_array_t **a_desc, int *i_dim, int *lb, int
 {
   _XMP_array_t *array = *a_desc;
   _XMP_array_info_t *ai = &(array->info[*i_dim]);
-  *lb = - ai->shadow_size_lo;
-  *ub = ai->alloc_size - ai->shadow_size_lo - 1;
+
+  if (ai->align_manner != _XMP_N_ALIGN_DUPLICATION &&
+      ai->align_manner != _XMP_N_ALIGN_NOT_ALIGNED){
+    *lb = - ai->shadow_size_lo;
+    *ub = ai->alloc_size - ai->shadow_size_lo - 1;
+  }
+  else {
+    *lb = ai->ser_lower;
+    *ub = ai->ser_upper;
+  }
+
   //xmpf_dbg_printf("array_get_size = (%d:%d)\n", *lb, *ub);
 }
 
