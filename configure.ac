@@ -529,6 +529,11 @@ AH_TEMPLATE(OBJEXT, [object file extension])
 AC_DEFINE_UNQUOTED(OBJEXT, "${OBJEXT}")
 
 
+if test "$target" != "$host" -a "$target" = "Kcomputer-linux-gnu"; then
+        BECC="fccpx"
+        BEFC="frtpx"
+fi
+
 if test "$BECC" = ""; then
 	BECC=${CC}
 fi
@@ -548,11 +553,17 @@ gcc*)
     OMC_CONF_LNK_OPT=""
     ;;
 *)
-    echo "No supported C compiler was found."
-    echo "This program supports following C compilers."
-    echo " - GNU C Compiler (gcc)"
-    echo " - Intel C Compiler (icc)"
-    exit 1
+    if test "$BECC" = "fccpx"; then
+       OMC_CONF_LX2X_OPT=""
+       OMC_CONF_NTV_OPT="-Xg -std=c99 -w"
+       OMC_CONF_LNK_OPT=""
+    else
+       echo "No supported C compiler was found."
+       echo "This program supports following C compilers."
+       echo " - GNU C Compiler (gcc)"
+       echo " - Intel C Compiler (icc)"
+       exit 1
+    fi
     ;;
 esac
 
@@ -590,12 +601,23 @@ if test $enableF2F = yes; then
             OMF_CONF_NTV_OPT="-auto"
             OMF_CONF_LNK_OPT="-threads"
             ;;
+	*frtpx*)
+            OMF_CONF_LX2X_OPT=""
+            OMF_CONF_NTV_OPT="-Free"
+            OMF_CONF_LNK_OPT=""
+	    ;;
         *)
-            echo "No supported Fortran compiler was found."
-            echo "This program supports following Fortran compilers."
-            echo " - GNU Fortran (gfortran)"
-            echo " - Intel Fortran (ifort)"
-            exit 1
+	    if test "$BEFC" = "frtpx"; then
+	       OMF_CONF_LX2X_OPT=""
+	       OMF_CONF_NTV_OPT="-Free"
+	       OMF_CONF_LNK_OPT=""
+	    else
+ 	       echo "No supported Fortran compiler was found."
+               echo "This program supports following Fortran compilers."
+	       echo " - GNU Fortran (gfortran)"
+	       echo " - Intel Fortran (ifort)"
+	       exit 1
+	    fi
             ;;
         esac
         AC_SUBST(OMF_CONF_LX2X_OPT)
