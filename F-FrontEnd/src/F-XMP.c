@@ -87,6 +87,13 @@ void compile_XMP_directive(expr x)
     case XMP_NODES:
       check_INDCL();
       /* check arg: (maptype, nameNames, nodeSizeList, inherit) */
+#ifdef not_yet
+      /* (<null> ident xmp_node_spec_list (inhirit )) */
+      clause = EXPR_ARG2(x);
+      x1 = EXPR_ARG2(clase); /* indent */
+      x2 = XMP_compile_expr_list(EXPR_ARG3(clause));
+      x3 = EXPR_ARG4(cluase)
+#endif
       output_statement(x);
       break;
 

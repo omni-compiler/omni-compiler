@@ -63,6 +63,10 @@ public class XMPdimInfo {
     if(lower == null) return Xcons.IntConstant(1);
     return lower; 
   }
+
+  public boolean hasLower(){
+    return (lower != null);
+  }
   
   public Xobject getUpper() { return upper; }
 

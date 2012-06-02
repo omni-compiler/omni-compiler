@@ -148,7 +148,7 @@ public class Xtype
     public static final BasicType FlogicalType =
         boolType;
     public static final BasicType FrealType =
-        doubleType;
+        floatType;
     public static final BasicType FcomplexType =
         floatComplexType;
     public static final BasicType FnumericType =
@@ -209,8 +209,8 @@ public class Xtype
         new TypeInfo(unsignedlongType,      "unsigned_long",        null,               "Fint"),
         new TypeInfo(longlongType,          "long_long",            null,               "Fint"),
         new TypeInfo(unsignedlonglongType,  "unsigned_long_long",   null,               "Fint"),
-        new TypeInfo(floatType,             "float",                null,               "Freal"),
-        new TypeInfo(doubleType,            "double",               "Freal",            "Freal"),
+        new TypeInfo(floatType,             "float",                "Freal",               "Freal"),
+        new TypeInfo(doubleType,            "double",               null,            "Freal"),
         new TypeInfo(longdoubleType,        "long_double",          null,               "Freal"),
         new TypeInfo(boolType,              "bool",                 "Flogical",         "Flogical"),
         new TypeInfo(floatComplexType,      "float_complex",        null,               "Fcomplex"),
@@ -937,7 +937,7 @@ public class Xtype
             }
             return "<" + p + (ref != null ? ":" + ref.toString() : "");
         }
-        
+
         String id = getXcodeCId();
         if(id == null)
             id = getXcodeFId();

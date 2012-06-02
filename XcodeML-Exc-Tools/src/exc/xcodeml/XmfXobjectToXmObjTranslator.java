@@ -874,8 +874,8 @@ public class XmfXobjectToXmObjTranslator
         if(xmobj instanceof IXbTypedExpr) {
             if(xobj.Type() != null) {
                 String tid = xobj.Type().getXcodeFId();
-                if(tid.equals("null") || tid == null)
-                    XmLog.fatal("type is null");
+//                 if(tid == null || tid.equals("null"))
+//                    XmLog.fatal("type is null");
                 ((IXbTypedExpr)xmobj).setType(tid);
             }
         }

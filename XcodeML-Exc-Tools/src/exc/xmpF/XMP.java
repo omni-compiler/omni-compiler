@@ -84,10 +84,104 @@ public class XMP {
   private static boolean errorFlags			= false;
 
   public static Xobject typeIntConstant(Xtype type) {
-    if(type.isBasic())
-      return Xcons.IntConstant(type.getBasicType() + 500);
-    else 
+    if(type.isBasic()){
+      return Xcons.IntConstant(reduceBasicType(type));
+    }else 
       return Xcons.IntConstant(NONBASIC_TYPE);
+  }
+
+  static int reduceBasicType(Xtype type){
+    Xobject Fkind = null;
+    int t = type.getBasicType();
+    switch(t){
+    case BasicType.INT:
+      Fkind = type.getFkind();
+      if(Fkind != null && Fkind.isIntConstant()){
+	switch(Fkind.getInt()){
+	case 1:
+	  t = BasicType.CHAR;
+	  break;
+	case 2:
+	  t = BasicType.SHORT;
+	  break;
+	case 4:
+	  t = BasicType.LONG;
+	  break;
+	case 8:
+	  t = BasicType.LONGLONG;
+	  break;
+	}
+      }
+      break;
+    case BasicType.BOOL:
+      Fkind = type.getFkind();
+      if(Fkind != null && Fkind.isIntConstant()){
+	switch(Fkind.getInt()){
+	case 1:
+	  t = BasicType.UNSIGNED_CHAR;
+	  break;
+	case 2:
+	  t = BasicType.UNSIGNED_SHORT;
+	  break;
+	case 4:
+	  t = BasicType.UNSIGNED_LONG;
+	  break;
+	case 8:
+	  t = BasicType.UNSIGNED_LONGLONG;
+	  break;
+	}
+      }
+      break;
+    case BasicType.FLOAT:
+      Fkind = type.getFkind();
+      if(Fkind != null && Fkind.isIntConstant()){
+	switch(Fkind.getInt()){
+	case 4:
+	  t = BasicType.FLOAT;
+	  break;
+	case 8:
+	  t = BasicType.DOUBLE;
+	  break;
+	case 16:
+	  t = BasicType.LONG_DOUBLE;
+	  break;
+	}
+      }
+      break;
+    case BasicType.FLOAT_COMPLEX:
+      Fkind = type.getFkind();
+      if(Fkind != null && Fkind.isIntConstant()){
+	switch(Fkind.getInt()){
+	case 8:
+	  t = BasicType.FLOAT_COMPLEX;
+	  break;
+	case 16:
+	  t = BasicType.DOUBLE_COMPLEX;
+	  break;
+	}
+      }
+      break;
+    case BasicType.CHAR:
+    case BasicType.UNSIGNED_CHAR:
+    case BasicType.SHORT:
+    case BasicType.UNSIGNED_SHORT:
+    case BasicType.UNSIGNED_INT:
+    case BasicType.LONG:
+    case BasicType.UNSIGNED_LONG:
+    case BasicType.LONGLONG:
+    case BasicType.UNSIGNED_LONGLONG:
+    case BasicType.DOUBLE:
+    case BasicType.LONG_DOUBLE:
+    case BasicType.FLOAT_IMAGINARY:
+    case BasicType.DOUBLE_IMAGINARY:
+    case BasicType.LONG_DOUBLE_IMAGINARY:
+    case BasicType.DOUBLE_COMPLEX:
+    case BasicType.LONG_DOUBLE_COMPLEX:
+	  break;
+    default:
+      return NONBASIC_TYPE;
+    }
+    return t+500;
   }
 
   public static void exitByError() {

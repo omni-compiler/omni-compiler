@@ -24,6 +24,16 @@ public class XMPobjectsRef {
   Vector<XMPdimInfo> subscripts;
   Vector<XMPdimInfo> loop_dims;  // back pointer to loop_dims
 
+  /* 
+   * !$XMP loop (i_0,i_1,..,i_k,...) on t(j_0,j_1,...,j_k,...)
+   *       j_k == i_l+off then:
+   *   subscripts maps tmpl to loop_idx 
+   *     subscripts k_th element contains l (getLoopOnIndex)
+   *                                    and off (getOnRefOffset)
+   *   loop_dims maps loop_idx to tmpl
+   *     loop_dims l_th element contains k (getLoopOnIndex)
+   */
+
   public XMPobjectsRef() {} // null constructor
 
   public Ident getDescId() { return descId; }
@@ -55,7 +65,11 @@ public class XMPobjectsRef {
 
   public Vector<XMPdimInfo> getSubscripts() { return subscripts; }
 
-  public int getLoopIndex(int i){
+  public int getLoopOnIndex(int i){
+    return loop_dims.elementAt(i).getLoopOnIndex();
+  }
+
+  public int getOnRefLoopIndex(int i){
     return subscripts.elementAt(i).getOnRefLoopIndex();
   }
 

@@ -322,7 +322,7 @@ public class XMParray {
 	  XMP.error("bad syntax in shadow");
 	  continue;
 	}
-	if(d_info.getLower() != null){
+	if(d_info.hasLower()){
 	  if(d_info.getLower().isIntConstant())
 	    left = d_info.getLower().getInt();
 	  else

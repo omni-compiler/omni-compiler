@@ -158,9 +158,17 @@ public class XMPrewriteExpr
     XMPtemplate a_tmpl = a.getAlignTemplate();
     if(on_tmpl != a_tmpl) return null; // different template
     
+    if(XMP.debugFlag) System.out.println("same template");
+
     int a_tmpl_idx = a.getAlignSubscriptIndexAt(dim_i);
-    int on_tmpl_idx = on_ref.getLoopIndex(loop_idx);
+    int on_tmpl_idx = on_ref.getLoopOnIndex(loop_idx);
+
+    if(XMP.debugFlag) 
+      System.out.println("template index a_tmpl_idx="+a_tmpl_idx+
+			 ", on_tmp_idx="+on_tmpl_idx);
+
     if(a_tmpl_idx != on_tmpl_idx) return null;
+
 
     Xobject off1 = a.getAlignSubscriptOffsetAt(dim_i);
     Xobject off2 = on_ref.getLoopOffset(loop_idx);

@@ -181,6 +181,10 @@ public class XMPanalyzePragma
     XobjList loopIterList = (XobjList)loopDecl.getArg(0);
     if (loopIterList == null) {
       ForBlock loopBlock = getOutermostLoopBlock(loopBody);
+      if(loopBlock == null){
+	XMP.error("loop is not found after loop directive");
+	return;
+      }
       dims.add(XMPdimInfo.loopInfo(loopBlock));
       loopBody = loopBlock.getBody();
     } else {
@@ -289,22 +293,23 @@ public class XMPanalyzePragma
     if (b != null) {
       if (b.Opcode() == Xcode.F_DO_STATEMENT) {
         if (b.getNext() != null){
-          XMP.error("only one loop statement is allowed in loop directive");
+          // XMP.error("only one loop statement is allowed in loop directive");
 	  return null;
 	}
         ForBlock forBlock = (ForBlock)b;
         forBlock.Canonicalize();
         if (!(forBlock.isCanonical())){
-	  XMP.error("loop statement is not canonical");
+	  // XMP.error("loop statement is not canonical");
 	  return null;
 	}
         return forBlock;
       }
       else if (b.Opcode() == Xcode.COMPOUND_STATEMENT)
         return getOutermostLoopBlock(b.getBody());
-    } else {
-      XMP.error("cannot find a loop statement");
-    }
+    } 
+//     else {
+//       XMP.error("cannot find a loop statement");
+//     }
     return null;
   }
 
