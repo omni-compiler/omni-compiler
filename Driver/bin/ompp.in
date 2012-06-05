@@ -36,4 +36,4 @@ if [ "${OM_VERBOSE}" = "1" ]; then
     echo $CMD \> ${OUTFILE}
 fi
 
-$CMD -o ${OUTFILE} || exit $?
+$CMD > ${OUTFILE} || exit $?
