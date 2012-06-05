@@ -5820,6 +5820,10 @@ else
   RANLIB="$ac_cv_prog_RANLIB"
 fi
 
+		if test "${RANLIB}" = ":"; then
+		    as_fn_error $? "ranlibpx not found" "$LINENO" 5;
+		fi
+
 		if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}arpx", so it can be a program name with args.
 set dummy ${ac_tool_prefix}arpx; ac_word=$2
@@ -5911,6 +5915,10 @@ esac
 else
   AR="$ac_cv_prog_AR"
 fi
+
+		if test "${AR}" = ":"; then
+		    as_fn_error $? "arpx not found" "$LINENO" 5;
+		fi
 
 		ARFLAGS="cru"
 		 ;;

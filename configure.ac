@@ -655,7 +655,15 @@ if test "$target" != "$host"; then
    case "$target" in
 	Kcomputer-linux-gnu)
 		AC_CHECK_TOOL([RANLIB], [ranlibpx], [:])
+		if test "${RANLIB}" = ":"; then
+		    AC_MSG_ERROR([ranlibpx not found]);
+		fi		    
+
 		AC_CHECK_TOOL([AR], [arpx], [:])
+		if test "${AR}" = ":"; then
+		    AC_MSG_ERROR([arpx not found]);
+		fi		    
+
 		ARFLAGS="cru"
 		AC_SUBST(ARFLAGS) ;;
 	*)
