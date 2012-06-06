@@ -298,7 +298,7 @@ int check_for_XMP_pragma(int st_no, expr x)
     goto done;
   }
 
-  if (XMP_io_desired_statements > 0) {
+  if (XMP_io_desired_statements > 0 && x != NULL) {
       if (isIOStatement(x) != 1) {
 	  error("XMP IO directives must be followed by I/O statements.");
 	  XMP_io_desired_statements = 0;
@@ -326,7 +326,7 @@ int check_for_XMP_pragma(int st_no, expr x)
     goto done;
   }
 
-  if (XMP_io_desired_statements == 1) {
+  if (XMP_io_desired_statements == 1 && x != NULL) {
       ret = close_XMP_IO_closure(st_no, x);
   }
 
