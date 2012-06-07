@@ -1076,7 +1076,7 @@ int get_all_obj_files( char *dst )
         } else {
             strcat( dst + next_src_idx, basename( io->in_file ));
             change_extension( dst + next_src_idx, OM_OBJFILE_EXT );
-            next_src_idx += strlen( basename( io->in_file ));
+            next_src_idx += (strlen( basename( io->in_file )) - strlen(ext) + strlen(OM_OBJFILE_EXT));
         }
         strcat( dst + next_src_idx, CODE_SPACE );
         next_src_idx++;
