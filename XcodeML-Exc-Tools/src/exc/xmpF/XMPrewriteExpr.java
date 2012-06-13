@@ -116,6 +116,21 @@ public class XMPrewriteExpr
 	  System.out.println("coarray not yet: "+ x);
 	  break;
 	}
+      case FUNCTION_CALL:
+	{
+	  String fname = x.getArg(0).getString();
+	  if (fname.equalsIgnoreCase("xmp_desc_of")){
+	      XMParray array = (XMParray) x.getArg(1).getArg(0).getProp(XMP.arrayProp);
+	      if (array == null){
+		 XMP.error("xmp_desc_of applied to non-global data");
+		 XMP.exitByError();
+	      }
+	      Xobject desc = array.getDescId();
+	      iter.setXobject(desc);
+	  }
+	  break;
+	}
+
       }
     }
   }
