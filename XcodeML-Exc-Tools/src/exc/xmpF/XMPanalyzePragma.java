@@ -148,9 +148,12 @@ public class XMPanalyzePragma
       break;
 
     case TASK:
-      { analyzeTask(pb);			break; }
+      analyzeTask(pb.getClauses(), pb.getBody(), info, pb);
+      break;
+
     case TASKS:
       { analyzeTasks(pb);			break; }
+
     case GMOVE:
       { analyzeGmove(pb);			break; }
 
@@ -319,7 +322,7 @@ public class XMPanalyzePragma
    * (2) distribution is BLOCK
    */
   private static void checkLocalizableLoop(Vector<XMPdimInfo> dims,
-				       XMPobjectsRef on_ref){
+					   XMPobjectsRef on_ref){
     for(int i = 0; i < dims.size(); i++){
       boolean localizable = false;
       XMPdimInfo d_info = dims.elementAt(i);
@@ -448,14 +451,14 @@ public class XMPanalyzePragma
 		      bcast_vars);
   }
 
-  private void analyzeTask(PragmaBlock pb){
-    XMP.fatal("analyzeTask");
+  void analyzeTask(Xobject taskDecl, BlockList taskBody,
+		   XMPinfo info, PragmaBlock pb) {
+    
   }
 
   private void analyzeTasks(PragmaBlock pb) {
     XMP.fatal("analyzeTasks");
   }
-
 
   private void analyzeGmove(PragmaBlock pb) {
     XMP.fatal("analyzeGmove");
@@ -464,5 +467,4 @@ public class XMPanalyzePragma
   private void analyzeCoarray(Xobject coarrayPragma){
     XMP.fatal("analyzeCoarray");
   }
-
 }

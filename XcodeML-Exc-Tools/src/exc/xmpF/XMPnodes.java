@@ -67,7 +67,7 @@ public class XMPnodes extends XMPobject {
   public void parsePragma(Xobject decl, XMPenv env, PragmaBlock pb) {
 
     // check name collision, name = arg(1)
-    _name = decl.getArg(1).getString();
+    _name = decl.getArg(0).getString();
     env.checkObjectNameCollision(_name,pb);
     if(XMP.hasError()) return;
 
@@ -76,7 +76,7 @@ public class XMPnodes extends XMPobject {
 
     // declare nodes object, count the numer of Dimension, demension = arg(2)
     _dim = 0;
-    for (XobjArgs i = decl.getArg(2).getArgs(); i != null; i = i.nextArgs()) {
+    for (XobjArgs i = decl.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
       _sizeVector.add(XMPdimInfo.parseDecl(i.getArg()));
       _dim++;
     }
@@ -98,7 +98,7 @@ public class XMPnodes extends XMPobject {
     }
 
     // inhrit type = arg(3)
-    XobjList inheritDecl = (XobjList)decl.getArg(3);
+    XobjList inheritDecl = (XobjList)decl.getArg(2);
     if(inheritDecl == null)
       inheritType = XMPnodes.INHERIT_GLOBAL; //default
     else {

@@ -1,5 +1,5 @@
 /* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
+ * $TSUKUBA_Release: Omni XcalableMP Compiler 3 $
  * $TSUKUBA_Copyright:
  *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
  *  $
@@ -8,7 +8,8 @@
 
 expv XMP_check_TASK(expr x);
 expv XMP_pragma_list(enum XMP_pragma pragma,expv arg1,expv arg2);
-static int	close_XMP_IO_closure(int st_no, expr x);
+static int close_XMP_IO_closure(int st_no, expr x);
+int check_for_XMP_pragma(int st_no, expr x);
 
 // void compile_XMP_name_list(expr x);
 
@@ -16,6 +17,21 @@ int XMP_do_required;
 int XMP_gmove_required;
 int XMP_io_desired_statements = 0;
 expv XMP_gmove_directive;
+
+typedef enum _xmp_list_context {
+    XMP_LIST_NODES,
+    XMP_LIST_ON_REF,
+    XMP_LIST_TEMPLATE,
+    XMP_LIST_DISTRIBUTE,
+    XMP_LIST_ALIGN,
+    XMP_LIST_SHADOW,
+    XMP_LIST_ID_LIST,
+    XMP_LIST_END
+} xmp_list_context;
+
+expv XMP_compile_subscript_list(expr list,xmp_list_context context);
+expv XMP_compile_ON_ref(expr x);
+expv XMP_compile_clause_opt(expr x);
 
 int XMP_reduction_op(expr v)
 {
@@ -55,6 +71,7 @@ void init_for_XMP_pragma()
 void compile_XMP_directive(expr x)
 {
     expr dir;
+    expr c, x1,x2,x3,x4;
 
     if(x == NULL) return;	/* error */
 
@@ -77,55 +94,70 @@ void compile_XMP_directive(expr x)
     }
 
     dir = EXPR_ARG1(x);  /* direcive name */
+    c = EXPR_ARG2(x);
 
     if(EXPR_INT(dir) != XMP_END_TASKS && 
        EXPR_INT(dir) != XMP_END_TASK)
-	check_for_XMP_pragma(NULL);  /* close DO directives if any */
+	check_for_XMP_pragma(-1,NULL);  /* close DO directives if any */
 
     switch(EXPR_INT(dir)){
-      
     case XMP_NODES:
       check_INDCL();
-      /* check arg: (maptype, nameNames, nodeSizeList, inherit) */
-#ifdef not_yet
-      /* (<null> ident xmp_node_spec_list (inhirit )) */
-      clause = EXPR_ARG2(x);
-      x1 = EXPR_ARG2(clase); /* indent */
-      x2 = XMP_compile_expr_list(EXPR_ARG3(clause));
-      x3 = EXPR_ARG4(cluase)
-#endif
-      output_statement(x);
+      /* check arg: (nameNames, nodeSizeList, inherit) */
+      x1 = EXPR_ARG1(c); /* indent */
+      x2 = XMP_compile_subscript_list(EXPR_ARG2(c),XMP_LIST_NODES);
+      x3 = XMP_compile_ON_ref(EXPR_ARG3(c));
+      c = list3(LIST,x1,x2,x3);
+      output_statement(XMP_pragma_list(XMP_NODES,c,NULL));
       break;
 
     case XMP_TEMPLATE:
       check_INDCL();
       /* check arg: (templateNameList, templateSpecList) */
-      output_statement(x);
+      x1 = EXPR_ARG1(c); /* name list */
+      x2 = XMP_compile_subscript_list(EXPR_ARG2(c),XMP_LIST_TEMPLATE);
+      c = list2(LIST,x1,x2);
+      output_statement(XMP_pragma_list(XMP_TEMPLATE,c,NULL));
       break;
 
     case XMP_DISTRIBUTE:
       check_INDCL();
-      /* check arg: (templateNameList, templateSpecList) */
-      output_statement(x);
+      /* check arg: (templateNameList, dist_fmt_list, nodes_ident) */
+      x1 = EXPR_ARG1(c); /* name list */
+      x2 = XMP_compile_subscript_list(EXPR_ARG2(c),XMP_LIST_DISTRIBUTE);
+      x3 = EXPR_ARG3(c);
+      c = list3(LIST,x1,x2,x3);
+      output_statement(XMP_pragma_list(XMP_DISTRIBUTE,c,NULL));
       break;
 
     case XMP_ALIGN:
       check_INDCL();
       /* check arg: (arrayNameList, alignSrcList,templateName, alignSubsript) */
-      output_statement(x);
+      x1 = EXPR_ARG1(c); /* arrayNameList */
+      x2 = XMP_compile_subscript_list(EXPR_ARG2(c),XMP_LIST_ID_LIST);
+      x3 = EXPR_ARG3(c); /* templateName */
+      x4 = XMP_compile_subscript_list(EXPR_ARG4(c),XMP_LIST_ALIGN);
+      c = list4(LIST,x1,x2,x3,x4);
+      output_statement(XMP_pragma_list(XMP_ALIGN,c,NULL));
       break;
 
     case XMP_SHADOW:
       check_INDCL();
       /* check arg: (arrayName, shadowWidthList) */
-      output_statement(x);
+      x1 = EXPR_ARG1(c);
+      x2 = XMP_compile_subscript_list(EXPR_ARG2(c),XMP_LIST_SHADOW);
+      c = list2(LIST,x1,x2);
+      output_statement(XMP_pragma_list(XMP_SHADOW,c,NULL));
       break;
 
     case XMP_TASK:
       check_INEXEC();
-      /* check: arg */
+      /* check arg: node_ref opt */
+      x1 = XMP_compile_ON_ref(EXPR_ARG1(c));
+      x2 = XMP_compile_clause_opt(EXPR_ARG2(c));
+      c = list2(LIST,x1,x2);
       push_ctl(CTL_XMP);
-      CTL_XMP_ARG(ctl_top) = x;
+      CTL_XMP_ARG(ctl_top) = XMP_pragma_list(XMP_TASK,c,NULL);
       EXPR_LINE(CTL_XMP_ARG(ctl_top)) = current_line;
       return;
 
@@ -143,7 +175,7 @@ void compile_XMP_directive(expr x)
 
     case XMP_TASKS:
       check_INEXEC();
-      /* check: arg */
+      /* check arg: no arg */
       push_ctl(CTL_XMP);
       CTL_XMP_ARG(ctl_top) = x;
       EXPR_LINE(CTL_XMP_ARG(ctl_top)) = current_line;
@@ -164,8 +196,14 @@ void compile_XMP_directive(expr x)
 
     case XMP_LOOP:
       check_INEXEC();
+      /* check arg: (index_list on_ref reduction_opt opt)  */
+      x1 = XMP_compile_subscript_list(EXPR_ARG1(c),XMP_LIST_ID_LIST);
+      x2 = XMP_compile_ON_ref(EXPR_ARG2(c));
+      x3 = EXPR_ARG3(c);
+      x4 = EXPR_ARG4(c);
+      c = list4(LIST,x1,x2,x3,x4);
       push_ctl(CTL_XMP);
-      CTL_XMP_ARG(ctl_top) = x;
+      CTL_XMP_ARG(ctl_top) = XMP_pragma_list(XMP_LOOP,c,NULL);;
       EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;
       XMP_do_required = TRUE;
       break;
@@ -420,6 +458,167 @@ expv XMP_check_TASK(expr x)
     return task_list;
 }
 
+
+expv XMP_compile_subscript_list(expr l,xmp_list_context context)
+{
+    expr x;
+    list lp;
+    expv v,v1,v2,ret_list;
+    
+    ret_list = EMPTY_LIST;
+    FOR_ITEMS_IN_LIST(lp,l){
+	x = LIST_ITEM(lp);
+	v = v1 = v2 = NULL;
+	switch(context){
+	case XMP_LIST_NODES: /* element must be integer scalar or * */
+	    if(x != NULL) { /* must a list */
+		if(EXPR_ARG1(x) == NULL){
+		    error("bad subscript in nodes directive");
+		    break;
+		}
+		if(EXPR_ARG2(x) == NULL &&  EXPR_ARG3(x) == NULL){
+		    v = compile_expression(EXPR_ARG1(x));
+		    if(!IS_INT_CONST_V(v))
+			error("subscript in nodes must be an integer constant");
+		} else 
+		    error("bad subscript in nodes directive");
+	    }
+	    break;
+	case XMP_LIST_ON_REF: /* expr, triplet, * */
+	    if(x != NULL){
+		if(EXPR_ARG1(x) == NULL){
+		    error("bad subscript in nodes ref");
+		    break;
+		}
+		v = compile_expression(EXPR_ARG1(x));
+		if(EXPR_ARG2(x) != NULL)
+		    v1 = compile_expression(EXPR_ARG2(x));
+		if(EXPR_ARG3(x) != NULL)
+		    v2 = compile_expression(EXPR_ARG3(x));
+		if(v1 != NULL || v2 != NULL)
+		    v = list3(LIST,v,v1,v2);
+	    }
+	    break;
+	case XMP_LIST_TEMPLATE: /* int-expr [: int-expr], or : */
+	    if(x == NULL)
+		error("subscript in template must not be *");
+	    else {
+		if(EXPR_ARG3(x) != NULL)
+		    error("subscript in template cannot have step");
+		if(EXPR_ARG1(x) != NULL){
+		    v = compile_expression(EXPR_ARG1(x));
+		} else {
+		    if(EXPR_ARG2(x) != NULL){
+			error("bad subscript in template");
+		    }  else {
+			/* both arg1 and arg2 are null, ':' */
+			v = list1(LIST,NULL);
+		    }
+		    break;
+		}
+		if(EXPR_ARG2(x) != NULL){
+		    v1 = compile_expression(EXPR_ARG2(x));
+		    v = list3(LIST,v,v1,NULL);
+		}
+	    }
+	    break;
+	case XMP_LIST_DISTRIBUTE: /* * or (id expr) */
+	    if(x != NULL){
+		if(EXPR_ARG2(x) != NULL){
+		    v = list2(LIST,EXPR_ARG1(x),
+			      compile_expression(EXPR_ARG2(x)));
+		} else v = x;
+	    }
+	    break;
+	case XMP_LIST_ID_LIST: /* id, or *,: */
+	    if(x != NULL){
+		if(EXPR_ARG2(x) == NULL &&  EXPR_ARG3(x) == NULL){
+		    x = EXPR_ARG1(x);
+		    if(x == NULL){
+			v = list1(LIST,NULL);
+			break;
+		    } else if(EXPR_CODE(x) == IDENT){
+			v = x;
+			break;
+		    }
+		}
+		error("susbscript in align source or index must be identifier or ':'");
+	    }
+	    break;
+	case XMP_LIST_ALIGN:  /* expr=v+off, or *, : */
+	    if(x != NULL){
+		if(EXPR_ARG2(x) == NULL &&  EXPR_ARG3(x) == NULL){
+		    x = EXPR_ARG1(x);
+		    if(x == NULL){
+			v = list1(LIST,NULL);
+			break;
+		    } else {
+			switch(EXPR_CODE(x)){
+			case IDENT:
+			    v = x;
+			    break;
+			case F_PLUS_EXPR:
+			case F_MINUS_EXPR:
+			    if(EXPR_CODE(EXPR_ARG1(x)) != IDENT)
+				error("left expression must be identifier in align target");
+			    v = expv_cons(EXPR_CODE(x) == F_PLUS_EXPR ?
+					  PLUS_EXPR:MINUS_EXPR,
+					  type_INT,
+					  EXPR_ARG1(x),
+					  compile_expression(EXPR_ARG2(x)));
+			    break;
+			default:
+			    error("bad expression in align target");
+			}
+			break;
+		    }
+		    error("subscript in align target must be expression or ':'");
+		}
+		error("susbscript in align target must be an expression or ':'");
+	    }
+	    break;
+
+	case XMP_LIST_SHADOW: /* expr expr:expr or * */
+	    if(x != NULL){
+		if(EXPR_ARG3(x) != NULL){
+		    error("bad subscript in shadow");
+		    break;
+		}
+		if(EXPR_ARG1(x) != NULL){
+		    v = compile_expression(EXPR_ARG1(x));
+		    if(EXPR_ARG2(x) != NULL){
+			v2 = compile_expression(EXPR_ARG2(x));
+			v = list3(LIST,v,v2,NULL);
+		    } 
+		    break;
+		}
+		error("bad subscript in shadow");
+	    }
+	    break;
+
+	default:
+	    fatal("XMP_compile_subscript_list: unknown context");
+	}
+	ret_list = list_put_last(ret_list,v);
+    }
+    return ret_list;
+}
+
+/*
+ * check node ref
+ */
+expv XMP_compile_ON_ref(expr x)
+{
+    expv v;
+    if(x == NULL) return NULL;
+    v = XMP_compile_subscript_list(EXPR_ARG2(x),XMP_LIST_ON_REF);
+    return list2(LIST,EXPR_ARG1(x),v);
+}
+
+expv XMP_compile_clause_opt(expr x)
+{
+    return x; /* nothing at this moment */
+}
 
 #ifdef not
 

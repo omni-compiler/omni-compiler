@@ -279,7 +279,10 @@
 %token XMPKW_ATOMIC
 %token XMPKW_DIRECT
 
-%type <val> xmp_directive xmp_nodes_clause xmp_template_clause xmp_distribute_clause xmp_align_clause xmp_shadow_clause xmp_task_clause xmp_loop_clause xmp_reflect_clause xmp_gmove_clause xmp_barrier_clause xmp_bcast_clause xmp_reduction_clause xmp_node_spec_list xmp_node_spec xmp_nodes_ref xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_align_subscript_list xmp_align_subscript xmp_shadow_width_list xmp_shadow_width xmp_on_ref xmp_reduction_opt xmp_reduction_spec xmp_gmove_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options
+%type <val> xmp_directive xmp_nodes_clause xmp_template_clause xmp_distribute_clause xmp_align_clause xmp_shadow_clause xmp_task_clause xmp_loop_clause xmp_reflect_clause xmp_gmove_clause xmp_barrier_clause xmp_bcast_clause xmp_reduction_clause xmp_nodes_ref 
+
+%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_on_ref xmp_reduction_opt xmp_reduction_spec xmp_gmove_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options
+
 %type <code> xmp_reduction_op
 
 %{
@@ -1767,12 +1770,12 @@ xmp_directive:
 	  ;
 
 xmp_nodes_clause:
-	    IDENTIFIER '(' xmp_node_spec_list ')'
-	      { $$ = list4(LIST,NULL,$1,$3,NULL); }
-	  | IDENTIFIER '(' xmp_node_spec_list ')' '=' '*'
-	    { $$ = list4(LIST,NULL,$1,$3,XMP_LIST(XMP_NODES_INHERIT_EXEC,NULL)); }
-	  | IDENTIFIER '(' xmp_node_spec_list ')' '=' xmp_nodes_ref
-	    { $$ = list4(LIST,NULL,$1,$3,XMP_LIST(XMP_NODES_INHERIT_NODES,$6)); }
+	    IDENTIFIER '(' xmp_subscript_list ')'
+	      { $$ = list3(LIST,$1,$3,NULL); }
+	  | IDENTIFIER '(' xmp_subscript_list ')' '=' '*'
+	    { $$ = list3(LIST,$1,$3,XMP_LIST(XMP_NODES_INHERIT_EXEC,NULL)); }
+	  | IDENTIFIER '(' xmp_subscript_list ')' '=' xmp_nodes_ref
+	    { $$ = list3(LIST,$1,$3,XMP_LIST(XMP_NODES_INHERIT_NODES,$6)); }
   	  ;
 
 xmp_template_clause:
@@ -1790,18 +1793,18 @@ xmp_distribute_clause:
 	  ;
 
 xmp_align_clause:
-	    IDENTIFIER '(' xmp_align_subscript_list ')' XMPKW_WITH 
-  	      IDENTIFIER '(' xmp_align_subscript_list ')' 
+	    IDENTIFIER '(' xmp_subscript_list ')' XMPKW_WITH 
+  	      IDENTIFIER '(' xmp_subscript_list ')' 
 	    { $$ = list4(LIST,list1(LIST,$1),$3,$6,$8); }
-	  | '(' xmp_align_subscript_list ')' XMPKW_WITH 
-  	    IDENTIFIER '(' xmp_align_subscript_list ')' COL2 xmp_name_list
+	  | '(' xmp_subscript_list ')' XMPKW_WITH 
+  	    IDENTIFIER '(' xmp_subscript_list ')' COL2 xmp_name_list
             { $$ = list4(LIST,$10,$2,$5,$7); }
 	  ;
 
 xmp_shadow_clause:
-	    IDENTIFIER '(' xmp_shadow_width_list ')' 
+	    IDENTIFIER '(' xmp_subscript_list ')' 
 	    { $$ = list2(LIST,list1(LIST,$1),$3); }
-	  |  '(' xmp_shadow_width_list ')' COL2 xmp_name_list
+	  |  '(' xmp_subscript_list ')' COL2 xmp_name_list
             { $$ = list2(LIST,$5,$2); }
           ;
 
@@ -1815,7 +1818,7 @@ xmp_loop_clause:
 	    { $$ = list4(LIST,NULL,$2,$3,$4); }
 	  | '(' xmp_subscript_list ')' XMPKW_ON xmp_on_ref
 	    	xmp_reduction_opt xmp_clause_opt
-	    { $$ = list4(LIST,$2,$5,$5,$7); }
+	    { $$ = list4(LIST,$2,$5,$6,$7); }
 	  ;
 
 xmp_reflect_clause:
@@ -1856,18 +1859,6 @@ xmp_reduction_clause:
 
 /* 
 */
-xmp_node_spec_list: 
-            xmp_node_spec
-	  { $$ = list1(LIST,$1); }
-	  | xmp_node_spec_list ',' xmp_node_spec
-	  { $$ = list_put_last($1,$3); }
-	  ;
-
-xmp_node_spec:
-	   expr
-	  | '*' { $$ = NULL; }
-	  ; 
-
 xmp_nodes_ref:
 	  '(' xmp_subscript ')' 
 	   { $$ = list2(LIST,NULL,$2); }
@@ -1908,32 +1899,6 @@ xmp_dist_fmt:
 	    { $$ = list2(LIST,$1,$3); }
 	  | IDENTIFIER '(' '*' ')'
 	    { $$ = list2(LIST,$1,NULL); }
-	  ;
-
-xmp_align_subscript_list:
-           xmp_align_subscript
-	  { $$ = list1(LIST,$1); }
-	  | xmp_align_subscript_list ',' xmp_align_subscript
-	  { $$ = list_put_last($1,$3); }
-	  ;
-
-xmp_align_subscript:
-	   expr
-	  | '*' { $$ = NULL; }
-	  | ':' { $$ = list1(LIST,NULL); }
-	  ;
-
-xmp_shadow_width_list:
-           xmp_shadow_width
-	  { $$ = list1(LIST,$1); }
-	  | xmp_shadow_width_list ',' xmp_shadow_width
-	  { $$ = list_put_last($1,$3); }
-	  ;
-
-xmp_shadow_width:
-	    expr { $$ = list2(LIST,$1,NULL); }
-	  | expr ':' expr {$$ = list2(LIST,$1,$3); }
-	  | '*' { $$ = NULL; }
 	  ;
 
 xmp_on_ref:

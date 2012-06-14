@@ -2274,6 +2274,10 @@ static void
 outx_expv_withListTag(int l,expv v)
 {
   list lp;
+  if(v == NULL) {
+      outx_printi(l,"<list/>\n");
+      return;
+  }
   if(EXPV_CODE(v) == LIST){
     outx_tag(l, "list");
     FOR_ITEMS_IN_LIST(lp, v)
