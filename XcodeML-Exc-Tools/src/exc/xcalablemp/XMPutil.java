@@ -166,7 +166,7 @@ public class XMPutil {
     int count = 0;
     Iterator<Xobject> it = list.iterator();
     while (it.hasNext()) {
-      it.next();
+			it.next();
       count++;
     }
 
@@ -179,7 +179,6 @@ public class XMPutil {
     while (it.hasNext()) {
       Xobject x = it.next();
       if (x == null) continue;
-
       if (x.Opcode() == Xcode.INT_CONSTANT) {
         if (x.getInt() == constant)
           count++;

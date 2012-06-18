@@ -1,0 +1,5 @@
+## How to compile sample files
+$ make all
+
+## How to run sample files
+$ make run

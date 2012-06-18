@@ -18,13 +18,26 @@ public class XMPrealloc implements XobjectDefVisitor {
 
   public void doDef(XobjectDef def) {
     try {
-      realloc(def);
+			alignArrayRealloc(def);
+			originalCoarrayDelete(def);
     } catch (XMPexception e) {
       XMP.error(def.getLineNo(), e.getMessage());
     }
   }
 
-  public void realloc(XobjectDef def) throws XMPexception {
+	private void originalCoarrayDelete(XobjectDef def) throws XMPexception {
+		if (def.isVarDecl()) {
+			String varName = def.getName();
+			XMPcoarray coarray = _globalDecl.getXMPcoarray(varName);
+
+			if (coarray != null){
+				def.setDef(Xcons.List(Xcode.TEXT,
+															Xcons.String("/* array '" + varName + "' is removed by XcalableMP coarray directive */")));
+			}
+		}
+	}
+
+  private void alignArrayRealloc(XobjectDef def) throws XMPexception {
     if (def.isVarDecl()) {
       String varName = def.getName();
       XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(varName);
@@ -43,8 +56,8 @@ public class XMPrealloc implements XobjectDefVisitor {
             _globalDecl.addGlobalInitFuncCall("_XMP_alloc_array", allocFuncArgs);
           }
 
-          def.setDef(Xcons.List(Xcode.TEXT,
-                                Xcons.String("/* array '" + varName + "' is removed by XcalableMP align directive */")));
+					def.setDef(Xcons.List(Xcode.TEXT,
+																Xcons.String("/* array '" + varName + "' is removed by XcalableMP align directive */")));
         } else {
           XobjList allocFuncArgs = Xcons.List(alignedArray.getAddrIdVoidAddr(),
                                               alignedArray.getArrayId().Ref(),

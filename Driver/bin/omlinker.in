@@ -38,7 +38,15 @@ for i in ${OM_OPTIONS}; do
 done
 OM_OPTIONS="${newOpts}"
 
-CMD="${LINKER} ${OM_OPTIONS} ${INPFILES} ${LIBS}"
+GASNET_PREFIX="@GASNET_PREFIX@"
+GASNET_CONDUIT="@GASNET_CONDUIT@"
+CMD=""
+if test "${GASNET_PREFIX}" != "" -a "${GASNET_CONDUIT}" != "" ; then
+  GASNET_LIBS="-lgasnet-${GASNET_CONDUIT}-seq -lammpi -lpthread -lrt -L${GASNET_PREFIX}/lib"
+  CMD="${LINKER} ${OM_OPTIONS} ${INPFILES} ${LIBS} ${GASNET_LIBS}"
+else
+  CMD="${LINKER} ${OM_OPTIONS} ${INPFILES} ${LIBS}"
+fi
 
 if [ "${OM_VERBOSE}" = "1" ]; then
     echo $CMD

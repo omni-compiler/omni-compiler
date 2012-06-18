@@ -142,8 +142,8 @@ extern void _XMP_finalize_world(void);
 extern int _XMP_split_world_by_color(int color);
 
 // xmp_runtime.c
-extern void _XMP_init(void);
-extern void _XMP_finalize(void);
+//extern void _XMP_init(void);
+//extern void _XMP_finalize(void);
 
 // ----- libxmp_threads ----------------------------------------------
 // xmp_threads_runtime.c
@@ -152,6 +152,27 @@ extern void _XMP_threads_finalize(void);
 
 #ifdef __cplusplus
 }
+#endif
+
+
+// ----- for coarray -------------------
+#ifdef _COARRAY_GASNET
+#include <gasnet.h>
+#include "xmp_data_struct.h"
+#define _XMP_COARRAY_MALLOC_SIZE (1*1024*1024*1024)  // 1GB
+
+#define GASNET_BARRIER() do {      \
+	gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);            \
+	gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);      \
+  } while (0)
+
+extern void _XMP_gasnet_set_coarray(_XMP_coarray_t *coarray, void **addr, long number_of_elements, size_t type_size);
+extern void _XMP_gasnet_initialize(int, char**, int);
+extern void _XMP_gasnet_finalize(int);
+extern void _XMP_gasnet_put(int, _XMP_coarray_t*, int, void*, int, int);
+extern void _XMP_gasnet_get(void*, int, int, _XMP_coarray_t*, int, int);
+extern void _XMP_gasnet_sync_all();
+extern void _XMP_gasnet_sync_memory();
 #endif
 
 #endif // _XMP_INTERNAL

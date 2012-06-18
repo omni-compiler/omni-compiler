@@ -330,7 +330,7 @@ public class omompx
       xmpTranslator.setScalascaEnabled(doScalasca);
       xmpTranslator.setTlogEnabled(doTlog);
 
-      xobjFile.iterateDef(xmpTranslator);
+			xobjFile.iterateDef(xmpTranslator);
       XMP.exitByError();
       xobjFile.iterateDef(xmpReallocator);
       XMP.exitByError();

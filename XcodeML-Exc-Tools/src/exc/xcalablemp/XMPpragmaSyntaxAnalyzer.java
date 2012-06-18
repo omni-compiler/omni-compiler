@@ -252,6 +252,12 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
       pg_get_token();
       args = null;
+		} else if (pg_is_ident("sync_all")) {
+      pragmaDir = XMPpragma.SYNC_ALL;
+      syntax = PragmaSyntax.SYN_EXEC;
+
+      pg_get_token();
+      args = null;
     } else if (pg_is_ident("local_alias")) {
       pragmaDir = XMPpragma.LOCAL_ALIAS;
       syntax = PragmaSyntax.SYN_DECL;

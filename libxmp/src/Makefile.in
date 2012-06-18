@@ -70,16 +70,35 @@ am__installdirs = "$(DESTDIR)$(libdir)"
 LIBRARIES = $(lib_LIBRARIES)
 libxmp_a_AR = $(AR) $(ARFLAGS)
 libxmp_a_LIBADD =
-am_libxmp_a_OBJECTS = xmp_lib.$(OBJEXT) xmp_util.$(OBJEXT) \
-	xmp_world.$(OBJEXT) xmp_nodes_stack.$(OBJEXT) \
-	xmp_nodes.$(OBJEXT) xmp_template.$(OBJEXT) \
-	xmp_barrier.$(OBJEXT) xmp_reduce.$(OBJEXT) xmp_bcast.$(OBJEXT) \
-	xmp_align.$(OBJEXT) xmp_shadow.$(OBJEXT) \
-	xmp_array_section.$(OBJEXT) xmp_loop.$(OBJEXT) \
-	xmp_gmove.$(OBJEXT) xmp_math_function.$(OBJEXT) \
-	xmp_runtime.$(OBJEXT) xmp_coarray.$(OBJEXT) \
-	xmp_coarray_RMA.$(OBJEXT) xmp_tlog_runtime.$(OBJEXT) \
-	xmp_io.$(OBJEXT)
+am__libxmp_a_SOURCES_DIST = $(XMP_INC_DIR)/xmp_internal.h \
+	$(XMP_INC_DIR)/xmp_constant.h $(XMP_INC_DIR)/xmp_data_struct.h \
+	xmp_math_function.h xmp_lib.c xmp_util.c xmp_world.c \
+	xmp_nodes_stack.c xmp_nodes.c xmp_template.c xmp_barrier.c \
+	xmp_reduce.c xmp_bcast.c xmp_align.c xmp_shadow.c \
+	xmp_array_section.c xmp_loop.c xmp_gmove.c xmp_math_function.c \
+	xmp_runtime.c xmp_coarray.c xmp_tlog_runtime.c xmp_io.c \
+	xmp_gasnet_coarray.c
+@GASNET_FALSE@am_libxmp_a_OBJECTS = xmp_lib.$(OBJEXT) \
+@GASNET_FALSE@	xmp_util.$(OBJEXT) xmp_world.$(OBJEXT) \
+@GASNET_FALSE@	xmp_nodes_stack.$(OBJEXT) xmp_nodes.$(OBJEXT) \
+@GASNET_FALSE@	xmp_template.$(OBJEXT) xmp_barrier.$(OBJEXT) \
+@GASNET_FALSE@	xmp_reduce.$(OBJEXT) xmp_bcast.$(OBJEXT) \
+@GASNET_FALSE@	xmp_align.$(OBJEXT) xmp_shadow.$(OBJEXT) \
+@GASNET_FALSE@	xmp_array_section.$(OBJEXT) xmp_loop.$(OBJEXT) \
+@GASNET_FALSE@	xmp_gmove.$(OBJEXT) xmp_math_function.$(OBJEXT) \
+@GASNET_FALSE@	xmp_runtime.$(OBJEXT) xmp_coarray.$(OBJEXT) \
+@GASNET_FALSE@	xmp_tlog_runtime.$(OBJEXT) xmp_io.$(OBJEXT)
+@GASNET_TRUE@am_libxmp_a_OBJECTS = xmp_lib.$(OBJEXT) \
+@GASNET_TRUE@	xmp_util.$(OBJEXT) xmp_world.$(OBJEXT) \
+@GASNET_TRUE@	xmp_nodes_stack.$(OBJEXT) xmp_nodes.$(OBJEXT) \
+@GASNET_TRUE@	xmp_template.$(OBJEXT) xmp_barrier.$(OBJEXT) \
+@GASNET_TRUE@	xmp_reduce.$(OBJEXT) xmp_bcast.$(OBJEXT) \
+@GASNET_TRUE@	xmp_align.$(OBJEXT) xmp_shadow.$(OBJEXT) \
+@GASNET_TRUE@	xmp_array_section.$(OBJEXT) xmp_loop.$(OBJEXT) \
+@GASNET_TRUE@	xmp_gmove.$(OBJEXT) xmp_math_function.$(OBJEXT) \
+@GASNET_TRUE@	xmp_runtime.$(OBJEXT) xmp_coarray.$(OBJEXT) \
+@GASNET_TRUE@	xmp_tlog_runtime.$(OBJEXT) xmp_io.$(OBJEXT) \
+@GASNET_TRUE@	xmp_gasnet_coarray.$(OBJEXT)
 libxmp_a_OBJECTS = $(am_libxmp_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/buildutils/depcomp
@@ -90,7 +109,7 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(libxmp_a_SOURCES)
-DIST_SOURCES = $(libxmp_a_SOURCES)
+DIST_SOURCES = $(am__libxmp_a_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -106,8 +125,6 @@ AWK = @AWK@
 BASH = @BASH@
 BECC = @BECC@
 BEFC = @BEFC@
-#GASNET_INC_DIR=@GASNET_PREFIX@/include
-#GASNET_CONDUIT_DIR=$(GASNET_INC_DIR)/@GASNET_CONDUIT@-conduit
 CC = @MPI_CMD@
 CCDEPMODE = @CCDEPMODE@
 CC_LIB = @CC_LIB@
@@ -133,6 +150,8 @@ FC = @FC@
 FCFLAGS = @FCFLAGS@
 F_BACKEND_DIR = @F_BACKEND_DIR@
 F_FRONTEND_DIR = @F_FRONTEND_DIR@
+GASNET_CONDUIT = @GASNET_CONDUIT@
+GASNET_PREFIX = @GASNET_PREFIX@
 GPGPU_PREFIX = @GPGPU_PREFIX@
 GPU_CMD = @GPU_CMD@
 GREP = @GREP@
@@ -295,16 +314,27 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 XMP_INC_DIR = ../include
 TLOG_INC_DIR = $(top_builddir)/@LIBTLOG_MPI_DIR@
+@GASNET_TRUE@GASNET_INC_DIR = @GASNET_PREFIX@/include
+@GASNET_TRUE@GASNET_CONDUIT_DIR = $(GASNET_INC_DIR)/@GASNET_CONDUIT@-conduit
 lib_LIBRARIES = libxmp.a
-libxmp_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h \
-                                  $(XMP_INC_DIR)/xmp_data_struct.h \
-                                  xmp_math_function.h \
-				  xmp_lib.c xmp_util.c xmp_world.c xmp_nodes_stack.c \
-                                  xmp_nodes.c xmp_template.c xmp_barrier.c xmp_reduce.c xmp_bcast.c \
-                                  xmp_align.c xmp_shadow.c xmp_array_section.c xmp_loop.c xmp_gmove.c \
-                                  xmp_math_function.c xmp_runtime.c xmp_coarray.c xmp_coarray_RMA.c xmp_tlog_runtime.c xmp_io.c
+@GASNET_FALSE@libxmp_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h $(XMP_INC_DIR)/xmp_data_struct.h \
+@GASNET_FALSE@                                  xmp_math_function.h xmp_lib.c xmp_util.c xmp_world.c xmp_nodes_stack.c \
+@GASNET_FALSE@                                  xmp_nodes.c xmp_template.c xmp_barrier.c xmp_reduce.c xmp_bcast.c \
+@GASNET_FALSE@                                  xmp_align.c xmp_shadow.c xmp_array_section.c xmp_loop.c xmp_gmove.c \
+@GASNET_FALSE@                                  xmp_math_function.c xmp_runtime.c xmp_coarray.c xmp_tlog_runtime.c xmp_io.c
 
-AM_CFLAGS = -Wall -Wpointer-arith -std=c99 -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR)
+@GASNET_TRUE@libxmp_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h $(XMP_INC_DIR)/xmp_data_struct.h \
+@GASNET_TRUE@																	xmp_math_function.h xmp_lib.c xmp_util.c xmp_world.c xmp_nodes_stack.c \
+@GASNET_TRUE@                                  xmp_nodes.c xmp_template.c xmp_barrier.c xmp_reduce.c xmp_bcast.c \
+@GASNET_TRUE@                                  xmp_align.c xmp_shadow.c xmp_array_section.c xmp_loop.c xmp_gmove.c \
+@GASNET_TRUE@                                  xmp_math_function.c xmp_runtime.c xmp_coarray.c xmp_tlog_runtime.c xmp_io.c \
+@GASNET_TRUE@																	xmp_gasnet_coarray.c
+
+@GASNET_TRUE@AM_LDFLAGS = $(GASNET_LDFLAGS) $(GASNET_LIBS)
+@GASNET_FALSE@AM_CFLAGS = -Wall -Wpointer-arith -std=c99 -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR)
+@GASNET_TRUE@AM_CFLAGS = -Wall -Wpointer-arith -std=c99 -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR) -D_COARRAY_GASNET \
+@GASNET_TRUE@                                  -I$(GASNET_INC_DIR) -I$(GASNET_CONDUIT_DIR) $(GASNET_CFLAGS) -DGASNET_SEQ
+
 all: all-am
 
 .SUFFIXES:
@@ -387,7 +417,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_barrier.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_bcast.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_coarray.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_coarray_RMA.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_gasnet_coarray.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_gmove.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_io.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_lib.Po@am__quote@
@@ -615,6 +645,7 @@ uninstall-am: uninstall-libLIBRARIES
 	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
 	tags uninstall uninstall-am uninstall-libLIBRARIES
 
+@GASNET_TRUE@include $(GASNET_CONDUIT_DIR)/@GASNET_CONDUIT@-seq.mak
 
 clean-local:
 	rm -f *~ *.core core core.*

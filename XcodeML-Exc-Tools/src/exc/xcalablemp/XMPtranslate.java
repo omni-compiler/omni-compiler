@@ -56,7 +56,7 @@ public class XMPtranslate implements XobjectDefVisitor {
     _translateLocalPragma.translate(fd);
 
     // rewrite expressions
-    _rewriteExpr.rewrite(fd);
+		_rewriteExpr.rewrite(fd);
   }
 
   public void set_all_profile(){

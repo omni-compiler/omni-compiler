@@ -24,6 +24,7 @@ public class XMP {
   public final static String GPU_DEVICE_ADDR_PREFIX_	= "_XMP_GPU_DEVICE_ADDR_";
   public final static String GPU_FUNC_PREFIX		= "_XMP_GPU_FUNC";
   public final static String COARRAY_DESC_PREFIX_	= "_XMP_COARRAY_DESC_";
+	public final static String COARRAY_ADDR_PREFIX_ = "_XMP_COARRAY_ADDR_";
   public final static String ADDR_PREFIX_		= "_XMP_ADDR_";
   public final static String GTOL_PREFIX_		= "_XMP_GTOL_";
   public final static String ASTERISK			= "* @{ASTERISK}@";

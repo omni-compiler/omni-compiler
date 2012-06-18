@@ -77,6 +77,8 @@ public class XMPtranslateLocalPragma {
         { translateGmove(pb);			break; }
       case SYNC_MEMORY:
         { translateSyncMemory(pb);		break; }
+   		case SYNC_ALL:
+	  		{ translateSyncAll(pb);    break; }
       case LOCAL_ALIAS:
         { translateLocalAlias(pb);		break; }
       case GPU_REPLICATE:
@@ -155,7 +157,11 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateSyncMemory(PragmaBlock pb) throws XMPexception {
-    pb.replace(_globalDecl.createFuncCallBlock("_XMP_coarray_sync", null));
+    pb.replace(_globalDecl.createFuncCallBlock("_XMP_coarray_sync_memory", null));
+  }
+
+  private void translateSyncAll(PragmaBlock pb) throws XMPexception {
+    pb.replace(_globalDecl.createFuncCallBlock("_XMP_coarray_sync_all", null));
   }
 
   private void translateLocalAlias(PragmaBlock pb) throws XMPexception {

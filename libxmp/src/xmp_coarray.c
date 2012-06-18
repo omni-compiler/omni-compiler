@@ -1,137 +1,72 @@
 #include <stdarg.h>
-#include "mpi.h"
 #include "xmp_internal.h"
 
-_XMP_coarray_list_t *_XMP_coarray_list_head = NULL;
-_XMP_coarray_list_t *_XMP_coarray_list_tail = NULL;
+void _XMP_coarray_malloc(void **coarray, void *addr, long number_of_elements, size_t type_size) {
 
-static void _XMP_add_coarray(_XMP_coarray_t *coarray) {
-  _XMP_coarray_list_t *coarray_list = _XMP_alloc(sizeof(_XMP_coarray_list_t));
-
-  coarray_list->coarray = coarray;
-  coarray_list->next = NULL;
-
-  if (_XMP_coarray_list_head == NULL) {
-    _XMP_coarray_list_head = coarray_list;
-    _XMP_coarray_list_tail = coarray_list;
-  } else {
-    _XMP_coarray_list_tail->next = coarray_list;
-    _XMP_coarray_list_tail = coarray_list;
-  }
+#ifdef _COARRAY_GASNET
+  *coarray = (_XMP_coarray_t*)_XMP_alloc(sizeof(_XMP_coarray_t));
+  _XMP_gasnet_set_coarray(*coarray, addr, number_of_elements, type_size);
+#else
+  _XMP_fatal("Cannt use Coarray Function");
+#endif
 }
 
-static _XMP_coarray_t *_XMP_alloc_coarray_desc(void *addr, int type, size_t type_size) {
-  _XMP_coarray_t *c = _XMP_alloc(sizeof(_XMP_coarray_t));
-
-  c->addr = addr;
-  c->type = type;
-  c->type_size = type_size;
-
-  return c;
+void _XMP_coarray_initialize(int argc, char **argv){
+#ifdef _COARRAY_GASNET
+  _XMP_gasnet_initialize(argc, argv, _XMP_COARRAY_MALLOC_SIZE);
+#else
+	_XMP_fatal("Cannt use Coarray Function");
+#endif
 }
 
-void _XMP_init_coarray_STATIC(_XMP_coarray_t **coarray, void *addr,
-                              int type, size_t type_size, int dim, ...) {
-  int dim_size[dim];
-
-  va_list args;
-  va_start(args, dim);
-  for (int i = 0; i < dim; i++) {
-    int elmts = va_arg(args, int);
-    if (elmts <= 0) {
-      _XMP_fatal("coarray has no elmts in this dimension");
-    }
-
-    dim_size[i] = elmts;
-  }
-  va_end(args);
-
-  _XMP_coarray_t *c = _XMP_alloc_coarray_desc(addr, type, type_size);
-  c->nodes = _XMP_init_nodes_struct_GLOBAL(dim, dim_size, _XMP_N_INT_TRUE);
-  c->comm = NULL;
-
-  MPI_Datatype *mpi_datatype = _XMP_alloc(sizeof(MPI_Datatype));
-  MPI_Type_contiguous(type_size, MPI_BYTE, mpi_datatype);
-  MPI_Type_commit(mpi_datatype);
-  c->data_type = (void *)mpi_datatype;
-
-  *coarray = c;
+void _XMP_coarray_finalize(){
+#ifdef _COARRAY_GASNET
+  _XMP_gasnet_finalize(0);
+#else
+  _XMP_fatal("Cannt use Coarray Function");
+#endif
 }
 
-void _XMP_init_coarray_DYNAMIC(_XMP_coarray_t **coarray, void *addr,
-                               int type, size_t type_size, int dim, ...) {
-  int dim_size[dim - 1];
-
-  va_list args;
-  va_start(args, dim);
-  for (int i = 0; i < dim - 1; i++) {
-    int elmts = va_arg(args, int);
-    if (elmts <= 0) {
-      _XMP_fatal("coarray has no elmts in this dimension");
-    }
-
-    dim_size[i] = elmts;
-  }
-  va_end(args);
-
-  _XMP_coarray_t *c = _XMP_alloc_coarray_desc(addr, type, type_size);
-  c->nodes = _XMP_init_nodes_struct_GLOBAL(dim, dim_size, _XMP_N_INT_FALSE);
-  c->comm = NULL;
-
-  MPI_Datatype *mpi_datatype = _XMP_alloc(sizeof(MPI_Datatype));
-  MPI_Type_contiguous(type_size, MPI_BYTE, mpi_datatype);
-  MPI_Type_commit(mpi_datatype);
-  c->data_type = (void *)mpi_datatype;
-
-  *coarray = c;
+void _XMP_coarray_rma_SCALAR(int rma_code, void *coarray, int offset, void* local_addr, int node){
+#ifdef _COARRAY_GASNET
+	if(_XMP_N_COARRAY_PUT == rma_code){
+		_XMP_gasnet_put(node, (_XMP_coarray_t*)coarray, offset, local_addr, 0, 1);
+	} else if(_XMP_N_COARRAY_GET == rma_code){
+		_XMP_gasnet_get(local_addr, 0, node, (_XMP_coarray_t*)coarray, offset, 1);
+	}
+#else
+  _XMP_fatal("Cannt use Coarray Function");
+#endif
 }
 
-void _XMP_init_coarray_comm(_XMP_coarray_t *coarray, int dim, ...) {
-  size_t type_size = coarray->type_size;
-
-  unsigned long long total_elmts = 1;
-  va_list args;
-  va_start(args, dim);
-
-  for (int i = 0; i < dim; i++) {
-    int elmts = va_arg(args, int);
-    if (elmts <= 0) {
-      _XMP_fatal("array has no elmts in this dimension");
-    }
-
-    total_elmts *= elmts;
-  }
-
-  va_end(args);
-
-  _XMP_nodes_t *coarray_nodes = coarray->nodes;
-
-  MPI_Win *win = _XMP_alloc(sizeof(MPI_Win));
-  MPI_Win_create(coarray->addr, total_elmts * type_size, type_size,
-                 MPI_INFO_NULL, *((MPI_Comm *)coarray_nodes->comm), win);
-
-  coarray->comm = win;
-
-  if (coarray_nodes->is_member) {
-    MPI_Win_fence(0, *win);
-  }
-
-  // FIXME correct implementation???
-  _XMP_add_coarray(coarray);
+void _XMP_coarray_put(int dest_node, void* dest, int dest_point, void *src_ptr, int src_point, int length){
+#ifdef _COARRAY_GASNET
+  _XMP_gasnet_put(dest_node, (_XMP_coarray_t*)dest, dest_point, src_ptr, src_point, length);
+#else
+  _XMP_fatal("Cannt use Coarray Function");
+#endif
 }
 
-void _XMP_finalize_coarray(_XMP_coarray_t *coarray) {
-  if ((coarray->nodes)->is_member) {
-    MPI_Win_fence(0, *((MPI_Win *)coarray->comm));
-  }
+void _XMP_coarray_get(void *dest_ptr, int dest_point, int src_node, void* src, int src_point, int length){
+#ifdef _COARRAY_GASNET
+  _XMP_gasnet_get(dest_ptr, dest_point, src_node, (_XMP_coarray_t*)src, src_point, length);
+#else
+  _XMP_fatal("Cannt use Coarray Function");
+#endif
+}
 
-  _XMP_finalize_nodes(coarray->nodes);
+void _XMP_coarray_sync_all(){
+#ifdef _COARRAY_GASNET
+  _XMP_gasnet_sync_all();
+#else
+  _XMP_fatal("Cannt use Coarray Function");
+#endif
+}
 
-  MPI_Win_free(coarray->comm);
-  _XMP_free(coarray->comm);
-
-  MPI_Type_free(coarray->data_type);
-  _XMP_free(coarray->data_type);
-
-  _XMP_free(coarray);
+void _XMP_coarray_sync_memory(){
+#ifdef _COARRAY_GASNET
+  _XMP_gasnet_sync_memory();
+#else
+  _XMP_fatal("Cannt use Coarray Function");
+#endif
 }

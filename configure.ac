@@ -1348,32 +1348,50 @@ AC_SUBST(LIBXML_PREFIX)
 # --------------------------------------------------------------------
 # specify GASNet path
 
-#default_gasnetDir="/usr"
+default_gasnetDir=""
 
-#AC_ARG_WITH(gasnetDir,
-#    [  --with-gasnetDir=DIR    specify GASNet install directory (default: /usr)],
-#    [GASNET_PREFIX="${withval}"], [GASNET_PREFIX="${default_gasnetDir}"])
+AC_ARG_WITH(gasnetDir,
+    [  --with-gasnetDir=DIR    specify GASNet install directory],
+    [GASNET_PREFIX="${withval}"], [GASNET_PREFIX="${default_gasnetDir}"])
 
-#if ! test -f $GASNET_PREFIX/include/gasnet.h; then
-#   AC_MSG_ERROR([gasnet.h not found. Please attach or check --with-gasnetDir])
-#fi
+use_gasnet=no
+if test "${GASNET_PREFIX}" != ""; then
+  use_gasnet=yes
+  if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
+	  AC_MSG_ERROR([${GASNET_PREFIX}/include/gasnet.h not found. Please attach or check --with-gasnetDir])
+  fi
+fi
 
-#AC_SUBST(GASNET_PREFIX)
+AM_CONDITIONAL(GASNET, test x${use_gasnet} = xyes)
+AC_SUBST(GASNET_PREFIX)
 
 # --------------------------------------------------------------------
 # specify GASNet conduit
 
-#default_gasnet_conduit="mpi"
+AC_ARG_WITH(gasnet_conduit,
+    [  --with-gasnet-conduit=NAME    specify GASNet conduit],
+    [GASNET_CONDUIT="${withval}"], [GASNET_CONDUIT="${default_gasnet_conduit}"])
 
-#AC_ARG_WITH(gasnet_conduit,
-#    [  --with-gasnet-conduit=NAME    specify GASNet conduit (default: mpi)],
-#    [GASNET_CONDUIT="${withval}"], [GASNET_CONDUIT="${default_gasnet_conduit}"])
+if test "${use_gasnet}" = yes; then
+  gasnet_conduit_flag=no
+  if test "${GASNET_CONDUIT}" = ""; then
+    for c in smp udp mpi gm lapi elan vapi ibv portals gemini shmem dcmf sci
+    do
+      if test -d ${GASNET_PREFIX}/include/${c}-conduit; then
+         GASNET_CONDUIT=${c}
+         gasnet_conduit_flag=yes
+      fi
+    done
+  else
+    gasnet_conduit_flag=yes
+  fi
 
-#if ! test -d $GASNET_PREFIX/include/${GASNET_CONDUIT}-conduit; then
-#   AC_MSG_ERROR([${GASNET_CONDUIT}-conduit not found. Please attach or check --with-gasnet-conduit])
-#fi
+  if test "${gasnet_conduit_flag}" = no || ! test -d $GASNET_PREFIX/include/${GASNET_CONDUIT}-conduit; then
+    AC_MSG_ERROR([${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit not found. Please attach or check --with-gasnet-conduit])
+  fi
+fi
 
-#AC_SUBST(GASNET_CONDUIT)
+AC_SUBST(GASNET_CONDUIT)
 
 # --------------------------------------------------------------------
 # specify MPI C compiler
@@ -1462,5 +1480,13 @@ AC_CONFIG_FILES(Makefile)
 
 AC_OUTPUT
 
-
-
+# --------------------------------------------------------------------                                                                                                                             
+echo "----------------------------------------------------"
+if test ${use_gasnet} = yes; then
+  echo "Using GASNet installed in     \"$GASNET_PREFIX\""
+  echo "Using GASNet conduit          \"$GASNET_CONDUIT\""
+else
+  echo "We recommend that you use GASNet."
+	echo "If not use GASNet, you cannnot use Coarray function of XcalableMP."
+fi
+echo "----------------------------------------------------"

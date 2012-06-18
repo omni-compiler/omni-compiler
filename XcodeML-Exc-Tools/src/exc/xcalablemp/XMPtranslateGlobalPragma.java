@@ -131,6 +131,7 @@ public class XMPtranslateGlobalPragma {
     Iterator<Xobject> iter = coarrayNameList.iterator();
     while (iter.hasNext()) {
       Xobject x = iter.next();
+
       coarrayDeclCopy.setArg(0, x);
       XMPcoarray.translateCoarray(coarrayDeclCopy, _globalDecl, false, null);
     }

@@ -184,15 +184,22 @@ typedef struct _XMP_task_desc_type {
 } _XMP_task_desc_t;
 
 // coarray descriptor
-typedef struct _XMP_coarray_type {
-  void *addr;
-  int type;
+//typedef struct _XMP_coarray_type {
+	//  void *addr;
+	//  int type;
+	//  size_t type_size;
+	//
+	//  _XMP_nodes_t *nodes;
+	//  _XMP_coarray_comm_t *comm;
+	//  _XMP_data_type_t *data_type;
+	//} _XMP_coarray_t;
+
+typedef struct xmp_coarray{
+  char **addr;      // Pointer on each node. The number of elements is process size.
+  /* Example: xmp_coarray.addr[2] is a pointer of real object on node 2. */
   size_t type_size;
 
-  _XMP_nodes_t *nodes;
-  _XMP_coarray_comm_t *comm;
-  _XMP_data_type_t *data_type;
-} _XMP_coarray_t;
+}_XMP_coarray_t;
 
 typedef struct _XMP_gpu_array_type {
   int gtol;

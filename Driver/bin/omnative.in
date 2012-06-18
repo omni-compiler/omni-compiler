@@ -48,7 +48,16 @@ for i in ${OM_OPTIONS}; do
 done
 OM_OPTIONS="${newOpts}"
 
-CMD="${COMPILER} ${OM_OPTIONS} -c ${INPFILE} -o ${OUTFILE}"
+GASNET="@GASNET_PREFIX@"
+CONDUIT="@GASNET_CONDUIT@"
+CMD=""
+if test "${GASNET}" != "" -a "${CONDUIT}" != "" ; then
+  CONDUIT_CAP=$(echo ${CONDUIT} | tr '[a-z]' '[A-Z]')
+  GASNET_INC="-I${GASNET}/include -I${GASNET}/include/${CONDUIT}-conduit -DGASNET_CONDUIT_${CONDUIT_CAP} -DGASNET_SEQ -D_REENTRANT -D_GNU_SOURCE"
+  CMD="${COMPILER} ${OM_OPTIONS} -c ${INPFILE} -o ${OUTFILE} ${GASNET_INC}"
+else
+  CMD="${COMPILER} ${OM_OPTIONS} -c ${INPFILE} -o ${OUTFILE}"
+fi
 
 if [ "${OM_VERBOSE}" = "1" ]; then
     echo $CMD

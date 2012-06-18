@@ -54,14 +54,23 @@ extern void _XMP_bcast_NODES_ENTIRE_GLOBAL(void *bcast_nodes, void *addr, int co
 extern void _XMP_bcast_NODES_ENTIRE_NODES(void *bcast_nodes, void *addr, int count, size_t datatype_size, void *from_nodes, ...);
 
 // xmp_coarray.c
-extern void _XMP_init_coarray_STATIC(void **coarray, void *addr, int type, size_t type_size, int dim, ...);
-extern void _XMP_init_coarray_DYNAMIC(void **coarray, void *addr, int type, size_t type_size, int dim, ...);
-extern void _XMP_init_coarray_comm(void *coarray, int dim, ...); 
-extern void _XMP_finalize_coarray(void *coarray);
+//extern void _XMP_init_coarray_STATIC(void **coarray, void *addr, int type, size_t type_size, int dim, ...);
+//extern void _XMP_init_coarray_DYNAMIC(void **coarray, void *addr, int type, size_t type_size, int dim, ...);
+//extern void _XMP_init_coarray_comm(void *coarray, int dim, ...); 
+//extern void _XMP_finalize_coarray(void *coarray);
+extern void _XMP_init_coarray(void **coarray, void *addr, long number_of_elements, size_t type_size);
+extern void _XMP_coarray_initialize(int, char **);
+extern void _XMP_coarray_finalize();
+extern void _XMP_coarray_malloc(void**, void*, long, size_t);
+extern void _XMP_coarray_put(int, void*, int, void*, int, int);
+extern void _XMP_coarray_get(void*, int, int, void*, int, int);
+extern void _XMP_coarray_sync_memory();
+extern void _XMP_coarray_sync_all();
 
 // xmp_coarray_RMA.c
-extern void _XMP_coarray_rma_SCALAR(int rma_code, void *coarray, void *offser_addr, void *rma_addr, ...);
-extern void _XMP_coarray_rma_ARRAY(int rma_code, void *coarray, void *rma_addr, ...);
+//extern void _XMP_coarray_rma_SCALAR(int rma_code, void *coarray, void *offser_addr, void *rma_addr, ...);
+//extern void _XMP_coarray_rma_ARRAY(int rma_code, void *coarray, void *rma_addr, ...);
+extern void _XMP_coarray_rma_SCALAR(int rma_code, void *coarray, int offset, void* local_addr, int node);
 
 // xmp_gmove.c
 extern void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, void *array, ...);
@@ -128,7 +137,8 @@ extern int _XMP_init_reduce_comm_NODES(void *nodes, ...);
 extern int _XMP_init_reduce_comm_TEMPLATE(void *template, ...);
 
 // xmp_runtime.c
-extern void _XMP_init(void);
+//extern void _XMP_init(void);
+extern void _XMP_init(int, char**); 
 extern void _XMP_finalize(void);
 extern char *_XMP_desc_of(void *p);
 
