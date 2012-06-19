@@ -66,7 +66,16 @@ public class XMPcoarray {
 
   public static void translateCoarray(XobjList coarrayDecl, XMPglobalDecl globalDecl,
                                       boolean isLocalPragma, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
-    String coarrayName = coarrayDecl.getArg(0).getString();
+
+		String coarrayName = coarrayDecl.getArg(0).getString();
+
+		// Fix me: Now only one dimensional node of coarray is supported
+		int num_coarray_node_dim = XMPutil.countElmts((XobjList)coarrayDecl.getArg(1));
+		if(num_coarray_node_dim > 1){
+			throw new XMPexception("number of coarray " + coarrayName + " node dimension is " + num_coarray_node_dim + ".\n" +
+														 "Now support only one coarray node dimension.");
+		}
+
     if(globalDecl.getXMPcoarray(coarrayName) != null) {
       throw new XMPexception("coarray " + coarrayName + " is already declared");
     }
