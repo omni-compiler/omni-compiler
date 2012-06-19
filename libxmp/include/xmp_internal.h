@@ -68,6 +68,9 @@ typedef struct _XMP_coarray_list_type {
 extern _XMP_coarray_list_t *_XMP_coarray_list_head;
 extern _XMP_coarray_list_t *_XMP_coarray_list_tail;
 
+extern void _XMP_coarray_initialize(int, char **);
+extern void _XMP_coarray_finalize();
+
 // xmp_loop.c
 extern int _XMP_sched_loop_template_width_1(int ser_init, int ser_cond, int ser_step,
                                             int *par_init, int *par_cond, int *par_step,
