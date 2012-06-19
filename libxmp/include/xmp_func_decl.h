@@ -69,8 +69,8 @@ extern void _XMP_coarray_sync_all();
 
 // xmp_coarray_RMA.c
 //extern void _XMP_coarray_rma_SCALAR(int rma_code, void *coarray, void *offser_addr, void *rma_addr, ...);
-//extern void _XMP_coarray_rma_ARRAY(int rma_code, void *coarray, void *rma_addr, ...);
 extern void _XMP_coarray_rma_SCALAR(int rma_code, void *coarray, int offset, void* local_addr, int node);
+extern void _XMP_coarray_rma_ARRAY(int rma_code, void *coarray, void *rma_addr, ...);
 
 // xmp_gmove.c
 extern void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, void *array, ...);

@@ -2,7 +2,7 @@
 #define FALSE 0
 #include <stdio.h>
 #include <xmp.h>
-#pragma xmp nodes p(*)
+#pragma xmp nodes p(2)
 int a, a_test;
 long b[2], b_test[2];
 float c[2][3], c_test[2][3];
@@ -181,22 +181,20 @@ void check_4(int me){
 
 int main(){
 	int me = xmp_node_num();
+	
+	initialize_coarrays(me);
 
-	if(me == 0 || me == 1){
-		initialize_coarrays(me);
-
-		communicate_1(me);
-		check_1(me);
+	communicate_1(me);
+	check_1(me);
+	
+	communicate_2(me);
+	check_2(me);
 		
-		communicate_2(me);
-		check_2(me);
+	communicate_3(me);
+	check_3(me);
 		
-		communicate_3(me);
-		check_3(me);
-		
-		communicate_4(me);
-		check_4(me);
-	}
+	communicate_4(me);
+	check_4(me);
 
 	return 0;
 }

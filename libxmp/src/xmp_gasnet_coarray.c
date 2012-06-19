@@ -74,7 +74,7 @@ void _XMP_gasnet_sync_all(){
   GASNET_BARRIER();
 }
 
-void _XMP_gasnet_put(int dest_node, _XMP_coarray_t* dest, int dest_point, void *src_ptr, int src_point,  int length){
+void _XMP_gasnet_put(int dest_node, _XMP_coarray_t* dest, int dest_point, void *src_ptr, int src_point, int length){
   dest_point *= dest->type_size;
   src_point  *= dest->type_size;
   gasnet_put_nbi_bulk(dest_node, dest->addr[dest_node]+dest_point, (char *)(src_ptr)+src_point, dest->type_size*length);

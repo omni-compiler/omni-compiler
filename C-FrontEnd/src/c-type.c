@@ -2266,8 +2266,10 @@ fixSubArrayRef(CExprOfBinaryNode *aryRef, CExprOfTypeDesc *orgTd,
             return NULL;
         }
         upperExpr1 = copyExpr(upperExpr1);
-        upperExpr1 = exprBinary(EC_MINUS, upperExpr1,
-            (CExpr*)allocExprOfNumberConst2(1, BT_INT));
+				//				upperExpr1 = exprBinary(EC_MINUS, upperExpr1,
+				//				            (CExpr*)allocExprOfNumberConst2(1, BT_INT));
+				upperExpr1 = exprBinary(EC_MINUS, upperExpr1, lowerExpr);
+
         EXPR_REF(upperExpr1);
         exprReplace(dim, upperExpr, upperExpr1);
         upperExpr = upperExpr1;

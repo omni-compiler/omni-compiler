@@ -148,17 +148,24 @@ public class XMPrewriteExpr {
     arrayType = arrayType.getRef();
     XobjList arrayRefList = (XobjList)expr.getArg(1);
     for (int i = 0; i < arrayDim - 1; i++, arrayType = arrayType.getRef()) {
-      args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(i).getArg(0)));
-      args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(i).getArg(1)));
-      args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(i).getArg(2)));
-      args.add(Xcons.Cast(Xtype.unsignedlonglongType, XMPutil.getArrayElmtsObj(arrayType)));
+			if(arrayRefList.getArg(i).Opcode() == Xcode.LIST){
+				throw new XMPexception("Now can't use \":\" for range specification except for last dimension");
+				//								args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(i).getArg(0)));  // start
+				//								args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(i).getArg(1)));  // length
+				//								args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(i).getArg(2)));  // stride
+			} 
+			else{                       
+				args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(i)));            // start
+				args.add(Xcons.Int(Xcode.INT_CONSTANT, 1));                             // length
+				args.add(Xcons.Int(Xcode.INT_CONSTANT, 1));                             // stride
+			}
+			args.add(Xcons.Cast(Xtype.unsignedlonglongType, XMPutil.getArrayElmtsObj(arrayType)));
     }
 
     args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(arrayDim - 1).getArg(0)));
     args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(arrayDim - 1).getArg(1)));
     args.add(Xcons.Cast(Xtype.intType, arrayRefList.getArg(arrayDim - 1).getArg(2)));
     args.add(Xcons.Cast(Xtype.unsignedlonglongType, Xcons.IntConstant(1)));
-
     return args;
   }
 
@@ -170,13 +177,13 @@ public class XMPrewriteExpr {
     Xobject rightExpr = myExpr.getArg(1);
 
     // FIXME type check
-
     XobjList coarrayFuncArgs = null;
 
     if (leftExpr.Opcode() == Xcode.CO_ARRAY_REF) {
       if (rightExpr.Opcode() == Xcode.CO_ARRAY_REF) {   // a[:]:[0] = x[:]:[1];	syntax error	throw exception
         throw new XMPexception("unknown co-array expression");
-      } else {                                          // a[:]:[0] = x[:];	RMA put		rewrite expr
+      } 
+			else {                                          // a[:]:[0] = x[:];	RMA put		rewrite expr
         if (rightExpr.Opcode() == Xcode.SUB_ARRAY_REF) {
           String coarrayName = XMPutil.getXobjSymbolName(leftExpr.getArg(0));
           XMPcoarray coarray = _globalDecl.getXMPcoarray(coarrayName, localXMPsymbolTable);
@@ -184,11 +191,20 @@ public class XMPrewriteExpr {
             throw new XMPexception("cannot find coarray '" + coarrayName + "'");
           }
 
-          coarrayFuncArgs = Xcons.List(Xcons.IntConstant(XMPcoarray.PUT),
-                                       coarray.getDescId(), rightExpr.getArg(0));
-          coarrayFuncArgs.mergeList(getSubArrayRefArgs(leftExpr.getArg(0), exprParentBlock));
-          coarrayFuncArgs.mergeList(getSubArrayRefArgs(rightExpr, exprParentBlock));
-          coarrayFuncArgs.mergeList(XMPutil.castList(Xtype.intType, (XobjList)leftExpr.getArg(1)));
+					if(isCoarray(rightExpr.getArg(0), localXMPsymbolTable) == true){
+						String rightCoarrayName = XMPutil.getXobjSymbolName(rightExpr);
+            XMPcoarray rightCoarray = _globalDecl.getXMPcoarray(rightCoarrayName, localXMPsymbolTable);
+						coarrayFuncArgs = Xcons.List(Xcons.IntConstant(XMPcoarray.PUT), coarray.getDescId(), 
+																				 _globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + rightExpr.getArg(0).getName()));
+					}
+					else{
+						coarrayFuncArgs = Xcons.List(Xcons.IntConstant(XMPcoarray.PUT),
+																				 coarray.getDescId(), rightExpr.getArg(0));
+					}
+					coarrayFuncArgs.mergeList(getSubArrayRefArgs(leftExpr.getArg(0), exprParentBlock));
+					coarrayFuncArgs.mergeList(getSubArrayRefArgs(rightExpr, exprParentBlock));
+					coarrayFuncArgs.mergeList(XMPutil.castList(Xtype.intType, (XobjList)leftExpr.getArg(1)));
+
         } else {
           // FIXME implement
           throw new XMPexception("unsupported co-array expression");
@@ -203,8 +219,16 @@ public class XMPrewriteExpr {
             throw new XMPexception("cannot find coarray '" + coarrayName + "'");
           }
 
-          coarrayFuncArgs = Xcons.List(Xcons.IntConstant(XMPcoarray.GET),
-                                       coarray.getDescId(), leftExpr.getArg(0));
+					if(isCoarray(leftExpr.getArg(0), localXMPsymbolTable) == true){
+						String leftCoarrayName = XMPutil.getXobjSymbolName(leftExpr);
+						XMPcoarray leftCoarray = _globalDecl.getXMPcoarray(leftCoarrayName, localXMPsymbolTable);
+						coarrayFuncArgs = Xcons.List(Xcons.IntConstant(XMPcoarray.GET), coarray.getDescId(),
+																				 _globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + leftExpr.getArg(0).getName()));
+					}
+					else{
+						coarrayFuncArgs = Xcons.List(Xcons.IntConstant(XMPcoarray.GET),
+																				 coarray.getDescId(), leftExpr.getArg(0));
+					}
           coarrayFuncArgs.mergeList(getSubArrayRefArgs(rightExpr.getArg(0), exprParentBlock));
           coarrayFuncArgs.mergeList(getSubArrayRefArgs(leftExpr, exprParentBlock));
           coarrayFuncArgs.mergeList(XMPutil.castList(Xtype.intType, (XobjList)rightExpr.getArg(1)));

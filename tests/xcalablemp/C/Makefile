@@ -15,7 +15,8 @@ all default: $(EXES)
 			$(XCC) -o $@ $^
 
 run: $(EXES)
-			$(XRUN) -np 2 $(EXES)
+			$(XRUN) -np 2 coarray_scalar.x
+			$(XRUN) -np 2 coarray_vector.x
 
 clean:
 			rm -f $(EXES) $(C_OBJS)
