@@ -612,6 +612,7 @@ GPGPU_PREFIX
 GPU_CMD
 MPI_F90
 MPI_CMD
+GASNET_CONDUIT_CAP
 GASNET_CONDUIT
 GASNET_PREFIX
 GASNET_FALSE
@@ -10122,6 +10123,8 @@ if test "${use_gasnet}" = yes; then
 fi
 
 
+
+GASNET_CONDUIT_CAP=$(echo ${GASNET_CONDUIT} | tr 'a-z' 'A-Z')
 
 # --------------------------------------------------------------------
 # specify MPI C compiler

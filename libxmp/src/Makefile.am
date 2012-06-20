@@ -18,7 +18,7 @@ libxmp_a_SOURCES		= $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h 
 
 AM_LDFLAGS                      = $(GASNET_LDFLAGS) $(GASNET_LIBS)
 AM_CFLAGS   			= -Wall -Wpointer-arith -std=c99 -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR) -D_COARRAY_GASNET \
-                                  -I$(GASNET_INC_DIR) -I$(GASNET_CONDUIT_DIR) $(GASNET_CFLAGS) -DGASNET_SEQ
+                                  -I$(GASNET_INC_DIR) -I$(GASNET_CONDUIT_DIR) $(GASNET_CFLAGS) -DGASNET_SEQ -DGASNET_CONDUIT_@GASNET_CONDUIT_CAP@
 else
 libxmp_a_SOURCES    = $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h $(XMP_INC_DIR)/xmp_data_struct.h \
                                   xmp_math_function.h xmp_lib.c xmp_util.c xmp_world.c xmp_nodes_stack.c \

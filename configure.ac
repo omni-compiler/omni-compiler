@@ -1393,6 +1393,8 @@ fi
 
 AC_SUBST(GASNET_CONDUIT)
 
+GASNET_CONDUIT_CAP=$(echo ${GASNET_CONDUIT} | tr '[a-z]' '[A-Z]')
+AC_SUBST(GASNET_CONDUIT_CAP)
 # --------------------------------------------------------------------
 # specify MPI C compiler
 
