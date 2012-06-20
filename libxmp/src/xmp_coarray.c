@@ -12,6 +12,7 @@ void _XMP_coarray_malloc(void **coarray, void *addr, long number_of_elements, si
 }
 
 void _XMP_coarray_initialize(int argc, char **argv){
+#ifdef _COARRAY_GASNET
 	char *env_heap_size;
 	int heap_size;
 	
@@ -31,7 +32,6 @@ void _XMP_coarray_initialize(int argc, char **argv){
 		heap_size = _XMP_DEFAULT_COARRAY_HEAP_SIZE;
 	}
 
-#ifdef _COARRAY_GASNET
   _XMP_gasnet_initialize(argc, argv, heap_size);
 #else
 	_XMP_fatal("Cannt use Coarray Function");
