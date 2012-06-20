@@ -12,8 +12,27 @@ void _XMP_coarray_malloc(void **coarray, void *addr, long number_of_elements, si
 }
 
 void _XMP_coarray_initialize(int argc, char **argv){
+	char *env_heap_size;
+	int heap_size;
+	
+	if((env_heap_size = getenv("XMP_COARRAY_HEAP_SIZE")) != NULL){
+		int i;
+		for(i=0;i<strlen(env_heap_size);i++){
+			if(isdigit(env_heap_size[i]) == 0){
+				fprintf(stderr, "%s : ", env_heap_size);
+				_XMP_fatal("Unexpected Charactor in XMP_COARRAY_HEAP_SIZE");
+			}
+		}
+		heap_size = atoi(env_heap_size) * 1024 * 1024;
+		if(heap_size <= 0){
+			_XMP_fatal("XMP_COARRAY_HEAP_SIZE is less than 0 !!");
+		}
+	} else{
+		heap_size = _XMP_DEFAULT_COARRAY_HEAP_SIZE;
+	}
+
 #ifdef _COARRAY_GASNET
-  _XMP_gasnet_initialize(argc, argv, _XMP_COARRAY_MALLOC_SIZE);
+  _XMP_gasnet_initialize(argc, argv, heap_size);
 #else
 	_XMP_fatal("Cannt use Coarray Function");
 #endif

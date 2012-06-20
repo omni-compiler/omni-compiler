@@ -162,7 +162,7 @@ extern void _XMP_threads_finalize(void);
 #ifdef _COARRAY_GASNET
 #include <gasnet.h>
 #include "xmp_data_struct.h"
-#define _XMP_COARRAY_MALLOC_SIZE (1*1024*1024*1024)  // 1GB
+#define _XMP_DEFAULT_COARRAY_HEAP_SIZE (256*1024*1024)  // 256MB
 
 #define GASNET_BARRIER() do {      \
 	gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);            \
