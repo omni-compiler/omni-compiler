@@ -257,7 +257,8 @@ public class XMPrewriteExpr {
     if (leftExpr.Opcode() == Xcode.CO_ARRAY_REF) {
       if (rightExpr.Opcode() == Xcode.CO_ARRAY_REF) {	// a:[0] = x:[1];	syntax error	throw exception
         throw new XMPexception("unknown co-array expression");
-      } else {						// a:[0] = x;		RMA put		rewrite expr
+      }
+			else {						// a:[0] = x;		RMA put		rewrite expr
         String coarrayName = XMPutil.getXobjSymbolName(leftExpr.getArg(0));
         XMPcoarray coarray = _globalDecl.getXMPcoarray(coarrayName, localXMPsymbolTable);
         if (coarray == null) {
@@ -278,30 +279,28 @@ public class XMPrewriteExpr {
 
 				if(isCoarray(rightExpr, localXMPsymbolTable) == false){
 					coarrayFuncArgs = Xcons.List(Xcons.IntConstant(XMPcoarray.PUT),
-																			 coarray.getDescId(), offset, Xcons.AddrOf(rightExpr));
-				} else{
+																			 coarray.getDescId(), offset, Xcons.AddrOf(rightExpr),
+																			 Xcons.Int(Xcode.INT_CONSTANT, 0));
+				} 
+				else{
 					Xobject src_offset = null;
 					if(rightExpr.Opcode() == Xcode.ARRAY_REF){
 						String rightCoarrayName = XMPutil.getXobjSymbolName(rightExpr);
 						XMPcoarray rightCoarray = _globalDecl.getXMPcoarray(rightCoarrayName, localXMPsymbolTable);
 						src_offset = getCoarrayOffset(rightExpr.getArg(1), rightCoarray);
 						rightExpr = rightExpr.getArg(0);
+					} 
+					else{
+						src_offset = Xcons.Int(Xcode.INT_CONSTANT, 0);
 					}
 					Xobject rightCoarray = _globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + rightExpr.getName());
-					Xobject srcAddr = null;
-					if(src_offset != null){
-						srcAddr = Xcons.binaryOp(Xcode.PLUS_EXPR, rightCoarray, src_offset);
-					}
-					else{
-						srcAddr = rightCoarray;
-					}
-
 					coarrayFuncArgs = Xcons.List(Xcons.IntConstant(XMPcoarray.PUT),
-																			coarray.getDescId(), offset, srcAddr);
+																			 coarray.getDescId(), offset, rightCoarray, src_offset);
 				}
-        coarrayFuncArgs.mergeList(XMPutil.castList(Xtype.intType, (XobjList)leftExpr.getArg(1)));
+				coarrayFuncArgs.mergeList(XMPutil.castList(Xtype.intType, (XobjList)leftExpr.getArg(1)));
       }
-    } else {
+    } 
+		else {
       if (rightExpr.Opcode() == Xcode.CO_ARRAY_REF) {	// a = x:[1];		RMA get		rewrite expr
         String coarrayName = XMPutil.getXobjSymbolName(rightExpr.getArg(0));
         XMPcoarray coarray = _globalDecl.getXMPcoarray(coarrayName, localXMPsymbolTable);
@@ -322,8 +321,10 @@ public class XMPrewriteExpr {
 
 				if(isCoarray(leftExpr, localXMPsymbolTable) == false){
 					coarrayFuncArgs = Xcons.List(Xcons.IntConstant(XMPcoarray.GET),
-																			 coarray.getDescId(), offset, Xcons.AddrOf(leftExpr));
-				}	else{
+																			 coarray.getDescId(), offset, Xcons.AddrOf(leftExpr), 
+																			 Xcons.Int(Xcode.INT_CONSTANT, 0));
+				}	
+				else{
 					Xobject src_offset = null;
 					if(leftExpr.Opcode() == Xcode.ARRAY_REF){
 						String leftCoarrayName = XMPutil.getXobjSymbolName(leftExpr);
@@ -332,17 +333,12 @@ public class XMPrewriteExpr {
 						src_offset = getCoarrayOffset(leftExpr.getArg(1), leftCoarray);
 						leftExpr = leftExpr.getArg(0);
 					}
-					Xobject leftCoarray = _globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + leftExpr.getName());
-
-					Xobject srcAddr = null;
-					if(src_offset != null){
-						srcAddr = Xcons.binaryOp(Xcode.PLUS_EXPR,	leftCoarray, src_offset);
-					}
 					else{
-						srcAddr = leftCoarray;
+						src_offset = Xcons.Int(Xcode.INT_CONSTANT, 0);
 					}
+					Xobject leftCoarray = _globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + leftExpr.getName());
 					coarrayFuncArgs = Xcons.List(Xcons.IntConstant(XMPcoarray.GET),
-																			 coarray.getDescId(), offset, srcAddr);
+																			 coarray.getDescId(), offset, leftCoarray, src_offset);
 				}
 
         coarrayFuncArgs.mergeList(XMPutil.castList(Xtype.intType, (XobjList)rightExpr.getArg(1)));
@@ -521,6 +517,7 @@ public class XMPrewriteExpr {
         newExpr = Xcons.binaryOp(Xcode.PLUS_EXPR, newExpr, var);
       }
 		}
+
 		return newExpr;
 	}
 

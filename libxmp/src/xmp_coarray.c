@@ -46,12 +46,12 @@ void _XMP_coarray_finalize(){
 #endif
 }
 
-void _XMP_coarray_rma_SCALAR(int rma_code, void *coarray, int offset, void* local_addr, int node){
+void _XMP_coarray_rma_SCALAR(int rma_code, void *rma_addr, int rma_offset, void* local_addr, int local_offset, int node){
 #ifdef _COARRAY_GASNET
 	if(_XMP_N_COARRAY_PUT == rma_code){
-		_XMP_gasnet_put(node, (_XMP_coarray_t*)coarray, offset, local_addr, 0, 1);
+		_XMP_gasnet_put(node, (_XMP_coarray_t*)rma_addr, rma_offset, local_addr, local_offset, 1);
 	} else if(_XMP_N_COARRAY_GET == rma_code){
-		_XMP_gasnet_get(local_addr, 0, node, (_XMP_coarray_t*)coarray, offset, 1);
+		_XMP_gasnet_get(local_addr, local_offset, node, (_XMP_coarray_t*)rma_addr, rma_offset, 1);
 	}
 #else
   _XMP_fatal("Cannt use Coarray Function");
