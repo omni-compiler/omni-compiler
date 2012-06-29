@@ -169,11 +169,11 @@ extern void _XMP_threads_finalize(void);
 	gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);      \
   } while (0)
 
-extern void _XMP_gasnet_set_coarray(_XMP_coarray_t *coarray, void **addr, long number_of_elements, size_t type_size);
-extern void _XMP_gasnet_initialize(int, char**, int);
+extern void _XMP_gasnet_set_coarray(_XMP_coarray_t *coarray, void **addr, unsigned long long number_of_elements, size_t type_size);
+extern void _XMP_gasnet_initialize(int, char**, unsigned long long);
 extern void _XMP_gasnet_finalize(int);
-extern void _XMP_gasnet_put(int, _XMP_coarray_t*, int, void*, int, int);
-extern void _XMP_gasnet_get(void*, int, int, _XMP_coarray_t*, int, int);
+extern void _XMP_gasnet_put(int, _XMP_coarray_t*, unsigned long long, void*, unsigned long long, unsigned long long);
+extern void _XMP_gasnet_get(void*, unsigned long long, int, _XMP_coarray_t*, unsigned long long, unsigned long long);
 extern void _XMP_gasnet_sync_all();
 extern void _XMP_gasnet_sync_memory();
 #endif

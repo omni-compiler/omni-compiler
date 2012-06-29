@@ -1,7 +1,7 @@
 #include <stdarg.h>
 #include "xmp_internal.h"
 
-void _XMP_coarray_malloc(void **coarray, void *addr, long number_of_elements, size_t type_size) {
+void _XMP_coarray_malloc(void **coarray, void *addr, unsigned long long number_of_elements, size_t type_size) {
 
 #ifdef _COARRAY_GASNET
   *coarray = (_XMP_coarray_t*)_XMP_alloc(sizeof(_XMP_coarray_t));
@@ -46,33 +46,33 @@ void _XMP_coarray_finalize(){
 #endif
 }
 
-void _XMP_coarray_rma_SCALAR(int rma_code, void *rma_addr, int rma_offset, void* local_addr, int local_offset, int node){
+void _XMP_coarray_rma_SCALAR(int rma_code, void *coarray_desc, unsigned long long coarray_offset, void* local_addr, int node){
 #ifdef _COARRAY_GASNET
 	if(_XMP_N_COARRAY_PUT == rma_code){
-		_XMP_gasnet_put(node, (_XMP_coarray_t*)rma_addr, rma_offset, local_addr, local_offset, 1);
+		_XMP_gasnet_put(node, (_XMP_coarray_t*)coarray_desc, coarray_offset, local_addr, 0, 1);
 	} else if(_XMP_N_COARRAY_GET == rma_code){
-		_XMP_gasnet_get(local_addr, local_offset, node, (_XMP_coarray_t*)rma_addr, rma_offset, 1);
+		_XMP_gasnet_get(local_addr, 0, node, (_XMP_coarray_t*)coarray_desc, coarray_offset, 1);
 	}
 #else
   _XMP_fatal("Cannt use Coarray Function");
 #endif
 }
 
-void _XMP_coarray_put(int dest_node, void* dest, int dest_point, void *src_ptr, int src_point, int length){
-#ifdef _COARRAY_GASNET
-  _XMP_gasnet_put(dest_node, (_XMP_coarray_t*)dest, dest_point, src_ptr, src_point, length);
-#else
-  _XMP_fatal("Cannt use Coarray Function");
-#endif
-}
+//void _XMP_coarray_put(int dest_node, void* dest, int dest_point, void *src_ptr, int src_point, int length){
+//#ifdef _COARRAY_GASNET
+//  _XMP_gasnet_put(dest_node, (_XMP_coarray_t*)dest, dest_point, src_ptr, src_point, length);
+//#else
+//  _XMP_fatal("Cannt use Coarray Function");
+//#endif
+//}
 
-void _XMP_coarray_get(void *dest_ptr, int dest_point, int src_node, void* src, int src_point, int length){
-#ifdef _COARRAY_GASNET
-  _XMP_gasnet_get(dest_ptr, dest_point, src_node, (_XMP_coarray_t*)src, src_point, length);
-#else
-  _XMP_fatal("Cannt use Coarray Function");
-#endif
-}
+//void _XMP_coarray_get(void *dest_ptr, int dest_point, int src_node, void* src, int src_point, int length){
+//#ifdef _COARRAY_GASNET
+//  _XMP_gasnet_get(dest_ptr, dest_point, src_node, (_XMP_coarray_t*)src, src_point, length);
+//#else
+//  _XMP_fatal("Cannt use Coarray Function");
+//#endif
+//}
 
 void _XMP_coarray_sync_all(){
 #ifdef _COARRAY_GASNET
@@ -90,10 +90,10 @@ void _XMP_coarray_sync_memory(){
 #endif
 }
 
-void _XMP_coarray_rma_ARRAY(int rma_code, void *coarray, void *rma_addr, ...){
+void _XMP_coarray_rma_ARRAY(int rma_code, void *coarray, void *local_addr, ...){
 	int i;
   va_list args;
-  va_start(args, rma_addr);
+  va_start(args, local_addr);
 
   // get coarray info
   int coarray_dim = va_arg(args, int);
@@ -131,7 +131,7 @@ void _XMP_coarray_rma_ARRAY(int rma_code, void *coarray, void *rma_addr, ...){
   va_end(args);
 
 #ifdef _COARRAY_GASNET
-	int rma_array_start_point = 0, coarray_start_point = 0;
+	unsigned long long rma_array_start_point = 0, coarray_start_point = 0;
 	for(i=0;i<rma_array_dim;i++)
 		rma_array_start_point += rma_array_start[i] * rma_array_dim_acc[i];
 	for(i=0;i<coarray_dim;i++)
@@ -139,10 +139,10 @@ void _XMP_coarray_rma_ARRAY(int rma_code, void *coarray, void *rma_addr, ...){
 
   if(_XMP_N_COARRAY_PUT == rma_code){
 		_XMP_gasnet_put(coarray_nodes_ref[0], (_XMP_coarray_t*)coarray, coarray_start_point, 
-										rma_addr, rma_array_start_point, coarray_length[coarray_dim-1]);
+										local_addr, rma_array_start_point, (unsigned long long)coarray_length[coarray_dim-1]);
   } else if(_XMP_N_COARRAY_GET == rma_code){
-		_XMP_gasnet_get(rma_addr, rma_array_start_point, coarray_nodes_ref[0], 
-										(_XMP_coarray_t*)coarray, coarray_start_point, coarray_length[coarray_dim-1]);
+		_XMP_gasnet_get(local_addr, rma_array_start_point, coarray_nodes_ref[0], 
+										(_XMP_coarray_t*)coarray, coarray_start_point, (unsigned long long)coarray_length[coarray_dim-1]);
   } else{
 		_XMP_fatal("Unexpected Operation !!");
 	}

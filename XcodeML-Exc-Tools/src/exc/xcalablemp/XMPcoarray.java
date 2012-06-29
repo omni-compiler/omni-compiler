@@ -133,7 +133,9 @@ public class XMPcoarray {
 		Ident addrId = globalDecl.declStaticIdent(XMP.COARRAY_ADDR_PREFIX_ + coarrayName, new PointerType(elmtType));
 		//    XobjList initDescFuncArgs = Xcons.List(descId.getAddr(), varAddr, elmtTypeRef, Xcons.SizeOf(elmtType),
 		//                                           Xcons.IntConstant(coarrayDim));
-		XobjList initDescFuncArgs = Xcons.List(descId.getAddr(), addrId.getAddr(), Xcons.LongLongConstant(0, num_of_elemt), 
+
+		// Fix me : How to create unsigned long long constant ?
+		XobjList initDescFuncArgs = Xcons.List(descId.getAddr(), addrId.getAddr(), Xcons.LongLongConstant(0, num_of_elemt),
 																					 Xcons.SizeOf(elmtType));
 
 		//    for (Xobject coarrayDimSize : coarrayDimSizeList) {
