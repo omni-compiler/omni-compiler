@@ -203,7 +203,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       syntax = PragmaSyntax.SYN_PREFIX;
 
       pg_get_token();
-      args = parse_LOOP_clause();
+      args = parse_LOOP_clause(false);
     }
     else if (pg_is_ident("reflect")) {
       pragmaDir = XMPpragma.REFLECT;
@@ -264,7 +264,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
       pg_get_token();
       args = parse_LOCAL_ALIAS_clause();
-    } else if (pg_is_ident("acc")) {
+    } else if (pg_is_ident("device")) {
       pg_get_token();
       if (pg_is_ident("replicate")) {
         pragmaDir = XMPpragma.GPU_REPLICATE;
@@ -291,11 +291,11 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         pg_get_token();
         args = Xcons.List();
       } else if (pg_is_ident("loop")) {
-        pragmaDir = XMPpragma.GPU_LOOP;
+        pragmaDir = XMPpragma.LOOP;
         syntax = PragmaSyntax.SYN_PREFIX;
 
         pg_get_token();
-        args = parse_GPU_LOOP_clause();
+        args = parse_LOOP_clause(true);
       } else {
         error("unknown XcalableMP-GPU directive, '" + pg_tok_buf() + "'");
       }
@@ -754,7 +754,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     // check body in translator: task directive list
   }
 
-  private XobjList parse_LOOP_clause() throws XmException, XMPexception {
+  private XobjList parse_LOOP_clause(boolean isDeviceLoop) throws XmException, XMPexception {
     XobjList loopIndexList = null;
     if (pg_tok() == '(') {
       loopIndexList = Xcons.List();
@@ -801,19 +801,14 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     XobjList multicoreClause = null;
 
     // parse [<gpu-clause>], ...
-    if (pg_is_ident("acc")) {
-      pg_get_token();
-      multicoreClause = Xcons.List(Xcons.String("acc"), parse_GPU_clause());
-    }
-
-    // parse [<threads-clause>], ...
     if (pg_is_ident("threads")) {
-      if (multicoreClause != null) {
-        error("'gpu' and 'threads' clauses cannot be used in the same directive");
+      if (isDeviceLoop) {
+        pg_get_token();
+        multicoreClause = Xcons.List(Xcons.String("acc"), parse_GPU_clause());
+      } else {
+        pg_get_token();
+        multicoreClause = Xcons.List(Xcons.String("threads"), parse_THREADS_clause());
       }
-
-      pg_get_token();
-      multicoreClause = Xcons.List(Xcons.String("threads"), parse_THREADS_clause());
     }
     
     // parse [profile]                                                                                                   
@@ -1431,7 +1426,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   }
 
   private XobjList parse_GPU_REPLICATE_clause() throws XMPexception {
-    XobjList varList = parse_XMP_symbol_list("acc replicate");
+    XobjList varList = parse_XMP_symbol_list("device replicate");
     return Xcons.List(varList);
   }
 
@@ -1443,11 +1438,11 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         XobjString clauseName = Xcons.String(pg_tok_buf());
 
         pg_get_token();
-        XobjList varList = parse_XMP_symbol_list("acc replicate_sync");
+        XobjList varList = parse_XMP_symbol_list("device replicate_sync");
 
         clauseList.add(Xcons.List(clauseName, varList));
       } else {
-        throw new XMPexception("'in' or 'out' clause is required in acc replicate_sync directive");
+        throw new XMPexception("'in' or 'out' clause is required in device replicate_sync directive");
       }
 
       if (!(pg_is_ident("in") || pg_is_ident("out"))) {
@@ -1461,7 +1456,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   private XobjList parse_GPU_LOOP_clause() throws XmException, XMPexception {
     XobjList loopVarList = null;
     if (pg_tok() == '(') {
-      loopVarList = parse_XMP_symbol_list("acc loop");
+      loopVarList = parse_XMP_symbol_list("device loop");
     }
 
     // FIXME needs reduction clause
