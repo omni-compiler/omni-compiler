@@ -10,9 +10,8 @@
 //  { XMP_GASNET_UNLOCK_REQUEST, _xmp_gasnet_unlock_request },
 //  { XMP_GASNET_LOCKHANDOFF,    _xmp_gasnet_lockhandoff }
 //};
-static gasnet_seginfo_t *_test_seginfo;
 static unsigned long long _xmp_coarray_shift = 0;
-static void **_xmp_gasnet_buf;
+static char **_xmp_gasnet_buf;
 
 void _XMP_gasnet_set_coarray(_XMP_coarray_t *coarray, void **addr, unsigned long long number_of_elements, size_t type_size){
   int numprocs;
@@ -33,14 +32,6 @@ void _XMP_gasnet_set_coarray(_XMP_coarray_t *coarray, void **addr, unsigned long
   *addr = each_addr[gasnet_mynode()];
 }
 
-static void *_gasnet_getseg(gasnet_node_t node) {
-  gasnet_seginfo_t *s = (gasnet_seginfo_t *)malloc(gasnet_nodes()*sizeof(gasnet_seginfo_t));
-  gasnet_getSegmentInfo(s, gasnet_nodes());
-  _test_seginfo = s;
-
-  return _test_seginfo[node].addr;
-}
-
 void _XMP_gasnet_initialize(int argc, char **argv, unsigned long long malloc_size){
   int numprocs;
 
@@ -49,16 +40,16 @@ void _XMP_gasnet_initialize(int argc, char **argv, unsigned long long malloc_siz
   if(malloc_size % GASNET_PAGESIZE != 0)
     malloc_size = (malloc_size/GASNET_PAGESIZE -1) * GASNET_PAGESIZE;
 
-  //gasnet_attach(htable, sizeof(htable)/sizeof(gasnet_handlerentry_t), malloc_size, 0);
   gasnet_attach(NULL, 0, malloc_size, 0);
   numprocs = gasnet_nodes();
 
-  _xmp_gasnet_buf = (void **)malloc(sizeof(void*) * numprocs);
+  _xmp_gasnet_buf = (char **)malloc(sizeof(char*) * numprocs);
 
   gasnet_node_t i;
+  gasnet_seginfo_t *s = (gasnet_seginfo_t *)malloc(gasnet_nodes()*sizeof(gasnet_seginfo_t)); 
+  gasnet_getSegmentInfo(s, gasnet_nodes());
   for(i=0;i<numprocs;i++)
-    _xmp_gasnet_buf[i] = (void*)_gasnet_getseg( i );
-
+    _xmp_gasnet_buf[i] =  (char*)s[i].addr;
 }
 
 void _XMP_gasnet_finalize(int val){
