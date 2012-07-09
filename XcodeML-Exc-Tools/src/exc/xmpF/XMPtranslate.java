@@ -51,13 +51,12 @@ public class XMPtranslate implements XobjectDefVisitor
 //       else
 //  	lastMod.addAfterThis(mod.toXobjectDef());
 //     }
-    env.getEnv().collectAllTypes();
-    env.getEnv().fixupTypeRef();
+    env.finalize();
   }
     
   private void replace_main(XobjectDef d) {
     String name = d.getName();
-    Ident id = env.findVarIdent(name);
+    Ident id = env.getEnv().findVarIdent(name);
     if(id == null)
       XMP.fatal("'" + name + "' not in id_list");
     id.setName(XMPmainFunc);
@@ -97,6 +96,13 @@ public class XMPtranslate implements XobjectDefVisitor
         
     // finally, replace body
     fd.Finalize();
+
+    if(XMP.debugFlag) {
+      System.out.println("**** final **** "+fd.getDef());
+      XobjectPrintWriter out = new XobjectPrintWriter(System.out);
+      out.print(fd.getDef().getDef());
+      System.out.println("---- final ---- ");
+    }
   }
 
   // not used?

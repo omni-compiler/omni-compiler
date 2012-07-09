@@ -51,17 +51,20 @@ public class XMP {
   public final static String nodes_init_GLOBAL_f = "xmpf_nodes_init_GLOBAL_";
   public final static String nodes_init_EXEC_f = "xmpf_nodes_init_EXEC_";
   public final static String nodes_init_NODES_f = "xmpf_nodes_init_NODES_";
+  public final static String nodes_dealloc_f = "xmpf_nodes_dealloc_";
 
   public final static String template_alloc_f = "xmpf_template_alloc_";
   public final static String template_dim_info_f = "xmpf_template_dim_info_";
   public final static String template_init_f = "xmpf_template_init_";
+  public final static String template_dealloc_f = "xmpf_template_dealloc_";
 
   public final static String array_alloc_f = "xmpf_array_alloc_";
   public final static String array_align_info_f = "xmpf_align_info_";
   public final static String array_init_f = "xmpf_array_init_";
-  public final static String array_get_local_size_f = "xmpf_array_get_local_size_";
+  public final static String array_get_local_size_f = "xmpf_array_get_local_size_off_";
   public final static String array_set_local_array_f = "xmpf_array_set_local_array_";
   public final static String array_init_shadow_f = "xmpf_array_init_shadow_";
+  public final static String array_dealloc_f = "xmpf_array_dealloc_";
 
   public final static String ref_templ_alloc_f = "xmpf_ref_templ_alloc_";
   public final static String ref_nodes_alloc_f = "xmpf_ref_nodes_alloc_";

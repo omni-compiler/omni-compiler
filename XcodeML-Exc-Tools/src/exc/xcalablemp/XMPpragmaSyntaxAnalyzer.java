@@ -1301,7 +1301,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
         pg_get_token();
       } else {
-        throw new XMPexception("unknown threads clause");
+        throw new XMPexception("unknown acc clause ="+pg_tok_buf());
       }
     }
 

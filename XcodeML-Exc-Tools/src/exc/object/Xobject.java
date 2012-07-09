@@ -277,6 +277,15 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
     }
 
     /**
+     * Returns Name of Xobject.
+     * Dummy method at base class, it causes exception.
+     */
+    public void setName(String name)
+    {
+        throw new UnsupportedOperationException(toString());
+    }
+
+    /**
      * Returns floating value if XobjLong.
      * Dummy method at base class, it causes exception.
      */

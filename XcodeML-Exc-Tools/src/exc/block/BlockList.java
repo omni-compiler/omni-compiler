@@ -434,14 +434,14 @@ public class BlockList
     public String toString()
     {
         StringBuilder s = new StringBuilder(256);
-        s.append("(BlockList ");
+        s.append("[BlockList ");
         int i = 0;
         for(Block b = head; b != null; b = b.getNext()) {
             if(i++ > 0)
                 s.append(" ");
             s.append(b.toString());
         }
-        s.append(")");
+        s.append("]");
         return s.toString();
     }
 }

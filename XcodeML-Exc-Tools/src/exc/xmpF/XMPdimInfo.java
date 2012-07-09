@@ -23,6 +23,8 @@ public class XMPdimInfo {
   int align_status;
   int align_subscript_index;
   Xobject align_subscript_offset;
+  Ident a_dim_size_var; 
+  Ident a_offset_var;
 
   final static int ALIGN_NONE = 0;
   final static int ALIGN_SET = 1;
@@ -120,6 +122,15 @@ public class XMPdimInfo {
   public Xobject getAlignSubscriptOffset() { return align_subscript_offset; }
   
   public boolean isAlignAny() { return  align_status == ALIGN_ANY; }
+
+  public void setArrayInfoVar(Ident size_var, Ident off_var){
+    a_dim_size_var = size_var;
+    a_offset_var = off_var;
+  }
+
+  public Ident getArraySizeVar() { return a_dim_size_var; }
+  
+  public Ident getArrayOffsetVar() { return a_offset_var; }
 
   /*
    * parse dim expression

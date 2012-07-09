@@ -50,6 +50,11 @@ public class XobjString extends XobjConst
         return value;
     }
     
+    public void setName(String newValue)
+    {
+        value = newValue;
+    }
+
     @Override
     public Xobject copy()
     {

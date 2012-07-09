@@ -84,7 +84,7 @@ public class XMPobjectsRef {
       refName = "xmp_";
     } else {
       refName = decl.getArg(0).getString();
-      refObject = env.getXMPobject(refName,pb);
+      refObject = env.findXMPobject(refName,pb);
       if (refObject == null) {
 	XMP.error("cannot find objects '" + refName + "'");
 	return;
@@ -101,15 +101,15 @@ public class XMPobjectsRef {
   public void setLoopDimInfo(Vector<XMPdimInfo> dims) { loop_dims = dims;}
 
   // make contructor
-  public Block buildConstructor(XobjectDef def){
+  public Block buildConstructor(XMPenv env){
     Block b = Bcons.emptyBlock();
     BasicBlock bb = b.getBasicBlock();
-    Ident f = def.declExternIdent(XMP.ref_templ_alloc_f,Xtype.FsubroutineType);
+    Ident f = env.declExternIdent(XMP.ref_templ_alloc_f,Xtype.FsubroutineType);
     Xobject args = Xcons.List(descId.Ref(),refObject.getDescId().Ref(),
 			      Xcons.IntConstant(subscripts.size()));
     bb.add(f.callSubroutine(args));
 
-    f = def.declExternIdent(XMP.ref_set_info_f,Xtype.FsubroutineType);
+    f = env.declExternIdent(XMP.ref_set_info_f,Xtype.FsubroutineType);
     for(int i = 0; i < loop_dims.size(); i++){
       int idx = loop_dims.elementAt(i).getLoopOnIndex();
       Xobject off = subscripts.elementAt(idx).getOnRefOffset();
@@ -119,15 +119,15 @@ public class XMPobjectsRef {
       bb.add(f.callSubroutine(args));
     }
     
-    f = def.declExternIdent(XMP.ref_init_f,Xtype.FsubroutineType);
+    f = env.declExternIdent(XMP.ref_init_f,Xtype.FsubroutineType);
     bb.add(f.callSubroutine(Xcons.List(descId.Ref())));
     
     return b;
   }
 
-  public Xobject buildLoopTestFuncCall(XobjectDef def, XMPinfo info){
+  public Xobject buildLoopTestFuncCall(XMPenv env, XMPinfo info){
 
-    Ident f = def.declExternIdent(XMP.loop_test_f+info.getLoopDim(),
+    Ident f = env.declExternIdent(XMP.loop_test_f+info.getLoopDim(),
 				  Xtype.FlogicalFunctionType);
     Xobject args = Xcons.List(descId);
     for(int i = 0; i < info.getLoopDim(); i++) 
@@ -135,9 +135,8 @@ public class XMPobjectsRef {
     return f.Call(args);
   }
 
-  public Xobject buildLoopTestSkipFuncCall(XobjectDef def, XMPinfo info,
-					   int k){
-    Ident f = def.declExternIdent(XMP.loop_test_skip_f,
+  public Xobject buildLoopTestSkipFuncCall(XMPenv env, XMPinfo info, int k){
+    Ident f = env.declExternIdent(XMP.loop_test_skip_f,
 				  Xtype.FlogicalFunctionType);
     Xobject args = Xcons.List(descId,Xcons.IntConstant(k),
 			      info.getLoopVar(k));

@@ -48,7 +48,13 @@ public class XMPobject {
     return _descId;
   }
 
-  public Block buildConstructor(XobjectDef def){
-    return null;
+  public void buildConstructor(BlockList body, XMPenv def){
+    // abstract method
+    XMP.fatal("buildConstrutor");
   }
+
+  public void buildDestructor(BlockList body, XMPenv def){
+    // abstract method
+    XMP.fatal("buildDestrutor");
+  }  
 }

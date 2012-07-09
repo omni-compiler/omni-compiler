@@ -229,6 +229,7 @@ public class Ident extends Xobject
         b.append(type == null ? "*" : type.toString());
         b.append(" ");
         b.append(value == null ? "()" : value.toString());
+
         /* bit_field, bit_field_expr, enum_value are exclusively set */
         b.append(" ");
         if(bit_field != 0 || bit_field_expr != null) {

@@ -20,14 +20,14 @@ import xcodeml.util.XmOption;
  */
 public class XMPanalyzePragma
 {
-  FuncDefBlock def;
   XMPenv env;
 
   public XMPanalyzePragma() {}
 
   public void run(FuncDefBlock def, XMPenv env) {
-    this.def = def;
     this.env = env;
+    env.setCurrentDef(def);
+
     Block b;
     Block fblock = def.getBlock();
 
@@ -285,7 +285,7 @@ public class XMPanalyzePragma
 
     on_ref.setLoopDimInfo(dims);  // set back pointer
     
-    checkLocalizableLoop(dims,on_ref);
+    checkLocalizableLoop(dims,on_ref,pb);
 
     info.setBody(loopBody);  // inner most body
     info.setLoopInfo(dims, on_ref, reductionRef);
@@ -321,8 +321,8 @@ public class XMPanalyzePragma
    * (1) step is 1
    * (2) distribution is BLOCK
    */
-  private static void checkLocalizableLoop(Vector<XMPdimInfo> dims,
-					   XMPobjectsRef on_ref){
+  private void checkLocalizableLoop(Vector<XMPdimInfo> dims,
+				    XMPobjectsRef on_ref, Block b){
     for(int i = 0; i < dims.size(); i++){
       boolean localizable = false;
       XMPdimInfo d_info = dims.elementAt(i);
@@ -343,8 +343,8 @@ public class XMPanalyzePragma
 	Xobject loop_var = d_info.getLoopVar();
 	/* if localiable, allocate local */
 	Ident local_loop_var = 
-	  Ident.Local(XMP.genSym(loop_var.getName()),
-		      loop_var.Type());
+	  env.declIdent(XMP.genSym(loop_var.getName()),
+			loop_var.Type(),b);
 	d_info.setLoopLocalVar(local_loop_var);
       }
     }
@@ -368,7 +368,7 @@ public class XMPanalyzePragma
 	continue;
       }
       String name = x.getName();
-      XMParray array = env.getXMParray(name, pb);
+      XMParray array = env.findXMParray(name, pb);
       if(array == null){
 	XMP.error("array '" + name + "'for reflect is not declared");
 	continue;
@@ -411,7 +411,7 @@ public class XMPanalyzePragma
       if(!v.isVariable()){
 	XMP.error("not variable in reduction spec list");
       }
-      Ident id = env.findVarIdent(v.getName(),pb);
+      Ident id = pb.findVarIdent(v.getName());
       if(id == null){
 	XMP.error("variable '"+v.getName()+"' in reduction is not found");
       }
@@ -439,7 +439,7 @@ public class XMPanalyzePragma
       if(!v.isVariable()){
 	XMP.error("not variable in bcast variable list");
       }
-      Ident id = env.findVarIdent(v.getName(),pb);
+      Ident id = pb.findVarIdent(v.getName());
       if(id == null){
 	XMP.error("variable '"+v.getName()+"' in reduction is not found");
       }

@@ -133,7 +133,7 @@ package exc.xmpF;
 				      XMPenv env, PragmaBlock pb) {
      XMPtemplate tempObject = new XMPtemplate();
      tempObject.parsePragma(name,templateDecl,env,pb);
-     env.putXMPobject(tempObject,pb);
+     env.declXMPobject(tempObject,pb);
      if(XMP.debugFlag){
        System.out.println("tempObject="+tempObject);
      }
@@ -143,8 +143,10 @@ package exc.xmpF;
 
      // check name collision
      _name = name.getString();
-     env.checkObjectNameCollision(_name,pb);
-     if(XMP.hasError()) return;
+     if(env.findXMPobject(_name,pb) != null){
+       XMP.error("XMP object '"+_name+"' is already declared");
+       return;
+     }
 
      // declare template desciptor
      _descId =  env.declObjectId(XMP.DESC_PREFIX_ + _name, pb);
@@ -194,7 +196,7 @@ package exc.xmpF;
 
      // get nodes object
      String nodesName = nodes.getString();
-     XMPnodes nodesObject = nodesObject = env.getXMPnodes(nodesName, pb);
+     XMPnodes nodesObject = nodesObject = env.findXMPnodes(nodesName, pb);
      if (nodesObject == null) {
        XMP.error("nodes '" + nodesName + "' is not declared");
      }
@@ -267,16 +269,14 @@ package exc.xmpF;
     *                                     dist_manner,n_idx,chunk)
     *  !  xmpf_template_init__(t_desc,n_desc)
     */
-   public Block buildConstructor(XobjectDef def){
-     Block b = Bcons.emptyBlock();
-     BasicBlock bb = b.getBasicBlock();
-     Ident f = def.declExternIdent(XMP.template_alloc_f,Xtype.FsubroutineType);
+   public void buildConstructor(BlockList body, XMPenv env){
+     Ident f = env.declExternIdent(XMP.template_alloc_f,Xtype.FsubroutineType);
      Xobject args = Xcons.List(_descId.Ref(),Xcons.IntConstant(_dim),
 			       Xcons.IntConstant(1)); // fixed only
-     bb.add(f.callSubroutine(args));
-
+     body.add(f.callSubroutine(args));
+     
      /* template size */
-     f = def.declExternIdent(XMP.template_dim_info_f,Xtype.FsubroutineType);
+     f = env.declExternIdent(XMP.template_dim_info_f,Xtype.FsubroutineType);
      for(int i = 0; i < _dim; i++){
        XMPdimInfo info = scripts.elementAt(i);
        Xobject dist_arg = info.getDistArg();
@@ -286,13 +286,19 @@ package exc.xmpF;
 			 info.getLower(),info.getUpper(),
 			 Xcons.IntConstant(info.getDistManner()),
 			 dist_arg);
-       bb.add(f.callSubroutine(args));
+       body.add(f.callSubroutine(args));
      }
 
      /* init */
-     f = def.declExternIdent(XMP.template_init_f,Xtype.FsubroutineType);
-     bb.add(f.callSubroutine(Xcons.List(_descId.Ref(),
+     f = env.declExternIdent(XMP.template_init_f,Xtype.FsubroutineType);
+     body.add(f.callSubroutine(Xcons.List(_descId.Ref(),
 					ontoNodes.getDescId().Ref())));
-     return b;
+   }
+
+   public void buildDestructor(BlockList body, XMPenv env){
+     Ident f = env.declExternIdent(XMP.template_dealloc_f,Xtype.
+				   FsubroutineType);
+     Xobject args = Xcons.List(_descId.Ref());
+     body.add(f.callSubroutine(args));
    }
 }

@@ -935,7 +935,7 @@ public class Xtype
             case Xtype.ENUM:        p = "E"; break;
             case Xtype.F_ARRAY:     p = "FA"; break;
             }
-            return "<" + p + (ref != null ? ":" + ref.toString() : "");
+            return "<" + p + (ref != null ? ":" + ref.toString() : "")+">";
         }
 
         String id = getXcodeCId();

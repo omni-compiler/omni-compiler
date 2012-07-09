@@ -18,23 +18,23 @@ import java.util.*;
  */
 public class XMPtransPragma
 {
-  protected XobjectDef current_def;
-  private XMPenv  xmp_env;
-  protected XobjectFile env;
+  private XMPenv  env;
     
   public XMPtransPragma() { }
 
   // pass3: do transformation for XMP pragma
   public void run(FuncDefBlock def, XMPenv env) {
+    this.env = env; 
+    env.setCurrentDef(def);
+
     Block b;
-    Block fblock = def.getBlock();
-    current_def = def.getDef();
-    this.env = current_def.getFile();
-    this.xmp_env = env; 
+    FunctionBlock fblock = def.getBlock();
 
     XMP.debug("pass3:");
+    
+    if(XMP.debugFlag) System.out.println("pass3 +fblock="+fblock);
     // scan by bottom-up iterator
-    BlockIterator i = new bottomupBlockIterator(fblock);
+    BlockIterator i = new bottomupBlockIterator(fblock.getBody().getHead());
     for(i.init(); !i.end(); i.next()) {
       b = i.getBlock();
       if(b.Opcode() == Xcode.XMP_PRAGMA) {
@@ -42,25 +42,31 @@ public class XMPtransPragma
 	if(b != null) i.setBlock(b);
       }
     }
-    // constructor for XMPobjects
-    fblock.getBody().getHead().
-      getBody().getHead().insert(localConstructorBlock(fblock));
+    
+    Xobject f_name = fblock.getNameObj();
+    BlockList prolog = Bcons.emptyBody();
+    BlockList epilog = Bcons.emptyBody();
+    buildXMPobjectBlock(prolog, epilog);
+    
+    // fblock = (FunckBlock ident <param_env> [BlockList 
+    //   (CompoundBlock <local_env> [BlockList statment ...]))
+    BlockList f_body = fblock.getBody().getHead().getBody();
+    f_body.insert(Bcons.COMPOUND(prolog));
+    f_body.add(Bcons.COMPOUND(epilog));
   }
 
-  public Block localConstructorBlock(Block fblock){
-    BlockList body = Bcons.emptyBody();
-    XMPsymbolTable table = XMPenv.localXMPsymbolTable(fblock);
+  void buildXMPobjectBlock(BlockList prolog, BlockList epilog){
+    XMPsymbolTable table = env.getXMPsymbolTable();
     if(table != null){
       for(XMPobject o: table.getXMPobjects()){
-	Block b1 = o.buildConstructor(current_def);
-	if(b1 != null) body.add(b1);
+	o.buildConstructor(prolog,env);
+	o.buildDestructor(epilog,env);
       }
       for(XMParray a: table.getXMParrays()){
-	Block b2 = a.buildConstructor(current_def);
-	if(b2 != null) body.add(b2);
+	a.buildConstructor(prolog,env);
+	a.buildDestructor(epilog,env);
       }
     }
-    return Bcons.COMPOUND(body);
   }
 
   // pass3:
@@ -112,7 +118,7 @@ public class XMPtransPragma
 
     // generate on_ref object
     // create on_desc, only use loop_on_ref
-    ret_body.add(on_ref.buildConstructor(current_def));
+    ret_body.add(on_ref.buildConstructor(env));
 
     if(!loop_opt_enable){
       // default loop transformation (non-opt)
@@ -121,7 +127,7 @@ public class XMPtransPragma
       ForBlock for_block = (ForBlock)pb.getBody().getHead();
       BlockList loopBody = info.getBody();
       FdoBlock for_inner = (FdoBlock)loopBody.getParent();
-      Xobject test_expr = on_ref.buildLoopTestFuncCall(current_def,info);
+      Xobject test_expr = on_ref.buildLoopTestFuncCall(env,info);
       Block new_body = 
 	Bcons.IF(BasicBlock.Cond(test_expr),loopBody,null);
       for_inner.setBody(new BlockList(new_body));
@@ -149,7 +155,7 @@ public class XMPtransPragma
       if(local_loop_var == null){
 	// cannot be localized
 	Xobject test_expr = 
-	  on_ref.buildLoopTestSkipFuncCall(current_def,info,k);
+	  on_ref.buildLoopTestSkipFuncCall(env,info,k);
 	Block skip_block = 
 	  Bcons.IF(BasicBlock.Cond(test_expr),
 		   Bcons.blockList(Bcons.Fcycle()),null);
@@ -159,9 +165,9 @@ public class XMPtransPragma
 
       // transform
       Xtype btype = local_loop_var.Type();
-      Ident lb_var = Ident.Local(env.genSym("lb"), btype);
-      Ident ub_var = Ident.Local(env.genSym("ub"), btype);
-      Ident step_var = Ident.Local(env.genSym("step"), step_type);
+      Ident lb_var = env.declIdent(XMP.genSym("XMP_loop_lb"), btype,pb);
+      Ident ub_var = env.declIdent(XMP.genSym("XMP_loop_ub"), btype,pb);
+      Ident step_var = env.declIdent(XMP.genSym("XMP_loop_step"), step_type,pb);
       
       Xobject org_loop_ind_var = for_block.getInductionVar();
 
@@ -173,7 +179,7 @@ public class XMPtransPragma
       entry_bb.add(Xcons.Set(step_var.Ref(), for_block.getStep()));
 
       Ident schd_f = 
-	current_def.declExternIdent(XMP.loop_sched_f,Xtype.FsubroutineType);
+	env.declExternIdent(XMP.loop_sched_f,Xtype.FsubroutineType);
       Xobject args = Xcons.List(lb_var.Ref(), ub_var.Ref(), step_var.Ref(),
 				Xcons.IntConstant(k),
 				on_ref.getDescId().Ref());
@@ -186,7 +192,7 @@ public class XMPtransPragma
       if(isVarUsed(for_block.getBody(),org_loop_ind_var)){
 	// if global variable is used in this block, convert local to global
 	Ident l2g_f = 
-	  current_def.declExternIdent(XMP.l2g_f,Xtype.FsubroutineType);
+	  env.declExternIdent(XMP.l2g_f,Xtype.FsubroutineType);
 	args = Xcons.List(org_loop_ind_var,
 			  local_loop_var.Ref(),
 			  Xcons.IntConstant(k),
@@ -226,7 +232,7 @@ public class XMPtransPragma
     BasicBlock bb = b.getBasicBlock();
     Ident f;
 
-    f = current_def.declExternIdent(XMP.reflect_f,Xtype.FsubroutineType);
+    f = env.declExternIdent(XMP.reflect_f,Xtype.FsubroutineType);
     
     // no width option is supported yet.
     Vector<XMParray> reflectArrays = info.getReflectArrays();
@@ -240,7 +246,7 @@ public class XMPtransPragma
   private Block translateBarrier(PragmaBlock pb, XMPinfo i) {
     Block b = Bcons.emptyBlock();
     BasicBlock bb = b.getBasicBlock();
-    Ident f = current_def.declExternIdent(XMP.barrier_f,
+    Ident f = env.declExternIdent(XMP.barrier_f,
 					  Xtype.FsubroutineType);
     // don't care about on_ref
     bb.add(f.callSubroutine(Xcons.List(Xcons.IntConstant(0))));
@@ -253,7 +259,7 @@ public class XMPtransPragma
 
     // object size
     int op = info.getReductionOp();
-    Ident f = current_def.declExternIdent(XMP.reduction_f,
+    Ident f = env.declExternIdent(XMP.reduction_f,
 					  Xtype.FsubroutineType);
     for(Ident id: info.getInfoVarIdents()){
       Xtype type = id.Type();
@@ -280,7 +286,7 @@ public class XMPtransPragma
     Block b = Bcons.emptyBlock();
     BasicBlock bb = b.getBasicBlock();
 
-    Ident f = current_def.declExternIdent(XMP.bcast_f,
+    Ident f = env.declExternIdent(XMP.bcast_f,
 					  Xtype.FsubroutineType);
     for(Ident id: info.getInfoVarIdents()){
       Xtype type = id.Type();
@@ -334,8 +340,9 @@ public class XMPtransPragma
 // 	    name == affinityShedNextFunc)
 //       t = Xtype.FlogicalFunctionType;
 //     else
+
     t = Xtype.FsubroutineType;
-    return current_def.declExternIdent(name, t);
+    return env.declExternIdent(name, t);
   }
 }
 

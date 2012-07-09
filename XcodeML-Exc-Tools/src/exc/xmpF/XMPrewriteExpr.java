@@ -15,20 +15,19 @@ import exc.block.*;
 public class XMPrewriteExpr
 {
   private XMPenv  env;
-  protected XobjectDef current_def;
 
   public XMPrewriteExpr(){ }
 
   public void run(FuncDefBlock def, XMPenv env) {
     this.env = env;
-    current_def = def.getDef();
+    env.setCurrentDef(def);
 
     XMP.debug("pass2:");
     FunctionBlock fb = def.getBlock();
     if (fb == null) return;
 
     // rewrite parameters
-    rewriteParams(fb);
+    rewriteDecls(fb);
 
     // rewrite expr
     BasicBlockExprIterator iter = new BasicBlockExprIterator(fb);
@@ -43,31 +42,35 @@ public class XMPrewriteExpr
     //def.Finalize();
   }
 
-  private void rewriteParams(FunctionBlock funcBlock){
-    XobjList identList = funcBlock.getBody().getIdentList();
-
-    if(XMP.debugFlag){
-      System.out.println("identList="+identList);
-      System.out.println("decl="+funcBlock.getBody().getDecls());
+  private void rewriteDecls(FunctionBlock funcBlock){
+    Xobject declList = funcBlock.getBody().getDecls();
+    for(Xobject decl: (XobjList) declList){
+      if(decl.Opcode() != Xcode.VAR_DECL) continue;
+      Xobject id = decl.getArg(0);
+      if(id.Opcode() == Xcode.IDENT){
+	XMParray array =  env.findXMParray(id.getName(),funcBlock);
+	if(array != null) {
+	  Ident a_id = array.getArrayId();
+	  decl.setArg(0,Xcons.Symbol(Xcode.IDENT,a_id.Type(),a_id.getName()));
+	}
+      }
     }
 
-    if (identList == null) {
-      return;
-    } else {
-      for(XobjArgs args = identList.getArgs(); args != null; 
-	  args = args.nextArgs()){
-	Xobject x = args.getArg();
-        XMParray array = 
-	  env.getXMParray(x.getName(),funcBlock);
-	// if parameter is array, then rewrite
-        if (array != null) {
-	  // replace decls
-	  Xobject decl = funcBlock.getBody().findLocalDecl(x.getName());
-	  if(decl != null){
-	    decl.setArg(0,Xcons.Symbol(Xcode.IDENT,array.getLocalId().getName()));
+    // rewrite parameter
+    Xtype f_type = funcBlock.getNameObj().Type();
+    if(f_type != null && f_type.isFunction()){
+      Xobject params = f_type.getFuncParam();
+      if(params != null){
+	for(Xobject param: (XobjList)params){
+	  if(param.Opcode() == Xcode.IDENT){
+	    XMParray array =  env.findXMParray(param.getName(),funcBlock);
+	    if(array != null) {
+	      Ident a_id = array.getArrayId();
+	      param.setName(a_id.getName());
+	      param.setType(a_id.Type());
+	    }
 	  }
-	  args.setArg(array.getLocalId());
-        }
+	}
       }
     }
   }
@@ -83,10 +86,10 @@ public class XMPrewriteExpr
       switch (x.Opcode()) {
       case VAR:
 	{
-	  XMParray array = env.getXMParray(x.getName(),block);
+	  XMParray array = env.findXMParray(x.getName(),block);
 	  if (array != null){
 	    // replace with local decl
-	    Xobject var = array.getLocalId().Ref();
+	    Xobject var = array.getArrayId().Ref();
 	    var.setProp(XMP.arrayProp,array);
 	    iter.setXobject(var);
 	  }
@@ -108,8 +111,12 @@ public class XMPrewriteExpr
 	      arrayIndexCalc(array,dim_i++,args.getArg(),bb,block);
 	    if(index_calc != null) args.setArg(index_calc);
 	  }
+	  
+	  x.setArg(1,array.convertLinearIndex(x.getArg(1)));
+
 	  break;
 	}
+
         // XXX delete this
       case CO_ARRAY_REF:
 	{
@@ -250,7 +257,7 @@ public class XMPrewriteExpr
 	}
       }
 
-      Ident f = current_def.declExternIdent("xmpf_local_idx_",
+      Ident f = env.declExternIdent("xmpf_local_idx_",
 					    Xtype.Function(Xtype.intType));
       Xobject x = f.Call(Xcons.List(a.getDescId().Ref(),
 				    Xcons.IntConstant(dim_i),

@@ -54,8 +54,9 @@ public class FunctionBlock extends CompoundBlock
     public Xobject toXobject()
     {
         Xobject x = new XobjList(Opcode(),
-            name, body.id_list,
-            body.decls, body.head.toXobject(), gcc_attrs);
+				 name, body.id_list,
+				 body.decls, body.head.toXobject(), 
+				 gcc_attrs);
         x.setLineNo(getLineNo());
         return x;
     }
