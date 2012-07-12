@@ -1,5 +1,6 @@
 #include <stdarg.h>
 #include "xmp_internal.h"
+unsigned long long _xmp_heap_size;
 
 void _XMP_coarray_malloc(void **coarray, void *addr, unsigned long long number_of_elements, size_t type_size) {
 
@@ -13,28 +14,27 @@ void _XMP_coarray_malloc(void **coarray, void *addr, unsigned long long number_o
 
 void _XMP_coarray_initialize(int argc, char **argv){
 #ifdef _COARRAY_GASNET
-	char *env_heap_size;
-	int heap_size;
+  char *env_heap_size;
 	
-	if((env_heap_size = getenv("XMP_COARRAY_HEAP_SIZE")) != NULL){
-		int i;
-		for(i=0;i<strlen(env_heap_size);i++){
-			if(isdigit(env_heap_size[i]) == 0){
-				fprintf(stderr, "%s : ", env_heap_size);
-				_XMP_fatal("Unexpected Charactor in XMP_COARRAY_HEAP_SIZE");
-			}
-		}
-		heap_size = atoi(env_heap_size) * 1024 * 1024;
-		if(heap_size <= 0){
-			_XMP_fatal("XMP_COARRAY_HEAP_SIZE is less than 0 !!");
-		}
-	} else{
-		heap_size = _XMP_DEFAULT_COARRAY_HEAP_SIZE;
-	}
+  if((env_heap_size = getenv("XMP_COARRAY_HEAP_SIZE")) != NULL){
+    int i;
+    for(i=0;i<strlen(env_heap_size);i++){
+      if(isdigit(env_heap_size[i]) == 0){
+	fprintf(stderr, "%s : ", env_heap_size);
+	_XMP_fatal("Unexpected Charactor in XMP_COARRAY_HEAP_SIZE");
+      }
+    }
+    _xmp_heap_size = atoi(env_heap_size) * 1024 * 1024;   
+    if(_xmp_heap_size <= 0){
+      _XMP_fatal("XMP_COARRAY_HEAP_SIZE is less than 0 !!");
+    }
+  } else{
+    _xmp_heap_size = _XMP_DEFAULT_COARRAY_HEAP_SIZE;
+  }
 
-  _XMP_gasnet_initialize(argc, argv, heap_size);
+  _XMP_gasnet_initialize(argc, argv, _xmp_heap_size);
 #else
-	_XMP_fatal("Cannt use Coarray Function");
+  _XMP_fatal("Cannt use Coarray Function");
 #endif
 }
 
@@ -48,11 +48,11 @@ void _XMP_coarray_finalize(){
 
 void _XMP_coarray_rma_SCALAR(int rma_code, void *coarray_desc, unsigned long long coarray_offset, void* local_addr, int node){
 #ifdef _COARRAY_GASNET
-	if(_XMP_N_COARRAY_PUT == rma_code){
-		_XMP_gasnet_put(node, (_XMP_coarray_t*)coarray_desc, coarray_offset, local_addr, 0, 1);
-	} else if(_XMP_N_COARRAY_GET == rma_code){
-		_XMP_gasnet_get(local_addr, 0, node, (_XMP_coarray_t*)coarray_desc, coarray_offset, 1);
-	}
+  if(_XMP_N_COARRAY_PUT == rma_code){
+    _XMP_gasnet_put(node, (_XMP_coarray_t*)coarray_desc, coarray_offset, local_addr, 0, 1);
+  } else if(_XMP_N_COARRAY_GET == rma_code){
+    _XMP_gasnet_get(local_addr, 0, node, (_XMP_coarray_t*)coarray_desc, coarray_offset, 1);
+  }
 #else
   _XMP_fatal("Cannt use Coarray Function");
 #endif
@@ -91,7 +91,7 @@ void _XMP_coarray_sync_memory(){
 }
 
 void _XMP_coarray_rma_ARRAY(int rma_code, void *coarray, void *local_addr, ...){
-	int i;
+  int i;
   va_list args;
   va_start(args, local_addr);
 
@@ -118,34 +118,34 @@ void _XMP_coarray_rma_ARRAY(int rma_code, void *coarray, void *local_addr, ...){
   }
 
   // get coarray ref info
-	//	_XMP_nodes_t *coarray_nodes = coarray->nodes;   // Fix me
-	//	int coarray_nodes_dim = coarray_nodes->dim;
-	int coarray_nodes_dim = 1;
-	int coarray_nodes_ref[coarray_nodes_dim];
+  //	_XMP_nodes_t *coarray_nodes = coarray->nodes;   // Fix me
+  //	int coarray_nodes_dim = coarray_nodes->dim;
+  int coarray_nodes_dim = 1;
+  int coarray_nodes_ref[coarray_nodes_dim];
   for (i = 0; i < coarray_nodes_dim; i++) {
     // translate 1-origin to 0-rigin
-		//    coarray_nodes_ref[i] = va_arg(args, int) - 1;
-		coarray_nodes_ref[i] = va_arg(args, int);
+    //    coarray_nodes_ref[i] = va_arg(args, int) - 1;
+    coarray_nodes_ref[i] = va_arg(args, int);
   }
 
   va_end(args);
 
 #ifdef _COARRAY_GASNET
-	unsigned long long rma_array_start_point = 0, coarray_start_point = 0;
-	for(i=0;i<rma_array_dim;i++)
-		rma_array_start_point += rma_array_start[i] * rma_array_dim_acc[i];
-	for(i=0;i<coarray_dim;i++)
-		coarray_start_point   += coarray_start[i] * coarray_dim_acc[i];
+  unsigned long long rma_array_start_point = 0, coarray_start_point = 0;
+  for(i=0;i<rma_array_dim;i++)
+    rma_array_start_point += rma_array_start[i] * rma_array_dim_acc[i];
+  for(i=0;i<coarray_dim;i++)
+    coarray_start_point   += coarray_start[i] * coarray_dim_acc[i];
 
   if(_XMP_N_COARRAY_PUT == rma_code){
-		_XMP_gasnet_put(coarray_nodes_ref[0], (_XMP_coarray_t*)coarray, coarray_start_point, 
-										local_addr, rma_array_start_point, (unsigned long long)coarray_length[coarray_dim-1]);
+    _XMP_gasnet_put(coarray_nodes_ref[0], (_XMP_coarray_t*)coarray, coarray_start_point, 
+		    local_addr, rma_array_start_point, (unsigned long long)coarray_length[coarray_dim-1]);
   } else if(_XMP_N_COARRAY_GET == rma_code){
-		_XMP_gasnet_get(local_addr, rma_array_start_point, coarray_nodes_ref[0], 
-										(_XMP_coarray_t*)coarray, coarray_start_point, (unsigned long long)coarray_length[coarray_dim-1]);
+    _XMP_gasnet_get(local_addr, rma_array_start_point, coarray_nodes_ref[0], 
+		    (_XMP_coarray_t*)coarray, coarray_start_point, (unsigned long long)coarray_length[coarray_dim-1]);
   } else{
-		_XMP_fatal("Unexpected Operation !!");
-	}
+    _XMP_fatal("Unexpected Operation !!");
+  }
 #else
   _XMP_fatal("Cannt use Coarray Function");
 #endif

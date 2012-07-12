@@ -177,5 +177,5 @@ extern void _XMP_gasnet_get(void*, unsigned long long, int, _XMP_coarray_t*, uns
 extern void _XMP_gasnet_sync_all();
 extern void _XMP_gasnet_sync_memory();
 #endif
-
+extern unsigned long long _xmp_heap_size;
 #endif // _XMP_INTERNAL
