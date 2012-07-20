@@ -258,8 +258,8 @@ IFSfx       {ISfx}{FSfx}|{FSfx}{ISfx}
 {FDecNum}{FSfx}     { count(); LEX_NUMCONST(BT_FLOAT,                 CD_DEC); }
 {FDecNum}           { count(); LEX_NUMCONST(BT_DOUBLE,                CD_DEC); }
 {FDecNum}{LFSfx}    { count(); LEX_NUMCONST(BT_LONGDOUBLE,            CD_DEC); }
-{FDecNum}{IFSfx}    { count(); LEX_NUMCONST(BT_FLOAT,                 CD_DEC); /* FIXME use BT_FLOAT_IMAGINARY  */ }
-{FDecNum}{ISfx}     { count(); LEX_NUMCONST(BT_DOUBLE,                CD_DEC); /* FIXME use BT_DOUBLE_IMAGINARY */ }
+{FDecNum}{IFSfx}    { count(); LEX_NUMCONST(BT_FLOAT_IMAGINARY,       CD_DEC); }
+{FDecNum}{ISfx}     { count(); LEX_NUMCONST(BT_DOUBLE_IMAGINARY,      CD_DEC); }
 {FHexNum}{FSfx}     { count(); LEX_NUMCONST(BT_FLOAT,                 CD_HEX); }
 {FHexNum}           { count(); LEX_NUMCONST(BT_DOUBLE,                CD_HEX); }
 {FHexNum}{LFSfx}    { count(); LEX_NUMCONST(BT_LONGDOUBLE,            CD_HEX); }

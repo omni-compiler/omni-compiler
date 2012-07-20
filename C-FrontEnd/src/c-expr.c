@@ -1365,6 +1365,7 @@ allocExprOfNumberConst(CExprCodeEnum exprCode, CBasicTypeEnum bt,
             }
             break;
         case BT_FLOAT:
+        case BT_FLOAT_IMAGINARY:
           {
             long double n = expr->e_numValue.ld = strtof(digits, NULL);
             if(errno) {
@@ -1375,6 +1376,7 @@ allocExprOfNumberConst(CExprCodeEnum exprCode, CBasicTypeEnum bt,
             }
           } break;
         case BT_DOUBLE:
+        case BT_DOUBLE_IMAGINARY:
           {
             long double n = expr->e_numValue.ld = strtod(digits, NULL);
             if(errno) {

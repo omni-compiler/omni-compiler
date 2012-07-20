@@ -1781,7 +1781,9 @@ outx_NUMBER_CONST(FILE *fp, int indent, CExprOfNumberConst *nc)
         }
         break;
     case BT_FLOAT:
+    case BT_FLOAT_IMAGINARY:
     case BT_DOUBLE:
+    case BT_DOUBLE_IMAGINARY:
     case BT_LONGDOUBLE:
         sprintf(s_charBuf[0], "%s", nc->e_orgToken);
         break;
@@ -1806,7 +1808,9 @@ outx_NUMBER_CONST(FILE *fp, int indent, CExprOfNumberConst *nc)
         tag = "longlongConstant";
         break;
     case BT_FLOAT:
+    case BT_FLOAT_IMAGINARY:
     case BT_DOUBLE:
+    case BT_DOUBLE_IMAGINARY:
     case BT_LONGDOUBLE:
         tag = "floatConstant";
         break;

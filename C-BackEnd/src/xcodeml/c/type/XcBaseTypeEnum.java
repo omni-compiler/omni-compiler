@@ -30,9 +30,9 @@ public enum XcBaseTypeEnum
     FLOAT_COMPLEX           ("float_complex",           "float _Complex",           null,   false),
     DOUBLE_COMPLEX          ("double_complex",          "double _Complex",          null,   false),
     LONGDOUBLE_COMPLEX      ("long_double_complex",     "long double _Complex",     null,   false),
-    FLOAT_IMAG              ("float_imaginary",         "float _Imaginary",         null,   false),
-    DOUBLE_IMAG             ("double_imaginary",        "double _Imaginary",        null,   false),
-    LONGDOUBLE_IMAG         ("long_double_imaginary",   "long double _Imaginary",   null,   false),
+    FLOAT_IMAG              ("float_imaginary",         "float _Complex",           null,   false),
+    DOUBLE_IMAG             ("double_imaginary",        "double _Complex",          null,   false),
+    LONGDOUBLE_IMAG         ("long_double_imaginary",   "long double _Complex",     null,   false),
     GCC_BUILTIN_VA_LIST     ("__builtin_va_list",       "__builtin_va_list",        null,   false),
     ;
     
