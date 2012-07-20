@@ -127,6 +127,8 @@ LSfx        [lL]
 ULSfx       {USfx}{LSfx}|{LSfx}{USfx}
 LLSfx       {LSfx}{LSfx}
 ULLSfx      {USfx}{LLSfx}|{LLSfx}{USfx}
+ISfx        i
+IFSfx       {ISfx}{FSfx}|{FSfx}{ISfx}
 
 %%
                         /* ------ comment ------ */
@@ -256,6 +258,8 @@ ULLSfx      {USfx}{LLSfx}|{LLSfx}{USfx}
 {FDecNum}{FSfx}     { count(); LEX_NUMCONST(BT_FLOAT,                 CD_DEC); }
 {FDecNum}           { count(); LEX_NUMCONST(BT_DOUBLE,                CD_DEC); }
 {FDecNum}{LFSfx}    { count(); LEX_NUMCONST(BT_LONGDOUBLE,            CD_DEC); }
+{FDecNum}{IFSfx}    { count(); LEX_NUMCONST(BT_FLOAT,                 CD_DEC); /* FIXME use BT_FLOAT_IMAGINARY  */ }
+{FDecNum}{ISfx}     { count(); LEX_NUMCONST(BT_DOUBLE,                CD_DEC); /* FIXME use BT_DOUBLE_IMAGINARY */ }
 {FHexNum}{FSfx}     { count(); LEX_NUMCONST(BT_FLOAT,                 CD_HEX); }
 {FHexNum}           { count(); LEX_NUMCONST(BT_DOUBLE,                CD_HEX); }
 {FHexNum}{LFSfx}    { count(); LEX_NUMCONST(BT_LONGDOUBLE,            CD_HEX); }
