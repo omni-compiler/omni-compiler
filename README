@@ -48,7 +48,8 @@ II. Implementation Status
    Not supported in this release
 
   F. Gmove Directive
-   gmove between aligned arrays using array section may not work correctly
+   gmove between aligned arrays using array section may not work correctly.
+   gmove in/out may not work correctly.
 
   G. Reduction Directive
   <defined reduce operations>
