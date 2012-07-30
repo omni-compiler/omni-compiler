@@ -775,11 +775,9 @@ void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size,
 }
 
 void _XMP_gmove_HOMECOPY_ARRAY(_XMP_array_t *dst_array, int type, size_t type_size, ...) {
-  fprintf(stderr, "zzz\n");
   if (!dst_array->is_allocated) {
     return;
   }
-  fprintf(stderr, "zzz\n");
   va_list args;
   va_start(args, type_size);
 
