@@ -72,11 +72,11 @@ II. Implementation Status
   Local-view model is not supported in this release.
 
  4. User API Functions (defined in xmp.h)
-  A. int xmp_get_rank(void);
-   returns MPI rank of the current communicator
+  A. int xmp_node_num(void);
+   returns Node ID
 
-  B. int xmp_get_size(void);
-   returns MPI size of the current communicator
+  B. int xmp_num_nodes(void);
+   returns number of Nodes
 
   C. double xmp_wtime(void);
    returns current time
