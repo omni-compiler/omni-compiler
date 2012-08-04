@@ -18,6 +18,7 @@ import xcodeml.util.XmOption;
 public class XMPenv {
   private XobjectFile env;
   private FuncDefBlock current_def;
+  private boolean is_module = false;
 
   private final static String SYMBOL_TABLE = "XMP_PROP_XMP_SYMBOL_TABLE";
 
@@ -36,7 +37,12 @@ public class XMPenv {
       XMPsymbolTable table = new XMPsymbolTable();
       d.setProp(SYMBOL_TABLE, (Object)table);
     }
+    is_module = def.getDef().isFmoduleDef();
   }
+
+  FuncDefBlock getCurrentDef() { return current_def; }
+  
+  public boolean currentDefIsModule() { return is_module; }
 
   // get symbol table bind to XobjectDef def
   public static XMPsymbolTable getXMPsymbolTable(XobjectDef def) {
@@ -89,7 +95,12 @@ public class XMPenv {
 
   // Id is Fint8type
   public Ident declObjectId(String objectName, Block block) {
-    return declIdent(objectName, Xtype.Fint8Type, block);
+    Xtype t = Xtype.Fint8Type;
+//     if(is_module){
+//       t = t.copy();
+//       t.setIsFsave(true);
+//     }
+    return declIdent(objectName, t, block);
   }
 
   public void finalize() {
@@ -103,6 +114,22 @@ public class XMPenv {
     tt = t.copy();
     tt.setIsFintrinsic(true);
     return Ident.Fident(name, tt ,false, false, env);
+  }
+
+  /*
+   *  Serch symbols nested definitions in Fortran
+   */
+  public Ident findVarIdent(String name, Block b){
+    for(XobjectDef def = current_def.getDef(); def != null; 
+	def = def.getParent()){
+      Xobject id_list = def.getDef().getArg(1);
+      for(Xobject id: (XobjList)id_list){
+	if(id.getName().equals(name)){
+	  return (Ident) id;
+	}
+      }
+    }
+    return null;
   }
 
   /*
@@ -127,6 +154,7 @@ public class XMPenv {
     for(XobjectDef def = current_def.getDef(); 
 	def != null; def = def.getParent()){
       XMPsymbolTable table = getXMPsymbolTable(def);
+      if(table == null) break;
       XMPobject o = table.getXMPobject(name);
       if(o != null) return o;
     }
@@ -144,6 +172,7 @@ public class XMPenv {
     for(XobjectDef def = current_def.getDef(); 
 	def != null; def = def.getParent()){
       XMPsymbolTable table = getXMPsymbolTable(def);
+      if(table == null) break;
       XMPnodes o = table.getXMPnodes(name);
       if(o != null) return o;
     }
@@ -161,6 +190,7 @@ public class XMPenv {
     for(XobjectDef def = current_def.getDef(); 
 	def != null; def = def.getParent()){
       XMPsymbolTable table = getXMPsymbolTable(def);
+      if(table == null) break;
       XMPtemplate t = table.getXMPtemplate(name);
       if(t != null) return t;
     }
@@ -179,18 +209,18 @@ public class XMPenv {
     table.putXMParray(array);
   }
 
-  public XMParray findXMParray(String name, Block bp){
-    return findXMParray(name);
-  }
+//   public XMParray findXMParray(String name, Block bp){
+//     return findXMParray(name);
+//   }
 
-  public XMParray findXMParray(String name) {
-    for(XobjectDef def = current_def.getDef(); def != null; def = def.getParent()){
-      XMPsymbolTable table = getXMPsymbolTable(def);
-      XMParray a = table.getXMParray(name);
-      if(a != null) return a;
-    }
-    return null;
-  }
+//   public XMParray findXMParray(String name) {
+//     for(XobjectDef def = current_def.getDef(); def != null; def = def.getParent()){
+//       XMPsymbolTable table = getXMPsymbolTable(def);
+//       XMParray a = table.getXMParray(name);
+//       if(a != null) return a;
+//     }
+//     return null;
+//   }
 
   /*
    * put/get XMPcorray (not yet ...)

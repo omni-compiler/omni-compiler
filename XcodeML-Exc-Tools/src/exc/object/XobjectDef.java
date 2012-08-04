@@ -97,6 +97,11 @@ public class XobjectDef extends PropObject implements IXobject, XobjectVisitable
     return !child_defs.isEmpty();
   }
 
+  public void setParent(XobjectDef parent)
+  {
+    this.parent = parent;
+  }
+
   public void setParent(XobjectDefEnv env)
   {
     this.parent_env = env;

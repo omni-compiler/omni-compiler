@@ -366,7 +366,7 @@ public class XmfXobjectToXmObjTranslator
             XobjList decls = (XobjList)addDeclForNotDeclared((XobjList)xobj.getArgOrNull(2), symbols, null);
             m.setSymbols(transSymbols(symbols));
             m.setDeclarations(transDeclarations(decls));
-            m.setFcontainsStatement((XbfFcontainsStatement)trans(xobj.getArgOrNull(3)));
+            // m.setFcontainsStatement((XbfFcontainsStatement)trans(xobj.getArgOrNull(3)));
             break;
         }
         case F_MODULE_PROCEDURE_DECL: {
@@ -620,6 +620,7 @@ public class XmfXobjectToXmObjTranslator
             xmobj = m;
             //m.setStatName("alloc");// m.setStatName(getArg0Name(xobj));
             for(Xobject a : (XobjList)xobj) {
+	      if(a == null) continue;
 	      if(a.Opcode() == Xcode.LIST){
 		for(Xobject aa : (XobjList)a)
 		  m.addAlloc((XbfAlloc)trans(aa));

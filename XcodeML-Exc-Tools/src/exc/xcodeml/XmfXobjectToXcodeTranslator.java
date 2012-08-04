@@ -222,10 +222,10 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                 (XobjList)addDeclForNotDeclared((XobjList)xobj.getArgOrNull(2),
                                                 symbols,
                                                 null);
+	    System.out.println("module arg3="+ xobj.getArgOrNull(3));
             addChildNodes(e,
                           transSymbols(symbols),
-                          transDeclarations(decls),
-                          trans(xobj.getArgOrNull(3)));
+                          transDeclarations(decls));
         }
             break;
 

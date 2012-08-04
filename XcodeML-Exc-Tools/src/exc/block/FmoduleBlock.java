@@ -23,7 +23,7 @@ public class FmoduleBlock extends CompoundBlock
 
     public FmoduleBlock(String name, XobjectFile env)
     {
-        super(Xcode.FUNCTION_DEFINITION, new BlockList(Xcons.IDList(), Xcons.List()));
+        super(Xcode.F_MODULE_DEFINITION, new BlockList(Xcons.IDList(), Xcons.List()));
         this.name = new XobjString(Xcode.IDENT, name);
         this.env = env;
         this.func_blocks = new BlockList();

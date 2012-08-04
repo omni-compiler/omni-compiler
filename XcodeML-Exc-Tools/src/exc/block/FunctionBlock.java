@@ -22,10 +22,22 @@ public class FunctionBlock extends CompoundBlock
      * contructor with function name "name", id list, decls, body block and env.
      * id_list and decls are for parameters.
      */
-    public FunctionBlock(Xobject name, Xobject id_list, Xobject decls, Block body_block,
-        Xobject gcc_attrs, XobjectDefEnv env)
+  public FunctionBlock(Xobject name, Xobject id_list, 
+		       Xobject decls, Block body_block,
+		       Xobject gcc_attrs, XobjectDefEnv env)
     {
         super(Xcode.FUNCTION_DEFINITION, new BlockList(id_list, decls));
+        this.env = env;
+        this.name = name;
+        this.gcc_attrs = gcc_attrs;
+        body.add(body_block);
+    }
+
+  public FunctionBlock(Xcode opcode, Xobject name, Xobject id_list, 
+		       Xobject decls, Block body_block,
+		       Xobject gcc_attrs, XobjectDefEnv env)
+    {
+        super(opcode, new BlockList(id_list, decls));
         this.env = env;
         this.name = name;
         this.gcc_attrs = gcc_attrs;

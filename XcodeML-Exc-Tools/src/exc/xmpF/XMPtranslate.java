@@ -24,8 +24,7 @@ public class XMPtranslate implements XobjectDefVisitor
     
   final String XMPmainFunc = "xmpf_main";
 
-  public XMPtranslate() {
-  }
+  public XMPtranslate() {  }
     
   public XMPtranslate(XobjectFile env) {
     init(env);
@@ -65,19 +64,24 @@ public class XMPtranslate implements XobjectDefVisitor
 
   // do transform takes three passes
   public void doDef(XobjectDef d) {
+    FuncDefBlock fd = null;
+    Boolean is_module = d.isFmoduleDef();
+
     XMP.resetError();
 
-    if(!d.isFuncDef()){ // declarations
-      XMP.fatal("Fotran only: decl out side function");
-    }
-        
-    Xtype ft = d.getFuncType();
-    if(ft != null && ft.isFprogram()) {
-      ft.setIsFprogram(false);
-      replace_main(d);
-    }
-        
-    FuncDefBlock fd = new FuncDefBlock(d);
+    // System.out.println("def="+d.getDef());
+    if(is_module){
+      if(!haveXMPpragma(d.getDef())) return;
+      fd = XMPmoduleBlock(d);
+    } else if(d.isFuncDef()){ // declarations
+      Xtype ft = d.getFuncType();
+      if(ft != null && ft.isFprogram()) {
+	ft.setIsFprogram(false);
+	replace_main(d);
+      }
+      fd = new FuncDefBlock(d);
+    } else 
+      XMP.fatal("Fotran: unknown decls");
 
     if(XMP.hasError())
       return;
@@ -105,7 +109,24 @@ public class XMPtranslate implements XobjectDefVisitor
     }
   }
 
-  // not used?
+  FuncDefBlock XMPmoduleBlock(XobjectDef def){
+    BlockList body = Bcons.emptyBody();
+    XobjList decls = Xcons.List(); // emptyList
+    Xobject xmp_pragma_list = Xcons.FstatementList();
+
+    Xobject d = def.getDef();
+    for(Xobject decl: (XobjList)d.getArg(2)){
+      if(decl.Opcode() == Xcode.XMP_PRAGMA)
+	xmp_pragma_list.add(decl);
+      else
+	decls.add(decl);
+    }
+    d.setArg(2,decls);
+    d.add(xmp_pragma_list);
+    // System.out.println("module fblock="+d);
+    return new FuncDefBlock(def);
+  }
+
   boolean haveXMPpragma(Xobject x)
   {
     XobjectIterator i = new topdownXobjectIterator(x);

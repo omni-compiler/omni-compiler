@@ -3734,6 +3734,9 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
                 // for FmoduleDefinition-declarations
                 outx_pragmaStatement(l1, v);
                 break;
+	    case XMP_PRAGMA:
+		outx_XMP_pragma(l1, v);
+		break;
             default:
                 break;
             }

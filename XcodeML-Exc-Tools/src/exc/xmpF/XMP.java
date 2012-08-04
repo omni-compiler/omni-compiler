@@ -184,7 +184,7 @@ public class XMP {
     default:
       return NONBASIC_TYPE;
     }
-    return t+500;
+    return t;
   }
 
   public static void exitByError() {

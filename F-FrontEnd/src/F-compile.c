@@ -1677,7 +1677,6 @@ end_declaration()
     }
 }
 
-
 EXT_ID
 define_external_function_id(ID id) {
     expr args;

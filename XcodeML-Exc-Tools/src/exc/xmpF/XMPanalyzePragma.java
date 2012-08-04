@@ -368,7 +368,12 @@ public class XMPanalyzePragma
 	continue;
       }
       String name = x.getName();
-      XMParray array = env.findXMParray(name, pb);
+      Ident id = env.findVarIdent(name,pb);
+      if(id == null){
+	XMP.error("variable '" + name + "'for reflect is not declared");
+	continue;
+      }
+      XMParray array =  XMParray.getArray(id);
       if(array == null){
 	XMP.error("array '" + name + "'for reflect is not declared");
 	continue;

@@ -143,6 +143,11 @@ public class Ident extends Xobject
         return value;
     }
 
+   public void setValue(Xobject value)
+    {
+      this.value = value;
+    }
+
     public boolean isDeclared()
     {
         return declared;

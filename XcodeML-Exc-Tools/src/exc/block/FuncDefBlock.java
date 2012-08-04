@@ -47,9 +47,9 @@ public class FuncDefBlock
         // make dummy XobjectDef
         this.def = XobjectDef.Func(name, id_list, decls, body.toXobject());
         this.def.setParent(env);
-        def.setProp(funcBlockProp,
-            new FunctionBlock(name, id_list, decls,
-                Bcons.COMPOUND(body), gcc_attrs, env));
+	this.fblock = new FunctionBlock(name, id_list, decls,
+					Bcons.COMPOUND(body), gcc_attrs, env);
+	def.setProp(funcBlockProp,this.fblock);
     }
 
     /** return its FucntionBlock */

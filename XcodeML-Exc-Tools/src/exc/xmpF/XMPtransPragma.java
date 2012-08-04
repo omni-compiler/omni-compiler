@@ -48,11 +48,39 @@ public class XMPtransPragma
     BlockList epilog = Bcons.emptyBody();
     buildXMPobjectBlock(prolog, epilog);
     
-    // fblock = (FunckBlock ident <param_env> [BlockList 
-    //   (CompoundBlock <local_env> [BlockList statment ...]))
-    BlockList f_body = fblock.getBody().getHead().getBody();
-    f_body.insert(Bcons.COMPOUND(prolog));
-    f_body.add(Bcons.COMPOUND(epilog));
+    if(env.currentDefIsModule()){
+      Xtype save_logical = Xtype.FlogicalType.copy();
+      save_logical.setIsFsave(true);
+      Ident init_flag_var = env.declIdent("xmpf_init_flag",save_logical);
+      prolog.add(Xcons.Set(init_flag_var.Ref(),
+			   Xcons.FlogicalConstant(true)));
+
+      Ident prolog_f = env.declIdent("xmpf_module_init__",
+				     Xtype.FsubroutineType);
+      XobjectDef prolog_def = 
+	XobjectDef.Func(prolog_f, null, null, prolog.toXobject());
+      env.getCurrentDef().getDef().getChildren().addFirst(prolog_def);
+      prolog_def.setParent(env.getCurrentDef().getDef());
+    } else {
+      // fblock = (FunckBlock ident <param_env> [BlockList 
+      //   (CompoundBlock <local_env> [BlockList statment ...]))
+      BlockList f_body = fblock.getBody().getHead().getBody();
+      
+      XobjectDef parent = env.getCurrentDef().getDef().getParent();
+      if(parent != null && parent.isFmoduleDef()){
+	Ident init_flag_var = env.findVarIdent("xmpf_init_flag",null);
+	Ident init_func = env.findVarIdent("xmpf_module_init__",null);
+	if(init_flag_var == null || init_func == null){
+	  System.out.println("var="+init_flag_var+",func="+init_func);
+	  XMP.fatal("cannot find init_var or init_func for moudle");
+	}
+	prolog.insert(Bcons.IF(Xcons.unaryOp(Xcode.LOG_NOT_EXPR,
+					     init_flag_var.Ref()),
+			       init_func.callSubroutine(null),null));
+      }
+      f_body.insert(Bcons.COMPOUND(prolog));
+      f_body.add(Bcons.COMPOUND(epilog));
+    }
   }
 
   void buildXMPobjectBlock(BlockList prolog, BlockList epilog){
@@ -274,7 +302,7 @@ public class XMPtransPragma
 	XMP.fatal("reduction for non-basic type ="+type);
       }
       Xobject args = Xcons.List(id.Ref(),size_expr,
-				Xcons.IntConstant(type.getBasicType()),
+				Xcons.IntConstant(XMP.reduceBasicType(type)),
 				Xcons.IntConstant(op),
 				Xcons.IntConstant(0));
       bb.add(f.callSubroutine(args));
