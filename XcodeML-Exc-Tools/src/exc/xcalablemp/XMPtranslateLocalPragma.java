@@ -35,7 +35,7 @@ public class XMPtranslateLocalPragma {
         PragmaBlock pb = (PragmaBlock)b;
 
         try {
-          translatePragma(pb);
+	  translatePragma(pb);
         } catch (XMPexception e) {
           XMP.error(pb.getLineNo(), e.getMessage());
         }
@@ -77,8 +77,8 @@ public class XMPtranslateLocalPragma {
         { translateGmove(pb);			break; }
       case SYNC_MEMORY:
         { translateSyncMemory(pb);		break; }
-   		case SYNC_ALL:
-	  		{ translateSyncAll(pb);    break; }
+      case SYNC_ALL:
+        { translateSyncAll(pb);                 break; }
       case LOCAL_ALIAS:
         { translateLocalAlias(pb);		break; }
       case GPU_REPLICATE:
@@ -422,10 +422,8 @@ public class XMPtranslateLocalPragma {
             loopFuncCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
             loopFuncCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
         } else if (doTlog == true) {
-            loopFuncCallBlock.insert(
-				     createTlogMacroInvoke("_XMP_M_TLOG_LOOP_IN", null));
-            loopFuncCallBlock.add(
-				  createTlogMacroInvoke("_XMP_M_TLOG_LOOP_OUT", null));
+            loopFuncCallBlock.insert(createTlogMacroInvoke("_XMP_M_TLOG_LOOP_IN", null));
+            loopFuncCallBlock.add(createTlogMacroInvoke("_XMP_M_TLOG_LOOP_OUT", null));
         }
     } else if(profileClause == null && _selective_profile && doTlog == false){
         XobjList profileFuncArgs = null;
@@ -904,14 +902,8 @@ public class XMPtranslateLocalPragma {
     throw new XMPexception("cannot find the loop statement");
   }
 
-  private static Block getLoopBody(Block b) throws XMPexception {
-    switch (b.Opcode()) {
-      case FOR_STATEMENT:
-      case COMPOUND_STATEMENT:
-        return getLoopBody(b.getBody().getHead());
-      default:
-        return b;
-    }
+  private static BlockList getLoopBody(Block b) throws XMPexception {
+    return b.getBody();
   }
 
   private static CforBlock findLoopBlock(BlockList body, String loopVarName) throws XMPexception {

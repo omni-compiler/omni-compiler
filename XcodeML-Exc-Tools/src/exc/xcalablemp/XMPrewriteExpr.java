@@ -750,7 +750,6 @@ public class XMPrewriteExpr {
                                             XMPtemplate templateObj, int templateIndex,
                                             XMPglobalDecl globalDecl, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
     if (expr == null) return;
-
     topdownXobjectIterator iter = new topdownXobjectIterator(expr);
     for (iter.init(); !iter.end(); iter.next()) {
       Xobject myExpr = iter.getXobject();
@@ -759,12 +758,11 @@ public class XMPrewriteExpr {
       } else if (myExpr.isRewrittedByXmp()) {
         continue;
       }
-
       switch (myExpr.Opcode()) {
         case VAR:
           {
             if (loopIndexName.equals(myExpr.getSym())) {
-              iter.setXobject(calcLtoG(templateObj, templateIndex, myExpr));
+	      iter.setXobject(calcLtoG(templateObj, templateIndex, myExpr));
             }
           } break;
         case ARRAY_REF:
@@ -913,7 +911,6 @@ public class XMPrewriteExpr {
       default:
         throw new XMPexception("unknown distribution manner");
     }
-
     return XMP.getMacroId("_XMP_M_LTOG_TEMPLATE_" + t.getDistMannerStringAt(ti), Xtype.intType).Call(args);
   }
 }

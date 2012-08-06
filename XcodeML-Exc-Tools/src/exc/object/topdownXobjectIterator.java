@@ -56,10 +56,15 @@ public class topdownXobjectIterator extends XobjectIterator
         currentXobject = null;
         return;
     }
-    
+
     public void setXobject(Xobject x)
     {
-        currentArgs.setArg(x);
+      // fix me
+      //      if(currentArgs == null){
+      //	currentArgs = new XobjArgs(null, null);
+      //      }
+
+      currentArgs.setArg(x);
     }
 
     @Override
