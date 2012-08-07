@@ -865,8 +865,10 @@ public class XMPrewriteExpr {
                              "'. loop is distributed by template '" + t.getName() + "'.");
     }
 
-    if (ti != a.getAlignSubscriptIndexAt(ai).intValue()) {
-      throw new XMPexception("array ref is not consistent with array alignment");
+    if(a.getAlignSubscriptIndexAt(ai) != null){   // if ai == 1 then null ?
+      if (ti != a.getAlignSubscriptIndexAt(ai).intValue()) {
+	throw new XMPexception("array ref is not consistent with array alignment");
+      }
     }
 
     XMPshadow shadow = a.getShadowAt(ai);
