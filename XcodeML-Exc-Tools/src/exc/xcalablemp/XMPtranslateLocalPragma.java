@@ -1773,6 +1773,11 @@ public class XMPtranslateLocalPragma {
     BlockList gmoveBody = pb.getBody();
     Block gmoveFuncCallBlock = null;
 
+    // gmove in/out is not implemented
+    Xobject gmoveClause = gmoveDecl.getArg(0);
+    if(XMPcollective.GMOVE_IN == gmoveClause.getInt() || XMPcollective.GMOVE_OUT == gmoveClause.getInt())
+      throw new XMPexception("gmove in/out directive is not supported yet");
+
     // check body
     Xobject assignStmt = null;
     String checkBodyErrMsg = new String("gmove directive should be written before one assign statement");
