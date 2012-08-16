@@ -155,7 +155,8 @@ public class XMPanalyzePragma
       { analyzeTasks(pb);			break; }
 
     case GMOVE:
-      { analyzeGmove(pb);			break; }
+      analyzeGmove(pb.getClauses(),pb.getBody(), info, pb);
+      break;
 
     case COARRAY:
       // { translateCoarrayDecl(x);   		break; }
@@ -458,15 +459,26 @@ public class XMPanalyzePragma
 
   void analyzeTask(Xobject taskDecl, BlockList taskBody,
 		   XMPinfo info, PragmaBlock pb) {
+    Xobject onRef = taskDecl.getArg(0);
+    Xobject taskOpt = taskDecl.getArg(1);
     
+    if(taskOpt != null){
+      XMP.fatal("task opt is not supported yet, sorry!");
+      return;
+    }
+    info.setOnRef(XMPobjectsRef.parseDecl(onRef,env,pb));
   }
 
   private void analyzeTasks(PragmaBlock pb) {
     XMP.fatal("analyzeTasks");
   }
 
-  private void analyzeGmove(PragmaBlock pb) {
-    XMP.fatal("analyzeGmove");
+  private void analyzeGmove(Xobject gmoveDecl, BlockList body, 
+			    XMPinfo info, PragmaBlock pb) {
+    Xobject gmoveOpt = gmoveDecl.getArg(0);
+    Xobject Opt = gmoveDecl.getArg(1);
+    
+    
   }
 
   private void analyzeCoarray(Xobject coarrayPragma){

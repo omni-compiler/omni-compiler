@@ -101,7 +101,56 @@ public class XMPobjectsRef {
   public void setLoopDimInfo(Vector<XMPdimInfo> dims) { loop_dims = dims;}
 
   // make contructor
+  /*
+   * ref_tmpl_alloc_f(ref_id,temp_id,#n_dim)
+   *    or ref_node_alloc_f(ref_id, node_id,#n_dim)
+   * ref_set_dim_info(ref_id,#dim_i,lb,ub,step)
+   * ref_init(ref_id)
+   */
   public Block buildConstructor(XMPenv env){
+    Block b = Bcons.emptyBlock();
+    BasicBlock bb = b.getBasicBlock();
+    Ident f;
+
+    switch(refObject.getKind()){
+    case XMPobject.NODES:
+      f = env.declExternIdent(XMP.ref_nodes_alloc_f,Xtype.FsubroutineType);
+      break;
+    case XMPobject.TEMPLATE:
+      f = env.declExternIdent(XMP.ref_templ_alloc_f,Xtype.FsubroutineType);
+      break;
+    default:
+      XMP.fatal("bad object for ref");
+      return null;
+    }
+    Xobject args = Xcons.List(descId.Ref(),refObject.getDescId().Ref(),
+			      Xcons.IntConstant(subscripts.size()));
+    bb.add(f.callSubroutine(args));
+    f = env.declExternIdent(XMP.ref_set_dim_info_f,Xtype.FsubroutineType);
+    for(int i = 0; i < subscripts.size(); i++){
+      XMPdimInfo d_info = subscripts.elementAt(i);
+      if(d_info.isStar()){
+	args = Xcons.List(Xcons.IntConstant(0),Xcons.IntConstant(0),
+			  Xcons.IntConstant(0));
+      } else {
+	args = Xcons.List(d_info.getLower(),d_info.getUpper(),
+			 d_info.getStride());
+      }
+      bb.add(f.callSubroutine(args));
+    }
+
+    f = env.declExternIdent(XMP.ref_init_f,Xtype.FsubroutineType);
+    bb.add(f.callSubroutine(Xcons.List(descId.Ref())));
+    
+    return b;
+  }
+
+  /*
+   * ref_tmpl_alloc_f(ref_id,temp_id,#n_dim)
+   * ref_set_loop_info(ref_id,#dim_i,#loop_idx,off)
+   * ref_init(ref_id)
+   */
+  public Block buildLoopConstructor(XMPenv env){
     Block b = Bcons.emptyBlock();
     BasicBlock bb = b.getBasicBlock();
     Ident f = env.declExternIdent(XMP.ref_templ_alloc_f,Xtype.FsubroutineType);
@@ -109,7 +158,7 @@ public class XMPobjectsRef {
 			      Xcons.IntConstant(subscripts.size()));
     bb.add(f.callSubroutine(args));
 
-    f = env.declExternIdent(XMP.ref_set_info_f,Xtype.FsubroutineType);
+    f = env.declExternIdent(XMP.ref_set_loop_info_f,Xtype.FsubroutineType);
     for(int i = 0; i < loop_dims.size(); i++){
       int idx = loop_dims.elementAt(i).getLoopOnIndex();
       Xobject off = subscripts.elementAt(idx).getOnRefOffset();
@@ -125,6 +174,9 @@ public class XMPobjectsRef {
     return b;
   }
 
+  /* (not used?)
+   * loop_test#n(desc_id,#idx_val_1,#idx_val_2, ...)
+   */
   public Xobject buildLoopTestFuncCall(XMPenv env, XMPinfo info){
 
     Ident f = env.declExternIdent(XMP.loop_test_f+info.getLoopDim(),
@@ -135,6 +187,9 @@ public class XMPobjectsRef {
     return f.Call(args);
   }
 
+  /*
+   * loop_test_skip(desc_id,#dim_i,indx_val)
+   */
   public Xobject buildLoopTestSkipFuncCall(XMPenv env, XMPinfo info, int k){
     Ident f = env.declExternIdent(XMP.loop_test_skip_f,
 				  Xtype.FlogicalFunctionType);

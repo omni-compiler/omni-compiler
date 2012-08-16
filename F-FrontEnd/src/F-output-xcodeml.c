@@ -2343,6 +2343,11 @@ outx_OMP_dir_clause_list(int l,expv v)
   expv vv,dir;
   char *s = NULL;
 
+  if(v == NULL){
+      outx_printi(l,"<list/>\n");
+      return;
+  }
+
   if(EXPV_CODE(v) != LIST) 
     fatal("outx_OMP_dir_clause_list: not LIST");
   outx_printi(l,"<list>\n");

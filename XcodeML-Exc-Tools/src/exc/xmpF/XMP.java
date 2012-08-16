@@ -68,7 +68,8 @@ public class XMP {
 
   public final static String ref_templ_alloc_f = "xmpf_ref_templ_alloc_";
   public final static String ref_nodes_alloc_f = "xmpf_ref_nodes_alloc_";
-  public final static String ref_set_info_f = "xmpf_ref_set_info_";
+  public final static String ref_set_loop_info_f = "xmpf_ref_set_loop_info_";
+  public final static String ref_set_dim_info_f = "xmpf_ref_set_dim_info_";
   public final static String ref_init_f = "xmpf_ref_init_";
 
   public final static String loop_test_f = "xmpf_loop_test_";
@@ -80,6 +81,7 @@ public class XMP {
   public final static String barrier_f = "xmpf_barrier_";
   public final static String reduction_f = "xmpf_reduction_";
   public final static String bcast_f = "xmpf_bcast_";
+  public final static String test_task_on_f = "xmpf_test_task_on_";
   
   public final static String arrayProp = "XMParrayProp";
 

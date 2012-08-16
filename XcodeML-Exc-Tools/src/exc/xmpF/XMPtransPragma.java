@@ -124,7 +124,6 @@ public class XMPtransPragma
       return translateReduction(pb,info);
     case BCAST:
       return translateBcast(pb,info);     
-
     case TASK:
       return translateTask(pb,info);
     case TASKS:
@@ -146,7 +145,7 @@ public class XMPtransPragma
 
     // generate on_ref object
     // create on_desc, only use loop_on_ref
-    ret_body.add(on_ref.buildConstructor(env));
+    ret_body.add(on_ref.buildLoopConstructor(env));
 
     if(!loop_opt_enable){
       // default loop transformation (non-opt)
@@ -275,7 +274,7 @@ public class XMPtransPragma
     Block b = Bcons.emptyBlock();
     BasicBlock bb = b.getBasicBlock();
     Ident f = env.declExternIdent(XMP.barrier_f,
-					  Xtype.FsubroutineType);
+				  Xtype.FsubroutineType);
     // don't care about on_ref
     bb.add(f.callSubroutine(Xcons.List(Xcons.IntConstant(0))));
     return b;
@@ -315,7 +314,7 @@ public class XMPtransPragma
     BasicBlock bb = b.getBasicBlock();
 
     Ident f = env.declExternIdent(XMP.bcast_f,
-					  Xtype.FsubroutineType);
+				  Xtype.FsubroutineType);
     for(Ident id: info.getInfoVarIdents()){
       Xtype type = id.Type();
       Xobject size_expr = Xcons.IntConstant(1);
@@ -338,9 +337,19 @@ public class XMPtransPragma
   }
 
   private Block translateTask(PragmaBlock pb, XMPinfo info){
-    XMP.fatal("translateTask");
-    return null;
+    BlockList ret_body = Bcons.emptyBody();
+    XMPobjectsRef on_ref = info.getOnRef();
+
+    ret_body.add(on_ref.buildConstructor(env));
+    Ident f = env.declExternIdent(XMP.test_task_on_f,
+				  Xtype.FlogicalFunctionType);
+    Xobject cond = f.Call(Xcons.List(on_ref.getDescId().Ref()));
+    ret_body.add(Bcons.IF(cond,Bcons.COMPOUND(pb.getBody()),null));
+    return Bcons.COMPOUND(ret_body);
   }
+
+  
+
 
   private Block translateTasks(PragmaBlock pb, XMPinfo i) {
     XMP.fatal("translateTasks");

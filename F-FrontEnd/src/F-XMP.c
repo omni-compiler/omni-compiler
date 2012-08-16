@@ -65,6 +65,10 @@ void init_for_XMP_pragma()
     XMP_io_desired_statements = 0;
 }
 
+expv XMP_gmove_statement(expv v){
+    return XMP_pragma_list(XMP_GMOVE,EXPR_ARG2(XMP_gmove_directive),v);
+}
+
 /*
  * called from Parser
  */
@@ -82,14 +86,14 @@ void compile_XMP_directive(expr x)
     }
 
     if(XMP_do_required){
-	error("OpenMP DO directives must be followed by do statement");
+	error("XcalableMP LOOP directives must be followed by do statement");
 	XMP_do_required = FALSE;
 	return;
     }
 
     if(XMP_gmove_required){
-	error("OpenMP ATOMIC directives must be followed by assignment");
-	XMP_do_required = FALSE;
+	error("XcalableMP GMOVE directives must be followed by assignment");
+	XMP_gmove_required = FALSE;
 	return;
     }
 
@@ -331,8 +335,7 @@ int check_for_XMP_pragma(int st_no, expr x)
   
   if(XMP_gmove_required){
     if(EXPR_CODE(x) != F_LET_STATEMENT)
-      error("XMP GMOVE directives must be followed by assignment");
-    XMP_gmove_required = FALSE;
+      error("XcalableMP GMOVE directives must be followed by assignment");
     goto done;
   }
 

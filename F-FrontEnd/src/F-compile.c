@@ -920,12 +920,22 @@ compile_exec_statement(expr x)
     expv w,v1,v2;
     SYMBOL s;
     ID id;
+    int OMP_atomic_flag;
+    extern int OMP_atomic_required;
+    extern expv OMP_atomic_statement(expv v);
+    int XMP_gmove_flag;
+    extern int XMP_gmove_required;
+    extern expv XMP_gmove_statement(expv v);
 
     if(EXPR_CODE(x) != F_LET_STATEMENT) check_INEXEC();
 
     switch(EXPR_CODE(x)){
 
     case F_LET_STATEMENT: /* (F_LET_STATEMENT lhs rhs) */
+	OMP_atomic_flag = OMP_atomic_required;
+	OMP_atomic_required = FALSE;
+	XMP_gmove_flag = XMP_gmove_required;
+	XMP_gmove_required = FALSE;
 
       if (CURRENT_STATE == OUTSIDE) {
 	begin_procedure();
@@ -975,6 +985,15 @@ compile_exec_statement(expr x)
 	}
 	if ((w = expv_assignment(v1,v2)) == NULL){
 	  break;
+	}
+
+	if(OMP_atomic_flag){
+	    output_statement(OMP_atomic_statement(w));
+	    break;
+	}
+	if(XMP_gmove_flag){
+	    output_statement(XMP_gmove_statement(w));
+	    break;
 	}
 	output_statement(w);
 	break;
