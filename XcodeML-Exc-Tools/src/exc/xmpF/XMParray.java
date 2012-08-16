@@ -521,9 +521,11 @@ public class XMParray {
       if(x.Opcode() != Xcode.F_ARRAY_INDEX)
 	 XMP.fatal("convertLinearIndex: not F_ARRAY_INDEX");
       x = x.getArg(0);
-      if(hasShadow(i)){
-	x = Xcons.binaryOp(Xcode.MINUS_EXPR,x,info.getArrayOffsetVar().Ref());
-      }
+//       if(hasShadow(i)){
+// 	x = Xcons.binaryOp(Xcode.MINUS_EXPR,x,info.getArrayOffsetVar().Ref());
+//       }
+      x = Xcons.binaryOp(Xcode.MINUS_EXPR,x,info.getArrayOffsetVar().Ref());
+
       if(idx == null) idx = x;
       else idx = Xcons.binaryOp(Xcode.PLUS_EXPR,idx,x);
       if(i != 0) {
