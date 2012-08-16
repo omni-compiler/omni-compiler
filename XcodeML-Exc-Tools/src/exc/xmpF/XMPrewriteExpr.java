@@ -197,11 +197,12 @@ public class XMPrewriteExpr
 
 
     Xobject off1 = a.getAlignSubscriptOffsetAt(dim_i);
-    Xobject off2 = on_ref.getLoopOffset(loop_idx);
-    if(off1 == null) localIndexOffset = off2;
-    else if(off2 == null) localIndexOffset = off1;
-    else localIndexOffset = 
-	   Xcons.binaryOp(Xcode.PLUS_EXPR,off1,off2);
+    // Xobject off2 = on_ref.getLoopOffset(loop_idx);
+    // if(off1 == null) localIndexOffset = off2;
+    // else if(off2 == null) localIndexOffset = off1;
+    // else localIndexOffset = 
+    // Xcons.binaryOp(Xcode.PLUS_EXPR,off1,off2);
+    localIndexOffset = off1;
 
     if(XMP.debugFlag) 
       System.out.println("check template v="+local_loop_var
