@@ -126,3 +126,7 @@ void _XMP_sendrecv_ARRAY(unsigned long long gmove_total_elmts,
 			 int *dst_lower, int *dst_upper, int *dst_stride, unsigned long long *dst_dim_acc,
 			 _XMP_array_t *src_array, int *src_array_nodes_ref,
 			 int *src_lower, int *src_upper, int *src_stride, unsigned long long *src_dim_acc);
+
+/* From xmp_runtime.c */
+void _XMP_init(int argc, char** argv);
+void _XMP_finalize(void);

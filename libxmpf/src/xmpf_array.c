@@ -47,6 +47,12 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
 }
 
 
+void xmpf_array_dealloc__(_XMP_array_t **a_desc)
+{
+  _XMP_free(*a_desc);
+}
+
+
 void xmpf_align_info__(_XMP_array_t **a_desc, int *a_idx, 
 		       int *lower, int *upper, int *t_idx, int *off)
 {
@@ -171,6 +177,38 @@ void xmpf_array_get_local_size__(_XMP_array_t **a_desc, int *i_dim, int *lb, int
 
   //xmpf_dbg_printf("array_get_size = (%d:%d)\n", *lb, *ub);
 }
+
+
+void xmpf_array_get_local_size_off__(_XMP_array_t **a_desc, int *i_dim,
+				     int *size, int *off)
+{
+  _XMP_array_t *array = *a_desc;
+  _XMP_array_info_t *ai = &(array->info[*i_dim]);
+  _XMP_template_t *template = array->align_template;
+
+  if (template->is_owner){
+    if (ai->align_manner != _XMP_N_ALIGN_DUPLICATION &&
+	ai->align_manner != _XMP_N_ALIGN_NOT_ALIGNED){
+
+      _XMP_template_chunk_t *tchunk = &(template->chunk[ai->align_template_index]);
+
+      *size = ai->alloc_size;
+      *off = ai->par_lower + ai->align_subscript - tchunk->par_lower
+	   - (ai->shadow_size_lo);
+    }
+    else {
+      *size = ai->ser_upper - ai->ser_lower + 1;
+      *off = 0;
+    }
+  }
+  else {
+    *size = 0;
+    *off = 0;
+  }    
+
+  //xmpf_dbg_printf("array_get_size = (%d:%d)\n", *lb, *ub);
+}
+
 
 void *tmp[1024];
 int jjj = 0;

@@ -7,7 +7,7 @@
 
 void xmpf_init_all__()
 {
-  _XMP_init();
+  _XMP_init(0, NULL);
 }
 
 void xmpf_finalize_all__()

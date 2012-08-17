@@ -10,6 +10,12 @@ void xmpf_template_alloc__(_XMP_template_t **t_desc, int *n_dim, int *is_fixed)
 }
 
 
+void xmpf_template_dealloc__(_XMP_template_t **t_desc)
+{
+  _XMP_free(*t_desc);
+}
+
+
 /* temporary */
 static int xmpf_template_dist_manner[XMPF_MAX_DIM];
 static int xmpf_template_dist_chunk[XMPF_MAX_DIM];
@@ -135,6 +141,16 @@ void xmpf_ref_nodes_alloc__(_XMP_object_ref_t **r_desc,
 
 
 void xmpf_ref_set_info__(_XMP_object_ref_t **r_desc,int *i_dim,
+			 int *t_idx,int *off)
+{
+    _XMP_object_ref_t *rp = *r_desc;
+    int i = *i_dim;
+    rp->offset[i] = *off;
+    rp->index[i] = *t_idx;
+}
+
+
+void xmpf_ref_set_loop_info__(_XMP_object_ref_t **r_desc,int *i_dim,
 			 int *t_idx,int *off)
 {
     _XMP_object_ref_t *rp = *r_desc;
