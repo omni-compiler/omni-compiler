@@ -26,7 +26,7 @@ for i in ${OM_OPTIONS}; do
     esac
 done
 
-LINKER=@MPI_CMD@
+LINKER="@MPI_CMD@"
 if test ${hasScalasca} -eq 1; then
     LINKER="scalasca --instrument @MPI_CMD@"
 fi

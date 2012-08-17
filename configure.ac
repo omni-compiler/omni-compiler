@@ -9,6 +9,8 @@ AC_PREREQ(2.60)
 
 AC_INIT([Omni XcalableMP Compiler], [1], [BUG-REPORT-ADDRESS], [omni_xmp])
 
+program_prefix=''
+
 AC_CONFIG_AUX_DIR([buildutils])
 AC_CONFIG_MACRO_DIR([buildutils])
 
@@ -549,13 +551,13 @@ gcc*)
     ;;
 *ICC*)
     OMC_CONF_LX2X_OPT=""
-    OMC_CONF_NTV_OPT="-std=c99 -w"
+    OMC_CONF_NTV_OPT="-std=gnu99 -w"
     OMC_CONF_LNK_OPT=""
     ;;
 *)
     if test "$BECC" = "fccpx"; then
        OMC_CONF_LX2X_OPT=""
-       OMC_CONF_NTV_OPT="-Xg -std=c99 -w"
+       OMC_CONF_NTV_OPT="-Xg -std=gnu99 -w"
        OMC_CONF_LNK_OPT=""
     else
        echo "No supported C compiler was found."

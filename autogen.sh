@@ -17,7 +17,9 @@ do
     m=`basename $f .am`
     mm=`dirname $f`/$m
     echo automake $mm
-    automake --foreign -f -a -c $mm || exit 1
+#    to keep config.sub
+#    automake --foreign -f -a -c $mm || exit 1
+    automake --foreign -a -c $mm || exit 1
 done
 
 echo delete intermediate files
