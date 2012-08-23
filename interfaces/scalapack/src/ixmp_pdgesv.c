@@ -21,9 +21,10 @@ void ixmp_pdgesv(int *n,int *nrhs,double *a,int *ia,int *ja,xmp_desc_t da,int *i
   desca[4]=xmp_align_size(da,2);
   desca[5]=xmp_align_size(da,1);
 
-  xmp_array_first_idx_node_index(da, aidx);
-  desca[6]=aidx[1];
-  desca[7]=aidx[0];
+  aidx[0]=0;
+  aidx[0]=0;
+  desca[6]=xmp_array_owner(da, andim, aidx, 2);
+  desca[7]=xmp_array_owner(da, andim, aidx, 1);
 
   desca[8]=xmp_array_lead_dim(da);
 
@@ -47,13 +48,15 @@ void ixmp_pdgesv(int *n,int *nrhs,double *a,int *ia,int *ja,xmp_desc_t da,int *i
      descb[5]=xmp_align_size(db,1);
   }
 
-  xmp_array_first_idx_node_index(db, bidx);
   if (bndim == 1) {
-     descb[6]=bidx[0];
+     bidx[0]=0;
+     descb[6]=xmp_array_owner(db, bndim, bidx, 1);
      descb[7]=0;
   }else if (bndim == 2) {
-     descb[6]=bidx[1];
-     descb[7]=bidx[0];
+     bidx[0]=0;
+     bidx[1]=0;
+     descb[6]=xmp_array_owner(db, bndim, bidx, 2);
+     descb[7]=xmp_array_owner(db, bndim, bidx, 1);
   }
 
   descb[8]=xmp_array_lead_dim(db);

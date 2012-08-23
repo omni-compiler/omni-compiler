@@ -21,9 +21,10 @@ void ixmp_pdlahqr(_Bool *wantt,_Bool *wantz,int *n,int *ilo,int *ihi,double *a,x
   desca[4]=xmp_align_size(da,2);
   desca[5]=xmp_align_size(da,1);
 
-  xmp_array_first_idx_node_index(da, aidx);
-  desca[6]=aidx[1];
-  desca[7]=aidx[0];
+  aidx[0]=0;
+  aidx[0]=0;
+  desca[6]=xmp_array_owner(da, andim, aidx, 2);
+  desca[7]=xmp_array_owner(da, andim, aidx, 1);
 
   desca[8]=xmp_array_lead_dim(da);
 
@@ -37,9 +38,10 @@ void ixmp_pdlahqr(_Bool *wantt,_Bool *wantz,int *n,int *ilo,int *ihi,double *a,x
   descz[4]=xmp_align_size(dz,2);
   descz[5]=xmp_align_size(dz,1);
 
-  xmp_array_first_idx_node_index(dz, zidx);
-  descz[6]=zidx[1];
-  descz[7]=zidx[0];
+  zidx[0]=0;
+  zidx[0]=0;
+  descz[6]=xmp_array_owner(dz, zndim, zidx, 2);
+  descz[7]=xmp_array_owner(dz, zndim, zidx, 1);
 
   descz[8]=xmp_array_lead_dim(dz);
 

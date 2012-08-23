@@ -146,43 +146,33 @@ int xmp_array_lshadow(xmp_desc_t d, int dim){
 
 }
 
-void xmp_array_first_idx_node_index(xmp_desc_t d, int idx[]){
+int xmp_array_owner(xmp_desc_t d, int ndims, int index[ndims], int dim){
 
-  int i, a_dim, t_dim, *a_lower, *t_lower, t_dist_size;
-  xmp_desc_t dt;
+  int idim, ival, idistnum, t_dist_size, format;
+  xmp_desc_t dt, dn;
 
   _XMP_array_t *a = (_XMP_array_t *)d;
 
-  a_dim = a->dim;
-  t_dim = a->align_template->dim;
-  a_lower = (int *)malloc(sizeof(int)* t_dim);
-  t_lower = (int *)malloc(sizeof(int)* t_dim);
-
-  if (t_dim == a_dim){
-     for (i = 0; i< t_dim; i++){
-       t_lower[i] = a->align_template->chunk[i].par_lower;
-       a_lower[i] = a->info[i].par_lower;
-     }
-  }else{
-     for (i = t_dim-1; i>= t_dim - a_dim -1; i--){
-       t_lower[i] = a->align_template->chunk[i].par_lower;
-       if (i >= t_dim-1-(a_dim-1)){
-          a_lower[i] = a->info[i-(t_dim-a_dim)].par_lower;
-       } else {
-          a_lower[i] = t_lower[i];
-       }
-     }
-  }
-
   dt = xmp_align_template(d);
+  dn = xmp_dist_nodes(dt);
+  _XMP_nodes_t *n = (_XMP_nodes_t *)dn;
 
-  for (i = 0; i< t_dim; i++){
-    t_dist_size=xmp_dist_size(dt,i+1);
-    idx[i]=(t_lower[i]-a_lower[i])/t_dist_size; 
-  }
+  t_dist_size=xmp_dist_size(dt,dim);
+  idistnum=a->info[dim-1].align_subscript/t_dist_size;
+ 
+  format = xmp_align_format(d,dim);
+  idim = xmp_align_axis(d,dim);
 
-  free(a_lower);
-  free(t_lower);
+  if (format == _XMP_N_ALIGN_BLOCK){
+    ival = index[idim-1]/t_dist_size+idistnum;
+  }else if (format == _XMP_N_ALIGN_CYCLIC){
+    ival = (index[idim-1]/t_dist_size+idistnum)%(n->info[idim-1].size);
+  }else if (format == _XMP_N_ALIGN_BLOCK_CYCLIC){
+    ival = (index[idim-1]/t_dist_size+idistnum)%(n->info[idim-1].size);
+  }else
+    ival = -1;
+
+  return ival;
 }
 
 int xmp_array_lead_dim(xmp_desc_t d){

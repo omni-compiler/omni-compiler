@@ -34,7 +34,7 @@ extern int      xmp_array_gcgubound(xmp_desc_t d, int dim);
 extern void   **xmp_array_laddr(xmp_desc_t d);
 extern int      xmp_array_ushadow(xmp_desc_t d, int dim);
 extern int      xmp_array_lshadow(xmp_desc_t d, int dim);
-extern void     xmp_array_first_idx_node_index(xmp_desc_t d, int idx[]);
+extern int      xmp_array_owner(xmp_desc_t d, int ndims, int index[], int dim);
 extern int      xmp_array_lead_dim(xmp_desc_t d);
 extern int      xmp_align_axis(xmp_desc_t d, int dim);
 extern int      xmp_align_offset(xmp_desc_t d, int dim);
