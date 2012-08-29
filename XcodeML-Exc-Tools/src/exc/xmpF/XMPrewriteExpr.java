@@ -88,10 +88,13 @@ public class XMPrewriteExpr
       switch (x.Opcode()) {
       case VAR:
 	{
+	  if(x.getProp(XMP.RWprotected) != null) break;
+
 	  Ident id = env.findVarIdent(x.getName(),block);
 	  if(id == null) break;
 	  XMParray array = XMParray.getArray(id);
 	  if(array == null) break;
+
 	  // replace with local decl
 	  Xobject var = Xcons.Symbol(Xcode.VAR,array.getLocalType(),
 				     array.getLocalName());
@@ -201,7 +204,7 @@ public class XMPrewriteExpr
     // if(off1 == null) localIndexOffset = off2;
     // else if(off2 == null) localIndexOffset = off1;
     // else localIndexOffset = 
-    // Xcons.binaryOp(Xcode.PLUS_EXPR,off1,off2);
+    //         Xcons.binaryOp(Xcode.PLUS_EXPR,off1,off2);
     localIndexOffset = off1;
 
     if(XMP.debugFlag) 

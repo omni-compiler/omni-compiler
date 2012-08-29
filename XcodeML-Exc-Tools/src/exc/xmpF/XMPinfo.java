@@ -37,6 +37,9 @@ public class XMPinfo
   // for bcast
   XMPobjectsRef bcast_from; // and on_ref, info_vars
 
+  // for gmove
+  Xobject gmoveLeft,gmoveRight;
+
   public XMPinfo(XMPpragma pragma, XMPinfo parent, Block b, XMPenv env) {
     this.pragma = pragma;
     this.parent = parent;
@@ -100,7 +103,14 @@ public class XMPinfo
 
   public XMPobjectsRef getBcastFrom() { return bcast_from; }
 
+  /* for gmove */
+  public void setGmoveOperands(Xobject left, Xobject right){
+    gmoveLeft = left;
+    gmoveRight = right;
+  }
 
-
+  public Xobject getGmoveLeft() { return gmoveLeft; }
+  
+  public Xobject getGmoveRight() { return gmoveRight; }
 
 }

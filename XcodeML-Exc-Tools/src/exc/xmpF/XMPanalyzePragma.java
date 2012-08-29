@@ -477,8 +477,49 @@ public class XMPanalyzePragma
 			    XMPinfo info, PragmaBlock pb) {
     Xobject gmoveOpt = gmoveDecl.getArg(0);
     Xobject Opt = gmoveDecl.getArg(1);
+
+    // check body is single statement.
+    Block b = body.getHead();
+    if(b.getNext() != null) XMP.fatal("not single block for Gmove");
+    Statement s = b.getBasicBlock().getHead();
+    if(b.Opcode() != Xcode.F_STATEMENT_LIST ||s.getNext() != null)
+      XMP.fatal("not single statment for Gmove");
+    Xobject x = s.getExpr();
+    if(x.Opcode() != Xcode.F_ASSIGN_STATEMENT)
+      XMP.fatal("not assignment for Gmove");
+    Xobject left = x.left();
+    Xobject right = x.right();
     
+    // opcode must be VAR or ARRAY_REF
+    checkGmoveOperand(left,pb);
+    checkGmoveOperand(right,pb);
     
+    if(XMP.hasError()) return;
+    
+    info.setGmoveOperands(left,right);
+  }
+
+  private void checkGmoveOperand(Xobject x, PragmaBlock pb){
+    switch(x.Opcode()){
+    case F_ARRAY_REF:
+      Xobject a = x.getArg(0);
+      if(a.Opcode() != Xcode.F_VAR_REF)
+	XMP.fatal("not F_VAR_REF for F_ARRAY_REF");
+      a = a.getArg(0);
+      if(a.Opcode() != Xcode.VAR)
+	XMP.fatal("not VAR for F_VAR_REF");
+      Ident id = pb.findVarIdent(a.getName());
+      if(id == null)
+	XMP.fatal("array in F_ARRAY_REF is not declared");
+      XMParray array = XMParray.getArray(id);
+      if(array != null){
+	a.setProp(XMP.RWprotected,new Boolean(true));
+      }
+    case VAR: /* it ok */
+      break;
+    default:
+      XMP.error("gmove must be followed by simple assignment");
+    }
   }
 
   private void analyzeCoarray(Xobject coarrayPragma){

@@ -291,7 +291,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         pg_get_token();
         args = Xcons.List();
       } else if (pg_is_ident("loop")) {
-        pragmaDir = XMPpragma.LOOP;
+        pragmaDir = XMPpragma.GPU_LOOP;
         syntax = PragmaSyntax.SYN_PREFIX;
 
         pg_get_token();

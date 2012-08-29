@@ -65,6 +65,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             return null;
         }
 
+	System.out.println("trans="+xobj);
+
         Element e = null;
 
         if (xobj instanceof Ident) {
@@ -456,16 +458,17 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
         case F_ALLOCATE_STATEMENT:
 	  System.out.println("xobj="+xobj);
-//              e = createElement(name,
-// 			       "stat_name", getArg0Name(xobj));
-//             for (Xobject a : (XobjList)xobj.getArg(1)) {
-//                 addChildNode(e, trans(a));
-//             }
-	  e = createElement(name);
-	  for (Xobject a : (XobjList)xobj.getArg(0)) {
-	    addChildNode(e, trans(a));
-	  }
-            break;
+             e = createElement(name,
+			       "stat_name", getArg0Name(xobj));
+            for (Xobject a : (XobjList)xobj.getArg(1)) {
+                addChildNode(e, trans(a));
+            }
+// 	  e = createElement(name);
+// 	  for (Xobject a : (XobjList)xobj.getArg(0)) {
+// 	    addChildNode(e, trans(a));
+// 	  }
+	    break
+	      ;
 
         case F_DEALLOCATE_STATEMENT:
             e = createElement(name,
@@ -677,7 +680,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
         if (xobj.Type() != null) {
             String tid = xobj.Type().getXcodeFId();
-            if (tid.equals("null") || tid == null) {
+            if (tid == null || tid.equals("null")) {
                 fatal("type is null");
             }
             addAttributes(e, "type", tid);

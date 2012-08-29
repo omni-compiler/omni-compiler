@@ -13,9 +13,10 @@ import xcodeml.util.XmLog;
  * all static members are defined here
  */
 public class XMP {
+  public static boolean debugFlag = false;
 
   final static String prop = "XMPprop";
-  public static boolean debugFlag = false;
+  final static String RWprotected = "XMPRWprotected";
 
   // defined in xmp_constant.h
   public final static int REDUCE_SUM		= 300;

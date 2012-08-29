@@ -150,8 +150,8 @@ public class XMPdimInfo {
     if(decl.Opcode() != Xcode.LIST){
       upper = decl;
     } else {
-      upper = decl.getArg(0);     /* null in case of ":" */
-      lower = decl.getArgOrNull(1); 
+      lower = decl.getArg(0);     /* null in case of ":" */
+      upper = decl.getArgOrNull(1); 
       stride = decl.getArgOrNull(2);
     }
   }

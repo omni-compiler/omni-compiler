@@ -130,15 +130,18 @@ public class XMPobjectsRef {
     for(int i = 0; i < subscripts.size(); i++){
       XMPdimInfo d_info = subscripts.elementAt(i);
       if(d_info.isStar()){
-	args = Xcons.List(Xcons.IntConstant(i),Xcons.IntConstant(0),
+	args = Xcons.List(descId.Ref(),
+			  Xcons.IntConstant(i),Xcons.IntConstant(0),
 			  Xcons.IntConstant(0),Xcons.IntConstant(0),
 			  Xcons.IntConstant(0));
       } else if(!d_info.hasLower()){
-	args = Xcons.List(Xcons.IntConstant(i),Xcons.IntConstant(1),
+	args = Xcons.List(descId.Ref(),
+			  Xcons.IntConstant(i),Xcons.IntConstant(1),
 			  d_info.getUpper(),Xcons.IntConstant(0),
 			  Xcons.IntConstant(0));
       } else {
-	args = Xcons.List(Xcons.IntConstant(i),Xcons.IntConstant(2),
+	args = Xcons.List(descId.Ref(),
+			  Xcons.IntConstant(i),Xcons.IntConstant(2),
 			  d_info.getLower(),d_info.getUpper(),
 			  d_info.getStride());
       }
