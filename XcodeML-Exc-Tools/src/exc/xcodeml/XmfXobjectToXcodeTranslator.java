@@ -65,7 +65,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             return null;
         }
 
-	System.out.println("trans="+xobj);
+	// System.out.println("trans="+xobj);
 
         Element e = null;
 
@@ -457,7 +457,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_ALLOCATE_STATEMENT:
-	  System.out.println("xobj="+xobj);
+	  // System.out.println("xobj="+xobj);
              e = createElement(name,
 			       "stat_name", getArg0Name(xobj));
             for (Xobject a : (XobjList)xobj.getArg(1)) {
@@ -681,9 +681,15 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         if (xobj.Type() != null) {
             String tid = xobj.Type().getXcodeFId();
             if (tid == null || tid.equals("null")) {
-                fatal("type is null");
-            }
-            addAttributes(e, "type", tid);
+	      Xtype t = xobj.Type();
+	      if(t.isBasic() && 
+		 t.getBasicType() == BasicType.DOUBLE){
+		addAttributes(e, "type", "Freal");
+		addAttributes(e, "kind", "8");
+	      } else
+	      fatal("type is null");
+            } else 
+	      addAttributes(e, "type", tid);
         }
 
         if (xobj.getLineNo() != null) {
