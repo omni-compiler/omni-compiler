@@ -33,7 +33,11 @@ if [ "* PLEASE DESCRIBE RELEASE NAME HERE *" = \
      exit 1
 fi
 
-PACKAGE_NAME=omni-3
+if [ $# -eq 0 ]; then
+    PACKAGE_NAME=omnixmp
+else
+    PACKAGE_NAME=omnixmp-$1
+fi
 WORK_DIR=../`basename $PWD`-dist
 PACKAGE_DIR=$WORK_DIR/$PACKAGE_NAME
 DOC_DIR=$PACKAGE_DIR/doc
