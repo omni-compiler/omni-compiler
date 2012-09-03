@@ -9,13 +9,22 @@
 
 #define XMPF_MAX_DIM  7
 
-#define LBOUND 0
-#define UBOUND 1
-#define STRIDE 2
+/* #define LBOUND 0 */
+/* #define UBOUND 1 */
+/* #define STRIDE 2 */
 
 #define XMP_OBJ_REF_NODES 1
 #define XMP_OBJ_REF_TEMPL 2
 
+#define REF_OFFSET arg0
+#define REF_LBOUND arg0
+#define REF_INDEX  arg1
+#define REF_UBOUND arg1
+#define REF_STRIDE arg2
+
+#define SUBSCRIPT_ASTERISK 0
+#define SUBSCRIPT_SCALAR   1
+#define SUBSCRIPT_TRIPLET  2
 
 typedef struct _XMP_object_ref_type {
   int ref_kind; 
@@ -23,21 +32,25 @@ typedef struct _XMP_object_ref_type {
   _XMP_nodes_t *n_desc;
     
   int ndims;
-  int *offset;
-  int *index;
+/*   int *offset; */
+/*   int *index; */
+  int *arg0;
+  int *arg1;
+  int *arg2;
+  int *subscript_type;
 } _XMP_object_ref_t;
 
 
-typedef struct _XMP_object_ref_type2 {
-  int ref_kind; 
-  _XMP_template_t *t_desc;
-  _XMP_nodes_t *n_desc;
+/* typedef struct _XMP_object_ref_type2 { */
+/*   int ref_kind;  */
+/*   _XMP_template_t *t_desc; */
+/*   _XMP_nodes_t *n_desc; */
     
-  int ndims;
-  int *lb;
-  int *ub;
-  int *st;
-} _XMP_object_ref_t2;
+/*   int ndims; */
+/*   int *lb; */
+/*   int *ub; */
+/*   int *st; */
+/* } _XMP_object_ref_t2; */
 
 
 /* From xmpf_index.c */

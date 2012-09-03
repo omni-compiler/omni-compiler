@@ -14,6 +14,7 @@ void _XMP_L2G(int local_idx, long long int *global_idx,
     break;
   case _XMP_N_DIST_BLOCK:
     *global_idx = base + n_info->rank * chunk->par_chunk_width + local_idx;
+    //xmpf_dbg_printf("%d -> %d, base = %d, rank = %d, chunk = %d\n", local_idx, *global_idx, base, n_info->rank, chunk->par_chunk_width);
     break;
   case _XMP_N_DIST_CYCLIC:
     *global_idx = base + n_info->rank + n_info->size * local_idx;
@@ -111,8 +112,10 @@ void xmpf_l2g__(int *global_idx, int *local_idx,
   long long int g_idx;
   _XMP_object_ref_t *rp = *r_desc;
 
-  int off = rp->offset[*rdim];
-  int tdim = rp->index[*rdim];
+/*   int off = rp->offset[*rdim]; */
+/*   int tdim = rp->index[*rdim]; */
+  int off = rp->REF_OFFSET[*rdim];
+  int tdim = rp->REF_INDEX[*rdim];
 
   _XMP_L2G(*local_idx, &g_idx, rp->t_desc, tdim);
 

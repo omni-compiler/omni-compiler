@@ -1,5 +1,12 @@
 #include "xmpf_internal.h"
 
+#ifdef DBG
+double t0;
+double t_mem = 0;
+double t_copy = 0;
+double t_comm = 0;
+#endif
+
 //
 // reflect
 //
@@ -37,8 +44,14 @@ void _XMPF_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_ad
         _XMP_fatal("shadow size is too big");
       }
 
+#ifdef DBG
+	t0 = MPI_Wtime();
+#endif
       // alloc buffer
       *lo_buffer = _XMP_alloc((ai->shadow_size_lo) * (ai->dim_elmts) * (array_desc->type_size));
+#ifdef DBG
+	t_mem = t_mem + MPI_Wtime() - t0;
+#endif
 
       // calc index
       for (int i = 0; i < array_dim; i++) {
@@ -56,9 +69,16 @@ void _XMPF_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_ad
         dim_acc[i] = array_desc->info[i].dim_acc;
       }
 
+#ifdef DBG
+	t0 = MPI_Wtime();
+#endif
       // pack data
       _XMP_pack_array(*lo_buffer, array_addr, array_type, array_desc->type_size,
                       array_dim, lower, upper, stride, dim_acc);
+#ifdef DBG
+	t_copy = t_copy + MPI_Wtime() - t0;
+#endif
+
     }
   }
 
@@ -70,8 +90,14 @@ void _XMPF_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_ad
         _XMP_fatal("shadow size is too big");
       }
 
+#ifdef DBG
+	t0 = MPI_Wtime();
+#endif
       // alloc buffer
       *hi_buffer = _XMP_alloc((ai->shadow_size_hi) * (ai->dim_elmts) * (array_desc->type_size));
+#ifdef DBG
+	t_mem = t_mem + MPI_Wtime() - t0;
+#endif
 
       // calc index
       for (int i = 0; i < array_dim; i++) {
@@ -89,9 +115,15 @@ void _XMPF_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_ad
         dim_acc[i] = array_desc->info[i].dim_acc;
       }
 
+#ifdef DBG
+	t0 = MPI_Wtime();
+#endif
       // pack data
       _XMP_pack_array(*hi_buffer, array_addr, array_type, array_desc->type_size,
                       array_dim, lower, upper, stride, dim_acc);
+#ifdef DBG
+	t_copy = t_copy + MPI_Wtime() - t0;
+#endif
     }
   }
 }
@@ -145,12 +177,24 @@ void _XMPF_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_ad
         dim_acc[i] = array_desc->info[i].dim_acc;
       }
 
+#ifdef DBG
+	t0 = MPI_Wtime();
+#endif
       // unpack data
       _XMP_unpack_array(array_addr, lo_buffer, array_type, array_desc->type_size,
                         array_dim, lower, upper, stride, dim_acc);
+#ifdef DBG
+	t_copy = t_copy + MPI_Wtime() - t0;
+#endif
 
+#ifdef DBG
+	t0 = MPI_Wtime();
+#endif
       // free buffer
       _XMP_free(lo_buffer);
+#ifdef DBG
+	t_mem = t_mem + MPI_Wtime() - t0;
+#endif
     }
   }
 
@@ -178,12 +222,24 @@ void _XMPF_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_ad
         dim_acc[i] = array_desc->info[i].dim_acc;
       }
 
+#ifdef DBG
+	t0 = MPI_Wtime();
+#endif
       // unpack data
       _XMP_unpack_array(array_addr, hi_buffer, array_type, array_desc->type_size,
                         array_dim, lower, upper, stride, dim_acc);
+#ifdef DBG
+	t_copy = t_copy + MPI_Wtime() - t0;
+#endif
 
+#ifdef DBG
+	t0 = MPI_Wtime();
+#endif
       // free buffer
       _XMP_free(hi_buffer);
+#ifdef DBG
+	t_mem = t_mem + MPI_Wtime() - t0;
+#endif
     }
   }
 }
@@ -279,7 +335,6 @@ void _XMPF_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
   MPI_Type_free(&mpi_datatype);
 }
 
-
 void _XMPF_reflect_(_XMP_array_t **a_desc, int lwidth[], int uwidth[],
 		    _Bool is_periodic[])
 {
@@ -298,10 +353,18 @@ void _XMPF_reflect_(_XMP_array_t **a_desc, int lwidth[], int uwidth[],
     else if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
 
       if (ai->shadow_size_lo > 0 || ai->shadow_size_hi > 0){
+
 	_XMPF_pack_shadow_NORMAL(&l_send_buf, &u_send_buf,
 				 *(a->array_addr_p), a, i, true);
+#ifdef DBG
+	t0 = MPI_Wtime();
+#endif
 	_XMPF_exchange_shadow_NORMAL(&l_recv_buf, &u_recv_buf,
 				     l_send_buf, u_send_buf, a, i, true);
+#ifdef DBG
+	t_comm = t_comm + MPI_Wtime() - t0;
+#endif
+
 	_XMPF_unpack_shadow_NORMAL(l_recv_buf, u_recv_buf,
 				   *(a->array_addr_p), a, i, true);
       }
@@ -509,7 +572,8 @@ void xmpf_bcast__(void *data_addr, int *count, int *datatype,
     }
 
     for (int i = 0; i < from->dim; i++){
-      root += (acc_nodes_size * ((*from_desc)->index[i] - 1));
+      //root += (acc_nodes_size * ((*from_desc)->index[i] - 1));
+      root += (acc_nodes_size * ((*from_desc)->REF_INDEX[i] - 1));
       acc_nodes_size *= from->info[i].size;
     }
   }

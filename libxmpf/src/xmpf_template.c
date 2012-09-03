@@ -102,19 +102,25 @@ void xmpf_ref_templ_alloc__(_XMP_object_ref_t **r_desc,
 			    _XMP_template_t **t_desc, int *n_dim)
 {
     _XMP_object_ref_t *rp;
-    int *ip,*iq;
+    int *ip, *iq, *ir, *is;
     int n = *n_dim;
 
     rp = (_XMP_object_ref_t *)malloc(sizeof(*rp));
     ip = (int *)malloc(sizeof(int)*n);
     iq = (int *)malloc(sizeof(int)*n);
-    if(rp == NULL || ip == NULL || iq == NULL) 
-	_XMP_fatal("ref_alloc: cannot alloc memory");
+    ir = (int *)malloc(sizeof(int)*n);
+    is = (int *)malloc(sizeof(int)*n);
+    if (rp == NULL || ip == NULL || iq == NULL || ir == NULL) 
+      _XMP_fatal("ref_alloc: cannot alloc memory");
     rp->ref_kind = XMP_OBJ_REF_TEMPL;
     rp->ndims = n;
-    rp->offset = ip;
+    //rp->offset = ip;
+    rp->REF_OFFSET = ip;
     rp->t_desc = *t_desc;
-    rp->index = iq;
+    //rp->index = iq;
+    rp->REF_INDEX = iq;
+    rp->REF_STRIDE = ir;
+    rp->subscript_type = is;
     *r_desc = rp;
 }
 
@@ -123,40 +129,68 @@ void xmpf_ref_nodes_alloc__(_XMP_object_ref_t **r_desc,
 			    _XMP_nodes_t **n_desc, int *n_dim)
 {
     _XMP_object_ref_t *rp;
-    int *ip,*iq;
+    int *ip, *iq, *ir, *is;
     int n = *n_dim;
 
     rp = (_XMP_object_ref_t *)malloc(sizeof(*rp));
     ip = (int *)malloc(sizeof(int)*n);
     iq = (int *)malloc(sizeof(int)*n);
+    ir = (int *)malloc(sizeof(int)*n);
+    is = (int *)malloc(sizeof(int)*n);
     if(rp == NULL || ip == NULL || iq == NULL) 
 	_XMP_fatal("ref_alloc: cannot alloc memory");
     rp->ref_kind = XMP_OBJ_REF_NODES;
     rp->ndims = n;
-    rp->offset = ip;
+    //rp->offset = ip;
+    rp->REF_OFFSET = ip;
     rp->n_desc = *n_desc;
-    rp->index = iq;
+    //rp->index = iq;
+    rp->REF_INDEX = iq;
+    rp->REF_STRIDE = ir;
+    rp->subscript_type = is;
     *r_desc = rp;
 }
 
 
-void xmpf_ref_set_info__(_XMP_object_ref_t **r_desc,int *i_dim,
-			 int *t_idx,int *off)
+/* void xmpf_ref_set_info__(_XMP_object_ref_t **r_desc,int *i_dim, */
+/* 			 int *t_idx,int *off) */
+/* { */
+/*     _XMP_object_ref_t *rp = *r_desc; */
+/*     int i = *i_dim; */
+/*     rp->offset[i] = *off; */
+/*     rp->index[i] = *t_idx; */
+/* } */
+
+
+void xmpf_ref_set_loop_info__(_XMP_object_ref_t **r_desc, int *i_dim,
+			      int *t_idx, int *off)
 {
     _XMP_object_ref_t *rp = *r_desc;
     int i = *i_dim;
-    rp->offset[i] = *off;
-    rp->index[i] = *t_idx;
+/*     rp->offset[i] = *off; */
+/*     rp->index[i] = *t_idx; */
+    rp->REF_OFFSET[i] = *off;
+    rp->REF_INDEX[i] = *t_idx;
 }
 
 
-void xmpf_ref_set_loop_info__(_XMP_object_ref_t **r_desc,int *i_dim,
-			 int *t_idx,int *off)
+void xmpf_ref_set_dim_info__(_XMP_object_ref_t **r_desc, int *i_dim, int *type, 
+			     int *lb, int *ub, int *st)
 {
     _XMP_object_ref_t *rp = *r_desc;
     int i = *i_dim;
-    rp->offset[i] = *off;
-    rp->index[i] = *t_idx;
+    
+    if ((rp->subscript_type[i] = *type) == SUBSCRIPT_SCALAR){
+      rp->REF_LBOUND[i] = *lb;
+      rp->REF_UBOUND[i] = *lb;
+      rp->REF_STRIDE[i] = 1;
+    }
+    else { // SUBSCRIPT_ASTERISK or SUBSCRIPT_TRIPLET
+      rp->REF_LBOUND[i] = *lb;
+      rp->REF_UBOUND[i] = *ub;
+      rp->REF_STRIDE[i] = *st;
+    }
+
 }
 
 

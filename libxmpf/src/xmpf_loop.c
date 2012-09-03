@@ -83,13 +83,14 @@ void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t 
   _XMP_object_ref_t *rp = *r_desc;
   _XMP_ASSERT(rp->ref_kind == XMP_OBJ_REF_TEMPL);
 
-  if (rp->index[*r_idx] != -1){
+  //if (rp->index[*r_idx] != -1){
+  if (rp->REF_INDEX[*r_idx] != -1){
 
     _XMP_ASSERT(*st != 0);
 
     _XMP_template_t *t_desc = rp->t_desc;
-    int t_idx = rp->index[*r_idx];
-    int off = rp->offset[*r_idx];  
+    int t_idx = rp->REF_INDEX[*r_idx];
+    int off = rp->REF_OFFSET[*r_idx];  
 
     int global_ub_C = (*st > 0) ? (*ub + 1) : (*ub - 1);
 
@@ -138,8 +139,10 @@ void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t 
 int xmpf_loop_test_skip__(_XMP_object_ref_t **r_desc, int *rdim, int *i)
 {
   _XMP_object_ref_t *rp = *r_desc;
-  int index = *i + rp->offset[*rdim];
-  int tdim = rp->offset[*rdim];
+/*   int index = *i + rp->offset[*rdim]; */
+/*   int tdim = rp->offset[*rdim]; */
+  int index = *i + rp->REF_OFFSET[*rdim];
+  int tdim = rp->REF_OFFSET[*rdim];
 
   _XMP_template_t *tp = rp->t_desc;
   _XMP_template_chunk_t *cp = &tp->chunk[tdim];
