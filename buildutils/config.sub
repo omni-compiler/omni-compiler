@@ -700,6 +700,10 @@ case $basic_machine in
 		basic_machine=m68k-isi
 		os=-sysv
 		;;
+        Kcomputer)
+	        basic_machine=Kcomputer
+		os=-linux
+		;;
 	m68knommu)
 		basic_machine=m68k-unknown
 		os=-linux
