@@ -93,6 +93,10 @@ public class XMPenv {
     return id;
   }
 
+  public Ident declIntrinsicIdent(String name, Xtype type) {
+    return Ident.Fident(name,type,false,false,null);
+  }
+
   // Id is Fint8type
   public Ident declObjectId(String objectName, Block block) {
     Xtype t = Xtype.Fint8Type;

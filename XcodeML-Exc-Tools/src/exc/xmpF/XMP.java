@@ -83,6 +83,13 @@ public class XMP {
   public final static String reduction_f = "xmpf_reduction_";
   public final static String bcast_f = "xmpf_bcast_";
   public final static String test_task_on_f = "xmpf_test_task_on_";
+  public final static String task_end_f = "xmpf_task_end_";
+
+  public final static String gmove_g_alloc_f = "xmpf_gmv_g_alloc_";
+  public final static String gmove_l_alloc_f = "xmpf_gmv_l_alloc_";
+  public final static String gmove_g_dim_info_f = "xmpf_gmv_g_dim_info_";
+  public final static String gmove_l_dim_info_f = "xmpf_gmv_l_dim_info_";
+  public final static String gmove_do_f = "xmpf_gmv_do_";
   
   public final static String arrayProp = "XMParrayProp";
 

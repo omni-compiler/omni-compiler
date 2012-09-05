@@ -104,9 +104,14 @@ public class XMPobjectsRef {
   /*
    * ref_tmpl_alloc_f(ref_id,temp_id,#n_dim)
    *    or ref_node_alloc_f(ref_id, node_id,#n_dim)
-   * ref_set_dim_info(ref_id,#dim_i,lb,ub,step)
+   * ref_set_dim_info(ref_id,#dim_i,ref_kind,lb,ub,step)
    * ref_init(ref_id)
    */
+  /* ref_kind */
+  private final static int REF_ALL   = 0;
+  private final static int REF_INDEX = 1;
+  private final static int REF_RANGE = 2;
+
   public Block buildConstructor(XMPenv env){
     Block b = Bcons.emptyBlock();
     BasicBlock bb = b.getBasicBlock();
@@ -131,17 +136,17 @@ public class XMPobjectsRef {
       XMPdimInfo d_info = subscripts.elementAt(i);
       if(d_info.isStar()){
 	args = Xcons.List(descId.Ref(),
-			  Xcons.IntConstant(i),Xcons.IntConstant(0),
+			  Xcons.IntConstant(i),Xcons.IntConstant(REF_ALL),
 			  Xcons.IntConstant(0),Xcons.IntConstant(0),
 			  Xcons.IntConstant(0));
       } else if(!d_info.hasLower()){
 	args = Xcons.List(descId.Ref(),
-			  Xcons.IntConstant(i),Xcons.IntConstant(1),
+			  Xcons.IntConstant(i),Xcons.IntConstant(REF_INDEX),
 			  d_info.getUpper(),Xcons.IntConstant(0),
 			  Xcons.IntConstant(0));
       } else {
 	args = Xcons.List(descId.Ref(),
-			  Xcons.IntConstant(i),Xcons.IntConstant(2),
+			  Xcons.IntConstant(i),Xcons.IntConstant(REF_RANGE),
 			  d_info.getLower(),d_info.getUpper(),
 			  d_info.getStride());
       }

@@ -491,15 +491,18 @@ public class XMPanalyzePragma
     Xobject right = x.right();
     
     // opcode must be VAR or ARRAY_REF
-    checkGmoveOperand(left,pb);
-    checkGmoveOperand(right,pb);
+    boolean left_is_global = checkGmoveOperand(left,pb);
+    boolean right_is_global = checkGmoveOperand(right,pb);
+
+    if(!left_is_global && !right_is_global)
+      XMP.error("local assignment for gmove");
     
     if(XMP.hasError()) return;
     
     info.setGmoveOperands(left,right);
   }
 
-  private void checkGmoveOperand(Xobject x, PragmaBlock pb){
+  private boolean checkGmoveOperand(Xobject x, PragmaBlock pb){
     switch(x.Opcode()){
     case F_ARRAY_REF:
       Xobject a = x.getArg(0);
@@ -513,13 +516,15 @@ public class XMPanalyzePragma
 	XMP.fatal("array in F_ARRAY_REF is not declared");
       XMParray array = XMParray.getArray(id);
       if(array != null){
-	a.setProp(XMP.RWprotected,new Boolean(true));
+	a.setProp(XMP.RWprotected,array);
+	return true;
       }
     case VAR: /* it ok */
       break;
     default:
       XMP.error("gmove must be followed by simple assignment");
     }
+    return false;
   }
 
   private void analyzeCoarray(Xobject coarrayPragma){

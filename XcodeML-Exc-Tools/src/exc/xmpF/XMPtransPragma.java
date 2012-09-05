@@ -345,41 +345,166 @@ public class XMPtransPragma
 				  Xtype.FlogicalFunctionType);
     Xobject cond = f.Call(Xcons.List(on_ref.getDescId().Ref()));
     ret_body.add(Bcons.IF(cond,Bcons.COMPOUND(pb.getBody()),null));
+
+    f = env.declExternIdent(XMP.task_end_f,Xtype.FsubroutineType);
+    pb.getBody().add(f.Call(Xcons.List(on_ref.getDescId().Ref())));
+    
     return Bcons.COMPOUND(ret_body);
   }
-
-  
-
 
   private Block translateTasks(PragmaBlock pb, XMPinfo i) {
     XMP.fatal("translateTasks");
     return null;
   }
 
+  /* gmove sequence:
+   * For global array,
+   *  	CALL xmp_gmv_g_alloc_(desc,XMP_DESC_a)
+   * 	CALL xmp_gmv_g_info(desc,#i_dim,kind,lb,ub,stride)
+   * For local array
+   *  	CALL xmp_gmv_l_alloc_(desc,array,a_dim)
+   *    CALL xmp_gmv_l_info(desc,#i_dim,a_lb,a_ub,kind,lb,ub,stride)
+   *
+   * kind = 2 -> ub, up, stride
+   *        1 -> index
+   *        0 -> all (:)
+   * And, followed by:
+   *    CALL xmp_gmv_do(left,right,collective(0)/in(1)/out(2))
+   * Note: data type must be describe one of global side
+   */
+
+  private final static int GMOVE_ALL   = 0;
+  private final static int GMOVE_INDEX = 1;
+  private final static int GMOVE_RANGE = 2;
+  
+  private final static int GMOVE_COLL   = 0;
+  private final static int GMOVE_IN = 1;
+  private final static int GMOVE_OUT = 2;
+
   private Block translateGmove(PragmaBlock pb, XMPinfo i) {
-    XMP.fatal("translateGmove");
-    return null;
+    Block b = Bcons.emptyBlock();
+    BasicBlock bb = b.getBasicBlock();
+
+    Xobject left = i.getGmoveLeft();
+    Xobject right = i.getGmoveRight();
+    
+    Ident left_desc = buildGmoveDesc(left, bb, pb);
+    Ident right_desc = buildGmoveDesc(right, bb, pb);
+
+    Ident f = env.declExternIdent(XMP.gmove_do_f, Xtype.FsubroutineType);
+    Xobject args = Xcons.List(left_desc.Ref(), right_desc.Ref(),
+			      Xcons.IntConstant(GMOVE_COLL));
+    bb.add(f.callSubroutine(args));
+	    
+    return b;
   }
 
-// declare func and return Ident with type
-  public Ident XMPfuncIdent(String name) {
-    if(name == null)
-      throw new IllegalArgumentException("may be generating unsupported function call");
-        
-    Xtype t;
-//     if(name == getMaxThreadsFunc || name == getThreadNumFunc ||
-//        name == getNumThreadsFunc || name == sectionIdFunc)
-//       t = Xtype.FintFunctionType;
-//     else if(name == isLastFunc || name == isMasterFunc ||
-// 	    name == doSingleFunc ||
-// 	    name == staticShedNextFunc || name == dynamicShedNextFunc ||
-// 	    name == guidedShedNextFunc || name == runtimeShedNextFunc ||
-// 	    name == affinityShedNextFunc)
-//       t = Xtype.FlogicalFunctionType;
-//     else
+  private Ident buildGmoveDesc(Xobject x, BasicBlock bb, PragmaBlock pb) {
+    Ident descId = env.declObjectId(XMP.genSym("gmv"),pb);
+    Ident f; 
+    Xobject args;
+    
+    switch(x.Opcode()){
+    case F_ARRAY_REF:
+      Xobject a = x.getArg(0).getArg(0);
+      XMParray array = (XMParray)a.getProp(XMP.RWprotected);
+      if(array != null){
+	f = env.declExternIdent(XMP.gmove_g_alloc_f, Xtype.FsubroutineType);
+	args = Xcons.List(descId.Ref(), array.getDescId().Ref());
+	bb.add(f.callSubroutine(args));
+	
+	// System.out.println("idx args="+x.getArg(1));
+	f = env.declExternIdent(XMP.gmove_g_dim_info_f, Xtype.FsubroutineType);
+ 	int idx = 0;
+ 	for(Xobject e: (XobjList) x.getArg(1)){
+ 	  switch(e.Opcode()){
+	  case F_ARRAY_INDEX:
+	    args = Xcons.List(descId.Ref(),Xcons.IntConstant(idx),
+			      Xcons.IntConstant(GMOVE_INDEX),
+			      e.getArg(0),
+			      Xcons.IntConstant(0),Xcons.IntConstant(0));
+	    break;
+	  case F_INDEX_RANGE:
+	    if(e.getArg(0) == null && e.getArg(1) == null){
+	      args = Xcons.List(descId.Ref(),Xcons.IntConstant(idx),
+				Xcons.IntConstant(GMOVE_ALL),
+				Xcons.IntConstant(0),
+				Xcons.IntConstant(0),Xcons.IntConstant(0));
+	    } else {
+	      Xobject stride = e.getArg(2);
+	      if(stride == null) stride = Xcons.IntConstant(1);
+	      args = Xcons.List(descId.Ref(),Xcons.IntConstant(idx),
+				Xcons.IntConstant(GMOVE_RANGE),
+				e.getArg(0),e.getArg(1),stride);
+	    }
+	    break;
+	  default:
+	    XMP.fatal("buildGmoveDec: unknown F_ARRAY_REF element");
+	  }
+	  bb.add(f.callSubroutine(args));
+ 	  idx++;
+	}
+      } else {
+	f = env.declExternIdent(XMP.gmove_l_alloc_f, Xtype.FsubroutineType);
+	Xtype type = a.Type();
+	if(!type.isFarray()) 
+	  XMP.fatal("buildGmoveDesc:F_ARRAY_REF for not Farray");
+	args = Xcons.List(descId.Ref(),a,
+			  Xcons.IntConstant(type.getNumDimensions()));
+	bb.add(f.callSubroutine(args));
 
-    t = Xtype.FsubroutineType;
-    return env.declExternIdent(name, t);
+	Xobject lower_b = 
+	  env.declIntrinsicIdent("lbound",Xtype.FintFunctionType).
+	  Call(Xcons.List(a));
+	Xobject upper_b = 
+	  env.declIntrinsicIdent("ubound",Xtype.FintFunctionType).
+	  Call(Xcons.List(a));
+	
+	f = env.declExternIdent(XMP.gmove_l_dim_info_f, Xtype.FsubroutineType);
+ 	int idx = 0;
+ 	for(Xobject e: (XobjList) x.getArg(1)){
+ 	  switch(e.Opcode()){
+	  case F_ARRAY_INDEX:
+	    args = Xcons.List(descId.Ref(),Xcons.IntConstant(idx),
+			      lower_b, upper_b,
+			      Xcons.IntConstant(GMOVE_INDEX),
+			      e.getArg(0),
+			      Xcons.IntConstant(0),Xcons.IntConstant(0));
+	    break;
+	  case F_INDEX_RANGE:
+	    if(e.getArg(0) == null && e.getArg(1) == null){
+	      args = Xcons.List(descId.Ref(),Xcons.IntConstant(idx),
+				lower_b,upper_b, 
+				Xcons.IntConstant(GMOVE_ALL),
+				Xcons.IntConstant(0),
+				Xcons.IntConstant(0),Xcons.IntConstant(0));
+	    } else {
+	      Xobject stride = e.getArg(2);
+	      if(stride == null) stride = Xcons.IntConstant(1);
+	      args = Xcons.List(descId.Ref(),Xcons.IntConstant(idx),
+				lower_b,upper_b,
+				Xcons.IntConstant(GMOVE_RANGE),
+				e.getArg(0),e.getArg(1),stride);
+	    }
+	    break;
+	  default:
+	    XMP.fatal("buildGmoveDec: unknown F_ARRAY_REF element");
+	  }
+	  bb.add(f.callSubroutine(args));
+ 	  idx++;
+	}
+      }
+      break;
+    case VAR: /* it ok */
+      f = env.declExternIdent(XMP.gmove_l_alloc_f, Xtype.FsubroutineType);
+      args = Xcons.List(descId.Ref(),x,Xcons.IntConstant(0));
+      bb.add(f.callSubroutine(args));
+      break;
+    default:
+      XMP.error("gmove must be followed by simple assignment");
+    }
+    
+    return descId;
   }
 }
 
