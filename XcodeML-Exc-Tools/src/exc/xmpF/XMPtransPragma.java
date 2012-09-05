@@ -346,8 +346,8 @@ public class XMPtransPragma
     Xobject cond = f.Call(Xcons.List(on_ref.getDescId().Ref()));
     ret_body.add(Bcons.IF(cond,Bcons.COMPOUND(pb.getBody()),null));
 
-    f = env.declExternIdent(XMP.task_end_f,Xtype.FsubroutineType);
-    pb.getBody().add(f.Call(Xcons.List(on_ref.getDescId().Ref())));
+    f = env.declExternIdent(XMP.end_task_f,Xtype.FsubroutineType);
+    pb.getBody().add(f.Call(Xcons.List()));
     
     return Bcons.COMPOUND(ret_body);
   }

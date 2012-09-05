@@ -489,11 +489,9 @@ expv XMP_compile_subscript_list(expr l,xmp_list_context context)
 	    break;
 	case XMP_LIST_ON_REF: /* expr, triplet, * */
 	    if(x != NULL){
-		if(EXPR_ARG1(x) == NULL){
-		    error("bad subscript in nodes ref");
-		    break;
-		}
-		v = compile_expression(EXPR_ARG1(x));
+		v = NULL;
+		if(EXPR_ARG1(x) != NULL)
+		    v = compile_expression(EXPR_ARG1(x));
 		if(EXPR_ARG2(x) != NULL)
 		    v1 = compile_expression(EXPR_ARG2(x));
 		if(EXPR_ARG3(x) != NULL)

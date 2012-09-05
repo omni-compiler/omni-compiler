@@ -39,7 +39,7 @@ public class XMP {
   public final static int GMOVE_OUT	= 402;
 
   public final static int MAX_DIM			= 7;
-  public final static int NONBASIC_TYPE			= 599;
+  public final static int NONBASIC_TYPE			= 99 /*599*/;
 
   public final static String PREFIX_			= "XMP__";
   public final static String DESC_PREFIX_		= "XMP_DESC_";
@@ -83,7 +83,7 @@ public class XMP {
   public final static String reduction_f = "xmpf_reduction_";
   public final static String bcast_f = "xmpf_bcast_";
   public final static String test_task_on_f = "xmpf_test_task_on_";
-  public final static String task_end_f = "xmpf_task_end_";
+  public final static String end_task_f = "xmpf_end_task_";
 
   public final static String gmove_g_alloc_f = "xmpf_gmv_g_alloc_";
   public final static String gmove_l_alloc_f = "xmpf_gmv_l_alloc_";
@@ -98,9 +98,9 @@ public class XMP {
 
   public static Xobject typeIntConstant(Xtype type) {
     if(type.isBasic()){
-      return Xcons.IntConstant(reduceBasicType(type));
+      return Xcons.IntConstant(reduceBasicType(type)+500);
     }else 
-      return Xcons.IntConstant(NONBASIC_TYPE);
+      return Xcons.IntConstant(NONBASIC_TYPE+500);
   }
 
   static int reduceBasicType(Xtype type){
