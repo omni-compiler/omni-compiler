@@ -40,6 +40,7 @@ public class XMPshadow {
   // FIXME incomplete, not checked
   public static void translateShadow(XobjList shadowDecl, XMPglobalDecl globalDecl,
                                      boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
+    
     // start translation
     XMPsymbolTable localXMPsymbolTable = null;
     if (isLocalPragma) {
@@ -56,6 +57,7 @@ public class XMPshadow {
       alignedArray = globalDecl.getXMPalignedArray(arrayName);
     }
 
+
     if (alignedArray == null) {
       throw new XMPexception("the aligned array '" + arrayName + "' is not found");
     }
@@ -63,7 +65,7 @@ public class XMPshadow {
     if (alignedArray.hasShadow()) {
       throw new XMPexception("the aligned array '" + arrayName + "' has the shadow declaration already");
     }
-
+    
     // init shadow
     XobjList shadowFuncArgs = Xcons.List(alignedArray.getDescId().Ref());
     int arrayIndex = 0;
@@ -87,10 +89,10 @@ public class XMPshadow {
           {
             Xobject shadowLo = shadowBody.left();
             Xobject shadowHi = shadowBody.right();
-
+	    
             if (shadowLo.isZeroConstant() && shadowHi.isZeroConstant()) {
-              shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_NONE)));
-              alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_NONE, null, null), arrayIndex);
+	      shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_NONE)));
+	      alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_NONE, null, null), arrayIndex);
               break;
             }
 
@@ -105,10 +107,10 @@ public class XMPshadow {
               throw new XMPexception("shadow should be declared on block distbirution");
             }
 
-            shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_NORMAL)));
-            shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowLo));
-            shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowHi));
-            alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_NORMAL, shadowLo, shadowHi), arrayIndex);
+	    shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_NORMAL)));
+	    shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowLo));
+	    shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowHi));
+	    alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_NORMAL, shadowLo, shadowHi), arrayIndex);
             break;
           }
         case XMPshadow.SHADOW_FULL:
@@ -130,7 +132,7 @@ public class XMPshadow {
 
       arrayIndex++;
     }
-
+    
     if (arrayIndex != arrayDim) {
       throw new XMPexception("the number of <nodes/template-subscript> should be the same with the dimension");
     }

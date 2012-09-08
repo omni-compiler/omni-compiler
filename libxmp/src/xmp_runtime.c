@@ -4,14 +4,12 @@ static int _XMP_runtime_working = _XMP_N_INT_FALSE;
 
 void _XMP_init(int argc, char** argv) {
   if (!_XMP_runtime_working) {
-    // XXX how to get command line args?
-    _XMP_init_world(NULL, NULL);
-
-    _XMP_runtime_working = _XMP_N_INT_TRUE;
-
 #ifdef _COARRAY_GASNET
     _XMP_coarray_initialize(argc, argv);
 #endif
+    // XXX how to get command line args?
+    _XMP_init_world(NULL, NULL);
+    _XMP_runtime_working = _XMP_N_INT_TRUE;
   }
 }
 

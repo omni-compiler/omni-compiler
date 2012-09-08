@@ -42,7 +42,11 @@ GASNET_PREFIX="@GASNET_PREFIX@"
 GASNET_CONDUIT="@GASNET_CONDUIT@"
 CMD=""
 if test "${GASNET_PREFIX}" != "" -a "${GASNET_CONDUIT}" != "" ; then
-  GASNET_LIBS="-lgasnet-${GASNET_CONDUIT}-seq -lammpi -lpthread -lrt -L${GASNET_PREFIX}/lib"
+  if test "${GASNET_CONDUIT}" = "mpi"; then
+      GASNET_LIBS="-lgasnet-${GASNET_CONDUIT}-seq -lammpi -lpthread -lrt -L${GASNET_PREFIX}/lib"
+  else
+      GASNET_LIBS="-lgasnet-${GASNET_CONDUIT}-seq -lpthread -lrt -L${GASNET_PREFIX}/lib"
+  fi
   CMD="${LINKER} ${OM_OPTIONS} ${INPFILES} ${LIBS} ${GASNET_LIBS}"
 else
   CMD="${LINKER} ${OM_OPTIONS} ${INPFILES} ${LIBS}"

@@ -194,10 +194,8 @@ public class XMPtranslateLocalPragma {
             reflectFuncCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
             reflectFuncCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
         } else if (doTlog == true) {
-            reflectFuncCallBlock.insert(
-                                        createTlogMacroInvoke("_XMP_M_TLOG_REFLECT_IN", null));
-            reflectFuncCallBlock.add(
-                                     createTlogMacroInvoke("_XMP_M_TLOG_REFLECT_OUT", null));
+            reflectFuncCallBlock.insert(createTlogMacroInvoke("_XMP_M_TLOG_REFLECT_IN", null));
+            reflectFuncCallBlock.add(createTlogMacroInvoke("_XMP_M_TLOG_REFLECT_OUT", null));
         }
     } else if(profileClause == null && _selective_profile && doTlog == false){
         XobjList profileFuncArgs = null;
@@ -332,10 +330,8 @@ public class XMPtranslateLocalPragma {
             taskFuncCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
             taskFuncCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
         } else if (doTlog == true) {
-            taskFuncCallBlock.insert(
-				     createTlogMacroInvoke("_XMP_M_TLOG_TASK_IN", null));
-            taskFuncCallBlock.add(
-				  createTlogMacroInvoke("_XMP_M_TLOG_TASK_OUT", null));
+            taskFuncCallBlock.insert(createTlogMacroInvoke("_XMP_M_TLOG_TASK_IN", null));
+            taskFuncCallBlock.add(createTlogMacroInvoke("_XMP_M_TLOG_TASK_OUT", null));
         }
     } else if(profileClause == null && _selective_profile && doTlog == false){
         XobjList profileFuncArgs = null;
@@ -1013,6 +1009,7 @@ public class XMPtranslateLocalPragma {
 
     // rewrite loop index in loop
     BasicBlockExprIterator iter = new BasicBlockExprIterator(getLoopBody(forBlock));
+
     for (iter.init(); !iter.end(); iter.next()) {
       XMPrewriteExpr.rewriteLoopIndexInLoop(iter.getExpr(), loopIndexName,
                                             templateObj, templateIndexArg.getInt(),
