@@ -1122,7 +1122,10 @@ outx_id(int l, ID id)
 
     const char *sclass = get_sclass(id);
 
-    outx_print(" sclass=\"%s\">\n", sclass);
+    outx_print(" sclass=\"%s\"", sclass);
+    if(ID_DEFINED_MODULE(id) != NULL)
+	outx_print(" module=\"%s\"", ID_DEFINED_MODULE(id));
+    outx_print(">\n");
     outx_symbolName(l + 1, ID_SYM(id));
     outx_close(l, "id");
 }

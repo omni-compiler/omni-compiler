@@ -169,6 +169,9 @@ use_module(const char * module_filename, const char * fortran_filename)
     struct module_list * lp;
     FILE * outFd;
 
+//     printf("use_module(module_name=%s, fortran_filename=%s)\n",
+//	   module_filename,fortran_filename);
+
     outFd = fopen(fortran_filename, "w");
     if (outFd == NULL) {
         fprintf(stderr, "cannot open file %s\n", fortran_filename);
@@ -176,8 +179,6 @@ use_module(const char * module_filename, const char * fortran_filename)
     }
 
     for(lp = module_list_head; lp != NULL; lp = MODULE_LINK(lp)) {
-        if(lp == NULL)
-            break;
         if(strcmp(MODULE_FILENAME(lp), module_filename) == 0) {
             xcodeProgram = MODULE_XCODEML(lp);
             break;

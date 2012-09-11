@@ -72,12 +72,14 @@ int pre_read = 0;
 lineno_info read_lineno;
 
 int is_using_module = FALSE;
+char *current_using_module = NULL;
 
 struct saved_file_state {
     FILE *save_fp;
     lineno_info *save_line;
     int save_pre_read;
     int is_using_module; /* TRUE if file is module file. */
+    char *using_module; /* if is_using_module is TRUE, its name is stored */
     lineno_info save_lineno;
     char *save_buffer;
     char *save_stn_cols;
@@ -1552,11 +1554,27 @@ int checkInsideUse()
     return is_using_module;
 }
 
-
 void
 setIsOfModule(ID id)
 {
-    ID_IS_OFMODULE(id) = checkInsideUse();
+    ID_IS_OFMODULE(id) = is_using_module;
+    ID_DEFINED_MODULE(id) = current_using_module;
+}
+
+void checkDefinedModule(ID id)
+{
+    if(is_using_module){  // declarations in USE inclusion 
+	if(ID_IS_OFMODULE(id) == FALSE)
+	    error("definition of '%s' in module '%s' has conflict",
+		  ID_NAME(id), current_using_module);
+	else if(ID_DEFINED_MODULE(id) != current_using_module)
+	    error("definitions of '%s' in module '%s' and '%s' have conflict",
+		  ID_NAME(id), current_using_module, ID_DEFINED_MODULE(id));
+    } else {
+	if(ID_IS_OFMODULE(id) == TRUE)
+	    error("definition of '%s' in module '%s' has conflict",
+		  ID_NAME(id), ID_DEFINED_MODULE(id));
+    }
 }
 
 void set_function_disappear()
@@ -1577,7 +1595,7 @@ void set_function_appearable()
  *    search name in include dir.
  */
 void
-include_file(char *name, int inside_use)
+include_file(char *name, int inside_use, char *module_name)
 {
     char buff[MAX_PATH_LEN];
     extern char *includeDirv[];
@@ -1622,6 +1640,7 @@ include_file(char *name, int inside_use)
     p->save_pre_read = pre_read;
     p->save_lineno = read_lineno;
     p->is_using_module = is_using_module;
+    p->using_module = current_using_module;
     /* save the context for fixed_format_flag,
      * since we force change in USE.
      */
@@ -1629,6 +1648,7 @@ include_file(char *name, int inside_use)
     /* save the context for no count up of line number.  */
     p->save_no_countup = no_countup;
     is_using_module = inside_use;
+    current_using_module = inside_use? strdup(module_name): NULL;
 
     if(p->save_buffer == NULL){
         if((p->save_buffer = (char *)malloc(sizeof(char)*LINE_BUF_SIZE)) == NULL){
@@ -1679,6 +1699,7 @@ static void restore_file()
     }
 
     is_using_module = p->is_using_module;
+    current_using_module = p->using_module;
 }
 
 /*

@@ -1015,6 +1015,9 @@ declare_ident(SYMBOL s, enum name_class class)
         ID_CLASS(ip) = class;
         if(isPreDecl == FALSE)
             ID_ORDER(ip) = order_sequence++;
+
+	// remember this ip is defiend in module by USE */
+	setIsOfModule(ip);
     }
 
     if (class == CL_TAGNAME) ID_STORAGE(ip) = STG_TAGNAME;
@@ -1353,7 +1356,7 @@ declare_struct_type(expr ident)
         ID_NEXT(EXT_PROC_ID_LIST(current_ext_id)) = id;
 #endif
 
-    setIsOfModule(id);
+    checkDefinedModule(id);
 
     return tp;
 }
@@ -1654,12 +1657,12 @@ declare_id_type(ID id, TYPE_DESC tp)
     }
 
  no_compatible:
-    if(checkInsideUse() && ID_IS_OFMODULE(id)) {
-        /* TODO:
-         *  the type of id turns into ambiguous type.
-         */
-        return;
-    }
+/*     if(checkInsideUse() && ID_IS_OFMODULE(id)) { */
+/*         /\* TODO: */
+/*          *  the type of id turns into ambiguous type. */
+/*          *\/ */
+/*         return; */
+/*     } */
 
     error("incompatible type declarations, %s", ID_NAME(id));
 }
@@ -2759,7 +2762,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
             compile_PARAM_decl(const_list);
         }
 
-        setIsOfModule(id);
+        checkDefinedModule(id);
     } /* end FOR_ITEMS_IN_LIST */
 }
 
@@ -3239,7 +3242,7 @@ compile_PARAM_decl(expr const_list)
         } else {
             TYPE_SET_PARAMETER(id);
         }
-        setIsOfModule(id);
+        checkDefinedModule(id);
 
         e = EXPR_ARG2(x);
         if(e == NULL) {
@@ -3378,7 +3381,7 @@ compile_EXTERNAL_decl(expr id_list)
         if(ID_STORAGE(id) != STG_ARG)
             ID_STORAGE(id) = STG_EXT;
 
-        setIsOfModule(id);
+        checkDefinedModule(id);
     }
 }
 
@@ -3402,7 +3405,7 @@ compile_INTRINSIC_decl(id_list)
         else if(PROC_CLASS(id) != P_INTRINSIC)
             error("invalid intrinsic declaration, %s", ID_NAME(id));
 
-        setIsOfModule(id);
+        checkDefinedModule(id);
     }
 }
 
@@ -3504,7 +3507,7 @@ compile_SAVE_decl(id_list)
             }
         }
         (void)markAsSave(id);
-        setIsOfModule(id);
+        checkDefinedModule(id);
     }
 }
 

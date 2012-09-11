@@ -418,7 +418,7 @@ extern void     pop_ctl _ANSI_ARGS_((void));
 extern void     check_INDATA _ANSI_ARGS_((void));
 extern void     check_INDCL _ANSI_ARGS_((void));
 extern void     check_INEXEC _ANSI_ARGS_((void));
-extern void     include_file(char *name, int inside_use);
+extern void     include_file(char *name, int inside_use, char *module_name);
 extern void     push_unit_ctl _ANSI_ARGS_((enum prog_state));
 extern void     pop_unit_ctl _ANSI_ARGS_((void));
 
@@ -698,6 +698,7 @@ extern void     checkTypeRef(ID id);
 
 extern int      checkInsideUse(void);
 extern void     setIsOfModule(ID id);
+extern void     checkDefinedModule(ID id);
 
 /* inform lexer 'FUNCITION' is appearable in next line. */
 extern void set_function_disappear(void);

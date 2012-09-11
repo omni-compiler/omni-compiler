@@ -131,6 +131,8 @@ typedef struct ident_descriptor
     int order;                          /* order in local_symbols */
     int is_ofModule;                    /* If TRUE(1) indicates this ID is
                                          * declared in USE inclusion. */
+    char *defined_module;		/* module name defined, 
+					 * included by USE */
     struct ident_descriptor *defined_by;/* if this ID is defined parents
                                            then point it, otherwise NULL */
     struct external_symbol* extID;      /* external symbol which is
@@ -226,6 +228,8 @@ typedef struct ident_descriptor
 #define ID_INTF(id)     ((id)->interfaceId)
 
 #define ID_IS_OFMODULE(id)  ((id)->is_ofModule)
+#define ID_DEFINED_MODULE(id)     ((id)->defined_module)
+
 #define ID_IS_EMITTED(id)   ((id)->is_varDeclEmitted)
 #define ID_EQUIV_ID(id)     ((id)->equivID)
 

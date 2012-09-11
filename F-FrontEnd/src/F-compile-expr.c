@@ -1086,9 +1086,9 @@ compile_array_ref_dimension(expr args, expv dims, expv subs)
                 continue;
             }
 
+	case INT_CONSTANT:
             list_put_last(dims, v);
             ++n;
-
             break;
 
         default:
@@ -1111,9 +1111,12 @@ compile_array_ref_dimension(expr args, expv dims, expv subs)
                  *
                  * Checkes must be done as follows.
                  *
-                 * 1) A vector subscript must be integer type and one dimensional array.
-                 * 2) All elements of the vector subscript must be indeces of the array.
-                 * 3) Internal files must not be a vector subscripted subarray.
+                 * 1) A vector subscript must be integer type and 
+		 *   one dimensional array.
+                 * 2) All elements of the vector subscript must be 
+		 *   indeces of the array.
+                 * 3) Internal files must not be a vector 
+		 *   subscripted subarray.
                  * 4) A duplicated vector subscripted subarray must not be
                  *    a left expression of a pointer assignment statement.
                  *
@@ -1217,10 +1220,10 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft)
     if(TYPE_N_DIM(tp) != n){
         if(id) {
             error_at_node(
-                args,"wrong number of subscript on '%s'",ID_NAME(id));
+                args,"wrong number of subscripts on '%s'",ID_NAME(id));
         } else {
             error_at_node(
-                args,"wrong number of subscript");
+                args,"wrong number of subscripts");
         }
 
         return NULL;
@@ -1230,8 +1233,10 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft)
         vary = expv_sym_term(F_VAR, ID_TYPE(id), ID_SYM(id));
         ID_ADDR(id) = vary;
 
-        if (TYPE_N_DIM(ID_TYPE(id)) < n) {
-            error_at_node(args, "too large dimension, %d.", n);
+        if (TYPE_N_DIM(ID_TYPE(id)) != n) {
+            error_at_node(args, 
+			  "rank mismatch (%d!=%d) in array reference '%s'",
+			  n, TYPE_N_DIM(ID_TYPE(id)), ID_NAME(id));
             return NULL;
         }
     }

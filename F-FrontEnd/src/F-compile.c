@@ -388,7 +388,7 @@ void compile_statement1(int st_no, expr x)
         v = EXPR_ARG1(x);
         if(v == NULL) break; /* error recovery */
         if(EXPR_CODE(v) == STRING_CONSTANT) {
-            include_file(EXPR_STR(v), FALSE);
+            include_file(EXPR_STR(v), FALSE, NULL);
         }
         else error("bad file name in include statement");
         break;
@@ -2601,6 +2601,9 @@ end_module()
         strcat(opt, includeDirv[i]);
     }
 
+    if(OMP_flag) strcat(opt," -fopenmp");
+    if(XMP_flag) strcat(opt," -fxmp");
+
     /*
      * source file name must be original file name.
      * file name which can get from lexer such as
@@ -2664,7 +2667,7 @@ do_use(expr name)
         exit(EXITCODE_ERR);
     }
 
-    include_file(xmodf_path, TRUE);
+    include_file(xmodf_path, TRUE, module_name);
 }
 
 
@@ -3936,7 +3939,7 @@ compile_TARGET_POINTER_ALLOCATABLE_statement(expr x)
             compile_type_decl(NULL, NULL, list1(LIST, aloc), NULL);
         }
 
-        setIsOfModule(id);
+        checkDefinedModule(id);
     }
 }
 
@@ -3962,7 +3965,7 @@ compile_OPTIONAL_statement(expr x)
         TYPE_SET_OPTIONAL(id);
     }
 
-    setIsOfModule(id);
+    checkDefinedModule(id);
 }
 
 
@@ -4000,7 +4003,7 @@ compile_INTENT_statement(expr x)
             abort();
         }
 
-        setIsOfModule(id);
+        checkDefinedModule(id);
     }
 }
 
