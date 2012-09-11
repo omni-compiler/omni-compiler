@@ -360,7 +360,9 @@ public class Bcons
     /** create block for Xobject */
     public static Block buildBlock(Xobject v)
     {
-        Xcode code = v.Opcode();
+      if(v == null) return null;
+
+      Xcode code = v.Opcode();
         switch(code) {
         default:
             if(code.isFstatement()) {

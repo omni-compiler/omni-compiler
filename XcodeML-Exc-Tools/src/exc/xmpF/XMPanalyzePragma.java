@@ -35,6 +35,7 @@ public class XMPanalyzePragma
     XMP.debug("pass1:");
 
     b = fblock.getBody().getHead();
+    if(b == null) return; // null body, do nothing
     b.setProp(XMP.prop, new XMPinfo(XMPpragma.FUNCTION_BODY, null, b, env));
 
     // scan by topdown iterator

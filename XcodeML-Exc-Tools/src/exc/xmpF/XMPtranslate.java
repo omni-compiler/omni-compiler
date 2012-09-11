@@ -110,11 +110,11 @@ public class XMPtranslate implements XobjectDefVisitor
   }
 
   FuncDefBlock XMPmoduleBlock(XobjectDef def){
-    BlockList body = Bcons.emptyBody();
     XobjList decls = Xcons.List(); // emptyList
     Xobject xmp_pragma_list = Xcons.FstatementList();
 
     Xobject d = def.getDef();
+    // module = (F_MODULE_DEFINITION name_id id_list decls body?)
     for(Xobject decl: (XobjList)d.getArg(2)){
       if(decl.Opcode() == Xcode.XMP_PRAGMA)
 	xmp_pragma_list.add(decl);
@@ -122,7 +122,7 @@ public class XMPtranslate implements XobjectDefVisitor
 	decls.add(decl);
     }
     d.setArg(2,decls);
-    d.add(xmp_pragma_list);
+    d.setArg(3, xmp_pragma_list); // put xmp_pragmas as a body
     // System.out.println("module fblock="+d);
     return new FuncDefBlock(def);
   }

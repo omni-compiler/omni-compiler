@@ -90,6 +90,7 @@ public class BlockList
     // add block at tail
     public void add(Block b)
     {
+      if(b == null) return;  // if b is null, do nothing
         if(head == null) {
             head = tail = b;
         } else {
