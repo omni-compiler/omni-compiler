@@ -42,9 +42,9 @@ public class XobjectDef extends PropObject implements IXobject, XobjectVisitable
     this.def = def;
     this.parent = parent;
     
-    Xobject body = def.getArg(3);
     switch(def.Opcode()) {
     case FUNCTION_DEFINITION: {
+      Xobject body = def.getArg(3);
       if(body != null) {
 	Xobject cont = body.getTail();
 	if(cont != null && cont.Opcode() == Xcode.F_CONTAINS_STATEMENT) {
@@ -57,7 +57,7 @@ public class XobjectDef extends PropObject implements IXobject, XobjectVisitable
       break;
     }
     case F_MODULE_DEFINITION: {
-      Xobject cont = body;
+      Xobject cont = def.getArg(3);
       if(cont != null && cont.Opcode() == Xcode.F_CONTAINS_STATEMENT) {
 	def.setArg(3,null);  // remove body
 	for(Xobject d : (XobjList)cont) {
