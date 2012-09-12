@@ -1085,8 +1085,6 @@ compile_array_ref_dimension(expr args, expv dims, expv subs)
 
                 continue;
             }
-
-	case INT_CONSTANT:
             list_put_last(dims, v);
             ++n;
             break;
@@ -1128,7 +1126,8 @@ compile_array_ref_dimension(expr args, expv dims, expv subs)
                 expr dim = NULL;
 
                 if(TYPE_N_DIM(tq) != 1) {
-                    error_at_node(v, "is an array of rank %d", TYPE_N_DIM(tq));
+                    error_at_node(v, "is an array of rank %d", 
+				  TYPE_N_DIM(tq));
                     return TRUE;
                 }
                 shape = list0(LIST);
@@ -1152,13 +1151,12 @@ compile_array_ref_dimension(expr args, expv dims, expv subs)
                     size = EXPV_INT_VALUE(ub) - EXPV_INT_VALUE(lb) + 1;
                     dim = list2(LIST, expv_constant_1, expv_int_term(INT_CONSTANT,type_INT,size));
                 }
-
                 list_put_last(dims, dim);
-
                 ++n;
-            }
-
-            break;
+		break;
+            } 
+	    list_put_last(dims, v);
+	    ++n;
         }
 
         if(n > MAX_DIM){
