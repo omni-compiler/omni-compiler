@@ -3,7 +3,6 @@
  * $TSUKUBA_Copyright:
  *  $
  */
-
 #ifndef _XMP_DATA_STRUCT
 #define _XMP_DATA_STRUCT
 
@@ -11,8 +10,6 @@
 #include "xmp_constant.h"
 
 #define _XMP_comm_t void
-#define _XMP_coarray_comm_t void
-#define _XMP_data_type_t void
 
 // nodes descriptor
 typedef struct _XMP_nodes_inherit_info_type {
@@ -183,22 +180,10 @@ typedef struct _XMP_task_desc_type {
   int ref_stride[_XMP_N_MAX_DIM];
 } _XMP_task_desc_t;
 
-// coarray descriptor
-//typedef struct _XMP_coarray_type {
-	//  void *addr;
-	//  int type;
-	//  size_t type_size;
-	//
-	//  _XMP_nodes_t *nodes;
-	//  _XMP_coarray_comm_t *comm;
-	//  _XMP_data_type_t *data_type;
-	//} _XMP_coarray_t;
-
 typedef struct xmp_coarray{
   char **addr;      // Pointer on each node. The number of elements is process size.
-  /* Example: xmp_coarray.addr[2] is a pointer of real object on node 2. */
+                    // xmp_coarray.addr[2] is a pointer of real object on node 2.
   size_t type_size;
-
 }_XMP_coarray_t;
 
 typedef struct _XMP_gpu_array_type {

@@ -159,7 +159,7 @@ extern void _XMP_threads_finalize(void);
 
 
 // ----- for coarray -------------------
-#ifdef _COARRAY_GASNET
+#ifdef _XMP_COARRAY_GASNET
 #include <gasnet.h>
 #include "xmp_data_struct.h"
 #define _XMP_DEFAULT_COARRAY_HEAP_SIZE (256*1024*1024)  // 256MB
@@ -176,6 +176,7 @@ extern void _XMP_gasnet_put(int, _XMP_coarray_t*, unsigned long long, void*, uns
 extern void _XMP_gasnet_get(void*, unsigned long long, int, _XMP_coarray_t*, unsigned long long, unsigned long long);
 extern void _XMP_gasnet_sync_all();
 extern void _XMP_gasnet_sync_memory();
+
 #endif
 extern unsigned long long _xmp_heap_size;
 #endif // _XMP_INTERNAL

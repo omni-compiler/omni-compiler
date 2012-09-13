@@ -4,7 +4,7 @@ static int _XMP_runtime_working = _XMP_N_INT_FALSE;
 
 void _XMP_init(int argc, char** argv) {
   if (!_XMP_runtime_working) {
-#ifdef _COARRAY_GASNET
+#ifdef _XMP_COARRAY_GASNET
     _XMP_coarray_initialize(argc, argv);
 #endif
     // XXX how to get command line args?
@@ -18,7 +18,7 @@ void _XMP_finalize(void) {
     _XMP_finalize_world();
     _XMP_runtime_working = _XMP_N_INT_FALSE;
 
-#ifdef _COARRAY_GASNET
+#ifdef _XMP_COARRAY_GASNET
     _XMP_coarray_finalize();
 #endif
   }

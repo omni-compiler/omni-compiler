@@ -2,7 +2,6 @@
 #include "mpi.h"
 #include "xmp_internal.h"
 #include <gasnet.h>
-//#include "xmp_gasnet_lock.h"
 
 //gasnet_handlerentry_t htable[] = {
 //  { XMP_GASNET_LOCK_REQUEST,   _xmp_gasnet_lock_request },

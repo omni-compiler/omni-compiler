@@ -10,53 +10,53 @@ double d[2][3][4], d_test[2][3][4];
 #pragma xmp coarray a,b,c,d : [*]
 
 void initialize_coarrays(int me){
-	int i, j, k, n = 100 * me;
+  int i, j, k, n = 100 * me;
 
-	a = n + 1;
-	a_test = a;
-
-	for(i=0;i<2;i++){
-		b[i] = i + n;
-		b_test[i] = b[i];
-	}
-
-	for(i=0;i<2;i++){
-		for(j=0;j<3;j++){
-			c[i][j] = i*3 + j + n;
-			c_test[i][j] = c[i][j];
-		}
-	}
-
-	for(i=0;i<2;i++){
-		for(j=0;j<3;j++){
-			for(k=0;k<4;k++){
-				d[i][j][k] = i*3*4 + j*4 + k + n;
-				d_test[i][j][k] = d[i][j][k];
-			}
-		}
-	}
+  a = n + 1;
+  a_test = a;
+  
+  for(i=0;i<2;i++){
+    b[i] = i + n;
+    b_test[i] = b[i];
+  }
+  
+  for(i=0;i<2;i++){
+    for(j=0;j<3;j++){
+      c[i][j] = i*3 + j + n;
+      c_test[i][j] = c[i][j];
+    }
+  }
+  
+  for(i=0;i<2;i++){
+    for(j=0;j<3;j++){
+      for(k=0;k<4;k++){
+	d[i][j][k] = i*3*4 + j*4 + k + n;
+	d_test[i][j][k] = d[i][j][k];
+      }
+    }
+  }
 #pragma xmp sync_all
 }
 
 void communicate_1(int me){
-	int tmp;
+  int tmp;
 
-	if(me == 0){   // get
-		tmp = a;
-		a = a:[1];
-	}
+  if(me == 0){   // get
+    tmp = a;
+    a = a:[1];
+  }
 #pragma xmp sync_all
-	if(me == 0){  // put
-	  a:[1] = tmp;
-	}
-
-	if(me == 0){
-		a_test = 101;
-	}
-	else if(me == 1){
-		a_test = 1;
-	}
-
+  if(me == 0){  // put
+  a:[1] = tmp;
+  }
+  
+  if(me == 0){
+    a_test = 101;
+  }
+  else if(me == 1){
+    a_test = 1;
+  }
+  
 #pragma xmp sync_all
 }
 
@@ -68,53 +68,53 @@ void check_1(int me){
 }
 
 void communicate_2(int me){
-	if(me == 1){
-		long tmp = 99;
-		b[0]:[0] = tmp;   // put
+  if(me == 1){
+    long tmp = 99;
+    b[0]:[0] = tmp;   // put
 #pragma xmp sync_memory
-		b[1] = b[0]:[0];  // get
-	}
-
-	if(me == 0){
-		b_test[0] = 99;
-	}
-	else if(me == 1){
-		b_test[1] = 99;
-	}
-
+    b[1] = b[0]:[0];  // get
+  }
+  
+  if(me == 0){
+    b_test[0] = 99;
+  }
+  else if(me == 1){
+    b_test[1] = 99;
+  }
+  
 #pragma xmp sync_all
 }
 
 void check_2(int me){
-	int i, flag = TRUE;
-
-	for(i=0; i<2; i++){
-		if( b[i] != b_test[i] ){
-			flag = FALSE;
-			printf("[%d] b[%d] check_2 : fall\nb[%d] = %ld (True value is %ld)\n",
+  int i, flag = TRUE;
+  
+  for(i=0; i<2; i++){
+    if( b[i] != b_test[i] ){
+      flag = FALSE;
+      printf("[%d] b[%d] check_2 : fall\nb[%d] = %ld (True value is %ld)\n",
              me, i, i, b[i], b_test[i]);
-		}
-	}
-
-	if(flag == TRUE)   printf("[%d] check_2 : PASS\n", me);
+    }
+  }
+  
+  if(flag == TRUE)   printf("[%d] check_2 : PASS\n", me);
 }
 
 void communicate_3(int me){
-	float tmp[2][3];
+  float tmp[2][3];
 
-	tmp[0][0] = 9.1;
+  tmp[0][0] = 9.1;
 #pragma xmp sync_all
-	if(me == 0){
-		c[1][1]:[1] = tmp[0][0]; // put
+  if(me == 0){
+    c[1][1]:[1] = tmp[0][0]; // put
 	} 
-	if(me == 1){
-		c[1][2] = c[1][0]:[0];  // get
-	}
-	
-	if(me == 1){
-		c_test[1][1] = 9.1;
-		c_test[1][2] = 3;
-	}
+  if(me == 1){
+    c[1][2] = c[1][0]:[0];  // get
+  }
+  
+  if(me == 1){
+    c_test[1][1] = 9.1;
+    c_test[1][2] = 3;
+  }
 #pragma xmp sync_all
 }
 
@@ -125,76 +125,76 @@ void check_3(int me){
     for(j=0; j<3; j++){
       if( c[i][j] != c_test[i][j] ){
         flag = FALSE;
-				printf("[%d] check_3 : c[%d][%d] = %f (True value is %f) : ERROR\n",
-               me, i, j, c[i][j], c_test[i][j]);
+	printf("[%d] check_3 : c[%d][%d] = %f (True value is %f) : ERROR\n",
+	       me, i, j, c[i][j], c_test[i][j]);
       }
     }
   }
-
+  
   if(flag == TRUE)  printf("[%d] check_3 : PASS\n", me);
 }
 
 void communicate_4(int me){
-	int dest = 1, src = 0;
+  int dest = 1, src = 0;
 
 #pragma xmp sync_all
-	if(me == src){
-		double tmp;
-		tmp = d[0][1][2];
-		d[0][1][2] = 3.14;
-		d[1][2][3]:[dest] = d[0][1][2]; // put
-		d[0][1][2] = tmp;
-	}
-
-	if(me == src){
-		double tmp[1][2][3];
-		tmp[0][1][2] = d[1][1][2]:[dest];
-		d[1][1][2] = tmp[0][1][2];
-	}
-
-	if(me == dest){
-		d_test[1][2][3] = 3.14;
-	} 
-	else if(me == src){
-		d_test[1][1][2] = 118;
-	}
+  if(me == src){
+    double tmp;
+    tmp = d[0][1][2];
+    d[0][1][2] = 3.14;
+    d[1][2][3]:[dest] = d[0][1][2]; // put
+    d[0][1][2] = tmp;
+  }
+  
+  if(me == src){
+    double tmp[1][2][3];
+    tmp[0][1][2] = d[1][1][2]:[dest];
+    d[1][1][2] = tmp[0][1][2];
+  }
+  
+  if(me == dest){
+    d_test[1][2][3] = 3.14;
+  } 
+  else if(me == src){
+    d_test[1][1][2] = 118;
+  }
 #pragma xmp sync_all
 }
 
 void check_4(int me){
-	int i, j, k, flag = TRUE;
-	
-	for(i=0; i<2; i++){
-		for(j=0; j<3; j++){
-			for(k=0; k<4; k++){
-				if( d[i][j][k] != d_test[i][j][k] ){
-					flag = FALSE;
-					printf("[%d] check_4 : d[%d][%d][%d] = %f (True value is %f) : ERROR\n",
-								 me, i, j, k, d[i][j][k], d_test[i][j][k]);
-				}
-			}
-		}
+  int i, j, k, flag = TRUE;
+  
+  for(i=0; i<2; i++){
+    for(j=0; j<3; j++){
+      for(k=0; k<4; k++){
+	if( d[i][j][k] != d_test[i][j][k] ){
+	  flag = FALSE;
+	  printf("[%d] check_4 : d[%d][%d][%d] = %f (True value is %f) : ERROR\n",
+		 me, i, j, k, d[i][j][k], d_test[i][j][k]);
 	}
-
-	if(flag == TRUE)  printf("[%d] check_4 : PASS\n", me);
+      }
+    }
+  }
+  
+  if(flag == TRUE)  printf("[%d] check_4 : PASS\n", me);
 }
 
 int main(){
-	int me = xmp_node_num();
-	
-	initialize_coarrays(me);
+  int me = xmp_node_num();
+  
+  initialize_coarrays(me);
+  
+  communicate_1(me);
+  check_1(me);
+  
+  communicate_2(me);
+  check_2(me);
+  
+  communicate_3(me);
+  check_3(me);
+  
+  communicate_4(me);
+  check_4(me);
 
-	communicate_1(me);
-	check_1(me);
-	
-	communicate_2(me);
-	check_2(me);
-		
-	communicate_3(me);
-	check_3(me);
-		
-	communicate_4(me);
-	check_4(me);
-
-	return 0;
+  return 0;
 }
