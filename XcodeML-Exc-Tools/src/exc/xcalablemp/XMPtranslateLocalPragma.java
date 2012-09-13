@@ -174,7 +174,7 @@ public class XMPtranslateLocalPragma {
     XobjList postNode = (XobjList)postDecl.getArg(0);
     Xobject  tag      = postDecl.getArg(1);
 
-    if(postNode.getArg(1).getArgOrNull(1) != null){
+    if (postNode.getArg(1).getArgOrNull(1) != null){
       throw new XMPexception("Not implementaion for wait directive by using multidimentional node!!");
     }
 
@@ -186,11 +186,39 @@ public class XMPtranslateLocalPragma {
   private void translateWait(PragmaBlock pb) throws XMPexception {
     checkDeclPragmaLocation(pb);
     XobjList waitDecl = (XobjList)pb.getClauses();
-    XobjList waitNameList = (XobjList)waitDecl.getArg(0);
-    XobjList waitDeclCopy = (XobjList)waitDecl.copy();
+    Xobject numOfArgs = waitDecl.getArg(0); 
+    XobjList args = null;
+    Xobject waitNode = null;
+    Xobject tag = null;
 
-   
-    pb.replace(_globalDecl.createFuncCallBlock("_XMP_wait", null));
+    switch (numOfArgs.getInt()) {
+    case 0:  // no arguments
+      args = Xcons.List(numOfArgs);
+      break;
+    case 1:  // only node
+      waitNode = waitDecl.getArg(1).getArg(1).getArg(0).getArg(0);
+      args = Xcons.List(numOfArgs, waitNode);
+      break;
+    case 2:
+      waitNode = waitDecl.getArg(1).getArg(1).getArg(0).getArg(0);
+      tag = waitDecl.getArg(2);
+      args = Xcons.List(numOfArgs, waitNode, tag);
+      break;
+    }
+
+    pb.replace(_globalDecl.createFuncCallBlock("_XMP_wait", args));
+    //    XobjList args = null;
+
+    //    if (waitDecl == null){
+    //      args = Xcons.List(Xcons.IntConstant(0));   // 0 is a number of args
+    //    } else{
+    //    }
+    //    System.out.println(numOfArgs);
+    //    XobjList waitNameList = (XobjList)waitDecl.getArg(0);
+    //    XobjList waitDeclCopy = (XobjList)waitDecl.copy();
+
+    //    pb.replace(_globalDecl.createFuncCallBlock("_XMP_wait", args));
+    //    pb.replace(_globalDecl.createFuncCallBlock("_XMP_wait", waitDecl));
   }
 
   private void translateLocalAlias(PragmaBlock pb) throws XMPexception {

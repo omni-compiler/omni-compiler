@@ -174,7 +174,7 @@ extern void _XMP_finalize_world(void);
 
 // xmp_post.c
 extern void _XMP_post(int node, int tag);
-extern void _XMP_wait(int node, int tag);
+extern void _XMP_wait(int num, ...);
 
 // ----- libxmp_threads
 // xmp_threads_runtime.c

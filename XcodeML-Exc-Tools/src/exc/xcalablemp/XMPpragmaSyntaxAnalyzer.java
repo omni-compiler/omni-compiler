@@ -1167,11 +1167,26 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     return Xcons.List(nodeName, tag);
   }
 
-  private XobjList parse_WAIT_clause() throws XMPexception {
-    Xobject profileClause = null;
-    return Xcons.List(profileClause);
+  private XobjList parse_WAIT_clause() throws XmException, XMPexception {
+    if (pg_tok() != '('){
+      pg_get_token();
+      return Xcons.List(Xcons.IntConstant(0));  // 0 is a number of args
+    }
+    else{
+      pg_get_token(); 
+      XobjList nodeName = parse_ON_REF(false);
+      if (pg_tok() == ','){
+	pg_get_token();
+        Xobject tag = pg_parse_int_expr();
+        pg_get_token();
+        return Xcons.List(Xcons.IntConstant(2), nodeName, tag);
+      }
+      else{  // if(pg_tok() == ')')
+	pg_get_token();
+	return Xcons.List(Xcons.IntConstant(1), nodeName);
+      }
+    }
   }
-
 
   private XobjList parse_COARRAY_clause() throws XmException, XMPexception {
     XobjList coarrayNameList = parse_XMP_obj_name_list("coarray");
