@@ -1,6 +1,6 @@
 /* Lock algorithm of XMP is based on that of Bercley UPC. */
 #include "xmp_internal.h"
-#include "xmp_internal_lock.h"
+#include "xmp_atomic.h"
 
 void _xmp_gasnet_lock_initialize(xmp_gasnet_lock_t* lock, int number_of_elements){
   int i;

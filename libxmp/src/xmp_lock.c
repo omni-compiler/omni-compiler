@@ -1,5 +1,5 @@
 #include "xmp_internal.h"
-#include "xmp_internal_lock.h"
+#include "xmp_atomic.h"
 
 void _xmp_lock(_XMP_coarray_t* c, int position, int target_node){
 #ifdef _XMP_COARRAY_GASNET

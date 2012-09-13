@@ -77,7 +77,7 @@ am__libxmp_a_SOURCES_DIST = $(XMP_INC_DIR)/xmp_internal.h \
 	xmp_reduce.c xmp_bcast.c xmp_align.c xmp_shadow.c \
 	xmp_array_section.c xmp_loop.c xmp_gmove.c xmp_math_function.c \
 	xmp_runtime.c xmp_coarray.c xmp_tlog_runtime.c xmp_io.c \
-	xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c
+	xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c xmp_post.c
 @GASNET_FALSE@am_libxmp_a_OBJECTS = xmp_lib.$(OBJEXT) \
 @GASNET_FALSE@	xmp_util.$(OBJEXT) xmp_world.$(OBJEXT) \
 @GASNET_FALSE@	xmp_nodes_stack.$(OBJEXT) xmp_nodes.$(OBJEXT) \
@@ -99,7 +99,7 @@ am__libxmp_a_SOURCES_DIST = $(XMP_INC_DIR)/xmp_internal.h \
 @GASNET_TRUE@	xmp_runtime.$(OBJEXT) xmp_coarray.$(OBJEXT) \
 @GASNET_TRUE@	xmp_tlog_runtime.$(OBJEXT) xmp_io.$(OBJEXT) \
 @GASNET_TRUE@	xmp_gasnet_coarray.$(OBJEXT) xmp_lock.$(OBJEXT) \
-@GASNET_TRUE@	xmp_gasnet_lock.$(OBJEXT)
+@GASNET_TRUE@	xmp_gasnet_lock.$(OBJEXT) xmp_post.$(OBJEXT)
 libxmp_a_OBJECTS = $(am_libxmp_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/buildutils/depcomp
@@ -330,7 +330,7 @@ lib_LIBRARIES = libxmp.a
 @GASNET_TRUE@                                xmp_nodes.c xmp_template.c xmp_barrier.c xmp_reduce.c xmp_bcast.c \
 @GASNET_TRUE@                                xmp_align.c xmp_shadow.c xmp_array_section.c xmp_loop.c xmp_gmove.c \
 @GASNET_TRUE@                                xmp_math_function.c xmp_runtime.c xmp_coarray.c xmp_tlog_runtime.c xmp_io.c \
-@GASNET_TRUE@				xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c
+@GASNET_TRUE@				xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c xmp_post.c
 
 @GASNET_TRUE@AM_LDFLAGS = $(GASNET_LDFLAGS) $(GASNET_LIBS)
 @GASNET_FALSE@AM_CFLAGS = -Wall -Wpointer-arith -std=c99 -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR)
@@ -429,6 +429,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_math_function.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_nodes.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_nodes_stack.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_post.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_reduce.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_runtime.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmp_shadow.Po@am__quote@

@@ -172,6 +172,10 @@ extern void _XMP_unexpected_error(void);
 extern void _XMP_init_world(int *argc, char ***argv);
 extern void _XMP_finalize_world(void);
 
+// xmp_post.c
+extern void _XMP_post(int node, int tag);
+extern void _XMP_wait(int node, int tag);
+
 // ----- libxmp_threads
 // xmp_threads_runtime.c
 extern void _XMP_threads_init(void);

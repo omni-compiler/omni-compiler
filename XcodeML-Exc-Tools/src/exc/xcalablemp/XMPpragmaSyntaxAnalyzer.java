@@ -252,12 +252,26 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
       pg_get_token();
       args = null;
-		} else if (pg_is_ident("sync_all")) {
+    } else if (pg_is_ident("sync_all")) {
       pragmaDir = XMPpragma.SYNC_ALL;
       syntax = PragmaSyntax.SYN_EXEC;
 
       pg_get_token();
       args = null;
+    }else if (pg_is_ident("post")) {
+      pragmaDir = XMPpragma.POST;
+      syntax = PragmaSyntax.SYN_EXEC;
+
+      pg_get_token();
+      args = parse_POST_clause();
+
+    }else if (pg_is_ident("wait")) {
+      pragmaDir = XMPpragma.WAIT;
+      syntax = PragmaSyntax.SYN_EXEC;
+
+      pg_get_token();
+      args = parse_WAIT_clause();
+
     } else if (pg_is_ident("local_alias")) {
       pragmaDir = XMPpragma.LOCAL_ALIAS;
       syntax = PragmaSyntax.SYN_DECL;
@@ -327,7 +341,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
     // parse (<nodes-size>, ...)
     if (pg_tok() != '(')
-      error("'(' is expected after <nodes-name>");
+      error("'(' is expected before <nodes-name>");
 
     XobjList nodesSizeList = Xcons.List();
     do {
@@ -1135,6 +1149,29 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
     return Xcons.List(gmoveClause, profileClause);
   }
+
+  private XobjList parse_POST_clause() throws XmException, XMPexception {
+    if (pg_tok() != '(')
+      error("'(' is expected before <nodes-name, tag>");
+    
+    pg_get_token();
+
+    XobjList nodeName = parse_ON_REF(false);
+    pg_get_token();
+    Xobject tag = pg_parse_int_expr();
+
+    if (pg_tok() != ')') {
+      error("')' is expected after <nodes-name, tag>");
+    }
+    pg_get_token();
+    return Xcons.List(nodeName, tag);
+  }
+
+  private XobjList parse_WAIT_clause() throws XMPexception {
+    Xobject profileClause = null;
+    return Xcons.List(profileClause);
+  }
+
 
   private XobjList parse_COARRAY_clause() throws XmException, XMPexception {
     XobjList coarrayNameList = parse_XMP_obj_name_list("coarray");

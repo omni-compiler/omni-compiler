@@ -29,6 +29,8 @@ public enum XMPpragma {
   COARRAY,
   SYNC_MEMORY,
   SYNC_ALL,
+  POST,
+  WAIT,
   LOCAL_ALIAS,
   GPU_REPLICATE,
   GPU_REPLICATE_SYNC,

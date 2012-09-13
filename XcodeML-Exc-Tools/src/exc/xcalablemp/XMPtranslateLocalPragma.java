@@ -79,6 +79,10 @@ public class XMPtranslateLocalPragma {
         { translateSyncMemory(pb);		break; }
       case SYNC_ALL:
         { translateSyncAll(pb);                 break; }
+      case POST:
+        { translatePost(pb);                    break; }
+      case WAIT:
+        { translateWait(pb);                    break; }
       case LOCAL_ALIAS:
         { translateLocalAlias(pb);		break; }
       case GPU_REPLICATE:
@@ -162,6 +166,31 @@ public class XMPtranslateLocalPragma {
 
   private void translateSyncAll(PragmaBlock pb) throws XMPexception {
     pb.replace(_globalDecl.createFuncCallBlock("_XMP_coarray_sync_all", null));
+  }
+
+  private void translatePost(PragmaBlock pb) throws XMPexception {
+    checkDeclPragmaLocation(pb);
+    XobjList postDecl = (XobjList)pb.getClauses();
+    XobjList postNode = (XobjList)postDecl.getArg(0);
+    Xobject  tag      = postDecl.getArg(1);
+
+    if(postNode.getArg(1).getArgOrNull(1) != null){
+      throw new XMPexception("Not implementaion for wait directive by using multidimentional node!!");
+    }
+
+    Xobject postNodeNum = (Xobject)postNode.getArg(1).getArg(0).getArg(0);
+
+    pb.replace(_globalDecl.createFuncCallBlock("_XMP_post", Xcons.List(postNodeNum, tag))); 
+  }
+
+  private void translateWait(PragmaBlock pb) throws XMPexception {
+    checkDeclPragmaLocation(pb);
+    XobjList waitDecl = (XobjList)pb.getClauses();
+    XobjList waitNameList = (XobjList)waitDecl.getArg(0);
+    XobjList waitDeclCopy = (XobjList)waitDecl.copy();
+
+   
+    pb.replace(_globalDecl.createFuncCallBlock("_XMP_wait", null));
   }
 
   private void translateLocalAlias(PragmaBlock pb) throws XMPexception {
