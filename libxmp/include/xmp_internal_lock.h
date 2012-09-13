@@ -6,7 +6,7 @@
 
 typedef struct xmp_lock{
   int islocked;
-  gasnet_hsl_t  inchsl;
+  gasnet_hsl_t  hsl;
   int  wait_size;   /* How many elements in wait_list */
   int  wait_head;   /* Index for next dequeue */
   int  wait_tail;   /* Index for next enqueue */
