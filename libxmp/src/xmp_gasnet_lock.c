@@ -1,6 +1,7 @@
 /* Lock algorithm of XMP is based on that of Bercley UPC. */
 #include "xmp_internal.h"
 #include "xmp_atomic.h"
+#include <gasnet_tools.h>
 
 void _xmp_gasnet_lock_initialize(xmp_gasnet_lock_t* lock, int number_of_elements){
   int i;
@@ -8,7 +9,7 @@ void _xmp_gasnet_lock_initialize(xmp_gasnet_lock_t* lock, int number_of_elements
   for(i=0;i<number_of_elements;i++){
     gasnet_hsl_init(&((lock + i)->hsl));
     (lock + i)->islocked = _XMP_N_INT_FALSE;
-    (lock + i)->wait_size = MIN(_XMP_LOCK_WAIT_CHUNK, gasnet_nodes());
+    (lock + i)->wait_size = MIN(_XMP_LOCK_CHUNK, gasnet_nodes());
     (lock + i)->wait_list = malloc((lock + i)->wait_size * sizeof(int));
     (lock + i)->wait_head = 0;
     (lock + i)->wait_tail = 0;
@@ -29,7 +30,7 @@ void _xmp_gasnet_do_lock(int target_node, xmp_gasnet_lock_t* lock, int *replysta
       int  old_head = lock->wait_head;
       int  old_size = lock->wait_size;
       int  leading = old_size - old_head;
-      lock->wait_size = MIN(old_size + _XMP_LOCK_WAIT_CHUNK, gasnet_nodes());
+      lock->wait_size = MIN(old_size + _XMP_LOCK_CHUNK, gasnet_nodes());
       lock->wait_list = malloc(lock->wait_size * sizeof(int));
       memcpy(lock->wait_list, old_list+old_head, leading*sizeof(int));
       memcpy(lock->wait_list+leading, old_list, old_head*sizeof(int));

@@ -159,6 +159,7 @@ extern void _XMP_threads_finalize(void);
 
 
 // ----- for coarray -------------------
+extern void _XMP_post_initialize();
 #ifdef _XMP_COARRAY_GASNET
 #include <gasnet.h>
 #include "xmp_data_struct.h"
@@ -176,7 +177,9 @@ extern void _XMP_gasnet_put(int, _XMP_coarray_t*, unsigned long long, void*, uns
 extern void _XMP_gasnet_get(void*, unsigned long long, int, _XMP_coarray_t*, unsigned long long, unsigned long long);
 extern void _XMP_gasnet_sync_all();
 extern void _XMP_gasnet_sync_memory();
-
+extern void _xmp_gasnet_post_initialize();
+extern void _xmp_gasnet_post(int, int);
+extern void _xmp_gasnet_wait(int, ...);
 #endif
 extern unsigned long long _xmp_heap_size;
 #endif // _XMP_INTERNAL

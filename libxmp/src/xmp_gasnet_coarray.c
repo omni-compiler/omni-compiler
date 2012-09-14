@@ -1,23 +1,26 @@
 #include <stdarg.h>
 #include "mpi.h"
 #include "xmp_internal.h"
-#include <gasnet.h>
+#include "xmp_atomic.h"
 
-//gasnet_handlerentry_t htable[] = {
-//  { XMP_GASNET_LOCK_REQUEST,   _xmp_gasnet_lock_request },
-//  { XMP_GASNET_SETLOCKSTATE,   _xmp_gasnet_setlockstate },
-//  { XMP_GASNET_UNLOCK_REQUEST, _xmp_gasnet_unlock_request },
-//  { XMP_GASNET_LOCKHANDOFF,    _xmp_gasnet_lockhandoff }
-//};
+gasnet_handlerentry_t htable[] = {
+  { _XMP_GASNET_LOCK_REQUEST,   _xmp_gasnet_lock_request },
+  { _XMP_GASNET_SETLOCKSTATE,   _xmp_gasnet_setlockstate },
+  { _XMP_GASNET_UNLOCK_REQUEST, _xmp_gasnet_unlock_request },
+  { _XMP_GASNET_LOCKHANDOFF,    _xmp_gasnet_lockhandoff },
+  { _XMP_GASNET_POST_REQUEST,   _xmp_gasnet_post_request },
+  { _XMP_GASNET_WAIT_REQUEST,   _xmp_gasnet_wait_request },
+};
+
 static unsigned long long _xmp_coarray_shift = 0;
 static char **_xmp_gasnet_buf;
 
 void _XMP_gasnet_set_coarray(_XMP_coarray_t *coarray, void **addr, unsigned long long number_of_elements, size_t type_size){
   int numprocs;
-  void **each_addr;   // head address of a local array on each node
+  char **each_addr;  // head address of a local array on each node
 
   numprocs = gasnet_nodes();
-  each_addr = _XMP_alloc(sizeof(void*) * numprocs);
+  each_addr = (char **)_XMP_alloc(sizeof(char *) * numprocs);
 
   gasnet_node_t i;
   for(i=0;i<numprocs;i++)
@@ -33,7 +36,7 @@ void _XMP_gasnet_set_coarray(_XMP_coarray_t *coarray, void **addr, unsigned long
     _XMP_fatal("Please set XMP_COARRAY_HEAP_SIZE=<number>\n");
   }
 
-  coarray->addr = (char **)each_addr;
+  coarray->addr = each_addr;
   coarray->type_size = type_size;
 
   *addr = each_addr[gasnet_mynode()];
@@ -47,7 +50,8 @@ void _XMP_gasnet_initialize(int argc, char **argv, unsigned long long malloc_siz
   if(malloc_size % GASNET_PAGESIZE != 0)
     malloc_size = (malloc_size/GASNET_PAGESIZE -1) * GASNET_PAGESIZE;
 
-  gasnet_attach(NULL, 0, malloc_size, 0);
+  //  gasnet_attach(NULL, 0, malloc_size, 0);
+  gasnet_attach(htable, sizeof(htable)/sizeof(gasnet_handlerentry_t), malloc_size, 0); 
   numprocs = gasnet_nodes();
 
   _xmp_gasnet_buf = (char **)malloc(sizeof(char*) * numprocs);

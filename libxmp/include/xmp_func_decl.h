@@ -175,6 +175,12 @@ extern void _XMP_finalize_world(void);
 // xmp_post.c
 extern void _XMP_post(int node, int tag);
 extern void _XMP_wait(int num, ...);
+extern void _XMP_post_initialize(void);
+
+// xmp_gasnet_post.c
+extern void _xmp_gasnet_post(int node, int tag);
+extern void _xmp_gasnet_wait(int num, ...);
+extern void _xmp_gasnet_post_initialize(void);
 
 // ----- libxmp_threads
 // xmp_threads_runtime.c

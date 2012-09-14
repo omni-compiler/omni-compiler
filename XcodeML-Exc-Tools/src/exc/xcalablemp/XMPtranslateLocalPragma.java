@@ -207,18 +207,6 @@ public class XMPtranslateLocalPragma {
     }
 
     pb.replace(_globalDecl.createFuncCallBlock("_XMP_wait", args));
-    //    XobjList args = null;
-
-    //    if (waitDecl == null){
-    //      args = Xcons.List(Xcons.IntConstant(0));   // 0 is a number of args
-    //    } else{
-    //    }
-    //    System.out.println(numOfArgs);
-    //    XobjList waitNameList = (XobjList)waitDecl.getArg(0);
-    //    XobjList waitDeclCopy = (XobjList)waitDecl.copy();
-
-    //    pb.replace(_globalDecl.createFuncCallBlock("_XMP_wait", args));
-    //    pb.replace(_globalDecl.createFuncCallBlock("_XMP_wait", waitDecl));
   }
 
   private void translateLocalAlias(PragmaBlock pb) throws XMPexception {

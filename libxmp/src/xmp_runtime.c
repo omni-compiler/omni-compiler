@@ -6,6 +6,7 @@ void _XMP_init(int argc, char** argv) {
   if (!_XMP_runtime_working) {
 #ifdef _XMP_COARRAY_GASNET
     _XMP_coarray_initialize(argc, argv);
+    _XMP_post_initialize();
 #endif
     // XXX how to get command line args?
     _XMP_init_world(NULL, NULL);
