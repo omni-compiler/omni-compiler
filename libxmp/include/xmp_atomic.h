@@ -37,14 +37,12 @@ extern void _xmp_gasnet_do_lockhandoff(int);
 #define _XMP_GASNET_UNLOCK_REQUEST 202
 #define _XMP_GASNET_LOCKHANDOFF    203
 #define _XMP_GASNET_POST_REQUEST   204
-#define _XMP_GASNET_WAIT_REQUEST   205
 extern void _xmp_gasnet_lock_request(gasnet_token_t, int, uint32_t, uint32_t);
 extern void _xmp_gasnet_setlockstate(gasnet_token_t, int);
 extern void _xmp_gasnet_do_setlockstate(int);
 extern void _xmp_gasnet_unlock_request(gasnet_token_t, int, uint32_t, uint32_t);
 extern void _xmp_gasnet_lockhandoff(gasnet_token_t, int);
 extern void _xmp_gasnet_post_request(gasnet_token_t, int, int);
-extern void _xmp_gasnet_wait_request(gasnet_token_t, int, int);
 
 /*  Macros for splitting and reassembling 64-bit quantities  */
 #define HIWORD(arg)     ((uint32_t) (((uint64_t)(arg)) >> 32))

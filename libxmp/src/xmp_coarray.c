@@ -39,7 +39,10 @@ void _XMP_coarray_initialize(int argc, char **argv){
 }
 
 void _XMP_coarray_finalize(){
+  fprintf(stderr, "b\n");
 #ifdef _XMP_COARRAY_GASNET
+  _XMP_gasnet_sync_all();
+  fprintf(stderr, "a\n");
   _XMP_gasnet_finalize(0);
 #else
   _XMP_fatal("Cannt use Coarray Function");

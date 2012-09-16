@@ -8,8 +8,7 @@ gasnet_handlerentry_t htable[] = {
   { _XMP_GASNET_SETLOCKSTATE,   _xmp_gasnet_setlockstate },
   { _XMP_GASNET_UNLOCK_REQUEST, _xmp_gasnet_unlock_request },
   { _XMP_GASNET_LOCKHANDOFF,    _xmp_gasnet_lockhandoff },
-  { _XMP_GASNET_POST_REQUEST,   _xmp_gasnet_post_request },
-  { _XMP_GASNET_WAIT_REQUEST,   _xmp_gasnet_wait_request },
+  { _XMP_GASNET_POST_REQUEST,   _xmp_gasnet_post_request }
 };
 
 static unsigned long long _xmp_coarray_shift = 0;
@@ -61,9 +60,11 @@ void _XMP_gasnet_initialize(int argc, char **argv, unsigned long long malloc_siz
   gasnet_getSegmentInfo(s, gasnet_nodes());
   for(i=0;i<numprocs;i++)
     _xmp_gasnet_buf[i] =  (char*)s[i].addr;
+
 }
 
 void _XMP_gasnet_finalize(int val){
+  _XMP_gasnet_sync_all();
   gasnet_exit(val);
 }
 

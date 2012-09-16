@@ -15,6 +15,7 @@ void _XMP_init(int argc, char** argv) {
 }
 
 void _XMP_finalize(void) {
+  fprintf(stderr, "a\n");
   if (_XMP_runtime_working) {
     _XMP_finalize_world();
     _XMP_runtime_working = _XMP_N_INT_FALSE;
