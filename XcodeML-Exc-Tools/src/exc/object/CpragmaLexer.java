@@ -275,8 +275,15 @@ public class CpragmaLexer extends PragmaLexer
             pg_get_token();
             sym = XmSymbolUtil.lookupSymbol(context, pg_tok_buf);
             if(sym != null && sym.isIdent()) {
-                e = (Ident)xm2xobjTranslator.translate(sym.getXmObj());
-                e = Xcons.SymbolRef((Ident)e);
+	      e = (Ident)xm2xobjTranslator.translate(sym.getXmObj());
+
+	      // e = Xcons.SymbolRef((Ident)e);
+	      if(e.Type().getKind() != Xtype.ARRAY){
+		e = Xcons.SymbolRef((Ident)e);
+	      }
+	      else{
+		e = ((Ident)e).getAddr();
+	      }
             } else {
                 error("bad symbol in expression of pragma args");
                 return null;

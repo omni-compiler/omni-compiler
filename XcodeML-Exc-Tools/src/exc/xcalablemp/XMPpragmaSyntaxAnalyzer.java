@@ -1158,7 +1158,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
     XobjList nodeName = parse_ON_REF(false);
     pg_get_token();
-    Xobject tag = pg_parse_int_expr();
+    Xobject tag = pg_parse_expr();
 
     if (pg_tok() != ')') {
       error("')' is expected after <nodes-name, tag>");
@@ -1177,7 +1177,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       XobjList nodeName = parse_ON_REF(false);
       if (pg_tok() == ','){
 	pg_get_token();
-        Xobject tag = pg_parse_int_expr();
+        Xobject tag = pg_parse_expr();
         pg_get_token();
         return Xcons.List(Xcons.IntConstant(2), nodeName, tag);
       }
