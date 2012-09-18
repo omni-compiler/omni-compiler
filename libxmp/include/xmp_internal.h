@@ -9,7 +9,7 @@
 
 // --------------- including headers  --------------------------------
 #include <stddef.h>
-
+#include <stdarg.h>
 // --------------- macro functions -----------------------------------
 #ifdef DEBUG
 #define _XMP_ASSERT(_flag) \
@@ -162,7 +162,6 @@ extern void _XMP_threads_finalize(void);
 extern void _XMP_post_initialize();
 #ifdef _XMP_COARRAY_GASNET
 #include <gasnet.h>
-#include "xmp_data_struct.h"
 #define _XMP_DEFAULT_COARRAY_HEAP_SIZE (256*1024*1024)  // 256MB
 
 #define GASNET_BARRIER() do {      \

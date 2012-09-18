@@ -17,7 +17,7 @@ typedef struct post_wait_obj{
 static post_wait_obj_t pw;
 
 void _xmp_gasnet_post_initialize(){
-  gasnet_hsl_init(pw.hsl);
+  gasnet_hsl_init(&pw.hsl);
   pw.wait_num            = 0;
   pw.list                = malloc(sizeof(request_list_t) * _XMP_POST_WAIT_CHUNK);
   pw.list_size           = _XMP_POST_WAIT_CHUNK;
@@ -30,7 +30,7 @@ static void _xmp_pw_push(int node, int tag){
 }
 
 static void _xmp_gasnet_do_post(int node, int tag){
-  gasnet_hsl_lock(pw.hsl);
+  gasnet_hsl_lock(&pw.hsl);
   if(pw.wait_num == 0){
     _xmp_pw_push(node, tag);
   } 
@@ -50,7 +50,7 @@ static void _xmp_gasnet_do_post(int node, int tag){
     }
     _xmp_pw_push(node, tag);
   }
-  gasnet_hsl_unlock(pw.hsl);
+  gasnet_hsl_unlock(&pw.hsl);
 }
 
 void _xmp_gasnet_post_request(gasnet_token_t token, int node, int tag){
