@@ -44,12 +44,15 @@ void post_wait_nodes(){
   int tag2 = 7;
 #pragma xmp task on p(1)
 {
-#pragma xmp post (p(3), tag2)
+  int target_node = 3;
+#pragma xmp post (p(target_node), tag2)
  }
 
 #pragma xmp task on p(2)
  {
-#pragma xmp post (p(3), tag2)
+   int target_node[100][3];
+   target_node[3][2] = 3;
+#pragma xmp post (p(target_node[3][2]), tag2)
  }
 
 #pragma xmp task on p(3)

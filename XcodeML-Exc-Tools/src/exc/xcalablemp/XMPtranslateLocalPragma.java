@@ -174,11 +174,7 @@ public class XMPtranslateLocalPragma {
     XobjList postNode = (XobjList)postDecl.getArg(0);
     Xobject  tag      = postDecl.getArg(1);
 
-    if (postNode.getArg(1).getArgOrNull(1) != null){
-      throw new XMPexception("Not implementaion for wait directive by using multidimentional node!!");
-    }
-
-    Xobject postNodeNum = (Xobject)postNode.getArg(1).getArg(0).getArg(0);
+    Xobject postNodeNum = (Xobject)postNode.getArg(1);
 
     pb.replace(_globalDecl.createFuncCallBlock("_XMP_post", Xcons.List(postNodeNum, tag))); 
   }
@@ -196,11 +192,11 @@ public class XMPtranslateLocalPragma {
       args = Xcons.List(numOfArgs);
       break;
     case 1:  // only node
-      waitNode = waitDecl.getArg(1).getArg(1).getArg(0).getArg(0);
+      waitNode = (Xobject)waitDecl.getArg(1).getArg(1);
       args = Xcons.List(numOfArgs, waitNode);
       break;
     case 2:
-      waitNode = waitDecl.getArg(1).getArg(1).getArg(0).getArg(0);
+      waitNode = (Xobject)waitDecl.getArg(1).getArg(1);
       tag = waitDecl.getArg(2);
       args = Xcons.List(numOfArgs, waitNode, tag);
       break;

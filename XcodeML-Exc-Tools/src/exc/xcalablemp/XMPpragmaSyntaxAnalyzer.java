@@ -911,6 +911,20 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     return Xcons.List(varList, fromRef, onRef, profileClause);
   }
 
+  // Fix me
+  private XobjList parse_pg_node() throws XmException, XMPexception {
+    XobjString objName = Xcons.String(pg_tok_buf());
+
+    pg_get_token();
+
+    if (pg_tok() != '(')
+      error("Node syntax Error");
+
+    Xobject nodeNum = pg_parse_expr();
+      
+    return Xcons.List(objName, nodeNum);
+  }
+
   private XobjList parse_ON_REF(boolean isLoopPragma) throws XmException, XMPexception {
     if (pg_tok() == PG_IDENT) {
       // parse <named-obj-ref>
@@ -1156,7 +1170,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     
     pg_get_token();
 
-    XobjList nodeName = parse_ON_REF(false);
+    XobjList nodeName = parse_pg_node();
     pg_get_token();
     Xobject tag = pg_parse_expr();
 
@@ -1174,7 +1188,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     }
     else{
       pg_get_token(); 
-      XobjList nodeName = parse_ON_REF(false);
+      XobjList nodeName = parse_pg_node();
       if (pg_tok() == ','){
 	pg_get_token();
         Xobject tag = pg_parse_expr();
