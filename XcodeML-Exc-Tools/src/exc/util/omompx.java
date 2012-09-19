@@ -28,7 +28,6 @@ import xcodeml.XmObj;
 import xcodeml.binding.XmXcodeProgram;
 import xcodeml.util.*;
 
-
 // For removing Relaxer
 import exc.xcodeml.XmXobjectToXcodeTranslator;
 import exc.xcodeml.XmfXobjectToXcodeTranslator;
@@ -43,7 +42,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import com.sun.org.apache.xml.internal.serializer.OutputPropertiesFactory;
 import xcodeml.XmException;
-
 
 /**
  * OpenMP-supported XcodeML to XcodeML translator
@@ -329,8 +327,8 @@ public class omompx
       }
       xmpTranslator.setScalascaEnabled(doScalasca);
       xmpTranslator.setTlogEnabled(doTlog);
-
-			xobjFile.iterateDef(xmpTranslator);
+      
+      xobjFile.iterateDef(xmpTranslator);
       XMP.exitByError();
       xobjFile.iterateDef(xmpReallocator);
       XMP.exitByError();
@@ -356,8 +354,7 @@ public class omompx
     }
 
     if(xmpf){// XcalableMP xmpF translation
-      exc.xmpF.XMPtranslate xmp_translator = 
-	new exc.xmpF.XMPtranslate(xobjFile);
+      exc.xmpF.XMPtranslate xmp_translator = new exc.xmpF.XMPtranslate(xobjFile);
       xobjFile.iterateDef(xmp_translator);
         
       if(exc.xmpF.XMP.hasErrors())
@@ -440,8 +437,7 @@ public class omompx
       if (indent) {
 	final int indentSpaces = 2;
 	transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-	transformer.setOutputProperty(
-				      OutputPropertiesFactory.S_KEY_INDENT_AMOUNT, "" + indentSpaces);
+	transformer.setOutputProperty(OutputPropertiesFactory.S_KEY_INDENT_AMOUNT, "" + indentSpaces);
       }
       try {
 	transformer.transform(new DOMSource(xcodeDoc),

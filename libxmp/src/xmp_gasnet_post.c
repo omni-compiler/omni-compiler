@@ -1,6 +1,6 @@
 #include "xmp_internal.h"
 #include "xmp_atomic.h"
-#define _XMP_POST_WAIT_CHUNK 16
+#define _XMP_POST_WAIT_CHUNK 256
 
 typedef struct request_list{
   int node;
@@ -59,10 +59,6 @@ void _xmp_gasnet_post_request(gasnet_token_t token, int node, int tag){
 
 void _xmp_gasnet_post(int target_node, int tag){
   target_node -= 1;   // for 1-origin in XMP
-
-  if(target_node >= gasnet_nodes() || target_node < 0){
-    _XMP_fatal("[post] Target Node ID is illegal.");
-  }
 
   int mynode = (int)gasnet_mynode();
   
@@ -124,16 +120,10 @@ void _xmp_gasnet_wait(int num, ...){
     break;
   case 1:
     target_node = va_arg(args, int) - 1;  // for 1-origin in XMP
-    if(target_node >= gasnet_nodes() || target_node < 0){
-      _XMP_fatal("[wait] Target Node ID is illegal.");
-    }
     GASNET_BLOCKUNTIL(_xmp_pw_remove_notag(target_node));
     break;
   case 2:
     target_node = va_arg(args, int) - 1;  // for 1-origin in XMP
-    if(target_node >= gasnet_nodes() || target_node < 0){
-      _XMP_fatal("[wait] Target Node ID is illegal.");
-    }
     tag  = va_arg(args, int);
     GASNET_BLOCKUNTIL(_xmp_pw_remove(target_node, tag));
     break;

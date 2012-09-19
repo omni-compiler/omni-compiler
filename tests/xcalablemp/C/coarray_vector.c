@@ -11,7 +11,7 @@ long d[3][2][3][2], d_test[3][2][3][2];
 #pragma xmp coarray a, b, c, d : [*]
 
 void initialize(int me){
-  int i, j, m, n, t = me * 100;
+  int i, j, m, n, t = (me-1) * 100;
   
   for(i=0;i<10;i++){
     a[i] = i + t;
@@ -48,18 +48,18 @@ void initialize(int me){
 
 void communicate_1(int me){
 #pragma xmp sync_all
-  if(me == 1){
+  if(me == 2){
     int tmp[100];
-    tmp[3:5] = a[2:5]:[0]; // get
+    tmp[3:5] = a[2:5]:[1]; // get
     memcpy(&a[3], &tmp[3], sizeof(int)*5);
   }
-  if(me == 0){
+  if(me == 1){
     int tmp[50];
     tmp[8] = 999; tmp[9] = 1000;
-    a[0:2]:[1] = tmp[8:2]; // put
+    a[0:2]:[2] = tmp[8:2]; // put
   }
   
-  if(me == 1){
+  if(me == 2){
     a_test[3] = 2; a_test[4] = 3; a_test[5] = 4;
     a_test[6] = 5; a_test[7] = 6; 
     a_test[0] = 999; a_test[1] = 1000;
@@ -84,19 +84,19 @@ void check_1(int me){
 
 void communicate_2(int me){
 #pragma xmp sync_all
-  if(me == 0){
+  if(me == 1){
     int a1, a2, a3, a4, a5, a6, a7, a8, a9;
     a1 = 1; a2 = 2; a3 = 3;
     a4 = 0; a5 = 1; a6 = 3;
-    a7 = 1;
+    a7 = 2;
     b[a1][a2:a3] = b[a4][a5:a6]:[a7];  // get
-    b[2][:1]:[1] = b[0][:1];           // put
+    b[2][:1]:[2] = b[0][:1];           // put
   }
   
-  if(me == 0){
+  if(me == 1){
     b_test[1][2] = 101; b_test[1][3] = 102; b_test[1][4] = 103;
   }
-  if(me == 1){
+  if(me == 2){
     b_test[2][0] = 0;
   }
   
@@ -122,16 +122,16 @@ void check_2(int me){
 
 void communicate_3(int me){
 #pragma xmp sync_all
-  if(me == 1){
-    c[1][2][0:1]:[0] = c[1][1][1:];     // put
+  if(me == 2){
+    c[1][2][0:1]:[1] = c[1][1][1:];     // put
   }
-  if(me == 0){
+  if(me == 1){
     double tmp[2][5];
-    tmp[1][0:] = c[0][2][1:]:[1];       // get
+    tmp[1][0:] = c[0][2][1:]:[2];       // get
     memcpy(&c[0][2][1], &tmp[1][0], sizeof(double) * 3);
   }
   
-  if(me == 0){
+  if(me == 1){
     c_test[1][2][0] = 117;
     c_test[0][2][1] = 109; c_test[0][2][2] = 110; c_test[0][2][3] = 111;
   }
@@ -160,18 +160,18 @@ void check_3(int me){
 
 void communicate_4(int me){
 #pragma xmp sync_all
-  if(me == 1){
+  if(me == 2){
     long tmp[2] = {5, 9};
-    d[1][2][1][:]:[0] = tmp[:];          // put
+    d[1][2][1][:]:[1] = tmp[:];          // put
   }
-  if(me == 1){
-    d[0][1][1][:] = d[0][2][1][:]:[0];   // get 
+  if(me == 2){
+    d[0][1][1][:] = d[0][2][1][:]:[1];   // get 
   }
 
-  if(me == 0){
+  if(me == 1){
     d_test[1][2][1][0] = 5; d_test[1][2][1][1] = 9;
   }
-  if(me == 1){
+  if(me == 2){
     d_test[0][1][1][0] = 14; d_test[0][1][1][1] = 15;
   }
 
@@ -205,7 +205,6 @@ int main(){
   int i, me;
   
   me = xmp_node_num();
-  
   initialize(me);
   
   communicate_1(me);

@@ -78,15 +78,17 @@ void _XMP_gasnet_sync_all(){
 }
 
 void _XMP_gasnet_put(int dest_node, _XMP_coarray_t* dest, unsigned long long dest_point, void *src_ptr, 
-										 unsigned long long src_point, unsigned long long length){
+		     unsigned long long src_point, unsigned long long length){
   dest_point *= dest->type_size;
   src_point  *= dest->type_size;
+  dest_node -= 1;     // for 1-origin in XMP
   gasnet_put_nbi_bulk(dest_node, dest->addr[dest_node]+dest_point, (char *)(src_ptr)+src_point, dest->type_size*length);
 }
 
 void _XMP_gasnet_get(void *dest_ptr, unsigned long long dest_point, int src_node, _XMP_coarray_t *src, 
-										 unsigned long long src_point, unsigned long long length){
+		     unsigned long long src_point, unsigned long long length){
   dest_point *= src->type_size;
   src_point  *= src->type_size;
+  src_node -= 1;     // for 1-origin in XMP
   gasnet_get_bulk((char *)(dest_ptr)+dest_point, src_node, src->addr[src_node]+src_point, src->type_size*length);
 }

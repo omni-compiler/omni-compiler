@@ -10,7 +10,7 @@ double d[2][3][4], d_test[2][3][4];
 #pragma xmp coarray a,b,c,d : [*]
 
 void initialize_coarrays(int me){
-  int i, j, k, n = 100 * me;
+  int i, j, k, n = 100 * (me - 1);
 
   a = n + 1;
   a_test = a;
@@ -41,19 +41,19 @@ void initialize_coarrays(int me){
 void communicate_1(int me){
   int tmp;
 
-  if(me == 0){   // get
+  if(me == 1){   // get
     tmp = a;
-    a = a:[1];
+    a = a:[2];
   }
 #pragma xmp sync_all
-  if(me == 0){  // put
-  a:[1] = tmp;
+  if(me == 1){  // put
+    a:[2] = tmp;
   }
   
-  if(me == 0){
+  if(me == 1){
     a_test = 101;
   }
-  else if(me == 1){
+  else if(me == 2){
     a_test = 1;
   }
   
@@ -68,17 +68,17 @@ void check_1(int me){
 }
 
 void communicate_2(int me){
-  if(me == 1){
+  if(me == 2){
     long tmp = 99;
-    b[0]:[0] = tmp;   // put
+    b[0]:[1] = tmp;   // put
 #pragma xmp sync_memory
-    b[1] = b[0]:[0];  // get
+    b[1] = b[0]:[1];  // get
   }
   
-  if(me == 0){
+  if(me == 1){
     b_test[0] = 99;
   }
-  else if(me == 1){
+  else if(me == 2){
     b_test[1] = 99;
   }
   
@@ -104,14 +104,14 @@ void communicate_3(int me){
 
   tmp[0][0] = 9.1;
 #pragma xmp sync_all
-  if(me == 0){
-    c[1][1]:[1] = tmp[0][0]; // put
-	} 
   if(me == 1){
-    c[1][2] = c[1][0]:[0];  // get
+    c[1][1]:[2] = tmp[0][0]; // put
+	} 
+  if(me == 2){
+    c[1][2] = c[1][0]:[1];  // get
   }
   
-  if(me == 1){
+  if(me == 2){
     c_test[1][1] = 9.1;
     c_test[1][2] = 3;
   }
@@ -135,7 +135,7 @@ void check_3(int me){
 }
 
 void communicate_4(int me){
-  int dest = 1, src = 0;
+  int dest = 2, src = 1;
 
 #pragma xmp sync_all
   if(me == src){
