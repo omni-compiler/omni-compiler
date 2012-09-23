@@ -10,8 +10,8 @@ lib_LIBRARIES		= libxmpf.a
 libxmpf_a_SOURCES	= $(XMPF_INC_DIR)/xmpf_internal.h \
 		xmpf_array.c  xmpf_gcomm.c  xmpf_gmove.c  xmpf_index.c  \
 		xmpf_lib.c  xmpf_loop.c  xmpf_misc.c  xmpf_nodes.c  \
-		xmpf_pack.c xmpf_template.c
-AM_CFLAGS   		= -Wall -Wpointer-arith -std=c99 -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) -I$(XMP_SRC_DIR) -I$(TLOG_INC_DIR)
+		xmpf_pack.c xmpf_task.c xmpf_template.c
+AM_CFLAGS   		= -Wall -Wpointer-arith -std=gnu99 -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) -I$(XMP_SRC_DIR) -I$(TLOG_INC_DIR)
 
 xmpf_main.o: xmpf_main.f
 	@MPI_F90@ -c xmpf_main.f
