@@ -52,6 +52,24 @@ typedef struct _XMP_object_ref_type {
 /*   int *st; */
 /* } _XMP_object_ref_t2; */
 
+typedef struct _XMP_gmv_desc_type {
+
+  _Bool is_global;
+  int ndims;
+
+  _XMP_array_t *a_desc;
+
+  void *local_data;
+  int *a_lb;
+  int *a_ub;
+
+  int *kind;
+  int *lb;
+  int *ub;
+  int *st;
+
+} _XMP_gmv_desc_t;
+
 
 /* From xmpf_index.c */
 void _XMP_L2G(int local_idx, long long int *global_idx,
@@ -124,13 +142,23 @@ void _XMP_barrier_NODES_ENTIRE(_XMP_nodes_t *nodes);
 int _XMP_calc_gmove_array_owner_linear_rank_SCALAR(_XMP_array_t *array, int *ref_index);
 void _XMP_gmove_bcast_SCALAR(void *dst_addr, void *src_addr,
 			     size_t type_size, int root_rank);
+unsigned long long _XMP_gmove_bcast_ARRAY(void *dst_addr, int dst_dim,
+					  int *dst_l, int *dst_u, int *dst_s, unsigned long long *dst_d,
+					  void *src_addr, int src_dim,
+					  int *src_l, int *src_u, int *src_s, unsigned long long *src_d,
+					  int type, size_t type_size, int root_rank);
 void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
 				 int dim_index, int *lower, int *upper, int *stride);
+int _XMP_check_gmove_array_ref_inclusion_SCALAR(_XMP_array_t *array, int array_index,
+						int ref_index);
 void _XMP_gmove_localcopy_ARRAY(int type, int type_size,
 				void *dst_addr, int dst_dim,
 				int *dst_l, int *dst_u, int *dst_s, unsigned long long *dst_d,
 				void *src_addr, int src_dim,
 				int *src_l, int *src_u, int *src_s, unsigned long long *src_d);
+int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_index,
+				    int *dst_l, int *dst_u, int *dst_s,
+				    int *src_l, int *src_u, int *src_s);
 int _XMP_calc_global_index_BCAST(int dst_dim, int *dst_l, int *dst_u, int *dst_s,
 				 _XMP_array_t *src_array, int *src_array_nodes_ref, int *src_l, int *src_u, int *src_s);
 void _XMP_sendrecv_ARRAY(unsigned long long gmove_total_elmts,
