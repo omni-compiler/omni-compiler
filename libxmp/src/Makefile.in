@@ -335,8 +335,8 @@ lib_LIBRARIES = libxmp.a
 @GASNET_TRUE@				xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c xmp_post.c xmp_gasnet_post.c
 
 @GASNET_TRUE@AM_LDFLAGS = $(GASNET_LDFLAGS) $(GASNET_LIBS)
-@GASNET_FALSE@AM_CFLAGS = -Wall -Wpointer-arith -std=c99 -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR)
-@GASNET_TRUE@AM_CFLAGS = -Wall -Wpointer-arith -std=c99 -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR) -D_XMP_COARRAY_GASNET \
+@GASNET_FALSE@AM_CFLAGS = -Wall -Wpointer-arith -std=gnu99 -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR)
+@GASNET_TRUE@AM_CFLAGS = -Wall -Wpointer-arith -std=gnu99 -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR) -D_XMP_COARRAY_GASNET \
 @GASNET_TRUE@                                  -I$(GASNET_INC_DIR) -I$(GASNET_CONDUIT_DIR) $(GASNET_CFLAGS) -DGASNET_SEQ -DGASNET_CONDUIT_@GASNET_CONDUIT_CAP@
 
 all: all-am
