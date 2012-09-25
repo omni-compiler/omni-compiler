@@ -247,7 +247,6 @@ public class XMPrewriteExpr {
 
   private Xobject rewriteScalarCoarrayAssignExpr(Xobject myExpr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
     assert myExpr.Opcode() == Xcode.ASSIGN_EXPR;
-
     Xobject leftExpr = myExpr.getArg(0);
     Xobject rightExpr = myExpr.getArg(1);
 
@@ -278,7 +277,8 @@ public class XMPrewriteExpr {
 	if(isCoarray(rightExpr, localXMPsymbolTable) == false){
 	  coarrayFuncArgs = Xcons.List(Xcons.IntConstant(XMPcoarray.PUT),
 				       coarray.getDescId(), offset, Xcons.AddrOf(rightExpr));
-				} else{
+	}
+	else{
 	  Xobject src_offset = null;
 	  if(rightExpr.Opcode() == Xcode.ARRAY_REF){
 	    String rightCoarrayName = XMPutil.getXobjSymbolName(rightExpr);
@@ -299,7 +299,8 @@ public class XMPrewriteExpr {
 	}
         coarrayFuncArgs.mergeList(XMPutil.castList(Xtype.intType, (XobjList)leftExpr.getArg(1)));
       }
-    } else {
+    } 
+    else {
       if (rightExpr.Opcode() == Xcode.CO_ARRAY_REF) {	// a = x:[1];		RMA get		rewrite expr
         String coarrayName = XMPutil.getXobjSymbolName(rightExpr.getArg(0));
         XMPcoarray coarray = _globalDecl.getXMPcoarray(coarrayName, localXMPsymbolTable);
@@ -469,32 +470,50 @@ public class XMPrewriteExpr {
 
     if (alignedArray == null && coarray == null) {
       return myExpr;
-    } else if(alignedArray != null && coarray == null){  // only alignedArray
+    } 
+    else if(alignedArray != null && coarray == null){  // only alignedArray
       Xobject newExpr = null;
       XobjList arrayRefList = normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
 
       if (alignedArray.checkRealloc()) {
 	newExpr = rewriteAlignedArrayExpr(arrayRefList, alignedArray);
-      } else {
+      } 
+      else {
         newExpr = Xcons.arrayRef(myExpr.Type(), arrayAddr, arrayRefList);
       }
 
       newExpr.setIsRewrittedByXmp(true);
       return newExpr;
-    } else if(alignedArray == null && coarray != null){  // only coarray
-      return translateCoarrayRef(myExpr.getArg(1), coarray);
-    } else{  // this statemant must not be executed
+    } 
+    else if(alignedArray == null && coarray != null){  // only coarray
+      Xobject newExpr = translateCoarrayRef(myExpr.getArg(1), coarray);
+      if(isAddrCoarray((XobjList)myExpr.getArg(1), coarray) == true){
+	return Xcons.AddrOf(newExpr);
+      }	else{
+	return newExpr;
+      }
+    } 
+    else{  // this statemant must not be executed
       return myExpr;
     }
   }
   
+  private boolean isAddrCoarray(XobjList myExpr, XMPcoarray coarray){
+    for(int i=0; i<coarray.getVarDim(); i++){
+      if(myExpr.getArgOrNull(i) == null){
+	return true;
+      }
+    }
+    return false;
+  }
+
   private Xobject getCoarrayOffset(Xobject myExpr, XMPcoarray coarray){
     // "a[N][M][K]" is defined as a coarray.
     // If a[i][j][k] is referred, this function returns "(i * M * K) + (j * K) + (k)"
     if(myExpr.Opcode() == Xcode.VAR){
       return Xcons.Int(Xcode.INT_CONSTANT, 0);
     }
-    
+
     Xobject newExpr = null;
     for(int i=0; i<coarray.getVarDim(); i++){
       Xobject tmp = null;
@@ -508,6 +527,7 @@ public class XMPrewriteExpr {
       } // end j
 
       /* Code may be optimized by native compiler when variable(e,g. i, j) is multipled finally. */
+      if(myExpr.getArgOrNull(i) == null) break;
       Xobject var = myExpr.getArg(i);
 
       if(tmp != null){
@@ -526,7 +546,6 @@ public class XMPrewriteExpr {
     // "a[N][M][K]" is defined as a coarray.
     // When "a[i][j][k] = x;" is defined,
     // this function returns "*(_XMP_COARRAY_ADDR_a + (i * M * K) + (j * K) + (k)) = x;".
-    
     Xobject newExpr = getCoarrayOffset(myExpr, coarray);
     
     int offset = -999;  // dummy
