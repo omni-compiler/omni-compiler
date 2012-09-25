@@ -499,12 +499,12 @@ public class XMPrewriteExpr {
   }
   
   private boolean isAddrCoarray(XobjList myExpr, XMPcoarray coarray){
-    for(int i=0; i<coarray.getVarDim(); i++){
-      if(myExpr.getArgOrNull(i) == null){
-	return true;
-      }
+    if(myExpr.getArgOrNull(coarray.getVarDim()-1) == null){
+      return true;
     }
-    return false;
+    else{
+      return false;
+    }
   }
 
   private Xobject getCoarrayOffset(Xobject myExpr, XMPcoarray coarray){
