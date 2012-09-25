@@ -2,6 +2,7 @@
 #include "mpi.h"
 #include "xmp_internal.h"
 #include "xmp_atomic.h"
+#define _XMP_GASNET_ALIGNMENT 8
 
 gasnet_handlerentry_t htable[] = {
   { _XMP_GASNET_LOCK_REQUEST,   _xmp_gasnet_lock_request },
@@ -25,7 +26,12 @@ void _XMP_gasnet_set_coarray(_XMP_coarray_t *coarray, void **addr, unsigned long
   for(i=0;i<numprocs;i++)
     each_addr[i] = (char *)(_xmp_gasnet_buf[i]) + _xmp_coarray_shift;
 
-  _xmp_coarray_shift += type_size * number_of_elements;
+    if(type_size % _XMP_GASNET_ALIGNMENT == 0)
+      _xmp_coarray_shift += type_size * number_of_elements;
+    else{
+      int tmp_type_size = ((type_size / _XMP_GASNET_ALIGNMENT) + 1) * _XMP_GASNET_ALIGNMENT;
+      _xmp_coarray_shift += tmp_type_size * number_of_elements;
+    }
 
   if(_xmp_coarray_shift > _xmp_heap_size){
     if(gasnet_mynode() == 0){
