@@ -1239,8 +1239,13 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft)
         }
     }
 
+#ifdef not
     return expv_reduce(expv_cons(ARRAY_REF,
                                  tp, vary, subs), FALSE);
+#else /* msato */
+    return expv_reduce(expv_cons(ARRAY_REF,
+                                 bottom_type(tp), vary, subs), FALSE);
+#endif
 }
 
 
