@@ -1,6 +1,7 @@
 #include "xmp_internal.h"
 #include "xmp_atomic.h"
-#define _XMP_POST_WAIT_CHUNK 256
+#define _XMP_POST_WAIT_QUEUESIZE 32
+#define _XMP_POST_WAIT_QUEUECHUNK 512
 
 typedef struct request_list{
   int node;
@@ -19,8 +20,8 @@ static post_wait_obj_t pw;
 void _xmp_gasnet_post_initialize(){
   gasnet_hsl_init(&pw.hsl);
   pw.wait_num            = 0;
-  pw.list                = malloc(sizeof(request_list_t) * _XMP_POST_WAIT_CHUNK);
-  pw.list_size           = _XMP_POST_WAIT_CHUNK;
+  pw.list                = malloc(sizeof(request_list_t) * _XMP_POST_WAIT_QUEUESIZE);
+  pw.list_size           = _XMP_POST_WAIT_QUEUESIZE;
 }
 
 static void _xmp_pw_push(int node, int tag){
@@ -40,9 +41,9 @@ static void _xmp_gasnet_do_post(int node, int tag){
   else{  // pw.wait_num > 0
     if(pw.list_size == pw.wait_num){
       request_list_t *old_list = pw.list;
-      pw.list_size += _XMP_POST_WAIT_CHUNK;
+      pw.list_size += _XMP_POST_WAIT_QUEUECHUNK;
       pw.list = malloc(sizeof(request_list_t) * pw.list_size);
-      memcpy(pw.list, old_list, sizeof(request_list_t) * pw.list_size);
+      memcpy(pw.list, old_list, sizeof(request_list_t) * pw.wait_num);
       free(old_list);
     }
     else if(pw.list_size < pw.wait_num){  // This statement does not executed.
