@@ -36,7 +36,7 @@ II. Implementation Status
 
   B. Template Directive
    ':' cannot be used for <template-spec>.
-   ("template_fix" ditective is not supported in this release)
+   ("template_fix" ditective is not supported in this release)
 
   C. Distribute Directive
    "gblock", Block-cyclic("cyclic(w)") distribution is not implemented.
