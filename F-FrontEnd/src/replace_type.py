@@ -1,10 +1,5 @@
 #!/usr/bin/python
 
-# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
-# $TSUKUBA_Copyright:
-#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
-#  $
-
 import sys, re
 
 TYPE_ID_DICT = {}

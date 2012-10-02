@@ -12,6 +12,6 @@
       module sup_mod
         use inf_mod
 
-        integer,public :: func
+        public :: func
 
       end module sup_mod
