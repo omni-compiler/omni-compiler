@@ -22,8 +22,9 @@ enum XMP_st_pragma {
     XMP_ST_END
 };
 
-static int XMP_st_required, XMP_st_flag;
+static enum XMP_st_pragma XMP_st_required, XMP_st_flag;
 expv XMP_gmove_directive;
+expv XMP_array_directive;
 
 int XMP_io_desired_statements = 0;
 
@@ -223,6 +224,12 @@ void compile_XMP_directive(expr x)
       XMP_gmove_directive = x;
       break;
 
+    case XMP_ARRAY:
+      check_INEXEC();
+      XMP_st_required = XMP_ST_ARRAY;
+      XMP_array_directive = x;
+      break;
+
     case XMP_REFLECT:
       check_INEXEC();
       /* check arg: (arrayNameList???, opt) */
@@ -394,13 +401,13 @@ int XMP_output_st_pragma(expv v)
 					 EXPR_ARG2(XMP_gmove_directive),v));
 	return TRUE;
     case XMP_ST_ARRAY:
-	
+	output_statement(XMP_pragma_list(XMP_ARRAY,
+					 EXPR_ARG2(XMP_array_directive),v));
+	return TRUE;
     default:
-
 	return FALSE;
     }
 }
-
 
 /*
  * Close XMP_{MASTER|GLOBAL}_IO_BEGIN closure.
