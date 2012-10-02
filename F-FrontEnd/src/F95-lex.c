@@ -18,7 +18,7 @@ int XMP_flag = FALSE;
 int cond_compile_enabled = FALSE;
 
 /* lexical analyzer */
-/* enable to parse  for progma.  */
+/* enable to parse for pragma.  */
 int PRAGMA_flag = TRUE;
 
 #define TOLOWER(x) (isupper((int)(x))) ? tolower((int)(x)) : (x)
@@ -291,8 +291,10 @@ yylex()
 static int
 yylex0()
 {
-  int t;
+    int t;
     static int tkn_cnt; 
+    char *p;
+
     switch(lexstate){
     case LEX_NEW_STATEMENT:
     again:
@@ -311,11 +313,13 @@ yylex0()
         if(st_OMP_flag && OMP_flag){
             lexstate = LEX_OMP_TOKEN;
 	    /* bufptr = pragmaBuf+3; *//* skip omp */
+	    for(p = bufptr; *p != '\0'; p++) *p = TOLOWER(*p);
             return OMPKW_LINE;
         }
         if(st_XMP_flag && XMP_flag){
             lexstate = LEX_XMP_TOKEN;
 	    /* bufptr = pragmaBuf+3; *//* skip omp */
+	    for(p = bufptr; *p != '\0'; p++) *p = TOLOWER(*p);
             return XMPKW_LINE;
         }
         if (st_OMP_flag || st_XMP_flag || st_PRAGMA_flag
@@ -2081,7 +2085,7 @@ again:
             /* dumb copy */
             strcpy( st_buffer, oBuf );
             st_len = strlen( st_buffer );
-        }else{
+        } else {
             q = st_buffer+st_len;
             l = ScanFortranLine(pp, oBuf, q, st_buffer, bufMax,
                                 &inQuote, &qChar, &inH, &hLen, &p, &q);
@@ -3584,6 +3588,7 @@ XMP_lex_token()
     } 
     return token();
 }
+
 #ifdef not
 static int 
 is_XMP_sentinel(char **pp)
@@ -3612,6 +3617,7 @@ is_XMP_sentinel(char **pp)
     return FALSE;
 }
 #endif
+
 /* sentinel list functions */
 /* initialize sentinel list */
 static void init_sentinel_list( sentinel_list * p )
@@ -3622,6 +3628,7 @@ static void init_sentinel_list( sentinel_list * p )
         p->name_list[i] = NULL;
     }
 }
+
 /* add sentinel name to list */
 static int add_sentinel( sentinel_list * p, char* name )
 {
@@ -3632,16 +3639,19 @@ static int add_sentinel( sentinel_list * p, char* name )
     p->sentinel_count++;
     return 1;
 }
+
 /* sentinel count */
 static unsigned int sentinel_count( sentinel_list * p )
 {
     return p->sentinel_count;
 }
+
 /* sentinel name by index */
 static char * sentinel_name( sentinel_list * p, unsigned int n )
 {
     return p->name_list[n];
 }
+
 /* sentinel index by name */
 static int sentinel_index( sentinel_list * p, char * name )
 {
