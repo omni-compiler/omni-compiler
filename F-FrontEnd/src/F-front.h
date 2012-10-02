@@ -69,7 +69,9 @@ extern int doImplicitUndef;
 extern int nerrors;
 
 /* max nam length */
-#define MAX_NAME_LEN    30
+#define MAX_NAME_LEN_F77          31    /* limitation of fortran 77, 90 */
+#define MAX_NAME_LEN_F03          63    /* limitation of fortran 2003 */
+#define MAX_NAME_LEN_UPPER_LIMIT 256   /* upper bound */
 #define MAX_DIM  7
 
 extern unsigned long int maxStackSize;
@@ -104,6 +106,7 @@ extern FILE *source_file,*output_file;
 extern int fixed_format_flag;
 extern char *includeDirv[MAXINCLUDEDIRV + 1];
 extern int includeDirvI;
+extern const char * search_include_path(const char *);
 
 enum fixed_line_len_kind {
 	FIXED_LINE_LEN_72,
@@ -251,9 +254,12 @@ typedef struct {
     ID                  local_labels;
     EXT_ID              local_external_symbols;
 
+    int			implicit_none;
+    int                 implicit_type_declared;
     TYPE_DESC           implicit_types[IMPLICIT_ALPHA_NUM];
     enum storage_class  implicit_stg[IMPLICIT_ALPHA_NUM];
     expv                implicit_decls;
+    expv                initialize_decls;
     expv                equiv_decls;
     expv                use_decls;
 } *UNIT_CTL;
@@ -271,9 +277,12 @@ typedef struct {
 #define UNIT_CTL_LOCAL_COMMON_SYMBOLS(u)        ((u)->local_common_symbols)
 #define UNIT_CTL_LOCAL_LABELS(u)                ((u)->local_labels)
 #define UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(u)      ((u)->local_external_symbols)
+#define UNIT_CTL_IMPLICIT_NONE(u)               ((u)->implicit_none)
 #define UNIT_CTL_IMPLICIT_TYPES(u)              ((u)->implicit_types)
+#define UNIT_CTL_IMPLICIT_TYPE_DECLARED(u)      ((u)->implicit_type_declared)
 #define UNIT_CTL_IMPLICIT_STG(u)                ((u)->implicit_stg)
 #define UNIT_CTL_IMPLICIT_DECLS(u)              ((u)->implicit_decls)
+#define UNIT_CTL_INITIALIZE_DECLS(u)            ((u)->initialize_decls)
 #define UNIT_CTL_EQUIV_DECLS(u)                 ((u)->equiv_decls)
 #define UNIT_CTL_USE_DECLS(u)                   ((u)->use_decls)
 
@@ -293,6 +302,7 @@ extern int unit_ctl_level;
 #define CURRENT_EXT_ID              UNIT_CTL_CURRENT_EXT_ID(CURRENT_UNIT_CTL)
 #define CURRENT_STATE               UNIT_CTL_CURRENT_STATE(CURRENT_UNIT_CTL)
 #define CURRENT_INTERFACE           UNIT_CTL_CURRENT_INTERFACE(CURRENT_UNIT_CTL)
+#define CURRENT_INITIALIZE_DECLS    UNIT_CTL_INITIALIZE_DECLS(CURRENT_UNIT_CTL)
 #define LOCAL_SYMBOLS               UNIT_CTL_LOCAL_SYMBOLS(CURRENT_UNIT_CTL)
 #define LOCAL_STRUCT_DECLS          UNIT_CTL_LOCAL_STRUCT_DECLS(CURRENT_UNIT_CTL)
 #define LOCAL_COMMON_SYMBOLS        UNIT_CTL_LOCAL_COMMON_SYMBOLS(CURRENT_UNIT_CTL)
@@ -341,6 +351,7 @@ extern expv expv_float_0;
 
 extern int OMP_flag;
 extern int XMP_flag;
+extern int cond_compile_enabled;
 
 #define EMPTY_LIST list0(LIST)
 
@@ -395,6 +406,7 @@ extern char *   xmalloc _ANSI_ARGS_((int size));
 extern void     error EXC_VARARGS(char *, fmt);
 extern void     fatal EXC_VARARGS(char *, fmt);
 extern void     warning EXC_VARARGS(char *, fmt);
+extern void     warning_lineno ( lineno_info * info, char * fmt, ...);
 extern void     error_at_node EXC_VARARGS(expr, x);
 extern void     error_at_id EXC_VARARGS(ID, x);
 extern void     warning_at_node EXC_VARARGS(expr, x);
@@ -418,11 +430,11 @@ extern void     pop_ctl _ANSI_ARGS_((void));
 extern void     check_INDATA _ANSI_ARGS_((void));
 extern void     check_INDCL _ANSI_ARGS_((void));
 extern void     check_INEXEC _ANSI_ARGS_((void));
-extern void     include_file(char *name, int inside_use, char *module_name);
+extern void     include_file(char *name, int inside_use);
 extern void     push_unit_ctl _ANSI_ARGS_((enum prog_state));
 extern void     pop_unit_ctl _ANSI_ARGS_((void));
 
-extern void     set_implicit_type_uc _ANSI_ARGS_((UNIT_CTL uc, TYPE_DESC tp, int c1, int c2));
+extern void     set_implicit_type_uc _ANSI_ARGS_((UNIT_CTL uc, TYPE_DESC tp, int c1, int c2, int ignore_declared_flag));
 extern void     set_implicit_type _ANSI_ARGS_((TYPE_DESC tp, int c1, int c2));
 extern void     set_implicit_storage_uc _ANSI_ARGS_((UNIT_CTL uc, enum storage_class stg, int c1, int c2));
 extern void     set_implicit_storage _ANSI_ARGS_((enum storage_class stg, int c1, int c2));
@@ -445,6 +457,7 @@ extern void     compile_SEQUENCE_statement _ANSI_ARGS_((void));
 extern void     compile_COMMON_decl _ANSI_ARGS_((expr com_list));
 extern void     compile_IMPLICIT_decl _ANSI_ARGS_((expr v1,expr v2));
 extern void     compile_PARAM_decl _ANSI_ARGS_((expr const_list));
+extern void	postproc_PARAM_decl _ANSI_ARGS_((expr ident, expr e));
 
 extern expv     compile_logical_expression _ANSI_ARGS_((expr x));
 extern expv     compile_logical_expression_with_array _ANSI_ARGS_((expr x));
@@ -486,15 +499,19 @@ extern expv     convertSubstrRefToPointerRef _ANSI_ARGS_((expv org, expv *lenVPt
 extern ID       declare_function _ANSI_ARGS_((ID id));
 extern ID       declare_ident _ANSI_ARGS_((SYMBOL s, enum name_class class));
 extern ID       declare_common_ident _ANSI_ARGS_((SYMBOL s));
+extern ID       find_ident_head _ANSI_ARGS_((SYMBOL s, ID head));
 extern ID       find_ident _ANSI_ARGS_((SYMBOL s));
+extern ID       find_ident_local _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_parent _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_sibling _ANSI_ARGS_((SYMBOL s));
 extern ID       find_struct_member _ANSI_ARGS_((TYPE_DESC struct_td, SYMBOL sym));
 extern ID       find_external_ident_head _ANSI_ARGS_((SYMBOL s));
+extern EXT_ID   find_ext_id_head _ANSI_ARGS_((SYMBOL s, EXT_ID head));
 extern EXT_ID   find_ext_id _ANSI_ARGS_((SYMBOL s));
 extern EXT_ID   find_ext_id_parent _ANSI_ARGS_((SYMBOL s));
 extern EXT_ID   find_ext_id_sibling _ANSI_ARGS_((SYMBOL s));
 extern int      char_length _ANSI_ARGS_((TYPE_DESC tp));
+extern TYPE_DESC  find_struct_decl_head _ANSI_ARGS_((SYMBOL s, TYPE_DESC head));
 extern TYPE_DESC  find_struct_decl _ANSI_ARGS_((SYMBOL s));
 extern TYPE_DESC  find_struct_decl_parent _ANSI_ARGS_((SYMBOL s));
 extern TYPE_DESC  find_struct_decl_sibling _ANSI_ARGS_((SYMBOL s));
@@ -523,6 +540,8 @@ extern void     compile_pragma_statement _ANSI_ARGS_((expr x));
 extern int      type_is_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
 extern int      type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
+extern int      type_is_specific_than
+                    _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
 
 extern int      type_is_possible_dreal(TYPE_DESC tp);
 extern int      is_array_size_adjustable(TYPE_DESC tp);
@@ -532,9 +551,15 @@ extern expv     expv_power_expr _ANSI_ARGS_((expv left, expv right));
 extern TYPE_DESC        max_type _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
 extern expv             max_shape _ANSI_ARGS_((expv lshape, expv rshape, int select));
 extern int              is_variable_shape _ANSI_ARGS_((expv shape));
+extern int              score_array_spec _ANSI_ARGS_((expv aSpec));
+extern expv             combine_array_specs _ANSI_ARGS_((expv l, expv r));
+extern int              array_spec_size _ANSI_ARGS_((expv shape, expv dimShape,
+                                                expv *whichSPtr));
+extern void             set_index_range_type _ANSI_ARGS_((expv v));
 extern TYPE_DESC        type_ref _ANSI_ARGS_((TYPE_DESC tp));
 extern TYPE_DESC        struct_type  _ANSI_ARGS_((ID id));
 extern TYPE_DESC        function_type _ANSI_ARGS_((TYPE_DESC tp));
+extern TYPE_DESC        new_type_subr _ANSI_ARGS_((void));
 extern TYPE_DESC        type_char _ANSI_ARGS_((int len));
 extern TYPE_DESC        type_basic _ANSI_ARGS_((BASIC_DATA_TYPE t));
 extern TYPE_DESC        array_element_type _ANSI_ARGS_((TYPE_DESC tp));
@@ -579,6 +604,7 @@ extern expr     list5 _ANSI_ARGS_((enum expr_code code, expr x1, expr x2, expr x
 
 extern expr     expr_list_get_n _ANSI_ARGS_((expr x, int n));
 extern int      expr_list_set_n _ANSI_ARGS_((expr x, int n, expr val, int doOverride));
+extern int      expr_list_length _ANSI_ARGS_((expr x));
 
 extern expr     list_cons _ANSI_ARGS_((expr v, expr w));
 extern expr     list_put_last _ANSI_ARGS_((expr lx, expr x));
@@ -668,9 +694,7 @@ extern expv     ExpandImpliedDoInDATA _ANSI_ARGS_((expv spec, expv new));
 extern void     compile_OMN_directive _ANSI_ARGS_((expr x));
 extern void     begin_module _ANSI_ARGS_((expr name));
 extern void     end_module _ANSI_ARGS_((void));
-extern void     do_use _ANSI_ARGS_((expr name));
 extern omllint_t getExprValue(expv v);
-extern char *   genFunctionTypeID(EXT_ID ep);
 
 extern EXT_ID    define_external_function_id _ANSI_ARGS_((ID id));
 extern ID        declare_function_result_id(SYMBOL s, TYPE_DESC tp);
@@ -692,13 +716,16 @@ extern TYPE_DESC               bottom_type(TYPE_DESC tp); /* bottom type of arra
 extern TYPE_DESC               get_bottom_ref_type(TYPE_DESC tp);
 
 extern TYPE_DESC               wrap_type(TYPE_DESC tp);
+extern void                    merge_attributes(TYPE_DESC tp1, TYPE_DESC tp2);
 extern TYPE_DESC               type_link_add(TYPE_DESC tp, TYPE_DESC tlist, TYPE_DESC ttail);
+
+extern int is_array_shape_assumed(TYPE_DESC tp);
+extern int is_descendant_coindexed(TYPE_DESC tp);
 
 extern void     checkTypeRef(ID id);
 
 extern int      checkInsideUse(void);
 extern void     setIsOfModule(ID id);
-extern void     checkDefinedModule(ID id);
 
 /* inform lexer 'FUNCITION' is appearable in next line. */
 extern void set_function_disappear(void);

@@ -9,13 +9,21 @@
 expv OMP_check_SECTION(expr x);
 expv OMP_pragma_list(enum OMP_pragma pragma,expv arg1,expv arg2);
 expv OMP_FOR_pragma_list(expv clause,expv statements);
+expv OMP_atomic_statement(expv v);
 
 void compile_OMP_name_list(expr x);
 void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel,
 			  expv *pc,expv *dc);
 
-int OMP_do_required;
-int OMP_atomic_required;
+static int OMP_do_required;
+
+enum OMP_st_pragma {
+    OMP_ST_NONE,
+    OMP_ST_ATOMIC,
+    OMP_ST_END
+};
+
+static enum OMP_st_pragma OMP_st_required, OMP_st_flag;
 
 int OMP_reduction_op(expr v)
 {
@@ -35,7 +43,7 @@ int OMP_reduction_op(expr v)
 void init_for_OMP_pragma()
 {
     OMP_do_required = FALSE;
-    OMP_atomic_required = FALSE;
+    OMP_st_required = OMP_ST_NONE;
 }
 
 void check_for_OMP_pragma(expr x)
@@ -46,7 +54,7 @@ void check_for_OMP_pragma(expr x)
 	OMP_do_required = FALSE;
 	return;
     }
-    if(OMP_atomic_required){
+    if(OMP_st_required != OMP_ST_NONE){
 	if(EXPR_CODE(x) != F_LET_STATEMENT)
 	    error("OpenMP ATOMIC directives must be followed by assignment");
 	return;
@@ -69,6 +77,24 @@ void check_for_OMP_pragma(expr x)
 	}
 	EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top));
 	pop_ctl();
+    }
+}
+
+void OMP_check_LET_statement()
+{
+    OMP_st_flag = OMP_st_required;
+    OMP_st_required = OMP_ST_NONE;
+}
+
+int OMP_output_st_pragma(expv v)
+{
+    switch(OMP_st_flag){
+    case OMP_ST_ATOMIC:
+	output_statement(OMP_pragma_list(OMP_ATOMIC, list0(LIST), 
+					 list1(EXPR_STATEMENT, v)));
+	return TRUE;
+    default:
+	return FALSE;
     }
 }
     
@@ -102,10 +128,6 @@ expv OMP_FOR_pragma_list(expv clause,expv statements)
     return statements;
 }
 
-expv OMP_atomic_statement(expv v)
-{
-    return OMP_pragma_list(OMP_ATOMIC,NULL,list1(EXPR_STATEMENT,v));
-}
 
 void compile_OMP_directive(expr x)
 {
@@ -115,10 +137,10 @@ void compile_OMP_directive(expr x)
 
     if(x == NULL) return;	/* error */
 
-    if(debug_flag){
-	printf("OMP_directive:\n");
-	expv_output(x,stdout);
-	printf("\n");
+    if (debug_flag) {
+	fprintf(stderr, "OMP_directive:\n");
+	expv_output(x, stderr);
+	fprintf(stderr, "\n");
     }
 
     if(OMP_do_required){
@@ -127,20 +149,25 @@ void compile_OMP_directive(expr x)
 	return;
     }
 
-    if(OMP_atomic_required){
+    if(OMP_st_required != OMP_ST_NONE){
 	error("OpenMP ATOMIC directives must be followed by assignment");
 	return;
     }
 
     dir = EXPR_ARG1(x);
 
-    if(EXPR_INT(dir) == OMP_F_THREADPRIVATE) check_INDCL();
-    else check_INEXEC();
+    if (EXPR_INT(dir) == OMP_F_THREADPRIVATE) {
+        check_INDCL();
+    } else {
+        check_INEXEC();
+    }
 
-    if(EXPR_INT(dir) != OMP_F_END_DO &&
-       EXPR_INT(dir) != OMP_F_END_PARALLEL_DO)
+    if (EXPR_INT(dir) != OMP_F_END_DO &&
+        EXPR_INT(dir) != OMP_F_END_PARALLEL_DO &&
+        EXPR_INT(dir) != OMP_F_ATOMIC) {
 	check_for_OMP_pragma(NULL);  /* close DO directives if any */
-	
+    }
+
     switch(EXPR_INT(dir)){
     case OMP_F_PARALLEL:
 	push_ctl(CTL_OMP);
@@ -269,7 +296,7 @@ void compile_OMP_directive(expr x)
 	    pop_ctl();
 	} else  error("OpenMP SINGLE block is not closed");
 	return;
-	
+
     case OMP_F_MASTER:
     case OMP_F_ORDERED:
 	push_ctl(CTL_OMP);
@@ -281,7 +308,7 @@ void compile_OMP_directive(expr x)
 	if(CTL_TYPE(ctl_top) == CTL_OMP &&
 	   CTL_OMP_ARG_DIR(ctl_top) == OMP_F_MASTER){
 	    CTL_BLOCK(ctl_top) = 
-		OMP_pragma_list(OMP_MASTER,NULL,CURRENT_STATEMENTS);
+		OMP_pragma_list(OMP_MASTER, list0(LIST), CURRENT_STATEMENTS);
 	    EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top));
 	    pop_ctl();
 	} else  error("OpenMP MASTER block is not closed");
@@ -291,7 +318,7 @@ void compile_OMP_directive(expr x)
 	if(CTL_TYPE(ctl_top) == CTL_OMP &&
 	   CTL_OMP_ARG_DIR(ctl_top) == OMP_F_ORDERED){
 	    CTL_BLOCK(ctl_top) = 
-		OMP_pragma_list(OMP_ORDERED,NULL,CURRENT_STATEMENTS);
+		OMP_pragma_list(OMP_ORDERED, list0(LIST), CURRENT_STATEMENTS);
 	    EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top));
 	    pop_ctl();
 	} else  error("OpenMP ORDERED block is not closed");
@@ -326,8 +353,14 @@ void compile_OMP_directive(expr x)
 	return;
 	
     case OMP_F_BARRIER:
-	output_statement(OMP_pragma_list(OMP_BARRIER,NULL,NULL));
+	output_statement(OMP_pragma_list(OMP_BARRIER, list0(LIST), NULL));
 	return;
+
+#ifdef notyet
+    case OMP_F_TASKWAIT:
+	output_statement(OMP_pragma_list(OMP_TASKWAIT, list0(LIST), NULL));
+	return;
+#endif /* notyet */
 
     case OMP_F_FLUSH:
 	c = EXPR_ARG2(x);
@@ -340,10 +373,11 @@ void compile_OMP_directive(expr x)
 	compile_OMP_name_list(c);
 	output_statement(OMP_pragma_list(OMP_THREADPRIVATE,c,NULL));
 	return;
-	
+
     case OMP_F_ATOMIC:
-	OMP_atomic_required = TRUE;
+	OMP_st_required = OMP_ST_ATOMIC;
 	break;
+
     default:
 	fatal("unknown OMP pragma");
     }

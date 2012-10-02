@@ -234,7 +234,7 @@
 %token OMPKW_FLUSH
 %token OMPKW_THREADPRIVATE
 
-%type <val> omp_directive omp_nowait_option omp_clause_option omp_clause_list omp_clause omp_list omp_common_list omp_default_attr omp_copyin_list omp_schedule_arg
+%type <val> omp_directive omp_nowait_option omp_clause_option omp_clause_list omp_clause omp_list /*omp_common_list*/ omp_default_attr omp_copyin_list omp_schedule_arg
 %type <code> omp_schedule_attr omp_reduction_op
 
 /* XcalableMP directive */
@@ -259,6 +259,7 @@
 %token XMPKW_WAIT
 %token XMPKW_POST
 %token XMPKW_CRITICAL
+%token XMPKW_ARRAY
 
 %token XMPKW_ON
 %token XMPKW_ONTO
@@ -279,7 +280,7 @@
 %token XMPKW_ATOMIC
 %token XMPKW_DIRECT
 
-%type <val> xmp_directive xmp_nodes_clause xmp_template_clause xmp_distribute_clause xmp_align_clause xmp_shadow_clause xmp_task_clause xmp_loop_clause xmp_reflect_clause xmp_gmove_clause xmp_barrier_clause xmp_bcast_clause xmp_reduction_clause xmp_nodes_ref 
+%type <val> xmp_directive xmp_nodes_clause xmp_template_clause xmp_distribute_clause xmp_align_clause xmp_shadow_clause xmp_task_clause xmp_loop_clause xmp_reflect_clause xmp_gmove_clause xmp_barrier_clause xmp_bcast_clause xmp_reduction_clause xmp_array_clause xmp_nodes_ref 
 
 %type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_on_ref xmp_reduction_opt xmp_reduction_spec xmp_gmove_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options
 
@@ -325,13 +326,13 @@ expr st_name;
 %type <val> declaration_list entity_decl type_spec type_spec0 length_spec common_decl
 %type <val> common_block external_decl intrinsic_decl equivalence_decl
 %type <val> cray_pointer_list cray_pointer_pair cray_pointer_var
-%type <val> equiv_list data data_list data_val_list data_val value simple_value save_list save_item const_list const_item common_var data_var data_var_list image_dims image_dim_list image_dim image_dims_alloc image_dim_list_alloc image_dim_alloc dims dim_list dim ubound label_list implicit_decl imp_list letter_group letter_groups namelist_decl namelist_entry namelist_list ident_list access_ident_list access_ident
+%type <val> equiv_list data data_list data_val_list data_val value simple_value save_list save_item const_list const_item common_var data_var data_var_list image_dims image_dim_list image_dim image_dims_alloc image_dim_list_alloc image_dim_alloc dims dim_list dim ubound label_list implicit_decl imp_list letter_group letter_groups namelist_decl namelist_list ident_list access_ident_list access_ident
 %type <val> do_spec arg arg_list parenthesis_arg_list image_selector cosubscript_list
 %type <val> set_expr
 %type <val> io_statement format_spec ctl_list io_clause io_list_or_null io_list io_item
 %type <val> IDENTIFIER CONSTANT const kind_parm GENERIC_SPEC USER_DEFINED_OP
 
-%type <val> name name_or_null generic_name defined_operator func_prefix prefix_spec
+%type <val> name name_or_null generic_name defined_operator intrinsic_operator func_prefix prefix_spec
 %type <val> declaration_statement95 attr_spec_list attr_spec access_spec
 %type <val> intent_spec kind_selector kind_or_len_selector char_selector len_key_spec len_spec kind_key_spec array_allocation_list  array_allocation defered_shape_list defered_shape
 %type <val> result_opt type_keyword
@@ -339,6 +340,7 @@ expr st_name;
 %type <val> use_rename_list use_rename use_only_list use_only 
 %type <val> allocation_list allocation
 %type <val> scene_list scene_range
+
 
 %start program
 %%
@@ -394,6 +396,12 @@ statement:      /* entry */
           { $$ = list1(F95_INTERFACE_STATEMENT,NULL); }
         | ENDINTERFACE generic_name
           { $$ = list1(F95_ENDINTERFACE_STATEMENT,$2); }
+        | ENDINTERFACE generic_name '(' '=' ')'
+          { $$ = list1(F95_ENDINTERFACE_STATEMENT,$2); }
+        | ENDINTERFACE generic_name '(' intrinsic_operator ')'
+          { $$ = list1(F95_ENDINTERFACE_STATEMENT,$2); }
+        | ENDINTERFACE generic_name '(' USER_DEFINED_OP ')'
+          { $$ = list1(F95_ENDINTERFACE_STATEMENT,$2); }	
         | ENDINTERFACE
           { $$ = list1(F95_ENDINTERFACE_STATEMENT,NULL); }
         | MODULEPROCEDURE ident_list
@@ -452,7 +460,7 @@ result_opt:    /* null */
           { $$ = $3; }
         ;
 
-defined_operator: '.'
+intrinsic_operator: '.'
         { $$ = list0(F95_DOTOP); }
         | POWER
         { $$ = list0(F95_POWEOP); }
@@ -488,6 +496,9 @@ defined_operator: '.'
         { $$ = list0(F95_NEQVOP); }
         | CONCAT
         { $$ = list0(F95_CONCATOP); }
+        ;
+
+defined_operator: intrinsic_operator
         | '.' IDENTIFIER '.'
         { $$ = list1(F95_USER_DEFINED, $2); }
         ;
@@ -551,8 +562,8 @@ declaration_statement:
         { $$ = list1(F_COMMON_DECL,$2); }
         | EXTERNAL COL2_or_null external_decl
         { $$ = list1(F_EXTERNAL_DECL, $3); }
-        | INTRINSIC intrinsic_decl
-        { $$ = list1(F_INTRINSIC_DECL,$2); }
+        | INTRINSIC COL2_or_null intrinsic_decl
+        { $$ = list1(F_INTRINSIC_DECL,$3); }
         | EQUIV equivalence_decl
         { $$ = list1(F_EQUIV_DECL,$2); }
         | DATA data
@@ -634,6 +645,8 @@ array_allocation:
         { $$ = list5(F95_ARRAY_ALLOCATION, $1, NULL, NULL, NULL, NULL); }
         | IDENTIFIER '(' defered_shape_list ')'
         { $$ = list5(F95_ARRAY_ALLOCATION, $1, $3, NULL, NULL, NULL); }
+        | IDENTIFIER '(' defered_shape_list ')' REF_OP IDENTIFIER '(' ')'
+        { $$ = list5(F95_ARRAY_ALLOCATION, $1, $3, $6, NULL, NULL); }
         ;
 
 defered_shape_list:
@@ -735,7 +748,17 @@ entity_decl:
           IDENTIFIER  dims image_dims length_spec
         { $$ = list5(LIST,$1,$2,$4,NULL,$3); }
         | IDENTIFIER  dims image_dims length_spec '=' expr
-        { $$ = list5(LIST,$1,$2,$4,$6,$3); }
+        { $$ = list5(LIST,$1,$2,$4,$6,$3);}
+        | IDENTIFIER  dims image_dims length_spec '/' data_val_list '/'
+        { $$ = list5(LIST,$1,$2,$4,
+                     list1(F_DATA_DECL,
+                           list1(LIST,
+                                 list2(LIST,
+                                       list1(LIST, $1 ),
+                                       $6 ))), $3);
+        }
+        | IDENTIFIER  dims image_dims length_spec REF_OP expr
+        { $$ = list5(LIST,$1,$2,$4,$6,$3);}
         ;
 
 type_spec: type_spec0 { $$ = $1; /* need_keyword = TRUE; */ };
@@ -1076,14 +1099,10 @@ letter_group:  IDENTIFIER
         { $$ = list2(LIST,$1,$3); }
         ;
 
-namelist_decl:        namelist_entry
-        { $$ = list1(LIST,$1); }
-        | namelist_decl namelist_entry
-        { $$ = list_put_last($1,$2); }
-        ;
-
-namelist_entry:  '/' IDENTIFIER '/' namelist_list
-        { $$ = list2(LIST,$2,$4); }
+namelist_decl: '/' IDENTIFIER '/' namelist_list
+        { $$ = list1(LIST,list2(LIST,$2,$4)); }
+        | '/' IDENTIFIER '/' namelist_list comma_or_null namelist_decl
+        { $$ = list_cons(list2(LIST,$2,$4),$6); }
         ;
 
 namelist_list:  IDENTIFIER
@@ -1103,6 +1122,8 @@ executable_statement:
         { $$ = list3(F_DO_STATEMENT, $2, $3, st_name); }
         | DO label ',' do_spec  /* for dusty deck */
         { $$ = list3(F_DO_STATEMENT, $2, $4, st_name); }
+        | DO label
+        { $$ = list3(F_DO_STATEMENT, $2, NULL, st_name); }
         | DO do_spec
         { $$ = list3(F_DO_STATEMENT,NULL, $2, st_name); }
         | DO
@@ -1123,10 +1144,29 @@ executable_statement:
         { $$ = list0(F_ENDIF_STATEMENT); }
         | DOWHILE '(' expr ')'
         { $$ = list3(F_DOWHILE_STATEMENT, NULL, $3, st_name); }
+	/***
+	WHERE, ELSEWHERE and ENDWHERE implimanetation is not appropriate now.
+	it should be:
+
+	 | WHERE '(' expr ')' 
+	 {...}
+	 | ELSEWHERE '(' expr ')'
+	 {...}
+	 | ELSEWHERE 
+	 {...}
+         | ENDWHERE
+         {...}
+
+	 then on compiling procedure switch cotrol-type 
+	 CTL_WHERE/CTL_ELSE_WHERE and treat coming statement 
+	 appropriately.
+	 ***/
         | WHERE '(' expr ')' assign_statement_or_null
         { $$ = list2(F_WHERE_STATEMENT,$3,$5); }
         | ELSEWHERE
         { $$ = list0(F_ELSEWHERE_STATEMENT); }
+        | ELSEWHERE '(' expr ')' assign_statement_or_null
+        { $$ = list2(F_ELSEWHERE_STATEMENT, $3, $5); }
         | ENDWHERE
         { $$ = list0(F_ENDWHERE_STATEMENT); }
         | SELECT '(' expr ')'
@@ -1613,7 +1653,7 @@ omp_directive:
 	  { $$ = OMP_LIST(OMP_F_ORDERED,NULL); }
 	| OMPKW_END OMPKW_ORDERED
 	  { $$ = OMP_LIST(OMP_F_END_ORDERED,NULL); }
-	| OMPKW_THREADPRIVATE '(' omp_common_list ')'
+	| OMPKW_THREADPRIVATE '(' omp_list ')'
 	  { $$ = OMP_LIST(OMP_F_THREADPRIVATE,$3); }
 	;
 
@@ -1677,14 +1717,14 @@ omp_list:
 	| omp_list ',' IDENTIFIER
 	  { $$ = list_put_last($1,$3); }
 	;
-
+/*
 omp_common_list:
 	  '/' IDENTIFIER '/'
 	 { $$ = list1(LIST,list1(LIST,$2)); }
 	| omp_common_list ',' '/' IDENTIFIER '/'
 	 { $$ = list_put_last($1,list1(LIST,$4)); }
 	;
-
+*/
 omp_copyin_list:
 	  IDENTIFIER
 	  { $$ = list1(LIST,$1); }
@@ -1755,6 +1795,8 @@ xmp_directive:
 	    { $$ = XMP_LIST(XMP_REDUCTION,$2); }
 	  | XMPKW_BCAST xmp_bcast_clause
 	    { $$ = XMP_LIST(XMP_BCAST,$2); }
+	  | XMPKW_ARRAY xmp_array_clause
+	    { $$ = XMP_LIST(XMP_ARRAY,$2); }
 
 	  | XMPKW_MASTER_IO xmp_master_io_options
 	    { $$ = XMP_LIST(XMP_MASTER_IO_BEGIN, $2); }
@@ -1855,6 +1897,11 @@ xmp_reduction_clause:
 	        { $$ = list3(LIST,$1,NULL,$2); }
 	     | xmp_reduction_spec XMPKW_ON xmp_on_ref xmp_clause_opt
                 { $$ = list3(LIST,$1,$3,$4); }
+	     ;
+
+xmp_array_clause:
+	     XMPKW_ON xmp_on_ref xmp_clause_opt
+                { $$ = list2(LIST,$2,$3); }
 	     ;
 
 /* 

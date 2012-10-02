@@ -13,10 +13,19 @@ int check_for_XMP_pragma(int st_no, expr x);
 
 // void compile_XMP_name_list(expr x);
 
-int XMP_do_required;
-int XMP_gmove_required;
-int XMP_io_desired_statements = 0;
+static int XMP_do_required;
+
+enum XMP_st_pragma {
+    XMP_ST_NONE,
+    XMP_ST_GMOVE,
+    XMP_ST_ARRAY,
+    XMP_ST_END
+};
+
+static int XMP_st_required, XMP_st_flag;
 expv XMP_gmove_directive;
+
+int XMP_io_desired_statements = 0;
 
 typedef enum _xmp_list_context {
     XMP_LIST_NODES,
@@ -61,12 +70,8 @@ expv XMP_pragma_list(enum XMP_pragma pragma,expv arg1,expv arg2)
 void init_for_XMP_pragma()
 {
     XMP_do_required = FALSE;
-    XMP_gmove_required = FALSE;
+    XMP_st_required = XMP_ST_NONE;
     XMP_io_desired_statements = 0;
-}
-
-expv XMP_gmove_statement(expv v){
-    return XMP_pragma_list(XMP_GMOVE,EXPR_ARG2(XMP_gmove_directive),v);
 }
 
 /*
@@ -91,9 +96,9 @@ void compile_XMP_directive(expr x)
 	return;
     }
 
-    if(XMP_gmove_required){
-	error("XcalableMP GMOVE directives must be followed by assignment");
-	XMP_gmove_required = FALSE;
+    if(XMP_st_required != XMP_ST_NONE){
+	error("XcalableMP GMOVE/ARRAY directives must be followed by assignment");
+	XMP_st_required = XMP_ST_NONE;
 	return;
     }
 
@@ -214,7 +219,7 @@ void compile_XMP_directive(expr x)
 
     case XMP_GMOVE:
       check_INEXEC();
-      XMP_gmove_required = TRUE;
+      XMP_st_required = XMP_ST_GMOVE;
       XMP_gmove_directive = x;
       break;
 
@@ -333,9 +338,9 @@ int check_for_XMP_pragma(int st_no, expr x)
     goto done;
   }
   
-  if(XMP_gmove_required){
+  if(XMP_st_required != XMP_ST_NONE){
     if(EXPR_CODE(x) != F_LET_STATEMENT)
-      error("XcalableMP GMOVE directives must be followed by assignment");
+      error("XcalableMP GMOVE/ARRAY directives must be followed by assignment");
     goto done;
   }
 
@@ -374,6 +379,28 @@ int check_for_XMP_pragma(int st_no, expr x)
 done:
   return ret;
 }
+
+void XMP_check_LET_statement()
+{
+    XMP_st_flag = XMP_st_required;
+    XMP_st_required = XMP_ST_NONE;
+}
+
+int XMP_output_st_pragma(expv v)
+{
+    switch(XMP_st_flag){
+    case XMP_ST_GMOVE:
+	output_statement(XMP_pragma_list(XMP_GMOVE,
+					 EXPR_ARG2(XMP_gmove_directive),v));
+	return TRUE;
+    case XMP_ST_ARRAY:
+	
+    default:
+
+	return FALSE;
+    }
+}
+
 
 /*
  * Close XMP_{MASTER|GLOBAL}_IO_BEGIN closure.

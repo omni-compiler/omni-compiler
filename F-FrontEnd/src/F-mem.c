@@ -10,43 +10,6 @@
 
 #include "F-front.h"
 
-ID
-new_ident_desc(sp)
-     SYMBOL sp;
-{
-    ID id;
-    id = XMALLOC(ID,sizeof(*id));
-    ID_SYM(id) = sp;
-    return(id);
-}
-
-EXT_ID
-new_external_id(sp)
-     SYMBOL sp;
-{
-    EXT_ID id;
-    id = XMALLOC(EXT_ID,sizeof(*id));
-    EXT_SYM(id) = sp;
-    return(id);
-}
-
-EXT_ID
-new_external_id_for_external_decl(SYMBOL sp, TYPE_DESC tp)
-{
-    EXT_ID id = new_external_id(sp);
-    EXT_TAG(id) = STG_EXT;
-    EXT_PROC_TYPE(id) = tp;
-    return id;
-}
-
-TYPE_DESC
-new_type_desc()
-{
-    TYPE_DESC tp;
-    tp = XMALLOC(TYPE_DESC,sizeof(*tp));
-    return(tp);
-}
-
 /* construct expression */
 expv
 expv_cons(code,tp,left,right)
@@ -255,3 +218,18 @@ expr_list_set_n(x, n, val, doOverride)
     return TRUE;
 }
 
+
+int
+expr_list_length(expr x) {
+    int ret = 0;
+
+    if (EXPR_CODE_IS_LIST(EXPR_CODE(x))) {
+        list lp;
+
+        FOR_ITEMS_IN_LIST(lp, x) {
+            ret++;
+        }
+    }
+
+    return ret;
+}

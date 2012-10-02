@@ -54,6 +54,7 @@ T    F_FUNC
 T    ID_LIST
 L    VAR_DECL
 L    EXT_DECL
+L    F_MODULE_INTERNAL
 
 # for FORTRAN Xcode
 

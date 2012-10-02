@@ -98,7 +98,7 @@ expv_output_rec(v,l,fp)
                 FOREACH_ID(id, EXPV_ANY(ID, v)) {
                     if(i++ > 0)
                         fprintf(fp, ",");
-                    fprintf(fp, ID_NAME(id));
+                    fprintf(fp, "%s", ID_NAME(id));
                 }
                 fprintf(fp,"})");
             } else {
@@ -223,7 +223,10 @@ print_type(TYPE_DESC tp, FILE *fp, int recursive)
         return;
     }
     if(IS_STRUCT_TYPE(tp) && TYPE_REF(tp) == NULL){
-        fprintf(fp,"{type(%s):",SYM_NAME(ID_SYM(TYPE_TAGNAME(tp))));
+        if(TYPE_TAGNAME(tp))
+            fprintf(fp,"{type(%s):",SYM_NAME(ID_SYM(TYPE_TAGNAME(tp))));
+        else
+            fprintf(fp,"{type(<NULL>):"); // tagname may be private
         fprintf(fp,"\n");
         if(recursive == TRUE) {
             print_IDs(TYPE_MEMBER_LIST(tp),fp,FALSE);

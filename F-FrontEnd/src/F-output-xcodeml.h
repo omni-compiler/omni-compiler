@@ -11,12 +11,15 @@
 #ifndef _F_XCODEML_H_
 #define _F_XCODEML_H_
 
+#include "module-manager.h"
+
 #ifdef Min
 #undef Min
 #endif
 #define Min(a, b) (((a) > (b)) ? (b) : (a))
 
 extern void output_XcodeML_file();
+extern void output_module_file(struct module *);
 
 #define CEXPR_OPTVAL_CHARLEN 128
 
@@ -25,6 +28,7 @@ extern void output_XcodeML_file();
 #define F_FRONTEND_NAME "XcodeML/Fortran-FrontEnd"
 #define F_TARGET_LANG   "Fortran"
 #define F_FRONTEND_VER  "1.0"
+#define F_MODULE_VER  "1.0"
 
 extern char s_timestamp[];
 extern char s_xmlIndent[];

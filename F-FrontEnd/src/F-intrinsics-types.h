@@ -74,7 +74,11 @@ typedef enum {
     INTR_TYPE_TARGET,
 
     INTR_TYPE_ANY_ARRAY_ALLOCATABLE,
-    INTR_TYPE_ANY_OPTIONAL
+    INTR_TYPE_ANY_OPTIONAL,
+
+
+    /* For NULL(void) */
+    INTR_TYPE_LHS
 
 } INTR_DATA_TYPE;
 
@@ -96,6 +100,7 @@ typedef enum {
     INTR_DIM,
     INTR_DIMAG,
     INTR_DPROD,
+    INTR_DREAL,
     INTR_INT,
     INTR_MAX,
     INTR_MIN,
@@ -293,6 +298,9 @@ typedef struct {
 
                         /* -6 : return type completely differs to any
                             args and always scalar type. */
+
+                        /* -7 : return type always comforms to the
+                            left hand. */
 
     int langSpec;
 } intrinsic_entry;

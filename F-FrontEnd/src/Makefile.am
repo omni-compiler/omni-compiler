@@ -3,14 +3,14 @@
 #  $
 bin_PROGRAMS=F_Front
 
-F_Front_SOURCES= F95-main.c C-expr-mem.c C-exprcode.c \
+F_Front_SOURCES= F95-main.c C-expr-mem.c C-exprcode.c F-datatype.c F-ident.c \
 	F95-parser.y F-mem.c F-compile.c F-compile-decl.c F-compile-expr.c \
 	F-opt-expv.c F-output-xcodeml.c F-io-xcodeml.c \
 	F-data.c F-datasub.c F-equiv.c F-varutil.c \
 	F-intrinsic.c F-intrinsics-table.c F-OMP.c F-XMP.c\
 	xcodeml-node.c xcodeml-parse.c \
 	 xcodeml-util.c xcodeml-type.c xcodeml-traverse.c xcodeml-output-F.c \
-	F-dump.c F-type-attr-tbl.c
+	F-dump.c F-type-attr-tbl.c module-manager.c hash.c F-input-xmod.c
 
 AM_YFLAGS=-v
 

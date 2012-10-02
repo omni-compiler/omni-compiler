@@ -10,6 +10,7 @@
  */
 
 #include "F-front.h"
+#include "module-manager.h"
 
 #include <sys/wait.h>
 
@@ -39,7 +40,6 @@ extern long prelast_initial_line_pos;
 
 extern char xmodule_path[MAX_PATH_LEN];
 extern char *myName;
-extern int  mcLn_no;
 extern int  flag_module_compile;
 extern char *original_source_file_name;
 extern int fixed_line_len_kind;
@@ -57,6 +57,7 @@ TYPE_DESC type_REAL, type_INT, type_SUBR, type_CHAR, type_LOGICAL;
 TYPE_DESC type_DREAL, type_COMPLEX, type_DCOMPLEX;
 TYPE_DESC type_MODULE;
 TYPE_DESC type_GNUMERIC_ALL;
+TYPE_DESC type_NAMELIST;
 TYPE_DESC basic_type_desc[N_BASIC_TYPES];
 expv expv_constant_1,expv_constant_0,expv_constant_m1;
 expv expv_float_0;
@@ -102,7 +103,7 @@ static expv compile_scene_range_expression_list(
                             expr scene_range_expression_list);
 static void fix_array_dimensions_recursive(ID ip);
 static void fix_pointer_pointee_recursive(TYPE_DESC tp);
-static TYPE_DESC new_type_subr(void);
+static void compile_data_style_decl(expr x);
 
 
 void init_for_OMP_pragma();
@@ -140,6 +141,7 @@ initialize_compile()
     type_CHAR = BASIC_TYPE_DESC(TYPE_CHAR);
     TYPE_CHAR_LEN(type_CHAR) = 1;
     type_GNUMERIC_ALL = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+    type_NAMELIST = BASIC_TYPE_DESC(TYPE_NAMELIST);
 
     expv_constant_1 = expv_int_term(INT_CONSTANT,type_INT,1);
     expv_constant_0 = expv_int_term(INT_CONSTANT,type_INT,0);
@@ -367,9 +369,21 @@ void compile_statement1(int st_no, expr x)
     case F_FUNCTION_STATEMENT:
         /* (F_FUNCTION_STATEMENT name dummy_arg_list type) */
         begin_procedure();
-        declare_procedure(CL_PROC, EXPR_ARG1(x),
-                          compile_type(EXPR_ARG3(x)),
-                          EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));
+        if (EXPR_ARG3(x) && EXPR_CODE(EXPR_ARG3(x)) == IDENT) {
+            /* in case of struct */
+            TYPE_DESC tp = find_struct_decl(EXPR_SYM(EXPR_ARG3(x)));
+            if (tp) {
+                declare_procedure(CL_PROC, EXPR_ARG1(x),
+                                  tp,
+                                  EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));
+            }else{
+                error("unknown type of function");
+            }
+        }else{
+            declare_procedure(CL_PROC, EXPR_ARG1(x),
+                              compile_type(EXPR_ARG3(x)),
+                              EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));
+        }
         break;
     case F_ENTRY_STATEMENT:
         /* (F_ENTRY_STATEMENT name dummy_arg_list) */
@@ -388,7 +402,7 @@ void compile_statement1(int st_no, expr x)
         v = EXPR_ARG1(x);
         if(v == NULL) break; /* error recovery */
         if(EXPR_CODE(v) == STRING_CONSTANT) {
-            include_file(EXPR_STR(v), FALSE, NULL);
+            include_file(EXPR_STR(v), FALSE);
         }
         else error("bad file name in include statement");
         break;
@@ -440,6 +454,12 @@ void compile_statement1(int st_no, expr x)
     case F_TYPE_DECL: /* (F_TYPE_DECL type (LIST data ....) (LIST attr ...)) */
         check_INDCL();
         compile_type_decl(EXPR_ARG1(x), NULL, EXPR_ARG2(x),EXPR_ARG3(x));
+        /* in case of data-style initializer like "INTEGER A / 10 /",
+         * F_TYPE_DECL has data structure like, (LIST, IDENTIFIER,
+         * dims, length, (F_DATA_DECL, LIST(..) ), data_val_list) so
+         * separate and compile data declarations after type
+         * declarations. */
+        compile_data_style_decl(EXPR_ARG2(x));
         break;
 
     case F95_DIMENSION_DECL: /* (F95_DIMENSION_DECL (LIST data data)) */
@@ -474,11 +494,14 @@ void compile_statement1(int st_no, expr x)
                 compile_IMPLICIT_decl(EXPR_ARG1(v),EXPR_ARG2(v));
             }
 	  }
-	}
-	else { /* implicit none */
-	  set_implicit_type(NULL, 'a', 'z');
-	  list_put_last(UNIT_CTL_IMPLICIT_DECLS(CURRENT_UNIT_CTL),
-			create_implicit_decl_expv(NULL, "a", "z"));
+	} else { /* implicit none */
+            if (UNIT_CTL_IMPLICIT_TYPE_DECLARED(CURRENT_UNIT_CTL))
+                error("IMPLICIT NONE and IMPLICIT type declaration "
+                      "cannot co-exist");
+            UNIT_CTL_IMPLICIT_NONE(CURRENT_UNIT_CTL) = TRUE;
+            set_implicit_type_uc(CURRENT_UNIT_CTL, NULL, 'a', 'z', TRUE);
+            list_put_last(UNIT_CTL_IMPLICIT_DECLS(CURRENT_UNIT_CTL),
+                          create_implicit_decl_expv(NULL, "a", "z"));
 	}
 
         break;
@@ -512,7 +535,8 @@ void compile_statement1(int st_no, expr x)
 
     case F_DATA_DECL:
         check_INDCL();
-        compile_DATA_decl(EXPR_ARG1(x));
+        /* compilataion is executed later in end_declaration */
+        list_put_last(CURRENT_INITIALIZE_DECLS, x);
         break;
 
     case F_INTRINSIC_DECL:
@@ -533,10 +557,12 @@ void compile_statement1(int st_no, expr x)
         break;
 
     case F95_OPTIONAL_STATEMENT:
+        check_INDCL();
         compile_OPTIONAL_statement(x);
         break;
 
     case F95_INTENT_STATEMENT:
+        check_INDCL();
         compile_INTENT_statement(x);
         break;
 
@@ -731,21 +757,49 @@ void compile_statement1(int st_no, expr x)
         }
         break;
     case F_ELSEWHERE_STATEMENT:
-        if(CTL_TYPE(ctl_top) == CTL_WHERE){
-            /* store current statements to 'then' part, and clear */
-            CTL_WHERE_THEN(ctl_top) = CURRENT_STATEMENTS;
-            CURRENT_STATEMENTS = NULL;
+        check_INEXEC();
+        if(CTL_TYPE(ctl_top) == CTL_WHERE){ /* check WHERE-BLOCK  */
+            if( EXPR_LIST(x)==NULL ){ /*  no condition  */
+                /* store current statements to 'then' part, and clear */
+                CTL_WHERE_THEN(ctl_top) = CURRENT_STATEMENTS;
+                CURRENT_STATEMENTS = NULL;
 
-            /* change to CTL_ELSE_WHERE */
-            CTL_TYPE(ctl_top) = CTL_ELSE_WHERE;
+                /* change to CTL_ELSE_WHERE */
+                CTL_TYPE(ctl_top) = CTL_ELSE_WHERE;
+                
+                if (endlineno_flag){
+                    st = list0(F_ELSEWHERE_STATEMENT);
+                    output_statement(st);
+                    CURRENT_STATEMENTS = NULL;
+                    EXPR_ARG5(CTL_WHERE_STATEMENT(ctl_top)) = st;
+                }
+            }else{ /*  has condition  */
+                CTL_WHERE_THEN(ctl_top) = CURRENT_STATEMENTS;
+                CURRENT_STATEMENTS = NULL;
+                
+                /* evaluate condition and make WHERE_STATEMENT clause */
+                v = compile_logical_expression_with_array(EXPR_ARG1(x));
+                
+                st = list5(F_WHERE_STATEMENT,v,NULL,NULL,NULL,NULL);
+                output_statement(st);
+                
+                CTL_WHERE_ELSE(ctl_top) = CURRENT_STATEMENTS;
+                CURRENT_STATEMENTS = NULL;
+                
+                /* set current WHERE_STATEMENT */
+                CTL_WHERE_STATEMENT(ctl_top) = st;
 
-	    if (endlineno_flag){
-	      st = list0(F_ELSEWHERE_STATEMENT);
-	      output_statement(st);
-	      CURRENT_STATEMENTS = NULL;
-	      EXPR_ARG5(CTL_WHERE_STATEMENT(ctl_top)) = st;
-	    }
-
+                if(EXPR_ARG2(x) != NULL) {
+                    compile_statement1(st_no, EXPR_ARG2(x));
+                    /* TODO x must be array assignment expression,
+                     * and shape of array is equal to v
+                     */
+                
+                    CTL_WHERE_THEN(ctl_top) = CURRENT_STATEMENTS;
+                    pop_ctl();  /* pop and output */
+                    break;
+                }
+            }
         } else error("'elsewhere', out of place");
         break;
     case F_ENDWHERE_STATEMENT:
@@ -909,7 +963,6 @@ allocate_temp(TYPE_DESC tp)
     return ID_ADDR(id);
 }
 
-
 /* 
  * executable statement 
  */
@@ -920,22 +973,19 @@ compile_exec_statement(expr x)
     expv w,v1,v2;
     SYMBOL s;
     ID id;
-    int OMP_atomic_flag;
-    extern int OMP_atomic_required;
-    extern expv OMP_atomic_statement(expv v);
-    int XMP_gmove_flag;
-    extern int XMP_gmove_required;
-    extern expv XMP_gmove_statement(expv v);
+
+    extern void OMP_check_LET_statement();
+    extern int OMP_output_st_pragma(expv w);
+    extern void XMP_check_LET_statement();
+    extern int XMP_output_st_pragma(expv w);
 
     if(EXPR_CODE(x) != F_LET_STATEMENT) check_INEXEC();
 
     switch(EXPR_CODE(x)){
 
     case F_LET_STATEMENT: /* (F_LET_STATEMENT lhs rhs) */
-	OMP_atomic_flag = OMP_atomic_required;
-	OMP_atomic_required = FALSE;
-	XMP_gmove_flag = XMP_gmove_required;
-	XMP_gmove_required = FALSE;
+	OMP_check_LET_statement();
+	XMP_check_LET_statement();
 
       if (CURRENT_STATE == OUTSIDE) {
 	begin_procedure();
@@ -960,6 +1010,10 @@ compile_exec_statement(expr x)
 	    id = find_ident(s);
 	    if (id == NULL)
 	      id = declare_ident(s, CL_UNKNOWN);
+            if (ID_IS_AMBIGUOUS(id)) {
+                error_at_node(x, "an ambiguous reference to symbol '%s'", ID_NAME(id));
+                return;
+            }
 	    if (ID_CLASS(id) == CL_UNKNOWN){
 	      if (CURRENT_STATE != INEXEC) {
 		declare_statement_function(id,v1,v2);
@@ -987,14 +1041,9 @@ compile_exec_statement(expr x)
 	  break;
 	}
 
-	if(OMP_atomic_flag){
-	    output_statement(OMP_atomic_statement(w));
-	    break;
-	}
-	if(XMP_gmove_flag){
-	    output_statement(XMP_gmove_statement(w));
-	    break;
-	}
+	if(OMP_output_st_pragma(w)) break;
+	if(XMP_output_st_pragma(w)) break;
+
 	output_statement(w);
 	break;
 
@@ -1183,7 +1232,7 @@ checkTypeRef(ID id) {
 (ID_CLASS(ip) == CL_UNKNOWN ||                  \
  ID_CLASS(ip) == CL_VAR ||                      \
  ID_CLASS(ip) == CL_PARAM ||                                    \
- (ID_CLASS(ip) == CL_PROC && (PROC_CLASS(ip) != P_EXTERNAL || PROC_CLASS(ip) != P_DEFINEDPROC)) || \
+ (ID_CLASS(ip) == CL_PROC && (PROC_CLASS(ip) != P_EXTERNAL && PROC_CLASS(ip) != P_DEFINEDPROC)) || \
  ID_CLASS(ip) == CL_ENTRY)
 
 
@@ -1284,6 +1333,18 @@ union_parent_type(ID id)
     }
 }
 
+static int isAlreadyMarked(ID id)
+{
+    TYPE_DESC tp = ID_TYPE(id);
+
+    if (tp == NULL)
+        return (TYPE_IS_PUBLIC(id) || TYPE_IS_PRIVATE(id));
+    else
+        return (TYPE_IS_PUBLIC(id) || TYPE_IS_PRIVATE(id) ||
+                TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp));
+}
+
+
 /* called at the end of declaration part */
 static void
 end_declaration()
@@ -1379,6 +1440,12 @@ end_declaration()
             TYPE_SET_RECURSIVE(ID_TYPE(myId));
             TYPE_SET_RECURSIVE(EXT_PROC_TYPE(myEId));
         }
+        /* for pure */
+        if (TYPE_IS_PURE(myId) ||
+            PROC_IS_PURE(myId)) {
+            TYPE_SET_PURE(ID_TYPE(myId));
+            TYPE_SET_PURE(EXT_PROC_TYPE(myEId));
+        }
     }
 
     /*
@@ -1429,37 +1496,45 @@ end_declaration()
     FOREACH_ID (ip, LOCAL_SYMBOLS) {
 
         struct type_attr_check *check;
+        EXT_ID ep;
 
         tp = ID_TYPE(ip);
 
         if (tp == NULL) {
             implicit_declaration(ip);
             tp = ID_TYPE(ip);
-            if(tp == NULL)
-                continue;
+        }
+
+        /* fix external identifier whose type is not fixed */
+        if (tp == NULL && 
+            ID_CLASS(ip) == CL_PROC &&
+            PROC_CLASS(ip) == P_EXTERNAL) {
+            tp = new_type_subr();
+            declare_id_type(ip, tp);
+        }
+
+        if(tp == NULL)
+            continue;
+
+        /* public or private attribute is handled only in module. */
+        if (CURRENT_PROC_CLASS == CL_MODULE) {
+            if (ID_MAY_HAVE_ACCECIBILITY(ip) && !isAlreadyMarked(ip)) {
+                if (current_module_state == M_PUBLIC) {
+                    TYPE_SET_PUBLIC(ip);
+                }
+                if (current_module_state == M_PRIVATE) {
+                    TYPE_SET_PRIVATE(ip);
+                }
+            }
         }
 
         /* merge type attribute flags except SAVE attr*/
         TYPE_ATTR_FLAGS(tp) |= (TYPE_ATTR_FLAGS(ip) & ~TYPE_ATTR_SAVE);
 
-        if (CURRENT_PROC_CLASS == CL_PROC) {
-            /* For variables in inner procedure,
-             * public or private attribute is not available.
-             */
-#if 0
-            TYPE_UNSET_PUBLIC(tp);
-            TYPE_UNSET_PRIVATE(tp);
-#endif
-        } else {
-            if (!IS_TYPE_PUBLICORPRIVATE(tp) && ID_STORAGE(ip) != STG_ARG) {
-                if (current_module_state == M_PUBLIC) {
-                    TYPE_SET_PUBLIC(tp);
-                }
-                if (current_module_state == M_PRIVATE) {
-                    TYPE_SET_PRIVATE(tp);
-                }
-            }
-        }
+        /* copy type attribute flags to EXT_PROC_TYPE */
+        ep = PROC_EXT_ID(ip);
+        if (ep != NULL && EXT_PROC_TYPE(ep) != NULL)
+            TYPE_ATTR_FLAGS(EXT_PROC_TYPE(ep)) = TYPE_ATTR_FLAGS(tp);
 
         if (TYPE_IS_EXTERNAL(tp)) {
             if(ID_STORAGE(ip) != STG_ARG)
@@ -1506,23 +1581,40 @@ end_declaration()
             TYPE_SET_SAVE(tp);
         }
 
-        /* multiple type attribute check */
-        for(check = type_attr_checker; check->flag; check++) {
-            if (ID_CLASS(ip) == CL_MODULE) {
-                continue;
-            }
-            
-            if ((TYPE_ATTR_FLAGS(tp) & check->flag) &&
-                (TYPE_ATTR_FLAGS(tp) & ~check->acceptable_flags)) {
-                struct type_attr_check *e;
-                for(e = type_attr_checker; e->flag; e++) {
-                    if ((TYPE_ATTR_FLAGS(tp) & ~check->acceptable_flags) & 
-                        e->flag)
-                        fprintf(stderr, "%s has %s\n", ID_NAME(ip),
-                                e->flag_name);
+        if (ID_CLASS(ip) != CL_MODULE) {
+            /* multiple type attribute check */
+            for (check = type_attr_checker; check->flag; check++) {
+                if (TYPE_ATTR_FLAGS(tp) & check->flag) {
+                    uint32_t a = TYPE_ATTR_FLAGS(tp) & 
+                        ~check->acceptable_flags;
+                    if (debug_flag) {
+                        fprintf(stderr,
+                                "ID '%s' attr 0x%08x : "
+                                "matches 0x%08x ('%s'), "
+                                "flags allowed 0x%08x (negation: 0x%08x), "
+                                "logical AND: 0x%08x\n",
+                                ID_NAME(ip), TYPE_ATTR_FLAGS(tp),
+                                check->flag,
+                                check->flag_name,
+                                check->acceptable_flags,
+                                ~check->acceptable_flags,
+                                a);
+                    }
+                    if (TYPE_ATTR_FLAGS(tp) & ~check->acceptable_flags) {
+                        struct type_attr_check *e;
+                        for (e = type_attr_checker; e->flag; e++) {
+                            if (TYPE_ATTR_FLAGS(tp) & e->flag) {
+                                fprintf(stderr, "%s has %s\n", ID_NAME(ip),
+                                        e->flag_name);
+                            }
+                        }
+                        fatal("type attr error: "
+                              "symbol=%s attribute=%s flags=0x%08x",
+                              ID_NAME(ip),
+                              check->flag_name,
+                              TYPE_ATTR_FLAGS(tp));
+                    }
                 }
-                fatal("type attr error: symbol=%s attribute=%s flags=0x%08x",
-                    ID_NAME(ip), check->flag_name, TYPE_ATTR_FLAGS(tp));
             }
         }
     }
@@ -1592,12 +1684,11 @@ end_declaration()
         if(ep == NULL || EXT_PROC_ARGS(ep) == NULL)
             continue;
         FOR_ITEMS_IN_LIST (lp, EXT_PROC_ARGS(ep)) {
-            expv varg, vid, vidaddr;
+            expv varg, vid;
             ID idarg;
             
             varg = LIST_ITEM(lp);
             vid = EXPR_ARG1(varg);
-            vidaddr = EXPR_ARG2(varg);
             idarg = find_ident(EXPR_SYM(vid));
             if(idarg == NULL)
                 continue;
@@ -1685,6 +1776,23 @@ end_declaration()
         compile_EQUIVALENCE_decl(LIST_ITEM(lp));
     }
 
+    /* execute postponed compilation of initial values */
+    FOR_ITEMS_IN_LIST (lp, CURRENT_INITIALIZE_DECLS) {
+        v = LIST_ITEM(lp);
+        switch (EXPR_CODE(v)) {
+        case F_PARAM_DECL:
+            postproc_PARAM_decl(EXPR_ARG1(v), EXPR_ARG2(v));
+            break;
+        case F_DATA_DECL:
+            compile_DATA_decl(EXPR_ARG1(v));
+            break;
+        default:
+            continue;
+        }
+    }
+    delete_list(CURRENT_INITIALIZE_DECLS);
+    CURRENT_INITIALIZE_DECLS = EMPTY_LIST;
+
     /*
      * Finally, ready for exec-statements.
      */
@@ -1695,6 +1803,7 @@ end_declaration()
         output_statement(make_enode(FIRST_EXECUTION_POINT, (void *)NULL));
     }
 }
+
 
 EXT_ID
 define_external_function_id(ID id) {
@@ -1843,7 +1952,15 @@ end_contains()
 
             FOREACH_EXT_ID(intrDef, EXT_PROC_INTR_DEF_EXT_IDS(intr)) {
                 if(EXT_PROC_IS_MODULE_PROCEDURE(intrDef)) {
-                    ep = find_ext_id(EXT_SYM(intrDef));
+                    ID id = find_ident_parent(EXT_SYM(intrDef));
+                    if(id != NULL
+                       && ID_CLASS(id) == CL_PROC
+                       && id->use_assoc != NULL) {
+                        // intrDef is use associated module procedure.
+                        ep = PROC_EXT_ID(id);
+                    } else {
+                        ep = find_ext_id(EXT_SYM(intrDef));
+                    }
                     if(ep == NULL || EXT_TAG(ep) != STG_EXT ||
                         EXT_PROC_TYPE(ep) == NULL) {
                         error("%s is not defined in CONTAINS",
@@ -1881,10 +1998,14 @@ end_contains()
     return;
 }
 
+/**
+ * search for the defined procedure from the unit ctl procedure stack.
+ */
 static EXT_ID
-procedure_defined(ID f_id, EXT_ID defined_proc)
+procedure_defined(ID f_id, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_level)
 {
-    EXT_ID ep;
+    EXT_ID ep, defined_proc;
+    int i;
 
     if(f_id == NULL || ID_CLASS(f_id) != CL_PROC) {
         if(debug_flag)
@@ -1898,9 +2019,12 @@ procedure_defined(ID f_id, EXT_ID defined_proc)
         return NULL;
     }
 
-    FOREACH_EXT_ID(ep, defined_proc) {
-        if(EXT_SYM(ep) == ID_SYM(f_id))
-            return ep;
+    for(i = redefine_unit_ctl_level; i >= 0; i--) {
+        defined_proc = unit_ctl_procs[i];
+        FOREACH_EXT_ID(ep, defined_proc) {
+            if(EXT_SYM(ep) == ID_SYM(f_id))
+                return ep;
+        }
     }
 
     return NULL;
@@ -1910,46 +2034,66 @@ procedure_defined(ID f_id, EXT_ID defined_proc)
  * fix undefined procedure with already defined procedure.
  */
 static void
-redefine_procedures(EXT_ID proc, EXT_ID defined_proc)
+redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_level)
 {
     EXT_ID ep;
     ID id, local_ids;
+    int i;
 
-    FOREACH_EXT_ID(ep, proc) {
+    if (proc == NULL)
+        return;
+    unit_ctl_procs[redefine_unit_ctl_level] = EXT_PROC_CONT_EXT_SYMS(proc);
+
+    if(debug_flag) {
+        for(i = redefine_unit_ctl_level; i >= 0; i--) fprintf(debug_fp,"  ");
+        fprintf(debug_fp,"redefine '%s'\n", SYM_NAME(EXT_SYM(proc)));
+        for(i = redefine_unit_ctl_level; i >= 0; i--) fprintf(debug_fp,"  ");
+        fprintf(debug_fp,"contain procedure : {\n");
+        FOREACH_EXT_ID(ep, unit_ctl_procs[redefine_unit_ctl_level]){
+            for(i = redefine_unit_ctl_level; i >= 0; i--) fprintf(debug_fp,"  ");
+            fprintf(debug_fp,"  %s\n", SYM_NAME(EXT_SYM(ep)));
+        }
+        for(i = redefine_unit_ctl_level; i >= 0; i--) fprintf(debug_fp,"  ");
+        fprintf(debug_fp,"}\n");
+    }
+
+    FOREACH_EXT_ID(ep, EXT_PROC_CONT_EXT_SYMS(proc)) {
         /* redefine recursive. */
-        redefine_procedures(EXT_PROC_CONT_EXT_SYMS(ep), defined_proc);
+        redefine_procedures(ep, unit_ctl_procs, redefine_unit_ctl_level + 1);
+    }
 
-        local_ids = EXT_PROC_ID_LIST(ep);
+    local_ids = EXT_PROC_ID_LIST(proc);
 
-        FOREACH_ID(id, local_ids) {
-            EXT_ID proc;
+    FOREACH_ID(id, local_ids) {
+        EXT_ID contained_proc;
 
-            if(ID_CLASS(id) != CL_PROC ||
-               PROC_CLASS(id) != P_UNDEFINEDPROC)
-                continue;
+        if(ID_CLASS(id) != CL_PROC ||
+           PROC_CLASS(id) != P_UNDEFINEDPROC)
+            continue;
 
-            proc = procedure_defined(id, defined_proc);
-            if (proc == NULL) {
-                PROC_CLASS(id)  = P_EXTERNAL;
+        contained_proc = procedure_defined(id, unit_ctl_procs, redefine_unit_ctl_level);
+        if (contained_proc == NULL) {
+            EXT_ID external_proc = NULL;
+            PROC_CLASS(id)  = P_EXTERNAL;
 
-		EXT_ID ep;
-		FOREACH_EXT_ID(ep, EXTERNAL_SYMBOLS){
-		  if (EXT_SYM(ep) == ID_SYM(id)){
-		    proc = ep;
-		    break;
-		  }
-		}
-
-		if (!proc)
-		  proc = declare_external_proc_id(ID_SYM(id), ID_TYPE(id), TRUE);
-
-                EXT_TAG(proc) = STG_EXT;
-                PROC_EXT_ID(id) = proc;
-            } else {
-                /* undefine procedure is defined in contains statement. */
-                PROC_CLASS(id)  = P_DEFINEDPROC;
-                PROC_EXT_ID(id) = proc;
+            EXT_ID ep;
+            FOREACH_EXT_ID(ep, EXTERNAL_SYMBOLS){
+                if (EXT_SYM(ep) == ID_SYM(id)){
+                    external_proc = ep;
+                    break;
+                }
             }
+
+            if (!external_proc)
+                external_proc = declare_external_proc_id(ID_SYM(id), ID_TYPE(id), TRUE);
+
+            EXT_TAG(external_proc) = STG_EXT;
+            PROC_EXT_ID(id) = external_proc;
+
+        } else {
+            /* undefine procedure is defined in contains statement. */
+            PROC_CLASS(id)  = P_DEFINEDPROC;
+            PROC_EXT_ID(id) = contained_proc;
         }
     }
 }
@@ -2000,7 +2144,7 @@ static void
 end_procedure()
 {
     ID id;
-    EXT_ID ext,cont;
+    EXT_ID ext;
 
     if (unit_ctl_level > 0 && CURRENT_PROC_NAME == NULL) {
         /* if CURRENT_PROC_NAME == NULL, then this is the end of CONTAINS */
@@ -2096,7 +2240,8 @@ end_procedure()
             declare_variable(id);
         }
 
-        if(ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) {
+        if ((ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) ||
+            ID_CLASS(id) == CL_ENTRY) {
             PROC_CLASS(id) = P_DEFINEDPROC;
             if(unit_ctl_level != 0) {
                 TYPE_DESC tp;
@@ -2119,6 +2264,7 @@ end_procedure()
 
                 PROC_CLASS(id_in_parent) = PROC_CLASS(id);
                 PROC_ARGS(id_in_parent) = PROC_ARGS(id);
+                ID_CLASS(id_in_parent) = ID_CLASS(id);
                 ID_STORAGE(id_in_parent) = STG_EXT;
                 PROC_EXT_ID(id_in_parent) = PROC_EXT_ID(id);
                 PROC_CLASS(id_in_parent) = P_DEFINEDPROC;
@@ -2187,6 +2333,14 @@ end_procedure()
         CURRENT_STATEMENTS = NULL;
     }
 
+    /*
+     * set self in parent to procedure.
+     */
+    if(CURRENT_PROC_CLASS == CL_PROC
+       && (id = find_ident_parent(CURRENT_PROC_NAME)) != NULL) {
+        ID_CLASS(id) = CL_PROC;
+    }
+
     /* output */
     switch (CURRENT_PROC_CLASS) {
     case CL_MAIN:
@@ -2234,17 +2388,26 @@ end_procedure()
     switch (CURRENT_PROC_CLASS) {
     case CL_MAIN:
     case CL_PROC:
-    case CL_MODULE:
+    case CL_MODULE: {
+        /* EXT_ID list, used as a stack.*/
+        EXT_ID unit_ctl_procs[MAX_UNIT_CTL];
         if(unit_ctl_level != 0)
             break;
         ext = UNIT_CTL_CURRENT_EXT_ID(CURRENT_UNIT_CTL);
         if(ext == NULL)
             break;
-        cont = EXT_PROC_CONT_EXT_SYMS(ext);
-        redefine_procedures(ext, cont);
-        break;
+        redefine_procedures(ext, unit_ctl_procs, unit_ctl_level);
+    } break;
     default:
         break;
+    }
+
+    if(CURRENT_PROC_CLASS == CL_MODULE) {
+        SYMBOL sym = find_symbol(current_module_name);
+        if(!export_module(sym, LOCAL_SYMBOLS)) {
+            error("internal error, fail to export module.");
+            exit(1);
+        }
     }
 
     /* check control nesting */
@@ -2541,17 +2704,6 @@ begin_module(expr name)
   module_start_offset = prelast_initial_line_pos;
 }
 
-/* get .xmod file name by module name */
-static char*
-get_xmod_filename(char *module_name)
-{
-    static char file_name[MAX_PATH_LEN];
-
-    strcpy(file_name, module_name);
-    strcat(file_name, ".xmod");
-    return file_name;
-}
-
 /*
  * compile END MODULE statement and
  * output module's XcodeML file.
@@ -2559,141 +2711,236 @@ get_xmod_filename(char *module_name)
 void
 end_module()
 {
-
-    static char buf[MAX_PATH_LEN * 4];
-    static char opt[MAX_PATH_LEN];
-
-    int i, ret;
-
     current_module_state = M_DEFAULT;
-    /* check the module compile?  */
-    if (mcLn_no != -1)
-        return; /* then nothing to do.  */
-
-    if (flag_module_compile || nerrors > 0)
-        goto skipMC;
-
-    /* else fork the module compile this module section as seek point.  */
-    opt[0] = '\0';
-
-    if(langSpecSet == LANGSPEC_F77_SET)
-        strcat(opt, " -f77");
-    else if(langSpecSet == LANGSPEC_F90_SET)
-        strcat(opt, " -f90");
-    else if(langSpecSet == LANGSPEC_F95_SET)
-        strcat(opt, " -f95");
-    else
-        abort();
-
-    if(fixed_format_flag)
-        strcat(opt, " -force-fixed-format");
-
-    switch(fixed_line_len_kind) {
-    case FIXED_LINE_LEN_132:
-        strcat(opt, " -fixed-line-length-132");
-        break;
-    default:
-        break;
-    }
-
-    for(i = 0; i < includeDirvI; ++i) {
-        strcat(opt, " -I ");
-        strcat(opt, includeDirv[i]);
-    }
-
-    if(OMP_flag) strcat(opt," -fopenmp");
-    if(XMP_flag) strcat(opt," -fxmp");
-
-    /*
-     * source file name must be original file name.
-     * file name which can get from lexer such as
-     * FILE_NAME macro is effected by '# [lineno]' directive.
-     */
-    assert(original_source_file_name);
-
-    sprintf (buf, "%s %s -TD=%s -MC=%d:%ld:%ld %s -o %s",
-             myName,
-             opt,
-             xmodule_path,
-             module_start_ln_no - 1,
-             module_start_offset,
-             last_initial_line_pos,
-             original_source_file_name,
-             get_xmod_filename(current_module_name));
-
-    /* xcodeml output enable.  */
-    if(debug_flag) fprintf(debug_fp, "(%s)\n", buf);
-
-    ret = system(buf);
-    if ( ret == -1 ) {
-        error("internal error, fail to create module.");
-        exit(1);
-    } else {
-        ret = WEXITSTATUS( ret );
-        if ( ret != 0 ) {
-            error("internal error, fail to create module.");
-            exit(1);
-        }
-    }
-
-skipMC:
     current_module_name = NULL;
     CURRENT_STATE = OUTSIDE; /* goto outer, outside state.  */
 }
 
+struct use_argument {
+    struct use_argument * next;
+    SYMBOL use;   /* use name or NULL*/
+    SYMBOL local; /* local name, not NULL */
+    int used;
+};
 
-/* NAME, module name.  now we do not care other option like alias or only.  */
-void
-do_use(expr name)
+#define FOREACH_USE_ARG(arg, arg_list)\
+    for((arg) = (args); (arg) != NULL; (arg) = (arg)->next)
+
+extern ID find_ident_head(SYMBOL s, ID head);
+
+#define ID_SEEM_GENERIC_PROCEDURE(id)                                   \
+    (ID_TYPE((id)) != NULL &&                                           \
+     ((ID_CLASS((id)) == CL_PROC &&                                     \
+       TYPE_BASIC_TYPE(ID_TYPE((id))) == TYPE_GENERIC) ||               \
+      (TYPE_BASIC_TYPE(ID_TYPE((id))) == TYPE_FUNCTION &&               \
+       TYPE_REF(ID_TYPE((id))) != NULL &&                               \
+       TYPE_BASIC_TYPE(TYPE_REF(ID_TYPE((id)))) == TYPE_GNUMERIC_ALL)))
+
+/**
+ * solve conflict between local identifier and use associated identifier.
+ *
+ * @id local identifier (only LOCAL, neither parent identifier nor sibling one)
+ * @mid use associated identifier
+ */
+static void
+solve_use_assoc_conflict(ID id, ID mid)
 {
-    SYMBOL s;
-    char module_name[FILE_NAME_LEN];
-    char xmodf_path[FILE_NAME_LEN];
-
-    if (name == NULL)
-        fatal("internal error, module name is NULL in do_use()");
-
-    if(EXPR_CODE(name) != IDENT)
-        fatal("internal error, module name is not IDENT in do_use()");
-
-    s = EXPR_SYM(name);
-    strcpy(module_name, SYM_NAME(s));
-    strcpy(xmodf_path, xmodule_path);
-    strcat(xmodf_path, "/");
-    strcat(xmodf_path, module_name);
-    strcat(xmodf_path, ".xmodf");
-
-    if(use_module(get_xmod_filename(module_name), xmodf_path) == FALSE) {
-        exit(EXITCODE_ERR);
+    if(ID_SEEM_GENERIC_PROCEDURE(id) && ID_SEEM_GENERIC_PROCEDURE(mid)) {
+        // ignore a conflict between generic functions.
+        /* NOTE:
+         * Generic functions with functions with different type of arguments is not conflict.
+         * Generic function occurres a conflict if it cotains functions with same type of arguments,
+         * but the current type system couldn't detect it.
+         */
+        return;
     }
-
-    include_file(xmodf_path, TRUE, module_name);
+    if(!id->use_assoc) {
+        // conflict between (sub)program, argument, or module
+        /* NOTE:
+         * If id is not use associated,
+         * id is (sub)program name, argument name, or module name.
+         * It is because that USE statement appear before any declaration.
+         */
+        if(debug_flag) {
+            fprintf(debug_fp,
+                    "conflict symbol '%s' between current scope and module '%s'\n",
+                    SYM_NAME(ID_SYM(mid)),
+                    SYM_NAME(mid->use_assoc->module_name));
+        }
+        id->use_assoc_conflicted = TRUE;
+    } else {
+        // conflict between use associated ids
+        /* NOTE:
+         * If two ids are defined with same name, and in same module,
+         * two ids are same one. So there are no conflict.
+         */
+        if((id->use_assoc->module_name == mid->use_assoc->module_name)
+           && (id->use_assoc->original_name == mid->use_assoc->original_name)) {
+            // DO NOTHING
+            if(debug_flag) {
+                fprintf(debug_fp,
+                        "duplicate use assoc symbol '%s' (original '%s') from module '%s'\n",
+                        SYM_NAME(ID_SYM(mid)),
+                        SYM_NAME(mid->use_assoc->original_name),
+                        SYM_NAME(mid->use_assoc->module_name));
+            }
+        } else {
+            if(debug_flag) {
+                fprintf(debug_fp,
+                        "conflict symbol '%s' between the followings\n"
+                        " - original '%s' from module '%s'\n"
+                        " - original '%s' from module '%s'\n",
+                        SYM_NAME(ID_SYM(id)),
+                        SYM_NAME(id->use_assoc->original_name),
+                        SYM_NAME(mid->use_assoc->original_name),
+                        SYM_NAME(id->use_assoc->module_name),
+                        SYM_NAME(mid->use_assoc->module_name));
+            }
+            id->use_assoc_conflicted = TRUE;
+        }
+    }
 }
 
-
+/**
+ * import id from module to id list.
+ */
 static int
-is_already_used_mod(expv x)
+import_module_id(ID mid,
+                 ID *head, ID *tail,
+                 TYPE_DESC *sthead, TYPE_DESC *sttail,
+                 EXT_ID *ehead, EXT_ID *etail,
+                 SYMBOL use_name, int need_wrap_type)
 {
-    expv use_decls = UNIT_CTL_USE_DECLS(CURRENT_UNIT_CTL);
+    ID existed_id, id;
 
-    if(use_decls == NULL) {
-        use_decls = list0(LIST);
-        UNIT_CTL_USE_DECLS(CURRENT_UNIT_CTL) = use_decls;
+    if((existed_id = find_ident_head(use_name?:ID_SYM(mid), *head)) != NULL) {
+        solve_use_assoc_conflict(existed_id, mid);
+        return TRUE;
     }
 
-    list lp;
+    id = XMALLOC(ID, sizeof(*id));
+    *id = *mid;
 
-    FOR_ITEMS_IN_LIST(lp, use_decls) {
-        if(EXPV_NAME(LIST_ITEM(lp)) == EXPV_NAME(x)) {
-            return TRUE;
+    if(use_name)
+        ID_SYM(id) = use_name;
+
+    // In module, use associated id may be given PUBLIC or PRIVATE attribute.
+    // OR, If id is tagname and rename required, then type will be given different tagname.
+    if(need_wrap_type || (ID_STORAGE(id) == STG_TAGNAME && use_name)) {
+        // shallow copy type from module
+        TYPE_DESC tp = ID_TYPE(id);
+        ID_TYPE(id) = new_type_desc();
+        *ID_TYPE(id) = *tp;
+    }
+
+    if(ID_STORAGE(id) == STG_TAGNAME) {
+        TYPE_TAGNAME(ID_TYPE(id)) = id;
+        TYPE_SLINK_ADD(ID_TYPE(id), *sthead, *sttail);
+    }
+
+    ID_LINK_ADD(id, *head, *tail);
+
+    if(debug_flag) {
+        fprintf(debug_fp,
+                "import '%s' from module '%s'\n",
+                SYM_NAME(ID_SYM(mid)),
+                SYM_NAME(mid->use_assoc->module_name));
+        if(use_name)
+        fprintf(debug_fp,
+                "as '%s'",
+                SYM_NAME(use_name));
+    }
+
+    return TRUE;
+}
+
+/**
+ * common use assoc
+ */
+int
+use_assoc_common(SYMBOL name, struct use_argument * args, int isRename)
+{
+    struct module *mod;
+    ID mid, id, last_id = NULL;
+    TYPE_DESC tp, sttail = NULL;
+    EXT_ID ep, last_ep = NULL;
+    struct use_argument * arg;
+    int ret = TRUE;
+    int wrap_type = TRUE;
+
+    if(!import_module(name, &mod)) {
+        return FALSE;
+    }
+
+    if(debug_flag) {
+        fprintf(debug_fp, "######## BEGIN USE ASSOC #######\n");
+        print_IDs(mod->head, debug_fp, TRUE);
+    }
+
+    FOREACH_ID(id, LOCAL_SYMBOLS) {
+        last_id = id;
+    }
+
+    for (tp = LOCAL_STRUCT_DECLS; tp != NULL; tp = TYPE_SLINK(tp)) {
+        sttail = tp;
+    }
+
+    for (ep = LOCAL_EXTERNAL_SYMBOLS; ep != NULL; ep = EXT_NEXT(ep)){
+        last_ep = ep;
+    }
+    ep = LOCAL_EXTERNAL_SYMBOLS;
+
+    FOREACH_ID(mid, mod->head) {
+        int rename_count = 0;
+        FOREACH_USE_ARG(arg, args) {
+            wrap_type = TRUE;
+            if(arg->local != ID_SYM(mid))
+                continue;
+            import_module_id(mid, &LOCAL_SYMBOLS, &last_id, &LOCAL_STRUCT_DECLS, &sttail, &LOCAL_EXTERNAL_SYMBOLS, &last_ep, arg->use, wrap_type);
+            arg->used = TRUE;
+            rename_count++;
+        }
+        if(isRename && rename_count == 0) {
+            wrap_type = TRUE;
+            import_module_id(mid, &LOCAL_SYMBOLS, &last_id, &LOCAL_STRUCT_DECLS, &sttail, &LOCAL_EXTERNAL_SYMBOLS, &last_ep, NULL, wrap_type);
         }
     }
 
-    list_cons(x, use_decls);
+    FOREACH_USE_ARG(arg, args) {
+        if(!arg->used) {
+            error("'%s' is not found in module '%s'", SYM_NAME(arg->local), SYM_NAME(name));
+            ret = FALSE;
+        }
+    }
 
-    return FALSE;
+    if(debug_flag)
+        fprintf(debug_fp, "########   END USE ASSOC #######\n");
+
+    return ret;
 }
 
+
+/**
+ * use association with rename arguments.
+ * import public identifiers from module to LOCAL_SYMBOLS.
+ */
+int
+use_assoc_rename(SYMBOL name, struct use_argument * args)
+{
+    int isRename = TRUE;
+    return use_assoc_common(name, args, isRename);
+}
+
+/**
+ * use association with only arguments.
+ * import public identifiers from module to LOCAL_SYMBOLS.
+ */
+int
+use_assoc_only(SYMBOL name, struct use_argument * args)
+{
+    int isRename = FALSE;
+    return use_assoc_common(name, args, isRename);
+}
 
 /*
  * compiles use statement.
@@ -2703,44 +2950,92 @@ compile_USE_decl (expr x, expr x_args)
 {
     expv args, v;
     struct list_node *lp;
-    symbol_filter * filter;
+    struct use_argument * use_args = NULL;
 
-    if(is_already_used_mod(x) && (x_args == NULL || EXPR_ARG1(x_args) == NULL))
+    if(x_args != NULL && EXPR_ARG1(x_args) == NULL)
         return;
 
-    filter = push_new_filter();
     args = list0(LIST);
 
-    FILTER_USAGE(filter) = RENAME;
-
     FOR_ITEMS_IN_LIST(lp, x_args) {
-        expr useExpr, localExpr;
-        char * use, * local;
-        expr x = LIST_ITEM(lp);
-        localExpr = EXPR_ARG1(x);
-        useExpr = EXPR_ARG2(x);
+        expr useExpr, localExpr, x = LIST_ITEM(lp);
+        struct use_argument * use_arg = XMALLOC(struct use_argument *, sizeof(struct use_argument));
+        *use_arg = (struct use_argument){0};
+
+        useExpr = EXPR_ARG1(x);
+        localExpr = EXPR_ARG2(x);
 
         assert(EXPV_CODE(localExpr) == IDENT);
         assert(EXPV_CODE(useExpr) == IDENT);
 
-        use = SYM_NAME(EXPV_NAME(useExpr));
-        local = SYM_NAME(EXPV_NAME(localExpr));
+        args = list_put_last(args, list2(LIST, useExpr, localExpr));
 
-        symbol_filter_addElem(filter, use, local);
-
-        args = list_put_last(args, list2(LIST, localExpr, useExpr));
+        use_arg->local = EXPV_NAME(localExpr);
+        use_arg->use = EXPV_NAME(useExpr);
+        if(use_args != NULL) {
+            use_arg->next = use_args;
+        }
+        use_args = use_arg;
     }
 
     v = expv_cons(F95_USE_STATEMENT, NULL, x, args);
-
     EXPV_LINE(v) = EXPR_LINE(x);
-    if (checkInsideUse() == FALSE) {
-        output_statement(v);
-    }
+    output_statement(v);
 
-    do_use(x);
+    use_assoc_rename(EXPR_SYM(x), use_args);
 }
 
+/*
+ * compiles use only statement.
+ */
+static void
+compile_USE_ONLY_decl (expr x, expr x_args)
+{
+    expv args, v;
+    struct list_node *lp;
+    expr useExpr, localExpr, a;
+    struct use_argument * use_args = NULL;
+
+    if(x_args == NULL || EXPR_ARG1(x_args) == NULL)
+        return;
+
+    args = list0(LIST);
+
+    FOR_ITEMS_IN_LIST(lp, x_args) {
+        struct use_argument * use_arg = XMALLOC(struct use_argument *, sizeof(struct use_argument));
+        *use_arg = (struct use_argument){0};
+
+        a = LIST_ITEM(lp);
+
+        if (EXPV_CODE(a) == LIST) {
+            useExpr = EXPR_ARG1(a);
+            localExpr = EXPR_ARG2(a);
+
+            assert(EXPV_CODE(useExpr) == IDENT);
+            assert(EXPV_CODE(localExpr) == IDENT);
+
+            args = list_put_last(args, list2(LIST, useExpr, localExpr));
+
+            use_arg->use = EXPV_NAME(useExpr);
+            use_arg->local = EXPV_NAME(localExpr);
+        } else {
+            assert(EXPV_CODE(a) == IDENT);
+            args = list_put_last(args, list2(LIST, NULL, a));
+            use_arg->local = EXPV_NAME(a);
+            use_arg->use = NULL;
+        }
+        if(use_args != NULL) {
+            use_arg->next = use_args;
+        }
+        use_args = use_arg;
+    }
+
+    v = expv_cons(F95_USE_ONLY_STATEMENT, NULL, x, args);
+    EXPV_LINE(v) = EXPR_LINE(x);
+    output_statement(v);
+
+    use_assoc_only(EXPR_SYM(x), use_args);
+}
 
 static char*
 genBlankInterfaceName()
@@ -2775,13 +3070,14 @@ compile_INTERFACE_statement(expr x)
         case IDENT:
             /* generic function/subroutine */
             s = EXPR_SYM(identOrOp);
-            iid = find_ident(s);
+            iid = find_ident_local(s);
             if(iid == NULL) {
                 iid = declare_ident(s, CL_PROC);
                 if(iid == NULL)
                     return;
             } else if(ID_STORAGE(iid) == STG_UNKNOWN) {
                 ID_STORAGE(iid) = STG_EXT;
+                ID_CLASS(iid) = CL_PROC;
             }
             break;
         case F95_ASSIGNOP: {
@@ -2853,7 +3149,6 @@ compile_INTERFACE_statement(expr x)
     push_unit_ctl(ININTR);
     CURRENT_INTERFACE = ep;
 }
-
 
 /*
  * complies END INTERFACE statement
@@ -2943,6 +3238,7 @@ end_interface()
 
         /* type should be calculated from
          * declared functions, not always TYPE_GNUMERIC */
+        ID_CLASS(iid) = CL_PROC;
         ID_TYPE(iid) = type_basic(hasSub ? TYPE_SUBR : TYPE_GENERIC);
         TYPE_ATTR_FLAGS(ID_TYPE(iid)) = TYPE_ATTR_FLAGS(iid);
         ID_STORAGE(iid) = STG_EXT;
@@ -2990,11 +3286,9 @@ accept_MODULEPROCEDURE_statement_in_module(expr x)
         ID_TYPE(id) = BASIC_TYPE_DESC(TYPE_GENERIC);
         ID_CLASS(id) = CL_PROC;
         PROC_CLASS(id) = P_DEFINEDPROC;
-        ID_IS_OFMODULE(id) = TRUE;
         declare_function(id);
     }
 }
-
 
 /*
  * compile MODULE PROCEDURE statement
@@ -3039,64 +3333,6 @@ compile_MODULEPROCEDURE_statement(expr x)
         EXT_PROC_CLASS(ep) = EP_MODULE_PROCEDURE;
     }
 }
-
-
-/*
- * compiles use only statement.
- */
-static void
-compile_USE_ONLY_decl (expr x, expr x_args)
-{
-    expv args, v;
-    struct list_node *lp;
-    symbol_filter * filter;
-    expr useExpr, localExpr, a;
-    char * use, * local;
-
-    if(x_args == NULL || EXPR_ARG1(x_args) == NULL)
-        return;
-
-    filter = push_new_filter();
-    args = list0(LIST);
-
-    FILTER_USAGE(filter) = LIMIT;
-
-    FOR_ITEMS_IN_LIST(lp, x_args) {
-        a = LIST_ITEM(lp);
-
-        if (EXPV_CODE(a) == LIST) {
-            localExpr = EXPR_ARG1(a);
-            useExpr = EXPR_ARG2(a);
-
-            assert(EXPV_CODE(localExpr) == IDENT);
-            assert(EXPV_CODE(useExpr) == IDENT);
-
-            use = SYM_NAME(EXPV_NAME(useExpr));
-            local = SYM_NAME(EXPV_NAME(localExpr));
-
-            symbol_filter_addElem(filter, use, local);
-
-            args = list_put_last(args, list2(LIST, localExpr, useExpr));
-        } else {
-            assert(EXPV_CODE(a) == IDENT);
-
-            use = SYM_NAME(EXPV_NAME(a));
-
-            symbol_filter_addElem(filter, use, NULL);
-
-            args = list_put_last(args, list2(LIST, NULL, a));
-        }
-    }
-
-    v = expv_cons(F95_USE_ONLY_STATEMENT, NULL, x, args);
-    EXPV_LINE(v) = EXPR_LINE(x);
-    if (checkInsideUse() == FALSE) {
-        output_statement(v);
-    }
-
-    do_use(x);
-}
-
 
 /*
  * compiles the scene range expression of case label.
@@ -3336,6 +3572,7 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
     expv args, v, vstat = NULL;
     list lp;
     enum expr_code code = EXPR_CODE(x);
+    expv tmpAssignV = NULL;
 
     args = list0(LIST);
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
@@ -3355,6 +3592,11 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
                 error("invalid status variable");
             } else if(IS_INT(EXPV_TYPE(vstat)) == FALSE) {
                 error("status variable is not a integer type");
+            }
+            if (EXPR_CODE(vstat) != F_VAR) {
+                expv orgStat = vstat;
+                vstat = allocate_temp(type_INT);
+                tmpAssignV = expv_assignment(orgStat, vstat);
             }
         } else {
             if(vstat) {
@@ -3393,6 +3635,9 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
     v = expv_cons(code, NULL, args, vstat);
     EXPV_LINE(v) = EXPR_LINE(x);
     output_statement(v);
+    if (tmpAssignV != NULL) {
+        output_statement(tmpAssignV);
+    }
 }
 
 
@@ -3456,6 +3701,10 @@ compile_CALL_statement(expr x)
             PROC_CLASS(id) = P_EXTERNAL;
             TYPE_SET_EXTERNAL(id);
         }
+    }
+    if (ID_IS_AMBIGUOUS(id)) {
+        error("an ambiguous reference to symbol '%s'", ID_NAME(id));
+        return;
     }
     if (PROC_CLASS(id) == P_EXTERNAL &&
         (ID_TYPE(id) == NULL || IS_SUBR(ID_TYPE(id)) == FALSE)) {
@@ -3717,16 +3966,6 @@ static int markAsPrivate(ID id)
     return TRUE;
 }
 
-static int isAlreadyMarked(ID id)
-{
-    TYPE_DESC tp = ID_TYPE(id);
-
-    if (tp == NULL)
-        return (TYPE_IS_PUBLIC(id) || TYPE_IS_PRIVATE(id));
-    else
-        return (TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp));
-}
-
 static void
 compile_PUBLIC_PRIVATE_statement(expr id_list, int (*markAs)(ID))
 {
@@ -3752,16 +3991,8 @@ compile_PUBLIC_PRIVATE_statement(expr id_list, int (*markAs)(ID))
         } else if (markAs == markAsPrivate)  {
             current_module_state = M_PRIVATE;
         }
-        
-        /* local symbol. */
-        FOREACH_ID(id, LOCAL_SYMBOLS) {
-            if ((ID_CLASS(id) == CL_UNKNOWN ||
-                 ID_CLASS(id) == CL_VAR) &&
-                ID_STORAGE(id) != STG_ARG &&
-                isAlreadyMarked(id) != TRUE) {
-                (void) markAs(id);
-            }
-        }
+
+        /* private/public is set to ids, later in end_declaration */
 
         return;
     }
@@ -3770,12 +4001,13 @@ compile_PUBLIC_PRIVATE_statement(expr id_list, int (*markAs)(ID))
         ident = LIST_ITEM(lp);
         switch (EXPR_CODE(ident)) {
             case IDENT: {
-                if ((id = find_ident(EXPR_SYM(ident))) == NULL) {
+                if ((id = find_ident_local(EXPR_SYM(ident))) == NULL) {
                     id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
                     if (id == NULL) {
                         /* must not happen. */
                         continue;
                     }
+                    ID_COULD_BE_IMPLICITLY_TYPED(id) = TRUE;
                 }
                 (void)markAs(id);
                 break;
@@ -3784,7 +4016,7 @@ compile_PUBLIC_PRIVATE_statement(expr id_list, int (*markAs)(ID))
                 expr arg;
                 arg = EXPR_ARG1(ident);
                 SYMBOL sym = find_symbol(EXPR_CODE_SYMBOL(EXPR_CODE(arg)));
-                if ((id = find_ident(sym)) == NULL) {
+                if ((id = find_ident_local(sym)) == NULL) {
                     id = declare_ident(sym, CL_UNKNOWN);
                     if (id == NULL) {
                         /* must not happen. */
@@ -3797,7 +4029,7 @@ compile_PUBLIC_PRIVATE_statement(expr id_list, int (*markAs)(ID))
             case F95_USER_DEFINED: {
                 expr arg;
                 arg = EXPR_ARG1(ident);
-                if ((id = find_ident(EXPR_SYM(arg))) == NULL) {
+                if ((id = find_ident_local(EXPR_SYM(arg))) == NULL) {
                     id = declare_ident(EXPR_SYM(arg), CL_UNKNOWN);
                     if (id == NULL) {
                         /* must not happen. */
@@ -3892,6 +4124,9 @@ accept:
               (expr)vPointer,
               (expr)vPointee);
     EXPV_LINE(v) = EXPR_LINE(x);
+    if (TYPE_BASIC_TYPE(EXPV_TYPE(vPointee)) == TYPE_LHS) {
+        EXPV_TYPE(vPointee) = EXPV_TYPE(vPointer);
+    }
 
     output_statement(v);
 }
@@ -3920,6 +4155,15 @@ compile_TARGET_POINTER_ALLOCATABLE_statement(expr x)
         id = declare_ident(EXPR_SYM(ident), CL_VAR);
         if(id == NULL)
             return;
+        if(ID_IS_OFMODULE(id)) {
+            error("can't change attributes of USE-assoicated symbol '%s'", ID_NAME(id));
+            return;
+        } else if (ID_IS_AMBIGUOUS(id)) {
+            error("an ambiguous reference to symbol '%s'", ID_NAME(id));
+            return;
+        }
+
+        ID_COULD_BE_IMPLICITLY_TYPED(id) = TRUE;
 
         switch(EXPR_CODE(x)) {
         case F95_TARGET_STATEMENT:
@@ -3938,8 +4182,6 @@ compile_TARGET_POINTER_ALLOCATABLE_statement(expr x)
         if(dims) {
             compile_type_decl(NULL, NULL, list1(LIST, aloc), NULL);
         }
-
-        checkDefinedModule(id);
     }
 }
 
@@ -3958,14 +4200,39 @@ compile_OPTIONAL_statement(expr x)
 
         assert(EXPR_CODE(ident) == IDENT);
 
-        id = declare_ident(EXPR_SYM(ident), CL_VAR);
-        if(id == NULL)
+        id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
+        if (id == NULL)
             return;
+        if(ID_IS_OFMODULE(id)) {
+            error("can't change attributes of USE-assoicated symbol '%s'", ID_NAME(id));
+            return;
+        } else if (ID_IS_AMBIGUOUS(id)) {
+            error("an ambiguous reference to symbol '%s'", ID_NAME(id));
+            return;
+        }
 
-        TYPE_SET_OPTIONAL(id);
+        /*
+         * Like any variable, any function/subroutine also could
+         * have optional attribute.
+         */
+        if (ID_CLASS(id) == CL_UNKNOWN ||
+            ID_CLASS(id) == CL_VAR ||
+            ID_CLASS(id) == CL_PROC) {
+            /*
+             * NOTE:
+             *	Don't fix the type/class, not even calling
+             *	declare_ident(), here.
+             */
+            TYPE_SET_OPTIONAL(id);
+
+            /*
+             * XXX FIXME:
+             *	Not sure I could overwrite the storage class here, but
+             *	it seems here could be the place.
+             */
+            ID_STORAGE(id) = STG_ARG;
+        }
     }
-
-    checkDefinedModule(id);
 }
 
 
@@ -3988,6 +4255,13 @@ compile_INTENT_statement(expr x)
         id = declare_ident(EXPR_SYM(ident), CL_VAR);
         if(id == NULL)
             return;
+        if(ID_IS_OFMODULE(id)) {
+            error("can't change attributes of USE-assoicated symbol '%s'", ID_NAME(id));
+            return;
+        } else if (ID_IS_AMBIGUOUS(id)) {
+            error("an ambiguous reference to symbol '%s'", ID_NAME(id));
+            return;
+        }
 
         switch(EXPR_CODE(spec)) {
         case F95_IN_EXTENT:
@@ -4002,8 +4276,6 @@ compile_INTENT_statement(expr x)
         default:
             abort();
         }
-
-        checkDefinedModule(id);
     }
 }
 
@@ -4064,19 +4336,6 @@ fix_pointer_pointee_recursive(TYPE_DESC tp)
     }
 }
 
-void
-extid_put_last(EXT_ID base, EXT_ID to_add)
-{
-    EXT_ID ep, last_ep = NULL;
-
-    assert(base != NULL);
-    for (ep = base; ep != NULL; ep = EXT_NEXT(ep)) {
-        last_ep = ep;
-    }
-    assert(last_ep != NULL);
-    EXT_NEXT(last_ep) = to_add;
-}
-
 expv
 create_implicit_decl_expv(TYPE_DESC tp, char * first, char * second)
 {
@@ -4107,11 +4366,17 @@ set_parent_implicit_decls()
         FOR_ITEMS_IN_LIST(lp, UNIT_CTL_IMPLICIT_DECLS(unit_ctls[i])) {
             v = LIST_ITEM(lp);
             if(EXPR_CODE(v) == IDENT)
-                set_implicit_type(EXPV_TYPE(v),*(SYM_NAME(EXPR_SYM(v))),
-                                  * (SYM_NAME(EXPR_SYM(v))));
+                set_implicit_type_uc(CURRENT_UNIT_CTL,
+                                     EXPV_TYPE(v),
+                                     *(SYM_NAME(EXPR_SYM(v))),
+                                     * (SYM_NAME(EXPR_SYM(v))),
+                                     TRUE);
             else
-                set_implicit_type(EXPV_TYPE(v),*SYM_NAME(EXPR_SYM(EXPR_ARG1(v))),
-                                  *SYM_NAME(EXPR_SYM(EXPR_ARG2(v))));
+                set_implicit_type_uc(CURRENT_UNIT_CTL,
+                                     EXPV_TYPE(v),
+                                     *SYM_NAME(EXPR_SYM(EXPR_ARG1(v))),
+                                     *SYM_NAME(EXPR_SYM(EXPR_ARG2(v))),
+                                     TRUE);
         }
     }
 }
@@ -4141,16 +4406,22 @@ cleanup_unit_ctl(UNIT_CTL uc)
     /* UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(uc) is not cleared */
     //if (unit_ctl_level == 0) { /* for main */
       if (doImplicitUndef == TRUE) {
-	set_implicit_type_uc(uc, NULL, 'a', 'z');
+        UNIT_CTL_IMPLICIT_NONE(uc) = TRUE;
+	set_implicit_type_uc(uc, NULL, 'a', 'z', TRUE);
+        UNIT_CTL_IMPLICIT_TYPE_DECLARED(uc) = 0;
 	list_put_last(UNIT_CTL_IMPLICIT_DECLS(uc), create_implicit_decl_expv(NULL, "a", "z"));
       } else {
 	/* default implicit type */
+        /* implicit none is not set */
+        UNIT_CTL_IMPLICIT_NONE(uc) = FALSE;
+        /* implicit type is not declared yet */
+        UNIT_CTL_IMPLICIT_TYPE_DECLARED(uc) = 0;
 	/* a - z : initialize all to real. */
-	set_implicit_type_uc(uc, BASIC_TYPE_DESC(defaultSingleRealType), 'a', 'z');
+	set_implicit_type_uc(uc, BASIC_TYPE_DESC(defaultSingleRealType), 'a', 'z', TRUE);
 	list_put_last(UNIT_CTL_IMPLICIT_DECLS(uc),
 		      create_implicit_decl_expv(BASIC_TYPE_DESC(defaultSingleRealType), "a", "z"));
 	/* i - n : initialize to int. */
-	set_implicit_type_uc(uc, BASIC_TYPE_DESC(TYPE_INT), 'i', 'n');
+	set_implicit_type_uc(uc, BASIC_TYPE_DESC(TYPE_INT), 'i', 'n', TRUE);
 	list_put_last(UNIT_CTL_IMPLICIT_DECLS(uc),
 		      create_implicit_decl_expv(BASIC_TYPE_DESC(TYPE_INT), "i", "n"));
       }
@@ -4168,6 +4439,7 @@ new_unit_ctl()
         fatal("memory allocation failed");
     cleanup_unit_ctl(uc);
     UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(uc) = NULL;
+    UNIT_CTL_INITIALIZE_DECLS(uc) = EMPTY_LIST;
     return uc;
 }
 
@@ -4278,15 +4550,26 @@ pop_unit_ctl()
         unit_ctl_contains_level --;
 }
 
-
+/**
+ * for type declaration with data style initializer
+ * compile 'data .../... /' after compiling type declarations
+ **/
 static
-TYPE_DESC
-new_type_subr(void)
+void
+compile_data_style_decl(expr decl_list)
 {
-    TYPE_DESC tp;
-
-    tp = new_type_desc();
-    TYPE_BASIC_TYPE(tp) = (BASIC_DATA_TYPE)TYPE_SUBR;
-
-    return tp;
+    expr x, value;
+    list lp;
+    if( decl_list == NULL )return;
+    FOR_ITEMS_IN_LIST(lp, decl_list) {
+        x = LIST_ITEM(lp);
+        if( x == NULL )continue;
+        value  = EXPR_ARG4(x);
+        if( value != NULL && EXPR_CODE(value) == F_DATA_DECL ){
+            /* compilataion is executed later in end_declaration */
+            list_put_last(CURRENT_INITIALIZE_DECLS,
+                list1(F_DATA_DECL, EXPR_ARG1(value)));
+        }
+    }
 }
+

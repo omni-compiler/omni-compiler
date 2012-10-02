@@ -21,28 +21,6 @@ static char *varInitTypeStr[] = {
     NULL
 };
 
-
-BASIC_DATA_TYPE
-getBasicType(TYPE_DESC tp)
-{
-    BASIC_DATA_TYPE typ;
-    if (tp == NULL) {
-        return TYPE_UNKNOWN;
-    }
-    typ = TYPE_BASIC_TYPE(tp);
-    if (typ == TYPE_UNKNOWN ||
-        typ == TYPE_ARRAY) {
-        if (TYPE_REF(tp) != NULL) {
-            return getBasicType(TYPE_REF(tp));
-        } else {
-            return typ;
-        }
-    } else {
-        return typ;
-    }
-}
-
-
 static expv
 serializeInitialValue(expr x, expv new)
 {
@@ -224,27 +202,6 @@ genImpliedDo(expv loopSpec, int dim, int lvl, expv refSpec)
     }
     return new;
 }
-
-
-int
-char_length(TYPE_DESC tp)
-{
-    int len = 1;
-
-    while(TYPE_REF(tp)) {
-        expv vs = TYPE_DIM_SIZE(tp);
-        if(vs && EXPV_CODE(vs) == INT_CONSTANT) {
-            if(EXPV_INT_VALUE(vs) < 0)
-                return -1;
-            len *= EXPV_INT_VALUE(vs);
-        } else
-            return -1;
-        tp = TYPE_REF(tp);
-    }
-    assert(IS_CHAR(tp));
-    return len * TYPE_CHAR_LEN(tp);
-}
-
 
 static expv
 serializeVariable(expv v, expv new)
@@ -647,7 +604,7 @@ isValidDataDecl(expr x)
 static void
 fixIdTypesInDataDecl(expr x)
 {
-    expr iX;
+    expr iX = NULL;
     ID id;
 
     switch (EXPR_CODE(x)) {
@@ -685,6 +642,18 @@ compile_DATA_decl0(expv varAndVal)
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(varAndVal)) {
         vLp = LIST_ITEM(lp);
+
+        /*
+         * Elimicate statement like:
+         *
+         *	data a() / ... /
+         */
+        if (EXPR_CODE(vLp) == F_ARRAY_REF &&
+            EXPR_ARG2(vLp) == NULL) {
+            error_at_node(vLp, "Invalid array reference.");
+            continue;
+        }
+
         v = compile_expression(vLp);
         if (v == NULL) {
             return FALSE;
@@ -701,7 +670,10 @@ compile_DATA_decl0(expv varAndVal)
         list_put_last(vVals, v);
     }
 
-    output_statement(list2(F_DATA_DECL, vVars, vVals));
+    v = list2(F_DATA_DECL, vVars, vVals);
+    EXPR_LINE(v) = EXPR_LINE(varAndVal);
+
+    output_statement(v);
 
     return TRUE;
 }
@@ -725,9 +697,9 @@ compile_DATA_decl(expr x)
 	/* varAndVal => ((LIST m n) (LIST 5 6)) */
 
 	FOR_ITEMS_IN_LIST(lp1, EXPR_ARG1(varAndVal)) {
-	  lx = LIST_ITEM(lp1);
-	  /* lx => m */
-	  fixIdTypesInDataDecl(lx);
+            lx = LIST_ITEM(lp1);
+            /* lx => m */
+            fixIdTypesInDataDecl(lx);
         }
 
 #ifdef DATA_C_IMPL

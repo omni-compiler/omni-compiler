@@ -28,9 +28,14 @@ typedef enum datatype {
     TYPE_FUNCTION,      /* 10 function */
     TYPE_STRUCT,        /* 11 derived type */
     TYPE_GNUMERIC,      /* 12 general numeric (integer or real) */ 
-    TYPE_GNUMERIC_ALL,  /* 13 general all numeric (integer or real or complex) */
+    TYPE_GNUMERIC_ALL,  /* 13 general all numeric (integer or real or
+                         * complex) */
     TYPE_MODULE,        /* 14 module */
     TYPE_GENERIC,       /* 15 generic type for interface */
+    TYPE_NAMELIST,      /* 16 type for namelist */
+    TYPE_LHS,		/* 17 type for intrinsic null(), always
+                         * comforms to the type of the left hand
+                         * expression. */
     TYPE_END
 } BASIC_DATA_TYPE;
 
@@ -62,6 +67,9 @@ extern char *basic_type_names[];
  "*numeric*", \
  "*numeric_all*", \
  "module", \
+ "*generic*", \
+ "*namelist*", \
+ "*comforms_to_the_lefthand*", \
 }
 
 typedef struct _codims_desc {
@@ -105,6 +113,7 @@ typedef struct type_descriptor
 #define TYPE_ATTR_SEQUENCE          0x00002000
 #define TYPE_ATTR_INTERNAL_PRIVATE  0x00004000
 #define TYPE_ATTR_RECURSIVE         0x00008000
+#define TYPE_ATTR_PURE              0x00010000
         uint32_t type_attr_flags;
 #define TYPE_EXFLAGS_IMPLICIT       0x00000001 /* implicitly defined or not */
 #define TYPE_EXFLAGS_OVERRIDDEN     0x00000002 /* type is overridden by child */
@@ -123,11 +132,13 @@ typedef struct type_descriptor
     } array_info; /* FOR FbasicType for Array */
     struct ident_descriptor *members; /* all members for derived type */
     codims_desc *codims;
+    int is_reshaped_type;       /* A bool flag to specify this type is
+                                 * genereted by reshape() intrinsic. */
 } *TYPE_DESC;
 
 struct type_attr_check {
-    unsigned int flag;
-    unsigned int acceptable_flags;
+    uint32_t flag;
+    uint32_t acceptable_flags;
     char *flag_name;
 };
 
@@ -202,6 +213,9 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_IS_RECURSIVE(tp)       ((tp)->attr.type_attr_flags &   TYPE_ATTR_RECURSIVE)
 #define TYPE_SET_RECURSIVE(tp)      ((tp)->attr.type_attr_flags |=  TYPE_ATTR_RECURSIVE)
 #define TYPE_UNSET_REDURSIVE(tp)    ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_RECURSIVE)
+#define TYPE_IS_PURE(tp)            ((tp)->attr.type_attr_flags &   TYPE_ATTR_PURE)
+#define TYPE_SET_PURE(tp)           ((tp)->attr.type_attr_flags |=  TYPE_ATTR_PURE)
+#define TYPE_UNSET_PURE(tp)         ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_PURE)
 #define TYPE_IS_INTENT_IN(tp)       ((tp)->attr.type_attr_flags &   TYPE_ATTR_INTENT_IN)
 #define TYPE_SET_INTENT_IN(tp)      ((tp)->attr.type_attr_flags |=  TYPE_ATTR_INTENT_IN)
 #define TYPE_UNSET_INTENT_IN(tp)    ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_INTENT_IN)
@@ -241,12 +255,17 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_LENG(tp)            ((tp)->leng)
 
 #define TYPE_ARRAY_ASSUME_KIND(tp) ((tp)->array_info.assume_kind)
+
+#define TYPE_IS_RESHAPED(tp)            ((tp)->is_reshaped_type)
+
 #define TYPE_IS_ARRAY_ASSUMED_SIZE(tp) \
                 (TYPE_ARRAY_ASSUME_KIND(tp) == ASSUMED_SIZE)
 #define TYPE_IS_ARRAY_ASSUMED_SHAPE(tp) \
                 (TYPE_ARRAY_ASSUME_KIND(tp) == ASSUMED_SHAPE)
 #define TYPE_IS_ARRAY_ADJUSTABLE(tp) \
                 (TYPE_IS_ARRAY_ASSUMED_SIZE(tp) || TYPE_IS_ARRAY_ASSUMED_SHAPE(tp))
+
+#define TYPE_IS_RESHAPED_ARRAY(tp)
 
 #define CHAR_LEN_UNFIXED (-1)
 
@@ -305,12 +324,25 @@ extern TYPE_DESC basic_type_desc[];
 #define IS_MODULE(tp) \
                 ((tp) != NULL && TYPE_BASIC_TYPE(tp) == TYPE_MODULE)
 
+#define IS_NAMELIST(tp) \
+                ((tp) != NULL && TYPE_BASIC_TYPE(tp) == TYPE_NAMELIST)
+
 #define IS_REFFERENCE(tp) \
                 ((tp) != NULL && TYPE_N_DIM(tp) == 0 && TYPE_REF(tp) != NULL)
 
 #define FOREACH_MEMBER(/* ID */ mp, /* TYPE_DESC */ tp) \
     if ((tp) != NULL && TYPE_MEMBER_LIST(tp) != NULL) \
         FOREACH_ID(mp, TYPE_MEMBER_LIST(tp))
+
+#if 0
+typedef enum {
+    PRAGMA_NOT_IN_SCOPE = 0,	/* The sentinel is not appeared, yet. */
+    PRAGMA_ENTER_SCOPE,		/* The sentinel just appeared. */
+    PRAGMA_LEAVE_SCOPE		/* The sentinel got enough block(s) and
+                                 * the scope is needed to be
+                                 * closed. */
+} pragma_status_t;
+#endif
 
 #endif /* _F_DATATYPE_H_ */
 

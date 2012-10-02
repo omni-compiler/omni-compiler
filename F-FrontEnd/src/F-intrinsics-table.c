@@ -65,6 +65,9 @@ intrinsic_entry intrinsic_table[] = {
     // DBLE (A)
     { INTR_DBLE,        INTR_NAME_GENERIC,      "dble",         0,      {INTR_TYPE_ALL_NUMERICS},               INTR_TYPE_DREAL,        1, -1, LANGSPEC_F77 },
 
+    // DREAL (A)
+    { INTR_REAL,        INTR_NAME_GENERIC,      "dreal",         0,      {INTR_TYPE_ALL_NUMERICS},               INTR_TYPE_DREAL,        1, -1, LANGSPEC_NONSTD },
+
     // DIM (X, Y)
     { INTR_DIM,         INTR_NAME_GENERIC,      "dim",          0,      {INTR_TYPE_NUMERICS, INTR_TYPE_NUMERICS},       INTR_TYPE_NUMERICS,     2, 0, LANGSPEC_F77 },
     { INTR_DIM,         INTR_NAME_SPECIFIC,     "idim",         0,      {INTR_TYPE_INT, INTR_TYPE_INT},                 INTR_TYPE_INT,          2, 0, LANGSPEC_F77 },
@@ -142,7 +145,7 @@ intrinsic_entry intrinsic_table[] = {
     // ATAN2 (Y, X)
     { INTR_ATAN2,       INTR_NAME_GENERIC,      "atan2",        0,      {INTR_TYPE_REAL, INTR_TYPE_REAL},       INTR_TYPE_REAL,         2, 0, LANGSPEC_F77 },
     { INTR_ATAN2,       INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL, INTR_TYPE_DREAL},     INTR_TYPE_DREAL,        2, 0, LANGSPEC_F77 },
-    { INTR_ATAN2,       INTR_NAME_SPECIFIC,     "datan2",       0,      {INTR_TYPE_DREAL, INTR_TYPE_DREAL},     INTR_TYPE_DREAL,        1, 0, LANGSPEC_F77 },
+    { INTR_ATAN2,       INTR_NAME_SPECIFIC,     "datan2",       0,      {INTR_TYPE_DREAL, INTR_TYPE_DREAL},     INTR_TYPE_DREAL,        2, 0, LANGSPEC_F77 },
 
     // COS (X)
     { INTR_COS,         INTR_NAME_GENERIC,      "cos",          0,      {INTR_TYPE_REAL},       INTR_TYPE_REAL,         1, 0, LANGSPEC_F77 },
@@ -480,8 +483,9 @@ intrinsic_entry intrinsic_table[] = {
 #endif
 
     // MATMUL (MATRIX_A, MATRIX_B)
-    { INTR_MATMUL,      INTR_NAME_GENERIC,      "matmul",             0,      {INTR_TYPE_ALL_NUMERICS_ARRAY, INTR_TYPE_ALL_NUMERICS_ARRAY},           INTR_TYPE_ALL_NUMERICS_ARRAY,   2, 1, LANGSPEC_F90 },
-    { INTR_MATMUL,      INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_LOGICAL_ARRAY,INTR_TYPE_LOGICAL_ARRAY},      INTR_TYPE_LOGICAL_ARRAY,        2, 1, LANGSPEC_F90 },
+    { INTR_MATMUL,      INTR_NAME_GENERIC,      "matmul",             0,      {INTR_TYPE_ALL_NUMERICS_ARRAY, INTR_TYPE_ALL_NUMERICS_ARRAY},           INTR_TYPE_ALL_NUMERICS_DYNAMIC_ARRAY,   2, -1, LANGSPEC_F90 },
+    { INTR_MATMUL,      INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_LOGICAL_ARRAY,INTR_TYPE_LOGICAL_ARRAY},      INTR_TYPE_LOGICAL_DYNAMIC_ARRAY,        2, -1, LANGSPEC_F90 },
+
 #if 0
     { INTR_MATMUL,      INTR_NAME_GENERIC,      "matmul",       0,      {INTR_TYPE_INT_ARRAY, INTR_TYPE_INT_ARRAY},             INTR_TYPE_INT_ARRAY,    2, 1, LANGSPEC_F90 },
     { INTR_MATMUL,      INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_REAL_ARRAY, INTR_TYPE_REAL_ARRAY},           INTR_TYPE_REAL_ARRAY,   2, 1, LANGSPEC_F90 },
@@ -600,18 +604,33 @@ intrinsic_entry intrinsic_table[] = {
 
     /* 19. Array location functions */
 
-    // MINLOC (ARRAY [, MASK])
-    { INTR_MINLOC,      INTR_NAME_GENERIC,      "minloc",       0,      { INTR_TYPE_INT_ARRAY },                                INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90 },
-    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY },                           INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90 },
-    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_LOGICAL_ARRAY },       INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90 },
-    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY },  INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90 },
+    // MINLOC (ARRAY [, MASK, KIND])
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "minloc",       1,      { INTR_TYPE_INT_ARRAY },                                INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90 },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY },                           INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90 },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_LOGICAL_ARRAY },       INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90 },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY },  INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90 },
 
-    // MAXLOC (ARRAY [, MASK])
-    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "maxloc",       0,      { INTR_TYPE_INT_ARRAY },                                INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90 },
-    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY },                           INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90 },
-    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_LOGICAL_ARRAY },       INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90 },
-    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY },  INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90 },
+    // MINLOC (ARRAY [, DIM, MASK, KIND]) (Fortran 95)
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT },       INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F95 },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT },  INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F95 },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },       INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95 },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },  INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95 },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },       INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95 },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },  INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95 },
 
+    // MAXLOC (ARRAY [, MASK, KIND])
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "maxloc",       1,      { INTR_TYPE_INT_ARRAY },                                INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90 },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY },                           INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90 },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_LOGICAL_ARRAY },       INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90 },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY },  INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90 },
+
+    // MAXLOC (ARRAY [, DIM, MASK, KIND]) (Fortran 95)
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT },       INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F95 },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT },  INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F95 },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },       INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95 },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },  INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95 },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },       INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95 },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },  INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95 },
 
 
     /* 20. Pointer association status functions */
@@ -678,9 +697,9 @@ intrinsic_entry intrinsic_table[] = {
     /* 20. Pointer association status functions */
 
     // NULL ([MOLD])
-    { INTR_NULL,       INTR_NAME_GENERIC,      "null",          0,      { },                                    INTR_TYPE_ANY_ARRAY, 0, -1, LANGSPEC_F95 },
-    { INTR_NULL,       INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_POINTER },                  INTR_TYPE_ANY_ARRAY, 1, 0,  LANGSPEC_F95 },
-    { INTR_NULL,       INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_ANY_ARRAY_ALLOCATABLE },              INTR_TYPE_ANY_ARRAY, 1, 0,  LANGSPEC_F95 },
+    { INTR_NULL,       INTR_NAME_GENERIC,      "null",          0,      { },                                    INTR_TYPE_LHS, 0, -7, LANGSPEC_F95 },
+    { INTR_NULL,       INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_POINTER },                  INTR_TYPE_TARGET, 1, 0,  LANGSPEC_F95 },
+    { INTR_NULL,       INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_ANY_ARRAY_ALLOCATABLE },    INTR_TYPE_TARGET, 1, 0,  LANGSPEC_F95 },
 
 
     /* 21. Intrinsic subroutines */

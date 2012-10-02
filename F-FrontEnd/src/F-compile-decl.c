@@ -14,7 +14,7 @@
 #define ROUND(a,b)    (b * ( (a+b-1)/b))
 
 static SYMBOL blank_common_symbol;
-static int order_sequence = 0;
+int order_sequence = 0;
 
 static void     declare_dummy_args _ANSI_ARGS_((expr l,
                                                 enum name_class class));
@@ -29,19 +29,8 @@ extern char *current_module_name;
  *	SUPER BOGUS FLAG ALERT !
  */
 int is_in_kind_compilation_flag_for_declare_ident = FALSE;
-
-
-int
-get_num_ids(ID id)
-{
-    int n = 0;
-    while(id != NULL) {
-        ++n;
-        id = ID_NEXT(id);
-    }
-    return n;
-}
-
+int is_in_struct_member_initializer_compilation_flag_for_declare_ident = FALSE;
+#define WARN_STRUCT_MEMBER_INITIALIZATION
 
 ID
 declare_function_result_id(SYMBOL s, TYPE_DESC tp) {
@@ -96,6 +85,7 @@ declare_procedure(enum name_class class,
     ID id;
     EXT_ID ep;
     int recursive = FALSE;
+    int pure = FALSE;
     list lp;
 
     if (name) {
@@ -135,6 +125,15 @@ declare_procedure(enum name_class class,
             }
             recursive = TRUE;
             break;
+
+        case F95_PURE_SPEC:
+            if (class != CL_PROC) {
+                error("invalid pure prefix");
+                return;
+            }
+            pure = TRUE;
+            break;
+
         default:
             error("unknown prefix");
         }
@@ -191,13 +190,19 @@ declare_procedure(enum name_class class,
                 TYPE_SET_RECURSIVE(type);
             }
         }
+        if (pure == TRUE) {
+            PROC_IS_PURE(id) = pure;
+            TYPE_SET_PURE(id);
+            if (type != NULL) {
+                TYPE_SET_PURE(type);
+            }
+        }
         ID_STORAGE(id) = STG_EXT;
         declare_dummy_args(args, CL_PROC);
         CURRENT_PROCEDURE = id;
         /* make link before declare_current_procedure_ext_id() */
         link_parent_defined_by(CURRENT_PROC_NAME);
         (void)declare_current_procedure_ext_id();
-
 
         break;
     }
@@ -207,6 +212,8 @@ declare_procedure(enum name_class class,
         expv emitV = NULL;
         expv symV = NULL;
         expv resultV = NULL;
+        TYPE_DESC tp = NULL;
+        list lp;
 
         if (debug_flag)
             fprintf(diag_file,"   entry %s:\n",SYM_NAME(s));
@@ -222,13 +229,33 @@ declare_procedure(enum name_class class,
                 return;
             }
         }
-        declare_id_type(id, type);
+        tp = new_type_desc();
+        *tp = *type;
+        TYPE_ATTR_FLAGS(tp) = 0;
+        declare_id_type(id, tp);
 
         ID_LINE(id) = EXPR_LINE(name); /* set line_no */
         PROC_CLASS(id) = P_DEFINEDPROC;
         PROC_ARGS(id) = args;
         ID_STORAGE(id) = STG_EXT;
+
         declare_dummy_args(args, CL_ENTRY);
+        /* If an entry statement appears in execute part,
+           then each arguments of it should have type. */
+        if(CURRENT_STATE == INEXEC) {
+            FOR_ITEMS_IN_LIST(lp,args) {
+                expr x = LIST_ITEM(lp);
+                SYMBOL s = EXPR_SYM(x);
+                ID arg = find_ident_local(s);
+                if(ID_TYPE(arg) == NULL) {
+                    implicit_declaration(arg);
+                }
+                if(ID_TYPE(arg) == NULL) {
+                    error("'%s' has no implicit type.", SYM_NAME(s));
+                    abort();
+                }
+            }
+        }
 
         if (result_opt != NULL) {
             SYMBOL resS = EXPR_SYM(result_opt);
@@ -238,6 +265,7 @@ declare_procedure(enum name_class class,
                       __func__, SYM_NAME(resS));
                 return;
             }
+            //TODO: resId also required implicit declaration like args
             resultV = expv_sym_term(F_VAR, ID_TYPE(resId), ID_SYM(resId));
         }
 
@@ -372,51 +400,6 @@ declare_current_procedure_ext_id()
     return ep;
 }
 
-
-int
-is_array_size_adjustable(TYPE_DESC tp)
-{
-    assert(IS_ARRAY_TYPE(tp));
-
-    while(IS_ARRAY_TYPE(tp) && TYPE_REF(tp)) {
-        if(TYPE_IS_ARRAY_ADJUSTABLE(tp))
-            return TRUE;
-        tp = TYPE_REF(tp);
-    }
-    return FALSE;
-}
-
-
-int
-is_array_shape_assumed(TYPE_DESC tp)
-{
-    assert(IS_ARRAY_TYPE(tp));
-
-    while(IS_ARRAY_TYPE(tp) && TYPE_REF(tp)) {
-        if(TYPE_IS_ARRAY_ASSUMED_SHAPE(tp))
-            return TRUE;
-        tp = TYPE_REF(tp);
-    }
-    return FALSE;
-}
-
-
-int
-is_array_size_const(TYPE_DESC tp)
-{
-    expv upper;
-    assert(IS_ARRAY_TYPE(tp));
-
-    while(IS_ARRAY_TYPE(tp) && TYPE_REF(tp)) {
-        upper = TYPE_DIM_UPPER(tp);
-        if(upper == NULL || expr_is_constant(upper) == FALSE)
-            return FALSE;
-        tp = TYPE_REF(tp);
-    }
-    return TRUE;
-}
-
-
 static void
 declare_dummy_args(expr l, enum name_class class)
 {
@@ -432,6 +415,7 @@ declare_dummy_args(expr l, enum name_class class)
         }
         s = EXPR_SYM(x);
         id = declare_ident(s, CL_UNKNOWN);
+        ID_COULD_BE_IMPLICITLY_TYPED(id) = TRUE;
         if (ID_STORAGE(id) == STG_UNKNOWN) {
             ID_STORAGE(id) = STG_ARG;
 
@@ -475,6 +459,7 @@ copy_parent_type(ID id)
     }
     ID_DEFINED_BY(id) = parent_id;
     declare_id_type(id, ID_TYPE(parent_id));
+    id->use_assoc = parent_id->use_assoc;
     TYPE_SET_OVERRIDDEN(id);
 }
 
@@ -493,7 +478,7 @@ implicit_declaration(ID id)
         return;
     }
 
-    if (CURRENT_STATE == INEXEC) {
+    if (CURRENT_STATE == INEXEC && !ID_COULD_BE_IMPLICITLY_TYPED(id)) {
         /* use parent type as is */
         copy_parent_type(id);
     }
@@ -519,18 +504,6 @@ implicit_declaration(ID id)
         assert(tp != NULL);
 
         declare_id_type(id, tp);
-    }
-}
-
-
-TYPE_DESC
-getBaseType(tp)
-     TYPE_DESC tp;
-{
-    if (TYPE_REF(tp) != NULL) {
-        return getBaseType(TYPE_REF(tp));
-    } else {
-        return tp;
     }
 }
 
@@ -932,18 +905,25 @@ declare_ident(SYMBOL s, enum name_class class)
 
     symbols = &LOCAL_SYMBOLS;
 
-    if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
-        if (class == CL_TAGNAME) {
-            isPreDecl = TRUE;
-        } else
-        /*
-         * FIXME:
-         *	SUPER BOGUS FLAG ALERT !
-         */
-        if (is_in_kind_compilation_flag_for_declare_ident == FALSE) {
-            TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
-            symbols = &TYPE_MEMBER_LIST(struct_tp);
-            class = CL_ELEMENT;
+    /*
+     * FIXME:
+     *	SUPER BOGUS FLAG ALERT !
+     */
+    if (is_in_struct_member_initializer_compilation_flag_for_declare_ident == 
+        FALSE) {
+        if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
+            if (class == CL_TAGNAME) {
+                isPreDecl = TRUE;
+            } else 
+                /*
+                 * FIXME:
+                 *	SUPER BOGUS FLAG ALERT !
+                 */
+            if (is_in_kind_compilation_flag_for_declare_ident == FALSE) {
+                TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
+                symbols = &TYPE_MEMBER_LIST(struct_tp);
+                class = CL_ELEMENT;
+            }
         }
     }
 
@@ -1015,9 +995,6 @@ declare_ident(SYMBOL s, enum name_class class)
         ID_CLASS(ip) = class;
         if(isPreDecl == FALSE)
             ID_ORDER(ip) = order_sequence++;
-
-	// remember this ip is defiend in module by USE */
-	setIsOfModule(ip);
     }
 
     if (class == CL_TAGNAME) ID_STORAGE(ip) = STG_TAGNAME;
@@ -1046,15 +1023,10 @@ declare_common_ident(SYMBOL s)
     return ip;
 }
 
-
 ID
-find_ident_head(SYMBOL s, ID head)
+find_ident_local(SYMBOL s)
 {
-    ID ip;
-    FOREACH_ID(ip, head) {
-        if (ID_SYM(ip) == s) return ip;
-    }
-    return NULL;
+    return find_ident_head(s, LOCAL_SYMBOLS);
 }
 
 ID
@@ -1158,7 +1130,7 @@ find_ident(SYMBOL s)
 {
     ID ip;
 
-    ip = find_ident_head(s, LOCAL_SYMBOLS);
+    ip = find_ident_local(s);
     if (ip != NULL) {
         return ip;
     }
@@ -1172,17 +1144,6 @@ find_ident(SYMBOL s)
     }
     ip = find_external_ident_head(s);
     return ip;
-}
-
-EXT_ID
-find_ext_id_head(SYMBOL s, EXT_ID head)
-{
-    EXT_ID ep;
-    FOREACH_EXT_ID(ep, head) {
-        if(strcmp(SYM_NAME(EXT_SYM(ep)), SYM_NAME(s)) == 0)
-            return ep;
-    }
-    return NULL;
 }
 
 EXT_ID
@@ -1243,25 +1204,13 @@ find_ext_id(SYMBOL s)
 }
 
 ID
-find_common_ident_head(SYMBOL s, ID head)
-{
-    ID id;
-    FOREACH_ID(id, head) {
-        if(ID_SYM(id) == s)
-            return id;
-    }
-
-    return NULL;
-}
-
-ID
 find_common_ident_parent(SYMBOL s)
 {
     ID ip;
     int lev_idx;
 
     for (lev_idx = unit_ctl_level - 1; lev_idx >= 0; --lev_idx) {
-        ip = find_common_ident_head(s,
+        ip = find_ident_head(s,
                 UNIT_CTL_LOCAL_COMMON_SYMBOLS(unit_ctls[lev_idx]));
         if (ip != NULL) {
             return ip;
@@ -1280,7 +1229,7 @@ find_common_ident_sibling(SYMBOL s)
         return NULL;
     }
     FOREACH_EXT_ID(ep, PARENT_CONTAINS) {
-        ip = find_common_ident_head(s, EXT_PROC_COMMON_ID_LIST(ep));
+        ip = find_ident_head(s, EXT_PROC_COMMON_ID_LIST(ep));
         if (ip != NULL) {
             return ip;
         }
@@ -1293,7 +1242,7 @@ find_common_ident(SYMBOL s)
 {
     ID ip;
 
-    ip = find_common_ident_head(s, LOCAL_COMMON_SYMBOLS);
+    ip = find_ident_head(s, LOCAL_COMMON_SYMBOLS);
     if (ip != NULL) {
         return ip;
     }
@@ -1304,8 +1253,6 @@ find_common_ident(SYMBOL s)
     ip = find_common_ident_sibling(s);
     return ip;
 }
-
-#define static
 
 static TYPE_DESC
 declare_struct_type(expr ident)
@@ -1339,7 +1286,16 @@ declare_struct_type(expr ident)
     }
 
     if(tp == NULL) {
-        id = declare_ident(sp, CL_TAGNAME);
+        if ((id = find_ident_local(sp)) == NULL) {
+            id = declare_ident(sp, CL_TAGNAME);
+        }else{
+            if (ID_CLASS(id) == CL_UNKNOWN) {
+                ID_CLASS(id) = CL_TAGNAME;
+                ID_STORAGE(id) = STG_TAGNAME;
+            } else {
+                error("identifier '%s' is already used", ID_NAME(id));
+            }
+        }
         tp = struct_type(id);
         TYPE_SLINK_ADD(tp, LOCAL_STRUCT_DECLS, ttail);
         ID_TYPE(id) = tp;
@@ -1347,6 +1303,7 @@ declare_struct_type(expr ident)
         id = declare_ident(sp, CL_TAGNAME);
     }
     ID_LINE(id) = EXPR_LINE(ident);
+    ID_ORDER(id) = order_sequence++;
 
 #if 0
     /* add to id list for output <FstructDecl> */
@@ -1355,8 +1312,6 @@ declare_struct_type(expr ident)
     else
         ID_NEXT(EXT_PROC_ID_LIST(current_ext_id)) = id;
 #endif
-
-    checkDefinedModule(id);
 
     return tp;
 }
@@ -1386,62 +1341,6 @@ declare_struct_type_wo_component(expr ident)
 
     return tp;
 }
-
-
-TYPE_DESC
-getBaseStructType(TYPE_DESC td)
-{
-    if (td == NULL)
-        return NULL;
-    while (TYPE_REF(td) && IS_STRUCT_TYPE(TYPE_REF(td))) {
-        td = TYPE_REF(td);
-    }
-    return td;
-}
-
-ID
-find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
-{
-    ID member;
-
-    if (!IS_STRUCT_TYPE(struct_td)) {
-        return NULL;
-    }
-    struct_td = getBaseStructType(struct_td);
-    FOREACH_MEMBER(member, struct_td) {
-        if (strcmp(ID_NAME(member), SYM_NAME(sym)) == 0) {
-            return member;
-        }
-    }
-    return NULL;
-}
-
-
-static int
-is_descendant_coindexed(TYPE_DESC tp){
-
-  ID id;
-
-  if (!tp) return FALSE;
-
-  if (TYPE_IS_COINDEXED(tp)) return TRUE;
-
-  if (IS_STRUCT_TYPE(tp)){
-
-    FOREACH_MEMBER(id, tp){
-      if (is_descendant_coindexed(ID_TYPE(id))) return TRUE;
-    }
-
-    if (TYPE_REF(tp)) return is_descendant_coindexed(TYPE_REF(tp));
-
-  }
-  else if (IS_ARRAY_TYPE(tp)){
-    return is_descendant_coindexed(bottom_type(tp));
-  }
-
-  return FALSE;
-}
-
 
 /* declare type for F95 attributes */
 /* check compatibility if id's type is already declared. */
@@ -1620,9 +1519,11 @@ declare_id_type(ID id, TYPE_DESC tp)
             tpp = tp;
             while(TYPE_REF(tpp) != NULL && IS_ARRAY_TYPE(TYPE_REF(tpp)))
                 tpp = TYPE_REF(tpp);
-            if(TYPE_REF(tpp) == NULL || type_is_compatible(tq,TYPE_REF(tpp)))
+            if (TYPE_REF(tpp) != NULL && !type_is_compatible(tq, TYPE_REF(tpp)))
+                goto no_compatible;
+            if (TYPE_REF(tpp) == NULL ||
+                type_is_specific_than(tq, TYPE_REF(tpp)))
                 TYPE_REF(tpp) = tq;
-            else goto no_compatible;
         }
         ID_TYPE(id) = tp;
         return;
@@ -1633,10 +1534,13 @@ declare_id_type(ID id, TYPE_DESC tp)
         /* already defined as array */
         while(TYPE_REF(tq) != NULL && IS_ARRAY_TYPE(TYPE_REF(tq)))
             tq = TYPE_REF(tq);
-        if(TYPE_REF(tq) == NULL || type_is_compatible(TYPE_REF(tq),tp)){
+        if (TYPE_REF(tq) != NULL && !type_is_compatible(TYPE_REF(tq),tp))
+            goto no_compatible;
+        if (TYPE_REF(tq) == NULL ||
+            type_is_specific_than(tp, TYPE_REF(tq))) {
             TYPE_REF(tq) = tp;
             return;
-        } else goto no_compatible;
+        }
     }
 
     /* both are not ARRAY_TYPE */
@@ -1653,109 +1557,25 @@ declare_id_type(ID id, TYPE_DESC tp)
             /* copy recursive flag */
             PROC_IS_RECURSIVE(id) = TRUE;
         }
+        if (ID_CLASS(id) == CL_PROC &&
+            (TYPE_IS_PURE(id) ||
+             TYPE_IS_PURE(tp))) {
+            /* copy pure flag */
+            PROC_IS_PURE(id) = TRUE;
+        }
         return;
     }
 
  no_compatible:
-/*     if(checkInsideUse() && ID_IS_OFMODULE(id)) { */
-/*         /\* TODO: */
-/*          *  the type of id turns into ambiguous type. */
-/*          *\/ */
-/*         return; */
-/*     } */
+    if(checkInsideUse() && ID_IS_OFMODULE(id)) {
+        /* TODO:
+         *  the type of id turns into ambiguous type.
+         */
+        return;
+    }
 
     error("incompatible type declarations, %s", ID_NAME(id));
 }
-
-/* check type compatiblity of element types */
-int
-type_is_compatible(TYPE_DESC tp,TYPE_DESC tq)
-{
-    if(tp == NULL || tq == NULL ||
-       IS_ARRAY_TYPE(tp) || IS_ARRAY_TYPE(tq)) return FALSE;
-    if(TYPE_BASIC_TYPE(tp) != TYPE_BASIC_TYPE(tq)) {
-      if (TYPE_BASIC_TYPE(tp) == TYPE_GENERIC || TYPE_BASIC_TYPE(tq) == TYPE_GENERIC ||
-	  TYPE_BASIC_TYPE(tp) == TYPE_GNUMERIC_ALL ||
-	  TYPE_BASIC_TYPE(tq) == TYPE_GNUMERIC_ALL){
-	return TRUE;
-      }
-      else if(TYPE_BASIC_TYPE(tp) == TYPE_DREAL || TYPE_BASIC_TYPE(tq) == TYPE_DREAL) {
-            TYPE_DESC tt;
-            tt = (TYPE_BASIC_TYPE(tp) == TYPE_DREAL)?tq:tp;
-            if(TYPE_BASIC_TYPE(tt) == TYPE_REAL &&
-               EXPR_CODE(TYPE_KIND(tt)) == INT_CONSTANT &&
-               EXPV_INT_VALUE(TYPE_KIND(tt)) == KIND_PARAM_DOUBLE)
-                return TRUE;
-        }
-        return FALSE;
-    }
-    if(TYPE_BASIC_TYPE(tp) == TYPE_CHAR){
-        int l1 = TYPE_CHAR_LEN(tp);
-        int l2 = TYPE_CHAR_LEN(tq);
-        if(l1 > 0 && l2 > 0 && l1 != l2) return FALSE;
-    }
-    return TRUE;
-}
-
-
-/* check type compatiblity of element types */
-int
-type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2)
-{
-    BASIC_DATA_TYPE b1;
-    BASIC_DATA_TYPE b2;
-
-    assert(TYPE_BASIC_TYPE(tp1));
-    b1 = TYPE_BASIC_TYPE(tp1);
-    assert(TYPE_BASIC_TYPE(tp2));
-    b2 = TYPE_BASIC_TYPE(tp2);
-
-    if(b2 == TYPE_GNUMERIC_ALL)
-        return TRUE;
-
-    switch(b1) {
-    case TYPE_ARRAY:
-    case TYPE_INT:
-    case TYPE_REAL:
-    case TYPE_DREAL:
-    case TYPE_COMPLEX:
-    case TYPE_DCOMPLEX:
-    case TYPE_GNUMERIC:
-    case TYPE_GNUMERIC_ALL:
-        if(b2 != TYPE_LOGICAL ||
-            (b1 == TYPE_ARRAY && IS_LOGICAL(array_element_type(tp1))))
-            return TRUE;
-        break;
-    case TYPE_LOGICAL:
-        if(b2 == TYPE_LOGICAL || b2 == TYPE_GENERIC)
-            return TRUE;
-        break;
-    case TYPE_CHAR:
-        if(b2 == TYPE_CHAR || b2 == TYPE_GENERIC)
-            return TRUE;
-        break;
-    case TYPE_STRUCT:
-        if (b2 == TYPE_STRUCT || b2 == TYPE_GENERIC)
-            return TRUE;
-        break;
-    case TYPE_GENERIC:
-        return TRUE;
-    default:
-        break;
-    }
-    return FALSE;
-}
-
-
-void
-declare_storage(ID id, enum storage_class stg)
-{
-    if(ID_STORAGE(id) == STG_UNKNOWN)
-      ID_STORAGE(id) = stg;
-    else if(ID_STORAGE(id) != stg)
-      error("incompatible storage declarations, %s", ID_NAME(id));
-}
-
 
 /* create TYPE_DESC from type expression x. */
 /* x := (LIST basic_type leng_spec)
@@ -2000,97 +1820,17 @@ compile_type(expr x)
     return tp;
 }
 
-
-int
-type_is_possible_dreal(TYPE_DESC tp)
-{
-    expv kind, kind1;
-
-    if(TYPE_REF(tp))
-        type_is_possible_dreal(TYPE_REF(tp));
-
-    if(TYPE_BASIC_TYPE(tp) == TYPE_DREAL)
-        return TRUE;
-
-    if(TYPE_BASIC_TYPE(tp) != TYPE_REAL)
-        return FALSE;
-
-    kind = TYPE_KIND(tp);
-    if(kind == NULL)
-        return FALSE;
-    kind1 = expv_reduce(kind, TRUE);
-    if(kind1 == NULL)
-        return FALSE;
-    if(expr_is_constant(kind) && EXPV_CODE(kind) == INT_CONSTANT) {
-        return (EXPV_INT_VALUE(kind) == KIND_PARAM_DOUBLE);
-    }
-    /* treat unreducable value as double */
-    return TRUE;
-}
-
-
-TYPE_DESC
-type_ref(TYPE_DESC tp)
-{
-    TYPE_DESC tq = new_type_desc();
-    TYPE_REF(tq) = tp;
-    return tq;
-}
-
-
-TYPE_DESC
-struct_type(ID id)
-{
-    TYPE_DESC tp;
-    tp = new_type_desc();
-    TYPE_BASIC_TYPE(tp) = TYPE_STRUCT;
-    TYPE_TAGNAME(tp) = id;
-    TYPE_MEMBER_LIST(tp) = NULL;
-    TYPE_REF(tp) = NULL;
-    TYPE_IS_DECLARED(tp) = FALSE;
-    return tp;
-}
-
-TYPE_DESC
-function_type(TYPE_DESC tp)
-{
-    TYPE_DESC tq;
-    tq = new_type_desc();
-    TYPE_BASIC_TYPE(tq) = TYPE_FUNCTION;
-    TYPE_REF(tq) = tp;
-    return tq;
-}
-
-TYPE_DESC
-type_char(int len)
-{
-    TYPE_DESC tp;
-
-    /* (len <=0) means character(len=*) in function argument */
-    tp = new_type_desc();
-    TYPE_BASIC_TYPE(tp) = TYPE_CHAR;
-    assert(len >= 0 || len == CHAR_LEN_UNFIXED);
-    TYPE_CHAR_LEN(tp) = len;
-    return tp;
-}
-
-TYPE_DESC
-type_basic(BASIC_DATA_TYPE t)
-{
-    TYPE_DESC tp;
-    assert(t != TYPE_CHAR);
-
-    tp = new_type_desc();
-    TYPE_BASIC_TYPE(tp) = t;
-    return tp;
-}
-
 void 
 compile_IMPLICIT_decl(expr type,expr l)
 {
     TYPE_DESC tp;
     list lp;
     expr v, ty;
+
+    if (UNIT_CTL_IMPLICIT_NONE(CURRENT_UNIT_CTL)) {
+        error("IMPLICIT NONE is already set");
+        return;
+    }
 
     if(type == NULL){   /* DIMENSION */
         error("bad IMPLICIT declaration");
@@ -2132,8 +1872,25 @@ compile_IMPLICIT_decl(expr type,expr l)
     }
 }
 
+static void
+set_implicit_type_declared_uc(UNIT_CTL uc, int c)
+{
+    int i = 1;
+    i <<= (c - 'a');
+    UNIT_CTL_IMPLICIT_TYPE_DECLARED(uc) |= i;
+}
+
+static int
+is_implicit_type_declared_uc(UNIT_CTL uc, int c)
+{
+    int i = 1;
+    i <<= (c - 'a');
+    return UNIT_CTL_IMPLICIT_TYPE_DECLARED(uc) & i;
+}
+
 void
-set_implicit_type_uc(UNIT_CTL uc, TYPE_DESC tp, int c1, int c2)
+set_implicit_type_uc(UNIT_CTL uc, TYPE_DESC tp, int c1, int c2,
+                     int ignore_declared_flag)
 {
     int i;
     
@@ -2142,17 +1899,30 @@ set_implicit_type_uc(UNIT_CTL uc, TYPE_DESC tp, int c1, int c2)
     
     if (c1 > c2) {
         error("characters out of order in IMPLICIT:%c-%c", c1, c2);
-    } else {
-      if (tp) TYPE_SET_IMPLICIT(tp);
-        for (i = c1 ; i <= c2 ; ++i)
+        return;
+    }
+
+    if (tp)
+        TYPE_SET_IMPLICIT(tp);
+
+    for (i = c1 ; i <= c2 ; ++i) {
+        if (ignore_declared_flag) {
             UNIT_CTL_IMPLICIT_TYPES(uc)[i - 'a'] = tp;
+        } else {
+            if (!is_implicit_type_declared_uc(uc, i)) {
+                UNIT_CTL_IMPLICIT_TYPES(uc)[i - 'a'] = tp;
+                set_implicit_type_declared_uc(uc, i);
+            } else {
+                error("character '%c' already has IMPLICIT type", i);
+            }
+        }
     }
 }
 
 void
 set_implicit_type(TYPE_DESC tp, int c1, int c2)
 {
-    set_implicit_type_uc(CURRENT_UNIT_CTL, tp, c1, c2);
+    set_implicit_type_uc(CURRENT_UNIT_CTL, tp, c1, c2, FALSE);
 }
 
 void
@@ -2410,6 +2180,287 @@ is_variable_shape(expv shape)
     return FALSE;
 }
 
+
+static int
+is_pure_null_array_spec(expv shape) {
+    int ret = FALSE;
+
+    if (shape != NULL) {
+        int i;
+        expv v;
+        for (i = 0; i < 3; i++) {
+            v = expr_list_get_n(shape, i);
+            if (v != NULL) {
+                break;
+            }
+        }
+        ret = (i == 3) ? TRUE : FALSE;
+    } else {
+        fatal("invalid array-spec. (NULL).");
+    }
+
+    return ret;
+}
+
+
+static int
+calc_array_spec_size_by_spec(int lower, int upper, int step) {
+    int ret = -1;
+
+    if (lower != 0 &&
+        upper != 0 &&
+        step != 0) {
+        ret = (upper - lower + step) / step;
+        if (ret <= 0) {
+            error("invalid array-spec: %d:%d:%d.",
+                  lower, upper, step);
+            ret = -1;
+        }
+    }
+
+    return ret;
+}
+
+
+static int
+calc_array_spec_size(expv shape) {
+    int vals[3];
+
+    vals[0] = 0;
+    vals[1] = 0;
+    vals[2] = 0;
+
+    if (shape != NULL) {
+        int i;
+        expv v;
+
+        for (i = 0; i < 3; i++) {
+            v = expv_reduce(expr_list_get_n(shape, i), TRUE);
+            if (v != NULL && EXPR_CODE(v) == INT_CONSTANT) {
+                vals[i] = EXPV_INT_VALUE(v);
+            } else if (v == NULL) {
+                switch (i) {
+                    case 0: {
+                        vals[i] = 1;
+                        break;
+                    }
+                    case 1: {
+                        break;
+                    }
+                    case 2: {
+                        vals[i] = 1;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    return calc_array_spec_size_by_spec(vals[0], vals[1], vals[2]);
+}
+
+
+static int
+score_array_spec_element(expv e, int n) {
+    /*
+     * n:
+     *	0:	lower
+     *	1:	upper
+     *	2:	step
+     */
+    int ret = 0;
+
+    if (e != NULL) {
+        e = expv_reduce(e, TRUE);
+        if (e != NULL) {
+            if (EXPR_CODE(e) == INT_CONSTANT) {
+                if (n < 2) {
+                    /*
+                     * give it a high score, if it is lower or upper.
+                     */
+                    ret += 100;
+                } else {
+                    ret += 10;
+                }
+            } else {
+                if (n < 2) {
+                    ret += 30;
+                } else {
+                    ret += 3;
+                }
+            }
+        }
+    }
+
+    /*
+     * The highest score is 210.
+     */
+    return ret;
+}
+
+
+/**
+ * \brief Returns a "score" of the given array-spec. The larger the score
+ * the more specifc the shape.
+ *
+ *	@param shape    An array-spec.
+ *
+ *	@return A score. The highest score is 1210.
+ */
+int
+score_array_spec(expv aSpec) {
+    int ret = 0;
+
+    if (aSpec != NULL) {
+        int i = 0;
+        expv e;
+
+        if (calc_array_spec_size(aSpec) > 0) {
+            /*
+             * no matter how the array-spec consists of, this one is
+             * highly usable no doubt.
+             */
+            ret += 1000;
+        }
+        for (i = 0; i < 3; i++) {
+            e = expr_list_get_n(aSpec, i);
+            ret += score_array_spec_element(e, i);
+        }
+        /*
+         * The highest score is 1210.
+         */
+    }
+
+    return ret;
+}
+
+
+/**
+ * \brief Combine two given array-specs.
+ *
+ *	@param l    The left hand array-spec.
+ *	@param r    The right hand array-spec.
+ *
+ *	@return A newly created array-spec or one of the given array-specs.
+ */
+expv
+combine_array_specs(expv l, expv r) {
+    expv ret = NULL;
+
+    if (l != NULL && r != NULL) {
+        int i;
+        int lS, rS;
+        expv lE, rE;
+
+        ret = list0(LIST);
+
+        for (i = 0; i < 3; i++) {
+            lE = expr_list_get_n(l, i);
+            rE = expr_list_get_n(r, i);
+            lS = score_array_spec_element(lE, i);
+            rS = score_array_spec_element(rE, i);
+
+            if (lS == rS) {
+                /*
+                 * Use the left side element since the right side
+                 * might be worn-out'ed by successive compilation.
+                 */
+                list_put_last(ret, lE);
+            } else {
+                list_put_last(ret,
+                              (lS > rS) ? lE : rE);
+            }
+        }
+    } else if (l != NULL && r == NULL) {
+        ret = l;
+    } else {
+        ret = r;
+    }
+
+    return ret;
+}
+
+
+/**
+ * \brief Calculate a size of an array-spec.
+ *
+ *	@param aSpec      An array-spec expv.
+ *	@param idASpec   An array-spec of the variable definition
+ *	                  (accept NULL).
+ *	@param whichSPtr  If not NULL, a used array-spec is returned.
+ *	
+ *	@return -1 if the size can't be determined statically.
+ *	@return A size of the shape.
+ */
+int
+array_spec_size(expv aSpec, expv idASpec, expv *whichSPtr) {
+    if (aSpec == NULL) {
+        fatal("the array-spec expression is NULL.");
+        /* not reached. */
+        return -1;
+    } else {
+        int ret = -1;
+        expv which = NULL;
+
+        if (is_pure_null_array_spec(aSpec) == TRUE) {
+            /*
+             * In this case, the aSpec is so called "assumed shape".
+             */
+            if (idASpec != NULL) {
+                if (is_pure_null_array_spec(idASpec) == TRUE) {
+                    /*
+                     * Both the array-specs are the assumed shapes.
+                     * Use the aShape.
+                     */
+                    which = aSpec;
+                } else {
+                    int dimSz = calc_array_spec_size(idASpec);
+                    if (dimSz > 0) {
+                        /*
+                         * The size of aShape can't be determined but
+                         * the dimASpec can be. Use dimASpec.
+                         */
+                        ret = dimSz;
+                        which = idASpec;
+                    } else {
+                        which = aSpec;
+                    }
+                }
+            } else {
+                which = aSpec;
+            }
+        } else {
+            /*
+             * Use the aSpec no argue.
+             */
+            ret = calc_array_spec_size(aSpec);
+            which = aSpec;
+        }
+
+        if (whichSPtr != NULL) {
+            *whichSPtr = which;
+        }
+
+        return ret;
+    }
+}
+
+
+/**
+ * \brief Set a type of F_INDEX_RANGE expression.
+ *
+ *	@param v	an F_INDEX_RANGE expression.
+ */
+void
+set_index_range_type(expv v) {
+    if (EXPR_CODE(v) == F_INDEX_RANGE) {
+        TYPE_DESC tp = compile_dimensions(type_INT, list1(LIST, v));
+        fix_array_dimensions(tp);
+        EXPV_TYPE(v) = tp;
+    }
+}
+
+
 /**
  * If shapes are not same shape then return NULL .
  * If one shape is not array but scalar, then return the other shape.
@@ -2546,6 +2597,11 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
     
     if (typeExpr != NULL) {
         if (EXPR_CODE(typeExpr) == IDENT) {
+            ID id = find_ident_local(EXPR_SYM(typeExpr));
+            if(id != NULL && ID_IS_AMBIGUOUS(id)) {
+                error_at_node(decl_list, "an ambiguous reference to symbol '%s'", ID_NAME(id));
+                return;
+            }
             tp0 = find_struct_decl(EXPR_SYM(typeExpr));
             if (tp0 == NULL) {
                 if(hasPointerAttr) {
@@ -2598,9 +2654,18 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
         if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
             id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
         } else {
-            id = find_ident(EXPR_SYM(ident));
-            if(id == NULL || ID_STORAGE(id) != STG_ARG) {
+            id = find_ident_local(EXPR_SYM(ident));
+            if(id != NULL && ID_IS_OFMODULE(id)) {
+                error_at_node(decl_list, "setting a type to USE-associated symbol '%s'.", ID_NAME(id));
+                continue;
+            } else if (id != NULL && ID_IS_AMBIGUOUS(id)) {
+                error_at_node(decl_list, "an ambiguous reference to symbol '%s'", ID_NAME(id));
+                return;
+            } else if(id == NULL || ID_STORAGE(id) != STG_ARG) {
                 id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
+            } else if (id != NULL && ID_STORAGE(id) == STG_ARG) {
+                /* update order from one set in declare_dummy_args */
+                ID_ORDER(id) = order_sequence++;
             }
             TYPE_DESC t = tp0 ? tp0 : ID_TYPE(id);
             if (t && TYPE_LENG(t) && IS_INT_CONST_V(TYPE_LENG(t)) == FALSE)
@@ -2622,6 +2687,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                 }
                 ID_CLASS(id) = CL_VAR;
 		ID_LINE(id) = EXPR_LINE(decl_list);
+                ID_COULD_BE_IMPLICITLY_TYPED(id) = TRUE;
                 continue;
             }
         } else {
@@ -2712,7 +2778,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
              * Always use dimension spec specified with identifier.
              */
             tp = compile_dimensions(tp, dims);
-            fix_array_dimensions(tp);
+            /* fix_array_dimensions() is now called in end_declaration() */
             ID_ORDER(id) = order_sequence++;
         }
 
@@ -2746,10 +2812,31 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
              }
         }
 
-        if (value != NULL) {
+        if (value != NULL && EXPR_CODE(value) != F_DATA_DECL) {
+#ifdef WARN_STRUCT_MEMBER_INITIALIZATION
+            if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
+                warning_at_node(typeExpr,
+                                "The initialization of \"%s\" is "
+                                "just ignored due to current limitation.",
+                                ID_NAME(id));
+                goto valueCompilationDone;
+            }
+#endif /* WARN_STRUCT_MEMBER_INITIALIZATION */
+            /*
+             * FIXME:
+             *	SUPER BOGUS FLAG ALERT !
+             */
+            is_in_struct_member_initializer_compilation_flag_for_declare_ident
+                = TRUE;
             VAR_INIT_VALUE(id) = compile_expression(value);
             ID_ORDER(id) = order_sequence++;
+            is_in_struct_member_initializer_compilation_flag_for_declare_ident
+                = FALSE;
         }
+#ifdef WARN_STRUCT_MEMBER_INITIALIZATION
+        valueCompilationDone:
+#endif /* WARN_STRUCT_MEMBER_INITIALIZATION */
+
         if (TYPE_IS_PARAMETER(tp)) {
            /* handle the attribute for parameter, calc its value.
              ident
@@ -2762,22 +2849,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
             compile_PARAM_decl(const_list);
         }
 
-        checkDefinedModule(id);
     } /* end FOR_ITEMS_IN_LIST */
-}
-
-
-TYPE_DESC
-find_struct_decl_head(SYMBOL s, TYPE_DESC head)
-{
-    TYPE_DESC tp;
-
-    for (tp = head; tp != NULL; tp = TYPE_SLINK(tp)) {
-        if(strcmp(ID_NAME(TYPE_TAGNAME(tp)),SYM_NAME(s)) == 0)
-            return tp;
-    }
-
-    return NULL;
 }
 
 TYPE_DESC
@@ -2919,15 +2991,16 @@ compile_dimensions(TYPE_DESC tp, expr dims)
         expr lower = NULL, upper = NULL, step = NULL;
 
         x = LIST_ITEM(lp);
-        if(x == NULL) {
-            if(LIST_NEXT(lp) != NULL)
+        if (x == NULL) {
+            if (LIST_NEXT(lp) != NULL) {
                 error("only last bound may be asterisk");
-        } else if(EXPR_CODE(x) == LIST){ /* (LIST lower upper) */
+            }
+        } else if (EXPR_CODE(x) == LIST) { /* (LIST lower upper) */
             lower = EXPR_ARG1(x);
             upper = EXPR_ARG2(x);
             /* step comes from compile_array_ref() */
             step = expr_list_get_n(x, 2);
-        } else if(EXPR_CODE(x) == F_INDEX_RANGE) {
+        } else if (EXPR_CODE(x) == F_INDEX_RANGE) {
             lower = EXPR_ARG1(x);
             upper = EXPR_ARG2(x);
             step  = EXPR_ARG3(x);
@@ -2935,7 +3008,7 @@ compile_dimensions(TYPE_DESC tp, expr dims)
             upper = x;
         }
         n++;
-        if(n > MAX_DIM){
+        if (n > MAX_DIM) {
             error("no more than MAX_DIM(%d) dimensions",MAX_DIM);
             break;
         }
@@ -3056,14 +3129,6 @@ compile_codimensions(expr dims, int is_alloc){
   return codims;
 }
 
-
-static void
-merge_attributs(TYPE_DESC tp1, TYPE_DESC tp2)
-{
-    TYPE_ATTR_FLAGS(tp1) |= TYPE_ATTR_FLAGS(tp2);
-}
-
-
 void
 fix_array_dimensions(TYPE_DESC tp)
 {
@@ -3154,17 +3219,10 @@ fix_array_dimensions(TYPE_DESC tp)
 
     /* merge parent's and child's attributes */
     if (TYPE_REF(tp) != NULL) {
-        merge_attributs(tp, TYPE_REF(tp));
+        merge_attributes(tp, TYPE_REF(tp));
     }
 }
 
-
-TYPE_DESC array_element_type(TYPE_DESC tp)
-{
-    if(!IS_ARRAY_TYPE(tp)) fatal("array_element_type: not ARRAY_TYPE");
-    while(IS_ARRAY_TYPE(tp)) tp = TYPE_REF(tp);
-    return tp;
-}
 
 TYPE_DESC
 copy_array_type(TYPE_DESC tp)
@@ -3213,8 +3271,7 @@ copy_dimension(TYPE_DESC array, TYPE_DESC base)
 void 
 compile_PARAM_decl(expr const_list)
 {
-    expr x,ident,e;
-    expv v;
+    expr x,ident;
     ID id;
     list lp;
 
@@ -3242,42 +3299,54 @@ compile_PARAM_decl(expr const_list)
         } else {
             TYPE_SET_PARAMETER(id);
         }
-        checkDefinedModule(id);
+        ID_COULD_BE_IMPLICITLY_TYPED(id) = TRUE;
 
-        e = EXPR_ARG2(x);
-        if(e == NULL) {
-            error("parameter value not specified");
-            continue;
-        }
+        /* compilataion of initial value is executed later */
+        list_put_last(CURRENT_INITIALIZE_DECLS,
+            list2(F_PARAM_DECL, ident, EXPR_ARG2(x)));
 
-        v = compile_expression(e);
-
-        if (expr_is_constant(e)) {
-            if(v)
-                v = expv_reduce(v, FALSE);
-            if (v == NULL) {
-                error("bad constant expression in PARAMETER statement");
-                continue;
-            }
-        } else {
-            if (v == NULL)
-                continue;
-        }
-
-        if (ID_TYPE(id) != NULL) {
-            if (type_is_compatible_for_assignment(ID_TYPE(id),
-                                                  EXPV_TYPE(v)) == FALSE) {
-                error("incompatible constant expression in PARAMETER "
-                      "statement");
-                continue;
-            }
-        }
-
-        VAR_INIT_VALUE(id) = v;
         ID_ORDER(id) = order_sequence++;
     }
 }
 
+void 
+postproc_PARAM_decl(expr ident, expr e)
+{
+    expv v;
+    ID id;
+
+    id = find_ident(EXPR_SYM(ident));
+
+    if(e == NULL) {
+        error("parameter value not specified");
+        return;
+    }
+
+    v = compile_expression(e);
+
+    if (expr_is_constant(e)) {
+        if(v)
+            v = expv_reduce(v, FALSE);
+        if (v == NULL) {
+            error("bad constant expression in PARAMETER statement");
+            return;
+        }
+    } else {
+        if (v == NULL)
+            return;
+    }
+
+    if (ID_TYPE(id) != NULL) {
+        if (type_is_compatible_for_assignment(ID_TYPE(id),
+                                              EXPV_TYPE(v)) == FALSE) {
+            error("incompatible constant expression in PARAMETER "
+                  "statement");
+            return;
+        }
+    }
+
+    VAR_INIT_VALUE(id) = v;
+}
 
 void
 compile_COMMON_decl(expr com_list)
@@ -3313,6 +3382,7 @@ compile_COMMON_decl(expr com_list)
             if (EXPR_CODE(ident) != IDENT) fatal("compile_COMMON_decl: not ident");
             id = declare_ident(EXPR_SYM(ident), CL_VAR);
             if(id == NULL) continue;
+            ID_COULD_BE_IMPLICITLY_TYPED(id) = TRUE;
             tp = ID_TYPE(id);
             if (dims != NULL) {
                 tp = compile_dimensions(tp,dims);
@@ -3380,8 +3450,6 @@ compile_EXTERNAL_decl(expr id_list)
 
         if(ID_STORAGE(id) != STG_ARG)
             ID_STORAGE(id) = STG_EXT;
-
-        checkDefinedModule(id);
     }
 }
 
@@ -3404,8 +3472,6 @@ compile_INTRINSIC_decl(id_list)
             PROC_CLASS(id) = P_INTRINSIC;
         else if(PROC_CLASS(id) != P_INTRINSIC)
             error("invalid intrinsic declaration, %s", ID_NAME(id));
-
-        checkDefinedModule(id);
     }
 }
 
@@ -3456,7 +3522,8 @@ compile_SAVE_decl(id_list)
 
         /* local symbol. */
         FOREACH_ID(id, LOCAL_SYMBOLS) {
-            if (ID_CLASS(id) != CL_PARAM &&
+            if (!ID_IS_OFMODULE(id) &&
+                ID_CLASS(id) != CL_PARAM &&
                 !TYPE_IS_PARAMETER(id) &&
                 (ID_CLASS(id) == CL_UNKNOWN ||
                  ID_CLASS(id) == CL_VAR) &&
@@ -3474,17 +3541,18 @@ compile_SAVE_decl(id_list)
         }
         return;
     }
-    
+
     FOR_ITEMS_IN_LIST(lp, id_list) {
         ident = LIST_ITEM(lp);
         switch (EXPR_CODE(ident)) {
             case IDENT: {
-                if ((id = find_ident(EXPR_SYM(ident))) == NULL) {
-                    id = declare_ident(EXPR_SYM(ident), CL_VAR);
+                if ((id = find_ident_local(EXPR_SYM(ident))) == NULL) {
+                    id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
                     if (id == NULL) {
                         /* must not happen. */
                         continue;
                     }
+                    ID_COULD_BE_IMPLICITLY_TYPED(id) = TRUE;
                 }
                 break;
             }
@@ -3506,8 +3574,14 @@ compile_SAVE_decl(id_list)
                 break;
             }
         }
+        if(ID_IS_OFMODULE(id)) {
+            error("can't change attributes of USE-assoicated symbol '%s'", ID_NAME(id));
+            return;
+        } else if (ID_IS_AMBIGUOUS(id)) {
+            error("an ambiguous reference to symbol '%s'", ID_NAME(id));
+            return;
+        }
         (void)markAsSave(id);
-        checkDefinedModule(id);
     }
 }
 
@@ -3525,9 +3599,8 @@ compile_pragma_statement(expr x)
 	    break;
 	}
 	else {
-        int len = strlen(EXPR_STR(EXPR_ARG1(x)));
         v = expv_str_term(STRING_CONSTANT,
-                          type_char(len),
+                          NULL,
                           strdup(EXPR_STR(EXPR_ARG1(x))));
         break;
       }
@@ -3540,58 +3613,3 @@ compile_pragma_statement(expr x)
   output_statement(list1(F_PRAGMA_STATEMENT, v));
 }
 
-
-TYPE_DESC
-wrap_type(TYPE_DESC tp)
-{
-    TYPE_DESC tq = new_type_desc();
-    if (tp == tq) {
-        fatal("%s: must be an malloc() problem, "
-              "newly alloc'd TYPE_DESC has duplicated address.",
-              __func__);
-        /* not reached. */
-        return NULL;
-    }
-    TYPE_REF(tq) = tp;
-    if (IS_STRUCT_TYPE(tp)) {
-        TYPE_BASIC_TYPE(tq) = TYPE_STRUCT;
-    } else {
-        TYPE_BASIC_TYPE(tq) = TYPE_BASIC_TYPE(tp);
-        TYPE_CHAR_LEN(tq) = TYPE_CHAR_LEN(tp);
-        TYPE_KIND(tq) = TYPE_KIND(tp);
-        if (TYPE_IS_IMPLICIT(tp))
-            TYPE_SET_IMPLICIT(tq);
-    }
-
-    return tq;
-}
-
-static
-int
-type_is_linked(TYPE_DESC tp, TYPE_DESC tlist)
-{
-    if(tlist == NULL)
-        return FALSE;
-    do {
-        if (tp == tlist)
-            return TRUE;
-        tlist = TYPE_LINK(tlist);
-    } while (tlist != NULL);
-    return FALSE;
-}
-
-TYPE_DESC
-type_link_add(TYPE_DESC tp, TYPE_DESC tlist, TYPE_DESC ttail)
-{
-    if(ttail == NULL) 
-        return tp;
-    TYPE_LINK(ttail) = tp;
-    ttail = tp;
-    while(ttail != TYPE_LINK(ttail) && TYPE_LINK(ttail) != NULL) {
-        if(type_is_linked(TYPE_LINK(ttail), tlist))
-            break;
-        ttail = TYPE_LINK(ttail);
-    }
-    TYPE_LINK(ttail) = NULL;
-    return ttail;
-}

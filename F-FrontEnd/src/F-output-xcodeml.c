@@ -11,7 +11,7 @@
 #include "F-front.h"
 #include "F-output-xcodeml.h"
 
-#define CHAR_BUF_SIZE 8192
+#define CHAR_BUF_SIZE 65536
 
 #define ARRAY_LEN(a)    (sizeof(a) / sizeof(a[0]))
 
@@ -64,6 +64,7 @@ typedef struct type_ext_id {
       (tail) = (te); }
 
 static TYPE_DESC    type_list,type_list_tail;
+static TYPE_EXT_ID  type_module_proc_list = NULL, type_module_proc_last = NULL;
 static TYPE_EXT_ID  type_ext_id_list = NULL, type_ext_id_last = NULL;
 static FILE         *print_fp;
 static char         s_charBuf[CHAR_BUF_SIZE];
@@ -571,6 +572,7 @@ has_attribute_except_func_attrs(TYPE_DESC tp)
         /* TYPE_IS_EXTERNAL(tp) || */
         /* TYPE_IS_INTRINSIC(tp) || */
         /* TYPE_IS_RECURSIVE(tp) || */
+        /* TYPE_IS_PURE(tp) || */
         TYPE_IS_PARAMETER(tp) ||
         TYPE_IS_ALLOCATABLE(tp) ||
         TYPE_IS_OPTIONAL(tp) ||
@@ -595,9 +597,30 @@ has_attribute(TYPE_DESC tp)
         has_attribute_except_func_attrs(tp) ||
         TYPE_IS_EXTERNAL(tp) ||
         TYPE_IS_INTRINSIC(tp) ||
-        TYPE_IS_RECURSIVE(tp);
+        TYPE_IS_RECURSIVE(tp) ||
+        TYPE_IS_PURE(tp);
 }
 
+static int
+has_attribute_except_private_public(TYPE_DESC tp)
+{
+    int ret;
+    int is_public = TYPE_IS_PUBLIC(tp);
+    int is_private = TYPE_IS_PRIVATE(tp);
+    TYPE_UNSET_PUBLIC(tp);
+    TYPE_UNSET_PRIVATE(tp);
+    ret =
+        has_attribute_except_func_attrs(tp) ||
+        TYPE_IS_EXTERNAL(tp) ||
+        TYPE_IS_INTRINSIC(tp) ||
+        TYPE_IS_RECURSIVE(tp) ||
+        TYPE_IS_PURE(tp);
+    if(is_private)
+        TYPE_SET_PRIVATE(tp);
+    if(is_public)
+        TYPE_SET_PUBLIC(tp);
+    return ret;
+}
 
 static const char *
 getBasicTypeID(BASIC_DATA_TYPE t)
@@ -613,9 +636,11 @@ getBasicTypeID(BASIC_DATA_TYPE t)
     case TYPE_DCOMPLEX:     tid = "Fcomplex"; break;
     case TYPE_GNUMERIC:     tid = "Fnumeric"; break;
     case TYPE_GENERIC:      /* fall through */
+    case TYPE_LHS:          /* fall through too */
     case TYPE_GNUMERIC_ALL: tid = "FnumericAll"; break;
     case TYPE_SUBR:         /* fall through */
     case TYPE_MODULE:       tid = "Fvoid"; break;
+    case TYPE_NAMELIST:     tid = "Fnamelist"; break;
     default: abort();
     }
     return tid;
@@ -660,7 +685,9 @@ getTypeID(TYPE_DESC tp)
         case TYPE_STRUCT:       pfx = 'S'; break;
         case TYPE_GNUMERIC:     pfx = 'U'; break;
         case TYPE_GENERIC:      /* fall through */
+        case TYPE_LHS:		/* fall through too */
         case TYPE_GNUMERIC_ALL: pfx = 'V'; break;
+        case TYPE_NAMELIST:     pfx = 'N'; break;
         default: abort();
         }
 
@@ -668,6 +695,14 @@ getTypeID(TYPE_DESC tp)
     }
 
     return buf;
+}
+
+static char*
+genFunctionTypeID(EXT_ID ep)
+{
+    char buf[128];
+    sprintf(buf, "F" ADDRX_PRINT_FMT, Addr2Uint(ep));
+    return strdup(buf);
 }
 
 /**
@@ -1121,10 +1156,10 @@ outx_id(int l, ID id)
     }
 
     const char *sclass = get_sclass(id);
-
     outx_print(" sclass=\"%s\"", sclass);
     if(ID_IS_OFMODULE(id))
-	outx_print(" module=\"%s\"", ID_DEFINED_MODULE(id));
+	outx_print(" module=\"%s\"", 
+		   ID_USEASSOC_INFO(id)->module_name->s_name);
     outx_print(">\n");
     outx_symbolName(l + 1, ID_SYM(id));
     outx_close(l, "id");
@@ -1786,7 +1821,7 @@ outx_EXITCYCLE_statement(int l, expv v)
 static const char*
 getFormatID(expv v)
 {
-    static char buf[128];
+    static char buf[CHAR_BUF_SIZE];
 
     if(v && EXPV_CODE(v) == LIST)
         v = EXPR_ARG1(v);
@@ -2346,11 +2381,6 @@ outx_OMP_dir_clause_list(int l,expv v)
   expv vv,dir;
   char *s = NULL;
 
-  if(v == NULL){
-      outx_printi(l,"<list/>\n");
-      return;
-  }
-
   if(EXPV_CODE(v) != LIST) 
     fatal("outx_OMP_dir_clause_list: not LIST");
   outx_printi(l,"<list>\n");
@@ -2719,6 +2749,15 @@ outx_expv(int l, expv v)
     case F_IMPLIED_DO:          outx_doLoop(l, v); break;
     case F_INDEX_RANGE:         outx_indexRangeInList(l, v); break;
     case F_SCENE_RANGE_EXPR:    outx_sceneRange(l, v); break;
+    case F_MODULE_INTERNAL:
+        /*
+         * When using other module, F_MODULE_INTERNAL is set as dummy
+         * expression insted of real value defined in module.
+         * We emit dummy FintConstant for F_Back.
+         */
+        outx_printi(l, "<!-- dummy value for imported type -->\n");
+        outx_intAsConst(l, -INT_MAX);
+        break;
 
     /*
      * elements to skip
@@ -2906,25 +2945,17 @@ mark_type_desc(TYPE_DESC tp)
   TYPE_IS_REFERENCED(tp) = 1;
 
   if (TYPE_REF(tp)){
-
-    if (IS_ARRAY_TYPE(tp)){
-
-      mark_type_desc(array_element_type(tp));
-
-    }
-    else {
-
-      mark_type_desc(TYPE_REF(tp));
-
-    }
-
-/*     if (IS_ARRAY_TYPE(tp)) */
-/*       mark_type_desc(array_element_type(tp)); */
-/*     else */
-/*       mark_type_desc(TYPE_REF(tp)); */
+      if (IS_ARRAY_TYPE(tp)){
+          mark_type_desc(array_element_type(tp));
+      } else {
+          mark_type_desc(TYPE_REF(tp));
+      }
   }
 
   TYPE_LINK_ADD(tp, type_list, type_list_tail);
+
+  if(IS_STRUCT_TYPE(tp))
+      mark_type_desc_in_structure(tp);
 }
 
 
@@ -3029,6 +3060,13 @@ mark_type_desc_in_id_list(ID ids)
                 add_type_ext_id(PROC_EXT_ID(id));
                 mark_type_desc(EXT_PROC_TYPE(PROC_EXT_ID(id)));
             }
+            // TODO
+            if(id->use_assoc != NULL) {
+                TYPE_EXT_ID te = (TYPE_EXT_ID)malloc(sizeof(struct type_ext_id));
+                bzero(te, sizeof(struct type_ext_id));
+                te->ep = PROC_EXT_ID(id);
+                FUNC_EXT_LINK_ADD(te, type_module_proc_list, type_module_proc_last);
+            }
             break;
         default:
             break;
@@ -3036,6 +3074,29 @@ mark_type_desc_in_id_list(ID ids)
     }
 }
 
+/**
+ * remove mark from type in type list.
+ */
+static void
+unmark_type_table()
+{
+    TYPE_DESC tp;
+    TYPE_EXT_ID te;
+    for (tp = type_list; tp != NULL; tp = TYPE_LINK(tp)){
+        if (tp == NULL || TYPE_IS_REFERENCED(tp) != 1 || IS_MODULE(tp))
+            continue;
+        TYPE_IS_REFERENCED(tp) = 0;
+    }
+
+    FOREACH_TYPE_EXT_ID(te, type_module_proc_list) {
+        if(te->ep != NULL)
+            EXT_PROC_IS_OUTPUT(te->ep) = FALSE;
+    }
+
+    FOREACH_TYPE_EXT_ID(te, type_ext_id_list) {
+        EXT_PROC_IS_OUTPUT(te->ep) = FALSE;
+    }
+}
 
 static void
 outx_kind(int l, TYPE_DESC tp)
@@ -3248,6 +3309,9 @@ outx_functionType_EXT(int l, EXT_ID ep)
 
     if (tp) {
         outx_true(TYPE_IS_RECURSIVE(tp), "is_recursive");
+#ifdef SUPPORT_PURE
+        outx_true(TYPE_IS_PURE(tp), "is_pure");
+#endif /* SUPPORT_PURE */
         outx_true(TYPE_IS_EXTERNAL(tp), "is_external");
         outx_true(TYPE_IS_PUBLIC(tp), "is_public");
         outx_true(TYPE_IS_PRIVATE(tp), "is_private");
@@ -3338,7 +3402,8 @@ id_is_visibleVar(ID id)
             CRT_FUNCEP != PROC_EXT_ID(id)) {
             return FALSE;
         }
-        if (TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp)) {
+        if ((is_outputed_module && CRT_FUNCEP == NULL)
+            && (TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp))) {
             return TRUE;
         }
         return FALSE;
@@ -3361,6 +3426,8 @@ id_is_visibleVar(ID id)
 #endif
         break;
     case CL_PARAM:
+        return TRUE;
+    case CL_NAMELIST:
         return TRUE;
     case CL_PROC:
         if(PROC_CLASS(id) == P_DEFINEDPROC) {
@@ -3522,7 +3589,7 @@ genSortedIDs(ID ids, int *retnIDs)
   && (ID_TYPE(id) \
       && IS_MODULE(ID_TYPE(id)) == FALSE	    \
       && (IS_SUBR(ID_TYPE(id)) == FALSE || \
-	  has_attribute(ID_TYPE(id)))))
+	  has_attribute_except_private_public(ID_TYPE(id)))))
 
 
 static int
@@ -3655,6 +3722,9 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
         for (i = 0; i < nIDs; i++) {
             id = ids[i];
 
+            if (ID_CLASS(id) != CL_TAGNAME) {
+                continue;
+            }
             if (ID_IS_EMITTED(id) == TRUE) {
                 continue;
             }
@@ -3968,13 +4038,16 @@ outx_moduleDefinition(int l, EXT_ID ep)
     }
 
     is_outputed_module = TRUE;
-    
+    CRT_FUNCEP = NULL;
+
     outx_tagOfDecl1(l, "%s name=\"%s\"", GET_EXT_LINE(ep),
                     "FmoduleDefinition", SYM_NAME(EXT_SYM(ep)));
     outx_definition_symbols(l1, ep);
     outx_declarations1(l1, ep, TRUE); // output with pragma
     outx_contains(l1, ep);
     outx_close(l, "FmoduleDefinition");
+
+    is_outputed_module = FALSE;
 }
 
 
@@ -4102,6 +4175,11 @@ outx_typeTable(int l)
       outx_type(l1, tp);
     }
 
+    FOREACH_TYPE_EXT_ID(te, type_module_proc_list) {
+        if(te->ep != NULL)
+            outx_functionType_EXT(l1, te->ep);
+    }
+
     FOREACH_TYPE_EXT_ID(te, type_ext_id_list) {
         assert(EXT_TAG(te->ep) == STG_EXT);
         outx_functionType_EXT(l1, te->ep);
@@ -4197,3 +4275,198 @@ output_XcodeML_file()
     outx_close(l, "XcodeProgram");
 }
 
+/*        
+ * functions defined below is those related to xmod(modules).
+ */
+
+/**
+ * output <id> node
+ */
+static void
+outx_id_mod(int l, ID id)
+{
+    if(ID_STORAGE(id) == STG_EXT && PROC_EXT_ID(id) == NULL) {
+        fatal("outx_id: PROC_EXT_ID is NULL: symbol=%s", ID_NAME(id));
+    }
+
+    if((ID_CLASS(id) == CL_PROC || ID_CLASS(id) == CL_ENTRY) &&
+       PROC_EXT_ID(id)) {
+        outx_typeAttrOnly_functionType(l, PROC_EXT_ID(id), "id");
+    } else {
+        outx_typeAttrOnly_ID(l, id, "id");
+    }
+
+    const char *sclass = get_sclass(id);
+
+    outx_print(" sclass=\"%s\"", sclass);
+    outx_print(" original_name=\"%s\"", SYM_NAME(id->use_assoc->original_name));
+    outx_print(" declared_in=\"%s\"", SYM_NAME(id->use_assoc->module_name));
+    if(ID_IS_AMBIGUOUS(id))
+        outx_print(" is_ambiguous=\"true\"");
+    outx_print(">\n", SYM_NAME(id->use_assoc->module_name));
+    outx_symbolName(l + 1, ID_SYM(id));
+    outx_close(l, "id");
+}
+
+/**
+ * output <identifiers> node
+ */
+static void
+outx_identifiers(int l, ID ids)
+{
+    const int l1 = l + 1;
+    ID id;
+
+    outx_tag(l, "identifiers");
+
+    FOREACH_ID(id, ids) {
+        outx_id_mod(l1, id);
+    }
+
+    outx_close(l, "identifiers");
+}
+
+/**
+ * output <interfaceDecls> node
+ */
+static void
+outx_interfaceDecls(int l, ID ids)
+{
+    const int l1 = l + 1;
+    ID id;
+    EXT_ID ep;
+
+    outx_tag(l, "interfaceDecls");
+
+    FOREACH_ID(id, ids) {
+        ep = PROC_EXT_ID(id);
+        if (ep != NULL) {
+            outx_interfaceDecl(l1, ep);
+        }
+    }
+
+    outx_close(l, "interfaceDecls");
+}
+
+/**
+ * output <XcalablempFortranModule> node
+ */
+static void
+outx_module(struct module * mod)
+{
+    const int l = 0, l1 = l + 1, l2 = l1 + 1;
+    struct depend_module * mp;
+    outx_tag(l, "OmniFortranModule version=\"%s\"", F_MODULE_VER);
+
+    outx_printi(l1, "<name>%s</name>\n", SYM_NAME(mod->name));
+
+    mp = mod->depend.head;
+
+    outx_tag(l1, "depends");
+
+    while (mp != NULL) {
+        outx_printi(l2, "<name>%s</name>\n", SYM_NAME(mp->module_name));
+        mp = mp->next;
+    }
+
+    outx_close(l1, "depends");
+
+    outx_typeTable(l1);
+
+    outx_identifiers(l1, mod->head);
+
+    outx_interfaceDecls(l1, mod->head);
+
+    /* output pragmas etc in CURRENT_STATEMENTS */
+    outx_tag(l1,"aux_info");
+    if(CURRENT_STATEMENTS != NULL){
+	list lp;
+	expv v;
+	FOR_ITEMS_IN_LIST(lp,CURRENT_STATEMENTS){
+            v = LIST_ITEM(lp);
+	    outx_expv(l1+1,v);
+	}
+    }
+    outx_close(l1,"aux_info");
+
+    outx_close(l, "OmniFortranModule");
+}
+
+/**
+ * unmark id in proc
+ */
+void
+unmark_ids(EXT_ID ep)
+{
+    ID id;
+    EXT_ID interface, sub_program, external_proc;
+
+    FOREACH_ID(id, EXT_PROC_ID_LIST(ep)) {
+        TYPE_DESC tp;
+        ID_IS_EMITTED(id) = FALSE;
+
+        tp = ID_TYPE(id);
+        if (IS_STRUCT_TYPE(tp) && TYPE_REF(tp) == NULL) {
+            ID member;
+            FOREACH_MEMBER(member, tp) {
+                ID_IS_EMITTED(member) = FALSE;
+            }
+        }
+        ID_IS_EMITTED(id) = FALSE;
+    }
+
+    // recursive apply
+    FOREACH_EXT_ID(interface, EXT_PROC_INTERFACES(ep)) {
+        unmark_ids(interface);
+    }
+
+    FOREACH_EXT_ID(sub_program, EXT_PROC_CONT_EXT_SYMS(ep)) {
+        unmark_ids(sub_program);
+    }
+
+    FOREACH_EXT_ID(external_proc, EXT_PROC_INTR_DEF_EXT_IDS(ep)) {
+        unmark_ids(external_proc);
+    }
+}
+
+/**
+ * output module to .xmod file
+ */
+void
+output_module_file(struct module * mod)
+{
+    char filename[255];
+    ID id;
+    EXT_ID ep;
+    TYPE_EXT_ID te;
+
+    bzero(filename, sizeof(filename));
+    strcpy(filename, SYM_NAME(mod->name));
+    strcat(filename, ".xmod");
+
+    if ((print_fp = fopen(filename, "w")) == NULL) {
+        fatal("could'nt open module file to write.");
+        return;
+    }
+
+    type_list = NULL;
+
+    mark_type_desc_in_id_list(mod->head);
+    FOREACH_ID(id, mod->head) {
+        ep = PROC_EXT_ID(id);
+        if (ep != NULL) {
+            collect_types1(ep);
+            FOREACH_TYPE_EXT_ID(te, type_ext_id_list) {
+            TYPE_DESC tp = EXT_PROC_TYPE(te->ep);
+            if(tp && EXT_TAG(te->ep) == STG_EXT)
+                mark_type_desc(EXT_PROC_TYPE(te->ep));
+            }
+        }
+    }
+
+    outx_module(mod);
+    unmark_type_table();
+    unmark_ids(UNIT_CTL_CURRENT_EXT_ID(CURRENT_UNIT_CTL));
+
+    fclose(print_fp);
+}

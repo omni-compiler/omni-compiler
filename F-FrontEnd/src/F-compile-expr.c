@@ -17,7 +17,7 @@ static expv compile_data_args _ANSI_ARGS_((expr args));
 static expv compile_implied_do_expression _ANSI_ARGS_((expr x));
 static expv compile_dup_decl _ANSI_ARGS_((expv x));
 static expv compile_array_constructor _ANSI_ARGS_((expr x));
-static char compile_array_ref_dimension _ANSI_ARGS_((expr x, expv dims, expv subs));
+static int compile_array_ref_dimension _ANSI_ARGS_((expr x, expv dims, expv subs));
 static expv compile_member_array_ref  _ANSI_ARGS_((expr x, expv v));
 
 struct replace_item replace_stack[MAX_REPLACE_ITEMS];
@@ -174,6 +174,157 @@ force_to_logica_type(expv v)
 }
 
 
+static int
+are_dimension_and_shape_conformant(expr x, 
+                                   expv left, expv right,
+                                   expv *shapePtr) {
+    int ret = FALSE;
+    TYPE_DESC lt = EXPV_TYPE(left);
+    TYPE_DESC rt = EXPV_TYPE(right);
+    expv lShape = list0(LIST);
+    expv rShape = list0(LIST);
+
+    generate_shape_expr(lt, lShape);
+    generate_shape_expr(rt, rShape);
+
+    if (shapePtr != NULL) {
+        *shapePtr = NULL;
+    }
+
+    if (TYPE_N_DIM(lt) > 0 && TYPE_N_DIM(rt) > 0 &&
+        TYPE_N_DIM(lt) == TYPE_N_DIM(rt)) {
+
+        int nDims = TYPE_N_DIM(lt);
+        int i;
+        expv laSpec;
+        expv raSpec;
+        expv aSpec;
+        int laSz;
+        int raSz;
+        expv retShape = list0(LIST);
+
+#if 0
+        if (x != NULL) {
+            expr_print(x, stderr);
+        }
+
+        fprintf(stderr, "\nLEFT:\n");
+        expr_print(left, stderr);
+        expr_print(lShape, stderr);
+
+        fprintf(stderr, "\n\nRIGHT:\n");
+        expr_print(right, stderr);
+        expr_print(rShape, stderr);
+                
+        fprintf(stderr, "\n");
+#endif
+
+        for (i = 0; i < nDims; i++) {
+            aSpec = NULL;
+            laSpec = expr_list_get_n(lShape, i);
+            raSpec = expr_list_get_n(rShape, i);
+            laSz = array_spec_size(laSpec, NULL, NULL);
+            raSz = array_spec_size(raSpec, NULL, NULL);
+            if (laSz > 0 && raSz > 0) {
+                if (laSz == raSz) {
+                    /*
+                     * Both the array-specs are identical. Use left.
+                     */
+                    aSpec = laSpec;
+                } else {
+#if 0
+                    fprintf(stderr, "%d: laSz: %d, raSz: %d\n",
+                            i, laSz, raSz);
+
+                    fprintf(stderr, "\nLEFT:\n");
+                    expr_print(left, stderr);
+                    expr_print(lShape, stderr);
+
+                    fprintf(stderr, "\n\nRIGHT:\n");
+                    expr_print(right, stderr);
+                    expr_print(rShape, stderr);
+                
+                    fprintf(stderr, "\n");
+#endif
+                    if (x != NULL) {
+                        error_at_node(x,
+                                      "Subscript #%d array-spec size differs, "
+                                      "%d and %d.", i + 1, laSz, raSz);
+                    } else {
+                        error("Subscript #%d array-spec size differs, "
+                              "%d and %d.", i + 1, laSz, raSz);
+                    }
+                    goto Done;
+                }
+            } else if (laSz > 0 && raSz < 0) {
+                /*
+                 * Use left.
+                 */
+                aSpec = laSpec;
+            } else if (laSz < 0 && raSz > 0) {
+                /*
+                 * Use right.
+                 */
+                aSpec = raSpec;
+            } else {
+                /*
+                 * FIXME: 
+                 *	I'm not so sure about this case.
+                 */
+                aSpec = combine_array_specs(laSpec, raSpec);
+#if 0
+                fprintf(stderr, "\nLEFT:\n");
+                expr_print(laSpec, stderr);
+                fprintf(stderr, "\n\nRIGHT:\n");
+                expr_print(raSpec, stderr);
+                fprintf(stderr, "\n\nCOMBINED:\n");
+                expr_print(aSpec, stderr);
+#endif
+            }
+
+            if (aSpec == NULL) {
+                fatal("must not happen but can't determine which "
+                      "array-spec to use.");
+            }
+
+            list_put_last(retShape, aSpec);
+        }
+
+        if (shapePtr != NULL) {
+            *shapePtr = retShape;
+        }
+
+        ret = TRUE;
+
+    } else {
+        if (x != NULL) {
+            error_at_node(x,
+                          "incompatible dimension for the opsration, "
+                          "%d and %d.",
+                          TYPE_N_DIM(lt), TYPE_N_DIM(rt));
+        } else {
+            error("incompatible dimension for the opsration, %d and %d.",
+                  TYPE_N_DIM(lt), TYPE_N_DIM(rt));
+        }
+
+#if 0
+        fprintf(stderr, "\nLEFT:\n");
+        expr_print(left, stderr);
+        expr_print(lShape, stderr);
+
+        fprintf(stderr, "\n\nRIGHT:\n");
+        expr_print(right, stderr);
+        expr_print(rShape, stderr);
+
+        fprintf(stderr, "\n");
+#endif
+    }
+
+    Done:
+    return ret;
+}
+
+
 enum binary_expr_type {
     ARITB,
     RELAB,
@@ -217,7 +368,6 @@ compile_expression(expr x)
             if (EXPR_CODE(x1) == F_ARRAY_REF) {
                 /* substr of character array */
                 return compile_substr_ref(x);
-
             } else if (EXPR_CODE(x1) == IDENT) {
                 s = EXPR_SYM(x1);
                 id = find_ident(s);
@@ -225,6 +375,11 @@ compile_expression(expr x)
                     id = declare_ident(s,CL_UNKNOWN);
                     if(id == NULL)
                         return NULL;
+                }
+                if(ID_IS_AMBIGUOUS(id)) {
+                    error_at_node(x, "an ambiguous reference to symbol '%s'",
+                                  ID_NAME(id));
+                    return NULL;
                 }
                 v = NULL;
                 tp = ID_TYPE(id);
@@ -430,19 +585,73 @@ compile_expression(expr x)
                 goto err;
             }
 
-            if(tp == NULL) {
+            if (tp == NULL) {
+                int expDim = 0;
 
+                /*
+                 * First of all, check if which side is reshaped type.
+                 */
+                if (TYPE_IS_RESHAPED(lt) == TRUE &&
+                    TYPE_IS_RESHAPED(rt) == FALSE) {
+                    tp = rt;
+                } else if (TYPE_IS_RESHAPED(rt) == TRUE) {
+                    /*
+                     * both rehaped or right is reshaped. Use left.
+                     */
+                    tp = lt;
+                }
+                if (tp != NULL) {
+                    goto doEmit;
+                }
+
+                /*
+                 * Check the dimension of the both expressions.
+                 */
                 if (TYPE_N_DIM(lt) != TYPE_N_DIM(rt) &&
                     (TYPE_N_DIM(lt) != 0 && TYPE_N_DIM(rt) != 0)) {
-                    error("operation between different rank array. ");
+                    error_at_node(x,
+                                  "operation between different rank array.");
+                    error_at_node(x, "left dim %d != right dim %d.",
+                                  TYPE_N_DIM(lt), TYPE_N_DIM(rt));
                     goto err;
                 }
 
                 lshape = list0(LIST);
                 rshape = list0(LIST);
 
-                generate_shape_expr(lt,lshape);
-                generate_shape_expr(rt,rshape);
+                generate_shape_expr(lt, lshape);
+                generate_shape_expr(rt, rshape);
+
+                /*
+                 * Check if (ARRAY binop scalar) or (scalar binop
+                 * ARRAY). In these case, ALWAYS use ARRAY's dimension
+                 * and the basic type must be the bType.
+                 */
+                if (TYPE_N_DIM(lt) == 0 && TYPE_N_DIM(rt) != 0) {
+                    expDim = TYPE_N_DIM(rt);
+                    shape = rshape;
+                } else if (TYPE_N_DIM(lt) != 0 && TYPE_N_DIM(rt) == 0) {
+                    expDim = TYPE_N_DIM(lt);
+                    shape = lshape;
+                }
+                if (expDim != 0) {
+                    tp = compile_dimensions(bType, shape);
+                    fix_array_dimensions(tp);
+                    goto doEmit;
+                }
+
+                /*
+                 * Then check the shape. After the above check, both
+                 * the left and the right are/aren't array references
+                 * so check the case both are array ref.
+                 */
+                if (TYPE_N_DIM(lt) > 0 && TYPE_N_DIM(rt) > 0 &&
+                    are_dimension_and_shape_conformant(x, left, right, 
+                                                       &shape) == TRUE) {
+                    tp = compile_dimensions(bType, shape);
+                    fix_array_dimensions(tp);
+                    goto doEmit;
+                }
 
                 shape = max_shape(lshape, rshape, bType == bLType);
 
@@ -477,7 +686,8 @@ compile_expression(expr x)
                 delete_list(rshape);
             }
 
-            return expv_cons(op,tp,left,right);
+            doEmit:
+            return expv_cons(op, tp, left, right);
         }
 
         case F_NOT_EXPR: {
@@ -535,6 +745,7 @@ compile_expression(expr x)
         }
 
         case F95_TRIPLET_EXPR: {
+            expv retV = NULL;
             left = compile_expression(EXPR_ARG1(x));
             right = compile_expression(EXPR_ARG2(x));
             right2 = compile_expression(EXPR_ARG3(x));
@@ -544,7 +755,9 @@ compile_expression(expr x)
                 (EXPR_ARG3(x) && right2 == NULL)) {
                 goto err;
             }
-            return list3(F_INDEX_RANGE, left, right, right2);
+            retV = list3(F_INDEX_RANGE, left, right, right2);
+            set_index_range_type(retV);
+            return retV;
         }
 
         case F95_CONSTANT_WITH:  {
@@ -633,6 +846,10 @@ compile_expression(expr x)
         case F95_ARRAY_CONSTRUCTOR:
             return compile_array_constructor(x);
 
+        case F_MODULE_INTERNAL:
+            /* we regard a module imported expression as compiled */
+            return x;
+
         default: {
             fatal("compile_expression: unknown code '%s'",
                   EXPR_CODE_NAME(EXPR_CODE(x)));
@@ -664,18 +881,19 @@ is_statement_function_or_replace(ID id)
 }
 
 
-/* evaluates identifier as expression.
- * translates him to Var expression.
+/*
+ * evaluate an identifier as an expression and translate it to Var
+ * expression.
  */
 expv
 compile_ident_expression(expr x)
 {
     ID id;
     SYMBOL sym;
-    expv v;
+    expv ret = NULL;
 
-    if(EXPR_CODE(x) != IDENT) {
-        goto err;
+    if (EXPR_CODE(x) != IDENT) {
+        goto done;
     }
 
     sym = EXPR_SYM(x);
@@ -689,23 +907,43 @@ compile_ident_expression(expr x)
     if ((id = find_ident(sym)) == NULL) {
         id = declare_ident(sym, CL_UNKNOWN);
     }
+    if(ID_IS_AMBIGUOUS(id)) {
+        error("an ambiguous reference to symbol '%s'", ID_NAME(id));
+        return NULL;
+    }
 
     /* check if name is on the replace list? */
-    if((v = is_statement_function_or_replace(id)) != NULL)
-        return v;
+    if ((ret = is_statement_function_or_replace(id)) != NULL) {
+        goto done;
+    }
 
-    if((id = declare_variable(id)) == NULL)
-        goto err;
+    if (ID_STORAGE(id) == STG_ARG &&
+        ID_TYPE(id) == NULL) {
+        /*
+         * Don't declare (means not determine the type) this variable
+         * at this moment, since the id is a dummy arg and it is not
+         * declared yet.
+         */
+        EXPV_CODE(x) = F_VAR;
+        EXPV_NAME(x) = ID_SYM(id);
+        ret = (expv)x;
+        goto done;
+    }
 
-    EXPV_CODE(x) = F_VAR;
-    EXPV_TYPE(x) = ID_TYPE(id);
-    EXPV_NAME(x) = ID_SYM(id);
+    if ((id = declare_variable(id)) != NULL) {
+        EXPV_CODE(x) = F_VAR;
+        EXPV_TYPE(x) = ID_TYPE(id);
+        EXPV_NAME(x) = ID_SYM(id);
+        ret = (expv)x;
+        goto done;
+    }
 
-    return x;
+    done:
+    if (ret == NULL) {
+        fatal("%s: invalid code", __func__);
+    }
 
-err:
-    fatal("%s: invalid code", __func__);
-    return NULL;
+    return ret;
 }
 
 int
@@ -824,6 +1062,10 @@ compile_lhs_expression(x)
                 if(id == NULL)
                     goto err;
             }
+            if(ID_IS_AMBIGUOUS(id)) {
+                error("an ambiguous reference to symbol '%s'", ID_NAME(id));
+                goto err;
+            }
             v = NULL;
             tp = ID_TYPE(id);
         } else {
@@ -865,6 +1107,10 @@ compile_lhs_expression(x)
     case IDENT:         /* terminal */
         s = EXPR_SYM(x);
         id = declare_ident(s,CL_UNKNOWN);
+        if(ID_IS_AMBIGUOUS(id)) {
+            error("an ambiguous reference to symbol '%s'", ID_NAME(id));
+            goto err;
+        }
 
         /* check if name is on the replace list? */
         if((v = is_statement_function_or_replace(id)) != NULL)
@@ -1005,15 +1251,14 @@ compile_logical_expression_with_array(expr x)
 
 
 expv
-expv_assignment(v1,v2)
-     expv v1,v2;
+expv_assignment(expv v1, expv v2)
 {
     /* check assignment operator is user defined or not. */
     if(find_symbol_without_allocate(EXPR_CODE_SYMBOL(F95_ASSIGNOP)) != NULL)
         return expv_cons(F_LET_STATEMENT, NULL, v1, v2);
 
     if(EXPV_IS_RVALUE(v1) == TRUE) {
-        error("bad left hand side expression in assignment");
+        error("bad left hand side expression in assignment.");
         return NULL;
     }
 
@@ -1026,9 +1271,17 @@ expv_assignment(v1,v2)
             return NULL;
         }
     }
-    if(EXPV_CODE(v2) != FUNCTION_CALL &&
-              type_is_compatible_for_assignment(tp1, tp2) == FALSE) {
-        error("incompatible type in assignment");
+    if (EXPV_CODE(v2) != FUNCTION_CALL &&
+        type_is_compatible_for_assignment(tp1, tp2) == FALSE) {
+        error("incompatible type in assignment.");
+        return NULL;
+    }
+
+    if (TYPE_IS_RESHAPED(tp2) == FALSE &&
+        EXPR_CODE(v2) != F95_ARRAY_CONSTRUCTOR &&
+        ((TYPE_N_DIM(tp1) > 0 && TYPE_N_DIM(tp2) > 0) &&
+         (are_dimension_and_shape_conformant(NULL, v1, v2,
+                                             NULL) == FALSE))) {
         return NULL;
     }
 
@@ -1053,119 +1306,108 @@ checkSubscriptIsInt(expv v)
 
 
 /**
- * \brief Compiles a dimension expression from args.
+ * \brief Compiles a dimension (and a shape if needed) from
+ * subscript expressions.
  *
- * @return NULL if some errors occurred.
+ *	@param args    Subscript expressions.
+ *	@param subs    If not NULL, compiled subscriptions are put.
+ *	@param aSpecs  If not NULL, array-specs coresponding to each
+ *		       subsctiption are put. NULLs might be put for
+ *		       non-array subscriptions, thus the # of the
+ *		       elemsnts in the dims and aSpec is identical and
+ *		       its are also identical to the # of elements in
+ *		       the args.
+ *
+ *	@return TRUE if some errors occurred.
  */
-static char
-compile_array_ref_dimension(expr args, expv dims, expv subs)
-{
+static int
+compile_array_ref_dimension(expr args, expv subs, expv aSpecs) {
     int n = 0;
     list lp;
-    char err_flag = FALSE;
+    int err_flag = FALSE;
+    expv v;
+    expv d;
+    expv aSpecV;
+    TYPE_DESC tp;
+    int nDims;
 
-    assert(dims != NULL);
+    assert(subs != NULL);
 
     FOR_ITEMS_IN_LIST(lp, args) {
-        expr v, d = LIST_ITEM(lp);
-        if((v = compile_expression(d)) == NULL){
+        v = NULL;
+        aSpecV = NULL;
+        tp = NULL;
+        nDims = 0;
+        d = LIST_ITEM(lp);
+
+        if ((v = compile_expression(d)) == NULL){
             err_flag = TRUE;
             continue;
         }
 
         EXPR_LINE(v) = EXPR_LINE(d);
 
-        switch(EXPR_CODE(v)) {
-        case F_INDEX_RANGE:
+        if (EXPR_CODE(v) == F_INDEX_RANGE) {
             /* lower, upper, step */
-            if(checkSubscriptIsInt(EXPR_ARG1(v)) == FALSE ||
+            if (checkSubscriptIsInt(EXPR_ARG1(v)) == FALSE ||
                 checkSubscriptIsInt(EXPR_ARG2(v)) == FALSE ||
                 checkSubscriptIsInt(EXPR_ARG3(v)) == FALSE) {
-                err_flag = TRUE;
-
-                continue;
-            }
-            list_put_last(dims, v);
-            ++n;
-            break;
-
-        default:
-            if(checkSubscriptIsInt(v) == FALSE) {
+                error_at_node(d,
+                              "Subscript #%d is not a valid array-spec, "
+                              "not consists of integer expressions.", n + 1);
                 err_flag = TRUE;
                 continue;
             }
-
-            if(IS_ARRAY_TYPE(EXPV_TYPE(v))) {
-                /* support vector subscripts.
-                 *
-                 * ex)
-                 * REAL,DIMENSION(1:5)    :: array = (/1.0, 0.0, 2.0, 0.0, 3.0/)
-                 * REAL,DIMENSION(1:3)    :: new_array
-                 * INTEGER,DIMENSION(1:3) :: index = (/1, 3, 5/)
-                 *
-                 * new_array = array(index(1:3))
-                 *
-                 * print *, new_array ! must be prinetd as 1.0 2.0 3.0
-                 *
-                 * Checkes must be done as follows.
-                 *
-                 * 1) A vector subscript must be integer type and 
-		 *   one dimensional array.
-                 * 2) All elements of the vector subscript must be 
-		 *   indeces of the array.
-                 * 3) Internal files must not be a vector 
-		 *   subscripted subarray.
-                 * 4) A duplicated vector subscripted subarray must not be
-                 *    a left expression of a pointer assignment statement.
-                 *
-                 * Sorry, but only 1st check is implemented now.
+            /*
+             * F_INDEX_RANGE is very identical as an array-spec.
+             */
+            aSpecV = v;
+        } else if (checkSubscriptIsInt(v) == TRUE) {
+            tp = EXPV_TYPE(v);
+            if (tp == NULL) {
+                warning_at_node(d,
+                                "Subscript #%d could consist of (still) "
+                                "undefined variable(s).", n + 1);
+            } else {
+                if ((nDims = TYPE_N_DIM(tp)) > 0) {
+                    /*
+                     * Could have to be treat as it is having
+                     * array-spec.
+                     */
+                    if (nDims != 1) {
+                        error_at_node(d,
+                                      "#%d subscription is not a "
+                                      "one-dimensional expression.", n + 1);
+                        err_flag = TRUE;
+                        continue;
+                    }
+                    aSpecV = list0(LIST);
+                    generate_shape_expr(tp, aSpecV);
+                    if (expr_list_length(aSpecV) != 1) {
+                        fatal("Invalid # of array-specs for one-dim "
+                              "array shape.");
+                        /* not reached. */
+                        err_flag = TRUE;
+                        continue;
+                    }
+                    aSpecV = EXPR_ARG1(aSpecV);
+                }
+                /*
+                 * Otherwise this is just a integer expression
+                 * suitable for a subscription and not an array-spec.
                  */
-                TYPE_DESC tq = EXPV_TYPE(v);
-
-                expr shape;
-                expr dim = NULL;
-
-                if(TYPE_N_DIM(tq) != 1) {
-                    error_at_node(v, "is an array of rank %d", 
-				  TYPE_N_DIM(tq));
-                    return TRUE;
-                }
-                shape = list0(LIST);
-                generate_shape_expr(tq,shape);
-
-                tq = bottom_type(tq);
-                if(IS_INT(tq) == FALSE) {
-                    error_at_node(v, "is not an integer array.");
-                    return TRUE;
-                }
-
-                if (is_variable_shape(shape)) {
-                    dim = list2(LIST, NULL, NULL);
-
-                } else {
-                    int size;
-                    expr lb,ub;
-
-                    lb = EXPR_ARG1(EXPR_ARG1(shape));
-                    ub = EXPR_ARG2(EXPR_ARG1(shape));
-                    size = EXPV_INT_VALUE(ub) - EXPV_INT_VALUE(lb) + 1;
-                    dim = list2(LIST, expv_constant_1, expv_int_term(INT_CONSTANT,type_INT,size));
-                }
-                list_put_last(dims, dim);
-                ++n;
-		break;
-            } 
-	    list_put_last(dims, v);
-	    ++n;
+            }
+        } else {
+            error_at_node(d,
+                          "#%d subscrition is not an integer expression.",
+                          n + 1);
+            continue;
         }
 
-        if(n > MAX_DIM){
-            error_at_node(args,"too many subscripts");
-            return TRUE;
+        list_put_last(subs, v);
+        if (aSpecs != NULL) {
+            list_put_last(aSpecs, aSpecV);
         }
-
-        if(subs != NULL)
-            list_put_last(subs, v);
     }
 
     return err_flag;
@@ -1173,13 +1415,22 @@ compile_array_ref_dimension(expr args, expv dims, expv subs)
 
 
 expv
-compile_array_ref(ID id, expv vary, expr args, int isLeft)
-{
+compile_array_ref(ID id, expv vary, expr args, int isLeft) {
+    int nDims;
     int n;
-    list lp;
+    int i;
+    expv aSpecs;
     expv subs;
-    expv dims;
+    expv argASpec;
+    expv idASpec;
+    expv aSpec;
+    expv shape = NULL;
+    int aSpecSz;
+    int idASpecSz;
+
     TYPE_DESC tp;
+    int nIdxRanges = 0;
+    expv idShape = NULL;
 
     assert((id && vary == NULL) || (id == NULL && vary));
 
@@ -1194,58 +1445,130 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft)
         return compile_highorder_function_call(id, args, FALSE);
     }
 
-    if(!IS_ARRAY_TYPE(tp)) fatal("%s: not ARRAY_TYPE", __func__);
-    if(!TYPE_DIM_FIXED(tp)) fix_array_dimensions(tp);
+    nDims = TYPE_N_DIM(tp);
 
-    subs = list0(LIST);
-    dims = list0(LIST);
+    if (!IS_ARRAY_TYPE(tp)) fatal("%s: not ARRAY_TYPE", __func__);
+    if (!TYPE_DIM_FIXED(tp)) fix_array_dimensions(tp);
 
-    /* get dims and subs*/
-    if(compile_array_ref_dimension(args, dims, subs)) {
-        return NULL;
-    }
-
-    tp = compile_dimensions(bottom_type(tp), dims);
-    fix_array_dimensions(tp);
-
-    if(tp == NULL) return NULL;
-
-    n = 0;
-    FOR_ITEMS_IN_LIST(lp, dims) {
-        n++;
-    }
-
-    if(TYPE_N_DIM(tp) != n){
-        if(id) {
-            error_at_node(
-                args,"wrong number of subscripts on '%s'",ID_NAME(id));
+    /*
+     * Firstly, check the # of subsctipts.
+     */
+    n = expr_list_length(args);
+    if (n != nDims) {
+        if (id != NULL) {
+            error_at_node(args,
+                          "wrong # of subscripts on '%s', "
+                          "got %d, should be %d.",
+                          ID_NAME(id), n, TYPE_N_DIM(tp));
         } else {
-            error_at_node(
-                args,"wrong number of subscripts");
+            error_at_node(args, "wrong number of subscript.");
         }
-
         return NULL;
     }
 
-    if(id != NULL) {
+    aSpecs = list0(LIST);
+    subs = list0(LIST);
+
+    /*
+     * Get subscripts and array-specs.
+     */
+    if (compile_array_ref_dimension(args, subs, aSpecs) == TRUE) {
+        return NULL;
+    }
+
+    /*
+     * Check if the subscript expressions are compiled successfully.
+     */
+    n = expr_list_length(subs);
+    if (n != nDims) {
+        if (id != NULL) {
+            error_at_node(args, "wrong number of subscript on '%s'",
+                          ID_NAME(id));
+        } else {
+            error_at_node(args, "wrong number of subscript");
+        }
+        return NULL;
+    }
+
+    idShape = list0(LIST);
+    generate_shape_expr(tp, idShape);
+
+    shape = list0(LIST);
+
+    /*
+     * Then fix the shape of this expression. To do this, we use two
+     * array-specs source; 1) the aSpecs, generated from the
+     * subscripts. 2) the idShape, generated from the variable
+     * definition.
+     */
+    for (i = 0; i < nDims; i++) {
+        argASpec = expr_list_get_n(aSpecs, i);
+        if (argASpec != NULL) {
+            idASpec = expr_list_get_n(idShape, i);
+            /*
+             * Now we have two array-spec. Determine which one to be used.
+             */
+            aSpec = NULL;
+            aSpecSz = array_spec_size(argASpec, idASpec, &aSpec);
+            if (aSpec == NULL) {
+                fatal("an array-spec to use can't be determined.");
+                /* not reached. */
+                continue;
+            }
+            /*
+             * size check.
+             */
+            idASpecSz = array_spec_size(idASpec, NULL, NULL);
+            if ((aSpecSz > 0 && idASpecSz > 0) &&
+                (aSpecSz > idASpecSz)) {
+                if (id != NULL) {
+                    error_at_node(args, 
+                                  "The size of sunscript #%d is %d, exceeds "
+                                  "the size of '%s', %d.",
+                                  i + 1, aSpecSz, ID_NAME(id), idASpecSz);
+                } else {
+                    error_at_node(args, 
+                                  "The size of sunscript #%d is %d, exceeds "
+                                  "%d.",
+                                  i + 1, aSpecSz, idASpecSz);
+                }
+                continue;
+            }
+
+            list_put_last(shape, aSpec);
+            nIdxRanges++;
+        }
+    }
+
+    if (nIdxRanges == 0) {
+        shape = NULL;
+    }
+
+    if (nIdxRanges > 0) {
+        tp = compile_dimensions(bottom_type(tp), shape);
+        if (tp == NULL) {
+            return NULL;
+        }
+        fix_array_dimensions(tp);
+    } else {
+        /*
+         * Otherwise the type should be basic type of the array.
+         */
+        tp = bottom_type(tp);
+    }
+
+    if (id != NULL) {
         vary = expv_sym_term(F_VAR, ID_TYPE(id), ID_SYM(id));
         ID_ADDR(id) = vary;
 
-        if (TYPE_N_DIM(ID_TYPE(id)) != n) {
-            error_at_node(args, 
-			  "rank mismatch (%d!=%d) in array reference '%s'",
-			  n, TYPE_N_DIM(ID_TYPE(id)), ID_NAME(id));
+        if (TYPE_N_DIM(ID_TYPE(id)) < n) {
+            error_at_node(args, "too large dimension, %d.", n);
             return NULL;
         }
     }
 
-#ifdef not
     return expv_reduce(expv_cons(ARRAY_REF,
                                  tp, vary, subs), FALSE);
-#else /* msato */
-    return expv_reduce(expv_cons(ARRAY_REF,
-                                 bottom_type(tp), vary, subs), FALSE);
-#endif
 }
 
 
@@ -1560,16 +1883,6 @@ compile_coarray_ref(expr coarrayRef){
 		     FALSE);
 }
 
-
-char*
-genFunctionTypeID(EXT_ID ep)
-{
-    char buf[128];
-    sprintf(buf, "F" ADDRX_PRINT_FMT, Addr2Uint(ep));
-    return strdup(buf);
-}
-
-
 expv
 compile_highorder_function_call(ID id, expr args, int isCall)
 {
@@ -1755,6 +2068,10 @@ compile_args(expr args)
             id = find_ident(EXPR_SYM(a));
             if (id == NULL)
                 id = declare_ident(EXPR_SYM(a), CL_UNKNOWN);
+            if (ID_IS_AMBIGUOUS(id)) {
+                error("an ambiguous reference to symbol '%s'", ID_NAME(id));
+                continue;
+            }
             switch (ID_CLASS(id)) {
             case CL_PROC:
             case CL_ENTRY:
@@ -1816,8 +2133,10 @@ genCastCall(const char *name, TYPE_DESC tp, expv arg, expv kind)
     symV = expv_sym_term(F_FUNC, NULL, sym);
     id = find_ident(sym);
 
-    if(id == NULL)
-        id = declare_ident(sym, CL_PROC);
+    if(id == NULL) {
+        id = declare_ident(sym, CL_UNKNOWN);
+        declare_function(id);
+    }
 
     ftp = function_type(tp);
     TYPE_SET_INTRINSIC(ftp);
@@ -1982,7 +2301,7 @@ expv expv_power_expr(expv left,expv right)
 static expv
 compile_implied_do_expression(expr x)
 {
-    expv do_var, do_init, do_limit, do_incr;
+    expv do_var, do_init, do_limit, do_incr, retv;
     expr var, init, limit, incr;
     SYMBOL do_var_sym;
     CTL *cp;
@@ -2029,7 +2348,9 @@ compile_implied_do_expression(expr x)
         retTyp = EXPV_TYPE(EXPR_ARG1(x2));
     }
 
-    return expv_cons(F_IMPLIED_DO, retTyp, x1, x2);
+    retv = expv_cons(F_IMPLIED_DO, retTyp, x1, x2);
+    EXPR_LINE(retv) = EXPR_LINE(x);
+    return retv;
 }
 
 

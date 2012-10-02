@@ -122,6 +122,9 @@ typedef struct ident_descriptor
     struct ident_descriptor *next;      /* linked list */
     enum name_class class;              /* name class */
     char is_declared;
+    char could_be_implicitly_typed;     /* id is declared in current scope */
+                                        /* and could be typed implicity. */
+                                        /* never changed to FALSE from TRUE */
     enum storage_class stg;
     SYMBOL name;                        /* key */
     struct type_descriptor *type;       /* its type */
@@ -129,10 +132,6 @@ typedef struct ident_descriptor
     lineno_info *line;                  /* line number this node created */
     struct type_attr attr;              /* type attribute for ID */
     int order;                          /* order in local_symbols */
-    int is_ofModule;                    /* If TRUE(1) indicates this ID is
-                                         * declared in USE inclusion. */
-    char *defined_module;		/* module name defined, 
-					 * included by USE */
     struct ident_descriptor *defined_by;/* if this ID is defined parents
                                            then point it, otherwise NULL */
     struct external_symbol* extID;      /* external symbol which is
@@ -144,6 +143,11 @@ typedef struct ident_descriptor
     int is_varDeclEmitted;              /* varDecl for this ID is emitted
                                          * or not. */
     struct ident_descriptor *equivID;
+
+    int    use_assoc_conflicted;         /* if TRUE then id ID is conflicted with
+                                           use associated id. */
+    struct use_assoc_info *use_assoc;   /* use association infomation of this ID,
+                                           otherwise NULL */
 
     union {
         struct {
@@ -160,6 +164,7 @@ typedef struct ident_descriptor
             int is_recursive;         /* temporary flag.
                                          copy to TYPE_DESC's is_recursive
                                          after type is decided */
+            int is_pure;              /* like above. */
         } proc_info;
         struct {
 
@@ -217,6 +222,7 @@ typedef struct ident_descriptor
 #define ID_NAME(id)     SYM_NAME((id)->name)
 #define ID_TYPE(id)     ((id)->type)
 #define ID_IS_DECLARED(id) ((id)->is_declared)
+#define ID_COULD_BE_IMPLICITLY_TYPED(id) ((id)->could_be_implicitly_typed)
 #define ID_ADDR(id)     ((id)->addr)
 #define ID_LINE_NO(x)   ((x)->line->ln_no)
 #define ID_END_LINE_NO(id)    ((id)->line->end_ln_no)
@@ -227,11 +233,22 @@ typedef struct ident_descriptor
 
 #define ID_INTF(id)     ((id)->interfaceId)
 
-#define ID_IS_OFMODULE(id)  ((id)->is_ofModule)
-#define ID_DEFINED_MODULE(id)     ((id)->defined_module)
-
+#define ID_USEASSOC_INFO(id) ((id)->use_assoc)
+#define ID_IS_OFMODULE(id)  ((id)->use_assoc != NULL)
+#define ID_IS_AMBIGUOUS(id) ((id)->use_assoc_conflicted)
 #define ID_IS_EMITTED(id)   ((id)->is_varDeclEmitted)
 #define ID_EQUIV_ID(id)     ((id)->equivID)
+
+#define ID_MAY_HAVE_ACCECIBILITY(id) \
+    (ID_STORAGE(id) != STG_ARG && \
+     (ID_CLASS(id) == CL_UNKNOWN || \
+      ID_CLASS(id) == CL_PARAM || \
+      ID_CLASS(id) == CL_VAR || \
+      ID_CLASS(id) == CL_ENTRY || \
+      ID_CLASS(id) == CL_PROC || \
+      ID_CLASS(id) == CL_TAGNAME || \
+      ID_CLASS(id) == CL_NAMELIST || \
+      ID_CLASS(id) == CL_GENERICS))
 
 #define ID_LINK_ADD(id, list, tail) \
     { if((list) == NULL || (tail) == NULL) (list) = (id); \
@@ -247,6 +264,7 @@ typedef struct ident_descriptor
 #define PROC_RESULTVAR(id)    ((id)->info.proc_info.result)
 #define PROC_STBODY(id) ((id)->addr)
 #define PROC_IS_RECURSIVE(id) ((id)->info.proc_info.is_recursive)
+#define PROC_IS_PURE(id) ((id)->info.proc_info.is_pure)
 
 /* for CL_VAR */
 #define VAR_COM_ID(id)          ((id)->info.var_info.common_id)

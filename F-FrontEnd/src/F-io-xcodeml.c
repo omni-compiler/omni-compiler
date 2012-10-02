@@ -22,6 +22,8 @@ static char fmtVBuf[1024];
 #define COND_ERR        0
 #define COND_END        1
 
+extern int order_sequence;
+
 static char *
 StatusLineToFormatVariableName(n)
      int n;
@@ -320,6 +322,7 @@ compile_NAMELIST_decl(x)
 {
     ID nlId;
     list lp, lq;
+    TYPE_DESC tp;
     expr nlName;
     expr idList;
     expr nlVX;
@@ -329,6 +332,11 @@ compile_NAMELIST_decl(x)
         idList = EXPR_ARG2(LIST_ITEM(lp));
 
         nlId = declare_ident(EXPR_SYM(nlName), CL_UNKNOWN);
+        tp = new_type_desc();
+        TYPE_BASIC_TYPE(tp) = TYPE_NAMELIST;
+        declare_id_type(nlId, tp);
+        ID_ORDER(nlId) = order_sequence++;
+
         ID_LINE(nlId) = EXPR_LINE(x); /* set line_no */
         if (ID_CLASS(nlId) == CL_UNKNOWN) {
             /*
