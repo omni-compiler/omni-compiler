@@ -2335,15 +2335,29 @@ static void
 outx_OMP_pragma(int l, expv v)
 {
     const int l1 = l + 1;
+
     outx_tagOfStatement(l, v);
     outx_OMP_dir_string(l1,EXPR_ARG1(v));
     // outx_expv_withListTag(l1, EXPR_ARG1(v));
 
-    outx_OMP_dir_clause_list(l1,EXPR_ARG2(v));
-    // outx_expv_withListTag(l1, EXPR_ARG2(v));
+    if (EXPV_INT_VALUE(EXPR_ARG1(v)) != OMP_THREADPRIVATE) {
+        outx_OMP_dir_clause_list(l1,EXPR_ARG2(v));
+        // outx_expv_withListTag(l1, EXPR_ARG2(v));
 
-    /* output body */
-    outx_expv_withListTag(l1, EXPR_ARG3(v));
+        /* output body */
+        outx_expv_withListTag(l1, EXPR_ARG3(v));
+    } else {
+        list lp;
+        expv lV;
+
+        outx_tag(l1, "list");
+        FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)) {
+            lV = LIST_ITEM(lp);
+            outx_varOrFunc(l1 + 1, lV);
+        }
+        outx_close(l1, "list");
+    }
+
     outx_expvClose(l, v);
 }
 
@@ -2387,6 +2401,7 @@ outx_OMP_dir_clause_list(int l,expv v)
   
   FOR_ITEMS_IN_LIST(lp, v) {
     vv = LIST_ITEM(lp);
+
     if(EXPV_CODE(vv) != LIST) 
       fatal("outx_OMP_dir_clause_list: not LIST2");
 

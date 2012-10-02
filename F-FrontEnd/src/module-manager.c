@@ -83,11 +83,13 @@ export_module(SYMBOL sym, ID ids)
 
     output_module_file(mod);
 
+#if 0
     /* debug */
     printf("debug=");
     expr_print(CURRENT_STATEMENTS,stdout);
     printf("\n");
-    
+#endif
+
     return TRUE;
 }
 
