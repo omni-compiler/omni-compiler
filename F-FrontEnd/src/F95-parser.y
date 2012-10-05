@@ -268,7 +268,7 @@
 
 %token XMPKW_ASYNC
 %token XMPKW_NOWAIT
-%token XMPKW_MASTER
+%token XMPKW_MASTER /* not used */
 
 %token XMPKW_IN
 %token XMPKW_OUT
@@ -282,7 +282,7 @@
 
 %type <val> xmp_directive xmp_nodes_clause xmp_template_clause xmp_distribute_clause xmp_align_clause xmp_shadow_clause xmp_task_clause xmp_loop_clause xmp_reflect_clause xmp_gmove_clause xmp_barrier_clause xmp_bcast_clause xmp_reduction_clause xmp_array_clause 
 
-%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_spec xmp_gmove_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options
+%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_gmove_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options
 
 %type <code> xmp_reduction_op
 
@@ -359,8 +359,8 @@ one_statement:
         { compile_statement(st_no,$2);}
 	| OMPKW_LINE omp_directive
 	{ compile_OMP_directive($2); }
-	| XMPKW_LINE xmp_directive
-	{ compile_XMP_directive($2); }
+	| XMPKW_LINE { need_keyword = TRUE; } xmp_directive
+	{ compile_XMP_directive($3); }
         | PRAGMA_HEAD  PRAGMA_SLINE /* like !$ ... */
 	{ 
 	    if (pragmaString != NULL)
@@ -1774,14 +1774,14 @@ xmp_directive:
 	    { $$ = XMP_LIST(XMP_TEMPLATE_FIX,NULL); }
 	  | XMPKW_TASK xmp_task_clause
 	    { $$ = XMP_LIST(XMP_TASK,$2); }
-	  | XMPKW_END XMPKW_TASK
+	  | XMPKW_END { need_keyword=TRUE; } XMPKW_TASK
 	    { $$ = XMP_LIST(XMP_END_TASK,NULL); }
 	  | XMPKW_TASKS
 	    { $$ = XMP_LIST(XMP_TASKS,NULL); }
-	  | XMPKW_TASKS XMPKW_NOWAIT
+	  | XMPKW_TASKS xmp_NOWAIT
 	    { $$ = XMP_LIST(XMP_TASKS,
 	                    GEN_NODE(INT_CONSTANT, XMP_OPT_NOWAIT)); }
-	  | XMPKW_END XMPKW_TASKS
+	  | XMPKW_END { need_keyword=TRUE; } XMPKW_TASKS
 	    { $$ = XMP_LIST(XMP_END_TASKS,NULL); }
 	  | XMPKW_LOOP xmp_loop_clause
 	    { $$ = XMP_LIST(XMP_LOOP,$2); }
@@ -1828,17 +1828,17 @@ xmp_template_clause:
 	  ;
 
 xmp_distribute_clause:
-	    IDENTIFIER '(' xmp_dist_fmt_list ')' XMPKW_ONTO IDENTIFIER
+	    IDENTIFIER '(' xmp_dist_fmt_list ')' xmp_ONTO IDENTIFIER
 	     { $$ = list3(LIST,list1(LIST,$1),$3,$6); }
-	  | '(' xmp_dist_fmt_list ')' XMPKW_ONTO IDENTIFIER COL2 xmp_name_list
+	  | '(' xmp_dist_fmt_list ')' xmp_ONTO IDENTIFIER COL2 xmp_name_list
 	     { $$ = list3(LIST,$7,$2,$5); }
 	  ;
 
 xmp_align_clause:
-	    IDENTIFIER '(' xmp_subscript_list ')' XMPKW_WITH 
+	    IDENTIFIER '(' xmp_subscript_list ')' xmp_WITH 
   	      IDENTIFIER '(' xmp_subscript_list ')' 
 	    { $$ = list4(LIST,list1(LIST,$1),$3,$6,$8); }
-	  | '(' xmp_subscript_list ')' XMPKW_WITH 
+	  | '(' xmp_subscript_list ')' xmp_WITH 
   	    IDENTIFIER '(' xmp_subscript_list ')' COL2 xmp_name_list
             { $$ = list4(LIST,$10,$2,$5,$7); }
 	  ;
@@ -1851,14 +1851,14 @@ xmp_shadow_clause:
           ;
 
 xmp_task_clause:
-	    XMPKW_ON xmp_obj_ref xmp_clause_opt
+	    xmp_ON xmp_obj_ref xmp_clause_opt
 	    { $$= list2(LIST,$2,$3); }
           ;
 
 xmp_loop_clause:
-	    XMPKW_ON xmp_obj_ref xmp_reduction_opt xmp_clause_opt
+	    xmp_ON xmp_obj_ref xmp_reduction_opt xmp_clause_opt
 	    { $$ = list4(LIST,NULL,$2,$3,$4); }
-	  | '(' xmp_subscript_list ')' XMPKW_ON xmp_obj_ref
+	  | '(' xmp_subscript_list ')' xmp_ON xmp_obj_ref
 	    	xmp_reduction_opt xmp_clause_opt
 	    { $$ = list4(LIST,$2,$5,$6,$7); }
 	  ;
@@ -1874,7 +1874,7 @@ xmp_gmove_clause:
 	   ;
 
 xmp_barrier_clause:
-	     XMPKW_ON xmp_obj_ref xmp_clause_opt
+	     xmp_ON xmp_obj_ref xmp_clause_opt
 	      { $$ = list2(LIST,$2,$3); }
 	   | xmp_clause_opt
 	      { $$ = list2(LIST,NULL,$1); }
@@ -1883,24 +1883,24 @@ xmp_barrier_clause:
 xmp_bcast_clause:
 	     '(' xmp_expr_list ')' xmp_clause_opt
 	      { $$ = list4(LIST,$2,NULL,NULL,$4); }
-   	   | '(' xmp_expr_list ')' XMPKW_FROM xmp_obj_ref xmp_clause_opt
+   	   | '(' xmp_expr_list ')' xmp_FROM xmp_obj_ref xmp_clause_opt
 	      { $$ = list4(LIST,$2,$5,NULL,$6); }
-	   | '(' xmp_expr_list ')' XMPKW_ON xmp_obj_ref xmp_clause_opt
+	   | '(' xmp_expr_list ')' xmp_ON xmp_obj_ref xmp_clause_opt
 	      { $$ = list4(LIST,$2,NULL,$5,$6); }
-   	   | '(' xmp_expr_list ')' XMPKW_FROM xmp_obj_ref 
-	           XMPKW_ON xmp_obj_ref xmp_clause_opt
+   	   | '(' xmp_expr_list ')' xmp_FROM xmp_obj_ref 
+	           xmp_ON xmp_obj_ref xmp_clause_opt
 	      { $$ = list4(LIST,$2,$5,$7,$8); }
             ;
 
 xmp_reduction_clause:
 	       xmp_reduction_spec xmp_clause_opt
 	        { $$ = list3(LIST,$1,NULL,$2); }
-	     | xmp_reduction_spec XMPKW_ON xmp_obj_ref xmp_clause_opt
+	     | xmp_reduction_spec xmp_ON xmp_obj_ref xmp_clause_opt
                 { $$ = list3(LIST,$1,$3,$4); }
 	     ;
 
 xmp_array_clause:
-	     XMPKW_ON xmp_obj_ref xmp_clause_opt
+	     xmp_ON xmp_obj_ref xmp_clause_opt
                 { $$ = list2(LIST,$2,$3); }
 	     ;
 
@@ -1948,7 +1948,10 @@ xmp_dist_fmt:
 	    { $$ = list2(LIST,$1,NULL); }
 	  ;
 
-xmp_reduction_opt:
+xmp_reduction_opt: 
+	 { need_keyword=TRUE; } xmp_reduction_opt1 { $$ = $2; }
+    
+xmp_reduction_opt1:
 	     /* empty */ { $$ = NULL; }
         | XMPKW_REDUCTION xmp_reduction_spec { $$=$2; }
 	;
@@ -1970,8 +1973,8 @@ xmp_reduction_op:
 
 xmp_gmove_opt:
 	  /* NULL */ { $$= NULL; }
-	 | XMPKW_IN { $$ = GEN_NODE(INT_CONSTANT, XMP_GMOVE_IN); }
-	 | XMPKW_OUT { $$ = GEN_NODE(INT_CONSTANT, XMP_GMOVE_OUT); }
+	 | { need_keyword=TRUE; } XMPKW_IN { $$ = GEN_NODE(INT_CONSTANT, XMP_GMOVE_IN); }
+	 | { need_keyword=TRUE; } XMPKW_OUT { $$ = GEN_NODE(INT_CONSTANT, XMP_GMOVE_OUT); }
 	 ;
 
 xmp_expr_list:
@@ -2001,9 +2004,19 @@ xmp_clause_list:
 	  ;
 
 xmp_clause_one:
-	    XMPKW_ASYNC '(' IDENTIFIER ')'
+	    xmp_ASYNC '(' IDENTIFIER ')'
 	   { $$ = XMP_LIST(XMP_OPT_ASYNC, $3); }
 	   ;
+
+xmp_ON: { need_keyword = TRUE; } XMPKW_ON;
+xmp_ONTO: { need_keyword = TRUE; } XMPKW_ONTO;
+xmp_WITH: { need_keyword = TRUE; } XMPKW_WITH;
+xmp_FROM: { need_keyword = TRUE; } XMPKW_FROM;
+xmp_ASYNC: { need_keyword = TRUE; } XMPKW_ASYNC;
+xmp_NOWAIT: { need_keyword = TRUE; } XMPKW_NOWAIT;
+/* xmp_REDUCTION: { need_keyword = TRUE; } XMPKW_REDUCTION; */
+/* xmp_MASTER: { need_keyword = TRUE; } XMPKW_MASTER; */
+
 
 /*
  * (flag, mode)

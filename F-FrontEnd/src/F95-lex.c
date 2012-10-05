@@ -273,7 +273,7 @@ initialize_lex()
     add_sentinel( &sentinels, XMP_SENTINEL );
 }
 
-//#define LEX_DEBUG
+// #define LEX_DEBUG
 static int yylast;
 
 /* lexical analyer */
@@ -3580,7 +3580,7 @@ XMP_lex_token()
     while(isspace(*bufptr)) bufptr++;  /* skip white space */
     
     if(isalpha(*bufptr)){
-	  if(need_keyword == TRUE || paren_level == 0) {  /* require keyword */
+	  if(need_keyword == TRUE && paren_level == 0) {  /* require keyword */
 	    need_keyword = FALSE;
 	    t = get_keyword(XMP_keywords);
 	    if(t != UNKNOWN) return t;
