@@ -37,19 +37,6 @@ public class XMPtranslate implements XobjectDefVisitor
   }
     
   public void finish() {
-//     FmoduleBlock mod = 
-//       (FmoduleBlock)env.getProp(XMPtransPragma.PROP_KEY_FINTERNAL_MODULE);
-//     if(mod != null) {
-//       XobjectDef lastMod = null;
-//       for(XobjectDef d : env) {
-//  	if(d.isFmoduleDef())
-//  	  lastMod = d;
-//       }
-//       if(lastMod == null)
-//  	env.insert(mod.toXobjectDef());
-//       else
-//  	lastMod.addAfterThis(mod.toXobjectDef());
-//     }
     env.finalize();
   }
     
@@ -87,16 +74,13 @@ public class XMPtranslate implements XobjectDefVisitor
       return;
         
     anaPragma.run(fd,env);
-    if(XMP.hasError())
-      return;
+    if(XMP.hasError()) return;
 
     rewriteExpr.run(fd, env);
-    if(XMP.hasError())
-      return;
+    if(XMP.hasError()) return;
 
     transPragma.run(fd,env);
-    if(XMP.hasError())
-      return;
+    if(XMP.hasError()) return;
         
     // finally, replace body
     fd.Finalize();

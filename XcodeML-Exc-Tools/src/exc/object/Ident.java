@@ -42,7 +42,9 @@ public class Ident extends Xobject
     private String fcommon_name;
     /** Fortran: parameter's initial value */
     private Xobject fparam_value;
-
+    /** Fortran: declared module */
+    private String declared_module;
+  
     // constructor
     public Ident(String name, StorageClass stg_class, Xtype type, Xobject v, VarScope scope)
     {
@@ -487,6 +489,16 @@ public class Ident extends Xobject
     public void setFparamValue(Xobject value)
     {
         this.fparam_value = value;
+    }
+
+    public String getFdeclaredModule()
+    {
+        return declared_module;
+    }
+    
+    public void setFdeclaredModule(String module_name)
+    {
+        this.declared_module = module_name;
     }
 
     // for Fortran subroutine

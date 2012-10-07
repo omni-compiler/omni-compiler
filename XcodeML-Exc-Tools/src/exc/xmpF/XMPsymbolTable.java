@@ -17,6 +17,8 @@ public class XMPsymbolTable {
   private Vector<XMPobject> objects;
   private Vector<XMParray> arrays;
   private Vector<XMPcoarray> coarrays;
+  
+  private Vector<String> used_modules;
 
   public XMPsymbolTable() {
     objectTable = new HashMap<String, XMPobject>();
@@ -26,6 +28,17 @@ public class XMPsymbolTable {
     objects = new Vector<XMPobject>();
     arrays = new Vector<XMParray>();
     coarrays = new Vector<XMPcoarray>();
+
+    used_modules = new Vector<String>();
+  }
+
+  /* module */
+  public void addUseModule(String module_name){
+    used_modules.add(module_name);
+  }
+
+  public Vector<String> getUsedModules(){
+    return used_modules;
   }
 
   /*
@@ -38,22 +51,6 @@ public class XMPsymbolTable {
 
   public XMPobject getXMPobject(String name) {
     return objectTable.get(name);
-  }
-
-  public XMPnodes getXMPnodes(String name) {
-    XMPobject o = objectTable.get(name);
-
-    if (o == null) return null;
-    else if (o.getKind() != XMPobject.NODES) return null;
-    else return (XMPnodes)o;
-  }
-
-  public XMPtemplate getXMPtemplate(String name) {
-    XMPobject o = objectTable.get(name);
-
-    if (o == null) return null;
-    else if (o.getKind() != XMPobject.TEMPLATE) return null;
-    else return (XMPtemplate)o;
   }
 
   public Vector<XMPobject> getXMPobjects(){
@@ -90,5 +87,13 @@ public class XMPsymbolTable {
 
   public Vector<XMPcoarray> getXMPcoarrys(){
     return coarrays;
+  }
+
+  // for debug
+  public void dump(String msg){
+    System.out.println("dump XMP Symbol Table: --- "+msg);
+    for(XMPobject o: objects) System.out.println("o="+o);
+    for(XMParray a: arrays) System.out.println("a="+a);
+    System.out.println("dump end: ---");
   }
 }

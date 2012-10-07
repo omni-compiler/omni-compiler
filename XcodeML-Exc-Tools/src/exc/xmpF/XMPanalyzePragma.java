@@ -31,8 +31,12 @@ public class XMPanalyzePragma
     Block b;
     Block fblock = def.getBlock();
 
+
     // pass1: traverse to collect information about XMP pramga
     XMP.debug("pass1:");
+
+    // check module use 
+    checkUseDecl(fblock.getBody().getDecls());
 
     b = fblock.getBody().getHead();
     if(b == null) return; // null body, do nothing
@@ -45,6 +49,16 @@ public class XMPanalyzePragma
       if(XMP.debugFlag)	System.out.println("pass1=" + b);
       if(b.Opcode() == Xcode.XMP_PRAGMA)
 	analyzePragma((PragmaBlock)b);
+    }
+  }
+
+  private void checkUseDecl(Xobject decls){
+    if(decls == null) return;
+    for(Xobject decl: (XobjList)decls){
+      if(decl.Opcode() != Xcode.F_USE_DECL) continue;
+      String name = decl.getArg(0).getName();
+      env.useModule(name);
+      env.findModule(name); // import 
     }
   }
 
@@ -418,7 +432,7 @@ public class XMPanalyzePragma
       if(!v.isVariable()){
 	XMP.error("not variable in reduction spec list");
       }
-      Ident id = pb.findVarIdent(v.getName());
+      Ident id = env.findVarIdent(v.getName(),pb);
       if(id == null){
 	XMP.error("variable '"+v.getName()+"' in reduction is not found");
       }
@@ -446,7 +460,7 @@ public class XMPanalyzePragma
       if(!v.isVariable()){
 	XMP.error("not variable in bcast variable list");
       }
-      Ident id = pb.findVarIdent(v.getName());
+      Ident id = env.findVarIdent(v.getName(),pb);
       if(id == null){
 	XMP.error("variable '"+v.getName()+"' in reduction is not found");
       }
@@ -512,7 +526,7 @@ public class XMPanalyzePragma
       a = a.getArg(0);
       if(a.Opcode() != Xcode.VAR)
 	XMP.fatal("not VAR for F_VAR_REF");
-      Ident id = pb.findVarIdent(a.getName());
+      Ident id = env.findVarIdent(a.getName(),pb);
       if(id == null)
 	XMP.fatal("array in F_ARRAY_REF is not declared");
       XMParray array = XMParray.getArray(id);

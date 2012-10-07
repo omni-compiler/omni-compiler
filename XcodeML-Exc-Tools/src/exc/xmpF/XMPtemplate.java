@@ -180,10 +180,11 @@ package exc.xmpF;
      String templateName = templ.getString();
      XMPtemplate templateObject = null;
 
-     templateObject = env.getXMPtemplate(templateName,pb);
+     templateObject = env.findXMPtemplate(templateName,pb);
 
      if (templateObject == null) {
        XMP.error("template '" + templateName  + "' is not declared");
+       return;
      }
 
      if (!templateObject.isFixed()) {
@@ -196,7 +197,7 @@ package exc.xmpF;
 
      // get nodes object
      String nodesName = nodes.getString();
-     XMPnodes nodesObject = nodesObject = env.findXMPnodes(nodesName, pb);
+     XMPnodes nodesObject = env.findXMPnodes(nodesName, pb);
      if (nodesObject == null) {
        XMP.error("nodes '" + nodesName + "' is not declared");
      }

@@ -158,7 +158,7 @@ public class XMParray {
     // get array information
     name = a.getString();
 
-    arrayId = pb.findVarIdent(name);  // find ident, in this block(func)
+    arrayId = env.findVarIdent(name,pb);  // find ident, in this block(func)
     if (arrayId == null) {
       XMP.error("array '" + name + "' is not declared");
       return;
@@ -194,7 +194,7 @@ public class XMParray {
 
     // get template information
     String templateName = templ.getString();
-    template = env.getXMPtemplate(templateName, pb);
+    template = env.findXMPtemplate(templateName, pb);
 
     if (template == null) {
       XMP.error("template '" + templateName + "' is not declared");
@@ -413,8 +413,8 @@ public class XMParray {
     
     f = env.declExternIdent(XMP.array_alloc_f,Xtype.FsubroutineType);
     args = Xcons.List(descId.Ref(),Xcons.IntConstant(dims.size()),
-		     XMP.typeIntConstant(elementType),
-		     template.getDescId().Ref());
+		      XMP.typeIntConstant(elementType),
+		      template.getDescId().Ref());
     body.add(f.callSubroutine(args));
 
     f = env.declExternIdent(XMP.array_align_info_f,Xtype.FsubroutineType);

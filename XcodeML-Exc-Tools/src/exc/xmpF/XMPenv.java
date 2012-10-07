@@ -6,6 +6,9 @@
 
 package exc.xmpF;
 
+import java.io.*;
+import java.util.Vector;
+
 import exc.object.*;
 import exc.block.*;
 
@@ -16,11 +19,15 @@ import xcodeml.util.XmOption;
  */
 
 public class XMPenv {
-  private XobjectFile env;
+  protected XobjectFile env;
+  protected boolean is_module = false;
+
+  private Vector<XMPmodule> modules = new Vector<XMPmodule>();
   private FuncDefBlock current_def;
-  private boolean is_module = false;
 
   private final static String SYMBOL_TABLE = "XMP_PROP_XMP_SYMBOL_TABLE";
+  
+  public XMPenv() { }
 
   public XMPenv(XobjectFile env) {
     this.env = env;
@@ -30,6 +37,22 @@ public class XMPenv {
     return env;
   }
 
+  public XMPmodule findModule(String module_name){
+    for(XMPmodule mod : modules){
+      if(module_name.equals(mod.getModuleName())) return mod;
+    }
+    XMPmodule module = new XMPmodule(this);
+    module.inputFile(module_name);
+    modules.add(module);
+    return module;
+  }
+
+  public void useModule(String module_name){
+    XMPsymbolTable table = getXMPsymbolTable();
+    table.addUseModule(module_name);
+  }
+
+  // set current definition and set symbol table each DEF
   public void setCurrentDef(FuncDefBlock def){
     current_def = def;
     XobjectDef d = def.getDef();
@@ -127,9 +150,15 @@ public class XMPenv {
     for(XobjectDef def = current_def.getDef(); def != null; 
 	def = def.getParent()){
       Xobject id_list = def.getDef().getArg(1);
-      for(Xobject id: (XobjList)id_list){
-	if(id.getName().equals(name)){
-	  return (Ident) id;
+      for(Xobject i: (XobjList)id_list){
+	if(i.getName().equals(name)){
+	  Ident id = (Ident)i;
+	  String mod_name = id.getFdeclaredModule();
+	  if(mod_name == null) return id;
+
+	  /* check module */
+	  XMPmodule mod = findModule(mod_name);
+	  return mod.findVarIdent(name,null);
 	}
       }
     }
@@ -155,51 +184,52 @@ public class XMPenv {
   }
 
   public XMPobject findXMPobject(String name) {
+    XMPobject o;
+
     for(XobjectDef def = current_def.getDef(); 
 	def != null; def = def.getParent()){
       XMPsymbolTable table = getXMPsymbolTable(def);
       if(table == null) break;
-      XMPobject o = table.getXMPobject(name);
+      o = table.getXMPobject(name);
       if(o != null) return o;
+
+      // search used module
+      for(String module_name: table.getUsedModules()){
+	XMPmodule mod = findModule(module_name);
+	o = mod.findXMPobject(name);
+	if(o != null) return o;
+      }
     }
     return null;
   }
 
   /*
-   * decl/find XMPnodes
+   * find XMPnodes
    */
   public XMPnodes findXMPnodes(String name, Block block){
     return findXMPnodes(name);
   }
 
   public XMPnodes findXMPnodes(String name) {
-    for(XobjectDef def = current_def.getDef(); 
-	def != null; def = def.getParent()){
-      XMPsymbolTable table = getXMPsymbolTable(def);
-      if(table == null) break;
-      XMPnodes o = table.getXMPnodes(name);
-      if(o != null) return o;
-    }
+    XMPobject o = findXMPobject(name);
+    if (o != null && o.getKind() == XMPobject.NODES) 
+      return (XMPnodes)o;
     return null;
   }
 
   /*
-   * decl/find XMPtemplate
+   * find XMPtemplate
    */
-  public XMPtemplate getXMPtemplate(String name, Block block){
-    return getXMPtemplate(name);
-  }
+   public XMPtemplate findXMPtemplate(String name, Block block){
+     return findXMPtemplate(name);
+   }
 
-  public XMPtemplate getXMPtemplate(String name) {
-    for(XobjectDef def = current_def.getDef(); 
-	def != null; def = def.getParent()){
-      XMPsymbolTable table = getXMPsymbolTable(def);
-      if(table == null) break;
-      XMPtemplate t = table.getXMPtemplate(name);
-      if(t != null) return t;
-    }
-    return null;
-  }
+   public XMPtemplate findXMPtemplate(String name) {
+     XMPobject o = findXMPobject(name);
+     if (o != null && o.getKind() == XMPobject.TEMPLATE) 
+       return (XMPtemplate)o;
+     return null;
+   }
 
   /*
    * decl/find XMParray
@@ -212,19 +242,6 @@ public class XMPenv {
     XMPsymbolTable table = getXMPsymbolTable();
     table.putXMParray(array);
   }
-
-//   public XMParray findXMParray(String name, Block bp){
-//     return findXMParray(name);
-//   }
-
-//   public XMParray findXMParray(String name) {
-//     for(XobjectDef def = current_def.getDef(); def != null; def = def.getParent()){
-//       XMPsymbolTable table = getXMPsymbolTable(def);
-//       XMParray a = table.getXMParray(name);
-//       if(a != null) return a;
-//     }
-//     return null;
-//   }
 
   /*
    * put/get XMPcorray (not yet ...)
