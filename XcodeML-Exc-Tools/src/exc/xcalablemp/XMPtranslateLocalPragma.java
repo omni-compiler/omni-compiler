@@ -1278,13 +1278,11 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private Vector<XobjList> createReductionArgsList(XobjList reductionRef, PragmaBlock pb,
-                                                   boolean isClause,
+  private Vector<XobjList> createReductionArgsList(XobjList reductionRef, PragmaBlock pb, boolean isClause,
                                                    CforBlock schedBaseBlock, IfBlock reductionInitIfBlock) throws XMPexception {
     Vector<XobjList> returnVector = new Vector<XobjList>();
 
     XobjInt reductionOp = (XobjInt)reductionRef.getArg(0);
-
     XobjList reductionSpecList = (XobjList)reductionRef.getArg(1);
     for (XobjArgs i = reductionSpecList.getArgs(); i != null; i = i.nextArgs()) {
       XobjList reductionSpec = (XobjList)i.getArg();
@@ -1295,56 +1293,65 @@ public class XMPtranslateLocalPragma {
       Xtype specType = typedSpec.getSecond();
 
       boolean isArray = false;
+      boolean isPointer = false;
       Xobject specRef = null;
       Xobject count = null;
       Xobject elmtType = null;
       BasicType basicSpecType = null;
       switch (specType.getKind()) {
-        case Xtype.BASIC:
-          {
-            basicSpecType = (BasicType)specType;
-            checkReductionType(specName, basicSpecType);
+      case Xtype.POINTER:
+	{
+	  isPointer = true;
+	  basicSpecType = (BasicType)specType.getRef();
+	  specRef = specId.getAddr();
+          count = Xcons.LongLongConstant(0, 1);
+	  elmtType = XMP.createBasicTypeConstantObj(basicSpecType);
+	} break;
+      case Xtype.BASIC:
+	{
+	  basicSpecType = (BasicType)specType;
+	  checkReductionType(specName, basicSpecType);
+	  
+	  specRef = specId.getAddr();
+	  count = Xcons.LongLongConstant(0, 1);
+	  elmtType = XMP.createBasicTypeConstantObj(basicSpecType);
+	} break;
+      case Xtype.ARRAY:
+	{
+	  isArray = true;
+	  ArrayType arraySpecType = (ArrayType)specType;
+	  if (arraySpecType.getArrayElementType().getKind() != Xtype.BASIC)
+	    throw new XMPexception("array '" + specName + "' has a wrong data type for reduction");
+	  
+	  basicSpecType = (BasicType)arraySpecType.getArrayElementType();
+	  checkReductionType(specName, basicSpecType);
+	  
+	  // FIXME not good implementation
+	  XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+	  XMPalignedArray specAlignedArray = _globalDecl.getXMPalignedArray(specName, localXMPsymbolTable);
+	  if (specAlignedArray == null) {
+	    specRef = specId.Ref();
+	    count = Xcons.LongLongConstant(0, XMPutil.getArrayElmtCount(arraySpecType));
+	  }
+	  else {
+	    if (isClause) {
+	      throw new XMPexception("aligned arrays cannot be used in reduction clause");
+	    }
+	    
+	    if (specAlignedArray.hasShadow()) {
+	      throw new XMPexception("arrays which have shadow cannot be used in reduction directive/clause");
+	    }
+	    
+	    specRef = specAlignedArray.getAddrIdVoidRef();
+	    Ident getTotalElmtFuncId = _globalDecl.declExternFunc("_XMP_get_array_total_elmts",
+								  Xtype.unsignedlonglongType);
+	    count = getTotalElmtFuncId.Call(Xcons.List(specAlignedArray.getDescId().Ref()));
+	  }
 
-            specRef = specId.getAddr();
-            count = Xcons.LongLongConstant(0, 1);
-            elmtType = XMP.createBasicTypeConstantObj(basicSpecType);
-          } break;
-        case Xtype.ARRAY:
-          {
-            isArray = true;
-            ArrayType arraySpecType = (ArrayType)specType;
-            if (arraySpecType.getArrayElementType().getKind() != Xtype.BASIC)
-              throw new XMPexception("array '" + specName + "' has has a wrong data type for reduction");
-
-            basicSpecType = (BasicType)arraySpecType.getArrayElementType();
-            checkReductionType(specName, basicSpecType);
-
-            // FIXME not good implementation
-            XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-            XMPalignedArray specAlignedArray = _globalDecl.getXMPalignedArray(specName, localXMPsymbolTable);
-            if (specAlignedArray == null) {
-              specRef = specId.Ref();
-              count = Xcons.LongLongConstant(0, XMPutil.getArrayElmtCount(arraySpecType));
-            }
-            else {
-              if (isClause) {
-                throw new XMPexception("aligned arrays cannot be used in reduction clause");
-              }
-
-              if (specAlignedArray.hasShadow()) {
-                throw new XMPexception("arrays which have shadow cannot be used in reduction directive/clause");
-              }
-
-              specRef = specAlignedArray.getAddrIdVoidRef();
-              Ident getTotalElmtFuncId = _globalDecl.declExternFunc("_XMP_get_array_total_elmts",
-                                                                    Xtype.unsignedlonglongType);
-              count = getTotalElmtFuncId.Call(Xcons.List(specAlignedArray.getDescId().Ref()));
-            }
-
-            elmtType = XMP.createBasicTypeConstantObj(basicSpecType);
-          } break;
-        default:
-          throw new XMPexception("'" + specName + "' has a wrong data type for reduction");
+	  elmtType = XMP.createBasicTypeConstantObj(basicSpecType);
+	} break;
+      default:
+	throw new XMPexception("'" + specName + "' has a wrong data type for reduction");
       }
 
       XobjList reductionFuncArgs = Xcons.List(specRef, count, elmtType, reductionOp);
@@ -1353,6 +1360,11 @@ public class XMPtranslateLocalPragma {
       if (isClause) {
         createReductionInitStatement(specId, isArray, count, basicSpecType, reductionOp.getInt(),
                                      schedBaseBlock, reductionInitIfBlock);
+      }
+      
+      if(isPointer){
+	Xobject varaddr = (Xobject)reductionFuncArgs.getArg(0);
+	reductionFuncArgs.setArg(0, Xcons.PointerRef(varaddr));
       }
 
       // add extra args for (firstmax, firstmin, lastmax, lastmin) if needed
@@ -1379,8 +1391,7 @@ public class XMPtranslateLocalPragma {
     Xobject statement = null;
     if (isArray) {
       Ident initLoopIndexId = declIdentWithBlock(schedBaseBlock, _globalDecl.genSym(XMP.TEMP_PREFIX), Xtype.unsignedlonglongType);
-      initPart.add(createReductionArrayInit(varId, createReductionInitValueObj(varId, type, reductionOp),
-                                            count, type, initLoopIndexId));
+      initPart.add(createReductionArrayInit(varId, createReductionInitValueObj(varId, type, reductionOp), count, type, initLoopIndexId));
     }
     else {
       initPart.add(Xcons.Set(varId.Ref(), createReductionInitValueObj(varId, type, reductionOp)));

@@ -1090,8 +1090,13 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
   private XobjList parse_REDUCTION_SPEC(int reductionKind) throws XMPexception {
     XobjList reductionSpec = Xcons.List();
-    if (pg_tok() == PG_IDENT)
+    if (pg_tok() == PG_IDENT){
       reductionSpec.add(Xcons.String(pg_tok_buf()));
+    }
+    else if(pg_tok() == '*'){
+      pg_get_token();
+      reductionSpec.add(Xcons.String(pg_tok_buf()));
+    }
     else
       error("syntax error on <reduction-spec>");
 
@@ -1230,7 +1235,6 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       error("']' is expected after <coarray-dim>");
     }
     
-
     while (true) {
       pg_get_token();
       if (pg_tok() == '[') {
