@@ -545,6 +545,8 @@ getConstNumValue(CExpr *expr, CNumValueWithType *result)
         return 1;
     }
 
+    if(EXPR_CODE(expr) == EC_XMP_DESC_OF) return 0; /* not constant */
+
     CNumValueWithType n1, n2, n3;
     int use2 = 0, use3 = 0, isConst2 = 0, isConst3 = 0;
 
@@ -553,8 +555,7 @@ getConstNumValue(CExpr *expr, CNumValueWithType *result)
             CExpr *node = EXPR_U(expr)->e_node;
 
             if(EXPR_CODE(expr) == EC_SIZE_OF || 
-	       EXPR_CODE(expr) == EC_GCC_ALIGN_OF ||
-	       EXPR_CODE(expr) == EC_XMP_DESC_OF) {
+	       EXPR_CODE(expr) == EC_GCC_ALIGN_OF) {
                 CExprOfTypeDesc *td = resolveType(node);
 
                 if(td == NULL)
@@ -563,8 +564,7 @@ getConstNumValue(CExpr *expr, CNumValueWithType *result)
                 result->nvt_isConstButMutable = 1;
                 result->nvt_basicType = BT_INT;
                 result->nvt_numKind = getNumValueKind(result->nvt_basicType);
-                if(EXPR_CODE(expr) == EC_SIZE_OF ||
-		   EXPR_CODE(expr) == EC_XMP_DESC_OF)
+                if(EXPR_CODE(expr) == EC_SIZE_OF)
                     result->nvt_numValue.ll = getTypeSize(td);
                 else {
                     assertExpr((CExpr*)td, getTypeAlign(td));

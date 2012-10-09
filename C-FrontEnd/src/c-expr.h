@@ -1257,6 +1257,8 @@ extern int                    isSubArrayRef2(CExpr *expr);
 #define EXPR_L_DATA(x)              ((CExpr*)CCOL_DL_DATA(x))
 //! get list size of CExprOfList
 #define EXPR_L_SIZE(l)              CCOL_DL_SIZE(EXPR_DLIST(l))
+//! get nth child  in CExprOfList
+#define EXPR_L_AT(l,n)             CCOL_DL_AT(EXPR_DLIST(l),n)
 //! is NULL or CExprOfNull or list size zero
 #define EXPR_L_ISNULL(l)            (EXPR_ISNULL(l) || EXPR_L_SIZE(l) == 0)
 //! get expression's type descriptor

@@ -2077,6 +2077,10 @@ compile1(CExpr *expr, CExpr *parent)
     case EC_PRAGMA_PACK:
         expr = compile_pragmaPack(expr, parent);
         goto end;
+	
+    case EC_XMP_DESC_OF:
+	EXPR_ISCOMPILED(expr) = 1;
+	return;
 
     default:
         if(isScopedStmt(expr)) {

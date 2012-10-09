@@ -1273,7 +1273,6 @@ convertSyntax0(CConvsModeEnum mode, CExpr *expr, CSymbolTable *symTab)
                 break;
             case EC_SIZE_OF:
             case EC_GCC_ALIGN_OF:
-	    case EC_XMP_DESC_OF:
                 newExpr = convs_sizeAlignOf(expr, symTab, &converted);
                 break;
             default:

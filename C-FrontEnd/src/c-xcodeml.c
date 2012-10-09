@@ -481,7 +481,13 @@ outxContext(FILE *fp, int indent, CExpr *expr)
     case EC_XMP_COARRAY_REF:
         outx_COARRAY_REF(fp, indent, EXPR_B(expr)); break;
     case EC_XMP_DESC_OF:
-        OUTX_OP("xmpDescOf"); break;
+        // OUTX_OP("xmpDescOf"); 
+        outxTagForExpr(fp, indent, expr, "xmpDescOf", 0, NULL);
+	outxPrint(fp, indent+1, 
+		  "<Var type=\"int\" scope=\"global\">%s</Var>\n",
+		  EXPR_SYMBOL(EXPR_L_AT(expr,0))->e_symName);
+        outxTagClose(fp, indent, "xmpDescOf");
+	break;
 
     // Operators
     case EC_UNARY_MINUS:    OUTX_OP("unaryMinusExpr"); break;

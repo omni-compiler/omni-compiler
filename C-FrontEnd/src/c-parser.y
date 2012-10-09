@@ -275,8 +275,8 @@ unary_expr:
             { STAT_TRACE(("{unary_expr#10}")); $$ = exprUnary(EC_GCC_REALPART, $2); }
     | IMAGPART cast_expr        %prec UNARY
             { STAT_TRACE(("{unary_expr#11}")); $$ = exprUnary(EC_GCC_IMAGPART, $2); }
-    | XMP_DESC_OF unary_expr         %prec UNARY
-            { STAT_TRACE(("{unary_expr#12}")); $$ = exprUnary(EC_XMP_DESC_OF, $2); }
+    | XMP_DESC_OF '(' IDENTIFIER ')' 
+            { STAT_TRACE(("{unary_expr#12}")); $$ = exprUnary(EC_XMP_DESC_OF, $3); }
     ;
 
 cast_expr:
