@@ -2293,6 +2293,7 @@
     </xsd:attribute>
     <xsd:attribute name="type" type="xsd:string"/>
     <xsd:attribute name="module" type="xsd:string"/>
+    <xsd:attribute name="declared_in" type="xsd:string"/>
   </xsd:complexType>
   <xsd:complexType name="globalSymbols">
     <xsd:sequence>

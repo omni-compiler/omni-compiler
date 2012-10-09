@@ -464,6 +464,7 @@
 <!ATTLIST id sclass (flocal|fsave|fcommon|fparam|ffunc|ftype_name|fcommon_name|fnamelist_name) "flocal">
 <!ATTLIST id type CDATA #IMPLIED>
 <!ATTLIST id module CDATA #IMPLIED>
+<!ATTLIST id declared_in CDATA #IMPLIED>
 
 <!ELEMENT logOrExpr ((FlogicalConstant | logGTExpr | logLEExpr | FstructConstructor | FconcatExpr | userBinaryExpr | FcharacterConstant | logNEQVExpr | mulExpr | varRef | plusExpr | logAndExpr | userUnaryExpr | logOrExpr | logEQVExpr | functionCall | logEQExpr | FarrayConstructor | logGEExpr | unaryMinusExpr | FdoLoop | FpowerExpr | divExpr | FmemberRef | logNotExpr | FcoArrayRef | FcharacterRef | FcomplexConstant | FrealConstant | FarrayRef | minusExpr | logLTExpr | logNEQExpr | Var | FintConstant), (FlogicalConstant | logGTExpr | logLEExpr | FstructConstructor | FconcatExpr | userBinaryExpr | FcharacterConstant | logNEQVExpr | varRef | mulExpr | plusExpr | logAndExpr | userUnaryExpr | logOrExpr | logEQVExpr | functionCall | logEQExpr | FarrayConstructor | logGEExpr | unaryMinusExpr | FdoLoop | FpowerExpr | divExpr | FmemberRef | FcoArrayRef | logNotExpr | FcharacterRef | FcomplexConstant | FrealConstant | FarrayRef | minusExpr | logLTExpr | logNEQExpr | Var | FintConstant))>
 <!ATTLIST logOrExpr type CDATA #IMPLIED>
