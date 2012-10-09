@@ -32,7 +32,7 @@ void _XMP_gasnet_set_coarray(_XMP_coarray_t *coarray, void **addr, unsigned long
       int tmp_type_size = ((type_size / _XMP_GASNET_ALIGNMENT) + 1) * _XMP_GASNET_ALIGNMENT;
       _xmp_coarray_shift += tmp_type_size * number_of_elements;
     }
-
+    
   if(_xmp_coarray_shift > _xmp_heap_size){
     if(gasnet_mynode() == 0){
       fprintf(stderr, "Cannot allocate coarray. Now HEAP SIZE of coarray is %d MB\n", (int)(_xmp_heap_size/1024/1024));

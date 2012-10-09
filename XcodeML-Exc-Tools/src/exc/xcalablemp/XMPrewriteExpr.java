@@ -875,7 +875,7 @@ public class XMPrewriteExpr {
       throw new XMPexception("array '" + a.getName() + "' is aligned by template '" + alignedTemplate.getName() +
                              "'. loop is distributed by template '" + t.getName() + "'.");
     }
-    
+
     if(a.getAlignSubscriptIndexAt(ai) != null){  // null is an asterisk
       if (ti != a.getAlignSubscriptIndexAt(ai).intValue()) {
 	throw new XMPexception("array ref is not consistent with array alignment");

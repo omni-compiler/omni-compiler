@@ -1127,6 +1127,10 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
             pg_get_token();
             if (pg_tok() == PG_IDENT)
               locationVariables.add(Xcons.String(pg_tok_buf()));
+	    else if (pg_tok() == '*'){  // Pointer Reference
+	      pg_get_token();
+	      locationVariables.add(Xcons.String(pg_tok_buf()));
+	    }
             else
               error("syntax error on <location-variable>");
 
@@ -1546,7 +1550,11 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     do {
       pg_get_token();
       if (pg_tok() == PG_IDENT) {
-        varList.add(Xcons.String(pg_tok_buf()));
+	varList.add(Xcons.String(pg_tok_buf()));
+      }
+      else if (pg_tok() == '*'){  // Pointer Reference 
+	pg_get_token();
+	varList.add(Xcons.String(pg_tok_buf()));
       }
       else {
         throw new XMPexception("<variable> for " + name + " is expected");

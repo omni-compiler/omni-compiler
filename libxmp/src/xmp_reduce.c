@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <limits.h>
+#include <float.h>
 #include "mpi.h"
 #include "xmp_internal.h"
 
@@ -195,6 +196,7 @@ static void _XMP_init_localtion_variables(void *loc, int count, int loc_datatype
     case _XMP_N_TYPE_UNSIGNED_LONG:	_XMP_M_INIT_LOCATION_VARIABLES_MAIN(unsigned long, 0, ULONG_MAX);
     case _XMP_N_TYPE_LONGLONG:		_XMP_M_INIT_LOCATION_VARIABLES_MAIN(long long, LLONG_MIN, LLONG_MAX);
     case _XMP_N_TYPE_UNSIGNED_LONGLONG:	_XMP_M_INIT_LOCATION_VARIABLES_MAIN(unsigned long long, 0, ULLONG_MAX);
+    case _XMP_N_TYPE_DOUBLE:             _XMP_M_INIT_LOCATION_VARIABLES_MAIN(double, DBL_MIN, DBL_MAX);
     default:
       _XMP_fatal("wrong data type for <location-variables>");
   }

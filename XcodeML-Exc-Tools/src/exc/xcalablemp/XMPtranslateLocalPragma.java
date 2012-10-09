@@ -1299,14 +1299,6 @@ public class XMPtranslateLocalPragma {
       Xobject elmtType = null;
       BasicType basicSpecType = null;
       switch (specType.getKind()) {
-      case Xtype.POINTER:
-	{
-	  isPointer = true;
-	  basicSpecType = (BasicType)specType.getRef();
-	  specRef = specId.getAddr();
-          count = Xcons.LongLongConstant(0, 1);
-	  elmtType = XMP.createBasicTypeConstantObj(basicSpecType);
-	} break;
       case Xtype.BASIC:
 	{
 	  basicSpecType = (BasicType)specType;
@@ -1350,6 +1342,14 @@ public class XMPtranslateLocalPragma {
 
 	  elmtType = XMP.createBasicTypeConstantObj(basicSpecType);
 	} break;
+        case Xtype.POINTER:
+        {
+          isPointer = true;
+          basicSpecType = (BasicType)specType.getRef();
+          specRef = specId.getAddr();
+          count = Xcons.LongLongConstant(0, 1);
+          elmtType = XMP.createBasicTypeConstantObj(basicSpecType);
+        } break;
       default:
 	throw new XMPexception("'" + specName + "' has a wrong data type for reduction");
       }
@@ -1426,7 +1426,7 @@ public class XMPtranslateLocalPragma {
     Xobject loopIndexRef = loopIndexId.Ref();
 
     Xobject tempArrayRef = Xcons.PointerRef(Xcons.binaryOp(Xcode.PLUS_EXPR, Xcons.Cast(Xtype.Pointer(type), tempId.Ref()),
-                                                                            loopIndexRef));
+							   loopIndexRef));
 
     Block loopBlock = Bcons.FOR(Xcons.Set(loopIndexRef, Xcons.IntConstant(0)),
                                 Xcons.binaryOp(Xcode.LOG_LT_EXPR, loopIndexRef, count),
@@ -1538,8 +1538,8 @@ public class XMPtranslateLocalPragma {
       switch (varType.getKind()) {
         case Xtype.BASIC:
           {
-            if (!XMPutil.isIntegerType(varType))
-              throw new XMPexception("'" + varName + "' should have a integer type for reduction");
+	    //            if (!XMPutil.isIntegerType(varType))
+	    //              throw new XMPexception("'" + varName + "' should have a integer type for reduction");
 
             BasicType basicVarType = (BasicType)varType;
 
@@ -1560,6 +1560,13 @@ public class XMPtranslateLocalPragma {
             funcArgs.add(Xcons.Cast(Xtype.voidPtrType, varId.Ref()));
             funcArgs.add(Xcons.Cast(Xtype.intType, XMP.createBasicTypeConstantObj(basicVarType)));
           } break;
+        case Xtype.POINTER:
+  	  {
+	    PointerType ptrVarType = (PointerType)varType;
+	    BasicType basicVarType = (BasicType)ptrVarType.getRef();
+	    funcArgs.add(Xcons.Cast(Xtype.voidPtrType, varId.Ref()));
+	    funcArgs.add(Xcons.Cast(Xtype.intType, XMP.createBasicTypeConstantObj(basicVarType)));
+	  } break;
         default:
           throw new XMPexception("'" + varName + "' has a wrong data type for reduction");
       }
@@ -1687,6 +1694,11 @@ public class XMPtranslateLocalPragma {
             count = Xcons.LongLongConstant(0, 1);
             returnVector.add(Xcons.List(varId.getAddr(), count, Xcons.SizeOf(varType)));
           } break;
+        case Xtype.POINTER:
+	  {
+	    count = Xcons.LongLongConstant(0, 1);
+	    returnVector.add(Xcons.List(varId.Ref(), count, Xcons.SizeOf(varType)));
+  	  } break;
         case Xtype.ARRAY:
           {
             ArrayType arrayVarType = (ArrayType)varType;
