@@ -909,8 +909,9 @@ public class Xcons
     public static Xobject Fallocate(Xobject var, Xobject ... indices)
     {
         XobjList l = Xcons.List(indices);
-        return Xcons.List(Xcode.F_ALLOCATE_STATEMENT, /* (Xobject)null,*/
-            Xcons.List(Xcons.List(Xcode.F_ALLOC, var, l)));
+        return Xcons.List(Xcode.F_ALLOCATE_STATEMENT, 
+			  (Xobject)null, // no stat
+			  Xcons.List(Xcons.List(Xcode.F_ALLOC, var, l)));
     }
 
     public static Xobject FallocateByList(Xobject var, XobjList l)
