@@ -6,6 +6,7 @@
  */
 package xcodeml.f.decompile;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -43,11 +44,16 @@ public class XfDecompileVisitor extends RVisitorBase
 
     private IRNode _nextNode;
 
+    private HashSet<String> _moduleAllIds;
+    private HashSet<String> _declaredIds;
+
     public XfDecompileVisitor(XmfDecompilerContext context)
     {
         _context = context;
         _invokeNodeStack = new InvokeNodeStack();
         _validator = new XfRuntimeValidator();
+        _moduleAllIds = new HashSet<String>();
+        _declaredIds = new HashSet<String>();
     }
 
     /**
@@ -192,6 +198,29 @@ public class XfDecompileVisitor extends RVisitorBase
     }
 
     /**
+     * If symbolName match with operaotr, then rename to OPERATOR()/ASSIGNMENT().
+     * @param symbolName original symbol name.
+     * @return symbol name wrapped with "OPERATOR()" or "ASSIGNMENT()" if required,
+     * otherwize return original symbol name.
+     */
+    private String _toUserOperatorIfRequired(String symbolName)
+    {
+        if (symbolName.equals("**") ||
+                symbolName.equals("*") ||
+                symbolName.equals("/") ||
+                symbolName.equals("+") ||
+                symbolName.equals("-") ||
+                symbolName.equals("//")) {
+            symbolName = "OPERATOR(" + symbolName + ")";
+        } else if (symbolName.equals("=")) {
+            symbolName = "ASSIGNMENT(" + symbolName + ")";
+        } else if (symbolName.startsWith(".") && symbolName.endsWith(".")) {
+            symbolName = "OPERATOR(" + symbolName + ")";
+        }
+        return symbolName;
+    }
+
+    /**
      * Make internal symbol from symbol name and type name.
      *
      * @param symbolName
@@ -222,18 +251,7 @@ public class XfDecompileVisitor extends RVisitorBase
             }
         }
 
-        if (symbolName.equals("**") ||
-             symbolName.equals("*") ||
-             symbolName.equals("/") ||
-             symbolName.equals("+") ||
-             symbolName.equals("-") ||
-             symbolName.equals("//")) {
-            symbolName = "OPERATOR(" + symbolName + ")";
-        } else if (symbolName.equals("=")) {
-            symbolName = "ASSIGNMENT(" + symbolName + ")";
-        } else if (symbolName.startsWith(".") && symbolName.endsWith(".")) {
-            symbolName = "OPERATOR(" + symbolName + ")";
-        }
+        symbolName = _toUserOperatorIfRequired(symbolName);
 
         XfSymbol symbol = null;
         XfType typeId = XfType.getTypeIdFromXcodemlTypeName(typeName);
@@ -344,7 +362,6 @@ public class XfDecompileVisitor extends RVisitorBase
 
         writer.writeToken(" ");
         writer.writeToken(operation);
-        writer.writeToken(" ");
 
         if (invokeEnter(rightExpr) == false) {
             return false;
@@ -2971,7 +2988,6 @@ public class XfDecompileVisitor extends RVisitorBase
             return false;
         }
 
-        writer.writeToken(" ");
         if (invokeEnter(visitable.getValueList()) == false) {
             return false;
         }
@@ -3041,6 +3057,23 @@ public class XfDecompileVisitor extends RVisitorBase
         return true;
     }
 
+    private void _writeInterface(XmfWriter writer, XbfFinterfaceDecl visitable)
+    {
+        String interfaceName = visitable.getName();
+        if (visitable.getIsAssignment()) {
+            writer.writeToken("ASSIGNMENT(=)");
+        } else if (visitable.getIsOperator()) {
+            writer.writeToken("OPERATOR(");
+            writer.writeToken(interfaceName);
+            writer.writeToken(")");
+        } else {
+            if (XfUtil.isNullOrEmpty(interfaceName) == false) {
+                writer.writeToken(" ");
+                writer.writeToken(interfaceName);
+            }
+        }
+    }
+
     /**
      * Decompile "FinterfaceDecl" element in XcodeML/F.
      *
@@ -3068,25 +3101,50 @@ public class XfDecompileVisitor extends RVisitorBase
     public boolean enter(XbfFinterfaceDecl visitable)
     {
         // DONE: XbfFinterfaceDecl
-        _writeLineDirective(visitable.getLineno(), visitable.getFile());
 
         XmfWriter writer = _context.getWriter();
+        XfTypeManager typeManager = _context.getTypeManager();
 
         String interfaceName = visitable.getName();
-
-        writer.writeToken("INTERFACE");
         if (visitable.getIsAssignment()) {
-            writer.writeToken(" ASSIGNMENT(=)");
-        } else if (visitable.getIsOperator()) {
-            writer.writeToken(" OPERATOR(");
-            writer.writeToken(visitable.getName());
-            writer.writeToken(")");
-        } else {
-            if (XfUtil.isNullOrEmpty(interfaceName) == false) {
-                writer.writeToken(" ");
-                writer.writeToken(visitable.getName());
+            interfaceName = "=";
+        }
+
+        if (XfUtil.isNullOrEmpty(interfaceName) == false) {
+            XbfId interfaceId = typeManager.findSymbol(interfaceName);
+            if (interfaceId == null) {
+                _context.setLastErrorMessage(XfUtil.formatError(visitable,
+                        XfError.XCODEML_NAME_NOT_FOUND, interfaceName));
+                return false;
+            }
+
+            IXbfTypeTableChoice typeChoice = typeManager.findTypeFromSymbol(interfaceName);
+            if (typeChoice == null) {
+                _context.setLastErrorMessage(XfUtil.formatError(visitable,
+                        XfError.XCODEML_TYPE_NOT_FOUND, interfaceName));
+                return false;
+            } else if ((typeChoice instanceof XbfFfunctionType) == false) {
+                _context.setLastErrorMessage(XfUtil.formatError(visitable,
+                        XfError.XCODEML_TYPE_MISMATCH, "function definition", XfUtil
+                        .getElementName(typeChoice), "FfunctionType"));
+                return false;
+            }
+
+            XbfFfunctionType type = (XbfFfunctionType) typeChoice;
+            if (type.getIsPublic() || type.getIsPrivate()) {
+                if (type.getIsPublic()) {
+                    writer.writeToken("PUBLIC :: ");
+                } else {
+                    writer.writeToken("PRIVATE :: ");
+                }
+                _writeInterface(writer, visitable);
+                _declaredIds.add(interfaceName);
             }
         }
+
+        _writeLineDirective(visitable.getLineno(), visitable.getFile());
+        writer.writeToken("INTERFACE ");
+        _writeInterface(writer, visitable);
 
         writer.setupNewLine();
         writer.incrementIndentLevel();
@@ -3224,6 +3282,8 @@ public class XfDecompileVisitor extends RVisitorBase
         // DONE: XbfFmoduleDefinition
         _writeLineDirective(visitable.getLineno(), visitable.getFile());
 
+        _moduleAllIds.clear();
+        _declaredIds.clear();
         XfTypeManager typeManager = _context.getTypeManager();
         XmfWriter writer = _context.getWriter();
 
@@ -3247,6 +3307,24 @@ public class XfDecompileVisitor extends RVisitorBase
 
         if (invokeEnter(visitable.getDeclarations()) == false) {
             return false;
+        }
+
+        _moduleAllIds.removeAll(_declaredIds);
+        for (String useAssocId : _moduleAllIds) {
+            IXbfTypeTableChoice typeChoice = typeManager.findTypeFromSymbol(useAssocId);
+            if(typeChoice == null)
+                continue;
+            assert(typeChoice.getIsPublic() && typeChoice.getIsPrivate() == false);
+            if(typeChoice.getIsPublic()) {
+                writer.writeToken("PUBLIC :: ");
+                writer.writeToken(_toUserOperatorIfRequired(useAssocId));
+                writer.setupNewLine();
+            }
+            if (typeChoice.getIsPrivate()){
+                writer.writeToken("PRIVATE :: ");
+                writer.writeToken(_toUserOperatorIfRequired(useAssocId));
+                writer.setupNewLine();
+            }
         }
 
         if (invokeEnter(visitable.getFcontainsStatement()) == false) {
@@ -3391,16 +3469,11 @@ public class XfDecompileVisitor extends RVisitorBase
     public boolean enter(XbfFnamelistDecl visitable)
     {
         // DONE: XbfFnamelistDecl
-        _writeLineDirective(visitable.getLineno(), visitable.getFile());
 
-        XmfWriter writer = _context.getWriter();
-        writer.writeToken("NAMELIST ");
 
         if (_invokeEnterAndWriteDelim(visitable.getVarList(), ", ") == false) {
             return false;
         }
-
-        writer.setupNewLine();
 
         return true;
     }
@@ -3617,7 +3690,6 @@ public class XfDecompileVisitor extends RVisitorBase
             return false;
         }
 
-        writer.writeToken(" ");
         if (invokeEnter(visitable.getValueList()) == false) {
             return false;
         }
@@ -3979,6 +4051,7 @@ public class XfDecompileVisitor extends RVisitorBase
             } else if (structTypeElem.getIsPublic()) {
                 writer.writeToken(", PUBLIC");
             }
+            _declaredIds.add(structTypeName);
         }
 
         writer.writeToken(" :: ");
@@ -4293,7 +4366,6 @@ public class XfDecompileVisitor extends RVisitorBase
             return false;
         }
 
-        writer.writeToken(" ");
         if (invokeEnter(visitable.getValueList()) == false) {
             return false;
         }
@@ -5115,6 +5187,13 @@ public class XfDecompileVisitor extends RVisitorBase
             XfTypeManager typeManager = _context.getTypeManager();
             for (XbfId idElem : visitable.getId()) {
                 typeManager.addSymbol(idElem);
+
+                if (_isInvokeNodeOf(XbfFmoduleDefinition.class, 1)) {
+                    if(idElem.getName() == null)
+                        continue;
+                    String name = idElem.getName().getContent();
+                    _moduleAllIds.add(name);
+                }
             }
 
             // _context.debugPrint(typeManager.toString());
@@ -5436,7 +5515,11 @@ public class XfDecompileVisitor extends RVisitorBase
         XbfValue valueElem = visitable.getValue();
         if (valueElem != null) {
             XmfWriter writer = _context.getWriter();
-            writer.writeToken(" = ");
+            if (isPointerType(visitable)) {
+                writer.writeToken(" => ");
+            } else {
+                writer.writeToken(" = ");
+            }
             if (invokeEnter(valueElem) == false) {
                 return false;
             }
@@ -5444,7 +5527,54 @@ public class XfDecompileVisitor extends RVisitorBase
 
         _context.getWriter().setupNewLine();
 
+        if(_isUnderModuleDef()) {
+            _declaredIds.add(symbol.getSymbolName());
+        }
+
         return true;
+    }
+
+    private boolean isPointerType(String typesym)
+    {
+        if(typesym == null)
+            return false;
+        XfTypeManager typeManager = _context.getTypeManager();
+        IXbfTypeTableChoice choice = typeManager.findType(typesym);
+        return isPointerType(choice);
+    }
+
+    private boolean isPointerType(XbfFbasicType type)
+    {
+        if (type == null)
+            return false;
+        if (type.getIsPointer())
+            return true;
+        else
+            return isPointerType(type.getRefAsString());
+    }
+
+    private boolean isPointerType(IXbfTypeTableChoice choice)
+    {
+        if (choice == null)
+            return false;
+        if (choice instanceof XbfFbasicType)
+            return isPointerType((XbfFbasicType)choice);
+        return false;
+    }
+
+    /**
+     * Check if varDecl is a pointer assignment or not.
+     * @param lvalue The identifier initialized with rvalue.
+     * @return True if varDecl is a pointer assignment.
+     */
+    private boolean isPointerType(XbfVarDecl lvalue)
+    {
+        if (lvalue == null)
+            return false;
+        XbfName name = lvalue.getName();
+        if (name == null)
+            return false;
+        return isPointerType(name.getTypeAsString());
     }
 
     /**
@@ -5478,9 +5608,40 @@ public class XfDecompileVisitor extends RVisitorBase
                 return false;
             }
 
+            XfTypeManager typeManager = _context.getTypeManager();
+            IXbfTypeTableChoice typeChoice = typeManager.findTypeFromSymbol(name);
+
+            if(typeChoice != null && _isInvokeNodeOf(XbfFmoduleDefinition.class, 3)) {
+                assert((typeChoice instanceof XbfFbasicType));
+                XbfFbasicType type = (XbfFbasicType) typeChoice;
+                assert(type.getIsPublic() && type.getIsPrivate() == false);
+                if(type.getIsPublic() || type.getIsPrivate() || type.getIsSave()) {
+                    if(type.getIsPublic()) {
+                        writer.writeToken("PUBLIC");
+                    }
+                    if(type.getIsPrivate()) {
+                        writer.writeToken("PRIVATE");
+                    }
+                    if(type.getIsSave()) {
+                        if(type.getIsPublic() || type.getIsPrivate()) {
+                            writer.writeToken(", ");
+                        }
+                        writer.writeToken("SAVE");
+                    }
+                    writer.writeToken(" :: ");
+                    writer.writeToken(name);
+                    writer.setupNewLine();
+                    _declaredIds.add(name);
+                }
+            }
+
+            XbfFnamelistDecl parent = (XbfFnamelistDecl)_getInvokeNode(1);
+            _writeLineDirective(parent.getLineno(), parent.getFile());
+            writer.writeToken("NAMELIST ");
             writer.writeToken("/");
             writer.writeToken(name);
             writer.writeToken("/ ");
+
         } else if (_isInvokeNodeOf(XbfFdataDeclSequence.class, 1)) {
             // Parent node is XbfFdataDeclSequence
         } else if (_isInvokeNodeOf(XbfFequivalenceDeclSequence.class, 1)) {
@@ -5491,6 +5652,10 @@ public class XfDecompileVisitor extends RVisitorBase
 
         if (_invokeEnterAndWriteDelim(visitable.getContent(), ", ") == false) {
             return false;
+        }
+
+        if (_isInvokeNodeOf(XbfFnamelistDecl.class, 1)) {
+            writer.setupNewLine();
         }
 
         return true;

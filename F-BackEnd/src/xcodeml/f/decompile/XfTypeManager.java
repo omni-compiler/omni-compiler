@@ -192,8 +192,7 @@ class XfTypeManager
             AliasMap aliasMap = _getCurrentAliasMap();
             assert (aliasMap != null);
             aliasMap.put(typeName, symbolName);
-        } else if (!XbfId.SCLASS_FCOMMON_NAME.equalsIgnoreCase(id.getSclass()) &&
-                !XbfId.SCLASS_FNAMELIST_NAME.equalsIgnoreCase(id.getSclass())) {
+        } else if (!XbfId.SCLASS_FCOMMON_NAME.equalsIgnoreCase(id.getSclass())) {
             SymbolMap symbolMap = _getCurrentSymbolMap();
             assert (symbolMap != null);
             symbolMap.put(symbolName, id);

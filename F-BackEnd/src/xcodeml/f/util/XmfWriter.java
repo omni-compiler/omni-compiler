@@ -47,6 +47,7 @@ public class XmfWriter
     private int _lineNumber = 0;
     private int _columnNumber = 0;
     private int _indentLevel = 0;
+    private boolean _needSeparator = false;
 
     public XmfWriter(PrintWriter writer)
     {
@@ -235,6 +236,7 @@ public class XmfWriter
         _out.println();
         _columnNumber = 0;
         _lineNumber++;
+        _needSeparator = false;
         flush();
     }
 
@@ -247,20 +249,36 @@ public class XmfWriter
         setupNewLine();
     }
 
+    private boolean _isWhitespace(String s)
+    {
+        for (char c : s.toCharArray()) {
+            if (!Character.isWhitespace(c))
+                return false;
+        }
+
+        return true;
+    }
+
     /**
      * Write in the designated string as token.
      * @param s String to write
      */
     public void writeToken(String s)
     {
-        if (s == null || s.length() == 0) {
+        if (s == null || s.length() == 0 || _isWhitespace(s)) {
             return;
         }
 
-        int columnCount = _getColumnCount(s);
+        StringBuilder sb = new StringBuilder();
+
+        if (_needSeparator)
+            sb.append(' ');
+        sb.append(s.trim());
+
+        int columnCount = _getColumnCount(sb.toString());
         _setupLine(columnCount);
 
-        _writeCharacterArray(s.toCharArray());
+        _writeCharacterArray(sb.toString().toCharArray());
     }
 
     /**
@@ -328,6 +346,8 @@ public class XmfWriter
             _columnNumber += substringColumnCount;
             offset += substringLength;
         }
+
+        _needSeparator = true;
     }
 
 

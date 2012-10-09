@@ -5,6 +5,10 @@
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
 
+if test -z "${OMNI_HOME}"; then
+    OMNI_HOME=@prefix@
+fi
+
 CONF="${OMNI_HOME}/etc/java.conf"
 if [ -e ${CONF} ]; then
   if [ -r ${CONF} ]; then
