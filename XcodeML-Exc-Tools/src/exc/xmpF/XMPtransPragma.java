@@ -55,7 +55,7 @@ public class XMPtransPragma
       prolog.add(Xcons.Set(init_flag_var.Ref(),
 			   Xcons.FlogicalConstant(true)));
 
-      Ident prolog_f = env.declIdent("xmpf_module_init__",
+      Ident prolog_f = env.declIdent("xmpf_module_init_"+env.currentDefName(),
 				     Xtype.FsubroutineType);
       XobjectDef prolog_def = 
 	XobjectDef.Func(prolog_f, null, null, prolog.toXobject());
@@ -66,18 +66,19 @@ public class XMPtransPragma
       //   (CompoundBlock <local_env> [BlockList statment ...]))
       BlockList f_body = fblock.getBody().getHead().getBody();
       
-      XobjectDef parent = env.getCurrentDef().getDef().getParent();
-      if(parent != null && parent.isFmoduleDef()){
-	Ident init_flag_var = env.findVarIdent("xmpf_init_flag",null);
-	Ident init_func = env.findVarIdent("xmpf_module_init__",null);
-	if(init_flag_var == null || init_func == null){
-	  System.out.println("var="+init_flag_var+",func="+init_func);
-	  XMP.fatal("cannot find init_var or init_func for moudle");
-	}
-	prolog.insert(Bcons.IF(Xcons.unaryOp(Xcode.LOG_NOT_EXPR,
-					     init_flag_var.Ref()),
-			       init_func.callSubroutine(null),null));
-      }
+      // not need to call init_module__
+//       XobjectDef parent = env.getCurrentDef().getDef().getParent();
+//       if(parent != null && parent.isFmoduleDef()){
+// 	Ident init_flag_var = env.findVarIdent("xmpf_init_flag",null);
+// 	Ident init_func = env.findVarIdent("xmpf_module_init__",null);
+// 	if(init_flag_var == null || init_func == null){
+// 	  System.out.println("var="+init_flag_var+",func="+init_func);
+// 	  XMP.fatal("cannot find init_var or init_func for moudle");
+// 	}
+// 	prolog.insert(Bcons.IF(Xcons.unaryOp(Xcode.LOG_NOT_EXPR,
+// 					     init_flag_var.Ref()),
+// 			       init_func.callSubroutine(null),null));
+//       }
       f_body.insert(Bcons.COMPOUND(prolog));
       f_body.add(Bcons.COMPOUND(epilog));
     }
@@ -230,9 +231,13 @@ public class XMPtransPragma
 
     ret_body.add(entry_block);
     ret_body.add(pb.getBody().getHead()); // loop
+
+    if(info.getReductionOp() != XMP.REDUCE_NONE){
+      ret_body.add(translateReduction(pb,info));
+    }
+
     return Bcons.COMPOUND(ret_body);
   }
-
 
   boolean isVarUsed(BlockList body,Xobject v){
     BasicBlockExprIterator iter = new BasicBlockExprIterator(body);
@@ -287,8 +292,8 @@ public class XMPtransPragma
     // object size
     int op = info.getReductionOp();
     Ident f = env.declExternIdent(XMP.reduction_f,
-					  Xtype.FsubroutineType);
-    for(Ident id: info.getInfoVarIdents()){
+				  Xtype.FsubroutineType);
+    for(Ident id: info.getReductionVars()){
       Xtype type = id.Type();
       Xobject size_expr = Xcons.IntConstant(1);
       if(type.isFarray()){

@@ -32,7 +32,8 @@ public class XMPinfo
   Vector<XMParray> reflectArrays; // and on_ref
 
   // for reduction
-  int reduction_op;  // and info_vars
+  int reduction_op; 
+  Vector<Ident> reduction_vars; 
 
   // for bcast
   XMPobjectsRef bcast_from; // and on_ref, info_vars
@@ -64,11 +65,9 @@ public class XMPinfo
   /* 
    * for loop
    */
-  public void setLoopInfo(Vector<XMPdimInfo> dims, XMPobjectsRef ref,
-			  Xobject reduction_ref){
+  public void setLoopInfo(Vector<XMPdimInfo> dims, XMPobjectsRef ref){
     loop_dims = dims;
     on_ref = ref;
-    // loop_reduction_ref = reduction_ref;
   }
 
   public int getLoopDim() { return loop_dims.size(); }
@@ -79,8 +78,6 @@ public class XMPinfo
     return loop_dims.elementAt(i).getLoopVar(); 
   }
   
-  // public Xobject getLoopReductionRef() {  return loop_reduction_ref; }
-  
   public void setReflectArrays(Vector<XMParray> arrays){
     reflectArrays = arrays;
   }
@@ -89,7 +86,7 @@ public class XMPinfo
 
   public void setReductionInfo(int op, Vector<Ident> vars){
     reduction_op = op;
-    info_vars = vars;
+    reduction_vars = vars;
   }
 
   public void setBcastInfo(XMPobjectsRef from, XMPobjectsRef on,
@@ -100,6 +97,7 @@ public class XMPinfo
   }
 
   public int getReductionOp() { return reduction_op; }
+  public Vector<Ident> getReductionVars() { return reduction_vars; }
 
   public XMPobjectsRef getBcastFrom() { return bcast_from; }
 

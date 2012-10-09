@@ -296,15 +296,16 @@ public class XMPanalyzePragma
       }
     }
     
-    Xobject reductionRef = loopDecl.getArg(2);
-    // should check reduction clause
+    Xobject reductionSpec = loopDecl.getArg(2);
+    if(reductionSpec != null) 
+      analyzeReductionSpec(info, reductionSpec, pb);
 
     on_ref.setLoopDimInfo(dims);  // set back pointer
     
     checkLocalizableLoop(dims,on_ref,pb);
 
     info.setBody(loopBody);  // inner most body
-    info.setLoopInfo(dims, on_ref, reductionRef);
+    info.setLoopInfo(dims, on_ref);
   }
 
   private static ForBlock getOutermostLoopBlock(BlockList body) {
@@ -424,6 +425,12 @@ public class XMPanalyzePragma
       return;
     }
 
+    analyzeReductionSpec(info, reductionSpec, pb);
+    info.setOnRef(XMPobjectsRef.parseDecl(reductionOnRef,env,pb));
+  }
+
+  private void analyzeReductionSpec(XMPinfo info, Xobject reductionSpec,
+				    PragmaBlock pb){
     Xobject op = reductionSpec.getArg(0);
     if(!op.isIntConstant()) XMP.fatal("reduction: op is not INT");
 
@@ -439,8 +446,6 @@ public class XMPanalyzePragma
       reduction_vars.add(id);
     }
     info.setReductionInfo(op.getInt(),reduction_vars);
-    
-    info.setOnRef(XMPobjectsRef.parseDecl(reductionOnRef,env,pb));
   }
 
   private void analyzeBcast(Xobject bcastDecl, 

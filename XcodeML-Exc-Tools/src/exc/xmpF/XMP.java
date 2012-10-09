@@ -19,6 +19,7 @@ public class XMP {
   final static String RWprotected = "XMPRWprotected";
 
   // defined in xmp_constant.h
+  public final static int REDUCE_NONE		= 0;
   public final static int REDUCE_SUM		= 300;
   public final static int REDUCE_PROD		= 301;
   public final static int REDUCE_BAND		= 302;

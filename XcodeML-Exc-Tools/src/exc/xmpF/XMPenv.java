@@ -67,6 +67,8 @@ public class XMPenv {
   
   public boolean currentDefIsModule() { return is_module; }
 
+  public String currentDefName() { return current_def.getDef().getName(); }
+
   // get symbol table bind to XobjectDef def
   public static XMPsymbolTable getXMPsymbolTable(XobjectDef def) {
     return (XMPsymbolTable)def.getProp(SYMBOL_TABLE);

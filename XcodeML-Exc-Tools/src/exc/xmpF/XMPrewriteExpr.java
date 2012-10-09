@@ -119,7 +119,8 @@ public class XMPrewriteExpr
 	    if(index_calc != null) args.setArg(index_calc);
 	  }
 	  
-	  x.setArg(1,array.convertLinearIndex(x.getArg(1)));
+	  if(array.isLinearized())
+	    x.setArg(1,array.convertLinearIndex(x.getArg(1)));
 
 	  break;
 	}

@@ -35,6 +35,7 @@ public class XMParray {
   private XMPtemplate template;
 
   StorageClass sclass;
+  boolean is_linearized = false;
 
   // null constructor
   public XMParray() { }
@@ -139,6 +140,12 @@ public class XMParray {
     id.setProp(XMP_ARRAY_PROP,array);
   }
 
+  public void setLinearized(boolean flag){
+    is_linearized = flag;
+  }
+
+  public boolean isLinearized() { return is_linearized; }
+
   /* 
    * Method to translate align directive 
    */
@@ -219,20 +226,25 @@ public class XMParray {
     }
 
     // declare array address pointer, array descriptor
-    descId = env.declObjectId(XMP.DESC_PREFIX_ + name, pb);
+    String desc_id_name = XMP.DESC_PREFIX_ + name;
+    descId = env.declObjectId(desc_id_name, pb);
     elementType = type.getRef();
     
     Xtype localType = null;
-    Xobject sizeExprs[] = new Xobject[1];
+    Xobject sizeExprs[];
     switch(sclass){
     case FPARAM:
+      sizeExprs = new Xobject[1];
       sizeExprs[0] = Xcons.FindexRange(Xcons.IntConstant(0),
 				       Xcons.IntConstant(1));
       localType = Xtype.Farray(elementType,sizeExprs);
+      setLinearized(true);
       break;
     case FLOCAL:
     case FSAVE:
-      sizeExprs[0] = Xcons.FindexRangeOfAssumedShape();
+      sizeExprs = new Xobject[arrayDim];
+      for(int i = 0; i < arrayDim; i++)
+	sizeExprs[i] = Xcons.FindexRangeOfAssumedShape();
       localType = Xtype.Farray(elementType,sizeExprs);
       localType.setTypeQualFlags(type.getTypeQualFlags());
       localType.setIsFallocatable(true);
@@ -334,12 +346,14 @@ public class XMParray {
     }
 
     // Finally, allocate size and offset var
+    int dim_i = 0;
     for(XMPdimInfo info: dims){
-    	// allocate variables for size and offset
-      info.setArrayInfoVar(env.declIdent(XMP.genSym("XMP_a_size_"),
+      // allocate variables for size and offset, use fixed name
+      info.setArrayInfoVar(env.declIdent(desc_id_name+"_size_"+dim_i,
 					 Xtype.FintType),
-			   env.declIdent(XMP.genSym("XMP_a_off_"),
+			   env.declIdent(desc_id_name+"_off_"+dim_i,
 					 Xtype.FintType));
+      dim_i++;
     }
   }
 
@@ -455,40 +469,62 @@ public class XMParray {
     f = env.declExternIdent(XMP.array_init_f,Xtype.FsubroutineType);
     body.add(f.callSubroutine(Xcons.List(descId.Ref())));
 
-    // allocate size variable
-    Xobject alloc_size = null;
-    for(int i = 0; i < dims.size(); i++){
-      XMPdimInfo info = dims.elementAt(i);
-      f = env.declExternIdent(XMP.array_get_local_size_f,
+    Xobject allocate_statement = null;
+    if(isLinearized()){
+      // allocate size variable
+      Xobject alloc_size = null;
+      for(int i = 0; i < dims.size(); i++){
+	XMPdimInfo info = dims.elementAt(i);
+	f = env.declExternIdent(XMP.array_get_local_size_f,
 			      Xtype.FsubroutineType);
-      body.add(f.callSubroutine(Xcons.List(descId.Ref(),
-					 Xcons.IntConstant(i),
-					 info.getArraySizeVar().Ref(),
-					 info.getArrayOffsetVar().Ref())));
-      if(alloc_size == null)
-	alloc_size = info.getArraySizeVar().Ref();
-      else
-	alloc_size = Xcons.binaryOp(Xcode.MUL_EXPR, 
-				    alloc_size,info.getArraySizeVar().Ref());
+	body.add(f.callSubroutine(Xcons.List(descId.Ref(),
+					     Xcons.IntConstant(i),
+					     info.getArraySizeVar().Ref(),
+					     info.getArrayOffsetVar().Ref())));
+	if(alloc_size == null)
+	  alloc_size = info.getArraySizeVar().Ref();
+	else
+	  alloc_size = Xcons.binaryOp(Xcode.MUL_EXPR, 
+				      alloc_size,info.getArraySizeVar().Ref());
+      }
+      
+      // allocatable
+      Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,alloc_size,
+				      Xcons.IntConstant(1));
+      allocate_statement = 
+	Xcons.Fallocate(localId.Ref(),
+			Xcons.FindexRange(Xcons.IntConstant(0),size_1));
+    } else {
+      XobjList alloc_args = Xcons.List();
+      for(int i = 0; i < dims.size(); i++){
+	XMPdimInfo info = dims.elementAt(i);
+	f = env.declExternIdent(XMP.array_get_local_size_f,
+			      Xtype.FsubroutineType);
+	body.add(f.callSubroutine(Xcons.List(descId.Ref(),
+					     Xcons.IntConstant(i),
+					     info.getArraySizeVar().Ref(),
+					     info.getArrayOffsetVar().Ref())));
+	
+	Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,
+					info.getArraySizeVar().Ref(),
+					Xcons.IntConstant(1));
+	alloc_args.add(Xcons.FindexRange(Xcons.IntConstant(0),size_1));
+      }
+      
+      // allocatable
+      allocate_statement = Xcons.FallocateByList(localId.Ref(),alloc_args);
     }
-
-    // allocatable
-    Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,alloc_size,
-				    Xcons.IntConstant(1));
+      
     switch(sclass){
     case FLOCAL:
-      body.add(Xcons.Fallocate(localId.Ref(),
-			       Xcons.FindexRange(Xcons.IntConstant(0),
-						 size_1)));
+      body.add(allocate_statement);
       break;
     case FSAVE:
       Xobject cond =  
 	env.FintrinsicIdent(Xtype.FlogicalFunctionType,"allocated").
 	Call(Xcons.List(localId.Ref()));
       body.add(Bcons.IF(Xcons.unaryOp(Xcode.LOG_NOT_EXPR,cond),
-			Xcons.Fallocate(localId.Ref(),
-					Xcons.FindexRange(Xcons.IntConstant(0),
-							  size_1)),null));
+			allocate_statement,null));
       break;
     }
     

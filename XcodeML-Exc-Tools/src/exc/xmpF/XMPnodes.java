@@ -133,10 +133,11 @@ public class XMPnodes extends XMPobject {
 
     f = env.declExternIdent(XMP.nodes_dim_size_f,Xtype.FsubroutineType);
     for(int i = 0; i < _dim; i++){
-      args = Xcons.List(_descId.Ref(),Xcons.IntConstant(i),
- 			_sizeVector.elementAt(i).getSize());
-       body.add(f.callSubroutine(args));
-     }
+      Xobject size = _sizeVector.elementAt(i).getSize();
+      if(size == null) size = Xcons.IntConstant(-1);
+      args = Xcons.List(_descId.Ref(),Xcons.IntConstant(i), size);
+      body.add(f.callSubroutine(args));
+    }
 
     switch(inheritType){
     case INHERIT_GLOBAL:
