@@ -1,1 +1,1 @@
-CMD_OPT="${CMD_OPT} -fxmpf -use-relaxer"
+CMD_OPT="${CMD_OPT} -fxmpf "
