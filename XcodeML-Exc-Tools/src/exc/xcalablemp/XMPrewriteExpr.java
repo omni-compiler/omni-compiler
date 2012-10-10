@@ -433,7 +433,7 @@ public class XMPrewriteExpr {
       String arrayName = myExpr.getArg(0).getSym();
       XMPalignedArray alignedArray =  _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
       if (alignedArray == null)
-	throw new XMPexception("Must be global array name for xmp_desc_of()");   
+	throw new XMPexception(arrayName + " is not aligned global array or tempalte descriptor.");
 
       Ident XmpDescOfFuncId =  _globalDecl.declExternFunc("_XMP_desc_of", myExpr.Type());
       e = XmpDescOfFuncId.Call(Xcons.List(alignedArray.getDescId())); 

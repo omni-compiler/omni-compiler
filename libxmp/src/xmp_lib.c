@@ -8,6 +8,7 @@
 #include "stdlib.h"
 #include "xmp_internal.h"
 #include "xmp.h"
+#include <stddef.h>
 
 // FIXME utility functions
 void xmp_MPI_comm(void **comm) {
@@ -363,6 +364,10 @@ void xmp_sched_template_index(int* local_start_index, int* local_end_index,
   int tmp;
   _XMP_template_chunk_t *chunk = &(((_XMP_template_t*)template)->chunk[template_index]);
 
+  if(chunk->dist_manner == NULL){
+    _XMP_fatal("Invalid template descriptor in xmp_sched_template_index()");
+  }
+
   switch(chunk->dist_manner){
   case _XMP_N_DIST_BLOCK:
     _XMP_sched_loop_template_BLOCK(global_start_index, global_end_index, step, 
@@ -377,7 +382,7 @@ void xmp_sched_template_index(int* local_start_index, int* local_end_index,
 					  local_start_index, local_end_index, &tmp, template, template_index);
     break;
   default:
-    _XMP_fatal("donot support distribution.");
+    _XMP_fatal("does not support distribution in xmp_sched_template_index()");
     break;
   }
 }
