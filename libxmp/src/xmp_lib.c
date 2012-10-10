@@ -352,3 +352,32 @@ int xmp_nodes_size(xmp_desc_t d, int dim){
   return n->info[dim-1].size;
 
 }
+
+extern void _XMP_sched_loop_template_BLOCK(int, int, int, int *, int *, int *, void *, int);
+extern void _XMP_sched_loop_template_CYCLIC(int, int, int, int *, int *, int *, void *, int);
+extern void _XMP_sched_loop_template_BLOCK_CYCLIC(int, int, int, int *, int *, int *, void *, int);
+void xmp_sched_template_index(int* local_start_index, int* local_end_index, 
+			     const int global_start_index, const int global_end_index, const int step, 
+			     const xmp_desc_t template, const int template_index)
+{
+  int tmp;
+  _XMP_template_chunk_t *chunk = &(((_XMP_template_t*)template)->chunk[template_index]);
+
+  switch(chunk->dist_manner){
+  case _XMP_N_DIST_BLOCK:
+    _XMP_sched_loop_template_BLOCK(global_start_index, global_end_index, step, 
+				   local_start_index, local_end_index, &tmp, template, template_index);
+    break;
+  case _XMP_N_DIST_CYCLIC:
+    _XMP_sched_loop_template_CYCLIC(global_start_index, global_end_index, step, 
+				    local_start_index, local_end_index, &tmp, template, template_index);
+    break;
+  case _XMP_N_DIST_BLOCK_CYCLIC: 
+    _XMP_sched_loop_template_BLOCK_CYCLIC(global_start_index, global_end_index, step, 
+					  local_start_index, local_end_index, &tmp, template, template_index);
+    break;
+  default:
+    _XMP_fatal("donot support distribution.");
+    break;
+  }
+}
