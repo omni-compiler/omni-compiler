@@ -415,23 +415,35 @@ public class XMPrewriteExpr {
   }
 
   private Xobject rewriteXmpDescOf(Xobject myExpr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
-    Xobject arrayAddr = myExpr.getArg(0);
-    if(arrayAddr.Opcode() != Xcode.ARRAY_ADDR)
-      throw new XMPexception("Bad array name for xmp_desc_of()");
-    String arrayName = arrayAddr.getSym();
-    XMPalignedArray alignedArray = 
-      _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
-    if (alignedArray == null) 
-      throw new XMPexception("Must be global array name for xmp_desc_of()");
-    Ident XmpDescOfFuncId = 
-      _globalDecl.declExternFunc("_XMP_desc_of",myExpr.Type());
-    Xobject e = XmpDescOfFuncId.Call(Xcons.List(alignedArray.getDescId()));
+    String entityName = myExpr.getArg(0).getName();
+    XMPobject entity = _globalDecl.getXMPobject(entityName);
+    Xobject e = null;
+
+    if(entity != null){
+      if(entity.getKind() == XMPobject.TEMPLATE){
+	entityName = XMP.DESC_PREFIX_ + entityName;
+	Ident XmpDescOfFuncId = _globalDecl.declExternFunc("_XMP_desc_of", myExpr.Type());
+	e = XmpDescOfFuncId.Call(Xcons.List(entity.getDescId()));
+      } 
+      else{
+	throw new XMPexception("Bad entity name for xmp_desc_of()");
+      }
+    }
+    else{ // When myExpr is a distributed array name.
+      String arrayName = myExpr.getArg(0).getSym();
+      XMPalignedArray alignedArray =  _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+      if (alignedArray == null)
+	throw new XMPexception("Must be global array name for xmp_desc_of()");   
+
+      Ident XmpDescOfFuncId =  _globalDecl.declExternFunc("_XMP_desc_of", myExpr.Type());
+      e = XmpDescOfFuncId.Call(Xcons.List(alignedArray.getDescId())); 
+    }
+
     return e;
   }
 
   private Xobject rewriteArrayAddr(Xobject arrayAddr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
-    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayAddr.getSym(),
-                                                                  localXMPsymbolTable);
+    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayAddr.getSym(), localXMPsymbolTable);
     XMPcoarray coarray = _globalDecl.getXMPcoarray(arrayAddr.getSym(), localXMPsymbolTable);
 
     if (alignedArray == null && coarray == null) {
@@ -674,8 +686,7 @@ public class XMPrewriteExpr {
           }
         }
         else {
-          XobjList args = Xcons.List(indexRef,
-                                     alignedArray.getGtolTemp0IdAt(index).Ref());
+          XobjList args = Xcons.List(indexRef, alignedArray.getGtolTemp0IdAt(index).Ref());
           return XMP.getMacroId("_XMP_M_CALC_INDEX_CYCLIC").Call(args);
         }
       case XMPalignedArray.BLOCK_CYCLIC:
