@@ -1783,14 +1783,14 @@ xmp_directive:
 	                    GEN_NODE(INT_CONSTANT, XMP_OPT_NOWAIT)); }
 	  | XMPKW_END { need_keyword=TRUE; } XMPKW_TASKS
 	    { $$ = XMP_LIST(XMP_END_TASKS,NULL); }
-	  | XMPKW_LOOP xmp_loop_clause
-	    { $$ = XMP_LIST(XMP_LOOP,$2); }
+	  | XMPKW_LOOP { need_keyword = TRUE; } xmp_loop_clause
+	    { $$ = XMP_LIST(XMP_LOOP,$3); }
 	  | XMPKW_REFLECT xmp_reflect_clause
 	    { $$ = XMP_LIST(XMP_REFLECT,$2); }
 	  | XMPKW_GMOVE xmp_gmove_clause
 	    { $$ = XMP_LIST(XMP_GMOVE,$2); }
-	  | XMPKW_BARRIER xmp_barrier_clause
-	    { $$ = XMP_LIST(XMP_BARRIER,$2); }
+	  | XMPKW_BARRIER { need_keyword = TRUE; } xmp_barrier_clause
+	    { $$ = XMP_LIST(XMP_BARRIER,$3); }
 	  | XMPKW_REDUCTION xmp_reduction_clause
 	    { $$ = XMP_LIST(XMP_REDUCTION,$2); }
 	  | XMPKW_BCAST xmp_bcast_clause
