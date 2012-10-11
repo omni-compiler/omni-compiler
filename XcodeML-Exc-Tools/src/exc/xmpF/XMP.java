@@ -7,6 +7,7 @@
 package exc.xmpF;
 
 import exc.object.*;
+import exc.block.*;
 import xcodeml.util.XmLog;
 
 /**
@@ -217,20 +218,25 @@ public class XMP {
   public static void error(String msg) {
     errorFlag = true;
     errorFlags = true;
-    System.out.println("[XcalableMP] " + msg);
+    System.err.println("[XcalableMP] " + msg);
   }
 
-  public static void error(LineNo l, String msg) {
+  public static void errorAt(Block b, String msg) {
+    LineNo l = null;
+
+    if(b == null || (l = b.getLineNo()) == null){
+      error(msg);
+    }
+      
     errorFlag = true;
     errorFlags = true;
-    System.out.println("[XcalableMP:"+l+"] " + msg);
-    XmLog.error(l, "[XcalableMP] " + msg);
+    System.err.println("[XMP:"+l+"] " + msg);
+    // XmLog.error(l, "[XcalableMP] " + msg);
   }
 
   public static void resetError(){
     errorFlag = false;
   }
-    
 
   public static void warning(String msg) {
     XmLog.warning("[XcalableMP] " + msg);

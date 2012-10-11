@@ -86,7 +86,7 @@ public class XMPobjectsRef {
       refName = decl.getArg(0).getString();
       refObject = env.findXMPobject(refName,pb);
       if (refObject == null) {
-	XMP.error("cannot find objects '" + refName + "'");
+	XMP.errorAt(pb,"cannot find objects '" + refName + "'");
 	return;
       }
       Xobject subscriptList = decl.getArg(1);

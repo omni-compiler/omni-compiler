@@ -201,7 +201,7 @@ public class XMPanalyzePragma
     if (loopIterList == null) {
       ForBlock loopBlock = getOutermostLoopBlock(loopBody);
       if(loopBlock == null){
-	XMP.error("loop is not found after loop directive");
+	XMP.errorAt(pb,"loop is not found after loop directive");
 	return;
       }
       dims.add(XMPdimInfo.loopInfo(loopBlock));
@@ -228,7 +228,7 @@ public class XMPanalyzePragma
 	if(x.Opcode() == Xcode.LIST){
 	  if(x.getArgOrNull(1) != null ||
 	     x.getArgOrNull(2) != null){
-	    XMP.error("bad syntax in loop directive");
+	    XMP.errorAt(pb,"bad syntax in loop directive");
 	  }
 	  x = x.getArg(0);
 	}
@@ -240,7 +240,7 @@ public class XMPanalyzePragma
 	  }
 	}
 	if(!is_found)
-	  XMP.error("loop index is not found in loop varaibles");
+	  XMP.errorAt(pb,"loop index is not found in loop varaibles");
       }
     }
     
@@ -254,7 +254,7 @@ public class XMPanalyzePragma
       XMPdimInfo d_info = on_ref_dims.elementAt(k);
       if(d_info.isStar()) continue;
       if(d_info.isTriplet()){
-	XMP.error("on-ref in loop must not be triplet");
+	XMP.errorAt(pb,"on-ref in loop must not be triplet");
       } else {
 	Xobject t = d_info.getIndex();
 	if(t == null) continue;
@@ -267,7 +267,7 @@ public class XMPanalyzePragma
 	  case PLUS_EXPR:
 	  case MINUS_EXPR:
 	    if(!t.left().isVariable())
-	      XMP.error("left hand-side in align-subscript must be a variable");
+	      XMP.errorAt(pb,"left hand-side in align-subscript must be a variable");
 	    else {
 	      v = t.left();
 	      off = t.right();
@@ -277,7 +277,7 @@ public class XMPanalyzePragma
 	    // check right-hand side?
 	    break;
 	  default:
-	    XMP.error("bad expression in subsript of on-ref");
+	    XMP.errorAt(pb,"bad expression in subsript of on-ref");
 	  }
 	}
 	if(v == null) continue; // some error occurs
@@ -291,7 +291,8 @@ public class XMPanalyzePragma
 	  }
 	}
 	if(idx < 0)
-	  XMP.error("loop variable is not found in on_ref: '"+v.getName()+"'");
+	  XMP.errorAt(pb,"loop variable is not found in on_ref: '"
+		      +v.getName()+"'");
 	d_info.setLoopOnRefInfo(idx,off);
       }
     }
@@ -349,8 +350,12 @@ public class XMPanalyzePragma
 	if(!(on_ref.getRefObject() instanceof XMPtemplate))
 	  continue;
 	XMPtemplate tmpl = (XMPtemplate)on_ref.getRefObject();
-	if(tmpl.getDistMannerAt(d_info.getLoopOnIndex()) == XMPtemplate.BLOCK)
-	  localizable = true;
+	if(tmpl.isDistributed()){
+	  if(tmpl.getDistMannerAt(d_info.getLoopOnIndex()) 
+	     == XMPtemplate.BLOCK)
+	    localizable = true;
+	} else 
+	  XMP.errorAt(b,"template '"+tmpl.getName()+"' is not distributed");
       }
 
       if(XMP.debugFlag)
@@ -381,18 +386,18 @@ public class XMPanalyzePragma
     // check array
     for(Xobject x: reflectNameList){
       if(!x.isVariable()){
-	XMP.error("Bad array name in reflect name list");
+	XMP.errorAt(pb,"Bad array name in reflect name list");
 	continue;
       }
       String name = x.getName();
       Ident id = env.findVarIdent(name,pb);
       if(id == null){
-	XMP.error("variable '" + name + "'for reflect is not declared");
+	XMP.errorAt(pb,"variable '" + name + "'for reflect is not declared");
 	continue;
       }
       XMParray array =  XMParray.getArray(id);
       if(array == null){
-	XMP.error("array '" + name + "'for reflect is not declared");
+	XMP.errorAt(pb,"array '" + name + "'for reflect is not declared");
 	continue;
       }
       reflectArrays.add(array);
@@ -437,11 +442,11 @@ public class XMPanalyzePragma
     Vector<Ident> reduction_vars = new Vector<Ident>();
     for(Xobject v: (XobjList)reductionSpec.getArg(1)){
       if(!v.isVariable()){
-	XMP.error("not variable in reduction spec list");
+	XMP.errorAt(pb,"not variable in reduction spec list");
       }
       Ident id = env.findVarIdent(v.getName(),pb);
       if(id == null){
-	XMP.error("variable '"+v.getName()+"' in reduction is not found");
+	XMP.errorAt(pb,"variable '"+v.getName()+"' in reduction is not found");
       }
       reduction_vars.add(id);
     }
@@ -463,11 +468,11 @@ public class XMPanalyzePragma
     Vector<Ident> bcast_vars = new Vector<Ident>();
     for(Xobject v: bcastNameList){
       if(!v.isVariable()){
-	XMP.error("not variable in bcast variable list");
+	XMP.errorAt(pb,"not variable in bcast variable list");
       }
       Ident id = env.findVarIdent(v.getName(),pb);
       if(id == null){
-	XMP.error("variable '"+v.getName()+"' in reduction is not found");
+	XMP.errorAt(pb,"variable '"+v.getName()+"' in reduction is not found");
       }
       bcast_vars.add(id);
     }
@@ -515,7 +520,7 @@ public class XMPanalyzePragma
     boolean right_is_global = checkGmoveOperand(right,pb);
 
     if(!left_is_global && !right_is_global)
-      XMP.error("local assignment for gmove");
+      XMP.errorAt(pb,"local assignment for gmove");
     
     if(XMP.hasError()) return;
     
@@ -542,7 +547,7 @@ public class XMPanalyzePragma
     case VAR: /* it ok */
       break;
     default:
-      XMP.error("gmove must be followed by simple assignment");
+      XMP.errorAt(pb,"gmove must be followed by simple assignment");
     }
     return false;
   }

@@ -55,8 +55,9 @@ public class XMPtransPragma
       prolog.add(Xcons.Set(init_flag_var.Ref(),
 			   Xcons.FlogicalConstant(true)));
 
-      Ident prolog_f = env.declIdent("xmpf_module_init_"+env.currentDefName(),
-				     Xtype.FsubroutineType);
+      Ident prolog_f = 
+	env.declIdent(env.currentDefName()+"_xmpf_module_init_",
+		      Xtype.FsubroutineType);
       XobjectDef prolog_def = 
 	XobjectDef.Func(prolog_f, null, null, prolog.toXobject());
       env.getCurrentDef().getDef().getChildren().addFirst(prolog_def);
@@ -506,7 +507,7 @@ public class XMPtransPragma
       bb.add(f.callSubroutine(args));
       break;
     default:
-      XMP.error("gmove must be followed by simple assignment");
+      XMP.errorAt(pb,"gmove must be followed by simple assignment");
     }
     
     return descId;

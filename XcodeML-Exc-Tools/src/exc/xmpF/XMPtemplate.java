@@ -74,18 +74,10 @@ package exc.xmpF;
    }
 
    public int getDistMannerAt(int index){
-     if (!isDistributed) {
-       XMP.error("template " + getName() + " is not distributed");
-       return 0;
-     }
      return scripts.elementAt(index).getDistManner();
    }
 
    public String getDistMannerStringAt(int index){
-     if (!isDistributed) {
-       XMP.error("template " + getName() + " is not distributed");
-       return null;
-     }
      return(distMannerName(getDistMannerAt(index)));
    }
 
@@ -144,7 +136,7 @@ package exc.xmpF;
      // check name collision
      _name = name.getString();
      if(env.findXMPobject(_name,pb) != null){
-       XMP.error("XMP object '"+_name+"' is already declared");
+       XMP.errorAt(pb,"XMP object '"+_name+"' is already declared");
        return;
      }
 
@@ -164,7 +156,7 @@ package exc.xmpF;
      if (templateIsFixed)  setIsFixed();
 
      if (_dim > XMP.MAX_DIM) {
-       XMP.error("template dimension should be less than " + (XMP.MAX_DIM + 1));
+       XMP.errorAt(pb,"template dimension should be less than " + (XMP.MAX_DIM + 1));
        return;
      }
    }
@@ -183,23 +175,23 @@ package exc.xmpF;
      templateObject = env.findXMPtemplate(templateName,pb);
 
      if (templateObject == null) {
-       XMP.error("template '" + templateName  + "' is not declared");
+       XMP.errorAt(pb,"template '" + templateName  + "' is not declared");
        return;
      }
 
      if (!templateObject.isFixed()) {
-       XMP.error("template '" + templateName + "' is not fixed");
+       XMP.errorAt(pb,"template '" + templateName + "' is not fixed");
      }
 
      if (templateObject.isDistributed()) {
-       XMP.error("template '" + templateName +  "' is already distributed");
+       XMP.errorAt(pb,"template '" + templateName +  "' is already distributed");
      }
 
      // get nodes object
      String nodesName = nodes.getString();
      XMPnodes nodesObject = env.findXMPnodes(nodesName, pb);
      if (nodesObject == null) {
-       XMP.error("nodes '" + nodesName + "' is not declared");
+       XMP.errorAt(pb,"nodes '" + nodesName + "' is not declared");
      }
 
      // set onto Nodes.
@@ -214,7 +206,7 @@ package exc.xmpF;
      // distDecl.getArg(1) = the_list_of_dimension 
      for (XobjArgs i = distArgs.getArgs();  i != null; i = i.nextArgs()) {
        if (templateDimIdx >= templateDim) {
-	 XMP.error("wrong template dimension indicated, too many");
+	 XMP.errorAt(pb,"wrong template dimension indicated, too many");
 	 break;
        }
        // ({block|cyclic|genblock) arg) 
@@ -239,7 +231,7 @@ package exc.xmpF;
 
        if(distManner != XMPtemplate.DUPLICATION){
 	 if (nodesDimIdx >= nodesDim) {
-	   XMP.error("the number of <dist-format> (except '*') should be the same with the nodes dimension");
+	   XMP.errorAt(pb,"the number of <dist-format> (except '*') should be the same with the nodes dimension");
 	   return;
 	 }
 	 nodesDimIdx++;
@@ -252,11 +244,11 @@ package exc.xmpF;
 
      // check nodes, template dimension
      if (nodesDimIdx != nodesDim) {
-       XMP.error("the number of <dist-format> (except '*') should be the same with the nodes dimension");
+       XMP.errorAt(pb,"the number of <dist-format> (except '*') should be the same with the nodes dimension");
      }
 
      if (templateDimIdx != templateDim) {
-       XMP.error("wrong template dimension indicated, too few");
+       XMP.errorAt(pb,"wrong template dimension indicated, too few");
      }
 
      // set distributed

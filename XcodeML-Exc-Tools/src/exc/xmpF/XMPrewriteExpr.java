@@ -137,8 +137,8 @@ public class XMPrewriteExpr
 	  if (fname.equalsIgnoreCase("xmp_desc_of")){
 	      XMParray array = (XMParray) x.getArg(1).getArg(0).getProp(XMP.arrayProp);
 	      if (array == null){
-		 XMP.error("xmp_desc_of applied to non-global data");
-		 XMP.exitByError();
+		XMP.errorAt(block,"xmp_desc_of applied to non-global data");
+		XMP.exitByError();
 	      }
 	      Xobject desc = array.getDescId();
 	      iter.setXobject(desc);
@@ -261,6 +261,8 @@ public class XMPrewriteExpr
 	  }
 	  if(offset != null)
 	    v = Xcons.binaryOp(Xcode.PLUS_EXPR,v,offset);
+
+	  v = Xcons.binaryOp(Xcode.MINUS_EXPR,v,a.convertOffset(dim_i));
 	  i.setArg(0,v);
 	  return i;
 	}
@@ -276,8 +278,8 @@ public class XMPrewriteExpr
 
       /* what to do for array_range expression */
     default:
-	XMP.error("bad expression in XMP array index");
-	return null;
+      XMP.errorAt(block,"bad expression in XMP array index");
+      return null;
     }
   }
 }

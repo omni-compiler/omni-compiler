@@ -69,7 +69,7 @@ public class XMPnodes extends XMPobject {
     // check name collision, name = arg(1)
     _name = decl.getArg(0).getString();
     if(env.findXMPobject(_name,pb) != null){
-      XMP.error("XMP object '"+_name+"' is already declared");
+      XMP.errorAt(pb,"XMP object '"+_name+"' is already declared");
       return;
     }
 
@@ -83,7 +83,7 @@ public class XMPnodes extends XMPobject {
       _dim++;
     }
     if (_dim > XMP.MAX_DIM){
-      XMP.error("nodes dimension should be less than " + (XMP.MAX_DIM + 1));
+      XMP.errorAt(pb,"nodes dimension should be less than " + (XMP.MAX_DIM + 1));
       return;
     }
 
@@ -93,7 +93,7 @@ public class XMPnodes extends XMPobject {
 	if(k == (_dim-1))
 	  isDynamic = true;
 	else {
-	  XMP.error("* must be only in the last dimension in nodes");
+	  XMP.errorAt(pb,"* must be only in the last dimension in nodes");
 	  return;
 	}
       }

@@ -167,18 +167,18 @@ public class XMParray {
 
     arrayId = env.findVarIdent(name,pb);  // find ident, in this block(func)
     if (arrayId == null) {
-      XMP.error("array '" + name + "' is not declared");
+      XMP.errorAt(pb,"array '" + name + "' is not declared");
       return;
     }
 
     type  = arrayId.Type();
     if (type.getKind() != Xtype.F_ARRAY) {
-      XMP.error(name + " is not an array");
+      XMP.errorAt(pb,name + " is not an array");
       return;
     }
 
     if(getArray(arrayId) != null){
-      XMP.error("array '" + name + "' is already aligned");
+      XMP.errorAt(pb,"array '" + name + "' is already aligned");
       return;
     }
 
@@ -196,7 +196,7 @@ public class XMParray {
     case FSAVE:
       break;
     default:
-      XMP.error("bad storage class of XMP array");
+      XMP.errorAt(pb,"bad storage class of XMP array");
     }
 
     // get template information
@@ -204,15 +204,15 @@ public class XMParray {
     template = env.findXMPtemplate(templateName, pb);
 
     if (template == null) {
-      XMP.error("template '" + templateName + "' is not declared");
+      XMP.errorAt(pb,"template '" + templateName + "' is not declared");
     }
 
     if (!template.isFixed()) {
-      XMP.error("template '" + templateName + "' is not fixed");
+      XMP.errorAt(pb,"template '" + templateName + "' is not fixed");
     }
 
     if (!(template.isDistributed())) {
-      XMP.error("template '" + templateName + "' is not distributed");
+      XMP.errorAt(pb,"template '" + templateName + "' is not distributed");
     }
 
     if(XMP.hasError()) return;
@@ -221,7 +221,7 @@ public class XMParray {
 
     int arrayDim = type.getNumDimensions();
     if (arrayDim > XMP.MAX_DIM) {
-      XMP.error("array dimension should be less than " + (XMP.MAX_DIM + 1));
+      XMP.errorAt(pb,"array dimension should be less than " + (XMP.MAX_DIM + 1));
       return;
     }
 
@@ -266,43 +266,43 @@ public class XMParray {
     for(XMPdimInfo i: src_dims){
       if(i.isStar()) continue;
       if(i.isTriplet())
-	XMP.error("bad syntax in align source script");
+	XMP.errorAt(pb,"bad syntax in align source script");
       t = i.getIndex();
       if(t.isVariable()){
 	for(XMPdimInfo j: src_dims){  // cross check!
 	  if(j.isStar()) continue;
 	  if(t != j.getIndex() && t.equals(j.getIndex())){
-	    XMP.error("same variable is found for '"+t.getName()+"'");
+	    XMP.errorAt(pb,"same variable is found for '"+t.getName()+"'");
 	    break;
 	  }
 	}
 	if(XMP.hasError()) break;
       } else 
-	XMP.error("align source script must be variable");
+	XMP.errorAt(pb,"align source script must be variable");
     }
 
     // check tmpl_dims
     for(XMPdimInfo i: tmpl_dims){
       if(i.isStar()) continue;
       if(i.isTriplet())
-	XMP.error("bad syntax in align script");
+	XMP.errorAt(pb,"bad syntax in align script");
       t = i.getIndex();
       if(!t.isVariable()){
 	switch(t.Opcode()){
 	case PLUS_EXPR:
 	case MINUS_EXPR:
 	  if(!t.left().isVariable())
-	    XMP.error("left hand-side in align-subscript must be a variable");
+	    XMP.errorAt(pb,"left hand-side in align-subscript must be a variable");
 	  // check right-hand side?
 	  break;
 	default:
-	  XMP.error("bad expression in align-subsript");
+	  XMP.errorAt(pb,"bad expression in align-subsript");
 	}
       }
     }
 
     if(src_dims.size() != arrayDim){
-      XMP.error("source dimension is different from array dimension");
+      XMP.errorAt(pb,"source dimension is different from array dimension");
     }
       
     if(XMP.hasError()) return;
@@ -340,7 +340,7 @@ public class XMParray {
       }
 
       if(idx < 0)
-	XMP.error("the associated align-subscript not found:"+t.getName());
+	XMP.errorAt(pb,"the associated align-subscript not found:"+t.getName());
       else
 	dims.elementAt(i).setAlignSubscript(idx,idxOffset);
     }
@@ -360,23 +360,23 @@ public class XMParray {
   public static void analyzeShadow(Xobject a, Xobject shadow_w_list,
 				   XMPenv env, PragmaBlock pb){
     if(!a.isVariable()){
-      XMP.error("shadow cannot applied to non-array");
+      XMP.errorAt(pb,"shadow cannot applied to non-array");
       return;
     }
     String name = a.getString();
     Ident id = env.findVarIdent(name, pb);
     if(id == null){
-      XMP.error("variable '" + name + "'for shadow  is not declared");
+      XMP.errorAt(pb,"variable '" + name + "'for shadow  is not declared");
       return;
     }
     XMParray array = XMParray.getArray(id);
     if (array == null) {
-      XMP.error("array '" + name + "'for shadow  is not declared");
+      XMP.errorAt(pb,"array '" + name + "'for shadow  is not declared");
       return;
     }
     Vector<XMPdimInfo> dims = XMPdimInfo.parseSubscripts(shadow_w_list);
     if(dims.size() != array.getDim()){
-      XMP.error("shadow dimension size is different from array dimension");
+      XMP.errorAt(pb,"shadow dimension size is different from array dimension");
       return;
     }
     for(int i = 0; i < dims.size(); i++){
@@ -387,23 +387,23 @@ public class XMParray {
 	array.setFullShadow(i);
       else {
 	if(d_info.hasStride()){
-	  XMP.error("bad syntax in shadow");
+	  XMP.errorAt(pb,"bad syntax in shadow");
 	  continue;
 	}
 	if(d_info.hasLower()){
 	  if(d_info.getLower().isIntConstant())
 	    left = d_info.getLower().getInt();
 	  else
-	    XMP.error("shadow width(right) is not integer constant");
+	    XMP.errorAt(pb,"shadow width(right) is not integer constant");
 	  if(d_info.getUpper().isIntConstant())
 	    right = d_info.getUpper().getInt();
 	  else
-	    XMP.error("shadow width(left) is not integer constant");
+	    XMP.errorAt(pb,"shadow width(left) is not integer constant");
 	} else {
 	  if(d_info.getIndex().isIntConstant())
 	    left = right = d_info.getIndex().getInt();
 	  else 
-	    XMP.error("shadow width is not integer constant");
+	    XMP.errorAt(pb,"shadow width is not integer constant");
 	}
 	array.setShadow(left,right,i);
       }
@@ -549,6 +549,16 @@ public class XMParray {
     body.add(f.callSubroutine(args));
   }
 
+  public Xobject convertOffset(int dim_i){
+      XMPdimInfo info = dims.elementAt(dim_i);
+      return info.getArrayOffsetVar().Ref();
+  }
+
+  public Xobject conertSize(int dim_i){
+      XMPdimInfo info = dims.elementAt(dim_i);
+      return info.getArraySizeVar().Ref();
+  }
+
   public Xobject convertLinearIndex(Xobject index_list){
     Xobject idx = null;
     for(int i = dims.size()-1; i >= 0; i--){
@@ -557,10 +567,8 @@ public class XMParray {
       if(x.Opcode() != Xcode.F_ARRAY_INDEX)
 	 XMP.fatal("convertLinearIndex: not F_ARRAY_INDEX");
       x = x.getArg(0);
-//       if(hasShadow(i)){
-// 	x = Xcons.binaryOp(Xcode.MINUS_EXPR,x,info.getArrayOffsetVar().Ref());
-//       }
-      x = Xcons.binaryOp(Xcode.MINUS_EXPR,x,info.getArrayOffsetVar().Ref());
+
+//      x = Xcons.binaryOp(Xcode.MINUS_EXPR,x,info.getArrayOffsetVar().Ref());
 
       if(idx == null) idx = x;
       else idx = Xcons.binaryOp(Xcode.PLUS_EXPR,idx,x);
