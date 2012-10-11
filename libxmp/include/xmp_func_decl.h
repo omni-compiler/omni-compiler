@@ -51,7 +51,7 @@ extern void _XMP_barrier_EXEC(void);
 extern void _XMP_bcast_NODES_ENTIRE_OMITTED(void *bcast_nodes, void *addr, int count, size_t datatype_size);
 extern void _XMP_bcast_NODES_ENTIRE_GLOBAL(void *bcast_nodes, void *addr, int count, size_t datatype_size,
                                            int from_lower, int from_upper, int from_stride);
-extern void _XMP_bcast_NODES_ENTIRE_NODES(void *bcast_nodes, void *addr, int count, size_t datatype_size, void *from_nodes, ...);
+extern void _XMP_bcast_NODES_ENTIRE_NODES(void *bcast_nodes, void *addr, int count, size_t datatype_size, bool is_on, void *from_nodes, ...);
 
 // xmp_coarray.c
 //extern void _XMP_init_coarray_STATIC(void **coarray, void *addr, int type, size_t type_size, int dim, ...);

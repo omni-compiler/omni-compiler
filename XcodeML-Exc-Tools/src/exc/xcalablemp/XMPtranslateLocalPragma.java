@@ -1625,7 +1625,7 @@ public class XMPtranslateLocalPragma {
 
     // create function arguments
     XobjList varList = (XobjList)bcastDecl.getArg(0);
-    Vector<XobjList> bcastArgsList = createBcastArgsList(varList, pb);
+    Vector<XobjList> bcastArgsList = createBcastArgsList(varList, pb, bcastDecl);
 
     // create function call
     Block bcastFuncCallBlock = null;
@@ -1635,7 +1635,7 @@ public class XMPtranslateLocalPragma {
 
     XobjList onRef = (XobjList)bcastDecl.getArg(2);
     if (onRef == null) {
-	bcastFuncCallBlock = createBcastFuncCallBlock(true, "EXEC", null, bcastArgsList, execFromRefArgs);
+      bcastFuncCallBlock = createBcastFuncCallBlock(true, "EXEC", null, bcastArgsList, execFromRefArgs);
     } else {
       XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
 
@@ -1649,7 +1649,7 @@ public class XMPtranslateLocalPragma {
       }
       else {
 	bcastFuncCallBlock = createBcastFuncCallBlock(false, execFuncSurfix,
-                                            execFuncArgs.operand(), bcastArgsList, execFromRefArgs);
+						      execFuncArgs.operand(), bcastArgsList, execFromRefArgs);
       }
     }
 
@@ -1663,10 +1663,8 @@ public class XMPtranslateLocalPragma {
             bcastFuncCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
             bcastFuncCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
         } else if (doTlog == true) {
-            bcastFuncCallBlock.insert(
-				      createTlogMacroInvoke("_XMP_M_TLOG_BCAST_IN", null));
-            bcastFuncCallBlock.add(
-				   createTlogMacroInvoke("_XMP_M_TLOG_BCAST_OUT", null));
+	  bcastFuncCallBlock.insert(createTlogMacroInvoke("_XMP_M_TLOG_BCAST_IN", null));
+	  bcastFuncCallBlock.add(createTlogMacroInvoke("_XMP_M_TLOG_BCAST_OUT", null));
         }
     } else if(profileClause == null && _selective_profile && doTlog == false){
         XobjList profileFuncArgs = null;
@@ -1675,9 +1673,10 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private Vector<XobjList> createBcastArgsList(XobjList varList, PragmaBlock pb) throws XMPexception {
+  private Vector<XobjList> createBcastArgsList(XobjList varList, PragmaBlock pb, XobjList bcastDecl) throws XMPexception {
     Vector<XobjList> returnVector = new Vector<XobjList>();
-
+    XobjList argList = Xcons.List();
+    
     for (XobjArgs i = varList.getArgs(); i != null; i = i.nextArgs()) {
       String varName = i.getArg().getString();
 
@@ -1692,12 +1691,16 @@ public class XMPtranslateLocalPragma {
         case Xtype.UNION:
           {
             count = Xcons.LongLongConstant(0, 1);
-            returnVector.add(Xcons.List(varId.getAddr(), count, Xcons.SizeOf(varType)));
+	    argList.add(varId.getAddr());
+	    argList.add(count);
+	    argList.add(Xcons.SizeOf(varType));
           } break;
         case Xtype.POINTER:
 	  {
 	    count = Xcons.LongLongConstant(0, 1);
-	    returnVector.add(Xcons.List(varId.Ref(), count, Xcons.SizeOf(varType)));
+	    argList.add(varId.Ref());
+	    argList.add(count);
+	    argList.add(Xcons.SizeOf(varType));
   	  } break;
         case Xtype.ARRAY:
           {
@@ -1712,13 +1715,24 @@ public class XMPtranslateLocalPragma {
             }
 
             count = Xcons.LongLongConstant(0, XMPutil.getArrayElmtCount(arrayVarType));
-            returnVector.add(Xcons.List(varId.Ref(), count, Xcons.SizeOf(((ArrayType)varType).getArrayElementType())));
+	    //	    argList.add(Xcons.List(varId.Ref(), count, Xcons.SizeOf(((ArrayType)varType).getArrayElementType())));
+	    argList.add(varId.Ref());
+	    argList.add(count);
+	    argList.add(Xcons.SizeOf(((ArrayType)varType).getArrayElementType()));
           } break;
         default:
           throw new XMPexception("'" + varName + "' has a wrong data type for broadcast");
       }
     }
 
+    XobjList fromRef = (XobjList)bcastDecl.getArg(1);
+    XobjList onRef   = (XobjList)bcastDecl.getArg(2);
+    if(onRef == null && fromRef != null)
+      argList.add(Xcons.IntConstant(0));    // false : on-clause does not exit
+    else if (onRef != null && fromRef != null)
+      argList.add(Xcons.IntConstant(1));    // true : on-clase exits
+
+    returnVector.add(argList);
     return returnVector;
   }
 
@@ -1745,6 +1759,7 @@ public class XMPtranslateLocalPragma {
 
       funcCallList.add(Bcons.Statement(funcId.Call(funcArgs)));
     }
+
     return Bcons.COMPOUND(funcCallList);
   }
 
