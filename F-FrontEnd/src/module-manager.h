@@ -50,6 +50,6 @@ int import_module(const SYMBOL, struct module **);
 /**
  * export public identifiers to module-manager.
  */
-int export_module(const SYMBOL, ID);
+int export_module(const SYMBOL, ID, expv);
 
 #endif /* _MODULE_MANAGER_H_ */

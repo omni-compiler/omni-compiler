@@ -2404,7 +2404,8 @@ end_procedure()
 
     if(CURRENT_PROC_CLASS == CL_MODULE) {
         SYMBOL sym = find_symbol(current_module_name);
-        if(!export_module(sym, LOCAL_SYMBOLS)) {
+        if(!export_module(sym, LOCAL_SYMBOLS,
+                          UNIT_CTL_USE_DECLS(CURRENT_UNIT_CTL))) {
             error("internal error, fail to export module.");
             exit(1);
         }
@@ -2983,6 +2984,8 @@ compile_USE_decl (expr x, expr x_args)
     output_statement(v);
 
     use_assoc_rename(EXPR_SYM(x), use_args);
+
+    list_put_last(UNIT_CTL_USE_DECLS(CURRENT_UNIT_CTL), x);
 }
 
 /*
@@ -3035,6 +3038,8 @@ compile_USE_ONLY_decl (expr x, expr x_args)
     output_statement(v);
 
     use_assoc_only(EXPR_SYM(x), use_args);
+
+    list_put_last(UNIT_CTL_USE_DECLS(CURRENT_UNIT_CTL), x);
 }
 
 static char*

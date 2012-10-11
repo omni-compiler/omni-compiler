@@ -66,9 +66,11 @@ add_module_id(struct module * mod, ID id)
  * export public identifiers to module-manager.
  */
 int
-export_module(SYMBOL sym, ID ids)
+export_module(SYMBOL sym, ID ids, expv use_decls)
 {
     ID id;
+    list lp;
+    struct depend_module * dep;
     struct module * mod = XMALLOC(struct module *, sizeof(struct module));
 
     *mod = (struct module){0};
@@ -77,6 +79,18 @@ export_module(SYMBOL sym, ID ids)
     FOREACH_ID(id, ids) {
         if(AVAILABLE_ID(id))
             add_module_id(mod, id);
+    }
+
+    FOR_ITEMS_IN_LIST(lp, use_decls) {
+        dep = XMALLOC(struct depend_module *, sizeof(struct depend_module));
+        dep->module_name = EXPR_SYM(LIST_ITEM(lp));
+        if (mod->depend.last == NULL) {
+            mod->depend.head = dep;
+            mod->depend.last = dep;
+        } else {
+            mod->depend.last->next = dep;
+            mod->depend.last = dep;
+        }
     }
 
     add_module(mod);
