@@ -6,4 +6,4 @@
 #  $
 
 L2X="${OMNI_HOME}/bin/F_Front"
-. ${OMNI_HOME}/bin/oml2x -I@OMNI_HOME@/include $*
+. ${OMNI_HOME}/bin/oml2x $*
