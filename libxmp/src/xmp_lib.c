@@ -359,10 +359,10 @@ extern void _XMP_sched_loop_template_CYCLIC(int, int, int, int *, int *, int *, 
 extern void _XMP_sched_loop_template_BLOCK_CYCLIC(int, int, int, int *, int *, int *, void *, int);
 void xmp_sched_template_index(int* local_start_index, int* local_end_index, 
 			     const int global_start_index, const int global_end_index, const int step, 
-			     const xmp_desc_t template, const int template_index)
+			     const xmp_desc_t template, const int template_dim)
 {
   int tmp;
-  _XMP_template_chunk_t *chunk = &(((_XMP_template_t*)template)->chunk[template_index]);
+  _XMP_template_chunk_t *chunk = &(((_XMP_template_t*)template)->chunk[template_dim]);
 
   if(chunk->dist_manner == NULL){
     _XMP_fatal("Invalid template descriptor in xmp_sched_template_index()");
@@ -371,15 +371,15 @@ void xmp_sched_template_index(int* local_start_index, int* local_end_index,
   switch(chunk->dist_manner){
   case _XMP_N_DIST_BLOCK:
     _XMP_sched_loop_template_BLOCK(global_start_index, global_end_index, step, 
-				   local_start_index, local_end_index, &tmp, template, template_index);
+				   local_start_index, local_end_index, &tmp, template, template_dim);
     break;
   case _XMP_N_DIST_CYCLIC:
     _XMP_sched_loop_template_CYCLIC(global_start_index, global_end_index, step, 
-				    local_start_index, local_end_index, &tmp, template, template_index);
+				    local_start_index, local_end_index, &tmp, template, template_dim);
     break;
   case _XMP_N_DIST_BLOCK_CYCLIC: 
     _XMP_sched_loop_template_BLOCK_CYCLIC(global_start_index, global_end_index, step, 
-					  local_start_index, local_end_index, &tmp, template, template_index);
+					  local_start_index, local_end_index, &tmp, template, template_dim);
     break;
   default:
     _XMP_fatal("does not support distribution in xmp_sched_template_index()");

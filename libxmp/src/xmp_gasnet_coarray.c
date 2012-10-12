@@ -75,7 +75,7 @@ void _XMP_gasnet_finalize(int val){
 }
 
 void _XMP_gasnet_sync_memory(){
-  gasnet_wait_syncnbi_all();
+  gasnet_wait_syncnbi_puts();
 }
 
 void _XMP_gasnet_sync_all(){

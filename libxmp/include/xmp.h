@@ -53,7 +53,7 @@ extern int      xmp_nodes_index(xmp_desc_t d, int dim);
 extern int      xmp_nodes_size(xmp_desc_t d, int dim);
 extern void     xmp_sched_template_index(int* local_start_index, int* local_end_index,
 					 const int global_start_index, const int global_end_index, const int step,
-					 const xmp_desc_t template, const int template_index);
+					 const xmp_desc_t template, const int template_dim);
 
 // ----- libxmp_gpu
 #ifdef _XMP_ENABLE_GPU
