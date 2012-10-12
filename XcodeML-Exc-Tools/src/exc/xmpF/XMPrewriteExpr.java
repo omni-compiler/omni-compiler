@@ -220,7 +220,13 @@ public class XMPrewriteExpr
     switch(i.Opcode()){
     case F_ARRAY_INDEX:
       // if not distributed, do nothing
-      if(!a.isDistributed(dim_i)) return null;
+      if(!a.isDistributed(dim_i)){
+	// return null;
+	i.setArg(0,Xcons.binaryOp(Xcode.MINUS_EXPR,
+				  i.getArg(0),
+				  a.convertOffset(dim_i)));
+	return i;
+      }
 
       // check this expression is ver+offset
       Xobject e = i.getArg(0);
