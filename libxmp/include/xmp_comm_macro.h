@@ -21,7 +21,7 @@ _XMP_bcast_NODES_ENTIRE_OMITTED(_XMP_get_execution_nodes(), addr, count, datatyp
 #define _XMP_M_BCAST_EXEC_GLOBAL(addr, count, datatype_size, from_l, from_u, from_s) \
 _XMP_bcast_NODES_ENTIRE_GLOBAL(_XMP_get_execution_nodes(), addr, count, datatype_size, from_l, from_u, from_s)
 
-#define _XMP_M_BCAST_EXEC_NODES(addr, count, datatype_size, is_on, from_nodes, ...) \
-_XMP_bcast_NODES_ENTIRE_NODES(_XMP_get_execution_nodes(), addr, count, datatype_size, is_on, from_nodes, __VA_ARGS__)
+#define _XMP_M_BCAST_EXEC_NODES(addr, count, datatype_size, from_nodes, ...) \
+_XMP_bcast_NODES_ENTIRE_NODES(_XMP_get_execution_nodes(), addr, count, datatype_size, from_nodes, __VA_ARGS__)
 
 #endif // _XMP_COMM_MACRO
