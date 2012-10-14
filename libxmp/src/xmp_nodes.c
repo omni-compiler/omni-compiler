@@ -702,6 +702,7 @@ int _XMP_exec_task_NODES_PART(_XMP_task_desc_t **task_desc, _XMP_nodes_t *ref_no
   va_list args;
   va_start(args, ref_nodes);
   int ref_dim = ref_nodes->dim;
+
   int shrink[ref_dim], ref_lower[ref_dim], ref_upper[ref_dim], ref_stride[ref_dim];
   int acc_dim_size = 1;
   for (int i = 0; i < ref_dim; i++) {

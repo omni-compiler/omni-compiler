@@ -173,7 +173,7 @@ int xmp_array_owner(xmp_desc_t d, int ndims, int index[ndims], int dim){
   }else
     ival = -1;
 
-  return ival;
+  return ival + 1;
 }
 
 int xmp_array_lead_dim(xmp_desc_t d){

@@ -3,7 +3,7 @@
  * $TSUKUBA_Copyright:
  *  $
  */
-
+#include <stdio.h>
 #include <stdarg.h>
 #include "mpi.h"
 #include "xmp_internal.h"
@@ -53,7 +53,7 @@ void _XMP_bcast_NODES_ENTIRE_GLOBAL(_XMP_nodes_t *bcast_nodes, void *addr, int c
 
 // FIXME read spec
 void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
-                                   bool is_on, _XMP_nodes_t *from_nodes, ...) {
+                                   _XMP_nodes_t *from_nodes, ...) {
   _XMP_RETURN_IF_SINGLE;
 
   if (!bcast_nodes->is_member) {
@@ -67,52 +67,83 @@ void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int co
   // calc source nodes number
   int root = 0;
   int acc_nodes_size = 1;
-  int from_dim, size, rank;
-
-  if(is_on == false)  // is there on clause ?
-    from_dim = from_nodes->dim;
-  else
-    from_dim = bcast_nodes->dim;
-
+  int from_dim = from_nodes->dim;
   int from_lower, from_upper, from_stride;
+  _XMP_nodes_inherit_info_t  *inherit_info = bcast_nodes->inherit_info;
+  int bcast_dim = bcast_nodes->dim;
   va_list args;
-  bool flag = true;
   va_start(args, from_nodes);
-  for (int i = 0; i < from_dim; i++) {
-    if(is_on == false){
-      size = from_nodes->info[i].size;
-      rank = from_nodes->info[i].rank;
-    }
-    else{
-      size = bcast_nodes->info[i].size; 
-      rank = bcast_nodes->info[i].rank;
-      flag = false;
-    }
 
-    if (va_arg(args, int) == 1) {
-      if(flag == false) _XMP_fatal("Sorry Not implemented bcast operation on p(*,?)");
-      root += (acc_nodes_size * rank);
-    }
-    else {
-      from_lower = va_arg(args, int) - 1;
-      from_upper = va_arg(args, int) - 1;
-      from_stride = va_arg(args, int);
+  if(inherit_info == NULL){
+    for (int i = 0; i < from_dim; i++) {
+      int size = from_nodes->info[i].size;
+      if(inherit_info != NULL){
+	if(inherit_info[i].shrink == true)
+	  continue;
+	size = inherit_info[i].upper - inherit_info[i].lower;
+	if(size == 0) continue;
+      }
+      int rank = from_nodes->info[i].rank;
 
-      // check <from-ref>
-      if (_XMP_M_COUNT_TRIPLETi(from_lower, from_upper, from_stride) != 1) {
-	_XMP_fatal("multiple source nodes indicated in bcast directive");
+      if (va_arg(args, int) == 1) {
+	root += (acc_nodes_size * rank);
+      }
+      else {
+	from_lower = va_arg(args, int) - 1;
+	from_upper = va_arg(args, int) - 1;
+	from_stride = va_arg(args, int);
+	
+	// check <from-ref>
+	if (_XMP_M_COUNT_TRIPLETi(from_lower, from_upper, from_stride) != 1) {
+	  _XMP_fatal("multiple source nodes indicated in bcast directive");
+	}
+	
+	root += (acc_nodes_size * (from_lower));
+      }
+      
+      acc_nodes_size *= size;
+    }
+  }
+  else{
+    for (int i = 0; i < from_dim; i++) {
+      if(inherit_info[i].shrink == 1){
+	va_arg(args, int);
+	continue;
+      }
+      int size = inherit_info[i].upper - inherit_info[i].lower;
+      if(size == 0) {  // These variables are not used.
+	int is_astrisk = va_arg(args, int);
+	from_lower = va_arg(args, int) ;
+	from_upper = va_arg(args, int) ;
+	from_stride = va_arg(args, int);
+	continue;
+      }
+      int rank = from_nodes->info[i].rank;
+
+      if (va_arg(args, int) == 1) {
+        root += (acc_nodes_size * rank);
+      }
+      else {
+        from_lower = va_arg(args, int) - 1;
+        from_upper = va_arg(args, int) - 1;
+        from_stride = va_arg(args, int);
+	// check <from-ref> 
+	if (_XMP_M_COUNT_TRIPLETi(from_lower, from_upper, from_stride) != 1) {
+          _XMP_fatal("multiple source nodes indicated in bcast directive");
+        }
+
+        root += (acc_nodes_size * (from_lower));
       }
 
-      root += (acc_nodes_size * (from_lower));
+      acc_nodes_size *= size;
     }
-
-    acc_nodes_size *= size;
   }
+
   // setup type
   MPI_Datatype mpi_datatype;
   MPI_Type_contiguous(datatype_size, MPI_BYTE, &mpi_datatype);
   MPI_Type_commit(&mpi_datatype);
-  
+
   // bcast
   MPI_Bcast(addr, count, mpi_datatype, root, *((MPI_Comm *)bcast_nodes->comm));
 
