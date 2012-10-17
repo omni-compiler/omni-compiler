@@ -80,6 +80,7 @@ extern void _XMP_gmove_LOCALCOPY_ARRAY(int type, size_t type_size, ...);
 extern void _XMP_gmove_BCAST_ARRAY(void *src_array, int type, size_t type_size, ...);
 extern void _XMP_gmove_HOMECOPY_ARRAY(void *dst_array, int type, size_t type_size, ...);
 extern void _XMP_gmove_SENDRECV_ARRAY(void *dst_array, void *src_array, int type, size_t type_size, ...);
+extern void _XMP_gmove_BCAST_TO_NOTALIGNED_ARRAY(void *dst_array, void *src_array, int type, size_t type_size, ...);
 
 // xmp_loop.c
 extern void _XMP_sched_loop_template_DUPLICATION(int ser_init, int ser_cond, int ser_step,

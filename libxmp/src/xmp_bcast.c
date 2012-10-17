@@ -70,7 +70,6 @@ void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int co
   int from_dim = from_nodes->dim;
   int from_lower, from_upper, from_stride;
   _XMP_nodes_inherit_info_t  *inherit_info = bcast_nodes->inherit_info;
-  int bcast_dim = bcast_nodes->dim;
   va_list args;
   va_start(args, from_nodes);
 
@@ -111,11 +110,11 @@ void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int co
 	continue;
       }
       int size = inherit_info[i].upper - inherit_info[i].lower;
-      if(size == 0) {  // These variables are not used.
-	int is_astrisk = va_arg(args, int);
-	from_lower = va_arg(args, int) ;
-	from_upper = va_arg(args, int) ;
-	from_stride = va_arg(args, int);
+      if(size == 0) {  // skip arguments
+	va_arg(args, int);   // is_astrisk 
+	va_arg(args, int);   // from_lower
+	va_arg(args, int);   // from_upper
+	va_arg(args, int);   // from_stride
 	continue;
       }
       int rank = from_nodes->info[i].rank;

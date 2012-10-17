@@ -1936,7 +1936,39 @@ public class XMPtranslateLocalPragma {
 
             gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
             gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
-	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_gmove_SENDRECV_ARRAY", gmoveFuncArgs);
+
+	    boolean flag = false;
+	    for(int i=0;i<leftAlignedArray.getDim();i++){   // 1
+	      if(leftAlignedArray.getAlignMannerAt(i) == XMPalignedArray.NOT_ALIGNED){
+		flag = true;
+	      }
+	    }
+
+	    for(int i=0;i<rightAlignedArray.getDim();i++){  // 2
+	      if(rightAlignedArray.getAlignMannerAt(i) == XMPalignedArray.NOT_ALIGNED){
+		flag = false;
+	      }
+	    }
+
+	    String leftAlignedArrayTemplate  = leftAlignedArray.getAlignTemplate().getName();
+	    String rightAlignedArrayTemplate = rightAlignedArray.getAlignTemplate().getName();
+	    if(!leftAlignedArrayTemplate.equals(rightAlignedArrayTemplate)){ // 3
+	      flag = false;
+	    }
+	    if(!(leftAlignedArray.getDim() == 2 && rightAlignedArray.getDim() == 2)){  // 4
+	      flag = false;
+	    }
+
+	    if(flag == true){
+	      // 1. One of dimension of left array is not aligned.
+	      // 2. All dimensions of right array are aligned (temporary).
+	      // 3. Templates of left array amd right array are the same.
+	      // 4. Both left array amd right array are must 2 dimentional array (temporary).
+	      gmoveFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_gmove_BCAST_TO_NOTALIGNED_ARRAY", gmoveFuncArgs);
+	    }
+	    else{
+	      gmoveFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_gmove_SENDRECV_ARRAY", gmoveFuncArgs);
+	    }
           }
         }
       } else {
@@ -1975,8 +2007,10 @@ public class XMPtranslateLocalPragma {
         }
       }
     }
-
-    Block gmoveBlock = Bcons.COMPOUND(Bcons.blockList(gmoveFuncCallBlock, _globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null)));
+    
+    // Why is the barrier needed ?
+    //Block gmoveBlock = Bcons.COMPOUND(Bcons.blockList(gmoveFuncCallBlock, _globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null)));
+    Block gmoveBlock = Bcons.COMPOUND(Bcons.blockList(gmoveFuncCallBlock));
     pb.replace(gmoveBlock);
 
     // add function calls for profiling                                                                                    
