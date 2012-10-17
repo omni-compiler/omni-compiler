@@ -91,10 +91,14 @@ public abstract class XmXobjectToXcodeTranslator {
     abstract protected Element transIdent(Ident ident);
 
     protected Element transTypeTable(List<Xtype> xtypeList) {
-        Element e = createElement("typeTable");
-        for (Xtype xtype : xtypeList) {
-            addChildNodes(e, transType(xtype));
-        }
+      Element e = createElement("typeTable");
+      for(int i = 0; i < xtypeList.size(); i++){
+	Xtype xtype = xtypeList.get(i);
+	addChildNodes(e, transType(xtype));
+      }
+//         for (Xtype xtype : xtypeList) {
+//             addChildNodes(e, transType(xtype));
+//         }
         return e;
     }
 
