@@ -20,6 +20,21 @@ import xcodeml.f.util.XmfWriter;
  */
 public class XfDecompileVisitor extends RVisitorBase
 {
+  static final int PRIO_LOW = 0; /* lowest */
+
+  static final int PRIO_EQV = 1; /* EQV, NEQV */
+  static final int PRIO_OR = 2; /* .OR. */
+  static final int PRIO_AND = 3; /* .AND. */
+
+  static final int PRIO_COMP = 4; /* <, >,...  */
+  
+  static final int PRIO_CONCAT = 5; 
+
+  static final int PRIO_PLUS_MINUS = 6;
+  static final int PRIO_MUL_DIV = 7;
+  static final int PRIO_POWER = 8;
+  static final int PRIO_HIGH = 10;
+
     @SuppressWarnings("serial")
     private class InvokeNodeStack extends LinkedList<IRNode>
     {
@@ -348,31 +363,89 @@ public class XfDecompileVisitor extends RVisitorBase
      * @return true/false
      */
     private boolean _writeBinaryExpr(IXbfDefModelExprChoice leftExpr,
-        IXbfDefModelExprChoice rightExpr, String operation, boolean grouping)
+				     IXbfDefModelExprChoice rightExpr, 
+				     String operator)
     {
         XmfWriter writer = _context.getWriter();
+	boolean need_paren;
+	int op_prio = operator_priority(operator);
 
-        if (grouping) {
-            writer.writeToken("(");
-        }
+	need_paren = false;
+	if(op_prio > operator_priority(leftExpr))
+	  need_paren = true;
 
+	if(need_paren) writer.writeToken("(");
         if (invokeEnter(leftExpr) == false) {
             return false;
         }
+	if(need_paren) writer.writeToken(")");
 
         writer.writeToken(" ");
-        writer.writeToken(operation);
+        writer.writeToken(operator);
 
+	need_paren = false;
+	if(op_prio == PRIO_POWER ||
+	   op_prio > operator_priority(leftExpr))
+	  need_paren = true;
+	if(need_paren) writer.writeToken("(");
         if (invokeEnter(rightExpr) == false) {
-            return false;
+	  return false;
         }
-
-        if (grouping) {
-            writer.writeToken(")");
-        }
+	if(need_paren) writer.writeToken(")");
 
         return true;
     }
+
+  int operator_priority(String operator){
+
+    if(operator.equals("=")) return PRIO_LOW;
+
+    if(operator.equals("-") || operator.equals("+")) 
+      return PRIO_PLUS_MINUS;
+    if(operator.equals("*") || operator.equals("/")) 
+      return PRIO_MUL_DIV;
+    if(operator.equals("**")) 
+      return PRIO_POWER;
+    
+    if(operator.equals("<") || operator.equals(">") || 
+       operator.equals("<=") || operator.equals(">=") ||
+       operator.equals("/=") || operator.equals("=="))
+      return PRIO_COMP;
+    
+    if(operator.equals("//")) return PRIO_CONCAT;
+
+    if(operator.equals(".AND.")) return PRIO_AND;
+    if(operator.equals(".OR."))  return PRIO_OR;
+    if(operator.equals(".NEQV.") || operator.equals(".EQV."))
+      return PRIO_EQV;
+
+    return PRIO_HIGH;
+  }
+  
+  int operator_priority(IXbfDefModelExprChoice expr){
+    if(expr instanceof XbfFassignStatement) return PRIO_LOW;
+
+    if(expr instanceof  XbfPlusExpr || expr instanceof XbfMinusExpr)
+      return PRIO_PLUS_MINUS;
+    if(expr instanceof XbfDivExpr || expr instanceof XbfMulExpr)
+      return PRIO_MUL_DIV;
+    if(expr instanceof XbfFpowerExpr)
+      return PRIO_POWER;
+    
+    if(expr instanceof XbfLogLTExpr || expr instanceof XbfLogGTExpr ||
+       expr instanceof XbfLogLEExpr || expr instanceof XbfLogGEExpr ||
+       expr instanceof XbfLogEQExpr || expr instanceof XbfLogNEQExpr)
+      return PRIO_COMP;
+    
+    if(expr instanceof XbfFconcatExpr) return PRIO_CONCAT;
+
+    if(expr instanceof XbfLogAndExpr) return PRIO_AND;
+    if(expr instanceof XbfLogOrExpr)  return PRIO_OR;
+    if(expr instanceof XbfLogEQVExpr ||expr instanceof XbfLogNEQVExpr)
+      return PRIO_EQV;
+
+    return PRIO_HIGH;
+  }
 
     /**
      * Write simple primitive symbol declaration.
@@ -1306,7 +1379,7 @@ public class XfDecompileVisitor extends RVisitorBase
         
         _writeLineDirective(visitable.getLineno(), visitable.getFile());
 
-        if (_writeBinaryExpr((IXbfDefModelExprChoice)visitable.getDefModelLValue(), visitable.getDefModelExpr(), "=", false) == false) {
+        if (_writeBinaryExpr((IXbfDefModelExprChoice)visitable.getDefModelLValue(), visitable.getDefModelExpr(), "=") == false) {
             return false;
         }
 
@@ -1442,7 +1515,7 @@ public class XfDecompileVisitor extends RVisitorBase
     public boolean enter(XbfDivExpr visitable)
     {
         // DONE: XbfDivExpr
-        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), "/", true) == false) {
+        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), "/") == false) {
             return false;
         }
 
@@ -1963,7 +2036,7 @@ public class XfDecompileVisitor extends RVisitorBase
     public boolean enter(XbfFconcatExpr visitable)
     {
         // DONE: XbfFconcatExpr
-        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), "//", true) == false) {
+        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), "//") == false) {
             return false;
         }
 
@@ -3566,7 +3639,7 @@ public class XfDecompileVisitor extends RVisitorBase
         
         _writeLineDirective(visitable.getLineno(), visitable.getFile());
 
-        if (_writeBinaryExpr((IXbfDefModelExprChoice)visitable.getDefModelLValue(), visitable.getDefModelExpr(), "=>", false) == false) {
+        if (_writeBinaryExpr((IXbfDefModelExprChoice)visitable.getDefModelLValue(), visitable.getDefModelExpr(), "=>") == false) {
             return false;
         }
 
@@ -3591,7 +3664,7 @@ public class XfDecompileVisitor extends RVisitorBase
     public boolean enter(XbfFpowerExpr visitable)
     {
         // DONE: XbfFpowerExpr
-        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), "**", true) == false) {
+        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), "**") == false) {
             return false;
         }
 
@@ -4621,8 +4694,7 @@ public class XfDecompileVisitor extends RVisitorBase
     public boolean enter(XbfLogAndExpr visitable)
     {
         // DONE: XbfLogAndExpr
-        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), ".AND.",
-            true) == false) {
+        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), ".AND.") == false) {
             return false;
         }
 
@@ -4645,7 +4717,7 @@ public class XfDecompileVisitor extends RVisitorBase
     public boolean enter(XbfLogEQExpr visitable)
     {
         // DONE: XbfLogEQExpr
-        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), "==", true) == false) {
+        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), "==") == false) {
             return false;
         }
 
@@ -4668,8 +4740,7 @@ public class XfDecompileVisitor extends RVisitorBase
     public boolean enter(XbfLogEQVExpr visitable)
     {
         // DONE: XbfLogEQVExpr
-        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), ".EQV.",
-            true) == false) {
+        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), ".EQV.") == false) {
             return false;
         }
 
@@ -4692,7 +4763,7 @@ public class XfDecompileVisitor extends RVisitorBase
     public boolean enter(XbfLogGEExpr visitable)
     {
         // DONE: XbfLogGEExpr
-        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), ">=", true) == false) {
+        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), ">=") == false) {
             return false;
         }
 
@@ -4715,7 +4786,7 @@ public class XfDecompileVisitor extends RVisitorBase
     public boolean enter(XbfLogGTExpr visitable)
     {
         // DONE: XbfLogGTExpr
-        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), ">", true) == false) {
+        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), ">") == false) {
             return false;
         }
 
@@ -4738,7 +4809,7 @@ public class XfDecompileVisitor extends RVisitorBase
     public boolean enter(XbfLogLEExpr visitable)
     {
         // DONE: XbfLogLEExpr
-        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), "<=", true) == false) {
+        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), "<=") == false) {
             return false;
         }
 
@@ -4761,7 +4832,7 @@ public class XfDecompileVisitor extends RVisitorBase
     public boolean enter(XbfLogLTExpr visitable)
     {
         // DONE: XbfLogLTExpr
-        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), "<", true) == false) {
+        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), "<") == false) {
             return false;
         }
 
@@ -4784,7 +4855,7 @@ public class XfDecompileVisitor extends RVisitorBase
     public boolean enter(XbfLogNEQExpr visitable)
     {
         // DONE: XbfLogNEQExpr
-        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), "/=", true) == false) {
+        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), "/=") == false) {
             return false;
         }
 
@@ -4807,8 +4878,7 @@ public class XfDecompileVisitor extends RVisitorBase
     public boolean enter(XbfLogNEQVExpr visitable)
     {
         // DONE: XbfLogNEQVExpr
-        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), ".NEQV.",
-            true) == false) {
+        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), ".NEQV.") == false) {
             return false;
         }
 
@@ -4854,8 +4924,7 @@ public class XfDecompileVisitor extends RVisitorBase
     public boolean enter(XbfLogOrExpr visitable)
     {
         // DONE: XbfLogOrExpr
-        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), ".OR.",
-            true) == false) {
+        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), ".OR.") == false) {
             return false;
         }
 
@@ -4900,7 +4969,7 @@ public class XfDecompileVisitor extends RVisitorBase
     public boolean enter(XbfMinusExpr visitable)
     {
         // DONE: XbfMinusExpr
-        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), "-", true) == false) {
+        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), "-") == false) {
             return false;
         }
 
@@ -4923,7 +4992,7 @@ public class XfDecompileVisitor extends RVisitorBase
     public boolean enter(XbfMulExpr visitable)
     {
         // DONE: XbfMulExpr
-        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), "*", true) == false) {
+        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), "*") == false) {
             return false;
         }
 
@@ -5060,7 +5129,7 @@ public class XfDecompileVisitor extends RVisitorBase
     public boolean enter(XbfPlusExpr visitable)
     {
         // DONE: XbfPlusExpr
-        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), "+", true) == false) {
+        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), "+") == false) {
             return false;
         }
 
@@ -5347,7 +5416,7 @@ public class XfDecompileVisitor extends RVisitorBase
             return false;
         }
 
-        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), name, true) == false) {
+        if (_writeBinaryExpr(visitable.getDefModelExpr1(), visitable.getDefModelExpr2(), name) == false) {
             return false;
         }
 
