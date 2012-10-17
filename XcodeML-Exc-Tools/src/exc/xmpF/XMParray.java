@@ -551,6 +551,9 @@ public class XMParray {
 
   public Xobject convertOffset(int dim_i){
       XMPdimInfo info = dims.elementAt(dim_i);
+      if(!isDistributed(dim_i)){  // case not aligned, duplicated
+	return info.getLower();
+      }
       return info.getArrayOffsetVar().Ref();
   }
 

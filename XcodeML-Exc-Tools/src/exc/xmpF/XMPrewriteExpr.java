@@ -222,9 +222,9 @@ public class XMPrewriteExpr
       // if not distributed, do nothing
       if(!a.isDistributed(dim_i)){
 	// return null;
-	i.setArg(0,Xcons.binaryOp(Xcode.MINUS_EXPR,
-				  i.getArg(0),
-				  a.convertOffset(dim_i)));
+ 	i.setArg(0,Xcons.binaryOp(Xcode.MINUS_EXPR,
+ 				  i.getArg(0),
+ 				  a.convertOffset(dim_i)));
 	return i;
       }
 
