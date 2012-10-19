@@ -1,5 +1,7 @@
 #include "xmpf_internal.h"
 
+#define DBG 1
+
 #ifdef DBG
 double t0;
 double t_mem = 0;
@@ -69,15 +71,23 @@ void _XMPF_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_ad
         dim_acc[i] = array_desc->info[i].dim_acc;
       }
 
+      if (array_index == array_dim - 1){
+	*lo_buffer = array_addr;
+	for (int i = 0; i < array_dim; i++){
+	  (char *)(*lo_buffer) += lower[i] * dim_acc[i] * (array_desc->type_size);
+	}
+      }
+      else {
 #ifdef DBG
 	t0 = MPI_Wtime();
 #endif
       // pack data
-      _XMP_pack_array(*lo_buffer, array_addr, array_type, array_desc->type_size,
-                      array_dim, lower, upper, stride, dim_acc);
+	_XMP_pack_array(*lo_buffer, array_addr, array_type, array_desc->type_size,
+			array_dim, lower, upper, stride, dim_acc);
 #ifdef DBG
 	t_copy = t_copy + MPI_Wtime() - t0;
 #endif
+      }
 
     }
   }
@@ -115,15 +125,23 @@ void _XMPF_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_ad
         dim_acc[i] = array_desc->info[i].dim_acc;
       }
 
+      if (array_index == array_dim - 1){
+	*hi_buffer = array_addr;
+	for (int i = 0; i < array_dim; i++){
+	  (char *)(*hi_buffer) += lower[i] * dim_acc[i] * (array_desc->type_size);
+	}
+      }
+      else {
 #ifdef DBG
 	t0 = MPI_Wtime();
 #endif
       // pack data
-      _XMP_pack_array(*hi_buffer, array_addr, array_type, array_desc->type_size,
-                      array_dim, lower, upper, stride, dim_acc);
+	_XMP_pack_array(*hi_buffer, array_addr, array_type, array_desc->type_size,
+			array_dim, lower, upper, stride, dim_acc);
 #ifdef DBG
 	t_copy = t_copy + MPI_Wtime() - t0;
 #endif
+      }
     }
   }
 }
@@ -152,6 +170,8 @@ void _XMPF_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_ad
 
   int lower[array_dim], upper[array_dim], stride[array_dim];
   unsigned long long dim_acc[array_dim];
+
+  if (array_index == array_dim - 1) return;
 
   // unpack lo shadow
   if (is_periodic || rank != 0) {
@@ -258,6 +278,8 @@ void _XMPF_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
   _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
   _XMP_ASSERT(ai->is_shadow_comm_member);
 
+  int array_dim = array_desc->dim;
+
   // get communicator info
   int size = ai->shadow_comm_size;
   if (!is_periodic && size == 1) {
@@ -279,10 +301,40 @@ void _XMPF_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
 
   if (ai->shadow_size_lo > 0) {
     if (is_periodic || rank != 0) {
-      *lo_recv_buffer = _XMP_alloc((ai->shadow_size_lo) * (ai->dim_elmts) * (array_desc->type_size));
+
+      if (array_index == array_dim - 1){
+
+	int lower[array_dim];
+	unsigned long long dim_acc[array_dim];
+
+	for (int i = 0; i < array_dim; i++) {
+	  if (i == array_index) {
+	    lower[i] = 0;
+	    //	    upper[i] = array_desc->info[i].shadow_size_lo - 1;
+	    //	    stride[i] = 1;
+	  }
+	  else {
+	    lower[i] = array_desc->info[i].local_lower;
+	    //	    upper[i] = array_desc->info[i].local_upper;
+	    //	    stride[i] = array_desc->info[i].local_stride;
+	  }
+
+	  dim_acc[i] = array_desc->info[i].dim_acc;
+	}
+
+	*lo_recv_buffer = *(array_desc->array_addr_p);
+	for (int i = 0; i < array_dim; i++){
+	  (char *)(*lo_recv_buffer) += lower[i] * dim_acc[i] * (array_desc->type_size);
+	}
+
+      }
+      else {
+	*lo_recv_buffer = _XMP_alloc((ai->shadow_size_lo) * (ai->dim_elmts) * (array_desc->type_size));
+      }
+
       src = (rank - 1 + size) % size;
       MPI_Irecv(*lo_recv_buffer, (ai->shadow_size_lo) * (ai->dim_elmts), mpi_datatype,
-                src, _XMP_N_MPI_TAG_REFLECT_LO, *comm, &(recv_req[0]));
+		src, _XMP_N_MPI_TAG_REFLECT_LO, *comm, &(recv_req[0]));
     }
 
     if (is_periodic || rank != (size - 1)) {
@@ -294,7 +346,36 @@ void _XMPF_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
 
   if (ai->shadow_size_hi > 0) {
     if (is_periodic || rank != (size - 1)) {
-      *hi_recv_buffer = _XMP_alloc((ai->shadow_size_hi) * (ai->dim_elmts) * (array_desc->type_size));
+
+      if (array_index == array_dim - 1){
+
+	int lower[array_dim];
+	unsigned long long dim_acc[array_dim];
+
+	for (int i = 0; i < array_dim; i++) {
+	  if (i == array_index) {
+	    lower[i] = array_desc->info[i].local_upper + 1;
+	    //	    upper[i] = lower[i] + array_desc->info[i].shadow_size_hi - 1;
+	    //	    stride[i] = 1;
+	  }
+	  else {
+	    lower[i] = array_desc->info[i].local_lower;
+	    //	    upper[i] = array_desc->info[i].local_upper;
+	    //	    stride[i] = array_desc->info[i].local_stride;
+	  }
+	  
+	  dim_acc[i] = array_desc->info[i].dim_acc;
+	}
+
+	*hi_recv_buffer = *(array_desc->array_addr_p);
+	for (int i = 0; i < array_dim; i++){
+	  (char *)(*hi_recv_buffer) += lower[i] * dim_acc[i] * (array_desc->type_size);
+	}
+      }
+      else {
+	*hi_recv_buffer = _XMP_alloc((ai->shadow_size_hi) * (ai->dim_elmts) * (array_desc->type_size));
+      }
+
       src = (rank + 1) % size;
       MPI_Irecv(*hi_recv_buffer, (ai->shadow_size_hi) * (ai->dim_elmts), mpi_datatype,
                 src, _XMP_N_MPI_TAG_REFLECT_HI, *comm, &(recv_req[1]));
@@ -317,7 +398,7 @@ void _XMPF_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
 
     if (is_periodic || rank != (size - 1)) {
       MPI_Wait(&(send_req[0]), &stat);
-      _XMP_free(lo_send_buffer);
+      if (array_index != array_dim - 1) _XMP_free(lo_send_buffer);
     }
   }
 
@@ -328,7 +409,7 @@ void _XMPF_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
 
     if (is_periodic || rank != 0) {
       MPI_Wait(&(send_req[1]), &stat);
-      _XMP_free(hi_send_buffer);
+      if (array_index != array_dim - 1) _XMP_free(hi_send_buffer);
     }
   }
 
