@@ -385,7 +385,7 @@ public class XfDecompileVisitor extends RVisitorBase
 
 	need_paren = false;
 	if(op_prio == PRIO_POWER ||
-	   op_prio > operator_priority(leftExpr))
+	   op_prio >= operator_priority(rightExpr))
 	  need_paren = true;
 	if(need_paren) writer.writeToken("(");
         if (invokeEnter(rightExpr) == false) {
