@@ -74,7 +74,7 @@ void _XMPF_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_ad
       if (array_index == array_dim - 1){
 	*lo_buffer = array_addr;
 	for (int i = 0; i < array_dim; i++){
-	  (char *)(*lo_buffer) += lower[i] * dim_acc[i] * (array_desc->type_size);
+	  *lo_buffer = (void *)((char *)(*lo_buffer) + lower[i] * dim_acc[i] * (array_desc->type_size));
 	}
       }
       else {
@@ -128,7 +128,7 @@ void _XMPF_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_ad
       if (array_index == array_dim - 1){
 	*hi_buffer = array_addr;
 	for (int i = 0; i < array_dim; i++){
-	  (char *)(*hi_buffer) += lower[i] * dim_acc[i] * (array_desc->type_size);
+	  *hi_buffer = (void *)((char *)(*hi_buffer) + lower[i] * dim_acc[i] * (array_desc->type_size));
 	}
       }
       else {
@@ -324,7 +324,7 @@ void _XMPF_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
 
 	*lo_recv_buffer = *(array_desc->array_addr_p);
 	for (int i = 0; i < array_dim; i++){
-	  (char *)(*lo_recv_buffer) += lower[i] * dim_acc[i] * (array_desc->type_size);
+	  *lo_recv_buffer = (void *)((char *)(*lo_recv_buffer) + lower[i] * dim_acc[i] * (array_desc->type_size));
 	}
 
       }
@@ -369,7 +369,7 @@ void _XMPF_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
 
 	*hi_recv_buffer = *(array_desc->array_addr_p);
 	for (int i = 0; i < array_dim; i++){
-	  (char *)(*hi_recv_buffer) += lower[i] * dim_acc[i] * (array_desc->type_size);
+	  *hi_recv_buffer = (void *)((char *)(*hi_recv_buffer) + lower[i] * dim_acc[i] * (array_desc->type_size));
 	}
       }
       else {
