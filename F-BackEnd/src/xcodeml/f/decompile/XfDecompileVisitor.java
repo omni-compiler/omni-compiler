@@ -398,7 +398,8 @@ public class XfDecompileVisitor extends RVisitorBase
 
   int operator_priority(String operator){
 
-    if(operator.equals("=")) return PRIO_LOW;
+    if(operator.equals("=") || operator.equals("=>"))
+      return PRIO_LOW;
 
     if(operator.equals("-") || operator.equals("+")) 
       return PRIO_PLUS_MINUS;
@@ -423,7 +424,8 @@ public class XfDecompileVisitor extends RVisitorBase
   }
   
   int operator_priority(IXbfDefModelExprChoice expr){
-    if(expr instanceof XbfFassignStatement) return PRIO_LOW;
+    if(expr instanceof XbfFassignStatement ||
+       expr instanceof XbfFpointerAssignStatement) return PRIO_LOW;
 
     if(expr instanceof  XbfPlusExpr || expr instanceof XbfMinusExpr)
       return PRIO_PLUS_MINUS;
