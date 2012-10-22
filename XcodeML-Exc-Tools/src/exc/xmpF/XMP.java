@@ -230,7 +230,7 @@ public class XMP {
       
     errorFlag = true;
     errorFlags = true;
-    System.err.println("[XMP:"+l+"] " + msg);
+    System.err.println("\""+l.fileName()+"\", line "+l.lineNo()+":(XMP) "+msg);
     // XmLog.error(l, "[XcalableMP] " + msg);
   }
 

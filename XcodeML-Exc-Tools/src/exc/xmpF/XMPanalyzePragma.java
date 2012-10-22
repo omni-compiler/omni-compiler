@@ -198,7 +198,7 @@ public class XMPanalyzePragma
     
     // schedule loop
     XobjList loopIterList = (XobjList)loopDecl.getArg(0);
-    if (loopIterList == null) {
+    if (loopIterList == null || loopIterList.Nargs() == 0) {
       ForBlock loopBlock = getOutermostLoopBlock(loopBody);
       if(loopBlock == null){
 	XMP.errorAt(pb,"loop is not found after loop directive");
@@ -281,7 +281,7 @@ public class XMPanalyzePragma
 	  }
 	}
 	if(v == null) continue; // some error occurs
-	// find varaible 
+	// find varaible
 	int idx = -1;
 	for(int i = 0; i < dims.size(); i++){
 	  if(isEqualVar(v,dims.elementAt(i).getLoopVar())){
