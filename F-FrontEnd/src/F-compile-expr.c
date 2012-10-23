@@ -777,9 +777,14 @@ compile_expression(expr x)
                     error("bad expression in constant kind parameter");
                     break;
                 }
-                if(TYPE_BASIC_TYPE(EXPV_TYPE(v1)) == TYPE_DREAL) {
-                    error("kind parameter with 'd' exponent");
-                    break;
+                /*
+                 * NOTE:
+                 *	Need to fix the backend.
+                 */
+                if (TYPE_BASIC_TYPE(EXPV_TYPE(v1)) == TYPE_DREAL) {
+                    warning("a kind value of a constant with 'd' "
+                            "type exponent is ignored due to current "
+                            "limitation.");
                 }
             }
             /* if kind is differ, make new type desc.
@@ -814,14 +819,22 @@ compile_expression(expr x)
         case F_DUP_DECL:
             return compile_dup_decl(x);
 
-        case F95_KIND_SELECTOR_SPEC:
-            if(expr_is_constant(EXPR_ARG1(x)))
-                return compile_int_constant(EXPR_ARG1(x));
-            else
-                /* allow any expression
+        case F95_KIND_SELECTOR_SPEC: {
+            expv v = NULL;
+            if (expr_is_constant(EXPR_ARG1(x))) {
+                v = compile_int_constant(EXPR_ARG1(x));
+            } else {
+                /*
+                 * allow any expression
                  * ex) kind = selected_int_kind(..)
                  */
-                return compile_expression(EXPR_ARG1(x));
+                v = compile_expression(EXPR_ARG1(x));
+            }
+            if (v != NULL) {
+                EXPV_KWOPT_NAME(v) = (const char *)strdup("kind");
+            }
+            return v;
+        }
 
         case F95_LEN_SELECTOR_SPEC: {
             expr v;

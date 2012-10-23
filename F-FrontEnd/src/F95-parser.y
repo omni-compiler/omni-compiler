@@ -317,6 +317,16 @@ static void append_pragma_str _ANSI_ARGS_((char *p));
 /* statement name */
 expr st_name;
 
+static expr
+gen_default_real_kind(void) {
+    return list2(F_ARRAY_REF,
+                 GEN_NODE(IDENT, find_symbol("kind")),
+                 list1(LIST, 
+                       make_float_enode(F_DOUBLE_CONSTANT,
+                                        0.0,
+                                        strdup("0.0D0"))));
+}
+    
 %}
 
 %type <val> statement label 
@@ -773,9 +783,11 @@ type_spec0:
         | KW_CHARACTER char_selector
         { $$ = list2(LIST,GEN_NODE(F_TYPE_NODE,TYPE_CHAR),$2); }
         | KW_DOUBLE
-        { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE,TYPE_DREAL), NULL); }
+        { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_REAL),
+                      gen_default_real_kind()); }
         | KW_DCOMPLEX   
-        { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE,TYPE_DCOMPLEX), NULL); }
+        { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_COMPLEX),
+                      gen_default_real_kind()); }
         ;
 
 type_keyword:
@@ -1370,7 +1382,19 @@ io_clause:
 
 set_expr:
         IDENTIFIER '=' expr
-        { $$ = list2(F_SET_EXPR, $1, $3); }
+        {
+            /*
+             * FIXME:
+             *
+             *	Sorry I can't let a grammer "KW KW_KIND '=' expr" work
+             *	well, never even close.
+             */
+            if (strcasecmp(SYM_NAME(EXPR_SYM($1)), "kind") == 0) {
+                $$ = list1(F95_KIND_SELECTOR_SPEC, $3);
+            } else {
+                $$ = list2(F_SET_EXPR, $1, $3);
+            }
+        }
 
 format_spec:
           '*'

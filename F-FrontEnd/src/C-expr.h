@@ -151,6 +151,9 @@ typedef expr expv;
 #define EXPV_LLINT_VALUE(x)     ((x)->v.e_llval)
 #define EXPV_ANY(t,x)           ((t)((x)->v.e_gen))
 #define EXPV_KWOPT_NAME(x)      ((x)->keyword_opt)
+#define EXPV_KW_IS_KIND(x) \
+    ((EXPV_KWOPT_NAME(x) != NULL) && \
+     (strcasecmp(EXPV_KWOPT_NAME(x), "kind") == 0))
 #define EXPV_LINE(x)            ((x)->e_line)
 #define EXPV_LINE_NO(x)         (EXPV_LINE(x)->ln_no)
 #define EXPV_END_LINE_NO(x)     (EXPV_LINE(x)->end_ln_no)

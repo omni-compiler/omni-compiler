@@ -26,7 +26,8 @@ static int              compare_intrinsic_arg_type(expv arg,
 static void             generate_reverse_dimension_expr(TYPE_DESC tp,
                                                         expr dimSpec);
 static TYPE_DESC        get_intrinsic_return_type(intrinsic_entry *ep,
-                                                  expv args);
+                                                  expv args,
+                                                  expv kindV);
 static BASIC_DATA_TYPE	intr_type_to_basic_type(INTR_DATA_TYPE iType);
 
 expv doubledKind = NULL;
@@ -79,7 +80,7 @@ compile_intrinsic_call(ID id, expv args) {
     list lp;
     INTR_OPS iOps = INTR_END;
     const char *iName = NULL;
-    int hasKind = 0;
+    expv kindV = NULL;
     int typeNotMatch = 0;
     int isVarArgs = 0;
     EXT_ID extid;
@@ -109,7 +110,7 @@ compile_intrinsic_call(ID id, expv args) {
            !(isValidString(INTR_NAME(ep)))));
          ep++) {
 
-        hasKind = 0;
+        kindV = NULL;
         typeNotMatch = 0;
         isVarArgs = 0;
 
@@ -129,6 +130,9 @@ compile_intrinsic_call(ID id, expv args) {
             if (lastV == NULL) {
                 return NULL;    /* error recovery */
             }
+            if (EXPV_KW_IS_KIND(lastV)) {
+                goto gotKind;
+            }
             tp = EXPV_TYPE(lastV);
             if (!(isValidType(tp))) {
                 return NULL;    /* error recovery */
@@ -137,8 +141,10 @@ compile_intrinsic_call(ID id, expv args) {
                 /* kind arg must be integer type. */
                 continue;
             }
+
+            gotKind:
             nIntrArgs = INTR_N_ARGS(ep);
-            hasKind = 1;
+            kindV = lastV;
         } else {
             continue;
         }
@@ -177,7 +183,7 @@ compile_intrinsic_call(ID id, expv args) {
 
         /* Then we have to determine return type. */
         if (INTR_RETURN_TYPE(ep) != INTR_TYPE_NONE) {
-            tp = get_intrinsic_return_type(ep, args);
+            tp = get_intrinsic_return_type(ep, args, kindV);
             if (!(isValidType(tp))) {
                 fatal("%s: can't determine return type.", __func__);
                 return NULL;
@@ -706,7 +712,7 @@ intr_type_to_basic_type(INTR_DATA_TYPE iType) {
 
 static TYPE_DESC
 intr_convert_to_dimension_ifneeded(intrinsic_entry *ep,
-    expv args, TYPE_DESC ret_tp)
+                                   expv args, TYPE_DESC ret_tp)
 {
     TYPE_DESC tp0;
 
@@ -725,7 +731,9 @@ intr_convert_to_dimension_ifneeded(intrinsic_entry *ep,
 
 
 static TYPE_DESC
-get_intrinsic_return_type(intrinsic_entry *ep, expv args) {
+get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
+    BASIC_DATA_TYPE bType = TYPE_UNKNOWN;
+    TYPE_DESC bTypeDsc = NULL;
     TYPE_DESC ret = NULL;
     expv a = NULL;
     
@@ -751,19 +759,28 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args) {
                         return type is scalar */ : {
 
                 if (!(INTR_IS_RETURN_TYPE_DYNAMIC(ep))) {
-                    BASIC_DATA_TYPE bType =
-                        intr_type_to_basic_type(INTR_RETURN_TYPE(ep));
+                    bType = intr_type_to_basic_type(INTR_RETURN_TYPE(ep));
                     if (bType == TYPE_UNKNOWN) {
                         ret = NULL;
                     } else {
-                        ret = (bType != TYPE_CHAR) ? type_basic(bType) :
-                            type_char(1);
+                        if (kindV == NULL) {
+                            ret = (bType != TYPE_CHAR) ? type_basic(bType) :
+                                type_char(1);
+                        } else {
+                            /*
+                             * Don't use BASIC_TYPE_DESC(bType) very
+                             * here, since we need to set a kind to
+                             * the TYPE_DESC.
+                             */
+                            ret = type_basic(bType);
+                            TYPE_KIND(ret) = kindV;
+                        }
                     }
                     ret = intr_convert_to_dimension_ifneeded(
                         ep, args, ret);
                 } else {
                     expv shape = list0(LIST);
-                    TYPE_DESC tp, bTypeDsc;
+                    TYPE_DESC tp;
 
                     switch (INTR_OP(ep)) {
 
@@ -793,13 +810,21 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args) {
                         switch (INTR_OP(ep)) {
                         case INTR_ALL:
                         case INTR_ANY:
-                            bTypeDsc = BASIC_TYPE_DESC(TYPE_LOGICAL);
+                            bType = TYPE_LOGICAL;
                             break;
                         case INTR_COUNT:
-                            bTypeDsc = BASIC_TYPE_DESC(TYPE_INT);
+                            bType = TYPE_INT;
                             break;
                         default:
-                            bTypeDsc = BASIC_TYPE_DESC(get_basic_type(tp));
+                            bType = get_basic_type(tp);
+                            break;
+                        }
+
+                        if (kindV == NULL) {
+                            bTypeDsc = BASIC_TYPE_DESC(bType);
+                        } else {
+                            bTypeDsc = type_basic(bType);
+                            TYPE_KIND(bTypeDsc) = kindV;
                         }
 
                         dim = expv_reduce(dim, FALSE);
@@ -818,7 +843,8 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args) {
                             generate_assumed_shape_expr(shape, TYPE_N_DIM(tp) - 1);
                         }
                     }
-                        break;
+                    break;
+
                     case INTR_SPREAD:
                     {
                         /* intrinsic arguments */
@@ -838,7 +864,14 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args) {
                         }
 
                         tp = EXPV_TYPE(array);
-                        bTypeDsc = BASIC_TYPE_DESC(get_basic_type(tp));
+                        bType = get_basic_type(tp);
+                        if (kindV == NULL) {
+                            bTypeDsc = BASIC_TYPE_DESC(bType);
+                        } else {
+                            bTypeDsc = type_basic(bType);
+                            TYPE_KIND(bTypeDsc) = kindV;
+                        }
+
                         dim = expv_reduce(dim, FALSE);
 
                         if(EXPR_CODE(dim) == INT_CONSTANT) {
@@ -872,7 +905,13 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args) {
                         }
 
                         tp = EXPV_TYPE(source);
-                        bTypeDsc = BASIC_TYPE_DESC(get_basic_type(tp));
+                        bType = get_basic_type(tp);
+                        if (kindV == NULL) {
+                            bTypeDsc = BASIC_TYPE_DESC(bType);
+                        } else {
+                            bTypeDsc = type_basic(bType);
+                            TYPE_KIND(bTypeDsc) = kindV;
+                        }
 
                         tp = EXPV_TYPE(arg_shape);
                         if (TYPE_N_DIM(tp) != 1) {
@@ -941,9 +980,15 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args) {
                         TYPE_DESC t2 = EXPV_TYPE(m2);
                         expv s1 = list0(LIST);
                         expv s2 = list0(LIST);
-                        TYPE_DESC bType = max_type(t1, t2);
 
-                        bTypeDsc = BASIC_TYPE_DESC(get_basic_type(bType));
+                        bType = get_basic_type(max_type(t1, t2));
+
+                        if (kindV == NULL) {
+                            bTypeDsc = BASIC_TYPE_DESC(bType);
+                        } else {
+                            bTypeDsc = type_basic(bType);
+                            TYPE_KIND(bTypeDsc) = kindV;
+                        }
 
                         generate_shape_expr(t1, s1);
                         generate_shape_expr(t2, s2);
@@ -1000,13 +1045,17 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args) {
                 /*
                  * Returns BASIC_TYPE of the first arg.
                  */
-                BASIC_DATA_TYPE bType;
                 a = expr_list_get_n(args, 0);
                 if (!(isValidTypedExpv(a))) {
                     return NULL;
                 }
                 bType = get_basic_type(EXPV_TYPE(a));
-                ret = BASIC_TYPE_DESC(bType);
+                if (kindV == NULL) {
+                    ret = BASIC_TYPE_DESC(bType);
+                } else {
+                    ret = type_basic(bType);
+                    TYPE_KIND(ret) = kindV;
+                }
                 break;
             }
 
@@ -1015,7 +1064,11 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args) {
                  * Returns single dimension array of integer having
                  * elemnets that equals to the first arg's dimension.
                  */
-                TYPE_DESC bTypDsc = BASIC_TYPE_DESC(TYPE_INT);
+                /*
+                 * FIXME:
+                 *	No need to check kindV?? I believe we don't, though.
+                 */
+                bTypeDsc = BASIC_TYPE_DESC(TYPE_INT);
                 TYPE_DESC tp = NULL;
                 expr dims = NULL;
                 int nDims = 0;
@@ -1024,10 +1077,11 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args) {
                     return NULL;
                 }
 
+                bTypeDsc = BASIC_TYPE_DESC(TYPE_INT);
                 tp = EXPV_TYPE(a);
                 nDims = TYPE_N_DIM(tp);
                 dims = list1(LIST, make_int_enode(nDims));
-                ret = compile_dimensions(bTypDsc, dims);
+                ret = compile_dimensions(bTypeDsc, dims);
                 fix_array_dimensions(ret);
 
                 break;
@@ -1037,8 +1091,6 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args) {
                 /*
                  * Returns transpose of the first arg (matrix).
                  */
-                BASIC_DATA_TYPE bType = TYPE_UNKNOWN;
-                TYPE_DESC bTypDsc = NULL;
                 TYPE_DESC tp = NULL;
                 expr dims = list0(LIST);
 
@@ -1048,7 +1100,12 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args) {
                 }
                 tp = EXPV_TYPE(a);
                 bType = get_basic_type(tp);
-                bTypDsc = BASIC_TYPE_DESC(bType);
+                if (kindV == NULL) {
+                    bTypeDsc = BASIC_TYPE_DESC(bType);
+                } else {
+                    bTypeDsc = type_basic(bType);
+                    TYPE_KIND(bTypeDsc) = kindV;
+                }
 
                 if (TYPE_N_DIM(tp) != 2) {
                     error("Dimension is not two.");
@@ -1056,24 +1113,26 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args) {
                 }
 
                 generate_reverse_dimension_expr(tp, dims);
-                ret = compile_dimensions(bTypDsc, dims);
+                ret = compile_dimensions(bTypeDsc, dims);
                 fix_array_dimensions(ret);
 
                 break;
             }
 
             case -5: {
-                /* -5 : BASIC_TYPE of return type is 'returnType'
-                    and kind of return type is same as first
-                    arg. */
+                /*
+                 * -5 : BASIC_TYPE of return type is 'returnType' and
+                 * kind of return type is same as first arg.
+                 */
                 a = expr_list_get_n(args, 0);
                 if (!(isValidTypedExpv(a)))
                     return NULL;
-                ret = type_basic(intr_type_to_basic_type(INTR_RETURN_TYPE(ep)));
+                ret = 
+                    type_basic(intr_type_to_basic_type(INTR_RETURN_TYPE(ep)));
 
 		if (!doubledKind)
-		  doubledKind = expv_int_term(INT_CONSTANT, type_INT,
-					       KIND_PARAM_DOUBLE);
+                    doubledKind = expv_int_term(INT_CONSTANT, type_INT,
+                                                KIND_PARAM_DOUBLE);
 
 		TYPE_KIND(ret) = IS_DOUBLED_TYPE(EXPV_TYPE(a)) ?
 	                         doubledKind :
