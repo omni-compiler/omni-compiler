@@ -2409,7 +2409,7 @@ compile_dup_decl(expv x)
 static expv
 compile_array_constructor(expr x)
 {
-    int nDims = 0;
+    int nElems = 0;
     list lp;
     expv v, res, l;
     TYPE_DESC tp;
@@ -2418,14 +2418,15 @@ compile_array_constructor(expr x)
     l = list0(LIST);
     res = list1(F95_ARRAY_CONSTRUCTOR, l);
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
-        nDims++;
+        nElems++;
         v = compile_expression(LIST_ITEM(lp));
         list_put_last(l, v);
+        tp = EXPV_TYPE(v);
         if (elem_type == TYPE_UNKNOWN) {
-            elem_type = get_basic_type(EXPV_TYPE(v));
+            elem_type = get_basic_type(tp);
             continue;
         }
-        if (get_basic_type(EXPV_TYPE(v)) != elem_type) {
+        if (get_basic_type(tp) != elem_type) {
             error("Array constructor elements have different data types.");
             return NULL;
         }
@@ -2434,12 +2435,20 @@ compile_array_constructor(expr x)
     assert(elem_type != TYPE_UNKNOWN);
     if (elem_type == TYPE_CHAR) {
         tp = type_char(-1);
-    } else {
+    } else if (elem_type != TYPE_STRUCT) {
         tp = type_basic(elem_type);
+        /*
+         * If elem_type == TYPE_STRUCT, we just use the tp.
+         */
     }
 
-    EXPV_TYPE(res) = compile_dimensions(tp, list1(LIST,
-        (list2(LIST, expv_constant_1, expv_int_term(INT_CONSTANT,type_INT,nDims)))));
+    EXPV_TYPE(res) =
+        compile_dimensions(tp,
+                           list1(LIST,
+                                 (list2(LIST,
+                                        expv_constant_1,
+                                        expv_int_term(INT_CONSTANT,
+                                                      type_INT, nElems)))));
 
     return res;
 }
