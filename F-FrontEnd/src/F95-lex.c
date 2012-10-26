@@ -128,6 +128,7 @@ sentinel_list sentinels;
 
 #define OMP_SENTINEL "!$omp"
 #define XMP_SENTINEL "!$xmp"
+#define OCL_SENTINEL "!ocl"
 
 /* sentinel list functions */
 static void init_sentinel_list( sentinel_list * p );
@@ -271,6 +272,7 @@ initialize_lex()
     
     add_sentinel( &sentinels, OMP_SENTINEL );
     add_sentinel( &sentinels, XMP_SENTINEL );
+    if (ocl_flag) add_sentinel( &sentinels, OCL_SENTINEL );
 }
 
 // #define LEX_DEBUG
@@ -1969,6 +1971,11 @@ again:
             }else if( strcasecmp( sentinel_name( &sentinels, index ), XMP_SENTINEL )== 0 ){
                 set_pragma_str( "XMP" );
                 st_XMP_flag = TRUE;
+            }else if( strcasecmp( sentinel_name( &sentinels, index ), OCL_SENTINEL )== 0 ){
+	        char buff[256] = "ocl";
+		strcat(buff, p);
+                set_pragma_str( buff );
+                st_PRAGMA_flag = TRUE;
             }else{
                 set_pragma_str( &(sentinel_name( &sentinels, index )[2]) );
                 st_PRAGMA_flag = TRUE;
