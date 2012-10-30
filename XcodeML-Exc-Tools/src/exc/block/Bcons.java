@@ -386,7 +386,7 @@ public class Bcons
             return COMPOUND(buildList(v));
             
         case OMP_PRAGMA:
-            return PRAGMA(Xcode.OMP_PRAGMA, v.getArg(0).getString(), v.getArg(1),
+            return PRAGMA(Xcode.OMP_PRAGMA, v.getArg(0).getString(), v.getArgOrNull(1),
                 buildList(v.getArgOrNull(2)));
 
         case XMP_PRAGMA:
