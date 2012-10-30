@@ -1842,6 +1842,12 @@ xmp_nodes_clause:
 	    { $$ = list3(LIST,$1,$3,XMP_LIST(XMP_NODES_INHERIT_EXEC,NULL)); }
 	  | IDENTIFIER '(' xmp_subscript_list ')' '=' xmp_obj_ref
 	    { $$ = list3(LIST,$1,$3,XMP_LIST(XMP_NODES_INHERIT_NODES,$6)); }
+	  | '(' xmp_subscript_list ')' COL2 xmp_name_list
+	      { $$ = list3(LIST,$5,$2,NULL); }
+	  | '(' xmp_subscript_list ')' '=' '*' COL2 xmp_name_list
+	    { $$ = list3(LIST,$7,$2,XMP_LIST(XMP_NODES_INHERIT_EXEC,NULL)); }
+	  | '(' xmp_subscript_list ')' '=' xmp_obj_ref COL2 xmp_name_list
+	    { $$ = list3(LIST,$7,$2,XMP_LIST(XMP_NODES_INHERIT_NODES,$5)); }
   	  ;
 
 xmp_template_clause:
@@ -1988,6 +1994,7 @@ xmp_reduction_spec:
 xmp_reduction_op:
 	  '+' { $$ = (int) XMP_DATA_REDUCE_SUM; }
 	| '*' { $$ = (int) XMP_DATA_REDUCE_PROD; }
+	| '-' { $$ = (int) XMP_DATA_REDUCE_SUB; }
 	| AND { $$ = (int) XMP_DATA_REDUCE_LAND; }
 	| OR  { $$ = (int) XMP_DATA_REDUCE_LOR; }
 	| EQV { $$ = (int) XMP_DATA_REDUCE_EQV; }
