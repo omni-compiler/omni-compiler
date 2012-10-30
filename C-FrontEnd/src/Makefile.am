@@ -32,8 +32,9 @@ MKDIR_P = @MKDIR_P@
 C_Front_SOURCES=\
 	c-parser.y c-lexer.l c-expr.c c-token.c c-exprcode.c \
 	c-dump.c c-comp.c c-reduce.c c-xcodeml.c c-const.c \
-    c-gcctype.c c-option.c c-pragma.c c-omp-pragma.c c-type.c c-convert.c \
-	ccol-list.c ccol-hash.c c-main.c
+	c-gcctype.c c-option.c c-type.c c-convert.c \
+	ccol-list.c ccol-hash.c c-main.c \
+	c-pragma.c c-omp-pragma.c c-xmp-pragma.c c-acc-pragma.c 
 
 ccol.h: ccol-list.h ccol-hash.h
 ccol-list.c: ccol-list.h
@@ -46,13 +47,32 @@ c-parser.h: c-parser.y
 c-lexer.l: c-cmn.h c-lexyacc.h c-expr.h c-token.h c-parser.h
 c-option.c: c-option.h
 c-gcctype.c: c-gcctype.h
-c-pragma.c: c-pragma.h
-c-omp-pragma.c: c-pragma.h
 c-convert.c: c-expr.h
+c-const.c: c-expr.h c-const.h
+c-comp.c: c-expr.h c-comp.h
+c-option.c: c-expr.h c-option.h
+c-pragma.c: c-pragma.h c-omp.h c-xmp.h c-acc.h
+c-omp-pragma.c: c-pragma.h c-omp.h
+c-xmp-pragma.c: c-pragma.h c-xmp.h
+c-acc-pragma.c: c-pragma.h c-acc.h
+c-omp-pragma.c: c-pragma.h c-omp.h
+c-xmp-pragma.c: c-pragma.h c-xmp.h
+c-acc-pragma.c: c-pragma.h c-acc.h
 c-xcodeml.c: c-expr.h
 c-const.c: c-expr.h c-const.h
 c-comp.c: c-expr.h c-comp.h
 c-option.c: c-expr.h c-option.h
+c-pragma.c: c-pragma.h c-omp.h c-xmp.h c-acc.h
+c-omp-pragma.c: c-pragma.h c-omp.h
+c-xmp-pragma.c: c-pragma.h c-xmp.h
+c-acc-pragma.c: c-pragma.h c-acc.h
+c-omp-pragma.c: c-pragma.h c-omp.h
+c-xmp-pragma.c: c-pragma.h c-xmp.h
+c-acc-pragma.c: c-pragma.h c-acc.h
+c-xcodeml.c: c-expr.h
+c-omp-xcodeml.c: c-expr.h c-omp.h
+c-xmp-xcodeml.c: c-expr.h c-xmp.h
+c-acc-xcodeml.c: c-expr.h c-acc.h
 
 EXTRA_C_Front_SOURCES=c-dbgmain.c
 
