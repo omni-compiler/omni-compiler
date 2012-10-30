@@ -670,7 +670,7 @@ public class XMPtranslateLocalPragma {
               compile_THREADS_name_list(c.getArg(1));
               forClause.add(c);
             } break;
-          case DATA_NUM_THREADS:
+          case DIR_NUM_THREADS:
           case DIR_IF:
             parallelClause.add(c);
             break;

@@ -1409,7 +1409,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 
         pg_get_token();
         Xobject v = pg_parse_expr();
-        args.add(omp_pg_list(OMPpragma.DATA_NUM_THREADS, v));
+        args.add(omp_pg_list(OMPpragma.DIR_NUM_THREADS, v));
 
         if (pg_tok() != ')') {
           throw new XMPexception("')' is expected after <num_threads> clause");
