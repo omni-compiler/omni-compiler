@@ -763,7 +763,7 @@ public class OMPinfo
             return;
         }
         sched = OMPpragma.valueOf(sched_arg.getArg(0));
-        sched_chunk = sched_arg.getArg(1);
+        sched_chunk = sched_arg.getArgOrNull(1);
         if(sched == OMPpragma.SCHED_RUNTIME && sched_chunk != null)
             OMP.error(block.getLineNo(), "schedule RUNTIME has chunk argument");
         if(sched == OMPpragma.SCHED_AFFINITY)

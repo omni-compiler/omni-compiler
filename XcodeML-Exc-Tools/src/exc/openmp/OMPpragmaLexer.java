@@ -457,7 +457,7 @@ public class OMPpragmaLexer implements ExternalPragmaLexer
                 if((err = (pg_tok() != ')')))
                     break;
                 pg_get_token();
-                c = omp_pg_list(OMPpragma.DATA_NUM_THREADS, v);
+                c = omp_pg_list(OMPpragma.DIR_NUM_THREADS, v);
             } else if(pg_is_ident("reduction")) {
                 pg_get_token();
                 OMPpragma clause[] = {null};

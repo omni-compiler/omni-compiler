@@ -92,7 +92,7 @@ public class OMPanalyzePragma
                 case DATA_DEFAULT:
                     info.data_default = OMPpragma.valueOf(a.getArg(1));
                     break;
-                case DATA_NUM_THREADS:
+                case DIR_NUM_THREADS:
                     info.num_threads = a.getArg(1);
                     break;
                 default: // DATA_*

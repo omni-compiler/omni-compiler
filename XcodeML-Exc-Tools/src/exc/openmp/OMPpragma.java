@@ -48,7 +48,7 @@ public enum OMPpragma
     DATA_COPYPRIVATE,
     DATA_COPYIN,
     _DATA_PRIVATE_SHARED, /* using internally */
-    DATA_NUM_THREADS,
+    DIR_NUM_THREADS,
 
     /* DATA_REDUCTION_* values are synchronized with
        OMPC_REDUCTION_* values in ompc_reduction.h */

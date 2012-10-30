@@ -252,7 +252,7 @@ public class OMPpragmaParser implements ExternalPragmaParser
                 pclause.add(c);
                 break;
                 
-            case DATA_NUM_THREADS:
+            case DIR_NUM_THREADS:
                 if(pclause != null)
                     pclause.add(c);
                 else
