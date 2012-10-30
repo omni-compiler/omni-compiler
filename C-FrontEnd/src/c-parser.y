@@ -169,7 +169,8 @@ ext_def:
     | directive
             { STAT_TRACE(("{ext_def#5}")); $$ = $1; }
     | PRAGMA_EXEC
-            { STAT_TRACE(("{ext_def#6}")); $$ = $1; }
+            { STAT_TRACE(("{ext_def#6}")); 
+	      $$ = exprList(EC_COMP_STMT);((CExprOfList *)$$)->e_aux_info=$1; }
     ;
 
 data_def:

@@ -29,6 +29,7 @@
 #define PG_LTLT 'V'
 #define PG_GTGT 'W'
 #define PG_STREF 'S'
+#define PG_COL2 'C'
 
 /**
  * \brief
@@ -37,8 +38,9 @@
 typedef enum {
     PK_NOT_PARSABLE,
     PK_PACK,
-    PK_OMP,
-    PK_XMP,  // xmp???
+    PK_OMP,  // OpenMP
+    PK_XMP,  // XcalableMP
+    PK_ACC,  // OpenACC
 } CPragmaKind;
 
 extern CExpr*  pg_parse_expr();

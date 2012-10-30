@@ -50,8 +50,9 @@ unsigned int s_useBuiltinWchar          = 0;
 unsigned int s_useShortWchar            = 0;
 unsigned int s_useIntWchar              = 0;
 unsigned int s_transFuncInInit          = 0;
-unsigned int s_useXmp                   = 0;
-unsigned int s_debugSymbol				= 0;
+unsigned int s_useXMP                   = 0;
+unsigned int s_useACC                   = 0;
+unsigned int s_debugSymbol		= 0;
 unsigned int s_arrayToPointer           = 0;
 
 #define CEXPR_OPTVAL_CHARLEN 128
@@ -503,7 +504,9 @@ procOptions(int argc, char **argv)
             } else if(strcmp(arg, "--m64") == 0) {
                 setOptSizeSet(CSIZESET_M64);
             } else if(strcmp(arg, "-fxmp") == 0) {
-                s_useXmp = 1;
+                s_useXMP = 1;
+            } else if(strcmp(arg, "-facc") == 0) {
+                s_useACC = 1;
             } else if(strcmp(arg, "-fopenmp") == 0) {
                 /* accept but no action */
 	    } else if(strcmp(arg, "--array-to-pointer") == 0) {

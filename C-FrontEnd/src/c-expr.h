@@ -1453,6 +1453,7 @@ extern int              isSkipErrorOutput(CExpr *expr);
 extern void             dumpError(FILE *fp);
 extern int              hasChildren(CExpr *expr);;
 
+#define exprListNth(listExpr,n) exprListNextNData(listExpr,n)
 
 /**
  * \brief

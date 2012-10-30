@@ -21,6 +21,8 @@
 #include "c-option.h"
 
 #include "c-omp.h"
+#include "c-xmp.h"
+#include "c-acc.h"
 
 //! Pointer to parsing string
 char    *pg_cp;
@@ -38,11 +40,10 @@ PRIVATE_STATIC CExpr* pg_parse_number(void);
 PRIVATE_STATIC CExpr* pg_parse_string_constant(void);
 PRIVATE_STATIC CExpr* pg_parse_char_constant(void);
 
-PRIVATE_STATIC CExpr* pg_term_expr(int pre, int endToken);
-PRIVATE_STATIC CExpr* pg_factor_expr(int endToken);
-PRIVATE_STATIC CExpr* pg_unary_expr(int endToken);
-PRIVATE_STATIC CExpr* pg_primary_expr(int endToken);
-
+PRIVATE_STATIC CExpr* pg_term_expr(int pre);
+PRIVATE_STATIC CExpr* pg_factor_expr(void);
+PRIVATE_STATIC CExpr* pg_unary_expr(void);
+PRIVATE_STATIC CExpr* pg_primary_expr(void);
 
 /**
  * \brief
@@ -212,6 +213,9 @@ equals_tokenP(const char *s1, const char *s2)
 CPragmaKind
 getPragmaKind(char *p)
 {
+    extern int s_useXMP;
+    extern int s_useACC;
+
     /* after '#directive[space]' */
     p = lexSkipSpace(p);
     p = lexSkipWord(p);
@@ -219,8 +223,12 @@ getPragmaKind(char *p)
 
     if(equals_tokenP("pack", p))
         return PK_PACK;
-    else if(equals_tokenP("omp", p)) /* openmp */
+    else if(equals_tokenP("omp", p)) /* OpenMP */
         return PK_OMP;
+    else if(s_useXMP && equals_tokenP("xmp", p)) /* XcalableMP */
+        return PK_XMP;
+    else if(s_useACC && equals_tokenP("acc", p)) /* OpenACC */
+        return PK_ACC;
     else
         return PK_NOT_PARSABLE;
 }
@@ -296,7 +304,6 @@ pg_get_token()
     case ',':
     case '[':
     case ']':
-    case ':':
         pg_tok = *pg_cp++;
         return;
     case '-':
@@ -320,6 +327,13 @@ pg_get_token()
             addError(NULL, CERR_054);
             pg_tok = 0;
         }
+        return;
+    case ':':
+        pg_tok = *pg_cp++;
+        if(*pg_cp == ':'){
+            pg_cp++;
+            pg_tok = PG_COL2;
+        } 
         return;
     case '|':
         pg_tok = *pg_cp++;
@@ -398,9 +412,9 @@ pg_get_token()
  * parse expression
  */
 CExpr*
-pg_parse_expr(int endToken)
+pg_parse_expr()
 {
-    return pg_term_expr(0, endToken);
+    return pg_term_expr(0);
 }
 
 
@@ -409,15 +423,15 @@ pg_parse_expr(int endToken)
  * parse terminal node
  */
 PRIVATE_STATIC CExpr*
-pg_term_expr(int pre, int endToken)
+pg_term_expr(int pre)
 {
     CExprCodeEnum code;
     CExpr *e = NULL, *ee = NULL;
 
     if(pre > 10)
-        return pg_unary_expr(endToken);
+        return pg_unary_expr();
 
-    if((e = pg_term_expr(pre + 1, endToken)) == NULL)
+    if((e = pg_term_expr(pre + 1)) == NULL)
         return NULL;
 
   again:
@@ -469,7 +483,7 @@ pg_term_expr(int pre, int endToken)
     pg_tok_val = NULL;
     pg_get_token();
 
-    if((ee = pg_term_expr(pre + 1, endToken)) == NULL) {
+    if((ee = pg_term_expr(pre + 1)) == NULL) {
         if(e)
             freeExpr(e);
         return NULL;
@@ -486,7 +500,7 @@ pg_term_expr(int pre, int endToken)
  * parse unary expression
  */
 PRIVATE_STATIC CExpr*
-pg_unary_expr(int endToken)
+pg_unary_expr()
 {
     CExpr *e = NULL;
     CExprCodeEnum code;
@@ -494,33 +508,32 @@ pg_unary_expr(int endToken)
     switch(pg_tok){
     case '-':
         pg_get_token();
-        if((e = pg_unary_expr(0)) == NULL)
+        if((e = pg_factor_expr()) == NULL)
             goto error;
         code = EC_UNARY_MINUS;
         break;
 
     case '!':
         pg_get_token();
-        if((e = pg_unary_expr(0)) == NULL)
+        if((e = pg_factor_expr()) == NULL)
             goto error;
         code = EC_LOG_NOT;
         break;
 
     case '~':
         pg_get_token();
-        if((e = pg_unary_expr(0)) == NULL)
+        if((e = pg_factor_expr()) == NULL)
             goto error;
         code = EC_BIT_NOT;
         break;
 
     default:
-        return pg_factor_expr(endToken);
+        return pg_factor_expr();
     }
 
     return exprUnary(code, e);
 
   error:
-    
     if(e)
         freeExpr(e);
     return NULL;
@@ -546,11 +559,11 @@ addExpectedCharError(const char *expected)
  * parse  postfix expression
  */
 PRIVATE_STATIC CExpr*
-pg_factor_expr(int endToken)
+pg_factor_expr()
 {
     CExpr *e, *ee = NULL;
 
-    e = pg_primary_expr(0);
+    e = pg_primary_expr();
 
     if(e == NULL)
         goto error;
@@ -562,7 +575,7 @@ pg_factor_expr(int endToken)
     case '[':
         pg_get_token();
 
-        if((ee = pg_term_expr(0, endToken)) == NULL)
+        if((ee = pg_term_expr(0)) == NULL)
             goto error;
 
         if(pg_tok != ']') {
@@ -580,7 +593,7 @@ pg_factor_expr(int endToken)
             addSyntaxErrorNearInExpression(".");
             goto error;
         }
-        if((ee = pg_primary_expr(0)) == NULL)
+        if((ee = pg_primary_expr()) == NULL)
             goto error;
         e = exprBinary(EC_MEMBER_REF, e, ee);
         break;
@@ -592,7 +605,7 @@ pg_factor_expr(int endToken)
             goto error;
         }
 
-        if((ee = pg_primary_expr(0)) == NULL)
+        if((ee = pg_primary_expr()) == NULL)
             goto error;
 
         e = exprBinary(EC_POINTS_AT, e, ee);
@@ -619,14 +632,11 @@ pg_factor_expr(int endToken)
  * parse primary expression
  */
 PRIVATE_STATIC CExpr*
-pg_primary_expr(int endToken)
+pg_primary_expr()
 {
     CExpr *e;
 
-    if(pg_tok == endToken)
-        return NULL;
-
-    switch(pg_tok) {
+    switch(pg_tok){
     case '*':
         e = (CExpr*)allocExprOfGeneralCode(EC_FLEXIBLE_STAR, 0);
         pg_get_token();
@@ -636,16 +646,18 @@ pg_primary_expr(int endToken)
         pg_get_token();
         assert(pg_tok_val);
         assertExprCode((CExpr*)pg_tok_val, EC_IDENT);
+#ifdef not /* not needed to intern */
         e = (CExpr*)findSymbol(EXPR_SYMBOL(pg_tok_val)->e_symName);
         if(e == NULL) {
             addError(NULL, CERR_060, EXPR_SYMBOL(pg_tok_val)->e_symName);
             goto error;
         }
+#endif
         return pg_tok_val;
 
     case '(':
         pg_get_token();
-        if((e = pg_term_expr(0, endToken)) == NULL)
+        if((e = pg_term_expr(0)) == NULL)
             goto error;
 
         if(pg_tok != ')'){
@@ -1149,6 +1161,12 @@ lexParsePragma(char *p, int *token)
     }
     else if(pk == PK_OMP) {
       return lexParsePragmaOMP(p,token);
+    }
+    else if(pk == PK_XMP) {
+      return lexParsePragmaXMP(p,token);
+    }
+    else if(pk == PK_ACC) {
+      return lexParsePragmaACC(p,token);
     }
     else if(pk == PK_NOT_PARSABLE) {
         *token = DIRECTIVE;

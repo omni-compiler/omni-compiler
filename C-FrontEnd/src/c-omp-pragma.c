@@ -16,8 +16,47 @@
 #include "c-option.h"
 #include "c-omp.h"
 
+/*
+ * <OMPPragma> <string> directive_name </string> 
+ *             [clauses] [body] </OMPPragma>
+ * [clauses] = <list> [clause] </list>
+ *   C_Front: (direcive clause1 clause2 ... )
+ *
+ * [data_clause] = 
+ *     <list> <string> [data_clause_name] </string> [name_list] </list>
+ *     [data_clause_name] = DATA_PRIVATE|OMP_DATA_SHARED|
+ *               OMP_DATA_FIRSTPRIVATE|OMP_DATA_LASTPRIVATE|OMP_DATA_COPYIN|
+ *               OMP_DATA_REDUCTION_***
+ *     [name_list] = <list> variable ... </list>
+ *  C_Front: (data_clause_name (LIST ident ... ))
+ * 
+ * [default_clause] = 
+ *      <list> <string> OMP_DATA_DEFAULT </string> 
+ *           <string> OMP_DEFAULT_*** </string> </list>
+ *  C_Front: (OMP_DATA_DEFAULT (OMP_DEFAULT_*** null))
+ * 
+ * [if_clause] = <list> <string> OMP_DIR_IF </string> cond_expr </list>
+ *  C_Front: (OMP_DIR_IF cond_expr)
+ *
+ * [schedule_clause] = 
+ *       <list> <string> OMP_DIR_SCHEDULE </string>
+ *           <list> <string> OMP_SCHED_*** </string> expr </list> </list>
+ *  C_Front: (OMP_DIR_SCHEDULE (OMP_SCHED_*** expr))
+ *
+ * [ordered_clause] = <list> <string> OMP_DIR_ORDERED </strign> null </list>
+ *  C_Front: (OMP_DIR_ORDERED null) 
+ *
+ * [nowait_clause] = <list> <string> OMP_DIR_NOWAIT </strign> null </list>
+ *  C_Front: (OMP_DIR_NOWAIT null) 
+ *
+ * [num_threads_clause] = 
+ *    <list> <string> OMP_DIR_NUM_THREADS </strign> expr </list>
+ *  C_Front: (OMP_DIR_NUM_THREADS expr) 
+ *
+ */
+
 static int parse_OMP_pragma(void);
-static CExpr* parse_OMP_clause(void);
+static CExpr* parse_OMP_clauses(void);
 static CExpr* parse_OMP_namelist(void);
 static CExpr* parse_OMP_reduction_namelist(int *r);
 
@@ -76,39 +115,39 @@ int parse_OMP_pragma()
 	  if(PG_IS_IDENT("for")){	/* parallel for */
 	    pg_OMP_pragma = OMP_PARALLEL_FOR;
 	    pg_get_token();
-	    if((pg_OMP_list = parse_OMP_clause()) == NULL) goto syntax_err;
+	    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
 	    goto chk_end;
 	  }
 	  if(PG_IS_IDENT("sections")){	/* parallel for */
 	    pg_OMP_pragma = OMP_PARALLEL_SECTIONS;
 	    pg_get_token();
-	    if((pg_OMP_list = parse_OMP_clause()) == NULL) goto syntax_err;
+	    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
 	    goto chk_end;
 	  }
 	}
 	pg_OMP_pragma = OMP_PARALLEL;
-	if((pg_OMP_list = parse_OMP_clause()) == NULL) goto syntax_err;
+	if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
 	goto chk_end;
   }
   
   if(PG_IS_IDENT("for")){
     pg_OMP_pragma = OMP_FOR;
     pg_get_token();
-    if((pg_OMP_list = parse_OMP_clause()) == NULL) goto syntax_err;
+    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
     goto chk_end;
   }
 
   if(PG_IS_IDENT("sections")){
     pg_OMP_pragma = OMP_SECTIONS;
     pg_get_token();
-    if((pg_OMP_list = parse_OMP_clause()) == NULL) goto syntax_err;
+    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
     goto chk_end;
   }
 
   if(PG_IS_IDENT("single")){
     pg_OMP_pragma = OMP_SINGLE;
     pg_get_token();
-    if((pg_OMP_list = parse_OMP_clause()) == NULL)  goto syntax_err;
+    if((pg_OMP_list = parse_OMP_clauses()) == NULL)  goto syntax_err;
     goto chk_end;
   }
 
@@ -147,31 +186,31 @@ int parse_OMP_pragma()
     goto chk_end;
   }
   
-    if(PG_IS_IDENT("atomic")){
-	pg_OMP_pragma = OMP_ATOMIC;
-	ret = PRAGMA_PREFIX;
-	pg_get_token();
-	goto chk_end;
-    }
+  if(PG_IS_IDENT("atomic")){
+      pg_OMP_pragma = OMP_ATOMIC;
+      ret = PRAGMA_PREFIX;
+      pg_get_token();
+      goto chk_end;
+  }
 
-    if(PG_IS_IDENT("flush")){
-	pg_OMP_pragma = OMP_FLUSH;
-	pg_get_token();
-	if(pg_tok == '('){
-	    if((pg_OMP_list = parse_OMP_namelist()) == NULL) goto syntax_err;
-	} else pg_OMP_list = NULL;
-	ret= PRAGMA_EXEC;
-	goto chk_end;
-    }
+  if(PG_IS_IDENT("flush")){
+      pg_OMP_pragma = OMP_FLUSH;
+      pg_get_token();
+      if(pg_tok == '('){
+	  if((pg_OMP_list = parse_OMP_namelist()) == NULL) goto syntax_err;
+      } else pg_OMP_list = NULL;
+      ret= PRAGMA_EXEC;
+      goto chk_end;
+  }
 
-    if(PG_IS_IDENT("threadprivate")){
-	pg_OMP_pragma = OMP_THREADPRIVATE;
-	pg_get_token();
-	if((pg_OMP_list = parse_OMP_namelist()) == NULL) goto syntax_err;
-	ret = PRAGMA_EXEC;
-	goto chk_end;
-    }
-    addError(NULL,"OMP:unknown OMP directive, '%s'",pg_tok_buf);
+  if(PG_IS_IDENT("threadprivate")){
+      pg_OMP_pragma = OMP_THREADPRIVATE;
+      pg_get_token();
+      if((pg_OMP_list = parse_OMP_namelist()) == NULL) goto syntax_err;
+      ret = PRAGMA_EXEC;
+      goto chk_end;
+  }
+  addError(NULL,"OMP:unknown OMP directive, '%s'",pg_tok_buf);
  syntax_err:
     return 0;
 
@@ -180,7 +219,7 @@ int parse_OMP_pragma()
     return ret;
 }
 
-static CExpr* parse_OMP_clause()
+static CExpr* parse_OMP_clauses()
 {
   CExpr *args,*v,*c;
   int r = 0;
@@ -218,9 +257,11 @@ static CExpr* parse_OMP_clause()
 	    pg_get_token();
 	    if(pg_tok != PG_IDENT) goto syntax_err;
 	    if(PG_IS_IDENT("shared")) 
-	      r = OMP_DEFAULT_SHARED;
+		r = OMP_DEFAULT_SHARED;
+	    else if(PG_IS_IDENT("private")) 
+		r = OMP_DEFAULT_PRIVATE;
 	    else if(PG_IS_IDENT("none"))
-	      r = OMP_DEFAULT_NONE;
+		r = OMP_DEFAULT_NONE;
 	    else goto syntax_err;
 	    pg_get_token();
 	    if(pg_tok != ')') goto syntax_err;
@@ -245,7 +286,9 @@ static CExpr* parse_OMP_clause()
 	    else if(PG_IS_IDENT("guided")) r = (int)OMP_SCHED_GUIDED;
 	    else if(PG_IS_IDENT("runtime")) r = (int)OMP_SCHED_RUNTIME;
 	    else if(PG_IS_IDENT("affinity")) r = (int)OMP_SCHED_AFFINITY;
-	    else goto syntax_err;
+	    else {
+		addError(NULL,"unknown schedule method '%s'",pg_tok_buf);
+	    }
 	    pg_get_token();
 
 	    if(pg_tok == ','){
@@ -263,6 +306,14 @@ static CExpr* parse_OMP_clause()
 	} else if(PG_IS_IDENT("nowait")){
 	    pg_get_token();
 	    c = OMP_PG_LIST(OMP_DIR_NOWAIT,NULL);
+	} else if(PG_IS_IDENT("num_threads")){
+	    pg_get_token();
+	    if(pg_tok != '(') goto syntax_err;
+	    pg_get_token();
+	    if((v = pg_parse_expr()) == NULL) goto syntax_err;
+	    if(pg_tok != ')') goto syntax_err;
+	    pg_get_token();
+	    c = OMP_PG_LIST(OMP_DIR_NUM_THREADS,v);
 	} else {
 	  addError(NULL,"unknown OMP directive clause '%s'",pg_tok_buf);
 	    goto syntax_err;
@@ -549,7 +600,7 @@ static void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel,
 	    }
 	    v = compile_expression(EXPR_ARG2(c));
 	    pclause = exprListAdd(pclause,
-					list2(LIST,EXPR_ARG1(c),v));
+				  list2(LIST,EXPR_ARG1(c),v));
 	    break;
 
 	case OMP_DATA_PRIVATE:
@@ -670,53 +721,3 @@ static CExpr* compile_OMP_name_list(expr x)
 }
 
 #endif
-
-char *ompDirectiveName(int c)
-{
-  switch(c){
-  case OMP_PARALLEL:  return "PARALLEL";
-  case OMP_FOR: return "FOR";
-  case OMP_SECTIONS: return "SECTIONS";
-  case OMP_SECTION: return "SECTION";
-  case OMP_SINGLE: return "SINGLE";
-  case OMP_MASTER: return "MASTER";
-  case OMP_CRITICAL: return "CRITICAL";
-  case OMP_BARRIER: return "BARRIER";
-  case OMP_ATOMIC: return "ATOMIC";
-  case OMP_FLUSH:return "FLUSH";
-  case OMP_ORDERED:return "ORDERED";
-  case OMP_THREADPRIVATE:return "THREADPRIVATE";
-  case OMP_PARALLEL_FOR:return "PARALLEL_FOR";
-  case OMP_PARALLEL_SECTIONS:return "PARALLEL_SECTIONS";
-  default: return "OMP???";
-  }
-}
-
-char *ompClauseName(int c)
-{
-  switch(c){
-  case OMP_DATA_DEFAULT: return "DATA_DEFAULT";
-  case OMP_DATA_PRIVATE: return "DATA_PRIVATE";
-  case OMP_DATA_SHARED: return "DATA_SHARED";
-  case OMP_DATA_FIRSTPRIVATE: return "DATA_FIRSTPRIVATE";
-  case OMP_DATA_LASTPRIVATE: return "DATA_LASTPRIVATE";
-  case OMP_DATA_COPYIN: return "DATA_COPYIN";
-
-  case OMP_DATA_REDUCTION_PLUS: return "DATA_REDUCTION_PLUS";
-  case OMP_DATA_REDUCTION_MINUS: return "DATA_REDUCTION_MINUS";
-  case OMP_DATA_REDUCTION_MUL: return "DATA_REDUCTION_MUL";
-  case OMP_DATA_REDUCTION_BITAND: return "DATA_REDUCTION_BITAND";
-  case OMP_DATA_REDUCTION_BITOR: return "DATA_REDUCTION_BITOR";
-  case OMP_DATA_REDUCTION_BITXOR: return "DATA_REDUCTION_BITXOR";
-  case OMP_DATA_REDUCTION_LOGAND: return "DATA_REDUCTION_LOGAND";
-  case OMP_DATA_REDUCTION_LOGOR: return "DATA_REDUCTION_LOGOR";
-  case OMP_DATA_REDUCTION_MIN: return "DATA_REDUCTION_MIN";
-  case OMP_DATA_REDUCTION_MAX: return "DATA_REDUCTION_MAX";
-
-  case OMP_DIR_ORDERED: return "DIR_ORDERED";
-  case OMP_DIR_IF: return "DIR_IF";
-  case OMP_DIR_NOWAIT: return "DIR_NOWAIT";
-  case OMP_DIR_SCHEDULE: return "DIR_SCHEDULE";
-  default:  return "???OMP???";
-  }
-}

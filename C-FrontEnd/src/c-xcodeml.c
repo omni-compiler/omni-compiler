@@ -13,7 +13,14 @@
 #include <wchar.h>
 #include "c-comp.h"
 #include "c-option.h"
+
+#include "c-xcodeml.h"
 #include "c-omp.h"
+#include "c-xmp.h"
+#include "c-acc.h"
+
+void outxTag1(FILE *fp, int indent, CExpr *expr, const char *tag,
+                        int xattrFlag);
 
 #define MAX_TYPEID_SIZE     256
 
@@ -25,7 +32,6 @@
 #define XATTR_LINENO            (1 << 5)
 #define XATTR_IS_GCCEXTENSION   (1 << 6)
 #define XATTR_COMMON            (XATTR_IS_MODIFIED|XATTR_IS_GCCSYNTAX)
-
 
 static const char   *s_CBasicTypeEnumXcodes[] = CBasicTypeEnumXcodeDef;
 static int          s_tidSeqBasicType = 0;
@@ -40,65 +46,19 @@ static int          s_tidSeqCoarray = 0;
 #define CSYMBOLS_GLOBAL (1 << 0)
 #define CSYMBOLS_PARAM  (1 << 1)
 
-PRIVATE_STATIC void outxPrint(FILE *fp, int indent, const char *fmt, ...);
-PRIVATE_STATIC void outxTagOnly(FILE *fp, int indent, const char *tag, int xattrFlag);
-PRIVATE_STATIC void outxTag(FILE *fp, int indent, CExpr *expr, const char *tag, int xattrFlag,
-                        const char *attrFmt, ...);
-PRIVATE_STATIC void outxTag1(FILE *fp, int indent, CExpr *expr, const char *tag,
-                        int xattrFlag);
-PRIVATE_STATIC void outxTagClose(FILE *fp, int indent, const char *tag);
-PRIVATE_STATIC void outxTagCloseNoIndent(FILE *fp, const char *tag);
-PRIVATE_STATIC void outxContext(FILE *fp, int indent, CExpr *expr);
-PRIVATE_STATIC void outxContextWithTag(FILE *fp, int indent, CExpr *expr, const char *tag);
-PRIVATE_STATIC void outxContext(FILE *fp, int indent, CExpr *expr);
-PRIVATE_STATIC void outxChildren(FILE *fp, int indent, CExpr *expr);
-PRIVATE_STATIC void outxChildrenWithTag(FILE *fp, int indent, CExpr *expr, const char *tag);
-PRIVATE_STATIC void outxSymbols(FILE *fp, int indent, CSymbolTable *symTab, int symbolsFlags);
-PRIVATE_STATIC void outxSymbolsAndDecls(FILE *fp, int indent, CExpr *expr, int symbolsFlags);
-PRIVATE_STATIC void outxTypeTable(FILE *fp, int indent);
-PRIVATE_STATIC void outxBody(FILE *fp, int indent, CExpr *stmtsAndDecls);
-PRIVATE_STATIC const char* getScope(CExprOfSymbol *sym);
+void outx_ARRAY_REF2(FILE*, int, CExprOfBinaryNode*);
+void outx_COARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *expr);
+void outx_GCC_BLTIN_OFFSETOF(FILE *fp, int indent, CExprOfBinaryNode *expr);
+void outx_GCC_REALPART(FILE *fp, int indent, CExpr *expr);
+void outx_GCC_IMAGPART(FILE *fp, int indent, CExpr *expr);
+void outx_GCC_ASM_STMT(FILE *fp, int indent, CExprOfBinaryNode *expr);
+void outx_GCC_ASM_EXPR(FILE *fp, int indent, CExpr *expr);
+void outx_GCC_ASM_EXPR_asAsmDef(FILE *fp, int indent, CExpr *expr);
+void outx_GCC_ASM_OPE(FILE *fp, int indent, CExpr *expr);
 
-PRIVATE_STATIC void outx_CHAR_CONST(FILE *fp, int indent, CExprOfCharConst *expr);
-PRIVATE_STATIC void outx_STRING_CONST(FILE *fp, int indent, CExprOfStringConst *expr);
-PRIVATE_STATIC void outx_NUMBER_CONST(FILE *fp, int indent, CExprOfNumberConst *expr);
-PRIVATE_STATIC void outx_IDENT(FILE *fp, int indent, CExprOfSymbol *expr);
-PRIVATE_STATIC void outx_EXT_DEFS(FILE *fp, int indent, CExpr *expr);
-PRIVATE_STATIC void outx_FUNC_DEF(FILE *fp, int indent, CExpr *expr);
-PRIVATE_STATIC void outx_DIRECTIVE(FILE *fp, int indent, CExprOfDirective *expr);
-PRIVATE_STATIC void outx_INIT_DECL(FILE *fp, int indent, CExpr *expr);
-PRIVATE_STATIC void outx_COMPOUND_LITERAL(FILE *fp, int indent, CExpr *expr);
-PRIVATE_STATIC void outx_ASSIGN(FILE *fp, int indent, CExpr *expr);
-PRIVATE_STATIC void outx_EXPRS(FILE *fp, int indent, CExpr *expr);
-PRIVATE_STATIC void outx_COMP_STMT(FILE *fp, int indent, CExpr *expr);
-PRIVATE_STATIC void outx_IF_STMT(FILE *fp, int indent, CExpr *expr);
-PRIVATE_STATIC void outx_WHILE_STMT(FILE *fp, int indent, CExprOfBinaryNode *expr);
-PRIVATE_STATIC void outx_DO_STMT(FILE *fp, int indent, CExprOfBinaryNode *expr);
-PRIVATE_STATIC void outx_FOR_STMT(FILE *fp, int indent, CExpr *expr);
-PRIVATE_STATIC void outx_SWITCH_STMT(FILE *fp, int indent, CExprOfBinaryNode *expr);
-PRIVATE_STATIC void outx_CASE_LABEL(FILE *fp, int indent, CExprOfBinaryNode *expr);
-PRIVATE_STATIC void outx_FUNCTION_CALL(FILE *fp, int indent, CExprOfBinaryNode *expr);
-PRIVATE_STATIC void outxBuiltinOpCall(FILE *fp, int indent, const char *name, CExpr *typeExpr, CExpr *args);
-PRIVATE_STATIC void outx_TYPE_DESC(FILE *fp, int indent, CExprOfTypeDesc *expr);
-PRIVATE_STATIC void outx_INITIALIZERS(FILE *fp, int indent, CExpr *expr);
-PRIVATE_STATIC void outx_CAST(FILE *fp, int indent, CExprOfBinaryNode *expr);
-PRIVATE_STATIC void outx_POINTS_AT(FILE *fp, int indent, CExprOfBinaryNode *expr);
-PRIVATE_STATIC void outx_ARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *expr);
-PRIVATE_STATIC void outx_SUBARRAY_REF(FILE*, int, CExprOfBinaryNode*);
-PRIVATE_STATIC void outx_ARRAY_REF2(FILE*, int, CExprOfBinaryNode*);
-PRIVATE_STATIC void outx_COARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *expr);
-PRIVATE_STATIC void outx_GCC_BLTIN_OFFSETOF(FILE *fp, int indent, CExprOfBinaryNode *expr);
-PRIVATE_STATIC void outx_GCC_REALPART(FILE *fp, int indent, CExpr *expr);
-PRIVATE_STATIC void outx_GCC_IMAGPART(FILE *fp, int indent, CExpr *expr);
-PRIVATE_STATIC void outx_GCC_ASM_STMT(FILE *fp, int indent, CExprOfBinaryNode *expr);
-PRIVATE_STATIC void outx_GCC_ASM_EXPR(FILE *fp, int indent, CExpr *expr);
-PRIVATE_STATIC void outx_GCC_ASM_EXPR_asAsmDef(FILE *fp, int indent, CExpr *expr);
-PRIVATE_STATIC void outx_GCC_ASM_OPE(FILE *fp, int indent, CExpr *expr);
+void out_PRAGMA_COMP_STMT(FILE *fp, int indent, CExpr* expr);
 
-PRIVATE_STATIC void out_PRAGMA_COMP_STMT(FILE *fp, int indent, CExpr* expr);
-PRIVATE_STATIC void outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause);
-
-PRIVATE_STATIC void
+void
 xstrcat(char **p, const char *s)
 {
     int len = strlen(s);
@@ -107,7 +67,7 @@ xstrcat(char **p, const char *s)
 }
 
 
-PRIVATE_STATIC char*
+char*
 allocXmlEscapedStr(const char *s)
 {
     const char *p = s;
@@ -166,7 +126,7 @@ allocXmlEscapedStr(const char *s)
 }
 
 
-PRIVATE_STATIC void
+void
 outxEscapedStr(FILE *fp, const char *s)
 {
     char *xs = allocXmlEscapedStr(s);
@@ -175,7 +135,7 @@ outxEscapedStr(FILE *fp, const char *s)
 }
 
 
-PRIVATE_STATIC const char*
+const char*
 getScope(CExprOfSymbol *sym)
 {
     const char *scope;
@@ -195,7 +155,7 @@ getScope(CExprOfSymbol *sym)
 }
 
 
-PRIVATE_STATIC void
+void
 outxIndent(FILE *fp, int indent)
 {
     for(int i = 0; i < indent; ++i)
@@ -203,7 +163,7 @@ outxIndent(FILE *fp, int indent)
 }
 
 
-PRIVATE_STATIC void
+void
 outxPrint(FILE *fp, int indent, const char *fmt, ...)
 {
     outxIndent(fp, indent);
@@ -214,7 +174,7 @@ outxPrint(FILE *fp, int indent, const char *fmt, ...)
 }
 
 
-PRIVATE_STATIC void
+void
 outxContextWithTag(FILE *fp, int indent, CExpr *expr, const char *tag)
 {
     if(EXPR_ISNULL(expr)) {
@@ -227,7 +187,7 @@ outxContextWithTag(FILE *fp, int indent, CExpr *expr, const char *tag)
 }
 
 
-PRIVATE_STATIC void
+void
 voutxTag(FILE *fp, int indent, CExpr *expr, const char *tag, int xattrFlag,
     const char *attrFmt, va_list args)
 {
@@ -281,7 +241,7 @@ voutxTag(FILE *fp, int indent, CExpr *expr, const char *tag, int xattrFlag,
 }
 
 
-PRIVATE_STATIC void
+void
 outxTag(FILE *fp, int indent, CExpr *expr, const char *tag, int xattrFlag,
     const char *attrFmt, ...)
 {
@@ -296,21 +256,21 @@ outxTag(FILE *fp, int indent, CExpr *expr, const char *tag, int xattrFlag,
 }
 
 
-PRIVATE_STATIC void
+void
 outxTagOnly(FILE *fp, int indent, const char *tag, int xattrFlag)
 {
     outxTag(fp, indent, NULL, tag, xattrFlag, NULL);
 }
 
 
-PRIVATE_STATIC void
+void
 outxTag1(FILE *fp, int indent, CExpr *expr, const char *tag, int xattrFlag)
 {
     outxTag(fp, indent, expr, tag, xattrFlag, NULL);
 }
 
 
-PRIVATE_STATIC void
+void
 outxTagForStmt(FILE *fp, int indent, CExpr *expr, const char *tag, int addXattrFlag,
     const char *attrFmt, ...)
 {
@@ -329,7 +289,7 @@ outxTagForStmt(FILE *fp, int indent, CExpr *expr, const char *tag, int addXattrF
 }
 
 
-PRIVATE_STATIC void
+void
 outxTagForExpr(FILE *fp, int indent, CExpr *expr, const char *tag, int addXattrFlag,
     const char *attrFmt, ...)
 {
@@ -348,21 +308,21 @@ outxTagForExpr(FILE *fp, int indent, CExpr *expr, const char *tag, int addXattrF
 }
 
 
-PRIVATE_STATIC void
+void
 outxTagClose(FILE *fp, int indent, const char *tag)
 {
     outxPrint(fp, indent, "</%s>\n", tag);
 }
 
 
-PRIVATE_STATIC void
+void
 outxTagCloseNoIndent(FILE *fp, const char *tag)
 {
     fprintf(fp, "</%s>\n", tag);
 }
 
 
-PRIVATE_STATIC void
+void
 outxChildren(FILE *fp, int indent, CExpr *expr)
 {
     if(expr == NULL)
@@ -375,7 +335,7 @@ outxChildren(FILE *fp, int indent, CExpr *expr)
 }
 
 
-PRIVATE_STATIC void
+void
 outxChildrenForExpr(FILE *fp, int indent, CExpr *expr, const char *tag)
 {
     if(hasChildren(expr)) {
@@ -388,7 +348,7 @@ outxChildrenForExpr(FILE *fp, int indent, CExpr *expr, const char *tag)
 }
 
 
-PRIVATE_STATIC void
+void
 outxChildrenForStmt(FILE *fp, int indent, CExpr *expr, const char *tag)
 {
     if(hasChildren(expr)) {
@@ -401,7 +361,7 @@ outxChildrenForStmt(FILE *fp, int indent, CExpr *expr, const char *tag)
 }
 
 
-PRIVATE_STATIC void
+void
 outxChildrenWithTag(FILE *fp, int indent, CExpr *expr, const char *tag)
 {
     if(hasChildren(expr)) {
@@ -414,7 +374,7 @@ outxChildrenWithTag(FILE *fp, int indent, CExpr *expr, const char *tag)
 }
 
 
-PRIVATE_STATIC void
+void
 outxContext(FILE *fp, int indent, CExpr *expr)
 {
     if(expr == NULL)
@@ -651,7 +611,7 @@ outxContext(FILE *fp, int indent, CExpr *expr)
 }
 
 
-PRIVATE_STATIC void
+void
 outxGccAttr(FILE *fp, int indent, CExpr *expr, CGccAttrKindEnum gak)
 {
     CExpr *attrs = NULL;
@@ -689,7 +649,7 @@ outxGccAttr(FILE *fp, int indent, CExpr *expr, CGccAttrKindEnum gak)
 }
 
 
-PRIVATE_STATIC void
+void
 outxGccAttrVarOrFunc(FILE *fp, int indent, CExprOfTypeDesc *td, CGccAttrKindEnum gak)
 {
     CExpr *attrs = exprList(EC_GCC_ATTRS);
@@ -712,7 +672,7 @@ outxGccAttrVarOrFunc(FILE *fp, int indent, CExprOfTypeDesc *td, CGccAttrKindEnum
 #define CLOSE_NO_CHILD  1
 #define CLOSE_CHILD     2
 
-PRIVATE_STATIC void
+void
 outxTypeDescClosureAndGccAttr(
     FILE *fp, int indent, CExprOfTypeDesc *td, CGccAttrKindEnum gak,
     const char *tag, int hasGA, int needsClosure)
@@ -738,7 +698,7 @@ outxTypeDescClosureAndGccAttr(
 }
 
 
-PRIVATE_STATIC void
+void
 outxStructOrUnionType(FILE *fp, int indent, CExprOfTypeDesc *typeDesc, const char *tag, int hasGA)
 {
     CExpr *memDecls = getMemberDeclsExpr(typeDesc);
@@ -820,7 +780,7 @@ outxStructOrUnionType(FILE *fp, int indent, CExprOfTypeDesc *typeDesc, const cha
 }
 
 
-PRIVATE_STATIC void
+void
 outxEnumType(FILE *fp, int indent, CExprOfTypeDesc *typeDesc, const char *tag, int hasGA)
 {
     CExpr *enums = exprListNextNData(typeDesc->e_typeExpr, 2);
@@ -857,7 +817,7 @@ outxEnumType(FILE *fp, int indent, CExprOfTypeDesc *typeDesc, const char *tag, i
 }
 
 
-PRIVATE_STATIC void
+void
 outxArrayType(FILE *fp, int indent, CExprOfTypeDesc *td, const char *tag, int hasGA, const char *refId)
 {
     if(td->e_len.eln_isStatic)
@@ -901,7 +861,7 @@ outxArrayType(FILE *fp, int indent, CExprOfTypeDesc *td, const char *tag, int ha
 }
 
 
-PRIVATE_STATIC void
+void
 outxFuncParams(FILE *fp, int indent, CExpr *params)
 {
     const char *paramTag = "params";
@@ -933,7 +893,7 @@ outxFuncParams(FILE *fp, int indent, CExpr *params)
 }
 
 
-PRIVATE_STATIC void
+void
 outxFuncType(FILE *fp, int indent, CExprOfTypeDesc *typeDesc, const char *tag, int hasGA)
 {
     fprintf(fp, " return_type=\"%s\"", EXPR_T(typeDesc->e_typeExpr)->e_typeId);
@@ -953,7 +913,7 @@ outxFuncType(FILE *fp, int indent, CExprOfTypeDesc *typeDesc, const char *tag, i
 }
 
 
-PRIVATE_STATIC void
+void
 outxTypeDesc(FILE *fp, int indent, CExprOfTypeDesc *td)
 {
     if(td->e_isDuplicated || td->e_isMarked ||
@@ -1094,7 +1054,7 @@ outxTypeDesc(FILE *fp, int indent, CExprOfTypeDesc *td)
 }
 
 
-PRIVATE_STATIC CExprOfTypeDesc*
+CExprOfTypeDesc*
 getDuplicatedType(CExprOfTypeDesc *td)
 {
     if(td == NULL)
@@ -1305,7 +1265,7 @@ setTypeId(CExprOfTypeDesc *td)
 }
 
 
-PRIVATE_STATIC void
+void
 setTypeIds()
 {
     CCOL_DListNode *ite;
@@ -1332,7 +1292,7 @@ setTypeIds()
 }
 
 
-PRIVATE_STATIC void
+void
 outxTypeDescByKind(FILE *fp, int indent, CTypeDescKindEnum tdKind)
 {
     CCOL_DListNode *ite;
@@ -1344,7 +1304,7 @@ outxTypeDescByKind(FILE *fp, int indent, CTypeDescKindEnum tdKind)
 }
 
 
-PRIVATE_STATIC void
+void
 outxTypeTable(FILE *fp, int indent)
 {
     outxPrint(fp, indent, "<typeTable>\n");
@@ -1364,7 +1324,7 @@ outxTypeTable(FILE *fp, int indent)
 }
 
 
-PRIVATE_STATIC const char*
+const char*
 getSclassOfFunc(CExprOfSymbol* sym, int isGlobal)
 {
     CExprOfTypeDesc *td = EXPRS_TYPE(sym);
@@ -1381,7 +1341,7 @@ getSclassOfFunc(CExprOfSymbol* sym, int isGlobal)
 }
 
 
-PRIVATE_STATIC const char*
+const char*
 getSclassOfVar(CExprOfSymbol* sym, int isGlobal)
 {
     CExprOfTypeDesc *td = EXPRS_TYPE(sym);
@@ -1399,7 +1359,7 @@ getSclassOfVar(CExprOfSymbol* sym, int isGlobal)
 }
 
 
-PRIVATE_STATIC int
+int
 compareSymbolOrder(const void *v1, const void *v2)
 {
     CExprOfSymbol *s1 = *(CExprOfSymbol**)v1;
@@ -1410,7 +1370,7 @@ compareSymbolOrder(const void *v1, const void *v2)
 }
 
 
-PRIVATE_STATIC void
+void
 collectSymbols(CExprOfSymbol **syms, CCOL_HashTable *ht, int *idx)
 {
     CCOL_HashEntry *he;
@@ -1426,7 +1386,7 @@ collectSymbols(CExprOfSymbol **syms, CCOL_HashTable *ht, int *idx)
 }
 
 
-PRIVATE_STATIC void
+void
 outxSymbols0(FILE *fp, int indent, CSymbolTable *symTab, int symbolsFlags)
 {
     int sz = CCOL_HT_SIZE(&symTab->stb_identGroup) +
@@ -1554,7 +1514,7 @@ outxSymbols0(FILE *fp, int indent, CSymbolTable *symTab, int symbolsFlags)
 }
 
 
-PRIVATE_STATIC void
+void
 outxSymbols(FILE *fp, int indent, CSymbolTable *symTab, int symbolsFlags)
 {
     const char *tag = ((symbolsFlags & CSYMBOLS_GLOBAL) > 0) ?
@@ -1578,7 +1538,7 @@ outxSymbols(FILE *fp, int indent, CSymbolTable *symTab, int symbolsFlags)
 }
 
 
-PRIVATE_STATIC void
+void
 outxDeclarations(FILE *fp, int indent, CExpr *stmts)
 {
     outxPrint(fp, indent, "<declarations");
@@ -1613,7 +1573,7 @@ outxDeclarations(FILE *fp, int indent, CExpr *stmts)
 }
 
 
-PRIVATE_STATIC void
+void
 outxGlobalDeclarations(FILE *fp, int indent, CExpr *extDefs)
 {
     if(EXPR_L_SIZE(extDefs) == 0)
@@ -1662,7 +1622,7 @@ outxGlobalDeclarations(FILE *fp, int indent, CExpr *extDefs)
 }
 
 
-PRIVATE_STATIC void
+void
 outxSymbolsAndDecls(FILE *fp, int indent, CExpr *extDefsOrStmts, int symbolsFlags)
 {
     outxSymbols(fp, indent, EXPR_C(extDefsOrStmts)->e_symTab, symbolsFlags);
@@ -1674,7 +1634,7 @@ outxSymbolsAndDecls(FILE *fp, int indent, CExpr *extDefsOrStmts, int symbolsFlag
 }
 
 
-PRIVATE_STATIC void
+void
 outxBody(FILE *fp, int indent, CExpr *stmts)
 {
     const char *bodyTag = "body";
@@ -1686,7 +1646,7 @@ outxBody(FILE *fp, int indent, CExpr *stmts)
 }
 
 
-PRIVATE_STATIC void
+void
 outxTagForConstant(FILE *fp, int indent, CExpr *e, const char *tag,
     const char *typeId, const char *val)
 {
@@ -1697,7 +1657,7 @@ outxTagForConstant(FILE *fp, int indent, CExpr *e, const char *tag,
 }
 
 
-PRIVATE_STATIC void
+void
 outx_CHAR_CONST(FILE *fp, int indent, CExprOfCharConst *cc)
 {
     assertExprCode((CExpr*)cc, EC_CHAR_CONST);
@@ -1720,7 +1680,7 @@ outx_CHAR_CONST(FILE *fp, int indent, CExprOfCharConst *cc)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_STRING_CONST(FILE *fp, int indent, CExprOfStringConst *sc)
 {
     assertExprCode((CExpr*)sc, EC_STRING_CONST);
@@ -1735,7 +1695,7 @@ outx_STRING_CONST(FILE *fp, int indent, CExprOfStringConst *sc)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_NUMBER_CONST(FILE *fp, int indent, CExprOfNumberConst *nc)
 {
     assertExprCode((CExpr*)nc, EC_NUMBER_CONST);
@@ -1829,7 +1789,7 @@ outx_NUMBER_CONST(FILE *fp, int indent, CExprOfNumberConst *nc)
 }
 
 
-PRIVATE_STATIC int
+int
 isAddrOfChild(CExpr *expr, CExpr *parentExpr, CExpr **outParentExpr)
 {
     assertExpr(expr, parentExpr);
@@ -1843,7 +1803,7 @@ isAddrOfChild(CExpr *expr, CExpr *parentExpr, CExpr **outParentExpr)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_IDENT(FILE *fp, int indent, CExprOfSymbol *sym)
 {
     CExprOfTypeDesc *td = EXPRS_TYPE(sym);
@@ -1907,10 +1867,12 @@ outx_IDENT(FILE *fp, int indent, CExprOfSymbol *sym)
     case ST_MEMBER:
     case ST_TAG:
     case ST_GCC_ASM_IDENT:
-    case ST_UNDEF:
     case ST_END:
         assertExpr((CExpr*)sym, 0);
         ABORT();
+    case ST_UNDEF: /* don't care */
+	tag = "Var"; // default
+	break;
     }
 
     outxPrint(fp, indent, "<%s", tag);
@@ -1924,7 +1886,7 @@ outx_IDENT(FILE *fp, int indent, CExprOfSymbol *sym)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_EXT_DEFS(FILE *fp, int indent, CExpr *expr)
 {
     fprintf(fp, "<XcodeProgram");
@@ -1954,7 +1916,7 @@ outx_EXT_DEFS(FILE *fp, int indent, CExpr *expr)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_FUNC_DEF(FILE *fp, int indent, CExpr *funcDef)
 {
     CExprOfBinaryNode *declr = EXPR_B(exprListHeadData(funcDef));
@@ -1973,7 +1935,7 @@ outx_FUNC_DEF(FILE *fp, int indent, CExpr *funcDef)
     outxTagClose(fp, indent, funcDefTag);
 }
 
-PRIVATE_STATIC void
+void
 outx_DIRECTIVE(FILE *fp, int indent, CExprOfDirective *directive)
 {
     const char *textTag = "text";
@@ -1997,54 +1959,25 @@ outx_DIRECTIVE(FILE *fp, int indent, CExprOfDirective *directive)
     }
 }
 
-PRIVATE_STATIC void
+void
 out_PRAGMA_COMP_STMT(FILE *fp, int indent, CExpr* expr)
 {
     CExprOfList *body = (CExprOfList *)expr;
-    const char *ompPragmaTag = "OMPPragma";
-
-    /* only for OpenMP */
     CExprOfList *clauseList = (CExprOfList *)body->e_aux_info;
-    int indent1 = indent + 1;
-    CExprOfList *namelist;
-    CCOL_DListNode *ite;
-    outxTagForStmt(fp, indent,(CExpr*)clauseList, ompPragmaTag,0, NULL);
-    outxPrint(fp,indent1,"<string>%s</string>\n",
-	      ompDirectiveName(clauseList->e_aux));
-    namelist = (CExprOfList *)exprListHeadData((CExpr *)clauseList);
-    if(namelist != NULL){
-	EXPR_FOREACH(ite, namelist){
-	    CExpr *node = EXPR_L_DATA(ite);
-	    outx_OMP_Clause(fp,indent1,(CExprOfList *)node);
-	}
-    }
-    if(EXPR_L_SIZE(expr) != 0) outxChildren(fp,indent1,expr);
-    outxTagClose(fp, indent,ompPragmaTag);
+    int code = clauseList->e_aux;
+    
+    if(IS_OMP_PRAGMA_CODE(code)) 
+	out_OMP_PRAGMA(fp,indent,code,expr);
+    else if(IS_XMP_PRAGMA_CODE(code))
+	out_XMP_PRAGMA(fp,indent,code,expr);
+    else if(IS_ACC_PRAGMA_CODE(code))
+	out_ACC_PRAGMA(fp,indent,code,expr);
+    else
+	addFatal(NULL, "unknown PRAGMA CODE");
 }
 
 
-PRIVATE_STATIC void
-outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
-{
-  int indent1 = indent+1;
-  CCOL_DListNode *ite;
-  outxPrint(fp,indent,"<list>\n");
-  outxPrint(fp,indent1,"<string>%s</string>\n",
-	    ompClauseName(clause->e_aux));
-  if(EXPR_L_SIZE(clause) != 0){
-    outxPrint(fp,indent1,"<list>\n");
-    EXPR_FOREACH(ite, clause) {
-      CExpr *node = EXPR_L_DATA(ite);
-      // outx_IDENT(fp,indent1+1,(CExprOfSymbol *)node);
-      outxPrint(fp,indent1+1,"<Var>%s</Var>\n",
-	       ((CExprOfSymbol *)node)->e_symName);
-    }
-    outxPrint(fp,indent1,"</list>\n");
-  }
-  outxPrint(fp,indent,"</list>\n");
-}
-
-PRIVATE_STATIC void
+void
 outx_INIT_DECL(FILE *fp, int indent, CExpr *initDecl)
 {
     CExprOfBinaryNode *declr = EXPR_B(exprListNextNData(initDecl, 0));
@@ -2084,7 +2017,7 @@ outx_INIT_DECL(FILE *fp, int indent, CExpr *initDecl)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_COMPOUND_LITERAL(FILE *fp, int indent, CExpr *expr)
 {
     CExprOfTypeDesc *td = EXPRS_TYPE(expr);
@@ -2100,7 +2033,7 @@ outx_COMPOUND_LITERAL(FILE *fp, int indent, CExpr *expr)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_ASSIGN(FILE *fp, int indent, CExpr *expr)
 {
   //    const char *assignTag = isCoArrayAssign(expr) ? "coArrayAssignExpr" : "assignExpr";
@@ -2109,7 +2042,7 @@ outx_ASSIGN(FILE *fp, int indent, CExpr *expr)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_EXPRS(FILE *fp, int indent, CExpr *expr)
 {
     CCOL_DListNode *ite;
@@ -2135,7 +2068,7 @@ outx_EXPRS(FILE *fp, int indent, CExpr *expr)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_COMP_STMT(FILE *fp, int indent, CExpr *expr)
 {
     const char *compStmtTag = "compoundStatement";
@@ -2147,7 +2080,7 @@ outx_COMP_STMT(FILE *fp, int indent, CExpr *expr)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_IF_STMT(FILE *fp, int indent, CExpr *stmt)
 {
     CExpr *cond     = exprListNextNData(stmt, 0);
@@ -2167,7 +2100,7 @@ outx_IF_STMT(FILE *fp, int indent, CExpr *stmt)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_WHILE_STMT(FILE *fp, int indent, CExprOfBinaryNode *stmt)
 {
     CExpr *cond = stmt->e_nodes[0];
@@ -2181,7 +2114,7 @@ outx_WHILE_STMT(FILE *fp, int indent, CExprOfBinaryNode *stmt)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_DO_STMT(FILE *fp, int indent, CExprOfBinaryNode *stmt)
 {
     CExpr *body = stmt->e_nodes[0];
@@ -2195,7 +2128,7 @@ outx_DO_STMT(FILE *fp, int indent, CExprOfBinaryNode *stmt)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_FOR_STMT(FILE *fp, int indent, CExpr *stmt)
 {
     CExpr *init = exprListNextNData(stmt, 0);
@@ -2213,7 +2146,7 @@ outx_FOR_STMT(FILE *fp, int indent, CExpr *stmt)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_SWITCH_STMT(FILE *fp, int indent, CExprOfBinaryNode *stmt)
 {
     CExpr *val = stmt->e_nodes[0];
@@ -2227,7 +2160,7 @@ outx_SWITCH_STMT(FILE *fp, int indent, CExprOfBinaryNode *stmt)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_CASE_LABEL(FILE *fp, int indent, CExprOfBinaryNode *stmt)
 {
     CExpr *case1 = stmt->e_nodes[0];
@@ -2248,7 +2181,7 @@ outx_CASE_LABEL(FILE *fp, int indent, CExprOfBinaryNode *stmt)
 }
 
 
-PRIVATE_STATIC void
+void
 outxBuiltinOpCall(FILE *fp, int indent, const char *name, CExpr *typeExpr, CExpr *args)
 {
     const char *builtinOpTag = "builtin_op";
@@ -2259,7 +2192,7 @@ outxBuiltinOpCall(FILE *fp, int indent, const char *name, CExpr *typeExpr, CExpr
 }
 
 
-PRIVATE_STATIC void
+void
 outx_FUNCTION_CALL(FILE *fp, int indent, CExprOfBinaryNode *funcCall)
 {
     CExpr *funcExpr = funcCall->e_nodes[0];
@@ -2280,14 +2213,14 @@ outx_FUNCTION_CALL(FILE *fp, int indent, CExprOfBinaryNode *funcCall)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_TYPE_DESC(FILE *fp, int indent, CExprOfTypeDesc *td)
 {
     outxPrint(fp, indent, "<typeName type=\"%s\"/>\n", td->e_typeId);
 }
 
 
-PRIVATE_STATIC void
+void
 outx_INITIALIZERS(FILE *fp, int indent, CExpr *expr)
 {
     int isDesignated = (EXPR_ISNULL(EXPR_L(expr)->e_symbol) == 0);
@@ -2304,7 +2237,7 @@ outx_INITIALIZERS(FILE *fp, int indent, CExpr *expr)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_CAST(FILE *fp, int indent, CExprOfBinaryNode *castExpr)
 {
     CExpr *expr = castExpr->e_nodes[1];
@@ -2315,7 +2248,7 @@ outx_CAST(FILE *fp, int indent, CExprOfBinaryNode *castExpr)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_POINTS_AT(FILE *fp, int indent, CExprOfBinaryNode *pointsAt)
 {
     CExpr *composExpr = pointsAt->e_nodes[0];
@@ -2351,7 +2284,7 @@ outx_POINTS_AT(FILE *fp, int indent, CExprOfBinaryNode *pointsAt)
 }
 
 
-/* PRIVATE_STATIC void */
+/* void */
 /* outx_ARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef) */
 /* { */
 /*     CExpr *aryExpr = aryRef->e_nodes[0]; */
@@ -2420,7 +2353,7 @@ outx_POINTS_AT(FILE *fp, int indent, CExprOfBinaryNode *pointsAt)
 
 extern unsigned int s_arrayToPointer;
 
-PRIVATE_STATIC void
+void
 outx_ARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
 {
   CExpr *aryExpr = aryRef->e_nodes[0];
@@ -2493,7 +2426,7 @@ outx_ARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_SUBARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
 {
   if (EXPR_CODE((CExpr*)aryRef) != EC_ARRAY_REF){
@@ -2554,7 +2487,7 @@ outx_SUBARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_ARRAY_REF2(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
 {
   if (EXPR_CODE((CExpr*)aryRef) != EC_ARRAY_REF){
@@ -2571,7 +2504,7 @@ outx_ARRAY_REF2(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_COARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
 {
     CExpr *sym = EXPR_B(aryRef)->e_nodes[0];
@@ -2588,7 +2521,7 @@ outx_COARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
 }
 
 
-PRIVATE_STATIC void
+void
 outxOfsMemberDesignator(FILE *fp, int indent, CExprOfBinaryNode *expr)
 {
     const char *gccMemDesigTag = "gccMemberDesignator";
@@ -2614,7 +2547,7 @@ outxOfsMemberDesignator(FILE *fp, int indent, CExprOfBinaryNode *expr)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_GCC_BLTIN_OFFSETOF(FILE *fp, int indent, CExprOfBinaryNode *expr)
 {
     const char *builtinOpTag = "builtin_op";
@@ -2627,7 +2560,7 @@ outx_GCC_BLTIN_OFFSETOF(FILE *fp, int indent, CExprOfBinaryNode *expr)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_GCC_REALPART(FILE *fp, int indent, CExpr *expr)
 {
     const char *builtinOpTag = "builtin_op";
@@ -2636,7 +2569,7 @@ outx_GCC_REALPART(FILE *fp, int indent, CExpr *expr)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_GCC_IMAGPART(FILE *fp, int indent, CExpr *expr)
 {
     const char *builtinOpTag = "builtin_op";
@@ -2645,14 +2578,14 @@ outx_GCC_IMAGPART(FILE *fp, int indent, CExpr *expr)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_GCC_ASM_EXPR(FILE *fp, int indent, CExpr *asmExpr)
 {
     outxChildrenWithTag(fp, indent, asmExpr, "gccAsm");
 }
 
 
-PRIVATE_STATIC void
+void
 outx_GCC_ASM_EXPR_asAsmDef(FILE *fp, int indent, CExpr *asmExpr)
 {
     const char *gccAsmDefTag = "gccAsmDefinition";
@@ -2662,7 +2595,7 @@ outx_GCC_ASM_EXPR_asAsmDef(FILE *fp, int indent, CExpr *asmExpr)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_GCC_ASM_STMT(FILE *fp, int indent, CExprOfBinaryNode *stmt)
 {
     CExpr *volatileExpr = stmt->e_nodes[0];
@@ -2703,7 +2636,7 @@ outx_GCC_ASM_STMT(FILE *fp, int indent, CExprOfBinaryNode *stmt)
 }
 
 
-PRIVATE_STATIC void
+void
 outx_GCC_ASM_OPE(FILE *fp, int indent, CExpr *expr)
 {
     CExpr *match = exprListNextNData(expr, 0);
