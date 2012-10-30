@@ -53,9 +53,12 @@ am_C_Front_OBJECTS = c-parser.$(OBJEXT) c-lexer.$(OBJEXT) \
 	c-expr.$(OBJEXT) c-token.$(OBJEXT) c-exprcode.$(OBJEXT) \
 	c-dump.$(OBJEXT) c-comp.$(OBJEXT) c-reduce.$(OBJEXT) \
 	c-xcodeml.$(OBJEXT) c-const.$(OBJEXT) c-gcctype.$(OBJEXT) \
-	c-option.$(OBJEXT) c-pragma.$(OBJEXT) c-omp-pragma.$(OBJEXT) \
-	c-type.$(OBJEXT) c-convert.$(OBJEXT) ccol-list.$(OBJEXT) \
-	ccol-hash.$(OBJEXT) c-main.$(OBJEXT)
+	c-option.$(OBJEXT) c-type.$(OBJEXT) c-convert.$(OBJEXT) \
+	ccol-list.$(OBJEXT) ccol-hash.$(OBJEXT) c-main.$(OBJEXT) \
+	c-pragma.$(OBJEXT) c-omp-pragma.$(OBJEXT) \
+	c-xmp-pragma.$(OBJEXT) c-acc-pragma.$(OBJEXT) \
+	c-omp-xcodeml.$(OBJEXT) c-xmp-xcodeml.$(OBJEXT) \
+	c-acc-xcodeml.$(OBJEXT)
 C_Front_OBJECTS = $(am_C_Front_OBJECTS)
 C_Front_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
@@ -301,8 +304,10 @@ top_srcdir = @top_srcdir@
 C_Front_SOURCES = \
 	c-parser.y c-lexer.l c-expr.c c-token.c c-exprcode.c \
 	c-dump.c c-comp.c c-reduce.c c-xcodeml.c c-const.c \
-    c-gcctype.c c-option.c c-pragma.c c-omp-pragma.c c-type.c c-convert.c \
-	ccol-list.c ccol-hash.c c-main.c
+	c-gcctype.c c-option.c c-type.c c-convert.c \
+	ccol-list.c ccol-hash.c c-main.c \
+	c-pragma.c c-omp-pragma.c c-xmp-pragma.c c-acc-pragma.c \
+	c-omp-xcodeml.c c-xmp-xcodeml.c c-acc-xcodeml.c
 
 EXTRA_C_Front_SOURCES = c-dbgmain.c
 AM_YFLAGS = -v -d
@@ -388,6 +393,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c-acc-pragma.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c-acc-xcodeml.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c-comp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c-const.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c-convert.Po@am__quote@
@@ -399,6 +406,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c-lexer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c-main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c-omp-pragma.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c-omp-xcodeml.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c-option.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c-parser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c-pragma.Po@am__quote@
@@ -406,6 +414,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c-token.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c-type.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c-xcodeml.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c-xmp-pragma.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c-xmp-xcodeml.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ccol-hash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ccol-list.Po@am__quote@
 
@@ -647,13 +657,32 @@ c-parser.h: c-parser.y
 c-lexer.l: c-cmn.h c-lexyacc.h c-expr.h c-token.h c-parser.h
 c-option.c: c-option.h
 c-gcctype.c: c-gcctype.h
-c-pragma.c: c-pragma.h
-c-omp-pragma.c: c-pragma.h
 c-convert.c: c-expr.h
+c-const.c: c-expr.h c-const.h
+c-comp.c: c-expr.h c-comp.h
+c-option.c: c-expr.h c-option.h
+c-pragma.c: c-pragma.h c-omp.h c-xmp.h c-acc.h
+c-omp-pragma.c: c-pragma.h c-omp.h
+c-xmp-pragma.c: c-pragma.h c-xmp.h
+c-acc-pragma.c: c-pragma.h c-acc.h
+c-omp-pragma.c: c-pragma.h c-omp.h
+c-xmp-pragma.c: c-pragma.h c-xmp.h
+c-acc-pragma.c: c-pragma.h c-acc.h
 c-xcodeml.c: c-expr.h
 c-const.c: c-expr.h c-const.h
 c-comp.c: c-expr.h c-comp.h
 c-option.c: c-expr.h c-option.h
+c-pragma.c: c-pragma.h c-omp.h c-xmp.h c-acc.h
+c-omp-pragma.c: c-pragma.h c-omp.h
+c-xmp-pragma.c: c-pragma.h c-xmp.h
+c-acc-pragma.c: c-pragma.h c-acc.h
+c-omp-pragma.c: c-pragma.h c-omp.h
+c-xmp-pragma.c: c-pragma.h c-xmp.h
+c-acc-pragma.c: c-pragma.h c-acc.h
+c-xcodeml.c: c-expr.h
+c-omp-xcodeml.c: c-expr.h c-omp.h
+c-xmp-xcodeml.c: c-expr.h c-xmp.h
+c-acc-xcodeml.c: c-expr.h c-acc.h
 
 $(C_Front_SOURCES): c-exprcode.h
 
