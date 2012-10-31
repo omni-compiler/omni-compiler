@@ -698,7 +698,11 @@ c-lexer.c : c-lexer.l
 debug: C_debugfront
 
 C_debugfront: $(C_Front_OBJECTS) c-dbgmain.o
-	$(LINK) $(C_Front_LDADD) $(LIBS) c-parser.o c-lexer.o c-expr.o c-token.o c-exprcode.o c-dump.o c-comp.o c-reduce.o c-xcodeml.o c-const.o c-gcctype.o c-option.o c-pragma.o c-omp-pragma.o c-type.o c-convert.o ccol-list.o ccol-hash.o c-dbgmain.o
+	$(LINK) $(C_Front_LDADD) $(LIBS) c-parser.o c-lexer.o c-expr.o \
+	c-token.o c-exprcode.o c-dump.o c-comp.o c-reduce.o c-const.o \
+	c-gcctype.o c-option.o c-type.o c-convert.o ccol-list.o ccol-hash.o \
+	c-dbgmain.o c-pragma.o c-omp-pragma.o c-xmp-pragma.o c-acc-pragma.o \
+	c-xcodeml.o c-omp-xcodeml.o c-xmp-xcodeml.o c-acc-xcodeml.o
 
 clean-local:
 	rm -f C_debugfront tags *.o *.log *.output c-lexer.c
