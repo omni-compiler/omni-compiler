@@ -231,6 +231,17 @@ public class XMPtransPragma
     }
 
     ret_body.add(entry_block);
+
+    if(pb.getPrev() != null && 
+       pb.getPrev().Opcode() == Xcode.F_STATEMENT_LIST &&
+       pb.getPrev().getBasicBlock() != null){
+      Statement tail = pb.getPrev().getBasicBlock().getTail();
+      if(tail != null && tail.getExpr().Opcode() == Xcode.PRAGMA_LINE){
+	ret_body.add(tail.getExpr());
+	tail.remove();
+      }
+    }
+
     ret_body.add(pb.getBody().getHead()); // loop
 
     if(info.getReductionOp() != XMP.REDUCE_NONE){

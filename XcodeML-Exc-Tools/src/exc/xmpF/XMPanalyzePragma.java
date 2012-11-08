@@ -311,12 +311,12 @@ public class XMPanalyzePragma
 
   private static ForBlock getOutermostLoopBlock(BlockList body) {
     Block b = body.getHead();
-    if (b != null) {
+    while (b != null) {
       if (b.Opcode() == Xcode.F_DO_STATEMENT) {
-        if (b.getNext() != null){
-          // XMP.error("only one loop statement is allowed in loop directive");
-	  return null;
-	}
+//         if (b.getNext() != null){
+//           // XMP.error("only one loop statement is allowed in loop directive");
+// 	  return null;
+// 	}
         ForBlock forBlock = (ForBlock)b;
         forBlock.Canonicalize();
         if (!(forBlock.isCanonical())){
@@ -327,10 +327,13 @@ public class XMPanalyzePragma
       }
       else if (b.Opcode() == Xcode.COMPOUND_STATEMENT)
         return getOutermostLoopBlock(b.getBody());
+//       else if(b.Opcode() == Xcode.F_STATEMENT_LIST &&
+// 	      b.getBasicBlock().getHead().getExpr().Opcode() 
+// 	      == Xcode.PRAGMA_LINE) 
+// 	b = b.getNext();   // skip pragma_line
+//       else return null;  // otherwise, failed.
+      b = b.getNext();
     } 
-//     else {
-//       XMP.error("cannot find a loop statement");
-//     }
     return null;
   }
 
