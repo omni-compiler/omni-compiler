@@ -38,7 +38,7 @@ int may_generic_spec = FALSE;
 int fixed_format_flag = FALSE; 
 int fixed_line_len = 72;
 
-/* enable  comment char, 'c' in free format.  */
+/* enable comment char, 'c' in free format.  */
 int flag_force_c_comment = FALSE; /* does not set yet.  */
 
 #define QUOTE   '\002'  /* special quote mark */

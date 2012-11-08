@@ -335,14 +335,16 @@ isIOStatement(expr x)
  */
 int check_for_XMP_pragma(int st_no, expr x)
 {
-  expv statements;
+    expv statements,xx;
   int ret = 1;
 
   if(XMP_do_required){
-    if(EXPR_CODE(x) != F_DO_STATEMENT)
-      error("XMP LOOP directives must be followed by do statement");
-    XMP_do_required = FALSE;
-    goto done;
+      // don't care the order of pragma around XMP LOOP
+      if(EXPR_CODE(x) == F_PRAGMA_STATEMENT) goto done;
+      if(EXPR_CODE(x) != F_DO_STATEMENT)
+	  error("XMP LOOP directives must be followed by do statement");
+      XMP_do_required = FALSE;
+      goto done;
   }
   
   if(XMP_st_required != XMP_ST_NONE){
@@ -365,12 +367,20 @@ int check_for_XMP_pragma(int st_no, expr x)
      CTL_XMP_ARG_DIR(ctl_top) == XMP_LOOP){
     statements = CURRENT_STATEMENTS;
     if(EXPR_CODE(statements) == LIST) {
-      if(LIST_NEXT(EXPR_LIST(statements)) != NULL)
-	fatal("XMP_LOOP: bad statements\n");
-      statements = EXPR_ARG1(statements);
+	list lp;
+	FOR_ITEMS_IN_LIST(lp,statements){
+	    xx = LIST_ITEM(lp);
+	    if(EXPR_CODE(xx) == F_PRAGMA_STATEMENT) 
+		CTL_SAVE(ctl_top) = list_put_last(CTL_SAVE(ctl_top),xx);
+	    else {
+		statements = xx;
+		break;
+	    }
+	}
     }
-    if(EXPR_CODE(statements) != F_DO_STATEMENT)
-      error("DO LOOP dirctives must be followed by do statements");
+    if(EXPR_CODE(statements) != F_DO_STATEMENT){
+	fatal("XMP LOOP directive must be followed by do statements");
+    }
     CTL_BLOCK(ctl_top) = 
       XMP_pragma_list(XMP_LOOP,CTL_XMP_ARG_CLAUSE(ctl_top),
 		      statements);
@@ -655,92 +665,3 @@ expv XMP_compile_clause_opt(expr x)
     return x; /* nothing at this moment */
 }
 
-#ifdef not
-
-void check_XMP_loop_var(SYMBOL do_var_sym)
-{
-    CTL *cp;
-    expr x,c;
-    list lp,lq;
-    enum XMP_pragma_clause cdir;
-
-    /* clause to be inserted. */
-    c = list2(LIST,expv_int_term(INT_CONSTANT,NULL,XMP_DATA_PRIVATE),
-	      list1(LIST,expv_sym_term(IDENT,NULL,do_var_sym)));
-
-    /* find any data attribute clauses on do_var_sym */
-    for(cp = ctl_top; cp >= ctls; cp--){
-	if(CTL_TYPE(cp) != CTL_OMP) continue;
-	if(CTL_XMP_ARG_DCLAUSE(cp) != NULL){
-	    FOR_ITEMS_IN_LIST(lp,CTL_XMP_ARG_DCLAUSE(cp)){
-		x = LIST_ITEM(lp); 
-		cdir = (enum XMP_pragma_clause) EXPR_INT(EXPR_ARG1(x));
-		if(IS_XMP_DATA_CLAUSE(cdir)){
-		    if(EXPR_ARG2(x) == NULL) continue;
-		    FOR_ITEMS_IN_LIST(lq,EXPR_ARG2(x)){
-			x = LIST_ITEM(lq);
-			if(EXPR_CODE(x) == IDENT && EXPR_SYM(x) == do_var_sym)
-			    goto found;
-		    }
-		}
-	    }
-	}
-	/* check on PCLAUSE */
-	if(CTL_XMP_ARG_PCLAUSE(cp) != NULL){
-	    FOR_ITEMS_IN_LIST(lp,CTL_XMP_ARG_PCLAUSE(cp)){
-		x = LIST_ITEM(lp); 
-		cdir = (enum XMP_pragma_clause) EXPR_INT(EXPR_ARG1(x));
-		if(IS_XMP_DATA_CLAUSE(cdir)){
-		    if(EXPR_ARG2(x) == NULL) continue;
-		    FOR_ITEMS_IN_LIST(lq,EXPR_ARG2(x)){
-			x = LIST_ITEM(lq);
-			if(EXPR_CODE(x) == IDENT && EXPR_SYM(x) == do_var_sym)
-			    goto found;
-		    }
-		}
-	    }
-	}
-	
-	/* not found, then make loop variable private in parallel region */
-	switch(CTL_XMP_ARG_DIR(cp)){
-	case XMP_F_PARALLEL:
-	case XMP_F_PARALLEL_DO:
-	case XMP_F_PARALLEL_SECTIONS:
-	    if(CTL_XMP_ARG_PCLAUSE(cp) == NULL)
-		CTL_XMP_ARG_PCLAUSE(cp) = list1(LIST,c);
-	    else 
-		list_put_last(CTL_XMP_ARG_PCLAUSE(cp),c);
-	    return;
-	}
-    }
-    return; /* nothing to do, not in parallel region. */
-
-found:
-    if(cdir == XMP_DATA_PRIVATE || 
-       cdir == XMP_DATA_FIRSTPRIVATE || 
-       cdir == XMP_DATA_LASTPRIVATE)
-	return; /* already private */
-    
-    if(IS_XMP_REDUCTION_DATA_CLAUSE(cdir)){
-	error("loop control variable must not be OpenMP induction variable");
-	return;
-    }
-    
-    if(ctl_top == cp){
-	error("parallel loop control variable is declared as SHARED");
-	return;
-    }
-
-    /* check where parallel loop or not */
-    /* if loop var of parallel loop, it is forced to be private */
-    if(CTL_TYPE(ctl_top) == CTL_OMP && 
-       (CTL_XMP_ARG_DIR(ctl_top) == XMP_F_DO ||
-	CTL_XMP_ARG_DIR(ctl_top) == XMP_F_PARALLEL_DO)){
-	    if(CTL_XMP_ARG_DCLAUSE(cp) == NULL)
-		CTL_XMP_ARG_DCLAUSE(cp) = list1(LIST,c);
-	    else 
-		list_put_last(CTL_XMP_ARG_DCLAUSE(cp),c);
-    }
-}
-
-#endif

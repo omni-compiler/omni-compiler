@@ -2025,6 +2025,7 @@ outx_arraySpec(int l, expv v)
 
     FOR_ITEMS_IN_LIST(lp, v) {
         iv = LIST_ITEM(lp);
+	if(iv == NULL) continue;
         switch(EXPV_CODE(iv)) {
         case F_INDEX_RANGE:
             outx_indexRangeInList(l, iv);
