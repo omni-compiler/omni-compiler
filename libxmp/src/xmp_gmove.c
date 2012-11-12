@@ -388,7 +388,7 @@ static void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datat
     _XMP_translate_nodes_rank_array_to_ranks(dst_ref->nodes, dst_ranks, dst_ref->ref, dst_shrink_nodes_size);
   }
 
-  unsigned long long total_elmts = 0;
+  unsigned long long total_elmts = 1;
   for (int i = 0; i < dst_dim; i++) {
     total_elmts *= _XMP_M_COUNT_TRIPLETi(dst_lower[i], dst_upper[i], dst_stride[i]);
   }
@@ -403,7 +403,7 @@ static void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datat
     _XMP_translate_nodes_rank_array_to_ranks(src_ref->nodes, src_ranks, src_ref->ref, src_shrink_nodes_size);
   }
 
-  unsigned long long src_total_elmts = 0;
+  unsigned long long src_total_elmts = 1;
   for (int i = 0; i < src_dim; i++) {
     src_total_elmts *= _XMP_M_COUNT_TRIPLETi(src_lower[i], src_upper[i], src_stride[i]);
   }
@@ -719,10 +719,6 @@ void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size,
   }
 
   if (_XMP_IS_SINGLE) {
-    for (int i = 0; i < src_dim; i++) {
-      _XMP_gtol_array_ref_triplet(src_array, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
-    }
-
     _XMP_gmove_localcopy_ARRAY(type, type_size,
                                dst_addr, dst_dim, dst_l, dst_u, dst_s, dst_d,
                                src_addr, src_dim, src_l, src_u, src_s, src_d);
@@ -813,10 +809,6 @@ void _XMP_gmove_HOMECOPY_ARRAY(_XMP_array_t *dst_array, int type, size_t type_si
   }
 
   if (_XMP_IS_SINGLE) {
-    for (int i = 0; i < dst_dim; i++) {
-      _XMP_gtol_array_ref_triplet(dst_array, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
-    }
-
     _XMP_gmove_localcopy_ARRAY(type, type_size,
                                dst_addr, dst_dim, dst_l, dst_u, dst_s, dst_d,
                                src_addr, src_dim, src_l, src_u, src_s, src_d);
@@ -1149,14 +1141,6 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
   }
 
   if (_XMP_IS_SINGLE) {
-    for (int i = 0; i < dst_dim; i++) {
-      _XMP_gtol_array_ref_triplet(dst_array, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
-    }
-
-    for (int i = 0; i < src_dim; i++) {
-      _XMP_gtol_array_ref_triplet(src_array, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
-    }
-
     _XMP_gmove_localcopy_ARRAY(type, type_size,
                                dst_addr, dst_dim, dst_l, dst_u, dst_s, dst_d,
                                src_addr, src_dim, src_l, src_u, src_s, src_d);
