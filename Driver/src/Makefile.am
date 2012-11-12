@@ -2,7 +2,7 @@
 # $TSUKUBA_Copyright:
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
-bin_PROGRAMS=omdriver
+bin_PROGRAMS=omdriver xmpf_collect_init
 bin_SCRIPTS=\
 	../bin/ompp ../bin/oml2x ../bin/omx2x ../bin/omx2l ../bin/omnative ../bin/omlinker \
 	../bin/omc2c ../bin/ompcc ../bin/omc2x ../bin/omcx2x ../bin/omx2c ../bin/omcpp \
