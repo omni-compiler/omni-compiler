@@ -1,1 +1,2 @@
-Omni OpenMP/XcalableMP Compiler Software Version 0.5.1
+Omni OpenMP/XcalableMP Compiler Software Version 0.6.0 (alpha)
+

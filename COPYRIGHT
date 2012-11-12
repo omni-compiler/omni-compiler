@@ -1,5 +1,6 @@
-Omni OpenMP/XcalableMP Compiler Software Version 0.5.2 (alpha)
-Copyright (C) 2010-2011 University of Tsukuba
+Omni OpenMP/XcalableMP Compiler Software Version 0.6.0 (alpha)
+Copyright (C) 2010-2011 University of Tsukuba, 
+	      2012  University of Tsukuba and Riken AICS
 
 This software is free software; you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License version
@@ -8,7 +9,7 @@ it under the terms of the GNU Lesser General Public License version
 * The specification of XcalableMP has been designed by the XcalableMP
   Specification Working Group (http://www.xcalablemp.org/).
 
-* The development of this software is supported by "Seamless and
+* The development of this software was supported by "Seamless and
   Highly-productive Parallel Programming Environment for
   High-performance computing" project funded by Ministry of Education,
   Culture, Sports, Science and Technology, Japan.

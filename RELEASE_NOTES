@@ -24,3 +24,7 @@ ver 0.5.3	2011/04/08
 
 ver 0.5.4	2011/11/11
  supports block-cyclic distribution in distribute directive
+
+version 0.6(alpha) 2012/11/12
+  Initial release of XcalableMP Fortran compiler.
+   (Coarray feature will be added soon)
