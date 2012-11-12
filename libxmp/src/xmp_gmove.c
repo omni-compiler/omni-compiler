@@ -772,7 +772,7 @@ void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size,
         return;
       }
     }
-  } while (_XMP_calc_next_next_rank(array_nodes, array_nodes_ref));
+  } while (_XMP_get_next_rank(array_nodes, array_nodes_ref));
 }
 
 void _XMP_gmove_HOMECOPY_ARRAY(_XMP_array_t *dst_array, int type, size_t type_size, ...) {
@@ -1216,9 +1216,9 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
                               src_array, src_array_nodes_ref,
                               send_lower, send_upper, send_stride, src_d);
         }
-      } while (_XMP_calc_next_next_rank(src_array_nodes, src_array_nodes_ref));
+      } while (_XMP_get_next_rank(src_array_nodes, src_array_nodes_ref));
     }
-  } while (_XMP_calc_next_next_rank(dst_array_nodes, dst_array_nodes_ref));
+  } while (_XMP_get_next_rank(dst_array_nodes, dst_array_nodes_ref));
 
   MPI_Type_free(&mpi_datatype);
 }

@@ -890,7 +890,7 @@ void _XMP_translate_nodes_rank_array_to_ranks(_XMP_nodes_t *nodes, int *ranks, i
   }
 }
 
-int _XMP_calc_next_next_rank(_XMP_nodes_t *nodes, int *rank_array) {
+int _XMP_get_next_rank(_XMP_nodes_t *nodes, int *rank_array) {
   int i, dim = nodes->dim;
   for (i = 0; i < dim; i++) {
     int size = nodes->info[i].size;
