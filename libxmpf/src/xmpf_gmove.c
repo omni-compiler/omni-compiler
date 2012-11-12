@@ -431,9 +431,9 @@ void _XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
                               src_array, src_array_nodes_ref,
                               send_lower, send_upper, send_stride, src_d);
         }
-      } while (_XMP_calc_next_next_rank(src_array_nodes, src_array_nodes_ref));
+      } while (_XMP_get_next_rank(src_array_nodes, src_array_nodes_ref));
     }
-  } while (_XMP_calc_next_next_rank(dst_array_nodes, dst_array_nodes_ref));
+  } while (_XMP_get_next_rank(dst_array_nodes, dst_array_nodes_ref));
 
   MPI_Type_free(&mpi_datatype);
 
@@ -660,7 +660,7 @@ void _XMPF_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
         return;
       }
     }
-  } while (_XMP_calc_next_next_rank(array_nodes, array_nodes_ref));
+  } while (_XMP_get_next_rank(array_nodes, array_nodes_ref));
 
 }
 
