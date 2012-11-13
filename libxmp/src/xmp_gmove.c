@@ -316,14 +316,29 @@ int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_index,
 }
 
 int _XMP_calc_global_index_BCAST(int dst_dim, int *dst_l, int *dst_u, int *dst_s,
-                                        _XMP_array_t *src_array, int *src_array_nodes_ref, int *src_l, int *src_u, int *src_s) {
+                                 _XMP_array_t *src_array, int *src_array_nodes_ref, int *src_l, int *src_u, int *src_s) {
   _XMP_template_t *template = src_array->align_template;
 
   int dst_dim_index = 0;
   int array_dim = src_array->dim;
   for (int i = 0; i < array_dim; i++) {
+    if (_XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]) == 1) {
+      continue;
+    }
+
     int template_index = src_array->info[i].align_template_index;
-    if (template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
+    if (template_index == _XMP_N_NO_ALIGN_TEMPLATE) {
+      do {
+        if (_XMP_M_COUNT_TRIPLETi(dst_l[dst_dim_index], dst_u[dst_dim_index], dst_s[dst_dim_index]) != 1) {
+          dst_dim_index++;
+          break;
+        } else if (dst_dim_index < dst_dim) {
+          dst_dim_index++;
+        } else {
+          _XMP_fatal("bad assign statement for gmove");
+        }
+      } while (1);
+    } else {
       int onto_nodes_index = template->chunk[template_index].onto_nodes_index;
       _XMP_ASSERT(onto_nodes_index != _XMP_N_NO_ONTO_NODES);
 
@@ -1113,11 +1128,6 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
   }
 
   if (_XMP_IS_SINGLE) {
-    for (int i = 0; i < src_dim; i++) {
-      printf("[%d] (%d:%d:%d)<-(%d:%d:%d)\n", i, dst_l[i], dst_u[i], dst_s[i],
-                                                 src_l[i], src_u[i], src_s[i]);
-    }
-
     _XMP_gmove_localcopy_ARRAY(type, type_size,
                                dst_addr, dst_dim, dst_l, dst_u, dst_s, dst_d,
                                src_addr, src_dim, src_l, src_u, src_s, src_d);
