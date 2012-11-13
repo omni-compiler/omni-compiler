@@ -60,13 +60,13 @@ void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
         {
           t_lower = _XMP_SM_GTOL_CYCLIC(t_lower, template_ser_lower, template_par_nodes_size);
           t_upper = _XMP_SM_GTOL_CYCLIC(t_upper, template_ser_lower, template_par_nodes_size);
-          t_stride = t_stride / template_par_nodes_size; // FIXME correct imeplementation?
+          t_stride = t_stride / template_par_nodes_size;
         } break;
       case _XMP_N_DIST_BLOCK_CYCLIC:
         {
           t_lower = _XMP_SM_GTOL_BLOCK_CYCLIC(template_par_width, t_lower, template_ser_lower, template_par_nodes_size);
           t_upper = _XMP_SM_GTOL_BLOCK_CYCLIC(template_par_width, t_upper, template_ser_lower, template_par_nodes_size);
-          t_stride = 1; // FIXME how implement???
+          // t_stride does not change (in block)
         } break;
       default:
         _XMP_fatal("wrong distribute manner for normal shadow");
@@ -242,10 +242,10 @@ void _XMP_gmove_localcopy_ARRAY(int type, int type_size,
   _XMP_free(buffer);
 }
 
-static int _XMP_sched_gmove_triplet_1(int template_lower, int template_upper, int template_stride,
-                                      _XMP_array_t *dst_array, int dst_dim_index,
-                                      int *dst_l, int *dst_u, int *dst_s,
-                                      int *src_l, int *src_u, int *src_s) {
+static int _XMP_sched_gmove_triplet(int template_lower, int template_upper, int template_stride,
+                                    _XMP_array_t *dst_array, int dst_dim_index,
+                                    int *dst_l, int *dst_u, int *dst_s,
+                                    int *src_l, int *src_u, int *src_s) {
   int src_lower = *src_l;                         int src_stride = *src_s;
   int dst_lower = *dst_l; int dst_upper = *dst_u; int dst_stride = *dst_s;
 
@@ -266,7 +266,6 @@ static int _XMP_sched_gmove_triplet_1(int template_lower, int template_upper, in
       case _XMP_N_DIST_BLOCK:
       case _XMP_N_DIST_CYCLIC:
         {
-          // FIXME consider when stride is not 1
           ret = _XMP_sched_loop_template_width_1(dst_lower - align_subscript,
                                                  dst_upper - align_subscript,
                                                  dst_stride - align_subscript,
@@ -294,7 +293,7 @@ static int _XMP_sched_gmove_triplet_1(int template_lower, int template_upper, in
     // calc src_l, src_u, src_s
     *src_l = (src_stride * ((*dst_l - dst_lower) / dst_stride)) + src_lower;
     *src_u = (src_stride * ((*dst_u - dst_lower) / dst_stride)) + src_lower;
-    *src_s = *dst_s; // FIXME consider when stride is not 1, how implement???
+    *src_s = src_stride * (*dst_s / dst_stride);
   } // FIXME else how implement???
 
   return ret;
@@ -306,10 +305,10 @@ int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_index,
   int align_template_index = dst_array->info[dst_dim_index].align_template_index;
   if (align_template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
     _XMP_template_chunk_t *tc = &((dst_array->align_template)->chunk[align_template_index]);
-    return _XMP_sched_gmove_triplet_1(tc->par_lower, tc->par_upper, tc->par_stride,
-                                      dst_array, dst_dim_index,
-                                      dst_l, dst_u, dst_s,
-                                      src_l, src_u, src_s);
+    return _XMP_sched_gmove_triplet(tc->par_lower, tc->par_upper, tc->par_stride,
+                                    dst_array, dst_dim_index,
+                                    dst_l, dst_u, dst_s,
+                                    src_l, src_u, src_s);
   } else {
     // FIXME else how implement???
     return _XMP_N_INT_TRUE;
@@ -339,10 +338,10 @@ int _XMP_calc_global_index_BCAST(int dst_dim, int *dst_l, int *dst_u, int *dst_s
 
       do {
         if (_XMP_M_COUNT_TRIPLETi(dst_l[dst_dim_index], dst_u[dst_dim_index], dst_s[dst_dim_index]) != 1) {
-          if (_XMP_sched_gmove_triplet_1(template_lower, template_upper, template_stride,
-                                         src_array, i,
-                                         &(src_l[i]), &(src_u[i]), &(src_s[i]),
-                                         &(dst_l[dst_dim_index]), &(dst_u[dst_dim_index]), &(dst_s[dst_dim_index]))) {
+          if (_XMP_sched_gmove_triplet(template_lower, template_upper, template_stride,
+                                       src_array, i,
+                                       &(src_l[i]), &(src_u[i]), &(src_s[i]),
+                                       &(dst_l[dst_dim_index]), &(dst_u[dst_dim_index]), &(dst_s[dst_dim_index]))) {
             dst_dim_index++;
             break;
           } else {
