@@ -1,4 +1,5 @@
 Omni OpenMP/XcalableMP Compiler Software README
+(version 0.6.0 alpha)
 
 I. Getting Started
  1. You will need the following softwares to build Omni XcalableMP Compiler.
@@ -27,51 +28,45 @@ II. Implementation Status
  Some features in the language specification are not supported in this release.
  (You can download the specification of XcalableMP from "http://www.xcalablemp.org".)
 
- 1. Language
-  Current version only supports C language.
+ 1. XcalableMP C
 
- 2. Global-view Model
-  A. Nodes Directive
+  - Nodes Directive:
    <map-type> "regular" is not implemented.
 
-  B. Template Directive
+  - Template Directive
    ':' cannot be used for <template-spec>.
-   ("template_fix" ditective is not supported in this release)
 
-  C. Distribute Directive
-   "gblock", Block-cyclic("cyclic(w)") distribution is not implemented.
+  - Distribute Directive
+   "gblock" distribution is not implemented.
 
-  D. Template_fix Directive
+  - Template_fix Directive
    Not supported in this release
 
-  E. Tasks Directive
+  - Tasks Directive
    Not supported in this release
 
-  F. Gmove Directive
-   gmove between aligned arrays using array section may not work correctly.
-   gmove in/out may not work correctly.
+  - Gmove Directive
+   Some patterns of Gmove may not work (not fully tested)
+   gmove with in/out may not work correctly.
 
-  G. Reduction Directive
-  <defined reduce operations>
-   '+', "sum", "SUM"		sum
-   '*', "prod", "PROD"		product
-   '&', "band", "BAND"		bit-wise and
-   "&&", "land", "LAND"		logical and
-   '|', "bor", "BOR"		bit-wise or
-   "||", "lor", "LOR"		logical or
-   '^', "bxor", "BXOR"		bit-wise xor
-   "lxor", "LXOR"		logical xor
-   "max", "MAX"			maximum
-   "min", "MIN"			minimum
-   "firstmax", "FIRSTMAX"	first location of maximum
-   "firstmin", "FIRSTMIN"	first location of minimum
-   "lastmax", "LASTMAX"		last location of maximum
-   "lastmin", "LASTMIN"		last location of minumum
+ 2. XcalableMP Fortran
 
- 3. Local-view Model
-  Local-view model is not supported in this release.
+  - Distribute Directive
+   "gblock" distribution is not implemented.
 
- 4. User API Functions (defined in xmp.h)
+  - Template_fix Directive
+   Not supported in this release
+
+  - Tasks Directive
+   Not supported in this release
+
+  - Gmove Directive
+   Some patterns of Gmove may not work (not fully tested)
+   gmove with in/out may not work correctly.
+
+ - Coarray is not supported in this release (comming soon).
+
+ 3. User API Functions (defined in xmp.h)
   A. int xmp_node_num(void);
    returns Node ID
 
@@ -81,7 +76,7 @@ II. Implementation Status
   C. double xmp_wtime(void);
    returns current time
  
-III. Profiling Options
+III. Profiling Options in XMP C
   XMP supports profiler interfaces of Scalasca and tlog.
   The tlog is included in XMP.
   If you want to use the profiler interface of Scalasca,
