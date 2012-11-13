@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -22,6 +24,8 @@ char init_func_source[MAX_NAME_LEN];
 char init_func_object[MAX_NAME_LEN];
 
 #define MODULE_INIT_F_NAME "_xmpf_module_init_"
+#define MODULE_INIT_F_NAME_ "_xmpf_module_init__"
+
 #define MODULE_INIT_ENTRY_NAME "xmpf_module_init__"
 #define MAX_INIT_F 256
 
@@ -30,9 +34,11 @@ int n_module_init_f = 0;
 
 int debug_flag = FALSE;
 
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-    int i, pid, len, initf_name_len;
+    int i, pid, len;
+    int initf_name_len;
+    int initf_name_len_;
     char *arg;
     FILE *fp;
     char *prog;
@@ -73,13 +79,16 @@ main(int argc, char *argv[])
 	exit(1);
     }
     initf_name_len = strlen(MODULE_INIT_F_NAME);
+    initf_name_len_ = strlen(MODULE_INIT_F_NAME_);
     while(fscanf(fp,"%s",buf) == 1){
-	// printf("buf=%s\n",buf);
 	len = strlen(buf);
 	if(len > initf_name_len && 
 	   strcmp(buf+(len-initf_name_len),MODULE_INIT_F_NAME) == 0){
 	    module_init_f_names[n_module_init_f++] = strdup(buf);
-	    // printf("-> found\n");
+	} else 
+	if(len > initf_name_len_ && 
+	   strcmp(buf+(len-initf_name_len_),MODULE_INIT_F_NAME_) == 0){
+	    module_init_f_names[n_module_init_f++] = strdup(buf);
 	}
     }
     fclose(fp);
