@@ -359,11 +359,11 @@ int _XMP_calc_global_index_BCAST(int dst_dim, int *dst_l, int *dst_u, int *dst_s
   return _XMP_N_INT_TRUE;
 }
 
-static void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datatype,
-                                _XMP_array_t *dst_array, int *dst_array_nodes_ref,
-                                int *dst_lower, int *dst_upper, int *dst_stride, unsigned long long *dst_dim_acc,
-                                _XMP_array_t *src_array, int *src_array_nodes_ref,
-                                int *src_lower, int *src_upper, int *src_stride, unsigned long long *src_dim_acc) {
+void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datatype,
+                         _XMP_array_t *dst_array, int *dst_array_nodes_ref,
+                         int *dst_lower, int *dst_upper, int *dst_stride, unsigned long long *dst_dim_acc,
+                         _XMP_array_t *src_array, int *src_array_nodes_ref,
+                         int *src_lower, int *src_upper, int *src_stride, unsigned long long *src_dim_acc) {
   _XMP_nodes_t *dst_array_nodes = dst_array->array_nodes;
   _XMP_nodes_t *src_array_nodes = src_array->array_nodes;
   void *dst_addr = *(dst_array->array_addr_p);
