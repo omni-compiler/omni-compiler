@@ -663,8 +663,9 @@ void _XMP_gmove_LOCALCOPY_ARRAY(int type, size_t type_size, ...) {
   int dst_l[dst_dim], dst_u[dst_dim], dst_s[dst_dim]; unsigned long long dst_d[dst_dim];
   for (int i = 0; i < dst_dim; i++) {
     dst_l[i] = va_arg(args, int);
-    dst_u[i] = dst_l[i] + va_arg(args, int) - 1;
+    int size = va_arg(args, int);
     dst_s[i] = va_arg(args, int);
+    dst_u[i] = dst_l[i] + (size - 1) * dst_s[i];
     dst_d[i] = va_arg(args, unsigned long long);
     _XMP_normalize_array_section(&(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
   }
@@ -675,8 +676,9 @@ void _XMP_gmove_LOCALCOPY_ARRAY(int type, size_t type_size, ...) {
   int src_l[src_dim], src_u[src_dim], src_s[src_dim]; unsigned long long src_d[src_dim];
   for (int i = 0; i < src_dim; i++) {
     src_l[i] = va_arg(args, int);
-    src_u[i] = src_l[i] + va_arg(args, int) - 1;
+    int size = va_arg(args, int);
     src_s[i] = va_arg(args, int);
+    src_u[i] = src_l[i] + (size - 1) * src_s[i];
     src_d[i] = va_arg(args, unsigned long long);
     _XMP_normalize_array_section(&(src_l[i]), &(src_u[i]), &(src_s[i]));
   }
@@ -701,8 +703,9 @@ void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size,
   int dst_l[dst_dim], dst_u[dst_dim], dst_s[dst_dim]; unsigned long long dst_d[dst_dim];
   for (int i = 0; i < dst_dim; i++) {
     dst_l[i] = va_arg(args, int);
-    dst_u[i] = dst_l[i] + va_arg(args, int) - 1;
+    int size = va_arg(args, int);
     dst_s[i] = va_arg(args, int);
+    dst_u[i] = dst_l[i] + (size - 1) * dst_s[i];
     dst_d[i] = va_arg(args, unsigned long long);
     _XMP_normalize_array_section(&(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
     dst_total_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
@@ -715,8 +718,9 @@ void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size,
   int src_l[src_dim], src_u[src_dim], src_s[src_dim]; unsigned long long src_d[src_dim];
   for (int i = 0; i < src_dim; i++) {
     src_l[i] = va_arg(args, int);
-    src_u[i] = src_l[i] + va_arg(args, int) - 1;
+    int size = va_arg(args, int);
     src_s[i] = va_arg(args, int);
+    src_u[i] = src_l[i] + (size - 1) * src_s[i];
     src_d[i] = va_arg(args, unsigned long long);
     _XMP_normalize_array_section(&(src_l[i]), &(src_u[i]), &(src_s[i]));
     src_total_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
@@ -793,8 +797,9 @@ void _XMP_gmove_HOMECOPY_ARRAY(_XMP_array_t *dst_array, int type, size_t type_si
   int dst_l[dst_dim], dst_u[dst_dim], dst_s[dst_dim]; unsigned long long dst_d[dst_dim];
   for (int i = 0; i < dst_dim; i++) {
     dst_l[i] = va_arg(args, int);
-    dst_u[i] = dst_l[i] + va_arg(args, int) - 1;
+    int size = va_arg(args, int);
     dst_s[i] = va_arg(args, int);
+    dst_u[i] = dst_l[i] + (size - 1) * dst_s[i];
     dst_d[i] = va_arg(args, unsigned long long);
     _XMP_normalize_array_section(&(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
     dst_total_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
@@ -807,8 +812,9 @@ void _XMP_gmove_HOMECOPY_ARRAY(_XMP_array_t *dst_array, int type, size_t type_si
   int src_l[src_dim], src_u[src_dim], src_s[src_dim]; unsigned long long src_d[src_dim];
   for (int i = 0; i < src_dim; i++) {
     src_l[i] = va_arg(args, int);
-    src_u[i] = src_l[i] + va_arg(args, int) - 1;
+    int size = va_arg(args, int);
     src_s[i] = va_arg(args, int);
+    src_u[i] = src_l[i] + (size - 1) * src_s[i];
     src_d[i] = va_arg(args, unsigned long long);
     _XMP_normalize_array_section(&(src_l[i]), &(src_u[i]), &(src_s[i]));
     src_total_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
@@ -1097,8 +1103,9 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
   int dst_l[dst_dim], dst_u[dst_dim], dst_s[dst_dim]; unsigned long long dst_d[dst_dim];
   for (int i = 0; i < dst_dim; i++) {
     dst_l[i] = va_arg(args, int);
-    dst_u[i] = dst_l[i] + va_arg(args, int) - 1;
+    int size = va_arg(args, int);
     dst_s[i] = va_arg(args, int);
+    dst_u[i] = dst_l[i] + (size - 1) * dst_s[i];
     dst_d[i] = va_arg(args, unsigned long long);
     _XMP_normalize_array_section(&(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
     dst_total_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
@@ -1111,8 +1118,9 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
   int src_l[src_dim], src_u[src_dim], src_s[src_dim]; unsigned long long src_d[src_dim];
   for (int i = 0; i < src_dim; i++) {
     src_l[i] = va_arg(args, int);
-    src_u[i] = src_l[i] + va_arg(args, int) - 1;
+    int size = va_arg(args, int);
     src_s[i] = va_arg(args, int);
+    src_u[i] = src_l[i] + (size - 1) * src_s[i];
     src_d[i] = va_arg(args, unsigned long long);
     _XMP_normalize_array_section(&(src_l[i]), &(src_u[i]), &(src_s[i]));
     src_total_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
