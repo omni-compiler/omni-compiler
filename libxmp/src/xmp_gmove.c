@@ -20,7 +20,6 @@
 #define _XMP_SM_GTOL_BLOCK_CYCLIC(_b, _i, _m, _P) \
 (((((_i) - (_m)) / (((_P) * (_b)))) * (_b)) + (((_i) - (_m)) % (_b)))
 
-// FIXME not completed
 void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
                                  int dim_index, int *lower, int *upper, int *stride) {
   _XMP_array_info_t *array_info = &(array->info[dim_index]);
@@ -294,7 +293,7 @@ static int _XMP_sched_gmove_triplet(int template_lower, int template_upper, int 
     *src_l = (src_stride * ((*dst_l - dst_lower) / dst_stride)) + src_lower;
     *src_u = (src_stride * ((*dst_u - dst_lower) / dst_stride)) + src_lower;
     *src_s = src_stride * (*dst_s / dst_stride);
-  } // FIXME else how implement???
+  }
 
   return ret;
 }
@@ -310,7 +309,6 @@ int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_index,
                                     dst_l, dst_u, dst_s,
                                     src_l, src_u, src_s);
   } else {
-    // FIXME else how implement???
     return _XMP_N_INT_TRUE;
   }
 }
@@ -548,7 +546,7 @@ int _XMP_gmove_HOMECOPY_SCALAR(_XMP_array_t *array, ...) {
 
 void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
                                 _XMP_array_t *dst_array, _XMP_array_t *src_array, ...) {
-  _XMP_ASSERT(dst_array->type_size == src_array->type_size); // FIXME checked by compiler
+  _XMP_ASSERT(dst_array->type_size == src_array->type_size);
   size_t type_size = dst_array->type_size;
 
   if(_XMP_IS_SINGLE) {
