@@ -179,8 +179,6 @@ void _XMP_sched_loop_template_DUPLICATION(int ser_init, int ser_cond, int ser_st
   // calc par_init, par_cond, par_step
   if (_XMP_sched_loop_template_width_1(ser_init, ser_cond, ser_step, par_init, par_cond, par_step,
                                        template_lower, template_upper, template_stride)) {
-    *par_step = ser_step; // FIXME delete this line after implementing _XMP_sched_loop_template_width_1()
-
     // finalize iter
     _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
   } else {
