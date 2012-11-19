@@ -294,7 +294,8 @@ public class omompx
       srcPath = null;
     } else {
       String fileName = new File(srcPath).getName();
-      int idx = fileName.indexOf(".");
+      //      int idx = fileName.indexOf(".");
+      int idx = fileName.lastIndexOf(".");
       if(idx < 0) {
 	XmLog.fatal("invalid source file name : " + fileName);
       }
