@@ -155,6 +155,164 @@ TYPE_DESC array_element_type(TYPE_DESC tp)
     return tp;
 }
 
+/**
+ * check type is omissible, such that
+ * no attributes, no memebers, no indexRanage and so on.
+ *
+ * FIXME:
+ * shrink_type() and type_is_omissible() are quick-fix.
+ * see shrink_type().
+ */
+int
+type_is_omissible(TYPE_DESC tp, uint32_t attr, uint32_t ext)
+{
+    // NULL or a terminal type is not omissible.
+    if (tp == NULL || TYPE_REF(tp) == NULL)
+        return FALSE;
+    // The struct type is not omissible.
+    if (IS_STRUCT_TYPE(tp))
+        return FALSE;
+    // The array type is not omissible.
+    if (IS_ARRAY_TYPE(tp))
+        return FALSE;
+    // The function type is not omissible.
+    if (IS_FUNCTION_TYPE(tp))
+        return FALSE;
+    // Co-array is not omissible.
+    if (tp->codims != NULL)
+        return FALSE;
+    // The type has kind, leng, or size is not omissible.
+    if (TYPE_KIND(tp) != NULL ||
+        TYPE_LENG(tp) != NULL ||
+        TYPE_CHAR_LEN(tp) != 0) {
+        return FALSE;
+    }
+
+#if 0
+    // The type has attributes is not omissible.
+    if (TYPE_ATTR_FLAGS(tp))
+        return FALSE;
+    if (TYPE_EXTATTR_FLAGS(tp))
+        return FALSE;
+#else
+    /*
+     * not omissible if this type has any attributes that is not
+     * included in the given attrribute flags.
+     */
+    if (TYPE_ATTR_FLAGS(tp) != 0) {
+        if ((attr != 0 && (attr & TYPE_ATTR_FLAGS(tp)) == 0) ||
+            (attr == 0)) {
+            return FALSE;
+        }
+    }
+    if (TYPE_EXTATTR_FLAGS(tp) != 0) {
+        if ((ext != 0 && (ext & TYPE_EXTATTR_FLAGS(tp)) == 0) ||
+            (ext == 0)) {
+            return FALSE;
+        }
+    }
+#endif
+
+    return TRUE;
+}
+
+/**
+ * shrink TYPE_DESC, ignore the basic_type with a reference and no attributes.
+ *
+ * FIXME:
+ * shrink_type() and type_is_omissible() are quick-fix.
+ *
+ * These function solve the following problem:
+ *  Too long TYPE_REF list created while reading a xmod file,
+ *  but F-Frontend expects TYPE_REF list of basic_type shorter than 3.
+ *  Thus type attributes of use-associated IDs are discarded.
+ *
+ * Something wrong with creation of types from xmod file,
+ * This quick-fix don't care above, but shrink TYPE_REF list after
+ * type is created.
+ */
+void
+shrink_type(TYPE_DESC tp)
+{
+    TYPE_DESC ref = TYPE_REF(tp);
+    while (type_is_omissible(ref, 0, 0)) {
+        TYPE_REF(tp) = TYPE_REF(ref);
+        ref = TYPE_REF(tp);
+    }
+}
+
+
+static uint64_t
+reduce_type_attr(TYPE_DESC tp) {
+    uint64_t f = 0LL;
+
+    if (TYPE_REF(tp) != NULL &&
+        TYPE_BASIC_TYPE(TYPE_REF(tp)) != TYPE_STRUCT) {
+        /*
+         * FIXME:
+         *	Do we have to avoid recursive reduction other than the
+         *	TYPE_STRUCT ?
+         */
+        f = reduce_type_attr(TYPE_REF(tp));
+    }
+
+    /*
+     * upper 32 bit: exflag
+     * lower 32 bit: attr
+     */
+    f |= (((uint64_t)(TYPE_EXTATTR_FLAGS(tp)) << 32)
+          & 0xffffffff00000000LL);
+    f |= (((uint64_t)TYPE_ATTR_FLAGS(tp)) & 0xffffffffL);
+
+    return f;
+}
+
+
+static TYPE_DESC
+simplify_type_recursively(TYPE_DESC tp, uint32_t attr, uint32_t ext) {
+    if (TYPE_REF(tp) != NULL) {
+        TYPE_REF(tp) = simplify_type_recursively(TYPE_REF(tp), attr, ext);
+    }
+    return type_is_omissible(tp, attr, ext) ? TYPE_REF(tp) : tp;
+}
+
+
+/**
+ * Reduce redundant type references.
+ *
+ *	@param	tp	A TYPE_DESC to be reduced.
+ *	@return A reduced TYPE_DESC (could be the tp).
+ */
+TYPE_DESC
+reduce_type(TYPE_DESC tp) {
+    TYPE_DESC ret = NULL;
+
+    if (tp != NULL) {
+#if 0
+        uint64_t f = reduce_type_attr(tp);
+        uint32_t attr = (uint32_t)(f & 0xffffffffL);
+        uint32_t ext = (uint32_t)((f >> 32) & 0xffffffffL);
+#else
+        uint32_t attr = 0;
+        uint32_t ext = 0;
+#endif
+
+        ret = simplify_type_recursively(tp, attr, ext);
+        if (ret == NULL) {
+            fatal("%s: failure.\n", __func__);
+            /* not reached. */
+            return NULL;
+        }
+#if 0
+        TYPE_ATTR_FLAGS(ret) = attr;
+        TYPE_EXTATTR_FLAGS(ret) = ext;
+#endif
+    }
+
+    return ret;
+}
+
+
 int
 char_length(TYPE_DESC tp)
 {
@@ -397,6 +555,311 @@ type_is_specific_than(TYPE_DESC tp, TYPE_DESC tq)
     return FALSE;
 }
 
+TYPE_DESC
+get_binary_numeric_intrinsic_operation_type(TYPE_DESC t0, TYPE_DESC t1) {
+    /*
+     * Based on the type promotion rule regulated by the JIS X 3001-1
+     * (ISO/IEC 1539-1 : 2004)
+     */
+    /*
+     * Atuned to:
+     *	+, -, *, /, **
+     */
+    TYPE_DESC ret = NULL;
+    BASIC_DATA_TYPE b0 = get_basic_type(t0);
+    BASIC_DATA_TYPE b1 = get_basic_type(t1);
+
+    if (b0 == TYPE_UNKNOWN || b1 == TYPE_UNKNOWN) {
+        fatal("Invalid basic type.");
+        /* not reached. */
+        return NULL;
+    }
+
+    switch (b0) {
+
+        case TYPE_INT: {
+            switch (b1) {
+                case TYPE_INT:
+                case TYPE_REAL: case TYPE_DREAL:
+                case TYPE_COMPLEX: case TYPE_DCOMPLEX:
+                case TYPE_GNUMERIC: case TYPE_GNUMERIC_ALL: {
+                    ret = t1;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+            break;
+        }
+
+        case TYPE_REAL: {
+            switch (b1) {
+                case TYPE_INT: {
+                    ret = t0;
+                    break;
+                }
+                case TYPE_REAL: case TYPE_DREAL:
+                case TYPE_COMPLEX: case TYPE_DCOMPLEX:
+                case TYPE_GNUMERIC: case TYPE_GNUMERIC_ALL: {
+                    ret = t1;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+            break;
+        }
+
+        case TYPE_DREAL: {
+            switch (b1) {
+                case TYPE_INT:
+                case TYPE_REAL: {
+                    ret = t0;
+                    break;
+                }
+                case TYPE_DREAL:
+                case TYPE_COMPLEX: case TYPE_DCOMPLEX:
+                case TYPE_GNUMERIC: case TYPE_GNUMERIC_ALL: {
+                    ret = t1;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+            break;
+        }
+
+        case TYPE_COMPLEX: {
+            switch (b1) {
+                case TYPE_INT:
+                case TYPE_REAL: case TYPE_DREAL:
+                case TYPE_GNUMERIC: {
+                    ret = t0;
+                    break;
+                }
+                case TYPE_COMPLEX: case TYPE_DCOMPLEX:
+                case TYPE_GNUMERIC_ALL: {
+                    ret = t1;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+            break;
+        }
+
+        case TYPE_DCOMPLEX: {
+            switch (b1) {
+                case TYPE_INT:
+                case TYPE_REAL: case TYPE_DREAL:
+                case TYPE_GNUMERIC:
+                case TYPE_COMPLEX: case TYPE_DCOMPLEX: {
+                    ret = t0;
+                    break;
+                }
+                case TYPE_GNUMERIC_ALL: {
+                    ret = t1;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+            break;
+        }
+
+        case TYPE_GNUMERIC: {
+            switch (b1) {
+                case TYPE_INT:
+                case TYPE_REAL: case TYPE_DREAL:
+                case TYPE_COMPLEX: case TYPE_DCOMPLEX:
+                case TYPE_GNUMERIC: {
+                    ret = t0;
+                    break;
+                }
+                case TYPE_GNUMERIC_ALL: {
+                    ret = t1;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+            break;
+        }
+
+        case TYPE_GNUMERIC_ALL: {
+            switch (b1) {
+                case TYPE_INT:
+                case TYPE_REAL: case TYPE_DREAL:
+                case TYPE_COMPLEX: case TYPE_DCOMPLEX:
+                case TYPE_GNUMERIC: case TYPE_GNUMERIC_ALL: {
+                    ret = t0;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+            break;
+        }
+
+        case TYPE_STRUCT: {
+            /*
+             * FIXME:
+             *	it depends on operation, could be a user defined
+             *	operator. Anyway return NULL at this moment.
+             */
+            break;
+        }
+
+        default: {
+            break;
+        }
+
+    }
+
+    return ret;
+}
+
+TYPE_DESC
+get_binary_comparative_intrinsic_operation_type(TYPE_DESC t0, TYPE_DESC t1) {
+    /*
+     * Based on the type promotion rule regulated by the JIS X 3001-1
+     * (ISO/IEC 1539-1 : 2004)
+     */
+    /*
+     * Attuned to:
+     *	.GT., .GE., .LT., .LE., >, >=, <, <=.
+     */
+
+    int isValid = FALSE;
+    BASIC_DATA_TYPE b0 = get_basic_type(t0);
+    BASIC_DATA_TYPE b1 = get_basic_type(t1);
+
+    if (b0 == TYPE_UNKNOWN || b1 == TYPE_UNKNOWN) {
+        fatal("Invalid basic type.");
+        /* not reached. */
+        return NULL;
+    }
+
+    switch (b0) {
+
+        case TYPE_INT:
+        case TYPE_REAL: case TYPE_DREAL:
+        case TYPE_GNUMERIC: {
+            switch (b1) {
+                case TYPE_INT:
+                case TYPE_REAL: case TYPE_DREAL:
+                case TYPE_GNUMERIC: {
+                    isValid = TRUE;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+            break;
+        }
+
+        case TYPE_CHAR: {
+            if (b1 == TYPE_CHAR) {
+                isValid = TRUE;
+                break;
+            }
+            break;
+        }
+
+        case TYPE_STRUCT: {
+            /*
+             * FIXME:
+             *	it depends on operation, could be a user defined
+             *	operator. Anyway return NULL at this moment.
+             */
+            break;
+        }
+
+        default: {
+            break;
+        }
+
+    }
+
+    return (isValid = TRUE) ? type_basic(TYPE_LOGICAL) : NULL;
+}
+
+TYPE_DESC
+get_binary_equal_intrinsic_operation_type(TYPE_DESC t0, TYPE_DESC t1) {
+    /*
+     * Based on the type promotion rule regulated by the JIS X 3001-1
+     * (ISO/IEC 1539-1 : 2004)
+     */
+    /*
+     * Attuned to:
+     *	.EQ., .NE., ==, /=.
+     */
+
+    int isValid = FALSE;
+    BASIC_DATA_TYPE b0 = get_basic_type(t0);
+    BASIC_DATA_TYPE b1 = get_basic_type(t1);
+
+    if (b0 == TYPE_UNKNOWN || b1 == TYPE_UNKNOWN) {
+        fatal("Invalid basic type.");
+        /* not reached. */
+        return NULL;
+    }
+
+    switch (b0) {
+
+        case TYPE_INT:
+        case TYPE_REAL: case TYPE_DREAL:
+        case TYPE_COMPLEX: case TYPE_DCOMPLEX:
+        case TYPE_GNUMERIC: case TYPE_GNUMERIC_ALL: {
+            switch (b1) {
+                case TYPE_INT:
+                case TYPE_REAL: case TYPE_DREAL:
+                case TYPE_COMPLEX: case TYPE_DCOMPLEX:
+                case TYPE_GNUMERIC: case TYPE_GNUMERIC_ALL: {
+                    isValid = TRUE;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+            break;
+        }
+
+        case TYPE_CHAR: {
+            if (b1 == TYPE_CHAR) {
+                isValid = TRUE;
+                break;
+            }
+            break;
+        }
+
+        case TYPE_STRUCT: {
+            /*
+             * FIXME:
+             *	it depends on operation, could be a user defined
+             *	operator. Anyway return NULL at this moment.
+             */
+            break;
+        }
+
+        default: {
+            break;
+        }
+
+    }
+
+    return (isValid = TRUE) ? type_basic(TYPE_LOGICAL) : NULL;
+}
+
 int
 type_is_linked(TYPE_DESC tp, TYPE_DESC tlist)
 {
@@ -424,4 +887,21 @@ type_link_add(TYPE_DESC tp, TYPE_DESC tlist, TYPE_DESC ttail)
     }
     TYPE_LINK(ttail) = NULL;
     return ttail;
+}
+
+TYPE_DESC
+copy_type_partially(TYPE_DESC tp, int doCopyAttr) {
+    TYPE_DESC ret = NULL;
+    if (tp != NULL) {
+        ret = new_type_desc();
+        *ret = *tp;
+        if (doCopyAttr == FALSE) {
+            TYPE_ATTR_FLAGS(ret) = 0;
+            TYPE_EXTATTR_FLAGS(ret) = 0;
+        }
+        if (TYPE_REF(tp) != NULL) {
+            TYPE_REF(ret) = copy_type_partially(TYPE_REF(tp), doCopyAttr);
+        }
+    }
+    return ret;
 }

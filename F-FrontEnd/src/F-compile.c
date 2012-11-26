@@ -1,4 +1,3 @@
-
 /* 
  * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
  * $TSUKUBA_Copyright:
@@ -1169,6 +1168,10 @@ begin_procedure()
     current_proc_state = P_DEFAULT;
 
     if (unit_ctl_level > 0) set_parent_implicit_decls();
+
+    if (isInFinalizer == FALSE) {
+        module_procedure_manager_init();
+    }
 }
 
 /* now this is not called.  */
@@ -1365,6 +1368,7 @@ end_declaration()
         fprintf(debug_fp,"--- end_declaration ---\n");
         print_IDs(LOCAL_SYMBOLS, debug_fp, TRUE);
         print_IDs(LOCAL_COMMON_SYMBOLS, debug_fp, TRUE);
+        print_interface_IDs(LOCAL_SYMBOLS, debug_fp);
         print_types(LOCAL_STRUCT_DECLS, debug_fp);
     }
 
@@ -1711,14 +1715,15 @@ end_declaration()
             if (TYPE_IS_ALLOCATABLE(tp) && IS_ARRAY_TYPE(tp) == FALSE &&
 		!tp->codims) {
                 error_at_id(ip, "ALLOCATABLE is applied only to array");
-            } else
-            if (TYPE_IS_OPTIONAL(tp) && ID_STORAGE(ip) != STG_ARG) {
-                warning_at_id(ip, "OPTIONAL is applied only to dummy argument");
-            } else
-            if ((TYPE_IS_INTENT_IN(tp) ||
-                TYPE_IS_INTENT_OUT(tp) ||
-                TYPE_IS_INTENT_INOUT(tp)) && ID_STORAGE(ip) != STG_ARG) {
-                warning_at_id(ip, "INTENT is applied only to dummy argument");
+            } else if (TYPE_IS_OPTIONAL(tp) && !(ID_IS_DUMMY_ARG(ip))) {
+                warning_at_id(ip, "OPTIONAL is applied only "
+                              "to dummy argument");
+            } else if ((TYPE_IS_INTENT_IN(tp) ||
+                        TYPE_IS_INTENT_OUT(tp) ||
+                        TYPE_IS_INTENT_INOUT(tp)) &&
+                       !(ID_IS_DUMMY_ARG(ip))) {
+                warning_at_id(ip, "INTENT is applied only "
+                              "to dummy argument");
             }
         }
     }
@@ -2402,6 +2407,11 @@ end_procedure()
         break;
     }
 
+    fixup_all_module_procedures();
+    if (debug_flag) {
+        dump_all_module_procedures(stderr);
+    }
+
     if(CURRENT_PROC_CLASS == CL_MODULE) {
         SYMBOL sym = find_symbol(current_module_name);
         if(!export_module(sym, LOCAL_SYMBOLS,
@@ -2681,28 +2691,32 @@ check_DO_end(ID label)
 static int module_start_ln_no;
 extern int last_ln_no;
 
-
 /* set the module from NAME.  */
 void
 begin_module(expr name)
 {
-  SYMBOL s;
-  if (name) {
-    if(EXPR_CODE(name) != IDENT) {
-      error ("internal error, module name is not IDENT in begein_module()");
-      abort();
+    SYMBOL s;
+    if (name) {
+        if (EXPR_CODE(name) == IDENT &&
+            (s = EXPR_SYM(name)) != NULL &&
+            SYM_NAME(s) != NULL) {
+            /*
+             * call the module_procedure_manager_init() very here, not
+             * after the current_module_name != NULL.
+             */
+            module_procedure_manager_init();
+            current_module_name = SYM_NAME(s);
+            module_start_ln_no = last_ln_no;
+            module_start_offset = prelast_initial_line_pos;
+        } else {
+            fatal("internal error, module name is not "
+                  "IDENT in %s().", __func__);
+            /* not reached. */
+        }
+    } else {
+        fatal("internal error, module name is NULL in %s().", __func__);
+        /* not reached. */
     }
-
-    s = EXPR_SYM(name);
-    current_module_name = SYM_NAME(s);
-  }
-  else {
-    error("internal error, module name is NULL in begin_module()");
-    abort();
-  }
-
-  module_start_ln_no = last_ln_no;
-  module_start_offset = prelast_initial_line_pos;
 }
 
 /*
@@ -2710,11 +2724,20 @@ begin_module(expr name)
  * output module's XcodeML file.
  */
 void
-end_module()
-{
+end_module() {
     current_module_state = M_DEFAULT;
     current_module_name = NULL;
     CURRENT_STATE = OUTSIDE; /* goto outer, outside state.  */
+}
+
+int
+is_in_module(void) {
+    return (INMODULE()) ? TRUE : FALSE;
+}
+
+const char *
+get_current_module_name(void) {
+    return current_module_name;
 }
 
 struct use_argument {
@@ -3186,16 +3209,15 @@ end_interface()
     }
 
     /* add INTERFACE symbol to parent */
-    if(EXT_PROC_INTERFACES(PARENT_EXT_ID) == NULL) {
+    if (EXT_PROC_INTERFACES(PARENT_EXT_ID) == NULL) {
         EXT_PROC_INTERFACES(PARENT_EXT_ID) = intr;
     } else {
-        extid_put_last(
-            EXT_PROC_INTERFACES(PARENT_EXT_ID), intr);
+        extid_put_last(EXT_PROC_INTERFACES(PARENT_EXT_ID), intr);
     }
 
-    if (endlineno_flag){
-      if (CURRENT_INTERFACE && EXT_LINE(CURRENT_INTERFACE))
-	EXT_END_LINE_NO(CURRENT_INTERFACE) = current_line->ln_no;
+    if (endlineno_flag) {
+        if (CURRENT_INTERFACE && EXT_LINE(CURRENT_INTERFACE))
+            EXT_END_LINE_NO(CURRENT_INTERFACE) = current_line->ln_no;
     }
 
     pop_unit_ctl();
@@ -3282,8 +3304,16 @@ accept_MODULEPROCEDURE_statement_in_module(expr x)
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
         ident = LIST_ITEM(lp);
         assert(EXPR_CODE(ident) == IDENT);
+
+        /*
+         * FIXME:
+         *	It is not good idea to set ID_TYPE() to
+         *	BASIC_TYPE_DESC(TYPE_GENERIC). Need to replace the
+         *	ID_TYPE() anyway.
+         */
+
         id = find_ident(EXPR_SYM(ident));
-        if(id == NULL) {
+        if (id == NULL) {
             id = declare_ident(EXPR_SYM(ident), CL_PROC);
         } else {
             switch_id_to_proc(id);
@@ -3305,37 +3335,54 @@ compile_MODULEPROCEDURE_statement(expr x)
     expr ident;
     ID id;
     EXT_ID ep;
+    const char *genProcName = NULL;
 
-    if(PARENT_STATE != ININTR) {
+    if (PARENT_STATE != ININTR) {
         error("unexpected MODULE PROCEDURE statement");
         return;
     }
 
-    if(checkInsideUse()) {
+    if (checkInsideUse()) {
         accept_MODULEPROCEDURE_statement_in_module(x);
         return;
     }
 
-    if(EXT_IS_BLANK_NAME(CURRENT_INTERFACE)) {
+    if (EXT_IS_BLANK_NAME(CURRENT_INTERFACE)) {
         error("MODULE PROCEDURE must be in a generic module interface");
         return;
     }
+
+    genProcName = SYM_NAME(EXT_SYM(CURRENT_INTERFACE));
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
         ident = LIST_ITEM(lp);
         assert(EXPR_CODE(ident) == IDENT);
         id = find_ident(EXPR_SYM(ident));
-        if(id == NULL) {
+        if (id == NULL) {
             id = declare_ident(EXPR_SYM(ident), CL_PROC);
         } else {
             switch_id_to_proc(id);
         }
 
         ep = declare_external_proc_id(EXPR_SYM(ident), NULL, TRUE);
-        if(ep == NULL)
-            return;
+        if (ep == NULL) {
+            fatal("can't allocate an EXT_ID for a module procedure.");
+            /* not reached. */
+            continue;
+        }
         EXT_LINE(ep) = EXPR_LINE(x);
         EXT_PROC_CLASS(ep) = EP_MODULE_PROCEDURE;
+
+        if (add_module_procedure(genProcName, SYM_NAME(EXPR_SYM(ident)),
+                                 NULL, NULL, NULL) == NULL) {
+            fatal("can't add a module procedure '%s' for '%s'.",
+                  SYM_NAME(EXPR_SYM(ident)), genProcName);
+            /* not reached. */
+        }
+    }
+
+    if (debug_flag) {
+        dump_all_module_procedures(stderr);
     }
 }
 
@@ -3748,7 +3795,7 @@ compile_CALL_statement(expr x)
     }
 #endif
 
-    if (ID_STORAGE(id) == STG_ARG) {
+    if (ID_IS_DUMMY_ARG(id)) {
         v = compile_highorder_function_call(id, EXPR_ARG2(x), TRUE);
     } else {
         v = compile_function_call(id, EXPR_ARG2(x));
@@ -4205,11 +4252,24 @@ compile_OPTIONAL_statement(expr x)
 
         assert(EXPR_CODE(ident) == IDENT);
 
-        id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
-        if (id == NULL)
-            return;
+        /*
+         * Dummy args must be declared as local symbol.
+         */
+        id = find_ident_local(EXPR_SYM(ident));
+        if (id == NULL) {
+            error_at_node(x, "\"%s\" is not declared yet.",
+                          SYM_NAME(EXPR_SYM(ident)));
+            continue;
+        }
+        if (!ID_IS_DUMMY_ARG(id)) {
+            error_at_node(x, "\"%s\" is not a dummy argument.",
+                          SYM_NAME(ID_SYM(id)));
+            continue;
+        }
+
         if(ID_IS_OFMODULE(id)) {
-            error("can't change attributes of USE-assoicated symbol '%s'", ID_NAME(id));
+            error("can't change attributes of USE-assoicated symbol '%s'",
+                  ID_NAME(id));
             return;
         } else if (ID_IS_AMBIGUOUS(id)) {
             error("an ambiguous reference to symbol '%s'", ID_NAME(id));
@@ -4230,12 +4290,21 @@ compile_OPTIONAL_statement(expr x)
              */
             TYPE_SET_OPTIONAL(id);
 
+#if 0
             /*
              * XXX FIXME:
              *	Not sure I could overwrite the storage class here, but
              *	it seems here could be the place.
              */
             ID_STORAGE(id) = STG_ARG;
+#else
+            /*
+             * A fix:
+             *  Since we checked this id IS dummy arg now, no need to
+             *	overwrite it. Furthermore, the id could be STG_EXT if
+             *	it is function/subroutine.
+             */
+#endif
         }
     }
 }
@@ -4257,11 +4326,24 @@ compile_INTENT_statement(expr x)
 
         assert(EXPR_CODE(ident) == IDENT);
 
-        id = declare_ident(EXPR_SYM(ident), CL_VAR);
-        if(id == NULL)
-            return;
+        /*
+         * Dummy args must be declared as local symbol.
+         */
+        id = find_ident_local(EXPR_SYM(ident));
+        if (id == NULL) {
+            error_at_node(x, "\"%s\" is not declared yet.",
+                          SYM_NAME(EXPR_SYM(ident)));
+            continue;
+        }
+        if (!ID_IS_DUMMY_ARG(id)) {
+            error_at_node(x, "\"%s\" is not a dummy argument.",
+                          SYM_NAME(ID_SYM(id)));
+            continue;
+        }
+
         if(ID_IS_OFMODULE(id)) {
-            error("can't change attributes of USE-assoicated symbol '%s'", ID_NAME(id));
+            error("can't change attributes of USE-assoicated symbol '%s'",
+                  ID_NAME(id));
             return;
         } else if (ID_IS_AMBIGUOUS(id)) {
             error("an ambiguous reference to symbol '%s'", ID_NAME(id));

@@ -415,6 +415,8 @@ char *argv[];
     if (nerrors != 0) {
         goto Done;
     }
+
+    final_fixup();
     
     /* output XcodeML/Fortran code */
     output_XcodeML_file();

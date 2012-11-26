@@ -34,6 +34,7 @@ intrinsic_entry intrinsic_table[] = {
 
     // AIMAG (Z)
     { INTR_AIMAG,       INTR_NAME_SPECIFIC,     "aimag",        0,      {INTR_TYPE_COMPLEX},    INTR_TYPE_REAL,         1, -5, LANGSPEC_F77 },
+    { INTR_AIMAG,       INTR_NAME_SPECIFIC,     "",             0,      {INTR_TYPE_DCOMPLEX},   INTR_TYPE_DREAL,        1, -5, LANGSPEC_F77 },
 
     // DIMAG (Z)
     { INTR_DIMAG,       INTR_NAME_GENERIC,      "dimag",        0,      {INTR_TYPE_DCOMPLEX},   INTR_TYPE_DREAL,        1, -5, LANGSPEC_NONSTD },
@@ -293,16 +294,16 @@ intrinsic_entry intrinsic_table[] = {
     // REPEAT (STRING, NCOPIES)
     { INTR_REPEAT,  INTR_NAME_GENERIC,          "repeat",       0,      {INTR_TYPE_CHAR, INTR_TYPE_INT},       INTR_TYPE_INT,  2, 0, LANGSPEC_F90 },
 
-    // SCAN (STRING, SET [, BACK])
-    { INTR_SCAN,        INTR_NAME_GENERIC,      "scan",         0,      {INTR_TYPE_CHAR, INTR_TYPE_CHAR},                       INTR_TYPE_INT,  2, -1, LANGSPEC_F90 },
-    { INTR_SCAN,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_CHAR, INTR_TYPE_CHAR, INTR_TYPE_LOGICAL},    INTR_TYPE_INT,  3, -1, LANGSPEC_F90 },
+    // SCAN (STRING, SET [, BACK, KIND ])
+    { INTR_SCAN,        INTR_NAME_GENERIC,      "scan",         1,      {INTR_TYPE_CHAR, INTR_TYPE_CHAR},                       INTR_TYPE_INT,  2, -1, LANGSPEC_F90 },
+    { INTR_SCAN,        INTR_NAME_GENERIC,      "",             1,      {INTR_TYPE_CHAR, INTR_TYPE_CHAR, INTR_TYPE_LOGICAL},    INTR_TYPE_INT,  3, -1, LANGSPEC_F90 },
 
     // TRIM (STRING)
     { INTR_TRIM,        INTR_NAME_GENERIC,      "trim",         0,      {INTR_TYPE_CHAR},       INTR_TYPE_CHAR, 1, 0, LANGSPEC_F90 },
 
-    // VERIFY (STRING, SET [, BACK])
-    { INTR_VERIFY,      INTR_NAME_GENERIC,      "verify",       0,      {INTR_TYPE_CHAR, INTR_TYPE_CHAR},                       INTR_TYPE_INT,      2, -1, LANGSPEC_F90 },
-    { INTR_VERIFY,      INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_CHAR, INTR_TYPE_CHAR, INTR_TYPE_LOGICAL},    INTR_TYPE_INT,      3, -1, LANGSPEC_F90 },
+    // VERIFY (STRING, SET [, BACK, KIND])
+    { INTR_VERIFY,      INTR_NAME_GENERIC,      "verify",       1,      {INTR_TYPE_CHAR, INTR_TYPE_CHAR},                       INTR_TYPE_INT,      2, -1, LANGSPEC_F90 },
+    { INTR_VERIFY,      INTR_NAME_GENERIC,      "",             1,      {INTR_TYPE_CHAR, INTR_TYPE_CHAR, INTR_TYPE_LOGICAL},    INTR_TYPE_INT,      3, -1, LANGSPEC_F90 },
 
 
 
@@ -474,7 +475,7 @@ intrinsic_entry intrinsic_table[] = {
 
     // DOT_PRODUCT (VECTOR_A, VECTOR_B)
     { INTR_DOT_PRODUCT, INTR_NAME_GENERIC,      "dot_product",  0,      {INTR_TYPE_ALL_NUMERICS_ARRAY, INTR_TYPE_ALL_NUMERICS_ARRAY},             INTR_TYPE_ALL_NUMERICS,    2, -6, LANGSPEC_F90 },
-    { INTR_DOT_PRODUCT, INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY},             INTR_TYPE_ALL_NUMERICS,    2, -6, LANGSPEC_F90 },
+    { INTR_DOT_PRODUCT, INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY},                       INTR_TYPE_LOGICAL,         2, -6, LANGSPEC_F90 },
 #if 0
     { INTR_DOT_PRODUCT, INTR_NAME_GENERIC,      "dot_product",  0,      {INTR_TYPE_INT_ARRAY, INTR_TYPE_INT_ARRAY},             INTR_TYPE_INT_ARRAY,    2, 0, LANGSPEC_F90 },
     { INTR_DOT_PRODUCT, INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_REAL_ARRAY, INTR_TYPE_REAL_ARRAY},           INTR_TYPE_REAL_ARRAY,   2, 0, LANGSPEC_F90 },

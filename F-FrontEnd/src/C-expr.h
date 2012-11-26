@@ -62,6 +62,7 @@ typedef struct expression_node
     enum expr_code e_code;
     lineno_info *e_line;                /* line number this node created */
     struct type_descriptor *e_type;     /* used for expv */
+    int need_type_fixup;                /* used for expv */
     int is_rvalue;                      /* used for expv, to determine
                                            rvalue (not lhs) or not. */
     const char *keyword_opt;		/* A name of keyword option
@@ -137,6 +138,7 @@ typedef expr expv;
 #define EXPV_GEN(x)     ((x)->v.e_gen)
 #define EXPV_CODE(x)    ((x)->e_code)
 #define EXPV_TYPE(x)    ((x)->e_type)
+#define EXPV_NEED_TYPE_FIXUP(x) ((x)->need_type_fixup)
 #define EXPV_IS_RVALUE(x)       ((x)->is_rvalue)
 #define EXPV_LIST(x)    ((x)->v.e_lp)
 #define EXPV_LEFT(x)    ((x)->v.e_lp->l_item)

@@ -172,6 +172,17 @@ declare_procedure(enum name_class class,
         if (debug_flag)
             fprintf(diag_file,"   %s:\n",SYM_NAME(s));
 
+        if (unit_ctl_level > 0 && PARENT_STATE == ININTR) {
+            ID pid = find_ident_parent(s);
+            if (pid != NULL && ID_STORAGE(pid) == STG_ARG) {
+                /*
+                 * The s is declared in an interface statement in
+                 * a dummy argument list.
+                 */
+                PROC_IS_DUMMY_ARG(pid) = TRUE;
+            }
+        }
+
         /* make local entry */
         id = declare_ident(s, CL_PROC);
         if (result_opt != NULL) {
@@ -418,7 +429,6 @@ declare_dummy_args(expr l, enum name_class class)
         ID_COULD_BE_IMPLICITLY_TYPED(id) = TRUE;
         if (ID_STORAGE(id) == STG_UNKNOWN) {
             ID_STORAGE(id) = STG_ARG;
-
         } else if (ID_STORAGE(id) != STG_ARG) {
             if (ID_STORAGE(id) == STG_AUTO &&
                 IS_ARRAY_TYPE(ID_TYPE(id)) &&
@@ -817,7 +827,7 @@ declare_external_id_for_highorder(ID id, int isCall)
 {
     EXT_ID ret;
 
-    if (ID_STORAGE(id) != STG_ARG) {
+    if (!(ID_IS_DUMMY_ARG(id))) {
         fatal("%s: '%s' is not a dummy arg.",
               __func__, SYM_NAME(ID_SYM(id)));
         /* not reached. */
@@ -963,7 +973,7 @@ declare_ident(SYMBOL s, enum name_class class)
             /* define name class */
             if (ID_CLASS(ip) == CL_UNKNOWN) {
                 ID_CLASS(ip) = class;
-            } else if (ID_STORAGE(ip) != STG_ARG) {
+            } else if (!(ID_IS_DUMMY_ARG(ip))) {
                 snprintf(msg, 2048, fmt, "name", SYM_NAME(s));
                 if (isInUseDecl == FALSE) {
                     error(msg);
@@ -1345,7 +1355,7 @@ declare_struct_type_wo_component(expr ident)
 /* declare type for F95 attributes */
 /* check compatibility if id's type is already declared. */
 static TYPE_DESC
-declare_type_attributes(TYPE_DESC tp, expr attributes,
+declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
 			int ignoreDims, int ignoreCodims)
 {
     expr v;
@@ -1362,6 +1372,16 @@ declare_type_attributes(TYPE_DESC tp, expr attributes,
 
     FOR_ITEMS_IN_LIST(lp,attributes){
         v = LIST_ITEM(lp);
+
+        if (EXPR_CODE(v) == F95_INTENT_SPEC ||
+            EXPR_CODE(v) == F95_OPTIONAL_SPEC) {
+            if (id != NULL && !(ID_IS_DUMMY_ARG(id))) {
+                error_at_node(attributes, "\"%s\" is not a dummy argument.",
+                              SYM_NAME(ID_SYM(id)));
+                continue;
+            }
+        }
+
         if (debug_flag)
             fprintf(debug_fp,"<!-- %s -->\n", EXPR_CODE_NAME(EXPR_CODE(v)) );
 
@@ -1545,7 +1565,7 @@ declare_id_type(ID id, TYPE_DESC tp)
 
     /* both are not ARRAY_TYPE */
 
-    if(tq != NULL && IS_SUBR(tp) && ID_STORAGE(id) == STG_ARG){
+    if(tq != NULL && IS_SUBR(tp) && ID_IS_DUMMY_ARG(id)) {
         /* if argument, may override with TYPE_SUBR ??? */
         ID_TYPE(id) = tp;
         return;
@@ -2661,9 +2681,9 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
             } else if (id != NULL && ID_IS_AMBIGUOUS(id)) {
                 error_at_node(decl_list, "an ambiguous reference to symbol '%s'", ID_NAME(id));
                 return;
-            } else if(id == NULL || ID_STORAGE(id) != STG_ARG) {
+            } else if(id == NULL || !(ID_IS_DUMMY_ARG(id))) {
                 id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
-            } else if (id != NULL && ID_STORAGE(id) == STG_ARG) {
+            } else if (id != NULL && ID_IS_DUMMY_ARG(id)) {
                 /* update order from one set in declare_dummy_args */
                 ID_ORDER(id) = order_sequence++;
             }
@@ -2765,7 +2785,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
 	      ignoreCodimsInAttr = TRUE;
             }
 
-            tp = declare_type_attributes(tp, attributes,
+            tp = declare_type_attributes(id, tp, attributes,
                                          ignoreDimsInAttr,
 					 ignoreCodimsInAttr);
 
@@ -3448,7 +3468,7 @@ compile_EXTERNAL_decl(expr id_list)
             continue;
         }
 
-        if(ID_STORAGE(id) != STG_ARG)
+        if(!(ID_IS_DUMMY_ARG(id)))
             ID_STORAGE(id) = STG_EXT;
     }
 }
@@ -3486,7 +3506,7 @@ markAsSave(id)
     if ((ID_CLASS(id) != CL_VAR &&
          ID_CLASS(id) != CL_COMMON &&
          ID_CLASS(id) != CL_UNKNOWN) ||
-        ID_STORAGE(id) == STG_ARG) {
+        ID_IS_DUMMY_ARG(id)) {
 
         error("\"%s\" is not a variable.", SYM_NAME(ID_SYM(id)));
         return FALSE;
@@ -3527,7 +3547,7 @@ compile_SAVE_decl(id_list)
                 !TYPE_IS_PARAMETER(id) &&
                 (ID_CLASS(id) == CL_UNKNOWN ||
                  ID_CLASS(id) == CL_VAR) &&
-                ID_STORAGE(id) != STG_ARG) {
+                !(ID_IS_DUMMY_ARG(id))) {
                 markAsSave(id);
             }
         }

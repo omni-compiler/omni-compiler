@@ -659,66 +659,6 @@ input_coShape(xmlTextReaderPtr reader, TYPE_DESC tp)
 }
 
 /**
- * check type is omissible, such that
- * no attributes, no memebers, no indexRanage and so on.
- *
- * FIXME:
- * shrink_type() and type_is_omissible() are quick-fix.
- * see shrink_type().
- */
-static int
-type_is_omissible(TYPE_DESC tp)
-{
-    // NULL or a terminal type is not omissible.
-    if (tp == NULL || TYPE_REF(tp) == NULL)
-        return FALSE;
-    // The struct type is not omissible.
-    if (IS_STRUCT_TYPE(tp))
-        return FALSE;
-    // The array type is not omissible.
-    if (IS_ARRAY_TYPE(tp))
-        return FALSE;
-    // The function type is not omissible.
-    if (IS_FUNCTION_TYPE(tp))
-        return FALSE;
-    // Co-array is not omissible.
-    if (tp->codims != NULL)
-        return FALSE;
-    // The type has kind, leng, or size is not omissible.
-    if (TYPE_KIND(tp) != NULL || TYPE_LENG(tp) != NULL || TYPE_CHAR_LEN(tp) != 0)
-        return FALSE;
-    // The type has attributes is not omissible.
-    if (TYPE_ATTR_FLAGS(tp))
-        return FALSE;
-    return TRUE;
-}
-
-/**
- * shrink TYPE_DESC, ignore the basic_type with a reference and no attributes.
- *
- * FIXME:
- * shrink_type() and type_is_omissible() are quick-fix.
- *
- * These function solve the following problem:
- *  Too long TYPE_REF list created while reading a xmod file,
- *  but F-Frontend expects TYPE_REF list of basic_type shorter than 3.
- *  Thus type attributes of use-associated IDs are discarded.
- *
- * Something wrong with creation of types from xmod file,
- * This quick-fix don't care above, but shrink TYPE_REF list after type is created.
- */
-static void
-shrink_type(TYPE_DESC tp)
-{
-    TYPE_DESC ref = TYPE_REF(tp);
-    while (type_is_omissible(ref)) {
-        TYPE_REF(tp) = TYPE_REF(ref);
-        ref = TYPE_REF(tp);
-    }
-}
-
-
-/**
  * input <FbasicType> node
  */
 static int
@@ -915,7 +855,7 @@ input_symbol(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC parent, ID * tai
 
     id = new_ident_desc(s);
     ID_TYPE(id) = tp;
-    if(type_is_omissible(tp))
+    if(type_is_omissible(tp, 0, 0))
         ID_TYPE(id) = TYPE_REF(tp);
 
     ID_LINK_ADD(id, TYPE_MEMBER_LIST(parent), *tail);
@@ -1099,7 +1039,7 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
             PROC_EXT_ID(id) = tep->ep;
             EXT_SYM(tep->ep) = name;
             EXT_PROC_TYPE(tep->ep) = ID_TYPE(id);
-        } else if (type_is_omissible(ID_TYPE(id))) {
+        } else if (type_is_omissible(ID_TYPE(id), 0, 0)) {
             ID_TYPE(id) = TYPE_REF(ID_TYPE(id));
         }
 

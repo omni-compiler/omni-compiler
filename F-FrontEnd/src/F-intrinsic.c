@@ -12,7 +12,6 @@
 
 #include "F-intrinsics-types.h"
 
-#define isValidString(s)        (s != NULL && *s != '\0')
 #define isValidType(tp)         \
     (tp != NULL && get_basic_type(tp) != TYPE_UNKNOWN)
 #define isValidTypedExpv(v)     (v != NULL && isValidType(EXPV_TYPE(v)))
@@ -29,8 +28,6 @@ static TYPE_DESC        get_intrinsic_return_type(intrinsic_entry *ep,
                                                   expv args,
                                                   expv kindV);
 static BASIC_DATA_TYPE	intr_type_to_basic_type(INTR_DATA_TYPE iType);
-
-expv doubledKind = NULL;
 
 
 void
@@ -758,10 +755,14 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
                         argument is scalar/array, return
                         return type is scalar */ : {
 
-                if (!(INTR_IS_RETURN_TYPE_DYNAMIC(ep))) {
+                if (!(INTR_IS_RETURN_TYPE_DYNAMIC(ep)) &&
+                    (INTR_RETURN_TYPE(ep) != INTR_TYPE_ALL_NUMERICS &&
+                     INTR_RETURN_TYPE(ep) != INTR_TYPE_NUMERICS)) {
                     bType = intr_type_to_basic_type(INTR_RETURN_TYPE(ep));
                     if (bType == TYPE_UNKNOWN) {
-                        ret = NULL;
+                        fatal("invalid intrinsic return type (case -1/-6).");
+                        /* not reached. */
+                        return NULL;
                     } else {
                         if (kindV == NULL) {
                             ret = (bType != TYPE_CHAR) ? type_basic(bType) :
@@ -834,13 +835,16 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
                             nDim  = (int)EXPV_INT_VALUE(dim);
 
                             if(nDim > TYPE_N_DIM(tp) || nDim <= 0) {
-                                error("value DIM of intrinsic %s out of range.", INTR_NAME(ep));
+                                error("value DIM of intrinsic %s "
+                                      "out of range.", INTR_NAME(ep));
                                 return NULL;
                             }
 
-                            generate_contracted_shape_expr(tp, shape, TYPE_N_DIM(tp) - nDim);
+                            generate_contracted_shape_expr(
+                                tp, shape, TYPE_N_DIM(tp) - nDim);
                         } else {
-                            generate_assumed_shape_expr(shape, TYPE_N_DIM(tp) - 1);
+                            generate_assumed_shape_expr(
+                                shape, TYPE_N_DIM(tp) - 1);
                         }
                     }
                     break;
@@ -879,13 +883,16 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
                             nDim  = (int)EXPV_INT_VALUE(dim);
 
                             if(nDim > (TYPE_N_DIM(tp) + 1) || nDim <= 0) {
-                                error("value DIM of intrinsic %s out of range.", INTR_NAME(ep));
+                                error("value DIM of intrinsic %s "
+                                      "out of range.", INTR_NAME(ep));
                                 return NULL;
                             }
 
-                            generate_expand_shape_expr(tp, shape, ncopies, TYPE_N_DIM(tp) + 1 - nDim);
+                            generate_expand_shape_expr(
+                                tp, shape, ncopies, TYPE_N_DIM(tp) + 1 - nDim);
                         } else {
-                            generate_assumed_shape_expr(shape, TYPE_N_DIM(tp) - 1);
+                            generate_assumed_shape_expr(
+                                shape, TYPE_N_DIM(tp) - 1);
                         }
                     }
                     break;
@@ -915,40 +922,11 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
 
                         tp = EXPV_TYPE(arg_shape);
                         if (TYPE_N_DIM(tp) != 1) {
-                            error("SHAPE argument of intrinsic RESHAPE is not vector.");
+                            error("SHAPE argument of intrinsic "
+                                  "RESHAPE is not vector.");
                             return NULL;
                         }
 
-#if 0
-                        /* check if arg_shape is array constructer. */
-
-                        {
-                            int nDims;
-                            expv upper, lower, step;
-
-                            upper = expv_reduce(TYPE_DIM_UPPER(tp), FALSE);
-                            lower = expv_reduce(TYPE_DIM_LOWER(tp), FALSE);
-                            step  = expv_reduce(TYPE_DIM_STEP(tp), FALSE);
-
-                            if(upper != NULL && EXPV_CODE(upper) == INT_CONSTANT &&
-                               lower != NULL && EXPV_CODE(lower) == INT_CONSTANT &&
-                               (step == NULL || EXPV_CODE(step) != INT_CONSTANT)) {
-
-                                nDims = (int)EXPV_INT_VALUE(upper) -
-                                    (int)EXPV_INT_VALUE(lower) + 1;
-
-                                if(step != NULL) {
-                                    nDims = nDims / ((int)EXPV_INT_VALUE(step));
-                                }
-
-                                generate_assumed_shape_expr(shape, nDims);
-
-                            } else {
-                                /* not  reached ! */
-                                ret = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
-                            }
-                        }
-#else
                         /*
                          * We can't determine # of the elements in
                          * this array that represents dimension of the
@@ -968,7 +946,6 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
                         TYPE_IS_RESHAPED(ret) = TRUE;
 
                         return ret;
-#endif
                     }
                     break;
 
@@ -981,6 +958,13 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
                         expv s1 = list0(LIST);
                         expv s2 = list0(LIST);
 
+                        /*
+                         * FIXME:
+                         *	Should we use
+                         *	get_binary_numeric_intrinsic_operation_type()
+                         *	instead of max_type()? I think so but
+                         *	not sure at this moment.
+                         */
                         bType = get_basic_type(max_type(t1, t2));
 
                         if (kindV == NULL) {
@@ -1023,6 +1007,27 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
                         fix_array_dimensions(ret);
 
                         return ret;
+                    }
+                    break;
+
+                    case INTR_DOT_PRODUCT:
+                    {
+                        expv m1 = expr_list_get_n(args, 0);
+                        expv m2 = expr_list_get_n(args, 1);
+                        TYPE_DESC t1 = EXPV_TYPE(m1);
+                        TYPE_DESC t2 = EXPV_TYPE(m2);
+
+                        if (TYPE_N_DIM(t1) == 1 &&
+                            TYPE_N_DIM(t2) == 1) {
+                            TYPE_DESC tp =
+                                get_binary_numeric_intrinsic_operation_type(
+                                    t1, t2);
+                            return array_element_type(tp);
+                        } else {
+                            error("argument(s) is not a one-dimensional "
+                                  "array.");
+                            return NULL;
+                        }
                     }
                     break;
 
@@ -1124,22 +1129,49 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
                  * -5 : BASIC_TYPE of return type is 'returnType' and
                  * kind of return type is same as first arg.
                  */
+                int nDims = 0;
+                TYPE_DESC tp = NULL;
+
                 a = expr_list_get_n(args, 0);
-                if (!(isValidTypedExpv(a)))
+                if (!(isValidTypedExpv(a))) {
                     return NULL;
-                ret = 
-                    type_basic(intr_type_to_basic_type(INTR_RETURN_TYPE(ep)));
+                }
 
-		if (!doubledKind)
-                    doubledKind = expv_int_term(INT_CONSTANT, type_INT,
-                                                KIND_PARAM_DOUBLE);
+                tp = EXPV_TYPE(a);
 
-		TYPE_KIND(ret) = IS_DOUBLED_TYPE(EXPV_TYPE(a)) ?
-	                         doubledKind :
-		                 TYPE_KIND(get_bottom_ref_type(EXPV_TYPE(a)));
+                switch (INTR_OP(ep)) {
+                    case INTR_AIMAG: case INTR_DIMAG: {
+                        bType = get_basic_type(tp);
+                        if (bType != TYPE_COMPLEX &&
+                            bType != TYPE_DCOMPLEX) {
+                            error("argument is not a complex type.");
+                            return NULL;
+                        }
+                        bType = (bType == TYPE_COMPLEX) ?
+                            TYPE_REAL : TYPE_DREAL;
+                        break;
+                    }
+                    default: {
+                        bType = intr_type_to_basic_type(INTR_RETURN_TYPE(ep));
+                        break;
+                    }
+                }
 
-		//TYPE_KIND(ret) = TYPE_KIND(get_bottom_ref_type(EXPV_TYPE(a)));
-                ret = intr_convert_to_dimension_ifneeded(ep, args, ret);
+                if (bType == TYPE_UNKNOWN) {
+                    fatal("invalid intrinsic return type (case -5).");
+                    /* not reached. */
+                    return NULL;
+                }
+                bTypeDsc = type_basic(bType);
+                TYPE_KIND(bTypeDsc) = TYPE_KIND(tp);
+
+                if ((nDims = TYPE_N_DIM(tp)) > 0) {
+                    ret = copy_dimension(tp, bTypeDsc);
+                    fix_array_dimensions(ret);
+                } else {
+                    ret = bTypeDsc;
+                }
+
                 break;
             }
 

@@ -18,6 +18,7 @@
 #endif
 #define Min(a, b) (((a) > (b)) ? (b) : (a))
 
+extern void final_fixup();
 extern void output_XcodeML_file();
 extern void output_module_file(struct module *);
 

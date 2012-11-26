@@ -169,12 +169,12 @@ print_IDs(ip,fp,rec)
     fflush(fp);
 }
 
-
 static void
 print_EXT_ID(EXT_ID ep, FILE *fp)
 {
-    fprintf(fp,"'%s',tag=%s",SYM_NAME(EXT_SYM(ep)),
-        storage_class_name(EXT_TAG(ep)));
+    fprintf(fp, "'%s',tag=%s",SYM_NAME(EXT_SYM(ep)),
+            storage_class_name(EXT_TAG(ep)));
+    print_type(EXT_PROC_TYPE(ep), fp, FALSE);
     fprintf(fp,"\n");
 }
 
@@ -187,6 +187,21 @@ print_EXT_IDs(EXT_ID extids, FILE *fp)
     fflush(fp);
 }
 
+void
+print_interface_IDs(ID id, FILE *fd) {
+    EXT_ID eId;
+    for (; id != NULL; id = ID_NEXT(id)) {
+        if (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_EXTERNAL) {
+            eId = PROC_EXT_ID(id);
+            if (eId != NULL && EXT_PROC_CLASS(eId) == EP_INTERFACE &&
+                EXT_PROC_INTR_DEF_EXT_IDS(eId) != NULL) {
+                fprintf(fd, "# interface '%s' consists of:\n",
+                        ID_NAME(id));
+                print_EXT_IDs(EXT_PROC_INTR_DEF_EXT_IDS(eId), fd);
+            }
+        }
+    }
+}
 
 void
 print_types(tp,fp)
@@ -345,6 +360,12 @@ expr_print(x, fp)
     fprintf(fp, "# EXPR dump by %s\n", __func__);
     expr_print_rec(x, 0, fp);
     fprintf(fp,"\n");
+}
+
+
+void
+expr_print_indent(expr x, int l, FILE *fp) {
+    expr_print_rec(x, l, fp);
 }
 
 

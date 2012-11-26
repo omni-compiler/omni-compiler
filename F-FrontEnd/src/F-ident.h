@@ -48,7 +48,7 @@ extern char *name_class_names[];
   "CL_TAGNAME", \
   "CL_NAMELIST", \
   "CL_COMMON",  \
-  "CL_ELEMENT",                             \
+  "CL_ELEMENT", \
   "CL_GENERICS" \
 }
 
@@ -134,20 +134,22 @@ typedef struct ident_descriptor
     int order;                          /* order in local_symbols */
     struct ident_descriptor *defined_by;/* if this ID is defined parents
                                            then point it, otherwise NULL */
-    struct external_symbol* extID;      /* external symbol which is
+    struct external_symbol *extID;      /* external symbol which is
                                          * represented by this ID */
 
-    struct external_symbol* interfaceId;/* interface id which referes this ID. */
-
+    struct external_symbol *interfaceId;/* interface id which referes
+                                         * this ID. */
 
     int is_varDeclEmitted;              /* varDecl for this ID is emitted
                                          * or not. */
     struct ident_descriptor *equivID;
 
-    int    use_assoc_conflicted;         /* if TRUE then id ID is conflicted with
-                                           use associated id. */
-    struct use_assoc_info *use_assoc;   /* use association infomation of this ID,
-                                           otherwise NULL */
+    int    use_assoc_conflicted;        /* if TRUE then id ID is
+                                           conflicted with use
+                                           associated id. */
+    struct use_assoc_info *use_assoc;   /* use association infomation
+                                           of this ID, otherwise
+                                           NULL */
 
     union {
         struct {
@@ -165,6 +167,8 @@ typedef struct ident_descriptor
                                          copy to TYPE_DESC's is_recursive
                                          after type is decided */
             int is_pure;              /* like above. */
+            int is_dummy;             /* if TRUE, declared as dummy
+                                       * arg in the parent scope. */
         } proc_info;
         struct {
 
@@ -265,6 +269,11 @@ typedef struct ident_descriptor
 #define PROC_STBODY(id) ((id)->addr)
 #define PROC_IS_RECURSIVE(id) ((id)->info.proc_info.is_recursive)
 #define PROC_IS_PURE(id) ((id)->info.proc_info.is_pure)
+#define PROC_IS_DUMMY_ARG(id) ((id)->info.proc_info.is_dummy)
+
+#define ID_IS_DUMMY_ARG(id) \
+    ((ID_STORAGE((id)) == STG_ARG) || \
+     (ID_CLASS((id)) == CL_PROC && PROC_IS_DUMMY_ARG((id)) == TRUE))
 
 /* for CL_VAR */
 #define VAR_COM_ID(id)          ((id)->info.var_info.common_id)
@@ -315,11 +324,11 @@ struct interface_info {
         INTF_DECL         /* for interface not above cases. (interface for function prottype)*/
     } class;
     enum expr_code ecode; /* need it? */
-    ID * operatorId;        /* identifier of the operator */
-    ID * idlist;            /* ident implements this interface. */
+    ID operatorId;        /* identifier of the operator */
+    ID idlist;            /* ident implements this interface. */
 };
 #define INTF_OPID(ii) ((ii)->operatorId)
-#define INTR_IMPL(ii) ((ii)->idlist) /* need it? */
+#define INTF_IMPL(ii) ((ii)->idlist) /* need it? */
 
 enum ext_proc_class {
     EP_UNKNOWN,

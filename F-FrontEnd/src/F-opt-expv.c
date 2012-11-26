@@ -165,8 +165,9 @@ expv_reduce(expv v, int doParamReduce)
     if (doParamReduce == TRUE && code == F_VAR) {
         /* Could be a parameter. */
         ID vId = find_ident(EXPV_NAME(v));
-        if (ID_CLASS(vId) == CL_PARAM ||
-            TYPE_IS_PARAMETER(vId)) {
+        if (vId != NULL && 
+            (ID_CLASS(vId) == CL_PARAM ||
+             TYPE_IS_PARAMETER(vId))) {
             /* Yes it is a parameter. */
             if (VAR_INIT_VALUE(vId) != NULL) {
                 v = expv_reduce(VAR_INIT_VALUE(vId), TRUE);

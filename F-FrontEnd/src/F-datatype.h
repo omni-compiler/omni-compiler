@@ -225,6 +225,8 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_IS_INTENT_INOUT(tp)    ((tp)->attr.type_attr_flags &   TYPE_ATTR_INTENT_INOUT)
 #define TYPE_SET_INTENT_INOUT(tp)   ((tp)->attr.type_attr_flags |=  TYPE_ATTR_INTENT_INOUT)
 #define TYPE_UNSET_INTENT_INOUT(tp) ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_INTENT_INOUT)
+
+#define TYPE_EXTATTR_FLAGS(tp)      ((tp)->attr.exflags)
 #define TYPE_IS_IMPLICIT(tp)        ((tp)->attr.exflags &   TYPE_EXFLAGS_IMPLICIT)
 #define TYPE_SET_IMPLICIT(tp)       ((tp)->attr.exflags |=  TYPE_EXFLAGS_IMPLICIT)
 #define TYPE_UNSET_IMPLICIT(tp)     ((tp)->attr.exflags &= ~TYPE_EXFLAGS_IMPLICIT)

@@ -74,8 +74,6 @@ static int          is_outputed_module = FALSE;
     (EXT_LINE(ep) ? EXT_LINE(ep) : \
     EXT_PROC_ID_LIST(ep) ? ID_LINE(EXT_PROC_ID_LIST(ep)) : NULL)
 
-extern expv doubledKind;
-
 static const char*
 xtag(enum expr_code code)
 {
@@ -2956,23 +2954,24 @@ static void mark_type_desc_in_structure(TYPE_DESC tp);
 static void
 mark_type_desc(TYPE_DESC tp)
 {
-  if (tp == NULL || TYPE_IS_REFERENCED(tp) || IS_MODULE(tp))
-    return;
+    if (tp == NULL || TYPE_IS_REFERENCED(tp) || IS_MODULE(tp))
+        return;
 
-  TYPE_IS_REFERENCED(tp) = 1;
+    if (TYPE_REF(tp) != NULL) {
+        TYPE_DESC sTp = NULL;
+        if (IS_ARRAY_TYPE(tp)){
+            mark_type_desc(array_element_type(tp));
+        }
+        sTp = reduce_type(TYPE_REF(tp));
+        mark_type_desc(sTp);
+        TYPE_REF(tp) = sTp;
+    }
 
-  if (TYPE_REF(tp)){
-      if (IS_ARRAY_TYPE(tp)){
-          mark_type_desc(array_element_type(tp));
-      } else {
-          mark_type_desc(TYPE_REF(tp));
-      }
-  }
+    TYPE_LINK_ADD(tp, type_list, type_list_tail);
+    TYPE_IS_REFERENCED(tp) = 1;
 
-  TYPE_LINK_ADD(tp, type_list, type_list_tail);
-
-  if(IS_STRUCT_TYPE(tp))
-      mark_type_desc_in_structure(tp);
+    if (IS_STRUCT_TYPE(tp))
+        mark_type_desc_in_structure(tp);
 }
 
 
@@ -3019,11 +3018,13 @@ static void
 mark_type_desc_in_structure(TYPE_DESC tp)
 {
     ID id;
-    TYPE_DESC itp;
+    TYPE_DESC itp, siTp;
 
     FOREACH_MEMBER(id, tp) {
         itp = ID_TYPE(id);
-        mark_type_desc(itp);
+        siTp = reduce_type(itp);
+        mark_type_desc(siTp);
+        ID_TYPE(id) = siTp;
         if(IS_STRUCT_TYPE(itp))
             mark_type_desc_in_structure(itp);
     }
@@ -3034,10 +3035,13 @@ static void
 collect_type_desc(expv v)
 {
     list lp;
+    TYPE_DESC sTp;
 
-    if(v == NULL) return;
-    mark_type_desc(EXPV_TYPE(v));
-    if(EXPR_CODE_IS_TERMINAL(EXPV_CODE(v))) return;
+    if (v == NULL) return;
+    sTp = reduce_type(EXPV_TYPE(v));
+    mark_type_desc(sTp);
+    EXPV_TYPE(v) = sTp;
+    if (EXPR_CODE_IS_TERMINAL(EXPV_CODE(v))) return;
 
     FOR_ITEMS_IN_LIST(lp, v)
         collect_type_desc(LIST_ITEM(lp));
@@ -3058,8 +3062,11 @@ static void
 mark_type_desc_in_id_list(ID ids)
 {
     ID id;
+    TYPE_DESC sTp;
     FOREACH_ID(id, ids) {
-        mark_type_desc(ID_TYPE(id));
+        sTp = reduce_type(ID_TYPE(id));
+        mark_type_desc(sTp);
+        ID_TYPE(id) = sTp;
         collect_type_desc(ID_ADDR(id));
         switch(ID_CLASS(id)) {
         case CL_PARAM:
@@ -3075,7 +3082,9 @@ mark_type_desc_in_id_list(ID ids)
                  PROC_CLASS(id) == P_DEFINEDPROC)) {
                 /* symbol declared as intrinsic */
                 add_type_ext_id(PROC_EXT_ID(id));
-                mark_type_desc(EXT_PROC_TYPE(PROC_EXT_ID(id)));
+                sTp = reduce_type(EXT_PROC_TYPE(PROC_EXT_ID(id)));
+                mark_type_desc(sTp);
+                EXT_PROC_TYPE(PROC_EXT_ID(id)) = sTp;
             }
             // TODO
             if(id->use_assoc != NULL) {
@@ -3118,7 +3127,7 @@ unmark_type_table()
 static void
 outx_kind(int l, TYPE_DESC tp)
 {
-  //    static expv doubeledKind = NULL;
+    static expv doubledKind = NULL;
     expv vkind;
     
     if(doubledKind == NULL)
@@ -4107,7 +4116,7 @@ static void
 collect_types1(EXT_ID extid)
 {
     EXT_ID ep;
-    TYPE_DESC tp;
+    TYPE_DESC tp, sTp;
 
     if(extid == NULL)
         return;
@@ -4143,7 +4152,9 @@ collect_types1(EXT_ID extid)
         /* symbols in INTERFACE */
         collect_types1(EXT_PROC_INTR_DEF_EXT_IDS(ep));
 
-        mark_type_desc(EXT_PROC_TYPE(ep));
+        sTp = reduce_type(EXT_PROC_TYPE(ep));
+        mark_type_desc(sTp);
+        EXT_PROC_TYPE(ep) = sTp;
         collect_type_desc(EXT_PROC_ARGS(ep));
         mark_type_desc_in_id_list(EXT_PROC_ID_LIST(ep));
         collect_type_desc(EXT_PROC_BODY(ep));
@@ -4167,11 +4178,15 @@ static void
 collect_types(EXT_ID extid)
 {
     TYPE_EXT_ID te;
+    TYPE_DESC sTp;
     collect_types1(extid);
     FOREACH_TYPE_EXT_ID(te, type_ext_id_list) {
         TYPE_DESC tp = EXT_PROC_TYPE(te->ep);
-        if(tp && EXT_TAG(te->ep) == STG_EXT)
-            mark_type_desc(EXT_PROC_TYPE(te->ep));
+        if (tp && EXT_TAG(te->ep) == STG_EXT) {
+            sTp = reduce_type(EXT_PROC_TYPE(te->ep));
+            mark_type_desc(sTp);
+            EXT_PROC_TYPE(te->ep) = sTp;
+        }
     }
 }
 
@@ -4446,6 +4461,18 @@ unmark_ids(EXT_ID ep)
     }
 }
 
+static int is_emitting_module = FALSE;
+
+static void
+set_module_emission_mode(int mode) {
+    is_emitting_module = mode;
+}
+
+int
+is_emitting_xmod(void) {
+    return is_emitting_module;
+}
+
 /**
  * output module to .xmod file
  */
@@ -4456,15 +4483,17 @@ output_module_file(struct module * mod)
     ID id;
     EXT_ID ep;
     TYPE_EXT_ID te;
+    TYPE_DESC sTp;
+    int oEmitMode;
 
-    bzero(filename, sizeof(filename));
-    strcpy(filename, SYM_NAME(mod->name));
-    strcat(filename, ".xmod");
-
+    snprintf(filename, sizeof(filename), "%s.xmod", SYM_NAME(mod->name));
     if ((print_fp = fopen(filename, "w")) == NULL) {
         fatal("could'nt open module file to write.");
         return;
     }
+
+    oEmitMode = is_emitting_xmod();
+    set_module_emission_mode(TRUE);
 
     type_list = NULL;
 
@@ -4474,9 +4503,12 @@ output_module_file(struct module * mod)
         if (ep != NULL) {
             collect_types1(ep);
             FOREACH_TYPE_EXT_ID(te, type_ext_id_list) {
-            TYPE_DESC tp = EXT_PROC_TYPE(te->ep);
-            if(tp && EXT_TAG(te->ep) == STG_EXT)
-                mark_type_desc(EXT_PROC_TYPE(te->ep));
+                TYPE_DESC tp = EXT_PROC_TYPE(te->ep);
+                if (tp && EXT_TAG(te->ep) == STG_EXT) {
+                    sTp = reduce_type(EXT_PROC_TYPE(te->ep));
+                    mark_type_desc(sTp);
+                    EXT_PROC_TYPE(te->ep) = sTp;
+                }
             }
         }
     }
@@ -4485,5 +4517,52 @@ output_module_file(struct module * mod)
     unmark_type_table();
     unmark_ids(UNIT_CTL_CURRENT_EXT_ID(CURRENT_UNIT_CTL));
 
+    set_module_emission_mode(oEmitMode);
+
     fclose(print_fp);
+}
+
+
+/**
+ * Fix type of forward-referenced function calls to actual type if possible.
+ */
+static void
+fixup_function_call(expv v) {
+    if (EXPR_CODE(v) == FUNCTION_CALL) {
+        if (EXPV_NEED_TYPE_FIXUP(v) == TRUE) {
+            if (EXPR_ARG3(v) != NULL) {
+                EXT_ID eid = PROC_EXT_ID(EXPV_ANY(ID, EXPR_ARG3(v)));
+                if (eid != NULL) {
+                    TYPE_DESC tp = EXT_PROC_TYPE(eid);
+                    if (tp != NULL) {
+                        EXPV_TYPE(v) = tp;
+                    }
+                }
+            }
+        }
+    }
+    if (!(EXPR_CODE_IS_TERMINAL(EXPR_CODE(v)))) {
+        list lp;
+        expv vv;
+        FOR_ITEMS_IN_LIST(lp, v) {
+            vv = LIST_ITEM(lp);
+            if (vv != NULL) {
+                fixup_function_call(vv);
+            }
+        }
+    }
+}
+
+
+void
+final_fixup() {
+    EXT_ID ep;
+    expv v;
+
+    FOREACH_EXT_ID(ep, EXTERNAL_SYMBOLS) {
+        if (EXT_TAG(ep) == STG_EXT &&
+            (v = EXT_PROC_BODY(ep)) != NULL) {
+            fixup_function_call(v);
+        }
+    }
 }

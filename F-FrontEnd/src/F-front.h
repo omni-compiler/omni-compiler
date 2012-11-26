@@ -420,7 +420,9 @@ extern void     initialize_compile_procedure _ANSI_ARGS_((void));
 extern int      output_X_file _ANSI_ARGS_((void));
 
 extern void     expr_print _ANSI_ARGS_((expr x, FILE *fp));
-extern void     print_type _ANSI_ARGS_((TYPE_DESC tp, FILE *fp, int recursive));
+extern void	expr_print_indent(expr x, int i, FILE *fp);
+extern void     print_type _ANSI_ARGS_((TYPE_DESC tp, FILE *fp,
+                                        int recursive));
 
 extern void     compile_statement _ANSI_ARGS_((int st_no, expr x));
 extern void     compile_statement1 _ANSI_ARGS_((int st_no, expr x));
@@ -489,6 +491,7 @@ extern expv     compare_dimensions _ANSI_ARGS_((expv lDim, expr rDim));
 
 extern void     print_IDs _ANSI_ARGS_((ID ip, FILE *fp, int recursive));
 extern void     print_EXT_IDs _ANSI_ARGS_((EXT_ID ep, FILE *fp));
+extern void     print_interface_IDs _ANSI_ARGS_((ID id, FILE *fd));
 extern void     print_types _ANSI_ARGS_((TYPE_DESC tp, FILE *fp));
 extern void     type_output _ANSI_ARGS_((TYPE_DESC tp, FILE *fp));
 extern void     expv_output _ANSI_ARGS_((expv x, FILE *fp));
@@ -542,6 +545,15 @@ extern int      type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
 extern int      type_is_specific_than
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
+extern TYPE_DESC
+	get_binary_numeric_intrinsic_operation_type(TYPE_DESC t0,
+                                                    TYPE_DESC t1);
+extern TYPE_DESC
+	get_binary_comparative_intrinsic_operation_type(TYPE_DESC t0,
+                                                        TYPE_DESC t1);
+extern TYPE_DESC
+	get_binary_equal_intrinsic_operation_type(TYPE_DESC t0,
+                                                  TYPE_DESC t1);
 
 extern int      type_is_possible_dreal(TYPE_DESC tp);
 extern int      is_array_size_adjustable(TYPE_DESC tp);
@@ -694,6 +706,9 @@ extern expv     ExpandImpliedDoInDATA _ANSI_ARGS_((expv spec, expv new));
 extern void     compile_OMN_directive _ANSI_ARGS_((expr x));
 extern void     begin_module _ANSI_ARGS_((expr name));
 extern void     end_module _ANSI_ARGS_((void));
+extern int	is_in_module(void);
+extern const char *	get_current_module_name(void);
+
 extern omllint_t getExprValue(expv v);
 
 extern EXT_ID    define_external_function_id _ANSI_ARGS_((ID id));
@@ -712,12 +727,26 @@ extern void	expv_dump(expv v);
 extern void	type_dump(TYPE_DESC tp);
 
 extern BASIC_DATA_TYPE         get_basic_type(TYPE_DESC tp);
-extern TYPE_DESC               bottom_type(TYPE_DESC tp); /* bottom type of array type. */
+
+extern TYPE_DESC               bottom_type(TYPE_DESC tp); /* bottom
+                                                           * type of
+                                                           * array
+                                                           * type. */
 extern TYPE_DESC               get_bottom_ref_type(TYPE_DESC tp);
+extern int                     type_is_assumed_size_array(TYPE_DESC tp);
 
 extern TYPE_DESC               wrap_type(TYPE_DESC tp);
 extern void                    merge_attributes(TYPE_DESC tp1, TYPE_DESC tp2);
-extern TYPE_DESC               type_link_add(TYPE_DESC tp, TYPE_DESC tlist, TYPE_DESC ttail);
+extern TYPE_DESC               type_link_add(TYPE_DESC tp,
+                                             TYPE_DESC tlist,
+                                             TYPE_DESC ttail);
+extern TYPE_DESC               copy_type_partially(TYPE_DESC tp,
+                                                   int doCopyAttr);
+extern int                     type_is_omissible(TYPE_DESC tp,
+                                                 uint32_t attr,
+                                                 uint32_t ext);
+extern void                    shrink_type(TYPE_DESC tp);
+extern TYPE_DESC               reduce_type(TYPE_DESC tp);
 
 extern int is_array_shape_assumed(TYPE_DESC tp);
 extern int is_descendant_coindexed(TYPE_DESC tp);
@@ -744,5 +773,6 @@ extern void compile_XMP_directive(expr v);
 int XMP_reduction_op(expr v);
 
 #include "xcodeml-module.h"
+#include "F-module-procedure.h"
 
 #endif /* _F_FRONT_H_ */

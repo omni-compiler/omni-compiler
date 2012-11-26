@@ -15,6 +15,18 @@ static expv             getTerminalExpr _ANSI_ARGS_((expr x, expv l));
 static TYPE_DESC        getConstExprType _ANSI_ARGS_((expr x));
 
 
+int
+type_is_assumed_size_array(TYPE_DESC tp) {
+    if (TYPE_N_DIM(tp) > 0 && TYPE_ARRAY_ASSUME_KIND(tp) == ASSUMED_SIZE) {
+        return TRUE;
+    } else if (TYPE_REF(tp) != NULL) {
+        return type_is_assumed_size_array(TYPE_REF(tp));
+    } else {
+        return FALSE;
+    }
+}
+
+
 BASIC_DATA_TYPE
 get_basic_type(TYPE_DESC tp) {
     BASIC_DATA_TYPE ret = TYPE_UNKNOWN;
@@ -556,7 +568,7 @@ expr_is_restricted_argument(expr x)
         TYPE_DESC tp;
         ID id = find_ident(EXPV_NAME(x));
         /* check id is argument. */
-        if(id == NULL && ID_STORAGE(id) != STG_ARG)
+        if(id == NULL && !(ID_IS_DUMMY_ARG(id)))
             return FALSE;
         /* check type of id. */
         if((tp = ID_TYPE(id)) == NULL)
