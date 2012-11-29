@@ -1370,7 +1370,7 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
 	}
     }
 
-    FOR_ITEMS_IN_LIST(lp,attributes){
+    FOR_ITEMS_IN_LIST(lp, attributes) {
         v = LIST_ITEM(lp);
 
         if (EXPR_CODE(v) == F95_INTENT_SPEC ||
@@ -1402,7 +1402,8 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
 	case XMP_CODIMENSION_SPEC:
 	  if (ignoreDims) break;
 	  if (is_descendant_coindexed(tp)){
-	    error_at_node(EXPR_ARG1(v), "The derived-type of the coindexed object cannot have a coindexed member.");
+	    error_at_node(EXPR_ARG1(v), "The derived-type of the coindexed "
+                          "object cannot have a coindexed member.");
 	    return NULL;
 	  }
 
@@ -1453,10 +1454,20 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
             TYPE_SET_TARGET(tp);
             break;
         case F95_PUBLIC_SPEC:
+            if (TYPE_IS_PRIVATE(tp)) {
+                error_at_node(attributes, "'%s' is already specified as "
+                              "private.", ID_NAME(id));
+                return NULL;
+            }
             TYPE_SET_PUBLIC(tp);
             TYPE_UNSET_PRIVATE(tp);
             break;
         case F95_PRIVATE_SPEC:
+            if (TYPE_IS_PUBLIC(tp)) {
+                error_at_node(attributes, "'%s' is already specified as "
+                              "public.", ID_NAME(id));
+                return NULL;
+            }
             TYPE_UNSET_PUBLIC(tp);
             TYPE_SET_PRIVATE(tp);
             if (CTL_TYPE(ctl_top) == CTL_STRUCT) {

@@ -4004,6 +4004,11 @@ compile_ARITHIF_statement(expr x)
 
 static int markAsPublic(ID id)
 {
+    TYPE_DESC tp = ID_TYPE(id);
+    if (TYPE_IS_PRIVATE(id) || (tp != NULL && TYPE_IS_PRIVATE(tp))) {
+        error("'%s' is already specified as private.", ID_NAME(id));
+        return FALSE;
+    }
     TYPE_SET_PUBLIC(id);
     TYPE_UNSET_PRIVATE(id);
 
@@ -4012,6 +4017,11 @@ static int markAsPublic(ID id)
 
 static int markAsPrivate(ID id)
 {
+    TYPE_DESC tp = ID_TYPE(id);
+    if (TYPE_IS_PUBLIC(id) || (tp != NULL && TYPE_IS_PUBLIC(tp))) {
+        error("'%s' is already specified as public.", ID_NAME(id));
+        return FALSE;
+    }
     TYPE_UNSET_PUBLIC(id);
     TYPE_SET_PRIVATE(id);
 
