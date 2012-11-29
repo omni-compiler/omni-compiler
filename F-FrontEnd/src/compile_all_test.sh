@@ -11,8 +11,8 @@ abspath() {
 }
 
 work=`abspath ../..`
-OMNI_HOME=${work}
-export OMNI_HOME
+#OMNI_HOME=${work}
+#export OMNI_HOME
 frontend=${work}/F-FrontEnd/src/F_Front
 backend=${work}/F-BackEnd/bin/F_Back
 nativecomp=gfortran
@@ -36,7 +36,12 @@ for f in $testdata/*.f $testdata/*.f90; do
     xmlOut=${b}.xml
     decompiledSrc=${b}.dec.f90
     binOut=${b}.o
-    ${frontend} -I ${testdata} ${f} -o ${xmlOut} > ${errOut} 2>&1
+    fOpts=''
+    if test -f ${f}.options; then
+	fOpts=`cat ${f}.options`
+    fi
+    ${frontend} ${F_FRONT_TEST_OPTS} ${fOpts} -I ${testdata} ${f} \
+	-o ${xmlOut} > ${errOut} 2>&1
     if test $? -eq 0; then
         ${backend} ${xmlOut} -o ${decompiledSrc} >> ${errOut} 2>&1
 	if test $? -eq 0; then

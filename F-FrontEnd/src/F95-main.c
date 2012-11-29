@@ -110,6 +110,8 @@ int includeDirvI = 0;
 /* -MC?  */
 int flag_module_compile = FALSE;
 
+int flag_do_module_cache = TRUE;
+
 static void
 usage()
 {
@@ -126,7 +128,8 @@ usage()
         "-Kscope-omp               enable conditional compilation.",
         "-force-fixed-format       read file as fixed format.",
         "-force-free-format        read file as free format.",
-        "-fixed-line-length-132    set max columns to 132 in a line in fixed format.",
+        "-fixed-line-length-132    set max columns to 132 in a line "
+                                  "in fixed format.",
         "-force-c-comment          enable 'c' comment in free format.",
         "-f77                      use F77 spec intrinsic.",
         "-f90                      use F90 spec intrinsic.",
@@ -134,17 +137,16 @@ usage()
         "-u                        use no implicit type.",
         "-r[N]                     set double precision size (default N=8).",
         "--save[=n]                add save attribute than n kbytes except",
-        "                          in a recursive function and common variables.",
+        "                          in a recursive function and common "
+                                  "variables.",
         "                          (default n=1)",
         "-max_name_len=n           set maximum identifier name length.",
         "-fdollar-ok               enable using \'$\' in identifier.",
 	"-endlineno                output the endlineno attribute.",
-        "-d                        enable debug mode.",
         "",
         "internal options:",
-        "  -TD=, -xmod",
-
-        /* "-m                                                 ", */
+        "-d                        enable debug mode.",
+        "-no-module-cache          always load module from file.",
 
         NULL
     };
@@ -264,6 +266,7 @@ char *argv[];
             strcpy(xmodule_path, argv[0] + 4);
             if(strlen(xmodule_path) == 0)
                 cmd_error_exit("invalid path after -TD.");
+#if 0
         } else if (strncmp(argv[0], "-MC=", 4) == 0) {
             /* -MC=fileName:N:StartSeekPoint:EndSeekPoint */
             /* internal option for module compile.  */
@@ -272,6 +275,7 @@ char *argv[];
                         &mcLn_no, &mcStart, &mcEnd) != 3) {
                 cmd_error_exit ("internal error on internal command option, does not match: -MC=fileName:N:StartSeekPoint:EndSeekPoint");
             }
+#endif
         } else if (strncmp(argv[0], "-I", 2) == 0) {
             /* -I <anotherDir> or -I<anotherDir> */
             char *path;
@@ -305,7 +309,7 @@ char *argv[];
             if (flag_force_fixed_format == 1)  {
                 cmd_warning("no need option for enable c comment(-force-c-comment) in fixed format mode(.f or .F).");
             }
-
+#if 0
         } else if (strcmp(argv[0], "-xmod") == 0) {
             char *path;
             symbol_filter * filter;
@@ -319,6 +323,7 @@ char *argv[];
             FILTER_USAGE(filter) = RENAME;
 
             return use_module_to(path, stdout) ? EXITCODE_OK : EXITCODE_ERR;
+#endif
         } else if (strcmp(argv[0], "--save") == 0) {
             auto_save_attr_kb = 1; // 1kbytes
         } else if (strncmp(argv[0], "--save=", 7) == 0) {
@@ -351,9 +356,13 @@ char *argv[];
  	    ocl_flag = 1;
         } else if (strcmp(argv[0], "--help") == 0) {
             usage();
-            exit(1);
+            exit(0);
+#if 0
         } else if (strncmp(argv[0], "-m", 2) == 0) {
             cmd_warning("quad/multiple precision is not supported.");
+#endif
+        } else if (strcmp(argv[0], "-no-module-cache") == 0) {
+            flag_do_module_cache = FALSE;
         } else {
             cmd_error_exit("unknown option : %s",argv[0]);
         }

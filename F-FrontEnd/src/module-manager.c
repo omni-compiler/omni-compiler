@@ -72,6 +72,7 @@ export_module(SYMBOL sym, ID ids, expv use_decls)
     list lp;
     struct depend_module * dep;
     struct module * mod = XMALLOC(struct module *, sizeof(struct module));
+    extern int flag_do_module_cache;
 
     *mod = (struct module){0};
     mod->name = sym;
@@ -93,7 +94,8 @@ export_module(SYMBOL sym, ID ids, expv use_decls)
         }
     }
 
-    add_module(mod);
+    if (flag_do_module_cache == TRUE)
+        add_module(mod);
 
     output_module_file(mod);
 

@@ -23,7 +23,8 @@ do_compile() {
 	    opts=`cat ${testfile}.options`
 	fi
 
-	./F_Front ${opts} ${testfile} > ${TMPFILE} 2>/dev/null
+	./F_Front ${F_FRONT_TEST_OPTS} ${opts} ${testfile} \
+	    > ${TMPFILE} 2>/dev/null
 	local exitcode=$?
 	python replace_type.py ${TMPFILE} > ${filename}
 
