@@ -74,6 +74,18 @@ static int          is_outputed_module = FALSE;
     (EXT_LINE(ep) ? EXT_LINE(ep) : \
     EXT_PROC_ID_LIST(ep) ? ID_LINE(EXT_PROC_ID_LIST(ep)) : NULL)
 
+static int is_emitting_module = FALSE;
+
+static void
+set_module_emission_mode(int mode) {
+    is_emitting_module = mode;
+}
+
+int
+is_emitting_xmod(void) {
+    return is_emitting_module;
+}
+
 static const char*
 xtag(enum expr_code code)
 {
@@ -3076,7 +3088,7 @@ mark_type_desc_in_id_list(ID ids)
             collect_type_desc(VAR_INIT_VALUE(id));
             /* fall through */
         case CL_PROC:
-            if(PROC_EXT_ID(id) && EXT_TAG(PROC_EXT_ID(id)) != STG_UNKNOWN &&
+            if (PROC_EXT_ID(id) && EXT_TAG(PROC_EXT_ID(id)) != STG_UNKNOWN &&
                 (PROC_CLASS(id) == P_INTRINSIC ||
                  PROC_CLASS(id) == P_EXTERNAL ||
                  PROC_CLASS(id) == P_DEFINEDPROC)) {
@@ -3087,11 +3099,13 @@ mark_type_desc_in_id_list(ID ids)
                 EXT_PROC_TYPE(PROC_EXT_ID(id)) = sTp;
             }
             // TODO
-            if(id->use_assoc != NULL) {
-                TYPE_EXT_ID te = (TYPE_EXT_ID)malloc(sizeof(struct type_ext_id));
+            if (id->use_assoc != NULL) {
+                TYPE_EXT_ID te =
+                    (TYPE_EXT_ID)malloc(sizeof(struct type_ext_id));
                 bzero(te, sizeof(struct type_ext_id));
                 te->ep = PROC_EXT_ID(id);
-                FUNC_EXT_LINK_ADD(te, type_module_proc_list, type_module_proc_last);
+                FUNC_EXT_LINK_ADD(te, type_module_proc_list,
+                                  type_module_proc_last);
             }
             break;
         default:
@@ -3866,7 +3880,7 @@ outx_declarations(int l, EXT_ID parent_ep)
  * output FmoduleProcedureDecl
  */
 static void
-outx_moduleProcedureDecl(int l, EXT_ID parent_ep)
+outx_moduleProcedureDecl(int l, EXT_ID parent_ep, SYMBOL parentName)
 {
     const int l1 = l + 1;
     int hasModProc = FALSE;
@@ -3885,10 +3899,43 @@ outx_moduleProcedureDecl(int l, EXT_ID parent_ep)
 
     outx_tagOfDecl1(l, "FmoduleProcedureDecl", GET_EXT_LINE(ep));
 
-    FOREACH_EXT_ID(ep, parent_ep) {
-        if(EXT_TAG(ep) == STG_EXT &&
-            EXT_PROC_IS_MODULE_PROCEDURE(ep)) {
-            outx_symbolName(l1, EXT_SYM(ep));
+    if (is_emitting_xmod() == FALSE) {
+        FOREACH_EXT_ID(ep, parent_ep) {
+            if (EXT_TAG(ep) == STG_EXT &&
+                EXT_PROC_IS_MODULE_PROCEDURE(ep)) {
+                outx_symbolName(l1, EXT_SYM(ep));
+            }
+        }
+    } else {
+        if (parentName != NULL) {
+            gen_proc_t gp = find_generic_procedure(SYM_NAME(parentName));
+            if (gp != NULL) {
+                HashTable *tPtr = GEN_PROC_MOD_TABLE(gp);
+                if (tPtr != NULL) {
+                    HashEntry *hPtr;
+                    HashSearch sCtx;
+                    mod_proc_t mp;
+
+                    FOREACH_IN_HASH(hPtr, &sCtx, tPtr) {
+                        mp = (mod_proc_t)GetHashValue(hPtr);
+                        outx_symbolNameWithFunctionType(l1,
+                                                        MOD_PROC_EXT_ID(mp));
+                    }
+                } else {
+                    fatal("invalid generic procedure structure.");
+                    /* not reached. */
+                    return;
+                }
+            } else {
+                fatal("can't find a generic function '%s'.",
+                      SYM_NAME(parentName));
+                /* not reached. */
+                return;
+            }
+        } else {
+            fatal("module procedure w/o generic name.");
+            /* not reached. */
+            return;
         }
     }
 
@@ -3913,7 +3960,7 @@ outx_functionDecl(int l, EXT_ID ep)
 
 
 static void
-outx_innerDefinitions(int l, EXT_ID extids, int asDefOrDecl)
+outx_innerDefinitions(int l, EXT_ID extids, SYMBOL parentName, int asDefOrDecl)
 {
     EXT_ID ep;
 
@@ -3936,7 +3983,7 @@ outx_innerDefinitions(int l, EXT_ID extids, int asDefOrDecl)
         }
     }
 
-    outx_moduleProcedureDecl(l, extids);
+    outx_moduleProcedureDecl(l, extids, parentName);
 }
 
 
@@ -3956,7 +4003,7 @@ outx_contains(int l, EXT_ID parent)
     }
     assert(contains_line != NULL);
     outx_tagOfDecl1(l, "FcontainsStatement", contains_line);
-    outx_innerDefinitions(l + 1, contains, TRUE);
+    outx_innerDefinitions(l + 1, contains, NULL, TRUE);
     outx_close(l, "FcontainsStatement");
 }
 
@@ -3986,7 +4033,7 @@ outx_interfaceDecl(int l, EXT_ID ep)
         sprintf(buf, " name=\"%s\"", SYM_NAME(EXT_SYM(ep)));
 
     outx_tagOfDecl1(l, "FinterfaceDecl%s", EXT_LINE(ep), buf);
-    outx_innerDefinitions(l + 1, extids, FALSE);
+    outx_innerDefinitions(l + 1, extids, EXT_SYM(ep), FALSE);
     outx_close(l, "FinterfaceDecl");
 #endif
     CRT_FUNCEP_PUSH(NULL);
@@ -4012,7 +4059,7 @@ outx_interfaceDecl(int l, EXT_ID ep)
 
     outx_lineno(EXT_LINE(ep));
     outx_printi(0,">\n");
-    outx_innerDefinitions(l + 1, extids, FALSE);
+    outx_innerDefinitions(l + 1, extids, EXT_SYM(ep), FALSE);
     outx_close(l, "FinterfaceDecl");
     CRT_FUNCEP_POP;
 }
@@ -4204,7 +4251,7 @@ outx_typeTable(int l)
     outx_tag(l, "typeTable");
 
     for (tp = type_list; tp != NULL; tp = TYPE_LINK(tp)){
-      outx_type(l1, tp);
+        outx_type(l1, tp);
     }
 
     FOREACH_TYPE_EXT_ID(te, type_module_proc_list) {
@@ -4321,8 +4368,8 @@ outx_id_mod(int l, ID id)
         fatal("outx_id: PROC_EXT_ID is NULL: symbol=%s", ID_NAME(id));
     }
 
-    if((ID_CLASS(id) == CL_PROC || ID_CLASS(id) == CL_ENTRY) &&
-       PROC_EXT_ID(id)) {
+    if ((ID_CLASS(id) == CL_PROC || ID_CLASS(id) == CL_ENTRY) &&
+        PROC_EXT_ID(id)) {
         outx_typeAttrOnly_functionType(l, PROC_EXT_ID(id), "id");
     } else {
         outx_typeAttrOnly_ID(l, id, "id");
@@ -4461,18 +4508,6 @@ unmark_ids(EXT_ID ep)
     }
 }
 
-static int is_emitting_module = FALSE;
-
-static void
-set_module_emission_mode(int mode) {
-    is_emitting_module = mode;
-}
-
-int
-is_emitting_xmod(void) {
-    return is_emitting_module;
-}
-
 /**
  * output module to .xmod file
  */
@@ -4485,6 +4520,9 @@ output_module_file(struct module * mod)
     TYPE_EXT_ID te;
     TYPE_DESC sTp;
     int oEmitMode;
+    expr modTypeList;
+    list lp;
+    expv v;
 
     snprintf(filename, sizeof(filename), "%s.xmod", SYM_NAME(mod->name));
     if ((print_fp = fopen(filename, "w")) == NULL) {
@@ -4509,6 +4547,20 @@ output_module_file(struct module * mod)
                     mark_type_desc(sTp);
                     EXT_PROC_TYPE(te->ep) = sTp;
                 }
+            }
+        }
+    }
+
+    modTypeList = collect_all_module_procedures_types();
+    FOR_ITEMS_IN_LIST(lp, modTypeList) {
+        v = LIST_ITEM(lp);
+        if (EXPV_INT_VALUE(EXPR_ARG1(v)) == 1) {
+            if (EXPR_ARG3(v) != NULL) {
+                ep = EXPV_ANY(EXT_ID, EXPR_ARG3(v));
+                collect_types1(ep);
+                sTp = reduce_type(EXT_PROC_TYPE(ep));
+                mark_type_desc(sTp);
+                EXT_PROC_TYPE(ep) = sTp;
             }
         }
     }

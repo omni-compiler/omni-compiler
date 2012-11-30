@@ -1031,7 +1031,6 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
         ID_IS_AMBIGUOUS(id) = FALSE;
     }
 
-
     if (type != NULL) {
         tep = getTypeEntry(ht, type);
         ID_TYPE(id) = tep->tp;
@@ -1114,33 +1113,81 @@ input_identifiers(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
  * input <FmoduleProcedureDecl> node
  */
 static int
-input_FmoduleProcedureDecl(xmlTextReaderPtr reader, EXT_ID parent)
+input_FmoduleProcedureDecl(xmlTextReaderPtr reader, HashTable *ht,
+                           EXT_ID parent)
 {
     SYMBOL s;
-    EXT_ID ep;
+    TYPE_ENTRY tep;
+    char *typeId;
+    char *name;
+    int ret = TRUE;
 
-    if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "FmoduleProcedureDecl"))
+    if (!xmlExpectNode(reader,
+                       XML_READER_TYPE_ELEMENT, "FmoduleProcedureDecl"))
         return FALSE;
 
-    while (!xmlMatchNodeType(reader, XML_READER_TYPE_END_ELEMENT)) {
-        if (!input_name(reader, &s))
-            return FALSE;
+    while (!xmlMatchNodeType(reader, XML_READER_TYPE_END_ELEMENT) &&
+           ret == TRUE) {
+        tep = NULL;
+        typeId = NULL;
+        name = NULL;
+        s = NULL;
 
-        ep = new_external_id(s);
-        EXT_TAG(ep) = STG_EXT;
-        EXT_PROC_CLASS(ep) = EP_MODULE_PROCEDURE;
+        if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "name")) {
+            ret = FALSE;
+            goto loopEnd;
+        }
 
-        if (EXT_PROC_INTR_DEF_EXT_IDS(parent) == NULL)
-            EXT_PROC_INTR_DEF_EXT_IDS(parent) = ep;
-        else
-            extid_put_last(EXT_PROC_INTR_DEF_EXT_IDS(parent), ep);
+        typeId = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "type");
+        if (!xmlSkipWhiteSpace(reader)) {
+            ret = FALSE;
+            goto loopEnd;
+        }
+
+        name = (char *)xmlTextReaderConstValue(reader);
+        if (name != NULL) {
+            name = strdup(name);
+        }
+        if (!xmlSkipWhiteSpace(reader)) {
+            ret = FALSE;
+            goto loopEnd;
+        }
+
+        if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "name")) {
+            ret = FALSE;
+            goto loopEnd;
+        }
+
+        if (typeId != NULL &&
+            (tep = getTypeEntry(ht, typeId)) != NULL &&
+            tep->hasExtID == TRUE &&
+            tep->ep != NULL) {
+            
+            s = find_symbol(name);
+            EXT_SYM(tep->ep) = s;
+
+            if (EXT_PROC_TYPE(tep->ep) == NULL) {
+                EXT_PROC_TYPE(tep->ep) = tep->tp;
+            }
+
+            if (EXT_PROC_INTR_DEF_EXT_IDS(parent) == NULL)
+                EXT_PROC_INTR_DEF_EXT_IDS(parent) = tep->ep;
+            else
+                extid_put_last(EXT_PROC_INTR_DEF_EXT_IDS(parent), tep->ep);
+        } else {
+            ret = FALSE;
+        }
+
+        loopEnd:
+        free(typeId);
+        free(name);
     }
 
     if (!xmlExpectNode(reader,XML_READER_TYPE_END_ELEMENT,
                        "FmoduleProcedureDecl"))
         return FALSE;
 
-    return TRUE;
+    return ret;
 }
 
 /**
@@ -1308,7 +1355,7 @@ input_FinterfaceDecl_in_declarations(xmlTextReaderPtr reader, HashTable * ht,
     while (!xmlMatchNodeType(reader, XML_READER_TYPE_END_ELEMENT)) {
         if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
                          "FmoduleProcedureDecl")) {
-            if (!input_FmoduleProcedureDecl(reader, ep))
+            if (!input_FmoduleProcedureDecl(reader, ht, ep))
                 return FALSE;
         } else if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
                                 "FfunctionDecl")) {
@@ -1455,7 +1502,7 @@ input_FinterfaceDecl(xmlTextReaderPtr reader, HashTable * ht, ID id_list)
     while (!xmlMatchNodeType(reader, XML_READER_TYPE_END_ELEMENT)) {
         if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
                          "FmoduleProcedureDecl")) {
-            if (!input_FmoduleProcedureDecl(reader, ep))
+            if (!input_FmoduleProcedureDecl(reader, ht, ep))
                 return FALSE;
         } else if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
                                 "FfunctionDecl")) {

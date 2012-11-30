@@ -97,7 +97,8 @@ export_module(SYMBOL sym, ID ids, expv use_decls)
     if (flag_do_module_cache == TRUE)
         add_module(mod);
 
-    output_module_file(mod);
+    if (nerrors == 0)
+        output_module_file(mod);
 
 #if 0
     /* debug */

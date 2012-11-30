@@ -388,6 +388,9 @@ fixup_module_procedure(mod_proc_t mp) {
                 }
                 MOD_PROC_ARGS(mp) = newArgs;
             }
+            if (eId != NULL) {
+                MOD_PROC_EXT_ID(mp) = eId;
+            }
         }
     }
 }
@@ -417,6 +420,71 @@ fixup_all_module_procedures(void) {
     FOREACH_IN_HASH(hPtr, &sCtx, &genProcTbl) {
         fixup_module_procedures((gen_proc_t)GetHashValue(hPtr));
     }
+}
+
+
+
+
+
+static void
+colloct_module_procedure_types(mod_proc_t mp, expr l) {
+    if (mp != NULL) {
+        list lp;
+        expv v;
+        TYPE_DESC tp;
+
+        if (MOD_PROC_TYPE(mp) != NULL) {
+            v = list3(LIST, 
+                      expv_int_term(INT_CONSTANT, type_INT, 1),
+                      expv_any_term(IDENT, (void *)MOD_PROC_TYPE(mp)),
+                      expv_any_term(IDENT, (void *)MOD_PROC_EXT_ID(mp)));
+            list_put_last(l, v);
+        }
+
+        FOR_ITEMS_IN_LIST(lp, MOD_PROC_ARGS(mp)) {
+            v = LIST_ITEM(lp);
+            if (v != NULL) {
+                tp = EXPV_TYPE(v);
+                if (tp != NULL) {
+                    v = list2(LIST,
+                              expv_int_term(INT_CONSTANT, type_INT, 0),
+                              expv_any_term(IDENT, (void *)tp));
+                    list_put_last(l, v);
+                }
+            }
+        }
+    }
+}
+
+
+static void
+collect_module_procedures_types(gen_proc_t gp, expr l) {
+    if (gp != NULL) {
+        HashTable *tPtr = GEN_PROC_MOD_TABLE(gp);
+        if (tPtr != NULL) {
+            HashEntry *hPtr;
+            HashSearch sCtx;
+
+            FOREACH_IN_HASH(hPtr, &sCtx, tPtr) {
+                colloct_module_procedure_types((mod_proc_t)GetHashValue(hPtr),
+                                               l);
+            }
+        }
+    }
+}
+
+
+expr
+collect_all_module_procedures_types(void) {
+    expr ret = list0(LIST);
+    HashEntry *hPtr;
+    HashSearch sCtx;
+
+    FOREACH_IN_HASH(hPtr, &sCtx, &genProcTbl) {
+        collect_module_procedures_types((gen_proc_t)GetHashValue(hPtr), ret);
+    }
+
+    return ret;
 }
 
 

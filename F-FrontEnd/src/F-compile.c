@@ -2848,13 +2848,20 @@ import_module_id(ID mid,
     if(use_name)
         ID_SYM(id) = use_name;
 
-    // In module, use associated id may be given PUBLIC or PRIVATE attribute.
-    // OR, If id is tagname and rename required, then type will be given different tagname.
+    /*
+     * In module, use associated id may be given PUBLIC or PRIVATE
+     * attribute. OR, If id is tagname and rename required, then type
+     * will be given different tagname.
+     */
     if(need_wrap_type || (ID_STORAGE(id) == STG_TAGNAME && use_name)) {
         // shallow copy type from module
         TYPE_DESC tp = ID_TYPE(id);
         ID_TYPE(id) = new_type_desc();
         *ID_TYPE(id) = *tp;
+        TYPE_UNSET_PUBLIC(ID_TYPE(id));
+        TYPE_UNSET_PRIVATE(ID_TYPE(id));
+        TYPE_UNSET_PUBLIC(id);
+        TYPE_UNSET_PRIVATE(id);
     }
 
     if(ID_STORAGE(id) == STG_TAGNAME) {
