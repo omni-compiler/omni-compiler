@@ -364,9 +364,9 @@ void xmp_sched_template_index(int* local_start_index, int* local_end_index,
   int tmp;
   _XMP_template_chunk_t *chunk = &(((_XMP_template_t*)template)->chunk[template_dim]);
 
-  if(chunk->dist_manner == NULL){
-    _XMP_fatal("Invalid template descriptor in xmp_sched_template_index()");
-  }
+/*   if(chunk->dist_manner == NULL){ */
+/*     _XMP_fatal("Invalid template descriptor in xmp_sched_template_index()"); */
+/*   } */
 
   switch(chunk->dist_manner){
   case _XMP_N_DIST_BLOCK:
@@ -385,4 +385,38 @@ void xmp_sched_template_index(int* local_start_index, int* local_end_index,
     _XMP_fatal("does not support distribution in xmp_sched_template_index()");
     break;
   }
+}
+
+
+void *xmp_malloc(xmp_desc_t d){
+
+  _XMP_array_t *array_desc = (_XMP_array_t *)d;
+
+  void *array_addr;
+
+  if (!array_desc->is_allocated) {
+    return NULL;
+  }
+  
+  _XMP_ASSERT(array_desc->dim == 1);
+
+  unsigned long long total_elmts = 1;
+  int ndims = array_desc->dim;
+  for (int i = ndims - 1; i >= 0; i--) {
+    array_desc->info[i].dim_acc = total_elmts;
+    total_elmts *= array_desc->info[i].alloc_size;
+  }
+
+  for (int i = 0; i < ndims; i++) {
+    _XMP_calc_array_dim_elmts(array_desc, i);
+  }
+
+  array_addr = _XMP_alloc(total_elmts * (array_desc->type_size));
+
+  // set members
+  array_desc->array_addr_p = array_addr;
+  array_desc->total_elmts = total_elmts;
+
+  return array_addr;
+
 }

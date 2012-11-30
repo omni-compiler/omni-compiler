@@ -40,6 +40,9 @@ extern "C" {
 #endif
 
 // ----- libxmp ------------------------------------------------------
+// xmp_align.c
+extern void _XMP_calc_array_dim_elmts(_XMP_array_t *array, int array_index);
+
 // xmp_array_section.c
 extern void _XMP_normalize_array_section(int *lower, int *upper, int *stride);
 // FIXME make these static
