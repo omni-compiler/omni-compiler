@@ -1,97 +1,84 @@
-Omni OpenMP/XcalableMP Compiler Software README
-(version 0.6.0 alpha)
+Omni OpenMP/XcalableMP Compiler Software README (version 0.6.0 alpha)
 
 I. Getting Started
- 1. You will need the following softwares to build Omni XcalableMP Compiler.
+ 1. You will need the following softwares to build Omni XcalableMP(XMP) Compiler.
   - Lex, Yacc
-  - A C Compiler (supports C99)
-  - A Java Compiler (latest)
+  - C Compiler (supports C99)
+  - Java Compiler (latest)
   - Apache Ant (1.8.1 or later)
-  - A MPI Implementation (supports MPI-2)
+  - MPI Implementation (supports MPI-2)
   - libxml2
   - GASNet (If you want to use coarray functions)
 
  2. Install Step
   A. Configure Omni XcalableMP Compiler
-   ex)
-    ./configure --prefix=/home/you/XMP
+   e.g.) $ ./configure --prefix=/home/you/XMP
 
    if your MPI C compiler command is not "mpicc",
-    ./configure --with-mpicc=MPICC_CMD
+         $ ./configure --with-mpicc=MPICC_CMD
 
   B. Build the compiler
-   ex)
-    make
-    make install
+   e.g.) $ make
+         $ make install
 
-II. Implementation Status
- This is the alpha release of Omni XcalableMP compiler.
- Some features in the language specification are not supported in this release.
- (You can download the specification of XcalableMP from "http://www.xcalablemp.org".)
 
- 1. XcalableMP C
+II. How to use
+  1. Compile
+   Compile commands are "xmpcc" or "xmpf90".
+   e.g.) $ xmpcc -O2 test.c -o test
+   
+  2. Run
+   Please use the command for runing mpi program on your environment.
+   e.g.) $ mpirun -np 4 test
 
-  - Nodes Directive:
-   <map-type> "regular" is not implemented.
+  3. Environment Variable
+   - XMP_COARRAY_HEAP_SIZE : 
+      The heap memory size for using coarray. The default size is 256MB.
+      If you want to change this size, please set a value by the Mega Byte.
+      e.g.) export XMP_COARRAY_HEAP_SIZE = 128
 
-  - Template Directive
-   ':' cannot be used for <template-spec>.
-
-  - Distribute Directive
-   "gblock" distribution is not implemented.
-
-  - Template_fix Directive
-   Not supported in this release
-
-  - Tasks Directive
-   Not supported in this release
-
-  - Gmove Directive
-   Some patterns of Gmove may not work (not fully tested)
-   gmove with in/out may not work correctly.
-
- 2. XcalableMP Fortran
-
-  - Distribute Directive
-   "gblock" distribution is not implemented.
-
-  - Template_fix Directive
-   Not supported in this release
-
-  - Tasks Directive
-   Not supported in this release
-
-  - Gmove Directive
-   Some patterns of Gmove may not work (not fully tested)
-   gmove with in/out may not work correctly.
-
- - Coarray is not supported in this release (comming soon).
-
- 3. User API Functions (defined in xmp.h)
-  A. int xmp_node_num(void);
-   returns Node ID
-
-  B. int xmp_num_nodes(void);
-   returns number of Nodes
-
-  C. double xmp_wtime(void);
-   returns current time
- 
-III. Profiling Options in XMP C
-  XMP supports profiler interfaces of Scalasca and tlog.
-  The tlog is included in XMP.
-  If you want to use the profiler interface of Scalasca,
-  you need to download and compile it from Scalasca website.
-  Moreover you need to set an environmental variable as below,
+  4. Profiling Options in XMP/C
+   XMP supports profiler interfaces of Scalasca and tlog.
+   The tlog is included in XMP.
+   If you want to use the profiler interface of Scalasca,
+   you need to download and compile it from Scalasca website.
+   Moreover you need to set an environmental variable as below,
     $ export SCALASCA_HOME = <install-path-scalasca>
 
-  If you want to specify directives for profiling,
-  please add "profile" to directive.
-    example) #pragma xmp loop on t(i) profile
+   If you want to specify directives for profiling,
+   please add "profile" to directive.
+     e.g.) #pragma xmp loop on t(i) profile
 
-  When you want to compile XMP source code with profiling,
-  please add some of below options.
-   -profile         Emit XMP directive profiling code only for specified directives
-   -allprofile      Emit XMP directive profiling code for all directives
-   -with-scalasca   Emit Scalasca instrumentation
-   -with-tlog       Emit tlog insturumentation
+   When you want to compile XMP source code with profiling,
+   please add some of below options.
+    -profile         Emit XMP directive profiling code only for specified directives
+    -allprofile      Emit XMP directive profiling code for all directives
+    -with-scalasca   Emit Scalasca instrumentation
+    -with-tlog       Emit tlog insturumentation
+
+
+III. Implementation Status
+ This is the alpha release of Omni XMP compiler.
+ Some features in the language specification are not supported in this release.
+ (You can download the specification of XMP from "http://www.xcalablemp.org".)
+
+ 1. XMP/C and XMP/Fortran
+  - Distribute Directive
+     "gblock" distribution is not implemented.
+ 
+  - Template_fix Directive
+  - Tasks Directive
+  - Gmove Directive
+     Some patterns of Gmove may not work (not fully tested)
+     gmove with in/out may not work correctly.
+
+ 2. XMP/C
+  - Nodes Directive:
+     <map-type> "regular" is not implemented.
+
+  - Template Directive
+     ':' cannot be used for <template-spec>.
+
+ 3. XMP/Fortran
+  - Coarray is not supported in this release (comming soon).
+ 
