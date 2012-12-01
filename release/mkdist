@@ -76,7 +76,7 @@ touch $PACKAGE_DIR/configure
 
 echo archiving
 cd $WORK_DIR
-tar czf $PACKAGE_NAME.tar.gz $PACKAGE_NAME
+tar cjf $PACKAGE_NAME.tar.bz2 $PACKAGE_NAME
 
 echo completed
 
