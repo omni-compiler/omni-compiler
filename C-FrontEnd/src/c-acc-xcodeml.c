@@ -35,7 +35,8 @@ out_ACC_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr)
 
     switch(pragma_code){
     case ACC_WAIT:
-	out_ACC_name_list(fp, indent1, clauseList);
+    case ACC_CACHE:
+	outxChildren(fp,indent1,(CExpr *)clauseList);
 	goto end;
     }
 

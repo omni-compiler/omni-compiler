@@ -192,7 +192,10 @@ int parse_ACC_pragma()
 	pg_ACC_pragma = ACC_WAIT;
 	pg_get_token();
 	if(pg_tok == '('){
-	    if((pg_ACC_list = parse_ACC_namelist()) == NULL) goto syntax_err;
+	    CExpr *x;
+	    if((x = parse_ACC_clause_arg()) == NULL) 
+		goto syntax_err;
+	    pg_ACC_list = allocExprOfList1(EC_UNDEF,x);
 	} else pg_ACC_list = NULL;
 	ret= PRAGMA_EXEC;
 	goto chk_end;
@@ -313,7 +316,6 @@ static CExpr* parse_ACC_clauses()
 	} else if(PG_IS_IDENT("num_workers")){
 	    pg_get_token();
 	    if((v = parse_ACC_clause_arg()) == NULL) goto syntax_err;
-	    pg_get_token();
 	    c = ACC_PG_LIST(ACC_NUM_WORKERS,v);
 	} else if(PG_IS_IDENT("vector")){
 	    pg_get_token();
