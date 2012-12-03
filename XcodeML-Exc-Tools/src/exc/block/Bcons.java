@@ -393,6 +393,10 @@ public class Bcons
             return PRAGMA(Xcode.XMP_PRAGMA, v.getArg(0).getString(), v.getArg(1),
                 buildList(v.getArgOrNull(2)));
 
+        case ACC_PRAGMA:
+        	return PRAGMA(Xcode.ACC_PRAGMA, v.getArg(0).getString(), v.getArg(1),
+                buildList(v.getArgOrNull(2)));
+
         case IF_STATEMENT: /* (IF_STATMENT cond then-part else-part) */
             return IF(BasicBlock.Cond(v.getArg(0)), buildList(v.getArg(1)),
                 buildList(v.getArg(2)));

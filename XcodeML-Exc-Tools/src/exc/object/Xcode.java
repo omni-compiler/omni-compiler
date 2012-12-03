@@ -258,6 +258,9 @@ public enum Xcode
     XMP_PRAGMA                      ( 189, 'L', null, null),
     XMP_DESC_OF                     ( 190, 'U', null, null),
      // -----------------
+     // OpenACC Pragma
+    ACC_PRAGMA                      ( 191, 'L', null, null),
+     // -----------------
      // Codes dynamically assignable
     DYN_1                           ( 1001, 'L', null, null),
     DYN_2                           ( 1002, 'L', null, null),
