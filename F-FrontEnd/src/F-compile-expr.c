@@ -885,6 +885,60 @@ compile_expression(expr x)
             /* we regard a module imported expression as compiled */
             return x;
 
+        case F_STRING_CONST_SUBSTR: {
+            expr strConstX = EXPR_ARG1(x);
+            expr indexX = EXPR_ARG2(x);
+            char *str = NULL;
+            int len = 0;
+            expr paramNameX = NULL;
+            expr typeDeclX = NULL;
+            expr accessX = NULL;
+
+            /*
+             * Generate parameter declaration.
+             */
+            if (EXPR_CODE(strConstX) != STRING_CONSTANT) {
+                fatal("1st arg is not a string.");
+                /* not reached. */
+                return NULL;
+            }
+            str = EXPR_STR(strConstX);
+            len = strlen(str);
+
+            paramNameX = make_enode(IDENT,
+                                    (void *)gen_temp_symbol("strconst")),
+            typeDeclX = list3(F_TYPE_DECL,
+                              list2(LIST,
+                                    make_enode(F_TYPE_NODE, (void *)TYPE_CHAR),
+                                    list2(LIST,
+                                          list1(F95_LEN_SELECTOR_SPEC,
+                                                make_int_enode(len)),
+                                          NULL)),
+                              list1(LIST,
+                                    list5(LIST,
+                                          paramNameX,
+                                          NULL,
+                                          NULL,
+                                          make_enode(STRING_CONSTANT,
+                                                     (void *)str),
+                                          NULL)),
+                              (is_in_module() == FALSE) ?
+                              list1(LIST,
+                                    list0(F95_PARAMETER_SPEC)) :
+                              list2(LIST,
+                                    list0(F95_PARAMETER_SPEC),
+                                    list0(F95_PRIVATE_SPEC)));
+            compile_type_decl(EXPR_ARG1(typeDeclX),
+                              NULL,
+                              EXPR_ARG2(typeDeclX),
+                              EXPR_ARG3(typeDeclX));
+
+            accessX = list2(F_ARRAY_REF,
+                            paramNameX,
+                            indexX);
+            return compile_expression(accessX);
+        }
+
         default: {
             fatal("compile_expression: unknown code '%s'",
                   EXPR_CODE_NAME(EXPR_CODE(x)));

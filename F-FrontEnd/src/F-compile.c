@@ -938,11 +938,11 @@ void compile_statement1(int st_no, expr x)
 
 int temp_gen = 0;
 
-static SYMBOL
-gen_symbol(const char *leader)
+SYMBOL
+gen_temp_symbol(const char *leader)
 {
     char name[128];
-    sprintf(name,"%s%03d",leader,temp_gen++);
+    sprintf(name,"%s%03d", leader, temp_gen++);
     return find_symbol(name);
 }
 
@@ -953,7 +953,7 @@ allocate_temp(TYPE_DESC tp)
     ID id;
     SYMBOL sym;
 
-    sym = gen_symbol("omnitmp");
+    sym = gen_temp_symbol("omnitmp");
     id = declare_ident(sym,CL_VAR);
     ID_TYPE(id) = tp;
     ID_STORAGE(id) = STG_AUTO;

@@ -435,6 +435,7 @@ extern void     check_INEXEC _ANSI_ARGS_((void));
 extern void     include_file(char *name, int inside_use);
 extern void     push_unit_ctl _ANSI_ARGS_((enum prog_state));
 extern void     pop_unit_ctl _ANSI_ARGS_((void));
+extern SYMBOL   gen_temp_symbol(const char *leader);
 
 extern void     set_implicit_type_uc _ANSI_ARGS_((UNIT_CTL uc, TYPE_DESC tp, int c1, int c2, int ignore_declared_flag));
 extern void     set_implicit_type _ANSI_ARGS_((TYPE_DESC tp, int c1, int c2));

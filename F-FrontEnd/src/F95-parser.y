@@ -341,6 +341,7 @@ gen_default_real_kind(void) {
 %type <val> set_expr
 %type <val> io_statement format_spec ctl_list io_clause io_list_or_null io_list io_item
 %type <val> IDENTIFIER CONSTANT const kind_parm GENERIC_SPEC USER_DEFINED_OP
+%type <val> string_const_substr
 
 %type <val> name name_or_null generic_name defined_operator intrinsic_operator func_prefix prefix_spec
 %type <val> declaration_statement95 attr_spec_list attr_spec access_spec
@@ -1475,6 +1476,8 @@ expr:     lhs
         { $$ = list3(F95_USER_DEFINED_BINARY_EXPR, $2, $1, $3); }
         | USER_DEFINED_OP expr
         { $$ = list2(F95_USER_DEFINED_UNARY_EXPR, $1, $2); }
+	| string_const_substr
+        { $$ = $1; }
         ;
 
 lhs:     
@@ -1576,6 +1579,15 @@ array_constructor: expr
         ;
 */
 
+string_const_substr: const substring
+	{
+            if (EXPR_CODE($1) != STRING_CONSTANT) {
+                error_at_node($1, "not a string constant.");
+                $$ = NULL;
+            } else {
+                $$ = list2(F_STRING_CONST_SUBSTR, $1, $2);
+            }
+        }
 
 substring:  '(' expr_or_null ':' expr_or_null ')'
         { $$ = list1(LIST, list3(F95_TRIPLET_EXPR,$2,$4,NULL)); }
