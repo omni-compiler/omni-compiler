@@ -9,6 +9,7 @@
  */
 
 #include "F-front.h"
+#include "F-module-procedure.h"
 #include "module-manager.h"
 
 #include <sys/wait.h>
@@ -2870,6 +2871,9 @@ import_module_id(ID mid,
     }
 
     ID_LINK_ADD(id, *head, *tail);
+
+    if(IS_GENERIC_TYPE(ID_TYPE(id)))
+        add_generic_procedure(SYM_NAME(ID_SYM(id)), NULL);
 
     if(debug_flag) {
         fprintf(debug_fp,

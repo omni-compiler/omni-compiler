@@ -2349,7 +2349,7 @@ compile_function_call(ID f_id, expr args) {
                     warning_at_node(args, "can't determine a function to "
                                     "be actually called for a generic "
                                     "interface function call of '%s', "
-                                    "this is a currrent limitation.",
+                                    "this is a current limitation.",
                                     SYM_NAME(EXT_SYM(ep)));
                 }
             } else if (ep == NULL) {

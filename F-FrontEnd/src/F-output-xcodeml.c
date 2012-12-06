@@ -3437,6 +3437,12 @@ id_is_visibleVar(ID id)
         if (tp == NULL) {
             return FALSE;
         }
+        if (IS_GENERIC_TYPE(tp)) {
+            /* The generic function visibility is differed from
+             * function and subroutine.
+             */
+            return TRUE;
+        }
         if (ID_CLASS(id) == CL_PROC &&
             CRT_FUNCEP != NULL &&
             CRT_FUNCEP != PROC_EXT_ID(id)) {

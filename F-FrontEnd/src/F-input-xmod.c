@@ -184,6 +184,9 @@ setReturnType(HashTable * ht, TYPE_DESC tp, const char * rtid)
 {
     if (strcmp(rtid, "Fvoid") == 0) {
         TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+    } else if (strncmp(rtid, "V", 1) == 0) {
+        TYPE_BASIC_TYPE(tp) = TYPE_GENERIC;
+        TYPE_REF(tp) = getTypeDesc(ht, rtid);
     } else {
         TYPE_BASIC_TYPE(tp) = TYPE_FUNCTION;
         TYPE_REF(tp) = getTypeDesc(ht, rtid);
@@ -957,7 +960,7 @@ set_sclass(ID id, const char* sclass)
         else
             ID_CLASS(id) = CL_VAR;
 
-        if (IS_FUNCTION_TYPE(tp) || IS_SUBR(tp)) {
+        if (IS_FUNCTION_TYPE(tp) || IS_SUBR(tp) || IS_GENERIC_TYPE(tp)) {
             ID_CLASS(id) = CL_PROC;
             /* ID_STORAGE(id) = STG_SAVE; */
         }
@@ -1044,7 +1047,8 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
 
         // if type of id is function/subroutine, then regarded as procedure
         if (TYPE_BASIC_TYPE(ID_TYPE(id)) == TYPE_FUNCTION ||
-            TYPE_BASIC_TYPE(ID_TYPE(id)) == TYPE_SUBR) {
+            TYPE_BASIC_TYPE(ID_TYPE(id)) == TYPE_SUBR ||
+            TYPE_BASIC_TYPE(ID_TYPE(id)) == TYPE_GENERIC) {
             ID_IS_DECLARED(id) = TRUE;
             if (TYPE_IS_EXTERNAL(ID_TYPE(id)))
                 PROC_CLASS(id) = P_EXTERNAL;
