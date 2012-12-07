@@ -345,7 +345,6 @@ yylex()
     if (auxIdentX != NULL) {
         curToken = IDENTIFIER;
         yylval.val = auxIdentX;
-        auxIdentX = NULL;
     } else {
         curToken = yylex0();
     }
