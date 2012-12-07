@@ -407,12 +407,16 @@ statement:      /* entry */
           { $$ = list1(F95_INTERFACE_STATEMENT,NULL); }
         | ENDINTERFACE generic_name
           { $$ = list1(F95_ENDINTERFACE_STATEMENT,$2); }
-        | ENDINTERFACE generic_name '(' '=' ')'
-          { $$ = list1(F95_ENDINTERFACE_STATEMENT,$2); }
-        | ENDINTERFACE generic_name '(' intrinsic_operator ')'
-          { $$ = list1(F95_ENDINTERFACE_STATEMENT,$2); }
-        | ENDINTERFACE generic_name '(' USER_DEFINED_OP ')'
-          { $$ = list1(F95_ENDINTERFACE_STATEMENT,$2); }	
+        | ENDINTERFACE OPERATOR '(' '=' ')'
+          { $$ = list1(F95_ENDINTERFACE_STATEMENT,
+                       GEN_NODE(IDENT, find_symbol("="))); }
+        | ENDINTERFACE ASSIGNMENT '(' '=' ')'
+          { $$ = list1(F95_ENDINTERFACE_STATEMENT,
+                       GEN_NODE(IDENT, find_symbol("="))); }
+        | ENDINTERFACE OPERATOR '(' intrinsic_operator ')'
+          { $$ = list1(F95_ENDINTERFACE_STATEMENT, $4); }
+        | ENDINTERFACE OPERATOR '(' USER_DEFINED_OP ')'
+          { $$ = list1(F95_ENDINTERFACE_STATEMENT, $4); }
         | ENDINTERFACE
           { $$ = list1(F95_ENDINTERFACE_STATEMENT,NULL); }
         | MODULEPROCEDURE ident_list

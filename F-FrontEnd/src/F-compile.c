@@ -250,7 +250,6 @@ compile_statement(st_no,x)
         }
     } else this_label = NULL;
 
-    set_function_disappear();
     if (doCont == 1)
 	compile_statement1(st_no,x);
 
@@ -445,7 +444,6 @@ void compile_statement1(int st_no, expr x)
     case F95_CONTAINS_STATEMENT:
         check_INEXEC();
         push_unit_ctl(INCONT);
-        set_function_appearable();
         break;
 
         /* 
@@ -2433,7 +2431,6 @@ end_procedure()
     /* clean up for next procedure */
     initialize_compile_procedure();
     cleanup_unit_ctl(CURRENT_UNIT_CTL);
-    set_function_appearable();
 }
 
 /* 
@@ -3097,12 +3094,12 @@ compile_INTERFACE_statement(expr x)
     expr identOrOp;
     SYMBOL s = NULL;
     int hasName;
-    struct interface_info * info = XMALLOC(struct interface_info *, sizeof(struct interface_info));
+    struct interface_info * info =
+        XMALLOC(struct interface_info *, sizeof(struct interface_info));
     info->class = INTF_DECL;
 
     identOrOp = EXPR_ARG1(x);
     hasName = identOrOp ? TRUE : FALSE;
-    set_function_appearable();
 
     if(hasName) {
         switch(EXPR_CODE(identOrOp)) {

@@ -43,8 +43,6 @@ int flag_force_c_comment = FALSE; /* does not set yet.  */
 
 #define QUOTE   '\002'  /* special quote mark */
 
-int function_apperable = TRUE;
-
 struct keyword_token {
     char *k_name;
     int k_token;
@@ -165,6 +163,9 @@ int last_ln_no = 0;
 /* when read ';', no need for line count up.  */
 static int no_countup = FALSE;
 
+static int the_last_token[2] = { UNKNOWN, UNKNOWN };
+static int expect_next_token_is_keyword = TRUE;
+
 static int      read_initial_line _ANSI_ARGS_((void));
 static int      classify_statement _ANSI_ARGS_((void));
 static int      token _ANSI_ARGS_((void));
@@ -275,19 +276,121 @@ initialize_lex()
     if (ocl_flag) add_sentinel( &sentinels, OCL_SENTINEL );
 }
 
-// #define LEX_DEBUG
-static int yylast;
+static void
+prepare_for_new_statement(void) {
+    the_last_token[0] = UNKNOWN;
+    the_last_token[1] = UNKNOWN;
+    expect_next_token_is_keyword = TRUE;
+}
 
-/* lexical analyer */
+static int
+is_keyword(int k, struct keyword_token *tblPtr) {
+    struct keyword_token *kwPtr;
+
+    /*
+     * special treatment for I/O.
+     */
+    if (k == READ_P ||
+        k == WRITE_P ||
+        k == REWIND_P ||
+        k == ENDFILE_P ||
+        k == BACKSPACE_P) {
+        return TRUE;
+    }
+
+    if (tblPtr == NULL) {
+        tblPtr = keywords;
+    }
+
+    for (kwPtr = tblPtr; kwPtr->k_name != NULL; kwPtr++) {
+        if (kwPtr->k_token == k) {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+static int
+seems_type_or_func_attr(int kw) {
+    return (kw == KW_CHARACTER ||
+            kw == KW_COMPLEX ||
+            kw == KW_DOUBLE ||
+            kw == KW_DCOMPLEX ||
+            kw == KW_INTEGER ||
+            kw == KW_LOGICAL ||
+            kw == KW_REAL ||
+            kw == PURE ||
+            kw == RECURSIVE) ? TRUE : FALSE;
+}
+
+static char *
+yyidentvalue(void) {
+    return SYM_NAME(EXPR_SYM(yylval.val));
+}
+
+static int
+is_current_ident_matched(const char *str) {
+    return (strcasecmp(str, yyidentvalue()) == 0) ? TRUE : FALSE;
+}
+
+static expr auxIdentX = NULL;
+
+/* lexical analyzer */
 int
 yylex()
 {
-    yylast = yylex0();
+    int curToken = UNKNOWN;
+
+    if (auxIdentX != NULL) {
+        curToken = IDENTIFIER;
+        yylval.val = auxIdentX;
+        auxIdentX = NULL;
+    } else {
+        curToken = yylex0();
+    }
+
+    the_last_token[1] = the_last_token[0];
+    the_last_token[0] = curToken;
+
+    if (auxIdentX != NULL) {
+        auxIdentX = NULL;
+        goto Done;
+    }
+
+    if (expect_next_token_is_keyword == TRUE) {
+        if (the_last_token[0] == '(' ||
+            the_last_token[0] == LET ||
+            is_keyword(the_last_token[0], keywords) == TRUE) {
+            expect_next_token_is_keyword = FALSE;
+        }
+    } else {
+        if (curToken == IDENTIFIER) {
+            if ((strncasecmp(yyidentvalue(), "function", 8) == 0) &&
+                (seems_type_or_func_attr(the_last_token[1]) == TRUE ||
+                 the_last_token[1] == ')')) {
+                curToken = the_last_token[0] = FUNCTION;
+                if (is_current_ident_matched("function") != TRUE) {
+                    char *rest = yyidentvalue() + 8;
+                    auxIdentX = GEN_NODE(IDENT, find_symbol(rest));
+                }
+            } else if (is_current_ident_matched("operator") == TRUE &&
+                       the_last_token[1] == ENDINTERFACE) {
+                curToken = the_last_token[0] = OPERATOR;
+            } else if (is_current_ident_matched("assignment") == TRUE &&
+                       the_last_token[1] == ENDINTERFACE) {
+                curToken = the_last_token[0] = ASSIGNMENT;
+            }
+        }
+    }
+
+    Done:
 #ifdef LEX_DEBUG
-    printf("%c[%d]",(yylast < ' ' || yylast >= 0xFF) ? ' ': yylast, yylast);
-    fflush(stdout);
+    fprintf(stderr, "%c[%d]", 
+            (curToken < ' ' || curToken >= 0xFF) ?
+            ' ' : curToken, curToken);
 #endif
-    return(yylast);
+    return curToken;
 }
 
 static int
@@ -300,8 +403,9 @@ yylex0()
     switch(lexstate){
     case LEX_NEW_STATEMENT:
     again:
-        if(read_initial_line() == ST_EOF){
-            if(n_nested_file > 0){
+        prepare_for_new_statement();
+        if (read_initial_line() == ST_EOF) {
+            if (n_nested_file > 0){
                 restore_file();
                 goto again;
             }
@@ -312,22 +416,20 @@ yylex0()
         
         /* set bufptr st_buffer */
         bufptr = st_buffer;
-        if(st_OMP_flag && OMP_flag){
+        if (st_OMP_flag && OMP_flag) {
             lexstate = LEX_OMP_TOKEN;
-	    /* bufptr = pragmaBuf+3; *//* skip omp */
-	    for(p = bufptr; *p != '\0'; p++) *p = TOLOWER(*p);
+	    for (p = bufptr; *p != '\0'; p++) *p = TOLOWER(*p);
             return OMPKW_LINE;
         }
-        if(st_XMP_flag && XMP_flag){
+        if (st_XMP_flag && XMP_flag) {
             lexstate = LEX_XMP_TOKEN;
-	    /* bufptr = pragmaBuf+3; *//* skip omp */
-	    for(p = bufptr; *p != '\0'; p++) *p = TOLOWER(*p);
+	    for (p = bufptr; *p != '\0'; p++) *p = TOLOWER(*p);
             return XMPKW_LINE;
         }
-        if (st_OMP_flag || st_XMP_flag || st_PRAGMA_flag
-            || (st_CONDCOMPL_flag && !OMP_flag && !cond_compile_enabled)) {
+        if (st_OMP_flag || st_XMP_flag || st_PRAGMA_flag ||
+            (st_CONDCOMPL_flag && !OMP_flag && !cond_compile_enabled)) {
             lexstate = LEX_PRAGMA_TOKEN;
-	  return PRAGMA_HEAD;
+            return PRAGMA_HEAD;
         }
         tkn_cnt = 0;
         lexstate = LEX_FIRST_TOKEN;
@@ -350,25 +452,24 @@ yylex0()
 
     case LEX_OTHER_TOKEN:
         /* check 'if' '(' ... ')' */
-        if((st_class == LOGIF || (st_class == ELSEIFTHEN)) /* elseif in 95? */
-           && paren_level == 0 && tkn_cnt > 3)
-          goto first;
+        if ((st_class == LOGIF || (st_class == ELSEIFTHEN)) /* elseif in 95? */
+            && paren_level == 0 && tkn_cnt > 3)
+            goto first;
         tkn_cnt++;
         /* check 'assign' ... 'to' */
-        if(st_class == ASSIGN && tkn_cnt == 3
-           && bufptr[0] == 't' && bufptr[1] == 'o'){
+        if (st_class == ASSIGN && tkn_cnt == 3 &&
+            bufptr[0] == 't' && bufptr[1] == 'o'){
             bufptr += 2;
             return(KW_TO);
-        }
-	else if (st_class == DO && tkn_cnt == 3 &&
-		 bufptr[0] == 'w' && bufptr[1] == 'h' &&
-		 bufptr[2] == 'i' && bufptr[3] == 'l' &&
-		 bufptr[4] == 'e'){
-	  bufptr += 5;
-	  return KW_WHILE;
+        } else if (st_class == DO && tkn_cnt == 3 &&
+                   bufptr[0] == 'w' && bufptr[1] == 'h' &&
+                   bufptr[2] == 'i' && bufptr[3] == 'l' &&
+                   bufptr[4] == 'e'){
+            bufptr += 5;
+            return KW_WHILE;
 	}
         t = token();
-        if (t == FORMAT){
+        if (t == FORMAT) {
             /*
              * "format" shouldn't be here...
              */
@@ -384,20 +485,20 @@ yylex0()
         return(EOS);
 
     case LEX_OMP_TOKEN:
-      t = OMP_lex_token();
-      if(t == EOS) lexstate = LEX_NEW_STATEMENT;
-      return t;
+        t = OMP_lex_token();
+        if (t == EOS) lexstate = LEX_NEW_STATEMENT;
+        return t;
 
     case LEX_XMP_TOKEN:
-      t = XMP_lex_token();
-      if(t == EOS) lexstate = LEX_NEW_STATEMENT;
-      return t;
+        t = XMP_lex_token();
+        if (t == EOS) lexstate = LEX_NEW_STATEMENT;
+        return t;
 
     case LEX_PRAGMA_TOKEN:
-      /*
+#if 0
         if (!fixed_format_flag)
             append_pragma_str(st_buffer_org);
-      */
+#endif
         lexstate = LEX_RET_EOS;
         return PRAGMA_SLINE;
 
@@ -431,8 +532,6 @@ save_format_str()
     }
     formatString = strdup(fmt);
 }
-
-
 
 
 static void
@@ -511,12 +610,13 @@ token()
     
     while(isspace(*bufptr)) bufptr++;  /* skip white space */
     
-    if(need_keyword == TRUE) {  /* require keyword */
+    if (need_keyword == TRUE || expect_next_token_is_keyword == TRUE) {
+        /*
+         * require keyword
+         */
         need_keyword = FALSE;
         t = get_keyword(keywords);
-        if(t == SUBROUTINE || t == FUNCTION)
-            set_function_disappear();
-        if(t != UNKNOWN) return(t);
+        if (t != UNKNOWN) return(t);
     }
 
     if(need_type_len == TRUE){  /* for type_length */
@@ -776,46 +876,13 @@ read_identifier()
     *p = 0;             /* termination */
     
 #ifdef not
-    if(strncmp(buffio,"function",8) == 0 && isalpha((int)buffio[8]) &&
-               bufptr[0] == '(' && (bufptr[1] == ')' || isalpha((int)bufptr[1]))){
+    if (strncmp(buffio,"function",8) == 0 && isalpha((int)buffio[8]) &&
+        bufptr[0] == '(' && (bufptr[1] == ')' || isalpha((int)bufptr[1]))) {
         /* back */
         bufptr -= (tkn_len - 8);
         return(FUNCTION);
     }
 #endif
-
-    /* ad hoc. read a head.  */
-    /* caution!! if var name is "funciton", then miss parse here!!  */
-
-    if (function_apperable == TRUE && strncmp (buffio, "function", 8) == 0) {
-        char *save;
-
-        if (fixed_format_flag) {
-            bufptr -= strlen (buffio) - 8; /* put back for function-name-id.  */
-        }
-        save = bufptr;
-        /* check the id is "function" and  */
-        while (isspace(*bufptr))
-            bufptr++;  /* skip white space */
-        if (isalpha(*bufptr)) /* check the 'functio-name-id' */
-            bufptr++;
-        while (isalpha(*bufptr) || isdigit(*bufptr) || *bufptr == '_')
-            bufptr++;
-        while (isspace(*bufptr)) /* skip white space */
-            bufptr++;  
-        if (*bufptr == '(') { /* check '('  */
-            bufptr++;
-            while  (*bufptr) {
-                if (*bufptr && *bufptr == ')') { /* anc check ')' */
-                    bufptr = save; /* restore.  */
-                    set_function_disappear();
-                    return FUNCTION;
-                }
-                bufptr++;
-            }
-        }
-        bufptr = save;  /* restore.  */
-    }
 
     if(tkn_len == 1 && *bufptr == QUOTE){
         omllint_t v = 0;
@@ -829,12 +896,14 @@ read_identifier()
         default: error("bad bit id");
         }
         tkn_len = 0;
-        for(p = buffio, bufptr++; 
-            UNDER_LINE_BUF_SIZE(buffio,p)&&((ch = *bufptr++) != QUOTE); *p++ = ch)
-            if(tkn_len++ > 32) {
+        for (p = buffio, bufptr++; 
+             UNDER_LINE_BUF_SIZE(buffio,p)&&((ch = *bufptr++) != QUOTE);
+             *p++ = ch) {
+            if (tkn_len++ > 32) {
                 error("too long constant");
                 break;
             }
+        }
         *p = 0;         /* termination */
         if (radix == 0) {
             error("can't determine radix");
@@ -845,7 +914,7 @@ read_identifier()
     } 
 #ifdef YYDEBUG
     if (yydebug)
-      fprintf (stderr, "read_identifier/(%s)\n", buffio);
+        fprintf (stderr, "read_identifier/(%s)\n", buffio);
 #endif
     if (may_generic_spec &&
 	((strcmp(buffio, "operator") == 0)
@@ -1379,7 +1448,7 @@ nextPair:
     goto nextPair;
 }
 
-/* check tokn is syntax name or not. */
+/* check token is syntax name or not. */
 static int
 is_not_keyword()
 {
@@ -1630,21 +1699,9 @@ get_keyword_optional_blank(int class)
     return UNKNOWN;
 }
 
-
 int checkInsideUse()
 {
     return is_using_module;
-}
-
-
-void set_function_disappear()
-{
-    function_apperable = FALSE;
-}
-
-void set_function_appearable()
-{
-    function_apperable = TRUE;
 }
 
 /*
