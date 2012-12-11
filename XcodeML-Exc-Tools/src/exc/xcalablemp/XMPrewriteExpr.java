@@ -906,7 +906,7 @@ public class XMPrewriteExpr {
     }
   }
 
-  private static Xobject calcLtoG(XMPtemplate t, int ti, Xobject expr) throws XMPexception {
+  public static Xobject calcLtoG(XMPtemplate t, int ti, Xobject expr) throws XMPexception {
     expr.setIsRewrittedByXmp(true);
 
     if (!t.isDistributed()) {

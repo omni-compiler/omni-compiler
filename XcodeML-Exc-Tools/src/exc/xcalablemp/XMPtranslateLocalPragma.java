@@ -825,9 +825,11 @@ public class XMPtranslateLocalPragma {
 
   private void translateFollowingLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {
     XobjList loopDecl = (XobjList)pb.getClauses();
+    ArrayList iteraterList = new ArrayList();  // Not used 
 
     // schedule loop
-    scheduleLoop(pb, schedBaseBlock, schedBaseBlock);
+    scheduleLoop(pb, schedBaseBlock, schedBaseBlock, iteraterList);
+    insertScheduleIndexFunction(pb, schedBaseBlock, schedBaseBlock, iteraterList);
   }
 
   private void translateMultipleLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {
@@ -844,10 +846,175 @@ public class XMPtranslateLocalPragma {
 
     // schedule loop
     Iterator<CforBlock> it = loopVector.iterator();
+    ArrayList iteraterList = new ArrayList();
     while (it.hasNext()) {
       CforBlock forBlock = it.next();
-      scheduleLoop(pb, forBlock, schedBaseBlock);
+      scheduleLoop(pb, forBlock, schedBaseBlock, iteraterList);
     }
+
+    it = loopVector.iterator();
+    while (it.hasNext()) {
+      CforBlock forBlock = it.next();
+      insertScheduleIndexFunction(pb, forBlock, schedBaseBlock, iteraterList);
+    }
+  }
+
+  private void insertScheduleIndexFunction(PragmaBlock pb, CforBlock forBlock, CforBlock schedBaseBlock, 
+					   ArrayList iteraterList) throws XMPexception {
+    XobjList loopDecl = (XobjList)pb.getClauses();
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(schedBaseBlock);
+    Xobject onRef = loopDecl.getArg(1);
+    String onRefObjName = onRef.getArg(0).getString();
+    XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, localXMPsymbolTable);
+
+    XMPtemplate templateObj = (XMPtemplate)onRefObj;
+    XobjList templateSubscriptList = (XobjList)onRef.getArg(1);
+    Xobject loopIndex = forBlock.getInductionVar();
+    String loopIndexName = loopIndex.getSym();
+    XobjList funcArgs = Xcons.List();
+    Xobject lb = forBlock.getLowerBound();
+    Xobject up = forBlock.getUpperBound();
+    Xobject step = forBlock.getStep();
+    funcArgs.add(lb);
+    funcArgs.add(up);
+    funcArgs.add(step);
+
+    Ident parallelInitId = declIdentWithBlock(schedBaseBlock, "_XMP_loop_init_" + loopIndexName, Xtype.intType);
+    Ident parallelCondId = declIdentWithBlock(schedBaseBlock, "_XMP_loop_cond_" + loopIndexName, Xtype.intType);
+    Ident parallelStepId = declIdentWithBlock(schedBaseBlock, "_XMP_loop_step_" + loopIndexName, Xtype.intType);
+    
+    funcArgs.add(parallelInitId.getAddr());
+    funcArgs.add(parallelCondId.getAddr());
+    funcArgs.add(parallelStepId.getAddr());
+
+    XobjInt templateIndexArg = null;
+    int templateIndex = 0;
+    int distManner = 0;
+    String distMannerString = null;
+    for (XobjArgs i = templateSubscriptList.getArgs(); i != null; i = i.nextArgs()) {
+      String s = i.getArg().getString();
+      if (s.equals(loopIndexName)) {
+        templateIndexArg = Xcons.IntConstant(templateIndex);
+        distManner = templateObj.getDistMannerAt(templateIndex);
+        distMannerString = templateObj.getDistMannerStringAt(templateIndex);
+      }
+      templateIndex++;
+    }
+    funcArgs.add(templateObj.getDescId().Ref());
+    funcArgs.add(templateIndexArg);
+    
+    Ident funcId = _globalDecl.declExternFunc("_XMP_sched_loop_template_" + distMannerString);
+    
+    int[] position = {iteraterList.size()};
+    boolean[] flag = {false, false, false};
+    String[] insertedIteraterList = new String[3];
+    flag[0] = getPositionInsertScheFuncion(lb,   0, position, iteraterList, insertedIteraterList);
+    flag[1] = getPositionInsertScheFuncion(up,   1, position, iteraterList, insertedIteraterList);
+    flag[2] = getPositionInsertScheFuncion(step, 2, position, iteraterList, insertedIteraterList);
+
+    if(position[0] == iteraterList.size()){
+      schedBaseBlock.insert(funcId.Call(funcArgs));
+    }
+    else{
+      if(flag[0]){ 
+	insertScheFuncion(lb,   flag, position[0], 0, schedBaseBlock, funcArgs, templateObj, 
+			  funcId, iteraterList, insertedIteraterList);
+      }
+      if(flag[1]){
+	insertScheFuncion(up,   flag, position[0], 1, schedBaseBlock, funcArgs, templateObj, 
+			  funcId, iteraterList, insertedIteraterList);
+      }
+      if(flag[2]){
+	insertScheFuncion(step, flag, position[0], 2, schedBaseBlock, funcArgs, templateObj,
+			  funcId, iteraterList, insertedIteraterList);
+      }
+    }
+  }
+
+  private void insertScheFuncion(Xobject v, boolean[] flag, int position, int num, CforBlock schedBaseBlock, XobjList funcArgs, 
+				 XMPtemplate templateObj, Ident funcId, ArrayList iteraterList, String[] insertedIteraterList) throws XMPexception {
+
+    Block b = schedBaseBlock;
+    for(int i=0;i<iteraterList.size()-position;i++){
+      b = b.getBody().getHead();
+    }
+
+    Xobject func = funcId.Call(funcArgs);
+    int loop_depth = 0;
+    String index = insertedIteraterList[num];
+    for(int i=0;i<iteraterList.size();i++){
+      if(iteraterList.get(i).toString().equals(index)){
+	loop_depth = i;
+      }
+    }
+    v = XMPrewriteExpr.calcLtoG(templateObj, loop_depth, v); 
+    funcArgs.setArg(num, v);
+
+    // Insert Function
+    if(num == 0){
+      b.insert(func);
+      return;
+    }
+
+    if(num == 1){
+      if(flag[0]){
+	return; 
+      }
+      else{
+        b.insert(func);
+      }
+      return;
+    }
+
+    if(num == 2){
+      if(flag[0] || flag[1]){
+	return;
+      }
+      else{
+	b.insert(func);
+      }
+      return;
+    }
+  }
+
+  private boolean getPositionInsertScheFuncion(Xobject v, int num, int[] position, ArrayList iteraterList, 
+					       String[] insertedIteraterList) throws XMPexception {
+    if(v.Opcode() != Xcode.INT_CONSTANT){
+      XobjList vList = null;
+      if(v.isVariable()){
+        vList = Xcons.List(v);
+      }
+      else{
+        vList = XobjArgs2XobjList(v, Xcons.List());
+      }
+      for (XobjArgs i = vList.getArgs(); i != null; i = i.nextArgs()) {
+	if(i.getArg().isVariable()){
+          for(int j=0;j<iteraterList.size();j++){
+            if(i.getArg().getSym().equals(iteraterList.get(j))){
+	      if(position[0] > j){
+		position[0] = j;
+	      }
+	      insertedIteraterList[num] = iteraterList.get(j).toString();
+	      return true;
+            }
+	  }
+	}
+      }
+    }
+    return false;
+  }
+
+  private XobjList XobjArgs2XobjList(Xobject x, XobjList a){
+    for (XobjArgs i = x.getArgs(); i != null; i = i.nextArgs()) {
+
+      if(i.getArg().isBinaryOp()){
+	XobjArgs2XobjList(i.getArg(), a);
+      } 
+      else{
+	a.add(i.getArg());
+      }
+    }
+    return a;
   }
 
   private BlockList createReductionClauseBody(PragmaBlock pb, XobjList reductionRefList,
@@ -878,7 +1045,7 @@ public class XMPtranslateLocalPragma {
     return reductionBody;
   }
 
-  private void scheduleLoop(PragmaBlock pb, CforBlock forBlock, CforBlock schedBaseBlock) throws XMPexception {
+  private void scheduleLoop(PragmaBlock pb, CforBlock forBlock, CforBlock schedBaseBlock, ArrayList iteraterList) throws XMPexception {
     XobjList loopDecl = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(schedBaseBlock);
 
@@ -902,7 +1069,7 @@ public class XMPtranslateLocalPragma {
             throw new XMPexception("template '" + onRefObjName + "' is not distributed");
           }
 
-          callLoopSchedFuncTemplate(onRefTemplate, (XobjList)onRef.getArg(1), forBlock, schedBaseBlock);
+          callLoopSchedFuncTemplate(onRefTemplate, (XobjList)onRef.getArg(1), forBlock, schedBaseBlock, iteraterList);
         } break;
       case XMPobject.NODES:
         callLoopSchedFuncNodes((XMPnodes)onRefObj, (XobjList)onRef.getArg(1), forBlock, schedBaseBlock);
@@ -973,14 +1140,10 @@ public class XMPtranslateLocalPragma {
   }
 
   private void callLoopSchedFuncTemplate(XMPtemplate templateObj, XobjList templateSubscriptList,
-                                         CforBlock forBlock, CforBlock schedBaseBlock) throws XMPexception {
+                                         CforBlock forBlock, CforBlock schedBaseBlock, ArrayList iteraterList) throws XMPexception {
     Xobject loopIndex = forBlock.getInductionVar();
     String loopIndexName = loopIndex.getSym();
-
-    XobjList funcArgs = Xcons.List();
-    funcArgs.add(forBlock.getLowerBound());
-    funcArgs.add(forBlock.getUpperBound());
-    funcArgs.add(forBlock.getStep());
+    iteraterList.add(loopIndexName);
 
     int templateIndex = 0;
     int templateDim = templateObj.getDim();
@@ -1037,17 +1200,6 @@ public class XMPtranslateLocalPragma {
         throw new XMPexception("unknown distribute manner");
     }
 
-    funcArgs.add(parallelInitId.getAddr());
-    funcArgs.add(parallelCondId.getAddr());
-    funcArgs.add(parallelStepId.getAddr());
-
-    funcArgs.add(templateObj.getDescId().Ref());
-    funcArgs.add(templateIndexArg);
-
-    Ident funcId = _globalDecl.declExternFunc("_XMP_sched_loop_template_" + distMannerString);
-
-    schedBaseBlock.insert(funcId.Call(funcArgs));
-
     // rewrite loop index in loop
     BasicBlockExprIterator iter = new BasicBlockExprIterator(getLoopBody(forBlock));
 
@@ -1068,11 +1220,6 @@ public class XMPtranslateLocalPragma {
     }
 
     String loopIndexName = loopIndex.getSym();
-
-    XobjList funcArgs = Xcons.List();
-    funcArgs.add(forBlock.getLowerBound());
-    funcArgs.add(forBlock.getUpperBound());
-    funcArgs.add(forBlock.getStep());
 
     int nodesIndex = 0;
     int nodesDim = nodesObj.getDim();
@@ -1117,17 +1264,6 @@ public class XMPtranslateLocalPragma {
     forBlock.setStep(parallelStepId.Ref());
 
     forBlock.getCondBBlock().setExpr(Xcons.binaryOp(Xcode.LOG_LT_EXPR, loopIndex, parallelCondId.Ref()));
-
-    funcArgs.add(parallelInitId.getAddr());
-    funcArgs.add(parallelCondId.getAddr());
-    funcArgs.add(parallelStepId.getAddr());
-
-    funcArgs.add(nodesObj.getDescId().Ref());
-    funcArgs.add(nodesIndexArg);
-
-    Ident funcId = _globalDecl.declExternFunc("_XMP_sched_loop_nodes");
-
-    schedBaseBlock.insert(funcId.Call(funcArgs));
   }
 
   private Ident declIdentWithBlock(Block b, String identName, Xtype type) {
