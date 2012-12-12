@@ -146,6 +146,8 @@
 #define OPT_INVALID_CODE        "-"
 #define OPT_DRV_DONT_LINK       "-c"
 #define OPT_LNK_OUTPUT          "-o"
+#define OPT_DRV_DO_CPP          "-cpp"
+#define OPT_DRV_NO_CPP          "-nocpp"
 #define OPT_DRV_LANGID          "--x"
 #define OPT_DRV_CONF            "--conf"
 #define OPT_DRV_TEMP            "--tempdir"
@@ -315,6 +317,7 @@ typedef struct st_driver_manage_info {
     struct {
         int     proc_lang;
         int     dont_link;
+        int     do_cpp;
         char    *conffile;
         char    *tempdir;
         int     dont_del_temp;
@@ -331,6 +334,8 @@ typedef struct st_driver_manage_info {
 /** accessor to driver private option */
 #define GET_DONT_LINK() g_manage_info.private.dont_link
 #define SET_DONT_LINK( flg ) g_manage_info.private.dont_link = flg
+#define GET_DO_CPP() g_manage_info.private.do_cpp
+#define SET_DO_CPP( flg ) g_manage_info.private.do_cpp = flg
 #define GET_CONFFILE() g_manage_info.private.conffile
 #define SET_CONFFILE( file ) g_manage_info.private.conffile = file
 #define GET_TEMPDIR() g_manage_info.private.tempdir

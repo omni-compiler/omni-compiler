@@ -59,6 +59,9 @@ static const opt_pair opt_pair_table[] = {
     { OPT_LNK_L,          MOD_LNK,  1, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_LX2X_TRANS,     MOD_DRV , 1, 1, 0, 1, OPT_INVALID_CODE },
     { OPT_DRV_LANGID,     MOD_DRV,  0, 0, 0, 0, OPT_INVALID_CODE },
+    /* DO_CPP (-cpp) must precede DONT_LINK (-c). */
+    { OPT_DRV_DO_CPP,     MOD_DRV,  0, 0, 0, 0, OPT_INVALID_CODE },
+    { OPT_DRV_NO_CPP,     MOD_DRV,  0, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_DRV_DONT_LINK,  MOD_DRV,  0, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_DRV_CONF,       MOD_DRV,  0, 1, 0, 0, OPT_INVALID_CODE },
     { OPT_DRV_TEMP,       MOD_DRV,  0, 1, 0, 0, OPT_INVALID_CODE },
@@ -114,8 +117,9 @@ cmp_opt_value( char *opt_value, char *opt_src )
     int opt_src_len = strlen(opt_src);
     int opt_value_len = strlen(opt_value);
 
-    while ((idx_opt_value < opt_value_len) &&
-            (idx_opt_value < opt_src_len)) {
+/*     while ((idx_opt_value < opt_value_len) && */
+/*             (idx_opt_value < opt_src_len)) { */
+    while ((idx_opt_value < opt_src_len)) {
         if (*(opt_value+idx_opt_value) != *(opt_src+idx_opt_value)) {
             return FALSE;
         }
@@ -454,6 +458,14 @@ int set_driver_option( void )
     /** dont link */
     if (GET_OPT_IS_APPLIED_TBL(opt_idx(OPT_DRV_DONT_LINK))) {
         SET_DONT_LINK( TRUE );
+    }
+
+    if (GET_OPT_IS_APPLIED_TBL(opt_idx(OPT_DRV_DO_CPP))) {
+        SET_DO_CPP( TRUE );
+    }
+
+    if (GET_OPT_IS_APPLIED_TBL(opt_idx(OPT_DRV_NO_CPP))) {
+        SET_DO_CPP( FALSE );
     }
 
     /** set conffile */
@@ -1113,9 +1125,9 @@ int exec_module( opt_applier id )
     switch (id) {
     case MOD_PP:
         for (i = 0; i < cnt_file; i++) {
-            if (( io->is_valid )
-                 && (io->is_preped == FALSE )
-                 && (io->is_compiled == FALSE )) {
+ 	    if (GET_DO_CPP() || (( io->is_valid )
+				 && (io->is_preped == FALSE )
+			         && (io->is_compiled == FALSE ))) {
                 strcpy( g_cmd_buf, g_module_path );
                 memset( g_outfile_buf, 0x00, MAX_INPUT_FILE_PATH );
                 ret = get_out_file( id, g_outfile_buf, io->in_file );
