@@ -1,6 +1,14 @@
 #include "xmpf_internal.h"
 #include "config.h"
 
+//#define DBG 1
+
+#ifdef DBG
+extern double t_copy;
+extern double t_comm;
+extern double t_mem;
+#endif
+
 /*
  * For xmpf, initialize all
  */
@@ -12,6 +20,12 @@ void xmpf_init_all__()
 
 void xmpf_finalize_all__()
 {
+#ifdef DBG
+  xmpf_dbg_printf("t_copy = %f\n", t_copy);
+  xmpf_dbg_printf("t_comm = %f\n", t_comm);
+  xmpf_dbg_printf("t_mem  = %f\n", t_mem);
+#endif
+
   _XMP_finalize();
 }
 
@@ -63,7 +77,7 @@ void xmpf_dbg_printf(char *fmt,...)
 void xmpf_array___(_XMP_array_t **a_desc)
 {
   _XMP_array_t *a = *a_desc;
-  xmpf_dbg_printf("array : *(a->array_addr_p) = %p\n", *(a->array_addr_p));
+  xmpf_dbg_printf("array : a->array_addr_p = %p\n", a->array_addr_p);
 }
 
 

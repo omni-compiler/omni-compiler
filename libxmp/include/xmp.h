@@ -30,7 +30,7 @@ extern int      xmp_array_lcllbound(xmp_desc_t d, int dim);
 extern int      xmp_array_lclubound(xmp_desc_t d, int dim);
 extern int      xmp_array_gcglbound(xmp_desc_t d, int dim);
 extern int      xmp_array_gcgubound(xmp_desc_t d, int dim);
-extern void   **xmp_array_laddr(xmp_desc_t d);
+extern void    *xmp_array_laddr(xmp_desc_t d);
 extern int      xmp_array_ushadow(xmp_desc_t d, int dim);
 extern int      xmp_array_lshadow(xmp_desc_t d, int dim);
 extern int      xmp_array_owner(xmp_desc_t d, int ndims, int index[], int dim);

@@ -3,7 +3,7 @@
 void *_XMP_get_array_addr(_XMP_array_t *a, int *gidx)
 {
   int ndims = a->dim;
-  void *ret = *(a->array_addr_p);
+  void *ret = a->array_addr_p;
   //xmpf_dbg_printf("ret = %p\n", ret);
   //xmpf_dbg_printf("a->array_addr_p = %p\n", a->array_addr_p);
 
@@ -222,7 +222,7 @@ static _Bool _XMPF_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
   bufsize = count * nnodes;
 
   if (dst_block_dim == src_block_dim){
-    memcpy((char *)(*(dst_array->array_addr_p)), (char *)(*(src_array->array_addr_p)), bufsize);
+    memcpy((char *)dst_array->array_addr_p, (char *)src_array->array_addr_p, bufsize);
     return true;
   }
 
@@ -239,11 +239,11 @@ static _Bool _XMPF_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
       k= 0;
       for (int j = 0; j < chunk_size; j++){
 	memcpy((char *)sendbuf + i * count + k,
-	       (char *)(*(src_array->array_addr_p)) + (i * chunk_size + j * ser_size) * type_size,
+	       (char *)src_array->array_addr_p + (i * chunk_size + j * ser_size) * type_size,
 	       chunk_size * type_size);
 #ifdef DBG
 	xmpf_dbg_printf("%d -> %d\n",
-			*((int *)(*(src_array->array_addr_p)) + (i * chunk_size + j * ser_size)),
+			*((int *)src_array->array_addr_p + (i * chunk_size + j * ser_size)),
 			i * count + k);
 #endif
 	k += chunk_size * type_size;
@@ -251,7 +251,7 @@ static _Bool _XMPF_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
     }
   }
   else {
-    sendbuf = *(src_array->array_addr_p);
+    sendbuf = src_array->array_addr_p;
   }
 
 #ifdef DBG
@@ -264,7 +264,7 @@ static _Bool _XMPF_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
     recvbuf = _XMP_alloc(bufsize);
   }
   else {
-    recvbuf = *(dst_array->array_addr_p);
+    recvbuf = dst_array->array_addr_p;
   }
 
   MPI_Alltoall(sendbuf, count, MPI_BYTE, recvbuf, count, MPI_BYTE,
@@ -276,7 +276,7 @@ static _Bool _XMPF_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
     for (int i = 0; i < nnodes; i++){
       k = 0;
       for (int j = 0; j < chunk_size; j++){
-	memcpy((char *)(*(dst_array->array_addr_p)) + (i * chunk_size + j * ser_size) * type_size,
+	memcpy((char *)dst_array->array_addr_p + (i * chunk_size + j * ser_size) * type_size,
 	       (char *)recvbuf + i * count + k,
 	       chunk_size * type_size);
 	k += chunk_size * type_size;
@@ -330,7 +330,7 @@ void _XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
 
   // get dst info
   unsigned long long dst_total_elmts = 1;
-  void *dst_addr = *(dst_array->array_addr_p);
+  void *dst_addr = dst_array->array_addr_p;
   int dst_dim = dst_array->dim;
   int dst_l[dst_dim], dst_u[dst_dim], dst_s[dst_dim];
   unsigned long long dst_d[dst_dim];
@@ -345,7 +345,7 @@ void _XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
 
   // get src info
   unsigned long long src_total_elmts = 1;
-  void *src_addr = *(src_array->array_addr_p);
+  void *src_addr = src_array->array_addr_p;
   int src_dim = src_array->dim;
   int src_l[src_dim], src_u[src_dim], src_s[src_dim];
   unsigned long long src_d[src_dim];
@@ -459,7 +459,7 @@ void _XMPF_gmove_garray_larray(_XMP_gmv_desc_t *gmv_desc_leftp,
 
   // get dst info
   unsigned long long dst_total_elmts = 1;
-  void *dst_addr = *(dst_array->array_addr_p);
+  void *dst_addr = dst_array->array_addr_p;
   int dst_dim = dst_array->dim;
   int dst_l[dst_dim], dst_u[dst_dim], dst_s[dst_dim];
   unsigned long long dst_d[dst_dim];
@@ -474,7 +474,7 @@ void _XMPF_gmove_garray_larray(_XMP_gmv_desc_t *gmv_desc_leftp,
 
   // get src info
   unsigned long long src_total_elmts = 1;
-  void *src_addr = *(src_array->array_addr_p);
+  void *src_addr = src_array->array_addr_p;
   int src_dim = src_array->dim;
   int src_l[src_dim], src_u[src_dim], src_s[src_dim];
   unsigned long long src_d[src_dim];
@@ -576,7 +576,7 @@ void _XMPF_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
 
   // get dst info
   unsigned long long dst_total_elmts = 1;
-  void *dst_addr = *(dst_array->array_addr_p);
+  void *dst_addr = dst_array->array_addr_p;
   int dst_dim = dst_array->dim;
   int dst_l[dst_dim], dst_u[dst_dim], dst_s[dst_dim];
   unsigned long long dst_d[dst_dim];
@@ -591,7 +591,7 @@ void _XMPF_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
 
   // get src info
   unsigned long long src_total_elmts = 1;
-  void *src_addr = *(src_array->array_addr_p);
+  void *src_addr = src_array->array_addr_p;
   int src_dim = src_array->dim;
   int src_l[src_dim], src_u[src_dim], src_s[src_dim];
   unsigned long long src_d[src_dim];

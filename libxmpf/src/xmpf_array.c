@@ -210,8 +210,8 @@ void xmpf_array_get_local_size_off__(_XMP_array_t **a_desc, int *i_dim,
 }
 
 
-void *tmp[1024];
-int jjj = 0;
+//void *tmp[1024];
+//int jjj = 0;
 
 void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr)
 {
@@ -229,7 +229,8 @@ void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr)
   }
   a->total_elmts = total_elmts;
 
-  tmp[jjj] = array_addr;
-  a->array_addr_p = &tmp[jjj];
-  jjj++;
+  a->array_addr_p = array_addr;
+  //  tmp[jjj] = array_addr;
+  //  a->array_addr_p = &tmp[jjj];
+  //  jjj++;
 }

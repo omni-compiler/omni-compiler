@@ -322,7 +322,7 @@ void _XMPF_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
 	  dim_acc[i] = array_desc->info[i].dim_acc;
 	}
 
-	*lo_recv_buffer = *(array_desc->array_addr_p);
+	*lo_recv_buffer = array_desc->array_addr_p;
 	for (int i = 0; i < array_dim; i++){
 	  *lo_recv_buffer = (void *)((char *)(*lo_recv_buffer) + lower[i] * dim_acc[i] * (array_desc->type_size));
 	}
@@ -367,7 +367,7 @@ void _XMPF_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
 	  dim_acc[i] = array_desc->info[i].dim_acc;
 	}
 
-	*hi_recv_buffer = *(array_desc->array_addr_p);
+	*hi_recv_buffer = array_desc->array_addr_p;
 	for (int i = 0; i < array_dim; i++){
 	  *hi_recv_buffer = (void *)((char *)(*hi_recv_buffer) + lower[i] * dim_acc[i] * (array_desc->type_size));
 	}
@@ -436,7 +436,7 @@ void _XMPF_reflect_(_XMP_array_t **a_desc, int lwidth[], int uwidth[],
       if (ai->shadow_size_lo > 0 || ai->shadow_size_hi > 0){
 
 	_XMPF_pack_shadow_NORMAL(&l_send_buf, &u_send_buf,
-				 *(a->array_addr_p), a, i, true);
+				 a->array_addr_p, a, i, true);
 #ifdef DBG
 	t0 = MPI_Wtime();
 #endif
@@ -447,7 +447,7 @@ void _XMPF_reflect_(_XMP_array_t **a_desc, int lwidth[], int uwidth[],
 #endif
 
 	_XMPF_unpack_shadow_NORMAL(l_recv_buf, u_recv_buf,
-				   *(a->array_addr_p), a, i, true);
+				   a->array_addr_p, a, i, true);
       }
       
     }

@@ -1944,7 +1944,7 @@ int xmp_fread_darray_unpack(fp, apd, rp)
 
    /* unpack data */
    cp = buf;
-   array_addr = (char*)(*(xmp_array_laddr(apd)));
+   array_addr = (char*)xmp_array_laddr(apd);
    for(j=0; j<buf_size; j++){
      disp = 0;
      size = 1;
@@ -2278,7 +2278,7 @@ printf("READ(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
   // on erro in commit
   if (mpiRet != MPI_SUCCESS) { return 1; }
   
-  char *array_addr = (char*)(*(xmp_array_laddr(apd)));
+  char *array_addr = (char*)xmp_array_laddr(apd);
 
   // read
   MPI_Type_size(dataType[0], &typesize_int);
@@ -2494,7 +2494,7 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
 
    /* pack data */
    cp = buf;
-   array_addr = (char*)(*(xmp_array_laddr(apd)));
+   array_addr = (char*)xmp_array_laddr(apd);
    for(j=0; j<buf_size; j++){
      disp = 0;
      size = 1;
@@ -2857,7 +2857,7 @@ printf("WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper);
   // on error in commit
   if (mpiRet != MPI_SUCCESS) { return 1119; }
  
-  char *array_addr = (char*)(*(xmp_array_laddr(apd)));
+  char *array_addr = (char*)xmp_array_laddr(apd);
 
   // write
   MPI_Type_size(dataType[0], &typesize_int);

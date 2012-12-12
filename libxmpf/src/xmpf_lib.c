@@ -123,7 +123,7 @@ int xmp_array_gcgubound(xmp_desc_t d, int dim) {
 
 }
 
-void **xmp_array_laddr(xmp_desc_t d){
+void *xmp_array_laddr(xmp_desc_t d){
 
   _XMP_array_t *a = (_XMP_array_t *)d;
 
