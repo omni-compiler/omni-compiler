@@ -187,7 +187,7 @@ static _Bool _XMPF_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
   int dst_block_dim, src_block_dim;
 
   void *sendbuf, *recvbuf;
-  int count, bufsize;
+  unsigned long long count, bufsize;
 
   int chunk_size, ser_size, type_size;
 
@@ -227,7 +227,7 @@ static _Bool _XMPF_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
   }
 
 #ifdef DBG
-  xmpf_dbg_printf("chunk_size = %d, ser_size = %d, type_size = %d, count = %d, buf_size = %d\n",
+  xmpf_dbg_printf("chunk_size = %d, ser_size = %d, type_size = %d, count = %llu, buf_size = %llu\n",
 		  chunk_size, ser_size, type_size, count, bufsize);
 #endif
 
