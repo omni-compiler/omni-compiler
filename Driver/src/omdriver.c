@@ -1128,6 +1128,7 @@ int exec_module( opt_applier id )
  	    if (GET_DO_CPP() || (( io->is_valid )
 				 && (io->is_preped == FALSE )
 			         && (io->is_compiled == FALSE ))) {
+	        io->is_preped = FALSE;
                 strcpy( g_cmd_buf, g_module_path );
                 memset( g_outfile_buf, 0x00, MAX_INPUT_FILE_PATH );
                 ret = get_out_file( id, g_outfile_buf, io->in_file );
