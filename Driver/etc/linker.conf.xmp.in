@@ -20,7 +20,7 @@ for i in ${OM_OPTIONS}; do
         -prof-tlog)
             hasTlog=1;;
         -l*)
-            LIBS="${LIBS} ${i}";;
+            LIBS="${i} ${LIBS}";;
         *)
             newOpts="${newOpts} ${i}";;
     esac
