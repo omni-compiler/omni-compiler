@@ -5,14 +5,10 @@
  *  $
  */
 
-
 #ifndef _F_MODULE_PROCEDURE_H_
 #define _F_MODULE_PROCEDURE_H_
 #include "F-front.h"
 #include "hash.h"
-
-
-
 
 
 #define FOREACH_IN_HASH(h, s, tab) \
@@ -22,9 +18,6 @@
 
 
 #define isValidString(x) ((x) != NULL && *(x) != '\0')
-
-
-
 
 
 struct generic_procedure_info_record {
@@ -70,9 +63,6 @@ typedef struct module_procedure_info_record *mod_proc_t;
 #define MOD_PROC_EXT_ID(mp)	((mp)->eId)
 #define MOD_PROC_TYPE(mp)	((mp)->retType)
 #define MOD_PROC_ARGS(mp)	((mp)->args)
-
-
-
 
 extern void		module_procedure_manager_init(void);
 
