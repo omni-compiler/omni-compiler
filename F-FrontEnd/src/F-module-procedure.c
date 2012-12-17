@@ -4,20 +4,11 @@
  *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
  *  $
  */
-
-
 #include "F-module-procedure.h"
-
-
-
 
 
 static HashTable genProcTbl;
 static int isInitialized = FALSE;
-
-
-
-
 
 static void
 destroy_module_procedure(mod_proc_t mp) {
@@ -158,10 +149,6 @@ create_generic_procedure(const char *name) {
     return ret;
 }
 
-
-
-
-
 void
 module_procedure_manager_init(void) {
     if (is_in_module() == FALSE) {
@@ -172,10 +159,6 @@ module_procedure_manager_init(void) {
         isInitialized = TRUE;
     }
 }
-
-
-
-
 
 gen_proc_t
 find_generic_procedure(const char *name) {
@@ -233,9 +216,6 @@ delete_generic_procedure_by_name(const char *name) {
         }
     }
 }
-
-
-
 
 
 mod_proc_t
@@ -307,9 +287,6 @@ delete_module_procdure_by_name(const char *genName, const char *modName) {
         }
     }
 }
-
-
-
 
 
 static expv
@@ -423,9 +400,6 @@ fixup_all_module_procedures(void) {
 }
 
 
-
-
-
 static void
 colloct_module_procedure_types(mod_proc_t mp, expr l) {
     if (mp != NULL) {
@@ -486,9 +460,6 @@ collect_all_module_procedures_types(void) {
 
     return ret;
 }
-
-
-
 
 
 void
