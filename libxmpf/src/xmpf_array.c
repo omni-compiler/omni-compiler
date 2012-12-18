@@ -49,7 +49,7 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
 
 void xmpf_array_dealloc__(_XMP_array_t **a_desc)
 {
-  _XMP_free(*a_desc);
+  _XMP_finalize_array_desc(*a_desc);
 }
 
 

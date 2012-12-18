@@ -81,7 +81,8 @@ void _XMP_G2L(long long int global_idx,int *local_idx,
 void xmpf_dbg_printf(char *fmt, ...);
 size_t _XMP_get_datatype_size(int datatype);
 
-/* From xmp_align.c */
+
+/* From xmp_template.c */
 _XMP_template_t *_XMP_create_template_desc(int dim, _Bool is_fixed);
 void _XMP_calc_template_size(_XMP_template_t *t);
 void _XMP_dist_template_DUPLICATION(_XMP_template_t *template, int template_index);
@@ -90,6 +91,9 @@ void _XMP_dist_template_CYCLIC(_XMP_template_t *template, int template_index, in
 void _XMP_dist_template_BLOCK_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index, unsigned long long width);
 void _XMP_init_template_chunk(_XMP_template_t *template, _XMP_nodes_t *nodes);
 
+
+/* From xmp_align.c */
+void _XMP_finalize_array_desc(_XMP_array_t *array);
 void _XMP_align_array_NOT_ALIGNED(_XMP_array_t *array, int array_index);
 void _XMP_align_array_DUPLICATION(_XMP_array_t *array, int array_index, int template_index,
                                   long long align_subscript);
