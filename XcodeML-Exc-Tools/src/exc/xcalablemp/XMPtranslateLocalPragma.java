@@ -1279,8 +1279,7 @@ public class XMPtranslateLocalPragma {
 
     // create function call
     BlockList taskBody = Bcons.emptyBody();
-    Ident taskDescId = taskBody.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.STATIC,
-                                               Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
+    Ident taskDescId = Ident.Local("_XMP_TASK_desc", Xtype.voidPtrType);
     execFuncArgs.cons(taskDescId.getAddr());
     Ident execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.intType);
     Block execBlock = Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), body, null);

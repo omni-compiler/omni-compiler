@@ -78,6 +78,11 @@ public class XMPrewriteExpr {
   }
 
   private void rewriteFuncExprs(FunctionBlock funcBlock, XMPsymbolTable localXMPsymbolTable) {
+    // insert TASK descripter for cache mechanism
+    BlockList taskBody = funcBlock.getBody().getHead().getBody();
+    Ident taskDescId = taskBody.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.STATIC,
+					       Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
+
     BasicBlockExprIterator iter = new BasicBlockExprIterator(funcBlock);
     for (iter.init(); !iter.end(); iter.next()) {
       Xobject expr = iter.getExpr();
