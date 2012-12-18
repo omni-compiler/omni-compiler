@@ -363,6 +363,9 @@ public class XMPtranslateLocalPragma {
     taskFuncCallBlockList.add(taskFuncCallBlock);
     pb.replace(Bcons.COMPOUND(taskFuncCallBlockList));
 
+    XobjList arg = Xcons.List(Xcode.POINTER_REF, taskDescId.Ref());
+    taskFuncCallBlockList.add(_globalDecl.createFuncCallBlock("_XMP_exec_task_NODES_FINALIZE", arg));
+
     // add function calls for profiling                                                              
     Xobject profileClause = taskDecl.getArg(1);
     if( _all_profile || (profileClause != null && _selective_profile)){

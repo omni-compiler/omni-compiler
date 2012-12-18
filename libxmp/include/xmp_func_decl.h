@@ -118,6 +118,7 @@ extern void _XMP_finalize_nodes(void *nodes);
 extern int _XMP_exec_task_GLOBAL_PART(void **task_desc, int ref_lower, int ref_upper, int ref_stride);
 extern int _XMP_exec_task_NODES_ENTIRE(void **task_desc, void *ref_nodes);
 extern int _XMP_exec_task_NODES_PART(void **task_desc, void *ref_nodes, ...);
+extern void _XMP_exec_task_NODES_FINALIZE(void *task_desc);
 
 // xmp_nodes_stack.c
 extern void _XMP_push_nodes(void *nodes);

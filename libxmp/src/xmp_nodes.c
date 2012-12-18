@@ -703,6 +703,10 @@ int _XMP_exec_task_NODES_ENTIRE(_XMP_task_desc_t **task_desc, _XMP_nodes_t *ref_
   }
 }
 
+void _XMP_exec_task_NODES_FINALIZE(_XMP_task_desc_t *task_desc){
+  _XMP_free(task_desc);
+}
+
 int _XMP_exec_task_NODES_PART(_XMP_task_desc_t **task_desc, _XMP_nodes_t *ref_nodes, ...) {
   va_list args;
   va_start(args, ref_nodes);
