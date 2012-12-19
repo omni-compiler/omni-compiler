@@ -355,8 +355,9 @@ public class XMPtranslateLocalPragma {
 
     // create function call
     BlockList taskFuncCallBlockList = Bcons.emptyBody();
-    Ident taskDescId = taskFuncCallBlockList.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.STATIC,
-                                                            Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
+    Ident taskDescId = taskBody.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.STATIC,
+					       Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
+
     execFuncArgs.cons(taskDescId.getAddr());
     Ident execFuncId = execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.intType);
     Block taskFuncCallBlock = Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), taskBody, null);
@@ -364,7 +365,7 @@ public class XMPtranslateLocalPragma {
     pb.replace(Bcons.COMPOUND(taskFuncCallBlockList));
 
     XobjList arg = Xcons.List(Xcode.POINTER_REF, taskDescId.Ref());
-    taskFuncCallBlockList.add(_globalDecl.createFuncCallBlock("_XMP_exec_task_NODES_FINALIZE", arg));
+    taskBody.add(_globalDecl.createFuncCallBlock("_XMP_exec_task_NODES_FINALIZE", arg));
 
     // add function calls for profiling                                                              
     Xobject profileClause = taskDecl.getArg(1);
