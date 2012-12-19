@@ -79,14 +79,17 @@ public class XMPrewriteExpr {
 
   private void rewriteFuncExprs(FunctionBlock funcBlock, XMPsymbolTable localXMPsymbolTable) {
     // insert TASK descripter for cache mechanism.
-    // This decleartion is inserted into the first point of each function.
-    BlockList taskBody = funcBlock.getBody().getHead().getBody();
-    Ident taskDescId = taskBody.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.STATIC,
-					       Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
+    if(_globalDecl.findVarIdent(funcBlock.getName()).Type().isInline() == false){
 
-    // insert Finalize function into the last point of each function.
-    XobjList arg = Xcons.List(Xcode.POINTER_REF, taskDescId.Ref());
-    taskBody.add(_globalDecl.createFuncCallBlock("_XMP_exec_task_NODES_FINALIZE", arg));
+      // This decleartion is inserted into the first point of each function.
+      BlockList taskBody = funcBlock.getBody().getHead().getBody();
+      Ident taskDescId = taskBody.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.STATIC,
+						 Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
+      
+      // insert Finalize function into the last point of each function.
+      XobjList arg = Xcons.List(Xcode.POINTER_REF, taskDescId.Ref());
+      taskBody.add(_globalDecl.createFuncCallBlock("_XMP_exec_task_NODES_FINALIZE", arg));
+    }
 
     BasicBlockExprIterator iter = new BasicBlockExprIterator(funcBlock);
     for (iter.init(); !iter.end(); iter.next()) {
