@@ -4160,8 +4160,10 @@ compile_PUBLIC_PRIVATE_statement(expr id_list, int (*markAs)(ID))
     expr ident;
     ID id;
     
-    if (!INMODULE())
-            fatal("not in module.");
+    if (!INMODULE()) {
+        error("not in module.");
+        return;
+    }
 
     if (id_list == NULL) {
         /*

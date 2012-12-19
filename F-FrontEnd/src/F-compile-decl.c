@@ -514,6 +514,20 @@ implicit_declaration(ID id)
         assert(tp != NULL);
 
         declare_id_type(id, tp);
+
+        if (current_proc_state == P_SAVE) {
+            TYPE_SET_SAVE(tp);
+        }
+#if 0
+        /*
+         * FIXME:
+         *	Don't we really need this?
+         */
+        if (is_in_module() &&
+            current_module_state == M_PRIVATE) {
+            TYPE_SET_PRIVATE(tp);
+        }
+#endif
     }
 }
 
