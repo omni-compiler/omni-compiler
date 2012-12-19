@@ -83,7 +83,7 @@ public class XMPrewriteExpr {
 
       // This decleartion is inserted into the first point of each function.
       BlockList taskBody = funcBlock.getBody().getHead().getBody();
-      Ident taskDescId = taskBody.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.STATIC,
+      Ident taskDescId = taskBody.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.AUTO,
 						 Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
       
       // insert Finalize function into the last point of each function.

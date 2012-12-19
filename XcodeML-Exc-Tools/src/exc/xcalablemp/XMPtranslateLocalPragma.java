@@ -355,7 +355,7 @@ public class XMPtranslateLocalPragma {
 
     // create function call
     BlockList taskFuncCallBlockList = Bcons.emptyBody();
-    Ident taskDescId = taskBody.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.STATIC,
+    Ident taskDescId = taskBody.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.AUTO,
 					       Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
 
     execFuncArgs.cons(taskDescId.getAddr());
