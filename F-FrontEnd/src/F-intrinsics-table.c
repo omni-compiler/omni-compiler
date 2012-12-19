@@ -117,7 +117,7 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_REAL,        INTR_NAME_GENERIC,      "real",         1,      {INTR_TYPE_ALL_NUMERICS},               INTR_TYPE_REAL,  1, -1, LANGSPEC_F77 },
     { INTR_REAL,        INTR_NAME_SPECIFIC_NA,  "float",        1,      {INTR_TYPE_INT},                        INTR_TYPE_REAL,  1, -1, LANGSPEC_F77 },
     { INTR_REAL,        INTR_NAME_SPECIFIC_NA,  "dfloat",       1,      {INTR_TYPE_INT},                        INTR_TYPE_DREAL, 1, -1, LANGSPEC_NONSTD },	/* non-standard */
-    { INTR_REAL,        INTR_NAME_SPECIFIC_NA,  "sgnl",         1,      {INTR_TYPE_DREAL},                      INTR_TYPE_REAL,  1, -1, LANGSPEC_F77 },
+    { INTR_REAL,        INTR_NAME_SPECIFIC_NA,  "sngl",         1,      {INTR_TYPE_DREAL},                      INTR_TYPE_REAL,  1, -1, LANGSPEC_F77 },
 
     // SIGN (A, B)
     { INTR_SIGN,        INTR_NAME_GENERIC,      "sign",         0,      {INTR_TYPE_NUMERICS, INTR_TYPE_NUMERICS},       INTR_TYPE_NUMERICS,     2, 0, LANGSPEC_F77 },
