@@ -1,6 +1,6 @@
       MODULE vars
-        INTEGER,PARAMETER :: a = 3
-        LOGICAL :: b
+        INTEGER,PARAMETER :: a = 8
+        LOGICAL,PARAMETER :: b = .TRUE.
         TYPE tt
            INTEGER :: n
         END TYPE tt

@@ -36,6 +36,7 @@ new_external_id_for_external_decl(SYMBOL sp, TYPE_DESC tp)
     EXT_ID id = new_external_id(sp);
     EXT_TAG(id) = STG_EXT;
     EXT_PROC_TYPE(id) = tp;
+    EXT_IS_OFMODULE(id) = FALSE;
     return id;
 }
 

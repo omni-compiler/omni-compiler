@@ -1193,7 +1193,8 @@ check_INDCL()
     switch (CURRENT_STATE) {
     case OUTSIDE:       
         begin_procedure();
-        declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
+        if (unit_ctl_level == 0)
+            declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
     case INSIDE:        
         CURRENT_STATE = INDCL;
     case INDCL: 
@@ -1959,9 +1960,11 @@ end_contains()
                     ID id = find_ident_parent(EXT_SYM(intrDef));
                     if(id != NULL
                        && ID_CLASS(id) == CL_PROC
-                       && id->use_assoc != NULL) {
+                       && ID_IS_OFMODULE(id)) {
                         // intrDef is use associated module procedure.
                         ep = PROC_EXT_ID(id);
+                    } else if (EXT_IS_OFMODULE(intrDef)) {
+                        continue;
                     } else {
                         ep = find_ext_id(EXT_SYM(intrDef));
                     }
@@ -1971,6 +1974,9 @@ end_contains()
                             SYM_NAME(EXT_SYM(intrDef)));
                         goto error;
                     }
+                    EXT_PROC_TYPE(intrDef) = EXT_PROC_TYPE(ep);
+                    EXT_PROC_ARGS(intrDef) = EXT_PROC_ARGS(ep);
+                    EXT_PROC_ID_LIST(intrDef) = EXT_PROC_ID_LIST(ep);
                 } else {
                     ep = intrDef;
                 }
@@ -2750,6 +2756,57 @@ struct use_argument {
 
 extern ID find_ident_head(SYMBOL s, ID head);
 
+static void
+import_module_procedure(const char * genName, EXT_ID mep) {
+    TYPE_DESC tp = EXT_PROC_TYPE(mep);
+    expr modArgs = EXT_PROC_ARGS(mep);
+    // TODO(shingo-s): fix name if the module procedure is private.
+    const char * modName = SYM_NAME(EXT_SYM(mep));
+    mod_proc_t mp = add_module_procedure(genName,
+                                         modName,
+                                         tp,
+                                         modArgs,
+                                         NULL);
+    MOD_PROC_EXT_ID(mp) = mep;
+}
+
+/**
+ * import id as generic procedure.
+ */
+static void
+import_generic_procedure(ID id) {
+    EXT_ID ep;
+    EXT_ID modProcs = NULL;
+    EXT_ID aProc;
+
+    const char *genName = SYM_NAME(ID_SYM(id));
+    add_generic_procedure(genName, NULL);
+
+    ep = PROC_EXT_ID(id);
+    modProcs = EXT_PROC_INTR_DEF_EXT_IDS(ep);
+
+    FOREACH_EXT_ID(aProc, modProcs) {
+        import_module_procedure(genName, aProc);
+    }
+}
+
+static EXT_ID
+shallow_copy_ext_id(EXT_ID original) {
+    EXT_ID ret = NULL, ep, new_ep;
+    FOREACH_EXT_ID(ep, original) {
+        if (ep == original) {
+            new_ep = new_external_id(EXT_SYM(ep));
+            ret = new_ep;
+        } else {
+            EXT_NEXT(new_ep) = new_external_id(EXT_SYM(ep));
+            new_ep = EXT_NEXT(new_ep);
+        }
+        *new_ep = *ep;
+        EXT_NEXT(new_ep) = NULL;
+    }
+    return ret;
+}
+
 #define ID_SEEM_GENERIC_PROCEDURE(id)                                   \
     (ID_TYPE((id)) != NULL &&                                           \
      ((ID_CLASS((id)) == CL_PROC &&                                     \
@@ -2774,6 +2831,25 @@ solve_use_assoc_conflict(ID id, ID mid)
          * Generic function occurres a conflict if it cotains functions with same type of arguments,
          * but the current type system couldn't detect it.
          */
+        EXT_ID current_ep, module_ep, head, ep;
+        if(IS_GENERIC_TYPE(ID_TYPE(mid))) {
+            import_generic_procedure(mid);
+        }
+        current_ep = PROC_EXT_ID(id);
+        module_ep = PROC_EXT_ID(mid);
+
+        if (!EXT_PROC_INTR_DEF_EXT_IDS(module_ep))
+            return;
+        head = shallow_copy_ext_id(EXT_PROC_INTR_DEF_EXT_IDS(module_ep));
+        FOREACH_EXT_ID(ep, head) {
+            EXT_IS_OFMODULE(ep) = TRUE;
+        }
+
+        if (EXT_PROC_INTR_DEF_EXT_IDS(current_ep)) {
+            extid_put_last(EXT_PROC_INTR_DEF_EXT_IDS(current_ep), head);
+        } else if (EXT_PROC_INTR_DEF_EXT_IDS(current_ep) == NULL) {
+            EXT_PROC_INTR_DEF_EXT_IDS(current_ep) = head;
+        }
         return;
     }
     if(!id->use_assoc) {
@@ -2834,14 +2910,36 @@ import_module_id(ID mid,
                  SYMBOL use_name, int need_wrap_type)
 {
     ID existed_id, id;
+    EXT_ID ep, mep;
 
-    if((existed_id = find_ident_head(use_name?:ID_SYM(mid), *head)) != NULL) {
+    if ((existed_id = find_ident_head(use_name?:ID_SYM(mid), *head)) != NULL) {
         solve_use_assoc_conflict(existed_id, mid);
         return TRUE;
     }
 
-    id = XMALLOC(ID, sizeof(*id));
+    id = new_ident_desc(ID_SYM(mid));
     *id = *mid;
+
+    PROC_EXT_ID(id) = NULL;
+    mep = PROC_EXT_ID(mid);
+    if (mep != NULL) {
+        PROC_EXT_ID(id) = new_external_id(EXT_SYM(mep));
+        ep = PROC_EXT_ID(id);
+        *ep = *mep;
+        EXT_IS_OFMODULE(ep) = TRUE;
+        EXT_NEXT(ep) = NULL;
+        EXT_PROC_INTR_DEF_EXT_IDS(ep) = NULL;
+
+        if (EXT_PROC_INTR_DEF_EXT_IDS(mep) != NULL) {
+            EXT_ID head, p;
+            head = shallow_copy_ext_id(EXT_PROC_INTR_DEF_EXT_IDS(mep));
+            FOREACH_EXT_ID(p, head) {
+                EXT_IS_OFMODULE(p) = TRUE;
+            }
+            EXT_PROC_INTR_DEF_EXT_IDS(ep) = head;
+        }
+    }
+
 
     if(use_name)
         ID_SYM(id) = use_name;
@@ -2870,7 +2968,7 @@ import_module_id(ID mid,
     ID_LINK_ADD(id, *head, *tail);
 
     if(IS_GENERIC_TYPE(ID_TYPE(id)))
-        add_generic_procedure(SYM_NAME(ID_SYM(id)), NULL);
+        import_generic_procedure(id);
 
     if(debug_flag) {
         fprintf(debug_fp,
@@ -2928,13 +3026,21 @@ use_assoc_common(SYMBOL name, struct use_argument * args, int isRename)
             wrap_type = TRUE;
             if(arg->local != ID_SYM(mid))
                 continue;
-            import_module_id(mid, &LOCAL_SYMBOLS, &last_id, &LOCAL_STRUCT_DECLS, &sttail, &LOCAL_EXTERNAL_SYMBOLS, &last_ep, arg->use, wrap_type);
+            import_module_id(mid,
+                             &LOCAL_SYMBOLS, &last_id,
+                             &LOCAL_STRUCT_DECLS, &sttail,
+                             &LOCAL_EXTERNAL_SYMBOLS, &last_ep,
+                             arg->use, wrap_type);
             arg->used = TRUE;
             rename_count++;
         }
         if(isRename && rename_count == 0) {
             wrap_type = TRUE;
-            import_module_id(mid, &LOCAL_SYMBOLS, &last_id, &LOCAL_STRUCT_DECLS, &sttail, &LOCAL_EXTERNAL_SYMBOLS, &last_ep, NULL, wrap_type);
+            import_module_id(mid,
+                             &LOCAL_SYMBOLS, &last_id,
+                             &LOCAL_STRUCT_DECLS, &sttail,
+                             &LOCAL_EXTERNAL_SYMBOLS, &last_ep,
+                             NULL, wrap_type);
         }
     }
 
@@ -3089,7 +3195,7 @@ genBlankInterfaceName()
 static void
 compile_INTERFACE_statement(expr x)
 {
-    EXT_ID ep;
+    EXT_ID ep = NULL, use_associated_ep = NULL;
     ID iid;
     expr identOrOp;
     SYMBOL s = NULL;
@@ -3114,6 +3220,14 @@ compile_INTERFACE_statement(expr x)
             } else if(ID_STORAGE(iid) == STG_UNKNOWN) {
                 ID_STORAGE(iid) = STG_EXT;
                 ID_CLASS(iid) = CL_PROC;
+            } else if(ID_IS_OFMODULE(iid)){
+                if(TYPE_BASIC_TYPE(ID_TYPE((iid))) != TYPE_GENERIC)
+                    error_at_node(x,
+                                  "'%s' is already defined"
+                                  " as a generic procedure in module '%s'",
+                                  SYM_NAME(s), iid->use_assoc->module_name);
+                else
+                    use_associated_ep = PROC_EXT_ID(iid);
             }
             break;
         case F95_ASSIGNOP: {
@@ -3176,11 +3290,14 @@ compile_INTERFACE_statement(expr x)
     EXT_TAG(ep) = STG_EXT;
     EXT_IS_BLANK_NAME(ep) = !hasName;
     EXT_IS_DEFINED(ep) = TRUE;
+    EXT_IS_OFMODULE(ep) = FALSE;
     EXT_PROC_CLASS(ep) = EP_INTERFACE;
 
     EXT_PROC_INTERFACE_INFO(ep) = info;
 
     EXT_NEXT(ep) = NULL;
+    if(use_associated_ep)
+        EXT_PROC_INTR_DEF_EXT_IDS(ep) = EXT_PROC_INTR_DEF_EXT_IDS(use_associated_ep);
 
     push_unit_ctl(ININTR);
     CURRENT_INTERFACE = ep;
@@ -3206,7 +3323,7 @@ end_interface()
 
     localExtSyms = LOCAL_EXTERNAL_SYMBOLS;
     intr = CURRENT_INTERFACE;
-    EXT_IS_OFMODULE(intr) = checkInsideUse();
+
 
     /* add symbols in INTERFACE to INTERFACE symbol */
     if (EXT_PROC_INTR_DEF_EXT_IDS(intr) == NULL) {

@@ -3908,7 +3908,8 @@ outx_moduleProcedureDecl(int l, EXT_ID parent_ep, SYMBOL parentName)
     if (is_emitting_xmod() == FALSE) {
         FOREACH_EXT_ID(ep, parent_ep) {
             if (EXT_TAG(ep) == STG_EXT &&
-                EXT_PROC_IS_MODULE_PROCEDURE(ep)) {
+                EXT_PROC_IS_MODULE_PROCEDURE(ep) &&
+                !EXT_IS_OFMODULE(ep)) {
                 outx_symbolName(l1, EXT_SYM(ep));
             }
         }
@@ -4083,21 +4084,12 @@ outx_functionDefinition(int l, EXT_ID ep)
 
     outx_tagOfDecl1(l, "FfunctionDefinition", GET_EXT_LINE(ep));
     outx_symbolNameWithFunctionType(l1, ep);
-    if(flag_module_compile) {
-        outx_tag(l1, "symbols");
-        outx_close(l1, "symbols");
-        outx_tag(l1, "declarations");
-        outx_close(l1, "declarations");
-        outx_tag(l1, "body");
-        outx_close(l1, "body");
-    } else {
-        outx_definition_symbols(l1, ep);
-        outx_declarations(l1, ep);
-        outx_tag(l1, "body");
-        outx_expv(l2, EXT_PROC_BODY(ep));
-        outx_contains(l2, ep);
-        outx_close(l1, "body");
-    }
+    outx_definition_symbols(l1, ep);
+    outx_declarations(l1, ep);
+    outx_tag(l1, "body");
+    outx_expv(l2, EXT_PROC_BODY(ep));
+    outx_contains(l2, ep);
+    outx_close(l1, "body");
     outx_close(l, "FfunctionDefinition");
 
     CRT_FUNCEP_POP;
@@ -4111,10 +4103,6 @@ static void
 outx_moduleDefinition(int l, EXT_ID ep)
 {
     const int l1 = l + 1;
-
-    if(flag_module_compile && is_outputed_module) {
-        fatal("output multiple FmoduleDefinition in module file");
-    }
 
     is_outputed_module = TRUE;
     CRT_FUNCEP = NULL;
@@ -4334,6 +4322,9 @@ outx_globalDeclarations(int l)
 void
 output_XcodeML_file()
 {
+    if(flag_module_compile)
+        return; // DO NOTHING
+
     type_list = NULL;
 
     collect_types(EXTERNAL_SYMBOLS);
@@ -4530,10 +4521,14 @@ output_module_file(struct module * mod)
     list lp;
     expv v;
 
-    snprintf(filename, sizeof(filename), "%s.xmod", SYM_NAME(mod->name));
-    if ((print_fp = fopen(filename, "w")) == NULL) {
-        fatal("could'nt open module file to write.");
-        return;
+    if(flag_module_compile) {
+        print_fp = stdout;
+    } else {
+        snprintf(filename, sizeof(filename), "%s.xmod", SYM_NAME(mod->name));
+        if ((print_fp = fopen(filename, "w")) == NULL) {
+            fatal("could'nt open module file to write.");
+            return;
+        }
     }
 
     oEmitMode = is_emitting_xmod();
@@ -4577,7 +4572,8 @@ output_module_file(struct module * mod)
 
     set_module_emission_mode(oEmitMode);
 
-    fclose(print_fp);
+    if(!flag_module_compile)
+        fclose(print_fp);
 }
 
 

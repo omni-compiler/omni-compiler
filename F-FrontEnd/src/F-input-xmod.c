@@ -770,6 +770,7 @@ input_FfunctionType(xmlTextReaderPtr reader, HashTable * ht)
     tep->ep = new_external_id(NULL);
     EXT_PROC_ARGS(tep->ep) = EMPTY_LIST;
     EXT_IS_DEFINED(tep->ep) = TRUE;
+    EXT_IS_OFMODULE(tep->ep) = FALSE;
     EXT_TAG(tep->ep) = STG_EXT;
 
     setReturnType(ht, tep->tp, (char *) xmlTextReaderGetAttribute(reader,
@@ -1166,18 +1167,24 @@ input_FmoduleProcedureDecl(xmlTextReaderPtr reader, HashTable *ht,
             (tep = getTypeEntry(ht, typeId)) != NULL &&
             tep->hasExtID == TRUE &&
             tep->ep != NULL) {
-            
+            EXT_ID new_ep;
+
+            EXT_PROC_CLASS(tep->ep) = EP_MODULE_PROCEDURE;
+
             s = find_symbol(name);
             EXT_SYM(tep->ep) = s;
 
             if (EXT_PROC_TYPE(tep->ep) == NULL) {
                 EXT_PROC_TYPE(tep->ep) = tep->tp;
             }
+            new_ep = new_external_id(s);
+            *new_ep = *tep->ep;
+            EXT_NEXT(new_ep) = NULL;
 
             if (EXT_PROC_INTR_DEF_EXT_IDS(parent) == NULL)
-                EXT_PROC_INTR_DEF_EXT_IDS(parent) = tep->ep;
+                EXT_PROC_INTR_DEF_EXT_IDS(parent) = new_ep;
             else
-                extid_put_last(EXT_PROC_INTR_DEF_EXT_IDS(parent), tep->ep);
+                extid_put_last(EXT_PROC_INTR_DEF_EXT_IDS(parent), new_ep);
         } else {
             ret = FALSE;
         }
@@ -1347,6 +1354,7 @@ input_FinterfaceDecl_in_declarations(xmlTextReaderPtr reader, HashTable * ht,
     EXT_IS_BLANK_NAME(ep) = FALSE;
     EXT_PROC_CLASS(ep) = EP_INTERFACE;
     EXT_PROC_INTERFACE_CLASS(ep) = INTF_DECL;
+    EXT_IS_OFMODULE(ep) = TRUE;
 
     if (EXT_PROC_INTERFACES(parent) == NULL)
         EXT_PROC_INTERFACES(parent) = ep;
@@ -1432,13 +1440,15 @@ input_FfunctionDecl(xmlTextReaderPtr reader, HashTable * ht, EXT_ID parent,
     if (!input_name_with_type(reader, ht, TRUE, &s, &tp))
         return FALSE;
 
-    id = find_ident_head(s, id_list); 
+    ep = new_external_id(s);
+    id = find_ident_head(s, id_list);
     if (id != NULL) {
-        ep = PROC_EXT_ID(id);
+        *ep = *(PROC_EXT_ID(id));
     } else {
-        ep = new_external_id(s);
         EXT_PROC_TYPE(ep) = tp;
     }
+    EXT_IS_OFMODULE(ep) = TRUE;
+    EXT_NEXT(ep) = NULL;
 
     if (EXT_PROC_INTR_DEF_EXT_IDS(parent) == NULL)
         EXT_PROC_INTR_DEF_EXT_IDS(parent) = ep;

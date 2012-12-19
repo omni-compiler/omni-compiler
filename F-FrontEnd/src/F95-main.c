@@ -266,6 +266,8 @@ char *argv[];
             strcpy(xmodule_path, argv[0] + 4);
             if(strlen(xmodule_path) == 0)
                 cmd_error_exit("invalid path after -TD.");
+        } else if (strcmp(argv[0], "-module-compile") == 0) {
+            flag_module_compile = TRUE;
 #if 0
         } else if (strncmp(argv[0], "-MC=", 4) == 0) {
             /* -MC=fileName:N:StartSeekPoint:EndSeekPoint */

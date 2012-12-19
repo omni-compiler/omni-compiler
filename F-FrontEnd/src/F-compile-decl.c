@@ -898,6 +898,7 @@ declare_external_id(SYMBOL s, enum storage_class tag, int def_flag)
     if (!EXT_IS_DEFINED(ep)) {
         EXT_IS_DEFINED(ep) = def_flag;
     }
+    EXT_IS_OFMODULE(ep) = FALSE;
     return ep;
 }
 
