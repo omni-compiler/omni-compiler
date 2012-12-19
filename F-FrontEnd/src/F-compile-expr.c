@@ -799,14 +799,9 @@ compile_expression(expr x)
                     error("bad expression in constant kind parameter");
                     break;
                 }
-                /*
-                 * NOTE:
-                 *	Need to fix the backend.
-                 */
                 if (TYPE_BASIC_TYPE(EXPV_TYPE(v1)) == TYPE_DREAL) {
-                    warning("a kind value of a constant with 'd' "
-                            "type exponent is ignored due to current "
-                            "limitation.");
+                    error("an invalid constant expression, which has "
+                          "a 'd' exponent and an explicit kind.");
                 }
             }
             /* if kind is differ, make new type desc.
