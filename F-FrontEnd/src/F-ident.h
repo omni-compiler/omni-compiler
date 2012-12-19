@@ -169,6 +169,11 @@ typedef struct ident_descriptor
             int is_pure;              /* like above. */
             int is_dummy;             /* if TRUE, declared as dummy
                                        * arg in the parent scope. */
+            int is_func_subr_ambiguous;
+                                      /* if TRUE, the id is still
+                                       * ambiguous function or
+                                       * subroutine when pclass ==
+                                       * P_EXTERNAL. */
         } proc_info;
         struct {
 
@@ -270,6 +275,8 @@ typedef struct ident_descriptor
 #define PROC_IS_RECURSIVE(id) ((id)->info.proc_info.is_recursive)
 #define PROC_IS_PURE(id) ((id)->info.proc_info.is_pure)
 #define PROC_IS_DUMMY_ARG(id) ((id)->info.proc_info.is_dummy)
+#define PROC_IS_FUNC_SUBR_AMBIGUOUS(id) \
+    ((id)->info.proc_info.is_func_subr_ambiguous)
 
 #define ID_IS_DUMMY_ARG(id) \
     ((ID_STORAGE((id)) == STG_ARG) || \

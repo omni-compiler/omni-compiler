@@ -1028,15 +1028,16 @@ compile_exec_statement(expr x)
       case XMP_COARRAY_REF:
 
 	if (NOT_INDATA_YET) end_declaration();
-	v1 = compile_lhs_expression(x1);
-	v2 = compile_expression(EXPR_ARG2(x));
-	if (v1 == NULL || v2 == NULL) break;
-	if (!expv_is_lvalue(v1) && !expv_is_str_lvalue(v1)){
-	  error_at_node(x, "bad lhs expression in assignment");
-	  break;
+	if ((v1 = compile_lhs_expression(x1)) == NULL ||
+            (v2 = compile_expression(EXPR_ARG2(x))) == NULL) {
+            break;
+        }
+	if (!expv_is_lvalue(v1) && !expv_is_str_lvalue(v1)) {
+            error_at_node(x, "bad lhs expression in assignment");
+            break;
 	}
-	if ((w = expv_assignment(v1,v2)) == NULL){
-	  break;
+	if ((w = expv_assignment(v1,v2)) == NULL) {
+            break;
 	}
 
 	if(OMP_output_st_pragma(w)) break;
@@ -1515,6 +1516,7 @@ end_declaration()
             PROC_CLASS(ip) == P_EXTERNAL) {
             tp = new_type_subr();
             declare_id_type(ip, tp);
+            PROC_IS_FUNC_SUBR_AMBIGUOUS(ip) = TRUE;
         }
 
         if(tp == NULL)

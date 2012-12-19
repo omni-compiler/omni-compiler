@@ -440,9 +440,40 @@ compile_expression(expr x)
                 ID_CLASS(id) == CL_UNKNOWN) {
                 expv vRet = NULL;
                 if (ID_CLASS(id) == CL_PROC && IS_SUBR(ID_TYPE(id))) {
-                    error("function invocation of subroutine");
+                    if (PROC_CLASS(id) == P_EXTERNAL &&
+                        PROC_IS_FUNC_SUBR_AMBIGUOUS(id) == TRUE) {
+                        error("'%s' is not yet determined as a function or "
+                              "a subroutine.", ID_NAME(id));
+                    } else {
+                        error("'%s' is a subroutine, not a function.",
+                              ID_NAME(id));
+                    }
                     goto err;
                 }
+
+#if 0
+                if (is_in_module() == FALSE &&
+                    CURRENT_STATE == INEXEC &&
+                    is_intrinsic_function(id) == FALSE &&
+                    ID_TYPE(id) == NULL) {
+                    implicit_declaration(id);
+                    if (ID_TYPE(id) == NULL) {
+                        /*
+                         * NOTE:
+                         *	We don't have to care about the external'd
+                         *	ids, well, I think.
+                         */
+                        error("'%s' could be a function but the type is "
+                              "still unknown.", ID_NAME(id));
+                        /*
+                         * Choke futher error message by classifying the id.
+                         */
+                        ID_CLASS(id) = CL_PROC;
+                        goto err;
+                    }
+                }
+#endif
+
                 if (ID_IS_DUMMY_ARG(id)) {
                     vRet = compile_highorder_function_call(id,
                                                            EXPR_ARG2(x),
@@ -2373,8 +2404,17 @@ compile_function_call(ID f_id, expr args) {
             fatal("%s: unknown proc_class %d", __func__,
                   PROC_CLASS(f_id));
     }
-    return(v);
- err:
+
+    if (v != NULL) {
+        if (args != NULL) {
+            EXPR_LINE(v) = EXPR_LINE(args);
+        } else {
+            EXPR_LINE(v) = current_line;
+        }
+    }
+    return v;
+
+err:
     return NULL;
 }
 

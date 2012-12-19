@@ -4583,14 +4583,20 @@ output_module_file(struct module * mod)
 static void
 fixup_function_call(expv v) {
     if (EXPR_CODE(v) == FUNCTION_CALL) {
-        if (EXPV_NEED_TYPE_FIXUP(v) == TRUE) {
-            if (EXPR_ARG3(v) != NULL) {
-                EXT_ID eid = PROC_EXT_ID(EXPV_ANY(ID, EXPR_ARG3(v)));
-                if (eid != NULL) {
-                    TYPE_DESC tp = EXT_PROC_TYPE(eid);
-                    if (tp != NULL) {
-                        EXPV_TYPE(v) = tp;
-                    }
+        int n = expr_list_length(v);
+        ID fid = (n >= 3 && EXPR_ARG3(v) != NULL) ?
+            EXPV_ANY(ID, EXPR_ARG3(v)) : NULL;
+        if (fid != NULL) {
+            EXT_ID eid = PROC_EXT_ID(fid);
+            TYPE_DESC tp = (eid != NULL) ? EXT_PROC_TYPE(eid) : NULL;
+            if (tp != NULL) {
+                if (EXPV_NEED_TYPE_FIXUP(v) == TRUE) {
+                    EXPV_TYPE(v) = tp;
+                }
+            } else {
+                if (!ID_IS_DUMMY_ARG(fid)) {
+                    error_at_node(v, "undefined function/subroutine: '%s'.",
+                                  ID_NAME(fid));
                 }
             }
         }
