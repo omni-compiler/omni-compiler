@@ -89,6 +89,15 @@ public class XMPrewriteExpr {
       // insert Finalize function into the last point of each function.
       XobjList arg = Xcons.List(Xcode.POINTER_REF, taskDescId.Ref());
       taskBody.add(_globalDecl.createFuncCallBlock("_XMP_exec_task_NODES_FINALIZE", arg));
+
+      // insert Finalize function into the previous point of return statement
+      BlockIterator i = new topdownBlockIterator(taskBody);
+      for (i.init(); !i.end(); i.next()) {
+	Block b = i.getBlock();
+	if (b.Opcode() == Xcode.RETURN_STATEMENT){
+	  b.insert(_globalDecl.createFuncCallBlock("_XMP_exec_task_NODES_FINALIZE", arg));
+	}
+      }
     }
 
     BasicBlockExprIterator iter = new BasicBlockExprIterator(funcBlock);
