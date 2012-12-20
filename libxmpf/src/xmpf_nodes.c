@@ -21,7 +21,7 @@ void xmpf_nodes_alloc__(_XMP_nodes_t **n_desc, int *n_dim)
 /* deallocate nodes */
 void xmpf_nodes_dealloc__(_XMP_nodes_t **n_desc)
 {
-  _XMP_free(*n_desc);
+  _XMP_finalize_nodes(*n_desc);
 }
 
 
