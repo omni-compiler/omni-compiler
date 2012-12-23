@@ -33,6 +33,7 @@ char *module_init_f_names[MAX_INIT_F];
 int n_module_init_f = 0;
 
 int debug_flag = FALSE;
+char *cc_command = "cc";
 
 int main(int argc, char *argv[])
 {
@@ -53,6 +54,14 @@ int main(int argc, char *argv[])
 	argv++;
 	debug_flag = TRUE;
 	tmp_dir = "";
+    }
+
+    if(argc > 0 && strcmp(argv[0],"--cc") == 0){
+	argc--;
+	argv++;
+	cc_command = strdup(argv[0]);
+	argc--;
+	argv++;
     }
 
     pid = getpid();
@@ -81,6 +90,9 @@ int main(int argc, char *argv[])
     initf_name_len = strlen(MODULE_INIT_F_NAME);
     initf_name_len_ = strlen(MODULE_INIT_F_NAME_);
     while(fscanf(fp,"%s",buf) == 1){
+      if(strncmp(buf,".jwe",4) == 0 || 
+	 strncmp(buf,"jpj.",4) == 0) continue; // for K computer
+
 	len = strlen(buf);
 	if(len > initf_name_len && 
 	   strcmp(buf+(len-initf_name_len),MODULE_INIT_F_NAME) == 0){
@@ -102,13 +114,19 @@ int main(int argc, char *argv[])
 	fprintf(stderr,"cannot open '%s'\n",init_func_source);
 	exit(1);
     }
-    fprintf(fp,"%s(){\n",MODULE_INIT_ENTRY_NAME);
-    for(i=0; i<n_module_init_f;i++)
-	fprintf(fp,"\t%s();\n",module_init_f_names[i++]);
+    fprintf(fp,"void %s(){\n",MODULE_INIT_ENTRY_NAME);
+    for(i=0; i<n_module_init_f;i++){
+      char *name = module_init_f_names[i];
+      if(strchr(name,'.') != NULL)
+	fprintf(fp,"asm(\"call\t%s\");\n",name);  // asm("call func"); 
+      else
+	fprintf(fp,"\t%s();\n",name);
+	
+    }
     fprintf(fp,"}\n");
     fclose(fp);
-    sprintf(command_buf,"cc -c -o %s %s",
-	    init_func_object, init_func_source);
+    sprintf(command_buf,"%s -c -o %s %s",
+	    cc_command, init_func_object, init_func_source);
 
     if(debug_flag) printf("command = '%s'\n",command_buf);
     if(system(command_buf) < 0){

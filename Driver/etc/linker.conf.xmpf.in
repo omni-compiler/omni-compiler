@@ -6,7 +6,7 @@ LOCK_TYPE=@OMP_LOCK_TYPE@
 LIB_THREAD=@OMP_THREAD_TYPE@
 LIB_OMPC=ompc_${LOCK_TYPE}_${LIB_THREAD}
 
-@OMNI_HOME@/bin/xmpf_collect_init $*
+@OMNI_HOME@/bin/xmpf_collect_init --cc @MPI_CMD@ $*
 
 LIBS="@OMNI_HOME@/lib/xmpf_main.o _xmpf_module_INIT.o ${LIBS} -lxmpf -lxmp"
 
