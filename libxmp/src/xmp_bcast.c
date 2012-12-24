@@ -105,10 +105,11 @@ void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int co
   }
   else{
     for (int i = 0; i < from_dim; i++) {
-      if(inherit_info[i].shrink == 1){
-	va_arg(args, int);
-	continue;
-      }
+      while(inherit_info[i++].shrink){}
+      // if(inherit_info[i].shrink == 1){
+      //   	va_arg(args, int);
+      //      	continue;
+      // }
       int size = inherit_info[i].upper - inherit_info[i].lower;
       if(size == 0) {  // skip arguments
 	va_arg(args, int);   // is_astrisk 
