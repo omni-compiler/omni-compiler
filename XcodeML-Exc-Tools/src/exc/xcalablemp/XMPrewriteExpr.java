@@ -470,6 +470,9 @@ public class XMPrewriteExpr {
 
     if (alignedArray == null && coarray == null) {
       return arrayAddr;
+    }
+    else if(alignedArray.hasShadow()){
+      return arrayAddr;
     } else if(alignedArray != null && coarray == null){ // only alignedArray
       Xobject newExpr = alignedArray.getAddrId().Ref();
       newExpr.setIsRewrittedByXmp(true);
