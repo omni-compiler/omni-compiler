@@ -539,6 +539,11 @@ if test "$target" != "$host" -a "$target" = "Kcomputer-linux-gnu"; then
         BEFC="frtpx"
 fi
 
+if test "$target" != "$host" -a "$target" = "MIC-linux-gnu"; then
+        BECC="icc"
+        BEFC="ifort"
+fi
+
 if test "$BECC" = ""; then
 	BECC=${CC}
 fi
@@ -699,6 +704,9 @@ if test "$target" != "$host"; then
    case "$target" in
 	Kcomputer-linux-gnu)
 		CC_LIB="fccpx -Xg -std=gnu99"
+		AC_SUBST(CC_LIB) ;;
+        MIC-linux-gnu)
+		CC_LIB="icc -mmic"
 		AC_SUBST(CC_LIB) ;;
 	*)
 		AC_CHECK_TARGET_TOOL([CC_LIB], [cc], [:]) ;;
@@ -1332,6 +1340,9 @@ default_libxmlDir="/usr"
 if test "$target" == "Kcomputer-linux-gnu"; then
    default_mpicc="mpifccpx -Xg -std=gnu99"
    default_mpif90="mpifrtpx"
+elif test "$target" == "MIC-linux-gnu"; then
+   default_mpicc="mpiicc -mmic"
+   default_mpif90="mpiifort -mmic"
 else
    default_mpicc="mpicc"
    default_mpif90="mpif90"
