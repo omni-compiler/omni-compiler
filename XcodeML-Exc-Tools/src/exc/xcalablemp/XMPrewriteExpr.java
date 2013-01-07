@@ -467,13 +467,21 @@ public class XMPrewriteExpr {
   private Xobject rewriteArrayAddr(Xobject arrayAddr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
     XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayAddr.getSym(), localXMPsymbolTable);
     XMPcoarray coarray = _globalDecl.getXMPcoarray(arrayAddr.getSym(), localXMPsymbolTable);
+    boolean hasShadow;
+    if(alignedArray != null){
+      hasShadow = alignedArray.hasShadow();
+    }
+    else{
+      hasShadow = false; // e.g. coarray
+    }
 
     if (alignedArray == null && coarray == null) {
       return arrayAddr;
     }
-    else if(alignedArray.hasShadow()){
+    else if(hasShadow){
       return arrayAddr;
-    } else if(alignedArray != null && coarray == null){ // only alignedArray
+    }
+    else if(alignedArray != null && coarray == null){ // only alignedArray
       Xobject newExpr = alignedArray.getAddrId().Ref();
       newExpr.setIsRewrittedByXmp(true);
       return newExpr;
