@@ -554,7 +554,13 @@ public class XMParray {
       if(!isDistributed(dim_i)){  // case not aligned, duplicated
 	return info.getLower();
       }
-      return info.getArrayOffsetVar().Ref();
+      Xobject offset = info.getAlignSubscriptOffset();
+      Xobject alb = info.getLower();
+      Xobject tlb = this.getAlignTemplate().getLowerAt(info.getAlignSubscriptIndex());
+      if ((offset != null && !offset.isZeroConstant()) || !alb.equals(tlb))
+	  return info.getArrayOffsetVar().Ref();
+      else
+	  return null;
   }
 
   public Xobject conertSize(int dim_i){

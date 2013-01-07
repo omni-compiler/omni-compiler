@@ -199,8 +199,17 @@ public class XMPrewriteExpr
 
     if(a_tmpl_idx != on_tmpl_idx) return null;
 
+    Xobject off1;
+    int lshadow = a.getShadowLeft(dim_i);
+    if (lshadow != 0){
+	off1 = Xcons.IntConstant(lshadow);
+    }
+    else {
+	off1 = null;
+    }
 
-    Xobject off1 = a.getAlignSubscriptOffsetAt(dim_i);
+    //Xobject off1 = a.getAlignSubscriptOffsetAt(dim_i);
+
     // Xobject off2 = on_ref.getLoopOffset(loop_idx);
     // if(off1 == null) localIndexOffset = off2;
     // else if(off2 == null) localIndexOffset = off1;
@@ -255,23 +264,26 @@ public class XMPrewriteExpr
 	}
       }
 
-      if(v != null){
-	v = convertLocalIndex(v,dim_i,a,bb,block);
-	if(v != null){
-	  if(localIndexOffset != null){
-	    if(offset != null)
-	      offset = Xcons.binaryOp(Xcode.PLUS_EXPR,
-				      localIndexOffset,offset);
-	    else 
-	      offset = localIndexOffset;
-	  }
-	  if(offset != null)
-	    v = Xcons.binaryOp(Xcode.PLUS_EXPR,v,offset);
+      if (v != null){
+	  v = convertLocalIndex(v, dim_i, a, bb, block);
+	  if (v != null){
+	      if (localIndexOffset != null){
+		  if (offset != null)
+		      offset = Xcons.binaryOp(Xcode.PLUS_EXPR,
+					      localIndexOffset, offset);
+		  else 
+		      offset = localIndexOffset;
+	      }
+	      if (offset != null)
+		  v = Xcons.binaryOp(Xcode.PLUS_EXPR, v, offset);
 
-	  v = Xcons.binaryOp(Xcode.MINUS_EXPR,v,a.convertOffset(dim_i));
-	  i.setArg(0,v);
-	  return i;
-	}
+	      Xobject x = a.convertOffset(dim_i);
+	      if (x != null)
+		  v = Xcons.binaryOp(Xcode.MINUS_EXPR, v, x);
+	      //v = Xcons.binaryOp(Xcode.MINUS_EXPR, v, a.convertOffset(dim_i));
+	      i.setArg(0, v);
+	      return i;
+	  }
       }
 
       Ident f = env.declExternIdent("xmpf_local_idx_",

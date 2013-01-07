@@ -19,7 +19,7 @@ int xmp_num_nodes(void) {
 */
 
 int xmp_node_num_(void) {
-  return _XMP_get_execution_nodes()->comm_rank;
+  return _XMP_get_execution_nodes()->comm_rank + 1;
 }
 
 void xmp_barrier_(void) {

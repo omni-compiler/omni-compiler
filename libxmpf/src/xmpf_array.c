@@ -185,16 +185,34 @@ void xmpf_array_get_local_size_off__(_XMP_array_t **a_desc, int *i_dim,
   _XMP_array_t *array = *a_desc;
   _XMP_array_info_t *ai = &(array->info[*i_dim]);
   _XMP_template_t *template = array->align_template;
+  _XMP_template_chunk_t *tchunk = &(template->chunk[ai->align_template_index]);
 
   if (template->is_owner){
+
     if (ai->align_manner != _XMP_N_ALIGN_DUPLICATION &&
 	ai->align_manner != _XMP_N_ALIGN_NOT_ALIGNED){
 
-      _XMP_template_chunk_t *tchunk = &(template->chunk[ai->align_template_index]);
-
       *size = ai->alloc_size;
-      *off = ai->par_lower + ai->align_subscript - tchunk->par_lower
-	   - (ai->shadow_size_lo);
+
+      int lidx_on_template, template_local_lower;
+
+      _XMP_G2L(ai->par_lower + ai->align_subscript, &lidx_on_template,
+	       template, ai->align_template_index);
+
+      //      xmpf_dbg_printf("par_lower = %d\n", ai->par_lower);
+
+      _XMP_G2L(tchunk->par_lower, &template_local_lower,
+	       template, ai->align_template_index);
+
+      *off = lidx_on_template - template_local_lower;
+
+/*       _XMP_template_chunk_t *tchunk = &(template->chunk[ai->align_template_index]); */
+/*       //_XMP_template_info_t *ti = &(template->info[ai->align_template_index]); */
+
+/*       *size = ai->alloc_size; */
+/* /\*       *off = ai->ser_lower + ai->align_subscript - ti->ser_lower *\/ */
+/* /\* 	   - (ai->shadow_size_lo); *\/ */
+/*       *off = ai->par_lower - tchunk->par_lower - ai->shadow_size_lo; */
     }
     else {
       *size = ai->ser_upper - ai->ser_lower + 1;

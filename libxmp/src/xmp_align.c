@@ -251,12 +251,18 @@ void _XMP_align_array_CYCLIC(_XMP_array_t *array, int array_index, int template_
 
   if (template->is_owner) {
     int cycle = chunk->par_stride;
-    int mod = _XMP_modi_ll_i(chunk->par_lower - align_subscript, cycle);
+    //int mod = _XMP_modi_ll_i(chunk->par_lower - align_subscript, cycle);
+    int rank = chunk->onto_nodes_info->rank;
+    int nsize = chunk->onto_nodes_info->size;
+    int rank_lb = (ai->ser_lower + align_subscript - ti->ser_lower) % nsize;
+    int mod = _XMP_modi_ll_i(rank - rank_lb, nsize);
 
-    int dist = (ai->ser_upper - mod) / cycle;
+    int dist = (ai->ser_upper - (mod + ai->ser_lower)) / cycle;
 
-    ai->par_lower = mod;
-    ai->par_upper = mod + (dist * cycle);
+    //xmpf_dbg_printf("cycle = %d, mod = %d, dist = %d, rank_lb = %d, nsize = %d\n", cycle, mod, dist, rank_lb, nsize);
+
+    ai->par_lower = mod + ai->ser_lower;
+    ai->par_upper = ai->par_lower + (dist * cycle);
     ai->par_stride = cycle;
     ai->par_size = dist + 1;
 
@@ -275,6 +281,8 @@ void _XMP_align_array_CYCLIC(_XMP_array_t *array, int array_index, int template_
 
   ai->align_template_index = template_index;
 }
+
+#define MIN(a,b)  ( (a)<(b) ? (a) : (b) )
 
 void _XMP_align_array_BLOCK_CYCLIC(_XMP_array_t *array, int array_index, int template_index,
                                    long long align_subscript, int *temp0) {
@@ -298,10 +306,35 @@ void _XMP_align_array_BLOCK_CYCLIC(_XMP_array_t *array, int array_index, int tem
   ai->align_manner = _XMP_N_ALIGN_BLOCK_CYCLIC;
 
   if (template->is_owner) {
-    ai->par_lower = chunk->par_lower - ti->ser_lower;
-    ai->par_upper = chunk->par_upper - ti->ser_lower;
+
+/*     ai->par_lower = chunk->par_lower - ti->ser_lower; */
+/*     ai->par_upper = chunk->par_upper - ti->ser_lower; */
+/*     ai->par_stride = chunk->par_stride; */
+/*     ai->par_size = chunk->par_chunk_width; */
+
+    int cycle = chunk->par_stride;
+    int rank = chunk->onto_nodes_info->rank;
+    int nsize = chunk->onto_nodes_info->size;
+    int rank_lb = ((ai->ser_lower + align_subscript - ti->ser_lower) / 2) % nsize;
+    int mod = _XMP_modi_ll_i(rank - rank_lb, nsize);
+    int dist = (ai->ser_upper - (mod * chunk->par_width + ai->ser_lower)) / cycle;
+
+    ai->par_lower = mod * chunk->par_width + ai->ser_lower;
+
+    int diff = ai->ser_upper - (ai->par_lower + (dist * cycle) + (chunk->par_width - 1));
+    if (diff > 0){
+      ai->par_upper = ai->par_lower + (dist * cycle) + (chunk->par_width - 1);
+      ai->par_size = (dist + 1) * chunk->par_width;
+    }
+    else {
+      ai->par_upper = ai->ser_upper;
+      ai->par_size = (dist + 1) * chunk->par_width + diff;
+    }
+
     ai->par_stride = chunk->par_stride;
-    ai->par_size = chunk->par_chunk_width;
+
+    xmpf_dbg_printf("par_lower = %d, par_upper = %d, par_stride = %d, par_size = %d\n",
+		    ai->par_lower, ai->par_upper, ai->par_stride, ai->par_size);
 
     // array lower is always 0 in C
     // FIXME works when only data is divided equally
