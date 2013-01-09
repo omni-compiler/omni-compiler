@@ -132,7 +132,7 @@ void xmpf_array_init_shadow__(_XMP_array_t **a_desc, int *i_dim,
       ai->temp0_v -= *lshadow;
     }
 
-    _XMP_create_shadow_comm(array, *i_dim);
+    //_XMP_create_shadow_comm(array, *i_dim);
 
   }
   else { // *lshadow < 0 && *ushadow < 0
@@ -148,7 +148,7 @@ void xmpf_array_init_shadow__(_XMP_array_t **a_desc, int *i_dim,
       ai->alloc_size = ai->ser_size;
     }
     
-    _XMP_create_shadow_comm(array, *i_dim);
+    //_XMP_create_shadow_comm(array, *i_dim);
   }
 }
 

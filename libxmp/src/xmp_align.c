@@ -333,8 +333,8 @@ void _XMP_align_array_BLOCK_CYCLIC(_XMP_array_t *array, int array_index, int tem
 
     ai->par_stride = chunk->par_stride;
 
-    xmpf_dbg_printf("par_lower = %d, par_upper = %d, par_stride = %d, par_size = %d\n",
-		    ai->par_lower, ai->par_upper, ai->par_stride, ai->par_size);
+    //xmpf_dbg_printf("par_lower = %d, par_upper = %d, par_stride = %d, par_size = %d\n",
+    //		    ai->par_lower, ai->par_upper, ai->par_stride, ai->par_size);
 
     // array lower is always 0 in C
     // FIXME works when only data is divided equally

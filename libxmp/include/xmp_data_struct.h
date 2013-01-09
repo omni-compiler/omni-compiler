@@ -29,6 +29,7 @@ typedef struct _XMP_nodes_info_type {
   // enable when is_member is true
   int rank;
   // -----------------------------
+  int multiplier;
 } _XMP_nodes_info_t;
 
 typedef struct _XMP_nodes_type {

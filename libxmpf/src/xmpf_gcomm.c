@@ -13,6 +13,22 @@ double t_comm = 0;
 // reflect
 //
 
+static _XMPF_get_owner_pos_BLOCK(_XMP_array_t *a, int dim, int index){
+
+  _XMP_ASSERT(a->info[dim].align_manner == _XMP_N_ALIGN_BLOCK);
+
+  int align_offset = a->info[dim].align_subscript;
+
+  int tdim = a->info[dim].align_template_index;
+  int tlb = a->align_template->info[tdim].ser_lower;
+  int chunk = a->align_template->chunk[tdim].par_chunk_width;
+
+  int pos = (index + align_offset - tlb) / chunk;
+
+  return pos;
+}
+
+
 void _XMPF_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_addr,
 			      _XMP_array_t *array_desc, int array_index,
 			      _Bool is_periodic) {
@@ -26,8 +42,18 @@ void _XMPF_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_ad
   _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
   _XMP_ASSERT(ai->is_shadow_comm_member);
 
-  int size = ai->shadow_comm_size;
-  if (!is_periodic && size == 1) {
+/*   int size = ai->shadow_comm_size; */
+/*   if (!is_periodic && size == 1) { */
+/*     return; */
+/*   } */
+
+  int target_tdim = ai->align_template_index;
+  _XMP_nodes_info_t *ni = array_desc->align_template->chunk[target_tdim].onto_nodes_info;
+  int my_pos = ni->rank;
+  int lb_pos = _XMPF_get_owner_pos_BLOCK(array_desc, array_index, ai->ser_lower);
+  int ub_pos = _XMPF_get_owner_pos_BLOCK(array_desc, array_index, ai->ser_upper);
+
+  if (!is_periodic && lb_pos == ub_pos){
     return;
   }
 
@@ -39,7 +65,8 @@ void _XMPF_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_ad
   unsigned long long dim_acc[array_dim];
 
   // pack lo shadow
-  if (is_periodic || rank != (size - 1)) {
+  //if (is_periodic || rank != (size - 1)) {
+  if (is_periodic || my_pos != ub_pos) {
     if (ai->shadow_size_lo > 0) {
       // FIXME strict condition
       if (ai->shadow_size_lo > ai->par_size) {
@@ -93,7 +120,8 @@ void _XMPF_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_ad
   }
 
   // pack hi shadow
-  if (is_periodic || rank != 0) {
+  //if (is_periodic || rank != 0) {
+  if (is_periodic || my_pos != lb_pos) {
     if (ai->shadow_size_hi > 0) {
       // FIXME strict condition
       if (ai->shadow_size_hi > ai->par_size) {
@@ -159,8 +187,18 @@ void _XMPF_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_ad
   _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
   _XMP_ASSERT(ai->is_shadow_comm_member);
 
-  int size = ai->shadow_comm_size;
-  if (!is_periodic && size == 1) {
+/*   int size = ai->shadow_comm_size; */
+/*   if (!is_periodic && size == 1) { */
+/*     return; */
+/*   } */
+
+  int target_tdim = ai->align_template_index;
+  _XMP_nodes_info_t *ni = array_desc->align_template->chunk[target_tdim].onto_nodes_info;
+  int my_pos = ni->rank;
+  int lb_pos = _XMPF_get_owner_pos_BLOCK(array_desc, array_index, ai->ser_lower);
+  int ub_pos = _XMPF_get_owner_pos_BLOCK(array_desc, array_index, ai->ser_upper);
+
+  if (!is_periodic && lb_pos == ub_pos){
     return;
   }
 
@@ -174,7 +212,7 @@ void _XMPF_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_ad
   if (array_index == array_dim - 1) return;
 
   // unpack lo shadow
-  if (is_periodic || rank != 0) {
+  if (is_periodic || my_pos != lb_pos) {
     if (ai->shadow_size_lo > 0) {
       // FIXME strict condition
       if (ai->shadow_size_lo > ai->par_size) {
@@ -219,7 +257,7 @@ void _XMPF_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_ad
   }
 
   // unpack hi shadow
-  if (is_periodic || rank != (size - 1)) {
+  if (is_periodic || my_pos != ub_pos) {
     if (ai->shadow_size_hi > 0) {
       // FIXME strict condition
       if (ai->shadow_size_hi > ai->par_size) {
@@ -238,6 +276,8 @@ void _XMPF_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_ad
           upper[i] = array_desc->info[i].local_upper;
           stride[i] = array_desc->info[i].local_stride;
         }
+
+	//xmpf_dbg_printf("(%d : %d) in %d\n", lower[i], upper[i], i);
 
         dim_acc[i] = array_desc->info[i].dim_acc;
       }
@@ -264,6 +304,7 @@ void _XMPF_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_ad
   }
 }
 
+
 void _XMPF_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
 				  void *lo_send_buffer, void *hi_send_buffer,
 				  _XMP_array_t *array_desc, int array_index,
@@ -278,17 +319,39 @@ void _XMPF_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
   _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
   _XMP_ASSERT(ai->is_shadow_comm_member);
 
+  int target_tdim = ai->align_template_index;
+  _XMP_nodes_info_t *ni = array_desc->align_template->chunk[target_tdim].onto_nodes_info;
+
   int array_dim = array_desc->dim;
 
   // get communicator info
-  int size = ai->shadow_comm_size;
-  if (!is_periodic && size == 1) {
+  //int size = ai->shadow_comm_size;
+
+  // 0-origin
+  int my_pos = ni->rank;
+  int lb_pos = _XMPF_get_owner_pos_BLOCK(array_desc, array_index, ai->ser_lower);
+  int ub_pos = _XMPF_get_owner_pos_BLOCK(array_desc, array_index, ai->ser_upper);
+
+  //xmpf_dbg_printf("my_pos = %d, lb_pos = %d, ub_pos = %d in (%d)\n", 
+  //		  my_pos, lb_pos, ub_pos, array_index);
+
+  if (!is_periodic && lb_pos == ub_pos){
     return;
   }
 
-  int rank = ai->shadow_comm_rank;
-  MPI_Comm *comm = ai->shadow_comm;
-  int src, dst;
+  //int rank = ai->shadow_comm_rank;
+  //MPI_Comm *comm = ai->shadow_comm;
+  MPI_Comm *comm = array_desc->align_template->onto_nodes->comm;
+  int my_rank = array_desc->align_template->onto_nodes->comm_rank;
+
+  int lo_pos = (my_pos == lb_pos) ? ub_pos : my_pos - 1;
+  int hi_pos = (my_pos == ub_pos) ? lb_pos : my_pos + 1;
+
+  int lo_rank = my_rank + (lo_pos - my_pos) * ni->multiplier;
+  int hi_rank = my_rank + (hi_pos - my_pos) * ni->multiplier;
+
+  //xmpf_dbg_printf("lo_pos = %d, hi_pos = %d in (%d)\n", 
+  //		  lo_pos, hi_pos, array_index);
 
   // setup type
   MPI_Datatype mpi_datatype;
@@ -300,7 +363,7 @@ void _XMPF_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
   MPI_Request recv_req[2];
 
   if (ai->shadow_size_lo > 0) {
-    if (is_periodic || rank != 0) {
+    if (is_periodic || my_pos != lb_pos) {
 
       if (array_index == array_dim - 1){
 
@@ -331,21 +394,22 @@ void _XMPF_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
       else {
 	*lo_recv_buffer = _XMP_alloc((ai->shadow_size_lo) * (ai->dim_elmts) * (array_desc->type_size));
       }
-
-      src = (rank - 1 + size) % size;
+      //src = (rank - 1 + size) % size;
+      //xmpf_dbg_printf(" <= [%d] in (%d)\n", lo_rank, array_index);
       MPI_Irecv(*lo_recv_buffer, (ai->shadow_size_lo) * (ai->dim_elmts), mpi_datatype,
-		src, _XMP_N_MPI_TAG_REFLECT_LO, *comm, &(recv_req[0]));
+		lo_rank, _XMP_N_MPI_TAG_REFLECT_LO, *comm, &(recv_req[0]));
     }
 
-    if (is_periodic || rank != (size - 1)) {
-      dst = (rank + 1) % size;
+    if (is_periodic || my_pos != ub_pos) {
+      //dst = (rank + 1) % size;
+      //xmpf_dbg_printf(" => [%d] in (%d)\n", hi_rank, array_index);
       MPI_Isend(lo_send_buffer, (ai->shadow_size_lo) * (ai->dim_elmts), mpi_datatype,
-                dst, _XMP_N_MPI_TAG_REFLECT_LO, *comm, &(send_req[0]));
+                hi_rank, _XMP_N_MPI_TAG_REFLECT_LO, *comm, &(send_req[0]));
     }
   }
 
   if (ai->shadow_size_hi > 0) {
-    if (is_periodic || rank != (size - 1)) {
+    if (is_periodic || my_pos != ub_pos) {
 
       if (array_index == array_dim - 1){
 
@@ -369,6 +433,8 @@ void _XMPF_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
 
 	*hi_recv_buffer = array_desc->array_addr_p;
 	for (int i = 0; i < array_dim; i++){
+	  //xmpf_dbg_printf("lower = %d, dim_acc = %d, type_size = %d\n",
+	  //			  lower[i], dim_acc[i], array_desc->type_size);
 	  *hi_recv_buffer = (void *)((char *)(*hi_recv_buffer) + lower[i] * dim_acc[i] * (array_desc->type_size));
 	}
       }
@@ -376,15 +442,17 @@ void _XMPF_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
 	*hi_recv_buffer = _XMP_alloc((ai->shadow_size_hi) * (ai->dim_elmts) * (array_desc->type_size));
       }
 
-      src = (rank + 1) % size;
+      //src = (rank + 1) % size;
+      //xmpf_dbg_printf(" <= [%d] in (%d)\n", hi_rank, array_index);
       MPI_Irecv(*hi_recv_buffer, (ai->shadow_size_hi) * (ai->dim_elmts), mpi_datatype,
-                src, _XMP_N_MPI_TAG_REFLECT_HI, *comm, &(recv_req[1]));
+                hi_rank, _XMP_N_MPI_TAG_REFLECT_HI, *comm, &(recv_req[1]));
     }
 
-    if (is_periodic || rank != 0) {
-      dst = (rank - 1 + size) % size;
+    if (is_periodic || my_pos != lb_pos) {
+      //dst = (rank - 1 + size) % size;
+      //xmpf_dbg_printf(" => [%d] in (%d)\n", lo_rank, array_index);
       MPI_Isend(hi_send_buffer, (ai->shadow_size_hi) * (ai->dim_elmts), mpi_datatype,
-                dst, _XMP_N_MPI_TAG_REFLECT_HI, *comm, &(send_req[1]));
+                lo_rank, _XMP_N_MPI_TAG_REFLECT_HI, *comm, &(send_req[1]));
     }
   }
 
@@ -392,26 +460,29 @@ void _XMPF_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
   MPI_Status stat;
 
   if (ai->shadow_size_lo > 0) {
-    if (is_periodic || rank != 0) {
+    if (is_periodic || my_pos != lb_pos) {
       MPI_Wait(&(recv_req[0]), &stat);
     }
 
-    if (is_periodic || rank != (size - 1)) {
+    if (is_periodic || my_pos != ub_pos) {
       MPI_Wait(&(send_req[0]), &stat);
       if (array_index != array_dim - 1) _XMP_free(lo_send_buffer);
     }
   }
 
   if (ai->shadow_size_hi > 0) {
-    if (is_periodic || rank != (size - 1)) {
+    if (is_periodic || my_pos != ub_pos) {
       MPI_Wait(&(recv_req[1]), &stat);
     }
 
-    if (is_periodic || rank != 0) {
+    if (is_periodic || my_pos != lb_pos) {
       MPI_Wait(&(send_req[1]), &stat);
       if (array_index != array_dim - 1) _XMP_free(hi_send_buffer);
     }
   }
+
+  //int *p = (int *)array_desc->array_addr_p;
+  //xmpf_dbg_printf("%d %d %d %d", *p, *(p+1), *(p+2), *(p+3));
 
   MPI_Type_free(&mpi_datatype);
 }

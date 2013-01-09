@@ -297,6 +297,37 @@ _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim, int *dim_size, int is_stati
   // calc info
   _XMP_init_nodes_info(n, dim_size, is_static);
 
+  n->info[0].multiplier = 1;
+  for (int i = 1; i < dim; i++){
+    n->info[i].multiplier = n->info[i-1].multiplier * dim_size[i-1];
+  }
+
+/*   int myrank; */
+/*   MPI_Comm_rank(*comm, &myrank); */
+
+/*   int n_multiplier[dim]; */
+
+/*   n_multiplier[0] = 1; */
+/*   for (int i = 1; i < dim; i++){ */
+/*     n_multiplier[i] = n_multiplier[i-1] * dim_size[i-1]; */
+/*   } */
+
+/*   int remainder = myrank; */
+
+/*   for (int i = dim - 1; i >= 0; i--){ */
+    
+/*     int mypos = remainder / n_multiplier[i]; */
+/*     remainder = remainder % n_multiplier[i]; */
+
+/*     _XMP_nodes_info_t *ni = &n->info[i]; */
+
+/*     int diff = (mypos - 1 + dim_size[i]) % dim_size[i]; */
+/*     ni->lo_neighbor = myrank + (diff - mypos) * n_multiplier[i]; */
+/*     diff = (mypos + 1) % dim_size[i]; */
+/*     ni->hi_neighbor = myrank + (diff - mypos) * n_multiplier[i]; */
+
+/*   } */
+
   return n;
 }
 
