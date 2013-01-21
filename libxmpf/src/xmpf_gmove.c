@@ -424,8 +424,7 @@ void _XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
 
         if (_XMP_calc_global_index_BCAST(dst_dim, recv_lower, recv_upper, recv_stride,
                                          src_array, src_array_nodes_ref, send_lower, send_upper, send_stride)) {
-          _XMP_sendrecv_ARRAY(gmove_total_elmts,
-                              type, type_size, &mpi_datatype,
+          _XMP_sendrecv_ARRAY(type, type_size, &mpi_datatype,
                               dst_array, dst_array_nodes_ref,
                               recv_lower, recv_upper, recv_stride, dst_d,
                               src_array, src_array_nodes_ref,

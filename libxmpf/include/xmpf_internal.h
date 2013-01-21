@@ -165,12 +165,11 @@ int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_index,
 				    int *src_l, int *src_u, int *src_s);
 int _XMP_calc_global_index_BCAST(int dst_dim, int *dst_l, int *dst_u, int *dst_s,
 				 _XMP_array_t *src_array, int *src_array_nodes_ref, int *src_l, int *src_u, int *src_s);
-void _XMP_sendrecv_ARRAY(unsigned long long gmove_total_elmts,
-			 int type, int type_size, MPI_Datatype *mpi_datatype,
-			 _XMP_array_t *dst_array, int *dst_array_nodes_ref,
-			 int *dst_lower, int *dst_upper, int *dst_stride, unsigned long long *dst_dim_acc,
-			 _XMP_array_t *src_array, int *src_array_nodes_ref,
-			 int *src_lower, int *src_upper, int *src_stride, unsigned long long *src_dim_acc);
+void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datatype,
+                         _XMP_array_t *dst_array, int *dst_array_nodes_ref,
+                         int *dst_lower, int *dst_upper, int *dst_stride, unsigned long long *dst_dim_acc,
+                         _XMP_array_t *src_array, int *src_array_nodes_ref,
+                         int *src_lower, int *src_upper, int *src_stride, unsigned long long *src_dim_acc);
 
 /* From xmp_runtime.c */
 void _XMP_init(int argc, char** argv);
