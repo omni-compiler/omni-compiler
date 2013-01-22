@@ -8,8 +8,6 @@ LIB_OMPC=ompc_${LOCK_TYPE}_${LIB_THREAD}
 
 @OMNI_HOME@/bin/xmpf_collect_init --cc @MPI_CMD@ $*
 
-LIBS="@OMNI_HOME@/lib/xmpf_main.o _xmpf_module_INIT.o ${LIBS} -lxmpf -lxmp"
-
 
 for i in ${OM_OPTIONS}; do
     case ${i} in
@@ -23,11 +21,13 @@ for i in ${OM_OPTIONS}; do
         -prof-tlog)
             hasTlog=1;;
         -l*)
-            LIBS="${i} ${LIBS}";;
+            LIBS="${LIBS} ${i}";;
         *)
             newOpts="${newOpts} ${i}";;
     esac
 done
+
+LIBS="@OMNI_HOME@/lib/xmpf_main.o _xmpf_module_INIT.o ${LIBS} -lxmpf -lxmp"
 
 LINKER=@MPI_F90@
 if test ${hasScalasca} -eq 1; then
