@@ -10,22 +10,23 @@ void ixmp_dmumps_c(DMUMPS_STRUC_C *id, xmp_desc_t dirn, xmp_desc_t djcn, xmp_des
   void *jcn_laddr;
   void *irn_laddr;
   void *a_laddr;
+  int ierr;
 
-  irn_size = xmp_array_lsize(dirn,1);
-  jcn_size = xmp_array_lsize(djcn,1);
-  a_size = xmp_array_lsize(da,1);
+  ierr = xmp_array_lsize(dirn,1,&irn_size);
+  ierr = xmp_array_lsize(djcn,1,&jcn_size);
+  ierr = xmp_array_lsize(da,1,&a_size);
   if (irn_size == jcn_size && jcn_size == a_size) {
      id->nz_loc=irn_size;
   }else{
      exit(1);
   }
 
-  irn_laddr=xmp_array_laddr(dirn);
-  jcn_laddr=xmp_array_laddr(djcn);
-  a_laddr=xmp_array_laddr(da);
-  id->irn_loc = *(void **)irn_laddr;
-  id->jcn_loc = *(void **)jcn_laddr;
-  id->a_loc = *(void **)a_laddr;
+  ierr=xmp_array_laddr(dirn, &irn_laddr);
+  ierr=xmp_array_laddr(djcn, &jcn_laddr);
+  ierr=xmp_array_laddr(da, &a_laddr);
+  id->irn_loc = (void *)irn_laddr;
+  id->jcn_loc = (void *)jcn_laddr;
+  id->a_loc = (void *)a_laddr;
     
   dmumps_c(id);
 

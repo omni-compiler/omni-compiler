@@ -7,6 +7,19 @@
 #ifndef _XMP_USERAPI
 #define _XMP_USERAPI
 
+#define XMP_FAILURE					-2000
+#define XMP_UNDEFINED					-2001
+
+#define XMP_ENTIRE_NODES				2000
+#define XMP_EXECUTING_NODES				2001
+#define XMP_PRIMARY_NODES				2002
+#define XMP_EQUIVALENCE_NODES				2003
+
+#define XMP_NOT_DISTRIBUTED				2100
+#define XMP_BLOCK					2101
+#define XMP_CYCLIC					2102
+#define XMP_GBLOCK					2103
+
 #include "stddef.h"
 
 typedef void *xmp_desc_t;
@@ -20,37 +33,41 @@ extern int	xmp_all_num_nodes(void);
 extern int	xmp_all_node_num(void);
 extern double	xmp_wtime(void);
 extern double	xmp_wtick(void);
-extern int      xmp_array_ndim(xmp_desc_t d);
+extern int      xmp_array_ndims(xmp_desc_t d, int *ndims);
+extern int      xmp_array_lbound(xmp_desc_t d, int dim, int *lbound);
+extern int      xmp_array_ubound(xmp_desc_t d, int dim, int *ubound);
 extern size_t   xmp_array_type_size(xmp_desc_t d);
 extern int      xmp_array_gsize(xmp_desc_t d, int dim);
-extern int      xmp_array_lsize(xmp_desc_t d, int dim);
+extern int      xmp_array_lsize(xmp_desc_t d, int dim, int *lsize);
 extern int      xmp_array_gcllbound(xmp_desc_t d, int dim);
 extern int      xmp_array_gclubound(xmp_desc_t d, int dim);
 extern int      xmp_array_lcllbound(xmp_desc_t d, int dim);
 extern int      xmp_array_lclubound(xmp_desc_t d, int dim);
 extern int      xmp_array_gcglbound(xmp_desc_t d, int dim);
 extern int      xmp_array_gcgubound(xmp_desc_t d, int dim);
-extern void    *xmp_array_laddr(xmp_desc_t d);
-extern int      xmp_array_ushadow(xmp_desc_t d, int dim);
-extern int      xmp_array_lshadow(xmp_desc_t d, int dim);
+extern int      xmp_array_laddr(xmp_desc_t d, void **laddr);
+extern int      xmp_array_lshadow(xmp_desc_t d, int dim, int *lshadow);
+extern int      xmp_array_ushadow(xmp_desc_t d, int dim, int *ushadow);
 extern int      xmp_array_owner(xmp_desc_t d, int ndims, int index[], int dim);
-extern int      xmp_array_lead_dim(xmp_desc_t d);
-extern int      xmp_align_axis(xmp_desc_t d, int dim);
-extern int      xmp_align_offset(xmp_desc_t d, int dim);
+extern int      xmp_array_lead_dim(xmp_desc_t d, int size[]);
+extern int      xmp_align_axis(xmp_desc_t d, int dim, int *axis);
+extern int      xmp_align_offset(xmp_desc_t d, int dim, int *offset);
 extern int      xmp_align_format(xmp_desc_t d, int dim);
 extern int      xmp_align_size(xmp_desc_t d, int dim);
-extern xmp_desc_t xmp_align_template(xmp_desc_t d);
-extern _Bool    xmp_template_fixed(xmp_desc_t d);
-extern int      xmp_template_ndim(xmp_desc_t d);
+extern int      xmp_align_template(xmp_desc_t d, xmp_desc_t *dt);
+extern int      xmp_template_fixed(xmp_desc_t d, int *fixed);
+extern int      xmp_template_ndims(xmp_desc_t d, int *ndims);
+extern int      xmp_template_lbound(xmp_desc_t d, int dim, int *lbound);
+extern int      xmp_template_ubound(xmp_desc_t d, int dim, int *ubound);
 extern int      xmp_template_gsize(xmp_desc_t d, int dim);
 extern int      xmp_template_lsize(xmp_desc_t d, int dim);
-extern int      xmp_dist_format(xmp_desc_t d, int dim);
-extern int      xmp_dist_size(xmp_desc_t d, int dim);
+extern int      xmp_dist_format(xmp_desc_t d, int dim, int *format);
+extern int      xmp_dist_blocksize(xmp_desc_t d, int dim, int *blocksize);
 extern int      xmp_dist_stride(xmp_desc_t d, int dim);
-extern xmp_desc_t xmp_dist_nodes(xmp_desc_t d);
-extern int      xmp_nodes_ndim(xmp_desc_t d);
-extern int      xmp_nodes_index(xmp_desc_t d, int dim);
-extern int      xmp_nodes_size(xmp_desc_t d, int dim);
+extern int      xmp_dist_nodes(xmp_desc_t d, xmp_desc_t *dn);
+extern int      xmp_nodes_ndims(xmp_desc_t d, int *ndims);
+extern int      xmp_nodes_index(xmp_desc_t d, int dim, int *index);
+extern int      xmp_nodes_size(xmp_desc_t d, int dim, int *size);
 extern void     xmp_sched_template_index(int* local_start_index, int* local_end_index,
 					 const int global_start_index, const int global_end_index, const int step,
 					 const xmp_desc_t template, const int template_dim);

@@ -12,11 +12,11 @@
 void xmp_MPI_comm(void **comm) {
   *comm = _XMP_get_execution_nodes()->comm;
 }
+*/
 
-int xmp_num_nodes(void) {
+int xmp_num_nodes_(void) {
   return _XMP_get_execution_nodes()->comm_size;
 }
-*/
 
 int xmp_node_num_(void) {
   return _XMP_get_execution_nodes()->comm_rank + 1;

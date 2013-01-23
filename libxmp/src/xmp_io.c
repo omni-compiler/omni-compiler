@@ -1789,16 +1789,17 @@ int xmp_fread_darray_unpack(fp, apd, rp)
   int *rp_lb_addr = NULL;
   int *rp_ub_addr = NULL;
   int *rp_step_addr = NULL;
-  int array_ndim;
+  int array_ndims;
+  int ierr;
 
   // check argument
   if (fp == NULL){ ret = -1; goto FunctionExit; }
   if (apd == NULL){ ret = -1; goto FunctionExit; }
   if (rp == NULL){ ret = -1; goto FunctionExit; }
 
-  tempd = xmp_align_template(apd);
+  ierr = xmp_align_template(apd, &tempd);
   if (tempd == NULL){ ret = -1; goto FunctionExit; }
-  array_ndim = xmp_array_ndim(apd);
+  ierr = xmp_array_ndims(apd, &array_ndims);
 
   rp_dims = _xmp_range_get_dims(rp);
   rp_lb_addr = _xmp_range_get_lb_addr(rp);
@@ -1811,7 +1812,7 @@ int xmp_fread_darray_unpack(fp, apd, rp)
 #define RP_STEP(i)  (rp_step_addr[(i)])
 
   // check number of dimensions
-   if (array_ndim != RP_DIMS){ ret = -1; goto FunctionExit; }
+   if (array_ndims != RP_DIMS){ ret = -1; goto FunctionExit; }
 
    /* allocate arrays for the number of rotations */
    lb = (int*)malloc(sizeof(int)*RP_DIMS);
@@ -1944,7 +1945,7 @@ int xmp_fread_darray_unpack(fp, apd, rp)
 
    /* unpack data */
    cp = buf;
-   array_addr = (char*)xmp_array_laddr(apd);
+   int ierr0 = xmp_array_laddr(apd, &array_addr);
    for(j=0; j<buf_size; j++){
      disp = 0;
      size = 1;
@@ -1953,8 +1954,10 @@ int xmp_fread_darray_unpack(fp, apd, rp)
        int par_lower_i = xmp_array_gcllbound(apd, i+1);
        int align_manner_i = xmp_align_format(apd, i+1);
        int ser_size_i = xmp_array_gsize(apd, i+1);
-       int alloc_size_i = xmp_array_lsize(apd, i+1);
        int local_lower_i = xmp_array_lcllbound(apd, i+1);
+       int alloc_size_i;
+       int ierr;
+       ierr = xmp_array_lsize(apd, i+1, &alloc_size_i);
        ub[i] = (j/size)%cnt[i];
        if (align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED ||
 	   align_manner_i == _XMP_N_ALIGN_DUPLICATION) {
@@ -2030,9 +2033,10 @@ size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
   int *rp_lb_addr = NULL;
   int *rp_ub_addr = NULL;
   int *rp_step_addr = NULL;
-  int array_ndim;
+  int array_ndims;
   size_t array_type_size;
   int typesize_int;
+  int ierr;
 
   int rank, nproc;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -2043,9 +2047,9 @@ size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
   if (apd == NULL)         { return -1; }
   if (rp == NULL)          { return -1; }
 
-  tempd = xmp_align_template(apd);
+  ierr = xmp_align_template(apd, &tempd);
   if (tempd == NULL){ return -1; }
-  array_ndim = xmp_array_ndim(apd);
+  ierr = xmp_array_ndims(apd, &array_ndims);
   array_type_size = xmp_array_type_size(apd);
 
   rp_dims = _xmp_range_get_dims(rp);
@@ -2059,7 +2063,7 @@ size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
 #define RP_STEP(i)  (rp_step_addr[(i)])
 
   // check number of dimensions
-  if (array_ndim != RP_DIMS) { return -1; }
+  if (array_ndims != RP_DIMS) { return -1; }
 
   /* case unpack is required */
   for (i = RP_DIMS - 1; i >= 0; i--){
@@ -2083,7 +2087,9 @@ printf("READ(%d/%d) dims=%d\n", rank, nproc, RP_DIMS);
     int par_upper_i = xmp_array_gclubound_tmp(apd, i+1);
     int align_manner_i = xmp_align_format(apd, i+1);
     int local_lower_i = xmp_array_lcllbound(apd, i+1);
-    int alloc_size_i = xmp_array_lsize(apd, i+1);
+    int alloc_size_i;
+    int ierr;
+    ierr = xmp_array_lsize(apd, i+1, &alloc_size_i);
 #ifdef DEBUG
 printf("READ(%d/%d) (lb,ub,step)=(%d,%d,%d)\n",
        rank, nproc, RP_LB(i),  RP_UB(i), RP_STEP(i));
@@ -2278,7 +2284,8 @@ printf("READ(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
   // on erro in commit
   if (mpiRet != MPI_SUCCESS) { return 1; }
   
-  char *array_addr = (char*)xmp_array_laddr(apd);
+  char *array_addr;
+  ierr = xmp_array_laddr(apd, &array_addr);
 
   // read
   MPI_Type_size(dataType[0], &typesize_int);
@@ -2357,16 +2364,17 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
    int *rp_lb_addr = NULL;
    int *rp_ub_addr = NULL;
    int *rp_step_addr = NULL;
-   int array_ndim;
+   int array_ndims;
+   int ierr;
 
    int myrank, nprocs;
    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-   tempd = xmp_align_template(apd);
+   ierr = xmp_align_template(apd, &tempd);
    if (tempd == NULL){ ret = -1; goto FunctionExit; }
    array_type_size = xmp_array_type_size(apd);
-   array_ndim = xmp_array_ndim(apd);
+   ierr = xmp_array_ndims(apd, &array_ndims);
 
    rp_dims = _xmp_range_get_dims(rp);
    rp_lb_addr = _xmp_range_get_lb_addr(rp);
@@ -2379,7 +2387,7 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
 #define RP_STEP(i)  (rp_step_addr[(i)])
 
   // check number of dimensions
-   if (array_ndim != RP_DIMS){ ret = -1; goto FunctionExit; }
+   if (array_ndims != RP_DIMS){ ret = -1; goto FunctionExit; }
 
    /* allocate arrays for the number of rotations */
    lb = (int*)malloc(sizeof(int)*RP_DIMS);
@@ -2494,7 +2502,7 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
 
    /* pack data */
    cp = buf;
-   array_addr = (char*)xmp_array_laddr(apd);
+   ierr = xmp_array_laddr(apd, &array_addr);
    for(j=0; j<buf_size; j++){
      disp = 0;
      size = 1;
@@ -2504,7 +2512,9 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
        int align_manner_i = xmp_align_format(apd, i+1);
        int local_lower_i = xmp_array_lcllbound(apd, i+1);
        int ser_size_i = xmp_array_gsize(apd, i+1);
-       int alloc_size_i = xmp_array_lsize(apd, i+1);
+       int alloc_size_i;
+       int ierr;
+       ierr = xmp_array_lsize(apd, i+1, &alloc_size_i);
        ub[i] = (j/size)%cnt[i];
        if (align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED ||
 	   align_manner_i == _XMP_N_ALIGN_DUPLICATION) {
@@ -2598,9 +2608,10 @@ size_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
   int *rp_lb_addr = NULL;
   int *rp_ub_addr = NULL;
   int *rp_step_addr = NULL;
-  int array_ndim;
+  int array_ndims;
   size_t array_type_size;
   int typesize_int;
+  int ierr;
 
   int rank, nproc;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -2611,9 +2622,9 @@ size_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
   if (apd == NULL)         { return -1103; }
   if (rp == NULL)          { return -1104; }
 
-  tempd = xmp_align_template(apd);
+  ierr = xmp_align_template(apd, &tempd);
   if (tempd == NULL){ return -1105; }
-  array_ndim = xmp_array_ndim(apd);
+  ierr = xmp_array_ndims(apd, &array_ndims);
   array_type_size = xmp_array_type_size(apd);
 
   rp_dims = _xmp_range_get_dims(rp);
@@ -2627,7 +2638,7 @@ size_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
 #define RP_STEP(i)  (rp_step_addr[(i)])
 
   // check number of dimensions
-  if (array_ndim != RP_DIMS) { return -1107; }
+  if (array_ndims != RP_DIMS) { return -1107; }
 
 #ifdef DEBUG
 printf("WRITE(%d/%d) dims=%d\n",rank, nproc, RP_DIMS);
@@ -2650,10 +2661,12 @@ printf("WRITE(%d/%d) dims=%d\n",rank, nproc, RP_DIMS);
     int par_lower_i = xmp_array_gcllbound(apd, i+1);
     int par_upper_i = xmp_array_gclubound_tmp(apd, i+1);
     int align_manner_i = xmp_align_format(apd, i+1);
-    int alloc_size_i = xmp_array_lsize(apd, i+1);
     int ser_lower_i = xmp_array_gcglbound(apd, i+1);
     int ser_upper_i = xmp_array_gcgubound(apd, i+1);
     int local_lower_i = xmp_array_lcllbound(apd, i+1);
+    int alloc_size_i;
+    int ierr;
+    ierr = xmp_array_lsize(apd, i+1, &alloc_size_i);
 /*     int local_upper_i = xmp_array_lclubound(apd, i+1); */
 /*     int shadow_size_lo_i = xmp_array_lshadow(apd, i+1); */
 /*     int shadow_size_hi_i = xmp_array_ushadow(apd, i+1); */
@@ -2857,7 +2870,8 @@ printf("WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper);
   // on error in commit
   if (mpiRet != MPI_SUCCESS) { return 1119; }
  
-  char *array_addr = (char*)xmp_array_laddr(apd);
+  char *array_addr;
+  ierr = xmp_array_laddr(apd, &array_addr);
 
   // write
   MPI_Type_size(dataType[0], &typesize_int);
@@ -3127,8 +3141,9 @@ int xmp_file_set_view_all(xmp_file_t  *pstXmp_file,
   int *rp_lb_addr = NULL;
   int *rp_ub_addr = NULL;
   int *rp_step_addr = NULL;
-  int array_ndim;
+  int array_ndims;
   size_t array_type_size;
+  int ierr;
 
   int rank, nproc;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -3140,9 +3155,9 @@ int xmp_file_set_view_all(xmp_file_t  *pstXmp_file,
   if (rp == NULL)          { return 1004; }
   if (disp  < 0)           { return 1005; }
 
-  tempd = xmp_align_template(apd);
+  ierr = xmp_align_template(apd, &tempd);
   if (tempd == NULL){ return 1006; }
-  array_ndim = xmp_array_ndim(apd);
+  ierr = xmp_array_ndims(apd, &array_ndims);
   array_type_size = xmp_array_type_size(apd);
 
   rp_dims = _xmp_range_get_dims(rp);
@@ -3156,7 +3171,7 @@ int xmp_file_set_view_all(xmp_file_t  *pstXmp_file,
 #define RP_STEP(i)  (rp_step_addr[(i)])
 
   // check number of dimensions
-  if (array_ndim != RP_DIMS) { return 1008; }
+  if (array_ndims != RP_DIMS) { return 1008; }
 
 #ifdef DEBUG
 printf("VIEW(%d/%d) dims=%d\n", rank, nproc, RP_DIMS);
