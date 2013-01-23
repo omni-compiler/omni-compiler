@@ -21,6 +21,8 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
   a->align_comm_size = 1;
   a->align_comm_rank = _XMP_N_INVALID_RANK;
 
+  a->num_reqs = -1;
+
   a->align_template = *t_desc;
 
   *a_desc = a;
@@ -37,6 +39,13 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
     ai->shadow_type = _XMP_N_SHADOW_NONE;
     ai->shadow_size_lo  = 0;
     ai->shadow_size_hi  = 0;
+
+    ai->mpi_datatype_shadow_lo = MPI_DATATYPE_NULL;
+    ai->mpi_datatype_shadow_hi = MPI_DATATYPE_NULL;
+/*     ai->mpi_req_shadow[0] = MPI_REQUEST_NULL; */
+/*     ai->mpi_req_shadow[1] = MPI_REQUEST_NULL; */
+/*     ai->mpi_req_shadow[2] = MPI_REQUEST_NULL; */
+/*     ai->mpi_req_shadow[3] = MPI_REQUEST_NULL; */
 
     ai->shadow_comm = NULL;
     ai->shadow_comm_size = 1;

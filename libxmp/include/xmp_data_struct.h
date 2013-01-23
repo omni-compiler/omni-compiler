@@ -8,6 +8,7 @@
 
 #include <stdbool.h>
 #include "xmp_constant.h"
+#include "mpi.h"
 
 #define _XMP_comm_t void
 
@@ -136,6 +137,10 @@ typedef struct _XMP_array_info_type {
   int shadow_size_lo;
   int shadow_size_hi;
 
+  MPI_Datatype mpi_datatype_shadow_lo;
+  MPI_Datatype mpi_datatype_shadow_hi;
+  //MPI_Request mpi_req_shadow[4];
+
   // enable when is_shadow_comm_member is true
   _XMP_comm_t *shadow_comm;
   int shadow_comm_size;
@@ -163,6 +168,9 @@ typedef struct _XMP_array_type {
   int align_comm_size;
   int align_comm_rank;
   // ----------------------------------------
+
+  int num_reqs;
+  MPI_Request mpi_req_shadow[4 * _XMP_N_MAX_DIM];
 
   _XMP_nodes_t *array_nodes;
 

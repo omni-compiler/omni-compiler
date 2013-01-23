@@ -40,6 +40,8 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
   a->align_comm_size = 1;
   a->align_comm_rank = _XMP_N_INVALID_RANK;
 
+  a->num_reqs = -1;
+
   a->align_template = template;
 
   va_list args;
@@ -61,6 +63,13 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
     ai->shadow_size_lo  = 0;
     ai->shadow_size_hi  = 0;
 
+    ai->mpi_datatype_shadow_lo = MPI_DATATYPE_NULL;
+    ai->mpi_datatype_shadow_hi = MPI_DATATYPE_NULL;
+/*     ai->mpi_req_shadow[0] = MPI_REQUEST_NULL; */
+/*     ai->mpi_req_shadow[1] = MPI_REQUEST_NULL; */
+/*     ai->mpi_req_shadow[2] = MPI_REQUEST_NULL; */
+/*     ai->mpi_req_shadow[3] = MPI_REQUEST_NULL; */
+
     ai->shadow_comm = NULL;
     ai->shadow_comm_size = 1;
     ai->shadow_comm_rank = _XMP_N_INVALID_RANK;
@@ -71,12 +80,28 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
 }
 
 void _XMP_finalize_array_desc(_XMP_array_t *array) {
+
   int dim = array->dim;
+
   for (int i = 0; i < dim; i++) {
     _XMP_array_info_t *ai = &(array->info[i]);
 
     if (ai->is_shadow_comm_member) {
       _XMP_finalize_comm(ai->shadow_comm);
+    }
+
+    if (ai->mpi_datatype_shadow_lo != MPI_DATATYPE_NULL){
+      MPI_Type_free(&ai->mpi_datatype_shadow_lo);
+    }
+    if (ai->mpi_datatype_shadow_hi != MPI_DATATYPE_NULL){
+      MPI_Type_free(&ai->mpi_datatype_shadow_hi);
+    }
+
+  }
+
+  for (int i = 0; i < array->num_reqs; i++){
+    if (array->mpi_req_shadow[i] != MPI_REQUEST_NULL){
+      MPI_Request_free(&array->mpi_req_shadow[i]);
     }
   }
 
@@ -85,6 +110,7 @@ void _XMP_finalize_array_desc(_XMP_array_t *array) {
   }
 
   _XMP_finalize_nodes(array->array_nodes);
+
   _XMP_free(array);
 }
 
