@@ -522,7 +522,12 @@ mustCFlags="${mustCppFlags}"
 CPUDEF=-DOMNI_CPU_`echo $CPU | tr '[a-z]' '[A-Z]'`
 OSDEF=-DOMNI_OS_`echo $OS | tr '[a-z]' '[A-Z]'`
 
-CPPFLAGS="${CPUDEF} ${OSDEF} ${debCppFlags} ${userCppFlags} ${mustCppFlags}"
+if test "$target" != "$host"; then
+   TARGET_CPU=`echo $target | awk -F- '{ print $1 }' | sed 's/\./_/g'`
+   TARGET_CPUDEF=-DOMNI_TARGET_CPU_`echo ${TARGET_CPU} | tr '[a-z]' '[A-Z]'`
+fi
+
+CPPFLAGS="${CPUDEF} ${OSDEF} ${debCppFlags} ${userCppFlags} ${mustCppFlags} ${TARGET_CPUDEF}"
 AC_SUBST(CPPFLAGS)
 
 CFLAGS="${debCFlags} ${userCFlags} ${optCFlags} ${mustCFlags} ${CFLAGS}"
