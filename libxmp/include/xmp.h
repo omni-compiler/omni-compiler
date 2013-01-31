@@ -72,6 +72,11 @@ extern void     xmp_sched_template_index(int* local_start_index, int* local_end_
 					 const int global_start_index, const int global_end_index, const int step,
 					 const xmp_desc_t template, const int template_dim);
 extern void    *xmp_malloc(xmp_desc_t d);
+extern void     xmp_sync_memory(int* status);
+extern void     xmp_sync_all(int* status);
+extern void     xmp_sync_image(int image, int* status);
+extern void     xmp_sync_images(int num, int* image_set, int* status);
+extern void     xmp_sync_images_all(int* status);
 
 // ----- libxmp_gpu
 #ifdef _XMP_ENABLE_GPU

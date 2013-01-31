@@ -288,4 +288,39 @@ void _XMP_coarray_sync_memory(){
 #endif
 }
 
+void xmp_sync_memory(int* status){
+#ifdef _XMP_COARRAY_GASNET
+  _XMP_gasnet_sync_memory();
+#else
+  _XMP_fatal("Cannt use Coarray Function");
+#endif
+}
+
+void xmp_sync_all(int* status){
+#ifdef _XMP_COARRAY_GASNET
+  _XMP_gasnet_sync_all();
+#else
+  _XMP_fatal("Cannt use Coarray Function");
+#endif
+}
+
+void xmp_sync_image(int image, int* status){
+  _XMP_fatal("Not implement xmp_sync_images()");
+}
+
+void xmp_sync_image_f(int *image, int* status){
+  xmp_sync_image(*image, status);
+}
+
+void xmp_sync_images(int num, int* image_set, int* status){
+  _XMP_fatal("Not implement xmp_sync_images_images()");
+}
+
+void xmp_sync_images_f(int *num, int* image_set, int* status){
+  xmp_sync_images(*num, image_set, status);
+}
+
+void xmp_sync_images_all(int* status){
+  _XMP_fatal("Not implement xmp_sync_images_all()");
+}
 

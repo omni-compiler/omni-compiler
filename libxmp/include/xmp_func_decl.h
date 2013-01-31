@@ -78,6 +78,13 @@ extern void _XMP_coarray_rma_do_f(int *rma_code, void *coarray, void *array);
 extern void _XMP_coarray_rma_do(int rma_code, void *coarray, void *array);
 extern void _XMP_coarray_sync_all();
 extern void _XMP_coarray_sync_memory();
+extern void xmp_sync_memory(int* status);
+extern void xmp_sync_all(int* status);
+extern void xmp_sync_image(int image, int* status);
+extern void xmp_sync_image_f(int *image, int* status);
+extern void xmp_sync_images(int num, int* image_set, int* status);
+extern void xmp_sync_images_f(int *num, int* image_set, int* status);
+extern void xmp_sync_images_all(int* status);
 
 // xmp_gmove.c
 extern void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, void *array, ...);

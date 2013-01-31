@@ -1,6 +1,7 @@
 #include <stdio.h>
+#include <xmp.h>
 #define MAX_TAG 4
-
+int *status;
 #pragma xmp nodes p(*)
 
 void init_tag(int tag[MAX_TAG]){
@@ -19,7 +20,7 @@ void post_wait_local(){
 #pragma xmp wait (p(1))     // release  0 tag
 #pragma xmp wait            // release -1 tag
   }
-#pragma xmp sync_all
+  xmp_sync_all(status);
 }
 
 void post_wait_p2p(int tag[MAX_TAG]){
@@ -37,7 +38,7 @@ void post_wait_p2p(int tag[MAX_TAG]){
 #pragma xmp wait (p(1), tag[3])  // release tag[3]
 #pragma xmp wait (p(1))          // release tag[1]
   }
-#pragma xmp sync_all
+  xmp_sync_all(status);
 }
 
 void post_wait_nodes(){
@@ -61,7 +62,7 @@ void post_wait_nodes(){
 #pragma xmp wait (p(2), tag2)
  }
 
-#pragma xmp sync_all
+ xmp_sync_all(status);
 }
 
 int main(){
