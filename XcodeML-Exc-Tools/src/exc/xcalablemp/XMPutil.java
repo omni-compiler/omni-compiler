@@ -166,7 +166,7 @@ public class XMPutil {
     int count = 0;
     Iterator<Xobject> it = list.iterator();
     while (it.hasNext()) {
-			it.next();
+      it.next();
       count++;
     }
 

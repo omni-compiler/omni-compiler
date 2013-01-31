@@ -54,23 +54,30 @@ extern void _XMP_bcast_NODES_ENTIRE_GLOBAL(void *bcast_nodes, void *addr, int co
 extern void _XMP_bcast_NODES_ENTIRE_NODES(void *bcast_nodes, void *addr, int count, size_t datatype_size, void *from_nodes, ...);
 
 // xmp_coarray.c
-//extern void _XMP_init_coarray_STATIC(void **coarray, void *addr, int type, size_t type_size, int dim, ...);
-//extern void _XMP_init_coarray_DYNAMIC(void **coarray, void *addr, int type, size_t type_size, int dim, ...);
-//extern void _XMP_init_coarray_comm(void *coarray, int dim, ...); 
-//extern void _XMP_finalize_coarray(void *coarray);
-extern void _XMP_init_coarray(void **coarray, void *addr, long number_of_elements, size_t type_size);
-//extern void _XMP_coarray_initialize(int, char **);
-//extern void _XMP_coarray_finalize();
-extern void _XMP_coarray_malloc(void**, void*, unsigned long long, size_t);
-//extern void _XMP_coarray_put(int, void*, int, void*, int, int);
-//extern void _XMP_coarray_get(void*, int, int, void*, int, int);
-extern void _XMP_coarray_sync_memory();
+extern void _XMP_gasnet_not_continuous_put();
+extern void _XMP_gasnet_continuous_put();
+extern void _XMP_gasnet_not_continuous_get();
+extern void _XMP_gasnet_continuous_get();
+extern void _XMP_coarray_malloc_set_f(int *elmt_size, int *coarray_dims, int *image_dims);
+extern void _XMP_coarray_malloc_set(int elmt_size, int coarray_dims, int image_dims);
+extern void _XMP_coarray_malloc_array_info_f(int *dim, long long *size);
+extern void _XMP_coarray_malloc_array_info(int dim, long long size);
+extern void _XMP_coarray_malloc_image_info_f(int *dim, int *image_size);
+extern void _XMP_coarray_malloc_image_info(int dim, int image_size);
+extern void _XMP_coarray_malloc_do_f(void **coarray, void *addr);
+extern void _XMP_coarray_malloc_do(void **coarray, void *addr);
+extern void _XMP_coarray_rma_set_f(int *coarray_dims, int *array_dims, int *image_dims);
+extern void _XMP_coarray_rma_set(int coarray_dims, int array_dims, int image_dimss);
+extern void _XMP_coarray_rma_coarray_set_f(int *dim, long long *start, long long *length, long long *stride);
+extern void _XMP_coarray_rma_coarray_set(int dim, long long start, long long length, long long stride);
+extern void _XMP_coarray_rma_array_set_f(int *dim, long long *start, long long *length, long long *stride, long long *size, long long *distance);
+extern void _XMP_coarray_rma_array_set(int dim, long long start, long long length, long long stride, long long size, long long distance);
+extern void _XMP_coarray_rma_node_set_f(int *dim, int *image_num);
+extern void _XMP_coarray_rma_node_set(int dim, int image_num);
+extern void _XMP_coarray_rma_do_f(int *rma_code, void *coarray, void *array);
+extern void _XMP_coarray_rma_do(int rma_code, void *coarray, void *array);
 extern void _XMP_coarray_sync_all();
-
-// xmp_coarray_RMA.c
-//extern void _XMP_coarray_rma_SCALAR(int rma_code, void *coarray, void *offser_addr, void *rma_addr, ...);
-extern void _XMP_coarray_rma_SCALAR(int rma_code, void *rma_addr, unsigned long long rma_offset, void* local_addr, int node);
-extern void _XMP_coarray_rma_ARRAY(int rma_code, void *coarray, void *rma_addr, ...);
+extern void _XMP_coarray_sync_memory();
 
 // xmp_gmove.c
 extern void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, void *array, ...);

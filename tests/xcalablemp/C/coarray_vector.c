@@ -123,11 +123,11 @@ void check_2(int me){
 void communicate_3(int me){
 #pragma xmp sync_all
   if(me == 2){
-    c[1][2][0:1]:[1] = c[1][1][1:];     // put
+    c[1][2][0:1]:[1] = c[1][1][1];     // put
   }
   if(me == 1){
     double tmp[2][5];
-    tmp[1][0:] = c[0][2][1:]:[2];       // get
+    tmp[1][0:5] = c[0][2][1:5]:[2];       // get
     memcpy(&c[0][2][1], &tmp[1][0], sizeof(double) * 3);
   }
   

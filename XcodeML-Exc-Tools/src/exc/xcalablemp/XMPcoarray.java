@@ -66,20 +66,10 @@ public class XMPcoarray {
 
   public static void translateCoarray(XobjList coarrayDecl, XMPglobalDecl globalDecl,
                                       boolean isLocalPragma, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
-
     String coarrayName = coarrayDecl.getArg(0).getString();
-
-    // Fix me: Now only one dimensional node of coarray is supported
-    int num_coarray_node_dim = XMPutil.countElmts((XobjList)coarrayDecl.getArg(1));
-    if(num_coarray_node_dim > 1){
-      throw new XMPexception("number of coarray " + coarrayName + " node dimension is " + num_coarray_node_dim + ".\n" +
-			     "Now support only one coarray node dimension.");
-    }
-
     if(globalDecl.getXMPcoarray(coarrayName) != null) {
       throw new XMPexception("coarray " + coarrayName + " is already declared");
     }
-
     if (globalDecl.getXMPalignedArray(coarrayName) != null) {
       throw new XMPexception("an aligned array cannot be declared as a coarray");
     }
@@ -89,6 +79,7 @@ public class XMPcoarray {
       throw new XMPexception("coarray '" + coarrayName + "' is not declared");
     }
 
+    int imageDim = XMPutil.countElmts((XobjList)coarrayDecl.getArg(1));
     boolean isArray = false;
     int varDim = 0;
     Xtype elmtType = null;
@@ -116,60 +107,58 @@ public class XMPcoarray {
 
     XobjList coarrayDimSizeList = (XobjList)coarrayDecl.getArg(1);
     int coarrayDim = coarrayDimSizeList.Nargs();
-    if (coarrayDim > XMP.MAX_DIM) {
+    if(coarrayDim > XMP.MAX_DIM) {
       throw new XMPexception("coarray dimension should be less than " + (XMP.MAX_DIM + 1));
     }
 
-    String initDescFuncName = null;
-    initDescFuncName = new String("_XMP_coarray_malloc"); 
-    //    if (coarrayDecl.getArg(1).getArg(coarrayDim - 1) == null) {
-    //      initDescFuncName = new String("_XMP_init_coarray_DYNAMIC");
-    //    } else {
-    //      initDescFuncName = new String("_XMP_init_coarray_STATIC");
-    //    }
-    
-    // init descriptor
+    // _XMP_coarray_malloc_set()
+    String funcName = new String("_XMP_coarray_malloc_set");
+    XobjList funcArgs = Xcons.List(Xcons.Cast(Xtype.intType, Xcons.SizeOf(elmtType)), 
+				   Xcons.IntConstant(varDim), Xcons.IntConstant(imageDim));
+    globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
+
+    // _XMP_coarray_malloc_array_info()
+    funcName = new String("_XMP_coarray_malloc_array_info");
+    Vector<Long> sizeVector = new Vector<Long>(varDim);
+    if(isArray){
+      for(int i=0;i<varDim;i++,varType=varType.getRef()){
+        long dimSize = varType.getArraySize();
+        if((dimSize == 0) || (dimSize == -1)) {
+          throw new XMPexception("array size should be declared statically");
+        }
+	funcArgs = Xcons.List(Xcons.IntConstant(i), Xcons.LongLongConstant(0, dimSize));
+	globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
+        sizeVector.add(new Long(dimSize));
+      }                                                                                                                                                                                 
+    }
+    else{
+      funcArgs = Xcons.List(Xcons.IntConstant(0), Xcons.LongLongConstant(0, 1));
+      globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
+      sizeVector.add(new Long(1));
+    }  
+
+    // _XMP_coarray_malloc_image_info()
+    funcName = new String("_XMP_coarray_malloc_image_info");
+    for(int i=0;i<imageDim-1;i++){
+      funcArgs = Xcons.List(Xcons.IntConstant(i), ((XobjList)coarrayDecl.getArg(1)).getArg(i));
+      globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
+    }
+
+    // _XMP_coarray_malloc_do()
+    funcName = new String("_XMP_coarray_malloc_do");
     Ident descId = globalDecl.declStaticIdent(XMP.COARRAY_DESC_PREFIX_ + coarrayName, Xtype.voidPtrType);
     Ident addrId = globalDecl.declStaticIdent(XMP.COARRAY_ADDR_PREFIX_ + coarrayName, new PointerType(elmtType));
-    //    XobjList initDescFuncArgs = Xcons.List(descId.getAddr(), varAddr, elmtTypeRef, Xcons.SizeOf(elmtType),
-    //                                           Xcons.IntConstant(coarrayDim));
+    funcArgs = Xcons.List(descId.getAddr(), addrId.getAddr());
+    globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
     
-    // Fix me : How to create unsigned long long constant ?
-    XobjList initDescFuncArgs = Xcons.List(descId.getAddr(), addrId.getAddr(), Xcons.LongLongConstant(0, num_of_elemt),
-					   Xcons.SizeOf(elmtType));
-    
+    //    XobjList initDescFuncArgs = Xcons.List(descId.getAddr(), addrId.getAddr(), Xcons.SizeOf(elmtType));
+    //    initDescFuncArgs.add(Xcons.IntConstant(varDim));
     //    for (Xobject coarrayDimSize : coarrayDimSizeList) {
     //      if (coarrayDimSize != null) {
-    //        initDescFuncArgs.add(Xcons.Cast(Xtype.intType, coarrayDimSize));
+    //	initDescFuncArgs.add(Xcons.Cast(Xtype.intType, coarrayDimSize));
     //      }
     //    }
 
-    // call init desc function
-    globalDecl.addGlobalInitFuncCall(initDescFuncName, initDescFuncArgs);
-
-    // call init comm function
-    //    XobjList initCommFuncArgs = Xcons.List(descId.Ref(), Xcons.IntConstant(varDim));
-    Vector<Long> sizeVector = new Vector<Long>(varDim);
-    
-    if (isArray) {
-      for (int i = 0; i < varDim; i++, varType = varType.getRef()) {
-	long dimSize = varType.getArraySize();
-	if ((dimSize == 0) || (dimSize == -1)) {
-	  throw new XMPexception("array size should be declared statically");
-	}
-	sizeVector.add(new Long(dimSize));
-	//        initCommFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.LongLongConstant(0, dimSize)));
-      }
-    } else {
-      sizeVector.add(new Long(1));
-      //      initCommFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
-    }
-    
-    //    globalDecl.addGlobalInitFuncCall("_XMP_init_coarray_comm", initCommFuncArgs);
-    
-    // call finalize desc function
-    //		globalDecl.addGlobalFinalizeFuncCall("_XMP_finalize_coarray", Xcons.List(descId.Ref()));
-    
     XMPcoarray coarrayEntry = new XMPcoarray(coarrayName, elmtType, varDim, sizeVector, varAddr, varId, descId);
     globalDecl.putXMPcoarray(coarrayEntry);
   }

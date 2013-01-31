@@ -15,7 +15,7 @@ gasnet_handlerentry_t htable[] = {
 static unsigned long long _xmp_coarray_shift = 0;
 static char **_xmp_gasnet_buf;
 
-void _XMP_gasnet_set_coarray(_XMP_coarray_t *coarray, void **addr, unsigned long long number_of_elements, size_t type_size){
+void _XMP_gasnet_set_coarray(_XMP_coarray_t *coarray, void **addr, unsigned long long num_of_elmts, size_t elmt_size){
   int numprocs;
   char **each_addr;  // head address of a local array on each node
 
@@ -26,11 +26,11 @@ void _XMP_gasnet_set_coarray(_XMP_coarray_t *coarray, void **addr, unsigned long
   for(i=0;i<numprocs;i++)
     each_addr[i] = (char *)(_xmp_gasnet_buf[i]) + _xmp_coarray_shift;
 
-    if(type_size % _XMP_GASNET_ALIGNMENT == 0)
-      _xmp_coarray_shift += type_size * number_of_elements;
+    if(elmt_size % _XMP_GASNET_ALIGNMENT == 0)
+      _xmp_coarray_shift += elmt_size * num_of_elmts;
     else{
-      int tmp_type_size = ((type_size / _XMP_GASNET_ALIGNMENT) + 1) * _XMP_GASNET_ALIGNMENT;
-      _xmp_coarray_shift += tmp_type_size * number_of_elements;
+      int tmp = ((elmt_size / _XMP_GASNET_ALIGNMENT) + 1) * _XMP_GASNET_ALIGNMENT;
+      _xmp_coarray_shift += tmp * num_of_elmts;
     }
     
   if(_xmp_coarray_shift > _xmp_heap_size){
@@ -42,7 +42,7 @@ void _XMP_gasnet_set_coarray(_XMP_coarray_t *coarray, void **addr, unsigned long
   }
 
   coarray->addr = each_addr;
-  coarray->type_size = type_size;
+  coarray->elmt_size = elmt_size;
 
   *addr = each_addr[gasnet_mynode()];
 }
@@ -83,18 +83,53 @@ void _XMP_gasnet_sync_all(){
   GASNET_BARRIER();
 }
 
+static long long get_offset(_XMP_array_section_t *array, int dims){
+  int i;
+  long long offset = 0;
+  for(i=0;i<dims;i++)
+    offset += (array+i)->start * (array+i)->distance;
+
+  return offset;
+}
+
+void _XMP_gasnet_put(int target_image, int dest_continuous, int src_continuous,
+		     int dest_dims, int src_dims, _XMP_array_section_t *dest_info, 
+		     _XMP_array_section_t *src_info, _XMP_coarray_t *dest, void *src, long long length){
+  if(dest_continuous == _XMP_N_INT_TRUE){
+    long long dest_point = get_offset(dest_info, dest_dims);
+    long long src_point  = get_offset(src_info, src_dims);
+
+    gasnet_put_nbi_bulk(target_image, dest->addr[target_image]+dest_point, ((char *)src)+src_point, 
+			dest->elmt_size*length);
+  }
+}
+
+void _XMP_gasnet_get(int target_image, int src_continuous, int dest_continuous,
+		     int src_dims, int dest_dims, _XMP_array_section_t *src_info,
+                     _XMP_array_section_t *dest_info, _XMP_coarray_t *src, void *dest, long long length){
+  if(dest_continuous == _XMP_N_INT_TRUE){
+    long long dest_point = get_offset(dest_info, dest_dims);
+    long long src_point  = get_offset(src_info, src_dims);
+
+    gasnet_get_bulk(((char *)dest)+dest_point, target_image, ((char *)src->addr[target_image])+src_point, 
+    		    src->elmt_size*length);
+  }
+}
+
+#ifdef _OLD
 void _XMP_gasnet_put(int dest_node, _XMP_coarray_t* dest, unsigned long long dest_point, void *src_ptr, 
 		     unsigned long long src_point, unsigned long long length){
-  dest_point *= dest->type_size;
-  src_point  *= dest->type_size;
+  dest_point *= dest->elmt_size;
+  src_point  *= dest->elmt_size;
   dest_node -= 1;     // for 1-origin in XMP
-  gasnet_put_nbi_bulk(dest_node, dest->addr[dest_node]+dest_point, (char *)(src_ptr)+src_point, dest->type_size*length);
+  gasnet_put_nbi_bulk(dest_node, dest->addr[dest_node]+dest_point, (char *)(src_ptr)+src_point, dest->elmt_size*length);
 }
 
 void _XMP_gasnet_get(void *dest_ptr, unsigned long long dest_point, int src_node, _XMP_coarray_t *src, 
 		     unsigned long long src_point, unsigned long long length){
-  dest_point *= src->type_size;
-  src_point  *= src->type_size;
+  dest_point *= src->elmt_size;
+  src_point  *= src->elmt_size;
   src_node -= 1;     // for 1-origin in XMP
-  gasnet_get_bulk((char *)(dest_ptr)+dest_point, src_node, src->addr[src_node]+src_point, src->type_size*length);
+  gasnet_get_bulk((char *)(dest_ptr)+dest_point, src_node, src->addr[src_node]+src_point, src->elmt_size*length);
 }
+#endif

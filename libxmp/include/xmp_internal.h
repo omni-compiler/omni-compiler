@@ -171,8 +171,10 @@ extern void _XMP_post_initialize();
 extern void _XMP_gasnet_set_coarray(_XMP_coarray_t *coarray, void **addr, unsigned long long number_of_elements, size_t type_size);
 extern void _XMP_gasnet_initialize(int, char**, unsigned long long);
 extern void _XMP_gasnet_finalize(int);
-extern void _XMP_gasnet_put(int, _XMP_coarray_t*, unsigned long long, void*, unsigned long long, unsigned long long);
-extern void _XMP_gasnet_get(void*, unsigned long long, int, _XMP_coarray_t*, unsigned long long, unsigned long long);
+extern void _XMP_gasnet_put(int, int, int, int, int, _XMP_array_section_t*, _XMP_array_section_t*, 
+			    _XMP_coarray_t*, void*, long long);
+extern void _XMP_gasnet_get(int, int, int, int, int, _XMP_array_section_t*, _XMP_array_section_t*,
+                            _XMP_coarray_t*, void*, long long);
 extern void _XMP_gasnet_sync_all();
 extern void _XMP_gasnet_sync_memory();
 extern void _xmp_gasnet_post_initialize();
