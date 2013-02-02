@@ -7,6 +7,9 @@
 #ifndef _XMP_INTERNAL
 #define _XMP_INTERNAL
 
+extern int _XMPC_running;
+extern int _XMPF_running;
+
 // --------------- including headers  --------------------------------
 #include <stddef.h>
 #include <stdarg.h>
