@@ -796,7 +796,7 @@ if test "x${useJava}" = "xyes"; then
     AC_MSG_CHECKING([IBM Java6])
     jTmp=/tmp/.omniJavaChk.$$
     ${JAVACOM} -fullversion > ${jTmp} 2>&1
-    chk=`grep 'J2RE 1.6.0 IBM' ${jTmp}`
+    chk=`grep 'JRE 1.6.0 IBM' ${jTmp}`
     if test "x${chk}" = "x"; then
         AC_MSG_RESULT([no])
     else
