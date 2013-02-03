@@ -11,6 +11,7 @@ extern int _XMPC_running;
 extern int _XMPF_running;
 
 // --------------- including headers  --------------------------------
+#include <mpi.h>
 #include <stddef.h>
 #include <stdarg.h>
 // --------------- macro functions -----------------------------------

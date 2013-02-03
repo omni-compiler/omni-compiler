@@ -8,7 +8,6 @@
 #define _XMP_IO
 
 // --------------- including headers  --------------------------------
-#include "mpi.h"
 #include "xmp.h"
 #include "xmp_data_struct.h"
 

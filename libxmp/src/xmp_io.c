@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
+#include <mpi.h>
 /* #define DEBUG */
 
 #define MPI_TYPE_CREATE_RESIZED1  MPI_Type_create_resized1

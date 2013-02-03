@@ -8,7 +8,6 @@
 
 #include <stdbool.h>
 #include "xmp_constant.h"
-#include "mpi.h"
 
 #define _XMP_comm_t void
 
