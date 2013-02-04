@@ -10,7 +10,7 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include "xmp_data_struct.h"
+//#include "xmp_data_struct.h"
 
 // ----- libxml
 // xmp_align.c
@@ -108,7 +108,7 @@ extern void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_
                                             void *template, int template_index);
 extern void _XMP_sched_loop_template_BLOCK_CYCLIC(int ser_init, int ser_cond, int ser_step,
                                            int *par_init, int *par_cond, int *par_step,
-                                           _XMP_template_t *template, int template_index);
+                                           void *template, int template_index);
 extern void _XMP_sched_loop_nodes(int ser_init, int ser_cond, int ser_step,
                                   int *par_init, int *par_cond, int *par_step,
                                   void *nodes, int nodes_index);
