@@ -1,5 +1,9 @@
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "xmp_internal.h"
+#include "mpi-ext.h"
+
 unsigned long long _xmp_heap_size;
 static int _elmt_size, _coarray_dims, _image_dims, *_image_size, _array_dims;
 static long long *_coarray_size, _total_coarray_size;
@@ -7,6 +11,7 @@ static long long _total_coarray_length, _total_array_length;
 static _XMP_array_section_t *_coarray, *_array;
 
 void _XMP_coarray_initialize(int argc, char **argv){
+    fprintf(stderr, "CP(init)\n");
 #ifdef _XMP_COARRAY_GASNET
   char *env_heap_size;
 
@@ -27,6 +32,9 @@ void _XMP_coarray_initialize(int argc, char **argv){
   }
 
   _XMP_gasnet_initialize(argc, argv, _xmp_heap_size);
+#elif _XMP_COARRAY_FJRDMA
+  fprintf(stderr, "CP01\n");
+  _XMP_fjrdma_initialize();
 #else
   _XMP_fatal("Cannt use Coarray Function");
 #endif
@@ -36,12 +44,16 @@ void _XMP_coarray_finalize(){
 #ifdef _XMP_COARRAY_GASNET
   _XMP_gasnet_sync_all();
   _XMP_gasnet_finalize(0);
+#elif _XMP_COARRAY_FJRDMA
+  fprintf(stderr, "CP02\n");
+  _XMP_fjrdma_finalize();
 #else
   _XMP_fatal("Cannt use Coarray Function");
 #endif
 }
 
 void _XMP_coarray_malloc_set(int elmt_size, int coarray_dims, int image_dims){
+    fprintf(stderr, "CP(coarray_malloc_set)\n");
   _elmt_size          = elmt_size;
   _coarray_dims       = coarray_dims;
   _coarray_size       = _XMP_alloc(sizeof(long long) * coarray_dims);
@@ -118,6 +130,9 @@ void _XMP_coarray_malloc_do(void **coarray, void *addr){
 
 #ifdef _XMP_COARRAY_GASNET
   _XMP_gasnet_set_coarray(*coarray, addr, _total_coarray_size, _elmt_size);
+#elif _XMP_COARRAY_FJRDMA
+  fprintf(stderr, "CP(malloc_do)\n");
+  _XMP_fjrdma_reg_mem(*coarray, addr, _total_coarray_size);
 #else
   _XMP_fatal("Cannt use Coarray Function");
 #endif
@@ -265,6 +280,35 @@ void _XMP_coarray_rma_do(int rma_code, void *coarray, void *array){
   else{
     _XMP_fatal("Unexpected Operation !!");
   }
+#elif _XMP_COARRAY_FJRDMA
+  fprintf(stderr, "CP04\n");
+  if (_XMP_N_COARRAY_PUT == rma_code) {
+    _XMP_fjrdma_put(target_image,
+		    coarray_continuous,
+		    array_continuous,
+		    _coarray_dims,
+		    _array_dims,
+		    _coarray,
+		    _array,
+		    coarray,
+		    array,
+		    _total_coarray_length,
+		    _image_size);
+  } else if (_XMP_N_COARRAY_GET == rma_code) {
+    _XMP_fjrdma_get(target_image,
+		    coarray_continuous,
+		    array_continuous,
+                    _coarray_dims,
+		    _array_dims,
+		    _coarray,
+		    _array,
+		    coarray,
+		    array,
+		    _total_coarray_length,
+		    _image_size);
+  } else {
+    _XMP_fatal("Unexpected Operation !!");
+  }
 #else
   _XMP_fatal("Cannt use Coarray Function");
 #endif
@@ -279,14 +323,21 @@ void _XMP_coarray_rma_do_f(int *rma_code, void *coarray, void *array){
 void _XMP_coarray_sync_all(){
 #ifdef _XMP_COARRAY_GASNET
   _XMP_gasnet_sync_all();
+#elif _XMP_COARRAY_FJRDMA
+  fprintf(stderr, "CP05\n");
+  _XMP_fjrdma_sync_all();
 #else
   _XMP_fatal("Cannt use Coarray Function");
 #endif
 }
 
 void _XMP_coarray_sync_memory(){
+  fprintf(stderr, "CP06(sync_memory) start\n");
 #ifdef _XMP_COARRAY_GASNET
   _XMP_gasnet_sync_memory();
+#elif _XMP_COARRAY_FJRDMA
+  _XMP_fjrdma_sync_memory();
+  fprintf(stderr, "CP06(sync_memory) finish\n");
 #else
   _XMP_fatal("Cannt use Coarray Function");
 #endif
@@ -295,6 +346,9 @@ void _XMP_coarray_sync_memory(){
 void xmp_sync_memory(int* status){
 #ifdef _XMP_COARRAY_GASNET
   _XMP_gasnet_sync_memory();
+#elif _XMP_COARRAY_FJRDMA
+  fprintf(stderr, "CP07\n");
+  _XMP_fjrdma_sync_memory();
 #else
   _XMP_fatal("Cannt use Coarray Function");
 #endif
@@ -303,6 +357,9 @@ void xmp_sync_memory(int* status){
 void xmp_sync_all(int* status){
 #ifdef _XMP_COARRAY_GASNET
   _XMP_gasnet_sync_all();
+#elif _XMP_COARRAY_FJRDMA
+  fprintf(stderr, "CP08\n");
+  _XMP_fjrdma_sync_all();
 #else
   _XMP_fatal("Cannt use Coarray Function");
 #endif
