@@ -236,7 +236,6 @@ static int check_continuous(_XMP_array_section_t *a, int dims, long long total_l
   }
 }
 
-//void _XMP_coarray_rma_do(int rma_code, void *coarray, long *array){
 void _XMP_coarray_rma_do(int rma_code, void *coarray, void *array){
   int i, target_image = 0;
 
