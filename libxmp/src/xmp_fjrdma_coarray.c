@@ -17,14 +17,14 @@ struct FJMPI_Rdma_cq cq;
 
 int _XMP_fjrdma_initialize() {
     int ret;
-//    fprintf(stderr, "CP(fjrdma_initialize01)\n");
+//    fprintf(fjrdma_coarray.c)(stderr, "CP(fjrdma_initialize01)\n");
     ret = FJMPI_Rdma_init();
 
-//    fprintf(stderr, "CP(fjrdma_initialize02)\n");
+//    fprintf(stderr, "CP(fjrdma_coarray.c)(fjrdma_initialize02)\n");
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    raddr = (uint64_t**)malloc(sizeof(uint64_t*)*512);
-    for (int i = 0; i < 512; i++) {
+    raddr = (uint64_t**)malloc(sizeof(uint64_t*)*510);
+    for (int i = 0; i < 510; i++) {
 	raddr[i] = (uint64_t *)malloc(sizeof(uint64_t)*(numprocs));
     }
 
@@ -38,29 +38,29 @@ int _XMP_fjrdma_finalize() {
 }
 
 void _XMP_fjrdma_sync_memory() {
-    fprintf(stderr, "fjrdma_sync_memory [%d] %d\n", rank, rdma_num);
+  //    fprintf(stderr, "(fjrdma_coarray.c)fjrdma_sync_memory [%d] %d\n", rank, rdma_num);
     /*
-    fprintf(stderr, "fjrdma_sync_memory01 [%d] %d\n", rank, rdma_num);
+    fprintf(stderr, "(fjrdma_coarray.c)fjrdma_sync_memory01 [%d] %d\n", rank, rdma_num);
     while (rdma_num > 0) {
-	fprintf(stderr, "fjrdma_sync_memory02 [%d] %d\n", rank, rdma_num);
+	fprintf(stderr, "(fjrdma_coarray.c)fjrdma_sync_memory02 [%d] %d\n", rank, rdma_num);
 	if (FJMPI_Rdma_poll_cq(FJMPI_RDMA_NIC0, NULL) == FJMPI_RDMA_NOTICE) {
 	    rdma_num--;
 	}
-	fprintf(stderr, "fjrdma_sync_memory finish[%d] %d\n", rank, rdma_num);
+	fprintf(stderr, "(fjrdma_coarray.c)fjrdma_sync_memory finish[%d] %d\n", rank, rdma_num);
     }
     */
 }
 
 void _XMP_fjrdma_sync_all(){
   _XMP_fjrdma_sync_memory();
-  _XMP_barrier_EXEC();
+  //  _XMP_barrier_EXEC();
 }
 
 uint64_t _XMP_fjrdma_reg_mem(_XMP_coarray_t *coarray, void **buf, unsigned long long num_of_elmts) {
-    uint64_t ret;
+    uint64_t retregmem;
 //    int numprocs, rank;
 //    char **each_addr;
-    fprintf(stderr, "CP(reg_mem01)\n");
+//    fprintf(stderr, "CP(fjrdma_coarray.c)(reg_mem01)\n");
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -73,24 +73,26 @@ uint64_t _XMP_fjrdma_reg_mem(_XMP_coarray_t *coarray, void **buf, unsigned long 
     }
 //    each_addr = (uint64_t *)_XMP_alloc(sizeof(uint64_t) * numprocs);
 //    each_addr = (char **)_XMP_alloc(sizeof(char *) * numprocs);
-//    fprintf(stderr, "CP(reg_mem02) numprocs=%d\n", numprocs);
+//    fprintf(stderr, "CP(fjrdma_coarray.c)(reg_mem02) numprocs=%d\n", numprocs);
+    /*
     for (int i = 0; i < numprocs; i++) {
-	fprintf(stderr, "CP(reg_mem02-1) i=%d shift=%d\n", i, _xmp_coarray_shift);
-//	fprintf(stderr, "CP(reg_mem02-2) i=%d buf=%d\n", i, _xmp_fjrdma_buf[i]);
+      //	fprintf(stderr, "CP(fjrdma_coarray.c)(reg_mem02-1) i=%d shift=%d\n", i, _xmp_coarray_shift);
+//	fprintf(stderr, "CP(fjrdma_coarray.c)(reg_mem02-2) i=%d buf=%d\n", i, _xmp_fjrdma_buf[i]);
 //	each_addr[i] = (char *)(_xmp_fjrdma_buf[i]) + _xmp_coarray_shift;
     }
+    */
 
-//    fprintf(stderr, "CP(reg_mem03)\n");
+//    fprintf(stderr, "CP(fjrdma_coarray.c)(reg_mem03)\n");
     if (coarray->elmt_size % _XMP_FJRDMA_ALIGNMENT == 0) {
-//	fprintf(stderr, "CP(reg_mem03-1: if)\n");
+//	fprintf(stderr, "CP(fjrdma_coarray.c)(reg_mem03-1: if)\n");
 	_xmp_coarray_shift += coarray->elmt_size * num_of_elmts;
     } else {
-//	fprintf(stderr, "CP(reg_mem03-2: else)\n");
+//	fprintf(stderr, "CP(fjrdma_coarray.c)(reg_mem03-2: else)\n");
 	int tmp = ((coarray->elmt_size / _XMP_FJRDMA_ALIGNMENT) + 1) * _XMP_FJRDMA_ALIGNMENT;
 	_xmp_coarray_shift += tmp * num_of_elmts;
     }
     
-    fprintf(stderr, "CP(reg_mem04)\n");
+    //    fprintf(stderr, "CP(fjrdma_coarray.c)(reg_mem04)\n");
     /*
     if(_xmp_coarray_shift > _xmp_heap_size) {
 	if(rank == 0) {
@@ -101,34 +103,32 @@ uint64_t _XMP_fjrdma_reg_mem(_XMP_coarray_t *coarray, void **buf, unsigned long 
     }
     */
 
-#if 1
-    fprintf(stderr, "reg_mem04-1(rank, elmt_size, num_of_elmts)=(%d, %d, %d)\n", rank, coarray->elmt_size, num_of_elmts);
+    //    fprintf(stderr, "(fjrdma_coarray.c)reg_mem04-1(rank, elmt_size, num_of_elmts, _memid)=(%d, %d, %d, %d)\n", rank, coarray->elmt_size, num_of_elmts, _memid);
     *buf = (void *)malloc(coarray->elmt_size * num_of_elmts);
-    ret = FJMPI_Rdma_reg_mem(_memid, *buf, coarray->elmt_size * num_of_elmts);
+    retregmem = FJMPI_Rdma_reg_mem(_memid, *buf, coarray->elmt_size * num_of_elmts);
+    if (retregmem == FJMPI_RDMA_ERROR) {
+      fprintf(stderr, "reg_mem Error!\n");
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }
     for (int i = 0; i < numprocs; i++) {
 	while ((raddr[_memid][i] = FJMPI_Rdma_get_remote_addr(i, _memid)) == FJMPI_RDMA_ERROR) {
-	    ;
+	  ;
+	  //	  fprintf(stderr, "while r=[%d]\n", rank);
 	}
     }
-    fprintf(stderr, "CP(reg_mem05) num_of_elmts=%d elmt_size=%d\n", num_of_elmts, coarray->elmt_size);
+    _memid++;
+    //    fprintf(stderr, "CP(fjrdma_coarray.c)(reg_mem05) num_of_elmts=%d elmt_size=%d\n", num_of_elmts, coarray->elmt_size);
 //    size_t length = (size_t)(num_of_elmts * coarray->elmt_size);
-//    fprintf(stderr, "CP(reg_num05-1) _memid=%d\n", _memid);
+//    fprintf(stderr, "CP(fjrdma_coarray.c)(reg_num05-1) _memid=%d\n", _memid);
 //    while((ret = FJMPI_Rdma_reg_mem(_memid, *buf, length)) == FJMPI_RDMA_ERROR) {
-//	fprintf(stderr, "while loop\n");
+//	fprintf(stderr, "(fjrdma_coarray.c)while loop\n");
 //	;
 //    }
-    fprintf(stderr, "CP(reg_mem06)\n");
-#else
-    ret = FJMPI_Rdma_reg_mem(_memid
-			     (void *)_XMP_COARRAY_ADDR_result,
-			     sizeof(struct anon_type_26_Pair)*DATA_NUM_X*DATA_NUM_Y);
-#endif
 //    for (int i = 0; i < numprocs; i++) {
 //	while ((each_addr[i] = (void *)FJMPI_Rdma_get_remote_addr(i, _memid)) == (void *)FJMPI_RDMA_ERROR);
 //    }
-    _memid++;
 //    *buf = each_addr[rank];
-    return ret;
+    return retregmem;
 }
 
 #if 1
@@ -144,68 +144,62 @@ void _XMP_fjrdma_put(int target_image,
 		     long long length,
 		     int *image_size) {
 
-    uint64_t laddr;
-    laddr = FJMPI_Rdma_reg_mem(_memid, (void*)(&src), dest->elmt_size);
-    fprintf(stderr, "laddr reg memory(%d, %d)\n", FJMPI_RDMA_ERROR, laddr);
+    int destnode = image_size[0]-1;
+    uint64_t laddr = FJMPI_Rdma_reg_mem(_memid, (void*)(src), dest->elmt_size);
+    //    uint64_t laddr = FJMPI_Rdma_reg_mem(_memid, (void*)(xxx), sizeof(long));
+    _memid++;
+    //    printf("PUT destnode=%d tag=%d raddr=%d laddr=%d\n    sizoef(long)=%d _memid=%d\n", destnode, tag, raddr[0][destnode], laddr, sizeof(long), _memid);
+    //    fprintf(stderr, "(fjrdma_coarray.c:_put)laddr reg memory(%d, %d)\n", FJMPI_RDMA_ERROR, laddr);
     if (laddr == FJMPI_RDMA_ERROR) {
-	fprintf(stderr, "laddr reg memory error (%d)\n", laddr);
-	MPI_Abort(MPI_COMM_WORLD, 1);
-    } else {
-	fprintf(stderr, "laddr reg memory noerror\n");
-    }
-    if (FJMPI_Rdma_put(image_size[0],
-		       (tag++)%14,
-		       (uint64_t)(raddr[image_size[0]] + sizeof(long)*dest_info[0].start),
+      //      fprintf(stderr, "(fjrdma_coarray.c:_put)laddr reg memory error r=[%d] (%d)\n", rank, laddr);
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }// else {
+    //      fprintf(stderr, "(fjrdma_coarray.c)laddr reg memory noerror[%d]\n", rank);
+    //    }
+    if (FJMPI_Rdma_put(destnode,
+		       tag%14,
+		       raddr[0][destnode] + sizeof(long)*dest_info[0].start,
 		       laddr,
 		       sizeof(long),
 		       FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_REMOTE_NIC1)) {
-	fprintf(stderr, "put error!\n");
+        fprintf(stderr, "(fjrdma_coarray.c:_put)put error!\n");
 	MPI_Abort(MPI_COMM_WORLD, 1);
     }
-    fprintf(stderr, "put arg image_size[0]=%d tag=%d raddr[image_size[0]]=%d dest_info[0].start=%d laddr=%d sizeof(long)=%d FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_REMOTE_NIC1=%d\n",image_size[0], tag, raddr[image_size[0]], dest_info[0].start, laddr, sizeof(long), FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_REMOTE_NIC1);
-/*    
-    if(dest_continuous == _XMP_N_INT_TRUE) {
-	long long dest_point = get_offset(dest_info, dest_dims);
-	long long src_point  = get_offset(src_info, src_dims);
-	
-	FJMPI_Rdma_put();
-    }
-*/
-    fprintf(stderr, "PUT\n");
+    //    fprintf(stderr, "(fjrdma_coarray.c:_put) arg destnode=%d tag=%d raddr[%d][%d]=%d dest_info[0].start=%d src=%d\n",destnode , tag, 0, destnode, raddr[0][destnode], dest_info[0].start, *(long*)(src));
+    //    fprintf(stderr, "                            laddr=%d sizeof(long)=%d FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_REMOTE_NIC1=%d\n",laddr, sizeof(long), FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_REMOTE_NIC1);
+    //    fprintf(stderr, "(fjrdma_coarray.c)===PUT===\n");
     rdma_num++;
-    fprintf(stderr, "fjrdma_sync_memory01 [%d] %d\n", rank, rdma_num);
+    //    fprintf(stderr, "(fjrdma_coarray.c)(PUT01) r=[%d] %d\n", rank, rdma_num);
 //    fprintf(stderr, "fjrdma_sync_memory01d [%d] %d %d\n", rank, FJMPI_RDMA_NOTICE, FJMPI_RDMA_HALFWAY_NOTICE);
-    while (rdma_num > 0) {
-	int flag;
-	fprintf(stderr, "fjrdma_sync_memory02 [%d] %d\n", rank, rdma_num);
-	flag = FJMPI_Rdma_poll_cq(FJMPI_RDMA_NIC1, &cq);
-	fprintf(stderr, "fjrdma_sync_memory02d [%d] %d %d %d\n", rank, flag, FJMPI_RDMA_NOTICE, FJMPI_RDMA_HALFWAY_NOTICE);
-	FJMPI_Rdma_poll_cq(FJMPI_RDMA_NIC1, &cq);
-	fprintf(stderr, "fjrdma_sync_memory03 [%d] %d\n", rank, rdma_num);
-	while(flag == 0) {
-	    fprintf(stderr, "fjrdma_sync_memory03-ws [%d] %d\n", rank, rdma_num);
-	    flag = FJMPI_Rdma_poll_cq(FJMPI_RDMA_NIC1, &cq);
-	    fprintf(stderr, "fjrdma_sync_memory03-we [%d] %d\n", rank, rdma_num);
-	}
-	if((cq.pid != image_size[0]) || (cq.tag != (tag-1)%14) || flag != FJMPI_RDMA_NOTICE) {
-	     fprintf(stderr, "CQ ERROR01 (%d, %d || %d, %d) %d\n", cq.pid, image_size[0], cq.tag, tag-1, flag);
-	}
+    int flag;
+    //    fprintf(stderr, "(fjrdma_coarray.c)(PUT02) r=[%d] %d\n", rank, rdma_num);
+    flag = FJMPI_Rdma_poll_cq(FJMPI_RDMA_NIC1, &cq);
+    //    fprintf(stderr, "(fjrdma_coarray.c)(PUT03) r=[%d] %d %d %d\n", rank, flag, FJMPI_RDMA_NOTICE, FJMPI_RDMA_HALFWAY_NOTICE);
+	//	FJMPI_Rdma_poll_cq(FJMPI_RDMA_NIC1, &cq);
+    //    fprintf(stderr, "(fjrdma_coarray.c)(PUT04) r=[%d] %d\n", rank, rdma_num);
+    while(flag == 0) {
+      //      fprintf(stderr, "(fjrdma_coarray.c)(PUT05) r=[%d] %d\n", rank, rdma_num);
+      flag = FJMPI_Rdma_poll_cq(FJMPI_RDMA_NIC1, &cq);
+      //      fprintf(stderr, "(fjrdma_coarray.c)(PUT06) r=[%d] %d\n", rank, rdma_num);
+    }
+    if((cq.pid != destnode) || (cq.tag != tag%14) || flag != FJMPI_RDMA_NOTICE) {
+      fprintf(stderr, "(fjrdma_coarray.c)CQ ERROR01 (PUT) (%d, %d || %d, %d) %d\n", cq.pid, destnode, cq.tag, tag, flag);
+    }
+    tag++;
 	/*
 	if (FJMPI_Rdma_poll_cq(FJMPI_RDMA_NIC0, &cq) == FJMPI_RDMA_NOTICE) {
 	    rdma_num--;
-	    fprintf(stderr, "fjrdma_sync_memory03 [%d] %d\n", rank, rdma_num);
+	    fprintf(stderr, "(fjrdma_coarray.c)fjrdma_sync_memory03 [%d] %d\n", rank, rdma_num);
 	}
 	*/
-	fprintf(stderr, "fjrdma_sync_memory04 [%d] %d\n", rank, rdma_num);
-    }
-    fprintf(stderr, "fjrdma_sync_memory finish[%d] %d\n", rank, rdma_num);
+    //    fprintf(stderr, "(fjrdma_coarray.c:_put)07 r=[%d] %d\n", rank, rdma_num);
+    //    fprintf(stderr, "(fjrdma_coarray.c:_put)finish r=[%d] %d\n", rank, rdma_num);
 }
 #else
 void _XMP_gasnet_put(int target_image, int dest_continuous, int src_continuous,
 		     int dest_dims, int src_dims, _XMP_array_section_t *dest_info, 
 		     _XMP_array_section_t *src_info, _XMP_coarray_t *dest, void *src, long long length){
-    static uint64_t laddr;
-    laddr = FJRdma_reg_mem(_memid, (void*)(&buf), coarray->elmt_size);
+    uint64_t laddr = FJRdma_reg_mem(_memid, (void*)(&buf), coarray->elmt_size);
     if(dest_continuous == _XMP_N_INT_TRUE){
 	long long dest_point = get_offset(dest_info, dest_dims);
 	long long src_point  = get_offset(src_info, src_dims);
@@ -228,28 +222,49 @@ void _XMP_fjrdma_get(int target_image,
 		     void *src,
 		     long long length,
 		     int *image_size) {
-    static uint64_t laddr;
-    laddr = FJMPI_Rdma_reg_mem(_memid, (void*)(&src), dest->elmt_size);
-    if (FJMPI_Rdma_put(image_size[0],
-		       (tag++)%14,
-		       (uint64_t)(raddr[image_size[0]] + sizeof(long)*dest_info[0].start),
-		       laddr,
+    int destnode = image_size[0]-1;
+    uint64_t laddr = FJMPI_Rdma_reg_mem(_memid, (void*)(src), dest->elmt_size);
+    _memid++;
+    //    printf("GET destnode=%d tag=%d raddr=%d laddr=%d\n    sizoef(long)=%d MEMID=%d\n", destnode, tag, raddr[0][destnode], laddr, sizeof(long), _memid);
+    if (FJMPI_Rdma_get(destnode,
+		       tag%14,
+		       raddr[0][destnode] + sizeof(long)*dest_info[0].start,
+		       laddr + sizeof(long)*1,
 		       sizeof(long),
 		       FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_REMOTE_NIC1)) {
-	fprintf(stderr, "put error!\n");
+        fprintf(stderr, "(fjrdma_coarray.c:_get)get error!\n");
 	MPI_Abort(MPI_COMM_WORLD, 1);
     }
-    fprintf(stderr, "GET\n");
+    //    fprintf(stderr, "(fjrdma_coarray.c:_get) arg destnode=%d tag=%d raddr[%d][%d]=%d dest_info[0].start=%d\n",destnode, tag, 0, destnode, raddr[0][destnode], dest_info[0].start);
+    //    fprintf(stderr, "                            laddr=%d sizeof(long)=%d FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_REMOTE_NIC1=%d\n",laddr, sizeof(long), FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_REMOTE_NIC1);
+    //    fprintf(stderr, "(fjrdma_coarray.c)===GET===\n");
 
+    int flag;
+    //    fprintf(stderr, "(fjrdma_coarray.c:_get)(GET02) r=[%d] %d\n", rank, rdma_num);
+    flag = FJMPI_Rdma_poll_cq(FJMPI_RDMA_NIC1, &cq);
+    //    fprintf(stderr, "(fjrdma_coarray.c:_get)(GET03) r=[%d] %d %d %d\n", rank, flag, FJMPI_RDMA_NOTICE, FJMPI_RDMA_HALFWAY_NOTICE);
+	//	FJMPI_Rdma_poll_cq(FJMPI_RDMA_NIC1, &cq);
+    //    fprintf(stderr, "(fjrdma_coarray.c:_get)(GET04) r=[%d] %d\n", rank, rdma_num);
+    while(flag == 0) {
+      //      fprintf(stderr, "(fjrdma_coarray.c:_get)(GET05) r=[%d] %d\n", rank, rdma_num);
+      flag = FJMPI_Rdma_poll_cq(FJMPI_RDMA_NIC1, &cq);
+      //      fprintf(stderr, "(fjrdma_coarray.c:_get)(GET06) r=[%d] %d\n", rank, rdma_num);
+    }
+    if((cq.pid != destnode) || (cq.tag != tag%14) || flag != FJMPI_RDMA_NOTICE) {
+      fprintf(stderr, "(fjrdma_coarray.c:_get)CQ ERROR01 (GET) (%d, %d || %d, %d) %d\n", cq.pid, destnode, cq.tag, tag, flag);
+    }
+    /*
     rdma_num++;
-    fprintf(stderr, "fjrdma_sync_memory01 [%d] %d\n", rank, rdma_num);
+    fprintf(stderr, "(fjrdma_coarray.c)fjrdma_sync_memory01 [%d] %d\n", rank, rdma_num);
     while (rdma_num > 0) {
-	fprintf(stderr, "fjrdma_sync_memory02 [%d] %d\n", rank, rdma_num);
+	fprintf(stderr, "(fjrdma_coarray.c)fjrdma_sync_memory02 [%d] %d\n", rank, rdma_num);
 	if (FJMPI_Rdma_poll_cq(FJMPI_RDMA_NIC1, NULL) == FJMPI_RDMA_NOTICE) {
 	    rdma_num--;
 	}
-	fprintf(stderr, "fjrdma_sync_memory finish[%d] %d\n", rank, rdma_num);
+	fprintf(stderr, "(fjrdma_coarray.c)fjrdma_sync_memory finish[%d] %d\n", rank, rdma_num);
     }
+    */
+    tag++;
 }
 
 #else
