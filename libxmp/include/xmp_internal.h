@@ -205,6 +205,7 @@ extern void _XMP_fjrdma_put(int target_image,
 			    _XMP_coarray_t *dest,
 			    void *src,
 			    long long length,
+			    long long,
 			    int*);
 extern void _XMP_fjrdma_get(int target_image,
 			    int dest_continuous,
@@ -215,6 +216,7 @@ extern void _XMP_fjrdma_get(int target_image,
 			    _XMP_coarray_t *dest,
 			    void *src,
 			    long long length,
+			    long long,
 			    int*);
 #endif
 extern unsigned long long _xmp_heap_size;
