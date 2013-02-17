@@ -129,34 +129,8 @@ void _XMP_fjrdma_put(int target_image,
     }
     fprintf(stderr, "\n");
 #endif
-    uint64_t raddr = raddr_start[dest_val_id][destnode];
-    for (int i = 0; i < dest_dims; i++) {
-      int dist_length=1;
-      for(int j = i + 1; j < dest_dims; j++) {
-#ifdef FJRDMA_DEBUG
-	fprintf(stderr, "[put:remote] i=%d j=%d size=%lld\n", i,j,dest->size[j]);
-#endif
-	dist_length *= dest->size[j];
-      }
-#ifdef FJRDMA_DEBUG
-      fprintf(stderr, "dist_length=%d\n", dist_length);
-#endif
-      raddr += typesize*dest_info[i].start*dist_length;
-#ifdef FJRDMA_DEBUG
-      fprintf(stderr, "dest_info[%d].start=%d, dest_info[%d].distance=%lld raddr=%d\n", i, dest_info[i].start, i, dest->size[i], raddr);
-#endif
-    }
-    uint64_t laddr = laddr_start;
-    for (int i = 0; i < src_dims; i++) {
-      //      fprintf(stderr, "src_info[%d].start=%d, src_info[%d].size=%lld\n", i, src_info[i].start, i, src_info[i].size);
-      int dist_length=1;
-      for(int j = i + 1; j < src_dims; j++) {
-	fprintf(stderr, "[get:local] i=%d j=%d size=%lld\n", i, j, src_info[j].size);
-	dist_length *= src_info[j].size;
-      }
-      fprintf(stderr, "dist_length=%d\n", dist_length);
-      laddr += typesize*src_info[i].start*dist_length;
-    }
+    uint64_t raddr = remote_addr(raddr_start[dest_val_id][destnode], dest_dims, dest_info, typesize);
+    uint64_t laddr = local_addr(laddr_start, src_dims, src_info, typesize);
     int options = FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_REMOTE_NIC1;
     if (FJMPI_Rdma_put(destnode, tag%14, raddr, laddr, typesize, options)) {
         fprintf(stderr, "(fjrdma_coarray.c:_put)put error!\n");
@@ -224,40 +198,8 @@ void _XMP_fjrdma_get(int target_image,
     fprintf(stderr, "\n");
     fprintf(stderr, "source_value=%d or %d or %lf\n", *(int*)(src), *(long*)(src), *(float*)(src));
 #endif
-    uint64_t raddr = raddr_start[dest_val_id][destnode];
-    for (int i = 0; i < dest_dims; i++) {
-      int dist_length=1;
-      for(int j = i + 1; j < dest_dims; j++) {
-#ifdef FJRDMA_DEBUG
-	fprintf(stderr, "[get:remote] i=%d j=%d size=%lld\n", i,j,dest->size[j]);
-#endif
-	dist_length *= dest->size[j];
-      }
-#ifdef FJRDMA_DEBUG
-      fprintf(stderr, "dist_length=%d\n", dist_length);
-#endif
-      raddr += typesize*dest_info[i].start*dist_length;
-#ifdef FJRDMA_DEBUG
-      fprintf(stderr, "dest_info[%d].start=%d, dest_info[%d].distance=%lld raddr=%d\n", i, dest_info[i].start, i, dest->size[i], raddr);
-#endif
-    }
-    uint64_t laddr = laddr_start;
-    for (int i = 0; i < src_dims; i++) {
-#ifdef FJRDMA_DEBUG
-      fprintf(stderr, "src_info[%d].start=%d, src_info[%d].size=%lld\n", i, src_info[i].start, i, src_info[i].size);
-#endif
-      int dist_length=1;
-      for(int j = i + 1; j < src_dims; j++) {
-#ifdef FJRDMA_DEBUG
-	fprintf(stderr, "[get:local] i=%d j=%d size=%lld\n", i, j, src_info[j].size);
-#endif
-	dist_length *= src_info[j].size;
-      }
-#ifdef FJRDMA_DEBUG
-      fprintf(stderr, "dist_length=%d\n", dist_length);
-#endif
-      laddr += typesize*src_info[i].start*dist_length;
-    }
+    uint64_t raddr = remote_addr(raddr_start[dest_val_id][destnode], dest_dims, dest_info, typesize);
+    uint64_t laddr = local_addr(laddr_start, src_dims, src_info, typesize);
     int options = FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_REMOTE_NIC1;
     if (FJMPI_Rdma_get(destnode, tag%14, raddr, laddr, typesize, options)) {
         fprintf(stderr, "(fjrdma_coarray.c:_get)get error!\n");
@@ -281,4 +223,50 @@ void _XMP_fjrdma_get(int target_image,
 #endif
     _memid++;
     tag++;
+}
+
+uint64_t remote_addr(uint64_t start_addr, int dims, _XMP_array_section_t *info, int typesize) {
+    uint64_t target_addr = start_addr;
+    for (int i = 0; i < dims; i++) {
+#ifdef FJRDMA_DEBUG
+      fprintf(stderr, "info[%d].start=%d, info[%d].size=%lld\n", i, info[i].start, i, info[i].size);
+#endif
+      int dist_length=1;
+      for (int j = i + 1; j < dims; j++) {
+#ifdef FJRDMA_DEBUG
+	fprintf(stderr, "[remote] i=%d j=%d size=%lld\n", i, j, info[j].size);
+#endif
+	dist_length *= info[j].size;
+      }
+#ifdef FJRDMA_DEBUG
+      fprintf(stderr, "dist_length=%d\n", dist_length);
+#endif
+      target_addr += typesize*info[i].start*dist_length;
+      fprintf(stderr, "cp\n");
+#ifdef FJRDMA_DEBUG
+      fprintf(stderr, "info[%d].start=%d, info[%d].distance=%lld target_addr=%d\n", i, info[i].start, i, info[i].size, target_addr);
+#endif
+    }
+    return target_addr;
+}
+
+uint64_t local_addr(uint64_t start_addr, int dims, _XMP_array_section_t *info, int typesize) {
+    uint64_t target_addr = start_addr;
+    for (int i = 0; i < dims; i++) {
+#ifdef FJRDMA_DEBUG
+      fprintf(stderr, "info[%d].start=%d, info[%d].size=%lld\n", i, info[i].start, i, info[i].size);
+#endif
+      int dist_length=1;
+      for(int j = i + 1; j < dims; j++) {
+#ifdef FJRDMA_DEBUG
+	fprintf(stderr, "[local] i=%d j=%d size=%lld\n", i, j, info[j].size);
+#endif
+	dist_length *= info[j].size;
+      }
+#ifdef FJRDMA_DEBUG
+      fprintf(stderr, "dist_length=%d\n", dist_length);
+#endif
+      target_addr += typesize*info[i].start*dist_length;
+    }
+    return target_addr;
 }
