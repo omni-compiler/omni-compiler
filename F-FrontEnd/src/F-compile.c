@@ -987,7 +987,9 @@ compile_exec_statement(expr x)
 
       if (CURRENT_STATE == OUTSIDE) {
 	begin_procedure();
-	declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
+	//declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
+	declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol("main")),
+			  NULL, NULL, NULL, NULL);
       }
 
       x1 = EXPR_ARG1(x);
@@ -1180,7 +1182,9 @@ check_INDATA()
 {
     if (CURRENT_STATE == OUTSIDE) {
         begin_procedure();
-        declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
+        //declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
+	declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol("main")),
+			  NULL, NULL, NULL, NULL);
     }
     if(NOT_INDATA_YET){
         end_declaration();
@@ -1195,7 +1199,9 @@ check_INDCL()
     case OUTSIDE:       
         begin_procedure();
         if (unit_ctl_level == 0)
-            declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
+	  //declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
+	  declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol("main")),
+			    NULL, NULL, NULL, NULL);
     case INSIDE:        
         CURRENT_STATE = INDCL;
     case INDCL: 
@@ -1210,7 +1216,9 @@ check_INEXEC()
 {
     if (CURRENT_STATE == OUTSIDE) {
         begin_procedure();
-        declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
+        //declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
+	declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol("main")),
+			  NULL, NULL, NULL, NULL);
     }
     if(NOT_INDATA_YET) end_declaration();
 }
