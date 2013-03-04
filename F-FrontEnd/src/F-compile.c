@@ -1182,9 +1182,7 @@ check_INDATA()
 {
     if (CURRENT_STATE == OUTSIDE) {
         begin_procedure();
-        //declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
-	declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol("main")),
-			  NULL, NULL, NULL, NULL);
+        declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
     }
     if(NOT_INDATA_YET){
         end_declaration();
@@ -1216,9 +1214,7 @@ check_INEXEC()
 {
     if (CURRENT_STATE == OUTSIDE) {
         begin_procedure();
-        //declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
-	declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol("main")),
-			  NULL, NULL, NULL, NULL);
+        declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
     }
     if(NOT_INDATA_YET) end_declaration();
 }
