@@ -429,6 +429,23 @@ int xmp_nodes_size(xmp_desc_t d, int dim, int *size){
 
 }
 
+int xmp_nodes_equiv(xmp_desc_t d, xmp_desc_t *dn, int lb[], int ub[], int st[]){
+
+  int i,ndims, ierr;
+  _XMP_nodes_t *n = (_XMP_nodes_t *)d;
+
+  *dn = (xmp_desc_t)(n->inherit_nodes);
+  ierr = xmp_nodes_ndims(n, &ndims);
+
+  for (i=0; i<ndims; i++){
+    lb[i]= n ->inherit_info[i].lower;
+    ub[i]= n ->inherit_info[i].upper;
+    st[i]= n ->inherit_info[i].stride;
+  }
+
+  return 0;
+
+}
 extern void _XMP_sched_loop_template_BLOCK(int, int, int, int *, int *, int *, void *, int);
 extern void _XMP_sched_loop_template_CYCLIC(int, int, int, int *, int *, int *, void *, int);
 extern void _XMP_sched_loop_template_BLOCK_CYCLIC(int, int, int, int *, int *, int *, void *, int);
