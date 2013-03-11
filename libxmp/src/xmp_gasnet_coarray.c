@@ -7,6 +7,7 @@ static int _xmp_gasnet_stride_wait_size = 0;
 static int _xmp_gasnet_stride_queue_size = _XMP_GASNET_STRIDE_INIT_SIZE;
 static unsigned long long _xmp_coarray_shift = 0;
 static char **_xmp_gasnet_buf;
+int done_get_flag;
 
 gasnet_handlerentry_t htable[] = {
   { _XMP_GASNET_LOCK_REQUEST,             _xmp_gasnet_lock_request },
@@ -17,7 +18,8 @@ gasnet_handlerentry_t htable[] = {
   { _XMP_GASNET_UNPACK_HANDLER,           _xmp_gasnet_unpack },
   { _XMP_GASNET_UNPACK_HANDLER_USING_BUF, _xmp_gasnet_unpack_using_buf },
   { _XMP_GASNET_UNPACK_REPLY,             _xmp_gasnet_unpack_reply },
-  { _XMP_GASNET_PACK_HANDLER,             _xmp_gasnet_pack }
+  { _XMP_GASNET_PACK_HANDLER,             _xmp_gasnet_pack },
+  { _XMP_GASNET_UNPACK_GET_REPLY,         _xmp_gasnet_unpack_get_reply}
 };
 
 void _XMP_gasnet_set_coarray(_XMP_coarray_t *coarray, void **addr, unsigned long long num_of_elmts, size_t elmt_size){
@@ -139,9 +141,8 @@ static int get_depth(int dims, const _XMP_array_section_t* array_info){
 }
 
 // Perhap, this function had better exist in xmp_lib.c
-static void XMP_pack(char* archive_ptr, const char* src_ptr, const int dst_dims,
-		     const int src_dims, const _XMP_array_section_t* src_info, 
-		     const _XMP_array_section_t* dst_info, long long archive_offset){
+static void XMP_pack(char* archive_ptr, const char* src_ptr, const int src_dims, 
+		     const _XMP_array_section_t* src_info, long long archive_offset){
 
   int i;
   size_t element_size = src_info[src_dims-1].distance;
@@ -198,7 +199,7 @@ static void XMP_gasnet_from_nonc_to_c_put(int target_image, long long dst_point,
 					  _XMP_array_section_t *dst_info, _XMP_array_section_t *src_info, 
 					  _XMP_coarray_t *dst, void *src, long long transfer_size){
   char* archive = malloc(transfer_size);
-  XMP_pack(archive, src, dst_dims, src_dims, src_info, dst_info, 0);
+  XMP_pack(archive, src, src_dims, src_info, 0);
   XMP_gasnet_c_put(target_image, dst_point, (long long)0, dst, archive, transfer_size);
   free(archive);
 }
@@ -341,7 +342,7 @@ static void XMP_gasnet_from_nonc_to_nonc_put(int target_image, long long src_poi
   transfer_size += sizeof(_XMP_array_section_t) * dst_dims;
   char *archive = malloc(transfer_size);
   memcpy(archive, dst_info, sizeof(_XMP_array_section_t) * dst_dims);
-  XMP_pack(archive, src, dst_dims, src_dims, src_info, dst_info, sizeof(_XMP_array_section_t) * dst_dims);
+  XMP_pack(archive, src, src_dims, src_info, sizeof(_XMP_array_section_t) * dst_dims);
 
   extend_stride_queue();
   _xmp_gasnet_stride_queue[_xmp_gasnet_stride_wait_size] = 0;
@@ -411,25 +412,39 @@ static void XMP_gasnet_from_c_to_nonc_get(int target_image, long long src_point,
 }
 
 
-void _xmp_gasnet_pack(gasnet_token_t t, const char* archive, const size_t transfer_size, 
-		      const int addr_hi, const int addr_lo, const int src_dims){
-  //  _XMP_array_section_t *src_info = malloc(sizeof(_XMP_array_section_t) * src_dims);
-  //  memcpy(src_info, archive, sizeof(_XMP_array_section_t) * src_dims);
-  
+void _xmp_gasnet_pack(gasnet_token_t t, const char* info, const size_t am_request_size, 
+		      const int src_addr_hi, const int src_addr_lo, const int src_dims, 
+		      const size_t tansfer_size, const int dst_addr_hi, const int dst_addr_lo){
 
-  //  free(src_info);
+  _XMP_array_section_t *src_info = (_XMP_array_section_t *)info;
+  char *archive = malloc(tansfer_size);
+  XMP_pack(archive, (char *)UPCRI_MAKEWORD(src_addr_hi,src_addr_lo), src_dims, src_info, 0);
+
+  gasnet_AMReplyMedium2(t, _XMP_GASNET_UNPACK_GET_REPLY, archive, tansfer_size,
+			dst_addr_hi, dst_addr_lo);
+  free(archive);
 }
-#ifdef _AA
+
+void _xmp_gasnet_unpack_get_reply(gasnet_token_t t, char *archive, size_t transfer_size, 
+				  const int dst_addr_hi, const int dst_addr_lo){
+  memcpy((char *)UPCRI_MAKEWORD(dst_addr_hi,dst_addr_lo), archive, transfer_size);
+  done_get_flag = _XMP_N_INT_TRUE;
+}
+
+
 static void XMP_gasnet_from_nonc_to_c_get(int target_image, int src_dims, _XMP_array_section_t *dst_info,
-                                          void *dst, _XMP_coarray_t *src, long long transfer_size){
+					  _XMP_array_section_t *src_info, void *dst, _XMP_coarray_t *src, 
+					  long long transfer_size, long long dst_point){
+  size_t am_request_size = sizeof(_XMP_array_section_t) * src_dims;
+  char *archive = malloc(am_request_size);  // Note: Info. of transfer_size may have better in "arcive".
+  memcpy(archive, src_info, am_request_size);
 
-  char *archive = malloc(sizeof(_XMP_array_section_t) * src_dims);
-  memcpy(archive, src_info, sizeof(_XMP_array_section_t) * src_dims);
-
-  int done_flag = _XMP_N_INT_FALSE;
+  done_get_flag = _XMP_N_INT_FALSE;
   if(transfer_size < gasnet_AMMaxMedium()){
-    gasnet_AMRequestMedium3(target_image, _XMP_GASNET_PACK_HANDLER, archive, (sizeof(_XMP_array_section_t) * src_dims),
-			    HIWORD(src->addr[target_image]), LOWORD(src->addr[target_image]), src_dims);
+    gasnet_AMRequestMedium6(target_image, _XMP_GASNET_PACK_HANDLER, archive, am_request_size,
+			    HIWORD(src->addr[target_image]), LOWORD(src->addr[target_image]), src_dims,
+			    (size_t)transfer_size, HIWORD((char *)dst+dst_point), LOWORD((char *)dst+dst_point));
+    GASNET_BLOCKUNTIL(done_get_flag == _XMP_N_INT_TRUE);
   }
   else if(transfer_size < _xmp_stride_size){
   }
@@ -438,7 +453,7 @@ static void XMP_gasnet_from_nonc_to_c_get(int target_image, int src_dims, _XMP_a
   }
   free(archive);
 }
-#endif
+
 void _XMP_gasnet_get(int src_continuous, int dst_continuous, int target_image, int src_dims, 
 		     int dst_dims, _XMP_array_section_t *src_info, _XMP_array_section_t *dst_info, 
 		     _XMP_coarray_t *src, void *dst, long long length){
@@ -450,12 +465,11 @@ void _XMP_gasnet_get(int src_continuous, int dst_continuous, int target_image, i
   if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
     XMP_gasnet_c_get(target_image, dst_point, src_point, dst, src, transfer_size);
   }
-#ifdef _AA
   else if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_FALSE){
-    XMP_gasnet_from_nonc_to_c_get(target_image, dst_point, dst_dims, src_dims,
-  				  dst_info, src_info, dst, src, transfer_size);
+    XMP_gasnet_from_nonc_to_c_get(target_image, src_dims, dst_info, 
+				  src_info, dst, src, 
+				  transfer_size, dst_point);
   }
-#endif
   else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_TRUE){
     XMP_gasnet_from_c_to_nonc_get(target_image, src_point, dst_dims, dst_info, 
 				  dst, src, transfer_size);
