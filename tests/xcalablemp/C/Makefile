@@ -17,6 +17,7 @@ all default: $(EXES)
 run: $(EXES)
 	$(XRUN) -np 2 coarray_scalar.x
 	$(XRUN) -np 2 coarray_vector.x
+	$(XRUN) -np 2 coarray_stride.x
 	$(XRUN) -np 4 post_wait.x
 	$(XRUN) -np 4 shadow.x
 

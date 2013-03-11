@@ -27,16 +27,23 @@ extern void _xmp_gasnet_do_lock(int, xmp_gasnet_lock_t*, int*);
 extern void _xmp_gasnet_lock_initialize(xmp_gasnet_lock_t*, int);
 extern void _xmp_gasnet_do_unlock(int, xmp_gasnet_lock_t*, int*, int*);
 extern void _xmp_gasnet_do_lockhandoff(int);
+extern void _xmp_gasnet_unpack(gasnet_token_t, const char*, const size_t, 
+			       const int, const int, const int, const int);
+extern void _xmp_gasnet_unpack_using_buf(gasnet_token_t, const int, const int, const int, const int);
+extern void _xmp_gasnet_unpack_reply(gasnet_token_t t, const int ith);
 
 /* Every handler function needs a uniqe number between 200-255.   
  * The Active Message library reserves ID's 1-199 for itself: client libs must
  * use IDs between 200-255. 
  */
-#define _XMP_GASNET_LOCK_REQUEST   200
-#define _XMP_GASNET_SETLOCKSTATE   201
-#define _XMP_GASNET_UNLOCK_REQUEST 202
-#define _XMP_GASNET_LOCKHANDOFF    203
-#define _XMP_GASNET_POST_REQUEST   204
+#define _XMP_GASNET_LOCK_REQUEST             200
+#define _XMP_GASNET_SETLOCKSTATE             201
+#define _XMP_GASNET_UNLOCK_REQUEST           202
+#define _XMP_GASNET_LOCKHANDOFF              203
+#define _XMP_GASNET_POST_REQUEST             204
+#define _XMP_GASNET_UNPACK_HANDLER           205
+#define _XMP_GASNET_UNPACK_HANDLER_USING_BUF 206
+#define _XMP_GASNET_UNPACK_REPLY             207
 extern void _xmp_gasnet_lock_request(gasnet_token_t, int, uint32_t, uint32_t);
 extern void _xmp_gasnet_setlockstate(gasnet_token_t, int);
 extern void _xmp_gasnet_do_setlockstate(int);

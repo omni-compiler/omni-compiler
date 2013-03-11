@@ -1,17 +1,16 @@
 #include <stdarg.h>
 #include "xmp_internal.h"
-unsigned long long _xmp_heap_size;
+unsigned long long _xmp_heap_size, _xmp_stride_size;
 static int _elmt_size, _coarray_dims, _image_dims, *_image_size, _array_dims;
 static long long *_coarray_size, _total_coarray_size;
 static long long _total_coarray_length, _total_array_length;
 static _XMP_array_section_t *_coarray, *_array;
 
 void _XMP_coarray_initialize(int argc, char **argv){
-#ifdef _XMP_COARRAY_GASNET
-  char *env_heap_size;
+  char *env_heap_size, *env_stride_size;
+  int i;
 
   if((env_heap_size = getenv("XMP_COARRAY_HEAP_SIZE")) != NULL){
-    int i;
     for(i=0;i<strlen(env_heap_size);i++){
       if(isdigit(env_heap_size[i]) == 0){
         fprintf(stderr, "%s : ", env_heap_size);
@@ -26,7 +25,23 @@ void _XMP_coarray_initialize(int argc, char **argv){
     _xmp_heap_size = _XMP_DEFAULT_COARRAY_HEAP_SIZE;
   }
 
-  _XMP_gasnet_initialize(argc, argv, _xmp_heap_size);
+  if((env_stride_size = getenv("XMP_COARRAY_STRIDE_SIZE")) != NULL){
+    for(i=0;i<strlen(env_stride_size);i++){
+      if(isdigit(env_stride_size[i]) == 0){
+        fprintf(stderr, "%s : ", env_stride_size);
+        _XMP_fatal("Unexpected Charactor in XMP_COARRAY_STRIDE_SIZE");
+      }
+    }
+    _xmp_stride_size = atoi(env_stride_size) * 1024 * 1024;
+    if(_xmp_stride_size <= 0){
+      _XMP_fatal("XMP_COARRAY_STRIDE_SIZE is less than 0 !!");
+    }
+  } else{
+    _xmp_stride_size = _XMP_DEFAULT_COARRAY_STRIDE_SIZE;
+  }
+
+#ifdef _XMP_COARRAY_GASNET
+  _XMP_gasnet_initialize(argc, argv);
 #else
   _XMP_fatal("Cannt use Coarray Function");
 #endif
@@ -249,17 +264,13 @@ void _XMP_coarray_rma_do(int rma_code, void *coarray, void *array){
   coarray_continuous = check_continuous(_coarray, _coarray_dims, _total_coarray_length);
   array_continuous   = check_continuous(_array, _array_dims, _total_coarray_length); 
 
-  if(coarray_continuous == _XMP_N_INT_FALSE || coarray_continuous == _XMP_N_INT_FALSE){
-    _XMP_fatal("Sorry! Not continuous array is not supported.");
-  }
-
 #ifdef _XMP_COARRAY_GASNET
   if(_XMP_N_COARRAY_PUT == rma_code){
-    _XMP_gasnet_put(target_image, coarray_continuous, array_continuous,
+    _XMP_gasnet_put(coarray_continuous, array_continuous, target_image,
 		    _coarray_dims, _array_dims, _coarray, _array, coarray, array, _total_coarray_length);
   }
   else if(_XMP_N_COARRAY_GET == rma_code){
-    _XMP_gasnet_get(target_image, coarray_continuous, array_continuous,
+    _XMP_gasnet_get(coarray_continuous, array_continuous, target_image,
                     _coarray_dims, _array_dims, _coarray, _array, coarray, array, _total_coarray_length);
   }
   else{
