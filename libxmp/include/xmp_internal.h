@@ -185,42 +185,5 @@ extern void _xmp_gasnet_post_initialize();
 extern void _xmp_gasnet_post(int, int);
 extern void _xmp_gasnet_wait(int, ...);
 #endif
-
-// ---- for rdma ----
-#ifdef _XMP_COARRAY_FJRDMA
-#include <mpi-ext.h>
-#define _XMP_DEFAULT_COARRAY_HEAP_SIZE (256*1024*1024)  // 256MB
-
-extern int _XMP_fjrdma_initialize();
-extern int _XMP_fjrdma_finalize();
-extern void _XMP_fjrdma_sync_memory();
-extern void _XMP_fjrdma_sync_all();
-extern uint64_t _XMP_fjrdma_reg_mem(_XMP_coarray_t *coarray, void **buf, unsigned long long num_of_elmts);
-extern void _XMP_fjrdma_put(int target_image,
-			    int dest_continuous,
-			    int src_continuous,
-			    int dest_dims, int src_dims,
-			    _XMP_array_section_t *dest_info, 
-			    _XMP_array_section_t *src_info,
-			    _XMP_coarray_t *dest,
-			    void *src,
-			    long long length,
-			    long long,
-			    int*);
-extern void _XMP_fjrdma_get(int target_image,
-			    int dest_continuous,
-			    int src_continuous,
-			    int dest_dims, int src_dims,
-			    _XMP_array_section_t *dest_info, 
-			    _XMP_array_section_t *src_info,
-			    _XMP_coarray_t *dest,
-			    void *src,
-			    long long length,
-			    long long,
-			    int*);
-extern uint64_t remote_addr(uint64_t, int, _XMP_array_section_t*, int);
-extern uint64_t local_addr(uint64_t, int, _XMP_array_section_t*, int);
-#endif
 extern unsigned long long _xmp_heap_size;
 #endif // _XMP_INTERNAL
-
