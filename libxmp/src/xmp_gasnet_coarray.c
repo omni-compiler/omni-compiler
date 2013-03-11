@@ -396,10 +396,8 @@ static void XMP_gasnet_c_get(const int target_image, const long long dst_point, 
 
 }
 
-static void XMP_gasnet_from_c_to_nonc_get(int target_image, long long src_point, long long dst_point, 
-					  int src_dims, int dst_dims,
-                                          _XMP_array_section_t *dst_info, _XMP_array_section_t *src_info,
-                                          void *dst, _XMP_coarray_t *src, long long transfer_size){
+static void XMP_gasnet_from_c_to_nonc_get(int target_image, long long src_point, int dst_dims,
+                                          _XMP_array_section_t *dst_info, void *dst, long long transfer_size){
   if(transfer_size < _xmp_stride_size){
     char* src_addr = (char *)_xmp_gasnet_buf[gasnet_mynode()];
     gasnet_get_bulk(src_addr, target_image, ((char *)src->addr[target_image])+src_point, transfer_size);
@@ -422,15 +420,13 @@ void _XMP_gasnet_get(int src_continuous, int dst_continuous, int target_image, i
   if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
     XMP_gasnet_c_get(target_image, dst_point, src_point, dst, src, transfer_size);
   }
-  //  else if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_FALSE){
-  //    XMP_gasnet_from_nonc_to_c_get(target_image, dst_point, dst_dims, src_dims,
-  //                                  dst_info, src_info, dst, src, transfer_size);
-  //  }
+  else if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_FALSE){
+    XMP_gasnet_from_nonc_to_c_get(target_image, dst_point, dst_dims, src_dims,
+				  dst_info, src_info, dst, src, transfer_size);
+  }
   else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_TRUE){
-    XMP_gasnet_from_c_to_nonc_get(target_image, src_point, dst_point, 
-				  src_dims, dst_dims,
-				  dst_info, src_info, 
-				  dst, src, transfer_size);
+    XMP_gasnet_from_c_to_nonc_get(target_image, src_point, dst_dims, 
+				  dst_info, dst, transfer_size);
   }
 }
 
