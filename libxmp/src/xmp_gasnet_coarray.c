@@ -377,16 +377,18 @@ void _XMP_gasnet_put(int dst_continuous, int src_continuous, int target_image, i
 		     _XMP_coarray_t *dst, void *src, long long length){
 
   long long transfer_size = dst->elmt_size*length;
-  long long dst_point = get_offset(dst_info, dst_dims);
-  long long src_point = get_offset(src_info, src_dims);
 
   if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
+    long long dst_point = get_offset(dst_info, dst_dims);
+    long long src_point = get_offset(src_info, src_dims);
     XMP_gasnet_from_c_to_c_put(target_image, dst_point, src_point, dst, src, transfer_size);
   }
   else if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_FALSE){
+    long long dst_point = get_offset(dst_info, dst_dims);
     XMP_gasnet_from_nonc_to_c_put(target_image, dst_point, src_dims, src_info, dst, src, transfer_size);
   }
   else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_TRUE){
+    long long src_point = get_offset(src_info, src_dims);
     XMP_gasnet_from_c_to_nonc_put(target_image, src_point, dst_dims, dst_info, 
 				  dst, src, transfer_size);
   }
@@ -408,7 +410,8 @@ static void XMP_gasnet_from_c_to_c_get(const int target_image, const long long d
 
 }
 
-static void XMP_gasnet_from_c_to_nonc_get(int target_image, long long src_point, int dst_dims, _XMP_array_section_t *dst_info, 
+static void XMP_gasnet_from_c_to_nonc_get(int target_image, long long src_point, int dst_dims, 
+					  _XMP_array_section_t *dst_info, 
 					  void *dst, _XMP_coarray_t *src, long long transfer_size){
   if(transfer_size < _xmp_stride_size){
     char* src_addr = (char *)_xmp_gasnet_buf[gasnet_mynode()];
@@ -420,7 +423,6 @@ static void XMP_gasnet_from_c_to_nonc_get(int target_image, long long src_point,
     coarray_stride_size_error();
   }
 }
-
 
 void _xmp_gasnet_pack(gasnet_token_t t, const char* info, const size_t am_request_size, 
 		      const int src_addr_hi, const int src_addr_lo, const int src_dims, 
@@ -513,8 +515,7 @@ static void XMP_gasnet_from_nonc_to_c_get(int target_image, int src_dims, _XMP_a
 
 static void XMP_gasnet_from_nonc_to_nonc_get(int target_image, int dst_dims, int src_dims, 
 					     _XMP_array_section_t *dst_info, _XMP_array_section_t *src_info, 
-					     void *dst, _XMP_coarray_t *src,
-					     long long transfer_size, long long dst_point){
+					     void *dst, _XMP_coarray_t *src, long long transfer_size){
   char *archive;
   done_get_flag = _XMP_N_INT_FALSE;
   //  if(transfer_size < gasnet_AMMaxMedium()){
@@ -554,24 +555,25 @@ void _XMP_gasnet_get(int src_continuous, int dst_continuous, int target_image, i
 		     _XMP_coarray_t *src, void *dst, long long length){
 
   long long transfer_size = src->elmt_size*length;
-  long long dst_point = get_offset(dst_info, dst_dims);
-  long long src_point = get_offset(src_info, src_dims);
 
   if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
+    long long dst_point = get_offset(dst_info, dst_dims);
+    long long src_point = get_offset(src_info, src_dims);
     XMP_gasnet_from_c_to_c_get(target_image, dst_point, src_point, dst, src, transfer_size);
   }
   else if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_FALSE){
+    long long dst_point = get_offset(dst_info, dst_dims);
     XMP_gasnet_from_nonc_to_c_get(target_image, src_dims, src_info, 
-				  dst, src, 
-				  transfer_size, dst_point);
+				  dst, src, transfer_size, dst_point);
   }
   else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_TRUE){
+    long long src_point = get_offset(src_info, src_dims);
     XMP_gasnet_from_c_to_nonc_get(target_image, src_point, dst_dims, dst_info, 
 				  dst, src, transfer_size);
   }
   else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_FALSE){
     XMP_gasnet_from_nonc_to_nonc_get(target_image, dst_dims, src_dims, dst_info, src_info, 
-    				     dst, src, transfer_size, dst_point);
+    				     dst, src, transfer_size);
   }
   else{
     _XMP_fatal("Unkown shape of coarray");
