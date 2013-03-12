@@ -129,6 +129,16 @@ static int get_depth(int dims, const _XMP_array_section_t* array_info){
   if(dims == 1)
     return 0;
 
+  if(dims == 2){
+    if(array_info[1].stride == 1 && array_info[0].start == 0 && 
+       array_info[0].length == array_info[0].size && array_info[0].stride == 1){
+      return 1;
+    }
+    else if(array_info[1].stride == 1){
+      return 0;
+    }
+  }
+
   int i;
   int continuous_dim = dims - 2;
 
@@ -161,7 +171,6 @@ static void XMP_pack(char* archive_ptr, const char* src_ptr, const int src_dims,
 
   // How depth is memory continuity ?
   int continuous_dim = get_depth(src_dims, src_info);
-
   if(src_info[src_dims-1].stride != 1 || continuous_dim+1 == src_dims){
     while(index[0]==0){
       if(index[d]>=src_info[d-1].length){    // Move to outer loop
