@@ -442,6 +442,7 @@ void _xmp_gasnet_pack_get(gasnet_token_t t, const char* info, const size_t am_re
   char *archive = malloc(tansfer_size + dst_size);
   memcpy(archive, info + src_size, dst_size);
   XMP_pack(archive, (char *)UPCRI_MAKEWORD(src_addr_hi,src_addr_lo), src_dims, src_info, dst_size);
+  free(src_info);
   gasnet_AMReplyMedium3(t, _XMP_GASNET_UNPACK_GET_REPLY_NONC, archive, tansfer_size + dst_size,
                         dst_addr_hi, dst_addr_lo, dst_dims);
   free(archive);
@@ -514,7 +515,8 @@ static void XMP_gasnet_from_nonc_to_nonc_get(int target_image, int dst_dims, int
 					     long long transfer_size, long long dst_point){
   char *archive;
   done_get_flag = _XMP_N_INT_FALSE;
-  if(transfer_size < gasnet_AMMaxMedium()){
+  //  if(transfer_size < gasnet_AMMaxMedium()){
+  if(transfer_size < 0){  // mikansei
     size_t am_request_src_size = sizeof(_XMP_array_section_t) * src_dims;
     size_t am_request_dst_size = sizeof(_XMP_array_section_t) * dst_dims;
     archive = malloc(am_request_src_size + am_request_dst_size);
@@ -534,7 +536,7 @@ static void XMP_gasnet_from_nonc_to_nonc_get(int target_image, int dst_dims, int
                             (size_t)transfer_size, gasnet_mynode());
     GASNET_BLOCKUNTIL(done_get_flag == _XMP_N_INT_TRUE);
     gasnet_get_bulk(_xmp_gasnet_buf[gasnet_mynode()], target_image, _xmp_gasnet_buf[target_image], transfer_size);
-    int continuous_dim = get_depth(src_dims, src_info);
+    int continuous_dim = get_depth(dst_dims, dst_info);
     unpack((char *)dst, dst_dims, _xmp_gasnet_buf[gasnet_mynode()], continuous_dim, dst_info, 0);
   }
   else{
