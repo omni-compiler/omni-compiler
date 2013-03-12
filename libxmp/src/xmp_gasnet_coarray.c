@@ -7,7 +7,7 @@ static int _xmp_gasnet_stride_wait_size = 0;
 static int _xmp_gasnet_stride_queue_size = _XMP_GASNET_STRIDE_INIT_SIZE;
 static unsigned long long _xmp_coarray_shift = 0;
 static char **_xmp_gasnet_buf;
-int done_get_flag;
+volatile static int done_get_flag;
 
 gasnet_handlerentry_t htable[] = {
   { _XMP_GASNET_LOCK_REQUEST,               _xmp_gasnet_lock_request },
@@ -171,7 +171,7 @@ static void XMP_pack(char* archive_ptr, const char* src_ptr, const int src_dims,
       }
       else if(d == src_dims){                // the innermost loop
         src_offset = cnt[d-1] + (index[d]*src_info[d-1].stride+src_info[d-1].start) * src_info[d-1].distance;
-        memcpy(archive_ptr + archive_offset, src_ptr + src_offset, element_size);
+	memcpy(archive_ptr + archive_offset, src_ptr + src_offset, element_size);
         archive_offset += element_size;
         index[d]++;
       }
@@ -228,7 +228,6 @@ static void extend_stride_queue(){
 static void unpack(char *dst_addr, const int dst_dims, const char* src_addr, 
 		   const int continuous_dim, _XMP_array_section_t* dst, long long src_offset){
   unsigned long long dst_offset = 0;
-  
   size_t element_size = dst[dst_dims-1].distance;
   int index[dst_dims+1], d = 1, i;                // d is a position of nested loop
   for(i=0;i<dst_dims+1;i++)   index[i] = 0;       // Initialize index
@@ -422,13 +421,14 @@ static void XMP_gasnet_from_c_to_nonc_get(int target_image, long long src_point,
 void _xmp_gasnet_pack(gasnet_token_t t, const char* info, const size_t am_request_size, 
 		      const int src_addr_hi, const int src_addr_lo, const int src_dims, 
 		      const size_t tansfer_size, const int dst_addr_hi, const int dst_addr_lo){
-
+  
   _XMP_array_section_t *src_info = (_XMP_array_section_t *)info;
-  char *archive = malloc(tansfer_size);
+  char *archive = _xmp_gasnet_buf[gasnet_mynode()];
   XMP_pack(archive, (char *)UPCRI_MAKEWORD(src_addr_hi,src_addr_lo), src_dims, src_info, 0);
+  fprintf(stderr, "a\n");
   gasnet_AMReplyMedium2(t, _XMP_GASNET_UNPACK_GET_REPLY, archive, tansfer_size,
-    			dst_addr_hi, dst_addr_lo);
-  free(archive);
+      			dst_addr_hi, dst_addr_lo);
+  fprintf(stderr, "b\n");
 }
 
 void _xmp_gasnet_pack_get(gasnet_token_t t, const char* info, const size_t am_request_size,
@@ -454,7 +454,7 @@ void _xmp_gasnet_unpack_get_reply_nonc(gasnet_token_t t, char *archive, size_t t
   memcpy(dst_info, archive, dst_size);
 
   int continuous_dim = get_depth(dst_dims, dst_info);
-  unpack((char *)UPCRI_MAKEWORD(dst_addr_hi,dst_addr_lo), dst_dims, archive, continuous_dim, dst_info, dst_size);
+  unpack((char *)UPCRI_MAKEWORD(dst_addr_hi,dst_addr_lo), dst_dims, archive+dst_size, continuous_dim, dst_info, 0);
   done_get_flag = _XMP_N_INT_TRUE;
 }
 
@@ -474,11 +474,9 @@ void _xmp_gasnet_pack_using_buf(gasnet_token_t t, const char* info, const size_t
 				const size_t tansfer_size, const int target_image){
 
   _XMP_array_section_t *src_info = (_XMP_array_section_t *)info;
-  char *archive = malloc(tansfer_size);
+  char *archive = _xmp_gasnet_buf[gasnet_mynode()];
   XMP_pack(archive, (char *)UPCRI_MAKEWORD(src_addr_hi,src_addr_lo), src_dims, src_info, 0);
-  gasnet_put_bulk(target_image, _xmp_gasnet_buf[target_image], archive, tansfer_size);
   gasnet_AMReplyShort0(t, _XMP_GASNET_UNPACK_GET_REPLY_USING_BUF);
-  free(archive);
 }
 
 static void XMP_gasnet_from_nonc_to_c_get(int target_image, int src_dims, _XMP_array_section_t *dst_info,
@@ -489,7 +487,8 @@ static void XMP_gasnet_from_nonc_to_c_get(int target_image, int src_dims, _XMP_a
   memcpy(archive, src_info, am_request_size);
 
   done_get_flag = _XMP_N_INT_FALSE;
-  if(transfer_size < gasnet_AMMaxMedium()){
+  //  if(transfer_size < gasnet_AMMaxMedium()){
+  if(transfer_size < 0){  // mikansei
     gasnet_AMRequestMedium6(target_image, _XMP_GASNET_PACK_HANDLER, archive, am_request_size,
 			    HIWORD(src->addr[target_image]), LOWORD(src->addr[target_image]), src_dims,
     			    (size_t)transfer_size, HIWORD((char *)dst+dst_point), LOWORD((char *)dst+dst_point));
@@ -500,7 +499,8 @@ static void XMP_gasnet_from_nonc_to_c_get(int target_image, int src_dims, _XMP_a
                             HIWORD(src->addr[target_image]), LOWORD(src->addr[target_image]), src_dims,
                             (size_t)transfer_size, gasnet_mynode());
     GASNET_BLOCKUNTIL(done_get_flag == _XMP_N_INT_TRUE);
-    memcpy((char *)dst+dst_point, _xmp_gasnet_buf[gasnet_mynode()], transfer_size);
+    gasnet_get_bulk(_xmp_gasnet_buf[gasnet_mynode()], target_image, _xmp_gasnet_buf[target_image], transfer_size);
+    memcpy(((char *)dst)+dst_point, _xmp_gasnet_buf[gasnet_mynode()], transfer_size);
   }
   else{
     coarray_stride_size_error();
@@ -522,7 +522,7 @@ static void XMP_gasnet_from_nonc_to_nonc_get(int target_image, int dst_dims, int
     memcpy(archive + am_request_src_size, dst_info, am_request_dst_size);
     gasnet_AMRequestMedium7(target_image, _XMP_GASNET_PACK_GET_HANDLER, archive, am_request_src_size+am_request_dst_size,
                             HIWORD(src->addr[target_image]), LOWORD(src->addr[target_image]), src_dims, dst_dims,
-                            (size_t)transfer_size, HIWORD((char *)dst+dst_point), LOWORD((char *)dst+dst_point));
+                            (size_t)transfer_size, HIWORD((char *)dst), LOWORD((char *)dst));
     GASNET_BLOCKUNTIL(done_get_flag == _XMP_N_INT_TRUE);
   }
   else if(transfer_size < _xmp_stride_size){
@@ -533,8 +533,9 @@ static void XMP_gasnet_from_nonc_to_nonc_get(int target_image, int dst_dims, int
                             HIWORD(src->addr[target_image]), LOWORD(src->addr[target_image]), src_dims,
                             (size_t)transfer_size, gasnet_mynode());
     GASNET_BLOCKUNTIL(done_get_flag == _XMP_N_INT_TRUE);
-    int continuous_dim = get_depth(dst_dims, dst_info);
-    unpack((char *)dst+dst_point, dst_dims, _xmp_gasnet_buf[gasnet_mynode()], continuous_dim, dst_info, 0);
+    gasnet_get_bulk(_xmp_gasnet_buf[gasnet_mynode()], target_image, _xmp_gasnet_buf[target_image], transfer_size);
+    int continuous_dim = get_depth(src_dims, src_info);
+    unpack((char *)dst, dst_dims, _xmp_gasnet_buf[gasnet_mynode()], continuous_dim, dst_info, 0);
   }
   else{
     coarray_stride_size_error();
