@@ -190,6 +190,8 @@ void _XMP_coarray_rma_node_set_f(int *dim, int *image_num){
   _XMP_coarray_rma_node_set(*dim, *image_num);
 }
 
+// If array a is continuous, retrun _XMP_N_INT_TRUE.
+// If array a is non-continuous (e.g. stride access), return _XMP_N_INT_FALSE.
 static int check_continuous(_XMP_array_section_t *a, int dims, long long total_length){
   // If only 1 elements is transferred.
   if(_total_coarray_length == 1)
@@ -201,43 +203,42 @@ static int check_continuous(_XMP_array_section_t *a, int dims, long long total_l
     return _XMP_N_INT_TRUE;
 
   // The last dimension is not continuous ?
-  if((a+dims-1)->length > 1 && (a+dims-1)->stride != 1){
+  if((a+dims-1)->stride != 1)
+    return _XMP_N_INT_FALSE;
+
+  // (i+1, i+2, ..)-th dimensions are ":" && i-th dimension's stride is "1" &&
+  // (i-1, i-2, ..)-th dimension's length is "1" ?
+  // ex1) a[1][3][1:2][:]   // (i = 2)
+  // ex2) a[2][:][:]        // (i = 0)
+  int i, flag, th = 0;
+  for(i=dims-1;i>=0;i--){
+    if((a+i)->start != 0 || (a+i)->length != (a+i)->size){
+      th = i;
+      break;
+    }
+  }
+  
+  if(th == 0 && a->stride == 1){  //  ex) a[1:2][:][:] or a[:][:][:]
+    return _XMP_N_INT_TRUE;
+  }
+  else if(th == dims-1){          // The last dimension is not ":".  ex) a[:][:][1:2]
     return _XMP_N_INT_FALSE;
   }
+  else if((a+th)->stride == 1){
+    flag = _XMP_N_INT_TRUE;
+    for(i=0;i<th;i++)
+      if((a+i)->length != 1)
+	flag = _XMP_N_INT_FALSE;
+  }
   else{
-    int i, flag = _XMP_N_INT_TRUE, th = 0;
-    // (i+1, i+2, ..)-th dimensions are ":" && i-th dimension's stride is "1" &&
-    // (i-1, i-2, ..)-th dimension's length is "1" ?
-    // ex1) a[1][3][1:2][:]   // (i = 2)
-    // ex2) a[2][:][:]        // (i = 0)
-    for(i=dims-1;i>=0;i--){
-      if((a+i)->start != 0 || (a+i)->length != (a+i)->size){
-	th = i;
-	break;
-      }
-    }
+    flag = _XMP_N_INT_FALSE;
+  }
     
-    if(th == 0 && a->stride == 1){  //  ex) a[1:2][:][:] or a[:][:][:]
-      return _XMP_N_INT_TRUE;
-    }
-    else if(th == dims-1){          // The last dimension is not ":".  ex) a[:][:][1:2]
-      return _XMP_N_INT_FALSE;
-    }
-    else if((a+th)->stride == 1){
-      for(i=0;i<th;i++)
-	if((a+i)->length != 1)
-	  flag = _XMP_N_INT_FALSE;
-    }
-    else{
-      flag = _XMP_N_INT_FALSE;
-    }
-    
-    if(flag){
-      return _XMP_N_INT_TRUE;
-    }
-    else{
-      return _XMP_N_INT_FALSE; 
-    }
+  if(flag){
+    return _XMP_N_INT_TRUE;
+  }
+  else{
+    return _XMP_N_INT_FALSE; 
   }
 }
 
