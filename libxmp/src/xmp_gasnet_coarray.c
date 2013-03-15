@@ -124,37 +124,78 @@ static void XMP_gasnet_from_c_to_c_put(const int target_image, const long long d
 
 }
 
+static int is_all_element(const _XMP_array_section_t* array_info, const int dim){
+  if(array_info[dim].start == 0 && array_info[dim].length == array_info[dim].size && 
+     array_info[dim].stride == 1){
+    return _XMP_N_INT_TRUE;
+  }
+  else{
+    return _XMP_N_INT_FALSE;
+  }
+}
+
 // How depth is memory continuity ?
-static int get_depth(int dims, const _XMP_array_section_t* array_info){
-  if(dims == 1)
-    return 0;
+// when depth is 0, all dimension is not continuous.
+// ushiro no jigen kara kazoete "depth" banme made rennzokuka ?
+// eg. a[:][2:2:1]    -> depth is 1. The last diemnsion is continuous.
+//     a[:][2:2:2]    -> depth is 0.
+//     a[:][:]        -> depth is 2. But, this function is called when array is not continuous. 
+//                       So depth does not become 2.
+//     b[:][:][1:2:2] -> depth is 0.
+//     b[:][:][1]     -> depth is 1.
+//     b[:][2:2:2][1] -> depth is 1.
+//     b[2:2:2][:][:] -> depth is 2.
+static int get_depth(const int dims, const _XMP_array_section_t* array_info){
+  if(dims == 1){
+      return 0;
+  }
 
   if(dims == 2){
-    if(array_info[1].stride == 1 && array_info[0].start == 0 && 
-       array_info[0].length == array_info[0].size && array_info[0].stride == 1){
+    if(array_info[1].stride == 1){
       return 1;
     }
-    else if(array_info[1].stride == 1){
+    else{
       return 0;
     }
   }
 
-  int i;
-  int continuous_dim = dims - 2;
-
-  for(i=dims-2;i>=0;i--){
-    if(array_info[i+1].start == 0 && array_info[i+1].length == array_info[i+1].size &&
-       array_info[i+1].stride == 1 && array_info[i].stride == 1){
-      continuous_dim = i;
-      continue;
+  if(dims == 3){
+    if(is_all_element(array_info, 2) && is_all_element(array_info, 1)){
+      return 2;
+    }
+    else if(array_info[2].stride == 1){
+      return 1;
     }
     else{
-      continuous_dim++;
-      break;
+      return 0;
     }
   }
 
-  return continuous_dim;
+  // if(dims >= 4)
+  if(array_info[dims-1].stride != 1)
+    return 0;
+
+  if(array_info[dims-1].stride == 1 && !is_all_element(array_info, dims-2))
+    return 1;
+
+  int i, j, flag;
+  for(j=dims-1;j>=1;j--){
+    flag = _XMP_N_INT_TRUE;
+    for(i=j;i>=1;i--){
+      if(!is_all_element(array_info, dims-i)){
+	flag = _XMP_N_INT_FALSE;
+	break;
+      }
+    }
+
+    if(flag)
+      return j;
+  }
+
+  if(array_info[dims-1].stride == 1)
+    return 1;
+  else
+    return 0;
 }
 
 // Perhap, this function had better exist in xmp_lib.c
@@ -171,6 +212,7 @@ static void XMP_pack(char* archive_ptr, const char* src_ptr, const int src_dims,
 
   // How depth is memory continuity ?
   int continuous_dim = get_depth(src_dims, src_info);
+  printf(":%d\n", continuous_dim);
   if(src_info[src_dims-1].stride != 1 || continuous_dim+1 == src_dims){
     while(index[0]==0){
       if(index[d]>=src_info[d-1].length){    // Move to outer loop
