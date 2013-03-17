@@ -212,7 +212,7 @@ static void XMP_pack(char* archive_ptr, const char* src_ptr, const int src_dims,
 
   // How depth is memory continuity ?
   int continuous_dim = get_depth(src_dims, src_info);
-  printf(":%d\n", continuous_dim);
+
   if(src_info[src_dims-1].stride != 1 || continuous_dim+1 == src_dims){
     while(index[0]==0){
       if(index[d]>=src_info[d-1].length){    // Move to outer loop

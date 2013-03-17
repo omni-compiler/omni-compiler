@@ -76,7 +76,7 @@ am__libxmp_a_SOURCES_DIST = $(XMP_INC_DIR)/xmp_internal.h \
 	xmp_nodes_stack.c xmp_nodes.c xmp_template.c xmp_barrier.c \
 	xmp_reduce.c xmp_bcast.c xmp_align.c xmp_shadow.c \
 	xmp_array_section.c xmp_loop.c xmp_gmove.c xmp_math_function.c \
-	xmp_runtime.c xmp_coarray.c xmp_tlog_runtime.c xmp_io.c \
+	xmp_runtime.c xmp_tlog_runtime.c xmp_io.c xmp_coarray.c \
 	xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c xmp_post.c \
 	xmp_gasnet_post.c
 @GASNET_FALSE@am_libxmp_a_OBJECTS = xmp_lib.$(OBJEXT) \
@@ -87,8 +87,8 @@ am__libxmp_a_SOURCES_DIST = $(XMP_INC_DIR)/xmp_internal.h \
 @GASNET_FALSE@	xmp_align.$(OBJEXT) xmp_shadow.$(OBJEXT) \
 @GASNET_FALSE@	xmp_array_section.$(OBJEXT) xmp_loop.$(OBJEXT) \
 @GASNET_FALSE@	xmp_gmove.$(OBJEXT) xmp_math_function.$(OBJEXT) \
-@GASNET_FALSE@	xmp_runtime.$(OBJEXT) xmp_coarray.$(OBJEXT) \
-@GASNET_FALSE@	xmp_tlog_runtime.$(OBJEXT) xmp_io.$(OBJEXT)
+@GASNET_FALSE@	xmp_runtime.$(OBJEXT) xmp_tlog_runtime.$(OBJEXT) \
+@GASNET_FALSE@	xmp_io.$(OBJEXT)
 @GASNET_TRUE@am_libxmp_a_OBJECTS = xmp_lib.$(OBJEXT) \
 @GASNET_TRUE@	xmp_util.$(OBJEXT) xmp_world.$(OBJEXT) \
 @GASNET_TRUE@	xmp_nodes_stack.$(OBJEXT) xmp_nodes.$(OBJEXT) \
@@ -326,7 +326,7 @@ lib_LIBRARIES = libxmp.a
 @GASNET_FALSE@                                  xmp_math_function.h xmp_lib.c xmp_util.c xmp_world.c xmp_nodes_stack.c \
 @GASNET_FALSE@                                  xmp_nodes.c xmp_template.c xmp_barrier.c xmp_reduce.c xmp_bcast.c \
 @GASNET_FALSE@                                  xmp_align.c xmp_shadow.c xmp_array_section.c xmp_loop.c xmp_gmove.c \
-@GASNET_FALSE@                                  xmp_math_function.c xmp_runtime.c xmp_coarray.c xmp_tlog_runtime.c xmp_io.c
+@GASNET_FALSE@                                  xmp_math_function.c xmp_runtime.c xmp_tlog_runtime.c xmp_io.c
 
 @GASNET_TRUE@libxmp_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h $(XMP_INC_DIR)/xmp_data_struct.h \
 @GASNET_TRUE@				xmp_math_function.h xmp_lib.c xmp_util.c xmp_world.c xmp_nodes_stack.c \
