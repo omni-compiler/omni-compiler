@@ -211,14 +211,14 @@ int main(){
   communicate_1(me);
   check_1(me);
   
-  communicate_2(me);
-  check_2(me);
+    communicate_2(me);
+    check_2(me);
   
-  communicate_3(me);
-  check_3(me);
+    communicate_3(me);
+    check_3(me);
   
-  communicate_4(me);
-  check_4(me);
+    communicate_4(me);
+    check_4(me);
 
   return 0;
 }
