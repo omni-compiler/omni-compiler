@@ -142,17 +142,20 @@ declare_procedure(enum name_class class,
     switch(class){
 
     case CL_MAIN:
-        if (debug_flag)
-            fprintf(diag_file,"  MAIN %s:\n",(name ? SYM_NAME(s): ""));
-        CURRENT_EXT_ID = declare_external_id(find_symbol(
-            name ? SYM_NAME(s): "main"), STG_EXT, TRUE);
-        EXT_PROC_CLASS(CURRENT_EXT_ID) = EP_PROGRAM;
-        if (name) {
-          /* set line_no */
-          EXT_LINE(CURRENT_EXT_ID) = EXPR_LINE(name);
-          id = declare_ident(s,CL_MAIN);
-        }
-        break;
+      if (debug_flag)
+	fprintf(diag_file,"  MAIN %s:\n",(name ? SYM_NAME(s): ""));
+
+      // Delete line because of [Xmp-dev:1896]
+      // CURRENT_EXT_ID = declare_external_id(find_symbol(
+      //   		   name ? SYM_NAME(s): "main"), STG_EXT, TRUE);
+      CURRENT_EXT_ID = declare_external_id(s, STG_EXT, TRUE);
+      EXT_PROC_CLASS(CURRENT_EXT_ID) = EP_PROGRAM;
+      if (name) {
+	/* set line_no */
+	EXT_LINE(CURRENT_EXT_ID) = EXPR_LINE(name);
+	id = declare_ident(s,CL_MAIN);
+      }
+      break;
 
     case CL_BLOCK:
         if (debug_flag)
