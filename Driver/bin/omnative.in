@@ -48,6 +48,11 @@ for i in ${OM_OPTIONS}; do
 done
 OM_OPTIONS="${newOpts}"
 
+FJRDMA="@FJRDMA_PREFIX@"
+if test "${FJRDMA}" != ""; then
+  OM_OPTIONS="${OM_OPTIONS} -D_XMP_COARRAY_FJRDMA"
+fi
+
 CMD="${COMPILER} ${OM_OPTIONS} -c ${INPFILE} -o ${OUTFILE}"
 
 GASNET="@GASNET_PREFIX@"
