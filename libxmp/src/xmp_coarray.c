@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "xmp_internal.h"
+#ifdef _XMP_COARRAY_FJRDMA
 #include "mpi-ext.h"
+#endif
 
 unsigned long long _xmp_heap_size;
 static int _elmt_size, _coarray_dims, _image_dims, *_image_size, _array_dims;
