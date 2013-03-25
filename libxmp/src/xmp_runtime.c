@@ -1,6 +1,8 @@
 #include "xmp_internal.h"
 #include "mpi.h"
+#ifdef _XMP_COARRAY_FJRDMA
 #include "mpi-ext.h"
+#endif
 #include <stdio.h>
 
 static int _XMP_runtime_working = _XMP_N_INT_FALSE;
