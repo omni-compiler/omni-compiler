@@ -617,8 +617,6 @@ GASNET_CONDUIT
 GASNET_PREFIX
 GASNET_FALSE
 GASNET_TRUE
-FJRDMA_FALSE
-FJRDMA_TRUE
 LIBXML_PREFIX
 omniQRealFillGap
 omniQRealPrecInLimb
@@ -819,7 +817,6 @@ with_precision
 with_libxmlDir
 with_gasnetDir
 with_gasnet_conduit
-with_fjrdma
 with_mpicc
 with_mpif90
 with_gpucc
@@ -1481,7 +1478,6 @@ Optional Packages:
   --with-libxmlDir=DIR    specify libxml install directory (default: /usr)
   --with-gasnetDir=DIR    specify GASNet install directory
   --with-gasnet-conduit=NAME    specify GASNet conduit
-  --with-fjrdma           specify Fujitsu RDMA
   --with-mpicc=CMD        specify MPI C compiler (default: mpicc)
   --with-mpif90=CMD        specify MPI F90 compiler (default: mpif90)
   --with-gpucc=CMD        specify GPU C compiler (default: nvcc)
@@ -10152,19 +10148,6 @@ fi
 
 
 GASNET_CONDUIT_CAP=$(echo ${GASNET_CONDUIT} | tr 'a-z' 'A-Z')
-
-# --------------------------------------------------------------------
-# specify Fujitsu RDMA
-
-# Check whether --with-fjrdma was given.
-if test "${with_fjrdma+set}" = set; then :
-  FJRDMA_TRUE=
-  FJRDMA_FALSE='#'
-else
-  FJRDMA_TRUE='#'
-  FJRDMA_FALSE=
-fi
-
 
 # --------------------------------------------------------------------
 # specify MPI C compiler
