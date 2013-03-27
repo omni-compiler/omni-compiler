@@ -6,18 +6,17 @@
 #include "mpi-ext.h"
 #endif
 
-unsigned long long _xmp_heap_size;
+unsigned long long _xmp_heap_size, _xmp_stride_size;
 static int _elmt_size, _coarray_dims, _image_dims, *_image_size, _array_dims;
 static long long *_coarray_size, _total_coarray_size;
 static long long _total_coarray_length, _total_array_length;
 static _XMP_array_section_t *_coarray, *_array;
 
 void _XMP_coarray_initialize(int argc, char **argv){
-#ifdef _XMP_COARRAY_GASNET
-  char *env_heap_size;
+  char *env_heap_size, *env_stride_size;
+  int i;
 
   if((env_heap_size = getenv("XMP_COARRAY_HEAP_SIZE")) != NULL){
-    int i;
     for(i=0;i<strlen(env_heap_size);i++){
       if(isdigit(env_heap_size[i]) == 0){
         fprintf(stderr, "%s : ", env_heap_size);
@@ -32,7 +31,23 @@ void _XMP_coarray_initialize(int argc, char **argv){
     _xmp_heap_size = _XMP_DEFAULT_COARRAY_HEAP_SIZE;
   }
 
-  _XMP_gasnet_initialize(argc, argv, _xmp_heap_size);
+  if((env_stride_size = getenv("XMP_COARRAY_STRIDE_SIZE")) != NULL){
+    for(i=0;i<strlen(env_stride_size);i++){
+      if(isdigit(env_stride_size[i]) == 0){
+        fprintf(stderr, "%s : ", env_stride_size);
+        _XMP_fatal("Unexpected Charactor in XMP_COARRAY_STRIDE_SIZE");
+      }
+    }
+    _xmp_stride_size = atoi(env_stride_size) * 1024 * 1024;
+    if(_xmp_stride_size <= 0){
+      _XMP_fatal("XMP_COARRAY_STRIDE_SIZE is less than 0 !!");
+    }
+  } else{
+    _xmp_stride_size = _XMP_DEFAULT_COARRAY_STRIDE_SIZE;
+  }
+
+#ifdef _XMP_COARRAY_GASNET
+  _XMP_gasnet_initialize(argc, argv);
 #elif _XMP_COARRAY_FJRDMA
   _XMP_fjrdma_initialize();
 #else
@@ -203,6 +218,8 @@ void _XMP_coarray_rma_node_set_f(int *dim, int *image_num){
   _XMP_coarray_rma_node_set(*dim, *image_num);
 }
 
+// If array a is continuous, retrun _XMP_N_INT_TRUE.
+// If array a is non-continuous (e.g. stride access), return _XMP_N_INT_FALSE.
 static int check_continuous(_XMP_array_section_t *a, int dims, long long total_length){
   // If only 1 elements is transferred.
   if(_total_coarray_length == 1)
@@ -214,43 +231,42 @@ static int check_continuous(_XMP_array_section_t *a, int dims, long long total_l
     return _XMP_N_INT_TRUE;
 
   // The last dimension is not continuous ?
-  if((a+dims-1)->length > 1 && (a+dims-1)->stride != 1){
+  if((a+dims-1)->stride != 1)
+    return _XMP_N_INT_FALSE;
+
+  // (i+1, i+2, ..)-th dimensions are ":" && i-th dimension's stride is "1" &&
+  // (i-1, i-2, ..)-th dimension's length is "1" ?
+  // ex1) a[1][3][1:2][:]   // (i = 2)
+  // ex2) a[2][:][:]        // (i = 0)
+  int i, flag, th = 0;
+  for(i=dims-1;i>=0;i--){
+    if((a+i)->start != 0 || (a+i)->length != (a+i)->size){
+      th = i;
+      break;
+    }
+  }
+  
+  if(th == 0 && a->stride == 1){  //  ex) a[1:2][:][:] or a[:][:][:]
+    return _XMP_N_INT_TRUE;
+  }
+  else if(th == dims-1){          // The last dimension is not ":".  ex) a[:][:][1:2]
     return _XMP_N_INT_FALSE;
   }
+  else if((a+th)->stride == 1){
+    flag = _XMP_N_INT_TRUE;
+    for(i=0;i<th;i++)
+      if((a+i)->length != 1)
+	flag = _XMP_N_INT_FALSE;
+  }
   else{
-    int i, flag = _XMP_N_INT_TRUE, th = 0;
-    // (i+1, i+2, ..)-th dimensions are ":" && i-th dimension's stride is "1" &&
-    // (i-1, i-2, ..)-th dimension's length is "1" ?
-    // ex1) a[1][3][1:2][:]   // (i = 2)
-    // ex2) a[2][:][:]        // (i = 0)
-    for(i=dims-1;i>=0;i--){
-      if((a+i)->start != 0 || (a+i)->length != (a+i)->size){
-	th = i;
-	break;
-      }
-    }
+    flag = _XMP_N_INT_FALSE;
+  }
     
-    if(th == 0 && a->stride == 1){  //  ex) a[1:2][:][:] or a[:][:][:]
-      return _XMP_N_INT_TRUE;
-    }
-    else if(th == dims-1){          // The last dimension is not ":".  ex) a[:][:][1:2]
-      return _XMP_N_INT_FALSE;
-    }
-    else if((a+th)->stride == 1){
-      for(i=0;i<th;i++)
-	if((a+i)->length != 1)
-	  flag = _XMP_N_INT_FALSE;
-    }
-    else{
-      flag = _XMP_N_INT_FALSE;
-    }
-    
-    if(flag){
-      return _XMP_N_INT_TRUE;
-    }
-    else{
-      return _XMP_N_INT_FALSE; 
-    }
+  if(flag){
+    return _XMP_N_INT_TRUE;
+  }
+  else{
+    return _XMP_N_INT_FALSE; 
   }
 }
 
@@ -277,11 +293,6 @@ void _XMP_coarray_rma_do(int rma_code, void *coarray, void *array){
   coarray_continuous = check_continuous(_coarray, _coarray_dims, _total_coarray_length);
   array_continuous   = check_continuous(_array, _array_dims, _total_coarray_length); 
 
-#if 0
-  fprintf(stderr, "===coarray_rma_do===\n");
-  fprintf(stderr, "target_image=%d\n", target_image);
-  fprintf(stderr, "coarray_continuous=%d  array_continuous=%d\n", coarray_continuous, array_continuous);
-#endif
 
   if(coarray_continuous == _XMP_N_INT_FALSE || coarray_continuous == _XMP_N_INT_FALSE){
     _XMP_fatal("Sorry! Not continuous array is not supported.");
@@ -289,11 +300,11 @@ void _XMP_coarray_rma_do(int rma_code, void *coarray, void *array){
 
 #ifdef _XMP_COARRAY_GASNET
   if(_XMP_N_COARRAY_PUT == rma_code){
-    _XMP_gasnet_put(target_image, coarray_continuous, array_continuous,
+    _XMP_gasnet_put(coarray_continuous, array_continuous, target_image,
 		    _coarray_dims, _array_dims, _coarray, _array, coarray, array, _total_coarray_length);
   }
   else if(_XMP_N_COARRAY_GET == rma_code){
-    _XMP_gasnet_get(target_image, coarray_continuous, array_continuous,
+    _XMP_gasnet_get(coarray_continuous, array_continuous, target_image,
                     _coarray_dims, _array_dims, _coarray, _array, coarray, array, _total_coarray_length);
   }
   else{

@@ -1,10 +1,10 @@
 Omni OpenMP/XcalableMP Compiler Software RELEASE NOTES
 
 <CHANGES>
-ver 0.5		2010/11/13
+ver. 0.5.0	2010/11/13
  This is the first release of Omni XcalableMP Compiler.
 
-ver 0.5.1	2011/03/09
+ver. 0.5.1	2011/03/09
  1. gmove directive
   gmove between aligned array and duplicated array using array section is suppoted.
    ex)
@@ -16,15 +16,19 @@ ver 0.5.1	2011/03/09
  2. reflect directive
   full shadow reflect is implemented.
 
-ver 0.5.2	2011/03/11
+ver. 0.5.2	2011/03/11
  Fixed bugs in runtime
 
-ver 0.5.3	2011/04/08
+ver. 0.5.3	2011/04/08
  Fixed problems with rewriting expressions
 
-ver 0.5.4	2011/11/11
- supports block-cyclic distribution in distribute directive
+ver. 0.5.4	2011/11/11
+ Supports block-cyclic distribution in distribute directive
 
-version 0.6(alpha) 2012/11/12
-  Initial release of XcalableMP Fortran compiler.
-   (Coarray feature will be added soon)
+ver. 0.6.0      2012/11/12
+ Initial release of XcalableMP Fortran compiler.
+  (Coarray feature will be added soon)
+
+ver. 0.6.1  	2013/03/27
+  1. Supports stride Coarray function (only by using GASNet)
+  2. Supports coarray function on the K computer

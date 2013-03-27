@@ -166,6 +166,10 @@ extern void _XMP_post_initialize();
 #ifdef _XMP_COARRAY_GASNET
 #include <gasnet.h>
 #define _XMP_DEFAULT_COARRAY_HEAP_SIZE (256*1024*1024)  // 256MB
+#define _XMP_DEFAULT_COARRAY_STRIDE_SIZE (16*1024*1024)  // 16MB
+#define _XMP_GASNET_STRIDE_INIT_SIZE 16
+#define _XMP_GASNET_STRIDE_BLK       16
+#define _XMP_GASNET_ALIGNMENT        8
 
 #define GASNET_BARRIER() do {      \
 	gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);            \
@@ -173,7 +177,7 @@ extern void _XMP_post_initialize();
   } while (0)
 
 extern void _XMP_gasnet_set_coarray(_XMP_coarray_t *coarray, void **addr, unsigned long long number_of_elements, size_t type_size);
-extern void _XMP_gasnet_initialize(int, char**, unsigned long long);
+extern void _XMP_gasnet_initialize(int, char**);
 extern void _XMP_gasnet_finalize(int);
 extern void _XMP_gasnet_put(int, int, int, int, int, _XMP_array_section_t*, _XMP_array_section_t*, 
 			    _XMP_coarray_t*, void*, long long);
@@ -220,7 +224,6 @@ extern void _XMP_fjrdma_get(int target_image,
 			    int*);
 extern uint64_t remote_addr(uint64_t, int, _XMP_array_section_t*, int);
 extern uint64_t local_addr(uint64_t, int, _XMP_array_section_t*, int);
-#endif
-extern unsigned long long _xmp_heap_size;
+extern unsigned long long _xmp_heap_size, _xmp_stride_size;
 #endif // _XMP_INTERNAL
 

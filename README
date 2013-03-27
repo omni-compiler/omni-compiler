@@ -1,4 +1,4 @@
-Omni OpenMP/XcalableMP Compiler Software README (version 0.6.0 alpha)
+Omni OpenMP/XcalableMP Compiler Software README (version 0.6.1)
 
 I. Getting Started
  1. You will need the following softwares to build Omni XcalableMP(XMP) Compiler.
@@ -14,8 +14,11 @@ I. Getting Started
   A. Configure Omni XcalableMP Compiler
    e.g.) $ ./configure --prefix=/home/you/XMP
 
-   if your MPI C compiler command is not "mpicc",
+   If your MPI C compiler command is not "mpicc",
          $ ./configure --with-mpicc=MPICC_CMD
+
+   If you use omni xmp compiler on the K computer,
+         $  ./configure --target=Kcomputer-linux-gnu
 
   B. Build the compiler
    e.g.) $ make
@@ -35,7 +38,7 @@ II. How to use
    - XMP_COARRAY_HEAP_SIZE : 
       The heap memory size for using coarray. The default size is 256MB.
       If you want to change this size, please set a value by the Mega Byte.
-      e.g.) export XMP_COARRAY_HEAP_SIZE = 128
+      e.g.) export XMP_COARRAY_HEAP_SIZE=128
 
   4. Profiling Options in XMP/C
    XMP supports profiler interfaces of Scalasca and tlog.

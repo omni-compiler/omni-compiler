@@ -7,7 +7,7 @@ AC_PREREQ(2.60)
 # --------------------------------------------------------------------
 # Let the initiation begin....
 
-AC_INIT([Omni XcalableMP Compiler], [1], [BUG-REPORT-ADDRESS], [omni_xmp])
+AC_INIT([Omni XcalableMP Compiler], [0.6.1], [BUG-REPORT-ADDRESS], [omni_xmp])
 
 program_prefix=''
 
