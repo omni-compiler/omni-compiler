@@ -222,6 +222,7 @@ extern void _XMP_fjrdma_get(int target_image,
 			    long long length,
 			    long long,
 			    int*);
+#endif
 extern uint64_t remote_addr(uint64_t, int, _XMP_array_section_t*, int);
 extern uint64_t local_addr(uint64_t, int, _XMP_array_section_t*, int);
 extern unsigned long long _xmp_heap_size, _xmp_stride_size;
