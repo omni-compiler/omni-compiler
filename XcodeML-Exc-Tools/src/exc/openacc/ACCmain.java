@@ -78,11 +78,12 @@ public class ACCmain
 //      }
 //    }
     
-    xcodeWriter = new OutputStreamWriter(System.out);
+    //xcodeWriter = new OutputStreamWriter(System.out);
 
     XmToolFactory toolFactory = new XmToolFactory(lang);
 
     XmOption.setLanguage(XmLanguage.valueOf(lang));
+    XmOption.setDebugOutput(true);
 
     XcodeMLtools tools = null;
     if (XmOption.getLanguage() == XmLanguage.F) {
@@ -141,7 +142,7 @@ public class ACCmain
 
 
     if(dump_flag && xcodeWriter != null) {
-      System.out.println("*** dump Xobject (after XMP translate) ...");
+      System.out.println("*** dump Xobject (after ACC translate) ...");
       xobjFile.Output(xcodeWriter);
       xcodeWriter.flush();
     }

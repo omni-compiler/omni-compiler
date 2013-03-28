@@ -29,8 +29,8 @@ public enum ACCpragma {
   FIRSTPRIVATE,
   REDUCTION_PLUS,
   REDUCTION_MUL,
-  REDUCTION_MIN,
   REDUCTION_MAX,
+  REDUCTION_MIN,
   REDUCTION_BITAND,
   REDUCTION_BITOR,
   REDUCTION_BITXOR,
@@ -73,6 +73,7 @@ public enum ACCpragma {
   _WARP,
   _VECTORTHREAD,
   _THREAD,
+  _AUTO,
   ;
   
   private String name = null;

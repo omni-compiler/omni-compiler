@@ -16,7 +16,7 @@ public class ACCtranslatePragma implements XobjectDefVisitor{
 
     _globalDecl = globalDecl;
     _localPragmaTranslator = new ACCtranslateLocalPragma(globalDecl);
-    //_globalPragmaTranslator = new ACCanalyzeGlobalPragma(globalDecl);
+    //_globalPragmaTranslator = new ACCtranslateGlobalPragma(globalDecl);
   }
   
   public void finalize() {

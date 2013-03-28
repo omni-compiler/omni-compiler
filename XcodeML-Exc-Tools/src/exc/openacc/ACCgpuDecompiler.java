@@ -12,6 +12,9 @@ public class ACCgpuDecompiler {
   private static final int BUFFER_SIZE = 4096;
   private static final String GPU_SRC_EXTENSION = ".cu";
   public static final String GPU_FUNC_CONF = "OEPNACC_GPU_FUNC_CONF_PROP";
+  public static final String GPU_FUNC_CONF_ASYNC = "OEPNACC_GPU_FUNC_CONF_ASYNC_PROP";
+  
+  
   public static final String GPU_INDEX_TABLE = "OPENACC_GPU_INDEX_TABLE_PROP";
 
   

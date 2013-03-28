@@ -26,7 +26,7 @@ public class ACCanalyzeLocalPragma {
         } catch (ACCexception e) {
           ACC.error(pb.getLineNo(), e.getMessage());
         }
-      }else if(b.Opcode() == Xcode.LIST){
+      /*}else if(b.Opcode() == Xcode.LIST){
         SimpleBlock sb = (SimpleBlock)b;
         BasicBlock bb = sb.getBasicBlock();
         for(Statement st = bb.getHead(); st != null; st = st.getNext()){
@@ -57,7 +57,7 @@ public class ACCanalyzeLocalPragma {
             }
 
           }
-        }
+        }*/
       }else if(b.Opcode() == Xcode.PRAGMA_LINE){
         PragmaBlock pb = (PragmaBlock)b;
         ACC.error(pb.getLineNo(), "unknown pragma : " + pb.getClauses());
@@ -130,7 +130,7 @@ public class ACCanalyzeLocalPragma {
         if(clauseName.isDataClause() || clauseName.isReduction()){
           for(Xobject var : (XobjList)clauseArgs) accInfo.declACCvar(var.getName(), clauseName);
         }else{
-          ACC.fatal("'" + clauseName +"' clause is not allowed in 'parallel' directive");
+          ACC.fatal("'" + clauseName.getName() +"' clause is not allowed in 'parallel' directive");
         }
       }
     }
@@ -227,7 +227,6 @@ public class ACCanalyzeLocalPragma {
     
 
     //parallel or kernels? 
-    //これはinfoのほうで処理した方がいいかも
     ACCpragma computePragma = accInfo.getComputePragma();
     if(computePragma == null){
       throw new ACCexception("loop directive exists outside parallel/kernels region");
@@ -289,10 +288,19 @@ public class ACCanalyzeLocalPragma {
     Block block = body.getHead();
     if(block.Opcode() != Xcode.FOR_STATEMENT) throw new ACCexception("for-loop must be following 'loop' directive");
     CforBlock forBlock = (CforBlock)block;
-    forBlock.Canonicalize();
     if(! forBlock.isCanonical()){
-      throw new ACCexception("can't canonicalize this loop");
+      forBlock.Canonicalize();
+      if(! forBlock.isCanonical()){
+        throw new ACCexception("can't canonicalize this loop");
+      }
     }
+    
+    /*
+    //if execModel is not specified, set it AUTO.
+    Iterator<ACCpragma> execModel = accInfo.getExecModels();
+    if(! execModel.hasNext()){
+      accInfo.addExecModel(ACCpragma._AUTO);
+    }*/
   }
   
   private void analyzeCache(PragmaBlock pb) throws ACCexception{
@@ -304,7 +312,7 @@ public class ACCanalyzeLocalPragma {
       System.out.println("cache directive : " + clauseList);
     }
     
-    Xobject args = clauseList.getArg(1);
+    Xobject args = clauseList; //.getArg(1);
     for(Xobject var : (XobjList)args){
       accInfo.declACCvar(var.getName(), ACCpragma.CACHE);
     }
@@ -362,15 +370,14 @@ public class ACCanalyzeLocalPragma {
   }
   
   private void analyzeWait(PragmaBlock pb) throws ACCexception{
-    XobjList clauseList = (XobjList)pb.getClauses();
+    Xobject arg = pb.getClauses();
     ACCinfo accInfo = new ACCinfo(ACCpragma.WAIT, pb, _globalDecl);
     ACCutil.setACCinfo(pb, accInfo);
     
     if(ACC.debugFlag){
-      System.out.println("wait directive : " + clauseList);
+      System.out.println("wait directive : " + arg);
     }
     
-    Xobject arg = clauseList.getArg(1);
     accInfo.setWaitExp(arg);
   }
   
@@ -388,20 +395,29 @@ public class ACCanalyzeLocalPragma {
   void specifyInductionVarAsPrivate(PragmaBlock pb) throws ACCexception{
     ACCinfo info = ACCutil.getACCinfo(pb);
     
+    if(ACC.debugFlag){
+      ACC.debug("check induction variables");
+    }
+    
     topdownBlockIterator blockIter = new topdownBlockIterator(pb.getBody());
     for(blockIter.init(); !blockIter.end(); blockIter.next()){
       Block b = blockIter.getBlock();
       if(b.Opcode() == Xcode.FOR_STATEMENT){
         CforBlock forBlock = (CforBlock)b;
-        forBlock.Canonicalize();
-        if(! forBlock.isCanonical()) throw new ACCexception("loop can't canonicalize");
-        
+        if(! forBlock.isCanonical()){
+          forBlock.Canonicalize();
+          if(! forBlock.isCanonical()) throw new ACCexception("loop can't canonicalize");
+        }
+
         String indVarName = forBlock.getInductionVar().getName();
         Ident indVarId = pb.findVarIdent(indVarName);
         if(indVarId != null){
           ACCvar var = info.getACCvar(indVarName);
           if(var == null){
             info.declACCvar(indVarName, ACCpragma.PRIVATE);
+            if(ACC.debugFlag){
+              ACC.debug("add private(" + indVarName + ")");
+            }
           }
         }
       }
@@ -411,6 +427,10 @@ public class ACCanalyzeLocalPragma {
   
   void checkUnspecifiedVars(PragmaBlock pb, ACCinfo info) throws ACCexception{
     Set<String> checkedVars = new HashSet<String>();
+    
+    if(ACC.debugFlag){
+      ACC.debug("check unspecified variables");
+    }
     
     BasicBlockExprIterator iter = new BasicBlockExprIterator(pb.getBody());
     for (iter.init(); !iter.end(); iter.next()) {
@@ -423,13 +443,21 @@ public class ACCanalyzeLocalPragma {
         {
           String varName = x.getName();
           if (checkedVars.contains(varName)) break;
-          System.out.println("check : "+varName);
-
-          Ident id = pb.findVarIdent(varName);
-          if(id != null) {
-            if( !info.isVarPrivate(varName) ){
-              info.declACCvar(varName, ACCpragma.PRESENT_OR_COPY);
+          
+          //break if var is declared in pragma block
+          if(pb.findVarIdent(varName) == null) break; 
+          
+          ACCvar var = info.getACCvar(varName);
+          if(var != null){
+            if(var.isPrivate() || var.isFirstprivate()){
+              checkedVars.add(varName);
+              break;
             }
+          }
+          
+          if(! info.isVarAllocated(varName)){
+            info.declACCvar(varName, ACCpragma.PRESENT_OR_COPY);
+            if(ACC.debugFlag) ACC.debug("add present_or_copy(" + varName + ")");
           }
           checkedVars.add(varName);
         } break;
@@ -437,14 +465,15 @@ public class ACCanalyzeLocalPragma {
         {
           String varName = x.getArg(0).getName();
           if (checkedVars.contains(varName)) break;
-          System.out.println("check : "+varName);
+          
+          //break if array is declared in pragma block
+          if(pb.findVarIdent(varName) == null) break; 
 
-          Ident id = pb.findVarIdent(varName);
-          if(id != null) { //ident exists out pb
-            if( !info.isVarPrivate(varName) ){
-              info.declACCvar(varName, ACCpragma.PRESENT_OR_COPY);
-            }
+          if(! info.isVarAllocated(varName)){
+            info.declACCvar(varName, ACCpragma.PRESENT_OR_COPY);
+            if(ACC.debugFlag) ACC.debug("add present_or_copy(" + varName + ")");
           }
+
           checkedVars.add(varName);
         } break;
         default:
@@ -452,5 +481,6 @@ public class ACCanalyzeLocalPragma {
       }
     }
   }
+  
   
 }

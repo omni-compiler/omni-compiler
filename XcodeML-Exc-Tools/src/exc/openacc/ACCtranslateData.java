@@ -11,7 +11,9 @@ public class ACCtranslateData {
   private List<Block> copyinBlockList;
   private List<Block> copyoutBlockList;
   private List<Block> finalizeBlockList;
-  private List<Ident> idList;
+//  private List<Ident> idList;
+  private XobjList idList;
+  private XobjList declList;
   
   private final static String GPU_DEVICE_PTR_PREFIX = "_ACC_GPU_DEVICE_ADDR_";
   private final static String GPU_HOST_DESC_PREFIX = "_ACC_GPU_HOST_DESC_";
@@ -32,23 +34,27 @@ public class ACCtranslateData {
     copyinBlockList = new ArrayList<Block>();
     copyoutBlockList = new ArrayList<Block>();
     finalizeBlockList = new ArrayList<Block>();
-    idList = new ArrayList<Ident>();
+//    idList = new ArrayList<Ident>();
+    idList = Xcons.IDList();
+    declList = Xcons.List();
   }
   
   public void translate() throws ACCexception{
     if(ACC.debugFlag){
       System.out.println("translate data");
     }
+    
+    if(dataInfo.isDisabled()) return;
         
-    //List<ACCvar> accVarList = dataInfo.getACCvarList();
-    //for(ACCvar var : accVarList){
     for(Iterator<ACCvar> iter = dataInfo.getVars(); iter.hasNext(); ){
       ACCvar var = iter.next();
       if(var.allocatesDeviceMemory()){
         String varName = var.getName();
         Ident varId = var.getId();
         if(var.isPresentOr()){
-          if(dataInfo.isVarAllocated(varName))continue;
+          if(dataInfo.getParent() != null){
+            if(dataInfo.getParent().isVarAllocated(varName))continue;            
+          }
         }
         boolean copyHtoD = var.copiesHtoD();
         boolean copyDtoH = var.copiesDtoH();
@@ -83,15 +89,45 @@ public class ACCtranslateData {
       }
     }
     
-    List<Block> beginBlockList = new ArrayList<Block>();
-    List<Block> endBlockList = new ArrayList<Block>();
-    beginBlockList.addAll(initBlockList);
-    beginBlockList.addAll(copyinBlockList);
-    endBlockList.addAll(copyoutBlockList);
-    endBlockList.addAll(finalizeBlockList);
-    dataInfo.setBeginBlockList(beginBlockList);
-    dataInfo.setEndBlockList(endBlockList);
+//    List<Block> beginBlockList = new ArrayList<Block>();
+//    List<Block> endBlockList = new ArrayList<Block>();
+//    beginBlockList.addAll(initBlockList);
+//    beginBlockList.addAll(copyinBlockList);
+//    endBlockList.addAll(copyoutBlockList);
+//    endBlockList.addAll(finalizeBlockList);
+    
+    BlockList beginBody = Bcons.emptyBody();
+    for(Block b : initBlockList) beginBody.add(b);
+    for(Block b : copyinBlockList) beginBody.add(b);
+    BlockList endBody = Bcons.emptyBody();
+    for(Block b : copyoutBlockList) endBody.add(b);
+    for(Block b : finalizeBlockList) endBody.add(b);
+    
+    Block beginBlock = Bcons.COMPOUND(beginBody);
+    Block endBlock = Bcons.COMPOUND(endBody);
+    
+    if(dataInfo.isEnabled()){
+      dataInfo.setBeginBlock(beginBlock);
+      dataInfo.setEndBlock(endBlock);
+    }else{
+      Ident condId = Ident.Local("_ACC_DATA_IF_COND", Xtype.intType);
+      condId.setIsDeclared(true);
+      Xobject condDecl = Xcons.List(Xcode.VAR_DECL, condId.Ref(), dataInfo.getIfCond());
+      dataInfo.setBeginBlock(Bcons.IF(condId.Ref(), beginBlock, null));
+      dataInfo.setEndBlock(Bcons.IF(condId.Ref(), endBlock, null));
+      dataInfo.setDeclList(Xcons.List(condDecl));
+      idList.add(condId);
+    }
     dataInfo.setIdList(idList);
+
+    
+//    if(dataInfo.isEnabled()){
+//      dataInfo.setBeginBlockList(beginBlockList);
+//      dataInfo.setEndBlockList(endBlockList);
+//      dataInfo.setIdList(idList);
+//    }else{
+//      //case like if(var)
+//    }
   }
   
   public Block createFuncCallBlock(String funcName, XobjList funcArgs) {
@@ -124,7 +160,8 @@ public class ACCtranslateData {
 
       addrObj = varId.Ref();
       sizeObj = Xcons.binaryOp(Xcode.MUL_EXPR, 
-          Xcons.LongLongConstant(0, ACCutil.getArrayElmtCount(arrayVarType)),
+          //Xcons.LongLongConstant(0, ACCutil.getArrayElmtCount(arrayVarType)),
+          ACCutil.getArrayElmtCountObj(arrayVarType),
           Xcons.SizeOf(((ArrayType)varType).getArrayElementType()));
       break;
     }

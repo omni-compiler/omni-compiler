@@ -28,8 +28,7 @@ public class ACCvar {
   
   //for use_device clause
   private boolean isUse_device = false;
-
-
+  
   
   ACCvar(Ident id, ACCpragma atr, ACCvar parent) throws ACCexception{
     this.id = id;
@@ -89,6 +88,12 @@ public class ACCvar {
       break;
     case CACHE:
       isCache = true;
+      break;
+    case HOST:
+      copyDeviceToHost = true;
+      break;
+    case DEVICE:
+      copyHostToDevice = true;
       break;
     default:
       if(atr.isReduction()){
@@ -159,7 +164,12 @@ public class ACCvar {
   public void setHostDesc(Ident hostDesc){
     this.hostDesc = hostDesc;
   }
+  public Ident getHostDesc(){
+    return hostDesc;
+  }
   public boolean isAllocated(){
-    return deviceptr != null;
+    //return deviceptr != null;
+    //return allocatesDeviceMemory();
+    return (deviceptr != null ) || allocatesDeviceMemory;
   }
 }

@@ -45,33 +45,41 @@ public class ACCrewritePragma implements XobjectDefVisitor{
 //        try {
           ACCinfo info = ACCutil.getACCinfo(pb);
           if(info != null){
-            if(info.isEnabled()){
-              List<Ident> idList = info.getIdList();
-              List<Block> beginBlockList = info.getBeginBlockList();
-              List<Block> endBlockList = info.getEndBlockList();
-              Block replaceBlock = info.getReplaceBlock();
-              //BlockList newBody = Bcons.emptyBody(ACCutil.getVarIdList(idList), ACCutil.getVarDeclList(idList));
-              BlockList newBody = Bcons.emptyBody();
-              if(idList != null){
-                for(Ident id : idList) newBody.addIdent(id);
-              }
-              if(beginBlockList != null){
-                for(Block bb : beginBlockList) newBody.add(bb);
-              }
-              if(replaceBlock != null){
-                newBody.add(replaceBlock);
-              }else{
-                newBody.add(Bcons.COMPOUND(pb.getBody()));
-              }
-              if(endBlockList != null){
-                for(Block eb : endBlockList) newBody.add(eb);
-              }
+//            List<Ident> idList = info.getIdList();
+            XobjList idList = info.getIdList();
+            XobjList declList = info.getDeclList();
+//            List<Block> beginBlockList = info.getBeginBlockList();
+//            List<Block> endBlockList = info.getEndBlockList();
+            Block beginBlock = info.getBeginBlock();
+            Block endBlock = info.getEndBlock();
+            Block replaceBlock = info.getReplaceBlock();
 
-              Block newBlock = Bcons.COMPOUND(newBody);
-              pb.replace(newBlock);
-            }else{
-              pb.replace(pb.getBody().getHead());
+            BlockList newBody = Bcons.emptyBody();
+//            if(idList != null){
+//              for(Ident id : idList) newBody.addIdent(id);
+//            }
+            newBody.setIdentList(idList);
+//            if(beginBlockList != null){
+//              for(Block bb : beginBlockList) newBody.add(bb);
+//            }
+            newBody.setDecls(declList);
+            if(beginBlock != null){
+              newBody.add(beginBlock);
             }
+            if(replaceBlock != null){
+              newBody.add(replaceBlock);
+            }else{
+              newBody.add(Bcons.COMPOUND(pb.getBody()));
+            }
+//            if(endBlockList != null){
+//              for(Block eb : endBlockList) newBody.add(eb);
+//            }
+            if(endBlock != null){
+              newBody.add(endBlock);
+            }
+
+            Block newBlock = Bcons.COMPOUND(newBody);
+            pb.replace(newBlock);
           }
 //        } catch (ACCexception e) {
 //          ACC.error(pb.getLineNo(), e.getMessage());
@@ -83,6 +91,7 @@ public class ACCrewritePragma implements XobjectDefVisitor{
     }
     def.Finalize();
   }
+  
   private void rewriteGlobalPragma(XobjectDef def){
     //XXX need to implement
   }
