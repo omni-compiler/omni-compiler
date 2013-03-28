@@ -1,7 +1,6 @@
 package exc.openacc;
-import java.util.*;
 
-import xcodeml.c.decompile.XcIndexRangeObj.UpperBound;
+import java.util.*;
 import exc.block.*;
 import exc.object.*;
 
@@ -19,7 +18,6 @@ public class ACCinfo {
   private boolean isAsync = false;
   private Xobject asyncExp = null;
   
-  private boolean isWait = false;
   private Xobject waitExp = null;
   
   private Set<ACCpragma> execModels; 
@@ -32,10 +30,17 @@ public class ACCinfo {
   private boolean isIndependent = false;
   
   //for rewrite
-  private List<Ident> idList = null;
+  //private List<Ident> idList = null;
+  private XobjList idList = null;
+  @Deprecated
   private List<Block> beginBlockList = null;
   private Block replaceBlock = null;
+  @Deprecated
   private List<Block> endBlockList = null;
+  private Block beginBlock = null;
+  private Block endBlock = null;
+  private XobjList declList = null;
+  
   
   ACCinfo(ACCpragma pragma, Block b, ACCglobalDecl globalDecl){
     this.pragma = pragma;
@@ -47,9 +52,33 @@ public class ACCinfo {
     execModels = new HashSet<ACCpragma>();
   }
   
+  /** @return true if expression is scalar integer */
+  private boolean isExpScalarInt(Xobject exp){
+    if(exp == null) return false;
+    
+    if(exp.Opcode() == Xcode.VAR){
+      String varName = exp.getName();
+      Ident varId = block.findVarIdent(varName);
+      if(varId.Type() == Xtype.intType){
+        return true;
+      }
+    }else if(exp.isIntConstant()){
+      return true;
+    }
+    return false;
+  }
+  
   public void setIfCond(Xobject ifCond) throws ACCexception{
-    if(this.ifCond == null) this.ifCond = ifCond;
-    else throw new ACCexception("if clause is already specified");
+    if(this.ifCond != null) throw new ACCexception("if clause is already specified"); 
+
+    if(ifCond != null){
+      if(isExpScalarInt(ifCond)){
+        this.ifCond = ifCond;
+      }
+      else throw new ACCexception("'" + ifCond + "' is not scalar integer expression");
+    }else{
+      this.ifCond = null;
+    }
   }
   public Xobject getIfCond(){
     return ifCond;
@@ -57,8 +86,14 @@ public class ACCinfo {
 
   public void setAsyncExp(Xobject asyncExp) throws ACCexception{
     if(isAsync) throw new ACCexception("async clause is already specified");
+
+    if(asyncExp != null){
+      if(isExpScalarInt(asyncExp)){
+        this.asyncExp = asyncExp;        
+      }
+      else throw new ACCexception("'" + asyncExp + "' is not scalar integer expression");
+    }
     isAsync = true;
-    this.asyncExp = asyncExp;
   }
   public boolean isAsync(){
     return isAsync;
@@ -69,15 +104,17 @@ public class ACCinfo {
   }
   
   public void setWaitExp(Xobject waitExp) throws ACCexception{
-    if(isWait) throw new ACCexception("wait clause is already specified");
-    isWait = true;
-    this.waitExp = waitExp;
-  }
-  public boolean isWait(){
-    return isWait;
+    if(this.waitExp != null) throw new ACCexception("wait is already specified");
+    
+    if(waitExp != null){
+      if(isExpScalarInt(waitExp)){
+        this.waitExp = waitExp;
+      }else{
+        throw new ACCexception("'" + waitExp + "' is not scalar integer expression");
+      }
+    }
   }
   public Xobject getWaitExp() throws ACCexception{
-    if(! isWait) throw new ACCexception("it is not wait");
     return waitExp;
   }
 
@@ -101,34 +138,52 @@ public class ACCinfo {
         throw new ACCexception("this loop is already specified as (gang|worker|vector)");
       }
       execModels.add(ACCpragma.SEQ);
+      break;
     default:
-      throw new ACCexception(execModel.getName() + " is not execLevel");
+      throw new ACCexception(execModel.getName() + " is not execModel");
     }
   }
   public Iterator<ACCpragma> getExecModels(){
     return execModels.iterator();
   }
   
-  
   public void setNumGangsExp(Xobject num_gangsExp) throws ACCexception{
-    if(this.num_gangsExp == null) this.num_gangsExp = num_gangsExp;
-    else throw new ACCexception("number of gangs is already specified");
+    if(this.num_gangsExp != null) throw new ACCexception("number of gangs is already specified"); 
+    if(num_gangsExp == null) return;
+    
+    if(isExpScalarInt(num_gangsExp)){
+      this.num_gangsExp = num_gangsExp;
+    }else{
+      throw new ACCexception("'" + num_gangsExp + "' is not scalar integer expression");
+    }
   }
   public Xobject getNumGangsExp(){
     return num_gangsExp;
   }
 
   public void setNumWorkersExp(Xobject num_workersExp) throws ACCexception{
-    if(this.num_workersExp == null) this.num_workersExp = num_workersExp;
-    else throw new ACCexception("number of workers is already specified");
+    if(this.num_workersExp != null) throw new ACCexception("number of workers is already specified");
+    if(num_workersExp == null) return;
+    
+    if(isExpScalarInt(num_workersExp)){
+      this.num_workersExp = num_workersExp;
+    }else{
+      throw new ACCexception("'" + num_workersExp + "' is not scalar integer expression");
+    }
   }
   public Xobject getNumWorkersExp(){
     return num_workersExp;
   }
   
   public void setVectorLengthExp(Xobject vect_lenExp) throws ACCexception{
-    if(this.vect_lenExp == null) this.vect_lenExp = vect_lenExp;
-    else throw new ACCexception("vector length is already specified");
+    if(this.vect_lenExp != null) throw new ACCexception("vector length is already specified");
+    if(vect_lenExp == null) return;
+    
+    if(isExpScalarInt(vect_lenExp)){
+      this.vect_lenExp = vect_lenExp;
+    }else{
+      throw new ACCexception("'" + vect_lenExp + "' is not scalar integer expression");
+    }
   }
   public Xobject getVectorLengthExp(){
     return vect_lenExp;
@@ -183,7 +238,8 @@ public class ACCinfo {
     return null;
   }
   
-  public boolean isEnabled(){ //returns true if (ifCond != 0)
+  /** @return true if this is always enabled */
+  public boolean isEnabled(){
     if(ifCond == null) return true;
     if(ifCond.isIntConstant()){
       return ! ifCond.isZeroConstant();
@@ -191,13 +247,19 @@ public class ACCinfo {
     return false;
   }
   
+  /** @return true if this is always disabled */
+  public boolean isDisabled(){
+    if(ifCond != null && ifCond.isZeroConstant()) return true;
+    return false;
+  }
+  
   public boolean isVarAllocated(String varName){
     for(ACCinfo info = this; info != null; info = info.parent){
-      if(info.isEnabled()){
-        ACCvar var = info.getACCvar(varName);
-        if(var != null){
-          if(var.isPresent() || var.isAllocated()) return true;
-        }
+      if(info.isDisabled()) continue;
+
+      ACCvar var = info.getACCvar(varName);
+      if(var != null){
+        if(var.isPresent() || var.isAllocated()) return true;
       }
     }
     return false;
@@ -224,10 +286,12 @@ public class ACCinfo {
   
   public Ident getDevicePtr(String varName){
     for(ACCinfo info = this; info != null; info = info.parent){
+      if(info.isDisabled()) continue;
+      
       ACCvar var = info.getACCvar(varName);
       if(var != null){
         Ident deviceptr = var.getDevicePtr();
-        if(info.isEnabled() && deviceptr != null){
+        if(deviceptr != null){
           return deviceptr;
         }
       }
@@ -313,12 +377,21 @@ public class ACCinfo {
         ACC.warning("'" + varName + "' is already specified as deviceptr.");
       }   
       break;
+    case HOST:
+    case DEVICE:
+      if(! isVarAllocated(varName)){
+        throw new ACCexception("'" + varName + "' is not allocated");
+      }
+      break;
+      
     case PRIVATE:
     case FIRSTPRIVATE:
     case CACHE:
       break;
     default:
-      throw new ACCexception("'" + atr.getName() + "' is unknown attribute");
+      if(! atr.isReduction()){
+        throw new ACCexception("'" + atr.getName() + "' is unknown attribute");        
+      }
     }
 
     parentACCvar = findOuterACCvar(varName);
@@ -362,29 +435,53 @@ public class ACCinfo {
   public ACCpragma getPragma(){
     return pragma;
   }
+  @Deprecated
   public void setBeginBlockList(List<Block> beginBlockList){
     this.beginBlockList = beginBlockList;
   }
+  @Deprecated
   public void setEndBlockList(List<Block> endBlockList){
     this.endBlockList = endBlockList;
+  }
+  public void setBeginBlock(Block beginBlock){
+    this.beginBlock = beginBlock;
+  }
+  public void setEndBlock(Block endBlock){
+    this.endBlock = endBlock;
   }
   public void setReplaceBlock(Block replaceBlock){
     this.replaceBlock = replaceBlock;
   }
+  @Deprecated
   public List<Block> getBeginBlockList(){
     return beginBlockList;
   }
+  @Deprecated
   public List<Block> getEndBlockList(){
     return endBlockList;
+  }
+  public Block getBeginBlock(){
+    return beginBlock;
+  }
+  public Block getEndBlock(){
+    return endBlock;
   }
   public Block getReplaceBlock(){
     return replaceBlock;
   }
-  public void setIdList(List<Ident> idList){
+  //public void setIdList(List<Ident> idList){
+  public void setIdList(XobjList idList){
     this.idList = idList;
   }
-  public List<Ident> getIdList(){
+  //public List<Ident> getIdList(){
+  public XobjList getIdList(){
     return idList;
+  }
+  public void setDeclList(XobjList declList){
+    this.declList = declList;
+  }
+  public XobjList getDeclList(){
+    return declList;
   }
   
   public ACCglobalDecl getGlobalDecl(){
@@ -398,5 +495,33 @@ public class ACCinfo {
   public Iterator<ACCvar> getVars(){
     return varList.iterator();
   }
+
+  
+  public Ident getHostDescId(String varName) {
+    for(ACCinfo info = this; info != null; info = info.parent){
+      if(info.isDisabled()) continue;
+      ACCvar var = info.getACCvar(varName);
+      if(var != null){
+        Ident hostDescId = var.getHostDesc();
+        if(hostDescId != null) return hostDescId;
+      }
+    }
+    return null;
+  }
+  
+  public ACCinfo getParent(){
+    return parent;
+  }
+  
+  /*
+  public Iterator<ACCvar> getReductionVars(){
+    List<ACCvar> reductionVars = new ArrayList<ACCvar>();
+    for(ACCvar v : varList){
+      if(v.isReduction()){
+        reductionVars.add(v);
+      }
+    }
+    return reductionVars.iterator();
+  }*/
   
 }

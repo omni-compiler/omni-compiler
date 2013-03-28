@@ -366,7 +366,8 @@ public class ACCgpuDecompileWriter extends PrintWriter {
 
     case FUNCTION_CALL: /* (FUNCTION_CALL function args-list) */
       XobjList prop = (XobjList)v.getProp(ACCgpuDecompiler.GPU_FUNC_CONF);
-
+      XobjList propAsync = (XobjList)v.getProp(ACCgpuDecompiler.GPU_FUNC_CONF_ASYNC);
+      
       String funcName = null;
       if(v.left().Opcode() == Xcode.FUNC_ADDR){
         funcName = v.left().getSym();
@@ -385,14 +386,25 @@ public class ACCgpuDecompileWriter extends PrintWriter {
 
       // FIXME implement stream???
       if (prop != null) {
-        print("<<<_ACC_GPU_DIM3_block, _ACC_GPU_DIM3_thread>>>");
+        print("<<<_ACC_GPU_DIM3_block, _ACC_GPU_DIM3_thread, 0");
+        
+        if(propAsync != null){
+          if(! propAsync.isEmpty()){
+            print("," + propAsync.getArg(0).getName());
+          }
+        }
+        
+        print(">>>");
       }
 
       printArgList(v.right());
 
       if (prop != null) {
         println(";");
-        println("_ACC_GPU_M_BARRIER_KERNEL();");
+
+        if(propAsync == null){
+          println("_ACC_GPU_M_BARRIER_KERNEL();");
+        }
         print("}");
       }
       break;

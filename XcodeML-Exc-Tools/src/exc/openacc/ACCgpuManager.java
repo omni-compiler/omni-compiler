@@ -5,19 +5,18 @@ import java.util.*;
 
 
 public class ACCgpuManager {
-  //boolean[] isBlockAvailable = new boolean[]{true, true, true};
-  //boolean[] isThreadAvailable = new boolean[]{true, true, true};
-  //boolean isVectorAvailable = true;
-  //boolean isWorkerSpecified = false;
-  int availableBlockDim = 3;
-  int availableThreadDim = 3;
+  static final int maxBlockDim = 3;
+  static final int maxThreadDim = 3;
+  
+  int availableBlockDim = maxBlockDim;
+  int availableThreadDim = maxThreadDim;
   
   List<LoopExecInfo> loopExecInfos = new ArrayList<LoopExecInfo>();
   
   ACCgpuManager() {
   }
   
-  public boolean setLoop(Iterator<ACCpragma> execModelIter, CforBlock... loops){
+  public boolean addLoop(Iterator<ACCpragma> execModelIter, CforBlock... loops){
     ACCpragma execMethod = getExecMethod(execModelIter);
     switch(execMethod){
     case _BLOCK:
@@ -26,10 +25,23 @@ public class ACCgpuManager {
       return setAsThread(loops);
     case _BLOCK_THREAD:
       return setAsBlockThread(loops);
+    case SEQ:
+      return true;
+    case _AUTO:
+    {
+      setAsAuto(loops);
+      return true;
+    }
     default:
       ACC.fatal("'" + execMethod.getName() + "' is not suppoerted");
     }
     return false;
+  }
+  
+  private void setAsAuto(CforBlock... forBlocks){
+    List<CforBlock> forBlockList = new ArrayList<CforBlock>();
+    for(CforBlock forBlock : forBlocks) forBlockList.add(forBlock);
+    loopExecInfos.add(new LoopExecInfo(forBlockList, ACCpragma._AUTO));
   }
   
   private boolean setAsBlock(CforBlock... forBlocks){
@@ -72,14 +84,19 @@ public class ACCgpuManager {
     boolean worker = false;
     boolean vector = false;
 
+    //if execModel is not specified, set it AUTO.
+    if(! execModelIter.hasNext()){ 
+      return ACCpragma._AUTO;
+    }
     
     while(execModelIter.hasNext()){
       switch(execModelIter.next()){
       case GANG: gang = true;break;
       case WORKER: worker = true;break;
       case VECTOR: vector = true;break;
+      case SEQ: break;
       default:
-        ACC.fatal("getExecMethd error");
+        ACC.fatal("getExecMethod error");
       }
     }
     
@@ -96,6 +113,61 @@ public class ACCgpuManager {
         return ACCpragma.SEQ;
       }
     }
+  }
+  
+  public void specifyExecModel(){
+    //for execModel == _AUTO
+    int num_auto = 0;
+    for(LoopExecInfo loopExecInfo : loopExecInfos){
+      if(loopExecInfo.method == ACCpragma._AUTO){
+        num_auto++;
+      }
+    }
+
+    ACCpragma prevExecMethod = null;
+    
+//    Iterator<LoopExecInfo> loopExecInfoIter = loopExecInfos.iterator();
+//    for(; loopExecInfoIter.hasNext(); ){
+//      LoopExecInfo loopExecInfo = loopExecInfoIter.next();
+    for(LoopExecInfo loopExecInfo : loopExecInfos){
+      if(loopExecInfo.method == ACCpragma._AUTO){
+        ACCpragma method;
+        if(num_auto > 1){
+          if(prevExecMethod == null){
+            method = ACCpragma._BLOCK;
+          }else{
+            method = prevExecMethod;            
+          }
+        }else{
+          if(prevExecMethod == null){
+            method = ACCpragma._BLOCK_THREAD;
+          }else{
+            method = ACCpragma._THREAD;
+          }
+        }
+        
+        if(method == ACCpragma._BLOCK || method == ACCpragma._BLOCK_THREAD){
+          if(availableBlockDim == 0){
+            method = ACCpragma.SEQ;
+          }else{
+            availableBlockDim--;
+          }
+        }
+        if(method == ACCpragma._THREAD || method == ACCpragma._BLOCK_THREAD){
+          if(availableThreadDim == 0){
+            method = ACCpragma.SEQ;
+          }else{
+            availableThreadDim--;
+          }
+        }
+
+        loopExecInfo.method = method;
+        num_auto--;
+      }
+
+      prevExecMethod = loopExecInfo.method;
+    }
+    
   }
   
   public void distAxis(){
@@ -135,11 +207,11 @@ public class ACCgpuManager {
         Axis axis = loopExecInfo.axis;
         switch(loopExecInfo.method){
         case _BLOCK:
-          return "block" + axis;
+          return "block_" + axis.getName();
         case _THREAD:
-          return "thread" + axis;
+          return "thread_" + axis.getName();
         case _BLOCK_THREAD:
-          return "block_thread" + axis;
+          return "block_thread_" + axis.getName();
         }
       }
     }
@@ -147,6 +219,7 @@ public class ACCgpuManager {
   }
   
   public void finalize(){
+    specifyExecModel();
     distAxis();
   }
   
@@ -168,7 +241,7 @@ public class ACCgpuManager {
         break;
       }
     }
-    for(int i = 0; i < usedBlockDim; i++){
+    for(int i = 0; i < usedThreadDim/*BlockDim*/; i++){
       if(threadSize[i] == null){
         threadSize[i] = Xcons.IntConstant(getDefaultThreadNum(usedThreadDim));
       }
@@ -196,7 +269,14 @@ public class ACCgpuManager {
         if(num_gangs != null){
           blockSize[idx] = num_gangs;
         }else{
-          blockSize[idx] = Xcons.binaryOp(Xcode.DIV_EXPR, loopExecInfo.getTotalIterNum(), threadSize[idx]);
+          blockSize[idx] = Xcons.binaryOp(Xcode.PLUS_EXPR, 
+                                          Xcons.binaryOp(Xcode.DIV_EXPR, 
+                                                         Xcons.binaryOp(Xcode.MINUS_EXPR, 
+                                                                        loopExecInfo.getTotalIterNum(), 
+                                                                        Xcons.IntConstant(1)),
+                                                         threadSize[idx]),
+                                          Xcons.IntConstant(1));
+          //blockSize[idx] = ACCutil.foldIntConstant(blockSize[idx]);
         }
       } break;
       }
@@ -217,8 +297,7 @@ public class ACCgpuManager {
     case 3: return 8;
     default: return 1;
     }
-  }
-  
+  }  
 }
 
 class LoopExecInfo{
@@ -258,9 +337,13 @@ class LoopExecInfo{
             step), 
         Xcons.IntConstant(1));
   }
+  
 }
 
 enum Axis{
   X, Y, Z;
+  public String getName(){
+    return toString().toLowerCase();
+  }
 }
 

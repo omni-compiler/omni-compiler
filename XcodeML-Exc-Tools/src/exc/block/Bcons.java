@@ -394,7 +394,7 @@ public class Bcons
                 buildList(v.getArgOrNull(2)));
 
         case ACC_PRAGMA:
-        	return PRAGMA(Xcode.ACC_PRAGMA, v.getArg(0).getString(), v.getArg(1),
+        	return PRAGMA(Xcode.ACC_PRAGMA, v.getArg(0).getString(), v.getArgOrNull(1),
                 buildList(v.getArgOrNull(2)));
 
         case IF_STATEMENT: /* (IF_STATMENT cond then-part else-part) */

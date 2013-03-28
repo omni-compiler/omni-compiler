@@ -56,9 +56,9 @@ public class ACCtranslateLocalPragma {
     case DECLARE:
       //translateDeclare(pb); break;
     case UPDATE:
-      //translateUpdate(pb); break;
+      translateUpdate(pb); break;
     case WAIT:
-      //translateWait(pb); break;
+      translateWait(pb); break;
     default:
       throw new ACCexception("'" + pragmaName.toLowerCase() + "' directive is not supported yet");
     }
@@ -71,6 +71,16 @@ public class ACCtranslateLocalPragma {
   
   private void translateData(PragmaBlock pb) throws ACCexception{
     ACCtranslateData translator = new ACCtranslateData(pb);
+    translator.translate();
+  }
+  
+  private void translateUpdate(PragmaBlock pb) throws ACCexception{
+    ACCtranslateUpdate translator = new ACCtranslateUpdate(pb);
+    translator.translate();
+  }
+  
+  private void translateWait(PragmaBlock pb) throws ACCexception{
+    ACCtranslateWait translator = new ACCtranslateWait(pb);
     translator.translate();
   }
 }

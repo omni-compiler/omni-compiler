@@ -27,6 +27,24 @@ public class ACCutil {
     }
   }
   
+  public static Xobject getArrayElmtCountObj(Xtype type) throws ACCexception {
+    if (type.isArray()) {
+      ArrayType arrayType = (ArrayType)type;
+      long arraySize = arrayType.getArraySize();
+      Xobject arraySizeObj;
+      if ((arraySize == 0)){// || (arraySize == -1)) {
+        throw new ACCexception("array size should be declared statically");
+      }else if(arraySize==-1){
+        arraySizeObj = arrayType.getArraySizeExpr();
+      }else{
+        arraySizeObj = Xcons.LongLongConstant(0, arraySize);
+      }
+      return Xcons.binaryOp(Xcode.MUL_EXPR, arraySizeObj, getArrayElmtCountObj(arrayType.getRef()));
+    } else {
+      return Xcons.IntConstant(1);
+    }
+  }
+  
   public static XobjList getVarDeclList(List<Ident> varIdList){
     XobjList varDeclList = Xcons.List();
     for(Ident id : varIdList){
@@ -80,6 +98,22 @@ public class ACCutil {
     
     return false;
   }
+  
+  public static Ident getIdent(XobjList list, String string){
+    Iterator<Xobject> it = list.iterator();
+    while (it.hasNext()) {
+      Ident id = (Ident)it.next();
+      if (id == null) {
+        continue;
+      }
+      
+      if (id.getName().equals(string)) {
+        return id;
+      }
+    }
+    return null;
+  }
+  
   public static int getIdentNum(XobjList list, String string){
     int count = 0;
     for(Iterator<Xobject> it = list.iterator(); it.hasNext(); count++){
@@ -119,6 +153,27 @@ public class ACCutil {
       addrs.add(id.getAddr());
     }
     return addrs;
+  }
+  
+  public static Xobject foldIntConstant(Xobject exp){
+    if(exp.isBinaryOp()){
+      Xcode code = exp.Opcode();
+      Xobject left = foldIntConstant(exp.left());
+      Xobject right = foldIntConstant(exp.right());
+      if(left.isIntConstant() && right.isIntConstant()){
+        switch(code){
+        case PLUS_EXPR:
+          return Xcons.IntConstant(left.getInt() + right.getInt());
+        case MINUS_EXPR:
+          return Xcons.IntConstant(left.getInt() - right.getInt());
+        case MUL_EXPR:
+          return Xcons.IntConstant(left.getInt() * right.getInt());
+        case DIV_EXPR:
+          return Xcons.IntConstant(left.getInt() / right.getInt());
+        }
+      }
+    }
+    return exp;
   }
 }
 
