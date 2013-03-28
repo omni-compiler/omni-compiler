@@ -28,7 +28,7 @@ libxmp_a_SOURCES    = $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.
                                   xmp_math_function.c xmp_runtime.c xmp_coarray.c xmp_tlog_runtime.c \
                                   xmp_io.c xmp_fjrdma_coarray.c
 
-AM_CFLAGS         = -Wall -Wpointer-arith -std=gnu99 -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR) -D_XMP_COARRAY_RDMA
+AM_CFLAGS         = -Wall -Wpointer-arith -std=gnu99 -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR) -D_XMP_COARRAY_FJRDMA
 else
 libxmp_a_SOURCES    = $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h $(XMP_INC_DIR)/xmp_data_struct.h \
                                   xmp_math_function.h xmp_lib.c xmp_util.c xmp_world.c xmp_nodes_stack.c \
