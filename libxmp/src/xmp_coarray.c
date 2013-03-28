@@ -13,7 +13,6 @@ static long long _total_coarray_length, _total_array_length;
 static _XMP_array_section_t *_coarray, *_array;
 
 void _XMP_coarray_initialize(int argc, char **argv){
-#ifdef _XMP_COARRAY_GASNET
   char *env_heap_size, *env_stride_size;
   int i;
 
@@ -47,6 +46,7 @@ void _XMP_coarray_initialize(int argc, char **argv){
     _xmp_stride_size = _XMP_DEFAULT_COARRAY_STRIDE_SIZE;
   }
 
+#ifdef _XMP_COARRAY_GASNET
   _XMP_gasnet_initialize(argc, argv);
 #elif _XMP_COARRAY_FJRDMA
   _XMP_fjrdma_initialize();

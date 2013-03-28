@@ -640,13 +640,14 @@ GPGPU_PREFIX
 GPU_CMD
 MPI_F90
 MPI_CMD
+FJRDMA
+FJRDMA_FALSE
+FJRDMA_TRUE
 GASNET_CONDUIT_CAP
 GASNET_CONDUIT
 GASNET_PREFIX
 GASNET_FALSE
 GASNET_TRUE
-FJRDMA_FALSE
-FJRDMA_TRUE
 LIBXML_PREFIX
 omniQRealFillGap
 omniQRealPrecInLimb
@@ -853,7 +854,7 @@ with_precision
 with_libxmlDir
 with_gasnetDir
 with_gasnet_conduit
-with_fjrdma
+enable_fjrdma
 with_mpicc
 with_mpif90
 with_gpucc
@@ -1503,6 +1504,7 @@ Optional Features:
   --disable-dependency-tracking
                           speeds up one-time build
   --enable-mreal          enable multiple precision real (and real*16) support of Fortran 77 (false default).
+  --enable-fjrdma         use Fujitsu RDMA
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1517,7 +1519,6 @@ Optional Packages:
   --with-libxmlDir=DIR    specify libxml install directory (default: /usr)
   --with-gasnetDir=DIR    specify GASNet install directory
   --with-gasnet-conduit=NAME    specify GASNet conduit
-  --with-fjrdma           specify Fujitsu RDMA
   --with-mpicc=CMD        specify MPI C compiler (default: mpicc)
   --with-mpif90=CMD        specify MPI F90 compiler (default: mpif90)
   --with-gpucc=CMD        specify GPU C compiler (default: nvcc)
@@ -10259,17 +10260,23 @@ fi
 
 GASNET_CONDUIT_CAP=$(echo ${GASNET_CONDUIT} | tr 'a-z' 'A-Z')
 
+
 # --------------------------------------------------------------------
 # specify Fujitsu RDMA
 
-# Check whether --with-fjrdma was given.
-if test "${with_fjrdma+set}" = set; then :
+# Check whether --enable-fjrdma was given.
+if test "${enable_fjrdma+set}" = set; then :
+  enableval=$enable_fjrdma;
+fi
+
+ if test "${enable_fjrdma+set}" = set; then
   FJRDMA_TRUE=
   FJRDMA_FALSE='#'
 else
   FJRDMA_TRUE='#'
   FJRDMA_FALSE=
 fi
+
 
 
 # --------------------------------------------------------------------
@@ -10528,6 +10535,10 @@ fi
 
 if test -z "${GASNET_TRUE}" && test -z "${GASNET_FALSE}"; then
   as_fn_error $? "conditional \"GASNET\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${FJRDMA_TRUE}" && test -z "${FJRDMA_FALSE}"; then
+  as_fn_error $? "conditional \"FJRDMA\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
