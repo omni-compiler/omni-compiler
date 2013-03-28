@@ -1,6 +1,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 #include "xmp_internal.h"
 #ifdef _XMP_COARRAY_FJRDMA
 #include "mpi-ext.h"
@@ -292,7 +294,6 @@ void _XMP_coarray_rma_do(int rma_code, void *coarray, void *array){
   int coarray_continuous, array_continuous;
   coarray_continuous = check_continuous(_coarray, _coarray_dims, _total_coarray_length);
   array_continuous   = check_continuous(_array, _array_dims, _total_coarray_length); 
-
 
   if(coarray_continuous == _XMP_N_INT_FALSE || coarray_continuous == _XMP_N_INT_FALSE){
     _XMP_fatal("Sorry! Not continuous array is not supported.");

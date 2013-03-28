@@ -14,6 +14,7 @@ extern int _XMPF_running;
 #include <mpi.h>
 #include <stddef.h>
 #include <stdarg.h>
+#include <stdint.h>
 // --------------- macro functions -----------------------------------
 #ifdef DEBUG
 #define _XMP_ASSERT(_flag) \
@@ -162,11 +163,14 @@ extern void _XMP_threads_finalize(void);
 
 
 // ----- for coarray -------------------
+#ifdef _XMP_COARRAY_RDMA
+#define _XMP_DEFAULT_COARRAY_HEAP_SIZE (256*1024*1024)  // 256MB
+#define _XMP_DEFAULT_COARRAY_STRIDE_SIZE (16*1024*1024)  // 16MB
+#endif
+
 extern void _XMP_post_initialize();
 #ifdef _XMP_COARRAY_GASNET
 #include <gasnet.h>
-#define _XMP_DEFAULT_COARRAY_HEAP_SIZE (256*1024*1024)  // 256MB
-#define _XMP_DEFAULT_COARRAY_STRIDE_SIZE (16*1024*1024)  // 16MB
 #define _XMP_GASNET_STRIDE_INIT_SIZE 16
 #define _XMP_GASNET_STRIDE_BLK       16
 #define _XMP_GASNET_ALIGNMENT        8
@@ -193,7 +197,6 @@ extern void _xmp_gasnet_wait(int, ...);
 // ---- for rdma ----
 #ifdef _XMP_COARRAY_FJRDMA
 #include <mpi-ext.h>
-#define _XMP_DEFAULT_COARRAY_HEAP_SIZE (256*1024*1024)  // 256MB
 
 extern int _XMP_fjrdma_initialize();
 extern int _XMP_fjrdma_finalize();
