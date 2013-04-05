@@ -28,15 +28,15 @@ void _XMP_init(int argc, char** argv) {
 
 void _XMP_finalize(void) {
   if (_XMP_runtime_working) {
-    _XMP_finalize_world();
-    _XMP_runtime_working = _XMP_N_INT_FALSE;
-
 #ifdef _XMP_COARRAY_GASNET
     _XMP_coarray_finalize();
 #endif
 #ifdef _XMP_COARRAY_FJRDMA
     _XMP_fjrdma_finalize();
 #endif
+
+    _XMP_finalize_world();
+    _XMP_runtime_working = _XMP_N_INT_FALSE;
   }
 }
 
