@@ -112,8 +112,8 @@ if test "${GASNET}" != "" -a "${CONDUIT}" != "" ; then
   args="${args} --Wl-ltlog_mpi ${GASNET_INC} -D_XMP_COARRAY_GASNET"
 fi
 
-if test "${FJRDMA}" != ""; then
-    echo ====CP====
+FJRDMA="@FJRDMA_TRUE@"
+if test "${FJRDMA}" == ""; then
   args="${args} --Wl-ltlog_mpi -D_XMP_COARRAY_FJRDMA"
 fi
 
