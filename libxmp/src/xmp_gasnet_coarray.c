@@ -244,7 +244,7 @@ static void pack_for_1_dim_array(const _XMP_array_section_t* src, char* archive_
   long long start_offset  = src[0].start  * element_size;
   long long stride_offset = src[0].stride * element_size;
   long long archive_offset = 0, src_offset;
-  int i;
+  int i = 0;
 
   if(repeat == 0){
     for(i=0;i<left;i++){
@@ -425,7 +425,7 @@ static void unpack_for_1_dim_array(const _XMP_array_section_t* dst, const char* 
   long long start_offset  = dst[0].start  * element_size;
   long long stride_offset = dst[0].stride * element_size;
   long long dst_offset, src_offset = 0;
-  int i;
+  int i = 0;
 
   if(repeat == 0){
     for(i=0;i<left;i++){
