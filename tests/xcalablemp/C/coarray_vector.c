@@ -6,7 +6,7 @@
 int a[10], a_test[10];
 float b[3][5], b_test[3][5];
 double c[2][3][4], c_test[2][3][4];
-long d[3][2][3][2], d_test[3][2][3][2];
+long d[3][4][3][2], d_test[3][4][3][2];
 int *status;
 #pragma xmp nodes p(2)
 #pragma xmp coarray a, b, c, d : [*]
@@ -36,7 +36,7 @@ void initialize(int me){
   }
   
   for(i=0;i<3;i++){
-    for(j=0;j<2;j++){
+    for(j=0;j<4;j++){
       for(m=0;m<3;m++){
 	for(n=0;n<2;n++){
 	  d[i][j][m][n] = 12*i + 6 * j + 2 * m + n + t;
@@ -185,7 +185,7 @@ void check_4(int me){
 
   int i, j, m, n, flag = TRUE;
   for(i=0;i<3;i++){
-    for(j=0;j<2;j++){
+    for(j=0;j<4;j++){
       for(m=0;m<3;m++){
 	for(n=0;n<2;n++){
 	  if( d[i][j][m][n] != d_test[i][j][m][n] ){
@@ -211,14 +211,14 @@ int main(){
   communicate_1(me);
   check_1(me);
   
-    communicate_2(me);
-    check_2(me);
+  communicate_2(me);
+  check_2(me);
   
-    communicate_3(me);
-    check_3(me);
+  communicate_3(me);
+  check_3(me);
   
-    communicate_4(me);
-    check_4(me);
+  communicate_4(me);
+  check_4(me);
 
   return 0;
 }
