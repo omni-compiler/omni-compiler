@@ -1372,6 +1372,8 @@ WARNING_OPTION="-Wall"
 if test "$target" == "Kcomputer-linux-gnu"; then
    default_mpicc="mpifccpx -Xg -std=gnu99"
    default_mpif90="mpifrtpx"
+   GNU_OPTION="-Xg"
+   WARNING_OPTION=""
 elif test "$target" == "MIC-linux-gnu"; then
    default_mpicc="mpiicc -mmic"
    default_mpif90="mpiifort -mmic"
