@@ -538,49 +538,58 @@ AC_SUBST(CXXFLAGS)
 AH_TEMPLATE(OBJEXT, [object file extension])
 AC_DEFINE_UNQUOTED(OBJEXT, "${OBJEXT}")
 
-
-if test "$target" != "$host" -a "$target" = "Kcomputer-linux-gnu"; then
-        BECC="fccpx"
-        BEFC="frtpx"
-fi
-
-if test "$target" != "$host" -a "$target" = "MIC-linux-gnu"; then
-        BECC="icc"
-        BEFC="ifort"
-fi
-
-if test "$BECC" = ""; then
-	BECC=${CC}
+if test "$target" != "$host"; then
+  if test "$target" = "Kcomputer-linux-gnu"; then
+    BECC="mpifccpx"
+    BEFC="mpifrtpx"
+  elif test "$target" = "MIC-linux-gnu"; then
+    BECC="mpiicc"
+    BEFC="mpiifort"
+  elif test "$target" = "Cray-linux-gnu"; then
+    BECC="cc"
+    BEFC="ftn"
+  fi
+else
+  BECC=${CC}
 fi
 
 AC_MSG_CHECKING([backend C compiler])
 
-chk=`$BECC --version | head -n1`
-case $chk in
-gcc*)
+# check C Compiler
+if test "$target" = "Cray-linux-gnu"; then
+  OMC_CONF_LX2X_OPT=""
+  OMC_CONF_NTV_OPT="-hgnu"
+  OMC_CONF_LNK_OPT=""
+else
+  chk=`$BECC --version | head -n1`
+  case $chk in
+  gcc*)
     OMC_CONF_LX2X_OPT=""
     OMC_CONF_NTV_OPT="-std=gnu99 -Wno-implicit"
     OMC_CONF_LNK_OPT=""
     ;;
-*ICC*)
-    OMC_CONF_LX2X_OPT=""
-    OMC_CONF_NTV_OPT="-std=gnu99 -w"
-    OMC_CONF_LNK_OPT=""
-    ;;
-*)
-    if test "$BECC" = "fccpx"; then
-       OMC_CONF_LX2X_OPT=""
-       OMC_CONF_NTV_OPT="-Xg -std=gnu99 -w"
-       OMC_CONF_LNK_OPT=""
+ *ICC*)
+   OMC_CONF_LX2X_OPT=""
+   OMC_CONF_NTV_OPT="-std=gnu99 -w"
+   OMC_CONF_LNK_OPT=""
+   ;;
+  *)
+    if test "$BECC" = "mpifccpx"; then
+      OMC_CONF_LX2X_OPT=""
+      OMC_CONF_NTV_OPT="-Xg -std=gnu99 -w"
+      OMC_CONF_LNK_OPT=""
     else
-       echo "No supported C compiler was found."
-       echo "This program supports following C compilers."
-       echo " - GNU C Compiler (gcc)"
-       echo " - Intel C Compiler (icc)"
-       exit 1
+      echo "No supported C compiler was found."
+      echo "This program supports following C compilers."
+      echo " - GNU C Compiler (mpicc)"
+      echo " - Intel C Compiler (mpiicc)"
+      echo " - Fujitsu C Compiler (mpifccpx)"
+      echo " - Cray C Compiler (cc)"
+      exit 1
     fi
     ;;
-esac
+  esac
+fi
 
 AC_SUBST(OMC_CONF_LX2X_OPT)
 AC_SUBST(OMC_CONF_NTV_OPT)
@@ -595,54 +604,60 @@ AC_MSG_RESULT([$BECC])
 # check Fortran Compiler
 
 if test $enableF2F = yes; then
+  AC_PROG_FC([${FC},gfortran,ifort])
+  AC_MSG_CHECKING([backend Fortran compiler])
+  if test "$BEFC" = ""; then
+    BEFC=${FC}
+  fi
 
-    AC_PROG_FC([${FC},gfortran,ifort])
-
-    AC_MSG_CHECKING([backend Fortran compiler])
-    if test "$BEFC" = ""; then
-        BEFC=${FC}
-    fi
-
-    if test "$BEFC" != ""; then
-        chk=`$BEFC --version | head -n1`
-        case $chk in
-        GNU*)
-            OMF_CONF_LX2X_OPT="-gnu"
-            OMF_CONF_NTV_OPT="-ffree-form"
-            OMF_CONF_LNK_OPT=""
-            ;;
-        *IFORT*)
-            OMF_CONF_LX2X_OPT="-intel"
-            OMF_CONF_NTV_OPT="-auto"
-            OMF_CONF_LNK_OPT="-threads"
-            ;;
-	*frtpx*)
-            OMF_CONF_LX2X_OPT=""
-            OMF_CONF_NTV_OPT="-Free"
-            OMF_CONF_LNK_OPT=""
-	    ;;
-        *)
-	    if test "$BEFC" = "frtpx"; then
-	       OMF_CONF_LX2X_OPT=""
-	       OMF_CONF_NTV_OPT="-Free"
-	       OMF_CONF_LNK_OPT=""
-	    else
- 	       echo "No supported Fortran compiler was found."
-               echo "This program supports following Fortran compilers."
-	       echo " - GNU Fortran (gfortran)"
-	       echo " - Intel Fortran (ifort)"
-	       exit 1
-	    fi
-            ;;
-        esac
-        AC_SUBST(OMF_CONF_LX2X_OPT)
-        AC_SUBST(OMF_CONF_NTV_OPT)
-        AC_SUBST(OMF_CONF_LNK_OPT)
-        AC_SUBST(BEFC)
-        AC_MSG_RESULT([$BEFC])
+  if test "$BEFC" != ""; then
+    if test "$target" = "Cray-linux-gnu"; then
+      OMF_CONF_LX2X_OPT=""
+      OMF_CONF_NTV_OPT=""
+      OMF_CONF_LNK_OPT=""
     else
-        echo "No Fortran compiler was found."
-        exit 1
+      chk=`$BEFC --version | head -n1`
+      case $chk in
+        GNU*)
+          OMF_CONF_LX2X_OPT="-gnu"
+          OMF_CONF_NTV_OPT="-ffree-form"
+          OMF_CONF_LNK_OPT=""
+          ;;
+        *IFORT*)
+          OMF_CONF_LX2X_OPT="-intel"
+          OMF_CONF_NTV_OPT="-auto"
+          OMF_CONF_LNK_OPT="-threads"
+          ;;
+        *frtpx*)
+          OMF_CONF_LX2X_OPT=""
+          OMF_CONF_NTV_OPT="-Free"
+          OMF_CONF_LNK_OPT=""
+	  ;;
+        *)
+	  if test "$BEFC" = "mpifrtpx"; then
+	    OMF_CONF_LX2X_OPT=""
+	    OMF_CONF_NTV_OPT="-Free"
+	    OMF_CONF_LNK_OPT=""
+	  else
+ 	    echo "No supported Fortran compiler was found."
+            echo "This program supports following Fortran compilers."
+	    echo " - GNU Fortran (mpif77 or mpif90)"
+	    echo " - Intel Fortran (mpiifort)"
+	    echo " - Fujitsu Fortran (mpifrtpx)"
+            echo " - Cray Fortran (ftn)"
+	    exit 1
+  	  fi
+          ;;
+	esac
+      fi
+      AC_SUBST(OMF_CONF_LX2X_OPT)
+      AC_SUBST(OMF_CONF_NTV_OPT)
+      AC_SUBST(OMF_CONF_LNK_OPT)
+      AC_SUBST(BEFC)
+      AC_MSG_RESULT([$BEFC])
+    else
+      echo "No Fortran compiler was found."
+      exit 1
     fi
 
     AC_PROG_FC_C_O
@@ -666,34 +681,46 @@ AC_SUBST(BASH)
 
 # check ranlib & ar
 if test "$target" != "$host"; then
+  case "$target" in
+    Kcomputer-linux-gnu)
+      AC_CHECK_TOOL([RANLIB], [ranlibpx], [:])
+      if test "${RANLIB}" = ":"; then
+	AC_MSG_ERROR([ranlibpx not found]);
+      fi		    
 
-   case "$target" in
-	Kcomputer-linux-gnu)
-		AC_CHECK_TOOL([RANLIB], [ranlibpx], [:])
-		if test "${RANLIB}" = ":"; then
-		    AC_MSG_ERROR([ranlibpx not found]);
-		fi		    
+      AC_CHECK_TOOL([AR], [arpx], [:])
+      if test "${AR}" = ":"; then
+	AC_MSG_ERROR([arpx not found]);
+      fi		    
 
-		AC_CHECK_TOOL([AR], [arpx], [:])
-		if test "${AR}" = ":"; then
-		    AC_MSG_ERROR([arpx not found]);
-		fi		    
+      ARFLAGS="cru"
+      AC_SUBST(ARFLAGS) ;;
 
-		ARFLAGS="cru"
-		AC_SUBST(ARFLAGS) ;;
-	*)
-		AC_CHECK_TARGET_TOOL([RANLIB], [ranlib], [:])
-		AC_CHECK_TARGET_TOOL([AR], [ar], [:]) ;;
+    Cray-linux-gnu)
+      AC_CHECK_TOOL([RANLIB], [ranlib], [:])
+      if test "${RANLIB}" = ":"; then
+        AC_MSG_ERROR([ranlib not found]);
+      fi
+
+      AC_CHECK_TOOL([AR], [ar], [:])
+      if test "${AR}" = ":"; then
+        AC_MSG_ERROR([ar not found]);
+      fi
+
+      ARFLAGS="cru"
+      AC_SUBST(ARFLAGS) ;;
+
+    *)
+      AC_CHECK_TARGET_TOOL([RANLIB], [ranlib], [:])
+      AC_CHECK_TARGET_TOOL([AR], [ar], [:]) ;;
    esac
-
 else
-
    AC_PROG_RANLIB
    if test "x${isGcc}" = "xno"; then
-      case $OS in
-          solaris*|irix*)
-	  RANLIB=':';;
-      esac
+     case $OS in
+       solaris*|irix*)
+       RANLIB=':';;
+     esac
    fi
 
    AC_CHECK_TOOL([AR], [ar], [:])
@@ -703,9 +730,7 @@ else
 fi
 
 # check CC for libraries
-
 if test "$target" != "$host"; then
-
    case "$target" in
 	Kcomputer-linux-gnu)
 		CC_LIB="fccpx -Xg -std=gnu99"
@@ -1342,17 +1367,28 @@ AC_SUBST(omniQRealFillGap)
 # --------------------------------------------------------------------
 
 default_libxmlDir="/usr"
+GNU_OPTION="-std=gnu99"
+WARNING_OPTION="-Wall"
 if test "$target" == "Kcomputer-linux-gnu"; then
    default_mpicc="mpifccpx -Xg -std=gnu99"
    default_mpif90="mpifrtpx"
 elif test "$target" == "MIC-linux-gnu"; then
    default_mpicc="mpiicc -mmic"
    default_mpif90="mpiifort -mmic"
+elif test "$target" == "Cray-linux-gnu"; then
+   default_mpicc="cc"
+   default_mpif90="ftn"
+   GNU_OPTION="-hgnu"
+   WARNING_OPTION=""
 else
    default_mpicc="mpicc"
    default_mpif90="mpif90"
 fi
+AC_SUBST(GNU_OPTION)
+AC_SUBST(WARNING_OPTION)
 
+AM_CONDITIONAL(CRAY, test "$target" == "Cray-linux-gnu")
+AC_SUBST(CRAY)
 # --------------------------------------------------------------------
 # specify libxmp path
 

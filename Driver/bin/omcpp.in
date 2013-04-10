@@ -6,5 +6,7 @@
 #  $
 
 PP="@OM_EXEC_C_PP@"
-OM_OPTIONS="${OM_OPTIONS} -std=gnu99"
+GNU_OPTION="@GNU_OPTION@"
+
+OM_OPTIONS="${OM_OPTIONS} ${GNU_OPTION}"
 . ${OMNI_HOME}/bin/ompp $*

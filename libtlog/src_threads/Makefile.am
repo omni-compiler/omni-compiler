@@ -2,6 +2,8 @@
 # $TSUKUBA_Copyright:
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
+
+CC=@MPI_CMD@
 include_HEADERS	=	tlog.h
 
 lib_LIBRARIES	=	libtlog.a

@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include <stdio.h>
 #include <xmp.h>
 #define ARRAY_SIZE 4

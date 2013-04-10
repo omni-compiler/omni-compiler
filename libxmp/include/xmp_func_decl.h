@@ -7,9 +7,9 @@
 #ifndef _XMP_RUNTIME_FUNC_DECL
 #define _XMP_RUNTIME_FUNC_DECL
 
-#include <stdarg.h>
-#include <stddef.h>
-#include <stdbool.h>
+//#include <stdarg.h>
+//#include <stddef.h>
+//#include <stdbool.h>
 //#include "xmp_data_struct.h"
 
 // ----- libxml

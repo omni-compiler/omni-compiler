@@ -49,7 +49,7 @@ done
 OM_OPTIONS="${newOpts}"
 
 FJRDMA="@FJRDMA_TRUE@"
-if test "${FJRDMA}" == ""; then
+if test "${FJRDMA}" = ""; then
   OM_OPTIONS="${OM_OPTIONS} -D_XMP_COARRAY_FJRDMA"
 fi
 
@@ -57,7 +57,8 @@ CMD="${COMPILER} ${OM_OPTIONS} -c ${INPFILE} -o ${OUTFILE}"
 
 GASNET="@GASNET_PREFIX@"
 CONDUIT="@GASNET_CONDUIT@"
-if test "${GASNET}" != "" -a "${CONDUIT}" != "" ; then
+CRAY="@CRAY_TRUE@"
+if test "${GASNET}" != "" -a "${CONDUIT}" != "" -a "${CRAY}" != ""; then
   CMD="${CMD} -Wno-attributes"
 # When using "include <xmp_lock.h>", the "gasnet.h" is called from xmp_lock.h.
 # The __attribute__((unused)) which is used in gasnet.h and is expanded by C_Front,

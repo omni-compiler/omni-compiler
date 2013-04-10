@@ -4,7 +4,7 @@
 #   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
 #   Free Software Foundation, Inc.
 
-timestamp='2012-12-27'
+timestamp='2013-04-09'
 
 # This file is (in principle) common to ALL GNU software.
 # The presence of a machine in this file suggests that SOME GNU software
@@ -706,6 +706,10 @@ case $basic_machine in
 		;;
         MIC)
 	        basic_machine=MIC
+                os=-linux
+                ;;
+        Cray)
+                basic_machine=Cray
                 os=-linux
                 ;;
 	m68knommu)

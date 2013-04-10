@@ -5,11 +5,11 @@
 TOPDIR		= ../..
 prefix		= @prefix@
 
-CC_OPT_SWITCH	= @CFLAGS@ -Wall -std=gnu99
+CC_OPT_SWITCH	= @CFLAGS@ @WARNING_OPTION@ @GNU_OPTION@
 CPPFLAGS	= -I. -I$(TOPDIR)/include @DEFS@ @CPPFLAGS@
 CFLAGS		= $(CC_OPT_SWITCH) $(CPPFLAGS)
 
-CC		= @CC@
+CC		= @BECC@
 AR		= @AR@ cr
 RANLIB		= @RANLIB@
 
