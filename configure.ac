@@ -542,7 +542,7 @@ AH_TEMPLATE(OBJEXT, [object file extension])
 AC_DEFINE_UNQUOTED(OBJEXT, "${OBJEXT}")
 
 # --------------------------------------------------------------------
-# Specify Backend Compiler
+# Specify Backend Compiler and Options
 if test "$target" != "$host"; then
   if test "$target" = "Kcomputer-linux-gnu"; then
     BECC="mpifccpx"
@@ -587,7 +587,7 @@ AM_CONDITIONAL(CRAY, test "$target" == "Cray-linux-gnu")
 AC_SUBST(CRAY)
 
 # --------------------------------------------------------------------
-# Specify Options of Backend C Compiler
+# Specify Options of Backend C Compiler when compiling XMP code
 AC_MSG_CHECKING([backend C compiler])
 if test "$target" = "Kcomputer-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
