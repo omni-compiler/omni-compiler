@@ -3,12 +3,10 @@
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
 
-CC=@MPI_CMD@
-include_HEADERS	=	tlog.h
-
-lib_LIBRARIES	=	libtlog.a
-
-libtlog_a_SOURCES		= tlog-ompc.c tlog.c tlog-time.c
+CC                = @BECC@
+include_HEADERS	  = tlog.h
+lib_LIBRARIES	  = libtlog.a
+libtlog_a_SOURCES = tlog-ompc.c tlog.c tlog-time.c
 
 all-local:	$(lib_LIBRARIES)
 

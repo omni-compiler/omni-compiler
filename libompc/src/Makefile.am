@@ -5,9 +5,7 @@
 TOPDIR		= ../..
 prefix		= @prefix@
 
-CC_OPT_SWITCH	= @CFLAGS@ @WARNING_OPTION@ @GNU_OPTION@
-CPPFLAGS	= -I. -I$(TOPDIR)/include @DEFS@ @CPPFLAGS@
-CFLAGS		= $(CC_OPT_SWITCH) $(CPPFLAGS)
+CFLAGS		= @CFLAGS@ @BECC_OPTION@ -I. -I$(TOPDIR)/include @DEFS@ @CPPFLAGS@
 
 CC		= @BECC@
 AR		= @AR@ cr

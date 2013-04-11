@@ -33,8 +33,6 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@CRAY_TRUE@am__append_1 = -hgnu
-@CRAY_FALSE@am__append_2 = -Wall -Wpointer-arith -std=gnu99
 subdir = ./libxmpf/src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -84,11 +82,9 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 BASH = @BASH@
 BECC = @BECC@
+BECC_OPTION = @BECC_OPTION@
 BEFC = @BEFC@
-#TLOG_INC_DIR=$(top_builddir)/@LIBTLOG_MPI_DIR@
-#GASNET_INC_DIR=@GASNET_PREFIX@/include
-#GASNET_CONDUIT_DIR=$(GASNET_INC_DIR)/@GASNET_CONDUIT@-conduit
-CC = @MPI_CMD@
+CC = @BECC@
 CCDEPMODE = @CCDEPMODE@
 CC_LIB = @CC_LIB@
 CFLAGS = @CFLAGS@
@@ -118,7 +114,6 @@ F_FRONTEND_DIR = @F_FRONTEND_DIR@
 GASNET_CONDUIT = @GASNET_CONDUIT@
 GASNET_CONDUIT_CAP = @GASNET_CONDUIT_CAP@
 GASNET_PREFIX = @GASNET_PREFIX@
-GNU_OPTION = @GNU_OPTION@
 GPGPU_PREFIX = @GPGPU_PREFIX@
 GPU_CMD = @GPU_CMD@
 GREP = @GREP@
@@ -155,8 +150,6 @@ LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
 MM5TGT = @MM5TGT@
-MPI_CMD = @MPI_CMD@
-MPI_F90 = @MPI_F90@
 OBJEXT = @OBJEXT@
 OMC_CONF_LNK_OPT = @OMC_CONF_LNK_OPT@
 OMC_CONF_LX2X_OPT = @OMC_CONF_LX2X_OPT@
@@ -205,7 +198,6 @@ TYPE_INT16 = @TYPE_INT16@
 TYPE_INT32 = @TYPE_INT32@
 TYPE_INT64 = @TYPE_INT64@
 VERSION = @VERSION@
-WARNING_OPTION = @WARNING_OPTION@
 XCODEML_COMMON_DIR = @XCODEML_COMMON_DIR@
 XCODEML_EXC_TOOLS_DIR = @XCODEML_EXC_TOOLS_DIR@
 XMP_ENABLE_GPU = @XMP_ENABLE_GPU@
@@ -283,8 +275,10 @@ top_srcdir = @top_srcdir@
 XMP_INC_DIR = ../../libxmp/include
 XMP_SRC_DIR = ../../libxmp/src
 XMPF_INC_DIR = ../include
-AM_CFLAGS = -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) -I$(XMP_SRC_DIR) \
-	-I$(TLOG_INC_DIR) $(am__append_1) $(am__append_2)
+#TLOG_INC_DIR=$(top_builddir)/@LIBTLOG_MPI_DIR@
+#GASNET_INC_DIR=@GASNET_PREFIX@/include
+#GASNET_CONDUIT_DIR=$(GASNET_INC_DIR)/@GASNET_CONDUIT@-conduit
+AM_CFLAGS = -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) -I$(XMP_SRC_DIR)  @BECC_OPTION@
 lib_LIBRARIES = libxmpf.a
 libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_array.c xmpf_gcomm.c \
                     xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c \
@@ -546,7 +540,7 @@ uninstall-am: uninstall-libLIBRARIES
 
 
 xmpf_main.o: xmpf_main.f
-	@MPI_F90@ -c xmpf_main.f
+	@BEFC@ -c xmpf_main.f
 
 install-exec-local: xmpf_main.o
 	test -z $(libdir) || /bin/mkdir -p $(libdir)

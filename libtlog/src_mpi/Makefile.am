@@ -3,14 +3,11 @@
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
 
-CC=@MPI_CMD@
-
-include_HEADERS	=	tlog_mpi.h tlog_event.h
-
-lib_LIBRARIES	=	libtlog_mpi.a
-sri_TLOGVIEWS	=	./bin/tlogview
-jar_TLOGVIEWS	=	./bin/tlogview.jar
-
+CC              = @BECC@
+include_HEADERS	= tlog_mpi.h tlog_event.h
+lib_LIBRARIES	= libtlog_mpi.a
+sri_TLOGVIEWS	= ./bin/tlogview
+jar_TLOGVIEWS	= ./bin/tlogview.jar
 libtlog_mpi_a_SOURCES = tlog.c tlog_conv.c tlog_event.c tlog_misc.c tlog-time.c tlog_dump.c tlog_event.h
 
 all-local:	$(lib_LIBRARIES)

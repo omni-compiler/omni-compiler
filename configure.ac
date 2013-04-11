@@ -7,7 +7,7 @@ AC_PREREQ(2.60)
 # --------------------------------------------------------------------
 # Let the initiation begin....
 
-AC_INIT([Omni XcalableMP Compiler], [0.6.1], [BUG-REPORT-ADDRESS], [omni_xmp])
+AC_INIT([Omni XcalableMP Compiler], [0.6.1], [xmp-users@hpcs.cs.tsukuba.ac.jp], [omni_xmp])
 
 program_prefix=''
 
@@ -197,7 +197,6 @@ fi
 AC_SUBST(OMDRIVER_DIR)
 
 #----
-
 LIBXMP_HEADER_DIR=libxmp/include
 LIBXMP_DIR=libxmp/src
 LIBXMP_THREADS_DIR=libxmp/src_threads
@@ -312,13 +311,13 @@ ompcLibAsmSrcs=""
 # Default thread type
 # Check whether --with-thread or --without-thread was given.
 AC_ARG_WITH(thread,
-    [  --with-thread           type of openmp thread],
+    [  --with-thread               type of openmp thread],
     [thread_type=$withval], [thread_type=""])
 
 # Default lock type
 # Check whether --with-lock or --without-lock was given.
 AC_ARG_WITH(lock,
-    [  --with-lock             type of openmp lock],
+    [  --with-lock                 type of openmp lock],
     [lock_type=$withval], [lock_type=""])
 
 case $OS in
@@ -452,40 +451,44 @@ AC_SUBST(LIBTLOG_MPI_DIR)
 # check what CC will be used, and set compile flags
 
 isGcc=yes
-
 optCFlags=""
-
 debCFlags=""
-userCFlags=""
+userBCFlags=""
 mustCFlags=""
-
 debCppFlags=""
 userCppFlags=""
 mustCppFlags=""
-
 ccCom=""
-AC_ARG_WITH(cflag,
-    [  --with-cflag=OPT        specify C compiler options for optimization],
-    [userCFlags="${withval}"], [userCFlags=""])
 
 AC_ARG_ENABLE(debug,
-    [  --enable-debug          enable generate executable with debug symbol (false default).],
+    [  --enable-debug                 enable generate executable with debug symbol (false default).],
     [doDebug=$enableval], [doDebug=no])
 
 AC_ARG_ENABLE(xmpgpu,
-    [  --enable-xmpgpu         enable XcalableMP-GPU (false default).],
+    [  --enable-xmpgpu                enable XcalableMP-GPU (false default).],
     [doXmpGpu=$enableval], [doXmpGpu=no])
 
 AC_ARG_WITH(cppflag,
-    [  --with-cppflag=OPT      specify C preprocessor options],
+    [  --with-cppflag=OPT          C preprocessor options],
     [userCppFlags="${withval}"], [userCppFlags=""])
+
+AC_ARG_WITH(backend-cflag,
+    [  --with-backend-cflag=OPT    Backend C compiler options for optimization],
+    [userBCFlags="${withval}"], [userBCFlags=""])
 
 AC_PROG_CC
 AC_PROG_CXX
 
+# --------------------------------------------------------------------
+# The above "AC_PROG_CC" sets "CFLAG" to "-O2 -g" by automake function.
+# We remove "-O2 -g" to reduce file size, so we clear "CFLAG".
+# And below if-statement sets "CFLAG" to only "-O2".
+CFLAGS=""
+
+# --------------------------------------------------------------------
 if test "x${doDebug}" = "xyes"; then
     debCFlags="-g"
-    optCFlags=""
+    optCFlags="-O0"
     debCppFlags="-DDEBUG"
 else
     debCFlags=""
@@ -530,7 +533,7 @@ fi
 CPPFLAGS="${CPUDEF} ${OSDEF} ${debCppFlags} ${userCppFlags} ${mustCppFlags} ${TARGET_CPUDEF}"
 AC_SUBST(CPPFLAGS)
 
-CFLAGS="${debCFlags} ${userCFlags} ${optCFlags} ${mustCFlags} ${CFLAGS}"
+CFLAGS="${debCFlags} ${optCFlags} ${mustCFlags} ${CFLAGS}"
 CXXFLAGS=$CFLAGS
 AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
@@ -538,25 +541,59 @@ AC_SUBST(CXXFLAGS)
 AH_TEMPLATE(OBJEXT, [object file extension])
 AC_DEFINE_UNQUOTED(OBJEXT, "${OBJEXT}")
 
+# --------------------------------------------------------------------
+# Specify Backend Compiler
 if test "$target" != "$host"; then
   if test "$target" = "Kcomputer-linux-gnu"; then
     BECC="mpifccpx"
     BEFC="mpifrtpx"
+    BECC_OPTION="-Xg"
   elif test "$target" = "MIC-linux-gnu"; then
     BECC="mpiicc"
     BEFC="mpiifort"
+    BECC_OPTION="-mmic"
   elif test "$target" = "Cray-linux-gnu"; then
     BECC="cc"
     BEFC="ftn"
+    BECC_OPTION="-hgnu"
   fi
-else
-  BECC=${CC}
+else  # if "--target" option is not used in ./configure
+  BECC="mpicc"
+  BEFC="mpif90"
+  BECC_OPTION="-std=gnu99 -Wall -Wpointer-arith"
 fi
 
-AC_MSG_CHECKING([backend C compiler])
+BECC_OPTION="${BECC_OPTION} ${userBCFlags}"
 
-# check C Compiler
-if test "$target" = "Cray-linux-gnu"; then
+# --------------------------------------------------------------------
+# specify Backend C compiler
+AC_ARG_WITH(backend-cc,
+    [  --with-bachend-cc=CMD       Backend C compiler (default: mpicc)],
+    [BECC="${withval}"], [BECC="${BECC}"])
+
+# --------------------------------------------------------------------
+# specify Backend F90 compiler
+AC_ARG_WITH(backend-fc,
+    [  --with-backend-fc=CMD       Backend F90 compiler (default: mpif90)],
+    [BEFC="${withval}"], [BEFC="${BEFC}"])
+
+# --------------------------------------------------------------------
+
+AC_SUBST(BECC)
+AC_SUBST(BECC_OPTION)
+AC_SUBST(BEFC)
+
+AM_CONDITIONAL(CRAY, test "$target" == "Cray-linux-gnu")
+AC_SUBST(CRAY)
+
+# --------------------------------------------------------------------
+# Specify Options of Backend C Compiler
+AC_MSG_CHECKING([backend C compiler])
+if test "$target" = "Kcomputer-linux-gnu"; then
+  OMC_CONF_LX2X_OPT=""
+  OMC_CONF_NTV_OPT="-Xg -std=gnu99 -w"
+  OMC_CONF_LNK_OPT=""
+elif test "$target" = "Cray-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT="-hgnu"
   OMC_CONF_LNK_OPT=""
@@ -568,25 +605,19 @@ else
     OMC_CONF_NTV_OPT="-std=gnu99 -Wno-implicit"
     OMC_CONF_LNK_OPT=""
     ;;
- *ICC*)
-   OMC_CONF_LX2X_OPT=""
-   OMC_CONF_NTV_OPT="-std=gnu99 -w"
-   OMC_CONF_LNK_OPT=""
-   ;;
+  *ICC*)
+    OMC_CONF_LX2X_OPT=""
+    OMC_CONF_NTV_OPT="-std=gnu99 -w"
+    OMC_CONF_LNK_OPT=""
+    ;;
   *)
-    if test "$BECC" = "mpifccpx"; then
-      OMC_CONF_LX2X_OPT=""
-      OMC_CONF_NTV_OPT="-Xg -std=gnu99 -w"
-      OMC_CONF_LNK_OPT=""
-    else
-      echo "No supported C compiler was found."
-      echo "This program supports following C compilers."
-      echo " - GNU C Compiler (mpicc)"
-      echo " - Intel C Compiler (mpiicc)"
-      echo " - Fujitsu C Compiler (mpifccpx)"
-      echo " - Cray C Compiler (cc)"
-      exit 1
-    fi
+    echo "No supported C compiler was found."
+    echo "This program supports following C compilers."
+    echo " - GNU C Compiler (mpicc)"
+    echo " - Intel C Compiler (mpiicc)"
+    echo " - Fujitsu C Compiler (mpifccpx)"
+    echo " - Cray C Compiler (cc)"
+    exit 1
     ;;
   esac
 fi
@@ -594,76 +625,52 @@ fi
 AC_SUBST(OMC_CONF_LX2X_OPT)
 AC_SUBST(OMC_CONF_NTV_OPT)
 AC_SUBST(OMC_CONF_LNK_OPT)
-AC_SUBST(BECC)
-
-AC_MSG_RESULT([$BECC])
 
 # --------------------------------------------------------------------
 
 # --------------------------------------------------------------------
-# check Fortran Compiler
-
+# Specify Options of Backend Fortran Compiler
 if test $enableF2F = yes; then
   AC_PROG_FC([${FC},gfortran,ifort])
   AC_MSG_CHECKING([backend Fortran compiler])
-  if test "$BEFC" = ""; then
-    BEFC=${FC}
-  fi
 
-  if test "$BEFC" != ""; then
-    if test "$target" = "Cray-linux-gnu"; then
-      OMF_CONF_LX2X_OPT=""
-      OMF_CONF_NTV_OPT=""
+  if test "$target" = "Kcomputer-linux-gnu"; then
+    OMF_CONF_LX2X_OPT=""
+    OMF_CONF_NTV_OPT="-Free"
+    OMF_CONF_LNK_OPT=""
+  elif test "$target" = "Cray-linux-gnu"; then
+    OMF_CONF_LX2X_OPT=""
+    OMF_CONF_NTV_OPT="-f free"
+    OMF_CONF_LNK_OPT=""
+  else
+    chk=`$BEFC --version | head -n1`
+    case $chk in
+    GNU*)
+      OMF_CONF_LX2X_OPT="-gnu"
+      OMF_CONF_NTV_OPT="-ffree-form"
       OMF_CONF_LNK_OPT=""
-    else
-      chk=`$BEFC --version | head -n1`
-      case $chk in
-        GNU*)
-          OMF_CONF_LX2X_OPT="-gnu"
-          OMF_CONF_NTV_OPT="-ffree-form"
-          OMF_CONF_LNK_OPT=""
-          ;;
-        *IFORT*)
-          OMF_CONF_LX2X_OPT="-intel"
-          OMF_CONF_NTV_OPT="-auto"
-          OMF_CONF_LNK_OPT="-threads"
-          ;;
-        *frtpx*)
-          OMF_CONF_LX2X_OPT=""
-          OMF_CONF_NTV_OPT="-Free"
-          OMF_CONF_LNK_OPT=""
-	  ;;
-        *)
-	  if test "$BEFC" = "mpifrtpx"; then
-	    OMF_CONF_LX2X_OPT=""
-	    OMF_CONF_NTV_OPT="-Free"
-	    OMF_CONF_LNK_OPT=""
-	  else
- 	    echo "No supported Fortran compiler was found."
-            echo "This program supports following Fortran compilers."
-	    echo " - GNU Fortran (mpif77 or mpif90)"
-	    echo " - Intel Fortran (mpiifort)"
-	    echo " - Fujitsu Fortran (mpifrtpx)"
-            echo " - Cray Fortran (ftn)"
-	    exit 1
-  	  fi
-          ;;
-	esac
-      fi
-      AC_SUBST(OMF_CONF_LX2X_OPT)
-      AC_SUBST(OMF_CONF_NTV_OPT)
-      AC_SUBST(OMF_CONF_LNK_OPT)
-      AC_SUBST(BEFC)
-      AC_MSG_RESULT([$BEFC])
-    else
-      echo "No Fortran compiler was found."
+      ;;
+    *IFORT*)
+      OMF_CONF_LX2X_OPT="-intel"
+      OMF_CONF_NTV_OPT="-auto"
+      OMF_CONF_LNK_OPT="-threads"
+      ;;
+    *)
+      echo "No supported Fortran compiler was found."
+      echo "This program supports following Fortran compilers."
+      echo " - GNU Fortran (mpif77 or mpif90)"
+      echo " - Intel Fortran (mpiifort)"
+      echo " - Fujitsu Fortran (mpifrtpx)"
+      echo " - Cray Fortran (ftn)"
       exit 1
-    fi
-
-    AC_PROG_FC_C_O
+      ;;
+    esac
+  fi
+  AC_SUBST(OMF_CONF_LX2X_OPT)
+  AC_SUBST(OMF_CONF_NTV_OPT)
+  AC_SUBST(OMF_CONF_LNK_OPT)
+  AC_PROG_FC_C_O
 fi
-
-# --------------------------------------------------------------------
 
 # --------------------------------------------------------------------
 # Various command check
@@ -794,7 +801,6 @@ useJava=yes
 
 JAVACOM=""
 AC_PATH_PROG(JAVACOM, java, java, ${JAVA_HOME}/bin)
-
 JAVA_HOME=`$JAVACOM -classpath buildutils javahome`
 java_home_base=`basename ${JAVA_HOME}`
 
@@ -1188,15 +1194,15 @@ gmpDirOpt=""
 qRealPrecBits=128
 
 AC_ARG_ENABLE(mreal,
-    [  --enable-mreal          enable multiple precision real (and real*16) support of Fortran 77 (false default).],
+    [  --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default).],
     [doQReal=$enableval], [doQReal=no])
 
 AC_ARG_WITH(gmpLibDir,
-    [  --with-gmpLibDir=DIR    specify where the GNU-MP library is for quad-real support.],
+    [  --with-gmpLibDir=DIR        where the GNU-MP library is for quad-real support.],
     [gmpLibDir=$withval], [true])
 
 AC_ARG_WITH(gmpIncDir,
-    [  --with-gmpIncDir=DIR    specify where the GNU-MP include headers are for quad-real support.],
+    [  --with-gmpIncDir=DIR        where the GNU-MP include headers are for quad-real support.],
     [gmpIncDir=$withval], [true])
 
 if test "x${doQReal}" = "xyes"; then
@@ -1216,7 +1222,7 @@ if test "x${doQReal}" = "xyes"; then
 fi
 
 AC_ARG_WITH(precision,
-    [  --with-precision=NUM    specify the default precision of real*16 in bits (128).],
+    [  --with-precision=NUM        the default precision of real*16 in bits (128).],
     [qRealPrecBits=$withval], [qRealPrecBits=128])
 
 
@@ -1365,37 +1371,11 @@ AC_SUBST(omniQRealPrecInLimb)
 AC_SUBST(omniQRealFillGap)
 
 # --------------------------------------------------------------------
-
-default_libxmlDir="/usr"
-GNU_OPTION="-std=gnu99"
-WARNING_OPTION="-Wall"
-if test "$target" == "Kcomputer-linux-gnu"; then
-   default_mpicc="mpifccpx -Xg -std=gnu99"
-   default_mpif90="mpifrtpx"
-   GNU_OPTION="-Xg"
-   WARNING_OPTION=""
-elif test "$target" == "MIC-linux-gnu"; then
-   default_mpicc="mpiicc -mmic"
-   default_mpif90="mpiifort -mmic"
-elif test "$target" == "Cray-linux-gnu"; then
-   default_mpicc="cc"
-   default_mpif90="ftn"
-   GNU_OPTION="-hgnu"
-   WARNING_OPTION=""
-else
-   default_mpicc="mpicc"
-   default_mpif90="mpif90"
-fi
-AC_SUBST(GNU_OPTION)
-AC_SUBST(WARNING_OPTION)
-
-AM_CONDITIONAL(CRAY, test "$target" == "Cray-linux-gnu")
-AC_SUBST(CRAY)
-# --------------------------------------------------------------------
 # specify libxmp path
+default_libxmlDir="/usr"
 
 AC_ARG_WITH(libxmlDir,
-    [  --with-libxmlDir=DIR    specify libxml install directory (default: /usr)],
+    [  --with-libxmlDir=DIR        libxml install directory (default: /usr)],
     [LIBXML_PREFIX="${withval}"], [LIBXML_PREFIX="${default_libxmlDir}"])
 
 if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
@@ -1410,7 +1390,7 @@ AC_SUBST(LIBXML_PREFIX)
 default_gasnetDir=""
 
 AC_ARG_WITH(gasnetDir,
-    [  --with-gasnetDir=DIR    specify GASNet install directory],
+    [  --with-gasnetDir=DIR        GASNet install directory],
     [GASNET_PREFIX="${withval}"], [GASNET_PREFIX="${default_gasnetDir}"])
 
 use_gasnet=no
@@ -1428,7 +1408,7 @@ AC_SUBST(GASNET_PREFIX)
 # specify GASNet conduit
 
 AC_ARG_WITH(gasnet_conduit,
-    [  --with-gasnet-conduit=NAME    specify GASNet conduit],
+    [  --with-gasnet-conduit=NAME  GASNet conduit],
     [GASNET_CONDUIT="${withval}"], [GASNET_CONDUIT="${default_gasnet_conduit}"])
 
 if test "${use_gasnet}" = yes; then
@@ -1459,35 +1439,15 @@ AC_SUBST(GASNET_CONDUIT_CAP)
 # specify Fujitsu RDMA
 
 AC_ARG_ENABLE(fjrdma,
-    [  --enable-fjrdma         use Fujitsu RDMA], , )
+    [  --enable-fjrdma                use Fujitsu RDMA], , )
 AM_CONDITIONAL(FJRDMA, test "${enable_fjrdma+set}" = set)
 AC_SUBST(FJRDMA)
-
-# --------------------------------------------------------------------
-# specify MPI C compiler
-
-AC_ARG_WITH(mpicc,
-    [  --with-mpicc=CMD        specify MPI C compiler (default: mpicc)],
-    [MPI_CMD="${withval}"], [MPI_CMD="${default_mpicc}"])
-
-AC_SUBST(MPI_CMD)
-
-# --------------------------------------------------------------------
-# specify MPI F90 compiler
-
-AC_ARG_WITH(mpif90,
-    [  --with-mpif90=CMD        specify MPI F90 compiler (default: mpif90)],
-    [MPI_F90="${withval}"], [MPI_F90="${default_mpif90}"])
-
-AC_SUBST(MPI_F90)
-
-# --------------------------------------------------------------------
 
 # --------------------------------------------------------------------
 # specify GPU C compiler
 
 AC_ARG_WITH(gpucc,
-    [  --with-gpucc=CMD        specify GPU C compiler (default: nvcc)],
+    [  --with-gpucc=CMD            GPU C compiler (default: nvcc)],
     [GPU_CMD="${withval}"], [GPU_CMD="nvcc"])
 
 AC_SUBST(GPU_CMD)
@@ -1498,7 +1458,7 @@ AC_SUBST(GPU_CMD)
 # specify libgpu path
 
 AC_ARG_WITH(gpuDir,
-    [  --with-gpuDir=DIR    specify GPGPU tooklit install directory (default: /usr/local/cuda)],
+    [  --with-gpuDir=DIR           GPGPU tooklit install directory (default: /usr/local/cuda)],
     [GPGPU_PREFIX="${withval}"], [GPGPU_PREFIX="/usr/local/cuda"])
 
 AC_SUBST(GPGPU_PREFIX)
@@ -1550,13 +1510,3 @@ AC_CONFIG_FILES(Makefile)
 
 AC_OUTPUT
 
-# --------------------------------------------------------------------                                                                                                                             
-echo "----------------------------------------------------"
-if test ${use_gasnet} = yes; then
-  echo "Using GASNet installed in     \"$GASNET_PREFIX\""
-  echo "Using GASNet conduit          \"$GASNET_CONDUIT\""
-else
-  echo "We recommend that you use GASNet."
-	echo "If not use GASNet, you cannnot use Coarray function of XcalableMP."
-fi
-echo "----------------------------------------------------"

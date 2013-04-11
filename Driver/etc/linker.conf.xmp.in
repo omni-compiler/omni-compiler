@@ -26,9 +26,9 @@ done
 
 LIBS="${LIBS} -lxmp"
 
-LINKER="@MPI_CMD@"
+LINKER="@BECC@"
 if test ${hasScalasca} -eq 1; then
-    LINKER="scalasca --instrument @MPI_CMD@"
+    LINKER="scalasca --instrument @BECC@"
 fi
 
 OM_OPTIONS="${newOpts} -L${OMNI_HOME}/lib"

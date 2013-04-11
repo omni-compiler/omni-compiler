@@ -56,15 +56,16 @@ fi
 CMD="${COMPILER} ${OM_OPTIONS} -c ${INPFILE} -o ${OUTFILE}"
 
 GASNET="@GASNET_PREFIX@"
-CONDUIT="@GASNET_CONDUIT@"
 CRAY="@CRAY_TRUE@"
-if test "${GASNET}" != "" -a "${CONDUIT}" != "" -a "${CRAY}" != ""; then
+if test "${GASNET}" != "" -a "${CRAY}" != ""; then
   CMD="${CMD} -Wno-attributes"
 # When using "include <xmp_lock.h>", the "gasnet.h" is called from xmp_lock.h.
 # The __attribute__((unused)) which is used in gasnet.h and is expanded by C_Front,
 # and "Warning attribute" is occur when compiling it.
 # So, not to occur this warning, compile option "-Wno-attributes" is attached.
 fi
+
+CMD="${CMD} ${NO_ATTRIBUTE_OPTION}"
 
 if [ "${OM_VERBOSE}" = "1" ]; then
     echo $CMD

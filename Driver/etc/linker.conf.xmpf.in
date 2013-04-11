@@ -6,7 +6,7 @@ LOCK_TYPE=@OMP_LOCK_TYPE@
 LIB_THREAD=@OMP_THREAD_TYPE@
 LIB_OMPC=ompc_${LOCK_TYPE}_${LIB_THREAD}
 
-@OMNI_HOME@/bin/xmpf_collect_init --cc @MPI_CMD@ $*
+@OMNI_HOME@/bin/xmpf_collect_init --cc @BECC@ $*
 
 
 for i in ${OM_OPTIONS}; do
@@ -29,9 +29,9 @@ done
 
 LIBS="@OMNI_HOME@/lib/xmpf_main.o _xmpf_module_INIT.o ${LIBS} -lxmpf -lxmp"
 
-LINKER=@MPI_F90@
+LINKER=@BEFC@
 if test ${hasScalasca} -eq 1; then
-    LINKER="scalasca --instrument @MPI_F90@"
+    LINKER="scalasca --instrument @BEFC@"
 fi
 
 OM_OPTIONS="${newOpts} -L${OMNI_HOME}/lib"
