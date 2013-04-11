@@ -547,7 +547,7 @@ if test "$target" != "$host"; then
   if test "$target" = "Kcomputer-linux-gnu"; then
     BECC="mpifccpx"
     BEFC="mpifrtpx"
-    BECC_OPTION="-Xg"
+    BECC_OPTION="-Xg -noansi"
   elif test "$target" = "MIC-linux-gnu"; then
     BECC="mpiicc"
     BEFC="mpiifort"
@@ -591,7 +591,7 @@ AC_SUBST(CRAY)
 AC_MSG_CHECKING([backend C compiler])
 if test "$target" = "Kcomputer-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
-  OMC_CONF_NTV_OPT="-Xg -std=gnu99 -w"
+  OMC_CONF_NTV_OPT="-Xg -noansi"
   OMC_CONF_LNK_OPT=""
 elif test "$target" = "Cray-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""

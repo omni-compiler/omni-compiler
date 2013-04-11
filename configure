@@ -4869,12 +4869,12 @@ _ACEOF
 
 
 # --------------------------------------------------------------------
-# Specify Backend Compiler
+# Specify Backend Compiler and Options
 if test "$target" != "$host"; then
   if test "$target" = "Kcomputer-linux-gnu"; then
     BECC="mpifccpx"
     BEFC="mpifrtpx"
-    BECC_OPTION="-Xg"
+    BECC_OPTION="-Xg -noansi"
   elif test "$target" = "MIC-linux-gnu"; then
     BECC="mpiicc"
     BEFC="mpiifort"
@@ -4931,12 +4931,12 @@ fi
 
 
 # --------------------------------------------------------------------
-# Specify Options of Backend C Compiler
+# Specify Options of Backend C Compiler when compiling XMP code
 { $as_echo "$as_me:$LINENO: checking backend C compiler" >&5
 $as_echo_n "checking backend C compiler... " >&6; }
 if test "$target" = "Kcomputer-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
-  OMC_CONF_NTV_OPT="-Xg -std=gnu99 -w"
+  OMC_CONF_NTV_OPT="-Xg -noansi"
   OMC_CONF_LNK_OPT=""
 elif test "$target" = "Cray-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
