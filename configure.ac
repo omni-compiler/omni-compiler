@@ -591,7 +591,7 @@ AC_SUBST(BEFC)
 AC_MSG_CHECKING([backend C compiler])
 if test "$target" = "Kcomputer-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
-  OMC_CONF_NTV_OPT="-Xg -noansi -D_XMP_CRAY"
+  OMC_CONF_NTV_OPT="-Xg -noansi"
   OMC_CONF_LNK_OPT=""
 elif test "$target" = "Cray-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
