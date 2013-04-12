@@ -655,6 +655,10 @@ FJRDMA
 FJRDMA_FALSE
 FJRDMA_TRUE
 GASNET_CONDUIT_CAP
+GASNET_LIBS
+GASNET_LDFLAGS
+GASNET_CFLAGS
+GASNET_CPPFLAGS
 GASNET_CONDUIT
 GASNET_PREFIX
 GASNET_FALSE
@@ -19411,8 +19415,29 @@ if test "${use_gasnet}" = yes; then
     { { $as_echo "$as_me:$LINENO: error: ${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit not found. Please attach or check --with-gasnet-conduit" >&5
 $as_echo "$as_me: error: ${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit not found. Please attach or check --with-gasnet-conduit" >&2;}
    { (exit 1); exit 1; }; }
+  else
+    # Create temporary Makefile to set $(GASNET_CPPFLAGS) $(GASNET_CFLAGS) $(GASNET_LDFLAGS) $(GASNET_LIBS)
+    tmp_file=_XMP_makefile.$$
+    mak_file=${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit/${GASNET_CONDUIT}-seq.mak
+
+    echo -e "include ${mak_file}\nall:\n\t@echo \$(GASNET_CPPFLAGS)" > ${tmp_file}
+    GASNET_CPPFLAGS=`make -f ${tmp_file}`
+
+    echo -e "include ${mak_file}\nall:\n\t@echo \$(GASNET_CFLAGS)"   > ${tmp_file}
+    GASNET_CFLAGS=`make -f ${tmp_file}`
+
+    echo -e "include ${mak_file}\nall:\n\t@echo \$(GASNET_LDFLAGS)"  > ${tmp_file}
+    GASNET_LDFLAGS=`make -f ${tmp_file}`
+
+    echo -e "include ${mak_file}\nall:\n\t@echo \$(GASNET_LIBS)"     > ${tmp_file}
+    GASNET_LIBS=`make -f ${tmp_file}`
+    rm ${tmp_file}
   fi
 fi
+
+
+
+
 
 
 

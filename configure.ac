@@ -1401,10 +1401,31 @@ if test "${use_gasnet}" = yes; then
 
   if test "${gasnet_conduit_flag}" = no || ! test -d $GASNET_PREFIX/include/${GASNET_CONDUIT}-conduit; then
     AC_MSG_ERROR([${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit not found. Please attach or check --with-gasnet-conduit])
+  else
+    # Create temporary Makefile to set $(GASNET_CPPFLAGS) $(GASNET_CFLAGS) $(GASNET_LDFLAGS) $(GASNET_LIBS)
+    tmp_file=_XMP_makefile.$$
+    mak_file=${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit/${GASNET_CONDUIT}-seq.mak
+
+    echo -e "include ${mak_file}\nall:\n\t@echo \$(GASNET_CPPFLAGS)" > ${tmp_file}
+    GASNET_CPPFLAGS=`make -f ${tmp_file}`
+    
+    echo -e "include ${mak_file}\nall:\n\t@echo \$(GASNET_CFLAGS)"   > ${tmp_file}
+    GASNET_CFLAGS=`make -f ${tmp_file}`
+
+    echo -e "include ${mak_file}\nall:\n\t@echo \$(GASNET_LDFLAGS)"  > ${tmp_file}
+    GASNET_LDFLAGS=`make -f ${tmp_file}`
+
+    echo -e "include ${mak_file}\nall:\n\t@echo \$(GASNET_LIBS)"     > ${tmp_file}
+    GASNET_LIBS=`make -f ${tmp_file}`
+    rm ${tmp_file}
   fi
 fi
 
 AC_SUBST(GASNET_CONDUIT)
+AC_SUBST(GASNET_CPPFLAGS)
+AC_SUBST(GASNET_CFLAGS)
+AC_SUBST(GASNET_LDFLAGS)
+AC_SUBST(GASNET_LIBS)
 
 GASNET_CONDUIT_CAP=$(echo ${GASNET_CONDUIT} | tr '[a-z]' '[A-Z]')
 AC_SUBST(GASNET_CONDUIT_CAP)

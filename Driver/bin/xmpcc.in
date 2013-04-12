@@ -108,8 +108,9 @@ GASNET="@GASNET_PREFIX@"
 CONDUIT="@GASNET_CONDUIT@"
 if test "${GASNET}" != "" -a "${CONDUIT}" != "" ; then
   CONDUIT_CAP=$(echo ${CONDUIT} | tr '[a-z]' '[A-Z]')
-  GASNET_INC="-I${GASNET}/include -I${GASNET}/include/${CONDUIT}-conduit -DGASNET_CONDUIT_${CONDUIT_CAP} -DGASNET_SEQ -D_REENTRANT -D_GNU_SOURCE"
-  args="${args} --Wl-ltlog_mpi ${GASNET_INC} -D_XMP_COARRAY_GASNET"
+  GASNET_OPTIONS="@GASNET_CPPFLAGS@ @GASNET_CFLAGS@"
+#  args="${args} --Wl-ltlog_mpi ${GASNET_OPTIONS} -D_XMP_COARRAY_GASNET"
+  args="${args} ${GASNET_OPTIONS} -D_XMP_COARRAY_GASNET"
 fi
 
 FJRDMA="@FJRDMA_TRUE@"
