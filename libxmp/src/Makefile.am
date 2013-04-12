@@ -12,13 +12,10 @@ libxmp_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h $
                    xmp_math_function.c xmp_runtime.c xmp_tlog_runtime.c xmp_io.c
 
 if GASNET
-    include $(GASNET_CONDUIT_DIR)/@GASNET_CONDUIT@-seq.mak
-    GASNET_INC_DIR      = @GASNET_PREFIX@/include
-    GASNET_CONDUIT_DIR  = $(GASNET_INC_DIR)/@GASNET_CONDUIT@-conduit
+    include @GASNET_PREFIX@/include/@GASNET_CONDUIT@-conduit/@GASNET_CONDUIT@-seq.mak
     libxmp_a_SOURCES   += xmp_coarray.c xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c xmp_post.c xmp_gasnet_post.c
     AM_LDFLAGS          = $(GASNET_LDFLAGS) $(GASNET_LIBS)
-    AM_CFLAGS          += -D_XMP_COARRAY_GASNET -I$(GASNET_INC_DIR) -I$(GASNET_CONDUIT_DIR) $(GASNET_CFLAGS) \
-                          -DGASNET_SEQ -DGASNET_CONDUIT_@GASNET_CONDUIT_CAP@
+    AM_CFLAGS          += -D_XMP_COARRAY_GASNET $(GASNET_CPPFLAGS) $(GASNET_CFLAGS)
 endif
 
 if FJRDMA

@@ -654,7 +654,6 @@ GPU_CMD
 FJRDMA
 FJRDMA_FALSE
 FJRDMA_TRUE
-GASNET_CONDUIT_CAP
 GASNET_LIBS
 GASNET_LDFLAGS
 GASNET_CFLAGS
@@ -19432,9 +19431,6 @@ fi
 
 
 
-GASNET_CONDUIT_CAP=$(echo ${GASNET_CONDUIT} | tr 'a-z' 'A-Z')
-
-
 # --------------------------------------------------------------------
 # specify Fujitsu RDMA
 
@@ -19442,6 +19438,7 @@ GASNET_CONDUIT_CAP=$(echo ${GASNET_CONDUIT} | tr 'a-z' 'A-Z')
 if test "${enable_fjrdma+set}" = set; then
   enableval=$enable_fjrdma;
 fi
+
 
  if test "${enable_fjrdma+set}" = set; then
   FJRDMA_TRUE=

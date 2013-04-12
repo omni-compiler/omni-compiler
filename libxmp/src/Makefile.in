@@ -34,9 +34,7 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 @GASNET_TRUE@am__append_1 = xmp_coarray.c xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c xmp_post.c xmp_gasnet_post.c
-@GASNET_TRUE@am__append_2 = -D_XMP_COARRAY_GASNET -I$(GASNET_INC_DIR) -I$(GASNET_CONDUIT_DIR) $(GASNET_CFLAGS) \
-@GASNET_TRUE@                          -DGASNET_SEQ -DGASNET_CONDUIT_@GASNET_CONDUIT_CAP@
-
+@GASNET_TRUE@am__append_2 = -D_XMP_COARRAY_GASNET $(GASNET_CPPFLAGS) $(GASNET_CFLAGS)
 @FJRDMA_TRUE@am__append_3 = xmp_coarray.c xmp_fjrdma_coarray.c
 @FJRDMA_TRUE@am__append_4 = -Wall -Wpointer-arith -std=gnu99 -D_XMP_COARRAY_FJRDMA
 subdir = ./libxmp/src
@@ -137,7 +135,6 @@ F_BACKEND_DIR = @F_BACKEND_DIR@
 F_FRONTEND_DIR = @F_FRONTEND_DIR@
 GASNET_CFLAGS = @GASNET_CFLAGS@
 GASNET_CONDUIT = @GASNET_CONDUIT@
-GASNET_CONDUIT_CAP = @GASNET_CONDUIT_CAP@
 GASNET_CPPFLAGS = @GASNET_CPPFLAGS@
 GASNET_LDFLAGS = @GASNET_LDFLAGS@
 GASNET_LIBS = @GASNET_LIBS@
@@ -313,8 +310,6 @@ libxmp_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h \
 	xmp_array_section.c xmp_loop.c xmp_gmove.c xmp_math_function.c \
 	xmp_runtime.c xmp_tlog_runtime.c xmp_io.c $(am__append_1) \
 	$(am__append_3)
-@GASNET_TRUE@GASNET_INC_DIR = @GASNET_PREFIX@/include
-@GASNET_TRUE@GASNET_CONDUIT_DIR = $(GASNET_INC_DIR)/@GASNET_CONDUIT@-conduit
 @GASNET_TRUE@AM_LDFLAGS = $(GASNET_LDFLAGS) $(GASNET_LIBS)
 all: all-am
 
@@ -570,7 +565,7 @@ uninstall-am: uninstall-libLIBRARIES
 	tags uninstall uninstall-am uninstall-libLIBRARIES
 
 
-@GASNET_TRUE@    include $(GASNET_CONDUIT_DIR)/@GASNET_CONDUIT@-seq.mak
+@GASNET_TRUE@    include @GASNET_PREFIX@/include/@GASNET_CONDUIT@-conduit/@GASNET_CONDUIT@-seq.mak
 
 clean-local:
 	rm -f *~ *.core core core.*

@@ -1428,14 +1428,12 @@ AC_SUBST(GASNET_CFLAGS)
 AC_SUBST(GASNET_LDFLAGS)
 AC_SUBST(GASNET_LIBS)
 
-GASNET_CONDUIT_CAP=$(echo ${GASNET_CONDUIT} | tr '[a-z]' '[A-Z]')
-AC_SUBST(GASNET_CONDUIT_CAP)
-
 # --------------------------------------------------------------------
 # specify Fujitsu RDMA
 
 AC_ARG_ENABLE(fjrdma,
     [  --enable-fjrdma                use Fujitsu RDMA], , )
+
 AM_CONDITIONAL(FJRDMA, test "${enable_fjrdma+set}" = set)
 AC_SUBST(FJRDMA)
 
