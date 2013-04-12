@@ -687,54 +687,28 @@ AC_PATH_PROGS(BASH, bash, ${PATH}:/bin:/usr/bin:/usr/local/bin:/opt/bin:/opt/loc
 AC_SUBST(BASH)
 
 # check ranlib & ar
-if test "$target" != "$host"; then
-  case "$target" in
-    Kcomputer-linux-gnu)
-      AC_CHECK_TOOL([RANLIB], [ranlibpx], [:])
-      if test "${RANLIB}" = ":"; then
-	AC_MSG_ERROR([ranlibpx not found]);
-      fi		    
+if test "$target" != "$host" -a "$target" = "Kcomputer-linux-gnu"; then
+  AC_CHECK_TOOL([RANLIB], [ranlibpx], [:])
+  if test "${RANLIB}" = ":"; then
+    AC_MSG_ERROR([ranlibpx not found]);
+  fi		    
 
-      AC_CHECK_TOOL([AR], [arpx], [:])
-      if test "${AR}" = ":"; then
-	AC_MSG_ERROR([arpx not found]);
-      fi		    
-
-      ARFLAGS="cru"
-      AC_SUBST(ARFLAGS) ;;
-
-    Cray-linux-gnu)
-      AC_CHECK_TOOL([RANLIB], [ranlib], [:])
-      if test "${RANLIB}" = ":"; then
-        AC_MSG_ERROR([ranlib not found]);
-      fi
-
-      AC_CHECK_TOOL([AR], [ar], [:])
-      if test "${AR}" = ":"; then
-        AC_MSG_ERROR([ar not found]);
-      fi
-
-      ARFLAGS="cru"
-      AC_SUBST(ARFLAGS) ;;
-
-    *)
-      AC_CHECK_TARGET_TOOL([RANLIB], [ranlib], [:])
-      AC_CHECK_TARGET_TOOL([AR], [ar], [:]) ;;
-   esac
+  AC_CHECK_TOOL([AR], [arpx], [:])
+  if test "${AR}" = ":"; then
+    AC_MSG_ERROR([arpx not found]);
+  fi
 else
-   AC_PROG_RANLIB
-   if test "x${isGcc}" = "xno"; then
-     case $OS in
-       solaris*|irix*)
-       RANLIB=':';;
-     esac
-   fi
-
-   AC_CHECK_TOOL([AR], [ar], [:])
-   ARFLAGS="cru"
-   AC_SUBST(ARFLAGS)
-
+  AC_PROG_RANLIB
+  if test "x${isGcc}" = "xno"; then
+    case $OS in
+      solaris*|irix*)
+      RANLIB=':';;
+    esac
+  fi
+  AC_CHECK_TOOL([AR], [ar], [:])
 fi
+ARFLAGS="cru"
+AC_SUBST(ARFLAGS)
 
 # check CC for libraries
 if test "$target" != "$host"; then
