@@ -583,8 +583,8 @@ AC_SUBST(BECC)
 AC_SUBST(BECC_OPTION)
 AC_SUBST(BEFC)
 
-AM_CONDITIONAL(CRAY, test "$target" == "Cray-linux-gnu")
-AC_SUBST(CRAY)
+#AM_CONDITIONAL(CRAY, test "$target" = "Cray-linux-gnu")
+#AC_SUBST(CRAY)
 
 # --------------------------------------------------------------------
 # Specify Options of Backend C Compiler when compiling XMP code
@@ -602,7 +602,7 @@ else
   case $chk in
   gcc*)
     OMC_CONF_LX2X_OPT=""
-    OMC_CONF_NTV_OPT="-std=gnu99 -Wno-implicit"
+    OMC_CONF_NTV_OPT="-std=gnu99 -Wno-implicit -Wno-attributes"
     OMC_CONF_LNK_OPT=""
     ;;
   *ICC*)
@@ -1408,6 +1408,7 @@ if test "${use_gasnet}" = yes; then
 
     echo -e "include ${mak_file}\nall:\n\t@echo \$(GASNET_CPPFLAGS)" > ${tmp_file}
     GASNET_CPPFLAGS=`make -f ${tmp_file}`
+    GASNET_CPPFLAGS="${GASNET_CPPFLAGS} -D_XMP_COARRAY_GASNET"
     
     echo -e "include ${mak_file}\nall:\n\t@echo \$(GASNET_CFLAGS)"   > ${tmp_file}
     GASNET_CFLAGS=`make -f ${tmp_file}`

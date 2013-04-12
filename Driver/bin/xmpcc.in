@@ -104,15 +104,6 @@ if test ${doProf} -eq 1 -a ${doScalasca} -eq 0; then
     args="${args} --Wl-ltlog_mpi"
 fi
 
-GASNET="@GASNET_PREFIX@"
-CONDUIT="@GASNET_CONDUIT@"
-if test "${GASNET}" != "" -a "${CONDUIT}" != "" ; then
-  CONDUIT_CAP=$(echo ${CONDUIT} | tr '[a-z]' '[A-Z]')
-  GASNET_OPTIONS="@GASNET_CPPFLAGS@ @GASNET_CFLAGS@"
-#  args="${args} --Wl-ltlog_mpi ${GASNET_OPTIONS} -D_XMP_COARRAY_GASNET"
-  args="${args} ${GASNET_OPTIONS} -D_XMP_COARRAY_GASNET"
-fi
-
 FJRDMA="@FJRDMA_TRUE@"
 if test "${FJRDMA}" = ""; then
   args="${args} --Wl-ltlog_mpi -D_XMP_COARRAY_FJRDMA"

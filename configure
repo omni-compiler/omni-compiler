@@ -723,9 +723,6 @@ FC
 OMC_CONF_LNK_OPT
 OMC_CONF_NTV_OPT
 OMC_CONF_LX2X_OPT
-CRAY
-CRAY_FALSE
-CRAY_TRUE
 BEFC
 BECC_OPTION
 BECC
@@ -4924,15 +4921,8 @@ fi
 
 
 
- if test "$target" == "Cray-linux-gnu"; then
-  CRAY_TRUE=
-  CRAY_FALSE='#'
-else
-  CRAY_TRUE='#'
-  CRAY_FALSE=
-fi
-
-
+#AM_CONDITIONAL(CRAY, test "$target" = "Cray-linux-gnu")
+#AC_SUBST(CRAY)
 
 # --------------------------------------------------------------------
 # Specify Options of Backend C Compiler when compiling XMP code
@@ -4951,7 +4941,7 @@ else
   case $chk in
   gcc*)
     OMC_CONF_LX2X_OPT=""
-    OMC_CONF_NTV_OPT="-std=gnu99 -Wno-implicit"
+    OMC_CONF_NTV_OPT="-std=gnu99 -Wno-implicit -Wno-attributes"
     OMC_CONF_LNK_OPT=""
     ;;
   *ICC*)
@@ -19422,6 +19412,7 @@ $as_echo "$as_me: error: ${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit not 
 
     echo -e "include ${mak_file}\nall:\n\t@echo \$(GASNET_CPPFLAGS)" > ${tmp_file}
     GASNET_CPPFLAGS=`make -f ${tmp_file}`
+    GASNET_CPPFLAGS="${GASNET_CPPFLAGS} -D_XMP_COARRAY_GASNET"
 
     echo -e "include ${mak_file}\nall:\n\t@echo \$(GASNET_CFLAGS)"   > ${tmp_file}
     GASNET_CFLAGS=`make -f ${tmp_file}`
@@ -19668,13 +19659,6 @@ if test -z "${ENABLE_XMP_GPU_TRUE}" && test -z "${ENABLE_XMP_GPU_FALSE}"; then
   { { $as_echo "$as_me:$LINENO: error: conditional \"ENABLE_XMP_GPU\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 $as_echo "$as_me: error: conditional \"ENABLE_XMP_GPU\" was never defined.
-Usually this means the macro was only invoked conditionally." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-if test -z "${CRAY_TRUE}" && test -z "${CRAY_FALSE}"; then
-  { { $as_echo "$as_me:$LINENO: error: conditional \"CRAY\" was never defined.
-Usually this means the macro was only invoked conditionally." >&5
-$as_echo "$as_me: error: conditional \"CRAY\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi

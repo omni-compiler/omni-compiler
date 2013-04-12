@@ -24,7 +24,7 @@ for i in ${OM_OPTIONS}; do
     esac
 done
 
-LIBS="${LIBS} -lxmp"
+LIBS="-lxmp ${LIBS}"
 
 LINKER="@BECC@"
 if test ${hasScalasca} -eq 1; then
