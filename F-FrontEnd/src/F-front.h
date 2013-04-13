@@ -352,6 +352,7 @@ extern expv expv_float_0;
 extern int OMP_flag;
 extern int XMP_flag;
 extern int cond_compile_enabled;
+extern int leave_comment_flag;
 
 #define EMPTY_LIST list0(LIST)
 

@@ -17,6 +17,9 @@ int XMP_flag = FALSE;
 /* lexical analyzer, enable conditional compilation.  */
 int cond_compile_enabled = FALSE;
 
+/* leave comemnt in xcodeml file using TEXT */
+int leave_comment_flag = FALSE;
+
 /* lexical analyzer */
 /* enable to parse for pragma.  */
 int PRAGMA_flag = TRUE;

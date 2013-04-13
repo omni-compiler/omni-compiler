@@ -142,6 +142,7 @@ usage()
         "                          (default n=1)",
         "-max_name_len=n           set maximum identifier name length.",
         "-fdollar-ok               enable using \'$\' in identifier.",
+	"-fleave-comment           leave comment in xcodeml file.",
 	"-endlineno                output the endlineno attribute.",
         "",
         "internal options:",
@@ -223,6 +224,8 @@ char *argv[];
 	    XMP_flag = TRUE;   /* enable XcalableMP */
         } else if (strcmp(argv[0],"-Kscope-omp") == 0){
 	    cond_compile_enabled = TRUE;
+        } else if (strcmp(argv[0],"-fleave-comment") == 0){
+	    leave_comment_flag = TRUE;
         } else if (strcmp(argv[0], "-fixed-line-length-132") == 0) {
             fixed_line_len = 132;
             fixed_line_len_kind = FIXED_LINE_LEN_132;
