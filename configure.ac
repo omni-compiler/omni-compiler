@@ -480,12 +480,6 @@ AC_PROG_CC
 AC_PROG_CXX
 
 # --------------------------------------------------------------------
-# The above "AC_PROG_CC" sets "CFLAG" to "-O2 -g" by automake function.
-# We remove "-O2 -g" to reduce file size, so we clear "CFLAG".
-# And below if-statement sets "CFLAG" to only "-O2".
-CFLAGS=""
-
-# --------------------------------------------------------------------
 if test "x${doDebug}" = "xyes"; then
     debCFlags="-g"
     optCFlags="-O0"
