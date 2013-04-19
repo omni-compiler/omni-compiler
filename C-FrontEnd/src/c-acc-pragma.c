@@ -167,6 +167,7 @@ int parse_ACC_pragma()
 	pg_ACC_pragma = ACC_DECLARE;
 	pg_get_token();
 	if((pg_ACC_list = parse_ACC_clauses()) == NULL)  goto syntax_err;
+	ret= PRAGMA_EXEC;
 	goto chk_end;
     }
 
@@ -250,19 +251,19 @@ static CExpr* parse_ACC_clauses()
 	  pg_get_token();
 	  if((v = parse_ACC_namelist()) == NULL) goto syntax_err;
 	  c = ACC_PG_LIST(ACC_PRESENT,v);
-      } else if(PG_IS_IDENT("present_or_copy")){
+      } else if(PG_IS_IDENT("present_or_copy") || PG_IS_IDENT("pcopy")){
 	  pg_get_token();
 	  if((v = parse_ACC_namelist()) == NULL) goto syntax_err;
 	  c = ACC_PG_LIST(ACC_PRESENT_OR_COPY,v);
-      } else if(PG_IS_IDENT("present_or_copyin")){
+      } else if(PG_IS_IDENT("present_or_copyin") || PG_IS_IDENT("pcopyin")){
 	  pg_get_token();
 	  if((v = parse_ACC_namelist()) == NULL) goto syntax_err;
 	  c = ACC_PG_LIST(ACC_PRESENT_OR_COPYIN,v);
-      } else if(PG_IS_IDENT("present_or_copyout")){
+      } else if(PG_IS_IDENT("present_or_copyout") || PG_IS_IDENT("pcopyout")){
 	  pg_get_token();
 	  if((v = parse_ACC_namelist()) == NULL) goto syntax_err;
 	  c = ACC_PG_LIST(ACC_PRESENT_OR_COPYOUT,v);
-      } else if(PG_IS_IDENT("present_or_create")){
+      } else if(PG_IS_IDENT("present_or_create") || PG_IS_IDENT("pcreate")){
 	  pg_get_token();
 	  if((v = parse_ACC_namelist()) == NULL) goto syntax_err;
 	  c = ACC_PG_LIST(ACC_PRESENT_OR_CREATE,v);
