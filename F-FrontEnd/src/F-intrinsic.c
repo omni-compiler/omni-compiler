@@ -1031,6 +1031,49 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
                     }
                     break;
 
+		    case INTR_PACK:
+		    {
+
+		      if (INTR_N_ARGS(ep) == 3){
+			expv v = expr_list_get_n(args, 2);
+			return EXPV_TYPE(v);
+		      }
+		      else {
+			a = expr_list_get_n(args, 0);
+			if (!(isValidTypedExpv(a))) {
+			  return NULL;
+			}
+
+			bType = get_basic_type(EXPV_TYPE(a));
+			bTypeDsc = BASIC_TYPE_DESC(bType);
+			expr dims = list1(LIST, NULL);
+			ret = compile_dimensions(bTypeDsc, dims);
+			fix_array_dimensions(ret);
+			return ret;
+		      }
+		    }
+		    break;
+
+		    case INTR_UNPACK:
+		    {
+			a = expr_list_get_n(args, 0);
+			if (!(isValidTypedExpv(a))) {
+			  return NULL;
+			}
+			bType = get_basic_type(EXPV_TYPE(a));
+			bTypeDsc = BASIC_TYPE_DESC(bType);
+
+			a = expr_list_get_n(args, 1);
+			if (!(isValidTypedExpv(a))) {
+			  return NULL;
+			}
+			TYPE_DESC tp = EXPV_TYPE(a);
+			ret = copy_dimension(tp, bTypeDsc);
+			fix_array_dimensions(ret);
+			return ret;
+		    }
+		    break;
+
                     default:
                     {
                         /* not  reached ! */
