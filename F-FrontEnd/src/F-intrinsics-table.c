@@ -568,8 +568,10 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_MERGE,       INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL },        INTR_TYPE_ANY_ARRAY,    3, 0, LANGSPEC_F90 },
 
     // PACK (ARRAY, MASK [, VECTOR])
-    { INTR_PACK,        INTR_NAME_GENERIC,      "pack",         0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL_ARRAY, },              INTR_TYPE_ANY_DYNAMIC_ARRAY,            2, -1, LANGSPEC_F90 },
-    { INTR_PACK,        INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_ANY_ARRAY},              INTR_TYPE_ANY_DYNAMIC_ARRAY,            3, -1, LANGSPEC_F90 },
+    //    { INTR_PACK,        INTR_NAME_GENERIC,      "pack",         0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL_ARRAY, },              INTR_TYPE_ANY_DYNAMIC_ARRAY,            2, -1, LANGSPEC_F90 },
+    //    { INTR_PACK,        INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_ANY_ARRAY},              INTR_TYPE_ANY_DYNAMIC_ARRAY,            3, -1, LANGSPEC_F90 },
+    { INTR_PACK,        INTR_NAME_GENERIC,      "pack",         0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL, },              INTR_TYPE_ANY_DYNAMIC_ARRAY,            2, -1, LANGSPEC_F90 },
+    { INTR_PACK,        INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL, INTR_TYPE_ANY_ARRAY},              INTR_TYPE_ANY_DYNAMIC_ARRAY,            3, -1, LANGSPEC_F90 },
 
     // SPREAD (SOURCE, DIM, NCOPIES)
     { INTR_SPREAD,      INTR_NAME_GENERIC,      "spread",       0,      { INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT },                INTR_TYPE_ANY_DYNAMIC_ARRAY,    3, -1, LANGSPEC_F90 },
