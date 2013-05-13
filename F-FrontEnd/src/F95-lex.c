@@ -680,6 +680,16 @@ token()
 		    return '(';
 		}
 	    }
+	    else if (strncmp(bufptr, "periodic", 8) == 0) {
+	      bufptr += 8;
+	      if (*bufptr++ == '/'){
+		while (isspace(*bufptr)) bufptr++;
+		if (*bufptr != ')') {
+		  bufptr = save - 1;
+		  return '(';
+		}
+	      }
+	    }
 	    bufptr = save;		
 	    return L_ARRAY_CONSTRUCTOR;
 	} else {
@@ -752,6 +762,17 @@ token()
             }
             return R_ARRAY_CONSTRUCTOR;
         }
+	if (strncmp(bufptr, "periodic", 8) == 0) {
+	  char *save = bufptr;
+	  bufptr += 8;
+	  if (*bufptr++ == '/'){
+	    while (isspace(*bufptr)) bufptr++;
+	    if (*bufptr != ')') {
+	      return XMPKW_PERIODIC;
+	    }
+	  }
+	  bufptr = save + 1;
+	}
         return('/');
     case '.':
         if(isdigit((int)*bufptr)) goto number;
@@ -3756,6 +3777,8 @@ struct keyword_token XMP_keywords[ ] =
     {"on",	XMPKW_ON },
     {"with",	XMPKW_WITH },
     {"from",	XMPKW_FROM },
+
+    {"width",   XMPKW_WIDTH },
 
     {"nowait",	XMPKW_NOWAIT },
     {"async",	XMPKW_ASYNC },

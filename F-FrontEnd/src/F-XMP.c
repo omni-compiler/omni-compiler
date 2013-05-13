@@ -35,6 +35,7 @@ typedef enum _xmp_list_context {
     XMP_LIST_DISTRIBUTE,
     XMP_LIST_ALIGN,
     XMP_LIST_SHADOW,
+    XMP_LIST_WIDTH,
     XMP_LIST_ID_LIST,
     XMP_LIST_END
 } xmp_list_context;
@@ -232,8 +233,12 @@ void compile_XMP_directive(expr x)
 
     case XMP_REFLECT:
       check_INEXEC();
-      /* check arg: (arrayNameList???, opt) */
-      output_statement(x);
+      /* check arg: (arrayNameList, width, opt) */
+      x1 = EXPR_ARG1(c);
+      x2 = XMP_compile_subscript_list(EXPR_ARG2(c),XMP_LIST_WIDTH);
+      x3 = EXPR_ARG3(c);
+      c = list3(LIST,x1,x2,x3);
+      output_statement(XMP_pragma_list(XMP_REFLECT,c,NULL));
       break;
 
     case XMP_BARRIER:
@@ -633,11 +638,28 @@ expv XMP_compile_subscript_list(expr l,xmp_list_context context)
 		    v = compile_expression(EXPR_ARG1(x));
 		    if(EXPR_ARG2(x) != NULL){
 			v2 = compile_expression(EXPR_ARG2(x));
-			v = list3(LIST,v,v2,NULL);
+			v = list2(LIST,v,v2);
 		    } 
 		    break;
 		}
 		error("bad subscript in shadow");
+	    }
+	    break;
+
+	case XMP_LIST_WIDTH:
+	    if (x != NULL){
+	      if (EXPR_ARG2(x) != NULL){
+		v = compile_expression(EXPR_ARG2(x));
+		if (EXPR_ARG3(x) != NULL){
+		  v2 = compile_expression(EXPR_ARG3(x));
+		  v = list3(LIST,EXPR_ARG1(x),v,v2);
+		}
+		else {
+		  v = list2(LIST,EXPR_ARG1(x),v);
+		}
+		break;
+	      }
+	      error("bad subscript in width");
 	    }
 	    break;
 
