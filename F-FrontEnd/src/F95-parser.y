@@ -254,6 +254,7 @@
 %token XMPKW_BARRIER
 %token XMPKW_REDUCTION
 %token XMPKW_BCAST
+%token XMPKW_WAIT_ASYNC
 %token XMPKW_COARRAY
 %token XMPKW_WAIT
 %token XMPKW_POST
@@ -282,7 +283,7 @@
 %token XMPKW_ATOMIC
 %token XMPKW_DIRECT
 
-%type <val> xmp_directive xmp_nodes_clause xmp_template_clause xmp_distribute_clause xmp_align_clause xmp_shadow_clause xmp_task_clause xmp_loop_clause xmp_reflect_clause xmp_gmove_clause xmp_barrier_clause xmp_bcast_clause xmp_reduction_clause xmp_array_clause 
+%type <val> xmp_directive xmp_nodes_clause xmp_template_clause xmp_distribute_clause xmp_align_clause xmp_shadow_clause xmp_task_clause xmp_loop_clause xmp_reflect_clause xmp_gmove_clause xmp_barrier_clause xmp_bcast_clause xmp_reduction_clause xmp_array_clause xmp_wait_async_clause
 
 %type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_gmove_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_width_opt xmp_width_opt1 xmp_async_opt xmp_async_opt1 xmp_width_list xmp_width
 
@@ -1840,6 +1841,9 @@ xmp_directive:
 	  | XMPKW_ARRAY xmp_array_clause
 	    { $$ = XMP_LIST(XMP_ARRAY,$2); }
 
+          | XMPKW_WAIT_ASYNC xmp_wait_async_clause
+            { $$ = XMP_LIST(XMP_WAIT_ASYNC, $2); }
+
 	  | XMPKW_MASTER_IO xmp_master_io_options
 	    { $$ = XMP_LIST(XMP_MASTER_IO_BEGIN, $2); }
 	  | XMPKW_END XMPKW_MASTER_IO
@@ -1951,6 +1955,11 @@ xmp_array_clause:
 	     xmp_ON xmp_obj_ref xmp_clause_opt
                 { $$ = list2(LIST,$2,$3); }
 	     ;
+
+xmp_wait_async_clause:
+          '(' expr ')'
+          { $$ = list1(LIST,$2); }
+          ;
 
 xmp_obj_ref:
 	  '(' xmp_subscript ')' 
@@ -2067,13 +2076,13 @@ xmp_width_list:
 
 xmp_width:
 	    expr_or_null
-            { $$ = list3(LIST,GEN_NODE(INT_CONSTANT, 0),$1,$1); }
+            { $$ = list3(LIST,$1,$1,GEN_NODE(INT_CONSTANT, 0)); }
 	  | expr_or_null ':' expr_or_null
-            { $$ = list3(LIST,GEN_NODE(INT_CONSTANT, 0),$1,$3); }
+            { $$ = list3(LIST,$1,$3,GEN_NODE(INT_CONSTANT, 0)); }
           | XMPKW_PERIODIC expr_or_null
-            { $$ = list3(LIST,GEN_NODE(INT_CONSTANT, 1),$2,$2); }
+            { $$ = list3(LIST,$2,$2,GEN_NODE(INT_CONSTANT, 1)); }
 	  | XMPKW_PERIODIC expr_or_null ':' expr_or_null
-            { $$ = list3(LIST,GEN_NODE(INT_CONSTANT, 1),$2,$4); }
+            { $$ = list3(LIST,$2,$4,GEN_NODE(INT_CONSTANT, 1)); }
 	  ;
 
 xmp_clause_opt:

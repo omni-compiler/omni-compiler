@@ -162,6 +162,10 @@ public class XMPanalyzePragma
       analyzeBcast(pb.getClauses(),info,pb);
       break;
 
+    case WAIT_ASYNC:
+      analyzeWaitAsync(pb.getClauses(),info,pb);
+      break;
+
     case TASK:
       analyzeTask(pb.getClauses(), pb.getBody(), info, pb);
       break;
@@ -378,12 +382,13 @@ public class XMPanalyzePragma
   private void analyzeReflect(Xobject reflectDecl, 
 			      XMPinfo info, PragmaBlock pb){
     XobjList reflectNameList = (XobjList) reflectDecl.getArg(0);
-    Xobject reflectOpt = reflectDecl.getArg(1);
+    XobjList widthOpt = (XobjList) reflectDecl.getArg(1);
+    Xobject asyncOpt = reflectDecl.getArg(2);
 
-    if(reflectOpt != null){
-      XMP.fatal("reflect opt is not supported yet, sorry!");
-      return;
-    }
+//     if(reflectOpt != null){
+//       XMP.fatal("reflect opt is not supported yet, sorry!");
+//       return;
+//     }
 
     Vector<XMParray> reflectArrays = new Vector<XMParray>();
     // check array
@@ -405,7 +410,22 @@ public class XMPanalyzePragma
       }
       reflectArrays.add(array);
     }
-    info.setReflectArrays(reflectArrays);
+
+    Vector<XMPdimInfo> widthList = new Vector<XMPdimInfo>();
+    // width list
+    for (Xobject x: widthOpt){
+	XMPdimInfo width = new XMPdimInfo();
+
+	if(XMP.debugFlag)
+	    System.out.println("width = ("+x.getArg(0)+":"+x.getArg(1)+":"+x.getArg(2)+")");
+
+	width.parse(x);
+	widthList.add(width);
+    }
+
+    info.setReflectArrays(reflectArrays, widthList);
+    info.setAsyncId(asyncOpt);
+
   }
 
   void analyzeBarrier(Xobject barrierDecl, 
@@ -483,6 +503,12 @@ public class XMPanalyzePragma
     info.setBcastInfo(XMPobjectsRef.parseDecl(fromRef,env,pb),
 		      XMPobjectsRef.parseDecl(toRef,env,pb),
 		      bcast_vars);
+  }
+
+  private void analyzeWaitAsync(Xobject waitAsyncDecl, 
+				XMPinfo info, PragmaBlock pb){
+    Xobject async_id = waitAsyncDecl.getArg(0);
+    info.setAsyncId(async_id);
   }
 
   void analyzeTask(Xobject taskDecl, BlockList taskBody,

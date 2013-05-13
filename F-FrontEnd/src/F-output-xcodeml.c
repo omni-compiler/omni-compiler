@@ -2497,6 +2497,7 @@ outx_XMP_dir_string(int l,expv v)
   case XMP_BARRIER: s = "BARRIER"; break;
   case XMP_REDUCTION: s = "REDUCTION"; break;
   case XMP_BCAST: s = "BCAST"; break;
+  case XMP_WAIT_ASYNC: s = "WAIT_ASYNC"; break;
   case XMP_COARRAY: s = "COARRAY"; break;
   case XMP_TEMPLATE_FIX: s = "TEMPLATE_FIX"; break;
   case XMP_MASTER_IO: s = "XMP_MASTER_IO"; break;

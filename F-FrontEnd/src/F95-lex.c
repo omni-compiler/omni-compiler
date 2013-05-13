@@ -3767,6 +3767,7 @@ struct keyword_token XMP_keywords[ ] =
     {"barrier",	XMPKW_BARRIER},
     {"reduction",	XMPKW_REDUCTION },
     {"bcast",	XMPKW_BCAST },
+    {"wait_async",	XMPKW_WAIT_ASYNC },
     {"array",	XMPKW_ARRAY },
     {"coarray",	XMPKW_COARRAY },
 

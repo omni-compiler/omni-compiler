@@ -236,7 +236,7 @@ void compile_XMP_directive(expr x)
       /* check arg: (arrayNameList, width, opt) */
       x1 = EXPR_ARG1(c);
       x2 = XMP_compile_subscript_list(EXPR_ARG2(c),XMP_LIST_WIDTH);
-      x3 = EXPR_ARG3(c);
+      x3 = compile_expression(EXPR_ARG3(c));
       c = list3(LIST,x1,x2,x3);
       output_statement(XMP_pragma_list(XMP_REFLECT,c,NULL));
       break;
@@ -254,6 +254,13 @@ void compile_XMP_directive(expr x)
     case XMP_BCAST:
       check_INEXEC();
       output_statement(x);
+      break;
+
+    case XMP_WAIT_ASYNC:
+      check_INEXEC();
+      x1 = compile_expression(EXPR_ARG1(c));
+      c = list1(LIST,x1);
+      output_statement(XMP_pragma_list(XMP_WAIT_ASYNC,c,NULL));
       break;
 
     case XMP_TEMPLATE_FIX:
@@ -515,7 +522,7 @@ expv XMP_compile_subscript_list(expr l,xmp_list_context context)
 {
     expr x;
     list lp;
-    expv v,v1,v2,ret_list;
+    expv v,v1,v2,v3,ret_list;
     
     ret_list = EMPTY_LIST;
     FOR_ITEMS_IN_LIST(lp,l){
@@ -647,20 +654,10 @@ expv XMP_compile_subscript_list(expr l,xmp_list_context context)
 	    break;
 
 	case XMP_LIST_WIDTH:
-	    if (x != NULL){
-	      if (EXPR_ARG2(x) != NULL){
-		v = compile_expression(EXPR_ARG2(x));
-		if (EXPR_ARG3(x) != NULL){
-		  v2 = compile_expression(EXPR_ARG3(x));
-		  v = list3(LIST,EXPR_ARG1(x),v,v2);
-		}
-		else {
-		  v = list2(LIST,EXPR_ARG1(x),v);
-		}
-		break;
-	      }
-	      error("bad subscript in width");
-	    }
+	    v1 = compile_expression(EXPR_ARG1(x));
+	    v2 = compile_expression(EXPR_ARG2(x));
+	    v3 = compile_expression(EXPR_ARG3(x));
+	    v = list3(LIST, v1, v2, v3);
 	    break;
 
 	default:

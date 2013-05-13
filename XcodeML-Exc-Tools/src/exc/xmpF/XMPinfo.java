@@ -23,13 +23,15 @@ public class XMPinfo
   BlockList body;
 
   XMPobjectsRef on_ref;
-  Vector<Ident> info_vars; 
+  Vector<Ident> info_vars;
+  Xobject async_id;
 
   // loop info for loop
   Vector<XMPdimInfo> loop_dims;  // and on_ref
 
   // for reflect
-  Vector<XMParray> reflectArrays; // and on_ref
+  Vector<XMParray> reflectArrays; // and async_id
+  Vector<XMPdimInfo> widthList;
 
   // for reduction
   int reduction_op; 
@@ -62,6 +64,10 @@ public class XMPinfo
 
   public Vector<Ident> getInfoVarIdents() { return info_vars; }
 
+  public void setAsyncId(Xobject async_id) { this.async_id = async_id; }
+
+  public Xobject getAsyncId() { return async_id; }
+
   /* 
    * for loop
    */
@@ -81,8 +87,17 @@ public class XMPinfo
   public void setReflectArrays(Vector<XMParray> arrays){
     reflectArrays = arrays;
   }
+
+  public void setReflectArrays(Vector<XMParray> arrays, Vector<XMPdimInfo> list){
+    reflectArrays = arrays;
+    widthList = list;
+  }
   
   public  Vector<XMParray> getReflectArrays(){ return reflectArrays; }
+
+  public  Vector<XMPdimInfo> getWidthList() {
+      return widthList;
+  }
 
   public void setReductionInfo(int op, Vector<Ident> vars){
     reduction_op = op;

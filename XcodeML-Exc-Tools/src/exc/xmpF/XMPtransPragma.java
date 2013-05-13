@@ -126,6 +126,8 @@ public class XMPtransPragma
       return translateReduction(pb,info);
     case BCAST:
       return translateBcast(pb,info);     
+    case WAIT_ASYNC:
+      return translateWaitAsync(pb,info);     
     case TASK:
       return translateTask(pb,info);
     case TASKS:
@@ -274,14 +276,28 @@ public class XMPtransPragma
   private Block translateReflect(PragmaBlock pb, XMPinfo info){
     Block b = Bcons.emptyBlock();
     BasicBlock bb = b.getBasicBlock();
-    Ident f;
+    Ident f, g, h;
 
+    g = env.declExternIdent(XMP.set_reflect_f,Xtype.FsubroutineType);
     f = env.declExternIdent(XMP.reflect_f,Xtype.FsubroutineType);
-    
-    // no width option is supported yet.
+    h = env.declExternIdent(XMP.reflect_async_f,Xtype.FsubroutineType);
+
     Vector<XMParray> reflectArrays = info.getReflectArrays();
     for(XMParray a: reflectArrays){
-      bb.add(f.callSubroutine(Xcons.List(a.getDescId().Ref())));
+
+      for (int i = 0; i < info.widthList.size(); i++){
+	  XMPdimInfo w = info.widthList.get(i);
+	  Xobject args = Xcons.List(a.getDescId().Ref(), Xcons.IntConstant(i),
+				    w.getLower(), w.getUpper(), w.getStride());
+	  bb.add(g.callSubroutine(args));
+      }
+
+      if (info.getAsyncId() != null){
+	  bb.add(h.callSubroutine(Xcons.List(a.getDescId().Ref(), info.getAsyncId())));
+      }
+      else {
+	  bb.add(f.callSubroutine(Xcons.List(a.getDescId().Ref())));
+      }
     }
 
     return b;
@@ -350,6 +366,15 @@ public class XMPtransPragma
 				Xcons.IntConstant(0));
       bb.add(f.callSubroutine(args));
     }
+    return b;
+  }
+
+  private Block translateWaitAsync(PragmaBlock pb, XMPinfo info){
+    Block b = Bcons.emptyBlock();
+    BasicBlock bb = b.getBasicBlock();
+
+    Ident f = env.declExternIdent(XMP.wait_async_f, Xtype.FsubroutineType);
+    bb.add(f.callSubroutine(Xcons.List(info.async_id)));
     return b;
   }
 

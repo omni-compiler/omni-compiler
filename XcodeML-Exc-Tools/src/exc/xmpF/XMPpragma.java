@@ -26,6 +26,7 @@ public enum XMPpragma {
     BARRIER,
     REDUCTION,
     BCAST,
+    WAIT_ASYNC,
     COARRAY,
 
     FUNCTION_BODY,      
