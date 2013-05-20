@@ -25,6 +25,7 @@ public class XMPinfo
   XMPobjectsRef on_ref;
   Vector<Ident> info_vars;
   Xobject async_id;
+  Vector<Xobject> waitAsyncIds;
 
   // loop info for loop
   Vector<XMPdimInfo> loop_dims;  // and on_ref
@@ -67,6 +68,12 @@ public class XMPinfo
   public void setAsyncId(Xobject async_id) { this.async_id = async_id; }
 
   public Xobject getAsyncId() { return async_id; }
+
+  public void setWaitAsyncIds(Vector<Xobject> waitAsyncIds){
+      this.waitAsyncIds = waitAsyncIds;
+  }
+
+  public Vector<Xobject> getWaitAsyncIds() { return waitAsyncIds; }
 
   /* 
    * for loop

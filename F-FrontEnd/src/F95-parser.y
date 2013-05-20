@@ -1957,7 +1957,7 @@ xmp_array_clause:
 	     ;
 
 xmp_wait_async_clause:
-          '(' expr ')'
+          '(' xmp_expr_list ')'
           { $$ = list1(LIST,$2); }
           ;
 

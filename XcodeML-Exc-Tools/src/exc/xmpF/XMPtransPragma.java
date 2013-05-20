@@ -374,7 +374,13 @@ public class XMPtransPragma
     BasicBlock bb = b.getBasicBlock();
 
     Ident f = env.declExternIdent(XMP.wait_async_f, Xtype.FsubroutineType);
-    bb.add(f.callSubroutine(Xcons.List(info.async_id)));
+
+    for (Xobject i: info.waitAsyncIds){
+	bb.add(f.callSubroutine(Xcons.List(i)));
+    }
+
+    //    bb.add(f.callSubroutine(Xcons.List(info.async_id)));
+
     return b;
   }
 
