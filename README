@@ -15,7 +15,7 @@ I. Getting Started
    e.g.) $ ./configure --prefix=/home/you/XMP
 
    If your MPI C compiler command is not "mpicc",
-         $ ./configure --with-mpicc=MPICC_CMD
+         $ ./configure --with-backend-cc=MPICC_CMD
 
    If you use omni xmp compiler on the K computer,
          $  ./configure --target=Kcomputer-linux-gnu

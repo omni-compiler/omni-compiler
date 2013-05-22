@@ -562,7 +562,7 @@ BECC_OPTION="${BECC_OPTION} ${userBCFlags}"
 # --------------------------------------------------------------------
 # specify Backend C compiler
 AC_ARG_WITH(backend-cc,
-    [  --with-bachend-cc=CMD       Backend C compiler (default: mpicc)],
+    [  --with-backend-cc=CMD       Backend C compiler (default: mpicc)],
     [BECC="${withval}"], [BECC="${BECC}"])
 
 # --------------------------------------------------------------------

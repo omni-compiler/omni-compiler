@@ -1479,7 +1479,7 @@ Optional Packages:
   --with-lock                 type of openmp lock
   --with-cppflag=OPT          C preprocessor options
   --with-backend-cflag=OPT    Backend C compiler options for optimization
-  --with-bachend-cc=CMD       Backend C compiler (default: mpicc)
+  --with-backend-cc=CMD       Backend C compiler (default: mpicc)
   --with-backend-fc=CMD       Backend F90 compiler (default: mpif90)
   --with-gmpLibDir=DIR        where the GNU-MP library is for quad-real support.
   --with-gmpIncDir=DIR        where the GNU-MP include headers are for quad-real support.
