@@ -77,18 +77,23 @@ public class XMPglobalDecl {
                                                  declExternFunc("_XMP_threads_init").Call(null)));
     }
 		
-    Ident argv = Ident.Param("argv", Xtype.Pointer(Xtype.Pointer(Xtype.charType)));   // create "int argc" & "char **argv"
-    XobjList args = Xcons.List(Ident.Param("argc", Xtype.intType), argv);
-		
-    _globalConstructorFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT, declExternFunc("_XMP_init").Call(args)));
+    //    Ident argv = Ident.Param("argv", Xtype.Pointer(Xtype.Pointer(Xtype.charType)));   // create "int argc" & "char **argv"
+    //    XobjList args = Xcons.List(Ident.Param("argc", Xtype.intType), argv);
+    
+    String fileName = _env.getSourceFileName();
+    int fileNameLength = fileName.length();
+    String moduleName = new String(fileName.substring(0,fileNameLength-2));  // hoge.c -> hoge
+    moduleName = "__" + moduleName + "_xmpc_module_init_";                   // __hoge_xmpc_module_init_
+
+    //    _globalConstructorFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT, declExternFunc(moduleName).Call(null)));
     Xtype funcType = Xtype.Function(Xtype.voidType);
 
     //    Ident constructor = new Ident("constructor", null, null, null, null);
     //    funcType.setGccAttributes(Xcons.List(Xcode.GCC_ATTRIBUTES,
     //					 Xcons.List(Xcode.GCC_ATTRIBUTE, constructor, Xcons.List())));
-    Ident funcId = _env.declStaticIdent("_XMP_constructor", funcType);
+    Ident funcId = _env.declExternIdent(moduleName, funcType);
     
-    _env.add(XobjectDef.Func(funcId, args, null, 
+    _env.add(XobjectDef.Func(funcId, null, null, 
 			     Xcons.List(Xcode.COMPOUND_STATEMENT, (Xobject)null, null, _globalConstructorFuncBody)));
   }
 
@@ -108,14 +113,20 @@ public class XMPglobalDecl {
                                                declExternFunc("_XMP_threads_finalize").Call(null)));
     }
 
-    _globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT,
-                                             declExternFunc("_XMP_finalize").Call(null)));
+    //    _globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT,
+    //                                             declExternFunc("_XMP_finalize").Call(null)));
 
     Xtype funcType = Xtype.Function(Xtype.voidType);
     //    funcType.setGccAttributes(Xcons.List(Xcode.GCC_ATTRIBUTES,
     //                              Xcons.List(Xcode.GCC_ATTRIBUTE,
     //                              new Ident("destructor", null, null, null, null), Xcons.List())));
-    Ident funcId = _env.declStaticIdent("_XMP_destructor", funcType);
+    //    Ident funcId = _env.declStaticIdent("_XMP_destructor", funcType);
+    String fileName = _env.getSourceFileName();
+    int fileNameLength = fileName.length();
+    String moduleName = new String(fileName.substring(0,fileNameLength-2));  // hoge.c -> hoge
+    moduleName = "__" + moduleName + "_xmpc_module_finalize_";               // __hoge_xmpc_module_finalize_
+    Ident funcId = _env.declExternIdent(moduleName, funcType);
+
     _env.add(XobjectDef.Func(funcId, null, null, Xcons.List(Xcode.COMPOUND_STATEMENT,
                              (Xobject)null, null, _globalDestructorFuncBody)));
   }

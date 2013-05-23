@@ -6,8 +6,11 @@ LOCK_TYPE=@OMP_LOCK_TYPE@
 LIB_THREAD=@OMP_THREAD_TYPE@
 LIB_OMPC=ompc_${LOCK_TYPE}_${LIB_THREAD}
 
-@OMNI_HOME@/bin/xmpf_collect_init --cc @BECC@ $*
-
+CMD="@OMNI_HOME@/bin/xmp_collect_init --cc @BECC@ --F $*"
+if [ "${OM_VERBOSE}" = "1" ]; then
+    echo $CMD
+fi
+$CMD
 
 for i in ${OM_OPTIONS}; do
     case ${i} in

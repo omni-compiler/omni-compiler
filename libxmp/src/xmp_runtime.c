@@ -26,7 +26,7 @@ void _XMP_init(int argc, char** argv) {
   }
 }
 
-void _XMP_finalize(void) {
+void _XMP_finalize(void){
   if (_XMP_runtime_working) {
 #ifdef _XMP_COARRAY_GASNET
     _XMP_coarray_finalize();
@@ -42,4 +42,12 @@ void _XMP_finalize(void) {
 
 char *_XMP_desc_of(void *p) {
   return (char *)p;
+}
+
+void xmpc_init_all(int argc, char** argv) {
+  _XMP_init(argc, argv);
+}
+
+void xmpc_finalize_all(){
+  _XMP_finalize();
 }

@@ -6,6 +6,12 @@ LOCK_TYPE=@OMP_LOCK_TYPE@
 LIB_THREAD=@OMP_THREAD_TYPE@
 LIB_OMPC=ompc_${LOCK_TYPE}_${LIB_THREAD}
 
+CMD="@OMNI_HOME@/bin/xmp_collect_init --cc @BECC@ --C $*"
+if [ "${OM_VERBOSE}" = "1" ]; then
+    echo $CMD
+fi
+$CMD
+
 for i in ${OM_OPTIONS}; do
     case ${i} in
         -enable-threads)
@@ -24,7 +30,8 @@ for i in ${OM_OPTIONS}; do
     esac
 done
 
-LIBS="-lxmp ${LIBS}"
+XMPC_MODULE_INIT="_xmpc_module_INIT.o"
+LIBS="${XMPC_MODULE_INIT} -lxmp ${LIBS}"
 
 LINKER="@BECC@"
 if test ${hasScalasca} -eq 1; then

@@ -78,7 +78,6 @@ extern void     xmp_sync_all(int* status);
 extern void     xmp_sync_image(int image, int* status);
 extern void     xmp_sync_images(int num, int* image_set, int* status);
 extern void     xmp_sync_images_all(int* status);
-
 // ----- libxmp_gpu
 #ifdef _XMP_ENABLE_GPU
 extern int	xmp_get_gpu_count(void);
