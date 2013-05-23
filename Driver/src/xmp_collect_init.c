@@ -139,7 +139,13 @@ int main(int argc, char *argv[])
 	fprintf(stderr,"cannot open '%s'\n",init_func_source);
 	exit(1);
     }
+    for(i=0; i<n_module_init;i++){
+      char *name = module_init_names[i];
+      fprintf(fp,"extern void %s();\n",name);
+    }
+    fprintf(fp,"\n");
     fprintf(fp,"void %s(){\n",MODULE_INIT_ENTRY_NAME);
+
     for(i=0; i<n_module_init;i++){
       char *name = module_init_names[i];
       if(strchr(name,'.') != NULL)
