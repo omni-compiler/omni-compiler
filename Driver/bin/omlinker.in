@@ -44,6 +44,9 @@ if [ "${OM_VERBOSE}" = "1" ]; then
     echo $CMD
 fi
 
-$CMD || exit $?
+$CMD
+v=$?
 rm -f ${INIT_MODULE_OBJ}
+exit $v
+
 
