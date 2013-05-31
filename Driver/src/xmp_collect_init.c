@@ -21,6 +21,7 @@ char *module_init_names[MAX_INIT];
 int n_module_init = 0;
 int debug_flag    = FALSE;
 char *cc_command  = "cc";
+char *cc_option   = "";
 char *INIT_MODULE_OBJ, *NM_PREFIX, *INIT_PREFIX;
 char *MODULE_INIT_NAME, *MODULE_INIT_NAME_;
 char *MODULE_INIT_ENTRY_NAME;
@@ -89,6 +90,14 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
+    if(argc > 0 && strcmp(argv[0],"--OPTION") == 0){
+      argc--;
+      argv++;
+      cc_option = strdup(argv[0]);
+      argc--;
+      argv++;
+    }
+
     pid = getpid();
     strcpy(command_buf,"nm");
     for(i = 0; i < argc; i++){
@@ -118,15 +127,25 @@ int main(int argc, char *argv[])
       if(strncmp(buf,".jwe",4) == 0 || 
 	 strncmp(buf,"jpj.",4) == 0) continue; // for K computer
 
-	len = strlen(buf);
-	if(len > init_name_len && 
-	   strcmp(buf+(len-init_name_len),MODULE_INIT_NAME) == 0){
-	    module_init_names[n_module_init++] = strdup(buf);
-	} else 
-	if(len > init_name_len_ && 
-	   strcmp(buf+(len-init_name_len_),MODULE_INIT_NAME_) == 0){
-	    module_init_names[n_module_init++] = strdup(buf);
+      len = strlen(buf);
+      if(len > init_name_len && 
+	 strcmp(buf+(len-init_name_len),MODULE_INIT_NAME) == 0){
+	module_init_names[n_module_init++] = strdup(buf);
+      } 
+      else if(len > init_name_len_ && 
+	      strcmp(buf+(len-init_name_len_),MODULE_INIT_NAME_) == 0){
+	module_init_names[n_module_init++] = strdup(buf);
+      }
+      else{
+	// for the Cray
+	// In Cray machines, when module name "foo", 
+	// a subroutine for "foo" is converted to "foo_xmpf_module_init_$foo_".
+	int module_name_len = (len - init_name_len - 2) / 2;
+	if(len > init_name_len &&
+	   strncmp(buf+module_name_len,MODULE_INIT_NAME,init_name_len) == 0){
+	  module_init_names[n_module_init++] = strdup(buf);
 	}
+      }
     }
     fclose(fp);
     if(!debug_flag) unlink(nm_output);
@@ -156,8 +175,8 @@ int main(int argc, char *argv[])
     }
     fprintf(fp,"}\n");
     fclose(fp);
-    sprintf(command_buf,"%s -c -o %s %s",
-	    cc_command, init_func_object, init_func_source);
+    sprintf(command_buf,"%s -c -o %s %s %s",
+	    cc_command, init_func_object, init_func_source, cc_option);
 
     if(debug_flag) printf("command = '%s'\n",command_buf);
     if(system(command_buf) < 0){

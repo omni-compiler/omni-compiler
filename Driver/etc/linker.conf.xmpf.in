@@ -6,7 +6,14 @@ LOCK_TYPE=@OMP_LOCK_TYPE@
 LIB_THREAD=@OMP_THREAD_TYPE@
 LIB_OMPC=ompc_${LOCK_TYPE}_${LIB_THREAD}
 
-CMD="@OMNI_HOME@/bin/xmp_collect_init --cc @BECC@ --F $*"
+CC_OPTION=@BECC_OPTION@
+
+if [ "${CC_OPTION}" = "" ]; then
+   CMD="@OMNI_HOME@/bin/xmp_collect_init --cc @BECC@ --F $*"
+else
+   CMD="@OMNI_HOME@/bin/xmp_collect_init --cc @BECC@ --F --OPTION ${CC_OPTION} $*"
+fi
+
 if [ "${OM_VERBOSE}" = "1" ]; then
     echo $CMD
 fi
