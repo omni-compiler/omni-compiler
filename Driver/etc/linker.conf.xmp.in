@@ -5,8 +5,10 @@ newOpts=''
 LOCK_TYPE=@OMP_LOCK_TYPE@
 LIB_THREAD=@OMP_THREAD_TYPE@
 LIB_OMPC=ompc_${LOCK_TYPE}_${LIB_THREAD}
+PID=$$
+INIT_MODULE_OBJ="/tmp/_xmpc_init_${PID}.o"
 
-CMD="@OMNI_HOME@/bin/xmp_collect_init --cc @BECC@ --C $*"
+CMD="@OMNI_HOME@/bin/xmp_collect_init --cc @BECC@ --PID ${PID} --C $*"
 if [ "${OM_VERBOSE}" = "1" ]; then
     echo $CMD
 fi
@@ -30,8 +32,7 @@ for i in ${OM_OPTIONS}; do
     esac
 done
 
-XMPC_MODULE_INIT="_xmpc_module_INIT.o"
-LIBS="${XMPC_MODULE_INIT} -lxmp ${LIBS}"
+LIBS="${INIT_MODULE_OBJ} -lxmp ${LIBS}"
 
 LINKER="@BECC@"
 if test ${hasScalasca} -eq 1; then

@@ -7,11 +7,13 @@ LIB_THREAD=@OMP_THREAD_TYPE@
 LIB_OMPC=ompc_${LOCK_TYPE}_${LIB_THREAD}
 
 IS_CRAY=@IS_CRAY@
+PID=$$
+INIT_MODULE_OBJ="/tmp/_xmpf_init_${PID}.o"
 
 if [ "${IS_CRAY}" = "Yes" ]; then
-   CMD="@OMNI_HOME@/bin/xmp_collect_init --cc @BECC@ --F --OPTION -hgnu $*"
+   CMD="@OMNI_HOME@/bin/xmp_collect_init --cc @BECC@ --PID ${PID} --F --OPTION -hgnu $*"
 else
-   CMD="@OMNI_HOME@/bin/xmp_collect_init --cc @BECC@ --F $*"
+   CMD="@OMNI_HOME@/bin/xmp_collect_init --cc @BECC@ --PID ${PID} --F $*"
 fi
 
 if [ "${OM_VERBOSE}" = "1" ]; then
@@ -37,7 +39,7 @@ for i in ${OM_OPTIONS}; do
     esac
 done
 
-LIBS="@OMNI_HOME@/lib/xmpf_main.o _xmpf_module_INIT.o ${LIBS} -lxmpf -lxmp"
+LIBS="@OMNI_HOME@/lib/xmpf_main.o ${INIT_MODULE_OBJ} ${LIBS} -lxmpf -lxmp"
 
 LINKER=@BEFC@
 if test ${hasScalasca} -eq 1; then

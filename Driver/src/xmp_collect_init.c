@@ -25,10 +25,11 @@ char *cc_option   = "";
 char *INIT_MODULE_OBJ, *NM_PREFIX, *INIT_PREFIX;
 char *MODULE_INIT_NAME, *MODULE_INIT_NAME_;
 char *MODULE_INIT_ENTRY_NAME;
+int pid = 0;
 
 int main(int argc, char *argv[])
 {
-    int i, pid, len;
+    int i, len;
     int init_name_len, init_name_len_;
     char *arg, *prog;
     FILE *fp;
@@ -98,7 +99,7 @@ int main(int argc, char *argv[])
       argv++;
     }
 
-    pid = getpid();
+    //    pid = getpid();
     strcpy(command_buf,"nm");
     for(i = 0; i < argc; i++){
 	arg = argv[i];
@@ -151,8 +152,8 @@ int main(int argc, char *argv[])
     if(!debug_flag) unlink(nm_output);
 
     sprintf(init_func_source,"%s%s%d.c",tmp_dir,INIT_PREFIX,pid);
-    //    sprintf(init_func_object,"%s%s%d.o",tmp_dir,INIT_PREFIX,pid);
-    strcpy(init_func_object,INIT_MODULE_OBJ);
+    sprintf(init_func_object,"%s%s%d.o",tmp_dir,INIT_PREFIX,pid);
+    //    strcpy(init_func_object,INIT_MODULE_OBJ);
     fp = fopen(init_func_source,"w");
     if(fp == NULL){
 	fprintf(stderr,"cannot open '%s'\n",init_func_source);

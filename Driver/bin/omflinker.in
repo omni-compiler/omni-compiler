@@ -6,4 +6,5 @@
 #  $
 LIBS=""
 LINKER="@OM_EXEC_F_LINKER@"
+INIT_MODULE_OBJ="_xmpf_module_INIT.o"
 . $OMNI_HOME/bin/omlinker $*
