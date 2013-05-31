@@ -537,6 +537,7 @@ AC_DEFINE_UNQUOTED(OBJEXT, "${OBJEXT}")
 
 # --------------------------------------------------------------------
 # Specify Backend Compiler and Options
+IS_CRAY="No"
 if test "$target" != "$host"; then
   if test "$target" = "Kcomputer-linux-gnu"; then
     BECC="mpifccpx"
@@ -550,6 +551,7 @@ if test "$target" != "$host"; then
     BECC="cc"
     BEFC="ftn"
     BECC_OPTION="-hgnu"
+    IS_CRAY="Yes"
   fi
 else  # if "--target" option is not used in ./configure
   BECC="mpicc"
@@ -576,6 +578,8 @@ AC_ARG_WITH(backend-fc,
 AC_SUBST(BECC)
 AC_SUBST(BECC_OPTION)
 AC_SUBST(BEFC)
+
+AC_SUBST(IS_CRAY)
 
 #AM_CONDITIONAL(CRAY, test "$target" = "Cray-linux-gnu")
 #AC_SUBST(CRAY)

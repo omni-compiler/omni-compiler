@@ -6,12 +6,12 @@ LOCK_TYPE=@OMP_LOCK_TYPE@
 LIB_THREAD=@OMP_THREAD_TYPE@
 LIB_OMPC=ompc_${LOCK_TYPE}_${LIB_THREAD}
 
-CC_OPTION=@BECC_OPTION@
+IS_CRAY=@IS_CRAY@
 
-if [ "${CC_OPTION}" = "" ]; then
-   CMD="@OMNI_HOME@/bin/xmp_collect_init --cc @BECC@ --F $*"
+if [ "${IS_CRAY}" = "Yes" ]; then
+   CMD="@OMNI_HOME@/bin/xmp_collect_init --cc @BECC@ --F --OPTION -hgnu $*"
 else
-   CMD="@OMNI_HOME@/bin/xmp_collect_init --cc @BECC@ --F --OPTION ${CC_OPTION} $*"
+   CMD="@OMNI_HOME@/bin/xmp_collect_init --cc @BECC@ --F $*"
 fi
 
 if [ "${OM_VERBOSE}" = "1" ]; then
