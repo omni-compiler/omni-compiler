@@ -189,7 +189,8 @@ static _Bool _XMPF_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
   void *sendbuf, *recvbuf;
   unsigned long long count, bufsize;
 
-  int chunk_size, ser_size, type_size;
+  int dst_chunk_size, dst_ser_size, type_size;
+  int src_chunk_size, src_ser_size;
 
 #ifdef DBG
   xmpf_dbg_printf("_XMPF_gmove_transpose\n");
@@ -197,10 +198,8 @@ static _Bool _XMPF_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
 
   nnodes = dst_array->align_template->onto_nodes->comm_size;
 
-  // Square Matrix
-  if (dst_array->dim != 2 ||
-      dst_array->info[0].ser_size != dst_array->info[1].ser_size ||
-      src_array->info[0].ser_size != src_array->info[1].ser_size) return false;
+// 2-dimensional Matrix
+  if (dst_array->dim != 2) return false;
 
   // No Shadow
   if (dst_array->info[0].shadow_size_lo != 0 ||
@@ -214,11 +213,13 @@ static _Bool _XMPF_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
   dst_block_dim = (dst_array->info[0].align_manner == _XMP_N_ALIGN_BLOCK) ? 0 : 1;
   src_block_dim = (src_array->info[0].align_manner == _XMP_N_ALIGN_BLOCK) ? 0 : 1;
 
-  chunk_size = dst_array->info[dst_block_dim].par_size;
-  ser_size = dst_array->info[dst_block_dim].ser_size;
+  dst_chunk_size = dst_array->info[dst_block_dim].par_size;
+  dst_ser_size = dst_array->info[dst_block_dim].ser_size;
+  src_chunk_size = src_array->info[src_block_dim].par_size;
+  src_ser_size = src_array->info[src_block_dim].ser_size;
   type_size = dst_array->type_size;
 
-  count =  chunk_size * chunk_size * type_size;
+  count =  dst_chunk_size * src_chunk_size * type_size;
   bufsize = count * nnodes;
 
   if (dst_block_dim == src_block_dim){
@@ -227,8 +228,8 @@ static _Bool _XMPF_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
   }
 
 #ifdef DBG
-  xmpf_dbg_printf("chunk_size = %d, ser_size = %d, type_size = %d, count = %llu, buf_size = %llu\n",
-		  chunk_size, ser_size, type_size, count, bufsize);
+  xmpf_dbg_printf("dst_chunk_size = %d, dst_ser_size = %d, type_size = %d, count = %llu, buf_size = %llu\n",
+		  dst_chunk_size,dst_ser_size, type_size, count, bufsize);
 #endif
 
   if (src_block_dim == 1){
@@ -237,16 +238,16 @@ static _Bool _XMPF_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
     int k;
     for (int i = 0; i < nnodes; i++){
       k= 0;
-      for (int j = 0; j < chunk_size; j++){
+      for (int j = 0; j < src_chunk_size; j++){
 	memcpy((char *)sendbuf + i * count + k,
-	       (char *)src_array->array_addr_p + (i * chunk_size + j * ser_size) * type_size,
-	       chunk_size * type_size);
+	       (char *)src_array->array_addr_p + (i * dst_chunk_size + j * dst_ser_size) * type_size,
+	       dst_chunk_size * type_size);
 #ifdef DBG
 	xmpf_dbg_printf("%d -> %d\n",
-			*((int *)src_array->array_addr_p + (i * chunk_size + j * ser_size)),
+			*((int *)src_array->array_addr_p + (i * dst_chunk_size + j * dst_ser_size)),
 			i * count + k);
 #endif
-	k += chunk_size * type_size;
+	k += dst_chunk_size * type_size;
       }
     }
   }
@@ -255,7 +256,7 @@ static _Bool _XMPF_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
   }
 
 #ifdef DBG
-  for (int i = 0; i < chunk_size * chunk_size * nnodes; i++){
+  for (int i = 0; i < dst_chunk_size * src_chunk_size * nnodes; i++){
     xmpf_dbg_printf("sendbuf[%d] = %d\n", i, ((int *)sendbuf)[i]);
   }
 #endif
@@ -275,11 +276,11 @@ static _Bool _XMPF_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
     int k;
     for (int i = 0; i < nnodes; i++){
       k = 0;
-      for (int j = 0; j < chunk_size; j++){
-	memcpy((char *)dst_array->array_addr_p + (i * chunk_size + j * ser_size) * type_size,
+      for (int j = 0; j < dst_chunk_size; j++){
+	memcpy((char *)dst_array->array_addr_p + (i * src_chunk_size + j * src_ser_size) * type_size,
 	       (char *)recvbuf + i * count + k,
-	       chunk_size * type_size);
-	k += chunk_size * type_size;
+	       src_chunk_size * type_size);
+	k += src_chunk_size * type_size;
       }
     }
 
@@ -323,7 +324,6 @@ void _XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
   // do transpose
   if (is_same_shape(dst_array, src_array) &&
       is_whole(gmv_desc_leftp) && is_whole(gmv_desc_rightp) &&
-      dst_array->align_template == src_array->align_template &&
       is_one_block(dst_array) && is_one_block(src_array)){
     if (_XMPF_gmove_transpose(gmv_desc_leftp, gmv_desc_rightp)) return;
   }
