@@ -278,14 +278,13 @@ public class XMPtransPragma
     BasicBlock bb = b.getBasicBlock();
     Ident f, g, h;
 
-    g = env.declExternIdent(XMP.set_reflect_f,Xtype.FsubroutineType);
     f = env.declExternIdent(XMP.reflect_f,Xtype.FsubroutineType);
-    h = env.declExternIdent(XMP.reflect_async_f,Xtype.FsubroutineType);
 
     Vector<XMParray> reflectArrays = info.getReflectArrays();
     for(XMParray a: reflectArrays){
 
       for (int i = 0; i < info.widthList.size(); i++){
+	  g = env.declExternIdent(XMP.set_reflect_f,Xtype.FsubroutineType);
 	  XMPdimInfo w = info.widthList.get(i);
 	  Xobject args = Xcons.List(a.getDescId().Ref(), Xcons.IntConstant(i),
 				    w.getLower(), w.getUpper(), w.getStride());
@@ -293,6 +292,7 @@ public class XMPtransPragma
       }
 
       if (info.getAsyncId() != null){
+	  h = env.declExternIdent(XMP.reflect_async_f,Xtype.FsubroutineType);
 	  bb.add(h.callSubroutine(Xcons.List(a.getDescId().Ref(), info.getAsyncId())));
       }
       else {
