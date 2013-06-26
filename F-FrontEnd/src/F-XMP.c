@@ -396,7 +396,9 @@ int check_for_XMP_pragma(int st_no, expr x)
 	    }
 	}
     }
-    if(EXPR_CODE(statements) != F_DO_STATEMENT){
+    if(EXPR_CODE(statements) != F_DO_STATEMENT &&
+       EXPR_CODE(statements) != OMP_PRAGMA){
+      // not fully checked ? only PARALLEL DO should be accepted.
 	fatal("XMP LOOP directive must be followed by do statements");
     }
     CTL_BLOCK(ctl_top) = 
