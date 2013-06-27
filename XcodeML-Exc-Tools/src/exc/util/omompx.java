@@ -336,14 +336,14 @@ public class omompx
       globalDecl.setupGlobalConstructor();
       globalDecl.setupGlobalDestructor();
       XMP.exitByError();
-      xobjFile.addHeaderLine("include \"xmp_func_decl.h\"");
-      xobjFile.addHeaderLine("include \"xmp_index_macro.h\"");
-      xobjFile.addHeaderLine("include \"xmp_comm_macro.h\"");
+      xobjFile.addHeaderLine("# include \"xmp_func_decl.h\"");
+      xobjFile.addHeaderLine("# include \"xmp_index_macro.h\"");
+      xobjFile.addHeaderLine("# include \"xmp_comm_macro.h\"");
       if(all_profile || selective_profile){
 	if (doScalasca == true) {
-	  xobjFile.addHeaderLine("include \"xmp_scalasca.h\"");
+	  xobjFile.addHeaderLine("# include \"xmp_scalasca.h\"");
 	}else if (doTlog == true) {
-	  xobjFile.addHeaderLine("include \"xmp_tlog.h\"");
+	  xobjFile.addHeaderLine("# include \"xmp_tlog.h\"");
 	}
       }
       xmpTranslator.finalize();
