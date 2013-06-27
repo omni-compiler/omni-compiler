@@ -2007,8 +2007,7 @@ public class XcBindingVisitor extends RVisitorBase implements XcLazyVisitor
         XcDirectiveObj obj = new XcDirectiveObj();
 
         String directiveContent = visitable.getContent();
-        //obj.setLine("# " + directiveContent);
-	obj.setLine(directiveContent);
+        obj.setLine("# " + directiveContent);
         _setSourcePos(obj, visitable);
         return _setAsLeaf(obj, visitable);
     }
