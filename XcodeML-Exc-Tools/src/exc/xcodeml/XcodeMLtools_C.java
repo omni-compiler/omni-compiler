@@ -109,6 +109,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
     case GCC_ASM_DEFINITION:
     case PRAGMA_LINE:
     case TEXT:
+    case ACC_PRAGMA:
       xobjFile.add(xobj);
       break;
     default:
