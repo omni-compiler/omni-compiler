@@ -429,13 +429,33 @@ int xmp_nodes_size(xmp_desc_t d, int dim, int *size){
 
 }
 
+int xmp_nodes_rank(xmp_desc_t d, int *rank){
+
+  _XMP_nodes_t *n = (_XMP_nodes_t *)d;
+
+  *rank = n->comm_rank;
+
+  return 0;
+
+}
+
+int xmp_nodes_comm(xmp_desc_t d, void **comm){
+
+  _XMP_nodes_t *n = (_XMP_nodes_t *)d;
+
+  *(void **)comm = (void *)n->comm;
+
+  return 0;
+
+}
+
 int xmp_nodes_equiv(xmp_desc_t d, xmp_desc_t *dn, int lb[], int ub[], int st[]){
 
   int i,ndims, ierr;
   _XMP_nodes_t *n = (_XMP_nodes_t *)d;
 
   *dn = (xmp_desc_t)(n->inherit_nodes);
-  ierr = xmp_nodes_ndims(n, &ndims);
+  ierr = xmp_nodes_ndims(*dn, &ndims);
 
   for (i=0; i<ndims; i++){
     lb[i]= n ->inherit_info[i].lower;
