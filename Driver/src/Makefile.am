@@ -23,6 +23,9 @@ AM_CFLAGS=-std=c99 -Wall
 
 omdriver.c: omdriver.h
 
+xmp_collect_init: xmp_collect_init.c
+	$(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@ -DNM=\"@NM@\" $<
+
 clean-local:
 	rm -rf ../doc
 

@@ -5,7 +5,7 @@
 TOPDIR		= ../..
 prefix		= @prefix@
 
-CFLAGS		= @CFLAGS@ @BECC_OPTION@ -I. -I$(TOPDIR)/include @DEFS@ @CPPFLAGS@
+CFLAGS		= @BECC_OPTION@ -I. -I$(TOPDIR)/include @DEFS@ @CPPFLAGS@
 
 CC		= @BECC@
 AR		= @AR@ cr

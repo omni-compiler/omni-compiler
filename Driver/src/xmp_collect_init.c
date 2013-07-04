@@ -100,7 +100,8 @@ int main(int argc, char *argv[])
     }
 
     //    pid = getpid();
-    strcpy(command_buf,"nm");
+    //    strcpy(command_buf,"nm");
+    strcpy(command_buf,NM);
     for(i = 0; i < argc; i++){
 	arg = argv[i];
 	len = strlen(arg);

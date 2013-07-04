@@ -79,10 +79,7 @@ libxmpf_a_OBJECTS = $(am_libxmpf_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
 depcomp =
 am__depfiles_maybe =
-COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
-LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(libxmpf_a_SOURCES)
 DIST_SOURCES = $(libxmpf_a_SOURCES)
 ETAGS = etags
@@ -99,6 +96,7 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 BASH = @BASH@
 BECC = @BECC@
+BECC_OMP_OPTION = @BECC_OMP_OPTION@
 BECC_OPTION = @BECC_OPTION@
 BEFC = @BEFC@
 CC = @BECC@
@@ -170,6 +168,7 @@ LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
 MM5TGT = @MM5TGT@
+NM = @NM@
 OBJEXT = @OBJEXT@
 OMC_CONF_LNK_OPT = @OMC_CONF_LNK_OPT@
 OMC_CONF_LX2X_OPT = @OMC_CONF_LX2X_OPT@
@@ -215,6 +214,7 @@ SIZEOF_UNSIGNED_SHORT = @SIZEOF_UNSIGNED_SHORT@
 SIZEOF_VOID_P = @SIZEOF_VOID_P@
 SIZEOF__BOOL = @SIZEOF__BOOL@
 STRIP = @STRIP@
+SUPERUX = @SUPERUX@
 TYPE_INT16 = @TYPE_INT16@
 TYPE_INT32 = @TYPE_INT32@
 TYPE_INT64 = @TYPE_INT64@
@@ -305,6 +305,10 @@ libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_array.c xmpf_gcomm.c \
                     xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c \
                     xmpf_nodes.c xmpf_pack.c xmpf_task.c xmpf_template.c
 
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS)
+
+LINK = $(CCLD) $(AM_CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 all: all-am
 
 .SUFFIXES:

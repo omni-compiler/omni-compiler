@@ -569,6 +569,10 @@ case $basic_machine in
 	encore | umax | mmax)
 		basic_machine=ns32k-encore
 		;;
+        es | es?)
+	        basic_machine=sx-nec
+		os=-superux
+		;;
 	es1800 | OSE68k | ose68k | ose | OSE)
 		basic_machine=m68k-ericsson
 		os=-ose
@@ -1056,6 +1060,10 @@ case $basic_machine in
 	sv1)
 		basic_machine=sv1-cray
 		os=-unicos
+		;;
+        sx*)
+	        basic_machine=sx-nec
+		os=-superux
 		;;
 	symmetry)
 		basic_machine=i386-sequent

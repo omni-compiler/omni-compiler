@@ -103,6 +103,7 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 BASH = @BASH@
 BECC = @BECC@
+BECC_OMP_OPTION = @BECC_OMP_OPTION@
 BECC_OPTION = @BECC_OPTION@
 BEFC = @BEFC@
 CC = @CC@
@@ -174,6 +175,7 @@ LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
 MM5TGT = @MM5TGT@
+NM = @NM@
 OBJEXT = @OBJEXT@
 OMC_CONF_LNK_OPT = @OMC_CONF_LNK_OPT@
 OMC_CONF_LX2X_OPT = @OMC_CONF_LX2X_OPT@
@@ -219,6 +221,7 @@ SIZEOF_UNSIGNED_SHORT = @SIZEOF_UNSIGNED_SHORT@
 SIZEOF_VOID_P = @SIZEOF_VOID_P@
 SIZEOF__BOOL = @SIZEOF__BOOL@
 STRIP = @STRIP@
+SUPERUX = @SUPERUX@
 TYPE_INT16 = @TYPE_INT16@
 TYPE_INT32 = @TYPE_INT32@
 TYPE_INT64 = @TYPE_INT64@
@@ -387,9 +390,6 @@ clean-binPROGRAMS:
 omdriver$(EXEEXT): $(omdriver_OBJECTS) $(omdriver_DEPENDENCIES) 
 	@rm -f omdriver$(EXEEXT)
 	$(LINK) $(omdriver_OBJECTS) $(omdriver_LDADD) $(LIBS)
-xmp_collect_init$(EXEEXT): $(xmp_collect_init_OBJECTS) $(xmp_collect_init_DEPENDENCIES) 
-	@rm -f xmp_collect_init$(EXEEXT)
-	$(LINK) $(xmp_collect_init_OBJECTS) $(xmp_collect_init_LDADD) $(LIBS)
 install-binSCRIPTS: $(bin_SCRIPTS)
 	@$(NORMAL_INSTALL)
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
@@ -659,6 +659,9 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 
 
 omdriver.c: omdriver.h
+
+xmp_collect_init: xmp_collect_init.c
+	$(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@ -DNM=\"@NM@\" $<
 
 clean-local:
 	rm -rf ../doc

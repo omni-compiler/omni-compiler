@@ -8,6 +8,11 @@ include_HEADERS	  = tlog.h
 lib_LIBRARIES	  = libtlog.a
 libtlog_a_SOURCES = tlog-ompc.c tlog.c tlog-time.c
 
+AM_CFLAGS     = -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR) @BECC_OPTION@ 
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS)
+LINK = $(CCLD) $(AM_CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+
 all-local:	$(lib_LIBRARIES)
 
 clean-local:
