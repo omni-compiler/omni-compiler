@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
       MODULE_INIT_ENTRY_NAME = "xmpc_module_init";
     }
     else{
-      fprintf(stderr, "error. worong arg is used. The arg must be --F or --C.\n");
+      fprintf(stderr, "error. wrong arg is used. The arg must be --F or --C.\n");
       exit(1);
     }
 
