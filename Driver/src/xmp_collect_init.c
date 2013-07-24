@@ -26,6 +26,7 @@ char *INIT_MODULE_OBJ, *NM_PREFIX, *INIT_PREFIX;
 char *MODULE_INIT_NAME, *MODULE_INIT_NAME_;
 char *MODULE_INIT_ENTRY_NAME;
 int pid = 0;
+int is_K = FALSE;
 
 int main(int argc, char *argv[])
 {
@@ -129,6 +130,7 @@ int main(int argc, char *argv[])
       if(strncmp(buf,".jwe",4) == 0 || 
 	 strncmp(buf,"jpj.",4) == 0) continue; // for K computer
 
+      is_K = TRUE;
       len = strlen(buf);
       if(len > init_name_len && 
 	 strcmp(buf+(len-init_name_len),MODULE_INIT_NAME) == 0){
@@ -160,22 +162,27 @@ int main(int argc, char *argv[])
 	fprintf(stderr,"cannot open '%s'\n",init_func_source);
 	exit(1);
     }
-    for(i=0; i<n_module_init;i++){
-      char *name = module_init_names[i];
-      fprintf(fp,"extern void %s();\n",name);
+    
+    if(!is_K){
+      for(i=0; i<n_module_init;i++){
+	char *name = module_init_names[i];
+	fprintf(fp,"extern void %s();\n",name);
+      }
+      fprintf(fp,"\n");
     }
-    fprintf(fp,"\n");
     fprintf(fp,"void %s(){\n",MODULE_INIT_ENTRY_NAME);
 
     for(i=0; i<n_module_init;i++){
       char *name = module_init_names[i];
-      if(strchr(name,'.') != NULL)
-	fprintf(fp,"asm(\"call\t%s\");\n",name);  // asm("call func"); 
+      if(strchr(name,'.') != NULL){
+	fprintf(fp,"asm(\"call %s\");\n",name);  // asm("call func"); 
+	fprintf(fp,"asm(\"nop\");",name);
+      }
       else
 	fprintf(fp,"\t%s();\n",name);
 	
     }
-    fprintf(fp,"}\n");
+    fprintf(fp,"\n}\n");
     fclose(fp);
     sprintf(command_buf,"%s -c -o %s %s %s",
 	    cc_command, init_func_object, init_func_source, cc_option);
