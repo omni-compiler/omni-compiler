@@ -205,46 +205,46 @@ public class XMPanalyzePragma
     if (loopIterList == null || loopIterList.Nargs() == 0) {
       ForBlock loopBlock = getOutermostLoopBlock(loopBody);
       if(loopBlock == null){
-	XMP.errorAt(pb,"loop is not found after loop directive");
-	return;
+    	  XMP.errorAt(pb,"loop is not found after loop directive");
+    	  return;
       }
       dims.add(XMPdimInfo.loopInfo(loopBlock));
       loopBody = loopBlock.getBody();
     } else {
       while(true){
-	ForBlock loopBlock = getOutermostLoopBlock(loopBody);
-	if(loopBlock == null) break;
-	boolean is_found = false;
-	for(Xobject x: loopIterList){
-	  if(x.Opcode() == Xcode.LIST) x = x.getArg(0);
-	  if(isEqualVar(loopBlock.getInductionVar(),x)){
-	    is_found = true;
-	    break;
-	  }
-	}
-	if(is_found)
-	  dims.add(XMPdimInfo.loopInfo(loopBlock));
-	loopBody = loopBlock.getBody();
+    	  ForBlock loopBlock = getOutermostLoopBlock(loopBody);
+    	  if(loopBlock == null) break;
+    	  boolean is_found = false;
+    	  for(Xobject x: loopIterList){
+    		  if(x.Opcode() == Xcode.LIST) x = x.getArg(0);
+    		  if(isEqualVar(loopBlock.getInductionVar(),x)){
+    			  is_found = true;
+    			  break;
+    		  }
+    	  }
+    	  if(is_found)
+    		  dims.add(XMPdimInfo.loopInfo(loopBlock));
+    	  loopBody = loopBlock.getBody();
       }
 
       /* check loopIterList */
       for(Xobject x: loopIterList){
-	if(x.Opcode() == Xcode.LIST){
-	  if(x.getArgOrNull(1) != null ||
-	     x.getArgOrNull(2) != null){
-	    XMP.errorAt(pb,"bad syntax in loop directive");
-	  }
-	  x = x.getArg(0);
-	}
-	boolean is_found = false;
-	for(XMPdimInfo d_info: dims){
-	  if(isEqualVar(d_info.getLoopVar(),x)){
-	    is_found = true;
-	    break;
-	  }
-	}
-	if(!is_found)
-	  XMP.errorAt(pb,"loop index is not found in loop varaibles");
+    	  if(x.Opcode() == Xcode.LIST){
+    		  if(x.getArgOrNull(1) != null ||
+    		     x.getArgOrNull(2) != null){
+    			  XMP.errorAt(pb,"bad syntax in loop directive");
+    		  }
+    		  x = x.getArg(0);
+    	  }
+    	  boolean is_found = false;
+    	  for(XMPdimInfo d_info: dims){
+    		  if(isEqualVar(d_info.getLoopVar(),x)){
+    			  is_found = true;
+    			  break;
+    		  }
+    	  }
+    	  if(!is_found)
+    		  XMP.errorAt(pb,"loop index is not found in loop varaibles");
       }
     }
     
@@ -324,13 +324,15 @@ public class XMPanalyzePragma
         ForBlock forBlock = (ForBlock)b;
         forBlock.Canonicalize();
         if (!(forBlock.isCanonical())){
-	  // XMP.error("loop statement is not canonical");
-	  return null;
-	}
+        	// XMP.error("loop statement is not canonical");
+        	return null;
+        }
         return forBlock;
       }
       else if (b.Opcode() == Xcode.COMPOUND_STATEMENT)
-        return getOutermostLoopBlock(b.getBody());
+    	  return getOutermostLoopBlock(b.getBody());
+      else if (b.Opcode() == Xcode.OMP_PRAGMA)
+    	  return getOutermostLoopBlock(b.getBody());
 //       else if(b.Opcode() == Xcode.F_STATEMENT_LIST &&
 // 	      b.getBasicBlock().getHead().getExpr().Opcode() 
 // 	      == Xcode.PRAGMA_LINE) 

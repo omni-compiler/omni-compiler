@@ -17,7 +17,7 @@ if [ -z "${INPFILE}" ]; then
     exit 1
 fi
 
-if [ "${OM_USE_OPENMP}" = "1" -o "${OM_USE_XMP}" = "1" ]; then
+if [ "${OM_USE_OPENMP}" = "1" -o "${OM_USE_XMP}" = "1" -o "${OM_USE_XMPF}" = "1" ]; then
     if [ "${OM_VERBOSE}" = "1" ]; then
         echo "skip backend"
     fi

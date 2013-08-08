@@ -3294,6 +3294,124 @@ public class XfDecompileDomVisitor {
             writer.writeIsolatedLine(content);
         }
     }
+    
+    // OMPPragma
+    class OMPPragmaVisitor extends XcodeNodeVisitor {
+        /**
+         * Decompile "OMPPragma" element in XcodeML/F.
+         */
+        @Override public void enter(Node n) {
+            _writeLineDirective(n);
+            
+            boolean nowaitFlag = false;
+            
+            XmfWriter writer = _context.getWriter();
+
+            // directive
+            Node dir = n.getFirstChild();
+            String dirName = XmDomUtil.getContentText(dir);
+            
+            if (dirName.equals("FOR")) dirName = "DO";
+            writer.writeToken("!$OMP " + dirName);
+
+            if (dirName.equals("THREADPRIVATE")){
+            	writer.writeToken("(");
+            	
+            	NodeList varList = dir.getNextSibling().getChildNodes();
+        		invokeEnter(varList.item(0));
+        		for (int j = 1; j < varList.getLength(); j++){
+        			Node var = varList.item(j);
+        			writer.writeToken(",");
+        			invokeEnter(var);
+        		}
+        
+        		writer.writeToken(")");
+        		writer.setupNewLine();
+        		
+        		return;
+            }
+            
+            // clause
+            Node clause = dir.getNextSibling();
+
+            NodeList list0 = clause.getChildNodes();
+            for (int i = 0; i < list0.getLength(); i++){          
+            	Node childNode = list0.item(i);
+                if (childNode.getNodeType() != Node.ELEMENT_NODE) {
+                    continue;
+                }
+                
+                String clauseName = XmDomUtil.getContentText(childNode);
+                String operator = "";
+                if (clauseName.equals("DATA_DEFAULT"))               clauseName = "DEFAULT";
+                else if (clauseName.equals("DATA_PRIVATE"))          clauseName = "PRIVATE";
+                else if (clauseName.equals("DATA_SHARED"))           clauseName = "SHARED";
+                else if (clauseName.equals("DATA_FIRSTPRIVATE"))     clauseName = "FIRSTPRIVATE";
+                else if (clauseName.equals("DATA_LASTPRIVATE"))      clauseName = "LASTPRIVATE";
+                else if (clauseName.equals("DATA_COPYIN"))           clauseName = "COPYIN";
+                else if (clauseName.equals("DATA_REDUCTION_PLUS"))  {clauseName = "REDUCTION"; operator = "+";}
+                else if (clauseName.equals("DATA_REDUCTION_MINUS")) {clauseName = "REDUCTION"; operator = "-";}
+                else if (clauseName.equals("DATA_REDUCTION_MUL"))   {clauseName = "REDUCTION"; operator = "*";}
+                else if (clauseName.equals("DATA_REDUCTION_BITAND")){clauseName = "REDUCTION"; operator = "iand";}
+                else if (clauseName.equals("DATA_REDUCTION_BITOR")) {clauseName = "REDUCTION"; operator = "ior";}
+                else if (clauseName.equals("DATA_REDUCITON_BITXOR")){clauseName = "REDUCTION"; operator = "ieor";}
+                else if (clauseName.equals("DATA_REDUCITON_LOGAND")){clauseName = "REDUCTION"; operator = ".and.";}
+                else if (clauseName.equals("DATA_REDUCTION_LOGOR")) {clauseName = "REDUCTION"; operator = ".or.";}
+                else if (clauseName.equals("DATA_REDUCTION_MIN"))   {clauseName = "REDUCTION"; operator = "min";}
+                else if (clauseName.equals("DATA_REDUCTION_MAX"))   {clauseName = "REDUCTION"; operator = "max";}
+                else if (clauseName.equals("DATA_REDUCTION_EQV"))   {clauseName = "REDUCTION"; operator = ".eqv.";}
+                else if (clauseName.equals("DATA_REDUCTION_NEQV"))  {clauseName = "REDUCTION"; operator = ".neqv.";}
+                else if (clauseName.equals("DIR_ORDERED"))           clauseName = "ORDERED";
+                else if (clauseName.equals("DIR_IF"))                clauseName = "IF";
+                else if (clauseName.equals("DIR_NOWAIT"))           {clauseName = "NOWAIT";    nowaitFlag = true;}
+                else if (clauseName.equals("DIR_SCHEDULE"))          clauseName = "SCHEDULE";
+            
+                if (!clauseName.equals("NOWAIT")){
+                	writer.writeToken(clauseName);
+                
+                	Node arg = childNode.getFirstChild().getNextSibling();
+                	if (arg != null){
+                		writer.writeToken("(");
+                		if (operator != "") writer.writeToken(operator + " :");
+                    
+                		NodeList varList = arg.getChildNodes();
+                		invokeEnter(varList.item(0));
+                		for (int j = 1; j < varList.getLength(); j++){
+                			Node var = varList.item(j);
+                			writer.writeToken(",");
+                			invokeEnter(var);
+                		}
+                
+                		writer.writeToken(")");
+                	}
+                }
+                
+            }
+            
+            writer.setupNewLine();
+
+            // body
+            Node body = clause.getNextSibling();
+
+            writer.incrementIndentLevel();
+
+            NodeList list2 = body.getChildNodes();
+            for (int i = 0; i < list2.getLength(); i++){
+                Node childNode = list2.item(i);
+                if (childNode.getNodeType() != Node.ELEMENT_NODE) {
+                    continue;
+                }
+                invokeEnter(childNode);
+            }
+
+            writer.decrementIndentLevel();
+            
+            writer.writeToken("!$OMP END " + dirName);
+            if (nowaitFlag) writer.writeToken("NOWAIT");
+            writer.setupNewLine();
+            
+        }
+    }
 
     // FprintStatement
     class FprintStatementVisitor extends XcodeNodeVisitor {
@@ -5131,6 +5249,7 @@ public class XfDecompileDomVisitor {
         new Pair("FpointerAssignStatement", new FpointerAssignStatementVisitor()),
         new Pair("FpowerExpr", new FpowerExprVisitor()),
         new Pair("FpragmaStatement", new FpragmaStatementVisitor()),
+        new Pair("OMPPragma", new OMPPragmaVisitor()),
         new Pair("FprintStatement", new FprintStatementVisitor()),
         new Pair("FreadStatement", new FreadStatementVisitor()),
         new Pair("FrealConstant", new FrealConstantVisitor()),

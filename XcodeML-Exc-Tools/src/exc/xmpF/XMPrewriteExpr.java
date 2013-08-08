@@ -8,6 +8,7 @@ package exc.xmpF;
 
 import exc.object.*;
 import exc.block.*;
+import java.util.*;
 
 /**
  * pass2: check and write variables
@@ -31,6 +32,16 @@ public class XMPrewriteExpr
     for (iter.init(); !iter.end(); iter.next()) {
       Xobject expr = iter.getExpr();
       if(expr != null)  rewriteExpr(expr,iter.getBasicBlock(),fb);
+    }
+    
+    // rewrite OMP pragma
+    topdownBlockIterator iter2 = new topdownBlockIterator(fb);
+    for (iter2.init(); !iter2.end(); iter2.next()){
+    	Block block = iter2.getBlock();
+    	if (block.Opcode() == Xcode.OMP_PRAGMA){
+    		Xobject clauses = ((PragmaBlock)block).getClauses();
+    		if (clauses != null) rewriteOmpClauses(clauses, (PragmaBlock)block, fb);
+    	}
     }
 
     // rewrite id_list, decles, parameters
@@ -94,10 +105,10 @@ public class XMPrewriteExpr
 	  if(id == null) break;
 	  XMParray array = XMParray.getArray(id);
 	  if(array == null) break;
-
+	  
 	  // replace with local decl
 	  Xobject var = Xcons.Symbol(Xcode.VAR,array.getLocalType(),
-				     array.getLocalName());
+				                 array.getLocalName());
 	  var.setProp(XMP.arrayProp,array);
 	  iter.setXobject(var);
 	  break;
@@ -150,6 +161,94 @@ public class XMPrewriteExpr
     }
   }
 
+  /*
+   * rewrite Pragma
+   */
+  private void rewriteOmpClauses(Xobject expr, PragmaBlock pragmaBlock, Block block){
+	  
+    bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
+    
+    for (iter.init(); !iter.end();iter.next()){
+    	
+      Xobject x = iter.getXobject();
+      if (x == null)  continue;
+      
+      if (x.Opcode() == Xcode.VAR){
+
+	  if (x.getProp(XMP.RWprotected) != null) break;
+
+	  Ident id = env.findVarIdent(x.getName(),block);
+	  if (id == null) break;
+	  
+	  XMParray array = XMParray.getArray(id);
+
+	  if (array != null){
+	      // replace with local decl
+	      Xobject var = Xcons.Symbol(Xcode.VAR,array.getLocalType(),
+					 array.getLocalName());
+	      var.setProp(XMP.arrayProp,array);
+	      iter.setXobject(var);
+	  }
+	  /*	  else {
+	      Ident local_loop_var = null;
+	      // find the loop variable x
+	      for (Block b = pragmaBlock.getParentBlock(); b != null; b = b.getParentBlock()){
+		  XMPinfo info = (XMPinfo)b.getProp(XMP.prop);
+		  if (info == null) continue;
+		  if (info.pragma != XMPpragma.LOOP) continue;
+		  for (int k = 0; k < info.getLoopDim(); k++){
+		      if (x.getName().equals(info.getLoopVar(k).getName())){
+			  local_loop_var = info.getLoopDimInfo(k).getLoopLocalVar();
+			  break;
+		      }
+		  }
+		  if (local_loop_var != null) break;
+	      }
+	      if (local_loop_var != null) iter.setXobject(local_loop_var.Ref());
+	      }*/
+
+      }
+      else if (x.Opcode() == Xcode.LIST){
+	  if (x.left() != null && x.left().Opcode() == Xcode.STRING &&
+	      x.left().getString().equals("DATA_PRIVATE")){
+
+	      if (!pragmaBlock.getPragma().equals("FOR")) continue;
+
+	      XobjList itemList = (XobjList)x.right();
+
+	      // find loop variable
+	      Xobject loop_var = null;
+	      BasicBlockIterator i = new BasicBlockIterator(pragmaBlock.getBody());
+	      for (Block b = pragmaBlock.getBody().getHead();
+		   b != null;
+		   b = b.getNext()){
+		  if (b.Opcode() == Xcode.F_DO_STATEMENT){
+		      loop_var = ((FdoBlock)b).getInductionVar();
+		  }
+	      }
+	      if (loop_var == null) continue;
+
+	      // check if the clause has contained the loop variable
+	      boolean flag = false;
+	      Iterator<Xobject> j = itemList.iterator();
+	      while (j.hasNext()){
+		  Xobject item = j.next();
+		  if (item.getName().equals(loop_var.getName())){
+		      flag = true;
+		  }
+	      }
+
+	      // add the loop variable to the clause
+	      if (!flag){
+		  itemList.add(loop_var);
+	      }
+	  }
+      }
+
+    }
+
+  }
+  
   Xobject localIndexOffset;
 
   Xobject convertLocalIndex(Xobject v, int dim_i, XMParray a, 
