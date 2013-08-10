@@ -1310,7 +1310,7 @@ if test "x${doQReal}" = "xyes"; then
 
     # check size of mp_limb_t
     AC_MSG_CHECKING([size of GNU-MP mp_limb_t])
-    lSz=`qcCC utils/csMPlimb.c ./csMPlimb`
+    lSz=`qcCC buildutils/csMPlimb.c ./csMPlimb`
     AC_MSG_RESULT([${lSz}])
     omniLimbT=""
     case ${lSz} in
@@ -1329,7 +1329,7 @@ if test "x${doQReal}" = "xyes"; then
 
     # check how many mp_limb_t the GNU-MP needed for N bit precision.
     AC_MSG_CHECKING([how many mp_limb_t needed for $omniQPrec bit precision])
-    omniQRealPrecInLimb=`qcCC utils/cMPlb.c ./cMPlb '' $omniQPrec`
+    omniQRealPrecInLimb=`qcCC buildutils/cMPlb.c ./cMPlb '' $omniQPrec`
     AC_MSG_RESULT([$omniQRealPrecInLimb])
     AC_DEFINE_UNQUOTED(OMNI_QLIM_LEN, $omniQRealPrecInLimb)
     AH_TEMPLATE(OMNI_QLIM_LEN, [how many mp_limb_t the GNU-MP needed for N bit precision])
@@ -1462,20 +1462,26 @@ if test "${use_gasnet}" = yes; then
     AC_MSG_ERROR([${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit not found. Please attach or check --with-gasnet-conduit])
   else
     # Create temporary Makefile to set $(GASNET_CPPFLAGS) $(GASNET_CFLAGS) $(GASNET_LDFLAGS) $(GASNET_LIBS)
+    ECHO=""
+    if test $OS = "darwin"; then
+        ECHO="echo"
+    else
+	ECHO="echo -e"
+    fi
     tmp_file=_XMP_makefile.$$
     mak_file=${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit/${GASNET_CONDUIT}-seq.mak
 
-    echo -e "include ${mak_file}\nall:\n\t@echo \$(GASNET_CPPFLAGS)" > ${tmp_file}
+    $ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CPPFLAGS)" > ${tmp_file}
     GASNET_CPPFLAGS=`make -f ${tmp_file}`
     GASNET_CPPFLAGS="${GASNET_CPPFLAGS} -D_XMP_COARRAY_GASNET"
     
-    echo -e "include ${mak_file}\nall:\n\t@echo \$(GASNET_CFLAGS)"   > ${tmp_file}
+    $ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CFLAGS)"   > ${tmp_file}
     GASNET_CFLAGS=`make -f ${tmp_file}`
 
-    echo -e "include ${mak_file}\nall:\n\t@echo \$(GASNET_LDFLAGS)"  > ${tmp_file}
+    $ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LDFLAGS)"  > ${tmp_file}
     GASNET_LDFLAGS=`make -f ${tmp_file}`
 
-    echo -e "include ${mak_file}\nall:\n\t@echo \$(GASNET_LIBS)"     > ${tmp_file}
+    $ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LIBS)"     > ${tmp_file}
     GASNET_LIBS=`make -f ${tmp_file}`
     rm ${tmp_file}
   fi

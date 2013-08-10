@@ -42,7 +42,9 @@ pthread_mutex_t ompc_proc_mutex;
 pthread_cond_t ompc_proc_cond;
 pthread_cond_t ompc_mainwait_cond;
 pthread_mutex_t ompc_mainwait_mutex;
+#if _POSIX_BARRIERS > 0
 pthread_barrier_t ompc_thd_bar;
+#endif
 # endif /* !SIMPLE_SPIN */
 #endif /* USE_PTHREAD */
 
@@ -247,10 +249,12 @@ ompc_init(int argc,char *argv[])
     ompc_max_threads = ompc_num_threads;
 
 #ifdef USE_PTHREAD
+#if _POSIX_BARRIERS > 0
     pthread_barrier_init(&ompc_thd_bar, 0, ompc_num_threads);
 #endif
+#endif
 
-#if defined(OMNI_OS_IRIX) && defined(USE_PTHREAD)
+#if (defined(OMNI_OS_IRIX) || defined(OMNI_OS_DARWIN)) && defined(USE_PTHREAD)
     pthread_setconcurrency(ompc_max_threads);
 #endif /* OMNI_OS_IRIX && USE_PTHREAD */
 

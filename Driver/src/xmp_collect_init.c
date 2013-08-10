@@ -26,17 +26,17 @@ char *INIT_MODULE_OBJ, *NM_PREFIX, *INIT_PREFIX;
 char *MODULE_INIT_NAME, *MODULE_INIT_NAME_;
 char *MODULE_INIT_ENTRY_NAME;
 int pid = 0;
-int is_K = FALSE;
+int is_Mac = FALSE;
+int is_K_FC = FALSE; // only Fortran compiler on the K
 
 int main(int argc, char *argv[])
 {
     int i, len;
     int init_name_len, init_name_len_;
-    char *arg, *prog;
+    char *arg;
     FILE *fp;
 
     tmp_dir = TMP_DIR;
-    prog    = argv[0];
 
     argc--;
     argv++;
@@ -127,10 +127,16 @@ int main(int argc, char *argv[])
     init_name_len = strlen(MODULE_INIT_NAME);
     init_name_len_ = strlen(MODULE_INIT_NAME_);
     while(fscanf(fp,"%s",buf) == 1){
-      if(strncmp(buf,".jwe",4) == 0 || 
-	 strncmp(buf,"jpj.",4) == 0) continue; // for K computer
+      if(strncmp(buf,".jwe",4) == 0 || strncmp(buf,"jpj.",4) == 0){
+	is_K_FC = TRUE;
+	continue; // Fortran compiler on the K computer
+      }
 
-      is_K = TRUE;
+      if(strncmp(buf,"_xmpc_init_all",14) == 0 || 
+	 strncmp(buf,"_xmpf_main_",11) == 0) is_Mac = TRUE;
+      // On Mac OS X (Darwin), all module is added "_".
+      // For example, __shadow_xmpc_module_init_ -> ___shadow_xmpc_module_init_
+
       len = strlen(buf);
       if(len > init_name_len && 
 	 strcmp(buf+(len-init_name_len),MODULE_INIT_NAME) == 0){
@@ -162,27 +168,30 @@ int main(int argc, char *argv[])
 	fprintf(stderr,"cannot open '%s'\n",init_func_source);
 	exit(1);
     }
-    
-    if(!is_K){
+
+    if(!is_K_FC){
       for(i=0; i<n_module_init;i++){
 	char *name = module_init_names[i];
+	if(is_Mac)
+	  strcpy(name, name+sizeof(char)); // Remove the first charactor of function name
+	                                   // ___shadow_xmpc_module_init_ -> __shadow_xmpc_module_init_
 	fprintf(fp,"extern void %s();\n",name);
       }
       fprintf(fp,"\n");
     }
+    
     fprintf(fp,"void %s(){\n",MODULE_INIT_ENTRY_NAME);
 
     for(i=0; i<n_module_init;i++){
       char *name = module_init_names[i];
       if(strchr(name,'.') != NULL){
-	fprintf(fp,"asm(\"call %s\");\n",name);  // asm("call func"); 
-	fprintf(fp,"asm(\"nop\");",name);
+	fprintf(fp, "asm(\"call %s\");\n", name);  // asm("call func"); 
+	fprintf(fp, "asm(\"nop\");");
       }
       else
 	fprintf(fp,"\t%s();\n",name);
-	
     }
-    fprintf(fp,"\n}\n");
+    fprintf(fp,"}\n");
     fclose(fp);
     sprintf(command_buf,"%s -c -o %s %s %s",
 	    cc_command, init_func_object, init_func_source, cc_option);

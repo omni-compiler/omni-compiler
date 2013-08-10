@@ -20,8 +20,8 @@ xmpf_main.o: xmpf_main.f
 	@BEFC@ -c xmpf_main.f
 
 install-exec-local: xmpf_main.o
-	test -z $(libdir) || /bin/mkdir -p $(libdir)
-	$(INSTALL_DATA) xmpf_main.o $(libdir)
+	test -z $(DESTDIR)$(libdir) || /bin/mkdir -p $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) xmpf_main.o $(DESTDIR)$(libdir)
 
 clean-local:
 	rm -f *~ *.core core core.*

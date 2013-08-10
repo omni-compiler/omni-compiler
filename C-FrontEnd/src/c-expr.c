@@ -1293,7 +1293,7 @@ allocExprOfNumberConst(CExprCodeEnum exprCode, CBasicTypeEnum bt,
         int len = strlen(orgToken);
         char digits[len + 1];
 
-        if(orgToken[0] == '0') {
+        if(orgToken[0] == '0' && len > 2) {
             char c = orgToken[1];
             if(c == 'x' || c == 'X' || c == 'b' || c == 'B')
                 strcpy(digits, orgToken + 2); // hex, bin
