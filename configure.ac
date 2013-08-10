@@ -611,7 +611,7 @@ elif test "$target" = "sx-nec-superux"; then
 else
   chk=`$BECC --version | head -n1`
   case $chk in
-  gcc*)
+  gcc* | Apple*)
     OMC_CONF_LX2X_OPT=""
     OMC_CONF_NTV_OPT="-std=gnu99 -Wno-implicit -Wno-attributes"
     OMC_CONF_LNK_OPT=""
@@ -630,7 +630,7 @@ else
     echo " - Intel C Compiler (mpiicc)"
     echo " - Fujitsu C Compiler (mpifccpx)"
     echo " - Cray C Compiler (cc)"
-    exho " - NEC C/C++ Compiler (sxc++)"
+    echo " - NEC C/C++ Compiler (sxc++)"
     exit 1
     ;;
   esac
