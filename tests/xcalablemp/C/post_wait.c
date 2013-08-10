@@ -32,6 +32,8 @@ void post_wait_p2p(int tag[MAX_TAG]){
 #pragma xmp post (p(2), tag[2])
   }
 
+  xmp_sync_all(status);
+
 #pragma xmp task on p(2)
   {
 #pragma xmp wait                 // release tag[2]
