@@ -744,6 +744,13 @@ if test "$target" != "$host"; then
 		if test "${AR}" = ":"; then
 		    AC_MSG_ERROR([sxnm not found]);
 		fi ;;
+	Cray-linux-gnu)
+		AC_PROG_RANLIB
+		AC_CHECK_TOOL([AR], [ar], [:])
+		ARFLAGS="cru"
+		AC_SUBST(ARFLAGS)
+		AC_CHECK_TOOL([NM], [nm], [:])
+                ;;
 	*)
 		AC_CHECK_TARGET_TOOL([RANLIB], [ranlib], [:])
 		AC_CHECK_TARGET_TOOL([AR], [ar], [:])
