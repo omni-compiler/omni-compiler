@@ -364,3 +364,110 @@ int xmp_nodes_size(xmp_desc_t d, int dim){
 
 }
 */
+
+void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
+
+  _XMP_array_t *dst_array = *(_XMP_array_t **)dst_d;
+  _XMP_array_t *src_array = *(_XMP_array_t **)src_d;
+
+  int nnodes;
+
+  int dst_block_dim, src_block_dim;
+
+  void *sendbuf=NULL, *recvbuf=NULL;
+  unsigned long long count, bufsize;
+
+  int dst_chunk_size, dst_ser_size, type_size;
+  int src_chunk_size, src_ser_size;
+
+  nnodes = dst_array->align_template->onto_nodes->comm_size;
+
+  // 2-dimensional Matrix
+  if (dst_array->dim != 2) {
+    _XMP_fatal("bad dimension for xmp_transpose");
+  }
+
+  // No Shadow
+  if (dst_array->info[0].shadow_size_lo != 0 ||
+      dst_array->info[0].shadow_size_hi != 0 ||
+      src_array->info[0].shadow_size_lo != 0 ||
+      src_array->info[0].shadow_size_hi != 0) {
+   _XMP_fatal("A global array must not have shadows");
+  fflush(stdout);
+  }
+
+  // Dividable by the number of nodes
+  if (dst_array->info[0].ser_size % nnodes != 0) {
+   _XMP_fatal("Not dividable by the number of nodes");
+  fflush(stdout);
+  }
+
+  dst_block_dim = (dst_array->info[0].align_manner == _XMP_N_ALIGN_BLOCK) ? 0 : 1;
+  src_block_dim = (src_array->info[0].align_manner == _XMP_N_ALIGN_BLOCK) ? 0 : 1;
+
+  dst_chunk_size = dst_array->info[dst_block_dim].par_size;
+  dst_ser_size = dst_array->info[dst_block_dim].ser_size;
+  src_chunk_size = src_array->info[src_block_dim].par_size;
+  src_ser_size = src_array->info[src_block_dim].ser_size;
+  type_size = dst_array->type_size;
+
+  count =  dst_chunk_size * src_chunk_size * type_size;
+  bufsize = count * nnodes;
+
+  if (src_block_dim == 1){
+    if (*opt ==0){
+      sendbuf = _XMP_alloc(bufsize);
+    }else if (*opt==1){
+      sendbuf = dst_array->array_addr_p;
+    }
+    // src_array -> sendbuf
+    int k;
+    for (int i = 0; i < nnodes; i++){
+      k= 0;
+      for (int j = 0; j < src_chunk_size; j++){
+        memcpy((char *)sendbuf + i * count + k,
+               (char *)src_array->array_addr_p + (i * dst_chunk_size + j * dst_ser_size) * type_size,
+               dst_chunk_size * type_size);
+        k += dst_chunk_size * type_size;
+      }
+    }
+  }
+  else {
+    sendbuf = src_array->array_addr_p;
+  }
+
+  if (*opt == 0){
+    recvbuf = _XMP_alloc(bufsize);
+  }else if (*opt ==1){
+    recvbuf = src_array->array_addr_p;
+  }
+  MPI_Alltoall(sendbuf, count, MPI_BYTE, recvbuf, count, MPI_BYTE,
+               *((MPI_Comm *)src_array->align_template->onto_nodes->comm));
+
+  if (dst_block_dim == 1){
+    int k;
+    for (int i = 0; i < nnodes; i++){
+      k = 0;
+      for (int jj = 0; jj < src_chunk_size; jj++){
+        for (int j = 0; j < dst_chunk_size; j++){
+          memcpy((char *)dst_array->array_addr_p + (i * src_chunk_size + j * src_ser_size + jj) * type_size,
+                 (char *)recvbuf + i * count + k, type_size);
+          k += type_size;
+        }
+      }
+    }
+
+    if (*opt==0){
+      _XMP_free(recvbuf);
+    }
+  }
+
+  if (src_block_dim == 1){
+    if (*opt == 0){
+      _XMP_free(sendbuf);
+    }
+  }
+
+
+  return;
+}
