@@ -225,7 +225,7 @@ void xmpf_array_get_local_size_off__(_XMP_array_t **a_desc, int *i_dim,
     }
     else {
       *size = ai->ser_upper - ai->ser_lower + 1;
-      *off = ai->ser_lower;
+      *off = ai->ser_lower; // dummy
     }
   }
   else {
