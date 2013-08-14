@@ -22,6 +22,7 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
   a->align_comm_rank = _XMP_N_INVALID_RANK;
 
   a->num_reqs = -1;
+  a->mpi_req_shadow = _XMP_alloc(sizeof(MPI_Request) * 4 * (*n_dim));
 
   a->align_template = *t_desc;
 
@@ -40,12 +41,7 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
     ai->shadow_size_lo  = 0;
     ai->shadow_size_hi  = 0;
 
-    ai->mpi_datatype_shadow_lo = MPI_DATATYPE_NULL;
-    ai->mpi_datatype_shadow_hi = MPI_DATATYPE_NULL;
-/*     ai->mpi_req_shadow[0] = MPI_REQUEST_NULL; */
-/*     ai->mpi_req_shadow[1] = MPI_REQUEST_NULL; */
-/*     ai->mpi_req_shadow[2] = MPI_REQUEST_NULL; */
-/*     ai->mpi_req_shadow[3] = MPI_REQUEST_NULL; */
+    ai->reflect_sched = NULL;
 
     ai->shadow_comm = NULL;
     ai->shadow_comm_size = 1;
@@ -139,6 +135,14 @@ void xmpf_array_init_shadow__(_XMP_array_t **a_desc, int *i_dim,
       // ai->temp0 shuld not be used in XMP/F.
       // *(ai->temp0) -= *lshadow;
       ai->temp0_v -= *lshadow;
+    }
+
+    if (!ai->reflect_sched){
+      _XMP_reflect_sched_t *sched = _XMP_alloc(sizeof(_XMP_reflect_sched_t));
+      sched->datatype_lo = MPI_DATATYPE_NULL;
+      sched->datatype_hi = MPI_DATATYPE_NULL;
+      for (int j = 0; j < 4; j++) sched->req[j] = MPI_REQUEST_NULL;
+      ai->reflect_sched = sched;
     }
 
     //_XMP_create_shadow_comm(array, *i_dim);
@@ -236,9 +240,10 @@ void xmpf_array_get_local_size_off__(_XMP_array_t **a_desc, int *i_dim,
   //xmpf_dbg_printf("array_get_size = (%d:%d)\n", *lb, *ub);
 }
 
-
-//void *tmp[1024];
-//int jjj = 0;
+#if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
+int _memid = 0;
+extern int _memid;
+#endif
 
 void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr)
 {
@@ -257,7 +262,11 @@ void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr)
   a->total_elmts = total_elmts;
 
   a->array_addr_p = array_addr;
-  //  tmp[jjj] = array_addr;
-  //  a->array_addr_p = &tmp[jjj];
-  //  jjj++;
+
+#if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
+  _memid = _memid % 511;
+  a->rdma_memid = _memid;
+  a->rdma_addr = FJMPI_Rdma_reg_mem(_memid++, array_addr, total_elmts * a->type_size);
+#endif
+
 }

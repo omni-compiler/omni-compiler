@@ -17,8 +17,8 @@ void xmpf_template_dealloc__(_XMP_template_t **t_desc)
 
 
 /* temporary */
-static int xmpf_template_dist_manner[XMPF_MAX_DIM];
-static int xmpf_template_dist_chunk[XMPF_MAX_DIM];
+static int xmpf_template_dist_manner[_XMP_N_MAX_DIM];
+static int xmpf_template_dist_chunk[_XMP_N_MAX_DIM];
 
 
 void xmpf_template_dim_info__(_XMP_template_t **t_desc, int *i_dim, 

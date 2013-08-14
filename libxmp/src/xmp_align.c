@@ -63,12 +63,7 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
     ai->shadow_size_lo  = 0;
     ai->shadow_size_hi  = 0;
 
-    ai->mpi_datatype_shadow_lo = MPI_DATATYPE_NULL;
-    ai->mpi_datatype_shadow_hi = MPI_DATATYPE_NULL;
-/*     ai->mpi_req_shadow[0] = MPI_REQUEST_NULL; */
-/*     ai->mpi_req_shadow[1] = MPI_REQUEST_NULL; */
-/*     ai->mpi_req_shadow[2] = MPI_REQUEST_NULL; */
-/*     ai->mpi_req_shadow[3] = MPI_REQUEST_NULL; */
+    ai->reflect_sched = NULL;
 
     ai->shadow_comm = NULL;
     ai->shadow_comm_size = 1;
@@ -90,11 +85,23 @@ void _XMP_finalize_array_desc(_XMP_array_t *array) {
       _XMP_finalize_comm(ai->shadow_comm);
     }
 
-    if (ai->mpi_datatype_shadow_lo != MPI_DATATYPE_NULL){
-      MPI_Type_free(&ai->mpi_datatype_shadow_lo);
-    }
-    if (ai->mpi_datatype_shadow_hi != MPI_DATATYPE_NULL){
-      MPI_Type_free(&ai->mpi_datatype_shadow_hi);
+    _XMP_reflect_sched_t *reflect_sched;
+
+    if (reflect_sched = ai->reflect_sched){
+
+      if (reflect_sched->datatype_lo != MPI_DATATYPE_NULL){
+	MPI_Type_free(&reflect_sched->datatype_lo);
+      }
+      if (reflect_sched->datatype_hi != MPI_DATATYPE_NULL){
+	MPI_Type_free(&reflect_sched->datatype_hi);
+      }
+
+      for (int j = 0; j < 4; j++){
+	if (reflect_sched->req[j] != MPI_REQUEST_NULL){
+	  MPI_Request_free(&reflect_sched->req[j]);
+	}
+      }
+
     }
 
   }
@@ -104,6 +111,7 @@ void _XMP_finalize_array_desc(_XMP_array_t *array) {
       MPI_Request_free(&array->mpi_req_shadow[i]);
     }
   }
+  _XMP_free(array->mpi_req_shadow);
 
   if (array->is_align_comm_member) {
     _XMP_finalize_comm(array->align_comm);

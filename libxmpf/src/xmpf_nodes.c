@@ -1,13 +1,11 @@
 #include "xmpf_internal.h"
 
-#define XMPF_MAX_DIM  7
-
 static int _xmpf_nodes_n_dim;
-static int _xmpf_nodes_dim_size[XMPF_MAX_DIM];
-static int _xmpf_nodes_shrink[XMPF_MAX_DIM];
-static int _xmpf_nodes_ref_lower[XMPF_MAX_DIM];
-static int _xmpf_nodes_ref_upper[XMPF_MAX_DIM];
-static int _xmpf_nodes_ref_stride[XMPF_MAX_DIM];
+static int _xmpf_nodes_dim_size[_XMP_N_MAX_DIM];
+static int _xmpf_nodes_shrink[_XMP_N_MAX_DIM];
+static int _xmpf_nodes_ref_lower[_XMP_N_MAX_DIM];
+static int _xmpf_nodes_ref_upper[_XMP_N_MAX_DIM];
+static int _xmpf_nodes_ref_stride[_XMP_N_MAX_DIM];
 
 /* allocate nodes */
 void xmpf_nodes_alloc__(_XMP_nodes_t **n_desc, int *n_dim)
@@ -28,8 +26,8 @@ void xmpf_nodes_dealloc__(_XMP_nodes_t **n_desc)
 void xmpf_nodes_dim_size__(_XMP_nodes_t **n_desc, int *i_dim, int *size)
 {
   /* do nothing for n_desc */
-  if(*i_dim >= XMPF_MAX_DIM) 
-    _XMP_fatal("nodes dimesion should not greater than XMPF_MAX_DIM");
+  if(*i_dim >= _XMP_N_MAX_DIM) 
+    _XMP_fatal("nodes dimesion should not greater than _XMP_N_MAX_DIM");
   _xmpf_nodes_dim_size[*i_dim] = *size;
 }
 
@@ -38,8 +36,8 @@ void xmpf_nodes_dim_triplet__(_XMP_nodes_t *n_desc, int *i_dim, int *shrink,
 			      int *ref_lower, int *ref_upper, int *ref_stride)
 {
   /* do nothing for n_desc */
-  if(*i_dim >= XMPF_MAX_DIM) 
-    _XMP_fatal("nodes dimesion should not greater than XMPF_MAX_DIM");
+  if(*i_dim >= _XMP_N_MAX_DIM) 
+    _XMP_fatal("nodes dimesion should not greater than _XMP_N_MAX_DIM");
   _xmpf_nodes_shrink[*i_dim] = *shrink;
   _xmpf_nodes_ref_lower[*i_dim] = *ref_lower;
   _xmpf_nodes_ref_upper[*i_dim] = *ref_upper;

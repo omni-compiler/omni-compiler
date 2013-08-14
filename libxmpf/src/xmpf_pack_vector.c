@@ -53,12 +53,12 @@ void _XMPF_check_reflect_type(void)
 
     if (strcmp(reflect_type, "REFLECT_NOPACK") == 0){
       _xmp_reflect_pack_flag = 0;
-      xmpf_dbg_printf("REFLECT_NOPACK\n");
+      //xmpf_dbg_printf("REFLECT_NOPACK\n");
       return;
     }
     else if (strcmp(reflect_type, "REFLECT_PACK") == 0){
       _xmp_reflect_pack_flag = 1;
-      xmpf_dbg_printf("REFLECT_PACK\n");
+      //xmpf_dbg_printf("REFLECT_PACK\n");
       return;
     }
 
@@ -67,11 +67,11 @@ void _XMPF_check_reflect_type(void)
   // not specified or a wrong value
   if (_xmp_omp_num_procs > 1){
     _xmp_reflect_pack_flag = 1;
-    xmpf_dbg_printf("not specified and REFLECT_PACK\n");
+    //xmpf_dbg_printf("not specified and REFLECT_PACK\n");
   }
   else {
     _xmp_reflect_pack_flag = 0;
-    xmpf_dbg_printf("not specified and REFLECT_NOPACK\n");
+    //xmpf_dbg_printf("not specified and REFLECT_NOPACK\n");
   }
 
 }

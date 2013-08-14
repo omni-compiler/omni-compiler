@@ -8,6 +8,9 @@
 #include <mpi.h>
 #include <stdbool.h>
 #include "xmp_constant.h"
+#if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
+#include <mpi-ext.h>
+#endif
 
 #define _XMP_comm_t void
 
@@ -102,6 +105,29 @@ typedef struct _XMP_template_type {
   _XMP_template_info_t info[1];
 } _XMP_template_t;
 
+// schedule of reflect comm.
+typedef struct _XMP_reflect_sched_type {
+
+  int lo_width, hi_width;
+  _Bool is_periodic;
+
+  MPI_Datatype datatype_lo;
+  MPI_Datatype datatype_hi;
+
+  MPI_Request req[4];
+
+  void *lo_send_buf, *lo_recv_buf;
+  void *hi_send_buf, *hi_recv_buf;
+
+  void *lo_send_array, *lo_recv_array;
+  void *hi_send_array, *hi_recv_array;
+
+  int count, blocklength, stride;
+
+  int lo_rank, hi_rank;
+
+} _XMP_reflect_sched_t;
+
 // aligned array descriptor
 typedef struct _XMP_array_info_type {
   _Bool is_shadow_comm_member;
@@ -136,9 +162,7 @@ typedef struct _XMP_array_info_type {
   int shadow_size_lo;
   int shadow_size_hi;
 
-  MPI_Datatype mpi_datatype_shadow_lo;
-  MPI_Datatype mpi_datatype_shadow_hi;
-  //MPI_Request mpi_req_shadow[4];
+  _XMP_reflect_sched_t *reflect_sched;
 
   // enable when is_shadow_comm_member is true
   _XMP_comm_t *shadow_comm;
@@ -158,6 +182,10 @@ typedef struct _XMP_array_type {
 
   // enable when is_allocated is true
   void *array_addr_p;
+#if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
+  uint64_t rdma_addr;
+  int rdma_memid;
+#endif
   unsigned long long total_elmts;
   // --------------------------------
 
@@ -169,7 +197,7 @@ typedef struct _XMP_array_type {
   // ----------------------------------------
 
   int num_reqs;
-  MPI_Request mpi_req_shadow[4 * _XMP_N_MAX_DIM];
+  MPI_Request *mpi_req_shadow;
 
   _XMP_nodes_t *array_nodes;
 

@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define XMPF_MAX_DIM  7
-
 /* #define LBOUND 0 */
 /* #define UBOUND 1 */
 /* #define STRIDE 2 */
@@ -25,6 +23,43 @@
 #define SUBSCRIPT_ASTERISK 0
 #define SUBSCRIPT_SCALAR   1
 #define SUBSCRIPT_TRIPLET  2
+
+//#define _XMP_TIMING 1
+
+#ifdef _XMP_TIMING
+
+extern double t0, t1;
+
+/* extern double t_mem; */
+/* extern double t_copy; */
+/* extern double t_comm; */
+/* extern double t_sched; */
+/* extern double t_wait; */
+
+#define _XMP_TSTART(t0)  ((t0) = MPI_Wtime())
+#define _XMP_TEND(t, t0) ((t) = (t) + MPI_Wtime() - (t0))
+#define _XMP_TEND2(t, tt, t0) { double _XMP_TMP = MPI_Wtime(); \
+                                (t) = (t) + _XMP_TMP - (t0); \
+                                (tt) = (tt) + _XMP_TMP - (t0); }
+
+struct _XMPTIMING
+{ double t_mem, t_copy, t_comm, t_sched, t_wait, t_misc,
+    tdim[_XMP_N_MAX_DIM],
+    tdim_mem[_XMP_N_MAX_DIM],
+    tdim_copy[_XMP_N_MAX_DIM],
+    tdim_comm[_XMP_N_MAX_DIM],
+    tdim_sched[_XMP_N_MAX_DIM],
+    tdim_wait[_XMP_N_MAX_DIM],
+    tdim_misc[_XMP_N_MAX_DIM];
+} xmptiming_;
+
+#else
+
+#define _XMP_TSTART(t0)
+#define _XMP_TEND(t, t0)
+#define _XMP_TEND2(t, tt, t0)
+
+#endif
 
 typedef struct _XMP_object_ref_type {
   int ref_kind; 
@@ -82,6 +117,16 @@ void xmpf_dbg_printf(char *fmt, ...);
 size_t _XMP_get_datatype_size(int datatype);
 
 
+/* From xmpf_gcomm.c */
+int _XMPF_get_owner_pos_BLOCK(_XMP_array_t *a, int dim, int index);
+
+/* From xmpf_pack_vector.c */
+void _XMPF_pack_vector(char * restrict dst, char * restrict src,
+		       int count, int blocklength, int stride);
+void _XMPF_unpack_vector(char * restrict dst, char * restrict src,
+			 int count, int blocklength, int stride);
+void _XMPF_check_reflect_type(void);
+
 /* From xmp_template.c */
 _XMP_template_t *_XMP_create_template_desc(int dim, _Bool is_fixed);
 void _XMP_calc_template_size(_XMP_template_t *t);
@@ -105,6 +150,9 @@ void _XMP_align_array_BLOCK_CYCLIC(_XMP_array_t *array, int array_index, int tem
                                    long long align_subscript, int *temp0);
 void _XMP_init_array_nodes(_XMP_array_t *array);
 void _XMP_calc_array_dim_elmts(_XMP_array_t *array, int array_index);
+
+/* From xmp_lib.c */
+void xmp_barrier(void);
 
 
 /* From xmp_loop.c */
@@ -174,3 +222,6 @@ void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datatype,
 /* From xmp_runtime.c */
 void _XMP_init(int argc, char** argv);
 void _XMP_finalize(void);
+
+
+

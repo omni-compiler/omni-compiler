@@ -3,12 +3,6 @@
 
 //#define DBG 1
 
-#ifdef DBG
-extern double t_copy;
-extern double t_comm;
-extern double t_mem;
-#endif
-
 /*
  * For xmpf, initialize all
  */
@@ -16,17 +10,25 @@ extern double t_mem;
 void xmpf_init_all__()
 {
   _XMP_init(0, NULL);
+  _XMPF_check_reflect_type();
 
   _XMPC_running = 0;
   _XMPF_running = 1;
+
+#if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
+  FJMPI_Rdma_init();
+#endif
 }
+
+//extern double t_sched, t_start, t_wait;
 
 void xmpf_finalize_all__()
 {
-#ifdef DBG
-  xmpf_dbg_printf("t_copy = %f\n", t_copy);
-  xmpf_dbg_printf("t_comm = %f\n", t_comm);
-  xmpf_dbg_printf("t_mem  = %f\n", t_mem);
+
+  //  xmpf_dbg_printf("sched = %f, start = %f, wait = %f\n", t_sched, t_start, t_wait);
+
+#if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
+  FJMPI_Rdma_finalize();
 #endif
 
   _XMP_finalize();

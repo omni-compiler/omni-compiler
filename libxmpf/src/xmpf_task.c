@@ -7,8 +7,8 @@ _Bool xmpf_test_task_on__(_XMP_object_ref_t **r_desc)
 
   _XMP_ASSERT(rp->ndims <= _XMP_N_ALIGN_BLOCK);
   
-  int dim_size[XMPF_MAX_DIM];
-  int asterisk[XMPF_MAX_DIM];
+  int dim_size[_XMP_N_MAX_DIM];
+  int asterisk[_XMP_N_MAX_DIM];
 
   if (rp->ref_kind == XMP_OBJ_REF_NODES){
 
