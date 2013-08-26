@@ -1654,8 +1654,10 @@ stmt_nocomp:
 stmt:
       loc stmt_1
         { $$ = $2; }
-    | loc PRAGMA_PREFIX stmt_1
+//    | loc PRAGMA_PREFIX stmt_1
+    | loc PRAGMA_PREFIX stmt
         { $$ = exprList1(EC_COMP_STMT,$3);((CExprOfList *)$$)->e_aux_info=$2;}
+        // NOTE: not check nesting of XMP and OMP pragma.
     | loc PRAGMA_EXEC
         { $$ = exprList(EC_COMP_STMT);((CExprOfList *)$$)->e_aux_info=$2;}
     ;
