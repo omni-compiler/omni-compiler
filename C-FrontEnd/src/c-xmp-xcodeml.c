@@ -39,14 +39,34 @@ void outx_XMP_Clause(FILE *fp, int indent, CExprOfList* clauseList)
     CCOL_DListNode *ite;
 
     outxPrint(fp,indent1,"<list>\n");
+
+    switch (clauseList->e_aux){
+
+    case XMP_DIST_DUPLICATION:
+      break;
+
+    case XMP_DIST_BLOCK:
+      outxPrint(fp,indent1+1,"<string>block</string>\n");
+      break;
+
+    case XMP_DIST_CYCLIC:
+      outxPrint(fp,indent1+1,"<string>cyclic</string>\n");
+      break;
+
+    case XMP_DIST_GBLOCK:
+      outxPrint(fp,indent1+1,"<string>gblock</string>\n");
+      break;
+    }
+
     EXPR_FOREACH(ite, clauseList){
 	CExpr *node = EXPR_L_DATA(ite);
-	if(node == NULL) 
-	    outxPrint(fp,indent1,"<list/>\n");
+	//	if(node == NULL) 
+	if(EXPR_ISNULL(node)) 
+	    outxPrint(fp,indent1+1,"<list/>\n");
 	else if(EXPR_CODE(node) == EC_UNDEF)
 	    outx_XMP_Clause(fp,indent1,(CExprOfList *)node);
 	else
-	    outxContext(fp,indent1,node);
+	    outxContext(fp,indent1+1,node);
     }
     outxPrint(fp,indent1,"</list>\n");
 }
