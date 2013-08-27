@@ -414,6 +414,8 @@ void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
   count =  dst_chunk_size * src_chunk_size * type_size;
   bufsize = count * nnodes;
 
+  _XMPF_check_reflect_type();
+
   if (src_block_dim == 1){
     if (*opt ==0){
       sendbuf = _XMP_alloc(bufsize);
@@ -424,12 +426,9 @@ void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
     int k;
     for (int i = 0; i < nnodes; i++){
       k= 0;
-      for (int j = 0; j < src_chunk_size; j++){
-        memcpy((char *)sendbuf + i * count + k,
-               (char *)src_array->array_addr_p + (i * dst_chunk_size + j * dst_ser_size) * type_size,
-               dst_chunk_size * type_size);
-        k += dst_chunk_size * type_size;
-      }
+      _XMPF_pack_vector((char *)sendbuf + i * count,
+         (char *)src_array->array_addr_p + (i * dst_chunk_size*type_size),
+          src_chunk_size, dst_chunk_size * type_size, dst_ser_size*type_size);
     }
   }
   else {
@@ -448,13 +447,9 @@ void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
     int k;
     for (int i = 0; i < nnodes; i++){
       k = 0;
-      for (int jj = 0; jj < src_chunk_size; jj++){
-        for (int j = 0; j < dst_chunk_size; j++){
-          memcpy((char *)dst_array->array_addr_p + (i * src_chunk_size + j * src_ser_size + jj) * type_size,
-                 (char *)recvbuf + i * count + k, type_size);
-          k += type_size;
-        }
-      }
+      _XMPF_unpack_transpose_vector((char *)dst_array->array_addr_p + i * src_chunk_size * type_size,
+         (char *)recvbuf + i * count, src_chunk_size, dst_chunk_size, type_size,
+          dst_chunk_size*type_size, src_ser_size*type_size);
     }
 
     if (*opt==0){
