@@ -24,6 +24,22 @@ import xcodeml.util.XmTranslationException;
  * Decompiler of XcodeML/F DOM nodes.
  */
 public class XfDecompileDomVisitor {
+
+  static final int PRIO_LOW = 0; /* lowest */
+
+  static final int PRIO_EQV = 1; /* EQV, NEQV */
+  static final int PRIO_OR = 2; /* .OR. */
+  static final int PRIO_AND = 3; /* .AND. */
+
+  static final int PRIO_COMP = 4; /* <, >,...  */
+  
+  static final int PRIO_CONCAT = 5; 
+
+  static final int PRIO_PLUS_MINUS = 6;
+  static final int PRIO_MUL_DIV = 7;
+  static final int PRIO_POWER = 8;
+  static final int PRIO_HIGH = 10;
+
     @SuppressWarnings("serial")
     private class InvokeNodeStack extends LinkedList<Node>
     {
@@ -907,24 +923,87 @@ public class XfDecompileDomVisitor {
      *            Grouping flag.
      */
     private void _writeBinaryExpr(Node leftExpr, Node rightExpr,
-                                  String operation, boolean grouping) {
+                                  String operation) {
         XmfWriter writer = _context.getWriter();
+	boolean need_paren;
+	int op_prio = operator_priority(operation);
 
-        if (grouping) {
-            writer.writeToken("(");
-        }
+	need_paren = false;
+	if(op_prio > operator_priority(leftExpr))
+	  need_paren = true;
 
+        if (need_paren) writer.writeToken("(");
         invokeEnter(leftExpr);
+        if (need_paren) writer.writeToken(")");
 
         writer.writeToken(" ");
         writer.writeToken(operation);
         writer.writeToken(" ");
 
-        invokeEnter(rightExpr);
+	need_paren = false;
+	if(op_prio == PRIO_POWER ||
+	   op_prio >= operator_priority(rightExpr))
+	  need_paren = true;
 
-        if (grouping) {
-            writer.writeToken(")");
-        }
+        if (need_paren) writer.writeToken("(");
+        invokeEnter(rightExpr);
+        if (need_paren) writer.writeToken(")");
+    }
+
+    int operator_priority(String operator){
+
+	if (operator.equals("=") || operator.equals("=>"))
+	    return PRIO_LOW;
+
+	if (operator.equals("-") || operator.equals("+")) 
+	    return PRIO_PLUS_MINUS;
+	if (operator.equals("*") || operator.equals("/")) 
+	    return PRIO_MUL_DIV;
+	if (operator.equals("**")) 
+	    return PRIO_POWER;
+    
+	if (operator.equals("<") || operator.equals(">") || 
+	   operator.equals("<=") || operator.equals(">=") ||
+	   operator.equals("/=") || operator.equals("=="))
+	    return PRIO_COMP;
+    
+	if (operator.equals("//")) return PRIO_CONCAT;
+
+	if (operator.equals(".AND.")) return PRIO_AND;
+	if (operator.equals(".OR."))  return PRIO_OR;
+	if (operator.equals(".NEQV.") || operator.equals(".EQV."))
+	    return PRIO_EQV;
+
+	return PRIO_HIGH;
+    }
+
+    int operator_priority(Node expr){
+
+	String name = expr.getNodeName();
+
+	if (name.equals("FassignStatement") ||
+	    name.equals("FpointerAssignStatement")) return PRIO_LOW;
+
+	if (name.equals("plusExpr") || name.equals("minusExpr"))
+	    return PRIO_PLUS_MINUS;
+	if (name.equals("divExpr") || name.equals("mulExpr"))
+	    return PRIO_MUL_DIV;
+	if (name.equals("FpowerExpr"))
+	    return PRIO_POWER;
+    
+	if (name.equals("logLTExpr") || name.equals("logGTExpr") ||
+	    name.equals("logLEExpr") || name.equals("logGEExpr") ||
+	    name.equals("logEQExpr") || name.equals("logNEQExpr"))
+	    return PRIO_COMP;
+    
+	if (name.equals("FconcatExpr")) return PRIO_CONCAT;
+
+	if (name.equals("logAndExpr")) return PRIO_AND;
+	if (name.equals("logOrExpr"))  return PRIO_OR;
+	if (name.equals("logEQVExpr") ||name.equals("logNEQVExpr"))
+	    return PRIO_EQV;
+
+	return PRIO_HIGH;
     }
 
     /**
@@ -940,11 +1019,10 @@ public class XfDecompileDomVisitor {
      *            Grouping flag.
      */
     private void _writeBinaryExpr(ArrayList<Node> exprNodes, int offset,
-                                  String operation, boolean grouping) {
+                                  String operation) {
         _writeBinaryExpr(exprNodes.get(offset),
                          exprNodes.get(offset + 1),
-                         operation,
-                         grouping);
+                         operation);
     }
 
     /**
@@ -1227,7 +1305,7 @@ public class XfDecompileDomVisitor {
             _writeLineDirective(n);
 
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "=", false);
+                             "=");
 
             writer.setupNewLine();
         }
@@ -1347,7 +1425,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "/", true);
+                             "/");
         }
     }
 
@@ -1820,7 +1898,7 @@ public class XfDecompileDomVisitor {
          *      )
          */
         @Override public void enter(Node n) {
-            _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0, "//", true);
+            _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0, "//");
         }
     }
 
@@ -3246,7 +3324,7 @@ public class XfDecompileDomVisitor {
             XmfWriter writer = _context.getWriter();
 
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "=>", false);
+                             "=>");
 
             writer.setupNewLine();
         }
@@ -3268,7 +3346,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "**", true);
+                             "**");
         }
     }
 
@@ -3357,8 +3435,8 @@ public class XfDecompileDomVisitor {
                 else if (clauseName.equals("DATA_REDUCTION_MUL"))   {clauseName = "REDUCTION"; operator = "*";}
                 else if (clauseName.equals("DATA_REDUCTION_BITAND")){clauseName = "REDUCTION"; operator = "iand";}
                 else if (clauseName.equals("DATA_REDUCTION_BITOR")) {clauseName = "REDUCTION"; operator = "ior";}
-                else if (clauseName.equals("DATA_REDUCITON_BITXOR")){clauseName = "REDUCTION"; operator = "ieor";}
-                else if (clauseName.equals("DATA_REDUCITON_LOGAND")){clauseName = "REDUCTION"; operator = ".and.";}
+                else if (clauseName.equals("DATA_REDUCTION_BITXOR")){clauseName = "REDUCTION"; operator = "ieor";}
+                else if (clauseName.equals("DATA_REDUCTION_LOGAND")){clauseName = "REDUCTION"; operator = ".and.";}
                 else if (clauseName.equals("DATA_REDUCTION_LOGOR")) {clauseName = "REDUCTION"; operator = ".or.";}
                 else if (clauseName.equals("DATA_REDUCTION_MIN"))   {clauseName = "REDUCTION"; operator = "min";}
                 else if (clauseName.equals("DATA_REDUCTION_MAX"))   {clauseName = "REDUCTION"; operator = "max";}
@@ -4349,7 +4427,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             ".AND.", true);
+                             ".AND.");
         }
     }
 
@@ -4369,7 +4447,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "==", true);
+                             "==");
         }
     }
 
@@ -4389,7 +4467,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             ".EQV.", true);
+                             ".EQV.");
         }
     }
 
@@ -4409,7 +4487,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             ">=", true);
+                             ">=");
         }
     }
 
@@ -4429,7 +4507,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             ">", true);
+                             ">");
         }
     }
 
@@ -4449,7 +4527,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "<=", true);
+                             "<=");
         }
     }
 
@@ -4469,7 +4547,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "<", true);
+                             "<");
         }
     }
 
@@ -4489,7 +4567,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "/=", true);
+                             "/=");
         }
     }
 
@@ -4509,7 +4587,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             ".NEQV.", true);
+                             ".NEQV.");
         }
     }
 
@@ -4548,7 +4626,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             ".OR.", true);
+                             ".OR.");
         }
     }
 
@@ -4586,7 +4664,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "-", true);
+                             "-");
         }
     }
 
@@ -4606,7 +4684,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "*", true);
+                             "*");
         }
     }
 
@@ -4729,7 +4807,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "+", true);
+                             "+");
         }
     }
 
@@ -4959,7 +5037,7 @@ public class XfDecompileDomVisitor {
             }
 
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             name, true);
+                             name);
         }
     }
 
