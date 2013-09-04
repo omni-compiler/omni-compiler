@@ -27,6 +27,52 @@ public class XMPrewriteExpr
     FunctionBlock fb = def.getBlock();
     if (fb == null) return;
 
+    // rewrite statement
+    BasicBlockIterator iter3 = new BasicBlockIterator(fb);
+    for (iter3.init(); !iter3.end(); iter3.next()){
+      StatementIterator iter4 = iter3.getBasicBlock().statements();
+      while (iter4.hasNext()){
+	Statement st = iter4.next();
+	Xobject x = st.getExpr();
+	if (x == null)  continue;
+	switch (x.Opcode()) {
+	case F_ALLOCATE_STATEMENT:
+	  {
+            // must be performed before rewriteExpr
+	    Iterator<Xobject> y = ((XobjList)x.getArg(1)).iterator();
+	    while (y.hasNext()){
+	      XobjList alloc = (XobjList)y.next();
+
+	      Ident id = env.findVarIdent(alloc.getArg(0).getName(), fb);
+	      if (id == null) break;
+	      XMParray array = XMParray.getArray(id);
+	      if (array == null) break;
+
+	      array.rewriteAllocate(alloc, st, fb, env);
+	    }
+	    break;
+	  }
+	case F_DEALLOCATE_STATEMENT:
+	  {
+            // must be performed before rewriteExpr
+	    Iterator<Xobject> y = ((XobjList)x.getArg(1)).iterator();
+	    while (y.hasNext()){
+	      XobjList dealloc = (XobjList)y.next();
+
+	      Ident id = env.findVarIdent(dealloc.getArg(0).getName(), fb);
+	      if (id == null) break;
+	      XMParray array = XMParray.getArray(id);
+	      if (array == null) break;
+
+	      array.rewriteDeallocate(dealloc, st, fb, env);
+	    }
+	    break;
+	  }
+
+	}
+      }
+    }
+
     // rewrite expr
     BasicBlockExprIterator iter = new BasicBlockExprIterator(fb);
     for (iter.init(); !iter.end(); iter.next()) {
@@ -92,6 +138,7 @@ public class XMPrewriteExpr
    * rewrite expression
    */
   private void rewriteExpr(Xobject expr, BasicBlock bb, Block block){
+
     bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
     for(iter.init(); !iter.end();iter.next()){
       Xobject x = iter.getXobject();
@@ -156,7 +203,6 @@ public class XMPrewriteExpr
 	  }
 	  break;
 	}
-
       }
     }
   }
@@ -248,7 +294,7 @@ public class XMPrewriteExpr
     }
 
   }
-  
+
   Xobject localIndexOffset;
 
   Xobject convertLocalIndex(Xobject v, int dim_i, XMParray a, 
@@ -330,9 +376,9 @@ public class XMPrewriteExpr
       // if not distributed, do nothing
       if(!a.isDistributed(dim_i)){
 	// return null;
- 	i.setArg(0,Xcons.binaryOp(Xcode.MINUS_EXPR,
- 				  i.getArg(0),
- 				  a.convertOffset(dim_i)));
+  	i.setArg(0,Xcons.binaryOp(Xcode.MINUS_EXPR,
+  				  i.getArg(0),
+  				  a.convertOffset(dim_i)));
 	return i;
       }
 

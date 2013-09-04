@@ -431,6 +431,8 @@ public class XMParray {
 		      template.getDescId().Ref());
     body.add(f.callSubroutine(args));
 
+    if (type.isFallocatable()) return;
+
     f = env.declExternIdent(XMP.array_align_info_f,Xtype.FsubroutineType);
     for(int i = 0; i < dims.size(); i++){
       XMPdimInfo info = dims.elementAt(i);
@@ -505,10 +507,18 @@ public class XMParray {
 					     info.getArraySizeVar().Ref(),
 					     info.getArrayOffsetVar().Ref())));
 	
-	Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,
-					info.getArraySizeVar().Ref(),
-					Xcons.IntConstant(1));
-	alloc_args.add(Xcons.FindexRange(Xcons.IntConstant(0),size_1));
+	if (isDistributed(i)){
+	    // distributed
+	    Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,
+					    info.getArraySizeVar().Ref(),
+					    Xcons.IntConstant(1));
+	    alloc_args.add(Xcons.FindexRange(Xcons.IntConstant(0),size_1));
+	}
+	else {
+	    // not distributed
+	    alloc_args.add(Xcons.FindexRange(info.getLower(),
+					     info.getArraySizeVar().Ref()));
+	}
       }
       
       // allocatable
@@ -533,6 +543,145 @@ public class XMParray {
     body.add(f.callSubroutine(Xcons.List(descId.Ref(),localId.Ref())));
   }
 
+  /*
+   * rewrite Allocate for aligned arrays
+   */
+    public void rewriteAllocate(XobjList alloc, Statement st,
+				Block block, XMPenv env){
+
+    XobjList boundList = (XobjList)alloc.getArg(1);
+
+    Ident f;
+    Xobject args;
+
+    // Following codes come from XMParray.buildConstructor
+
+    f = env.declExternIdent(XMP.array_align_info_f,Xtype.FsubroutineType);
+    for(int i = 0; i < dims.size(); i++){
+
+      XobjList bound = (XobjList)boundList.getArg(i);
+      Xobject lower, upper;
+
+      if (bound.Nargs() == 1){
+	lower = Xcons.IntConstant(1);
+	upper = bound.getArg(0);
+      }
+      else {
+	lower = bound.getArg(0);
+	upper = bound.getArg(1);
+      }
+
+      XMPdimInfo info = dims.elementAt(i);
+      if(info.isAlignAny()){
+	args = Xcons.List(descId.Ref(),Xcons.IntConstant(i),
+			  lower, upper, // modified
+			  Xcons.IntConstant(-1),
+			  Xcons.IntConstant(0));
+      } else {
+	Xobject off = info.getAlignSubscriptOffset();
+	if(off == null) off = Xcons.IntConstant(0);
+	args = Xcons.List(descId.Ref(),Xcons.IntConstant(i),
+			  lower, upper, // modified
+			  Xcons.IntConstant(info.getAlignSubscriptIndex()),
+			  off);
+      }
+      st.insert(f.callSubroutine(args));
+    }
+
+    if(hasShadow()){
+      f = env.declExternIdent(XMP.array_init_shadow_f,Xtype.FsubroutineType);
+      for(int i = 0; i < dims.size(); i++){
+	if(hasShadow(i)){
+	  int left = getShadowLeft(i);
+	  int right = getShadowRight(i);
+	  if(isFullShadow(i)) left = right = -1;
+	  args = Xcons.List(descId.Ref(),
+			    Xcons.IntConstant(i),
+			    Xcons.IntConstant(left),
+			    Xcons.IntConstant(right));
+	  st.insert(f.callSubroutine(args));
+	}
+      }
+    }
+
+    f = env.declExternIdent(XMP.array_init_f,Xtype.FsubroutineType);
+    st.insert(f.callSubroutine(Xcons.List(descId.Ref())));
+
+    if(isLinearized()){
+      // allocate size variable
+      Xobject alloc_size = null;
+      for(int i = 0; i < dims.size(); i++){
+	XMPdimInfo info = dims.elementAt(i);
+	f = env.declExternIdent(XMP.array_get_local_size_f,
+			      Xtype.FsubroutineType);
+	st.insert(f.callSubroutine(Xcons.List(descId.Ref(),
+					     Xcons.IntConstant(i),
+					     info.getArraySizeVar().Ref(),
+					     info.getArrayOffsetVar().Ref())));
+	if(alloc_size == null)
+	  alloc_size = info.getArraySizeVar().Ref();
+	else
+	  alloc_size = Xcons.binaryOp(Xcode.MUL_EXPR, 
+				      alloc_size,info.getArraySizeVar().Ref());
+      }
+      
+      // allocatable
+      Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,alloc_size,
+				      Xcons.IntConstant(1));
+
+      alloc.setArg(0, localId.Ref());
+      alloc.setArg(1, Xcons.FindexRange(Xcons.IntConstant(0),size_1));
+    } else {
+      XobjList alloc_args = Xcons.List();
+      for(int i = 0; i < dims.size(); i++){
+	XMPdimInfo info = dims.elementAt(i);
+	f = env.declExternIdent(XMP.array_get_local_size_f,
+			      Xtype.FsubroutineType);
+	st.insert(f.callSubroutine(Xcons.List(descId.Ref(),
+					     Xcons.IntConstant(i),
+					     info.getArraySizeVar().Ref(),
+					     info.getArrayOffsetVar().Ref())));
+	
+	if (isDistributed(i)){
+	    // distributed
+	    Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,
+					    info.getArraySizeVar().Ref(),
+					    Xcons.IntConstant(1));
+	    alloc_args.add(Xcons.FindexRange(Xcons.IntConstant(0),size_1));
+	}
+	else {
+	    // not distributed
+	    alloc_args.add(Xcons.FindexRange(info.getLower(),
+					     info.getArraySizeVar().Ref()));
+	}
+      }
+      
+      // allocatable
+      alloc.setArg(0, localId.Ref());
+      alloc.setArg(1, alloc_args);
+    }
+      
+    // set
+    f = env.declExternIdent(XMP.array_set_local_array_f,Xtype.FsubroutineType);
+    st.add(f.callSubroutine(Xcons.List(descId.Ref(), localId.Ref())));
+
+  }
+
+  /*
+   * rewrite Deallocate for aligned arrays
+   */
+    public void rewriteDeallocate(XobjList dealloc, Statement st,
+				  Block block, XMPenv env){
+    Ident f;
+
+    // deallocate desc
+    f = env.declExternIdent(XMP.array_deallocate_f, Xtype.FsubroutineType);
+    st.insert(f.callSubroutine(Xcons.List(descId.Ref())));
+
+    dealloc.setArg(0, localId.Ref());
+
+  }
+  
   public void buildSetup(BlockList body, XMPenv env){
     Ident f;
     Xobject args;
@@ -552,7 +701,7 @@ public class XMParray {
   public Xobject convertOffset(int dim_i){
       XMPdimInfo info = dims.elementAt(dim_i);
       if(!isDistributed(dim_i)){  // case not aligned, duplicated
-	return info.getLower();
+	  return info.getLower();
       }
       Xobject offset = info.getAlignSubscriptOffset();
       Xobject alb = info.getLower();

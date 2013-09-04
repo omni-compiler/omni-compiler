@@ -54,9 +54,27 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
 
 void xmpf_array_dealloc__(_XMP_array_t **a_desc)
 {
-  _XMP_finalize_array_desc(*a_desc);
+  _XMP_array_t *a = *a_desc;
+
+#if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
+  if (a->array_addr_p) FJMPI_Rdma_dereg_mem(a->rdma_memid);
+#endif
+
+  _XMP_finalize_array_desc(a);
 }
 
+
+void xmpf_array_deallocate__(_XMP_array_t **a_desc)
+{
+  _XMP_array_t *a = *a_desc;
+
+  a->array_addr_p = NULL;
+  
+#if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
+  FJMPI_Rdma_dereg_mem(a->rdma_memid);
+#endif
+
+}
 
 void xmpf_align_info__(_XMP_array_t **a_desc, int *a_idx, 
 		       int *lower, int *upper, int *t_idx, int *off)

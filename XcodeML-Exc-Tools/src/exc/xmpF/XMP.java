@@ -68,6 +68,7 @@ public class XMP {
   public final static String array_set_local_array_f = "xmpf_array_set_local_array_";
   public final static String array_init_shadow_f = "xmpf_array_init_shadow_";
   public final static String array_dealloc_f = "xmpf_array_dealloc_";
+  public final static String array_deallocate_f = "xmpf_array_deallocate_";
 
   public final static String ref_templ_alloc_f = "xmpf_ref_templ_alloc_";
   public final static String ref_nodes_alloc_f = "xmpf_ref_nodes_alloc_";
