@@ -507,18 +507,23 @@ public class XMParray {
 					     info.getArraySizeVar().Ref(),
 					     info.getArrayOffsetVar().Ref())));
 	
-	if (isDistributed(i)){
-	    // distributed
-	    Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,
-					    info.getArraySizeVar().Ref(),
-					    Xcons.IntConstant(1));
-	    alloc_args.add(Xcons.FindexRange(Xcons.IntConstant(0),size_1));
-	}
-	else {
-	    // not distributed
-	    alloc_args.add(Xcons.FindexRange(info.getLower(),
-					     info.getArraySizeVar().Ref()));
-	}
+	Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,
+					info.getArraySizeVar().Ref(),
+					Xcons.IntConstant(1));
+	alloc_args.add(Xcons.FindexRange(Xcons.IntConstant(0),size_1));
+
+// 	if (isDistributed(i)){
+// 	    // distributed
+// 	    Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,
+// 					    info.getArraySizeVar().Ref(),
+// 					    Xcons.IntConstant(1));
+// 	    alloc_args.add(Xcons.FindexRange(Xcons.IntConstant(0),size_1));
+// 	}
+// 	else {
+// 	    // not distributed
+// 	    alloc_args.add(Xcons.FindexRange(info.getLower(),
+// 					     info.getArraySizeVar().Ref()));
+// 	}
       }
       
       // allocatable
@@ -642,18 +647,23 @@ public class XMParray {
 					     info.getArraySizeVar().Ref(),
 					     info.getArrayOffsetVar().Ref())));
 	
-	if (isDistributed(i)){
-	    // distributed
-	    Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,
-					    info.getArraySizeVar().Ref(),
-					    Xcons.IntConstant(1));
-	    alloc_args.add(Xcons.FindexRange(Xcons.IntConstant(0),size_1));
-	}
-	else {
-	    // not distributed
-	    alloc_args.add(Xcons.FindexRange(info.getLower(),
-					     info.getArraySizeVar().Ref()));
-	}
+	Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,
+					info.getArraySizeVar().Ref(),
+					Xcons.IntConstant(1));
+	alloc_args.add(Xcons.FindexRange(Xcons.IntConstant(0),size_1));
+
+// 	if (isDistributed(i)){
+// 	    // distributed
+// 	    Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,
+// 					    info.getArraySizeVar().Ref(),
+// 					    Xcons.IntConstant(1));
+// 	    alloc_args.add(Xcons.FindexRange(Xcons.IntConstant(0),size_1));
+// 	}
+// 	else {
+// 	    // not distributed
+// 	    alloc_args.add(Xcons.FindexRange(info.getLower(),
+// 					     info.getArraySizeVar().Ref()));
+// 	}
       }
       
       // allocatable
