@@ -3760,7 +3760,7 @@ struct keyword_token XMP_keywords[ ] =
     {"align",	XMPKW_ALIGN },
     {"shadow",	XMPKW_SHADOW },
     {"task",	XMPKW_TASK },
-    {"task",	XMPKW_TASK },
+    {"tasks",	XMPKW_TASKS },
     {"loop",	XMPKW_LOOP },
     {"reflect",	XMPKW_REFLECT },
     {"gmove",	XMPKW_GMOVE },

@@ -283,7 +283,7 @@
 %token XMPKW_ATOMIC
 %token XMPKW_DIRECT
 
-%type <val> xmp_directive xmp_nodes_clause xmp_template_clause xmp_distribute_clause xmp_align_clause xmp_shadow_clause xmp_task_clause xmp_loop_clause xmp_reflect_clause xmp_gmove_clause xmp_barrier_clause xmp_bcast_clause xmp_reduction_clause xmp_array_clause xmp_wait_async_clause
+%type <val> xmp_directive xmp_nodes_clause xmp_template_clause xmp_distribute_clause xmp_align_clause xmp_shadow_clause xmp_task_clause xmp_loop_clause xmp_reflect_clause xmp_gmove_clause xmp_barrier_clause xmp_bcast_clause xmp_reduction_clause xmp_array_clause xmp_wait_async_clause xmp_end_clause
 
 %type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_gmove_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_width_opt xmp_width_opt1 xmp_async_opt xmp_async_opt1 xmp_width_list xmp_width
 
@@ -1817,15 +1817,13 @@ xmp_directive:
 	    { $$ = XMP_LIST(XMP_TEMPLATE_FIX,NULL); }
 	  | XMPKW_TASK xmp_task_clause
 	    { $$ = XMP_LIST(XMP_TASK,$2); }
-	  | XMPKW_END { need_keyword=TRUE; } XMPKW_TASK
-	    { $$ = XMP_LIST(XMP_END_TASK,NULL); }
+	  | XMPKW_END xmp_end_clause
+	    { $$ = $2; }
 	  | XMPKW_TASKS
 	    { $$ = XMP_LIST(XMP_TASKS,NULL); }
 	  | XMPKW_TASKS xmp_NOWAIT
 	    { $$ = XMP_LIST(XMP_TASKS,
 	                    GEN_NODE(INT_CONSTANT, XMP_OPT_NOWAIT)); }
-	  | XMPKW_END { need_keyword=TRUE; } XMPKW_TASKS
-	    { $$ = XMP_LIST(XMP_END_TASKS,NULL); }
 	  | XMPKW_LOOP { need_keyword = TRUE; } xmp_loop_clause
 	    { $$ = XMP_LIST(XMP_LOOP,$3); }
 	  | XMPKW_REFLECT xmp_reflect_clause
@@ -1846,13 +1844,8 @@ xmp_directive:
 
 	  | XMPKW_MASTER_IO xmp_master_io_options
 	    { $$ = XMP_LIST(XMP_MASTER_IO_BEGIN, $2); }
-	  | XMPKW_END XMPKW_MASTER_IO
-	    { $$ = XMP_LIST(XMP_END_MASTER_IO, NULL); }
-
 	  | XMPKW_GLOBAL_IO xmp_global_io_options
 	    { $$ = XMP_LIST(XMP_GLOBAL_IO_BEGIN, $2); }
-	  | XMPKW_END XMPKW_GLOBAL_IO
-	    { $$ = XMP_LIST(XMP_END_GLOBAL_IO, NULL); }
 
 /*	  | XMPKW_COARRAY */
 	  ;
@@ -1959,6 +1952,13 @@ xmp_array_clause:
 xmp_wait_async_clause:
           '(' xmp_expr_list ')'
           { $$ = list1(LIST,$2); }
+          ;
+
+xmp_end_clause:
+            KW XMPKW_TASK { $$ = XMP_LIST(XMP_END_TASK,NULL); }
+          | KW XMPKW_TASKS { $$ = XMP_LIST(XMP_END_TASKS,NULL); }
+          | KW XMPKW_MASTER_IO { $$ = XMP_LIST(XMP_END_MASTER_IO,NULL); }
+          | KW XMPKW_GLOBAL_IO { $$ = XMP_LIST(XMP_END_GLOBAL_IO,NULL); }
           ;
 
 xmp_obj_ref:
