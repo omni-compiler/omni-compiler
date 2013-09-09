@@ -31,7 +31,7 @@ int xmp_all_num_nodes_(void) {
 }
 
 int xmp_all_node_num_(void) {
-  return _XMP_world_rank;
+  return _XMP_world_rank + 1;
 }
 
 double xmp_wtime_(void) {
