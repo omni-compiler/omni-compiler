@@ -506,24 +506,18 @@ public class XMParray {
 					     Xcons.IntConstant(i),
 					     info.getArraySizeVar().Ref(),
 					     info.getArrayOffsetVar().Ref())));
-	
-	Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,
-					info.getArraySizeVar().Ref(),
-					Xcons.IntConstant(1));
-	alloc_args.add(Xcons.FindexRange(Xcons.IntConstant(0),size_1));
-
-// 	if (isDistributed(i)){
-// 	    // distributed
-// 	    Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,
-// 					    info.getArraySizeVar().Ref(),
-// 					    Xcons.IntConstant(1));
-// 	    alloc_args.add(Xcons.FindexRange(Xcons.IntConstant(0),size_1));
-// 	}
-// 	else {
-// 	    // not distributed
-// 	    alloc_args.add(Xcons.FindexRange(info.getLower(),
-// 					     info.getArraySizeVar().Ref()));
-// 	}
+	if (isDistributed(i)){
+	    // distributed
+	    Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,
+					    info.getArraySizeVar().Ref(),
+					    Xcons.IntConstant(1));
+	    alloc_args.add(Xcons.FindexRange(Xcons.IntConstant(0),size_1));
+	}
+	else {
+	    // not distributed
+	    alloc_args.add(Xcons.FindexRange(info.getLower(),
+					     info.getArraySizeVar().Ref()));
+	}
       }
       
       // allocatable
@@ -646,24 +640,18 @@ public class XMParray {
 					     Xcons.IntConstant(i),
 					     info.getArraySizeVar().Ref(),
 					     info.getArrayOffsetVar().Ref())));
-	
-	Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,
-					info.getArraySizeVar().Ref(),
-					Xcons.IntConstant(1));
-	alloc_args.add(Xcons.FindexRange(Xcons.IntConstant(0),size_1));
-
-// 	if (isDistributed(i)){
-// 	    // distributed
-// 	    Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,
-// 					    info.getArraySizeVar().Ref(),
-// 					    Xcons.IntConstant(1));
-// 	    alloc_args.add(Xcons.FindexRange(Xcons.IntConstant(0),size_1));
-// 	}
-// 	else {
-// 	    // not distributed
-// 	    alloc_args.add(Xcons.FindexRange(info.getLower(),
-// 					     info.getArraySizeVar().Ref()));
-// 	}
+	if (isDistributed(i)){
+	    // distributed
+	    Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,
+					    info.getArraySizeVar().Ref(),
+					    Xcons.IntConstant(1));
+	    alloc_args.add(Xcons.FindexRange(Xcons.IntConstant(0),size_1));
+	}
+	else {
+	    // not distributed
+	    alloc_args.add(Xcons.FindexRange(info.getLower(),
+					     info.getArraySizeVar().Ref()));
+	}
       }
       
       // allocatable
@@ -711,7 +699,9 @@ public class XMParray {
   public Xobject convertOffset(int dim_i){
       XMPdimInfo info = dims.elementAt(dim_i);
       if(!isDistributed(dim_i)){  // case not aligned, duplicated
-	  return info.getLower();
+	  //return info.getLower();
+	  if (is_linearized) return info.getLower();
+	  else return null;
       }
       Xobject offset = info.getAlignSubscriptOffset();
       Xobject alb = info.getLower();
