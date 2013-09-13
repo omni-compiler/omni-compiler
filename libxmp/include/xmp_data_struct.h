@@ -196,8 +196,8 @@ typedef struct _XMP_array_type {
   int align_comm_rank;
   // ----------------------------------------
 
-  int num_reqs;
-  MPI_Request *mpi_req_shadow;
+  //int num_reqs;
+  //MPI_Request *mpi_req_shadow;
 
   _XMP_nodes_t *array_nodes;
 

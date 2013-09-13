@@ -21,8 +21,8 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
   a->align_comm_size = 1;
   a->align_comm_rank = _XMP_N_INVALID_RANK;
 
-  a->num_reqs = -1;
-  a->mpi_req_shadow = _XMP_alloc(sizeof(MPI_Request) * 4 * (*n_dim));
+  //a->num_reqs = -1;
+  //a->mpi_req_shadow = _XMP_alloc(sizeof(MPI_Request) * 4 * (*n_dim));
 
   a->align_template = *t_desc;
 
@@ -157,9 +157,14 @@ void xmpf_array_init_shadow__(_XMP_array_t **a_desc, int *i_dim,
 
     if (!ai->reflect_sched){
       _XMP_reflect_sched_t *sched = _XMP_alloc(sizeof(_XMP_reflect_sched_t));
+      sched->is_periodic = -1; /* not used yet */
       sched->datatype_lo = MPI_DATATYPE_NULL;
       sched->datatype_hi = MPI_DATATYPE_NULL;
       for (int j = 0; j < 4; j++) sched->req[j] = MPI_REQUEST_NULL;
+      sched->lo_send_buf = NULL;
+      sched->lo_recv_buf = NULL;
+      sched->hi_send_buf = NULL;
+      sched->hi_recv_buf = NULL;
       ai->reflect_sched = sched;
     }
 

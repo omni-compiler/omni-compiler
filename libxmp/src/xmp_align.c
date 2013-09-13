@@ -40,7 +40,7 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
   a->align_comm_size = 1;
   a->align_comm_rank = _XMP_N_INVALID_RANK;
 
-  a->num_reqs = -1;
+  //a->num_reqs = -1;
 
   a->align_template = template;
 
@@ -102,16 +102,24 @@ void _XMP_finalize_array_desc(_XMP_array_t *array) {
 	}
       }
 
+      if (i != dim -1){
+	_XMP_free(reflect_sched->lo_send_buf);
+	_XMP_free(reflect_sched->lo_recv_buf);
+	_XMP_free(reflect_sched->hi_send_buf);
+	_XMP_free(reflect_sched->hi_recv_buf);
+      }
+
+      _XMP_free(reflect_sched);
     }
 
   }
 
-  for (int i = 0; i < array->num_reqs; i++){
-    if (array->mpi_req_shadow[i] != MPI_REQUEST_NULL){
-      MPI_Request_free(&array->mpi_req_shadow[i]);
-    }
-  }
-  _XMP_free(array->mpi_req_shadow);
+/*   for (int i = 0; i < array->num_reqs; i++){ */
+/*     if (array->mpi_req_shadow[i] != MPI_REQUEST_NULL){ */
+/*       MPI_Request_free(&array->mpi_req_shadow[i]); */
+/*     } */
+/*   } */
+/*   _XMP_free(array->mpi_req_shadow); */
 
   if (array->is_align_comm_member) {
     _XMP_finalize_comm(array->align_comm);

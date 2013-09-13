@@ -183,7 +183,11 @@ static void _XMPF_reflect_sched(_XMP_array_t **a_desc, int *lwidth, int *uwidth,
       _XMP_reflect_sched_t *reflect = ai->reflect_sched;
 
       if (lwidth[i] || uwidth[i]){
-	if (lwidth[i] != reflect->lo_width ||
+
+	_XMP_ASSERT(reflect);
+
+	if (reflect->is_periodic == -1 /* not set yet */ ||
+	    lwidth[i] != reflect->lo_width ||
 	    uwidth[i] != reflect->hi_width ||
 	    is_periodic[i] != reflect->is_periodic){
 
@@ -287,14 +291,9 @@ static void _XMPF_reflect_normal_sched_dim(_XMP_array_t *adesc, int target_dim,
     MPI_Type_free(&reflect->datatype_lo);
   }
 
-  if (lwidth){
-    MPI_Type_vector(count, blocklength * lwidth, stride,
-		    MPI_BYTE, &reflect->datatype_lo);
-    MPI_Type_commit(&reflect->datatype_lo);
-  }
-  else {
-    reflect->datatype_lo = MPI_BYTE; // dummy
-  }
+  MPI_Type_vector(count, blocklength * lwidth, stride,
+		  MPI_BYTE, &reflect->datatype_lo);
+  MPI_Type_commit(&reflect->datatype_lo);
 
   // for upper reflect
 
@@ -302,14 +301,9 @@ static void _XMPF_reflect_normal_sched_dim(_XMP_array_t *adesc, int target_dim,
     MPI_Type_free(&reflect->datatype_hi);
   }
 
-  if (uwidth){
-    MPI_Type_vector(count, blocklength * uwidth, stride,
-		    MPI_BYTE, &reflect->datatype_hi);
-    MPI_Type_commit(&reflect->datatype_hi);
-  }
-  else {
-    reflect->datatype_hi = MPI_BYTE; // dummy
-  }
+  MPI_Type_vector(count, blocklength * uwidth, stride,
+		  MPI_BYTE, &reflect->datatype_hi);
+  MPI_Type_commit(&reflect->datatype_hi);
 
   //
   // calculate base address
@@ -475,10 +469,14 @@ static void _XMPF_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   void *lo_send_array, *lo_recv_array;
   void *hi_send_array, *hi_recv_array;
 
-  void *lo_send_buf = array_addr;
-  void *lo_recv_buf = array_addr;
-  void *hi_send_buf = array_addr;
-  void *hi_recv_buf = array_addr;
+/*   void *lo_send_buf = array_addr; */
+/*   void *lo_recv_buf = array_addr; */
+/*   void *hi_send_buf = array_addr; */
+/*   void *hi_recv_buf = array_addr; */
+  void *lo_send_buf = NULL;
+  void *lo_recv_buf = NULL;
+  void *hi_send_buf = NULL;
+  void *hi_recv_buf = NULL;
 
   int lo_buf_size = 0;
   int hi_buf_size = 0;
@@ -568,6 +566,13 @@ static void _XMPF_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   // Allocate buffers
 
   // for lower reflect
+
+  if (target_dim != ndims - 1){
+    _XMP_free(reflect->lo_send_buf);
+    _XMP_free(reflect->lo_recv_buf);
+    _XMP_free(reflect->hi_send_buf);
+    _XMP_free(reflect->hi_recv_buf);
+  }
 
   if (lwidth){
 
