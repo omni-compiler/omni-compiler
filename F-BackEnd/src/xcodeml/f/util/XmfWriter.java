@@ -245,7 +245,7 @@ public class XmfWriter
      */
     public void setupContinuousNewLine()
     {
-        _out.print("&");
+        _out.print(" &");
         setupNewLine();
     }
 

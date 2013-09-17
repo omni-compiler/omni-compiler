@@ -27,7 +27,18 @@ public class XMPrewriteExpr
     FunctionBlock fb = def.getBlock();
     if (fb == null) return;
 
-    // rewrite statement
+    // rewrite return statements
+
+    BlockIterator iter5 = new topdownBlockIterator(fb);
+    for (iter5.init(); !iter5.end(); iter5.next()){
+      if (iter5.getBlock().Opcode() == Xcode.RETURN_STATEMENT){
+	Block b = Bcons.GOTO(Xcons.StringConstant(XMP.epilog_label_f));
+	iter5.setBlock(b);
+      }
+    }
+
+    // rewrite allocate and deallocate statements
+
     BasicBlockIterator iter3 = new BasicBlockIterator(fb);
     for (iter3.init(); !iter3.end(); iter3.next()){
       StatementIterator iter4 = iter3.getBasicBlock().statements();

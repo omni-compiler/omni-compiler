@@ -931,4 +931,9 @@ public class Xcons
             IntConstant(0), IntConstant(0), Xcons.List(
                 Xcons.List(Xcode.FUNCTION_DECL, name, null, null, paramDecls)));
     }
+
+    public static Xobject StatementLabel(String label)
+    {
+	return Xcons.List(Xcode.STATEMENT_LABEL, Xcons.StringConstant(label));
+    }
 }

@@ -49,6 +49,8 @@ public class XMP {
   public final static String ASTERISK			= "* @{ASTERISK}@";
   public final static String COLON			= ": @{COLON}@";
 
+  public final static String epilog_label_f = "99999";
+
   public final static String nodes_alloc_f = "xmpf_nodes_alloc_";
   public final static String nodes_dim_size_f = "xmpf_nodes_dim_size_";
   public final static String nodes_init_GLOBAL_f = "xmpf_nodes_init_GLOBAL_";
