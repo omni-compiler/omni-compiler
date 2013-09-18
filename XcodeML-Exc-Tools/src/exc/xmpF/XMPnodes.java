@@ -49,6 +49,10 @@ public class XMPnodes extends XMPobject {
     return s;
   }
 
+  public XMPdimInfo getInfoAt(int index) {
+    return _sizeVector.get(index);
+  }
+
   /* 
    * Method to analyze and handle nodes directives.
    *  nodeDecl = (nodeMaptype name dimensions inheritDecl)

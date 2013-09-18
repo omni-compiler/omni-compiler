@@ -265,8 +265,10 @@ public class XMParray {
     // check src_dims
     for(XMPdimInfo i: src_dims){
       if(i.isStar()) continue;
-      if(i.isTriplet())
+      if(i.isTriplet()){
 	XMP.errorAt(pb,"bad syntax in align source script");
+	break;
+      }
       t = i.getIndex();
       if(t.isVariable()){
 	for(XMPdimInfo j: src_dims){  // cross check!
@@ -284,8 +286,10 @@ public class XMParray {
     // check tmpl_dims
     for(XMPdimInfo i: tmpl_dims){
       if(i.isStar()) continue;
-      if(i.isTriplet())
+      if(i.isTriplet()){
 	XMP.errorAt(pb,"bad syntax in align script");
+	break;
+      }
       t = i.getIndex();
       if(!t.isVariable()){
 	switch(t.Opcode()){
@@ -386,25 +390,57 @@ public class XMParray {
       if(d_info.isStar())
 	array.setFullShadow(i);
       else {
-	if(d_info.hasStride()){
-	  XMP.errorAt(pb,"bad syntax in shadow");
-	  continue;
-	}
-	if(d_info.hasLower()){
-	  if(d_info.getLower().isIntConstant())
-	    left = d_info.getLower().getInt();
-	  else
-	    XMP.errorAt(pb,"shadow width(right) is not integer constant");
-	  if(d_info.getUpper().isIntConstant())
-	    right = d_info.getUpper().getInt();
-	  else
-	    XMP.errorAt(pb,"shadow width(left) is not integer constant");
-	} else {
-	  if(d_info.getIndex().isIntConstant())
+	if (d_info.isScalar()){ // scalar
+	  if (d_info.getIndex().isIntConstant())
 	    left = right = d_info.getIndex().getInt();
 	  else 
 	    XMP.errorAt(pb,"shadow width is not integer constant");
 	}
+	else if (!d_info.hasStride()){ // "lshadow : ushadow"
+	  if (d_info.hasLower()){
+	    if (d_info.getLower().isIntConstant())
+	      left = d_info.getLower().getInt();
+	    else
+	      XMP.errorAt(pb,"shadow width(left) is not integer constant");
+	  }
+	  else {
+	    XMP.errorAt(pb,"no shadow width(left) is specified.");
+	  }
+	  if (d_info.hasLower()){
+	    if (d_info.getUpper().isIntConstant())
+	      right = d_info.getUpper().getInt();
+	    else
+	      XMP.errorAt(pb,"shadow width(right) is not integer constant");
+	  }
+	  else {
+	    XMP.errorAt(pb,"no shadow width(right) is specified.");
+	  }
+	}
+	else {
+	  XMP.errorAt(pb,"bad syntax in shadow");
+	  continue;
+	}
+
+	// if(d_info.hasStride()){
+	//   XMP.errorAt(pb,"bad syntax in shadow");
+	//   continue;
+	// }
+	// if(d_info.hasLower()){
+	//   if(d_info.getLower().isIntConstant())
+	//     left = d_info.getLower().getInt();
+	//   else
+	//     XMP.errorAt(pb,"shadow width(right) is not integer constant");
+	//   if(d_info.getUpper().isIntConstant())
+	//     right = d_info.getUpper().getInt();
+	//   else
+	//     XMP.errorAt(pb,"shadow width(left) is not integer constant");
+	// } else {
+	//   if(d_info.getIndex().isIntConstant())
+	//     left = right = d_info.getIndex().getInt();
+	//   else 
+	//     XMP.errorAt(pb,"shadow width is not integer constant");
+	// }
+
 	array.setShadow(left,right,i);
       }
     }

@@ -535,7 +535,7 @@ expv XMP_compile_subscript_list(expr l,xmp_list_context context)
     ret_list = EMPTY_LIST;
     FOR_ITEMS_IN_LIST(lp,l){
 	x = LIST_ITEM(lp);
-	v = v1 = v2 = NULL;
+	v = v1 = v2 = v3 = NULL;
 	switch(context){
 	case XMP_LIST_NODES: /* element must be integer scalar or * */
 	    if(x != NULL) { /* must a list */
@@ -543,7 +543,9 @@ expv XMP_compile_subscript_list(expr l,xmp_list_context context)
 		    error("bad subscript in nodes directive");
 		    break;
 		}
-		if(EXPR_ARG2(x) == NULL &&  EXPR_ARG3(x) == NULL){
+		//if(EXPR_ARG2(x) == NULL &&  EXPR_ARG3(x) == NULL){
+		if(EXPR_ARG1(x) == EXPR_ARG2(x) &&
+		   EXPR_ARG3(x) != NULL && EXPR_INT(EXPR_ARG3(x)) == 0){
 		    v = compile_expression(EXPR_ARG1(x));
 		    if(!IS_INT_CONST_V(v))
 			error("subscript in nodes must be an integer constant");
@@ -553,38 +555,76 @@ expv XMP_compile_subscript_list(expr l,xmp_list_context context)
 	    break;
 	case XMP_LIST_ON_REF: /* expr, triplet, * */
 	    if(x != NULL){
-		v = NULL;
-		if(EXPR_ARG1(x) != NULL)
-		    v = compile_expression(EXPR_ARG1(x));
-		if(EXPR_ARG2(x) != NULL)
-		    v1 = compile_expression(EXPR_ARG2(x));
-		if(EXPR_ARG3(x) != NULL)
-		    v2 = compile_expression(EXPR_ARG3(x));
-		if(v1 != NULL || v2 != NULL)
-		    v = list3(LIST,v,v1,v2);
+
+	      if (EXPR_ARG1(x) == EXPR_ARG2(x) && EXPR_ARG3(x) &&
+		  EXPR_CODE(EXPR_ARG3(x)) == INT_CONSTANT && EXPR_INT(EXPR_ARG3(x)) == 0){
+		/* scalar */
+		v = compile_expression(EXPR_ARG1(x));
+		break;
+	      }
+	      else {
+		if (EXPR_ARG1(x) != NULL)
+		  v1 = compile_expression(EXPR_ARG1(x));
+		if (EXPR_ARG2(x) != NULL)
+		  v2 = compile_expression(EXPR_ARG2(x));
+		if (EXPR_ARG3(x) != NULL)
+		  v3 = compile_expression(EXPR_ARG3(x));
+		v = list3(LIST,v1,v2,v3);
+	      }
 	    }
 	    break;
 	case XMP_LIST_TEMPLATE: /* int-expr [: int-expr], or : */
-	    if(x == NULL)
-		error("subscript in template must not be *");
+
+	    if (x == NULL)
+	      error("subscript in template must not be *");
 	    else {
-		if(EXPR_ARG3(x) != NULL)
-		    error("subscript in template cannot have step");
-		if(EXPR_ARG1(x) != NULL){
-		    v = compile_expression(EXPR_ARG1(x));
-		} else {
-		    if(EXPR_ARG2(x) != NULL){
-			error("bad subscript in template");
-		    }  else {
-			/* both arg1 and arg2 are null, ':' */
-			v = list1(LIST,NULL);
-		    }
-		    break;
+
+	      if (EXPR_ARG3(x)){
+		if (EXPR_ARG1(x) == EXPR_ARG2(x) &&
+		    EXPR_CODE(EXPR_ARG3(x)) == INT_CONSTANT && EXPR_INT(EXPR_ARG3(x)) == 0){
+		  /* scalar */
+		  v = compile_expression(EXPR_ARG1(x));
+		  break;
 		}
-		if(EXPR_ARG2(x) != NULL){
-		    v1 = compile_expression(EXPR_ARG2(x));
-		    v = list3(LIST,v,v1,NULL);
+		else {
+		  error("subscript in template cannot have step");
 		}
+	      }
+	      else {
+		if (!EXPR_ARG1(x) && !EXPR_ARG2(x)){
+		  /* ":" */
+		  v = list3(LIST, NULL, NULL, NULL);
+		  break;
+		}
+
+		if (EXPR_ARG1(x) && EXPR_ARG2(x)){
+		  /* "lb:ub" */
+		  v = compile_expression(EXPR_ARG1(x));
+		  v1 = compile_expression(EXPR_ARG2(x));
+		  v = list3(LIST, v, v1, NULL);
+		  break;
+		}
+	      }
+
+	      error("bad subscript in template");
+
+		/* if(EXPR_ARG3(x) != NULL) */
+		/*     error("subscript in template cannot have step"); */
+		/* if(EXPR_ARG1(x) != NULL){ */
+		/*     v = compile_expression(EXPR_ARG1(x)); */
+		/* } else { */
+		/*     if(EXPR_ARG2(x) != NULL){ */
+		/* 	error("bad subscript in template"); */
+		/*     }  else { */
+		/* 	/\* both arg1 and arg2 are null, ':' *\/ */
+		/* 	v = list1(LIST,NULL); */
+		/*     } */
+		/*     break; */
+		/* } */
+		/* if(EXPR_ARG2(x) != NULL){ */
+		/*     v1 = compile_expression(EXPR_ARG2(x)); */
+		/*     v = list3(LIST,v,v1,NULL); */
+		/* } */
 	    }
 	    break;
 	case XMP_LIST_DISTRIBUTE: /* * or (id expr) */
@@ -597,68 +637,133 @@ expv XMP_compile_subscript_list(expr l,xmp_list_context context)
 	    break;
 	case XMP_LIST_ID_LIST: /* id, or *,: */
 	    if(x != NULL){
-		if(EXPR_ARG2(x) == NULL &&  EXPR_ARG3(x) == NULL){
-		    x = EXPR_ARG1(x);
-		    if(x == NULL){
-			v = list1(LIST,NULL);
-			break;
-		    } else if(EXPR_CODE(x) == IDENT){
-			v = x;
-			break;
-		    }
+	      if (!EXPR_ARG1(x) && !EXPR_ARG2(x) && !EXPR_ARG3(x)){
+		/* ":" */
+		v = list3(LIST, NULL, NULL, NULL);
+		break;
+	      }
+	      else if (EXPR_ARG1(x) && EXPR_ARG1(x) == EXPR_ARG2(x) && EXPR_ARG3(x) &&
+		       EXPR_CODE(EXPR_ARG3(x)) == INT_CONSTANT && EXPR_INT(EXPR_ARG3(x)) == 0){
+		/* expression */
+		x = EXPR_ARG1(x);
+		if (EXPR_CODE(x) == IDENT){
+		  v = x;
+		  break;
 		}
+	      }
 		error("susbscript in align source or index must be identifier or ':'");
+		/* if(EXPR_ARG2(x) == NULL &&  EXPR_ARG3(x) == NULL){ */
+		/*     x = EXPR_ARG1(x); */
+		/*     if(x == NULL){ */
+		/* 	v = list1(LIST,NULL); */
+		/* 	break; */
+		/*     } else if(EXPR_CODE(x) == IDENT){ */
+		/* 	v = x; */
+		/* 	break; */
+		/*     } */
+		/* } */
+		/* error("susbscript in align source or index must be identifier or ':'"); */
 	    }
 	    break;
 	case XMP_LIST_ALIGN:  /* expr=v+off, or *, : */
 	    if(x != NULL){
-		if(EXPR_ARG2(x) == NULL &&  EXPR_ARG3(x) == NULL){
-		    x = EXPR_ARG1(x);
-		    if(x == NULL){
-			v = list1(LIST,NULL);
-			break;
-		    } else {
-			switch(EXPR_CODE(x)){
-			case IDENT:
-			    v = x;
-			    break;
-			case F_PLUS_EXPR:
-			case F_MINUS_EXPR:
-			    if(EXPR_CODE(EXPR_ARG1(x)) != IDENT)
-				error("left expression must be identifier in align target");
-			    v = expv_cons(EXPR_CODE(x) == F_PLUS_EXPR ?
-					  PLUS_EXPR:MINUS_EXPR,
-					  type_INT,
-					  EXPR_ARG1(x),
-					  compile_expression(EXPR_ARG2(x)));
-			    break;
-			default:
-			    error("bad expression in align target");
-			}
-			break;
-		    }
-		    error("subscript in align target must be expression or ':'");
+	      if (!EXPR_ARG1(x) && !EXPR_ARG2(x) && !EXPR_ARG3(x)){
+		/* ":" */
+		v = list3(LIST, NULL, NULL, NULL);
+		break;
+	      }
+	      else if (EXPR_ARG1(x) && EXPR_ARG1(x) == EXPR_ARG2(x) && EXPR_ARG3(x) &&
+		       EXPR_CODE(EXPR_ARG3(x)) == INT_CONSTANT && EXPR_INT(EXPR_ARG3(x)) == 0){
+		/* expression */
+		x = EXPR_ARG1(x);
+		switch (EXPR_CODE(x)){
+		case IDENT:
+		  v = x;
+		  break;
+		case F_PLUS_EXPR:
+		case F_MINUS_EXPR:
+		  if (EXPR_CODE(EXPR_ARG1(x)) != IDENT)
+		    error("left expression must be identifier in align target");
+		  v = expv_cons(EXPR_CODE(x) == F_PLUS_EXPR ?
+				PLUS_EXPR:MINUS_EXPR,
+				type_INT,
+				EXPR_ARG1(x),
+				compile_expression(EXPR_ARG2(x)));
+		  break;
+		default:
+		  error("bad expression in align target");
 		}
-		error("susbscript in align target must be an expression or ':'");
+		break;
+	      }
+	      error("subscript in align target must be an expression or ':'");
+
+		/* if(EXPR_ARG2(x) == NULL &&  EXPR_ARG3(x) == NULL){ */
+		/*     x = EXPR_ARG1(x); */
+		/*     if(x == NULL){ */
+		/* 	v = list1(LIST,NULL); */
+		/* 	break; */
+		/*     } else { */
+		/* 	switch(EXPR_CODE(x)){ */
+		/* 	case IDENT: */
+		/* 	    v = x; */
+		/* 	    break; */
+		/* 	case F_PLUS_EXPR: */
+		/* 	case F_MINUS_EXPR: */
+		/* 	    if(EXPR_CODE(EXPR_ARG1(x)) != IDENT) */
+		/* 		error("left expression must be identifier in align target"); */
+		/* 	    v = expv_cons(EXPR_CODE(x) == F_PLUS_EXPR ? */
+		/* 			  PLUS_EXPR:MINUS_EXPR, */
+		/* 			  type_INT, */
+		/* 			  EXPR_ARG1(x), */
+		/* 			  compile_expression(EXPR_ARG2(x))); */
+		/* 	    break; */
+		/* 	default: */
+		/* 	    error("bad expression in align target"); */
+		/* 	} */
+		/* 	break; */
+		/*     } */
+		/*     error("subscript in align target must be expression or ':'"); */
+		/* } */
+		/* error("susbscript in align target must be an expression or ':'"); */
 	    }
 	    break;
 
 	case XMP_LIST_SHADOW: /* expr expr:expr or * */
-	    if(x != NULL){
-		if(EXPR_ARG3(x) != NULL){
-		    error("bad subscript in shadow");
-		    break;
+	    if (x != NULL){
+
+	      if (EXPR_ARG1(x) && EXPR_ARG2(x) &&
+		  EXPR_CODE(EXPR_ARG1(x)) == INT_CONSTANT &&
+		  EXPR_CODE(EXPR_ARG2(x)) == INT_CONSTANT){
+		
+		if (EXPR_ARG1(x) == EXPR_ARG2(x) && EXPR_ARG3(x) &&
+		    EXPR_CODE(EXPR_ARG3(x)) == INT_CONSTANT && EXPR_INT(EXPR_ARG3(x)) == 0){
+		  v = compile_expression(EXPR_ARG1(x));
+		  break;
 		}
-		if(EXPR_ARG1(x) != NULL){
-		    v = compile_expression(EXPR_ARG1(x));
-		    if(EXPR_ARG2(x) != NULL){
-			v2 = compile_expression(EXPR_ARG2(x));
-			v = list2(LIST,v,v2);
-		    } 
-		    break;
+		else if (!EXPR_ARG3(x)){
+		  v = compile_expression(EXPR_ARG1(x));
+		  v2 = compile_expression(EXPR_ARG2(x));
+		  v = list2(LIST,v,v2);
+		  break;
 		}
-		error("bad subscript in shadow");
+	      }
+	      error("bad subscript in shadow");
 	    }
+	    /* if(x != NULL){ */
+	    /* 	if(EXPR_ARG3(x) != NULL){ */
+	    /* 	    error("bad subscript in shadow"); */
+	    /* 	    break; */
+	    /* 	} */
+	    /* 	if(EXPR_ARG1(x) != NULL){ */
+	    /* 	    v = compile_expression(EXPR_ARG1(x)); */
+	    /* 	    if(EXPR_ARG2(x) != NULL){ */
+	    /* 		v2 = compile_expression(EXPR_ARG2(x)); */
+	    /* 		v = list2(LIST,v,v2); */
+	    /* 	    }  */
+	    /* 	    break; */
+	    /* 	} */
+	    /* 	error("bad subscript in shadow"); */
+	    /* } */
 	    break;
 
 	case XMP_LIST_WIDTH:

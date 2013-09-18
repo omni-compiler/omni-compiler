@@ -72,6 +72,10 @@ public class XMPdimInfo {
   
   public Xobject getUpper() { return upper; }
 
+  public boolean hasUpper(){
+    return (upper != null);
+  }
+
   public Xobject getSize() { 
     if(lower == null) return upper;
     else return Xcons.binaryOp(Xcode.PLUS_EXPR,upper,lower); 
@@ -88,10 +92,15 @@ public class XMPdimInfo {
 
   public boolean isStar() { return is_star; }
 
+  public boolean isScalar(){
+    return (stride != null && stride.isZeroConstant());
+  }
+
   public Xobject getIndex() { return upper; }
 
   public boolean isTriplet() {
-    return (lower != null || stride != null);
+    return (!is_star && !isScalar());
+    //    return (lower != null || stride != null);
   }
 
   /*
@@ -149,6 +158,7 @@ public class XMPdimInfo {
 
     if(decl.Opcode() != Xcode.LIST){
       upper = decl;
+      stride = Xcons.IntConstant(0);
     } else {
       lower = decl.getArg(0);     /* null in case of ":" */
       upper = decl.getArgOrNull(1); 

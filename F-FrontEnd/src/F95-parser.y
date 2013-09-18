@@ -1979,7 +1979,7 @@ xmp_subscript_list:
 
 xmp_subscript:
 	    expr_or_null
-	    { $$ = list3(LIST,$1,NULL,NULL); }
+	    { $$ = list3(LIST,$1,$1,GEN_NODE(INT_CONSTANT, 0)); }
 	  | expr_or_null ':' expr_or_null
 	    { $$ = list3(LIST,$1,$3,NULL); }
 	  | expr_or_null ':' expr_or_null ':' expr

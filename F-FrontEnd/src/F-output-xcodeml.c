@@ -2806,7 +2806,7 @@ outx_expv(int l, expv v)
 	{
             list lp;
             FOR_ITEMS_IN_LIST(lp, v)
-                outx_expv(l+1, LIST_ITEM(lp));
+                outx_expv(l, LIST_ITEM(lp));
         }
         break;
 

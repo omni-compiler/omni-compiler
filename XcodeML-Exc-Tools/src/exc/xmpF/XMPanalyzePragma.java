@@ -258,7 +258,8 @@ public class XMPanalyzePragma
       XMPdimInfo d_info = on_ref_dims.elementAt(k);
       if(d_info.isStar()) continue;
       if(d_info.isTriplet()){
-	XMP.errorAt(pb,"on-ref in loop must not be triplet");
+	  //XMP.errorAt(pb,"on-ref in loop must not be triplet");
+	  continue;
       } else {
 	Xobject t = d_info.getIndex();
 	if(t == null) continue;

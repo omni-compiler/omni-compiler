@@ -134,22 +134,41 @@ public class XMPobjectsRef {
     f = env.declExternIdent(XMP.ref_set_dim_info_f,Xtype.FsubroutineType);
     for(int i = 0; i < subscripts.size(); i++){
       XMPdimInfo d_info = subscripts.elementAt(i);
+      Xobject stride = d_info.getStride();
       if(d_info.isStar()){
 	args = Xcons.List(descId.Ref(),
 			  Xcons.IntConstant(i),Xcons.IntConstant(REF_ALL),
 			  Xcons.IntConstant(0),Xcons.IntConstant(0),
 			  Xcons.IntConstant(0));
-      } else if(!d_info.hasLower()){
-	args = Xcons.List(descId.Ref(),
-			  Xcons.IntConstant(i),Xcons.IntConstant(REF_INDEX),
-			  d_info.getUpper(),Xcons.IntConstant(0),
-			  Xcons.IntConstant(0));
-      } else {
-	args = Xcons.List(descId.Ref(),
-			  Xcons.IntConstant(i),Xcons.IntConstant(REF_RANGE),
-			  d_info.getLower(),d_info.getUpper(),
-			  d_info.getStride());
       }
+      else if (d_info.isScalar()){ // scalar
+	  args = Xcons.List(descId.Ref(),
+			    Xcons.IntConstant(i),Xcons.IntConstant(REF_INDEX),
+			    d_info.getIndex(),Xcons.IntConstant(0),
+			    Xcons.IntConstant(0));
+      }
+      else { // triplet
+	  Xobject lower, upper;
+	  lower = d_info.getLower();
+	  upper = d_info.getUpper() != null ? d_info.getUpper() :
+	      ((XMPnodes)refObject).getInfoAt(i).getUpper();
+	  stride = d_info.getStride();
+	      
+	  args = Xcons.List(descId.Ref(),
+			    Xcons.IntConstant(i),Xcons.IntConstant(REF_RANGE),
+			    lower, upper, stride);
+      }
+      // } else if(!d_info.hasLower()){
+      // 	args = Xcons.List(descId.Ref(),
+      // 			  Xcons.IntConstant(i),Xcons.IntConstant(REF_INDEX),
+      // 			  d_info.getUpper(),Xcons.IntConstant(0),
+      // 			  Xcons.IntConstant(0));
+      // } else {
+      // 	args = Xcons.List(descId.Ref(),
+      // 			  Xcons.IntConstant(i),Xcons.IntConstant(REF_RANGE),
+      // 			  d_info.getLower(),d_info.getUpper(),
+      // 			  d_info.getStride());
+      // }
       bb.add(f.callSubroutine(args));
     }
 
