@@ -1568,11 +1568,46 @@ AC_SUBST(OM_EXEC_F_LINKER)
 INCLUDECOM=include
 AC_SUBST(INCLUDECOM)
 
-# --------------------------------------------------------------------
+XMPPKG_CONFFILE="./release/package_param.conf"
+
+if test -f "${XMPPKG_CONFFILE}"; then
+	. "${XMPPKG_CONFFILE}"
+else
+	AC_MSG_WARN([a configuration file for packaging is not found.])
+fi
+
+XMPPKG_CHANGELOG_DATE=`date '+%a, %d %b %Y %H:%M:%S %z'`
+
+AC_SUBST(XMPPKG_NAME)
+AC_SUBST(XMPPKG_VERSION)
+AC_SUBST(XMPPKG_SUMMARY)
+AC_SUBST(XMPPKG_LICENSE)
+AC_SUBST(XMPPKG_RELEASE)
+AC_SUBST(XMPPKG_MAINTAINER)
+AC_SUBST(XMPPKG_PREFIX)
+AC_SUBST(XMPPKG_DESCRIPTION)
+AC_SUBST(XMPPKG_URL)
+AC_SUBST(XMPPKG_GROUP)
+AC_SUBST(XMPPKG_PACKAGER)
+AC_SUBST(XMPPKG_VENDOR)
+AC_SUBST(XMPPKG_SECTION)
+AC_SUBST(XMPPKG_PRIORITY)
+AC_SUBST(XMPPKG_CHANGELOG_DATE)
+AM_SUBST_NOTMAKE(XMPPKG_DESCRIPTION)
 
 # --------------------------------------------------------------------
 
-AC_CONFIG_FILES(Makefile)
+# --------------------------------------------------------------------
+
+AC_CONFIG_FILES(
+	Makefile
+	release/debian/changelog
+	release/debian/control
+	release/debian/rules
+	release/xcalablemp.spec
+	release/make_rpm.sh
+	release/make_deb.sh
+)
 
 AC_OUTPUT
 

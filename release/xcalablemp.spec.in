@@ -1,0 +1,40 @@
+#%define _topdir ${RPM_BUILD_DIR}
+
+Summary: @XMPPKG_SUMMARY@
+Name: @XMPPKG_NAME@
+Version: @XMPPKG_VERSION@
+Release: @XMPPKG_RELEASE@
+License: @XMPPKG_LICENSE@
+Packager: @XMPPKG_PACKAGER@
+Vendor: @XMPPKG_VENDOR@
+URL: @XMPPKG_URL@
+
+Group: @XMPPKG_GROUP@
+Source: %{name}-%{version}.tar.gz
+
+Requires:	openmpi-devel gcc-gfortran java-1.7.0-openjdk
+
+%define default_prefix @OMNI_HOME@
+
+%description
+@XMPPKG_DESCRIPTION@
+
+%prep
+%setup
+
+%build
+./configure --prefix=%{default_prefix}
+make
+
+%install
+rm -rf ${RPM_BUILD_ROOT}
+mkdir -p ${RPM_BUILD_ROOT}/%{default_prefix}
+make prefix=${RPM_BUILD_ROOT}/%{default_prefix} install
+
+%clean
+rm -rf ${RPM_BUILD_ROOT}
+
+%files
+%defattr(-,root,root)
+%{default_prefix}
+

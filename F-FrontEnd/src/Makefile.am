@@ -1,4 +1,5 @@
-# $TSUKUBA_Release: Omni OpenMP Compiler 3 $ # $TSUKUBA_Copyright:
+# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
+# $TSUKUBA_Copyright:
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
 bin_PROGRAMS=F_Front

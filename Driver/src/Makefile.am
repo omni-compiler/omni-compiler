@@ -18,13 +18,12 @@ sysconf_DATA=../etc/omc.conf ../etc/omf.conf \
 	../etc/pp.conf.xmpf ../etc/native.conf.xmpf ../etc/linker.conf.xmpf ../etc/l2x.conf.xmpf ../etc/x2x.conf.xmpf
 
 omdriver_SOURCES=omdriver.c
+xmp_collect_init_SOURCES=xmp_collect_init.c
+xmp_collect_init_CPPFLAGS=-DNM=\"@NM@\"
 
 AM_CFLAGS=-std=c99 -Wall
 
 omdriver.c: omdriver.h
-
-xmp_collect_init: xmp_collect_init.c
-	$(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@ -DNM=\"@NM@\" $<
 
 clean-local:
 	rm -rf ../doc

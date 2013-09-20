@@ -1,0 +1,95 @@
+#!/bin/sh
+
+XMP_SRCDIR=$1
+XMP_TMPDIR=$2
+
+DEB_DIR="${XMP_SRCDIR}/release/debian"
+CHANGELOG_FILE="${DEB_DIR}/changelog"
+CONTROL_FILE="${DEB_DIR}/control"
+RULES_FILE="${DEB_DIR}/rules"
+COMPAT_FILE="${DEB_DIR}/compat"
+MKARCHIVE_FILE="${XMP_SRCDIR}/release/mkarchive"
+XMPPKG_NAME="@XMPPKG_NAME@"
+XMPPKG_VERSION="@XMPPKG_VERSION@"
+XMPPKG_RELEASE="@XMPPKG_RELEASE@"
+XMPPKG_PREFIX="/@OMNI_HOME@"
+ARCHIVE_NAME="${XMPPKG_NAME}"
+
+clean_exit () {
+	rm -rf "${XMP_TMPDIR}"
+	exit $1
+}
+
+trap "clean_exit 1" INT HUP TERM
+
+if test "$#" -ne 2 ; then
+	echo "Usage: $0 <top_src_dir> <tmp_dir> <prefix>"
+	exit 1
+fi
+if test ! -d "$1" -o ! -d "$2" ; then
+	echo "Usage: $0 <top_src_dir> <tmp_dir> <prefix>"
+	exit 1
+fi
+if test -z "${XMPPKG_NAME}" -o -z "${XMPPKG_VERSION}" -o -z "${XMPPKG_RELEASE}" ; then
+	clean_exit 1
+fi
+if test ! -f "${MKARCHIVE_FILE}" ; then
+	clean_exit 1
+fi
+
+# create archive
+
+rm -f "${ARCHIVE_NAME}.tar.gz"
+
+/bin/sh "${MKARCHIVE_FILE}" "${ARCHIVE_NAME}"
+if test "$?" -ne 0 ; then
+	clean_exit 1
+fi
+
+# extract archive
+if test ! -f "${ARCHIVE_NAME}.tar.gz" ; then
+	clean_exit 1
+fi
+mv "${ARCHIVE_NAME}.tar.gz" "${XMP_TMPDIR}"/.
+if test "$?" -ne 0 ; then
+	clean_exit 1
+fi
+cd "${XMP_TMPDIR}"
+tar zxf "${ARCHIVE_NAME}.tar.gz"
+
+# build
+
+cd "${XMP_TMPDIR}"/"${XMPPKG_NAME}"
+./configure --prefix=${XMPPKG_PREFIX} \
+&& make clean \
+&& make \
+&& make prefix=${XMP_TMPDIR}/debian/${XMPPKG_NAME}/${XMPPKG_PREFIX} install \
+|| clean_exit 1
+
+# copy conffiles
+
+cp ${CHANGELOG_FILE} ${XMP_TMPDIR}/debian/. \
+&& cp ${RULES_FILE} ${XMP_TMPDIR}/debian/. \
+&& cp ${COMPAT_FILE} ${XMP_TMPDIR}/debian/. \
+|| clean_exit 1
+
+sed -e "/^Section:\s*$/d" -e "/^Priority:\s*$/d" ${CONTROL_FILE} > ${XMP_TMPDIR}/debian/control \
+|| clean_exit 1
+
+# build DEB file
+
+cd ${XMP_TMPDIR}
+dpkg-buildpackage -d -rfakeroot -uc -us
+if test "$?" -ne 0 ; then
+	clean_exit 1
+fi
+CPU=`dpkg-architecture -qDEB_HOST_ARCH`
+if test "$?" -ne 0 ; then
+	clean_exit 1
+fi
+cp "../${XMPPKG_NAME}_${XMPPKG_VERSION}-${XMPPKG_RELEASE}_${CPU}.deb" "${XMP_SRCDIR}"/.
+
+# clean up
+
+rm -rf ${XMP_TMPDIR}
+exit 0
