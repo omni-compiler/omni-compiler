@@ -626,6 +626,21 @@ ac_includes_default="\
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
+XMPPKG_CHANGELOG_DATE
+XMPPKG_PRIORITY
+XMPPKG_SECTION
+XMPPKG_VENDOR
+XMPPKG_PACKAGER
+XMPPKG_GROUP
+XMPPKG_URL
+XMPPKG_DESCRIPTION
+XMPPKG_PREFIX
+XMPPKG_MAINTAINER
+XMPPKG_RELEASE
+XMPPKG_LICENSE
+XMPPKG_SUMMARY
+XMPPKG_VERSION
+XMPPKG_NAME
 INCLUDECOM
 OM_EXEC_F_LINKER
 OM_EXEC_F_COMPILER
@@ -11378,11 +11393,39 @@ OM_EXEC_F_LINKER="${FC}"
 INCLUDECOM=include
 
 
-# --------------------------------------------------------------------
+XMPPKG_CONFFILE="./release/package_param.conf"
+
+if test -f "${XMPPKG_CONFFILE}"; then
+	. "${XMPPKG_CONFFILE}"
+else
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: a configuration file for packaging is not found." >&5
+$as_echo "$as_me: WARNING: a configuration file for packaging is not found." >&2;}
+fi
+
+XMPPKG_CHANGELOG_DATE=`date '+%a, %d %b %Y %H:%M:%S %z'`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # --------------------------------------------------------------------
 
-ac_config_files="$ac_config_files Makefile"
+# --------------------------------------------------------------------
+
+ac_config_files="$ac_config_files Makefile release/debian/changelog release/debian/control release/debian/rules release/xcalablemp.spec release/make_rpm.sh release/make_deb.sh"
 
 
 cat >confcache <<\_ACEOF
@@ -12205,6 +12248,12 @@ do
     "$LIBTLOG_MPI_DIR/bin/tlogview") CONFIG_FILES="$CONFIG_FILES $LIBTLOG_MPI_DIR/bin/tlogview" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+    "release/debian/changelog") CONFIG_FILES="$CONFIG_FILES release/debian/changelog" ;;
+    "release/debian/control") CONFIG_FILES="$CONFIG_FILES release/debian/control" ;;
+    "release/debian/rules") CONFIG_FILES="$CONFIG_FILES release/debian/rules" ;;
+    "release/xcalablemp.spec") CONFIG_FILES="$CONFIG_FILES release/xcalablemp.spec" ;;
+    "release/make_rpm.sh") CONFIG_FILES="$CONFIG_FILES release/make_rpm.sh" ;;
+    "release/make_deb.sh") CONFIG_FILES="$CONFIG_FILES release/make_deb.sh" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

@@ -82,7 +82,13 @@ target_triplet = @target@
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
-	$(top_srcdir)/include/config.h.in README buildutils/compile \
+	$(top_srcdir)/include/config.h.in \
+	$(top_srcdir)/release/debian/changelog.in \
+	$(top_srcdir)/release/debian/control.in \
+	$(top_srcdir)/release/debian/rules.in \
+	$(top_srcdir)/release/xcalablemp.spec.in \
+	$(top_srcdir)/release/make_rpm.sh.in \
+	$(top_srcdir)/release/make_deb.sh.in README buildutils/compile \
 	buildutils/config.guess buildutils/config.sub \
 	buildutils/depcomp buildutils/install-sh buildutils/missing \
 	buildutils/ylwrap $(top_srcdir)/buildutils/compile \
@@ -98,7 +104,9 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/config.h
-CONFIG_CLEAN_FILES =
+CONFIG_CLEAN_FILES = release/debian/changelog release/debian/control \
+	release/debian/rules release/xcalablemp.spec \
+	release/make_rpm.sh release/make_deb.sh
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -342,6 +350,26 @@ TYPE_INT64 = @TYPE_INT64@
 VERSION = @VERSION@
 XCODEML_COMMON_DIR = @XCODEML_COMMON_DIR@
 XCODEML_EXC_TOOLS_DIR = @XCODEML_EXC_TOOLS_DIR@
+XMPPKG_CHANGELOG_DATE = @XMPPKG_CHANGELOG_DATE@
+XMPPKG_GROUP = @XMPPKG_GROUP@
+XMPPKG_LICENSE = @XMPPKG_LICENSE@
+XMPPKG_MAINTAINER = @XMPPKG_MAINTAINER@
+
+#install-data-local:
+#	if test -e "./doc"; then\
+#		test -z "${docdir}" || ${MKDIR_P} "${docdir}";\
+#		cp -fr ./doc/* ${docdir}/; chmod -R 755 ${docdir}/*;\
+#	fi
+XMPPKG_NAME := "@XMPPKG_NAME@"
+XMPPKG_PACKAGER = @XMPPKG_PACKAGER@
+XMPPKG_PREFIX = @XMPPKG_PREFIX@
+XMPPKG_PRIORITY = @XMPPKG_PRIORITY@
+XMPPKG_RELEASE = @XMPPKG_RELEASE@
+XMPPKG_SECTION = @XMPPKG_SECTION@
+XMPPKG_SUMMARY = @XMPPKG_SUMMARY@
+XMPPKG_URL = @XMPPKG_URL@
+XMPPKG_VENDOR = @XMPPKG_VENDOR@
+XMPPKG_VERSION = @XMPPKG_VERSION@
 XMP_ENABLE_GPU = @XMP_ENABLE_GPU@
 YACC = @YACC@
 YFLAGS = @YFLAGS@
@@ -434,6 +462,10 @@ top_srcdir = @top_srcdir@
 @SUPERUX_TRUE@	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ \
 @SUPERUX_TRUE@	@LIBXMP_THREADS_DIR@ @LIBXMPF_HEADER_DIR@ \
 @SUPERUX_TRUE@	@LIBXMPF_DIR@ $(am__append_1)
+XMPPKG_TMPDIR_TOP := "/tmp/@XMPPKG_NAME@"
+XMPPKG_TMPDIR := $(XMPPKG_TMPDIR_TOP)/$(shell mktemp -u --tmpdir=/)
+DEB_VER_FILE = "/etc/debian_version"
+RH_REL_FILE = "/etc/redhat-release"
 DELETABLES = \
 	C-BackEnd/ant.properties \
 	C-BackEnd/bin/C_Back \
@@ -499,7 +531,11 @@ DELETABLES = \
 	tests/C-test/Makefile \
 	tests/F-test/OMP-test/Makefile \
 	tests/clinpack/Makefile \
-	tests/tiny/Makefile
+	tests/tiny/Makefile \
+	$(XMPPKG_TMPDIR_TOP) \
+	${XMPPKG_NAME}*.tar.gz \
+	${XMPPKG_NAME}*.deb \
+	${XMPPKG_NAME}*.rpm
 
 all: all-recursive
 
@@ -553,6 +589,18 @@ $(top_srcdir)/include/config.h.in:  $(am__configure_deps)
 
 distclean-hdr:
 	-rm -f include/config.h include/stamp-h1
+release/debian/changelog: $(top_builddir)/config.status $(top_srcdir)/release/debian/changelog.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+release/debian/control: $(top_builddir)/config.status $(top_srcdir)/release/debian/control.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+release/debian/rules: $(top_builddir)/config.status $(top_srcdir)/release/debian/rules.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+release/xcalablemp.spec: $(top_builddir)/config.status $(top_srcdir)/release/xcalablemp.spec.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+release/make_rpm.sh: $(top_builddir)/config.status $(top_srcdir)/release/make_rpm.sh.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+release/make_deb.sh: $(top_builddir)/config.status $(top_srcdir)/release/make_deb.sh.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run 'make' without going through this Makefile.
@@ -971,11 +1019,25 @@ uninstall-am:
 	tags-am uninstall uninstall-am
 
 
-#install-data-local:
-#	if test -e "./doc"; then\
-#		test -z "${docdir}" || ${MKDIR_P} "${docdir}";\
-#		cp -fr ./doc/* ${docdir}/; chmod -R 755 ${docdir}/*;\
-#	fi
+release-rpm:
+	if test -f $(RH_REL_FILE) ; then \
+		mkdir -p $(XMPPKG_TMPDIR_TOP); \
+		$(SHELL) release/make_rpm.sh $(CURDIR) $(XMPPKG_TMPDIR_TOP); \
+		rm -rf $(XMPPKG_TMPDIR_TOP); \
+	else \
+		echo "Can't generate an RPM package on Current system."; \
+	fi
+
+release-deb:
+	if test -f $(DEB_VER_FILE) ; then \
+		mkdir -p $(XMPPKG_TMPDIR); \
+		$(SHELL) release/make_deb.sh $(CURDIR) $(XMPPKG_TMPDIR); \
+		rm -rf $(XMPPKG_TMPDIR_TOP); \
+	else \
+		echo "Can't generate a Debian package on Current system."; \
+	fi
+
+release: release-rpm release-deb
 
 clean-local:
 	rm -rf autom4te.cache
