@@ -9,7 +9,7 @@
 #endif
 
 unsigned long long _xmp_heap_size, _xmp_stride_size;
-static int _elmt_size, _coarray_dims, _image_dims, *_image_size, _array_dims;
+static int _elmt_size, _coarray_dims, _image_dims, *_image_size, *_image_num, _array_dims;
 static long long *_coarray_size, _total_coarray_size;
 static long long _total_coarray_length, _total_array_length;
 static _XMP_array_section_t *_coarray, *_array;
@@ -178,7 +178,7 @@ void _XMP_coarray_rma_set(int coarray_dims, int array_dims, int image_dims){
   _array                = malloc(sizeof(_XMP_array_section_t) * array_dims);
   _coarray_dims         = coarray_dims;
   _array_dims           = array_dims;
-  _image_size           = malloc(sizeof(int) * image_dims);
+  _image_num            = malloc(sizeof(int) * image_dims);
   _image_dims           = image_dims;
   _total_coarray_length = 1;
   _total_array_length   = 1;
@@ -213,7 +213,7 @@ void _XMP_coarray_rma_array_set_f(int *dim, long long *start, long long *length,
 }
 
 void _XMP_coarray_rma_node_set(int dim, int image_num){
-  _image_size[dim]  = image_num;
+  _image_num[dim]  = image_num;
 }
 
 void _XMP_coarray_rma_node_set_f(int *dim, int *image_num){
@@ -279,9 +279,8 @@ void _XMP_coarray_rma_do(int rma_code, void *coarray, void *array){
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n") ;
   }
 
-  for(i=0;i<_image_dims-1;i++)
+  for(i=0;i<_image_dims;i++)
     target_image += ((_XMP_coarray_t*)coarray)->distance_of_image_elmt[i] * (_image_size[i] - 1);
-  target_image += _image_size[_image_dims-1] - 1;
 
   for(i=0;i<_array_dims;i++)
     _array[i].distance *= ((_XMP_coarray_t*)coarray)->elmt_size;
@@ -344,7 +343,7 @@ void _XMP_coarray_rma_do(int rma_code, void *coarray, void *array){
   _XMP_fatal("Cannt use Coarray Function");
 #endif
 
-  free(_coarray);  free(_array);  free(_image_size);
+  free(_coarray);  free(_array);  free(_image_num);
 }
 
 void _XMP_coarray_rma_do_f(int *rma_code, void *coarray, void *array){
