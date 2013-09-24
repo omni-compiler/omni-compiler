@@ -170,13 +170,34 @@ public class XMPtranslateLocalPragma {
 
   private void translatePost(PragmaBlock pb) throws XMPexception {
     checkDeclPragmaLocation(pb);
+    XobjList args = null;
     XobjList postDecl = (XobjList)pb.getClauses();
-    XobjList postNode = (XobjList)postDecl.getArg(0);
-    Xobject  tag      = postDecl.getArg(1);
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
 
-    Xobject postNodeNum = (Xobject)postNode.getArg(1);
+    XobjList onRef = (XobjList)postDecl.getArg(0);
+    String nodeName = onRef.getArg(0).getString();
+    XMPnodes nodeObj = _globalDecl.getXMPnodes(nodeName, localXMPsymbolTable);
+    if (nodeObj == null) {
+	throw new XMPexception("cannot find '" + nodeName + "' nodes");
+    }
+    args = Xcons.List(nodeObj.getDescId().Ref());
+    
+    XobjList nodeList = (XobjList)onRef.getArg(1);
 
-    pb.replace(_globalDecl.createFuncCallBlock("_XMP_post", Xcons.List(postNodeNum, tag))); 
+    if(nodeObj.getDim() < nodeList.Nargs()){
+	throw new XMPexception("Error. more node arguments");
+    }
+    else if(nodeObj.getDim() > nodeList.Nargs()){
+	throw new XMPexception("Error. less node argument");
+    }
+    args.add(Xcons.IntConstant(nodeObj.getDim()));
+    for(int i=0;i<nodeObj.getDim();i++)
+	args.add(nodeList.getArg(i).getArg(0));
+
+    Xobject tag = postDecl.getArg(1);
+    args.add(tag);
+
+    pb.replace(_globalDecl.createFuncCallBlock("_XMP_post", args));
   }
 
   private void translateWait(PragmaBlock pb) throws XMPexception {

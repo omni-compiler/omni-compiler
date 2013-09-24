@@ -59,8 +59,6 @@ void _xmp_gasnet_post_request(gasnet_token_t token, int node, int tag){
 }
 
 void _xmp_gasnet_post(int target_node, int tag){
-  target_node -= 1;   // for 1-origin in XMP
-
   int mynode = (int)gasnet_mynode();
   
   if(target_node == mynode){
@@ -120,11 +118,11 @@ void _xmp_gasnet_wait(int num, ...){
     GASNET_BLOCKUNTIL(_xmp_pw_remove_anonymous());
     break;
   case 1:
-    target_node = va_arg(args, int) - 1;  // for 1-origin in XMP
+    target_node = va_arg(args, int);
     GASNET_BLOCKUNTIL(_xmp_pw_remove_notag(target_node));
     break;
   case 2:
-    target_node = va_arg(args, int) - 1;  // for 1-origin in XMP
+    target_node = va_arg(args, int);
     tag  = va_arg(args, int);
     GASNET_BLOCKUNTIL(_xmp_pw_remove(target_node, tag));
     break;

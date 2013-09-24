@@ -8,9 +8,28 @@ void _XMP_post_initialize(){
 #endif
 }
 
-void _XMP_post(int node, int tag){
+void _XMP_post(_XMP_nodes_t *node_desc, int dims, ...){
+  int i, j;
+  int target_node = 0, node_distance[dims], tag;
+
+  for(i=0;i<dims;i++){
+    node_distance[i] = 1;
+    for(j=0;j<i;j++){
+      node_distance[i] *= node_desc->info[j].size;
+    }
+  }
+
+  va_list args;
+  va_start( args, dims );
+  
+  for(i=0;i<dims;i++)  // target_node is rank
+    target_node += (va_arg(args, int) - 1) * node_distance[i];
+
+  tag = va_arg(args, int);
+  va_end( args );
+
 #ifdef _XMP_COARRAY_GASNET
-  _xmp_gasnet_post(node, tag);
+  _xmp_gasnet_post(target_node, tag);
 #else
   _XMP_fatal("Cannot use post function");
 #endif
@@ -27,11 +46,11 @@ void _XMP_wait(int num, ...){
     _xmp_gasnet_wait(num);
     break;
   case 1:
-    node = va_arg(args, int);
+    node = va_arg(args, int) - 1;
     _xmp_gasnet_wait(num, node);
     break;
   case 2:
-    node = va_arg(args, int);
+    node = va_arg(args, int) - 1;
     tag  = va_arg(args, int);
     _xmp_gasnet_wait(num, node, tag);
     break;

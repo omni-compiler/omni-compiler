@@ -128,9 +128,10 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     Xobject x = _lexer.pg_parse_expr();
     if (x == null)
       error("syntax error on <int-expr>");
-
+    
     if (!XMPutil.isIntegerType(x.Type()))
-      error("<int-expr> is expected, parsed expression has a non-integer type");
+	if(x.Type().getRef() != Xtype.intType )  // x is a pointer refence
+	    error("<int-expr> is expected, parsed expression has a non-integer type");
 
     return x;
   }
@@ -1176,10 +1177,10 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   private XobjList parse_POST_clause() throws XmException, XMPexception {
     if (pg_tok() != '(')
       error("'(' is expected before <nodes-name, tag>");
-    
+
     pg_get_token();
 
-    XobjList nodeName = parse_pg_node();
+    Xobject onRef = parse_ON_REF(false);
     pg_get_token();
     Xobject tag = pg_parse_expr();
 
@@ -1187,7 +1188,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
       error("')' is expected after <nodes-name, tag>");
     }
     pg_get_token();
-    return Xcons.List(nodeName, tag);
+    return Xcons.List(onRef, tag);
   }
 
   private XobjList parse_WAIT_clause() throws XmException, XMPexception {

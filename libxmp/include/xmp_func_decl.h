@@ -188,7 +188,7 @@ extern void _XMP_init_world(int *argc, char ***argv);
 extern void _XMP_finalize_world(void);
 
 // xmp_post.c
-extern void _XMP_post(int node, int tag);
+extern void _XMP_post(void *, int num, ...);
 extern void _XMP_wait(int num, ...);
 extern void _XMP_post_initialize(void);
 
