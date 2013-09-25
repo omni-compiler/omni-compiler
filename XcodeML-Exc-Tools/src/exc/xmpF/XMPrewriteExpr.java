@@ -53,8 +53,9 @@ public class XMPrewriteExpr
 	    Iterator<Xobject> y = ((XobjList)x.getArg(1)).iterator();
 	    while (y.hasNext()){
 	      XobjList alloc = (XobjList)y.next();
-
-	      Ident id = env.findVarIdent(alloc.getArg(0).getName(), fb);
+	      Xobject obj = alloc.getArg(0);
+	      while (obj.Opcode() == Xcode.MEMBER_REF) obj = obj.getArg(0).getArg(0);
+	      Ident id = env.findVarIdent(obj.getName(), fb);
 	      if (id == null) break;
 	      XMParray array = XMParray.getArray(id);
 	      if (array == null) break;
@@ -69,8 +70,9 @@ public class XMPrewriteExpr
 	    Iterator<Xobject> y = ((XobjList)x.getArg(1)).iterator();
 	    while (y.hasNext()){
 	      XobjList dealloc = (XobjList)y.next();
-
-	      Ident id = env.findVarIdent(dealloc.getArg(0).getName(), fb);
+	      Xobject obj = dealloc.getArg(0);
+	      while (obj.Opcode() == Xcode.MEMBER_REF) obj = obj.getArg(0).getArg(0);
+	      Ident id = env.findVarIdent(obj.getName(), fb);
 	      if (id == null) break;
 	      XMParray array = XMParray.getArray(id);
 	      if (array == null) break;
