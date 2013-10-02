@@ -40,23 +40,34 @@ void _XMPF_unpack_vector(char * restrict dst, char * restrict src,
 }
 
 void _XMPF_unpack_transpose_vector(char * restrict dst, char * restrict src,
-                                   int icount, int jcount, int wordlength, 
+                                   int icount, int jcount, int type_size,
                                    int src_stride, int dst_stride){
 
   if (_xmp_omp_num_procs > 1 && icount > 8 * _xmp_omp_num_procs){
+    if (type_size == 16){
+      double _Complex *dst0 = (double _Complex *)dst;
+      double _Complex *src0 = (double _Complex *)src;
 #pragma omp parallel for
-    for (int i = 0; i < icount; i++){
-      for (int j = 0; j < jcount; j++){
-        memcpy(dst + j * dst_stride + i * wordlength, 
-               src + i * src_stride + j * wordlength, wordlength);
+      for (int i = 0; i < icount; i++){
+        for (int j = 0; j < jcount; j++){
+            dst0[j * dst_stride + i]=src0[i * src_stride + j];
+        }
+      }
+    }
+    else {
+      for (int i = 0; i < icount; i++){
+        for (int j = 0; j < jcount; j++){
+          memcpy(dst + j * dst_stride * type_size + i * type_size,
+                 src + i * src_stride * type_size + j * type_size, type_size);
+        }
       }
     }
   }
   else {
     for (int i = 0; i < icount; i++){
       for (int j = 0; j < jcount; i++){
-        memcpy(dst + j * dst_stride + i * wordlength, 
-               src + i * src_stride + j * wordlength, wordlength);
+        memcpy(dst + j * dst_stride * type_size + i * type_size,
+               src + i * src_stride * type_size + j * type_size, type_size);
       }
     }
   }

@@ -449,7 +449,7 @@ void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
       k = 0;
       _XMPF_unpack_transpose_vector((char *)dst_array->array_addr_p + i * src_chunk_size * type_size,
          (char *)recvbuf + i * count, src_chunk_size, dst_chunk_size, type_size,
-          dst_chunk_size*type_size, src_ser_size*type_size);
+          dst_chunk_size, src_ser_size);
     }
 
     if (*opt==0){
