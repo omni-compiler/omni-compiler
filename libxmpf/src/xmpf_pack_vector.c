@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <omp.h>
+#include <complex.h>
 
 int _xmp_omp_num_procs = 1;
 
