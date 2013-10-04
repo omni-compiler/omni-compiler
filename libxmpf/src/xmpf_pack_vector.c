@@ -7,15 +7,15 @@ int _xmp_omp_num_procs = 1;
 
 void _XMPF_pack_vector(char * restrict dst, char * restrict src,
 		       int count, int blocklength, int stride){
-
+  long i;
   if (_xmp_omp_num_procs > 1 && count > 8 * _xmp_omp_num_procs){
 #pragma omp parallel for
-    for (int i = 0; i < count; i++){
+    for (i = 0; i < count; i++){
       memcpy(dst + i * blocklength, src + i * stride, blocklength);
     }
   }
   else {
-    for (int i = 0; i < count; i++){
+    for (i = 0; i < count; i++){
       memcpy(dst + i * blocklength, src + i * stride, blocklength);
     }
   }
@@ -25,15 +25,15 @@ void _XMPF_pack_vector(char * restrict dst, char * restrict src,
 
 void _XMPF_unpack_vector(char * restrict dst, char * restrict src,
 			 int count, int blocklength, int stride){
-
+  long i;
   if (_xmp_omp_num_procs > 1 && count > 8 * _xmp_omp_num_procs){
 #pragma omp parallel for
-    for (int i = 0; i < count; i++){
+    for (i = 0; i < count; i++){
       memcpy(dst + i * stride, src + i * blocklength, blocklength);
     }
   }
   else {
-    for (int i = 0; i < count; i++){
+    for (i = 0; i < count; i++){
       memcpy(dst + i * stride, src + i * blocklength, blocklength);
     }
   }
@@ -44,20 +44,28 @@ void _XMPF_unpack_transpose_vector(char * restrict dst, char * restrict src,
                                    int icount, int jcount, int type_size,
                                    int src_stride, int dst_stride){
 
+  long i,j;
   if (_xmp_omp_num_procs > 1 && icount > 8 * _xmp_omp_num_procs){
     if (type_size == 16){
+      long ii,jj,nblk=16;
       double _Complex *dst0 = (double _Complex *)dst;
       double _Complex *src0 = (double _Complex *)src;
+      for (jj = 0; jj < jcount; jj+=nblk){
 #pragma omp parallel for
-      for (int i = 0; i < icount; i++){
-        for (int j = 0; j < jcount; j++){
-            dst0[j * dst_stride + i]=src0[i * src_stride + j];
+        for (ii = 0; ii < icount; ii+=nblk){
+          long jmin=((jj+nblk) < jcount)? (jj+nblk):jcount;
+          for (j = jj; j < jmin; j++){
+            long imin=((ii+nblk) < icount)? (ii+nblk):icount;
+            for (i = ii; i < imin; i++){
+              dst0[j * dst_stride + i]=src0[i * src_stride + j];
+            }
+          }
         }
       }
     }
     else {
-      for (int i = 0; i < icount; i++){
-        for (int j = 0; j < jcount; j++){
+      for (j = 0; j < jcount; j++){
+        for (i = 0; i < icount; i++){
           memcpy(dst + j * dst_stride * type_size + i * type_size,
                  src + i * src_stride * type_size + j * type_size, type_size);
         }
@@ -65,8 +73,8 @@ void _XMPF_unpack_transpose_vector(char * restrict dst, char * restrict src,
     }
   }
   else {
-    for (int i = 0; i < icount; i++){
-      for (int j = 0; j < jcount; i++){
+    for (j = 0; j < jcount; j++){
+      for (i = 0; i < icount; i++){
         memcpy(dst + j * dst_stride * type_size + i * type_size,
                src + i * src_stride * type_size + j * type_size, type_size);
       }
