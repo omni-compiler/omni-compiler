@@ -2467,6 +2467,7 @@ copy_body:
         /* dumb copy */
         newLen = strlen( p );
         strcpy( q, p );
+	q += newLen;
     }else{
         newLen = st_len = ScanFortranLine(p, p, q, q, bufMax,
                                           &inQuote, &qChar, &inH, &hLen, &p, &q);
