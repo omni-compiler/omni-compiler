@@ -547,7 +547,7 @@ expv XMP_compile_subscript_list(expr l,xmp_list_context context)
 		if(EXPR_ARG1(x) == EXPR_ARG2(x) &&
 		   EXPR_ARG3(x) != NULL && EXPR_INT(EXPR_ARG3(x)) == 0){
 		    v = compile_expression(EXPR_ARG1(x));
-		    if(!IS_INT_CONST_V(v))
+		    if(!IS_INT_CONST_V(v) && !IS_INT_PARAM_V(v))
 			error("subscript in nodes must be an integer constant");
 		} else 
 		    error("bad subscript in nodes directive");

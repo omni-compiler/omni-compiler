@@ -34,7 +34,7 @@ public class XmfWriter
 
     private PrintWriter _out;
 
-    /** Indent string */
+    /* Indent string */
     private String _indentChars = DEFAULT_INDENT_CHARS;
     /** Indent string length. */
     private int _indentCharsLength = DEFAULT_INDENT_CHARS.length();
@@ -49,9 +49,23 @@ public class XmfWriter
     private int _indentLevel = 0;
     private boolean _needSeparator = false;
 
+    public enum StatementMode { FORTRAN, XMP, OMP, ACC }
+
+    private StatementMode _mode = StatementMode.FORTRAN;
+
     public XmfWriter(PrintWriter writer)
     {
         _out = writer;
+    }
+
+    public void setStatementMode(StatementMode m)
+    {
+	_mode = m;
+    }
+
+    public StatementMode getStatementMode()
+    {
+	return _mode;
     }
 
     /**
@@ -136,6 +150,7 @@ public class XmfWriter
             _out.print("&");
             setupNewLine();
             _writeIndent();
+	    if (_mode == StatementMode.OMP) _out.print("!$OMP");
         }
     }
 

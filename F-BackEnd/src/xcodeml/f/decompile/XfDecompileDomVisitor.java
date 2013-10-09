@@ -3382,11 +3382,15 @@ public class XfDecompileDomVisitor {
          * Decompile "OMPPragma" element in XcodeML/F.
          */
         @Override public void enter(Node n) {
+
             _writeLineDirective(n);
             
             boolean nowaitFlag = false;
             
             XmfWriter writer = _context.getWriter();
+
+	    XmfWriter.StatementMode prevMode = writer.getStatementMode();
+	    writer.setStatementMode(XmfWriter.StatementMode.OMP);
 
             // directive
             Node dir = n.getFirstChild();
@@ -3490,7 +3494,8 @@ public class XfDecompileDomVisitor {
             writer.writeToken("!$OMP END " + dirName);
             if (nowaitFlag) writer.writeToken("NOWAIT");
             writer.setupNewLine();
-            
+	    writer.setStatementMode(prevMode);
+
         }
     }
 

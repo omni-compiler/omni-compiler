@@ -1046,6 +1046,7 @@ compile_ident_expression(expr x)
     }
 
     if ((id = declare_variable(id)) != NULL) {
+        TYPE_ATTR_FLAGS(ID_TYPE(id)) |= TYPE_ATTR_FLAGS(id);
         EXPV_CODE(x) = F_VAR;
         EXPV_TYPE(x) = ID_TYPE(id);
         EXPV_NAME(x) = ID_SYM(id);

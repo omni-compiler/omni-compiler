@@ -307,6 +307,8 @@ extern TYPE_DESC basic_type_desc[];
                 ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_SUBR))
 #define IS_INT_CONST_V(v) \
                 (IS_INT(EXPV_TYPE(v)) && expr_is_constant(v))
+#define IS_INT_PARAM_V(v) \
+                (IS_INT(EXPV_TYPE(v)) && expr_is_param(v))
 #define IS_REAL_CONST_V(v) \
                 (IS_REAL(EXPV_TYPE(v)) && expr_is_constant(v))
 #define IS_COMPLEX_CONST_V(v) \
