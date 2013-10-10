@@ -1,0 +1,21 @@
+/*
+ * $Id: nata_platform.h.in 86 2012-07-30 05:33:07Z m-hirano $
+ */
+#ifndef __NATA_PLATFORM_H__
+#define __NATA_PLATFORM_H__
+
+#define @OSDEF@
+#define @CPUDEF@
+#define @API_FLAVOR@
+
+#ifdef WORDS_BIGENDIAN
+#define NATA_BIG_ENDIAN
+#else
+#define NATA_LITTLE_ENDIAN
+#endif /* WORDS_BIGENDIAN */
+
+#ifdef NATA_API_WIN32API
+#include <nata/nata_win32api.h>
+#endif /* NATA_API_WIN32API */
+
+#endif /* ! __NATA_PLATFORM_H__ */

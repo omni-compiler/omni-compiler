@@ -1,0 +1,21 @@
+#!/bin/sh
+# $Id: initheaders 86 2012-07-30 05:33:07Z m-hirano $
+
+if test ! -r ./configure.ac; then
+    exit 1
+fi
+
+cd ./Driver/atool/src/include/nata || exit 1
+
+out=./.headers
+rm -f ${out}
+> ${out}
+
+echo -n "HEADERS = " >> ${out}
+for i in `ls *.h`; do
+    echo ${i} | awk '{ printf("\\\n\t%s ", $1); }' >> ${out}
+done
+
+exit 0
+
+
