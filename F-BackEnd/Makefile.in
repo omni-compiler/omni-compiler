@@ -83,11 +83,17 @@ target_triplet = @target@
 subdir = ./F-BackEnd
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/buildutils/libtool.m4 \
+	$(top_srcdir)/buildutils/ltoptions.m4 \
+	$(top_srcdir)/buildutils/ltsugar.m4 \
+	$(top_srcdir)/buildutils/ltversion.m4 \
+	$(top_srcdir)/buildutils/lt~obsolete.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
-CONFIG_HEADER = $(top_builddir)/include/config.h
+CONFIG_HEADER = $(top_builddir)/include/config.h \
+	$(top_builddir)/Driver/atool/src/include/nata/nata_config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
@@ -147,8 +153,10 @@ ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 ANTCOM = @ANTCOM@
+API_FLAVOR = @API_FLAVOR@
 AR = @AR@
 ARFLAGS = @ARFLAGS@
+ATOOL_DIR = @ATOOL_DIR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -165,7 +173,9 @@ CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CPU = @CPU@
+CPUDEF = @CPUDEF@
 CXX = @CXX@
+CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
@@ -173,6 +183,9 @@ C_BACKEND_DIR = @C_BACKEND_DIR@
 C_FRONTEND_DIR = @C_FRONTEND_DIR@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DLLTOOL = @DLLTOOL@
+DSYMUTIL = @DSYMUTIL@
+DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
@@ -181,6 +194,7 @@ EXEEXT = @EXEEXT@
 F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
+FGREP = @FGREP@
 FJRDMA = @FJRDMA@
 F_BACKEND_DIR = @F_BACKEND_DIR@
 F_FRONTEND_DIR = @F_FRONTEND_DIR@
@@ -206,6 +220,7 @@ JAVACCOM = @JAVACCOM@
 JAVACOM = @JAVACOM@
 JAVA_HOME = @JAVA_HOME@
 JAVA_OPT = @JAVA_OPT@
+LD = @LD@
 LDFLAGS = @LDFLAGS@
 LEX = @LEX@
 LEXLIB = @LEXLIB@
@@ -216,6 +231,8 @@ LIBOMPF_DIR = @LIBOMPF_DIR@
 LIBS = @LIBS@
 LIBTLOG_DIR = @LIBTLOG_DIR@
 LIBTLOG_MPI_DIR = @LIBTLOG_MPI_DIR@
+LIBTOOL = @LIBTOOL@
+LIBTOOL_DEPS = @LIBTOOL_DEPS@
 LIBXML_PREFIX = @LIBXML_PREFIX@
 LIBXMPF_DIR = @LIBXMPF_DIR@
 LIBXMPF_HEADER_DIR = @LIBXMPF_HEADER_DIR@
@@ -223,11 +240,19 @@ LIBXMP_DIR = @LIBXMP_DIR@
 LIBXMP_GPU_DIR = @LIBXMP_GPU_DIR@
 LIBXMP_HEADER_DIR = @LIBXMP_HEADER_DIR@
 LIBXMP_THREADS_DIR = @LIBXMP_THREADS_DIR@
+LIPO = @LIPO@
+LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
+MAKE = @MAKE@
 MAKEINFO = @MAKEINFO@
+MANIFEST_TOOL = @MANIFEST_TOOL@
+MKDIR = @MKDIR@
 MKDIR_P = @MKDIR_P@
+MKRULESDIR = @MKRULESDIR@
 MM5TGT = @MM5TGT@
 NM = @NM@
+NMEDIT = @NMEDIT@
+OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 OMC_CONF_LNK_OPT = @OMC_CONF_LNK_OPT@
 OMC_CONF_LX2X_OPT = @OMC_CONF_LX2X_OPT@
@@ -248,6 +273,14 @@ OM_EXEC_F_COMPILER = @OM_EXEC_F_COMPILER@
 OM_EXEC_F_LINKER = @OM_EXEC_F_LINKER@
 OM_EXEC_F_PP = @OM_EXEC_F_PP@
 OS = @OS@
+OSDEF = @OSDEF@
+OS_CFLAGS = @OS_CFLAGS@
+OS_CPPFLAGS = @OS_CPPFLAGS@
+OS_CXXFLAGS = @OS_CXXFLAGS@
+OS_LDFLAGS = @OS_LDFLAGS@
+OS_LIBS = @OS_LIBS@
+OTOOL = @OTOOL@
+OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
@@ -260,6 +293,8 @@ PERL5 = @PERL5@
 POW_LIB = @POW_LIB@
 PPTGT = @PPTGT@
 RANLIB = @RANLIB@
+RM = @RM@
+SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 SIZEOF_DOUBLE = @SIZEOF_DOUBLE@
@@ -274,6 +309,8 @@ SIZEOF_VOID_P = @SIZEOF_VOID_P@
 SIZEOF__BOOL = @SIZEOF__BOOL@
 STRIP = @STRIP@
 SUPERUX = @SUPERUX@
+TARGET_ARCH = @TARGET_ARCH@
+TOPDIR = @TOPDIR@
 TYPE_INT16 = @TYPE_INT16@
 TYPE_INT32 = @TYPE_INT32@
 TYPE_INT64 = @TYPE_INT64@
@@ -302,8 +339,10 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
+ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 ac_ct_FC = @ac_ct_FC@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
@@ -317,6 +356,7 @@ build_cpu = @build_cpu@
 build_os = @build_os@
 build_vendor = @build_vendor@
 builddir = @builddir@
+cppCmd = @cppCmd@
 datadir = @datadir@
 datarootdir = @datarootdir@
 doQReal = @doQReal@
@@ -344,8 +384,14 @@ localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
+nativeCompiler = @nativeCompiler@
 oldincludedir = @oldincludedir@
+omniBinDir = @omniBinDir@
+omniDir = @omniDir@
+omniEtcDir = @omniEtcDir@
 omniExpT = @omniExpT@
+omniIncDir = @omniIncDir@
+omniLibDir = @omniLibDir@
 omniLimbT = @omniLimbT@
 omniQPrec = @omniQPrec@
 omniQRealFillGap = @omniQRealFillGap@
@@ -442,6 +488,12 @@ uninstall-binSCRIPTS:
 	files=`for p in $$list; do echo "$$p"; done | \
 	       sed -e 's,.*/,,;$(transform)'`; \
 	dir='$(DESTDIR)$(bindir)'; $(am__uninstall_files_from_dir)
+
+mostlyclean-libtool:
+	-rm -f *.lo
+
+clean-libtool:
+	-rm -rf .libs _libs
 install-javaDATA: $(java_DATA)
 	@$(NORMAL_INSTALL)
 	@list='$(java_DATA)'; test -n "$(javadir)" || list=; \
@@ -539,7 +591,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-local mostlyclean-am
+clean-am: clean-generic clean-libtool clean-local mostlyclean-am
 
 distclean: distclean-am
 	-rm -f Makefile
@@ -591,7 +643,7 @@ maintainer-clean-am: distclean-am maintainer-clean-generic
 
 mostlyclean: mostlyclean-am
 
-mostlyclean-am: mostlyclean-generic
+mostlyclean-am: mostlyclean-generic mostlyclean-libtool
 
 pdf: pdf-am
 
@@ -606,17 +658,18 @@ uninstall-am: uninstall-binSCRIPTS uninstall-javaDATA
 .MAKE: install-am install-strip
 
 .PHONY: all all-am all-local check check-am clean clean-generic \
-	clean-local cscopelist-am ctags-am distclean distclean-generic \
-	distdir dvi dvi-am html html-am html-local info info-am \
-	install install-am install-binSCRIPTS install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-javaDATA install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-generic pdf \
-	pdf-am ps ps-am tags-am uninstall uninstall-am \
-	uninstall-binSCRIPTS uninstall-javaDATA
+	clean-libtool clean-local cscopelist-am ctags-am distclean \
+	distclean-generic distclean-libtool distdir dvi dvi-am html \
+	html-am html-local info info-am install install-am \
+	install-binSCRIPTS install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-javaDATA \
+	install-man install-pdf install-pdf-am install-ps \
+	install-ps-am install-strip installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-generic mostlyclean-libtool pdf pdf-am \
+	ps ps-am tags-am uninstall uninstall-am uninstall-binSCRIPTS \
+	uninstall-javaDATA
 
 
 all-local: $(java_DATA)

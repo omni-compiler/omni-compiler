@@ -19,7 +19,7 @@ sysconf_DATA=../etc/omc.conf ../etc/omf.conf \
 
 omdriver_SOURCES=omdriver.c
 xmp_collect_init_SOURCES=xmp_collect_init.c
-xmp_collect_init_CPPFLAGS=-DNM=\"@NM@\"
+xmp_collect_init_CPPFLAGS=-DNM="\"$(NM)\""
 
 AM_CFLAGS=-std=c99 -Wall
 

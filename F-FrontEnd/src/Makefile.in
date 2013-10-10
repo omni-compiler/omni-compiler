@@ -82,13 +82,19 @@ target_triplet = @target@
 bin_PROGRAMS = F_Front$(EXEEXT)
 subdir = ./F-FrontEnd/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am F95-parser.c \
-	$(top_srcdir)/buildutils/ylwrap ChangeLog
+	$(top_srcdir)/./buildutils/ylwrap ChangeLog
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/buildutils/libtool.m4 \
+	$(top_srcdir)/buildutils/ltoptions.m4 \
+	$(top_srcdir)/buildutils/ltsugar.m4 \
+	$(top_srcdir)/buildutils/ltversion.m4 \
+	$(top_srcdir)/buildutils/lt~obsolete.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
-CONFIG_HEADER = $(top_builddir)/include/config.h
+CONFIG_HEADER = $(top_builddir)/include/config.h \
+	$(top_builddir)/Driver/atool/src/include/nata/nata_config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
@@ -109,6 +115,10 @@ am_F_Front_OBJECTS = F95-main.$(OBJEXT) C-expr-mem.$(OBJEXT) \
 	F-module-procedure.$(OBJEXT)
 F_Front_OBJECTS = $(am_F_Front_OBJECTS)
 F_Front_DEPENDENCIES =
+AM_V_lt = $(am__v_lt_@AM_V@)
+am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
+am__v_lt_0 = --silent
+am__v_lt_1 = 
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -121,17 +131,23 @@ AM_V_at = $(am__v_at_@AM_V@)
 am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 = 
-DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
+DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include -I$(top_builddir)/Driver/atool/src/include/nata
 depcomp =
 am__depfiles_maybe =
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
 AM_V_CC = $(am__v_CC_@AM_V@)
 am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
 am__v_CC_0 = @echo "  CC      " $@;
 am__v_CC_1 = 
 CCLD = $(CC)
-LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
@@ -139,11 +155,13 @@ am__v_CCLD_1 =
 am__yacc_c2h = sed -e s/cc$$/hh/ -e s/cpp$$/hpp/ -e s/cxx$$/hxx/ \
 		   -e s/c++$$/h++/ -e s/c$$/h/
 YACCCOMPILE = $(YACC) $(AM_YFLAGS) $(YFLAGS)
+LTYACCCOMPILE = $(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(YACC) $(AM_YFLAGS) $(YFLAGS)
 AM_V_YACC = $(am__v_YACC_@AM_V@)
 am__v_YACC_ = $(am__v_YACC_@AM_DEFAULT_V@)
 am__v_YACC_0 = @echo "  YACC    " $@;
 am__v_YACC_1 = 
-YLWRAP = $(top_srcdir)/buildutils/ylwrap
+YLWRAP = $(top_srcdir)/./buildutils/ylwrap
 SOURCES = $(F_Front_SOURCES)
 DIST_SOURCES = $(F_Front_SOURCES)
 am__can_run_installinfo = \
@@ -175,8 +193,10 @@ ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 ANTCOM = @ANTCOM@
+API_FLAVOR = @API_FLAVOR@
 AR = @AR@
 ARFLAGS = @ARFLAGS@
+ATOOL_DIR = @ATOOL_DIR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -193,7 +213,9 @@ CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CPU = @CPU@
+CPUDEF = @CPUDEF@
 CXX = @CXX@
+CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
@@ -201,6 +223,9 @@ C_BACKEND_DIR = @C_BACKEND_DIR@
 C_FRONTEND_DIR = @C_FRONTEND_DIR@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DLLTOOL = @DLLTOOL@
+DSYMUTIL = @DSYMUTIL@
+DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
@@ -209,6 +234,7 @@ EXEEXT = @EXEEXT@
 F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
+FGREP = @FGREP@
 FJRDMA = @FJRDMA@
 F_BACKEND_DIR = @F_BACKEND_DIR@
 F_FRONTEND_DIR = @F_FRONTEND_DIR@
@@ -234,6 +260,7 @@ JAVACCOM = @JAVACCOM@
 JAVACOM = @JAVACOM@
 JAVA_HOME = @JAVA_HOME@
 JAVA_OPT = @JAVA_OPT@
+LD = @LD@
 LDFLAGS = @LDFLAGS@
 LEX = @LEX@
 LEXLIB = @LEXLIB@
@@ -244,6 +271,8 @@ LIBOMPF_DIR = @LIBOMPF_DIR@
 LIBS = @LIBS@
 LIBTLOG_DIR = @LIBTLOG_DIR@
 LIBTLOG_MPI_DIR = @LIBTLOG_MPI_DIR@
+LIBTOOL = @LIBTOOL@
+LIBTOOL_DEPS = @LIBTOOL_DEPS@
 LIBXML_PREFIX = @LIBXML_PREFIX@
 LIBXMPF_DIR = @LIBXMPF_DIR@
 LIBXMPF_HEADER_DIR = @LIBXMPF_HEADER_DIR@
@@ -251,11 +280,19 @@ LIBXMP_DIR = @LIBXMP_DIR@
 LIBXMP_GPU_DIR = @LIBXMP_GPU_DIR@
 LIBXMP_HEADER_DIR = @LIBXMP_HEADER_DIR@
 LIBXMP_THREADS_DIR = @LIBXMP_THREADS_DIR@
+LIPO = @LIPO@
+LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
+MAKE = @MAKE@
 MAKEINFO = @MAKEINFO@
+MANIFEST_TOOL = @MANIFEST_TOOL@
+MKDIR = @MKDIR@
 MKDIR_P = @MKDIR_P@
+MKRULESDIR = @MKRULESDIR@
 MM5TGT = @MM5TGT@
 NM = @NM@
+NMEDIT = @NMEDIT@
+OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 OMC_CONF_LNK_OPT = @OMC_CONF_LNK_OPT@
 OMC_CONF_LX2X_OPT = @OMC_CONF_LX2X_OPT@
@@ -276,6 +313,14 @@ OM_EXEC_F_COMPILER = @OM_EXEC_F_COMPILER@
 OM_EXEC_F_LINKER = @OM_EXEC_F_LINKER@
 OM_EXEC_F_PP = @OM_EXEC_F_PP@
 OS = @OS@
+OSDEF = @OSDEF@
+OS_CFLAGS = @OS_CFLAGS@
+OS_CPPFLAGS = @OS_CPPFLAGS@
+OS_CXXFLAGS = @OS_CXXFLAGS@
+OS_LDFLAGS = @OS_LDFLAGS@
+OS_LIBS = @OS_LIBS@
+OTOOL = @OTOOL@
+OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
@@ -288,6 +333,8 @@ PERL5 = @PERL5@
 POW_LIB = @POW_LIB@
 PPTGT = @PPTGT@
 RANLIB = @RANLIB@
+RM = @RM@
+SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 SIZEOF_DOUBLE = @SIZEOF_DOUBLE@
@@ -302,6 +349,8 @@ SIZEOF_VOID_P = @SIZEOF_VOID_P@
 SIZEOF__BOOL = @SIZEOF__BOOL@
 STRIP = @STRIP@
 SUPERUX = @SUPERUX@
+TARGET_ARCH = @TARGET_ARCH@
+TOPDIR = @TOPDIR@
 TYPE_INT16 = @TYPE_INT16@
 TYPE_INT32 = @TYPE_INT32@
 TYPE_INT64 = @TYPE_INT64@
@@ -330,8 +379,10 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
+ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 ac_ct_FC = @ac_ct_FC@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
@@ -345,6 +396,7 @@ build_cpu = @build_cpu@
 build_os = @build_os@
 build_vendor = @build_vendor@
 builddir = @builddir@
+cppCmd = @cppCmd@
 datadir = @datadir@
 datarootdir = @datarootdir@
 doQReal = @doQReal@
@@ -372,8 +424,14 @@ localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
+nativeCompiler = @nativeCompiler@
 oldincludedir = @oldincludedir@
+omniBinDir = @omniBinDir@
+omniDir = @omniDir@
+omniEtcDir = @omniEtcDir@
 omniExpT = @omniExpT@
+omniIncDir = @omniIncDir@
+omniLibDir = @omniLibDir@
 omniLimbT = @omniLimbT@
 omniQPrec = @omniQPrec@
 omniQRealFillGap = @omniQRealFillGap@
@@ -410,7 +468,7 @@ F_Front_LDADD = -L$(LIBXML_PREFIX)/lib -lxml2 -lm
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .o .obj .y
+.SUFFIXES: .c .lo .o .obj .y
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -451,6 +509,7 @@ install-binPROGRAMS: $(bin_PROGRAMS)
 	for p in $$list; do echo "$$p $$p"; done | \
 	sed 's/$(EXEEXT)$$//' | \
 	while read p p1; do if test -f $$p \
+	 || test -f $$p1 \
 	  ; then echo "$$p"; echo "$$p"; else :; fi; \
 	done | \
 	sed -e 'p;s,.*/,,;n;h' \
@@ -465,8 +524,8 @@ install-binPROGRAMS: $(bin_PROGRAMS)
 	while read type dir files; do \
 	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
 	    test -z "$$files" || { \
-	      echo " $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(bindir)$$dir'"; \
-	      $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(bindir)$$dir" || exit $$?; \
+	    echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(bindir)$$dir'"; \
+	    $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(bindir)$$dir" || exit $$?; \
 	    } \
 	; done
 
@@ -482,7 +541,13 @@ uninstall-binPROGRAMS:
 	cd "$(DESTDIR)$(bindir)" && rm -f $$files
 
 clean-binPROGRAMS:
-	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+	@list='$(bin_PROGRAMS)'; test -n "$$list" || exit 0; \
+	echo " rm -f" $$list; \
+	rm -f $$list || exit $$?; \
+	test -n "$(EXEEXT)" || exit 0; \
+	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
+	echo " rm -f" $$list; \
+	rm -f $$list
 
 F_Front$(EXEEXT): $(F_Front_OBJECTS) $(F_Front_DEPENDENCIES) $(EXTRA_F_Front_DEPENDENCIES) 
 	@rm -f F_Front$(EXEEXT)
@@ -500,8 +565,17 @@ distclean-compile:
 .c.obj:
 	$(AM_V_CC)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
+.c.lo:
+	$(AM_V_CC)$(LTCOMPILE) -c -o $@ $<
+
 .y.c:
 	$(AM_V_YACC)$(am__skipyacc) $(SHELL) $(YLWRAP) $< y.tab.c $@ y.tab.h `echo $@ | $(am__yacc_c2h)` y.output $*.output -- $(YACCCOMPILE)
+
+mostlyclean-libtool:
+	-rm -f *.lo
+
+clean-libtool:
+	-rm -rf .libs _libs
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -625,7 +699,8 @@ maintainer-clean-generic:
 	-rm -f F95-parser.c
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic clean-local mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic clean-libtool clean-local \
+	mostlyclean-am
 
 distclean: distclean-am
 	-rm -f Makefile
@@ -678,7 +753,8 @@ maintainer-clean-am: distclean-am maintainer-clean-generic
 
 mostlyclean: mostlyclean-am
 
-mostlyclean-am: mostlyclean-compile mostlyclean-generic
+mostlyclean-am: mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool
 
 pdf: pdf-am
 
@@ -693,18 +769,19 @@ uninstall-am: uninstall-binPROGRAMS
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am check check-am clean \
-	clean-binPROGRAMS clean-generic clean-local cscopelist-am \
-	ctags ctags-am distclean distclean-compile distclean-generic \
-	distclean-tags distdir dvi dvi-am html html-am html-local info \
-	info-am install install-am install-binPROGRAMS install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic pdf pdf-am ps ps-am tags tags-am uninstall \
-	uninstall-am uninstall-binPROGRAMS
+	clean-binPROGRAMS clean-generic clean-libtool clean-local \
+	cscopelist-am ctags ctags-am distclean distclean-compile \
+	distclean-generic distclean-libtool distclean-tags distdir dvi \
+	dvi-am html html-am html-local info info-am install install-am \
+	install-binPROGRAMS install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags tags-am uninstall uninstall-am \
+	uninstall-binPROGRAMS
 
 
 C-exprcode.h: C-exprcode.def C-exprcode.h.awk

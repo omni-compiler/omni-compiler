@@ -3,27 +3,48 @@ dnl    generate the file "configure", which is run during Omni installation
 dnl    to configure the system for the local environment.
 
 AC_PREREQ(2.60)
+LT_PREREQ(2.4)
 
 # --------------------------------------------------------------------
 # Let the initiation begin....
 
 AC_INIT([Omni XcalableMP Compiler], [0.6.1], [xmp-users@hpcs.cs.tsukuba.ac.jp], [omni_xmp])
 
-program_prefix=''
+AC_CONFIG_AUX_DIR([./buildutils])
+AC_CONFIG_MACRO_DIR([./buildutils])
 
-AC_CONFIG_AUX_DIR([buildutils])
-AC_CONFIG_MACRO_DIR([buildutils])
-
+AC_CANONICAL_BUILD
+AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([include/exc_platform.h])
-AC_CONFIG_HEADER([include/config.h])
-AC_PREFIX_DEFAULT(/usr/local/omni3)
+AC_CONFIG_HEADER([include/config.h Driver/atool/src/include/nata/nata_config.h])
 
+SHELL=`which bash` > /dev/null 2>&1
+if test $? -ne 0 -o -z "${SHELL}"; then
+   AC_MSG_ERROR([To run libtool you need a bash, not /bin/sh.])
+   exit 1
+fi
+export SHELL
+AC_SUBST(SHELL)
+
+LT_INIT
+AC_SUBST(LIBTOOL)
+AC_SUBST(LIBTOOL_DEPS)
+
+AM_INIT_AUTOMAKE([no-define foreign])
+
+AC_PREFIX_DEFAULT(/usr/local/omni3)
 if test "${prefix}" = "NONE"; then
 	prefix=/usr/local/omni3
 fi
+if test "${exec_prefix}" = "NONE"; then
+    exec_prefix='${prefix}'
+fi
+program_prefix=''
+
+TOPDIR=${ac_pwd}
+AC_SUBST(TOPDIR)
 
 # --------------------------------------------------------------------
 
@@ -478,6 +499,7 @@ AC_ARG_WITH(backend-cflag,
 
 AC_PROG_CC
 AC_PROG_CXX
+AC_PROG_INSTALL
 
 # --------------------------------------------------------------------
 if test "x${doDebug}" = "xyes"; then
@@ -1030,7 +1052,7 @@ AC_CHECK_FUNC(strtold, , AC_MSG_ERROR([strtold not found]))
 #       if not, set the GETTOD_NOT_DECLARED flag so that tclPort.h can
 #       declare it.
 #--------------------------------------------------------------------
-AC_CHECK_FUNCS(gettimeofday, , AC_DEFINE(NO_GETTOD))
+AC_CHECK_FUNCS(gettimeofday, , [AC_DEFINE(NO_GETTOD)])
 AH_TEMPLATE(NO_GETTOD, [no gettimeofday])
 AC_EGREP_HEADER(gettimeofday, sys/time.h, , AC_DEFINE(GETTOD_NOT_DECLARED))
 AH_TEMPLATE(GETTOD_NOT_DECLARED, [not declared gettimeofday in sys/time.h])
@@ -1534,7 +1556,7 @@ AC_SUBST(GPGPU_PREFIX)
 # --------------------------------------------------------------------
 # Export Omni Config Variable
 
-OMNI_HOME=$prefix
+OMNI_HOME=${prefix}
 AC_SUBST(OMNI_HOME)
 AH_TEMPLATE(OMNI_HOME, [omni compiler install directory])
 AC_DEFINE_UNQUOTED(OMNI_HOME, "${OMNI_HOME}")
@@ -1595,15 +1617,6 @@ AC_SUBST(XMPPKG_PRIORITY)
 AC_SUBST(XMPPKG_CHANGELOG_DATE)
 AM_SUBST_NOTMAKE(XMPPKG_DESCRIPTION)
 
-# --------------------------------------------------------------------
-
-# ----start to atool---------
-ATOOL_DIR=./Driver/atool
-AC_SUBST(ATOOL_DIR)
-# -----end of atool----------
-
-# --------------------------------------------------------------------
-
 AC_CONFIG_FILES(
 	Makefile
 	release/debian/changelog
@@ -1614,45 +1627,10 @@ AC_CONFIG_FILES(
 	release/make_deb.sh
 )
 
-#AC_OUTPUT
+# --------------------------------------------------------------------
 
-# ------------------------start to atool------------------------------
-TOPDIR=${ac_pwd}
-AC_SUBST(TOPDIR)
-
-#AC_CONFIG_AUX_DIR(./Driver/atool/mk)
-#AC_CONFIG_MACRO_DIR(./Driver/atool/mk)
-
-AM_INIT_AUTOMAKE([foreign])
-
-if test "${prefix}" = "NONE"; then
-    prefix=/usr/local
-fi
-if test "${exec_prefix}" = "NONE"; then
-    exec_prefix='${prefix}'
-fi
-
-SHELL=`which bash` > /dev/null 2>&1
-if test $? -ne 0 -o -z "${SHELL}"; then
-   AC_MSG_ERROR([To run libtool you need a bash, not /bin/sh.])
-   exit 1
-fi
-export SHELL
-AC_SUBST(SHELL)
-
-LT_PREREQ(2.4)
-
-LT_INIT
-AC_SUBST(LIBTOOL)
-AC_SUBST(LIBTOOL_DEPS)
-
-AC_CANONICAL_BUILD
-AC_CANONICAL_HOST
-#AC_CANONICAL_TARGET
-
-AC_PROG_INSTALL
-AC_PROG_CC
-AC_PROG_CXX
+ATOOL_DIR=./Driver/atool
+AC_SUBST(ATOOL_DIR)
 
 RM="rm -f"
 AC_SUBST(RM)
@@ -1660,48 +1638,26 @@ AC_SUBST(RM)
 MKDIR="mkdir -p"
 AC_SUBST(MKDIR)
 
-
 # headers/macros
+AC_CHECK_HEADER(sys/param.h, [AC_DEFINE([HAVE_SYS_PARAM_H], [1], [ ])])
+AC_CHECK_HEADER(ctype.h, [AC_DEFINE([HAVE_CTYPE_H], [1], [ ])])
+AC_CHECK_HEADER(stdio.h, [AC_DEFINE([HAVE_STDIO_H], [1], [ ])])
+AC_CHECK_HEADER(stdarg.h, [AC_DEFINE([HAVE_STDARG_H], [1], [ ])])
+AC_CHECK_HEADER(dirent.h, [AC_DEFINE([HAVE_DIRENT_H], [1], [ ])])
+AC_CHECK_HEADER(time.h, [AC_DEFINE([HAVE_TIME_H], [1], [ ])])
+AC_CHECK_HEADER(sys/termios.h, [AC_DEFINE([HAVE_SYS_TERMIOS_H], [1], [ ])])
+AC_CHECK_HEADER(signal.h, [AC_DEFINE([HAVE_SIGNAL_H], [1], [ ])])
+AC_CHECK_HEADER(netdb.h, [AC_DEFINE([HAVE_NETDB_H], [1], [ ])])
+AC_CHECK_HEADER(netinet/tcp.h, [AC_DEFINE([HAVE_NETINET_TCP_H], [1], [ ])])
+AC_CHECK_HEADER(sys/socket.h, [AC_DEFINE([HAVE_SYS_SOCKET_H], [1], [ ])])
+AC_CHECK_HEADER(arpa/inet.h, [AC_DEFINE([HAVE_ARPA_INET_H], [1], [ ])])
+AC_CHECK_HEADER(sys/ioctl.h, [AC_DEFINE([HAVE_SYS_IOCTL_H], [1], [ ])])
+AC_CHECK_HEADER(pthread.h, [AC_DEFINE([HAVE_PTHREAD_H], [1], [ ])])
+AC_CHECK_HEADER(stdbool.h, [AC_DEFINE([HAVE_STDBOOL_H], [1], [ ])])
+AC_CHECK_HEADER(sys/resource.h, [AC_DEFINE([HAVE_SYS_RESOURCE_H], [1], [ ])])
+AC_CHECK_HEADER(regex.h, [AC_DEFINE([HAVE_REGEX_H], [1], [ ])])
 
-AC_CONFIG_HEADER([./Driver/atool/src/include/nata/nata_config.h])
-
-#AC_C_BIGENDIAN
-
-AC_HEADER_STDC
-
-AC_CHECK_HEADER(inttypes.h, [AC_DEFINE(HAVE_INTTYPES_H)], [])
-AC_CHECK_HEADER(stdint.h, [AC_DEFINE(HAVE_STDINT_H)])
-AC_CHECK_HEADER(limits.h, [AC_DEFINE(HAVE_LIMITS_H)])
-AC_CHECK_HEADER(sys/param.h, [AC_DEFINE(HAVE_SYS_PARAM_H)])
-AC_CHECK_HEADER(sys/types.h, [AC_DEFINE(HAVE_SYS_TYPES_H)])
-AC_CHECK_HEADER(ctype.h, [AC_DEFINE(HAVE_CTYPE_H)])
-AC_CHECK_HEADER(stdio.h, [AC_DEFINE(HAVE_STDIO_H)])
-AC_CHECK_HEADER(stdlib.h, [AC_DEFINE(HAVE_STDLIB_H)])
-AC_CHECK_HEADER(unistd.h, [AC_DEFINE(HAVE_UNISTD_H)])
-AC_CHECK_HEADER(memory.h, [AC_DEFINE(HAVE_MEMORY_H)])
-AC_CHECK_HEADER(string.h, [AC_DEFINE(HAVE_STRING_H)])
-AC_CHECK_HEADER(malloc.h, [AC_DEFINE(HAVE_MALLOC_H)])
-AC_CHECK_HEADER(stdarg.h, [AC_DEFINE(HAVE_STDARG_H)])
-AC_CHECK_HEADER(dirent.h, [AC_DEFINE(HAVE_DIRENT_H)])
-AC_CHECK_HEADER(time.h, [AC_DEFINE(HAVE_TIME_H)])
-AC_CHECK_HEADER(sys/time.h, [AC_DEFINE(HAVE_SYS_TIME_H)])
-AC_CHECK_HEADER(sys/termios.h, [AC_DEFINE(HAVE_SYS_TERMIOS_H)])
-AC_CHECK_HEADER(sys/stat.h, [AC_DEFINE(HAVE_SYS_STAT_H)])
-AC_CHECK_HEADER(fcntl.h, [AC_DEFINE(HAVE_FCNTL_H)])
-AC_CHECK_HEADER(errno.h, [AC_DEFINE(HAVE_ERRNO_H)])
-AC_CHECK_HEADER(signal.h, [AC_DEFINE(HAVE_SIGNAL_H)])
-AC_CHECK_HEADER(netdb.h, [AC_DEFINE(HAVE_NETDB_H)])
-AC_CHECK_HEADER(netinet/tcp.h, [AC_DEFINE(HAVE_NETINET_TCP_H)])
-AC_CHECK_HEADER(sys/socket.h, [AC_DEFINE(HAVE_SYS_SOCKET_H)])
-AC_CHECK_HEADER(arpa/inet.h, [AC_DEFINE(HAVE_ARPA_INET_H)])
-AC_CHECK_HEADER(sys/ioctl.h, [AC_DEFINE(HAVE_SYS_IOCTL_H)])
-AC_CHECK_HEADER(sys/wait.h, [AC_DEFINE(HAVE_SYS_WAIT_H)])
-AC_CHECK_HEADER(pthread.h, [AC_DEFINE(HAVE_PTHREAD_H)])
-AC_CHECK_HEADER(stdbool.h, [AC_DEFINE(HAVE_STDBOOL_H)])
-AC_CHECK_HEADER(sys/resource.h, [AC_DEFINE(HAVE_SYS_RESOURCE_H)])
-AC_CHECK_HEADER(regex.h, [AC_DEFINE(HAVE_REGEX_H)])
-
-AC_CHECK_FUNC(strtold, [AC_DEFINE(HAVE_STRTOLD)])
+AC_CHECK_FUNC(strtold, [AC_DEFINE([HAVE_STRTOLD], [1], [ ])])
 
 # Assume 32 bit for cross compilation.
 AC_CHECK_SIZEOF(short int, 2)
@@ -1712,7 +1668,9 @@ AC_CHECK_SIZEOF(int64_t, 8)
 AC_CHECK_SIZEOF(size_t, 4)
 AC_CHECK_SIZEOF(void *, 4)
 
+oCPPFLAGS=${CPPFLAGS}
 oCFLAGS=${CFLAGS}
+CPPFLAGS=''
 CFLAGS="${CFLAGS} -Wall -Werror"
 AC_MSG_CHECKING([print format for size_t])
 AC_RUN_IFELSE(
@@ -1724,11 +1682,12 @@ AC_RUN_IFELSE(
 		 [snprintf(buf, sizeof(buf), "%zu", (size_t)1);]
 		 [return (strcmp("1", buf) == 0 && strlen(buf) == 1) ? ]
 		 [0 : 1;]])],
-	[AC_DEFINE(HAVE_PRINT_FORMAT_FOR_SIZE_T)
+	[AC_DEFINE([HAVE_PRINT_FORMAT_FOR_SIZE_T], [], [ ])
 	 AC_MSG_RESULT([available.])],
 	[AC_MSG_RESULT([not available.])],
 	[AC_MSG_RESULT([not checkable since cross-compilation.])])
 CFLAGS=${oCFLAGS}
+CPPFLAGS=${oCPPFLAGS}
 
 # where the omni is.
 tmpOmniDir=''
@@ -1925,21 +1884,18 @@ AC_CONFIG_FILES(
 )
 
 AC_CONFIG_COMMANDS([modify-config],
-	[sh Driver/atool/mk/finalizeconfig ${OS_CPPFLAGS}],
+	[(cd Driver/atool && sh ./mk/finalizeconfig ${OS_CPPFLAGS})],
 	[OS_CPPFLAGS="${OS_CPPFLAGS}"])
 
 AC_CONFIG_COMMANDS([includes],
-	[sh Driver/atool/mk/initheaders])
+	[sh ./Driver/atool/mk/initheaders])
 
 AC_CONFIG_COMMANDS([depend],
-	[sh Driver/atool/mk/initdepend &&  ${MAKE} -f Driver/atool/Makefile depend],
+	[(sh ./Driver/atool/mk/initdepend && cd ./Driver/atool && ${MAKE} depend)],
 	[MAKE=${MAKE}])
 
 AC_CONFIG_COMMANDS([config-clean],
 	[rm -rf ./config.log ./config.status.* autom4te.cache])
 
 AC_OUTPUT
-cd ${TOPDIR}/Driver/atool/
 ${MAKE} clean
-# ------------------------end of atool -------------------------------
-
