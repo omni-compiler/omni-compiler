@@ -1597,6 +1597,11 @@ AM_SUBST_NOTMAKE(XMPPKG_DESCRIPTION)
 
 # --------------------------------------------------------------------
 
+# ----start to atool---------
+ATOOL_DIR=./Driver/atool
+AC_SUBST(ATOOL_DIR)
+# -----end of atool----------
+
 # --------------------------------------------------------------------
 
 AC_CONFIG_FILES(
@@ -1609,5 +1614,332 @@ AC_CONFIG_FILES(
 	release/make_deb.sh
 )
 
+#AC_OUTPUT
+
+# ------------------------start to atool------------------------------
+TOPDIR=${ac_pwd}
+AC_SUBST(TOPDIR)
+
+#AC_CONFIG_AUX_DIR(./Driver/atool/mk)
+#AC_CONFIG_MACRO_DIR(./Driver/atool/mk)
+
+AM_INIT_AUTOMAKE([foreign])
+
+if test "${prefix}" = "NONE"; then
+    prefix=/usr/local
+fi
+if test "${exec_prefix}" = "NONE"; then
+    exec_prefix='${prefix}'
+fi
+
+SHELL=`which bash` > /dev/null 2>&1
+if test $? -ne 0 -o -z "${SHELL}"; then
+   AC_MSG_ERROR([To run libtool you need a bash, not /bin/sh.])
+   exit 1
+fi
+export SHELL
+AC_SUBST(SHELL)
+
+LT_PREREQ(2.4)
+
+LT_INIT
+AC_SUBST(LIBTOOL)
+AC_SUBST(LIBTOOL_DEPS)
+
+AC_CANONICAL_BUILD
+AC_CANONICAL_HOST
+#AC_CANONICAL_TARGET
+
+AC_PROG_INSTALL
+AC_PROG_CC
+AC_PROG_CXX
+
+RM="rm -f"
+AC_SUBST(RM)
+
+MKDIR="mkdir -p"
+AC_SUBST(MKDIR)
+
+
+# headers/macros
+
+AC_CONFIG_HEADER([./Driver/atool/src/include/nata/nata_config.h])
+
+#AC_C_BIGENDIAN
+
+AC_HEADER_STDC
+
+AC_CHECK_HEADER(inttypes.h, [AC_DEFINE(HAVE_INTTYPES_H)], [])
+AC_CHECK_HEADER(stdint.h, [AC_DEFINE(HAVE_STDINT_H)])
+AC_CHECK_HEADER(limits.h, [AC_DEFINE(HAVE_LIMITS_H)])
+AC_CHECK_HEADER(sys/param.h, [AC_DEFINE(HAVE_SYS_PARAM_H)])
+AC_CHECK_HEADER(sys/types.h, [AC_DEFINE(HAVE_SYS_TYPES_H)])
+AC_CHECK_HEADER(ctype.h, [AC_DEFINE(HAVE_CTYPE_H)])
+AC_CHECK_HEADER(stdio.h, [AC_DEFINE(HAVE_STDIO_H)])
+AC_CHECK_HEADER(stdlib.h, [AC_DEFINE(HAVE_STDLIB_H)])
+AC_CHECK_HEADER(unistd.h, [AC_DEFINE(HAVE_UNISTD_H)])
+AC_CHECK_HEADER(memory.h, [AC_DEFINE(HAVE_MEMORY_H)])
+AC_CHECK_HEADER(string.h, [AC_DEFINE(HAVE_STRING_H)])
+AC_CHECK_HEADER(malloc.h, [AC_DEFINE(HAVE_MALLOC_H)])
+AC_CHECK_HEADER(stdarg.h, [AC_DEFINE(HAVE_STDARG_H)])
+AC_CHECK_HEADER(dirent.h, [AC_DEFINE(HAVE_DIRENT_H)])
+AC_CHECK_HEADER(time.h, [AC_DEFINE(HAVE_TIME_H)])
+AC_CHECK_HEADER(sys/time.h, [AC_DEFINE(HAVE_SYS_TIME_H)])
+AC_CHECK_HEADER(sys/termios.h, [AC_DEFINE(HAVE_SYS_TERMIOS_H)])
+AC_CHECK_HEADER(sys/stat.h, [AC_DEFINE(HAVE_SYS_STAT_H)])
+AC_CHECK_HEADER(fcntl.h, [AC_DEFINE(HAVE_FCNTL_H)])
+AC_CHECK_HEADER(errno.h, [AC_DEFINE(HAVE_ERRNO_H)])
+AC_CHECK_HEADER(signal.h, [AC_DEFINE(HAVE_SIGNAL_H)])
+AC_CHECK_HEADER(netdb.h, [AC_DEFINE(HAVE_NETDB_H)])
+AC_CHECK_HEADER(netinet/tcp.h, [AC_DEFINE(HAVE_NETINET_TCP_H)])
+AC_CHECK_HEADER(sys/socket.h, [AC_DEFINE(HAVE_SYS_SOCKET_H)])
+AC_CHECK_HEADER(arpa/inet.h, [AC_DEFINE(HAVE_ARPA_INET_H)])
+AC_CHECK_HEADER(sys/ioctl.h, [AC_DEFINE(HAVE_SYS_IOCTL_H)])
+AC_CHECK_HEADER(sys/wait.h, [AC_DEFINE(HAVE_SYS_WAIT_H)])
+AC_CHECK_HEADER(pthread.h, [AC_DEFINE(HAVE_PTHREAD_H)])
+AC_CHECK_HEADER(stdbool.h, [AC_DEFINE(HAVE_STDBOOL_H)])
+AC_CHECK_HEADER(sys/resource.h, [AC_DEFINE(HAVE_SYS_RESOURCE_H)])
+AC_CHECK_HEADER(regex.h, [AC_DEFINE(HAVE_REGEX_H)])
+
+AC_CHECK_FUNC(strtold, [AC_DEFINE(HAVE_STRTOLD)])
+
+# Assume 32 bit for cross compilation.
+AC_CHECK_SIZEOF(short int, 2)
+AC_CHECK_SIZEOF(int, 4)
+AC_CHECK_SIZEOF(long int, 4)
+AC_CHECK_SIZEOF(long long, 8)
+AC_CHECK_SIZEOF(int64_t, 8)
+AC_CHECK_SIZEOF(size_t, 4)
+AC_CHECK_SIZEOF(void *, 4)
+
+oCFLAGS=${CFLAGS}
+CFLAGS="${CFLAGS} -Wall -Werror"
+AC_MSG_CHECKING([print format for size_t])
+AC_RUN_IFELSE(
+	[AC_LANG_PROGRAM(
+		[[#include <stdio.h>]
+		 [#include <stddef.h>]
+		 [#include <string.h>]],
+		[[char buf[24];]
+		 [snprintf(buf, sizeof(buf), "%zu", (size_t)1);]
+		 [return (strcmp("1", buf) == 0 && strlen(buf) == 1) ? ]
+		 [0 : 1;]])],
+	[AC_DEFINE(HAVE_PRINT_FORMAT_FOR_SIZE_T)
+	 AC_MSG_RESULT([available.])],
+	[AC_MSG_RESULT([not available.])],
+	[AC_MSG_RESULT([not checkable since cross-compilation.])])
+CFLAGS=${oCFLAGS}
+
+# where the omni is.
+tmpOmniDir=''
+omniDir="${OMNI_HOME}"
+omniBinDir=''
+omniLibDir=''
+omniEtcDir="${OM_DRIVER_CONF_DIR}/"
+omniIncDir=''
+AC_ARG_WITH([omni],
+	[AS_HELP_STRING([--with-omni],
+		[specify where the omni is installed (prefix default).])],
+	[tmpOmniDir=${withval}],
+	[tmpOmniDir=${prefix}])
+if test -z "${tmpOmniDir}"; then
+    tmpOmniDir=${defaultOmniDir}
+fi
+AC_MSG_CHECKING([the Omni is installed at "${tmpOmniDir}"])
+if test -d "${tmpOmniDir}"; then
+    if test -x "${tmpOmniDir}/bin/F_Front"; then
+	omniDir="${tmpOmniDir}"
+	AC_MSG_RESULT([yes.])
+    else
+	omniDir=''
+	AC_MSG_RESULT([no. Assume every user sets path correctly.])
+    fi
+fi
+if test ! -z "${omniDir}"; then
+    # Don't delete the last slash.
+    omniBinDir="${omniDir}"/bin/
+    omniLibDir="${omniDir}"/lib/
+#    omniEtcDir="${omniDir}"/etc/
+    omniIncDir="${omniDir}"/include
+fi
+
+AC_SUBST(omniDir)
+AC_SUBST(omniBinDir)
+AC_SUBST(omniLibDir)
+AC_SUBST(omniEtcDir)
+AC_SUBST(omniIncDir)
+
+# native compiler
+tmpNativeCompiler=''
+AC_ARG_WITH([nativeCompiler],
+	[AS_HELP_STRING([--with-nativeCompiler],
+		[specify a native fortran compiler ("gfortran" default).])],
+	[tmpNativeCompiler=${withval}],
+	[tmpNativeCompiler="gfortran"])
+nativeCompiler=${tmpNativeCompiler}
+AC_SUBST(nativeCompiler)
+
+checkCpp() {
+    __ret=1
+    __tmpFileBase=/tmp/.cpptest.$$
+    __tmpFile=${__tmpFileBase}.F90
+    __data=`date | base64 2>/dev/null`
+    echo "#ifdef __XMP_CPP_CHECK__" > ${__tmpFile}
+    echo ${__data} >> ${__tmpFile}
+    echo "#endif" >> ${__tmpFile}
+    __vdata=`$* -D__XMP_CPP_CHECK__ ${__tmpFile} 2>/dev/null | grep "${__data}" 2>/dev/null`
+    rm -f ${__tmpFileBase}*
+    if test "x${__data}" = "x${__vdata}"; then
+        __ret=0
+    fi
+    unset __tmpFile __data __vdata
+    return ${__ret}
+}
+
+# cpp
+cppCmd=''
+tmpCppCmd=''
+AC_ARG_WITH([cpp],
+	[AS_HELP_STRING([--with-cpp],
+		[specify a cpp command (native compiler default).])],
+	[tmpCppCmd=${withval}],
+	[tmpCppCmd=${nativeCompiler}])
+AC_MSG_CHECKING(["${tmpCppCmd}" is a C preprosessor])
+checkCpp ${tmpCppCmd}
+if test $? -eq 0; then
+    AC_MSG_RESULT([yes, it is.])
+    cppCmd=${tmpCppCmd}
+else
+    AC_MSG_RESULT([no, it isn't.])
+    AC_MSG_CHECKING(["${nativeCompiler} -E" acts like cpp])
+    checkCpp ${nativeCompiler} -E
+    if test $? -eq 0; then
+        AC_MSG_RESULT([yes, it does.])
+        cppCmd=${nativeCompiler}
+    else
+	AC_MSG_RESULT([no, it doesn't.])
+    fi
+fi
+if test -z "${cppCmd}"; then
+   AC_MSG_FAILURE([Can't find any usable C preprosessor.])
+   exit 1
+fi
+AC_SUBST(cppCmd)
+
+# sysdeps.
+
+eval `echo ${target} | awk -F- '{ printf "tagCPU=%s; tagOS=%s;\n", $1, $3 }'`
+
+changequote(<<, >>)dnl
+CPU=`echo ${tagCPU} | tr '[A-Z]' '[a-z]'`
+OS=`echo ${tagOS} | tr '[A-Z]' '[a-z]'` 
+changequote([, ])dnl
+unset tagOS tagCPU
+
+case $CPU in
+    i*86)
+        CPU=i386;;
+esac
+
+OS_CPPFLAGS='-D_REENTRANT'
+OS_LDFLAGS=''
+OS_LIBS=''
+OS_CFLAGS=''
+if test -z "${MAKE}"; then
+	MAKE=make
+fi
+
+API_FLAVOR=NATA_API_POSIX
+TARGET_ARCH=POSIX
+case $OS in
+    sunos*)
+        OS=sunos;;
+    solaris*)
+        OS=solaris;;
+    freebsd*)
+	OS=freebsd;;
+    linux*)
+	OS_CPPFLAGS="${OS_CPPFLAGS} -D_GNU_SOURCE"
+	OS_LIBS="-lrt -lpthread"
+	OS=linux;;
+    netbsd*)
+        MAKE=gmake
+        OS_CPPFLAGS="${OS_CPPFLAGS} -I/usr/pkg/include"
+    	OS_LDFLAGS="-L/usr/pkg/lib"
+	OS_LIBS="-lpthread"
+	OS=netbsd;;
+    cygwin*)
+	OS=cygwin;;
+    mingw32ce)
+	OS=windowsce
+	TARGET_ARCH=WINDOWS
+	API_FLAVOR=NATA_API_WIN32API;;
+    mingw32*)
+	case $CPU in
+	    x86_64*)
+		OS=windows64;;
+	    i*86)
+		OS=windows32;;
+	    *)
+		OS=windows;;
+	esac
+	OS_LIBS="-lpthread -loleaut32 -lws2_32 -lwinmm"
+	TARGET_ARCH=WINDOWS
+	API_FLAVOR=NATA_API_WIN32API;;
+esac
+
+OS_CXXFLAGS=${OS_CFLAGS}
+AC_SUBST(MAKE)
+AC_SUBST(OS_CPPFLAGS)
+AC_SUBST(OS_CFLAGS)
+AC_SUBST(OS_CXXFLAGS)
+AC_SUBST(OS_LDFLAGS)
+AC_SUBST(OS_LIBS)
+
+changequote(<<, >>)dnl
+CPUDEF=NATA_CPU_`echo $CPU | tr '[a-z]' '[A-Z]'`
+OSDEF=NATA_OS_`echo $OS | tr '[a-z]' '[A-Z]'`
+changequote([, ])dnl
+AC_SUBST(CPUDEF)
+AC_SUBST(OSDEF)
+AC_SUBST(API_FLAVOR)
+AC_SUBST(TARGET_ARCH)
+
+MKRULESDIR=${TOPDIR}/Driver/atool/mk
+AC_SUBST(MKRULESDIR)
+
+AC_SUBST(CPPFLAGS)
+AC_SUBST(CFLAGS)
+AC_SUBST(CXXFLAGS)
+AC_SUBST(LDFLAGS)
+
+# emit.
+AC_CONFIG_FILES(
+	Driver/atool/mk/vars.mk
+	Driver/atool/Makefile
+	Driver/atool/src/lib/Makefile
+	Driver/atool/src/include/nata/Makefile
+	Driver/atool/src/include/nata/nata_platform.h
+	Driver/atool/src/cmd/Makefile
+	Driver/atool/src/cmd/paths.h
+)
+
+AC_CONFIG_COMMANDS([modify-config],
+	[sh Driver/atool/mk/finalizeconfig ${OS_CPPFLAGS}],
+	[OS_CPPFLAGS="${OS_CPPFLAGS}"])
+
+AC_CONFIG_COMMANDS([includes],
+	[sh Driver/atool/mk/initheaders])
+
+AC_CONFIG_COMMANDS([depend],
+	[sh Driver/atool/mk/initdepend &&  ${MAKE} -f Driver/atool/Makefile depend],
+	[MAKE=${MAKE}])
+
+AC_CONFIG_COMMANDS([config-clean],
+	[rm -rf ./config.log ./config.status.* autom4te.cache])
+
 AC_OUTPUT
+cd ${TOPDIR}/Driver/atool/
+${MAKE} clean
+# ------------------------end of atool -------------------------------
 
