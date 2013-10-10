@@ -50,12 +50,12 @@ WARN_BASE_CFLAGS	+= -W -Wall -Wextra -pedantic \
 	-Wcast-align \
 	-Wwrite-strings \
 	-Wconversion \
-	-Waddress \
 	-Wmissing-format-attribute \
 	-Wno-long-long \
 	-Wno-variadic-macros
 
 #	-Wlogical-op
+#	-Waddress 
 
 WARN_CFLAGS	+= $(WARN_BASE_CFLAGS) \
 	-Wstrict-prototypes \
