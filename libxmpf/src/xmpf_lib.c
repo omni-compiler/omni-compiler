@@ -411,8 +411,8 @@ void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
   src_ser_size = src_array->info[src_block_dim].ser_size;
   type_size = dst_array->type_size;
 
-  count =  dst_chunk_size * src_chunk_size * type_size;
-  bufsize = count * nnodes;
+  count =  dst_chunk_size * src_chunk_size;
+  bufsize = count * nnodes * type_size;
 
   _XMPF_check_reflect_type();
 
@@ -423,13 +423,9 @@ void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
       sendbuf = dst_array->array_addr_p;
     }
     // src_array -> sendbuf
-    int k;
-    for (int i = 0; i < nnodes; i++){
-      k= 0;
-      _XMPF_pack_vector((char *)sendbuf + i * count,
-         (char *)src_array->array_addr_p + (i * dst_chunk_size*type_size),
-          src_chunk_size, dst_chunk_size * type_size, dst_ser_size*type_size);
-    }
+    _XMPF_pack_vector2((char *)sendbuf, (char *)src_array->array_addr_p ,
+                       src_chunk_size, dst_chunk_size, nnodes, type_size,
+                       src_block_dim);
   }
   else {
     sendbuf = src_array->array_addr_p;
@@ -440,17 +436,12 @@ void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
   }else if (*opt ==1){
     recvbuf = src_array->array_addr_p;
   }
-  MPI_Alltoall(sendbuf, count, MPI_BYTE, recvbuf, count, MPI_BYTE,
-               *((MPI_Comm *)src_array->align_template->onto_nodes->comm));
+  MPI_Alltoall(sendbuf, count * type_size, MPI_BYTE, recvbuf, count * type_size,
+               MPI_BYTE, *((MPI_Comm *)src_array->align_template->onto_nodes->comm));
 
   if (dst_block_dim == 1){
-    int k;
-    for (int i = 0; i < nnodes; i++){
-      k = 0;
-      _XMPF_unpack_transpose_vector((char *)dst_array->array_addr_p + i * src_chunk_size * type_size,
-         (char *)recvbuf + i * count, src_chunk_size, dst_chunk_size, type_size,
-          dst_chunk_size, src_ser_size);
-    }
+    _XMPF_unpack_transpose_vector((char *)dst_array->array_addr_p ,
+       (char *)recvbuf , src_ser_size, dst_chunk_size, type_size, dst_block_dim);
 
     if (*opt==0){
       _XMP_free(recvbuf);

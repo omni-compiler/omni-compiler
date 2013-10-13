@@ -22,6 +22,21 @@ void _XMPF_pack_vector(char * restrict dst, char * restrict src,
 
 }
 
+void _XMPF_pack_vector2(char * restrict dst, char * restrict src,
+                       int count, int blocklength,
+                       int nnodes, int type_size, int src_block_dim){
+  long j,k;
+  if (src_block_dim == 1){
+#pragma omp parallel for
+    for (j = 0; j < count; j++){
+      for (k = 0; k < nnodes; k++){
+        memcpy(dst + ((k * count +j ) * blocklength ) * type_size,
+               src + ((k + j * nnodes) * blocklength ) * type_size,
+               blocklength * type_size);
+      }
+    }
+  }
+}
 
 void _XMPF_unpack_vector(char * restrict dst, char * restrict src,
 			 int count, int blocklength, int stride){
@@ -41,46 +56,36 @@ void _XMPF_unpack_vector(char * restrict dst, char * restrict src,
 }
 
 void _XMPF_unpack_transpose_vector(char * restrict dst, char * restrict src,
-                                   int icount, int jcount, int type_size,
-                                   int src_stride, int dst_stride){
-
+                                   int dst_stride, int src_stride,
+                                   int type_size, int dst_block_dim){
   long i,j;
-  if (_xmp_omp_num_procs > 1 && icount > 8 * _xmp_omp_num_procs){
+  if (dst_block_dim == 1){
     if (type_size == 16){
       long ii,jj,nblk=16;
       double _Complex *dst0 = (double _Complex *)dst;
       double _Complex *src0 = (double _Complex *)src;
-      for (jj = 0; jj < jcount; jj+=nblk){
+      for (jj = 0; jj < src_stride; jj+=nblk){
+        long jmin=((jj+nblk) < src_stride)? (jj+nblk):src_stride;
 #pragma omp parallel for
-        for (ii = 0; ii < icount; ii+=nblk){
-          long jmin=((jj+nblk) < jcount)? (jj+nblk):jcount;
+        for (ii = 0; ii < dst_stride; ii+=nblk){
+          long imin=((ii+nblk) < dst_stride)? (ii+nblk):dst_stride;
           for (j = jj; j < jmin; j++){
-            long imin=((ii+nblk) < icount)? (ii+nblk):icount;
             for (i = ii; i < imin; i++){
-              dst0[j * dst_stride + i]=src0[i * src_stride + j];
+              dst0[j * dst_stride + i] = src0[i * src_stride + j];
             }
           }
         }
       }
     }
     else {
-      for (j = 0; j < jcount; j++){
-        for (i = 0; i < icount; i++){
-          memcpy(dst + j * dst_stride * type_size + i * type_size,
-                 src + i * src_stride * type_size + j * type_size, type_size);
+      for (j = 0; j < src_stride; j++){
+        for (i = 0; i < dst_stride; i++){
+          memcpy(dst + (j * dst_stride + i) * type_size,
+                 src + (i * src_stride + j) * type_size, type_size);
         }
       }
     }
   }
-  else {
-    for (j = 0; j < jcount; j++){
-      for (i = 0; i < icount; i++){
-        memcpy(dst + j * dst_stride * type_size + i * type_size,
-               src + i * src_stride * type_size + j * type_size, type_size);
-      }
-    }
-  }
-
 }
 
 #include "xmpf_internal.h"
