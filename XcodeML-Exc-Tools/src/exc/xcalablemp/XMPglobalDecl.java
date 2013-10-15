@@ -5,7 +5,6 @@
  */
 
 package exc.xcalablemp;
-
 import exc.object.*;
 import exc.block.*;
 import xcodeml.util.XmOption;
@@ -80,10 +79,11 @@ public class XMPglobalDecl {
     //    Ident argv = Ident.Param("argv", Xtype.Pointer(Xtype.Pointer(Xtype.charType)));   // create "int argc" & "char **argv"
     //    XobjList args = Xcons.List(Ident.Param("argc", Xtype.intType), argv);
     
-    String fileName = _env.getSourceFileName();
-    int fileNameLength = fileName.length();
-    String moduleName = new String(fileName.substring(0,fileNameLength-2));  // hoge.c -> hoge
-    moduleName = "__" + moduleName + "_xmpc_module_init_";                   // __hoge_xmpc_module_init_
+    String fullPath = _env.getSourceFileName();
+    int dot = fullPath.lastIndexOf('.');
+    int sep = fullPath.lastIndexOf('/');
+    String moduleName = fullPath.substring(sep + 1, dot);                 // ./fuga/hoge.c -> hoge
+    moduleName = "__" + moduleName + "_xmpc_module_init_";                // __hoge_xmpc_module_init_
 
     //    _globalConstructorFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT, declExternFunc(moduleName).Call(null)));
     Xtype funcType = Xtype.Function(Xtype.voidType);
@@ -121,10 +121,12 @@ public class XMPglobalDecl {
     //                              Xcons.List(Xcode.GCC_ATTRIBUTE,
     //                              new Ident("destructor", null, null, null, null), Xcons.List())));
     //    Ident funcId = _env.declStaticIdent("_XMP_destructor", funcType);
-    String fileName = _env.getSourceFileName();
-    int fileNameLength = fileName.length();
-    String moduleName = new String(fileName.substring(0,fileNameLength-2));  // hoge.c -> hoge
-    moduleName = "__" + moduleName + "_xmpc_module_finalize_";               // __hoge_xmpc_module_finalize_
+
+    String fullPath = _env.getSourceFileName();
+    int dot = fullPath.lastIndexOf('.');
+    int sep = fullPath.lastIndexOf('/');
+    String moduleName =fullPath.substring(sep + 1, dot);                 // ./fuga/hoge.c -> hoge
+    moduleName = "__" + moduleName + "_xmpc_module_finalize_";           // __hoge_xmpc_module_finalize_
     Ident funcId = _env.declExternIdent(moduleName, funcType);
 
     _env.add(XobjectDef.Func(funcId, null, null, Xcons.List(Xcode.COMPOUND_STATEMENT,
