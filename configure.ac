@@ -1902,6 +1902,7 @@ AC_CONFIG_COMMANDS([depend],
 AC_CONFIG_COMMANDS([config-clean],
 	[rm -rf ./config.log ./config.status.* autom4te.cache])
 
+unset program_transform_name
+
 AC_OUTPUT
 ${MAKE} clean
-echo "${target}"
