@@ -1787,13 +1787,18 @@ AC_SUBST(cppCmd)
 
 # sysdeps.
 
-eval `echo ${target} | awk -F- '{ printf "tagCPU=%s; tagOS=%s;\n", $1, $3 }'`
+#eval `echo ${target} | awk -F- '{ printf "tagCPU=%s; tagOS=%s;\n", $1, $3 }'`
 
-changequote(<<, >>)dnl
-CPU=`echo ${tagCPU} | tr '[A-Z]' '[a-z]'`
-OS=`echo ${tagOS} | tr '[A-Z]' '[a-z]'` 
-changequote([, ])dnl
-unset tagOS tagCPU
+#changequote(<<, >>)dnl
+#CPU=`echo ${tagCPU} | tr '[A-Z]' '[a-z]'`
+#OS=`echo ${tagOS} | tr '[A-Z]' '[a-z]'` 
+#changequote([, ])dnl
+#unset tagOS tagCPU
+
+HOSTARCH=`./buildutils/config.guess | grep -v Linking`
+CPU=`echo $HOSTARCH | awk -F- '{ print $1 }' | sed 's/\./_/g'`
+OS=`echo $HOSTARCH | awk -F- '{ print $3 }' | sed 's/\./_/g'`
+
 
 case $CPU in
     i*86)
@@ -1899,3 +1904,4 @@ AC_CONFIG_COMMANDS([config-clean],
 
 AC_OUTPUT
 ${MAKE} clean
+echo "${target}"
