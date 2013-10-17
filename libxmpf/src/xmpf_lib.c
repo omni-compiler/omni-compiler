@@ -7,6 +7,7 @@
 #include "xmpf_internal.h"
 //#include "xmpf.h"
 
+typedef void *xmp_desc_t;
 
 /*
 void xmp_MPI_comm(void **comm) {
@@ -42,15 +43,17 @@ double xmp_wtick_(void) {
   return MPI_Wtick();
 }
 
-/*
-int xmp_array_ndim(xmp_desc_t d) {
+int xmp_array_ndims_(xmp_desc_t **d, int *ndims) {
 
-  _XMP_array_t *a = (_XMP_array_t *)d;
+  _XMP_array_t *a = *(_XMP_array_t **)d;
 
-  return a->dim;
- 
+  *ndims = a->dim;
+
+  return 0;
+
 }
 
+/*
 size_t xmp_array_type_size(xmp_desc_t d) {
 
   _XMP_array_t *a = (_XMP_array_t *)d;
@@ -66,15 +69,19 @@ int xmp_array_gsize(xmp_desc_t d, int dim) {
   return a->info[dim-1].ser_size;
 
 }
+*/
 
-int xmp_array_lsize(xmp_desc_t d, int dim){
+int xmp_array_lsize_(xmp_desc_t **d, int *dim, int *lsize){
 
-  _XMP_array_t *a = (_XMP_array_t *)d;
+  _XMP_array_t *a = *(_XMP_array_t **)d;
 
-  return a->info[dim-1].par_size;
+  *lsize = a->info[*dim-1].par_size;
+
+  return 0;
 
 }
 
+/*
 int xmp_array_gcllbound(xmp_desc_t d, int dim) {
 
   _XMP_array_t *a = (_XMP_array_t *)d;
