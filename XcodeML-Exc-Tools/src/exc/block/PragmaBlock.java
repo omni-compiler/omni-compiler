@@ -38,6 +38,11 @@ public class PragmaBlock extends CompoundBlock
         return args;
     }
 
+    public void setClauses(Xobject args)
+    {
+        this.args = args;
+    }
+
     @Override
     public Xobject toXobject()
     {

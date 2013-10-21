@@ -96,11 +96,11 @@ public class XMPrewriteExpr
     // rewrite OMP pragma
     topdownBlockIterator iter2 = new topdownBlockIterator(fb);
     for (iter2.init(); !iter2.end(); iter2.next()){
-    	Block block = iter2.getBlock();
-    	if (block.Opcode() == Xcode.OMP_PRAGMA){
-    		Xobject clauses = ((PragmaBlock)block).getClauses();
-    		if (clauses != null) rewriteOmpClauses(clauses, (PragmaBlock)block, fb);
-    	}
+      Block block = iter2.getBlock();
+      if (block.Opcode() == Xcode.OMP_PRAGMA){
+	Xobject clauses = ((PragmaBlock)block).getClauses();
+	rewriteOmpClauses(clauses, (PragmaBlock)block, fb);
+      }
     }
 
     // rewrite id_list, decles, parameters
@@ -224,6 +224,8 @@ public class XMPrewriteExpr
    * rewrite Pragma
    */
   private void rewriteOmpClauses(Xobject expr, PragmaBlock pragmaBlock, Block block){
+
+    boolean private_done = false;
 	  
     bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
     
@@ -271,6 +273,8 @@ public class XMPrewriteExpr
 	  if (x.left() != null && x.left().Opcode() == Xcode.STRING &&
 	      x.left().getString().equals("DATA_PRIVATE")){
 
+	      private_done = true;
+
 	      if (!pragmaBlock.getPragma().equals("FOR")) continue;
 
 	      XobjList itemList = (XobjList)x.right();
@@ -301,8 +305,32 @@ public class XMPrewriteExpr
 	      if (!flag){
 		  itemList.add(loop_var);
 	      }
+
 	  }
       }
+
+    }
+
+    if (!private_done){
+
+      if (!pragmaBlock.getPragma().equals("FOR")) return;
+
+      // find loop variable
+      Xobject loop_var = null;
+      BasicBlockIterator i = new BasicBlockIterator(pragmaBlock.getBody());
+      for (Block b = pragmaBlock.getBody().getHead();
+	   b != null;
+	   b = b.getNext()){
+	if (b.Opcode() == Xcode.F_DO_STATEMENT){
+	  loop_var = ((FdoBlock)b).getInductionVar();
+	}
+      }
+      if (loop_var == null) return;
+      
+      // add the loop variable to the clause
+      Xobject thread_private = Xcons.List(Xcons.StringConstant("DATA_PRIVATE"),
+					  Xcons.List(loop_var));
+      pragmaBlock.setClauses(Xcons.List(thread_private));
 
     }
 
