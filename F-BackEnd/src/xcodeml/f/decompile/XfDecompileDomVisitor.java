@@ -3472,6 +3472,8 @@ public class XfDecompileDomVisitor {
                 }
                 
             }
+
+	    writer.setStatementMode(prevMode);
             
             writer.setupNewLine();
 
@@ -3494,7 +3496,7 @@ public class XfDecompileDomVisitor {
             writer.writeToken("!$OMP END " + dirName);
             if (nowaitFlag) writer.writeToken("NOWAIT");
             writer.setupNewLine();
-	    writer.setStatementMode(prevMode);
+	    //	    writer.setStatementMode(prevMode);
 
         }
     }

@@ -109,6 +109,9 @@ static void compile_data_style_decl(expr x);
 void init_for_OMP_pragma();
 void check_for_OMP_pragma(expr x);
 
+expv OMP_pragma_list(enum OMP_pragma pragma,expv arg1,expv arg2);
+expv OMP_FOR_pragma_list(expv clause,expv statements);
+
 void init_for_XMP_pragma();
 int check_for_XMP_pragma(int st_no, expr x);
 
@@ -700,6 +703,27 @@ void compile_statement1(int st_no, expr x)
     case F_ENDDO_STATEMENT:
         check_INEXEC();
         check_DO_end(NULL);
+
+	if (CTL_TYPE(ctl_top) == CTL_OMP){
+	  if (CTL_OMP_ARG_DIR(ctl_top) == OMP_F_PARALLEL_DO){
+	    CTL_BLOCK(ctl_top) = 
+		OMP_pragma_list(OMP_PARALLEL, CTL_OMP_ARG_PCLAUSE(ctl_top),
+				OMP_FOR_pragma_list(
+				    CTL_OMP_ARG_DCLAUSE(ctl_top),
+				    CURRENT_STATEMENTS));
+	    EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top));
+	    pop_ctl();
+	  }
+	  else if (CTL_OMP_ARG_DIR(ctl_top) == OMP_F_DO){
+	    expv dclause = CTL_OMP_ARG_DCLAUSE(ctl_top);
+	    if (EXPR_ARG2(x) != NULL) list_put_last(dclause, EXPR_ARG2(x));
+	    CTL_BLOCK(ctl_top) = 
+		OMP_FOR_pragma_list(dclause, CURRENT_STATEMENTS);
+	    EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top));
+	    pop_ctl();
+	  }
+	}
+
         break;
 
     case F_DOWHILE_STATEMENT: {
