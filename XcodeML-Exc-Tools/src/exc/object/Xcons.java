@@ -112,7 +112,7 @@ public class Xcons
 
     public static XobjFloat FloatConstant(Xtype type, String floatStr, String fkind)
     {
-        return new XobjFloat(Xcode.FLOAT_CONSTANT, Xtype.doubleType, floatStr, fkind);
+        return new XobjFloat(Xcode.FLOAT_CONSTANT, Xtype.floatType, floatStr, fkind);
     }
     
     public static XobjBool FlogicalConstant(Xtype type, boolean value, String fkind)
