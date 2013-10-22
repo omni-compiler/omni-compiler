@@ -51,6 +51,7 @@ public class XMPtransPragma
     if(env.currentDefIsModule()){
       Xtype save_logical = Xtype.FlogicalType.copy();
       save_logical.setIsFsave(true);
+      save_logical.setIsFprivate(true);
       Ident init_flag_var = env.declIdent("xmpf_init_flag",save_logical);
       prolog.add(Xcons.Set(init_flag_var.Ref(),
 			   Xcons.FlogicalConstant(true)));
