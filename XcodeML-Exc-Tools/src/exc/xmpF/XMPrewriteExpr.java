@@ -37,7 +37,7 @@ public class XMPrewriteExpr
       }
     }
 
-    // rewrite allocate and deallocate statements
+    // rewrite allocate, deallocate, and stop statements
 
     BasicBlockIterator iter3 = new BasicBlockIterator(fb);
     for (iter3.init(); !iter3.end(); iter3.next()){
@@ -80,6 +80,14 @@ public class XMPrewriteExpr
 	      array.rewriteDeallocate(dealloc, st, fb, env);
 	    }
 	    break;
+	  }
+
+	case F_STOP_STATEMENT:
+	  {
+	    Ident f = env.declExternIdent(XMP.finalize_all_f, Xtype.FsubroutineType);
+	    Xobject call = f.callSubroutine();
+	    st.insert(call);
+	  break;
 	  }
 
 	}
