@@ -184,7 +184,8 @@ int main(int argc, char *argv[])
     for (i = 0; i < n_files; i++){
 	arg = files[i];
 	len = strlen(arg);
-	if (len > 2 && strcmp(&arg[len - 2], ".o") == 0){
+	if (len > 2 && 
+	    (strcmp(&arg[len-2], ".o") == 0 || strcmp(&arg[len-2], ".a") == 0)){
 	    strcat(command_buf, " ");
 	    strcat(command_buf, arg);
 	}
