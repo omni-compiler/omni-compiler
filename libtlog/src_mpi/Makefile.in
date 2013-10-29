@@ -137,9 +137,8 @@ am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libtlog_mpi_a_AR = $(AR) $(ARFLAGS)
 libtlog_mpi_a_LIBADD =
-am_libtlog_mpi_a_OBJECTS = tlog.$(OBJEXT) tlog_conv.$(OBJEXT) \
-	tlog_event.$(OBJEXT) tlog_misc.$(OBJEXT) tlog-time.$(OBJEXT) \
-	tlog_dump.$(OBJEXT)
+am_libtlog_mpi_a_OBJECTS = tlog.$(OBJEXT) tlog_event.$(OBJEXT) \
+	tlog_misc.$(OBJEXT) tlog-time.$(OBJEXT)
 libtlog_mpi_a_OBJECTS = $(am_libtlog_mpi_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -468,7 +467,7 @@ include_HEADERS = tlog_mpi.h tlog_event.h
 lib_LIBRARIES = libtlog_mpi.a
 sri_TLOGVIEWS = ./bin/tlogview
 jar_TLOGVIEWS = ./bin/tlogview.jar
-libtlog_mpi_a_SOURCES = tlog.c tlog_conv.c tlog_event.c tlog_misc.c tlog-time.c tlog_dump.c tlog_event.h
+libtlog_mpi_a_SOURCES = tlog.c tlog_event.c tlog_misc.c tlog-time.c tlog_event.h
 AM_CFLAGS = -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR) @BECC_OPTION@ 
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS)

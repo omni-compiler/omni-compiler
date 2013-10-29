@@ -8,7 +8,7 @@ include_HEADERS	= tlog_mpi.h tlog_event.h
 lib_LIBRARIES	= libtlog_mpi.a
 sri_TLOGVIEWS	= ./bin/tlogview
 jar_TLOGVIEWS	= ./bin/tlogview.jar
-libtlog_mpi_a_SOURCES = tlog.c tlog_conv.c tlog_event.c tlog_misc.c tlog-time.c tlog_dump.c tlog_event.h
+libtlog_mpi_a_SOURCES = tlog.c tlog_event.c tlog_misc.c tlog-time.c tlog_event.h
 
 AM_CFLAGS     = -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR) @BECC_OPTION@ 
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
