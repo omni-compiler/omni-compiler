@@ -3452,23 +3452,48 @@ public class XfDecompileDomVisitor {
                 else if (clauseName.equals("DIR_SCHEDULE"))          clauseName = "SCHEDULE";
             
                 if (!clauseName.equals("NOWAIT")){
-                	writer.writeToken(clauseName);
+		  writer.writeToken(clauseName);
                 
-                	Node arg = childNode.getFirstChild().getNextSibling();
-                	if (arg != null){
-                		writer.writeToken("(");
-                		if (operator != "") writer.writeToken(operator + " :");
+		  Node arg = childNode.getFirstChild().getNextSibling();
+		  if (arg != null){
+		    writer.writeToken("(");
+		    if (operator != "") writer.writeToken(operator + " :");
                     
-                		NodeList varList = arg.getChildNodes();
-                		invokeEnter(varList.item(0));
-                		for (int j = 1; j < varList.getLength(); j++){
-                			Node var = varList.item(j);
-                			writer.writeToken(",");
-                			invokeEnter(var);
-                		}
+		    NodeList varList = arg.getChildNodes();
+
+		    if (clauseName.equals("SCHEDULE")){
+		      String sched = XmDomUtil.getContentText(varList.item(0));
+		      switch (sched){
+		      case "0": sched = "";         break;
+		      case "1": sched = "STATIC";   break;
+		      case "2": sched = "DYNAMIC";  break;
+		      case "3": sched = "GUIDED";   break;
+		      case "4": sched = "RUNTIME";  break;
+		      case "5": sched = "AFFINITY"; break;
+		      }
+		      writer.writeToken(sched);
+		    }
+		    else if (clauseName.equals("DEFAULT")){
+		      String attr = XmDomUtil.getContentText(varList.item(0));
+		      switch (attr){
+		      case "0": attr = "SHARED";  break;
+		      case "1": attr = "";        break;
+		      case "2": attr = "PRIVATE"; break;
+		      }
+		      writer.writeToken(attr);
+		    }
+		    else {
+		      invokeEnter(varList.item(0));
+		    }
+
+		    for (int j = 1; j < varList.getLength(); j++){
+		      Node var = varList.item(j);
+		      writer.writeToken(",");
+		      invokeEnter(var);
+		    }
                 
-                		writer.writeToken(")");
-                	}
+		    writer.writeToken(")");
+		  }
                 }
                 
             }

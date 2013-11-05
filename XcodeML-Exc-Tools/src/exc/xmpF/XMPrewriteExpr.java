@@ -338,7 +338,7 @@ public class XMPrewriteExpr
       // add the loop variable to the clause
       Xobject thread_private = Xcons.List(Xcons.StringConstant("DATA_PRIVATE"),
 					  Xcons.List(loop_var));
-      pragmaBlock.setClauses(Xcons.List(thread_private));
+      pragmaBlock.addClauses(thread_private);
 
     }
 

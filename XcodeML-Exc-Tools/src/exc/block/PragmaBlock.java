@@ -43,6 +43,16 @@ public class PragmaBlock extends CompoundBlock
         this.args = args;
     }
 
+    public void addClauses(Xobject args)
+    {
+	if (this.args == null){
+	    this.args = Xcons.List(args);
+	}
+	else {
+	    ((XobjList)this.args).add(args);
+	}
+    }
+
     @Override
     public Xobject toXobject()
     {

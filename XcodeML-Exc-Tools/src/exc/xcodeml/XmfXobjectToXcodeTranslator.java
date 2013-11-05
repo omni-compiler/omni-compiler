@@ -676,64 +676,69 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             return null;
 
         case OMP_PRAGMA: {
-        	e = createElement(name);
+	    e = createElement(name);
 
-        	Element f0 = createElement("string");
-        	addChildNode(f0, trans(xobj.getArg(0).getString()));
-        	addChildNode(e, f0);
+	    Element f0 = createElement("string");
+	    addChildNode(f0, trans(xobj.getArg(0).getString()));
+	    addChildNode(e, f0);
         	
-        	Element f1 = createElement("list");
-        	Xobject clause = xobj.getArg(1);
-        	if (clause != null){
-        		for (Xobject a : (XobjList)clause){
+	    Element f1 = createElement("list");
+	    Xobject clause = xobj.getArg(1);
+	    if (clause != null){
+		for (Xobject a : (XobjList)clause){
         			
-        			if (a instanceof XobjString){
-        				addChildNode(f1, trans(a));
-        			}
-        			else {
-        				Element g = createElement("list");
-
-        				addChildNode(g, trans(a.getArg(0).getString()));
+		    if (a instanceof XobjString){
+			addChildNode(f1, trans(a));
+		    }
+		    else {
+			Element g = createElement("list");
+			
+			addChildNode(g, trans(a.getArg(0).getString()));
         			
-        				Xobject vars = a.getArg(1);
-        				if (vars != null){
-        					Element g1 = createElement("list");
-        					for (Xobject b : (XobjList)vars){
-        						addChildNode(g1, trans(b));
-        					}
-        					addChildNode(g, g1);
-        				}
+			Xobject vars = a.getArg(1);
+			if (vars != null){
+			    Element g1 = createElement("list");
+			    if (vars instanceof XobjList){
+				for (Xobject b : (XobjList)vars){
+				    addChildNode(g1, trans(b));
+				}
+			    }
+			    else {
+				addChildNode(g1, trans(vars));
+			    }
+			    addChildNode(g, g1);
+			}
         			
-        				addChildNode(f1, g);
-        			}
-        		}
+			addChildNode(f1, g);
+		    }
+		}
             }
-        	addChildNode(e, f1);
+	    addChildNode(e, f1);
         	
-        	Element f2 = createElement("list");
-        	Xobject body = xobj.getArg(2);
-        	if (body != null){
-        		if (body.Opcode() == Xcode.F_STATEMENT_LIST){
-        			for (Xobject a : (XobjList)body){
-        				if (a.Opcode() == Xcode.F_STATEMENT_LIST){
-        					for (Xobject b : (XobjList)a){
-        						addChildNode(f2, trans(b));
-        					}
-        				}
-        				else {
-        					addChildNode(f2, trans(a));
-        				}
-        			}
-        		}
-        		else {
-        			addChildNode(f2, trans(body));
-        		}
+	    Element f2 = createElement("list");
+	    Xobject body = xobj.getArg(2);
+	    if (body != null){
+		if (body.Opcode() == Xcode.F_STATEMENT_LIST){
+		    for (Xobject a : (XobjList)body){
+			if (a.Opcode() == Xcode.F_STATEMENT_LIST){
+			    for (Xobject b : (XobjList)a){
+				addChildNode(f2, trans(b));
+			    }
+			}
+			else {
+			    addChildNode(f2, trans(a));
+			}
+		    }
+		}
+		else {
+		    addChildNode(f2, trans(body));
+		}
             }
-        	addChildNode(e, f2);
+	    addChildNode(e, f2);
             
         }
 
-        	break;
+	    break;
         	
         default:
             fatal_dump("cannot convert Xcode to XcodeML.", xobj);
