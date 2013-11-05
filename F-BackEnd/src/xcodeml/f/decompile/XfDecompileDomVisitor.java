@@ -3463,23 +3463,19 @@ public class XfDecompileDomVisitor {
 
 		    if (clauseName.equals("SCHEDULE")){
 		      String sched = XmDomUtil.getContentText(varList.item(0));
-		      switch (sched){
-		      case "0": sched = "";         break;
-		      case "1": sched = "STATIC";   break;
-		      case "2": sched = "DYNAMIC";  break;
-		      case "3": sched = "GUIDED";   break;
-		      case "4": sched = "RUNTIME";  break;
-		      case "5": sched = "AFFINITY"; break;
-		      }
+		      if (sched.equals("0")) sched = "";
+		      else if (sched.equals("1")) sched = "STATIC";
+		      else if (sched.equals("2")) sched = "DYNAMIC";
+		      else if (sched.equals("3")) sched = "GUIDED";
+		      else if (sched.equals("4")) sched = "RUNTIME";
+		      else if (sched.equals("5")) sched = "AFFINITY";
 		      writer.writeToken(sched);
 		    }
 		    else if (clauseName.equals("DEFAULT")){
 		      String attr = XmDomUtil.getContentText(varList.item(0));
-		      switch (attr){
-		      case "0": attr = "SHARED";  break;
-		      case "1": attr = "";        break;
-		      case "2": attr = "PRIVATE"; break;
-		      }
+		      if (attr.equals("0")) attr = "SHARED";
+		      else if (attr.equals("1")) attr = "";
+		      else if (attr.equals("2")) attr = "PRIVATE";
 		      writer.writeToken(attr);
 		    }
 		    else {
