@@ -1,6 +1,24 @@
 /*
- * $TSUKUBA_Release: $
+ * $TSUKUBA_Release: Omni OpenMP/XcalableMP Compiler Software Version 0.6.0 (alpha) $
  * $TSUKUBA_Copyright:
+ *  Copyright (C) 2010-2011 University of Tsukuba, 
+ *  	      2012  University of Tsukuba and Riken AICS
+ *  
+ *  This software is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License version
+ *  2.1 published by the Free Software Foundation.
+ *  
+ *  Please check the Copyright and License information in the files named
+ *  COPYRIGHT and LICENSE under the top  directory of the Omni Compiler
+ *  Software release kit.
+ *  
+ *  * The specification of XcalableMP has been designed by the XcalableMP
+ *    Specification Working Group (http://www.xcalablemp.org/).
+ *  
+ *  * The development of this software was partially supported by "Seamless and
+ *    Highly-productive Parallel Programming Environment for
+ *    High-performance computing" project funded by Ministry of Education,
+ *    Culture, Sports, Science and Technology, Japan.
  *  $
  */
 #include <stdio.h>
@@ -105,12 +123,13 @@ void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int co
   }
   else{
     for (int i = 0; i < from_dim; i++) {
-      while(inherit_info[i].shrink){ i++; }
-      // if(inherit_info[i].shrink == 1){
-      //   	va_arg(args, int);
-      //      	continue;
-      // }
+      //      while(inherit_info[i].shrink){ i++; }
+      if(inherit_info[i].shrink == 1){
+	va_arg(args, int);
+	continue;
+      }
       int size = inherit_info[i].upper - inherit_info[i].lower;
+
       if(size == 0) {  // skip arguments
 	va_arg(args, int);   // is_astrisk 
 	va_arg(args, int);   // from_lower
