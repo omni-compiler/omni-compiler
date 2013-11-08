@@ -15,6 +15,9 @@ void compile_OMP_name_list(expr x);
 void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel,
 			  expv *pc,expv *dc);
 
+void check_for_OMP_pragma(expr x);
+int check_for_XMP_pragma(int st_no, expr x);
+
 static int OMP_do_required;
 
 enum OMP_st_pragma {
@@ -49,6 +52,7 @@ void init_for_OMP_pragma()
 void check_for_OMP_pragma(expr x)
 {
     if(OMP_do_required){
+        if (EXPR_CODE(x) == XMP_PRAGMA && EXPR_INT(EXPR_ARG1(x)) == XMP_LOOP) return;
 	if(EXPR_CODE(x) != F_DO_STATEMENT)
 	    error("OpenMP DO directives must be followed by do statement");
 	OMP_do_required = FALSE;
@@ -142,6 +146,9 @@ void compile_OMP_directive(expr x)
 	expv_output(x, stderr);
 	fprintf(stderr, "\n");
     }
+
+    check_for_OMP_pragma(x);
+    check_for_XMP_pragma(-1, x);
 
     if(OMP_do_required){
 	error("OpenMP DO directives must be followed by do statement");

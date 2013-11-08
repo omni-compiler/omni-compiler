@@ -441,6 +441,8 @@ void compile_statement1(int st_no, expr x)
 	    //else if (CURRENT_EXT_ID && EXT_LINE(CURRENT_EXT_ID))
 	    //EXT_END_LINE_NO(CURRENT_EXT_ID) = current_line->ln_no;
 	    //}
+	    check_for_OMP_pragma(x); /* close DO directives if any */
+	    check_for_XMP_pragma(st_no, x); /* close LOOP directives if any */
             end_procedure();
         }
         break;
