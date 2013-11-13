@@ -32,6 +32,10 @@ for i in ${OM_OPTIONS}; do
             if ls *.xmpgpu.o >/dev/null 2>&1; then
                 INPFILES="${INPFILES} *.xmpgpu.o"
             fi;;
+	-acc)
+            if ls *.accgpu.o >/dev/null 2>&1; then
+                INPFILES="${INPFILES} *.accgpu.o"
+            fi;;
         *)
             newOpts="${newOpts} ${i}";;
     esac

@@ -79,6 +79,7 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 @ENABLE_XMP_GPU_TRUE@am__append_1 = @LIBXMP_GPU_DIR@
+@ENABLE_ACC_TRUE@am__append_2 = @LIBACC_DIR@ @LIBACC_HEADER_DIR@
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
@@ -192,7 +193,8 @@ DIST_SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ @C_BACKEND_DIR@ \
 	@OMDRIVER_DIR@ @LIBOMPC_DIR@ @LIBOMPF_DIR@ @LIBTLOG_DIR@ \
 	@LIBTLOG_MPI_DIR@ @LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ \
 	@LIBXMP_THREADS_DIR@ @LIBXMPF_HEADER_DIR@ @LIBXMPF_DIR@ \
-	@ATOOL_DIR@ @LIBXMP_GPU_DIR@ $(am__empty)
+	@ATOOL_DIR@ @LIBXMP_GPU_DIR@ @LIBACC_DIR@ @LIBACC_HEADER_DIR@ \
+	$(am__empty)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -276,6 +278,7 @@ ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
+ENABLE_ACC = @ENABLE_ACC@
 EXEEXT = @EXEEXT@
 F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
@@ -311,6 +314,8 @@ LDFLAGS = @LDFLAGS@
 LEX = @LEX@
 LEXLIB = @LEXLIB@
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
+LIBACC_DIR = @LIBACC_DIR@
+LIBACC_HEADER_DIR = @LIBACC_HEADER_DIR@
 LIBOBJS = @LIBOBJS@
 LIBOMPC_DIR = @LIBOMPC_DIR@
 LIBOMPF_DIR = @LIBOMPF_DIR@
@@ -516,14 +521,16 @@ top_srcdir = @top_srcdir@
 @SUPERUX_FALSE@	@LIBTLOG_DIR@ @LIBTLOG_MPI_DIR@ \
 @SUPERUX_FALSE@	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ \
 @SUPERUX_FALSE@	@LIBXMP_THREADS_DIR@ @LIBXMPF_HEADER_DIR@ \
-@SUPERUX_FALSE@	@LIBXMPF_DIR@ @ATOOL_DIR@ $(am__append_1)
+@SUPERUX_FALSE@	@LIBXMPF_DIR@ @ATOOL_DIR@ $(am__append_1) \
+@SUPERUX_FALSE@	$(am__append_2)
 @SUPERUX_TRUE@SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ \
 @SUPERUX_TRUE@	@C_BACKEND_DIR@ @F_FRONTEND_DIR@ @F_BACKEND_DIR@ \
 @SUPERUX_TRUE@	@XCODEML_EXC_TOOLS_DIR@ @OMDRIVER_DIR@ \
 @SUPERUX_TRUE@	@LIBTLOG_DIR@ @LIBTLOG_MPI_DIR@ \
 @SUPERUX_TRUE@	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ \
 @SUPERUX_TRUE@	@LIBXMP_THREADS_DIR@ @LIBXMPF_HEADER_DIR@ \
-@SUPERUX_TRUE@	@LIBXMPF_DIR@ @ATOOL_DIR@ $(am__append_1)
+@SUPERUX_TRUE@	@LIBXMPF_DIR@ @ATOOL_DIR@ $(am__append_1) \
+@SUPERUX_TRUE@	$(am__append_2)
 XMPPKG_TMPDIR_TOP := "/tmp/@XMPPKG_NAME@"
 XMPPKG_TMPDIR := $(XMPPKG_TMPDIR_TOP)/$(shell mktemp -u --tmpdir=/)
 DEB_VER_FILE = "/etc/debian_version"
@@ -563,20 +570,25 @@ DELETABLES = \
 	Driver/etc/l2x.conf.openmp \
 	Driver/etc/l2x.conf.xmp \
 	Driver/etc/l2x.conf.xmpf \
+	Driver/etc/l2x.conf.acc \
 	Driver/etc/linker.conf.openmp \
 	Driver/etc/linker.conf.xmp \
 	Driver/etc/linker.conf.xmpf \
+	Driver/etc/linker.conf.acc \
 	Driver/etc/native.conf.openmp \
 	Driver/etc/native.conf.xmp \
 	Driver/etc/native.conf.xmpf \
+	Driver/etc/native.conf.acc \
 	Driver/etc/omc.conf \
 	Driver/etc/omf.conf \
 	Driver/etc/pp.conf.openmp \
 	Driver/etc/pp.conf.xmp \
 	Driver/etc/pp.conf.xmpf \
+	Driver/etc/pp.conf.acc \
 	Driver/etc/x2x.conf.openmp \
 	Driver/etc/x2x.conf.xmp \
 	Driver/etc/x2x.conf.xmpf \
+	Driver/etc/x2x.conf.acc \
 	F-BackEnd/ant.properties \
 	F-BackEnd/bin/F_Back \
 	F-FrontEnd/src/C-exprcode.c \

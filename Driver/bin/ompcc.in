@@ -7,11 +7,18 @@
 
 BINDIR=`dirname $0`
 
+USE_ACC=''
 args=''
 for i in "$@"; do
     case "${i}" in
         -tmp)
             args="${args} --Wn${i}";;
+	-acc)
+	    if test @ENABLE_ACC@ -eq 1; then
+		USE_ACC="1"
+	    else
+		echo "warning: -acc option is unavailable, rebuild the compiler with ./configure --enable-openacc"
+	    fi;;
         *)
             args="${args} ${i}";;
     esac
@@ -19,7 +26,11 @@ done
 
 set -- ${args}
 
-${BINDIR}/omdriver --xc -Topenmp "$@"
+if [ -z "${USE_ACC}" ]; then
+    ${BINDIR}/omdriver --xc -Topenmp "$@"
+else
+    ${BINDIR}/omdriver --xc -Tacc "$@"
+fi
 
 exit $?
 

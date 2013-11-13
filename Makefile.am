@@ -26,6 +26,10 @@ if ENABLE_XMP_GPU
 SUBDIRS+=@LIBXMP_GPU_DIR@
 endif
 
+if ENABLE_ACC
+SUBDIRS+=@LIBACC_DIR@ @LIBACC_HEADER_DIR@
+endif
+
 #install-data-local:
 #	if test -e "./doc"; then\
 #		test -z "${docdir}" || ${MKDIR_P} "${docdir}";\
@@ -100,20 +104,25 @@ DELETABLES	= \
 	Driver/etc/l2x.conf.openmp \
 	Driver/etc/l2x.conf.xmp \
 	Driver/etc/l2x.conf.xmpf \
+	Driver/etc/l2x.conf.acc \
 	Driver/etc/linker.conf.openmp \
 	Driver/etc/linker.conf.xmp \
 	Driver/etc/linker.conf.xmpf \
+	Driver/etc/linker.conf.acc \
 	Driver/etc/native.conf.openmp \
 	Driver/etc/native.conf.xmp \
 	Driver/etc/native.conf.xmpf \
+	Driver/etc/native.conf.acc \
 	Driver/etc/omc.conf \
 	Driver/etc/omf.conf \
 	Driver/etc/pp.conf.openmp \
 	Driver/etc/pp.conf.xmp \
 	Driver/etc/pp.conf.xmpf \
+	Driver/etc/pp.conf.acc \
 	Driver/etc/x2x.conf.openmp \
 	Driver/etc/x2x.conf.xmp \
 	Driver/etc/x2x.conf.xmpf \
+	Driver/etc/x2x.conf.acc \
 	F-BackEnd/ant.properties \
 	F-BackEnd/bin/F_Back \
 	F-FrontEnd/src/C-exprcode.c \

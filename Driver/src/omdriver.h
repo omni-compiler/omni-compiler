@@ -116,6 +116,7 @@
 #define ENV_OM_OPTIONS          "OM_OPTIONS"
 #define ENV_OM_USE_XMP          "OM_USE_XMP"
 #define ENV_OM_USE_OPENMP       "OM_USE_OPENMP"
+#define ENV_OM_USE_ACC          "OM_USE_ACC"
 #define ENV_OM_VERBOSE          "OM_VERBOSE"
 #define ENV_OM_LANGID           "OM_LANGID"
 #define ENV_OM_USE              "OM_USE_%s"

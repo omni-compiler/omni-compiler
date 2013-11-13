@@ -40,6 +40,11 @@ for i in ${OM_OPTIONS}; do
             if [ -f "${INPFILE_FILENAME}.cu" ]; then
                 ${GPU_CMD} -arch=sm_20 -I${OMNI_HOME}/include -c ${INPFILE_FILENAME}.cu -o ${INPFILE_FILENAME}.xmpgpu.o
             fi;;
+	-acc)
+            if [ -f "${INPFILE_FILENAME}.cu" ]; then
+		GPUCMD="${GPU_CMD} -arch=sm_20 -I${OMNI_HOME}/include -c ${INPFILE_FILENAME}.cu -o ${INPFILE_FILENAME}.accgpu.o"
+		$GPUCMD
+            fi;;
         -tmp)
             cp ${INPFILE} __omni_tmp_${INPFILE_BASENAME};;
         *)
@@ -52,6 +57,9 @@ CMD="${COMPILER} ${OM_OPTIONS} -c ${INPFILE} -o ${OUTFILE}"
 
 if [ "${OM_VERBOSE}" = "1" ]; then
     echo $CMD
+    if [ -n "${GPUCMD}" ]; then
+	echo $GPUCMD
+    fi
 fi
 
 $CMD

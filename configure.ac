@@ -209,6 +209,12 @@ if test -e "Driver/src/Makefile.am"; then
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/native.conf.xmpf)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.xmpf)
 
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/pp.conf.acc)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/l2x.conf.acc)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/x2x.conf.acc)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/native.conf.acc)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.acc)
+
     AC_MSG_RESULT(yes)
 else
     OMDRIVER_DIR=''
@@ -468,6 +474,15 @@ AC_SUBST(LIBOMPF_DIR)
 AC_SUBST(LIBTLOG_DIR)
 AC_SUBST(LIBTLOG_MPI_DIR)
 
+#----
+
+LIBACC_DIR=libacc/src
+LIBACC_HEADER_DIR=libacc/include
+AC_CONFIG_FILES($LIBACC_DIR/Makefile)
+AC_CONFIG_FILES($LIBACC_HEADER_DIR/Makefile)
+AC_SUBST(LIBACC_DIR)
+AC_SUBST(LIBACC_HEADER_DIR)
+
 # --------------------------------------------------------------------
 # check what CC will be used, and set compile flags
 
@@ -488,6 +503,10 @@ AC_ARG_ENABLE(debug,
 AC_ARG_ENABLE(xmpgpu,
     [  --enable-xmpgpu                enable XcalableMP-GPU (false default).],
     [doXmpGpu=$enableval], [doXmpGpu=no])
+
+AC_ARG_ENABLE(openacc,
+    [  --enable-openacc               enable OpenACC (false default).],
+    [doOpenAcc=$enableval], [doOpenAcc=no])
 
 AC_ARG_WITH(cppflag,
     [  --with-cppflag=OPT          C preprocessor options],
@@ -519,6 +538,13 @@ fi
 
 AM_CONDITIONAL(ENABLE_XMP_GPU, test "x${doXmpGpu}" = "xyes")
 AC_SUBST(XMP_ENABLE_GPU)
+
+ENABLE_ACC=0
+if test "x${doOpenAcc}" = "xyes"; then
+    ENABLE_ACC=1
+fi
+AM_CONDITIONAL(ENABLE_ACC, test "x${doOpenAcc}" = "xyes")
+AC_SUBST(ENABLE_ACC)
 
 # check gcc version
 AC_MSG_CHECKING(gcc version)

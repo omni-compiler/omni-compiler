@@ -758,6 +758,9 @@ IS_CRAY
 BEFC
 BECC_OPTION
 BECC
+ENABLE_ACC
+ENABLE_ACC_FALSE
+ENABLE_ACC_TRUE
 XMP_ENABLE_GPU
 ENABLE_XMP_GPU_FALSE
 ENABLE_XMP_GPU_TRUE
@@ -768,6 +771,8 @@ CXXCPP
 ac_ct_CXX
 CXXFLAGS
 CXX
+LIBACC_HEADER_DIR
+LIBACC_DIR
 LIBTLOG_MPI_DIR
 LIBTLOG_DIR
 LIBOMPF_DIR
@@ -925,6 +930,7 @@ with_thread
 with_lock
 enable_debug
 enable_xmpgpu
+enable_openacc
 with_cppflag
 with_backend_cflag
 with_backend_cc
@@ -1592,6 +1598,7 @@ Optional Features:
   --disable-silent-rules  verbose build output (undo: "make V=0")
   --enable-debug                 enable generate executable with debug symbol (false default).
   --enable-xmpgpu                enable XcalableMP-GPU (false default).
+  --enable-openacc               enable OpenACC (false default).
   --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default).
   --enable-fjrdma                use Fujitsu RDMA
 
@@ -12406,6 +12413,17 @@ if test -e "Driver/src/Makefile.am"; then
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/linker.conf.xmpf"
 
 
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/pp.conf.acc"
+
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/l2x.conf.acc"
+
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/x2x.conf.acc"
+
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/native.conf.acc"
+
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/linker.conf.acc"
+
+
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 else
@@ -12694,6 +12712,17 @@ genLibTargetTmpl $LIBOMPC_DIR
 
 
 
+#----
+
+LIBACC_DIR=libacc/src
+LIBACC_HEADER_DIR=libacc/include
+ac_config_files="$ac_config_files $LIBACC_DIR/Makefile"
+
+ac_config_files="$ac_config_files $LIBACC_HEADER_DIR/Makefile"
+
+
+
+
 # --------------------------------------------------------------------
 # check what CC will be used, and set compile flags
 
@@ -12720,6 +12749,14 @@ if test "${enable_xmpgpu+set}" = set; then :
   enableval=$enable_xmpgpu; doXmpGpu=$enableval
 else
   doXmpGpu=no
+fi
+
+
+# Check whether --enable-openacc was given.
+if test "${enable_openacc+set}" = set; then :
+  enableval=$enable_openacc; doOpenAcc=$enableval
+else
+  doOpenAcc=no
 fi
 
 
@@ -16948,6 +16985,20 @@ fi
 else
   ENABLE_XMP_GPU_TRUE='#'
   ENABLE_XMP_GPU_FALSE=
+fi
+
+
+
+ENABLE_ACC=0
+if test "x${doOpenAcc}" = "xyes"; then
+    ENABLE_ACC=1
+fi
+ if test "x${doOpenAcc}" = "xyes"; then
+  ENABLE_ACC_TRUE=
+  ENABLE_ACC_FALSE='#'
+else
+  ENABLE_ACC_TRUE='#'
+  ENABLE_ACC_FALSE=
 fi
 
 
@@ -26229,6 +26280,10 @@ if test -z "${ENABLE_XMP_GPU_TRUE}" && test -z "${ENABLE_XMP_GPU_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_XMP_GPU\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${ENABLE_ACC_TRUE}" && test -z "${ENABLE_ACC_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_ACC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${SUPERUX_TRUE}" && test -z "${SUPERUX_FALSE}"; then
   as_fn_error $? "conditional \"SUPERUX\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -27357,6 +27412,11 @@ do
     "$OMDRIVER_DIR/../etc/x2x.conf.xmpf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/x2x.conf.xmpf" ;;
     "$OMDRIVER_DIR/../etc/native.conf.xmpf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/native.conf.xmpf" ;;
     "$OMDRIVER_DIR/../etc/linker.conf.xmpf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/linker.conf.xmpf" ;;
+    "$OMDRIVER_DIR/../etc/pp.conf.acc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/pp.conf.acc" ;;
+    "$OMDRIVER_DIR/../etc/l2x.conf.acc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/l2x.conf.acc" ;;
+    "$OMDRIVER_DIR/../etc/x2x.conf.acc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/x2x.conf.acc" ;;
+    "$OMDRIVER_DIR/../etc/native.conf.acc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/native.conf.acc" ;;
+    "$OMDRIVER_DIR/../etc/linker.conf.acc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/linker.conf.acc" ;;
     "$LIBXMP_HEADER_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_HEADER_DIR/Makefile" ;;
     "$LIBXMP_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_DIR/Makefile" ;;
     "$LIBXMP_THREADS_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_THREADS_DIR/Makefile" ;;
@@ -27372,6 +27432,8 @@ do
     "$LIBTLOG_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBTLOG_DIR/Makefile" ;;
     "$LIBTLOG_MPI_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBTLOG_MPI_DIR/Makefile" ;;
     "$LIBTLOG_MPI_DIR/bin/tlogview") CONFIG_FILES="$CONFIG_FILES $LIBTLOG_MPI_DIR/bin/tlogview" ;;
+    "$LIBACC_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBACC_DIR/Makefile" ;;
+    "$LIBACC_HEADER_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBACC_HEADER_DIR/Makefile" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "release/debian/changelog") CONFIG_FILES="$CONFIG_FILES release/debian/changelog" ;;
     "release/debian/control") CONFIG_FILES="$CONFIG_FILES release/debian/control" ;;

@@ -242,6 +242,7 @@ ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
+ENABLE_ACC = @ENABLE_ACC@
 EXEEXT = @EXEEXT@
 F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
@@ -277,6 +278,8 @@ LDFLAGS = @LDFLAGS@
 LEX = @LEX@
 LEXLIB = @LEXLIB@
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
+LIBACC_DIR = @LIBACC_DIR@
+LIBACC_HEADER_DIR = @LIBACC_HEADER_DIR@
 LIBOBJS = @LIBOBJS@
 LIBOMPC_DIR = @LIBOMPC_DIR@
 LIBOMPF_DIR = @LIBOMPF_DIR@
@@ -476,7 +479,8 @@ sysconf_DATA = ../etc/omc.conf ../etc/omf.conf \
 	../etc/java.conf \
 	../etc/pp.conf.openmp ../etc/native.conf.openmp ../etc/linker.conf.openmp ../etc/l2x.conf.openmp ../etc/x2x.conf.openmp \
 	../etc/pp.conf.xmp ../etc/native.conf.xmp ../etc/linker.conf.xmp ../etc/l2x.conf.xmp ../etc/x2x.conf.xmp \
-	../etc/pp.conf.xmpf ../etc/native.conf.xmpf ../etc/linker.conf.xmpf ../etc/l2x.conf.xmpf ../etc/x2x.conf.xmpf
+	../etc/pp.conf.xmpf ../etc/native.conf.xmpf ../etc/linker.conf.xmpf ../etc/l2x.conf.xmpf ../etc/x2x.conf.xmpf \
+	../etc/pp.conf.acc ../etc/native.conf.acc ../etc/linker.conf.acc ../etc/l2x.conf.acc ../etc/x2x.conf.acc
 
 omdriver_SOURCES = omdriver.c
 xmp_collect_init_SOURCES = xmp_collect_init.c

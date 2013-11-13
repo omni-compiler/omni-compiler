@@ -12,6 +12,11 @@ import java.util.List;
 
 import exc.object.XobjectFile;
 
+import exc.openacc.ACC;
+import exc.openacc.ACCanalyzePragma;
+import exc.openacc.ACCglobalDecl;
+import exc.openacc.ACCrewritePragma;
+import exc.openacc.ACCtranslatePragma;
 import exc.openmp.OMP;
 import exc.openmp.OMPtranslate;
 
@@ -99,6 +104,7 @@ public class omompx
     String outXmlFile = null;
     String lang = "C";
     boolean openMP = false;
+    boolean openACC = false;
     boolean xcalableMP = false;
     boolean xcalableMPthreads = false;
     boolean xcalableMPGPU = false;
@@ -132,6 +138,8 @@ public class omompx
 	indent = true;
       } else if(arg.equals("-fopenmp")) {
 	openMP = true;
+      } else if(arg.equals("-facc")) {
+	openACC = true; 
       } else if(arg.equals("-fxmp")) {
 	xcalableMP = true;
       } else if(arg.equals("-enable-threads")) {
@@ -287,6 +295,7 @@ public class omompx
       if (inXmlFile != null) {
 	reader.close();
       }
+      srcPath = xobjFile.getSourceFileName();
     }
         
     String baseName = null;
@@ -383,6 +392,38 @@ public class omompx
 	xobjFile.Output(xcodeWriter);
 	xcodeWriter.flush();
       }
+    }
+    
+    if(openACC){
+	ACCglobalDecl accGlobalDecl = new ACCglobalDecl(xobjFile);
+	ACCanalyzePragma accAnalyzer = new ACCanalyzePragma(accGlobalDecl);
+	xobjFile.iterateDef(accAnalyzer);
+	accAnalyzer.finalize();
+	ACC.exitByError();
+
+	ACCtranslatePragma accTranslator = new ACCtranslatePragma(accGlobalDecl);
+	xobjFile.iterateDef(accTranslator);
+	accTranslator.finalize();
+	ACC.exitByError();
+
+	ACCrewritePragma accRewriter = new ACCrewritePragma(accGlobalDecl);
+	xobjFile.iterateDef(accRewriter);
+	accRewriter.finalize();
+	ACC.exitByError();
+
+	accGlobalDecl.setupGlobalConstructor();
+	accGlobalDecl.setupGlobalDestructor();
+	accGlobalDecl.setupMain();
+	ACC.exitByError();
+
+	xobjFile.addHeaderLine("include \"acc.h\"");
+	xobjFile.addHeaderLine("include \"acc_gpu.h\"");
+	accGlobalDecl.finalize();
+	
+	if(xcodeWriter != null) {
+	    xobjFile.Output(xcodeWriter);
+	    xcodeWriter.flush();
+	}
     }
         
     if(!dump && outputXcode) {
