@@ -5,7 +5,7 @@ import exc.block.*;
 import exc.object.*;
 
 public class ACCtranslateData {
-  private PragmaBlock pb;
+  //private PragmaBlock pb;
   private ACCinfo dataInfo;
   private List<Block> initBlockList;
   private List<Block> copyinBlockList;
@@ -14,88 +14,127 @@ public class ACCtranslateData {
 //  private List<Ident> idList;
   private XobjList idList;
   private XobjList declList;
+  private boolean _isGlobal;
   
   private final static String GPU_DEVICE_PTR_PREFIX = "_ACC_GPU_DEVICE_ADDR_";
   private final static String GPU_HOST_DESC_PREFIX = "_ACC_GPU_HOST_DESC_";
-  private final static String GPU_INIT_DATA_FUNC_NAME = "_ACC_gpu_init_data";
-  private final static String GPU_FINALIZE_DATA_FUNC_NAME = "_ACC_gpu_finalize_data";
-  private final static String GPU_COPY_DATA_FUNC_NAME = "_ACC_gpu_copy_data";
   
-  private final static int GPU_COPY_HOST_TO_DEVICE = 400;
-  private final static int GPU_COPY_DEVICE_TO_HOST = 401;
+  private static final String GPU_INIT_DATA_FUNC_NAME = "_ACC_gpu_init_data";
+  private static final String GPU_PRESENT_OR_INIT_DATA_FUNC_NAME = "_ACC_gpu_pinit_data";
+  private static final String GPU_FINALIZE_DATA_FUNC_NAME = "_ACC_gpu_finalize_data";
+  //private static final String GPU_PRESENT_OR_FINALIZE_DATA_FUNC_NAME = "_ACC_gpu_pfinalize_data";
+  private static final String GPU_COPY_DATA_FUNC_NAME = "_ACC_gpu_copy_data";
+  private static final String GPU_PRESENT_OR_COPY_DATA_FUNC_NAME = "_ACC_gpu_pcopy_data";
+  private static final String GPU_FIND_DATA_FUNC_NAME = "_ACC_gpu_find_data";
+  
+  
+  private static final int GPU_COPY_HOST_TO_DEVICE = 400;
+  private static final int GPU_COPY_DEVICE_TO_HOST = 401;
   
   ACCtranslateData(PragmaBlock pb){
-    this.pb = pb;
-    this.dataInfo = ACCutil.getACCinfo(pb);
-    if(this.dataInfo == null){
+    init(pb);
+    _isGlobal = false;
+  }
+  
+  ACCtranslateData(Xobject px){
+    init(px);
+    _isGlobal = true;
+  }
+  
+  private void init(PropObject po){
+    dataInfo = ACCutil.getACCinfo(po);
+    if(dataInfo == null){
       ACC.fatal("cannot get accinfo");
     }
     initBlockList = new ArrayList<Block>();
     copyinBlockList = new ArrayList<Block>();
     copyoutBlockList = new ArrayList<Block>();
     finalizeBlockList = new ArrayList<Block>();
-//    idList = new ArrayList<Ident>();
     idList = Xcons.IDList();
     declList = Xcons.List();
   }
   
   public void translate() throws ACCexception{
-    if(ACC.debugFlag){
-      System.out.println("translate data");
-    }
+    ACC.debug("translate data");
     
     if(dataInfo.isDisabled()) return;
-        
+
+    VarScope varScope = _isGlobal? VarScope.GLOBAL : VarScope.LOCAL;
+    
+    /**
+     * varはサブアレイでもよい。ただし各APIやACCInfo.isVarAllocatedなどが対応する必要あり。
+     * 
+     */
+    
     for(Iterator<ACCvar> iter = dataInfo.getVars(); iter.hasNext(); ){
       ACCvar var = iter.next();
-      if(var.allocatesDeviceMemory()){
-        String varName = var.getName();
-        Ident varId = var.getId();
-        if(var.isPresentOr()){
-          if(dataInfo.getParent() != null){
-            if(dataInfo.getParent().isVarAllocated(varName))continue;            
-          }
-        }
-        boolean copyHtoD = var.copiesHtoD();
-        boolean copyDtoH = var.copiesDtoH();
-        
-        //allocate device memory
-        XobjList objAddrSize = getAddressAndSize(varName, varId, varId.Type());
-        Xobject addrObj = objAddrSize.left();
-        Xobject sizeObj = objAddrSize.right();
-        
-        Ident deviceAddr = Ident.Local(GPU_DEVICE_PTR_PREFIX + varName, Xtype.voidPtrType);
-        Ident hostDesc = Ident.Local(GPU_HOST_DESC_PREFIX + varName, Xtype.voidPtrType);
-        Block initBlock = createFuncCallBlock(GPU_INIT_DATA_FUNC_NAME, Xcons.List(hostDesc.getAddr(), deviceAddr.getAddr(), addrObj, sizeObj));
-        Block finalizeBlock = createFuncCallBlock(GPU_FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
-        
-        var.setDevicePtr(deviceAddr);
-        var.setHostDesc(hostDesc);
-        idList.add(deviceAddr);
-        idList.add(hostDesc);        
-        
-        initBlockList.add(initBlock);
-        finalizeBlockList.add(finalizeBlock);
-        
-        //copy data
+      Ident varId = var.getId();
+      
+      if(! var.allocatesDeviceMemory()){
+    	  if(var.isFirstprivate() || var.isPrivate()) continue;
+    	  
+    	  Ident hostDescId = dataInfo.getHostDescId(var.getName());
+    	  if(hostDescId != null) continue;
+      }
+      
+      if(dataInfo.getParent() != null && dataInfo.getParent().isVarAllocated(varId)){
+        continue;
+      }
+
+      
+      String varName = var.getName();
+      Xobject addrObj = var.getAddress();
+      Xobject sizeObj = var.getSize();
+      Xobject offsetObj = var.getOffset();
+      Ident deviceAddr = Ident.Var(GPU_DEVICE_PTR_PREFIX + varName, Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType), varScope);
+      Ident hostDesc = Ident.Var(GPU_HOST_DESC_PREFIX + varName, Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType), varScope);
+      var.setDevicePtr(deviceAddr);
+      var.setHostDesc(hostDesc);
+      idList.add(deviceAddr);
+      idList.add(hostDesc);
+      
+      Block initializeBlock = Bcons.emptyBlock();
+      Block finalizeBlock = Bcons.emptyBlock();
+
+      if(var.isPresent()){
+        initializeBlock = createFuncCallBlock(GPU_FIND_DATA_FUNC_NAME, Xcons.List(hostDesc.getAddr(), deviceAddr.getAddr(), addrObj, offsetObj, sizeObj));
+        finalizeBlock = Bcons.emptyBlock(); //createFuncCallBlock(GPU_FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
+      }else if(var.isPresentOr()){
+        initializeBlock = createFuncCallBlock(GPU_PRESENT_OR_INIT_DATA_FUNC_NAME, Xcons.List(hostDesc.getAddr(), deviceAddr.getAddr(), addrObj, offsetObj, sizeObj));
+        finalizeBlock = createFuncCallBlock(GPU_FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
+      }else{
+        initializeBlock = createFuncCallBlock(GPU_INIT_DATA_FUNC_NAME, Xcons.List(hostDesc.getAddr(), deviceAddr.getAddr(), addrObj, offsetObj, sizeObj));
+        finalizeBlock = createFuncCallBlock(GPU_FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
+      }
+      
+      initBlockList.add(initializeBlock);
+      finalizeBlockList.add(finalizeBlock);
+      
+      //copy data
+      Block copyHostToDeviceFunc = Bcons.emptyBlock();
+      Block copyDeviceToHostFunc = Bcons.emptyBlock();
+      boolean copyHtoD = var.copiesHtoD();
+      boolean copyDtoH = var.copiesDtoH();
+      if(var.isPresentOr()){
         if(copyHtoD){
-          Block copyHtoD_Func = createFuncCallBlock(GPU_COPY_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref(), Xcons.IntConstant(GPU_COPY_HOST_TO_DEVICE)));
-          copyinBlockList.add(copyHtoD_Func);
+          copyHostToDeviceFunc = createFuncCallBlock(GPU_PRESENT_OR_COPY_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref(), offsetObj, sizeObj, Xcons.IntConstant(GPU_COPY_HOST_TO_DEVICE)));
         }
         if(copyDtoH){
-          Block copyDtoH_Func = createFuncCallBlock(GPU_COPY_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref(), Xcons.IntConstant(GPU_COPY_DEVICE_TO_HOST)));
-          copyoutBlockList.add(copyDtoH_Func);
+          copyDeviceToHostFunc = createFuncCallBlock(GPU_PRESENT_OR_COPY_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref(), offsetObj, sizeObj, Xcons.IntConstant(GPU_COPY_DEVICE_TO_HOST)));
+        }
+      }else if(var.allocatesDeviceMemory()){
+        if(copyHtoD){
+          copyHostToDeviceFunc = createFuncCallBlock(GPU_COPY_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref(), offsetObj, sizeObj, Xcons.IntConstant(GPU_COPY_HOST_TO_DEVICE)));
+        }
+        if(copyDtoH){
+          copyDeviceToHostFunc = createFuncCallBlock(GPU_COPY_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref(), offsetObj, sizeObj, Xcons.IntConstant(GPU_COPY_DEVICE_TO_HOST)));
         }
       }
+      copyinBlockList.add(copyHostToDeviceFunc);
+      copyoutBlockList.add(copyDeviceToHostFunc);
     }
     
-//    List<Block> beginBlockList = new ArrayList<Block>();
-//    List<Block> endBlockList = new ArrayList<Block>();
-//    beginBlockList.addAll(initBlockList);
-//    beginBlockList.addAll(copyinBlockList);
-//    endBlockList.addAll(copyoutBlockList);
-//    endBlockList.addAll(finalizeBlockList);
-    
+    //build
     BlockList beginBody = Bcons.emptyBody();
     for(Block b : initBlockList) beginBody.add(b);
     for(Block b : copyinBlockList) beginBody.add(b);
@@ -119,15 +158,6 @@ public class ACCtranslateData {
       idList.add(condId);
     }
     dataInfo.setIdList(idList);
-
-    
-//    if(dataInfo.isEnabled()){
-//      dataInfo.setBeginBlockList(beginBlockList);
-//      dataInfo.setEndBlockList(endBlockList);
-//      dataInfo.setIdList(idList);
-//    }else{
-//      //case like if(var)
-//    }
   }
   
   public Block createFuncCallBlock(String funcName, XobjList funcArgs) {

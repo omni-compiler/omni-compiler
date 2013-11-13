@@ -21,9 +21,7 @@ public class ACCtranslateWait {
   }
 
   public void translate() throws ACCexception{
-    if(ACC.debugFlag){
-      System.out.println("translate wait");
-    }
+    ACC.debug("translate wait");
 
     Block waitFuncBlock;
     Xobject waitExp = waitInfo.getWaitExp();

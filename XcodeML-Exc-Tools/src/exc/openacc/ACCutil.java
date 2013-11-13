@@ -2,11 +2,12 @@ package exc.openacc;
 
 import exc.block.*;
 import exc.object.*;
+
 import java.util.*;
 
 
 public class ACCutil {
-  public static ACCinfo getACCinfo(Block b){
+  public static ACCinfo getACCinfo(PropObject b){
     return (ACCinfo)b.getProp(ACC.prop);
   }
   public static void setACCinfo(Block b, ACCinfo info){
@@ -171,9 +172,56 @@ public class ACCutil {
         case DIV_EXPR:
           return Xcons.IntConstant(left.getInt() / right.getInt());
         }
-      }
+      }//else if(left.Opcode()==Xcode.LONGLONG_CONSTANT && right.getLong())
     }
     return exp;
+  }
+  
+  public static Xobject foldIntConstant_mod(Xobject exp){
+    if(exp.isBinaryOp()){
+      Xcode code = exp.Opcode();
+      Xobject lhs = foldIntConstant(exp.left());
+      Xobject rhs = foldIntConstant(exp.right());
+      boolean isLhsConstant = lhs.isIntConstant() || lhs.Opcode() == Xcode.LONGLONG_CONSTANT;
+      boolean isRhsConstant = rhs.isIntConstant() || rhs.Opcode() == Xcode.LONGLONG_CONSTANT;
+      if(isLhsConstant && isRhsConstant){
+        long lhsValue = lhs.isIntConstant()? lhs.getInt() : getLong(lhs);
+        long rhsValue = rhs.isIntConstant()? rhs.getInt() : getLong(rhs);
+        long value;
+        
+        switch(code){
+        case PLUS_EXPR:
+          value = lhsValue + rhsValue; break;
+        case MINUS_EXPR:
+          value = lhsValue - rhsValue; break;
+        case MUL_EXPR:
+          value = lhsValue * rhsValue; break;
+        case DIV_EXPR:
+          value = lhsValue / rhsValue; break;
+        case MOD_EXPR:
+          value = lhsValue % rhsValue; break;
+        default:
+          
+        }
+        
+      }//else if(left.Opcode()==Xcode.LONGLONG_CONSTANT && right.getLong())
+    }
+    return exp;
+  }
+  public static long getLong(Xobject longObj){
+    long low = longObj.getLongLow();
+    long high = longObj.getLongHigh();
+    
+    
+    return high << 32 + low;
+  }
+  
+  public static String removeExtension(String name){
+	int dotPos = name.lastIndexOf(".");
+	  if(dotPos != -1){
+	    return name.substring(0, dotPos);
+	  }
+    return name; 
   }
 }
 

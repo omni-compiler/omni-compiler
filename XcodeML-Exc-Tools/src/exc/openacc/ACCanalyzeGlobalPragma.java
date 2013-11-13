@@ -19,7 +19,7 @@ public class ACCanalyzeGlobalPragma {
       }catch(ACCexception e){
         ACC.error(x.getLineNo(), e.getMessage());
       }
-      System.out.println(x);
+      //System.out.println(x);
     }else if(x.Opcode() == Xcode.PRAGMA_LINE){
       ACC.error(x.getLineNo(), "unknown pragma : " + x);
     }
@@ -37,15 +37,13 @@ public class ACCanalyzeGlobalPragma {
     }
   }
   
-  void analyzeDeclare(Xobject x){
+  void analyzeDeclare(Xobject x) throws ACCexception{
     XobjList clauseList = (XobjList)x.getArg(1);
     //XXX need to save ACCinfo in globalDecl
-    //ACCinfo accInfo = new ACCinfo(ACCpragma.DECLARE, pb);
-    //pb.setProp(ACC.prop, accInfo);
+    ACCinfo accInfo = new ACCinfo(ACCpragma.DECLARE,x,_globalDecl);
+    x.setProp(ACC.prop, accInfo);
     
-    if(ACC.debugFlag){
-      System.out.println("declare directive : " + clauseList);
-    }
+    ACC.debug("declare directive : " + clauseList);
     
     for(Xobject o : clauseList){
       XobjList clause = (XobjList)o;
@@ -53,10 +51,10 @@ public class ACCanalyzeGlobalPragma {
       Xobject clauseArgs = (clause.Nargs() > 1)? clause.getArg(1) : null;
             
       if(clauseName.isDataClause() || clauseName == ACCpragma.DEVICE_RESIDENT){
-        //for(Xobject var : (XobjList)clauseArgs) accInfo.declACCvar(var.getName(), clauseName);
         //XXX need to implement
+        for(Xobject var : (XobjList)clauseArgs) accInfo.declACCvar(var.getName(), clauseName);
       }else{
-        ACC.fatal("'" + clauseName +"' clause is not allowed in 'declare' directive");
+        ACC.fatal("'" + clauseName + "' clause is not allowed in 'declare' directive");
       }
     }
   }

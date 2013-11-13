@@ -39,22 +39,23 @@ public class ACCtranslateLocalPragma {
     case PARALLEL:
       translateParallel(pb); break;
     case KERNELS:
-      //translateKernels(pb); break;
-      break;
+      translateKernels(pb); break;
     case DATA:
       translateData(pb); break;
     case HOST_DATA:
-      //translateHostData(pb); break;
+      //translateHostData(pb); 
+      break;
     case LOOP: break;
-      //translateLoop(pb); break;
     case CACHE:
-      //translateCache(pb); break;
+      //translateCache(pb); 
+      break;
     case PARALLEL_LOOP:
-      //break;
+      translateParallel(pb);
+      break;
     case KERNELS_LOOP:
       //break;
     case DECLARE:
-      //translateDeclare(pb); break;
+      translateDeclare(pb); break;
     case UPDATE:
       translateUpdate(pb); break;
     case WAIT:
@@ -69,8 +70,18 @@ public class ACCtranslateLocalPragma {
     translator.translate();
   }
   
+  private void translateKernels(PragmaBlock pb) throws ACCexception{
+    ACCtranslateKernels translator = new ACCtranslateKernels(pb);
+    translator.translate();
+  }
+  
   private void translateData(PragmaBlock pb) throws ACCexception{
     ACCtranslateData translator = new ACCtranslateData(pb);
+    translator.translate();
+  }
+  
+  private void translateDeclare(PragmaBlock pb) throws ACCexception{
+    ACCtranslateDeclare translator = new ACCtranslateDeclare(pb);
     translator.translate();
   }
   

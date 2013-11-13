@@ -1,6 +1,7 @@
 package exc.openacc;
 
 import java.util.*;
+
 import exc.block.*;
 import exc.object.*;
 
@@ -10,6 +11,7 @@ public class ACCinfo {
   private Block block; /* back link */
   private ACCglobalDecl globalDecl;
   ACCpragma pragma; /* directives */
+  private Xobject xObject;
 
   private List<ACCvar> varList; /* variable list */
   
@@ -48,6 +50,16 @@ public class ACCinfo {
     this.globalDecl = globalDecl;
     
     parent = getOuterACCinfo();
+    varList = new ArrayList<ACCvar>();
+    execModels = new HashSet<ACCpragma>();
+  }
+  
+  ACCinfo(ACCpragma pragma, Xobject xObj, ACCglobalDecl globalDecl){
+    this.pragma = pragma;
+    this.globalDecl = globalDecl;
+    this.xObject = xObj;
+    
+    parent = null;
     varList = new ArrayList<ACCvar>();
     execModels = new HashSet<ACCpragma>();
   }
@@ -198,16 +210,19 @@ public class ACCinfo {
     
     int n = collapseNum.getInt();
     if(n > 0){
-      //FIXME check loop nest
       this.collapseNum = n;
     }else{
       throw new ACCexception("collapse clause arg must be positive integer");
     }
   }
   public int getCollapseNum(){
-    return collapseNum;
+    if(collapseNum != 0){
+      return collapseNum;
+    }else{
+      return 1;
+    }
   }
-  
+
   public void setIndependent() throws ACCexception{
     if(isIndependent) throw new ACCexception("independent clause is already specified");
     isIndependent = true;
@@ -253,13 +268,29 @@ public class ACCinfo {
     return false;
   }
   
+  /** @return true if the variable is always allocated */
   public boolean isVarAllocated(String varName){
     for(ACCinfo info = this; info != null; info = info.parent){
       if(info.isDisabled()) continue;
 
-      ACCvar var = info.getACCvar(varName);
-      if(var != null){
-        if(var.isPresent() || var.isAllocated()) return true;
+      if(info.isEnabled()){
+        ACCvar var = info.getACCvar(varName);
+        if(var != null){
+          if(var.isPresent() || var.isAllocated()) return true;
+        }
+      }
+    }
+    return false;
+  }
+  public boolean isVarAllocated(Ident id){
+    for(ACCinfo info = this; info != null; info = info.parent){
+      if(info.isDisabled()) continue;
+      
+      if(info.isEnabled()){
+        ACCvar var = info.getACCvar(id);
+        if(var != null){
+          if(var.isPresent() || var.isAllocated()) return true;
+        }
       }
     }
     return false;
@@ -312,64 +343,64 @@ public class ACCinfo {
     ACC.fatal("cant't get func info");
     return null;
   }
-      
+  
   public void declACCvar(String varName, ACCpragma atr) throws ACCexception{
+    declACCvar(varName, null, atr);
+  }
+      
+  public void declACCvar(String varName, XobjList subscripts, ACCpragma atr) throws ACCexception{
     ACCvar parentACCvar;
     ACCvar newACCvar;
     Ident newACCvarId;
     
-    if(getACCvar(varName) != null){
-      //FIXME allows subarray
-      ACC.fatal("VAR:" + varName + " is already specified in same directive");
-      return;
-    }
+//    if((newACCvar = getACCvar(varName)) != null){
+//      FIXME allows subarray
+//      ACC.fatal("VAR:" + varName + " is already specified in same directive");
+//      return;
+//    }
     
+    //check conflict
+//    if(conflictsWith(varName, subscripts)){
+//      //ACC.fatal("VAR:" + varName + " is already specified in same directive");
+//      throw new ACCexception("VAR:" + varName + " is already specified in same directive");
+//    }
+    
+    Ident varId;
+    if(block != null){
+        varId = block.findVarIdent(varName);
+    }else{
+      varId = xObject.findVarIdent(varName);
+    }
+      
     switch(atr){
     case COPY:
     case COPYIN:
     case COPYOUT:
     case CREATE:
-      if(isVarAllocated(varName)){
+      if(isVarAllocated(varId)){
         throw new ACCexception("'" + varName + "' is already allocated on device memory");
       }
       break;
     case PRESENT:
-      if(! isVarAllocated(varName)){
-        //throw new ACCexception("'" + varName + "' is not allocated yet.");
-        //check func params
-        XobjList funcInfo = getFuncInfo();
-        //String funcName = funcInfo.getArg(0).getString();
-        XobjList funcParams = (XobjList)funcInfo.getArg(1);
-        /*
-        int paramNum = 0;
-        for(Xobject o : funcParams){
-          Ident id = (Ident)o;
-          if(id != null){
-            if(id.getName().equals(varName)){
-              Xcode code = id.getValue().Opcode();
-              globalDecl.setCalleeInfo(funcName, paramNum, code, true);
-              System.out.println("setfuncparaminfo:"+id + "(" + paramNum + ")");
-            }
-          }
-          paramNum++;
-        }
-        if(paramNum > funcParams.Nargs()){ //not found in params
-          throw new ACCexception("'" + varName + "' is not allocated.");
-        }
-        */
-        if(! ACCutil.hasIdent(funcParams, varName)){
-          throw new ACCexception("'" + varName + "' is not allocated.");
-        }
-      }
+//      if(! isVarAllocated(varName)){
+//        XobjList funcInfo = getFuncInfo();
+//        XobjList funcParams = (XobjList)funcInfo.getArg(1);
+//
+//        if(ACCutil.hasIdent(funcParams, varName)) break;
+//
+//        if(globalDecl.findVarIdent(varName) != null) break;
+//        
+//        throw new ACCexception("'" + varName + "' is not allocated.");
+//      }
       break;
     case PRESENT_OR_COPY:
     case PRESENT_OR_COPYIN:
     case PRESENT_OR_COPYOUT:
     case PRESENT_OR_CREATE:
-      if(isVarAllocated(varName)){
+      if(isVarAllocated(varName)){ //not enough. 
         ACC.debug("'" + varName + "' is already allocated. '" + atr.getName() + "' is same as 'present'.");
       }else{
-        ACC.debug("'" + varName + "' is not allocated yet. '" + atr.getName() + "' is same as '" + atr.getName().substring("PRESENT_OR_".length()) + "'.");
+        //ACC.debug("'" + varName + "' is not allocated yet. '" + atr.getName() + "' is same as '" + atr.getName().substring("PRESENT_OR_".length()) + "'.");
       }
       break;
     case DEVICEPTR:
@@ -384,8 +415,17 @@ public class ACCinfo {
       }
       break;
       
+    case USE_DEVICE:
+      if(! isVarAllocated(varName)){
+        throw new ACCexception("'" + varName + "' is not allocated");
+      }
+      break;
+      
     case PRIVATE:
     case FIRSTPRIVATE:
+      if(varId.Type().isArray()){
+        //throw new ACCexception("'" + varName + "' is an array. Array is not allowed in " + atr.getName() + ".");
+      }break;
     case CACHE:
       break;
     default:
@@ -397,19 +437,60 @@ public class ACCinfo {
     parentACCvar = findOuterACCvar(varName);
     if(parentACCvar != null){
       newACCvarId = parentACCvar.getId();
-
     }else{
-
-      newACCvarId = block.findVarIdent(varName);
+      
+      //newACCvarId = block.findVarIdent(varName);
+      newACCvarId = varId;//findVarIdent(varName);
       if(newACCvarId == null){
         ACC.fatal("VAR:" + varName + " is not declared");
         return;
       }
     }
     
-
-    newACCvar = new ACCvar(newACCvarId, atr, parentACCvar);
-    varList.add(newACCvar);
+    //check subscripts
+    XobjList newSubscripts = null;
+    if(subscripts != null){
+    newSubscripts = Xcons.List();
+    for(Xobject subscript : subscripts){
+	XobjList newSubscript = Xcons.List();
+	Xobject lower = subscript.getArg(0);
+	Xobject length = subscript.getArgOrNull(1);
+	String vName;
+	Ident vId;
+	if(!lower.isIntConstant()){
+	    vName = lower.getName();
+	    vId = block.findVarIdent(vName);
+	    if(vId == null){
+		throw new ACCexception("'" + vName + "' is undefined");
+	    }
+	    lower = vId.Ref();
+	}
+	newSubscript.add(lower);
+	if(length != null){
+	    if(!length.isIntConstant()){
+		vName = length.getName();
+		vId = block.findVarIdent(vName);
+		if(vId == null){
+		    throw new ACCexception("'" + vName + "' is undefined");
+		}
+		length = vId.Ref();
+	    }
+	    newSubscript.add(length);
+	}
+	newSubscripts.add(newSubscript);
+    }
+    }
+    
+    newACCvar = getACCvar(varName, newSubscripts);
+    if(newACCvar == null){
+      newACCvar = new ACCvar(newACCvarId, newSubscripts, atr, parentACCvar);
+      varList.add(newACCvar);
+    }else{
+      newACCvar.setAttribute(atr);
+    }
+    //if(! subscripts.isEmpty()){
+      //newACCvar.setRange(subscripts);
+    //}
     
   }
   
@@ -421,14 +502,44 @@ public class ACCinfo {
     }
     return null;
   }
+  //returns ACCvar that has same region described by subscripts
+  public ACCvar getACCvar(String varName, XobjList subscripts){
+    for(ACCvar accVar : varList){
+      if(accVar.getName().equals(varName)){
+        if(accVar.contains(subscripts))
+        return accVar;
+      }
+    }
+    return null;
+  }
+  public ACCvar getACCvar(Ident id){
+    for(ACCvar accVar : varList){
+      if(accVar.getId().equals(id)){
+        return accVar;
+      }
+    }
+    return null;
+  }
   
+  //FIXME change function name to getParentACCinfo
   ACCinfo getOuterACCinfo(){
-    for(Block b = block.getParentBlock(); b != null; b = b.getParentBlock()){
-      if(b.Opcode() == Xcode.ACC_PRAGMA){
-        Object info = b.getProp(ACC.prop);
+    if(block != null){
+      for(Block b = block.getParentBlock(); b != null; b = b.getParentBlock()){
+        //if(b.Opcode() != Xcode.ACC_PRAGMA);
+        ACCinfo info = ACCutil.getACCinfo(b); 
+        if(info != null) return info;
+      }
+    }
+    List<XobjectDef> defs = globalDecl.getEnv().getDefs();
+    for(int i = defs.size() - 1; i >= 0; i--){
+      XobjectDef def = defs.get(i);
+      Xobject x = def.getDef();
+      if(x.Opcode() == Xcode.ACC_PRAGMA){
+        Object info = x.getProp(ACC.prop);
         if(info != null) return (ACCinfo)info;
       }
     }
+    
     return null;
   }
   
@@ -524,4 +635,51 @@ public class ACCinfo {
     return reductionVars.iterator();
   }*/
   
+  private Ident findVarIdent(String name)
+  {
+      for(Block b = block; b != null; b = b.getParentBlock()){
+        BlockList body = b.getBody();
+        Ident id = body.findLocalIdent(name);
+        if(id != null) return id;
+      }
+      return globalDecl.getEnv().findVarIdent(name);
+  }
+  
+  private boolean conflictsWith(String varName, XobjList subscripts){
+    for(ACCvar var : varList){
+      if(!var.getName().equals(varName)) continue;
+      if(var.conllidesWith(subscripts)) return true;
+    }
+    return false;
+  }
+  
+  public Iterable<ACCvar> getACCvars(ACCpragma atr){
+    Iterable <ACCvar> vars = new Iterable<ACCvar>(){
+      public Iterator<ACCvar> iterator(){
+        return new Iterator<ACCvar>(){
+          private ACCvar var;
+          private Iterator<ACCvar> varIter = getVars();
+          @Override
+          public boolean hasNext() {
+            while(varIter.hasNext()){
+              var = varIter.next(); 
+              if(var.isPrivate()){ //一時的に
+                return true;
+              }
+            }
+            return false;
+          }
+          @Override
+          public ACCvar next(){
+            return var;
+          }
+          @Override
+          public void remove() {}
+        };
+      }
+    };
+    
+    return vars;
+  }
+
 }

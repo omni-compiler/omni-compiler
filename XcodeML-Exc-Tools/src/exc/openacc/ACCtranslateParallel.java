@@ -1,6 +1,7 @@
 package exc.openacc;
 
 import java.util.*;
+
 import exc.block.*;
 import exc.object.*;
 
@@ -16,7 +17,9 @@ public class ACCtranslateParallel {
   private ACCinfo parallelInfo;
   private ACCglobalDecl globalDecl;
   private ACCgpuManager gpuManager;
-  private List<ACCvar> reductionVars;
+  //private List<ACCvar> reductionVars;
+  private List<ACCvar> tmpUsingReductionVars = new ArrayList<ACCvar>();
+  private List<XobjectDef> varDecls = new ArrayList<XobjectDef>();
  
   public ACCtranslateParallel(PragmaBlock pb) {
     this.pb = pb;
@@ -28,6 +31,70 @@ public class ACCtranslateParallel {
   }
   
   public void translate() throws ACCexception{
+    ACC.debug("translate parallel");
+    
+    if(parallelInfo.isDisabled()){
+      return;
+    }
+    
+    //List<List<Block>> kernelBodyList = null;//divideBlocksBetweenKernels(pb);
+    //BlockList kernelBlocks = pb.getBody();
+
+    List<Block> kernelBody = new ArrayList<Block>(); 
+    if(parallelInfo.getPragma() == ACCpragma.PARALLEL_LOOP){
+      kernelBody.add(pb);
+    }else{
+//      for(Block b = pb.getBody().getHead(); b != null; b = b.getNext()){
+//        kernelBody.add(b);
+//      }
+        kernelBody.add(pb);
+    }
+    
+    //analyze and complete clause for kernel
+    
+    ACCgpuKernel gpuKernel = new ACCgpuKernel(parallelInfo, kernelBody);
+    gpuKernel.analyze();
+    
+    //get readonly id set
+    Set<Ident> readOnlyOuterIdSet = gpuKernel.getReadOnlyOuterIdSet();//collectReadOnlyOuterIdSet(kernelList);
+    
+    //kernel内のincudtionVarのid
+    //Set<Ident> inductionVarIdSet = gpuKernel.getInductionVarIdSet();
+
+    //set unspecified var's attribute from outerIdSet
+    Set<Ident> outerIdSet = new HashSet<Ident>(gpuKernel.getOuterIdList());
+    for(Ident id : outerIdSet){
+      String varName = id.getName();
+      //if(parallelInfo.getACCvar(varName) != null) continue; 
+      if(parallelInfo.isVarAllocated(varName)) continue;
+      //if(parallelInfo.isVarPrivate(varName)) continue;
+      if(parallelInfo.isVarFirstprivate(varName)) continue; //this is need for only parallel construct
+      //if(parallelInfo.getDevicePtr(varName) != null) continue;
+      if(readOnlyOuterIdSet.contains(id) && !id.Type().isArray()) continue; //firstprivateは除く
+      //if(inductionVarIdSet.contains(id)) continue;
+      
+      parallelInfo.declACCvar(id.getName(), ACCpragma.PRESENT_OR_COPY);
+    }
+    
+    //translate data
+    ACCtranslateData dataTranslator = new ACCtranslateData(pb);
+    dataTranslator.translate();
+    
+    //make kernels list of block(kernel call , sync) 
+    
+    Block parallelBlock = gpuKernel.makeLaunchFuncCallBlock();
+    Block replaceBlock = null;
+    if(parallelInfo.isEnabled()){
+      replaceBlock = parallelBlock;
+    }else{
+      replaceBlock = Bcons.IF(parallelInfo.getIfCond(), parallelBlock, Bcons.COMPOUND(pb.getBody()));
+    }
+
+    //set replace block
+    parallelInfo.setReplaceBlock(replaceBlock);
+  }
+  
+  public void translate_old() throws ACCexception{
     if(ACC.debugFlag){
       System.out.println("translate parallel");
     }
@@ -46,14 +113,13 @@ public class ACCtranslateParallel {
     divideIds(outerIds, normalIds, privateIds, firstprivateIds);
     
     //translate
-    BlockList parallelBody = pb.getBody();
     Ident funcId = globalDecl.declExternIdent(globalDecl.genSym(ACC_GPU_FUNC_PREFIX), Xtype.Function(Xtype.voidType));  
     
     XobjList funcParamArgs = makeFuncParamArgs(normalIds, firstprivateIds);
     XobjList funcParams = (XobjList)funcParamArgs.left();
     XobjList funcArgs = (XobjList)funcParamArgs.right();
     
-    createGpuFuncs(funcId, funcParams, parallelBody, parallelInfo);
+    createGpuFuncs(funcId, funcParams, pb, parallelInfo);
     ((FunctionType)funcId.Type()).setFuncParamIdList(funcParams);  //if need
     Block funcCallBlock = ACCutil.createFuncCallBlock(funcId.getName(), funcArgs);
     parallelInfo.setReplaceBlock(funcCallBlock) ;
@@ -117,7 +183,7 @@ public class ACCtranslateParallel {
   }
 
   /** @return identList which is referenced in pragma block and defined out pragma block.*/ 
-  XobjList getOuterIds(){
+  private XobjList getOuterIds(){
     XobjList outerIds = Xcons.IDList();
 
     Set<String> checkedVars = new HashSet<String>();
@@ -136,7 +202,9 @@ public class ACCtranslateParallel {
 
           Ident id = pb.findVarIdent(varName);
           if(id != null) { //id exists out pb
-            outerIds.add(id);
+            //if(iter.getBasicBlock().getParent().findVarIdent(varName) == null){
+              outerIds.add(id);
+            //}
           }
           checkedVars.add(varName);
         } break;
@@ -151,6 +219,7 @@ public class ACCtranslateParallel {
           }
           checkedVars.add(varName);
         } break;
+        default:
         }
       }
     }
@@ -160,14 +229,15 @@ public class ACCtranslateParallel {
 
   
 
-  public void createGpuFuncs(Ident funcId, XobjList funcParams, BlockList parallelBody, ACCinfo info) throws ACCexception {
+  private void createGpuFuncs(Ident funcId, XobjList funcParams, Block parallelBlock, ACCinfo info) throws ACCexception {
     String hostFuncName = funcId.getName();
     Ident hostFuncId = funcId;
-    gpuManager = new ACCgpuManager();
-    reductionVars = new ArrayList<ACCvar>();
+    gpuManager = new ACCgpuManager(info);
+    //reductionVars = new ArrayList<ACCvar>();
 
     //analyze
-    analyzeParallelBody(parallelBody);
+    analyzeParallelBlock(parallelBlock);
+    //analyzeParallelBody(parallelBlock.getBody());
     gpuManager.finalize();
     
 
@@ -177,7 +247,7 @@ public class ACCtranslateParallel {
     XobjList deviceKernelArgs = (XobjList)deviceKernelParamArgs.right();
     String deviceKernelName = hostFuncName + "_DEVICE";
     Ident deviceKernelId = ACCutil.getMacroFuncId(deviceKernelName, Xtype.voidType);
-    XobjectDef deviceKernelDef = createDeviceKernelDef(deviceKernelId, deviceKernelParams, parallelBody);
+    XobjectDef deviceKernelDef = createDeviceKernelDef(deviceKernelId, deviceKernelParams, parallelBlock/*parallelBody*/);
 
     ((FunctionType)deviceKernelId.Type()).setFuncParamIdList(deviceKernelParams);
     Bcons.Statement(deviceKernelId.Call(deviceKernelArgs));
@@ -185,16 +255,16 @@ public class ACCtranslateParallel {
     // create host function
     XobjectDef hostFuncDef = createHostFuncDef(hostFuncId, funcParams, deviceKernelDef, deviceKernelId);
 
-    new ACCgpuDecompiler().decompile(info.getGlobalDecl().getEnv(), deviceKernelDef, deviceKernelId, hostFuncDef);
+    new ACCgpuDecompiler().decompile(info.getGlobalDecl().getEnv(), deviceKernelDef, deviceKernelId, hostFuncDef, varDecls);
     
   }
 
   private XobjList makeDeviceKernelParamArgs(XobjList funcParams) {
     //temporary
-    return Xcons.List(funcParams, ACCutil.getRefs(funcParams));
+    return Xcons.List(funcParams.copy(), ACCutil.getRefs(funcParams));
   }
   
-  private XobjectDef createDeviceKernelDef(Ident deviceKernelId, XobjList deviceKernelParamIds, BlockList kernelBody) throws ACCexception {
+  private XobjectDef createDeviceKernelDef(Ident deviceKernelId, XobjList deviceKernelParamIds, Block kernelBlock/*BlockList kernelBody*/) throws ACCexception {
     //create device function
     XobjList deviceKernelLocalIds = Xcons.IDList();
     BlockList deviceKernelBody = Bcons.emptyBody();
@@ -204,7 +274,7 @@ public class ACCtranslateParallel {
     while(varIter.hasNext()){
       ACCvar var = varIter.next();
       if(var.isPrivate()){
-        deviceKernelLocalIds.add(Ident.Local(var.getName(), Xtype.intType));
+        deviceKernelLocalIds.add(Ident.Local(var.getName(), var.getId().Type()/*Xtype.intType*/));
       }
     }
     
@@ -213,7 +283,7 @@ public class ACCtranslateParallel {
     XobjList additionalParams = Xcons.IDList();
     XobjList additionalLocals = Xcons.IDList();
     //BlockList copyBody = kernelBody.copy();
-    Block deviceKernelBlock = makeDeviceKernelCoreBlock(initBlocks, kernelBody, additionalParams, additionalLocals);//, Xcons.IDList());
+    Block deviceKernelBlock = makeDeviceKernelCoreBlock(initBlocks, kernelBlock.getBody(), additionalParams, additionalLocals, null, deviceKernelId);//, Xcons.IDList());
     rewriteReferenceType(deviceKernelBlock, deviceKernelParamIds);
     deviceKernelLocalIds.mergeList(additionalLocals);
     deviceKernelParamIds.mergeList(additionalParams);
@@ -232,7 +302,7 @@ public class ACCtranslateParallel {
     return deviceKernelDef;
   }
   
-  private Block makeDeviceKernelCoreBlock(List<Block> initBlocks, BlockList kernelBody, XobjList paramIds, XobjList localIds){//, XobjList reduceIds) throws ACCexception {
+  private Block makeDeviceKernelCoreBlock(List<Block> initBlocks, BlockList kernelBody, XobjList paramIds, XobjList localIds, String prevExecMethodName, Ident deviceKernelId){//, XobjList reduceIds) throws ACCexception {
     Block b = kernelBody.getHead();
     
     Xobject ids = kernelBody.getIdentList();
@@ -240,10 +310,10 @@ public class ACCtranslateParallel {
     BlockList resultBody = Bcons.emptyBody(ids, decls);
     
     while(b != null){
-      if(b.Opcode() == Xcode.ACC_PRAGMA){
+      if(b.Opcode() == Xcode.FOR_STATEMENT){
         ACCinfo info = ACCutil.getACCinfo(b);
-        if(info.getPragma() == ACCpragma.LOOP){
-          CforBlock forBlock = (CforBlock)b.getBody().getHead();
+        if(info != null && (info.getPragma() == ACCpragma.LOOP || info.getPragma() == ACCpragma.PARALLEL_LOOP)){
+          CforBlock forBlock = (CforBlock)b;
           String execMethodName = gpuManager.getMethodName(forBlock);
           Block resultBlock = Bcons.emptyBlock();
           
@@ -255,7 +325,7 @@ public class ACCtranslateParallel {
           
           if(execMethodName == ""){ //if execMethod is not defined or seq
             resultBlock=Bcons.FOR(forBlock.getInitBBlock(), forBlock.getCondBBlock(), forBlock.getIterBBlock(), 
-                Bcons.blockList(makeDeviceKernelCoreBlock(initBlocks, forBlock.getBody(), paramIds, localIds/*, reduceIds*/)));
+                Bcons.blockList(makeDeviceKernelCoreBlock(initBlocks, forBlock.getBody(), paramIds, localIds, prevExecMethodName, deviceKernelId/*, reduceIds*/)));
             resultBody.add(resultBlock);
           }else{
             
@@ -264,22 +334,27 @@ public class ACCtranslateParallel {
             while(vars.hasNext()){
               ACCvar var = vars.next();
               if(var.isReduction()){
-                reductionVars.add(var);
+                //reductionVars.add(var);
                 Ident localRedId = Ident.Local(ACC_REDUCTION_VAR_PREFIX + var.getName(), var.getId().Type());
                 XobjList redTmpArgs = Xcons.List();
                 if(needsTemp(var)){
                   Ident redId = var.getId();
-                  Ident ptr_red_tmp = Ident.Param("_ACC_gpu_red_tmp_" + redId.getName(), Xtype.Pointer(redId.Type()));
-                  Ident ptr_red_cnt = Ident.Param("_ACC_gpu_red_cnt_" + redId.getName(), Xtype.Pointer(Xtype.unsignedType));
-                  paramIds.add(ptr_red_tmp);
-                  paramIds.add(ptr_red_cnt);
-                  redTmpArgs.add(ptr_red_tmp.Ref());
-                  redTmpArgs.add(ptr_red_cnt.Ref());
+                  if(needsTemp(var) && execMethodName.startsWith("block")){
+                    Ident ptr_red_tmp = Ident.Param("_ACC_gpu_red_tmp_" + redId.getName(), Xtype.Pointer(redId.Type()));
+                    //Ident ptr_red_cnt = Ident.Param("_ACC_gpu_red_cnt_" + redId.getName(), Xtype.Pointer(Xtype.unsignedType));
+                    Ident ptr_red_cnt = Ident.Var(deviceKernelId.getName() + "_red_cnt_" + redId.getName(), Xtype.unsignedType, Xtype.Pointer(Xtype.unsignedType), VarScope.GLOBAL);
+                    paramIds.add(ptr_red_tmp);
+                    //paramIds.add(ptr_red_cnt);
+                    redTmpArgs.add(ptr_red_tmp.Ref());
+                    redTmpArgs.add(Xcons.AddrOfVar(ptr_red_cnt.Ref()));
+                    tmpUsingReductionVars.add(var);
+                    varDecls.add(new XobjectDef(Xcons.List(Xcode.VAR_DECL, ptr_red_cnt, Xcons.IntConstant(0))));
+                  }
                 }
                 localIds.add(localRedId);
                 reductionLocalVarIds.add(localRedId);
                 reductionVarIds.add(var.getId());
-                int reductionKind = getReductionKindInt(var.getAttribute());
+                int reductionKind = getReductionKindInt(var.getReductionOperator());
                 beginBlocks.add(ACCutil.createFuncCallBlock("_ACC_gpu_init_reduction_var", Xcons.List(localRedId.getAddr(), Xcons.IntConstant(reductionKind))));
                 XobjList funcCallArgs = Xcons.List(var.getId().getAddr(),localRedId.Ref(), Xcons.IntConstant(reductionKind));
                 funcCallArgs.mergeList(redTmpArgs);
@@ -301,7 +376,8 @@ public class ACCtranslateParallel {
             XobjList initIterFuncArgs = Xcons.List(iterInit.getAddr(), iterCond.getAddr(), iterStep.getAddr());
             initIterFuncArgs.mergeList(Xcons.List(init, cond, step));
             Block initIterFunc = ACCutil.createFuncCallBlock("_ACC_gpu_init_" + execMethodName + "_iter", initIterFuncArgs); 
-            initBlocks.add(initIterFunc);
+            //initBlocks.add(initIterFunc);
+            beginBlocks.add(initIterFunc);
 
             XobjList calcIdxFuncArgs = Xcons.List(iterIdx.Ref());
             calcIdxFuncArgs.add(indVarId.getAddr());
@@ -315,7 +391,7 @@ public class ACCtranslateParallel {
                 Bcons.COMPOUND(
                     Bcons.blockList(
                         calcIdxFunc,
-                        makeDeviceKernelCoreBlock(initBlocks, forBlock.getBody(), paramIds, localIds/*, reduceIds*/)
+                        makeDeviceKernelCoreBlock(initBlocks, forBlock.getBody(), paramIds, localIds, execMethodName, deviceKernelId/*, reduceIds*/)
                         )
                     )
                 );
@@ -328,17 +404,33 @@ public class ACCtranslateParallel {
           for(Block block : beginBlocks) resultBody.add(block);
           resultBody.add(resultBlock);
           for(Block block : endBlocks) resultBody.add(block);          
+        }else{
+          CforBlock forBlock = (CforBlock)b;
+          Block resultBlock=Bcons.FOR(forBlock.getInitBBlock(), forBlock.getCondBBlock(), forBlock.getIterBBlock(), 
+              Bcons.blockList(makeDeviceKernelCoreBlock(initBlocks, forBlock.getBody(), paramIds, localIds, prevExecMethodName, deviceKernelId/*, reduceIds*/)));
+          resultBody.add(resultBlock);
         }
-      }else if(b.Opcode() == Xcode.FOR_STATEMENT){
-        CforBlock forBlock = (CforBlock)b;
-        Block resultBlock=Bcons.FOR(forBlock.getInitBBlock(), forBlock.getCondBBlock(), forBlock.getIterBBlock(), 
-            Bcons.blockList(makeDeviceKernelCoreBlock(initBlocks, forBlock.getBody(), paramIds, localIds/*, reduceIds*/)));
-        resultBody.add(resultBlock);
       }else if(b.Opcode() == Xcode.COMPOUND_STATEMENT){
-        Block resultBlock = makeDeviceKernelCoreBlock(initBlocks, b.getBody(), paramIds, localIds/*, reduceIds*/);
+        Block resultBlock = makeDeviceKernelCoreBlock(initBlocks, b.getBody(), paramIds, localIds, prevExecMethodName, deviceKernelId/*, reduceIds*/);
         resultBody.add(resultBlock);
+      }else if(b.Opcode() == Xcode.ACC_PRAGMA){
+        ACCinfo info = ACCutil.getACCinfo(b);
+        ACC.debug("directive in parallel : "+info.getPragma().getName());
+        resultBody.add(makeDeviceKernelCoreBlock(initBlocks, b.getBody(), paramIds, localIds, prevExecMethodName, deviceKernelId));
       }else{
-        Block newBlock = b.copy();
+        Block newBlock; 
+        if(prevExecMethodName==null){
+          newBlock=null;
+//          /blockidx.x==0
+          Ident block_id = Ident.Local("_ACC_block_x_id", Xtype.intType);
+          newBlock = Bcons.IF(Xcons.binaryOp(Xcode.LOG_EQ_EXPR, block_id.Ref(),Xcons.IntConstant(0)), b.copy(),null);
+        }else if(prevExecMethodName.equals("block_x")){
+          Ident thread_id = Ident.Local("_ACC_thread_x_id", Xtype.intType); 
+          newBlock = Bcons.IF(Xcons.binaryOp(Xcode.LOG_EQ_EXPR, thread_id.Ref(),Xcons.IntConstant(0)), b.copy(), null);
+          //threadidx.x==0
+        }else{
+          newBlock = b.copy();
+        }
         
         //replace reduction_var with local_reduction_var
         //rewriteReductionVar(newBlock, reduceIds, localIds);
@@ -353,10 +445,12 @@ public class ACCtranslateParallel {
   private void analyzeParallelBody(BlockList body) throws ACCexception {
     Block b = body.getHead();
     
+   // b = b.getParentBlock();
+    
     while(b != null){
       if(b.Opcode() == Xcode.ACC_PRAGMA){
         ACCinfo info = ACCutil.getACCinfo(b);
-        if(info.getPragma() == ACCpragma.LOOP){
+        if(info.getPragma() == ACCpragma.LOOP || info.getPragma() == ACCpragma.PARALLEL_LOOP){
           CforBlock forBlock = (CforBlock)b.getBody().getHead();
           ACCutil.setACCinfo(forBlock, info);
           Iterator<ACCpragma> execModelIter = info.getExecModels();
@@ -375,6 +469,75 @@ public class ACCtranslateParallel {
     }
     
     return;
+  }
+  
+  private void analyzeParallelBlock(Block block) throws ACCexception{
+    if(block == null) return;
+
+    Block b = block;
+    if(b.Opcode() == Xcode.ACC_PRAGMA){
+      ACCinfo info = ACCutil.getACCinfo(b);
+      if(info.getPragma() == ACCpragma.LOOP || info.getPragma() == ACCpragma.PARALLEL_LOOP){
+        CforBlock forBlock = (CforBlock)b.getBody().getHead();
+        ACCutil.setACCinfo(forBlock, info);
+        Iterator<ACCpragma> execModelIter = info.getExecModels();
+        gpuManager.addLoop(execModelIter, forBlock);
+        BlockList body = forBlock.getBody();
+        if(body != null){
+          b = body.getHead();
+          while(b != null){
+            analyzeParallelBlock(b);
+            b = b.getNext();
+          }
+        }
+      }
+    }else if(b.Opcode() == Xcode.FOR_STATEMENT){
+
+    }else if(b.Opcode() == Xcode.COMPOUND_STATEMENT){
+      //analyzeParallelBody(b.getBody());
+    }else{
+
+    }
+    
+//    BlockList body = block.getBody();
+//    if(body != null){
+//      b = body.getHead();
+//      while(b != null){
+//        analyzeParallelBlock(b);
+//        b = b.getNext();
+//      }
+//    }
+  }
+  
+  
+  private void analyzeParallelBlock_back(Block block) throws ACCexception{
+    if(block == null) return;
+
+    Block b = block;
+    if(b.Opcode() == Xcode.ACC_PRAGMA){
+      ACCinfo info = ACCutil.getACCinfo(b);
+      if(info.getPragma() == ACCpragma.LOOP || info.getPragma() == ACCpragma.PARALLEL_LOOP){
+        CforBlock forBlock = (CforBlock)b.getBody().getHead();
+        ACCutil.setACCinfo(forBlock, info);
+        Iterator<ACCpragma> execModelIter = info.getExecModels();
+        gpuManager.addLoop(execModelIter, forBlock);
+      }
+    }else if(b.Opcode() == Xcode.FOR_STATEMENT){
+
+    }else if(b.Opcode() == Xcode.COMPOUND_STATEMENT){
+      //analyzeParallelBody(b.getBody());
+    }else{
+
+    }
+    
+    BlockList body = block.getBody();
+    if(body != null){
+      b = body.getHead();
+      while(b != null){
+        analyzeParallelBlock(b);
+        b = b.getNext();
+      }
+    }
   }
   
   private XobjectDef createHostFuncDef(Ident hostFuncId, XobjList hostFuncParams, XobjectDef deviceKernelDef, Ident deviceKernelId) {
@@ -405,25 +568,30 @@ public class ACCtranslateParallel {
     hostFuncBody.add(Bcons.Statement(Xcons.Set(threadZid.Ref(), threadSize.getArg(2))));
     
     //add reduction_tmp & reduction_cnt
-    for(ACCvar redVar : reductionVars){
+    for(ACCvar redVar : tmpUsingReductionVars){
       if(needsTemp(redVar)){
         Ident redVarId = redVar.getId();
         Ident ptr_red_tmp = Ident.Local("_ACC_gpu_red_tmp_" + redVarId.getName(), Xtype.Pointer(redVarId.Type()));
-        Ident ptr_red_cnt = Ident.Local("_ACC_gpu_red_cnt_" + redVarId.getName(), Xtype.Pointer(Xtype.unsignedType));
-        Block mallocCall = ACCutil.createFuncCallBlock("_ACC_gpu_malloc", Xcons.List(ptr_red_tmp.getAddr(), Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.SizeOf(redVarId.Type()), blockXid.Ref())));
-        Block callocCall = ACCutil.createFuncCallBlock("_ACC_gpu_calloc", Xcons.List(ptr_red_cnt.getAddr(), Xcons.SizeOf(Xtype.unsignedType)));
+        //Ident ptr_red_cnt = Ident.Local("_ACC_gpu_red_cnt_" + redVarId.getName(), Xtype.Pointer(Xtype.unsignedType));
+        Xtype voidPtrPtr = Xtype.Pointer(Xtype.voidPtrType);
+        Block mallocCall = ACCutil.createFuncCallBlock("_ACC_gpu_malloc", Xcons.List(Xcons.Cast(voidPtrPtr, ptr_red_tmp.getAddr()), Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.SizeOf(Xtype.doubleType/*redVarId.Type()*/), blockXid.Ref())));
+        //Block callocCall = ACCutil.createFuncCallBlock("_ACC_gpu_calloc", Xcons.List(Xcons.Cast(voidPtrPtr, ptr_red_cnt.getAddr()), Xcons.SizeOf(Xtype.unsignedType)));
         Block tmpFreeCall = ACCutil.createFuncCallBlock("_ACC_gpu_free", Xcons.List(ptr_red_tmp.Ref()));
-        Block cntFreeCall = ACCutil.createFuncCallBlock("_ACC_gpu_free", Xcons.List(ptr_red_cnt.Ref()));
+        //Block cntFreeCall = ACCutil.createFuncCallBlock("_ACC_gpu_free", Xcons.List(ptr_red_cnt.Ref()));
         hostFuncLocalIds.add(ptr_red_tmp);
-        hostFuncLocalIds.add(ptr_red_cnt);
+        //hostFuncLocalIds.add(ptr_red_cnt);
         deviceKernelCallArgs.add(ptr_red_tmp.Ref());
-        deviceKernelCallArgs.add(ptr_red_cnt.Ref());
+        //deviceKernelCallArgs.add(ptr_red_cnt.Ref());
         preBlocks.add(mallocCall);
-        preBlocks.add(callocCall);
+        //preBlocks.add(callocCall);
         postBlocks.add(tmpFreeCall);
-        postBlocks.add(cntFreeCall);
+        //postBlocks.add(cntFreeCall);
       }
     }
+    
+    Xobject max_num_grid = Xcons.IntConstant(2147483647/*65535*/);
+    Block adjustGridFuncCall = ACCutil.createFuncCallBlock("_ACC_GPU_ADJUST_GRID", Xcons.List(Xcons.AddrOf(blockXid.Ref()), Xcons.AddrOf(blockYid.Ref()), Xcons.AddrOf(blockZid.Ref()),max_num_grid));
+    //hostFuncBody.add(adjustGridFuncCall);
     
     hostFuncBody.setIdentList(hostFuncLocalIds);
     hostFuncBody.setDecls(ACCutil.getDecls(hostFuncLocalIds));
@@ -455,7 +623,6 @@ public class ACCtranslateParallel {
   }
   
   void rewriteReferenceType(Block b, XobjList paramIds){
-    
     BasicBlockExprIterator iter = new BasicBlockExprIterator(b.getBody());
     for (iter.init(); !iter.end(); iter.next()) {
       Xobject expr = iter.getExpr();
@@ -522,7 +689,7 @@ public class ACCtranslateParallel {
     }
   }
   
-  int getReductionKindInt(ACCpragma pragma){
+  private int getReductionKindInt(ACCpragma pragma){
     if(! pragma.isReduction()) ACC.fatal(pragma.getName() + " is not reduction clause");
     switch(pragma){
     case REDUCTION_PLUS: return 0;
@@ -539,7 +706,7 @@ public class ACCtranslateParallel {
   }
   
   boolean needsTemp(ACCvar redVar){
-    ACCpragma pragma = redVar.getAttribute();
+    ACCpragma pragma = redVar.getReductionOperator();
     Ident id = redVar.getId();
     Xtype type = id.Type();
     if(! pragma.isReduction()) ACC.fatal(pragma.getName() + " is not reduction clause");

@@ -26,6 +26,29 @@ public class ACCgpuDecompileWriter extends PrintWriter {
   public void printHostFunc(XobjectDef def) {
     printWithIdentList(def.getDef(), _env.getGlobalIdentList(), false, null);
   }
+  
+  public void printDecl(XobjectDef def){
+    Xobject v = def.getDef();
+    if(v==null)return;
+    switch (v.Opcode()) {
+    case VAR_DECL:
+    {
+      Xobject varId = v.getArg(0);
+      Xobject varInitializer = v.getArg(1);
+      print("__device__ ");
+      print(makeDeclType(varId.Type(), varId.getName()));
+      if(varInitializer != null){
+        print(" = ");
+        printInitializer(varInitializer);
+      }
+      println(";");
+    }
+    break;
+
+    default:
+      break;
+    }
+  }
 
   private void fatal(String msg) {
     System.err.println("Fatal XobjectDecompileStream: " + msg);
@@ -142,7 +165,7 @@ public class ACCgpuDecompileWriter extends PrintWriter {
       print(v.getArg(0));
       print(")");
       printBody(v.getArg(1));
-      if(v.getArg(2) != null){
+      if(v.getArg(2) != null && (! v.getArg(2).isEmpty())){
         print(" else ");
         printBody(v.getArg(2));
       }
@@ -367,6 +390,7 @@ public class ACCgpuDecompileWriter extends PrintWriter {
     case FUNCTION_CALL: /* (FUNCTION_CALL function args-list) */
       XobjList prop = (XobjList)v.getProp(ACCgpuDecompiler.GPU_FUNC_CONF);
       XobjList propAsync = (XobjList)v.getProp(ACCgpuDecompiler.GPU_FUNC_CONF_ASYNC);
+      Xobject propShared = (Xobject)v.getProp(ACCgpuDecompiler.GPU_FUNC_CONF_SHAREDMEMORY);
       
       String funcName = null;
       if(v.left().Opcode() == Xcode.FUNC_ADDR){
@@ -386,7 +410,13 @@ public class ACCgpuDecompileWriter extends PrintWriter {
 
       // FIXME implement stream???
       if (prop != null) {
-        print("<<<_ACC_GPU_DIM3_block, _ACC_GPU_DIM3_thread, 0");
+        print("<<<_ACC_GPU_DIM3_block, _ACC_GPU_DIM3_thread, ");
+        
+        if(propShared != null){
+          print(propShared);
+        }else{
+          print("0");
+        }
         
         if(propAsync != null){
           if(! propAsync.isEmpty()){
@@ -404,6 +434,9 @@ public class ACCgpuDecompileWriter extends PrintWriter {
 
         if(propAsync == null){
           println("_ACC_GPU_M_BARRIER_KERNEL();");
+          if(ACC.debugFlag){
+            println("_ACC_GPU_CHECK_ERROR(\"" + funcName + "\");"); //for debugging
+          }
         }
         print("}");
       }
@@ -422,7 +455,8 @@ public class ACCgpuDecompileWriter extends PrintWriter {
 
     case SIZE_OF_EXPR:    /* (SIZE_OF_EXPR type-or-expr) */
       print("sizeof(");
-      printDeclType(v.Type(),null);
+      //printDeclType(v.Type(),null);
+      printDeclType(v.getArg(0).Type(),null);
       print(")");
       break;
 
@@ -609,7 +643,8 @@ public class ACCgpuDecompileWriter extends PrintWriter {
           if (type.getTagName() != null) {
              typename += type.getTagName();
           } else {
-            typename += "_S" + Integer.toHexString(Integer.parseInt(type.Id()));
+            //typename += "_S" + Integer.toHexString(Integer.parseInt(type.Id()));
+              typename += "_S" + Integer.toHexString(Integer.parseInt(type.Id().substring(1)));
           }
         } break;
       case Xtype.UNION:
@@ -722,7 +757,11 @@ public class ACCgpuDecompileWriter extends PrintWriter {
           if (t.isVolatile()) {
             decltype += "volatile ";
           }
-
+          
+          if(t.isRestrict()) {
+            decltype += "__restrict__ ";
+          }
+          
           decltype += makeDeclaratorRec(decls, name);
         } break;
     case Xtype.FUNCTION:
@@ -751,13 +790,13 @@ public class ACCgpuDecompileWriter extends PrintWriter {
           break;
         }
 
-        if (t.getArrayDim() < 0) {
-          decltype += "(";
-          decltype += "*";
-          decltype += makeDeclaratorRec(decls, name);
-          decltype += ")";
-          break;
-        }
+//        if (t.getArrayDim() < 0) {
+//          decltype += "(";
+//          decltype += "*";
+//          decltype += makeDeclaratorRec(decls, name);
+//          decltype += ")";
+//          break;
+//        }
 
         if (pred) {
           decltype += "(";
@@ -769,7 +808,7 @@ public class ACCgpuDecompileWriter extends PrintWriter {
           decltype += ")";
         }
 
-        if (t.getArrayDim() <= 0) {
+        if (t.getArraySize() <= 0) {
           decltype += "[]";
         } else {
           decltype += "[" + t.getArrayDim() + "]";
@@ -847,6 +886,10 @@ public class ACCgpuDecompileWriter extends PrintWriter {
   }
 
   private void printIdentDecl(Ident id) {
+    Object isShared = id.getProp(ACCgpuDecompiler.GPU_STRAGE_SHARED);
+    if(isShared != null){
+      print("__shared__ ");
+    }
     switch (id.getStorageClass()) {
       case AUTO:
         // print("auto ");

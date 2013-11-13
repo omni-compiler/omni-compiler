@@ -8,7 +8,7 @@ import exc.object.*;
 public class ACCtranslateUpdate {
   private final static String GPU_COPY_DATA_FUNC_NAME = "_ACC_gpu_copy_data";
   private final static String GPU_ASYNC_FUNC_SUFFIX = "_async";
-  private final static String GPU_ASYNC_ALL_FUNC_SUFFIX = "_async_all";
+  private final static String GPU_ASYNC_DEFAULT_FUNC_SUFFIX = "_async_default";
   private final static int GPU_COPY_HOST_TO_DEVICE = 400;
   private final static int GPU_COPY_DEVICE_TO_HOST = 401;
   
@@ -27,9 +27,7 @@ public class ACCtranslateUpdate {
   }
   
   public void translate() throws ACCexception{
-    if(ACC.debugFlag){
-      System.out.println("translate update");
-    }
+    ACC.debug("translate update");
     
     if(updateInfo.isDisabled()) return;
     
@@ -42,7 +40,7 @@ public class ACCtranslateUpdate {
         throw new ACCexception(var + " is not allocated in device memory");
       }
       
-      Ident hostDesc = updateInfo.getHostDescId(varName);//var.getHostDesc();
+      Ident hostDescId = updateInfo.getHostDescId(varName);//var.getHostDesc();
 
       Xobject dirObj = null;
       if(var.copiesDtoH()){ //update host
@@ -54,14 +52,16 @@ public class ACCtranslateUpdate {
       }
 
       String copyFuncName = GPU_COPY_DATA_FUNC_NAME;
-      XobjList copyFuncArgs = Xcons.List(hostDesc.Ref(), dirObj);
+      XobjList copyFuncArgs = Xcons.List(hostDescId.Ref(), var.getOffset(), var.getSize(), dirObj);
+      
+      //XobjList copyFuncArgs = Xcons.List(hostDescId.Ref(), dirObj);
       if(updateInfo.isAsync()){
         Xobject asyncExp = updateInfo.getAsyncExp(); 
         if(asyncExp != null){ //async(expr)
           copyFuncName += GPU_ASYNC_FUNC_SUFFIX;
           copyFuncArgs.add(asyncExp);
         }else{ // async all
-          copyFuncName += GPU_ASYNC_ALL_FUNC_SUFFIX;
+          copyFuncName += GPU_ASYNC_DEFAULT_FUNC_SUFFIX;
         }
       }
 

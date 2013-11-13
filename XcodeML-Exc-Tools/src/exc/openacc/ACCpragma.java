@@ -140,4 +140,25 @@ public enum ACCpragma {
       return false;
     }
   }
+  
+  public boolean isLoop(){
+    switch(this){
+    case LOOP:
+    case PARALLEL_LOOP:
+    case KERNELS_LOOP:
+      return true;
+    default:
+      return false;
+    }
+  }
+  
+  public boolean isCompute(){
+    switch(this){
+    case PARALLEL_LOOP:
+    case KERNELS_LOOP:
+      return true;
+    default:
+      return false;
+    }
+  }
 }
