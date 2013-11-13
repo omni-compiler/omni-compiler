@@ -1,8 +1,8 @@
 #include "stdlib.h"
-#include "dmumps_c.h"
+#include "cmumps_c.h"
 #include "xmp.h"
 
-void ixmp_dmumps_c(DMUMPS_STRUC_C *id, xmp_desc_t dirn, xmp_desc_t djcn, xmp_desc_t da){
+void ixmp_cmumps_c(CMUMPS_STRUC_C *id, xmp_desc_t dirn, xmp_desc_t djcn, xmp_desc_t da){
 
   int irn_size;
   int jcn_size;
@@ -30,6 +30,6 @@ void ixmp_dmumps_c(DMUMPS_STRUC_C *id, xmp_desc_t dirn, xmp_desc_t djcn, xmp_des
     id->a_loc = (void *)a_laddr;
   }
 
-  dmumps_c(id);
+  cmumps_c(id);
 
 }
