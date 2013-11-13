@@ -15,6 +15,8 @@
 
 void outx_ACC_Clause(FILE *fp, int indent, CExprOfList* clause);
 void out_ACC_name_list(FILE *fp,int indent, CExprOfList *list);
+void out_ACC_arrayRef(FILE *fp, int indent, CExprOfBinaryNode *arrayRef);
+void out_ACC_subscript(FILE *fp, int indent, CExpr *subscript);
 
 char *accDirectiveName(int c);
 char *accClauseName(int c);
@@ -38,9 +40,8 @@ out_ACC_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr)
     outxChildren(fp,indent1,(CExpr *)clauseList);
     goto end;
     case ACC_CACHE:
-    outxPrint(fp,indent1,"<list>\n");
-	outxChildren(fp,indent1+1,(CExpr *)clauseList);
-    outxPrint(fp,indent1,"</list>\n");
+      if(EXPR_L_SIZE(clauseList) != 0)
+	  out_ACC_name_list(fp, indent1, clauseList);
 	goto end;
     }
 
@@ -88,7 +89,7 @@ outx_ACC_Clause(FILE *fp, int indent, CExprOfList* clause)
   default:
       namelist = (CExprOfList *)arg;
       if(EXPR_L_SIZE(namelist) != 0)
-	  out_ACC_name_list(fp, indent, namelist);
+	  out_ACC_name_list(fp, indent1, namelist);
   }
   outxPrint(fp,indent,"</list>\n");
 }
@@ -101,10 +102,62 @@ void out_ACC_name_list(FILE *fp,int indent, CExprOfList *list)
     EXPR_FOREACH(ite, list) {
 	CExpr *node = EXPR_L_DATA(ite);
 	// outx_IDENT(fp,indent1+1,(CExprOfSymbol *)node);
+	if(EXPR_CODE(node) == EC_ARRAY_REF){
+	  out_ACC_arrayRef(fp,indent1, (CExprOfBinaryNode*)node);
+	}else{
 	outxPrint(fp,indent1,"<Var>%s</Var>\n",
 		  ((CExprOfSymbol *)node)->e_symName);
+	}
     }
     outxPrint(fp,indent,"</list>\n");
+}
+
+void out_ACC_arrayRef(FILE *fp,int indent, CExprOfBinaryNode *arrayRef)
+{
+    int indent1 = indent+1;
+    CCOL_DListNode *ite;
+    CExpr *arrayExpr = arrayRef->e_nodes[0];
+    CExpr *subscripts = arrayRef->e_nodes[1];
+
+    outxPrint(fp,indent,"<list>\n");
+
+    outxPrint(fp,indent1,"<Var>%s</Var>\n",((CExprOfSymbol *)arrayExpr)->e_symName);
+    EXPR_FOREACH(ite, subscripts){
+      CExpr *node = EXPR_L_DATA(ite);
+      out_ACC_subscript(fp, indent1, node);
+    }
+
+    outxPrint(fp,indent,"</list>\n");
+}
+
+void out_ACC_subscript(FILE *fp,int indent, CExpr *subscript)
+{
+  int indent1 = indent + 1;
+  if(EXPR_CODE(subscript) != EC_UNDEF){
+    outxContext(fp, indent, subscript); //single subscript
+  }else{
+    outxPrint(fp, indent, "<list>\n");
+
+    CExpr *lower = exprListHeadData(subscript);
+    CExpr *tmpLower = NULL;
+    if(EXPR_ISNULL(lower)){
+      lower = tmpLower = (CExpr*)allocExprOfNumberConst2(0, BT_INT);
+    }
+
+    outxContext(fp, indent1, lower);
+    if(tmpLower){
+      freeExpr(tmpLower);
+    }
+
+    if(EXPR_L_SIZE(subscript) > 1){
+      CExpr *length = exprListNextNData(subscript, 1);
+      if(! EXPR_ISNULL(length)){
+	outxContext(fp,indent1, length);
+      }
+    }
+
+    outxPrint(fp, indent, "</list>\n");
+  }
 }
 
 char *accDirectiveName(int c)

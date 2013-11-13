@@ -61,8 +61,10 @@ static CExpr* parse_ACC_clauses(void);
 static CExpr* parse_ACC_namelist(void);
 static CExpr* parse_ACC_reduction_namelist(int *r);
 static CExpr* parse_ACC_clause_arg(void);
+static CExpr* parse_ACC_C_subscript_list(void);
 
 #define ACC_PG_LIST(pg,args) _omp_pg_list(pg,args)
+#define ACC_LIST2(arg1,arg2) (CExpr*)allocExprOfList2(EC_UNDEF,arg1,arg2)
 
 static CExpr* _omp_pg_list(int omp_code,CExpr* args)
 {
@@ -352,6 +354,8 @@ static CExpr* parse_ACC_clauses()
 static CExpr* parse_ACC_namelist()
 {
     CExpr* args;
+    CExpr* v = NULL;
+    CExpr* list = NULL;
 
     args = EMPTY_LIST;
     if(pg_tok != '(') {
@@ -364,8 +368,18 @@ static CExpr* parse_ACC_namelist()
       addError(NULL,"ACC: empty name list in ACC directive clause");
 	return NULL;
     }
-    args = exprListAdd(args, pg_tok_val);
+
+    v = pg_tok_val;
     pg_get_token();
+
+    if(pg_tok != '['){
+      args = exprListAdd(args, v);
+    }else{
+      list = parse_ACC_C_subscript_list();
+      CExprOfBinaryNode* arrayRef = exprBinary(EC_ARRAY_REF, v, list);
+      args = exprListAdd(args, (CExpr*)arrayRef);
+    }
+
     if(pg_tok == ','){
 	pg_get_token();
 	goto next;
@@ -444,4 +458,61 @@ static CExpr* parse_ACC_clause_arg()
     addError(NULL,"ACC: syntax error in ACC pragma clause");
     return NULL;
 }
+
+static CExpr* parse_ACC_C_subscript_list()
+{
+  CExpr* list;
+  CExpr *v1,*v2;
+
+  list = EMPTY_LIST;
+
+  if(pg_tok != '[') {
+    addError(NULL,"parse_ACC_C_subscript_list: first token= '['");
+  }
+  pg_get_token();
+
+  while(1){
+    v1 = v2 = NULL;
+    switch(pg_tok){
+    case ']':  goto err;
+    case ',':  goto err;
+      break;
+    case ':':
+      v1 = (CExpr*)allocExprOfNumberConst2(0, BT_INT);
+      break;
+    default:
+      v1 = pg_parse_expr();
+    }
+    
+    if(pg_tok == ':') goto subarray;
+    list = exprListAdd(list, v1);
+    goto next;
+
+  subarray:
+    pg_get_token();
+    if(pg_tok != ']'){
+      v2 = pg_parse_expr();
+    }
+    list = exprListAdd(list, ACC_LIST2(v1,v2));
+
+  next:
+    if(pg_tok == ']'){
+      pg_get_token();
+    }else goto err;
+    
+    if(pg_tok != '['){
+      break;
+    }else{
+      pg_get_token();
+    }
+  }
+  
+  return list;
+
+ err:
+  addError(NULL, "Syntax error in scripts of ACC directive");
+  return NULL;
+}
+
+
 
