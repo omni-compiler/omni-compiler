@@ -28,6 +28,12 @@ public class SimpleBlock extends Block
     {
         super(b);
     }
+    
+    @Override
+    public Block copy()
+    {
+        return new SimpleBlock(this);
+    }
 
     @Override
     public Xobject toXobject()

@@ -455,7 +455,7 @@ public class ACCgpuKernel {
       return Bcons.FOR(forBlock.getInitBBlock(), forBlock.getCondBBlock(), forBlock.getIterBBlock(), body);
     }
 
-    String execMethodName = gpuManager.getMethodName_new(forBlock);
+    String execMethodName = gpuManager.getMethodName(forBlock);
     if(execMethodName == ""){ //if execMethod is not defined or seq
       //return Bcons.FOR(forBlock.getInitBBlock(), forBlock.getCondBBlock(), forBlock.getIterBBlock(), Bcons.blockList(makeCoreBlock(initBlocks, forBlock.getBody(), paramIds, localIds, prevExecMethodName, deviceKernelName)));
       loopStack.push(new Loop(forBlock));
@@ -889,8 +889,7 @@ public class ACCgpuKernel {
     List<Block> preBlocks = new ArrayList<Block>();
     List<Block> postBlocks = new ArrayList<Block>();
 
-    //XobjList blockThreadSize = gpuManager.getBlockThreadSize();
-    XobjList blockThreadSize = gpuManager.getBlockThreadSize_new();
+    XobjList blockThreadSize = gpuManager.getBlockThreadSize();
     XobjList blockSize = (XobjList)blockThreadSize.left();
     XobjList threadSize = (XobjList)blockThreadSize.right();
 

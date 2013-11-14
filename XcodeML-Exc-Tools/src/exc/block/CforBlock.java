@@ -29,6 +29,26 @@ public class CforBlock extends CondBlock implements ForBlock
         if(iter_part != null)
             iter_part.parent = this;
     }
+    
+    public CforBlock(CforBlock forBlock)
+    {
+        super(forBlock);
+          this.is_canonical = forBlock.is_canonical;
+            if(forBlock.init_part != null){
+              this.init_part = forBlock.init_part.copy();
+              this.init_part.parent = this;
+            }
+            if(forBlock.iter_part != null){
+              this.iter_part = forBlock.iter_part.copy();
+              this.iter_part.parent = this;
+            }
+    }
+      
+    @Override
+    public Block copy()
+    {
+        return new CforBlock(this);
+    }
 
     @Override
     public BasicBlock getInitBBlock()

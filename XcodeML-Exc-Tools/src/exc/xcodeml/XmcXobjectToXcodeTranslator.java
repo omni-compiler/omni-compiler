@@ -536,9 +536,16 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         case CONTINUE_STATEMENT:
             e = addChildNodes(createElement(name));
             break;
-        case RETURN_STATEMENT:
-            e = addChildNodes(createElement(name),
-                              transExpr(xobj.getArg(0)));
+        case RETURN_STATEMENT:{
+              Xobject ret_exp = xobj.getArgOrNull(0);
+              if(ret_exp != null){
+                e = addChildNodes(createElement(name), transExpr(ret_exp));
+              }else{
+                e = addChildNodes(createElement(name));
+              }
+            //e = addChildNodes(createElement(name),
+                              //transExpr(xobj.getArg(0)));
+        }
             break;
         case GOTO_STATEMENT: {
             e = createElement(name);
@@ -604,13 +611,16 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         case ADDR_OF: {
             Element nSymAddr = null;
             Element nMember = null;
+            Boolean isArrayRef = false;
             Xobject operand = xobj.operand();
             switch (operand.Opcode()) {
             case VAR:
             case VAR_ADDR:
                 nSymAddr = createElement("varAddr");
                 break;
-            //case ARRAY_REF:
+            case ARRAY_REF:
+              isArrayRef = true;
+              break;
             case ARRAY_ADDR: /* illegal but convert */
                 nSymAddr = createElement("arrayAddr");
                 break;
@@ -631,8 +641,10 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             default:
                 fatal("cannot apply ADDR_OF to " + operand.toString());
             }
-
-            if (nSymAddr != null) {
+            
+            if (isArrayRef){
+              e = addChildNodes(createElement("addrOfExpr"), transOrError(xobj.getArg(0)));
+            }else if (nSymAddr != null) {
                 addChildNodes(nSymAddr,
                               trans(operand.getName()));
                 e = nSymAddr;
@@ -913,6 +925,7 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
         case OMP_PRAGMA: 
         case XMP_PRAGMA:
+        case ACC_PRAGMA:
             e = addChildNodes(createElement("text"),
                               trans("/* ignored Xcode." + xobj.Opcode().toXcodeString() + " */"));
             break;

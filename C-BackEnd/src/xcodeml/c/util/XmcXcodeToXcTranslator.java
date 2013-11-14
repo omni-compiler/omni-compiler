@@ -11,6 +11,7 @@ import xcodeml.c.decompile.*;
 import xcodeml.c.obj.XcNode;
 import xcodeml.c.type.XcArrayLikeType;
 import xcodeml.c.type.XcArrayType;
+import xcodeml.c.type.XcBaseType;
 import xcodeml.c.type.XcIdentTableEnum;
 import xcodeml.c.type.XcXmpCoArrayType;
 import xcodeml.c.type.XcGccAttributable;
@@ -39,7 +40,6 @@ import xcodeml.util.XmStringUtil;
 import xcodeml.util.XmDomUtil;
 import xcodeml.util.XmTranslationException;
 import xcodeml.XmException;
-
 import static xcodeml.util.XmDomUtil.getElement;
 import static xcodeml.util.XmDomUtil.getAttr;
 import static xcodeml.util.XmDomUtil.getContent;
@@ -47,6 +47,7 @@ import static xcodeml.util.XmDomUtil.getContentText;
 import static xcodeml.util.XmDomUtil.getAttrBool;
 
 import org.w3c.dom.*;
+
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -1452,6 +1453,68 @@ public class XmcXcodeToXcTranslator {
             obj.setIsGccExtension(getAttrBool(n, "is_gccExtension"));
             addChild(parent, obj);
             transChildren(tc, n, obj);
+            
+            XcLazyVisitor lazyVisitor = new XmcXcodeToXcLazyVisitor(tc);
+	    lazyEval(type, lazyVisitor);
+        }
+        public void lazyEval(XcType type, XcLazyVisitor visitor)
+        {
+            _lazyEval(type, visitor); // lazy evalueate for type
+
+            while(type instanceof XcBasicType) {
+                type = type.getRefType();
+            }
+            switch(type.getTypeEnum()) { // lazy evaluate for child ident
+            case STRUCT:
+            case UNION:
+                XcCompositeType ct = (XcCompositeType)type;
+
+                if(ct.getMemberList() != null) {
+                    for(XcIdent child : ct.getMemberList()) {
+                        child.lazyEval(visitor);
+                    }
+                }
+                break;
+            case ENUM:
+                XcEnumType et = (XcEnumType)type;
+
+                if(et.getEnumeratorList() != null) {
+                    for(XcIdent child : et.getEnumeratorList()) {
+                      child.lazyEval(visitor);
+                    }
+                }
+                break;
+            case FUNC:
+                XcFuncType ft = (XcFuncType)type;
+
+                if(ft.getParamList() != null) {
+                    visitor.pushParamListIdentTable(ft.getParamList());
+                    for(XcIdent child : ft.getParamList()) {
+                      child.lazyEval(visitor);
+                    }
+                    visitor.popIdentTable();
+                }
+                break;
+            default:
+                break;
+            }
+        }
+        private void _lazyEval(XcType type, XcLazyVisitor visitor)
+        {
+            if((type == null) || (type instanceof XcBaseType))
+                return;
+
+            XcGccAttributeList attrs = type.getGccAttribute();
+
+            if(attrs != null)
+                visitor.lazyEnter(attrs);
+
+            if(type instanceof XcArrayType)
+                visitor.lazyEnter((XcLazyEvalType) type);
+
+            type = type.getRefType();
+
+            _lazyEval(type, visitor);
         }
     }
 
@@ -1496,7 +1559,9 @@ public class XmcXcodeToXcTranslator {
     class ArrayAddrVisitor extends XcodeNodeVisitor {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
-            _enterSymbolAddr(tc, n, parent);
+            //_enterSymbolAddr(tc, n, parent);
+            XcIdent ident = _getIdent(tc, XcSymbolKindEnum.VAR, n);
+            addChild(parent, ident);
         }
     }
 
@@ -1624,6 +1689,7 @@ public class XmcXcodeToXcTranslator {
         public void enter(TranslationContext tc, Node n, XcNode parent) {
             XcOperatorObj obj = new XcOperatorObj(XcOperatorEnum.ADDROF);
             transChildren(tc, n, obj);
+            addChild(parent, obj);
         }
     }
 

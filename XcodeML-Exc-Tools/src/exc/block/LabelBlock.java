@@ -71,4 +71,10 @@ public class LabelBlock extends Block
         s.append(")");
         return s.toString();
     }
+    
+    @Override
+    public LabelBlock copy()
+    {
+      return new LabelBlock(this.code, this.label, this.value, this.params);
+    }
 }

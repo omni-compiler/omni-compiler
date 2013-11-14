@@ -88,7 +88,7 @@ public class XcodeMLNameTable_C extends XcodeMLNameTable {
 		new XcodeMLName(Xcode.POST_INCR_EXPR, "postIncrExpr"),
 		new XcodeMLName(Xcode.POST_DECR_EXPR, "postDecrExpr"),
 		new XcodeMLName(Xcode.ADDR_OF, "addrOf"), // In XmcXobjectToXmObjTranslator, name is not used.
-//		new XcodeMLName(Xcode.ADDR_OF_EXPR, "addrOfExpr"),
+		new XcodeMLName(Xcode.ADDR_OF, "addrOfExpr"),
 		new XcodeMLName(Xcode.TYPE_NAME, "typeName"),
 
 		new XcodeMLName(Xcode.VAR, "Var"),
