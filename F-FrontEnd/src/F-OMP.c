@@ -203,16 +203,16 @@ void compile_OMP_directive(expr x)
 	OMP_do_required = TRUE;
 	return;
     case OMP_F_END_PARALLEL_DO:
-	if(CTL_TYPE(ctl_top) == CTL_OMP &&
-	   CTL_OMP_ARG_DIR(ctl_top) == OMP_F_PARALLEL_DO){
-	    CTL_BLOCK(ctl_top) = 
-		OMP_pragma_list(OMP_PARALLEL,CTL_OMP_ARG_PCLAUSE(ctl_top),
-				OMP_FOR_pragma_list(
-				    CTL_OMP_ARG_DCLAUSE(ctl_top),
-				    CURRENT_STATEMENTS));
-	    EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top));
-	    pop_ctl();
-	} else  error("OpenMP PARALLEL DO block is not closed");
+/* 	if(CTL_TYPE(ctl_top) == CTL_OMP && */
+/* 	   CTL_OMP_ARG_DIR(ctl_top) == OMP_F_PARALLEL_DO){ */
+/* 	    CTL_BLOCK(ctl_top) =  */
+/* 		OMP_pragma_list(OMP_PARALLEL,CTL_OMP_ARG_PCLAUSE(ctl_top), */
+/* 				OMP_FOR_pragma_list( */
+/* 				    CTL_OMP_ARG_DCLAUSE(ctl_top), */
+/* 				    CURRENT_STATEMENTS)); */
+/* 	    EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top)); */
+/* 	    pop_ctl(); */
+/* 	} else  error("OpenMP PARALLEL DO block is not closed"); */
 	return;
 	
     case OMP_F_DO:
