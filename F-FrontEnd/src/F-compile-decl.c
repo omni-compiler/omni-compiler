@@ -1873,6 +1873,7 @@ void
 compile_IMPLICIT_decl(expr type,expr l)
 {
     TYPE_DESC tp;
+    ID id;
     list lp;
     expr v, ty;
 
@@ -1885,24 +1886,34 @@ compile_IMPLICIT_decl(expr type,expr l)
         error("bad IMPLICIT declaration");
         return;
     }
-    ty = EXPR_ARG1 (type);
-    if (EXPR_CODE (ty) != F_TYPE_NODE) {
-      fatal ("compile_IMPLICIT_decl: not F_TYPE_NODE");
-      return;
-    }
-    if ((BASIC_DATA_TYPE) EXPR_INT (ty) == TYPE_UNKNOWN) {
-      set_implicit_type(NULL,'a','z');
-
-      /* store implict none decl. */
-      list_put_last(UNIT_CTL_IMPLICIT_DECLS(CURRENT_UNIT_CTL),
-                    create_implicit_decl_expv(NULL, "a", "z"));
-      return;
+    if (EXPR_CODE (type) == IDENT) {
+        id = find_ident(EXPR_SYM(type));
+        if (id != NULL) {
+            tp = ID_TYPE(id);
+        } else {
+            error_at_node(type, "struct type '%s' is not declared",
+                SYM_NAME(EXPR_SYM(type)));
+        }
     } else {
-        tp = compile_type(type);
-        if(tp == NULL) return;  /* error */
-        if(l == NULL) {
-            error("no implicit set");
-            return;
+        ty = EXPR_ARG1 (type);
+        if (EXPR_CODE (ty) != F_TYPE_NODE) {
+          fatal ("compile_IMPLICIT_decl: not F_TYPE_NODE");
+          return;
+        }
+        if ((BASIC_DATA_TYPE) EXPR_INT (ty) == TYPE_UNKNOWN) {
+          set_implicit_type(NULL,'a','z');
+
+          /* store implict none decl. */
+          list_put_last(UNIT_CTL_IMPLICIT_DECLS(CURRENT_UNIT_CTL),
+                        create_implicit_decl_expv(NULL, "a", "z"));
+          return;
+        } else {
+            tp = compile_type(type);
+            if(tp == NULL) return;  /* error */
+            if(l == NULL) {
+                error("no implicit set");
+                return;
+            }
         }
     }
 

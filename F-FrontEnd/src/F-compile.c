@@ -1175,6 +1175,21 @@ compile_exec_statement(expr x)
     }
 }
 
+/**
+ * Checks if the current context is inside interface block
+ * (between `INTERFACE` and `END INTERFACE`)
+ */
+static int
+check_inside_INTERFACE_body() {
+    int i;
+    for (i = 0; i <= unit_ctl_level; i++) {
+        if (UNIT_CTL_CURRENT_STATE(unit_ctls[i]) == ININTR) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 /* 
  * context control. keep track of context
  */
@@ -1195,7 +1210,16 @@ begin_procedure()
     CURRENT_PROC_CLASS = CL_MAIN;       /* default */
     current_proc_state = P_DEFAULT;
 
-    if (unit_ctl_level > 0) set_parent_implicit_decls();
+    /*
+     * NOTE:
+     * The function/subroutine in the interface body
+     * don't host-assciate with the outer scope,
+     * and the implicit type conversion rule can be propagated
+     * only from the host-associated scopes
+     */
+    if (unit_ctl_level > 0 && check_inside_INTERFACE_body() == FALSE) {
+        set_parent_implicit_decls();
+    }
 
     if (isInFinalizer == FALSE) {
         module_procedure_manager_init();
@@ -2847,6 +2871,153 @@ shallow_copy_ext_id(EXT_ID original) {
        TYPE_REF(ID_TYPE((id))) != NULL &&                               \
        TYPE_BASIC_TYPE(TYPE_REF(ID_TYPE((id)))) == TYPE_GNUMERIC_ALL)))
 
+struct replicated_type {
+  TYPE_DESC original;
+  TYPE_DESC replica;
+  struct replicated_type * next;
+};
+
+struct replicated_type * replicated_type_list = NULL;
+
+static void
+initialize_replicated_type_list() {
+    replicated_type_list = NULL;
+}
+
+static void
+finalize_replicated_type_list() {
+    struct replicated_type * lp;
+    while(replicated_type_list != NULL) {
+        lp = replicated_type_list->next;
+        free(replicated_type_list);
+        replicated_type_list = lp;
+    }
+}
+
+static void
+append_replicated_type_list(const TYPE_DESC original,
+                            const TYPE_DESC replica) {
+    struct replicated_type * lp;
+    if(original != NULL && replica != NULL) {
+        lp = XMALLOC(struct replicated_type *,sizeof(struct replicated_type));
+        lp->original = original;
+        lp->replica = replica;
+        lp->next = replicated_type_list;
+        replicated_type_list = lp;
+    }
+}
+
+/**
+ * Checks if a type has the replica of itself.
+ *
+ * @param replica if tp has the replica, then set replica to it.
+ */
+static int
+type_has_replica(const TYPE_DESC tp, TYPE_DESC * replica) {
+    struct replicated_type * lp;
+    if (tp != NULL) {
+        for(lp = replicated_type_list; lp != NULL; lp = lp->next) {
+            if(tp == lp->original) {
+                if(replica != NULL) {
+                    *replica = lp->replica;
+                }
+                return TRUE;
+            }
+        }
+    }
+    return FALSE;
+}
+
+/**
+ * Checks if a type is the replicated one.
+ */
+static int
+type_is_replica(const TYPE_DESC tp) {
+    struct replicated_type * lp;
+    if(tp != NULL) {
+        for(lp = replicated_type_list; lp != NULL; lp = lp->next) {
+            if(tp == lp->replica) {
+                return TRUE;
+            }
+        }
+    }
+    return FALSE;
+}
+
+/**
+ * Creates the type thas is shallow copied for the module id.
+ */
+static TYPE_DESC
+shallow_copy_type_for_module_id(TYPE_DESC original) {
+    TYPE_DESC new_tp;
+
+    new_tp = new_type_desc();
+    *new_tp = *original;
+
+    /* PUBLIC/PRIVATE attribute may be given by the module user */
+    TYPE_UNSET_PUBLIC(new_tp);
+    TYPE_UNSET_PRIVATE(new_tp);
+
+    append_replicated_type_list(original, new_tp);
+
+    return new_tp;
+}
+
+static void
+deep_copy_and_overwrite_for_module_id_type(TYPE_DESC * ptp);
+
+/**
+ * Copy the reference types recursively
+ *  until there is no reference type or
+ *  the reference type is already replicated.
+ */
+static void
+deep_ref_copy_for_module_id_type(TYPE_DESC tp) {
+    ID id;
+    TYPE_DESC itp, cur, old;
+    cur = tp;
+    while(TYPE_REF(cur) != NULL) {
+        old = TYPE_REF(cur);
+        deep_copy_and_overwrite_for_module_id_type(&(TYPE_REF(cur)));
+        if (old == TYPE_REF(cur))
+            break;
+        cur = TYPE_REF(cur);
+    }
+
+    if(IS_STRUCT_TYPE(cur)) {
+        FOREACH_MEMBER(id, cur) {
+            itp = ID_TYPE(id);
+            deep_copy_and_overwrite_for_module_id_type(&(ID_TYPE(id)));
+        }
+    }
+}
+
+/**
+ * Deep-copy the type and overwrite it
+ */
+static void
+deep_copy_and_overwrite_for_module_id_type(TYPE_DESC * ptp) {
+    TYPE_DESC tp;
+
+    if(ptp == NULL || (*ptp == NULL)) {
+      return;
+    }
+
+    if (type_is_replica(*ptp)) {
+      ;  /* do nothing */
+    } else if (type_has_replica(*ptp, &tp)) {
+      /* overwrite the type with replicated one */
+      *ptp = tp;
+    } else {
+      /* shallow-copy type and deep-copy the  type referenced by this type */
+      *ptp
+          = shallow_copy_type_for_module_id(*ptp);
+      deep_ref_copy_for_module_id_type(*ptp);
+    }
+}
+
+
+
 /**
  * solve conflict between local identifier and use associated identifier.
  *
@@ -2962,6 +3133,12 @@ import_module_id(ID mid,
         EXT_NEXT(ep) = NULL;
         EXT_PROC_INTR_DEF_EXT_IDS(ep) = NULL;
 
+        /* hmm, this code is really required? */
+        if(!type_is_replica(EXT_PROC_TYPE(mep))) {
+            EXT_PROC_TYPE(mep)
+                    = shallow_copy_type_for_module_id(EXT_PROC_TYPE(mep));
+        }
+
         if (EXT_PROC_INTR_DEF_EXT_IDS(mep) != NULL) {
             EXT_ID head, p;
             head = shallow_copy_ext_id(EXT_PROC_INTR_DEF_EXT_IDS(mep));
@@ -2971,7 +3148,6 @@ import_module_id(ID mid,
             EXT_PROC_INTR_DEF_EXT_IDS(ep) = head;
         }
     }
-
 
     if(use_name)
         ID_SYM(id) = use_name;
@@ -2983,11 +3159,7 @@ import_module_id(ID mid,
      */
     if(need_wrap_type || (ID_STORAGE(id) == STG_TAGNAME && use_name)) {
         // shallow copy type from module
-        TYPE_DESC tp = ID_TYPE(id);
-        ID_TYPE(id) = new_type_desc();
-        *ID_TYPE(id) = *tp;
-        TYPE_UNSET_PUBLIC(ID_TYPE(id));
-        TYPE_UNSET_PRIVATE(ID_TYPE(id));
+        ID_TYPE(id) = shallow_copy_type_for_module_id(ID_TYPE(id));
         TYPE_UNSET_PUBLIC(id);
         TYPE_UNSET_PRIVATE(id);
     }
@@ -3017,18 +3189,45 @@ import_module_id(ID mid,
 }
 
 /**
+ * Copy the expv as function argments.
+ */
+static expv
+copy_function_args(const expv args) {
+    expv v, new_args, varg, new_varg;
+    list lp;
+    TYPE_DESC tp;
+
+    new_args = XMALLOC(expv, sizeof(*new_args));
+    *new_args = *args;
+    EXPR_LIST(new_args) = NULL;
+
+    FOR_ITEMS_IN_LIST (lp, args) {
+        varg = EXPR_ARG1(LIST_ITEM(lp));
+        new_varg = XMALLOC(expv, sizeof(*new_varg));
+        *new_varg = *varg;
+
+        v = list1(LIST, new_varg);
+        list_put_last(new_args, v);
+    }
+
+    return new_args;
+}
+
+/**
  * common use assoc
  */
 int
 use_assoc_common(SYMBOL name, struct use_argument * args, int isRename)
 {
     struct module *mod;
-    ID mid, id, last_id = NULL;
+    ID mid, id, last_id = NULL, prev_mid, first_mid;
     TYPE_DESC tp, sttail = NULL;
-    EXT_ID ep, last_ep = NULL;
+    EXT_ID ep, last_ep = NULL, mep;
     struct use_argument * arg;
     int ret = TRUE;
     int wrap_type = TRUE;
+
+    initialize_replicated_type_list();
 
     if(!import_module(name, &mod)) {
         return FALSE;
@@ -3042,6 +3241,7 @@ use_assoc_common(SYMBOL name, struct use_argument * args, int isRename)
     FOREACH_ID(id, LOCAL_SYMBOLS) {
         last_id = id;
     }
+    prev_mid = last_id;
 
     for (tp = LOCAL_STRUCT_DECLS; tp != NULL; tp = TYPE_SLINK(tp)) {
         sttail = tp;
@@ -3076,12 +3276,45 @@ use_assoc_common(SYMBOL name, struct use_argument * args, int isRename)
         }
     }
 
+    // deep-copy types now!
+    first_mid = ID_NEXT(prev_mid);
+    FOREACH_ID(mid, first_mid) {
+        // deep copy of types!
+        deep_ref_copy_for_module_id_type(ID_TYPE(mid));
+
+        // deep copy for function types!
+        if((mep = PROC_EXT_ID(mid)) != NULL) {
+          ID id;
+          expv v;
+          list lp;
+
+          deep_ref_copy_for_module_id_type(EXT_PROC_TYPE(mep));
+
+          /*
+           * copy the arguments of the function type
+           *
+           * NOTE:
+           *  It may be required to deep-copy whole of the EXT_ID.
+           */
+          if (EXT_PROC_ARGS(mep) != NULL) {
+              EXT_PROC_ARGS(mep) = copy_function_args(EXT_PROC_ARGS(mep));
+
+              FOR_ITEMS_IN_LIST(lp, EXT_PROC_ARGS(mep)) {
+                  v = EXPR_ARG1(LIST_ITEM(lp));
+                  deep_copy_and_overwrite_for_module_id_type(&(EXPV_TYPE(v)));
+              }
+          }
+        }
+    }
+
     FOREACH_USE_ARG(arg, args) {
         if(!arg->used) {
             error("'%s' is not found in module '%s'", SYM_NAME(arg->local), SYM_NAME(name));
             ret = FALSE;
         }
     }
+
+    finalize_replicated_type_list();
 
     if(debug_flag)
         fprintf(debug_fp, "########   END USE ASSOC #######\n");
@@ -4749,7 +4982,9 @@ push_unit_ctl(enum prog_state state)
 
     assert(unit_ctls[unit_ctl_level] == NULL);
     unit_ctls[unit_ctl_level] = new_unit_ctl();
-    set_parent_implicit_decls();
+    if (check_inside_INTERFACE_body() == FALSE) {
+        set_parent_implicit_decls();
+    }
 }
 
 

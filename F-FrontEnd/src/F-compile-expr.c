@@ -49,12 +49,22 @@ compile_terminal_node(x)
             break;
         }
 
+        case F_QUAD_CONSTANT:
         case F_DOUBLE_CONSTANT:
         case FLOAT_CONSTANT: {
             TYPE_DESC tp = type_basic((EXPR_CODE(x) == F_DOUBLE_CONSTANT) ?
                 TYPE_DREAL : TYPE_REAL);
             ret = expv_float_term(FLOAT_CONSTANT, tp, EXPR_FLOAT(x),
                 EXPR_ORIGINAL_TOKEN(x));
+            if (ret != NULL && EXPR_CODE(x) == F_QUAD_CONSTANT) {
+                /*
+                 * We won't introduce TYPE_QUAD. Instead, quad-real
+                 * constant is treated as a constant with a kind
+                 * specifier _16.
+                 */
+                TYPE_KIND(EXPV_TYPE(ret)) =
+                    expv_int_term(INT_CONSTANT, type_INT, 16);
+            }
             break;
         }
 

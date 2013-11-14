@@ -1008,25 +1008,30 @@ returnId:
 static int
 read_number()
 {
+    typedef enum {
+        PREC_UNKNOWN = 0,
+        PREC_SINGLE,
+        PREC_DOUBLE,
+        PREC_QUAD
+    } epreq_t;
+
     char *p,ch;
-
-    int have_dot;
-    int have_exp;
-    int have_dbl;
-
-    have_dot = FALSE;
-    have_exp = FALSE;
-    have_dbl = FALSE;
+    int have_dot = FALSE;
+    int have_exp = FALSE;
+    epreq_t e = PREC_UNKNOWN;
 
     p = buffio;
     while((ch = *bufptr) != '\0'){
         if(ch == '.'){
-            if(have_dot) break; 
-            else if(isalpha((int)bufptr[1]) && 
-                    isalpha((int)bufptr[2])) 
+            if (have_dot) {
+                break; 
+            } else if (isalpha((int)bufptr[1]) && 
+                       isalpha((int)bufptr[2])) {
                 break;
+            }
             have_dot = TRUE;
-        } else if(ch == 'd'|| ch =='e'){
+            e = PREC_SINGLE;
+        } else if (ch == 'd' || ch == 'e' || ch == 'q') {
             if(bufptr[1] == '+'||bufptr[1] =='-'){
                 if(isdigit((int)bufptr[2])){
                     *p++ = ch;
@@ -1038,7 +1043,12 @@ read_number()
                 bufptr++;
             } else break;
             have_exp = TRUE;
-            if(ch == 'd') have_dbl = TRUE;
+            switch (ch) {
+                case 'e': e = PREC_SINGLE; break;
+                case 'd': e = PREC_DOUBLE; break;
+                case 'q': e = PREC_QUAD; break;
+                default: break;
+            }
             while(isdigit((int)*bufptr)) *p++ = *bufptr++;
             break;
         } else if(!isdigit((int)ch))
@@ -1048,10 +1058,25 @@ read_number()
     }
     *p = '\0';
 
-    if (have_dbl || have_dot || have_exp) { 
-        yylval.val = make_float_enode(
-            have_dbl ? F_DOUBLE_CONSTANT : FLOAT_CONSTANT,
-            convert_str_double(buffio), strdup(buffio));
+    if (have_dot || have_exp) {
+        enum expr_code exp_code = FLOAT_CONSTANT;
+        switch (e) {
+            case PREC_DOUBLE: {
+                exp_code = F_DOUBLE_CONSTANT;
+                break;
+            }
+            case PREC_QUAD: {
+                exp_code = F_QUAD_CONSTANT;
+                break;
+            }
+            default: {
+                exp_code = FLOAT_CONSTANT;
+                break;
+            }
+        }
+        yylval.val = make_float_enode(exp_code,
+                                      convert_str_double(buffio),
+                                      strdup(buffio));
     } else {
         omllint_t v = 0;
         string_to_integer(&v, buffio, 10);

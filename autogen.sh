@@ -7,6 +7,8 @@
 
 echo aclocal
 aclocal --force || exit 1
+echo libtoolize
+libtoolize -f -c || exit 1
 echo autoheader
 autoheader -f || exit 1
 echo autoconf

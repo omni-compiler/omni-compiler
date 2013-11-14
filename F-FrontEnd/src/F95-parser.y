@@ -1315,6 +1315,8 @@ arg:
          { $$ = list3(F95_TRIPLET_EXPR,$1,$3,NULL); }
         | expr_or_null ':' expr_or_null ':' expr
          { $$ = list3(F95_TRIPLET_EXPR,$1,$3,$5); }
+        | expr_or_null COL2 expr
+         { $$ = list3(F95_TRIPLET_EXPR,$1,NULL,$3); }
         ;
 
 image_selector:

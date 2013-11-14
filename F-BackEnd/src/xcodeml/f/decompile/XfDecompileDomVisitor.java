@@ -3638,8 +3638,10 @@ public class XfDecompileDomVisitor {
             XmfWriter writer = _context.getWriter();
 
             String kind = XmDomUtil.getAttr(n, "kind");
-            // gfortran rejects kind with 'd' exponent
-            if (XfUtil.isNullOrEmpty(kind) == false && content.toLowerCase().indexOf("d") < 0) {
+            // gfortran rejects kind with 'd'/'q' exponent
+            if (XfUtil.isNullOrEmpty(kind) == false &&
+                ((content.toLowerCase().indexOf("d") < 0) &&
+                 (content.toLowerCase().indexOf("q") < 0))) {
                 writer.writeToken(content + "_" + kind);
             } else {
                 writer.writeToken(content);
