@@ -6,6 +6,7 @@
 #include "xmp_internal.h"
 #ifdef _XMP_COARRAY_FJRDMA
 #include "mpi-ext.h"
+//#define FJRDMA_DEBUG
 #endif
 
 unsigned long long _xmp_heap_size, _xmp_stride_size;
@@ -47,7 +48,6 @@ void _XMP_coarray_initialize(int argc, char **argv){
   } else{
     _xmp_stride_size = _XMP_DEFAULT_COARRAY_STRIDE_SIZE;
   }
-
 #ifdef _XMP_COARRAY_GASNET
   _XMP_gasnet_initialize(argc, argv);
 #elif _XMP_COARRAY_FJRDMA
@@ -162,7 +162,7 @@ void _XMP_coarray_malloc_do(void **coarray, void *addr){
 #ifdef _XMP_COARRAY_GASNET
   _XMP_gasnet_set_coarray(*coarray, addr, _total_coarray_size, _elmt_size);
 #elif _XMP_COARRAY_FJRDMA
-  _XMP_fjrdma_reg_mem(*coarray, addr, _total_coarray_size);
+  _XMP_fjrdma_local_set(*coarray, addr, _total_coarray_size);
 #else
   _XMP_fatal("Cannt use Coarray Function");
 #endif
@@ -193,6 +193,15 @@ void _XMP_coarray_rma_coarray_set(int dim, long long start, long long length, lo
   _coarray[dim].length   = length;
   _total_coarray_length *= length;
   _coarray[dim].stride   = stride;
+#ifdef FJRDMA_DEBUG
+  fprintf(stderr, "_XMP_coarray_rma_coarray_set:\n");
+  fprintf(stderr, "_total_coarray_length=%d\n", _total_coarray_length);
+  fprintf(stderr,
+	  "[%d]: (start=%d, length=%d, stride=%d, size=%d)\n",
+	  dim, _coarray[dim].start,
+	  _coarray[dim].length,
+	  _coarray[dim].stride);
+#endif
 }
 
 void _XMP_coarray_rma_coarray_set_f(int *dim, long long *start, long long *length, long long *stride){
@@ -206,6 +215,16 @@ void _XMP_coarray_rma_array_set(int dim, long long start, long long length, long
   _array[dim].stride   = stride;
   _array[dim].size     = size;
   _array[dim].distance = distance;
+#ifdef FJRDMA_DEBUG
+  fprintf(stderr, "_XMP_coarray_rma_array_set:\n");
+  fprintf(stderr, "_total_array_length=%d\n", _total_array_length);
+  fprintf(stderr,
+	  "[%d]: (start=%d, length=%d, stride=%d, size=%d, dist=%d)\n",
+	  dim, _array[dim].start,
+	  _array[dim].length,
+	  _array[dim].stride,
+	  _array[dim].distance);
+#endif
 }
 
 void _XMP_coarray_rma_array_set_f(int *dim, long long *start, long long *length, long long *stride, long long *size, long long *distance){

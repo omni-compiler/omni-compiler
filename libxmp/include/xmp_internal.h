@@ -214,7 +214,10 @@ extern int _XMP_fjrdma_initialize();
 extern int _XMP_fjrdma_finalize();
 extern void _XMP_fjrdma_sync_memory();
 extern void _XMP_fjrdma_sync_all();
-extern uint64_t _XMP_fjrdma_reg_mem(_XMP_coarray_t *coarray, void **buf, unsigned long long num_of_elmts);
+extern int get_memid();
+extern uint64_t _XMP_fjrdma_local_set(_XMP_coarray_t *coarray,
+				      void **buf,
+				      unsigned long long num_of_elmts);
 extern void _XMP_fjrdma_put(int target_image,
 			    int dest_continuous,
 			    int src_continuous,
@@ -238,8 +241,7 @@ extern void _XMP_fjrdma_get(int target_image,
 			    long long,
 			    int*);
 #endif
-extern uint64_t remote_addr(uint64_t, int, _XMP_array_section_t*, int);
-extern uint64_t local_addr(uint64_t, int, _XMP_array_section_t*, int);
+extern uint64_t get_addr(uint64_t, int, _XMP_array_section_t*, int);
 extern unsigned long long _xmp_heap_size, _xmp_stride_size;
 #endif // _XMP_INTERNAL
 
