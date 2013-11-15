@@ -1,46 +1,73 @@
-Omni OpenMP/XcalableMP Compiler Software README (version 0.6.1)
-
 I. Getting Started
- 1. You will need the following softwares to build Omni XcalableMP(XMP) Compiler.
+ A. Need the following softwares to build an Omni XcalableMP(XMP) Compiler.
   - Lex, Yacc
-  - C Compiler (supports C99)
-  - Java Compiler (latest)
+  - C and Fortran Compilers (supports C99 and Fortran 2008)
+  - C++
+  - Java Compiler
   - Apache Ant (1.8.1 or later)
   - MPI Implementation (supports MPI-2)
   - libxml2
-  - GASNet (If you want to use coarray functions)
+  - make
+  ———
+  If you use Debian GNU/Linux 7.2, you install below packages,
+  $ aptitude install flex gcc gfortran g++ openjdk-7-jdk ant libopenmpi-dev openmpi-bin libxml2-dev byacc make
+  ———
+
+  B. If you want to use coarray functions, you install GASNet. (http://gasnet.lbl.gov)
+     But when you use the the Omni XMP Compiler on the K computer, you do not need the GASNet.
+
 
  2. Install Step
-  A. Configure Omni XcalableMP Compiler
-   e.g.) $ ./configure --prefix=/home/you/XMP
+  A. Configure
+   1) on a general linux cluster
+        $ ./configure --prefix=<INSTALL DIR>
 
-   If your MPI C compiler command is not "mpicc",
-         $ ./configure --with-backend-cc=MPICC_CMD
+      If your MPI C compiler command is not "mpicc",
+        $ ./configure --with-backend-cc=MPICC_CMD
 
-   If you use omni xmp compiler on the K computer,
-         $  ./configure --target=Kcomputer-linux-gnu
+      If you want to use Coarray functions
+        $ ./configure --with-gasnetDir=(GASNet install PATH) --with-gasnet-conduit=(GASNet Conduit)
 
-  B. Build the compiler
+   2) on the K computer
+        $ ./configure --target=Kcomputer-linux-gnu
+
+      If you wait to use Coarray functions
+        $ ./configure --target=Kcomputer-linux-gnu --enable-fjrdma
+
+    3) on a Cray machine
+        $ ./configure --target=Cray-linux-gnu
+
+  B. Build
    e.g.) $ make
          $ make install
 
+  C. Set PATH
+    bash) export PATH=<INSTALL DIR>/bin:$PATH
+    csh ) set path = ($path <INSTALL DIR>)
+
+  D. Test (Optional)
+    Note that you need the XMP Compiler with coarray function to compile "coarray_scalar.c",
+    "coarray_vector.c", and "post_wait.c".
+    $ cd tests/xcalablemp/C/
+    $ make
+    $ make run
 
 II. How to use
-  1. Compile
+  A. Compile
    Compile commands are "xmpcc" or "xmpf90".
    e.g.) $ xmpcc -O2 test.c -o test
    
-  2. Run
+  B. Run
    Please use the command for runing mpi program on your environment.
    e.g.) $ mpirun -np 4 test
 
-  3. Environment Variable
+  C. Environment Variable
    - XMP_COARRAY_HEAP_SIZE : 
       The heap memory size for using coarray. The default size is 256MB.
       If you want to change this size, please set a value by the Mega Byte.
       e.g.) export XMP_COARRAY_HEAP_SIZE=128
 
-  4. Profiling Options in XMP/C
+  D. Profiling Options in XMP/C
    XMP supports profiler interfaces of Scalasca and tlog.
    The tlog is included in XMP.
    If you want to use the profiler interface of Scalasca,
@@ -61,27 +88,13 @@ II. How to use
 
 
 III. Implementation Status
- This is the alpha release of Omni XMP compiler.
  Some features in the language specification are not supported in this release.
  (You can download the specification of XMP from "http://www.xcalablemp.org".)
 
- 1. XMP/C and XMP/Fortran
-  - Distribute Directive
-     "gblock" distribution is not implemented.
- 
-  - Template_fix Directive
-  - Tasks Directive
-  - Gmove Directive
-     Some patterns of Gmove may not work (not fully tested)
-     gmove with in/out may not work correctly.
+ Please show http://www.hpcs.cs.tsukuba.ac.jp/omni-compiler/xcalablemp/download.html
 
- 2. XMP/C
-  - Nodes Directive:
-     <map-type> "regular" is not implemented.
-
-  - Template Directive
-     ':' cannot be used for <template-spec>.
-
- 3. XMP/Fortran
-  - Coarray is not supported in this release (comming soon).
- 
+IV. Note
+ In some reasons you failed to build the XMP, especially in the configuration stage, 
+ issuing autogen.sh on the top directory would be a solution. 
+ And if the build still failed even after issuing the autogen.sh, 
+ you should update your autotools (autoconf/automake/libtools) to the latest ones.
