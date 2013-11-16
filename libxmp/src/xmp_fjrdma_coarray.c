@@ -5,6 +5,7 @@
 #include "mpi.h"
 #include "mpi-ext.h"
 #include "xmp_internal.h"
+#include "xmp.h"
 #define MEMID_MAX 511
 //#define MEMID_MAX 100
 //#define MEMID_MAX 10
@@ -454,9 +455,9 @@ uint64_t get_addr(uint64_t start_addr,
   return target_addr;
 }
 
-void _XMP_post(int target_node, int tag) {
+void _XMP_post(xmp_desc_t dummy1, int dummy2,int target_node, int tag) {
   int dummy_sbuf;
-  MPI_Request *req;
+//  MPI_Request *req;
 #ifdef FJRDMA_DEBUG_PW
   fprintf(stderr, "POST: start\n");
 #endif
@@ -465,8 +466,8 @@ void _XMP_post(int target_node, int tag) {
 #ifdef FJRDMA_DEBUG_PW
   fprintf(stderr, "POST [%d(me)]->[%d] tag=%d\n", rank, target_node, tag);
 #endif
-  MPI_Isend(&dummy_sbuf, 1, MPI_INT, target_node, tag, MPI_COMM_WORLD, req);
-//  MPI_Send(&dummy_sbuf, 1, MPI_INT, target_node, tag, MPI_COMM_WORLD);
+//  MPI_Isend(&dummy_sbuf, 1, MPI_INT, target_node, tag, MPI_COMM_WORLD, req);
+  MPI_Send(&dummy_sbuf, 1, MPI_INT, target_node, tag, MPI_COMM_WORLD);
 #ifdef FJRDMA_DEBUG_PW
   fprintf(stderr, "POST: finished\n");
 #endif
