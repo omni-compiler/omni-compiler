@@ -188,8 +188,8 @@ extern void _XMP_init_world(int *argc, char ***argv);
 extern void _XMP_finalize_world(void);
 
 // xmp_post.c
-#ifndef _XMP_FJRDMA_COARRAY
-extern void _XMP_post(int node, int tag);
+#ifdef _XMP_FJRDMA_COARRAY
+extern void _XMP_post(xmp_desc_t, int, int node, int tag);
 extern void _XMP_wait(int dummy, int target_node, int tag);
 extern void _XMP_post_initialize(void);
 #endif

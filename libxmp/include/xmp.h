@@ -86,7 +86,7 @@ extern void     xmp_sync_images_all(int* status);
 extern int	xmp_get_gpu_count(void);
 #endif
 
-extern void _XMP_post(int node, int tag);
+extern void _XMP_post(xmp_desc_t, int, int node, int tag);
 extern void _XMP_wait(int node, int dummy, int tag);
 
 #endif // _XMP_USERAPI
