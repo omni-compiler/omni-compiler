@@ -192,6 +192,10 @@ extern void _XMP_finalize_world(void);
 extern void _XMP_post(xmp_desc_t, int, int node, int tag);
 extern void _XMP_wait(int dummy, int target_node, int tag);
 extern void _XMP_post_initialize(void);
+#else
+extern void _XMP_post(void *, int num, ...);
+extern void _XMP_wait(int num, ...);
+extern void _XMP_post_initialize(void);
 #endif
 
 // xmp_gasnet_post.c

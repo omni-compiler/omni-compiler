@@ -30,5 +30,9 @@ ver. 0.6.0      2012/11/12
   (Coarray feature will be added soon)
 
 ver. 0.6.1  	2013/03/27
-  1. Supports stride Coarray function (only by using GASNet)
-  2. Supports coarray function on the K computer
+  Supports stride Coarray function. (only by using GASNet)
+  Supports coarray function on the K computer.
+
+ver. 0.7.0      2013/11/20
+  Improve shadow/reflect directive.
+  Fixed some bugs.
