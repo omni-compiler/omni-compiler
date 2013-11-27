@@ -295,7 +295,9 @@ public class omompx
       if (inXmlFile != null) {
 	reader.close();
       }
-      srcPath = xobjFile.getSourceFileName();
+      if(XmOption.getLanguage() == XmLanguage.C){
+        srcPath = xobjFile.getSourceFileName();
+      }
     }
         
     String baseName = null;
