@@ -222,6 +222,16 @@ public class XMPrewriteExpr
 	      Xobject desc = array.getDescId();
 	      iter.setXobject(desc);
 	  }
+	  else if (fname.equalsIgnoreCase("xmp_transpose")){
+	    XMParray array0 = (XMParray) x.getArg(1).getArg(0).getProp(XMP.arrayProp);
+	    XMParray array1 = (XMParray) x.getArg(1).getArg(1).getProp(XMP.arrayProp);
+	    if (array0 == null || array1 == null){
+	      XMP.errorAt(block,"wrong argument of xmp_transpose");
+	      XMP.exitByError();
+	    }
+	    x.getArg(1).setArg(0, array0.getDescId());
+	    x.getArg(1).setArg(1, array1.getDescId());
+	  }
 	  break;
 	}
       }
