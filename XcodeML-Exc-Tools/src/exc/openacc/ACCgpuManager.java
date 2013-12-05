@@ -204,7 +204,7 @@ public class ACCgpuManager {
     }
   }
   
-  public String getMethodName(CforBlock forBlock){
+  public String getMethodName_old(CforBlock forBlock){
     for(LoopExecInfo loopExecInfo : loopExecInfos){
       if(loopExecInfo.forBlocks.contains(forBlock)){
         Axis axis = loopExecInfo.axis;
@@ -226,7 +226,7 @@ public class ACCgpuManager {
     distAxis();
   }
   
-  public XobjList getBlockThreadSize(){
+  public XobjList getBlockThreadSize_old(){
     int usedBlockDim = 3 - availableBlockDim;
     int usedThreadDim = 3 - availableThreadDim;
         
@@ -328,11 +328,15 @@ public class ACCgpuManager {
         if(info!= null){
           //ACCpragma execMethod = getExecMethod(info.getExecModels());
           Iterator<ACCpragma> execiter = info.getExecModels();
-          for(;execiter.hasNext();){
-            ACCpragma p = execiter.next();
-            if(p == ACCpragma.GANG) isGang = true;
-            else if(p == ACCpragma.VECTOR) isVector = true;
-            else if (p == ACCpragma._AUTO) isAuto = true;
+          if(! execiter.hasNext()){
+            isAuto = true;
+          }else{         
+            for(;execiter.hasNext();){
+              ACCpragma p = execiter.next();
+              if(p == ACCpragma.GANG) isGang = true;
+              else if(p == ACCpragma.VECTOR) isVector = true;
+              else if (p == ACCpragma._AUTO) isAuto = true;
+            }
           }
         }
       }
@@ -355,85 +359,114 @@ public class ACCgpuManager {
     }
   }
 
-  private void determineExecMethod(Block b,ACCpragma findingMethod){
+  private boolean compareExecModel(ACCpragma a, ACCpragma b){ //if(a > b) true
+    if(a.ordinal() < b.ordinal()){
+      return true;
+    }else{
+      return false;
+    }
+  }
+  private ACCpragma getCoarsestExecModel(ACCinfo info){
+    Iterator<ACCpragma> execModelIter = info.getExecModels();
+    ACCpragma coarsestExecModel = ACCpragma.SEQ;
+    if(!execModelIter.hasNext()){
+      return ACCpragma.AUTO;
+    }
+    while(execModelIter.hasNext()){
+      ACCpragma execModel = execModelIter.next();
+      if(compareExecModel(execModel, coarsestExecModel)){
+	coarsestExecModel = execModel;
+      }
+    }
+    return coarsestExecModel;
+  }
+  private Set<ACCpragma> getExecModels(ACCinfo info){
+    Iterator<ACCpragma> execModelIter = info.getExecModels();
+    Set<ACCpragma> execModels = new HashSet<ACCpragma>();
+    if(!execModelIter.hasNext()){
+      execModels.add(ACCpragma.AUTO);
+      return execModels;
+    }
+    while(execModelIter.hasNext()){
+      ACCpragma execModel = execModelIter.next();
+      execModels.add(execModel);
+    }
+    return execModels;
+  }
+  private void determineExecMethod(Block b, ACCpragma findingMethod){
     switch(b.Opcode()){
     case FOR_STATEMENT:
     {
       ACCinfo info = ACCutil.getACCinfo(b);
       CforBlock forBlock = (CforBlock)b;
       ACCpragma forBlockExecMethod = ACCpragma.SEQ;
-      if(info != null){
-        ACCpragma execMethod = getExecMethod(info.getExecModels());
-        switch(execMethod){
-        case _BLOCK:{
-          if(findingMethod != ACCpragma.GANG){
-            ACC.fatal("gang inner gang");
-          }
-          if(hasExecMethod(b.getBody(), ACCpragma.VECTOR) || hasExecMethod(b.getBody(), ACCpragma._AUTO)){
-            forBlockExecMethod = ACCpragma._BLOCK;
-          }else{
-            forBlockExecMethod = ACCpragma._BLOCK_THREAD;
-          }
-        }break;
-        case _BLOCK_THREAD:{
-          if(findingMethod != ACCpragma.GANG){
-            ACC.fatal("gang inner gang");
-          }
-          forBlockExecMethod = ACCpragma._BLOCK_THREAD;
-        }break;
-        case _THREAD:{
-          if(findingMethod != ACCpragma.VECTOR){
-            ACC.fatal("not vector");
-          }
-          forBlockExecMethod = ACCpragma._THREAD;
-        }break;
-        case _AUTO:
-        {
-          if(findingMethod == ACCpragma.GANG){
-            if(hasExecMethod(b.getBody(), ACCpragma.GANG)){
-              forBlockExecMethod = ACCpragma.SEQ;
-            }else{
-              if(hasExecMethod(b.getBody(), ACCpragma.VECTOR)){
-                forBlockExecMethod = ACCpragma._BLOCK;
-              }else{
-                forBlockExecMethod = ACCpragma._BLOCK_THREAD;
-              }
-            }
-          }else if(findingMethod == ACCpragma.VECTOR){
-            if(hasExecMethod(b.getBody(), ACCpragma.VECTOR)){
-              forBlockExecMethod = ACCpragma.SEQ;
-            }else{
-              forBlockExecMethod = ACCpragma._THREAD;
-            }
-          }
-        }break;
-        case SEQ:
-        {
-          forBlockExecMethod = ACCpragma.SEQ;
-        }
-        default:
-          ACC.fatal("unknown pragma");
-        }
-        List<CforBlock> forBlocks = new ArrayList<CforBlock>();
-        CforBlock fb = forBlock;
-        for(int i = info.getCollapseNum(); i>0; i--){
-          forBlocks.add(fb);
-          if(i > 1){
-            fb = (CforBlock)(fb.getBody().getHead());
-          }
-        }
-        execMethodMap.put(forBlock, new LoopExecInfo(forBlocks, forBlockExecMethod));
-      }
+      if(info == null){
+	determineExecMethod(b.getBody(), findingMethod);
+      }else{
+	ACCpragma coarsestExecModel = getCoarsestExecModel(info);
+	Set<ACCpragma> execModels = getExecModels(info); 
 
-      ACCpragma next = findingMethod;
-      switch(forBlockExecMethod){
-      case _BLOCK:
-        next = ACCpragma.VECTOR; break;
-      case _BLOCK_THREAD:
-      case _THREAD:
-        next = ACCpragma.SEQ; break;
+	if(compareExecModel(coarsestExecModel, findingMethod)){
+	  ACC.fatal("'"+coarsestExecModel+"' clause is not allowed in '"+findingMethod+"'");
+	}
+
+	switch(findingMethod){
+	case GANG:
+	{
+	  if(execModels.contains(ACCpragma.GANG) && execModels.contains(ACCpragma.VECTOR)){
+	    forBlockExecMethod = ACCpragma._BLOCK_THREAD;
+	  }else if(execModels.contains(ACCpragma.GANG)){
+	    forBlockExecMethod = ACCpragma._BLOCK;
+	  }else if(execModels.contains(ACCpragma.VECTOR)){
+	    forBlockExecMethod = ACCpragma._THREAD;
+	  }else if(execModels.contains(ACCpragma.AUTO)){
+	    if(hasExecMethod(b.getBody(), ACCpragma.GANG)){
+	      forBlockExecMethod = ACCpragma.SEQ;
+	    }else if(hasExecMethod(b.getBody(), ACCpragma.VECTOR) || hasExecMethod(b.getBody(), ACCpragma._AUTO)){ ///findCoarsestExecModel(b.getBody())
+	      forBlockExecMethod = ACCpragma._BLOCK;
+	    }else{
+	      forBlockExecMethod = ACCpragma._BLOCK_THREAD;
+	    }
+	  }else{
+	    forBlockExecMethod = ACCpragma.SEQ;
+	  }
+	}break;
+	case VECTOR:
+	{
+	  if(execModels.contains(ACCpragma.VECTOR)){
+	    forBlockExecMethod = ACCpragma._THREAD;
+	  }else if(execModels.contains(ACCpragma.AUTO)){
+	    if(hasExecMethod(b.getBody(), ACCpragma.VECTOR) || hasExecMethod(b.getBody(), ACCpragma._AUTO)){ 
+	      forBlockExecMethod = ACCpragma.SEQ;
+	    }else{
+	      forBlockExecMethod = ACCpragma._THREAD;
+	    }
+	  }else{
+	    forBlockExecMethod = ACCpragma.SEQ;
+	  }
+	}break;
+	default:
+	  ACC.fatal("unknown pragma");
+	}
+	List<CforBlock> forBlocks = new ArrayList<CforBlock>();
+	CforBlock fb = forBlock;
+	for(int i = info.getCollapseNum(); i>0; i--){
+	  forBlocks.add(fb);
+	  if(i > 1){
+	    fb = (CforBlock)(fb.getBody().getHead());
+	  }
+	}
+	execMethodMap.put(forBlock, new LoopExecInfo(forBlocks, forBlockExecMethod));
+	ACCpragma next = findingMethod;
+	switch(forBlockExecMethod){
+	case _BLOCK:
+	  next = ACCpragma.VECTOR; break;
+	case _BLOCK_THREAD:
+	case _THREAD:
+	  next = ACCpragma.SEQ; break;
+	}
+	determineExecMethod(fb.getBody(), next);
       }
-      determineExecMethod(b.getBody(), next);
     }break;
     case COMPOUND_STATEMENT:
     case WHILE_STATEMENT:
@@ -445,7 +478,7 @@ public class ACCgpuManager {
       //ACC.fatal("default");
     }
   }
-  public String getMethodName_new(CforBlock forBlock){
+  public String getMethodName(CforBlock forBlock){
     LoopExecInfo loopExecInfo = execMethodMap.get(forBlock); 
     ACCpragma execMethod = loopExecInfo.method;
     if(execMethod != null){
@@ -460,7 +493,7 @@ public class ACCgpuManager {
     }
     return "";
   }
-  public XobjList getBlockThreadSize_new(){
+  public XobjList getBlockThreadSize(){
     int thread = 1;
     Xobject[] blockSize = {null, null, null};
     Xobject[] threadSize = {null, null, null};

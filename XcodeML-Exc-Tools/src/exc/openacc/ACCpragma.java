@@ -56,8 +56,9 @@ public enum ACCpragma {
   COLLAPSE,
   GANG,
   WORKER,
-  SEQ,
   VECTOR,
+  AUTO,
+  SEQ,
   INDEPENDENT,
   
   //declare clause
