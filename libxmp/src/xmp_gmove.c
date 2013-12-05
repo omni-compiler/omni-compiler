@@ -1057,9 +1057,7 @@ static _Bool _XMP_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
       src_array->info[0].shadow_size_hi != 0) return false;
 
   // Dividable by the number of nodes
-  if (dst_array->info[0].ser_size % nnodes != 0){
-    _XMP_fatal("bad assign statement for gmove");
-  } 
+  if (dst_array->info[0].ser_size % nnodes != 0) return false;
 
   dst_block_dim = (dst_array->info[0].align_manner == _XMP_N_ALIGN_BLOCK) ? 0 : 1;
   src_block_dim = (src_array->info[0].align_manner == _XMP_N_ALIGN_BLOCK) ? 0 : 1;
@@ -1500,11 +1498,6 @@ void _XMP_gmove_garray_garray_common(_XMP_array_t *dst_array, _XMP_array_t *src_
     return;
   }
 
-  int src_t_dim = src_array->align_template->dim;
-  if ((src_dim > 2) && (src_dim >  src_t_dim)) {
-    _XMP_fatal("bad assign statement for gmove");
-  }
- 
   MPI_Datatype mpi_datatype;
   MPI_Type_contiguous(type_size, MPI_BYTE, &mpi_datatype);
   MPI_Type_commit(&mpi_datatype);
@@ -1604,13 +1597,14 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
 
   int **src_local_idx, **dst_local_idx;
   int **src_irank,**dst_irank;
+  int src_rank_acc[src_dim], dst_rank_acc[dst_dim];
   int src_num[src_dim], dst_num[dst_dim];
   int dst_num_myrank=0, src_num_myrank=0;
   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
   MPI_Comm *exec_comm = exec_nodes->comm;
   int dst_myindex[max_array_ndims], src_myindex[max_array_ndims];
   int i,j,jj,i0,i1,i2,i3,i4,i5,i6;
-
+  int temp_index;
   int src_template_index[max_array_ndims], dst_template_index[max_array_ndims];
 
   src_local_idx=(int **)malloc(src_dim*sizeof(int *));
@@ -1623,21 +1617,27 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
     src_num[i]=_XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
     src_local_idx[i]=(int *)malloc(src_num[i]*sizeof(int));
     src_irank[i]=(int *)malloc(src_num[i]*sizeof(int));
-    src_template_index[i] = src_array->info[i].align_template_index;
-    src_myindex[src_template_index[i]]=src_n->info[src_template_index[i]].rank;
+    temp_index = src_array->info[i].align_template_index;
+    if (temp_index == -1){
+      src_myindex[i]=0;
+      src_rank_acc[i]=0;
+    }else{
+      src_template_index[i] = temp_index;
+      src_myindex[i]=src_n->info[src_template_index[i]].rank;
+      src_rank_acc[i]=src_n->info[src_template_index[i]].multiplier;
+    }
 
     jj=0;
     src_num_myrank=0;
     for (j = src_l[i]; j<=src_u[i]; j+=src_s[i]){
 
-
       _XMP_G2L_rank(j, &(src_local_idx[i][jj]),
-                    src_array, i, &(src_irank[src_template_index[i]][jj]));
-      if (src_irank[src_template_index[i]][jj] 
-          == src_myindex[src_template_index[i]]) src_num_myrank++;
+                    src_array, i, &(src_irank[i][jj]));
+      if (src_irank[i][jj] == src_myindex[i]) src_num_myrank++;
       jj++;
 
     }
+
     src_num_myrank_total *=src_num_myrank;
   }
 
@@ -1646,24 +1646,26 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
     dst_num[i]=_XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
     dst_local_idx[i]=(int *)malloc(dst_num[i]*sizeof(int));
     dst_irank[i]=(int *)malloc(dst_num[i]*sizeof(int));
-    if (dst_array->info[i].align_manner != _XMP_N_ALIGN_NOT_ALIGNED){
-      dst_template_index[i] = dst_array->info[i].align_template_index;
+    temp_index = dst_array->info[i].align_template_index;
+    if (temp_index == -1){
+      dst_myindex[i]=0;
+      dst_rank_acc[i]=0;
     }else{
-      dst_template_index[i]=0;
+      dst_template_index[i] = temp_index;
+      dst_myindex[i]=dst_n->info[dst_template_index[i]].rank;
+      dst_rank_acc[i]=dst_n->info[dst_template_index[i]].multiplier;
     }
-    dst_myindex[dst_template_index[i]]=dst_n->info[dst_template_index[i]].rank;
 
     jj=0;
     dst_num_myrank=0;
     for (j = dst_l[i]; j<=dst_u[i]; j+=dst_s[i]){
 
       _XMP_G2L_rank(j, &dst_local_idx[i][jj],
-                    dst_array, i, 
-                    &dst_irank[dst_template_index[i]][jj]);
-      if (dst_irank[dst_template_index[i]][jj] 
-          == dst_myindex[dst_template_index[i]]) dst_num_myrank++; 
+                    dst_array, i, &dst_irank[i][jj]);
+      if (dst_irank[i][jj] == dst_myindex[i]) dst_num_myrank++; 
       jj++;
     }
+
     dst_num_myrank_total *=dst_num_myrank;
   }
 
@@ -1713,19 +1715,15 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
     for(i1=0;i1<src_num[1];i1++){
       for(i0=0;i0<src_num[0];i0++){
 
-        if ((dst_irank[dst_template_index[1]][i1] 
-             == dst_myindex[dst_template_index[1]]) 
-         && (dst_irank[dst_template_index[0]][i0] 
-             == dst_myindex[dst_template_index[0]])){
+        if ((dst_irank[1][i1] == dst_myindex[1]) 
+         && (dst_irank[0][i0] == dst_myindex[0])){
           MPI_Irecv((char *)dst_addr
                     +(dst_array->info[1].dim_acc*dst_local_idx[1][i1]
                      +dst_array->info[0].dim_acc*dst_local_idx[0][i0])
                     *dst_type_size, 
                     dst_type_size, MPI_BYTE,
-                    src_n->info[src_template_index[1]].multiplier
-                    *src_irank[src_template_index[1]][i1]
-                    +src_n->info[src_template_index[0]].multiplier
-                    *src_irank[src_template_index[0]][i0], 
+                    src_rank_acc[1]*src_irank[1][i1]
+                    +src_rank_acc[0]*src_irank[0][i0], 
                     100, *exec_comm, &dst_request[icount]);
           icount++;
         }
@@ -1735,24 +1733,21 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
     icount=0;
     for(i1=0;i1<dst_num[1];i1++){
       for(i0=0;i0<dst_num[0];i0++){
-        if ((src_irank[src_template_index[1]][i1] 
-             == src_myindex[src_template_index[1]])
-          && (src_irank[src_template_index[0]][i0]
-             == src_myindex[src_template_index[0]])){
+        if ((src_irank[1][i1] == src_myindex[1])
+          && (src_irank[0][i0] == src_myindex[0])){
           MPI_Isend((char *)src_addr
                     +(src_array->info[1].dim_acc*src_local_idx[1][i1]
                      +src_array->info[0].dim_acc*src_local_idx[0][i0])
                     *src_type_size, 
                     src_type_size, MPI_BYTE, 
-                    dst_n->info[dst_template_index[1]].multiplier
-                    *dst_irank[dst_template_index[1]][i1]
-                    +dst_n->info[dst_template_index[0]].multiplier
-                    *dst_irank[dst_template_index[0]][i0], 
+                    dst_rank_acc[1]*dst_irank[1][i1]
+                    +dst_rank_acc[0]*dst_irank[0][i0], 
                     100, *exec_comm, &src_request[icount]);
           icount++;
         }
       }
     }
+
     MPI_Waitall(dst_num_myrank_total, dst_request, dst_status);
     MPI_Waitall(src_num_myrank_total, src_request, src_status);
     break;
@@ -1763,24 +1758,18 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
       for(i1=0;i1<src_num[1];i1++){
         for(i0=0;i0<src_num[0];i0++){
 
-          if ((dst_irank[dst_template_index[2]][i2]
-               == dst_myindex[dst_template_index[2]])
-           && (dst_irank[dst_template_index[1]][i1]
-               == dst_myindex[dst_template_index[1]])
-           && (dst_irank[dst_template_index[0]][i0]
-               == dst_myindex[dst_template_index[0]])){
+          if ((dst_irank[2][i2] == dst_myindex[2])
+           && (dst_irank[1][i1] == dst_myindex[1])
+           && (dst_irank[0][i0] == dst_myindex[0])){
             MPI_Irecv((char *)dst_addr
                     +(dst_array->info[2].dim_acc*dst_local_idx[2][i2]
                      +dst_array->info[1].dim_acc*dst_local_idx[1][i1]
                      +dst_array->info[0].dim_acc*dst_local_idx[0][i0])
                     *dst_type_size,
                     dst_type_size, MPI_BYTE,
-                    src_n->info[src_template_index[2]].multiplier
-                    *src_irank[src_template_index[2]][i2]
-                    +src_n->info[src_template_index[1]].multiplier
-                    *src_irank[src_template_index[1]][i1]
-                    +src_n->info[src_template_index[0]].multiplier
-                    *src_irank[src_template_index[0]][i0],
+                    src_rank_acc[2]*src_irank[2][i2]
+                    +src_rank_acc[1]*src_irank[1][i1]
+                    +src_rank_acc[0]*src_irank[0][i0],
                     100, *exec_comm, &dst_request[icount]);
             icount++;
           }
@@ -1793,24 +1782,18 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
       for(i1=0;i1<dst_num[1];i1++){
         for(i0=0;i0<dst_num[0];i0++){
 
-          if ((src_irank[src_template_index[2]][i2]
-               == src_myindex[src_template_index[2]])
-           && (src_irank[src_template_index[1]][i1]
-               == src_myindex[src_template_index[1]])
-           && (src_irank[src_template_index[0]][i0]
-               == src_myindex[src_template_index[0]])){
+          if ((src_irank[2][i2] == src_myindex[2])
+           && (src_irank[1][i1] == src_myindex[1])
+           && (src_irank[0][i0] == src_myindex[0])){
             MPI_Isend((char *)src_addr
                     +(src_array->info[2].dim_acc*src_local_idx[2][i2]
                      +src_array->info[1].dim_acc*src_local_idx[1][i1]
                      +src_array->info[0].dim_acc*src_local_idx[0][i0])
                     *src_type_size,
                     src_type_size, MPI_BYTE,
-                    dst_n->info[dst_template_index[2]].multiplier
-                    *dst_irank[dst_template_index[2]][i2]
-                    +dst_n->info[dst_template_index[1]].multiplier
-                    *dst_irank[dst_template_index[1]][i1]
-                    +dst_n->info[dst_template_index[0]].multiplier
-                    *dst_irank[dst_template_index[0]][i0],
+                    dst_rank_acc[2]*dst_irank[2][i2]
+                    +dst_rank_acc[1]*dst_irank[1][i1]
+                    +dst_rank_acc[0]*dst_irank[0][i0],
                     100, *exec_comm, &src_request[icount]);
             icount++;
           }
@@ -1827,14 +1810,10 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
         for(i1=0;i1<src_num[1];i1++){
           for(i0=0;i0<src_num[0];i0++){
 
-            if ((dst_irank[dst_template_index[3]][i3]
-                 == dst_myindex[dst_template_index[3]])
-             && (dst_irank[dst_template_index[2]][i2]
-                 == dst_myindex[dst_template_index[2]])
-             && (dst_irank[dst_template_index[1]][i1]
-                 == dst_myindex[dst_template_index[1]])
-             && (dst_irank[dst_template_index[0]][i0]
-                 == dst_myindex[dst_template_index[0]])){
+            if ((dst_irank[3][i3] == dst_myindex[3])
+             && (dst_irank[2][i2] == dst_myindex[2])
+             && (dst_irank[1][i1] == dst_myindex[1])
+             && (dst_irank[0][i0] == dst_myindex[0])){
               MPI_Irecv((char *)dst_addr
                       +(dst_array->info[3].dim_acc*dst_local_idx[3][i3]
                        +dst_array->info[2].dim_acc*dst_local_idx[2][i2]
@@ -1842,14 +1821,10 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
                        +dst_array->info[0].dim_acc*dst_local_idx[0][i0])
                       *dst_type_size,
                       dst_type_size, MPI_BYTE,
-                      src_n->info[src_template_index[3]].multiplier
-                      *src_irank[src_template_index[3]][i3]
-                      +src_n->info[src_template_index[2]].multiplier
-                      *src_irank[src_template_index[2]][i2]
-                      +src_n->info[src_template_index[1]].multiplier
-                      *src_irank[src_template_index[1]][i1]
-                      +src_n->info[src_template_index[0]].multiplier
-                      *src_irank[src_template_index[0]][i0],
+                      src_rank_acc[3]*src_irank[3][i3]
+                      +src_rank_acc[2]*src_irank[2][i2]
+                      +src_rank_acc[1]*src_irank[1][i1]
+                      +src_rank_acc[0]*src_irank[0][i0],
                       100, *exec_comm, &dst_request[icount]);
               icount++;
             }
@@ -1864,14 +1839,10 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
         for(i1=0;i1<dst_num[1];i1++){
           for(i0=0;i0<dst_num[0];i0++){
 
-            if ((src_irank[src_template_index[3]][i3]
-                 == src_myindex[src_template_index[3]])
-             && (src_irank[src_template_index[2]][i2]
-                 == src_myindex[src_template_index[2]])
-             && (src_irank[src_template_index[1]][i1]
-                 == src_myindex[src_template_index[1]])
-             && (src_irank[src_template_index[0]][i0]
-                 == src_myindex[src_template_index[0]])){
+            if ((src_irank[3][i3] == src_myindex[3])
+             && (src_irank[2][i2] == src_myindex[2])
+             && (src_irank[1][i1] == src_myindex[1])
+             && (src_irank[0][i0] == src_myindex[0])){
               MPI_Isend((char *)src_addr
                       +(src_array->info[3].dim_acc*src_local_idx[3][i3]
                        +src_array->info[2].dim_acc*src_local_idx[2][i2]
@@ -1879,14 +1850,10 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
                        +src_array->info[0].dim_acc*src_local_idx[0][i0])
                       *src_type_size,
                       src_type_size, MPI_BYTE,
-                      dst_n->info[dst_template_index[3]].multiplier
-                      *dst_irank[dst_template_index[3]][i3]
-                      +dst_n->info[dst_template_index[2]].multiplier
-                      *dst_irank[dst_template_index[2]][i2]
-                      +dst_n->info[dst_template_index[1]].multiplier
-                      *dst_irank[dst_template_index[1]][i1]
-                      +dst_n->info[dst_template_index[0]].multiplier
-                      *dst_irank[dst_template_index[0]][i0],
+                      dst_rank_acc[3]*dst_irank[3][i3]
+                      +dst_rank_acc[2]*dst_irank[2][i2]
+                      +dst_rank_acc[1]*dst_irank[1][i1]
+                      +dst_rank_acc[0]*dst_irank[0][i0],
                       100, *exec_comm, &src_request[icount]);
               icount++;
             }
@@ -1905,16 +1872,11 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
           for(i1=0;i1<src_num[1];i1++){
             for(i0=0;i0<src_num[0];i0++){
 
-              if ((dst_irank[dst_template_index[4]][i4]
-                   == dst_myindex[dst_template_index[4]])
-               && (dst_irank[dst_template_index[3]][i3]
-                   == dst_myindex[dst_template_index[3]])
-               && (dst_irank[dst_template_index[2]][i2]
-                   == dst_myindex[dst_template_index[2]])
-               && (dst_irank[dst_template_index[1]][i1]
-                   == dst_myindex[dst_template_index[1]])
-               && (dst_irank[dst_template_index[0]][i0]
-                   == dst_myindex[dst_template_index[0]])){
+              if ((dst_irank[4][i4] == dst_myindex[4])
+               && (dst_irank[3][i3] == dst_myindex[3])
+               && (dst_irank[2][i2] == dst_myindex[2])
+               && (dst_irank[1][i1] == dst_myindex[1])
+               && (dst_irank[0][i0] == dst_myindex[0])){
                 MPI_Irecv((char *)dst_addr
                         +(dst_array->info[4].dim_acc*dst_local_idx[4][i4]
                          +dst_array->info[3].dim_acc*dst_local_idx[3][i3]
@@ -1923,16 +1885,11 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
                          +dst_array->info[0].dim_acc*dst_local_idx[0][i0])
                         *dst_type_size,
                         dst_type_size, MPI_BYTE,
-                        src_n->info[src_template_index[4]].multiplier
-                        *src_irank[src_template_index[4]][i4]
-                        +src_n->info[src_template_index[3]].multiplier
-                        *src_irank[src_template_index[3]][i3]
-                        +src_n->info[src_template_index[2]].multiplier
-                        *src_irank[src_template_index[2]][i2]
-                        +src_n->info[src_template_index[1]].multiplier
-                        *src_irank[src_template_index[1]][i1]
-                        +src_n->info[src_template_index[0]].multiplier
-                        *src_irank[src_template_index[0]][i0],
+                        src_rank_acc[4]*src_irank[4][i4]
+                        +src_rank_acc[3]*src_irank[3][i3]
+                        +src_rank_acc[2]*src_irank[2][i2]
+                        +src_rank_acc[1]*src_irank[1][i1]
+                        +src_rank_acc[0]*src_irank[0][i0],
                         100, *exec_comm, &dst_request[icount]);
                 icount++;
               }
@@ -1949,16 +1906,11 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
           for(i1=0;i1<dst_num[1];i1++){
             for(i0=0;i0<dst_num[0];i0++){
 
-              if ((src_irank[src_template_index[4]][i4]
-                   == src_myindex[src_template_index[4]])
-               && (src_irank[src_template_index[3]][i3]
-                   == src_myindex[src_template_index[3]])
-               && (src_irank[src_template_index[2]][i2]
-                   == src_myindex[src_template_index[2]])
-               && (src_irank[src_template_index[1]][i1]
-                   == src_myindex[src_template_index[1]])
-               && (src_irank[src_template_index[0]][i0]
-                   == src_myindex[src_template_index[0]])){
+              if ((src_irank[4][i4] == src_myindex[4])
+               && (src_irank[3][i3] == src_myindex[3])
+               && (src_irank[2][i2] == src_myindex[2])
+               && (src_irank[1][i1] == src_myindex[1])
+               && (src_irank[0][i0] == src_myindex[0])){
                 MPI_Isend((char *)src_addr
                         +(src_array->info[4].dim_acc*src_local_idx[4][i4]
                          +src_array->info[3].dim_acc*src_local_idx[3][i3]
@@ -1967,16 +1919,11 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
                          +src_array->info[0].dim_acc*src_local_idx[0][i0])
                         *src_type_size,
                         src_type_size, MPI_BYTE,
-                        dst_n->info[dst_template_index[4]].multiplier
-                        *dst_irank[dst_template_index[4]][i4]
-                        +dst_n->info[dst_template_index[3]].multiplier
-                        *dst_irank[dst_template_index[3]][i3]
-                        +dst_n->info[dst_template_index[2]].multiplier
-                        *dst_irank[dst_template_index[2]][i2]
-                        +dst_n->info[dst_template_index[1]].multiplier
-                        *dst_irank[dst_template_index[1]][i1]
-                        +dst_n->info[dst_template_index[0]].multiplier
-                        *dst_irank[dst_template_index[0]][i0],
+                        dst_rank_acc[4]*dst_irank[4][i4]
+                        +dst_rank_acc[3]*dst_irank[3][i3]
+                        +dst_rank_acc[2]*dst_irank[2][i2]
+                        +dst_rank_acc[1]*dst_irank[1][i1]
+                        +dst_rank_acc[0]*dst_irank[0][i0],
                         100, *exec_comm, &src_request[icount]);
                 icount++;
               }
@@ -1997,18 +1944,12 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
             for(i1=0;i1<src_num[1];i1++){
               for(i0=0;i0<src_num[0];i0++){
 
-                if ((dst_irank[dst_template_index[5]][i5]
-                     == dst_myindex[dst_template_index[5]])
-                 && (dst_irank[dst_template_index[4]][i4]
-                     == dst_myindex[dst_template_index[4]])
-                 && (dst_irank[dst_template_index[3]][i3]
-                     == dst_myindex[dst_template_index[3]])
-                 && (dst_irank[dst_template_index[2]][i2]
-                     == dst_myindex[dst_template_index[2]])
-                 && (dst_irank[dst_template_index[1]][i1]
-                     == dst_myindex[dst_template_index[1]])
-                 && (dst_irank[dst_template_index[0]][i0]
-                     == dst_myindex[dst_template_index[0]])){
+                if ((dst_irank[5][i5] == dst_myindex[5])
+                 && (dst_irank[4][i4] == dst_myindex[4])
+                 && (dst_irank[3][i3] == dst_myindex[3])
+                 && (dst_irank[2][i2] == dst_myindex[2])
+                 && (dst_irank[1][i1] == dst_myindex[1])
+                 && (dst_irank[0][i0] == dst_myindex[0])){
                   MPI_Irecv((char *)dst_addr
                           +(dst_array->info[5].dim_acc*dst_local_idx[5][i5]
                            +dst_array->info[4].dim_acc*dst_local_idx[4][i4]
@@ -2018,18 +1959,12 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
                            +dst_array->info[0].dim_acc*dst_local_idx[0][i0])
                           *dst_type_size,
                           dst_type_size, MPI_BYTE,
-                          src_n->info[src_template_index[5]].multiplier
-                          *src_irank[src_template_index[5]][i5]
-                          +src_n->info[src_template_index[4]].multiplier
-                          *src_irank[src_template_index[4]][i4]
-                          +src_n->info[src_template_index[3]].multiplier
-                          *src_irank[src_template_index[3]][i3]
-                          +src_n->info[src_template_index[2]].multiplier
-                          *src_irank[src_template_index[2]][i2]
-                          +src_n->info[src_template_index[1]].multiplier
-                          *src_irank[src_template_index[1]][i1]
-                          +src_n->info[src_template_index[0]].multiplier
-                          *src_irank[src_template_index[0]][i0],
+                          src_rank_acc[5]*src_irank[5][i5]
+                          +src_rank_acc[4]*src_irank[4][i4]
+                          +src_rank_acc[3]*src_irank[3][i3]
+                          +src_rank_acc[2]*src_irank[2][i2]
+                          +src_rank_acc[1]*src_irank[1][i1]
+                          +src_rank_acc[0]*src_irank[0][i0],
                           100, *exec_comm, &dst_request[icount]);
                   icount++;
                 }
@@ -2048,19 +1983,13 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
             for(i1=0;i1<dst_num[1];i1++){
               for(i0=0;i0<dst_num[0];i0++){
 
-                if ((src_irank[src_template_index[5]][i5]
-                     == src_myindex[src_template_index[5]])
-                 && (src_irank[src_template_index[4]][i4]
-                     == src_myindex[src_template_index[4]])
-                 && (src_irank[src_template_index[3]][i3]
-                     == src_myindex[src_template_index[3]])
-                 && (src_irank[src_template_index[2]][i2]
-                     == src_myindex[src_template_index[2]])
-                 && (src_irank[src_template_index[1]][i1]
-                     == src_myindex[src_template_index[1]])
-                 && (src_irank[src_template_index[0]][i0]
-                     == src_myindex[src_template_index[0]])){
-                  MPI_Isend((char *)src_addr
+                if ((src_irank[5][i5] == src_myindex[5])
+                 && (src_irank[4][i4] == src_myindex[4])
+                 && (src_irank[3][i3] == src_myindex[3])
+                 && (src_irank[2][i2] == src_myindex[2])
+                 && (src_irank[1][i1] == src_myindex[1])
+                 && (src_irank[0][i0] == src_myindex[0])){
+                 MPI_Isend((char *)src_addr
                           +(src_array->info[5].dim_acc*src_local_idx[5][i5]
                            +src_array->info[4].dim_acc*src_local_idx[4][i4]
                            +src_array->info[3].dim_acc*src_local_idx[3][i3]
@@ -2069,18 +1998,12 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
                            +src_array->info[0].dim_acc*src_local_idx[0][i0])
                           *src_type_size,
                           src_type_size, MPI_BYTE,
-                          dst_n->info[dst_template_index[5]].multiplier
-                          *dst_irank[dst_template_index[5]][i5]
-                          +dst_n->info[dst_template_index[4]].multiplier
-                          *dst_irank[dst_template_index[4]][i4]
-                          +dst_n->info[dst_template_index[3]].multiplier
-                          *dst_irank[dst_template_index[3]][i3]
-                          +dst_n->info[dst_template_index[2]].multiplier
-                          *dst_irank[dst_template_index[2]][i2]
-                          +dst_n->info[dst_template_index[1]].multiplier
-                          *dst_irank[dst_template_index[1]][i1]
-                          +dst_n->info[dst_template_index[0]].multiplier
-                          *dst_irank[dst_template_index[0]][i0],
+                          dst_rank_acc[5]*dst_irank[5][i5]
+                          +dst_rank_acc[4]*dst_irank[4][i4]
+                          +dst_rank_acc[3]*dst_irank[3][i3]
+                          +dst_rank_acc[2]*dst_irank[2][i2]
+                          +dst_rank_acc[1]*dst_irank[1][i1]
+                          +dst_rank_acc[0]*dst_irank[0][i0],
                           100, *exec_comm, &src_request[icount]);
                   icount++;
                 }
@@ -2103,20 +2026,13 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
               for(i1=0;i1<src_num[1];i1++){
                 for(i0=0;i0<src_num[0];i0++){
 
-                  if ((dst_irank[dst_template_index[6]][i6]
-                       == dst_myindex[dst_template_index[6]])
-                   && (dst_irank[dst_template_index[5]][i5]
-                       == dst_myindex[dst_template_index[5]])
-                   && (dst_irank[dst_template_index[4]][i4]
-                       == dst_myindex[dst_template_index[4]])
-                   && (dst_irank[dst_template_index[3]][i3]
-                       == dst_myindex[dst_template_index[3]])
-                   && (dst_irank[dst_template_index[2]][i2]
-                       == dst_myindex[dst_template_index[2]])
-                   && (dst_irank[dst_template_index[1]][i1]
-                       == dst_myindex[dst_template_index[1]])
-                   && (dst_irank[dst_template_index[0]][i0]
-                       == dst_myindex[dst_template_index[0]])){
+                  if ((dst_irank[6][i6] == dst_myindex[6])
+                   && (dst_irank[5][i5] == dst_myindex[5])
+                   && (dst_irank[4][i4] == dst_myindex[4])
+                   && (dst_irank[3][i3] == dst_myindex[3])
+                   && (dst_irank[2][i2] == dst_myindex[2])
+                   && (dst_irank[1][i1] == dst_myindex[1])
+                   && (dst_irank[0][i0] == dst_myindex[0])){
                     MPI_Irecv((char *)dst_addr
                             +(dst_array->info[6].dim_acc*dst_local_idx[6][i6]
                              +dst_array->info[5].dim_acc*dst_local_idx[5][i5]
@@ -2127,20 +2043,13 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
                              +dst_array->info[0].dim_acc*dst_local_idx[0][i0])
                             *dst_type_size,
                             dst_type_size, MPI_BYTE,
-                            src_n->info[src_template_index[6]].multiplier
-                            *src_irank[src_template_index[6]][i6]
-                            +src_n->info[src_template_index[5]].multiplier
-                            *src_irank[src_template_index[5]][i5]
-                            +src_n->info[src_template_index[4]].multiplier
-                            *src_irank[src_template_index[4]][i4]
-                            +src_n->info[src_template_index[3]].multiplier
-                            *src_irank[src_template_index[3]][i3]
-                            +src_n->info[src_template_index[2]].multiplier
-                            *src_irank[src_template_index[2]][i2]
-                            +src_n->info[src_template_index[1]].multiplier
-                            *src_irank[src_template_index[1]][i1]
-                            +src_n->info[src_template_index[0]].multiplier
-                            *src_irank[src_template_index[0]][i0],
+                            src_rank_acc[6]*src_irank[6][i6]
+                            +src_rank_acc[5]*src_irank[5][i5]
+                            +src_rank_acc[4]*src_irank[4][i4]
+                            +src_rank_acc[3]*src_irank[3][i3]
+                            +src_rank_acc[2]*src_irank[2][i2]
+                            +src_rank_acc[1]*src_irank[1][i1]
+                            +src_rank_acc[0]*src_irank[0][i0],
                             100, *exec_comm, &dst_request[icount]);
                     icount++;
                   }
@@ -2161,20 +2070,13 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
               for(i1=0;i1<dst_num[1];i1++){
                 for(i0=0;i0<dst_num[0];i0++){
 
-                  if ((src_irank[src_template_index[6]][i6]
-                       == src_myindex[src_template_index[6]])
-                   && (src_irank[src_template_index[5]][i5]
-                       == src_myindex[src_template_index[5]])
-                   && (src_irank[src_template_index[4]][i4]
-                       == src_myindex[src_template_index[4]])
-                   && (src_irank[src_template_index[3]][i3]
-                       == src_myindex[src_template_index[3]])
-                   && (src_irank[src_template_index[2]][i2]
-                       == src_myindex[src_template_index[2]])
-                   && (src_irank[src_template_index[1]][i1]
-                       == src_myindex[src_template_index[1]])
-                   && (src_irank[src_template_index[0]][i0]
-                       == src_myindex[src_template_index[0]])){
+                  if ((src_irank[6][i6] == src_myindex[6])
+                   && (src_irank[5][i5] == src_myindex[5])
+                   && (src_irank[4][i4] == src_myindex[4])
+                   && (src_irank[3][i3] == src_myindex[3])
+                   && (src_irank[2][i2] == src_myindex[2])
+                   && (src_irank[1][i1] == src_myindex[1])
+                   && (src_irank[0][i0] == src_myindex[0])){
                     MPI_Isend((char *)src_addr
                             +(src_array->info[6].dim_acc*src_local_idx[6][i6]
                              +src_array->info[5].dim_acc*src_local_idx[5][i5]
@@ -2185,20 +2087,13 @@ void _XMP_gmove_1to1(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_
                              +src_array->info[0].dim_acc*src_local_idx[0][i0])
                             *src_type_size,
                             src_type_size, MPI_BYTE,
-                            dst_n->info[dst_template_index[6]].multiplier
-                            *dst_irank[dst_template_index[6]][i6]
-                            +dst_n->info[dst_template_index[5]].multiplier
-                            *dst_irank[dst_template_index[5]][i5]
-                            +dst_n->info[dst_template_index[4]].multiplier
-                            *dst_irank[dst_template_index[4]][i4]
-                            +dst_n->info[dst_template_index[3]].multiplier
-                            *dst_irank[dst_template_index[3]][i3]
-                            +dst_n->info[dst_template_index[2]].multiplier
-                            *dst_irank[dst_template_index[2]][i2]
-                            +dst_n->info[dst_template_index[1]].multiplier
-                            *dst_irank[dst_template_index[1]][i1]
-                            +dst_n->info[dst_template_index[0]].multiplier
-                            *dst_irank[dst_template_index[0]][i0],
+                            dst_rank_acc[6]*dst_irank[6][i6]
+                            +dst_rank_acc[5]*dst_irank[5][i5]
+                            +dst_rank_acc[4]*dst_irank[4][i4]
+                            +dst_rank_acc[3]*dst_irank[3][i3]
+                            +dst_rank_acc[2]*dst_irank[2][i2]
+                            +dst_rank_acc[1]*dst_irank[1][i1]
+                            +dst_rank_acc[0]*dst_irank[0][i0],
                             100, *exec_comm, &src_request[icount]);
                     icount++;
                   }

@@ -208,9 +208,7 @@ static _Bool _XMPF_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
       src_array->info[0].shadow_size_hi != 0) return false;
 
   // Dividable by the number of nodes
-  if (dst_array->info[0].ser_size % nnodes != 0){
-    _XMP_fatal("bad assign statement for gmove");
-  }
+  if (dst_array->info[0].ser_size % nnodes != 0) return false;
 
   dst_block_dim = (dst_array->info[0].align_manner == _XMP_N_ALIGN_BLOCK) ? 0 : 1;
   src_block_dim = (src_array->info[0].align_manner == _XMP_N_ALIGN_BLOCK) ? 0 : 1;
