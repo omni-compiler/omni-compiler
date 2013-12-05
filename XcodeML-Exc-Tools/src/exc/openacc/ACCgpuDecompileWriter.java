@@ -281,7 +281,7 @@ public class ACCgpuDecompileWriter extends PrintWriter {
       break;
 
     case LONGLONG_CONSTANT:
-      print("0x"+Long.toHexString(v.getLong()));
+      print("0x"+Long.toHexString(v.getLongHigh()) + Long.toHexString(v.getLongLow()));
       break;
 
       // variable reference
@@ -337,7 +337,7 @@ public class ACCgpuDecompileWriter extends PrintWriter {
     case MEMBER_REF:      /* (MEMBER_REF v member), v.member */
       print("((");
       print(v.left());
-      print(").");
+      print(")->");
       print(v.getArg(1).getSym());
       print(")");
       break;
