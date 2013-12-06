@@ -1,8 +1,7 @@
 #include <stdio.h>
-#include <math.h>
 #include <xmp.h>
 
-int n=8;
+int n=9;
 double a[n][n],b[n][n];
 #pragma xmp nodes p(2)
 #pragma xmp template tx(0:n-1)
@@ -36,11 +35,10 @@ int main(){
   b[0:n][0:n]=a[0:n][0:n];
 
   err=0.0;
-#pragma xmp loop (i) on tx(i)
   for(i=0;i<n;i++){
 #pragma xmp loop (j) on tx(j)
     for(j=0;j<n;j++){
-      err=err+fabs(b[i][j]-a[i][j]);
+      err=err+fabs(b[i][j]-(i+j+2));
     }
   }
 

@@ -6,7 +6,7 @@ int n=8;
 double a[n][n][n],b[n][n][n];
 #pragma xmp nodes p(2,2,2)
 #pragma xmp template tx(0:n-1,0:n-1,0:n-1)
-#pragma xmp distribute tx(block,block,block) onto p
+#pragma xmp distribute tx(cyclic(2),cyclic(2),cyclic(2)) onto p
 #pragma xmp align a[i][j][k] with tx(i,j,k)
 #pragma xmp align b[i][j][k] with tx(i,j,k)
 
@@ -37,15 +37,15 @@ int main(){
   }
 
 #pragma xmp gmove
-  b[3:4][3:4][3:4]=a[0:4][0:4][0:4];
+  b[0:4][0:4][0:4]=a[4:4][4:4][4,4];
 
   err=0.0;
 #pragma xmp loop (i,j,k) on tx(i,j,k)
-  for(i=3;i<7;i++){
-    for(j=3;j<7;j++){
-      for(k=3;k<7;k++){
-        printf("i=%d,j=%d,k=%d,b=%f,myrank=%d\n",i,j,k,b[i][j][k],myrank);
-        err=err+fabs(b[i][j][k]-(i-2+j-2+k-2));
+  for(i=0;i<4;i++){
+    for(j=0;j<4;j++){
+      for(k=0;k<4;k++){
+//        printf("i=%d,j=%d,k=%d,b=%f,myrank=%d\n",i,j,k,b[i][j][k],myrank);
+        err=err+fabs(b[i][j][k]-(i+5+j+5+k+5));
       }
     }
   }
