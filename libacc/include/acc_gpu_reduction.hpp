@@ -122,6 +122,7 @@ void reduceInBlock(T *resultInBlock, T resultInThread, int kind){
   if(threadIdx.x == 0){
     *resultInBlock = tmp[0];
   }
+  __syncthreads(); //sync for next reduction among threads
 }
 
 template<typename T>

@@ -27,6 +27,7 @@ public class ACCgpuKernel {
   private SharedMemory sharedMemory = new SharedMemory();
   
   private ReductionManager reductionManager = new ReductionManager("test_kernels");
+  private List<Ident> BlockPrivateArrayIdList = new ArrayList<Ident>();
 
 
   public ACCgpuKernel(ACCinfo kernelInfo, Block kernelBlock) {
@@ -232,14 +233,6 @@ public class ACCgpuKernel {
     XobjList deviceKernelLocalIds = Xcons.IDList();
     List<Block> initBlocks = new ArrayList<Block>();
     
-    //add localIds from private vars
-    Iterator<ACCvar> varIter = kernelInfo.getVars();
-    while(varIter.hasNext()){
-      ACCvar var = varIter.next();
-      if(var.isPrivate()){
-        deviceKernelLocalIds.add(Ident.Local(var.getName(), var.getId().Type()));
-      }
-    }
     
     //make params
     XobjList deviceKernelParamIds = Xcons.IDList();
@@ -399,8 +392,10 @@ public class ACCgpuKernel {
         Ident block_id = Ident.Local("_ACC_block_x_id", Xtype.intType); //this is not local var but macro.
         resultBlock = Bcons.IF(Xcons.binaryOp(Xcode.LOG_EQ_EXPR, block_id.Ref(),Xcons.IntConstant(0)), resultBlock, Bcons.emptyBlock()); //if(_ACC_block_x_id == 0){b}
       }else if(prevExecMethodName.equals("block_x")){
-        Ident thread_id = Ident.Local("_ACC_thread_x_id", Xtype.intType); 
-        resultBlock = Bcons.IF(Xcons.binaryOp(Xcode.LOG_EQ_EXPR, thread_id.Ref(),Xcons.IntConstant(0)), resultBlock, null);  //if(_ACC_thread_x_id == 0){b}
+        Ident thread_id = Ident.Local("_ACC_thread_x_id", Xtype.intType);
+        Block ifBlock = Bcons.IF(Xcons.binaryOp(Xcode.LOG_EQ_EXPR, thread_id.Ref(),Xcons.IntConstant(0)), resultBlock, null);  //if(_ACC_thread_x_id == 0){b}
+        Block syncThreadBlock = ACCutil.createFuncCallBlock("_ACC_GPU_M_BARRIER_THREADS", Xcons.List());
+        resultBlock = Bcons.COMPOUND(Bcons.blockList(ifBlock, syncThreadBlock));
       }
       return resultBlock;
     }
@@ -474,8 +469,47 @@ public class ACCgpuKernel {
     XobjList cacheIds = Xcons.IDList();
     XobjList cacheOffsetIds = Xcons.IDList();
     XobjList cacheSizeIds = Xcons.IDList();
+    
+    //private
+    {
+      Iterator<ACCvar> vars = info.getVars();
+      while(vars.hasNext()){
+	ACCvar var = vars.next();
+	if(var.isPrivate()){
+	  Xtype varType = var.getId().Type();
+	  if(execMethodName.contains("thread")){
+	    Ident privateLocalId = Ident.Local(var.getName(), varType);
+	    localIds_2.add(privateLocalId);
+	  }else if(execMethodName.startsWith("block")){
+	    if(varType.isArray()){
+	      Ident arrayPtrId = Ident.Local(var.getName(), Xtype.Pointer(varType.getRef()));
+	      Ident privateArrayParamId = Ident.Param("_ACC_prv_" + var.getName(), Xtype.voidPtrType);
+	      localIds.add(arrayPtrId);
+	      paramIds.add(privateArrayParamId);
+
+	      try{
+		Xobject sizeObj = Xcons.binaryOp(Xcode.MUL_EXPR, 
+		    ACCutil.getArrayElmtCountObj(varType),
+		    Xcons.SizeOf(((ArrayType)varType).getArrayElementType()));
+		XobjList initPrivateFuncArgs = Xcons.List(Xcons.Cast(Xtype.Pointer(Xtype.voidPtrType), arrayPtrId.getAddr()), privateArrayParamId.Ref(), sizeObj);
+		Block initPrivateFuncCall = ACCutil.createFuncCallBlock("_ACC_init_private", initPrivateFuncArgs);
+		initBlocks.add(initPrivateFuncCall);
+	      }catch(Exception e){
+		ACC.fatal(e.getMessage());
+	      }
+	      BlockPrivateArrayIdList.add(var.getId());
+	    }else{
+	      Ident privateLocalId = Ident.Local(var.getName(), varType);
+	      privateLocalId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+	      localIds.add(privateLocalId);
+	    }
+	  }
+	}
+      }
+    }
 
     //begin reduction
+    List<Reduction> reductionList = new ArrayList<Reduction>();
     Iterator<ACCvar> vars = info.getVars();
     while(vars.hasNext()){
       ACCvar var = vars.next();
@@ -514,6 +548,7 @@ public class ACCgpuKernel {
       }
       reductionVarIds.add(var.getId());
       reductionLocalVarIds.add(reduction.localVarId);
+      reductionList.add(reduction);
       
       //XobjList redTmpArgs = Xcons.List();
       //if(needsTemp(var) && execMethodName.startsWith("block")){ //this condition will be merged.
@@ -752,7 +787,9 @@ public class ACCgpuKernel {
 
 
     //rewriteReductionvar
-    rewriteReductionVar(resultCenterBlock, reductionVarIds, reductionLocalVarIds);//localIds);
+    for(Reduction red : reductionList){
+      red.rewrite(resultCenterBlock);
+    }
 
 
     //make blocklist
@@ -760,12 +797,16 @@ public class ACCgpuKernel {
     //Xobject ids = body.getIdentList();
     //Xobject decls = body.getDecls();
     BlockList resultBody = Bcons.emptyBody();
+    
     for(Block block : beginBlocks){
       resultBody.add(block);
     }
     resultBody.add(resultCenterBlock);
     for(Block block : endBlocks){
       resultBody.add(block);                  
+    }
+    if(execMethodName.contains("thread")){
+      resultBody.add(ACCutil.createFuncCallBlock("_ACC_GPU_M_BARRIER_THREADS", Xcons.List()));
     }
     
     //pop stack
@@ -900,6 +941,33 @@ public class ACCgpuKernel {
     launchFuncBody.add(Bcons.Statement(Xcons.Set(threadYid.Ref(), threadSize.getArg(1))));
     launchFuncBody.add(Bcons.Statement(Xcons.Set(threadZid.Ref(), threadSize.getArg(2))));
     
+    Xobject max_num_grid = Xcons.IntConstant(65535);
+    Block adjustGridFuncCall = ACCutil.createFuncCallBlock("_ACC_GPU_ADJUST_GRID", Xcons.List(Xcons.AddrOf(blockXid.Ref()), Xcons.AddrOf(blockYid.Ref()), Xcons.AddrOf(blockZid.Ref()),max_num_grid));
+    launchFuncBody.add(adjustGridFuncCall);
+    
+    //add private array
+    if(! BlockPrivateArrayIdList.isEmpty()){
+      for(Ident id : BlockPrivateArrayIdList){
+	Xtype varType = id.Type();
+	Ident privateArrayPtr = Ident.Local("_ACC_prv_"+id.getName(), Xtype.voidPtrType);
+	Xobject sizeObj = null;
+	try{
+	  sizeObj = Xcons.binaryOp(Xcode.MUL_EXPR, blockXid.Ref(),  
+	      Xcons.binaryOp(Xcode.MUL_EXPR, 
+	      ACCutil.getArrayElmtCountObj(varType),Xcons.SizeOf(((ArrayType)varType).getArrayElementType())));
+	}catch(Exception e){
+	  ACC.fatal(e.getMessage());
+	}
+	Block mallocPrivateArrayFuncCall = ACCutil.createFuncCallBlock("_ACC_gpu_malloc", Xcons.List(privateArrayPtr.getAddr(), sizeObj));
+	Block freePrivateArrayFuncCall = ACCutil.createFuncCallBlock("_ACC_gpu_free", Xcons.List(privateArrayPtr.Ref()));
+	
+	launchFuncLocalIds.add(privateArrayPtr);
+	deviceKernelCallArgs.add(privateArrayPtr.Ref());
+	preBlocks.add(mallocPrivateArrayFuncCall);
+	postBlocks.add(freePrivateArrayFuncCall);
+      }
+    }
+    
     //add blockReduction cnt & tmp
     if(reductionManager.hasBlockReduction){
       //temporary
@@ -907,11 +975,6 @@ public class ACCgpuKernel {
       //deviceKernelCallArgs.add(reductionCnt.getAddr());
       //deviceKernelCallArgs.add(reductionTmpPtr.getAddr());
     }
-
-
-    Xobject max_num_grid = Xcons.IntConstant(65535);
-    Block adjustGridFuncCall = ACCutil.createFuncCallBlock("_ACC_GPU_ADJUST_GRID", Xcons.List(Xcons.AddrOf(blockXid.Ref()), Xcons.AddrOf(blockYid.Ref()), Xcons.AddrOf(blockZid.Ref()),max_num_grid));
-    launchFuncBody.add(adjustGridFuncCall);
 
     launchFuncBody.setIdentList(launchFuncLocalIds);
     launchFuncBody.setDecls(ACCutil.getDecls(launchFuncLocalIds));
@@ -1240,6 +1303,24 @@ public class ACCgpuKernel {
     }
   }
   
+  private String getAccessedName(Xobject x){
+    switch(x.Opcode()){
+    case VAR:
+      return x.getName();
+    case ARRAY_REF:
+      return getAccessedName(x.getArg(0));
+    case MEMBER_REF:
+      return getAccessedName(x.getArg(0));
+    case ADDR_OF:
+      return getAccessedName(x.getArg(0));
+    case ARRAY_ADDR:
+      return x.getName();
+    default:
+      ACC.fatal("not implemented type");
+      return "";
+    }
+  }
+  
   private Set<Ident> collectReadOnlyIdSet(){
     //FIXME rewrite by topdownXobjectIterator
     class VarAttribute{
@@ -1283,10 +1364,16 @@ public class ACCgpuKernel {
                   ACC.warning("collectReadOnlyIdSet: process was skipped.");
                   continue;
                 }
+            }else if(lhs.Opcode() == Xcode.MEMBER_REF){
+              //varName = lhs.getArg(0).getArg(0).getName();
+              varName = getAccessedName(lhs);
+            }else{
+              ACC.fatal("not implemented type");
             }
           }else if(x.Opcode() == Xcode.PRE_INCR_EXPR || x.Opcode() == Xcode.PRE_DECR_EXPR){
             //writtenObj = x.getArg(0);
-            varName = x.getArg(0).getName();//writtenObj.getName();
+            Xobject operand = x.getArg(0);
+            varName = getAccessedName(operand);
           }else{
             continue;
           }
@@ -1752,10 +1839,13 @@ public class ACCgpuKernel {
       reductionList.add(reduction);
       if(execMethod == ACCpragma._BLOCK || execMethod == ACCpragma._BLOCK_THREAD){
         hasBlockReduction = true;
+      }else{
+	return reduction;
       }
       
       offsetMap.put(reduction, totalElementSize);
       
+
       Xtype varType = var.getId().Type();
       Xobject elementSize;
       if(varType.isPointer()){
@@ -1815,11 +1905,49 @@ public class ACCgpuKernel {
       this.execMethod = execMethod;
       
       //generate local var id
-      localVarId = Ident.Local(ACC_REDUCTION_VAR_PREFIX + varId.getName(), varId.Type());
+      String reductionVarPrefix = ACC_REDUCTION_VAR_PREFIX;
+      switch(execMethod){
+      case _BLOCK:
+	reductionVarPrefix += "b_";
+	break;
+      case _THREAD:
+	reductionVarPrefix += "t_";
+	break;
+      case _BLOCK_THREAD:
+	reductionVarPrefix += "bt_";
+      }
+      
+      localVarId = Ident.Local(reductionVarPrefix + varId.getName(), varId.Type());
       if(execMethod == ACCpragma._BLOCK){
         localVarId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
       }
       
+    }
+    public void rewrite(Block b) {
+      BasicBlockExprIterator iter = new BasicBlockExprIterator(b);
+      for (iter.init(); !iter.end(); iter.next()) {
+	Xobject expr = iter.getExpr();
+	topdownXobjectIterator exprIter = new topdownXobjectIterator(expr);
+	for (exprIter.init(); !exprIter.end(); exprIter.next()) {
+	  Xobject x = exprIter.getXobject();
+	  switch (x.Opcode()) {
+	  case VAR:
+	  {
+	    String varName = x.getName();
+	    if(varName.equals(varId.getName())){
+	      exprIter.setXobject(localVarId.Ref());
+	    }
+	  }break;
+	  case VAR_ADDR:
+	  {
+	    String varName = x.getName();
+	    if(varName.equals(varId.getName())){
+	      exprIter.setXobject(localVarId.getAddr());
+	    }
+	  }break;
+	  }
+	}
+      }
     }
     public boolean useThread() {
       if(execMethod != ACCpragma._BLOCK){

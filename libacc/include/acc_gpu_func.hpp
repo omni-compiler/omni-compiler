@@ -164,4 +164,9 @@ void _ACC_gpu_init_iter_cnt(int *cnt, int init, int cond, int step){
   *cnt = _ACC_M_COUNT_TRIPLETi(init, cond - 1, step);
 }
 
+__device__
+void _ACC_init_private(void **p_prv, void *array, size_t size){
+  *p_prv = (char *)array + size * blockIdx.x;
+}
+
 #endif //_ACC_GPU_FUNC
