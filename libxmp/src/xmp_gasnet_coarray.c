@@ -64,7 +64,17 @@ void _XMP_gasnet_initialize(int argc, char **argv){
   int numprocs;
   unsigned long long xmp_heap_size;
 
-  gasnet_init(&argc, &argv);
+  if(argc != 0)
+    gasnet_init(&argc, &argv);
+  else{ 
+    // In XMP/Fortran, this function is called with "argc == 0" & "**argv == NULL".
+    // But if the second argument of gasnet_init() is NULL, gasnet_init() returns error.
+    // So dummy argument is created and used.
+    char **s;
+    s = malloc(sizeof(char *));
+    s[0] = malloc(sizeof(char));
+    gasnet_init(&argc, &s);
+  }
 
   if(_xmp_heap_size % GASNET_PAGESIZE != 0)
     xmp_heap_size = (_xmp_heap_size/GASNET_PAGESIZE -1) * GASNET_PAGESIZE;
