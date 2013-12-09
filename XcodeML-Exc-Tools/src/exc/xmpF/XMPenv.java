@@ -85,6 +85,11 @@ public class XMPenv {
     return declIdent(name,type,true,null);
   }
 
+  // Internal ident is used in the same way as static
+  public Ident declInternIdent(String name, Xtype type) {
+    return declIdent(name,type,false,null);
+  }
+
   // this is local
   public Ident declIdent(String name, Xtype type, Block block) {
     return declIdent(name,type,false,block);

@@ -45,6 +45,31 @@ public class XcodeMLtools_Fmod extends XcodeMLtools_F {
     n = getElement(rootNode, "name");
     module_name = n.getFirstChild().getNodeValue();
 
+    aux_info = new Vector<Xobject>();
+
+    // process depends
+    n = getElement(rootNode, "depends");
+    list = n.getChildNodes();
+    for (int i = 0; i < list.getLength(); i++) {
+      nn = list.item(i);
+      if (nn.getNodeType() != Node.ELEMENT_NODE) continue;
+
+      String module_name = nn.getFirstChild().getNodeValue();
+
+      String mod_file_name = module_name + ".xmod";
+      Reader reader0 = null;
+      try {
+	reader0 = new BufferedReader(new FileReader(mod_file_name));
+      }
+      catch(Exception e){
+	fatal("cannot open module file '" + mod_file_name + "'");
+      }
+      XcodeMLtools_Fmod tools = new XcodeMLtools_Fmod();
+      tools.read(reader0);
+
+      aux_info.addAll(tools.getAuxInfo());
+    }
+
     // process type table part
     n = getElement(rootNode, "typeTable");
     list = n.getChildNodes();
@@ -66,7 +91,7 @@ public class XcodeMLtools_Fmod extends XcodeMLtools_F {
     // n = getElement(rootNode, "interfaceDecls");
 
     n = getElement(rootNode, "aux_info");
-    aux_info = new Vector<Xobject>();
+    //aux_info = new Vector<Xobject>();
     list = n.getChildNodes();
     for (int i = 0; i < list.getLength(); i++) {
       nn = list.item(i);

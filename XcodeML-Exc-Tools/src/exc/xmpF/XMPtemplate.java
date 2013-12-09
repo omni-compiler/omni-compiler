@@ -13,9 +13,10 @@ package exc.xmpF;
  public class XMPtemplate extends XMPobject {
    // defined in xmp_constant.h
    public final static int DUPLICATION	= 100;
-   public final static int BLOCK		= 101;
+   public final static int BLOCK	= 101;
    public final static int CYCLIC	= 102;
-   public final static int GENBLOCK	= 103;
+   public final static int BLOCK_CYCLIC	= 103;
+   public final static int GBLOCK	= 104;
 
    private boolean		isFixed;
    private boolean		isDistributed;
@@ -221,8 +222,8 @@ package exc.xmpF;
 	   distManner = XMPtemplate.BLOCK;
 	 else if(dist_fmt.equalsIgnoreCase("CYCLIC"))
 	   distManner = XMPtemplate.CYCLIC;
-	 else if(dist_fmt.equalsIgnoreCase("GENBLOCK"))
-	   distManner = XMPtemplate.GENBLOCK;
+	 else if(dist_fmt.equalsIgnoreCase("GBLOCK"))
+	   distManner = XMPtemplate.GBLOCK;
 	 else {
 	   XMP.fatal("unknown distribution format,"+dist_fmt);
 	 }
@@ -263,13 +264,13 @@ package exc.xmpF;
     *  !  xmpf_template_init__(t_desc,n_desc)
     */
    public void buildConstructor(BlockList body, XMPenv env){
-     Ident f = env.declExternIdent(XMP.template_alloc_f,Xtype.FsubroutineType);
+     Ident f = env.declInternIdent(XMP.template_alloc_f,Xtype.FsubroutineType);
      Xobject args = Xcons.List(_descId.Ref(),Xcons.IntConstant(_dim),
 			       Xcons.IntConstant(1)); // fixed only
      body.add(f.callSubroutine(args));
      
      /* template size */
-     f = env.declExternIdent(XMP.template_dim_info_f,Xtype.FsubroutineType);
+     f = env.declInternIdent(XMP.template_dim_info_f,Xtype.FsubroutineType);
      for(int i = 0; i < _dim; i++){
        XMPdimInfo info = scripts.elementAt(i);
        Xobject dist_arg = info.getDistArg();
@@ -283,13 +284,13 @@ package exc.xmpF;
      }
 
      /* init */
-     f = env.declExternIdent(XMP.template_init_f,Xtype.FsubroutineType);
+     f = env.declInternIdent(XMP.template_init_f,Xtype.FsubroutineType);
      body.add(f.callSubroutine(Xcons.List(_descId.Ref(),
 					ontoNodes.getDescId().Ref())));
    }
 
    public void buildDestructor(BlockList body, XMPenv env){
-     Ident f = env.declExternIdent(XMP.template_dealloc_f,Xtype.
+     Ident f = env.declInternIdent(XMP.template_dealloc_f,Xtype.
 				   FsubroutineType);
      Xobject args = Xcons.List(_descId.Ref());
      body.add(f.callSubroutine(args));

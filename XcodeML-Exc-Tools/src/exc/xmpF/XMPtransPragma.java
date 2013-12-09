@@ -212,7 +212,7 @@ public class XMPtransPragma
       entry_bb.add(Xcons.Set(step_var.Ref(), for_block.getStep()));
 
       Ident schd_f = 
-	env.declExternIdent(XMP.loop_sched_f,Xtype.FsubroutineType);
+	env.declInternIdent(XMP.loop_sched_f,Xtype.FsubroutineType);
       Xobject args = Xcons.List(lb_var.Ref(), ub_var.Ref(), step_var.Ref(),
 				Xcons.IntConstant(k),
 				on_ref.getDescId().Ref());
@@ -225,7 +225,7 @@ public class XMPtransPragma
       if(isVarUsed(for_block.getBody(),org_loop_ind_var)){
 	// if global variable is used in this block, convert local to global
 	Ident l2g_f = 
-	  env.declExternIdent(XMP.l2g_f,Xtype.FsubroutineType);
+	  env.declInternIdent(XMP.l2g_f,Xtype.FsubroutineType);
 	args = Xcons.List(org_loop_ind_var,
 			  local_loop_var.Ref(),
 			  Xcons.IntConstant(k),
@@ -280,13 +280,13 @@ public class XMPtransPragma
     BasicBlock bb = b.getBasicBlock();
     Ident f, g, h;
 
-    f = env.declExternIdent(XMP.reflect_f,Xtype.FsubroutineType);
+    f = env.declInternIdent(XMP.reflect_f,Xtype.FsubroutineType);
 
     Vector<XMParray> reflectArrays = info.getReflectArrays();
     for(XMParray a: reflectArrays){
 
       for (int i = 0; i < info.widthList.size(); i++){
-	  g = env.declExternIdent(XMP.set_reflect_f,Xtype.FsubroutineType);
+	  g = env.declInternIdent(XMP.set_reflect_f,Xtype.FsubroutineType);
 	  XMPdimInfo w = info.widthList.get(i);
 	  Xobject args = Xcons.List(a.getDescId().Ref(), Xcons.IntConstant(i),
 				    w.getLower(), w.getUpper(), w.getStride());
@@ -294,7 +294,7 @@ public class XMPtransPragma
       }
 
       if (info.getAsyncId() != null){
-	  h = env.declExternIdent(XMP.reflect_async_f,Xtype.FsubroutineType);
+	  h = env.declInternIdent(XMP.reflect_async_f,Xtype.FsubroutineType);
 	  bb.add(h.callSubroutine(Xcons.List(a.getDescId().Ref(), info.getAsyncId())));
       }
       else {
@@ -308,7 +308,7 @@ public class XMPtransPragma
   private Block translateBarrier(PragmaBlock pb, XMPinfo i) {
     Block b = Bcons.emptyBlock();
     BasicBlock bb = b.getBasicBlock();
-    Ident f = env.declExternIdent(XMP.barrier_f,
+    Ident f = env.declInternIdent(XMP.barrier_f,
 				  Xtype.FsubroutineType);
     // don't care about on_ref
     bb.add(f.callSubroutine(Xcons.List(Xcons.IntConstant(0))));
@@ -321,7 +321,7 @@ public class XMPtransPragma
 
     // object size
     int op = info.getReductionOp();
-    Ident f = env.declExternIdent(XMP.reduction_f,
+    Ident f = env.declInternIdent(XMP.reduction_f,
 				  Xtype.FsubroutineType);
     for(Ident id: info.getReductionVars()){
       Xtype type = id.Type();
@@ -348,7 +348,7 @@ public class XMPtransPragma
     Block b = Bcons.emptyBlock();
     BasicBlock bb = b.getBasicBlock();
 
-    Ident f = env.declExternIdent(XMP.bcast_f,
+    Ident f = env.declInternIdent(XMP.bcast_f,
 				  Xtype.FsubroutineType);
     for(Ident id: info.getInfoVarIdents()){
       Xtype type = id.Type();
@@ -375,7 +375,7 @@ public class XMPtransPragma
     Block b = Bcons.emptyBlock();
     BasicBlock bb = b.getBasicBlock();
 
-    Ident f = env.declExternIdent(XMP.wait_async_f, Xtype.FsubroutineType);
+    Ident f = env.declInternIdent(XMP.wait_async_f, Xtype.FsubroutineType);
 
     for (Xobject i: info.waitAsyncIds){
 	bb.add(f.callSubroutine(Xcons.List(i)));
@@ -391,12 +391,12 @@ public class XMPtransPragma
     XMPobjectsRef on_ref = info.getOnRef();
 
     ret_body.add(on_ref.buildConstructor(env));
-    Ident f = env.declExternIdent(XMP.test_task_on_f,
+    Ident f = env.declInternIdent(XMP.test_task_on_f,
 				  Xtype.FlogicalFunctionType);
     Xobject cond = f.Call(Xcons.List(on_ref.getDescId().Ref()));
     ret_body.add(Bcons.IF(cond,Bcons.COMPOUND(pb.getBody()),null));
 
-    f = env.declExternIdent(XMP.end_task_f,Xtype.FsubroutineType);
+    f = env.declInternIdent(XMP.end_task_f,Xtype.FsubroutineType);
     pb.getBody().add(f.Call(Xcons.List()));
     
     return Bcons.COMPOUND(ret_body);
@@ -441,7 +441,7 @@ public class XMPtransPragma
     Ident left_desc = buildGmoveDesc(left, bb, pb);
     Ident right_desc = buildGmoveDesc(right, bb, pb);
 
-    Ident f = env.declExternIdent(XMP.gmove_do_f, Xtype.FsubroutineType);
+    Ident f = env.declInternIdent(XMP.gmove_do_f, Xtype.FsubroutineType);
     Xobject args = Xcons.List(left_desc.Ref(), right_desc.Ref(),
 			      Xcons.IntConstant(GMOVE_COLL));
     bb.add(f.callSubroutine(args));
@@ -459,12 +459,12 @@ public class XMPtransPragma
       Xobject a = x.getArg(0).getArg(0);
       XMParray array = (XMParray)a.getProp(XMP.RWprotected);
       if(array != null){
-	f = env.declExternIdent(XMP.gmove_g_alloc_f, Xtype.FsubroutineType);
+	f = env.declInternIdent(XMP.gmove_g_alloc_f, Xtype.FsubroutineType);
 	args = Xcons.List(descId.Ref(), array.getDescId().Ref());
 	bb.add(f.callSubroutine(args));
 	
 	// System.out.println("idx args="+x.getArg(1));
-	f = env.declExternIdent(XMP.gmove_g_dim_info_f, Xtype.FsubroutineType);
+	f = env.declInternIdent(XMP.gmove_g_dim_info_f, Xtype.FsubroutineType);
  	int idx = 0;
  	for(Xobject e: (XobjList) x.getArg(1)){
  	  switch(e.Opcode()){
@@ -495,7 +495,7 @@ public class XMPtransPragma
  	  idx++;
 	}
       } else {
-	f = env.declExternIdent(XMP.gmove_l_alloc_f, Xtype.FsubroutineType);
+	f = env.declInternIdent(XMP.gmove_l_alloc_f, Xtype.FsubroutineType);
 	Xtype type = a.Type();
 	if(!type.isFarray()) 
 	  XMP.fatal("buildGmoveDesc:F_ARRAY_REF for not Farray");
@@ -510,7 +510,7 @@ public class XMPtransPragma
 	  env.declIntrinsicIdent("ubound",Xtype.FintFunctionType).
 	  Call(Xcons.List(a));
 	
-	f = env.declExternIdent(XMP.gmove_l_dim_info_f, Xtype.FsubroutineType);
+	f = env.declInternIdent(XMP.gmove_l_dim_info_f, Xtype.FsubroutineType);
  	int idx = 0;
  	for(Xobject e: (XobjList) x.getArg(1)){
  	  switch(e.Opcode()){
@@ -546,7 +546,7 @@ public class XMPtransPragma
       }
       break;
     case VAR: /* it ok */
-      f = env.declExternIdent(XMP.gmove_l_alloc_f, Xtype.FsubroutineType);
+      f = env.declInternIdent(XMP.gmove_l_alloc_f, Xtype.FsubroutineType);
       args = Xcons.List(descId.Ref(),x,Xcons.IntConstant(0));
       bb.add(f.callSubroutine(args));
       break;

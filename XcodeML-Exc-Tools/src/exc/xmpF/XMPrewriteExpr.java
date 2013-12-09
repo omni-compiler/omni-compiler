@@ -84,7 +84,7 @@ public class XMPrewriteExpr
 
 	case F_STOP_STATEMENT:
 	  {
-	    Ident f = env.declExternIdent(XMP.finalize_all_f, Xtype.FsubroutineType);
+	    Ident f = env.declInternIdent(XMP.finalize_all_f, Xtype.FsubroutineType);
 	    Xobject call = f.callSubroutine();
 	    st.insert(call);
 	  break;
@@ -390,7 +390,9 @@ public class XMPrewriteExpr
     
     XMPtemplate on_tmpl = on_ref.getTemplate();
     XMPtemplate a_tmpl = a.getAlignTemplate();
-    if(on_tmpl != a_tmpl) return null; // different template
+    if(on_tmpl != a_tmpl && !on_tmpl.getName().equals(a_tmpl.getName())){
+	return null; // different template
+    }
     
     if(XMP.debugFlag) System.out.println("same template");
 
@@ -493,7 +495,7 @@ public class XMPrewriteExpr
 	  }
       }
 
-      Ident f = env.declExternIdent("xmpf_local_idx_",
+      Ident f = env.declInternIdent("xmpf_local_idx_",
 				    Xtype.Function(Xtype.intType));
       Xobject x = f.Call(Xcons.List(a.getDescId().Ref(),
 				    Xcons.IntConstant(dim_i),

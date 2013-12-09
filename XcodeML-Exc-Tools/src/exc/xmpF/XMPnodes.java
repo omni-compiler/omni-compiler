@@ -131,11 +131,11 @@ public class XMPnodes extends XMPobject {
    *    _xmpf_nodes_init_NODES__(n_1,nodes_ref)
    */
   public void buildConstructor(BlockList body, XMPenv env){
-    Ident f = env.declExternIdent(XMP.nodes_alloc_f,Xtype.FsubroutineType);
+    Ident f = env.declInternIdent(XMP.nodes_alloc_f,Xtype.FsubroutineType);
     Xobject args = Xcons.List(_descId.Ref(),Xcons.IntConstant(_dim));
     body.add(f.callSubroutine(args));
 
-    f = env.declExternIdent(XMP.nodes_dim_size_f,Xtype.FsubroutineType);
+    f = env.declInternIdent(XMP.nodes_dim_size_f,Xtype.FsubroutineType);
     for(int i = 0; i < _dim; i++){
       Xobject size = _sizeVector.elementAt(i).getSize();
       if(size == null) size = Xcons.IntConstant(-1);
@@ -145,11 +145,11 @@ public class XMPnodes extends XMPobject {
 
     switch(inheritType){
     case INHERIT_GLOBAL:
-      f = env.declExternIdent(XMP.nodes_init_GLOBAL_f,Xtype.FsubroutineType);
+      f = env.declInternIdent(XMP.nodes_init_GLOBAL_f,Xtype.FsubroutineType);
       body.add(f.callSubroutine(Xcons.List(_descId.Ref())));
       break;
     case INHERIT_EXEC:
-      f = env.declExternIdent(XMP.nodes_init_EXEC_f,Xtype.FsubroutineType);
+      f = env.declInternIdent(XMP.nodes_init_EXEC_f,Xtype.FsubroutineType);
       body.add(f.callSubroutine(Xcons.List(_descId.Ref())));
       break;
     case INHERIT_NODES:
@@ -160,7 +160,7 @@ public class XMPnodes extends XMPobject {
   }
 
   public void buildDestructor(BlockList body, XMPenv env){
-    Ident f = env.declExternIdent(XMP.nodes_dealloc_f,Xtype.FsubroutineType);
+    Ident f = env.declInternIdent(XMP.nodes_dealloc_f,Xtype.FsubroutineType);
     Xobject args = Xcons.List(_descId.Ref());
     body.add(f.callSubroutine(args));
   }
