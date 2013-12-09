@@ -417,6 +417,7 @@ pg_parse_expr()
     return pg_term_expr(0);
 }
 
+extern CExprOfTypeDesc s_voidTypeDesc;
 
 /**
  * \brief
@@ -490,6 +491,7 @@ pg_term_expr(int pre)
     }
 
     e = exprBinary(code, e, ee);
+    exprSetExprsType(e, &s_voidTypeDesc);
 
     goto again;
 }

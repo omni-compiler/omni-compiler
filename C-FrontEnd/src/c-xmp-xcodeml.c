@@ -43,19 +43,45 @@ void outx_XMP_Clause(FILE *fp, int indent, CExprOfList* clauseList)
     switch (clauseList->e_aux){
 
     case XMP_DIST_DUPLICATION:
+      outxPrint(fp, indent1+1, "<intConstant type=\"int\">100<!-- NO_DIST--></intConstant>\n");
       break;
 
     case XMP_DIST_BLOCK:
-      outxPrint(fp,indent1+1,"<string>block</string>\n");
+      outxPrint(fp, indent1+1, "<intConstant type=\"int\">101<!-- BLOCK --></intConstant>\n");
       break;
 
     case XMP_DIST_CYCLIC:
-      outxPrint(fp,indent1+1,"<string>cyclic</string>\n");
+      outxPrint(fp, indent1+1, "<intConstant type=\"int\">102<!-- CYCLIC --></intConstant>\n");
+      break;
+
+    case XMP_DIST_BLOCK_CYCLIC:
+      outxPrint(fp, indent1+1, "<intConstant type=\"int\">103<!-- BLOCK_CYCLIC --></intConstant>\n");
       break;
 
     case XMP_DIST_GBLOCK:
-      outxPrint(fp,indent1+1,"<string>gblock</string>\n");
+      outxPrint(fp, indent1+1, "<intConstant type=\"int\">104<! -- GBLOCK --></intConstant>\n");
       break;
+
+    case XMP_DATA_REDUCE_SUM:
+    case XMP_DATA_REDUCE_PROD:
+    case XMP_DATA_REDUCE_BAND:
+    case XMP_DATA_REDUCE_LAND:
+    case XMP_DATA_REDUCE_BOR:
+    case XMP_DATA_REDUCE_LOR:
+    case XMP_DATA_REDUCE_BXOR:
+    case XMP_DATA_REDUCE_LXOR:
+    case XMP_DATA_REDUCE_MAX:
+    case XMP_DATA_REDUCE_MIN:
+    case XMP_DATA_REDUCE_FIRSTMAX:
+    case XMP_DATA_REDUCE_FIRSTMIN:
+    case XMP_DATA_REDUCE_LASTMAX:
+    case XMP_DATA_REDUCE_LASTMIN:
+    case XMP_DATA_REDUCE_EQV:
+    case XMP_DATA_REDUCE_NEQV:
+    case XMP_DATA_REDUCE_MINUS:
+      outxPrint(fp, indent1+1, "<intConstant type=\"int\">%d</intConstant>\n", clauseList->e_aux);
+      break;
+
     }
 
     EXPR_FOREACH(ite, clauseList){
@@ -88,6 +114,8 @@ char *xmpDirectiveName(int c)
   case XMP_REDUCTION: return "REDUCTION";
   case XMP_BCAST: return "BCAST";
   case XMP_COARRAY: return "COARRAY";
+  case XMP_POST: return "POST";
+  case XMP_WAIT: return "WAIT";
   case XMP_TEMPLATE_FIX: return "TEMPLATE_FIX";
   default: return "OMP???";
   }

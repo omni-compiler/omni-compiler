@@ -23,6 +23,8 @@ enum XMP_pragma {
     XMP_BCAST		= 113,
     XMP_COARRAY		= 114,
     XMP_TEMPLATE_FIX	= 115,
+    XMP_POST            = 116,
+    XMP_WAIT            = 117,
 
     XMP_END_TASK	= 120,
     XMP_END_TASKS	= 121,
@@ -48,6 +50,7 @@ enum XMP_pragma_clause {
     XMP_DIST_BLOCK = 202,
     XMP_DIST_CYCLIC = 203,
     XMP_DIST_GBLOCK = 204,
+    XMP_DIST_BLOCK_CYCLIC = 205,
 
     XMP_OPT_NOWAIT = 100,
     XMP_OPT_ASYNC = 101,
