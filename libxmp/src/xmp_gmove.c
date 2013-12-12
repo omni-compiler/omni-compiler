@@ -1035,9 +1035,10 @@ static _Bool _XMP_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
   int dst_block_dim, src_block_dim;
 
   void *sendbuf, *recvbuf;
-  int count, bufsize;
+  unsigned long long count, bufsize;
 
-  int chunk_size, ser_size, type_size;
+  int dst_chunk_size, dst_ser_size, type_size;
+  int src_chunk_size, src_ser_size;
 
 #ifdef DBG
   xmpf_dbg_printf("_XMPF_gmove_transpose\n");
@@ -1045,10 +1046,8 @@ static _Bool _XMP_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
 
   nnodes = dst_array->align_template->onto_nodes->comm_size;
 
-  // Square Matrix
-  if (dst_array->dim != 2 ||
-      dst_array->info[0].ser_size != dst_array->info[1].ser_size ||
-      src_array->info[0].ser_size != src_array->info[1].ser_size) return false;
+// 2-dimensional Matrix
+  if (dst_array->dim != 2) return false;
 
   // No Shadow
   if (dst_array->info[0].shadow_size_lo != 0 ||
@@ -1062,11 +1061,13 @@ static _Bool _XMP_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
   dst_block_dim = (dst_array->info[0].align_manner == _XMP_N_ALIGN_BLOCK) ? 0 : 1;
   src_block_dim = (src_array->info[0].align_manner == _XMP_N_ALIGN_BLOCK) ? 0 : 1;
 
-  chunk_size = dst_array->info[dst_block_dim].par_size;
-  ser_size = dst_array->info[dst_block_dim].ser_size;
+  dst_chunk_size = dst_array->info[dst_block_dim].par_size;
+  dst_ser_size = dst_array->info[dst_block_dim].ser_size;
+  src_chunk_size = src_array->info[src_block_dim].par_size;
+  src_ser_size = src_array->info[src_block_dim].ser_size;
   type_size = dst_array->type_size;
 
-  count =  chunk_size * chunk_size * type_size;
+  count =  dst_chunk_size * src_chunk_size * type_size;
   bufsize = count * nnodes;
 
   if (dst_block_dim == src_block_dim){
@@ -1075,26 +1076,27 @@ static _Bool _XMP_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
   }
 
 #ifdef DBG
-  xmpf_dbg_printf("chunk_size = %d, ser_size = %d, type_size = %d, count = %d, buf_size = %d\n",
-		  chunk_size, ser_size, type_size, count, bufsize);
+  xmpf_dbg_printf("dst_chunk_size = %d, dst_ser_size = %d, type_size = %d, count = %llu, buf_size = %llu\n",
+                  dst_chunk_size,dst_ser_size, type_size, count, bufsize);
 #endif
 
-  if (src_block_dim == 0){
+  if (((_XMPF_running == 1) && (_XMPC_running == 0) && (src_block_dim == 1))
+      || ((_XMPF_running == 0) && (_XMPC_running == 1) && (src_block_dim == 0))){
     sendbuf = _XMP_alloc(bufsize);
     // src_array -> sendbuf
     int k;
     for (int i = 0; i < nnodes; i++){
       k= 0;
-      for (int j = 0; j < chunk_size; j++){
-	memcpy((char *)sendbuf + i * count + k,
-	       (char *)src_array->array_addr_p + (i * chunk_size + j * ser_size) * type_size,
-	       chunk_size * type_size);
+      for (int j = 0; j < src_chunk_size; j++){
+        memcpy((char *)sendbuf + i * count + k,
+               (char *)src_array->array_addr_p + (i * dst_chunk_size + j * dst_ser_size) * type_size,
+               dst_chunk_size * type_size);
 #ifdef DBG
-	xmpf_dbg_printf("%d -> %d\n",
-			*((int *)src_array->array_addr_p + (i * chunk_size + j * ser_size)),
-			i * count + k);
+        xmpf_dbg_printf("%d -> %d\n",
+                        *((int *)src_array->array_addr_p + (i * dst_chunk_size + j * dst_ser_size)),
+                        i * count + k);
 #endif
-	k += chunk_size * type_size;
+        k += dst_chunk_size * type_size;
       }
     }
   }
@@ -1103,12 +1105,13 @@ static _Bool _XMP_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
   }
 
 #ifdef DBG
-  for (int i = 0; i < chunk_size * chunk_size * nnodes; i++){
+  for (int i = 0; i < dst_chunk_size * src_chunk_size * nnodes; i++){
     xmpf_dbg_printf("sendbuf[%d] = %d\n", i, ((int *)sendbuf)[i]);
   }
 #endif
 
-  if (dst_block_dim == 0){
+  if (((_XMPF_running == 1) && (_XMPC_running == 0) && (dst_block_dim == 1))
+      || ((_XMPF_running == 0) && (_XMPC_running == 1) && (dst_block_dim == 0))){
     recvbuf = _XMP_alloc(bufsize);
   }
   else {
@@ -1116,31 +1119,34 @@ static _Bool _XMP_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
   }
 
   MPI_Alltoall(sendbuf, count, MPI_BYTE, recvbuf, count, MPI_BYTE,
-	       *((MPI_Comm *)dst_array->align_template->onto_nodes->comm));
+               *((MPI_Comm *)dst_array->align_template->onto_nodes->comm));
 
-  if (dst_block_dim == 0){
+  if (((_XMPF_running == 1) && (_XMPC_running == 0) && (dst_block_dim == 1))
+      || ((_XMPF_running == 0) && (_XMPC_running == 1) && (dst_block_dim == 0))){
     // dst_array <- recvbuf
     int k;
     for (int i = 0; i < nnodes; i++){
       k = 0;
-      for (int j = 0; j < chunk_size; j++){
-	memcpy((char *)dst_array->array_addr_p + (i * chunk_size + j * ser_size) * type_size,
-	       (char *)recvbuf + i * count + k,
-	       chunk_size * type_size);
-	k += chunk_size * type_size;
+      for (int j = 0; j < dst_chunk_size; j++){
+        memcpy((char *)dst_array->array_addr_p + (i * src_chunk_size + j * src_ser_size) * type_size,
+               (char *)recvbuf + i * count + k,
+               src_chunk_size * type_size);
+        k += src_chunk_size * type_size;
       }
     }
 
     _XMP_free(recvbuf);
   }
 
-  if (src_block_dim == 0){
+  if (((_XMPF_running == 1) && (_XMPC_running == 0) && (src_block_dim == 1))
+      || ((_XMPF_running == 0) && (_XMPC_running == 1) && (src_block_dim == 0))){
     _XMP_free(sendbuf);
   }
 
   return true;
 
 }
+
 //
 // for transpose: end
 //
@@ -1207,15 +1213,7 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
   gmv_desc_leftp.ub = dst_u;             gmv_desc_rightp.ub = src_u;
   gmv_desc_leftp.st = dst_s;             gmv_desc_rightp.st = src_s;
 
-  if (is_same_shape(dst_array, src_array) &&
-      is_whole(&gmv_desc_leftp) && is_whole(&gmv_desc_rightp) &&
-      dst_array->align_template == src_array->align_template &&
-      is_one_block(dst_array) && is_one_block(src_array)){
-    if (_XMP_gmove_transpose(&gmv_desc_leftp, &gmv_desc_rightp)) return;
-  }
-  //
-
-  _XMP_gmove_garray_garray_common(dst_array, src_array, dst_l, dst_u, dst_s, dst_d, src_l, src_u, src_s, src_d);
+  _XMP_gmove_garray_garray_common(&gmv_desc_leftp, &gmv_desc_rightp, dst_l, dst_u, dst_s, dst_d, src_l, src_u, src_s, src_d);
 
 }
 
@@ -1467,7 +1465,10 @@ void _XMP_G2L_rank(long long int global_idx, int *local_idx,
   }
 }
 
-void _XMP_gmove_garray_garray_common(_XMP_array_t *dst_array, _XMP_array_t *src_array, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long *src_d){
+void _XMP_gmove_garray_garray_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long *src_d){
+
+  _XMP_array_t *dst_array = gmv_desc_leftp->a_desc;
+  _XMP_array_t *src_array = gmv_desc_rightp->a_desc;
 
   void *dst_addr = dst_array->array_addr_p;
   int dst_dim = dst_array->dim;
@@ -1496,6 +1497,12 @@ void _XMP_gmove_garray_garray_common(_XMP_array_t *dst_array, _XMP_array_t *src_
                                (void *)dst_addr, dst_dim, dst_l, dst_u, dst_s, dst_d,
                                (void *)src_addr, src_dim, src_l, src_u, src_s, src_d);
     return;
+  }
+
+  if (is_same_shape(dst_array, src_array) &&
+      is_whole(gmv_desc_leftp) && is_whole(gmv_desc_rightp) &&
+      is_one_block(dst_array) && is_one_block(src_array)){
+    if (_XMP_gmove_transpose(gmv_desc_leftp, gmv_desc_rightp)) return;
   }
 
   MPI_Datatype mpi_datatype;

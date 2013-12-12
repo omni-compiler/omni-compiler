@@ -132,170 +132,6 @@ void _XMPF_gmove_garray_scalar__(_XMP_gmv_desc_t *gmv_desc_leftp, void *scalar)
 
 }
 
-
-static _Bool is_same_shape(_XMP_array_t *adesc0, _XMP_array_t *adesc1)
-{
-  if (adesc0->dim != adesc1->dim) return false;
-
-  for (int i = 0; i < adesc0->dim; i++) {
-    if (adesc0->info[i].ser_lower != adesc1->info[i].ser_lower ||
-	adesc0->info[i].ser_upper != adesc1->info[i].ser_upper) return false;
-  }
-
-  return true;
-}
-
-
-static _Bool is_whole(_XMP_gmv_desc_t *gmv_desc)
-{
-  _XMP_array_t *adesc = gmv_desc->a_desc;
-
-  for (int i = 0; i < adesc->dim; i++){
-    if (gmv_desc->lb[i] == 0 && gmv_desc->ub[i] == 0 && gmv_desc->st[i] == 0) continue;
-    if (adesc->info[i].ser_lower != gmv_desc->lb[i] ||
-	adesc->info[i].ser_upper != gmv_desc->ub[i] ||
-	gmv_desc->st[i] != 1) return false;
-  }
-
-  return true;
-}
-
-
-static _Bool is_one_block(_XMP_array_t *adesc)
-{
-  int cnt = 0;
-
-  for (int i = 0; i < adesc->dim; i++) {
-    if (adesc->info[i].align_manner == _XMP_N_ALIGN_BLOCK) cnt++;
-    else if (adesc->info[i].align_manner != _XMP_N_ALIGN_NOT_ALIGNED) return false;
-  }
-  
-  if (cnt != 1) return false;
-  else return true;
-}
-
-//#define DBG 1
-
-static _Bool _XMPF_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
-				  _XMP_gmv_desc_t *gmv_desc_rightp)
-{
-  _XMP_array_t *dst_array = gmv_desc_leftp->a_desc;
-  _XMP_array_t *src_array = gmv_desc_rightp->a_desc;
-
-  int nnodes;
-
-  int dst_block_dim, src_block_dim;
-
-  void *sendbuf, *recvbuf;
-  unsigned long long count, bufsize;
-
-  int dst_chunk_size, dst_ser_size, type_size;
-  int src_chunk_size, src_ser_size;
-
-#ifdef DBG
-  xmpf_dbg_printf("_XMPF_gmove_transpose\n");
-#endif
-
-  nnodes = dst_array->align_template->onto_nodes->comm_size;
-
-// 2-dimensional Matrix
-  if (dst_array->dim != 2) return false;
-
-  // No Shadow
-  if (dst_array->info[0].shadow_size_lo != 0 ||
-      dst_array->info[0].shadow_size_hi != 0 ||
-      src_array->info[0].shadow_size_lo != 0 ||
-      src_array->info[0].shadow_size_hi != 0) return false;
-
-  // Dividable by the number of nodes
-  if (dst_array->info[0].ser_size % nnodes != 0) return false;
-
-  dst_block_dim = (dst_array->info[0].align_manner == _XMP_N_ALIGN_BLOCK) ? 0 : 1;
-  src_block_dim = (src_array->info[0].align_manner == _XMP_N_ALIGN_BLOCK) ? 0 : 1;
-
-  dst_chunk_size = dst_array->info[dst_block_dim].par_size;
-  dst_ser_size = dst_array->info[dst_block_dim].ser_size;
-  src_chunk_size = src_array->info[src_block_dim].par_size;
-  src_ser_size = src_array->info[src_block_dim].ser_size;
-  type_size = dst_array->type_size;
-
-  count =  dst_chunk_size * src_chunk_size * type_size;
-  bufsize = count * nnodes;
-
-  if (dst_block_dim == src_block_dim){
-    memcpy((char *)dst_array->array_addr_p, (char *)src_array->array_addr_p, bufsize);
-    return true;
-  }
-
-#ifdef DBG
-  xmpf_dbg_printf("dst_chunk_size = %d, dst_ser_size = %d, type_size = %d, count = %llu, buf_size = %llu\n",
-		  dst_chunk_size,dst_ser_size, type_size, count, bufsize);
-#endif
-
-  if (src_block_dim == 1){
-    sendbuf = _XMP_alloc(bufsize);
-    // src_array -> sendbuf
-    int k;
-    for (int i = 0; i < nnodes; i++){
-      k= 0;
-      for (int j = 0; j < src_chunk_size; j++){
-	memcpy((char *)sendbuf + i * count + k,
-	       (char *)src_array->array_addr_p + (i * dst_chunk_size + j * dst_ser_size) * type_size,
-	       dst_chunk_size * type_size);
-#ifdef DBG
-	xmpf_dbg_printf("%d -> %d\n",
-			*((int *)src_array->array_addr_p + (i * dst_chunk_size + j * dst_ser_size)),
-			i * count + k);
-#endif
-	k += dst_chunk_size * type_size;
-      }
-    }
-  }
-  else {
-    sendbuf = src_array->array_addr_p;
-  }
-
-#ifdef DBG
-  for (int i = 0; i < dst_chunk_size * src_chunk_size * nnodes; i++){
-    xmpf_dbg_printf("sendbuf[%d] = %d\n", i, ((int *)sendbuf)[i]);
-  }
-#endif
-
-  if (dst_block_dim == 1){
-    recvbuf = _XMP_alloc(bufsize);
-  }
-  else {
-    recvbuf = dst_array->array_addr_p;
-  }
-
-  MPI_Alltoall(sendbuf, count, MPI_BYTE, recvbuf, count, MPI_BYTE,
-	       *((MPI_Comm *)dst_array->align_template->onto_nodes->comm));
-
-  if (dst_block_dim == 1){
-    // dst_array <- recvbuf
-    int k;
-    for (int i = 0; i < nnodes; i++){
-      k = 0;
-      for (int j = 0; j < dst_chunk_size; j++){
-	memcpy((char *)dst_array->array_addr_p + (i * src_chunk_size + j * src_ser_size) * type_size,
-	       (char *)recvbuf + i * count + k,
-	       src_chunk_size * type_size);
-	k += src_chunk_size * type_size;
-      }
-    }
-
-    _XMP_free(recvbuf);
-  }
-
-  if (src_block_dim == 1){
-    _XMP_free(sendbuf);
-  }
-
-  return true;
-
-}
-
-
 //
 // ga(:) = gb(:)
 //
@@ -309,21 +145,6 @@ void _XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
   _XMP_ASSERT(src_array->type_size == type_size);
 
   unsigned long long gmove_total_elmts = 0;
-
-/* #ifdef DBG */
-/*   printf("%d, %d, %d, %d, %d, %d\n", */
-/* 	 is_same_shape(dst_array, src_array), */
-/* 	 is_whole(gmv_desc_leftp), is_whole(gmv_desc_rightp), */
-/* 	 dst_array->align_template == src_array->align_template, */
-/* 	 is_one_block(dst_array), is_one_block(src_array)); */
-/* #endif */
-
-  // do transpose
-  if (is_same_shape(dst_array, src_array) &&
-      is_whole(gmv_desc_leftp) && is_whole(gmv_desc_rightp) &&
-      is_one_block(dst_array) && is_one_block(src_array)){
-    if (_XMPF_gmove_transpose(gmv_desc_leftp, gmv_desc_rightp)) return;
-  }
 
   // get dst info
   unsigned long long dst_total_elmts = 1;
@@ -359,7 +180,7 @@ void _XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
     gmove_total_elmts = dst_total_elmts;
   }
 
-  _XMP_gmove_garray_garray_common(dst_array, src_array, dst_l, dst_u, dst_s, dst_d, src_l, src_u, src_s, src_d);
+  _XMP_gmove_garray_garray_common(gmv_desc_leftp, gmv_desc_rightp, dst_l, dst_u, dst_s, dst_d, src_l, src_u, src_s, src_d);
 
 }
 
