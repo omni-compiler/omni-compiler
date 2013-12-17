@@ -13,6 +13,7 @@ XMPPKG_NAME="@XMPPKG_NAME@"
 XMPPKG_VERSION="@XMPPKG_VERSION@"
 XMPPKG_RELEASE="@XMPPKG_RELEASE@"
 XMPPKG_PREFIX="/@OMNI_HOME@"
+XMPPKG_CONF_PREFIX="@OM_DRIVER_CONF_DIR@"
 ARCHIVE_NAME="${XMPPKG_NAME}"
 
 clean_exit () {
@@ -60,10 +61,10 @@ tar zxf "${ARCHIVE_NAME}.tar.gz"
 # build
 
 cd "${XMP_TMPDIR}"/"${XMPPKG_NAME}"
-./configure --prefix=${XMPPKG_PREFIX} \
+./configure --sysconfdir=${XMPPKG_CONF_PREFIX} --prefix=${XMPPKG_PREFIX} \
 && make clean \
 && make \
-&& make prefix=${XMP_TMPDIR}/debian/${XMPPKG_NAME}/${XMPPKG_PREFIX} install \
+&& make sysconfdir=${XMP_TMPDIR}/debian/${XMPPKG_NAME}/${XMPPKG_CONF_PREFIX} prefix=${XMP_TMPDIR}/debian/${XMPPKG_NAME}/${XMPPKG_PREFIX} install \
 || clean_exit 1
 
 # copy conffiles

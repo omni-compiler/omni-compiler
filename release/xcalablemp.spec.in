@@ -23,7 +23,7 @@ Requires:	openmpi-devel gcc-gfortran java-1.7.0-openjdk
 %setup
 
 %build
-./configure --prefix=%{default_prefix}
+./configure --sysconfdir=/etc/xcalablemp --prefix=/usr
 make
 
 %install

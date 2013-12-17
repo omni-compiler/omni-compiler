@@ -7,6 +7,6 @@ Standards-Version: @XMPPKG_VERSION@
 Homepage: @XMPPKG_URL@
 
 Package: @XMPPKG_NAME@
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, openjdk-7-jdk, openmpi-dev, openmpi-bin, gfortran
+Architecture: amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}, openjdk-7-jdk, libopenmpi-dev, openmpi-bin, gfortran
 Description: @XMPPKG_DESCRIPTION@
