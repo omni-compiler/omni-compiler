@@ -10,8 +10,16 @@ if test -z "${OMNI_HOME}"; then
 fi
 
 CONF="@OM_DRIVER_CONF_DIR@/java.conf"
-if [ -r ${CONF} ]; then
+if [ -e ${CONF} ]; then
+  if [ -r ${CONF} ]; then
     . ${CONF}
+  else
+    echo cannot read ${CONF} script.
+    exit 1
+  fi
+else
+  echo cannot find ${CONF} script.
+  exit 1
 fi
 
 OMNI_JAR1="${OMNI_HOME}/share/xcalablemp/om-f-back.jar"
