@@ -1000,7 +1000,7 @@ AC_SUBST(ANTCOM)
 #AC_SUBST(RELAXER_DIR)
 
 # set java library install dir to install target of java_DATA
-javadir='${prefix}/java'
+javadir='${prefix}/share/xcalablemp'
 AC_SUBST(javadir)
 
 # java option
@@ -1588,7 +1588,13 @@ AC_SUBST(OMNI_HOME)
 AH_TEMPLATE(OMNI_HOME, [omni compiler install directory])
 AC_DEFINE_UNQUOTED(OMNI_HOME, "${OMNI_HOME}")
 
-OM_DRIVER_CONF_DIR="${OMNI_HOME}/etc"
+# If "--sysconfdir=" is set,
+if test "${sysconfdir}" != '${prefix}/etc'; then
+  OM_DRIVER_CONF_DIR="${sysconfdir}"
+else
+  OM_DRIVER_CONF_DIR="${OMNI_HOME}/etc"
+fi
+
 AC_SUBST(OM_DRIVER_CONF_DIR)
 AH_TEMPLATE(OM_DRIVER_CONF_DIR, [omni compiler driver configuration file directory])
 AC_DEFINE_UNQUOTED(OM_DRIVER_CONF_DIR, "${OM_DRIVER_CONF_DIR}")

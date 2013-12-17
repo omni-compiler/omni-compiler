@@ -35,7 +35,7 @@ if [ -z "${OM_TRANSLATORS}" ]; then
 else
   CMD_OPT="-decomp"
   for TID in ${OM_TRANSLATORS}; do
-    CONF="${OMNI_HOME}/etc/x2x.conf.${TID}"
+    CONF="${OM_DRIVER_CONF_DIR}/x2x.conf.${TID}"
     if [ -r ${CONF} ]; then
       . ${CONF}
     else
@@ -46,7 +46,7 @@ else
 fi
 
 # ---------- setup java --------------------------------------------------------------------
-CONF="${OMNI_HOME}/etc/java.conf"
+CONF="${OM_DRIVER_CONF_DIR}/java.conf"
 if [ -e ${CONF} ]; then
   if [ -r ${CONF} ]; then
     . ${CONF}
@@ -59,10 +59,10 @@ else
   exit 1
 fi
 
-OMNI_JAR1="${OMNI_HOME}/java/om-exc-tools.jar"
-OMNI_JAR2="${OMNI_HOME}/java/om-c-back.jar"
-OMNI_JAR3="${OMNI_HOME}/java/om-f-back.jar"
-OMNI_JAR4="${OMNI_HOME}/java/om-common.jar"
+OMNI_JAR1="${OMNI_HOME}/share/xcalablemp/om-exc-tools.jar"
+OMNI_JAR2="${OMNI_HOME}/share/xcalablemp/om-c-back.jar"
+OMNI_JAR3="${OMNI_HOME}/share/xcalablemp/om-f-back.jar"
+OMNI_JAR4="${OMNI_HOME}/share/xcalablemp/om-common.jar"
 
 if [ -f $OMNI_JAR1 -a -f $OMNI_JAR2 -a -f $OMNI_JAR3 -a -f $OMNI_JAR4 ]; then
   JAVA_CMD="${OMNI_JAVA} ${OMNI_JAVA_OPT} -cp ${OMNI_JAR4}:${OMNI_JAR3}:${OMNI_JAR2}:${OMNI_JAR1} exc.util.omompx ${CMD_OPT}"

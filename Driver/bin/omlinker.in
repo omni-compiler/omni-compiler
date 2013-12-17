@@ -15,7 +15,7 @@ fi
 
 if [ ! -z "${OM_TRANSLATORS}" ]; then
     for TID in ${OM_TRANSLATORS}; do
-        CONF="${OMNI_HOME}/etc/linker.conf.${TID}"
+        CONF="${OM_DRIVER_CONF_DIR}/linker.conf.${TID}"
         if [ -r ${CONF} ]; then
             . ${CONF}
         else

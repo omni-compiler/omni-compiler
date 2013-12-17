@@ -22377,7 +22377,7 @@ ANTCOM="JAVA_HOME=$JAVA_HOME ${ANTCOM}"
 #AC_SUBST(RELAXER_DIR)
 
 # set java library install dir to install target of java_DATA
-javadir='${prefix}/java'
+javadir='${prefix}/share/xcalablemp'
 
 
 # java option
@@ -25180,7 +25180,13 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-OM_DRIVER_CONF_DIR="${OMNI_HOME}/etc"
+# If "--sysconfdir=" is set,
+if test "${sysconfdir}" != '${prefix}/etc'; then
+  OM_DRIVER_CONF_DIR="${sysconfdir}"
+else
+  OM_DRIVER_CONF_DIR="${OMNI_HOME}/etc"
+fi
+
 
 
 cat >>confdefs.h <<_ACEOF

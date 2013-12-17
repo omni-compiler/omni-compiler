@@ -122,6 +122,7 @@
 #define ENV_OM_USE              "OM_USE_%s"
 #define ENV_OM_TRANSLATORS      "OM_TRANSLATORS"
 #define ENV_OMNI_HOME           "OMNI_HOME"
+#define ENV_OM_DRIVER_CONF_DIR  "OM_DRIVER_CONF_DIR"
 
 /** option identifier */
 /** for Preprocessor */

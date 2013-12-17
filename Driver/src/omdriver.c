@@ -1327,6 +1327,7 @@ int set_all_env( void )
     int ret = SUCCESS;
 
     setenv( ENV_OMNI_HOME, OMNI_HOME, TRUE );
+    setenv( ENV_OM_DRIVER_CONF_DIR, OM_DRIVER_CONF_DIR, TRUE );
     const char *verbose = GET_OPT_IS_APPLIED_TBL(opt_idx(OPT_DRV_VERBOSE)) ? "1" : "0";
     setenv(ENV_OM_VERBOSE, verbose, TRUE);
     setenv(ENV_OM_LANGID, get_lang_code(), TRUE);

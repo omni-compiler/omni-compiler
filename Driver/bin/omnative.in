@@ -20,7 +20,7 @@ fi
 if [ ! -z "${OM_TRANSLATORS}" ]; then
     OM_OPTIONS="${OM_OPTIONS} -I${OMNI_HOME}/include"
     for TID in ${OM_TRANSLATORS}; do
-        CONF="${OMNI_HOME}/etc/native.conf.${TID}"
+	CONF="${OM_DRIVER_CONF_DIR}/native.conf.${TID}"
         if [ -r ${CONF} ]; then
             . ${CONF}
         else
