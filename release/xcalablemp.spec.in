@@ -15,6 +15,7 @@ Source: %{name}-%{version}.tar.gz
 Requires:	openmpi-devel gcc-gfortran java-1.7.0-openjdk
 
 %define default_prefix @OMNI_HOME@
+%define default_conf_prefix @OM_DRIVER_CONF_DIR@
 
 %description
 @XMPPKG_DESCRIPTION@
@@ -23,13 +24,14 @@ Requires:	openmpi-devel gcc-gfortran java-1.7.0-openjdk
 %setup
 
 %build
-./configure --sysconfdir=/etc/xcalablemp --prefix=/usr
+./configure --sysconfdir=%{default_conf_prefix} --prefix=%{default_prefix}
 make
 
 %install
 rm -rf ${RPM_BUILD_ROOT}
 mkdir -p ${RPM_BUILD_ROOT}/%{default_prefix}
-make prefix=${RPM_BUILD_ROOT}/%{default_prefix} install
+mkdir -p ${RPM_BUILD_ROOT}/%{default_conf_prefix}
+make sysconfdir=${RPM_BUILD_ROOT}/%{default_conf_prefix} prefix=${RPM_BUILD_ROOT}/%{default_prefix} install
 
 %clean
 rm -rf ${RPM_BUILD_ROOT}
