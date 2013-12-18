@@ -603,6 +603,23 @@ if test "$target" != "$host"; then
     BECC="sxmpic++"
     BEFC="sxmpif90"
     BECC_OPTION=""
+  elif test "$target" = "powerpc-ibm-none"; then
+    BECC="bgxlc"
+    BEFC="bgxlf90"
+    DRIVER="/bgsys/drivers/ppcfloor"
+    BECC_OPTION="-I${DRIVER} -I${DRIVER}/spi/include/kernel/cnk \
+		-I${DRIVER}/spi/include/mu/default \
+		-I${DRIVER}/comm/xl/include \
+		-L${DRIVER}/comm/xl/lib \
+		-L${DRIVER}/comm/sys/lib \
+		-L${DRIVER}/spi/lib \
+		-L${DRIVER}/bglpm/lib \
+		-L/usr/local/bg/lib \
+		-lkek -lmpich -lopa -lmpl -lpami -lSPI_cnk -lSPI -lSPI_l1p -lbgpm -lrt -lpthread -lstdc"
+  elif test "$target" = "powerpc64-hitachi-aix"; then
+    BECC="mpcc"
+    BEFC="mpif90"
+    BECC_OPTION=""
   fi
 else  # if "--target" option is not used in ./configure
   BECC="mpicc"
@@ -632,6 +649,9 @@ AC_SUBST(BEFC)
 
 AC_SUBST(IS_CRAY)
 
+AM_CONDITIONAL(SR16000, test "$target" = "powerpc64-hitachi-aix") 
+AC_SUBST(SR16000)
+
 AM_CONDITIONAL(SUPERUX, test "$target" = "sx-nec-superux")
 AC_SUBST(SUPERUX)
 
@@ -656,6 +676,16 @@ elif test "$target" = "sx-nec-superux"; then
   OMC_CONF_NTV_OPT="-Kgcc -w"
   OMC_CONF_LNK_OPT=""
   BECC_OMP_OPTION="-Popenmp"
+elif test "$target" = "powerpc-ibm-none"; then
+  OMC_CONF_LX2X_OPT=""
+  OMC_CONF_NTV_OPT=""
+  OMC_CONF_LNK_OPT=""
+  BECC_OMP_OPTION=""
+elif test "$target" = "powerpc64-hitachi-aix"; then
+  OMC_CONF_LX2X_OPT=""
+  OMC_CONF_NTV_OPT=""
+  OMC_CONF_LNK_OPT=""
+  BECC_OMP_OPTION="-omp"
 else
   chk=`$BECC --version | head -n1`
   case $chk in
@@ -679,7 +709,9 @@ else
     echo " - Fujitsu C Compiler (mpifccpx)"
     echo " - Cray C Compiler (cc)"
     echo " - NEC C/C++ Compiler (sxc++)"
-    exit 1
+    echo " - IBM C Compiler (bgxlc)"
+    echo " - HITACHI C Compiler (mpcc)"
+exit 1
     ;;
   esac
 fi
@@ -709,6 +741,14 @@ if test $enableF2F = yes; then
     OMF_CONF_LX2X_OPT=""
     OMF_CONF_NTV_OPT="-f4 -w"
     OMF_CONF_LNK_OPT=""
+  elif test "$target" = "powerpc-ibm-none"; then
+    OMF_CONF_LX2X_OPT=""
+    OMF_CONF_NTV_OPT=""
+    OMF_CONF_LNK_OPT=""
+  elif test "$target" = "powerpc64-hitachi-aix"; then
+    OMF_CONF_LX2X_OPT=""
+    OMF_CONF_NTV_OPT=""
+    OMF_CONF_LNK_OPT=""
   else
     chk=`$BEFC --version | head -n1`
     case $chk in
@@ -729,6 +769,8 @@ if test $enableF2F = yes; then
       echo " - Intel Fortran (mpiifort)"
       echo " - Fujitsu Fortran (mpifrtpx)"
       echo " - Cray Fortran (ftn)"
+      echo " - IBM Fortran (bgxlf90)"
+      echo " - Hitachi Fortran (mpif90)"
       exit 1
       ;;
     esac
@@ -792,6 +834,42 @@ if test "$target" != "$host"; then
 		if test "${AR}" = ":"; then
 		    AC_MSG_ERROR([sxnm not found]);
 		fi ;;
+	powerpc64-hitachi-aix)
+                AC_CHECK_TOOL([RANLIB], [echo], [:])
+                if test "${RANLIB}" = ":"; then
+                    AC_MSG_ERROR([ranlib not found]);
+                fi
+
+                AC_CHECK_TOOL([AR], [ar], [:])
+                if test "${AR}" = ":"; then
+                    AC_MSG_ERROR([ar not found]);
+                fi
+
+                ARFLAGS="cru"
+                AC_SUBST(ARFLAGS)
+
+                AC_CHECK_TOOL([NM], [nm], [:])
+                if test "${NM}" = ":"; then
+                    AC_MSG_ERROR([nm not found]);
+                fi ;;         
+	powerpc-ibm-none)
+                AC_CHECK_TOOL([RANLIB], [echo], [:])
+                if test "${RANLIB}" = ":"; then
+                    AC_MSG_ERROR([bgranlib not found]);
+                fi
+
+                AC_CHECK_TOOL([AR], [ar], [:])
+                if test "${AR}" = ":"; then
+                    AC_MSG_ERROR([bgar not found]);
+                fi
+
+                ARFLAGS="cru"
+                AC_SUBST(ARFLAGS)
+
+                AC_CHECK_TOOL([NM], [nm], [:])
+                if test "${NM}" = ":"; then
+                    AC_MSG_ERROR([nm not found]);
+                fi ;;         
 	Cray-linux-gnu)
 		AC_PROG_RANLIB
 		AC_CHECK_TOOL([AR], [ar], [:])
@@ -833,6 +911,12 @@ if test "$target" != "$host"; then
 	sx-nec-superux)
 		CC_LIB="sxc++ -Kgcc"
 		AC_SUBST(CC_LIB) ;;
+	powerpc64-hitachi-aix)
+		CC_LIB="lxc -qgcc_c_stdinc"
+		AC_SUBST(CC_LIB);;
+	powerpc-ibm-none)
+		CC_LIB="bglxc -qgcc_c_stdinc"
+		AC_SUBST(CC_LIB);;
 	*)
 		AC_CHECK_TARGET_TOOL([CC_LIB], [cc], [:]) ;;
    esac
@@ -915,7 +999,7 @@ if test "x${useJava}" = "xyes"; then
     AC_MSG_CHECKING([IBM Java6])
     jTmp=/tmp/.omniJavaChk.$$
     ${JAVACOM} -fullversion > ${jTmp} 2>&1
-    chk=`grep 'JRE 1.6.0 IBM' ${jTmp}`
+    chk=`grep 'JRE 1.6.0 IBM' ${jTmp}` || `grep 'JRE 1.7.0 IBM' ${jTmp}`
     if test "x${chk}" = "x"; then
         AC_MSG_RESULT([no])
     else
@@ -934,7 +1018,14 @@ if test "x${useJava}" = "xyes"; then
     AC_MSG_CHECKING([Sun Java6])
 
     changequote(<<, >>)dnl
-    chk=`${JAVACOM} -fullversion 2>&1 | sed -e 's:java[\t ]*full[\t ]*version[\t ]*::g' -e 's:\"::g'`
+    case $target in
+      powerpc-ibm-none|powerpc64-hitachi-aix)
+        chk=`${JAVACOM} -fullversion 2>&1 | sed -e 's:openjdk[\t ]*full[\t ]*version[\t ]*::g' -e 's:\"::g'`
+      ;;
+	*)
+        chk=`${JAVACOM} -fullversion 2>&1 | sed -e 's:java[\t ]*full[\t ]*version[\t ]*::g' -e 's:\"::g'`
+	;;
+    esac 
     changequote([, ])dnl
 
     if test "x${chk}" = "x"; then
@@ -1045,7 +1136,17 @@ AC_CHECK_HEADERS([fcntl.h libintl.h malloc.h stddef.h stdint.h limits.h strings.
 # --------------------------------------------------------------------
 # Checks for library functions.
 
-AC_FUNC_MALLOC
+if test "$target" != "$host"; then
+   case "$target" in
+        powerpc64-hitachi-aix);;
+        *)
+	AC_FUNC_MALLOC;;
+   esac
+else
+	AC_FUNC_MALLOC
+fi
+
+#AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_FUNC_FORK
 AC_FUNC_STAT
@@ -1853,6 +1954,8 @@ case $OS in
         OS=sunos;;
     solaris*)
         OS=solaris;;
+    aix*)
+	MAKE=gmake;; 
     freebsd*)
 	OS=freebsd;;
     linux*)
@@ -1922,14 +2025,14 @@ AC_CONFIG_FILES(
 )
 
 AC_CONFIG_COMMANDS([modify-config],
-	[(cd Driver/atool && sh ./mk/finalizeconfig ${OS_CPPFLAGS})],
+	[(cd Driver/atool && ${BASH} ./mk/finalizeconfig ${OS_CPPFLAGS})],
 	[OS_CPPFLAGS="${OS_CPPFLAGS}"])
 
 AC_CONFIG_COMMANDS([includes],
-	[sh ./Driver/atool/mk/initheaders])
+	[${BASH} ./Driver/atool/mk/initheaders])
 
 AC_CONFIG_COMMANDS([depend],
-	[(sh ./Driver/atool/mk/initdepend && cd ./Driver/atool && ${MAKE} depend)],
+	[(${BASH} ./Driver/atool/mk/initdepend && cd ./Driver/atool && ${MAKE} depend)],
 	[MAKE=${MAKE}])
 
 AC_CONFIG_COMMANDS([config-clean],
