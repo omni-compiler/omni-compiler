@@ -72,6 +72,7 @@ CGccAttrInfo s_gccAttrInfos[] = {
     { GAK_FUNC                 , "tiny_data"              , GA_TINY_DATA },
     { GAK_FUNC                 , "trap_exit"              , GA_TRAP_EXIT },
     { GAK_FUNC                 , "version_id"             , GA_VERSION_ID },
+    { GAK_FUNC                 , "leaf"                   , GA_LEAF },
     { GAK_VAR                  , "cleanup"                , GA_CLEANUP },
     { GAK_VAR                  , "common"                 , GA_COMMON },
     { GAK_VAR                  , "nocommon"               , GA_NOCOMMON },

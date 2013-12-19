@@ -136,7 +136,8 @@ typedef enum {
     GA_SPU_VECTOR,
     GA_GCC_STRUCT,
     GA_MS_STRUCT,
-    GA_ALTIVEC
+    GA_ALTIVEC,
+    GA_LEAF
 } CGccAttrIdEnum;
 
 /**
