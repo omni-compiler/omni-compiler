@@ -359,9 +359,17 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = addChildNodes(createElement(name,
                                             "construct_name", getArg0Name(xobj)),
                               transValue(xobj.getArg(1)));
-            for (Xobject a : (XobjList)xobj.getArg(2)) {
-                addChildNode(e, trans(a));
-            }
+
+	    Xobject caseList = xobj.getArg(2);
+
+	    if (caseList.Opcode() == Xcode.F_STATEMENT_LIST){
+		for (Xobject a : (XobjList)caseList) {
+		    addChildNode(e, trans(a));
+		}
+	    }
+	    else {
+		addChildNode(e, trans(caseList));
+	    }
             break;
 
         case F_CASE_LABEL: {
