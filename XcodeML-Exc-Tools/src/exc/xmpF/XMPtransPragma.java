@@ -89,6 +89,7 @@ public class XMPtransPragma
   void buildXMPobjectBlock(BlockList prolog, BlockList epilog){
     XMPsymbolTable table = env.getXMPsymbolTable();
     epilog.add(Xcons.StatementLabel(XMP.epilog_label_f));
+    epilog.add(Xcons.List(Xcode.F_CONTINUE_STATEMENT));
     if(table != null){
       for(XMPobject o: table.getXMPobjects()){
 	o.buildConstructor(prolog,env);
