@@ -39,4 +39,4 @@ rm -rf ${RPM_BUILD_ROOT}
 %files
 %defattr(-,root,root)
 %{default_prefix}
-
+%{default_conf_prefix}
