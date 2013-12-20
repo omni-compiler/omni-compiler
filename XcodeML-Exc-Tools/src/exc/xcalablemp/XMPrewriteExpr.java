@@ -8,6 +8,7 @@ package exc.xcalablemp;
 
 import exc.block.*;
 import exc.object.*;
+import java.util.*;
 
 public class XMPrewriteExpr {
   private XMPglobalDecl		_globalDecl;
@@ -31,6 +32,9 @@ public class XMPrewriteExpr {
 
     // rewrite Function Exprs
     rewriteFuncExprs(fb, localXMPsymbolTable);
+
+    // rewrite OMP pragma
+    rewriteOMPpragma(fb, localXMPsymbolTable);
 
     // create local object descriptors, constructors and desctructors
     XMPlocalDecl.setupObjectId(fb);
@@ -485,8 +489,9 @@ public class XMPrewriteExpr {
 
     if(entity != null){
       if(entity.getKind() == XMPobject.TEMPLATE){
-	entityName = XMP.DESC_PREFIX_ + entityName;
+	//entityName = XMP.DESC_PREFIX_ + entityName;
 	Ident XmpDescOfFuncId = _globalDecl.declExternFunc("_XMP_desc_of", myExpr.Type());
+	//e = XmpDescOfFuncId.Call(Xcons.List(entity.getDescId().Ref()));
 	e = XmpDescOfFuncId.Call(Xcons.List(entity.getDescId()));
       } 
       else{
@@ -500,6 +505,7 @@ public class XMPrewriteExpr {
 	throw new XMPexception(arrayName + " is not aligned global array or tempalte descriptor.");
 
       Ident XmpDescOfFuncId =  _globalDecl.declExternFunc("_XMP_desc_of", myExpr.Type());
+      //e = XmpDescOfFuncId.Call(Xcons.List(alignedArray.getDescId().Ref())); 
       e = XmpDescOfFuncId.Call(Xcons.List(alignedArray.getDescId())); 
     }
 
@@ -792,6 +798,27 @@ public class XMPrewriteExpr {
             return XMP.getMacroId("_XMP_M_CALC_INDEX_BLOCK_CYCLIC").Call(args);
           }
         }
+      case XMPalignedArray.GBLOCK:
+        if (alignedArray.hasShadow()) {
+          XMPshadow shadow = alignedArray.getShadowAt(index);
+          switch (shadow.getType()) {
+            case XMPshadow.SHADOW_NONE:
+            case XMPshadow.SHADOW_NORMAL:
+              {
+                XobjList args = Xcons.List(indexRef, alignedArray.getGtolTemp0IdAt(index).Ref());
+                return XMP.getMacroId("_XMP_M_CALC_INDEX_GBLOCK").Call(args);
+              }
+            case XMPshadow.SHADOW_FULL:
+              return indexRef;
+            default:
+              throw new XMPexception("unknown shadow type");
+          }
+        }
+        else {
+          XobjList args = Xcons.List(indexRef,
+                                     alignedArray.getGtolTemp0IdAt(index).Ref());
+          return XMP.getMacroId("_XMP_M_CALC_INDEX_GBLOCK").Call(args);
+        }
       default:
         throw new XMPexception("unknown align manner for array '" + alignedArray.getName()  + "'");
     }
@@ -1007,9 +1034,110 @@ public class XMPrewriteExpr {
         // _XMP_M_LTOG_TEMPLATE_BLOCK_CYCLIC(_l, _b, _m, _P, _p)
         args = Xcons.List(expr, t.getWidthAt(ti), t.getLowerAt(ti), n.getSizeAt(ni), n.getRankAt(ni));
         break;
+      case XMPtemplate.GBLOCK:
+        // _XMP_M_LTOG_TEMPLATE_GBLOCK(_l, _m, _p)
+        args = Xcons.List(expr, t.getWidthAt(ti), n.getRankAt(ni));
+        break;
       default:
         throw new XMPexception("unknown distribution manner");
     }
     return XMP.getMacroId("_XMP_M_LTOG_TEMPLATE_" + t.getDistMannerStringAt(ti), Xtype.intType).Call(args);
   }
+
+  /*
+   * rewrite OMP pragmas
+   */
+  private void rewriteOMPpragma(FunctionBlock fb, XMPsymbolTable localXMPsymbolTable){
+
+      topdownBlockIterator iter2 = new topdownBlockIterator(fb);
+
+      for (iter2.init(); !iter2.end(); iter2.next()){
+	  Block block = iter2.getBlock();
+	  if (block.Opcode() == Xcode.OMP_PRAGMA){
+	      Xobject clauses = ((PragmaBlock)block).getClauses();
+	      if (clauses != null) rewriteOmpClauses(clauses, (PragmaBlock)block, fb, localXMPsymbolTable);
+	  }
+      }
+
+  }
+
+  /*
+   * rewrite OMP clauses
+   */
+  private void rewriteOmpClauses(Xobject expr, PragmaBlock pragmaBlock, Block block,
+				 XMPsymbolTable localXMPsymbolTable){
+	  
+    bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
+    
+    for (iter.init(); !iter.end();iter.next()){
+    	
+      Xobject x = iter.getXobject();
+      if (x == null)  continue;
+      
+      if (x.Opcode() == Xcode.VAR){
+
+	  try {
+	      iter.setXobject(rewriteArrayAddr(x, localXMPsymbolTable));
+	  }
+	  catch (XMPexception e){
+	      XMP.error(x.getLineNo(), e.getMessage());
+	  }
+
+	  // if (x.getProp(XMP.RWprotected) != null) break;
+
+	  // Ident id = _globalDecl.findVarIdent(x.getName());
+	  // if (id == null) break;
+	  
+	  // XMPalignedArray array = localXMPsymbolTable.getXMPalignedArray(id.getName());
+
+	  // if (array != null){
+	  //     // replace with local decl
+	  //     Xobject var = Xcons.Symbol(Xcode.VAR,array.getLocalType(),
+	  // 				 array.getLocalName());
+	  //     var.setProp(XMP.arrayProp,array);
+	  //     iter.setXobject(var);
+	  // }
+
+      }
+      else if (x.Opcode() == Xcode.LIST){
+	  if (x.left() != null && x.left().Opcode() == Xcode.STRING &&
+	      x.left().getString().equals("DATA_PRIVATE")){
+
+	      if (!pragmaBlock.getPragma().equals("FOR")) continue;
+
+	      XobjList itemList = (XobjList)x.right();
+
+	      // find loop variable
+	      Xobject loop_var = null;
+	      BasicBlockIterator i = new BasicBlockIterator(pragmaBlock.getBody());
+	      for (Block b = pragmaBlock.getBody().getHead();
+		   b != null;
+		   b = b.getNext()){
+		  if (b.Opcode() == Xcode.F_DO_STATEMENT){
+		      loop_var = ((FdoBlock)b).getInductionVar();
+		  }
+	      }
+	      if (loop_var == null) continue;
+
+	      // check if the clause has contained the loop variable
+	      boolean flag = false;
+	      Iterator<Xobject> j = itemList.iterator();
+	      while (j.hasNext()){
+		  Xobject item = j.next();
+		  if (item.getName().equals(loop_var.getName())){
+		      flag = true;
+		  }
+	      }
+
+	      // add the loop variable to the clause
+	      if (!flag){
+		  itemList.add(loop_var);
+	      }
+	  }
+      }
+
+    }
+
+  }
+
 }

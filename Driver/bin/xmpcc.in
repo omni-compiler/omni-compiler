@@ -21,6 +21,7 @@ all_profile=0
 doScalasca=0
 doTlog=0
 doProf=0
+export useDom=0
 args=''
 for i in "$@"; do
     case "${i}" in
@@ -47,12 +48,18 @@ for i in "$@"; do
             fi;;
         -tmp)
             args="${args} --Wn${i}";;
+	-use-dom)
+	    export useDom=1;;
         *)
             args="${args} ${i}";;
     esac
 done
 
-args="${args} --Wx-use-relaxer"
+if test ${useDom} -eq 0; then
+    args="${args} --Wx-use-relaxer"
+else
+    args="${args} --Wf-fxmp"
+fi
 
 if test ${selective_profile} -eq 1 -a ${all_profile} -eq 1; then
     error "Please select only one, \"-profile\" or \"-allprofile\"."

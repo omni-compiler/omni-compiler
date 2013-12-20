@@ -82,6 +82,12 @@ void outx_XMP_Clause(FILE *fp, int indent, CExprOfList* clauseList)
       outxPrint(fp, indent1+1, "<intConstant type=\"int\">%d</intConstant>\n", clauseList->e_aux);
       break;
 
+    case XMP_NODES_INHERIT_EXEC:
+    case XMP_NODES_INHERIT_NODES:
+    case XMP_NODES_INHERIT_GLOBAL:
+      outxPrint(fp, indent1+1, "<intConstant type=\"int\">%d</intConstant>\n", clauseList->e_aux);
+      break;
+
     }
 
     EXPR_FOREACH(ite, clauseList){

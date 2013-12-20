@@ -6,7 +6,6 @@
  */
 package xcodeml.c.util;
 
-
 import xcodeml.c.decompile.*;
 import xcodeml.c.obj.XcNode;
 import xcodeml.c.type.XcArrayLikeType;
@@ -1742,12 +1741,137 @@ public class XmcXcodeToXcTranslator {
         }
     }
 
+    // OMPPragma
+    class OMPPragmaVisitor extends XcodeNodeVisitor {
+        /**
+         * Decompile "OMPPragma" element in XcodeML/F.
+         */
+        @Override
+	public void enter(TranslationContext tc, Node n, XcNode parent) {
+            XcDirectiveObj obj = new XcDirectiveObj();
+	    addChild(parent, obj);
+            
+            // directive
+            Node dir = n.getFirstChild();
+            String dirName = XmDomUtil.getContentText(dir).toLowerCase();
+            
+	    if (dirName.equals("parallel_for")) dirName = "parallel for";
+
+	    obj.setLine("#pragma omp " + dirName);
+
+            if (dirName.equals("threadprivate")){
+		obj.addToken("(");
+            	
+            	NodeList varList = dir.getNextSibling().getChildNodes();
+		enterNodes(tc, obj, varList.item(0));
+		for (int j = 1; j < varList.getLength(); j++){
+		    Node var = varList.item(j);
+		    obj.addToken(",");
+		    enterNodes(tc, obj, var);
+		}
+        
+		obj.addToken(")");
+		
+		return;
+            }
+            
+            // clause
+            Node clause = dir.getNextSibling();
+
+            NodeList list0 = clause.getChildNodes();
+            for (int i = 0; i < list0.getLength(); i++){          
+            	Node childNode = list0.item(i);
+                if (childNode.getNodeType() != Node.ELEMENT_NODE) {
+                    continue;
+                }
+                
+                String clauseName = XmDomUtil.getContentText(childNode).toLowerCase();
+                String operator = "";
+                if (clauseName.equals("data_default"))               clauseName = "default";
+                else if (clauseName.equals("data_private"))          clauseName = "private";
+                else if (clauseName.equals("data_shared"))           clauseName = "shared";
+                else if (clauseName.equals("data_firstprivate"))     clauseName = "firstprivate";
+                else if (clauseName.equals("data_lastprivate"))      clauseName = "lastprivate";
+                else if (clauseName.equals("data_copyin"))           clauseName = "copyin";
+                else if (clauseName.equals("data_reduction_plus"))  {clauseName = "reduction"; operator = "+";}
+                else if (clauseName.equals("data_reduction_minus")) {clauseName = "reduction"; operator = "-";}
+                else if (clauseName.equals("data_reduction_mul"))   {clauseName = "reduction"; operator = "*";}
+                else if (clauseName.equals("data_reduction_bitand")){clauseName = "reduction"; operator = "iand";}
+                else if (clauseName.equals("data_reduction_bitor")) {clauseName = "reduction"; operator = "ior";}
+                else if (clauseName.equals("data_reduction_bitxor")){clauseName = "reduction"; operator = "ieor";}
+                else if (clauseName.equals("data_reduction_logand")){clauseName = "reduction"; operator = ".and.";}
+                else if (clauseName.equals("data_reduction_logor")) {clauseName = "reduction"; operator = ".or.";}
+                else if (clauseName.equals("data_reduction_min"))   {clauseName = "reduction"; operator = "min";}
+                else if (clauseName.equals("data_reduction_max"))   {clauseName = "reduction"; operator = "max";}
+                else if (clauseName.equals("data_reduction_eqv"))   {clauseName = "reduction"; operator = ".eqv.";}
+                else if (clauseName.equals("data_reduction_neqv"))  {clauseName = "reduction"; operator = ".neqv.";}
+                else if (clauseName.equals("dir_ordered"))           clauseName = "ordered";
+                else if (clauseName.equals("dir_if"))                clauseName = "if";
+                else if (clauseName.equals("dir_nowait"))            clauseName = "nowait";
+                else if (clauseName.equals("dir_schedule"))          clauseName = "schedule";
+            
+		obj.addToken(clauseName);
+                
+		Node arg = childNode.getFirstChild().getNextSibling();
+		if (arg != null){
+		    obj.addToken("(");
+		    if (operator != "") obj.addToken(operator + " :");
+
+		    if (!arg.getNodeName().equals("list")){ // default clause
+		      String kind = XmDomUtil.getContentText(arg).toLowerCase();
+		      if (kind.equals("default_shared")) kind = "shared";
+		      else if (kind.equals("default_none")) kind = "none";
+		      obj.addToken(kind);
+		    }
+		    else {
+		      NodeList varList = arg.getChildNodes();
+
+		      String kind = XmDomUtil.getContentText(varList.item(0)).toLowerCase();
+		      
+		      if (kind.equals("sched_static")) obj.addToken("static");
+		      else if (kind.equals("sched_dynamic")) obj.addToken("static");
+		      else if (kind.equals("sched_guided")) obj.addToken("guided");
+		      else if (kind.equals("sched_auto")) obj.addToken("auto");
+		      else if (kind.equals("sched_runtime")) obj.addToken("runtime");
+		      else enterNodes(tc, obj, varList.item(0));
+
+		      for (int j = 1; j < varList.getLength(); j++){
+			Node var = varList.item(j);
+			obj.addToken(",");
+			enterNodes(tc, obj, var);
+		      }
+		    }
+
+		    obj.addToken(")");
+		}
+	    }
+                
+            // body
+            Node body = clause.getNextSibling();
+
+	    //            writer.incrementIndentLevel();
+
+            NodeList list2 = body.getChildNodes();
+            for (int i = 0; i < list2.getLength(); i++){
+                Node childNode = list2.item(i);
+                if (childNode.getNodeType() != Node.ELEMENT_NODE) {
+                    continue;
+                }
+		enterNodes(tc, parent, childNode);
+            }
+
+	    //            writer.decrementIndentLevel();
+            
+        }
+    }
+
     // text
     class TextVisitor extends XcodeNodeVisitor {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
             XcDirectiveObj obj = new XcDirectiveObj();
-            obj.setLine("# " + getContentText(n));
+	    //            obj.setLine("# " + getContentText(n));
+            obj.setLine(getContentText(n));
             setSourcePos(obj, n);
             addChild(parent, obj);
         }
@@ -2667,6 +2791,7 @@ public class XmcXcodeToXcTranslator {
         new Pair("intConstant", new IntConstantVisitor()),
         new Pair("longlongConstant", new LonglongConstantVisitor()),
         new Pair("stringConstant", new StringConstaantVisitor()),
+        new Pair("string", new StringConstaantVisitor()),
         new Pair("moeConstant", new MoeConstantVisitor()),
         new Pair("unaryMinusExpr", new UnaryMinusVisitor()),
         new Pair("postDecrExpr", new PostDecrVisitor()),
@@ -2727,6 +2852,7 @@ public class XmcXcodeToXcTranslator {
         new Pair("gccLabelAddr", new GccLabelAddrVisitor()),
         new Pair("gccAsmDefinition", new GccAsmDefinitionVisitor()),
         new Pair("pragma", new PragmaVisitor()),
+        new Pair("OMPPragma", new OMPPragmaVisitor()),
         new Pair("text", new TextVisitor()),
         new Pair("gccAsmStatement", new GccAsmStatementVisitor()),
         new Pair("gccAsmOperand", new GccAsmOperandVisitor()),

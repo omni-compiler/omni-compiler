@@ -230,6 +230,8 @@ int parse_XMP_pragma()
     return ret;
 }
 
+CExpr* parse_task_ON_ref();
+
 CExpr* parse_NODES_clause() {
     CExpr* nodesNameList = NULL;
     CExpr* nodesSizeList, *inheritedNodes;
@@ -256,10 +258,10 @@ CExpr* parse_NODES_clause() {
 	  inheritedNodes = XMP_PG_LIST(XMP_NODES_INHERIT_EXEC,NULL);
       } else {
 	  inheritedNodes = XMP_PG_LIST(XMP_NODES_INHERIT_NODES, 
-				       parse_ON_ref());
+				       parse_task_ON_ref());
       } 
     } else 
-	inheritedNodes = NULL;
+      inheritedNodes = XMP_PG_LIST(XMP_NODES_INHERIT_GLOBAL, NULL);
     
     if (nodesNameList == NULL) 
 	nodesNameList = parse_COL2_name_list();
@@ -423,7 +425,6 @@ CExpr* parse_SHADOW_clause() {
     return NULL;
 }
 
-CExpr* parse_task_ON_ref();
 
 CExpr* parse_TASK_clause() {
     CExpr* onRef = NULL;
@@ -640,11 +641,15 @@ CExpr *parse_XMP_subscript_list()
 	case ',':  goto err;
 	case ':':
 	    break;
+	case '*':
+	  list = exprListAdd(list, NULL);
+	  pg_get_token();
+	  goto next2;
 	default:
 	    v1 = pg_parse_expr();
 	}
 	
-	if(pg_tok != ':'){
+	if(pg_tok != ':'){ // scalar
 	  v2 = v1;
 	  v3 = (CExpr*)allocExprOfNumberConst2(1, BT_INT);
 	  goto next;
@@ -668,6 +673,8 @@ CExpr *parse_XMP_subscript_list()
       next:
 	if (v3 == NULL) v3 = (CExpr*)allocExprOfNumberConst2(1, BT_INT);
 	list = exprListAdd(list, XMP_LIST3(v1,v2,v3));
+
+      next2:
 	if(pg_tok == ')'){
 	    pg_get_token();
 	    break;
@@ -703,6 +710,11 @@ CExpr *parse_XMP_size_list()
 	case ',':
 	case ':':
 	  goto err;
+	case '*':
+	  //v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "* @{ASTERISK}@", CT_UNDEF);
+	  v = NULL;
+	  pg_get_token();
+	  break;
 	default:
 	    v = pg_parse_expr();
 	}
@@ -804,7 +816,9 @@ CExpr *parse_XMP_loop_subscript_list()
 	case ')':  goto err;
 	case ',':  goto err;
 	case ':':
-	  v = NULL; break;
+	  v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, ": @{COLON}@", CT_UNDEF);
+	  pg_get_token();
+	  break;
 	case '*':
 	  v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "* @{ASTERISK}@", CT_UNDEF);
 	  pg_get_token();
@@ -1082,19 +1096,33 @@ CExpr *parse_task_ON_ref()
 	pg_get_token();
     }
 
-    if(pg_tok != '('){
-	XMP_Error0("syntax error in reference object by 'on'");
-	XMP_has_err = 1;
-	return NULL;
+    if (pg_tok == '('){
+      subscript = parse_XMP_subscript_list();
+      return XMP_LIST2(ident,subscript);
     }
-    subscript = parse_XMP_subscript_list();
-    return XMP_LIST2(ident,subscript);
+    else if (pg_tok == 0){
+      return XMP_LIST2(ident, NULL);
+    }
+    else {
+      XMP_Error0("syntax error in reference object by 'on'");
+      XMP_has_err = 1;
+      return NULL;
+    }
+
+/*     if(pg_tok != '('){ */
+/* 	XMP_Error0("syntax error in reference object by 'on'"); */
+/* 	XMP_has_err = 1; */
+/* 	return NULL; */
+/*     } */
+/*     subscript = parse_XMP_subscript_list(); */
+/*     return XMP_LIST2(ident,subscript); */
 }
 
 CExpr *parse_Reduction_opt()
 {
     int op;
     CExpr *list;
+    int loc_var_flag = 0;
     
     if(!PG_IS_IDENT("reduction")) return NULL;
 
@@ -1119,10 +1147,10 @@ CExpr *parse_Reduction_opt()
     case PG_IDENT:
 	if(PG_IS_IDENT("max")) op = XMP_DATA_REDUCE_MAX;
 	else if(PG_IS_IDENT("min")) op = XMP_DATA_REDUCE_MIN;
-	else if(PG_IS_IDENT("firstmax")) op = XMP_DATA_REDUCE_FIRSTMAX;
-	else if(PG_IS_IDENT("firstmin")) op = XMP_DATA_REDUCE_FIRSTMIN;
-	else if(PG_IS_IDENT("lastmax")) op = XMP_DATA_REDUCE_LASTMAX;
-	else if(PG_IS_IDENT("lastmin")) op = XMP_DATA_REDUCE_LASTMIN;
+	else if(PG_IS_IDENT("firstmax")){ op = XMP_DATA_REDUCE_FIRSTMAX; loc_var_flag = 1;}
+	else if(PG_IS_IDENT("firstmin")){ op = XMP_DATA_REDUCE_FIRSTMIN; loc_var_flag = 1;}
+	else if(PG_IS_IDENT("lastmax")){ op = XMP_DATA_REDUCE_LASTMAX; loc_var_flag = 1;}
+	else if(PG_IS_IDENT("lastmin")){ op = XMP_DATA_REDUCE_LASTMIN; loc_var_flag = 1;}
 	else goto unknown_err;
 	break;
     default:
@@ -1132,17 +1160,68 @@ CExpr *parse_Reduction_opt()
     }
     pg_get_token();
     if(pg_tok != ':') goto err;
-    pg_get_token();
     list = EMPTY_LIST;
-    while(pg_tok == PG_IDENT){
-        list = exprListAdd(list, XMP_LIST2(pg_tok_val, EMPTY_LIST));
+
+    do {
+
+        pg_get_token();
+
+	CExpr *specList = XMP_LIST1(pg_tok_val);
+        CExpr *locVarList = EMPTY_LIST;
+
 	pg_get_token();
-	if(pg_tok != ',') break;
-	pg_get_token();
-    }
-    if(pg_tok != ')') goto err;
+
+	if (loc_var_flag){
+
+	  if (pg_tok != '/'){
+	    XMP_Error0("'/' is expected after <reduction-variable>");
+	    return NULL;
+	  }
+
+          do {
+
+            pg_get_token();
+
+            if (pg_tok == PG_IDENT)
+              locVarList = exprListAdd(locVarList, pg_tok_val);
+	    /* else if (pg_tok() == '*'){  // Pointer Reference */
+	    /*   pg_get_token(); */
+	    /*   locationVariables.add(Xcons.String(pg_tok_buf())); */
+	    /* } */
+            else {
+              XMP_Error0("syntax error on <location-variable>");
+	      return NULL;
+	    }
+
+            pg_get_token();
+            if (pg_tok == '/') break;
+            else if (pg_tok == ',') continue;
+            else {
+              XMP_Error0("'/' or ',' is expected after <reduction-spec>");
+	      return NULL;
+	    }
+
+          } while (1);
+
+	  list = exprListAdd(list, exprListAdd(specList, locVarList));
+
+          pg_get_token();
+	  if (pg_tok != ',') break;
+
+	  pg_get_token();
+	}
+	else
+	  list = exprListAdd(list, exprListAdd(specList, locVarList));
+
+	if (pg_tok == ')') break;
+	else if (pg_tok == ',') continue;
+	else
+	  XMP_Error0("')' or ',' is expected after <reduction-spec>");
+    } while (1);
+
     pg_get_token();
     return XMP_PG_LIST(op,list);
+
   err:
     XMP_Error0("syntax error in reduction clause");
   ret:

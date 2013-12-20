@@ -18,6 +18,7 @@ public class XMPalignedArray {
   public final static int BLOCK		= 202;
   public final static int CYCLIC	= 203;
   public final static int BLOCK_CYCLIC	= 204;
+  public final static int GBLOCK	= 205;
 
   private String		_name;
   private Xtype			_type;
@@ -48,6 +49,8 @@ public class XMPalignedArray {
         return CYCLIC;
       case XMPtemplate.BLOCK_CYCLIC:
         return BLOCK_CYCLIC;
+      case XMPtemplate.GBLOCK:
+	return GBLOCK;
       default:
         throw new XMPexception("unknown dist manner");
     }
@@ -116,6 +119,8 @@ public class XMPalignedArray {
         return new String("CYCLIC");
       case BLOCK_CYCLIC:
         return new String("BLOCK_CYCLIC");
+      case GBLOCK:
+        return new String("GBLOCK");
       default:
         throw new XMPexception("unknown align manner");
     }
@@ -216,6 +221,7 @@ public class XMPalignedArray {
           case BLOCK:
           case CYCLIC:
           case BLOCK_CYCLIC:
+	  case GBLOCK:
             {
               XMPshadow shadow = getShadowAt(i);
               switch (shadow.getType()) {
@@ -250,6 +256,7 @@ public class XMPalignedArray {
           case BLOCK:
           case CYCLIC:
           case BLOCK_CYCLIC:
+	  case GBLOCK:
             {
               _reallocChecked = true;
               _realloc = true;
@@ -312,13 +319,16 @@ public class XMPalignedArray {
     }
 
     Ident arrayId = null;
+    Boolean isParameter = true;
     if (isLocalPragma) {
-      arrayId = funcBlockList.findLocalIdent(arrayName);
-      if (arrayId != null) {
-        if (arrayId.getStorageClass() != StorageClass.PARAM) {
-          throw new XMPexception("array '" + arrayName + "' is not a parameter of a function");
-        }
-      }
+      arrayId = XMPlocalDecl.findLocalIdent(pb, arrayName);
+      if (arrayId != null) isParameter = (arrayId.getStorageClass() == StorageClass.PARAM);
+      // arrayId = funcBlockList.findLocalIdent(arrayName);
+      // if (arrayId != null) {
+      //   if (arrayId.getStorageClass() != StorageClass.PARAM) {
+      //     throw new XMPexception("array '" + arrayName + "' is not a parameter of a function");
+      //   }
+      // }
     }
     else {
       arrayId = globalDecl.findVarIdent(arrayName);
@@ -544,16 +554,20 @@ public class XMPalignedArray {
       XMPlocalDecl.addConstructorCall("_XMP_init_array_comm", initArrayCommFuncArgs, globalDecl, pb);
       XMPlocalDecl.addConstructorCall("_XMP_init_array_nodes", Xcons.List(alignedArray.getDescId().Ref()), globalDecl, pb);
 
-      // init array address
-      XobjList initArrayAddrFuncArgs = Xcons.List(alignedArray.getAddrIdVoidAddr(),
-                                                  arrayId.Ref(),
-                                                  arrayDescId.Ref());
-      for (int i = arrayDim - 1; i >= 0; i--) {
-        initArrayAddrFuncArgs.add(Xcons.Cast(Xtype.Pointer(Xtype.unsignedlonglongType),
-                                             alignedArray.getAccIdAt(i).getAddr()));
+      if (isParameter){
+
+	// init array address
+	XobjList initArrayAddrFuncArgs = Xcons.List(alignedArray.getAddrIdVoidAddr(),
+						    arrayId.Ref(),
+						    arrayDescId.Ref());
+	for (int i = arrayDim - 1; i >= 0; i--) {
+	  initArrayAddrFuncArgs.add(Xcons.Cast(Xtype.Pointer(Xtype.unsignedlonglongType),
+					       alignedArray.getAccIdAt(i).getAddr()));
+	}
+
+	XMPlocalDecl.addAllocCall("_XMP_init_array_addr", initArrayAddrFuncArgs, globalDecl, pb);
       }
 
-      XMPlocalDecl.addAllocCall("_XMP_init_array_addr", initArrayAddrFuncArgs, globalDecl, pb);
     }
     else {
       globalDecl.addGlobalInitFuncCall("_XMP_init_array_comm", initArrayCommFuncArgs);
@@ -618,6 +632,7 @@ public class XMPalignedArray {
       case XMPtemplate.BLOCK:
       case XMPtemplate.CYCLIC:
       case XMPtemplate.BLOCK_CYCLIC:
+      case XMPtemplate.GBLOCK:
         {
           Ident gtolTemp0Id = null;
           if (isLocalPragma) {

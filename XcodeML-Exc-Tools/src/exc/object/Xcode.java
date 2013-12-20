@@ -256,11 +256,15 @@ public enum Xcode
      // -----------------
      // XcalableMP Pragma
     XMP_PRAGMA                      ( 189, 'L', null, null),
-    XMP_DESC_OF                     ( 190, 'U', null, null),
+    XMP_DESC_OF                     ( 190, 'U', XbcXmpDescOf.class, null),
      // -----------------
      // OpenACC Pragma
     ACC_PRAGMA                      ( 191, 'L', null, null),
      // -----------------
+    INDEX_RANGE                     ( 192, 'L', XbcIndexRange.class, null),
+    LOWER_BOUND                     ( 193, 'L', XbcLowerBound.class, null),
+    UPPER_BOUND                     ( 194, 'L', XbcUpperBound.class, null),
+    STEP                            ( 195, 'L', XbcStep.class, null),
      // Codes dynamically assignable
     DYN_1                           ( 1001, 'L', null, null),
     DYN_2                           ( 1002, 'L', null, null),

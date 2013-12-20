@@ -500,6 +500,23 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
         } else {
           distFormatList.add(Xcons.List(Xcons.IntConstant(XMPtemplate.CYCLIC), null));
         }
+      } else if (pg_is_ident("gblock") || pg_is_ident("GBLOCK")) {
+        pg_get_token();
+        if (pg_tok() == '(') {
+          pg_get_token();
+          Xobject mapArray = pg_parse_expr();
+
+          if (pg_tok() != ')') {
+            error("')' is needed after <mapping-array>");
+          }
+	  else {
+            pg_get_token();
+            distFormatList.add(Xcons.List(Xcons.IntConstant(XMPtemplate.GBLOCK), mapArray));
+          }
+        }
+	else {
+          error("no mapping array of gblock");
+        }
       } else {
         error("unknown distribution manner");
       }

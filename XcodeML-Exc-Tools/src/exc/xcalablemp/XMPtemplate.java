@@ -16,6 +16,7 @@ public class XMPtemplate extends XMPobject {
   public final static int BLOCK		= 101;
   public final static int CYCLIC	= 102;
   public final static int BLOCK_CYCLIC	= 103;
+  public final static int GBLOCK	= 104;
 
   private boolean		_isFixed;
   private boolean		_isDistributed;
@@ -127,6 +128,8 @@ public class XMPtemplate extends XMPobject {
         return new String("CYCLIC");
       case BLOCK_CYCLIC:
         return new String("BLOCK_CYCLIC");
+      case GBLOCK:
+        return new String("GBLOCK");
       default:
         throw new XMPexception("unknown distribute manner");
     }
@@ -298,6 +301,7 @@ public class XMPtemplate extends XMPobject {
         case XMPtemplate.BLOCK:
         case XMPtemplate.CYCLIC:
         case XMPtemplate.BLOCK_CYCLIC:
+        case XMPtemplate.GBLOCK:
           {
             if (nodesDimIdx == nodesDim) {
               throw new XMPexception("the number of <dist-format> (except '*') should be the same with the nodes dimension");
@@ -363,6 +367,17 @@ public class XMPtemplate extends XMPobject {
                                 width);
           templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
           templateObject.setWidthAt(width, templateDimIdx);
+          break;
+        }
+      case XMPtemplate.GBLOCK:
+        {
+          Xobject mappingArray = distManner.getArg(1);
+          funcArgs = Xcons.List(templateObject.getDescId().Ref(),
+                                Xcons.IntConstant(templateDimIdx),
+                                Xcons.IntConstant(nodesDimIdx),
+                                mappingArray);
+          templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
+          templateObject.setWidthAt(mappingArray, templateDimIdx);
           break;
         }
       default:

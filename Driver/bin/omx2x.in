@@ -86,6 +86,8 @@ mv ${TMP_OUTFILE} ${OUTFILE} || exit $?
 
 if [ "${OM_USE_XMPF}" = "1" ]; then
     mv ${BNAME}.in.F90 ${BNAME}.F90 || exit $?
+elif [ "${OM_USE_XMP}" = "1" -a "${useDom}" = "1" ]; then
+    mv ${BNAME}.in.c ${BNAME}.c || exit $?
 fi
 
 exit 0

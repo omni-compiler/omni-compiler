@@ -42,6 +42,17 @@ public class XMPlocalDecl {
     return null;
   }
 
+  public static Ident findLocalIdent(Block block, String name) {
+    if (block == null) return null;
+
+    for (Block b = block; b != null; b = b.getParentBlock()){
+      Ident id = b.findVarIdent(name);
+      if (id != null) return id;
+    }
+
+    return null;
+  }
+    
   public static XMPsymbolTable getXMPsymbolTable(Block block) {
     FunctionBlock fb = findParentFunctionBlock(block);
     if (fb == null) return null;

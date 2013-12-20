@@ -418,6 +418,7 @@ pg_parse_expr()
 }
 
 extern CExprOfTypeDesc s_voidTypeDesc;
+extern CExprOfTypeDesc s_numTypeDescs[BT_END];
 
 /**
  * \brief
@@ -491,7 +492,8 @@ pg_term_expr(int pre)
     }
 
     e = exprBinary(code, e, ee);
-    exprSetExprsType(e, &s_voidTypeDesc);
+    //exprSetExprsType(e, &s_voidTypeDesc);
+    exprSetExprsType(e, &s_numTypeDescs[BT_INT]);
 
     goto again;
 }
@@ -563,7 +565,7 @@ addExpectedCharError(const char *expected)
 PRIVATE_STATIC CExpr*
 pg_factor_expr()
 {
-    CExpr *e, *ee = NULL;
+    CExpr *e, *ee = NULL, *args;
 
     e = pg_primary_expr();
 
@@ -588,6 +590,31 @@ pg_factor_expr()
         e = exprList2(EC_ARRAY_REF, e, ee);
         pg_get_token();
         break;
+
+    case '(':
+      pg_get_token();
+      args = (CExpr *)allocExprOfList(EC_UNDEF);
+      if (pg_tok != ')'){
+	while (1){
+	  if ((ee = pg_term_expr(0)) == NULL) {
+	    goto error;
+	  }
+	  args = exprListAdd(args, ee);
+	  if (pg_tok != ','){
+	    break;
+	  }
+	  pg_get_token();
+	}
+      }
+
+      if (pg_tok == ')'){
+	pg_get_token();
+	e = exprBinary(EC_FUNCTION_CALL, e, args);
+	//exprSetExprsType(e, &s_voidTypeDesc);
+	exprSetExprsType(e, &s_numTypeDescs[BT_INT]);
+	break;
+      }
+      goto error;
 
     case '.':
         pg_get_token();

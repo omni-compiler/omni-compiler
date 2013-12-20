@@ -199,6 +199,10 @@ public class XMPutil {
         if (x.getString().equals(string))
           count++;
       }
+      else if (x.Opcode() == Xcode.VAR) {
+        if (x.getString().equals(string))
+          count++;
+      }
     }
 
     return count;
@@ -228,6 +232,10 @@ public class XMPutil {
       if (x.Opcode() == Xcode.STRING) {
         if (x.getString().equals(string))
           return true;
+      }
+      else if (x.Opcode() == Xcode.VAR) {
+        if (x.getString().equals(string))
+	  return true;
       }
     }
 
@@ -278,6 +286,10 @@ public class XMPutil {
           if (x.getString().equals(string))
             return index;
         }
+	else if (x.Opcode() == Xcode.VAR) {
+	  if (x.getString().equals(string))
+	    return index;
+	}
       }
 
       index++;

@@ -110,6 +110,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
     case PRAGMA_LINE:
     case TEXT:
     case ACC_PRAGMA:
+    case XMP_PRAGMA:
       xobjFile.add(xobj);
       break;
     default:
@@ -408,8 +409,15 @@ public class XcodeMLtools_C extends XcodeMLtools {
       return objList;
     }
 
+    case XMP_DESC_OF:
+      return enterXmpDescOf(code, type, getContent(n));
+
     case SUB_ARRAY_REF:
-      return enterArrayRef(code, type, n);
+      //return enterArrayRef(code, type, n);
+      return enterSubArrayRef(code, type, n);
+
+    case INDEX_RANGE:
+      return enterIndexRange(code, type, n);
 
     case CO_ARRAY_REF: {
       ArrayList<Node> childNodes = collectChildNodes(n);
@@ -644,7 +652,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
     return objList;
   }
 
-  /** process arrayRef, subArrayRef. */
+  /** process arrayRef. */
   private XobjList enterArrayRef(Xcode code, Xtype type, Node arrayRefNode) {
     ArrayList<Node> childNodes = collectElementsExclude(arrayRefNode,
 							"arrayAddr");
@@ -657,6 +665,67 @@ public class XcodeMLtools_C extends XcodeMLtools {
 				Xcode.LIST,
 				getType(getAttr(arrayRefNode, "type")),
 				childNodes.toArray(new Node[0])));
+    return objList;
+  }
+
+  /** process xmpDescOf. */
+  private XobjList enterXmpDescOf(Xcode code, Xtype type, Node argNode){
+    XobjList objList = Xcons.List(code, type);
+    objList.add(toXobject(argNode));
+    return objList;
+  }
+
+  /** process subArrayRef. */
+  private XobjList enterSubArrayRef(Xcode code, Xtype type, Node subArrayRefNode) {
+    ArrayList<Node> childNodes = collectElementsExclude(subArrayRefNode,
+							"arrayAddr");
+    Node arrayAddrNode = getElement(subArrayRefNode, "arrayAddr");
+    XobjList objList = enterAsXobjList(subArrayRefNode,
+				       code,
+				       type,
+				       arrayAddrNode);
+
+    XobjList subList = Xcons.List();
+    for (Node childNode : childNodes){
+      Xobject indexRange = toXobject(childNode);
+      if (indexRange instanceof XobjList){
+	subList.add(indexRange.getArg(0));
+      }
+      else {
+	subList.add(indexRange);
+      }
+    }
+    objList.add(subList);
+
+    // objList.add(enterAsXobjList(subArrayRefNode,
+    // 				Xcode.LIST,
+    // 				getType(getAttr(subArrayRefNode, "type")),
+    // 				childNodes.toArray(new Node[0])));
+
+    return objList;
+  }
+
+  /** process indexRange. */
+  private XobjList enterIndexRange(Xcode code, Xtype type, Node indexRangeNode) {
+    ArrayList<Node> childNodes = collectChildNodes(indexRangeNode);
+    XobjList objList = Xcons.List(code, type);
+    // objList.add(enterAsXobjList(indexRangeNode,
+    // 				Xcode.LIST,
+    // 				type,
+    // 				childNodes.toArray(new Node[0])));
+
+    if (childNodes.size() == 1){
+      objList.add(toXobject(childNodes.get(0)));
+    }
+    else {
+      XobjList subList = Xcons.List();
+      for (Node childNode : childNodes){
+	Xobject arg = toXobject(childNode);
+	subList.add(arg.getArg(0));
+      }
+      objList.add(subList);
+    }
+
     return objList;
   }
 

@@ -268,7 +268,7 @@ public class omompx
 	if(!validator.read(reader, xmProg, readErrorList)) {
 	  for (String error : readErrorList) {
 	    System.err.println(error);
-	    System.exit(1);
+	    //	    System.exit(1);
 	  }
 	}
 
@@ -295,9 +295,7 @@ public class omompx
       if (inXmlFile != null) {
 	reader.close();
       }
-      if(XmOption.getLanguage() == XmLanguage.C){
-        srcPath = xobjFile.getSourceFileName();
-      }
+      //srcPath = xobjFile.getSourceFileName();
     }
         
     String baseName = null;
@@ -462,9 +460,9 @@ public class omompx
       XmXobjectToXcodeTranslator xc2xcodeTranslator = null;
 
       if (lang.equals("F")) {
-	xc2xcodeTranslator = new XmfXobjectToXcodeTranslator();
+        xc2xcodeTranslator = new XmfXobjectToXcodeTranslator();
       } else {
-	xc2xcodeTranslator = new XmcXobjectToXcodeTranslator();
+        xc2xcodeTranslator = new XmcXobjectToXcodeTranslator();
       }
 
       xcodeDoc = xc2xcodeTranslator.write(xobjFile);

@@ -8,6 +8,7 @@ package xcodeml.c.decompile;
 
 import xcodeml.XmException;
 import xcodeml.c.obj.XcNode;
+import xcodeml.c.type.XcIdent;
 import xcodeml.c.util.XmcWriter;
 
 /**
@@ -45,9 +46,20 @@ public class XcDirectiveObj extends XcStmtObj implements XcDecAndDefObj
         _line = line;
     }
 
+    public final void addToken(String line)
+    {
+	_line += " " + line;
+    }
+
     @Override
     public void addChild(XcNode child)
     {
+	if (child instanceof XcIdent){
+	    _line += " " + ((XcIdent)child).getSymbol();
+	}
+	else {
+	    throw new IllegalArgumentException(child.getClass().getName());
+	}
     }
 
     @Override
