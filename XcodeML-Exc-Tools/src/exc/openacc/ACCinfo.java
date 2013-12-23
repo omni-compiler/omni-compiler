@@ -315,6 +315,14 @@ public class ACCinfo {
     return false;
   }
   
+  public boolean isVarReduction(String varName){
+    ACCvar var = getACCvar(varName);
+    if(var != null){
+      if(var.isReduction()) return true;
+    }
+    return false;
+  }
+  
   public Ident getDevicePtr(String varName){
     for(ACCinfo info = this; info != null; info = info.parent){
       if(info.isDisabled()) continue;

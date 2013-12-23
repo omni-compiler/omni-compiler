@@ -70,6 +70,8 @@ public class ACCtranslateParallel {
       //if(parallelInfo.isVarPrivate(varName)) continue;
       if(parallelInfo.isVarFirstprivate(varName)) continue; //this is need for only parallel construct
       //if(parallelInfo.getDevicePtr(varName) != null) continue;
+      if(parallelInfo.isVarReduction(varName)) continue;
+      
       if(readOnlyOuterIdSet.contains(id) && !id.Type().isArray()) continue; //firstprivateは除く
       //if(inductionVarIdSet.contains(id)) continue;
       
@@ -93,7 +95,7 @@ public class ACCtranslateParallel {
     //set replace block
     parallelInfo.setReplaceBlock(replaceBlock);
   }
-  
+
   public void translate_old() throws ACCexception{
     if(ACC.debugFlag){
       System.out.println("translate parallel");

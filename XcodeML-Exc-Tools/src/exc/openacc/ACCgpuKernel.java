@@ -28,6 +28,8 @@ public class ACCgpuKernel {
   
   private ReductionManager reductionManager = new ReductionManager("test_kernels");
   private List<Ident> BlockPrivateArrayIdList = new ArrayList<Ident>();
+  private Set<Ident> _useMemPoolOuterIdSet = new HashSet<Ident>();
+  private List<XobjList> allocList = new ArrayList<XobjList>(); //for private array or reduction tmp array
 
 
   public ACCgpuKernel(ACCinfo kernelInfo, Block kernelBlock) {
@@ -85,7 +87,7 @@ public class ACCgpuKernel {
       case Xtype.UNION:
       case Xtype.ENUM:
       {
-        Ident devicePtrId;
+        Ident devicePtrId = null;
         String idName = id.getName(); 
         if(_readOnlyOuterIdSet.contains(id)){ //is this condition appropriate?
           devicePtrId = kernelInfo.getDevicePtr(idName);
@@ -95,11 +97,11 @@ public class ACCgpuKernel {
             arg = id.Ref();
           }
         }else{
-          try{
-            devicePtrId = kernelInfo.getDevicePtr(idName); 
-            arg = devicePtrId.Ref();
-          }catch(Exception e){
-            ACC.fatal("makeLaunchFuncArgs" + e.getMessage());
+          if(_useMemPoolOuterIdSet.contains(id)){
+            arg = id.getAddr();
+          }else{
+            devicePtrId = kernelInfo.getDevicePtr(idName);
+            arg = devicePtrId.Ref();              
           }
         }
       } break;
@@ -276,11 +278,9 @@ public class ACCgpuKernel {
     
     //if block reduction is used
     if(reductionManager.hasBlockReduction){
- 
-      deviceKernelLocalIds.mergeList(reductionManager.getBlockReductionParamIds());//temporary//deviceKernelParamIds.mergeList(reductionManager.getBlockReductionParamIds());
-
-      
+      deviceKernelParamIds.mergeList(reductionManager.getBlockReductionParamIds());
       deviceKernelLocalIds.mergeList(reductionManager.getBlockReductionLocalIds());
+      allocList.add(Xcons.List(reductionManager.tempPtr, Xcons.IntConstant(0), reductionManager.totalElementSize ));
     }
     
 
@@ -290,19 +290,8 @@ public class ACCgpuKernel {
     if(sharedMemory.isUsed()){
       deviceKernelBody.add(sharedMemory.makeInitFunc());
     }
-    if(reductionManager.hasBlockReduction){
-
-      /*temporary*/
-      Ident reductionCnt = Ident.Var(deviceKernelName + "_red_cnt", Xtype.unsignedType, Xtype.Pointer(Xtype.unsignedType), VarScope.GLOBAL);
-      Ident reductionTmpPtr = Ident.Var(deviceKernelName + "_red_tmp", Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType), VarScope.GLOBAL);
-      _varDecls.add(new XobjectDef(Xcons.List(Xcode.VAR_DECL, reductionCnt, Xcons.IntConstant(0))));
-      _varDecls.add(new XobjectDef(Xcons.List(Xcode.VAR_DECL, reductionTmpPtr, Xcons.IntConstant(0))));
-      deviceKernelBody.add(Bcons.Statement(Xcons.Set(reductionManager.counterPtr.Ref(), reductionCnt.getAddr())));
-      deviceKernelBody.add(Bcons.Statement(Xcons.Set(reductionManager.tempPtrPtr.Ref(), reductionTmpPtr.getAddr())));
-      /*end*/
-      
-      
-      deviceKernelBody.add(reductionManager.makeInitFunc());
+    if(reductionManager.hasBlockReduction){    
+      //deviceKernelBody.add(reductionManager.makeInitFunc());
       deviceKernelBody.add(reductionManager.makeLocalVarInitFuncs());
     }
     
@@ -494,10 +483,10 @@ public class ACCgpuKernel {
 		XobjList initPrivateFuncArgs = Xcons.List(Xcons.Cast(Xtype.Pointer(Xtype.voidPtrType), arrayPtrId.getAddr()), privateArrayParamId.Ref(), sizeObj);
 		Block initPrivateFuncCall = ACCutil.createFuncCallBlock("_ACC_init_private", initPrivateFuncArgs);
 		initBlocks.add(initPrivateFuncCall);
+		allocList.add(Xcons.List(var.getId(), Xcons.IntConstant(0), sizeObj)); ///List(id, basicSize, #block factor)
 	      }catch(Exception e){
 		ACC.fatal(e.getMessage());
 	      }
-	      BlockPrivateArrayIdList.add(var.getId());
 	    }else{
 	      Ident privateLocalId = Ident.Local(var.getName(), varType);
 	      privateLocalId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
@@ -907,13 +896,7 @@ public class ACCgpuKernel {
     ////make body
     XobjList launchFuncParamIds = Xcons.IDList();
     XobjList launchFuncLocalIds = Xcons.IDList();
-    
-    //parameter
-    for(Ident id : outerIdList){
-      Ident paramId = makeParamId_new(id);
-      launchFuncParamIds.add(paramId);
-    }
-    XobjList deviceKernelCallArgs = ACCutil.getRefs(launchFuncParamIds);
+    XobjList deviceKernelCallArgs = Xcons.List();
     
     //# of block and thread
     Ident blockXid = Ident.Local("_ACC_GPU_DIM3_block_x", Xtype.intType);
@@ -945,35 +928,91 @@ public class ACCgpuKernel {
     Block adjustGridFuncCall = ACCutil.createFuncCallBlock("_ACC_GPU_ADJUST_GRID", Xcons.List(Xcons.AddrOf(blockXid.Ref()), Xcons.AddrOf(blockYid.Ref()), Xcons.AddrOf(blockZid.Ref()),max_num_grid));
     launchFuncBody.add(adjustGridFuncCall);
     
-    //add private array
-    if(! BlockPrivateArrayIdList.isEmpty()){
-      for(Ident id : BlockPrivateArrayIdList){
-	Xtype varType = id.Type();
-	Ident privateArrayPtr = Ident.Local("_ACC_prv_"+id.getName(), Xtype.voidPtrType);
-	Xobject sizeObj = null;
-	try{
-	  sizeObj = Xcons.binaryOp(Xcode.MUL_EXPR, blockXid.Ref(),  
-	      Xcons.binaryOp(Xcode.MUL_EXPR, 
-	      ACCutil.getArrayElmtCountObj(varType),Xcons.SizeOf(((ArrayType)varType).getArrayElementType())));
-	}catch(Exception e){
-	  ACC.fatal(e.getMessage());
+    
+    Ident mpool = Ident.Local("_ACC_GPU_mpool", Xtype.voidPtrType);
+    Ident mpoolPos = Ident.Local("_ACC_GPU_mpool_pos", Xtype.longlongType);
+
+    if(! allocList.isEmpty() || !_useMemPoolOuterIdSet.isEmpty()){
+      Block initMpoolPos = Bcons.Statement(Xcons.Set(mpoolPos.Ref(), Xcons.LongLongConstant(0, 0)));
+      Block getMpoolFuncCall = null;
+      try{
+	if(kernelInfo.isAsync() && kernelInfo.getAsyncExp() != null){
+	  getMpoolFuncCall = ACCutil.createFuncCallBlock("_ACC_gpu_mpool_get_async", Xcons.List(mpool.getAddr(), kernelInfo.getAsyncExp()));
+	}else{
+	  getMpoolFuncCall = ACCutil.createFuncCallBlock("_ACC_gpu_mpool_get", Xcons.List(mpool.getAddr()));
 	}
-	Block mallocPrivateArrayFuncCall = ACCutil.createFuncCallBlock("_ACC_gpu_malloc", Xcons.List(privateArrayPtr.getAddr(), sizeObj));
-	Block freePrivateArrayFuncCall = ACCutil.createFuncCallBlock("_ACC_gpu_free", Xcons.List(privateArrayPtr.Ref()));
-	
-	launchFuncLocalIds.add(privateArrayPtr);
-	deviceKernelCallArgs.add(privateArrayPtr.Ref());
-	preBlocks.add(mallocPrivateArrayFuncCall);
-	postBlocks.add(freePrivateArrayFuncCall);
+      }catch(ACCexception e){
+	ACC.fatal(e.getMessage());
       }
+      launchFuncLocalIds.add(mpool);
+      launchFuncLocalIds.add(mpoolPos);
+      preBlocks.add(initMpoolPos);
+      preBlocks.add(getMpoolFuncCall);
+    }
+
+    for(Ident varId : _outerIdList){
+      if(_useMemPoolOuterIdSet.contains(varId)){
+	Ident paramId = Ident.Param(varId.getName(), Xtype.Pointer(varId.Type()));
+	launchFuncParamIds.add(paramId);
+	
+	Ident devPtrId = Ident.Local("_ACC_gpu_dev_" + varId.getName(), Xtype.voidPtrType);
+	launchFuncLocalIds.add(devPtrId);
+	Xobject size = null;
+	try{
+	  ACCvar var = kernelInfo.getACCvar(varId);
+	  size = var.getSize();
+	}catch(ACCexception e){
+	  ACC.fatal("cannot get var size");
+	}
+	Block mpoolAllocFuncCall = ACCutil.createFuncCallBlock("_ACC_gpu_mpool_alloc", Xcons.List(devPtrId.getAddr(), size, mpool.Ref(), mpoolPos.getAddr()));
+	Block mpoolFreeFuncCall = ACCutil.createFuncCallBlock("_ACC_gpu_mpool_free", Xcons.List(devPtrId.Ref(), mpool.Ref()));
+	Block HtoDCopyFuncCall = ACCutil.createFuncCallBlock("_ACC_gpu_copy", Xcons.List(paramId.Ref(), devPtrId.Ref(), size, Xcons.IntConstant(400)));
+	Block DtoHCopyFuncCall = ACCutil.createFuncCallBlock("_ACC_gpu_copy", Xcons.List(paramId.Ref(), devPtrId.Ref(), size, Xcons.IntConstant(401)));
+	preBlocks.add(mpoolAllocFuncCall);
+	preBlocks.add(HtoDCopyFuncCall);
+	postBlocks.add(DtoHCopyFuncCall);
+	postBlocks.add(mpoolFreeFuncCall);
+	deviceKernelCallArgs.add(Xcons.Cast(Xtype.Pointer(varId.Type()), devPtrId.Ref()));
+      }else{
+	Ident paramId = makeParamId_new(varId);
+	launchFuncParamIds.add(paramId);
+	deviceKernelCallArgs.add(paramId.Ref());
+      }
+    }
+      
+    for(XobjList xobjList : allocList){
+      Ident varId = (Ident)(xobjList.getArg(0));
+      Xobject baseSize = xobjList.getArg(1);
+      Xobject numBlocksFactor = xobjList.getArg(2);
+
+      Ident devPtrId = Ident.Local("_ACC_gpu_device_" + varId.getName(), Xtype.voidPtrType);
+      launchFuncLocalIds.add(devPtrId);
+      deviceKernelCallArgs.add(devPtrId.Ref());
+      
+      Xobject size = Xcons.binaryOp(Xcode.PLUS_EXPR, baseSize,
+	  Xcons.binaryOp(Xcode.MUL_EXPR, numBlocksFactor, blockXid.Ref()));
+      Block mpoolAllocFuncCall = ACCutil.createFuncCallBlock("_ACC_gpu_mpool_alloc", Xcons.List(devPtrId.getAddr(), size, mpool.Ref(), mpoolPos.getAddr()));
+      Block mpoolFreeFuncCall = ACCutil.createFuncCallBlock("_ACC_gpu_mpool_free", Xcons.List(devPtrId.Ref(), mpool.Ref()));
+      preBlocks.add(mpoolAllocFuncCall);
+      postBlocks.add(mpoolFreeFuncCall);
     }
     
     //add blockReduction cnt & tmp
     if(reductionManager.hasBlockReduction){
-      //temporary
-
-      //deviceKernelCallArgs.add(reductionCnt.getAddr());
-      //deviceKernelCallArgs.add(reductionTmpPtr.getAddr());
+      Ident blockCountId = Ident.Local("_ACC_gpu_block_count", Xtype.Pointer(Xtype.unsignedType));
+      launchFuncLocalIds.add(blockCountId);
+      deviceKernelCallArgs.add(blockCountId.Ref());
+      Block getBlockCounterFuncCall = null;
+      try{
+	if(kernelInfo.isAsync() && kernelInfo.getAsyncExp() != null){
+	  getBlockCounterFuncCall = ACCutil.createFuncCallBlock("_ACC_gpu_get_block_count_async", Xcons.List(blockCountId.getAddr(), kernelInfo.getAsyncExp()));
+	}else{
+	  getBlockCounterFuncCall = ACCutil.createFuncCallBlock("_ACC_gpu_get_block_count", Xcons.List(blockCountId.getAddr()));
+	}
+      }catch(ACCexception e){
+	ACC.fatal(e.getMessage());
+      }
+      preBlocks.add(getBlockCounterFuncCall);
     }
 
     launchFuncBody.setIdentList(launchFuncLocalIds);
@@ -1051,6 +1090,9 @@ public class ACCgpuKernel {
       if(kernelInfo.isVarAllocated(varName)){
         return Ident.Local(varName, Xtype.Pointer(id.Type()));
       }else{
+	if(_useMemPoolOuterIdSet.contains(id)){
+	  return Ident.Local(varName, Xtype.Pointer(id.Type()));
+	}
         return Ident.Local(varName, id.Type());          
       }
     }
@@ -1153,6 +1195,12 @@ public class ACCgpuKernel {
     //collect private var ids
     _inductionVarIdSet = collectInductionVarSet();
     
+    //useMemPoolVarId
+    for(Ident id : _outerIdList){
+      if(kernelInfo.isVarReduction(id.getName())){
+	_useMemPoolOuterIdSet.add(id);      
+      }
+    }
   }
   
   public Set<Ident> getInductionVarIdSet(){
@@ -1220,6 +1268,26 @@ public class ACCgpuKernel {
     }
     
     return privatizedIdSet;
+  }
+  
+  private Set<Ident> collectReductionIdSet(Block kernelBlock){
+    Set<Ident> reductionIdSet = new HashSet<Ident>();
+    
+    topdownBlockIterator blockIter = new topdownBlockIterator(kernelBlock);
+    for(blockIter.init(); !blockIter.end(); blockIter.next()){
+      Block b = blockIter.getBlock();
+      if(b.Opcode() != Xcode.FOR_STATEMENT) continue;
+      ACCinfo info = ACCutil.getACCinfo(b);
+      if(info == null) continue;
+      for(Iterator<ACCvar> accVarIter = info.getVars(); accVarIter.hasNext(); ){
+        ACCvar var = accVarIter.next();
+        if(var.isReduction()){
+          reductionIdSet.add(var.getId());
+        }
+      }
+    }
+    
+    return reductionIdSet;
   }
   
   private void analyzeKernelBlock(Block block){
@@ -1739,7 +1807,7 @@ public class ACCgpuKernel {
   
   class ReductionManager{
     Ident counterPtr = null;
-    Ident tempPtrPtr = null;
+    Ident tempPtr = null;
     boolean hasBlockReduction = false;
     List<Reduction> reductionList = new ArrayList<Reduction>();
     Xobject totalElementSize = Xcons.IntConstant(0);
@@ -1748,13 +1816,13 @@ public class ACCgpuKernel {
     
     ReductionManager(String deviceKernelName){
       counterPtr = Ident.Param("_ACC_GPU_RED_CNT", Xtype.Pointer(Xtype.unsignedType));//Ident.Var("_ACC_GPU_RED_CNT", Xtype.unsignedType, Xtype.Pointer(Xtype.unsignedType), VarScope.GLOBAL);
-      tempPtrPtr = Ident.Param("_ACC_GPU_RED_TMP", Xtype.Pointer(Xtype.voidPtrType));//Ident.Var("_ACC_GPU_RED_TMP", Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType), VarScope.GLOBAL);
+      tempPtr = Ident.Param("_ACC_GPU_RED_TMP", Xtype.voidPtrType);//Ident.Var("_ACC_GPU_RED_TMP", Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType), VarScope.GLOBAL);
       isLastVar = Ident.Local("_ACC_GPU_IS_LAST_BLOCK", Xtype.intType);
       isLastVar.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
     }
     
     public XobjList getBlockReductionParamIds() {
-      return Xcons.List(Xcode.ID_LIST, counterPtr, tempPtrPtr);
+      return Xcons.List(Xcode.ID_LIST, tempPtr, counterPtr);
     }
 
     public Block makeLocalVarInitFuncs() {
@@ -1798,6 +1866,13 @@ public class ACCgpuKernel {
       XobjList idList = Xcons.List(isLastVar);
       BlockList body = Bcons.emptyBody(idList, ACCutil.getDecls(idList));
       
+      //Ident reductionCnt = Ident.Var("hoge_kernel" + "_red_cnt", Xtype.unsignedType, Xtype.Pointer(Xtype.unsignedType), VarScope.GLOBAL);
+      //Ident reductionTmpPtr = Ident.Var("hoge_kernel" + "_red_tmp", Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType), VarScope.GLOBAL);
+      //_varDecls.add(new XobjectDef(Xcons.List(Xcode.VAR_DECL, reductionCnt, Xcons.IntConstant(0))));
+      //_varDecls.add(new XobjectDef(Xcons.List(Xcode.VAR_DECL, reductionTmpPtr, Xcons.IntConstant(0))));
+      //body.add(Bcons.Statement(Xcons.Set(counterPtr.Ref(), reductionCnt.getAddr())));
+      //body.add(Bcons.Statement(Xcons.Set(tempPtrPtr.Ref(), reductionTmpPtr.getAddr())));
+
       
       BlockList thenBody = Bcons.emptyBody();
       // add funcs
@@ -1809,10 +1884,10 @@ public class ACCgpuKernel {
           body.add(reduction.makeThreadReductionFuncCall());
         }
         if(reduction.useBlock()){
-          body.add(reduction.makeTempWriteFuncCall(tempPtrPtr, offsetMap.get(reduction)));
+          body.add(reduction.makeTempWriteFuncCall(tempPtr, offsetMap.get(reduction)));
         }
         
-        Block blockReduction = reduction.makeBlockReductionFuncCall(tempPtrPtr, offsetMap.get(reduction));
+        Block blockReduction = reduction.makeBlockReductionFuncCall(tempPtr, offsetMap.get(reduction));
         thenBody.add(blockReduction);
       }
       
@@ -1827,16 +1902,21 @@ public class ACCgpuKernel {
     }
 
     public Block makeInitFunc() {
-      return ACCutil.createFuncCallBlock("_ACC_gpu_init_block_reduction", Xcons.List(counterPtr.Ref(), tempPtrPtr.Ref(), totalElementSize));
+      return ACCutil.createFuncCallBlock("_ACC_gpu_init_block_reduction", Xcons.List(counterPtr.Ref(), tempPtr.getAddr(), totalElementSize));
     }
     
     public Block makeFinalizeFunc(){
-      return ACCutil.createFuncCallBlock("_ACC_gpu_finalize_reduction", Xcons.List(counterPtr.Ref(), tempPtrPtr.Ref()));
+      return ACCutil.createFuncCallBlock("_ACC_gpu_finalize_reduction", Xcons.List(counterPtr.Ref(), tempPtr.getAddr()));
     }
 
     Reduction addReduction(ACCvar var, ACCpragma execMethod){
-      Reduction reduction = new Reduction(var, execMethod, tempPtrPtr);
+      Reduction reduction = new Reduction(var, execMethod, tempPtr);
       reductionList.add(reduction);
+      
+//      if(_outerIdList.contains(var.getId()) && !outerReductionIdList.contains(var.getId())){
+//	outerReductionIdList.add(var.getId());
+//      }
+      
       if(execMethod == ACCpragma._BLOCK || execMethod == ACCpragma._BLOCK_THREAD){
         hasBlockReduction = true;
       }else{
@@ -1855,6 +1935,15 @@ public class ACCgpuKernel {
       }
       totalElementSize = Xcons.binaryOp(Xcode.PLUS_EXPR, totalElementSize, elementSize);
       return reduction;
+    }
+    
+    Reduction findReduction(Ident id){
+      for(Reduction red : reductionList){
+	if(red.varId == id){
+	  return red;
+	}
+      }
+      return null;
     }
     
     Iterator<Reduction> BlockReductionIterator(){
@@ -1897,6 +1986,7 @@ public class ACCgpuKernel {
     ACCpragma execMethod;
     Ident localVarId;
     Ident varId;
+    Ident launchFuncLocalId;
     ACCvar var;
     //Ident tmpId;
     Reduction(ACCvar var, ACCpragma execMethod, Ident tmpId){
@@ -1921,7 +2011,9 @@ public class ACCgpuKernel {
       if(execMethod == ACCpragma._BLOCK){
         localVarId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
       }
-      
+//      if(_outerIdList.contains(varId)){
+//	this.launchFuncLocalId = Ident.Local("_ACC_red_var_"+varId.getName(), Xtype.Pointer(varId.Type()));
+//      }
     }
     public void rewrite(Block b) {
       BasicBlockExprIterator iter = new BasicBlockExprIterator(b);
@@ -1968,8 +2060,8 @@ public class ACCgpuKernel {
       }
     }
     
-    public Block makeBlockReductionFuncCall(Ident tmpPtrPtrId, Xobject tmpOffsetElementSize) {
-      XobjList args = Xcons.List(varId.Ref(), Xcons.IntConstant(getReductionKindInt()), Xcons.PointerRef(tmpPtrPtrId.Ref()), tmpOffsetElementSize);
+    public Block makeBlockReductionFuncCall(Ident tmpPtrId, Xobject tmpOffsetElementSize) {
+      XobjList args = Xcons.List(varId.Ref(), Xcons.IntConstant(getReductionKindInt()), tmpPtrId.Ref(), tmpOffsetElementSize);
       return ACCutil.createFuncCallBlock("_ACC_gpu_reduction_block", args);
     }
     
@@ -1983,9 +2075,9 @@ public class ACCgpuKernel {
       return ACCutil.createFuncCallBlock("_ACC_gpu_reduction_thread", args);
     }
     
-    public Block makeTempWriteFuncCall(Ident tmpPtrPtrId, Xobject tmpOffsetElementSize){
-      Xobject tmpAddr = Xcons.binaryOp(Xcode.PLUS_EXPR, Xcons.PointerRef(tmpPtrPtrId.Ref()), tmpOffsetElementSize);
-      return ACCutil.createFuncCallBlock("_ACC_gpu_reduction_tmp", Xcons.List(localVarId.Ref(), Xcons.PointerRef(tmpPtrPtrId.Ref()), tmpOffsetElementSize));
+    public Block makeTempWriteFuncCall(Ident tmpPtrId, Xobject tmpOffsetElementSize){
+      Xobject tmpAddr = Xcons.binaryOp(Xcode.PLUS_EXPR, tmpPtrId.Ref(), tmpOffsetElementSize);
+      return ACCutil.createFuncCallBlock("_ACC_gpu_reduction_tmp", Xcons.List(localVarId.Ref(), tmpPtrId.Ref(), tmpOffsetElementSize));
     }
     
     private int getReductionKindInt(){

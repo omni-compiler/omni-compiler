@@ -85,6 +85,7 @@ void _ACC_gpu_set_device_num(int num)
 
   //finalize stream hashmap for previous device
   _ACC_gpu_finalize_stream_map();
+  _ACC_gpu_mpool_finalize();
 
   if(num == 0){ // 0 means default device num
     current_device_num = 0;
@@ -107,6 +108,8 @@ void _ACC_gpu_set_device_num(int num)
   _ACC_gpu_max_block_dim_y = dev_prop.maxGridSize[1];
   _ACC_gpu_max_block_dim_z = dev_prop.maxGridSize[2];
 
+  //init mpool
+  _ACC_gpu_mpool_init();
   //init stream hashmap
   _ACC_gpu_init_stream_map(64);
 }

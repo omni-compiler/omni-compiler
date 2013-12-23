@@ -59,6 +59,7 @@ public class ACCtranslateKernels {
       if(readOnlyOuterIdSet.contains(id) && !id.Type().isArray()) continue; //scalar variable && readOnly
       if(kernelsInfo.isVarAllocated(id.getName())) continue; //if var is already allocated 
       ////if(kernelsInfo.getDevicePtr(id.getName()) != null) continue;
+      if(kernelsInfo.isVarReduction(id.getName())) continue;
       
       ACC.warning("Line" + pb.getLineNo() + ":'" + id.getName() + "' is treated as pcopy");
       kernelsInfo.declACCvar(id.getName(), ACCpragma.PRESENT_OR_COPY);

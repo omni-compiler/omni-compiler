@@ -49,13 +49,20 @@ extern "C" {
   void _ACC_gpu_wait_all();
   int _ACC_gpu_test(int id);
   int _ACC_gpu_test_all();
+  void _ACC_gpu_mpool_get(void **ptr);
+  void _ACC_gpu_mpool_get_async(void **ptr, int id);
+  void _ACC_gpu_get_block_count(unsigned **count);
+  void _ACC_gpu_get_block_count_async(unsigned **count, int id);
 
+  //acc_gpu_mpool.cu
+  void _ACC_gpu_mpool_init();
+  void _ACC_gpu_mpool_finalize();
+  void _ACC_gpu_mpool_alloc_block(void **);
+  void _ACC_gpu_mpool_free_block(void *);
 
   //temporal funcdef
   int _ACC_gpu_get_num_devices();
-  
 
-  
 #ifdef __CUDACC__
   //acc_gpu_util.cu
   void _ACC_gpu_fatal(cudaError_t error);

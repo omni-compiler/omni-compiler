@@ -420,7 +420,9 @@ public class ACCgpuDecompileWriter extends PrintWriter {
         
         if(propAsync != null){
           if(! propAsync.isEmpty()){
-            print("," + propAsync.getArg(0).getName());
+            print("," + "_ACC_gpu_get_stream(");
+            print(propAsync.getArg(0));
+            print(")");
           }
         }
         

@@ -311,7 +311,6 @@ void _ACC_gpu_reduction_block(T* result, int kind, void* tmp, size_t offsetEleme
 __device__
 void _ACC_gpu_finalize_reduction(unsigned int *counter, void* tmp){
   *counter = 0;
-  free(tmp);
 }
 
 template<typename T>

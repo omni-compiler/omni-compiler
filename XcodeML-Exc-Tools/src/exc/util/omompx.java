@@ -416,8 +416,8 @@ public class omompx
 	accGlobalDecl.setupMain();
 	ACC.exitByError();
 
-	xobjFile.addHeaderLine("include \"acc.h\"");
-	xobjFile.addHeaderLine("include \"acc_gpu.h\"");
+	xobjFile.addHeaderLine("# include \"acc.h\"");
+	xobjFile.addHeaderLine("# include \"acc_gpu.h\"");
 	accGlobalDecl.finalize();
 	
 	if(xcodeWriter != null) {
