@@ -2426,14 +2426,14 @@ public class XMPtranslateLocalPragma {
             tempArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
 
             // lower
-            if (t.getArg(0) == null || t.getArg(0).getArgs() == null) {
+            if (t.getArg(0) == null || (t.getArg(0) instanceof XobjList && t.getArg(0).getArgs() == null)) {
               tempArgs.add(Xcons.Cast(castType, onRefObject.getLowerAt(refIndex)));
             } else {
               splitComm = true;
               tempArgs.add(Xcons.Cast(castType, t.getArg(0)));
             }
             // upper
-            if (t.getArg(1) == null || t.getArg(1).getArgs() == null) {
+            if (t.getArg(1) == null || (t.getArg(0) instanceof XobjList && t.getArg(1).getArgs() == null)) {
               tempArgs.add(Xcons.Cast(castType, onRefObject.getUpperAt(refIndex)));
             }
             else {
