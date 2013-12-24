@@ -30,7 +30,8 @@ if [ ! -z "${OM_TRANSLATORS}" ]; then
     done;
 fi
 
-CMD="${PP} ${OM_OPTIONS} ${INPFILE}"
+GASNET_CPPFLAGS="@GASNET_CPPFLAGS@"
+CMD="${PP} ${OM_OPTIONS} ${GASNET_CPPFLAGS} ${INPFILE}"
 
 if [ "${OM_VERBOSE}" = "1" ]; then
     echo $CMD \> ${OUTFILE}

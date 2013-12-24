@@ -7,10 +7,10 @@ NativeCompiler=@OMNI_HOME@/bin/omcnative
 Linker=@OMNI_HOME@/bin/omclinker
 
 # for options
-PreprocessorOption=@GASNET_CPPFLAGS@ @GASNET_CFLAGS@
+PreprocessorOption=
 L2XOption=
 LX2XOption=@OMC_CONF_LX2X_OPT@
 X2LOption=
-NativeCompilerOption=@OMC_CONF_NTV_OPT@ @GASNET_CPPFLAGS@ @GASNET_CFLAGS@
-LinkerOption=@GASNET_LDFLAGS@ @GASNET_LIBS@ @OMC_CONF_LNK_OPT@
+NativeCompilerOption=@OMC_CONF_NTV_OPT@
+LinkerOption=@OMC_CONF_LNK_OPT@
 TempDir=/tmp

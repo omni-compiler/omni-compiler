@@ -53,7 +53,8 @@ for i in ${OM_OPTIONS}; do
 done
 OM_OPTIONS="${newOpts}"
 
-CMD="${COMPILER} ${OM_OPTIONS} -c ${INPFILE} -o ${OUTFILE}"
+GASNET_CPPFLAGS="@GASNET_CPPFLAGS@"
+CMD="${COMPILER} ${OM_OPTIONS} ${GASNET_CPPFLAGS} -c ${INPFILE} -o ${OUTFILE}"
 
 if [ "${OM_VERBOSE}" = "1" ]; then
     echo $CMD

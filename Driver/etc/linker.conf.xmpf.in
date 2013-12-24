@@ -39,7 +39,8 @@ for i in ${OM_OPTIONS}; do
     esac
 done
 
-LIBS="@OMNI_HOME@/lib/xmpf_main.o ${INIT_MODULE_OBJ} -lxmpf -lxmp ${LIBS}"
+GASNET_LIBS="@GASNET_LIBS@"
+LIBS="@OMNI_HOME@/lib/xmpf_main.o ${INIT_MODULE_OBJ} -lxmpf -lxmp ${LIBS} ${GASNET_LIBS}"
 
 LINKER=@BEFC@
 if test ${hasScalasca} -eq 1; then

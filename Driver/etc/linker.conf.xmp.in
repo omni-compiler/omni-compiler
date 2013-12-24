@@ -32,7 +32,8 @@ for i in ${OM_OPTIONS}; do
     esac
 done
 
-LIBS="${INIT_MODULE_OBJ} -lxmp ${LIBS}"
+GASNET_LIB="@GASNET_LIBS@"
+LIBS="${INIT_MODULE_OBJ} -lxmp ${LIBS} ${GASNET_LIB}"
 
 LINKER="@BECC@"
 if test ${hasScalasca} -eq 1; then
