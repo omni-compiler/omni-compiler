@@ -33,7 +33,7 @@ for i in ${OM_OPTIONS}; do
 done
 
 GASNET_LIB="@GASNET_LIBS@"
-LIBS="${INIT_MODULE_OBJ} -lxmp ${LIBS} ${GASNET_LIB}"
+LIBS="${INIT_MODULE_OBJ} ${LIBS} -lxmp ${GASNET_LIB}"
 
 LINKER="@BECC@"
 if test ${hasScalasca} -eq 1; then
