@@ -86,7 +86,7 @@ void check_1(int me){
 void communicate_2(int me){
   xmp_sync_all(status);
   if(me == 1){
-    int a1, a2, a3, a4, a5, a6, a7, a8, a9;
+    int a1, a2, a3, a4, a5, a6, a7;
     a1 = 1; a2 = 2; a3 = 3;
     a4 = 0; a5 = 1; a6 = 3;
     a7 = 2;
@@ -203,7 +203,7 @@ void check_4(int me){
 }
 
 int main(){
-  int i, me;
+  int me;
   
   me = xmp_node_num();
   initialize(me);

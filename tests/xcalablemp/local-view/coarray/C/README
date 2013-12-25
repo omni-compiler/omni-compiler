@@ -1,0 +1,12 @@
+- coarray_scalar.c
+ For a scalar data of coarray
+
+- coarray_vector.c
+ For a vector data of coarray
+
+- coarray_stride.c
+ For a stride data of coarray
+
+- K.sh
+ Job script for the K compuer
+ $ pjsub --interact K.sh

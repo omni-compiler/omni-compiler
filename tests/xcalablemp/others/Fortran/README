@@ -1,0 +1,6 @@
+- module_test1.f90 module_test2.f90
+ Module test program
+
+- K.sh
+ Job script for the K compuer
+ $ pjsub --interact K.sh

@@ -54,6 +54,7 @@ target_triplet = @target@
 @ENABLE_XMP_GPU_TRUE@am__append_1 = @LIBXMP_GPU_DIR@
 @ENABLE_ACC_TRUE@am__append_2 = @LIBACC_DIR@ @LIBACC_HEADER_DIR@
 @GASNET_TRUE@am__append_3 = "local-view/post-wait/C" "local-view/coarray/C"
+@FJRDMA_TRUE@am__append_4 = "local-view/post-wait/C" "local-view/coarray/C"
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(top_srcdir)/Driver/atool/Makefile.in \
@@ -463,7 +464,7 @@ DEB_VER_FILE = "/etc/debian_version"
 RH_REL_FILE = "/etc/redhat-release"
 BASE_TESTDIR = "tests/xcalablemp/"
 SUB_TESTDIRS = "others/Fortran/" "global-view/shadow-reflect/C/" \
-	$(am__append_3)
+	$(am__append_3) $(am__append_4)
 DELETABLES = \
 	C-BackEnd/ant.properties \
 	C-BackEnd/bin/C_Back \

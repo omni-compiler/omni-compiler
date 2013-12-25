@@ -1,0 +1,6 @@
+- post_wait.c
+ Basic post and wait test program.
+
+- K.sh
+ Job script for the K compuer
+ $ pjsub --interact K.sh
