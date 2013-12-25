@@ -46,11 +46,11 @@ I. Getting Started
     csh ) set path = ($path <INSTALL DIR>)
 
   D. Test (Optional)
-    Note that you need the XMP Compiler with coarray function to compile "coarray_scalar.c",
-    "coarray_vector.c", and "post_wait.c".
-    $ cd tests/xcalablemp/C/
-    $ make
-    $ make run
+    $ make tests
+    $ make run-tests
+
+    If you want to clean binaries of tests,
+    $ make clean-tests 
 
 II. How to use
   A. Compile
