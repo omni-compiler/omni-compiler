@@ -62,6 +62,36 @@ release-deb:
 
 release: release-rpm release-deb
 
+BASE_TESTDIR="tests/xcalablemp/"
+SUB_TESTDIRS="others/Fortran/" "global-view/shadow-reflect/C/"
+if GASNET
+  SUB_TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
+endif
+
+tests: tests-dummy
+tests-dummy:
+	for dir in $(SUB_TESTDIRS); do \
+	  make -C $(BASE_TESTDIR)$$dir; \
+	  if test 0 -ne $$?; then \
+	    echo "Compile Error !!"; \
+	    exit; \
+	  fi; \
+	done
+
+clean-tests:
+	for dir in $(SUB_TESTDIRS); do \
+	  make clean -C $(BASE_TESTDIR)$$dir; \
+	done
+
+run-tests:
+	for dir in $(SUB_TESTDIRS); do \
+	  make run -C $(BASE_TESTDIR)$$dir; \
+	  if test 0 -ne $$?; then \
+	    echo "Execution Error !!"; \
+	    exit; \
+	  fi; \
+	done
+
 clean-local:
 	rm -rf autom4te.cache
 	find . -type f \( \
