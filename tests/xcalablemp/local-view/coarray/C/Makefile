@@ -14,15 +14,9 @@ all default: $(EXES)
 .c.x:
 	$(XCC) -o $@ $<
 
-run: coarray_scalar coarray_vector coarray_stride
-
-coarray_scalar:
+run: 
 	$(XRUN) -np 2 coarray_scalar.x
-
-coarray_vector:
 	$(XRUN) -np 2 coarray_vector.x
-
-coarray_stride:
 	$(XRUN) -np 2 coarray_stride.x
 
 clean:
