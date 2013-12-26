@@ -1107,28 +1107,22 @@ release: release-rpm release-deb
 
 tests: tests-dummy
 tests-dummy:
-	for dir in $(SUB_TESTDIRS); do \
+	@for dir in $(SUB_TESTDIRS); do \
 	  make -C $(BASE_TESTDIR)$$dir; \
-	  if test 0 -ne $$?; then \
-	    echo "Compile Error !!"; \
-	    exit; \
-	  fi; \
 	done
 
 clean-tests:
-	for dir in $(SUB_TESTDIRS); do \
+	@for dir in $(SUB_TESTDIRS); do \
 	  make clean -C $(BASE_TESTDIR)$$dir; \
 	done
 
 run-tests:
-	for dir in $(SUB_TESTDIRS); do \
+	@for dir in $(SUB_TESTDIRS); do \
 	  make run -C $(BASE_TESTDIR)$$dir; \
-	  if test 0 -ne $$?; then \
-	    echo "Execution Error !!"; \
+	  if [ $$? -ne 0 ]; then \
 	    exit; \
 	  fi; \
 	done
-	echo "All tests OK"
 
 clean-local:
 	rm -rf autom4te.cache
