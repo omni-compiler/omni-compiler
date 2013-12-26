@@ -94,6 +94,7 @@ run-tests:
 	    exit; \
 	  fi; \
 	done
+	echo "All tests OK"
 
 clean-local:
 	rm -rf autom4te.cache

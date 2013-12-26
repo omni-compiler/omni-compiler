@@ -8,7 +8,7 @@ long b[2], b_test[2];
 float c[2][3], c_test[2][3];
 double d[2][3][4], d_test[2][3][4];
 #pragma xmp coarray a,b,c,d : [*]
-int *status;
+int *status, return_val = 0;
 
 void initialize_coarrays(int me){
   int i, j, k, n = 100 * (me - 1);
@@ -64,8 +64,10 @@ void communicate_1(int me){
 void check_1(int me){
   if(a == a_test)
     printf("[%d] check_1 : PASS\n", me);
-  else
+  else{
     printf("[%d] check_1 : fall\n[%d] a = %d (True value is %d)\n", me, me, a, a_test);
+    return_val = 1;
+  }
 }
 
 void communicate_2(int me){
@@ -98,6 +100,7 @@ void check_2(int me){
   }
   
   if(flag == TRUE)   printf("[%d] check_2 : PASS\n", me);
+  else return_val = 1;
 }
 
 void communicate_3(int me){
@@ -133,6 +136,7 @@ void check_3(int me){
   }
   
   if(flag == TRUE)  printf("[%d] check_3 : PASS\n", me);
+  else return_val = 1;
 }
 
 void communicate_4(int me){
@@ -178,6 +182,7 @@ void check_4(int me){
   }
   
   if(flag == TRUE)  printf("[%d] check_4 : PASS\n", me);
+  else return_val = 1;
 }
 
 int main(){
@@ -197,5 +202,7 @@ int main(){
   communicate_4(me);
   check_4(me);
 
-  return 0;
+#pragma xmp barrier
+#pragma xmp reduction(MAX:return_val)
+  return return_val;
 }

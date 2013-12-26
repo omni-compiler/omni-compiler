@@ -57,10 +57,10 @@ void _XMP_coarray_initialize(int argc, char **argv){
 #endif
 }
 
-void _XMP_coarray_finalize(){
+void _XMP_coarray_finalize(int return_val){
 #ifdef _XMP_COARRAY_GASNET
   _XMP_gasnet_sync_all();
-  _XMP_gasnet_finalize(0);
+  _XMP_gasnet_finalize(return_val);
 #elif _XMP_COARRAY_FJRDMA
   _XMP_fjrdma_finalize();
 #else

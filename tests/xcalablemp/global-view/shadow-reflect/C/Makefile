@@ -14,8 +14,10 @@ all default: $(EXES)
 .c.x:
 	$(XCC) -o $@ $<
 
-run: $(EXES)
-	$(XRUN) -np 4 shadow_reflect.x
+run: shadow_reflect
+
+shadow_reflect:
+	XMP_COARRAY_HEAP_SIZE=18 $(XRUN) -np 4 shadow_reflect.x
 
 clean:
 	rm -f $(EXES) $(C_OBJS)

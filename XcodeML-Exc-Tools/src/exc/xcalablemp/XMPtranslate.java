@@ -125,7 +125,7 @@ public class XMPtranslate implements XobjectDefVisitor {
       Ident r = Ident.Local("r", mainType);
       newFuncBody.addIdent(r);
       newFuncBody.add(Xcons.Set(r.Ref(), xmpcMain.Call(mainIdList)));
-      newFuncBody.add(xmpcFinalizeAll.Call(null));
+      newFuncBody.add(xmpcFinalizeAll.Call(Xcons.List(r)));
       newFuncBody.add(Xcons.List(Xcode.RETURN_STATEMENT, r.Ref()));
     }
 

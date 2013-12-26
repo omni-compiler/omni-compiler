@@ -7,7 +7,7 @@ int a[10], a_test[10];
 float b[3][5], b_test[3][5];
 double c[2][3][4], c_test[2][3][4];
 long d[3][4][3][2], d_test[3][4][3][2];
-int *status;
+int *status, return_val = 0;
 #pragma xmp nodes p(2)
 #pragma xmp coarray a, b, c, d : [*]
 
@@ -81,6 +81,7 @@ void check_1(int me){
   }
   xmp_sync_all(status);
   if(flag == TRUE)   printf("[%d] check_1 : PASS\n", me);
+  else return_val = 1;
 }
 
 void communicate_2(int me){
@@ -119,6 +120,7 @@ void check_2(int me){
   }
   xmp_sync_all(status);
   if(flag == TRUE)   printf("[%d] check_2 : PASS\n", me);
+  else return_val = 1;
 }
 
 void communicate_3(int me){
@@ -157,6 +159,7 @@ void check_3(int me){
   }
   xmp_sync_all(status);
   if(flag == TRUE)   printf("[%d] check_3 : PASS\n", me);
+  else return_val = 1;
 }
 
 void communicate_4(int me){
@@ -200,6 +203,7 @@ void check_4(int me){
 
   xmp_sync_all(status);
   if(flag == TRUE)   printf("[%d] check_4 : PASS\n", me);
+  else return_val = 1;
 }
 
 int main(){
@@ -220,5 +224,7 @@ int main(){
   communicate_4(me);
   check_4(me);
 
-  return 0;
+#pragma xmp barrier
+#pragma xmp reduction(MAX:return_val)
+  return return_val;
 }

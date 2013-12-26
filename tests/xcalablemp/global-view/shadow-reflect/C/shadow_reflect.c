@@ -75,5 +75,8 @@ int main(void){
   {
     if(flag) printf("PASS\n");
   }
-  return 0;
+  if(flag)
+    return 0;
+  else
+    return 1;
 }

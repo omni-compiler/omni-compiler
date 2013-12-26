@@ -26,15 +26,14 @@ void _XMP_init(int argc, char** argv) {
   }
 }
 
-void _XMP_finalize(void){
+void _XMP_finalize(int return_val){
   if (_XMP_runtime_working) {
 #ifdef _XMP_COARRAY_GASNET
-    _XMP_coarray_finalize();
+    _XMP_coarray_finalize(return_val);
 #endif
 #ifdef _XMP_COARRAY_FJRDMA
     _XMP_fjrdma_finalize();
 #endif
-
     _XMP_finalize_world();
     _XMP_runtime_working = _XMP_N_INT_FALSE;
   }
@@ -48,6 +47,6 @@ void xmpc_init_all(int argc, char** argv) {
   _XMP_init(argc, argv);
 }
 
-void xmpc_finalize_all(){
-  _XMP_finalize();
+void xmpc_finalize_all(int return_val){
+  _XMP_finalize(return_val);
 }
