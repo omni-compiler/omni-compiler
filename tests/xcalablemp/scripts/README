@@ -1,0 +1,3 @@
+- K.sh
+ Sample job script for the K computer
+ ex.) $ pjsub --interact K.sh
