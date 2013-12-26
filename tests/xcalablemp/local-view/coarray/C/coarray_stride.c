@@ -165,7 +165,7 @@ void check_3(int me){
 }
 
 int main(){
-  int i, me;
+  int me;
   
   me = xmp_node_num();
   initialize(me);
