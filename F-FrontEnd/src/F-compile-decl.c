@@ -30,7 +30,7 @@ extern char *current_module_name;
  */
 int is_in_kind_compilation_flag_for_declare_ident = FALSE;
 int is_in_struct_member_initializer_compilation_flag_for_declare_ident = FALSE;
-#define WARN_STRUCT_MEMBER_INITIALIZATION
+#define WARN_STRUCT_MEMBER_INITIALIZATION 1
 
 ID
 declare_function_result_id(SYMBOL s, TYPE_DESC tp) {
