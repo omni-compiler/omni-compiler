@@ -604,20 +604,21 @@ if test "$target" != "$host"; then
     BEFC="sxmpif90"
     BECC_OPTION=""
   elif test "$target" = "powerpc-ibm-none"; then
-    BECC="bgxlc"
-    BEFC="bgxlf90"
-    DRIVER="/bgsys/drivers/ppcfloor"
-    BECC_OPTION="-I${DRIVER} -I${DRIVER}/spi/include/kernel/cnk \
-		-I${DRIVER}/spi/include/mu/default \
-		-I${DRIVER}/comm/xl/include \
-		-L${DRIVER}/comm/xl/lib \
-		-L${DRIVER}/comm/sys/lib \
-		-L${DRIVER}/spi/lib \
-		-L${DRIVER}/bglpm/lib \
-		-L/usr/local/bg/lib \
-		-lkek -lmpich -lopa -lmpl -lpami -lSPI_cnk -lSPI -lSPI_l1p -lbgpm -lrt -lpthread -lstdc"
+    BECC="mpixlcxx"
+    BEFC="mpixlf90"
+    BEFC_OPTION="-qextname" 
+#    DRIVER="/bgsys/drivers/ppcfloor"
+#    BECC_OPTION="-I${DRIVER} -I${DRIVER}/spi/include/kernel/cnk \
+#		-I${DRIVER}/spi/include/mu/default \
+#		-I${DRIVER}/comm/xl/include \
+#		-L${DRIVER}/comm/xl/lib \
+#		-L${DRIVER}/comm/sys/lib \
+#		-L${DRIVER}/spi/lib \
+#		-L${DRIVER}/bglpm/lib \
+#		-L/usr/local/bg/lib \
+#		-lkek -lmpich -lopa -lmpl -lpami -lSPI_cnk -lSPI -lSPI_l1p -lbgpm -lrt -lpthread -lstdc"
   elif test "$target" = "powerpc64-hitachi-aix"; then
-    BECC="mpcc"
+    BECC="mpCC"
     BEFC="mpif90"
     BECC_OPTION=""
   fi
@@ -646,6 +647,8 @@ AC_ARG_WITH(backend-fc,
 AC_SUBST(BECC)
 AC_SUBST(BECC_OPTION)
 AC_SUBST(BEFC)
+AC_SUBST(BEFC_OPTION)
+
 
 AC_SUBST(IS_CRAY)
 
@@ -710,7 +713,7 @@ else
     echo " - Cray C Compiler (cc)"
     echo " - NEC C/C++ Compiler (sxc++)"
     echo " - IBM C Compiler (bgxlc)"
-    echo " - HITACHI C Compiler (mpcc)"
+    echo " - HITACHI C Compiler (mpCC)"
 exit 1
     ;;
   esac
@@ -743,7 +746,7 @@ if test $enableF2F = yes; then
     OMF_CONF_LNK_OPT=""
   elif test "$target" = "powerpc-ibm-none"; then
     OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT=""
+    OMF_CONF_NTV_OPT="-qextname"
     OMF_CONF_LNK_OPT=""
   elif test "$target" = "powerpc64-hitachi-aix"; then
     OMF_CONF_LX2X_OPT=""
@@ -1987,6 +1990,30 @@ case $OS in
 	TARGET_ARCH=WINDOWS
 	API_FLAVOR=NATA_API_WIN32API;;
 esac
+
+if test "$target" != "$host"; then
+   case "$target" in
+        Kcomputer-linux-gnu)
+                LDFLAGS="";;
+        MIC-linux-gnu)
+                LDFLAGS="";;
+        sx-nec-superux)
+                LDFLAGS="-L/usr/lib64";;
+        powerpc64-hitachi-aix)
+                LDFLAGS="";;
+        powerpc-ibm-none)
+                LDFLAGS="";;
+        *)
+                LDFLAGS="";;
+   esac
+
+else
+
+   CC_LIB=${CC}
+   AC_SUBST(CC_LIB)
+
+fi
+
 
 OS_CXXFLAGS=${OS_CFLAGS}
 AC_SUBST(MAKE)

@@ -18,11 +18,11 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 LINK = $(CCLD) $(AM_CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 
 xmpf_main.o: xmpf_main.f
-	@BEFC@ -c xmpf_main.f
+	@BEFC@ @BEFC_OPTION@ -c xmpf_main.f
 
 xmpf_pack_vector.o: xmpf_pack_vector.c
 	@BECC@ $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) @BECC_OMP_OPTION@ -c $<
+	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) @BECC_OMP_OPTION@ -c -o $@ $<
 
 install-exec-local: xmpf_main.o
 	test -z $(DESTDIR)$(libdir) || /bin/mkdir -p $(DESTDIR)$(libdir)

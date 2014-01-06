@@ -54,7 +54,7 @@ PRIVATE_STATIC void         count();
 PRIVATE_STATIC void         setFileName();
 
 //lex function
-extern int fileno(FILE*);
+//extern int fileno(FILE*);
 
 #define LEX_EXPRCODE(c, t) \
     yylval.expr = lexAllocExprCode(c, t); return t;
