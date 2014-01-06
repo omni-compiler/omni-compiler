@@ -834,7 +834,7 @@ if test "$target" != "$host"; then
 		AC_SUBST(ARFLAGS)
 
 		AC_CHECK_TOOL([NM], [sxnm], [:])
-		if test "${AR}" = ":"; then
+		if test "${NM}" = ":"; then
 		    AC_MSG_ERROR([sxnm not found]);
 		fi ;;
 	powerpc64-hitachi-aix)

@@ -21110,7 +21110,7 @@ else
   NM="$ac_cv_prog_NM"
 fi
 
-		if test "${AR}" = ":"; then
+		if test "${NM}" = ":"; then
 		    as_fn_error $? "sxnm not found" "$LINENO" 5;
 		fi ;;
 	powerpc64-hitachi-aix)
