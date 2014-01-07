@@ -134,6 +134,7 @@ void _XMP_dist_template_DUPLICATION(_XMP_template_t *template, int template_inde
 void _XMP_dist_template_BLOCK(_XMP_template_t *template, int template_index, int nodes_index);
 void _XMP_dist_template_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index);
 void _XMP_dist_template_BLOCK_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index, unsigned long long width);
+void _XMP_dist_template_GBLOCK(_XMP_template_t *template, int template_index, int nodes_index, int *mapping_array);
 void _XMP_init_template_chunk(_XMP_template_t *template, _XMP_nodes_t *nodes);
 
 
@@ -148,6 +149,8 @@ void _XMP_align_array_CYCLIC(_XMP_array_t *array, int array_index, int template_
                              long long align_subscript, int *temp0);
 void _XMP_align_array_BLOCK_CYCLIC(_XMP_array_t *array, int array_index, int template_index,
                                    long long align_subscript, int *temp0);
+void _XMP_align_array_GBLOCK(_XMP_array_t *array, int array_index, int template_index,
+			     long long align_subscript, int *temp0);
 void _XMP_init_array_nodes(_XMP_array_t *array);
 void _XMP_calc_array_dim_elmts(_XMP_array_t *array, int array_index);
 

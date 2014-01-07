@@ -26,6 +26,9 @@ void _XMP_L2G(int local_idx, long long int *global_idx,
 	          + (local_idx/w) * w * n_info->size + local_idx%w;
     }
     break;
+  case _XMP_N_DIST_GBLOCK:
+    *global_idx = local_idx + chunk->mapping_array[n_info->rank];
+    break;
   default:
     _XMP_fatal("_XMP_: unknown chunk dist_manner");
   }
@@ -47,7 +50,7 @@ void _XMP_G2L(long long int global_idx, int *local_idx,
     *local_idx = global_idx - base;
     break;
   case _XMP_N_DIST_BLOCK:
-    *local_idx = (global_idx - base) - chunk->onto_nodes_info->rank * chunk->par_chunk_width;
+    *local_idx = (global_idx - base) - n_info->rank * chunk->par_chunk_width;
     break;
   case _XMP_N_DIST_CYCLIC:
     *local_idx = (global_idx - base) / n_info->size;
@@ -59,12 +62,16 @@ void _XMP_G2L(long long int global_idx, int *local_idx,
       *local_idx = (off / (n_info->size*w)) * w + off%w;
     }
     break;
+  case _XMP_N_DIST_GBLOCK:
+    *local_idx = global_idx - chunk->mapping_array[n_info->rank];
+    break;
   default:
     _XMP_fatal("_XMP_: unknown chunk dist_manner");
   }
 }
 
 
+#if 0
 int xmpf_local_idx__(_XMP_array_t **a_desc, int *i_dim, int *global_idx)
 {
     _XMP_array_t *a = *a_desc;
@@ -103,7 +110,7 @@ int xmpf_local_idx__(_XMP_array_t **a_desc, int *i_dim, int *global_idx)
 
 /*     return ret; */
 /* } */
-
+#endif
 
 /* calc global index by local index */
 void xmpf_l2g__(int *global_idx, int *local_idx,

@@ -9,7 +9,7 @@ typedef struct _XMP_async_comm {
 
 #define _XMP_ASYNC_COMM_SIZE 511
 
-_XMP_async_comm_t _XMP_async_comm_tab[_XMP_ASYNC_COMM_SIZE] = { 0 };
+_XMP_async_comm_t _XMP_async_comm_tab[_XMP_ASYNC_COMM_SIZE] = { {0, 0, NULL, NULL} };
 
 #define _XMP_MAX_ASYNC_REQS (4 * _XMP_N_MAX_DIM * 10)
 
@@ -35,6 +35,7 @@ static void _XMPF_wait_async_rdma(_XMP_async_comm_t *async);
 #endif
 
 int _XMPF_get_owner_pos_BLOCK(_XMP_array_t *a, int dim, int index);
+int _XMPF_get_owner_pos(_XMP_array_t *a, int dim, int index);
 
 _XMP_async_comm_t *_XMPF_get_async(int async_id);
 _XMP_async_comm_t *_XMPF_get_or_create_async(int async_id);
@@ -249,8 +250,8 @@ static void _XMPF_reflect_normal_sched_dim(_XMP_array_t *adesc, int target_dim,
 
   // 0-origin
   int my_pos = ni->rank;
-  int lb_pos = _XMPF_get_owner_pos_BLOCK(adesc, target_dim, ai->ser_lower);
-  int ub_pos = _XMPF_get_owner_pos_BLOCK(adesc, target_dim, ai->ser_upper);
+  int lb_pos = _XMPF_get_owner_pos(adesc, target_dim, ai->ser_lower);
+  int ub_pos = _XMPF_get_owner_pos(adesc, target_dim, ai->ser_upper);
 
   int lo_pos = (my_pos == lb_pos) ? ub_pos : my_pos - 1;
   int hi_pos = (my_pos == ub_pos) ? lb_pos : my_pos + 1;
@@ -451,8 +452,8 @@ static void _XMPF_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 
   // 0-origin
   int my_pos = ni->rank;
-  int lb_pos = _XMPF_get_owner_pos_BLOCK(adesc, target_dim, ai->ser_lower);
-  int ub_pos = _XMPF_get_owner_pos_BLOCK(adesc, target_dim, ai->ser_upper);
+  int lb_pos = _XMPF_get_owner_pos(adesc, target_dim, ai->ser_lower);
+  int ub_pos = _XMPF_get_owner_pos(adesc, target_dim, ai->ser_upper);
 
   int lo_pos = (my_pos == lb_pos) ? ub_pos : my_pos - 1;
   int hi_pos = (my_pos == ub_pos) ? lb_pos : my_pos + 1;
@@ -828,8 +829,8 @@ static void _XMPF_reflect_rdma_sched_dim(_XMP_array_t *adesc, int target_dim,
 
   // 0-origin
   int my_pos = ni->rank;
-  int lb_pos = _XMPF_get_owner_pos_BLOCK(adesc, target_dim, ai->ser_lower);
-  int ub_pos = _XMPF_get_owner_pos_BLOCK(adesc, target_dim, ai->ser_upper);
+  int lb_pos = _XMPF_get_owner_pos(adesc, target_dim, ai->ser_lower);
+  int ub_pos = _XMPF_get_owner_pos(adesc, target_dim, ai->ser_upper);
 
   int my_rank = adesc->align_template->onto_nodes->comm_rank;
 
@@ -1216,6 +1217,38 @@ int _XMPF_get_owner_pos_BLOCK(_XMP_array_t *a, int dim, int index){
 }
 
 
+int _XMPF_get_owner_pos(_XMP_array_t *a, int dim, int index){
+
+  int align_offset = a->info[dim].align_subscript;
+
+  int tdim = a->info[dim].align_template_index;
+  int tlb = a->align_template->info[tdim].ser_lower;
+  int chunk = a->align_template->chunk[tdim].par_chunk_width;
+
+  int pos;
+  switch (a->info[dim].align_manner){
+
+  case _XMP_N_ALIGN_BLOCK:
+    pos = (index + align_offset - tlb) / chunk;
+    return pos;
+
+  case _XMP_N_ALIGN_GBLOCK:
+    {
+      int tpos = index + align_offset; // tlb is not subtracted because the mapping_array is 1-origin.
+      unsigned long long *m = a->align_template->chunk[tdim].mapping_array;
+      int np = a->align_template->chunk[tdim].onto_nodes_info->size;
+      for (int i = 0; i < np; i++){
+	if (m[i] <= tpos && tpos < m[i+1]){
+	  return i;
+	}
+      }
+    }
+  }
+
+  return -1;
+}
+
+
 //
 // for Asynchronous Communication
 //
@@ -1335,7 +1368,7 @@ void _XMPF_pop_async(int async_id)
 
     _XMP_async_comm_t *prev = async;
 
-    while (async = prev->next){
+    while ((async = prev->next)){
 
       if (async->async_id == async_id){
 	prev->next = async->next;

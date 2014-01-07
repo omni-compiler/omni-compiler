@@ -309,6 +309,12 @@ void _XMP_init_template_chunk(_XMP_template_t *template, _XMP_nodes_t *nodes) {
 
 void _XMP_finalize_template(_XMP_template_t *template) {
   if (template->is_distributed) {
+    for (int i = 0; i < template->dim; i++){
+      _XMP_template_chunk_t *chunk = &(template->chunk[i]);
+      if (chunk->dist_manner == _XMP_N_DIST_GBLOCK){
+	_XMP_free(template->chunk->mapping_array);
+      }
+    }
     _XMP_free(template->chunk);
   }
 
@@ -388,6 +394,46 @@ void _XMP_dist_template_CYCLIC(_XMP_template_t *template, int template_index, in
 
 void _XMP_dist_template_BLOCK_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index, unsigned long long width) {
   _XMP_dist_template_CYCLIC_WIDTH(template, template_index, nodes_index, width);
+}
+
+#define min(x,y) ((x) < (y) ? (x) : (y))
+
+void _XMP_dist_template_GBLOCK(_XMP_template_t *template, int template_index, int nodes_index,
+			       int *mapping_array) {
+
+  _XMP_ASSERT(template->is_fixed);
+  _XMP_ASSERT(template->is_distributed);
+
+  _XMP_nodes_t *nodes = template->onto_nodes;
+
+  _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
+  _XMP_template_info_t *ti = &(template->info[template_index]);
+  _XMP_nodes_info_t *ni = &(nodes->info[nodes_index]);
+
+  unsigned long long *rsum_array = _XMP_alloc(sizeof(unsigned long long) * (ni->size + 1));
+  rsum_array[0] = ti->ser_lower;
+  for (unsigned long long i = 1; i <= ni->size; i++){
+    rsum_array[i] = rsum_array[i-1] + (unsigned long long)mapping_array[i-1];
+  }
+  chunk->mapping_array = rsum_array;
+
+  if (nodes->is_member && rsum_array[ni->rank + 1] != rsum_array[ni->rank]) {
+    chunk->par_lower = rsum_array[ni->rank];
+    if (chunk->par_lower < ti->ser_upper){
+      chunk->par_upper = min(ti->ser_upper, rsum_array[ni->rank + 1] - 1);
+    }
+    else
+      template->is_owner = false;
+  }
+
+  chunk->par_width = 1;
+  chunk->par_stride = 1;
+  chunk->par_chunk_width = chunk->par_upper - chunk->par_lower + 1;
+  chunk->dist_manner = _XMP_N_DIST_GBLOCK;
+  chunk->is_regular_chunk = false;
+
+  chunk->onto_nodes_index = nodes_index;
+  chunk->onto_nodes_info = ni;
 }
 
 _XMP_nodes_t *_XMP_create_nodes_by_template_ref(_XMP_template_t *ref_template, int *shrink,

@@ -120,6 +120,12 @@ void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t 
 					    t_desc, t_idx);
       break;
 
+    case _XMP_N_DIST_GBLOCK:
+      _XMP_sched_loop_template_GBLOCK(*lb + off, global_ub_C + off, *st,
+				      lb, ub, st,
+				      t_desc, t_idx);
+      break;
+
     default:
       _XMP_fatal("xmpf_sched_loop_template: unknown chunk dist_manner");
 

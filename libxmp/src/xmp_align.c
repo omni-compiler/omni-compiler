@@ -87,7 +87,7 @@ void _XMP_finalize_array_desc(_XMP_array_t *array) {
 
     _XMP_reflect_sched_t *reflect_sched;
 
-    if (reflect_sched = ai->reflect_sched){
+    if ((reflect_sched = ai->reflect_sched)){
 
       if (reflect_sched->datatype_lo != MPI_DATATYPE_NULL){
 	MPI_Type_free(&reflect_sched->datatype_lo);
@@ -390,6 +390,77 @@ void _XMP_align_array_BLOCK_CYCLIC(_XMP_array_t *array, int array_index, int tem
     ai->temp0 = temp0;
     ai->temp0_v = *temp0;
   }
+
+  ai->align_subscript = align_subscript;
+
+  ai->align_template_index = template_index;
+}
+
+void _XMP_align_array_GBLOCK(_XMP_array_t *array, int array_index, int template_index,
+			     long long align_subscript, int *temp0) {
+
+  _XMP_template_t *template = array->align_template;
+  _XMP_ASSERT(template->is_fixed);
+  _XMP_ASSERT(template->is_distributed);
+
+  _XMP_template_info_t *ti = &(template->info[template_index]);
+  _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
+  _XMP_array_info_t *ai = &(array->info[array_index]);
+
+  // check range
+  long long align_lower = ai->ser_lower + align_subscript;
+  long long align_upper = ai->ser_upper + align_subscript;
+  if (((align_lower < ti->ser_lower) || (align_upper > ti->ser_upper))) {
+    _XMP_fatal("aligned array is out of template bound");
+  }
+
+  // set members
+  ai->is_regular_chunk = (ti->ser_lower == (ai->ser_lower + align_subscript)) && chunk->is_regular_chunk;
+  ai->align_manner = _XMP_N_ALIGN_GBLOCK;
+
+  if (template->is_owner) {
+    long long template_lower = chunk->par_lower;
+    long long template_upper = chunk->par_upper;
+
+    // set par_lower
+    if (align_lower < template_lower) {
+      ai->par_lower = template_lower - align_subscript;
+    }
+    else if (template_upper < align_lower) {
+      array->is_allocated = false;
+      goto EXIT_CALC_PARALLEL_MEMBERS;
+    }
+    else {
+      ai->par_lower = ai->ser_lower;
+    }
+
+    // set par_upper
+    if (align_upper < template_lower) {
+      array->is_allocated = false;
+      goto EXIT_CALC_PARALLEL_MEMBERS;
+    }
+    else if (template_upper < align_upper) {
+      ai->par_upper = template_upper - align_subscript;
+    }
+    else {
+      ai->par_upper = ai->ser_upper;
+    }
+
+    ai->par_stride = 1;
+    ai->par_size = _XMP_M_COUNT_TRIPLETi(ai->par_lower, ai->par_upper, 1);
+
+    // array lower is always 0 in C
+    ai->local_lower = 0;
+    ai->local_upper = ai->par_size - 1;
+    ai->local_stride = 1;
+    ai->alloc_size = ai->par_size;
+
+    *temp0 = ai->par_lower;
+    ai->temp0 = temp0;
+    ai->temp0_v = *temp0;
+  }
+
+EXIT_CALC_PARALLEL_MEMBERS:
 
   ai->align_subscript = align_subscript;
 

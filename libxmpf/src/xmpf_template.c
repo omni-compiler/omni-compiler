@@ -19,6 +19,7 @@ void xmpf_template_dealloc__(_XMP_template_t **t_desc)
 /* temporary */
 static int xmpf_template_dist_manner[_XMP_N_MAX_DIM];
 static int xmpf_template_dist_chunk[_XMP_N_MAX_DIM];
+static int *xmpf_template_mapping_array[_XMP_N_MAX_DIM];
 
 
 void xmpf_template_dim_info__(_XMP_template_t **t_desc, int *i_dim, 
@@ -32,6 +33,9 @@ void xmpf_template_dim_info__(_XMP_template_t **t_desc, int *i_dim,
 
   if (*dist_chunk == 0 && *dist_manner == _XMP_N_DIST_CYCLIC){
     xmpf_template_dist_chunk[*i_dim] = 1;
+  }
+  else if (*dist_manner == _XMP_N_DIST_GBLOCK){
+    xmpf_template_mapping_array[*i_dim] = dist_chunk;
   }
   else {
     xmpf_template_dist_chunk[*i_dim] = *dist_chunk;
@@ -81,6 +85,13 @@ void xmpf_template_init__(_XMP_template_t **t_desc,_XMP_nodes_t  **n_desc)
 	_XMP_fatal("chunk size is nagative in DIST_CYCLIC");
       else
 	_XMP_dist_template_BLOCK_CYCLIC(t, t_idx, n_idx, chunk_size);
+      n_idx++;
+      break;
+    case _XMP_N_DIST_GBLOCK:
+      {
+	int *mapping_array = xmpf_template_mapping_array[t_idx];
+	_XMP_dist_template_GBLOCK(t, t_idx, n_idx, mapping_array);
+      }
       n_idx++;
       break;
     default:

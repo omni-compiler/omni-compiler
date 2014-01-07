@@ -17,6 +17,8 @@
 #define _XMP_SM_GTOL_BLOCK_CYCLIC(_b, _i, _m, _P) \
 (((((_i) - (_m)) / (((_P) * (_b)))) * (_b)) + (((_i) - (_m)) % (_b)))
 
+#define _XMP_SM_GTOL_GBLOCK(_i, _g) \
+((_i) - (_g))
 
 #define _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step, reverse_iter) \
 { \
@@ -298,6 +300,45 @@ void _XMP_sched_loop_template_BLOCK_CYCLIC(int ser_init, int ser_cond, int ser_s
     *par_init = _XMP_SM_GTOL_BLOCK_CYCLIC(width, *par_init, template_ser_lower, nodes_size);
     *par_cond = _XMP_SM_GTOL_BLOCK_CYCLIC(width, *par_cond, template_ser_lower, nodes_size);
     *par_step = 1;
+
+    // finalize iter
+    _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
+  } else {
+no_iter:
+    *par_init = 0;
+    *par_cond = 0;
+    *par_step = 1;
+  }
+}
+
+// block distribution ---------------------------------------------------------------------------------------------------------------
+void _XMP_sched_loop_template_GBLOCK(int ser_init, int ser_cond, int ser_step,
+				     int *par_init, int *par_cond, int *par_step,
+				     _XMP_template_t *template, int template_index) {
+
+  _XMP_ASSERT(template->is_distributed);
+
+  if (!template->is_owner) {
+    goto no_iter;
+  }
+
+  _XMP_template_chunk_t *template_chunk = &(template->chunk[template_index]);
+  int rank = template_chunk->onto_nodes_info->rank;
+  int template_lower = template_chunk->par_lower;
+  int template_upper = template_chunk->par_upper;
+  int template_stride = template_chunk->par_stride;
+  unsigned long long *mapping_array = template_chunk->mapping_array;
+
+  int reverse_iter = _XMP_N_INT_FALSE;
+  _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step, reverse_iter)
+
+  // calc par_init, par_cond, par_step
+  if (_XMP_sched_loop_template_width_1(ser_init, ser_cond, ser_step, par_init, par_cond, par_step,
+                                       template_lower, template_upper, template_stride)) {
+
+    *par_init = _XMP_SM_GTOL_GBLOCK(*par_init, mapping_array[rank]);
+    *par_cond = _XMP_SM_GTOL_GBLOCK(*par_cond, mapping_array[rank]);
+    *par_step = ser_step;
 
     // finalize iter
     _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
