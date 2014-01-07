@@ -1,47 +1,50 @@
-subroutine ixmp_smumps(id, dirn, djcn, da)
+subroutine ixmp_smumps(id)
 
-  include "smumps_struc.h"
-  type(smumps_struc) id
-  integer*8 dirn,djcn,da
+  include "ixmp_smumps.h"
+  type(ixmp_smumps_struc) id
   integer irn_size,jcn_size,a_size
 
-  ierr = xmp_array_lsize(dirn,1,irn_size)
-  ierr = xmp_array_lsize(djcn,1,jcn_size)
-  ierr = xmp_array_lsize(da,1,a_size)
-  id%nz_loc=irn_size
+  if ((id%mumps_par%icntl(18)==2 .or. id%mumps_par%icntl(18)==3) .and. &
+      (id%mumps_par%job == 1 .or. id%mumps_par%job==2  .or. &
+       id%mumps_par%job==4 .or. id%mumps_par%job==5 .or. &
+       id%mumps_par%job==6)) then
 
-  if (id%job == 1 .or. id%job==2  .or. id%job==4 .or. id%job==5 .or. id%job==6) then
-    if (associated(id%irn_loc)) then
+    ierr = xmp_array_lsize(id%idesc,1,irn_size)
+    ierr = xmp_array_lsize(id%jdesc,1,jcn_size)
+    ierr = xmp_array_lsize(id%adesc,1,a_size)
+    id%mumps_par%nz_loc=irn_size
+
+    if (associated(id%mumps_par%irn_loc)) then
     else
-      allocate(id%irn_loc (irn_size))
-      ierr=ixmp_array_icopy(dirn, id%irn_loc)
+      allocate(id%mumps_par%irn_loc (irn_size))
     endif
-    if (associated(id%jcn_loc)) then
+    ierr=ixmp_array_icopy(id%idesc, id%mumps_par%irn_loc)
+    if (associated(id%mumps_par%jcn_loc)) then
     else
-      allocate(id%jcn_loc (jcn_size))
-      ierr=ixmp_array_icopy(djcn, id%jcn_loc)
+      allocate(id%mumps_par%jcn_loc (jcn_size))
     endif
-    if (associated(id%a_loc)) then
+    ierr=ixmp_array_icopy(id%jdesc, id%mumps_par%jcn_loc)
+    if (associated(id%mumps_par%a_loc)) then
     else
-      allocate(id%a_loc (a_size))
-      ierr=ixmp_array_scopy(da, id%a_loc)
+      allocate(id%mumps_par%a_loc (a_size))
     endif
+    ierr=ixmp_array_scopy(id%adesc, id%mumps_par%a_loc)
 
   endif
 
-  if (id%job == -2) then
-    if (associated(id%irn_loc)) then
-      deallocate(id%irn_loc)
+  if (id%mumps_par%job == -2) then
+    if (associated(id%mumps_par%irn_loc)) then
+      deallocate(id%mumps_par%irn_loc)
     endif
-    if (associated(id%jcn_loc)) then
-      deallocate(id%jcn_loc)
+    if (associated(id%mumps_par%jcn_loc)) then
+      deallocate(id%mumps_par%jcn_loc)
     endif
-    if (associated(id%a_loc)) then
-      deallocate(id%a_loc)
+    if (associated(id%mumps_par%a_loc)) then
+      deallocate(id%mumps_par%a_loc)
     endif
   end if
 
-  call smumps(id)
+  call smumps(id%mumps_par)
 
   return
   end

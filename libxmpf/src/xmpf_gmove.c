@@ -491,9 +491,6 @@ xmpf_gmv_l_alloc__(_XMP_gmv_desc_t **gmv_desc , void *local_data, int *ndims)
     gp->a_lb = (int *)malloc(sizeof(int) * n);
     gp->a_ub = (int *)malloc(sizeof(int) * n);
 
-    if (!gp || !gp->kind || !gp->lb || !gp->st || gp->a_lb || gp->a_ub)
-      _XMP_fatal("gmv_g_alloc: cannot alloc memory");
-
     gp->is_global = false;
     gp->ndims = n;
     gp->a_desc = NULL;

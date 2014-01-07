@@ -1,1 +1,1 @@
-include_HEADERS = 
+include_HEADERS = xmp_lib.h
