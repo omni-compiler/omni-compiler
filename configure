@@ -17072,9 +17072,9 @@ if test "$target" != "$host"; then
 #		-L/usr/local/bg/lib \
 #		-lkek -lmpich -lopa -lmpl -lpami -lSPI_cnk -lSPI -lSPI_l1p -lbgpm -lrt -lpthread -lstdc"
   elif test "$target" = "powerpc64-hitachi-aix"; then
-    BECC="mpCC"
+    BECC="mpCC_r"
     BEFC="mpif90"
-    BECC_OPTION=""
+    BECC_OPTION="-qcpluscmt"
   fi
 else  # if "--target" option is not used in ./configure
   BECC="mpicc"
