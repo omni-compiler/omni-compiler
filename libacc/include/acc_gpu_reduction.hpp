@@ -223,7 +223,7 @@ static void reduceInGrid(double *resultInGrid, double resultInBlock, int kind, d
 
 template<typename T>
 __device__
-void _ACC_gpu_reduce_block_thread_x(T *result, T resultInThread, int kind){
+static void _ACC_gpu_reduce_block_thread_x(T *result, T resultInThread, int kind){
   T resultInBlock;
   reduceInBlock(&resultInBlock, resultInThread, kind);
   reduceInGrid(result, resultInBlock, kind, NULL, NULL);
@@ -231,7 +231,7 @@ void _ACC_gpu_reduce_block_thread_x(T *result, T resultInThread, int kind){
 
 template<typename T>
 __device__
-void _ACC_gpu_reduce_block_thread_x(T *result, T resultInThread, int kind, T *tmp, unsigned int *cnt){
+static void _ACC_gpu_reduce_block_thread_x(T *result, T resultInThread, int kind, T *tmp, unsigned int *cnt){
   T resultInBlock;
   reduceInBlock(&resultInBlock, resultInThread, kind);
   reduceInGrid(result, resultInBlock, kind, tmp, cnt);
@@ -239,7 +239,7 @@ void _ACC_gpu_reduce_block_thread_x(T *result, T resultInThread, int kind, T *tm
 
 template<typename T>
 __device__
-void _ACC_gpu_reduce_thread_x(T *result, T resultInThread, int kind){
+static void _ACC_gpu_reduce_thread_x(T *result, T resultInThread, int kind){
   reduceInBlock(result, resultInThread, kind);
 }
 
@@ -271,12 +271,12 @@ void _ACC_gpu_init_block_reduction(unsigned int *counter, void * volatile * tmp,
 
 template<typename T>
 __device__
-void _ACC_gpu_reduction_thread(T *resultInBlock, T resultInThread, int kind){
+static void _ACC_gpu_reduction_thread(T *resultInBlock, T resultInThread, int kind){
   reduceInBlock(resultInBlock, resultInThread, kind);
 }
 
 __device__
-void _ACC_gpu_is_last_block(int *is_last, unsigned int *counter){
+static void _ACC_gpu_is_last_block(int *is_last, unsigned int *counter){
   __threadfence();
   if(threadIdx.x==0){
     unsigned int value = atomicInc(counter, gridDim.x);
@@ -302,20 +302,20 @@ static void reduceInGridDefault_new(T *result, T *tmp, int kind){
 
 template<typename T>
 __device__
-void _ACC_gpu_reduction_block(T* result, int kind, void* tmp, size_t offsetElementSize){
+static void _ACC_gpu_reduction_block(T* result, int kind, void* tmp, size_t offsetElementSize){
   void *tmpAddr = (char*)tmp + (gridDim.x * offsetElementSize);
   reduceInGridDefault_new(result, (T*)tmpAddr, kind);
 }
 
 //template<typename T>
 __device__
-void _ACC_gpu_finalize_reduction(unsigned int *counter, void* tmp){
+static void _ACC_gpu_finalize_reduction(unsigned int *counter, void* tmp){
   *counter = 0;
 }
 
 template<typename T>
 __device__
-void _ACC_gpu_reduction_tmp(T resultInBlock, void *tmp, size_t offsetElementSize){
+static void _ACC_gpu_reduction_tmp(T resultInBlock, void *tmp, size_t offsetElementSize){
   if(threadIdx.x==0){
     void *tmpAddr =  (char*)tmp + (gridDim.x * offsetElementSize);
     ((T*)tmpAddr)[blockIdx.x] = resultInBlock;

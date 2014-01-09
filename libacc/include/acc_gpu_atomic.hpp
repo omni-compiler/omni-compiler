@@ -3,7 +3,7 @@
 
 
 //float atomic func
-__device__ float atomicMul(float* address, float val)
+__device__ static float atomicMul(float* address, float val)
 {
   int* address_as_int = (int*)address;
   int old = *address_as_int, assumed;
@@ -14,7 +14,7 @@ __device__ float atomicMul(float* address, float val)
   return __int_as_float(old);
 }
 
-__device__ float atomicMax(float* address, float val)
+__device__ static float atomicMax(float* address, float val)
 {
   int* address_as_int = (int*)address;
   int old = *address_as_int, assumed;
@@ -26,7 +26,7 @@ __device__ float atomicMax(float* address, float val)
   return __int_as_float(old);
 }
 
-__device__ float atomicMin(float* address, float val)
+__device__ static float atomicMin(float* address, float val)
 {
   int* address_as_int = (int*)address;
   int old = *address_as_int, assumed;
@@ -42,7 +42,7 @@ __device__ float atomicMin(float* address, float val)
 
 //double atomic func
 /* this code was taken from CUDA C programming guide */
-__device__ double atomicAdd(double* address, double val)
+__device__ static double atomicAdd(double* address, double val)
 {
   unsigned long long int* address_as_ull = (unsigned long long int*)address;
   unsigned long long int old = *address_as_ull, assumed;
@@ -53,7 +53,7 @@ __device__ double atomicAdd(double* address, double val)
   return __longlong_as_double(old);
 }
 
-__device__ double atomicMul(double* address, double val)
+__device__ static double atomicMul(double* address, double val)
 {
   unsigned long long int* address_as_ull = (unsigned long long int*)address;
   unsigned long long int old = *address_as_ull, assumed;
@@ -64,7 +64,7 @@ __device__ double atomicMul(double* address, double val)
   return __longlong_as_double(old);
 }
 
-__device__ double atomicMax(double* address, double val)
+__device__ static double atomicMax(double* address, double val)
 {
   unsigned long long int* address_as_ull = (unsigned long long int*)address;
   unsigned long long int old = *address_as_ull, assumed;
@@ -76,7 +76,7 @@ __device__ double atomicMax(double* address, double val)
   return __longlong_as_double(old);
 }
 
-__device__ double atomicMin(double* address, double val)
+__device__ static double atomicMin(double* address, double val)
 {
   unsigned long long int* address_as_ull = (unsigned long long int*)address;
   unsigned long long int old = *address_as_ull, assumed;

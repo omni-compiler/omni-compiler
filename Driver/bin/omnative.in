@@ -65,5 +65,11 @@ fi
 
 $CMD
 
+if [ -n "${GPUCMD}" ]; then
+    mv ${OUTFILE} ${INPFILE_FILENAME}.acccpu.o
+    ld -r ${INPFILE_FILENAME}.acccpu.o ${INPFILE_FILENAME}.accgpu.o -o ${OUTFILE}
+    rm ${INPFILE_FILENAME}.acccpu.o ${INPFILE_FILENAME}.accgpu.o
+fi
+
 exit $?
 

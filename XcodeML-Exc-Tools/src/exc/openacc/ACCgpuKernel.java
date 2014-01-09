@@ -46,7 +46,9 @@ public class ACCgpuKernel {
   //ok!
   public Block makeLaunchFuncCallBlock(){
     List<Block> kernelBody = _kernelBlocks;
-    String launchFuncName = kernelInfo.getGlobalDecl().genSym(ACC_GPU_FUNC_PREFIX);
+    String funcName = kernelInfo.getFuncInfo().getArg(0).getString();
+    int lineNo = kernelBody.get(0).getLineNo().lineNo();
+    String launchFuncName = ACC_GPU_FUNC_PREFIX + "_" + funcName + "_L" + lineNo; 
     
     //make deviceKernelDef
     String deviceKernelName = launchFuncName + "_DEVICE";

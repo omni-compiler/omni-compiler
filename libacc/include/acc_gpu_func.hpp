@@ -34,7 +34,7 @@ void init_block_thread_x_id_iter(int *b_init, int *b_cond, int *b_step, int b_to
 }
 */
 __device__
-void _ACC_gpu_init_block_x_iter(int *gang_iter, int *gang_cond, int *gang_step, int lower, int upper, int strid){
+static void _ACC_gpu_init_block_x_iter(int *gang_iter, int *gang_cond, int *gang_step, int lower, int upper, int strid){
   int totaliter = _ACC_M_COUNT_TRIPLETi(lower, upper-1, strid);
   *gang_iter = _ACC_M_CEILi(totaliter, gridDim.x) * blockIdx.x;
   *gang_cond = _ACC_M_MIN(_ACC_M_CEILi(totaliter, gridDim.x) * (blockIdx.x + 1), totaliter);
@@ -42,7 +42,7 @@ void _ACC_gpu_init_block_x_iter(int *gang_iter, int *gang_cond, int *gang_step, 
 }
 
 __device__
-void _ACC_gpu_init_thread_x_iter(int *iter, int *cond, int *step, int lower, int upper, int strid){
+static void _ACC_gpu_init_thread_x_iter(int *iter, int *cond, int *step, int lower, int upper, int strid){
   int totaliter = _ACC_M_COUNT_TRIPLETi(lower, upper-1, strid);
   *iter = threadIdx.x;
   *cond = totaliter;
@@ -50,7 +50,7 @@ void _ACC_gpu_init_thread_x_iter(int *iter, int *cond, int *step, int lower, int
 }
 
 __device__
-void _ACC_gpu_init_block_thread_x_iter(int *bt_idx, int *bt_cond, int *bt_step, int lower, int upper, int strid){
+static void _ACC_gpu_init_block_thread_x_iter(int *bt_idx, int *bt_cond, int *bt_step, int lower, int upper, int strid){
   int totalIter = _ACC_M_COUNT_TRIPLETi(lower, upper - 1, strid);
   int gang_size = _ACC_M_CEILi(totalIter, gridDim.x);
   //  int mod = gang_size % blockDim.x;
@@ -62,7 +62,7 @@ void _ACC_gpu_init_block_thread_x_iter(int *bt_idx, int *bt_cond, int *bt_step, 
 }
 
 __device__
-void _ACC_gpu_init_block_thread_y_iter(int *bt_idx, int *bt_cond, int *bt_step, int lower, int upper, int strid){
+static void _ACC_gpu_init_block_thread_y_iter(int *bt_idx, int *bt_cond, int *bt_step, int lower, int upper, int strid){
   int totalIter = _ACC_M_COUNT_TRIPLETi(lower, upper - 1, strid);
   int gang_size = _ACC_M_CEILi(totalIter, gridDim.y);
   *bt_idx  = gang_size * blockIdx.y + threadIdx.y;
@@ -72,27 +72,27 @@ void _ACC_gpu_init_block_thread_y_iter(int *bt_idx, int *bt_cond, int *bt_step, 
 }
 
 __device__
-void _ACC_gpu_calc_idx(int id, int *idx, int lower, int upper, int stride){
+static void _ACC_gpu_calc_idx(int id, int *idx, int lower, int upper, int stride){
   *idx = lower + stride * id;
 }
 
 template<typename T>
 __device__
-void _ACC_gpu_calc_gang_iter(unsigned long long gid, T lower, T upper, T stride, T *iter)
+static void _ACC_gpu_calc_gang_iter(unsigned long long gid, T lower, T upper, T stride, T *iter)
 {
   *iter = lower + (gid * stride);
 }
  
 template<typename T>
 __device__
-void _ACC_gpu_calc_worker_iter(unsigned long long wid, T lower, T upper, T stride, T *iter)
+static void _ACC_gpu_calc_worker_iter(unsigned long long wid, T lower, T upper, T stride, T *iter)
 {
   *iter = lower + (wid * stride);
 }
 
 
 template<typename T>
-void _ACC_gpu_calc_block_params(unsigned long long *total_iter,
+static void _ACC_gpu_calc_block_params(unsigned long long *total_iter,
 				int *block_x, int *block_y, int *block_z,
 				T lower0, T upper0, T stride0) {
   *total_iter = _ACC_M_COUNT_TRIPLETi(lower0, (upper0 - 1), stride0);
@@ -102,7 +102,7 @@ void _ACC_gpu_calc_block_params(unsigned long long *total_iter,
 }
 
 template<typename T>
-void _ACC_gpu_calc_thread_params(unsigned long long *total_iter,
+static void _ACC_gpu_calc_thread_params(unsigned long long *total_iter,
 				 int *thread_x, int *thread_y, int *thread_z,
 				 T lower0, T upper0, T stride0) {
   *total_iter = _ACC_M_COUNT_TRIPLETi(lower0, (upper0 - 1), stride0);
@@ -111,7 +111,7 @@ void _ACC_gpu_calc_thread_params(unsigned long long *total_iter,
   *thread_z = 1;
 }
 
-void _ACC_GPU_ADJUST_GRID(int *gridX,int *gridY, int *gridZ, int limit){
+static void _ACC_GPU_ADJUST_GRID(int *gridX,int *gridY, int *gridZ, int limit){
   int total = *gridX * *gridY * *gridZ;
   if(total > limit){
     *gridZ = _ACC_M_MAX(1, *gridZ/_ACC_M_CEILi(total,limit));
@@ -140,7 +140,7 @@ void _ACC_GPU_ADJUST_GRID(int *gridX,int *gridY, int *gridZ, int limit){
     }*/
 }
 
-void _ACC_GPU_CHECK_ERROR(const char funcname[]){
+static void _ACC_GPU_CHECK_ERROR(const char funcname[]){
   cudaError_t lastError = cudaGetLastError();
   if(lastError != cudaSuccess){
     fprintf(stderr, "error occured at %s\n", funcname);
@@ -149,23 +149,23 @@ void _ACC_GPU_CHECK_ERROR(const char funcname[]){
 }
 
 __device__
-void _ACC_calc_niter(int *niter, int init, int cond, int step){
+static void _ACC_calc_niter(int *niter, int init, int cond, int step){
   *niter = _ACC_M_COUNT_TRIPLETi(init, cond - 1, step);
 }
 
 __device__
-int _ACC_calc_vidx(int *idx, int niter, int total_idx){
+static int _ACC_calc_vidx(int *idx, int niter, int total_idx){
   *idx = total_idx % niter;
   return total_idx / niter;
 }
 
 __device__
-void _ACC_gpu_init_iter_cnt(int *cnt, int init, int cond, int step){
+static void _ACC_gpu_init_iter_cnt(int *cnt, int init, int cond, int step){
   *cnt = _ACC_M_COUNT_TRIPLETi(init, cond - 1, step);
 }
 
 __device__
-void _ACC_init_private(void **p_prv, void *array, size_t size){
+static void _ACC_init_private(void **p_prv, void *array, size_t size){
   *p_prv = (char *)array + size * blockIdx.x;
 }
 
