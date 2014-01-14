@@ -521,6 +521,7 @@ moveAllSymbolToParent(CExpr *expr, CExpr *parent)
         }
     } else {
         EXPR_C(parent)->e_symTab = symTab;
+	EXPR_C(expr)->e_symTab = NULL;
     }
 }
 
