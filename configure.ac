@@ -606,17 +606,8 @@ if test "$target" != "$host"; then
   elif test "$target" = "powerpc-ibm-none"; then
     BECC="mpixlcxx"
     BEFC="mpixlf90"
-    BEFC_OPTION="-qextname" 
-#    DRIVER="/bgsys/drivers/ppcfloor"
-#    BECC_OPTION="-I${DRIVER} -I${DRIVER}/spi/include/kernel/cnk \
-#		-I${DRIVER}/spi/include/mu/default \
-#		-I${DRIVER}/comm/xl/include \
-#		-L${DRIVER}/comm/xl/lib \
-#		-L${DRIVER}/comm/sys/lib \
-#		-L${DRIVER}/spi/lib \
-#		-L${DRIVER}/bglpm/lib \
-#		-L/usr/local/bg/lib \
-#		-lkek -lmpich -lopa -lmpl -lpami -lSPI_cnk -lSPI -lSPI_l1p -lbgpm -lrt -lpthread -lstdc"
+    BEFC_OPTION="-qextname"
+    BECC_OPTION=""
   elif test "$target" = "powerpc64-hitachi-aix"; then
     BECC="mpCC_r"
     BEFC="mpif90"
@@ -682,7 +673,11 @@ elif test "$target" = "sx-nec-superux"; then
 elif test "$target" = "powerpc-ibm-none"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT=""
-  OMC_CONF_LNK_OPT=""
+  DRIVER="/bgsys/drivers/ppcfloor"
+  OMC_CONF_LNK_OPT="-I${DRIVER} -I${DRIVER}/spi/include/kernel/cnk \
+                -I${DRIVER}/spi/include/mu/default \
+                -I${DRIVER}/comm/xl/include \
+                -L/usr/local/bg/lib -lkek -lpthread -L${DRIVER}/spi/lib -lSPI_cnk -lSPI -lSPI_l1p -L${DRIVER}/bgpm/lib/ -lbgpm -lrt -lstdc++"
   BECC_OMP_OPTION=""
 elif test "$target" = "powerpc64-hitachi-aix"; then
   OMC_CONF_LX2X_OPT=""
@@ -1703,7 +1698,14 @@ AC_SUBST(OM_DRIVER_CONF_DIR)
 AH_TEMPLATE(OM_DRIVER_CONF_DIR, [omni compiler driver configuration file directory])
 AC_DEFINE_UNQUOTED(OM_DRIVER_CONF_DIR, "${OM_DRIVER_CONF_DIR}")
 
-OM_EXEC_C_PP="${BECC} -E"
+  if test "$target" = "powerpc-ibm-none"; then
+    OM_EXEC_C_PP="gcc -E"
+  else
+    OM_EXEC_C_PP="${BECC} -E"
+  fi
+
+
+#OM_EXEC_C_PP="${BECC} -E"
 AC_SUBST(OM_EXEC_C_PP)
 
 OM_EXEC_C_COMPILER="${BECC}"
