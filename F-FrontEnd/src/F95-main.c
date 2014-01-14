@@ -34,7 +34,6 @@ char *original_source_file_name = NULL;
 char *source_file_name = NULL;
 char *output_file_name = NULL;
 FILE *source_file,*output_file;
-int fixed_line_len_kind = FIXED_LINE_LEN_72;
 
 /* -save=? */
 int auto_save_attr_kb = -1;
@@ -128,8 +127,11 @@ usage()
         "-Kscope-omp               enable conditional compilation.",
         "-force-fixed-format       read file as fixed format.",
         "-force-free-format        read file as free format.",
-        "-fixed-line-length-132    set max columns to 132 in a line "
-                                  "in fixed format.",
+        "-max-line-length[=n]      set max columns in a line.",
+        "                          (default n=72 in fixed format,",
+        "                                   n=132 in free format.)",
+        "-max-cont-line[=n]        set max number of continuation lines.",
+        "                          (default n=255)",
         "-force-c-comment          enable 'c' comment in free format.",
         "-f77                      use F77 spec intrinsic.",
         "-f90                      use F90 spec intrinsic.",
@@ -166,7 +168,8 @@ int argc;
 char *argv[]; 
 { 
     extern int fixed_format_flag;
-    extern int fixed_line_len;
+    extern int max_line_len;
+    extern int max_cont_line;
     extern int flag_force_c_comment;
 #if YYDEBUG != 0
     extern int yydebug;
@@ -226,9 +229,10 @@ char *argv[];
 	    cond_compile_enabled = TRUE;
         } else if (strcmp(argv[0],"-fleave-comment") == 0){
 	    leave_comment_flag = TRUE;
-        } else if (strcmp(argv[0], "-fixed-line-length-132") == 0) {
-            fixed_line_len = 132;
-            fixed_line_len_kind = FIXED_LINE_LEN_132;
+        } else if (strncmp(argv[0], "-max-line-length=", 17) == 0) {
+            max_line_len = atoi(argv[0] + 17);
+        } else if (strncmp(argv[0], "-max-cont-line=", 15) == 0) {
+            max_cont_line = atoi(argv[0] + 15);
         } else if (strcmp(argv[0], "-u") == 0) {
             doImplicitUndef = TRUE;
         } else if (strcmp(argv[0], "-C") == 0) {
@@ -400,6 +404,11 @@ char *argv[];
         if(getcwd(xmodule_path, MAX_PATH_LEN) == NULL) {
             cmd_error_exit("cannot get current directory");
         }
+    }
+
+    if( max_line_len < 0 ){ /* unset */
+        max_line_len = fixed_format_flag ? DEFAULT_MAX_LINE_LEN_FIXED :
+                       DEFAULT_MAX_LINE_LEN_FREE;
     }
 
     if( max_name_len < 0 ){ /* unset */

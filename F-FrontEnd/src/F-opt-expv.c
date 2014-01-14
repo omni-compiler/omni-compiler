@@ -256,8 +256,17 @@ expv_reduce(expv v, int doParamReduce)
 
     /* constant folding */
     switch(code){
+    /*
+     * constant folding with arithmetic operators are applied,
+     * only when two types has no explicit kind. Since if they have
+     * explicit kind, resulting expv may have different kind to
+     * original expression.
+     */
 
     case MUL_EXPR:
+        if(TYPE_HAVE_KIND(EXPV_TYPE(left)) ||
+           TYPE_HAVE_KIND(EXPV_TYPE(right)))
+            break;
         if(EXPV_IS_INT_ZERO(left) || EXPV_IS_INT_ZERO(right))
             return(expv_constant_0); /* x*0 = 0 */
         if(EXPV_IS_INT_ONE(left))
@@ -280,6 +289,9 @@ expv_reduce(expv v, int doParamReduce)
         break;
 
     case DIV_EXPR:
+        if(TYPE_HAVE_KIND(EXPV_TYPE(left)) ||
+           TYPE_HAVE_KIND(EXPV_TYPE(right)))
+            break;
         if(EXPV_IS_INT_ZERO(left)) return(expv_constant_0); /* 0/x = 0 */
         if(EXPV_IS_INT_ZERO(right)) /* x/0 = error */
           {
@@ -303,6 +315,9 @@ expv_reduce(expv v, int doParamReduce)
         break;
 
     case PLUS_EXPR:
+        if(TYPE_HAVE_KIND(EXPV_TYPE(left)) ||
+           TYPE_HAVE_KIND(EXPV_TYPE(right)))
+            break;
         if(EXPV_IS_INT_ZERO(left))
             return(right);        /* 0 + x = x */
         if(EXPV_IS_INT_ZERO(right))
@@ -356,6 +371,9 @@ expv_reduce(expv v, int doParamReduce)
         break;
 
     case POWER_EXPR:
+        if(TYPE_HAVE_KIND(EXPV_TYPE(left)) ||
+           TYPE_HAVE_KIND(EXPV_TYPE(right)))
+            break;
         if(EXPV_IS_INT_ZERO(left))
             return(expv_constant_0); /* 0**x = 0 */
         if(EXPV_IS_INT_ZERO(right))

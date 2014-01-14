@@ -74,6 +74,10 @@ extern int nerrors;
 #define MAX_NAME_LEN_UPPER_LIMIT 256   /* upper bound */
 #define MAX_DIM  7
 
+/* max line length */
+#define DEFAULT_MAX_LINE_LEN_FIXED 72
+#define DEFAULT_MAX_LINE_LEN_FREE 255
+
 extern unsigned long int maxStackSize;
 extern int debug_flag;
 extern FILE *debug_fp;
@@ -107,11 +111,6 @@ extern int fixed_format_flag;
 extern char *includeDirv[MAXINCLUDEDIRV + 1];
 extern int includeDirvI;
 extern const char * search_include_path(const char *);
-
-enum fixed_line_len_kind {
-	FIXED_LINE_LEN_72,
-	FIXED_LINE_LEN_132
-};
 
 #include <libgen.h>
 
@@ -683,6 +682,8 @@ extern expv     expv_get_address _ANSI_ARGS_((expv v));
 extern ID       find_common_ident _ANSI_ARGS_((SYMBOL sym));
 extern ID       find_common_ident_parent _ANSI_ARGS_((SYMBOL sym));
 extern ID       find_common_ident_sibling _ANSI_ARGS_((SYMBOL sym));
+
+extern TYPE_DESC declare_struct_type_wo_component(expr ident);
 
 extern int      expr_is_param _ANSI_ARGS_((expr x));
 extern int      expr_has_param _ANSI_ARGS_((expr x));

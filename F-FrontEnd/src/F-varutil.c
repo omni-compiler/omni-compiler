@@ -690,7 +690,8 @@ expr_is_restricted(expr x)
 int
 expr_is_specification(expv x)
 {
-    if (TYPE_BASIC_TYPE(EXPV_TYPE(x)) == TYPE_INT &&
+    if (EXPV_TYPE(x) != NULL &&
+        TYPE_BASIC_TYPE(EXPV_TYPE(x)) == TYPE_INT &&
         TYPE_N_DIM(EXPV_TYPE(x)) == 0 &&
         (expr_is_restricted(x)))
         return TRUE;

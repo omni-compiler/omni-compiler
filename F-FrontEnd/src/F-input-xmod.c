@@ -794,13 +794,17 @@ input_FfunctionType(xmlTextReaderPtr reader, HashTable * ht)
         free(attr);
     }
 
-#ifdef SUPPORT_PURE
     attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_pure");
     if (attr != NULL) {
         TYPE_SET_PURE(tep->tp);
         free(attr);
     }
-#endif
+
+    attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_elemental");
+    if (attr != NULL) {
+        TYPE_SET_ELEMENTAL(tep->tp);
+        free(attr);
+    }
 
     attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_external");
     if (attr != NULL) {

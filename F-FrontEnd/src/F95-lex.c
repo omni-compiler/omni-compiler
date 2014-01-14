@@ -26,8 +26,10 @@ int PRAGMA_flag = TRUE;
 
 #define TOLOWER(x) (isupper((int)(x))) ? tolower((int)(x)) : (x)
 
-#define ST_BUF_SIZE     65536
-#define LINE_BUF_SIZE   256
+int st_buf_size;
+int line_buf_size;
+#define ST_BUF_SIZE     st_buf_size
+#define LINE_BUF_SIZE   line_buf_size
 
 #define UNDER_LINE_BUF_SIZE(top,p) ((p-top)<LINE_BUF_SIZE)
 
@@ -39,7 +41,9 @@ int need_check_user_defined = TRUE; /* check the user defined dot id */
 int may_generic_spec = FALSE;
 
 int fixed_format_flag = FALSE; 
-int fixed_line_len = 72;
+
+int max_line_len = -1; /* -1 when value is not set yet. */
+int max_cont_line = 255;
 
 /* enable comment char, 'c' in free format.  */
 int flag_force_c_comment = FALSE; /* does not set yet.  */
@@ -62,12 +66,12 @@ extern int dollar_ok;    // accept '$' in identifier or not.
 
 int exposed_comma,exposed_eql;
 int paren_level;
-char *bufptr;                   /* pointer running in st_buffer */
-char st_buffer[ST_BUF_SIZE];    /* one statement buffer */
-char st_buffer_org[ST_BUF_SIZE];        /* one statement buffer  */
+char *bufptr = NULL;            /* pointer running in st_buffer */
+char *st_buffer = NULL;         /* one statement buffer */
+char *st_buffer_org = NULL;     /* one statement buffer  */
 char stn_cols[7];                       /* line number colums */
-char line_buffer[LINE_BUF_SIZE];        /* pre_read line buffer */
-char buffio[LINE_BUF_SIZE];
+char *line_buffer = NULL;       /* pre_read line buffer */
+char *buffio = NULL;
 
 int prevline_is_inQuote = 0;
 int prevline_is_inComment = FALSE;
@@ -139,7 +143,7 @@ static char * sentinel_name( sentinel_list * p, unsigned int n );
 static int sentinel_index( sentinel_list * p, char * name );
 
 /* buffer for progma with pragma key and rest of line.  */
-static char pragmaBuf[ST_BUF_SIZE];
+static char *pragmaBuf = NULL;
 
 extern struct keyword_token OMP_keywords[];
 extern struct keyword_token XMP_keywords[];
@@ -249,6 +253,15 @@ initialize_lex()
 {
   extern int mcLn_no;
   extern long mcStart;
+
+  line_buf_size = max_line_len + 2 + 1; /* CRLF + \0 */
+  st_buf_size = max_line_len * (max_cont_line + 1) + 1;
+
+  line_buffer = XMALLOC(char *, line_buf_size);
+  st_buffer = XMALLOC(char *, st_buf_size);
+  st_buffer_org = XMALLOC(char *, st_buf_size);
+  buffio = XMALLOC(char *, st_buf_size);
+  pragmaBuf = XMALLOC(char *, st_buf_size);
   
   memset(last_ln_nos, 0, sizeof(last_ln_nos));
 
@@ -1704,8 +1717,12 @@ get_keyword_optional_blank(int class)
         }
         break;
 
-    case ELSE:  /* ELSE IF */
-        if(get_keyword(keywords) == LOGIF)  return ELSEIFTHEN;
+    case ELSE:
+        cl = get_keyword(keywords);
+        if(cl == LOGIF)
+            return ELSEIFTHEN;
+        else if(cl == WHERE)
+            return ELSEWHERE;
         break;
     case KW_GO:
         if(get_keyword(keywords) == KW_TO) return GOTO;
@@ -2126,14 +2143,21 @@ again:
         }
     }
 
+    int cont_line_num = 0;
     while(find_last_ampersand(st_buffer,&st_len)){
         int index = 0;
+        if (cont_line_num >= max_cont_line) {
+            error("number of continuation lines exceeded %d lines", max_cont_line);
+            goto Done;
+        }
     next_line:
         rv = readline_free_format();
         if(rv == ST_EOF){
             error("unexpected EOF");
             return rv;
         }
+        cont_line_num++;
+
         p = line_buffer;
         while(isspace(*p)) p++;     /* skip space */
 
@@ -2304,6 +2328,7 @@ next_line0:
     for(bp = line_buffer;
         bp < &line_buffer[LINE_BUF_SIZE]; ) {
         c = getc(source_file);
+        if(c == '\r') continue;
         if(c == '\n') goto done;
         if (!inQuote && !inComment && (c == ';')) {
             no_countup = TRUE;
@@ -2374,8 +2399,8 @@ done:
         }
         goto next_line0;
     }
-    if(bp - line_buffer > 132)
-        warning_lineno( &read_lineno, "line contains more than 132 characters");
+    if((bp - line_buffer) > max_line_len)
+        error("line contains more than %d characters", max_line_len);
     return(ST_INIT);
 }
 
@@ -2504,8 +2529,13 @@ copy_body:
     memcpy(oBuf, st_buffer, newLen);
     oBuf[newLen] = '\0';
 
+    int cont_line_num = 0;
     current_st_PRAGMA_flag = st_PRAGMA_flag;
     while ((rv = readline_fixed_format()) == ST_CONT) {
+        cont_line_num++;
+        if (cont_line_num > max_cont_line) {
+            error("number of continuation lines exceeded %d lines", max_cont_line);
+        }
         if( is_pragma_sentinel( &sentinels, stn_cols, &index ) ){
             if( strcasecmp( sentinel_name( &sentinels, index ),
                             OMP_SENTINEL )== 0 ){
@@ -2646,10 +2676,10 @@ readline_fixed_format()
     int check_cont; /* need to check the continuation line.  */
     int inQuote = 0;
     int inComment = FALSE;
+    int only_space_or_comment = FALSE;
     long starting_pos;   /* starting position of line in file */
     int pos;            /* current position in file */
     int index; /* sentinel index in list */
-    char * linetop;
     size_t linelen;
     int body_offset = 0;
     int local_OMP_flag = FALSE;
@@ -2692,21 +2722,27 @@ next_line0:
         error( "ftell error" );
     }
     
-    linetop = fgets( line_buffer, LINE_BUF_SIZE-1, source_file );
-    if( feof( source_file ) ) return ST_EOF;
-    if( linetop == NULL ){ /* read error or eof */
-        error("line is too long or read error.");
+    if( fgets( line_buffer, LINE_BUF_SIZE, source_file ) == NULL ){
+        /* read error or eof */
+        return ST_EOF;
     }
     /* check end of line and fix to unix style */
     linelen = strlen( line_buffer );
-    if (linelen > 1) {
+    if (linelen > 2) {
         if (line_buffer[linelen-2] == 0x0d 
             && line_buffer[linelen-1] == 0x0a) { /* CR+LF DOS style */
             line_buffer[linelen-2] = 0x0a; 
             line_buffer[linelen-1] = 0x0; 
+            linelen -= 2;
+        } else if (line_buffer[linelen-1] == 0x0a) {
+            linelen--;
         }
     }
     
+    if (linelen > max_line_len) {
+        error("line contains more than %d characters", max_line_len);
+    }
+
     /*  replace coment letter to '!' */
     if( line_buffer[0]=='C'||line_buffer[0]=='c'||line_buffer[0]=='*' ){
         line_buffer[0]='!';  /* replace for pragma sentinel */
@@ -2854,7 +2890,7 @@ KeepOnGoin:
      */
     bp = line_buffer;
     inQuote = 0;
-    maxChars = fixed_line_len - 6;
+    maxChars = max_line_len - 6;
     if ( line_buffer[body_offset] == '\n') {
         line_buffer[0] = '\0';
     } else {
@@ -2868,6 +2904,15 @@ KeepOnGoin:
         for( i = 0 ; i < sizeof(scanBuf) 
                  && (i+body_offset)<LINE_BUF_SIZE; i++ ){
             c = line_buffer[i+body_offset];
+            if( c == '&' && !inComment && !inQuote) {
+                /* only space and comments are allowed after '&' */
+                only_space_or_comment = TRUE;
+                continue;
+            }
+            if( only_space_or_comment && !isspace(c) && c != '!') {
+                error("character '%c' appeared after '&'", c);
+                goto Newline;
+            }
             if( c == '\'' && inComment == FALSE ){
                 if( line_buffer[i] == inQuote )
                     inQuote = 0;

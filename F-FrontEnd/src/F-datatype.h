@@ -114,6 +114,7 @@ typedef struct type_descriptor
 #define TYPE_ATTR_INTERNAL_PRIVATE  0x00004000
 #define TYPE_ATTR_RECURSIVE         0x00008000
 #define TYPE_ATTR_PURE              0x00010000
+#define TYPE_ATTR_ELEMENTAL         0x00020000
         uint32_t type_attr_flags;
 #define TYPE_EXFLAGS_IMPLICIT       0x00000001 /* implicitly defined or not */
 #define TYPE_EXFLAGS_OVERRIDDEN     0x00000002 /* type is overridden by child */
@@ -216,6 +217,9 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_IS_PURE(tp)            ((tp)->attr.type_attr_flags &   TYPE_ATTR_PURE)
 #define TYPE_SET_PURE(tp)           ((tp)->attr.type_attr_flags |=  TYPE_ATTR_PURE)
 #define TYPE_UNSET_PURE(tp)         ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_PURE)
+#define TYPE_IS_ELEMENTAL(tp)       ((tp)->attr.type_attr_flags &   TYPE_ATTR_ELEMENTAL)
+#define TYPE_SET_ELEMENTAL(tp)      ((tp)->attr.type_attr_flags |=  TYPE_ATTR_ELEMENTAL)
+#define TYPE_UNSET_ELEMENTAL(tp)    ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_ELEMENTAL)
 #define TYPE_IS_INTENT_IN(tp)       ((tp)->attr.type_attr_flags &   TYPE_ATTR_INTENT_IN)
 #define TYPE_SET_INTENT_IN(tp)      ((tp)->attr.type_attr_flags |=  TYPE_ATTR_INTENT_IN)
 #define TYPE_UNSET_INTENT_IN(tp)    ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_INTENT_IN)
@@ -268,6 +272,9 @@ extern TYPE_DESC basic_type_desc[];
                 (TYPE_IS_ARRAY_ASSUMED_SIZE(tp) || TYPE_IS_ARRAY_ASSUMED_SHAPE(tp))
 
 #define TYPE_IS_RESHAPED_ARRAY(tp)
+
+#define TYPE_HAVE_KIND(tp) \
+                ((tp) != NULL && TYPE_KIND(tp) != NULL)
 
 #define CHAR_LEN_UNFIXED (-1)
 

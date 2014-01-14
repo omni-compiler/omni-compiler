@@ -38,6 +38,8 @@
     <xsd:attribute name="is_external" type="xsd:boolean"/>
     <xsd:attribute name="is_public" type="xsd:boolean"/>
     <xsd:attribute name="is_private" type="xsd:boolean"/>
+    <xsd:attribute name="is_pure" type="xsd:boolean"/>
+    <xsd:attribute name="is_elemental" type="xsd:boolean"/>
   </xsd:complexType>
   <xsd:complexType name="params">
     <xsd:sequence>

@@ -583,6 +583,7 @@ has_attribute_except_func_attrs(TYPE_DESC tp)
         /* TYPE_IS_INTRINSIC(tp) || */
         /* TYPE_IS_RECURSIVE(tp) || */
         /* TYPE_IS_PURE(tp) || */
+        /* TYPE_IS_ELEMENTAL(tp) || */
         TYPE_IS_PARAMETER(tp) ||
         TYPE_IS_ALLOCATABLE(tp) ||
         TYPE_IS_OPTIONAL(tp) ||
@@ -608,7 +609,8 @@ has_attribute(TYPE_DESC tp)
         TYPE_IS_EXTERNAL(tp) ||
         TYPE_IS_INTRINSIC(tp) ||
         TYPE_IS_RECURSIVE(tp) ||
-        TYPE_IS_PURE(tp);
+        TYPE_IS_PURE(tp) ||
+        TYPE_IS_ELEMENTAL(tp);
 }
 
 static int
@@ -619,12 +621,7 @@ has_attribute_except_private_public(TYPE_DESC tp)
     int is_private = TYPE_IS_PRIVATE(tp);
     TYPE_UNSET_PUBLIC(tp);
     TYPE_UNSET_PRIVATE(tp);
-    ret =
-        has_attribute_except_func_attrs(tp) ||
-        TYPE_IS_EXTERNAL(tp) ||
-        TYPE_IS_INTRINSIC(tp) ||
-        TYPE_IS_RECURSIVE(tp) ||
-        TYPE_IS_PURE(tp);
+    ret = has_attribute(tp);
     if(is_private)
         TYPE_SET_PRIVATE(tp);
     if(is_public)
@@ -3350,9 +3347,8 @@ outx_functionType_EXT(int l, EXT_ID ep)
 
     if (tp) {
         outx_true(TYPE_IS_RECURSIVE(tp), "is_recursive");
-#ifdef SUPPORT_PURE
         outx_true(TYPE_IS_PURE(tp), "is_pure");
-#endif /* SUPPORT_PURE */
+        outx_true(TYPE_IS_ELEMENTAL(tp), "is_elemental");
         outx_true(TYPE_IS_EXTERNAL(tp), "is_external");
         outx_true(TYPE_IS_PUBLIC(tp), "is_public");
         outx_true(TYPE_IS_PRIVATE(tp), "is_private");
@@ -4202,12 +4198,10 @@ collect_types1(EXT_ID extid)
         collect_type_desc(EXT_PROC_BODY(ep));
 
         for(tp = EXT_PROC_STRUCT_DECLS(ep); tp != NULL; tp = TYPE_SLINK(tp)) {
-            if(TYPE_IS_DECLARED(tp) == FALSE) {
-                error("component of type '%s' is not declared.", SYM_NAME(ID_SYM(TYPE_TAGNAME(tp))));
-                exit(1);
+            if(TYPE_IS_DECLARED(tp)) {
+                mark_type_desc(tp);
+                mark_type_desc_in_structure(tp);
             }
-            mark_type_desc(tp);
-            mark_type_desc_in_structure(tp);
         }
     }
 }

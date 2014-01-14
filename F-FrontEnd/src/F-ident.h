@@ -167,6 +167,7 @@ typedef struct ident_descriptor
                                          copy to TYPE_DESC's is_recursive
                                          after type is decided */
             int is_pure;              /* like above. */
+            int is_elemental;         /* like above. */
             int is_dummy;             /* if TRUE, declared as dummy
                                        * arg in the parent scope. */
             int is_func_subr_ambiguous;
@@ -274,6 +275,7 @@ typedef struct ident_descriptor
 #define PROC_STBODY(id) ((id)->addr)
 #define PROC_IS_RECURSIVE(id) ((id)->info.proc_info.is_recursive)
 #define PROC_IS_PURE(id) ((id)->info.proc_info.is_pure)
+#define PROC_IS_ELEMENTAL(id) ((id)->info.proc_info.is_elemental)
 #define PROC_IS_DUMMY_ARG(id) ((id)->info.proc_info.is_dummy)
 #define PROC_IS_FUNC_SUBR_AMBIGUOUS(id) \
     ((id)->info.proc_info.is_func_subr_ambiguous)

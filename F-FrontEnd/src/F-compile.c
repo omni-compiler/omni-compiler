@@ -373,14 +373,10 @@ void compile_statement1(int st_no, expr x)
         begin_procedure();
         if (EXPR_ARG3(x) && EXPR_CODE(EXPR_ARG3(x)) == IDENT) {
             /* in case of struct */
-            TYPE_DESC tp = find_struct_decl(EXPR_SYM(EXPR_ARG3(x)));
-            if (tp) {
-                declare_procedure(CL_PROC, EXPR_ARG1(x),
-                                  tp,
-                                  EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));
-            }else{
-                error("unknown type of function");
-            }
+            TYPE_DESC tp = declare_struct_type_wo_component(EXPR_ARG3(x));
+            declare_procedure(CL_PROC, EXPR_ARG1(x),
+                              tp,
+                              EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));
         }else{
             declare_procedure(CL_PROC, EXPR_ARG1(x),
                               compile_type(EXPR_ARG3(x)),
@@ -1264,7 +1260,11 @@ check_INEXEC()
 {
     if (CURRENT_STATE == OUTSIDE) {
         begin_procedure();
-        declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
+        if (unit_ctl_level == 0)
+            declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol("main")),
+                              NULL, NULL, NULL, NULL);
+        else
+            declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
     }
     if(NOT_INDATA_YET) end_declaration();
 }
@@ -1492,6 +1492,38 @@ end_declaration()
             EXT_PROC_RESULTVAR(myEId) = resultV;
         }
 
+        /*
+         * Fix return type of function when it is struct
+         */
+        if (CURRENT_PROC_CLASS == CL_PROC &&
+            CURRENT_PROCEDURE != NULL &&
+            IS_STRUCT_TYPE(ID_TYPE(CURRENT_PROCEDURE))) {
+            TYPE_DESC tp = ID_TYPE(CURRENT_PROCEDURE);
+            TYPE_DESC tq = NULL;
+            TYPE_DESC ts = NULL;
+            /*
+             * to preserve effect of wrap_type(), we substitute TYPE_DESC
+             * in TYPE_REF */
+            tq = tp;
+            while (TYPE_REF(tp) != NULL) {
+                tq = tp;
+                tp = TYPE_REF(tp);
+            }
+            if (!TYPE_IS_DECLARED(tp)) {
+                /*
+                 * since struct defined in contains cannot be reffered
+                 * from parent scope, we use find_struct_decl_parent()
+                 */
+                ts = find_struct_decl_parent(ID_SYM(TYPE_TAGNAME(tp)));
+                if (ts != NULL) {
+                    TYPE_REF(tq) = ts;
+                } else {
+                    error_at_id(CURRENT_PROCEDURE, "function returns undeclared "
+                                "struct type \"%s\".", ID_NAME(CURRENT_PROCEDURE));
+                }
+            }
+        }
+
         /* for recursive */
         assert(ID_TYPE(myId) != NULL);
         if (TYPE_IS_RECURSIVE(myId) ||
@@ -1504,6 +1536,12 @@ end_declaration()
             PROC_IS_PURE(myId)) {
             TYPE_SET_PURE(ID_TYPE(myId));
             TYPE_SET_PURE(EXT_PROC_TYPE(myEId));
+        }
+        /* for elemental */
+        if (TYPE_IS_ELEMENTAL(myId) ||
+            PROC_IS_ELEMENTAL(myId)) {
+            TYPE_SET_ELEMENTAL(ID_TYPE(myId));
+            TYPE_SET_ELEMENTAL(EXT_PROC_TYPE(myEId));
         }
     }
 
@@ -2002,56 +2040,6 @@ end_contains()
         goto error;
     }
 
-    if(PARENT_EXT_ID && EXT_PROC_INTERFACES(PARENT_EXT_ID)) {
-        /* check if module procedures are defined in contains block */
-        EXT_ID intr, intrDef, ep;
-        FOREACH_EXT_ID(intr, EXT_PROC_INTERFACES(PARENT_EXT_ID)) {
-            int hasSub = FALSE, hasFunc = FALSE;
-
-            if(EXT_IS_BLANK_NAME(intr))
-                continue;
-
-            FOREACH_EXT_ID(intrDef, EXT_PROC_INTR_DEF_EXT_IDS(intr)) {
-                if(EXT_PROC_IS_MODULE_PROCEDURE(intrDef)) {
-                    ID id = find_ident_parent(EXT_SYM(intrDef));
-                    if(id != NULL
-                       && ID_CLASS(id) == CL_PROC
-                       && ID_IS_OFMODULE(id)) {
-                        // intrDef is use associated module procedure.
-                        ep = PROC_EXT_ID(id);
-                    } else if (EXT_IS_OFMODULE(intrDef)) {
-                        continue;
-                    } else {
-                        ep = find_ext_id(EXT_SYM(intrDef));
-                    }
-                    if(ep == NULL || EXT_TAG(ep) != STG_EXT ||
-                        EXT_PROC_TYPE(ep) == NULL) {
-                        error("%s is not defined in CONTAINS",
-                            SYM_NAME(EXT_SYM(intrDef)));
-                        goto error;
-                    }
-                    EXT_PROC_TYPE(intrDef) = EXT_PROC_TYPE(ep);
-                    EXT_PROC_ARGS(intrDef) = EXT_PROC_ARGS(ep);
-                    EXT_PROC_ID_LIST(intrDef) = EXT_PROC_ID_LIST(ep);
-                } else {
-                    ep = intrDef;
-                }
-                if(IS_GENERIC_TYPE(EXT_PROC_TYPE(ep))) {
-                    continue;
-                } else if(IS_SUBR(EXT_PROC_TYPE(ep))) {
-                    hasSub = TRUE;
-                } else {
-                    hasFunc = TRUE;
-                }
-            }
-
-            if(hasSub && hasFunc) {
-                error("function does not belong in a generic subroutine interface");
-                goto error;
-            }
-        }
-    }
-
     localExtSyms = LOCAL_EXTERNAL_SYMBOLS;
     define_internal_subprog(localExtSyms);
     pop_unit_ctl();
@@ -2217,49 +2205,66 @@ end_procedure()
         end_contains();
     }
 
-/*     /\* Since module procedures may be defined not only in contains block but */
-/*        also in used modules, the following code is moved from end_contains. *\/ */
+    /* Since module procedures may be defined not only in contains block but */
+    /* also in used modules, the following code is moved from end_contains. */
 
-/*     /\* check if module procedures are defined in contains block *\/ */
-/*     EXT_ID intr, intrDef, ep; */
+    if (CURRENT_PROC_CLASS == CL_MAIN ||
+        CURRENT_PROC_CLASS == CL_PROC ||
+        CURRENT_PROC_CLASS == CL_MODULE ||
+        CURRENT_PROC_CLASS == CL_BLOCK) {
+        /* check if module procedures are defined in contains block */
+        EXT_ID intr, intrDef, ep;
+        FOREACH_EXT_ID(intr, EXT_PROC_INTERFACES(CURRENT_EXT_ID)) {
+            int hasSub = FALSE, hasFunc = FALSE;
 
-/*     FOREACH_EXT_ID(intr, EXT_PROC_INTERFACES(CURRENT_EXT_ID)){ */
+            if(EXT_IS_BLANK_NAME(intr))
+                continue;
 
-/*       int hasSub = FALSE, hasFunc = FALSE; */
+            FOREACH_EXT_ID(intrDef, EXT_PROC_INTR_DEF_EXT_IDS(intr)) {
+                if(EXT_PROC_IS_MODULE_PROCEDURE(intrDef)) {
+                    /*
+                     * currentry we use find_ident() in all cases,
+                     * but when module procedure is declare without
+                     * "module" keyword we should use find_ident_local()
+                     * and find_ident_sibling().
+                     */
+                    ep = NULL;
+                    ID id = find_ident(EXT_SYM(intrDef));
+                    if(id != NULL
+                       && ID_CLASS(id) == CL_PROC
+                       && ID_IS_OFMODULE(id)) {
+                        // intrDef is use associated module procedure.
+                        ep = PROC_EXT_ID(id);
+                    } else if (EXT_IS_OFMODULE(intrDef)) {
+                        continue;
+                    } else if (id != NULL) {
+                        ep = PROC_EXT_ID(id);
+                    }
+                    if(ep == NULL || EXT_TAG(ep) != STG_EXT ||
+                        EXT_PROC_TYPE(ep) == NULL) {
+                        error("%s is not defined.", SYM_NAME(EXT_SYM(intrDef)));
+                        break;
+                    }
+                    EXT_PROC_TYPE(intrDef) = EXT_PROC_TYPE(ep);
+                    EXT_PROC_ARGS(intrDef) = EXT_PROC_ARGS(ep);
+                    EXT_PROC_ID_LIST(intrDef) = EXT_PROC_ID_LIST(ep);
+                } else {
+                    ep = intrDef;
+                }
+                if(IS_GENERIC_TYPE(EXT_PROC_TYPE(ep))) {
+                    continue;
+                } else if(IS_SUBR(EXT_PROC_TYPE(ep))) {
+                    hasSub = TRUE;
+                } else {
+                    hasFunc = TRUE;
+                }
+            }
 
-/*       if (EXT_IS_BLANK_NAME(intr)) continue; */
-
-/*       FOREACH_EXT_ID(intrDef, EXT_PROC_INTR_DEF_EXT_IDS(intr)){ */
-
-/* 	if (EXT_PROC_IS_MODULE_PROCEDURE(intrDef)){ */
-/* 	  ep = find_ext_id(EXT_SYM(intrDef)); */
-/* 	  if (ep == NULL || EXT_TAG(ep) != STG_EXT || */
-/* 	      EXT_PROC_TYPE(ep) == NULL){ */
-/* 	    error("%s is not defined in the scoping unit", */
-/* 		  SYM_NAME(EXT_SYM(intrDef))); */
-/* 	    goto next; */
-/* 	  } */
-/* 	} */
-/* 	else { */
-/* 	  ep = intrDef; */
-/* 	} */
-
-/* 	if (IS_GENERIC_TYPE(EXT_PROC_TYPE(ep))){ */
-/* 	  continue; */
-/* 	} */
-/* 	else if (IS_SUBR(EXT_PROC_TYPE(ep))){ */
-/* 	  hasSub = TRUE; */
-/* 	} */
-/* 	else { */
-/* 	  hasFunc = TRUE; */
-/* 	} */
-/*       } */
-
-/*       if (hasSub && hasFunc){ */
-/* 	error("function does not belong in a generic subroutine interface"); */
-/* 	goto next; */
-/*       } */
-/*     } */
+            if(hasSub && hasFunc) {
+                error("function does not belong in a generic subroutine interface");
+            }
+        }
+    }
 
 /*  next: */
 

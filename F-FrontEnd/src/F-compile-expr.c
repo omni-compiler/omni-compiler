@@ -895,13 +895,24 @@ compile_expression(expr x)
         }
 
         case F95_LEN_SELECTOR_SPEC: {
-            expr v;
+            expv v;
             if(EXPR_ARG1(x) == NULL)
                 return expv_any_term(F_ASTERISK, NULL);
             v = compile_expression(EXPR_ARG1(x));
-            if(expr_is_specification(v))
-                return v;
-            return compile_int_constant(EXPR_ARG1(x));
+            if((v = expv_reduce(v, FALSE)) == NULL) return NULL;
+            /* if type is not fixed yet, do implicit declaration here */
+            if((EXPV_CODE(v) == IDENT || EXPV_CODE(v) == F_VAR) &&
+               EXPV_TYPE(v) == NULL) {
+                id = find_ident(EXPV_NAME(v));
+                if (ID_TYPE(id) == NULL) {
+                   implicit_declaration(id);
+                }
+                EXPV_TYPE(v) = ID_TYPE(id);
+            }
+            if(!expr_is_specification(v))
+                error_at_node(EXPR_ARG1(x),
+                    "character string length must be integer.");
+            return v;
         }
         case PLUS_EXPR:
         case MINUS_EXPR:
@@ -2056,30 +2067,10 @@ chose_module_procedure_by_args(EXT_ID modProcIDs, expv args) {
     ID aModArgID;
     int i;
     expv anArg, aModArg;
-    TYPE_DESC anArgType, aModArgType, eType;
-    BASIC_DATA_TYPE anArgBType, aModArgBType, eBType;
+    TYPE_DESC anArgType, aModArgType;
+    BASIC_DATA_TYPE anArgBType, aModArgBType;
     ID fId;
     int nMatch;
-    int nProcIDs = 0;
-    int nVisibleProcIDs = 0;
-    int nSubr = 0;
-
-    if (nArgs == 0) {
-        return NULL;
-    }
-
-    FOREACH_EXT_ID(aProcID, modProcIDs) {
-        nProcIDs++;
-        fId = find_ident(EXT_SYM(aProcID));
-        if (fId != NULL) {
-            eType = ID_TYPE(fId);
-        } else {
-            eType = EXT_PROC_TYPE(aProcID);
-        }
-        if (eType != NULL) {
-            nVisibleProcIDs++;
-        }
-    }
 
     FOREACH_EXT_ID(aProcID, modProcIDs) {
         fId = NULL;
@@ -2091,26 +2082,6 @@ chose_module_procedure_by_args(EXT_ID modProcIDs, expv args) {
         }
 
         fId = find_ident(EXT_SYM(aProcID));
-        if (fId != NULL) {
-            eType = ID_TYPE(fId);
-        } else {
-            eType = EXT_PROC_TYPE(aProcID);
-        }
-        if (eType != NULL) {
-            eBType = get_basic_type(eType);
-            /*
-             * check if the aProcID is subroutine or not.
-             */
-            if (eBType == TYPE_SUBR) {
-                nSubr++;
-                if (debug_flag) {
-                    fprintf(stderr, "'%s' is a subroutine.\n",
-                            SYM_NAME(EXT_SYM(aProcID)));
-                }
-                continue;
-            }
-        }
-
         modArgs = EXT_PROC_ARGS(aProcID);
         if (modArgs == NULL) {
             if (fId != NULL &&
@@ -2167,7 +2138,7 @@ chose_module_procedure_by_args(EXT_ID modProcIDs, expv args) {
             aModArgType = NULL;
 
             /*
-             * It's easy to get the type of an actual arcument.
+             * It's easy to get the type of an actual argument.
              */
             anArg = expr_list_get_n(args, i);
             anArgType = EXPV_TYPE(anArg);
@@ -2291,11 +2262,6 @@ chose_module_procedure_by_args(EXT_ID modProcIDs, expv args) {
         }
     }
 
-    if (nSubr > 0 &&
-        (nSubr == nProcIDs || nSubr == nVisibleProcIDs)) {
-        ret = type_basic(TYPE_SUBR);
-    }
-
     if (ret != NULL) {
         if (debug_flag) {
             fprintf(stderr, "ret = %p\n", ret);
@@ -2383,7 +2349,7 @@ compile_function_call(ID f_id, expr args) {
                 if (modProcType != NULL) {
                     tp = modProcType;
                 } else {
-                    warning_at_node(args, "can't determine a function to "
+                    warning_at_id(f_id, "can't determine a function to "
                                     "be actually called for a generic "
                                     "interface function call of '%s', "
                                     "this is a current limitation.",

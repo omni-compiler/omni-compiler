@@ -9,6 +9,7 @@
  */
 
 #include "F-front.h"
+#include "module-manager.h"
 #include <math.h>
 
 #define ROUND(a,b)    (b * ( (a+b-1)/b))
@@ -86,6 +87,7 @@ declare_procedure(enum name_class class,
     EXT_ID ep;
     int recursive = FALSE;
     int pure = FALSE;
+    int elemental = FALSE;
     list lp;
 
     if (name) {
@@ -132,6 +134,14 @@ declare_procedure(enum name_class class,
                 return;
             }
             pure = TRUE;
+            break;
+
+        case F95_ELEMENTAL_SPEC:
+            if (class != CL_PROC) {
+                error("invalid elemental prefix");
+                return;
+            }
+            elemental = TRUE;
             break;
 
         default:
@@ -209,6 +219,13 @@ declare_procedure(enum name_class class,
             TYPE_SET_PURE(id);
             if (type != NULL) {
                 TYPE_SET_PURE(type);
+            }
+        }
+        if (elemental == TRUE) {
+            PROC_IS_ELEMENTAL(id) = pure;
+            TYPE_SET_ELEMENTAL(id);
+            if (type != NULL) {
+                TYPE_SET_ELEMENTAL(type);
             }
         }
         ID_STORAGE(id) = STG_EXT;
@@ -1345,7 +1362,7 @@ declare_struct_type(expr ident)
 }
 
 /* declare struct type wihtout component. */
-static TYPE_DESC
+TYPE_DESC
 declare_struct_type_wo_component(expr ident)
 {
     SYMBOL sp = EXPR_SYM(ident);
@@ -3350,9 +3367,18 @@ compile_PARAM_decl(expr const_list)
             return;
         }
 
-        id = declare_ident(EXPR_SYM(ident), CL_PARAM);
+        id = find_ident_local(EXPR_SYM(ident));
         if (id == NULL) {
-            continue;
+            id = declare_ident(EXPR_SYM(ident), CL_PARAM);
+            if (id == NULL) {
+                continue;
+            }
+        } else if (ID_IS_OFMODULE(id)) {
+            error_at_id(id, "\"%s\" is already declared in module \"%s\".",
+                ID_NAME(id), SYM_NAME(ID_USEASSOC_INFO(id)->module_name));
+        }
+        if (ID_CLASS(id) == CL_VAR || ID_CLASS(id) == CL_UNKNOWN) {
+            ID_CLASS(id) = CL_PARAM;
         }
         if (ID_TYPE(id) != NULL) {
             TYPE_SET_PARAMETER(ID_TYPE(id));

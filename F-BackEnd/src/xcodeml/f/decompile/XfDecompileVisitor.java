@@ -2646,6 +2646,22 @@ public class XfDecompileVisitor extends RVisitorBase
         return true;
     }
 
+    private void _writeFunctionPrefix(XbfFfunctionType functionTypeElem) {
+        XmfWriter writer = _context.getWriter();
+        if (functionTypeElem.getIsRecursive()) {
+            writer.writeToken("RECURSIVE");
+            writer.writeToken(" ");
+        }
+        if (functionTypeElem.getIsPure()) {
+            writer.writeToken("PURE");
+            writer.writeToken(" ");
+        }
+        if (functionTypeElem.getIsElemental()) {
+            writer.writeToken("ELEMENTAL");
+            writer.writeToken(" ");
+        }
+    }
+
     /**
      * Decompile "FfunctionDecl" element in XcodeML/F.
      *
@@ -2706,10 +2722,7 @@ public class XfDecompileVisitor extends RVisitorBase
             // ==========
             // SUBROUTINE
             // ==========
-            if (functionTypeElem.getIsRecursive()) {
-                writer.writeToken("RECURSIVE");
-                writer.writeToken(" ");
-            }
+            _writeFunctionPrefix(functionTypeElem);
             writer.writeToken("SUBROUTINE");
             writer.writeToken(" ");
             writer.writeToken(functionNameElem.getContent());
@@ -2734,10 +2747,7 @@ public class XfDecompileVisitor extends RVisitorBase
              * writer.writeToken(typeId.fortranName()); }
              * writer.writeToken(" ");
              */
-            if (functionTypeElem.getIsRecursive()) {
-                writer.writeToken("RECURSIVE");
-                writer.writeToken(" ");
-            }
+            _writeFunctionPrefix(functionTypeElem);
             writer.writeToken("FUNCTION");
             writer.writeToken(" ");
             writer.writeToken(functionNameElem.getContent());
@@ -2865,10 +2875,7 @@ public class XfDecompileVisitor extends RVisitorBase
             // ==========
             // SUBROUTINE
             // ==========
-            if (functionTypeElem.getIsRecursive()) {
-                writer.writeToken("RECURSIVE");
-                writer.writeToken(" ");
-            }
+            _writeFunctionPrefix(functionTypeElem);
             writer.writeToken("SUBROUTINE");
             writer.writeToken(" ");
             writer.writeToken(functionNameElem.getContent());
@@ -2893,10 +2900,7 @@ public class XfDecompileVisitor extends RVisitorBase
              * writer.writeToken(typeId.fortranName()); }
              * writer.writeToken(" ");
              */
-            if (functionTypeElem.getIsRecursive()) {
-                writer.writeToken("RECURSIVE");
-                writer.writeToken(" ");
-            }
+            _writeFunctionPrefix(functionTypeElem);
             writer.writeToken("FUNCTION");
             writer.writeToken(" ");
             writer.writeToken(functionNameElem.getContent());

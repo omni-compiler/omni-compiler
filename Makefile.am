@@ -151,6 +151,7 @@ DELETABLES	= \
 	Driver/etc/x2x.conf.xmp \
 	Driver/etc/x2x.conf.xmpf \
 	Driver/etc/x2x.conf.acc \
+	C-FrontEnd/src/c-token.c \
 	F-BackEnd/ant.properties \
 	F-BackEnd/bin/F_Back \
 	F-FrontEnd/src/C-exprcode.c \

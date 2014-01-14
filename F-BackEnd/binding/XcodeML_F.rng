@@ -250,6 +250,16 @@
       <ref name="defChoiceBoolean"/>
     </attribute>
   </optional>
+  <optional>
+    <attribute name="is_pure">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
+    <attribute name="is_elemental">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
 </define>
 
 <define name="defAttrSclass">

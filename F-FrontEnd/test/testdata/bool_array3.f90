@@ -1,0 +1,2 @@
+      write(*,*) (/.true., .false./)
+      end

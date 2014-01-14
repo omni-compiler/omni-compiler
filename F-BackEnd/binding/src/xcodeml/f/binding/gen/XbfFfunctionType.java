@@ -75,6 +75,8 @@ public class XbfFfunctionType extends xcodeml.f.XmfObj implements java.io.Serial
     private Boolean isExternal_;
     private Boolean isPublic_;
     private Boolean isPrivate_;
+    private Boolean isPure_;
+    private Boolean isElemental_;
     private XbfParams params_;
     private IRNode parentRNode_;
 
@@ -214,6 +216,8 @@ public class XbfFfunctionType extends xcodeml.f.XmfObj implements java.io.Serial
         setIsExternal(source.getIsExternal());
         setIsPublic(source.getIsPublic());
         setIsPrivate(source.getIsPrivate());
+        setIsPure(source.getIsPure());
+        setIsElemental(source.getIsElemental());
         if (source.params_ != null) {
             setParams((XbfParams)source.getParams().clone());
         }
@@ -265,6 +269,8 @@ public class XbfFfunctionType extends xcodeml.f.XmfObj implements java.io.Serial
         isExternal_ = URelaxer.getAttributePropertyAsBooleanObject(element, "is_external");
         isPublic_ = URelaxer.getAttributePropertyAsBooleanObject(element, "is_public");
         isPrivate_ = URelaxer.getAttributePropertyAsBooleanObject(element, "is_private");
+        isPure_ = URelaxer.getAttributePropertyAsBooleanObject(element, "is_pure");
+        isElemental_ = URelaxer.getAttributePropertyAsBooleanObject(element, "is_elemental");
         if (XbfParams.isMatch(stack)) {
             setParams(factory.createXbfParams(stack));
         }
@@ -322,6 +328,12 @@ public class XbfFfunctionType extends xcodeml.f.XmfObj implements java.io.Serial
         }
         if (this.isPrivate_ != null) {
             URelaxer.setAttributePropertyByBoolean(element, "is_private", this.isPrivate_);
+        }
+        if (this.isPure_ != null) {
+            URelaxer.setAttributePropertyByBoolean(element, "is_pure", this.isPure_);
+        }
+        if (this.isElemental_ != null) {
+            URelaxer.setAttributePropertyByBoolean(element, "is_elemental", this.isElemental_);
         }
         if (this.params_ != null) {
             this.params_.makeElement(element);
@@ -896,6 +908,128 @@ public class XbfFfunctionType extends xcodeml.f.XmfObj implements java.io.Serial
     }
 
     /**
+     * Gets the boolean property <b>isPure</b>.
+     *
+     * @return boolean
+     */
+    public boolean getIsPure() {
+        if (isPure_ == null) {
+            return(false);
+        }
+        return (isPure_.booleanValue());
+    }
+
+    /**
+     * Gets the boolean property <b>isPure</b>.
+     *
+     * @param isPure
+     * @return boolean
+     */
+    public boolean getIsPure(boolean isPure) {
+        if (isPure_ == null) {
+            return(isPure);
+        }
+        return (this.isPure_.booleanValue());
+    }
+
+    /**
+     * Gets the boolean property <b>isPure</b>.
+     *
+     * @return Boolean
+     */
+    public Boolean getIsPureAsBoolean() {
+        return (isPure_);
+    }
+
+    /**
+     * Check the boolean property <b>isPure</b>.
+     *
+     * @return boolean
+     */
+    public boolean checkIsPure() {
+        return (isPure_ != null);
+    }
+
+    /**
+     * Sets the boolean property <b>isPure</b>.
+     *
+     * @param isPure
+     */
+    public void setIsPure(boolean isPure) {
+        this.isPure_ = new Boolean(isPure);
+    }
+
+    /**
+     * Sets the boolean property <b>isPure</b>.
+     *
+     * @param isPure
+     */
+    public void setIsPure(Boolean isPure) {
+        this.isPure_ = isPure;
+    }
+
+    /**
+     * Gets the boolean property <b>isElemental</b>.
+     *
+     * @return boolean
+     */
+    public boolean getIsElemental() {
+        if (isElemental_ == null) {
+            return(false);
+        }
+        return (isElemental_.booleanValue());
+    }
+
+    /**
+     * Gets the boolean property <b>isElemental</b>.
+     *
+     * @param isElemental
+     * @return boolean
+     */
+    public boolean getIsElemental(boolean isElemental) {
+        if (isElemental_ == null) {
+            return(isElemental);
+        }
+        return (this.isElemental_.booleanValue());
+    }
+
+    /**
+     * Gets the boolean property <b>isElemental</b>.
+     *
+     * @return Boolean
+     */
+    public Boolean getIsElementalAsBoolean() {
+        return (isElemental_);
+    }
+
+    /**
+     * Check the boolean property <b>isElemental</b>.
+     *
+     * @return boolean
+     */
+    public boolean checkIsElemental() {
+        return (isElemental_ != null);
+    }
+
+    /**
+     * Sets the boolean property <b>isElemental</b>.
+     *
+     * @param isElemental
+     */
+    public void setIsElemental(boolean isElemental) {
+        this.isElemental_ = new Boolean(isElemental);
+    }
+
+    /**
+     * Sets the boolean property <b>isElemental</b>.
+     *
+     * @param isElemental
+     */
+    public void setIsElemental(Boolean isElemental) {
+        this.isElemental_ = isElemental;
+    }
+
+    /**
      * Gets the XbfParams property <b>params</b>.
      *
      * @return XbfParams
@@ -985,6 +1119,16 @@ public class XbfFfunctionType extends xcodeml.f.XmfObj implements java.io.Serial
             buffer.append(URelaxer.getString(getIsPrivate()));
             buffer.append("\"");
         }
+        if (isPure_ != null) {
+            buffer.append(" is_pure=\"");
+            buffer.append(URelaxer.getString(getIsPure()));
+            buffer.append("\"");
+        }
+        if (isElemental_ != null) {
+            buffer.append(" is_elemental=\"");
+            buffer.append(URelaxer.getString(getIsElemental()));
+            buffer.append("\"");
+        }
         buffer.append(">");
         if (params_ != null) {
             params_.makeTextElement(buffer);
@@ -1051,6 +1195,16 @@ public class XbfFfunctionType extends xcodeml.f.XmfObj implements java.io.Serial
             buffer.write(URelaxer.getString(getIsPrivate()));
             buffer.write("\"");
         }
+        if (isPure_ != null) {
+            buffer.write(" is_pure=\"");
+            buffer.write(URelaxer.getString(getIsPure()));
+            buffer.write("\"");
+        }
+        if (isElemental_ != null) {
+            buffer.write(" is_elemental=\"");
+            buffer.write(URelaxer.getString(getIsElemental()));
+            buffer.write("\"");
+        }
         buffer.write(">");
         if (params_ != null) {
             params_.makeTextElement(buffer);
@@ -1114,6 +1268,16 @@ public class XbfFfunctionType extends xcodeml.f.XmfObj implements java.io.Serial
         if (isPrivate_ != null) {
             buffer.print(" is_private=\"");
             buffer.print(URelaxer.getString(getIsPrivate()));
+            buffer.print("\"");
+        }
+        if (isPure_ != null) {
+            buffer.print(" is_pure=\"");
+            buffer.print(URelaxer.getString(getIsPure()));
+            buffer.print("\"");
+        }
+        if (isElemental_ != null) {
+            buffer.print(" is_elemental=\"");
+            buffer.print(URelaxer.getString(getIsElemental()));
             buffer.print("\"");
         }
         buffer.print(">");
@@ -1236,6 +1400,24 @@ public class XbfFfunctionType extends xcodeml.f.XmfObj implements java.io.Serial
      */
     public String getIsPrivateAsString() {
         return (URelaxer.getString(getIsPrivate()));
+    }
+
+    /**
+     * Gets the property value as String.
+     *
+     * @return String
+     */
+    public String getIsPureAsString() {
+        return (URelaxer.getString(getIsPure()));
+    }
+
+    /**
+     * Gets the property value as String.
+     *
+     * @return String
+     */
+    public String getIsElementalAsString() {
+        return (URelaxer.getString(getIsElemental()));
     }
 
     /**

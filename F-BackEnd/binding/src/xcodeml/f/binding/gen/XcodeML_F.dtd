@@ -222,6 +222,8 @@
 <!ATTLIST FfunctionType is_external CDATA #IMPLIED>
 <!ATTLIST FfunctionType is_public CDATA #IMPLIED>
 <!ATTLIST FfunctionType is_private CDATA #IMPLIED>
+<!ATTLIST FfunctionType is_pure CDATA #IMPLIED>
+<!ATTLIST FfunctionType is_elemental CDATA #IMPLIED>
 
 <!ELEMENT FmoduleDefinition (symbols?, declarations?, FcontainsStatement?)>
 <!ATTLIST FmoduleDefinition lineno CDATA #IMPLIED>
