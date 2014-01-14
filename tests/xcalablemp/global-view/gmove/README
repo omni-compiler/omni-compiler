@@ -1,11 +1,12 @@
 ## Naming rule
-##   gmove_{lc, ata, bca, cp}_{1,2,3}a{1,2,3}t_{b, c, bc}.{c, f90}
+##   gmove_{lc, ata, bca, cp, G2L}_{1,2,3,4,5,6,7}a{1,2,3,4,5,6,7}t_{b, c, bc}.{c, f90}
 ##    lc  : Copy without communication
 ##    ata : Correspondence to Alltoall
 ##    bca : Correspondence to Bcast
 ##    cp  : Copy with communication
-##    {1,2,3}a : The rank of the (distributed) array 
-##    {1,2,3}t : The rank of the template
+##    G2L : Copy a distributed array to a local array  
+##    {1,2,3,4,5,6,7}a : The rank of the (distributed) array 
+##    {1,2,3,4,5,6,7}t : The rank of the template
 ##    {b, c, bc} : block, cyclic, or block-cyclic 
 
 ## How to compile sample files in each directory

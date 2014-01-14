@@ -87,24 +87,6 @@ typedef struct _XMP_object_ref_type {
 /*   int *st; */
 /* } _XMP_object_ref_t2; */
 
-typedef struct _XMP_gmv_desc_type {
-
-  _Bool is_global;
-  int ndims;
-
-  _XMP_array_t *a_desc;
-
-  void *local_data;
-  int *a_lb;
-  int *a_ub;
-
-  int *kind;
-  int *lb;
-  int *ub;
-  int *st;
-
-} _XMP_gmv_desc_t;
-
 
 /* From xmpf_index.c */
 void _XMP_L2G(int local_idx, long long int *global_idx,
@@ -222,7 +204,7 @@ void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datatype,
                          _XMP_array_t *src_array, int *src_array_nodes_ref,
                          int *src_lower, int *src_upper, int *src_stride, unsigned long long *src_dim_acc);
 
-extern void _XMP_gmove_garray_garray_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long *src_d);
+extern void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long *src_d);
 
 /* From xmp_runtime.c */
 void _XMP_init(int argc, char** argv);

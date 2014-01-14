@@ -236,6 +236,24 @@ typedef struct _XMP_array_section{
   long long distance;
 } _XMP_array_section_t;
 
+typedef struct _XMP_gmv_desc_type {
+
+  _Bool is_global;
+  int ndims;
+
+  _XMP_array_t *a_desc;
+
+  void *local_data;
+  int *a_lb;
+  int *a_ub;
+
+  int *kind;
+  int *lb;
+  int *ub;
+  int *st;
+
+} _XMP_gmv_desc_t;
+
 typedef struct _XMP_gpu_array_type {
   int gtol;
   unsigned long long acc;

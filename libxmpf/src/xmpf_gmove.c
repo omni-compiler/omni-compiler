@@ -180,7 +180,7 @@ void _XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
     gmove_total_elmts = dst_total_elmts;
   }
 
-  _XMP_gmove_garray_garray_common(gmv_desc_leftp, gmv_desc_rightp, dst_l, dst_u, dst_s, dst_d, src_l, src_u, src_s, src_d);
+  _XMP_gmove_array_array_common(gmv_desc_leftp, gmv_desc_rightp, dst_l, dst_u, dst_s, dst_d, src_l, src_u, src_s, src_d);
 
 }
 
@@ -307,28 +307,28 @@ void _XMPF_gmove_garray_larray(_XMP_gmv_desc_t *gmv_desc_leftp,
 void _XMPF_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
 			       _XMP_gmv_desc_t *gmv_desc_rightp)
 {
-  _XMP_array_t *dst_array = gmv_desc_leftp->a_desc;
   _XMP_array_t *src_array = gmv_desc_rightp->a_desc;
 
-  int type = dst_array->type;
-  size_t type_size = dst_array->type_size;
-
-  _XMP_ASSERT(src_array->type == type);
-  _XMP_ASSERT(src_array->type_size == type_size);
+  int type = 0;
+  size_t type_size = 0;
 
   unsigned long long gmove_total_elmts = 0;
 
   // get dst info
   unsigned long long dst_total_elmts = 1;
-  void *dst_addr = dst_array->array_addr_p;
-  int dst_dim = dst_array->dim;
+  void *dst_addr = gmv_desc_rightp->local_data;
+  int dst_dim = gmv_desc_leftp->ndims;
   int dst_l[dst_dim], dst_u[dst_dim], dst_s[dst_dim];
   unsigned long long dst_d[dst_dim];
   for (int i = 0; i < dst_dim; i++) {
     dst_l[i] = gmv_desc_leftp->lb[i];
     dst_u[i] = gmv_desc_leftp->ub[i];
     dst_s[i] = gmv_desc_leftp->st[i];
-    dst_d[i] = dst_array->info[i].dim_acc;
+    if (i == 0){
+      dst_d[i] =1;
+    }else{
+      dst_d[i] = dst_d[i-1]*(gmv_desc_leftp->a_ub[i] - gmv_desc_leftp->a_lb[i]+1);
+    }
     _XMP_normalize_array_section(&(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
     dst_total_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
   }
@@ -354,6 +354,10 @@ void _XMPF_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
     gmove_total_elmts = dst_total_elmts;
   }
 
+  _XMP_gmove_array_array_common(gmv_desc_leftp, gmv_desc_rightp, dst_l, dst_u, dst_s, dst_d, src_l, src_u, src_s, src_d);
+
+  int iflag =0;
+  if (iflag==1){
   if (_XMP_IS_SINGLE) {
     for (int i = 0; i < src_dim; i++) {
       _XMP_gtol_array_ref_triplet(src_array, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
@@ -405,7 +409,7 @@ void _XMPF_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
       }
     }
   } while (_XMP_get_next_rank(array_nodes, array_nodes_ref));
-
+  }
 }
 
 
