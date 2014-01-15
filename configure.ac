@@ -738,7 +738,7 @@ if test $enableF2F = yes; then
   elif test "$target" = "sx-nec-superux"; then
     OMF_CONF_LX2X_OPT=""
     OMF_CONF_NTV_OPT="-f4 -w"
-    OMF_CONF_LNK_OPT=""
+    OMF_CONF_LNK_OPT="-Popenmp"
   elif test "$target" = "powerpc-ibm-none"; then
     OMF_CONF_LX2X_OPT=""
     OMF_CONF_NTV_OPT="-qextname"
@@ -793,16 +793,22 @@ BASH=""
 AC_PATH_PROGS(BASH, bash, ${PATH}:/bin:/usr/bin:/usr/local/bin:/opt/bin:/opt/local/bin)
 AC_SUBST(BASH)
 
+RANLIB=""
+AR=""
+NM=""
+
 # check ranlib & ar & nm
 if test "$target" != "$host"; then
    case "$target" in
 	Kcomputer-linux-gnu)
-		AC_CHECK_TOOL([RANLIB], [ranlibpx], [:])
+#		AC_CHECK_TOOL([RANLIB], [ranlibpx], [:])
+		AC_CHECK_PROG([RANLIB], [ranlibpx], [ranlibpx], [:])
 		if test "${RANLIB}" = ":"; then
 		    AC_MSG_ERROR([ranlibpx not found]);
 		fi		    
 
-		AC_CHECK_TOOL([AR], [arpx], [:])
+#		AC_CHECK_TOOL([AR], [arpx], [:])
+		AC_CHECK_PROG([AR], [arpx], [arpx], [:])
 		if test "${AR}" = ":"; then
 		    AC_MSG_ERROR([arpx not found]);
 		fi		    
@@ -810,17 +816,20 @@ if test "$target" != "$host"; then
 		ARFLAGS="cru"
 		AC_SUBST(ARFLAGS)
 
-		AC_CHECK_TOOL([NM], [nmpx], [:])
+#		AC_CHECK_TOOL([NM], [nmpx], [:])
+		AC_CHECK_PROG([NM], [nmpx], [nmpx], [:])
 		if test "${AR}" = ":"; then
 		    AC_MSG_ERROR([nmpx not found]);
 		fi ;;
 	sx-nec-superux)
-		AC_CHECK_TOOL([RANLIB], [echo], [:])
-		if test "${RANLIB}" = ":"; then
-		    AC_MSG_ERROR([sxranlib not found]);
-		fi		    
+#		AC_CHECK_TOOL([RANLIB], [echo], [echo], [:])
+		AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
+#		if test "${RANLIB}" = ":"; then
+#		    AC_MSG_ERROR([sxranlib not found]);
+#		fi		    
 
-		AC_CHECK_TOOL([AR], [sxar], [:])
+#		AC_CHECK_TOOL([AR], [sxar], [:])
+		AC_CHECK_PROG([AR], [sxar], [sxar], [:])
 		if test "${AR}" = ":"; then
 		    AC_MSG_ERROR([sxar not found]);
 		fi		    
@@ -828,17 +837,20 @@ if test "$target" != "$host"; then
 		ARFLAGS="cru"
 		AC_SUBST(ARFLAGS)
 
-		AC_CHECK_TOOL([NM], [sxnm], [:])
+#		AC_CHECK_TOOL([NM], [sxnm], [:])
+		AC_CHECK_PROG([NM], [sxnm], [sxnm], [:])
 		if test "${NM}" = ":"; then
 		    AC_MSG_ERROR([sxnm not found]);
 		fi ;;
 	powerpc64-hitachi-aix)
-                AC_CHECK_TOOL([RANLIB], [echo], [:])
-                if test "${RANLIB}" = ":"; then
-                    AC_MSG_ERROR([ranlib not found]);
-                fi
+#                AC_CHECK_TOOL([RANLIB], [echo], [:])
+                AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
+#                if test "${RANLIB}" = ":"; then
+#                    AC_MSG_ERROR([ranlib not found]);
+#                fi
 
-                AC_CHECK_TOOL([AR], [ar], [:])
+#                AC_CHECK_TOOL([AR], [ar], [:])
+                AC_CHECK_PROG([AR], [ar], [ar], [:])
                 if test "${AR}" = ":"; then
                     AC_MSG_ERROR([ar not found]);
                 fi
@@ -846,17 +858,20 @@ if test "$target" != "$host"; then
                 ARFLAGS="cru"
                 AC_SUBST(ARFLAGS)
 
-                AC_CHECK_TOOL([NM], [nm], [:])
+#                AC_CHECK_TOOL([NM], [nm], [:])
+                AC_CHECK_PROG([NM], [nm], [nm], [:])
                 if test "${NM}" = ":"; then
                     AC_MSG_ERROR([nm not found]);
                 fi ;;         
 	powerpc-ibm-none)
-                AC_CHECK_TOOL([RANLIB], [echo], [:])
-                if test "${RANLIB}" = ":"; then
-                    AC_MSG_ERROR([bgranlib not found]);
-                fi
+#                AC_CHECK_TOOL([RANLIB], [echo], [:])
+                AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
+#                if test "${RANLIB}" = ":"; then
+#                    AC_MSG_ERROR([bgranlib not found]);
+#                fi
 
-                AC_CHECK_TOOL([AR], [ar], [:])
+#                AC_CHECK_TOOL([AR], [ar], [:])
+                AC_CHECK_PROG([AR], [ar], [ar], [:])
                 if test "${AR}" = ":"; then
                     AC_MSG_ERROR([bgar not found]);
                 fi
@@ -864,16 +879,19 @@ if test "$target" != "$host"; then
                 ARFLAGS="cru"
                 AC_SUBST(ARFLAGS)
 
-                AC_CHECK_TOOL([NM], [nm], [:])
+#                AC_CHECK_TOOL([NM], [nm], [:])
+                AC_CHECK_PROG([NM], [nm], [nm], [:])
                 if test "${NM}" = ":"; then
                     AC_MSG_ERROR([nm not found]);
                 fi ;;         
 	Cray-linux-gnu)
 		AC_PROG_RANLIB
-		AC_CHECK_TOOL([AR], [ar], [:])
+#		AC_CHECK_TOOL([AR], [ar], [:])
+		AC_CHECK_PROG([AR], [ar], [ar], [:])
 		ARFLAGS="cru"
 		AC_SUBST(ARFLAGS)
-		AC_CHECK_TOOL([NM], [nm], [:])
+#		AC_CHECK_TOOL([NM], [nm], [:])
+		AC_CHECK_PROG([NM], [nm], [nm], [:])
                 ;;
 	*)
 		AC_CHECK_TARGET_TOOL([RANLIB], [ranlib], [:])

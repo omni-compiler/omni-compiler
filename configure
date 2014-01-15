@@ -20294,7 +20294,7 @@ $as_echo_n "checking backend Fortran compiler... " >&6; }
   elif test "$target" = "sx-nec-superux"; then
     OMF_CONF_LX2X_OPT=""
     OMF_CONF_NTV_OPT="-f4 -w"
-    OMF_CONF_LNK_OPT=""
+    OMF_CONF_LNK_OPT="-Popenmp"
   elif test "$target" = "powerpc-ibm-none"; then
     OMF_CONF_LX2X_OPT=""
     OMF_CONF_NTV_OPT="-qextname"
@@ -20523,13 +20523,17 @@ test -n "$BASH" || BASH="${PATH}:/bin:/usr/bin:/usr/local/bin:/opt/bin:/opt/loca
 
 
 
+RANLIB=""
+AR=""
+NM=""
+
 # check ranlib & ar & nm
 if test "$target" != "$host"; then
    case "$target" in
 	Kcomputer-linux-gnu)
-		if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}ranlibpx", so it can be a program name with args.
-set dummy ${ac_tool_prefix}ranlibpx; ac_word=$2
+#		AC_CHECK_TOOL([RANLIB], [ranlibpx], [:])
+		# Extract the first word of "ranlibpx", so it can be a program name with args.
+set dummy ranlibpx; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_prog_RANLIB+:} false; then :
@@ -20545,7 +20549,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_RANLIB="${ac_tool_prefix}ranlibpx"
+    ac_cv_prog_RANLIB="ranlibpx"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -20553,6 +20557,7 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_prog_RANLIB" && ac_cv_prog_RANLIB=":"
 fi
 fi
 RANLIB=$ac_cv_prog_RANLIB
@@ -20565,67 +20570,13 @@ $as_echo "no" >&6; }
 fi
 
 
-fi
-if test -z "$ac_cv_prog_RANLIB"; then
-  ac_ct_RANLIB=$RANLIB
-  # Extract the first word of "ranlibpx", so it can be a program name with args.
-set dummy ranlibpx; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_ac_ct_RANLIB+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$ac_ct_RANLIB"; then
-  ac_cv_prog_ac_ct_RANLIB="$ac_ct_RANLIB" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ac_ct_RANLIB="ranlibpx"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_RANLIB=$ac_cv_prog_ac_ct_RANLIB
-if test -n "$ac_ct_RANLIB"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_RANLIB" >&5
-$as_echo "$ac_ct_RANLIB" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-  if test "x$ac_ct_RANLIB" = x; then
-    RANLIB=":"
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
-$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
-ac_tool_warned=yes ;;
-esac
-    RANLIB=$ac_ct_RANLIB
-  fi
-else
-  RANLIB="$ac_cv_prog_RANLIB"
-fi
-
 		if test "${RANLIB}" = ":"; then
 		    as_fn_error $? "ranlibpx not found" "$LINENO" 5;
 		fi
 
-		if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}arpx", so it can be a program name with args.
-set dummy ${ac_tool_prefix}arpx; ac_word=$2
+#		AC_CHECK_TOOL([AR], [arpx], [:])
+		# Extract the first word of "arpx", so it can be a program name with args.
+set dummy arpx; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_prog_AR+:} false; then :
@@ -20641,7 +20592,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_AR="${ac_tool_prefix}arpx"
+    ac_cv_prog_AR="arpx"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -20649,6 +20600,7 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_prog_AR" && ac_cv_prog_AR=":"
 fi
 fi
 AR=$ac_cv_prog_AR
@@ -20660,60 +20612,6 @@ else
 $as_echo "no" >&6; }
 fi
 
-
-fi
-if test -z "$ac_cv_prog_AR"; then
-  ac_ct_AR=$AR
-  # Extract the first word of "arpx", so it can be a program name with args.
-set dummy arpx; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_ac_ct_AR+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$ac_ct_AR"; then
-  ac_cv_prog_ac_ct_AR="$ac_ct_AR" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ac_ct_AR="arpx"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_AR=$ac_cv_prog_ac_ct_AR
-if test -n "$ac_ct_AR"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_AR" >&5
-$as_echo "$ac_ct_AR" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-  if test "x$ac_ct_AR" = x; then
-    AR=":"
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
-$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
-ac_tool_warned=yes ;;
-esac
-    AR=$ac_ct_AR
-  fi
-else
-  AR="$ac_cv_prog_AR"
-fi
 
 		if test "${AR}" = ":"; then
 		    as_fn_error $? "arpx not found" "$LINENO" 5;
@@ -20722,9 +20620,9 @@ fi
 		ARFLAGS="cru"
 
 
-		if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}nmpx", so it can be a program name with args.
-set dummy ${ac_tool_prefix}nmpx; ac_word=$2
+#		AC_CHECK_TOOL([NM], [nmpx], [:])
+		# Extract the first word of "nmpx", so it can be a program name with args.
+set dummy nmpx; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_prog_NM+:} false; then :
@@ -20740,7 +20638,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_NM="${ac_tool_prefix}nmpx"
+    ac_cv_prog_NM="nmpx"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -20748,6 +20646,7 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_prog_NM" && ac_cv_prog_NM=":"
 fi
 fi
 NM=$ac_cv_prog_NM
@@ -20760,67 +20659,13 @@ $as_echo "no" >&6; }
 fi
 
 
-fi
-if test -z "$ac_cv_prog_NM"; then
-  ac_ct_NM=$NM
-  # Extract the first word of "nmpx", so it can be a program name with args.
-set dummy nmpx; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_ac_ct_NM+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$ac_ct_NM"; then
-  ac_cv_prog_ac_ct_NM="$ac_ct_NM" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ac_ct_NM="nmpx"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_NM=$ac_cv_prog_ac_ct_NM
-if test -n "$ac_ct_NM"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_NM" >&5
-$as_echo "$ac_ct_NM" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-  if test "x$ac_ct_NM" = x; then
-    NM=":"
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
-$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
-ac_tool_warned=yes ;;
-esac
-    NM=$ac_ct_NM
-  fi
-else
-  NM="$ac_cv_prog_NM"
-fi
-
 		if test "${AR}" = ":"; then
 		    as_fn_error $? "nmpx not found" "$LINENO" 5;
 		fi ;;
 	sx-nec-superux)
-		if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}echo", so it can be a program name with args.
-set dummy ${ac_tool_prefix}echo; ac_word=$2
+#		AC_CHECK_TOOL([RANLIB], [echo], [echo], [:])
+		# Extract the first word of "echo", so it can be a program name with args.
+set dummy echo; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_prog_RANLIB+:} false; then :
@@ -20836,7 +20681,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_RANLIB="${ac_tool_prefix}echo"
+    ac_cv_prog_RANLIB="echo"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -20844,6 +20689,7 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_prog_RANLIB" && ac_cv_prog_RANLIB=":"
 fi
 fi
 RANLIB=$ac_cv_prog_RANLIB
@@ -20856,67 +20702,13 @@ $as_echo "no" >&6; }
 fi
 
 
-fi
-if test -z "$ac_cv_prog_RANLIB"; then
-  ac_ct_RANLIB=$RANLIB
-  # Extract the first word of "echo", so it can be a program name with args.
-set dummy echo; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_ac_ct_RANLIB+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$ac_ct_RANLIB"; then
-  ac_cv_prog_ac_ct_RANLIB="$ac_ct_RANLIB" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ac_ct_RANLIB="echo"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
+#		if test "${RANLIB}" = ":"; then
+#		    AC_MSG_ERROR([sxranlib not found]);
+#		fi
 
-fi
-fi
-ac_ct_RANLIB=$ac_cv_prog_ac_ct_RANLIB
-if test -n "$ac_ct_RANLIB"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_RANLIB" >&5
-$as_echo "$ac_ct_RANLIB" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-  if test "x$ac_ct_RANLIB" = x; then
-    RANLIB=":"
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
-$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
-ac_tool_warned=yes ;;
-esac
-    RANLIB=$ac_ct_RANLIB
-  fi
-else
-  RANLIB="$ac_cv_prog_RANLIB"
-fi
-
-		if test "${RANLIB}" = ":"; then
-		    as_fn_error $? "sxranlib not found" "$LINENO" 5;
-		fi
-
-		if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}sxar", so it can be a program name with args.
-set dummy ${ac_tool_prefix}sxar; ac_word=$2
+#		AC_CHECK_TOOL([AR], [sxar], [:])
+		# Extract the first word of "sxar", so it can be a program name with args.
+set dummy sxar; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_prog_AR+:} false; then :
@@ -20932,7 +20724,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_AR="${ac_tool_prefix}sxar"
+    ac_cv_prog_AR="sxar"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -20940,6 +20732,7 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_prog_AR" && ac_cv_prog_AR=":"
 fi
 fi
 AR=$ac_cv_prog_AR
@@ -20951,60 +20744,6 @@ else
 $as_echo "no" >&6; }
 fi
 
-
-fi
-if test -z "$ac_cv_prog_AR"; then
-  ac_ct_AR=$AR
-  # Extract the first word of "sxar", so it can be a program name with args.
-set dummy sxar; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_ac_ct_AR+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$ac_ct_AR"; then
-  ac_cv_prog_ac_ct_AR="$ac_ct_AR" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ac_ct_AR="sxar"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_AR=$ac_cv_prog_ac_ct_AR
-if test -n "$ac_ct_AR"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_AR" >&5
-$as_echo "$ac_ct_AR" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-  if test "x$ac_ct_AR" = x; then
-    AR=":"
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
-$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
-ac_tool_warned=yes ;;
-esac
-    AR=$ac_ct_AR
-  fi
-else
-  AR="$ac_cv_prog_AR"
-fi
 
 		if test "${AR}" = ":"; then
 		    as_fn_error $? "sxar not found" "$LINENO" 5;
@@ -21013,9 +20752,9 @@ fi
 		ARFLAGS="cru"
 
 
-		if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}sxnm", so it can be a program name with args.
-set dummy ${ac_tool_prefix}sxnm; ac_word=$2
+#		AC_CHECK_TOOL([NM], [sxnm], [:])
+		# Extract the first word of "sxnm", so it can be a program name with args.
+set dummy sxnm; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_prog_NM+:} false; then :
@@ -21031,7 +20770,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_NM="${ac_tool_prefix}sxnm"
+    ac_cv_prog_NM="sxnm"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -21039,6 +20778,7 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_prog_NM" && ac_cv_prog_NM=":"
 fi
 fi
 NM=$ac_cv_prog_NM
@@ -21051,67 +20791,13 @@ $as_echo "no" >&6; }
 fi
 
 
-fi
-if test -z "$ac_cv_prog_NM"; then
-  ac_ct_NM=$NM
-  # Extract the first word of "sxnm", so it can be a program name with args.
-set dummy sxnm; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_ac_ct_NM+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$ac_ct_NM"; then
-  ac_cv_prog_ac_ct_NM="$ac_ct_NM" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ac_ct_NM="sxnm"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_NM=$ac_cv_prog_ac_ct_NM
-if test -n "$ac_ct_NM"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_NM" >&5
-$as_echo "$ac_ct_NM" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-  if test "x$ac_ct_NM" = x; then
-    NM=":"
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
-$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
-ac_tool_warned=yes ;;
-esac
-    NM=$ac_ct_NM
-  fi
-else
-  NM="$ac_cv_prog_NM"
-fi
-
 		if test "${NM}" = ":"; then
 		    as_fn_error $? "sxnm not found" "$LINENO" 5;
 		fi ;;
 	powerpc64-hitachi-aix)
-                if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}echo", so it can be a program name with args.
-set dummy ${ac_tool_prefix}echo; ac_word=$2
+#                AC_CHECK_TOOL([RANLIB], [echo], [:])
+                # Extract the first word of "echo", so it can be a program name with args.
+set dummy echo; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_prog_RANLIB+:} false; then :
@@ -21127,7 +20813,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_RANLIB="${ac_tool_prefix}echo"
+    ac_cv_prog_RANLIB="echo"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -21135,6 +20821,7 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_prog_RANLIB" && ac_cv_prog_RANLIB=":"
 fi
 fi
 RANLIB=$ac_cv_prog_RANLIB
@@ -21147,67 +20834,13 @@ $as_echo "no" >&6; }
 fi
 
 
-fi
-if test -z "$ac_cv_prog_RANLIB"; then
-  ac_ct_RANLIB=$RANLIB
-  # Extract the first word of "echo", so it can be a program name with args.
-set dummy echo; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_ac_ct_RANLIB+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$ac_ct_RANLIB"; then
-  ac_cv_prog_ac_ct_RANLIB="$ac_ct_RANLIB" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ac_ct_RANLIB="echo"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
+#                if test "${RANLIB}" = ":"; then
+#                    AC_MSG_ERROR([ranlib not found]);
+#                fi
 
-fi
-fi
-ac_ct_RANLIB=$ac_cv_prog_ac_ct_RANLIB
-if test -n "$ac_ct_RANLIB"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_RANLIB" >&5
-$as_echo "$ac_ct_RANLIB" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-  if test "x$ac_ct_RANLIB" = x; then
-    RANLIB=":"
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
-$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
-ac_tool_warned=yes ;;
-esac
-    RANLIB=$ac_ct_RANLIB
-  fi
-else
-  RANLIB="$ac_cv_prog_RANLIB"
-fi
-
-                if test "${RANLIB}" = ":"; then
-                    as_fn_error $? "ranlib not found" "$LINENO" 5;
-                fi
-
-                if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}ar", so it can be a program name with args.
-set dummy ${ac_tool_prefix}ar; ac_word=$2
+#                AC_CHECK_TOOL([AR], [ar], [:])
+                # Extract the first word of "ar", so it can be a program name with args.
+set dummy ar; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_prog_AR+:} false; then :
@@ -21223,7 +20856,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_AR="${ac_tool_prefix}ar"
+    ac_cv_prog_AR="ar"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -21231,6 +20864,7 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_prog_AR" && ac_cv_prog_AR=":"
 fi
 fi
 AR=$ac_cv_prog_AR
@@ -21242,60 +20876,6 @@ else
 $as_echo "no" >&6; }
 fi
 
-
-fi
-if test -z "$ac_cv_prog_AR"; then
-  ac_ct_AR=$AR
-  # Extract the first word of "ar", so it can be a program name with args.
-set dummy ar; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_ac_ct_AR+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$ac_ct_AR"; then
-  ac_cv_prog_ac_ct_AR="$ac_ct_AR" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ac_ct_AR="ar"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_AR=$ac_cv_prog_ac_ct_AR
-if test -n "$ac_ct_AR"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_AR" >&5
-$as_echo "$ac_ct_AR" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-  if test "x$ac_ct_AR" = x; then
-    AR=":"
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
-$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
-ac_tool_warned=yes ;;
-esac
-    AR=$ac_ct_AR
-  fi
-else
-  AR="$ac_cv_prog_AR"
-fi
 
                 if test "${AR}" = ":"; then
                     as_fn_error $? "ar not found" "$LINENO" 5;
@@ -21304,9 +20884,9 @@ fi
                 ARFLAGS="cru"
 
 
-                if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}nm", so it can be a program name with args.
-set dummy ${ac_tool_prefix}nm; ac_word=$2
+#                AC_CHECK_TOOL([NM], [nm], [:])
+                # Extract the first word of "nm", so it can be a program name with args.
+set dummy nm; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_prog_NM+:} false; then :
@@ -21322,7 +20902,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_NM="${ac_tool_prefix}nm"
+    ac_cv_prog_NM="nm"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -21330,6 +20910,7 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_prog_NM" && ac_cv_prog_NM=":"
 fi
 fi
 NM=$ac_cv_prog_NM
@@ -21342,67 +20923,13 @@ $as_echo "no" >&6; }
 fi
 
 
-fi
-if test -z "$ac_cv_prog_NM"; then
-  ac_ct_NM=$NM
-  # Extract the first word of "nm", so it can be a program name with args.
-set dummy nm; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_ac_ct_NM+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$ac_ct_NM"; then
-  ac_cv_prog_ac_ct_NM="$ac_ct_NM" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ac_ct_NM="nm"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_NM=$ac_cv_prog_ac_ct_NM
-if test -n "$ac_ct_NM"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_NM" >&5
-$as_echo "$ac_ct_NM" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-  if test "x$ac_ct_NM" = x; then
-    NM=":"
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
-$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
-ac_tool_warned=yes ;;
-esac
-    NM=$ac_ct_NM
-  fi
-else
-  NM="$ac_cv_prog_NM"
-fi
-
                 if test "${NM}" = ":"; then
                     as_fn_error $? "nm not found" "$LINENO" 5;
                 fi ;;
 	powerpc-ibm-none)
-                if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}echo", so it can be a program name with args.
-set dummy ${ac_tool_prefix}echo; ac_word=$2
+#                AC_CHECK_TOOL([RANLIB], [echo], [:])
+                # Extract the first word of "echo", so it can be a program name with args.
+set dummy echo; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_prog_RANLIB+:} false; then :
@@ -21418,7 +20945,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_RANLIB="${ac_tool_prefix}echo"
+    ac_cv_prog_RANLIB="echo"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -21426,6 +20953,7 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_prog_RANLIB" && ac_cv_prog_RANLIB=":"
 fi
 fi
 RANLIB=$ac_cv_prog_RANLIB
@@ -21438,67 +20966,13 @@ $as_echo "no" >&6; }
 fi
 
 
-fi
-if test -z "$ac_cv_prog_RANLIB"; then
-  ac_ct_RANLIB=$RANLIB
-  # Extract the first word of "echo", so it can be a program name with args.
-set dummy echo; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_ac_ct_RANLIB+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$ac_ct_RANLIB"; then
-  ac_cv_prog_ac_ct_RANLIB="$ac_ct_RANLIB" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ac_ct_RANLIB="echo"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
+#                if test "${RANLIB}" = ":"; then
+#                    AC_MSG_ERROR([bgranlib not found]);
+#                fi
 
-fi
-fi
-ac_ct_RANLIB=$ac_cv_prog_ac_ct_RANLIB
-if test -n "$ac_ct_RANLIB"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_RANLIB" >&5
-$as_echo "$ac_ct_RANLIB" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-  if test "x$ac_ct_RANLIB" = x; then
-    RANLIB=":"
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
-$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
-ac_tool_warned=yes ;;
-esac
-    RANLIB=$ac_ct_RANLIB
-  fi
-else
-  RANLIB="$ac_cv_prog_RANLIB"
-fi
-
-                if test "${RANLIB}" = ":"; then
-                    as_fn_error $? "bgranlib not found" "$LINENO" 5;
-                fi
-
-                if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}ar", so it can be a program name with args.
-set dummy ${ac_tool_prefix}ar; ac_word=$2
+#                AC_CHECK_TOOL([AR], [ar], [:])
+                # Extract the first word of "ar", so it can be a program name with args.
+set dummy ar; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_prog_AR+:} false; then :
@@ -21514,7 +20988,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_AR="${ac_tool_prefix}ar"
+    ac_cv_prog_AR="ar"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -21522,6 +20996,7 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_prog_AR" && ac_cv_prog_AR=":"
 fi
 fi
 AR=$ac_cv_prog_AR
@@ -21534,60 +21009,6 @@ $as_echo "no" >&6; }
 fi
 
 
-fi
-if test -z "$ac_cv_prog_AR"; then
-  ac_ct_AR=$AR
-  # Extract the first word of "ar", so it can be a program name with args.
-set dummy ar; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_ac_ct_AR+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$ac_ct_AR"; then
-  ac_cv_prog_ac_ct_AR="$ac_ct_AR" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ac_ct_AR="ar"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_AR=$ac_cv_prog_ac_ct_AR
-if test -n "$ac_ct_AR"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_AR" >&5
-$as_echo "$ac_ct_AR" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-  if test "x$ac_ct_AR" = x; then
-    AR=":"
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
-$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
-ac_tool_warned=yes ;;
-esac
-    AR=$ac_ct_AR
-  fi
-else
-  AR="$ac_cv_prog_AR"
-fi
-
                 if test "${AR}" = ":"; then
                     as_fn_error $? "bgar not found" "$LINENO" 5;
                 fi
@@ -21595,9 +21016,9 @@ fi
                 ARFLAGS="cru"
 
 
-                if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}nm", so it can be a program name with args.
-set dummy ${ac_tool_prefix}nm; ac_word=$2
+#                AC_CHECK_TOOL([NM], [nm], [:])
+                # Extract the first word of "nm", so it can be a program name with args.
+set dummy nm; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_prog_NM+:} false; then :
@@ -21613,7 +21034,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_NM="${ac_tool_prefix}nm"
+    ac_cv_prog_NM="nm"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -21621,6 +21042,7 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_prog_NM" && ac_cv_prog_NM=":"
 fi
 fi
 NM=$ac_cv_prog_NM
@@ -21632,60 +21054,6 @@ else
 $as_echo "no" >&6; }
 fi
 
-
-fi
-if test -z "$ac_cv_prog_NM"; then
-  ac_ct_NM=$NM
-  # Extract the first word of "nm", so it can be a program name with args.
-set dummy nm; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_ac_ct_NM+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$ac_ct_NM"; then
-  ac_cv_prog_ac_ct_NM="$ac_ct_NM" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ac_ct_NM="nm"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_NM=$ac_cv_prog_ac_ct_NM
-if test -n "$ac_ct_NM"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_NM" >&5
-$as_echo "$ac_ct_NM" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-  if test "x$ac_ct_NM" = x; then
-    NM=":"
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
-$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
-ac_tool_warned=yes ;;
-esac
-    NM=$ac_ct_NM
-  fi
-else
-  NM="$ac_cv_prog_NM"
-fi
 
                 if test "${NM}" = ":"; then
                     as_fn_error $? "nm not found" "$LINENO" 5;
@@ -21783,9 +21151,9 @@ else
   RANLIB="$ac_cv_prog_RANLIB"
 fi
 
-		if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}ar", so it can be a program name with args.
-set dummy ${ac_tool_prefix}ar; ac_word=$2
+#		AC_CHECK_TOOL([AR], [ar], [:])
+		# Extract the first word of "ar", so it can be a program name with args.
+set dummy ar; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_prog_AR+:} false; then :
@@ -21801,7 +21169,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_AR="${ac_tool_prefix}ar"
+    ac_cv_prog_AR="ar"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -21809,6 +21177,7 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_prog_AR" && ac_cv_prog_AR=":"
 fi
 fi
 AR=$ac_cv_prog_AR
@@ -21821,65 +21190,11 @@ $as_echo "no" >&6; }
 fi
 
 
-fi
-if test -z "$ac_cv_prog_AR"; then
-  ac_ct_AR=$AR
-  # Extract the first word of "ar", so it can be a program name with args.
-set dummy ar; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_ac_ct_AR+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$ac_ct_AR"; then
-  ac_cv_prog_ac_ct_AR="$ac_ct_AR" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ac_ct_AR="ar"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_AR=$ac_cv_prog_ac_ct_AR
-if test -n "$ac_ct_AR"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_AR" >&5
-$as_echo "$ac_ct_AR" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-  if test "x$ac_ct_AR" = x; then
-    AR=":"
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
-$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
-ac_tool_warned=yes ;;
-esac
-    AR=$ac_ct_AR
-  fi
-else
-  AR="$ac_cv_prog_AR"
-fi
-
 		ARFLAGS="cru"
 
-		if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}nm", so it can be a program name with args.
-set dummy ${ac_tool_prefix}nm; ac_word=$2
+#		AC_CHECK_TOOL([NM], [nm], [:])
+		# Extract the first word of "nm", so it can be a program name with args.
+set dummy nm; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_prog_NM+:} false; then :
@@ -21895,7 +21210,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_NM="${ac_tool_prefix}nm"
+    ac_cv_prog_NM="nm"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -21903,6 +21218,7 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_prog_NM" && ac_cv_prog_NM=":"
 fi
 fi
 NM=$ac_cv_prog_NM
@@ -21914,60 +21230,6 @@ else
 $as_echo "no" >&6; }
 fi
 
-
-fi
-if test -z "$ac_cv_prog_NM"; then
-  ac_ct_NM=$NM
-  # Extract the first word of "nm", so it can be a program name with args.
-set dummy nm; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_ac_ct_NM+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$ac_ct_NM"; then
-  ac_cv_prog_ac_ct_NM="$ac_ct_NM" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ac_ct_NM="nm"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_NM=$ac_cv_prog_ac_ct_NM
-if test -n "$ac_ct_NM"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_NM" >&5
-$as_echo "$ac_ct_NM" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-  if test "x$ac_ct_NM" = x; then
-    NM=":"
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
-$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
-ac_tool_warned=yes ;;
-esac
-    NM=$ac_ct_NM
-  fi
-else
-  NM="$ac_cv_prog_NM"
-fi
 
                 ;;
 	*)
