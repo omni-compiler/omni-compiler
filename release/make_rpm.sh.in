@@ -33,13 +33,11 @@ fi
 test ! -f "${MKARCHIVE_FILE}" && clean_exit 1
 
 # create directory
-
 rm -rf ${XMP_RPM_BUILD_DIR}
 mkdir -p ${XMP_RPM_BUILD_DIR}/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
 test $? -ne 0 && clean_exit 1
 
 # set files
-
 sed -e "/^Vendor:\s*$/d" -e "/^Packager:\s*$/d" -e "/^Group:\s*$/d" -e "/^URL:\s*$/d" "${SPEC_FILE}" > "${XMP_RPM_BUILD_DIR}/SPECS/${SPEC_FILE_NAME}"
 test $? -ne 0 && clean_exit 1
 rm -f "${ARCHIVE_NAME}.tar.gz"
@@ -50,7 +48,6 @@ mv "${ARCHIVE_NAME}.tar.gz" "${XMP_RPM_BUILD_DIR}/SOURCES/."
 test $? -ne 0 && clean_exit 1
 
 # build RPM file
-
 cd ${XMP_RPM_BUILD_DIR}
 rpmbuild -v -bb \
 --define "_topdir ${XMP_RPM_BUILD_DIR}" \
@@ -69,7 +66,16 @@ esac
 cp ${XMP_RPM_BUILD_DIR}/RPMS/${CPU}/${XMPPKG_NAME}-${XMPPKG_VERSION}-${XMPPKG_RELEASE}.${CPU}.rpm ${XMP_SRCDIR}/.
 test $? -ne 0 && clean_exit 1
 
-# clean up
+if [ -d ${XMP_SRCDIR}/rpm_release ]; then
+  rm -r ${XMP_SRCDIR}/rpm_release
+fi
 
+mkdir -p ${XMP_SRCDIR}/rpm_release
+mv ${XMP_SRCDIR}/${XMPPKG_NAME}-${XMPPKG_VERSION}-${XMPPKG_RELEASE}.${CPU}.rpm ${XMP_SRCDIR}/rpm_release/
+rpm --addsign ${XMP_SRCDIR}/rpm_release/${XMPPKG_NAME}-${XMPPKG_VERSION}-${XMPPKG_RELEASE}.${CPU}.rpm
+createrepo ${XMP_SRCDIR}/rpm_release/
+echo "  $ scp -r rpm_release/* serv2.hpcs.cs.tsukuba.ac.jp:/home/www/http/omni-compiler/xcalablemp/download/centos/stable/"
+
+# clean up
 rm -rf ${XMP_RPM_BUILD_DIR}
 exit 0

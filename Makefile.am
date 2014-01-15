@@ -47,8 +47,6 @@ release-rpm:
 		mkdir -p $(XMPPKG_TMPDIR_TOP); \
 		$(SHELL) release/make_rpm.sh $(CURDIR) $(XMPPKG_TMPDIR_TOP); \
 		rm -rf $(XMPPKG_TMPDIR_TOP); \
-	else \
-		echo "Can't generate an RPM package on Current system."; \
 	fi
 
 release-deb:
@@ -56,8 +54,6 @@ release-deb:
 		mkdir -p $(XMPPKG_TMPDIR); \
 		$(SHELL) release/make_deb.sh $(CURDIR) $(XMPPKG_TMPDIR); \
 		rm -rf $(XMPPKG_TMPDIR_TOP); \
-	else \
-		echo "Can't generate a Debian package on Current system."; \
 	fi
 
 release: release-rpm release-deb
