@@ -39,7 +39,6 @@ if test ! -f "${MKARCHIVE_FILE}" ; then
 fi
 
 # create archive
-
 rm -f "${ARCHIVE_NAME}.tar.gz"
 
 /bin/sh "${MKARCHIVE_FILE}" "${ARCHIVE_NAME}"
@@ -59,7 +58,6 @@ cd "${XMP_TMPDIR}"
 tar zxf "${ARCHIVE_NAME}.tar.gz"
 
 # build
-
 cd "${XMP_TMPDIR}"/"${XMPPKG_NAME}"
 ./configure --sysconfdir=${XMPPKG_CONF_PREFIX} --prefix=${XMPPKG_PREFIX} \
 && make clean \
@@ -68,7 +66,6 @@ cd "${XMP_TMPDIR}"/"${XMPPKG_NAME}"
 || clean_exit 1
 
 # copy conffiles
-
 cp ${CHANGELOG_FILE} ${XMP_TMPDIR}/debian/. \
 && cp ${RULES_FILE} ${XMP_TMPDIR}/debian/. \
 && cp ${COMPAT_FILE} ${XMP_TMPDIR}/debian/. \
@@ -78,7 +75,6 @@ sed -e "/^Section:\s*$/d" -e "/^Priority:\s*$/d" ${CONTROL_FILE} > ${XMP_TMPDIR}
 || clean_exit 1
 
 # build DEB file
-
 cd ${XMP_TMPDIR}
 dpkg-buildpackage -d -rfakeroot -uc -us
 if test "$?" -ne 0 ; then
@@ -90,7 +86,17 @@ if test "$?" -ne 0 ; then
 fi
 cp "../${XMPPKG_NAME}_${XMPPKG_VERSION}-${XMPPKG_RELEASE}_${CPU}.deb" "${XMP_SRCDIR}"/.
 
-# clean up
-
 rm -rf ${XMP_TMPDIR}
+mkdir -p ${XMP_TMPDIR}
+cp "../${XMPPKG_NAME}_${XMPPKG_VERSION}-${XMPPKG_RELEASE}_${CPU}.deb" ${XMP_TMPDIR}
+cd ${XMP_TMPDIR}
+apt-ftparchive packages . | gzip -9c > "${XMP_SRCDIR}"/Packages.gz
+apt-ftparchive contents . | gzip -9c > "${XMP_SRCDIR}"/Contents.gz
+apt-ftparchive release  . > "${XMP_SRCDIR}"/Release
+
+echo "  $ scp ${XMPPKG_NAME}_${XMPPKG_VERSION}-${XMPPKG_RELEASE}_${CPU}.deb Packages.gz Contents.gz Release serv2.hpcs.cs.tsukuba.ac.jp:/home/www/http/omni-compiler/xcalablemp/download/[debian|ubuntu]/stable"
+
+# clean up
+rm -rf ${XMP_TMPDIR}
+
 exit 0
