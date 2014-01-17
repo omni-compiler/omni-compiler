@@ -74,6 +74,9 @@ void _XMP_coarray_malloc_set(int elmt_size, int coarray_dims, int image_dims){
   _coarray_size       = _XMP_alloc(sizeof(long long) * coarray_dims);
   _image_dims         = image_dims;
   _image_size         = _XMP_alloc(sizeof(int) * image_dims);
+  /* If coarray is 1 dimension, _XMP_coarray_malloc_image_info() is not called */
+  /* for optimization. This function is to initialize. The image node size must be 1. */
+  _image_size[0]      = 1;
   _total_coarray_size = 1;
 }
 
@@ -310,7 +313,7 @@ void _XMP_coarray_rma_do(int rma_code, void *coarray, void *array){
   target_image += _image_size[_image_dims-1] - 1;
 #else
   for(i=0;i<_image_dims;i++)
-    target_image += ((_XMP_coarray_t*)coarray)->distance_of_image_elmt[i] * (_image_size[i] - 1);
+    target_image += ((_XMP_coarray_t*)coarray)->distance_of_image_elmt[i] * (_image_num[i] - 1);
 #endif
 
   for(i=0;i<_array_dims;i++)
