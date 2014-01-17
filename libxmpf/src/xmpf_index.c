@@ -71,7 +71,6 @@ void _XMP_G2L(long long int global_idx, int *local_idx,
 }
 
 
-#if 0
 int xmpf_local_idx__(_XMP_array_t **a_desc, int *i_dim, int *global_idx)
 {
     _XMP_array_t *a = *a_desc;
@@ -110,7 +109,7 @@ int xmpf_local_idx__(_XMP_array_t **a_desc, int *i_dim, int *global_idx)
 
 /*     return ret; */
 /* } */
-#endif
+
 
 /* calc global index by local index */
 void xmpf_l2g__(int *global_idx, int *local_idx,
