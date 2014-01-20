@@ -236,6 +236,19 @@ void _XMP_init_shadow(_XMP_array_t *array, ...) {
               ai->temp0_v -= lo;
             }
 
+	    if (!ai->reflect_sched){
+	      _XMP_reflect_sched_t *sched = _XMP_alloc(sizeof(_XMP_reflect_sched_t));
+	      sched->is_periodic = -1; /* not used yet */
+	      sched->datatype_lo = MPI_DATATYPE_NULL;
+	      sched->datatype_hi = MPI_DATATYPE_NULL;
+	      for (int j = 0; j < 4; j++) sched->req[j] = MPI_REQUEST_NULL;
+	      sched->lo_send_buf = NULL;
+	      sched->lo_recv_buf = NULL;
+	      sched->hi_send_buf = NULL;
+	      sched->hi_recv_buf = NULL;
+	      ai->reflect_sched = sched;
+	    }
+
             _XMP_create_shadow_comm(array, i);
           }
 

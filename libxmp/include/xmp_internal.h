@@ -126,6 +126,19 @@ extern int _XMP_get_execution_nodes_rank(void);
 extern void _XMP_push_comm(_XMP_comm_t *comm);
 extern void _XMP_finalize_comm(_XMP_comm_t *comm);
 
+/* xmpf_pack_vector.c */
+void _XMP_pack_vector(char * restrict dst, char * restrict src,
+		      int count, int blocklength, int stride);
+void _XMP_pack_vector2(char * restrict dst, char * restrict src,
+                       int count, int blocklength,
+                       int nnodes, int type_size, int src_block_dim);
+void _XMP_unpack_vector(char * restrict dst, char * restrict src,
+			int count, int blocklength, int stride);
+void _XMPF_unpack_transpose_vector(char * restrict dst, char * restrict src,
+                                   int dst_stride, int src_stride,
+                                   int type_size, int dst_block_dim);
+void _XMP_check_reflect_type(void);
+
 // xmp_shadow.c
 extern void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index);
 
@@ -243,5 +256,45 @@ extern void _XMP_fjrdma_get(int target_image,
 #endif
 extern uint64_t get_addr(uint64_t, int, _XMP_array_section_t*, int);
 extern unsigned long long _xmp_heap_size, _xmp_stride_size;
+
+/* For timing */
+
+//#define _XMP_TIMING 1
+
+#ifdef _XMP_TIMING
+
+extern double t0, t1;
+
+/* extern double t_mem; */
+/* extern double t_copy; */
+/* extern double t_comm; */
+/* extern double t_sched; */
+/* extern double t_wait; */
+
+#define _XMP_TSTART(t0)  ((t0) = MPI_Wtime())
+#define _XMP_TEND(t, t0) ((t) = (t) + MPI_Wtime() - (t0))
+#define _XMP_TEND2(t, tt, t0) { double _XMP_TMP = MPI_Wtime(); \
+                                (t) = (t) + _XMP_TMP - (t0); \
+                                (tt) = (tt) + _XMP_TMP - (t0); }
+
+struct _XMPTIMING
+{ double t_mem, t_copy, t_comm, t_sched, t_wait, t_misc,
+    tdim[_XMP_N_MAX_DIM],
+    tdim_mem[_XMP_N_MAX_DIM],
+    tdim_copy[_XMP_N_MAX_DIM],
+    tdim_comm[_XMP_N_MAX_DIM],
+    tdim_sched[_XMP_N_MAX_DIM],
+    tdim_wait[_XMP_N_MAX_DIM],
+    tdim_misc[_XMP_N_MAX_DIM];
+} xmptiming_;
+
+#else
+
+#define _XMP_TSTART(t0)
+#define _XMP_TEND(t, t0)
+#define _XMP_TEND2(t, tt, t0)
+
+#endif
+
 #endif // _XMP_INTERNAL
 

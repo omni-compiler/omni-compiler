@@ -10,7 +10,7 @@
 void xmpf_init_all__()
 {
   _XMP_init(0, NULL);
-  _XMPF_check_reflect_type();
+  _XMP_check_reflect_type();
 
   _XMPC_running = 0;
   _XMPF_running = 1;

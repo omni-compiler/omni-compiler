@@ -24,6 +24,7 @@ void _XMP_init(int argc, char** argv) {
     _XMP_init_world(NULL, NULL);
     _XMP_runtime_working = _XMP_N_INT_TRUE;
   }
+  _XMP_check_reflect_type();
 }
 
 void _XMP_finalize(int return_val){

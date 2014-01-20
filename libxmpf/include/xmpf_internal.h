@@ -24,43 +24,6 @@
 #define SUBSCRIPT_SCALAR   1
 #define SUBSCRIPT_TRIPLET  2
 
-//#define _XMP_TIMING 1
-
-#ifdef _XMP_TIMING
-
-extern double t0, t1;
-
-/* extern double t_mem; */
-/* extern double t_copy; */
-/* extern double t_comm; */
-/* extern double t_sched; */
-/* extern double t_wait; */
-
-#define _XMP_TSTART(t0)  ((t0) = MPI_Wtime())
-#define _XMP_TEND(t, t0) ((t) = (t) + MPI_Wtime() - (t0))
-#define _XMP_TEND2(t, tt, t0) { double _XMP_TMP = MPI_Wtime(); \
-                                (t) = (t) + _XMP_TMP - (t0); \
-                                (tt) = (tt) + _XMP_TMP - (t0); }
-
-struct _XMPTIMING
-{ double t_mem, t_copy, t_comm, t_sched, t_wait, t_misc,
-    tdim[_XMP_N_MAX_DIM],
-    tdim_mem[_XMP_N_MAX_DIM],
-    tdim_copy[_XMP_N_MAX_DIM],
-    tdim_comm[_XMP_N_MAX_DIM],
-    tdim_sched[_XMP_N_MAX_DIM],
-    tdim_wait[_XMP_N_MAX_DIM],
-    tdim_misc[_XMP_N_MAX_DIM];
-} xmptiming_;
-
-#else
-
-#define _XMP_TSTART(t0)
-#define _XMP_TEND(t, t0)
-#define _XMP_TEND2(t, tt, t0)
-
-#endif
-
 typedef struct _XMP_object_ref_type {
   int ref_kind; 
   _XMP_template_t *t_desc;
@@ -101,13 +64,6 @@ size_t _XMP_get_datatype_size(int datatype);
 
 /* From xmpf_gcomm.c */
 int _XMPF_get_owner_pos_BLOCK(_XMP_array_t *a, int dim, int index);
-
-/* From xmpf_pack_vector.c */
-void _XMPF_pack_vector(char * restrict dst, char * restrict src,
-		       int count, int blocklength, int stride);
-void _XMPF_unpack_vector(char * restrict dst, char * restrict src,
-			 int count, int blocklength, int stride);
-void _XMPF_check_reflect_type(void);
 
 /* From xmp_template.c */
 _XMP_template_t *_XMP_create_template_desc(int dim, _Bool is_fixed);
@@ -157,6 +113,9 @@ void _XMP_sched_loop_template_BLOCK_CYCLIC(int ser_init, int ser_cond, int ser_s
                                            int *par_init, int *par_cond, int *par_step,
                                            _XMP_template_t *template, int template_index);
 
+void _XMP_sched_loop_template_GBLOCK(int ser_init, int ser_cond, int ser_step,
+				     int *par_init, int *par_cond, int *par_step,
+				     _XMP_template_t *template, int template_index);
 
 /* From xmp_reduce.c */
 void _XMP_reduce_CLAUSE(void *data_addr, int count, int datatype, int op);
@@ -210,5 +169,8 @@ extern void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_
 void _XMP_init(int argc, char** argv);
 void _XMP_finalize(void);
 
-
-
+/* From xmp_reflect.c */
+void xmp_set_reflect__(_XMP_array_t *a_desc, int dim, int lwidth, int uwidth, int is_periodic);
+void xmp_reflect__(_XMP_array_t *a_desc);
+void xmp_wait_async__(int async_id);
+void xmp_reflect_async__(_XMP_array_t *a_desc, int async_id);

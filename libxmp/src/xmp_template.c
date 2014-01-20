@@ -651,3 +651,13 @@ int _XMP_calc_template_par_triplet(_XMP_template_t *template, int template_index
 
   return _XMP_N_INT_TRUE;
 }
+
+
+long long int _XMP_L2G_GBLOCK(int local_idx, _XMP_template_t *template, int template_index)
+{
+  _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
+  _XMP_ASSERT(chunk->dist_manner == _XMP_N_DIST_GBLOCK);
+  _XMP_nodes_info_t *n_info = chunk->onto_nodes_info;
+  long long int global_idx = local_idx + chunk->mapping_array[n_info->rank];
+  return global_idx;
+}

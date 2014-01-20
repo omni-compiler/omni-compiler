@@ -140,9 +140,10 @@ am__libxmp_a_SOURCES_DIST = $(XMP_INC_DIR)/xmp_internal.h \
 	xmp_nodes_stack.c xmp_nodes.c xmp_template.c xmp_barrier.c \
 	xmp_reduce.c xmp_bcast.c xmp_align.c xmp_shadow.c \
 	xmp_array_section.c xmp_loop.c xmp_gmove.c xmp_math_function.c \
-	xmp_runtime.c xmp_tlog_runtime.c xmp_io.c xmp_coarray.c \
-	xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c xmp_post.c \
-	xmp_gasnet_post.c xmp_fjrdma_coarray.c
+	xmp_runtime.c xmp_tlog_runtime.c xmp_io.c xmp_reflect.c \
+	xmp_pack_vector.c xmp_coarray.c xmp_gasnet_coarray.c \
+	xmp_lock.c xmp_gasnet_lock.c xmp_post.c xmp_gasnet_post.c \
+	xmp_fjrdma_coarray.c
 @GASNET_TRUE@am__objects_1 = xmp_coarray.$(OBJEXT) \
 @GASNET_TRUE@	xmp_gasnet_coarray.$(OBJEXT) xmp_lock.$(OBJEXT) \
 @GASNET_TRUE@	xmp_gasnet_lock.$(OBJEXT) xmp_post.$(OBJEXT) \
@@ -157,7 +158,8 @@ am_libxmp_a_OBJECTS = xmp_lib.$(OBJEXT) xmp_util.$(OBJEXT) \
 	xmp_array_section.$(OBJEXT) xmp_loop.$(OBJEXT) \
 	xmp_gmove.$(OBJEXT) xmp_math_function.$(OBJEXT) \
 	xmp_runtime.$(OBJEXT) xmp_tlog_runtime.$(OBJEXT) \
-	xmp_io.$(OBJEXT) $(am__objects_1) $(am__objects_2)
+	xmp_io.$(OBJEXT) xmp_reflect.$(OBJEXT) \
+	xmp_pack_vector.$(OBJEXT) $(am__objects_1) $(am__objects_2)
 libxmp_a_OBJECTS = $(am_libxmp_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -501,8 +503,8 @@ libxmp_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h \
 	xmp_nodes_stack.c xmp_nodes.c xmp_template.c xmp_barrier.c \
 	xmp_reduce.c xmp_bcast.c xmp_align.c xmp_shadow.c \
 	xmp_array_section.c xmp_loop.c xmp_gmove.c xmp_math_function.c \
-	xmp_runtime.c xmp_tlog_runtime.c xmp_io.c $(am__append_1) \
-	$(am__append_3)
+	xmp_runtime.c xmp_tlog_runtime.c xmp_io.c xmp_reflect.c \
+	xmp_pack_vector.c $(am__append_1) $(am__append_3)
 @GASNET_TRUE@AM_LDFLAGS = $(GASNET_LDFLAGS) $(GASNET_LIBS)
 all: all-am
 

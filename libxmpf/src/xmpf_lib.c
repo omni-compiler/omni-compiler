@@ -421,7 +421,7 @@ void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
   count =  dst_chunk_size * src_chunk_size;
   bufsize = count * nnodes * type_size;
 
-  _XMPF_check_reflect_type();
+  _XMP_check_reflect_type();
 
   if (src_block_dim == 1){
     if (*opt ==0){
@@ -430,9 +430,9 @@ void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
       sendbuf = dst_array->array_addr_p;
     }
     // src_array -> sendbuf
-    _XMPF_pack_vector2((char *)sendbuf, (char *)src_array->array_addr_p ,
-                       src_chunk_size, dst_chunk_size, nnodes, type_size,
-                       src_block_dim);
+    _XMP_pack_vector2((char *)sendbuf, (char *)src_array->array_addr_p ,
+		      src_chunk_size, dst_chunk_size, nnodes, type_size,
+		      src_block_dim);
   }
   else {
     sendbuf = src_array->array_addr_p;

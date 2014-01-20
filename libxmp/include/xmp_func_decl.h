@@ -20,6 +20,8 @@ extern void _XMP_align_array_DUPLICATION(void *array, int array_index, int templ
 extern void _XMP_align_array_BLOCK(void *array, int array_index, int template_index, long long align_subscript, int *temp0);
 extern void _XMP_align_array_CYCLIC(void *array, int array_index, int template_index, long long align_subscript, int *temp0);
 extern void _XMP_align_array_BLOCK_CYCLIC(void *array, int array_index, int template_index, long long align_subscript, int *temp0);
+extern void _XMP_align_array_GBLOCK(void *array, int array_index, int template_index,
+				    long long align_subscript, int *temp0);
 extern void _XMP_alloc_array(void **array_addr, void *array_desc, ...);
 extern void _XMP_alloc_array_EXTERN(void **array_addr, void *array_desc, ...);
 extern void _XMP_init_array_addr(void **array_addr, void *init_addr, void *array_desc, ...);
@@ -111,6 +113,9 @@ extern void _XMP_sched_loop_template_BLOCK_CYCLIC(int ser_init, int ser_cond, in
 extern void _XMP_sched_loop_nodes(int ser_init, int ser_cond, int ser_step,
                                   int *par_init, int *par_cond, int *par_step,
                                   void *nodes, int nodes_index);
+extern void _XMP_sched_loop_template_GBLOCK(int ser_init, int ser_cond, int ser_step,
+					    int *par_init, int *par_cond, int *par_step,
+					    void *template, int template_index);
 
 // xmp_math_function.c
 extern int _XMP_modi_ll_i(long long value, int cycle);
@@ -151,6 +156,12 @@ extern void _XMP_reduce_FLMM_CLAUSE(void *data_addr, int count, int datatype, in
 extern int _XMP_init_reduce_comm_NODES(void *nodes, ...);
 extern int _XMP_init_reduce_comm_TEMPLATE(void *template, ...);
 
+// xmp_reflect.c
+extern void xmp_set_reflect__(void *a, int dim, int lwidth, int uwidth, int is_periodic);
+extern void xmp_reflect__(char *a);
+extern void xmp_wait_async__(int async_id);
+extern void xmp_reflect_async__(void *a, int async_id);
+
 // xmp_runtime.c
 //extern void _XMP_init(void);
 extern void _XMP_init(int, char**); 
@@ -175,7 +186,11 @@ extern void _XMP_dist_template_DUPLICATION(void *template, int template_index);
 extern void _XMP_dist_template_BLOCK(void *template, int template_index, int nodes_index);
 extern void _XMP_dist_template_CYCLIC(void *template, int template_index, int nodes_index);
 extern void _XMP_dist_template_BLOCK_CYCLIC(void *template, int template_index, int nodes_index, unsigned long long width);
+extern void _XMP_dist_template_GBLOCK(void *template, int template_index, int nodes_index,
+				      int *mapping_array);
+
 extern int _XMP_exec_task_TEMPLATE_PART(void **task_desc, void *ref_template, ...);
+extern long long int _XMP_L2G_GBLOCK(int local_idx, void *template, int template_index);
 
 // xmp_util.c
 extern void *_XMP_alloc(size_t size);

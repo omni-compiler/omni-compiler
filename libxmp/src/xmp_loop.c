@@ -311,7 +311,7 @@ no_iter:
   }
 }
 
-// block distribution ---------------------------------------------------------------------------------------------------------------
+// gblock distribution ---------------------------------------------------------------------------------------------------------------
 void _XMP_sched_loop_template_GBLOCK(int ser_init, int ser_cond, int ser_step,
 				     int *par_init, int *par_cond, int *par_step,
 				     _XMP_template_t *template, int template_index) {
