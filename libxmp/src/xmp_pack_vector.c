@@ -1,12 +1,13 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <omp.h>
 #include <complex.h>
 
 int _xmp_omp_num_procs = 1;
 
-void _XMPF_pack_vector(char * restrict dst, char * restrict src,
-		       int count, int blocklength, int stride){
+void _XMP_pack_vector(char * restrict dst, char * restrict src,
+		      int count, int blocklength, int stride){
   long i;
   if (_xmp_omp_num_procs > 1 && count > 8 * _xmp_omp_num_procs){
 #pragma omp parallel for
@@ -22,7 +23,7 @@ void _XMPF_pack_vector(char * restrict dst, char * restrict src,
 
 }
 
-void _XMPF_pack_vector2(char * restrict dst, char * restrict src,
+void _XMP_pack_vector2(char * restrict dst, char * restrict src,
                        int count, int blocklength,
                        int nnodes, int type_size, int src_block_dim){
   long j,k;
@@ -38,8 +39,8 @@ void _XMPF_pack_vector2(char * restrict dst, char * restrict src,
   }
 }
 
-void _XMPF_unpack_vector(char * restrict dst, char * restrict src,
-			 int count, int blocklength, int stride){
+void _XMP_unpack_vector(char * restrict dst, char * restrict src,
+			int count, int blocklength, int stride){
   long i;
   if (_xmp_omp_num_procs > 1 && count > 8 * _xmp_omp_num_procs){
 #pragma omp parallel for
@@ -88,11 +89,11 @@ void _XMPF_unpack_transpose_vector(char * restrict dst, char * restrict src,
   }
 }
 
-#include "xmpf_internal.h"
+#include "xmp_internal.h"
 
 int _xmp_reflect_pack_flag = 0;
 
-void _XMPF_check_reflect_type(void)
+void _XMP_check_reflect_type(void)
 {
   char *reflect_type = getenv("XMP_REFLECT_TYPE");
   _xmp_omp_num_procs = omp_get_num_procs();
