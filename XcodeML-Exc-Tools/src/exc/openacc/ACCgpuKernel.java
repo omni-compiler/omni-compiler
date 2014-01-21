@@ -11,6 +11,7 @@ public class ACCgpuKernel {
   private static final String ACC_GPU_FUNC_PREFIX ="_ACC_GPU_FUNC"; 
   private static final String ACC_REDUCTION_VAR_PREFIX = "_ACC_reduction_";
   private static final String ACC_CACHE_VAR_PREFIX = "_ACC_cache_";
+  static final String ACC_GPU_DEVICE_FUNC_SUFFIX = "_DEVICE";
   
   private List<XobjectDef> _varDecls = new ArrayList<XobjectDef>();
   
@@ -51,18 +52,16 @@ public class ACCgpuKernel {
     String launchFuncName = ACC_GPU_FUNC_PREFIX + "_" + funcName + "_L" + lineNo; 
     
     //make deviceKernelDef
-    String deviceKernelName = launchFuncName + "_DEVICE";
+    String deviceKernelName = launchFuncName + ACC_GPU_DEVICE_FUNC_SUFFIX;
     XobjectDef deviceKernelDef = makeDeviceKernelDef(deviceKernelName, _outerIdList, kernelBody);
     
     //make launchFuncDef
     XobjectDef launchFuncDef = makeLaunchFuncDef(launchFuncName, _outerIdList, deviceKernelDef);
     
-    //decompile deviceKernel and launchFunction
-    try{
-      new ACCgpuDecompiler().decompile(kernelInfo.getGlobalDecl().getEnv(), deviceKernelDef, (Ident)deviceKernelDef.getNameObj(), launchFuncDef, _varDecls);
-    }catch(ACCexception e){
-      ACC.fatal("makeKernelCallBlock(" + launchFuncName + e.getMessage());
-    }
+    //add deviceKernel and launchFunction
+    XobjectFile devEnv = kernelInfo.getGlobalDecl().getEnvDevice();
+    devEnv.add(deviceKernelDef);
+    devEnv.add(launchFuncDef);
     
     //make launchFuncCall
     Ident launchFuncId = (Ident)launchFuncDef.getNameObj();
@@ -307,7 +306,7 @@ public class ACCgpuKernel {
     deviceKernelBody.setIdentList(deviceKernelLocalIds);
     deviceKernelBody.setDecls(ACCutil.getDecls(deviceKernelLocalIds)); //is this need?
     
-    Ident deviceKernelId = ACCutil.getMacroFuncId(deviceKernelName, Xtype.voidType);
+    Ident deviceKernelId = kernelInfo.getGlobalDecl().getEnvDevice().declGlobalIdent(deviceKernelName, Xtype.Function(Xtype.voidType));
     ((FunctionType)deviceKernelId.Type()).setFuncParamIdList(deviceKernelParamIds);
 
     XobjectDef deviceKernelDef = XobjectDef.Func(deviceKernelId, deviceKernelParamIds, null, deviceKernelBody.toXobject()); //set decls?
@@ -1053,7 +1052,7 @@ public class ACCgpuKernel {
     for(Block b:postBlocks) launchFuncBody.add(b);
 
     ACCglobalDecl globalDecl = kernelInfo.getGlobalDecl();
-    Ident launchFuncId = globalDecl.declExternIdent(launchFuncName, Xtype.Function(Xtype.voidType));  
+    Ident launchFuncId = globalDecl.getEnvDevice().declGlobalIdent(launchFuncName, Xtype.Function(Xtype.voidType));
     XobjectDef hostFuncDef = XobjectDef.Func(launchFuncId, launchFuncParamIds, null, launchFuncBody.toXobject());
 
     return hostFuncDef;

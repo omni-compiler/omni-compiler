@@ -257,7 +257,7 @@ public class ACCtranslateParallel {
     // create host function
     XobjectDef hostFuncDef = createHostFuncDef(hostFuncId, funcParams, deviceKernelDef, deviceKernelId);
 
-    new ACCgpuDecompiler().decompile(info.getGlobalDecl().getEnv(), deviceKernelDef, deviceKernelId, hostFuncDef, varDecls);
+    //new ACCgpuDecompiler().decompile(info.getGlobalDecl().getEnv(), deviceKernelDef, deviceKernelId, hostFuncDef, varDecls);
     
   }
 

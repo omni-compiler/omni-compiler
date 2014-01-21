@@ -21,38 +21,52 @@ public class ACCgpuDecompiler {
   public static final String GPU_INDEX_TABLE = "OPENACC_GPU_INDEX_TABLE_PROP";
 
   
-  void decompile(XobjectFile env, XobjectDef deviceKernelDef, Ident deviceKernelId, XobjectDef hostFuncDef, List<XobjectDef> decls) throws ACCexception{
-    // write gpu_code
-    try {
-      if (out == null) {
-        Writer w = new BufferedWriter(new FileWriter(ACCutil.removeExtension(env.getSourceFileName()) + GPU_SRC_EXTENSION), BUFFER_SIZE);
-        //Writer w = new BufferedWriter(new FileWriter("test.cu"), BUFFER_SIZE);
-        out = new ACCgpuDecompileWriter(w, env);
+  public void decompile(ACCglobalDecl decl){
+    XobjectFile env = decl.getEnv();
+    XobjectFile envDevice = decl.getEnvDevice();
+    
+    if(envDevice.getDefs().isEmpty()){
+      return;
+    }
+    
+    envDevice.collectAllTypes();
+    
+    //collect ids corresponds to used types
+    XobjList globalIdList = (XobjList)envDevice.getGlobalIdentList();
+    for(Xtype type : envDevice.getTypeList()){
+      if(type.isStruct() || type.isEnum() || type.isUnion()){
+	Ident id = findIdent((XobjList)env.getGlobalIdentList(), type);
+	if(id != null){
+	  globalIdList.add(id);
+	  type.setTagIdent(id);
+	}
       }
+    }
 
-      // add header include line
-      out.println("#include \"acc_gpu_func.hpp\"");
-      //out.println("#include \"acc_index_macro.h\"");
-      out.println();
+    try{
+      Writer w = new BufferedWriter(new FileWriter(ACCutil.removeExtension(env.getSourceFileName()) + GPU_SRC_EXTENSION), BUFFER_SIZE);
+      ACCgpuDecompileWriter writer = new ACCgpuDecompileWriter(w, envDevice);
       
-      for(XobjectDef declDef : decls){
-        out.printDecl(declDef);
-      }
+      writer.println("#include \"acc_gpu_func.hpp\"");
+      writer.println();
 
-      // decompile device function
-      out.printDeviceFunc(deviceKernelDef, deviceKernelId);
-      out.println();
-
-      // decompile wrapping function
-      out.printHostFunc(hostFuncDef);
-      out.println();
-
-      out.flush();
-    } catch (IOException e) {
-      throw new ACCexception("error in gpu decompiler: " + e.getMessage());
+      writer.printAll();
+      
+      writer.flush();
+      writer.close();
+    }catch (IOException e){
+      ACC.fatal("error in gpu decompiler: " + e.getMessage());
     }
   }
-  
 
+  private Ident findIdent(XobjList idList, Xtype type){
+    for(Xobject x : idList){
+      Ident id = (Ident)x;
+      if(id.Type() == type){
+	return id;
+      }
+    }
+    return null;
+  }
 }
   

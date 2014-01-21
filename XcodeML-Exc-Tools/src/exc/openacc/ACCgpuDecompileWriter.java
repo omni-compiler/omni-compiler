@@ -18,6 +18,19 @@ public class ACCgpuDecompileWriter extends PrintWriter {
     super(out);
     _env = env;
   }
+  
+  public void printAll(){
+    //print declare of struct and union.
+    printIdentList(_env.getGlobalIdentList());
+    println();
+    
+    //print declare of function
+    List<XobjectDef> defList = _env.getDefs();
+    for(XobjectDef def : defList){
+      printFunc(def);
+      println();
+    }
+  }
 
   public void printDeviceFunc(XobjectDef def, Ident deviceFuncId) {
     printWithIdentList(def.getDef(), _env.getGlobalIdentList(), true, deviceFuncId);
@@ -25,6 +38,12 @@ public class ACCgpuDecompileWriter extends PrintWriter {
 
   public void printHostFunc(XobjectDef def) {
     printWithIdentList(def.getDef(), _env.getGlobalIdentList(), false, null);
+  }
+  
+  public void printFunc(XobjectDef def){
+    String funcName = def.getName();
+    boolean isDeviceFunc = funcName.endsWith(ACCgpuKernel.ACC_GPU_DEVICE_FUNC_SUFFIX);
+    printWithIdentList(def.getDef(), _env.getGlobalIdentList(), isDeviceFunc, (Ident)def.getNameObj());
   }
   
   public void printDecl(XobjectDef def){
@@ -549,6 +568,32 @@ public class ACCgpuDecompileWriter extends PrintWriter {
     case XMP_PRAGMA:
       break;
 
+    case COMPOUND_VALUE:
+      print("(");
+      printDeclType(v.Type(),null);
+      print("){");      
+      for(XobjArgs a = v.getArg(0).getArgs(); a != null; a = a.nextArgs()){
+        print(a.getArg());
+        if(a.nextArgs() != null){
+          print(",");
+        }
+      }
+      print("}");
+      break;
+      
+    case COMPOUND_VALUE_ADDR:
+      print("&((");
+      printDeclType(v.Type().getRef(),null);
+      print("){");      
+      for(XobjArgs a = v.getArg(0).getArg(0).getArgs(); a != null; a = a.nextArgs()){
+        print(a.getArg());
+        if(a.nextArgs() != null){
+          print(",");
+        }
+      }
+      print("})");
+      break;
+
     default:
       /* fatal("print: unknown decopmile = "+v); */
       printUserCode(v);
@@ -655,7 +700,7 @@ public class ACCgpuDecompileWriter extends PrintWriter {
           if (type.getTagName() != null) {
             typename += type.getTagName();
           } else {
-            typename += "_U" + Integer.toHexString(Integer.parseInt(type.Id()));
+            typename += "_U" + Integer.toHexString(Integer.parseInt(type.Id().substring(1)));
           }
         } break;
       case Xtype.ENUM:
@@ -664,7 +709,7 @@ public class ACCgpuDecompileWriter extends PrintWriter {
           if (type.getTagName() != null) {
             typename += type.getTagName();
           } else {
-            typename += "_E" + Integer.toHexString(Integer.parseInt(type.Id()));
+            typename += "_E" + Integer.toHexString(Integer.parseInt(type.Id().substring(1)));
           }
         } break;
       default:

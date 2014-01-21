@@ -13,6 +13,7 @@ public class ACCglobalDecl{
   private Map<String, FuncInfo> funcInfoMap;
   private XobjList _globalConstructorFuncBody;
   private XobjList _globalDestructorFuncBody;
+  private XobjectFile _env_device;
   
   
   private static String ACC_INIT_FUNC_NAME = "_ACC_init";
@@ -25,10 +26,16 @@ public class ACCglobalDecl{
     funcInfoMap = new HashMap<String, FuncInfo>();
     _globalConstructorFuncBody = Xcons.List();
     _globalDestructorFuncBody = Xcons.List();
+    _env_device = new XobjectFile();
+    _env_device.setIdentList(Xcons.IDList());//_env.getGlobalIdentList().copy());
   }
   
   public XobjectFile getEnv() {
     return _env;
+  }
+  
+  public XobjectFile getEnvDevice(){
+    return _env_device;
   }
   
   public void setCalleeInfo(String funcName, int paramNum, Xcode type, boolean mustBeAllocated){

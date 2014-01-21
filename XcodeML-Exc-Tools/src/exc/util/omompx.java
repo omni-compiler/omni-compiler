@@ -15,6 +15,7 @@ import exc.object.XobjectFile;
 import exc.openacc.ACC;
 import exc.openacc.ACCanalyzePragma;
 import exc.openacc.ACCglobalDecl;
+import exc.openacc.ACCgpuDecompiler;
 import exc.openacc.ACCrewritePragma;
 import exc.openacc.ACCtranslatePragma;
 import exc.openmp.OMP;
@@ -410,6 +411,9 @@ public class omompx
 	xobjFile.iterateDef(accRewriter);
 	accRewriter.finalize();
 	ACC.exitByError();
+
+	ACCgpuDecompiler gpuDecompiler = new ACCgpuDecompiler();
+	gpuDecompiler.decompile(accGlobalDecl);
 
 	accGlobalDecl.setupGlobalConstructor();
 	accGlobalDecl.setupGlobalDestructor();
