@@ -442,6 +442,10 @@ public class XcodeMLtools_C extends XcodeMLtools {
       return objList;
     }
 
+    case COMPOUND_VALUE:
+    case COMPOUND_VALUE_ADDR:
+      return enterAsXobjList(n, code, type, getContent(getElement(n, "value")));
+
     default: // default action, make list
       XobjList xobjs = new XobjList(code, type);
       //if(code == Xcode.LIST && list.getLength() == 0)
