@@ -658,7 +658,7 @@ AC_MSG_CHECKING([backend C compiler])
 if test "$target" = "Kcomputer-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT="-Xg -noansi"
-  OMC_CONF_LNK_OPT=""
+  OMC_CONF_LNK_OPT="-Kopenmp"
   BECC_OMP_OPTION="-Kfast,openmp"
 elif test "$target" = "Cray-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
@@ -668,7 +668,7 @@ elif test "$target" = "Cray-linux-gnu"; then
 elif test "$target" = "sx-nec-superux"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT="-Kgcc -w"
-  OMC_CONF_LNK_OPT=""
+  OMC_CONF_LNK_OPT="-Popenmp"
   BECC_OMP_OPTION="-Popenmp"
 elif test "$target" = "powerpc-ibm-none"; then
   OMC_CONF_LX2X_OPT=""
@@ -682,7 +682,7 @@ elif test "$target" = "powerpc-ibm-none"; then
 elif test "$target" = "powerpc64-hitachi-aix"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT=""
-  OMC_CONF_LNK_OPT=""
+  OMC_CONF_LNK_OPT="-omp"
   BECC_OMP_OPTION="-omp"
 else
   chk=`$BECC --version | head -n1`
@@ -690,13 +690,13 @@ else
   gcc* | Apple*)
     OMC_CONF_LX2X_OPT=""
     OMC_CONF_NTV_OPT="-std=gnu99 -Wno-implicit -Wno-attributes"
-    OMC_CONF_LNK_OPT=""
+    OMC_CONF_LNK_OPT="-fopenmp"
     BECC_OMP_OPTION="-fopenmp"
     ;;
   *ICC*)
     OMC_CONF_LX2X_OPT=""
     OMC_CONF_NTV_OPT="-std=gnu99 -w"
-    OMC_CONF_LNK_OPT=""
+    OMC_CONF_LNK_OPT="-openmp"
     BECC_OMP_OPTION="-openmp"
     ;;
   *)
