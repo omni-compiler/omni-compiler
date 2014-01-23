@@ -312,7 +312,7 @@ void _XMP_finalize_template(_XMP_template_t *template) {
     for (int i = 0; i < template->dim; i++){
       _XMP_template_chunk_t *chunk = &(template->chunk[i]);
       if (chunk->dist_manner == _XMP_N_DIST_GBLOCK){
-	_XMP_free(template->chunk->mapping_array);
+	_XMP_free(chunk->mapping_array);
       }
     }
     _XMP_free(template->chunk);

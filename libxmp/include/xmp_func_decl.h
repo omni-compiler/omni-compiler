@@ -23,6 +23,7 @@ extern void _XMP_align_array_BLOCK_CYCLIC(void *array, int array_index, int temp
 extern void _XMP_align_array_GBLOCK(void *array, int array_index, int template_index,
 				    long long align_subscript, int *temp0);
 extern void _XMP_alloc_array(void **array_addr, void *array_desc, ...);
+extern void _XMP_dealloc_array(void *array_desc);
 extern void _XMP_alloc_array_EXTERN(void **array_addr, void *array_desc, ...);
 extern void _XMP_init_array_addr(void **array_addr, void *init_addr, void *array_desc, ...);
 extern void _XMP_init_array_comm(void *array, ...);

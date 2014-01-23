@@ -33,6 +33,7 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
   a->dim = dim;
   a->type = type;
   a->type_size = type_size;
+  a->array_addr_p = NULL;
 
   a->total_elmts = 0;
 
@@ -524,6 +525,10 @@ void _XMP_alloc_array_EXTERN(void **array_addr, _XMP_array_t *array_desc, ...) {
   // set members
   array_desc->array_addr_p = *array_addr;
   array_desc->total_elmts = total_elmts;
+}
+
+void _XMP_dealloc_array(_XMP_array_t *array_desc){
+  _XMP_free(array_desc->array_addr_p);
 }
 
 void _XMP_init_array_addr(void **array_addr, void *init_addr,

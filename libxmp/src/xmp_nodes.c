@@ -428,6 +428,11 @@ _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NAMED(int dim, _XMP_nodes_t *ref_node
   // calc info
   _XMP_init_nodes_info(n, dim_size, is_static);
 
+  n->info[0].multiplier = 1;
+  for (int i = 1; i < dim; i++){
+    n->info[i].multiplier = n->info[i-1].multiplier * dim_size[i-1];
+  }
+
   return n;
 }
 
