@@ -17153,7 +17153,7 @@ elif test "$target" = "powerpc-ibm-none"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT=""
   DRIVER="/bgsys/drivers/ppcfloor"
-  OMC_CONF_LNK_OPT= "-I/usr/local/bg/include \
+  OMC_CONF_LNK_OPT="-I/usr/local/bg/include \
                 -L/usr/local/bg/lib -lkek -L${DRIVER}/bgpm/lib/ -lbgpm   -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
   BECC_OMP_OPTION=""
 elif test "$target" = "powerpc64-hitachi-aix"; then
