@@ -604,8 +604,8 @@ if test "$target" != "$host"; then
     BEFC="sxmpif90"
     BECC_OPTION=""
   elif test "$target" = "powerpc-ibm-none"; then
-    BECC="mpixlcxx"
-    BEFC="mpixlf90"
+    BECC="mpixlcxx_r"
+    BEFC="mpixlf90_r"
     BEFC_OPTION="-qextname"
     BECC_OPTION=""
   elif test "$target" = "powerpc64-hitachi-aix"; then
@@ -674,10 +674,8 @@ elif test "$target" = "powerpc-ibm-none"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT=""
   DRIVER="/bgsys/drivers/ppcfloor"
-  OMC_CONF_LNK_OPT="-I${DRIVER} -I${DRIVER}/spi/include/kernel/cnk \
-                -I${DRIVER}/spi/include/mu/default \
-                -I${DRIVER}/comm/xl/include \
-                -L/usr/local/bg/lib -lkek -lpthread -L${DRIVER}/spi/lib -lSPI_cnk -lSPI -lSPI_l1p -L${DRIVER}/bgpm/lib/ -lbgpm -lrt -lstdc++"
+  OMC_CONF_LNK_OPT= "-I/usr/local/bg/include \
+                -L/usr/local/bg/lib -lkek -L${DRIVER}/bgpm/lib/ -lbgpm   -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
   BECC_OMP_OPTION=""
 elif test "$target" = "powerpc64-hitachi-aix"; then
   OMC_CONF_LX2X_OPT=""
@@ -707,7 +705,7 @@ else
     echo " - Fujitsu C Compiler (mpifccpx)"
     echo " - Cray C Compiler (cc)"
     echo " - NEC C/C++ Compiler (sxc++)"
-    echo " - IBM C Compiler (bgxlc)"
+    echo " - IBM C Compiler (mpixlcxx_r)"
     echo " - HITACHI C Compiler (mpCC)"
 exit 1
     ;;
@@ -742,7 +740,7 @@ if test $enableF2F = yes; then
   elif test "$target" = "powerpc-ibm-none"; then
     OMF_CONF_LX2X_OPT=""
     OMF_CONF_NTV_OPT="-qextname"
-    OMF_CONF_LNK_OPT=""
+    OMF_CONF_LNK_OPT="-I/usr/local/bg/include -g -O3 -qhot -qsmp=omp -qsimd=auto -q64 -qsource -qlist"
   elif test "$target" = "powerpc64-hitachi-aix"; then
     OMF_CONF_LX2X_OPT=""
     OMF_CONF_NTV_OPT=""
@@ -767,7 +765,7 @@ if test $enableF2F = yes; then
       echo " - Intel Fortran (mpiifort)"
       echo " - Fujitsu Fortran (mpifrtpx)"
       echo " - Cray Fortran (ftn)"
-      echo " - IBM Fortran (bgxlf90)"
+      echo " - IBM Fortran (mpixlf90_r)"
       echo " - Hitachi Fortran (mpif90)"
       exit 1
       ;;
