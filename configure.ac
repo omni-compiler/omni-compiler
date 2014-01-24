@@ -33,6 +33,7 @@ AC_SUBST(LIBTOOL)
 AC_SUBST(LIBTOOL_DEPS)
 
 AM_INIT_AUTOMAKE([no-define foreign])
+AM_MAINTAINER_MODE
 
 AC_PREFIX_DEFAULT(/usr/local/omni3)
 if test "${prefix}" = "NONE"; then
