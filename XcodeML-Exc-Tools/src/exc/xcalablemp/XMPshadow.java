@@ -42,21 +42,38 @@ public class XMPshadow {
                                      boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
     
     // start translation
+    String arrayName = shadowDecl.getArg(0).getString();
+
     XMPsymbolTable localXMPsymbolTable = null;
+    Block parentBlock = null;
+
+    Boolean isParameter = false;
+    // if (isLocalPragma) {
+    //   localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+    // }
     if (isLocalPragma) {
-      localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+      Ident arrayId = XMPlocalDecl.findLocalIdent(pb, arrayName);
+      if (arrayId != null) isParameter = (arrayId.getStorageClass() == StorageClass.PARAM);
+
+      parentBlock = pb.getParentBlock();
+
+      // if (isParameter){
+      // 	localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+      // }
+      // else {
+      // 	localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable2(parentBlock);
+      // }
     }
 
     // find aligned array
-    String arrayName = shadowDecl.getArg(0).getString();
-    XMPalignedArray alignedArray = null;
-    if (isLocalPragma) {
-      alignedArray = localXMPsymbolTable.getXMPalignedArray(arrayName);
-    }
-    else {
-      alignedArray = globalDecl.getXMPalignedArray(arrayName);
-    }
-
+    // XMPalignedArray alignedArray = null;
+    // if (isLocalPragma) {
+    //   alignedArray = localXMPsymbolTable.getXMPalignedArray(arrayName);
+    // }
+    // else {
+    //   alignedArray = globalDecl.getXMPalignedArray(arrayName);
+    // }
+    XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, pb);
 
     if (alignedArray == null) {
       throw new XMPexception("the aligned array '" + arrayName + "' is not found");
@@ -139,7 +156,8 @@ public class XMPshadow {
     }
 
     if (isLocalPragma) {
-      XMPlocalDecl.addConstructorCall("_XMP_init_shadow", shadowFuncArgs, globalDecl, pb);
+      //XMPlocalDecl.addConstructorCall("_XMP_init_shadow", shadowFuncArgs, globalDecl, pb);
+      XMPlocalDecl.addConstructorCall2("_XMP_init_shadow", shadowFuncArgs, globalDecl, parentBlock);
     }
     else {
       globalDecl.addGlobalInitFuncCall("_XMP_init_shadow", shadowFuncArgs);
@@ -158,7 +176,8 @@ public class XMPshadow {
     XobjList arrayList = (XobjList)reflectDecl.getArg(0);
     for (XobjArgs iter = arrayList.getArgs(); iter != null; iter = iter.nextArgs()) {
       String arrayName = iter.getArg().getString();
-      XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+      //XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+      XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, pb);
       if (alignedArray == null) {
         throw new XMPexception("the aligned array '" + arrayName + "' is not found");
       }
@@ -167,6 +186,8 @@ public class XMPshadow {
         throw new XMPexception("the aligned array '" + arrayName + "' has no shadow declaration");
       }
 
+      //createReflectNormalShadowFunc(pb, globalDecl, alignedArray, reflectFuncBody);
+
       int arrayDim = alignedArray.getDim();
       for (int i = 0; i < arrayDim; i++) {
         XMPshadow shadowObj = alignedArray.getShadowAt(i);
@@ -174,7 +195,7 @@ public class XMPshadow {
           case XMPshadow.SHADOW_NONE:
             break;
           case XMPshadow.SHADOW_NORMAL:
-            createReflectNormalShadowFunc(pb, globalDecl, alignedArray, i, reflectFuncBody);
+            createReflectNormalShadowFunc0(pb, globalDecl, alignedArray, i, reflectFuncBody);
             break;
           case XMPshadow.SHADOW_FULL:
             createReflectFullShadowFunc(pb, globalDecl, alignedArray, i, reflectFuncBody);
@@ -191,9 +212,9 @@ public class XMPshadow {
     return reflectFuncCallBlock;
   }
 
-  private static void createReflectNormalShadowFunc(PragmaBlock pb, XMPglobalDecl globalDecl,
-                                                    XMPalignedArray alignedArray, int arrayIndex,
-                                                    BlockList reflectFuncBody) {
+  private static void createReflectNormalShadowFunc0(PragmaBlock pb, XMPglobalDecl globalDecl,
+						     XMPalignedArray alignedArray, int arrayIndex,
+						     BlockList reflectFuncBody) {
     String arrayName = alignedArray.getName();
 
     // decl buffers
@@ -224,6 +245,41 @@ public class XMPshadow {
 
     reflectFuncBody.add(Bcons.Statement(unpackFuncId.Call(unpackFuncArgs)));
   }
+
+  // private static void createReflectNormalShadowFunc(PragmaBlock pb, XMPglobalDecl globalDecl,
+  // 						    XMPalignedArray a, BlockList reflectFuncBody) {
+
+  //   XMPinfo info;
+
+  //   for (int i = 0; i < info.widthList.size(); i++){
+  //   	Ident f = globalDecl.declExternFunc("xmpf_set_reflect_");
+  //   	XMPdimInfo w = info.widthList.get(i);
+  //   	Xobject args = Xcons.List(a.getDescId().Ref(), Xcons.IntConstant(i),
+  //   				  w.getLower(), w.getUpper(), w.getStride());
+  //   	reflectFuncBody.add(Bcons.Statement(f.Call(args)));
+  //   }
+
+  //   if (info.getAsyncId() != null){
+  //   	Ident f = globalDecl.declExternFunc("xmpf_reflect_async_");
+  //   	Xobject args = Xcons.List(a.getDescId().Ref(), info.getAsyncId());
+  //   	reflectFuncBody.add(Bcons.Statement(f.Call(args)));
+  //   }
+  //   else {
+  //   	Ident f = globalDecl.declExternFunc("xmpf_reflect_");
+  //   	Xobject args = Xcons.List(a.getDescId().Ref());
+  //   	reflectFuncBody.add(Bcons.Statement(f.Call(args)));
+  //   }
+
+  //   Ident exchangeFuncId = globalDecl.declExternFunc("_XMP_exchange_shadow_NORMAL");
+  //   XobjList exchangeFuncArgs = Xcons.List();
+  //   exchangeFuncArgs.add(a.getDescId().Ref());
+  //   reflectFuncBody.add(Bcons.Statement(exchangeFuncId.Call(exchangeFuncArgs)));
+
+  //   // Ident f = globalDecl.declExternFunc("xmpf_reflect_");
+  //   // Xobject args = Xcons.List(a.getDescId().Ref());
+  //   // reflectFuncBody.add(Bcons.Statement(f.Call(args)));
+
+  // }
 
   private static void createReflectFullShadowFunc(PragmaBlock pb, XMPglobalDecl globalDecl,
                                                   XMPalignedArray alignedArray, int arrayIndex,

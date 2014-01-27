@@ -71,7 +71,8 @@ public class XMPrewriteExpr {
           try {
             for (Xobject x : decls) {
               Xobject declInitExpr = x.getArg(1);
-              x.setArg(1, rewriteExpr(declInitExpr, localXMPsymbolTable));
+              //x.setArg(1, rewriteExpr(declInitExpr, localXMPsymbolTable));
+	      x.setArg(1, rewriteExpr(declInitExpr, b));
             }
           } catch (XMPexception e) {
             XMP.error(b.getLineNo(), e.getMessage());
@@ -117,7 +118,8 @@ public class XMPrewriteExpr {
 	    iter.setExpr(rewriteAssignExpr(expr, iter.getBasicBlock().getParent(), localXMPsymbolTable));
             break;
           default:
-	    iter.setExpr(rewriteExpr(expr, localXMPsymbolTable));
+	    //iter.setExpr(rewriteExpr(expr, localXMPsymbolTable));
+	    iter.setExpr(rewriteExpr(expr, iter.getBasicBlock().getParent()));
             break;
         }
       } catch (XMPexception e) {
@@ -139,7 +141,8 @@ public class XMPrewriteExpr {
       return rewriteCoarrayAssignExpr(myExpr, exprParentBlock, localXMPsymbolTable);
     } 
     else {
-      return rewriteExpr(myExpr, localXMPsymbolTable);
+      //return rewriteExpr(myExpr, localXMPsymbolTable);
+      return rewriteExpr(myExpr, exprParentBlock);
     }
   }
 
@@ -161,7 +164,8 @@ public class XMPrewriteExpr {
     }
 
     String coarrayName = XMPutil.getXobjSymbolName(coarrayExpr.getArg(0));
-    XMPcoarray coarray = _globalDecl.getXMPcoarray(coarrayName, localXMPsymbolTable);
+    //XMPcoarray coarray = _globalDecl.getXMPcoarray(coarrayName, localXMPsymbolTable);
+    XMPcoarray coarray = _globalDecl.getXMPcoarray(coarrayName, exprParentBlock);
     if (coarray == null) {
       throw new XMPexception("cannot find coarray '" + coarrayName + "'");
     }
@@ -357,7 +361,8 @@ public class XMPrewriteExpr {
     // Get Local Pointer Name
     if(localExpr.Opcode() == Xcode.SUB_ARRAY_REF || localExpr.Opcode() == Xcode.ARRAY_REF){
       Xobject varAddr = localExpr.getArg(0);
-      if(isCoarray(varAddr, localXMPsymbolTable) == true){
+      //if(isCoarray(varAddr, localXMPsymbolTable) == true){
+      if(isCoarray(varAddr, exprParentBlock) == true){
 	funcArgs.add(Xcons.SymbolRef(_globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + varAddr.getName())));
       } else{
 	funcArgs.add(varAddr);
@@ -365,7 +370,8 @@ public class XMPrewriteExpr {
     }
     else if(localExpr.Opcode() == Xcode.VAR){
       String varName = localExpr.getName();
-      if(_globalDecl.getXMPcoarray(varName, localXMPsymbolTable) == null){
+      //if(_globalDecl.getXMPcoarray(varName, localXMPsymbolTable) == null){
+      if(_globalDecl.getXMPcoarray(varName, exprParentBlock) == null){
 	Xobject varAddr = Xcons.AddrOf(localExpr);
 	funcArgs.add(varAddr);
       }
@@ -424,12 +430,25 @@ public class XMPrewriteExpr {
     return args;
   }
 
-  private boolean isCoarray(Xobject myExpr, XMPsymbolTable localXMPsymbolTable){
+  // private boolean isCoarray(Xobject myExpr, XMPsymbolTable localXMPsymbolTable){
+  //   if(myExpr.Opcode() == Xcode.ARRAY_REF){
+  //     myExpr = myExpr.getArg(0);
+  //   }
+    
+  //   XMPcoarray coarray = _globalDecl.getXMPcoarray(myExpr.getSym(), localXMPsymbolTable);
+    
+  //   if(coarray == null)
+  //     return false;
+  //   else
+  //     return true;
+  // }
+
+  private boolean isCoarray(Xobject myExpr, Block block){
     if(myExpr.Opcode() == Xcode.ARRAY_REF){
       myExpr = myExpr.getArg(0);
     }
     
-    XMPcoarray coarray = _globalDecl.getXMPcoarray(myExpr.getSym(), localXMPsymbolTable);
+    XMPcoarray coarray = _globalDecl.getXMPcoarray(myExpr.getSym(), block);
     
     if(coarray == null)
       return false;
@@ -437,17 +456,62 @@ public class XMPrewriteExpr {
       return true;
   }
   
-  private Xobject rewriteExpr(Xobject expr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+  // private Xobject rewriteExpr(Xobject expr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+  //   if (expr == null) {
+  //     return null;
+  //   }
+  //   switch (expr.Opcode()) {
+  //   case ARRAY_REF:
+  //     return rewriteArrayRef(expr, localXMPsymbolTable);
+  //   case VAR:
+  //     return rewriteVarRef(expr, localXMPsymbolTable, true);
+  //   case ARRAY_ADDR:
+  //     return rewriteVarRef(expr, localXMPsymbolTable, false);
+  //   default:
+  //     {
+  // 	topdownXobjectIterator iter = new topdownXobjectIterator(expr);
+  // 	for (iter.init(); !iter.end(); iter.next()) {
+  // 	  Xobject myExpr = iter.getXobject();
+  // 	  if (myExpr == null) {
+  // 	    continue;
+  // 	  } else if (myExpr.isRewrittedByXmp()) {
+  // 	    continue;
+  // 	  }
+  // 	  switch (myExpr.Opcode()) {
+  // 	  case ARRAY_ADDR:
+  // 	    iter.setXobject(rewriteArrayAddr(myExpr, localXMPsymbolTable));
+  // 	    break;
+  // 	  case ARRAY_REF:
+  // 	    iter.setXobject(rewriteArrayRef(myExpr, localXMPsymbolTable));
+  // 	    break;
+  // 	  case SUB_ARRAY_REF:
+  // 	    System.out.println("sub_array_ref="+myExpr.toString());
+  // 	    break;
+  // 	  case XMP_DESC_OF:
+  // 	    iter.setXobject(rewriteXmpDescOf(myExpr, localXMPsymbolTable));
+  // 	    break;
+  // 	  case VAR:
+  // 	    iter.setXobject(rewriteVarRef(myExpr, localXMPsymbolTable, true));
+  // 	    break;
+  // 	  default:
+  // 	  }
+  // 	}
+  // 	return expr;
+  //     }
+  //   }
+  // }
+
+  private Xobject rewriteExpr(Xobject expr, Block block) throws XMPexception {
     if (expr == null) {
       return null;
     }
     switch (expr.Opcode()) {
     case ARRAY_REF:
-      return rewriteArrayRef(expr, localXMPsymbolTable);
+      return rewriteArrayRef(expr, block);
     case VAR:
-      return rewriteVarRef(expr, localXMPsymbolTable, true);
+      return rewriteVarRef(expr, block, true);
     case ARRAY_ADDR:
-      return rewriteVarRef(expr, localXMPsymbolTable, false);
+      return rewriteVarRef(expr, block, false);
     default:
       {
 	topdownXobjectIterator iter = new topdownXobjectIterator(expr);
@@ -460,19 +524,19 @@ public class XMPrewriteExpr {
 	  }
 	  switch (myExpr.Opcode()) {
 	  case ARRAY_ADDR:
-	    iter.setXobject(rewriteArrayAddr(myExpr, localXMPsymbolTable));
+	    iter.setXobject(rewriteArrayAddr(myExpr, block));
 	    break;
 	  case ARRAY_REF:
-	    iter.setXobject(rewriteArrayRef(myExpr, localXMPsymbolTable));
+	    iter.setXobject(rewriteArrayRef(myExpr, block));
 	    break;
 	  case SUB_ARRAY_REF:
 	    System.out.println("sub_array_ref="+myExpr.toString());
 	    break;
 	  case XMP_DESC_OF:
-	    iter.setXobject(rewriteXmpDescOf(myExpr, localXMPsymbolTable));
+	    iter.setXobject(rewriteXmpDescOf(myExpr, block));
 	    break;
 	  case VAR:
-	    iter.setXobject(rewriteVarRef(myExpr, localXMPsymbolTable, true));
+	    iter.setXobject(rewriteVarRef(myExpr, block, true));
 	    break;
 	  default:
 	  }
@@ -482,14 +546,42 @@ public class XMPrewriteExpr {
     }
   }
 
-  private Xobject rewriteXmpDescOf(Xobject myExpr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+  // private Xobject rewriteXmpDescOf(Xobject myExpr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+  //   String entityName = myExpr.getArg(0).getName();
+  //   XMPobject entity = _globalDecl.getXMPobject(entityName);
+  //   Xobject e = null;
+
+  //   if(entity != null){
+  //     if(entity.getKind() == XMPobject.TEMPLATE){
+  // 	Ident XmpDescOfFuncId = _globalDecl.declExternFunc("_XMP_desc_of", myExpr.Type());
+  // 	//e = XmpDescOfFuncId.Call(Xcons.List(entity.getDescId().Ref()));
+  // 	e = XmpDescOfFuncId.Call(Xcons.List(entity.getDescId()));
+  //     } 
+  //     else{
+  // 	throw new XMPexception("Bad entity name for xmp_desc_of()");
+  //     }
+  //   }
+  //   else{ // When myExpr is a distributed array name.
+  //     String arrayName = myExpr.getArg(0).getSym();
+  //     XMPalignedArray alignedArray =  _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+  //     if (alignedArray == null)
+  // 	throw new XMPexception(arrayName + " is not aligned global array or tempalte descriptor.");
+
+  //     Ident XmpDescOfFuncId =  _globalDecl.declExternFunc("_XMP_desc_of", myExpr.Type());
+  //     //e = XmpDescOfFuncId.Call(Xcons.List(alignedArray.getDescId().Ref())); 
+  //     e = XmpDescOfFuncId.Call(Xcons.List(alignedArray.getDescId())); 
+  //   }
+
+  //   return e;
+  // }
+
+  private Xobject rewriteXmpDescOf(Xobject myExpr, Block block) throws XMPexception {
     String entityName = myExpr.getArg(0).getName();
-    XMPobject entity = _globalDecl.getXMPobject(entityName);
+    XMPobject entity = _globalDecl.getXMPobject(entityName, block);
     Xobject e = null;
 
     if(entity != null){
       if(entity.getKind() == XMPobject.TEMPLATE){
-	//entityName = XMP.DESC_PREFIX_ + entityName;
 	Ident XmpDescOfFuncId = _globalDecl.declExternFunc("_XMP_desc_of", myExpr.Type());
 	//e = XmpDescOfFuncId.Call(Xcons.List(entity.getDescId().Ref()));
 	e = XmpDescOfFuncId.Call(Xcons.List(entity.getDescId()));
@@ -500,7 +592,7 @@ public class XMPrewriteExpr {
     }
     else{ // When myExpr is a distributed array name.
       String arrayName = myExpr.getArg(0).getSym();
-      XMPalignedArray alignedArray =  _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+      XMPalignedArray alignedArray =  _globalDecl.getXMPalignedArray(arrayName, block);
       if (alignedArray == null)
 	throw new XMPexception(arrayName + " is not aligned global array or tempalte descriptor.");
 
@@ -512,37 +604,81 @@ public class XMPrewriteExpr {
     return e;
   }
 
-  private Xobject rewriteArrayAddr(Xobject arrayAddr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
-    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayAddr.getSym(), localXMPsymbolTable);
-    XMPcoarray coarray = _globalDecl.getXMPcoarray(arrayAddr.getSym(), localXMPsymbolTable);
-    boolean hasShadow;
-    if(alignedArray != null){
-      hasShadow = alignedArray.hasShadow();
-    }
-    else{
-      hasShadow = false; // e.g. coarray
-    }
+  // private Xobject rewriteArrayAddr(Xobject arrayAddr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+  //   XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayAddr.getSym(), localXMPsymbolTable);
+  //   XMPcoarray coarray = _globalDecl.getXMPcoarray(arrayAddr.getSym(), localXMPsymbolTable);
+  //   boolean hasShadow;
+  //   if(alignedArray != null){
+  //     hasShadow = alignedArray.hasShadow();
+  //   }
+  //   else{
+  //     hasShadow = false; // e.g. coarray
+  //   }
+
+  //   if (alignedArray == null && coarray == null) {
+  //     return arrayAddr;
+  //   }
+  //   else if(hasShadow){
+  //     return arrayAddr;
+  //   }
+  //   else if(alignedArray != null && coarray == null){ // only alignedArray
+  //     Xobject newExpr = alignedArray.getAddrId().Ref();
+  //     newExpr.setIsRewrittedByXmp(true);
+  //     return newExpr;
+  //   } else if(alignedArray == null && coarray != null){  // only coarray
+  //     return rewriteVarRef(arrayAddr, localXMPsymbolTable, false);
+  //   } else{ // no execute
+  //     return arrayAddr;
+  //   }
+  // }
+
+  private Xobject rewriteArrayAddr(Xobject arrayAddr, Block block) throws XMPexception {
+    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayAddr.getSym(), block);
+    XMPcoarray coarray = _globalDecl.getXMPcoarray(arrayAddr.getSym(), block);
+    // boolean hasShadow;
+    // if(alignedArray != null){
+    //   hasShadow = alignedArray.hasShadow();
+    // }
+    // else{
+    //   hasShadow = false; // e.g. coarray
+    // }
 
     if (alignedArray == null && coarray == null) {
       return arrayAddr;
     }
-    else if(hasShadow){
-      return arrayAddr;
-    }
+    // else if(hasShadow){
+    //   return arrayAddr;
+    // }
     else if(alignedArray != null && coarray == null){ // only alignedArray
       Xobject newExpr = alignedArray.getAddrId().Ref();
       newExpr.setIsRewrittedByXmp(true);
       return newExpr;
     } else if(alignedArray == null && coarray != null){  // only coarray
-      return rewriteVarRef(arrayAddr, localXMPsymbolTable, false);
+      //return rewriteVarRef(arrayAddr, localXMPsymbolTable, false);
+      return rewriteVarRef(arrayAddr, block, false);
     } else{ // no execute
       return arrayAddr;
     }
   }
   
-  private Xobject rewriteVarRef(Xobject myExpr, XMPsymbolTable localXMPsymbolTable, boolean isVar) throws XMPexception {
+  // private Xobject rewriteVarRef(Xobject myExpr, XMPsymbolTable localXMPsymbolTable, boolean isVar) throws XMPexception {
+  //   String varName     = myExpr.getSym();
+  //   XMPcoarray coarray = _globalDecl.getXMPcoarray(varName, localXMPsymbolTable);
+    
+  //   if(coarray != null){
+  //     Xobject newExpr = _globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + varName).getValue();
+  //     newExpr = Xcons.PointerRef(newExpr);
+  //     if(isVar) // When coarray is NOT pointer,
+  // 	newExpr = Xcons.PointerRef(newExpr);
+  //     return newExpr;
+  //   } else{
+  //     return myExpr;
+  //   }
+  // }
+
+  private Xobject rewriteVarRef(Xobject myExpr, Block block, boolean isVar) throws XMPexception {
     String varName     = myExpr.getSym();
-    XMPcoarray coarray = _globalDecl.getXMPcoarray(varName, localXMPsymbolTable);
+    XMPcoarray coarray = _globalDecl.getXMPcoarray(varName, block);
     
     if(coarray != null){
       Xobject newExpr = _globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + varName).getValue();
@@ -555,11 +691,47 @@ public class XMPrewriteExpr {
     }
   }
   
-  private Xobject rewriteArrayRef(Xobject myExpr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+  // private Xobject rewriteArrayRef(Xobject myExpr, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+  //   Xobject arrayAddr = myExpr.getArg(0);
+  //   String arrayName = arrayAddr.getSym();
+  //   XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+  //   XMPcoarray      coarray      = _globalDecl.getXMPcoarray(arrayName, localXMPsymbolTable);
+
+  //   if (alignedArray == null && coarray == null) {
+  //     return myExpr;
+  //   } 
+  //   else if(alignedArray != null && coarray == null){  // only alignedArray
+  //     Xobject newExpr = null;
+  //     XobjList arrayRefList = normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
+
+  //     if (alignedArray.checkRealloc()) {
+  // 	newExpr = rewriteAlignedArrayExpr(arrayRefList, alignedArray);
+  //     } 
+  //     else {
+  //       newExpr = Xcons.arrayRef(myExpr.Type(), arrayAddr, arrayRefList);
+  //     }
+
+  //     newExpr.setIsRewrittedByXmp(true);
+  //     return newExpr;
+  //   } 
+  //   else if(alignedArray == null && coarray != null){  // only coarray
+  //     Xobject newExpr = translateCoarrayRef(myExpr.getArg(1), coarray);
+  //     if(isAddrCoarray((XobjList)myExpr.getArg(1), coarray) == true){
+  // 	return Xcons.AddrOf(newExpr);
+  //     }	else{
+  // 	return newExpr;
+  //     }
+  //   } 
+  //   else{  // this statemant must not be executed
+  //     return myExpr;
+  //   }
+  // }
+
+  private Xobject rewriteArrayRef(Xobject myExpr, Block block) throws XMPexception {
     Xobject arrayAddr = myExpr.getArg(0);
     String arrayName = arrayAddr.getSym();
-    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
-    XMPcoarray      coarray      = _globalDecl.getXMPcoarray(arrayName, localXMPsymbolTable);
+    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, block);
+    XMPcoarray      coarray      = _globalDecl.getXMPcoarray(arrayName, block);
 
     if (alignedArray == null && coarray == null) {
       return myExpr;
@@ -824,8 +996,43 @@ public class XMPrewriteExpr {
     }
   }
 
-  public static void rewriteArrayRefInLoop(Xobject expr,
-                                           XMPglobalDecl globalDecl, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+  // public static void rewriteArrayRefInLoop(Xobject expr,
+  //                                          XMPglobalDecl globalDecl, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+  //   if (expr == null) return;
+
+  //   topdownXobjectIterator iter = new topdownXobjectIterator(expr);
+  //   for (iter.init(); !iter.end(); iter.next()) {
+  //     Xobject myExpr = iter.getXobject();
+  //     if (myExpr == null) {
+  //       continue;
+  //     } else if (myExpr.isRewrittedByXmp()) {
+  //       continue;
+  //     }
+  //     switch (myExpr.Opcode()) {
+  //       case ARRAY_REF:
+  //         {
+  //           Xobject arrayAddr = myExpr.getArg(0);
+  //           String arrayName = arrayAddr.getSym();
+  //           XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+  //           if (alignedArray != null) {
+  //             Xobject newExpr = null;
+  //             XobjList arrayRefList = XMPrewriteExpr.normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
+  //             if (alignedArray.checkRealloc()) {
+  //               newExpr = XMPrewriteExpr.rewriteAlignedArrayExprInLoop(arrayRefList, alignedArray);
+  //             } else {
+  //               newExpr = Xcons.arrayRef(myExpr.Type(), arrayAddr, arrayRefList);
+  //             }
+  //             newExpr.setIsRewrittedByXmp(true);
+  //             iter.setXobject(newExpr);
+  //           }
+  //         } break;
+  //       default:
+  //     }
+  //   }
+  // }
+
+  public static void rewriteArrayRefInLoop(Xobject expr, XMPglobalDecl globalDecl, Block block) throws XMPexception {
+
     if (expr == null) return;
 
     topdownXobjectIterator iter = new topdownXobjectIterator(expr);
@@ -841,7 +1048,10 @@ public class XMPrewriteExpr {
           {
             Xobject arrayAddr = myExpr.getArg(0);
             String arrayName = arrayAddr.getSym();
-            XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+
+            //XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+	    XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, block);
+
             if (alignedArray != null) {
               Xobject newExpr = null;
               XobjList arrayRefList = XMPrewriteExpr.normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
@@ -873,8 +1083,42 @@ public class XMPrewriteExpr {
     return XMPrewriteExpr.createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
   }
 
-  public static void rewriteLoopIndexInLoop(Xobject expr, String loopIndexName, XMPtemplate templateObj, int templateIndex,
-                                            XMPglobalDecl globalDecl, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+  // public static void rewriteLoopIndexInLoop(Xobject expr, String loopIndexName, XMPtemplate templateObj, int templateIndex,
+  //                                           XMPglobalDecl globalDecl, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+  //   if (expr == null) return;
+  //   topdownXobjectIterator iter = new topdownXobjectIterator(expr);
+  //   for (iter.init(); !iter.end(); iter.next()) {
+  //     Xobject myExpr = iter.getXobject();
+  //     if (myExpr == null) {
+  //       continue;
+  //     } else if (myExpr.isRewrittedByXmp()) {
+  //       continue;
+  //     }
+  //     switch (myExpr.Opcode()) {
+  //     case VAR:
+  // 	{
+  // 	  if (loopIndexName.equals(myExpr.getSym())) {
+  // 	    iter.setXobject(calcLtoG(templateObj, templateIndex, myExpr));
+  // 	  }
+  // 	} break;
+  //     case ARRAY_REF:
+  // 	{
+  // 	  XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(myExpr.getArg(0).getSym(), localXMPsymbolTable);
+  // 	  if (alignedArray == null) {
+  // 	    rewriteLoopIndexVar(templateObj, templateIndex, loopIndexName, myExpr);
+  // 	  } else {
+  // 	    myExpr.setArg(1, rewriteLoopIndexArrayRefList(templateObj, templateIndex, alignedArray,
+  // 							  loopIndexName, (XobjList)myExpr.getArg(1)));
+  // 	  }
+  // 	} break;
+  //     default:
+  //     }
+  //   }
+  // }
+
+  public static void rewriteLoopIndexInLoop(Xobject expr, String loopIndexName,
+					    XMPtemplate templateObj, int templateIndex,
+                                            XMPglobalDecl globalDecl, Block block) throws XMPexception {
     if (expr == null) return;
     topdownXobjectIterator iter = new topdownXobjectIterator(expr);
     for (iter.init(); !iter.end(); iter.next()) {
@@ -893,7 +1137,7 @@ public class XMPrewriteExpr {
 	} break;
       case ARRAY_REF:
 	{
-	  XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(myExpr.getArg(0).getSym(), localXMPsymbolTable);
+	  XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(myExpr.getArg(0).getSym(), block);
 	  if (alignedArray == null) {
 	    rewriteLoopIndexVar(templateObj, templateIndex, loopIndexName, myExpr);
 	  } else {
@@ -1049,15 +1293,15 @@ public class XMPrewriteExpr {
    */
   private void rewriteOMPpragma(FunctionBlock fb, XMPsymbolTable localXMPsymbolTable){
 
-      topdownBlockIterator iter2 = new topdownBlockIterator(fb);
+    topdownBlockIterator iter2 = new topdownBlockIterator(fb);
 
-      for (iter2.init(); !iter2.end(); iter2.next()){
-	  Block block = iter2.getBlock();
-	  if (block.Opcode() == Xcode.OMP_PRAGMA){
-	      Xobject clauses = ((PragmaBlock)block).getClauses();
-	      if (clauses != null) rewriteOmpClauses(clauses, (PragmaBlock)block, fb, localXMPsymbolTable);
-	  }
+    for (iter2.init(); !iter2.end(); iter2.next()){
+      Block block = iter2.getBlock();
+      if (block.Opcode() == Xcode.OMP_PRAGMA){
+	Xobject clauses = ((PragmaBlock)block).getClauses();
+	if (clauses != null) rewriteOmpClauses(clauses, (PragmaBlock)block, fb, localXMPsymbolTable);
       }
+    }
 
   }
 
@@ -1077,7 +1321,8 @@ public class XMPrewriteExpr {
       if (x.Opcode() == Xcode.VAR){
 
 	  try {
-	      iter.setXobject(rewriteArrayAddr(x, localXMPsymbolTable));
+	    //iter.setXobject(rewriteArrayAddr(x, localXMPsymbolTable));
+	    iter.setXobject(rewriteArrayAddr(x, pragmaBlock));
 	  }
 	  catch (XMPexception e){
 	      XMP.error(x.getLineNo(), e.getMessage());

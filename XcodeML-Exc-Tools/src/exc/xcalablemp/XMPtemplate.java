@@ -143,17 +143,21 @@ public class XMPtemplate extends XMPobject {
   public static void translateTemplate(XobjList templateDecl, XMPglobalDecl globalDecl,
                                        boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
     // local parameters
-    BlockList funcBlockList = null;
+    //BlockList funcBlockList = null;
     XMPsymbolTable localXMPsymbolTable = null;
+    Block parentBlock = null;
     if (isLocalPragma) {
-      funcBlockList = XMPlocalDecl.findParentFunctionBlock(pb).getBody();
-      localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+      //funcBlockList = XMPlocalDecl.findParentFunctionBlock(pb).getBody();
+      //localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+      parentBlock = pb.getParentBlock();
+      localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable2(parentBlock);
     }
 
     // check name collision
     String templateName = templateDecl.getArg(0).getString();
     if (isLocalPragma) {
-      XMPlocalDecl.checkObjectNameCollision(templateName, funcBlockList, localXMPsymbolTable);
+      //XMPlocalDecl.checkObjectNameCollision(templateName, funcBlockList, localXMPsymbolTable);
+      XMPlocalDecl.checkObjectNameCollision(templateName, parentBlock.getBody(), localXMPsymbolTable);
     }
     else {
       globalDecl.checkObjectNameCollision(templateName);
@@ -162,7 +166,8 @@ public class XMPtemplate extends XMPobject {
     // declare template desciptor
     Ident templateDescId = null;
     if (isLocalPragma) {
-      templateDescId = XMPlocalDecl.addObjectId(XMP.DESC_PREFIX_ + templateName, pb);
+      //templateDescId = XMPlocalDecl.addObjectId(XMP.DESC_PREFIX_ + templateName, pb);
+      templateDescId = XMPlocalDecl.addObjectId2(XMP.DESC_PREFIX_ + templateName, parentBlock);
     }
     else {
       templateDescId = globalDecl.declStaticIdent(XMP.DESC_PREFIX_ + templateName, Xtype.voidPtrType);
@@ -214,8 +219,8 @@ public class XMPtemplate extends XMPobject {
     }
 
     if (isLocalPragma) {
-      XMPlocalDecl.addConstructorCall(constructorName, templateArgs, globalDecl, pb);
-      XMPlocalDecl.insertDestructorCall("_XMP_finalize_template", Xcons.List(templateDescId.Ref()), globalDecl, pb);
+      XMPlocalDecl.addConstructorCall2(constructorName, templateArgs, globalDecl, parentBlock);
+      XMPlocalDecl.insertDestructorCall2("_XMP_finalize_template", Xcons.List(templateDescId.Ref()), globalDecl, parentBlock);
     } else {
       globalDecl.addGlobalInitFuncCall(constructorName, templateArgs);
     }
@@ -224,11 +229,14 @@ public class XMPtemplate extends XMPobject {
   public static void translateDistribute(XobjList distDecl, XMPglobalDecl globalDecl,
                                          boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
     // local parameters
-    BlockList funcBlockList = null;
+    //BlockList funcBlockList = null;
     XMPsymbolTable localXMPsymbolTable = null;
+    Block parentBlock = null;
     if (isLocalPragma) {
-      funcBlockList = XMPlocalDecl.findParentFunctionBlock(pb).getBody();
-      localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+      //funcBlockList = XMPlocalDecl.findParentFunctionBlock(pb).getBody();
+      //localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+      parentBlock = pb.getParentBlock();
+      localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable2(parentBlock);
     }
 
     // get template object
@@ -262,7 +270,8 @@ public class XMPtemplate extends XMPobject {
     // get nodes object
     String nodesName = distDecl.getArg(2).getString();
     XMPnodes nodesObject = null;
-    nodesObject = globalDecl.getXMPnodes(nodesName, localXMPsymbolTable);
+    //nodesObject = globalDecl.getXMPnodes(nodesName, localXMPsymbolTable);
+    nodesObject = globalDecl.getXMPnodes(nodesName, pb);
     if (nodesObject == null) {
       throw new XMPexception("nodes '" + nodesName + "' is not declared");
     }
@@ -271,10 +280,10 @@ public class XMPtemplate extends XMPobject {
 
     // setup chunk constructor
     if (isLocalPragma) {
-      XMPlocalDecl.addConstructorCall("_XMP_init_template_chunk",
-                                      Xcons.List(templateObject.getDescId().Ref(),
-                                                 nodesObject.getDescId().Ref()),
-                                      globalDecl, pb);
+      XMPlocalDecl.addConstructorCall2("_XMP_init_template_chunk",
+				       Xcons.List(templateObject.getDescId().Ref(),
+						  nodesObject.getDescId().Ref()),
+				       globalDecl, parentBlock);
     }
     else {
       globalDecl.addGlobalInitFuncCall("_XMP_init_template_chunk",
@@ -296,7 +305,6 @@ public class XMPtemplate extends XMPobject {
       setupDistribution(distManner, templateObject, templateDimIdx, nodesDimIdx, globalDecl, isLocalPragma, pb);
 
       int distMannerValue = distManner.getArg(0).getInt();
-      // FIXME support gblock
       switch (distMannerValue) {
         case XMPtemplate.BLOCK:
         case XMPtemplate.CYCLIC:
@@ -332,6 +340,7 @@ public class XMPtemplate extends XMPobject {
   private static void setupDistribution(XobjList distManner, XMPtemplate templateObject,
                                         int templateDimIdx, int nodesDimIdx,
                                         XMPglobalDecl globalDecl, boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
+
     XobjList funcArgs = null;
     int distMannerValue = distManner.getArg(0).getInt();
     String distMannerName = getDistMannerString(distMannerValue);
@@ -385,7 +394,8 @@ public class XMPtemplate extends XMPobject {
     }
 
     if (isLocalPragma) {
-      XMPlocalDecl.addConstructorCall("_XMP_dist_template_" + distMannerName, funcArgs, globalDecl, pb);
+      Block parentBlock = pb.getParentBlock();
+      XMPlocalDecl.addConstructorCall2("_XMP_dist_template_" + distMannerName, funcArgs, globalDecl, parentBlock);
     }
     else {
       globalDecl.addGlobalInitFuncCall("_XMP_dist_template_" + distMannerName, funcArgs);

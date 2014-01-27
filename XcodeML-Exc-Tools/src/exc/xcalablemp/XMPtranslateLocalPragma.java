@@ -176,7 +176,8 @@ public class XMPtranslateLocalPragma {
 
     XobjList onRef = (XobjList)postDecl.getArg(0);
     String nodeName = onRef.getArg(0).getString();
-    XMPnodes nodeObj = _globalDecl.getXMPnodes(nodeName, localXMPsymbolTable);
+    //XMPnodes nodeObj = _globalDecl.getXMPnodes(nodeName, localXMPsymbolTable);
+    XMPnodes nodeObj = _globalDecl.getXMPnodes(nodeName, pb);
     if (nodeObj == null) {
 	throw new XMPexception("cannot find '" + nodeName + "' nodes");
     }
@@ -365,7 +366,8 @@ public class XMPtranslateLocalPragma {
 
     // create function arguments
     XobjList onRef = (XobjList)taskDecl.getArg(0);
-    XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
+    //XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
+    XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
     String execFuncSurfix = execOnRefArgs.getFirst();
     XobjList execFuncArgs = execOnRefArgs.getThird();
     XMPobject onRefObject = execOnRefArgs.getForth();
@@ -469,7 +471,8 @@ public class XMPtranslateLocalPragma {
     // rewrite array refs in loop
     topdownXobjectIterator iter = new topdownXobjectIterator(getLoopBody(schedBaseBlock).toXobject());
     for (iter.init(); !iter.end(); iter.next()) {
-	XMPrewriteExpr.rewriteArrayRefInLoop(iter.getXobject(), _globalDecl, XMPlocalDecl.getXMPsymbolTable(pb));
+      //XMPrewriteExpr.rewriteArrayRefInLoop(iter.getXobject(), _globalDecl, XMPlocalDecl.getXMPsymbolTable(pb));
+      XMPrewriteExpr.rewriteArrayRefInLoop(iter.getXobject(), _globalDecl, schedBaseBlock);
     }
 
     // replace pragma
@@ -805,7 +808,8 @@ public class XMPtranslateLocalPragma {
     XobjList subscriptList = (XobjList)onRef.getArg(1);
 
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-    XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, localXMPsymbolTable);
+    //XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, localXMPsymbolTable);
+    XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, pb);
     if (onRefObj == null) {
       throw new XMPexception("cannot find '" + onRefObjName + "' nodes/template");
     }
@@ -892,7 +896,8 @@ public class XMPtranslateLocalPragma {
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(schedBaseBlock);
     Xobject onRef = loopDecl.getArg(1);
     String onRefObjName = onRef.getArg(0).getString();
-    XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, localXMPsymbolTable);
+    //XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, localXMPsymbolTable);
+    XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, schedBaseBlock);
 
     XMPtemplate templateObj = (XMPtemplate)onRefObj;
     XobjList templateSubscriptList = (XobjList)onRef.getArg(1);
@@ -1083,7 +1088,8 @@ public class XMPtranslateLocalPragma {
     // analyze <on-ref>
     Xobject onRef = loopDecl.getArg(1);
     String onRefObjName = onRef.getArg(0).getString();
-    XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, localXMPsymbolTable);
+    //XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, localXMPsymbolTable);
+    XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, schedBaseBlock);
     if (onRefObj == null) {
       throw new XMPexception("cannot find '" + onRefObjName + "' nodes/template");
     }
@@ -1252,9 +1258,12 @@ public class XMPtranslateLocalPragma {
     BasicBlockExprIterator iter = new BasicBlockExprIterator(getLoopBody(forBlock));
 
     for (iter.init(); !iter.end(); iter.next()) {
+      // XMPrewriteExpr.rewriteLoopIndexInLoop(iter.getExpr(), loopIndexName,
+      //                                       templateObj, templateIndexArg.getInt(),
+      //                                       _globalDecl, XMPlocalDecl.getXMPsymbolTable(forBlock));
       XMPrewriteExpr.rewriteLoopIndexInLoop(iter.getExpr(), loopIndexName,
-                                            templateObj, templateIndexArg.getInt(),
-                                            _globalDecl, XMPlocalDecl.getXMPsymbolTable(forBlock));
+      					    templateObj, templateIndexArg.getInt(),
+      					    _globalDecl, forBlock);
     }
   }
 
@@ -1351,7 +1360,8 @@ public class XMPtranslateLocalPragma {
     if (onRef == null || onRef.Nargs() == 0) {
       barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null);
     } else {
-      XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
+      //XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
+      XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
       String execFuncSurfix = execOnRefArgs.getFirst();
       boolean splitComm = execOnRefArgs.getSecond().booleanValue();
       XobjList execFuncArgs = execOnRefArgs.getThird();
@@ -1404,7 +1414,8 @@ public class XMPtranslateLocalPragma {
 	reductionFuncCallBlock = createReductionFuncCallBlock(true, reductionFuncType + "_EXEC", null, reductionFuncArgsList);
     }
     else {
-      XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
+      //XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
+      XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
       String execFuncSurfix = execOnRefArgs.getFirst();
       boolean splitComm = execOnRefArgs.getSecond().booleanValue();
       XobjList execFuncArgs = execOnRefArgs.getThird();
@@ -1507,7 +1518,8 @@ public class XMPtranslateLocalPragma {
 	  
 	  // FIXME not good implementation
 	  XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-	  XMPalignedArray specAlignedArray = _globalDecl.getXMPalignedArray(specName, localXMPsymbolTable);
+	  //XMPalignedArray specAlignedArray = _globalDecl.getXMPalignedArray(specName, localXMPsymbolTable);
+	  XMPalignedArray specAlignedArray = _globalDecl.getXMPalignedArray(specName, pb);
 	  if (specAlignedArray == null) {
 	    specRef = specId.Ref();
 	    count = Xcons.LongLongConstant(0, XMPutil.getArrayElmtCount(arraySpecType));
@@ -1819,14 +1831,16 @@ public class XMPtranslateLocalPragma {
     XobjList fromRef = (XobjList)bcastDecl.getArg(1);
     XMPpair<String, XobjList> execFromRefArgs = null;
     if (fromRef != null && fromRef.Nargs() != 0){
-	execFromRefArgs = createExecFromRefArgs(fromRef, localXMPsymbolTable);
+      //execFromRefArgs = createExecFromRefArgs(fromRef, localXMPsymbolTable);
+      execFromRefArgs = createExecFromRefArgs(fromRef, pb);
     }
 
     XobjList onRef = (XobjList)bcastDecl.getArg(2);
     if (onRef == null || onRef.getArgs() == null) {
 	bcastFuncCallBlock = createBcastFuncCallBlock(true, "EXEC", null, bcastArgsList, execFromRefArgs);
     } else {
-      XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
+      //XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
+      XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
 
       String execFuncSurfix = execOnRefArgs.getFirst();
       boolean splitComm = execOnRefArgs.getSecond().booleanValue();
@@ -1937,8 +1951,86 @@ public class XMPtranslateLocalPragma {
     return Bcons.COMPOUND(funcCallList);
   }
 
-  private XMPpair<String, XobjList> createExecFromRefArgs(XobjList fromRef,
-                                                          XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+  // private XMPpair<String, XobjList> createExecFromRefArgs(XobjList fromRef,
+  //                                                         XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+  //   if (fromRef.getArg(0) == null) {
+  //     // execute on global communicator
+  //     XobjList globalRef = (XobjList)fromRef.getArg(1);
+
+  //     XobjList execFuncArgs = Xcons.List();
+  //     // lower
+  //     if (globalRef.getArg(0) == null)
+  //       throw new XMPexception("lower bound cannot be omitted in <from-ref>");
+  //     else execFuncArgs.add(globalRef.getArg(0));
+
+  //     // upper
+  //     if (globalRef.getArg(1) == null)
+  //       throw new XMPexception("upper bound cannot be omitted in <from-ref>");
+  //     else execFuncArgs.add(globalRef.getArg(1));
+
+  //     // stride
+  //     if (globalRef.getArg(2) == null) execFuncArgs.add(Xcons.IntConstant(1));
+  //     else execFuncArgs.add(globalRef.getArg(2));
+
+  //     return new XMPpair<String, XobjList>(new String("GLOBAL"), execFuncArgs);
+  //   }
+  //   else {
+  //     // execute on <object-ref>
+
+  //     // check object name collision
+  //     String objectName = fromRef.getArg(0).getString();
+  //     XMPobject fromRefObject = _globalDecl.getXMPobject(objectName, localXMPsymbolTable);
+  //     if (fromRefObject == null) {
+  //       throw new XMPexception("cannot find '" + objectName + "' nodes/template");
+  //     }
+
+  //     if (fromRefObject.getKind() == XMPobject.TEMPLATE)
+  //       throw new XMPexception("template cannot be used in <from-ref>");
+
+  //     // create arguments
+  //     if (fromRef.getArg(1) == null)
+  //       throw new XMPexception("multiple source nodes indicated in bcast directive");
+  //     else {
+  //       XobjList execFuncArgs = Xcons.List(fromRefObject.getDescId().Ref());
+
+  //       int refIndex = 0;
+  //       int refDim = fromRefObject.getDim();
+  //       for (XobjArgs i = fromRef.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
+  //         if (refIndex == refDim)
+  //           throw new XMPexception("wrong nodes dimension indicated, too many");
+
+  //         XobjList t = (XobjList)i.getArg();
+  //         if (t == null) execFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+  //         else {
+  //           execFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
+
+  //           // lower
+  //           if (t.getArg(0) == null)
+  //             throw new XMPexception("lower bound cannot be omitted in <from-ref>");
+  //           else execFuncArgs.add(Xcons.Cast(Xtype.intType, t.getArg(0)));
+
+  //           // upper
+  //           if (t.getArg(1) == null)
+  //             throw new XMPexception("upper bound cannot be omitted in <from-ref>");
+  //           else execFuncArgs.add(Xcons.Cast(Xtype.intType, t.getArg(1)));
+
+  //           // stride
+  //           if (t.getArg(2) == null) execFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+  //           else execFuncArgs.add(Xcons.Cast(Xtype.intType, t.getArg(2)));
+  //         }
+
+  //         refIndex++;
+  //       }
+
+  //       if (refIndex != refDim)
+  //         throw new XMPexception("the number of <nodes/template-subscript> should be the same with the dimension");
+
+  //       return new XMPpair<String, XobjList>(new String("NODES"), execFuncArgs);
+  //     }
+  //   }
+  // }
+
+  private XMPpair<String, XobjList> createExecFromRefArgs(XobjList fromRef, Block block) throws XMPexception {
     if (fromRef.getArg(0) == null) {
       // execute on global communicator
       XobjList globalRef = (XobjList)fromRef.getArg(1);
@@ -1965,7 +2057,7 @@ public class XMPtranslateLocalPragma {
 
       // check object name collision
       String objectName = fromRef.getArg(0).getString();
-      XMPobject fromRefObject = _globalDecl.getXMPobject(objectName, localXMPsymbolTable);
+      XMPobject fromRefObject = _globalDecl.getXMPobject(objectName, block);
       if (fromRefObject == null) {
         throw new XMPexception("cannot find '" + objectName + "' nodes/template");
       }
@@ -2248,7 +2340,8 @@ public class XMPtranslateLocalPragma {
     XobjList accList = Xcons.List();
 
     String arrayName = expr.getArg(0).getSym();
-    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+    //XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
     if (alignedArray == null) {
       Ident arrayId = pb.findVarIdent(arrayName);
       Xtype arrayType = arrayId.Type();
@@ -2278,7 +2371,8 @@ public class XMPtranslateLocalPragma {
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
     Xobject arrayAddr = expr.getArg(0);
     String arrayName = arrayAddr.getSym();
-    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+    //XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
 
     XobjList arrayRefs = (XobjList)expr.getArg(1);
     XobjList castedArrayRefs = Xcons.List();
@@ -2314,7 +2408,8 @@ public class XMPtranslateLocalPragma {
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
     String arrayName = expr.getArg(0).getSym();
 
-    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+    //XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
     XobjList castedArrayRefs = Xcons.List();
     XobjList arrayRefs = (XobjList)expr.getArg(1);
     if (arrayRefs != null) {
@@ -2326,8 +2421,164 @@ public class XMPtranslateLocalPragma {
     return new XMPpair<XMPalignedArray, XobjList>(alignedArray, castedArrayRefs);
   }
 
+  // private XMPquadruplet<String, Boolean, XobjList, XMPobject> createExecOnRefArgs(XobjList onRef,
+  //                                                                                 XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+  //   if (onRef.getArg(0) == null) {
+  //     // execute on global communicator
+  //     XobjList globalRef = (XobjList)onRef.getArg(1);
+
+  //     boolean splitComm = false;
+  //     XobjList tempArgs = Xcons.List();
+  //     // lower
+  //     if (globalRef.getArg(0) == null) tempArgs.add(Xcons.IntConstant(1));
+  //     else {
+  //       splitComm = true;
+  //       tempArgs.add(globalRef.getArg(0));
+  //     }
+  //     // upper
+  //     if (globalRef.getArg(1) == null) tempArgs.add(_globalDecl.getWorldSizeId().Ref());
+  //     else {
+  //       splitComm = true;
+  //       tempArgs.add(globalRef.getArg(1));
+  //     }
+  //     // stride
+  //     if (globalRef.getArg(2) == null) tempArgs.add(Xcons.IntConstant(1));
+  //     else {
+  //       splitComm = true;
+  //       tempArgs.add(globalRef.getArg(2));
+  //     }
+
+  //     String execFuncSurfix = null;
+  //     XobjList execFuncArgs = null;
+  //     if (splitComm) {
+  //       execFuncSurfix = "GLOBAL_PART";
+  //       execFuncArgs = tempArgs;
+  //     }
+  //     else {
+  //       execFuncSurfix = "NODES_ENTIRE";
+  //       execFuncArgs = Xcons.List(_globalDecl.getWorldDescId().Ref());
+  //     }
+
+  //     return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSurfix, new Boolean(splitComm), execFuncArgs, null);
+  //   }
+  //   else {
+  //     // execute on <object-ref>
+
+  //     // check object name collision
+  //     String objectName = onRef.getArg(0).getString();
+  //     XMPobject onRefObject = _globalDecl.getXMPobject(objectName, localXMPsymbolTable);
+  //     if (onRefObject == null) {
+  //       throw new XMPexception("cannot find '" + objectName + "' nodes/template");
+  //     }
+
+  //     Xobject ontoNodesRef = null;
+  //     Xtype castType = null;
+  //     switch (onRefObject.getKind()) {
+  //       case XMPobject.NODES:
+  //         ontoNodesRef = onRefObject.getDescId().Ref();
+  //         castType = Xtype.intType;
+  //         break;
+  //       case XMPobject.TEMPLATE:
+  //         {
+  //           XMPtemplate ontoTemplate = (XMPtemplate)onRefObject;
+
+  //           if (!ontoTemplate.isFixed()) {
+  //             throw new XMPexception("template '" + objectName + "' is not fixed");
+  //           }
+
+  //           if (!ontoTemplate.isDistributed()) {
+  //             throw new XMPexception("template '" + objectName + "' is not distributed");
+  //           }
+
+  //           XMPnodes ontoNodes = ((XMPtemplate)onRefObject).getOntoNodes();
+
+  //           ontoNodesRef = ontoNodes.getDescId().Ref();
+  //           castType = Xtype.longlongType;
+  //           break;
+  //         }
+  //       default:
+  //         throw new XMPexception("unknown object type");
+  //     }
+
+  //     // create arguments
+  //     if (onRef.getArg(1) == null || onRef.getArg(1).getArgs() == null)
+  //       return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(new String("NODES_ENTIRE"), new Boolean(false), Xcons.List(ontoNodesRef), onRefObject);
+  //     else {
+  //       boolean splitComm = false;
+  //       int refIndex = 0;
+  //       int refDim = onRefObject.getDim();
+  //       XobjList tempArgs = Xcons.List();
+  //       for (XobjArgs i = onRef.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
+  //         if (refIndex == refDim)
+  //           throw new XMPexception("wrong nodes dimension indicated, too many");
+
+  //         XobjList t = (XobjList)i.getArg();
+  //         if (t == null || t.getArgs() == null) {
+  //           splitComm = true;
+  //           tempArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+  //         }
+  //         else {
+  //           tempArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
+
+  //           // lower
+  //           if (t.getArg(0) == null || (t.getArg(0) instanceof XobjList && t.getArg(0).getArgs() == null)) {
+  //             tempArgs.add(Xcons.Cast(castType, onRefObject.getLowerAt(refIndex)));
+  //           } else {
+  //             splitComm = true;
+  //             tempArgs.add(Xcons.Cast(castType, t.getArg(0)));
+  //           }
+  //           // upper
+  //           if (t.getArg(1) == null || (t.getArg(0) instanceof XobjList && t.getArg(1).getArgs() == null)) {
+  //             tempArgs.add(Xcons.Cast(castType, onRefObject.getUpperAt(refIndex)));
+  //           }
+  //           else {
+  //             splitComm = true;
+  //             tempArgs.add(Xcons.Cast(castType, t.getArg(1)));
+  //           }
+  //           // stride
+  //           if (t.getArg(2) == null) tempArgs.add(Xcons.Cast(castType, Xcons.IntConstant(1)));
+  //           else {
+  //             splitComm = true;
+  //             // XXX stride: always int
+  //             tempArgs.add(Xcons.Cast(castType, t.getArg(2)));
+  //           }
+  //         }
+
+  //         refIndex++;
+  //       }
+
+  //       if (refIndex != refDim)
+  //         throw new XMPexception("the number of <nodes/template-subscript> should be the same with the dimension");
+
+  //       if (splitComm) {
+  //         String execFuncSurfix = null;
+  //         XobjList execFuncArgs = null;
+  //         execFuncArgs = tempArgs;
+  //         switch (onRefObject.getKind()) {
+  //           case XMPobject.NODES:
+  //             execFuncSurfix = "NODES_PART";
+  //             execFuncArgs.cons(ontoNodesRef);
+  //             break;
+  //           case XMPobject.TEMPLATE:
+  //             execFuncSurfix = "TEMPLATE_PART";
+  //             execFuncArgs.cons(((XMPtemplate)onRefObject).getDescId().Ref());
+  //             break;
+  //           default:
+  //             throw new XMPexception("unknown object type");
+  //         }
+
+  //         return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSurfix, new Boolean(splitComm), execFuncArgs, onRefObject);
+  //       }
+  //       else
+  //         return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(new String("NODES_ENTIRE"),
+  //                                                             new Boolean(splitComm), Xcons.List(ontoNodesRef),
+  //                                                             onRefObject);
+  //     }
+  //   }
+  // }
+
   private XMPquadruplet<String, Boolean, XobjList, XMPobject> createExecOnRefArgs(XobjList onRef,
-                                                                                  XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+                                                                                  Block block) throws XMPexception {
     if (onRef.getArg(0) == null) {
       // execute on global communicator
       XobjList globalRef = (XobjList)onRef.getArg(1);
@@ -2371,7 +2622,7 @@ public class XMPtranslateLocalPragma {
 
       // check object name collision
       String objectName = onRef.getArg(0).getString();
-      XMPobject onRefObject = _globalDecl.getXMPobject(objectName, localXMPsymbolTable);
+      XMPobject onRefObject = _globalDecl.getXMPobject(objectName, block);
       if (onRefObject == null) {
         throw new XMPexception("cannot find '" + objectName + "' nodes/template");
       }

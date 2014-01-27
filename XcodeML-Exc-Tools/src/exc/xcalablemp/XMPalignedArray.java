@@ -296,16 +296,37 @@ public class XMPalignedArray {
 
   public static void translateAlign(XobjList alignDecl, XMPglobalDecl globalDecl,
                                     boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
-    // local parameters
-    BlockList funcBlockList = null;
+
+    String arrayName = alignDecl.getArg(0).getString();
+    Ident arrayId = null;
+
     XMPsymbolTable localXMPsymbolTable = null;
+    Block parentBlock = null;
+
+    Boolean isParameter = true;
+
     if (isLocalPragma) {
-      funcBlockList = XMPlocalDecl.findParentFunctionBlock(pb).getBody();
-      localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+      arrayId = XMPlocalDecl.findLocalIdent(pb, arrayName);
+      if (arrayId != null) isParameter = (arrayId.getStorageClass() == StorageClass.PARAM);
+
+      parentBlock = pb.getParentBlock();
+
+      if (isParameter){
+	localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+      }
+      else {
+	localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable2(parentBlock);
+      }
+    }
+    else {
+      arrayId = globalDecl.findVarIdent(arrayName);
+    }
+
+    if (arrayId == null) {
+      throw new XMPexception("array '" + arrayName + "' is not declared");
     }
 
     // get array information
-    String arrayName = alignDecl.getArg(0).getString();
     XMPalignedArray alignedArray = null;
     if (isLocalPragma) {
       alignedArray = localXMPsymbolTable.getXMPalignedArray(arrayName);
@@ -316,26 +337,6 @@ public class XMPalignedArray {
 
     if (alignedArray != null) {
       throw new XMPexception("array '" + arrayName + "' is already aligned");
-    }
-
-    Ident arrayId = null;
-    Boolean isParameter = true;
-    if (isLocalPragma) {
-      arrayId = XMPlocalDecl.findLocalIdent(pb, arrayName);
-      if (arrayId != null) isParameter = (arrayId.getStorageClass() == StorageClass.PARAM);
-      // arrayId = funcBlockList.findLocalIdent(arrayName);
-      // if (arrayId != null) {
-      //   if (arrayId.getStorageClass() != StorageClass.PARAM) {
-      //     throw new XMPexception("array '" + arrayName + "' is not a parameter of a function");
-      //   }
-      // }
-    }
-    else {
-      arrayId = globalDecl.findVarIdent(arrayName);
-    }
-
-    if (arrayId == null) {
-      throw new XMPexception("array '" + arrayName + "' is not declared");
     }
 
     Xtype arrayType = arrayId.Type();
@@ -353,14 +354,22 @@ public class XMPalignedArray {
     }
 
     // check coarray table
-    if (globalDecl.getXMPcoarray(arrayName, localXMPsymbolTable) != null) {
+    //if (globalDecl.getXMPcoarray(arrayName, localXMPsymbolTable) != null) {
+    if (globalDecl.getXMPcoarray(arrayName, pb) != null) {
       throw new XMPexception("array '" + arrayName + "' is declared as a coarray, cannot be aligned");
     }
 
     // get template information
     String templateName = alignDecl.getArg(2).getString();
-    XMPtemplate templateObj = null;
-    templateObj = globalDecl.getXMPtemplate(templateName, localXMPsymbolTable);
+    XMPtemplate templateObj = globalDecl.getXMPtemplate(templateName, pb);
+    // if (isLocalPragma)
+    //   for (Block b = parentBlock; b != null; b = b.getParentBlock()){
+    // 	templateObj = globalDecl.getXMPtemplate(templateName, XMPlocalDecl.getXMPsymbolTable2(b));
+    // 	if (templateObj != null) break;
+    //   }
+    // else 
+    //   templateObj = globalDecl.getXMPtemplate(templateName, localXMPsymbolTable);
+
     if (templateObj == null) {
       throw new XMPexception("template '" + templateName + "' is not declared");
     }
@@ -379,9 +388,8 @@ public class XMPalignedArray {
     Ident arrayAddrId = null;
     Ident arrayDescId = null;
     if (isLocalPragma) {
-      arrayAddrId = XMPlocalDecl.addObjectId(XMP.ADDR_PREFIX_ + arrayName, Xtype.Pointer(arrayElmtType), pb);
-
-      arrayDescId = XMPlocalDecl.addObjectId(XMP.DESC_PREFIX_ + arrayName, pb);
+      arrayAddrId = XMPlocalDecl.addObjectId2(XMP.ADDR_PREFIX_ + arrayName, Xtype.Pointer(arrayElmtType), parentBlock);
+      arrayDescId = XMPlocalDecl.addObjectId2(XMP.DESC_PREFIX_ + arrayName, parentBlock);
     }
     else {
       if (arrayId.getStorageClass() == StorageClass.EXTERN) {
@@ -415,8 +423,8 @@ public class XMPalignedArray {
     for (int i = 0; i < arrayDim; i++) {
       Ident accId = null;
       if (isLocalPragma) {
-        accId = XMPlocalDecl.addObjectId(XMP.GTOL_PREFIX_ + "acc_" + arrayName + "_" + i,
-                                         Xtype.unsignedlonglongType, pb);
+        accId = XMPlocalDecl.addObjectId2(XMP.GTOL_PREFIX_ + "acc_" + arrayName + "_" + i,
+					  Xtype.unsignedlonglongType, parentBlock);
       }
       else {
         accId = globalDecl.declStaticIdent(XMP.GTOL_PREFIX_ + "acc_" + arrayName + "_" + i,
@@ -432,8 +440,8 @@ public class XMPalignedArray {
                                        templateObj);
 
     if (isLocalPragma) {
-      XMPlocalDecl.addConstructorCall("_XMP_init_array_desc", initArrayDescFuncArgs, globalDecl, pb);
-      XMPlocalDecl.insertDestructorCall("_XMP_finalize_array_desc", Xcons.List(arrayDescId.Ref()), globalDecl, pb);
+      XMPlocalDecl.addConstructorCall2("_XMP_init_array_desc", initArrayDescFuncArgs, globalDecl, parentBlock);
+      XMPlocalDecl.insertDestructorCall2("_XMP_finalize_array_desc", Xcons.List(arrayDescId.Ref()), globalDecl, parentBlock);
       localXMPsymbolTable.putXMPalignedArray(alignedArray);
     }
     else {
@@ -551,8 +559,8 @@ public class XMPalignedArray {
     }
 
     if (isLocalPragma) {
-      XMPlocalDecl.addConstructorCall("_XMP_init_array_comm", initArrayCommFuncArgs, globalDecl, pb);
-      XMPlocalDecl.addConstructorCall("_XMP_init_array_nodes", Xcons.List(alignedArray.getDescId().Ref()), globalDecl, pb);
+      XMPlocalDecl.addConstructorCall2("_XMP_init_array_comm", initArrayCommFuncArgs, globalDecl, parentBlock);
+      XMPlocalDecl.addConstructorCall2("_XMP_init_array_nodes", Xcons.List(alignedArray.getDescId().Ref()), globalDecl, parentBlock);
 
       if (isParameter){
 
@@ -565,25 +573,42 @@ public class XMPalignedArray {
 					       alignedArray.getAccIdAt(i).getAddr()));
 	}
 
-	XMPlocalDecl.addAllocCall("_XMP_init_array_addr", initArrayAddrFuncArgs, globalDecl, pb);
+	XMPlocalDecl.addAllocCall2("_XMP_init_array_addr", initArrayAddrFuncArgs, globalDecl, parentBlock);
       }
+      else {
 
+	XobjList allocFuncArgs = Xcons.List(alignedArray.getAddrIdVoidAddr(), alignedArray.getDescId().Ref());
+	for (int i = alignedArray.getDim() - 1; i >= 0; i--) {
+	  allocFuncArgs.add(Xcons.Cast(Xtype.Pointer(Xtype.unsignedlonglongType),
+				       alignedArray.getAccIdAt(i).getAddr()));
+	}
+
+	XMPlocalDecl.addAllocCall2("_XMP_alloc_array", allocFuncArgs, globalDecl, parentBlock);
+	XMPlocalDecl.insertDestructorCall2("_XMP_dealloc_array", Xcons.List(alignedArray.getDescId().Ref()),
+					   globalDecl, parentBlock);
+
+      }
     }
     else {
       globalDecl.addGlobalInitFuncCall("_XMP_init_array_comm", initArrayCommFuncArgs);
       globalDecl.addGlobalInitFuncCall("_XMP_init_array_nodes", Xcons.List(alignedArray.getDescId().Ref()));
     }
+
+    if (!isParameter)
+      XMPlocalDecl.removeLocalIdent(pb, arrayName);
   }
 
   private static void declNotAlignFunc(XMPalignedArray alignedArray, int alignSourceIndex,
                                        XMPglobalDecl globalDecl, boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
+
     XobjList alignFuncArgs = Xcons.List(alignedArray.getDescId().Ref(),
                                         Xcons.IntConstant(alignSourceIndex));
 
     alignedArray.setAlignMannerAt(XMPalignedArray.NOT_ALIGNED, alignSourceIndex);
 
     if (isLocalPragma) {
-      XMPlocalDecl.addConstructorCall("_XMP_align_array_NOT_ALIGNED", alignFuncArgs, globalDecl, pb);
+      Block parentBlock = pb.getParentBlock();
+      XMPlocalDecl.addConstructorCall2("_XMP_align_array_NOT_ALIGNED", alignFuncArgs, globalDecl, parentBlock);
     }
     else {
       globalDecl.addGlobalInitFuncCall("_XMP_align_array_NOT_ALIGNED", alignFuncArgs);
@@ -610,6 +635,10 @@ public class XMPalignedArray {
                                     XMPtemplate templateObj, int alignSubscriptIndex,
                                     Xobject alignSubscriptExpr,
                                     XMPglobalDecl globalDecl, boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
+
+    Block parentBlock = null;
+    if (isLocalPragma) parentBlock = pb.getParentBlock();
+
     // normalize array
     alignSubscriptExpr = normArray(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex,
                                    alignSubscriptExpr, globalDecl, isLocalPragma, pb);
@@ -636,8 +665,8 @@ public class XMPalignedArray {
         {
           Ident gtolTemp0Id = null;
           if (isLocalPragma) {
-            gtolTemp0Id = XMPlocalDecl.addObjectId(XMP.GTOL_PREFIX_ + "temp0_" + alignedArray.getName() + "_" + alignSourceIndex,
-                                                   Xtype.intType, pb);
+            gtolTemp0Id = XMPlocalDecl.addObjectId2(XMP.GTOL_PREFIX_ + "temp0_" + alignedArray.getName() + "_" + alignSourceIndex,
+						    Xtype.intType, parentBlock);
           }
           else {
             gtolTemp0Id = globalDecl.declStaticIdent(XMP.GTOL_PREFIX_ + "temp0_" + alignedArray.getName() + "_" + alignSourceIndex,
@@ -654,8 +683,8 @@ public class XMPalignedArray {
     }
 
     if (isLocalPragma) {
-      XMPlocalDecl.addConstructorCall("_XMP_align_array_" + templateObj.getDistMannerStringAt(alignSubscriptIndex),
-                                      alignFuncArgs, globalDecl, pb);
+      XMPlocalDecl.addConstructorCall2("_XMP_align_array_" + templateObj.getDistMannerStringAt(alignSubscriptIndex),
+				       alignFuncArgs, globalDecl, parentBlock);
     }
     else {
       globalDecl.addGlobalInitFuncCall("_XMP_align_array_" + templateObj.getDistMannerStringAt(alignSubscriptIndex),

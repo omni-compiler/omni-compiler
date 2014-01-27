@@ -264,6 +264,35 @@ public class BlockList
         id_list.add(id);
     }
 
+    public Boolean removeIdent(String name){
+
+      Boolean f1 = false, f2 = false;
+
+      if (id_list == null) return false;
+
+      XobjArgs a = id_list.getArgs();
+      do {
+	if (a.getArg().getName().equals(name)){
+	  id_list.removeArgs(a);
+      	  f1 = true;
+      	  break;
+	}	  
+	a = a.nextArgs();
+      } while (a != null);
+
+      XobjArgs b = decls.getArgs();
+      do {
+	if (b.getArg().getArg(0).getName().equals(name)){
+	  decls.removeArgs(b);
+      	  f2 = true;
+      	  break;
+	}	  
+	b = b.nextArgs();
+      } while (b != null);
+
+      return (f1 | f2);
+    }
+
     public void removeDeclInit()
     {
         Ident id;

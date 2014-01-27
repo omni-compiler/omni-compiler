@@ -42,17 +42,21 @@ public class XMPnodes extends XMPobject {
   public static void translateNodes(XobjList nodesDecl, XMPglobalDecl globalDecl,
                                     boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
     // local parameters
-    BlockList funcBlockList = null;
+    //BlockList funcBlockList = null;
     XMPsymbolTable localXMPsymbolTable = null;
+    Block parentBlock = null;
     if (isLocalPragma) {
-      funcBlockList = XMPlocalDecl.findParentFunctionBlock(pb).getBody();
-      localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+      //funcBlockList = XMPlocalDecl.findParentFunctionBlock(pb).getBody();
+      //localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+      parentBlock = pb.getParentBlock();
+      localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable2(parentBlock);
     }
 
     // check name collision
     String nodesName = nodesDecl.getArg(0).getString();
     if (isLocalPragma) {
-      XMPlocalDecl.checkObjectNameCollision(nodesName, funcBlockList, localXMPsymbolTable);
+      //XMPlocalDecl.checkObjectNameCollision(nodesName, funcBlockList, localXMPsymbolTable);
+      XMPlocalDecl.checkObjectNameCollision(nodesName, parentBlock.getBody(), localXMPsymbolTable);
     } else {
       globalDecl.checkObjectNameCollision(nodesName);
     }
@@ -60,7 +64,8 @@ public class XMPnodes extends XMPobject {
     // declare nodes desciptor
     Ident nodesDescId = null;
     if (isLocalPragma) {
-      nodesDescId = XMPlocalDecl.addObjectId(XMP.DESC_PREFIX_ + nodesName, pb);
+      //nodesDescId = XMPlocalDecl.addObjectId(XMP.DESC_PREFIX_ + nodesName, pb);
+      nodesDescId = XMPlocalDecl.addObjectId2(XMP.DESC_PREFIX_ + nodesName, parentBlock);
     } else {
       nodesDescId = globalDecl.declStaticIdent(XMP.DESC_PREFIX_ + nodesName, Xtype.voidPtrType);
     }
@@ -83,7 +88,8 @@ public class XMPnodes extends XMPobject {
     XobjList nodesArgs = Xcons.List(nodesDescId.getAddr(), Xcons.IntConstant(nodesDim));
 
     XobjList inheritDecl = (XobjList)nodesDecl.getArg(2);
-    XMPpair<String, XobjList> inheritInfo = getInheritInfo(inheritDecl, globalDecl, localXMPsymbolTable);
+    //XMPpair<String, XobjList> inheritInfo = getInheritInfo(inheritDecl, globalDecl, localXMPsymbolTable);
+    XMPpair<String, XobjList> inheritInfo = getInheritInfo(inheritDecl, globalDecl, pb);
     nodesArgs.mergeList(inheritInfo.getSecond());
 
     String allocType = "STATIC";
@@ -94,7 +100,8 @@ public class XMPnodes extends XMPobject {
 
         Ident nodesSizeId = null;
         if (isLocalPragma) {
-          nodesSizeId = XMPlocalDecl.addObjectId(XMP.NODES_SIZE_PREFIX_ + nodesName, Xtype.intType, pb);
+          //nodesSizeId = XMPlocalDecl.addObjectId(XMP.NODES_SIZE_PREFIX_ + nodesName, Xtype.intType, pb);
+	  nodesSizeId = XMPlocalDecl.addObjectId2(XMP.NODES_SIZE_PREFIX_ + nodesName, Xtype.intType, parentBlock);
         } else {
           nodesSizeId = globalDecl.declStaticIdent(XMP.NODES_SIZE_PREFIX_ + nodesName, Xtype.intType);
         }
@@ -111,7 +118,8 @@ public class XMPnodes extends XMPobject {
     for (int i = 0; i < nodesDim; i++) {
       Ident nodesRankId = null;
       if (isLocalPragma) {
-        nodesRankId = XMPlocalDecl.addObjectId(XMP.NODES_RANK_PREFIX_ + nodesName + "_" + i, Xtype.intType, pb);
+        //nodesRankId = XMPlocalDecl.addObjectId(XMP.NODES_RANK_PREFIX_ + nodesName + "_" + i, Xtype.intType, pb);
+	nodesRankId = XMPlocalDecl.addObjectId2(XMP.NODES_RANK_PREFIX_ + nodesName + "_" + i, Xtype.intType, parentBlock);
       } else {
         nodesRankId = globalDecl.declStaticIdent(XMP.NODES_RANK_PREFIX_ + nodesName + "_" + i, Xtype.intType);
       }
@@ -125,17 +133,128 @@ public class XMPnodes extends XMPobject {
     initFuncName = new String("_XMP_init_nodes_" + allocType + "_" + inheritInfo.getFirst());
 
     if (isLocalPragma) {
-      XMPlocalDecl.addConstructorCall(initFuncName, nodesArgs, globalDecl, pb);
-      XMPlocalDecl.insertDestructorCall("_XMP_finalize_nodes", Xcons.List(nodesDescId.Ref()), globalDecl, pb);
+      //XMPlocalDecl.addConstructorCall(initFuncName, nodesArgs, globalDecl, pb);
+      //XMPlocalDecl.insertDestructorCall("_XMP_finalize_nodes", Xcons.List(nodesDescId.Ref()), globalDecl, pb);
+      XMPlocalDecl.addConstructorCall2(initFuncName, nodesArgs, globalDecl, parentBlock);
+      XMPlocalDecl.insertDestructorCall2("_XMP_finalize_nodes", Xcons.List(nodesDescId.Ref()), globalDecl, parentBlock);
     }
     else {
       globalDecl.addGlobalInitFuncCall(initFuncName, nodesArgs);
     }
   }
 
+  // public static XMPpair<String, XobjList> getInheritInfo(XobjList inheritDecl,
+  //                                                        XMPglobalDecl globalDecl,
+  //                                                        XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+  //   String inheritType = null;
+  //   XobjList nodesArgs = Xcons.List();
+
+  //   switch (inheritDecl.getArg(0).getInt()) {
+  //     case INHERIT_GLOBAL:
+  //       inheritType = "GLOBAL";
+  //       break;
+  //     case INHERIT_EXEC:
+  //       inheritType = "EXEC";
+  //       break;
+  //     case INHERIT_NODES:
+  //       {
+  //         inheritType = "NODES";
+
+  //         XobjList nodesRef = (XobjList)inheritDecl.getArg(1);
+  //         if (nodesRef.getArg(0) == null) {
+  //           inheritType += "_NUMBER";
+
+  //           XobjList nodeNumberTriplet = (XobjList)nodesRef.getArg(1);
+  //           // lower
+  //           if (nodeNumberTriplet.getArg(0) == null) nodesArgs.add(Xcons.IntConstant(1));
+  //           else nodesArgs.add(nodeNumberTriplet.getArg(0));
+  //           // upper
+  //           if (nodeNumberTriplet.getArg(1) == null) nodesArgs.add(globalDecl.getWorldSizeId().Ref());
+  //           else nodesArgs.add(nodeNumberTriplet.getArg(1));
+  //           // stride
+  //           if (nodeNumberTriplet.getArg(2) == null) nodesArgs.add(Xcons.IntConstant(1));
+  //           else nodesArgs.add(nodeNumberTriplet.getArg(2));
+  //         } else {
+  //           XMPnodes nodesRefObject = null;
+  //           inheritType += "_NAMED";
+
+  //           String nodesRefName = nodesRef.getArg(0).getString();
+
+  //           nodesRefObject = globalDecl.getXMPnodes(nodesRefName, localXMPsymbolTable);
+  //           if (nodesRefObject == null) {
+  //             throw new XMPexception("cannot find nodes '" + nodesRefName + "'");
+  //           }
+
+  //           nodesArgs.add(nodesRefObject.getDescId().Ref());
+
+  //           int nodesRefDim = nodesRefObject.getDim();
+  //           XobjList subscriptList = (XobjList)nodesRef.getArg(1);
+  //           if (subscriptList == null) {
+  //             for (int nodesRefIndex = 0; nodesRefIndex < nodesRefDim; nodesRefIndex++) {
+  //               // shrink
+  //               nodesArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
+  //               // lower
+  //               nodesArgs.add(Xcons.Cast(Xtype.intType, nodesRefObject.getLowerAt(nodesRefIndex)));
+  //               // upper
+  //               nodesArgs.add(Xcons.Cast(Xtype.intType, nodesRefObject.getUpperAt(nodesRefIndex)));
+  //               // stride
+  //               nodesArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+  //             }
+  //           }
+  //           else {
+  //             int nodesRefIndex = 0;
+  //             for (XobjArgs i = subscriptList.getArgs(); i != null; i = i.nextArgs()) {
+  //               if (nodesRefIndex == nodesRefDim)
+  //                 throw new XMPexception("wrong nodes dimension indicated, too many");
+
+  //               XobjList subscriptTriplet = (XobjList)i.getArg();
+  //               if (subscriptTriplet == null || subscriptTriplet.Nargs() == 0) {
+  //                 // shrink
+  //                 nodesArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+  //               } else {
+  //                 // shrink
+  //                 nodesArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
+
+  //                 // lower
+  // 		  Xobject lower = subscriptTriplet.getArg(0);
+  //                 if (lower == null || (lower instanceof XobjList && lower.Nargs() == 0)) {
+  //                   nodesArgs.add(Xcons.Cast(Xtype.intType, nodesRefObject.getLowerAt(nodesRefIndex)));
+  //                 } else {
+  //                   nodesArgs.add(Xcons.Cast(Xtype.intType, lower));
+  //                 }
+  //                 // upper
+  // 		  Xobject upper = subscriptTriplet.getArg(1);
+  //                 if (upper == null || (upper instanceof XobjList && upper.Nargs() == 0)) {
+  //                   nodesArgs.add(Xcons.Cast(Xtype.intType, nodesRefObject.getUpperAt(nodesRefIndex)));
+  //                 }
+  //                 else nodesArgs.add(Xcons.Cast(Xtype.intType, upper));
+  //                 // stride
+  // 		  Xobject stride = subscriptTriplet.getArg(2);
+  //                 if (stride == null || (stride instanceof XobjList && stride.Nargs() == 0)) {
+  // 		      nodesArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+  // 		  }
+  //                 else nodesArgs.add(Xcons.Cast(Xtype.intType, stride));
+  //               }
+
+  //               nodesRefIndex++;
+  //             }
+
+  //             if (nodesRefIndex != nodesRefDim)
+  //               throw new XMPexception("the number of <nodes-subscript> should be the same with the nodes dimension");
+  //           }
+  //         }
+  //         break;
+  //       }
+  //     default:
+  //       throw new XMPexception("cannot create sub node set, unknown operation in nodes directive");
+  //   }
+
+  //   return new XMPpair<String, XobjList>(inheritType, nodesArgs);
+  // }
+
   public static XMPpair<String, XobjList> getInheritInfo(XobjList inheritDecl,
                                                          XMPglobalDecl globalDecl,
-                                                         XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+                                                         Block block) throws XMPexception {
     String inheritType = null;
     XobjList nodesArgs = Xcons.List();
 
@@ -170,7 +289,7 @@ public class XMPnodes extends XMPobject {
 
             String nodesRefName = nodesRef.getArg(0).getString();
 
-            nodesRefObject = globalDecl.getXMPnodes(nodesRefName, localXMPsymbolTable);
+            nodesRefObject = globalDecl.getXMPnodes(nodesRefName, block);
             if (nodesRefObject == null) {
               throw new XMPexception("cannot find nodes '" + nodesRefName + "'");
             }

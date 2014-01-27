@@ -180,54 +180,123 @@ public class XMPglobalDecl {
     return _globalObjectTable.getXMPobject(name);
   }
 
-  public XMPobject getXMPobject(String name, XMPsymbolTable localXMPsymbolTable) {
+  // public XMPobject getXMPobject(String name, XMPsymbolTable localXMPsymbolTable) {
+  //   XMPobject o = null;
+
+  //   if (localXMPsymbolTable != null) {
+  //     o = localXMPsymbolTable.getXMPobject(name);
+  //   }
+
+  //   if (o == null) {
+  //     o = getXMPobject(name);
+  //   }
+
+  //   return o;
+  // }
+
+  public XMPobject getXMPobject(String name, Block block) {
+
     XMPobject o = null;
 
-    if (localXMPsymbolTable != null) {
-      o = localXMPsymbolTable.getXMPobject(name);
+    // local
+    for (Block b = block; b != null; b = b.getParentBlock()){
+      XMPsymbolTable symTab = XMPlocalDecl.declXMPsymbolTable2(b);
+      if (symTab != null) o = symTab.getXMPobject(name);
+      if (o != null) return o;
     }
 
-    if (o == null) {
-      o = getXMPobject(name);
-    }
+    // parameter
+    XMPsymbolTable symTab = XMPlocalDecl.getXMPsymbolTable(block);
+    if (symTab != null) o = symTab.getXMPobject(name);
+    if (o != null) return o;
 
-    return o;
+    // global
+    o = getXMPobject(name);
+    if (o != null) return o;
+
+    return null;
   }
 
   public XMPnodes getXMPnodes(String name) {
     return _globalObjectTable.getXMPnodes(name);
   }
 
-  public XMPnodes getXMPnodes(String name, XMPsymbolTable localXMPsymbolTable) {
+  // public XMPnodes getXMPnodes(String name, XMPsymbolTable localXMPsymbolTable) {
+  //   XMPnodes n = null;
+
+  //   if (localXMPsymbolTable != null) {
+  //     n = localXMPsymbolTable.getXMPnodes(name);
+  //   }
+
+  //   if (n == null) {
+  //     n = getXMPnodes(name);
+  //   }
+
+  //   return n;
+  // }
+
+  public XMPnodes getXMPnodes(String name, Block block) {
+
     XMPnodes n = null;
 
-    if (localXMPsymbolTable != null) {
-      n = localXMPsymbolTable.getXMPnodes(name);
+    // local
+    for (Block b = block; b != null; b = b.getParentBlock()){
+      XMPsymbolTable symTab = XMPlocalDecl.declXMPsymbolTable2(b);
+      if (symTab != null) n = symTab.getXMPnodes(name);
+      if (n != null) return n;
     }
 
-    if (n == null) {
-      n = getXMPnodes(name);
-    }
+    // parameter
+    XMPsymbolTable symTab = XMPlocalDecl.getXMPsymbolTable(block);
+    if (symTab != null) n = symTab.getXMPnodes(name);
+    if (n != null) return n;
 
-    return n;
+    // global
+    n = getXMPnodes(name);
+    if (n != null) return n;
+
+    return null;
   }
 
   public XMPtemplate getXMPtemplate(String name) {
     return _globalObjectTable.getXMPtemplate(name);
   }
 
-  public XMPtemplate getXMPtemplate(String name, XMPsymbolTable localXMPsymbolTable) {
+  // public XMPtemplate getXMPtemplate(String name, XMPsymbolTable localXMPsymbolTable) {
+  //   XMPtemplate t = null;
+
+  //   if (localXMPsymbolTable != null) {
+  //     t = localXMPsymbolTable.getXMPtemplate(name);
+  //   }
+
+  //   if (t == null) {
+  //     t = getXMPtemplate(name);
+  //   }
+
+  //   return t;
+  // }
+
+  public XMPtemplate getXMPtemplate(String name, Block block) {
+
     XMPtemplate t = null;
 
-    if (localXMPsymbolTable != null) {
-      t = localXMPsymbolTable.getXMPtemplate(name);
+    // local
+    for (Block b = block; b != null; b = b.getParentBlock()){
+      XMPsymbolTable symTab = XMPlocalDecl.declXMPsymbolTable2(b);
+      if (symTab != null) t = symTab.getXMPtemplate(name);
+      if (t != null) return t;
     }
 
-    if (t == null) {
-      t = getXMPtemplate(name);
-    }
+    // parameter
+    XMPsymbolTable symTab = XMPlocalDecl.getXMPsymbolTable(block);
+    if (symTab != null) t = symTab.getXMPtemplate(name);
+    if (t != null) return t;
 
-    return t;
+    // global
+    t = getXMPtemplate(name);
+    if (t != null) return t;
+
+    return null;
   }
 
   public void putXMPalignedArray(XMPalignedArray array) {
@@ -238,18 +307,41 @@ public class XMPglobalDecl {
     return _globalObjectTable.getXMPalignedArray(name);
   }
 
-  public XMPalignedArray getXMPalignedArray(String name, XMPsymbolTable localXMPsymbolTable) {
+  // public XMPalignedArray getXMPalignedArray(String name, XMPsymbolTable localXMPsymbolTable) {
+  //   XMPalignedArray a = null;
+
+  //   if (localXMPsymbolTable != null) {
+  //     a = localXMPsymbolTable.getXMPalignedArray(name);
+  //   }
+
+  //   if (a == null) {
+  //     a = getXMPalignedArray(name);
+  //   }
+
+  //   return a;
+  // }
+
+  public XMPalignedArray getXMPalignedArray(String name, Block block) {
+
     XMPalignedArray a = null;
 
-    if (localXMPsymbolTable != null) {
-      a = localXMPsymbolTable.getXMPalignedArray(name);
+    // local
+    for (Block b = block; b != null; b = b.getParentBlock()){
+      XMPsymbolTable symTab = XMPlocalDecl.declXMPsymbolTable2(b);
+      if (symTab != null) a = symTab.getXMPalignedArray(name);
+      if (a != null) return a;
     }
 
-    if (a == null) {
-      a = getXMPalignedArray(name);
-    }
+    // parameter
+    XMPsymbolTable symTab = XMPlocalDecl.getXMPsymbolTable(block);
+    if (symTab != null) a = symTab.getXMPalignedArray(name);
+    if (a != null) return a;
 
-    return a;
+    // global
+    a = getXMPalignedArray(name);
+    if (a != null) return a;
+
+    return null;
   }
 
   public void putXMPcoarray(XMPcoarray array) {
@@ -260,18 +352,41 @@ public class XMPglobalDecl {
     return _globalObjectTable.getXMPcoarray(name);
   }
 
-  public XMPcoarray getXMPcoarray(String name, XMPsymbolTable localXMPsymbolTable) {
+  // public XMPcoarray getXMPcoarray(String name, XMPsymbolTable localXMPsymbolTable) {
+  //   XMPcoarray c = null;
+
+  //   if (localXMPsymbolTable != null) {
+  //     c = localXMPsymbolTable.getXMPcoarray(name);
+  //   }
+
+  //   if (c == null) {
+  //     c = getXMPcoarray(name);
+  //   }
+
+  //   return c;
+  // }
+
+  public XMPcoarray getXMPcoarray(String name, Block block) {
+
     XMPcoarray c = null;
 
-    if (localXMPsymbolTable != null) {
-      c = localXMPsymbolTable.getXMPcoarray(name);
+    // local
+    for (Block b = block; b != null; b = b.getParentBlock()){
+      XMPsymbolTable symTab = XMPlocalDecl.declXMPsymbolTable2(b);
+      if (symTab != null) c = symTab.getXMPcoarray(name);
+      if (c != null) return c;
     }
 
-    if (c == null) {
-      c = getXMPcoarray(name);
-    }
+    // parameter
+    XMPsymbolTable symTab = XMPlocalDecl.getXMPsymbolTable(block);
+    if (symTab != null) c = symTab.getXMPcoarray(name);
+    if (c != null) return c;
 
-    return c;
+    // global
+    c = getXMPcoarray(name);
+    if (c != null) return c;
+
+    return null;
   }
 
   public void finalize() {

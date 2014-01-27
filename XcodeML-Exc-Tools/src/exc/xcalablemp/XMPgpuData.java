@@ -103,7 +103,8 @@ public class XMPgpuData {
       Ident gpuDataDeviceDescId = null;
       Ident gpuDataDeviceAddrId = replaceBody.declLocalIdent(XMP.GPU_DEVICE_ADDR_PREFIX_ + varName, Xtype.voidPtrType);
 
-      XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(varName, localXMPsymbolTable);
+      //XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(varName, localXMPsymbolTable);
+      XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(varName, pb);
       if (alignedArray == null) {
         Xobject addrObj = null;
         Xobject sizeObj = null;

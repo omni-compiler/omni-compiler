@@ -339,6 +339,17 @@ public class Block extends PropObject implements IVarContainer
         return null; // not found
     }
 
+    public Boolean removeVarIdent(String name){
+
+      BlockList b_list;
+      Ident id;
+      for (b_list = parent; b_list != null; b_list = b_list.getParentList()){
+	if (b_list.removeIdent(name)) return true;
+      }
+      return false;
+
+    }
+
     public static final int numberOfBlock()
     {
         return Block.BlockCounter;
