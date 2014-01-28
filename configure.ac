@@ -979,6 +979,10 @@ AC_SUBST(PERL5)
 # check lex and yacc
 
 AC_PROG_LEX
+#AC_CHECK_PROGS([LEX], [flex]) 
+if test $LEX = ":"; then
+exit 1
+fi
 AC_PROG_YACC
 
 # --------------------------------------------------------------------
