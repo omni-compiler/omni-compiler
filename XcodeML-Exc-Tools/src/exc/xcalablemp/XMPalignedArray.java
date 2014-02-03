@@ -304,6 +304,7 @@ public class XMPalignedArray {
     Block parentBlock = null;
 
     Boolean isParameter = true;
+    Boolean isPointer = false;
 
     if (isLocalPragma) {
       arrayId = XMPlocalDecl.findLocalIdent(pb, arrayName);
@@ -340,8 +341,15 @@ public class XMPalignedArray {
     }
 
     Xtype arrayType = arrayId.Type();
-    if (arrayType.getKind() != Xtype.ARRAY) {
-      throw new XMPexception(arrayName + " is not an array");
+    if (arrayType.getKind() == Xtype.ARRAY){
+      ;
+    }
+    else if (arrayType.getKind() == Xtype.POINTER){
+      isPointer = true;
+      arrayType = new ArrayType(arrayType.getRef(), 0l);
+    }
+    else {
+      throw new XMPexception(arrayName + " is neither an array nor pointer");
     }
 
     Xtype arrayElmtType = arrayType.getArrayElementType();
@@ -490,8 +498,12 @@ public class XMPalignedArray {
         int alignSubscriptIndex = XMPutil.getLastIndex(alignSubscriptVarList, XMP.COLON);
         alignSubscriptVarList.setArg(alignSubscriptIndex, null);
 
-        declAlignFunc(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex,
-                      alignSubscriptExprList.getArg(alignSubscriptIndex), globalDecl, isLocalPragma, pb);
+	if (!isPointer)
+	  declAlignFunc(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex,
+			alignSubscriptExprList.getArg(alignSubscriptIndex), globalDecl, isLocalPragma, pb);
+	else
+	  declAlignFunc_pointer(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex,
+				alignSubscriptExprList.getArg(alignSubscriptIndex), globalDecl, isLocalPragma, pb);
       }
       else {
         if (XMPutil.countElmts(alignSourceList, alignSource) != 1) {
@@ -504,8 +516,12 @@ public class XMPalignedArray {
           }
 
           int alignSubscriptIndex = XMPutil.getFirstIndex(alignSubscriptVarList, alignSource);
-          declAlignFunc(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex,
-                        alignSubscriptExprList.getArg(alignSubscriptIndex), globalDecl, isLocalPragma, pb);
+	  if (!isPointer)
+	    declAlignFunc(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex,
+			  alignSubscriptExprList.getArg(alignSubscriptIndex), globalDecl, isLocalPragma, pb);
+	  else 
+	    declAlignFunc_pointer(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex,
+				  alignSubscriptExprList.getArg(alignSubscriptIndex), globalDecl, isLocalPragma, pb);
         }
         else {
           throw new XMPexception("cannot find '" + alignSource + "' in <align-subscript> list");
@@ -513,6 +529,11 @@ public class XMPalignedArray {
       }
 
       alignSourceIndex++;
+    }
+
+    if (isPointer){
+	XMPlocalDecl.removeLocalIdent(pb, arrayName);
+	return;
     }
 
     // check alignSubscriptVarList
@@ -689,6 +710,55 @@ public class XMPalignedArray {
     else {
       globalDecl.addGlobalInitFuncCall("_XMP_align_array_" + templateObj.getDistMannerStringAt(alignSubscriptIndex),
                                        alignFuncArgs);
+    }
+  }
+
+  private static void declAlignFunc_pointer(XMPalignedArray alignedArray, int alignSourceIndex,
+					    XMPtemplate templateObj, int alignSubscriptIndex,
+					    Xobject alignSubscriptExpr,
+					    XMPglobalDecl globalDecl, boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
+
+    Block parentBlock = null;
+    if (isLocalPragma) parentBlock = pb.getParentBlock();
+
+    // normalize array
+    alignSubscriptExpr = normArray(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex,
+                                   alignSubscriptExpr, globalDecl, isLocalPragma, pb);
+
+    XobjList alignFuncArgs = Xcons.List(alignedArray.getDescId().Ref(),
+                                        Xcons.IntConstant(alignSourceIndex),
+                                        Xcons.IntConstant(alignSubscriptIndex));
+
+    alignFuncArgs.add(alignSubscriptExpr);
+
+    int distManner = templateObj.getDistMannerAt(alignSubscriptIndex);
+    alignedArray.setAlignMannerAt(XMPalignedArray.convertDistMannerToAlignManner(distManner), alignSourceIndex);
+
+    alignedArray.setAlignSubscriptIndexAt(alignSubscriptIndex, alignSourceIndex);
+    alignedArray.setAlignSubscriptExprAt(alignSubscriptExpr, alignSourceIndex);
+
+    Ident gtolTemp0Id = null;
+    if (isLocalPragma) {
+      gtolTemp0Id = XMPlocalDecl.addObjectId2(XMP.GTOL_PREFIX_ + "temp0_" + alignedArray.getName() + "_" + alignSourceIndex,
+					      Xtype.intType, parentBlock);
+    }
+    else {
+      gtolTemp0Id = globalDecl.declStaticIdent(XMP.GTOL_PREFIX_ + "temp0_" + alignedArray.getName() + "_" + alignSourceIndex,
+					       Xtype.intType);
+    }
+
+    alignedArray.setGtolTemp0IdAt(gtolTemp0Id, alignSourceIndex);
+    alignFuncArgs.add(gtolTemp0Id.getAddr());
+
+    // assumed that dynamic arrays are one-dimentional.
+    alignFuncArgs.add(Xcons.Cast(Xtype.Pointer(Xtype.unsignedlonglongType),
+				 alignedArray.getAccIdAt(0).getAddr()));
+
+    if (isLocalPragma) {
+      XMPlocalDecl.addConstructorCall2("_XMP_align_array_noalloc", alignFuncArgs, globalDecl, parentBlock);
+    }
+    else {
+      globalDecl.addGlobalInitFuncCall("_XMP_align_array_noalloc", alignFuncArgs);
     }
   }
 

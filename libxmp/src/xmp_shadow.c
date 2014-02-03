@@ -277,6 +277,14 @@ void _XMP_init_shadow(_XMP_array_t *array, ...) {
   }
 }
 
+void _XMP_init_shadow_noalloc(_XMP_array_t *a, int shadow_type, int lshadow, int ushadow) {
+  _XMP_ASSERT(a->dim == 1);
+  _XMP_array_info_t *ai = &(a->info[0]);
+  ai->shadow_type = shadow_type;
+  ai->shadow_size_lo = lshadow;
+  ai->shadow_size_hi = ushadow;
+}
+
 void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_addr,
                              _XMP_array_t *array_desc, int array_index) {
   _XMP_RETURN_IF_SINGLE;

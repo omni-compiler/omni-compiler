@@ -29,6 +29,7 @@ extern void _XMP_init_array_addr(void **array_addr, void *init_addr, void *array
 extern void _XMP_init_array_comm(void *array, ...);
 extern void _XMP_init_array_nodes(void *array);
 extern unsigned long long _XMP_get_array_total_elmts(void *array);
+extern void _XMP_align_array_noalloc(void *a, int adim, int tdim, long long align_subscript, int *temp0, unsigned long long *acc0);
 
 // xmp_array_section.c
 extern void _XMP_normalize_array_section(int *lower, int *upper, int *stride);
@@ -177,6 +178,7 @@ extern void _XMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_bu
                                         void *lo_send_buffer, void *hi_send_buffer,
                                         void *array_desc, int array_index);
 extern void _XMP_reflect_shadow_FULL(void *array_addr, void *array_desc, int array_index);
+extern void _XMP_init_shadow_noalloc(void *a, int shadow_type, int lshadow, int ushadow);
 
 // xmp_template.c
 extern void _XMP_init_template_FIXED(void **template, int dim, ...);

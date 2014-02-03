@@ -512,6 +512,8 @@ public class XMPrewriteExpr {
       return rewriteVarRef(expr, block, true);
     case ARRAY_ADDR:
       return rewriteVarRef(expr, block, false);
+    case POINTER_REF:
+      return rewritePointerRef(expr, block);
     default:
       {
 	topdownXobjectIterator iter = new topdownXobjectIterator(expr);
@@ -537,6 +539,9 @@ public class XMPrewriteExpr {
 	    break;
 	  case VAR:
 	    iter.setXobject(rewriteVarRef(myExpr, block, true));
+	    break;
+	  case POINTER_REF:
+	    iter.setXobject(rewritePointerRef(myExpr, block));
 	    break;
 	  default:
 	  }
@@ -678,9 +683,13 @@ public class XMPrewriteExpr {
 
   private Xobject rewriteVarRef(Xobject myExpr, Block block, boolean isVar) throws XMPexception {
     String varName     = myExpr.getSym();
+    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(varName, block);
     XMPcoarray coarray = _globalDecl.getXMPcoarray(varName, block);
     
-    if(coarray != null){
+    if (alignedArray != null && coarray == null){
+      return alignedArray.getAddrId().Ref();
+    }
+    else if (alignedArray == null && coarray != null){
       Xobject newExpr = _globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + varName).getValue();
       newExpr = Xcons.PointerRef(newExpr);
       if(isVar) // When coarray is NOT pointer,
@@ -763,6 +772,34 @@ public class XMPrewriteExpr {
     }
   }
   
+  private Xobject rewritePointerRef(Xobject myExpr, Block block) throws XMPexception {
+
+    Xobject addr_expr = myExpr.getArg(0);
+    if (addr_expr.Opcode() == Xcode.PLUS_EXPR){
+
+      Xobject pointer = addr_expr.getArg(0);
+      Xobject offset = addr_expr.getArg(1);
+
+      if (pointer.Opcode() == Xcode.VAR){
+	XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(pointer.getSym(), block);
+	XMPcoarray      coarray      = _globalDecl.getXMPcoarray(pointer.getSym(), block);
+
+	if (alignedArray != null && coarray == null){
+	  addr_expr.setArg(0, alignedArray.getAddrId().Ref());
+	  // NOTE: an aligned pointer is assumed to be a one-dimensional array.
+	  addr_expr.setArg(1, getCalcIndexFuncRef(alignedArray, 0, offset)); 
+	}
+	else if(alignedArray == null && coarray != null){
+	  ;
+	}
+
+      }
+    }
+
+    return myExpr;
+
+  }
+
   private boolean isAddrCoarray(XobjList myExpr, XMPcoarray coarray){
     if(myExpr.getArgOrNull(coarray.getVarDim()-1) == null){
       return true;
@@ -1145,6 +1182,25 @@ public class XMPrewriteExpr {
 							  loopIndexName, (XobjList)myExpr.getArg(1)));
 	  }
 	} break;
+      case POINTER_REF:
+	{
+	  Xobject addr_expr = myExpr.getArg(0);
+	  if (addr_expr.Opcode() == Xcode.PLUS_EXPR){
+
+	    Xobject pointer = addr_expr.getArg(0);
+	    Xobject offset = addr_expr.getArg(1);
+
+	    if (pointer.Opcode() == Xcode.VAR){
+	      XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(pointer.getSym(), block);
+	      if (alignedArray != null){
+		addr_expr.setArg(0, alignedArray.getAddrId().Ref());
+		addr_expr.setArg(1, rewriteLoopIndexArrayRef(templateObj, templateIndex, alignedArray, 0,
+							     loopIndexName, offset));
+	      }
+	    }
+	  }
+	  break;
+	}
       default:
       }
     }

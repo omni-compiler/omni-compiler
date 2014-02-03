@@ -500,35 +500,61 @@ void xmp_sched_template_index(int* local_start_index, int* local_end_index,
 }
 
 
-void *xmp_malloc(xmp_desc_t d){
+void *xmp_malloc(xmp_desc_t d, int size){
 
-  _XMP_array_t *array_desc = (_XMP_array_t *)d;
+  _XMP_array_t *a = (_XMP_array_t *)d;
 
-  void *array_addr;
+  _XMP_ASSERT(a->dim == 1);
 
-  if (!array_desc->is_allocated) {
+  _XMP_array_info_t *ai = &(a->info[0]);
+
+  _XMP_template_t *t = a->align_template;
+  int tdim = ai->align_template_index;
+
+  a->is_allocated = t->is_owner;
+
+  ai->ser_upper = size - 1;
+  ai->ser_size = size;
+
+  switch (t->chunk[tdim].dist_manner){
+  case _XMP_N_DIST_DUPLICATION:
+    _XMP_align_array_DUPLICATION(a, 0, ai->align_template_index, ai->align_subscript);
+    break;
+  case _XMP_N_DIST_BLOCK:
+    _XMP_align_array_BLOCK(a, 0, ai->align_template_index, ai->align_subscript, ai->temp0);
+    break;
+  case _XMP_N_DIST_CYCLIC:
+    _XMP_align_array_CYCLIC(a, 0, ai->align_template_index, ai->align_subscript, ai->temp0);
+    break;
+  case _XMP_N_DIST_BLOCK_CYCLIC:
+    _XMP_align_array_BLOCK_CYCLIC(a, 0, ai->align_template_index, ai->align_subscript, ai->temp0);
+    break;
+  case _XMP_N_DIST_GBLOCK:
+    _XMP_align_array_GBLOCK(a, 0, ai->align_template_index, ai->align_subscript, ai->temp0);
+    break;
+  default:
+    _XMP_fatal("unknown distribution manner 1");
     return NULL;
   }
-  
-  _XMP_ASSERT(array_desc->dim == 1);
 
-  unsigned long long total_elmts = 1;
-  int ndims = array_desc->dim;
-  for (int i = ndims - 1; i >= 0; i--) {
-    array_desc->info[i].dim_acc = total_elmts;
-    total_elmts *= array_desc->info[i].alloc_size;
-  }
+  int ntdims = t->dim;
+  int args[ntdims];
+  for (int i = 0; i < ntdims; i++) args[i] = 1;
+  args[tdim] = 0;
+  _XMP_init_array_comm2(a, args);
 
-  for (int i = 0; i < ndims; i++) {
-    _XMP_calc_array_dim_elmts(array_desc, i);
-  }
+  _XMP_init_array_nodes(a);
 
-  array_addr = _XMP_alloc(total_elmts * (array_desc->type_size));
+  _XMP_init_shadow(a, ai->shadow_type, ai->shadow_size_lo, ai->shadow_size_hi);
 
-  // set members
-  array_desc->array_addr_p = array_addr;
-  array_desc->total_elmts = total_elmts;
+  void *array_addr;
+  _XMP_alloc_array(&array_addr, a, (unsigned long long *)a->array_addr_p);
 
   return array_addr;
+}
 
+
+void xmp_free(xmp_desc_t d){
+  if (((_XMP_array_t *)d)->is_allocated)
+    _XMP_dealloc_array((_XMP_array_t *)d);
 }

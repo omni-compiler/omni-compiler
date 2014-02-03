@@ -559,6 +559,17 @@ int _XMP_calc_template_owner_SCALAR(_XMP_template_t *template, int dim_index, lo
         int width = chunk->par_width;
         return ((ref_index - (info->ser_lower)) / width) % ((chunk->par_stride) / width);
       }
+    case _XMP_N_DIST_GBLOCK:
+      {
+	unsigned long long *m = chunk->mapping_array;
+	int np = chunk->onto_nodes_info->size;
+	for (int i = 0; i < np; i++){
+	  if (m[i] <= ref_index && ref_index < m[i+1]){
+	    return i;
+	  }
+	}
+      }
+      return _XMP_N_INVALID_RANK;
     default:
       _XMP_fatal("unknown distribute manner");
       return _XMP_N_INVALID_RANK; // XXX dummy

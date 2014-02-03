@@ -76,7 +76,6 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
 }
 
 void _XMP_finalize_array_desc(_XMP_array_t *array) {
-
   int dim = array->dim;
 
   for (int i = 0; i < dim; i++) {
@@ -126,7 +125,8 @@ void _XMP_finalize_array_desc(_XMP_array_t *array) {
     _XMP_finalize_comm(array->align_comm);
   }
 
-  _XMP_finalize_nodes(array->array_nodes);
+  if (array->array_nodes)
+    _XMP_finalize_nodes(array->array_nodes);
 
   _XMP_free(array);
 }
@@ -611,6 +611,51 @@ void _XMP_init_array_comm(_XMP_array_t *array, ...) {
   MPI_Comm_rank(*comm, &(array->align_comm_rank));
 }
 
+void _XMP_init_array_comm2(_XMP_array_t *array, int args[]) {
+  _XMP_template_t *align_template = array->align_template;
+  _XMP_ASSERT(align_template->is_distributed);
+
+  _XMP_nodes_t *onto_nodes = align_template->onto_nodes;
+
+  int color = 1;
+  if (onto_nodes->is_member) {
+    int acc_nodes_size = 1;
+    int template_dim = align_template->dim;
+
+    for (int i = 0; i < template_dim; i++) {
+      _XMP_template_chunk_t *chunk = &(align_template->chunk[i]);
+
+      int size, rank;
+      if (chunk->dist_manner == _XMP_N_DIST_DUPLICATION) {
+        size = 1;
+        rank = 0;
+      } else {
+        _XMP_nodes_info_t *onto_nodes_info = chunk->onto_nodes_info;
+        size = onto_nodes_info->size;
+        rank = onto_nodes_info->rank;
+      }
+
+      if (args[i] == 1) {
+        color += (acc_nodes_size * rank);
+      }
+
+      acc_nodes_size *= size;
+    }
+  } else {
+    color = 0;
+  }
+
+  MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
+  MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, _XMP_world_rank, comm);
+
+  // set members
+  array->is_align_comm_member = true;
+
+  array->align_comm = comm;
+  MPI_Comm_size(*comm, &(array->align_comm_size));
+  MPI_Comm_rank(*comm, &(array->align_comm_rank));
+}
+
 void _XMP_init_array_nodes(_XMP_array_t *array) {
   _XMP_template_t *align_template = array->align_template;
 
@@ -647,4 +692,22 @@ unsigned long long _XMP_get_array_total_elmts(_XMP_array_t *array) {
   else {
     return 0;
   }
+}
+
+
+void _XMP_align_array_noalloc(_XMP_array_t *a, int adim, int tdim, long long align_subscript, 
+			     int *temp0, unsigned long long *acc0){
+  _XMP_ASSERT(a->dim == 1);
+
+  a->is_allocated = false;
+
+  _XMP_array_info_t *ai = &(a->info[adim]);
+
+  ai->align_template_index = tdim;
+  ai->align_subscript = align_subscript;
+
+  ai->temp0 = temp0;
+  a->array_addr_p = (void *)acc0; // temporarily stored to this member
+
+  a->array_nodes = NULL;
 }

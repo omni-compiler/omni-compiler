@@ -48,31 +48,10 @@ public class XMPshadow {
     Block parentBlock = null;
 
     Boolean isParameter = false;
-    // if (isLocalPragma) {
-    //   localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-    // }
     if (isLocalPragma) {
-      Ident arrayId = XMPlocalDecl.findLocalIdent(pb, arrayName);
-      if (arrayId != null) isParameter = (arrayId.getStorageClass() == StorageClass.PARAM);
-
       parentBlock = pb.getParentBlock();
-
-      // if (isParameter){
-      // 	localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-      // }
-      // else {
-      // 	localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable2(parentBlock);
-      // }
     }
 
-    // find aligned array
-    // XMPalignedArray alignedArray = null;
-    // if (isLocalPragma) {
-    //   alignedArray = localXMPsymbolTable.getXMPalignedArray(arrayName);
-    // }
-    // else {
-    //   alignedArray = globalDecl.getXMPalignedArray(arrayName);
-    // }
     XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, pb);
 
     if (alignedArray == null) {
@@ -83,6 +62,8 @@ public class XMPshadow {
       throw new XMPexception("the aligned array '" + arrayName + "' has the shadow declaration already");
     }
     
+    Boolean isPointer = (alignedArray.getArrayId().Type().getKind() == Xtype.POINTER);
+
     // init shadow
     XobjList shadowFuncArgs = Xcons.List(alignedArray.getDescId().Ref());
     int arrayIndex = 0;
@@ -155,12 +136,15 @@ public class XMPshadow {
       throw new XMPexception("the number of <nodes/template-subscript> should be the same with the dimension");
     }
 
+    String fname = isPointer ? "_XMP_init_shadow_noalloc" : "_XMP_init_shadow";
+
     if (isLocalPragma) {
       //XMPlocalDecl.addConstructorCall("_XMP_init_shadow", shadowFuncArgs, globalDecl, pb);
-      XMPlocalDecl.addConstructorCall2("_XMP_init_shadow", shadowFuncArgs, globalDecl, parentBlock);
+      XMPlocalDecl.addConstructorCall2(fname, shadowFuncArgs, globalDecl, parentBlock);
+      
     }
     else {
-      globalDecl.addGlobalInitFuncCall("_XMP_init_shadow", shadowFuncArgs);
+      globalDecl.addGlobalInitFuncCall(fname, shadowFuncArgs);
     }
 
     // set shadow flag

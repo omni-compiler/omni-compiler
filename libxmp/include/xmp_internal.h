@@ -55,7 +55,12 @@ extern void _XMP_align_array_CYCLIC(_XMP_array_t *array, int array_index, int te
                              long long align_subscript, int *temp0);
 extern void _XMP_align_array_BLOCK_CYCLIC(_XMP_array_t *array, int array_index, int template_index,
                                    long long align_subscript, int *temp0);
+extern void _XMP_align_array_GBLOCK(_XMP_array_t *array, int array_index, int template_index,
+				    long long align_subscript, int *temp0);
 extern void _XMP_init_array_nodes(_XMP_array_t *array);
+extern void _XMP_init_array_comm2(_XMP_array_t *array, int args[]);
+extern void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...);
+extern void _XMP_dealloc_array(_XMP_array_t *array_desc);
 
 // xmp_array_section.c
 extern void _XMP_normalize_array_section(int *lower, int *upper, int *stride);
@@ -141,6 +146,7 @@ void _XMP_check_reflect_type(void);
 
 // xmp_shadow.c
 extern void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index);
+extern void _XMP_init_shadow(_XMP_array_t *array, ...);
 
 // xmp_template.c
 extern _XMP_template_t *_XMP_create_template_desc(int dim, _Bool is_fixed);
