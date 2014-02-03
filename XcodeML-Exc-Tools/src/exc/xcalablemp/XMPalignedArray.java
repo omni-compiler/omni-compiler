@@ -38,6 +38,8 @@ public class XMPalignedArray {
   private boolean		_reallocChecked;
   private boolean		_realloc;
   private XMPtemplate		_alignTemplate;
+  private boolean               _isParameter;
+  private boolean               _isLocal;
 
   public static int convertDistMannerToAlignManner(int distManner) throws XMPexception {
     switch (distManner) {
@@ -85,6 +87,8 @@ public class XMPalignedArray {
     _hasShadow = false;
     _reallocChecked = false;
     _alignTemplate = alignTemplate;
+    _isParameter = false;
+    _isLocal = false;
   }
 
   public String getName() {
@@ -197,6 +201,22 @@ public class XMPalignedArray {
     return _hasShadow;
   }
 
+  public void setIsParameter() {
+    _isParameter = true;
+  }
+
+  public boolean isParameter() {
+    return _isParameter;
+  }
+
+  public void setIsLocal() {
+    _isLocal = true;
+  }
+
+  public boolean isLocal() {
+    return _isLocal;
+  }
+
   public void setShadowAt(XMPshadow shadow, int index) {
     _shadowVector.setElementAt(shadow, index);
   }
@@ -303,7 +323,7 @@ public class XMPalignedArray {
     XMPsymbolTable localXMPsymbolTable = null;
     Block parentBlock = null;
 
-    Boolean isParameter = true;
+    Boolean isParameter = isLocalPragma;
     Boolean isPointer = false;
 
     if (isLocalPragma) {
@@ -446,6 +466,9 @@ public class XMPalignedArray {
                                        arrayDim, accIdVector,
                                        arrayId, arrayDescId, arrayAddrId,
                                        templateObj);
+
+    if (isLocalPragma) alignedArray.setIsLocal();
+    if (isParameter) alignedArray.setIsParameter();
 
     if (isLocalPragma) {
       XMPlocalDecl.addConstructorCall2("_XMP_init_array_desc", initArrayDescFuncArgs, globalDecl, parentBlock);
@@ -615,7 +638,7 @@ public class XMPalignedArray {
       globalDecl.addGlobalInitFuncCall("_XMP_init_array_nodes", Xcons.List(alignedArray.getDescId().Ref()));
     }
 
-    if (!isParameter)
+    if (isLocalPragma && !isParameter)
       XMPlocalDecl.removeLocalIdent(pb, arrayName);
   }
 

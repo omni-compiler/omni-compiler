@@ -170,7 +170,7 @@ void _XMP_init(int argc, char** argv);
 void _XMP_finalize(void);
 
 /* From xmp_reflect.c */
-void xmp_set_reflect__(_XMP_array_t *a_desc, int dim, int lwidth, int uwidth, int is_periodic);
-void xmp_reflect__(_XMP_array_t *a_desc);
-void xmp_wait_async__(int async_id);
-void xmp_reflect_async__(_XMP_array_t *a_desc, int async_id);
+void _XMP_set_reflect__(_XMP_array_t *a_desc, int dim, int lwidth, int uwidth, int is_periodic);
+void _XMP_reflect__(_XMP_array_t *a_desc);
+void _XMP_wait_async__(int async_id);
+void _XMP_reflect_async__(_XMP_array_t *a_desc, int async_id);

@@ -172,22 +172,27 @@ public class XMPshadow {
 
       //createReflectNormalShadowFunc(pb, globalDecl, alignedArray, reflectFuncBody);
 
-      int arrayDim = alignedArray.getDim();
-      for (int i = 0; i < arrayDim; i++) {
-        XMPshadow shadowObj = alignedArray.getShadowAt(i);
-        switch (shadowObj.getType()) {
-          case XMPshadow.SHADOW_NONE:
-            break;
-          case XMPshadow.SHADOW_NORMAL:
-            createReflectNormalShadowFunc0(pb, globalDecl, alignedArray, i, reflectFuncBody);
-            break;
-          case XMPshadow.SHADOW_FULL:
-            createReflectFullShadowFunc(pb, globalDecl, alignedArray, i, reflectFuncBody);
-            break;
-          default:
-            throw new XMPexception("unknown shadow type");
-        }
-      }
+//       int arrayDim = alignedArray.getDim();
+//       for (int i = 0; i < arrayDim; i++) {
+//         XMPshadow shadowObj = alignedArray.getShadowAt(i);
+//         switch (shadowObj.getType()) {
+//           case XMPshadow.SHADOW_NONE:
+//             break;
+//           case XMPshadow.SHADOW_NORMAL:
+//             createReflectNormalShadowFunc0(pb, globalDecl, alignedArray, i, reflectFuncBody);
+//             break;
+//           case XMPshadow.SHADOW_FULL:
+//             createReflectFullShadowFunc(pb, globalDecl, alignedArray, i, reflectFuncBody);
+//             break;
+//           default:
+//             throw new XMPexception("unknown shadow type");
+//         }
+//       }
+
+      Ident funcId = globalDecl.declExternFunc("_XMP_reflect__");
+      XobjList funcArgs = Xcons.List(alignedArray.getDescId().Ref());
+      reflectFuncBody.add(Bcons.Statement(funcId.Call(funcArgs)));
+
     }
 
     Block reflectFuncCallBlock = Bcons.COMPOUND(reflectFuncBody);
@@ -196,83 +201,83 @@ public class XMPshadow {
     return reflectFuncCallBlock;
   }
 
-  private static void createReflectNormalShadowFunc0(PragmaBlock pb, XMPglobalDecl globalDecl,
-						     XMPalignedArray alignedArray, int arrayIndex,
-						     BlockList reflectFuncBody) {
-    String arrayName = alignedArray.getName();
+//   private static void createReflectNormalShadowFunc0(PragmaBlock pb, XMPglobalDecl globalDecl,
+// 						     XMPalignedArray alignedArray, int arrayIndex,
+// 						     BlockList reflectFuncBody) {
+//     String arrayName = alignedArray.getName();
 
-    // decl buffers
-    Ident loSendId = reflectFuncBody.declLocalIdent("_XMP_reflect_LO_SEND_" + arrayName, Xtype.voidPtrType);
-    Ident loRecvId = reflectFuncBody.declLocalIdent("_XMP_reflect_LO_RECV_" + arrayName, Xtype.voidPtrType);
-    Ident hiSendId = reflectFuncBody.declLocalIdent("_XMP_reflect_HI_SEND_" + arrayName, Xtype.voidPtrType);
-    Ident hiRecvId = reflectFuncBody.declLocalIdent("_XMP_reflect_HI_RECV_" + arrayName, Xtype.voidPtrType);
+//     // decl buffers
+//     Ident loSendId = reflectFuncBody.declLocalIdent("_XMP_reflect_LO_SEND_" + arrayName, Xtype.voidPtrType);
+//     Ident loRecvId = reflectFuncBody.declLocalIdent("_XMP_reflect_LO_RECV_" + arrayName, Xtype.voidPtrType);
+//     Ident hiSendId = reflectFuncBody.declLocalIdent("_XMP_reflect_HI_SEND_" + arrayName, Xtype.voidPtrType);
+//     Ident hiRecvId = reflectFuncBody.declLocalIdent("_XMP_reflect_HI_RECV_" + arrayName, Xtype.voidPtrType);
 
-    // pack shadow
-    Ident packFuncId = globalDecl.declExternFunc("_XMP_pack_shadow_NORMAL");
-    XobjList packFuncArgs = Xcons.List(loSendId.getAddr(), hiSendId.getAddr(), alignedArray.getAddrIdVoidRef(),
-                                       alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
+//     // pack shadow
+//     Ident packFuncId = globalDecl.declExternFunc("_XMP_pack_shadow_NORMAL");
+//     XobjList packFuncArgs = Xcons.List(loSendId.getAddr(), hiSendId.getAddr(), alignedArray.getAddrIdVoidRef(),
+//                                        alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
 
-    reflectFuncBody.add(Bcons.Statement(packFuncId.Call(packFuncArgs)));
+//     reflectFuncBody.add(Bcons.Statement(packFuncId.Call(packFuncArgs)));
 
-    // exchange shadow
-    Ident exchangeFuncId = globalDecl.declExternFunc("_XMP_exchange_shadow_NORMAL");
-    XobjList exchangeFuncArgs = Xcons.List(loRecvId.getAddr(), hiRecvId.getAddr(), loSendId.Ref(), hiSendId.Ref());
-    exchangeFuncArgs.add(alignedArray.getDescId().Ref());
-    exchangeFuncArgs.add(Xcons.IntConstant(arrayIndex));
+//     // exchange shadow
+//     Ident exchangeFuncId = globalDecl.declExternFunc("_XMP_exchange_shadow_NORMAL");
+//     XobjList exchangeFuncArgs = Xcons.List(loRecvId.getAddr(), hiRecvId.getAddr(), loSendId.Ref(), hiSendId.Ref());
+//     exchangeFuncArgs.add(alignedArray.getDescId().Ref());
+//     exchangeFuncArgs.add(Xcons.IntConstant(arrayIndex));
 
-    reflectFuncBody.add(Bcons.Statement(exchangeFuncId.Call(exchangeFuncArgs)));
+//     reflectFuncBody.add(Bcons.Statement(exchangeFuncId.Call(exchangeFuncArgs)));
 
-    // unpack shadow
-    Ident unpackFuncId = globalDecl.declExternFunc("_XMP_unpack_shadow_NORMAL");;
-    XobjList unpackFuncArgs = Xcons.List(loRecvId.Ref(), hiRecvId.Ref(), alignedArray.getAddrIdVoidRef(),
-                                         alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
+//     // unpack shadow
+//     Ident unpackFuncId = globalDecl.declExternFunc("_XMP_unpack_shadow_NORMAL");;
+//     XobjList unpackFuncArgs = Xcons.List(loRecvId.Ref(), hiRecvId.Ref(), alignedArray.getAddrIdVoidRef(),
+//                                          alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
 
-    reflectFuncBody.add(Bcons.Statement(unpackFuncId.Call(unpackFuncArgs)));
-  }
+//     reflectFuncBody.add(Bcons.Statement(unpackFuncId.Call(unpackFuncArgs)));
+//   }
 
-  // private static void createReflectNormalShadowFunc(PragmaBlock pb, XMPglobalDecl globalDecl,
-  // 						    XMPalignedArray a, BlockList reflectFuncBody) {
+//   // private static void createReflectNormalShadowFunc(PragmaBlock pb, XMPglobalDecl globalDecl,
+//   // 						    XMPalignedArray a, BlockList reflectFuncBody) {
 
-  //   XMPinfo info;
+//   //   XMPinfo info;
 
-  //   for (int i = 0; i < info.widthList.size(); i++){
-  //   	Ident f = globalDecl.declExternFunc("xmpf_set_reflect_");
-  //   	XMPdimInfo w = info.widthList.get(i);
-  //   	Xobject args = Xcons.List(a.getDescId().Ref(), Xcons.IntConstant(i),
-  //   				  w.getLower(), w.getUpper(), w.getStride());
-  //   	reflectFuncBody.add(Bcons.Statement(f.Call(args)));
-  //   }
+//   //   for (int i = 0; i < info.widthList.size(); i++){
+//   //   	Ident f = globalDecl.declExternFunc("xmpf_set_reflect_");
+//   //   	XMPdimInfo w = info.widthList.get(i);
+//   //   	Xobject args = Xcons.List(a.getDescId().Ref(), Xcons.IntConstant(i),
+//   //   				  w.getLower(), w.getUpper(), w.getStride());
+//   //   	reflectFuncBody.add(Bcons.Statement(f.Call(args)));
+//   //   }
 
-  //   if (info.getAsyncId() != null){
-  //   	Ident f = globalDecl.declExternFunc("xmpf_reflect_async_");
-  //   	Xobject args = Xcons.List(a.getDescId().Ref(), info.getAsyncId());
-  //   	reflectFuncBody.add(Bcons.Statement(f.Call(args)));
-  //   }
-  //   else {
-  //   	Ident f = globalDecl.declExternFunc("xmpf_reflect_");
-  //   	Xobject args = Xcons.List(a.getDescId().Ref());
-  //   	reflectFuncBody.add(Bcons.Statement(f.Call(args)));
-  //   }
+//   //   if (info.getAsyncId() != null){
+//   //   	Ident f = globalDecl.declExternFunc("xmpf_reflect_async_");
+//   //   	Xobject args = Xcons.List(a.getDescId().Ref(), info.getAsyncId());
+//   //   	reflectFuncBody.add(Bcons.Statement(f.Call(args)));
+//   //   }
+//   //   else {
+//   //   	Ident f = globalDecl.declExternFunc("xmpf_reflect_");
+//   //   	Xobject args = Xcons.List(a.getDescId().Ref());
+//   //   	reflectFuncBody.add(Bcons.Statement(f.Call(args)));
+//   //   }
 
-  //   Ident exchangeFuncId = globalDecl.declExternFunc("_XMP_exchange_shadow_NORMAL");
-  //   XobjList exchangeFuncArgs = Xcons.List();
-  //   exchangeFuncArgs.add(a.getDescId().Ref());
-  //   reflectFuncBody.add(Bcons.Statement(exchangeFuncId.Call(exchangeFuncArgs)));
+//   //   Ident exchangeFuncId = globalDecl.declExternFunc("_XMP_exchange_shadow_NORMAL");
+//   //   XobjList exchangeFuncArgs = Xcons.List();
+//   //   exchangeFuncArgs.add(a.getDescId().Ref());
+//   //   reflectFuncBody.add(Bcons.Statement(exchangeFuncId.Call(exchangeFuncArgs)));
 
-  //   // Ident f = globalDecl.declExternFunc("xmpf_reflect_");
-  //   // Xobject args = Xcons.List(a.getDescId().Ref());
-  //   // reflectFuncBody.add(Bcons.Statement(f.Call(args)));
+//   //   // Ident f = globalDecl.declExternFunc("xmpf_reflect_");
+//   //   // Xobject args = Xcons.List(a.getDescId().Ref());
+//   //   // reflectFuncBody.add(Bcons.Statement(f.Call(args)));
 
-  // }
+//   // }
 
-  private static void createReflectFullShadowFunc(PragmaBlock pb, XMPglobalDecl globalDecl,
-                                                  XMPalignedArray alignedArray, int arrayIndex,
-                                                  BlockList reflectFuncBody) {
-    Ident funcId = globalDecl.declExternFunc("_XMP_reflect_shadow_FULL");
-    XobjList funcArgs = Xcons.List(alignedArray.getAddrIdVoidRef(), alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
+//   private static void createReflectFullShadowFunc(PragmaBlock pb, XMPglobalDecl globalDecl,
+//                                                   XMPalignedArray alignedArray, int arrayIndex,
+//                                                   BlockList reflectFuncBody) {
+//     Ident funcId = globalDecl.declExternFunc("_XMP_reflect_shadow_FULL");
+//     XobjList funcArgs = Xcons.List(alignedArray.getAddrIdVoidRef(), alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
 
-    reflectFuncBody.add(Bcons.Statement(funcId.Call(funcArgs)));
-  }
+//     reflectFuncBody.add(Bcons.Statement(funcId.Call(funcArgs)));
+//   }
 
   // FIXME implement full shadow
   public static Block translateGpuReflect(PragmaBlock pb, XMPglobalDecl globalDecl) throws XMPexception {

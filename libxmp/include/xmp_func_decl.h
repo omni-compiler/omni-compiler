@@ -159,10 +159,10 @@ extern int _XMP_init_reduce_comm_NODES(void *nodes, ...);
 extern int _XMP_init_reduce_comm_TEMPLATE(void *template, ...);
 
 // xmp_reflect.c
-extern void xmp_set_reflect__(void *a, int dim, int lwidth, int uwidth, int is_periodic);
-extern void xmp_reflect__(char *a);
-extern void xmp_wait_async__(int async_id);
-extern void xmp_reflect_async__(void *a, int async_id);
+extern void _XMP_set_reflect__(void *a, int dim, int lwidth, int uwidth, int is_periodic);
+extern void _XMP_reflect__(char *a);
+extern void _XMP_wait_async__(int async_id);
+extern void _XMP_reflect_async__(void *a, int async_id);
 
 // xmp_runtime.c
 //extern void _XMP_init(void);

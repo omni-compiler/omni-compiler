@@ -655,9 +655,14 @@ public class XMPrewriteExpr {
     //   return arrayAddr;
     // }
     else if(alignedArray != null && coarray == null){ // only alignedArray
-      Xobject newExpr = alignedArray.getAddrId().Ref();
-      newExpr.setIsRewrittedByXmp(true);
-      return newExpr;
+      if (alignedArray.checkRealloc() || (alignedArray.isLocal() && !alignedArray.isParameter())){
+	Xobject newExpr = alignedArray.getAddrId().Ref();
+	newExpr.setIsRewrittedByXmp(true);
+	return newExpr;
+      }
+      else {
+      	return arrayAddr;
+      }
     } else if(alignedArray == null && coarray != null){  // only coarray
       //return rewriteVarRef(arrayAddr, localXMPsymbolTable, false);
       return rewriteVarRef(arrayAddr, block, false);
@@ -749,7 +754,7 @@ public class XMPrewriteExpr {
       Xobject newExpr = null;
       XobjList arrayRefList = normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
 
-      if (alignedArray.checkRealloc()) {
+      if (alignedArray.checkRealloc() || (alignedArray.isLocal() && !alignedArray.isParameter())){
 	newExpr = rewriteAlignedArrayExpr(arrayRefList, alignedArray);
       } 
       else {
@@ -1092,7 +1097,7 @@ public class XMPrewriteExpr {
             if (alignedArray != null) {
               Xobject newExpr = null;
               XobjList arrayRefList = XMPrewriteExpr.normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
-              if (alignedArray.checkRealloc()) {
+              if (alignedArray.checkRealloc() || (alignedArray.isLocal() && !alignedArray.isParameter())){
                 newExpr = XMPrewriteExpr.rewriteAlignedArrayExprInLoop(arrayRefList, alignedArray);
               } else {
                 newExpr = Xcons.arrayRef(myExpr.Type(), arrayAddr, arrayRefList);

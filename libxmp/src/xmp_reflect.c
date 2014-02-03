@@ -74,7 +74,7 @@ static int _xmp_uwidth[_XMP_N_MAX_DIM];
 static int _xmp_is_periodic[_XMP_N_MAX_DIM];
 
 
-void xmp_set_reflect__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
+void _XMP_set_reflect__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
 		       int is_periodic)
 {
   _xmpf_set_reflect_flag = 1;
@@ -85,7 +85,7 @@ void xmp_set_reflect__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
 
 //double t0, t_sched = 0, t_start = 0, t_wait = 0;
 
-void xmp_reflect__(_XMP_array_t *a)
+void _XMP_reflect__(_XMP_array_t *a)
 {
   _XMP_RETURN_IF_SINGLE;
   if (!a->is_allocated){
@@ -119,7 +119,7 @@ void xmp_reflect__(_XMP_array_t *a)
 }
 
 
-void xmp_wait_async__(int async_id)
+void _XMP_wait_async__(int async_id)
 {
   _XMP_async_comm_t *async;
 
@@ -223,7 +223,7 @@ static void _XMP_reflect_sched(_XMP_array_t *a, int *lwidth, int *uwidth,
 
     }
     else { /* _XMP_N_SHADOW_FULL */
-      _XMP_fatal("xmpf_reflect: not surpport full shadow");
+      ;
     }
     
   }
@@ -772,11 +772,16 @@ static void _XMP_reflect_start(_XMP_array_t *a, int *lwidth, int *uwidth, int *i
 
     if (!lwidth[i] && !uwidth[i]) continue;
 
-    _XMP_reflect_sched_t *reflect = a->info[i].reflect_sched;
+    _XMP_array_info_t *ai = &(a->info[i]);
 
-    _XMP_TSTART(t0);
-    MPI_Startall(4, reflect->req);
-    _XMP_TEND2(xmptiming_.t_comm, xmptiming_.tdim_comm[i], t0);
+    if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
+
+      _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+
+      _XMP_TSTART(t0);
+      MPI_Startall(4, reflect->req);
+      _XMP_TEND2(xmptiming_.t_comm, xmptiming_.tdim_comm[i], t0);
+    }
 
   }
 
@@ -785,15 +790,23 @@ static void _XMP_reflect_start(_XMP_array_t *a, int *lwidth, int *uwidth, int *i
 
 static void _XMP_reflect_wait(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic)
 {
-    for (int i = 0; i < a->dim; i++){
+  for (int i = 0; i < a->dim; i++){
 
     if (!lwidth[i] && !uwidth[i]) continue;
 
-    _XMP_reflect_sched_t *reflect = a->info[i].reflect_sched;
+    _XMP_array_info_t *ai = &(a->info[i]);
 
-    _XMP_TSTART(t0);
-    MPI_Waitall(4, reflect->req, MPI_STATUSES_IGNORE);
-    _XMP_TEND2(xmptiming_.t_wait, xmptiming_.tdim_wait[i], t0);
+    if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
+
+      _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+
+      _XMP_TSTART(t0);
+      MPI_Waitall(4, reflect->req, MPI_STATUSES_IGNORE);
+      _XMP_TEND2(xmptiming_.t_wait, xmptiming_.tdim_wait[i], t0);
+    }
+    else if (ai->shadow_type == _XMP_N_SHADOW_FULL){
+      _XMP_reflect_shadow_FULL(a->array_addr_p, a, i);
+    }
 
   }
 
@@ -806,7 +819,7 @@ static void _XMP_reflect_wait(_XMP_array_t *a, int *lwidth, int *uwidth, int *is
 }
 
 
-void xmp_reflect_async__(_XMP_array_t *a, int async_id)
+void _XMP_reflect_async__(_XMP_array_t *a, int async_id)
 {
 
   int nreqs = 0;
@@ -1199,7 +1212,7 @@ static void _XMP_reflect_wait(_XMP_array_t *a, int *lwidth, int *uwidth, int *is
 }
 
 
-void xmp_reflect_async__(_XMP_array_t *a, int async_id)
+void _XMP_reflect_async__(_XMP_array_t *a, int async_id)
 {
 
   if (!a->is_allocated){
@@ -1485,22 +1498,27 @@ void _XMP_reflect_pack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_period
 
   for (int i = lb; i < ub; i++){
 
-    _XMP_reflect_sched_t *reflect = a->info[i].reflect_sched;
+    _XMP_array_info_t *ai = &(a->info[i]);
+    _XMP_reflect_sched_t *reflect = ai->reflect_sched;
 
-    // for lower reflect
-    if (lwidth[i]){
-      _XMP_pack_vector((char *)reflect->lo_send_buf,
-		       (char *)reflect->lo_send_array,
-		       reflect->count, lwidth[i] * reflect->blocklength,
-		       reflect->stride);
-    }
+    if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
 
-    // for upper reflect
-    if (uwidth[i]){
-      _XMP_pack_vector((char *)reflect->hi_send_buf,
-		       (char *)reflect->hi_send_array,
-		       reflect->count, uwidth[i] * reflect->blocklength,
-		       reflect->stride);
+      // for lower reflect
+      if (lwidth[i]){
+	_XMP_pack_vector((char *)reflect->lo_send_buf,
+			 (char *)reflect->lo_send_array,
+			 reflect->count, lwidth[i] * reflect->blocklength,
+			 reflect->stride);
+      }
+
+      // for upper reflect
+      if (uwidth[i]){
+	_XMP_pack_vector((char *)reflect->hi_send_buf,
+			 (char *)reflect->hi_send_array,
+			 reflect->count, uwidth[i] * reflect->blocklength,
+			 reflect->stride);
+      }
+
     }
 
   }
@@ -1527,22 +1545,27 @@ void _XMP_reflect_unpack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_peri
 
   for (int i = lb; i < ub; i++){
 
-    _XMP_reflect_sched_t *reflect = a->info[i].reflect_sched;
+    _XMP_array_info_t *ai = &(a->info[i]);
+    _XMP_reflect_sched_t *reflect = ai->reflect_sched;
 
-    // for lower reflect
-    if (lwidth[i]){
-      _XMP_unpack_vector((char *)reflect->lo_recv_array,
-			 (char *)reflect->lo_recv_buf,
-			 reflect->count, lwidth[i] * reflect->blocklength,
-			 reflect->stride);
-    }
+    if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
 
-    // for upper reflect
-    if (uwidth[i]){
-      _XMP_unpack_vector((char *)reflect->hi_recv_array,
-			 (char *)reflect->hi_recv_buf,
-			 reflect->count, uwidth[i] * reflect->blocklength,
-			 reflect->stride);
+      // for lower reflect
+      if (lwidth[i]){
+	_XMP_unpack_vector((char *)reflect->lo_recv_array,
+			   (char *)reflect->lo_recv_buf,
+			   reflect->count, lwidth[i] * reflect->blocklength,
+			   reflect->stride);
+      }
+
+      // for upper reflect
+      if (uwidth[i]){
+	_XMP_unpack_vector((char *)reflect->hi_recv_array,
+			   (char *)reflect->hi_recv_buf,
+			   reflect->count, uwidth[i] * reflect->blocklength,
+			   reflect->stride);
+      }
+
     }
 
   }

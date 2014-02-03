@@ -146,6 +146,7 @@ void _XMP_check_reflect_type(void);
 
 // xmp_shadow.c
 extern void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index);
+extern void _XMP_reflect_shadow_FULL(void *array_addr, _XMP_array_t *array_desc, int array_index);
 extern void _XMP_init_shadow(_XMP_array_t *array, ...);
 
 // xmp_template.c
