@@ -59,7 +59,7 @@ void outx_XMP_Clause(FILE *fp, int indent, CExprOfList* clauseList)
       break;
 
     case XMP_DIST_GBLOCK:
-      outxPrint(fp, indent1+1, "<intConstant type=\"int\">104<! -- GBLOCK --></intConstant>\n");
+      outxPrint(fp, indent1+1, "<intConstant type=\"int\">104<!-- GBLOCK --></intConstant>\n");
       break;
 
     case XMP_DATA_REDUCE_SUM:
@@ -123,6 +123,7 @@ char *xmpDirectiveName(int c)
   case XMP_POST: return "POST";
   case XMP_WAIT: return "WAIT";
   case XMP_TEMPLATE_FIX: return "TEMPLATE_FIX";
+  case XMP_WAIT_ASYNC: return "WAIT_ASYNC";
   default: return "OMP???";
   }
 }

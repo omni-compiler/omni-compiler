@@ -189,9 +189,39 @@ public class XMPshadow {
 //         }
 //       }
 
-      Ident funcId = globalDecl.declExternFunc("_XMP_reflect__");
-      XobjList funcArgs = Xcons.List(alignedArray.getDescId().Ref());
-      reflectFuncBody.add(Bcons.Statement(funcId.Call(funcArgs)));
+      Xobject asyncId = null;
+
+      if (reflectDecl.Nargs() > 2){
+
+	if (reflectDecl.getArg(1) != null){
+	  XobjList widthList = (XobjList)reflectDecl.getArg(1);
+	  for (int i = 0; i < widthList.Nargs(); i++){
+	    XobjList width = (XobjList)widthList.getArg(i);
+
+	    Ident funcId = globalDecl.declExternFunc("_XMP_set_reflect__");
+	    XobjList funcArgs = Xcons.List(alignedArray.getDescId().Ref(), Xcons.IntConstant(i),
+					   width.getArg(0), width.getArg(1), width.getArg(2));
+	    reflectFuncBody.add(Bcons.Statement(funcId.Call(funcArgs)));
+	  }
+	}
+
+	if (reflectDecl.getArg(2) != null &&
+	    !(reflectDecl.getArg(2) instanceof XobjList && reflectDecl.getArg(2).Nargs() == 0)){
+	  asyncId = reflectDecl.getArg(2);
+	}
+
+      }
+
+      if (asyncId != null){
+	Ident funcId = globalDecl.declExternFunc("_XMP_reflect_async__");
+	XobjList funcArgs = Xcons.List(alignedArray.getDescId().Ref(), asyncId);
+	reflectFuncBody.add(Bcons.Statement(funcId.Call(funcArgs)));
+      }
+      else {
+	Ident funcId = globalDecl.declExternFunc("_XMP_reflect__");
+	XobjList funcArgs = Xcons.List(alignedArray.getDescId().Ref());
+	reflectFuncBody.add(Bcons.Statement(funcId.Call(funcArgs)));
+      }
 
     }
 

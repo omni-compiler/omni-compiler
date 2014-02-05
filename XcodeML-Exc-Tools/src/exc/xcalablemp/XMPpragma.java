@@ -32,6 +32,7 @@ public enum XMPpragma {
   POST,
   WAIT,
   LOCAL_ALIAS,
+  WAIT_ASYNC,
   GPU_REPLICATE,
   GPU_REPLICATE_SYNC,
   GPU_REFLECT,

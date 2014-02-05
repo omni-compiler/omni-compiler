@@ -59,6 +59,8 @@ static CExpr* parse_COARRAY_clause();
 static CExpr* parse_POST_clause();
 static CExpr* parse_WAIT_clause();
 static CExpr* parse_LOCAL_ALIAS_clause();
+static CExpr* parse_WIDTH_list();
+static CExpr* parse_WAIT_ASYNC_clause();
 
 static CExpr* parse_COL2_name_list();
 static CExpr* parse_XMP_subscript_list();
@@ -206,6 +208,11 @@ int parse_XMP_pragma()
 	pg_XMP_pragma = XMP_WAIT;
 	pg_get_token();
 	pg_XMP_list = parse_WAIT_clause();
+    }
+    else if (PG_IS_IDENT("wait_async")) {
+      pg_XMP_pragma = XMP_WAIT_ASYNC;
+      pg_get_token();
+      pg_XMP_list = parse_WAIT_ASYNC_clause();
 #ifdef not
     } else if (PG_IS_IDENT("sync_memory")) {
 	pg_XMP_pragma = XMP_SYNC_MEMORY;
@@ -957,7 +964,6 @@ CExpr *parse_XMP_dist_fmt_list()
     
     pg_get_token();
     while(1){
-	// FIXME support gblock
 	// parse <dist-format> := { * | block(n) | cyclic(n) }
 	width = NULL;
 	if (pg_tok == '*') {
@@ -988,6 +994,18 @@ CExpr *parse_XMP_dist_fmt_list()
 	    }
 	    if (!width) v = XMP_PG_LIST(XMP_DIST_CYCLIC,width);
 	    else v = XMP_PG_LIST(XMP_DIST_BLOCK_CYCLIC,width);
+	} else if (PG_IS_IDENT("gblock")) {
+	    pg_get_token();
+	    if (pg_tok == '(') {
+		pg_get_token();
+		width = pg_parse_expr();
+		if (pg_tok != ')') {
+		    XMP_Error0("')' is needed after <mapping-array>");
+		    goto err;
+		} 
+		pg_get_token();
+	    }
+	    v = XMP_PG_LIST(XMP_DIST_GBLOCK,width);
 	} else goto syntax_err;
 
 	list = exprListAdd(list, v);
@@ -1064,6 +1082,31 @@ CExpr *parse_name_list2()
     }
 
     return list;
+}
+
+CExpr *parse_expr_list()
+{
+  CExpr *list = EMPTY_LIST;
+
+  if (pg_tok == '(') {
+
+    pg_get_token();
+
+    while (1){
+      list = exprListAdd(list, pg_parse_expr());
+      //pg_get_token();
+      if (pg_tok != ',') break;
+      pg_get_token();
+    }
+
+    if (pg_tok == ')'){
+      pg_get_token();
+      return list;
+    }
+  }
+
+  XMP_Error0("syntax error in expr list");
+  return NULL;
 }
 
 /* (xmp_sbuscript) or id(xmp_subscript) */
@@ -1294,10 +1337,20 @@ CExpr* parse_TASKS_clause()
     return (CExpr *)allocExprOfNull();
 }
 
-
 static CExpr* parse_REFLECT_clause()
 {
     CExpr *arrayNameList = parse_name_list();
+    CExpr *widthList = parse_WIDTH_list();
+    CExpr *async = (CExpr *)allocExprOfNull();
+
+    if (PG_IS_IDENT("async")){
+      pg_get_token();
+      if (pg_tok != '(') goto err;
+      pg_get_token();
+      async = pg_parse_expr();
+      if (pg_tok != ')') goto err;
+      pg_get_token();
+    }
 
     CExpr *profileClause = (CExpr *)allocExprOfNull();
     /* if (pg_is_ident("profile")) { */
@@ -1305,7 +1358,12 @@ static CExpr* parse_REFLECT_clause()
     /*     pg_get_token(); */
     /* } */
 
-    return XMP_LIST2(arrayNameList, profileClause);
+    return XMP_LIST4(arrayNameList, widthList, async, profileClause);
+
+ err:
+    XMP_Error0("syntax error in the REFLECT directive");
+    XMP_has_err = 1;
+    return NULL;
 }
 
 
@@ -1514,3 +1572,89 @@ static CExpr* parse_LOCAL_ALIAS_clause()
     return NULL;
 }
 
+static CExpr* parse_WIDTH_list()
+{
+  CExpr *list = EMPTY_LIST;
+  CExpr *v1,*v2;
+  int periodic_flag;
+
+  if (!PG_IS_IDENT("width")) return NULL;
+
+  pg_get_token();
+
+  if (pg_tok == '(') {
+
+    pg_get_token();
+
+    while(1){
+
+      v1 = v2 = NULL;
+      periodic_flag = 0;
+
+      if (pg_tok == '/'){
+	pg_get_token();
+	if (!PG_IS_IDENT("periodic")) goto err;
+
+	pg_get_token();
+	if (pg_tok != '/') goto err;
+
+	periodic_flag = 1;
+	pg_get_token();
+      }
+
+      switch (pg_tok){
+      case ')':
+      case ',':
+      case ':':
+	goto err;
+      default:
+	v1 = pg_parse_expr();
+      }
+	
+      if (pg_tok != ':'){
+	v2 = v1;
+	goto next;
+      }
+
+      pg_get_token();
+
+      switch (pg_tok){
+      case ')':
+      case ',':
+      case ':':
+	goto err;
+      default:
+	v2 = pg_parse_expr();
+      }
+
+    next:
+
+      list = exprListAdd(list, XMP_LIST3(v1, v2, (CExpr*)allocExprOfNumberConst2(periodic_flag, BT_INT)));
+
+      if (pg_tok == ')'){
+	pg_get_token();
+	break;
+      }
+
+      if (pg_tok == ',')  pg_get_token();
+      else goto err;
+    }
+
+  }
+
+  return list;
+
+ err:
+
+  XMP_Error0("syntax error in the WIDTH clause");
+  XMP_has_err = 1;
+  return NULL;
+
+}
+
+
+static CExpr* parse_WAIT_ASYNC_clause()
+{
+    CExpr *asyncIdList = parse_expr_list();
+    return XMP_LIST1(asyncIdList);
+}

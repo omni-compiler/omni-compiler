@@ -102,7 +102,7 @@ void _XMP_finalize_array_desc(_XMP_array_t *array) {
 	}
       }
 
-      if (i != dim -1){
+      if ((_XMPF_running && i != dim -1) || (_XMPC_running && i != 0)){
 	_XMP_free(reflect_sched->lo_send_buf);
 	_XMP_free(reflect_sched->lo_recv_buf);
 	_XMP_free(reflect_sched->hi_send_buf);

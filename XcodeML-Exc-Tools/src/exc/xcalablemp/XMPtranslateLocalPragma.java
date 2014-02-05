@@ -85,6 +85,8 @@ public class XMPtranslateLocalPragma {
         { translateWait(pb);                    break; }
       case LOCAL_ALIAS:
         { translateLocalAlias(pb);		break; }
+      case WAIT_ASYNC:
+	{ translateWaitAsync(pb);               break; }
       case GPU_REPLICATE:
         { translateGpuData(pb);			break; }
       case GPU_REPLICATE_SYNC:
@@ -230,6 +232,19 @@ public class XMPtranslateLocalPragma {
   private void translateLocalAlias(PragmaBlock pb) throws XMPexception {
     checkDeclPragmaLocation(pb);
     XMPalignedArray.translateLocalAlias((XobjList)pb.getClauses(), _globalDecl, true, pb);
+  }
+
+  private void translateWaitAsync(PragmaBlock pb) throws XMPexception {
+
+    Ident funcId = _globalDecl.declExternFunc("_XMP_wait_async__");
+    XobjList funcArgs = (XobjList)pb.getClauses().getArg(0);
+
+    BlockList funcBody = Bcons.emptyBody();
+    funcBody.add(Bcons.Statement(funcId.Call(funcArgs)));
+
+    Block funcCallBlock = Bcons.COMPOUND(funcBody);
+    pb.replace(funcCallBlock);
+
   }
 
   private void translateShadow(PragmaBlock pb) throws XMPexception {
