@@ -10,7 +10,9 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
 {
   _XMP_array_t *a = _XMP_alloc(sizeof(_XMP_array_t) + sizeof(_XMP_array_info_t) * (*n_dim - 1));
 
-  a->is_allocated = (*t_desc)->is_owner;
+  // moved to xmpf_align_info
+  //a->is_allocated = (*t_desc)->is_owner;
+
   a->is_align_comm_member = false;
   a->dim = *n_dim;
   a->type = *type;
@@ -79,6 +81,7 @@ void xmpf_array_deallocate__(_XMP_array_t **a_desc)
 void xmpf_align_info__(_XMP_array_t **a_desc, int *a_idx, 
 		       int *lower, int *upper, int *t_idx, int *off)
 {
+
   _XMP_array_t *a = *a_desc;
   _XMP_array_info_t *ai = &(a->info[*a_idx]);
   int t_index = *t_idx;
@@ -93,6 +96,12 @@ void xmpf_align_info__(_XMP_array_t **a_desc, int *a_idx,
     _XMP_align_array_NOT_ALIGNED(a,*a_idx);
     return;
   } 
+
+  if (!a->align_template->is_fixed){
+    _XMP_fatal("The align-target template is not fixed");
+  }
+
+  a->is_allocated = a->align_template->is_owner;
 
   chunk = &(a->align_template->chunk[t_index]);
   switch (chunk->dist_manner){

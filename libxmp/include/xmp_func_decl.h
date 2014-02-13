@@ -183,6 +183,7 @@ extern void _XMP_init_shadow_noalloc(void *a, int shadow_type, int lshadow, int 
 // xmp_template.c
 extern void _XMP_init_template_FIXED(void **template, int dim, ...);
 extern void _XMP_init_template_UNFIXED(void **template, int dim, ...);
+extern void _XMP_set_template_size(void **template, int dim, ...);
 extern void _XMP_init_template_chunk(void *template, void *nodes);
 extern void _XMP_finalize_template(void *template);
 extern void _XMP_dist_template_DUPLICATION(void *template, int template_index);

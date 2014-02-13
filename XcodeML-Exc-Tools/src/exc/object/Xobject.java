@@ -853,4 +853,9 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
     {
         return find(name, IXobject.FINDKIND_VAR);
     }
+
+    public boolean isEmptyList()
+    {
+	return (this instanceof XobjList && ((XobjList)this).Nargs() == 0);
+    }
 }

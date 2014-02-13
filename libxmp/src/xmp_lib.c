@@ -510,8 +510,14 @@ void *xmp_malloc(xmp_desc_t d, int size){
 
   _XMP_template_t *t = a->align_template;
   int tdim = ai->align_template_index;
+  _XMP_template_chunk_t *chunk = &(t->chunk[tdim]);
+  _XMP_template_info_t *info = &(t->info[tdim]);
 
   a->is_allocated = t->is_owner;
+
+  /* Now, normalize align_subscript and size */
+  size += (ai->align_subscript - info->ser_lower);
+  ai->align_subscript = info->ser_lower;
 
   ai->ser_upper = size - 1;
   ai->ser_size = size;

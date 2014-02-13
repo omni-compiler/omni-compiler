@@ -87,6 +87,8 @@ public class XMPtranslateLocalPragma {
         { translateLocalAlias(pb);		break; }
       case WAIT_ASYNC:
 	{ translateWaitAsync(pb);               break; }
+      case TEMPLATE_FIX:
+	{ translateTemplateFix(pb);             break; }
       case GPU_REPLICATE:
         { translateGpuData(pb);			break; }
       case GPU_REPLICATE_SYNC:
@@ -129,6 +131,21 @@ public class XMPtranslateLocalPragma {
       Xobject x = iter.next();
       templateDeclCopy.setArg(0, x);
       XMPtemplate.translateTemplate(templateDeclCopy, _globalDecl, true, pb);
+    }
+  }
+
+  private void translateTemplateFix(PragmaBlock pb) throws XMPexception {
+    checkDeclPragmaLocation(pb);
+
+    XobjList templateDecl = (XobjList)pb.getClauses();
+    XobjList templateNameList = (XobjList)templateDecl.getArg(1);
+    XobjList templateDeclCopy = (XobjList)templateDecl.copy();
+
+    Iterator<Xobject> iter = templateNameList.iterator();
+    while (iter.hasNext()) {
+      Xobject x = iter.next();
+      templateDeclCopy.setArg(1, x);
+      XMPtemplate.translateTemplateFix(templateDeclCopy, _globalDecl, pb);
     }
   }
 

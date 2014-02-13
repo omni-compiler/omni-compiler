@@ -692,6 +692,7 @@ public class XMPrewriteExpr {
     XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(varName, block);
     XMPcoarray coarray = _globalDecl.getXMPcoarray(varName, block);
     
+    //if ((alignedArray != null && !alignedArray.isParameter()) && coarray == null){
     if (alignedArray != null && coarray == null){
       return alignedArray.getAddrId().Ref();
     }
@@ -792,7 +793,8 @@ public class XMPrewriteExpr {
 	XMPcoarray      coarray      = _globalDecl.getXMPcoarray(pointer.getSym(), block);
 
 	if (alignedArray != null && coarray == null){
-	  addr_expr.setArg(0, alignedArray.getAddrId().Ref());
+	  //if (!alignedArray.isParameter())
+	    addr_expr.setArg(0, alignedArray.getAddrId().Ref());
 	  // NOTE: an aligned pointer is assumed to be a one-dimensional array.
 	  addr_expr.setArg(1, getCalcIndexFuncRef(alignedArray, 0, offset)); 
 	}
@@ -1109,6 +1111,34 @@ public class XMPrewriteExpr {
               iter.setXobject(newExpr);
             }
           } break;
+        case POINTER_REF:
+	  {
+	    Xobject addr_expr = myExpr.getArg(0);
+	    if (addr_expr.Opcode() == Xcode.PLUS_EXPR){
+
+	      Xobject pointer = addr_expr.getArg(0);
+	      Xobject offset = addr_expr.getArg(1);
+
+	      if (pointer.Opcode() == Xcode.VAR){
+		XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(pointer.getSym(), block);
+		if (alignedArray != null){
+		  XobjList arrayRefList = XMPrewriteExpr.normArrayRefList(Xcons.List(offset), alignedArray);
+		  if (alignedArray.checkRealloc() || (alignedArray.isLocal() && !alignedArray.isParameter()) ||
+		      alignedArray.isParameter()){
+		    Xobject newExpr = XMPrewriteExpr.rewriteAlignedArrayExprInLoop(arrayRefList, alignedArray);
+		    newExpr.setIsRewrittedByXmp(true);
+		    iter.setXobject(newExpr);
+		  }
+		  else {
+		    addr_expr.setArg(1, arrayRefList.getArg(0));
+		  }
+
+		}
+	      }
+	    }
+	    break;
+	  }
+
         default:
       }
     }
@@ -1117,7 +1147,13 @@ public class XMPrewriteExpr {
   private static Xobject rewriteAlignedArrayExprInLoop(XobjList refExprList,
                                                        XMPalignedArray alignedArray) throws XMPexception {
     int arrayDimCount = 0;
-    XobjList args = Xcons.List(alignedArray.getAddrId().Ref());
+    XobjList args;
+    //    if (!alignedArray.isParameter()){
+      args = Xcons.List(alignedArray.getAddrId().Ref());
+      //    }
+      //    else {
+      //      args = Xcons.List(alignedArray.getArrayId().Ref());
+      //    }
     if (refExprList != null) {
       for (Xobject x : refExprList) {
         args.add(x);
@@ -1201,7 +1237,8 @@ public class XMPrewriteExpr {
 	    if (pointer.Opcode() == Xcode.VAR){
 	      XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(pointer.getSym(), block);
 	      if (alignedArray != null){
-		addr_expr.setArg(0, alignedArray.getAddrId().Ref());
+		//if (!alignedArray.isParameter())
+		  addr_expr.setArg(0, alignedArray.getAddrId().Ref());
 		addr_expr.setArg(1, rewriteLoopIndexArrayRef(templateObj, templateIndex, alignedArray, 0,
 							     loopIndexName, offset));
 	      }

@@ -61,6 +61,7 @@ static CExpr* parse_WAIT_clause();
 static CExpr* parse_LOCAL_ALIAS_clause();
 static CExpr* parse_WIDTH_list();
 static CExpr* parse_WAIT_ASYNC_clause();
+static CExpr* parse_TEMPLATE_FIX_clause();
 
 static CExpr* parse_COL2_name_list();
 static CExpr* parse_XMP_subscript_list();
@@ -213,6 +214,11 @@ int parse_XMP_pragma()
       pg_XMP_pragma = XMP_WAIT_ASYNC;
       pg_get_token();
       pg_XMP_list = parse_WAIT_ASYNC_clause();
+    }
+    else if (PG_IS_IDENT("template_fix")) {
+      pg_XMP_pragma = XMP_TEMPLATE_FIX;
+      pg_get_token();
+      pg_XMP_list = parse_TEMPLATE_FIX_clause();
 #ifdef not
     } else if (PG_IS_IDENT("sync_memory")) {
 	pg_XMP_pragma = XMP_SYNC_MEMORY;
@@ -760,8 +766,10 @@ CExpr *parse_XMP_range_list()
 	switch(pg_tok){
 	case ')':
 	case ',':
-	case ':':
 	  goto err;
+	case ':':
+	  pg_get_token();
+	  goto next;
 	default:
 	    v1 = pg_parse_expr();
 	}
@@ -786,7 +794,11 @@ CExpr *parse_XMP_range_list()
 	}
 
       next:
-	list = exprListAdd(list, XMP_LIST2(v1,v2));
+	if (v1 == NULL && v2 == NULL)
+	  list = exprListAdd(list, NULL);
+	else
+	  list = exprListAdd(list, XMP_LIST2(v1,v2));
+
 	if(pg_tok == ')'){
 	    pg_get_token();
 	    break;
@@ -998,7 +1010,12 @@ CExpr *parse_XMP_dist_fmt_list()
 	    pg_get_token();
 	    if (pg_tok == '(') {
 		pg_get_token();
-		width = pg_parse_expr();
+		if (pg_tok == '*'){
+		  width = NULL;
+		  pg_get_token();
+		}
+		else
+		  width = pg_parse_expr();
 		if (pg_tok != ')') {
 		    XMP_Error0("')' is needed after <mapping-array>");
 		    goto err;
@@ -1658,3 +1675,39 @@ static CExpr* parse_WAIT_ASYNC_clause()
     CExpr *asyncIdList = parse_expr_list();
     return XMP_LIST1(asyncIdList);
 }
+
+
+static CExpr* parse_TEMPLATE_FIX_clause()
+{
+
+  CExpr *distFormatList = NULL;
+  CExpr *templateNameList;
+  CExpr *templateSpecList = NULL;
+
+  // parse (<dist-format>, ...)
+  if (pg_tok == '('){
+    distFormatList = parse_XMP_dist_fmt_list();
+  }
+
+  // parse <template-name>
+  if (pg_tok == PG_IDENT){
+    templateNameList = XMP_LIST1(pg_tok_val);
+    pg_get_token();
+  }
+  else {
+    XMP_Error0("<template-name> is not optional.");
+    goto err;
+  }
+
+  // parse (<template-spec>, ...)
+  if (pg_tok == '('){
+    templateSpecList = parse_XMP_range_list();
+  }
+
+  return XMP_LIST3(distFormatList, templateNameList, templateSpecList);
+
+  err:
+    XMP_has_err = 1;
+    return NULL;
+}
+

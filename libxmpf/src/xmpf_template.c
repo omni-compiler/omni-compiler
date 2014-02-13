@@ -6,7 +6,7 @@
 
 void xmpf_template_alloc__(_XMP_template_t **t_desc, int *n_dim, int *is_fixed)
 {
-  *t_desc = _XMP_create_template_desc(*n_dim,*is_fixed); /* fixed don't care */
+  *t_desc = _XMP_create_template_desc(*n_dim, *is_fixed);
 }
 
 
@@ -49,13 +49,14 @@ void xmpf_template_dim_info__(_XMP_template_t **t_desc, int *i_dim,
 }
 
 
-void xmpf_template_init__(_XMP_template_t **t_desc,_XMP_nodes_t  **n_desc)
+void xmpf_template_init__(_XMP_template_t **t_desc, _XMP_nodes_t  **n_desc)
 {
   int t_idx, n_idx, chunk_size;
 
   _XMP_template_t *t = *t_desc;
 
   t->is_fixed = 1;
+
   _XMP_calc_template_size(t);
   _XMP_init_template_chunk(t, *n_desc);
   n_idx = 0;

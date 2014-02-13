@@ -3830,6 +3830,7 @@ struct keyword_token XMP_keywords[ ] =
     {"distribute",	XMPKW_DISTRIBUTE },
     {"align",	XMPKW_ALIGN },
     {"shadow",	XMPKW_SHADOW },
+    {"template_fix", XMPKW_TEMPLATE_FIX },
     {"task",	XMPKW_TASK },
     {"tasks",	XMPKW_TASKS },
     {"loop",	XMPKW_LOOP },

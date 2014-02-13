@@ -9,6 +9,8 @@
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
+void xmp_dbg_printf(char *fmt, ...);
+
 void _XMP_calc_array_dim_elmts(_XMP_array_t *array, int array_index) {
   _XMP_ASSERT(array->is_allocated);
 
@@ -43,6 +45,7 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
 
   //a->num_reqs = -1;
 
+  if (!template->is_fixed) _XMP_fatal("target template is not fixed");
   a->align_template = template;
 
   va_list args;
@@ -704,7 +707,7 @@ void _XMP_align_array_noalloc(_XMP_array_t *a, int adim, int tdim, long long ali
   _XMP_array_info_t *ai = &(a->info[adim]);
 
   ai->align_template_index = tdim;
-  ai->align_subscript = align_subscript;
+  ai->align_subscript = align_subscript; /* not normalized, to be done at xmp_malloc */
 
   ai->temp0 = temp0;
   a->array_addr_p = (void *)acc0; // temporarily stored to this member

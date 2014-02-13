@@ -44,6 +44,11 @@ public class XMPinfo
   // for gmove
   Xobject gmoveLeft,gmoveRight;
 
+  // for template_fix
+  XMPtemplate template;
+  XobjList sizeList;
+  XobjList distList;
+
   public XMPinfo(XMPpragma pragma, XMPinfo parent, Block b, XMPenv env) {
     this.pragma = pragma;
     this.parent = parent;
@@ -132,5 +137,15 @@ public class XMPinfo
   public Xobject getGmoveLeft() { return gmoveLeft; }
   
   public Xobject getGmoveRight() { return gmoveRight; }
+
+  public void setTemplateFix(XMPtemplate t, XobjList sList, XobjList dList){
+    template = t;
+    sizeList = sList;
+    distList = dList;
+  }
+
+  public XMPtemplate getTemplate() { return template; }
+  public XobjList getSizeList() { return sizeList; }
+  public XobjList getDistList() { return distList; }
 
 }

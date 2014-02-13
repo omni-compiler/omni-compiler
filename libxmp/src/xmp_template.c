@@ -281,22 +281,42 @@ void _XMP_init_template_FIXED(_XMP_template_t **template, int dim, ...) {
   *template = t;
 }
 
-void _XMP_init_template_UNFIXED(_XMP_template_t **template, int dim, ...) {
-  // alloc descriptor
-  _XMP_template_t *t = _XMP_create_template_desc(dim, false);
+/* void _XMP_init_template_UNFIXED(_XMP_template_t **template, int dim, ...) { */
+/*   // alloc descriptor */
+/*   _XMP_template_t *t = _XMP_create_template_desc(dim, false); */
+
+/*   // calc info */
+/*   va_list args; */
+/*   va_start(args, dim); */
+/*   for(int i = 0; i < dim - 1; i++) { */
+/*     t->info[i].ser_lower = va_arg(args, long long); */
+/*     t->info[i].ser_upper = va_arg(args, long long); */
+/*   } */
+/*   va_end(args); */
+
+/*   _XMP_calc_template_size(t); */
+
+/*   *template = t; */
+/* } */
+
+void _XMP_init_template_UNFIXED(_XMP_template_t **template, int dim) {
+  *template = _XMP_create_template_desc(dim, false);
+}
+
+void _XMP_set_template_size(_XMP_template_t *t, int dim, ...) {
 
   // calc info
   va_list args;
   va_start(args, dim);
-  for(int i = 0; i < dim - 1; i++) {
+  for (int i = 0; i < dim; i++) {
     t->info[i].ser_lower = va_arg(args, long long);
     t->info[i].ser_upper = va_arg(args, long long);
   }
   va_end(args);
 
   _XMP_calc_template_size(t);
+  t->is_fixed = true;
 
-  *template = t;
 }
 
 void _XMP_init_template_chunk(_XMP_template_t *template, _XMP_nodes_t *nodes) {
@@ -410,25 +430,32 @@ void _XMP_dist_template_GBLOCK(_XMP_template_t *template, int template_index, in
   _XMP_template_info_t *ti = &(template->info[template_index]);
   _XMP_nodes_info_t *ni = &(nodes->info[nodes_index]);
 
-  unsigned long long *rsum_array = _XMP_alloc(sizeof(unsigned long long) * (ni->size + 1));
-  rsum_array[0] = ti->ser_lower;
-  for (unsigned long long i = 1; i <= ni->size; i++){
-    rsum_array[i] = rsum_array[i-1] + (unsigned long long)mapping_array[i-1];
-  }
-  chunk->mapping_array = rsum_array;
+  if (mapping_array){
 
-  if (nodes->is_member && rsum_array[ni->rank + 1] != rsum_array[ni->rank]) {
-    chunk->par_lower = rsum_array[ni->rank];
-    if (chunk->par_lower < ti->ser_upper){
-      chunk->par_upper = min(ti->ser_upper, rsum_array[ni->rank + 1] - 1);
+    unsigned long long *rsum_array = _XMP_alloc(sizeof(unsigned long long) * (ni->size + 1));
+    rsum_array[0] = ti->ser_lower;
+    for (unsigned long long i = 1; i <= ni->size; i++){
+      rsum_array[i] = rsum_array[i-1] + (unsigned long long)mapping_array[i-1];
     }
-    else
-      template->is_owner = false;
+    chunk->mapping_array = rsum_array;
+
+    if (nodes->is_member && rsum_array[ni->rank + 1] != rsum_array[ni->rank]) {
+      chunk->par_lower = rsum_array[ni->rank];
+      if (chunk->par_lower < ti->ser_upper){
+	chunk->par_upper = min(ti->ser_upper, rsum_array[ni->rank + 1] - 1);
+      }
+      else
+	template->is_owner = false;
+    }
+
+    chunk->par_width = 1;
+    chunk->par_stride = 1;
+    chunk->par_chunk_width = chunk->par_upper - chunk->par_lower + 1;
+  }
+  else {
+    template->is_fixed = false;
   }
 
-  chunk->par_width = 1;
-  chunk->par_stride = 1;
-  chunk->par_chunk_width = chunk->par_upper - chunk->par_lower + 1;
   chunk->dist_manner = _XMP_N_DIST_GBLOCK;
   chunk->is_regular_chunk = false;
 

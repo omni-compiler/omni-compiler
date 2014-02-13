@@ -41,7 +41,7 @@ public class XMPrealloc implements XobjectDefVisitor {
     if (def.isVarDecl()) {
       String varName = def.getName();
       XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(varName);
-      if (alignedArray != null) {
+      if (alignedArray != null && !alignedArray.isPointer()) {
         if (alignedArray.realloc()) {
           XobjList allocFuncArgs = Xcons.List(alignedArray.getAddrIdVoidAddr(), alignedArray.getDescId().Ref());
           for (int i = alignedArray.getDim() - 1; i >= 0; i--) {

@@ -275,7 +275,11 @@ void compile_XMP_directive(expr x)
 
     case XMP_TEMPLATE_FIX:
       check_INEXEC();
-      output_statement(x);
+      x1 = EXPR_ARG1(c);
+      x2 = EXPR_ARG2(c);
+      x3 = XMP_compile_subscript_list(EXPR_ARG3(c), XMP_LIST_TEMPLATE);
+      c = list3(LIST, x1, x2, x3);
+      output_statement(XMP_pragma_list(XMP_TEMPLATE_FIX, c, NULL));
       break;
 
     case XMP_COARRAY:

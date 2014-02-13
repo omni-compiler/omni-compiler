@@ -207,11 +207,12 @@ public class XMParray {
       XMP.errorAt(pb,"template '" + templateName + "' is not declared");
     }
 
-    if (!template.isFixed()) {
-      XMP.errorAt(pb,"template '" + templateName + "' is not fixed");
+    if (!template.isFixed() && !type.isFallocatable()) {
+      XMP.errorAt(pb, "non-allocatable array cannot be aligned with an unfixed template");
+      //XMP.errorAt(pb,"template '" + templateName + "' is not fixed");
     }
 
-    if (!(template.isDistributed())) {
+    if (!template.isDistributed() && !type.isFallocatable()) {
       XMP.errorAt(pb,"template '" + templateName + "' is not distributed");
     }
 

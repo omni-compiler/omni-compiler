@@ -254,6 +254,18 @@ public class XMP {
     XmLog.fatal("[XcalableMP fatal] " + msg);
   }
 
+  public static void fatal(Block b, String msg) {
+    LineNo l = null;
+
+    if (b == null || (l = b.getLineNo()) == null){
+      XmLog.fatal(msg);
+    }
+      
+    errorFlag = true;
+    errorFlags = true;
+    XmLog.fatal("\""+l.fileName() + "\", line " + l.lineNo() + ":(XMP) " + msg);
+  }
+
   public static boolean hasError(){
     return errorFlag;
   }

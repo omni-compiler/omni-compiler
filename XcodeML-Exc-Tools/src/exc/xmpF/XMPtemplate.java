@@ -50,6 +50,10 @@ package exc.xmpF;
      isFixed = true;
    }
 
+   public void unsetIsFixed() {
+     isFixed = false;
+   }
+
    public boolean isFixed() {
      return isFixed;
    }
@@ -76,6 +80,10 @@ package exc.xmpF;
 
    public int getDistMannerAt(int index){
      return scripts.elementAt(index).getDistManner();
+   }
+
+   public Xobject getDistArgAt(int index){
+     return scripts.elementAt(index).getDistArg();
    }
 
    public String getDistMannerStringAt(int index){
@@ -149,12 +157,12 @@ package exc.xmpF;
      boolean templateIsFixed = true;
      for (XobjArgs i = decl.getArgs(); i != null; i = i.nextArgs()){
        XMPdimInfo info = XMPdimInfo.parseDecl(i.getArg());
-       if(info.isStar()) templateIsFixed = false;
+       if (info.isStar() || (!info.hasLower() && !info.hasUpper())) templateIsFixed = false;
        scripts.add(info);
        _dim++;
      }
 
-     if (templateIsFixed)  setIsFixed();
+     if (templateIsFixed) setIsFixed();
 
      if (_dim > XMP.MAX_DIM) {
        XMP.errorAt(pb,"template dimension should be less than " + (XMP.MAX_DIM + 1));
@@ -180,9 +188,9 @@ package exc.xmpF;
        return;
      }
 
-     if (!templateObject.isFixed()) {
-       XMP.errorAt(pb,"template '" + templateName + "' is not fixed");
-     }
+     // if (!templateObject.isFixed()) {
+     //   XMP.errorAt(pb,"template '" + templateName + "' is not fixed");
+     // }
 
      if (templateObject.isDistributed()) {
        XMP.errorAt(pb,"template '" + templateName +  "' is already distributed");
@@ -222,8 +230,10 @@ package exc.xmpF;
 	   distManner = XMPtemplate.BLOCK;
 	 else if(dist_fmt.equalsIgnoreCase("CYCLIC"))
 	   distManner = XMPtemplate.CYCLIC;
-	 else if(dist_fmt.equalsIgnoreCase("GBLOCK"))
+	 else if(dist_fmt.equalsIgnoreCase("GBLOCK")){
 	   distManner = XMPtemplate.GBLOCK;
+	   if (i.getArg().getArg(1) == null) templateObject.unsetIsFixed();
+	 }
 	 else {
 	   XMP.fatal("unknown distribution format,"+dist_fmt);
 	 }
@@ -265,9 +275,11 @@ package exc.xmpF;
     */
    public void buildConstructor(BlockList body, XMPenv env){
      Ident f = env.declInternIdent(XMP.template_alloc_f,Xtype.FsubroutineType);
-     Xobject args = Xcons.List(_descId.Ref(),Xcons.IntConstant(_dim),
-			       Xcons.IntConstant(1)); // fixed only
+     Xobject flag = isFixed ? Xcons.IntConstant(1) : Xcons.IntConstant(0);
+     Xobject args = Xcons.List(_descId.Ref(), Xcons.IntConstant(_dim), flag);
      body.add(f.callSubroutine(args));
+
+     if (!isFixed) return;
      
      /* template size */
      f = env.declInternIdent(XMP.template_dim_info_f,Xtype.FsubroutineType);

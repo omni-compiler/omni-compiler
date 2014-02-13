@@ -142,6 +142,10 @@ public class XMPanalyzePragma
       }
       break;
 
+    case TEMPLATE_FIX:
+      analyzeTemplateFix(pb.getClauses(),info, pb);
+      break;
+
     case LOOP:
       analyzeLoop(pb.getClauses(), pb.getBody(), pb,info);
       break; 
@@ -190,6 +194,40 @@ public class XMPanalyzePragma
     return (v1.isVariable() && v2.isVariable() &&
 	    v1.getName().equals(v2.getName()));
   }
+
+  private void analyzeTemplateFix(Xobject tfixDecl, 
+				  XMPinfo info, PragmaBlock pb){
+
+    XobjList distList = (XobjList)tfixDecl.getArg(0);
+    Xobject t = tfixDecl.getArg(1);
+    XobjList sizeList = (XobjList)tfixDecl.getArg(2);
+
+    // get template object
+    String tName = t.getString();
+    XMPtemplate tObject = env.findXMPtemplate(tName, pb);
+
+    if (tObject == null) {
+      XMP.errorAt(pb, "template '" + tName  + "' is not declared");
+      return;
+    }
+
+    if (tObject.isFixed()) {
+      XMP.errorAt(pb, "template '" + tName + "' is alreday fixed");
+    }
+
+    if (!sizeList.isEmptyList()){
+      for (int i = 0; i < tObject.getDim(); i++){
+	if (sizeList.getArg(i).Opcode() != Xcode.LIST){
+	  sizeList.setArg(i, Xcons.List(Xcons.IntConstant(1), sizeList.getArg(i)));
+	}
+      }
+    }
+
+    // set info
+    info.setTemplateFix(tObject, sizeList, distList);
+
+  }
+
 
   /* 
    * analyze Loop directive:

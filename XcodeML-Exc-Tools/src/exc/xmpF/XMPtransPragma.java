@@ -137,6 +137,8 @@ public class XMPtransPragma
       return translateTasks(pb,info);
     case GMOVE:
       return translateGmove(pb,info);
+    case TEMPLATE_FIX:
+      return translateTemplateFix(pb, info);
     default:
       // XMP.fatal("unknown pragma");
       // ignore it
@@ -557,6 +559,106 @@ public class XMPtransPragma
     
     return descId;
   }
+
+  private Block translateTemplateFix(PragmaBlock pb, XMPinfo info){
+
+    Ident f; 
+    Xobject args;
+    Block b = Bcons.emptyBlock();
+    BasicBlock bb = b.getBasicBlock();
+
+    XMPtemplate tObject = info.getTemplate();
+
+    XobjList sizeList = info.getSizeList();
+    XobjList distList = info.getDistList();
+
+    if (sizeList == null || sizeList.isEmptyList()){
+      sizeList = Xcons.List();
+      for (int i = 0; i < tObject.getDim(); i++){
+	sizeList.add(Xcons.List(tObject.getLowerAt(i), tObject.getUpperAt(i)));
+      }
+    }
+    else {
+      // check rank matching
+      if (sizeList.Nargs() != tObject.getDim())
+	XMP.fatal(pb, "the number of <template-spec> is different from that in the declaration");
+    }
+
+    if (distList == null || distList.isEmptyList()){
+      distList = Xcons.List();
+      for (int i = 0; i < tObject.getDim(); i++){
+	distList.add(Xcons.List(Xcons.IntConstant(tObject.getDistMannerAt(i)),
+				tObject.getDistArgAt(i)));
+      }
+    }
+    else {
+      // check dist-format matching
+      for (int i = 0; i < tObject.getDim(); i++){
+	Xobject dist = distList.getArg(i);
+	int dist_decl = tObject.getDistMannerAt(i);
+	if (dist == null){
+	  if (dist_decl != XMPtemplate.DUPLICATION) XMP.fatal(pb, "<dist-format> not match");
+	}
+	else {
+	  String dist_fmt = dist.getArg(0).getString();
+	  if (dist_fmt.equalsIgnoreCase("BLOCK")){
+	    if (dist_decl != XMPtemplate.BLOCK) XMP.fatal(pb, "<dist-format> not match");
+	  }
+	  else if(dist_fmt.equalsIgnoreCase("CYCLIC")){
+	    if (dist_decl != XMPtemplate.CYCLIC)
+	      XMP.fatal(pb, "<dist-format> not match");
+	  }
+	  else if(dist_fmt.equalsIgnoreCase("GBLOCK")){
+	    if (dist_decl != XMPtemplate.GBLOCK) XMP.fatal(pb, "<dist-format> not match");
+	    if (tObject.getDistArgAt(i) != null) XMP.fatal(pb, "<dist-format> not match");
+	  }
+	}
+      }
+    }
+
+    /* template size */
+    f = env.declInternIdent(XMP.template_dim_info_f, Xtype.FsubroutineType);
+    for (int i = 0; i < tObject.getDim(); i++){
+
+      Xobject dist = distList.getArg(i);
+
+      int distManner = XMPtemplate.DUPLICATION;
+      if (dist == null)
+	distManner = XMPtemplate.DUPLICATION;
+      else if(dist.getArg(0).isIntConstant())
+	distManner = dist.getArg(0).getInt();
+      else {
+	String dist_fmt = dist.getArg(0).getString();
+	if (dist_fmt.equalsIgnoreCase("BLOCK"))
+	  distManner = XMPtemplate.BLOCK;
+	else if(dist_fmt.equalsIgnoreCase("CYCLIC"))
+	  distManner = XMPtemplate.CYCLIC;
+	else if(dist_fmt.equalsIgnoreCase("GBLOCK"))
+	  distManner = XMPtemplate.GBLOCK;
+	else {
+	  XMP.fatal(pb, "unknown distribution format," + dist_fmt);
+	}
+      }
+
+      Xobject distArg;
+      if (dist != null && dist.getArg(1) != null)
+	distArg = dist.getArg(1);
+      else
+	distArg = Xcons.IntConstant(0);
+
+      args = Xcons.List(tObject.getDescId().Ref(), Xcons.IntConstant(i),
+			sizeList.getArg(i).getArg(0), sizeList.getArg(i).getArg(1),
+			Xcons.IntConstant(distManner),
+			distArg);
+      bb.add(f.callSubroutine(args));
+    }
+
+    /* init */
+    f = env.declInternIdent(XMP.template_init_f, Xtype.FsubroutineType);
+    bb.add(f.callSubroutine(Xcons.List(tObject.getDescId().Ref(),
+				       tObject.getOntoNodes().getDescId().Ref())));
+
+    return b;
+  }
+
 }
-
-

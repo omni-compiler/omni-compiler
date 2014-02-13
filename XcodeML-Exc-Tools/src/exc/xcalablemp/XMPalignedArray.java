@@ -40,6 +40,7 @@ public class XMPalignedArray {
   private XMPtemplate		_alignTemplate;
   private boolean               _isParameter;
   private boolean               _isLocal;
+  private boolean               _isPointer;
 
   public static int convertDistMannerToAlignManner(int distManner) throws XMPexception {
     switch (distManner) {
@@ -89,6 +90,7 @@ public class XMPalignedArray {
     _alignTemplate = alignTemplate;
     _isParameter = false;
     _isLocal = false;
+    _isPointer = false;
   }
 
   public String getName() {
@@ -215,6 +217,14 @@ public class XMPalignedArray {
 
   public boolean isLocal() {
     return _isLocal;
+  }
+
+  public void setIsPointer() {
+    _isPointer = true;
+  }
+
+  public boolean isPointer() {
+    return _isPointer;
   }
 
   public void setShadowAt(XMPshadow shadow, int index) {
@@ -402,8 +412,8 @@ public class XMPalignedArray {
       throw new XMPexception("template '" + templateName + "' is not declared");
     }
 
-    if (!templateObj.isFixed()) {
-      throw new XMPexception("template '" + templateName + "' is not fixed");
+    if (!templateObj.isFixed() && !isPointer) {
+      throw new XMPexception("An array cannot aligned with a non-fixed template '" + templateName +"'");
     }
 
     if (!(templateObj.isDistributed())) {
@@ -413,26 +423,28 @@ public class XMPalignedArray {
     int templateDim = templateObj.getDim();
 
     // declare array address pointer, array descriptor
-    Ident arrayAddrId = null;
+    Ident arrayAddrId = arrayId;
     Ident arrayDescId = null;
     if (isLocalPragma) {
-      arrayAddrId = XMPlocalDecl.addObjectId2(XMP.ADDR_PREFIX_ + arrayName, Xtype.Pointer(arrayElmtType), parentBlock);
+      if (!isPointer) arrayAddrId = XMPlocalDecl.addObjectId2(XMP.ADDR_PREFIX_ + arrayName,
+							      Xtype.Pointer(arrayElmtType), parentBlock);
       arrayDescId = XMPlocalDecl.addObjectId2(XMP.DESC_PREFIX_ + arrayName, parentBlock);
     }
     else {
-      if (arrayId.getStorageClass() == StorageClass.EXTERN) {
-        arrayAddrId = globalDecl.declExternIdent(XMP.ADDR_PREFIX_ + arrayName, Xtype.Pointer(arrayElmtType));
+      if (!isPointer){
+	if (arrayId.getStorageClass() == StorageClass.EXTERN) {
+	  arrayAddrId = globalDecl.declExternIdent(XMP.ADDR_PREFIX_ + arrayName, Xtype.Pointer(arrayElmtType));
+	}
+	else if (arrayId.getStorageClass() == StorageClass.STATIC) {
+	  arrayAddrId = globalDecl.declStaticIdent(XMP.ADDR_PREFIX_ + arrayName, Xtype.Pointer(arrayElmtType));
+	}
+	else if (arrayId.getStorageClass() == StorageClass.EXTDEF) {
+	  arrayAddrId = globalDecl.declGlobalIdent(XMP.ADDR_PREFIX_ + arrayName, Xtype.Pointer(arrayElmtType));
+	}
+	else {
+	  throw new XMPexception("cannot align array '" + arrayName + "', wrong storage class");
+	}
       }
-      else if (arrayId.getStorageClass() == StorageClass.STATIC) {
-        arrayAddrId = globalDecl.declStaticIdent(XMP.ADDR_PREFIX_ + arrayName, Xtype.Pointer(arrayElmtType));
-      }
-      else if (arrayId.getStorageClass() == StorageClass.EXTDEF) {
-        arrayAddrId = globalDecl.declGlobalIdent(XMP.ADDR_PREFIX_ + arrayName, Xtype.Pointer(arrayElmtType));
-      }
-      else {
-        throw new XMPexception("cannot align array '" + arrayName + "', wrong storage class");
-      }
-
       arrayDescId = globalDecl.declStaticIdent(XMP.DESC_PREFIX_ + arrayName, Xtype.voidPtrType);
     }
 
@@ -469,6 +481,7 @@ public class XMPalignedArray {
 
     if (isLocalPragma) alignedArray.setIsLocal();
     if (isParameter) alignedArray.setIsParameter();
+    if (isPointer) alignedArray.setIsPointer();
 
     if (isLocalPragma) {
       XMPlocalDecl.addConstructorCall2("_XMP_init_array_desc", initArrayDescFuncArgs, globalDecl, parentBlock);
@@ -555,8 +568,8 @@ public class XMPalignedArray {
     }
 
     if (isPointer){
-	XMPlocalDecl.removeLocalIdent(pb, arrayName);
-	return;
+      //if (!isParameter) XMPlocalDecl.removeLocalIdent(pb, arrayName);
+      return;
     }
 
     // check alignSubscriptVarList
@@ -744,9 +757,9 @@ public class XMPalignedArray {
     Block parentBlock = null;
     if (isLocalPragma) parentBlock = pb.getParentBlock();
 
-    // normalize array
-    alignSubscriptExpr = normArray(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex,
-                                   alignSubscriptExpr, globalDecl, isLocalPragma, pb);
+    // not normalize pointers. normalization should be done at runtime.
+    //alignSubscriptExpr = normArray(alignedArray, alignSourceIndex, templateObj, alignSubscriptIndex,
+    //                               alignSubscriptExpr, globalDecl, isLocalPragma, pb);
 
     XobjList alignFuncArgs = Xcons.List(alignedArray.getDescId().Ref(),
                                         Xcons.IntConstant(alignSourceIndex),
