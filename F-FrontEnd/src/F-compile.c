@@ -714,7 +714,7 @@ void compile_statement1(int st_no, expr x)
 	  }
 	  else if (CTL_OMP_ARG_DIR(ctl_top) == OMP_F_DO){
 	    expv dclause = CTL_OMP_ARG_DCLAUSE(ctl_top);
-	    if (EXPR_ARG2(x) != NULL) list_put_last(dclause, EXPR_ARG2(x));
+	    //if (EXPR_ARG2(x) != NULL) list_put_last(dclause, EXPR_ARG2(x));
 	    CTL_BLOCK(ctl_top) = 
 		OMP_FOR_pragma_list(dclause, CURRENT_STATEMENTS);
 	    EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top));
