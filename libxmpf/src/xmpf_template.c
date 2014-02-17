@@ -152,7 +152,9 @@ void xmpf_ref_nodes_alloc__(_XMP_object_ref_t **r_desc,
     if(rp == NULL || ip == NULL || iq == NULL) 
 	_XMP_fatal("ref_alloc: cannot alloc memory");
     rp->ref_kind = XMP_OBJ_REF_NODES;
-    rp->ndims = n;
+
+    rp->ndims = n ? n : (*n_desc)->dim;
+
     //rp->offset = ip;
     rp->REF_OFFSET = ip;
     rp->n_desc = *n_desc;
@@ -160,6 +162,7 @@ void xmpf_ref_nodes_alloc__(_XMP_object_ref_t **r_desc,
     rp->REF_INDEX = iq;
     rp->REF_STRIDE = ir;
     rp->subscript_type = is;
+    for (int i = 0; i < rp->ndims; i++) rp->subscript_type[i] = SUBSCRIPT_NONE;
     *r_desc = rp;
 }
 
@@ -208,5 +211,14 @@ void xmpf_ref_set_dim_info__(_XMP_object_ref_t **r_desc, int *i_dim, int *type,
 
 void xmpf_ref_init__(_XMP_object_ref_t **r_desc)
 {
-    /* nothing at this moment */
+  _XMP_object_ref_t *rp = *r_desc;
+  _XMP_nodes_t *n = rp->n_desc;
+
+  for (int i = 0; i < rp->ndims; i++){
+    if (rp->subscript_type[i] == SUBSCRIPT_NONE){
+      rp->REF_LBOUND[i] = 1;
+      rp->REF_UBOUND[i] = n->info[i].size;
+      rp->REF_STRIDE[i] = 1;
+    }
+  }
 }

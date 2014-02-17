@@ -9,6 +9,8 @@
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
+void xmp_dbg_printf(char *fmt,...);
+
 // XXX <nodes-ref> is { 1-ogigin in language | 0-origin in runtime }, needs converting
 
 static _XMP_nodes_t *_XMP_create_new_nodes(int is_member, int dim, int comm_size, _XMP_comm_t *comm) {
@@ -417,7 +419,8 @@ _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NAMED(int dim, _XMP_nodes_t *ref_node
   }
 
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
-  MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, _XMP_world_rank, comm);
+  //MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, _XMP_world_rank, comm);
+  MPI_Comm_split(*((MPI_Comm *)ref_nodes->comm), color, _XMP_world_rank, comm);
 
   _XMP_nodes_t *n = _XMP_create_new_nodes(is_member, dim, comm_size, (_XMP_comm_t *)comm);
 

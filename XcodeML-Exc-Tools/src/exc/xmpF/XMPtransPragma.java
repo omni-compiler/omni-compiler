@@ -339,7 +339,8 @@ public class XMPtransPragma
 	XMP.fatal("reduction for non-basic type ="+type);
       }
       Xobject args = Xcons.List(id.Ref(),size_expr,
-				Xcons.IntConstant(XMP.reduceBasicType(type)),
+				//Xcons.IntConstant(XMP.reduceBasicType(type)),
+				XMP.typeIntConstant(type),
 				Xcons.IntConstant(op),
 				Xcons.IntConstant(0));
       bb.add(f.callSubroutine(args));
@@ -366,7 +367,8 @@ public class XMPtransPragma
 	XMP.fatal("bcast for non-basic type ="+type);
       }
       Xobject args = Xcons.List(id.Ref(),size_expr,
-				Xcons.IntConstant(type.getBasicType()),
+				//Xcons.IntConstant(type.getBasicType()),
+				XMP.typeIntConstant(type),
 				Xcons.IntConstant(0),
 				Xcons.IntConstant(0));
       bb.add(f.callSubroutine(args));

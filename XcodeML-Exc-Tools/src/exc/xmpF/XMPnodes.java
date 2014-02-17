@@ -153,7 +153,10 @@ public class XMPnodes extends XMPobject {
       body.add(f.callSubroutine(Xcons.List(_descId.Ref())));
       break;
     case INHERIT_NODES:
-      // create nodeRef ...
+      body.add(nodesRef.buildConstructor(env));
+      f = env.declInternIdent(XMP.nodes_init_NODES_f, Xtype.FsubroutineType);
+      body.add(f.callSubroutine(Xcons.List(_descId.Ref(), nodesRef.getDescId().Ref())));
+      break;
     default:
       XMP.fatal("bulidConstrutor: unknown inheritType="+inheritType);
     }

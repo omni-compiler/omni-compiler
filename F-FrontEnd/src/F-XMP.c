@@ -116,16 +116,25 @@ void compile_XMP_directive(expr x)
 	check_for_XMP_pragma(-1,NULL);  /* close DO directives if any */
 
     switch(EXPR_INT(dir)){
-    case XMP_NODES:
+    case XMP_NODES: {
       check_INDCL();
       /* check arg: (nameNames, nodeSizeList, inherit) */
       x1 = EXPR_ARG1(c); /* indent */
       x2 = XMP_compile_subscript_list(EXPR_ARG2(c),XMP_LIST_NODES);
-      x3 = XMP_compile_ON_ref(EXPR_ARG3(c));
+      //x3 = XMP_compile_ON_ref(EXPR_ARG3(c));
+
+      expr nodes_rhs, nodes_ref;
+      if (nodes_rhs = EXPR_ARG3(c)){
+	nodes_ref = XMP_compile_ON_ref(EXPR_ARG2(nodes_rhs));
+	x3 = list2(LIST, EXPR_ARG1(nodes_rhs), nodes_ref);
+      }
+      else 
+	x3 = NULL;
+
       c = list3(LIST,x1,x2,x3);
       output_statement(XMP_pragma_list(XMP_NODES,c,NULL));
       break;
-
+    }
     case XMP_TEMPLATE:
       check_INDCL();
       /* check arg: (templateNameList, templateSpecList) */
