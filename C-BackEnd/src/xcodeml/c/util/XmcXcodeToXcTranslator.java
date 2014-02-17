@@ -1864,6 +1864,139 @@ public class XmcXcodeToXcTranslator {
             
         }
     }
+    
+    class ACCPragmaVisitor extends XcodeNodeVisitor {
+	/**
+	 * Decompile "ACCPragma" element in XcodeML/F.
+	 */
+	@Override
+	public void enter(TranslationContext tc, Node n, XcNode parent) {
+	    XcDirectiveObj obj = new XcDirectiveObj();
+	    addChild(parent, obj);
+	    // directive
+	    Node dir = n.getFirstChild();
+	    String dirName = XmDomUtil.getContentText(dir).toLowerCase();
+
+	    if (dirName.equals("parallel_loop")) 	dirName = "parallel loop";
+	    else if (dirName.equals("kernels_loop"))dirName = "kernels loop";
+
+	    obj.setLine("#pragma acc " + dirName);
+
+	    if (dirName.equals("wait")){
+		Node arg = dir.getNextSibling();
+		if(! arg.getNodeName().equals("list")){
+		    obj.addToken("(");
+		    enterIntExprNode(tc, obj, arg);
+		    obj.addToken(")");
+		}
+		return;
+	    }
+
+	    if (dirName.equals("cache")){
+		NodeList varList = dir.getNextSibling().getChildNodes();
+		obj.addToken("(");
+		enterVarListNode(tc, obj, varList);
+		obj.addToken(")");
+		return;
+	    }
+
+	    // clause
+	    Node clause = dir.getNextSibling();
+
+	    NodeList list0 = clause.getChildNodes();
+	    for (int i = 0; i < list0.getLength(); i++){          
+		Node childNode = list0.item(i);
+		if (childNode.getNodeType() != Node.ELEMENT_NODE) {
+		    continue;
+		}
+
+		String clauseName = XmDomUtil.getContentText(childNode).toLowerCase();
+		String operator = "";
+
+		if (clauseName.equals("dev_resident"))          clauseName = "device_resident";	  
+		else if (clauseName.equals("reduction_plus"))  {clauseName = "reduction"; operator = "+";}
+		else if (clauseName.equals("reduction_mul"))   {clauseName = "reduction"; operator = "*";}
+		else if (clauseName.equals("reduction_bitand")){clauseName = "reduction"; operator = "&";}
+		else if (clauseName.equals("reduction_bitor")) {clauseName = "reduction"; operator = "|";}
+		else if (clauseName.equals("reduction_bitxor")){clauseName = "reduction"; operator = "^";}
+		else if (clauseName.equals("reduction_logand")){clauseName = "reduction"; operator = "&&";}
+		else if (clauseName.equals("reduction_logor")) {clauseName = "reduction"; operator = "||";}
+		else if (clauseName.equals("reduction_min"))   {clauseName = "reduction"; operator = "min";}
+		else if (clauseName.equals("reduction_max"))   {clauseName = "reduction"; operator = "max";}
+
+		obj.addToken(clauseName);
+
+		Node arg = childNode.getFirstChild().getNextSibling();
+		if (arg != null){
+		    obj.addToken("(");
+		    if (operator != "") obj.addToken(operator + " :");
+
+		    if (!arg.getNodeName().equals("list")){
+			enterIntExprNode(tc, obj, arg);
+		    }
+		    else {
+			NodeList varList = arg.getChildNodes();
+			enterVarListNode(tc, obj, varList);
+		    }
+		    obj.addToken(")");
+		}
+	    }
+
+	    // body
+	    Node body = clause.getNextSibling();
+	    NodeList list2 = body.getChildNodes();
+	    for (int i = 0; i < list2.getLength(); i++){
+		Node childNode = list2.item(i);
+		if (childNode.getNodeType() != Node.ELEMENT_NODE) {
+		    continue;
+		}
+		enterNodes(tc, parent, childNode);
+	    }
+	}
+
+	private void enterVarListNode(TranslationContext tc, XcDirectiveObj obj, NodeList nl){
+	    enterVarNode(tc, obj, nl.item(0));
+	    for (int j = 1; j < nl.getLength(); j++){
+		Node var = nl.item(j);
+		obj.addToken(",");
+		enterVarNode(tc, obj, var);
+	    }
+	}
+
+	private void enterIntExprNode(TranslationContext tc, XcDirectiveObj obj, Node n){
+	    String text = XmDomUtil.getContentText(n);
+	    obj.addToken(text);
+	}
+
+	private void enterVarNode(TranslationContext tc, XcDirectiveObj obj, Node n){
+	    if(n.getNodeName().equals("list")){
+		//array
+		String arrayDim = "";
+		NodeList array = n.getChildNodes();
+		enterNodes(tc, obj, array.item(0));
+		for (int j = 1; j < array.getLength(); j++){
+		    Node index = array.item(j);
+		    String indexStr = "";
+		    if(index.getNodeName().equals("list")){
+			NodeList range = index.getChildNodes();
+			String lower = XmDomUtil.getContentText(range.item(0)); 
+			String length = "";
+			if(range.item(1) != null){
+			    length = XmDomUtil.getContentText(range.item(1));
+			}
+			indexStr += lower + ":" + length;
+		    }else{
+			indexStr += XmDomUtil.getContentText(array.item(j));
+		    }
+		    arrayDim += "[" + indexStr + "]";
+		}
+		obj.addToken(arrayDim);
+	    }else{
+		//var
+		enterNodes(tc, obj, n);
+	    }
+	}
+    }
 
     // text
     class TextVisitor extends XcodeNodeVisitor {
@@ -2853,6 +2986,7 @@ public class XmcXcodeToXcTranslator {
         new Pair("gccAsmDefinition", new GccAsmDefinitionVisitor()),
         new Pair("pragma", new PragmaVisitor()),
         new Pair("OMPPragma", new OMPPragmaVisitor()),
+        new Pair("ACCPragma", new ACCPragmaVisitor()),
         new Pair("text", new TextVisitor()),
         new Pair("gccAsmStatement", new GccAsmStatementVisitor()),
         new Pair("gccAsmOperand", new GccAsmOperandVisitor()),

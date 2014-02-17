@@ -1005,8 +1005,72 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
             break;
 
-        case XMP_PRAGMA:
         case ACC_PRAGMA:
+            e = createElement(name);
+
+            Element f0 = createElement("string");
+            addChildNode(f0, trans(xobj.getArg(0).getString()));
+            addChildNode(e, f0);
+
+            Xobject clause = xobj.getArg(1);
+            if (clause != null){
+        	if(clause instanceof XobjList){
+        	    //clause list
+        	    Element f1 = createElement("list");
+
+        	    for(Xobject a : (XobjList)clause){
+        		if(a instanceof XobjList){
+        		    //clause name
+        		    Element g = createElement("list");
+        		    addChildNode(g, trans(a.getArg(0).getString()));
+
+        		    Xobject vars = a.getArgOrNull(1);
+        		    if (vars != null){
+        			if (vars instanceof XobjList){
+        			    Element g1 = createElement("list");
+        			    for (Xobject b : (XobjList)vars){
+        				addChildNode(g1, transACCPragmaVarOrArray(b));
+        			    }
+        			    addChildNode(g, g1);
+        			}else{
+        			    //int-expr of if, async, num_gangs, num_workers, vector_length, gang, worker, vector, collapse
+        			    addChildNode(g, transExpr(vars));
+        			}
+        		    }
+        		    addChildNode(f1, g);
+        		}else{
+        		    //var of cache
+        		    addChildNode(f1, transACCPragmaVarOrArray(a));
+        		}
+        	    }
+        	    addChildNode(e, f1);
+        	}else{
+        	    //int-expr of wait
+        	    addChildNode(e, transExpr(clause));
+        	}
+            }
+
+            Element f2 = createElement("list");
+            Xobject body = xobj.getArgOrNull(2);
+            if (body != null){
+        	if (body.Opcode() == Xcode.F_STATEMENT_LIST){
+        	    for (Xobject a : (XobjList)body){
+        		if (a.Opcode() == Xcode.F_STATEMENT_LIST){
+        		    for (Xobject b : (XobjList)a){
+        			addChildNode(f2, trans(b));
+        		    }
+        		} else {
+        		    addChildNode(f2, trans(a));
+        		}
+        	    }
+        	} else {
+        	    addChildNode(f2, trans(body));
+        	}
+            }
+            addChildNode(e, f2);
+            break;
+
+        case XMP_PRAGMA:
             e = addChildNodes(createElement("text"),
                               trans("/* ignored Xcode." + xobj.Opcode().toXcodeString() + " */"));
             break;
@@ -1090,5 +1154,28 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             return null;
         }
         return declList;
+    }
+    
+    private Node transACCPragmaVarOrArray(Xobject x){
+	if(x == null) return null;
+
+	if(x.Opcode() != Xcode.LIST){
+	    return trans(x);
+	}else{
+	    //array
+	    Element array = createElement("list");
+	    for (Xobject dim : (XobjList)x){
+		if(dim.Opcode() != Xcode.LIST){
+		    addChildNode(array, trans(dim));
+		}else{
+		    Element range = createElement("list");
+		    for(Xobject j : (XobjList)dim){
+			addChildNode(range, trans(j));
+		    }
+		    addChildNode(array, range);
+		}
+	    }
+	    return array;
+	}
     }
 }

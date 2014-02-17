@@ -8,6 +8,8 @@ package exc.xcalablemp;
 
 import exc.block.*;
 import exc.object.*;
+import exc.openacc.ACCpragma;
+
 import java.util.*;
 
 public class XMPrewriteExpr {
@@ -35,6 +37,9 @@ public class XMPrewriteExpr {
 
     // rewrite OMP pragma
     rewriteOMPpragma(fb, localXMPsymbolTable);
+    
+    // rewrite ACC pragma
+    rewriteACCpragma(fb, localXMPsymbolTable);
 
     // create local object descriptors, constructors and desctructors
     XMPlocalDecl.setupObjectId(fb);
@@ -1484,6 +1489,135 @@ public class XMPrewriteExpr {
 
     }
 
+  }
+  
+  /*
+   * rewrite ACC pragmas
+   */
+  private void rewriteACCpragma(FunctionBlock fb, XMPsymbolTable localXMPsymbolTable){
+    topdownBlockIterator bIter = new topdownBlockIterator(fb);
+
+    for (bIter.init(); !bIter.end(); bIter.next()){
+      Block block = bIter.getBlock();
+      if (block.Opcode() == Xcode.ACC_PRAGMA){
+	Xobject clauses = ((PragmaBlock)block).getClauses();
+	if (clauses != null){
+	  BlockList newBody = Bcons.emptyBody();
+	  rewriteACCClauses(clauses, (PragmaBlock)block, fb, localXMPsymbolTable, newBody);
+	  if(!newBody.isEmpty()){
+	    bIter.setBlock(Bcons.COMPOUND(newBody));
+    	    newBody.add(Bcons.COMPOUND(Bcons.blockList(block))); //newBody.add(block);
+	  }
+	}
+      }
+    }
+  }
+
+  /*
+   * rewrite ACC clauses
+   */
+  private void rewriteACCClauses(Xobject expr, PragmaBlock pragmaBlock, Block block,
+      XMPsymbolTable localXMPsymbolTable, BlockList body){
+
+    bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
+
+    for (iter.init(); !iter.end(); iter.next()){
+      Xobject x = iter.getXobject();
+      if (x == null) continue;
+
+      if (x.Opcode() == Xcode.LIST){
+	if (x.left() == null || x.left().Opcode() != Xcode.STRING) continue;
+	
+	String clauseName = x.left().getString();
+	ACCpragma accClause = ACCpragma.valueOf(clauseName); 
+	if(accClause != null){
+	  XobjList itemList  = (XobjList)x.right();
+	  for(int i = 0; i < itemList.Nargs(); i++){
+	    Xobject item = itemList.getArg(i);
+	    if(item.Opcode() == Xcode.VAR){
+	      //item is variable or arrayAddr
+	      try{
+		itemList.setArg(i, rewriteACCArrayAddr(item, pragmaBlock, body));
+	      }catch (XMPexception e){
+		XMP.error(x.getLineNo(), e.getMessage());
+	      }
+	    }else if(item.Opcode() == Xcode.LIST){
+	      //item is arrayRef
+	      XMP.error(x.getLineNo(), "reached unimplemented part");
+	    }
+	  }
+	}
+
+	if (x.left().getString().equals("PRIVATE")){
+	  if (!pragmaBlock.getPragma().contains("LOOP")) continue;
+
+	  XobjList itemList = (XobjList)x.right();
+
+	  // find loop variable
+	  Xobject loop_var = null;
+	  BasicBlockIterator i = new BasicBlockIterator(pragmaBlock.getBody());
+	  for (Block b = pragmaBlock.getBody().getHead();
+	      b != null;
+	      b = b.getNext()){
+	    if (b.Opcode() == Xcode.F_DO_STATEMENT){
+	      loop_var = ((FdoBlock)b).getInductionVar();
+	    }
+	  }
+	  if (loop_var == null) continue;
+
+	  // check if the clause has contained the loop variable
+	  boolean flag = false;
+	  Iterator<Xobject> j = itemList.iterator();
+	  while (j.hasNext()){
+	    Xobject item = j.next();
+	    if (item.getName().equals(loop_var.getName())){
+	      flag = true;
+	    }
+	  }
+
+	  // add the loop variable to the clause
+	  if (!flag){
+	    itemList.add(loop_var);
+	  }
+	}
+      }
+    }
+  }
+  
+  private Xobject rewriteACCArrayAddr(Xobject arrayAddr, Block block, BlockList body) throws XMPexception {
+      XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayAddr.getSym(), block);
+      XMPcoarray coarray = _globalDecl.getXMPcoarray(arrayAddr.getSym(), block);
+
+      if (alignedArray == null && coarray == null) {
+	  return arrayAddr;
+      }
+      else if(alignedArray != null && coarray == null){ // only alignedArray
+	  if (alignedArray.checkRealloc() || (alignedArray.isLocal() && !alignedArray.isParameter()) ||
+		  alignedArray.isParameter()){
+	      Xobject arrayAddrRef = alignedArray.getAddrId().Ref();
+	      Ident descId = alignedArray.getDescId();
+	      
+	      
+	      String arraySizeName = "_ACC_size_" + arrayAddr.getSym();
+	      Ident arraySizeId = body.declLocalIdent(arraySizeName, Xtype.unsignedlonglongType);
+
+	      Block getArraySizeFuncCall = _globalDecl.createFuncCallBlock("_XMP_get_array_total_elmts", Xcons.List(descId.Ref()));
+	      body.insert(Xcons.Set(arraySizeId.Ref(), getArraySizeFuncCall.toXobject()));
+	      //body.insert(getArraySizeFuncCall);
+	      
+	      XobjList arrayRef = Xcons.List(arrayAddrRef, Xcons.List(Xcons.IntConstant(0), arraySizeId.Ref()));
+	      
+	      arrayRef.setIsRewrittedByXmp(true);
+	      return arrayRef;
+	  }
+	  else {
+	      return arrayAddr;
+	  }
+      } else if(alignedArray == null && coarray != null){  // only coarray
+	  return rewriteVarRef(arrayAddr, block, false);
+      } else{ // no execute
+	  return arrayAddr;
+      }
   }
 
 }

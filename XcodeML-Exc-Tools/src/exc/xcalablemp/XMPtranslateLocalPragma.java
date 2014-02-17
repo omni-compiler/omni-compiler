@@ -507,6 +507,28 @@ public class XMPtranslateLocalPragma {
       XMPrewriteExpr.rewriteArrayRefInLoop(iter.getXobject(), _globalDecl, schedBaseBlock);
     }
 
+    // move pragma block
+    {
+      Block innerMostPragmaBlock = null;
+      for(Block b = schedBaseBlock; b != null; b = b.getParentBlock()){
+	if(b.getBody() == loopBody) break;
+	if(b.Opcode() == Xcode.ACC_PRAGMA || b.Opcode() == Xcode.OMP_PRAGMA){
+	  innerMostPragmaBlock = b;
+	  break;
+	}
+      }
+      if(innerMostPragmaBlock != null){
+	BlockList innerMostPragmaBody = innerMostPragmaBlock.getBody();
+	Block outerMostPragmaBlock = loopBody.getHead();
+	//innerMostPragmaBlock.setBody(Bcons.emptyBody());
+
+	schedBaseBlock.replace(outerMostPragmaBlock);
+	innerMostPragmaBlock.setBody(Bcons.blockList(schedBaseBlock));
+	loopBody = innerMostPragmaBody;
+
+      }
+    }
+    
     // replace pragma
     Block loopFuncCallBlock = Bcons.COMPOUND(loopBody);
     pb.replace(loopFuncCallBlock);
@@ -1181,7 +1203,8 @@ public class XMPtranslateLocalPragma {
         }
       }
       else if (b.Opcode() == Xcode.COMPOUND_STATEMENT ||
-	       b.Opcode() == Xcode.OMP_PRAGMA) {
+	       b.Opcode() == Xcode.OMP_PRAGMA ||
+	       b.Opcode() == Xcode.ACC_PRAGMA) {
         return getOutermostLoopBlock(b.getBody());
       }
 
