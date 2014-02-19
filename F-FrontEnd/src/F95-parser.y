@@ -1699,8 +1699,8 @@ omp_directive:
 	  { $$ = OMP_LIST(OMP_F_ORDERED,NULL); }
 	| OMPKW_END OMPKW_ORDERED
 	  { $$ = OMP_LIST(OMP_F_END_ORDERED,NULL); }
-	| OMPKW_THREADPRIVATE '(' omp_list ')'
-	  { $$ = OMP_LIST(OMP_F_THREADPRIVATE,$3); }
+	| OMPKW_THREADPRIVATE '(' omp_copyin_list ')'
+ 	  { $$ = OMP_LIST(OMP_F_THREADPRIVATE,NULL); } /* NOTE: must be fixed */
 	;
 
 omp_nowait_option:
@@ -1763,6 +1763,7 @@ omp_list:
 	| omp_list ',' IDENTIFIER
 	  { $$ = list_put_last($1,$3); }
 	;
+
 /*
 omp_common_list:
 	  '/' IDENTIFIER '/'
@@ -1942,23 +1943,34 @@ xmp_barrier_clause:
 	      { $$ = list2(LIST,NULL,$1); }
 	   ;
 
+/* xmp_bcast_clause: */
+/*    	     '(' xmp_expr_list ')' xmp_FROM xmp_obj_ref xmp_clause_opt */
+/* 	      { $$ = list4(LIST,$2,$5,NULL,$6); } */
+/* 	   | '(' xmp_expr_list ')' xmp_ON xmp_obj_ref xmp_clause_opt */
+/* 	      { $$ = list4(LIST,$2,NULL,$5,$6); } */
+/*    	   | '(' xmp_expr_list ')' xmp_FROM xmp_obj_ref */
+/* 	           xmp_ON xmp_obj_ref xmp_clause_opt */
+/* 	      { $$ = list4(LIST,$2,$5,$7,$8); } */
+/* 	   | '(' xmp_expr_list ')' xmp_clause_opt */
+/* 	      { $$ = list4(LIST,$2,NULL,NULL,$4); } */
+/*             ; */
+
 xmp_bcast_clause:
-	     '(' xmp_expr_list ')' xmp_clause_opt
-	      { $$ = list4(LIST,$2,NULL,NULL,$4); }
-   	   | '(' xmp_expr_list ')' xmp_FROM xmp_obj_ref xmp_clause_opt
-	      { $$ = list4(LIST,$2,$5,NULL,$6); }
-	   | '(' xmp_expr_list ')' xmp_ON xmp_obj_ref xmp_clause_opt
-	      { $$ = list4(LIST,$2,NULL,$5,$6); }
-   	   | '(' xmp_expr_list ')' xmp_FROM xmp_obj_ref 
-	           xmp_ON xmp_obj_ref xmp_clause_opt
-	      { $$ = list4(LIST,$2,$5,$7,$8); }
+   	     '(' xmp_expr_list ')' KW XMPKW_FROM xmp_obj_ref KW xmp_async_opt
+	      { $$ = list4(LIST,$2,$6,NULL,$8); }
+	   | '(' xmp_expr_list ')' KW XMPKW_ON xmp_obj_ref KW xmp_async_opt
+	      { $$ = list4(LIST,$2,NULL,$6,$8); }
+   	   | '(' xmp_expr_list ')' KW XMPKW_FROM xmp_obj_ref KW XMPKW_ON xmp_obj_ref KW xmp_async_opt
+	      { $$ = list4(LIST,$2,$6,$9,$11); }
+	   | '(' xmp_expr_list ')' KW xmp_async_opt
+	      { $$ = list4(LIST,$2,NULL,NULL,$5); }
             ;
 
 xmp_reduction_clause:
-	       xmp_reduction_spec xmp_clause_opt
-	        { $$ = list3(LIST,$1,NULL,$2); }
-	     | xmp_reduction_spec xmp_ON xmp_obj_ref xmp_clause_opt
-                { $$ = list3(LIST,$1,$3,$4); }
+	       xmp_reduction_spec KW xmp_clause_opt
+	        { $$ = list3(LIST,$1,NULL,$3); }
+	     | xmp_reduction_spec KW xmp_ON xmp_obj_ref KW xmp_clause_opt
+                { $$ = list3(LIST,$1,$4,$6); }
 	     ;
 
 xmp_array_clause:

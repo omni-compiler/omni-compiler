@@ -673,7 +673,7 @@ token()
     case '(': 
         paren_level++; 
 	/* or interface operator (/), (/=), or (//) */
-	if (*bufptr == '/') {
+	if (*bufptr == '/' && !st_OMP_flag) {
 	    char *save = ++bufptr; /* check 'interface operator (/)' ? */
 
 	    while(isspace(*bufptr)) bufptr++;  /* skip white space */
@@ -760,7 +760,7 @@ token()
             bufptr++;
             return(NE);
         } 
-        if (*bufptr == ')') {
+        if (*bufptr == ')' && !st_OMP_flag) {
             bufptr++;
             paren_level--; 
             { /* check 'interface operator (/)' ? */
