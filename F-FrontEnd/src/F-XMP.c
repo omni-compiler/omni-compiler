@@ -124,7 +124,7 @@ void compile_XMP_directive(expr x)
       //x3 = XMP_compile_ON_ref(EXPR_ARG3(c));
 
       expr nodes_rhs, nodes_ref;
-      if (nodes_rhs = EXPR_ARG3(c)){
+      if ((nodes_rhs = EXPR_ARG3(c))){
 	nodes_ref = XMP_compile_ON_ref(EXPR_ARG2(nodes_rhs));
 	x3 = list2(LIST, EXPR_ARG1(nodes_rhs), nodes_ref);
       }
@@ -172,6 +172,11 @@ void compile_XMP_directive(expr x)
       x2 = XMP_compile_subscript_list(EXPR_ARG2(c),XMP_LIST_SHADOW);
       c = list2(LIST,x1,x2);
       output_statement(XMP_pragma_list(XMP_SHADOW,c,NULL));
+      break;
+
+    case XMP_LOCAL_ALIAS:
+      check_INDCL();
+      output_statement(XMP_pragma_list(XMP_LOCAL_ALIAS,c,NULL));
       break;
 
     case XMP_TASK:

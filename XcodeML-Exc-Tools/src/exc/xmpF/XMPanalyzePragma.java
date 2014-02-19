@@ -142,8 +142,12 @@ public class XMPanalyzePragma
       }
       break;
 
+    case LOCAL_ALIAS:
+      analyzeLocalAlias(pb.getClauses(), env, pb);
+      break;
+
     case TEMPLATE_FIX:
-      analyzeTemplateFix(pb.getClauses(),info, pb);
+      analyzeTemplateFix(pb.getClauses(), info, pb);
       break;
 
     case LOOP:
@@ -193,6 +197,80 @@ public class XMPanalyzePragma
   private static boolean isEqualVar(Xobject v1, Xobject v2){
     return (v1.isVariable() && v2.isVariable() &&
 	    v1.getName().equals(v2.getName()));
+  }
+
+  public static void analyzeLocalAlias(Xobject localAliasDecl, 
+				 XMPenv env, PragmaBlock pb){
+
+    // global array
+
+    String gName = localAliasDecl.getArg(1).getName();
+
+    Ident gArrayId = env.findVarIdent(gName, pb);
+    if (gArrayId == null) {
+      XMP.errorAt(pb, "global array '" + gName + "' is not declared");
+      return;
+    }
+
+    XMParray gObject = XMParray.getArray(gArrayId);
+    if (gObject == null){
+      XMP.errorAt(pb, "global array '" + gName  + "' is not aligned");
+      return;
+    }
+
+    // local array
+
+    String lName = localAliasDecl.getArg(0).getName();
+
+    Ident lArrayId = env.findVarIdent(lName, pb);
+    if (lArrayId == null) {
+      XMP.errorAt(pb, "local alias '" + lName + "' is not declared");
+      return;
+    }
+
+    XMParray lObject = XMParray.getArray(lArrayId);
+    if (lObject != null){
+      XMP.errorAt(pb, "local alias '" + lName  + "' is aligned");
+      return;
+    }
+
+    // check type matching
+
+    FarrayType gType = (FarrayType)gArrayId.Type();
+    FarrayType lType = (FarrayType)lArrayId.Type();
+
+    if (!lType.isFassumedShape()){
+      XMP.errorAt(pb, "local alias must be declared as an assumed-shape array.");
+      return;
+    }      
+
+    if (gType.getNumDimensions() != lType.getNumDimensions()){
+      XMP.errorAt(pb, "The rank is different between the global array and the local alias");
+      return;
+    }
+
+    if (!gType.getRef().equals(lType.getRef())){
+      XMP.errorAt(pb, "The element type unmatched between the global array and the local alias");
+      return;
+    }
+
+    // replace name
+
+    Ident origLocalId = gObject.getLocalId();
+    Xtype localType = origLocalId.Type();
+    StorageClass sclass = origLocalId.getStorageClass();
+
+    env.removeIdent(lName, pb);
+    env.removeIdent(origLocalId.getName(), pb);
+
+    Ident newLocalId = env.declIdent(lName, localType, false, pb);
+    newLocalId.setStorageClass(sclass);
+    newLocalId.setValue(Xcons.Symbol(Xcode.VAR, localType, lName));
+
+    gObject.setLocalId(newLocalId);
+
+    
+
   }
 
   private void analyzeTemplateFix(Xobject tfixDecl, 

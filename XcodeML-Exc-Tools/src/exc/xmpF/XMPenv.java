@@ -123,6 +123,31 @@ public class XMPenv {
     return id;
   }
 
+  public void removeIdent(String name, Block block){
+
+    BlockList body= current_def.getBlock().getBody();
+
+    Xobject id_list = body.getIdentList();
+    if (id_list != null){
+      for (XobjArgs r = id_list.getArgs(); r != null; r = r.nextArgs()){
+	if (name.equals(r.getArg().getName())){
+	  id_list.removeArgs(r);
+	}
+      }
+    }
+
+    Xobject decls = body.getDecls();
+    if (decls != null){
+      for (XobjArgs r = decls.getArgs(); r != null; r = r.nextArgs()){
+	if (r.getArg().Opcode() != Xcode.VAR_DECL) continue;
+	if (name.equals(r.getArg().getArg(0).getName())){
+	  decls.removeArgs(r);
+	}
+      }
+    }
+
+  }    
+
   public Ident declIntrinsicIdent(String name, Xtype type) {
     return Ident.Fident(name,type,false,false,null);
   }

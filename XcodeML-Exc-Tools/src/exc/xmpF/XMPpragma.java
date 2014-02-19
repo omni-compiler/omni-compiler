@@ -18,6 +18,7 @@ public enum XMPpragma {
     DISTRIBUTE,
     ALIGN,
     SHADOW,
+    LOCAL_ALIAS,
     TEMPLATE_FIX,
     TASK,
     TASKS,

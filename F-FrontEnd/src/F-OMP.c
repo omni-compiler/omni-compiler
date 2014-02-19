@@ -6,6 +6,8 @@
  */
 #include "F-front.h"
 
+extern CTL *ctl_top_saved;
+
 expv OMP_check_SECTION(expr x);
 expv OMP_pragma_list(enum OMP_pragma pragma,expv arg1,expv arg2);
 expv OMP_FOR_pragma_list(expv clause,expv statements);
@@ -151,7 +153,7 @@ void compile_OMP_directive(expr x)
     check_for_XMP_pragma(-1, x);
 
     if(OMP_do_required){
-	error("OpenMP DO directives must be followed by do statement");
+	error("OpenMP DO directived must be followed by do statement");
 	OMP_do_required = FALSE;
 	return;
     }
@@ -224,16 +226,27 @@ void compile_OMP_directive(expr x)
 	OMP_do_required = TRUE;
 	return;
     case OMP_F_END_DO:
-	if(CTL_TYPE(ctl_top) == CTL_OMP &&
-	   CTL_OMP_ARG_DIR(ctl_top) == OMP_F_DO){
-	    dclause = CTL_OMP_ARG_DCLAUSE(ctl_top);
-	    if(EXPR_ARG2(x) != NULL) list_put_last(dclause,EXPR_ARG2(x));
-	    CTL_BLOCK(ctl_top) = 
-		OMP_FOR_pragma_list(dclause,CURRENT_STATEMENTS);
-	    EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top));
-	    pop_ctl();
-	} else error("OpenMP DO block is not closed");
-	return;
+        /* OMP_F_DO has been already closed at F_ENDDO */
+        /* Here, only the nowait clause is handled. */
+      if (ctl_top_saved){
+	dclause = CTL_OMP_ARG_DCLAUSE(ctl_top_saved);
+	if (EXPR_ARG2(x) != NULL) list_put_last(dclause, EXPR_ARG2(x));
+	CTL_BLOCK(ctl_top_saved) = OMP_FOR_pragma_list(dclause, CURRENT_STATEMENTS);
+	EXPR_LINE(CTL_BLOCK(ctl_top_saved)) = EXPR_LINE(CTL_OMP_ARG(ctl_top_saved));
+	ctl_top_saved = NULL;
+      }
+
+	/* if(CTL_TYPE(ctl_top) == CTL_OMP && */
+	/*    CTL_OMP_ARG_DIR(ctl_top) == OMP_F_DO){ */
+	/*     dclause = CTL_OMP_ARG_DCLAUSE(ctl_top); */
+	/*     if(EXPR_ARG2(x) != NULL) list_put_last(dclause,EXPR_ARG2(x)); */
+	/*     CTL_BLOCK(ctl_top) =  */
+	/* 	OMP_FOR_pragma_list(dclause,CURRENT_STATEMENTS); */
+	/*     EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top)); */
+	/*     pop_ctl(); */
+	/* } else error("OpenMP DO block is not closed"); */
+
+      return;
 	
     case OMP_F_PARALLEL_SECTIONS:
 	push_ctl(CTL_OMP);

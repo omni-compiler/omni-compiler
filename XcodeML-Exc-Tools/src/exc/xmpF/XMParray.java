@@ -128,10 +128,14 @@ public class XMParray {
     return template;
   }
 
+  public Ident getLocalId() { return localId; }
+
+  public void setLocalId(Ident id) { localId = id; }
+
   public Xtype getLocalType() { return localId.Type(); }
   
   public String getLocalName() { return localId.getName(); }
-  
+
   public static XMParray getArray(Xobject id){
     return (XMParray) id.getProp(XMP_ARRAY_PROP);
   }

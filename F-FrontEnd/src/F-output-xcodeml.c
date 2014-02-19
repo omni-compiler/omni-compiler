@@ -2485,6 +2485,7 @@ outx_XMP_dir_string(int l,expv v)
   case XMP_DISTRIBUTE: s = "DISTRIBUTE"; break;
   case XMP_ALIGN: s = "ALIGN"; break;
   case XMP_SHADOW: s = "SHADOW"; break;
+  case XMP_LOCAL_ALIAS: s = "LOCAL_ALIAS"; break;
   case XMP_TASK: s = "TASK"; break;
   case XMP_TASKS: s = "TASKS"; break;
   case XMP_LOOP: s = "LOOP"; break;

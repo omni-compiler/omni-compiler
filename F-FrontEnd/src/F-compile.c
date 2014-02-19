@@ -49,6 +49,7 @@ extern int auto_save_attr_kb;
 /* control stack */
 CTL ctls[MAX_CTL];
 CTL *ctl_top;
+CTL *ctl_top_saved = NULL;
 
 /* current statement label */
 ID this_label;
@@ -718,6 +719,7 @@ void compile_statement1(int st_no, expr x)
 	    CTL_BLOCK(ctl_top) = 
 		OMP_FOR_pragma_list(dclause, CURRENT_STATEMENTS);
 	    EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top));
+	    ctl_top_saved = ctl_top;
 	    pop_ctl();
 	  }
 	}

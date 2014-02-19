@@ -260,6 +260,7 @@
 %token XMPKW_POST
 %token XMPKW_CRITICAL
 %token XMPKW_ARRAY
+%token XMPKW_LOCAL_ALIAS
 
 %token XMPKW_ON
 %token XMPKW_ONTO
@@ -1840,6 +1841,8 @@ xmp_directive:
 	    { $$ = XMP_LIST(XMP_BCAST,$2); }
 	  | XMPKW_ARRAY xmp_array_clause
 	    { $$ = XMP_LIST(XMP_ARRAY,$2); }
+          | XMPKW_LOCAL_ALIAS IDENTIFIER REF_OP IDENTIFIER
+	    { $$ = XMP_LIST(XMP_LOCAL_ALIAS, list2(LIST,$2,$4)); }
 
           | XMPKW_WAIT_ASYNC xmp_wait_async_clause
             { $$ = XMP_LIST(XMP_WAIT_ASYNC, $2); }

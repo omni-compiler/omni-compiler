@@ -602,7 +602,8 @@ declare_variable(ID id)
                 (!TYPE_IS_POINTER(ID_TYPE(id))) &&
                 (!TYPE_IS_ALLOCATABLE(ID_TYPE(id))) &&
                 isSubprogram == FALSE &&
-                is_array_size_adjustable(ID_TYPE(id))) {
+                is_array_size_adjustable(ID_TYPE(id)) &&
+		!XMP_flag) { // For XMP, local adjustable array seems to be supported, because of LOCAL_ALIAS.
                 error("'%s' looks like a local adjustable array, "
                       "not supported yet.",
                       ID_NAME(id));

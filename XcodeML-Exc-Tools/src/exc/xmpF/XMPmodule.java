@@ -115,6 +115,10 @@ public class XMPmodule extends XMPenv {
 	}
 	break;
 
+      case LOCAL_ALIAS:
+	XMPanalyzePragma.analyzeLocalAlias(x.getArg(1), this, null);
+	break;
+
       default:
 	XMP.error("directive '"+x.getArg(0).getName()+"' appears in module");
       }
@@ -189,6 +193,29 @@ public class XMPmodule extends XMPenv {
     id_list.add(id);
     return id;
   }
+
+  public void removeIdent(String name, Block block){
+
+    Xobject id_list = env.getGlobalIdentList();
+    if (id_list != null){
+      for (XobjArgs r = id_list.getArgs(); r != null; r = r.nextArgs()){
+	if (name.equals(r.getArg().getName())){
+	  id_list.removeArgs(r);
+	}
+      }
+    }
+
+    // Xobject decls = body.getDecls();
+    // if (decls != null){
+    //   for (XobjArgs r = decls.getArgs(); r != null; r = r.nextArgs()){
+    // 	if (r.getArg().Opcode() != Xcode.VAR_DECL) continue;
+    // 	if (name.equals(r.getArg().getArg(0).getName())){
+    // 	  decls.removeArgs(r);
+    // 	}
+    //   }
+    // }
+
+  }    
 
   public Ident findVarIdent(String name, Block b){
     Xobject id_list = env.getGlobalIdentList();

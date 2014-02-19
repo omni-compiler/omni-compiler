@@ -114,6 +114,7 @@ public class XMPtransPragma
     case DISTRIBUTE:
     case ALIGN:
     case SHADOW:
+    case LOCAL_ALIAS:
     case COARRAY:
       /* declaration directives, do nothing */
       return Bcons.emptyBlock();
