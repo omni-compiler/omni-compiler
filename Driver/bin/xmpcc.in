@@ -21,7 +21,7 @@ all_profile=0
 doScalasca=0
 doTlog=0
 doProf=0
-export useDom=0
+export useDom=1
 args=''
 for i in "$@"; do
     case "${i}" in
@@ -48,8 +48,8 @@ for i in "$@"; do
             fi;;
         -tmp)
             args="${args} --Wn${i}";;
-	-use-dom)
-	    export useDom=1;;
+	-use-relaxer)
+	    export useDom=0;;
         *)
             args="${args} ${i}";;
     esac
