@@ -16,7 +16,7 @@ F_Front_SOURCES= F95-main.c C-expr-mem.c C-exprcode.c F-datatype.c F-ident.c \
 
 AM_YFLAGS=-v
 
-AM_CFLAGS=-DBUGFIX -D__XCODEML__ -DYYDEBUG -I$(LIBXML_PREFIX)/include/libxml2 -Wall
+AM_CFLAGS=-DBUGFIX -D__XCODEML__ -DYYDEBUG -I$(LIBXML_PREFIX)/include/libxml2 -Wall $(AIX_OPT)
 
 F_Front_LDADD=-L$(LIBXML_PREFIX)/lib -lxml2 -lm
 

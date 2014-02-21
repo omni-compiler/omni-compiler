@@ -78,7 +78,7 @@ c-acc-xcodeml.c: c-expr.h c-acc.h
 EXTRA_C_Front_SOURCES=c-dbgmain.c
 
 AM_YFLAGS=-v -d
-AM_CFLAGS=-std=c99 -Wall $(DEBUG_FLAGS)
+AM_CFLAGS=-std=c99 -Wall $(DEBUG_FLAGS) $(AIX_OPT)
 
 $(C_Front_SOURCES): c-exprcode.h
 

@@ -587,6 +587,7 @@ AC_DEFINE_UNQUOTED(OBJEXT, "${OBJEXT}")
 # --------------------------------------------------------------------
 # Specify Backend Compiler and Options
 IS_CRAY="No"
+AIX_OPT=""
 if test "$target" != "$host"; then
   if test "$target" = "Kcomputer-linux-gnu"; then
     BECC="mpifccpx"
@@ -612,14 +613,16 @@ if test "$target" != "$host"; then
   elif test "$target" = "powerpc64-hitachi-aix"; then
     BECC="mpCC_r"
     BEFC="mpif90"
-    BECC_OPTION="-qcpluscmt"
+    BEFC_OPTION="-Os -64 -model=M1 -parallel"
+    BECC_OPTION="-qcpluscmt -q64"
+    AIX_OPT="-maix64"
   fi
 else  # if "--target" option is not used in ./configure
   BECC="mpicc"
   BEFC="mpif90"
   BECC_OPTION="-std=gnu99 -Wall -Wpointer-arith"
 fi
-
+AC_SUBST(AIX_OPT)
 BECC_OPTION="${BECC_OPTION} ${userBCFlags}"
 
 # --------------------------------------------------------------------
@@ -681,8 +684,8 @@ elif test "$target" = "powerpc-ibm-none"; then
 elif test "$target" = "powerpc64-hitachi-aix"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT=""
-  OMC_CONF_LNK_OPT="-omp"
-  BECC_OMP_OPTION="-omp"
+  OMC_CONF_LNK_OPT="-Os -64 -model=M1 -parallel"
+  BECC_OMP_OPTION="-parallel"
 else
   chk=`$BECC --version | head -n1`
   case $chk in
@@ -707,7 +710,7 @@ else
     echo " - Cray C Compiler (cc)"
     echo " - NEC C/C++ Compiler (sxc++)"
     echo " - IBM C Compiler (mpixlcxx_r)"
-    echo " - HITACHI C Compiler (mpCC)"
+    echo " - HITACHI C Compiler (mpCC_r)"
 exit 1
     ;;
   esac
@@ -745,7 +748,7 @@ if test $enableF2F = yes; then
   elif test "$target" = "powerpc64-hitachi-aix"; then
     OMF_CONF_LX2X_OPT=""
     OMF_CONF_NTV_OPT=""
-    OMF_CONF_LNK_OPT=""
+    OMF_CONF_LNK_OPT="-Os -64 -model=M1 -parallel"
   else
     chk=`$BEFC --version | head -n1`
     case $chk in
@@ -854,7 +857,7 @@ if test "$target" != "$host"; then
                     AC_MSG_ERROR([ar not found]);
                 fi
 
-                ARFLAGS="cru"
+                ARFLAGS="-X32_64 cru"
                 AC_SUBST(ARFLAGS)
 
 #                AC_CHECK_TOOL([NM], [nm], [:])
