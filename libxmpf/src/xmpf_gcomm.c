@@ -9,7 +9,7 @@ void xmpf_reduction__(void *data_addr, int *count, int *datatype, int *op,
 		      _XMP_object_ref_t **r_desc)
 {
   // Now, r_desc is ignored.
-  _XMP_reduce_CLAUSE(data_addr, *count, *datatype + 500, *op);
+  _XMP_reduce_CLAUSE(data_addr, *count, *datatype, *op);
 }
 
 
