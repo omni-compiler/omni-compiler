@@ -134,6 +134,7 @@ public abstract class XcodeMLtools {
     }
 
     setIdentDecl(xobjFile);
+    xobjFile.setParentRecursively(null);
 
     return xobjFile;
   }

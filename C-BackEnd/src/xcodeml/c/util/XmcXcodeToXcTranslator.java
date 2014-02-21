@@ -44,6 +44,7 @@ import static xcodeml.util.XmDomUtil.getAttr;
 import static xcodeml.util.XmDomUtil.getContent;
 import static xcodeml.util.XmDomUtil.getContentText;
 import static xcodeml.util.XmDomUtil.getAttrBool;
+import static xcodeml.util.XmDomUtil.collectElements;
 
 import org.w3c.dom.*;
 
@@ -2025,10 +2026,15 @@ public class XmcXcodeToXcTranslator {
             obj.setAsmCode(new XcConstObj.StringConst(getContentText(strConstNode)));
             obj.setIsVolatile(getAttrBool(n, "is_volatile"));
 
-            Node asmRandsNode = getElement(n, "gccAsmOperands");
-            if (asmRandsNode != null) {
+            List<Node> asmOperandsNodes = collectElements(n, "gccAsmOperands");
+            if(asmOperandsNodes.get(0) != null){
                 obj.initInputOperands();
-                enterNodes(tc, obj, asmRandsNode);
+                enterNodes(tc, obj, asmOperandsNodes.get(0));
+                obj.setInputOperandsEnd();
+            }
+            if(asmOperandsNodes.get(1) != null){
+                obj.initOutputOperands();
+                enterNodes(tc, obj, asmOperandsNodes.get(1));
             }
 
             enterNodes(tc, obj,

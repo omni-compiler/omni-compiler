@@ -101,7 +101,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
   @Override
   void enterGlobalDecl(Node n) {
     Xobject xobj = toXobject(n);
-    xobj.setParentRecursively(null);
+    //xobj.setParentRecursively(null);
     switch (xobj.Opcode()) {
     case FUNCTION_DEFINITION:
     case VAR_DECL:
@@ -394,6 +394,24 @@ public class XcodeMLtools_C extends XcodeMLtools {
       objList.add(symbolObj);
       objList.add(enterChildren(n));
       return objList;
+    }
+    
+    case GCC_ASM_OPERAND: {
+        // (CODE var match constraint)
+        XobjList objList = enterAsXobjList(n, code, type);
+        getChildList(n, objList);
+        String match = getAttr(n, "match");
+        objList.add((match != null)? Xcons.StringConstant(null, match) : null);
+        objList.add(Xcons.StringConstant(null,getAttr(n, "constraint")));
+        return objList;
+    }
+    
+    case GCC_ASM_STATEMENT: {
+        // (CODE is_volatile string_constant operand1 operand2 clobbers)
+        XobjList objList = enterAsXobjList(n, code, type);
+        objList.add(getAttrIntFlag(n, "is_volatile"));
+        getChildList(n, objList);
+        return objList;
     }
 
     case GCC_LABEL_ADDR:
