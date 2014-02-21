@@ -64,6 +64,12 @@ run: $(EXES)
 	$(XRUN) -n 32 ./gmove_G2L_5a5t_bc.x
 	$(XRUN) -n 64 ./gmove_G2L_6a6t_bc.x
 	$(XRUN) -n 128 ./gmove_G2L_7a7t_bc.x
+	$(XRUN) -n 4 ./gmove_G2L_1a2t_bc.x
+	$(XRUN) -n 8 ./gmove_G2L_1a3t_bc.x
+	$(XRUN) -n 16 ./gmove_G2L_1a4t_bc.x
+	$(XRUN) -n 32 ./gmove_G2L_1a5t_bc.x
+	$(XRUN) -n 64 ./gmove_G2L_1a6t_bc.x
+	$(XRUN) -n 128 ./gmove_G2L_1a7t_bc.x
 
 clean:
 	rm -f $(EXES) $(F_OBJS) _xmpf_module_INIT.o
