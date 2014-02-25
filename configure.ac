@@ -517,6 +517,10 @@ AC_ARG_WITH(backend-cflag,
     [  --with-backend-cflag=OPT    Backend C compiler options for optimization],
     [userBCFlags="${withval}"], [userBCFlags=""])
 
+AC_ARG_ENABLE(atool,
+    [  --enable-atool                 enable atool (false default).],
+    [doatool=$enableval], [doatool=no])
+
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
@@ -546,6 +550,14 @@ if test "x${doOpenAcc}" = "xyes"; then
 fi
 AM_CONDITIONAL(ENABLE_ACC, test "x${doOpenAcc}" = "xyes")
 AC_SUBST(ENABLE_ACC)
+
+ 
+ENABLE_ATOOL=0
+if test "x${doatool}" = "xyes"; then
+   ENABLE_ATOOL=1
+fi
+AM_CONDITIONAL(ENABLE_ATOOL, test "x${doatool}" = "xyes")
+AC_SUBST(ENABLE_ATOOL)
 
 # check gcc version
 AC_MSG_CHECKING(gcc version)
@@ -612,8 +624,8 @@ if test "$target" != "$host"; then
     BECC_OPTION=""
   elif test "$target" = "powerpc64-hitachi-aix"; then
     BECC="mpCC_r"
-    BEFC="mpif90"
-    BEFC_OPTION="-Os -64 -model=M1 -parallel"
+    BEFC="mpxlf90_r"
+    BEFC_OPTION="-qextname -q64"
     BECC_OPTION="-qcpluscmt -q64"
     AIX_OPT="-maix64"
   fi
@@ -683,8 +695,8 @@ elif test "$target" = "powerpc-ibm-none"; then
   BECC_OMP_OPTION=""
 elif test "$target" = "powerpc64-hitachi-aix"; then
   OMC_CONF_LX2X_OPT=""
-  OMC_CONF_NTV_OPT=""
-  OMC_CONF_LNK_OPT="-Os -64 -model=M1 -parallel"
+  OMC_CONF_NTV_OPT="-q64"
+  OMC_CONF_LNK_OPT="-q64"
   BECC_OMP_OPTION="-parallel"
 else
   chk=`$BECC --version | head -n1`
@@ -747,8 +759,8 @@ if test $enableF2F = yes; then
     OMF_CONF_LNK_OPT="-I/usr/local/bg/include -g -O3 -qhot -qsmp=omp -qsimd=auto -q64 -qsource -qlist"
   elif test "$target" = "powerpc64-hitachi-aix"; then
     OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT=""
-    OMF_CONF_LNK_OPT="-Os -64 -model=M1 -parallel"
+    OMF_CONF_NTV_OPT="-qextname -qnomixed -q64"
+    OMF_CONF_LNK_OPT="-q64"
   else
     chk=`$BEFC --version | head -n1`
     case $chk in

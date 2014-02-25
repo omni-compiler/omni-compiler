@@ -80,8 +80,9 @@ host_triplet = @host@
 target_triplet = @target@
 @ENABLE_XMP_GPU_TRUE@am__append_1 = @LIBXMP_GPU_DIR@
 @ENABLE_ACC_TRUE@am__append_2 = @LIBACC_DIR@ @LIBACC_HEADER_DIR@
-@GASNET_TRUE@am__append_3 = "local-view/post-wait/C" "local-view/coarray/C"
-@FJRDMA_TRUE@am__append_4 = "local-view/post-wait/C" "local-view/coarray/C"
+@ENABLE_ATOOL_TRUE@am__append_3 = @ATOOL_DIR@
+@GASNET_TRUE@am__append_4 = "local-view/post-wait/C" "local-view/coarray/C"
+@FJRDMA_TRUE@am__append_5 = "local-view/post-wait/C" "local-view/coarray/C"
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
@@ -195,7 +196,7 @@ DIST_SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ @C_BACKEND_DIR@ \
 	@OMDRIVER_DIR@ @LIBOMPC_DIR@ @LIBOMPF_DIR@ @LIBTLOG_DIR@ \
 	@LIBTLOG_MPI_DIR@ @LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ \
 	@LIBXMP_THREADS_DIR@ @LIBXMPF_HEADER_DIR@ @LIBXMPF_DIR@ \
-	@ATOOL_DIR@ @LIBXMP_GPU_DIR@ @LIBACC_DIR@ @LIBACC_HEADER_DIR@ \
+	@LIBXMP_GPU_DIR@ @LIBACC_DIR@ @LIBACC_HEADER_DIR@ @ATOOL_DIR@ \
 	$(am__empty)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
@@ -283,6 +284,7 @@ ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 ENABLE_ACC = @ENABLE_ACC@
+ENABLE_ATOOL = @ENABLE_ATOOL@
 EXEEXT = @EXEEXT@
 F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
@@ -527,23 +529,23 @@ top_srcdir = @top_srcdir@
 @SUPERUX_FALSE@	@LIBTLOG_DIR@ @LIBTLOG_MPI_DIR@ \
 @SUPERUX_FALSE@	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ \
 @SUPERUX_FALSE@	@LIBXMP_THREADS_DIR@ @LIBXMPF_HEADER_DIR@ \
-@SUPERUX_FALSE@	@LIBXMPF_DIR@ @ATOOL_DIR@ $(am__append_1) \
-@SUPERUX_FALSE@	$(am__append_2)
+@SUPERUX_FALSE@	@LIBXMPF_DIR@ $(am__append_1) $(am__append_2) \
+@SUPERUX_FALSE@	$(am__append_3)
 @SUPERUX_TRUE@SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ \
 @SUPERUX_TRUE@	@C_BACKEND_DIR@ @F_FRONTEND_DIR@ @F_BACKEND_DIR@ \
 @SUPERUX_TRUE@	@XCODEML_EXC_TOOLS_DIR@ @OMDRIVER_DIR@ \
 @SUPERUX_TRUE@	@LIBTLOG_DIR@ @LIBTLOG_MPI_DIR@ \
 @SUPERUX_TRUE@	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ \
 @SUPERUX_TRUE@	@LIBXMP_THREADS_DIR@ @LIBXMPF_HEADER_DIR@ \
-@SUPERUX_TRUE@	@LIBXMPF_DIR@ @ATOOL_DIR@ $(am__append_1) \
-@SUPERUX_TRUE@	$(am__append_2)
+@SUPERUX_TRUE@	@LIBXMPF_DIR@ $(am__append_1) $(am__append_2) \
+@SUPERUX_TRUE@	$(am__append_3)
 XMPPKG_TMPDIR_TOP := "/tmp/@XMPPKG_NAME@"
 XMPPKG_TMPDIR := $(XMPPKG_TMPDIR_TOP)/$(shell mktemp -u --tmpdir=/)
 DEB_VER_FILE = "/etc/debian_version"
 RH_REL_FILE = "/etc/redhat-release"
 BASE_TESTDIR = "tests/xcalablemp/"
 SUB_TESTDIRS = "others/Fortran/" "global-view/shadow-reflect/C/" \
-	$(am__append_3) $(am__append_4)
+	$(am__append_4) $(am__append_5)
 DELETABLES = \
 	C-BackEnd/ant.properties \
 	C-BackEnd/bin/C_Back \

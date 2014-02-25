@@ -763,6 +763,9 @@ BEFC
 BECC_OPTION
 BECC
 AIX_OPT
+ENABLE_ATOOL
+ENABLE_ATOOL_FALSE
+ENABLE_ATOOL_TRUE
 ENABLE_ACC
 ENABLE_ACC_FALSE
 ENABLE_ACC_TRUE
@@ -942,6 +945,7 @@ enable_xmpgpu
 enable_openacc
 with_cppflag
 with_backend_cflag
+enable_atool
 with_backend_cc
 with_backend_fc
 enable_mreal
@@ -1611,6 +1615,7 @@ Optional Features:
   --enable-debug                 enable generate executable with debug symbol (false default).
   --enable-xmpgpu                enable XcalableMP-GPU (false default).
   --enable-openacc               enable OpenACC (false default).
+  --enable-atool                 enable atool (false default).
   --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default).
   --enable-fjrdma                use Fujitsu RDMA
 
@@ -12804,6 +12809,14 @@ else
 fi
 
 
+# Check whether --enable-atool was given.
+if test "${enable_atool+set}" = set; then :
+  enableval=$enable_atool; doatool=$enableval
+else
+  doatool=no
+fi
+
+
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -17028,6 +17041,21 @@ fi
 
 
 
+
+ENABLE_ATOOL=0
+if test "x${doatool}" = "xyes"; then
+   ENABLE_ATOOL=1
+fi
+ if test "x${doatool}" = "xyes"; then
+  ENABLE_ATOOL_TRUE=
+  ENABLE_ATOOL_FALSE='#'
+else
+  ENABLE_ATOOL_TRUE='#'
+  ENABLE_ATOOL_FALSE=
+fi
+
+
+
 # check gcc version
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking gcc version" >&5
 $as_echo_n "checking gcc version... " >&6; }
@@ -17096,8 +17124,8 @@ if test "$target" != "$host"; then
     BECC_OPTION=""
   elif test "$target" = "powerpc64-hitachi-aix"; then
     BECC="mpCC_r"
-    BEFC="mpif90"
-    BEFC_OPTION="-Os -64 -model=M1 -parallel"
+    BEFC="mpxlf90_r"
+    BEFC_OPTION="-qextname -q64"
     BECC_OPTION="-qcpluscmt -q64"
     AIX_OPT="-maix64"
   fi
@@ -17192,8 +17220,8 @@ elif test "$target" = "powerpc-ibm-none"; then
   BECC_OMP_OPTION=""
 elif test "$target" = "powerpc64-hitachi-aix"; then
   OMC_CONF_LX2X_OPT=""
-  OMC_CONF_NTV_OPT=""
-  OMC_CONF_LNK_OPT="-Os -64 -model=M1 -parallel"
+  OMC_CONF_NTV_OPT="-q64"
+  OMC_CONF_LNK_OPT="-q64"
   BECC_OMP_OPTION="-parallel"
 else
   chk=`$BECC --version | head -n1`
@@ -20333,8 +20361,8 @@ $as_echo_n "checking backend Fortran compiler... " >&6; }
     OMF_CONF_LNK_OPT="-I/usr/local/bg/include -g -O3 -qhot -qsmp=omp -qsimd=auto -q64 -qsource -qlist"
   elif test "$target" = "powerpc64-hitachi-aix"; then
     OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT=""
-    OMF_CONF_LNK_OPT="-Os -64 -model=M1 -parallel"
+    OMF_CONF_NTV_OPT="-qextname -qnomixed -q64"
+    OMF_CONF_LNK_OPT="-q64"
   else
     chk=`$BEFC --version | head -n1`
     case $chk in
@@ -26331,6 +26359,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_ACC_TRUE}" && test -z "${ENABLE_ACC_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_ACC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_ATOOL_TRUE}" && test -z "${ENABLE_ATOOL_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_ATOOL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${SR16000_TRUE}" && test -z "${SR16000_FALSE}"; then
