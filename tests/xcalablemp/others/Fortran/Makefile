@@ -1,4 +1,4 @@
-XFC     = xmpf90 -O2 --debug --verbose
+XFC     = xmpf90 -O2
 XRUN    = mpirun
 
 module_test: module_test2.o module_test1.o
