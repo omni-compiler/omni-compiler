@@ -90,10 +90,20 @@ public class XMPobjectsRef {
 	return;
       }
       Xobject subscriptList = decl.getArg(1);
-      if(subscriptList != null){
+      if (subscriptList != null){
 	subscripts = XMPdimInfo.parseSubscripts(subscriptList);
+
+	if (!subscriptList.isEmptyList() && subscripts.size() != refObject.getDim()){
+	  XMP.errorAt(pb, "wrong number of subscripts");
+	  return;
+	}
+
+      }
+      else {
+	subscripts = XMPdimInfo.parseSubscripts(Xcons.List());
       }
     }
+
     // allocate DescId
     descId = env.declObjectId(XMP.genSym(refName), pb);
   }
@@ -150,8 +160,12 @@ public class XMPobjectsRef {
       else { // triplet
 	  Xobject lower, upper;
 	  lower = d_info.getLower();
-	  upper = d_info.getUpper() != null ? d_info.getUpper() :
-	      ((XMPnodes)refObject).getInfoAt(i).getUpper();
+
+	  Xobject decl_upper = refObject.getKind() == XMPobject.NODES ?
+	      ((XMPnodes)refObject).getInfoAt(i).getUpper() :
+	      ((XMPtemplate)refObject).getUpperAt(i);
+	  upper = d_info.getUpper() != null ? d_info.getUpper() : decl_upper;
+
 	  stride = d_info.getStride();
 	      
 	  args = Xcons.List(descId.Ref(),

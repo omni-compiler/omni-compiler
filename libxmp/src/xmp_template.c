@@ -568,6 +568,7 @@ int _XMP_exec_task_TEMPLATE_PART(_XMP_task_desc_t **task_desc, _XMP_template_t *
   }
 }
 
+// 0-origin
 int _XMP_calc_template_owner_SCALAR(_XMP_template_t *template, int dim_index, long long ref_index) {
   _XMP_ASSERT(template->is_fixed);
   _XMP_ASSERT(template->is_distributed);

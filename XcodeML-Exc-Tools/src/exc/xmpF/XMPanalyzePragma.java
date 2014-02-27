@@ -599,7 +599,7 @@ public class XMPanalyzePragma
 			XMPinfo info, PragmaBlock pb){
     XobjList bcastNameList = (XobjList) bcastDecl.getArg(0);
     Xobject fromRef = bcastDecl.getArg(1);
-    Xobject toRef = bcastDecl.getArg(2);
+    Xobject onRef = bcastDecl.getArg(2);
     Xobject bcastOpt = bcastDecl.getArg(3);
 
     if(bcastOpt != null){
@@ -620,7 +620,7 @@ public class XMPanalyzePragma
     }
     
     info.setBcastInfo(XMPobjectsRef.parseDecl(fromRef,env,pb),
-		      XMPobjectsRef.parseDecl(toRef,env,pb),
+		      XMPobjectsRef.parseDecl(onRef,env,pb),
 		      bcast_vars);
   }
 

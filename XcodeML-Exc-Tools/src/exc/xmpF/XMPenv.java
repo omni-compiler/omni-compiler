@@ -162,6 +162,11 @@ public class XMPenv {
     return declIdent(objectName, t, block);
   }
 
+  public Ident declObjectId(String objectName, Block block, Xobject init) {
+    BlockList body = current_def.getBlock().getBody();
+    return body.declLocalIdent(objectName, Xtype.Fint8Type, StorageClass.FLOCAL, init);
+  }
+
   public void finalize() {
     env.collectAllTypes();
     env.fixupTypeRef();

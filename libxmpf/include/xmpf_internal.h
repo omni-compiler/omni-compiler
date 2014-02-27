@@ -75,6 +75,7 @@ void _XMP_dist_template_CYCLIC(_XMP_template_t *template, int template_index, in
 void _XMP_dist_template_BLOCK_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index, unsigned long long width);
 void _XMP_dist_template_GBLOCK(_XMP_template_t *template, int template_index, int nodes_index, int *mapping_array);
 void _XMP_init_template_chunk(_XMP_template_t *template, _XMP_nodes_t *nodes);
+_Bool _XMP_is_entire(_XMP_object_ref_t *rp);
 
 
 /* From xmp_align.c */
@@ -119,7 +120,7 @@ void _XMP_sched_loop_template_GBLOCK(int ser_init, int ser_cond, int ser_step,
 				     _XMP_template_t *template, int template_index);
 
 /* From xmp_reduce.c */
-void _XMP_reduce_CLAUSE(void *data_addr, int count, int datatype, int op);
+void _XMP_reduce_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op);
 
 /* From xmp_shadow.c */
 void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index);

@@ -125,7 +125,9 @@ void xmpf_ref_templ_alloc__(_XMP_object_ref_t **r_desc,
     if (rp == NULL || ip == NULL || iq == NULL || ir == NULL) 
       _XMP_fatal("ref_alloc: cannot alloc memory");
     rp->ref_kind = XMP_OBJ_REF_TEMPL;
-    rp->ndims = n;
+
+    rp->ndims = n ? n : (*t_desc)->dim;
+
     //rp->offset = ip;
     rp->REF_OFFSET = ip;
     rp->t_desc = *t_desc;
@@ -133,6 +135,7 @@ void xmpf_ref_templ_alloc__(_XMP_object_ref_t **r_desc,
     rp->REF_INDEX = iq;
     rp->REF_STRIDE = ir;
     rp->subscript_type = is;
+    for (int i = 0; i < rp->ndims; i++) rp->subscript_type[i] = SUBSCRIPT_NONE;
     *r_desc = rp;
 }
 
@@ -212,13 +215,56 @@ void xmpf_ref_set_dim_info__(_XMP_object_ref_t **r_desc, int *i_dim, int *type,
 void xmpf_ref_init__(_XMP_object_ref_t **r_desc)
 {
   _XMP_object_ref_t *rp = *r_desc;
-  _XMP_nodes_t *n = rp->n_desc;
 
-  for (int i = 0; i < rp->ndims; i++){
-    if (rp->subscript_type[i] == SUBSCRIPT_NONE){
-      rp->REF_LBOUND[i] = 1;
-      rp->REF_UBOUND[i] = n->info[i].size;
-      rp->REF_STRIDE[i] = 1;
+  if (rp->ref_kind == XMP_OBJ_REF_NODES){
+    _XMP_nodes_t *n = rp->n_desc;
+    for (int i = 0; i < rp->ndims; i++){
+      if (rp->subscript_type[i] == SUBSCRIPT_NONE){
+	rp->REF_LBOUND[i] = 1;
+	rp->REF_UBOUND[i] = n->info[i].size;
+	rp->REF_STRIDE[i] = 1;
+      }
     }
   }
+  else {
+    _XMP_template_t *t = rp->t_desc;
+    for (int i = 0; i < rp->ndims; i++){
+      if (rp->subscript_type[i] == SUBSCRIPT_NONE){
+	rp->REF_LBOUND[i] = t->info[i].ser_lower;
+	rp->REF_UBOUND[i] = t->info[i].ser_upper;
+	rp->REF_STRIDE[i] = 1;
+      }
+    }
+  }
+}
+
+_Bool _XMP_is_entire(_XMP_object_ref_t *rp)
+{
+  if (rp->ref_kind == XMP_OBJ_REF_NODES){
+    _XMP_nodes_t *n = rp->n_desc;
+    for (int i = 0; i < rp->ndims; i++){
+      if (rp->subscript_type[i] != SUBSCRIPT_NONE &&
+	  (rp->REF_LBOUND[i] != 1 ||
+	   rp->REF_UBOUND[i] != n->info[i].size ||
+	   rp->REF_STRIDE[i] != 1)){
+	return false;
+      }
+    }
+
+    return true;
+  }
+  else {
+    _XMP_template_t *t = rp->t_desc;
+    for (int i = 0; i < rp->ndims; i++){
+      if (rp->subscript_type[i] != SUBSCRIPT_NONE &&
+	  (rp->REF_LBOUND[i] != t->info[i].ser_lower ||
+	   rp->REF_UBOUND[i] != t->info[i].ser_upper ||
+	   rp->REF_STRIDE[i] != 1)){
+	return false;
+      }
+    }
+
+    return true;
+  }
+
 }

@@ -84,6 +84,7 @@ public class XMPtransPragma
       f_body.insert(Bcons.COMPOUND(prolog));
       f_body.add(Bcons.COMPOUND(epilog));
     }
+
   }
 
   void buildXMPobjectBlock(BlockList prolog, BlockList epilog){
@@ -309,19 +310,56 @@ public class XMPtransPragma
     return b;
   }
 
-  private Block translateBarrier(PragmaBlock pb, XMPinfo i) {
-    Block b = Bcons.emptyBlock();
-    BasicBlock bb = b.getBasicBlock();
+  private Block translateBarrier(PragmaBlock pb, XMPinfo info) {
+
+    //Block b = Bcons.emptyBlock();
+    //BasicBlock bb = b.getBasicBlock();
+
+    BlockList ret_body = Bcons.emptyBody();
+
+    XMPobjectsRef on_ref = info.getOnRef();
+    Xobject on_ref_arg;
+
+    Ident xmp_null = env.findVarIdent("XMP_NULL", pb);
+    if (xmp_null == null){
+	xmp_null = env.declObjectId("XMP_NULL", null,
+				    Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
+    }
+
+    if (on_ref != null){
+      ret_body.add(on_ref.buildConstructor(env));
+      on_ref_arg = on_ref.getDescId().Ref();
+    }
+    else on_ref_arg = xmp_null;
+
     Ident f = env.declInternIdent(XMP.barrier_f,
 				  Xtype.FsubroutineType);
-    // don't care about on_ref
-    bb.add(f.callSubroutine(Xcons.List(Xcons.IntConstant(0))));
-    return b;
+    ret_body.add(f.callSubroutine(Xcons.List(on_ref_arg)));
+
+    return Bcons.COMPOUND(ret_body);
   }
 
   private Block translateReduction(PragmaBlock pb, XMPinfo info){
-    Block b = Bcons.emptyBlock();
-    BasicBlock bb = b.getBasicBlock();
+
+    //Block b = Bcons.emptyBlock();
+    //BasicBlock bb = b.getBasicBlock();
+
+    BlockList ret_body = Bcons.emptyBody();
+
+    XMPobjectsRef on_ref = info.getOnRef();
+    Xobject on_ref_arg;
+
+    Ident xmp_null = env.findVarIdent("XMP_NULL", pb);
+    if (xmp_null == null){
+	xmp_null = env.declObjectId("XMP_NULL", null,
+				    Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
+    }
+
+    if (on_ref != null){
+      ret_body.add(on_ref.buildConstructor(env));
+      on_ref_arg = on_ref.getDescId().Ref();
+    }
+    else on_ref_arg = xmp_null;
 
     // object size
     int op = info.getReductionOp();
@@ -340,18 +378,42 @@ public class XMPtransPragma
 	XMP.fatal("reduction for non-basic type ="+type);
       }
       Xobject args = Xcons.List(id.Ref(),size_expr,
-				//Xcons.IntConstant(XMP.reduceBasicType(type)),
 				XMP.typeIntConstant(type),
 				Xcons.IntConstant(op),
-				Xcons.IntConstant(0));
-      bb.add(f.callSubroutine(args));
+				on_ref_arg);
+      ret_body.add(f.callSubroutine(args));
     }
-    return b;
+    return Bcons.COMPOUND(ret_body);
   }
 
   private Block translateBcast(PragmaBlock pb, XMPinfo info){
-    Block b = Bcons.emptyBlock();
-    BasicBlock bb = b.getBasicBlock();
+
+    //Block b = Bcons.emptyBlock();
+    //BasicBlock bb = b.getBasicBlock();
+
+    BlockList ret_body = Bcons.emptyBody();
+
+    Ident xmp_null = env.findVarIdent("XMP_NULL", pb);
+    if (xmp_null == null){
+	xmp_null = env.declObjectId("XMP_NULL", null,
+				    Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
+    }
+
+    XMPobjectsRef from_ref = info.getBcastFrom();
+    Xobject from_ref_arg;
+    if (from_ref != null){
+      ret_body.add(from_ref.buildConstructor(env));
+      from_ref_arg = from_ref.getDescId().Ref();
+    }
+    else from_ref_arg = xmp_null;
+
+    XMPobjectsRef on_ref = info.getOnRef();
+    Xobject on_ref_arg;
+    if (on_ref != null){
+      ret_body.add(on_ref.buildConstructor(env));
+      on_ref_arg = on_ref.getDescId().Ref();
+    }
+    else on_ref_arg = xmp_null;
 
     Ident f = env.declInternIdent(XMP.bcast_f,
 				  Xtype.FsubroutineType);
@@ -368,13 +430,12 @@ public class XMPtransPragma
 	XMP.fatal("bcast for non-basic type ="+type);
       }
       Xobject args = Xcons.List(id.Ref(),size_expr,
-				//Xcons.IntConstant(type.getBasicType()),
 				XMP.typeIntConstant(type),
-				Xcons.IntConstant(0),
-				Xcons.IntConstant(0));
-      bb.add(f.callSubroutine(args));
+				from_ref_arg,
+				on_ref_arg);
+      ret_body.add(f.callSubroutine(args));
     }
-    return b;
+    return Bcons.COMPOUND(ret_body);
   }
 
   private Block translateWaitAsync(PragmaBlock pb, XMPinfo info){
