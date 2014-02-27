@@ -599,6 +599,7 @@ AC_DEFINE_UNQUOTED(OBJEXT, "${OBJEXT}")
 # --------------------------------------------------------------------
 # Specify Backend Compiler and Options
 IS_CRAY="No"
+IS_AIX="No"
 AIX_OPT=""
 if test "$target" != "$host"; then
   if test "$target" = "Kcomputer-linux-gnu"; then
@@ -628,6 +629,7 @@ if test "$target" != "$host"; then
     BEFC_OPTION="-qextname -q64"
     BECC_OPTION="-qcpluscmt -q64"
     AIX_OPT="-maix64"
+    IS_AIX="Yes"
   fi
 else  # if "--target" option is not used in ./configure
   BECC="mpicc"
@@ -658,6 +660,7 @@ AC_SUBST(BEFC_OPTION)
 
 
 AC_SUBST(IS_CRAY)
+AC_SUBST(IS_AIX)
 
 AM_CONDITIONAL(SR16000, test "$target" = "powerpc64-hitachi-aix") 
 AC_SUBST(SR16000)

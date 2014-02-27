@@ -757,6 +757,7 @@ SUPERUX_TRUE
 SR16000
 SR16000_FALSE
 SR16000_TRUE
+IS_AIX
 IS_CRAY
 BEFC_OPTION
 BEFC
@@ -17099,6 +17100,7 @@ _ACEOF
 # --------------------------------------------------------------------
 # Specify Backend Compiler and Options
 IS_CRAY="No"
+IS_AIX="No"
 AIX_OPT=""
 if test "$target" != "$host"; then
   if test "$target" = "Kcomputer-linux-gnu"; then
@@ -17128,6 +17130,7 @@ if test "$target" != "$host"; then
     BEFC_OPTION="-qextname -q64"
     BECC_OPTION="-qcpluscmt -q64"
     AIX_OPT="-maix64"
+    IS_AIX="Yes"
   fi
 else  # if "--target" option is not used in ./configure
   BECC="mpicc"
@@ -17160,6 +17163,7 @@ fi
 
 
 # --------------------------------------------------------------------
+
 
 
 

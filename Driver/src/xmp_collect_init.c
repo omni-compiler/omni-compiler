@@ -37,6 +37,7 @@ char *MODULE_INIT_ENTRY_NAME;
 int pid = -INT_MAX;
 int is_Mac = FALSE;
 int is_K_FC = FALSE; // only Fortran compiler on the K
+int is_AIX = FALSE;
 
 #define IS_VALID_STRING(s)	\
     (((s) != NULL && *(s) != '\0') ? TRUE : FALSE)
@@ -198,6 +199,8 @@ int main(int argc, char *argv[])
     }
     init_name_len = strlen(MODULE_INIT_NAME);
     init_name_len_ = strlen(MODULE_INIT_NAME_);
+    char prev[MAX_BUF];
+    char *prev_ans="T";
     while(fscanf(fp,"%s",buf) == 1){
       if(strncmp(buf,".jwe",4) == 0 || strncmp(buf,"jpj.",4) == 0){
 	is_K_FC = TRUE;
@@ -206,9 +209,12 @@ int main(int argc, char *argv[])
 
       if(strncmp(buf,"_xmpc_init_all",14) == 0 || 
 	 strncmp(buf,"_xmpf_main_",11) == 0) is_Mac = TRUE;
+
+      if(strncmp(buf,".xmpf_main_",11)==0||
+	 strncmp(buf,".xmpc_init_all",14)==0) is_AIX = TRUE;
       // On Mac OS X (Darwin), all module is added "_".
       // For example, __shadow_xmpc_module_init_ -> ___shadow_xmpc_module_init_
-
+      
       len = strlen(buf);
       if(len > init_name_len && 
 	 strcmp(buf+(len-init_name_len),MODULE_INIT_NAME) == 0){
@@ -228,28 +234,36 @@ int main(int argc, char *argv[])
 	  module_init_names[n_module_init++] = strdup(buf);
 	}
       }
-    }
+    } 
     fclose(fp);
 
     sprintf(init_func_source,"%s%s%d.c",tmp_dir,INIT_PREFIX,pid);
     if (pid >= 0 && IS_VALID_STRING(init_func_object) == FALSE) {
-        sprintf(init_func_object,"%s%s%d.o",tmp_dir,INIT_PREFIX,pid);
+      sprintf(init_func_object,"%s%s%d.o",tmp_dir,INIT_PREFIX,pid);
     }
     //    strcpy(init_func_object,INIT_MODULE_OBJ);
     fp = fopen(init_func_source,"w");
     if (fp == NULL){
-	fprintf(stderr,"cannot open '%s'\n",init_func_source);
-        return 1;
+      fprintf(stderr,"cannot open '%s'\n",init_func_source);
+      return 1;
     }
-
+    
     if(!is_K_FC){
       for(i=0; i<n_module_init;i++){
 	char *name = module_init_names[i];
 	if(is_Mac)
-	  strcpy(name, name+sizeof(char)); // Remove the first charactor of function name
-	                                   // ___shadow_xmpc_module_init_ -> __shadow_xmpc_module_init_
-	fprintf(fp,"extern void %s();\n",name);
-      }
+        strcpy(name, name+sizeof(char)); // Remove the first charactor of function name
+	if(is_AIX)                                   // ___shadow_xmpc_module_init_ -> __shadow_xmpc_module_init_
+	  {
+	    if(strncmp(name,".",1)==0)
+	      {
+		fprintf(fp,"asm(\".extern  %s[GL]\");\n",name);
+		break;
+	      }
+	  }
+	else
+	  fprintf(fp,"extern void %s();\n",name);
+     }
       fprintf(fp,"\n");
     }
     
@@ -257,9 +271,19 @@ int main(int argc, char *argv[])
 
     for(i=0; i<n_module_init;i++){
       char *name = module_init_names[i];
-      if(strchr(name,'.') != NULL){
-	fprintf(fp, "asm(\"call %s\");\n", name);  // asm("call func"); 
-	fprintf(fp, "asm(\"nop\");");
+     if(strchr(name,'.') != NULL){
+       if(is_AIX)
+	 {
+	   fprintf(fp, "asm(\"mr 31,1\");\n"); 
+	   fprintf(fp, "asm(\"nop\");\n");
+	   fprintf(fp,"\t%s();\n",strcpy(name,name+1));
+	   break;
+	 }
+       else
+	 {
+	   fprintf(fp, "asm(\"call %s\");\n", name);  // asm("call func"); 
+	   fprintf(fp, "asm(\"nop\");");
+	 }
       }
       else
 	fprintf(fp,"\t%s();\n",name);
