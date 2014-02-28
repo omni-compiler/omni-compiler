@@ -389,9 +389,10 @@ void compile_OMP_directive(expr x)
 	return;
 
     case OMP_F_THREADPRIVATE:
-	c = EXPR_ARG2(x);
-	compile_OMP_name_list(c);
-	output_statement(OMP_pragma_list(OMP_THREADPRIVATE,c,NULL));
+	/* c = EXPR_ARG2(x); */
+	/* compile_OMP_name_list(c); */
+	/* output_statement(OMP_pragma_list(OMP_THREADPRIVATE,c,NULL)); */
+      warning("OMP THREADPRIVATE not supported yet");
 	return;
 
     case OMP_F_ATOMIC:
