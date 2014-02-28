@@ -187,6 +187,7 @@ void xmpf_ref_set_loop_info__(_XMP_object_ref_t **r_desc, int *i_dim,
     int i = *i_dim;
 /*     rp->offset[i] = *off; */
 /*     rp->index[i] = *t_idx; */
+    rp->subscript_type[i] = SUBSCRIPT_SCALAR;
     rp->REF_OFFSET[i] = *off;
     rp->REF_INDEX[i] = *t_idx;
 }
