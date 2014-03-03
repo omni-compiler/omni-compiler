@@ -254,7 +254,7 @@ public class XMPtransPragma
     ret_body.add(pb.getBody().getHead()); // loop
 
     if(info.getReductionOp() != XMP.REDUCE_NONE){
-      ret_body.add(translateReduction(pb,info));
+      ret_body.add(translateReduction(pb,info,true));
     }
 
     return Bcons.COMPOUND(ret_body);
@@ -340,6 +340,10 @@ public class XMPtransPragma
   }
 
   private Block translateReduction(PragmaBlock pb, XMPinfo info){
+    return translateReduction(pb, info, false);
+  }
+
+  private Block translateReduction(PragmaBlock pb, XMPinfo info, boolean loopFlag){
 
     //Block b = Bcons.emptyBlock();
     //BasicBlock bb = b.getBasicBlock();
@@ -355,7 +359,7 @@ public class XMPtransPragma
 				    Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
     }
 
-    if (on_ref != null){
+    if (on_ref != null && !loopFlag){
       ret_body.add(on_ref.buildConstructor(env));
       on_ref_arg = on_ref.getDescId().Ref();
     }
