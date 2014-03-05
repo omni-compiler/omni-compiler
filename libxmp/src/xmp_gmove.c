@@ -747,7 +747,7 @@ static _Bool is_same_alignmanner(_XMP_array_t *adesc0, _XMP_array_t *adesc1)
   return true;
 }*/
 
-static _Bool is_same_shape(_XMP_array_t *adesc0, _XMP_array_t *adesc1)
+static _Bool is_same_array_shape(_XMP_array_t *adesc0, _XMP_array_t *adesc1)
 {
   if (adesc0->dim != adesc1->dim) return false;
 
@@ -759,6 +759,17 @@ static _Bool is_same_shape(_XMP_array_t *adesc0, _XMP_array_t *adesc1)
   return true;
 }
 
+static _Bool is_same_template_shape(_XMP_template_t *tdesc0, _XMP_template_t *tdesc1)
+{
+  if (tdesc0->dim != tdesc1->dim) return false;
+
+  for (int i = 0; i < tdesc0->dim; i++) {
+    if (tdesc0->info[i].ser_lower != tdesc1->info[i].ser_lower ||
+        tdesc0->info[i].ser_upper != tdesc1->info[i].ser_upper) return false;
+  }
+
+  return true;
+}
 
 static _Bool is_whole(_XMP_gmv_desc_t *gmv_desc)
 {
@@ -941,7 +952,6 @@ void _XMP_G2L_rank(long long int global_idx, int *local_idx,
 
     // NOTE: local_idx is 0-origin.
 
-    //printf("array->info[array_axis].align_manner=%d\n",array->info[array_axis].align_manner);
     switch(array->info[array_axis].align_manner){
     case _XMP_N_ALIGN_DUPLICATION:
       {
@@ -952,7 +962,6 @@ void _XMP_G2L_rank(long long int global_idx, int *local_idx,
       {
       *local_idx = (global_idx - base) % chunk->par_chunk_width;
       *rank = (global_idx - base) / chunk->par_chunk_width;
-      //printf("BLOCK rank=%d\n",*rank);
       }
       break;
     case _XMP_N_ALIGN_CYCLIC:
@@ -985,7 +994,7 @@ void _XMP_G2L_rank(long long int global_idx, int *local_idx,
 
 }
 
-void _XMP_calc_num_myrank(int dim, int *num_triplet, int **irank, int *rank_acc, int *num_myrank){
+void _XMP_calc_elmts_myrank(int dim, int *num_triplet, int **irank, int *rank_acc, int *num_myrank){
 
   int i0,i1,i2,i3,i4,i5,i6;
   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
@@ -1124,6 +1133,139 @@ void _XMP_calc_num_myrank(int dim, int *num_triplet, int **irank, int *rank_acc,
   }
 }
 
+void _XMP_set_align_flag(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_align_flag, int *src_align_flag, int *calc_color_flag){
+
+  int i;
+  _XMP_array_t *dst_array;
+  _XMP_array_t *src_array = gmv_desc_rightp->a_desc;
+  _XMP_template_t *dst_template;
+  _XMP_template_t *src_template = src_array->align_template;
+
+  if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true){
+    dst_array = gmv_desc_leftp->a_desc;
+    dst_template = dst_array->align_template;
+  }
+
+  int dst_dim = gmv_desc_leftp->ndims;
+  int src_dim = gmv_desc_rightp->ndims;
+  int dst_t_dim, src_t_dim;
+  int dst_noalign_count=0, src_noalign_count=0;
+  if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true){
+    dst_t_dim = dst_template->dim;
+    src_t_dim = src_template->dim;
+    if (dst_t_dim == src_t_dim && dst_t_dim == dst_dim && src_t_dim == src_dim){
+      for(i=0;i<src_dim;i++){
+        src_align_flag[i]=1;
+        if (src_array->info[i].align_manner == _XMP_N_ALIGN_NOT_ALIGNED){
+          _XMP_fatal("Not supported a collapsed distributed array on the right hand side for gmove");
+        }
+      }
+      for(i=0;i<dst_dim;i++){
+        dst_align_flag[i]=1;
+        if (dst_array->info[i].align_manner == _XMP_N_ALIGN_NOT_ALIGNED){
+          dst_align_flag[i]=0;
+          dst_noalign_count++;
+        }
+      }
+    }
+  }
+
+  /* if aflag==1, a color is calculated. */
+  if (dst_noalign_count > src_noalign_count){
+    *calc_color_flag=1;
+  }else{
+    *calc_color_flag=0;
+  }
+
+}
+
+void _XMP_calc_color(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_align_flag, int *src_align_flag, MPI_Comm *newcomm, int *calc_color_flag, int *color){
+
+  _XMP_array_t *dst_array;
+  _XMP_array_t *src_array = gmv_desc_rightp->a_desc;
+  _XMP_template_t *dst_template;
+  _XMP_template_t *src_template = src_array->align_template;
+  _XMP_nodes_t *dst_n;
+  _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
+  int myrank = exec_nodes->comm_rank;
+
+  if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true){
+    dst_array = gmv_desc_leftp->a_desc;
+    dst_template = dst_array->align_template;
+    dst_n = dst_template->onto_nodes;
+  }
+
+  int dst_dim = gmv_desc_leftp->ndims;
+  int src_dim = gmv_desc_rightp->ndims;
+
+  if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true && *calc_color_flag == 1){
+    int dst_psize[_XMP_N_MAX_DIM];
+    int i, j, temp_index, num_term;
+    int noalign_flag;
+    int div[4], mod[4], mult[4];
+
+    int dst_t_dim = dst_template->dim;
+    int src_t_dim = src_template->dim;
+
+    for(i=0;i<4;i++){
+      div[i]=1;
+      mod[i]=1;
+      mult[i]=1;
+    }
+
+    if (dst_t_dim == src_t_dim && dst_t_dim == dst_dim && src_t_dim == src_dim){
+
+      for(i=0;i<dst_dim;i++){
+        temp_index = dst_array->info[i].align_template_index;
+        if (temp_index==-1){
+          dst_psize[i]=dst_n->info[i].size;
+        }else{
+          dst_psize[temp_index]=dst_n->info[temp_index].size;
+        }
+      }
+
+      /* Calculation of the number of terms of a color polynomial*/
+      int dst_term_num_loc[4];
+      noalign_flag=1;
+      num_term=0;
+      for(i=0;i<dst_dim;i++){
+        if (dst_align_flag[i] == 1){
+          if (noalign_flag==1){
+            num_term++;
+            noalign_flag=0;
+            dst_term_num_loc[num_term-1]=i-1;
+          }
+        }else{
+          noalign_flag=1;
+        }
+      }
+
+      *color=0;
+      for(j=0;j<num_term;j++){
+        for(i=0;i<dst_term_num_loc[j]+1;i++){
+          div[j]=div[j]*dst_psize[i];
+          if(dst_align_flag[i]==1){
+            mult[j]=mult[j]*dst_psize[i];
+          }
+        }
+        for(i=dst_term_num_loc[j]+1;i<dst_dim;i++){
+          if(dst_align_flag[i]==1){
+            mod[j]=mod[j]*dst_psize[i];
+          }else{
+            break;
+          }
+        }
+        *color=*color+((myrank/div[j])%mod[j])*mult[j];
+      }
+
+      MPI_Comm newcomm0;
+      MPI_Comm_split( *(MPI_Comm *)dst_n->comm, *color, myrank, &newcomm0);
+      *newcomm=newcomm0;
+
+    }
+  }
+}
+
 void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long  *src_d){
 
   _XMP_array_t *dst_array;
@@ -1132,6 +1274,9 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
   _XMP_template_t *src_template = src_array->align_template;
   _XMP_nodes_t *dst_n;
   _XMP_nodes_t *src_n = src_template->onto_nodes;
+  _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
+  MPI_Comm *exec_comm = exec_nodes->comm;
+  int myrank = exec_nodes->comm_rank;
 
   void *dst_addr, *src_addr;
   int dst_dim = gmv_desc_leftp->ndims;
@@ -1168,14 +1313,12 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
   int src_rank_acc[src_dim], dst_rank_acc[dst_dim];
   int src_num[src_dim], dst_num[dst_dim];
   int dst_num_myrank_total, src_num_myrank_total;
-  _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
-  MPI_Comm *exec_comm = exec_nodes->comm;
-  int myrank = exec_nodes->comm_rank;
   int root_rank;
   unsigned long long dst_array_acc[_XMP_N_MAX_DIM];
   int i,j,jj,i0,i1,i2,i3,i4,i5,i6;
-  int temp_index;
+  int temp_index, calc_color_flag;
   int src_template_index[_XMP_N_MAX_DIM], dst_template_index[_XMP_N_MAX_DIM];
+  int src_align_flag[_XMP_N_MAX_DIM], dst_align_flag[_XMP_N_MAX_DIM];
 
   src_local_idx=(int **)malloc(src_dim*sizeof(int *));
   src_irank=(int **)malloc(src_dim*sizeof(int *));
@@ -1204,10 +1347,11 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
     }
   }
 
-  _XMP_calc_num_myrank(src_dim, src_num, src_irank, src_rank_acc, &src_num_myrank_total);
+  _XMP_calc_elmts_myrank(src_dim, src_num, src_irank, src_rank_acc, &src_num_myrank_total);
 
   unsigned long long dst_total_elmts=1;
 
+  int dst_num_myindex, dst_num_myindex_total=1, dst_myindex[_XMP_N_MAX_DIM];
   if (gmv_desc_leftp->is_global == true){
     for (i=0;i<dst_dim;i++){
       dst_num[i]=_XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
@@ -1217,19 +1361,24 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
       temp_index = dst_array->info[i].align_template_index;
       dst_array_acc[i] = dst_array->info[i].dim_acc;
       if (temp_index == -1){
+        dst_myindex[i]=0;
         dst_rank_acc[i]=0;
       }else{
         dst_template_index[i] = temp_index;
+        dst_myindex[i]=dst_n->info[dst_template_index[i]].rank;
         dst_rank_acc[i]=dst_n->info[dst_template_index[i]].multiplier;
       }
 
       jj=0;
+      dst_num_myindex=0;
       for (j = dst_l[i]; j<=dst_u[i]; j+=dst_s[i]){
 
         _XMP_G2L_rank(j, &dst_local_idx[i][jj],
                       gmv_desc_leftp, i, &dst_irank[i][jj]);
+        if (dst_irank[i][jj] == dst_myindex[i]) dst_num_myindex++;
         jj++;
       }
+      dst_num_myindex_total *=dst_num_myindex;
     }
   }else{
     for (i=0;i<dst_dim;i++){
@@ -1237,24 +1386,36 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
       dst_total_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
       dst_local_idx[i]=(int *)malloc(dst_num[i]*sizeof(int));
       dst_irank[i]=(int *)malloc(dst_num[i]*sizeof(int));
+      dst_myindex[i]=src_n->info[src_array->info[i].align_template_index].rank;
       dst_rank_acc[i]=0;
       dst_array_acc[i]=dst_d[i];
 
       jj=0;
+      dst_num_myindex=0;
       for (j = dst_l[i]; j<=dst_u[i]; j+=dst_s[i]){
         _XMP_G2L_rank(j, &dst_local_idx[i][jj],
                       gmv_desc_leftp, i, &dst_irank[i][jj]);
+        if (dst_irank[i][jj] == dst_myindex[i]) dst_num_myindex++;
         jj++;
       }
+      dst_num_myindex_total *=dst_num_myindex;
     }
   }
 
-  _XMP_calc_num_myrank(dst_dim, dst_num, dst_irank, dst_rank_acc, &dst_num_myrank_total);
+  _XMP_calc_elmts_myrank(dst_dim, dst_num, dst_irank, dst_rank_acc, &dst_num_myrank_total);
+
+  _XMP_set_align_flag(gmv_desc_leftp, gmv_desc_rightp, dst_align_flag, src_align_flag, &calc_color_flag);
+
+  int color, newcomm_rank;
+  MPI_Comm newcomm;
+  _XMP_calc_color(gmv_desc_leftp, gmv_desc_rightp, dst_align_flag, src_align_flag, &newcomm, &calc_color_flag, &color);
 
   int dst_type_size=type_size;
   int src_type_size=src_array->type_size;
 
-  int icount;
+  int icount, dst_loc;
+  int *unpack_ref;
+  char *dst_buf;
   MPI_Request *dst_request;
   MPI_Request *src_request;
   MPI_Status *dst_status;
@@ -1263,6 +1424,8 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
   dst_status=(MPI_Status *)malloc(dst_num_myrank_total*sizeof(MPI_Status));
   src_request=(MPI_Request *)malloc(src_num_myrank_total*sizeof(MPI_Request));
   src_status=(MPI_Status *)malloc(src_num_myrank_total*sizeof(MPI_Status));
+  unpack_ref=(int *)malloc(dst_num_myindex_total*sizeof(int));
+  dst_buf=(char *)malloc(dst_num_myindex_total*dst_type_size*sizeof(char));
 
   switch(src_dim){
   case 1:
@@ -1296,14 +1459,13 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
     icount=0;
     for(i1=0;i1<src_num[1];i1++){
       for(i0=0;i0<src_num[0];i0++){
-
         if (dst_rank_acc[1]*dst_irank[1][i1]
            +dst_rank_acc[0]*dst_irank[0][i0]
            == myrank){
-          MPI_Irecv((char *)dst_addr
-                    +(dst_array_acc[1]*dst_local_idx[1][i1]
-                     +dst_array_acc[0]*dst_local_idx[0][i0])
-                    *dst_type_size, 
+          dst_loc=dst_array_acc[1]*dst_local_idx[1][i1]
+                 +dst_array_acc[0]*dst_local_idx[0][i0];
+          unpack_ref[icount]=dst_loc;
+          MPI_Irecv((char *)dst_addr+dst_loc*dst_type_size, 
                     dst_type_size, MPI_BYTE,
                     src_rank_acc[1]*src_irank[1][i1]
                     +src_rank_acc[0]*src_irank[0][i0], 
@@ -1345,11 +1507,11 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
              +dst_rank_acc[1]*dst_irank[1][i1]
              +dst_rank_acc[0]*dst_irank[0][i0]
              == myrank){
-            MPI_Irecv((char *)dst_addr
-                    +(dst_array_acc[2]*dst_local_idx[2][i2]
-                     +dst_array_acc[1]*dst_local_idx[1][i1]
-                     +dst_array_acc[0]*dst_local_idx[0][i0])
-                    *dst_type_size,
+            dst_loc=dst_array_acc[2]*dst_local_idx[2][i2]
+                   +dst_array_acc[1]*dst_local_idx[1][i1]
+                   +dst_array_acc[0]*dst_local_idx[0][i0];
+            unpack_ref[icount]=dst_loc;
+            MPI_Irecv((char *)dst_addr+dst_loc*dst_type_size,
                     dst_type_size, MPI_BYTE,
                     src_rank_acc[2]*src_irank[2][i2]
                     +src_rank_acc[1]*src_irank[1][i1]
@@ -1400,12 +1562,12 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
                +dst_rank_acc[1]*dst_irank[1][i1]
                +dst_rank_acc[0]*dst_irank[0][i0]
                == myrank){
-              MPI_Irecv((char *)dst_addr
-                      +(dst_array_acc[3]*dst_local_idx[3][i3]
-                       +dst_array_acc[2]*dst_local_idx[2][i2]
-                       +dst_array_acc[1]*dst_local_idx[1][i1]
-                       +dst_array_acc[0]*dst_local_idx[0][i0])
-                      *dst_type_size,
+              dst_loc=dst_array_acc[3]*dst_local_idx[3][i3]
+                     +dst_array_acc[2]*dst_local_idx[2][i2]
+                     +dst_array_acc[1]*dst_local_idx[1][i1]
+                     +dst_array_acc[0]*dst_local_idx[0][i0];
+              unpack_ref[icount]=dst_loc;
+              MPI_Irecv((char *)dst_addr+dst_loc*dst_type_size,
                       dst_type_size, MPI_BYTE,
                       src_rank_acc[3]*src_irank[3][i3]
                       +src_rank_acc[2]*src_irank[2][i2]
@@ -1465,13 +1627,13 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
                  +dst_rank_acc[1]*dst_irank[1][i1]
                  +dst_rank_acc[0]*dst_irank[0][i0]
                  == myrank){
-                MPI_Irecv((char *)dst_addr
-                        +(dst_array_acc[4]*dst_local_idx[4][i4]
-                         +dst_array_acc[3]*dst_local_idx[3][i3]
-                         +dst_array_acc[2]*dst_local_idx[2][i2]
-                         +dst_array_acc[1]*dst_local_idx[1][i1]
-                         +dst_array_acc[0]*dst_local_idx[0][i0])
-                        *dst_type_size,
+                dst_loc=dst_array_acc[4]*dst_local_idx[4][i4]
+                       +dst_array_acc[3]*dst_local_idx[3][i3]
+                       +dst_array_acc[2]*dst_local_idx[2][i2]
+                       +dst_array_acc[1]*dst_local_idx[1][i1]
+                       +dst_array_acc[0]*dst_local_idx[0][i0];
+                unpack_ref[icount]=dst_loc;
+                MPI_Irecv((char *)dst_addr+dst_loc*dst_type_size,
                         dst_type_size, MPI_BYTE,
                         src_rank_acc[4]*src_irank[4][i4]
                         +src_rank_acc[3]*src_irank[3][i3]
@@ -1540,14 +1702,14 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
                    +dst_rank_acc[1]*dst_irank[1][i1]
                    +dst_rank_acc[0]*dst_irank[0][i0]
                    == myrank){
-                  MPI_Irecv((char *)dst_addr
-                          +(dst_array_acc[5]*dst_local_idx[5][i5]
-                           +dst_array_acc[4]*dst_local_idx[4][i4]
-                           +dst_array_acc[3]*dst_local_idx[3][i3]
-                           +dst_array_acc[2]*dst_local_idx[2][i2]
-                           +dst_array_acc[1]*dst_local_idx[1][i1]
-                           +dst_array_acc[0]*dst_local_idx[0][i0])
-                          *dst_type_size,
+                  dst_loc=dst_array_acc[5]*dst_local_idx[5][i5]
+                         +dst_array_acc[4]*dst_local_idx[4][i4]
+                         +dst_array_acc[3]*dst_local_idx[3][i3]
+                         +dst_array_acc[2]*dst_local_idx[2][i2]
+                         +dst_array_acc[1]*dst_local_idx[1][i1]
+                         +dst_array_acc[0]*dst_local_idx[0][i0]; 
+                  unpack_ref[icount]=dst_loc;
+                  MPI_Irecv((char *)dst_addr+dst_loc*dst_type_size,
                           dst_type_size, MPI_BYTE,
                           src_rank_acc[5]*src_irank[5][i5]
                           +src_rank_acc[4]*src_irank[4][i4]
@@ -1625,15 +1787,15 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
                      +dst_rank_acc[1]*dst_irank[1][i1]
                      +dst_rank_acc[0]*dst_irank[0][i0]
                      == myrank){
-                    MPI_Irecv((char *)dst_addr
-                            +(dst_array_acc[6]*dst_local_idx[6][i6]
-                             +dst_array_acc[5]*dst_local_idx[5][i5]
-                             +dst_array_acc[4]*dst_local_idx[4][i4]
-                             +dst_array_acc[3]*dst_local_idx[3][i3]
-                             +dst_array_acc[2]*dst_local_idx[2][i2]
-                             +dst_array_acc[1]*dst_local_idx[1][i1]
-                             +dst_array_acc[0]*dst_local_idx[0][i0])
-                            *dst_type_size,
+                    dst_loc=dst_array_acc[6]*dst_local_idx[6][i6]
+                           +dst_array_acc[5]*dst_local_idx[5][i5]
+                           +dst_array_acc[4]*dst_local_idx[4][i4]
+                           +dst_array_acc[3]*dst_local_idx[3][i3]
+                           +dst_array_acc[2]*dst_local_idx[2][i2]
+                           +dst_array_acc[1]*dst_local_idx[1][i1]
+                           +dst_array_acc[0]*dst_local_idx[0][i0];
+                    unpack_ref[icount]=dst_loc;
+                    MPI_Irecv((char *)dst_addr+dst_loc*dst_type_size,
                             dst_type_size, MPI_BYTE,
                             src_rank_acc[6]*src_irank[6][i6]
                             +src_rank_acc[5]*src_irank[5][i5]
@@ -1723,6 +1885,27 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
   free(dst_local_idx);
   free(dst_irank);
 
+  if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true && calc_color_flag == 1){
+    MPI_Comm_rank(newcomm, &newcomm_rank);
+    if (newcomm_rank==0){
+      for(i0=0;i0<dst_num_myindex_total;i0++){
+        memcpy((char *)dst_buf+i0*dst_type_size,(char *)dst_addr+unpack_ref[i0]*dst_type_size,dst_type_size);
+      }
+    }
+
+    /* bcast & unpack */
+    int i, iroot=0;
+    MPI_Bcast(dst_buf, dst_num_myindex_total*dst_type_size, MPI_BYTE, iroot, newcomm);
+    MPI_Bcast(unpack_ref, dst_num_myindex_total, MPI_LONG_LONG_INT, iroot, newcomm);
+    if (newcomm_rank != 0){
+      for(i=0;i<dst_num_myindex_total;i++){
+        memcpy((char *)dst_addr+unpack_ref[i]*dst_type_size, (char *)dst_buf+i*dst_type_size,dst_type_size);
+      }
+    }
+  }
+  free(unpack_ref);
+  free(dst_buf);
+
   if (gmv_desc_leftp->is_global == false){
     root_rank=0;
     void *buffer = _XMP_alloc(dst_total_elmts * type_size);
@@ -1777,8 +1960,8 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
 
   if ((gmv_desc_leftp->is_global == true) && (gmv_desc_rightp->is_global == true)){
     if ((_XMP_IS_SINGLE) ||
-        (is_same_shape(dst_array, src_array) &&
-         is_same_shape(dst_array->align_template, src_array->align_template) &&
+        (is_same_array_shape(dst_array, src_array) &&
+         is_same_template_shape(dst_array->align_template, src_array->align_template) &&
          is_same_axis(dst_array, src_array) &&
          is_same_offset(dst_array, src_array) &&
          is_same_alignmanner(dst_array, src_array) &&
@@ -1802,7 +1985,7 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
       return;
     }
 
-    if (is_same_shape(dst_array, src_array) &&
+    if (is_same_array_shape(dst_array, src_array) &&
         is_whole(gmv_desc_leftp) && is_whole(gmv_desc_rightp) &&
         is_one_block(dst_array) && is_one_block(src_array)){
       if (_XMP_gmove_transpose(gmv_desc_leftp, gmv_desc_rightp)) return;
