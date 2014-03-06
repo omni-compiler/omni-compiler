@@ -1543,7 +1543,11 @@ public class XMPrewriteExpr {
 	      }
 	    }else if(item.Opcode() == Xcode.LIST){
 	      //item is arrayRef
-	      XMP.error(x.getLineNo(), "reached unimplemented part");
+	      try{
+	        itemList.setArg(i, rewriteACCArrayRef(item, pragmaBlock, body));
+	      }catch(XMPexception e){
+	        XMP.error(x.getLineNo(), e.getMessage());
+	      }
 	    }
 	  }
 	}
@@ -1614,10 +1618,37 @@ public class XMPrewriteExpr {
 	      return arrayAddr;
 	  }
       } else if(alignedArray == null && coarray != null){  // only coarray
-	  return rewriteVarRef(arrayAddr, block, false);
+          Xobject coarrayAddrRef = _globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + arrayAddr.getSym()).Ref();
+	  Ident descId = coarray.getDescId();
+	  
+	  String arraySizeName = "_ACC_size_" + arrayAddr.getSym();
+          Ident arraySizeId = body.declLocalIdent(arraySizeName, Xtype.unsignedlonglongType);
+	  
+          Block getArraySizeFuncCall = _globalDecl.createFuncCallBlock("_XMP_get_array_total_elmts", Xcons.List(descId.Ref()));
+          body.insert(Xcons.Set(arraySizeId.Ref(), getArraySizeFuncCall.toXobject()));
+          
+          XobjList arrayRef = Xcons.List(coarrayAddrRef, Xcons.List(Xcons.IntConstant(0), arraySizeId.Ref()));
+          
+          arrayRef.setIsRewrittedByXmp(true);
+          return arrayRef;
       } else{ // no execute
 	  return arrayAddr;
       }
   }
-
+  
+  private Xobject rewriteACCArrayRef(Xobject arrayRef, Block block, BlockList body) throws XMPexception {
+      Xobject arrayAddr = arrayRef.getArg(0);
+      
+      XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayAddr.getSym(), block);
+      XMPcoarray coarray = _globalDecl.getXMPcoarray(arrayAddr.getSym(), block);
+      
+      if(alignedArray != null && coarray == null){ //only alignedArray
+          Xobject alignedArrayAddrRef = alignedArray.getAddrId().Ref();
+          arrayRef.setArg(0, alignedArrayAddrRef);
+      }else if(alignedArray == null && coarray != null){ //only coarray
+          Xobject coarrayAddrRef = _globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + arrayAddr.getSym()).Ref();
+          arrayRef.setArg(0, coarrayAddrRef);
+      }
+      return arrayRef;
+  }
 }
