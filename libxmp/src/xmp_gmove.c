@@ -978,6 +978,17 @@ void _XMP_G2L_rank(long long int global_idx, int *local_idx,
         *rank=(off/w)% (n_info->size);
       }
       break;
+    case _XMP_N_ALIGN_GBLOCK:
+      {
+        for(int i=1;i<(n_info->size+1);i++){
+          if(global_idx < chunk->mapping_array[i]){
+            *local_idx = global_idx - chunk->mapping_array[i-1];
+            *rank = i - 1;
+            break;
+          }
+        } 
+      }
+      break;
     case _XMP_N_ALIGN_NOT_ALIGNED:
       {
         *local_idx=global_idx - base;
