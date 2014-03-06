@@ -66,11 +66,19 @@ public class XMPdimInfo {
     return lower; 
   }
 
+  public void setLower(Xobject l) {
+    lower = l;
+  }
+
   public boolean hasLower(){
     return (lower != null);
   }
   
   public Xobject getUpper() { return upper; }
+
+  public void setUpper(Xobject u) {
+    upper = u;
+  }
 
   public boolean hasUpper(){
     return (upper != null);
@@ -90,7 +98,13 @@ public class XMPdimInfo {
     return stride; 
   }
 
+  public void setStride(Xobject s) {
+    stride = s;
+  }
+
   public boolean isStar() { return is_star; }
+
+  public void setStar() { is_star = true; }
 
   public boolean isScalar(){
     return (stride != null && stride.isZeroConstant());

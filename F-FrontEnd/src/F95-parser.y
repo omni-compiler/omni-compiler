@@ -1997,6 +1997,8 @@ xmp_obj_ref:
 	   { $$ = list2(LIST,$1,$3); }
           | IDENTIFIER
 	   { $$ = list2(LIST,$1,NULL); }
+          | '*'
+	   { $$ = NULL; }
 	  ;
 
 xmp_subscript_list: 

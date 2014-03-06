@@ -254,7 +254,7 @@ public class XMPtransPragma
     ret_body.add(pb.getBody().getHead()); // loop
 
     if(info.getReductionOp() != XMP.REDUCE_NONE){
-      ret_body.add(translateReduction(pb,info,true));
+      ret_body.add(translateReduction(pb,info));
     }
 
     return Bcons.COMPOUND(ret_body);
@@ -340,10 +340,6 @@ public class XMPtransPragma
   }
 
   private Block translateReduction(PragmaBlock pb, XMPinfo info){
-    return translateReduction(pb, info, false);
-  }
-
-  private Block translateReduction(PragmaBlock pb, XMPinfo info, boolean loopFlag){
 
     //Block b = Bcons.emptyBlock();
     //BasicBlock bb = b.getBasicBlock();
@@ -359,9 +355,16 @@ public class XMPtransPragma
 				    Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
     }
 
-    if (on_ref != null && !loopFlag){
-      ret_body.add(on_ref.buildConstructor(env));
-      on_ref_arg = on_ref.getDescId().Ref();
+    if (on_ref != null){
+      if (info.pragma != XMPpragma.LOOP){
+	ret_body.add(on_ref.buildConstructor(env));
+	on_ref_arg = on_ref.getDescId().Ref();
+      }
+      else {
+	XMPobjectsRef on_ref_copy = on_ref.convertLoopToReduction();
+	ret_body.add(on_ref_copy.buildConstructor(env));
+	on_ref_arg = on_ref_copy.getDescId().Ref();
+      }
     }
     else on_ref_arg = xmp_null;
 
@@ -461,15 +464,18 @@ public class XMPtransPragma
     BlockList ret_body = Bcons.emptyBody();
     XMPobjectsRef on_ref = info.getOnRef();
 
+    // when '*' = the executing node set is specified
+    if (on_ref == null) return Bcons.COMPOUND(pb.getBody());
+
     ret_body.add(on_ref.buildConstructor(env));
     Ident f = env.declInternIdent(XMP.test_task_on_f,
 				  Xtype.FlogicalFunctionType);
     Xobject cond = f.Call(Xcons.List(on_ref.getDescId().Ref()));
     ret_body.add(Bcons.IF(cond,Bcons.COMPOUND(pb.getBody()),null));
-
+      
     f = env.declInternIdent(XMP.end_task_f,Xtype.FsubroutineType);
     pb.getBody().add(f.Call(Xcons.List()));
-    
+
     return Bcons.COMPOUND(ret_body);
   }
 
