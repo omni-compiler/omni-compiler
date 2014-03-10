@@ -562,6 +562,8 @@ private:
                 "\tShow this.\n");
         fprintf(stderr, "\n");
 
+        fprintf(stderr, "  -fopenmp"
+                "\tEnable OpenMP options to the frontend.\n");
         fprintf(stderr, "  -Wf,opt[,opt...]"
                 "\tPass options directly to the frontend.\n");
         fprintf(stderr, "  -Wt,opt[,opt...]"

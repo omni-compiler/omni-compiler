@@ -379,6 +379,7 @@ void disp_help( void )
         "",
         "Frontend Options",
         "",
+        "    -fopenmp            enable OpenMP option to the Frontend.",
         "    --Wf[option]        pass [option] as an option to the Frontend.",
         "",
         "c2c Frontend Options",
