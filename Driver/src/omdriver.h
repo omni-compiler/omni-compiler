@@ -136,6 +136,7 @@
 #define OPT_L2X_SAVE            "--save"
 #define OPT_L2X_SAVEEQ          "--save="
 #define OPT_L2X_F               "--Wf"
+#define OPT_L2X_FOPENMP   	"-fopenmp"
 /** for LX2X */
 #define OPT_LX2X_X              "--Wx"
 /** for X2L */

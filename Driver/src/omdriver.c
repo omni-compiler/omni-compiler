@@ -52,6 +52,7 @@ static const opt_pair opt_pair_table[] = {
     { OPT_L2X_SAVE,       MOD_L2X,  0, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_L2X_SAVEEQ,     MOD_L2X,  0, 1, 0, 1, OPT_INVALID_CODE },
     { OPT_L2X_F,          MOD_L2X,  1, 0, 0, 0, OPT_INVALID_CODE },
+    { OPT_L2X_FOPENMP,    MOD_L2X,  1, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_LX2X_X,         MOD_LX2X, 1, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_X2L_B,          MOD_X2L,  1, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_NTV_N,          MOD_NTV,  1, 0, 0, 0, OPT_INVALID_CODE },
@@ -440,7 +441,6 @@ int set_driver_option( void )
 {
     int ret = SUCCESS;
     const char *lang_code;
-
     /** langid */
     if (GET_OPT_IS_APPLIED_TBL(opt_idx(OPT_DRV_LANGID))) {
         lang_code = GET_OPT_VALUE_TBL(opt_idx(OPT_DRV_LANGID), 0) +
@@ -454,7 +454,6 @@ int set_driver_option( void )
             clean_exit( EXIT_ERROR_GENERAL );
         }
     }
-
     /** dont link */
     if (GET_OPT_IS_APPLIED_TBL(opt_idx(OPT_DRV_DONT_LINK))) {
         SET_DONT_LINK( TRUE );
@@ -1145,7 +1144,7 @@ int exec_module( opt_applier id )
     case MOD_X2L:
         /** do same proccess */
     case MOD_NTV:
-        for (i = 0; i<cnt_file; i++) {
+	for (i = 0; i<cnt_file; i++) {
             if (( io->is_valid ) && ( io->is_compiled == FALSE )) {
                 strcpy( g_cmd_buf, g_module_path );
                 memset( g_outfile_buf, 0x00, MAX_INPUT_FILE_PATH );
