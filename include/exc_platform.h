@@ -148,12 +148,16 @@ typedef _omInt64_t _omLonglongint;
 typedef _omUint64_t _omUlonglongint;
 #endif /* HAS_INT64 */
 
+#ifdef AIX_64BIT
+typedef int64_t _omAddrInt_t;
+#else
 #if SIZEOF_VOID_P == 8
 typedef unsigned long long _omAddrInt_t;
 #elif SIZEOF_VOID_P == 4
 typedef unsigned int _omAddrInt_t;
 #else
 /* error, sizeof_void_p is neither 4 nor 8.  */
+#endif
 #endif
 
 #if defined(LIST_NEXT)

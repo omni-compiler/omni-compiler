@@ -639,6 +639,11 @@ fi
 AC_SUBST(AIX_OPT)
 BECC_OPTION="${BECC_OPTION} ${userBCFlags}"
 
+if test "$IS_AIX" = "Yes"; then
+  AC_DEFINE(AIX_64BIT)
+  AH_TEMPLATE(AIX_64BIT, [aix int64_t])
+fi
+
 # --------------------------------------------------------------------
 # specify Backend C compiler
 AC_ARG_WITH(backend-cc,

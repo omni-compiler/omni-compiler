@@ -6,6 +6,9 @@
 /* */
 #undef ADDR_IS_64
 
+/* aix int64_t */
+#undef AIX_64BIT
+
 /* The normal alignment of `double', in bytes. */
 #undef ALIGNOF_DOUBLE
 

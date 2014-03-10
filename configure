@@ -17140,6 +17140,12 @@ fi
 
 BECC_OPTION="${BECC_OPTION} ${userBCFlags}"
 
+if test "$IS_AIX" = "Yes"; then
+  $as_echo "#define AIX_64BIT 1" >>confdefs.h
+
+
+fi
+
 # --------------------------------------------------------------------
 # specify Backend C compiler
 
