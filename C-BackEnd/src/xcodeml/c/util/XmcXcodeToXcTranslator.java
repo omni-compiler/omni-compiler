@@ -605,10 +605,11 @@ public class XmcXcodeToXcTranslator {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
             Node contentNode = getContent(n);
-            if (contentNode != null &&
-                contentNode.getNodeName().equals("value")) {
+            Node parentNode = n.getParentNode();
+            if (parentNode != null &&
+                parentNode.getNodeName().equals("value")) {
                 // inner 'value' node is treated as a 'compoundValue' node.
-                enterCompoundValue(tc, contentNode, parent);
+                enterCompoundValue(tc, n, parent);
             } else {
                 enterNodes(tc, parent,
                            contentNode);
