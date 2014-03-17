@@ -1945,7 +1945,7 @@ AC_ARG_WITH([cpp],
 	[AS_HELP_STRING([--with-cpp],
 		[specify a cpp command (native compiler default).])],
 	[tmpCppCmd=${withval}],
-	[tmpCppCmd=${nativCompiler}])
+	[tmpCppCmd=${nativeCompiler}])
 AC_MSG_CHECKING(["${tmpCppCmd}" is a C preprosessor])
 checkCpp ${tmpCppCmd}
 if test $? -eq 0; then

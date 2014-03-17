@@ -26054,7 +26054,7 @@ tmpCppCmd=''
 if test "${with_cpp+set}" = set; then :
   withval=$with_cpp; tmpCppCmd=${withval}
 else
-  tmpCppCmd=${nativCompiler}
+  tmpCppCmd=${nativeCompiler}
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking \"${tmpCppCmd}\" is a C preprosessor" >&5
