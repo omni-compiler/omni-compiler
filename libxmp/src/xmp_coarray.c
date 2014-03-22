@@ -8,6 +8,7 @@
 #include "mpi-ext.h"
 //#define FJRDMA_DEBUG
 #endif
+#define FJRDMA_PW
 
 unsigned long long _xmp_heap_size, _xmp_stride_size;
 static int _elmt_size, _coarray_dims, _image_dims, *_image_size, *_image_num, _array_dims;

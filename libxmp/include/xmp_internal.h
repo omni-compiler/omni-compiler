@@ -201,6 +201,8 @@ extern void _XMP_threads_finalize(void);
 #endif
 
 extern void _XMP_post_initialize();
+//extern void _XMP_post(xmp_desc_t, int, int, int);
+//extern void _XMP_wait(int, int, int);
 #ifdef _XMP_COARRAY_GASNET
 #include <gasnet.h>
 #define _XMP_GASNET_STRIDE_INIT_SIZE 16
@@ -232,6 +234,17 @@ extern void _xmp_gasnet_wait(int, ...);
 
 extern int _XMP_fjrdma_initialize();
 extern int _XMP_fjrdma_finalize();
+extern void fjrdma_init();
+extern void fjrdma_finalize();
+extern void fjrdma_post(int, int);
+extern void fjrdma_wait(int, int);
+extern void fjrdma_pw_push(int, int);
+extern void fjrdma_do_post(int, int);
+extern void fjrdma_post(int, int);
+extern void fjrdma_post(int, int);
+extern void fjrdma_pw_cutdown(int);
+extern int fjrdma_pw_remove(int, int);
+extern void fjrdma_wait(int, int);
 extern void _XMP_fjrdma_sync_memory();
 extern void _XMP_fjrdma_sync_all();
 extern int get_memid();
