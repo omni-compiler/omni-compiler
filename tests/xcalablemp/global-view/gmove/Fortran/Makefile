@@ -44,7 +44,9 @@ run: $(EXES)
 	$(XRUN) -n 4 ./gmove_bca_2a2t_b.x
 	$(XRUN) -n 8 ./gmove_bca_3a3t_bc.x
 	$(XRUN) -n 12 ./gmove_bca_3a3t_c_b2.x
+	$(XRUN) -n 12 ./gmove_bca_3a3t_c_b2_s.x
 	$(XRUN) -n 12 ./gmove_bca_3a3t_c_gb.x
+	$(XRUN) -n 12 ./gmove_bca_3a3t_c_gb_s.x
 	$(XRUN) -n 16 ./gmove_bca_4a4t_bc.x
 	$(XRUN) -n 16 ./gmove_bca_4a4t_b2.x
 	$(XRUN) -n 32 ./gmove_bca_5a5t_b2.x

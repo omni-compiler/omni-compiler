@@ -960,7 +960,7 @@ void _XMP_G2L_rank(long long int global_idx, int *local_idx,
       break;
     case _XMP_N_ALIGN_BLOCK:
       {
-      *local_idx = (global_idx - base) % chunk->par_chunk_width;
+      *local_idx = (global_idx - base) % chunk->par_chunk_width + array->info[array_axis].shadow_size_lo;
       *rank = (global_idx - base) / chunk->par_chunk_width;
       }
       break;
@@ -982,7 +982,7 @@ void _XMP_G2L_rank(long long int global_idx, int *local_idx,
       {
         for(int i=1;i<(n_info->size+1);i++){
           if(global_idx < chunk->mapping_array[i]){
-            *local_idx = global_idx - chunk->mapping_array[i-1];
+            *local_idx = global_idx - chunk->mapping_array[i-1] + array->info[array_axis].shadow_size_lo;
             *rank = i - 1;
             break;
           }
