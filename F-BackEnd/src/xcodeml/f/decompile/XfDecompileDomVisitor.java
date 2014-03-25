@@ -3423,7 +3423,9 @@ public class XfDecompileDomVisitor {
             if (dirName.equals("FOR")) dirName = "DO";
             writer.writeToken("!$OMP " + dirName);
 
-            if (dirName.equals("THREADPRIVATE")){
+            if (dirName.equals("THREADPRIVATE") ||
+		dirName.equals("FLUSH")){
+
             	writer.writeToken("(");
             	
             	NodeList varList = dir.getNextSibling().getChildNodes();
@@ -3439,7 +3441,11 @@ public class XfDecompileDomVisitor {
         		
         		return;
             }
-            
+            else if (dirName.equals("BARRIER")){
+	      writer.setupNewLine();
+	      return;
+	    }
+
             // clause
             Node clause = dir.getNextSibling();
 
@@ -3537,10 +3543,12 @@ public class XfDecompileDomVisitor {
             }
 
             writer.decrementIndentLevel();
-            
-            writer.writeToken("!$OMP END " + dirName);
-            if (nowaitFlag) writer.writeToken("NOWAIT");
-            writer.setupNewLine();
+
+	    if (!dirName.equals("ATOMIC")){
+	      writer.writeToken("!$OMP END " + dirName);
+	      if (nowaitFlag) writer.writeToken("NOWAIT");
+	      writer.setupNewLine();
+	    }
 	    //	    writer.setStatementMode(prevMode);
 
         }
