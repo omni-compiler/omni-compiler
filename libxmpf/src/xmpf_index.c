@@ -78,15 +78,11 @@ int xmpf_local_idx__(_XMP_array_t **a_desc, int *i_dim, int *global_idx)
     _XMP_array_info_t *ai = &a->info[*i_dim];
     int off = ai->align_subscript;
     int tdim = ai->align_template_index;
-    int base = ai->ser_lower;
-
-    // NOTE: base should be cached in the descriptor.
+    int lshadow = ai->shadow_size_lo;
 
     _XMP_G2L(*global_idx + off, &l_idx, a->align_template, tdim);
-    // NOTE: par_lower is 0-origin.
-    _XMP_G2L(ai->par_lower + base + off, &l_base, a->align_template, tdim);
-    //xmpf_dbg_printf("%d, %d, %d, %d\n", *global_idx, l_idx, base, ai->par_lower);
-    l_idx = l_idx - l_base + 1; // the local lower bound is always 1 in Fortran
+    _XMP_G2L(ai->par_lower + off, &l_base, a->align_template, tdim);
+    l_idx = l_idx - l_base + lshadow;
 
     return l_idx;
 }
