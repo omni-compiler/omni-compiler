@@ -123,7 +123,8 @@ typedef struct _XMP_reflect_sched_type {
   void *lo_send_array, *lo_recv_array;
   void *hi_send_array, *hi_recv_array;
 
-  int count, blocklength, stride;
+  int count, blocklength;
+  long long stride;
 
   int lo_rank, hi_rank;
 

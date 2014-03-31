@@ -7,7 +7,7 @@
 int _xmp_omp_num_procs = 1;
 
 void _XMP_pack_vector(char * restrict dst, char * restrict src,
-		      int count, int blocklength, int stride){
+		      int count, int blocklength, long stride){
   long i;
   if (_xmp_omp_num_procs > 1 && count > 8 * _xmp_omp_num_procs){
 #pragma omp parallel for
@@ -40,7 +40,7 @@ void _XMP_pack_vector2(char * restrict dst, char * restrict src,
 }
 
 void _XMP_unpack_vector(char * restrict dst, char * restrict src,
-			int count, int blocklength, int stride){
+			int count, int blocklength, long stride){
   long i;
   if (_xmp_omp_num_procs > 1 && count > 8 * _xmp_omp_num_procs){
 #pragma omp parallel for

@@ -69,9 +69,9 @@ double t0, t1;
 extern int _xmp_reflect_pack_flag;
 
 static int _xmpf_set_reflect_flag = 0;
-static int _xmp_lwidth[_XMP_N_MAX_DIM];
-static int _xmp_uwidth[_XMP_N_MAX_DIM];
-static int _xmp_is_periodic[_XMP_N_MAX_DIM];
+static int _xmp_lwidth[_XMP_N_MAX_DIM] = {};
+static int _xmp_uwidth[_XMP_N_MAX_DIM] = {};
+static int _xmp_is_periodic[_XMP_N_MAX_DIM] = {};
 
 
 void _XMP_set_reflect__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
@@ -115,6 +115,11 @@ void _XMP_reflect__(_XMP_array_t *a)
   //  t_wait = t_wait + (MPI_Wtime() - t0);
 
   _xmpf_set_reflect_flag = 0;
+  for (int i = 0; i < a->dim; i++){
+    _xmp_lwidth[i] = 0;
+    _xmp_uwidth[i] = 0;
+    _xmp_is_periodic[i] = 0;
+  }
 
 }
 
@@ -521,7 +526,8 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   // setup data_type
   //
 
-  int count, blocklength, stride;
+  int count, blocklength;
+  long long stride;
 
   if (_XMPF_running & !_XMPC_running){ /* for XMP/F */
 
@@ -572,7 +578,8 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 
     for (int i = 0; i < ndims; i++) {
 
-      int lb_send, lb_recv, dim_acc;
+      int lb_send, lb_recv;
+      unsigned long long dim_acc;
 
       if (i == target_dim) {
 	lb_send = ainfo[i].local_upper - lwidth + 1;
@@ -602,7 +609,8 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 
     for (int i = 0; i < ndims; i++) {
 
-      int lb_send, lb_recv, dim_acc;
+      int lb_send, lb_recv;
+      unsigned long long dim_acc;
 
       if (i == target_dim) {
 	lb_send = ainfo[i].local_lower;

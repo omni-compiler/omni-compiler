@@ -133,12 +133,12 @@ extern void _XMP_finalize_comm(_XMP_comm_t *comm);
 
 /* xmpf_pack_vector.c */
 void _XMP_pack_vector(char * restrict dst, char * restrict src,
-		      int count, int blocklength, int stride);
+		      int count, int blocklength, long stride);
 void _XMP_pack_vector2(char * restrict dst, char * restrict src,
                        int count, int blocklength,
                        int nnodes, int type_size, int src_block_dim);
 void _XMP_unpack_vector(char * restrict dst, char * restrict src,
-			int count, int blocklength, int stride);
+			int count, int blocklength, long stride);
 void _XMPF_unpack_transpose_vector(char * restrict dst, char * restrict src,
                                    int dst_stride, int src_stride,
                                    int type_size, int dst_block_dim);
