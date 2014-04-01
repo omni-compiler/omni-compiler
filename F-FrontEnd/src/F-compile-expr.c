@@ -322,7 +322,7 @@ are_dimension_and_shape_conformant_by_type(expr x,
     } else {
         if (x != NULL) {
             error_at_node(x,
-                          "incompatible dimension for the opsration, "
+                          "incompatible dimension for the operation, "
                           "%d and %d.",
                           TYPE_N_DIM(lt), TYPE_N_DIM(rt));
         } else {
@@ -379,6 +379,7 @@ compile_expression(expr x)
     SYMBOL s;
     int is_userdefined = FALSE;
     char * error_msg = NULL;
+    int type_is_not_fixed = FALSE;
 
     if (x == NULL) {
         return NULL;
@@ -513,14 +514,18 @@ compile_expression(expr x)
             if(v == NULL)
                 return NULL;
             tp = getBaseType(EXPV_TYPE(v));
-            if (!IS_NUMERIC(tp) && !IS_GENERIC_TYPE(tp)) {
-                error_msg = "nonarithmetic operand of negation";
-            }
-            if (error_msg != NULL) {
-                if(is_userdefined) {
-                    tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+            if (TYPE_IS_NOT_FIXED(tp)) {
+                if (!IS_NUMERIC(tp) && !IS_GENERIC_TYPE(tp)) {
+                    error_msg = "nonarithmetic operand of negation";
+                }
+                if (error_msg != NULL) {
+                    if(is_userdefined) {
+                        tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+                    } else {
+                        goto err;
+                    }
                 } else {
-                    goto err;
+                    tp = EXPV_TYPE(v);
                 }
             } else {
                 tp = EXPV_TYPE(v);
@@ -565,11 +570,17 @@ compile_expression(expr x)
             bLType = bottom_type(lt);
             bRType = bottom_type(rt);
 
+            if (TYPE_IS_NOT_FIXED(bLType) || TYPE_IS_NOT_FIXED(bRType)) {
+                type_is_not_fixed = TRUE;
+            }
+
             switch (biop) {
             case ARITB:
-                if ((!IS_NUMERIC(bLType) && !IS_GENERIC_TYPE(bLType)) ||
-                    (!IS_NUMERIC(bRType) && !IS_GENERIC_TYPE(bRType))) {
-                    error_msg = "nonarithmetic operand of arithmetic operator";
+                if (!type_is_not_fixed) {
+                    if ((!IS_NUMERIC(bLType) && !IS_GENERIC_TYPE(bLType)) ||
+                        (!IS_NUMERIC(bRType) && !IS_GENERIC_TYPE(bRType))) {
+                        error_msg = "nonarithmetic operand of arithmetic operator";
+                    }
                 }
 
                 if(error_msg == NULL) {
@@ -583,18 +594,20 @@ compile_expression(expr x)
                 break;
 
             case RELAB:
-                if (IS_CHAR(bLType) || IS_CHAR(bRType) ||
-                    IS_LOGICAL(bLType) || IS_LOGICAL(bRType)) {
-                    if (TYPE_BASIC_TYPE(bLType) != TYPE_BASIC_TYPE(bRType)) {
-                        error_msg = "illegal comparison";
+                if (!type_is_not_fixed) {
+                    if (IS_CHAR(bLType) || IS_CHAR(bRType) ||
+                        IS_LOGICAL(bLType) || IS_LOGICAL(bRType)) {
+                        if (TYPE_BASIC_TYPE(bLType) != TYPE_BASIC_TYPE(bRType)) {
+                            error_msg = "illegal comparison";
+                        }
+                    } else if (IS_COMPLEX(bLType) || IS_COMPLEX(bRType)) {
+                        if (op != LOG_EQ_EXPR && op!= LOG_NEQ_EXPR) {
+                            error_msg = "order comparison of complex data";
+                        }
+                    } else if ((!IS_NUMERIC(bLType) && !IS_GENERIC_TYPE(bLType)) ||
+                        (!IS_NUMERIC(bRType) && !IS_GENERIC_TYPE(bRType))) {
+                        error_msg = "comparison of nonarithmetic data";
                     }
-                } else if (IS_COMPLEX(bLType) || IS_COMPLEX(bRType)) {
-                    if (op != LOG_EQ_EXPR && op!= LOG_NEQ_EXPR) {
-                        error_msg = "order comparison of complex data";
-                    }
-                } else if ((!IS_NUMERIC(bLType) && !IS_GENERIC_TYPE(bLType)) ||
-                    (!IS_NUMERIC(bRType) && !IS_GENERIC_TYPE(bRType))) {
-                    error_msg = "comparison of nonarithmetic data";
                 }
 
                 if(error_msg == NULL) {
@@ -654,17 +667,19 @@ compile_expression(expr x)
                 /*
                  * First of all, check if which side is reshaped type.
                  */
-                if (TYPE_IS_RESHAPED(lt) == TRUE &&
-                    TYPE_IS_RESHAPED(rt) == FALSE) {
-                    tp = rt;
-                } else if (TYPE_IS_RESHAPED(rt) == TRUE) {
-                    /*
-                     * both rehaped or right is reshaped. Use left.
-                     */
-                    tp = lt;
-                }
-                if (tp != NULL) {
-                    goto doEmit;
+                if (TYPE_IS_RESHAPED(lt) || TYPE_IS_RESHAPED(rt)) {
+                    if (bType == NULL) {
+                        tp = TYPE_IS_RESHAPED(rt) ? lt : rt;
+                        goto doEmit;
+                    } else {
+                        shape = list0(LIST);
+                        generate_shape_expr(TYPE_IS_RESHAPED(rt) ? lt : rt,
+                            shape);
+                        tp = compile_dimensions(bType, shape);
+                        fix_array_dimensions(tp);
+                        delete_list(shape);
+                        goto doEmit;
+                    }
                 }
 
                 /*
@@ -750,6 +765,8 @@ compile_expression(expr x)
             }
 
             doEmit:
+            if (type_is_not_fixed)
+                TYPE_SET_NOT_FIXED(bottom_type(tp));
             return expv_cons(op, tp, left, right);
         }
 
@@ -909,7 +926,7 @@ compile_expression(expr x)
                 }
                 EXPV_TYPE(v) = ID_TYPE(id);
             }
-            if(!expr_is_specification(v))
+            if(!expv_is_specification(v))
                 error_at_node(EXPR_ARG1(x),
                     "character string length must be integer.");
             return v;
@@ -1362,7 +1379,7 @@ compile_logical_expression0(expr x, int allowArray)
          * To avoid error, we forced to change the type to logical.
          */
         if(EXPV_CODE(v) == FUNCTION_CALL &&
-            TYPE_IS_IMPLICIT(tp)) {
+            (TYPE_IS_IMPLICIT(tp) || TYPE_IS_NOT_FIXED(tp))) {
             (void)force_to_logical_type(v);
         } else {
             error("logical expression is required");
@@ -1408,7 +1425,8 @@ expv_assignment(expv v1, expv v2)
             return NULL;
         }
     }
-    if (EXPV_CODE(v2) != FUNCTION_CALL &&
+    if (!TYPE_IS_NOT_FIXED(tp1) && !TYPE_IS_NOT_FIXED(tp2) &&
+        EXPV_CODE(v2) != FUNCTION_CALL &&
         type_is_compatible_for_assignment(tp1, tp2) == FALSE) {
         error("incompatible type in assignment.");
         return NULL;
@@ -1566,6 +1584,7 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
     int idASpecSz;
 
     TYPE_DESC tp;
+    TYPE_DESC tq;
     int nIdxRanges = 0;
     expv idShape = NULL;
 
@@ -1682,16 +1701,37 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
     }
 
     if (nIdxRanges > 0) {
-        tp = compile_dimensions(bottom_type(tp), shape);
-        if (tp == NULL) {
+        tq = compile_dimensions(bottom_type(tp), shape);
+        if (tq == NULL) {
             return NULL;
         }
-        fix_array_dimensions(tp);
+        fix_array_dimensions(tq);
     } else {
         /*
          * Otherwise the type should be basic type of the array.
          */
-        tp = bottom_type(tp);
+        tq = bottom_type(tp);
+    }
+
+    /*
+     * copy type attributes from original type
+     */
+    if (id != NULL) {
+        if (TYPE_IS_POINTER(id)) {
+            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_POINTER(id);
+        }
+        if (TYPE_IS_TARGET(id)) {
+            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_TARGET(id);
+        }
+    }
+    while (tp != NULL) {
+        if (TYPE_IS_POINTER(tp)) {
+            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_POINTER(tp);
+        }
+        if (TYPE_IS_TARGET(tp)) {
+            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_TARGET(tp);
+        }
+        tp = TYPE_REF(tp);
     }
 
     if (id != NULL) {
@@ -1705,7 +1745,7 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
     }
 
     return expv_reduce(expv_cons(ARRAY_REF,
-                                 tp, vary, subs), FALSE);
+                                 tq, vary, subs), FALSE);
 }
 
 
@@ -2033,17 +2073,26 @@ compile_highorder_function_call(ID id, expr args, int isCall)
          * A high order sub program invocation.
          */
         expv ret;
+        /*
+         * We commented out temporal substitution of name class below for a bug
+         * fix. But, we don't know why this temporal substitution is introduced.
+         * Uncommnet two code blocks below if any problem occurs.
+         */
+#if 0
         enum name_class sNC = ID_CLASS(id);
         int sUAF = VAR_IS_USED_AS_FUNCTION(id);
 
         ID_CLASS(id) = CL_UNKNOWN;
         VAR_IS_USED_AS_FUNCTION(id) = TRUE;
+#endif
         
         (void)declare_external_id_for_highorder(id, isCall);
         ret = compile_function_call(id, args);
 
+#if 0
         ID_CLASS(id) = sNC;
         VAR_IS_USED_AS_FUNCTION(id) = sUAF;
+#endif
 
         if (isCall == TRUE) {
             EXPV_TYPE(ret) = type_SUBR;
@@ -2305,8 +2354,7 @@ compile_function_call(ID f_id, expr args) {
 #endif
             v = list3(FUNCTION_CALL, ID_ADDR(f_id), a,
                       expv_any_term(F_EXTFUNC, f_id));
-	    if (IS_GENERIC_TYPE(tp) ||
-                TYPE_BASIC_TYPE(tp) == TYPE_UNKNOWN) {
+	    if (IS_GENERIC_TYPE(tp)) {
                 EXPV_TYPE(v) = type_GNUMERIC_ALL;
 	    } else {
                 EXPV_TYPE(v) = tp;
@@ -2333,8 +2381,11 @@ compile_function_call(ID f_id, expr args) {
                       ID_NAME(f_id));
                 goto err;
             }
-  	    tp = ID_TYPE(f_id) ? ID_TYPE(f_id) : new_type_desc();
+            tp = ID_TYPE(f_id);
             TYPE_SET_USED_EXPLICIT(tp);
+            if (TYPE_BASIC_TYPE(tp) == TYPE_UNKNOWN) {
+                TYPE_SET_NOT_FIXED(tp);
+            }
             a = compile_args(args);
 
             if (ID_DEFINED_BY(f_id) != NULL) {

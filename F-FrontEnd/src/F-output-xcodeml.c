@@ -38,6 +38,7 @@ extern int      flag_module_compile;
 static void     outx_expv(int l, expv v);
 static void     outx_functionDefinition(int l, EXT_ID ep);
 static void     outx_interfaceDecl(int l, EXT_ID ep);
+static void     collect_type_desc(expv v);
 
 char s_timestamp[CEXPR_OPTVAL_CHARLEN] = { 0 };
 char s_xmlIndent[CEXPR_OPTVAL_CHARLEN] = "  ";
@@ -723,7 +724,12 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
         return;
     }
 
-    outx_printi(l,"<%s type=\"%s\"", tag, getTypeID(tp));
+    /* Output type as generic numeric type when type is not fixed */
+    if(TYPE_IS_NOT_FIXED(tp) && TYPE_BASIC_TYPE(tp) == TYPE_UNKNOWN) {
+        outx_printi(l,"<%s type=\"%s\"", tag, "FnumericAll");
+    } else {
+        outx_printi(l,"<%s type=\"%s\"", tag, getTypeID(tp));
+    }
 
     if((options & TOPT_TYPEONLY) == 0) {
 
@@ -2979,6 +2985,13 @@ mark_type_desc(TYPE_DESC tp)
         TYPE_REF(tp) = sTp;
     }
 
+    collect_type_desc(TYPE_KIND(tp));
+    collect_type_desc(TYPE_LENG(tp));
+    collect_type_desc(TYPE_DIM_SIZE(tp));
+    collect_type_desc(TYPE_DIM_UPPER(tp));
+    collect_type_desc(TYPE_DIM_LOWER(tp));
+    collect_type_desc(TYPE_DIM_STEP(tp));
+
     TYPE_LINK_ADD(tp, type_list, type_list_tail);
     TYPE_IS_REFERENCED(tp) = 1;
 
@@ -3039,6 +3052,8 @@ mark_type_desc_in_structure(TYPE_DESC tp)
         ID_TYPE(id) = siTp;
         if(IS_STRUCT_TYPE(itp))
             mark_type_desc_in_structure(itp);
+        if (VAR_INIT_VALUE(id) != NULL)
+            collect_type_desc(VAR_INIT_VALUE(id));
     }
 }
 
@@ -3097,6 +3112,12 @@ mark_type_desc_in_id_list(ID ids)
                 sTp = reduce_type(EXT_PROC_TYPE(PROC_EXT_ID(id)));
                 mark_type_desc(sTp);
                 EXT_PROC_TYPE(PROC_EXT_ID(id)) = sTp;
+                /*
+                 * types of argmument below may be verbose(not used).
+                 * But to pass consistency check in backend, we choose to
+                 * output these types.
+                 */
+                collect_type_desc(EXT_PROC_ARGS(PROC_EXT_ID(id)));
             }
             // TODO
             if (id->use_assoc != NULL) {
@@ -3268,9 +3289,17 @@ outx_basicTypeNoCharNoAryNoRef(int l, TYPE_DESC tp)
   */
   if (IS_FUNCTION_TYPE(tp)) return;
 
+
     outx_typeAttrs(l, tp, "FbasicType", 0);
-    /* tp is basic data type */
-    outx_print(" ref=\"%s\"", getBasicTypeID(TYPE_BASIC_TYPE(tp)));
+
+    /* Output type as generic numeric type when type is not fixed */
+    if (TYPE_IS_NOT_FIXED(tp) && TYPE_BASIC_TYPE(tp) == TYPE_UNKNOWN) {
+        outx_print(" ref=\"%s\"", "FnumericAll");
+    } else {
+        /* tp is basic data type */
+        outx_print(" ref=\"%s\"", getBasicTypeID(TYPE_BASIC_TYPE(tp)));
+    }
+
     if (TYPE_KIND(tp) || IS_DOUBLED_TYPE(tp) || tp->codims){
         outx_print(">\n");
         outx_kind(l + 1, tp);
@@ -3320,25 +3349,13 @@ outx_functionType_EXT(int l, EXT_ID ep)
     tp = EXT_PROC_TYPE(ep);
     outx_typeAttrOnly_functionTypeWithResultVar(l, ep, "FfunctionType");
 
-    /* external symbol whose type is not explicitly defined
-     * is possible to be function or subroutine.
-     * so it must not be defined explicit type.
-     */
     if(tp) {
-        if((TYPE_IS_IMPLICIT(tp) && !TYPE_IS_USED_EXPLICIT(tp)))
-            /* If type of function is implict and
-               used as neither function nor subroutine,
-               type of function is ambiguous.
-             */
-            rtid = "FnumericAll";
-        else {
-            if(IS_SUBR(tp))
-                rtid = "Fvoid";
-            else if(IS_FUNCTION_TYPE(tp))
-                rtid = getTypeID(TYPE_REF(tp));
-            else
-                rtid = getTypeID(tp);
-        }
+        if(IS_SUBR(tp))
+            rtid = "Fvoid";
+        else if(IS_FUNCTION_TYPE(tp))
+            rtid = getTypeID(TYPE_REF(tp));
+        else
+            rtid = getTypeID(tp);
     } else {
         rtid = "Fvoid";
     }
@@ -3384,6 +3401,9 @@ outx_structType(int l, TYPE_DESC tp)
     FOREACH_MEMBER(id, tp) {
         outx_printi(l2, "<id type=\"%s\">\n", getTypeID(ID_TYPE(id)));
         outx_symbolName(l3, ID_SYM(id));
+        if (VAR_INIT_VALUE(id) != NULL) {
+            outx_value(l3, VAR_INIT_VALUE(id));
+        }
         outx_close(l2, "id");
     }
 
@@ -3902,7 +3922,12 @@ outx_moduleProcedureDecl(int l, EXT_ID parent_ep, SYMBOL parentName)
     if(hasModProc == FALSE)
         return;
 
-    outx_tagOfDecl1(l, "FmoduleProcedureDecl", GET_EXT_LINE(ep));
+    if (EXT_PROC_IS_MODULE_SPECIFIED(parent_ep)) {
+        outx_tagOfDecl1(l, "FmoduleProcedureDecl is_module_specified=\"true\"",
+            GET_EXT_LINE(ep));
+    } else {
+        outx_tagOfDecl1(l, "FmoduleProcedureDecl", GET_EXT_LINE(ep));
+    }
 
     if (is_emitting_xmod() == FALSE) {
         FOREACH_EXT_ID(ep, parent_ep) {

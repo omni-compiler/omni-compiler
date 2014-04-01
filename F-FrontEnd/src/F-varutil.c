@@ -552,23 +552,53 @@ expr_array_index(x)
 int
 type_is_inqurable(TYPE_DESC tp)
 {
-    /* TODO */
+    /*
+     * TODO: implement check code according to JIS X 3001-1 (ISO/IEC 1539-1)
+     *       7.1.6 Specification expression (7)-(b)
+     */
     if(tp == NULL)
         return FALSE;
     return TRUE;
 }
 
+#define EXPV_IS_INTRINSIC_CALL(x) \
+    (EXPV_CODE(x) == FUNCTION_CALL && SYM_TYPE(EXPV_NAME(EXPR_ARG1(x))) == S_INTR)
+#define EXPV_IS_OBJECT_DESIGNATOR(x) \
+    (EXPV_CODE(x) == F_VAR || EXPV_CODE(x) == F_ARRAY_REF || EXPV_CODE(x) == F95_MEMBER_REF)
+
+expv
+base_object(expv x)
+{
+    expv ret = NULL;
+
+    if (x != NULL) {
+        switch (EXPV_CODE(x)) {
+        case F_VAR:
+            ret = x;
+            break;
+        case F_ARRAY_REF:
+        case F95_MEMBER_REF:
+            ret = base_object(EXPV_LEFT(x));
+            break;
+        default:
+            break;
+        }
+    }
+
+    return ret;
+}
+
 /**
- * Checks if expr is function argument and don't have attribute optional or intent(out).
+ * Checks if expv is function argument and don't have attribute optional or intent(out).
  */
 int
-expr_is_restricted_argument(expr x)
+expv_is_restricted_argument(expv x)
 {
     if(EXPV_CODE(x) == F_VAR) {
         TYPE_DESC tp;
         ID id = find_ident(EXPV_NAME(x));
         /* check id is argument. */
-        if(id == NULL && !(ID_IS_DUMMY_ARG(id)))
+        if(id == NULL || !(ID_IS_DUMMY_ARG(id)))
             return FALSE;
         /* check type of id. */
         if((tp = ID_TYPE(id)) == NULL)
@@ -581,39 +611,125 @@ expr_is_restricted_argument(expr x)
     return FALSE;
 }
 
-#define EXPR_IS_INTRINSIC_OP(x) \
-    ((EXPR_CODE(x) == PLUS_EXPR) || \
-    (EXPR_CODE(x) == MINUS_EXPR) || \
-    (EXPR_CODE(x) == MUL_EXPR) || \
-    (EXPR_CODE(x) == DIV_EXPR) || \
-    (EXPR_CODE(x) == POWER_EXPR) || \
-    (EXPR_CODE(x) == LOG_EQ_EXPR) || \
-    (EXPR_CODE(x) == LOG_NEQ_EXPR) || \
-    (EXPR_CODE(x) == LOG_GT_EXPR) || \
-    (EXPR_CODE(x) == LOG_GE_EXPR) || \
-    (EXPR_CODE(x) == LOG_LT_EXPR) || \
-    (EXPR_CODE(x) == LOG_LE_EXPR) || \
-    (EXPR_CODE(x) == F_EQV_EXPR) || \
-    (EXPR_CODE(x) == F_NEQV_EXPR) || \
-    (EXPR_CODE(x) == LOG_OR_EXPR) || \
-    (EXPR_CODE(x) == LOG_AND_EXPR))
+int
+expv_is_specification_inquiry(expv x)
+{
+    if(EXPV_IS_INTRINSIC_CALL(x)) {
+        intrinsic_entry *ep = NULL;
+        ep = &(intrinsic_table[SYM_VAL(EXPV_NAME(EXPR_ARG1(x)))]);
+        switch(INTR_OP(ep)) {
+        /* array inquiry function */
+        case INTR_LBOUND:
+        case INTR_SHAPE:
+        case INTR_SIZE:
+        case INTR_UBOUND:
+        /* bit inquiry function BIT_SIZE */
+        case INTR_BIT_SIZE:
+        /* character inquiry function LEN */
+        case INTR_LEN:
+        /* kind inquiry function KIND */
+        case INTR_KIND:
+        /* NOT IMPLEMENTED: character inquiry function NEW_LINE */
+        /* numeric inquiry functions */
+        case INTR_DIGITS:
+        case INTR_EPSILON:
+        case INTR_HUGE:
+        case INTR_MAXEXPONENT:
+        case INTR_MINEXPONENT:
+        case INTR_PRECISION:
+        case INTR_RADIX:
+        case INTR_RANGE:
+        case INTR_TINY:
+        /* NOT IMPLEMENTED: IEEE inquiry function */
+            return TRUE;
+        default:
+            break;
+        }
+    }
 
+    /* NOT IMPLEMENTED: type parameter inquiry */
+
+    return FALSE;
+}
+
+int
+expv_is_specification_function_call(expv x)
+{
+    ID id;
+    TYPE_DESC tp;
+
+    /* specification function is a function */
+    if (EXPV_CODE(x) != FUNCTION_CALL)
+        return FALSE;
+
+    /* not an intrinsic function */
+    if (EXPV_IS_INTRINSIC_CALL(x))
+        return FALSE;
+
+    id = find_ident(EXPV_NAME(EXPR_ARG1(x)));
+    if (id == NULL)
+        return FALSE;
+
+    /* not a statement function */
+    if (PROC_CLASS(id) == P_STFUNCT)
+        return FALSE;
+
+    tp = ID_TYPE(id);
+    if (tp == NULL)
+        return FALSE;
+
+    /* must be pure */
+    if (!PROC_IS_PURE(id) && !TYPE_IS_PURE(tp))
+        return FALSE;
+
+    /* NOT IMPLEMENTED: not an internal function. but we can't check this */
+
+    /* does not have dummy procedure as argument */
+    list lp;
+    FOR_ITEMS_IN_LIST(lp, PROC_ARGS(id)) {
+        ID arg = find_ident(EXPV_NAME(LIST_ITEM(lp)));
+        EXT_ID eid = arg != NULL ? PROC_EXT_ID(arg) : NULL;
+        if (eid != NULL && EXT_IS_DUMMY(eid))
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+#define EXPV_IS_INTRINSIC_OP(x) \
+    ((EXPV_CODE(x) == PLUS_EXPR) || \
+    (EXPV_CODE(x) == MINUS_EXPR) || \
+    (EXPV_CODE(x) == MUL_EXPR) || \
+    (EXPV_CODE(x) == DIV_EXPR) || \
+    (EXPV_CODE(x) == POWER_EXPR) || \
+    (EXPV_CODE(x) == LOG_EQ_EXPR) || \
+    (EXPV_CODE(x) == LOG_NEQ_EXPR) || \
+    (EXPV_CODE(x) == LOG_GT_EXPR) || \
+    (EXPV_CODE(x) == LOG_GE_EXPR) || \
+    (EXPV_CODE(x) == LOG_LT_EXPR) || \
+    (EXPV_CODE(x) == LOG_LE_EXPR) || \
+    (EXPV_CODE(x) == F_EQV_EXPR) || \
+    (EXPV_CODE(x) == F_NEQV_EXPR) || \
+    (EXPV_CODE(x) == LOG_OR_EXPR) || \
+    (EXPV_CODE(x) == LOG_AND_EXPR))
+
+int expv_list_is_restricted(expv x);
 
 /**
- * Checks if expr is a restricted expression.
+ * Checks if expv is a restricted expression.
  */
 int
-expr_is_restricted(expr x)
+expv_is_restricted(expv x)
 {
     if(x == NULL)
         return FALSE;
 
     /* x is intrinsic operation, all child must be restricted. */
-    if(EXPR_IS_INTRINSIC_OP(x)) {
+    if(EXPV_IS_INTRINSIC_OP(x)) {
         list lp;
         FOR_ITEMS_IN_LIST(lp, x) {
-            expr xx = LIST_ITEM(lp);
-            if(expr_is_restricted(xx) == FALSE)
+            expv xx = LIST_ITEM(lp);
+            if(expv_is_restricted(xx) == FALSE)
                 return FALSE;
         }
         return TRUE;
@@ -623,77 +739,118 @@ expr_is_restricted(expr x)
     if(expr_is_constant(x))
         return TRUE;
 
-    /* x is argument without optional or intent(out) or part of it. */
-    if(expr_is_restricted_argument(x)) {
-        return TRUE;
+    if(EXPV_IS_OBJECT_DESIGNATOR(x)) {
+        expv base = base_object(x);
+        if (base == NULL)
+            return FALSE;
+
+        /* x is argument without optional or intent(out) or part of it. */
+        if(expv_is_restricted_argument(base)) {
+            return TRUE;
+        }
+
+        /* x is a variable in common block or part of it. */
+        if(EXPV_CODE(base) == IDENT || EXPV_CODE(base) == F_VAR) {
+            ID id = find_ident(EXPV_NAME(base));
+            if (id != NULL && ID_STORAGE(id) == STG_COMMON)
+                return TRUE;
+        }
+
+        /* x is a variable which is be accecible by host or use association */
+        if(EXPV_CODE(base) == IDENT || EXPV_CODE(base) == F_VAR) {
+            ID id = find_ident(EXPV_NAME(base));
+            if (id != NULL && ID_IS_OFMODULE(id))
+                return TRUE;
+            id = find_ident_parent(EXPV_NAME(base));
+            if (id != NULL)
+                return TRUE;
+        }
     }
 
-    /* x is a variable in common block or part of it. */
-    /* NOT IMPLEMENTED. */
-
-    /* if(expr_is_subobject_designator(x)) { */
-    /*     expr parent = EXPR_ARG1(x); */
-    /*     if(expr_is_constant(x) || expr_is_argument(x)) */
-    /*         return TRUE; */
-    /* } */
-
     /* x is array constructor with all elements is restricted expression. */
-    if(EXPV_CODE(x) == FUNCTION_CALL && SYM_TYPE(EXPR_SYM(EXPR_ARG1(x))) == S_INTR) {
-        intrinsic_entry *ep = NULL;
+    if(EXPV_CODE(x) == F95_ARRAY_CONSTRUCTOR) {
+        if (expv_list_is_restricted(EXPV_LEFT(x)))
+            return TRUE;
+    }
+
+    /* x is implied do with expression except variable is restricted expression. */
+    if(EXPV_CODE(x) == F_IMPLIED_DO) {
         list lp;
-        expr v;
-        ep = &(intrinsic_table[SYM_VAL(EXPR_SYM(EXPR_ARG1(x)))]);
-        switch(INTR_OP(ep)) {
-        /* case INTR_REPEAT: NOT YET IMPLEMENTED. */
-        case INTR_SELECTED_INT_KIND:
-        case INTR_SELECTED_REAL_KIND:
-        case INTR_TRANSFER:
-        case INTR_TRIM:
-        case INTR_SIZE:
-        case INTR_LBOUND:
-        case INTR_UBOUND:
-        case INTR_BIT_SIZE:
-        case INTR_LEN:
-        case INTR_KIND:
-        /* case INTR_RADIX: NOT YET IMPLEMENTED. */
-        case INTR_DIGITS:
-        /* case INTR_MINEXPONENT: NOT YET IMPLEMENTED. */
-        case INTR_MAXEXPONENT:
-        /* case INTR_PRECISION: NOT YET IMPLEMENTED. */
-        /* case INTR_RANGE: NOT YET IMPLEMENTED. */
-        case INTR_HUGE:
-        case INTR_TINY:
-        case INTR_EPSILON:
-            break;
-        default:
-            return FALSE;
-            break;
+        FOR_ITEMS_IN_LIST(lp,EXPV_LEFT(x)) {
+            expv xx = LIST_ITEM(lp);
+            if(EXPV_CODE(xx) == F_VAR)
+                continue;
+            if(!expv_is_restricted(xx))
+                return FALSE;
         }
+    }
+
+    /* x is struct constructor with all elements is restricted expression. */
+    if(EXPV_CODE(x) == F95_STRUCT_CONSTRUCTOR) {
+        if (expv_list_is_restricted(EXPV_LEFT(x)))
+            return TRUE;
+    }
+
+    /* x is a specification inquiry */
+    if(expv_is_specification_inquiry(x)) {
         /*check parameter*/
-        v = EXPR_ARG1(x);
+        list lp;
+        expv v = EXPR_ARG2(x);
         FOR_ITEMS_IN_LIST(lp,v) {
-            expr xx = LIST_ITEM(lp);
-            if(expr_is_restricted(xx))
+            expv xx = LIST_ITEM(lp);
+            if(expv_is_restricted(xx))
                 continue;
             if(type_is_inqurable(EXPV_TYPE(xx)))
                 continue;
         }
         return TRUE;
     }
+
+    /* x is an other intrinsic function call. */
+    if(EXPV_IS_INTRINSIC_CALL(x)) {
+       if (expv_list_is_restricted(EXPR_ARG2(x)))
+           return TRUE;
+    }
+
+    /* x is a specification function call. */
+    if(expv_is_specification_function_call(x)) {
+       if (expv_list_is_restricted(EXPR_ARG2(x)))
+           return TRUE;
+    }
+
     return FALSE;
 }
 
-
 /**
- * Checks if expr is a specification expression.
+ * Checks if list of expv is a restricted expression.
  */
 int
-expr_is_specification(expv x)
+expv_list_is_restricted(expv x)
+{
+    list lp;
+
+    if (x == NULL || EXPR_CODE(x) != LIST)
+        return FALSE;
+
+    FOR_ITEMS_IN_LIST(lp,x) {
+        expv xx = LIST_ITEM(lp);
+        if(!expv_is_restricted(xx))
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+/**
+ * Checks if expv is a specification expression.
+ */
+int
+expv_is_specification(expv x)
 {
     if (EXPV_TYPE(x) != NULL &&
         TYPE_BASIC_TYPE(EXPV_TYPE(x)) == TYPE_INT &&
         TYPE_N_DIM(EXPV_TYPE(x)) == 0 &&
-        (expr_is_restricted(x)))
+        (expv_is_restricted(x)))
         return TRUE;
     else
         return FALSE;

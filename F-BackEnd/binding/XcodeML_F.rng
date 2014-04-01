@@ -283,6 +283,14 @@
   </optional>
 </define>
 
+<define name="defAttrModuleProcedure">
+  <optional>
+    <attribute name="is_module_specified">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+</define>
+
 <define name="defAttrRename">
   <optional>
     <attribute name="use_name">
@@ -750,6 +758,7 @@
 <define name="FmoduleProcedureDecl">
   <element name="FmoduleProcedureDecl" java:extends="xcodeml.f.XmfObj" java:implements="xcodeml.binding.IXbLineNo">
     <ref name="defAttrSourceLine"/>
+    <ref name="defAttrModuleProcedure"/>
     <zeroOrMore>
       <ref name="name"/>
     </zeroOrMore>
@@ -846,6 +855,9 @@
     <ref name="defAttrTypeName"/>
     <optional>
       <ref name="name"/>
+    </optional>
+    <optional>
+      <ref name="value"/>
     </optional>
   </element>
 </define>

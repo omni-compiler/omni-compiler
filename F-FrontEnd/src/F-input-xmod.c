@@ -20,6 +20,9 @@ typedef struct type_entry {
 } * TYPE_ENTRY;
 
 static int input_FfunctionDecl(xmlTextReaderPtr, HashTable *, EXT_ID, ID);
+static int input_value(xmlTextReaderPtr, HashTable *, expv *);
+static int input_varRef(xmlTextReaderPtr, HashTable *, expv *);
+static int input_expv(xmlTextReaderPtr, HashTable *, expv *);
 
 static int
 xmlSkipWhiteSpace(xmlTextReaderPtr reader) 
@@ -101,8 +104,9 @@ static int
 xmlExpectNode(xmlTextReaderPtr reader, int type, const char* name)
 {
     if (!xmlMatchNode(reader, type, name)) {
-        fprintf(stderr, "expected node type: %d, name: %s, "
-                        "but wad type: %d, name: %s\n",
+        fprintf(stderr, "On line %d, expected node type: %d, name: %s, "
+                        "but was type: %d, name: %s\n",
+                        xmlTextReaderGetParserLineNumber(reader),
                         type, name,
                         xmlTextReaderNodeType(reader),
                         xmlTextReaderConstName(reader));
@@ -193,28 +197,94 @@ setReturnType(HashTable * ht, TYPE_DESC tp, const char * rtid)
     }
 }
 
-/**
- * input <name> node
- */
-static int
-input_name(xmlTextReaderPtr reader, SYMBOL * s)
+const char *
+get_tagname_from_code(enum expr_code c)
 {
-    const char * name;
+    switch(c) {
+    case PLUS_EXPR:
+        return "plusExpr";
+    case MINUS_EXPR:
+        return "minusExpr";
+    case UNARY_MINUS_EXPR:
+        return "unaryMinusExpr";
+    case MUL_EXPR:
+        return "mulExpr";
+    case DIV_EXPR:
+        return "divExpr";
+    case POWER_EXPR:
+        return "FpowerExpr";
+    case LOG_EQ_EXPR:
+        return "logEQExpr";
+    case LOG_NEQ_EXPR:
+        return "logNEQExpr";
+    case LOG_GE_EXPR:
+        return "logGEExpr";
+    case LOG_GT_EXPR:
+        return "logGTExpr";
+    case LOG_LE_EXPR:
+        return "logLEExpr";
+    case LOG_LT_EXPR:
+        return "logLTExpr";
+    case LOG_AND_EXPR:
+        return "logAndExpr";
+    case LOG_OR_EXPR:
+        return "logOrExpr";
+    case LOG_NOT_EXPR:
+        return "logNotExpr";
+    case F_EQV_EXPR:
+        return "logEQVExpr";
+    case F_NEQV_EXPR:
+        return "logNEQVExpr";
+    case F_CONCAT_EXPR:
+        return "FconcatExpr";
+    case F95_ARRAY_CONSTRUCTOR:
+        return "FarrayConstructor";
+    case F95_STRUCT_CONSTRUCTOR:
+        return "FstructConstructor";
+    default:
+        return NULL;
+    }
+}
 
+static int
+input_name_as_string(xmlTextReaderPtr reader, char ** name)
+{
+    const char * str;
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "name"))
        return FALSE;
 
     if (!xmlMatchNodeType(reader, XML_READER_TYPE_TEXT))
        return FALSE;
 
-    name = (const char*) xmlTextReaderConstValue(reader);
-    *s = find_symbol(name);
+    str = (const char*) xmlTextReaderConstValue(reader);
+    if (str == NULL)
+        return FALSE;
+
+    *name = strdup(str);
 
     if (!xmlSkipWhiteSpace(reader)) 
         return FALSE;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "name"))
         return FALSE;
+
+    return TRUE;
+}
+
+/**
+ * input <name> node
+ */
+static int
+input_name(xmlTextReaderPtr reader, SYMBOL * s)
+{
+    char * name = NULL;
+
+    if (!input_name_as_string(reader, &name))
+       return FALSE;
+
+    *s = find_symbol(name);
+
+    free(name);
 
     return TRUE;
 }
@@ -383,32 +453,506 @@ input_depends(xmlTextReaderPtr reader, struct module * mod) {
 }
 
 /**
- * input expv node
+ * input FintConstant node
  */
 static int
-input_expv(xmlTextReaderPtr reader, expv * v)
+input_FintConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 {
-    const char * name;
-    int depth;
+    char * typeId = NULL;
+    const char * value = NULL;
+    TYPE_DESC tp = NULL;
 
-    if (!xmlMatchNodeType(reader, XML_READER_TYPE_ELEMENT))
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FintConstant"))
         return FALSE;
 
-    if (!xmlTextReaderIsEmptyElement(reader)) {
-        name = (const char *) xmlTextReaderConstName(reader);
-        depth = xmlTextReaderDepth(reader);
-
-        /* skip until corresponding close tag */
-        if (!xmlSkipUntil(reader, XML_READER_TYPE_END_ELEMENT, name, depth))
-            return FALSE;
-    }
+    if (!input_type_and_attr(reader, ht, &typeId, &tp))
+        return FALSE;
 
     if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
-    /* create dummy expv */
-    *v = list0(F_MODULE_INTERNAL);
-    EXPV_TYPE(*v) = type_basic(TYPE_INT);
+    value = (const char*) xmlTextReaderConstValue(reader);
+    if (value == NULL)
+        return FALSE;
+
+    // FIXME: do we need this?
+    if (TYPE_BASIC_TYPE(tp) != TYPE_INT) {
+        TYPE_BASIC_TYPE(tp) = TYPE_INT;
+    }
+    *v = expv_int_term(INT_CONSTANT, tp, atoll(value));
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FintConstant"))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
+ * input FrealConstant node
+ */
+static int
+input_FrealConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+{
+    char * typeId = NULL;
+    const char * value = NULL;
+    TYPE_DESC tp = NULL;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FrealConstant"))
+        return FALSE;
+
+    if (!input_type_and_attr(reader, ht, &typeId, &tp))
+        return FALSE;
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    value = (const char*) xmlTextReaderConstValue(reader);
+    if (value == NULL)
+        return FALSE;
+
+    /* FIXME: handling of double precision value */
+    if (TYPE_BASIC_TYPE(tp) != TYPE_REAL) {
+        TYPE_BASIC_TYPE(tp) = TYPE_REAL;
+    }
+    *v = expv_float_term(FLOAT_CONSTANT, tp, atof(value), strdup(value));
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FrealConstant"))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
+ * input FlogicalConstant node
+ */
+static int
+input_FlogicalConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+{
+    char * typeId = NULL;
+    const char * value = NULL;
+    TYPE_DESC tp = NULL;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FlogicalConstant"))
+        return FALSE;
+
+    if (!input_type_and_attr(reader, ht, &typeId, &tp))
+        return FALSE;
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    value = (const char*) xmlTextReaderConstValue(reader);
+    if (value == NULL)
+        return FALSE;
+
+    *v = expv_int_term(INT_CONSTANT, tp,
+             strcmp(value, ".TRUE.") == 0 ? TRUE : FALSE);
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FlogicalConstant"))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
+ * input FcharacterConstant node
+ */
+static int
+input_FcharacterConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+{
+    char * typeId = NULL;
+    const char * value = NULL;
+    TYPE_DESC tp = NULL;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FcharacterConstant"))
+        return FALSE;
+
+    if (!input_type_and_attr(reader, ht, &typeId, &tp))
+        return FALSE;
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    value = (const char*) xmlTextReaderConstValue(reader);
+    if (value == NULL)
+        return FALSE;
+
+    // FIXME: do we need this?
+    if (TYPE_BASIC_TYPE(tp) != TYPE_CHAR) {
+        TYPE_BASIC_TYPE(tp) = TYPE_CHAR;
+        TYPE_CHAR_LEN(tp) = 1;
+    }
+    *v = expv_str_term(STRING_CONSTANT, tp, (char *)value);
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FcharacterConstant"))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
+ * input FcomplexConstant node
+ */
+static int
+input_FcomplexConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+{
+    char * typeId = NULL;
+    TYPE_DESC tp = NULL;
+    expv i = NULL;
+    expv r = NULL;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FcomplexConstant"))
+        return FALSE;
+
+    if (!input_type_and_attr(reader, ht, &typeId, &tp))
+        return FALSE;
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (!input_expv(reader, ht, &i))
+        return FALSE;
+
+    if (!input_expv(reader, ht, &r))
+        return FALSE;
+
+    *v = list2(COMPLEX_CONSTANT, i, r);
+    EXPV_TYPE(*v) = tp;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FcomplexConstant"))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
+ * input Var node
+ */
+static int
+input_Var(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+{
+    char * typeId = NULL;
+    const char * name = NULL;
+    TYPE_DESC tp = NULL;
+    SYMBOL s;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "Var"))
+        return FALSE;
+
+    if (!input_type_and_attr(reader, ht, &typeId, &tp))
+        return FALSE;
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    name = (const char*) xmlTextReaderConstValue(reader);
+    if (name == NULL)
+        return FALSE;
+
+    s = find_symbol(name);
+    *v = expv_sym_term(F_VAR, tp, s);
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "Var"))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
+ * input unary expression node
+ */
+static int
+input_unaryExpr(xmlTextReaderPtr reader, HashTable * ht, enum expr_code c,
+    expv * v)
+{
+    expv operand;
+    TYPE_DESC tp = NULL;
+    const char * tag = get_tagname_from_code(c);
+    char * typeId = NULL;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, tag))
+        return FALSE;
+
+    if (!input_type_and_attr(reader, ht, &typeId, &tp))
+        return FALSE;
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (!input_expv(reader, ht, &operand))
+        return FALSE;
+
+    *v = expv_cons(c, tp, operand, NULL);
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, tag))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
+ * input binary expression node
+ */
+static int
+input_binaryExpr(xmlTextReaderPtr reader, HashTable * ht, enum expr_code c,
+    expv * v)
+{
+    expv lt, rt;
+    TYPE_DESC tp = NULL;
+    const char * tag = get_tagname_from_code(c);
+    char * typeId = NULL;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, tag))
+        return FALSE;
+
+    if (!input_type_and_attr(reader, ht, &typeId, &tp))
+        return FALSE;
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (!input_expv(reader, ht, &lt))
+        return FALSE;
+
+    if (!input_expv(reader, ht, &rt))
+        return FALSE;
+
+    *v = expv_cons(c, tp, lt, rt);
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, tag))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
+ * input multiple(zero or more) expression node
+ */
+static int
+input_multipleExpr(xmlTextReaderPtr reader, HashTable * ht, enum expr_code c,
+    expv * v)
+{
+    expv operand;
+    expv list;
+    TYPE_DESC tp = NULL;
+    const char * tag = get_tagname_from_code(c);
+    char * typeId = NULL;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, tag))
+        return FALSE;
+
+    if (!input_type_and_attr(reader, ht, &typeId, &tp))
+        return FALSE;
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    list = list0(LIST);
+
+    while (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, tag)) {
+        if (!input_expv(reader, ht, &operand))
+            return FALSE;
+        list_put_last(list, operand);
+    }
+
+    *v = expv_cons(c, tp, list, NULL);
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, tag))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
+ * input user binary expression node
+ */
+static int
+input_userBinaryExpr(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+{
+    expv lt, rt;
+    TYPE_DESC tp = NULL;
+    char * typeId = NULL;
+    char * name = NULL;
+    SYMBOL s;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "userBinaryExpr"))
+        return FALSE;
+
+    name = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "name");
+    if (name == NULL)
+        return FALSE;
+
+    if (!input_type_and_attr(reader, ht, &typeId, &tp))
+        return FALSE;
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (!input_expv(reader, ht, &lt))
+        return FALSE;
+
+    if (!input_expv(reader, ht, &rt))
+        return FALSE;
+
+    s = find_symbol(name);
+    *v = list3(F95_USER_DEFINED_BINARY_EXPR,
+               expv_sym_term(IDENT, NULL, s), lt, rt);
+    EXPV_TYPE(*v) = tp;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "userBinaryExpr"))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
+ * input user unary expression node
+ */
+static int
+input_userUnaryExpr(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+{
+    expv operand;
+    TYPE_DESC tp = NULL;
+    char * typeId = NULL;
+    char * name = NULL;
+    SYMBOL s;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "userUnaryExpr"))
+        return FALSE;
+
+    name = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "name");
+    if (name == NULL)
+        return FALSE;
+
+    if (!input_type_and_attr(reader, ht, &typeId, &tp))
+        return FALSE;
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (!input_expv(reader, ht, &operand))
+        return FALSE;
+
+    s = find_symbol(name);
+    *v = list2(F95_USER_DEFINED_UNARY_EXPR,
+               expv_sym_term(IDENT, NULL, s), operand);
+    EXPV_TYPE(*v) = tp;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "userUnaryExpr"))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
+ * input FmemberRef node
+ */
+static int
+input_FmemberRef(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+{
+    expv v1, v2;
+    TYPE_DESC tp = NULL;
+    char * typeId = NULL;
+    const char * member = NULL;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FmemberRef"))
+        return FALSE;
+
+    if (!input_type_and_attr(reader, ht, &typeId, &tp))
+        return FALSE;
+
+    member = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "member");
+    if (member == NULL)
+        return FALSE;
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (!input_varRef(reader, ht, &v1))
+        return FALSE;
+
+    v2 = expv_sym_term(IDENT, NULL, find_symbol(member));
+    *v = expv_cons(F95_MEMBER_REF, tp, v1, v2);
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FmemberRef"))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
+ * input functionCall node
+ */
+static int
+input_functionCall(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+{
+    char * name;
+    char * typeId = NULL;
+    SYMBOL s;
+    ID id;
+    TYPE_DESC tp = NULL;
+    expv arg;
+    expv args;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "functionCall"))
+        return FALSE;
+
+    if (!input_type_and_attr(reader, ht, &typeId, &tp))
+        return FALSE;
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (!input_name_as_string(reader, &name))
+        return FALSE;
+
+    args = list0(LIST);
+
+    if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "arguments")) {
+
+        if (!xmlSkipWhiteSpace(reader))
+            return FALSE;
+
+        while (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "arguments")) {
+            if (!input_expv(reader, ht, &arg))
+                return FALSE;
+            list_put_last(args, arg);
+        }
+
+        if (!xmlSkipWhiteSpace(reader))
+            return FALSE;
+    }
+
+    s = find_symbol(name);
+    SYM_TYPE(s) = TYPE_IS_INTRINSIC(tp) ? S_INTR : S_IDENT;
+    id = new_ident_desc(s);
+    PROC_EXT_ID(id) = new_external_id_for_external_decl(s, tp);
+
+    if (TYPE_IS_INTRINSIC(tp)) {
+        *v = compile_intrinsic_call(id, args);
+    } else {
+        ID_ADDR(id) = expv_sym_term(IDENT, NULL, s);
+        *v = list3(FUNCTION_CALL, ID_ADDR(id), args, expv_any_term(F_EXTFUNC, id));
+        EXPV_TYPE(*v) = getTypeDesc(ht, typeId);
+    }
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "functionCall"))
+        return FALSE;
 
     return TRUE;
 }
@@ -417,7 +961,7 @@ input_expv(xmlTextReaderPtr reader, expv * v)
  * input <kind> node
  */
 static int
-input_kind(xmlTextReaderPtr reader, TYPE_DESC tp)
+input_kind(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
 {
     expv v;
 
@@ -427,7 +971,7 @@ input_kind(xmlTextReaderPtr reader, TYPE_DESC tp)
     if (!xmlSkipWhiteSpace(reader)) 
         return FALSE;
 
-    if (!input_expv(reader, &v))
+    if (!input_expv(reader, ht, &v))
         return FALSE;
 
     TYPE_KIND(tp) = v;
@@ -442,7 +986,7 @@ input_kind(xmlTextReaderPtr reader, TYPE_DESC tp)
  * input <len> node
  */
 static int
-input_len(xmlTextReaderPtr reader, TYPE_DESC tp)
+input_len(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
 {
     expv v = NULL;
 
@@ -456,7 +1000,7 @@ input_len(xmlTextReaderPtr reader, TYPE_DESC tp)
         /* if <len> tag is empty, size is unfixed */
         TYPE_CHAR_LEN(tp) = CHAR_LEN_UNFIXED;
     } else {
-        if (!input_expv(reader, &v))
+        if (!input_expv(reader, ht, &v))
             return FALSE;
 
         if (v != NULL)
@@ -473,12 +1017,12 @@ input_len(xmlTextReaderPtr reader, TYPE_DESC tp)
  * input <lowerBound> node
  */
 static int
-input_lowerBound(xmlTextReaderPtr reader, expv * v)
+input_lowerBound(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 {
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "lowerBound"))
         return FALSE;
 
-    if (!input_expv(reader, v))
+    if (!input_expv(reader, ht, v))
         return FALSE;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "lowerBound"))
@@ -491,12 +1035,12 @@ input_lowerBound(xmlTextReaderPtr reader, expv * v)
  * input <upperBound> node
  */
 static int
-input_upperBound(xmlTextReaderPtr reader, expv * v)
+input_upperBound(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 {
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "upperBound"))
         return FALSE;
 
-    if (!input_expv(reader, v))
+    if (!input_expv(reader, ht, v))
         return FALSE;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "upperBound"))
@@ -509,12 +1053,12 @@ input_upperBound(xmlTextReaderPtr reader, expv * v)
  * input <step> node
  */
 static int
-input_step(xmlTextReaderPtr reader, expv * v)
+input_step(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 {
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "step"))
         return FALSE;
 
-    if (!input_expv(reader, v))
+    if (!input_expv(reader, ht, v))
         return FALSE;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "step"))
@@ -527,7 +1071,7 @@ input_step(xmlTextReaderPtr reader, expv * v)
  * input <indexRange> node
  */
 static int
-input_indexRange(xmlTextReaderPtr reader, TYPE_DESC tp)
+input_indexRange(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
 {
     TYPE_DESC bottom, base;
     expv v;
@@ -574,21 +1118,21 @@ input_indexRange(xmlTextReaderPtr reader, TYPE_DESC tp)
         return FALSE;
 
     if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "lowerBound")) {
-        if (input_lowerBound(reader, &v))
+        if (input_lowerBound(reader, ht, &v))
             TYPE_DIM_LOWER(bottom) = v;
         else
             return FALSE;
     }
 
     if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "upperBound")) {
-        if (input_upperBound(reader, &v))
+        if (input_upperBound(reader, ht, &v))
             TYPE_DIM_UPPER(bottom) = v;
         else
             return FALSE;
     }
 
     if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "step")) {
-        if (input_step(reader, &v))
+        if (input_step(reader, ht, &v))
             TYPE_DIM_STEP(bottom) = v;
         else
             return FALSE;
@@ -604,7 +1148,7 @@ input_indexRange(xmlTextReaderPtr reader, TYPE_DESC tp)
  * input <indexRange> node in <coShape> node
  */
 static int
-input_indexRange_coShape(xmlTextReaderPtr reader, expv lp)
+input_indexRange_coShape(xmlTextReaderPtr reader, HashTable * ht, expv lp)
 {
     expv cobound = NULL;
     expv lower = NULL;
@@ -615,15 +1159,15 @@ input_indexRange_coShape(xmlTextReaderPtr reader, expv lp)
         return FALSE;
 
     if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "lowerBound"))
-        if (!input_lowerBound(reader, &lower))
+        if (!input_lowerBound(reader, ht, &lower))
             return FALSE;
 
     if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "upperBound"))
-        if (!input_upperBound(reader, &upper))
+        if (!input_upperBound(reader, ht, &upper))
             return FALSE;
 
     if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "step"))
-        if (!input_step(reader, &step))
+        if (!input_step(reader, ht, &step))
             return FALSE;
 
     cobound = list3(LIST, lower, upper, step);
@@ -639,7 +1183,7 @@ input_indexRange_coShape(xmlTextReaderPtr reader, expv lp)
  * input <coShape> node
  */
 static int
-input_coShape(xmlTextReaderPtr reader, TYPE_DESC tp)
+input_coShape(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
 {
     codims_desc * codims;
 
@@ -651,11 +1195,253 @@ input_coShape(xmlTextReaderPtr reader, TYPE_DESC tp)
     codims->cobound_list = EMPTY_LIST;
 
     while (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "indexRange")) {
-        if (!input_indexRange_coShape(reader, codims->cobound_list))
+        if (!input_indexRange_coShape(reader, ht, codims->cobound_list))
             return FALSE;
     }
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "coShape"))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
+ * input indexRange or arrayIndex in FarrayRef, FcoArrayRef node
+ */
+static int
+input_arraySpec(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+{
+    expv lower = NULL;
+    expv upper = NULL;
+    expv step = NULL;
+
+    if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "arrayIndex")) {
+        if (!xmlSkipWhiteSpace(reader))
+            return FALSE;
+
+        if (!input_expv(reader, ht, v))
+            return FALSE;
+
+        if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "arrayIndex"))
+            return FALSE;
+
+    } else if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "indexRange")) {
+        if (!xmlSkipWhiteSpace(reader))
+            return FALSE;
+
+        if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "lowerBound"))
+            if (!input_lowerBound(reader, ht, &lower))
+                return FALSE;
+
+        if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "upperBound"))
+            if (!input_upperBound(reader, ht, &upper))
+                return FALSE;
+
+        if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "step"))
+            if (!input_step(reader, ht, &step))
+                return FALSE;
+
+        *v = list3(F_INDEX_RANGE, lower, upper, step);
+
+        if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "indexRange"))
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+/**
+ * input FarrayRef node
+ */
+static int
+input_FarrayRef(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+{
+    expv v1, v2, v3;
+    TYPE_DESC tp = NULL;
+    char * typeId = NULL;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FarrayRef"))
+        return FALSE;
+
+    if (!input_type_and_attr(reader, ht, &typeId, &tp))
+        return FALSE;
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (!input_varRef(reader, ht, &v1))
+        return FALSE;
+
+    v2 = list0(LIST);
+
+    while (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "FarrayRef")) {
+        if (!input_arraySpec(reader, ht, &v3))
+            return FALSE;
+        list_put_last(v2, v3);
+    }
+
+    *v = expv_cons(ARRAY_REF, tp, v1, v2);
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FarrayRef"))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
+ * input FcoArrayRef node
+ */
+static int
+input_FcoArrayRef(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+{
+    expv v1, v2, v3;
+    TYPE_DESC tp = NULL;
+    char * typeId = NULL;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FcoArrayRef"))
+        return FALSE;
+
+    if (!input_type_and_attr(reader, ht, &typeId, &tp))
+        return FALSE;
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (!input_varRef(reader, ht, &v1))
+        return FALSE;
+
+    v2 = list0(LIST);
+
+    while (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "FcoArrayRef")) {
+        if (!input_arraySpec(reader, ht, &v3))
+            return FALSE;
+        list_put_last(v2, v3);
+    }
+
+    *v = expv_cons(XMP_COARRAY_REF, tp, v1, v2);
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FcoArrayRef"))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
+ * input FcharacterRef node
+ */
+static int
+input_FcharacterRef(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+{
+    expv v1, v2;
+    TYPE_DESC tp = NULL;
+    char * typeId = NULL;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FcharacterRef"))
+        return FALSE;
+
+    if (!input_type_and_attr(reader, ht, &typeId, &tp))
+        return FALSE;
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (!input_varRef(reader, ht, &v1))
+        return FALSE;
+
+    v2 = NULL;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "FcharacterRef")) {
+        if (!input_arraySpec(reader, ht, &v2))
+            return FALSE;
+    }
+
+    *v = expv_cons(F_SUBSTR_REF, tp, v1, v2);
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FcharacterRef"))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
+ * input varRef node
+ */
+static int
+input_varRef(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+{
+    int ret = FALSE;
+    const char * name;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "varRef"))
+        return FALSE;
+
+    name = (const char *)xmlTextReaderConstName(reader);
+    if (strcmp(name, "Var") == 0)
+        ret = input_Var(reader, ht, v);
+    else if (strcmp(name, "FarrayRef") == 0)
+        ret = input_FarrayRef(reader, ht, v);
+    else if (strcmp(name, "FcharacterRef") == 0)
+        ret = input_FcharacterRef(reader, ht, v);
+    else if (strcmp(name, "FmemberRef") == 0)
+        ret = input_FmemberRef(reader, ht, v);
+    else if (strcmp(name, "FcoArrayRef") == 0)
+        ret = input_FcoArrayRef(reader, ht, v);
+
+    if (!ret)
+        return FALSE;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "varRef"))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
+ * input FdoLoop node
+ */
+static int
+input_FdoLoop(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+{
+    expv v1, v2;
+    expv var, lower, upper, step;
+    expv value;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "FdoLoop"))
+        return FALSE;
+
+    if (!input_Var(reader, ht, &var))
+        return FALSE;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "indexRange"))
+        return FALSE;
+
+    if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "lowerBound"))
+        if (!input_lowerBound(reader, ht, &lower))
+            return FALSE;
+
+    if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "upperBound"))
+        if (!input_upperBound(reader, ht, &upper))
+            return FALSE;
+
+    if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "step"))
+        if (!input_step(reader, ht, &step))
+            return FALSE;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "indexRange"))
+        return FALSE;
+
+    v1 = list4(LIST, var, lower, upper, step);
+    v2 = list0(LIST);
+
+    while (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "FdoLoop")) {
+        if (!input_value(reader, ht, &value))
+            return FALSE;
+        list_put_last(v2, value);
+    }
+
+    *v = expv_cons(F_IMPLIED_DO, NULL, v1, v2);
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FdoLoop"))
         return FALSE;
 
     return TRUE;
@@ -692,22 +1478,22 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
         return TRUE;	/* case FbasicType node has no child */
 
     /* <kind> */
-    if (!input_kind(reader, TYPE_REF(tp)))    /* kind should be set to ref */
+    if (!input_kind(reader, ht, TYPE_REF(tp)))    /* kind should be set to ref */
         return FALSE;
 
     /* <len> */
-    if (!input_len(reader, tp))
+    if (!input_len(reader, ht, tp))
         return FALSE;
 
     /* <indexRange> */
     while (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "indexRange")) {
-        if (!input_indexRange(reader, tp))
+        if (!input_indexRange(reader, ht, tp))
             return FALSE;
     }
 
     /* <coShape> */
     if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "coShape"))
-        if (!input_coShape(reader, tp))
+        if (!input_coShape(reader, ht, tp))
             return FALSE;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FbasicType"))
@@ -847,6 +1633,7 @@ input_symbol(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC parent, ID * tai
 {
     ID id;
     SYMBOL s;
+    expv v;
     TYPE_DESC tp;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "id"))
@@ -867,6 +1654,12 @@ input_symbol(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC parent, ID * tai
         ID_TYPE(id) = TYPE_REF(tp);
 
     ID_LINK_ADD(id, TYPE_MEMBER_LIST(parent), *tail);
+
+    if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "value")) {
+        if (!input_value(reader, ht, &v))
+            return FALSE;
+        VAR_INIT_VALUE(id) = v;
+    }
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "id"))
         return FALSE;
@@ -913,6 +1706,109 @@ input_FstructType(xmlTextReaderPtr reader, HashTable * ht)
         return FALSE;
 
     return TRUE;
+}
+
+/**
+ * input <value> node
+ */
+static int
+input_value(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+{
+    if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "value"))
+        return FALSE;
+
+    if (!input_expv(reader, ht, v))
+        return FALSE;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "value"))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
+ * input expv node
+ */
+static int
+input_expv(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+{
+    const char * name;
+    name = (const char *)xmlTextReaderConstName(reader);
+
+    if (strcmp(name, "FintConstant") == 0)
+        return input_FintConstant(reader, ht, v);
+    if (strcmp(name, "FrealConstant") == 0)
+        return input_FrealConstant(reader, ht, v);
+    if (strcmp(name, "FcomplexConstant") == 0)
+        return input_FcomplexConstant(reader, ht, v);
+    if (strcmp(name, "FcharacterConstant") == 0)
+        return input_FcharacterConstant(reader, ht, v);
+    if (strcmp(name, "FlogicalConstant") == 0)
+        return input_FlogicalConstant(reader, ht, v);
+    if (strcmp(name, "FarrayConstructor") == 0)
+        return input_multipleExpr(reader, ht, F95_ARRAY_CONSTRUCTOR, v);
+    if (strcmp(name, "FstructConstructor") == 0)
+        return input_multipleExpr(reader, ht, F95_STRUCT_CONSTRUCTOR, v);
+    if (strcmp(name, "Var") == 0)
+        return input_Var(reader, ht, v);
+    if (strcmp(name, "FarrayRef") == 0)
+        return input_FarrayRef(reader, ht, v);
+    if (strcmp(name, "FcharacterRef") == 0)
+        return input_FcharacterRef(reader, ht, v);
+    if (strcmp(name, "FmemberRef") == 0)
+        return input_FmemberRef(reader, ht, v);
+    if (strcmp(name, "FcoArrayRef") == 0)
+        return input_FcoArrayRef(reader, ht, v);
+    if (strcmp(name, "varRef") == 0)
+        return input_varRef(reader, ht, v);
+    if (strcmp(name, "functionCall") == 0)
+        return input_functionCall(reader, ht, v);
+    if (strcmp(name, "plusExpr") == 0)
+        return input_binaryExpr(reader, ht, PLUS_EXPR, v);
+    if (strcmp(name, "minusExpr") == 0)
+        return input_binaryExpr(reader, ht, MINUS_EXPR, v);
+    if (strcmp(name, "mulExpr") == 0)
+        return input_binaryExpr(reader, ht, MUL_EXPR, v);
+    if (strcmp(name, "divExpr") == 0)
+        return input_binaryExpr(reader, ht, DIV_EXPR, v);
+    if (strcmp(name, "FpowerExpr") == 0)
+        return input_binaryExpr(reader, ht, POWER_EXPR, v);
+    if (strcmp(name, "FconcatExpr") == 0)
+        return input_binaryExpr(reader, ht, F_CONCAT_EXPR, v);
+    if (strcmp(name, "logEQExpr") == 0)
+        return input_binaryExpr(reader, ht, LOG_EQ_EXPR, v);
+    if (strcmp(name, "logNEQExpr") == 0)
+        return input_binaryExpr(reader, ht, LOG_NEQ_EXPR, v);
+    if (strcmp(name, "logGEExpr") == 0)
+        return input_binaryExpr(reader, ht, LOG_GE_EXPR, v);
+    if (strcmp(name, "logGTExpr") == 0)
+        return input_binaryExpr(reader, ht, LOG_GT_EXPR, v);
+    if (strcmp(name, "logLEExpr") == 0)
+        return input_binaryExpr(reader, ht, LOG_LE_EXPR, v);
+    if (strcmp(name, "logLTExpr") == 0)
+        return input_binaryExpr(reader, ht, LOG_LT_EXPR, v);
+    if (strcmp(name, "logAndExpr") == 0)
+        return input_binaryExpr(reader, ht, LOG_AND_EXPR, v);
+    if (strcmp(name, "logOrExpr") == 0)
+        return input_binaryExpr(reader, ht, LOG_OR_EXPR, v);
+    if (strcmp(name, "logEQVExpr") == 0)
+        return input_binaryExpr(reader, ht, F_EQV_EXPR, v);
+    if (strcmp(name, "logNEQVExpr") == 0)
+        return input_binaryExpr(reader, ht, F_NEQV_EXPR, v);
+    if (strcmp(name, "unaryMinusExpr") == 0)
+        return input_unaryExpr(reader, ht, UNARY_MINUS_EXPR, v);
+    if (strcmp(name, "logNotExpr") == 0)
+        return input_unaryExpr(reader, ht, LOG_NOT_EXPR, v);
+    if (strcmp(name, "userBinaryExpr") == 0)
+        return input_userBinaryExpr(reader, ht, v);
+    if (strcmp(name, "userUnaryExpr") == 0)
+        return input_userUnaryExpr(reader, ht, v);
+    if (strcmp(name, "FdoLoop") == 0)
+        return input_FdoLoop(reader, ht, v);
+
+    fprintf(stderr, "unknown node \"%s\".\n", name);
+
+    return FALSE;
 }
 
 /**
@@ -1129,11 +2025,17 @@ input_FmoduleProcedureDecl(xmlTextReaderPtr reader, HashTable *ht,
     TYPE_ENTRY tep;
     char *typeId;
     char *name;
+    char *is_module_specified = NULL;
     int ret = TRUE;
 
-    if (!xmlExpectNode(reader,
+    if (!xmlMatchNode(reader,
                        XML_READER_TYPE_ELEMENT, "FmoduleProcedureDecl"))
         return FALSE;
+
+    is_module_specified =
+        (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_module_specified");
+
+    xmlSkipWhiteSpace(reader);
 
     while (!xmlMatchNodeType(reader, XML_READER_TYPE_END_ELEMENT) &&
            ret == TRUE) {
@@ -1185,6 +2087,9 @@ input_FmoduleProcedureDecl(xmlTextReaderPtr reader, HashTable *ht,
             *new_ep = *tep->ep;
             EXT_NEXT(new_ep) = NULL;
 
+            if (is_module_specified != NULL)
+                EXT_PROC_IS_MODULE_SPECIFIED(new_ep) = TRUE;
+
             if (EXT_PROC_INTR_DEF_EXT_IDS(parent) == NULL)
                 EXT_PROC_INTR_DEF_EXT_IDS(parent) = new_ep;
             else
@@ -1206,28 +2111,6 @@ input_FmoduleProcedureDecl(xmlTextReaderPtr reader, HashTable *ht,
 }
 
 /**
- * input <value> node
- */
-static int
-input_value(xmlTextReaderPtr reader, ID id)
-{
-    expv v = NULL;
-
-    if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "value"))
-        return FALSE;
-
-    if (!input_expv(reader, &v))
-        return FALSE;
-
-    VAR_INIT_VALUE(id) = v;
-
-    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "value"))
-        return FALSE;
-
-    return TRUE;
-}
-
-/**
  * input <varDecl> node
  */
 static int
@@ -1237,6 +2120,7 @@ input_varDecl(xmlTextReaderPtr reader, HashTable * ht, EXT_ID parent)
     TYPE_DESC tp;
     ID id;
     ID tail = NULL;
+    expv v;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "varDecl"))
         return FALSE;
@@ -1250,9 +2134,11 @@ input_varDecl(xmlTextReaderPtr reader, HashTable * ht, EXT_ID parent)
 
     ID_LINK_ADD(id, EXT_PROC_ID_LIST(parent), tail);
 
-    if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "value"))
-        if (!input_value(reader, id))
+    if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "value")) {
+        if (!input_value(reader, ht, &v))
             return FALSE;
+        VAR_INIT_VALUE(id) = v;
+    }
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "varDecl"))
         return FALSE;

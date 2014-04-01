@@ -345,6 +345,9 @@ expv_reduce(expv v, int doParamReduce)
         break;
 
     case MINUS_EXPR:
+        if(TYPE_HAVE_KIND(EXPV_TYPE(left)) ||
+           TYPE_HAVE_KIND(EXPV_TYPE(right)))
+            break;
         if(EXPV_IS_INT_ZERO(left))
           {
               /* 0 - x -> unary minus */

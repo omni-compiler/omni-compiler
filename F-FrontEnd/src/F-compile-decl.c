@@ -31,7 +31,6 @@ extern char *current_module_name;
  */
 int is_in_kind_compilation_flag_for_declare_ident = FALSE;
 int is_in_struct_member_initializer_compilation_flag_for_declare_ident = FALSE;
-#define WARN_STRUCT_MEMBER_INITIALIZATION 1
 
 ID
 declare_function_result_id(SYMBOL s, TYPE_DESC tp) {
@@ -58,20 +57,28 @@ link_parent_defined_by(SYMBOL sym)
         return;
     /* search parents local symbols,
        and if my name is found, then link it */
-    id = find_ident_parent(sym);
-    if (id == NULL)
-        return;
-    if (ID_CLASS(id) == CL_UNKNOWN) {
-        ID_CLASS(id) = CL_PROC;
-        ID_STORAGE(id) = STG_EXT;
-        PROC_CLASS(id) = P_EXTERNAL;
-    } else if (ID_CLASS(id) != CL_PROC &&
-        !(ID_TYPE(id) != NULL
-            && (TYPE_IS_PUBLIC(ID_TYPE(id)) || TYPE_IS_PRIVATE(id)))) {
-        error("%s is defined as variable before", ID_NAME(id));
-        return;
+    if (unit_ctl_level > 0) {
+        id = find_ident_head(sym, PARENT_LOCAL_SYMBOLS);
+        if (id == NULL)
+            return;
+        if (ID_CLASS(id) == CL_UNKNOWN) {
+            ID_CLASS(id) = CL_PROC;
+            ID_STORAGE(id) = STG_EXT;
+            PROC_CLASS(id) = P_EXTERNAL;
+        }
+        /* Conditions below is written to make test programs to pass. */
+        /* And it is not derived from the specification. So condition */
+        /* may be not enough. */
+        if (ID_CLASS(id) == CL_PROC &&
+            (PROC_CLASS(id) == P_UNDEFINEDPROC ||
+             PROC_CLASS(id) == P_EXTERNAL ||
+             IS_TYPE_PUBLICORPRIVATE(id) ||
+             (ID_TYPE(id) != NULL && (IS_TYPE_PUBLICORPRIVATE(ID_TYPE(id)))))) {
+            ID_DEFINED_BY(id) = CURRENT_PROCEDURE;
+        } else {
+            error("%s is defined as variable before", ID_NAME(id));
+        }
     }
-    ID_DEFINED_BY(id) = CURRENT_PROCEDURE;
 }
 
 /* 
@@ -513,7 +520,8 @@ implicit_declaration(ID id)
         copy_parent_type(id);
     }
     tp = ID_TYPE(id);
-    if (tp == NULL || (IS_ARRAY_TYPE(tp) && array_element_type(tp) == NULL)){
+    if (tp == NULL || TYPE_IS_NOT_FIXED(tp) ||
+        (IS_ARRAY_TYPE(tp) && array_element_type(tp) == NULL)){
         c = ID_NAME(id)[0];
         if (isupper((int)c)) {
             c = tolower((int)c);
@@ -664,12 +672,26 @@ declare_function(ID id)
                 if(tp == NULL ||
                    (TYPE_IS_IMPLICIT(tp) &&
                     !IS_TYPE_PUBLICORPRIVATE(tp))) {
-                    if(tp == NULL)
-                        implicit_declaration(id);
+                    if (tp == NULL) {
+                        ID parent;
+                        parent = find_ident_parent(ID_SYM(id));
+                        if (parent == NULL || ID_TYPE(parent) == NULL) {
+                            tp = new_type_desc();
+                            TYPE_SET_NOT_FIXED(tp);
+                        } else {
+                            if (TYPE_BASIC_TYPE(tp) == TYPE_UNKNOWN) {
+                                TYPE_SET_NOT_FIXED(tp);
+                            }
+                        }
+                        ID_TYPE(id) = tp;
+                    }
                     PROC_CLASS(id) = P_UNDEFINEDPROC;
                 } else {
                     if (IS_TYPE_PUBLICORPRIVATE(tp))
                         PROC_CLASS(id) = P_DEFINEDPROC; /* function is module procedure */
+                        if (TYPE_BASIC_TYPE(tp) == TYPE_UNKNOWN) {
+                            TYPE_SET_NOT_FIXED(tp);
+                        }
                     else
                         PROC_CLASS(id) = P_EXTERNAL;
                 }
@@ -1544,7 +1566,7 @@ declare_id_type(ID id, TYPE_DESC tp)
     }
 
     tq = ID_TYPE(id);
-    if (tq != NULL && TYPE_IS_IMPLICIT(tq)) {
+    if (tq != NULL && (TYPE_IS_IMPLICIT(tq) || TYPE_IS_NOT_FIXED(tq))) {
         /* override implicit declared type */
         TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(tq);
         ID_TYPE(id) = tp;
@@ -1715,7 +1737,7 @@ compile_type(expr x)
         if(vkind == NULL)
             return NULL;
 
-        vkind2 = expv_reduce(vkind, TRUE);
+        vkind2 = expv_reduce(vkind, FALSE);
         if(vkind2 != NULL)
             vkind = vkind2;
 
@@ -2891,15 +2913,6 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
         }
 
         if (value != NULL && EXPR_CODE(value) != F_DATA_DECL) {
-#ifdef WARN_STRUCT_MEMBER_INITIALIZATION
-            if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
-                warning_at_node(typeExpr,
-                                "The initialization of \"%s\" is "
-                                "just ignored due to current limitation.",
-                                ID_NAME(id));
-                goto valueCompilationDone;
-            }
-#endif /* WARN_STRUCT_MEMBER_INITIALIZATION */
             /*
              * FIXME:
              *	SUPER BOGUS FLAG ALERT !
@@ -2911,9 +2924,6 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
             is_in_struct_member_initializer_compilation_flag_for_declare_ident
                 = FALSE;
         }
-#ifdef WARN_STRUCT_MEMBER_INITIALIZATION
-        valueCompilationDone:
-#endif /* WARN_STRUCT_MEMBER_INITIALIZATION */
 
         if (TYPE_IS_PARAMETER(tp)) {
            /* handle the attribute for parameter, calc its value.

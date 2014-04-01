@@ -3171,7 +3171,10 @@ public class XfDecompileDomVisitor {
 
             XmfWriter writer = _context.getWriter();
 
-            writer.writeToken("MODULE PROCEDURE ");
+            if (XmDomUtil.getAttrBool(n, "is_module_specified")) {
+                writer.writeToken("MODULE ");
+            }
+            writer.writeToken("PROCEDURE ");
             int nameCount = 0;
             ArrayList<Node> nameNodes = XmDomUtil.collectElements(n, "name");
             for (Node nameNode : nameNodes) {
@@ -4991,6 +4994,14 @@ public class XfDecompileDomVisitor {
                         fail(n);
                     }
                     _writeSymbolDecl(symbol, n);
+
+                    Node valueNode = XmDomUtil.getElement(n, "value");
+                    if (valueNode != null) {
+                        XmfWriter writer = _context.getWriter();
+                        writer.writeToken(" = ");
+                        invokeEnter(valueNode);
+                    }
+
                     _context.getWriter().setupNewLine();
                 }
             }

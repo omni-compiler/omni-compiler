@@ -332,57 +332,56 @@ intrinsic_entry intrinsic_table[] = {
     /* 8. Numeric inquiry functions */
 
     // DIGITS (X)
-    { INTR_DIGITS,      INTR_NAME_GENERIC,      "digits",       0,      {INTR_TYPE_NUMERICS},           INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
-    { INTR_DIGITS,      INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_NUMERICS_ARRAY},     INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_DIGITS,      INTR_NAME_GENERIC,      "digits",       0,      {INTR_TYPE_NUMERICS_ARRAY},     INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_DIGITS,      INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_NUMERICS},           INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
 
     // EPSILON (X)
-    { INTR_EPSILON,     INTR_NAME_GENERIC,      "epsilon",      0,      {INTR_TYPE_REAL},               INTR_TYPE_REAL,         1, 0, LANGSPEC_F90 },
-    { INTR_EPSILON,     INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_REAL_ARRAY},         INTR_TYPE_REAL,         1, -6, LANGSPEC_F90 },
-    { INTR_EPSILON,     INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL},              INTR_TYPE_DREAL,        1, 0, LANGSPEC_F90 },
+    { INTR_EPSILON,     INTR_NAME_GENERIC,      "epsilon",      0,      {INTR_TYPE_REAL_ARRAY},         INTR_TYPE_REAL,         1, -6, LANGSPEC_F90 },
     { INTR_EPSILON,     INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL_ARRAY},        INTR_TYPE_DREAL,        1, -6, LANGSPEC_F90 },
+    { INTR_EPSILON,     INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_REAL},               INTR_TYPE_REAL,         1, 0, LANGSPEC_F90 },
+    { INTR_EPSILON,     INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL},              INTR_TYPE_DREAL,        1, 0, LANGSPEC_F90 },
 
     // HUGE (X)
-    { INTR_HUGE,        INTR_NAME_GENERIC,      "huge",         0,      {INTR_TYPE_INT},                INTR_TYPE_INT,          1, 0, LANGSPEC_F90 },
-    { INTR_HUGE,        INTR_NAME_GENERIC,      "huge",         0,      {INTR_TYPE_INT},                INTR_TYPE_INT,          1, 0, LANGSPEC_F90 },
-    { INTR_HUGE,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_INT_ARRAY},          INTR_TYPE_INT,          1, -6, LANGSPEC_F90 },
-    { INTR_HUGE,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_REAL},               INTR_TYPE_REAL,         1, 0, LANGSPEC_F90 },
+    { INTR_HUGE,        INTR_NAME_GENERIC,      "huge",         0,      {INTR_TYPE_INT_ARRAY},          INTR_TYPE_INT,          1, -6, LANGSPEC_F90 },
     { INTR_HUGE,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_REAL_ARRAY},         INTR_TYPE_REAL,         1, -6, LANGSPEC_F90 },
-    { INTR_HUGE,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL},              INTR_TYPE_DREAL,        1, 0, LANGSPEC_F90 },
     { INTR_HUGE,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL_ARRAY},        INTR_TYPE_DREAL,        1, -6, LANGSPEC_F90 },
+    { INTR_HUGE,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_INT},                INTR_TYPE_INT,          1, 0, LANGSPEC_F90 },
+    { INTR_HUGE,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_REAL},               INTR_TYPE_REAL,         1, 0, LANGSPEC_F90 },
+    { INTR_HUGE,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL},              INTR_TYPE_DREAL,        1, 0, LANGSPEC_F90 },
 
     // MAXEXPONENT (X)
-    { INTR_MAXEXPONENT, INTR_NAME_GENERIC,      "maxexponent",  0,      {INTR_TYPE_REAL},               INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
-    { INTR_MAXEXPONENT, INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_REAL_ARRAY},         INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
-    { INTR_MAXEXPONENT, INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL},              INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_MAXEXPONENT, INTR_NAME_GENERIC,      "maxexponent",  0,      {INTR_TYPE_REAL_ARRAY},         INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
     { INTR_MAXEXPONENT, INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL_ARRAY},        INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_MAXEXPONENT, INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_REAL},               INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_MAXEXPONENT, INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL},              INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
 
     // MINEXPONENT (X)
-    { INTR_MINEXPONENT, INTR_NAME_GENERIC,      "minexponent",  0,      {INTR_TYPE_REAL},               INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
-    { INTR_MINEXPONENT, INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_REAL_ARRAY},         INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
-    { INTR_MINEXPONENT, INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL},              INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_MINEXPONENT, INTR_NAME_GENERIC,      "minexponent",  0,      {INTR_TYPE_REAL_ARRAY},         INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
     { INTR_MINEXPONENT, INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL_ARRAY},        INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_MINEXPONENT, INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_REAL},               INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_MINEXPONENT, INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL},              INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
 
     // PRECISION (X)
-    { INTR_PRECISION,   INTR_NAME_GENERIC,      "precision",    0,      {INTR_TYPE_ALL_REAL},           INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
-    { INTR_PRECISION,   INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ALL_REAL_ARRAY},     INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
-    { INTR_PRECISION,   INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ALL_COMPLEX},        INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_PRECISION,   INTR_NAME_GENERIC,      "precision",    0,      {INTR_TYPE_ALL_REAL_ARRAY},     INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
     { INTR_PRECISION,   INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ALL_COMPLEX_ARRAY},  INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_PRECISION,   INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ALL_REAL},           INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_PRECISION,   INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ALL_COMPLEX},        INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
 
     // RADIX (X)
-    { INTR_RADIX,       INTR_NAME_GENERIC,      "radix",        0,      {INTR_TYPE_ALL_REAL},           INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
-    { INTR_RADIX,       INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ALL_REAL_ARRAY},     INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
-    { INTR_RADIX,       INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_INT},                INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_RADIX,       INTR_NAME_GENERIC,      "radix",        0,      {INTR_TYPE_ALL_REAL_ARRAY},     INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
     { INTR_RADIX,       INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_INT_ARRAY},          INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_RADIX,       INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ALL_REAL},           INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_RADIX,       INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_INT},                INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
 
     // RANGE (X)
-    { INTR_RANGE,       INTR_NAME_GENERIC,      "range",        0,      {INTR_TYPE_ALL_NUMERICS},            INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
-    { INTR_RANGE,       INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ALL_NUMERICS_ARRAY},      INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_RANGE,       INTR_NAME_GENERIC,      "range",        0,      {INTR_TYPE_ALL_NUMERICS_ARRAY},      INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
+    { INTR_RANGE,       INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ALL_NUMERICS},            INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
 
     // TINY (X)
-    { INTR_TINY,        INTR_NAME_GENERIC,      "tiny",         0,      {INTR_TYPE_REAL},               INTR_TYPE_REAL,         1, 0, LANGSPEC_F90 },
-    { INTR_TINY,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_REAL_ARRAY},         INTR_TYPE_REAL,         1, -6, LANGSPEC_F90 },
-    { INTR_TINY,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL},              INTR_TYPE_DREAL,        1, 0, LANGSPEC_F90 },
+    { INTR_TINY,        INTR_NAME_GENERIC,      "tiny",         0,      {INTR_TYPE_REAL_ARRAY},         INTR_TYPE_REAL,         1, -6, LANGSPEC_F90 },
     { INTR_TINY,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL_ARRAY},        INTR_TYPE_DREAL,        1, -6, LANGSPEC_F90 },
+    { INTR_TINY,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_REAL},               INTR_TYPE_REAL,         1, 0, LANGSPEC_F90 },
+    { INTR_TINY,        INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_DREAL},              INTR_TYPE_DREAL,        1, 0, LANGSPEC_F90 },
 
 
 
@@ -431,15 +430,15 @@ intrinsic_entry intrinsic_table[] = {
     /* 11. Transfer function */
 
     // TRANSFER (SOURCE, MOLD [, SIZE])
-    { INTR_TRANSFER,    INTR_NAME_GENERIC,      "transfer",     0,      {INTR_TYPE_ANY, INTR_TYPE_ANY},                         INTR_TYPE_ANY,  2, 1, LANGSPEC_F90 },
+    { INTR_TRANSFER,    INTR_NAME_GENERIC,      "transfer",     0,      {INTR_TYPE_ANY_ARRAY, INTR_TYPE_ANY_ARRAY},             INTR_TYPE_ANY_ARRAY, 2, 1, LANGSPEC_F90 },
     { INTR_TRANSFER,    INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ANY_ARRAY, INTR_TYPE_ANY},                   INTR_TYPE_ANY,  2, 1, LANGSPEC_F90 },
     { INTR_TRANSFER,    INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ANY, INTR_TYPE_ANY_ARRAY},                   INTR_TYPE_ANY_ARRAY,    2, 1, LANGSPEC_F90 },
-    { INTR_TRANSFER,    INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ANY_ARRAY, INTR_TYPE_ANY_ARRAY},             INTR_TYPE_ANY_ARRAY, 2, 1, LANGSPEC_F90 },
+    { INTR_TRANSFER,    INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ANY, INTR_TYPE_ANY},                         INTR_TYPE_ANY,  2, 1, LANGSPEC_F90 },
 
-    { INTR_TRANSFER,    INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ANY, INTR_TYPE_ANY, INTR_TYPE_INT},          INTR_TYPE_ANY,  3, 1, LANGSPEC_F90 },
+    { INTR_TRANSFER,    INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ANY_ARRAY, INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT},      INTR_TYPE_ANY_ARRAY, 3, 1, LANGSPEC_F90 },
     { INTR_TRANSFER,    INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ANY_ARRAY, INTR_TYPE_ANY, INTR_TYPE_INT},    INTR_TYPE_ANY,  3, 1, LANGSPEC_F90 },
     { INTR_TRANSFER,    INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ANY, INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT},    INTR_TYPE_ANY_ARRAY, 3, 1, LANGSPEC_F90 },
-    { INTR_TRANSFER,    INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ANY_ARRAY, INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT},      INTR_TYPE_ANY_ARRAY, 3, 1, LANGSPEC_F90 },
+    { INTR_TRANSFER,    INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_ANY, INTR_TYPE_ANY, INTR_TYPE_INT},          INTR_TYPE_ANY,  3, 1, LANGSPEC_F90 },
 
 
 
@@ -564,8 +563,8 @@ intrinsic_entry intrinsic_table[] = {
     /* 16. Array construction functions */
 
     // MERGE (TSOURCE, FSOURCE, MASK)
-    { INTR_MERGE,       INTR_NAME_GENERIC,      "merge",        0,      { INTR_TYPE_ANY, INTR_TYPE_ANY, INTR_TYPE_LOGICAL },                    INTR_TYPE_ANY,          3, 0, LANGSPEC_F90 },
-    { INTR_MERGE,       INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL },        INTR_TYPE_ANY_ARRAY,    3, 0, LANGSPEC_F90 },
+    { INTR_MERGE,       INTR_NAME_GENERIC,      "merge",        0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL },        INTR_TYPE_ANY_ARRAY,    3, 0, LANGSPEC_F90 },
+    { INTR_MERGE,       INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY, INTR_TYPE_ANY, INTR_TYPE_LOGICAL },                    INTR_TYPE_ANY,          3, 0, LANGSPEC_F90 },
 
     // PACK (ARRAY, MASK [, VECTOR])
     //    { INTR_PACK,        INTR_NAME_GENERIC,      "pack",         0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL_ARRAY, },              INTR_TYPE_ANY_DYNAMIC_ARRAY,            2, -1, LANGSPEC_F90 },
@@ -574,12 +573,12 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_PACK,        INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL, INTR_TYPE_ANY_ARRAY},              INTR_TYPE_ANY_DYNAMIC_ARRAY,            3, -1, LANGSPEC_F90 },
 
     // SPREAD (SOURCE, DIM, NCOPIES)
-    { INTR_SPREAD,      INTR_NAME_GENERIC,      "spread",       0,      { INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT },                INTR_TYPE_ANY_DYNAMIC_ARRAY,    3, -1, LANGSPEC_F90 },
-    { INTR_SPREAD,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT, INTR_TYPE_INT },          INTR_TYPE_ANY_DYNAMIC_ARRAY,    3, -1, LANGSPEC_F90 },
+    { INTR_SPREAD,      INTR_NAME_GENERIC,      "spread",       0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT, INTR_TYPE_INT },          INTR_TYPE_ANY_DYNAMIC_ARRAY,    3, -1, LANGSPEC_F90 },
+    { INTR_SPREAD,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT },                INTR_TYPE_ANY_DYNAMIC_ARRAY,    3, -1, LANGSPEC_F90 },
 
     // UNPACK (VECTOR, MASK, FIELD)
-    { INTR_UNPACK,      INTR_NAME_GENERIC,      "unpack",       0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_ANY},              INTR_TYPE_ANY_DYNAMIC_ARRAY,            3, -1, LANGSPEC_F90 },
-    { INTR_UNPACK,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_ANY_ARRAY},              INTR_TYPE_ANY_DYNAMIC_ARRAY,            3, -1, LANGSPEC_F90 },
+    { INTR_UNPACK,      INTR_NAME_GENERIC,      "unpack",       0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_ANY_ARRAY},              INTR_TYPE_ANY_DYNAMIC_ARRAY,            3, -1, LANGSPEC_F90 },
+    { INTR_UNPACK,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_ANY},              INTR_TYPE_ANY_DYNAMIC_ARRAY,            3, -1, LANGSPEC_F90 },
 
 
 
@@ -587,8 +586,8 @@ intrinsic_entry intrinsic_table[] = {
 
     // RESHAPE (SOURCE, SHAPE [, PAD, ORDER])
     { INTR_RESHAPE,     INTR_NAME_GENERIC,      "reshape",      0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT_ARRAY },   INTR_TYPE_ANY_DYNAMIC_ARRAY,    2, -1, LANGSPEC_F90 },
-    { INTR_RESHAPE,     INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT_ARRAY, INTR_TYPE_ANY_ARRAY },      INTR_TYPE_ANY_DYNAMIC_ARRAY,    3, -1, LANGSPEC_F90 },
     { INTR_RESHAPE,     INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT_ARRAY, INTR_TYPE_INT_ARRAY },      INTR_TYPE_ANY_DYNAMIC_ARRAY,    3, -1, LANGSPEC_F90 },
+    { INTR_RESHAPE,     INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT_ARRAY, INTR_TYPE_ANY_ARRAY },      INTR_TYPE_ANY_DYNAMIC_ARRAY,    3, -1, LANGSPEC_F90 },
     { INTR_RESHAPE,     INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT_ARRAY, INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT_ARRAY }, INTR_TYPE_ANY_DYNAMIC_ARRAY,    4, -1, LANGSPEC_F90 },
 
 
@@ -596,10 +595,10 @@ intrinsic_entry intrinsic_table[] = {
     /* 18. Array manipulation functions */
 
     // CSHIFT (ARRAY, SHIFT [, DIM])
-    { INTR_CSHIFT,      INTR_NAME_GENERIC,      "cshift",       0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT },                         INTR_TYPE_ANY_ARRAY,    2, 0, LANGSPEC_F90 },
-    { INTR_CSHIFT,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT_ARRAY },                   INTR_TYPE_ANY_ARRAY,    2, 0, LANGSPEC_F90 },
-    { INTR_CSHIFT,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT, INTR_TYPE_INT },          INTR_TYPE_ANY_ARRAY,    3, 0, LANGSPEC_F90 },
+    { INTR_CSHIFT,      INTR_NAME_GENERIC,      "cshift",       0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT_ARRAY },                   INTR_TYPE_ANY_ARRAY,    2, 0, LANGSPEC_F90 },
+    { INTR_CSHIFT,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT },                         INTR_TYPE_ANY_ARRAY,    2, 0, LANGSPEC_F90 },
     { INTR_CSHIFT,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT_ARRAY, INTR_TYPE_INT },    INTR_TYPE_ANY_ARRAY,    3, 0, LANGSPEC_F90 },
+    { INTR_CSHIFT,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT, INTR_TYPE_INT },          INTR_TYPE_ANY_ARRAY,    3, 0, LANGSPEC_F90 },
 
     // TRANSPOSE (MATRIX)
     { INTR_TRANSPOSE,   INTR_NAME_GENERIC,      "transpose",    0,      { INTR_TYPE_ANY_ARRAY },                                INTR_TYPE_ANY_ARRAY,    1, -4, LANGSPEC_F90 },
@@ -617,10 +616,10 @@ intrinsic_entry intrinsic_table[] = {
     // MINLOC (ARRAY [, DIM, MASK, KIND]) (Fortran 95)
     { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT },       INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F95 },
     { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT },  INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F95 },
-    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },       INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95 },
-    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },  INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95 },
     { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },       INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95 },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },       INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95 },
     { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },  INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95 },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },  INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95 },
 
     // MAXLOC (ARRAY [, MASK, KIND])
     { INTR_MAXLOC,      INTR_NAME_GENERIC,      "maxloc",       1,      { INTR_TYPE_INT_ARRAY },                                INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90 },
@@ -631,10 +630,10 @@ intrinsic_entry intrinsic_table[] = {
     // MAXLOC (ARRAY [, DIM, MASK, KIND]) (Fortran 95)
     { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT },       INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F95 },
     { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT },  INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F95 },
-    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },       INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95 },
-    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },  INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95 },
     { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },       INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95 },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },       INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95 },
     { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },  INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95 },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },  INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95 },
 
 
     /* 20. Pointer association status functions */
@@ -658,8 +657,8 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_MVBITS,              INTR_NAME_GENERIC,      "mvbits",               0,      { INTR_TYPE_INT, INTR_TYPE_INT, INTR_TYPE_INT, INTR_TYPE_INT, INTR_TYPE_INT },        INTR_TYPE_NONE, 5, -1, LANGSPEC_F90 },
 
     // RANDOM_NUMBER (HARVEST)
-    { INTR_RANDOM_NUMBER,      INTR_NAME_GENERIC,      "random_number",        0,      { INTR_TYPE_ALL_REAL },                                 INTR_TYPE_NONE, 1, -1, LANGSPEC_F90 },
     { INTR_RANDOM_NUMBER,      INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_ALL_REAL_ARRAY },                           INTR_TYPE_NONE, 1, -1, LANGSPEC_F90 },
+    { INTR_RANDOM_NUMBER,      INTR_NAME_GENERIC,      "random_number",        0,      { INTR_TYPE_ALL_REAL },                                 INTR_TYPE_NONE, 1, -1, LANGSPEC_F90 },
 
     // RANDOM_SEED ([SIZE, PUT, GET])
     { INTR_RANDOM_SEED,         INTR_NAME_GENERIC,      "random_seed",          0,      {},                                                     INTR_TYPE_NONE, 0, -1, LANGSPEC_F90 },
@@ -689,16 +688,16 @@ intrinsic_entry intrinsic_table[] = {
 
     // EOSHIFT (ARRAY, SHIFT [, BOUNDARY, DIM])
 
-    { INTR_EOSHIFT,    INTR_NAME_GENERIC,      "eoshift",       0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT },                                     INTR_TYPE_ANY_ARRAY, 2, 0, LANGSPEC_F95 },
-    { INTR_EOSHIFT,    INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT_ARRAY },                               INTR_TYPE_ANY_ARRAY, 2, 0, LANGSPEC_F95 },
-    { INTR_EOSHIFT,    INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT, INTR_TYPE_ANY },                      INTR_TYPE_ANY_ARRAY, 3, 0, LANGSPEC_F95 },
+    { INTR_EOSHIFT,    INTR_NAME_GENERIC,      "eoshift",       0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT_ARRAY },                               INTR_TYPE_ANY_ARRAY, 2, 0, LANGSPEC_F95 },
+    { INTR_EOSHIFT,    INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT },                                     INTR_TYPE_ANY_ARRAY, 2, 0, LANGSPEC_F95 },
+    { INTR_EOSHIFT,    INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT_ARRAY, INTR_TYPE_ANY_ARRAY },          INTR_TYPE_ANY_ARRAY, 3, 0, LANGSPEC_F95 },
     { INTR_EOSHIFT,    INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT_ARRAY, INTR_TYPE_ANY },                INTR_TYPE_ANY_ARRAY, 3, 0, LANGSPEC_F95 },
     { INTR_EOSHIFT,    INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT, INTR_TYPE_ANY_ARRAY },                INTR_TYPE_ANY_ARRAY, 3, 0, LANGSPEC_F95 },
-    { INTR_EOSHIFT,    INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT_ARRAY, INTR_TYPE_ANY_ARRAY },          INTR_TYPE_ANY_ARRAY, 3, 0, LANGSPEC_F95 },
-    { INTR_EOSHIFT,    INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT, INTR_TYPE_ANY, INTR_TYPE_INT },       INTR_TYPE_ANY_ARRAY, 4, 0, LANGSPEC_F95 },
+    { INTR_EOSHIFT,    INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT, INTR_TYPE_ANY },                      INTR_TYPE_ANY_ARRAY, 3, 0, LANGSPEC_F95 },
+    { INTR_EOSHIFT,    INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT_ARRAY, INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT }, INTR_TYPE_ANY_ARRAY, 4, 0, LANGSPEC_F95 },
     { INTR_EOSHIFT,    INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT_ARRAY, INTR_TYPE_ANY, INTR_TYPE_INT }, INTR_TYPE_ANY_ARRAY, 4, 0, LANGSPEC_F95 },
     { INTR_EOSHIFT,    INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT, INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT }, INTR_TYPE_ANY_ARRAY, 4, 0, LANGSPEC_F95 },
-    { INTR_EOSHIFT,    INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT_ARRAY, INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT }, INTR_TYPE_ANY_ARRAY, 4, 0, LANGSPEC_F95 },
+    { INTR_EOSHIFT,    INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT, INTR_TYPE_ANY, INTR_TYPE_INT },       INTR_TYPE_ANY_ARRAY, 4, 0, LANGSPEC_F95 },
 
     /*
      * Fortran95 intrinsic
@@ -708,8 +707,8 @@ intrinsic_entry intrinsic_table[] = {
 
     // NULL ([MOLD])
     { INTR_NULL,       INTR_NAME_GENERIC,      "null",          0,      { },                                    INTR_TYPE_LHS, 0, -7, LANGSPEC_F95 },
-    { INTR_NULL,       INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_POINTER },                  INTR_TYPE_TARGET, 1, 0,  LANGSPEC_F95 },
     { INTR_NULL,       INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_ANY_ARRAY_ALLOCATABLE },    INTR_TYPE_TARGET, 1, 0,  LANGSPEC_F95 },
+    { INTR_NULL,       INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_POINTER },                  INTR_TYPE_TARGET, 1, 0,  LANGSPEC_F95 },
 
 
     /* 21. Intrinsic subroutines */

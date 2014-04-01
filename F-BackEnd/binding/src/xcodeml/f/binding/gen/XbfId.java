@@ -73,6 +73,7 @@ public class XbfId extends xcodeml.f.XmfObj implements java.io.Serializable, Clo
     private String sclass_;
     private String type_;
     private XbfName name_;
+    private XbfValue value_;
     private IRNode parentRNode_;
 
     /**
@@ -206,6 +207,9 @@ public class XbfId extends xcodeml.f.XmfObj implements java.io.Serializable, Clo
         if (source.name_ != null) {
             setName((XbfName)source.getName().clone());
         }
+        if (source.value_ != null) {
+            setValue((XbfValue)source.getValue().clone());
+        }
     }
 
     /**
@@ -249,6 +253,9 @@ public class XbfId extends xcodeml.f.XmfObj implements java.io.Serializable, Clo
         if (XbfName.isMatch(stack)) {
             setName(factory.createXbfName(stack));
         }
+        if (XbfValue.isMatch(stack)) {
+            setValue(factory.createXbfValue(stack));
+        }
     }
 
     /**
@@ -284,6 +291,12 @@ public class XbfId extends xcodeml.f.XmfObj implements java.io.Serializable, Clo
             this.name_.makeElement(element);
         }
         parent.appendChild(element);
+
+        element = doc.createElement("value");
+        if (this.value_ != null) {
+            this.value_.makeElement(element);
+        }
+
     }
 
     /**
@@ -429,6 +442,27 @@ public class XbfId extends xcodeml.f.XmfObj implements java.io.Serializable, Clo
     }
 
     /**
+     * Gets the XbfValue property <b>value</b>.
+     *
+     * @return XbfName
+     */
+    public final XbfValue getValue() {
+        return (value_);
+    }
+
+    /**
+     * Sets the XbfValue property <b>value</b>.
+     *
+     * @param name
+     */
+    public final void setValue(XbfValue value) {
+        this.value_ = value;
+        if (value != null) {
+            value.rSetParentRNode(this);
+        }
+    }
+
+    /**
      * Makes an XML text representation.
      *
      * @return String
@@ -461,6 +495,9 @@ public class XbfId extends xcodeml.f.XmfObj implements java.io.Serializable, Clo
         if (name_ != null) {
             name_.makeTextElement(buffer);
         }
+        if (value_ != null) {
+            value_.makeTextElement(buffer);
+        }
         buffer.append("</id>");
     }
 
@@ -487,6 +524,9 @@ public class XbfId extends xcodeml.f.XmfObj implements java.io.Serializable, Clo
         if (name_ != null) {
             name_.makeTextElement(buffer);
         }
+        if (value_ != null) {
+            value_.makeTextElement(buffer);
+        }
         buffer.write("</id>");
     }
 
@@ -511,6 +551,9 @@ public class XbfId extends xcodeml.f.XmfObj implements java.io.Serializable, Clo
         buffer.print(">");
         if (name_ != null) {
             name_.makeTextElement(buffer);
+        }
+        if (value_ != null) {
+            value_.makeTextElement(buffer);
         }
         buffer.print("</id>");
     }
@@ -639,6 +682,9 @@ public class XbfId extends xcodeml.f.XmfObj implements java.io.Serializable, Clo
         if (name_ != null) {
             classNodes.add(name_);
         }
+        if (value_ != null) {
+            classNodes.add(value_);
+        }
         IRNode[] nodes = new IRNode[classNodes.size()];
         return ((IRNode[])classNodes.toArray(nodes));
     }
@@ -658,6 +704,8 @@ public class XbfId extends xcodeml.f.XmfObj implements java.io.Serializable, Clo
         boolean $match$ = false;
         Element child;
         if (XbfName.isMatchHungry(target)) {
+        }
+        if (XbfValue.isMatchHungry(target)) {
         }
         if (!target.isEmptyElement()) {
             return (false);

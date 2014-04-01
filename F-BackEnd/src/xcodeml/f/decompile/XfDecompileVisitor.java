@@ -3456,7 +3456,10 @@ public class XfDecompileVisitor extends RVisitorBase
 
         XmfWriter writer = _context.getWriter();
 
-        writer.writeToken("MODULE PROCEDURE ");
+        if (visitable.getIsModuleSpecified()) {
+            writer.writeToken("MODULE ");
+        }
+        writer.writeToken("PROCEDURE ");
         int nameCount = 0;
         for (XbfName nameElem : visitable.getName()) {
             if (nameCount > 0) {
@@ -5304,6 +5307,19 @@ public class XfDecompileVisitor extends RVisitorBase
                 }
                 if (_writeSymbolDecl(symbol, visitable) == false) {
                     return false;
+                }
+
+                XbfValue value = idElem.getValue();
+                if (value != null) {
+                    XmfWriter writer = _context.getWriter();
+                    if (isPointerType(typeName)) {
+                        writer.writeToken(" => ");
+                    } else {
+                        writer.writeToken(" = ");
+                    }
+                    if (invokeEnter(value) == false) {
+                        return false;
+                    }
                 }
                 _context.getWriter().setupNewLine();
             }

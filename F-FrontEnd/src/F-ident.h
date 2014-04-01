@@ -379,6 +379,7 @@ typedef struct external_symbol
             struct external_symbol *intr_def_external_symbols;
             enum ext_proc_class ext_proc_class;
             char is_output;
+            char is_module_specified; /* module procedure with keyword 'module' */
         } proc_info;
     } info;
 } *EXT_ID;
@@ -418,6 +419,8 @@ typedef struct external_symbol
 
 #define EXT_PROC_IS_MODULE_PROCEDURE(ep) \
                                 (EXT_PROC_CLASS(ep) == EP_MODULE_PROCEDURE)
+#define EXT_PROC_IS_MODULE_SPECIFIED(ep) \
+                                ((ep)->info.proc_info.is_module_specified)
 #define EXT_PROC_IS_INTRINSIC(ep)   (EXT_PROC_CLASS(ep) == EP_INTRINSIC)
 #define EXT_PROC_COMMON_ID_LIST(ep) ((ep)->info.proc_info.common_id_list)
 #define EXT_PROC_IS_OUTPUT(ep)  ((ep)->info.proc_info.is_output)

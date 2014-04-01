@@ -424,7 +424,9 @@ statement:      /* entry */
         | ENDINTERFACE
           { $$ = list1(F95_ENDINTERFACE_STATEMENT,NULL); }
         | MODULEPROCEDURE ident_list
-          { $$ = list1(F95_MODULEPROCEDURE_STATEMENT, $2); }
+          { $$ = list2(F95_MODULEPROCEDURE_STATEMENT, $2, make_int_enode(1)); }
+        | PROCEDURE ident_list
+          { $$ = list2(F95_MODULEPROCEDURE_STATEMENT, $2, make_int_enode(0)); }
         | BLOCKDATA program_name
           { $$ = list1(F_BLOCK_STATEMENT,$2); }
         | SUBROUTINE IDENTIFIER dummy_arg_list

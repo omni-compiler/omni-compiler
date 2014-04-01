@@ -1608,9 +1608,14 @@ end_declaration()
         if (tp == NULL && 
             ID_CLASS(ip) == CL_PROC &&
             PROC_CLASS(ip) == P_EXTERNAL) {
-            tp = new_type_subr();
+            ep = find_ext_id(ID_SYM(ip));
+            if (ep != NULL && EXT_PROC_TYPE(ep) != NULL) {
+                tp = EXT_PROC_TYPE(ep);
+            } else {
+                tp = new_type_subr();
+                PROC_IS_FUNC_SUBR_AMBIGUOUS(ip) = TRUE;
+            }
             declare_id_type(ip, tp);
-            PROC_IS_FUNC_SUBR_AMBIGUOUS(ip) = TRUE;
         }
 
         if(tp == NULL)
@@ -2214,6 +2219,10 @@ end_procedure()
         CURRENT_PROC_CLASS == CL_PROC ||
         CURRENT_PROC_CLASS == CL_MODULE ||
         CURRENT_PROC_CLASS == CL_BLOCK) {
+        if (CURRENT_EXT_ID == NULL) {
+            /* Any other errors already occured, let compilation carry on. */
+            return;
+        }
         /* check if module procedures are defined in contains block */
         EXT_ID intr, intrDef, ep;
         FOREACH_EXT_ID(intr, EXT_PROC_INTERFACES(CURRENT_EXT_ID)) {
@@ -2225,10 +2234,11 @@ end_procedure()
             FOREACH_EXT_ID(intrDef, EXT_PROC_INTR_DEF_EXT_IDS(intr)) {
                 if(EXT_PROC_IS_MODULE_PROCEDURE(intrDef)) {
                     /*
-                     * currentry we use find_ident() in all cases,
-                     * but when module procedure is declare without
-                     * "module" keyword we should use find_ident_local()
-                     * and find_ident_sibling().
+                     * According to JIS X 3001-1, When module procedure is
+                     * declared with "module" keyword, procedure should be
+                     * declared in that module. But, gfortran seems not to
+                     * implement this check. So, we won't implement this
+                     * check too.
                      */
                     ep = NULL;
                     ID id = find_ident(EXT_SYM(intrDef));
@@ -2335,12 +2345,14 @@ end_procedure()
                     ID_LINK_ADD(id_in_parent, parent_id_list, last_ip);
                 }
 
-                PROC_CLASS(id_in_parent) = PROC_CLASS(id);
                 PROC_ARGS(id_in_parent) = PROC_ARGS(id);
                 ID_CLASS(id_in_parent) = ID_CLASS(id);
                 ID_STORAGE(id_in_parent) = STG_EXT;
                 PROC_EXT_ID(id_in_parent) = PROC_EXT_ID(id);
                 PROC_CLASS(id_in_parent) = P_DEFINEDPROC;
+                PROC_IS_RECURSIVE(id_in_parent) = PROC_IS_RECURSIVE(id);
+                PROC_IS_PURE(id_in_parent) = PROC_IS_PURE(id);
+                PROC_IS_ELEMENTAL(id_in_parent) = PROC_IS_ELEMENTAL(id);
 
                 tp = ID_TYPE(id_in_parent);
                 ID_TYPE(id_in_parent) = ID_TYPE(id);
@@ -2373,16 +2385,9 @@ end_procedure()
             if(PROC_EXT_ID(id) != NULL) {
                 /* undefined procedure is defined in contain statement.  */
                 EXT_IS_DEFINED(PROC_EXT_ID(id)) = TRUE;
-            }
-#if 0
-            else {
-                EXT_ID ep;
+            } else {
                 implicit_declaration(id);
-                ep = declare_external_proc_id(ID_SYM(id), ID_TYPE(id), FALSE);
-                PROC_EXT_ID(id) = ep;
-		EXT_IS_DEFINED(PROC_EXT_ID(id)) = TRUE;
             }
-#endif
         }
     }
 
@@ -3769,6 +3774,7 @@ compile_MODULEPROCEDURE_statement(expr x)
         }
         EXT_LINE(ep) = EXPR_LINE(x);
         EXT_PROC_CLASS(ep) = EP_MODULE_PROCEDURE;
+        EXT_PROC_IS_MODULE_SPECIFIED(ep) = (EXPR_INT(EXPR_ARG2(x)) == 1);
 
         if (add_module_procedure(genProcName, SYM_NAME(EXPR_SYM(ident)),
                                  NULL, NULL, NULL) == NULL) {

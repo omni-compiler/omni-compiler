@@ -462,7 +462,7 @@
 <!ATTLIST FdoWhileStatement file CDATA #IMPLIED>
 <!ATTLIST FdoWhileStatement construct_name CDATA #IMPLIED>
 
-<!ELEMENT id (name?)>
+<!ELEMENT id (name?, value?)>
 <!ATTLIST id sclass (flocal|fsave|fcommon|fparam|ffunc|ftype_name|fcommon_name|fnamelist_name) "flocal">
 <!ATTLIST id type CDATA #IMPLIED>
 <!ATTLIST id module CDATA #IMPLIED>
@@ -549,6 +549,7 @@
 <!ATTLIST FmoduleProcedureDecl endlineno CDATA #IMPLIED>
 <!ATTLIST FmoduleProcedureDecl rawlineno CDATA #IMPLIED>
 <!ATTLIST FmoduleProcedureDecl file CDATA #IMPLIED>
+<!ATTLIST FmoduleProcedureDecl is_module_specified CDATA #IMPLIED>
 
 <!ELEMENT FendFileStatement (namedValueList)>
 <!ATTLIST FendFileStatement lineno CDATA #IMPLIED>

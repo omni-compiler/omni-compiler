@@ -764,7 +764,7 @@ extern void set_function_disappear(void);
 /* inform lexer 'FUNCITION' never appear in next line. */
 extern void set_function_appearable(void);
 
-extern int      expr_is_specification(expv x);
+extern int      expv_is_specification(expv x);
 
 /* create expr hold implict declaration information. */
 extern expr     create_implicit_decl_expv(TYPE_DESC tp, char * first, char * second);

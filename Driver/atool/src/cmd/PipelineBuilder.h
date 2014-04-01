@@ -18,6 +18,12 @@
 
 
 
+#define K_FORTRAN_COMPILE_DRIVER	"frtpx"
+
+
+
+
+
 class PipelineBuilder {
 
 
@@ -45,6 +51,7 @@ private:
 
     bool mIsCppTheCpp;	// not like "gcc", "gfortran", etc.
     bool mIsCppGccSuit;
+    bool mIsCppFujitsu;
     bool mHasNoTranslator;
 
     CompileOptions::CompileStageT mStage;
@@ -231,6 +238,16 @@ private:
             ret = true;
             // fprintf(stderr, "%s works as a cpp.\n", mCppExe);
         }
+
+        if (gotTheData == false &&
+            mIsCppTheCpp == false &&
+            mIsCppGccSuit == false) {
+            if (strcasecmp(cppArgv0, K_FORTRAN_COMPILE_DRIVER) == 0) {
+                mIsCppFujitsu = true;
+                ret = true;
+            }
+        }
+
 #if 0
         if (mIsCppGccSuit == true) {
             fprintf(stderr, "%s is a gcc suit.\n", mCppExe);
@@ -261,6 +278,11 @@ private:
                     vExeOpts.push_back((char *)"-E");
                     if (mIsCppGccSuit == true) {
                         vExeOpts.push_back((char *)"-cpp");
+                    } else if (mIsCppFujitsu == true) {
+                        //
+                        // For Fujitsu K fortran compiler frontend.
+                        //
+                        vExeOpts.push_back((char *)"-Cpp");
                     }
                 }
 #if 0
@@ -467,6 +489,7 @@ public:
         mOmniIncDirCppOpt(NULL),
         mIsCppTheCpp(false),
         mIsCppGccSuit(false),
+        mIsCppFujitsu(false),
         mHasNoTranslator(false),
         mStage(CompileOptions::Stage_Unknown),
         mIsDryrun(false),

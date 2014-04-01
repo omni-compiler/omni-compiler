@@ -2291,6 +2291,7 @@ readline_free_format()
     char *bp,*p;
     int inQuote;
     int inComment;
+    int index;
     int len = strlen(line_buffer);
 
     if(line_count > 1  && find_last_ampersand(line_buffer, &len)) {
@@ -2399,7 +2400,8 @@ done:
         }
         goto next_line0;
     }
-    if((bp - line_buffer) > max_line_len)
+    if((bp - line_buffer) > max_line_len &&
+       (!inComment || is_pragma_sentinel(&sentinels, line_buffer, &index)))
         error("line contains more than %d characters", max_line_len);
     return(ST_INIT);
 }
@@ -2739,14 +2741,17 @@ next_line0:
         }
     }
     
-    if (linelen > max_line_len) {
-        error("line contains more than %d characters", max_line_len);
-    }
-
     /*  replace coment letter to '!' */
     if( line_buffer[0]=='C'||line_buffer[0]=='c'||line_buffer[0]=='*' ){
         line_buffer[0]='!';  /* replace for pragma sentinel */
     }
+
+    if (linelen > max_line_len &&
+        (line_buffer[0] != '!' ||
+         is_pragma_sentinel( &sentinels, line_buffer, &index))) {
+        error("line contains more than %d characters", max_line_len);
+    }
+
     if (is_pragma_sentinel( &sentinels, line_buffer, &index )) {
         if( strcasecmp( sentinel_name( &sentinels, index ),
                         OMP_SENTINEL )== 0 ){

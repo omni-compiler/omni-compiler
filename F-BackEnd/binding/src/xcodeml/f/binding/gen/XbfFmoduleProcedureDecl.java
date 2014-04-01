@@ -63,6 +63,7 @@ public class XbfFmoduleProcedureDecl extends xcodeml.f.XmfObj implements java.io
     private String endlineno_;
     private String rawlineno_;
     private String file_;
+    private Boolean isModuleSpecified_;
     // List<XbfName>
     private java.util.List name_ = new java.util.ArrayList();
     private IRNode parentRNode_;
@@ -197,6 +198,7 @@ public class XbfFmoduleProcedureDecl extends xcodeml.f.XmfObj implements java.io
         setEndlineno(source.getEndlineno());
         setRawlineno(source.getRawlineno());
         setFile(source.getFile());
+        setIsModuleSpecified(source.getIsModuleSpecified());
         this.name_.clear();
         size = source.name_.size();
         for (int i = 0;i < size;i++) {
@@ -244,6 +246,7 @@ public class XbfFmoduleProcedureDecl extends xcodeml.f.XmfObj implements java.io
         endlineno_ = URelaxer.getAttributePropertyAsString(element, "endlineno");
         rawlineno_ = URelaxer.getAttributePropertyAsString(element, "rawlineno");
         file_ = URelaxer.getAttributePropertyAsString(element, "file");
+        isModuleSpecified_ = URelaxer.getAttributePropertyAsBooleanObject(element, "is_module_specified");
         name_.clear();
         while (true) {
             if (XbfName.isMatch(stack)) {
@@ -288,6 +291,9 @@ public class XbfFmoduleProcedureDecl extends xcodeml.f.XmfObj implements java.io
         }
         if (this.file_ != null) {
             URelaxer.setAttributePropertyByString(element, "file", this.file_);
+        }
+        if (this.isModuleSpecified_ != null) {
+            URelaxer.setAttributePropertyByBoolean(element, "is_module_specified", this.isModuleSpecified_);
         }
         size = this.name_.size();
         for (int i = 0;i < size;i++) {
@@ -452,6 +458,67 @@ public class XbfFmoduleProcedureDecl extends xcodeml.f.XmfObj implements java.io
      */
     public final void setFile(String file) {
         this.file_ = file;
+    }
+
+    /**
+     * Gets the boolean property <b>is_module_specified</b>.
+     *
+     * @return boolean
+     */
+    public boolean getIsModuleSpecified() {
+        if (isModuleSpecified_ == null) {
+            return(false);
+        }
+        return (isModuleSpecified_.booleanValue());
+    }
+
+    /**
+     * Gets the boolean property <b>is_module_specified</b>.
+     *
+     * @param isModuleSpecified
+     * @return boolean
+     */
+    public boolean getIsModuleSpecified(boolean isModuleSpecified) {
+        if (isModuleSpecified_ == null) {
+            return(isModuleSpecified);
+        }
+        return (isModuleSpecified_.booleanValue());
+    }
+
+    /**
+     * Gets the boolean property <b>is_module_specified</b>.
+     *
+     * @return Boolean
+     */
+    public boolean getIsModuleSpecifiedAsBoolean() {
+        return (isModuleSpecified_);
+    }
+
+    /**
+     * Check the boolean property <b>is_module_specified</b>.
+     *
+     * @return boolean
+     */
+    public boolean checkIsModuleSpecified() {
+        return (isModuleSpecified_ != null);
+    }
+
+    /**
+     * Sets the boolean property <b>is_module_specified</b>.
+     *
+     * @param isModuleSpecified
+     */
+    public void setIsModuleSpecified(boolean isModuleSpecified) {
+        this.isModuleSpecified_ = new Boolean(isModuleSpecified);
+    }
+
+    /**
+     * Sets the boolean property <b>is_module_specified</b>.
+     *
+     * @param isModuleSpecified
+     */
+    public void setIsModuleSpecified(Boolean isModuleSpecified) {
+        this.isModuleSpecified_ = isModuleSpecified;
     }
 
     /**
@@ -628,6 +695,11 @@ public class XbfFmoduleProcedureDecl extends xcodeml.f.XmfObj implements java.io
             buffer.append(URelaxer.escapeAttrQuot(URelaxer.getString(getFile())));
             buffer.append("\"");
         }
+        if (isModuleSpecified_ != null) {
+            buffer.append(" is_module_specified=\"");
+            buffer.append(URelaxer.getString(getIsModuleSpecified()));
+            buffer.append("\"");
+        }
         buffer.append(">");
         size = this.name_.size();
         for (int i = 0;i < size;i++) {
@@ -666,6 +738,11 @@ public class XbfFmoduleProcedureDecl extends xcodeml.f.XmfObj implements java.io
             buffer.write(URelaxer.escapeAttrQuot(URelaxer.getString(getFile())));
             buffer.write("\"");
         }
+        if (isModuleSpecified_ != null) {
+            buffer.write(" is_module_specified=\"");
+            buffer.write(URelaxer.getString(getIsModuleSpecified()));
+            buffer.write("\"");
+        }
         buffer.write(">");
         size = this.name_.size();
         for (int i = 0;i < size;i++) {
@@ -701,6 +778,11 @@ public class XbfFmoduleProcedureDecl extends xcodeml.f.XmfObj implements java.io
         if (file_ != null) {
             buffer.print(" file=\"");
             buffer.print(URelaxer.escapeAttrQuot(URelaxer.getString(getFile())));
+            buffer.print("\"");
+        }
+        if (isModuleSpecified_ != null) {
+            buffer.print(" is_module_specified=\"");
+            buffer.print(URelaxer.getString(getIsModuleSpecified()));
             buffer.print("\"");
         }
         buffer.print(">");
@@ -807,6 +889,15 @@ public class XbfFmoduleProcedureDecl extends xcodeml.f.XmfObj implements java.io
      */
     public void setFileByString(String string) {
         setFile(string);
+    }
+
+    /**
+     * Gets the property value as String.
+     *
+     * @return String
+     */
+    public String getIsModuleSpecifiedAsString() {
+        return (URelaxer.getString(getIsModuleSpecified()));
     }
 
     /**
