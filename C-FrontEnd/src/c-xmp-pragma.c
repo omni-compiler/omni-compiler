@@ -1537,6 +1537,7 @@ static CExpr* parse_POST_clause()
     CExpr* onRef = parse_task_ON_ref();
     pg_get_token();
     CExpr* tag = pg_parse_expr();
+    resolveType(tag);
 
     if (pg_tok != ')') {
       XMP_Error0("')' is expected after <nodes-name, tag>");
