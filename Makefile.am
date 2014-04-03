@@ -76,6 +76,9 @@ tests: tests-dummy
 tests-dummy:
 	@for dir in $(SUB_TESTDIRS); do \
 	  make -C $(BASE_TESTDIR)$$dir; \
+          if [ $$? -ne 0 ]; then
+            exit 1; \
+          fi; \
 	done
 
 clean-tests:
@@ -87,7 +90,7 @@ run-tests:
 	@for dir in $(SUB_TESTDIRS); do \
 	  make run -C $(BASE_TESTDIR)$$dir; \
 	  if [ $$? -ne 0 ]; then \
-	    exit; \
+	    exit 1; \
 	  fi; \
 	done
 
