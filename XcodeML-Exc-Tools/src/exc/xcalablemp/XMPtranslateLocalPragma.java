@@ -2442,7 +2442,8 @@ public class XMPtranslateLocalPragma {
           castedArrayRefs.add(Xcons.Cast(Xtype.unsignedlonglongType, accList.getArg(dim)));
         } else {
           castedArrayRefs.add(Xcons.Cast(Xtype.intType, x));
-          castedArrayRefs.add(Xcons.Cast(Xtype.intType, x));
+          //castedArrayRefs.add(Xcons.Cast(Xtype.intType, x)); // for C-style triplet
+          castedArrayRefs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
           castedArrayRefs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
           castedArrayRefs.add(Xcons.Cast(Xtype.unsignedlonglongType, accList.getArg(dim)));
         }
