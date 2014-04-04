@@ -76,7 +76,7 @@ tests: tests-dummy
 tests-dummy:
 	@for dir in $(SUB_TESTDIRS); do \
 	  make -C $(BASE_TESTDIR)$$dir; \
-	  if [ $$? -ne 0 ]; then
+	  if [ $$? -ne 0 ]; then \
 	    exit 1; \
 	  fi; \
 	done
