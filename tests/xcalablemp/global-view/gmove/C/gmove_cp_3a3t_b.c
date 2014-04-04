@@ -37,7 +37,7 @@ int main(){
   }
 
 #pragma xmp gmove
-  b[0:4][0:4][0:4]=a[4:4][4:4][4,4];
+  b[0:4][0:4][0:4]=a[4:4][4:4][4:4];
 
   err=0.0;
 #pragma xmp loop (i,j,k) on tx(i,j,k)
