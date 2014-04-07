@@ -3440,11 +3440,13 @@ public class XfDecompileDomVisitor {
         		}
         
         		writer.writeToken(")");
+			writer.setStatementMode(prevMode);
         		writer.setupNewLine();
         		
         		return;
             }
             else if (dirName.equals("BARRIER")){
+	      writer.setStatementMode(prevMode);
 	      writer.setupNewLine();
 	      return;
 	    }
