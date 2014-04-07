@@ -7,6 +7,7 @@
 #include "F-front.h"
 
 extern CTL *ctl_top_saved;
+extern expv CURRENT_STATEMENTS_saved;
 
 expv OMP_check_SECTION(expr x);
 expv OMP_pragma_list(enum OMP_pragma pragma,expv arg1,expv arg2);
@@ -231,7 +232,7 @@ void compile_OMP_directive(expr x)
       if (ctl_top_saved){
 	dclause = CTL_OMP_ARG_DCLAUSE(ctl_top_saved);
 	if (EXPR_ARG2(x) != NULL) list_put_last(dclause, EXPR_ARG2(x));
-	CTL_BLOCK(ctl_top_saved) = OMP_FOR_pragma_list(dclause, CURRENT_STATEMENTS);
+	CTL_BLOCK(ctl_top_saved) = OMP_FOR_pragma_list(dclause, CURRENT_STATEMENTS_saved);
 	EXPR_LINE(CTL_BLOCK(ctl_top_saved)) = EXPR_LINE(CTL_OMP_ARG(ctl_top_saved));
 	ctl_top_saved = NULL;
       }
