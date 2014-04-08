@@ -1610,7 +1610,7 @@ AC_ARG_WITH(libxmlDir,
     [LIBXML_PREFIX="${withval}"], [LIBXML_PREFIX="${default_libxmlDir}"])
 
 if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
-   AC_MSG_ERROR([parser.h not found. Please attach or check --with-libxmlDir])
+   AC_MSG_ERROR([parser.h not found. Please attach or check --with-libxmlDir=<DIR>. See ./configure --help])
 fi
 
 AC_SUBST(LIBXML_PREFIX)

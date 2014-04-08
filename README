@@ -9,8 +9,11 @@ I. Getting Started
   - libxml2
   - make
   ———
-  If you use Debian GNU/Linux 7.2, you install below packages,
-  $ aptitude install flex gcc gfortran g++ openjdk-7-jdk ant libopenmpi-dev openmpi-bin libxml2-dev byacc make
+  If in Debian GNU/Linux 7.4, you need follow packages,
+  # aptitude install flex gcc gfortran g++ openjdk-7-jdk ant libopenmpi-dev openmpi-bin libxml2-dev byacc make
+
+  In in CentOS 6.5, you need follow packages,
+  # yum install flex gcc gfortran gcc-c++ java-1.7.0-openjdk-devel ant openmpi-devel libxml2-devel byacc make
   ———
 
   B. If you want to use coarray functions, you install GASNet. (http://gasnet.lbl.gov)

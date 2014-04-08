@@ -25076,7 +25076,7 @@ fi
 
 
 if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
-   as_fn_error $? "parser.h not found. Please attach or check --with-libxmlDir" "$LINENO" 5
+   as_fn_error $? "parser.h not found. Please attach or check --with-libxmlDir=<DIR>. See ./configure --help" "$LINENO" 5
 fi
 
 
