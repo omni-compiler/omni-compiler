@@ -218,14 +218,14 @@ public class XMPrewriteExpr {
     int imageDims = imageList.Nargs();
     funcArgs.add(Xcons.IntConstant(imageDims));
 
-    // Set function _XMP_coarray_rma_set()
-    Ident funcId = _globalDecl.declExternFunc("_XMP_coarray_rma_set");
+    // Set function _XMP_coarray_rdma_set()
+    Ident funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_set");
     Xobject newExpr = funcId.Call(funcArgs);
     newExpr.setIsRewrittedByXmp(true);
     b.add(newExpr);
 
-    // Set function _XMP_coarray_rma_coarray_set()
-    funcId = _globalDecl.declExternFunc("_XMP_coarray_rma_coarray_set");
+    // Set function _XMP_coarray_rdma_coarray_set()
+    funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_coarray_set");
     if(coarrayExpr.getArg(0).Opcode() == Xcode.SUB_ARRAY_REF){
       XobjList tripletList = (XobjList)(coarrayExpr.getArg(0)).getArg(1);
       for(int i=0;i<tripletList.Nargs();i++){
@@ -273,8 +273,8 @@ public class XMPrewriteExpr {
       throw new XMPexception("Not supported this coarray Syntax");
     }
 
-    // Set function _XMP_coarray_rma_array_set() 
-    funcId = _globalDecl.declExternFunc("_XMP_coarray_rma_array_set");
+    // Set function _XMP_coarray_rdma_array_set() 
+    funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_array_set");
     if(isArray){
       String arrayName = localExpr.getArg(0).getName();
       Ident varId = localExpr.findVarIdent(arrayName);
@@ -339,8 +339,8 @@ public class XMPrewriteExpr {
       b.add(newExpr);
     }
 
-    // Set function _XMP_coarray_rma_node_set()
-    funcId = _globalDecl.declExternFunc("_XMP_coarray_rma_node_set");
+    // Set function _XMP_coarray_rdma_node_set()
+    funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_node_set");
     for(int i=0;i<imageDims;i++){
       funcArgs = Xcons.List();
       funcArgs.add(Xcons.IntConstant(i));
@@ -350,8 +350,8 @@ public class XMPrewriteExpr {
       b.add(newExpr);
     }
 
-    // Set function _XMP_coarray_rma_do()
-    funcId = _globalDecl.declExternFunc("_XMP_coarray_rma_do");
+    // Set function _XMP_coarray_rdma_do()
+    funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_do");
     funcArgs = Xcons.List();
     if(leftExpr.Opcode() == Xcode.CO_ARRAY_REF){
       funcArgs.add(Xcons.IntConstant(XMPcoarray.PUT));
