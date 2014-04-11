@@ -20,6 +20,8 @@ run: $(EXES)
 	$(XRUN) -n 2 ./gmove_lc_1a1t_c.x
 	$(XRUN) -n 2 ./gmove_lc_1a1t_b_h.x
 	$(XRUN) -n 2 ./gmove_lc_1a1t_c_h.x
+	$(XRUN) -n 4 ./gmove_lc_2a12t_b_gb.x
+	$(XRUN) -n 4 ./gmove_lc_2a12t_b_gb2.x
 	$(XRUN) -n 4 ./gmove_lc_2a2t_b.x
 	$(XRUN) -n 4 ./gmove_lc_2a2t_bc.x
 	$(XRUN) -n 4 ./gmove_lc_2a2t_c.x

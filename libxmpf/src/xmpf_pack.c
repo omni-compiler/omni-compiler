@@ -921,14 +921,18 @@ void _XMP_normalize_array_section(int *lower, int *upper, int *stride) {
     u = *lower;
   }
   else {
-    _XMP_fatal("the stride of <array-section> is 0");
-    l = 0; u = 0; // XXX dummy
+    l = *lower;
+    u = *lower;
+    s = 1;
+   // _XMP_fatal("the stride of <array-section> is 0");
+   // l = 0; u = 0; // XXX dummy
   }
 
   // normalize values
   if (s > 0) {
     u = u - ((u - l) % s);
     *upper = u;
+    *stride = s;
   }
   else {
     s = -s;
