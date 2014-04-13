@@ -219,14 +219,32 @@ typedef struct _XMP_task_desc_type {
 } _XMP_task_desc_t;
 
 typedef struct xmp_coarray{
-  char **addr;      // Pointer on each node. The number of elements is process size.
-                    // xmp_coarray.addr[2] is a pointer of real object on node 2.
-  size_t elmt_size;
-  int coarray_dims;
-  long long *size;
+  char **addr;      // Pointer to each node.
+                    // e.g.) xmp_coarray.addr[2] is a pointer of an object on node 2.
+
+  size_t elmt_size; // Element size of a coarray.
+                    // e.g.) "int a[10]:[*]" is 4.
+
+  int coarray_dims; // Number of dimensions of coarray.
+                    // e.g.) "int a[10][20]:[4][2][*]" is 2.
+
+  long long *coarray_elmts; // Number of elements of each dimension of a coarray.
+                            // e.g.) If "int a[10][20]:[*]", coarray_elmts[0] is 20, coarray_elmts[1] is 10.
+                            //       If a coarray is scalar, coarray_elmts[0] is 1.
+
+  //  long long *distance_of_each_dimension; // Distance between each dimension of coarray. A unit of the distance is Byte.
+                                         // e.g.) If "int a[10][20][30]:[*]", distance_of_each_dimension[0] is 4,
+                                         //       distance_of_each_dimension[1] is 120 (4*30),
+                                         //        distance_of_each_dimension[2] is 2400 (4*20*30).
   long long *distance_of_array_elmt;
-  int image_dims;
-  int *distance_of_image_elmt;
+
+  int image_dims; // Number of dimensions of image array
+                  // e.g.) If "int a[10][20]:[4][2][*]" is 3.
+
+  int *distance_of_image_elmt; // Distance between each dimension of image array.
+                               // e.g.) If "int a[10][20]:[4][2][*]", distance_of_image_elmt[0] is 1
+                               //       distance_of_image_elmt[1] is 4, distance_of_image_elmt[2] is 8.
+
 }_XMP_coarray_t;
 
 typedef struct _XMP_array_section{
