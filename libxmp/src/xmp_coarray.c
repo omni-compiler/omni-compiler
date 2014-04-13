@@ -9,7 +9,7 @@
 #endif
 
 unsigned long long _xmp_heap_size, _xmp_stride_size;
-static int _elmt_size, _coarray_dims, _image_dims, *_image_size, *_image_num, _array_dims;
+static int _elmt_size, _coarray_dims, _image_dims, *_image_elmts, *_image_num, _array_dims;
 static long long *_coarray_elmts, _total_coarray_elmts;
 static long long _total_coarray_length, _total_array_length;
 static _XMP_array_section_t *_coarray, *_array;
@@ -71,15 +71,13 @@ void _XMP_coarray_finalize(int return_val)
 #endif
 }
 
-void _XMP_coarray_malloc_set(int elmt_size, int coarray_dims, int image_dims){
-  _elmt_size          = elmt_size;
-  _coarray_dims       = coarray_dims;
-  _coarray_elmts      = _XMP_alloc(sizeof(long long) * coarray_dims);
-  _image_dims         = image_dims;
-  _image_size         = _XMP_alloc(sizeof(int) * image_dims);
-  /* If coarray is 1 dimension, _XMP_coarray_malloc_image_info() is not called */
-  /* for optimization. This function is to initialize. The image node size must be 1. */
-  _image_size[0]      = 1;
+void _XMP_coarray_malloc_set(int elmt_size, int coarray_dims, int image_dims)
+{
+  _elmt_size           = elmt_size;
+  _coarray_dims        = coarray_dims;
+  _coarray_elmts       = _XMP_alloc(sizeof(long long) * coarray_dims);
+  _image_dims          = image_dims;
+  _image_elmts         = _XMP_alloc(sizeof(int) * image_dims);
   _total_coarray_elmts = 1;
 }
 
@@ -99,61 +97,58 @@ void _XMP_coarray_malloc_array_info_f(int *dim, long long *coarray_elmts)
   _XMP_coarray_malloc_array_info(*dim, *coarray_elmts);
 }
 
-void _XMP_coarray_malloc_image_info(int dim, int image_size)
+void _XMP_coarray_malloc_image_info(int dim, int image_elmts)
 {
-  _image_size[dim] = image_size;
+  _image_elmts[dim] = image_elmts;
 }
 
-void _XMP_coarray_malloc_image_info_f(int *dim, int *image_size)
+void _XMP_coarray_malloc_image_info_f(int *dim, int *image_elmts)
 {
-  _XMP_coarray_malloc_image_info(*dim, *image_size);
+  _XMP_coarray_malloc_image_info(*dim, *image_elmts);
 }
 
 void _XMP_coarray_malloc_do(void **coarray, void *addr)
 {
   int i, j;
+  long long *distance_of_coarray_dims = _XMP_alloc(sizeof(long long) * _coarray_dims);
 
-  long long *distance_of_coarray_elmt = _XMP_alloc(sizeof(long long) * _coarray_dims);
   for(i=0;i<_coarray_dims-1;i++){
     long long distance = 1;
     for(j=i+1;j<_coarray_dims;j++){
-      distance       *= _coarray_elmts[j];
+      distance *= _coarray_elmts[j];
     }
-    distance_of_coarray_elmt[i] = distance * _elmt_size;
+    distance_of_coarray_dims[i] = distance * _elmt_size;
   }
-  distance_of_coarray_elmt[_coarray_dims-1] = _elmt_size;
+  distance_of_coarray_dims[_coarray_dims-1] = _elmt_size;
 
-  int total_node_size = _XMP_get_execution_nodes()->comm_size;
+  int total_node_size  = _XMP_get_execution_nodes()->comm_size;
   int total_image_size = 1;
   for(i=0;i<_image_dims-1;i++)
-    total_image_size *= _image_size[i];
+    total_image_size *= _image_elmts[i];
 
-  if(total_image_size > total_node_size){
-    _XMP_fatal("Too large coarray image size.");
-  }
-  else if(total_node_size % total_image_size != 0){
+  if(total_node_size % total_image_size != 0){
     _XMP_fatal("Wrong coarray image size.");
   }
-  _image_size[_image_dims-1] = total_node_size / total_image_size;
+  _image_elmts[_image_dims-1] = total_node_size / total_image_size;
 
-  int *distance_of_image_elmt = _XMP_alloc(sizeof(int) * _image_dims);
+  int *distance_of_image_dims = _XMP_alloc(sizeof(int) * _image_dims);
   for(i=_image_dims-1;i>=1;i--){
     int distance = 1;  
     for(j=0;j<i;j++){
-      distance *= _image_size[j]; 
+      distance *= _image_elmts[j];
     }
-    distance_of_image_elmt[i] = distance;
+    distance_of_image_dims[i] = distance;
   }
-  distance_of_image_elmt[0] = 1; 
+  distance_of_image_dims[0] = 1; 
 
-  _XMP_coarray_t* c = _XMP_alloc(sizeof(_XMP_coarray_t));
-  c->elmt_size     = _elmt_size;
-  c->coarray_dims  = _coarray_dims;
-  c->coarray_elmts = _coarray_elmts;
-  c->distance_of_array_elmt = distance_of_coarray_elmt;
-  c->image_dims = _image_dims;
-  c->distance_of_image_elmt = distance_of_image_elmt;
-  *coarray = c;
+  _XMP_coarray_t* c           = _XMP_alloc(sizeof(_XMP_coarray_t));
+  c->elmt_size                = _elmt_size;
+  c->coarray_dims             = _coarray_dims;
+  c->coarray_elmts            = _coarray_elmts;
+  c->distance_of_coarray_dims = distance_of_coarray_dims;
+  c->image_dims               = _image_dims;
+  c->distance_of_image_dims   = distance_of_image_dims;
+  *coarray                    = c;
 
 #ifdef _XMP_COARRAY_GASNET
   _XMP_gasnet_set_coarray(*coarray, addr, _total_coarray_elmts, _elmt_size);
@@ -162,7 +157,7 @@ void _XMP_coarray_malloc_do(void **coarray, void *addr)
 #else
   _XMP_fatal("Cannt use Coarray Function");
 #endif
-  free(_image_size);
+  free(_image_elmts);
 }
 
 void _XMP_coarray_malloc_do_f(void **coarray, void *addr)
@@ -172,15 +167,12 @@ void _XMP_coarray_malloc_do_f(void **coarray, void *addr)
 
 void _XMP_coarray_rdma_set(int coarray_dims, int array_dims, int image_dims)
 {
-  _coarray              = malloc(sizeof(_XMP_array_section_t) * coarray_dims);
-  _array                = malloc(sizeof(_XMP_array_section_t) * array_dims);
-  _coarray_dims         = coarray_dims;
-  _array_dims           = array_dims;
-  _image_num            = malloc(sizeof(int) * image_dims);
-#ifdef _XMP_COARRAY_FJRDMA
-  _image_size           = malloc(sizeof(int) * image_dims);
-#endif
-  _image_dims           = image_dims;
+  _coarray      = malloc(sizeof(_XMP_array_section_t) * coarray_dims);
+  _array        = malloc(sizeof(_XMP_array_section_t) * array_dims);
+  _coarray_dims = coarray_dims;
+  _array_dims   = array_dims;
+  _image_num    = malloc(sizeof(int) * image_dims);
+  _image_dims   = image_dims;
   _total_coarray_length = 1;
   _total_array_length   = 1;
 }
@@ -221,9 +213,6 @@ void _XMP_coarray_rdma_array_set_f(int *dim, long long *start, long long *length
 void _XMP_coarray_rdma_node_set(int dim, int image_num)
 {
   _image_num[dim]  = image_num;
-#ifdef _XMP_COARRAY_FJRDMA
-  _image_size[dim]  = image_num;
-#endif
 }
 
 void _XMP_coarray_rdma_node_set_f(int *dim, int *image_num)
@@ -292,21 +281,15 @@ void _XMP_coarray_rdma_do(int rdma_code, void *coarray, void *array)
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n") ;
   }
 
-#ifdef _XMP_COARRAY_FJRDMA
-  for(i=0;i<_image_dims-1;i++)
-    target_image += ((_XMP_coarray_t*)coarray)->distance_of_image_elmt[i] * (_image_size[i] - 1);
-  target_image += _image_size[_image_dims-1] - 1;
-#else
   for(i=0;i<_image_dims;i++)
-    target_image += ((_XMP_coarray_t*)coarray)->distance_of_image_elmt[i] * (_image_num[i] - 1);
-#endif
+    target_image += ((_XMP_coarray_t*)coarray)->distance_of_image_dims[i] * (_image_num[i] - 1);
 
   for(i=0;i<_array_dims;i++)
     _array[i].distance *= ((_XMP_coarray_t*)coarray)->elmt_size;
 
   for(i=0;i<_coarray_dims;i++){
     _coarray[i].size     = ((_XMP_coarray_t*)coarray)->coarray_elmts[i];
-    _coarray[i].distance = ((_XMP_coarray_t*)coarray)->distance_of_array_elmt[i];
+    _coarray[i].distance = ((_XMP_coarray_t*)coarray)->distance_of_coarray_dims[i];
   }
 
   int coarray_continuous, array_continuous;
@@ -331,11 +314,11 @@ void _XMP_coarray_rdma_do(int rdma_code, void *coarray, void *array)
   }
   if (_XMP_N_COARRAY_PUT == rdma_code){
     _XMP_fjrdma_put(target_image, coarray_continuous, array_continuous, _coarray_dims, _array_dims, 
-		    _coarray, _array, coarray, array, _total_coarray_length, _total_array_length, _image_size);
+		    _coarray, _array, coarray, array, _total_coarray_length, _total_array_length, _image_elmts);
   }
   else if (_XMP_N_COARRAY_GET == rdma_code){
     _XMP_fjrdma_get(target_image, coarray_continuous, array_continuous, _coarray_dims, _array_dims, _coarray,
-		    _array, coarray, array, _total_coarray_length, _total_array_length, _image_size);
+		    _array, coarray, array, _total_coarray_length, _total_array_length, _image_elmts);
   }
   else{
     _XMP_fatal("Unexpected Operation !!");

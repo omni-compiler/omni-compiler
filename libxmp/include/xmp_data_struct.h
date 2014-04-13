@@ -222,7 +222,7 @@ typedef struct xmp_coarray{
   char **addr;      // Pointer to each node.
                     // e.g.) xmp_coarray.addr[2] is a pointer of an object on node 2.
 
-  size_t elmt_size; // Element size of a coarray.
+  size_t elmt_size; // Element size of a coarray. A unit of it is Byte.
                     // e.g.) "int a[10]:[*]" is 4.
 
   int coarray_dims; // Number of dimensions of coarray.
@@ -232,16 +232,15 @@ typedef struct xmp_coarray{
                             // e.g.) If "int a[10][20]:[*]", coarray_elmts[0] is 20, coarray_elmts[1] is 10.
                             //       If a coarray is scalar, coarray_elmts[0] is 1.
 
-  //  long long *distance_of_each_dimension; // Distance between each dimension of coarray. A unit of the distance is Byte.
-                                         // e.g.) If "int a[10][20][30]:[*]", distance_of_each_dimension[0] is 4,
-                                         //       distance_of_each_dimension[1] is 120 (4*30),
-                                         //        distance_of_each_dimension[2] is 2400 (4*20*30).
-  long long *distance_of_array_elmt;
+  long long *distance_of_coarray_dims; // Distance between each dimension of coarray. A unit of the distance is Byte.
+                                       // e.g.) If "int a[10][20][30]:[*]", distance_of_each_dimension[0] is 4,
+                                       //       distance_of_coarray_dims[1] is 120 (4*30),
+                                       //       distance_of_coarray_dims[2] is 2400 (4*20*30).
 
   int image_dims; // Number of dimensions of image array
                   // e.g.) If "int a[10][20]:[4][2][*]" is 3.
 
-  int *distance_of_image_elmt; // Distance between each dimension of image array.
+  int *distance_of_image_dims; // Distance between each dimension of image array.
                                // e.g.) If "int a[10][20]:[4][2][*]", distance_of_image_elmt[0] is 1
                                //       distance_of_image_elmt[1] is 4, distance_of_image_elmt[2] is 8.
 
