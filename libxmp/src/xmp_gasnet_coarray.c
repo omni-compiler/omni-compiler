@@ -2,6 +2,7 @@
 #include "mpi.h"
 #include "xmp_internal.h"
 #include "xmp_atomic.h"
+static unsigned long long _xmp_heap_size, _xmp_stride_size;
 static int *_xmp_gasnet_stride_queue;
 static int _xmp_gasnet_stride_wait_size = 0;
 static int _xmp_gasnet_stride_queue_size = _XMP_GASNET_STRIDE_INIT_SIZE;
@@ -60,9 +61,8 @@ void _XMP_gasnet_set_coarray(_XMP_coarray_t *coarray, void **addr, unsigned long
   *addr = each_addr[gasnet_mynode()];
 }
 
-void _XMP_gasnet_initialize(int argc, char **argv){
+void _XMP_gasnet_initialize(int argc, char **argv, unsigned long long xmp_heap_size, unsigned long long xmp_stride_size){
   int numprocs;
-  unsigned long long xmp_heap_size;
 
   if(argc != 0)
     gasnet_init(&argc, &argv);
@@ -76,12 +76,14 @@ void _XMP_gasnet_initialize(int argc, char **argv){
     gasnet_init(&argc, &s);
   }
 
-  if(_xmp_heap_size % GASNET_PAGESIZE != 0)
-    xmp_heap_size = (_xmp_heap_size/GASNET_PAGESIZE -1) * GASNET_PAGESIZE;
+  if(xmp_heap_size % GASNET_PAGESIZE != 0)
+    _xmp_heap_size = (xmp_heap_size/GASNET_PAGESIZE -1) * GASNET_PAGESIZE;
   else
-    xmp_heap_size = _xmp_heap_size;
+    _xmp_heap_size = xmp_heap_size;
 
-  gasnet_attach(htable, sizeof(htable)/sizeof(gasnet_handlerentry_t), xmp_heap_size, 0); 
+  _xmp_stride_size = xmp_stride_size;
+
+  gasnet_attach(htable, sizeof(htable)/sizeof(gasnet_handlerentry_t), _xmp_heap_size, 0); 
   numprocs = gasnet_nodes();
 
   _xmp_gasnet_buf = (char **)malloc(sizeof(char*) * numprocs);
@@ -92,7 +94,7 @@ void _XMP_gasnet_initialize(int argc, char **argv){
   for(i=0;i<numprocs;i++)
     _xmp_gasnet_buf[i] =  (char*)s[i].addr;
 
-  _xmp_coarray_shift = _xmp_stride_size;
+  _xmp_coarray_shift = xmp_stride_size;
   _xmp_gasnet_stride_queue = malloc(sizeof(int) * _XMP_GASNET_STRIDE_INIT_SIZE);
 }
 
@@ -136,7 +138,7 @@ static void XMP_gasnet_from_c_to_c_put(const int target_image, const long long d
 }
 
 static int is_all_element(const _XMP_array_section_t* array_info, const int dim){
-  if(array_info[dim].start == 0 && array_info[dim].length == array_info[dim].size && 
+  if(array_info[dim].start == 0 && array_info[dim].length == array_info[dim].elmts && 
      array_info[dim].stride == 1){
     return _XMP_N_INT_TRUE;
   }
@@ -213,13 +215,13 @@ static void pack_for_2_dim_array(const _XMP_array_section_t* src, char* archive_
 				 const int continuous_dim){
   // continuous_dim is 0 or 1
   size_t element_size = src[1].distance;
-  long long start_offset  = (src[0].start * src[1].size + src[1].start) * element_size;
+  long long start_offset  = (src[0].start * src[1].elmts + src[1].start) * element_size;
   long long archive_offset = 0, src_offset;
   int i;
 
   if(continuous_dim == 1){
     int length = element_size * src[1].length;
-    long long stride_offset = (src[0].stride * src[1].size) * element_size;
+    long long stride_offset = (src[0].stride * src[1].elmts) * element_size;
     for(i=0;i<src[0].length;i++){
       src_offset = start_offset + stride_offset * i;
       memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
@@ -229,7 +231,7 @@ static void pack_for_2_dim_array(const _XMP_array_section_t* src, char* archive_
   else{ // continuous_dim == 0
     int j;
     long long stride_offset[2];
-    stride_offset[0] = src[0].stride * src[1].size * element_size;
+    stride_offset[0] = src[0].stride * src[1].elmts * element_size;
     stride_offset[1] = src[1].stride * element_size;
     for(i=0;i<src[0].length;i++){
       long long tmp = stride_offset[0] * i;
@@ -393,13 +395,13 @@ static void unpack_for_2_dim_array(const _XMP_array_section_t* dst, const char* 
 				   char* dst_ptr, const int continuous_dim){
   // continuous_dim is 0 or 1
   size_t element_size = dst[1].distance;
-  long long start_offset  = (dst[0].start * dst[1].size + dst[1].start) * element_size;
+  long long start_offset  = (dst[0].start * dst[1].elmts + dst[1].start) * element_size;
   long long dst_offset, src_offset = 0;
   int i;
 
   if(continuous_dim == 1){
     int length = element_size * dst[1].length;
-    long long stride_offset = (dst[0].stride * dst[1].size) * element_size;
+    long long stride_offset = (dst[0].stride * dst[1].elmts) * element_size;
     for(i=0;i<dst[0].length;i++){
       dst_offset = start_offset + stride_offset * i;
       memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
@@ -409,7 +411,7 @@ static void unpack_for_2_dim_array(const _XMP_array_section_t* dst, const char* 
   else{ // continuous_dim == 0
     int j;
     long long stride_offset[2];
-    stride_offset[0] = dst[0].stride * dst[1].size * element_size;
+    stride_offset[0] = dst[0].stride * dst[1].elmts * element_size;
     stride_offset[1] = dst[1].stride * element_size;
     for(i=0;i<dst[0].length;i++){
       long long tmp = stride_offset[0] * i;

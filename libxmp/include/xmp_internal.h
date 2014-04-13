@@ -214,8 +214,8 @@ extern void _XMP_post_initialize();
 	gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);      \
   } while (0)
 
-extern void _XMP_gasnet_set_coarray(_XMP_coarray_t *coarray, void **addr, unsigned long long number_of_elements, size_t type_size);
-extern void _XMP_gasnet_initialize(int, char**);
+extern void _XMP_gasnet_set_coarray(_XMP_coarray_t *, void **, unsigned long long, size_t);
+extern void _XMP_gasnet_initialize(int, char**, unsigned long long, unsigned long long);
 extern void _XMP_gasnet_finalize(int);
 extern void _XMP_gasnet_put(int, int, int, int, int, _XMP_array_section_t*, _XMP_array_section_t*, 
 			    _XMP_coarray_t*, void*, long long);
@@ -275,7 +275,6 @@ extern void _XMP_fjrdma_get(int target_image,
 			    int*);
 #endif
 extern uint64_t get_addr(uint64_t, int, _XMP_array_section_t*, int);
-extern unsigned long long _xmp_heap_size, _xmp_stride_size;
 
 /* For timing */
 

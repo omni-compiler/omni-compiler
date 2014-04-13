@@ -169,9 +169,8 @@ public class XMPrewriteExpr {
     }
 
     String coarrayName = XMPutil.getXobjSymbolName(coarrayExpr.getArg(0));
-    //XMPcoarray coarray = _globalDecl.getXMPcoarray(coarrayName, localXMPsymbolTable);
     XMPcoarray coarray = _globalDecl.getXMPcoarray(coarrayName, exprParentBlock);
-    if (coarray == null) {
+    if(coarray == null){
       throw new XMPexception("cannot find coarray '" + coarrayName + "'");
     }
 
@@ -279,6 +278,7 @@ public class XMPrewriteExpr {
       String arrayName = localExpr.getArg(0).getName();
       Ident varId = localExpr.findVarIdent(arrayName);
       Xtype varType = varId.Type();
+      Xtype elmtType = varType.getArrayElementType();
       int varDim = varType.getNumDimensions();
       Long[] sizeArray = new Long[varDim];
       Long[] distanceArray = new Long[varDim];
@@ -309,7 +309,7 @@ public class XMPrewriteExpr {
           funcArgs.add(Xcons.LongLongConstant(0, 1));                           // length
           funcArgs.add(Xcons.LongLongConstant(0, 1));                           // stride
           funcArgs.add(Xcons.LongLongConstant(0, sizeArray[i]));                // size
-	  funcArgs.add(Xcons.LongLongConstant(0, distanceArray[i]));            // distance
+	  funcArgs.add(Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.LongLongConstant(0, distanceArray[i]), Xcons.SizeOf(elmtType))); // distance
 	  newExpr = funcId.Call(funcArgs);
 	  newExpr.setIsRewrittedByXmp(true);
 	  b.add(newExpr);
@@ -319,7 +319,7 @@ public class XMPrewriteExpr {
             funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i).getArg(j)));
           }
           funcArgs.add(Xcons.LongLongConstant(0, sizeArray[i]));     // size
-	  funcArgs.add(Xcons.LongLongConstant(0, distanceArray[i])); // distance 
+	  funcArgs.add(Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.LongLongConstant(0, distanceArray[i]), Xcons.SizeOf(elmtType)));
 	  newExpr = funcId.Call(funcArgs);
 	  newExpr.setIsRewrittedByXmp(true);
 	  b.add(newExpr);
@@ -333,7 +333,7 @@ public class XMPrewriteExpr {
       funcArgs.add(Xcons.LongLongConstant(0, 1));  // length
       funcArgs.add(Xcons.LongLongConstant(0, 1));  // stride
       funcArgs.add(Xcons.LongLongConstant(0, 1));  // size
-      funcArgs.add(Xcons.LongLongConstant(0, 1));  // distance
+      funcArgs.add(Xcons.Cast(Xtype.longlongType, Xcons.SizeOf(localExpr.Type()))); // distance
       newExpr = funcId.Call(funcArgs);
       newExpr.setIsRewrittedByXmp(true);
       b.add(newExpr);
