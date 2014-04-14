@@ -28,36 +28,32 @@ gasnet_handlerentry_t htable[] = {
   { _XMP_GASNET_UNPACK_GET_REPLY_NONC,      _xmp_gasnet_unpack_get_reply_nonc }
 };
 
-void _XMP_gasnet_set_coarray(_XMP_coarray_t *coarray, void **addr, unsigned long long num_of_elmts, 
-			     size_t elmt_size){
+void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, unsigned long long coarray_size)
+{
   int numprocs;
   char **each_addr;  // head address of a local array on each node
 
   numprocs = gasnet_nodes();
   each_addr = (char **)_XMP_alloc(sizeof(char *) * numprocs);
 
-  gasnet_node_t i;
-  for(i=0;i<numprocs;i++)
+  for(int i=0;i<numprocs;i++)
     each_addr[i] = (char *)(_xmp_gasnet_buf[i]) + _xmp_coarray_shift;
 
-    if(elmt_size % _XMP_GASNET_ALIGNMENT == 0)
-      _xmp_coarray_shift += elmt_size * num_of_elmts;
-    else{
-      int tmp = ((elmt_size / _XMP_GASNET_ALIGNMENT) + 1) * _XMP_GASNET_ALIGNMENT;
-      _xmp_coarray_shift += tmp * num_of_elmts;
-    }
+  if(coarray_size % _XMP_GASNET_ALIGNMENT == 0)
+    _xmp_coarray_shift += coarray_size;
+  else{
+    _xmp_coarray_shift += ((coarray_size / _XMP_GASNET_ALIGNMENT) + 1) * _XMP_GASNET_ALIGNMENT;
+  }
     
   if(_xmp_coarray_shift > _xmp_heap_size){
     if(gasnet_mynode() == 0){
       fprintf(stderr, "Cannot allocate coarray. Now HEAP SIZE is %d MB\n", (int)(_xmp_heap_size/1024/1024));
       fprintf(stderr, "But %d MB is needed\n", (int)(_xmp_coarray_shift/1024/1024));
     }
-    _XMP_fatal("Please set XMP_COARRAY_HEAP_SIZE=<number>\n");
+    _XMP_fatal("Please set XMP_COARRAY_HEAP_SIZE=<number> (MB)\n");
   }
 
   coarray->addr = each_addr;
-  coarray->elmt_size = elmt_size;
-
   *addr = each_addr[gasnet_mynode()];
 }
 

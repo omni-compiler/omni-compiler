@@ -11,7 +11,7 @@
 static unsigned long long _xmp_heap_size, _xmp_stride_size;
 static int _elmt_size, _coarray_dims, _image_dims, *_image_elmts, *_image_num, _array_dims;
 static long long *_coarray_elmts, _total_coarray_elmts;
-static long long _total_coarray_length, _total_array_length;
+static long long _transfer_coarray_elmts, _transfer_array_elmts;
 static _XMP_array_section_t *_coarray, *_array;
 
 void _XMP_coarray_initialize(int argc, char **argv)
@@ -50,6 +50,7 @@ void _XMP_coarray_initialize(int argc, char **argv)
   else{
     _xmp_stride_size = _XMP_DEFAULT_COARRAY_STRIDE_SIZE;
   }
+
 #ifdef _XMP_COARRAY_GASNET
   _XMP_gasnet_initialize(argc, argv, _xmp_heap_size, _xmp_stride_size);
 #elif _XMP_COARRAY_FJRDMA
@@ -106,12 +107,11 @@ void _XMP_coarray_malloc_image_info_f(int *dim, int *image_elmts)
 
 void _XMP_coarray_malloc_do(void **coarray, void *addr)
 {
-  int i, j;
   long long *distance_of_coarray_elmts = _XMP_alloc(sizeof(long long) * _coarray_dims);
 
-  for(i=0;i<_coarray_dims-1;i++){
+  for(int i=0;i<_coarray_dims-1;i++){
     long long distance = 1;
-    for(j=i+1;j<_coarray_dims;j++){
+    for(int j=i+1;j<_coarray_dims;j++){
       distance *= _coarray_elmts[j];
     }
     distance_of_coarray_elmts[i] = distance * _elmt_size;
@@ -120,7 +120,7 @@ void _XMP_coarray_malloc_do(void **coarray, void *addr)
 
   int total_node_size  = _XMP_get_execution_nodes()->comm_size;
   int total_image_size = 1;
-  for(i=0;i<_image_dims-1;i++)
+  for(int i=0;i<_image_dims-1;i++)
     total_image_size *= _image_elmts[i];
 
   if(total_node_size % total_image_size != 0)
@@ -129,9 +129,9 @@ void _XMP_coarray_malloc_do(void **coarray, void *addr)
   _image_elmts[_image_dims-1] = total_node_size / total_image_size;
 
   int *distance_of_image_elmts = _XMP_alloc(sizeof(int) * _image_dims);
-  for(i=_image_dims-1;i>=1;i--){
+  for(int i=_image_dims-1;i>=1;i--){
     int distance = 1;  
-    for(j=0;j<i;j++){
+    for(int j=0;j<i;j++){
       distance *= _image_elmts[j];
     }
     distance_of_image_elmts[i] = distance;
@@ -148,9 +148,9 @@ void _XMP_coarray_malloc_do(void **coarray, void *addr)
   *coarray         = c;
 
 #ifdef _XMP_COARRAY_GASNET
-  _XMP_gasnet_set_coarray(*coarray, addr, _total_coarray_elmts, _elmt_size);
+  _XMP_gasnet_malloc_do(*coarray, addr, _total_coarray_elmts*_elmt_size);
 #elif _XMP_COARRAY_FJRDMA
-  _XMP_fjrdma_local_set(*coarray, addr, _total_coarray_elmts);
+  _XMP_fjrdma_malloc_do(*coarray, addr, _total_coarray_elmts);
 #endif
   
   free(_image_elmts);
@@ -169,8 +169,8 @@ void _XMP_coarray_rdma_set(int coarray_dims, int array_dims, int image_dims)
   _array_dims   = array_dims;
   _image_num    = malloc(sizeof(int) * image_dims);
   _image_dims   = image_dims;
-  _total_coarray_length = 1;
-  _total_array_length   = 1;
+  _transfer_coarray_elmts = 1;
+  _transfer_array_elmts   = 1;
 }
 
 void _XMP_coarray_rdma_set_f(int *coarray_dims, int *array_dims, int *image_dims)
@@ -182,7 +182,7 @@ void _XMP_coarray_rdma_coarray_set(int dim, long long start, long long length, l
 {
   _coarray[dim].start    = start;
   _coarray[dim].length   = length;
-  _total_coarray_length *= length;
+  _transfer_coarray_elmts *= length;
   _coarray[dim].stride   = stride;
 }
 
@@ -195,7 +195,7 @@ void _XMP_coarray_rdma_array_set(int dim, long long start, long long length, lon
 {
   _array[dim].start    = start;
   _array[dim].length   = length;
-  _total_array_length *= length;
+  _transfer_array_elmts *= length;
   _array[dim].stride   = stride;
   _array[dim].elmts    = elmts;
   _array[dim].distance = distance;
@@ -218,15 +218,15 @@ void _XMP_coarray_rdma_node_set_f(int *dim, int *image_num)
 
 // If array a is continuous, retrun _XMP_N_INT_TRUE.
 // If array a is non-continuous (e.g. stride access), return _XMP_N_INT_FALSE.
-static int check_continuous(_XMP_array_section_t *a, int dims, long long total_length)
+static int check_continuous(_XMP_array_section_t *a, int dims)
 {
   // If only 1 elements is transferred.
-  if(_total_coarray_length == 1)
+  if(_transfer_coarray_elmts == 1)
     return _XMP_N_INT_TRUE;
 
   // Only the last dimension length is transferred.
   // ex) a[1][2][:]
-  if(_total_coarray_length == (a+dims-1)->length && (a+dims-1)->stride == 1)
+  if(_transfer_coarray_elmts == (a+dims-1)->length && (a+dims-1)->stride == 1)
     return _XMP_N_INT_TRUE;
 
   // The last dimension is not continuous ?
@@ -273,7 +273,7 @@ void _XMP_coarray_rdma_do(int rdma_code, void *coarray, void *array)
 {
   int i, target_image = 0;
 
-  if(_total_coarray_length != _total_array_length)
+  if(_transfer_coarray_elmts != _transfer_array_elmts)
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n") ;
 
   for(i=0;i<_image_dims;i++)
@@ -285,17 +285,17 @@ void _XMP_coarray_rdma_do(int rdma_code, void *coarray, void *array)
   }
 
   int coarray_continuous, array_continuous;
-  coarray_continuous = check_continuous(_coarray, _coarray_dims, _total_coarray_length);
-  array_continuous   = check_continuous(_array, _array_dims, _total_coarray_length); 
+  coarray_continuous = check_continuous(_coarray, _coarray_dims);
+  array_continuous   = check_continuous(_array, _array_dims); 
 
 #ifdef _XMP_COARRAY_GASNET
   if(_XMP_N_COARRAY_PUT == rdma_code){
     _XMP_gasnet_put(coarray_continuous, array_continuous, target_image,
-		    _coarray_dims, _array_dims, _coarray, _array, coarray, array, _total_coarray_length);
+		    _coarray_dims, _array_dims, _coarray, _array, coarray, array, _transfer_coarray_elmts);
   }
   else if(_XMP_N_COARRAY_GET == rdma_code){
     _XMP_gasnet_get(coarray_continuous, array_continuous, target_image,
-                    _coarray_dims, _array_dims, _coarray, _array, coarray, array, _total_coarray_length);
+                    _coarray_dims, _array_dims, _coarray, _array, coarray, array, _transfer_coarray_elmts);
   }
   else{
     _XMP_fatal("Unexpected Operation !!");
@@ -306,11 +306,11 @@ void _XMP_coarray_rdma_do(int rdma_code, void *coarray, void *array)
   }
   if (_XMP_N_COARRAY_PUT == rdma_code){
     _XMP_fjrdma_put(target_image, coarray_continuous, array_continuous, _coarray_dims, _array_dims, 
-		    _coarray, _array, coarray, array, _total_coarray_length, _total_array_length, _image_elmts);
+		    _coarray, _array, coarray, array, _transfer_coarray_elmts, _transfer_array_elmts, _image_elmts);
   }
   else if (_XMP_N_COARRAY_GET == rdma_code){
     _XMP_fjrdma_get(target_image, coarray_continuous, array_continuous, _coarray_dims, _array_dims, _coarray,
-		    _array, coarray, array, _total_coarray_length, _total_array_length, _image_elmts);
+		    _array, coarray, array, _transfer_coarray_elmts, _transfer_array_elmts, _image_elmts);
   }
   else{
     _XMP_fatal("Unexpected Operation !!");

@@ -214,7 +214,7 @@ extern void _XMP_post_initialize();
 	gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);      \
   } while (0)
 
-extern void _XMP_gasnet_set_coarray(_XMP_coarray_t *, void **, unsigned long long, size_t);
+extern void _XMP_gasnet_malloc_do(_XMP_coarray_t *, void **, unsigned long long);
 extern void _XMP_gasnet_initialize(int, char**, unsigned long long, unsigned long long);
 extern void _XMP_gasnet_finalize(int);
 extern void _XMP_gasnet_put(int, int, int, int, int, _XMP_array_section_t*, _XMP_array_section_t*, 
@@ -248,31 +248,11 @@ extern void fjrdma_wait(int, int);
 extern void _XMP_fjrdma_sync_memory();
 extern void _XMP_fjrdma_sync_all();
 extern int get_memid();
-extern uint64_t _XMP_fjrdma_local_set(_XMP_coarray_t *coarray,
-				      void **buf,
-				      unsigned long long num_of_elmts);
-extern void _XMP_fjrdma_put(int target_image,
-			    int dest_continuous,
-			    int src_continuous,
-			    int dest_dims, int src_dims,
-			    _XMP_array_section_t *dest_info, 
-			    _XMP_array_section_t *src_info,
-			    _XMP_coarray_t *dest,
-			    void *src,
-			    long long length,
-			    long long,
-			    int*);
-extern void _XMP_fjrdma_get(int target_image,
-			    int dest_continuous,
-			    int src_continuous,
-			    int dest_dims, int src_dims,
-			    _XMP_array_section_t *dest_info, 
-			    _XMP_array_section_t *src_info,
-			    _XMP_coarray_t *dest,
-			    void *src,
-			    long long length,
-			    long long,
-			    int*);
+extern uint64_t _XMP_fjrdma_malloc_do(_XMP_coarray_t *, void **, unsigned long long);
+extern void _XMP_fjrdma_put(int, int, int, int, int, _XMP_array_section_t *,  _XMP_array_section_t *,
+			    _XMP_coarray_t *, void *, long long, long long, int*);
+extern void _XMP_fjrdma_get(int, int, int, int, int, _XMP_array_section_t *, _XMP_array_section_t *,
+			    _XMP_coarray_t *, void *, long long, long long, int*);
 #endif
 extern uint64_t get_addr(uint64_t, int, _XMP_array_section_t*, int);
 
