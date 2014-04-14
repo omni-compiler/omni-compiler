@@ -326,7 +326,7 @@ are_dimension_and_shape_conformant_by_type(expr x,
                           "%d and %d.",
                           TYPE_N_DIM(lt), TYPE_N_DIM(rt));
         } else {
-            error("incompatible dimension for the opsration, %d and %d.",
+            error("incompatible dimension for the operation, %d and %d.",
                   TYPE_N_DIM(lt), TYPE_N_DIM(rt));
         }
 

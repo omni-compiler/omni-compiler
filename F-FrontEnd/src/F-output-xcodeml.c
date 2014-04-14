@@ -65,8 +65,8 @@ typedef struct type_ext_id {
       (tail) = (te); }
 
 static TYPE_DESC    type_list,type_list_tail;
-static TYPE_EXT_ID  type_module_proc_list = NULL, type_module_proc_last = NULL;
-static TYPE_EXT_ID  type_ext_id_list = NULL, type_ext_id_last = NULL;
+static TYPE_EXT_ID  type_module_proc_list, type_module_proc_last;
+static TYPE_EXT_ID  type_ext_id_list, type_ext_id_last;
 static FILE         *print_fp;
 static char         s_charBuf[CHAR_BUF_SIZE];
 static int          is_outputed_module = FALSE;
@@ -4349,6 +4349,11 @@ output_XcodeML_file()
 
     type_list = NULL;
 
+    type_module_proc_list = NULL;
+    type_module_proc_last = NULL;
+    type_ext_id_list = NULL;
+    type_ext_id_last = NULL;
+
     collect_types(EXTERNAL_SYMBOLS);
     CRT_FUNCEP = NULL;
 
@@ -4557,6 +4562,11 @@ output_module_file(struct module * mod)
     set_module_emission_mode(TRUE);
 
     type_list = NULL;
+
+    type_module_proc_list = NULL;
+    type_module_proc_last = NULL;
+    type_ext_id_list = NULL;
+    type_ext_id_last = NULL;
 
     mark_type_desc_in_id_list(mod->head);
     FOREACH_ID(id, mod->head) {
