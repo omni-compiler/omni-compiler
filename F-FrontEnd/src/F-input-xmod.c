@@ -579,22 +579,23 @@ input_FcharacterConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
     if (!input_type_and_attr(reader, ht, &typeId, &tp))
         return FALSE;
 
-    if (!xmlSkipWhiteSpace(reader))
-        return FALSE;
+    if (xmlTextReaderRead(reader) != 1) return FALSE;
 
     value = (const char*) xmlTextReaderConstValue(reader);
-    if (value == NULL)
-        return FALSE;
 
     // FIXME: do we need this?
     if (TYPE_BASIC_TYPE(tp) != TYPE_CHAR) {
         TYPE_BASIC_TYPE(tp) = TYPE_CHAR;
         TYPE_CHAR_LEN(tp) = 1;
     }
-    *v = expv_str_term(STRING_CONSTANT, tp, (char *)value);
 
-    if (!xmlSkipWhiteSpace(reader))
-        return FALSE;
+    if (value){
+      *v = expv_str_term(STRING_CONSTANT, tp, (char *)value);
+      if (xmlTextReaderRead(reader) != 1) return FALSE;
+    }
+    else {
+      *v = expv_str_term(STRING_CONSTANT, tp, "");
+    }
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FcharacterConstant"))
         return FALSE;
