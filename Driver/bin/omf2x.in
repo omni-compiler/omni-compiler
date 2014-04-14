@@ -5,5 +5,5 @@
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
 
-L2X="${OMNI_HOME}/bin/F_Front"
+L2X="${OMNI_HOME}/bin/F_Front -I@OMNI_HOME@/include"
 . ${OMNI_HOME}/bin/oml2x $*
