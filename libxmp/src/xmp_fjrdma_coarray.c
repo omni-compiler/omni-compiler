@@ -10,9 +10,9 @@
 #define MEMID_MAX 511
 #define MEMID 0
 #define TAG 0
-static int FLAG_NIC = FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN;
-static int SEND_NIC = FJMPI_RDMA_LOCAL_NIC0;
-static int _memid = 1; // _memid = 1 (macro MEMID) is used to put/get operations.
+#define FLAG_NIC (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN)
+#define SEND_NIC FJMPI_RDMA_LOCAL_NIC0
+static int _memid = 1; // _memid = 0 (macro MEMID) is used to put/get operations.
 static int _num_of_puts = 0;
 static int _commsize, _myrank;
 
