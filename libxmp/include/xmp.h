@@ -92,3 +92,4 @@ extern int	xmp_get_gpu_count(void);
 //extern void _XMP_wait(int node, int dummy, int tag);
 
 #endif // _XMP_USERAPI
+

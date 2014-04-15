@@ -4,7 +4,6 @@
 #include "mpi-ext.h"
 #endif
 #include <stdio.h>
-#define FJRDMA_PW
 
 static int _XMP_runtime_working = _XMP_N_INT_FALSE;
 
@@ -20,10 +19,6 @@ void _XMP_init(int argc, char** argv) {
 #ifdef _XMP_COARRAY_FJRDMA
     MPI_Init(&argc, &argv);
     _XMP_fjrdma_initialize(argc, argv);
-#ifdef FJRDMA_PW
-  fprintf(stderr, "test fjrdma_init(00)\n");
-  fjrdma_init();
-#endif
 #endif
     // XXX how to get command line args?
     _XMP_init_world(NULL, NULL);
@@ -39,9 +34,6 @@ void _XMP_finalize(int return_val){
 #endif
 #ifdef _XMP_COARRAY_FJRDMA
     _XMP_fjrdma_finalize();
-#ifdef FJRDMA_PW
-  fjrdma_finalize();
-#endif
 #endif
     _XMP_finalize_world();
     _XMP_runtime_working = _XMP_N_INT_FALSE;

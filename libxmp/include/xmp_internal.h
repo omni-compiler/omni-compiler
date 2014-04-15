@@ -201,8 +201,6 @@ extern void _XMP_threads_finalize(void);
 #endif
 
 extern void _XMP_post_initialize();
-//extern void _XMP_post(xmp_desc_t, int, int, int);
-//extern void _XMP_wait(int, int, int);
 #ifdef _XMP_COARRAY_GASNET
 #include <gasnet.h>
 #define _XMP_GASNET_STRIDE_INIT_SIZE 16
@@ -228,42 +226,28 @@ extern void _xmp_gasnet_post(int, int);
 extern void _xmp_gasnet_wait(int, ...);
 #endif
 
+#if defined(_XMP_COARRAY_GASNET) || defined(_XMP_COARRAY_FJRDMA)
+extern long long get_offset(_XMP_array_section_t *, int);
+#endif
+
 // ---- for rdma ----
 #ifdef _XMP_COARRAY_FJRDMA
 #include <mpi-ext.h>
 
-extern int _XMP_fjrdma_initialize();
-extern int _XMP_fjrdma_finalize();
-extern void fjrdma_init();
-extern void fjrdma_finalize();
-extern void fjrdma_post(int, int);
-extern void fjrdma_wait(int, int);
-extern void fjrdma_pw_push(int, int);
-extern void fjrdma_do_post(int, int);
-extern void fjrdma_post(int, int);
-extern void fjrdma_post(int, int);
-extern void fjrdma_pw_cutdown(int);
-extern int fjrdma_pw_remove(int, int);
-extern void fjrdma_wait(int, int);
+extern void _XMP_fjrdma_initialize();
+extern void _XMP_fjrdma_finalize();
 extern void _XMP_fjrdma_sync_memory();
 extern void _XMP_fjrdma_sync_all();
-extern int get_memid();
-extern uint64_t _XMP_fjrdma_malloc_do(_XMP_coarray_t *, void **, unsigned long long);
+extern void _XMP_fjrdma_malloc_do(_XMP_coarray_t *, void **, unsigned long long);
 extern void _XMP_fjrdma_put(int, int, int, int, int, _XMP_array_section_t *,  _XMP_array_section_t *,
-			    _XMP_coarray_t *, void *, long long, long long, int*);
+			    _XMP_coarray_t *, void *, long long);
 extern void _XMP_fjrdma_get(int, int, int, int, int, _XMP_array_section_t *, _XMP_array_section_t *,
-			    _XMP_coarray_t *, void *, long long, long long, int*);
+			    _XMP_coarray_t *, void *, long long);
 #endif
-extern uint64_t get_addr(uint64_t, int, _XMP_array_section_t*, int);
-
-/* For timing */
-
-//#define _XMP_TIMING 1
 
 #ifdef _XMP_TIMING
 
 extern double t0, t1;
-
 /* extern double t_mem; */
 /* extern double t_copy; */
 /* extern double t_comm; */

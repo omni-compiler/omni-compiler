@@ -4,9 +4,6 @@
 #include <string.h>
 #include <ctype.h>
 #include "xmp_internal.h"
-#ifdef _XMP_COARRAY_FJRDMA
-#include "mpi-ext.h"
-#endif
 
 static unsigned long long _xmp_heap_size, _xmp_stride_size;
 static int _elmt_size, _coarray_dims, _image_dims, *_image_elmts, *_image_num, _array_dims;
@@ -150,7 +147,7 @@ void _XMP_coarray_malloc_do(void **coarray, void *addr)
 #ifdef _XMP_COARRAY_GASNET
   _XMP_gasnet_malloc_do(*coarray, addr, _total_coarray_elmts*_elmt_size);
 #elif _XMP_COARRAY_FJRDMA
-  _XMP_fjrdma_malloc_do(*coarray, addr, _total_coarray_elmts);
+  _XMP_fjrdma_malloc_do(*coarray, addr, _total_coarray_elmts*_elmt_size);
 #endif
   
   free(_image_elmts);
@@ -288,34 +285,32 @@ void _XMP_coarray_rdma_do(int rdma_code, void *coarray, void *array)
   coarray_continuous = check_continuous(_coarray, _coarray_dims);
   array_continuous   = check_continuous(_array, _array_dims); 
 
-#ifdef _XMP_COARRAY_GASNET
+#ifdef _XMP_COARRAY_FJRDMA
+  if(coarray_continuous == _XMP_N_INT_FALSE || coarray_continuous == _XMP_N_INT_FALSE)
+    _XMP_fatal("Sorry! Not continuous array is not supported.");
+#endif
+
   if(_XMP_N_COARRAY_PUT == rdma_code){
+#ifdef _XMP_COARRAY_GASNET
     _XMP_gasnet_put(coarray_continuous, array_continuous, target_image,
 		    _coarray_dims, _array_dims, _coarray, _array, coarray, array, _transfer_coarray_elmts);
+#elif _XMP_COARRAY_FJRDMA
+    _XMP_fjrdma_put(coarray_continuous, array_continuous, target_image, 
+		    _coarray_dims, _array_dims, _coarray, _array, coarray, array, _transfer_coarray_elmts);
+#endif
   }
   else if(_XMP_N_COARRAY_GET == rdma_code){
+#ifdef _XMP_COARRAY_GASNET
     _XMP_gasnet_get(coarray_continuous, array_continuous, target_image,
                     _coarray_dims, _array_dims, _coarray, _array, coarray, array, _transfer_coarray_elmts);
-  }
-  else{
-    _XMP_fatal("Unexpected Operation !!");
-  }
 #elif _XMP_COARRAY_FJRDMA
-  if(coarray_continuous == _XMP_N_INT_FALSE || coarray_continuous == _XMP_N_INT_FALSE){
-    _XMP_fatal("Sorry! Not continuous array is not supported.");
-  }
-  if (_XMP_N_COARRAY_PUT == rdma_code){
-    _XMP_fjrdma_put(target_image, coarray_continuous, array_continuous, _coarray_dims, _array_dims, 
-		    _coarray, _array, coarray, array, _transfer_coarray_elmts, _transfer_array_elmts, _image_elmts);
-  }
-  else if (_XMP_N_COARRAY_GET == rdma_code){
-    _XMP_fjrdma_get(target_image, coarray_continuous, array_continuous, _coarray_dims, _array_dims, _coarray,
-		    _array, coarray, array, _transfer_coarray_elmts, _transfer_array_elmts, _image_elmts);
+    _XMP_fjrdma_get(coarray_continuous, array_continuous, target_image, 
+		    _coarray_dims, _array_dims, _coarray, _array, coarray, array, _transfer_coarray_elmts);
+#endif
   }
   else{
     _XMP_fatal("Unexpected Operation !!");
   }
-#endif
 
   free(_coarray);
   free(_array);
@@ -386,4 +381,13 @@ void xmp_sync_images_f(int *num, int* image_set, int* status)
 void xmp_sync_images_all(int* status)
 {
   _XMP_fatal("Not implement xmp_sync_images_all()");
+}
+
+long long get_offset(_XMP_array_section_t *array, int dims){
+  int i;
+  long long offset = 0;
+  for(i=0;i<dims;i++)
+    offset += (array+i)->start * (array+i)->distance;
+
+  return offset;
 }

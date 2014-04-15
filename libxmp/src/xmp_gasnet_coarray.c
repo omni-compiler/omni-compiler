@@ -115,20 +115,11 @@ void _XMP_gasnet_sync_all(){
   GASNET_BARRIER();
 }
 
-static long long get_offset(_XMP_array_section_t *array, int dims){
-  int i;
-  long long offset = 0;
-  for(i=0;i<dims;i++)
-    offset += (array+i)->start * (array+i)->distance;
-
-  return offset;
-}
-
-static void XMP_gasnet_from_c_to_c_put(const int target_image, const long long dest_point, 
-				       const long long src_point, const _XMP_coarray_t *dest, 
+static void XMP_gasnet_from_c_to_c_put(const int target_image, const long long dst_point, 
+				       const long long src_point, const _XMP_coarray_t *dst, 
 				       const void *src, const long long transfer_size){
 
-  gasnet_put_nbi_bulk(target_image, dest->addr[target_image]+dest_point, ((char *)src)+src_point, 
+  gasnet_put_nbi_bulk(target_image, dst->addr[target_image]+dst_point, ((char *)src)+src_point, 
 		      transfer_size);
 
 }
