@@ -12,7 +12,7 @@
 #define TAG 0
 static int FLAG_NIC = FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN;
 static int SEND_NIC = FJMPI_RDMA_LOCAL_NIC0;
-static int _memid = 1; // _memid = 0 (macro MEMID) is used to put/get operations.
+static int _memid = 1; // _memid = 1 (macro MEMID) is used to put/get operations.
 static int _num_of_puts = 0;
 static int _commsize, _myrank;
 
@@ -48,11 +48,10 @@ void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray, void **buf, unsigned long lo
 }
 
 static void XMP_fjrdma_from_c_to_c_put(int target_image, uint64_t dst_point, uint64_t src_point,
-				       _XMP_coarray_t *dst, void *src, long long transfer_size){
+				       _XMP_coarray_t *dst, void *src, long long transfer_size)
+{
   uint64_t raddr = (uint64_t)dst->addr[target_image] + dst_point;
   uint64_t laddr = FJMPI_Rdma_reg_mem(MEMID, (void *)((char *)src+src_point), (size_t)transfer_size);
-
-  fprintf(stderr, "%PRIu64\t%p\t%PRIu64\t%p\t%p\n", laddr, src, src_point, (void *)((char *)src+src_point), (char *)src+src_point);
 
   FJMPI_Rdma_put(target_image, TAG, raddr, laddr, transfer_size, FLAG_NIC);
   FJMPI_Rdma_dereg_mem(MEMID);
@@ -76,18 +75,19 @@ void _XMP_fjrdma_put(int dst_continuous, int src_continuous, int target_image, i
 }
 
 static void XMP_fjrdma_from_c_to_c_get(int target_image, uint64_t dst_point, uint64_t src_point,
-				       void *dst, _XMP_coarray_t *src, long long transfer_size){
+				       void *dst, _XMP_coarray_t *src, long long transfer_size)
+{
   uint64_t raddr = (uint64_t)src->addr[target_image] + src_point;
-  uint64_t laddr = FJMPI_Rdma_reg_mem(MEMID, (char *)dst+dst_point, transfer_size);
+  uint64_t laddr = FJMPI_Rdma_reg_mem(MEMID, (void *)((char *)dst+dst_point), (size_t)transfer_size);
 
-  // To complete put operations before the fellowing get operation.
+  // To complete put operations before the following get operation.
   _XMP_fjrdma_sync_memory();
 
   FJMPI_Rdma_get(target_image, TAG, raddr, laddr, transfer_size, FLAG_NIC);
-  
+
   // To complete the above get operation.
   struct FJMPI_Rdma_cq cq;
-  while(FJMPI_Rdma_poll_cq(SEND_NIC, &cq) != FJMPI_RDMA_NOTICE)
+  while(FJMPI_Rdma_poll_cq(SEND_NIC, &cq) != FJMPI_RDMA_NOTICE);
 
   FJMPI_Rdma_dereg_mem(MEMID);
 }
@@ -110,15 +110,12 @@ void _XMP_fjrdma_get(int src_continuous, int dst_continuous, int target_image, i
 
 void _XMP_fjrdma_sync_memory()
 {
-  int num_of_notice = 0, ret;
+  int num_of_notice = 0;
   struct FJMPI_Rdma_cq cq;
 
-  while(1){
-    ret = FJMPI_Rdma_poll_cq(SEND_NIC, &cq);
-    if(ret == FJMPI_RDMA_NOTICE)
+  while(num_of_notice != _num_of_puts){
+    if(FJMPI_Rdma_poll_cq(SEND_NIC, &cq) == FJMPI_RDMA_NOTICE)
       num_of_notice++;
-    if(num_of_notice == _num_of_puts)
-      break;
   }
 
   _num_of_puts = 0;
