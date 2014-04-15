@@ -27,6 +27,7 @@ import exc.xcalablemp.XMPtranslate;
 import exc.xcalablemp.XMPrealloc;
 import exc.xcodeml.XcodeMLtools;
 import exc.xcodeml.XcodeMLtools_F;
+import exc.xcodeml.XcodeMLtools_Fmod;
 import exc.xcodeml.XcodeMLtools_C;
 
 import xcodeml.XmLanguage;
@@ -76,6 +77,7 @@ public class omompx
       "  -w N         set max columns to N for Fortran source.",
       "  -gnu         decompile for GNU Fortran (default).",
       "  -intel       decompile for Intel Fortran.",
+      "  -M dir       specify where to search for .xmod files",
       "  -decomp      output decompiled source code.",
       "",
       " Debug Options:",
@@ -199,6 +201,16 @@ public class omompx
 	useRelaxerTranslatorOutput = true;
       } else if (arg.equals("-use-relaxer-din")) {
 	useRelaxerDecompilerIutput = true;
+      } else if (arg.startsWith("-M")) {
+	  if (arg.equals("-M")) {
+	    if (narg == null)
+	      error("needs argument after -M");
+	    XcodeMLtools_Fmod.addSearchPath(narg);
+	    ++i;
+	  }
+	  else {
+	    XcodeMLtools_Fmod.addSearchPath(arg.substring(2));
+	  }
       } else if(arg.startsWith("-")){
 	error("unknown option " + arg);
       } else if(inXmlFile == null) {

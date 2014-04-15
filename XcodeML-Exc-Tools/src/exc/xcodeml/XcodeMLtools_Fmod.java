@@ -24,6 +24,8 @@ public class XcodeMLtools_Fmod extends XcodeMLtools_F {
   String module_name;
   Vector<Xobject> aux_info;
 
+  static private Vector<String> search_path;
+
   // constructor
   public XcodeMLtools_Fmod() { }
 
@@ -58,8 +60,34 @@ public class XcodeMLtools_Fmod extends XcodeMLtools_F {
 
       String mod_file_name = module_name + ".xmod";
       Reader reader0 = null;
+
+      String mod_file_name_with_path = "";
+      boolean found = false;
+      File mod_file;
+
+      for (String spath: search_path){
+	mod_file_name_with_path = spath + "/" + mod_file_name;
+	mod_file = new File(mod_file_name_with_path);
+	if (mod_file.exists()){
+	  found = true;
+	  break;
+	}
+      }
+
+      if (!found){
+	mod_file_name_with_path = mod_file_name;
+	mod_file = new File(mod_file_name_with_path);
+	if (mod_file.exists()){
+	  found = true;
+	}
+      }
+
+      if (!found){
+	fatal("module file '"+mod_file_name+"' not found");
+      }
+
       try {
-	reader0 = new BufferedReader(new FileReader(mod_file_name));
+	reader0 = new BufferedReader(new FileReader(mod_file_name_with_path));
       }
       catch(Exception e){
 	fatal("cannot open module file '" + mod_file_name + "'");
@@ -104,4 +132,15 @@ public class XcodeMLtools_Fmod extends XcodeMLtools_F {
 
     return xobjFile;
   }
+
+
+  static public void addSearchPath(String path){
+    if (search_path == null) search_path = new Vector<String>();
+    search_path.addElement(path);
+  }
+
+  static public Vector<String> getSearchPath(){
+    return search_path;
+  }
+
 }

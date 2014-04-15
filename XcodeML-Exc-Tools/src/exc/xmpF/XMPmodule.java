@@ -37,8 +37,35 @@ public class XMPmodule extends XMPenv {
     if(XMP.debugFlag) System.out.println("module read begin: "+module_name);
     String mod_file_name = module_name+".xmod";
     Reader reader = null;
+
+    String mod_file_name_with_path = "";
+    boolean found = false;
+    File mod_file;
+
+    for (String spath: XcodeMLtools_Fmod.getSearchPath()){
+      mod_file_name_with_path = spath + "/" + mod_file_name;
+      mod_file = new File(mod_file_name_with_path);
+      if (mod_file.exists()){
+	found = true;
+	break;
+      }
+    }
+
+    if (!found){
+      mod_file_name_with_path = mod_file_name;
+      mod_file = new File(mod_file_name_with_path);
+      if (mod_file.exists()){
+	found = true;
+      }
+    }
+
+    if (!found){
+      XMP.error("module file '"+mod_file_name+"' not found");
+      return;
+    }
+
     try {
-      reader = new BufferedReader(new FileReader(mod_file_name));
+      reader = new BufferedReader(new FileReader(mod_file_name_with_path));
     } catch(Exception e){
       XMP.error("cannot open module file '"+mod_file_name+"'");
       return;
@@ -226,4 +253,5 @@ public class XMPmodule extends XMPenv {
     }
     return null;
   }
+
 }
