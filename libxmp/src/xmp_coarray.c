@@ -266,7 +266,8 @@ static int check_continuous(_XMP_array_section_t *a, int dims)
   }
 }
 
-void _XMP_coarray_rdma_do(int rdma_code, void *coarray, void *array)
+void _XMP_coarray_rdma_do(int rdma_code, void *remote_coarray, void *local_array, void *local_coarray)
+/* If a local array is a coarray, local_coarray != NULL. */
 {
   int i, target_image = 0;
 
@@ -274,38 +275,38 @@ void _XMP_coarray_rdma_do(int rdma_code, void *coarray, void *array)
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n") ;
 
   for(i=0;i<_image_dims;i++)
-    target_image += ((_XMP_coarray_t*)coarray)->distance_of_image_elmts[i] * (_image_num[i] - 1);
+    target_image += ((_XMP_coarray_t*)remote_coarray)->distance_of_image_elmts[i] * (_image_num[i] - 1);
 
   for(i=0;i<_coarray_dims;i++){
-    _coarray[i].elmts    = ((_XMP_coarray_t*)coarray)->coarray_elmts[i];
-    _coarray[i].distance = ((_XMP_coarray_t*)coarray)->distance_of_coarray_elmts[i];
+    _coarray[i].elmts    = ((_XMP_coarray_t*)remote_coarray)->coarray_elmts[i];
+    _coarray[i].distance = ((_XMP_coarray_t*)remote_coarray)->distance_of_coarray_elmts[i];
   }
 
-  int coarray_continuous, array_continuous;
-  coarray_continuous = check_continuous(_coarray, _coarray_dims);
-  array_continuous   = check_continuous(_array, _array_dims); 
+  int remote_coarray_is_continuous, local_array_is_continuous;
+  remote_coarray_is_continuous = check_continuous(_coarray, _coarray_dims);
+  local_array_is_continuous    = check_continuous(_array, _array_dims); 
 
 #ifdef _XMP_COARRAY_FJRDMA
-  if(coarray_continuous == _XMP_N_INT_FALSE || coarray_continuous == _XMP_N_INT_FALSE)
+  if(remote_coarray_is_continuous == _XMP_N_INT_FALSE || local_array_is_continuous == _XMP_N_INT_FALSE)
     _XMP_fatal("Sorry! Not continuous array is not supported.");
 #endif
 
   if(_XMP_N_COARRAY_PUT == rdma_code){
 #ifdef _XMP_COARRAY_GASNET
-    _XMP_gasnet_put(coarray_continuous, array_continuous, target_image,
-		    _coarray_dims, _array_dims, _coarray, _array, coarray, array, _transfer_coarray_elmts);
+    _XMP_gasnet_put(remote_coarray_is_continuous, local_array_is_continuous, target_image,
+		    _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts);
 #elif _XMP_COARRAY_FJRDMA
-    _XMP_fjrdma_put(coarray_continuous, array_continuous, target_image, 
-		    _coarray_dims, _array_dims, _coarray, _array, coarray, array, _transfer_coarray_elmts);
+    _XMP_fjrdma_put(remote_coarray_is_continuous, local_array_is_continuous, target_image, 
+		    _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, local_coarray, _transfer_coarray_elmts);
 #endif
   }
   else if(_XMP_N_COARRAY_GET == rdma_code){
 #ifdef _XMP_COARRAY_GASNET
-    _XMP_gasnet_get(coarray_continuous, array_continuous, target_image,
-                    _coarray_dims, _array_dims, _coarray, _array, coarray, array, _transfer_coarray_elmts);
+    _XMP_gasnet_get(remote_coarray_is_continuous, local_array_is_continuous, target_image,
+                    _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts);
 #elif _XMP_COARRAY_FJRDMA
-    _XMP_fjrdma_get(coarray_continuous, array_continuous, target_image, 
-		    _coarray_dims, _array_dims, _coarray, _array, coarray, array, _transfer_coarray_elmts);
+    _XMP_fjrdma_get(remote_coarray_is_continuous, local_array_is_continuous, target_image, 
+		    _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, local_coarray, _transfer_coarray_elmts);
 #endif
   }
   else{
@@ -317,9 +318,10 @@ void _XMP_coarray_rdma_do(int rdma_code, void *coarray, void *array)
   free(_image_num);
 }
 
-void _XMP_coarray_rdma_do_f(int *rdma_code, void *coarray, void *array)
+void _XMP_coarray_rdma_do_f(int *rdma_code, void *remote_coarray, void *local_array, void *local_coarray)
+/* If a local array is a coarray, local_coarray != NULL. */
 {
-  _XMP_coarray_rdma_do(*rdma_code, coarray, array);
+  _XMP_coarray_rdma_do(*rdma_code, remote_coarray, local_array, local_coarray);
 }
 
 void _XMP_coarray_sync_all()

@@ -77,8 +77,8 @@ extern void _XMP_coarray_rdma_array_set_f(int *dim, long long *start, long long 
 extern void _XMP_coarray_rdma_array_set(int dim, long long start, long long length, long long stride, long long size, long long distance);
 extern void _XMP_coarray_rdma_node_set_f(int *dim, int *image_num);
 extern void _XMP_coarray_rdma_node_set(int dim, int image_num);
-extern void _XMP_coarray_rdma_do_f(int *rdma_code, void *coarray, void *array);
-extern void _XMP_coarray_rdma_do(int rdma_code, void *coarray, void *array);
+extern void _XMP_coarray_rdma_do_f(int*, void*, void*, void*);
+extern void _XMP_coarray_rdma_do(int, void*, void*, void *);
 extern void _XMP_coarray_sync_all();
 extern void _XMP_coarray_sync_memory();
 extern void xmp_sync_memory(int* status);

@@ -240,9 +240,9 @@ extern void _XMP_fjrdma_sync_memory();
 extern void _XMP_fjrdma_sync_all();
 extern void _XMP_fjrdma_malloc_do(_XMP_coarray_t *, void **, unsigned long long);
 extern void _XMP_fjrdma_put(int, int, int, int, int, _XMP_array_section_t *,  _XMP_array_section_t *,
-			    _XMP_coarray_t *, void *, long long);
+			    _XMP_coarray_t *, void *, _XMP_coarray_t *, long long);
 extern void _XMP_fjrdma_get(int, int, int, int, int, _XMP_array_section_t *, _XMP_array_section_t *,
-			    _XMP_coarray_t *, void *, long long);
+			    _XMP_coarray_t *, void *, _XMP_coarray_t *, long long);
 #endif
 
 #ifdef _XMP_TIMING
