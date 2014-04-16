@@ -26,6 +26,10 @@ public class XcodeMLtools_Fmod extends XcodeMLtools_F {
 
   static private Vector<String> search_path;
 
+  static {
+    search_path = new Vector<String>();
+  }
+
   // constructor
   public XcodeMLtools_Fmod() { }
 
@@ -135,7 +139,6 @@ public class XcodeMLtools_Fmod extends XcodeMLtools_F {
 
 
   static public void addSearchPath(String path){
-    if (search_path == null) search_path = new Vector<String>();
     search_path.addElement(path);
   }
 
