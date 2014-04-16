@@ -4714,7 +4714,8 @@ else
     ;;
   *)
     lt_cv_sys_max_cmd_len=`(getconf ARG_MAX) 2> /dev/null`
-    if test -n "$lt_cv_sys_max_cmd_len"; then
+    if test -n "$lt_cv_sys_max_cmd_len" && \
+	test undefined != "$lt_cv_sys_max_cmd_len"; then
       lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \/ 4`
       lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \* 3`
     else
@@ -6293,7 +6294,14 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	    LD="${LD-ld} -m elf_i386_fbsd"
 	    ;;
 	  x86_64-*linux*)
-	    LD="${LD-ld} -m elf_i386"
+	    case `/usr/bin/file conftest.o` in
+	      *x86-64*)
+		LD="${LD-ld} -m elf32_x86_64"
+		;;
+	      *)
+		LD="${LD-ld} -m elf_i386"
+		;;
+	    esac
 	    ;;
 	  ppc64-*linux*|powerpc64-*linux*)
 	    LD="${LD-ld} -m elf32ppclinux"
@@ -12305,6 +12313,10 @@ if test -e "F-BackEnd/Makefile.am" -a -e "F-BackEnd/ant.properties.in"; then
 
     ac_config_files="$ac_config_files $F_BACKEND_DIR/bin/F_Back"
 
+    ac_config_files="$ac_config_files $F_BACKEND_DIR/bin/F_Trans"
+
+    ac_config_files="$ac_config_files $F_BACKEND_DIR/bin/F_Decomp"
+
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 else
@@ -12455,6 +12467,11 @@ if test -e "Driver/src/Makefile.am"; then
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/native.conf.acc"
 
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/linker.conf.acc"
+
+
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/setup.conf"
+
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omtranslate"
 
 
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
@@ -27468,6 +27485,8 @@ do
     "$F_BACKEND_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $F_BACKEND_DIR/Makefile" ;;
     "$F_BACKEND_DIR/ant.properties") CONFIG_FILES="$CONFIG_FILES $F_BACKEND_DIR/ant.properties" ;;
     "$F_BACKEND_DIR/bin/F_Back") CONFIG_FILES="$CONFIG_FILES $F_BACKEND_DIR/bin/F_Back" ;;
+    "$F_BACKEND_DIR/bin/F_Trans") CONFIG_FILES="$CONFIG_FILES $F_BACKEND_DIR/bin/F_Trans" ;;
+    "$F_BACKEND_DIR/bin/F_Decomp") CONFIG_FILES="$CONFIG_FILES $F_BACKEND_DIR/bin/F_Decomp" ;;
     "$XCODEML_EXC_TOOLS_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $XCODEML_EXC_TOOLS_DIR/Makefile" ;;
     "$XCODEML_EXC_TOOLS_DIR/ant.properties") CONFIG_FILES="$CONFIG_FILES $XCODEML_EXC_TOOLS_DIR/ant.properties" ;;
     "$XCODEML_EXC_TOOLS_DIR/src/exc/util/MachineDepConst.java") CONFIG_FILES="$CONFIG_FILES $XCODEML_EXC_TOOLS_DIR/src/exc/util/MachineDepConst.java" ;;
@@ -27519,6 +27538,8 @@ do
     "$OMDRIVER_DIR/../etc/x2x.conf.acc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/x2x.conf.acc" ;;
     "$OMDRIVER_DIR/../etc/native.conf.acc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/native.conf.acc" ;;
     "$OMDRIVER_DIR/../etc/linker.conf.acc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/linker.conf.acc" ;;
+    "$OMDRIVER_DIR/../etc/setup.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/setup.conf" ;;
+    "$OMDRIVER_DIR/../bin/omtranslate") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omtranslate" ;;
     "$LIBXMP_HEADER_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_HEADER_DIR/Makefile" ;;
     "$LIBXMP_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_DIR/Makefile" ;;
     "$LIBXMP_THREADS_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_THREADS_DIR/Makefile" ;;

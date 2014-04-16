@@ -121,6 +121,8 @@ if test -e "F-BackEnd/Makefile.am" -a -e "F-BackEnd/ant.properties.in"; then
     AC_CONFIG_FILES($F_BACKEND_DIR/Makefile)
     AC_CONFIG_FILES($F_BACKEND_DIR/ant.properties)
     AC_CONFIG_FILES($F_BACKEND_DIR/bin/F_Back)
+    AC_CONFIG_FILES($F_BACKEND_DIR/bin/F_Trans)
+    AC_CONFIG_FILES($F_BACKEND_DIR/bin/F_Decomp)
     AC_MSG_RESULT(yes)
 else
     F_BACKEND_DIR=''
@@ -215,6 +217,9 @@ if test -e "Driver/src/Makefile.am"; then
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/x2x.conf.acc)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/native.conf.acc)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.acc)
+
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/setup.conf)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omtranslate)
 
     AC_MSG_RESULT(yes)
 else

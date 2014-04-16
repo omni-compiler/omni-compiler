@@ -132,6 +132,7 @@ DELETABLES	= \
 	Driver/bin/omx2x \
 	Driver/bin/xmpcc \
 	Driver/bin/xmpf90 \
+	Driver/bin/omtranslate \
 	Driver/etc/java.conf \
 	Driver/etc/l2x.conf.openmp \
 	Driver/etc/l2x.conf.xmp \
@@ -155,9 +156,12 @@ DELETABLES	= \
 	Driver/etc/x2x.conf.xmp \
 	Driver/etc/x2x.conf.xmpf \
 	Driver/etc/x2x.conf.acc \
+	Driver/etc/setup.conf \
 	C-FrontEnd/src/c-token.c \
 	F-BackEnd/ant.properties \
 	F-BackEnd/bin/F_Back \
+	F-BackEnd/bin/F_Trans \
+	F-BackEnd/bin/F_Decomp \
 	F-FrontEnd/src/C-exprcode.c \
 	F-FrontEnd/src/C-exprcode.h \
 	F-FrontEnd/src/F95-parser.c \

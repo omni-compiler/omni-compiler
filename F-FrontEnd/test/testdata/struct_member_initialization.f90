@@ -7,6 +7,6 @@
 	    type(TT0), pointer :: c(:) => null()
         end type TT1
 
-	type(TT1), pointer :: p(:) = null()
+	type(TT1), pointer :: p(:) => null()
 
     end program main

@@ -2,7 +2,7 @@
 # $TSUKUBA_Copyright:
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
-bin_SCRIPTS=bin/F_Back
+bin_SCRIPTS=bin/F_Back bin/F_Trans bin/F_Decomp
 java_DATA = build/om-f-back.jar
 ANT = @ANTCOM@ -buildfile build.xml
 MKDIR_P = @MKDIR_P@
