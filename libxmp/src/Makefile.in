@@ -79,9 +79,9 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@GASNET_TRUE@am__append_1 = xmp_coarray.c xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c xmp_post.c xmp_gasnet_post.c
+@GASNET_TRUE@am__append_1 = xmp_coarray_set.c xmp_coarray_do.c xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c xmp_post.c xmp_gasnet_post.c
 @GASNET_TRUE@am__append_2 = -D_XMP_COARRAY_GASNET $(GASNET_CPPFLAGS) $(GASNET_CFLAGS)
-@FJRDMA_TRUE@am__append_3 = xmp_coarray.c xmp_fjrdma_coarray.c
+@FJRDMA_TRUE@am__append_3 = xmp_coarray_set.c xmp_coarray_do.c xmp_fjrdma_coarray.c
 @FJRDMA_TRUE@am__append_4 = -Wall -Wpointer-arith -std=gnu99 -D_XMP_COARRAY_FJRDMA
 subdir = ./libxmp/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
@@ -141,14 +141,16 @@ am__libxmp_a_SOURCES_DIST = $(XMP_INC_DIR)/xmp_internal.h \
 	xmp_reduce.c xmp_bcast.c xmp_align.c xmp_shadow.c \
 	xmp_array_section.c xmp_loop.c xmp_gmove.c xmp_math_function.c \
 	xmp_runtime.c xmp_tlog_runtime.c xmp_io.c xmp_reflect.c \
-	xmp_pack_vector.c xmp_coarray.c xmp_gasnet_coarray.c \
-	xmp_lock.c xmp_gasnet_lock.c xmp_post.c xmp_gasnet_post.c \
-	xmp_fjrdma_coarray.c
-@GASNET_TRUE@am__objects_1 = xmp_coarray.$(OBJEXT) \
+	xmp_pack_vector.c xmp_coarray_set.c xmp_coarray_do.c \
+	xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c xmp_post.c \
+	xmp_gasnet_post.c xmp_fjrdma_coarray.c
+@GASNET_TRUE@am__objects_1 = xmp_coarray_set.$(OBJEXT) \
+@GASNET_TRUE@	xmp_coarray_do.$(OBJEXT) \
 @GASNET_TRUE@	xmp_gasnet_coarray.$(OBJEXT) xmp_lock.$(OBJEXT) \
 @GASNET_TRUE@	xmp_gasnet_lock.$(OBJEXT) xmp_post.$(OBJEXT) \
 @GASNET_TRUE@	xmp_gasnet_post.$(OBJEXT)
-@FJRDMA_TRUE@am__objects_2 = xmp_coarray.$(OBJEXT) \
+@FJRDMA_TRUE@am__objects_2 = xmp_coarray_set.$(OBJEXT) \
+@FJRDMA_TRUE@	xmp_coarray_do.$(OBJEXT) \
 @FJRDMA_TRUE@	xmp_fjrdma_coarray.$(OBJEXT)
 am_libxmp_a_OBJECTS = xmp_lib.$(OBJEXT) xmp_util.$(OBJEXT) \
 	xmp_world.$(OBJEXT) xmp_nodes_stack.$(OBJEXT) \
