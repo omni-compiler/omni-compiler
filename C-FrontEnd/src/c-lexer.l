@@ -333,7 +333,7 @@ L\"(\\.|[^\\"])*\"      { count(); yylval.expr = lexAllocStringConst(CT_WIDE);  
 ^[ \t]*"#ident"([ \t]+[^\n]+)?[\n]      { LEX_GCC_DIRECTIVE("#ident", DT_IDENT); count(); }
 ^[ \t]*"#warning"([ \t]+[^\n]+)?[\n]    { LEX_GCC_DIRECTIVE("#warning", DT_WARNING); count(); }
 ^[ \t]*"#error"([ \t]+[^\n]+)[\n]       { LEX_GCC_DIRECTIVE("#error", DT_ERROR); count(); }
-^[ \t]*"#pragma"([ \t]+[^\n]+)?[\n]     { int token;
+^[ \t]*"#"[ \t]*"pragma"([ \t]+[^\n]+)?[\n]     { int token;
                                             yylval.expr = lexParsePragma(yytext, &token); count();
                                             return token; }
 ^[ \t]*"#"[ \t]*[0-9]+([ \t]+[^\r\n]*)?\r?\n  { lexParseLineDirective(0); }

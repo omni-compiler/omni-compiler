@@ -147,6 +147,13 @@ lexSkipWordP(char *p)
     return p;
 }
 
+char*
+lexSkipSharp(char *p)
+{
+  if (p[0] == '#') ++p;
+  return p;
+}
+
 
 /**
  * \brief
@@ -217,6 +224,8 @@ getPragmaKind(char *p)
     extern int s_useACC;
 
     /* after '#directive[space]' */
+    p = lexSkipSpace(p);
+    p = lexSkipSharp(p);
     p = lexSkipSpace(p);
     p = lexSkipWord(p);
     p = lexSkipSpace(p);
@@ -1105,6 +1114,8 @@ lexAllocDirective(const char *name, CDirectiveTypeEnum type)
     char *p = yytext;
     /* after '#directive[space]' */
     while(isspace(*p)) ++p;
+    if (*p == '#') ++p;
+    while(isspace(*p)) ++p;
     while(isspace(*p) == 0) ++p;
     while(isspace(*p)) ++p;
 
@@ -1136,7 +1147,7 @@ PRIVATE_STATIC CExpr*
 lexParsePragmaPack(char *p)
 {
     //skip pragma[space]pack[space]*
-    p = lexSkipSpace(lexSkipWordP(lexSkipSpace(lexSkipWord(lexSkipSpace(p)))));
+    p = lexSkipSpace(lexSkipWordP(lexSkipSpace(lexSkipWord(lexSkipSpace(lexSkipSharp(lexSkipSpace(p)))))));
     if(*p != '(') {
         addWarn(NULL, CWRN_010);
         return exprNull();

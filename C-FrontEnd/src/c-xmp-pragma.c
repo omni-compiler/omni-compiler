@@ -107,7 +107,7 @@ CExpr*
 lexParsePragmaXMP(char *p, int *token) // p is buffer
 {
   //skip pragma[space]xmp[space]*
-  p = lexSkipSpace(lexSkipWordP(lexSkipSpace(lexSkipWord(lexSkipSpace(p)))));
+  p = lexSkipSpace(lexSkipWordP(lexSkipSpace(lexSkipWord(lexSkipSpace(lexSkipSharp(lexSkipSpace(p)))))));
 
   pg_cp = p; // set the pointer
 
