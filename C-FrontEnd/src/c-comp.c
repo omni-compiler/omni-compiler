@@ -13,6 +13,7 @@
 #include "c-comp.h"
 #include "c-option.h"
 #include "c-pragma.h"
+#include "c-xmp.h"
 
 PRIVATE_STATIC void
 compile_typeDesc(CExprOfTypeDesc *td, CDeclaratorContext declrContext);
@@ -1017,6 +1018,10 @@ duplicateQualifiedTaggedType(CExprOfTypeDesc *td, CExprOfBinaryNode *dataDefOrDe
     return dtd;
 }
 
+/* PRIVATE_STATIC void */
+/* compile_coarrayDeclaration(CExprOfBinaryNode *caDeclr); */
+/* #define XMP_LIST2(arg1,arg2) (CExpr*)allocExprOfList2(EC_UNDEF,arg1,arg2) */
+/* #define EMPTY_LIST (CExpr *)allocExprOfList(EC_UNDEF) */
 
 /**
  * \brief
@@ -1034,6 +1039,7 @@ compile_dataDefOrDecl(CExpr *dataDef, CExpr *parent)
     assertExpr(dataDef, EXPR_CODE(dataDef) == EC_DATA_DEF || EXPR_CODE(dataDef) == EC_DECL);
 
     CExpr *initDecls = EXPR_B(dataDef)->e_nodes[1];
+
     CExprOfTypeDesc *td = compile_noTypeCompletion(dataDef);
     if(EXPR_ISERROR(td) || EXPR_ISERROR(dataDef))
         return;
@@ -1081,10 +1087,28 @@ compile_dataDefOrDecl(CExpr *dataDef, CExpr *parent)
         EXPR_FOREACH(ite, initDecls) {
             CExpr *initDecl = EXPR_L_DATA(ite);
             assertExprCode(initDecl, EC_INIT_DECL);
+
+	    if (EXPR_CODE(initDecl) == EC_XMP_COARRAY_DIMENSIONS) continue;
             
             CExpr *declr = exprListHeadData(initDecl);
             assertExpr(initDecl, declr);
             assertExprCode(declr, EC_DECLARATOR);
+
+	    /* if (EXPR_CODE(declr) == EC_COARRAY_DECL){ */
+	      /* CExpr* coarrayNameList = EMPTY_LIST; */
+	      /* CCOL_DListNode *ite; */
+	      /* EXPR_FOREACH(ite, EXPR_B(declr)->e_nodes[0]){ */
+	      /* 	coarrayNameList = exprListAdd(coarrayNameList, EXPR_L_DATA(ite)); */
+	      /* } */
+	      /* CExpr *coarrayDecl = XMP_LIST2(coarrayNameList, EXPR_B(declr)->e_nodes[1]); */
+	      /* compile_coarrayDeclaration(EXPR_B(coarrayDecl)); */
+
+	    /*   EXPR_FOREACH(ite, declr) { */
+	    /* 	declr = EXPR_L_DATA(ite); */
+	    /* 	break; */
+	    /*   } */
+	    /*   //declr = EXPR_B(declr)->e_nodes[0]; */
+	    /* } */
 
             if(existsTypeDesc(td0) == 0) {
                 if(td0->e_typeExpr && EXPR_CODE(td0->e_typeExpr) == EC_IDENT)
@@ -2082,6 +2106,14 @@ compile1(CExpr *expr, CExpr *parent)
 	EXPR_ISCOMPILED(expr) = 1;
 	return;
 
+    /* case EC_COARRAY_DECL: { */
+    /*   CCOL_DListNode *ite; */
+    /*   EXPR_FOREACH(ite, expr) { */
+    /* 	compile1(EXPR_L_DATA(ite), expr); */
+    /* 	break; */
+    /*   } */
+    /*   return; */
+    /* } */
     default:
         if(isScopedStmt(expr)) {
             if(parent && EXPR_CODE(parent) == EC_FUNC_DEF) {
@@ -2106,6 +2138,18 @@ compile1(CExpr *expr, CExpr *parent)
     CExprIterator ite;
     EXPR_FOREACH_MULTI(ite, expr)
         compile1(ite.node, expr);
+
+    if (EXPR_CODE(expr) == EC_COMP_STMT){
+      CExprOfList *body = (CExprOfList *)expr;
+      CExprOfList *clauseList = (CExprOfList *)body->e_aux_info;
+      if (clauseList){
+      	int code = clauseList->e_aux;
+      	if (code == XMP_POST){
+      	  CExpr *tag = EXPR_L_DATA(ccol_DListAt(EXPR_DLIST(EXPR_L(clauseList)), 1));
+      	  compile1(tag, expr);
+      	}
+      }
+    }
 
  end:
 

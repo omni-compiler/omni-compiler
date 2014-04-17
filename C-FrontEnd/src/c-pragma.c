@@ -587,7 +587,8 @@ pg_factor_expr()
             goto error;
         }
 
-        e = exprList2(EC_ARRAY_REF, e, ee);
+        //e = exprList2(EC_ARRAY_REF, e, ee);
+	e = exprBinary(EC_ARRAY_REF, e, exprList1(EC_ARRAY_DIMENSION, exprList1(EC_EXPRS,ee)));
         pg_get_token();
         break;
 
