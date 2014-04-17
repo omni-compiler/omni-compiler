@@ -486,6 +486,10 @@ public class XMPtemplate extends XMPobject {
     XobjArgs sizeArgs_decl = tObject.getDecl().getArg(1).getArgs();
     XobjArgs sizeArgs_tfix = tfixDecl.getArg(2).getArgs();
 
+    if (tObject.getDistDecl() == null){
+      throw new XMPexception("template '" + tName + "' is not distributed");
+    }
+
     XobjArgs distMannerArgs_decl = tObject.getDistDecl().getArg(1).getArgs();
     XobjArgs distMannerArgs_tfix = tfixDecl.getArg(0).getArgs();
 

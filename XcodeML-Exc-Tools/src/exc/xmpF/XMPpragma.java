@@ -30,6 +30,7 @@ public enum XMPpragma {
     BCAST,
     WAIT_ASYNC,
     COARRAY,
+    ARRAY,
 
     FUNCTION_BODY,      
     PRAGMA_END;

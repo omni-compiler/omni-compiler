@@ -120,6 +120,7 @@ char *xmpDirectiveName(int c)
   case XMP_REDUCTION: return "REDUCTION";
   case XMP_BCAST: return "BCAST";
   case XMP_COARRAY: return "COARRAY";
+  case XMP_ARRAY: return "ARRAY";
   case XMP_POST: return "POST";
   case XMP_WAIT: return "WAIT";
   case XMP_TEMPLATE_FIX: return "TEMPLATE_FIX";

@@ -141,6 +141,9 @@ public class XMPtransPragma
       return translateGmove(pb,info);
     case TEMPLATE_FIX:
       return translateTemplateFix(pb, info);
+    case ARRAY:
+      // should not reaach here.
+
     default:
       // XMP.fatal("unknown pragma");
       // ignore it

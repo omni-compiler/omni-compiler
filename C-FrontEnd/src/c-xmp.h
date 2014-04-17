@@ -26,6 +26,7 @@ enum XMP_pragma {
     XMP_POST            = 116,
     XMP_WAIT            = 117,
     XMP_WAIT_ASYNC      = 118,
+    XMP_ARRAY		= 119,
 
     XMP_END_TASK	= 120,
     XMP_END_TASKS	= 121,

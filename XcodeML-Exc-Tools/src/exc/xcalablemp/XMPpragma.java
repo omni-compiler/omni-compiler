@@ -27,6 +27,7 @@ public enum XMPpragma {
   REDUCTION,
   BCAST,
   COARRAY,
+  ARRAY,
   SYNC_MEMORY,
   SYNC_ALL,
   POST,

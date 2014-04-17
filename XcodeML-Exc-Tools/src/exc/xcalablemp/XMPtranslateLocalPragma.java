@@ -75,6 +75,8 @@ public class XMPtranslateLocalPragma {
         { translateBcast(pb);			break; }
       case GMOVE:
         { translateGmove(pb);			break; }
+      case ARRAY:
+	{ translateArray(pb);                   break; }
       case SYNC_MEMORY:
         { translateSyncMemory(pb);		break; }
       case SYNC_ALL:
@@ -2788,6 +2790,316 @@ public class XMPtranslateLocalPragma {
       }
     }
   }
+
+
+  private void translateArray(PragmaBlock pb) throws XMPexception {
+
+    // start translation
+    XobjList arrayDecl = (XobjList)pb.getClauses();
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+    BlockList arrayBody = pb.getBody();
+
+    // check body
+    Statement arrayStmt = null;
+    Xobject assignStmt = null;
+    String checkBodyErrMsg = new String("array directive should be written before one assign statement");
+    Block arrayBodyHead = arrayBody.getHead();
+    if (arrayBodyHead instanceof SimpleBlock) {
+      if (arrayBodyHead.getNext() != null) {
+        throw new XMPexception(checkBodyErrMsg);
+      }
+
+      arrayStmt = arrayBodyHead.getBasicBlock().getHead();
+      if (arrayStmt.getNext() != null) {
+        throw new XMPexception(checkBodyErrMsg);
+      }
+
+      if (arrayStmt.getExpr().Opcode() == Xcode.ASSIGN_EXPR) {
+        assignStmt = arrayStmt.getExpr();
+      }
+      else {
+        throw new XMPexception(checkBodyErrMsg);
+      }
+    }
+    else {
+      throw new XMPexception(checkBodyErrMsg);
+    }
+
+    // Xobject leftExpr = assignStmt.left();
+    // XMPpair<XMPalignedArray, XobjList> leftExprInfo = getXMPalignedArrayExpr(pb, leftExpr);
+    // XMPalignedArray leftAlignedArray = leftExprInfo.getFirst();
+
+    // Xobject rightExpr = assignStmt.right();
+    // XMPpair<XMPalignedArray, XobjList> rightExprInfo = getXMPalignedArrayExpr(pb, assignStmt.right());
+    // XMPalignedArray rightAlignedArray = rightExprInfo.getFirst();
+
+    Block loopBlock = convertArrayToLoop(pb, arrayStmt);
+    pb.replace(loopBlock);
+
+    translateLoop((PragmaBlock)loopBlock);
+
+  }
+
+
+  private Block convertArrayToLoop(PragmaBlock pb, Statement arrayStmt)  throws XMPexception {
+
+    Xobject assignStmt = arrayStmt.getExpr();
+
+    Xobject left = assignStmt.left();
+    XMPpair<XMPalignedArray, XobjList> leftExprInfo = getXMPalignedArrayExpr(pb, left);
+    XMPalignedArray leftAlignedArray = leftExprInfo.getFirst();
+
+    Xobject right = assignStmt.right();
+    XMPpair<XMPalignedArray, XobjList> rightExprInfo = getXMPalignedArrayExpr(pb, right);
+    XMPalignedArray rightAlignedArray = rightExprInfo.getFirst();
+
+    List<Ident> varList = new ArrayList<Ident>();
+    List<Xobject> lbList = new ArrayList<Xobject>();
+    List<Xobject> lenList = new ArrayList<Xobject>();
+    List<Xobject> stList = new ArrayList<Xobject>();
+
+    //
+    // convert LHS
+    //
+
+    if (left.Opcode() != Xcode.SUB_ARRAY_REF){
+      throw new XMPexception("ARRAY not followed by array ref.");
+    }
+
+    String arrayName = getArrayName(left);
+    Ident arrayId = pb.findVarIdent(arrayName);
+    Xtype arrayType = arrayId.Type();
+    Xtype elemType = arrayType.getArrayElementType();
+    int n = arrayType.getNumDimensions();
+
+    XobjList subscripts = (XobjList)left.getArg(1);
+
+    for (int i = 0; i < n; i++, arrayType = arrayType.getRef()){
+
+      long dimSize = arrayType.getArraySize();
+      Xobject sizeExpr;
+      if (dimSize == 0 || arrayType.getKind() == Xtype.POINTER){
+
+	XMPalignedArray array = _globalDecl.getXMPalignedArray(arrayName);
+	if (array == null) throw new XMPexception("array size should be declared statically");
+
+	Ident ret = declIdentWithBlock(pb, "XMP_" + arrayName + "_ret" + Integer.toString(i),
+				       Xtype.intType);
+	Ident sz = declIdentWithBlock(pb, "XMP_" + arrayName + "_ub" + Integer.toString(i),
+				      Xtype.intType);
+
+	Ident f = _globalDecl.declExternFunc("xmp_ubound", Xtype.intType);
+	Xobject args = Xcons.List(array.getDescId(), Xcons.IntConstant(i+1), sz.getAddr());
+
+	pb.insert(Xcons.Set(ret.Ref(), Xcons.binaryOp(Xcode.PLUS_EXPR, f.Call(args), Xcons.IntConstant(i+1))));
+	sizeExpr = sz;
+      }
+      else if (dimSize == -1){
+        sizeExpr = arrayType.getArraySizeExpr();
+      }
+      else {
+        sizeExpr = Xcons.LongLongConstant(0, dimSize);
+      }
+
+      Xobject sub = subscripts.getArg(i);
+
+      Ident var;
+      Xobject lb, len, st;
+
+      if (sub.Opcode() != Xcode.LIST) continue;
+
+      var = declIdentWithBlock(pb, "_XMP_loop_i" + Integer.toString(i), Xtype.intType);
+      varList.add(var);
+
+      lb = ((XobjList)sub).getArg(0);
+      if (lb == null) lb = Xcons.IntConstant(0);
+      len = ((XobjList)sub).getArg(1);
+      if (len == null) len = Xcons.binaryOp(Xcode.MINUS_EXPR, sizeExpr, lb);
+      st = ((XobjList)sub).getArg(2);
+      if (st == null) st = Xcons.IntConstant(1);
+
+      lbList.add(lb);
+      lenList.add(len);
+      stList.add(st);
+
+      Xobject expr;
+      expr = Xcons.binaryOp(Xcode.MUL_EXPR, var.Ref(), st);
+      expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
+
+      subscripts.setArg(i, expr);
+
+    }
+
+    Xobject new_left = Xcons.arrayRef(elemType, left.getArg(0), subscripts);
+
+    //
+    // convert RHS
+    //
+
+    // NOTE: Since the top level object cannot be replaced, the following conversion is applied to
+    //       the whole assignment.
+    XobjectIterator j = new topdownXobjectIterator(assignStmt);
+    for (j.init(); !j.end(); j.next()) {
+      Xobject x = j.getXobject();
+
+      if (x.Opcode() != Xcode.SUB_ARRAY_REF) continue;
+
+      int k = 0;
+
+      String arrayName1 = getArrayName(x);
+      Ident arrayId1 = pb.findVarIdent(arrayName);
+      Xtype arrayType1 = arrayId.Type();
+      Xtype elemType1 = arrayType1.getArrayElementType();
+      int m = arrayType1.getNumDimensions();
+
+      XobjList subscripts1 = (XobjList)x.getArg(1);
+
+      for (int i = 0; i < m; i++, arrayType1 = arrayType1.getRef()){
+
+	Xobject sub = subscripts1.getArg(i);
+
+	Ident var;
+	Xobject lb, st;
+
+	if (sub.Opcode() != Xcode.LIST) continue;
+
+	lb = ((XobjList)sub).getArg(0);
+	if (lb == null) lb = Xcons.IntConstant(0);
+	st = ((XobjList)sub).getArg(2);
+	if (st == null) st = Xcons.IntConstant(1);
+
+	Xobject expr;
+	expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
+	expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
+
+	subscripts1.setArg(i, expr);
+	k++;
+      }
+
+      Xobject new_x = Xcons.arrayRef(elemType1, x.getArg(0), subscripts1);
+      j.setXobject(new_x);
+
+    }
+
+    //
+    // construct loop
+    //
+
+    BlockList loop = null;
+
+    BlockList body = Bcons.emptyBody();
+    body.add(Xcons.Set(new_left, assignStmt.right()));
+
+    for (int i = 0; i < varList.size(); i++){
+      loop = Bcons.emptyBody();
+      // Xobject ub = Xcons.binaryOp(Xcode.MINUS_EXPR, ubList.get(i), lbList.get(i));
+      // ub = Xcons.binaryOp(Xcode.PLUS_EXPR, ub, stList.get(i));
+      // ub = Xcons.binaryOp(Xcode.DIV_EXPR, ub, stList.get(i));
+      // ub = Xcons.binaryOp(Xcode.MINUS_EXPR, ub, Xcons.IntConstant(1));
+      loop.add(Bcons.FORall(varList.get(i).Ref(), Xcons.IntConstant(0), lenList.get(i), Xcons.IntConstant(1),
+			    Xcode.LOG_LT_EXPR, body));
+      body = loop;
+    }
+
+    //
+    // convert ARRAY to LOOP directive
+    //
+
+    Xobject args = Xcons.List();
+
+    XobjList loopIterList = Xcons.List();
+    for (int i = 0; i < varList.size(); i++){
+      loopIterList.add(varList.get(i).Ref());
+    }
+    args.add(loopIterList);
+
+    Xobject onRef = Xcons.List();
+
+    String templateName = pb.getClauses().getArg(0).getArg(0).getName();
+    XMPtemplate template = _globalDecl.getXMPtemplate(templateName, pb);
+    if (template == null) throw new XMPexception("template '" + templateName + "' not found");
+
+    onRef.add(pb.getClauses().getArg(0).getArg(0));
+    Xobject subscriptList = Xcons.List();
+
+    Xobject onSubscripts = pb.getClauses().getArg(0).getArg(1);
+
+    if (onSubscripts != null){
+      int k = 0;
+      for (int i = 0; i < onSubscripts.Nargs(); i++){
+    	Xobject sub = onSubscripts.getArg(i);
+    	if (sub.Opcode() == Xcode.LIST){ // triplet
+    	  Xobject lb = ((XobjList)sub).getArg(0);
+    	  if (lb == null || (lb.Opcode() == Xcode.LIST && lb.Nargs() == 0)){
+	    if (template.isFixed()){
+	      lb = template.getLowerAt(i);
+	    }
+	    else {
+	      Ident ret = declIdentWithBlock(pb, "XMP_" + template.getName() + "_ret" + Integer.toString(i),
+					     Xtype.intType);
+	      Ident tlb = declIdentWithBlock(pb, "XMP_" + template.getName() + "_lb" + Integer.toString(i),
+					     Xtype.intType);
+	      
+	      Ident f = _globalDecl.declExternFunc("xmp_template_lbound", Xtype.intType);
+	      Xobject args1 = Xcons.List(template.getDescId().Ref(), Xcons.IntConstant(i+1), tlb.getAddr());
+	      pb.insert(Xcons.Set(ret.Ref(), f.Call(args1)));
+
+	      lb = tlb.Ref();
+	    }
+	  }
+	  Xobject st = ((XobjList)sub).getArg(2);
+	  if (st != null){
+	    if (st.Opcode() == Xcode.INT_CONSTANT && ((XobjInt)st).getInt() == 0){ // scalar
+	      subscriptList.add(sub);
+	      continue;
+	    }
+	  }
+	  else st = Xcons.IntConstant(1);
+
+	  Xobject expr;
+	  expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
+	  expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
+    	  subscriptList.add(expr);
+	  k++;
+    	}
+	else { // scalar
+    	  subscriptList.add(sub);
+	}
+      }
+    }
+    else {
+      for (int i = 0; i < template.getDim(); i++){
+	Xobject lb;
+	if (template.isFixed()){
+	  lb = template.getLowerAt(i);
+	}
+	else {
+	  Ident ret = declIdentWithBlock(pb, "XMP_" + template.getName() + "_ret" + Integer.toString(i),
+					 Xtype.intType);
+	  Ident tlb = declIdentWithBlock(pb, "XMP_" + template.getName() + "_lb" + Integer.toString(i),
+					 Xtype.intType);
+	      
+	  Ident f = _globalDecl.declExternFunc("xmp_template_lbound", Xtype.intType);
+	  Xobject args1 = Xcons.List(template.getDescId().Ref(), Xcons.IntConstant(i+1), tlb.getAddr());
+	  pb.insert(Xcons.Set(ret.Ref(), f.Call(args1)));
+
+	  lb = tlb.Ref();
+	}
+
+	Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, varList.get(i).Ref(), lb);
+    	subscriptList.add(expr);
+      }
+    }
+
+    onRef.add(subscriptList);
+    args.add(onRef);
+
+    args.add(null);
+    args.add(null); // multicore clause ?
+
+    return Bcons.PRAGMA(Xcode.XMP_PRAGMA, "LOOP", args, loop);
+  }
+
 
   private void setupFinalizer(BlockList body, Ident funcId, XobjList args) throws XMPexception {
     BlockIterator i = new topdownBlockIterator(body);

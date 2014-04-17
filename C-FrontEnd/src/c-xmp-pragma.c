@@ -56,6 +56,7 @@ static CExpr* parse_BCAST_clause();
 static CExpr* parse_GMOVE_clause();
 
 static CExpr* parse_COARRAY_clause();
+static CExpr* parse_ARRAY_clause();
 static CExpr* parse_POST_clause();
 static CExpr* parse_WAIT_clause();
 static CExpr* parse_LOCAL_ALIAS_clause();
@@ -199,6 +200,12 @@ int parse_XMP_pragma()
 	pg_XMP_pragma = XMP_COARRAY;
 	pg_get_token();
 	pg_XMP_list = parse_COARRAY_clause();
+    }
+    else if (PG_IS_IDENT("array")) {
+	pg_XMP_pragma = XMP_ARRAY;
+	ret = PRAGMA_PREFIX;
+	pg_get_token();
+	pg_XMP_list = parse_ARRAY_clause();
     }
     else if (PG_IS_IDENT("post")) {
 	pg_XMP_pragma = XMP_POST;
@@ -1527,6 +1534,29 @@ static CExpr* parse_COARRAY_clause()
     return XMP_LIST2(coarrayNameList, coarrayDims);
 }
 
+CExpr* parse_ARRAY_clause() {
+    CExpr* onRef = NULL;
+    CExpr* opt;
+
+    if (PG_IS_IDENT("on")){
+      pg_get_token();
+	
+      //onRef = parse_ON_ref();
+      onRef = parse_task_ON_ref();
+      opt = parse_XMP_opt();
+    
+      return XMP_LIST2(onRef,opt);
+    }
+    else {
+      XMP_Error0("'on' is missing");
+      goto err;
+    }
+
+  err:
+    XMP_has_err = 1;
+    return NULL;
+}
+
 static CExpr* parse_POST_clause()
 {
     if (pg_tok != '(')
@@ -1575,6 +1605,7 @@ static CExpr* parse_WAIT_clause()
       if (pg_tok == ','){
 	pg_get_token();
         CExpr* tag = pg_parse_expr();
+	resolveType(tag);
         pg_get_token();
         return XMP_LIST3((CExpr*)allocExprOfNumberConst2(2, BT_INT), nodeName, tag);
       }

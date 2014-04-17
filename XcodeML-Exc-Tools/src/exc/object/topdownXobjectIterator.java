@@ -8,6 +8,9 @@ package exc.object;
 
 import java.util.Stack;
 
+// Warning !
+// topdownXobjectIterator.setXobject cannot be applied to the topXobject.
+
 public class topdownXobjectIterator extends XobjectIterator
 {
     Stack<Xobject> obj_stack;
