@@ -1427,7 +1427,13 @@ public class XmfXobjectToXmObjTranslator
         // sclass
         if(ident.getStorageClass() != null)
             xmid.setSclass(ident.getStorageClass().toXcodeString());
-        
+
+        // value
+        Xobject val = ident.getValue();
+        if (val != null && val.Opcode() == Xcode.F_VALUE) {
+            xmid.setValue(transValue(val));
+        }
+
         return xmid;
     }
     
