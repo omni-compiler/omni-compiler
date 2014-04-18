@@ -963,6 +963,13 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                           "sclass", ident.getStorageClass().toXcodeString());
         }
 
+        // value
+        Xobject val = ident.getValue();
+        if (val != null && val.Opcode() == Xcode.F_VALUE) {
+            Element ve = trans(val);
+            addChildNode(e, ve);
+        }
+
         return e;
     }
 

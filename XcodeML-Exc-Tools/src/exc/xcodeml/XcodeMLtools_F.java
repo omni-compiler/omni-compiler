@@ -633,6 +633,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
     StorageClass sclass = StorageClass.SNULL;
     String sclassStr = getAttr(n, "sclass");
     Xobject addr = null;
+    Node valueNode = getElement(n, "value");
 
     if (sclassStr != null) {
       sclass = StorageClass.get(sclassStr);
@@ -651,6 +652,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	addr.setScope(VarScope.LOCAL);
 	break;
       }
+    } else if (valueNode != null) {
+        addr = toXobject(valueNode);
     }
 
     // create ident
