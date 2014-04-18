@@ -2135,7 +2135,7 @@ public class XMPtranslateLocalPragma {
             throw new XMPexception("wrong nodes dimension indicated, too many");
 
           XobjList t = (XobjList)i.getArg();
-          if (t == null) execFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+          if (t == null || t.isEmptyList()) execFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
           else {
             execFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
 
