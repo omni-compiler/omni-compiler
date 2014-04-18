@@ -72,47 +72,41 @@ static int check_continuous(_XMP_array_section_t *a, int dims)
     return _XMP_N_INT_TRUE;
 
   // Only the last dimension length is transferred.
-  // ex) a[1][2][:]
+  // ex) a[1][2][2:3]
   if(_transfer_coarray_elmts == (a+dims-1)->length && (a+dims-1)->stride == 1)
     return _XMP_N_INT_TRUE;
 
-  // The last dimension is not continuous ?
+  // The last dimension is not continuous.
   if((a+dims-1)->stride != 1)
     return _XMP_N_INT_FALSE;
 
-  // (i+1, i+2, ..)-th dimensions are ":" && i-th dimension's stride is "1" &&
-  // (i-1, i-2, ..)-th dimension's length is "1" ?
-  // ex1) a[1][3][1:2][:]   // (i = 2)
-  // ex2) a[2][:][:]        // (i = 0)
-  int i, flag, th = 0;
+  // (.., i-2, i-1)-th dimension's length is "1" &&
+  // i-th dimension's stride is "1" && 
+  // (i+1, i+2, ..)-th dimensions are ":".
+  // ex) a[1][3][1:2][:]   // (i = 2)
+  // Note that: the last dimension must be continuous ((a+dims-1)->stride != 1)
+  int i, flag, th;
   for(i=dims-1;i>=0;i--){
-    if((a+i)->start != 0 || (a+i)->length != (a+i)->elmts){
-      th = i;
+    th = i;
+    if( !( (a+i)->start == 0 && (a+i)->length == (a+i)->elmts ) ){
       break;
     }
   }
-  
+
   if(th == 0 && a->stride == 1){  //  ex) a[1:2][:][:] or a[:][:][:]
     return _XMP_N_INT_TRUE;
   }
-  else if(th == dims-1){          // The last dimension is not ":".  ex) a[:][:][1:2]
-    return _XMP_N_INT_FALSE;
-  }
-  else if((a+th)->stride == 1){
-    flag = _XMP_N_INT_TRUE;
-    for(i=0;i<th;i++)
-      if((a+i)->length != 1)
-	flag = _XMP_N_INT_FALSE;
-  }
   else{
-    flag = _XMP_N_INT_FALSE;
-  }
-    
-  if(flag){
-    return _XMP_N_INT_TRUE;
-  }
-  else{
-    return _XMP_N_INT_FALSE; 
+    if((a+th)->stride != 1){
+      return _XMP_N_INT_FALSE;
+    }
+    else{
+      for(int i=0;i<th;i++)
+	if((a+i)->length != 1)
+	  return _XMP_N_INT_FALSE;
+
+      return _XMP_N_INT_TRUE;
+    }
   }
 }
 
