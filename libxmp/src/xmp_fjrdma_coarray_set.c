@@ -33,7 +33,7 @@ void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray, void **buf, unsigned long lo
   *buf = _XMP_alloc(coarray_size);
   uint64_t laddr = FJMPI_Rdma_reg_mem(memid, *buf, coarray_size);
 
-  for(int i=0; i<_commsize; i++)
+  for(int i=0; i<_XMP_world_size; i++)
     if(i != _XMP_world_rank)
       while((each_addr[i] = FJMPI_Rdma_get_remote_addr(i, memid)) == FJMPI_RDMA_ERROR);
 
