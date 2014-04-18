@@ -13,6 +13,17 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import java.io.PrintStream;
+import java.io.StringWriter;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import com.sun.org.apache.xml.internal.serializer.OutputPropertiesFactory;
+
 import xcodeml.XmException;
 import xcodeml.f.util.XmfNodeVisitorMap;
 import xcodeml.f.util.XmfWriter;
@@ -39,6 +50,33 @@ public class XfDecompileDomVisitor {
   static final int PRIO_MUL_DIV = 7;
   static final int PRIO_POWER = 8;
   static final int PRIO_HIGH = 10;
+
+    static public String nodeToString(Node n) {
+        String ret = null;
+        if (n != null) {
+            try {
+                StringWriter w = new StringWriter();
+                Transformer t = 
+                    TransformerFactory.newInstance().newTransformer();
+                t.setOutputProperty(OutputKeys.INDENT, "yes");
+                t.setOutputProperty(
+                    OutputPropertiesFactory.S_KEY_INDENT_AMOUNT, "" + 2);
+                t.transform(new DOMSource(n),
+                            new StreamResult(w));
+                ret = w.toString();
+            } catch (Exception e) {
+                ;
+            }
+        }
+        return ret;
+    }
+
+    static public void printNode(PrintStream fd, Node n) {
+        String s = nodeToString(n);
+        if (s != null) {
+            fd.printf("%s\n", s);
+        }
+    }
 
     @SuppressWarnings("serial")
     private class InvokeNodeStack extends LinkedList<Node>
@@ -4969,6 +5007,8 @@ public class XfDecompileDomVisitor {
                 for (Node idNode : idNodes) {
                     String typeName;
 
+                    //printNode(System.err, idNode);
+
                     typeName = XmDomUtil.getAttr(idNode, "type");
 
                     Node nameNode = XmDomUtil.getElement(idNode, "name");
@@ -4997,7 +5037,7 @@ public class XfDecompileDomVisitor {
                     }
                     _writeSymbolDecl(symbol, n);
 
-                    Node valueNode = XmDomUtil.getElement(n, "value");
+                    Node valueNode = XmDomUtil.getElement(idNode, "value");
                     if (valueNode != null) {
                         XmfWriter writer = _context.getWriter();
                         writer.writeToken(" = ");
