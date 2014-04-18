@@ -4994,9 +4994,12 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             ArrayList<Node> idNodes = XmDomUtil.collectElements(n, "id");
+            XfTypeManagerForDom typeManager =
+                _context.getTypeManagerForDom();
+
             if (_isInvokeAncestorNodeOf("FstructDecl") == false) {
                 _context.debugPrintLine("Add to symbol table.");
-                XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+
                 for (Node idNode : idNodes) {
                     typeManager.addSymbol(idNode);
                 }
@@ -5040,7 +5043,14 @@ public class XfDecompileDomVisitor {
                     Node valueNode = XmDomUtil.getElement(idNode, "value");
                     if (valueNode != null) {
                         XmfWriter writer = _context.getWriter();
-                        writer.writeToken(" = ");
+                        Node tn = typeManager.findType(typeName);
+
+                        if (XmDomUtil.getAttrBool(tn, "is_pointer") == true) {
+                            writer.writeToken(" => ");
+                        } else {
+                            writer.writeToken(" = ");
+                        }
+
                         invokeEnter(valueNode);
                     }
 
