@@ -30,7 +30,7 @@ void _XMP_coarray_rdma_coarray_set(int dim, long long start, long long length, l
   _coarray[dim].start    = start;
   _coarray[dim].length   = length;
   _transfer_coarray_elmts *= length;
-  _coarray[dim].stride   = stride;
+  _coarray[dim].stride = ((length == 1)? 1 : stride);
 }
 
 void _XMP_coarray_rdma_coarray_set_f(int *dim, long long *start, long long *length, long long *stride)
@@ -43,7 +43,7 @@ void _XMP_coarray_rdma_array_set(int dim, long long start, long long length, lon
   _array[dim].start    = start;
   _array[dim].length   = length;
   _transfer_array_elmts *= length;
-  _array[dim].stride   = stride;
+  _array[dim].stride = ((length == 1)? 1 : stride);
   _array[dim].elmts    = elmts;
   _array[dim].distance = distance;
 }
@@ -67,44 +67,47 @@ void _XMP_coarray_rdma_node_set_f(int *dim, int *image_num)
 // If array a is non-continuous (e.g. stride access), return _XMP_N_INT_FALSE.
 static int check_continuous(_XMP_array_section_t *a, int dims)
 {
-  // If only 1 elements is transferred.
+  // Only 1 elements is transferred.
+  // ex) a[2]
+  // ex) b
   if(_transfer_coarray_elmts == 1)
     return _XMP_N_INT_TRUE;
 
   // Only the last dimension length is transferred.
   // ex) a[1][2][2:3]
-  if(_transfer_coarray_elmts == (a+dims-1)->length && (a+dims-1)->stride == 1)
-    return _XMP_N_INT_TRUE;
+  if(_transfer_coarray_elmts == (a+dims-1)->length)
+    if((a+dims-1)->stride == 1)
+      return _XMP_N_INT_TRUE;
 
-  // The last dimension is not continuous.
-  if((a+dims-1)->stride != 1)
-    return _XMP_N_INT_FALSE;
+  // Is the dimension not continuous ?
+  for(int i=0;i<dims;i++)
+    if((a+i)->stride != 1)
+      return _XMP_N_INT_FALSE;
 
   // (.., i-2, i-1)-th dimension's length is "1" &&
   // i-th dimension's stride is "1" && 
   // (i+1, i+2, ..)-th dimensions are ":".
-  // ex) a[1][3][1:2][:]   // (i = 2)
+  // ex) a[1][3][1:2][:]   // i = 2
+  // ex) a[2][:][:][:]     // i = 0
+  // ex) a[:][:][:][:]     // i = -1
   // Note that: the last dimension must be continuous ((a+dims-1)->stride != 1)
-  int i, flag, th;
-  for(i=dims-1;i>=0;i--){
-    th = i;
-    if( !( (a+i)->start == 0 && (a+i)->length == (a+i)->elmts ) ){
+  int i;
+  for(i=dims-1;i>=0;i--)
+    if((a+i)->length != (a+i)->elmts)
       break;
-    }
-  }
 
-  if(th == 0 && a->stride == 1){  //  ex) a[1:2][:][:] or a[:][:][:]
-    return _XMP_N_INT_TRUE;
+  if(i == -1 || i == 0){
+    return _XMP_N_INT_TRUE;     // Note that (a+i)->stride != 1
   }
-  else{
-    if((a+th)->stride != 1){
+  else{  // i != 0
+    if(a->length != 1){         // a[:][1:2][:]  i == 1
       return _XMP_N_INT_FALSE;
     }
-    else{
-      for(int i=0;i<th;i++)
-	if((a+i)->length != 1)
+    else{                       // a[1][2][:][:] ?  i == 2
+      for(int j=0;j<i;j++)
+	if((a+j)->length != 1)
 	  return _XMP_N_INT_FALSE;
-
+    
       return _XMP_N_INT_TRUE;
     }
   }
@@ -229,10 +232,10 @@ void xmp_sync_images_all(int* status)
   _XMP_fatal("Not implement xmp_sync_images_all()");
 }
 
-long long get_offset(_XMP_array_section_t *array, int dims){
-  int i;
+long long get_offset(_XMP_array_section_t *array, int dims)
+{
   long long offset = 0;
-  for(i=0;i<dims;i++)
+  for(int i=0;i<dims;i++)
     offset += (array+i)->start * (array+i)->distance;
 
   return offset;

@@ -124,9 +124,8 @@ static void XMP_gasnet_from_c_to_c_put(const int target_image, const long long d
 
 }
 
-static int is_all_element(const _XMP_array_section_t* array_info, const int dim){
-  if(array_info[dim].start == 0 && array_info[dim].length == array_info[dim].elmts && 
-     array_info[dim].stride == 1){
+static int is_all_elmt(const _XMP_array_section_t* array_info, const int dim){
+  if(array_info[dim].start == 0 && array_info[dim].length == array_info[dim].elmts){
     return _XMP_N_INT_TRUE;
   }
   else{
@@ -141,17 +140,29 @@ static int is_all_element(const _XMP_array_section_t* array_info, const int dim)
 //     a[:][2:2:2]    -> depth is 0.
 //     a[:][:]        -> depth is 2. But, this function is called when array is not continuous. 
 //                       So depth does not become 2.
-//     b[:][:][1:2:2] -> depth is 0.
-//     b[:][:][1]     -> depth is 1.
-//     b[:][2:2:2][1] -> depth is 1.
-//     b[2:2:2][:][:] -> depth is 2.
-static int get_depth(const int dims, const _XMP_array_section_t* array_info){
-  if(dims == 1){
+//     b[:][:][1:2:2]   -> depth is 0.
+//     b[:][:][1]       -> depth is 1.
+//     b[:][2:2:2][1]   -> depth is 1.
+//     b[:][2:2:2][:]   -> depth is 1.
+//     b[2:2:2][:][:]   -> depth is 2.
+//     b[2:2][2:2][2:2] -> depth is 1.
+//     c[1:2][1:2][1:2][1:2] -> depth is 1.
+//     c[1:2:2][:][:][:]     -> depth is 3. 
+//     c[1:2:2][::2][:][:]   -> depth is 2.
+static int get_depth(const int dims, const _XMP_array_section_t* array_info)  // dims >= 2
+{
+  if(dims == 2){
+    if(array_info[1].stride == 1)
+      return 1;
+    else
       return 0;
   }
 
-  if(dims == 2){
-    if(array_info[1].stride == 1){
+  if(dims == 3){
+    if(is_all_elmt(array_info, 1) && is_all_elmt(array_info, 2)){
+      return 2;
+    }
+    else if(array_info[2].stride == 1){
       return 1;
     }
     else{
@@ -159,8 +170,12 @@ static int get_depth(const int dims, const _XMP_array_section_t* array_info){
     }
   }
 
-  if(dims == 3){
-    if(is_all_element(array_info, 2) && is_all_element(array_info, 1)){
+  if(dims == 4){
+    if(is_all_elmt(array_info, 1) && is_all_elmt(array_info, 2) && 
+       is_all_elmt(array_info, 3)){
+      return 3;
+    }
+    else if(is_all_elmt(array_info, 2) && is_all_elmt(array_info, 3)){
       return 2;
     }
     else if(array_info[2].stride == 1){
@@ -172,17 +187,18 @@ static int get_depth(const int dims, const _XMP_array_section_t* array_info){
   }
 
   // if(dims >= 4)
-  if(array_info[dims-1].stride != 1)
+  if(array_info[dims-1].stride != 1){
     return 0;
-
-  if(array_info[dims-1].stride == 1 && !is_all_element(array_info, dims-2))
+  }
+  else if(is_all_elmt(array_info, dims-1) || array_info[dims-1].length == 1){
     return 1;
+  }
 
   int i, j, flag;
   for(j=dims-1;j>=1;j--){
     flag = _XMP_N_INT_TRUE;
     for(i=j;i>=1;i--){
-      if(!is_all_element(array_info, dims-i)){
+      if(!is_all_elmt(array_info, dims-i)){
 	flag = _XMP_N_INT_FALSE;
 	break;
       }
@@ -191,38 +207,173 @@ static int get_depth(const int dims, const _XMP_array_section_t* array_info){
     if(flag)
       return j;
   }
-
+  
   if(array_info[dims-1].stride == 1)
     return 1;
   else
     return 0;
 }
 
+static void pack_for_4_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
+				 const int continuous_dim)  // continuous_dim is from 0 to 3
+{
+  size_t element_size = src[3].distance;
+  long long start_offset = 0, archive_offset = 0, src_offset;
+  int tmp[4];
+  long long stride_offset[4], length;
+
+  for(int i=0;i<4;i++)
+    start_offset += src[i].start * src[i].distance;
+
+  if(continuous_dim == 3){
+    length = src[1].length * src[1].distance;
+    stride_offset[0] = src[0].stride * src[0].distance;
+
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      src_offset = start_offset + tmp[0];
+      memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+      archive_offset += length;
+    }
+  }
+  else if(continuous_dim == 2){
+    length = src[2].distance * src[2].length;
+    for(int i=0;i<2;i++)
+      stride_offset[i] = src[i].stride * src[i].distance;
+
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<src[1].length;j++){
+	tmp[1] = stride_offset[1] * j;
+	src_offset = start_offset + (tmp[0] + tmp[1]);
+	memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+	archive_offset += length;
+      }
+    }
+  }
+  else if(continuous_dim == 1){
+    length = src[3].distance * src[3].length;
+    for(int i=0;i<3;i++)
+      stride_offset[i] = src[i].stride * src[i].distance;
+    
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<src[1].length;j++){
+	tmp[1] = stride_offset[1] * j;
+	for(int k=0;k<src[2].length;k++){
+	  tmp[2] = stride_offset[2] * k;
+	  src_offset = start_offset + (tmp[0] + tmp[1] + tmp[2]);
+	  memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+	  archive_offset += length;
+	}
+      }
+    }
+  }
+  else{  // continuous_dim == 0
+    length = element_size;
+    for(int i=0;i<4;i++)
+      stride_offset[i] = src[i].stride * src[i].distance;
+
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<src[1].length;j++){
+	tmp[1] = stride_offset[1] * j;
+	for(int k=0;k<src[2].length;k++){
+	  tmp[2] = stride_offset[2] * k;
+	  for(int m=0;m<src[3].length;m++){
+	    tmp[3] = stride_offset[3] * m;
+	    src_offset = start_offset + (tmp[0] + tmp[1] + tmp[2] + tmp[3]);
+	    memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+	    archive_offset += length;
+	  }
+	}
+      }
+    }
+  }
+}
+
+static void pack_for_3_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
+				 const int continuous_dim)  // continuous_dim is 0 or 1 or 2
+{
+  size_t element_size = src[2].distance;
+  long long start_offset = 0, archive_offset = 0, src_offset;
+  int tmp[3];
+  long long stride_offset[3], length;
+
+  for(int i=0;i<3;i++)
+    start_offset += src[i].start * src[i].distance;
+
+  if(continuous_dim == 2){
+    length = src[1].length * src[1].distance;
+    stride_offset[0] = src[0].stride * src[0].distance;
+    
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      src_offset = start_offset + tmp[0];
+      memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+      archive_offset += length;
+    }
+  }
+  else if(continuous_dim == 1){
+    length = src[2].distance * src[2].length;
+    for(int i=0;i<2;i++)
+      stride_offset[i] = src[i].stride * src[i].distance;
+
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<src[1].length;j++){
+	tmp[1] = stride_offset[1] * j;
+	src_offset = start_offset + (tmp[0] + tmp[1]);
+	memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+	archive_offset += length;
+      }
+    }
+  }
+  else{ // continuous_dim == 0
+    length = element_size;
+    for(int i=0;i<3;i++)
+      stride_offset[i] = src[i].stride * src[i].distance;
+
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<src[1].length;j++){
+	tmp[1] = stride_offset[1] * j;
+	for(int k=0;k<src[2].length;k++){
+	  tmp[2] = stride_offset[2] * k;
+	  src_offset = start_offset + (tmp[0] + tmp[1] + tmp[2]);
+	  memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+	  archive_offset += length;
+	}
+      }
+    }
+  }
+}
+
 static void pack_for_2_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr, 
-				 const int continuous_dim){
-  // continuous_dim is 0 or 1
+				 const int continuous_dim){  // continuous_dim is 0 or 1
+
   size_t element_size = src[1].distance;
-  long long start_offset  = (src[0].start * src[1].elmts + src[1].start) * element_size;
+  long long start_offset = 0;
   long long archive_offset = 0, src_offset;
-  int i;
+  for(int i=0;i<2;i++)
+    start_offset += src[i].start * src[i].distance;
 
   if(continuous_dim == 1){
     int length = element_size * src[1].length;
     long long stride_offset = (src[0].stride * src[1].elmts) * element_size;
-    for(i=0;i<src[0].length;i++){
+    for(int i=0;i<src[0].length;i++){
       src_offset = start_offset + stride_offset * i;
       memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
       archive_offset += length;
     }
   }
   else{ // continuous_dim == 0
-    int j;
     long long stride_offset[2];
     stride_offset[0] = src[0].stride * src[1].elmts * element_size;
     stride_offset[1] = src[1].stride * element_size;
-    for(i=0;i<src[0].length;i++){
+    for(int i=0;i<src[0].length;i++){
       long long tmp = stride_offset[0] * i;
-      for(j=0;j<src[1].length;j++){
+      for(int j=0;j<src[1].length;j++){
 	src_offset = start_offset + (tmp + stride_offset[1] * j);
 	memcpy(archive_ptr + archive_offset, src_ptr + src_offset, element_size);
 	archive_offset += element_size;
@@ -290,7 +441,8 @@ static void pack_for_1_dim_array(const _XMP_array_section_t* src, char* archive_
 }
 
 static void XMP_pack(char* archive_ptr, const char* src_ptr, const int src_dims, 
-		     const _XMP_array_section_t* src){
+		     const _XMP_array_section_t* src)
+{
   if(src_dims == 1){ 
     pack_for_1_dim_array(src, archive_ptr, src_ptr);
     return;
@@ -304,10 +456,19 @@ static void XMP_pack(char* archive_ptr, const char* src_ptr, const int src_dims,
     return;
   }
 
-  int i = 0;
+  if(src_dims == 3){
+    pack_for_3_dim_array(src, archive_ptr, src_ptr, continuous_dim);
+    return;
+  }
+
+  if(src_dims == 4){
+    pack_for_4_dim_array(src, archive_ptr, src_ptr, continuous_dim);
+    return;
+  }
+
   size_t element_size = src[src_dims-1].distance;
-  int index[src_dims+1], d = 1;                // d is a position of nested loop
-  for(i=0;i<src_dims+1;i++)   index[i] = 0;    // Initialize index
+  int index[src_dims+1], d = 1;                  // d is a position of nested loop
+  for(int i=0;i<src_dims+1;i++) index[i] = 0;    // Initialize index
   long long cnt[src_dims], src_offset;
   long long archive_offset = 0;
   cnt[0] = 0;
@@ -342,10 +503,11 @@ static void XMP_pack(char* archive_ptr, const char* src_ptr, const int src_dims,
         index[d+1] = 0;
         d++;
       }
+
       else if(d == continuous_dim+1){        // the innermost loop
         src_offset = cnt[d-1] + (index[d]*src[d-1].stride+src[d-1].start) * src[d-1].distance;
         memcpy(archive_ptr + archive_offset, src_ptr + src_offset + (src[d].start * element_size),
-               src[d].length * src[d].distance);
+               src[d].length * src[d+1].distance);
         archive_offset += src[d].length * src[d].distance;
         index[d]++;
       }
@@ -378,8 +540,134 @@ static void extend_stride_queue(){
   }
 }
 
-static void unpack_for_2_dim_array(const _XMP_array_section_t* dst, const char* src_ptr, 
-				   char* dst_ptr, const int continuous_dim){
+static void unpack_for_4_dim_array(const _XMP_array_section_t* dst, const char* src_ptr, 
+				   char* dst_ptr, const int continuous_dim)  // continuous_dim is from 0 to 3
+{
+  size_t element_size = dst[3].distance;
+  long long start_offset = 0, src_offset = 0, dst_offset;
+  int tmp[4];
+  long long stride_offset[4], length;
+  for(int i=0;i<4;i++)
+    start_offset += dst[i].start * dst[i].distance;
+
+  if(continuous_dim == 3){
+    length = dst[1].length * dst[1].distance;
+    stride_offset[0] = dst[0].stride * dst[0].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      dst_offset = start_offset + tmp[0];
+      memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+      src_offset += length;
+    }
+  }
+  else if(continuous_dim == 2){
+    length = dst[2].distance * dst[2].length;
+    for(int i=0;i<2;i++)
+      stride_offset[i] = dst[i].stride * dst[i].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<dst[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        dst_offset = start_offset + (tmp[0] + tmp[1]);
+        memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+        src_offset += length;
+      }
+    }
+  }
+  else if(continuous_dim == 1){
+    length = dst[3].distance * dst[3].length;
+    for(int i=0;i<3;i++)
+      stride_offset[i] = dst[i].stride * dst[i].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<dst[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<dst[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          dst_offset = start_offset + (tmp[0] + tmp[1] + tmp[2]);
+	  memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+          src_offset += length;
+        }
+      }
+    }
+  }
+  else{  // continuous_dim == 0
+    length = element_size;
+    for(int i=0;i<4;i++)
+      stride_offset[i] = dst[i].stride * dst[i].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<dst[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<dst[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<dst[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+            dst_offset = start_offset + (tmp[0] + tmp[1] + tmp[2] + tmp[3]);
+	    memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+            src_offset += length;
+          }
+        }
+      }
+    }
+  }
+}
+
+static void unpack_for_3_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
+				   char* dst_ptr, const int continuous_dim)  // continuous_dim is 0 or 1 or 2
+{
+  size_t element_size = dst[2].distance;
+  long long start_offset = 0, src_offset = 0, dst_offset;
+  int tmp[3];
+  long long stride_offset[3], length;
+  for(int i=0;i<3;i++)
+    start_offset += dst[i].start * dst[i].distance;
+
+  if(continuous_dim == 2){
+    length = dst[1].length * dst[1].distance;
+    stride_offset[0] = dst[0].stride * dst[0].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      dst_offset = start_offset + tmp[0];
+      memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+      src_offset += length;
+    }
+  }
+  else if(continuous_dim == 1){
+    length = dst[2].distance * dst[2].length;
+    for(int i=0;i<2;i++)
+      stride_offset[i] = dst[i].stride * dst[i].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<dst[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        dst_offset = start_offset + (tmp[0] + tmp[1]);
+        memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+        src_offset += length;
+      }
+    }
+  }
+  else{ // continuous_dim == 0
+    length = element_size;
+    for(int i=0;i<3;i++)
+      stride_offset[i] = dst[i].stride * dst[i].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<dst[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<dst[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          dst_offset = start_offset + (tmp[0] + tmp[1] + tmp[2]);
+          memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+          src_offset += length;
+        }
+      }
+    }
+  }
+}
+
+static void unpack_for_2_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
+                                   char* dst_ptr, const int continuous_dim){
   // continuous_dim is 0 or 1
   size_t element_size = dst[1].distance;
   long long start_offset  = (dst[0].start * dst[1].elmts + dst[1].start) * element_size;
@@ -403,9 +691,9 @@ static void unpack_for_2_dim_array(const _XMP_array_section_t* dst, const char* 
     for(i=0;i<dst[0].length;i++){
       long long tmp = stride_offset[0] * i;
       for(j=0;j<dst[1].length;j++){
-	dst_offset = start_offset + (tmp + stride_offset[1] * j);
-	memcpy(dst_ptr + dst_offset, src_ptr + src_offset, element_size);
-	src_offset += element_size;
+        dst_offset = start_offset + (tmp + stride_offset[1] * j);
+        memcpy(dst_ptr + dst_offset, src_ptr + src_offset, element_size);
+        src_offset += element_size;
       }
     }
   }
@@ -480,6 +768,16 @@ static void XMP_unpack(char *dst_ptr, const int dst_dims, const char* src_ptr,
 
   if(dst_dims == 2){
     unpack_for_2_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
+    return;
+  }
+
+  if(dst_dims == 3){
+    unpack_for_3_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
+    return;
+  }
+
+  if(dst_dims == 4){
+    unpack_for_4_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
     return;
   }
 
@@ -562,10 +860,10 @@ static void coarray_stride_size_error(){
 
 static void XMP_gasnet_from_c_to_nonc_put(int target_image, long long src_point, int dst_dims, 
 					  _XMP_array_section_t *dst_info, 
-                                          _XMP_coarray_t *dst, void *src, long long transfer_size){
-
+                                          _XMP_coarray_t *dst, void *src, long long transfer_size)
+{
   size_t dst_info_size = sizeof(_XMP_array_section_t) * dst_dims;
-  transfer_size += dst_info_size;
+  transfer_size += (long long)dst_info_size;
   char archive[transfer_size];
   memcpy(archive, dst_info, dst_info_size);
   memcpy(archive+dst_info_size, (char *)src+src_point, transfer_size - dst_info_size);
@@ -590,22 +888,23 @@ static void XMP_gasnet_from_c_to_nonc_put(int target_image, long long src_point,
 
 static void XMP_gasnet_from_nonc_to_nonc_put(int target_image, int dst_dims, int src_dims,
 					     _XMP_array_section_t *dst_info, _XMP_array_section_t *src,
-					     _XMP_coarray_t *dst, void *src_ptr, long long transfer_size){
+					     _XMP_coarray_t *dst, void *src_ptr, long long transfer_size)
+{
   size_t dst_info_size = sizeof(_XMP_array_section_t) * dst_dims;
-  transfer_size += dst_info_size;
-  char archive[transfer_size];
+  size_t tsize = (size_t)transfer_size + dst_info_size;
+  char archive[tsize];
   memcpy(archive, dst_info, dst_info_size);
   XMP_pack(archive + dst_info_size, src_ptr, src_dims, src);
-
   extend_stride_queue();
   _xmp_gasnet_stride_queue[_xmp_gasnet_stride_wait_size] = 0;
-  if(transfer_size < gasnet_AMMaxMedium()){
-    gasnet_AMRequestMedium4(target_image, _XMP_GASNET_UNPACK, archive, (size_t)transfer_size,
-                            HIWORD(dst->addr[target_image]), LOWORD(dst->addr[target_image]), dst_dims,
-                            _xmp_gasnet_stride_wait_size);
+
+  if(tsize < gasnet_AMMaxMedium()){
+    gasnet_AMRequestMedium4(target_image, _XMP_GASNET_UNPACK, archive, tsize,
+    			    HIWORD(dst->addr[target_image]), LOWORD(dst->addr[target_image]), dst_dims,
+    			    _xmp_gasnet_stride_wait_size);
   }
-  else if(transfer_size < _xmp_stride_size){
-    gasnet_put_bulk(target_image, _xmp_gasnet_buf[target_image], archive, (size_t)transfer_size);
+  else if(tsize < _xmp_stride_size){
+    gasnet_put_bulk(target_image, _xmp_gasnet_buf[target_image], archive, tsize);
     gasnet_AMRequestShort4(target_image, _XMP_GASNET_UNPACK_USING_BUF, HIWORD(dst->addr[target_image]),
                            LOWORD(dst->addr[target_image]), dst_dims, _xmp_gasnet_stride_wait_size);
   }
@@ -638,7 +937,7 @@ void _XMP_gasnet_put(int dst_continuous, int src_continuous, int target_image, i
   }
   else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_FALSE){
     XMP_gasnet_from_nonc_to_nonc_put(target_image, dst_dims, src_dims, dst_info,
-				     src_info, dst, src, transfer_size);
+    				     src_info, dst, src, transfer_size);
   }
   else{
     _XMP_fatal("Unkown shape of coarray");
@@ -755,14 +1054,14 @@ static void XMP_gasnet_from_nonc_to_c_get(int target_image, int src_dims, _XMP_a
 
 static void XMP_gasnet_from_nonc_to_nonc_get(int target_image, int dst_dims, int src_dims, 
 					     _XMP_array_section_t *dst_info, _XMP_array_section_t *src_info, 
-					     void *dst, _XMP_coarray_t *src, long long transfer_size){
-  char *archive;
+					     void *dst, _XMP_coarray_t *src, long long transfer_size)
+{
   done_get_flag = _XMP_N_INT_FALSE;
   //  if(transfer_size < gasnet_AMMaxMedium()){
   if(transfer_size < 0){  // mikansei
     size_t am_request_src_size = sizeof(_XMP_array_section_t) * src_dims;
     size_t am_request_dst_size = sizeof(_XMP_array_section_t) * dst_dims;
-    archive = malloc(am_request_src_size + am_request_dst_size);
+    char *archive = malloc(am_request_src_size + am_request_dst_size);
     memcpy(archive, src_info, am_request_src_size);
     memcpy(archive + am_request_src_size, dst_info, am_request_dst_size);
     gasnet_AMRequestMedium7(target_image, _XMP_GASNET_PACK_GET_HANDLER, archive, 
@@ -770,10 +1069,11 @@ static void XMP_gasnet_from_nonc_to_nonc_get(int target_image, int dst_dims, int
                             HIWORD(src->addr[target_image]), LOWORD(src->addr[target_image]), src_dims, dst_dims,
                             (size_t)transfer_size, HIWORD((char *)dst), LOWORD((char *)dst));
     GASNET_BLOCKUNTIL(done_get_flag == _XMP_N_INT_TRUE);
+    free(archive);
   }
   else if(transfer_size < _xmp_stride_size){
     size_t am_request_size = sizeof(_XMP_array_section_t) * src_dims;
-    archive = malloc(am_request_size);
+    char *archive = malloc(am_request_size);
     memcpy(archive, src_info, am_request_size);
     gasnet_AMRequestMedium4(target_image, _XMP_GASNET_PACK_USGIN_BUF, archive, am_request_size,
                             HIWORD(src->addr[target_image]), LOWORD(src->addr[target_image]), src_dims,
@@ -782,11 +1082,11 @@ static void XMP_gasnet_from_nonc_to_nonc_get(int target_image, int dst_dims, int
     gasnet_get_bulk(_xmp_gasnet_buf[gasnet_mynode()], target_image, _xmp_gasnet_buf[target_image], 
 		    transfer_size);
     XMP_unpack((char *)dst, dst_dims, _xmp_gasnet_buf[gasnet_mynode()], dst_info);
+    free(archive);
   }
   else{
     coarray_stride_size_error();
   }
-  free(archive);
 }
 
 void _XMP_gasnet_get(int src_continuous, int dst_continuous, int target_image, int src_dims, 
