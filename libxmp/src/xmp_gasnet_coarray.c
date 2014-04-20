@@ -149,7 +149,7 @@ static int is_all_elmt(const _XMP_array_section_t* array_info, const int dim){
 //     c[1:2][1:2][1:2][1:2] -> depth is 1.
 //     c[1:2:2][:][:][:]     -> depth is 3. 
 //     c[1:2:2][::2][:][:]   -> depth is 2.
-static int get_depth(const int dims, const _XMP_array_section_t* array_info)  // dims >= 2
+static int get_depth(const int dims, const _XMP_array_section_t* array_info)  // 7 >= dims >= 2
 {
   if(dims == 2){
     if(array_info[1].stride == 1)
@@ -157,8 +157,7 @@ static int get_depth(const int dims, const _XMP_array_section_t* array_info)  //
     else
       return 0;
   }
-
-  if(dims == 3){
+  else if(dims == 3){
     if(is_all_elmt(array_info, 1) && is_all_elmt(array_info, 2)){
       return 2;
     }
@@ -169,8 +168,7 @@ static int get_depth(const int dims, const _XMP_array_section_t* array_info)  //
       return 0;
     }
   }
-
-  if(dims == 4){
+  else if(dims == 4){
     if(is_all_elmt(array_info, 1) && is_all_elmt(array_info, 2) && 
        is_all_elmt(array_info, 3)){
       return 3;
@@ -178,15 +176,89 @@ static int get_depth(const int dims, const _XMP_array_section_t* array_info)  //
     else if(is_all_elmt(array_info, 2) && is_all_elmt(array_info, 3)){
       return 2;
     }
-    else if(array_info[2].stride == 1){
+    else if(array_info[3].stride == 1){
       return 1;
     }
     else{
       return 0;
     }
   }
-
-  // if(dims >= 4)
+  else if(dims == 5){
+    if(is_all_elmt(array_info, 1) && is_all_elmt(array_info, 2) &&
+       is_all_elmt(array_info, 3) && is_all_elmt(array_info, 4)){
+      return 4;
+    }
+    else if(is_all_elmt(array_info, 2) && is_all_elmt(array_info, 3) && is_all_elmt(array_info, 4)){
+      return 3;
+    }
+    else if(is_all_elmt(array_info, 3) && is_all_elmt(array_info, 4)){
+      return 2;
+    }
+    else if(array_info[4].stride == 1){
+      return 1;
+    }
+    else{
+      return 0;
+    }
+  }
+  else if(dims == 6){
+    if(is_all_elmt(array_info, 1) && is_all_elmt(array_info, 2) &&
+       is_all_elmt(array_info, 3) && is_all_elmt(array_info, 4) &&
+       is_all_elmt(array_info, 5)){
+      return 5;
+    }
+    else if(is_all_elmt(array_info, 2) && is_all_elmt(array_info, 3) && 
+	    is_all_elmt(array_info, 4) && is_all_elmt(array_info, 5)){
+      return 4;
+    }
+    else if(is_all_elmt(array_info, 3) && is_all_elmt(array_info, 4) &&
+	    is_all_elmt(array_info, 5)){
+      return 3;
+    }
+    else if(is_all_elmt(array_info, 4) && is_all_elmt(array_info, 5)){
+      return 2;
+    }
+    else if(array_info[5].stride == 1){
+      return 1;
+    }
+    else{
+      return 0;
+    }
+  }
+  else if(dims == 7){
+    if(is_all_elmt(array_info, 1) && is_all_elmt(array_info, 2) &&
+       is_all_elmt(array_info, 3) && is_all_elmt(array_info, 4) &&
+       is_all_elmt(array_info, 5) && is_all_elmt(array_info, 6)){
+      return 6;
+    }
+    else if(is_all_elmt(array_info, 2) && is_all_elmt(array_info, 3) &&
+            is_all_elmt(array_info, 4) && is_all_elmt(array_info, 5) &&
+	    is_all_elmt(array_info, 6)){
+      return 5;
+    }
+    else if(is_all_elmt(array_info, 3) && is_all_elmt(array_info, 4) &&
+            is_all_elmt(array_info, 5) && is_all_elmt(array_info, 6)){
+      return 4;
+    }
+    else if(is_all_elmt(array_info, 4) && is_all_elmt(array_info, 5) &&
+	    is_all_elmt(array_info, 6)){
+      return 3;
+    }
+    else if(is_all_elmt(array_info, 5) && is_all_elmt(array_info, 6)){
+      return 2;
+    }
+    else if(array_info[6].stride == 1){
+      return 1;
+    }
+    else{
+      return 0;
+    }
+  }
+  else{
+    _XMP_fatal("Dimensions of Coarray is too big.");
+    return -1;
+  }
+#ifdef _NOT_USED
   if(array_info[dims-1].stride != 1){
     return 0;
   }
@@ -212,6 +284,381 @@ static int get_depth(const int dims, const _XMP_array_section_t* array_info)  //
     return 1;
   else
     return 0;
+#endif
+}
+
+static void pack_for_7_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
+                                 const int continuous_dim)  // continuous_dim is from 0 to 3
+{
+  size_t element_size = src[6].distance;
+  long long start_offset = 0, archive_offset = 0, src_offset;
+  int tmp[7];
+  long long stride_offset[7], length;
+
+  for(int i=0;i<7;i++)
+    start_offset += src[i].start * src[i].distance;
+
+  if(continuous_dim == 6){
+    length = src[1].length * src[1].distance;
+    stride_offset[0] = src[0].stride * src[0].distance;
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      src_offset = start_offset + tmp[0];
+      memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+      archive_offset += length;
+    }
+  }
+  else if(continuous_dim == 5){
+    length = src[2].distance * src[2].length;
+    for(int i=0;i<2;i++)
+      stride_offset[i] = src[i].stride * src[i].distance;
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<src[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        src_offset = start_offset + (tmp[0] + tmp[1]);
+        memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+        archive_offset += length;
+      }
+    }
+  }
+  else if(continuous_dim == 4){
+    length = src[3].distance * src[3].length;
+    for(int i=0;i<3;i++)
+      stride_offset[i] = src[i].stride * src[i].distance;
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<src[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<src[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          src_offset = start_offset + (tmp[0] + tmp[1] + tmp[2]);
+          memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+          archive_offset += length;
+        }
+      }
+    }
+  }
+  else if(continuous_dim == 3){
+    length = src[4].distance * src[4].length;
+    for(int i=0;i<4;i++)
+      stride_offset[i] = src[i].stride * src[i].distance;
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<src[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<src[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<src[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+            src_offset = start_offset + (tmp[0] + tmp[1] + tmp[2] + tmp[3]);
+            memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+            archive_offset += length;
+          }
+        }
+      }
+    }
+  }
+  else if(continuous_dim == 2){
+    length = src[5].distance * src[5].length;
+    for(int i=0;i<5;i++)
+      stride_offset[i] = src[i].stride * src[i].distance;
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<src[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<src[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<src[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+            for(int n=0;n<src[4].length;n++){
+              tmp[4] = stride_offset[4] * n;
+              src_offset = start_offset + (tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4]);
+              memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+              archive_offset += length;
+            }
+          }
+        }
+      }
+    }
+  }
+  else if(continuous_dim == 1){
+    length = src[6].distance * src[6].length;
+    for(int i=0;i<6;i++)
+      stride_offset[i] = src[i].stride * src[i].distance;
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<src[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<src[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<src[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+            for(int n=0;n<src[4].length;n++){
+              tmp[4] = stride_offset[4] * n;
+	      for(int p=0;p<src[5].length;p++){
+                tmp[5] = stride_offset[5] * p;
+		src_offset = start_offset + (tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5]);
+		memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+		archive_offset += length;
+	      }
+            }
+          }
+        }
+      }
+    }
+  }
+  else{  // continuous_dim == 0
+    length = element_size;
+    for(int i=0;i<7;i++)
+      stride_offset[i] = src[i].stride * src[i].distance;
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<src[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<src[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<src[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+            for(int n=0;n<src[4].length;n++){
+              tmp[4] = stride_offset[4] * n;
+              for(int p=0;p<src[5].length;p++){
+                tmp[5] = stride_offset[5] * p;
+		for(int q=0;q<src[6].length;q++){
+		  tmp[6] = stride_offset[6] * q;
+		  src_offset = start_offset + (tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] + tmp[6]);
+		  memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+		  archive_offset += length;
+		}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+static void pack_for_6_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
+                                 const int continuous_dim)  // continuous_dim is from 0 to 3
+{
+  size_t element_size = src[5].distance;
+  long long start_offset = 0, archive_offset = 0, src_offset;
+  int tmp[6];
+  long long stride_offset[6], length;
+
+  for(int i=0;i<6;i++)
+    start_offset += src[i].start * src[i].distance;
+
+  if(continuous_dim == 5){
+    length = src[1].length * src[1].distance;
+    stride_offset[0] = src[0].stride * src[0].distance;
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      src_offset = start_offset + tmp[0];
+      memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+      archive_offset += length;
+    }
+  }
+  else if(continuous_dim == 4){
+    length = src[2].distance * src[2].length;
+    for(int i=0;i<2;i++)
+      stride_offset[i] = src[i].stride * src[i].distance;
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<src[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        src_offset = start_offset + (tmp[0] + tmp[1]);
+        memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+        archive_offset += length;
+      }
+    }
+  }
+  else if(continuous_dim == 3){
+    length = src[3].distance * src[3].length;
+    for(int i=0;i<3;i++)
+      stride_offset[i] = src[i].stride * src[i].distance;
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<src[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<src[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          src_offset = start_offset + (tmp[0] + tmp[1] + tmp[2]);
+          memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+          archive_offset += length;
+        }
+      }
+    }
+  }
+  else if(continuous_dim == 2){
+    length = src[4].distance * src[4].length;
+    for(int i=0;i<4;i++)
+      stride_offset[i] = src[i].stride * src[i].distance;
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<src[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<src[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<src[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+            src_offset = start_offset + (tmp[0] + tmp[1] + tmp[2] + tmp[3]);
+            memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+            archive_offset += length;
+          }
+        }
+      }
+    }
+  }
+  else if(continuous_dim == 1){
+    length = src[5].distance * src[5].length;
+    for(int i=0;i<5;i++)
+      stride_offset[i] = src[i].stride * src[i].distance;
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<src[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<src[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<src[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+	    for(int n=0;n<src[4].length;n++){
+              tmp[4] = stride_offset[4] * n;
+	      src_offset = start_offset + (tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4]);
+	      memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+	      archive_offset += length;
+	    }
+          }
+        }
+      }
+    }
+  }
+  else{  // continuous_dim == 0
+    length = element_size;
+    for(int i=0;i<6;i++)
+      stride_offset[i] = src[i].stride * src[i].distance;
+
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<src[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<src[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<src[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+            for(int n=0;n<src[4].length;n++){
+              tmp[4] = stride_offset[4] * n;
+	      for(int p=0;p<src[5].length;p++){
+		tmp[5] = stride_offset[5] * p;
+		src_offset = start_offset + (tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5]);
+		memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+		archive_offset += length;
+	      }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+static void pack_for_5_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
+                                 const int continuous_dim)  // continuous_dim is from 0 to 3
+{
+  size_t element_size = src[4].distance;
+  long long start_offset = 0, archive_offset = 0, src_offset;
+  int tmp[5];
+  long long stride_offset[5], length;
+
+  for(int i=0;i<5;i++)
+    start_offset += src[i].start * src[i].distance;
+
+  if(continuous_dim == 4){
+    length = src[1].length * src[1].distance;
+    stride_offset[0] = src[0].stride * src[0].distance;
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      src_offset = start_offset + tmp[0];
+      memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+      archive_offset += length;
+    }
+  }
+  else if(continuous_dim == 3){
+    length = src[2].distance * src[2].length;
+    for(int i=0;i<2;i++)
+      stride_offset[i] = src[i].stride * src[i].distance;
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<src[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        src_offset = start_offset + (tmp[0] + tmp[1]);
+        memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+        archive_offset += length;
+      }
+    }
+  }
+  else if(continuous_dim == 2){
+    length = src[3].distance * src[3].length;
+    for(int i=0;i<3;i++)
+      stride_offset[i] = src[i].stride * src[i].distance;
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<src[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<src[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          src_offset = start_offset + (tmp[0] + tmp[1] + tmp[2]);
+          memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+          archive_offset += length;
+        }
+      }
+    }
+  }
+  else if(continuous_dim == 1){
+    length = src[4].distance * src[4].length;
+    for(int i=0;i<4;i++)
+      stride_offset[i] = src[i].stride * src[i].distance;
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<src[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<src[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<src[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+	    src_offset = start_offset + (tmp[0] + tmp[1] + tmp[2] + tmp[3]);
+	    memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+	    archive_offset += length;
+	  }
+        }
+      }
+    }
+  }
+  else{  // continuous_dim == 0
+    length = element_size;
+    for(int i=0;i<5;i++)
+      stride_offset[i] = src[i].stride * src[i].distance;
+
+    for(int i=0;i<src[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<src[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<src[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<src[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+	    for(int n=0;n<src[4].length;n++){
+	      tmp[4] = stride_offset[4] * n;
+	      src_offset = start_offset + (tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4]);
+	      memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
+	      archive_offset += length;
+	    }
+          }
+        }
+      }
+    }
+  }
 }
 
 static void pack_for_4_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
@@ -450,22 +897,37 @@ static void XMP_pack(char* archive_ptr, const char* src_ptr, const int src_dims,
 
   // How depth is memory continuity ?
   int continuous_dim = get_depth(src_dims, src);
-
+  
   if(src_dims == 2){
     pack_for_2_dim_array(src, archive_ptr, src_ptr, continuous_dim);
     return;
   }
-
-  if(src_dims == 3){
+  else if(src_dims == 3){
     pack_for_3_dim_array(src, archive_ptr, src_ptr, continuous_dim);
     return;
   }
-
-  if(src_dims == 4){
+  else if(src_dims == 4){
     pack_for_4_dim_array(src, archive_ptr, src_ptr, continuous_dim);
     return;
   }
+  else if(src_dims == 5){
+    pack_for_5_dim_array(src, archive_ptr, src_ptr, continuous_dim);
+    return;
+  }
+  else if(src_dims == 6){
+    pack_for_6_dim_array(src, archive_ptr, src_ptr, continuous_dim);
+    return;
+  }
+  else if(src_dims == 7){
+    pack_for_7_dim_array(src, archive_ptr, src_ptr, continuous_dim);
+    return;
+  }
+  else{
+    _XMP_fatal("Dimension of coarray is too big");
+    return;
+  }
 
+#ifdef _NOT_USED
   size_t element_size = src[src_dims-1].distance;
   int index[src_dims+1], d = 1;                  // d is a position of nested loop
   for(int i=0;i<src_dims+1;i++) index[i] = 0;    // Initialize index
@@ -513,6 +975,7 @@ static void XMP_pack(char* archive_ptr, const char* src_ptr, const int src_dims,
       }
     }
   }
+#endif
 }
 
 static void XMP_gasnet_from_nonc_to_c_put(int target_image, long long dst_point, int src_dims, 
@@ -537,6 +1000,375 @@ static void extend_stride_queue(){
     _xmp_gasnet_stride_queue = new_list;
     _xmp_gasnet_stride_queue_size = new_size;
     free(old_list);
+  }
+}
+
+static void unpack_for_7_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
+                                   char* dst_ptr, const int continuous_dim)  // continuous_dim is from 0 to 3
+{
+  size_t element_size = dst[6].distance;
+  long long start_offset = 0, src_offset = 0, dst_offset;
+  int tmp[7];
+  long long stride_offset[7], length;
+  for(int i=0;i<7;i++)
+    start_offset += dst[i].start * dst[i].distance;
+
+  if(continuous_dim == 6){
+    length = dst[1].length * dst[1].distance;
+    stride_offset[0] = dst[0].stride * dst[0].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      dst_offset = start_offset + tmp[0];
+      memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+      src_offset += length;
+    }
+  }
+  else if(continuous_dim == 5){
+    length = dst[2].distance * dst[2].length;
+    for(int i=0;i<2;i++)
+      stride_offset[i] = dst[i].stride * dst[i].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<dst[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        dst_offset = start_offset + (tmp[0] + tmp[1]);
+        memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+        src_offset += length;
+      }
+    }
+  }
+  else if(continuous_dim == 4){
+    length = dst[3].distance * dst[3].length;
+    for(int i=0;i<3;i++)
+      stride_offset[i] = dst[i].stride * dst[i].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<dst[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<dst[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          dst_offset = start_offset + (tmp[0] + tmp[1] + tmp[2]);
+          memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+          src_offset += length;
+        }
+      }
+    }
+  }
+  else if(continuous_dim == 3){
+    length = dst[4].distance * dst[4].length;
+    for(int i=0;i<4;i++)
+      stride_offset[i] = dst[i].stride * dst[i].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<dst[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<dst[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<dst[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+            dst_offset = start_offset + (tmp[0] + tmp[1] + tmp[2] + tmp[3]);
+            memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+            src_offset += length;
+          }
+        }
+      }
+    }
+  }
+  else if(continuous_dim == 2){
+    length = dst[5].distance * dst[5].length;
+    for(int i=0;i<5;i++)
+      stride_offset[i] = dst[i].stride * dst[i].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<dst[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<dst[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<dst[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+            for(int n=0;n<dst[4].length;n++){
+              tmp[4] = stride_offset[4] * n;
+              dst_offset = start_offset + (tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4]);
+              memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+              src_offset += length;
+            }
+          }
+        }
+      }
+    }
+  }
+  else if(continuous_dim == 1){
+    length = dst[6].distance * dst[6].length;
+    for(int i=0;i<6;i++)
+      stride_offset[i] = dst[i].stride * dst[i].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<dst[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<dst[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<dst[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+            for(int n=0;n<dst[4].length;n++){
+              tmp[4] = stride_offset[4] * n;
+	      for(int p=0;p<dst[5].length;p++){
+                tmp[5] = stride_offset[5] * p;
+		dst_offset = start_offset + (tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5]);
+		memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+		src_offset += length;
+	      }
+            }
+          }
+        }
+      }
+    }
+  }
+  else{  // continuous_dim == 0
+    length = element_size;
+    for(int i=0;i<7;i++)
+      stride_offset[i] = dst[i].stride * dst[i].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<dst[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<dst[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<dst[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+            for(int n=0;n<dst[4].length;n++){
+              tmp[4] = stride_offset[4] * n;
+              for(int p=0;p<dst[5].length;p++){
+                tmp[5] = stride_offset[5] * p;
+		for(int q=0;q<dst[6].length;q++){
+		  tmp[6] = stride_offset[6] * q;
+		  dst_offset = start_offset + (tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] + tmp[6]);
+		  memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+		  src_offset += length;
+		}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+static void unpack_for_6_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
+                                   char* dst_ptr, const int continuous_dim)  // continuous_dim is from 0 to 3
+{
+  size_t element_size = dst[5].distance;
+  long long start_offset = 0, src_offset = 0, dst_offset;
+  int tmp[6];
+  long long stride_offset[6], length;
+  for(int i=0;i<6;i++)
+    start_offset += dst[i].start * dst[i].distance;
+
+  if(continuous_dim == 5){
+    length = dst[1].length * dst[1].distance;
+    stride_offset[0] = dst[0].stride * dst[0].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      dst_offset = start_offset + tmp[0];
+      memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+      src_offset += length;
+    }
+  }
+  else if(continuous_dim == 4){
+    length = dst[2].distance * dst[2].length;
+    for(int i=0;i<2;i++)
+      stride_offset[i] = dst[i].stride * dst[i].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<dst[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        dst_offset = start_offset + (tmp[0] + tmp[1]);
+        memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+        src_offset += length;
+      }
+    }
+  }
+  else if(continuous_dim == 3){
+    length = dst[3].distance * dst[3].length;
+    for(int i=0;i<3;i++)
+      stride_offset[i] = dst[i].stride * dst[i].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<dst[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<dst[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          dst_offset = start_offset + (tmp[0] + tmp[1] + tmp[2]);
+          memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+          src_offset += length;
+        }
+      }
+    }
+  }
+  else if(continuous_dim == 2){
+    length = dst[4].distance * dst[4].length;
+    for(int i=0;i<4;i++)
+      stride_offset[i] = dst[i].stride * dst[i].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<dst[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<dst[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<dst[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+            dst_offset = start_offset + (tmp[0] + tmp[1] + tmp[2] + tmp[3]);
+            memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+            src_offset += length;
+          }
+        }
+      }
+    }
+  }
+  else if(continuous_dim == 1){
+    length = dst[5].distance * dst[5].length;
+    for(int i=0;i<5;i++)
+      stride_offset[i] = dst[i].stride * dst[i].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<dst[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<dst[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<dst[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+	    for(int n=0;n<dst[4].length;n++){
+              tmp[4] = stride_offset[4] * n;
+              dst_offset = start_offset + (tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4]);
+	      memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+	      src_offset += length;
+	    }
+          }
+        }
+      }
+    }
+  }
+  else{  // continuous_dim == 0
+    length = element_size;
+    for(int i=0;i<6;i++)
+      stride_offset[i] = dst[i].stride * dst[i].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<dst[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<dst[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<dst[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+            for(int n=0;n<dst[4].length;n++){
+              tmp[4] = stride_offset[4] * n;
+	      for(int p=0;p<dst[5].length;p++){
+		tmp[5] = stride_offset[5] * p;
+		dst_offset = start_offset + (tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5]);
+		memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+		src_offset += length;
+	      }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+static void unpack_for_5_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
+                                   char* dst_ptr, const int continuous_dim)  // continuous_dim is from 0 to 3
+{
+  size_t element_size = dst[4].distance;
+  long long start_offset = 0, src_offset = 0, dst_offset;
+  int tmp[5];
+  long long stride_offset[5], length;
+  for(int i=0;i<5;i++)
+    start_offset += dst[i].start * dst[i].distance;
+
+  if(continuous_dim == 4){
+    length = dst[1].length * dst[1].distance;
+    stride_offset[0] = dst[0].stride * dst[0].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      dst_offset = start_offset + tmp[0];
+      memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+      src_offset += length;
+    }
+  }
+  else if(continuous_dim == 3){
+    length = dst[2].distance * dst[2].length;
+    for(int i=0;i<2;i++)
+      stride_offset[i] = dst[i].stride * dst[i].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<dst[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        dst_offset = start_offset + (tmp[0] + tmp[1]);
+        memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+        src_offset += length;
+      }
+    }
+  }
+  else if(continuous_dim == 2){
+    length = dst[3].distance * dst[3].length;
+    for(int i=0;i<3;i++)
+      stride_offset[i] = dst[i].stride * dst[i].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<dst[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<dst[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          dst_offset = start_offset + (tmp[0] + tmp[1] + tmp[2]);
+          memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+          src_offset += length;
+        }
+      }
+    }
+  }
+  else if(continuous_dim == 1){
+    length = dst[4].distance * dst[4].length;
+    for(int i=0;i<4;i++)
+      stride_offset[i] = dst[i].stride * dst[i].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<dst[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<dst[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<dst[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+	    dst_offset = start_offset + (tmp[0] + tmp[1] + tmp[2] + tmp[3]);
+	    memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+	    src_offset += length;
+	  }
+        }
+      }
+    }
+  }
+  else{  // continuous_dim == 0
+    length = element_size;
+    for(int i=0;i<5;i++)
+      stride_offset[i] = dst[i].stride * dst[i].distance;
+    for(int i=0;i<dst[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<dst[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<dst[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<dst[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+	    for(int n=0;n<dst[4].length;n++){
+	      tmp[4] = stride_offset[4] * n;
+	      dst_offset = start_offset + (tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4]);
+	      memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
+	      src_offset += length;
+	    }
+          }
+        }
+      }
+    }
   }
 }
 
@@ -770,17 +1602,32 @@ static void XMP_unpack(char *dst_ptr, const int dst_dims, const char* src_ptr,
     unpack_for_2_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
     return;
   }
-
-  if(dst_dims == 3){
+  else if(dst_dims == 3){
     unpack_for_3_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
     return;
   }
-
-  if(dst_dims == 4){
+  else if(dst_dims == 4){
     unpack_for_4_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
     return;
   }
+  else if(dst_dims == 5){
+    unpack_for_5_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
+    return;
+  }
+  else if(dst_dims == 6){
+    unpack_for_6_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
+    return;
+  }
+  else if(dst_dims == 7){
+    unpack_for_7_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
+    return;
+  }
+  else{
+    _XMP_fatal("Dimension of coarray is too big.");
+    return;
+  }
 
+#ifdef _NOT_USED
   unsigned long long dst_offset = 0, src_offset = 0;
   size_t element_size = dst[dst_dims-1].distance;
   int index[dst_dims+1], d = 1, i;                // d is a position of nested loop
@@ -827,6 +1674,7 @@ static void XMP_unpack(char *dst_ptr, const int dst_dims, const char* src_ptr,
       }
     }
   }
+#endif
 }
 
 void _xmp_gasnet_unpack_using_buf(gasnet_token_t t, const int addr_hi, const int addr_lo, 
