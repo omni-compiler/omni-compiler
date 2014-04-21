@@ -29,7 +29,7 @@ C-exprcode.c: C-exprcode.def C-exprcode.c.awk
 $(F_Front_SOURCES): C-exprcode.h
 
 F-intrinsic.c F-intrinsics-table.c: F-intrinsics-types.h
-F95-parser.c:	F95-lex.c
+F95-parser.c:	F95-lex.c F95-parser.y
 
 clean-local:
 	rm -rf ../doc

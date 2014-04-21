@@ -273,11 +273,11 @@ private:
     friend bool parseSpecificFrontendOptions(const char *arg, void *ctx);
 #endif
 
-    static bool
-    parseSpecificFrontendOpenmpOptions(const char *arg, void *ctx) {
-        return mParseSpecific(Options_Frontend, (CompileOptions *)ctx, arg);
-    }
-    friend bool parseSpecificFrontendOpenmpOptions(const char *arg, void *ctx);
+//    static bool
+//    parseSpecificFrontendOpenmpOptions(const char *arg, void *ctx) {
+//        return mParseSpecific(Options_Frontend, (CompileOptions *)ctx, arg);
+//    }
+//    friend bool parseSpecificFrontendOpenmpOptions(const char *arg, void *ctx);
 
     static bool
     parseGenericFrontendOptions(const char *arg, void *ctx) {
@@ -351,14 +351,14 @@ private:
     friend bool parseGenericPrelinkerOptions(const char *arg, void *ctx);
 
 
-    static bool
-    parse_fopenmp(const char *arg, void *ctx) {
-        (void)arg;
-        CompileOptions *m = (CompileOptions *)ctx;
-        mSetStage(m, Stage_Frontend);
-        return true;
-    }
-    friend bool parse_fopenmp(const char *arg, void *ctx);
+//    static bool
+//    parse_fopenmp(const char *arg, void *ctx) {
+//        (void)arg;
+//        CompileOptions *m = (CompileOptions *)ctx;
+//        mSetStage(m, Stage_Frontend);
+//        return true;
+//    }
+//    friend bool parse_fopenmp(const char *arg, void *ctx);
 
     static bool
     parse_E(const char *arg, void *ctx) {
@@ -562,8 +562,6 @@ private:
                 "\tShow this.\n");
         fprintf(stderr, "\n");
 
-        fprintf(stderr, "  -fopenmp"
-                "\tEnable OpenMP options to the frontend.\n");
         fprintf(stderr, "  -Wf,opt[,opt...]"
                 "\tPass options directly to the frontend.\n");
         fprintf(stderr, "  -Wt,opt[,opt...]"
@@ -667,9 +665,9 @@ public:
                   parseGenericFrontendOptions, (void *)this,
                   Parse_This, Value_None, true, true, NULL);
 
-        addParser("-fopenmp",
-                  parseSpecificFrontendOpenmpOptions, (void *)this,
-                  Parse_This, Value_None, true, false, NULL);
+//        addParser("-fopenmp",
+//                  parseSpecificFrontendOpenmpOptions, (void *)this,
+//                  Parse_This, Value_None, true, false, NULL);
 	
 	addParser("^-Wt,.*",
                   parseGenericTranslatorOptions, (void *)this,
