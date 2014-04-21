@@ -1378,8 +1378,10 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                     Ident typeName = ident_list.getStructTypeName(t);
                     if (typeName != null)
                         idSet.add("$" + typeName.getName());
-                    for (Xobject a : t.getMemberList())
+                    for (Xobject a : t.getMemberList()) {
                         _collectDependName(a.Type(), idSet);
+                        _collectDependName(((Ident)a).getValue(), idSet);
+                    }
                 }
                 break;
             }
