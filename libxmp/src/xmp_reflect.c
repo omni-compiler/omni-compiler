@@ -69,9 +69,9 @@ double t0, t1;
 extern int _xmp_reflect_pack_flag;
 
 static int _xmpf_set_reflect_flag = 0;
-static int _xmp_lwidth[_XMP_N_MAX_DIM] = {};
-static int _xmp_uwidth[_XMP_N_MAX_DIM] = {};
-static int _xmp_is_periodic[_XMP_N_MAX_DIM] = {};
+static int _xmp_lwidth[_XMP_N_MAX_DIM] = {0};
+static int _xmp_uwidth[_XMP_N_MAX_DIM] = {0};
+static int _xmp_is_periodic[_XMP_N_MAX_DIM] = {0};
 
 
 void _XMP_set_reflect__(_XMP_array_t *a, int dim, int lwidth, int uwidth,

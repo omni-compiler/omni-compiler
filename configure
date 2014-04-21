@@ -741,12 +741,15 @@ ZIPCOM
 CC_LIB
 ARFLAGS
 BASH
+BEFC_OPTION
 OMF_CONF_LNK_OPT
 OMF_CONF_NTV_OPT
 OMF_CONF_LX2X_OPT
 ac_ct_FC
 FCFLAGS
 FC
+IS_PGCC
+BECC_OPTION
 BECC_OMP_OPTION
 OMC_CONF_LNK_OPT
 OMC_CONF_NTV_OPT
@@ -759,9 +762,7 @@ SR16000_FALSE
 SR16000_TRUE
 IS_AIX
 IS_CRAY
-BEFC_OPTION
 BEFC
-BECC_OPTION
 BECC
 AIX_OPT
 ENABLE_ATOOL
@@ -17144,10 +17145,8 @@ if test "$target" != "$host"; then
 else  # if "--target" option is not used in ./configure
   BECC="mpicc"
   BEFC="mpif90"
-  BECC_OPTION="-std=gnu99 -Wall -Wpointer-arith"
 fi
 
-BECC_OPTION="${BECC_OPTION} ${userBCFlags}"
 
 if test "$IS_AIX" = "Yes"; then
   $as_echo "#define AIX_64BIT 1" >>confdefs.h
@@ -17186,8 +17185,6 @@ fi
 
 
 
-
-
  if test "$target" = "powerpc64-hitachi-aix"; then
   SR16000_TRUE=
   SR16000_FALSE='#'
@@ -17213,6 +17210,7 @@ fi
 
 # --------------------------------------------------------------------
 # Specify Options of Backend C Compiler when compiling XMP code
+IS_PGCC="No"
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking backend C compiler" >&5
 $as_echo_n "checking backend C compiler... " >&6; }
 if test "$target" = "Kcomputer-linux-gnu"; then
@@ -17249,15 +17247,28 @@ else
     OMC_CONF_LX2X_OPT=""
     OMC_CONF_NTV_OPT="-std=gnu99 -Wno-implicit -Wno-attributes"
     OMC_CONF_LNK_OPT="-fopenmp"
+    BECC_OPTION="-std=gnu99 -Wall -Wpointer-arith"
     BECC_OMP_OPTION="-fopenmp"
     ;;
   *ICC*)
     OMC_CONF_LX2X_OPT=""
     OMC_CONF_NTV_OPT="-std=gnu99 -w"
     OMC_CONF_LNK_OPT="-openmp"
+    BECC_OPTION="-std=gnu99 -Wall -Wpointer-arith"
     BECC_OMP_OPTION="-openmp"
     ;;
   *)
+    chk2=`$BECC --version | head -n2 | tail -n1`
+    case $chk2 in
+    pgcc*)
+      OMC_CONF_LX2X_OPT=""
+      OMC_CONF_NTV_OPT="-D_XMP_PGI"
+      OMC_CONF_LNK_OPT="-mp"
+      BECC_OPTION="-c99 -Minform=warn"
+      BECC_OMP_OPTION="-mp"
+      IS_PGCC="Yes"
+      ;;
+    *)
     echo "No supported C compiler was found."
     echo "This program supports following C compilers."
     echo " - GNU C Compiler (mpicc)"
@@ -17267,10 +17278,17 @@ else
     echo " - NEC C/C++ Compiler (sxc++)"
     echo " - IBM C Compiler (mpixlcxx_r)"
     echo " - HITACHI C Compiler (mpCC_r)"
+    echo " - PGI C Compiler (pgcc)"
 exit 1
+    ;;
+    esac
     ;;
   esac
 fi
+
+BECC_OPTION="${BECC_OPTION} ${userBCFlags}"
+
+
 
 
 
@@ -20396,6 +20414,14 @@ $as_echo_n "checking backend Fortran compiler... " >&6; }
       OMF_CONF_LNK_OPT="-threads -openmp"
       ;;
     *)
+      chk2=`$BEFC --version | head -n2 | tail -n1`
+      case $chk2 in
+      pgfortran*)
+        OMF_CONF_LX2X_OPT=""
+        OMF_CONF_NTV_OPT=""
+        OMF_CONF_LNK_OPT="-mp"
+	;;
+      *)
       echo "No supported Fortran compiler was found."
       echo "This program supports following Fortran compilers."
       echo " - GNU Fortran (mpif77 or mpif90)"
@@ -20404,10 +20430,14 @@ $as_echo_n "checking backend Fortran compiler... " >&6; }
       echo " - Cray Fortran (ftn)"
       echo " - IBM Fortran (mpixlf90_r)"
       echo " - Hitachi Fortran (mpif90)"
+      echo " - PGI Fortran (pgfortran)"
       exit 1
       ;;
     esac
+      ;;
+    esac
   fi
+
 
 
 

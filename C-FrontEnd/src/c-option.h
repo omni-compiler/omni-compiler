@@ -81,6 +81,8 @@ extern unsigned int s_supportGcc;
 extern unsigned int s_useBuiltinWchar;
 //! treat wide character as unsigned short
 extern unsigned int s_useShortWchar;
+//! use __builtin_va_arg
+extern unsigned int s_useBuiltinVaArg;
 //! transform function in initializer
 extern unsigned int s_transFuncInInit;
 //! transform xmp pragma

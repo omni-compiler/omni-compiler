@@ -639,10 +639,8 @@ if test "$target" != "$host"; then
 else  # if "--target" option is not used in ./configure
   BECC="mpicc"
   BEFC="mpif90"
-  BECC_OPTION="-std=gnu99 -Wall -Wpointer-arith"
 fi
 AC_SUBST(AIX_OPT)
-BECC_OPTION="${BECC_OPTION} ${userBCFlags}"
 
 if test "$IS_AIX" = "Yes"; then
   AC_DEFINE(AIX_64BIT)
@@ -664,9 +662,7 @@ AC_ARG_WITH(backend-fc,
 # --------------------------------------------------------------------
 
 AC_SUBST(BECC)
-AC_SUBST(BECC_OPTION)
 AC_SUBST(BEFC)
-AC_SUBST(BEFC_OPTION)
 
 
 AC_SUBST(IS_CRAY)
@@ -683,6 +679,7 @@ AC_SUBST(SUPERUX)
 
 # --------------------------------------------------------------------
 # Specify Options of Backend C Compiler when compiling XMP code
+IS_PGCC="No"
 AC_MSG_CHECKING([backend C compiler])
 if test "$target" = "Kcomputer-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
@@ -718,15 +715,28 @@ else
     OMC_CONF_LX2X_OPT=""
     OMC_CONF_NTV_OPT="-std=gnu99 -Wno-implicit -Wno-attributes"
     OMC_CONF_LNK_OPT="-fopenmp"
+    BECC_OPTION="-std=gnu99 -Wall -Wpointer-arith"
     BECC_OMP_OPTION="-fopenmp"
     ;;
   *ICC*)
     OMC_CONF_LX2X_OPT=""
     OMC_CONF_NTV_OPT="-std=gnu99 -w"
     OMC_CONF_LNK_OPT="-openmp"
+    BECC_OPTION="-std=gnu99 -Wall -Wpointer-arith"
     BECC_OMP_OPTION="-openmp"
     ;;
   *)
+    chk2=`$BECC --version | head -n2 | tail -n1`
+    case $chk2 in
+    pgcc*)
+      OMC_CONF_LX2X_OPT=""
+      OMC_CONF_NTV_OPT="-D_XMP_PGI"
+      OMC_CONF_LNK_OPT="-mp"
+      BECC_OPTION="-c99 -Minform=warn"
+      BECC_OMP_OPTION="-mp"
+      IS_PGCC="Yes"
+      ;;
+    *)
     echo "No supported C compiler was found."
     echo "This program supports following C compilers."
     echo " - GNU C Compiler (mpicc)"
@@ -736,16 +746,23 @@ else
     echo " - NEC C/C++ Compiler (sxc++)"
     echo " - IBM C Compiler (mpixlcxx_r)"
     echo " - HITACHI C Compiler (mpCC_r)"
+    echo " - PGI C Compiler (pgcc)"
 exit 1
+    ;;
+    esac 
     ;;
   esac
 fi
+
+BECC_OPTION="${BECC_OPTION} ${userBCFlags}"
 
 AC_SUBST(OMC_CONF_LX2X_OPT)
 AC_SUBST(OMC_CONF_NTV_OPT)
 AC_SUBST(OMC_CONF_LNK_OPT)
 AC_SUBST(BECC_OMP_OPTION)
+AC_SUBST(BECC_OPTION)
 
+AC_SUBST(IS_PGCC)
 # --------------------------------------------------------------------
 
 # --------------------------------------------------------------------
@@ -788,6 +805,14 @@ if test $enableF2F = yes; then
       OMF_CONF_LNK_OPT="-threads -openmp"
       ;;
     *)
+      chk2=`$BEFC --version | head -n2 | tail -n1`
+      case $chk2 in
+      pgfortran*)
+        OMF_CONF_LX2X_OPT=""
+        OMF_CONF_NTV_OPT=""
+        OMF_CONF_LNK_OPT="-mp"
+	;;
+      *)
       echo "No supported Fortran compiler was found."
       echo "This program supports following Fortran compilers."
       echo " - GNU Fortran (mpif77 or mpif90)"
@@ -796,13 +821,17 @@ if test $enableF2F = yes; then
       echo " - Cray Fortran (ftn)"
       echo " - IBM Fortran (mpixlf90_r)"
       echo " - Hitachi Fortran (mpif90)"
+      echo " - PGI Fortran (pgfortran)"
       exit 1
+      ;;
+    esac
       ;;
     esac
   fi
   AC_SUBST(OMF_CONF_LX2X_OPT)
   AC_SUBST(OMF_CONF_NTV_OPT)
   AC_SUBST(OMF_CONF_LNK_OPT)
+  AC_SUBST(BEFC_OPTION)
   AC_PROG_FC_C_O
 fi
 

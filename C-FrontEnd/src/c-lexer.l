@@ -176,7 +176,12 @@ IFSfx       {ISfx}{FSfx}|{FSfx}{ISfx}
 "__typeof__"            { count(); LEX_GCC_IDENT(TYPEOF); }
 "__label__"             { count(); LEX_GCC_IDENT(LABEL); }
 
-"__builtin_va_arg"             { count(); LEX_GCC_IDENT(BLTIN_VA_ARG); }
+"__builtin_va_arg"             { count(); if(s_useBuiltinVaArg){
+                                              LEX_GCC_IDENT(BLTIN_VA_ARG); 
+                                          } else {
+                                              yylval.expr = lexAllocSymbol(); return IDENTIFIER;
+                                          }
+                               }
 "__builtin_offsetof"           { count(); LEX_GCC_IDENT(BLTIN_OFFSETOF); }
 "__builtin_types_compatible_p" { count(); LEX_GCC_IDENT(BLTIN_TYPES_COMPATIBLE_P); }
 

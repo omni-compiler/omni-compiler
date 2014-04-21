@@ -271,6 +271,7 @@ INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INT_ENUFF_FOR_VOIDP = @INT_ENUFF_FOR_VOIDP@
 IS_AIX = @IS_AIX@
 IS_CRAY = @IS_CRAY@
+IS_PGCC = @IS_PGCC@
 JARCOM = @JARCOM@
 JAVACCOM = @JAVACCOM@
 JAVACOM = @JAVACOM@
@@ -477,7 +478,7 @@ lib_LIBRARIES = libtlog_mpi.a
 sri_TLOGVIEWS = ./bin/tlogview
 jar_TLOGVIEWS = ./bin/tlogview.jar
 libtlog_mpi_a_SOURCES = tlog.c tlog_event.c tlog_misc.c tlog-time.c tlog_event.h
-AM_CFLAGS = -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR) @BECC_OPTION@ 
+AM_CFLAGS = @BECC_OPTION@ 
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS)
 

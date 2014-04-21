@@ -49,6 +49,7 @@ unsigned int s_supportGcc               = 1;
 unsigned int s_useBuiltinWchar          = 0;
 unsigned int s_useShortWchar            = 0;
 unsigned int s_useIntWchar              = 0;
+unsigned int s_useBuiltinVaArg          = 1;
 unsigned int s_transFuncInInit          = 0;
 unsigned int s_useXMP                   = 0;
 unsigned int s_useACC                   = 0;
@@ -476,6 +477,8 @@ procOptions(int argc, char **argv)
                 s_useIntWchar = 1;
             } else if(strcmp(arg, "--no-gcc-support") == 0) {
                 s_supportGcc = 0;
+            } else if(strcmp(arg, "--no-builtin-va-arg") == 0) {
+                s_useBuiltinVaArg = 0;
             } else if(strcmp(arg, "--verbose") == 0) {
                 s_verbose = 1;
             } else if(strcmp(arg, "--suppress-typeid") == 0) {
