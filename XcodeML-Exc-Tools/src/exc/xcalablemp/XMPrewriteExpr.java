@@ -810,26 +810,30 @@ public class XMPrewriteExpr {
           }
         }
       case XMPalignedArray.GBLOCK:
-        if (alignedArray.hasShadow()) {
-          XMPshadow shadow = alignedArray.getShadowAt(index);
-          switch (shadow.getType()) {
-            case XMPshadow.SHADOW_NONE:
-            case XMPshadow.SHADOW_NORMAL:
-              {
-                XobjList args = Xcons.List(indexRef, alignedArray.getGtolTemp0IdAt(index).Ref());
-                return XMP.getMacroId("_XMP_M_CALC_INDEX_GBLOCK").Call(args);
-              }
-            case XMPshadow.SHADOW_FULL:
-              return indexRef;
-            default:
-              throw new XMPexception("unknown shadow type");
-          }
-        }
-        else {
-          XobjList args = Xcons.List(indexRef,
-                                     alignedArray.getGtolTemp0IdAt(index).Ref());
-          return XMP.getMacroId("_XMP_M_CALC_INDEX_GBLOCK").Call(args);
-        }
+	  XobjList args = Xcons.List(alignedArray.getDescId().Ref(), Xcons.IntConstant(index), indexRef);
+	  Ident f = _globalDecl.declExternFunc("_XMP_lidx_GBLOCK");
+	  return f.Call(args);
+	  
+//         if (alignedArray.hasShadow()) {
+//           XMPshadow shadow = alignedArray.getShadowAt(index);
+//           switch (shadow.getType()) {
+//             case XMPshadow.SHADOW_NONE:
+//             case XMPshadow.SHADOW_NORMAL:
+//               {
+//                 XobjList args = Xcons.List(indexRef, alignedArray.getGtolTemp0IdAt(index).Ref());
+//                 return XMP.getMacroId("_XMP_M_CALC_INDEX_GBLOCK").Call(args);
+//               }
+//             case XMPshadow.SHADOW_FULL:
+//               return indexRef;
+//             default:
+//               throw new XMPexception("unknown shadow type");
+//           }
+//         }
+//         else {
+//           XobjList args = Xcons.List(indexRef,
+//                                      alignedArray.getGtolTemp0IdAt(index).Ref());
+//           return XMP.getMacroId("_XMP_M_CALC_INDEX_GBLOCK").Call(args);
+//         }
       default:
         throw new XMPexception("unknown align manner for array '" + alignedArray.getName()  + "'");
     }

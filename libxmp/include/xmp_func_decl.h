@@ -32,6 +32,7 @@ extern void _XMP_init_array_comm(void *array, ...);
 extern void _XMP_init_array_nodes(void *array);
 extern unsigned long long _XMP_get_array_total_elmts(void *array);
 extern void _XMP_align_array_noalloc(void *a, int adim, int tdim, long long align_subscript, int *temp0, unsigned long long *acc0);
+extern int _XMP_lidx_GBLOCK(void *a, int i_dim, int global_idx);
 
 // xmp_array_section.c
 extern void _XMP_normalize_array_section(int *lower, int *upper, int *stride);

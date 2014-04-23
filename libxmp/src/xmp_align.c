@@ -714,3 +714,28 @@ void _XMP_align_array_noalloc(_XMP_array_t *a, int adim, int tdim, long long ali
 
   a->array_nodes = NULL;
 }
+
+
+int _XMP_lidx_GBLOCK(_XMP_array_t *a, int i_dim, int global_idx)
+{
+    int l_idx, l_base;
+    _XMP_array_info_t *ai = &a->info[i_dim];
+    int off = ai->align_subscript;
+    int tdim = ai->align_template_index;
+    int lshadow = ai->shadow_size_lo;
+
+    _XMP_template_t *template = a->align_template;
+    _XMP_template_chunk_t *template_chunk = &(template->chunk[tdim]);
+
+    int rank = template_chunk->onto_nodes_info->rank;
+    unsigned long long *mapping_array = template_chunk->mapping_array;
+
+    //_XMP_G2L(global_idx + off, &l_idx, a->align_template, tdim);
+    //_XMP_G2L(ai->par_lower + off, &l_base, a->align_template, tdim);
+    l_idx = global_idx + off - mapping_array[rank];
+    l_base = ai->par_lower + off -mapping_array[rank];
+
+    l_idx = l_idx - l_base + lshadow;
+
+    return l_idx;
+}
