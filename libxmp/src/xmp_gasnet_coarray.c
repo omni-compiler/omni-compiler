@@ -897,7 +897,7 @@ static void XMP_pack(char* archive_ptr, const char* src_ptr, const int src_dims,
 
   // How depth is memory continuity ?
   int continuous_dim = get_depth(src_dims, src);
-  
+
   if(src_dims == 2){
     pack_for_2_dim_array(src, archive_ptr, src_ptr, continuous_dim);
     return;

@@ -240,3 +240,26 @@ long long get_offset(_XMP_array_section_t *array, int dims)
 
   return offset;
 }
+
+void _XMP_coarray_shortcut_put(int target, const _XMP_coarray_t *dst, const _XMP_coarray_t *src, 
+			       const int dst_offset, const int src_offset, const int length)
+{
+#ifdef _XMP_COARRAY_GASNET
+  gasnet_put_nbi_bulk(target, dst->addr[target]+dst_offset*dst->elmt_size, 
+		      src->addr[_XMP_world_rank]+src_offset*dst->elmt_size, length*dst->elmt_size);
+#elif _XMP_COARRAY_FJRDMA
+  
+#endif
+}
+
+void _XMP_coarray_shortcut_get(int target, const _XMP_coarray_t *dst, const _XMP_coarray_t *src,
+			       const int dst_offset, const int src_offset, const int length)
+{
+#ifdef _XMP_COARRAY_GASNET
+  gasnet_get_bulk(dst->addr[_XMP_world_rank]+dst_offset*dst->elmt_size, target, 
+		  src->addr[target]+src_offset*dst->elmt_size, length*dst->elmt_size);
+#elif _XMP_COARRAY_FJRDMA
+
+#endif
+}
+

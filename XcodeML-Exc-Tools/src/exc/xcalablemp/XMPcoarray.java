@@ -13,6 +13,7 @@ import java.util.Vector;
 public class XMPcoarray {
   public final static int GET = 700;
   public final static int PUT = 701;
+  public final static int ASTERISK = -1;
 
   // FIXME supported in coarray fortran???
   public final static int ACC_BIT_XOR	= 1;
@@ -21,19 +22,23 @@ public class XMPcoarray {
   private Xtype			_elmtType;
   private int			_varDim;
   private Vector<Long>		_sizeVector;
+  private int                   _imageDim;
+  private Vector<Integer>       _imageVector;
   private Xobject		_varAddr;
   private Ident			_varId;
   private Ident			_descId;
 
-  public XMPcoarray(String name, Xtype elmtType, int varDim, Vector<Long> sizeVector,
+  public XMPcoarray(String name, Xtype elmtType, int varDim, Vector<Long> sizeVector, int imageDim, Vector<Integer> imageVector,
                     Xobject varAddr, Ident varId, Ident descId) {
-    _name = name;
-    _elmtType = elmtType;
-    _varDim = varDim;
-    _sizeVector = sizeVector;
-    _varAddr = varAddr;
-    _varId = varId;
-    _descId = descId;
+    _name        = name;
+    _elmtType    = elmtType;
+    _varDim      = varDim;
+    _sizeVector  = sizeVector;
+    _imageDim    = imageDim;
+    _imageVector = imageVector;
+    _varAddr     = varAddr;
+    _varId       = varId;
+    _descId      = descId;
   }
 
   public String getName() {
@@ -50,6 +55,14 @@ public class XMPcoarray {
 
   public int getSizeAt(int index) {
     return _sizeVector.get(index).intValue();
+  }
+
+  public int getImageDim() {
+    return _imageDim;
+  }
+
+  public int getImageAt(int index) {
+    return _imageVector.get(index);
   }
 
   public Xobject getVarAddr() {
@@ -139,10 +152,13 @@ public class XMPcoarray {
 
     // _XMP_coarray_malloc_image_info()
     funcName = new String("_XMP_coarray_malloc_image_info");
+    Vector<Integer> imageVector = new Vector<Integer>(imageDim);
     for(int i=0;i<imageDim-1;i++){
       funcArgs = Xcons.List(Xcons.IntConstant(i), ((XobjList)coarrayDecl.getArg(1)).getArg(i));
       globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
+      imageVector.add(((XobjList)coarrayDecl.getArg(1)).getArg(i).getInt());
     }
+    imageVector.add(XMPcoarray.ASTERISK);
 
     // _XMP_coarray_malloc_do()
     funcName = new String("_XMP_coarray_malloc_do");
@@ -159,7 +175,9 @@ public class XMPcoarray {
     //      }
     //    }
 
-    XMPcoarray coarrayEntry = new XMPcoarray(coarrayName, elmtType, varDim, sizeVector, varAddr, varId, descId);
+    XMPcoarray coarrayEntry = new XMPcoarray(coarrayName, elmtType, varDim, sizeVector, 
+                                             imageDim, imageVector, varAddr, varId, descId);
+
     globalDecl.putXMPcoarray(coarrayEntry);
   }
 }

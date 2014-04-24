@@ -145,6 +145,245 @@ public class XMPrewriteExpr {
     }
   }
 
+  //void _XMP_shortcut_put_image1(int target_image, _XMP_coarray_t *dst_desc,
+  //      _XMP_coarray_t *src_desc, int dst_point, int src_point, int transfer_length)
+  //void _XMP_shortcut_put_image2(int target_image1, int target_image2, _XMP_coarray_t *dst_desc, ...)
+  private Xobject createShortcutCoarray(int imageDims, XobjList imageList, String commkind, 
+                                        XMPcoarray dstCoarray, XMPcoarray srcCoarray,
+                                        Xobject dstCoarrayExpr, Xobject srcCoarrayExpr) throws XMPexception
+  // dstCoarray is left expression. srcCoarray is right expression.
+  {
+    // Set Function Name
+    // If image set is 2 dimension and Put operation,
+    // function name is "_XMP_shortcut_put_image2"
+    String funcName = "_XMP_coarray_shortcut_" + commkind;
+    Ident funcId = _globalDecl.declExternFunc(funcName);
+    XobjList funcArgs = Xcons.List();
+
+    // Set target image
+    XMPcoarray remoteCoarray;
+    if(commkind == "put"){
+      remoteCoarray = dstCoarray;
+    } else{
+      remoteCoarray = srcCoarray;
+    }
+    
+    // Distance Image to need increment in each dimension
+    // e.g.) a:[4][3][2][*];
+    //       remoteImageDistance[0] = 4 * 3 * 2;
+    //       remoteImageDistance[1] = 4 * 3;
+    //       remoteImageDistance[2] = 4;
+    //       remoteImageDistance[3] = 1; // Note: the last dimension must be 1.
+    int[] remoteImageDistance = new int[imageDims];
+    for(int i=0;i<imageDims-1;i++){
+      remoteImageDistance[i] = 1;
+      for(int j=0;j<imageDims-1-i;j++){
+        remoteImageDistance[i] *= remoteCoarray.getImageAt(j);
+      }
+    }
+    remoteImageDistance[imageDims-1] = 1;
+
+    Xobject targetImage = Xcons.binaryOp(Xcode.MINUS_EXPR, imageList.getArg(0), Xcons.IntConstant(1));
+    for(int i=1;i<imageDims;i++){
+      Xobject tmp = Xcons.binaryOp(Xcode.MUL_EXPR, 
+                                   Xcons.binaryOp(Xcode.MINUS_EXPR, imageList.getArg(i), Xcons.IntConstant(1)),
+                                   Xcons.IntConstant(remoteImageDistance[imageDims-1-i]));
+      targetImage = Xcons.binaryOp(Xcode.PLUS_EXPR, tmp, targetImage);
+    }
+    funcArgs.add(targetImage);
+
+    // Set Coarray Descriptor
+    funcArgs.add(Xcons.SymbolRef(dstCoarray.getDescId()));
+    funcArgs.add(Xcons.SymbolRef(srcCoarray.getDescId()));
+    
+    // Number of elements to need increment in each dimension
+    // e.g.) a[3][4][5][6];
+    //       xxxCoarrayDistance[0] = 4 * 5 * 6;
+    //       xxxCoarrayDistance[1] = 5 * 6;
+    //       xxxCoarrayDistance[2] = 6;
+    //       xxxCoarrayDistance[3] = 1; // Note: the last dimension must be 1.
+    int dstDim = dstCoarray.getVarDim();
+    int srcDim = srcCoarray.getVarDim();
+    int[] dstCoarrayDistance = new int[dstDim];
+    int[] srcCoarrayDistance = new int[srcDim];
+
+    if(dstCoarrayExpr.Opcode() == Xcode.VAR){
+      dstCoarrayDistance[0] = 1;
+    }
+    else{
+      for(int i=0;i<dstDim;i++){
+        dstCoarrayDistance[i] = 1;
+        for(int j=i+1;j<dstDim;j++){
+          dstCoarrayDistance[i] *= (int)dstCoarray.getSizeAt(j);
+        }
+      }
+    }
+
+    if(srcCoarrayExpr.Opcode() == Xcode.VAR){
+      srcCoarrayDistance[0] = 1;
+    }
+    else{
+      for(int i=0;i<srcDim;i++){
+        srcCoarrayDistance[i] = 1;
+        for(int j=i+1;j<srcDim;j++){
+          srcCoarrayDistance[i] *= (int)srcCoarray.getSizeAt(j);
+        }
+      }
+    }
+
+    // How depth continuous ?
+    // e.g.) a[100][100][100]:[*];
+    //       a[:][:][:],   xxxCoarrayDepthContinuous = 0
+    //       a[2][:][:],   xxxCoarrayDepthContinuous = 1
+    //       a[:2][:][:],  xxxCoarrayDepthContinuous = 1
+    //       a[2][2][:],   xxxCoarrayDepthContinuous = 2
+    //       a[:][:2][:],  xxxCoarrayDepthContinuous = 2
+    //       a[2][2][2:2], xxxCoarrayDepthContinuous = 3
+    //       a[2][2][2:],  xxxCoarrayDepthContinuous = 3
+    //       a[2][2][:],   xxxCoarrayDepthContinuous = 3
+    //       a[2][2][1],   xxxCoarrayDepthContinuous = 3
+
+    // dstCoarray
+    int dstCoarrayDepthContinuous = dstDim;
+    if(dstCoarrayExpr.Opcode() == Xcode.SUB_ARRAY_REF){
+      Ident varId = dstCoarray.getVarId();
+      XobjList tripletList = (XobjList)dstCoarrayExpr.getArg(1);
+      for(int i=dstDim-1;i>=0;i--){
+        if(is_all_element(i, tripletList, varId)){
+          dstCoarrayDepthContinuous = i;
+        }
+      }
+    }
+    // if dstCoarray == Xcode.ARRAY_REF or Xcode.VAR,
+    // dstCoarrayDepthContinuous = 1.
+    
+    int srcCoarrayDepthContinuous = srcDim;
+    if(srcCoarrayExpr.Opcode() == Xcode.SUB_ARRAY_REF){
+      Ident varId = srcCoarray.getVarId();
+      XobjList tripletList = (XobjList)srcCoarrayExpr.getArg(1);
+      for(int i=srcDim-1;i>=0;i--){
+        if(is_all_element(i, tripletList, varId)){
+          srcCoarrayDepthContinuous = i;
+        }
+      }
+    }
+
+    // dst offset
+    if(dstCoarrayExpr.Opcode() == Xcode.SUB_ARRAY_REF){
+      Xobject position = null;
+      for(int i=0;i<dstDim;i++){
+        Xobject tripletList = dstCoarrayExpr.getArg(1).getArg(i);
+        Xobject tmp_position;
+        if(tripletList.isConstant() || tripletList.isVariable()){
+          tmp_position = Xcons.binaryOp(Xcode.MUL_EXPR, tripletList, Xcons.IntConstant(dstCoarrayDistance[i]));
+        }
+        else{
+          Xobject start = ((XobjList)tripletList).getArg(0);
+          tmp_position = Xcons.binaryOp(Xcode.MUL_EXPR, start, Xcons.IntConstant(dstCoarrayDistance[i]));
+        }
+        if(i == 0){
+          position = tmp_position;
+        }
+        else{
+          position = Xcons.binaryOp(Xcode.PLUS_EXPR, position, tmp_position);
+        }
+      }
+      funcArgs.add(position);
+    }
+    else if(dstCoarrayExpr.Opcode() == Xcode.ARRAY_REF){
+      Xobject position = null;
+      for(int i=0;i<dstDim;i++){
+        Xobject tmp_position = Xcons.binaryOp(Xcode.MUL_EXPR, dstCoarrayExpr.getArg(1).getArg(i),
+                                              Xcons.IntConstant(dstCoarrayDistance[i]));
+        if(i==0){
+          position = tmp_position;
+        }
+        else{
+          position = Xcons.binaryOp(Xcode.PLUS_EXPR, position, tmp_position);
+        }
+      }
+      funcArgs.add(position);
+    }
+    else if(dstCoarrayExpr.Opcode() == Xcode.VAR){
+      funcArgs.add(Xcons.IntConstant(0));
+    }
+    else{
+      throw new XMPexception("Not supported this coarray Syntax");
+    }
+
+    // src offset
+    if(srcCoarrayExpr.Opcode() == Xcode.SUB_ARRAY_REF){
+      Xobject position = null;
+      for(int i=0;i<srcDim;i++){
+        Xobject tripletList = srcCoarrayExpr.getArg(1).getArg(i);
+        Xobject tmp_position;
+        if(tripletList.isConstant() || tripletList.isVariable()){
+          tmp_position = Xcons.binaryOp(Xcode.MUL_EXPR, tripletList, Xcons.IntConstant(srcCoarrayDistance[i]));
+        }
+        else{
+          Xobject start = ((XobjList)tripletList).getArg(0);
+          tmp_position = Xcons.binaryOp(Xcode.MUL_EXPR, start, Xcons.IntConstant(srcCoarrayDistance[i]));
+        }
+        if(i == 0){
+          position = tmp_position;
+        }
+        else{
+          position = Xcons.binaryOp(Xcode.PLUS_EXPR, position, tmp_position);
+        }
+      }
+      funcArgs.add(position);
+    }
+    else if(srcCoarrayExpr.Opcode() == Xcode.ARRAY_REF){
+      Xobject position = null;
+      for(int i=0;i<srcDim;i++){
+        Xobject tmp_position = Xcons.binaryOp(Xcode.MUL_EXPR, srcCoarrayExpr.getArg(1).getArg(i),
+                                              Xcons.IntConstant(srcCoarrayDistance[i]));
+        if(i==0){
+          position = tmp_position;
+        }
+        else{
+          position = Xcons.binaryOp(Xcode.PLUS_EXPR, position, tmp_position);
+        }
+      }
+      funcArgs.add(position);
+    }
+    else if(srcCoarrayExpr.Opcode() == Xcode.VAR){
+      funcArgs.add(Xcons.IntConstant(0));
+    }
+    else{
+      throw new XMPexception("Not supported this coarray Syntax");
+    }
+
+    // length
+    if(dstCoarrayExpr.Opcode() == Xcode.SUB_ARRAY_REF){
+      if(dstCoarrayDepthContinuous == 0){
+        funcArgs.add(Xcons.IntConstant((int)dstCoarray.getSizeAt(0) * dstCoarrayDistance[0]));
+      }
+      else{
+        Xobject tripletList = dstCoarrayExpr.getArg(1).getArg(dstCoarrayDepthContinuous-1);
+        if(tripletList.isConstant() || tripletList.isVariable()){
+          funcArgs.add(Xcons.IntConstant(dstCoarrayDistance[dstCoarrayDepthContinuous-1]));
+        }
+        else{
+          Xobject length = ((XobjList)tripletList).getArg(1);
+          funcArgs.add(Xcons.binaryOp(Xcode.MUL_EXPR, length,
+                                      Xcons.IntConstant(dstCoarrayDistance[dstCoarrayDepthContinuous-1])));
+        }
+      }
+    }
+    else if(dstCoarrayExpr.Opcode() == Xcode.ARRAY_REF || dstCoarrayExpr.Opcode() == Xcode.VAR){
+      funcArgs.add(Xcons.IntConstant(1));
+    }
+    else{
+      throw new XMPexception("Not supported this coarray Syntax");
+    }
+
+    // Create function
+    Xobject newExpr = funcId.Call(funcArgs);
+    newExpr.setIsRewrittedByXmp(true);
+    return newExpr;
+  }
+
   private Xobject rewriteCoarrayAssignExpr(Xobject myExpr, Block exprParentBlock,
                                            XMPsymbolTable localXMPsymbolTable) throws XMPexception {
     assert myExpr.Opcode() == Xcode.ASSIGN_EXPR;
@@ -181,20 +420,21 @@ public class XMPrewriteExpr {
     else{
       throw new XMPexception("Not supported this coarray Syntax");
     }
-    funcArgs.add(Xcons.IntConstant(coarrayDims));
 
     // Get Local Dims
     boolean isArray;
+    int localDims;
+    String localName;
     if(localExpr.Opcode() == Xcode.SUB_ARRAY_REF || localExpr.Opcode() == Xcode.ARRAY_REF){
       isArray = true;
-      String arrayName = localExpr.getArg(0).getName();
-      Ident varId = localExpr.findVarIdent(arrayName);
-      int varDim = varId.Type().getNumDimensions();
-      funcArgs.add(Xcons.IntConstant(varDim));
+      localName = localExpr.getArg(0).getName();
+      Ident varId = localExpr.findVarIdent(localName);
+      localDims = varId.Type().getNumDimensions();
     }
     else if(localExpr.Opcode() == Xcode.VAR){
+      localName = localExpr.getName();
       isArray = false;
-      funcArgs.add(Xcons.IntConstant(1));
+      localDims = 1;
     }
     else if(localExpr.Opcode() == Xcode.ARRAY_ADDR){
       throw new XMPexception("Array pointer is used at coarray Syntax");
@@ -209,10 +449,30 @@ public class XMPrewriteExpr {
     // Get image Dims
     XobjList imageList = (XobjList)coarrayExpr.getArg(1);
     int imageDims = imageList.Nargs();
-    funcArgs.add(Xcons.IntConstant(imageDims));
+
+    // Shortcut Function
+    if(isContinuousArray(coarrayExpr, exprParentBlock) &&
+       isContinuousArray(localExpr, exprParentBlock) &&
+       isCoarray(localExpr, exprParentBlock))
+      {
+        XMPcoarray remoteCoarray = coarray;
+        XMPcoarray localCoarray = _globalDecl.getXMPcoarray(localName, exprParentBlock);
+        if(leftExpr.Opcode() == Xcode.CO_ARRAY_REF)
+          {  // put a[:]:[1] = b[:];
+            return createShortcutCoarray(imageDims, imageList, "put", remoteCoarray, localCoarray,
+                                         coarrayExpr.getArg(0), localExpr);
+          }
+        else{ // get a[:] = b[:]:[1]
+          return createShortcutCoarray(imageDims, imageList, "get", localCoarray, remoteCoarray,
+                                       localExpr, coarrayExpr.getArg(0));
+        }
+      }
 
     // Set function _XMP_coarray_rdma_set()
     Ident funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_set");
+    funcArgs.add(Xcons.IntConstant(coarrayDims));
+    funcArgs.add(Xcons.IntConstant(localDims));
+    funcArgs.add(Xcons.IntConstant(imageDims));
     Xobject newExpr = funcId.Call(funcArgs);
     newExpr.setIsRewrittedByXmp(true);
     b.add(newExpr);
@@ -371,12 +631,6 @@ public class XMPrewriteExpr {
 	  funcArgs.add(Xcons.SymbolRef(_globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + varAddr.getName())));
 	  funcArgs.add(Xcons.SymbolRef(localArray.getDescId()));
       }
-
-      //      if(isCoarray(varAddr, exprParentBlock) == true){
-      //	funcArgs.add(Xcons.SymbolRef(_globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + varAddr.getName())));
-      //      } else{
-      //	funcArgs.add(varAddr);
-      //      }
     }
     else if(localExpr.Opcode() == Xcode.VAR){
       String varName = localExpr.getName();
@@ -406,8 +660,281 @@ public class XMPrewriteExpr {
     return b.toXobject();
   }
 
+
+  private boolean is_stride_1(int dim, XobjList tripletList)
+  {
+    if(tripletList.getArg(dim).isConstant() || tripletList.getArg(dim).isVariable()){
+        return true;
+    } 
+    else{
+      Xobject stride = tripletList.getArg(dim).getArg(2);
+      if(stride.isConstant()){
+        if(stride.getInt() == 1){
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+  
+  private boolean is_start_0(int dim, XobjList tripletList)
+  {
+    if(tripletList.getArg(dim).isVariable()){
+      return false;
+    }
+    else if(tripletList.getArg(dim).isConstant())
+      if(tripletList.getArg(dim).getInt() == 0){
+        return true;
+      }
+      else{
+        return false;
+      }
+    else{
+      Xobject start = tripletList.getArg(dim).getArg(0);
+      if(start.isConstant()){
+        if(start.getInt() == 0){
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private boolean is_length_all(int dim, XobjList tripletList, Ident varId){
+    if(tripletList.getArg(dim).isConstant() || tripletList.getArg(dim).isVariable()){
+      return false;
+    }
+
+    Xtype varType = varId.Type();
+
+    for(int i=0;i<dim;i++){
+      varType = varType.getRef();
+    }
+    long dimSize = varType.getArraySize();
+    Xobject length = tripletList.getArg(dim).getArg(1);
+
+    Xobject arraySizeExpr = Xcons.List(Xcode.MINUS_EXPR, Xtype.intType,
+                                       Xcons.IntConstant((int)dimSize),
+                                       Xcons.IntConstant(0));
+
+    if(arraySizeExpr.equals(length)){
+      return true;
+    }
+    else if(length.Opcode() ==  Xcode.INT_CONSTANT){
+      if(length.getInt() == (int)dimSize){
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private boolean is_all_element(int dim, XobjList tripletList, Ident varId){
+    if(is_start_0(dim, tripletList) && is_length_all(dim, tripletList, varId)){
+      return true;
+    }
+    else{
+      return false;
+    }
+  }
+
+  private boolean is_length_1(int dim, XobjList tripletList)
+  {
+    if(tripletList.getArg(dim).isVariable() || tripletList.getArg(dim).isConstant()){
+      return true;
+    }
+    else{
+      Xobject length = tripletList.getArg(dim).getArg(1);
+      if(length.isConstant()){
+        if(length.getInt() == 1){
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private boolean isContinuousArray(Xobject myExpr, Block block) throws XMPexception
+  {
+    if(myExpr.Opcode() == Xcode.CO_ARRAY_REF)
+      myExpr = myExpr.getArg(0);
+
+    if(myExpr.Opcode() == Xcode.VAR || myExpr.Opcode() == Xcode.ARRAY_REF){
+      return true;
+    }
+    else if(myExpr.Opcode() == Xcode.SUB_ARRAY_REF){
+      XobjList tripletList = (XobjList)(myExpr).getArg(1);
+      String arrayName = myExpr.getArg(0).getName();
+      Ident varId = myExpr.findVarIdent(arrayName);
+      Xtype varType = varId.Type();
+      int varDim = varType.getNumDimensions();
+
+      if(varDim == 1){
+        if(!is_stride_1(0, tripletList)){
+          return false;
+        }
+        else{
+          return true;
+        }
+      }
+      else if(varDim == 2){
+        if(!is_stride_1(0, tripletList) || !is_stride_1(1, tripletList)){
+          return false;
+        }
+        else if(is_all_element(1, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList)){
+          return true;
+        }
+      }
+      else if(varDim == 3){
+        if(!is_stride_1(0, tripletList) || !is_stride_1(1, tripletList) || !is_stride_1(2, tripletList)){
+          return false;
+        }
+        else if(is_all_element(1, tripletList, varId) && is_all_element(2, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList) && is_all_element(2, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList) && is_length_1(1, tripletList)){
+          return true;
+        }
+      }
+      else if(varDim == 4){
+        if(!is_stride_1(0, tripletList) || !is_stride_1(1, tripletList) || !is_stride_1(2, tripletList)
+           || !is_stride_1(3, tripletList)){
+          return false;
+        }
+        else if(is_all_element(1, tripletList, varId) && is_all_element(2, tripletList, varId) 
+                && is_all_element(3, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList) && is_all_element(2, tripletList, varId) && 
+                is_all_element(3, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList) && is_length_1(1, tripletList) 
+                && is_all_element(3, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList) && is_length_1(1, tripletList) && is_length_1(2, tripletList)){
+          return true;
+        }
+      }
+      else if(varDim == 5){
+        if(!is_stride_1(0, tripletList) || !is_stride_1(1, tripletList) || !is_stride_1(2, tripletList)
+           || !is_stride_1(3, tripletList) || !is_stride_1(4, tripletList)){
+          return false;
+        }
+        else if(is_all_element(1, tripletList, varId) && is_all_element(2, tripletList, varId) 
+                && is_all_element(3, tripletList, varId) && is_all_element(4, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList) && is_all_element(2, tripletList, varId) 
+                && is_all_element(3, tripletList, varId) && is_all_element(4, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList) && is_length_1(1, tripletList)
+                && is_all_element(3, tripletList, varId) && is_all_element(4, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList) && is_length_1(1, tripletList) && is_length_1(2, tripletList)
+                && is_all_element(4, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList) && is_length_1(1, tripletList) && is_length_1(2, tripletList)
+                && is_length_1(3, tripletList)){
+          return true;
+        }
+      }
+      else if(varDim == 6){
+        if(!is_stride_1(0, tripletList) || !is_stride_1(1, tripletList) || !is_stride_1(2, tripletList)
+           || !is_stride_1(3, tripletList) || !is_stride_1(4, tripletList) || !is_stride_1(5, tripletList)){
+          return false;
+        }
+        else if(is_all_element(1, tripletList, varId) && is_all_element(2, tripletList, varId) 
+                && is_all_element(3, tripletList, varId) && is_all_element(4, tripletList, varId) 
+                && is_all_element(5, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList) && is_all_element(2, tripletList, varId) 
+                && is_all_element(3, tripletList, varId) && is_all_element(4, tripletList, varId) 
+                && is_all_element(5, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList) && is_length_1(1, tripletList) 
+                && is_all_element(3, tripletList, varId) && is_all_element(4, tripletList, varId) 
+                && is_all_element(5, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList) && is_length_1(1, tripletList) && is_length_1(2, tripletList)
+                && is_all_element(4, tripletList, varId) && is_all_element(5, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList) && is_length_1(1, tripletList) && is_length_1(2, tripletList)
+                && is_length_1(3, tripletList) && is_all_element(5, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList) && is_length_1(1, tripletList) && is_length_1(2, tripletList)
+                && is_length_1(3, tripletList) && is_length_1(4, tripletList)){
+          return true;
+        }
+      }
+      else if(varDim == 7){
+        if(!is_stride_1(0, tripletList) || !is_stride_1(1, tripletList) || !is_stride_1(2, tripletList)
+           || !is_stride_1(3, tripletList) || !is_stride_1(4, tripletList) || !is_stride_1(5, tripletList)
+           || !is_stride_1(6, tripletList)){
+          return false;
+        }
+        else if(is_all_element(1, tripletList, varId) && is_all_element(2, tripletList, varId) 
+                && is_all_element(3, tripletList, varId) && is_all_element(4, tripletList, varId) 
+                && is_all_element(5, tripletList, varId) && is_all_element(6, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList) && is_all_element(2, tripletList, varId) 
+                && is_all_element(3, tripletList, varId) && is_all_element(4, tripletList, varId) 
+                && is_all_element(5, tripletList, varId) && is_all_element(6, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList) && is_length_1(1, tripletList) && 
+                is_all_element(3, tripletList, varId) && is_all_element(4, tripletList, varId) 
+                && is_all_element(5, tripletList, varId) && is_all_element(6, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList) && is_length_1(1, tripletList) && is_length_1(2, tripletList)
+                && is_all_element(4, tripletList, varId) && is_all_element(5, tripletList, varId) 
+                && is_all_element(6, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList) && is_length_1(1, tripletList) && is_length_1(2, tripletList)
+                && is_length_1(3, tripletList) && is_all_element(5, tripletList, varId)
+                && is_all_element(6, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList) && is_length_1(1, tripletList) && is_length_1(2, tripletList)
+                && is_length_1(3, tripletList) && is_length_1(4, tripletList) 
+                && is_all_element(6, tripletList, varId)){
+          return true;
+        }
+        else if(is_length_1(0, tripletList) && is_length_1(1, tripletList) && is_length_1(2, tripletList)
+                && is_length_1(3, tripletList) && is_length_1(4, tripletList) && is_length_1(5, tripletList)){
+          return true;
+        }
+      }
+    }
+    else{
+      throw new XMPexception("Not supported this coarray Syntax");
+    }
+
+    return false;
+  }
+
   private boolean isCoarray(Xobject myExpr, Block block){
-    if(myExpr.Opcode() == Xcode.ARRAY_REF){
+    if(myExpr.Opcode() == Xcode.ARRAY_REF || myExpr.Opcode() == Xcode.SUB_ARRAY_REF){
       myExpr = myExpr.getArg(0);
     }
     
@@ -810,30 +1337,30 @@ public class XMPrewriteExpr {
           }
         }
       case XMPalignedArray.GBLOCK:
-	  XobjList args = Xcons.List(alignedArray.getDescId().Ref(), Xcons.IntConstant(index), indexRef);
-	  Ident f = _globalDecl.declExternFunc("_XMP_lidx_GBLOCK");
-	  return f.Call(args);
-	  
-//         if (alignedArray.hasShadow()) {
-//           XMPshadow shadow = alignedArray.getShadowAt(index);
-//           switch (shadow.getType()) {
-//             case XMPshadow.SHADOW_NONE:
-//             case XMPshadow.SHADOW_NORMAL:
-//               {
-//                 XobjList args = Xcons.List(indexRef, alignedArray.getGtolTemp0IdAt(index).Ref());
-//                 return XMP.getMacroId("_XMP_M_CALC_INDEX_GBLOCK").Call(args);
-//               }
-//             case XMPshadow.SHADOW_FULL:
-//               return indexRef;
-//             default:
-//               throw new XMPexception("unknown shadow type");
-//           }
-//         }
-//         else {
-//           XobjList args = Xcons.List(indexRef,
-//                                      alignedArray.getGtolTemp0IdAt(index).Ref());
-//           return XMP.getMacroId("_XMP_M_CALC_INDEX_GBLOCK").Call(args);
-//         }
+        XobjList args = Xcons.List(alignedArray.getDescId().Ref(), Xcons.IntConstant(index), indexRef);
+        Ident f = _globalDecl.declExternFunc("_XMP_lidx_GBLOCK");
+        return f.Call(args);
+
+        //        if (alignedArray.hasShadow()) {
+        //          XMPshadow shadow = alignedArray.getShadowAt(index);
+        //          switch (shadow.getType()) {
+        //            case XMPshadow.SHADOW_NONE:
+        //            case XMPshadow.SHADOW_NORMAL:
+        //              {
+        //                XobjList args = Xcons.List(indexRef, alignedArray.getGtolTemp0IdAt(index).Ref());
+        //                return XMP.getMacroId("_XMP_M_CALC_INDEX_GBLOCK").Call(args);
+        //              }
+        //            case XMPshadow.SHADOW_FULL:
+        //              return indexRef;
+        //            default:
+        //              throw new XMPexception("unknown shadow type");
+        //          }
+        // }        
+        //        else {
+        //          XobjList args = Xcons.List(indexRef,
+        //                                     alignedArray.getGtolTemp0IdAt(index).Ref());
+        //          return XMP.getMacroId("_XMP_M_CALC_INDEX_GBLOCK").Call(args);
+        //        }
       default:
         throw new XMPexception("unknown align manner for array '" + alignedArray.getName()  + "'");
     }
