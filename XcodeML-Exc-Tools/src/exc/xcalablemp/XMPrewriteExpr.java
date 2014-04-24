@@ -1757,6 +1757,18 @@ public class XMPrewriteExpr {
 	String clauseName = x.left().getString();
 	ACCpragma accClause = ACCpragma.valueOf(clauseName); 
 	if(accClause != null){
+    	  switch(accClause){
+    	  case HOST:
+    	  case DEVICE:
+    	  case USE_DEVICE:
+    	  case PRIVATE:
+    	  case FIRSTPRIVATE:   
+    	  case DEVICE_RESIDENT:
+    	    break;
+    	  default:
+            if(!accClause.isDataClause()) continue;
+    	  }
+	  
 	  XobjList itemList  = (XobjList)x.right();
 	  for(int i = 0; i < itemList.Nargs(); i++){
 	    Xobject item = itemList.getArg(i);

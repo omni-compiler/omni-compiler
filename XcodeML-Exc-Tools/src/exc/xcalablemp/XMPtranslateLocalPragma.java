@@ -332,11 +332,13 @@ public class XMPtranslateLocalPragma {
     CforBlock schedBaseBlock = getOutermostLoopBlock(loopBody);
 
     // analyze loop
-    if (loopDecl.getArg(0) == null) {
-      loopDecl.setArg(0, Xcons.List(Xcons.String(schedBaseBlock.getInductionVar().getName())));
-      analyzeFollowingGpuLoop(pb, schedBaseBlock);
+    XobjList loopIterList = (XobjList)loopDecl.getArg(0);
+    if (loopIterList == null || loopIterList.Nargs() == 0) {
+      loopIterList = Xcons.List(Xcons.String(schedBaseBlock.getInductionVar().getName()));
+      loopDecl.setArg(0, loopIterList);
+      translateFollowingLoop(pb, schedBaseBlock);
     } else {
-      analyzeMultipleGpuLoop(pb, schedBaseBlock);
+      translateMultipleLoop(pb, schedBaseBlock);
     }
 
     // translate
@@ -1242,6 +1244,7 @@ public class XMPtranslateLocalPragma {
         case XMP_PRAGMA:
           throw new XMPexception("reached to a xcalablemp directive");
         case OMP_PRAGMA:
+        case ACC_PRAGMA:
 	  return findLoopBlock(b.getBody(), loopVarName);
       }
     }

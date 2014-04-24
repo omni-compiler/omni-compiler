@@ -411,7 +411,7 @@ public class XMPgpuDecompiler {
     XobjList args = Xcons.List(gpuData.getHostId().getAddr());
     if (refExprList != null) {
       for (Xobject x : refExprList) {
-        args.add(getCalcIndexFuncRef(gpuData, arrayDimCount, x));
+        args.add(x); //args.add(getCalcIndexFuncRef(gpuData, arrayDimCount, x));
         arrayDimCount++;
       }
     }
