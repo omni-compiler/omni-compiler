@@ -243,6 +243,8 @@ extern void _XMP_fjrdma_put(int, int, int, int, int, _XMP_array_section_t *,  _X
 			    _XMP_coarray_t *, void *, _XMP_coarray_t *, long long);
 extern void _XMP_fjrdma_get(int, int, int, int, int, _XMP_array_section_t *, _XMP_array_section_t *,
 			    _XMP_coarray_t *, void *, _XMP_coarray_t *, long long);
+extern void _XMP_fjrdma_shortcut_put(const int, const uint64_t, const uint64_t, const void *, const void *, const int);
+extern void _XMP_fjrdma_shortcut_get(const int, const uint64_t, const uint64_t, const void *, const void *, const int);
 #endif
 
 #ifdef _XMP_TIMING

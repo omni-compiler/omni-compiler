@@ -12,6 +12,16 @@
 #define FLAG_NIC (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN)
 #define SEND_NIC FJMPI_RDMA_LOCAL_NIC0
 static int _num_of_puts = 0;
+static struct FJMPI_Rdma_cq cq;
+
+void _XMP_fjrdma_shortcut_put(const int target_image, const uint64_t dst_point, const uint64_t src_point,
+			      const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, const int transfer_size)
+{
+  uint64_t raddr = (uint64_t)dst_desc->addr[target_image] + dst_point;
+  uint64_t laddr = (uint64_t)src_desc->addr[_XMP_world_rank] + src_point;
+  FJMPI_Rdma_put(target_image, TAG, raddr, laddr, transfer_size, FLAG_NIC);
+  _num_of_puts++;
+}
 
 static void XMP_fjrdma_from_c_to_c_put(int target_image, uint64_t dst_point, uint64_t src_point,
 				       _XMP_coarray_t *dst_desc, void *src, _XMP_coarray_t *src_desc,
@@ -49,6 +59,21 @@ void _XMP_fjrdma_put(int dst_continuous, int src_continuous, int target_image, i
   }
 }
 
+void _XMP_fjrdma_shortcut_get(const int target_image, const uint64_t dst_point, const uint64_t src_point,
+			      const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
+			      const int transfer_size)
+{
+  uint64_t raddr = (uint64_t)src_desc->addr[target_image] + src_point;
+  uint64_t laddr = (uint64_t)dst_desc->addr[_XMP_world_rank] + dst_point;
+  
+  // To complete put operations before the following get operation.
+  _XMP_fjrdma_sync_memory();
+  FJMPI_Rdma_get(target_image, TAG, raddr, laddr, transfer_size, FLAG_NIC);
+
+  // To complete the above get operation.
+  while(FJMPI_Rdma_poll_cq(SEND_NIC, &cq) != FJMPI_RDMA_NOTICE);
+}
+
 static void XMP_fjrdma_from_c_to_c_get(int target_image, uint64_t dst_point, uint64_t src_point,
 				       void *dst, _XMP_coarray_t *dst_desc, _XMP_coarray_t *src_desc, 
 				       long long transfer_size)
@@ -68,7 +93,6 @@ static void XMP_fjrdma_from_c_to_c_get(int target_image, uint64_t dst_point, uin
   FJMPI_Rdma_get(target_image, TAG, raddr, laddr, transfer_size, FLAG_NIC);
 
   // To complete the above get operation.
-  struct FJMPI_Rdma_cq cq;
   while(FJMPI_Rdma_poll_cq(SEND_NIC, &cq) != FJMPI_RDMA_NOTICE);
 
   if(dst_desc == NULL)
@@ -94,7 +118,6 @@ void _XMP_fjrdma_get(int src_continuous, int dst_continuous, int target_image, i
 void _XMP_fjrdma_sync_memory()
 {
   int num_of_notice = 0;
-  struct FJMPI_Rdma_cq cq;
 
   while(num_of_notice != _num_of_puts){
     if(FJMPI_Rdma_poll_cq(SEND_NIC, &cq) == FJMPI_RDMA_NOTICE)

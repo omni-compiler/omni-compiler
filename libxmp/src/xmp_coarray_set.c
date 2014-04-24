@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "xmp_internal.h"
 
 static unsigned long long _xmp_heap_size, _xmp_stride_size;
