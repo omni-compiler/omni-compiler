@@ -54,10 +54,15 @@ public class XcDirectiveObj extends XcStmtObj implements XcDecAndDefObj
     @Override
     public void addChild(XcNode child)
     {
-	if (child instanceof XcIdent){
-	    _line += " " + ((XcIdent)child).getSymbol();
-	}
-	else {
+       if(child instanceof XcExprObj){
+           XmcWriter w = new XmcWriter();
+           try{
+               ((XcExprObj)child).appendCode(w);
+               _line += " " + w.toString();
+           }catch(XmException xme){
+               throw new RuntimeException(xme.getMessage());
+           }
+	}else {
 	    throw new IllegalArgumentException(child.getClass().getName());
 	}
     }

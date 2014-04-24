@@ -1916,6 +1916,7 @@ public class XmcXcodeToXcTranslator {
 		String operator = "";
 
 		if (clauseName.equals("dev_resident"))          clauseName = "device_resident";	  
+		else if (clauseName.equals("vect_len"))         clauseName = "vector_length";
 		else if (clauseName.equals("reduction_plus"))  {clauseName = "reduction"; operator = "+";}
 		else if (clauseName.equals("reduction_mul"))   {clauseName = "reduction"; operator = "*";}
 		else if (clauseName.equals("reduction_bitand")){clauseName = "reduction"; operator = "&";}
@@ -1979,18 +1980,19 @@ public class XmcXcodeToXcTranslator {
 		for (int j = 1; j < array.getLength(); j++){
 		    Node index = array.item(j);
 		    String indexStr = "";
+		    obj.addToken("[");
 		    if(index.getNodeName().equals("list")){
 			NodeList range = index.getChildNodes();
-			String lower = XmDomUtil.getContentText(range.item(0)); 
+			enterNodes(tc, obj, range.item(0));
+			obj.addToken(":");
 			String length = "";
 			if(range.item(1) != null){
-			    length = XmDomUtil.getContentText(range.item(1));
+			    enterNodes(tc, obj, range.item(1));
 			}
-			indexStr += lower + ":" + length;
 		    }else{
-			indexStr += XmDomUtil.getContentText(array.item(j));
+		        enterNodes(tc,  obj, array.item(j));
 		    }
-		    arrayDim += "[" + indexStr + "]";
+		    obj.addToken("]");
 		}
 		obj.addToken(arrayDim);
 	    }else{
