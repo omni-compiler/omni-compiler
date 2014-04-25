@@ -38,7 +38,7 @@ void xmpf_finalize_all__()
   FJMPI_Rdma_finalize();
 #endif
 
-  _XMP_finalize();
+  _XMP_finalize(0);
 }
 
 

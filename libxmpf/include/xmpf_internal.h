@@ -169,7 +169,7 @@ extern void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_
 
 /* From xmp_runtime.c */
 void _XMP_init(int argc, char** argv);
-void _XMP_finalize(void);
+void _XMP_finalize(int);
 
 /* From xmp_reflect.c */
 void _XMP_set_reflect__(_XMP_array_t *a_desc, int dim, int lwidth, int uwidth, int is_periodic);

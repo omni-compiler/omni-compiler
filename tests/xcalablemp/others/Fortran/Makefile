@@ -1,5 +1,6 @@
 XFC     = xmpf90 -O2
 XRUN    = mpirun
+EXES    = exit module_test
 
 all: module_test2.o module_test1.o
 	$(XFC) -o module_test module_test2.o module_test1.o
