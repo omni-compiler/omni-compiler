@@ -217,15 +217,6 @@ extern void _XMP_finalize_world(void);
 extern void _XMP_post(xmp_desc_t, int, int node, int tag);
 extern void _XMP_wait(int dummy, int target_node, int tag);
 extern void _XMP_post_initialize(void);
-#endif
-
-#ifdef _XMP_COARRAY_GASNET
-  gasnet_get_bulk(dst->addr[_XMP_world_rank]+dst_offset*dst->elmt_size, target,
-		  src->addr[target]+src_offset*dst->elmt_size, length*dst->elmt_size);
-#elif _XMP_COARRAY_FJRDMA
-  _XMP_fjrdma_shortcut_get(target, (uint64_t)(dst_offset*dst->elmt_size), (uint64_t)(src_offset*dst->elmt_size),
-			   dst, src, length*dst->elmt_size);
-
 #else
 extern void _XMP_post(void *, int num, ...);
 extern void _XMP_wait(int num, ...);
