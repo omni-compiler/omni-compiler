@@ -2,7 +2,14 @@ Omni Compiler Software RELEASE NOTES
 
 ver. 0.8.0      2014/04/25
   Support Coarray communication for the K computer.
-  Fixed some bugs.
+  Support the gblock distribution
+  Support the template_fix directive
+  Support the array directive (with some restrictions)
+  Support clauses of the reflect directive in XMP/C
+  Support the xmp_malloc built-in function in XMP/C
+  Support clauses of the bcast, barrier, reduction directives in XMP/F
+  Support fully the node directive in XMP/F
+  Fixed lots of bugs.
 
 ver. 0.7.0      2013/11/20
   Improve shadow/reflect directive.
