@@ -66,10 +66,12 @@ release: release-rpm release-deb
 BASE_TESTDIR="tests/xcalablemp/"
 SUB_TESTDIRS="others/Fortran/" "global-view/shadow-reflect/C/"
 if GASNET
-  SUB_TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
+#  SUB_TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
+   SUB_TESTDIRS += "local-view/coarray/C"
 endif
 if FJRDMA
-  SUB_TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
+#  SUB_TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
+   SUB_TESTDIRS += "local-view/coarray/C"
 endif
 
 tests: tests-dummy
