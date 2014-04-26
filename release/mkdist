@@ -1,5 +1,13 @@
 #!/bin/sh
 
+if [ $# -ne 1 ]; then
+  echo "Please add version number to argument."
+  echo "e.g.) ./mkdist 0.8"
+  exit 1
+fi
+
+PACKAGE_NAME=omnicompiler-$1
+
 if [ ! -e configure.ac ]; then
     pwd
     echo execute this script in top directory
@@ -11,33 +19,70 @@ if [ -e "./config.log" ]; then
     exit 1
 fi
 
+###################
+# Check CopyRight
+###################
 CPYRHTTXT="./release/copyright.txt"
-RELNAMETXT="./release/releasename.txt"
-
 if [ ! -e "${CPYRHTTXT}" ]; then
      echo needed copyright.txt.
      exit 1
 fi
-if [ "* PLEASE DESCRIBE LICENSE AGREEMENT HERE *" = \
-     "`head -n1 ${CPYRHTTXT}`" ]; then
-     echo before execute this script, describe copyright agreement ${CPYRHTTXT}.
-     exit 1
-fi
+
+echo "---"
+cat $CPYRHTTXT
+echo "---"
+echo "Is this $CPYRHTTXT OK ? (Yes/No)"
+while true; do
+  read answer
+  case $answer in
+  yes)
+    break
+    ;;
+  Yes)
+    break
+    ;;
+  no)
+    exit 1
+    ;;
+  *)
+    # LOOP
+    ;;
+  esac
+done
+
+###################
+# Check Release Note
+###################
+RELNAMETXT="./release/releasename.txt"
 if [ ! -e "${RELNAMETXT}" ]; then
      echo needed ${RELNAMETXT}.
      exit 1
 fi
-if [ "* PLEASE DESCRIBE RELEASE NAME HERE *" = \
-     "`head -n1 ${RELNAMETXT}`" ]; then
-     echo before execute this script, describe release name in ${RELNAMETXT}.
-     exit 1
-fi
+echo "---"
+cat $RELNAMETXT
+echo "---"
+echo "Is this $RELNAMETXT OK ? (Yes/No)"
+while true; do
+  read answer
+  case $answer in
+  yes)
+    break
+    ;;
+  Yes)
+    break
+    ;;
+  no)
+    exit 1
+    ;;
+  *)
+    # LOOP
+    ;;
+  esac
+done
 
-if [ $# -eq 0 ]; then
-    PACKAGE_NAME=omnixmp
-else
-    PACKAGE_NAME=omnixmp-$1
-fi
+###################
+# Create Pakcage
+###################
 WORK_DIR=../`basename $PWD`-dist
 PACKAGE_DIR=$WORK_DIR/$PACKAGE_NAME
 DOC_DIR=$PACKAGE_DIR/doc
@@ -79,4 +124,5 @@ cd $WORK_DIR
 tar cjf $PACKAGE_NAME.tar.bz2 $PACKAGE_NAME
 
 echo completed
+echo "Created package is " $WORK_DIR/$PACKAGE_NAME.tar.bz2
 
