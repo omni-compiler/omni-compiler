@@ -1933,7 +1933,7 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
     /* bcast & unpack */
     int i, iroot=0;
     MPI_Bcast(dst_buf, dst_num_myindex_total*dst_type_size, MPI_BYTE, iroot, newcomm);
-    MPI_Bcast(unpack_ref, dst_num_myindex_total, MPI_LONG_LONG_INT, iroot, newcomm);
+    MPI_Bcast(unpack_ref, dst_num_myindex_total, MPI_INT, iroot, newcomm);
     if (newcomm_rank != 0){
       for(i=0;i<dst_num_myindex_total;i++){
         memcpy((char *)dst_addr+unpack_ref[i]*dst_type_size, (char *)dst_buf+i*dst_type_size,dst_type_size);
