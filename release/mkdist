@@ -45,6 +45,7 @@ while true; do
     exit 1
     ;;
   *)
+    echo "Type Yes or No."
     # LOOP
     ;;
   esac
@@ -75,6 +76,7 @@ while true; do
     exit 1
     ;;
   *)
+    echo "Type Yes or No."
     # LOOP
     ;;
   esac
