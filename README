@@ -1,7 +1,7 @@
 I. Getting Started
  A. Need the following softwares to build an Omni XcalableMP(XMP) Compiler.
   - Lex, Yacc
-  - C and Fortran Compilers (supports C99 and Fortran 2008)
+  - C and Fortran Compilers (supports C99 and Fortran 90)
   - C++
   - Java Compiler
   - Apache Ant (1.8.1 or later)
