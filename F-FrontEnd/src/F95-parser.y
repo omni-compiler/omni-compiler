@@ -232,6 +232,7 @@
 %token OMPKW_ATOMIC
 %token OMPKW_FLUSH
 %token OMPKW_THREADPRIVATE
+%token OMPKW_WORKSHARE
 
 %type <val> omp_directive omp_nowait_option omp_clause_option omp_clause_list omp_clause omp_list /*omp_common_list*/ omp_default_attr omp_copyin_list omp_schedule_arg
 %type <code> omp_schedule_attr omp_reduction_op
@@ -1703,6 +1704,14 @@ omp_directive:
 	  { $$ = OMP_LIST(OMP_F_END_ORDERED,NULL); }
 	| OMPKW_THREADPRIVATE '(' omp_copyin_list ')'
  	  { $$ = OMP_LIST(OMP_F_THREADPRIVATE,NULL); } /* NOTE: must be fixed */
+	| OMPKW_WORKSHARE
+	  { $$ = NULL; }
+	| OMPKW_END OMPKW_WORKSHARE omp_nowait_option
+	  { $$ = NULL; }
+	| OMPKW_PARALLEL OMPKW_WORKSHARE omp_clause_option
+	  { $$ = NULL; }
+	| OMPKW_END OMPKW_PARALLEL OMPKW_WORKSHARE omp_nowait_option
+	  { $$ = NULL; }
 	;
 
 omp_nowait_option:

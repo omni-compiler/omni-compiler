@@ -3729,6 +3729,7 @@ struct keyword_token OMP_keywords[ ] =
     {"atomic",		OMPKW_ATOMIC},
     {"flush",		OMPKW_FLUSH },
     {"threadprivate",	OMPKW_THREADPRIVATE},
+    {"workshare",	OMPKW_WORKSHARE},
 
     { 0, 0 }
 };

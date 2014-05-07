@@ -396,6 +396,22 @@ void compile_OMP_directive(expr x)
       warning("OMP THREADPRIVATE not supported yet");
 	return;
 
+    case OMP_F_WORKSHARE:
+      warning("OMP WORKSHARE not supported yet");
+      return;
+
+    case OMP_F_END_WORKSHARE:
+      //warning("OMP END WORKSHARE not supported yet");
+      return;
+
+    case OMP_F_PARALLEL_WORKSHARE:
+      warning("OMP PARALLEL WORKSHARE not supported yet");
+      return;
+
+    case OMP_F_END_PARALLEL_WORKSHARE:
+      //warning("OMP END PARALLEL WORKSHARE not supported yet");
+      return;
+
     case OMP_F_ATOMIC:
 	OMP_st_required = OMP_ST_ATOMIC;
 	break;
