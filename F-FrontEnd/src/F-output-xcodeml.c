@@ -2355,7 +2355,8 @@ outx_OMP_pragma(int l, expv v)
     // outx_expv_withListTag(l1, EXPR_ARG1(v));
 
     if (EXPV_INT_VALUE(EXPR_ARG1(v)) != OMP_THREADPRIVATE &&
-	EXPV_INT_VALUE(EXPR_ARG1(v)) != OMP_FLUSH) {
+	EXPV_INT_VALUE(EXPR_ARG1(v)) != OMP_FLUSH &&
+	EXPV_INT_VALUE(EXPR_ARG1(v)) != OMP_CRITICAL) {
         outx_OMP_dir_clause_list(l1,EXPR_ARG2(v));
         // outx_expv_withListTag(l1, EXPR_ARG2(v));
 
