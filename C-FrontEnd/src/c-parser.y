@@ -91,6 +91,7 @@ PRIVATE_STATIC const CExprCodeEnum s_CAssignEnumToExprCodeEnum[]       = CAssign
 %type <expr> band_expr bxor_expr bor_expr logand_expr logor_expr cond_expr
 %type <expr> array_ref array_dimension
 %type <expr> coarray_ref coarray_dimensions coarray_dimension coarray_dimension_1
+%type <expr> coarray_declarations coarray_declaration coarray_declaration_1
 %type <expr> declspecs_CTAA declspecs_CTAa declspecs_CTaA declspecs_CTaa
 %type <expr> declspecs_CtAA declspecs_CtAa declspecs_CtaA declspecs_Ctaa
 %type <expr> declspecs_cTAA declspecs_cTAa declspecs_cTaA declspecs_cTaa
@@ -107,7 +108,9 @@ PRIVATE_STATIC const CExprCodeEnum s_CAssignEnumToExprCodeEnum[]       = CAssign
 
 %type <expr> block_start block_labeled_stmt
 %type <expr> declarator nt_declarator after_type_declarator
+%type <expr> codeclarator nt_codeclarator
 %type <expr> param_declarator param_declarator_ts param_declarator_nts
+%type <expr> param_codeclarator
 %type <expr> array_declarator
 %type <expr> param param_head inner_params params params_na inner_params_1
 %type <expr> params_or_idents params_or_idents_na
@@ -980,9 +983,22 @@ initdecl_1:
                 EXPR_C($1)->e_hasInit = 1;
                 $$ = exprList3(EC_INIT_DECL, $1, $2, $5);
             }
+    | codeclarator opt_asm_expr opt_attr '=' init
+            {
+                STAT_TRACE(("{initdecl_1#1-co}"));
+                exprSetAttrPost($1, $3);
+                EXPR_C($1)->e_hasInit = 1;
+                $$ = exprList3(EC_INIT_DECL, $1, $2, $5);
+            }
     | declarator opt_asm_expr opt_attr
             {
                 STAT_TRACE(("{initdecl_1#2}"));
+                exprSetAttrPost($1, $3);
+                $$ = exprList2(EC_INIT_DECL, $1, $2);
+            }
+    | codeclarator opt_asm_expr opt_attr
+            {
+                STAT_TRACE(("{initdecl_1#2-co}"));
                 exprSetAttrPost($1, $3);
                 $$ = exprList2(EC_INIT_DECL, $1, $2);
             }
@@ -999,9 +1015,21 @@ notype_initdecl_1:
                 exprSetAttrPost($1, $3);
                 $$ = exprList3(EC_INIT_DECL, $1, $2, $5);
             }
+    | nt_codeclarator opt_asm_expr opt_attr '=' init
+            {
+                STAT_TRACE(("{notype_initdecl_1#1-co}"));
+                exprSetAttrPost($1, $3);
+                $$ = exprList3(EC_INIT_DECL, $1, $2, $5);
+            }
     | nt_declarator opt_asm_expr opt_attr
             {
                 STAT_TRACE(("{notype_initdecl_1#2}"));
+                exprSetAttrPost($1, $3);
+                $$ = exprList2(EC_INIT_DECL, $1, $2);
+            }
+    | nt_codeclarator opt_asm_expr opt_attr
+            {
+                STAT_TRACE(("{notype_initdecl_1#2-co}"));
                 exprSetAttrPost($1, $3);
                 $$ = exprList2(EC_INIT_DECL, $1, $2);
             }
@@ -1099,6 +1127,50 @@ declarator:
             { STAT_TRACE(("{declarator#2}")); $$ = $1; }
     ;
 
+codeclarator:
+      declarator coarray_declarations
+            { STAT_TRACE(("{codeclarator#1}"));
+                $$ = exprListJoin($1, $2); }
+    ;
+
+coarray_declarations:
+      COLON_SQBRACKET coarray_declaration_1
+            { STAT_TRACE(("{coarray_declarations#1}"));
+                //                $$ = exprList1(EC_XMP_COARRAY_DECLARATIONS, exprArrayDecl(NULL, $2));
+                $$ = exprList1(EC_LDECLARATOR, $2); }
+    | coarray_declarations coarray_declaration
+            { STAT_TRACE(("{coarray_declarations#2}"));
+                $$ = exprListJoin($1, $2); }
+    ;
+
+coarray_declaration_1:
+      expr ']'
+            { STAT_TRACE(("{coarray_declaration_1#1}"));
+                $$ = exprArrayDecl(NULL, $1);
+                $$->u.e_arrayDecl.e_common.e_exprCode = EC_COARRAY_DECL;
+            }
+    | '*' ']'
+            { STAT_TRACE(("{coarray_declaration_1#2}"));
+                // $$ = (CExpr*)allocExprOfGeneralCode(EC_FLEXIBLE_STAR, 0);
+                $$ = exprArrayDecl(NULL, NULL);
+                $$->u.e_arrayDecl.e_common.e_exprCode = EC_COARRAY_DECL;
+            }
+    ;
+
+coarray_declaration:
+      '[' expr ']'
+            { STAT_TRACE(("{coarray_declaration#1}"));
+                $$ = exprArrayDecl(NULL, $2);
+                $$->u.e_arrayDecl.e_common.e_exprCode = EC_COARRAY_DECL;
+            }
+    | '[' '*' ']'
+            { STAT_TRACE(("{coarray_declaration#2}"));
+                // $$ = (CExpr*)allocExprOfGeneralCode(EC_FLEXIBLE_STAR, 0);
+                $$ = exprArrayDecl(NULL, NULL);
+                $$->u.e_arrayDecl.e_common.e_exprCode = EC_COARRAY_DECL;
+            }
+    ;
+
 after_type_declarator:
       '(' opt_attr after_type_declarator ')'
             { STAT_TRACE(("{after_type_declarator#1}"));
@@ -1118,6 +1190,12 @@ param_declarator:
             { STAT_TRACE(("{param_declarator#1}")); $$ = $1; }
     | param_declarator_nts
             { STAT_TRACE(("{param_declarator#2}")); $$ = $1; }
+    ;
+
+param_codeclarator:
+      param_declarator coarray_declarations
+            { STAT_TRACE(("{param_cedeclarator#1}"));
+                $$ = exprListJoin($1, $2); }
     ;
 
 param_declarator_ts:
@@ -1159,6 +1237,12 @@ nt_declarator:
             { STAT_TRACE(("{nt_declarator#4}")); $$ = exprListJoin($1, $2); }
     | IDENTIFIER
             { STAT_TRACE(("{nt_declarator#5}")); $$ = exprList1(EC_LDECLARATOR, $1); }
+    ;
+
+nt_codeclarator:
+      nt_declarator coarray_declarations
+            { STAT_TRACE(("{nt_codeclarator#1}"));
+                $$ = exprListJoin($1, $2); }
     ;
 
 tagname:
@@ -1283,6 +1367,10 @@ member_declarator:
             { STAT_TRACE(("{member_declarator#1}"));
                 if($2) exprJoinAttrToPre($1, $2);
                 $$ = exprBinary(EC_MEMBER_DECLARATOR, $1, NULL); }
+    | codeclarator opt_attr
+            { STAT_TRACE(("{member_declarator#1-co}"));
+                if($2) exprJoinAttrToPre($1, $2);
+                $$ = exprBinary(EC_MEMBER_DECLARATOR, $1, NULL); }
     /* bit field */
     | declarator ':' expr opt_attr
             { STAT_TRACE(("{member_declarator#2}"));
@@ -1297,6 +1385,9 @@ member_declarator:
 member_nt_declarator:
       nt_declarator opt_attr
             { STAT_TRACE(("{member_nt_declarator#1}"));
+                $$ = exprSetAttrPost(exprBinary(EC_MEMBER_DECLARATOR, $1, NULL), $2); }
+    | nt_codeclarator opt_attr
+            { STAT_TRACE(("{member_nt_declarator#1-co}"));
                 $$ = exprSetAttrPost(exprBinary(EC_MEMBER_DECLARATOR, $1, NULL), $2); }
     | nt_declarator ':' expr opt_attr
             { STAT_TRACE(("{member_nt_declarator#2}"));
@@ -1762,12 +1853,18 @@ inner_params:
 param:
       declspecs_xtxx param_declarator opt_attr
             { STAT_TRACE(("{param#1}")); $$ = exprSetAttrPost(exprBinary(EC_PARAM, $1, $2), $3); }
+    | declspecs_xtxx param_codeclarator opt_attr
+            { STAT_TRACE(("{param#1-co}")); $$ = exprSetAttrPost(exprBinary(EC_PARAM, $1, $2), $3); }
     | declspecs_xtxx nt_declarator opt_attr
             { STAT_TRACE(("{param#2}")); $$ = exprSetAttrPost(exprBinary(EC_PARAM, $1, $2), $3); }
+    | declspecs_xtxx nt_codeclarator opt_attr
+            { STAT_TRACE(("{param#2-co}")); $$ = exprSetAttrPost(exprBinary(EC_PARAM, $1, $2), $3); }
     | declspecs_xtxx absdecl_opt_a
             { STAT_TRACE(("{param#3}")); $$ = exprBinary(EC_PARAM, $1, $2); }
     | declspecs_xTxx nt_declarator opt_attr
             { STAT_TRACE(("{param#4}")); $$ = exprSetAttrPost(exprBinary(EC_PARAM, $1, $2), $3); }
+    | declspecs_xTxx nt_codeclarator opt_attr
+            { STAT_TRACE(("{param#4-co}")); $$ = exprSetAttrPost(exprBinary(EC_PARAM, $1, $2), $3); }
     | declspecs_xTxx absdecl_opt_a
             { STAT_TRACE(("{param#5}")); $$ = exprBinary(EC_PARAM, $1, $2); }
     ;
@@ -1775,12 +1872,18 @@ param:
 param_head:
       declspecs_xtAx param_declarator opt_attr
             { STAT_TRACE(("{param_head#1}")); $$ = exprBinary(EC_PARAM, $1, exprSetAttrPost($2, $3)); }
+    | declspecs_xtAx param_codeclarator opt_attr
+            { STAT_TRACE(("{param_head#1-co}")); $$ = exprBinary(EC_PARAM, $1, exprSetAttrPost($2, $3)); }
     | declspecs_xtAx nt_declarator opt_attr
             { STAT_TRACE(("{param_head#2}")); $$ = exprBinary(EC_PARAM, $1, exprSetAttrPost($2, $3)); }
+    | declspecs_xtAx nt_codeclarator opt_attr
+            { STAT_TRACE(("{param_head#2-co}")); $$ = exprBinary(EC_PARAM, $1, exprSetAttrPost($2, $3)); }
     | declspecs_xtAx absdecl_opt_a
             { STAT_TRACE(("{param_head#3}")); $$ = exprBinary(EC_PARAM, $1, $2); }
     | declspecs_xTAx nt_declarator opt_attr
             { STAT_TRACE(("{param_head#4}")); $$ = exprBinary(EC_PARAM, $1, exprSetAttrPost($2, $3)); }
+    | declspecs_xTAx nt_codeclarator opt_attr
+            { STAT_TRACE(("{param_head#4-co}")); $$ = exprBinary(EC_PARAM, $1, exprSetAttrPost($2, $3)); }
     | declspecs_xTAx absdecl_opt_a
             { STAT_TRACE(("{param_head#5}")); $$ = exprBinary(EC_PARAM, $1, $2); }
     ;
@@ -2020,4 +2123,6 @@ execParse(FILE *fp)
 #endif
     return s_exprStart;
 }
+
+
 

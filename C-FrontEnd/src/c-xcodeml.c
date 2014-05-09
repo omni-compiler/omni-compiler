@@ -581,6 +581,7 @@ outxContext(FILE *fp, int indent, CExpr *expr)
     case EC_DECL_SPECS:
     case EC_LDECLARATOR:
     case EC_ARRAY_DECL:
+    case EC_COARRAY_DECL:
     case EC_POINTER_DECL:
     case EC_PARAM:
     case EC_TYPENAME:
@@ -847,6 +848,8 @@ outxArrayType(FILE *fp, int indent, CExprOfTypeDesc *td, const char *tag, int ha
         }
     } else if(td->e_len.eln_isVariable) {
         needsClosure = CLOSE_NO_CHILD;
+    } else if(td->e_tdKind == TD_COARRAY) {   // co-index [*] 
+        fprintf(fp, " array_size=\"*\"");
     } else {
         fprintf(fp, " array_size=\"0\"");
     }
@@ -1314,6 +1317,7 @@ outxTypeTable(FILE *fp, int indent)
     outxTypeDescByKind(fp, nindent, TD_GCC_BUILTIN);
     outxTypeDescByKind(fp, nindent, TD_POINTER);
     outxTypeDescByKind(fp, nindent, TD_ARRAY);
+    outxTypeDescByKind(fp, nindent, TD_COARRAY);
     outxTypeDescByKind(fp, nindent, TD_STRUCT);
     outxTypeDescByKind(fp, nindent, TD_UNION);
     outxTypeDescByKind(fp, nindent, TD_ENUM);
@@ -2687,7 +2691,8 @@ outputXcodeML(FILE *fp, CExpr *expr)
 
     setTypeIds();
     setExprParent(expr, NULL);
-    fprintf(fp, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", s_xmlEncoding);
+    //fprintf(fp, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", s_xmlEncoding);
+    fprintf(fp, "<?xml version=\"1.0/1.2\" encoding=\"%s\"?>\n", s_xmlEncoding);
     if(EXPR_ISNULL(expr))
         outx_EXT_DEFS(fp, 0, NULL);
     else

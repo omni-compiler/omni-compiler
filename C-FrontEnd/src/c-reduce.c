@@ -531,6 +531,7 @@ collectSpecs(CExpr *declr, CExpr *stack, CExpr **sym)
 
         switch(EXPR_CODE(expr)) {
         case EC_ARRAY_DECL:
+        case EC_COARRAY_DECL:
             exprListAdd(stack, reduceExpr1(expr, declr, &isReduced1));
             exprListRemove(declr, ite);
             break;
@@ -739,9 +740,14 @@ reduce_declarator(CExpr *declr, CExpr *parent, int *isReduced)
             reduceExpr1(expr, NULL, isReduced);
             exprJoinAttr((CExpr*)td, expr);
             break;
-        case EC_ARRAY_DECL: {
+        case EC_ARRAY_DECL:
+        case EC_COARRAY_DECL:
+            {
                 CExprOfArrayDecl *ary = EXPR_ARRAYDECL(expr);
-                td->e_tdKind = TD_ARRAY;
+                if (EXPR_CODE(expr) == EC_COARRAY_DECL)
+                    td->e_tdKind = TD_COARRAY;
+                else
+                    td->e_tdKind = TD_ARRAY;
 
                 if(EXPR_ISNULL(ary->e_lenExpr) == 0) {
                     int isReduced1 = 0;
