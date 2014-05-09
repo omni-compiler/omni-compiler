@@ -228,7 +228,16 @@ public class XMPtransPragma
 
       for_block.setLowerBound(lb_var.Ref());
       for_block.setUpperBound(ub_var.Ref());
-      for_block.setStep(step_var.Ref());
+
+      XMPtemplate t = on_ref.getTemplate();
+      int t_idx = on_ref.getLoopOnIndex(k);
+      if (for_block.getStep().isOneConstant() && (t.getDistMannerAt(t_idx) != XMPtemplate.CYCLIC ||
+						  t.getDistArgAt(t_idx).isOneConstant())){
+	for_block.setStep(Xcons.IntConstant(1));
+      }
+      else {
+	for_block.setStep(step_var.Ref());
+      }
       
       if(isVarUsed(for_block.getBody(),org_loop_ind_var)){
 	// if global variable is used in this block, convert local to global

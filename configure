@@ -22489,11 +22489,11 @@ fi
 
 isIBMJava6=no
 if test "x${useJava}" = "xyes"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking IBM Java6" >&5
-$as_echo_n "checking IBM Java6... " >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking IBM Java6 or later" >&5
+$as_echo_n "checking IBM Java6 or later... " >&6; }
     jTmp=/tmp/.omniJavaChk.$$
     ${JAVACOM} -fullversion > ${jTmp} 2>&1
-    chk=`grep 'JRE 1.6.0 IBM' ${jTmp}` || `grep 'JRE 1.7.0 IBM' ${jTmp}`
+    chk=`grep 'JRE 1.6.0 IBM' ${jTmp}` || `grep 'JRE 1.7.0 IBM' ${jTmp}` || `grep 'JRE 1.8.0 IBM' ${jTmp}`
     if test "x${chk}" = "x"; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -22511,8 +22511,8 @@ fi
 
 isSunJava6=no
 if test "x${useJava}" = "xyes"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking Sun Java6" >&5
-$as_echo_n "checking Sun Java6... " >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking Sun Java6 or later" >&5
+$as_echo_n "checking Sun Java6 or later... " >&6; }
 
         case $target in
       powerpc-ibm-none|powerpc64-hitachi-aix)
@@ -22528,7 +22528,7 @@ $as_echo_n "checking Sun Java6... " >&6; }
 $as_echo "no" >&6; }
     fi
     case $chk in
-    1.6*|1.7*)
+    1.6*|1.7*|1.8*)
         isSunJava6=yes
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; };;
@@ -22541,7 +22541,7 @@ $as_echo "no" >&6; };;
 fi
 
 if test "${isSunJava6}" = "no" -a "${isIBMJava6}" = "no"; then
-    as_fn_error $? "Java6 not found" "$LINENO" 5;
+    as_fn_error $? "Java6 or later not found" "$LINENO" 5;
 fi
 
 

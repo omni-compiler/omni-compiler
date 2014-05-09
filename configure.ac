@@ -1072,10 +1072,10 @@ AC_SUBST(JARCOM)
 
 isIBMJava6=no
 if test "x${useJava}" = "xyes"; then
-    AC_MSG_CHECKING([IBM Java6])
+    AC_MSG_CHECKING([IBM Java6 or later])
     jTmp=/tmp/.omniJavaChk.$$
     ${JAVACOM} -fullversion > ${jTmp} 2>&1
-    chk=`grep 'JRE 1.6.0 IBM' ${jTmp}` || `grep 'JRE 1.7.0 IBM' ${jTmp}`
+    chk=`grep 'JRE 1.6.0 IBM' ${jTmp}` || `grep 'JRE 1.7.0 IBM' ${jTmp}` || `grep 'JRE 1.8.0 IBM' ${jTmp}`
     if test "x${chk}" = "x"; then
         AC_MSG_RESULT([no])
     else
@@ -1091,7 +1091,7 @@ AC_SUBST(isIBMJava6)
 
 isSunJava6=no
 if test "x${useJava}" = "xyes"; then
-    AC_MSG_CHECKING([Sun Java6])
+    AC_MSG_CHECKING([Sun Java6 or later])
 
     changequote(<<, >>)dnl
     case $target in
@@ -1108,7 +1108,7 @@ if test "x${useJava}" = "xyes"; then
         AC_MSG_RESULT([no])
     fi
     case $chk in
-    1.6*|1.7*)
+    1.6*|1.7*|1.8*)
         isSunJava6=yes
         AC_MSG_RESULT([yes]);;
     *)
@@ -1119,7 +1119,7 @@ if test "x${useJava}" = "xyes"; then
 fi
 
 if test "${isSunJava6}" = "no" -a "${isIBMJava6}" = "no"; then
-    AC_MSG_ERROR([Java6 not found]);
+    AC_MSG_ERROR([Java6 or later not found]);
 fi
 
 AC_SUBST(isSunJava6)
