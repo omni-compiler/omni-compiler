@@ -341,6 +341,11 @@ L\"(\\.|[^\\"])*\"      { count(); yylval.expr = lexAllocStringConst(CT_WIDE);  
 ^[ \t]*"#"[ \t]*"pragma"([ \t]+[^\n]+)?[\n]     { int token;
                                             yylval.expr = lexParsePragma(yytext, &token); count();
                                             return token; }
+^[ \t]*"_Pragma"[ \t]*"("[ \t]*"L"?"\""[^\n]*"\""[ \t]*")"[ \t]*[\n] { int token;
+                                            char *converted_yytext = lexConvertUnderscorePragma(yytext);
+                                            yylval.expr = lexParsePragma(converted_yytext, &token); count();
+                                            free(converted_yytext);
+                                            return token; }
 ^[ \t]*"#"[ \t]*[0-9]+([ \t]+[^\r\n]*)?\r?\n  { lexParseLineDirective(0); }
 ^[ \t]*"#"[ \t]*"line"[ \t]+[0-9]+([ \t]+[^\r\n]*)?\r?\n  { lexParseLineDirective(1); }
 

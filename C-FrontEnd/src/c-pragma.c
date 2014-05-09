@@ -1112,9 +1112,14 @@ CExpr*
 lexAllocDirective(const char *name, CDirectiveTypeEnum type)
 {
     char *p = yytext;
+    char *conv_p = NULL;
     /* after '#directive[space]' */
     while(isspace(*p)) ++p;
-    if (*p == '#') ++p;
+    if (*p == '#'){
+      ++p;
+    }else if(*p == '_'){
+      p = conv_p = lexConvertUnderscorePragma(p);
+    }
     while(isspace(*p)) ++p;
     while(isspace(*p) == 0) ++p;
     while(isspace(*p)) ++p;
@@ -1129,6 +1134,8 @@ lexAllocDirective(const char *name, CDirectiveTypeEnum type)
     if(len > 1 && (str[len - 2] == '\n' || str[len - 2] == '\r'))
         str[len - 2] = 0;
 
+    if(conv_p != NULL) free(conv_p);
+    
     return (CExpr*)allocExprOfDirective(
         type, ccol_strdup(name, MAX_NAME_SIZ), str);
 }
@@ -1217,4 +1224,46 @@ lexParsePragma(char *p, int *token)
         ABORT();
         return 0;
     }
+}
+
+char* lexConvertUnderscorePragma(char *p)
+{
+  char *str = XALLOCSZ(char, strlen(p) + 1);
+  char *q = str;
+  
+  p = lexSkipSpace(p);
+  if(strncmp(p, "_Pragma", strlen("_Pragma")) == 0){
+    p += strlen("_Pragma");
+    strncpy(q, "#pragma ", strlen("#pragma "));
+    q+=strlen("#pragma ");
+  }
+
+  p = lexSkipSpace(p);
+  if(*p == '(') p++;
+  p = lexSkipSpace(p);
+  if(*p == 'L') p++;
+  if(*p == '"') p++;
+
+  /* string copy */
+  while(1){
+    if(*p == '"') break;
+    if(*p == '\\'){
+      switch(*(p+1)){
+      case '"':
+	*q++ = '"';
+	p += 2;
+	break;
+      case '\\':
+	*q++ = '\\';
+	p += 2;
+	break;
+      default:
+	*q++ = *p++;
+      }
+    }else{
+      *q++ = *p++;
+    }
+  }
+  
+  return str;
 }
