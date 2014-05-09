@@ -155,6 +155,8 @@ public enum ACCpragma {
   
   public boolean isCompute(){
     switch(this){
+    case PARALLEL:
+    case KERNELS:
     case PARALLEL_LOOP:
     case KERNELS_LOOP:
       return true;

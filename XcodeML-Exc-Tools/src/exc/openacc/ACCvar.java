@@ -522,7 +522,7 @@ public class ACCvar {
     }
     case Xtype.POINTER:
     {
-	Xtype elementType = varType.getRef(); //TODO support pointer of pointer of int
+	Xtype elementType = getElementType(varType);//varType.getRef(); //TODO support pointer of pointer of int
 	if(isSubarray()){
 	    sizeObj = Xcons.binaryOp(Xcode.MUL_EXPR, g_subarray.getNumberOfElement(), Xcons.SizeOf(elementType));
 	}else{
@@ -536,6 +536,38 @@ public class ACCvar {
     }
     return sizeObj;
   }
+  public Xobject getNumElements() throws ACCexception{
+      Xobject elementsObj = null;
+      Xtype varType = id.Type();
+      
+      switch (varType.getKind()) {
+      case Xtype.ARRAY:
+      {
+        ArrayType arrayType = (ArrayType)varType;
+        Xtype arrayElementType = varType.getArrayElementType();
+        if(isSubarray()){
+          elementsObj = g_subarray.getNumberOfElement();
+        }else{
+          elementsObj = ACCutil.getArrayElmtCountObj(arrayType);
+        }
+        break;
+      }
+      case Xtype.POINTER:
+      {
+          Xtype elementType = getElementType(varType);//varType.getRef(); //TODO support pointer of pointer of int
+          if(isSubarray()){
+              elementsObj = g_subarray.getNumberOfElement();
+          }else{
+              elementsObj = Xcons.IntConstant(1);
+          }
+          break;
+      }
+      default:
+        elementsObj = Xcons.IntConstant(1);//Xcons.SizeOf(varType);
+        break;
+      }
+      return elementsObj;
+    }
   public Xobject getOffset() throws ACCexception{
     Xobject offsetObj = null;
     Xtype varType = id.Type();
@@ -612,6 +644,19 @@ public class ACCvar {
   
   boolean isSubarray(){
     return g_subarray != null;
+  }
+  
+  Xtype getElementType(Xtype t)
+  {
+      if(t.isArray()){
+          return ((ArrayType)t).getArrayElementType();
+      }else if(t.isPointer()){
+          return getElementType(t.getRef());
+      }else if(t.isBasic()){
+          return t;
+      }else{
+          return null;
+      }
   }
 
   class Subarray{

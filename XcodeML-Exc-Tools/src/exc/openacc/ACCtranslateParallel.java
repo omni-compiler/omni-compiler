@@ -67,6 +67,8 @@ public class ACCtranslateParallel {
       String varName = id.getName();
       //if(parallelInfo.getACCvar(varName) != null) continue; 
       if(parallelInfo.isVarAllocated(varName)) continue;
+      ACCvar var = parallelInfo.getACCvar(varName);
+      if(var != null && var.isAllocated()) continue;
       //if(parallelInfo.isVarPrivate(varName)) continue;
       if(parallelInfo.isVarFirstprivate(varName)) continue; //this is need for only parallel construct
       //if(parallelInfo.getDevicePtr(varName) != null) continue;

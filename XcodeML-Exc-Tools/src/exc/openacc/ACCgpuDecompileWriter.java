@@ -585,7 +585,7 @@ public class ACCgpuDecompileWriter extends PrintWriter {
       print("&((");
       printDeclType(v.Type().getRef(),null);
       print("){");      
-      for(XobjArgs a = v.getArg(0).getArg(0).getArgs(); a != null; a = a.nextArgs()){
+      for(XobjArgs a = v.getArg(0).getArgs(); a != null; a = a.nextArgs()){
         print(a.getArg());
         if(a.nextArgs() != null){
           print(",");

@@ -222,8 +222,8 @@ public class ACCgpuManager {
   }
   
   public void finalize(){
-    specifyExecModel();
-    distAxis();
+    //specifyExecModel();
+    //distAxis();
   }
   
   public XobjList getBlockThreadSize_old(){
@@ -420,9 +420,9 @@ public class ACCgpuManager {
 	  }else if(execModels.contains(ACCpragma.VECTOR)){
 	    forBlockExecMethod = ACCpragma._THREAD;
 	  }else if(execModels.contains(ACCpragma.AUTO)){
-	    if(hasExecMethod(b.getBody(), ACCpragma.GANG)){
+	    if(hasExecMethod(forBlock.getBody(), ACCpragma.GANG)){
 	      forBlockExecMethod = ACCpragma.SEQ;
-	    }else if(hasExecMethod(b.getBody(), ACCpragma.VECTOR) || hasExecMethod(b.getBody(), ACCpragma._AUTO)){ ///findCoarsestExecModel(b.getBody())
+	    }else if(hasExecMethod(forBlock.getBody(), ACCpragma.VECTOR) || hasExecMethod(forBlock.getBody(), ACCpragma._AUTO)){ ///findCoarsestExecModel(b.getBody())
 	      forBlockExecMethod = ACCpragma._BLOCK;
 	    }else{
 	      forBlockExecMethod = ACCpragma._BLOCK_THREAD;
@@ -436,7 +436,7 @@ public class ACCgpuManager {
 	  if(execModels.contains(ACCpragma.VECTOR)){
 	    forBlockExecMethod = ACCpragma._THREAD;
 	  }else if(execModels.contains(ACCpragma.AUTO)){
-	    if(hasExecMethod(b.getBody(), ACCpragma.VECTOR) || hasExecMethod(b.getBody(), ACCpragma._AUTO)){ 
+	    if(hasExecMethod(forBlock.getBody(), ACCpragma.VECTOR) || hasExecMethod(forBlock.getBody(), ACCpragma._AUTO)){ 
 	      forBlockExecMethod = ACCpragma.SEQ;
 	    }else{
 	      forBlockExecMethod = ACCpragma._THREAD;
@@ -445,6 +445,7 @@ public class ACCgpuManager {
 	    forBlockExecMethod = ACCpragma.SEQ;
 	  }
 	}break;
+	case SEQ: break;
 	default:
 	  ACC.fatal("unknown pragma");
 	}
@@ -473,9 +474,16 @@ public class ACCgpuManager {
     case ACC_PRAGMA:
     {
       determineExecMethod(b.getBody(), findingMethod);
-    }
+    }break;
+    case IF_STATEMENT:
+      determineExecMethod(b.getThenBody(), findingMethod);
+      determineExecMethod(b.getElseBody(), findingMethod);
+      break;
+    case LIST:
+    case BREAK_STATEMENT:
+      break;
     default:
-      //ACC.fatal("default");
+      ACC.fatal("default"+ b.Opcode().toString());
     }
   }
   public String getMethodName(CforBlock forBlock){

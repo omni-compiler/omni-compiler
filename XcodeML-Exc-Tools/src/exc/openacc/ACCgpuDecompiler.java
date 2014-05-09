@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
+import xcodeml.util.XmOption;
+
 import exc.object.*;
 
 
@@ -48,6 +50,9 @@ public class ACCgpuDecompiler {
       ACCgpuDecompileWriter writer = new ACCgpuDecompileWriter(w, envDevice);
       
       writer.println("#include \"acc_gpu_func.hpp\"");
+      if(XmOption.isXcalableMP()){
+        writer.println("#include \"xmp_index_macro.h\"");
+      }
       writer.println();
 
       writer.printAll();

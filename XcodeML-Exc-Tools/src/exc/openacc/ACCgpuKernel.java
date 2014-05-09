@@ -64,7 +64,9 @@ public class ACCgpuKernel {
     devEnv.add(launchFuncDef);
     
     //make launchFuncCall
-    Ident launchFuncId = (Ident)launchFuncDef.getNameObj();
+    FunctionType launchFuncType=(FunctionType)launchFuncDef.getFuncType();
+    launchFuncType.setFuncParamIdList(launchFuncDef.getDef().getArg(1));
+    Ident launchFuncId = kernelInfo.getGlobalDecl().declExternIdent(launchFuncDef.getName(), launchFuncType);
     XobjList launchFuncArgs = makeLaunchFuncArgs();
     Block launchFuncCallBlock = Bcons.Statement(launchFuncId.Call(launchFuncArgs));
     
@@ -75,13 +77,15 @@ public class ACCgpuKernel {
   private XobjList makeLaunchFuncArgs(){
     XobjList launchFuncArgs = Xcons.List();
     for(Ident id : _outerIdList){
-      Xobject arg = null;
       switch(id.Type().getKind()){
       case Xtype.ARRAY:
       case Xtype.POINTER:
       {
+        Xobject arg0 = id.Ref();
         Ident devicePtr = kernelInfo.getDevicePtr(id.getName());
-        arg = devicePtr.Ref();
+        Xobject arg1 = devicePtr.Ref();
+        launchFuncArgs.add(arg0);
+        launchFuncArgs.add(arg1);
       } break;
       case Xtype.BASIC:
       case Xtype.STRUCT:
@@ -93,23 +97,24 @@ public class ACCgpuKernel {
         if(_readOnlyOuterIdSet.contains(id)){ //is this condition appropriate?
           devicePtrId = kernelInfo.getDevicePtr(idName);
           if(devicePtrId != null){
-            arg = devicePtrId.Ref();
+            launchFuncArgs.add(devicePtrId.Ref());
           }else{
-            arg = id.Ref();
+            launchFuncArgs.add(id.Ref());
           }
         }else{
+          Xobject arg;
           if(_useMemPoolOuterIdSet.contains(id)){
             arg = id.getAddr();
           }else{
             devicePtrId = kernelInfo.getDevicePtr(idName);
             arg = devicePtrId.Ref();              
           }
+          launchFuncArgs.add(arg);          
         }
       } break;
       default:
         ACC.fatal("unknown type");
       }
-      launchFuncArgs.add(arg); 
       
       
       /*
@@ -185,7 +190,22 @@ public class ACCgpuKernel {
     for(String varName : collectVarNames(x)){
       Ident id = findOuterBlockIdent(topBlock, body, varName);
       if(id != null){
-        outerIdSet.add(id);
+	{
+	  for(Block b = body.getParent(); b != null; b = b.getParentBlock()){
+	    if(b == topBlock.getParentBlock()) break;
+	    if(b.Opcode() == Xcode.ACC_PRAGMA){
+	      ACCinfo info = ACCutil.getACCinfo(b);
+	      if(info.isVarPrivate(varName)){
+		id = null;
+		break;
+	      }
+	    }
+	  }
+
+	}
+	if(id != null){
+	  outerIdSet.add(id);
+	}
       }
     }
     return outerIdSet;
@@ -193,6 +213,17 @@ public class ACCgpuKernel {
   
   private Set<Ident> collectOuterIdents(Block topBlock, BasicBlock bb){
     return collectOuterIdents(topBlock, bb.getParent().getParent(), bb.toXobject());
+  }
+  
+  private Ident findInnerBlockIdent(Block topBlock, BlockList body, String name)
+  {
+    // if the id exists between topBlock to bb, the id is not outerId
+    for(BlockList b_list = body; b_list != null; b_list = b_list.getParentList()){
+      Ident localId = b_list.findLocalIdent(name);
+      if(localId!= null) return localId;
+      if(b_list == topBlock.getParent()) break;
+    }
+    return null;
   }
   
   private Ident findOuterBlockIdent(Block topBlock, BlockList body, String name)
@@ -241,7 +272,7 @@ public class ACCgpuKernel {
     XobjList deviceKernelParamIds = Xcons.IDList();
     //add paramId from outerId
     for(Ident id : outerIdList){
-      if(_readOnlyOuterIdSet.contains(id) && id.Type().isArray()){
+      if(_readOnlyOuterIdSet.contains(id) && (id.Type().isArray() || id.Type().isPointer())){
         Xtype constParamType = makeConstRestrictType(Xtype.voidType);
         Ident constParamId = Ident.Param("_ACC_cosnt_" + id.getName(), constParamType);
        
@@ -264,12 +295,25 @@ public class ACCgpuKernel {
     //Block deviceKernelMainBlock = makeDeviceKernelCoreBlock(initBlocks, kernelBlock.getBody(), additionalParams, additionalLocals, null, deviceKernelId, gpuManager);
     //Block deviceKernelMainBlock = makeDeviceKernelCoreBlock(initBlocks, kernelBody.get(0).getBody(), additionalParams, additionalLocals, null, deviceKernelName, gpuManager);
     Block deviceKernelMainBlock = makeCoreBlock(initBlocks, kernelBody, additionalParams, additionalLocals, null, deviceKernelName);
-    rewriteReferenceType(deviceKernelMainBlock, deviceKernelParamIds); //does it need outerIdList?
+    //rewriteReferenceType(deviceKernelMainBlock, deviceKernelParamIds); //does it need outerIdList?
 
 
     //add localId, paramId from additional
     deviceKernelLocalIds.mergeList(additionalLocals);
     deviceKernelParamIds.mergeList(additionalParams);
+    
+    //add private varId only if "parallel"
+    if(kernelInfo.getPragma() == ACCpragma.PARALLEL){
+      Iterator<ACCvar> varIter = kernelInfo.getVars();
+      while(varIter.hasNext()){
+	ACCvar var = varIter.next();
+	if(var.isPrivate()){
+	  Ident privateId = Ident.Local(var.getName(), var.getId().Type());
+	  privateId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+	  deviceKernelLocalIds.add(privateId);
+	}
+      }
+    }
     
     //if extern_sm is used, add extern_sm_id & extern_sm_offset_id
     if(sharedMemory.isUsed()){
@@ -306,6 +350,8 @@ public class ACCgpuKernel {
     deviceKernelBody.setIdentList(deviceKernelLocalIds);
     deviceKernelBody.setDecls(ACCutil.getDecls(deviceKernelLocalIds)); //is this need?
     
+    rewriteReferenceType(deviceKernelMainBlock, deviceKernelParamIds);
+    
     Ident deviceKernelId = kernelInfo.getGlobalDecl().getEnvDevice().declGlobalIdent(deviceKernelName, Xtype.Function(Xtype.voidType));
     ((FunctionType)deviceKernelId.Type()).setFuncParamIdList(deviceKernelParamIds);
 
@@ -331,17 +377,24 @@ public class ACCgpuKernel {
         switch (x.Opcode()) {
         case VAR:
         {
-          Ident id = ACCutil.getIdent(paramIds, x.getName()); //FIXME this should use findVarIdent
-          if(id != null){
-            Xtype x_type = x.Type();
-            Xtype id_type = id.Type();
-            if(! x.Type().equals(id.Type())){ 
-              if(id.Type().equals(Xtype.Pointer(x.Type()))){
-                Xobject newXobj = Xcons.PointerRef(id.Ref());
-                exprIter.setXobject(newXobj);
-              }else{
-                ACC.fatal("type mismatch");
-              }
+          String varName = x.getName();
+          if(varName.startsWith("_ACC_")) break;
+          
+          Ident id = iter.getBasicBlock().getParent().findVarIdent(varName);
+          if(id != null) break;
+          
+          id = ACCutil.getIdent(paramIds, varName);
+          //if(id == null) ACC.fatal("ident not found : " + x.getName());
+       if(id==null){
+	 break;
+       }
+
+          if(! x.Type().equals(id.Type())){ 
+            if(id.Type().equals(Xtype.Pointer(x.Type()))){
+              Xobject newXobj = Xcons.PointerRef(id.Ref());
+              exprIter.setXobject(newXobj);
+            }else{
+              ACC.fatal("type mismatch");
             }
           }
         }break;
@@ -375,6 +428,40 @@ public class ACCgpuKernel {
     case COMPOUND_STATEMENT:
     case ACC_PRAGMA:
       return makeCoreBlock(initBlocks, b.getBody(), paramIds, localIds, prevExecMethodName, deviceKernelName);
+    case IF_STATEMENT:
+    {
+      if(prevExecMethodName==null || prevExecMethodName.equals("block_x")){
+	BlockList resultBody = Bcons.emptyBody();
+	
+	Ident sharedIfCond = Ident.Local("_ACC_if_cond", Xtype.charType);
+	sharedIfCond.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+	
+	XobjList idList = Xcons.IDList(); idList.add(sharedIfCond);
+	XobjList declList = ACCutil.getDecls(idList);
+	resultBody.setDecls(declList);
+	resultBody.setIdentList(idList);
+	
+	Xobject threadIdx = Xcons.Symbol(Xcode.VAR, Xtype.intType, "_ACC_thread_x_id");
+	
+	Block evalCondBlock = Bcons.IF(Xcons.binaryOp(
+	    	Xcode.LOG_EQ_EXPR, threadIdx, Xcons.IntConstant(0)),
+	    	Bcons.Statement(Xcons.Set(sharedIfCond.Ref(), b.getCondBBlock().toXobject())),
+	    	null);
+	Block syncThreadBlock = ACCutil.createFuncCallBlock("_ACC_GPU_M_BARRIER_THREADS", Xcons.List());
+	Block mainIfBlock = Bcons.IF(
+	    sharedIfCond.Ref(),
+	    makeCoreBlock(initBlocks, b.getThenBody(), paramIds, localIds, prevExecMethodName, deviceKernelName),//b.getThenBody(),
+	    makeCoreBlock(initBlocks, b.getElseBody(), paramIds, localIds, prevExecMethodName, deviceKernelName));//b.getElseBody());
+
+	resultBody.add(evalCondBlock);
+	resultBody.add(syncThreadBlock);
+	resultBody.add(mainIfBlock);
+	
+	return Bcons.COMPOUND(resultBody);
+      }else{
+	return b.copy();
+      }
+    }
     default:
     {
       Block resultBlock = b.copy();
@@ -397,7 +484,45 @@ public class ACCgpuKernel {
     
     Xobject ids = body.getIdentList();
     Xobject decls = body.getDecls();
+    Block varInitSection = null;
+    if(prevExecMethodName == null || prevExecMethodName.equals("block_x")){
+      if(ids != null){
+	for(Xobject x : (XobjList)ids){
+	  Ident id = (Ident)x;
+	  id.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+	}
+      }
+      //move decl initializer to body
+      if(decls != null){
+	List<Block> varInitBlocks = new ArrayList<Block>();
+	for(Xobject x : (XobjList)decls){
+	  XobjList decl = (XobjList)x;
+	  if(decl.right() != null){
+	    String varName = decl.left().getString();
+	    Ident id = ACCutil.getIdent((XobjList)ids, varName);
+	    Xobject initializer = decl.right();
+	    decl.setRight(null);
+	    {
+	      BlockList resultBody;
+	      varInitBlocks.add(Bcons.Statement(Xcons.Set(id.Ref(), initializer))); 
+	    }
+	  }
+	}
+	if(! varInitBlocks.isEmpty()){
+	  BlockList thenBody = Bcons.emptyBody();
+	  for(Block b : varInitBlocks){
+	    thenBody.add(b);
+	  }
+	  
+	  Xobject threadIdx = Xcons.Symbol(Xcode.VAR, Xtype.intType, "_ACC_thread_x_id");
+	  Block ifBlock = Bcons.IF(Xcons.binaryOp(Xcode.LOG_EQ_EXPR, threadIdx ,Xcons.IntConstant(0)), Bcons.COMPOUND(thenBody), null);  //if(_ACC_thread_x_id == 0){b}
+	  Block syncThreadBlock = ACCutil.createFuncCallBlock("_ACC_GPU_M_BARRIER_THREADS", Xcons.List());
+	  varInitSection = Bcons.COMPOUND(Bcons.blockList(ifBlock, syncThreadBlock));
+	}
+      }
+    }
     BlockList resultBody = Bcons.emptyBody(ids, decls);
+    resultBody.add(varInitSection);
     for(Block b = body.getHead(); b != null; b = b.getNext()){
       resultBody.add(makeCoreBlock(initBlocks, b, paramIds, localIds, prevExecMethodName, deviceKernelName));
     }
@@ -437,7 +562,29 @@ public class ACCgpuKernel {
       loopStack.push(new Loop(forBlock));
       BlockList body = Bcons.blockList(makeCoreBlock(initBlocks, forBlock.getBody(), paramIds, localIds, prevExecMethodName, deviceKernelName));
       loopStack.pop();
-      return Bcons.FOR(forBlock.getInitBBlock(), forBlock.getCondBBlock(), forBlock.getIterBBlock(), body);
+      if(prevExecMethodName != null && prevExecMethodName.equals("thread_x")){
+	return Bcons.FOR(forBlock.getInitBBlock(), forBlock.getCondBBlock(), forBlock.getIterBBlock(), body);
+      }
+      forBlock.Canonicalize();
+      if(forBlock.isCanonical()){
+	Ident iterator = Ident.Local("_ACC_loop_iter_" + forBlock.getInductionVar().getName(), forBlock.getInductionVar().Type());
+	Block mainLoop = Bcons.FOR(Xcons.Set(iterator.Ref(), forBlock.getLowerBound()),
+	    	Xcons.binaryOp(Xcode.LOG_LT_EXPR, iterator.Ref(), forBlock.getUpperBound()),
+	    	Xcons.asgOp(Xcode.ASG_PLUS_EXPR, iterator.Ref(), forBlock.getStep()),
+	    	Bcons.COMPOUND(body));
+	Xobject tidSym = Xcons.Symbol(Xcode.VAR, Xtype.intType, "_ACC_thread_x_id");
+	Block endIf = Bcons.IF(Xcons.binaryOp(Xcode.LOG_EQ_EXPR, tidSym, Xcons.IntConstant(0)), Bcons.Statement(Xcons.Set(forBlock.getInductionVar(), iterator.Ref())), null); 
+	Block syncThreadBlock = ACCutil.createFuncCallBlock("_ACC_GPU_M_BARRIER_THREADS", Xcons.List());
+	BlockList resultBody = Bcons.blockList(mainLoop,endIf,syncThreadBlock);
+	resultBody.addIdent(iterator);
+	XobjList declList = Xcons.List(Xcons.List(Xcode.VAR_DECL, iterator, null, null));
+	resultBody.setDecls(declList);
+	Ident orgIterId = forBlock.findVarIdent(forBlock.getInductionVar().getName());
+	replaceVar(mainLoop, orgIterId, iterator);
+	return Bcons.COMPOUND(resultBody);
+      }else{
+	ACC.fatal("non canonical loop");
+      }
     }
 
     String execMethodName = gpuManager.getMethodName(forBlock);
@@ -976,8 +1123,18 @@ public class ACCgpuKernel {
 	deviceKernelCallArgs.add(Xcons.Cast(Xtype.Pointer(varId.Type()), devPtrId.Ref()));
       }else{
 	Ident paramId = makeParamId_new(varId);
-	launchFuncParamIds.add(paramId);
-	deviceKernelCallArgs.add(paramId.Ref());
+	switch(varId.Type().getKind()){
+	case Xtype.ARRAY:
+	case Xtype.POINTER:
+	  launchFuncParamIds.add(paramId);
+	  Ident paramDevId = Ident.Param("_ACC_gpu_dev_"+paramId.getName(), paramId.Type());
+	  launchFuncParamIds.add(paramDevId);
+	  deviceKernelCallArgs.add(paramDevId.Ref());
+	  break;
+	default:
+	  launchFuncParamIds.add(paramId);
+	  deviceKernelCallArgs.add(paramId.Ref());
+	}
       }
     }
       
@@ -1172,7 +1329,7 @@ public class ACCgpuKernel {
     Set<Ident> outerIdSet = new HashSet();
     for(Block b : _kernelBlocks){
       Set<Ident> blockouterIdSet = collectOuterIdents(b); // = collectOuterIdents(b,b);
-      blockouterIdSet.removeAll(collectPrivatizedIdSet(b));
+      //blockouterIdSet.removeAll(collectPrivatizedIdSet(b));
       blockouterIdSet.removeAll(collectInductionVarIdSet(b));
       
       //blockouterIdSet.removeAll(_inductionVarIds);
@@ -1239,11 +1396,12 @@ public class ACCgpuKernel {
       ACCinfo info = ACCutil.getACCinfo(b);
       if(info == null) continue;
       CforBlock forBlock = (CforBlock)b;
+      if(gpuManager.getMethodName(forBlock).isEmpty()) continue;
       for(int i = info.getCollapseNum(); i > 0; --i){
         Ident indVarId = b.findVarIdent(forBlock.getInductionVar().getName());
         indVarIdSet.add(indVarId);
         if(i > 1){
-          forBlock = (CforBlock)(b.getBody().getHead());
+          forBlock = (CforBlock)(forBlock.getBody().getHead());
         }
       }
     }
@@ -1292,46 +1450,18 @@ public class ACCgpuKernel {
   }
   
   private void analyzeKernelBlock(Block block){
-    if(block == null) return;
-
-    if(block.Opcode() == Xcode.ACC_PRAGMA){
-      ACCinfo info = ACCutil.getACCinfo(block);
+    topdownBlockIterator blockIter = new topdownBlockIterator(block);
+    for(blockIter.init(); ! blockIter.end(); blockIter.next()){
+      Block b = blockIter.getBlock();
+      if(b.Opcode() != Xcode.ACC_PRAGMA) continue;
+      
+      ACCinfo info = ACCutil.getACCinfo(b);
       if(info.getPragma().isLoop()){
-        CforBlock forBlock = (CforBlock)block.getBody().getHead();
-        ACCutil.setACCinfo(forBlock, info);
-        Iterator<ACCpragma> execModelIter = info.getExecModels();
-        gpuManager.addLoop(execModelIter, forBlock);
-        BlockList forBody = forBlock.getBody();
-        if(forBody != null){
-          for(Block b = forBody.getHead(); b != null; b = b.getNext()){
-            analyzeKernelBlock(b);
-          }
-        }
-      }/*else if(info.getPragma() == ACCpragma.CACHE){
-        Block parentBlock = block.getParentBlock();
-        ACCinfo parentInfo = ACCutil.getACCinfo(parentBlock);
-        if(parentInfo != null){
-          parentInfo.decl
-        }
-      }*/
-    }else if(block.Opcode() == Xcode.FOR_STATEMENT){
-      for(Block b = block.getBody().getHead(); b != null; b = b.getNext()){
-        analyzeKernelBlock(b);
+	CforBlock forBlock = (CforBlock)b.getBody().getHead();
+	ACCutil.setACCinfo(forBlock, info);
+	Iterator<ACCpragma> execModelIter = info.getExecModels();
+	gpuManager.addLoop(execModelIter, forBlock);
       }
-//      ACCinfo info = ACCutil.getACCinfo(block);
-//      if(info == null){
-//        info = ACCutil.getACCinfo(block.getParentBlock());
-//        if(info != null){
-//          if(info.getPragma().isCompute()){
-//            //ACCutil.setACCinfo(block, info);
-//          }
-//        }
-//      }
-    }else if(block.Opcode() == Xcode.COMPOUND_STATEMENT){
-      for(Block b = block.getBody().getHead(); b != null; b = b.getNext()){
-        analyzeKernelBlock(b);
-      }
-    }else{
     }
   }
   
@@ -1372,6 +1502,26 @@ public class ACCgpuKernel {
     }
   }
   
+  private void replaceVar(Block b, Ident fromId, Ident toId){
+    BasicBlockExprIterator iter = new BasicBlockExprIterator(b);
+    for (iter.init(); !iter.end(); iter.next()) {
+      Xobject expr = iter.getExpr();
+      topdownXobjectIterator exprIter = new topdownXobjectIterator(expr);
+      for (exprIter.init(); !exprIter.end(); exprIter.next()) {
+        Xobject x = exprIter.getXobject();
+        if(x.Opcode() == Xcode.VAR){
+          String varName = x.getName();
+          if(fromId.getName().equals(varName)){
+            Ident id = findInnerBlockIdent(b, iter.getBasicBlock().getParent().getParent(), varName);
+            if(id == null){
+              exprIter.setXobject(toId.Ref());
+            }
+          }
+        }
+      }
+    }
+  }
+  
   private String getAccessedName(Xobject x){
     switch(x.Opcode()){
     case VAR:
@@ -1384,10 +1534,61 @@ public class ACCgpuKernel {
       return getAccessedName(x.getArg(0));
     case ARRAY_ADDR:
       return x.getName();
+    case POINTER_REF:
+      return getAccessedName(x.getArg(0));
+    case PLUS_EXPR:
+    case MINUS_EXPR:
+    {
+      
+    }
     default:
       ACC.fatal("not implemented type");
       return "";
     }
+  }
+  
+  private Xobject findAssignedXobject(Xobject x){
+    switch(x.Opcode()){
+    case VAR:
+    case ARRAY_ADDR:
+    case INT_CONSTANT:      
+      return x;
+    case ARRAY_REF:
+    case MEMBER_REF:
+    case ADDR_OF:
+    case POINTER_REF:
+    case CAST_EXPR:
+      return findAssignedXobject(x.getArg(0));
+    case PLUS_EXPR:
+    case MINUS_EXPR:
+    {
+      //only for pointer operation
+      if(! x.Type().isPointer()) return null;
+      Xobject lhs = findAssignedXobject(x.getArg(0));
+      Xobject rhs = findAssignedXobject(x.getArg(1));
+      if(lhs != null && lhs.Type().isPointer()){
+	return lhs;
+      }else if(rhs != null && rhs.Type().isPointer()){
+	return rhs;
+      }else{
+	ACC.fatal("no pointer type");
+      }
+    }
+    case MUL_EXPR:
+    case DIV_EXPR:
+      return null;
+    case FUNCTION_CALL:
+    {
+      Xobject funcAddr = x.getArg(0);
+      if(funcAddr.getName().startsWith("_XMP_M_GET_ADDR_E")){
+          Xobject args = x.getArg(1);
+          return args.getArg(0);
+      }
+    }
+    default:
+      ACC.fatal("not implemented type");
+    }
+    return null;
   }
   
   private Set<Ident> collectReadOnlyIdSet(){
@@ -1416,37 +1617,25 @@ public class ACCgpuKernel {
         for (exprIter.init(); !exprIter.end(); exprIter.next()) {
           Xobject x = exprIter.getXobject();
           String varName = null;
-          ///Xobject writtenObj = null;
           if(x.Opcode().isAsgOp()){
             Xobject lhs = x.getArg(0);
-            //writtenObj = lhs;
-            if(lhs.Opcode() == Xcode.VAR){
-              //writtenObj = lhs;
-              varName = lhs.getName();
-            }else if(lhs.Opcode() == Xcode.ARRAY_REF){
-              //writtenObj = lhs.getArg(0);
-              varName = lhs.getArg(0).getName();
-            }else if(lhs.Opcode() == Xcode.POINTER_REF){
-                if(lhs.getArg(0).getArg(0).Opcode()==Xcode.VAR){
-                  varName = lhs.getArg(0).getArg(0).getName();
-              }else{
-                  ACC.warning("collectReadOnlyIdSet: process was skipped.");
-                  continue;
-                }
-            }else if(lhs.Opcode() == Xcode.MEMBER_REF){
-              //varName = lhs.getArg(0).getArg(0).getName();
-              varName = getAccessedName(lhs);
+            Xobject assigned = findAssignedXobject(lhs);
+            if(assigned != null){
+              varName = assigned.getName();
             }else{
-              ACC.fatal("not implemented type");
+              ACC.warning("assigned xobject not found");
             }
           }else if(x.Opcode() == Xcode.PRE_INCR_EXPR || x.Opcode() == Xcode.PRE_DECR_EXPR){
-            //writtenObj = x.getArg(0);
             Xobject operand = x.getArg(0);
-            varName = getAccessedName(operand);
+            if(operand != null){
+              varName = getAccessedName(operand);              
+            }else{
+              ACC.warning("assigned xobject not found");
+            }
           }else{
             continue;
           }
-          Ident varId = iter.getBasicBlock().getParent().findVarIdent(varName);//x.findVarIdent(varName);
+          Ident varId = iter.getBasicBlock().getParent().findVarIdent(varName);
           
           if(outerIdMap.containsKey(varId)){
             VarAttribute va = outerIdMap.get(varId);

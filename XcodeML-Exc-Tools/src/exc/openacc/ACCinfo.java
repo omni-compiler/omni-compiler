@@ -466,22 +466,27 @@ public class ACCinfo {
 	String vName;
 	Ident vId;
 	if(!lower.isIntConstant()){
+	    if(lower.Opcode() == Xcode.VAR){
 	    vName = lower.getName();
 	    vId = block.findVarIdent(vName);
 	    if(vId == null){
 		throw new ACCexception("'" + vName + "' is undefined");
 	    }
 	    lower = vId.Ref();
+	    }
 	}
 	newSubscript.add(lower);
 	if(length != null){
 	    if(!length.isIntConstant()){
+	        if(length.Opcode() == Xcode.VAR){
+
 		vName = length.getName();
 		vId = block.findVarIdent(vName);
 		if(vId == null){
 		    throw new ACCexception("'" + vName + "' is undefined");
 		}
 		length = vId.Ref();
+	        }
 	    }
 	    newSubscript.add(length);
 	}
@@ -490,7 +495,7 @@ public class ACCinfo {
     }
     
     newACCvar = getACCvar(varName, newSubscripts);
-    if(newACCvar == null){
+    if(newACCvar == null || atr == ACCpragma.HOST || atr == ACCpragma.DEVICE){ //FIXME
       newACCvar = new ACCvar(newACCvarId, newSubscripts, atr, parentACCvar);
       varList.add(newACCvar);
     }else{
