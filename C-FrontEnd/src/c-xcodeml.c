@@ -2691,8 +2691,8 @@ outputXcodeML(FILE *fp, CExpr *expr)
 
     setTypeIds();
     setExprParent(expr, NULL);
-    //fprintf(fp, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", s_xmlEncoding);
-    fprintf(fp, "<?xml version=\"1.0/1.2\" encoding=\"%s\"?>\n", s_xmlEncoding);
+    fprintf(fp, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", s_xmlEncoding);
+    //    fprintf(fp, "<?xml version=\"1.0/1.2\" encoding=\"%s\"?>\n", s_xmlEncoding);
     if(EXPR_ISNULL(expr))
         outx_EXT_DEFS(fp, 0, NULL);
     else
