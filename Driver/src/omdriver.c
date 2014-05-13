@@ -1054,7 +1054,10 @@ int get_option_each_module( char *dst, opt_applier module )
 	if(strncmp(option," -J",3)==0)
 	{
 	    if(strcmp(get_lang_code(),LANGCODE_F)==0)
+		{	
 		strncpy(option," -M",3);
+		setenv("MOD_PATH",option,TRUE);
+		}
             else
 	       {
 		continue;
