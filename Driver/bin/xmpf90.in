@@ -10,11 +10,11 @@ BINDIR=`dirname $0`
 args=''
 for i in "$@"; do
     case "${i}" in
-	-fopenmp)
-	    args="${args} --Wf-fopenmp"
-		for j in "@OMF_CONF_LNK_OPT@"; do
-	    		args="${args} --Wn${j}"
-		done;;
+#	-fopenmp)
+#	    args="${args} --Wf-fopenmp"
+#		for j in "@OMF_CONF_LNK_OPT@"; do
+#	    		args="${args} --Wn${j}"
+#		done;;
         -tmp)
             args="${args} --Wn${i}";;
         *)

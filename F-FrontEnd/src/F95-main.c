@@ -106,6 +106,9 @@ char *myName;
 char *includeDirv[MAXINCLUDEDIRV + 1];
 int includeDirvI = 0;
 
+/* has termination element.  */
+char *modincludeDirv[MAXMODINCLUDEDIRV + 1];
+int modincludeDirvI = 0;
 /* -MC?  */
 int flag_module_compile = FALSE;
 
@@ -306,6 +309,27 @@ char *argv[];
                     "over the maximum include search dir. vector, %d",
                     MAXINCLUDEDIRV);
             }
+	}else if (strncmp(argv[0], "-M", 2) == 0) {
+            /* -I <anotherDir> or -I<anotherDir> */
+            char *path;
+            if (strlen(argv[0]) == 2) {
+                /* -I <anotherDir> */
+                if (--argc <= 0)
+                    cmd_error_exit("no arg for -M.");
+                argv++;
+                path = argv[0];
+            } else {
+                /* -I<anotherDir> */
+                path = argv[0] + 2;
+            }
+            if (modincludeDirvI < 256) {
+                modincludeDirv[modincludeDirvI++] = path;
+            } else {
+                cmd_error_exit(
+                    "over the maximum module include search dir. vector, %d",
+                    MAXMODINCLUDEDIRV);
+            }
+        
         } else if (strcmp(argv[0], "-f77") == 0) {
             langSpecSet = LANGSPEC_F77_SET;
         } else if (strcmp(argv[0], "-f90") == 0) {

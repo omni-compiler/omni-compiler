@@ -127,6 +127,7 @@
 /** option identifier */
 /** for Preprocessor */
 #define OPT_PP_INCPATH          "-I"
+#define OPT_PP_MODPATH          "-J"
 #define OPT_PP_D_MACRO          "-D"
 #define OPT_PP_U_MACRO          "-U"
 #define OPT_PP_P                "--Wp"
@@ -143,6 +144,7 @@
 #define OPT_X2L_B               "--Wb"
 /** for X2L */
 #define OPT_LX2X_TRANS          "-T"
+#define OPT_LX2X_MODPATH        "-M"
 #define OPT_NTV_N               "--Wn"
 #define OPT_LNK_L               "--Wl"
 /** for Driver */

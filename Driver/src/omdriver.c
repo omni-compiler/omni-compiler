@@ -17,7 +17,7 @@
 #include <libgen.h>
 
 #include "omdriver.h"
-
+extern const char* get_lang_code();
 static driver_manage_info g_manage_info;
 static char g_unrec_opt_str[OPT_BUF] = { 0 };
 static int  g_num_in_file = 0;
@@ -44,6 +44,7 @@ static const opt_pair opt_pair_table[] = {
      * |                  |         |           |
      */
     { OPT_PP_INCPATH,     MOD_PP,   1, 1, 0, 1, OPT_INVALID_CODE },
+    { OPT_PP_MODPATH,     MOD_PP,   1, 1, 0, 1, OPT_INVALID_CODE },
     { OPT_PP_D_MACRO,     MOD_PP,   1, 1, 0, 1, OPT_INVALID_CODE },
     { OPT_PP_U_MACRO,     MOD_PP,   1, 1, 0, 1, OPT_INVALID_CODE },
     { OPT_PP_P,           MOD_PP,   1, 0, 0, 0, OPT_INVALID_CODE },
@@ -59,6 +60,7 @@ static const opt_pair opt_pair_table[] = {
     { OPT_LNK_OUTPUT,     MOD_LNK,  0, 1, 0, 0, OPT_INVALID_CODE },
     { OPT_LNK_L,          MOD_LNK,  1, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_LX2X_TRANS,     MOD_DRV , 1, 1, 0, 1, OPT_INVALID_CODE },
+    { OPT_LX2X_MODPATH,   MOD_DRV , 1, 1, 0, 1, OPT_INVALID_CODE },
     { OPT_DRV_LANGID,     MOD_DRV,  0, 0, 0, 0, OPT_INVALID_CODE },
     /* DO_CPP (-cpp) must precede DONT_LINK (-c). */
     { OPT_DRV_DO_CPP,     MOD_DRV,  0, 0, 0, 0, OPT_INVALID_CODE },
@@ -373,6 +375,7 @@ void disp_help( void )
         "Preprocessor Options",
         "",
         "    -I[incpath]         add include path.",
+        "    -J[modpath]         add module path.",
         "    -D[macro]<=value>   define macro.",
         "    -U[macro]           undefine macro.",
         "    --Wp[option]        pass [option] as an option to the Preprocessor.",
@@ -904,7 +907,7 @@ int get_module_name( char *dst, opt_applier module )
     switch (module) {
     case MOD_PP:
         ret = get_config( config, CONFIG_PATH_PP );
-        break;
+    	 break;
     case MOD_L2X:
         ret = get_config( config, CONFIG_PATH_L2X );
         break;
@@ -1028,7 +1031,9 @@ int get_option_each_module( char *dst, opt_applier module )
             if (g_lang_id != LANGID_F || module != MOD_L2X)
                 continue;
             if(cmp_opt_value(
-                pair->opt_value, OPT_PP_INCPATH) == FALSE) {
+                pair->opt_value, OPT_PP_INCPATH) == FALSE &&
+		cmp_opt_value(
+                pair->opt_value, OPT_PP_MODPATH) == FALSE) {
                 continue;
             }
         }
@@ -1046,7 +1051,15 @@ int get_option_each_module( char *dst, opt_applier module )
                 next_opt_idx += strlen( set->opt_argument[j] ) + 1;
             }
         }
-
+	if(strncmp(option," -J",3)==0)
+	{
+	    if(strcmp(get_lang_code(),LANGCODE_F)==0)
+		strncpy(option," -M",3);
+            else
+	       {
+		continue;
+               }
+	}	
         strcat( option + next_opt_idx, CODE_SPACE );
         next_opt_idx++;
     }
