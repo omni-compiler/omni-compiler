@@ -6,20 +6,32 @@
 #  $
 
 BINDIR=`dirname $0`
-
 args=''
+prev_args=''
 for i in "$@"; do
+    case ${prev_args} in
+        -M)
+          args="${args} -M${i}"
+          prev_args="";;
+        *)
     case "${i}" in
-#	-fopenmp)
-#	    args="${args} --Wf-fopenmp"
-#		for j in "@OMF_CONF_LNK_OPT@"; do
-#	    		args="${args} --Wn${j}"
-#		done;;
+#       -fopenmp)
+#           args="${args} --Wf-fopenmp"
+#               for j in "-fopenmp -lgomp"; do
+#                       args="${args} --Wn${j}"
+#               done;;
+        -J?*)
+           foo=`echo ${i}|sed "s/-J\(.*\)/-M\1/"`
+           args="${args} ${foo}";;
+        -J)
+           prev_args="-M";;
         -tmp)
             args="${args} --Wn${i}";;
         *)
-            args="${args} ${i}";;
+            args="${args} ${i}"
+            prev_args="";;
     esac
+  esac
 done
 
 set -- ${args}

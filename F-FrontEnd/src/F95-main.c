@@ -125,6 +125,7 @@ usage()
         /* "-yd", */
         "-o [outputfile]           specify output file path.",
         "-I [dirpath]              specify include directory path.",
+        "-M [dirpath]              specify module include directory path.",
         "-fopenmp                  enable openmp translation.",
         "-fxmp                     enable XcalableMP translation.",
         "-Kscope-omp               enable conditional compilation.",
@@ -310,16 +311,16 @@ char *argv[];
                     MAXINCLUDEDIRV);
             }
 	}else if (strncmp(argv[0], "-M", 2) == 0) {
-            /* -I <anotherDir> or -I<anotherDir> */
+            /* -M <anotherDir> or -M<anotherDir> */
             char *path;
             if (strlen(argv[0]) == 2) {
-                /* -I <anotherDir> */
+                /* -M <anotherDir> */
                 if (--argc <= 0)
                     cmd_error_exit("no arg for -M.");
                 argv++;
                 path = argv[0];
             } else {
-                /* -I<anotherDir> */
+                /* -M<anotherDir> */
                 path = argv[0] + 2;
             }
             if (modincludeDirvI < 256) {
