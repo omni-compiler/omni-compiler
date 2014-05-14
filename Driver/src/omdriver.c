@@ -54,7 +54,7 @@ static const opt_pair opt_pair_table[] = {
     { OPT_L2X_F,          MOD_L2X,  1, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_L2X_FOPENMP,    MOD_L2X,  1, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_LX2X_X,         MOD_LX2X, 1, 0, 0, 0, OPT_INVALID_CODE },
-    { OPT_PP_MODPATH,     MOD_LX2X, 1, 1, 0, 1, OPT_INVALID_CODE },
+    { OPT_LX2X_MODPATH,   MOD_LX2X, 1, 1, 0, 1, OPT_INVALID_CODE },
     { OPT_X2L_B,          MOD_X2L,  1, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_NTV_N,          MOD_NTV,  1, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_LNK_OUTPUT,     MOD_LNK,  0, 1, 0, 0, OPT_INVALID_CODE },
@@ -1033,7 +1033,7 @@ int get_option_each_module( char *dst, opt_applier module )
             if(cmp_opt_value(
                 pair->opt_value, OPT_PP_INCPATH) == FALSE && 
 		cmp_opt_value(
-                pair->opt_value, OPT_PP_MODPATH) == FALSE) {
+                pair->opt_value, OPT_LX2X_MODPATH) == FALSE) {
                 continue;
             }
         }
