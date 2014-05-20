@@ -20,7 +20,7 @@ fi
 #--- decode space characters, corresponding to the modification of omdriver.c
 #--- (ID=278)
 OM_OPTION_ARR=()
-for opt in ${OM_OPTIONS_ENCODED}; do
+for opt in ${OM_OPTIONS}; do
     opt1=$(echo $opt | sed 's/\\s/ /g
                             s/\\t/\t/g
                             s/\\\\/\\/g')

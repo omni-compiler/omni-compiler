@@ -937,56 +937,10 @@ int get_module_name( char *dst, opt_applier module )
 
 
 /**
- * concat option string except "W"
+ * string concat and encoding for handling space characters (ID=278)
+ * This function is called only from get_option_without_w().
  *
  * */
-static void strcat_quoted_V1( char *dst, char *word )
-{
-    int i;
-    unsigned c;
-    char *pos;
-
-    pos = dst + strlen(dst);
-    *pos++ = '\'';
-
-    for (i = 0; i < strlen(word); i++) {
-        if ((c = word[i]) == '\'') {
-            memcpy(pos, "\'\\\'\'", 4);       /* add '\'' */
-            pos += 4;
-        } else {
-            *pos++ = c;
-        }
-    }
-
-    *pos++ = '\'';
-    *pos++ = '\0';
-}
-
-static void strcat_quoted_V2( char *dst, char *word )
-{
-    int i;
-    unsigned c;
-    char *pos;
-
-    pos = dst + strlen(dst);
-
-    for (i = 0; i < strlen(word); i++) {
-        switch (c = word[i]) {
-        case '\'':
-        case '\"':
-        case ' ':
-        case '\\':
-            *pos++ = '\\';
-            break;
-        default:
-            break;
-        }
-        *pos++ = c;
-    }
-
-    *pos++ = '\0';
-}
-
 static void strcat_encode( char *dst, char *word )
 {
     int i;
@@ -1022,25 +976,11 @@ static void strcat_encode( char *dst, char *word )
     *pos++ = '\0';
 }
 
-static void strcat_quoted_V4( char *dst, char *word )
-{
-    int i;
-    unsigned c;
-    char *pos;
 
-    pos = dst + strlen(dst);
-
-    for (i = 0; i < strlen(word); i++) {
-        if ((c = word[i]) == ' ') {
-            *pos++ = CODE_SPACE_ALTER;
-        } else {
-            *pos++ = c;
-        }
-    }
-
-    *pos++ = '\0';
-}
-
+/**
+ * concat option string except "W"
+ *
+ * */
 int get_option_without_w( char *dst, char *src, int opt_tbl_idx )
 {
     int ret;
