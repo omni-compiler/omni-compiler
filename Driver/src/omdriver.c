@@ -118,7 +118,6 @@ cmp_opt_value( char *opt_value, char *opt_src )
 {
     int idx_opt_value = 0;
     int opt_src_len = strlen(opt_src);
-    int opt_value_len = strlen(opt_value);
 
 /*     while ((idx_opt_value < opt_value_len) && */
 /*             (idx_opt_value < opt_src_len)) { */
@@ -941,9 +940,110 @@ int get_module_name( char *dst, opt_applier module )
  * concat option string except "W"
  *
  * */
+static void strcat_quoted_V1( char *dst, char *word )
+{
+    int i;
+    unsigned c;
+    char *pos;
+
+    pos = dst + strlen(dst);
+    *pos++ = '\'';
+
+    for (i = 0; i < strlen(word); i++) {
+        if ((c = word[i]) == '\'') {
+            memcpy(pos, "\'\\\'\'", 4);       /* add '\'' */
+            pos += 4;
+        } else {
+            *pos++ = c;
+        }
+    }
+
+    *pos++ = '\'';
+    *pos++ = '\0';
+}
+
+static void strcat_quoted_V2( char *dst, char *word )
+{
+    int i;
+    unsigned c;
+    char *pos;
+
+    pos = dst + strlen(dst);
+
+    for (i = 0; i < strlen(word); i++) {
+        switch (c = word[i]) {
+        case '\'':
+        case '\"':
+        case ' ':
+        case '\\':
+            *pos++ = '\\';
+            break;
+        default:
+            break;
+        }
+        *pos++ = c;
+    }
+
+    *pos++ = '\0';
+}
+
+static void strcat_encode( char *dst, char *word )
+{
+    int i;
+    unsigned c;
+    char *pos;
+
+    pos = dst + strlen(dst);
+
+    for (i = 0; i < strlen(word); i++) {
+        switch (c = word[i]) {
+        case ' ':
+            *pos++ = '\\';
+            *pos++ = 's';
+            break;
+        case '\t':
+            *pos++ = '\\';
+            *pos++ = 't';
+            break;
+        case '\n':
+            *pos++ = '\\';
+            *pos++ = 'n';
+            break;
+        case '\\':
+            *pos++ = '\\';
+            *pos++ = '\\';
+            break;
+        default:
+            *pos++ = c;
+            break;
+        }
+    }
+
+    *pos++ = '\0';
+}
+
+static void strcat_quoted_V4( char *dst, char *word )
+{
+    int i;
+    unsigned c;
+    char *pos;
+
+    pos = dst + strlen(dst);
+
+    for (i = 0; i < strlen(word); i++) {
+        if ((c = word[i]) == ' ') {
+            *pos++ = CODE_SPACE_ALTER;
+        } else {
+            *pos++ = c;
+        }
+    }
+
+    *pos++ = '\0';
+}
+
 int get_option_without_w( char *dst, char *src, int opt_tbl_idx )
 {
-    int ret = SUCCESS;
+    int ret;
     unsigned char w_pp     = FALSE;
     unsigned char w_l2x    = FALSE;
     unsigned char w_lx2x   = FALSE;
@@ -960,9 +1060,11 @@ int get_option_without_w( char *dst, char *src, int opt_tbl_idx )
     w_native = (strcmp( pair->opt_value, OPT_NTV_N ) == 0);
     w_linker = (strcmp( pair->opt_value, OPT_LNK_L ) == 0);
     if (w_pp || w_l2x || w_lx2x || w_x2l || w_native || w_linker) {
-        strcat( dst, src + strlen(OPT_PP_P));
+        strcat_encode( dst, src + strlen(OPT_PP_P));
+        //        strcat( dst, src + strlen(OPT_PP_P));
     } else {
-        strcat( dst, src );
+        strcat_encode( dst, src );
+        //        strcat( dst, src );
     }
     strcat(dst, " ");
 
@@ -970,6 +1072,7 @@ int get_option_without_w( char *dst, char *src, int opt_tbl_idx )
 
     return ret;
 }
+
 
 
 /**

@@ -17,6 +17,16 @@ if [ -z "${INPFILE}" ]; then
     exit 1
 fi
 
+#--- decode space characters, corresponding to the modification of omdriver.c
+#--- (ID=278)
+OM_OPTION_ARR=()
+for opt in ${OM_OPTIONS_ENCODED}; do
+    opt1=$(echo $opt | sed 's/\\s/ /g
+                            s/\\t/\t/g
+                            s/\\\\/\\/g')
+    OM_OPTION_ARR=( "${OM_OPTION_ARR[@]}" "$opt1" )
+done
+
 if [ ! -z "${OM_TRANSLATORS}" ]; then
     OM_OPTIONS="${OM_OPTIONS} -I${OMNI_HOME}/include"
     for TID in ${OM_TRANSLATORS}; do
@@ -31,10 +41,13 @@ if [ ! -z "${OM_TRANSLATORS}" ]; then
 fi
 
 GASNET_CPPFLAGS="@GASNET_CPPFLAGS@"
-CMD="${PP} ${OM_OPTIONS} ${GASNET_CPPFLAGS} ${INPFILE}"
+CMD=${PP}
+OPTION_ARR=( "${OM_OPTION_ARR[@]}" ${GASNET_CPPFLAGS} ${INPFILE} )
+
+set -- "${OPTION_ARR[@]}"
 
 if [ "${OM_VERBOSE}" = "1" ]; then
-    echo $CMD \> ${OUTFILE}
+    echo $CMD "$@" \> ${OUTFILE}
 fi
 
-$CMD > ${OUTFILE} || exit $?
+$CMD "$@" > ${OUTFILE} || exit $?

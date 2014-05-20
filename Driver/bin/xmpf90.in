@@ -7,22 +7,24 @@
 
 BINDIR=`dirname $0`
 
-args=''
-for i in "$@"; do
-    case "${i}" in
-#	-fopenmp)
-#	    args="${args} --Wf-fopenmp"
-#		for j in "@OMF_CONF_LNK_OPT@"; do
-#	    		args="${args} --Wn${j}"
-#		done;;
+i=0
+for arg in "$@"; do
+    case "$arg" in
+#        -fopenmp)
+#            args[$i]="--Wf-fopenmp"
+#            for arg2 in "@OMF_CONF_LNK_OPT@"; do
+#                i=$(expr $i + 1)
+#               args[$i]="--Wn$arg2"
+#            done ;;
         -tmp)
-            args="${args} --Wn${i}";;
+            args[$i]="--Wn$arg";;
         *)
-            args="${args} ${i}";;
+            args[$i]="$arg";;
     esac
+    i=$(expr $i + 1)
 done
 
-set -- ${args}
+set -- "${args[@]}"
 
 ${BINDIR}/omdriver --xf -Txmpf "$@"
 

@@ -42,6 +42,10 @@
 #define CNT_CONFIG              13    /** configuration value */
 #define MAX_LEN_EXTENSION       6     /** max length of extension */
 
+//#define ARG_SEPARATOR           "\n"   /** alternative char to CODE_SPACE (ID=278) */
+//#define ARG_SEPARATOR           "|"   /** alternative char to CODE_SPACE (ID=278) */
+#define CODE_SPACE_ALTER          "|"   /** alternative char to CODE_SPACE (ID=278) */
+
 /** default parent temporary directory */
 #define DEFAULT_TEMP_DIR     "/tmp"
 
