@@ -9,4 +9,4 @@ PP="@OM_EXEC_C_PP@"
 BECC_OPTION="@BECC_OPTION@"
 
 OM_OPTIONS="${OM_OPTIONS} ${BECC_OPTION}"
-. ${OMNI_HOME}/bin/ompp $*
+. ${OMNI_HOME}/bin/ompp "$@"

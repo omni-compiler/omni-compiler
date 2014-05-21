@@ -6,7 +6,7 @@
 #  $
 
 BINDIR=`dirname $0`
-${BINDIR}/omdriver --xf -I@OMNI_HOME@/include $@
+${BINDIR}/omdriver --xf -I@OMNI_HOME@/include "$@"
 
 exit $?
 

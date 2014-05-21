@@ -4,4 +4,4 @@
 # $TSUKUBA_Copyright:
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
-. $OMNI_HOME/bin/omx2x $*
+. $OMNI_HOME/bin/omx2x "$@"

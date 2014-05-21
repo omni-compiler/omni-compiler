@@ -6,7 +6,7 @@
 #  $
 
 BINDIR=`dirname $0`
-${BINDIR}/omdriver --xc $@
+${BINDIR}/omdriver --xc "$@"
 
 exit $?
 

@@ -6,5 +6,5 @@
 #  $
 
 COMPILER="@OM_EXEC_F_COMPILER@"
-. ${OMNI_HOME}/bin/omnative $*
+. ${OMNI_HOME}/bin/omnative "$@"
 
