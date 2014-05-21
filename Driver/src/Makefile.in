@@ -219,6 +219,7 @@ BECC = @BECC@
 BECC_OMP_OPTION = @BECC_OMP_OPTION@
 BECC_OPTION = @BECC_OPTION@
 BEFC = @BEFC@
+BEFC_MODINC = @BEFC_MODINC@
 BEFC_OPTION = @BEFC_OPTION@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
@@ -494,7 +495,7 @@ sysconf_DATA = ../etc/omc.conf ../etc/omf.conf \
 omdriver_SOURCES = omdriver.c
 xmp_collect_init_SOURCES = xmp_collect_init.c
 xmp_collect_init_CPPFLAGS = -DNM="\"$(NM)\""
-AM_CFLAGS = -std=c99 -Wall
+AM_CFLAGS = -std=c99 -Wall -g
 all: all-am
 
 .SUFFIXES:

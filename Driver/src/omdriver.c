@@ -57,6 +57,7 @@ static const opt_pair opt_pair_table[] = {
     { OPT_LX2X_MODPATH,   MOD_LX2X, 1, 1, 0, 1, OPT_INVALID_CODE },
     { OPT_X2L_B,          MOD_X2L,  1, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_NTV_N,          MOD_NTV,  1, 0, 0, 0, OPT_INVALID_CODE },
+    { OPT_NTV_MODPATH,    MOD_NTV,  1, 1, 0, 1, OPT_INVALID_CODE },
     { OPT_LNK_OUTPUT,     MOD_LNK,  0, 1, 0, 0, OPT_INVALID_CODE },
     { OPT_LNK_L,          MOD_LNK,  1, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_LX2X_TRANS,     MOD_DRV , 1, 1, 0, 1, OPT_INVALID_CODE },
@@ -927,7 +928,6 @@ int get_module_name( char *dst, opt_applier module )
         ret = FAILED;
         break;
     }
-
     if (ret == SUCCESS) {
         strcpy( dst, config );
     }
@@ -1021,8 +1021,8 @@ int get_option_each_module( char *dst, opt_applier module )
 
         pair = &opt_pair_table[i];
         set  = &g_manage_info.options[i];
-
-        if(set->is_applied == FALSE)
+        
+	if(set->is_applied == FALSE)
             continue;
 
         if (pair->opt_applier != module) {
@@ -1031,11 +1031,12 @@ int get_option_each_module( char *dst, opt_applier module )
             if (g_lang_id != LANGID_F || module != MOD_L2X)
                 continue;
             if(cmp_opt_value(
-                pair->opt_value, OPT_PP_INCPATH) == FALSE && 
+                pair->opt_value, OPT_PP_INCPATH) == FALSE  &&
 		cmp_opt_value(
-                pair->opt_value, OPT_LX2X_MODPATH) == FALSE) {
+                pair->opt_value, OPT_LX2X_MODPATH) == FALSE) 
+		{
                 continue;
-            }
+           	}	
         }
 
         apply_cnt = pair->is_multiple ? set->apply_cnt : 1;
@@ -1115,7 +1116,6 @@ int exec_module( opt_applier id )
 
     /** get module string and options */
     ret = get_module_name( g_module_path, id );
-
     msg_normal("executing %s ...", g_module_path);
 
     ret = get_option_each_module( g_option_buf, id );
