@@ -22,7 +22,7 @@ doScalasca=0
 doTlog=0
 doProf=0
 export useDom=1
-args=''
+args=()
 for i in "$@"; do
     case "${i}" in
         -profile|-allprofile|-with-scalasca|-with-tlog)
@@ -37,28 +37,28 @@ for i in "$@"; do
                     doTlog=1;;
             esac
             doProf=1
-            args="${args} --Wx${i}";;
+            args=("${args[@]}" "--Wx${i}");;
         -enable-threads)
-            args="${args} --Wx${i} --Wl${i} --Wn-D_OPENMP=200203";;
+            args=("${args[@]}" "--Wx${i}" "--Wl${i}" "--Wn-D_OPENMP=200203");;
         -enable-gpu)
             if test @XMP_ENABLE_GPU@ -eq 1; then
-                args="${args} --Wx${i} --Wl${i} --Wn${i}"
+                args=("${args[@]}" "--Wx${i}" "--Wl${i}" "--Wn${i}")
             else
                 echo "warning: -enable-gpu option is unavailable, rebuild the compiler with ./configure --enable-xmpgpu"
             fi;;
         -tmp)
-            args="${args} --Wn${i}";;
+            args=("${args[@]}" "--Wn${i}");;
 	-use-relaxer)
 	    export useDom=0;;
         *)
-            args="${args} ${i}";;
+            args=("${args[@]}" "${i}");;
     esac
 done
 
 if test ${useDom} -eq 0; then
-    args="${args} --Wx-use-relaxer"
+    args=("${args[@]}" "--Wx-use-relaxer")
 else
-    args="${args} --Wf-fxmp"
+    args=("${args[@]}" "--Wf-fxmp")
 fi
 
 if test ${selective_profile} -eq 1 -a ${all_profile} -eq 1; then
@@ -76,7 +76,7 @@ fi
 if test ${doScalasca} -eq 1; then
     if test ${all_profile} -eq 0 -a ${selective_profile} -eq 0; then
         all_profile=1
-	args="${args} --Wx-allprofile"
+	args=("${args[@]}" "--Wx-allprofile")
     fi
 fi
 
@@ -85,7 +85,7 @@ fi
 if test ${doTlog} -eq 1; then
     if test ${all_profile} -eq 0 -a ${selective_profile} -eq 0; then
         all_profile=1
-	args="${args} --Wx-allprofile"
+	args=("${args[@]}" "--Wx-allprofile")
     fi
 fi
 
@@ -100,18 +100,18 @@ if test ${doScalasca} -eq 1; then
         error "environmental variable SCALASCA_HOME not set."
         exit 1
     fi
-    args="--Wn-DEPIK --Wn-I${SCALASCA_HOME}/include ${args} --Wl-prof-scalasca"
+    args=("--Wn-DEPIK" "--Wn-I${SCALASCA_HOME}/include" "${args[@]}" "--Wl-prof-scalasca")
 elif test ${doTlog} -eq 1; then
     PREFIX=@prefix@
     TLOG_MPI_LIB=${PREFIX}/lib
-    args="--Wn-I${TLOG_MPI_LIB} ${args} --Wl-prof-tlog"
+    args=("--Wn-I${TLOG_MPI_LIB}" "${args[@]}" "--Wl-prof-tlog")
 fi
 
 if test ${doProf} -eq 1 -a ${doScalasca} -eq 0; then
-    args="${args} --Wl-ltlog_mpi"
+    args=("${args[@]}" "--Wl-ltlog_mpi")
 fi
 
-set -- ${args}
+set -- "${args[@]}"
 
 exec ${BINDIR}/omdriver --xc -Txmp "$@"
 
