@@ -11,7 +11,7 @@ prev_args=''
 for i in "$@"; do
     case ${prev_args} in
         -M)
-          args="${args} -M${i}"
+          args="${args} -M${i} -m{i}"
           prev_args="";;
         *)
     case "${i}" in
@@ -22,7 +22,8 @@ for i in "$@"; do
 #               done;;
         -J?*)
            foo=`echo ${i}|sed "s/-J\(.*\)/-M\1/"`
-           args="${args} ${foo}";;
+           bar=`echo ${i}|sed "s/-J\(.*\)/-m\1/"`
+           args="${args} ${foo} ${bar}";;
         -J)
            prev_args="-M";;
         -tmp)

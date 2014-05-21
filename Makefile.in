@@ -102,7 +102,7 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/Driver/atool/src/include/nata/Makefile.in \
 	$(top_srcdir)/Driver/atool/src/include/nata/nata_platform.h.in \
 	$(top_srcdir)/Driver/atool/src/cmd/Makefile.in \
-	$(top_srcdir)/Driver/atool/src/cmd/paths.h.in README \
+	$(top_srcdir)/Driver/atool/src/cmd/paths.h.in \
 	./buildutils/compile ./buildutils/config.guess \
 	./buildutils/config.sub ./buildutils/depcomp \
 	./buildutils/install-sh ./buildutils/missing \
@@ -260,6 +260,7 @@ BECC = @BECC@
 BECC_OMP_OPTION = @BECC_OMP_OPTION@
 BECC_OPTION = @BECC_OPTION@
 BEFC = @BEFC@
+BEFC_MODINC = @BEFC_MODINC@
 BEFC_OPTION = @BEFC_OPTION@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@

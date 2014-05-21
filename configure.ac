@@ -611,23 +611,28 @@ if test "$target" != "$host"; then
     BECC="mpifccpx"
     BEFC="mpifrtpx"
     BECC_OPTION="-Xg -noansi -Kfast"
+    BEFC_MODINC="-M"
   elif test "$target" = "MIC-linux-gnu"; then
     BECC="mpiicc"
     BEFC="mpiifort"
+    BEFC_MODINC="-module"
   elif test "$target" = "Cray-linux-gnu"; then
     BECC="cc"
     BEFC="ftn"
     BECC_OPTION="-hgnu"
     IS_CRAY="Yes"
+    BEFC_MODINC="-J"
   elif test "$target" = "sx-nec-superux"; then
     BECC="sxmpic++"
     BEFC="sxmpif90"
     BECC_OPTION=""
+    BEFC_MODINC="-to"
   elif test "$target" = "powerpc-ibm-none"; then
     BECC="mpixlcxx_r"
     BEFC="mpixlf90_r"
     BEFC_OPTION="-qextname"
     BECC_OPTION=""
+    BEFC_MODINC="-I"
   elif test "$target" = "powerpc64-hitachi-aix"; then
     BECC="mpCC_r"
     BEFC="mpxlf90_r"
@@ -635,13 +640,14 @@ if test "$target" != "$host"; then
     BECC_OPTION="-qcpluscmt -q64"
     AIX_OPT="-maix64"
     IS_AIX="Yes"
+    BEFC_MODINC="-I"
   fi
 else  # if "--target" option is not used in ./configure
   BECC="mpicc"
   BEFC="mpif90"
+  BEFC_MODINC="-M"
 fi
 AC_SUBST(AIX_OPT)
-
 if test "$IS_AIX" = "Yes"; then
   AC_DEFINE(AIX_64BIT)
   AH_TEMPLATE(AIX_64BIT, [aix int64_t])
@@ -660,10 +666,10 @@ AC_ARG_WITH(backend-fc,
     [BEFC="${withval}"], [BEFC="${BEFC}"])
 
 # --------------------------------------------------------------------
-
 AC_SUBST(BECC)
 AC_SUBST(BEFC)
 
+AC_SUBST(BEFC_MODINC)
 
 AC_SUBST(IS_CRAY)
 AC_SUBST(IS_AIX)
@@ -798,11 +804,13 @@ if test $enableF2F = yes; then
       OMF_CONF_LX2X_OPT="-gnu"
       OMF_CONF_NTV_OPT="-ffree-form"
       OMF_CONF_LNK_OPT="-fopenmp -lgomp"
+      BEFC_MODINC="-J"  
       ;;
     *IFORT*)
       OMF_CONF_LX2X_OPT="-intel"
       OMF_CONF_NTV_OPT="-auto"
       OMF_CONF_LNK_OPT="-threads -openmp"
+      BEFC_MODINC="-module"
       ;;
     *)
       chk2=`$BEFC --version | head -n2 | tail -n1`
@@ -832,6 +840,7 @@ if test $enableF2F = yes; then
   AC_SUBST(OMF_CONF_NTV_OPT)
   AC_SUBST(OMF_CONF_LNK_OPT)
   AC_SUBST(BEFC_OPTION)
+  AC_SUBST(BEFC_MODINC)
   AC_PROG_FC_C_O
 fi
 
