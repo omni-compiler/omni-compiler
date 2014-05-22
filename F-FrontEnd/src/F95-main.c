@@ -107,8 +107,9 @@ char *includeDirv[MAXINCLUDEDIRV + 1];
 int includeDirvI = 0;
 
 /* has termination element.  */
-char *modincludeDirv[MAXMODINCLUDEDIRV + 1];
-int modincludeDirvI = 0;
+//char *modincludeDirv[MAXMODINCLUDEDIRV + 1];
+char *modincludeDirv = NULL;
+//int modincludeDirvI = 0;
 /* -MC?  */
 int flag_module_compile = FALSE;
 
@@ -323,13 +324,14 @@ char *argv[];
                 /* -M<anotherDir> */
                 path = argv[0] + 2;
             }
-            if (modincludeDirvI < 256) {
-                modincludeDirv[modincludeDirvI++] = path;
-            } else {
-                cmd_error_exit(
-                    "over the maximum module include search dir. vector, %d",
-                    MAXMODINCLUDEDIRV);
-            }
+	    modincludeDirv = path;
+            /* if (modincludeDirvI < 256) { */
+            /*     modincludeDirv[modincludeDirvI++] = path; */
+            /* } else { */
+            /*     cmd_error_exit( */
+            /*         "over the maximum module include search dir. vector, %d", */
+            /*         MAXMODINCLUDEDIRV); */
+            /* } */
         
         } else if (strcmp(argv[0], "-f77") == 0) {
             langSpecSet = LANGSPEC_F77_SET;
@@ -498,11 +500,22 @@ search_include_path(const char * filename)
 
     length = strlen(filename);
 
-    if (includeDirvI <= 0 ||
+    if ((includeDirvI <= 0 && modincludeDirv == NULL) ||
         (length >= 1 && strncmp("/", filename, 1) == 0) ||
         (length >= 2 && strncmp("./", filename, 2) == 0) ||
         (length >= 3 && strncmp("../", filename, 3) == 0)) {
         return filename;
+    }
+
+    if (modincludeDirv){
+        strcpy(path, modincludeDirv);
+        strcat(path, "/");
+        strcat(path, filename);
+
+        if ((fp = fopen(path, "r")) != NULL) {
+            fclose(fp);
+            return path;
+        }
     }
 
     for (i = 0; i < includeDirvI; i++) {
