@@ -196,8 +196,8 @@ extern void _XMP_threads_finalize(void);
 
 // ----- for coarray -------------------
 #if defined(_XMP_COARRAY_FJRDMA) || defined(_XMP_COARRAY_GASNET)
-#define _XMP_DEFAULT_COARRAY_HEAP_SIZE (256*1024*1024)  // 256MB
-#define _XMP_DEFAULT_COARRAY_STRIDE_SIZE (16*1024*1024)  // 16MB
+#define _XMP_DEFAULT_COARRAY_HEAP_SIZE (16*1024*1024)  // 16MB
+#define _XMP_DEFAULT_COARRAY_STRIDE_SIZE (1*1024*1024)  // 1MB
 #endif
 
 extern void _XMP_post_initialize();
