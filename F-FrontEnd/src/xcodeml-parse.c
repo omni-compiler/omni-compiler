@@ -168,6 +168,7 @@ xcodeml_ParseFile(const char *fileName) {
     xmlDocPtr doc;
     extern char *includeDirv[];
     extern int includeDirvI;
+    extern char *modincludeDirv;
     int i;
 
     XcodeMLNode *ret = NULL;
@@ -175,6 +176,19 @@ xcodeml_ParseFile(const char *fileName) {
     bool succeeded = false;
 
     doc = xmlReadFile(fileName, NULL, XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOWARNING);
+
+    if (!doc){
+
+      if (modincludeDirv){
+
+	strcpy(buff, modincludeDirv);
+	strcat(buff, "/");
+	strcat(buff, fileName);
+
+	doc = xmlReadFile(buff, NULL, XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOWARNING);
+      }
+	
+    }
 
     if (!doc){
 
