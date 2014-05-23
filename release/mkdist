@@ -28,29 +28,6 @@ if [ ! -e "${CPYRHTTXT}" ]; then
      exit 1
 fi
 
-echo "---"
-cat $CPYRHTTXT
-echo "---"
-echo "Is this $CPYRHTTXT OK ? (Yes/No)"
-while true; do
-  read answer
-  case $answer in
-  yes)
-    break
-    ;;
-  Yes)
-    break
-    ;;
-  no)
-    exit 1
-    ;;
-  *)
-    echo "Type Yes or No."
-    # LOOP
-    ;;
-  esac
-done
-
 ###################
 # Check Release Note
 ###################
@@ -59,28 +36,6 @@ if [ ! -e "${RELNAMETXT}" ]; then
      echo needed ${RELNAMETXT}.
      exit 1
 fi
-echo "---"
-cat $RELNAMETXT
-echo "---"
-echo "Is this $RELNAMETXT OK ? (Yes/No)"
-while true; do
-  read answer
-  case $answer in
-  yes)
-    break
-    ;;
-  Yes)
-    break
-    ;;
-  no)
-    exit 1
-    ;;
-  *)
-    echo "Type Yes or No."
-    # LOOP
-    ;;
-  esac
-done
 
 ###################
 # Create Pakcage
