@@ -47,17 +47,17 @@ for i in ${OM_OPTIONS}; do
             fi;;
         -tmp)
             cp ${INPFILE} __omni_tmp_${INPFILE_BASENAME};;
-	-m?*);;
-#                j=@BEFC_MODINC@
-#                case ${j} in
-#                -to);;
-#                -module)
-#                foo=`echo ${i} |sed "s/-m\(.*\)/${j} \1/"`
-#                  newOpts="${newOpts} ${foo}";;
-#                  *)
-#                  foo=`echo ${i} |sed "s/-m\(.*\)/${j}\1/"`
-#                  newOpts="${newOpts} ${foo}";; 
-#                esac;;
+	-m?*)
+                j=@BEFC_MODINC@
+                case ${j} in
+               -to);;
+                -module)
+                foo=`echo ${i} |sed "s/-m\(.*\)/${j} \1/"`
+                  newOpts="${newOpts} ${foo}";;
+                  *)
+                  foo=`echo ${i} |sed "s/-m\(.*\)/${j}\1/"`
+                  newOpts="${newOpts} ${foo}";; 
+                esac;;
         *)
             newOpts="${newOpts} ${i}";;
     esac
