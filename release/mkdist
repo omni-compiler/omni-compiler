@@ -62,8 +62,8 @@ echo expand a copyright and a release name.
   -release "`head -n1 ${RELNAMETXT}`"\
   $PACKAGE_DIR 
 
-echo delete .svn dirs
-find $PACKAGE_DIR -name \.svn -exec rm -rf \{\} \; 2> /dev/null
+echo delete .git dirs
+rm -rf .git
 
 echo configure
 ./configure > /dev/null
