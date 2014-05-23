@@ -347,7 +347,25 @@ void exe_system( char *shcmd )
  * */
 void disp_version( void )
 {
-    printf( "%s %s\n", PACKAGE_NAME, PACKAGE_VERSION );
+  char filename[100];
+  int SIZE = 100;
+  char buf[SIZE];
+  FILE *fp;
+
+  strcpy(filename, OMNI_HOME);
+  strcat(filename, "/etc/version");
+
+  if((fp=fopen(filename, "r")) == NULL){
+    printf("Cannot open %s\n", filename);
+    exit(1);
+  }
+  while(fgets(buf, SIZE, fp) != NULL){
+    printf("%s\n", buf);
+
+    break; // output only 1 line
+  }
+
+  fclose(fp);
 }
 
 
