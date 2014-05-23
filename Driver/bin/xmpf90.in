@@ -6,20 +6,31 @@
 #  $
 
 BINDIR=`dirname $0`
-
 args=()
+prev_args=''
 for i in "$@"; do
-    case "${i}" in
-#       -fopenmp)
-#           args=("${args[@]}" "--Wf-fopenmp")
-#           for j in "@OMF_CONF_LNK_OPT@"; do
-#               args=("${args[@]}" "--Wn${j}")
-#           done;;
-        -tmp)
-            args=("${args[@]}" "--Wn${i}");;
-        *)
-            args=("${args[@]}" "${i}");;
-    esac
+    if [ "${prev_args}" == "-M" ]; then
+        args=("${args[@]}" "-M${i}" "-m${i}")
+        prev_args=''
+    elif
+        case "${i}" in
+#           -fopenmp)
+#               args=("${args[@]}" "--Wf-fopenmp")
+#               for j in "@OMF_CONF_LNK_OPT@"; do
+#                   args=("${args[@]}" "--Wn${j}")
+#               done;;
+            -J?*)
+                foo=`echo ${i}|sed 's/^-J/-M/'`
+                bar=`echo ${i}|sed 's/^-J/-m/'`
+                args=("${args[@]}" "${foo}" "${bar}");;
+            -J)
+                prev_args="-M";;
+            -tmp)
+                args=("${args[@]}" "--Wn${i}");;
+            *)
+                args=("${args[@]}" "${i}");;
+        esac
+    fi
 done
 
 set -- "${args[@]}"
