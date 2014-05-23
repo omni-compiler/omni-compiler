@@ -29295,7 +29295,7 @@ ${MAKE} clean
 VERSIONTXT="./Driver/etc/version"
 if test -d .git; then
   VERSION=`git log --date=short --pretty=format:"%ad-%h" -1`
-  echo ${VERSION} > ${VERSIONTXT}
+  echo -n ${VERSION} > ${VERSIONTXT}
 else
-  echo ${XMPPKG_VERSION} > ${VERSIONTXT}
+  echo -n ${XMPPKG_VERSION} > ${VERSIONTXT}
 fi
