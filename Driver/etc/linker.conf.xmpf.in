@@ -11,15 +11,19 @@ PID=$$
 INIT_MODULE_OBJ="/tmp/_xmpf_init_${PID}.o"
 
 if [ "${IS_CRAY}" = "Yes" ]; then
-   CMD="@OMNI_HOME@/bin/xmp_collect_init --cc @BECC@ --PID ${PID} --F --OPTION -hgnu $*"
+   CMD="@OMNI_HOME@/bin/xmp_collect_init"
+   args=( --cc @BECC@ --PID ${PID} --F --OPTION -hgnu "$@" )
+   set -- "${args[@]}"
 else
-   CMD="@OMNI_HOME@/bin/xmp_collect_init --cc @BECC@ --PID ${PID} --F $*"
+   CMD="@OMNI_HOME@/bin/xmp_collect_init"
+   args=( --cc @BECC@ --PID ${PID} --F "$@" )
+   set -- "${args[@]}"
 fi
 
 if [ "${OM_VERBOSE}" = "1" ]; then
-    echo $CMD
+    echo $CMD "$@"
 fi
-$CMD
+$CMD "$@"
 
 for i in ${OM_OPTIONS}; do
     case ${i} in

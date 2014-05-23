@@ -6,4 +6,4 @@
 #  $
 
 X2L=${OMNI_HOME}/bin/F_Back
-. ${OMNI_HOME}/bin/omx2l $*
+. ${OMNI_HOME}/bin/omx2l "$@"

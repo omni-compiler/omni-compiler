@@ -7,17 +7,17 @@
 
 BINDIR=`dirname $0`
 
-args=''
+args=()
 for i in "$@"; do
     case "${i}" in
         -tmp)
-            args="${args} --Wn${i}";;
+            args=("${args[@]}" "--Wn${i}");;
         *)
-            args="${args} ${i}";;
+            args=("${args[@]}" "${i}");;
     esac
 done
 
-set -- ${args}
+set -- "${args[@]}"
 
 ${BINDIR}/omdriver --xf -Topenmp "$@"
 
