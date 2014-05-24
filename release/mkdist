@@ -76,6 +76,7 @@ echo "mkdist) touch configure"
 touch $PACKAGE_DIR/configure
 
 echo "mkdist) archiving"
+cp $PWD/Driver/etc/version $PACKAGE_DIR/Driver/etc/version
 cd $WORK_DIR
 tar cjf $PACKAGE_NAME.tar.bz2 $PACKAGE_NAME
 
