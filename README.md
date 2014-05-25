@@ -47,5 +47,3 @@ README
     -allprofile      Emit XMP directive profiling code for all directives
     -with-scalasca   Emit Scalasca instrumentation
     -with-tlog       Emit tlog instrumentation
-
-
