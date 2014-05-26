@@ -24,6 +24,9 @@ HOW TO INSTALL
  * Need to install GASNet (http://gasnet.lbl.gov) except for the K computer.
  * On the K computer, attach "--enable-fjrdma" option when executing ./configure.
 
+## Usage of OpenACC compiler
+ * Need to install CUDA (https://developer.nvidia.com/cuda-zone).
+
 # Install Step
 ## Configure
 ### On a general linux cluster
@@ -33,6 +36,9 @@ HOW TO INSTALL
 
  If you want to use Coarray functions
     $ ./configure --with-gasnetDir=[GASNet-INSTALL-DIR] --with-gasnet-conduit=[GASNet-Conduit] --prefix=[INSTALL-DIR]
+
+ If you want to use OpenACC compiler
+    $ ./configure --with-gpuDir=[CUDA-INSTALL-DIR] --enable-openacc --prefix=[INSTALL-DIR]
 
 ### On the K computer
     $ ./configure --target=Kcomputer-linux-gnu --enable-fjrdma --prefix=[INSTALL-DIR]

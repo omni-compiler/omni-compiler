@@ -15,7 +15,10 @@ README
 ## Compile
     $ xmpcc -O2 test.c -o test
     $ xmpf90 -O2 test.f90 -o test
-   
+
+## Compile (OpenACC)
+    $ ompcc -acc -O2 test.c -o test
+
 ## Run
  Please use the command for running mpi program on your environment.
     $ mpirun -np 4 test
