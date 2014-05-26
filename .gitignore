@@ -95,7 +95,6 @@ Driver/etc/pp.conf.xmp
 Driver/etc/pp.conf.xmpf
 Driver/etc/setup.conf
 Driver/etc/version
-Driver/etc/version.in
 Driver/etc/x2x.conf.acc
 Driver/etc/x2x.conf.openmp
 Driver/etc/x2x.conf.xmp
