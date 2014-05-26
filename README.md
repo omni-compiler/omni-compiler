@@ -22,7 +22,7 @@ README
 
 ## Environment Variable
 * XMP_COARRAY_HEAP_SIZE
- The heap memory size for using coarray. The default size is 256MB.
+ The default size is 16MB. Note that on the K computer this value is not used.
  If you want to change this size, please set a value by the Mega Byte.
 
     export XMP_COARRAY_HEAP_SIZE=128
