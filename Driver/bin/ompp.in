@@ -4,8 +4,8 @@
 # $TSUKUBA_Copyright:
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
-OUTFILE=$1
-INPFILE=$2
+OUTFILE="$1"
+INPFILE="$2"
 
 if [ -z "${OUTFILE}" ]; then
     echo output file not specified
@@ -20,7 +20,7 @@ fi
 if [ ! -z "${OM_TRANSLATORS}" ]; then
     OM_OPTIONS="${OM_OPTIONS} -I${OMNI_HOME}/include"
     for TID in ${OM_TRANSLATORS}; do
-	CONF="${OM_DRIVER_CONF_DIR}/pp.conf.${TID}"
+        CONF="${OM_DRIVER_CONF_DIR}/pp.conf.${TID}"
         if [ -r ${CONF} ]; then
             . ${CONF}
         else
@@ -30,11 +30,23 @@ if [ ! -z "${OM_TRANSLATORS}" ]; then
     done;
 fi
 
+#--- unescape space characters, which are espaced in omdriver.c (ID=278)
+OM_OPTION_ARR=()
+for opt in ${OM_OPTIONS}; do
+    opt1=$(echo $opt | sed 's/\\s/ /g
+                            s/\\t/\t/g
+                            s/\\n/\n/g
+                            s/\\\\/\\/g')
+    OM_OPTION_ARR=( "${OM_OPTION_ARR[@]}" "$opt1" )
+done
+
 GASNET_CPPFLAGS="@GASNET_CPPFLAGS@"
-CMD="${PP} ${OM_OPTIONS} ${GASNET_CPPFLAGS} ${INPFILE}"
+CMD=${PP}
+args=( "${OM_OPTION_ARR[@]}" ${GASNET_CPPFLAGS} "${INPFILE}" )
+set -- "${args[@]}"
 
 if [ "${OM_VERBOSE}" = "1" ]; then
-    echo $CMD \> ${OUTFILE}
+    echo $CMD "$@" \> "${OUTFILE}"
 fi
 
-$CMD > ${OUTFILE} || exit $?
+$CMD "$@" > "${OUTFILE}" || exit $?

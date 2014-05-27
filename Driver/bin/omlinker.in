@@ -4,9 +4,9 @@
 # $TSUKUBA_Copyright:
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
-OUTFILE=$1
+OUTFILE="$1"
 shift
-INPFILES=$@
+INPFILES=("$@")
 
 if [ -z "${OUTFILE}" ]; then
     echo output file not specified
@@ -27,10 +27,10 @@ fi
 
 newOpts=''
 for i in ${OM_OPTIONS}; do
-    case ${i} in
+    case "${i}" in
         -enable-gpu)
             if ls *.xmpgpu.o >/dev/null 2>&1; then
-                INPFILES="${INPFILES} *.xmpgpu.o"
+                INPFILES=("${INPFILES[@]}" *.xmpgpu.o)
             fi;;
         *)
             newOpts="${newOpts} ${i}";;
@@ -38,13 +38,25 @@ for i in ${OM_OPTIONS}; do
 done
 OM_OPTIONS="${newOpts}"
 
-CMD="${LINKER} ${OM_OPTIONS} ${INPFILES} ${LIBS}"
+#--- unescape space characters, which are espaced in omdriver.c (ID=278)
+OM_OPTION_ARR=()
+for opt in ${OM_OPTIONS}; do
+    opt1=$(echo $opt | sed 's/\\s/ /g
+                            s/\\t/\t/g
+                            s/\\n/\n/g
+                            s/\\\\/\\/g')
+    OM_OPTION_ARR=( "${OM_OPTION_ARR[@]}" "$opt1" )
+done
+
+CMD=${LINKER}
+args=( "${OM_OPTION_ARR[@]}" "${INPFILES[@]}" ${LIBS} )
+set -- "${args[@]}"
 
 if [ "${OM_VERBOSE}" = "1" ]; then
-    echo $CMD
+    echo $CMD "$@"
 fi
 
-$CMD
+$CMD "$@"
 v=$?
 rm -f ${INIT_MODULE_OBJ}
 exit $v

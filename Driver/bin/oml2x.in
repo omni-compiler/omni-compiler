@@ -4,8 +4,8 @@
 # $TSUKUBA_Copyright:
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
-OUTFILE=$1
-INPFILE=$2
+OUTFILE="$1"
+INPFILE="$2"
 
 if [ -z "${OUTFILE}" ]; then
     echo output file not specified
@@ -29,13 +29,25 @@ if [ ! -z "${OM_TRANSLATORS}" ]; then
     done;
 fi
 
-CMD="${L2X} ${OM_OPTIONS} ${INPFILE} -o ${OUTFILE}"
+#--- unescape space characters, which are espaced in omdriver.c (ID=278)
+OM_OPTION_ARR=()
+for opt in ${OM_OPTIONS}; do
+    opt1=$(echo $opt | sed 's/\\s/ /g
+                            s/\\t/\t/g
+                            s/\\n/\n/g
+                            s/\\\\/\\/g')
+    OM_OPTION_ARR=( "${OM_OPTION_ARR[@]}" "$opt1" )
+done
+
+CMD=${L2X}
+args=( "${OM_OPTION_ARR[@]}" "${INPFILE}" -o "${OUTFILE}" )
+set -- "${args[@]}"
 
 if [ "${OM_VERBOSE}" = "1" ]; then
-    echo $CMD
+    echo $CMD "$@"
 fi
 
-$CMD
+$CMD "$@"
 
 exit $?
 

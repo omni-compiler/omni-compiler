@@ -6,4 +6,4 @@
 #  $
 
 PP="@OM_EXEC_F_PP@"
-. ${OMNI_HOME}/bin/ompp $*
+. ${OMNI_HOME}/bin/ompp "$@"

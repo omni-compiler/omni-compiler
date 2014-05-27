@@ -7,4 +7,4 @@
 LIBS=""
 LINKER="@OM_EXEC_C_LINKER@"
 INIT_MODULE_OBJ="_xmpc_module_INIT.o"
-. $OMNI_HOME/bin/omlinker $*
+. $OMNI_HOME/bin/omlinker "$@"

@@ -92,7 +92,7 @@ public class omompx
       "  -with-tlog       Emit tlog insturumentation.",
       "",
       "  -enable-threads  enable 'threads' clause",
-      "  -enable-gpu	  enable xmp-dev directive/clauses"
+      "  -enable-gpu      enable xmp-dev directive/clauses"
     };
         
     for(String line : lines) {
