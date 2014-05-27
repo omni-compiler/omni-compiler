@@ -28,29 +28,6 @@ if [ ! -e "${CPYRHTTXT}" ]; then
      exit 1
 fi
 
-echo "---"
-cat $CPYRHTTXT
-echo "---"
-echo "Is this $CPYRHTTXT OK ? (Yes/No)"
-while true; do
-  read answer
-  case $answer in
-  yes)
-    break
-    ;;
-  Yes)
-    break
-    ;;
-  no)
-    exit 1
-    ;;
-  *)
-    echo "Type Yes or No."
-    # LOOP
-    ;;
-  esac
-done
-
 ###################
 # Check Release Note
 ###################
@@ -59,28 +36,6 @@ if [ ! -e "${RELNAMETXT}" ]; then
      echo needed ${RELNAMETXT}.
      exit 1
 fi
-echo "---"
-cat $RELNAMETXT
-echo "---"
-echo "Is this $RELNAMETXT OK ? (Yes/No)"
-while true; do
-  read answer
-  case $answer in
-  yes)
-    break
-    ;;
-  Yes)
-    break
-    ;;
-  no)
-    exit 1
-    ;;
-  *)
-    echo "Type Yes or No."
-    # LOOP
-    ;;
-  esac
-done
 
 ###################
 # Create Pakcage
@@ -89,14 +44,14 @@ WORK_DIR=../`basename $PWD`-dist
 PACKAGE_DIR=$WORK_DIR/$PACKAGE_NAME
 DOC_DIR=$PACKAGE_DIR/doc
 
-echo autogen.sh
+echo "mkdist) autogen.sh"
 ./autogen.sh
 
-echo delete dist dir
+echo "mkdist) delete dist dir"
 rm -rf $WORK_DIR
 mkdir $WORK_DIR
 
-echo copy whole files
+echo "mkdist) copy whole files"
 cp -r . $PACKAGE_DIR
 
 # expands keywords for a releasement.
@@ -107,24 +62,23 @@ echo expand a copyright and a release name.
   -release "`head -n1 ${RELNAMETXT}`"\
   $PACKAGE_DIR 
 
-echo delete .svn dirs
-find $PACKAGE_DIR -name \.svn -exec rm -rf \{\} \; 2> /dev/null
-
-echo configure
+echo "mkdist) configure"
 ./configure > /dev/null
 
-echo touch Makefile.in
+echo "mkdist) delete .git dirs"
+rm -rf $PACKAGE_DIR/.git
+rm -f  $PACKAGE_DIR/.gitignore
+
+echo "mkdist) touch Makefile.in"
 find $PACKAGE_DIR -name Makefile.in -exec touch \{\} \;
 
-sleep 1
-
-echo touch configure
+echo "mkdist) touch configure"
 touch $PACKAGE_DIR/configure
 
-echo archiving
+echo "mkdist) archiving"
+cp $PWD/Driver/etc/version $PACKAGE_DIR/Driver/etc/version
 cd $WORK_DIR
 tar cjf $PACKAGE_NAME.tar.bz2 $PACKAGE_NAME
 
-echo completed
-echo "Created package is " $WORK_DIR/$PACKAGE_NAME.tar.bz2
+echo "mkdist) Created package is " $WORK_DIR/$PACKAGE_NAME.tar.bz2
 

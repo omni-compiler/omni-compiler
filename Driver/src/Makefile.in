@@ -490,7 +490,7 @@ sysconf_DATA = ../etc/omc.conf ../etc/omf.conf \
 	../etc/pp.conf.xmp ../etc/native.conf.xmp ../etc/linker.conf.xmp ../etc/l2x.conf.xmp ../etc/x2x.conf.xmp \
 	../etc/pp.conf.xmpf ../etc/native.conf.xmpf ../etc/linker.conf.xmpf ../etc/l2x.conf.xmpf ../etc/x2x.conf.xmpf \
 	../etc/pp.conf.acc ../etc/native.conf.acc ../etc/linker.conf.acc ../etc/l2x.conf.acc ../etc/x2x.conf.acc \
-	../etc/setup.conf
+	../etc/setup.conf ../etc/version
 
 omdriver_SOURCES = omdriver.c
 xmp_collect_init_SOURCES = xmp_collect_init.c

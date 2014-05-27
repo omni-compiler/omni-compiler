@@ -11,7 +11,7 @@ prev_args=''
 for i in "$@"; do
     case ${prev_args} in
         -M)
-          args="${args} -M${i} -m{i}"
+          args="${args} -M${i} -m${i}"
           prev_args="";;
         *)
     case "${i}" in

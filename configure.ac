@@ -8,7 +8,7 @@ LT_PREREQ(2.4)
 # --------------------------------------------------------------------
 # Let the initiation begin....
 
-AC_INIT([Omni XcalableMP Compiler], [0.7.0], [xmp-users@hpcs.cs.tsukuba.ac.jp], [omni_xmp])
+AC_INIT([Omni Compiler], [0.8.0], [xmp-users@hpcs.cs.tsukuba.ac.jp], [omni_xmp])
 
 AC_CONFIG_AUX_DIR([./buildutils])
 AC_CONFIG_MACRO_DIR([./buildutils])
@@ -2158,3 +2158,12 @@ unset program_transform_name
 
 AC_OUTPUT
 ${MAKE} clean
+
+###################
+# Edit version file
+###################
+VERSIONTXT="./Driver/etc/version"
+if test -d .git; then
+  VERSION=`git log --date=short --pretty=format:"Release Day:%ad, Hash Value:%h" -1`
+  echo -n Version:${XMPPKG_VERSION}, ${VERSION} > ${VERSIONTXT}
+fi
