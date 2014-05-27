@@ -8,8 +8,8 @@
 module purge
 module load intelmpi/4.1.3
 cd $SLURM_SUBMIT_DIR
-mpirun -np 2 $TESTDIR/others/Fortran/exit
-mpirun -np 2 $TESTDIR/others/Fortran/module_test
+mpirun -np 2 $TESTDIR/others/Fortran/exit.x
+mpirun -np 2 $TESTDIR/others/Fortran/module_test.x
 mpirun -np 4 $TESTDIR/global-view/shadow-reflect/C/shadow_reflect.x
 mpirun -np 2 $TESTDIR/local-view/coarray/C/coarray_scalar.x
 mpirun -np 2 $TESTDIR/local-view/coarray/C/coarray_vector.x
