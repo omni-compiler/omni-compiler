@@ -1,0 +1,23 @@
+
+Tiny test progarams from OpenMP C API 1.0 Appendix A. Examples.
+
+NOTES:
+
+1. Following test programs are not suitable for the OpenMP
+   specfications, and compilation might be failed:
+
+  Compile failed:
+    tiny19-1.c tiny19-3.c tiny19-4.c tiny19-5.c
+    tiny22-2.c tiny22-3.c
+
+  Compiled successfully but execution result says "FAILED":
+    tiny19-2.c tiny20.c
+
+
+2. "tiny22-1.c" is a valid OpenMP'd program, but compilation with Omni
+   failed because of its bug.
+
+
+3. "tiny11.c" is a valid program and Omni can compile it successfully,
+   execution success EXCEPT SCASH configuration. Because OpenMP
+   runtime for SCASH doesn't support omp_set_thread_num().
