@@ -12519,15 +12519,11 @@ ac_config_files="$ac_config_files $LIBXMPF_DIR/Makefile"
 
 #----
 
-TESTS_DIR=tests
-ac_config_files="$ac_config_files $TESTS_DIR/C-test/Makefile"
-
-ac_config_files="$ac_config_files $TESTS_DIR/tiny/Makefile"
-
-ac_config_files="$ac_config_files $TESTS_DIR/clinpack/Makefile"
-
-ac_config_files="$ac_config_files $TESTS_DIR/F-test/OMP-test/Makefile"
-
+#TESTS_DIR=tests
+#AC_CONFIG_FILES($TESTS_DIR/C-test/Makefile)
+#AC_CONFIG_FILES($TESTS_DIR/tiny/Makefile)
+#AC_CONFIG_FILES($TESTS_DIR/clinpack/Makefile)
+#AC_CONFIG_FILES($TESTS_DIR/F-test/OMP-test/Makefile)
 
 # --------------------------------------------------------------------
 # First of all, check on what system we are running.
@@ -27578,10 +27574,6 @@ do
     "$LIBXMP_GPU_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_GPU_DIR/Makefile" ;;
     "$LIBXMPF_HEADER_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMPF_HEADER_DIR/Makefile" ;;
     "$LIBXMPF_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMPF_DIR/Makefile" ;;
-    "$TESTS_DIR/C-test/Makefile") CONFIG_FILES="$CONFIG_FILES $TESTS_DIR/C-test/Makefile" ;;
-    "$TESTS_DIR/tiny/Makefile") CONFIG_FILES="$CONFIG_FILES $TESTS_DIR/tiny/Makefile" ;;
-    "$TESTS_DIR/clinpack/Makefile") CONFIG_FILES="$CONFIG_FILES $TESTS_DIR/clinpack/Makefile" ;;
-    "$TESTS_DIR/F-test/OMP-test/Makefile") CONFIG_FILES="$CONFIG_FILES $TESTS_DIR/F-test/OMP-test/Makefile" ;;
     "$LIBOMPC_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBOMPC_DIR/Makefile" ;;
     "$LIBOMPF_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBOMPF_DIR/Makefile" ;;
     "$LIBTLOG_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBTLOG_DIR/Makefile" ;;
