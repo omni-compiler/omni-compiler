@@ -1,5 +1,5 @@
 C-FrontEnd/src/c-parser.output
-config.log
+./config.log
 C-BackEnd/Makefile
 C-BackEnd/ant.properties
 C-BackEnd/bin/C_Back
@@ -96,7 +96,7 @@ F-FrontEnd/src/F95-parser.c
 F-FrontEnd/src/F95-parser.output
 F-FrontEnd/src/F_Front
 F-FrontEnd/src/Makefile
-Makefile
+./Makefile
 XcodeML-Common/Makefile
 XcodeML-Common/ant.properties
 XcodeML-Common/build/
@@ -144,11 +144,8 @@ tests/F-test/OMP-test/Makefile
 tests/clinpack/Makefile
 tests/tiny/Makefile
 tests/xcalablemp/global-view/shadow-reflect/C/shadow_reflect.[ox]
-tests/xcalablemp/global-view/reduction/C/and.[ox]
-tests/xcalablemp/global-view/reduction/C/mult.[ox]
-tests/xcalablemp/global-view/reduction/C/plus.[ox]
-tests/xcalablemp/global-view/reduction/F/and.[ox]
-tests/xcalablemp/global-view/reduction/F/mult.[ox]
+tests/xcalablemp/global-view/reduction/C/*.[ox]
+tests/xcalablemp/global-view/reduction/F/*.[ox]
 tests/xcalablemp/local-view/coarray/C/coarray_put_1dim.[ox]
 tests/xcalablemp/local-view/coarray/C/coarray_get_1dim.[ox]
 tests/xcalablemp/local-view/coarray/C/coarray_put_[2-7]dims.[ox]

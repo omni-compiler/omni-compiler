@@ -1,0 +1,71 @@
+SHELL=/bin/sh
+
+SRCS = \
+	tiny01.c    tiny02.c    tiny03.c    tiny04.c    tiny05.c    tiny06.c    tiny07.c \
+	tiny08.c    tiny09.c    tiny10.c    tiny11.c    tiny12.c    tiny13.c    tiny14.c \
+	tiny15.c    tiny16.c    tiny18.c	tiny21.c \
+	tiny19-2.c  tiny20.c \
+#	tiny22-1.c \
+#	tiny19-1.c  tiny19-3.c  tiny19-4.c  tiny19-5.c  tiny22-2.c  tiny22-3.c
+
+
+PROJDIR	= $(shell pwd)/../..
+INCDIR	= $(PROJDIR)/include
+TMPDIR	= .
+PREFIX	= /home/mnakao/work/xmp-trunk
+CC		= $(PREFIX)/bin/omc2c
+CFLAGS	= -O -Topenmp -I$(INCDIR) \
+	--tempdir $(TMPDIR) --fixed-tempdir --stay-tempdir \
+	--Wf--no-warn-W002 --Wf--no-warn-W003 --Wx-dxcode
+
+all:	test
+
+fullbuild:
+	@for i in $(SRCS); do \
+		(EXE=./`basename $$i .c`; \
+			rm -f $$EXE; \
+			$(CC) $(CFLAGS) $$i -o $$EXE); \
+	done
+
+build:
+	@for i in $(SRCS); do \
+		(EXE=./`basename $$i .c`; \
+			if test ! -x $$EXE; then \
+				echo CC $$i; \
+				$(CC) $(CFLAGS) $$i -o $$EXE; \
+			fi); \
+	done
+	
+test:	build
+	@for i in $(SRCS); do \
+		(OMP_NUM_THREADS=16; export OMP_NUM_THREADS; \
+		OMP_NESTED=true; export OMP_NESTED; \
+			EXE=./`basename $$i .c`; \
+			if test -x $$EXE; then \
+				okStr=`$$EXE 2>&1 | grep "PASSED" || true`; \
+				if test ! -z "$$okStr"; then \
+					echo "$$EXE ...	PASSED"; \
+				else \
+					echo "$$EXE ...	FAILED"; \
+				fi; \
+			else \
+				exit 1; \
+			fi); \
+		(if test $$? -ne 0; then \
+			echo "can't test `basename $$i .c`."; \
+			fi); \
+	done
+
+install:
+	true
+
+clean:
+	@for i in $(SRCS); do \
+		(EXE=./`basename $$i .c`; \
+			rm -f $$EXE); \
+	done
+	rm -f *.o *~ core
+
+distclean:	clean
+	true
+
