@@ -22,8 +22,11 @@ run: $(EXES)
 	$(XRUN) -n 4 ./min.x
 	$(XRUN) -n 4 ./logical_add.x
 	$(XRUN) -n 4 ./logical_or.x
-	$(XRUN) -n 8 ./sum.x
-	$(XRUN) -n 4 ./mult2.x
+	$(XRUN) -n 8 ./sum.x	
+	$(XRUN) -n 8 ./sum2.x
+	$(XRUN) -n 8 ./mult2.x
+	$(XRUN) -n 8 ./or2.x
+	$(XRUN) -n 8 ./max2.x
 
 clean:
 	rm -f $(EXES) $(OBJS)
