@@ -7,6 +7,7 @@ int procs, id, mask, val, i, w, result = 0;
 int main(void){
   if(xmp_num_nodes() > 31){
     printf("%s\n","You have to run this program by less than 32 nodes.");
+    exit(1);
   }
 
   procs = xmp_num_nodes();
@@ -38,7 +39,3 @@ int main(void){
   }
   return 0;
 }
-      
-         
-      
-   

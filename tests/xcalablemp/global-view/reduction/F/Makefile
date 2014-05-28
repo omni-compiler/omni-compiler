@@ -19,6 +19,7 @@ run: $(EXES)
 	$(XRUN) -n 4 ./or.x
 	$(XRUN) -n 4 ./max.x
 	$(XRUN) -n 4 ./min.x
+	$(XRUN) -n 4 ./mult2.x
 
 clean:
 	rm -f $(EXES) $(OBJS)

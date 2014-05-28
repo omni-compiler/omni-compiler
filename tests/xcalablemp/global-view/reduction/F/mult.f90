@@ -62,6 +62,5 @@
          write(*,*) "ERROR"
          call exit(1)
       endif
-
 !$xmp end task
       end
