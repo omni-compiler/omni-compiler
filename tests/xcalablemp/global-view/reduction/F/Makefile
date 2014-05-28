@@ -16,6 +16,7 @@ all default: $(EXES)
 run: $(EXES)
 	$(XRUN) -n 4 ./and.x
 	$(XRUN) -n 4 ./mult.x
+	$(XRUN) -n 4 ./or.x
 
 clean:
 	rm -f $(EXES) $(OBJS)
