@@ -23,6 +23,7 @@ run: $(EXES)
 	$(XRUN) -n 4 ./iand.x
 	$(XRUN) -n 4 ./or.x
 	$(XRUN) -n 8 ./max2.x
+	$(XRUN) -n 8 ./min2.x
 
 clean:
 	rm -f $(EXES) $(OBJS)

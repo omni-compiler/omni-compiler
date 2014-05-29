@@ -27,6 +27,9 @@ run: $(EXES)
 	$(XRUN) -n 8 ./mult2.x
 	$(XRUN) -n 8 ./or2.x
 	$(XRUN) -n 8 ./max2.x
+	$(XRUN) -n 8 ./min2.x
+	$(XRUN) -n 8 ./logical_add2.x
+	$(XRUN) -n 8 ./logical_or2.x
 
 clean:
 	rm -f $(EXES) $(OBJS)
