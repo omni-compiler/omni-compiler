@@ -41,7 +41,8 @@ for i in ${OM_OPTIONS}; do
         -no-replace-pragma)
             NO_REPLACE_PRAGMA="1";;
 	-I*)
-	    INCLUDES="${INCLUDES} ${i}";;
+	    INCLUDES="${INCLUDES} ${i}"
+	    newOpts="${newOpts} ${i}";;
         *)
 	    newOpts="${newOpts} ${i}";;
     esac
