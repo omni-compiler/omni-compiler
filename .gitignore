@@ -144,8 +144,10 @@ tests/clinpack/Makefile
 tests/tiny/Makefile
 tests/xcalablemp/global-view/shadow-reflect/C/*.[ox]
 tests/xcalablemp/global-view/reduction/[C|F]/*.[ox]
-tests/xcalablemp/local-view/coarray/C/*.[ox]
-tests/xcalablemp/others/Fortran/*.[ox]
-tests/xcalablemp/others/Fortran/second.mod
-tests/xcalablemp/others/Fortran/second.xmod
-tests/xcalablemp/others/Fortran/mod
+tests/xcalablemp/global-view/task/[C|F]/*.[ox]
+tests/xcalablemp/local-view/coarray/[C|F]/*.[ox]
+tests/xcalablemp/local-view/post-wait/[C|F]/*.[ox]
+tests/xcalablemp/others/F/*.[ox]
+tests/xcalablemp/others/F/second.mod
+tests/xcalablemp/others/F/second.xmod
+tests/xcalablemp/others/F/mod

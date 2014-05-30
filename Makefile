@@ -421,7 +421,7 @@ TYPE_INT64 = long int
 VERSION = 0.8.0
 XCODEML_COMMON_DIR = XcodeML-Common
 XCODEML_EXC_TOOLS_DIR = XcodeML-Exc-Tools
-XMPPKG_CHANGELOG_DATE = Wed, 28 May 2014 16:06:54 +0900
+XMPPKG_CHANGELOG_DATE = Fri, 30 May 2014 18:40:27 +0900
 XMPPKG_GROUP = Development Languages
 XMPPKG_LICENSE = LGPLv2
 XMPPKG_MAINTAINER = Hitoshi Murai <h-murai@riken.jp>
@@ -549,9 +549,10 @@ XMPPKG_TMPDIR := $(XMPPKG_TMPDIR_TOP)/$(shell mktemp -u --tmpdir=/)
 DEB_VER_FILE = "/etc/debian_version"
 RH_REL_FILE = "/etc/redhat-release"
 BASE_TESTDIR = "tests/xcalablemp/"
-SUB_TESTDIRS = "others/Fortran/" "global-view/shadow-reflect/C/" \
+SUB_TESTDIRS = "others/F" "global-view/shadow-reflect/C/" \
 	"global-view/reduction/C" "global-view/reduction/F" \
-	$(am__append_4) $(am__append_5)
+	"global-view/task/C" "global-view/task/F" $(am__append_4) \
+	$(am__append_5)
 DELETABLES = \
 	C-BackEnd/ant.properties \
 	C-BackEnd/bin/C_Back \
