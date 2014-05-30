@@ -81,6 +81,7 @@ Driver/src/Makefile
 Driver/src/omdriver
 Driver/src/*.o
 Driver/src/xmp_collect_init
+Driver/src/om_replace_pragma
 F-BackEnd/Makefile
 F-BackEnd/ant.properties
 F-BackEnd/bin/F_Back
@@ -145,7 +146,9 @@ tests/tiny/Makefile
 tests/xcalablemp/global-view/shadow-reflect/C/*.[ox]
 tests/xcalablemp/global-view/reduction/[C|F]/*.[ox]
 tests/xcalablemp/local-view/coarray/C/*.[ox]
+tests/xcalablemp/others/C/*.[ox]
 tests/xcalablemp/others/Fortran/*.[ox]
 tests/xcalablemp/others/Fortran/second.mod
 tests/xcalablemp/others/Fortran/second.xmod
 tests/xcalablemp/others/Fortran/mod
+

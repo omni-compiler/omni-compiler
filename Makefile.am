@@ -64,7 +64,7 @@ release-deb:
 release: release-rpm release-deb
 
 BASE_TESTDIR="tests/xcalablemp/"
-SUB_TESTDIRS="others/Fortran/" "global-view/shadow-reflect/C/" "global-view/reduction/C" "global-view/reduction/F"
+SUB_TESTDIRS="others/C/" "others/Fortran/" "global-view/shadow-reflect/C/" "global-view/reduction/C" "global-view/reduction/F"
 if GASNET
 #  SUB_TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
    SUB_TESTDIRS += "local-view/coarray/C"
