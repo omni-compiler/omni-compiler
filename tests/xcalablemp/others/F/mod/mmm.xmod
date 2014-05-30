@@ -1,0 +1,16 @@
+<OmniFortranModule version="1.0">
+  <name>mmm</name>
+  <depends>
+  </depends>
+  <typeTable>
+  </typeTable>
+  <identifiers>
+    <id type="Fint" sclass="fsave" original_name="j" declared_in="mmm">
+      <name>j</name>
+    </id>
+  </identifiers>
+  <interfaceDecls>
+  </interfaceDecls>
+  <aux_info>
+  </aux_info>
+</OmniFortranModule>
