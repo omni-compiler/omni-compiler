@@ -50,8 +50,6 @@ for i in "$@"; do
             args="${args} --Wn${i}";;
 	-use-relaxer)
 	    export useDom=0;;
-	-disable-pragma-macro)
-	    args="${args} --Wp-no-replace-pragma";;
         *)
             args="${args} ${i}";;
     esac
