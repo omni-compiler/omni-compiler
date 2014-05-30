@@ -286,6 +286,9 @@ static int _XMP_compare_nodes(_XMP_nodes_t *a, _XMP_nodes_t *b) {
   return _XMP_N_INT_TRUE;
 }
 
+#include <stdlib.h>
+#include <stdio.h>
+
 _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim, int *dim_size, int is_static) {
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_dup(MPI_COMM_WORLD, comm);
@@ -295,6 +298,34 @@ _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim, int *dim_size, int is_stati
   // calc inherit info
   n->inherit_nodes = NULL;
   n->inherit_info = NULL;
+
+  // set dim_size if XMP_NODE_SIZEn is set.
+
+  int flag = 1;
+  int isize[dim];
+
+  for (int i = 0; i < dim; i++){
+    char name[20];
+    sprintf(name, "XMP_NODE_SIZE%d", i);
+    char *size = getenv(name);
+    if (!size){
+      flag = 0;
+      break;
+    }
+    else {
+      isize[i] = atoi(size);
+      if (isize[i] <=0 || isize[i] > _XMP_world_size){
+	flag = 0;
+	break;
+      }
+    }
+  }
+
+  if (flag){
+    for (int i = 0; i < dim; i++){
+      dim_size[i] = isize[i];
+    }
+  }
 
   // calc info
   _XMP_init_nodes_info(n, dim_size, is_static);
