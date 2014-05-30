@@ -6,6 +6,7 @@
 
       if(xmp_num_nodes().gt.31) then
          print *, 'You have to run this program by less than 32 nodes.'
+         call exit(1)
       endif
 
       procs = xmp_num_nodes()

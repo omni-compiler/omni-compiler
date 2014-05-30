@@ -14,14 +14,10 @@ all default: $(EXES)
 	$(XCC) -o $@ $<
 
 run: $(EXES)
-	$(XRUN) -n 4 ./and.x
 	$(XRUN) -n 4 ./mult.x
-	$(XRUN) -n 4 ./or.x
 	$(XRUN) -n 4 ./max.x
 	$(XRUN) -n 4 ./min.x
 	$(XRUN) -n 4 ./mult2.x
-	$(XRUN) -n 4 ./iand.x
-	$(XRUN) -n 4 ./or.x
 	$(XRUN) -n 8 ./max2.x
 	$(XRUN) -n 8 ./min2.x
 
