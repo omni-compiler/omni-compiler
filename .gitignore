@@ -81,6 +81,7 @@ Driver/src/Makefile
 Driver/src/omdriver
 Driver/src/*.o
 Driver/src/xmp_collect_init
+Driver/src/om_replace_pragma
 F-BackEnd/Makefile
 F-BackEnd/ant.properties
 F-BackEnd/bin/F_Back
