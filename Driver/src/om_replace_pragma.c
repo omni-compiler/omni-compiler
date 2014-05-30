@@ -351,7 +351,7 @@ static void preprocess(char *srcFileName){
   //fprintf(stderr, "pp \"%s\"\n", srcFileName);
   //init srcFile
   if(findProcessedFileName(srcFileName)){
-    fprintf(stderr, "loop exist\n");
+    fprintf(stderr, "error: \"%s\" was included more than once\n", srcFileName);
     exit(EXIT_FAILURE);
   }
   SrcFile *src = malloc(sizeof(SrcFile));
