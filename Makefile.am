@@ -64,7 +64,7 @@ release-deb:
 release: release-rpm release-deb
 
 BASE_TESTDIR  = "tests/xcalablemp/"
-SUB_TESTDIRS  = "others/F"
+SUB_TESTDIRS  = "others/F" "others/C"
 SUB_TESTDIRS += "global-view/shadow-reflect/C/"
 SUB_TESTDIRS += "global-view/reduction/C" "global-view/reduction/F"
 SUB_TESTDIRS += "global-view/task/C"  "global-view/task/F"

@@ -81,7 +81,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-bin_PROGRAMS = omdriver$(EXEEXT) xmp_collect_init$(EXEEXT)
+bin_PROGRAMS = omdriver$(EXEEXT) xmp_collect_init$(EXEEXT) \
+	om_replace_pragma$(EXEEXT)
 subdir = ./Driver/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -101,13 +102,16 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)" \
 	"$(DESTDIR)$(sysconfdir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_omdriver_OBJECTS = omdriver.$(OBJEXT)
-omdriver_OBJECTS = $(am_omdriver_OBJECTS)
-omdriver_LDADD = $(LDADD)
+om_replace_pragma_SOURCES = om_replace_pragma.c
+om_replace_pragma_OBJECTS = om_replace_pragma.$(OBJEXT)
+om_replace_pragma_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+am_omdriver_OBJECTS = omdriver.$(OBJEXT)
+omdriver_OBJECTS = $(am_omdriver_OBJECTS)
+omdriver_LDADD = $(LDADD)
 am_xmp_collect_init_OBJECTS =  \
 	xmp_collect_init-xmp_collect_init.$(OBJEXT)
 xmp_collect_init_OBJECTS = $(am_xmp_collect_init_OBJECTS)
@@ -173,8 +177,10 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(omdriver_SOURCES) $(xmp_collect_init_SOURCES)
-DIST_SOURCES = $(omdriver_SOURCES) $(xmp_collect_init_SOURCES)
+SOURCES = om_replace_pragma.c $(omdriver_SOURCES) \
+	$(xmp_collect_init_SOURCES)
+DIST_SOURCES = om_replace_pragma.c $(omdriver_SOURCES) \
+	$(xmp_collect_init_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -579,6 +585,10 @@ clean-binPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
+
+om_replace_pragma$(EXEEXT): $(om_replace_pragma_OBJECTS) $(om_replace_pragma_DEPENDENCIES) $(EXTRA_om_replace_pragma_DEPENDENCIES) 
+	@rm -f om_replace_pragma$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(om_replace_pragma_OBJECTS) $(om_replace_pragma_LDADD) $(LIBS)
 
 omdriver$(EXEEXT): $(omdriver_OBJECTS) $(omdriver_DEPENDENCIES) $(EXTRA_omdriver_DEPENDENCIES) 
 	@rm -f omdriver$(EXEEXT)
