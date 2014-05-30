@@ -518,8 +518,8 @@ int main(int argc, char* argv[])
 
   
   //output OM_PRAGMA def
-  fprintf(output, "#define " PRAGMA_NAME0 "(p) _Pragma(#p)\n");
-  fprintf(output, "#define " PRAGMA_NAME1 "(p) " PRAGMA_NAME0 "(p)\n");
+  fprintf(output, "#define " PRAGMA_NAME0 "(...) _Pragma(#__VA_ARGS__)\n");
+  fprintf(output, "#define " PRAGMA_NAME1 "(...) " PRAGMA_NAME0 "(__VA_ARGS__)\n");
 
   //preprocess
   fprintf(output, "# 1 \"%s\"\n", input_filename);
