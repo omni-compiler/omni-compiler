@@ -1,3 +1,8 @@
 - K.sh
  Sample job script for the K computer
- ex.) $ pjsub --interact K.sh
+ $ pjsub --interact K.sh
+
+- SLURM.sh
+ Sample SLURM job script.
+ $ cd (XMP Top Dir)
+ $ sbatch SLURM.sh

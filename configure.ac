@@ -264,11 +264,11 @@ AC_SUBST(LIBXMPF_DIR)
 
 #----
 
-TESTS_DIR=tests
-AC_CONFIG_FILES($TESTS_DIR/C-test/Makefile)
-AC_CONFIG_FILES($TESTS_DIR/tiny/Makefile)
-AC_CONFIG_FILES($TESTS_DIR/clinpack/Makefile)
-AC_CONFIG_FILES($TESTS_DIR/F-test/OMP-test/Makefile)
+#TESTS_DIR=tests
+#AC_CONFIG_FILES($TESTS_DIR/C-test/Makefile)
+#AC_CONFIG_FILES($TESTS_DIR/tiny/Makefile)
+#AC_CONFIG_FILES($TESTS_DIR/clinpack/Makefile)
+#AC_CONFIG_FILES($TESTS_DIR/F-test/OMP-test/Makefile)
 
 # --------------------------------------------------------------------
 # First of all, check on what system we are running.
