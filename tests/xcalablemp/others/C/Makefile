@@ -14,10 +14,17 @@ all default: $(EXES)
 .c.x:
 	$(XCC) -o $@ $<
 
-run: macro_in_pragma
+#special handling
+hyphen_d.x: hyphen_d.c
+	$(XCC) -o $@ $< -DDEFINED_AT_COMPILE_TIME='"happy'\ guppy\"
+
+run: macro_in_pragma hyphen_d
 
 macro_in_pragma:
 	$(XRUN) -n 4 macro_in_pragma.x
+
+hyphen_d:
+	$(XRUN) -n 4 hyphen_d.x
 
 clean:
 	rm -f $(EXES) $(C_OBJS)

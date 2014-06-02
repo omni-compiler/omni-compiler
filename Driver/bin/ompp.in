@@ -30,6 +30,32 @@ if [ ! -z "${OM_TRANSLATORS}" ]; then
     done;
 fi
 
+GASNET_CPPFLAGS="@GASNET_CPPFLAGS@"
+
+TMP_FILE="${INPFILE}"
+REPLACE_PRAGMA_CMD=""
+INCLUDES=""
+newOpts=""
+for i in ${OM_OPTIONS}; do
+    case ${i} in
+        -no-replace-pragma)
+            NO_REPLACE_PRAGMA="1";;
+        -I*)
+            INCLUDES="${INCLUDES} ${i}"
+            newOpts="${newOpts} ${i}";;
+        *)
+            newOpts="${newOpts} ${i}";;
+    esac
+done
+OM_OPTIONS="${newOpts}"
+
+if [ -z "${NO_REPLACE_PRAGMA}" ]; then
+    PID=$$
+    TMP_FILE="__omni_tmp__pp_${PID}.c"
+    REPLACE_PRAGMA_CMD="@OMNI_HOME@/bin/om_replace_pragma"
+    RPC_ARGS=( "${INPFILE}" -o "${TMP_FILE}" ${INCLUDES} )
+fi
+
 #--- unescape space characters, which are espaced in omdriver.c (ID=278)
 OM_OPTION_ARR=()
 for opt in ${OM_OPTIONS}; do
@@ -40,13 +66,30 @@ for opt in ${OM_OPTIONS}; do
     OM_OPTION_ARR=( "${OM_OPTION_ARR[@]}" "$opt1" )
 done
 
-GASNET_CPPFLAGS="@GASNET_CPPFLAGS@"
 CMD=${PP}
-args=( "${OM_OPTION_ARR[@]}" ${GASNET_CPPFLAGS} "${INPFILE}" )
-set -- "${args[@]}"
+CMD_ARGS=( "${OM_OPTION_ARR[@]}" ${GASNET_CPPFLAGS} "${TMP_FILE}" )
 
 if [ "${OM_VERBOSE}" = "1" ]; then
+    if [ "${REPLACE_PRAGMA_CMD}" != "" ]; then
+        set -- "${RPC_ARGS[@]}"
+        echo $REPLACE_PRAGMA_CMD "$@"
+    fi  
+    set -- "${CMD_ARGS[@]}"
     echo $CMD "$@" \> "${OUTFILE}"
 fi
 
-$CMD "$@" > "${OUTFILE}" || exit $?
+if [ "${REPLACE_PRAGMA_CMD}" != "" ]; then
+    set -- "${RPC_ARGS[@]}"
+    $REPLACE_PRAGMA_CMD "$@" || exit $?
+#add filename to top of OUTFILE
+    echo "# 1 \"${INPFILE}\"" > "${OUTFILE}"
+    set -- "${CMD_ARGS[@]}"
+    $CMD "$@" >> "${OUTFILE}" || exit $?
+else
+    set -- "${CMD_ARGS[@]}"
+    $CMD "$@" > "${OUTFILE}" || exit $?
+fi
+
+if [ "${REPLACE_PRAGMA_CMD}" != "" ]; then
+    rm "${TMP_FILE}"
+fi
