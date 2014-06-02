@@ -1,3 +1,5 @@
+#!/bin/bash
+
 hasScalasca=0
 hasTlog=0
 newOpts=''
