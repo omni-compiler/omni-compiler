@@ -25,6 +25,8 @@ run: $(EXES)
 	$(XRUN) -n 4 ./reduction_mult.x
 	$(XRUN) -n 4 ./reduction_or.x
 	$(XRUN) -n 4 ./reduction_plus.x
+	$(XRUN) -n 4 ./reduction_logical_and.x
+	$(XRUN) -n 4 ./reduction_logical_or.x
 	$(XRUN) -n 8 ./reduction_and2.x
 	$(XRUN) -n 16 ./reduction_firstmax2.x
 	$(XRUN) -n 16 ./reduction_firstmin2.x
