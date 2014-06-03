@@ -1,5 +1,4 @@
 ./Makefile
-./Makefile.in
 ./config.log
 C-FrontEnd/src/c-parser.output
 C-BackEnd/Makefile
