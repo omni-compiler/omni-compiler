@@ -6,10 +6,7 @@
 int main(void)
 {
   if(xmp_num_nodes() <  4){
-#pragma xmp task on p(1)
-    {
-      printf("%s","You have to run this program by mpre than 3 nodes.\n");
-    }
+    printf("You have to run this program by more than 3 nodes.\n");
     exit(1);
   }
 
@@ -27,4 +24,3 @@ int main(void)
    
    return 0;
 }
-      

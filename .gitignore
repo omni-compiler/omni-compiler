@@ -1,6 +1,7 @@
 ./Makefile
-C-FrontEnd/src/c-parser.output
+./Makefile.in
 ./config.log
+C-FrontEnd/src/c-parser.output
 C-BackEnd/Makefile
 C-BackEnd/ant.properties
 C-BackEnd/bin/C_Back
@@ -144,13 +145,7 @@ tests/C-test/Makefile
 tests/F-test/OMP-test/Makefile
 tests/clinpack/Makefile
 tests/tiny/Makefile
-tests/xcalablemp/global-view/shadow-reflect/C/*.[ox]
-tests/xcalablemp/global-view/reduction/[C|F]/*.[ox]
-tests/xcalablemp/global-view/task/[C|F]/*.[ox]
-tests/xcalablemp/local-view/coarray/[C|F]/*.[ox]
-tests/xcalablemp/local-view/post-wait/[C|F]/*.[ox]
-tests/xcalablemp/others/C/*.[ox]
-tests/xcalablemp/others/F/*.[ox]
-tests/xcalablemp/others/F/second.mod
-tests/xcalablemp/others/F/second.xmod
-tests/xcalablemp/others/F/mod
+tests/xcalablemp/**/[CF]/*.[ox]
+tests/xcalablemp/**/**/[CF]/*.[ox]
+tests/xcalablemp/others/F/*mod
+tests/xcalablemp/NOT-IMPLEMENTED/**/*.[ox]

@@ -1,23 +1,16 @@
-#include<xmp.h>
-#include<stdio.h>
-#include<stdlib.h>   
+#include <xmp.h>
+#include <stdio.h>
+#include <stdlib.h>   
 static const int N=1000;
 #pragma xmp nodes p(4,*)
 #pragma xmp template t1(0:N-1,0:N-1)
 #pragma xmp distribute t1(block,block) onto p
-int a[N][N],sa;
+int a[N][N],sa=1;
 int i,j,m,result=0;
 #pragma xmp align a[i][j] with t1(j,i)
 
 int main(void)
 {
-  if(xmp_num_nodes() < 4){
-    printf("%s\n","You have to run this program by more than 4 nodes.");
-    exit(1);
-  }
-   
-  sa=1;
-
 #pragma xmp loop (j,i) on  t1(j,i)
   for(i=0;i<N;i++){
     for(j=0;j<N;j++){
