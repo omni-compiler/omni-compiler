@@ -206,7 +206,16 @@ void xmpf_ref_set_dim_info__(_XMP_object_ref_t **r_desc, int *i_dim, int *type,
     }
     else { // SUBSCRIPT_ASTERISK or SUBSCRIPT_TRIPLET
       rp->REF_LBOUND[i] = *lb;
-      rp->REF_UBOUND[i] = *ub;
+
+      if(*ub){
+	rp->REF_UBOUND[i] = *ub;
+      }
+      else {
+	_XMP_ASSERT(rp->ref_kind == XMP_OBJ_REF_NODES);
+	_XMP_ASSERT(i == rp->n_desc->dim - 1);
+	rp->REF_UBOUND[i] = rp->n_desc->info[i].size;
+      }
+
       rp->REF_STRIDE[i] = *st;
     }
 

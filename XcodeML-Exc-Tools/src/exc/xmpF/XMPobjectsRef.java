@@ -166,6 +166,15 @@ public class XMPobjectsRef {
 	      ((XMPtemplate)refObject).getUpperAt(i);
 	  upper = d_info.getUpper() != null ? d_info.getUpper() : decl_upper;
 
+	  if (upper == null){
+	      Ident xmp_null = env.findVarIdent("XMP_NULL", null);
+	      if (xmp_null == null){
+		  xmp_null = env.declObjectId("XMP_NULL", null,
+					      Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
+	      }
+	      upper = xmp_null;
+	  }
+
 	  stride = d_info.getStride();
 	      
 	  args = Xcons.List(descId.Ref(),
