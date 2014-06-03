@@ -717,7 +717,7 @@ elif test "$target" = "powerpc64-hitachi-aix"; then
 else
   chk=`$BECC --version | head -n1`
   case $chk in
-  gcc* | Apple*)
+  cc* | gcc* | Apple*)
     OMC_CONF_LX2X_OPT=""
     OMC_CONF_NTV_OPT="-std=gnu99 -Wno-implicit -Wno-attributes"
     OMC_CONF_LNK_OPT="-fopenmp"

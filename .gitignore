@@ -1,6 +1,7 @@
 /Makefile
 /config.log
 /config.status
+*.[aox]
 C-FrontEnd/src/c-parser.output
 C-BackEnd/Makefile
 C-BackEnd/ant.properties
@@ -10,7 +11,6 @@ C-BackEnd/build/
 C-BackEnd/classes/
 C-FrontEnd/src/C_Front
 C-FrontEnd/src/Makefile
-C-FrontEnd/src/*.o
 C-FrontEnd/src/c-exprcode.c
 C-FrontEnd/src/c-exprcode.h
 C-FrontEnd/src/c-lexer.c
@@ -81,7 +81,6 @@ Driver/etc/x2x.conf.xmp
 Driver/etc/x2x.conf.xmpf
 Driver/src/Makefile
 Driver/src/omdriver
-Driver/src/*.o
 Driver/src/xmp_collect_init
 Driver/src/om_replace_pragma
 F-BackEnd/Makefile
@@ -92,7 +91,6 @@ F-BackEnd/bin/F_Trans
 F-BackEnd/binding/classes/
 F-BackEnd/build/
 F-BackEnd/classes/
-F-FrontEnd/src/*.o
 F-FrontEnd/src/C-exprcode.c
 F-FrontEnd/src/C-exprcode.h
 F-FrontEnd/src/F95-parser.c
@@ -114,25 +112,19 @@ libacc/include/Makefile
 libacc/src/Makefile
 libompc/src/Makefile
 libompc/src/target.tmpl
-libompc/src/*.[ao]
 libompc/src/*mutex_pthread_o
 libompf/src/Makefile
 libompf/src/*.xmod
 libtlog/src_mpi/Makefile
 libtlog/src_mpi/bin/tlogview
-libtlog/src_mpi/*.[ao]
 libtlog/src_threads/Makefile
-libtlog/src_threads/*.[ao]
 libtool
 libxmp/include/Makefile
 libxmp/src/Makefile
-libxmp/src/*.[ao]
 libxmp/src_gpu/Makefile
 libxmp/src_threads/Makefile
-libxmp/src_threads/*.[ao]
 libxmpf/include/Makefile
 libxmpf/src/Makefile
-libxmpf/src/*.[ao]
 release/debian/changelog
 release/debian/control
 release/debian/rules
@@ -143,7 +135,5 @@ tests/C-test/Makefile
 tests/F-test/OMP-test/Makefile
 tests/clinpack/Makefile
 tests/tiny/Makefile
-tests/xcalablemp/**/[CF]/*.[ox]
-tests/xcalablemp/**/**/[CF]/*.[ox]
 tests/xcalablemp/others/F/*mod
-tests/xcalablemp/NOT-IMPLEMENTED/**/*.[ox]
+
