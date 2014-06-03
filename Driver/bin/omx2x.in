@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # $TSUKUBA_Release: Omni OpenMP Compiler 3 $
 # $TSUKUBA_Copyright:
@@ -6,8 +6,8 @@
 #  $
 
 # ---------- check input/output files ------------------------------------------------------
-OUTFILE=$1
-INPFILE=$2
+OUTFILE="$1"
+INPFILE="$2"
 
 if [ -z "${OUTFILE}" ]; then
   echo output file not specified
@@ -20,12 +20,12 @@ if [ -z "${INPFILE}" ]; then
 fi
 
 # ---------- setup temporary files ---------------------------------------------------------
-BNAME=`dirname ${INPFILE}`/`basename ${INPFILE} .xml`
-TMP_OUTFILE=${BNAME}.tmp.xml
-TMP_INPFILE=${BNAME}.in.xml
+BNAME=`dirname "${INPFILE}"`/`basename "${INPFILE}" .xml`
+TMP_OUTFILE="${BNAME}.tmp.xml"
+TMP_INPFILE="${BNAME}.in.xml"
 
-OM_INPFILE=$TMP_INPFILE
-OM_OUTFILE=$TMP_OUTFILE
+OM_INPFILE="$TMP_INPFILE"
+OM_OUTFILE="$TMP_OUTFILE"
 export OM_INPFILE
 export OM_OUTFILE
 
@@ -74,22 +74,35 @@ else
   exit 1
 fi
 
+#--- unescape space characters, which are espaced in omdriver.c (ID=278)
+OM_OPTION_ARR=()
+for opt in ${OM_OPTIONS}; do
+    opt1=$(echo $opt | sed 's/\\s/ /g
+                            s/\\t/\t/g
+                            s/\\n/\n/g
+                            s/\\\\/\\/g')
+    OM_OPTION_ARR=( "${OM_OPTION_ARR[@]}" "$opt1" )
+done
+
 # ---------- execute translator ------------------------------------------------------------
-mv ${INPFILE} ${TMP_INPFILE} || exit $?
-X2X_CMD="${JAVA_CMD} -x${OM_LANGID} ${OM_OPTIONS} ${TMP_INPFILE} -o ${TMP_OUTFILE}"
+mv "${INPFILE}" "${TMP_INPFILE}" || exit $?
+X2X_CMD=${JAVA_CMD}
+args=( -x${OM_LANGID} "${OM_OPTION_ARR[@]}" "${TMP_INPFILE}" -o "${TMP_OUTFILE}" )
+set -- "${args[@]}"
+
 if [ "${OM_VERBOSE}" = "1" ]; then
   echo "executing translator ..."
-  echo ${X2X_CMD}
+  echo ${X2X_CMD} "$@"
 fi
-${X2X_CMD} || exit $?
-mv ${TMP_OUTFILE} ${OUTFILE} || exit $?
+${X2X_CMD} "$@" || exit $?
+mv "${TMP_OUTFILE}" "${OUTFILE}" || exit $?
 
 if [ "${OM_USE_XMPF}" = "1" ]; then
-    mv ${BNAME}.in.F90 ${BNAME}.F90 || exit $?
+    mv "${BNAME}.in.F90" "${BNAME}.F90" || exit $?
 elif [ "${OM_USE_XMP}" = "1" -a "${useDom}" = "1" ]; then
-    mv ${BNAME}.in.c ${BNAME}.c || exit $?
+    mv "${BNAME}.in.c" "${BNAME}.c" || exit $?
 elif [ "${OM_USE_ACC}" = "1" ]; then
-    mv ${BNAME}.in.c ${BNAME}.c || exit $?
+    mv "${BNAME}.in.c" "${BNAME}.c" || exit $?
 fi
 
 exit 0

@@ -4588,8 +4588,8 @@ isCompatiblePointerType(CExprOfTypeDesc *td1, CExprOfTypeDesc *td2,
 
     int p1 = ETYP_IS_POINTER(tdo1);
     int p2 = ETYP_IS_POINTER(tdo2);
-    int a1 = ETYP_IS_ARRAY(tdo1);
-    int a2 = ETYP_IS_ARRAY(tdo2);
+    int a1 = ETYP_IS_ARRAY(tdo1) || ETYP_IS_COARRAY(tdo1);
+    int a2 = ETYP_IS_ARRAY(tdo2) || ETYP_IS_COARRAY(tdo2);
 
     if(p1 == 0 && p2 == 0 && a1 == 0 && a2 == 0) 
         return 0;

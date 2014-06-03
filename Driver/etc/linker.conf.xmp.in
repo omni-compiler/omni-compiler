@@ -1,3 +1,5 @@
+#!/bin/bash
+
 hasScalasca=0
 hasTlog=0
 newOpts=''
@@ -8,11 +10,13 @@ LIB_OMPC=ompc_${LOCK_TYPE}_${LIB_THREAD}
 PID=$$
 INIT_MODULE_OBJ="/tmp/_xmpc_init_${PID}.o"
 
-CMD="@OMNI_HOME@/bin/xmp_collect_init --cc @BECC@ --PID ${PID} --C $*"
+CMD="@OMNI_HOME@/bin/xmp_collect_init"
+args=( --cc @BECC@ --PID ${PID} --C "$@" )
+set -- ${args[@]}
 if [ "${OM_VERBOSE}" = "1" ]; then
-    echo $CMD
+    echo $CMD "$@"
 fi
-$CMD
+$CMD "$@"
 
 for i in ${OM_OPTIONS}; do
     case ${i} in

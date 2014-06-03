@@ -1,11 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 
 # $TSUKUBA_Release: Omni OpenMP Compiler 3 $
 # $TSUKUBA_Copyright:
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
-OUTFILE=$1
-INPFILE=$2
+OUTFILE="$1"
+INPFILE="$2"
 
 if [ -z "${OUTFILE}" ]; then
     echo output file not specified
@@ -20,7 +20,7 @@ fi
 if [ ! -z "${OM_TRANSLATORS}" ]; then
     OM_OPTIONS="${OM_OPTIONS} -I${OMNI_HOME}/include"
     for TID in ${OM_TRANSLATORS}; do
-	CONF="${OM_DRIVER_CONF_DIR}/native.conf.${TID}"
+        CONF="${OM_DRIVER_CONF_DIR}/native.conf.${TID}"
         if [ -r ${CONF} ]; then
             . ${CONF}
         else
@@ -31,55 +31,66 @@ if [ ! -z "${OM_TRANSLATORS}" ]; then
 fi
 
 GPU_CMD="@GPU_CMD@"
-INPFILE_BASENAME=`basename ${INPFILE}`
+INPFILE_BASENAME=`basename "${INPFILE}"`
 INPFILE_FILENAME=${INPFILE_BASENAME%.*}
 newOpts=''
 for i in ${OM_OPTIONS}; do
     case ${i} in
         -enable-gpu)
             if [ -f "${INPFILE_FILENAME}.cu" ]; then
-                ${GPU_CMD} -arch=sm_20 -I${OMNI_HOME}/include -c ${INPFILE_FILENAME}.cu -o ${INPFILE_FILENAME}.xmpgpu.o
+                ${GPU_CMD} -arch=sm_20 -I"${OMNI_HOME}/include" -c "${INPFILE_FILENAME}.cu" -o "${INPFILE_FILENAME}.xmpgpu.o"
             fi;;
-	-acc)
+        -acc)
             if [ -f "${INPFILE_FILENAME}.cu" ]; then
-		GPUCMD="${GPU_CMD} -arch=sm_20 -I${OMNI_HOME}/include -c ${INPFILE_FILENAME}.cu -o ${INPFILE_FILENAME}.accgpu.o"
-		$GPUCMD
+                ${GPU_CMD} -arch=sm_20 -I"${OMNI_HOME}/include" -c "${INPFILE_FILENAME}.cu" -o "${INPFILE_FILENAME}.accgpu.o"
             fi;;
         -tmp)
-            cp ${INPFILE} __omni_tmp_${INPFILE_BASENAME};;
-	-m?*)
-                j=@BEFC_MODINC@
-                case ${j} in
-               -to);;
+            cp "${INPFILE}" "__omni_tmp_${INPFILE_BASENAME}";;
+        -m?*)
+            j=@BEFC_MODINC@
+            case ${j} in
+                -to);;
                 -module)
-                foo=`echo ${i} |sed "s/-m\(.*\)/${j} \1/"`
-                  newOpts="${newOpts} ${foo}";;
-                  *)
-                  foo=`echo ${i} |sed "s/-m\(.*\)/${j}\1/"`
-                  newOpts="${newOpts} ${foo}";; 
-                esac;;
+                    foo=`echo "${i}" |sed "s/-m\(.*\)/${j} \1/"`
+                    newOpts="${newOpts} ${foo}";;
+                *)
+                    foo=`echo "${i}" |sed "s/-m\(.*\)/${j}\1/"`
+                    newOpts="${newOpts} ${foo}";; 
+            esac;;
         *)
             newOpts="${newOpts} ${i}";;
     esac
 done
 OM_OPTIONS="${newOpts}"
 
+#--- unescape space characters, which are espaced in omdriver.c (ID=278)
+OM_OPTION_ARR=()
+for opt in ${OM_OPTIONS}; do
+    opt1=$(echo $opt | sed 's/\\s/ /g
+                            s/\\t/\t/g
+                            s/\\n/\n/g
+                            s/\\\\/\\/g')
+    OM_OPTION_ARR=( "${OM_OPTION_ARR[@]}" "$opt1" )
+done
+
 GASNET_CPPFLAGS="@GASNET_CPPFLAGS@"
-CMD="${COMPILER} ${OM_OPTIONS} ${GASNET_CPPFLAGS} -c ${INPFILE} -o ${OUTFILE}"
+CMD=${COMPILER}
+args=( "${OM_OPTION_ARR[@]}" ${GASNET_CPPFLAGS} -c "${INPFILE}" -o "${OUTFILE}" )
+set -- "${args[@]}"
 
 if [ "${OM_VERBOSE}" = "1" ]; then
-    echo $CMD
+    echo $CMD "$@"
     if [ -n "${GPUCMD}" ]; then
-	echo $GPUCMD
+        echo $GPUCMD
     fi
 fi
 
-$CMD
+$CMD "$@"
 
 if [ -n "${GPUCMD}" ]; then
-    mv ${OUTFILE} ${INPFILE_FILENAME}.acccpu.o
-    ld -r ${INPFILE_FILENAME}.acccpu.o ${INPFILE_FILENAME}.accgpu.o -o ${OUTFILE}
-    rm ${INPFILE_FILENAME}.acccpu.o ${INPFILE_FILENAME}.accgpu.o
+    mv "${OUTFILE}" "${INPFILE_FILENAME}.acccpu.o"
+    ld -r "${INPFILE_FILENAME}.acccpu.o" "${INPFILE_FILENAME}.accgpu.o" -o "${OUTFILE}"
+    rm "${INPFILE_FILENAME}.acccpu.o" "${INPFILE_FILENAME}.accgpu.o"
 fi
 
 exit $?

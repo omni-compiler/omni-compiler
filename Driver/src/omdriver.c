@@ -33,6 +33,10 @@ static char g_all_obj[MAX_INPUT_FILE];
 
 void exe_system(char *shcmd);
 
+static void strcat_escaped(char *s1, char *s2);
+static void strcpy_escaped(char *s1, char *s2);
+
+
 /**
  * option table
  * */
@@ -118,7 +122,6 @@ cmp_opt_value( char *opt_value, char *opt_src )
 {
     int idx_opt_value = 0;
     int opt_src_len = strlen(opt_src);
-    int opt_value_len = strlen(opt_value);
 
 /*     while ((idx_opt_value < opt_value_len) && */
 /*             (idx_opt_value < opt_src_len)) { */
@@ -137,12 +140,12 @@ cmp_opt_value( char *opt_value, char *opt_src )
  * concat i/o file name with space
  *
  * */
-void concat_io_file( char *script, char *in, char *out )
+void concat_io_file( char *script, char *file1, char *file2 )
 {
     strcat( script, CODE_SPACE );
-    strcat( script, in );
+    strcat_escaped( script, file1 );
     strcat( script, CODE_SPACE );
-    strcat( script, out );
+    strcat_escaped( script, file2 );
 }
 
 
@@ -253,7 +256,7 @@ clean_exit(int exitCode)
         char shcmd[MAX_INPUT_FILE_PATH];
         get_tempdir( tempdir );
         strcpy( shcmd, SYSTEM_REMOVE );
-        strcat( shcmd, tempdir );
+        strcat_escaped( shcmd, tempdir );
         exe_system( shcmd );
     }
 
@@ -319,7 +322,7 @@ void msg_error( const char *msg, const char *arg )
 
 
 /**
- * execute sysmte function
+ * execute system function
  *
  * */
 void exe_system( char *shcmd )
@@ -743,6 +746,7 @@ int get_filename( char *file_name, char *src )
     int ret = SUCCESS;
     char *name = basename( src );
     strcat( file_name, name );
+      
     return ret;
 }
 
@@ -925,7 +929,7 @@ int get_module_name( char *dst, opt_applier module )
     switch (module) {
     case MOD_PP:
         ret = get_config( config, CONFIG_PATH_PP );
-    	 break;
+             break;
     case MOD_L2X:
         ret = get_config( config, CONFIG_PATH_L2X );
         break;
@@ -955,12 +959,53 @@ int get_module_name( char *dst, opt_applier module )
 
 
 /**
+ * string concat and encoding for handling space characters (ID=278)
+ * This function is called only from get_option_without_w().
+ *
+ * */
+static void strcat_escape( char *dst, char *word )
+{
+    int i;
+    unsigned c;
+    char *pos;
+
+    pos = dst + strlen(dst);
+
+    for (i = 0; i < strlen(word); i++) {
+        switch (c = word[i]) {
+        case ' ':
+            *pos++ = '\\';
+            *pos++ = 's';
+            break;
+        case '\t':
+            *pos++ = '\\';
+            *pos++ = 't';
+            break;
+        case '\n':
+            *pos++ = '\\';
+            *pos++ = 'n';
+            break;
+        case '\\':
+            *pos++ = '\\';
+            *pos++ = '\\';
+            break;
+        default:
+            *pos++ = c;
+            break;
+        }
+    }
+
+    *pos++ = '\0';
+}
+
+
+/**
  * concat option string except "W"
  *
  * */
 int get_option_without_w( char *dst, char *src, int opt_tbl_idx )
 {
-    int ret = SUCCESS;
+    int ret;
     unsigned char w_pp     = FALSE;
     unsigned char w_l2x    = FALSE;
     unsigned char w_lx2x   = FALSE;
@@ -977,9 +1022,11 @@ int get_option_without_w( char *dst, char *src, int opt_tbl_idx )
     w_native = (strcmp( pair->opt_value, OPT_NTV_N ) == 0);
     w_linker = (strcmp( pair->opt_value, OPT_LNK_L ) == 0);
     if (w_pp || w_l2x || w_lx2x || w_x2l || w_native || w_linker) {
-        strcat( dst, src + strlen(OPT_PP_P));
+        strcat_escape( dst, src + strlen(OPT_PP_P));
+        //        strcat( dst, src + strlen(OPT_PP_P));
     } else {
-        strcat( dst, src );
+        strcat_escape( dst, src );
+        //        strcat( dst, src );
     }
     strcat(dst, " ");
 
@@ -987,6 +1034,7 @@ int get_option_without_w( char *dst, char *src, int opt_tbl_idx )
 
     return ret;
 }
+
 
 
 /**
@@ -1024,7 +1072,6 @@ int get_option_each_module( char *dst, opt_applier module )
     int i, j;
     int next_opt_idx = 0, apply_cnt;
     char *option = dst;
-    char *mod_path;
     char pri_opt[MAX_INPUT_FILE_PATH];
     const opt_pair *pair;
     opt_set *set;
@@ -1040,7 +1087,7 @@ int get_option_each_module( char *dst, opt_applier module )
         pair = &opt_pair_table[i];
         set  = &g_manage_info.options[i];
         
-	if(set->is_applied == FALSE)
+        if(set->is_applied == FALSE)
             continue;
 
         if (pair->opt_applier != module) {
@@ -1050,11 +1097,11 @@ int get_option_each_module( char *dst, opt_applier module )
                 continue;
             if(cmp_opt_value(
                 pair->opt_value, OPT_PP_INCPATH) == FALSE  &&
-		cmp_opt_value(
+                cmp_opt_value(
                 pair->opt_value, OPT_LX2X_MODPATH) == FALSE) 
-		{
+              {
                 continue;
-           	}	
+              }        
         }
 
         apply_cnt = pair->is_multiple ? set->apply_cnt : 1;
@@ -1063,7 +1110,7 @@ int get_option_each_module( char *dst, opt_applier module )
             ret = get_option_without_w( option + next_opt_idx,
                                         set->opt_value[j], i );
             next_opt_idx += ret;
-	    if (set->opt_argument[j] != NULL) {
+            if (set->opt_argument[j] != NULL) {
                 strcat( option + next_opt_idx, CODE_SPACE );
                 strcat( option + next_opt_idx + 1,
                         set->opt_argument[j] );
@@ -1099,18 +1146,21 @@ int get_all_obj_files( char *dst )
     io_file *io = &(g_manage_info.file.info[0]);
     int next_src_idx = 0;
     char ext[MAX_LEN_EXTENSION];
+    char work[MAX_INPUT_FILE_PATH];
 
     for (i = 0; i<in_file_cnt; i++) {
         get_extension( ext, io->in_file );
 
         if ((strcmp( ext, EXTENSION_O ) == 0) ||
             (strcmp( ext, EXTENSION_A ) == 0)) {
-            strcat( dst + next_src_idx, io->in_file );
-            next_src_idx += strlen( io->in_file );
+            strcpy_escaped( work, io->in_file );
+            strcat( dst + next_src_idx, work );
+            next_src_idx += strlen( work );
         } else {
-            strcat( dst + next_src_idx, basename( io->in_file ));
+            strcpy_escaped( work, io->in_file );
+            strcat( dst + next_src_idx, basename( work ));
             change_extension( dst + next_src_idx, OM_OBJFILE_EXT );
-            next_src_idx += (strlen( basename( io->in_file )) - strlen(ext) + strlen(OM_OBJFILE_EXT));
+            next_src_idx += (strlen( basename( work )) - strlen(ext) + strlen(OM_OBJFILE_EXT));
         }
         strcat( dst + next_src_idx, CODE_SPACE );
         next_src_idx++;
@@ -1146,11 +1196,11 @@ int exec_module( opt_applier id )
     switch (id) {
     case MOD_PP:
         for (i = 0; i < cnt_file; i++) {
- 	    if (GET_DO_CPP() || (( io->is_valid )
-				 && (io->is_preped == FALSE )
-			         && (io->is_compiled == FALSE ))) {
-	        io->is_preped = FALSE;
-                strcpy( g_cmd_buf, g_module_path );
+             if (GET_DO_CPP() || (( io->is_valid )
+                                 && (io->is_preped == FALSE )
+                                 && (io->is_compiled == FALSE ))) {
+                io->is_preped = FALSE;
+                strcpy_escaped( g_cmd_buf, g_module_path );
                 memset( g_outfile_buf, 0x00, MAX_INPUT_FILE_PATH );
                 ret = get_out_file( id, g_outfile_buf, io->in_file );
                 concat_io_file( g_cmd_buf, g_outfile_buf, io->in_file );
@@ -1166,9 +1216,9 @@ int exec_module( opt_applier id )
     case MOD_X2L:
         /** do same proccess */
     case MOD_NTV:
-	for (i = 0; i<cnt_file; i++) {
+        for (i = 0; i<cnt_file; i++) {
             if (( io->is_valid ) && ( io->is_compiled == FALSE )) {
-                strcpy( g_cmd_buf, g_module_path );
+                strcpy_escaped( g_cmd_buf, g_module_path );
                 memset( g_outfile_buf, 0x00, MAX_INPUT_FILE_PATH );
                 memset( g_infile_buf, 0x00, MAX_INPUT_FILE_PATH );
                 ret = get_out_file( id, g_outfile_buf, io->in_file );
@@ -1180,15 +1230,15 @@ int exec_module( opt_applier id )
         }
         break;
     case MOD_LNK:
-        strcpy( g_cmd_buf, g_module_path );
+        strcpy_escaped( g_cmd_buf, g_module_path );
         strcat( g_cmd_buf, CODE_SPACE );
         if (GET_OPT_IS_APPLIED_TBL(opt_idx(OPT_LNK_OUTPUT))) {
-            strcat( g_cmd_buf, GET_OPT_ARG_TBL(opt_idx(OPT_LNK_OUTPUT), 0 ));
+            strcat_escaped( g_cmd_buf, GET_OPT_ARG_TBL(opt_idx(OPT_LNK_OUTPUT), 0 ));
         } else {
-            strcat( g_cmd_buf, DEFAULT_OUT_FILE );
+            strcat_escaped( g_cmd_buf, DEFAULT_OUT_FILE );
         }
         memset( g_all_obj, 0x00, MAX_INPUT_FILE );
-        ret = get_all_obj_files( g_all_obj );
+        ret = get_all_obj_files( g_all_obj );     // incl. quotation
         strcat( g_cmd_buf, CODE_SPACE );
         strcat( g_cmd_buf, g_all_obj );
         exe_system( g_cmd_buf );
@@ -1394,6 +1444,38 @@ int set_all_env( void )
     setenv(ENV_OM_TRANSLATORS, trans_line, TRUE);
 
     return ret;
+}
+
+
+/**
+ * quote arguments to be accepted in system() 
+ *
+ * */
+void strcat_escaped(char *s1, char *s2)
+{
+  strcpy_escaped(s1 + strlen(s1), s2);
+}
+
+void strcpy_escaped(char *s1, char *s2)
+{
+  char *src, *dst;
+  unsigned c;
+
+  for (src = s2, dst = s1; (c = *(src++)) != '\0'; ) {
+    if (strchr("|&;<>()$`'\\\"#*[]? ", c) != NULL) {
+      *(dst++) = '\\';
+      *(dst++) = c;
+    } else if(c == '\t') {
+      *(dst++) = '\\';
+      *(dst++) = 't';
+    } else if(c == '\n') {
+      *(dst++) = '\\';
+      *(dst++) = 'n';
+    } else {
+      *(dst++) = c;
+    }
+  }
+  *dst = '\0';
 }
 
 

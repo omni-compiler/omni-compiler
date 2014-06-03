@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # $TSUKUBA_Release: Omni OpenMP Compiler 3 $
 # $TSUKUBA_Copyright:
@@ -6,7 +6,7 @@
 #  $
 
 BINDIR=`dirname $0`
-${BINDIR}/omdriver --xf -I@OMNI_HOME@/include $@
+${BINDIR}/omdriver --xf -I@OMNI_HOME@/include "$@"
 
 exit $?
 

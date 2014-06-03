@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # $TSUKUBA_Release: Omni OpenMP Compiler 3 $
 # $TSUKUBA_Copyright:
@@ -6,4 +6,4 @@
 #  $
 
 L2X="${OMNI_HOME}/bin/F_Front -I@OMNI_HOME@/include"
-. ${OMNI_HOME}/bin/oml2x $*
+. ${OMNI_HOME}/bin/oml2x "$@"

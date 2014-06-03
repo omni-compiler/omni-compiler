@@ -25,5 +25,9 @@ if FJRDMA
     AM_CFLAGS        += -Wall -Wpointer-arith -std=gnu99 -D_XMP_COARRAY_FJRDMA
 endif
 
+xmp_pack_vector.o: xmp_pack_vector.c
+	@BECC@ $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) @BECC_OMP_OPTION@ -c $<
+
 clean-local:
 	rm -f *~ *.core core core.*

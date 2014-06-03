@@ -1,3 +1,4 @@
+./Makefile
 C-FrontEnd/src/c-parser.output
 ./config.log
 C-BackEnd/Makefile
@@ -81,6 +82,7 @@ Driver/src/Makefile
 Driver/src/omdriver
 Driver/src/*.o
 Driver/src/xmp_collect_init
+Driver/src/om_replace_pragma
 F-BackEnd/Makefile
 F-BackEnd/ant.properties
 F-BackEnd/bin/F_Back
@@ -147,6 +149,7 @@ tests/xcalablemp/global-view/reduction/[C|F]/*.[ox]
 tests/xcalablemp/global-view/task/[C|F]/*.[ox]
 tests/xcalablemp/local-view/coarray/[C|F]/*.[ox]
 tests/xcalablemp/local-view/post-wait/[C|F]/*.[ox]
+tests/xcalablemp/others/C/*.[ox]
 tests/xcalablemp/others/F/*.[ox]
 tests/xcalablemp/others/F/second.mod
 tests/xcalablemp/others/F/second.xmod

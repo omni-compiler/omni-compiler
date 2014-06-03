@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # $TSUKUBA_Release: Omni OpenMP Compiler 3 $
 # $TSUKUBA_Copyright:
@@ -8,11 +8,11 @@
 BINDIR=`dirname $0`
 
 USE_ACC=''
-args=''
+args=()
 for i in "$@"; do
     case "${i}" in
         -tmp)
-            args="${args} --Wn${i}";;
+            args=("${args[@]}" "--Wn${i}");;
 	-acc)
 	    if test @ENABLE_ACC@ -eq 1; then
 		USE_ACC="1"
@@ -20,11 +20,11 @@ for i in "$@"; do
 		echo "warning: -acc option is unavailable, rebuild the compiler with ./configure --enable-openacc"
 	    fi;;
         *)
-            args="${args} ${i}";;
+            args=("${args[@]}" "${i}");;
     esac
 done
 
-set -- ${args}
+set -- "${args[@]}"
 
 if [ -z "${USE_ACC}" ]; then
     ${BINDIR}/omdriver --xc -Topenmp "$@"
