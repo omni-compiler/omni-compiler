@@ -1,5 +1,6 @@
-./Makefile
-./config.log
+/Makefile
+/config.log
+/config.status
 C-FrontEnd/src/c-parser.output
 C-BackEnd/Makefile
 C-BackEnd/ant.properties
@@ -98,7 +99,6 @@ F-FrontEnd/src/F95-parser.c
 F-FrontEnd/src/F95-parser.output
 F-FrontEnd/src/F_Front
 F-FrontEnd/src/Makefile
-./Makefile
 XcodeML-Common/Makefile
 XcodeML-Common/ant.properties
 XcodeML-Common/build/
@@ -108,7 +108,6 @@ XcodeML-Exc-Tools/ant.properties
 XcodeML-Exc-Tools/build/
 XcodeML-Exc-Tools/classes/
 XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java
-config.status
 include/config.h
 include/stamp-h1
 libacc/include/Makefile
