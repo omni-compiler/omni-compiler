@@ -20,10 +20,6 @@ LINK = $(CCLD) $(AM_CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 xmpf_main.o: xmpf_main.f
 	@BEFC@ @BEFC_OPTION@ -c xmpf_main.f
 
-xmpf_pack_vector.o: xmpf_pack_vector.c
-	@BECC@ $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	$(CPPFLAGS) $(AM_CFLAGS) @BECC_OMP_OPTION@ -c $<
-
 install-exec-local: xmpf_main.o
 	test -z $(DESTDIR)$(libdir) || /bin/mkdir -p $(DESTDIR)$(libdir)
 	$(INSTALL_DATA) xmpf_main.o $(DESTDIR)$(libdir)
