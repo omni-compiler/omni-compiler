@@ -24,6 +24,7 @@ main.o: main.f90
 run: $(EXES)
 	$(XRUN) -np 2 module_test.x
 	$(XRUN) -np 2 exit.x
+	./module_test0.x
 
 clean:
 	rm -f $(EXES) *.o *.*mod
