@@ -16,6 +16,7 @@ all default: $(EXES)
 run: $(EXES)
 	$(XRUN) -n 4 ./block.x
 	$(XRUN) -n 4 ./gblock.x
+	$(XRUN) -n 4 ./reflect.x
 	$(XRUN) -n 16 ./gblock2.x
 	$(XRUN) -n 16 ./cyclic3.x
 	$(XRUN) -n 16 ./cyclic_block.x

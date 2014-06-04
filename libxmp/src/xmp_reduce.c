@@ -102,6 +102,10 @@ static void _XMP_setup_reduce_op(MPI_Op *mpi_op, int op) {
     case _XMP_N_REDUCE_LASTMIN:
       *mpi_op = MPI_MIN;
       break;
+    case _XMP_N_REDUCE_EQV:
+    case _XMP_N_REDUCE_NEQV:
+    case _XMP_N_REDUCE_MINUS:
+      _XMP_fatal("unsupported reduce operation");
     default:
       _XMP_fatal("unknown reduce operation");
   }

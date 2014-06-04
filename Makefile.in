@@ -553,8 +553,8 @@ SUB_TESTDIRS = "global-view/bcast/C/" "global-view/loop/C" \
 	"global-view/loop/F" "global-view/reduction/C" \
 	"global-view/reduction/F" "global-view/shadow-reflect/C/" \
 	"global-view/task/C" "global-view/task/F" \
-	"global-view/template_fix/F/" "others/F" "others/C" \
-	$(am__append_4) $(am__append_5)
+	"global-view/template_fix/C/" "global-view/template_fix/F/" \
+	"others/F" "others/C" $(am__append_4) $(am__append_5)
 DELETABLES = \
 	C-BackEnd/ant.properties \
 	C-BackEnd/bin/C_Back \

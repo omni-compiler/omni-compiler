@@ -1056,6 +1056,8 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     switch (pg_tok()) {
       case '+':
         return Xcons.IntConstant(XMPcollective.REDUCE_SUM);
+      case '-':
+        return Xcons.IntConstant(XMPcollective.REDUCE_MINUS);
       case '*':
         return Xcons.IntConstant(XMPcollective.REDUCE_PROD);
       case '&':
@@ -1121,6 +1123,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     pg_get_token();
     switch (reductionKind) {
       case XMPcollective.REDUCE_SUM:
+      case XMPcollective.REDUCE_MINUS:
       case XMPcollective.REDUCE_PROD:
       case XMPcollective.REDUCE_BAND:
       case XMPcollective.REDUCE_LAND:

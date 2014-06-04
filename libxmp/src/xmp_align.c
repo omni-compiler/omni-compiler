@@ -45,7 +45,7 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
 
   //a->num_reqs = -1;
 
-  if (!template->is_fixed) _XMP_fatal("target template is not fixed");
+  //if (!template->is_fixed) _XMP_fatal("target template is not fixed");
   a->align_template = template;
 
   va_list args;
