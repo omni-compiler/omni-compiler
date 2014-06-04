@@ -199,21 +199,36 @@ void xmpf_ref_set_dim_info__(_XMP_object_ref_t **r_desc, int *i_dim, int *type,
     _XMP_object_ref_t *rp = *r_desc;
     int i = *i_dim;
     
-    if ((rp->subscript_type[i] = *type) == SUBSCRIPT_SCALAR){
+    if (*type == SUBSCRIPT_SCALAR){
+      rp->subscript_type[i] = *type;
       rp->REF_LBOUND[i] = *lb;
       rp->REF_UBOUND[i] = *lb;
       rp->REF_STRIDE[i] = 1;
     }
-    else { // SUBSCRIPT_ASTERISK or SUBSCRIPT_TRIPLET
-      rp->REF_LBOUND[i] = *lb;
+    else {
 
-      if(*ub){
-	rp->REF_UBOUND[i] = *ub;
+      rp->subscript_type[i] = *type;
+
+      if (*type == SUBSCRIPT_NOLB || *type == SUBSCRIPT_NOLBUB){
+	_XMP_ASSERT(rp->ref_kind == XMP_OBJ_REF_TEMPLATE);
+	rp->REF_LBOUND[i] = rp->t_desc->info[i].ser_lower;
+	rp->subscript_type[i] = SUBSCRIPT_TRIPLET;
       }
       else {
-	_XMP_ASSERT(rp->ref_kind == XMP_OBJ_REF_NODES);
-	_XMP_ASSERT(i == rp->n_desc->dim - 1);
-	rp->REF_UBOUND[i] = rp->n_desc->info[i].size;
+	rp->REF_LBOUND[i] = *lb;
+      }
+
+      if (*type == SUBSCRIPT_NOUB || *type == SUBSCRIPT_NOLBUB){
+	if (rp->ref_kind == XMP_OBJ_REF_NODES){
+	  rp->REF_UBOUND[i] = rp->n_desc->info[i].size;
+	}
+	else { // XMP_OBJ_REF_TEMPLATE
+	  rp->REF_UBOUND[i] = rp->t_desc->info[i].ser_upper;
+	}
+	rp->subscript_type[i] = SUBSCRIPT_TRIPLET;
+      }
+      else {
+	rp->REF_UBOUND[i] = *ub;
       }
 
       rp->REF_STRIDE[i] = *st;
