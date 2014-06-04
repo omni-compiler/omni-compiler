@@ -23,7 +23,10 @@
 #define SUBSCRIPT_ASTERISK 0
 #define SUBSCRIPT_SCALAR   1
 #define SUBSCRIPT_TRIPLET  2
-#define SUBSCRIPT_NONE     3
+#define SUBSCRIPT_NOLB     3
+#define SUBSCRIPT_NOUB     4
+#define SUBSCRIPT_NOLBUB   5
+#define SUBSCRIPT_NONE     6
 
 typedef struct _XMP_object_ref_type {
   int ref_kind; 
