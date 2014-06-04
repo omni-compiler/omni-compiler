@@ -51,7 +51,7 @@ for i in "$@"; do
 	-use-relaxer)
 	    export useDom=0;;
 	-disable-pragma-macro)
-	    args="${args} --Wp-no-replace-pragma";;
+	    args=("${args[@]}" "--Wp-no-replace-pragma");;
         *)
             args=("${args[@]}" "${i}");;
     esac
