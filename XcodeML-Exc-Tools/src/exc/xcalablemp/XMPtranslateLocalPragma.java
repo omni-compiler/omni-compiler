@@ -809,6 +809,9 @@ public class XMPtranslateLocalPragma {
         case XMPcollective.REDUCE_SUM:
           redOp = OMPpragma.DATA_REDUCTION_PLUS;
           break;
+        case XMPcollective.REDUCE_MINUS:
+          redOp = OMPpragma.DATA_REDUCTION_MINUS;
+          break;
         case XMPcollective.REDUCE_PROD:
           redOp = OMPpragma.DATA_REDUCTION_MUL;
           break;
@@ -1516,6 +1519,7 @@ public class XMPtranslateLocalPragma {
     XobjInt reductionOp = (XobjInt)reductionRef.getArg(0);
     switch (reductionOp.getInt()) {
       case XMPcollective.REDUCE_SUM:
+      case XMPcollective.REDUCE_MINUS:
       case XMPcollective.REDUCE_PROD:
       case XMPcollective.REDUCE_BAND:
       case XMPcollective.REDUCE_LAND:
@@ -1660,6 +1664,7 @@ public class XMPtranslateLocalPragma {
   private boolean needsInitialization(int reductionOp) throws XMPexception {
     switch (reductionOp) {
       case XMPcollective.REDUCE_SUM:
+      case XMPcollective.REDUCE_MINUS:
       case XMPcollective.REDUCE_PROD:
       case XMPcollective.REDUCE_BXOR:
       case XMPcollective.REDUCE_LXOR:
@@ -1739,6 +1744,7 @@ public class XMPtranslateLocalPragma {
   private Xobject selectReductionInitValueObj(int reductionOp, Xobject varRef, Xobject zero, Xobject one) throws XMPexception {
     switch (reductionOp) {
       case XMPcollective.REDUCE_SUM:
+      case XMPcollective.REDUCE_MINUS:
         return zero;
       case XMPcollective.REDUCE_PROD:
         return one;
@@ -1765,6 +1771,7 @@ public class XMPtranslateLocalPragma {
   private void createFLMMreductionArgs(int op, XobjList locationVars, XobjList funcArgs, PragmaBlock pb) throws XMPexception {
     switch (op) {
       case XMPcollective.REDUCE_SUM:
+      case XMPcollective.REDUCE_MINUS:
       case XMPcollective.REDUCE_PROD:
       case XMPcollective.REDUCE_BAND:
       case XMPcollective.REDUCE_LAND:
