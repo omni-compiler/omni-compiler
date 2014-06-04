@@ -25,6 +25,7 @@ run: $(EXES)
 	$(XRUN) -n 8 ./bcast_from_p2.x
 	$(XRUN) -n 8 ./bcast_on_p2.x
 	$(XRUN) -n 8 ./bcast_on_split_p2.x
+	$(XRUN) -n 8 ./bcast_from_p2_on_p2.x
 
 clean:
 	rm -f $(EXES) $(OBJS)

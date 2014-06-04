@@ -27,11 +27,13 @@ run: $(EXES)
 	$(XRUN) -n 4 ./reduction_plus.x
 	$(XRUN) -n 4 ./reduction_logical_and.x
 	$(XRUN) -n 4 ./reduction_logical_or.x
+	$(XRUN) -n 4 ./reduction_raise.x
 	$(XRUN) -n 8 ./reduction_and2.x
 	$(XRUN) -n 16 ./reduction_firstmax2.x
 	$(XRUN) -n 16 ./reduction_firstmin2.x
 	$(XRUN) -n 8 ./reduction_lastmax2.x
 	$(XRUN) -n 16 ./reduction_lastmin2.x
+	$(XRUN) -n 8 ./reduction_raise2.x
 	$(XRUN) -n 8 ./reduction_max2.x
 	$(XRUN) -n 8 ./reduction_min2.x
 	$(XRUN) -n 8 ./reduction_mult2.x
