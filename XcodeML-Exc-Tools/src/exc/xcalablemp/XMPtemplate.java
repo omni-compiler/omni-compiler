@@ -535,7 +535,7 @@ public class XMPtemplate extends XMPobject {
 
     tObject.createSizeVector();
 
-    String constructorName = new String("_XMP_set_template_size_");
+    String constructorName = new String("_XMP_set_template_size");
     XMPlocalDecl.addConstructorCall2(constructorName, tArgs, globalDecl, parentBlock);
 
     //

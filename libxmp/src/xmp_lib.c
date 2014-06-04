@@ -509,6 +509,9 @@ void *xmp_malloc(xmp_desc_t d, int size){
   _XMP_array_info_t *ai = &(a->info[0]);
 
   _XMP_template_t *t = a->align_template;
+
+  if (!t->is_fixed) _XMP_fatal("target template is not fixed");
+
   int tdim = ai->align_template_index;
   _XMP_template_chunk_t *chunk = &(t->chunk[tdim]);
   _XMP_template_info_t *info = &(t->info[tdim]);
