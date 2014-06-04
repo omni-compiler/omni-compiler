@@ -1578,41 +1578,27 @@ static CExpr* parse_POST_clause()
 
 static CExpr* parse_WAIT_clause()
 {
-    if (pg_tok != '('){
-      return XMP_LIST1((CExpr*)allocExprOfNumberConst2(0, BT_INT));  // 0 is a number of args
-    }
-    else{
-      pg_get_token(); 
+  if(pg_tok != '(')
+    return NULL;  // no argument
 
-      //CExpr* nodeName = parse_task_ON_ref();
+  pg_get_token(); 
+  CExpr* nodeNum = parse_ON_ref();
+  
+  // only node
+  if(pg_tok == ')'){
+    pg_get_token();
+    return XMP_LIST1(nodeNum);
+  }
 
-      if (pg_tok != PG_IDENT){
-	XMP_Error0("Syntax Error in WAIT");
-      }
+  // node and tag
+  pg_get_token();
+  CExpr* tag = pg_parse_expr();
 
-      CExpr* objName = pg_tok_val;
+  if(pg_tok != ')')
+    XMP_Error0("')' is expected after <nodes-name, tag>");
 
-      pg_get_token();
-
-      if (pg_tok != '(')
-	XMP_Error0("Syntax Error in WAIT");
-
-      CExpr* nodeNum = pg_parse_expr();
-      
-      CExpr* nodeName = XMP_LIST2(objName, nodeNum);
-
-      if (pg_tok == ','){
-	pg_get_token();
-        CExpr* tag = pg_parse_expr();
-	resolveType(tag);
-        pg_get_token();
-        return XMP_LIST3((CExpr*)allocExprOfNumberConst2(2, BT_INT), nodeName, tag);
-      }
-      else{  // if(pg_tok() == ')')
-	pg_get_token();
-	return XMP_LIST2((CExpr*)allocExprOfNumberConst2(1, BT_INT), nodeName);
-      }
-    }
+  pg_get_token();
+  return XMP_LIST2(nodeNum, tag);
 }
 
 static CExpr* parse_LOCAL_ALIAS_clause()

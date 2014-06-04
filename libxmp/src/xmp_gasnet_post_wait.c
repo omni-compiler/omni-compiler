@@ -17,7 +17,7 @@ typedef struct post_wait_obj{
 
 static post_wait_obj_t pw;
 
-void _xmp_gasnet_post_initialize(){
+void _xmp_gasnet_post_wait_initialize(){
   gasnet_hsl_init(&pw.hsl);
   pw.wait_num            = 0;
   pw.list                = malloc(sizeof(request_list_t) * _XMP_POST_WAIT_QUEUESIZE);
@@ -60,7 +60,6 @@ void _xmp_gasnet_post_request(gasnet_token_t token, int node, int tag){
 
 void _xmp_gasnet_post(int target_node, int tag){
   int mynode = (int)gasnet_mynode();
-  
   if(target_node == mynode){
     _xmp_gasnet_do_post(mynode, tag);
   } else{
@@ -108,24 +107,17 @@ static int _xmp_pw_remove(int node, int tag){
   return _XMP_N_INT_FALSE;
 }
 
-void _xmp_gasnet_wait(int num, ...){
-  int target_node, tag;
-  va_list args;
-  
-  va_start(args, num);
-  switch (num) {
-  case 0:
-    GASNET_BLOCKUNTIL(_xmp_pw_remove_anonymous());
-    break;
-  case 1:
-    target_node = va_arg(args, int);
-    GASNET_BLOCKUNTIL(_xmp_pw_remove_notag(target_node));
-    break;
-  case 2:
-    target_node = va_arg(args, int);
-    tag  = va_arg(args, int);
-    GASNET_BLOCKUNTIL(_xmp_pw_remove(target_node, tag));
-    break;
-  }
-  va_end(args);
+void _xmp_gasnet_wait()
+{
+  GASNET_BLOCKUNTIL(_xmp_pw_remove_anonymous());
+}
+
+void _xmp_gasnet_wait_tag(int node, int tag)
+{
+  GASNET_BLOCKUNTIL(_xmp_pw_remove(node, tag));
+}
+
+void _xmp_gasnet_wait_notag(int node)
+{
+  GASNET_BLOCKUNTIL(_xmp_pw_remove_notag(node));
 }

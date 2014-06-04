@@ -200,7 +200,7 @@ extern void _XMP_threads_finalize(void);
 #define _XMP_DEFAULT_COARRAY_STRIDE_SIZE (1*1024*1024)  // 1MB
 #endif
 
-extern void _XMP_post_initialize();
+extern void _XMP_post_wait_initialize();
 #ifdef _XMP_COARRAY_GASNET
 #include <gasnet.h>
 #define _XMP_GASNET_STRIDE_INIT_SIZE 16
@@ -221,9 +221,11 @@ extern void _XMP_gasnet_get(int, int, int, int, int, _XMP_array_section_t*, _XMP
                             _XMP_coarray_t*, void*, long long);
 extern void _XMP_gasnet_sync_all();
 extern void _XMP_gasnet_sync_memory();
-extern void _xmp_gasnet_post_initialize();
+extern void _xmp_gasnet_post_wait_initialize();
 extern void _xmp_gasnet_post(int, int);
-extern void _xmp_gasnet_wait(int, ...);
+extern void _xmp_gasnet_wait();
+extern void _xmp_gasnet_wait_tag(int, int);
+extern void _xmp_gasnet_wait_notag(int);
 #endif
 
 #if defined(_XMP_COARRAY_GASNET) || defined(_XMP_COARRAY_FJRDMA)

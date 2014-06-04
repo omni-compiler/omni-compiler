@@ -197,55 +197,73 @@ public class XMPtranslateLocalPragma {
 
     XobjList onRef = (XobjList)postDecl.getArg(0);
     String nodeName = onRef.getArg(0).getString();
-    //XMPnodes nodeObj = _globalDecl.getXMPnodes(nodeName, localXMPsymbolTable);
+
     XMPnodes nodeObj = _globalDecl.getXMPnodes(nodeName, pb);
-    if (nodeObj == null) {
-	throw new XMPexception("cannot find '" + nodeName + "' nodes");
+    if(nodeObj == null){
+      throw new XMPexception("cannot find '" + nodeName + "' nodes");
     }
     args = Xcons.List(nodeObj.getDescId().Ref());
     
     XobjList nodeList = (XobjList)onRef.getArg(1);
 
-    if(nodeObj.getDim() < nodeList.Nargs()){
-	throw new XMPexception("Error. more node arguments");
+    if(nodeObj.getDim() != nodeList.Nargs()){
+      throw new XMPexception("Error. Dimension of node is different.");
     }
-    else if(nodeObj.getDim() > nodeList.Nargs()){
-	throw new XMPexception("Error. less node argument");
-    }
-    args.add(Xcons.IntConstant(nodeObj.getDim()));
+
+    String funcName = "_XMP_post_" + String.valueOf(nodeObj.getDim());
+
     for(int i=0;i<nodeObj.getDim();i++)
-	args.add(nodeList.getArg(i).getArg(0));
+      args.add(nodeList.getArg(i).getArg(0));
 
     Xobject tag = postDecl.getArg(1);
     args.add(tag);
 
-    pb.replace(_globalDecl.createFuncCallBlock("_XMP_post", args));
+    pb.replace(_globalDecl.createFuncCallBlock(funcName, args));
   }
 
   private void translateWait(PragmaBlock pb) throws XMPexception {
     checkDeclPragmaLocation(pb);
     XobjList waitDecl = (XobjList)pb.getClauses();
-    Xobject numOfArgs = waitDecl.getArg(0); 
-    XobjList args = null;
-    Xobject waitNode = null;
-    Xobject tag = null;
+    int numOfArgs = waitDecl.Nargs();
 
-    switch (numOfArgs.getInt()) {
-    case 0:  // no arguments
-      args = Xcons.List(numOfArgs);
-      break;
-    case 1:  // only node
-      waitNode = (Xobject)waitDecl.getArg(1).getArg(1);
-      args = Xcons.List(numOfArgs, waitNode);
-      break;
-    case 2:
-      waitNode = (Xobject)waitDecl.getArg(1).getArg(1);
-      tag = waitDecl.getArg(2);
-      args = Xcons.List(numOfArgs, waitNode, tag);
-      break;
+    // no arguments
+    if(numOfArgs == 0){
+      pb.replace(_globalDecl.createFuncCallBlock("_XMP_wait", null));
+      return;
     }
 
-    pb.replace(_globalDecl.createFuncCallBlock("_XMP_wait", args));
+    // only node
+    XobjList onRef = (XobjList)waitDecl.getArg(0);
+    String nodeName = onRef.getArg(0).getString();
+    XobjList nodeList = (XobjList)onRef.getArg(1);
+    XMPnodes nodeObj = _globalDecl.getXMPnodes(nodeName, pb);
+    String funcName = null;
+    XobjList args = Xcons.List(nodeObj.getDescId().Ref());
+
+    if(nodeObj == null){
+      throw new XMPexception("cannot find '" + nodeName + "' nodes");
+    }
+    if(nodeObj.getDim() != nodeList.Nargs()){
+      throw new XMPexception("Error. Dimension of node is different.");
+    }
+
+    for(int i=0;i<nodeList.Nargs();i++)
+      args.add(onRef.getArg(1).getArg(i));
+
+    if(numOfArgs == 1){
+      funcName = "_XMP_wait_notag_" + String.valueOf(nodeObj.getDim());
+      pb.replace(_globalDecl.createFuncCallBlock(funcName, args));
+      return;
+    }
+    
+    // node and tag
+    if(numOfArgs == 2){ // node and tag
+      funcName = "_XMP_wait_tag_" + String.valueOf(nodeObj.getDim());
+      Xobject tag = waitDecl.getArg(1);
+      args.add(tag);
+      pb.replace(_globalDecl.createFuncCallBlock(funcName, args));
+      return;
+    }
   }
 
   private void translateLocalAlias(PragmaBlock pb) throws XMPexception {

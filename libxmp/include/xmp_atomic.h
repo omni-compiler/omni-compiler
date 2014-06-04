@@ -143,7 +143,5 @@ extern void _xmp_lock(_XMP_coarray_t*, int, int);
 extern void _xmp_unlock(_XMP_coarray_t*, int, int);
 extern void _xmp_lock_initialize(_xmp_lock_t*, int);
 
-extern void _XMP_post(void*, int, ...);
-extern void _XMP_wait(int, int);
 #endif
 

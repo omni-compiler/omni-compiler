@@ -88,8 +88,5 @@ extern void     xmp_free(xmp_desc_t d);
 extern int	xmp_get_gpu_count(void);
 #endif
 
-//extern void _XMP_post(xmp_desc_t, int, int node, int tag);
-//extern void _XMP_wait(int node, int dummy, int tag);
-
 #endif // _XMP_USERAPI
 

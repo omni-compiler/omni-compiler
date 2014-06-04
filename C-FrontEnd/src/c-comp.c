@@ -2148,6 +2148,12 @@ compile1(CExpr *expr, CExpr *parent)
       	  CExpr *tag = EXPR_L_DATA(ccol_DListAt(EXPR_DLIST(EXPR_L(clauseList)), 1));
       	  compile1(tag, expr);
       	}
+	else if(code == XMP_WAIT){
+	  if(EXPR_DLIST(EXPR_L(clauseList))->dl_head != NULL){
+	    CExpr *tag = EXPR_L_DATA(ccol_DListAt(EXPR_DLIST(EXPR_L(clauseList)), 1));
+	    compile1(tag, expr);
+	  }
+	}
       }
     }
 
