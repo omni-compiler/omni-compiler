@@ -1207,6 +1207,8 @@ CExpr *parse_Reduction_opt()
 	op = XMP_DATA_REDUCE_BOR; break;
     case '&':
 	op = XMP_DATA_REDUCE_BAND; break;
+    case '^':
+        op = XMP_DATA_REDUCE_BXOR; break;
     case PG_ANDAND:
 	op = XMP_DATA_REDUCE_LAND; break;
     case PG_OROR:
@@ -1313,6 +1315,8 @@ CExpr *parse_Reduction_ref()
 	op = XMP_DATA_REDUCE_BOR; break;
     case '&':
 	op = XMP_DATA_REDUCE_BAND; break;
+    case '^':
+        op = XMP_DATA_REDUCE_BXOR; break;
     case PG_ANDAND:
 	op = XMP_DATA_REDUCE_LAND; break;
     case PG_OROR:
