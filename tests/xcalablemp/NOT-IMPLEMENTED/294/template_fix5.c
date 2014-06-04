@@ -4,16 +4,12 @@
 #pragma xmp nodes p(4,4)
 #pragma xmp template t(0:3,:)
 #pragma xmp distribute t(cyclic,block) onto p
-int i,j,N,s,result=0;
-int **a;
+int i,j,N,s,result=0, **a;
 #pragma xmp align a[i][j] with t(j,i)
 
 int main(void)
 {
-
   N = 1000;
-
-  /*
 #pragma xmp template_fix(block) t(0:N-1,0:N-1)
   for(i=0;i<N;i++)
     a[i]=(int *)malloc(sizeof(int) * N);
@@ -28,7 +24,7 @@ int main(void)
   for(i=1;i<N+1;i++)
     for(j=1;j<N+1;j++)
       s = s+a[i][j];
-  */
+
   if(s != 450000)
     result = -1;
 
@@ -36,8 +32,3 @@ int main(void)
     free(a[i]); 
    return 0;
 }
-      
-         
-      
-   
-   

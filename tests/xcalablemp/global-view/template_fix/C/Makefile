@@ -15,6 +15,7 @@ all default: $(EXES)
 
 run: $(EXES)
 	$(XRUN) -n 4 ./reflect.x
+	$(XRUN) -n 4 ./block.x
 
 clean:
 	rm -f $(EXES) $(OBJS)

@@ -26,6 +26,18 @@ int main(void)
     result = -1;
   
   free(a); 
+
+#pragma xmp reduction(+:result)
+#pragma xmp task on p(1)
+  {
+    if(result == 0 ){
+      printf("PASS\n");
+    }
+    else{
+      fprintf(stderr, "ERROR\n");
+      exit(1);
+    }
+  }
   
   return 0;
 }
