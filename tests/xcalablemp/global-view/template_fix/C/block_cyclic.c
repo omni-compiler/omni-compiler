@@ -11,14 +11,11 @@ int main(void)
 {
   N = 1000;
 #pragma xmp template_fix(cyclic(3)) t(0:N-1)
-  //  a = (int *)malloc(N*sizeof(int));
   a = (int *)xmp_malloc(xmp_desc_of(a), N);
 
 #pragma xmp loop on t(i)
-  for(i=0;i<N;i++){
+  for(i=0;i<N;i++)
     a[i] = i;
-    printf("%d\n", a[i]);
-  }
 
 #pragma xmp loop on t(i) reduction(+:s)
   for(i=0;i<N;i++)

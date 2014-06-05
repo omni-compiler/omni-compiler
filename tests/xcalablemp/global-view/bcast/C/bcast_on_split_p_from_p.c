@@ -24,20 +24,20 @@ int main(void)
     }
 
 #pragma xmp bcast (a) from p(j) on p(2:procs-1)
-    //#pragma xmp bcast (b) from p(j) on p(2:procs-1)
-    //#pragma xmp bcast (c) from p(j) on p(2:procs-1)
-    //#pragma xmp bcast (aa) from p(j) on p(2:procs-1)
-    //#pragma xmp bcast (bb) from p(j) on p(2:procs-1)
-    //#pragma xmp bcast (cc) from p(j) on p(2:procs-1)
+#pragma xmp bcast (b) from p(j) on p(2:procs-1)
+#pragma xmp bcast (c) from p(j) on p(2:procs-1)
+#pragma xmp bcast (aa) from p(j) on p(2:procs-1)
+#pragma xmp bcast (bb) from p(j) on p(2:procs-1)
+#pragma xmp bcast (cc) from p(j) on p(2:procs-1)
 
     if((id >= 2)&&(id<=procs-1)){
       if(a != j) result = -1;
       if(b != (double)j) result = -1;
       if(c != (float)j) result = -1;
       for(i=0;i<N;i++){
-	if(aa[i] != j+i+1) result = -1;
-	if(bb[i] != (double)(j+i+1)) result = -1;
-	if(cc[i] != (float)(j+i+1)) result = -1;
+	if(aa[i] != j+i) result = -1;
+	if(bb[i] != (double)(j+i)) result = -1;
+	if(cc[i] != (float)(j+i)) result = -1;
       }
     }
     else{

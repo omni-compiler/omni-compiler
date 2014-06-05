@@ -15,7 +15,7 @@ int main(void)
   m = (int *)malloc(sizeof(int) * procs);
   remain = N;
 
-  for(i=0;i<procs;i++){
+  for(i=0;i<procs-1;i++){
     m[i] = remain/2;
     remain -= m[i];
   }
@@ -35,6 +35,18 @@ int main(void)
    
    if(s != 499500)
      result = -1;
+
+#pragma xmp reduction(+:result)
+#pragma xmp task on p(1)
+   {
+     if(result == 0){
+       printf("PASS\n");
+     }
+     else{
+       fprintf(stderr, "ERROR\n");
+       exit(1);
+     }
+   }
    
    free (a);
    free (m);
