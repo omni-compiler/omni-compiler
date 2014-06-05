@@ -306,6 +306,13 @@ public class XMPtransPragma
       for (int i = 0; i < info.widthList.size(); i++){
 	  g = env.declInternIdent(XMP.set_reflect_f,Xtype.FsubroutineType);
 	  XMPdimInfo w = info.widthList.get(i);
+
+	  // Here the stride means the periodic flag.
+	  // check wheter the shadow is full.
+	  if (w.getStride().getInt() == 1 && a.isFullShadow(i)){
+	    XMP.error("Periodic reflect cannot be specified for a dimension with full shadow.");
+	  }
+
 	  Xobject args = Xcons.List(a.getDescId().Ref(), Xcons.IntConstant(i),
 				    w.getLower(), w.getUpper(), w.getStride());
 	  bb.add(g.callSubroutine(args));
