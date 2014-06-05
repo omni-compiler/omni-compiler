@@ -22,8 +22,7 @@ int main(void)
   m[procs-1] = remain;
 
 #pragma xmp template_fix(gblock(m)) t(0:N-1)
-
-   a = (int *)malloc(sizeof(int) * N);
+  a = (int *)xmp_malloc(xmp_desc_of(a), N);
 
 #pragma xmp loop on t(i)
    for(i=0;i<N;i++)

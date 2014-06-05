@@ -12,7 +12,7 @@ int main(void)
   N = 1000;
 
 #pragma xmp template_fix(block) t(0:N-1)
-  a = (int *)malloc(sizeof(int) * N);
+  a = (int *)xmp_malloc(xmp_desc_of(a), N);
 
 #pragma xmp loop (i) on t(i)
   for(i=0;i<N;i++)
