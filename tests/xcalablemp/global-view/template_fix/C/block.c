@@ -10,7 +10,7 @@ int i,N,s=0,result=0,*a;
 int main(void)
 {
   N = 1000;
- 
+
 #pragma xmp template_fix(block) t(0:N-1)
   a = (int *)malloc(sizeof(int) * N);
 
