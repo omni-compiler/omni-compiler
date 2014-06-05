@@ -83,24 +83,20 @@ endif
 
 tests: tests-dummy
 tests-dummy:
-	@for dir in $(SUB_TESTDIRS); do \
-	  make -C $(BASE_TESTDIR)$$dir; \
-	  if [ $$? -ne 0 ]; then \
-	    exit 1; \
-	  fi; \
+	@for subdir in $(SUB_TESTDIRS) ; do \
+	$(MAKE) -C $(BASE_TESTDIR)/$$subdir ; \
+	if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 clean-tests:
-	@for dir in $(SUB_TESTDIRS); do \
-	  make clean -C $(BASE_TESTDIR)$$dir; \
+	@for subdir in $(SUB_TESTDIRS) ; do \
+	(cd $(BASE_TESTDIR)/$$subdir && $(MAKE) clean ) ;\
 	done
 
 run-tests:
-	@for dir in $(SUB_TESTDIRS); do \
-	  make run -C $(BASE_TESTDIR)$$dir; \
-	  if [ $$? -ne 0 ]; then \
-	    exit 1; \
-	  fi; \
+	@for subdir in $(SUB_TESTDIRS); do \
+	make run -C $(BASE_TESTDIR)$$subdir; \
+	if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 clean-local:
