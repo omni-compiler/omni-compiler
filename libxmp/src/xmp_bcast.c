@@ -151,7 +151,7 @@ void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int co
           _XMP_fatal("multiple source nodes indicated in bcast directive");
         }
 
-        root += (acc_nodes_size * (from_lower));
+        root += (acc_nodes_size * (from_lower - inherit_info[i].lower));
       }
 
       acc_nodes_size *= size;
