@@ -137,7 +137,6 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateTemplateFix(PragmaBlock pb) throws XMPexception {
-    checkDeclPragmaLocation(pb);
 
     XobjList templateDecl = (XobjList)pb.getClauses();
     XobjList templateNameList = (XobjList)templateDecl.getArg(1);
