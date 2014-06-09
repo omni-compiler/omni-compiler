@@ -549,7 +549,8 @@ XMPPKG_TMPDIR := $(XMPPKG_TMPDIR_TOP)/$(shell mktemp -u --tmpdir=/)
 DEB_VER_FILE = "/etc/debian_version"
 RH_REL_FILE = "/etc/redhat-release"
 BASE_TESTDIR = "tests/xcalablemp/"
-SUB_TESTDIRS = "global-view/bcast/C/" "global-view/loop/C" \
+SUB_TESTDIRS = "global-view/array/C/" "global-view/array/F/" \
+	"global-view/bcast/C/" "global-view/loop/C" \
 	"global-view/loop/F" "global-view/reduction/C" \
 	"global-view/reduction/F" "global-view/shadow-reflect/C/" \
 	"global-view/task/C" "global-view/task/F" \

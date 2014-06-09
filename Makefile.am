@@ -65,7 +65,8 @@ release: release-rpm release-deb
 
 BASE_TESTDIR  = "tests/xcalablemp/"
 
-SUB_TESTDIRS = "global-view/bcast/C/"
+SUB_TESTDIRS = "global-view/array/C/" "global-view/array/F/"
+SUB_TESTDIRS += "global-view/bcast/C/"
 SUB_TESTDIRS += "global-view/loop/C" "global-view/loop/F"
 SUB_TESTDIRS += "global-view/reduction/C" "global-view/reduction/F"
 SUB_TESTDIRS += "global-view/shadow-reflect/C/"
