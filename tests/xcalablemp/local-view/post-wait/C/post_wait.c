@@ -16,9 +16,9 @@ void post_wait_local(){
 #pragma xmp post (p(1), 8)
 #pragma xmp post (p(1), 0)
 
-#pragma xmp wait (p(1), 8)  // release  8 tag
-#pragma xmp wait (p(1))     // release  0 tag
-#pragma xmp wait            // release -1 tag
+#pragma xmp wait (p(1), 8)
+#pragma xmp wait (p(1))
+#pragma xmp wait
   }
   xmp_sync_all(&status);
 }
@@ -36,9 +36,9 @@ void post_wait_p2p(int tag[MAX_TAG]){
 
 #pragma xmp task on p(2)
   {
-#pragma xmp wait                 // release tag[2]
-#pragma xmp wait (p(1), tag[3])  // release tag[3]
-#pragma xmp wait (p(1))          // release tag[1]
+#pragma xmp wait (p(1), tag[1])
+#pragma xmp wait (p(1), tag[3])
+#pragma xmp wait (p(1), tag[2])
   }
   xmp_sync_all(&status);
 }
