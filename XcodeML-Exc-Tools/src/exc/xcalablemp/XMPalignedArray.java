@@ -101,6 +101,10 @@ public class XMPalignedArray {
     return _type;
   }
 
+  public Xtype getArrayType() {
+    return _arrayType;
+  }
+
   public int getDim() {
     return _dim;
   }

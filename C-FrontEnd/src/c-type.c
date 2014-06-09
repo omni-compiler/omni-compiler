@@ -1429,7 +1429,7 @@ resolveType_binaryArithOp(CExprOfBinaryNode *expr)
     int b1 = isBasicTypeOrEnum(tdo1);
     int b2 = isBasicTypeOrEnum(tdo2);
 
-    if(b1 == 0 || b2 == 0) {
+    if ((b1 == 0 || b2 == 0) && !isSubArrayRef(e1) && !isSubArrayRef(e2)){
         // allow 'pointer - pointer'
         isCompatiblePointerType(td1, td2, &td, (ec != EC_MINUS));
         if(td == NULL) {
@@ -1439,6 +1439,12 @@ resolveType_binaryArithOp(CExprOfBinaryNode *expr)
             td = &s_addrIntTypeDesc;
         }
     } else {
+      if (isSubArrayRef(e1)){
+	tdo1 = getRefType(EXPR_T(tdo1->e_typeExpr));
+      }
+      if (isSubArrayRef(e2)){
+	tdo2 = getRefType(EXPR_T(tdo2->e_typeExpr));
+      }
         CBasicTypeEnum b1 = getBasicTypeWithEnum(tdo1);
         CBasicTypeEnum b2 = getBasicTypeWithEnum(tdo2);
         int isReal1 = (b1 < BT_FLOAT_IMAGINARY);

@@ -2876,9 +2876,9 @@ public class XMPtranslateLocalPragma {
     XMPpair<XMPalignedArray, XobjList> leftExprInfo = getXMPalignedArrayExpr(pb, left);
     XMPalignedArray leftAlignedArray = leftExprInfo.getFirst();
 
-    Xobject right = assignStmt.right();
-    XMPpair<XMPalignedArray, XobjList> rightExprInfo = getXMPalignedArrayExpr(pb, right);
-    XMPalignedArray rightAlignedArray = rightExprInfo.getFirst();
+    // Xobject right = assignStmt.right();
+    // XMPpair<XMPalignedArray, XobjList> rightExprInfo = getXMPalignedArrayExpr(pb, right);
+    // XMPalignedArray rightAlignedArray = rightExprInfo.getFirst();
 
     List<Ident> varList = new ArrayList<Ident>();
     List<Xobject> lbList = new ArrayList<Xobject>();
@@ -2894,8 +2894,24 @@ public class XMPtranslateLocalPragma {
     }
 
     String arrayName = getArrayName(left);
-    Ident arrayId = pb.findVarIdent(arrayName);
-    Xtype arrayType = arrayId.Type();
+
+    //Ident arrayId = pb.findVarIdent(arrayName);
+    //Xtype arrayType = arrayId.Type();
+
+    XMPalignedArray array = _globalDecl.getXMPalignedArray(arrayName, pb);
+    Xtype arrayType = null;
+    if (array != null){
+      arrayType = array.getArrayType();
+    }
+    else {
+      Ident arrayId = pb.findVarIdent(arrayName);
+      if (arrayId != null){
+	arrayType = arrayId.Type();
+      }
+    }
+	
+    if (arrayType == null) throw new XMPexception("array should be declared statically");
+
     Xtype elemType = arrayType.getArrayElementType();
     int n = arrayType.getNumDimensions();
 
@@ -2906,10 +2922,6 @@ public class XMPtranslateLocalPragma {
       long dimSize = arrayType.getArraySize();
       Xobject sizeExpr;
       if (dimSize == 0 || arrayType.getKind() == Xtype.POINTER){
-
-	XMPalignedArray array = _globalDecl.getXMPalignedArray(arrayName);
-	if (array == null) throw new XMPexception("array size should be declared statically");
-
 	Ident ret = declIdentWithBlock(pb, "XMP_" + arrayName + "_ret" + Integer.toString(i),
 				       Xtype.intType);
 	Ident sz = declIdentWithBlock(pb, "XMP_" + arrayName + "_ub" + Integer.toString(i),
@@ -2974,8 +2986,24 @@ public class XMPtranslateLocalPragma {
       int k = 0;
 
       String arrayName1 = getArrayName(x);
-      Ident arrayId1 = pb.findVarIdent(arrayName);
-      Xtype arrayType1 = arrayId.Type();
+
+      //Ident arrayId1 = pb.findVarIdent(arrayName1);
+      //Xtype arrayType1 = arrayId.Type();
+
+      XMPalignedArray array1 = _globalDecl.getXMPalignedArray(arrayName1, pb);
+      Xtype arrayType1 = null;
+      if (array1 != null){
+	arrayType1 = array1.getArrayType();
+      }
+      else {
+	Ident arrayId1 = pb.findVarIdent(arrayName1);
+	if (arrayId1 != null){
+	  arrayType1 = arrayId1.Type();
+	}
+      }
+	
+      if (arrayType1 == null) throw new XMPexception("array should be declared statically");
+
       Xtype elemType1 = arrayType1.getArrayElementType();
       int m = arrayType1.getNumDimensions();
 
