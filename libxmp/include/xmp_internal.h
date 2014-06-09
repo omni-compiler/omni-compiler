@@ -203,6 +203,7 @@ extern void _XMP_threads_finalize(void);
 #define FLAG_NIC (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN)
 #define FLAG_NIC_POST_WAIT (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_REMOTE_NOTICE)
 #define SEND_NIC FJMPI_RDMA_LOCAL_NIC0
+#define RECV_NIC FJMPI_RDMA_LOCAL_NIC1
 #define MEMID 0
 #define POST_WAIT_ID 1
 extern long long get_offset(_XMP_array_section_t *, int);
@@ -249,6 +250,7 @@ extern void _XMP_fjrdma_get(int, int, int, int, int, _XMP_array_section_t *, _XM
 			    _XMP_coarray_t *, void *, _XMP_coarray_t *, long long);
 extern void _XMP_fjrdma_shortcut_put(const int, const uint64_t, const uint64_t, const _XMP_coarray_t *, const _XMP_coarray_t *, const int);
 extern void _XMP_fjrdma_shortcut_get(const int, const uint64_t, const uint64_t, const _XMP_coarray_t *, const _XMP_coarray_t *, const int);
+extern void _xmp_fjrdma_post_wait_initialize();
 extern void _xmp_fjrdma_post(int, int);
 extern void _xmp_fjrdma_wait();
 extern void _xmp_fjrdma_wait_tag(int, int);
