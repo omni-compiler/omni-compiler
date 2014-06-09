@@ -21,7 +21,7 @@ if GASNET
 endif
 
 if FJRDMA
-    libxmp_a_SOURCES += xmp_coarray_set.c xmp_coarray_do.c xmp_fjrdma_coarray_set.c xmp_fjrdma_coarray_do.c xmp_fjrdma_post_wait.c
+    libxmp_a_SOURCES += xmp_coarray_set.c xmp_coarray_do.c xmp_fjrdma_coarray_set.c xmp_fjrdma_coarray_do.c xmp_post.c xmp_wait.c xmp_fjrdma_post_wait.c
     AM_CFLAGS        += -std=gnu99 -D_XMP_COARRAY_FJRDMA
 endif
 

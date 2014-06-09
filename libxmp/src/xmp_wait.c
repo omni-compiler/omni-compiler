@@ -4,8 +4,8 @@ void _XMP_wait()
 {
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_wait();
-#else
-  _XMP_fatal("Cannot use wait function");
+#elif _XMP_COARRAY_FJRDMA
+  _xmp_fjrdma_wait();
 #endif
 }
 
@@ -13,8 +13,8 @@ void _XMP_wait_tag_1(_XMP_nodes_t *node_desc, int num1, int tag)
 {
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_wait_tag(num1-1, tag);
-#else
-  _XMP_fatal("Cannot use wait function");
+#elif _XMP_COARRAY_FJRDMA
+  _xmp_fjrdma_wait_tag(num1-1, tag);
 #endif
 }
 
@@ -22,8 +22,8 @@ void _XMP_wait_notag_1(_XMP_nodes_t *node_desc, int num1)
 {
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_wait_notag(num1-1);
-#else
-  _XMP_fatal("Cannot use wait function");
+#elif _XMP_COARRAY_FJRDMA
+  _xmp_fjrdma_wait_notag(num1-1);
 #endif
 }
 
@@ -33,8 +33,8 @@ void _XMP_wait_tag_2(_XMP_nodes_t *node_desc, int num1, int num2, int tag)
 
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_wait_tag(target, tag);
-#else
-  _XMP_fatal("Cannot use wait function");
+#elif _XMP_COARRAY_FJRDMA
+  _xmp_fjrdma_wait_tag(target, tag);
 #endif
 }
 
@@ -44,8 +44,8 @@ void _XMP_wait_notag_2(_XMP_nodes_t *node_desc, int num1, int num2)
 
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_wait_notag(target);
-#else
-  _XMP_fatal("Cannot use wait function");
+#elif _XMP_COARRAY_FJRDMA
+  _xmp_fjrdma_wait_notag(target);
 #endif
 }
 
@@ -57,8 +57,8 @@ void _XMP_wait_tag_3(_XMP_nodes_t *node_desc, int num1, int num2, int num3, int 
 
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_wait_tag(target, tag);
-#else
-  _XMP_fatal("Cannot use wait function");
+#elif _XMP_COARRAY_FJRDMA
+  _xmp_fjrdma_wait_tag(target, tag);
 #endif
 }
 
@@ -70,8 +70,8 @@ void _XMP_wait_notag_3(_XMP_nodes_t *node_desc, int num1, int num2, int num3)
 
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_wait_notag(target);
-#else
-  _XMP_fatal("Cannot use wait function");
+#elif _XMP_COARRAY_FJRDMA
+  _xmp_fjrdma_wait_notag(target);
 #endif
 }
 
@@ -83,8 +83,8 @@ void _XMP_wait_tag_4(_XMP_nodes_t *node_desc, int num1, int num2, int num3, int 
 
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_wait_tag(target, tag);
-#else
-  _XMP_fatal("Cannot use wait function");
+#elif _XMP_COARRAY_FJRDMA
+  _xmp_fjrdma_wait_tag(target, tag);
 #endif
 }
 
@@ -96,8 +96,8 @@ void _XMP_wait_notag_4(_XMP_nodes_t *node_desc, int num1, int num2, int num3, in
 
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_wait_notag(target);
-#else
-  _XMP_fatal("Cannot use wait function");
+#elif _XMP_COARRAY_FJRDMA
+  _xmp_fjrdma_wait_notag(target);
 #endif
 }
 
@@ -113,8 +113,8 @@ void _XMP_wait_tag_5(_XMP_nodes_t *node_desc, int num1, int num2, int num3, int 
   
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_wait_tag(target, tag);
-#else
-  _XMP_fatal("Cannot use wait function");
+#elif _XMP_COARRAY_FJRDMA
+  _xmp_fjrdma_wait_tag(target, tag);
 #endif
 }
 
@@ -129,8 +129,8 @@ void _XMP_wait_notag_5(_XMP_nodes_t *node_desc, int num1, int num2, int num3, in
 
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_wait_notag(target);
-#else
-  _XMP_fatal("Cannot use wait function");
+#elif _XMP_COARRAY_FJRDMA
+  _xmp_fjrdma_wait_notag(target);
 #endif
 }
 
@@ -148,8 +148,8 @@ void _XMP_wait_tag_6(_XMP_nodes_t *node_desc, int num1, int num2, int num3, int 
 
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_wait_tag(target, tag);
-#else
-  _XMP_fatal("Cannot use wait function");
+#elif _XMP_COARRAY_FJRDMA
+  _xmp_fjrdma_wait_tag(target, tag);
 #endif
 }
 
@@ -167,8 +167,8 @@ void _XMP_wait_notag_6(_XMP_nodes_t *node_desc, int num1, int num2, int num3, in
 
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_wait_notag(target);
-#else
-  _XMP_fatal("Cannot use wait function");
+#elif _XMP_COARRAY_FJRDMA
+  _xmp_fjrdma_wait_notag(target);
 #endif
 }
 
@@ -188,8 +188,8 @@ void _XMP_wait_tag_7(_XMP_nodes_t *node_desc, int num1, int num2, int num3, int 
 
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_wait_tag(target, tag);
-#else
-  _XMP_fatal("Cannot use wait function");
+#elif _XMP_COARRAY_FJRDMA
+  _xmp_fjrdma_wait_tag(target, tag);
 #endif
 }
 
@@ -209,7 +209,7 @@ void _XMP_wait_notag_7(_XMP_nodes_t *node_desc, int num1, int num2, int num3, in
 
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_wait_notag(target);
-#else
-  _XMP_fatal("Cannot use wait function");
+#elif _XMP_COARRAY_FJRDMA
+  _xmp_fjrdma_wait_notag(target);
 #endif
 }

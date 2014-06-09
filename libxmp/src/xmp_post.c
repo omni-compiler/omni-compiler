@@ -16,7 +16,7 @@ void _XMP_post_1(_XMP_nodes_t *node_desc, int num1, int tag)
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_post(node_desc->comm_rank, num1-1, tag);
 #elif _XMP_COARRAY_FJRDMA
-  _xmp_fjrdma_post(node_desc->comm_rank, num1-1, tag);
+  _xmp_fjrdma_post(num1-1, tag);
 #endif
 }
 
@@ -27,7 +27,7 @@ void _XMP_post_2(_XMP_nodes_t *node_desc, int num1, int num2, int tag)
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_post(node_desc->comm_rank, target, tag);
 #elif _XMP_COARRAY_FJRDMA
-  _xmp_fjrdma_post(node_desc->comm_rank, target, tag);
+  _xmp_fjrdma_post(target, tag);
 #endif
 }
 
@@ -40,7 +40,7 @@ void _XMP_post_3(_XMP_nodes_t *node_desc, int num1, int num2, int num3, int tag)
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_post(node_desc->comm_rank, target, tag);
 #elif _XMP_COARRAY_FJRDMA
-  _xmp_fjrdma_post(node_desc->comm_rank, target, tag);
+  _xmp_fjrdma_post(target, tag);
 #endif
 }
 
@@ -53,7 +53,7 @@ void _XMP_post_4(_XMP_nodes_t *node_desc, int num1, int num2, int num3, int num4
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_post(node_desc->comm_rank, target, tag);
 #elif _XMP_COARRAY_FJRDMA
-  _xmp_fjrdma_post(node_desc->comm_rank, target, tag);
+  _xmp_fjrdma_post(target, tag);
 #endif
 }
 
@@ -70,7 +70,7 @@ void _XMP_post_5(_XMP_nodes_t *node_desc, int num1, int num2, int num3, int num4
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_post(node_desc->comm_rank, target, tag);
 #elif _XMP_COARRAY_FJRDMA
-  _xmp_fjrdma_post(node_desc->comm_rank, target, tag);
+  _xmp_fjrdma_post(target, tag);
 #endif
 }
 
@@ -89,7 +89,7 @@ void _XMP_post_6(_XMP_nodes_t *node_desc, int num1, int num2, int num3, int num4
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_post(node_desc->comm_rank, target, tag);
 #elif _XMP_COARRAY_FJRDMA
-  _xmp_fjrdma_post(node_desc->comm_rank, target, tag);
+  _xmp_fjrdma_post(target, tag);
 #endif
 }
 
@@ -110,6 +110,6 @@ void _XMP_post_7(_XMP_nodes_t *node_desc, int num1, int num2, int num3, int num4
 #ifdef _XMP_COARRAY_GASNET
   _xmp_gasnet_post(node_desc->comm_rank, target, tag);
 #elif _XMP_COARRAY_FJRDMA
-  _xmp_fjrdma_post(node_desc->comm_rank, target, tag);
+  _xmp_fjrdma_post(target, tag);
 #endif
 }
