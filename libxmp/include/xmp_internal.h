@@ -198,6 +198,12 @@ extern void _XMP_threads_finalize(void);
 #if defined(_XMP_COARRAY_FJRDMA) || defined(_XMP_COARRAY_GASNET)
 #define _XMP_DEFAULT_COARRAY_HEAP_SIZE (16*1024*1024)  // 16MB
 #define _XMP_DEFAULT_COARRAY_STRIDE_SIZE (1*1024*1024)  // 1MB
+#define _XMP_POST_WAIT_QUEUESIZE 32
+#define _XMP_POST_WAIT_QUEUECHUNK 512
+#define FLAG_NIC (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN)
+#define SEND_NIC FJMPI_RDMA_LOCAL_NIC0
+#define MEMID 0
+#define POST_WAID_ID 1
 #endif
 
 extern void _XMP_post_wait_initialize();
@@ -222,7 +228,7 @@ extern void _XMP_gasnet_get(int, int, int, int, int, _XMP_array_section_t*, _XMP
 extern void _XMP_gasnet_sync_all();
 extern void _XMP_gasnet_sync_memory();
 extern void _xmp_gasnet_post_wait_initialize();
-extern void _xmp_gasnet_post(int, int);
+extern void _xmp_gasnet_post(int, int, int);
 extern void _xmp_gasnet_wait();
 extern void _xmp_gasnet_wait_tag(int, int);
 extern void _xmp_gasnet_wait_notag(int);

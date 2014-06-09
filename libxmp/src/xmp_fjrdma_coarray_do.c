@@ -7,10 +7,7 @@
 #include "mpi-ext.h"
 #include "xmp_internal.h"
 #include "xmp.h"
-#define MEMID 0
 #define TAG 0
-static int FLAG_NIC= (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN);
-static int SEND_NIC= FJMPI_RDMA_LOCAL_NIC0;
 static int _num_of_puts = 0;
 static struct FJMPI_Rdma_cq cq;
 

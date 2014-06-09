@@ -15,14 +15,14 @@ libxmp_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h $
 
 if GASNET
     include @GASNET_PREFIX@/include/@GASNET_CONDUIT@-conduit/@GASNET_CONDUIT@-seq.mak
-    libxmp_a_SOURCES   += xmp_coarray_set.c xmp_coarray_do.c xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c xmp_post.c xmp_gasnet_post_wait.c xmp_wait.c
+    libxmp_a_SOURCES   += xmp_coarray_set.c xmp_coarray_do.c xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c xmp_post.c xmp_wait.c xmp_gasnet_post_wait.c
     AM_LDFLAGS          = $(GASNET_LDFLAGS) $(GASNET_LIBS)
     AM_CFLAGS          += -D_XMP_COARRAY_GASNET $(GASNET_CPPFLAGS) $(GASNET_CFLAGS)
 endif
 
 if FJRDMA
-    libxmp_a_SOURCES += xmp_coarray_set.c xmp_coarray_do.c xmp_fjrdma_coarray_set.c xmp_fjrdma_coarray_do.c
-    AM_CFLAGS        += -Wall -Wpointer-arith -std=gnu99 -D_XMP_COARRAY_FJRDMA
+    libxmp_a_SOURCES += xmp_coarray_set.c xmp_coarray_do.c xmp_fjrdma_coarray_set.c xmp_fjrdma_coarray_do.c xmp_fjrdma_post_wait.c
+    AM_CFLAGS        += -std=gnu99 -D_XMP_COARRAY_FJRDMA
 endif
 
 xmp_pack_vector.o: xmp_pack_vector.c

@@ -213,34 +213,3 @@ void _XMP_wait_notag_7(_XMP_nodes_t *node_desc, int num1, int num2, int num3, in
   _XMP_fatal("Cannot use wait function");
 #endif
 }
-
-#ifdef _AA
-void _XMP_wait(int num, ...){
-#ifdef _XMP_COARRAY_GASNET
-  int node, tag;
-  va_list args;
-
-  va_start(args, num);
-  switch (num){
-  case 0:
-    _xmp_gasnet_wait(num);
-    break;
-  case 1:
-    node = va_arg(args, int) - 1;
-    _xmp_gasnet_wait(num, node);
-    break;
-  case 2:
-    node = va_arg(args, int) - 1;
-    tag  = va_arg(args, int);
-    _xmp_gasnet_wait(num, node, tag);
-    break;
-  default:
-    _XMP_fatal("_XMP_wait Error");
-    break;
-  }
-  va_end(args);
-#else
-  _XMP_fatal("Cannot use wait function");
-#endif
-}
-#endif

@@ -1,7 +1,5 @@
 #include "xmp_internal.h"
 #include "xmp_atomic.h"
-#define _XMP_POST_WAIT_QUEUESIZE 32
-#define _XMP_POST_WAIT_QUEUECHUNK 512
 
 typedef struct request_list{
   int node;
@@ -35,9 +33,6 @@ static void _xmp_gasnet_do_post(int node, int tag){
   if(pw.wait_num == 0){
     _xmp_pw_push(node, tag);
   } 
-  else if(pw.wait_num < 0){ // This statement does not executed.
-    _XMP_fatal("xmp_gasnet_do_post() : Variable pw.wait_num is illegal.");
-  }
   else{  // pw.wait_num > 0
     if(pw.list_size == pw.wait_num){
       request_list_t *old_list = pw.list;
@@ -58,8 +53,7 @@ void _xmp_gasnet_post_request(gasnet_token_t token, int node, int tag){
   _xmp_gasnet_do_post(node, tag);
 }
 
-void _xmp_gasnet_post(int target_node, int tag){
-  int mynode = (int)gasnet_mynode();
+void _xmp_gasnet_post(int mynode, int target_node, int tag){
   if(target_node == mynode){
     _xmp_gasnet_do_post(mynode, tag);
   } else{

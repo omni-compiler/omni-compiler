@@ -9,7 +9,8 @@
 #include "xmp.h"
 #define MEMID_MAX 511
 #define TAG 0
-static int _memid = 1; // _memid = 0 (macro MEMID in xmp_fjrdma_coarray_do.c) is used to put/get operations.
+static int _memid = 2; // _memid = 0 (macro MEMID in xmp_internal.h) is used to put/get operations.
+                       // _memid = 1 (macro POST_WAID_ID in xmp_internal.h) is used to post/wait operations.
 
 void _XMP_fjrdma_initialize()
 {
