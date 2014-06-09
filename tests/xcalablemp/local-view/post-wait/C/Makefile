@@ -14,10 +14,9 @@ all default: $(EXES)
 .c.x:
 	$(XCC) -o $@ $<
 
-run: post_wait
-
-post_wait:
-	XMP_COARRAY_HEAP_SIZE=18 $(XRUN) -np 4 post_wait.x
+run: 
+	$(XRUN) -np 4 post_wait.x
+	$(XRUN) -np 4 post_wait_massive.x
 
 clean:
 	rm -f $(EXES) $(C_OBJS)

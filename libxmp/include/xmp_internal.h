@@ -230,7 +230,7 @@ extern void _XMP_gasnet_get(int, int, int, int, int, _XMP_array_section_t*, _XMP
 extern void _XMP_gasnet_sync_all();
 extern void _XMP_gasnet_sync_memory();
 extern void _xmp_gasnet_post_wait_initialize();
-extern void _xmp_gasnet_post(int, int, int);
+extern void _xmp_gasnet_post(int, int);
 extern void _xmp_gasnet_wait();
 extern void _xmp_gasnet_wait_tag(int, int);
 extern void _xmp_gasnet_wait_notag(int);
