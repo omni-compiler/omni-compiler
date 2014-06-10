@@ -18,6 +18,7 @@ array.x: array.c
 
 run: $(EXES)
 	$(XRUN) -n 4 ./array.x
+	$(XRUN) -n 4 ./array2.x
 
 clean:
 	rm -f $(EXES) $(OBJS)
