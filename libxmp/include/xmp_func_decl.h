@@ -213,22 +213,30 @@ extern void _XMP_init_world(int *argc, char ***argv);
 extern void _XMP_finalize_world(void);
 
 // xmp_post.c
-#ifdef _XMP_FJRDMA_COARRAY
-extern void _XMP_post(xmp_desc_t, int, int node, int tag);
-extern void _XMP_wait(int dummy, int target_node, int tag);
-extern void _XMP_post_initialize(void);
-#else
-extern void _XMP_post(void *, int num, ...);
-extern void _XMP_wait(int num, ...);
-extern void _XMP_post_initialize(void);
-#endif
+extern void _XMP_post_1(void*, int n1, int t);
+extern void _XMP_post_2(void*, int n1, int n2, int t);
+extern void _XMP_post_3(void*, int n1, int n2, int n3, int t);
+extern void _XMP_post_4(void*, int n1, int n2, int n3, int n4, int t);
+extern void _XMP_post_5(void *, int n1, int n2, int n3, int n4, int n5, int t);
+extern void _XMP_post_6(void*, int n1, int n2, int n3, int n4, int n5, int n6, int t);
+extern void _XMP_post_7(void*, int n1, int n2, int n3, int n4, int n5, int n6, int n7, int t);
 
-// xmp_gasnet_post.c
-#ifndef _XMP_FJRDMA_COARRAY
-extern void _xmp_gasnet_post(int node, int tag);
-extern void _xmp_gasnet_wait(int num, ...);
-extern void _xmp_gasnet_post_initialize(void);
-#endif
+extern void _XMP_wait();
+extern void _XMP_wait_tag_1(void*, int n1, int t);
+extern void _XMP_wait_tag_2(void*, int n1, int n2, int t);
+extern void _XMP_wait_tag_3(void*, int n1, int n2, int n3, int t);
+extern void _XMP_wait_tag_4(void*, int n1, int n2, int n3, int n4, int t);
+extern void _XMP_wait_tag_5(void*, int n1, int n2, int n3, int n4, int n5, int t);
+extern void _XMP_wait_tag_6(void*, int n1, int n2, int n3, int n4, int n5, int n6, int t);
+extern void _XMP_wait_tag_7(void*, int n1, int n2, int n3, int n4, int n5, int n6, int n7, int t);
+
+extern void _XMP_wait_notag_1(void*, int n1);
+extern void _XMP_wait_notag_2(void*, int n1, int n2);
+extern void _XMP_wait_notag_3(void*, int n1, int n2, int n3);
+extern void _XMP_wait_notag_4(void*, int n1, int n2, int n3, int n4);
+extern void _XMP_wait_notag_5(void*, int n1, int n2, int n3, int n4, int n5);
+extern void _XMP_wait_notag_6(void*, int n1, int n2, int n3, int n4, int n5, int n6);
+extern void _XMP_wait_notag_7(void*, int n1, int n2, int n3, int n4, int n5, int n6, int n7);
 
 // ----- libxmp_threads
 // xmp_threads_runtime.c

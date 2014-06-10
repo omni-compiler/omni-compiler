@@ -81,10 +81,10 @@ target_triplet = @target@
 @ENABLE_XMP_GPU_TRUE@am__append_1 = @LIBXMP_GPU_DIR@
 @ENABLE_ACC_TRUE@am__append_2 = @LIBACC_DIR@ @LIBACC_HEADER_DIR@
 @ENABLE_ATOOL_TRUE@am__append_3 = @ATOOL_DIR@
-#  SUB_TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
-@GASNET_TRUE@am__append_4 = "local-view/coarray/C"
-#  SUB_TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
-@FJRDMA_TRUE@am__append_5 = "local-view/coarray/C"
+@GASNET_TRUE@am__append_4 = "local-view/post-wait/C" \
+@GASNET_TRUE@	"local-view/coarray/C" "local-view/coarray/C"
+@FJRDMA_TRUE@am__append_5 = "local-view/post-wait/C" \
+@FJRDMA_TRUE@	"local-view/coarray/C" "local-view/coarray/C"
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
@@ -549,10 +549,13 @@ XMPPKG_TMPDIR := $(XMPPKG_TMPDIR_TOP)/$(shell mktemp -u --tmpdir=/)
 DEB_VER_FILE = "/etc/debian_version"
 RH_REL_FILE = "/etc/redhat-release"
 BASE_TESTDIR = "tests/xcalablemp/"
-SUB_TESTDIRS = "others/F" "others/C" "global-view/shadow-reflect/C/" \
-	"global-view/reduction/C" "global-view/reduction/F" \
-	"global-view/task/C" "global-view/task/F" $(am__append_4) \
-	$(am__append_5)
+SUB_TESTDIRS = "global-view/array/C/" "global-view/array/F/" \
+	"global-view/bcast/C/" "global-view/loop/C" \
+	"global-view/loop/F" "global-view/reduction/C" \
+	"global-view/reduction/F" "global-view/shadow-reflect/C/" \
+	"global-view/task/C" "global-view/task/F" \
+	"global-view/template_fix/C/" "global-view/template_fix/F/" \
+	"others/F" "others/C" $(am__append_4) $(am__append_5)
 DELETABLES = \
 	C-BackEnd/ant.properties \
 	C-BackEnd/bin/C_Back \
@@ -649,9 +652,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps ./Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -1166,24 +1169,20 @@ release: release-rpm release-deb
 
 tests: tests-dummy
 tests-dummy:
-	@for dir in $(SUB_TESTDIRS); do \
-	  make -C $(BASE_TESTDIR)$$dir; \
-	  if [ $$? -ne 0 ]; then \
-	    exit 1; \
-	  fi; \
+	@for subdir in $(SUB_TESTDIRS) ; do \
+	$(MAKE) -C $(BASE_TESTDIR)/$$subdir ; \
+	if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 clean-tests:
-	@for dir in $(SUB_TESTDIRS); do \
-	  make clean -C $(BASE_TESTDIR)$$dir; \
+	@for subdir in $(SUB_TESTDIRS) ; do \
+	(cd $(BASE_TESTDIR)/$$subdir && $(MAKE) clean ) ;\
 	done
 
 run-tests:
-	@for dir in $(SUB_TESTDIRS); do \
-	  make run -C $(BASE_TESTDIR)$$dir; \
-	  if [ $$? -ne 0 ]; then \
-	    exit 1; \
-	  fi; \
+	@for subdir in $(SUB_TESTDIRS); do \
+	make run -C $(BASE_TESTDIR)$$subdir; \
+	if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 clean-local:
