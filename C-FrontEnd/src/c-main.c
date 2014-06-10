@@ -13,7 +13,7 @@
 #include "c-comp.h"
 #include "c-lexyacc.h"
 #include "c-option.h"
-/* #include "c-ptree.h" */
+#include "c-ptree.h"
 
 /**
  * C_Front main.
