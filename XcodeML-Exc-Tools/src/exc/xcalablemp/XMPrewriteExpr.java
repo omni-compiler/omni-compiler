@@ -1052,16 +1052,31 @@ public class XMPrewriteExpr {
     String varName     = myExpr.getSym();
     XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(varName, block);
     XMPcoarray coarray = _globalDecl.getXMPcoarray(varName, block);
-    
+
     if (alignedArray != null && coarray == null){
       return alignedArray.getAddrId().Ref();
     }
     else if (alignedArray == null && coarray != null){
-      Xobject newExpr = _globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + varName).getValue();
-      newExpr = Xcons.PointerRef(newExpr);
-      if(isVar) // When coarray is NOT pointer,
-	newExpr = Xcons.PointerRef(newExpr);
-      return newExpr;
+      Ident coarrayIdent = _globalDecl.getXMPcoarray(varName).getVarId();
+      Ident localIdent = XMPlocalDecl.findLocalIdent(block, varName);
+      if(coarrayIdent != localIdent){
+        // e.g.) When an coarray is declared at global region and 
+        //       the same name variable is decleard at local region.
+        //
+        // int a:[*]
+        // void hoge(){
+        //   int a;
+        //   printf("%d\n", a);  <- "a" should not be changed.
+        // }
+        return myExpr;
+      }
+      else{
+        Xobject newExpr = _globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + varName).getValue();
+        newExpr = Xcons.PointerRef(newExpr);
+        if(isVar) // When coarray is NOT pointer,
+          newExpr = Xcons.PointerRef(newExpr);
+        return newExpr;
+      }
     } else{
       return myExpr;
     }
@@ -1105,7 +1120,7 @@ public class XMPrewriteExpr {
   }
   
   private Xobject rewritePointerRef(Xobject myExpr, Block block) throws XMPexception
-{
+  {
     Xobject addr_expr = myExpr.getArg(0);
     if (addr_expr.Opcode() == Xcode.PLUS_EXPR){
 
@@ -1200,7 +1215,7 @@ public class XMPrewriteExpr {
   }
   
   public static XobjList normArrayRefList(XobjList refExprList, XMPalignedArray alignedArray)
-{
+  {
     if (refExprList == null) {
       return null;
     } else {
@@ -1503,7 +1518,7 @@ public class XMPrewriteExpr {
 
   private static void rewriteLoopIndexVar(XMPtemplate templateObj, int templateIndex,
                                           String loopIndexName, Xobject expr) throws XMPexception
-{
+  {
     topdownXobjectIterator iter = new topdownXobjectIterator(expr);
     for (iter.init(); !iter.end(); iter.next()) {
       Xobject myExpr = iter.getXobject();
@@ -1527,7 +1542,7 @@ public class XMPrewriteExpr {
 
   private static XobjList rewriteLoopIndexArrayRefList(XMPtemplate t, int ti, XMPalignedArray a,
                                                        String loopIndexName, XobjList arrayRefList) throws XMPexception
-{
+  {
     if (arrayRefList == null) {
       return null;
     }
@@ -1545,7 +1560,7 @@ public class XMPrewriteExpr {
 
   private static Xobject rewriteLoopIndexArrayRef(XMPtemplate t, int ti, XMPalignedArray a, int ai,
                                                   String loopIndexName, Xobject arrayRef) throws XMPexception
-{
+  {
     if (arrayRef.Opcode() == Xcode.VAR) {
       if (loopIndexName.equals(arrayRef.getString())) {
         return calcShadow(t, ti, a, ai, arrayRef);
@@ -1644,7 +1659,7 @@ public class XMPrewriteExpr {
    * rewrite OMP pragmas
    */
   private void rewriteOMPpragma(FunctionBlock fb, XMPsymbolTable localXMPsymbolTable)
-{
+  {
     topdownBlockIterator iter2 = new topdownBlockIterator(fb);
 
     for (iter2.init(); !iter2.end(); iter2.next()){
@@ -1661,7 +1676,7 @@ public class XMPrewriteExpr {
    */
   private void rewriteOmpClauses(Xobject expr, PragmaBlock pragmaBlock, Block block,
 				 XMPsymbolTable localXMPsymbolTable)
-{
+  {
     bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
     
     for (iter.init(); !iter.end();iter.next()){
@@ -1669,52 +1684,48 @@ public class XMPrewriteExpr {
       Xobject x = iter.getXobject();
       if (x == null)  continue;
       if (x.Opcode() == Xcode.VAR){
-	  try {
-	      iter.setXobject(rewriteArrayAddr(x, pragmaBlock));
-	  }
-	  catch (XMPexception e){
-	      XMP.error(x.getLineNo(), e.getMessage());
-	  }
+        try {
+          iter.setXobject(rewriteArrayAddr(x, pragmaBlock));
+        }
+        catch (XMPexception e){
+          XMP.error(x.getLineNo(), e.getMessage());
+        }
       }
       else if (x.Opcode() == Xcode.LIST){
-	  if (x.left() != null && x.left().Opcode() == Xcode.STRING &&
-	      x.left().getString().equals("DATA_PRIVATE")){
-
-	      if (!pragmaBlock.getPragma().equals("FOR")) continue;
-
-	      XobjList itemList = (XobjList)x.right();
-
-	      // find loop variable
-	      Xobject loop_var = null;
-	      BasicBlockIterator i = new BasicBlockIterator(pragmaBlock.getBody());
-	      for (Block b = pragmaBlock.getBody().getHead();
-		   b != null;
-		   b = b.getNext()){
-		  if (b.Opcode() == Xcode.F_DO_STATEMENT){
-		      loop_var = ((FdoBlock)b).getInductionVar();
-		  }
-	      }
-	      if (loop_var == null) continue;
-
-	      // check if the clause has contained the loop variable
-	      boolean flag = false;
-	      Iterator<Xobject> j = itemList.iterator();
-	      while (j.hasNext()){
-		  Xobject item = j.next();
-		  if (item.getName().equals(loop_var.getName())){
-		      flag = true;
-		  }
-	      }
-
-	      // add the loop variable to the clause
-	      if (!flag){
-		  itemList.add(loop_var);
-	      }
-	  }
+        if (x.left() != null && x.left().Opcode() == Xcode.STRING &&
+            x.left().getString().equals("DATA_PRIVATE")){
+          
+          if (!pragmaBlock.getPragma().equals("FOR")) continue;
+          
+          XobjList itemList = (XobjList)x.right();
+          
+          // find loop variable
+          Xobject loop_var = null;
+          BasicBlockIterator i = new BasicBlockIterator(pragmaBlock.getBody());
+          for (Block b = pragmaBlock.getBody().getHead(); b != null; b = b.getNext()){
+            if (b.Opcode() == Xcode.F_DO_STATEMENT){
+              loop_var = ((FdoBlock)b).getInductionVar();
+            }
+          }
+          if (loop_var == null) continue;
+          
+          // check if the clause has contained the loop variable
+          boolean flag = false;
+          Iterator<Xobject> j = itemList.iterator();
+          while (j.hasNext()){
+            Xobject item = j.next();
+            if (item.getName().equals(loop_var.getName())){
+              flag = true;
+            }
+          }
+          
+          // add the loop variable to the clause
+          if (!flag){
+            itemList.add(loop_var);
+          }
+        }
       }
-
     }
-
   }
   
   /*
@@ -1845,7 +1856,6 @@ public class XMPrewriteExpr {
 
 	      Block getArraySizeFuncCall = _globalDecl.createFuncCallBlock("_XMP_get_array_total_elmts", Xcons.List(descId.Ref()));
 	      body.insert(Xcons.Set(arraySizeId.Ref(), getArraySizeFuncCall.toXobject()));
-	      //body.insert(getArraySizeFuncCall);
 	      
 	      XobjList arrayRef = Xcons.List(arrayAddrRef, Xcons.List(Xcons.IntConstant(0), arraySizeId.Ref()));
 	      
