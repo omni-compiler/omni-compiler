@@ -566,3 +566,9 @@ void xmp_free(xmp_desc_t d){
   if (((_XMP_array_t *)d)->is_allocated)
     _XMP_dealloc_array((_XMP_array_t *)d);
 }
+
+
+void xmp_exit(int status){
+  _XMP_finalize(0);
+  exit(status);
+}

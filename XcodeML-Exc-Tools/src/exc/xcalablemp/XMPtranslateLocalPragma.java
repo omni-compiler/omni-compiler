@@ -2880,10 +2880,12 @@ public class XMPtranslateLocalPragma {
     // XMPpair<XMPalignedArray, XobjList> rightExprInfo = getXMPalignedArrayExpr(pb, right);
     // XMPalignedArray rightAlignedArray = rightExprInfo.getFirst();
 
-    List<Ident> varList = new ArrayList<Ident>();
-    List<Xobject> lbList = new ArrayList<Xobject>();
-    List<Xobject> lenList = new ArrayList<Xobject>();
-    List<Xobject> stList = new ArrayList<Xobject>();
+    List<Ident> varList = new ArrayList<Ident>(XMP.MAX_DIM);
+    List<Ident> varListTemplate = new ArrayList<Ident>(XMP.MAX_DIM);
+    for (int i = 0; i < XMP.MAX_DIM; i++) varListTemplate.add(null);
+    List<Xobject> lbList = new ArrayList<Xobject>(XMP.MAX_DIM);
+    List<Xobject> lenList = new ArrayList<Xobject>(XMP.MAX_DIM);
+    List<Xobject> stList = new ArrayList<Xobject>(XMP.MAX_DIM);
 
     //
     // convert LHS
@@ -2949,6 +2951,7 @@ public class XMPtranslateLocalPragma {
 
       var = declIdentWithBlock(pb, "_XMP_loop_i" + Integer.toString(i), Xtype.intType);
       varList.add(var);
+      varListTemplate.set(leftAlignedArray.getAlignSubscriptIndexAt(i), var);
 
       lb = ((XobjList)sub).getArg(0);
       if (lb == null) lb = Xcons.IntConstant(0);
@@ -3024,7 +3027,10 @@ public class XMPtranslateLocalPragma {
 	if (st == null) st = Xcons.IntConstant(1);
 
 	Xobject expr;
-	expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
+	//expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
+	Ident loopVar = varListTemplate.get(array1.getAlignSubscriptIndexAt(i));
+	if (loopVar == null) XMP.fatal("array on rhs does not conform to that on lhs.");
+	expr = Xcons.binaryOp(Xcode.MUL_EXPR, loopVar.Ref(), st);
 	expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
 
 	subscripts1.setArg(i, expr);
@@ -3112,7 +3118,10 @@ public class XMPtranslateLocalPragma {
 	  else st = Xcons.IntConstant(1);
 
 	  Xobject expr;
-	  expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
+	  //expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
+	  Ident loopVar = varListTemplate.get(i);
+	  if (loopVar == null) XMP.fatal("template-ref does not conform to that on lhs.");
+	  expr = Xcons.binaryOp(Xcode.MUL_EXPR, varListTemplate.get(i).Ref(), st);
 	  expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
     	  subscriptList.add(expr);
 	  k++;
@@ -3141,7 +3150,10 @@ public class XMPtranslateLocalPragma {
 	  lb = tlb.Ref();
 	}
 
-	Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, varList.get(i).Ref(), lb);
+	//Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, varList.get(i).Ref(), lb);
+	Ident loopVar = varListTemplate.get(i);
+	if (loopVar == null) XMP.fatal("template-ref does not conform to the array on lhs.");
+	Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, loopVar.Ref(), lb);
     	subscriptList.add(expr);
       }
     }
