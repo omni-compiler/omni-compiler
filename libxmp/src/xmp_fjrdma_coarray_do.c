@@ -114,14 +114,10 @@ void _XMP_fjrdma_get(int src_continuous, int dst_continuous, int target_image, i
 
 void _XMP_fjrdma_sync_memory()
 {
-  int num_of_notice = 0;
-
-  while(num_of_notice != _num_of_puts){
+  while(_num_of_puts != 0){
     if(FJMPI_Rdma_poll_cq(SEND_NIC, &cq) == FJMPI_RDMA_NOTICE)
-      num_of_notice++;
+      _num_of_puts--;
   }
-
-  _num_of_puts = 0;
 }
 
 void _XMP_fjrdma_sync_all()
