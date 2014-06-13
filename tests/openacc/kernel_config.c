@@ -18,10 +18,10 @@ int main()
     int n;
     for(n=100; n<10000; n+=100){
       int sum = 0;
-#pragma acc parallel loop collapse(2) firstprivate(n)
+#pragma acc parallel loop collapse(2) firstprivate(n) reduction(+:sum)
       for(i=0;i<n;i++){
 	for(j=0;j<n;j++){
-	  sum = array[(i+j)%1000];
+	  sum += array[(i+j)%1000];
 	}
       }
     }
