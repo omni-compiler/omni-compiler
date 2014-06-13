@@ -11,7 +11,7 @@ prev_args=''
 for i in "$@"; do
     case ${prev_args} in
         -M)
-            args=("${args[@]}" "-M${i}" "-m${i}")
+            args=("${args[@]}" "-M${i}" "-moddir${i}")
             prev_args='';;
         *)
             case "${i}" in
@@ -22,7 +22,7 @@ for i in "$@"; do
 #                   done;;
                 -J?*)
                     foo=`echo ${i}|sed 's/^-J/-M/'`
-                    bar=`echo ${i}|sed 's/^-J/-m/'`
+                    bar=`echo ${i}|sed 's/^-J/-moddir/'`
                     args=("${args[@]}" "${foo}" "${bar}");;
                 -J)
                     prev_args="-M";;
