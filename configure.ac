@@ -2103,11 +2103,11 @@ cat << EOF
     C Compiler FLAG       : "$BECC_OPTION"
     Fortran Compiler      : $BEFC
     Fortran Compiler FLAG : "$BEFC_OPTION"
-
 EOF
 
-  echo "  Options:"
 if test "$target" != "Kcomputer-linux-gnu"; then
+  echo ""
+  echo "  Options:"
   echo "    GASNet                : $use_gasnet"
 
   if test "${use_gasnet}" = yes; then
