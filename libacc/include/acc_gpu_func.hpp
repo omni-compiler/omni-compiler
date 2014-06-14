@@ -169,6 +169,7 @@ static void _ACC_init_private(void **p_prv, void *array, size_t size){
   *p_prv = (char *)array + size * blockIdx.x;
 }
 
+/*
 static void _ACC_gpu_mpool_alloc(void **ptr, long long size, void *mpool, long long *pos){
   const int align = 128;
   long long aligned_size = ((size - 1) / align + 1) * align;
@@ -187,5 +188,6 @@ static void _ACC_gpu_mpool_free(void *ptr, void *mpool)
     _ACC_gpu_free(ptr);
   }
 }
+*/
 
 #endif //_ACC_GPU_FUNC

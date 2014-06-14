@@ -131,7 +131,7 @@ am__v_AR_1 =
 libacc_a_AR = $(AR) $(ARFLAGS)
 libacc_a_DEPENDENCIES = acc_runtime.o acc_gpu_data_table.o acc_util.o \
 	acc_gpu_runtime.o acc_gpu_data.o acc_gpu_stream.o \
-	acc_gpu_util.o acc_gpu_mpool.o
+	acc_gpu_util.o acc_gpu_mpool.o acc_gpu_pack.o
 am_libacc_a_OBJECTS = acc_gpu_data_table.$(OBJEXT) \
 	acc_runtime.$(OBJEXT) acc_util.$(OBJEXT)
 libacc_a_OBJECTS = $(am_libacc_a_OBJECTS)
@@ -481,7 +481,7 @@ libacc_a_SOURCES = $(ACC_INC_DIR)/acc_internal.h $(ACC_INC_DIR)/acc_gpu_internal
 			  acc_gpu_data_table.c acc_runtime.c acc_util.c
 
 libacc_a_LIBADD = acc_runtime.o acc_gpu_data_table.o acc_util.o \
-			  acc_gpu_runtime.o acc_gpu_data.o acc_gpu_stream.o acc_gpu_util.o acc_gpu_mpool.o
+			  acc_gpu_runtime.o acc_gpu_data.o acc_gpu_stream.o acc_gpu_util.o acc_gpu_mpool.o acc_gpu_pack.o
 
 all: all-am
 

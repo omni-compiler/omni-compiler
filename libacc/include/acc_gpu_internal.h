@@ -25,6 +25,11 @@ extern "C" {
   void _ACC_gpu_pcopy_data(_ACC_gpu_data_t *desc, size_t offset, size_t size, int direction);
   void _ACC_gpu_find_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t offset, size_t size);
 
+  void _ACC_gpu2_init_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);
+  void _ACC_gpu2_copy_data(_ACC_gpu_data_t *desc, int direction, int asyncId);
+  void _ACC_gpu2_copy_subdata(_ACC_gpu_data_t *desc, int direction, int asyncId, ...);
+  void _ACC_gpu2_find_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);
+
   //acc_gpu_util.cu
   void _ACC_gpu_alloc(void **addr, size_t size);
   void _ACC_gpu_malloc(void **addr, size_t size);
@@ -59,6 +64,14 @@ extern "C" {
   void _ACC_gpu_mpool_finalize();
   void _ACC_gpu_mpool_alloc_block(void **);
   void _ACC_gpu_mpool_free_block(void *);
+  void _ACC_gpu_mpool_alloc(void **ptr, long long size, void *mpool, long long *pos);
+  void _ACC_gpu_mpool_free(void *ptr, void *mpool);
+
+  //acc_gpu_pack.cu
+  void _ACC_gpu_pack_data(void *dst, void *src, int dim, int total_elmnts, int type_size, int* info);
+  void _ACC_gpu_unpack_data(void *dst, void *src, int dim, int total_elmnts, int type_size, int* info);
+  void _ACC_gpu_pack_data_host(void *dst, void *src, int dim, int total_elmnts, int type_size, int* info);
+  void _ACC_gpu_unpack_data_host(void *dst, void *src, int dim, int total_elmnts, int type_size, int* info);
 
   //temporal funcdef
   int _ACC_gpu_get_num_devices();

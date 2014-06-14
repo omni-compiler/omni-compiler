@@ -26,6 +26,9 @@ run: $(EXES)
 #	$(XRUN) loop_reduction.x
 	$(XRUN) loop_private.x
 	$(XRUN) kernel_config.x
+	$(XRUN) update_array.x
+	$(XRUN) update_subarray.x
+	$(XRUN) update_async.x
 
 clean:
 	rm -f $(EXES) $(C_OBJS) *.cu
