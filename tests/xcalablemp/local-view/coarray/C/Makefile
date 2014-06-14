@@ -15,6 +15,7 @@ all default: $(EXES)
 	$(XCC) -o $@ $<
 
 run: 
+	$(XRUN) -np 1 coarray_translation.x
 	$(XRUN) -np 2 coarray_scalar.x
 	$(XRUN) -np 2 coarray_vector.x
 	$(XRUN) -np 2 coarray_stride.x

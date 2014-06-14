@@ -22,7 +22,6 @@ run: macro_in_pragma hyphen_d
 
 macro_in_pragma:
 	$(XRUN) -n 4 macro_in_pragma.x
-	$(XRUN) -n 1 coarray_translation.x
 
 hyphen_d:
 	$(XRUN) -n 4 hyphen_d.x

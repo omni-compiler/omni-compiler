@@ -118,6 +118,8 @@ void _XMP_coarray_rdma_do(int rdma_code, void *remote_coarray, void *local_array
 {
   int i, target_image = 0;
 
+  if(_transfer_coarray_elmts == 0) return;
+
   if(_transfer_coarray_elmts != _transfer_array_elmts)
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n") ;
 
@@ -244,6 +246,8 @@ long long get_offset(_XMP_array_section_t *array, int dims)
 void _XMP_coarray_shortcut_put(int target, const _XMP_coarray_t *dst, const _XMP_coarray_t *src, 
 			       const int dst_offset, const int src_offset, const int length)
 {
+  if(length == 0) return;
+
 #ifdef _XMP_COARRAY_GASNET
   gasnet_put_nbi_bulk(target, dst->addr[target]+dst_offset*dst->elmt_size, 
 		      src->addr[_XMP_world_rank]+src_offset*dst->elmt_size, length*dst->elmt_size);
@@ -256,6 +260,8 @@ void _XMP_coarray_shortcut_put(int target, const _XMP_coarray_t *dst, const _XMP
 void _XMP_coarray_shortcut_get(int target, const _XMP_coarray_t *dst, const _XMP_coarray_t *src,
 			       const int dst_offset, const int src_offset, const int length)
 {
+  if(length == 0) return;
+
 #ifdef _XMP_COARRAY_GASNET
   gasnet_get_bulk(dst->addr[_XMP_world_rank]+dst_offset*dst->elmt_size, target, 
 		  src->addr[target]+src_offset*dst->elmt_size, length*dst->elmt_size);
