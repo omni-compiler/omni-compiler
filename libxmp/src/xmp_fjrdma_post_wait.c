@@ -56,8 +56,10 @@ static void _xmp_pw_push(const int node, const int tag)
 
 void _xmp_fjrdma_post(const int target_node, const int tag)
 {
-  if(tag < 0 || tag > 14)
+  if(tag < 0 || tag > 14){
     fprintf(stderr, "tag is %d : On the K computer or FX10, 0 <= tag && tag <= 14\n", tag);
+    exit(1);
+  }
 
   if(target_node != _myrank){
     FJMPI_Rdma_put(target_node, tag, _each_addr[target_node], _laddr, sizeof(double), FLAG_NIC_POST_WAIT);

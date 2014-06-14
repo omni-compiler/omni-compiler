@@ -8,12 +8,18 @@
 #include "xmp_internal.h"
 #include "xmp.h"
 #define TAG 0
+#define MAXSIZE 16777212
 static int _num_of_puts = 0;
 static struct FJMPI_Rdma_cq cq;
 
 void _XMP_fjrdma_shortcut_put(const int target_image, const uint64_t dst_point, const uint64_t src_point,
 			      const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, const int transfer_size)
 {
+  if(transfer_size > MAXSIZE){
+    fprintf(stderr, "transfer_size is too large %d\n", transfer_size);
+    exit(1);
+  }
+
   uint64_t raddr = (uint64_t)dst_desc->addr[target_image] + dst_point;
   uint64_t laddr = (uint64_t)src_desc->addr[_XMP_world_rank] + src_point;
   FJMPI_Rdma_put(target_image, TAG, raddr, laddr, transfer_size, FLAG_NIC);
@@ -44,6 +50,10 @@ void _XMP_fjrdma_put(int dst_continuous, int src_continuous, int target_image, i
 		     _XMP_coarray_t *dst_desc, void *src, _XMP_coarray_t *src_desc, long long length)
 {
   long long transfer_size = dst_desc->elmt_size * length;
+  if(transfer_size > MAXSIZE){
+    fprintf(stderr, "transfer_size is too large %lld\n", transfer_size);
+    exit(1);
+  }
   _num_of_puts++;
 
   if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
@@ -60,6 +70,11 @@ void _XMP_fjrdma_shortcut_get(const int target_image, const uint64_t dst_point, 
 			      const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
 			      const int transfer_size)
 {
+  if(transfer_size > MAXSIZE){
+    fprintf(stderr, "transfer_size is too large %d\n", transfer_size);
+    exit(1);
+  }
+
   uint64_t raddr = (uint64_t)src_desc->addr[target_image] + src_point;
   uint64_t laddr = (uint64_t)dst_desc->addr[_XMP_world_rank] + dst_point;
   
@@ -101,6 +116,10 @@ void _XMP_fjrdma_get(int src_continuous, int dst_continuous, int target_image, i
 		     _XMP_coarray_t *src_desc, void *dst, _XMP_coarray_t *dst_desc, long long length)
 {
   long long transfer_size = src_desc->elmt_size * length;
+  if(transfer_size > MAXSIZE){
+    fprintf(stderr, "transfer_size is too large %lld\n", transfer_size);
+    exit(1);
+  }
   
   if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
     uint64_t dst_point = (uint64_t)get_offset(dst_info, dst_dims);
