@@ -29,6 +29,8 @@ run: $(EXES)
 	$(XRUN) update_array.x
 	$(XRUN) update_subarray.x
 	$(XRUN) update_async.x
+	$(XRUN) update_host_subarray.x
+	$(XRUN) update_device_subarray.x
 
 clean:
 	rm -f $(EXES) $(C_OBJS) *.cu
