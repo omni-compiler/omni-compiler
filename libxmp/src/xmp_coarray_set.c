@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "xmp_internal.h"
+#include "xmp_constant.h"
 
 static size_t _xmp_heap_size, _xmp_stride_size;
 static size_t _elmt_size;
@@ -156,3 +157,4 @@ void _XMP_coarray_malloc_do_f(void **coarray, void *addr)
 {
   _XMP_coarray_malloc_do(coarray, addr);
 }
+

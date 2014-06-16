@@ -72,6 +72,7 @@ extern void _XMP_coarray_malloc_image_info_f(const int *, const int *);
 extern void _XMP_coarray_malloc_image_info(const int, const int);
 extern void _XMP_coarray_malloc_do_f(void **, void *);
 extern void _XMP_coarray_malloc_do(void **, void *);
+extern void _XMP_coarray_malloc_do_EXTERN(void **, void *);
 extern void _XMP_coarray_rdma_set_f(const int *, const int *, const int *);
 extern void _XMP_coarray_rdma_set(const int, const int, const int);
 extern void _XMP_coarray_rdma_coarray_set_f(const int *, const int *, const int *, const int *);
