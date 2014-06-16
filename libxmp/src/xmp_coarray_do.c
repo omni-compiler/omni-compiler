@@ -272,3 +272,15 @@ void _XMP_coarray_shortcut_get(int target, const _XMP_coarray_t *dst, const _XMP
 			   dst, src, elmts*dst->elmt_size);
 #endif
 }
+
+void _XMP_coarray_shortcut_put_f(int *target, const void *dst, const void *src, const int *dst_offset, 
+				 const int *src_offset, const int *elmts)
+{
+  _XMP_coarray_shortcut_put(*target, dst, src, *dst_offset, *src_offset, *elmts);
+}
+
+void _XMP_coarray_shortcut_get_f(int *target, const void *dst, const void *src, const int *dst_offset, 
+				 const int *src_offset, const int *elmts)
+{
+  _XMP_coarray_shortcut_get(*target, dst, src, *dst_offset, *src_offset, *elmts);
+}
