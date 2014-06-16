@@ -93,10 +93,10 @@ extern void xmp_sync_images(int num, int* image_set, int* status);
 extern void xmp_sync_images_f(int *num, int* image_set, int* status);
 extern void xmp_sync_images_all(int* status);
 extern size_t get_offset(const void *, const int);
-extern void _XMP_coarray_shortcut_put(const int, const void*, const void*, const int, const int, const int);
-extern void _XMP_coarray_shortcut_put_f(const int*, const void*, const void*, const int*, const int*, const int*);
-extern void _XMP_coarray_shortcut_get(const int, const void*, const void*, const int, const int, const int);
-extern void _XMP_coarray_shortcut_get_f(const int*, const void*, const void*, const int*, const int*, const int*);
+extern void _XMP_coarray_shortcut_put(const int, const void*, const void*, const size_t, const size_t, const size_t);
+extern void _XMP_coarray_shortcut_put_f(const int*, const void*, const void*, const size_t*, const size_t*, const size_t*);
+extern void _XMP_coarray_shortcut_get(const int, const void*, const void*, const size_t, const size_t, const size_t);
+extern void _XMP_coarray_shortcut_get_f(const int*, const void*, const void*, const size_t*, const size_t*, const size_t*);
 
 // xmp_gmove.c
 extern void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, void *array, ...);

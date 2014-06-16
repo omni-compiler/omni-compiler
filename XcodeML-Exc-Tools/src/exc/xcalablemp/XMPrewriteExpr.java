@@ -270,8 +270,8 @@ public class XMPrewriteExpr {
     }
 
     // dst offset
+    Xobject position = null;
     if(dstCoarrayExpr.Opcode() == Xcode.SUB_ARRAY_REF){
-      Xobject position = null;
       for(int i=0;i<dstDim;i++){
         Xobject tripletList = dstCoarrayExpr.getArg(1).getArg(i);
         Xobject tmp_position;
@@ -289,10 +289,8 @@ public class XMPrewriteExpr {
           position = Xcons.binaryOp(Xcode.PLUS_EXPR, position, tmp_position);
         }
       }
-      funcArgs.add(position);
     }
     else if(dstCoarrayExpr.Opcode() == Xcode.ARRAY_REF){
-      Xobject position = null;
       for(int i=0;i<dstDim;i++){
         Xobject tmp_position = Xcons.binaryOp(Xcode.MUL_EXPR, dstCoarrayExpr.getArg(1).getArg(i),
                                               Xcons.IntConstant(dstCoarrayDistance[i]));
@@ -303,18 +301,20 @@ public class XMPrewriteExpr {
           position = Xcons.binaryOp(Xcode.PLUS_EXPR, position, tmp_position);
         }
       }
-      funcArgs.add(position);
     }
     else if(dstCoarrayExpr.Opcode() == Xcode.VAR){
-      funcArgs.add(Xcons.IntConstant(0));
+      position = Xcons.IntConstant(0);
     }
     else{
       throw new XMPexception("Not supported this coarray Syntax");
     }
+    Xtype elmtType = dstCoarray.getElmtType();
+    position = Xcons.binaryOp(Xcode.MUL_EXPR, position, Xcons.SizeOf(elmtType));
+    funcArgs.add(position);
 
     // src offset
+    position = null;
     if(srcCoarrayExpr.Opcode() == Xcode.SUB_ARRAY_REF){
-      Xobject position = null;
       for(int i=0;i<srcDim;i++){
         Xobject tripletList = srcCoarrayExpr.getArg(1).getArg(i);
         Xobject tmp_position;
@@ -332,10 +332,8 @@ public class XMPrewriteExpr {
           position = Xcons.binaryOp(Xcode.PLUS_EXPR, position, tmp_position);
         }
       }
-      funcArgs.add(position);
     }
     else if(srcCoarrayExpr.Opcode() == Xcode.ARRAY_REF){
-      Xobject position = null;
       for(int i=0;i<srcDim;i++){
         Xobject tmp_position = Xcons.binaryOp(Xcode.MUL_EXPR, srcCoarrayExpr.getArg(1).getArg(i),
                                               Xcons.IntConstant(srcCoarrayDistance[i]));
@@ -346,38 +344,41 @@ public class XMPrewriteExpr {
           position = Xcons.binaryOp(Xcode.PLUS_EXPR, position, tmp_position);
         }
       }
-      funcArgs.add(position);
     }
     else if(srcCoarrayExpr.Opcode() == Xcode.VAR){
-      funcArgs.add(Xcons.IntConstant(0));
+      position = Xcons.IntConstant(0);
     }
     else{
       throw new XMPexception("Not supported this coarray Syntax");
     }
+    position = Xcons.binaryOp(Xcode.MUL_EXPR, position, Xcons.SizeOf(elmtType));
+    funcArgs.add(position);
 
     // length
+    Xobject length = null;
     if(dstCoarrayExpr.Opcode() == Xcode.SUB_ARRAY_REF){
       if(dstCoarrayDepthContinuous == 0){
-        funcArgs.add(Xcons.IntConstant((int)dstCoarray.getSizeAt(0) * dstCoarrayDistance[0]));
+        length = Xcons.IntConstant((int)dstCoarray.getSizeAt(0) * dstCoarrayDistance[0]);
       }
       else{
         Xobject tripletList = dstCoarrayExpr.getArg(1).getArg(dstCoarrayDepthContinuous-1);
         if(tripletList.isConstant() || tripletList.isVariable()){
-          funcArgs.add(Xcons.IntConstant(dstCoarrayDistance[dstCoarrayDepthContinuous-1]));
+          length = Xcons.IntConstant(dstCoarrayDistance[dstCoarrayDepthContinuous-1]);
         }
         else{
-          Xobject length = ((XobjList)tripletList).getArg(1);
-          funcArgs.add(Xcons.binaryOp(Xcode.MUL_EXPR, length,
-                                      Xcons.IntConstant(dstCoarrayDistance[dstCoarrayDepthContinuous-1])));
+          length = Xcons.binaryOp(Xcode.MUL_EXPR, ((XobjList)tripletList).getArg(1),
+                                  Xcons.IntConstant(dstCoarrayDistance[dstCoarrayDepthContinuous-1]));
         }
       }
     }
     else if(dstCoarrayExpr.Opcode() == Xcode.ARRAY_REF || dstCoarrayExpr.Opcode() == Xcode.VAR){
-      funcArgs.add(Xcons.IntConstant(1));
+      length = Xcons.IntConstant(1);
     }
     else{
       throw new XMPexception("Not supported this coarray Syntax");
     }
+    length = Xcons.binaryOp(Xcode.MUL_EXPR, length, Xcons.SizeOf(elmtType));
+    funcArgs.add(length);
 
     // Create function
     Xobject newExpr = funcId.Call(funcArgs);
