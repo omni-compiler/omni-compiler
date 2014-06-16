@@ -5,7 +5,7 @@
 #include "xmp_internal.h"
 
 static int _coarray_dims, _image_dims, *_image_num, _array_dims;
-static long long _transfer_coarray_elmts, _transfer_array_elmts;
+static int _transfer_coarray_elmts, _transfer_array_elmts;
 static _XMP_array_section_t *_coarray, *_array;
 
 void _XMP_coarray_rdma_set(int coarray_dims, int array_dims, int image_dims)
@@ -25,7 +25,7 @@ void _XMP_coarray_rdma_set_f(int *coarray_dims, int *array_dims, int *image_dims
   _XMP_coarray_rdma_set(*coarray_dims, *array_dims, *image_dims);
 }
 
-void _XMP_coarray_rdma_coarray_set(int dim, long long start, long long length, long long stride)
+void _XMP_coarray_rdma_coarray_set(int dim, int start, int length, int stride)
 {
   _coarray[dim].start    = start;
   _coarray[dim].length   = length;
@@ -33,12 +33,12 @@ void _XMP_coarray_rdma_coarray_set(int dim, long long start, long long length, l
   _coarray[dim].stride = ((length == 1)? 1 : stride);
 }
 
-void _XMP_coarray_rdma_coarray_set_f(int *dim, long long *start, long long *length, long long *stride)
+void _XMP_coarray_rdma_coarray_set_f(int *dim, int *start, int *length, int *stride)
 {
   _XMP_coarray_rdma_coarray_set(*dim, *start, *length, *stride);
 }
 
-void _XMP_coarray_rdma_array_set(int dim, long long start, long long length, long long stride, long long elmts, long long distance)
+void _XMP_coarray_rdma_array_set(int dim, int start, int length, int stride, int elmts, int distance)
 {
   _array[dim].start    = start;
   _array[dim].length   = length;
@@ -48,7 +48,7 @@ void _XMP_coarray_rdma_array_set(int dim, long long start, long long length, lon
   _array[dim].distance = distance;
 }
 
-void _XMP_coarray_rdma_array_set_f(int *dim, long long *start, long long *length, long long *stride, long long *elmts, long long *distance)
+void _XMP_coarray_rdma_array_set_f(int *dim, int *start, int *length, int *stride, int *elmts, int *distance)
 {
   _XMP_coarray_rdma_array_set(*dim, *start, *length, *stride, *elmts, *distance);
 }
@@ -234,9 +234,9 @@ void xmp_sync_images_all(int* status)
   _XMP_fatal("Not implement xmp_sync_images_all()");
 }
 
-long long get_offset(_XMP_array_section_t *array, int dims)
+size_t get_offset(_XMP_array_section_t *array, int dims)
 {
-  long long offset = 0;
+  size_t offset = 0;
   for(int i=0;i<dims;i++)
     offset += (array+i)->start * (array+i)->distance;
 

@@ -207,7 +207,7 @@ extern void _XMP_threads_finalize(void);
 #define RECV_NIC_POST FJMPI_RDMA_LOCAL_NIC3
 #define MEMID 0
 #define POST_WAIT_ID 1
-extern long long get_offset(_XMP_array_section_t *, int);
+extern size_t get_offset(_XMP_array_section_t *, int);
 #endif
 
 extern void _XMP_post_wait_initialize();
@@ -222,13 +222,13 @@ extern void _XMP_post_wait_initialize();
 	gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);   \
   } while (0)
 
-extern void _XMP_gasnet_malloc_do(_XMP_coarray_t *, void **, unsigned long long);
-extern void _XMP_gasnet_initialize(int, char**, unsigned long long, unsigned long long);
+extern void _XMP_gasnet_malloc_do(_XMP_coarray_t *, void **, size_t);
+extern void _XMP_gasnet_initialize(int, char**, size_t, size_t);
 extern void _XMP_gasnet_finalize(int);
 extern void _XMP_gasnet_put(int, int, int, int, int, _XMP_array_section_t*, _XMP_array_section_t*, 
-			    _XMP_coarray_t*, void*, long long);
+			    _XMP_coarray_t*, void*, size_t);
 extern void _XMP_gasnet_get(int, int, int, int, int, _XMP_array_section_t*, _XMP_array_section_t*,
-                            _XMP_coarray_t*, void*, long long);
+                            _XMP_coarray_t*, void*, size_t);
 extern void _XMP_gasnet_sync_all();
 extern void _XMP_gasnet_sync_memory();
 extern void _xmp_gasnet_post_wait_initialize();

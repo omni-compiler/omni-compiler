@@ -2,11 +2,10 @@
 #include "mpi.h"
 #include "xmp_internal.h"
 #include "xmp_atomic.h"
-static unsigned long long _xmp_heap_size, _xmp_stride_size;
+static size_t _xmp_heap_size, _xmp_stride_size, _xmp_coarray_shift = 0;
 static int *_xmp_gasnet_stride_queue;
 static int _xmp_gasnet_stride_wait_size = 0;
 static int _xmp_gasnet_stride_queue_size = _XMP_GASNET_STRIDE_INIT_SIZE;
-static unsigned long long _xmp_coarray_shift = 0;
 static char **_xmp_gasnet_buf;
 volatile static int done_get_flag;
 #define UNROLLING (4)
@@ -28,7 +27,7 @@ gasnet_handlerentry_t htable[] = {
   { _XMP_GASNET_UNPACK_GET_REPLY_NONC,      _xmp_gasnet_unpack_get_reply_nonc }
 };
 
-void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, unsigned long long coarray_size)
+void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, size_t coarray_size)
 {
   int numprocs;
   char **each_addr;  // head address of a local array on each node
@@ -47,8 +46,8 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, unsigned long l
     
   if(_xmp_coarray_shift > _xmp_heap_size){
     if(gasnet_mynode() == 0){
-      fprintf(stderr, "Cannot allocate coarray. Now HEAP SIZE is %d MB\n", (int)(_xmp_heap_size/1024/1024));
-      fprintf(stderr, "But %d MB is needed\n", (int)(_xmp_coarray_shift/1024/1024));
+      fprintf(stderr, "Cannot allocate coarray. Now HEAP SIZE is %zu MB\n", _xmp_heap_size/1024/1024);
+      fprintf(stderr, "But %zu MB is needed\n", _xmp_coarray_shift/1024/1024);
     }
     _XMP_fatal("Please set XMP_COARRAY_HEAP_SIZE=<number> (MB)\n");
   }
@@ -57,9 +56,8 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, unsigned long l
   *addr = each_addr[gasnet_mynode()];
 }
 
-void _XMP_gasnet_initialize(int argc, char **argv, unsigned long long xmp_heap_size, unsigned long long xmp_stride_size){
-  int numprocs;
-
+void _XMP_gasnet_initialize(int argc, char **argv, size_t xmp_heap_size, size_t xmp_stride_size)
+{
   if(argc != 0)
     gasnet_init(&argc, &argv);
   else{ 
@@ -79,8 +77,8 @@ void _XMP_gasnet_initialize(int argc, char **argv, unsigned long long xmp_heap_s
 
   _xmp_stride_size = xmp_stride_size;
 
-  gasnet_attach(htable, sizeof(htable)/sizeof(gasnet_handlerentry_t), _xmp_heap_size, 0); 
-  numprocs = gasnet_nodes();
+  gasnet_attach(htable, sizeof(htable)/sizeof(gasnet_handlerentry_t), (uintptr_t)_xmp_heap_size, 0); 
+  int numprocs = gasnet_nodes();
 
   _xmp_gasnet_buf = (char **)malloc(sizeof(char*) * numprocs);
 
@@ -94,15 +92,15 @@ void _XMP_gasnet_initialize(int argc, char **argv, unsigned long long xmp_heap_s
   _xmp_gasnet_stride_queue = malloc(sizeof(int) * _XMP_GASNET_STRIDE_INIT_SIZE);
 }
 
-void _XMP_gasnet_finalize(int val){
+void _XMP_gasnet_finalize(int val)
+{
   _XMP_gasnet_sync_all();
   gasnet_exit(val);
 }
 
-void _XMP_gasnet_sync_memory(){
-  int i;
-
-  for(i=0;i<_xmp_gasnet_stride_wait_size;i++)
+void _XMP_gasnet_sync_memory()
+{
+  for(int i=0;i<_xmp_gasnet_stride_wait_size;i++)
     GASNET_BLOCKUNTIL(_xmp_gasnet_stride_queue[i] == 1);
 
   _xmp_gasnet_stride_wait_size = 0;
@@ -110,21 +108,23 @@ void _XMP_gasnet_sync_memory(){
   gasnet_wait_syncnbi_puts();
 }
 
-void _XMP_gasnet_sync_all(){
+void _XMP_gasnet_sync_all()
+{
   _XMP_gasnet_sync_memory();
   GASNET_BARRIER();
 }
 
-static void XMP_gasnet_from_c_to_c_put(const int target_image, const long long dst_point, 
-				       const long long src_point, const _XMP_coarray_t *dst, 
-				       const void *src, const long long transfer_size){
-
+static void XMP_gasnet_from_c_to_c_put(const int target_image, const size_t dst_point, 
+				       const size_t src_point, const _XMP_coarray_t *dst, 
+				       const void *src, const size_t transfer_size)
+{
   gasnet_put_nbi_bulk(target_image, dst->addr[target_image]+dst_point, ((char *)src)+src_point, 
 		      transfer_size);
 
 }
 
-static int is_all_elmt(const _XMP_array_section_t* array_info, const int dim){
+static int is_all_elmt(const _XMP_array_section_t* array_info, const int dim)
+{
   if(array_info[dim].start == 0 && array_info[dim].length == array_info[dim].elmts){
     return _XMP_N_INT_TRUE;
   }
@@ -258,42 +258,15 @@ static int get_depth(const int dims, const _XMP_array_section_t* array_info)  //
     _XMP_fatal("Dimensions of Coarray is too big.");
     return -1;
   }
-#ifdef _NOT_USED
-  if(array_info[dims-1].stride != 1){
-    return 0;
-  }
-  else if(is_all_elmt(array_info, dims-1) || array_info[dims-1].length == 1){
-    return 1;
-  }
-
-  int i, j, flag;
-  for(j=dims-1;j>=1;j--){
-    flag = _XMP_N_INT_TRUE;
-    for(i=j;i>=1;i--){
-      if(!is_all_elmt(array_info, dims-i)){
-	flag = _XMP_N_INT_FALSE;
-	break;
-      }
-    }
-
-    if(flag)
-      return j;
-  }
-  
-  if(array_info[dims-1].stride == 1)
-    return 1;
-  else
-    return 0;
-#endif
 }
 
 static void pack_for_7_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
                                  const int continuous_dim)  // continuous_dim is from 0 to 3
 {
   size_t element_size = src[6].distance;
-  long long start_offset = 0, archive_offset = 0, src_offset;
+  size_t start_offset = 0, archive_offset = 0, src_offset;
   int tmp[7];
-  long long stride_offset[7], length;
+  size_t stride_offset[7], length;
 
   for(int i=0;i<7;i++)
     start_offset += src[i].start * src[i].distance;
@@ -443,9 +416,9 @@ static void pack_for_6_dim_array(const _XMP_array_section_t* src, char* archive_
                                  const int continuous_dim)  // continuous_dim is from 0 to 3
 {
   size_t element_size = src[5].distance;
-  long long start_offset = 0, archive_offset = 0, src_offset;
+  size_t start_offset = 0, archive_offset = 0, src_offset;
   int tmp[6];
-  long long stride_offset[6], length;
+  size_t stride_offset[6], length;
 
   for(int i=0;i<6;i++)
     start_offset += src[i].start * src[i].distance;
@@ -567,9 +540,9 @@ static void pack_for_5_dim_array(const _XMP_array_section_t* src, char* archive_
                                  const int continuous_dim)  // continuous_dim is from 0 to 3
 {
   size_t element_size = src[4].distance;
-  long long start_offset = 0, archive_offset = 0, src_offset;
+  size_t start_offset = 0, archive_offset = 0, src_offset;
   int tmp[5];
-  long long stride_offset[5], length;
+  size_t stride_offset[5], length;
 
   for(int i=0;i<5;i++)
     start_offset += src[i].start * src[i].distance;
@@ -665,9 +638,9 @@ static void pack_for_4_dim_array(const _XMP_array_section_t* src, char* archive_
 				 const int continuous_dim)  // continuous_dim is from 0 to 3
 {
   size_t element_size = src[3].distance;
-  long long start_offset = 0, archive_offset = 0, src_offset;
+  size_t start_offset = 0, archive_offset = 0, src_offset;
   int tmp[4];
-  long long stride_offset[4], length;
+  size_t stride_offset[4], length;
 
   for(int i=0;i<4;i++)
     start_offset += src[i].start * src[i].distance;
@@ -743,9 +716,9 @@ static void pack_for_3_dim_array(const _XMP_array_section_t* src, char* archive_
 				 const int continuous_dim)  // continuous_dim is 0 or 1 or 2
 {
   size_t element_size = src[2].distance;
-  long long start_offset = 0, archive_offset = 0, src_offset;
+  size_t start_offset = 0, archive_offset = 0, src_offset;
   int tmp[3];
-  long long stride_offset[3], length;
+  size_t stride_offset[3], length;
 
   for(int i=0;i<3;i++)
     start_offset += src[i].start * src[i].distance;
@@ -797,17 +770,18 @@ static void pack_for_3_dim_array(const _XMP_array_section_t* src, char* archive_
 }
 
 static void pack_for_2_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr, 
-				 const int continuous_dim){  // continuous_dim is 0 or 1
-
+				 const int continuous_dim) // continuous_dim is 0 or 1
+{
   size_t element_size = src[1].distance;
-  long long start_offset = 0;
-  long long archive_offset = 0, src_offset;
+  size_t start_offset = 0;
+  size_t archive_offset = 0, src_offset;
+
   for(int i=0;i<2;i++)
     start_offset += src[i].start * src[i].distance;
 
   if(continuous_dim == 1){
     int length = element_size * src[1].length;
-    long long stride_offset = (src[0].stride * src[1].elmts) * element_size;
+    size_t stride_offset = (src[0].stride * src[1].elmts) * element_size;
     for(int i=0;i<src[0].length;i++){
       src_offset = start_offset + stride_offset * i;
       memcpy(archive_ptr + archive_offset, src_ptr + src_offset, length);
@@ -815,11 +789,11 @@ static void pack_for_2_dim_array(const _XMP_array_section_t* src, char* archive_
     }
   }
   else{ // continuous_dim == 0
-    long long stride_offset[2];
+    size_t stride_offset[2];
     stride_offset[0] = src[0].stride * src[1].elmts * element_size;
     stride_offset[1] = src[1].stride * element_size;
     for(int i=0;i<src[0].length;i++){
-      long long tmp = stride_offset[0] * i;
+      size_t tmp = stride_offset[0] * i;
       for(int j=0;j<src[1].length;j++){
 	src_offset = start_offset + (tmp + stride_offset[1] * j);
 	memcpy(archive_ptr + archive_offset, src_ptr + src_offset, element_size);
@@ -829,7 +803,8 @@ static void pack_for_2_dim_array(const _XMP_array_section_t* src, char* archive_
   }
 }
 
-static void pack_for_1_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr){
+static void pack_for_1_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr)
+{
   // for(i=0;i<src[0].length;i++){
   //   src_offset = start_offset + (stride_offset * i);
   //   memcpy(archive_ptr + archive_offset, src_ptr + src_offset, element_size);
@@ -838,9 +813,9 @@ static void pack_for_1_dim_array(const _XMP_array_section_t* src, char* archive_
   size_t element_size = src[0].distance;
   int repeat = src[0].length / UNROLLING;
   int left   = src[0].length % UNROLLING;
-  long long start_offset  = src[0].start  * element_size;
-  long long stride_offset = src[0].stride * element_size;
-  long long archive_offset = 0, src_offset;
+  size_t start_offset  = src[0].start  * element_size;
+  size_t stride_offset = src[0].stride * element_size;
+  size_t archive_offset = 0, src_offset;
   int i = 0;
 
   if(repeat == 0){
@@ -926,71 +901,24 @@ static void XMP_pack(char* archive_ptr, const char* src_ptr, const int src_dims,
     _XMP_fatal("Dimension of coarray is too big");
     return;
   }
-
-#ifdef _NOT_USED
-  size_t element_size = src[src_dims-1].distance;
-  int index[src_dims+1], d = 1;                  // d is a position of nested loop
-  for(int i=0;i<src_dims+1;i++) index[i] = 0;    // Initialize index
-  long long cnt[src_dims], src_offset;
-  long long archive_offset = 0;
-  cnt[0] = 0;
-
-  if(src[src_dims-1].stride != 1 || continuous_dim+1 == src_dims){
-    while(index[0]==0){
-      if(index[d]>=src[d-1].length){    // Move to outer loop
-        d--;
-        index[d]++;
-      }
-      else if(d < src_dims){                 // Move to inner loop
-        cnt[d] = cnt[d-1] + (index[d]*src[d-1].stride+src[d-1].start) * src[d-1].distance;
-        index[d+1] = 0;
-        d++;
-      }
-      else if(d == src_dims){                // the innermost loop
-        src_offset = cnt[d-1] + (index[d]*src[d-1].stride+src[d-1].start) * src[d-1].distance;
-	memcpy(archive_ptr + archive_offset, src_ptr + src_offset, element_size);
-        archive_offset += element_size;
-        index[d]++;
-      }
-    }
-  }
-  else{
-    while(index[0]==0){
-      if(index[d]>=src[d-1].length){    // Move to outer loop
-        d--;
-        index[d]++;
-      }
-      else if(d < continuous_dim+1){         // Move to inner loop
-        cnt[d] = cnt[d-1] + (index[d]*src[d-1].stride+src[d-1].start) * src[d-1].distance;
-        index[d+1] = 0;
-        d++;
-      }
-
-      else if(d == continuous_dim+1){        // the innermost loop
-        src_offset = cnt[d-1] + (index[d]*src[d-1].stride+src[d-1].start) * src[d-1].distance;
-        memcpy(archive_ptr + archive_offset, src_ptr + src_offset + (src[d].start * element_size),
-               src[d].length * src[d+1].distance);
-        archive_offset += src[d].length * src[d].distance;
-        index[d]++;
-      }
-    }
-  }
-#endif
 }
 
-static void XMP_gasnet_from_nonc_to_c_put(int target_image, long long dst_point, int src_dims, 
+static void XMP_gasnet_from_nonc_to_c_put(int target_image, size_t dst_point, int src_dims, 
 					  _XMP_array_section_t *src, _XMP_coarray_t *dst, void *src_ptr, 
-					  long long transfer_size){
+					  size_t transfer_size)
+{
   char archive[transfer_size];
   XMP_pack(archive, src_ptr, src_dims, src);
-  XMP_gasnet_from_c_to_c_put(target_image, dst_point, (long long)0, dst, archive, transfer_size);
+  XMP_gasnet_from_c_to_c_put(target_image, dst_point, 0, dst, archive, transfer_size);
 }
 
-void _xmp_gasnet_unpack_reply(gasnet_token_t t, const int ith){
+void _xmp_gasnet_unpack_reply(gasnet_token_t t, const int ith)
+{
   _xmp_gasnet_stride_queue[ith] = 1;
 }
 
-static void extend_stride_queue(){
+static void extend_stride_queue()
+{
   if(_xmp_gasnet_stride_wait_size >= _xmp_gasnet_stride_queue_size){
     int old_size = _xmp_gasnet_stride_wait_size;
     int new_size = old_size + _XMP_GASNET_STRIDE_BLK;
@@ -1007,9 +935,10 @@ static void unpack_for_7_dim_array(const _XMP_array_section_t* dst, const char* 
                                    char* dst_ptr, const int continuous_dim)  // continuous_dim is from 0 to 3
 {
   size_t element_size = dst[6].distance;
-  long long start_offset = 0, src_offset = 0, dst_offset;
+  size_t start_offset = 0, src_offset = 0, dst_offset;
   int tmp[7];
-  long long stride_offset[7], length;
+  size_t stride_offset[7], length;
+
   for(int i=0;i<7;i++)
     start_offset += dst[i].start * dst[i].distance;
 
@@ -1158,9 +1087,10 @@ static void unpack_for_6_dim_array(const _XMP_array_section_t* dst, const char* 
                                    char* dst_ptr, const int continuous_dim)  // continuous_dim is from 0 to 3
 {
   size_t element_size = dst[5].distance;
-  long long start_offset = 0, src_offset = 0, dst_offset;
+  size_t start_offset = 0, src_offset = 0, dst_offset;
   int tmp[6];
-  long long stride_offset[6], length;
+  size_t stride_offset[6], length;
+
   for(int i=0;i<6;i++)
     start_offset += dst[i].start * dst[i].distance;
 
@@ -1280,9 +1210,10 @@ static void unpack_for_5_dim_array(const _XMP_array_section_t* dst, const char* 
                                    char* dst_ptr, const int continuous_dim)  // continuous_dim is from 0 to 3
 {
   size_t element_size = dst[4].distance;
-  long long start_offset = 0, src_offset = 0, dst_offset;
+  size_t start_offset = 0, src_offset = 0, dst_offset;
   int tmp[5];
-  long long stride_offset[5], length;
+  size_t stride_offset[5], length;
+
   for(int i=0;i<5;i++)
     start_offset += dst[i].start * dst[i].distance;
 
@@ -1376,9 +1307,10 @@ static void unpack_for_4_dim_array(const _XMP_array_section_t* dst, const char* 
 				   char* dst_ptr, const int continuous_dim)  // continuous_dim is from 0 to 3
 {
   size_t element_size = dst[3].distance;
-  long long start_offset = 0, src_offset = 0, dst_offset;
+  size_t start_offset = 0, src_offset = 0, dst_offset;
   int tmp[4];
-  long long stride_offset[4], length;
+  size_t stride_offset[4], length;
+
   for(int i=0;i<4;i++)
     start_offset += dst[i].start * dst[i].distance;
 
@@ -1449,9 +1381,10 @@ static void unpack_for_3_dim_array(const _XMP_array_section_t* dst, const char* 
 				   char* dst_ptr, const int continuous_dim)  // continuous_dim is 0 or 1 or 2
 {
   size_t element_size = dst[2].distance;
-  long long start_offset = 0, src_offset = 0, dst_offset;
+  size_t start_offset = 0, src_offset = 0, dst_offset;
   int tmp[3];
-  long long stride_offset[3], length;
+  size_t stride_offset[3], length;
+
   for(int i=0;i<3;i++)
     start_offset += dst[i].start * dst[i].distance;
 
@@ -1499,16 +1432,17 @@ static void unpack_for_3_dim_array(const _XMP_array_section_t* dst, const char* 
 }
 
 static void unpack_for_2_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
-                                   char* dst_ptr, const int continuous_dim){
+                                   char* dst_ptr, const int continuous_dim)
+{
   // continuous_dim is 0 or 1
   size_t element_size = dst[1].distance;
-  long long start_offset  = (dst[0].start * dst[1].elmts + dst[1].start) * element_size;
-  long long dst_offset, src_offset = 0;
+  size_t start_offset  = (dst[0].start * dst[1].elmts + dst[1].start) * element_size;
+  size_t dst_offset, src_offset = 0;
   int i;
 
   if(continuous_dim == 1){
     int length = element_size * dst[1].length;
-    long long stride_offset = (dst[0].stride * dst[1].elmts) * element_size;
+    size_t stride_offset = (dst[0].stride * dst[1].elmts) * element_size;
     for(i=0;i<dst[0].length;i++){
       dst_offset = start_offset + stride_offset * i;
       memcpy(dst_ptr + dst_offset, src_ptr + src_offset, length);
@@ -1517,11 +1451,11 @@ static void unpack_for_2_dim_array(const _XMP_array_section_t* dst, const char* 
   }
   else{ // continuous_dim == 0
     int j;
-    long long stride_offset[2];
+    size_t stride_offset[2];
     stride_offset[0] = dst[0].stride * dst[1].elmts * element_size;
     stride_offset[1] = dst[1].stride * element_size;
     for(i=0;i<dst[0].length;i++){
-      long long tmp = stride_offset[0] * i;
+      size_t tmp = stride_offset[0] * i;
       for(j=0;j<dst[1].length;j++){
         dst_offset = start_offset + (tmp + stride_offset[1] * j);
         memcpy(dst_ptr + dst_offset, src_ptr + src_offset, element_size);
@@ -1531,7 +1465,8 @@ static void unpack_for_2_dim_array(const _XMP_array_section_t* dst, const char* 
   }
 }
 
-static void unpack_for_1_dim_array(const _XMP_array_section_t* dst, const char* src_ptr, char* dst_ptr){
+static void unpack_for_1_dim_array(const _XMP_array_section_t* dst, const char* src_ptr, char* dst_ptr)
+{
   //  for(i=0;i<dst[0].length;i++){
   //    dst_offset = start_offset + i * stride_offset;
   //    memcpy(dst_ptr + dst_offset, src_ptr + src_offset, element_size);
@@ -1540,9 +1475,9 @@ static void unpack_for_1_dim_array(const _XMP_array_section_t* dst, const char* 
   size_t element_size = dst[0].distance;
   int repeat = dst[0].length / UNROLLING;
   int left   = dst[0].length % UNROLLING;
-  long long start_offset  = dst[0].start  * element_size;
-  long long stride_offset = dst[0].stride * element_size;
-  long long dst_offset, src_offset = 0;
+  size_t start_offset  = dst[0].start  * element_size;
+  size_t stride_offset = dst[0].stride * element_size;
+  size_t dst_offset, src_offset = 0;
   int i = 0;
 
   if(repeat == 0){
@@ -1590,7 +1525,8 @@ static void unpack_for_1_dim_array(const _XMP_array_section_t* dst, const char* 
 }
 
 static void XMP_unpack(char *dst_ptr, const int dst_dims, const char* src_ptr, 
-		       _XMP_array_section_t* dst){
+		       _XMP_array_section_t* dst)
+{
   if(dst_dims == 1){
     unpack_for_1_dim_array(dst, src_ptr, dst_ptr);
     return;
@@ -1626,60 +1562,11 @@ static void XMP_unpack(char *dst_ptr, const int dst_dims, const char* src_ptr,
     _XMP_fatal("Dimension of coarray is too big.");
     return;
   }
-
-#ifdef _NOT_USED
-  unsigned long long dst_offset = 0, src_offset = 0;
-  size_t element_size = dst[dst_dims-1].distance;
-  int index[dst_dims+1], d = 1, i;                // d is a position of nested loop
-  for(i=0;i<dst_dims+1;i++)   index[i] = 0;       // Initialize index
-  unsigned long long cnt[dst_dims];
-  cnt[0] = 0;
-
-  if(dst[dst_dims-1].stride != 1 || continuous_dim+1 == dst_dims){
-    while(index[0]==0){
-      if(index[d]>=dst[d-1].length){          // Move to outer loop
-        d--;
-        index[d]++;
-      }
-      else if(d < dst_dims){                  // Move to inner loop
-        cnt[d] = cnt[d-1] + (index[d]*dst[d-1].stride+dst[d-1].start) * dst[d-1].distance;
-        index[d+1] = 0;
-        d++;
-      }
-      else if(d == dst_dims){                 // the innermost loop
-        dst_offset = cnt[d-1] + (index[d]*dst[d-1].stride+dst[d-1].start) * dst[d-1].distance;
-        memcpy(dst_ptr + dst_offset, src_ptr + src_offset, element_size);
-        src_offset += element_size;
-        index[d]++;
-      }
-    }
-  }
-  else{
-    while(index[0]==0){
-      if(index[d]>=dst[d-1].length){           // Move to outer loop
-        d--;
-        index[d]++;
-      }
-      else if(d < continuous_dim+1){           // Move to inner loop
-        cnt[d] = cnt[d-1] + (index[d]*dst[d-1].stride+dst[d-1].start) * dst[d-1].distance;
-        index[d+1] = 0;
-        d++;
-      }
-      else if(d == continuous_dim+1){          // the innermost loop
-        dst_offset = cnt[d-1] + (index[d]*dst[d-1].stride+dst[d-1].start) * dst[d-1].distance;
-        memcpy(dst_ptr + dst_offset + (dst[d].start * element_size), src_ptr + src_offset,
-               dst[d].length * dst[d].distance);
-        src_offset += dst[d].length * dst[d].distance;
-        index[d]++;
-      }
-    }
-  }
-#endif
 }
 
 void _xmp_gasnet_unpack_using_buf(gasnet_token_t t, const int addr_hi, const int addr_lo, 
-				  const int dst_dims, const int ith){
-
+				  const int dst_dims, const int ith)
+{
   size_t dst_info_size = sizeof(_XMP_array_section_t) * dst_dims;
   _XMP_array_section_t *dst = malloc(dst_info_size);
   char* src_addr = _xmp_gasnet_buf[gasnet_mynode()];
@@ -1690,8 +1577,8 @@ void _xmp_gasnet_unpack_using_buf(gasnet_token_t t, const int addr_hi, const int
 }
 
 void _xmp_gasnet_unpack(gasnet_token_t t, const char* src_addr, const size_t nbytes, 
-			const int addr_hi, const int addr_lo, const int dst_dims, const int ith){
-
+			const int addr_hi, const int addr_lo, const int dst_dims, const int ith)
+{
   size_t dst_info_size = sizeof(_XMP_array_section_t) * dst_dims;
   _XMP_array_section_t *dst = malloc(dst_info_size);
   memcpy(dst, src_addr, dst_info_size);
@@ -1702,16 +1589,16 @@ void _xmp_gasnet_unpack(gasnet_token_t t, const char* src_addr, const size_t nby
 
 static void coarray_stride_size_error(){
   fprintf(stderr, "Corray stride transfer size is too big\n");
-  fprintf(stderr, "Reconfigure environmental variant BUFFER_FOR_STRIDE_SIZE > %lld\n", _xmp_stride_size);
+  fprintf(stderr, "Reconfigure environmental variant BUFFER_FOR_STRIDE_SIZE > %zu\n", _xmp_stride_size);
   _XMP_fatal("");
 }
 
-static void XMP_gasnet_from_c_to_nonc_put(int target_image, long long src_point, int dst_dims, 
+static void XMP_gasnet_from_c_to_nonc_put(int target_image, size_t src_point, int dst_dims, 
 					  _XMP_array_section_t *dst_info, 
-                                          _XMP_coarray_t *dst, void *src, long long transfer_size)
+                                          _XMP_coarray_t *dst, void *src, size_t transfer_size)
 {
   size_t dst_info_size = sizeof(_XMP_array_section_t) * dst_dims;
-  transfer_size += (long long)dst_info_size;
+  transfer_size += dst_info_size;
   char archive[transfer_size];
   memcpy(archive, dst_info, dst_info_size);
   memcpy(archive+dst_info_size, (char *)src+src_point, transfer_size - dst_info_size);
@@ -1736,7 +1623,7 @@ static void XMP_gasnet_from_c_to_nonc_put(int target_image, long long src_point,
 
 static void XMP_gasnet_from_nonc_to_nonc_put(int target_image, int dst_dims, int src_dims,
 					     _XMP_array_section_t *dst_info, _XMP_array_section_t *src,
-					     _XMP_coarray_t *dst, void *src_ptr, long long transfer_size)
+					     _XMP_coarray_t *dst, void *src_ptr, size_t transfer_size)
 {
   size_t dst_info_size = sizeof(_XMP_array_section_t) * dst_dims;
   size_t tsize = (size_t)transfer_size + dst_info_size;
@@ -1765,21 +1652,21 @@ static void XMP_gasnet_from_nonc_to_nonc_put(int target_image, int dst_dims, int
 
 void _XMP_gasnet_put(int dst_continuous, int src_continuous, int target_image, int dst_dims, 
 		     int src_dims, _XMP_array_section_t *dst_info, _XMP_array_section_t *src_info, 
-		     _XMP_coarray_t *dst, void *src, long long length){
-
-  long long transfer_size = dst->elmt_size*length;
+		     _XMP_coarray_t *dst, void *src, size_t  length)
+{
+  size_t transfer_size = dst->elmt_size*length;
 
   if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
-    long long dst_point = get_offset(dst_info, dst_dims);
-    long long src_point = get_offset(src_info, src_dims);
+    size_t dst_point = get_offset(dst_info, dst_dims);
+    size_t src_point = get_offset(src_info, src_dims);
     XMP_gasnet_from_c_to_c_put(target_image, dst_point, src_point, dst, src, transfer_size);
   }
   else if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_FALSE){
-    long long dst_point = get_offset(dst_info, dst_dims);
+    size_t dst_point = get_offset(dst_info, dst_dims);
     XMP_gasnet_from_nonc_to_c_put(target_image, dst_point, src_dims, src_info, dst, src, transfer_size);
   }
   else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_TRUE){
-    long long src_point = get_offset(src_info, src_dims);
+    size_t src_point = get_offset(src_info, src_dims);
     XMP_gasnet_from_c_to_nonc_put(target_image, src_point, dst_dims, dst_info, 
 				  dst, src, transfer_size);
   }
@@ -1792,18 +1679,19 @@ void _XMP_gasnet_put(int dst_continuous, int src_continuous, int target_image, i
   }
 }
 
-static void XMP_gasnet_from_c_to_c_get(const int target_image, const long long dst_point, 
-				       const long long src_point, const void *dst, 
-				       const _XMP_coarray_t *src, const long long transfer_size){
-
+static void XMP_gasnet_from_c_to_c_get(const int target_image, const size_t dst_point, 
+				       const size_t src_point, const void *dst, 
+				       const _XMP_coarray_t *src, const size_t transfer_size)
+{
   gasnet_get_bulk(((char *)dst)+dst_point, target_image, ((char *)src->addr[target_image])+src_point,
 		  transfer_size);
 
 }
 
-static void XMP_gasnet_from_c_to_nonc_get(int target_image, long long src_point, int dst_dims, 
+static void XMP_gasnet_from_c_to_nonc_get(int target_image, size_t src_point, int dst_dims, 
 					  _XMP_array_section_t *dst_info, 
-					  void *dst, _XMP_coarray_t *src, long long transfer_size){
+					  void *dst, _XMP_coarray_t *src, size_t transfer_size)
+{
   if(transfer_size < _xmp_stride_size){
     char* src_addr = (char *)_xmp_gasnet_buf[gasnet_mynode()];
     gasnet_get_bulk(src_addr, target_image, ((char *)src->addr[target_image])+src_point, (size_t)transfer_size);
@@ -1816,8 +1704,8 @@ static void XMP_gasnet_from_c_to_nonc_get(int target_image, long long src_point,
 
 void _xmp_gasnet_pack(gasnet_token_t t, const char* info, const size_t am_request_size, 
 		      const int src_addr_hi, const int src_addr_lo, const int src_dims, 
-		      const size_t tansfer_size, const int dst_addr_hi, const int dst_addr_lo){
-  
+		      const size_t tansfer_size, const int dst_addr_hi, const int dst_addr_lo)
+{
   _XMP_array_section_t *src_info = (_XMP_array_section_t *)info;
   char *archive = _xmp_gasnet_buf[gasnet_mynode()];
   XMP_pack(archive, (char *)UPCRI_MAKEWORD(src_addr_hi,src_addr_lo), src_dims, src_info);
@@ -1827,8 +1715,8 @@ void _xmp_gasnet_pack(gasnet_token_t t, const char* info, const size_t am_reques
 
 void _xmp_gasnet_pack_get(gasnet_token_t t, const char* info, const size_t am_request_size,
 			  const int src_addr_hi, const int src_addr_lo, const int src_dims, const int dst_dims,
-			  const size_t tansfer_size, const int dst_addr_hi, const int dst_addr_lo){
-
+			  const size_t tansfer_size, const int dst_addr_hi, const int dst_addr_lo)
+{
   size_t src_size = sizeof(_XMP_array_section_t) * src_dims;
   size_t dst_size = sizeof(_XMP_array_section_t) * dst_dims;
   _XMP_array_section_t *src_info = malloc(src_size);
@@ -1842,7 +1730,8 @@ void _xmp_gasnet_pack_get(gasnet_token_t t, const char* info, const size_t am_re
 }
 
 void _xmp_gasnet_unpack_get_reply_nonc(gasnet_token_t t, char *archive, size_t transfer_size,
-				       const int dst_addr_hi, const int dst_addr_lo, const int dst_dims){
+				       const int dst_addr_hi, const int dst_addr_lo, const int dst_dims)
+{
   size_t dst_size = sizeof(_XMP_array_section_t) * dst_dims;
   _XMP_array_section_t *dst_info = malloc(dst_size);
   memcpy(dst_info, archive, dst_size);
@@ -1853,19 +1742,21 @@ void _xmp_gasnet_unpack_get_reply_nonc(gasnet_token_t t, char *archive, size_t t
 
 
 void _xmp_gasnet_unpack_get_reply(gasnet_token_t t, char *archive, size_t transfer_size, 
-				  const int dst_addr_hi, const int dst_addr_lo){
+				  const int dst_addr_hi, const int dst_addr_lo)
+{
   memcpy((char *)UPCRI_MAKEWORD(dst_addr_hi,dst_addr_lo), archive, transfer_size);
   done_get_flag = _XMP_N_INT_TRUE;
 }
 
-void _xmp_gasnet_unpack_get_reply_using_buf(gasnet_token_t t){
+void _xmp_gasnet_unpack_get_reply_using_buf(gasnet_token_t t)
+{
   done_get_flag = _XMP_N_INT_TRUE;
 }
 
 void _xmp_gasnet_pack_using_buf(gasnet_token_t t, const char* info, const size_t am_request_size,
 				const int src_addr_hi, const int src_addr_lo, const int src_dims,
-				const int target_image){
-
+				const int target_image)
+{
   _XMP_array_section_t *src_info = (_XMP_array_section_t *)info;
   char *archive = _xmp_gasnet_buf[gasnet_mynode()];
   XMP_pack(archive, (char *)UPCRI_MAKEWORD(src_addr_hi,src_addr_lo), src_dims, src_info);
@@ -1873,8 +1764,8 @@ void _xmp_gasnet_pack_using_buf(gasnet_token_t t, const char* info, const size_t
 }
 
 static void XMP_gasnet_from_nonc_to_c_get(int target_image, int src_dims, _XMP_array_section_t *src_info, 
-					  void *dst, _XMP_coarray_t *src, 
-					  long long transfer_size, long long dst_point){
+					  void *dst, _XMP_coarray_t *src, size_t transfer_size, size_t dst_point)
+{
   size_t am_request_size = sizeof(_XMP_array_section_t) * src_dims;
   char archive[am_request_size];  // Note: Info. of transfer_size may have better in "archive".
   memcpy(archive, src_info, am_request_size);
@@ -1902,7 +1793,7 @@ static void XMP_gasnet_from_nonc_to_c_get(int target_image, int src_dims, _XMP_a
 
 static void XMP_gasnet_from_nonc_to_nonc_get(int target_image, int dst_dims, int src_dims, 
 					     _XMP_array_section_t *dst_info, _XMP_array_section_t *src_info, 
-					     void *dst, _XMP_coarray_t *src, long long transfer_size)
+					     void *dst, _XMP_coarray_t *src, size_t transfer_size)
 {
   done_get_flag = _XMP_N_INT_FALSE;
   //  if(transfer_size < gasnet_AMMaxMedium()){
@@ -1939,22 +1830,22 @@ static void XMP_gasnet_from_nonc_to_nonc_get(int target_image, int dst_dims, int
 
 void _XMP_gasnet_get(int src_continuous, int dst_continuous, int target_image, int src_dims, 
 		     int dst_dims, _XMP_array_section_t *src_info, _XMP_array_section_t *dst_info, 
-		     _XMP_coarray_t *src, void *dst, long long length){
-
-  long long transfer_size = src->elmt_size*length;
+		     _XMP_coarray_t *src, void *dst, size_t length)
+{
+  size_t transfer_size = src->elmt_size*length;
 
   if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
-    long long dst_point = get_offset(dst_info, dst_dims);
-    long long src_point = get_offset(src_info, src_dims);
+    size_t dst_point = get_offset(dst_info, dst_dims);
+    size_t src_point = get_offset(src_info, src_dims);
     XMP_gasnet_from_c_to_c_get(target_image, dst_point, src_point, dst, src, transfer_size);
   }
   else if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_FALSE){
-    long long dst_point = get_offset(dst_info, dst_dims);
+    size_t dst_point = get_offset(dst_info, dst_dims);
     XMP_gasnet_from_nonc_to_c_get(target_image, src_dims, src_info, 
 				  dst, src, transfer_size, dst_point);
   }
   else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_TRUE){
-    long long src_point = get_offset(src_info, src_dims);
+    size_t src_point = get_offset(src_info, src_dims);
     XMP_gasnet_from_c_to_nonc_get(target_image, src_point, dst_dims, dst_info, 
 				  dst, src, transfer_size);
   }

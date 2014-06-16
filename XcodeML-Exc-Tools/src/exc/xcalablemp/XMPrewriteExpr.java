@@ -485,13 +485,15 @@ public class XMPrewriteExpr {
 	funcArgs = Xcons.List();
 	funcArgs.add(Xcons.IntConstant(i));                                    // dim
         if(tripletList.getArg(i).isConstant() || tripletList.getArg(i).isVariable()){
-          funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i))); // start	  
-          funcArgs.add(Xcons.LongLongConstant(0, 1));                          // length	  
-          funcArgs.add(Xcons.LongLongConstant(0, 1));                          // stride
+          //          funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i))); // start
+          funcArgs.add(tripletList.getArg(i)); // start
+          funcArgs.add(Xcons.IntConstant(1));  // length
+          funcArgs.add(Xcons.IntConstant(1));  // stride
         }
         else{
           for(int j=0;j<3;j++){
-            funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i).getArg(j)));
+            //            funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i).getArg(j)));
+            funcArgs.add(tripletList.getArg(i).getArg(j));
           }
         }
 	newExpr = funcId.Call(funcArgs);
@@ -504,9 +506,10 @@ public class XMPrewriteExpr {
       for(int i=0;i<startList.Nargs();i++){
 	funcArgs = Xcons.List();
 	funcArgs.add(Xcons.IntConstant(i));                                // dim
-        funcArgs.add(Xcons.Cast(Xtype.longlongType, startList.getArg(i))); // start
-	funcArgs.add(Xcons.LongLongConstant(0, 1));                        // length
-        funcArgs.add(Xcons.LongLongConstant(0, 1));                        // stride
+        //        funcArgs.add(Xcons.Cast(Xtype.longlongType, startList.getArg(i))); // start
+        funcArgs.add(startList.getArg(i));  // start
+	funcArgs.add(Xcons.IntConstant(1)); // length
+        funcArgs.add(Xcons.IntConstant(1)); // stride
 	newExpr = funcId.Call(funcArgs);
         newExpr.setIsRewrittedByXmp(true);
 	b.add(newExpr);
@@ -514,10 +517,10 @@ public class XMPrewriteExpr {
     }
     else if(coarrayExpr.getArg(0).Opcode() == Xcode.VAR){
       funcArgs = Xcons.List();
-      funcArgs.add(Xcons.IntConstant(0));          // dim
-      funcArgs.add(Xcons.LongLongConstant(0, 0));  // start
-      funcArgs.add(Xcons.LongLongConstant(0, 1));  // length
-      funcArgs.add(Xcons.LongLongConstant(0, 1));  // stride
+      funcArgs.add(Xcons.IntConstant(0)); // dim
+      funcArgs.add(Xcons.IntConstant(0)); // start
+      funcArgs.add(Xcons.IntConstant(1)); // length
+      funcArgs.add(Xcons.IntConstant(1)); // stride
       newExpr = funcId.Call(funcArgs);
       newExpr.setIsRewrittedByXmp(true);
       b.add(newExpr);
@@ -534,11 +537,11 @@ public class XMPrewriteExpr {
       Xtype varType = varId.Type();
       Xtype elmtType = varType.getArrayElementType();
       int varDim = varType.getNumDimensions();
-      Long[] sizeArray = new Long[varDim];
-      Long[] distanceArray = new Long[varDim];
+      Integer[] sizeArray = new Integer[varDim];
+      Integer[] distanceArray = new Integer[varDim];
 
       for(int i=0;i<varDim;i++,varType=varType.getRef()){
-        long dimSize = varType.getArraySize();
+        int dimSize = (int)varType.getArraySize();
         if((dimSize == 0) || (dimSize == -1)){
           throw new XMPexception("array size should be declared statically");
         }
@@ -546,34 +549,36 @@ public class XMPrewriteExpr {
       }
 
       for(int i=0;i<varDim-1;i++){
-	long tmp = (long)1;
+	int tmp = 1;
 	for(int j=i+1;j<varDim;j++){
 	  tmp *= sizeArray[j];
 	}
 	distanceArray[i] = tmp;
       }
-      distanceArray[varDim-1] = (long)1;
+      distanceArray[varDim-1] = 1;
 
       XobjList tripletList = (XobjList)localExpr.getArg(1);
       for(int i=0;i<tripletList.Nargs();i++){
 	funcArgs = Xcons.List();
 	funcArgs.add(Xcons.IntConstant(i));                                     // dim
         if(tripletList.getArg(i).isVariable() || tripletList.getArg(i).isIntConstant() ){
-          funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i)));  // start
-          funcArgs.add(Xcons.LongLongConstant(0, 1));                           // length
-          funcArgs.add(Xcons.LongLongConstant(0, 1));                           // stride
-          funcArgs.add(Xcons.LongLongConstant(0, sizeArray[i]));                // size
-	  funcArgs.add(Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.LongLongConstant(0, distanceArray[i]), Xcons.SizeOf(elmtType))); // distance
+          //          funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i)));  // start
+          funcArgs.add(tripletList.getArg(i));           // start
+          funcArgs.add(Xcons.IntConstant(1));            // length
+          funcArgs.add(Xcons.IntConstant(1));            // stride
+          funcArgs.add(Xcons.IntConstant(sizeArray[i])); // size
+	  funcArgs.add(Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.IntConstant(distanceArray[i]), Xcons.SizeOf(elmtType))); // distance
 	  newExpr = funcId.Call(funcArgs);
 	  newExpr.setIsRewrittedByXmp(true);
 	  b.add(newExpr);
         }
         else{
           for(int j=0;j<3;j++){
-            funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i).getArg(j)));
+            //            funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i).getArg(j)));
+            funcArgs.add(tripletList.getArg(i).getArg(j));
           }
-          funcArgs.add(Xcons.LongLongConstant(0, sizeArray[i]));     // size
-	  funcArgs.add(Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.LongLongConstant(0, distanceArray[i]), Xcons.SizeOf(elmtType)));
+          funcArgs.add(Xcons.IntConstant(sizeArray[i]));     // size
+	  funcArgs.add(Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.IntConstant(distanceArray[i]), Xcons.SizeOf(elmtType)));
 	  newExpr = funcId.Call(funcArgs);
 	  newExpr.setIsRewrittedByXmp(true);
 	  b.add(newExpr);
@@ -582,12 +587,13 @@ public class XMPrewriteExpr {
     }
     else{  // !isArray
       funcArgs = Xcons.List();
-      funcArgs.add(Xcons.IntConstant(0));          // dim 
-      funcArgs.add(Xcons.LongLongConstant(0, 0));  // start
-      funcArgs.add(Xcons.LongLongConstant(0, 1));  // length
-      funcArgs.add(Xcons.LongLongConstant(0, 1));  // stride
-      funcArgs.add(Xcons.LongLongConstant(0, 1));  // size
-      funcArgs.add(Xcons.Cast(Xtype.longlongType, Xcons.SizeOf(localExpr.Type()))); // distance
+      funcArgs.add(Xcons.IntConstant(0)); // dim
+      funcArgs.add(Xcons.IntConstant(0)); // start
+      funcArgs.add(Xcons.IntConstant(1)); // length
+      funcArgs.add(Xcons.IntConstant(1)); // stride
+      funcArgs.add(Xcons.IntConstant(1)); // size
+      //      funcArgs.add(Xcons.Cast(Xtype.longlongType, Xcons.SizeOf(localExpr.Type()))); // distance
+      funcArgs.add(Xcons.SizeOf(localExpr.Type()));
       newExpr = funcId.Call(funcArgs);
       newExpr.setIsRewrittedByXmp(true);
       b.add(newExpr);
