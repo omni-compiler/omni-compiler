@@ -34,13 +34,6 @@ if ENABLE_ATOOL
 SUBDIRS+=@ATOOL_DIR@
 endif
 
-
-#install-data-local:
-#	if test -e "./doc"; then\
-#		test -z "${docdir}" || ${MKDIR_P} "${docdir}";\
-#		cp -fr ./doc/* ${docdir}/; chmod -R 755 ${docdir}/*;\
-#	fi
-
 XMPPKG_NAME:="@XMPPKG_NAME@"
 XMPPKG_TMPDIR_TOP:="/tmp/@XMPPKG_NAME@"
 XMPPKG_TMPDIR:=$(XMPPKG_TMPDIR_TOP)/$(shell mktemp -u --tmpdir=/)
@@ -82,8 +75,9 @@ if FJRDMA
    SUB_TESTDIRS += "local-view/coarray/C"
 endif
 
-tests: tests-dummy
-tests-dummy:
+.PHONY: tests clean-tests run-tests clean-local
+
+tests: 
 	@for subdir in $(SUB_TESTDIRS) ; do \
 	$(MAKE) -C $(BASE_TESTDIR)/$$subdir ; \
 	if test $$? -ne 0; then exit 1; fi ;\
