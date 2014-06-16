@@ -1,5 +1,54 @@
 #include<stdio.h>
 #include<stdlib.h>
+
+typedef struct quad{
+  int a;
+  int b;
+  int c;
+  int d;
+}quad;
+
+#ifdef CHAR
+#define TYPE char
+#define ZEROVAL (0)
+#define SETVAL (i*11 + j*13 + k*17 + l*19)%128
+#endif
+
+#ifdef SHORT
+#define TYPE short
+#define ZEROVAL (0)
+#define SETVAL (i*11 + j*13 + k*17 + l*19)%32767
+#endif
+
+#ifdef INT
+#define TYPE int
+#define ZEROVAL (0)
+#define SETVAL (i*11 + j*13 + k*17 + l*19)
+#endif
+
+#ifdef FLOAT
+#define TYPE float
+#define ZEROVAL (0.0)
+#define SETVAL (i*11 + j*13 + k*17 + l*19)
+#endif
+
+#ifdef DOUBLE
+#define TYPE double
+#define ZEROVAL (0.0)
+#define SETVAL (double)(i*11 + j*13 + k*17 + l*19)
+#endif
+
+#ifndef TYPE
+//#define TYPE quad
+//#define ZEROVAL (quad){0,0,0,0}
+//#define SETVAL (quad){i,j,k,l}
+//#define STRUCT
+
+#define TYPE char
+#define ZEROVAL (0)
+#define SETVAL (i*11 + j*13 + k*17 + l*19)%128
+#endif
+
 /*
 #define I 3
 #define J 5
@@ -12,15 +61,15 @@
 #define K 23
 #define L 29
 
-int test_update_host(int *a, int i_low, int i_len, int j_low, int j_len, int k_low, int k_len, int l_low, int l_len);
+int test_update_host(TYPE *a, int i_low, int i_len, int j_low, int j_len, int k_low, int k_len, int l_low, int l_len);
 void get_range(int range[2], int size, int type);
 
 int main()
 {
   int i,j,k,l;
-  int *a;
+  TYPE *a;
 
-  a = (int*)malloc(sizeof(int)*I*J*K*L);
+  a = (TYPE*)malloc(sizeof(TYPE)*I*J*K*L);
 
   
 #pragma acc data create(a[0:I*J*K*L])
@@ -30,7 +79,7 @@ int main()
       for(j = 0; j < J; j++){
 	for(k = 0; k < K; k++){
 	  for(l = 0; l < L; l++){
-	    a[(((i*J)+j)*K+k)*L+l] = i*11 + j*13 + k*17 + l*19;
+	    a[(((i*J)+j)*K+k)*L+l] = (SETVAL);
 	  }
 	}
       }
@@ -47,7 +96,7 @@ int main()
 	    get_range(range_k, K, k);
 	    get_range(range_l, L, l);
 	    if(test_update_host(a, range_i[0], range_i[1], range_j[0], range_j[1], range_k[0], range_k[1], range_l[0], range_l[1]) ){
-	      printf("update [%d:%d][%d:%d][%d:%d][%d:%d] failed\n", range_i[0], range_i[1], range_j[0], range_j[1], range_l[0], range_l[1], range_l[0], range_l[1]);
+	      printf("update [%d:%d][%d:%d][%d:%d][%d:%d] failed\n", range_i[0], range_i[1], range_j[0], range_j[1], range_k[0], range_k[1], range_l[0], range_l[1]);
 	      exit(1);
 	    }
 	  }
@@ -59,13 +108,13 @@ int main()
   return 0;
 }
 
-int test_update_host(int *a, int i_low, int i_len, int j_low, int j_len, int k_low, int k_len, int l_low, int l_len)
+int test_update_host(TYPE *a, int i_low, int i_len, int j_low, int j_len, int k_low, int k_len, int l_low, int l_len)
 {
   int i,j,k,l;
 
   //set zero
   for(i=0;i<I*J*K*L;i++){
-    a[i] = 0;
+    a[i] = (ZEROVAL);
   }
   
 #pragma acc data present(a[0:I][0:J][0:K][0:L])
@@ -73,28 +122,30 @@ int test_update_host(int *a, int i_low, int i_len, int j_low, int j_len, int k_l
 #pragma acc update host(a[i_low:i_len][j_low:j_len][k_low:k_len][l_low:l_len])
   }
 
-  /*
-  //print
-  for(i=0;i<I*J*K*L;i++){
-    printf("%d,", a[i]);
-  }printf("\n\n");
-  */
-
   //check
-  int flag = 0;
+  //int flag = 0;
   for(i = 0; i < I; i++){
     for(j = 0; j < J; j++){
       for(k = 0; k < K; k++){
 	for(l = 0; l < L; l++){
+	  TYPE v = a[(((i*J)+j)*K+k)*L+l];
 	  if( (i>=i_low&&i<i_low+i_len) && (j>=j_low&&j<j_low+j_len) && (k>=k_low&&k<k_low+k_len) && (l>=l_low&&l<l_low+l_len) ){
-	    if(a[(((i*J)+j)*K+k)*L+l] != i*11 + j*13 + k*17 + l*19){
-	      flag = 1;
-	      break;
+#ifndef STRUCT
+	    if(v != (SETVAL)){
+#else
+	    if(v.a != i || v.b != j || v.c != k || v.d != l){
+#endif
+	      //printf("(%lf , %lf) ", v, (SETVAL));
+	      return 1;
 	    }
 	  }else{
-	    if(a[(((i*J)+j)*K+k)*L+l] != 0){
-	      flag = 1;
-	      break;
+#ifndef STRUCT
+	    if(v != (ZEROVAL)){
+#else
+	    if(v.a != 0 || v.b != 0 || v.c != 0 || v.d != 0){
+#endif
+	      //printf("(%lf , %lf) ", v, (ZEROVAL));
+	      return 1;
 	    }
 	  }
 	}
@@ -102,7 +153,7 @@ int test_update_host(int *a, int i_low, int i_len, int j_low, int j_len, int k_l
     }
   }
 
-  return flag;
+  return 0;
 }
 
 void get_range(int range[2], int size, int type)
