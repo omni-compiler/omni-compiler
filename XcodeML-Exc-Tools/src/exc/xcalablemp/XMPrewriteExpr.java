@@ -183,7 +183,8 @@ public class XMPrewriteExpr {
     }
     remoteImageDistance[imageDims-1] = 1;
 
-    Xobject targetImage = Xcons.binaryOp(Xcode.MINUS_EXPR, imageList.getArg(0), Xcons.IntConstant(1));
+    //    Xobject targetImage = Xcons.binaryOp(Xcode.MINUS_EXPR, imageList.getArg(0), Xcons.IntConstant(1));
+    Xobject targetImage = imageList.getArg(0);
     for(int i=1;i<imageDims;i++){
       Xobject tmp = Xcons.binaryOp(Xcode.MUL_EXPR, 
                                    Xcons.binaryOp(Xcode.MINUS_EXPR, imageList.getArg(i), Xcons.IntConstant(1)),

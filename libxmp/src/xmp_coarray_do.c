@@ -244,29 +244,31 @@ size_t get_offset(_XMP_array_section_t *array, int dims)
 }
 
 void _XMP_coarray_shortcut_put(int target, const _XMP_coarray_t *dst, const _XMP_coarray_t *src, 
-			       const int dst_offset, const int src_offset, const int length)
+			       const int dst_offset, const int src_offset, const int elmts)
 {
-  if(length == 0) return;
+  if(elmts == 0) return;
+  target--;
 
 #ifdef _XMP_COARRAY_GASNET
   gasnet_put_nbi_bulk(target, dst->addr[target]+dst_offset*dst->elmt_size, 
-		      src->addr[_XMP_world_rank]+src_offset*dst->elmt_size, length*dst->elmt_size);
+		      src->addr[_XMP_world_rank]+src_offset*dst->elmt_size, elmts*dst->elmt_size);
 #elif _XMP_COARRAY_FJRDMA
   _XMP_fjrdma_shortcut_put(target, (uint64_t)(dst_offset*dst->elmt_size), (uint64_t)(src_offset*dst->elmt_size),
-			   dst, src, length*dst->elmt_size);
+			   dst, src, elmts*dst->elmt_size);
 #endif
 }
 
 void _XMP_coarray_shortcut_get(int target, const _XMP_coarray_t *dst, const _XMP_coarray_t *src,
-			       const int dst_offset, const int src_offset, const int length)
+			       const int dst_offset, const int src_offset, const int elmts)
 {
-  if(length == 0) return;
-
+  if(elmts == 0) return;
+  target--;
+  
 #ifdef _XMP_COARRAY_GASNET
   gasnet_get_bulk(dst->addr[_XMP_world_rank]+dst_offset*dst->elmt_size, target, 
-		  src->addr[target]+src_offset*dst->elmt_size, length*dst->elmt_size);
+		  src->addr[target]+src_offset*dst->elmt_size, elmts*dst->elmt_size);
 #elif _XMP_COARRAY_FJRDMA
   _XMP_fjrdma_shortcut_get(target, (uint64_t)(dst_offset*dst->elmt_size), (uint64_t)(src_offset*dst->elmt_size),
-			   dst, src, length*dst->elmt_size);
+			   dst, src, elmts*dst->elmt_size);
 #endif
 }
