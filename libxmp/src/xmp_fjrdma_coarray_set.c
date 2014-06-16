@@ -24,12 +24,12 @@ void _XMP_fjrdma_finalize()
   if(ret) _XMP_fatal("FJMPI_Rdma_init error!");
 }
 
-void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray, void **buf, unsigned long long coarray_size)
+void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray, void **buf, const size_t coarray_size)
 {
   uint64_t *each_addr = _XMP_alloc(sizeof(uint64_t) * _XMP_world_size);
   int memid = _memid++;
   if(_memid == MEMID_MAX)
-    _XMP_fatal("Too many coarrays. Number of coarrays is not more than 511.");
+    _XMP_fatal("Too many coarrays. Number of coarrays is not more than 510.");
 
   *buf = _XMP_alloc(coarray_size);
   uint64_t laddr = FJMPI_Rdma_reg_mem(memid, *buf, coarray_size);

@@ -91,7 +91,7 @@ extern _XMP_coarray_list_t *_XMP_coarray_list_head;
 extern _XMP_coarray_list_t *_XMP_coarray_list_tail;
 
 extern void _XMP_coarray_initialize(int, char **);
-extern void _XMP_coarray_finalize(int);
+extern void _XMP_coarray_finalize(const int);
 
 // xmp_loop.c
 extern int _XMP_sched_loop_template_width_1(int ser_init, int ser_cond, int ser_step,
@@ -207,7 +207,7 @@ extern void _XMP_threads_finalize(void);
 #define RECV_NIC_POST FJMPI_RDMA_LOCAL_NIC3
 #define MEMID 0
 #define POST_WAIT_ID 1
-extern size_t get_offset(_XMP_array_section_t *, int);
+extern size_t get_offset(const _XMP_array_section_t *, const int);
 #endif
 
 extern void _XMP_post_wait_initialize();
@@ -222,20 +222,20 @@ extern void _XMP_post_wait_initialize();
 	gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);   \
   } while (0)
 
-extern void _XMP_gasnet_malloc_do(_XMP_coarray_t *, void **, size_t);
-extern void _XMP_gasnet_initialize(int, char**, size_t, size_t);
-extern void _XMP_gasnet_finalize(int);
-extern void _XMP_gasnet_put(int, int, int, int, int, _XMP_array_section_t*, _XMP_array_section_t*, 
-			    _XMP_coarray_t*, void*, size_t);
-extern void _XMP_gasnet_get(int, int, int, int, int, _XMP_array_section_t*, _XMP_array_section_t*,
-                            _XMP_coarray_t*, void*, size_t);
+extern void _XMP_gasnet_malloc_do(_XMP_coarray_t *, void **, const size_t);
+extern void _XMP_gasnet_initialize(int, char**, const size_t, const size_t);
+extern void _XMP_gasnet_finalize(const int);
+extern void _XMP_gasnet_put(const int, const int, const int, const int, const int, const _XMP_array_section_t*, const _XMP_array_section_t*, 
+			    const _XMP_coarray_t*, const void*, const size_t);
+extern void _XMP_gasnet_get(const int, const int, const int, const int, const int, const _XMP_array_section_t*, const _XMP_array_section_t*,
+                            const _XMP_coarray_t*, const void*, const size_t);
 extern void _XMP_gasnet_sync_all();
 extern void _XMP_gasnet_sync_memory();
 extern void _xmp_gasnet_post_wait_initialize();
-extern void _xmp_gasnet_post(int, int);
+extern void _xmp_gasnet_post(const int, const int);
 extern void _xmp_gasnet_wait();
-extern void _xmp_gasnet_wait_tag(int, int);
-extern void _xmp_gasnet_wait_notag(int);
+extern void _xmp_gasnet_wait_tag(const int, const int);
+extern void _xmp_gasnet_wait_notag(const int);
 #endif
 
 #ifdef _XMP_COARRAY_FJRDMA
@@ -244,18 +244,18 @@ extern void _XMP_fjrdma_initialize();
 extern void _XMP_fjrdma_finalize();
 extern void _XMP_fjrdma_sync_memory();
 extern void _XMP_fjrdma_sync_all();
-extern void _XMP_fjrdma_malloc_do(_XMP_coarray_t *, void **, unsigned long long);
-extern void _XMP_fjrdma_put(int, int, int, int, int, _XMP_array_section_t *,  _XMP_array_section_t *,
-			    _XMP_coarray_t *, void *, _XMP_coarray_t *, long long);
-extern void _XMP_fjrdma_get(int, int, int, int, int, _XMP_array_section_t *, _XMP_array_section_t *,
-			    _XMP_coarray_t *, void *, _XMP_coarray_t *, long long);
-extern void _XMP_fjrdma_shortcut_put(const int, const uint64_t, const uint64_t, const _XMP_coarray_t *, const _XMP_coarray_t *, const int);
-extern void _XMP_fjrdma_shortcut_get(const int, const uint64_t, const uint64_t, const _XMP_coarray_t *, const _XMP_coarray_t *, const int);
+extern void _XMP_fjrdma_malloc_do(_XMP_coarray_t *, void **, const size_t);
+extern void _XMP_fjrdma_put(const int, const int, const int, const int, const int, const _XMP_array_section_t *,  
+			    const _XMP_array_section_t *, const _XMP_coarray_t *, const void *, const _XMP_coarray_t *, const int);
+extern void _XMP_fjrdma_get(const int, const int, const int, const int, const int, const _XMP_array_section_t *, 
+			    const _XMP_array_section_t *, const _XMP_coarray_t *, const void *, const _XMP_coarray_t *, const int);
+extern void _XMP_fjrdma_shortcut_put(const int, const uint64_t, const uint64_t, const _XMP_coarray_t *, const _XMP_coarray_t *, const size_t);
+extern void _XMP_fjrdma_shortcut_get(const int, const uint64_t, const uint64_t, const _XMP_coarray_t *, const _XMP_coarray_t *, const size_t);
 extern void _xmp_fjrdma_post_wait_initialize();
-extern void _xmp_fjrdma_post(int, int);
+extern void _xmp_fjrdma_post(const int, const int);
 extern void _xmp_fjrdma_wait();
-extern void _xmp_fjrdma_wait_tag(int, int);
-extern void _xmp_fjrdma_wait_notag(int);
+extern void _xmp_fjrdma_wait_tag(const int, const int);
+extern void _xmp_fjrdma_wait_notag(const int);
 #endif
 
 #ifdef _XMP_TIMING

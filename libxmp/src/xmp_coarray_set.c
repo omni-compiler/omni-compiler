@@ -55,7 +55,7 @@ void _XMP_coarray_initialize(int argc, char **argv)
 #endif
 }
 
-void _XMP_coarray_finalize(int return_val)
+void _XMP_coarray_finalize(const int return_val)
 {
 #ifdef _XMP_COARRAY_GASNET
   _XMP_gasnet_finalize(return_val);
@@ -64,7 +64,7 @@ void _XMP_coarray_finalize(int return_val)
 #endif
 }
 
-void _XMP_coarray_malloc_set(size_t elmt_size, int coarray_dims, int image_dims)
+void _XMP_coarray_malloc_set(const size_t elmt_size, const int coarray_dims, const int image_dims)
 {
   _elmt_size     = elmt_size;
   _coarray_dims  = coarray_dims;
@@ -74,28 +74,28 @@ void _XMP_coarray_malloc_set(size_t elmt_size, int coarray_dims, int image_dims)
   _total_coarray_elmts = 1;
 }
 
-void _XMP_coarray_malloc_set_f(size_t *elmt_size, int *coarray_dims, int *image_dims)
+void _XMP_coarray_malloc_set_f(const size_t *elmt_size, const int *coarray_dims, const int *image_dims)
 {
   _XMP_coarray_malloc_set(*elmt_size, *coarray_dims, *image_dims);
 }
 
-void _XMP_coarray_malloc_array_info(int dim, int coarray_elmts)
+void _XMP_coarray_malloc_array_info(const int dim, const int coarray_elmts)
 {
   _coarray_elmts[dim]   = coarray_elmts;
   _total_coarray_elmts *= coarray_elmts;
 }
 
-void _XMP_coarray_malloc_array_info_f(int *dim, int *coarray_elmts)
+void _XMP_coarray_malloc_array_info_f(const int *dim, const int *coarray_elmts)
 {
   _XMP_coarray_malloc_array_info(*dim, *coarray_elmts);
 }
 
-void _XMP_coarray_malloc_image_info(int dim, int image_elmts)
+void _XMP_coarray_malloc_image_info(const int dim, const int image_elmts)
 {
   _image_elmts[dim] = image_elmts;
 }
 
-void _XMP_coarray_malloc_image_info_f(int *dim, int *image_elmts)
+void _XMP_coarray_malloc_image_info_f(const int *dim, const int *image_elmts)
 {
   _XMP_coarray_malloc_image_info(*dim, *image_elmts);
 }
