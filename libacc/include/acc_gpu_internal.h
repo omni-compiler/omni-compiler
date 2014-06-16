@@ -72,6 +72,10 @@ extern "C" {
   void _ACC_gpu_unpack_data(void *dst, void *src, int dim, int total_elmnts, int type_size, int* info);
   void _ACC_gpu_pack_data_host(void *dst, void *src, int dim, int total_elmnts, int type_size, int* info);
   void _ACC_gpu_unpack_data_host(void *dst, void *src, int dim, int total_elmnts, int type_size, int* info);
+  void _ACC_gpu_pack_vector(void *dst, void *src, int count, int blocklength, int stride, size_t typesize, int asyncId);
+  void _ACC_gpu_unpack_vector(void *dst, void *src, int count, int blocklength, int stride, size_t typesize, int asyncId);
+  void _ACC_pack_vector(void *dst, void *src, int count, int blocklength, int stride, size_t typesize);
+  void _ACC_unpack_vector(void *dst, void *src, int count, int blocklength, int stride, size_t typesize);
 
   //temporal funcdef
   int _ACC_gpu_get_num_devices();

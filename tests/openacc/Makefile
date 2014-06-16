@@ -7,7 +7,7 @@ EXES = $(C_EXES)
 
 .PHONY: clean all default run
 
-all default: $(EXES)
+all default: $(EXES) update_host_subarray_type update_device_subarray_type
 
 .SUFFIXES: .x
 
@@ -29,6 +29,34 @@ run: $(EXES)
 	$(XRUN) update_array.x
 	$(XRUN) update_subarray.x
 	$(XRUN) update_async.x
+	$(XRUN) update_host_subarray.x
+	$(XRUN) update_device_subarray.x
+
+	$(XRUN) update_host_subarray_char.x
+	$(XRUN) update_host_subarray_short.x
+	$(XRUN) update_host_subarray_int.x
+	$(XRUN) update_host_subarray_float.x
+	$(XRUN) update_host_subarray_double.x
+
+	$(XRUN) update_device_subarray_char.x
+	$(XRUN) update_device_subarray_short.x
+	$(XRUN) update_device_subarray_int.x
+	$(XRUN) update_device_subarray_float.x
+	$(XRUN) update_device_subarray_double.x
+
+update_host_subarray_type:
+	$(XCC) -o update_host_subarray_char.x update_host_subarray.c -DCHAR
+	$(XCC) -o update_host_subarray_short.x update_host_subarray.c -DSHORT
+	$(XCC) -o update_host_subarray_int.x update_host_subarray.c -DINT
+	$(XCC) -o update_host_subarray_float.x update_host_subarray.c -DFLOAT
+	$(XCC) -o update_host_subarray_double.x update_host_subarray.c -DDOUBLE
+
+update_device_subarray_type:
+	$(XCC) -o update_device_subarray_char.x update_device_subarray.c -DCHAR
+	$(XCC) -o update_device_subarray_short.x update_device_subarray.c -DSHORT
+	$(XCC) -o update_device_subarray_int.x update_device_subarray.c -DINT
+	$(XCC) -o update_device_subarray_float.x update_device_subarray.c -DFLOAT
+	$(XCC) -o update_device_subarray_double.x update_device_subarray.c -DDOUBLE
 
 clean:
 	rm -f $(EXES) $(C_OBJS) *.cu

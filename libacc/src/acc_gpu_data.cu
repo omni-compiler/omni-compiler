@@ -180,6 +180,59 @@ void _ACC_gpu_copy_data(_ACC_gpu_data_t *desc, size_t offset, size_t size, int d
   _ACC_gpu_copy((void*)((char*)(desc->host_addr) + offset), (void*)((char *)(desc->device_addr) + offset - desc->offset), size, direction);
 }
 
+void _ACC_gpu2_copy_data_using_pack_vector(_ACC_gpu_data_t *desc, int direction, int asyncId, int offset, int count, int blocklength, int stride)
+{
+  void *dev_buf;
+  void *host_buf;
+  int type_size = desc->type_size;
+  size_t buf_size = count * blocklength * type_size;
+  size_t offset_size = offset * type_size;
+
+  //alloc buffer
+  host_buf = (void *)_ACC_alloc(buf_size);
+  void *mpool;
+  long long mpool_pos = 0;
+  _ACC_gpu_mpool_get(&mpool);
+  _ACC_gpu_mpool_alloc((void**)&dev_buf, buf_size, mpool, &mpool_pos);
+
+  ////
+  void *dev_data = (void*)((char*)(desc->device_addr) - desc->offset + offset_size);
+  void *host_data = (void*)((char*)(desc->host_addr) + offset_size);
+
+  if(direction == 400){
+    //host to device
+    _ACC_pack_vector(host_buf, host_data, count, blocklength, stride, type_size);
+    switch(asyncId){
+    case ACC_ASYNC_SYNC:
+    case ACC_ASYNC_NOVAL:
+      _ACC_gpu_copy_async_all(host_buf, dev_buf, buf_size, _ACC_GPU_COPY_HOST_TO_DEVICE);
+      break;
+    default:
+      _ACC_gpu_copy_async(host_buf, dev_buf, buf_size, _ACC_GPU_COPY_HOST_TO_DEVICE, asyncId);
+    }
+    _ACC_gpu_unpack_vector(dev_data, dev_buf, count, blocklength, stride, type_size, asyncId);
+    cudaThreadSynchronize();
+  }else{
+    //device to host
+    _ACC_gpu_pack_vector(dev_buf, dev_data, count, blocklength, stride, type_size, asyncId);
+    switch(asyncId){
+    case ACC_ASYNC_SYNC:
+    case ACC_ASYNC_NOVAL:
+      _ACC_gpu_copy_async_all(host_buf, dev_buf, buf_size, _ACC_GPU_COPY_DEVICE_TO_HOST);
+      break;
+    default:
+      _ACC_gpu_copy_async(host_buf, dev_buf, buf_size, _ACC_GPU_COPY_DEVICE_TO_HOST, asyncId);
+    }
+    cudaThreadSynchronize();
+    _ACC_unpack_vector(host_data, host_buf, count, blocklength, stride, type_size);
+  }
+
+  //free buffer
+  _ACC_gpu_mpool_free(dev_buf, mpool);
+
+  _ACC_free(host_buf);
+}
+
 void _ACC_gpu2_copy_data_using_pack(_ACC_gpu_data_t *desc, int direction, int isAsync, int *trans_info){
   int i;
   int dim = desc->dim;
@@ -248,8 +301,118 @@ void _ACC_gpu2_copy_data_using_pack(_ACC_gpu_data_t *desc, int direction, int is
     _ACC_free(host_buf);
   }
 }
-  
+
+void find_contiguous(int dim, _ACC_gpu_array_t *array_info, int *trans_info, int start_dim, int *offset, int *blockLength, int *next_dim)
+{
+  int *info_lower = trans_info;
+  int *info_length = trans_info + dim;
+  int *info_dim_acc = trans_info + dim*2;
+
+  //skip all full-range dim
+  int i;
+  for(i = start_dim; i >= 0; i--){
+    if(info_lower[i] != 0 || info_length[i] != array_info[i].dim_elmnts) break;
+  }
+      
+  if(i < 0){
+    //seq
+    *blockLength = array_info[0].dim_acc * array_info[0].dim_elmnts;
+    *offset = 0;
+    *next_dim = -1;
+    return;
+  }
+
+  *blockLength = array_info[i].dim_acc * info_length[i];
+  *offset = array_info[i].dim_acc * info_lower[i];
+  i--; //skip sub-range dim
+
+  //skip all range=1 dim
+  for(; i >= 0; i--){
+    if(info_length[i] != 1) break;
+    *offset += array_info[i].dim_acc * info_lower[i];
+  }
+}
+
 void _ACC_gpu2_copy_subdata(_ACC_gpu_data_t *desc, int direction, int asyncId, ...){
+  int dim = desc->dim;
+  int *trans_info = (int *)_ACC_alloc(dim * 3 * sizeof(int));
+  int *info_lower = trans_info;
+  int *info_length = trans_info + dim;
+  int *info_dim_acc = trans_info + dim*2;
+  _ACC_gpu_array_t *array_info = desc->array_info;
+  int i;
+
+  va_list args;
+  va_start(args, asyncId);
+  for(i=0;i<dim;i++){
+    info_lower[i] = va_arg(args, int);
+    info_length[i] = va_arg(args, int);
+    info_dim_acc[i] = desc->array_info[i].dim_acc;
+  }
+  va_end(args);
+
+  int next_dim;
+  
+  //skip all full-range dim
+  for(i = dim - 1; i >= 0; i--){
+    if(info_lower[i] != 0 || info_length[i] != array_info[i].dim_elmnts) break;
+  }
+      
+  if(i < 0){
+    //all data copy
+    //    printf("sequencial\n");
+    _ACC_gpu_copy(desc->host_addr, (void*)((char *)(desc->device_addr) - desc->offset),desc-> size, direction);
+    return;
+  }
+
+  int offset, blockLength;
+  blockLength = array_info[i].dim_acc * info_length[i];
+  offset = array_info[i].dim_acc * info_lower[i];
+  i--; //skip sub-range dim
+
+  //skip all range=1 dim
+  for(; i >= 0; i--){
+    if(info_length[i] != 1) break;
+    offset += array_info[i].dim_acc * info_lower[i];
+  }
+
+  if(i < 0){
+    size_t offset_size = offset * desc->type_size;
+    size_t size = blockLength * desc->type_size;
+    //    printf("sequencial\n");
+    _ACC_gpu_copy((void*)((char*)(desc->host_addr) + offset_size), (void*)((char *)(desc->device_addr) + offset_size - desc->offset), size, direction);
+    return;
+  }
+  
+  int stride = array_info[i].dim_acc;
+  int count = 1;
+  //skip all full-range dim
+  for(; i >= 0; i--){
+    count *= info_length[i];
+    if(info_lower[i] != 0 || info_length[i] != array_info[i].dim_elmnts) break;
+  }
+   
+  offset += array_info[i].dim_acc * info_lower[i];
+  i--; //skip sub-range dim
+
+  //skip all range=1 dim
+  for(; i >= 0; i--){
+    if(info_length[i] != 1) break;
+    offset += array_info[i].dim_acc * info_lower[i];
+  }
+
+  if(i < 0){
+    // block stride
+    //    printf("block stride\n");
+    _ACC_gpu2_copy_data_using_pack_vector(desc, direction, asyncId, offset, count, blockLength, stride);
+    return;
+  }
+
+  //  printf("unknown\n");
+  _ACC_gpu2_copy_data_using_pack(desc, direction, asyncId, trans_info);
+}
+
+void _ACC_gpu2_copy_subdata__(_ACC_gpu_data_t *desc, int direction, int asyncId, ...){
   int dim = desc->dim;
   int *trans_info = (int *)_ACC_alloc(dim * 3 * sizeof(int));
   int *info_lower = trans_info;
@@ -275,6 +438,46 @@ void _ACC_gpu2_copy_subdata(_ACC_gpu_data_t *desc, int direction, int asyncId, .
 	use_packing = 1;
       }
     }
+  }
+
+  {
+    {
+      //      unsigned long long blockLength = 1;
+      //      unsigned long long count = 1;
+      //      unsigned long long offset = 0;
+      //      unsigned long long stride = 0;
+      _ACC_gpu_array_t *array_info = desc->array_info;
+
+      int offset, blockLength;
+      int next_dim;
+      find_contiguous(dim, array_info, trans_info, dim - 1, &offset, &blockLength, &next_dim);
+      if(next_dim < 0){
+	//連続コピー
+	
+      }else{
+	//not 連続コピー
+	int offset2;
+	int next_dim2;
+	int count;
+	find_contiguous(dim,array_info, trans_info, next_dim, &offset2, &count, &next_dim2);
+
+	if(next_dim2 < 0){
+	  // block stride copy
+	  // 
+	}else{
+	  //unknown pattern
+	}
+      }
+      
+      //skip all full-range dim
+      for(i = dim - 1; i >= 0; i--){
+	if(info_lower[i] != 0 || info_length[i] != array_info[i].dim_elmnts) break;
+      }
+      
+      ///////
+
+    }
+
   }
 
   if(use_packing){ //pack
