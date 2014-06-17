@@ -471,6 +471,7 @@ public class XMPrewriteExpr {
       }
 
     // Set function _XMP_coarray_rdma_set()
+    /*
     Ident funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_set");
     funcArgs.add(Xcons.IntConstant(coarrayDims));
     funcArgs.add(Xcons.IntConstant(localDims));
@@ -478,67 +479,59 @@ public class XMPrewriteExpr {
     Xobject newExpr = funcId.Call(funcArgs);
     newExpr.setIsRewrittedByXmp(true);
     b.add(newExpr);
+    */
 
-    // Set function _XMP_coarray_rdma_coarray_set()
-    funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_coarray_set");
+    // Set function _XMP_coarray_rdma_coarray_set_X()
+    Ident funcId;
+    funcArgs = Xcons.List();
     if(coarrayExpr.getArg(0).Opcode() == Xcode.SUB_ARRAY_REF){
       XobjList tripletList = (XobjList)(coarrayExpr.getArg(0)).getArg(1);
+      funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_coarray_set_" + Integer.toString(tripletList.Nargs()));
       for(int i=0;i<tripletList.Nargs();i++){
-	funcArgs = Xcons.List();
-	funcArgs.add(Xcons.IntConstant(i));                                    // dim
         if(tripletList.getArg(i).isConstant() || tripletList.getArg(i).isVariable()){
-          //          funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i))); // start
           funcArgs.add(tripletList.getArg(i)); // start
           funcArgs.add(Xcons.IntConstant(1));  // length
           funcArgs.add(Xcons.IntConstant(1));  // stride
         }
         else{
           for(int j=0;j<3;j++){
-            //            funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i).getArg(j)));
             funcArgs.add(tripletList.getArg(i).getArg(j));
           }
         }
-	newExpr = funcId.Call(funcArgs);
-	newExpr.setIsRewrittedByXmp(true);
-	b.add(newExpr);
       }
     }
     else if(coarrayExpr.getArg(0).Opcode() == Xcode.ARRAY_REF){
+      funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_coarray_set_1");
       XobjList startList = (XobjList)(coarrayExpr.getArg(0)).getArg(1);
+      funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_coarray_set_" + Integer.toString(startList.Nargs()));
       for(int i=0;i<startList.Nargs();i++){
-	funcArgs = Xcons.List();
-	funcArgs.add(Xcons.IntConstant(i));                                // dim
-        //        funcArgs.add(Xcons.Cast(Xtype.longlongType, startList.getArg(i))); // start
         funcArgs.add(startList.getArg(i));  // start
 	funcArgs.add(Xcons.IntConstant(1)); // length
         funcArgs.add(Xcons.IntConstant(1)); // stride
-	newExpr = funcId.Call(funcArgs);
-        newExpr.setIsRewrittedByXmp(true);
-	b.add(newExpr);
       }
     }
     else if(coarrayExpr.getArg(0).Opcode() == Xcode.VAR){
-      funcArgs = Xcons.List();
-      funcArgs.add(Xcons.IntConstant(0)); // dim
+      funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_coarray_set_1");
       funcArgs.add(Xcons.IntConstant(0)); // start
       funcArgs.add(Xcons.IntConstant(1)); // length
       funcArgs.add(Xcons.IntConstant(1)); // stride
-      newExpr = funcId.Call(funcArgs);
-      newExpr.setIsRewrittedByXmp(true);
-      b.add(newExpr);
     }
     else{
       throw new XMPexception("Not supported this coarray Syntax");
     }
+    Xobject newExpr = funcId.Call(funcArgs);
+    newExpr.setIsRewrittedByXmp(true);
+    b.add(newExpr);
 
-    // Set function _XMP_coarray_rdma_array_set() 
-    funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_array_set");
+    // Set function _XMP_coarray_rdma_array_set_X()
+    funcArgs = Xcons.List();
     if(isArray){
       String arrayName = localExpr.getArg(0).getName();
       Ident varId = localExpr.findVarIdent(arrayName);
       Xtype varType = varId.Type();
       Xtype elmtType = varType.getArrayElementType();
       int varDim = varType.getNumDimensions();
+      funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_array_set_" + Integer.toString(varDim));
       Integer[] sizeArray = new Integer[varDim];
       Integer[] distanceArray = new Integer[varDim];
 
@@ -561,56 +554,43 @@ public class XMPrewriteExpr {
 
       XobjList tripletList = (XobjList)localExpr.getArg(1);
       for(int i=0;i<tripletList.Nargs();i++){
-	funcArgs = Xcons.List();
-	funcArgs.add(Xcons.IntConstant(i));                                     // dim
         if(tripletList.getArg(i).isVariable() || tripletList.getArg(i).isIntConstant() ){
-          //          funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i)));  // start
           funcArgs.add(tripletList.getArg(i));           // start
           funcArgs.add(Xcons.IntConstant(1));            // length
           funcArgs.add(Xcons.IntConstant(1));            // stride
           funcArgs.add(Xcons.IntConstant(sizeArray[i])); // size
 	  funcArgs.add(Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.IntConstant(distanceArray[i]), Xcons.SizeOf(elmtType))); // distance
-	  newExpr = funcId.Call(funcArgs);
-	  newExpr.setIsRewrittedByXmp(true);
-	  b.add(newExpr);
         }
         else{
           for(int j=0;j<3;j++){
-            //            funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i).getArg(j)));
             funcArgs.add(tripletList.getArg(i).getArg(j));
           }
           funcArgs.add(Xcons.IntConstant(sizeArray[i]));     // size
 	  funcArgs.add(Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.IntConstant(distanceArray[i]), Xcons.SizeOf(elmtType)));
-	  newExpr = funcId.Call(funcArgs);
-	  newExpr.setIsRewrittedByXmp(true);
-	  b.add(newExpr);
         }
       }
     }
     else{  // !isArray
-      funcArgs = Xcons.List();
-      funcArgs.add(Xcons.IntConstant(0)); // dim
+      funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_array_set_1");
       funcArgs.add(Xcons.IntConstant(0)); // start
       funcArgs.add(Xcons.IntConstant(1)); // length
       funcArgs.add(Xcons.IntConstant(1)); // stride
       funcArgs.add(Xcons.IntConstant(1)); // size
-      //      funcArgs.add(Xcons.Cast(Xtype.longlongType, Xcons.SizeOf(localExpr.Type()))); // distance
       funcArgs.add(Xcons.SizeOf(localExpr.Type()));
-      newExpr = funcId.Call(funcArgs);
-      newExpr.setIsRewrittedByXmp(true);
-      b.add(newExpr);
     }
+    newExpr = funcId.Call(funcArgs);
+    newExpr.setIsRewrittedByXmp(true);
+    b.add(newExpr);
 
-    // Set function _XMP_coarray_rdma_node_set()
-    funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_node_set");
+    // Set function _XMP_coarray_rdma_node_set_X()
+    funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_node_set_" + Integer.toString(imageDims));
+    funcArgs = Xcons.List();
     for(int i=0;i<imageDims;i++){
-      funcArgs = Xcons.List();
-      funcArgs.add(Xcons.IntConstant(i));
       funcArgs.add(imageList.getArg(i));
-      newExpr = funcId.Call(funcArgs);
-      newExpr.setIsRewrittedByXmp(true);
-      b.add(newExpr);
     }
+    newExpr = funcId.Call(funcArgs);
+    newExpr.setIsRewrittedByXmp(true);
+    b.add(newExpr);
 
     // Set function _XMP_coarray_rdma_do()
     funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_do");
@@ -667,7 +647,6 @@ public class XMPrewriteExpr {
 
     return b.toXobject();
   }
-
 
   private boolean is_stride_1(int dim, XobjList tripletList)
   {
