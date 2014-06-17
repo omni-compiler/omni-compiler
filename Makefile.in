@@ -82,9 +82,11 @@ target_triplet = @target@
 @ENABLE_ACC_TRUE@am__append_2 = @LIBACC_DIR@ @LIBACC_HEADER_DIR@
 @ENABLE_ATOOL_TRUE@am__append_3 = @ATOOL_DIR@
 @GASNET_TRUE@am__append_4 = "local-view/post-wait/C" \
-@GASNET_TRUE@	"local-view/coarray/C" "local-view/coarray/C"
+@GASNET_TRUE@	"local-view/coarray/C" "local-view/coarray/C" \
+@GASNET_TRUE@	"local-view/other/C"
 @FJRDMA_TRUE@am__append_5 = "local-view/post-wait/C" \
-@FJRDMA_TRUE@	"local-view/coarray/C" "local-view/coarray/C"
+@FJRDMA_TRUE@	"local-view/coarray/C" "local-view/coarray/C" \
+@FJRDMA_TRUE@	"local-view/other/C"
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
@@ -423,12 +425,6 @@ XMPPKG_CHANGELOG_DATE = @XMPPKG_CHANGELOG_DATE@
 XMPPKG_GROUP = @XMPPKG_GROUP@
 XMPPKG_LICENSE = @XMPPKG_LICENSE@
 XMPPKG_MAINTAINER = @XMPPKG_MAINTAINER@
-
-#install-data-local:
-#	if test -e "./doc"; then\
-#		test -z "${docdir}" || ${MKDIR_P} "${docdir}";\
-#		cp -fr ./doc/* ${docdir}/; chmod -R 755 ${docdir}/*;\
-#	fi
 XMPPKG_NAME := "@XMPPKG_NAME@"
 XMPPKG_PACKAGER = @XMPPKG_PACKAGER@
 XMPPKG_PREFIX = @XMPPKG_PREFIX@
@@ -650,9 +646,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -1165,8 +1161,9 @@ release-deb:
 
 release: release-rpm release-deb
 
-tests: tests-dummy
-tests-dummy:
+.PHONY: tests clean-tests run-tests clean-local
+
+tests: 
 	@for subdir in $(SUB_TESTDIRS) ; do \
 	$(MAKE) -C $(BASE_TESTDIR)/$$subdir ; \
 	if test $$? -ne 0; then exit 1; fi ;\

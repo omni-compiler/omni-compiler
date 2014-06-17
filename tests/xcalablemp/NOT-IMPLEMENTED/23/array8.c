@@ -1,13 +1,13 @@
 /*testp078.c*/
 /*task指示文およびarray指示文のテスト*/ 
-#include<xmp.h>
-#include<mpi.h>
-#include<stdio.h> 
-#include<stdlib.h>    
+#include <xmp.h>
+#include <stdio.h> 
+#include <stdlib.h>    
 static const int N=1000;
 #pragma xmp nodes p(4,4)
 #pragma xmp template t(0:N-1,0:N-1,0:N-1)
-#pragma xmp distribute t(gblock((/100,400,250,250/)),gblock((/100,400,250,250/))) onto p
+int m[4] = {100,400,250,250};
+#pragma xmp distribute t(gblock(m),gblock(m)) onto p
 int a[N][N],sa,ansa;
 double b[N][N],sb,ansb;
 float c[N][N],sc,ansc;

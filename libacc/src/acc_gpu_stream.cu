@@ -76,6 +76,9 @@ static Cell* alloc_stream(int id)
 
 cudaStream_t _ACC_gpu_get_stream(int id)
 {
+  if(id == ACC_ASYNC_SYNC || id == ACC_ASYNC_NOVAL){
+    return 0;
+  }
   int hash = calc_hash(id);
 
   Cell *cur;

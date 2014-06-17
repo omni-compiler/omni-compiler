@@ -1,9 +1,8 @@
 XCC     = xmpcc -O2
 XRUN    = mpirun
-C_TESTS = $(wildcard *.c)
-C_EXES  = $(C_TESTS:.c=.x)
-C_OBJS  = $(C_TESTS:.c=.o)
-EXES    = $(C_EXES)
+TESTS = $(wildcard *.c)
+EXES  = $(TESTS:.c=.x)
+OBJS  = $(TESTS:.c=.o)
 
 .PHONY: clean all default run
 
@@ -15,6 +14,7 @@ all default: $(EXES)
 	$(XCC) -o $@ $<
 
 run: 
+	$(XRUN) -np 1 coarray_translation.x
 	$(XRUN) -np 2 coarray_scalar.x
 	$(XRUN) -np 2 coarray_vector.x
 	$(XRUN) -np 2 coarray_stride.x
@@ -28,5 +28,5 @@ run:
 	$(XRUN) -np 2 coarray_get_4dims.x
 
 clean:
-	rm -f $(EXES) $(C_OBJS)
+	rm -f $(EXES) $(OBJS)
 

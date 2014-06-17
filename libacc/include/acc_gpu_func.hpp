@@ -6,7 +6,7 @@
 #include "acc_gpu_reduction.hpp"
 
 #define _ACC_M_FLOORi(a_, b_) ((a_) / (b_))
-#define _ACC_M_COUNT_TRIPLETi(l_, u_, s_) (_ACC_M_FLOORi(((u_) - (l_)), s_) + 1)
+#define _ACC_M_COUNT_TRIPLETi(l_, u_, s_) (_ACC_M_MAX(0, _ACC_M_FLOORi((u_) - (l_), s_) + 1))
 #define _ACC_M_CEILi(a_, b_) (((a_) % (b_)) == 0 ? ((a_) / (b_)) : ((a_) / (b_)) + 1)
 #define _ACC_M_MAX(a_, b_) ((a_) > (b_) ? (a_) : (b_))
 #define _ACC_M_MIN(a_, b_) ((a_) > (b_) ? (b_) : (a_))
@@ -122,7 +122,7 @@ static void _ACC_GPU_ADJUST_GRID(int *gridX,int *gridY, int *gridZ, int limit){
       total = *gridX * *gridY;
       
       if(total > limit){
-	*gridX /= _ACC_M_CEILi(total,limit);
+	*gridX = _ACC_M_CEILi(*gridX, _ACC_M_CEILi(total,limit));
       }
     }
   }
@@ -169,6 +169,7 @@ static void _ACC_init_private(void **p_prv, void *array, size_t size){
   *p_prv = (char *)array + size * blockIdx.x;
 }
 
+/*
 static void _ACC_gpu_mpool_alloc(void **ptr, long long size, void *mpool, long long *pos){
   const int align = 128;
   long long aligned_size = ((size - 1) / align + 1) * align;
@@ -187,5 +188,6 @@ static void _ACC_gpu_mpool_free(void *ptr, void *mpool)
     _ACC_gpu_free(ptr);
   }
 }
+*/
 
 #endif //_ACC_GPU_FUNC

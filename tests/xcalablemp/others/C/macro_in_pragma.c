@@ -10,6 +10,7 @@ int main()
 {
   int i;
   int sum = 0;
+  char str[] = "test: '//' and '/* ... */' are not comment sign in string literal\n";
   
 #pragma xmp loop (i) on t(i)
   for(i=0;i<N;i++){

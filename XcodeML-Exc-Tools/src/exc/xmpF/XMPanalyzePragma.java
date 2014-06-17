@@ -778,6 +778,8 @@ public class XMPanalyzePragma
   private Block convertArrayToLoop(PragmaBlock pb, XMPinfo info){
 
     List<Ident> varList = new ArrayList<Ident>();
+    List<Ident> varListTemplate = new ArrayList<Ident>(XMP.MAX_DIM);
+    for (int i = 0; i < XMP.MAX_DIM; i++) varListTemplate.add(null);
     List<Xobject> lbList = new ArrayList<Xobject>();
     List<Xobject> ubList = new ArrayList<Xobject>();
     List<Xobject> stList = new ArrayList<Xobject>();
@@ -795,6 +797,10 @@ public class XMPanalyzePragma
     XobjList subscripts = (XobjList)left.getArg(1);
     Xobject[] sizeExprs = left_var.Type().getFarraySizeExpr();
 
+    String name = left_var.getName();
+    Ident id = env.findVarIdent(name, pb);
+    XMParray leftArray =  XMParray.getArray(id);
+
     for (int i = 0; i < n; i++){
 
       Xobject sub = subscripts.getArg(i);
@@ -809,6 +815,7 @@ public class XMPanalyzePragma
 
     	var = env.declIdent(XMP.genSym("XMP_loop_i"), Xtype.intType, pb);
     	varList.add(var);
+	varListTemplate.set(leftArray.getAlignSubscriptIndexAt(i), var);
 
 	lb = ((XobjList)sub).getArg(0);
 	if (lb == null){
@@ -863,6 +870,10 @@ public class XMPanalyzePragma
 	XobjList subscripts1 = (XobjList)x.getArg(1);
 	Xobject[] sizeExprs1 = x_var.Type().getFarraySizeExpr();
 
+	String name1 = x_var.getName();
+	Ident id1 = env.findVarIdent(name1, pb);
+	XMParray array1 =  XMParray.getArray(id1);
+
 	for (int i = 0; i < x_var.Type().getNumDimensions(); i++){
 
 	  Xobject sub = subscripts1.getArg(i);
@@ -885,7 +896,10 @@ public class XMPanalyzePragma
 	    if (st == null) st = Xcons.IntConstant(1);
 
 	    Xobject expr;
-	    expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
+	    //expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
+	    Ident loopVar = varListTemplate.get(array1.getAlignSubscriptIndexAt(i));
+	    if (loopVar == null) XMP.fatal("array on rhs does not conform to that on lhs.");
+	    expr = Xcons.binaryOp(Xcode.MUL_EXPR, loopVar.Ref(), st);
 	    expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
 
 	    subscripts1.setArg(i, Xcons.FarrayIndex(expr));
@@ -972,7 +986,10 @@ public class XMPanalyzePragma
 	  }
 	  else st = Xcons.IntConstant(1);
 	  Xobject expr;
-	  expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
+	  //expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
+	  Ident loopVar = varListTemplate.get(i);
+	  if (loopVar == null) XMP.fatal("template-ref does not conform to the array on lhs.");
+	  expr = Xcons.binaryOp(Xcode.MUL_EXPR, loopVar.Ref(), st);
 	  expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
     	  subscriptList.add(expr);
 	  k++;
@@ -1000,7 +1017,10 @@ public class XMPanalyzePragma
 	  lb = tlb.Ref();
 	}
 
-	Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, varList.get(i).Ref(), lb);
+	//Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, varList.get(i).Ref(), lb);
+	Ident loopVar = varListTemplate.get(i);
+	if (loopVar == null) XMP.fatal("template-ref does not conform to the array on lhs.");
+	Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, loopVar.Ref(), lb);
     	subscriptList.add(expr);
       }
     }

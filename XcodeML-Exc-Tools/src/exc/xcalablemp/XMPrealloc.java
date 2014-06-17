@@ -29,7 +29,7 @@ public class XMPrealloc implements XobjectDefVisitor {
     if (def.isVarDecl()) {
       String varName = def.getName();
       XMPcoarray coarray = _globalDecl.getXMPcoarray(varName);
-      
+
       if (coarray != null){
 	def.setDef(Xcons.List(Xcode.TEXT,
 			      Xcons.String("/* array '" + varName + "' is removed by XcalableMP coarray directive */")));

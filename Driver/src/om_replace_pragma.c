@@ -19,6 +19,7 @@ typedef struct{
   int numCommentedLFs;
   int numEscapedLFs;
   fpos_t pos;
+  char inStrLiteral;
 } SrcFile;
 
 static FILE *output;
@@ -94,16 +95,30 @@ static int getChar(SrcFile *sf)
 {
   int c = getChar_(sf);
 
-  if(c == '/'){
+  if(c == '\\'){
     int nc = getChar_(sf);
-    if(nc == '*'){ // block comment
-      sf->numCommentedLFs += skipBlockComment(sf);
-      c = ' ';
-    }else if(nc == '/'){ // single-line comment
-      skipSingleLineComment(sf);
-      c = '\n';
-    }else{
-      ungetChar_(nc, sf);
+    if(nc == '"'){ //escaped double-quotation
+      sf->inStrLiteral = !sf->inStrLiteral;
+    }
+    ungetChar_(nc, sf);
+  }else if(sf->inStrLiteral){
+    if(c == '"'){
+      sf->inStrLiteral = 0;
+    }
+  }else{
+    if(c == '/'){
+      int nc = getChar_(sf);
+      if(nc == '*'){ // block comment
+	sf->numCommentedLFs += skipBlockComment(sf);
+	c = ' ';
+      }else if(nc == '/'){ // single-line comment
+	skipSingleLineComment(sf);
+	c = '\n';
+      }else{
+	ungetChar_(nc, sf);
+      }
+    }else if(c == '"'){
+      sf->inStrLiteral = 1;
     }
   }
 
@@ -363,6 +378,7 @@ static void preprocess(char *srcFileName){
   src->curLine = 1;
   src->numCommentedLFs = 0;
   src->numEscapedLFs = 0;
+  src->inStrLiteral = 0;
   src->file = fopen(src->filename, "r");
   if(src->file == NULL){
     fprintf(stderr, "error: cannot open \"%s\"\n", src->filename);
