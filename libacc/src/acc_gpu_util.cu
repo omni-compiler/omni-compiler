@@ -57,7 +57,7 @@ void _ACC_gpu_copy(void *host_addr, void *device_addr, size_t size, int directio
 }
 
 void _ACC_gpu_copy_async_all(void *host_addr, void *device_addr, size_t size, int direction){
-  printf("_ACC_gpu_copy_async_all\n");
+  //printf("_ACC_gpu_copy_async_all\n");
   cudaError_t cuda_err;
 
   switch(direction){
@@ -78,7 +78,7 @@ void _ACC_gpu_copy_async_all(void *host_addr, void *device_addr, size_t size, in
 
 
 void _ACC_gpu_copy_async(void *host_addr, void *device_addr, size_t size, int direction, int id){
-  printf("_ACC_gpu_copy_async\n");
+  //printf("_ACC_gpu_copy_async\n");
   cudaError_t cuda_err;
   cudaStream_t stream = _ACC_gpu_get_stream(id);
 

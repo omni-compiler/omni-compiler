@@ -25,14 +25,14 @@ void _xmp_gasnet_post_wait_initialize()
   _mynode                = gasnet_mynode();
 }
 
-static void _xmp_pw_push(int node, int tag)
+static void _xmp_pw_push(const int node, const int tag)
 {
   pw.list[pw.wait_num].node = node;
   pw.list[pw.wait_num].tag  = tag;
   pw.wait_num++;
 }
 
-static void _xmp_gasnet_do_post(int node, int tag)
+static void _xmp_gasnet_do_post(const int node, const int tag)
 {
   gasnet_hsl_lock(&pw.hsl);
   if(pw.list_size == pw.wait_num){
@@ -46,12 +46,12 @@ static void _xmp_gasnet_do_post(int node, int tag)
   gasnet_hsl_unlock(&pw.hsl);
 }
 
-void _xmp_gasnet_post_request(gasnet_token_t token, int node, int tag)
+void _xmp_gasnet_post_request(gasnet_token_t token, const int node, const int tag)
 {
   _xmp_gasnet_do_post(node, tag);
 }
 
-void _xmp_gasnet_post(int target_node, int tag)
+void _xmp_gasnet_post(const int target_node, const int tag)
 {
   if(target_node == _mynode){
     _xmp_gasnet_do_post(_mynode, tag);
@@ -60,7 +60,7 @@ void _xmp_gasnet_post(int target_node, int tag)
   }
 }
 
-void _xmp_pw_cutdown(int index)
+static void _xmp_pw_cutdown(const int index)
 {
   if(index != pw.wait_num-1){  // Not tail index
     for(int i=index+1;i<pw.wait_num;i++){
@@ -79,7 +79,7 @@ static int _xmp_pw_remove_anonymous()
   return _XMP_N_INT_FALSE;
 }
 
-static int _xmp_pw_remove_notag(int node)
+static int _xmp_pw_remove_notag(const int node)
 {
   for(int i=pw.wait_num-1;i>=0;i--){
     if(node == pw.list[i].node){
@@ -90,7 +90,7 @@ static int _xmp_pw_remove_notag(int node)
   return _XMP_N_INT_FALSE;
 }
 
-static int _xmp_pw_remove(int node, int tag)
+static int _xmp_pw_remove(const int node, const int tag)
 {
   for(int i=pw.wait_num-1;i>=0;i--){
     if(node == pw.list[i].node && tag == pw.list[i].tag){
@@ -106,12 +106,12 @@ void _xmp_gasnet_wait()
   GASNET_BLOCKUNTIL(_xmp_pw_remove_anonymous());
 }
 
-void _xmp_gasnet_wait_tag(int node, int tag)
+void _xmp_gasnet_wait_tag(const int node, const int tag)
 {
   GASNET_BLOCKUNTIL(_xmp_pw_remove(node, tag));
 }
 
-void _xmp_gasnet_wait_notag(int node)
+void _xmp_gasnet_wait_notag(const int node)
 {
   GASNET_BLOCKUNTIL(_xmp_pw_remove_notag(node));
 }

@@ -11,6 +11,8 @@ public class ACCtranslateUpdate {
   private final static String GPU_ASYNC_DEFAULT_FUNC_SUFFIX = "_async_default";
   private final static int GPU_COPY_HOST_TO_DEVICE = 400;
   private final static int GPU_COPY_DEVICE_TO_HOST = 401;
+  private final static int ACC_ASYNC_SYNC = -1;
+  private final static int ACC_ASYNC_NOVAL = -2;
   
   private PragmaBlock pb;
   private ACCinfo updateInfo;
@@ -51,18 +53,30 @@ public class ACCtranslateUpdate {
         throw new ACCexception(var + " does not have update direction");
       }
 
-      String copyFuncName = GPU_COPY_DATA_FUNC_NAME;
-      XobjList copyFuncArgs = Xcons.List(hostDescId.Ref(), var.getOffset(), var.getSize(), dirObj);
-      
-      //XobjList copyFuncArgs = Xcons.List(hostDescId.Ref(), dirObj);
+      //String copyFuncName = GPU_COPY_DATA_FUNC_NAME;
+      //XobjList copyFuncArgs = Xcons.List(hostDescId.Ref(), var.getOffset(), var.getSize(), dirObj);
+      String copyFuncName = null;//"_ACC_gpu2_copy_data";//GPU_COPY_DATA_FUNC_NAME;
+      Xobject asyncExpr = Xcons.IntConstant(ACC_ASYNC_SYNC);
       if(updateInfo.isAsync()){
-        Xobject asyncExp = updateInfo.getAsyncExp(); 
-        if(asyncExp != null){ //async(expr)
-          copyFuncName += GPU_ASYNC_FUNC_SUFFIX;
-          copyFuncArgs.add(asyncExp);
-        }else{ // async all
-          copyFuncName += GPU_ASYNC_DEFAULT_FUNC_SUFFIX;
+        Xobject expr = updateInfo.getAsyncExp(); 
+        if(expr != null){ //async(expr)
+	    asyncExpr = expr;
+        }else{
+	    asyncExpr = Xcons.IntConstant(ACC_ASYNC_NOVAL);
         }
+      }
+
+      XobjList copyFuncArgs = Xcons.List(hostDescId.Ref(), dirObj, asyncExpr);
+      if(var.isSubarray()){
+        XobjList subarrayList = var.getSubscripts();
+        for(Xobject x : subarrayList){
+          XobjList rangeList = (XobjList)x;
+          copyFuncArgs.add(rangeList.left());
+          copyFuncArgs.add(rangeList.right());
+        }
+	copyFuncName = "_ACC_gpu2_copy_subdata";
+      }else{
+	copyFuncName = "_ACC_gpu2_copy_data";
       }
 
       Block copyFunc = ACCutil.createFuncCallBlock(copyFuncName, copyFuncArgs);

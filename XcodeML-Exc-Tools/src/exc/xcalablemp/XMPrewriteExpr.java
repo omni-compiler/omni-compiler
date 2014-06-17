@@ -183,7 +183,8 @@ public class XMPrewriteExpr {
     }
     remoteImageDistance[imageDims-1] = 1;
 
-    Xobject targetImage = Xcons.binaryOp(Xcode.MINUS_EXPR, imageList.getArg(0), Xcons.IntConstant(1));
+    //    Xobject targetImage = Xcons.binaryOp(Xcode.MINUS_EXPR, imageList.getArg(0), Xcons.IntConstant(1));
+    Xobject targetImage = imageList.getArg(0);
     for(int i=1;i<imageDims;i++){
       Xobject tmp = Xcons.binaryOp(Xcode.MUL_EXPR, 
                                    Xcons.binaryOp(Xcode.MINUS_EXPR, imageList.getArg(i), Xcons.IntConstant(1)),
@@ -269,8 +270,8 @@ public class XMPrewriteExpr {
     }
 
     // dst offset
+    Xobject position = null;
     if(dstCoarrayExpr.Opcode() == Xcode.SUB_ARRAY_REF){
-      Xobject position = null;
       for(int i=0;i<dstDim;i++){
         Xobject tripletList = dstCoarrayExpr.getArg(1).getArg(i);
         Xobject tmp_position;
@@ -288,10 +289,8 @@ public class XMPrewriteExpr {
           position = Xcons.binaryOp(Xcode.PLUS_EXPR, position, tmp_position);
         }
       }
-      funcArgs.add(position);
     }
     else if(dstCoarrayExpr.Opcode() == Xcode.ARRAY_REF){
-      Xobject position = null;
       for(int i=0;i<dstDim;i++){
         Xobject tmp_position = Xcons.binaryOp(Xcode.MUL_EXPR, dstCoarrayExpr.getArg(1).getArg(i),
                                               Xcons.IntConstant(dstCoarrayDistance[i]));
@@ -302,18 +301,20 @@ public class XMPrewriteExpr {
           position = Xcons.binaryOp(Xcode.PLUS_EXPR, position, tmp_position);
         }
       }
-      funcArgs.add(position);
     }
     else if(dstCoarrayExpr.Opcode() == Xcode.VAR){
-      funcArgs.add(Xcons.IntConstant(0));
+      position = Xcons.IntConstant(0);
     }
     else{
       throw new XMPexception("Not supported this coarray Syntax");
     }
+    Xtype elmtType = dstCoarray.getElmtType();
+    position = Xcons.binaryOp(Xcode.MUL_EXPR, position, Xcons.SizeOf(elmtType));
+    funcArgs.add(position);
 
     // src offset
+    position = null;
     if(srcCoarrayExpr.Opcode() == Xcode.SUB_ARRAY_REF){
-      Xobject position = null;
       for(int i=0;i<srcDim;i++){
         Xobject tripletList = srcCoarrayExpr.getArg(1).getArg(i);
         Xobject tmp_position;
@@ -331,10 +332,8 @@ public class XMPrewriteExpr {
           position = Xcons.binaryOp(Xcode.PLUS_EXPR, position, tmp_position);
         }
       }
-      funcArgs.add(position);
     }
     else if(srcCoarrayExpr.Opcode() == Xcode.ARRAY_REF){
-      Xobject position = null;
       for(int i=0;i<srcDim;i++){
         Xobject tmp_position = Xcons.binaryOp(Xcode.MUL_EXPR, srcCoarrayExpr.getArg(1).getArg(i),
                                               Xcons.IntConstant(srcCoarrayDistance[i]));
@@ -345,38 +344,41 @@ public class XMPrewriteExpr {
           position = Xcons.binaryOp(Xcode.PLUS_EXPR, position, tmp_position);
         }
       }
-      funcArgs.add(position);
     }
     else if(srcCoarrayExpr.Opcode() == Xcode.VAR){
-      funcArgs.add(Xcons.IntConstant(0));
+      position = Xcons.IntConstant(0);
     }
     else{
       throw new XMPexception("Not supported this coarray Syntax");
     }
+    position = Xcons.binaryOp(Xcode.MUL_EXPR, position, Xcons.SizeOf(elmtType));
+    funcArgs.add(position);
 
     // length
+    Xobject length = null;
     if(dstCoarrayExpr.Opcode() == Xcode.SUB_ARRAY_REF){
       if(dstCoarrayDepthContinuous == 0){
-        funcArgs.add(Xcons.IntConstant((int)dstCoarray.getSizeAt(0) * dstCoarrayDistance[0]));
+        length = Xcons.IntConstant((int)dstCoarray.getSizeAt(0) * dstCoarrayDistance[0]);
       }
       else{
         Xobject tripletList = dstCoarrayExpr.getArg(1).getArg(dstCoarrayDepthContinuous-1);
         if(tripletList.isConstant() || tripletList.isVariable()){
-          funcArgs.add(Xcons.IntConstant(dstCoarrayDistance[dstCoarrayDepthContinuous-1]));
+          length = Xcons.IntConstant(dstCoarrayDistance[dstCoarrayDepthContinuous-1]);
         }
         else{
-          Xobject length = ((XobjList)tripletList).getArg(1);
-          funcArgs.add(Xcons.binaryOp(Xcode.MUL_EXPR, length,
-                                      Xcons.IntConstant(dstCoarrayDistance[dstCoarrayDepthContinuous-1])));
+          length = Xcons.binaryOp(Xcode.MUL_EXPR, ((XobjList)tripletList).getArg(1),
+                                  Xcons.IntConstant(dstCoarrayDistance[dstCoarrayDepthContinuous-1]));
         }
       }
     }
     else if(dstCoarrayExpr.Opcode() == Xcode.ARRAY_REF || dstCoarrayExpr.Opcode() == Xcode.VAR){
-      funcArgs.add(Xcons.IntConstant(1));
+      length = Xcons.IntConstant(1);
     }
     else{
       throw new XMPexception("Not supported this coarray Syntax");
     }
+    length = Xcons.binaryOp(Xcode.MUL_EXPR, length, Xcons.SizeOf(elmtType));
+    funcArgs.add(length);
 
     // Create function
     Xobject newExpr = funcId.Call(funcArgs);
@@ -485,13 +487,15 @@ public class XMPrewriteExpr {
 	funcArgs = Xcons.List();
 	funcArgs.add(Xcons.IntConstant(i));                                    // dim
         if(tripletList.getArg(i).isConstant() || tripletList.getArg(i).isVariable()){
-          funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i))); // start	  
-          funcArgs.add(Xcons.LongLongConstant(0, 1));                          // length	  
-          funcArgs.add(Xcons.LongLongConstant(0, 1));                          // stride
+          //          funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i))); // start
+          funcArgs.add(tripletList.getArg(i)); // start
+          funcArgs.add(Xcons.IntConstant(1));  // length
+          funcArgs.add(Xcons.IntConstant(1));  // stride
         }
         else{
           for(int j=0;j<3;j++){
-            funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i).getArg(j)));
+            //            funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i).getArg(j)));
+            funcArgs.add(tripletList.getArg(i).getArg(j));
           }
         }
 	newExpr = funcId.Call(funcArgs);
@@ -504,9 +508,10 @@ public class XMPrewriteExpr {
       for(int i=0;i<startList.Nargs();i++){
 	funcArgs = Xcons.List();
 	funcArgs.add(Xcons.IntConstant(i));                                // dim
-        funcArgs.add(Xcons.Cast(Xtype.longlongType, startList.getArg(i))); // start
-	funcArgs.add(Xcons.LongLongConstant(0, 1));                        // length
-        funcArgs.add(Xcons.LongLongConstant(0, 1));                        // stride
+        //        funcArgs.add(Xcons.Cast(Xtype.longlongType, startList.getArg(i))); // start
+        funcArgs.add(startList.getArg(i));  // start
+	funcArgs.add(Xcons.IntConstant(1)); // length
+        funcArgs.add(Xcons.IntConstant(1)); // stride
 	newExpr = funcId.Call(funcArgs);
         newExpr.setIsRewrittedByXmp(true);
 	b.add(newExpr);
@@ -514,10 +519,10 @@ public class XMPrewriteExpr {
     }
     else if(coarrayExpr.getArg(0).Opcode() == Xcode.VAR){
       funcArgs = Xcons.List();
-      funcArgs.add(Xcons.IntConstant(0));          // dim
-      funcArgs.add(Xcons.LongLongConstant(0, 0));  // start
-      funcArgs.add(Xcons.LongLongConstant(0, 1));  // length
-      funcArgs.add(Xcons.LongLongConstant(0, 1));  // stride
+      funcArgs.add(Xcons.IntConstant(0)); // dim
+      funcArgs.add(Xcons.IntConstant(0)); // start
+      funcArgs.add(Xcons.IntConstant(1)); // length
+      funcArgs.add(Xcons.IntConstant(1)); // stride
       newExpr = funcId.Call(funcArgs);
       newExpr.setIsRewrittedByXmp(true);
       b.add(newExpr);
@@ -534,11 +539,11 @@ public class XMPrewriteExpr {
       Xtype varType = varId.Type();
       Xtype elmtType = varType.getArrayElementType();
       int varDim = varType.getNumDimensions();
-      Long[] sizeArray = new Long[varDim];
-      Long[] distanceArray = new Long[varDim];
+      Integer[] sizeArray = new Integer[varDim];
+      Integer[] distanceArray = new Integer[varDim];
 
       for(int i=0;i<varDim;i++,varType=varType.getRef()){
-        long dimSize = varType.getArraySize();
+        int dimSize = (int)varType.getArraySize();
         if((dimSize == 0) || (dimSize == -1)){
           throw new XMPexception("array size should be declared statically");
         }
@@ -546,34 +551,36 @@ public class XMPrewriteExpr {
       }
 
       for(int i=0;i<varDim-1;i++){
-	long tmp = (long)1;
+	int tmp = 1;
 	for(int j=i+1;j<varDim;j++){
 	  tmp *= sizeArray[j];
 	}
 	distanceArray[i] = tmp;
       }
-      distanceArray[varDim-1] = (long)1;
+      distanceArray[varDim-1] = 1;
 
       XobjList tripletList = (XobjList)localExpr.getArg(1);
       for(int i=0;i<tripletList.Nargs();i++){
 	funcArgs = Xcons.List();
 	funcArgs.add(Xcons.IntConstant(i));                                     // dim
         if(tripletList.getArg(i).isVariable() || tripletList.getArg(i).isIntConstant() ){
-          funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i)));  // start
-          funcArgs.add(Xcons.LongLongConstant(0, 1));                           // length
-          funcArgs.add(Xcons.LongLongConstant(0, 1));                           // stride
-          funcArgs.add(Xcons.LongLongConstant(0, sizeArray[i]));                // size
-	  funcArgs.add(Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.LongLongConstant(0, distanceArray[i]), Xcons.SizeOf(elmtType))); // distance
+          //          funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i)));  // start
+          funcArgs.add(tripletList.getArg(i));           // start
+          funcArgs.add(Xcons.IntConstant(1));            // length
+          funcArgs.add(Xcons.IntConstant(1));            // stride
+          funcArgs.add(Xcons.IntConstant(sizeArray[i])); // size
+	  funcArgs.add(Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.IntConstant(distanceArray[i]), Xcons.SizeOf(elmtType))); // distance
 	  newExpr = funcId.Call(funcArgs);
 	  newExpr.setIsRewrittedByXmp(true);
 	  b.add(newExpr);
         }
         else{
           for(int j=0;j<3;j++){
-            funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i).getArg(j)));
+            //            funcArgs.add(Xcons.Cast(Xtype.longlongType, tripletList.getArg(i).getArg(j)));
+            funcArgs.add(tripletList.getArg(i).getArg(j));
           }
-          funcArgs.add(Xcons.LongLongConstant(0, sizeArray[i]));     // size
-	  funcArgs.add(Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.LongLongConstant(0, distanceArray[i]), Xcons.SizeOf(elmtType)));
+          funcArgs.add(Xcons.IntConstant(sizeArray[i]));     // size
+	  funcArgs.add(Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.IntConstant(distanceArray[i]), Xcons.SizeOf(elmtType)));
 	  newExpr = funcId.Call(funcArgs);
 	  newExpr.setIsRewrittedByXmp(true);
 	  b.add(newExpr);
@@ -582,12 +589,13 @@ public class XMPrewriteExpr {
     }
     else{  // !isArray
       funcArgs = Xcons.List();
-      funcArgs.add(Xcons.IntConstant(0));          // dim 
-      funcArgs.add(Xcons.LongLongConstant(0, 0));  // start
-      funcArgs.add(Xcons.LongLongConstant(0, 1));  // length
-      funcArgs.add(Xcons.LongLongConstant(0, 1));  // stride
-      funcArgs.add(Xcons.LongLongConstant(0, 1));  // size
-      funcArgs.add(Xcons.Cast(Xtype.longlongType, Xcons.SizeOf(localExpr.Type()))); // distance
+      funcArgs.add(Xcons.IntConstant(0)); // dim
+      funcArgs.add(Xcons.IntConstant(0)); // start
+      funcArgs.add(Xcons.IntConstant(1)); // length
+      funcArgs.add(Xcons.IntConstant(1)); // stride
+      funcArgs.add(Xcons.IntConstant(1)); // size
+      //      funcArgs.add(Xcons.Cast(Xtype.longlongType, Xcons.SizeOf(localExpr.Type()))); // distance
+      funcArgs.add(Xcons.SizeOf(localExpr.Type()));
       newExpr = funcId.Call(funcArgs);
       newExpr.setIsRewrittedByXmp(true);
       b.add(newExpr);
@@ -1052,16 +1060,31 @@ public class XMPrewriteExpr {
     String varName     = myExpr.getSym();
     XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(varName, block);
     XMPcoarray coarray = _globalDecl.getXMPcoarray(varName, block);
-    
+
     if (alignedArray != null && coarray == null){
       return alignedArray.getAddrId().Ref();
     }
     else if (alignedArray == null && coarray != null){
-      Xobject newExpr = _globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + varName).getValue();
-      newExpr = Xcons.PointerRef(newExpr);
-      if(isVar) // When coarray is NOT pointer,
-	newExpr = Xcons.PointerRef(newExpr);
-      return newExpr;
+      Ident coarrayIdent = _globalDecl.getXMPcoarray(varName).getVarId();
+      Ident localIdent = XMPlocalDecl.findLocalIdent(block, varName);
+      if(coarrayIdent != localIdent){
+        // e.g.) When an coarray is declared at global region and 
+        //       the same name variable is decleard at local region.
+        //
+        // int a:[*]
+        // void hoge(){
+        //   int a;
+        //   printf("%d\n", a);  <- "a" should not be changed.
+        // }
+        return myExpr;
+      }
+      else{
+        Xobject newExpr = _globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + varName).getValue();
+        newExpr = Xcons.PointerRef(newExpr);
+        if(isVar) // When coarray is NOT pointer,
+          newExpr = Xcons.PointerRef(newExpr);
+        return newExpr;
+      }
     } else{
       return myExpr;
     }
@@ -1105,7 +1128,7 @@ public class XMPrewriteExpr {
   }
   
   private Xobject rewritePointerRef(Xobject myExpr, Block block) throws XMPexception
-{
+  {
     Xobject addr_expr = myExpr.getArg(0);
     if (addr_expr.Opcode() == Xcode.PLUS_EXPR){
 
@@ -1200,7 +1223,7 @@ public class XMPrewriteExpr {
   }
   
   public static XobjList normArrayRefList(XobjList refExprList, XMPalignedArray alignedArray)
-{
+  {
     if (refExprList == null) {
       return null;
     } else {
@@ -1503,7 +1526,7 @@ public class XMPrewriteExpr {
 
   private static void rewriteLoopIndexVar(XMPtemplate templateObj, int templateIndex,
                                           String loopIndexName, Xobject expr) throws XMPexception
-{
+  {
     topdownXobjectIterator iter = new topdownXobjectIterator(expr);
     for (iter.init(); !iter.end(); iter.next()) {
       Xobject myExpr = iter.getXobject();
@@ -1527,7 +1550,7 @@ public class XMPrewriteExpr {
 
   private static XobjList rewriteLoopIndexArrayRefList(XMPtemplate t, int ti, XMPalignedArray a,
                                                        String loopIndexName, XobjList arrayRefList) throws XMPexception
-{
+  {
     if (arrayRefList == null) {
       return null;
     }
@@ -1545,7 +1568,7 @@ public class XMPrewriteExpr {
 
   private static Xobject rewriteLoopIndexArrayRef(XMPtemplate t, int ti, XMPalignedArray a, int ai,
                                                   String loopIndexName, Xobject arrayRef) throws XMPexception
-{
+  {
     if (arrayRef.Opcode() == Xcode.VAR) {
       if (loopIndexName.equals(arrayRef.getString())) {
         return calcShadow(t, ti, a, ai, arrayRef);
@@ -1644,7 +1667,7 @@ public class XMPrewriteExpr {
    * rewrite OMP pragmas
    */
   private void rewriteOMPpragma(FunctionBlock fb, XMPsymbolTable localXMPsymbolTable)
-{
+  {
     topdownBlockIterator iter2 = new topdownBlockIterator(fb);
 
     for (iter2.init(); !iter2.end(); iter2.next()){
@@ -1661,7 +1684,7 @@ public class XMPrewriteExpr {
    */
   private void rewriteOmpClauses(Xobject expr, PragmaBlock pragmaBlock, Block block,
 				 XMPsymbolTable localXMPsymbolTable)
-{
+  {
     bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
     
     for (iter.init(); !iter.end();iter.next()){
@@ -1669,52 +1692,48 @@ public class XMPrewriteExpr {
       Xobject x = iter.getXobject();
       if (x == null)  continue;
       if (x.Opcode() == Xcode.VAR){
-	  try {
-	      iter.setXobject(rewriteArrayAddr(x, pragmaBlock));
-	  }
-	  catch (XMPexception e){
-	      XMP.error(x.getLineNo(), e.getMessage());
-	  }
+        try {
+          iter.setXobject(rewriteArrayAddr(x, pragmaBlock));
+        }
+        catch (XMPexception e){
+          XMP.error(x.getLineNo(), e.getMessage());
+        }
       }
       else if (x.Opcode() == Xcode.LIST){
-	  if (x.left() != null && x.left().Opcode() == Xcode.STRING &&
-	      x.left().getString().equals("DATA_PRIVATE")){
-
-	      if (!pragmaBlock.getPragma().equals("FOR")) continue;
-
-	      XobjList itemList = (XobjList)x.right();
-
-	      // find loop variable
-	      Xobject loop_var = null;
-	      BasicBlockIterator i = new BasicBlockIterator(pragmaBlock.getBody());
-	      for (Block b = pragmaBlock.getBody().getHead();
-		   b != null;
-		   b = b.getNext()){
-		  if (b.Opcode() == Xcode.F_DO_STATEMENT){
-		      loop_var = ((FdoBlock)b).getInductionVar();
-		  }
-	      }
-	      if (loop_var == null) continue;
-
-	      // check if the clause has contained the loop variable
-	      boolean flag = false;
-	      Iterator<Xobject> j = itemList.iterator();
-	      while (j.hasNext()){
-		  Xobject item = j.next();
-		  if (item.getName().equals(loop_var.getName())){
-		      flag = true;
-		  }
-	      }
-
-	      // add the loop variable to the clause
-	      if (!flag){
-		  itemList.add(loop_var);
-	      }
-	  }
+        if (x.left() != null && x.left().Opcode() == Xcode.STRING &&
+            x.left().getString().equals("DATA_PRIVATE")){
+          
+          if (!pragmaBlock.getPragma().equals("FOR")) continue;
+          
+          XobjList itemList = (XobjList)x.right();
+          
+          // find loop variable
+          Xobject loop_var = null;
+          BasicBlockIterator i = new BasicBlockIterator(pragmaBlock.getBody());
+          for (Block b = pragmaBlock.getBody().getHead(); b != null; b = b.getNext()){
+            if (b.Opcode() == Xcode.F_DO_STATEMENT){
+              loop_var = ((FdoBlock)b).getInductionVar();
+            }
+          }
+          if (loop_var == null) continue;
+          
+          // check if the clause has contained the loop variable
+          boolean flag = false;
+          Iterator<Xobject> j = itemList.iterator();
+          while (j.hasNext()){
+            Xobject item = j.next();
+            if (item.getName().equals(loop_var.getName())){
+              flag = true;
+            }
+          }
+          
+          // add the loop variable to the clause
+          if (!flag){
+            itemList.add(loop_var);
+          }
+        }
       }
-
     }
-
   }
   
   /*
@@ -1845,7 +1864,6 @@ public class XMPrewriteExpr {
 
 	      Block getArraySizeFuncCall = _globalDecl.createFuncCallBlock("_XMP_get_array_total_elmts", Xcons.List(descId.Ref()));
 	      body.insert(Xcons.Set(arraySizeId.Ref(), getArraySizeFuncCall.toXobject()));
-	      //body.insert(getArraySizeFuncCall);
 	      
 	      XobjList arrayRef = Xcons.List(arrayAddrRef, Xcons.List(Xcons.IntConstant(0), arraySizeId.Ref()));
 	      

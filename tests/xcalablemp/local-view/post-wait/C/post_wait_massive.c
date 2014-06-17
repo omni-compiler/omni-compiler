@@ -7,7 +7,6 @@ int status;
 
 int main()
 {
-  srand(0);
   int id = xmp_node_num();
 
   if(id == 1){

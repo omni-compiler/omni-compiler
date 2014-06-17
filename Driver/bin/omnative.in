@@ -30,7 +30,7 @@ if [ ! -z "${OM_TRANSLATORS}" ]; then
     done;
 fi
 
-GPU_CMD="@GPU_CMD@"
+GPU_COMPILER="@GPU_CMD@"
 INPFILE_BASENAME=`basename "${INPFILE}"`
 INPFILE_FILENAME=${INPFILE_BASENAME%.*}
 newOpts=''
@@ -38,23 +38,24 @@ for i in ${OM_OPTIONS}; do
     case ${i} in
         -enable-gpu)
             if [ -f "${INPFILE_FILENAME}.cu" ]; then
-                ${GPU_CMD} -arch=sm_20 -I"${OMNI_HOME}/include" -c "${INPFILE_FILENAME}.cu" -o "${INPFILE_FILENAME}.xmpgpu.o"
+                ${GPU_COMPILER} -arch=sm_20 -I"${OMNI_HOME}/include" -c "${INPFILE_FILENAME}.cu" -o "${INPFILE_FILENAME}.xmpgpu.o"
             fi;;
         -acc)
             if [ -f "${INPFILE_FILENAME}.cu" ]; then
-                ${GPU_CMD} -arch=sm_20 -I"${OMNI_HOME}/include" -c "${INPFILE_FILENAME}.cu" -o "${INPFILE_FILENAME}.accgpu.o"
+                GPUCMD="${GPU_COMPILER} -arch=sm_20 -I"${OMNI_HOME}/include" -c "${INPFILE_FILENAME}.cu" -o "${INPFILE_FILENAME}.accgpu.o""
+		$GPUCMD
             fi;;
         -tmp)
             cp "${INPFILE}" "__omni_tmp_${INPFILE_BASENAME}";;
-        -m?*)
+        -moddir?*)
             j=@BEFC_MODINC@
             case ${j} in
                 -to);;
                 -module)
-                    foo=`echo "${i}" |sed "s/-m\(.*\)/${j} \1/"`
+                    foo=`echo "${i}" |sed "s/-moddir\(.*\)/${j} \1/"`
                     newOpts="${newOpts} ${foo}";;
                 *)
-                    foo=`echo "${i}" |sed "s/-m\(.*\)/${j}\1/"`
+                    foo=`echo "${i}" |sed "s/-moddir\(.*\)/${j}\1/"`
                     newOpts="${newOpts} ${foo}";; 
             esac;;
         *)

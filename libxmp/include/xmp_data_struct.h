@@ -228,14 +228,14 @@ typedef struct xmp_coarray{
   int coarray_dims; // Number of dimensions of coarray.
                     // e.g.) "int a[10][20]:[4][2][*]" is 2.
 
-  long long *coarray_elmts; // Number of elements of each dimension of a coarray.
-                            // e.g.) If "int a[10][20]:[*]", coarray_elmts[0] is 10, coarray_elmts[1] is 20.
-                            //       If a coarray is scalar, coarray_elmts[0] is 1.
+  int *coarray_elmts; // Number of elements of each dimension of a coarray.
+                      // e.g.) If "int a[10][20]:[*]", coarray_elmts[0] is 10, coarray_elmts[1] is 20.
+                      //       If a coarray is scalar, coarray_elmts[0] is 1.
 
-  long long *distance_of_coarray_elmts; // Distance between each dimension of coarray. A unit of the distance is Byte.
-                                        // e.g.) If "int a[10][20][30]:[*]", distance_of_coarray_elmts[0] is 2400 (20*30*sizeof(int)),
-                                        //       distance_of_coarray_elmts[1] is 120 (30*sizeof(int)),
-                                        //       distance_of_coarray_elmts[0] is 4 (sizeof(int)).
+  int *distance_of_coarray_elmts; // Distance between each dimension of coarray. A unit of the distance is Byte.
+                                  // e.g.) If "int a[10][20][30]:[*]", distance_of_coarray_elmts[0] is 2400 (20*30*sizeof(int)),
+                                  //       distance_of_coarray_elmts[1] is 120 (30*sizeof(int)),
+                                  //       distance_of_coarray_elmts[0] is 4 (sizeof(int)).
 
   int image_dims; // Number of dimensions of image set.
                   // e.g.) If "int a[10][20]:[4][2][*]" is 3.
