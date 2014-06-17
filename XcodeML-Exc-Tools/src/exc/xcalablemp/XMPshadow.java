@@ -198,6 +198,12 @@ public class XMPshadow {
 	  for (int i = 0; i < widthList.Nargs(); i++){
 	    XobjList width = (XobjList)widthList.getArg(i);
 
+	    // Here the stride means the periodic flag.
+	    // check wheter the shadow is full.
+	    if (width.getArg(2).getInt() == 1 && alignedArray.getShadowAt(i).getType() == XMPshadow.SHADOW_FULL){
+	      throw new XMPexception("Periodic reflect cannot be specified for a dimension with full shadow.");
+	    }
+
 	    Ident funcId = globalDecl.declExternFunc("_XMP_set_reflect__");
 	    XobjList funcArgs = Xcons.List(alignedArray.getDescId().Ref(), Xcons.IntConstant(i),
 					   width.getArg(0), width.getArg(1), width.getArg(2));

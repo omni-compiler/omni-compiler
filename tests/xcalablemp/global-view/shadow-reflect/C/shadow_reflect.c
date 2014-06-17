@@ -62,8 +62,6 @@ int main(void){
       else
 	right = a[i][j+1];
 
-      //      printf("Node %d array[%d][%d] = %d, top = %d, bottom = %d, left = %d, right = %d\n", 
-      //	     xmp_node_num(), i, j, array[i][j], top, bottom, left, right);
       if(!verify(i, j, top, bottom, left, right)){
 	flag = FALSE;
       }

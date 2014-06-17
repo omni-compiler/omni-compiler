@@ -35,6 +35,9 @@ public class XMP {
   public final static int REDUCE_FIRSTMIN	= 311;
   public final static int REDUCE_LASTMAX	= 312;
   public final static int REDUCE_LASTMIN	= 313;
+  public final static int REDUCE_EQV            = 314;
+  public final static int REDUCE_NEQV           = 315;
+  public final static int REDUCE_MINUS          = 316;
 
   public final static int GMOVE_NORMAL	= 400;
   public final static int GMOVE_IN	= 401;

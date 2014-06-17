@@ -179,20 +179,20 @@ int xmp_array_lshadow(xmp_desc_t d, int dim, int *lshadow){
 
 int xmp_array_owner(xmp_desc_t d, int ndims, int index[ndims], int dim){
 
-  int ierr, idim, ival, idistnum, t_dist_size, format;
+  int idim, ival, idistnum, t_dist_size, format;
   xmp_desc_t dt, dn;
 
   _XMP_array_t *a = (_XMP_array_t *)d;
 
-  ierr = xmp_align_template(d, &dt);
-  ierr = xmp_dist_nodes(dt, &dn);
+  xmp_align_template(d, &dt);
+  xmp_dist_nodes(dt, &dn);
   _XMP_nodes_t *n = (_XMP_nodes_t *)dn;
 
-  ierr=xmp_dist_blocksize(dt,dim,&t_dist_size);
+  xmp_dist_blocksize(dt,dim,&t_dist_size);
   idistnum=a->info[dim-1].align_subscript/t_dist_size;
  
   format = xmp_align_format(d,dim);
-  ierr = xmp_align_axis(d,dim,&idim);
+  xmp_align_axis(d,dim,&idim);
 
   if (format == _XMP_N_ALIGN_BLOCK){
     ival = index[idim-1]/t_dist_size+idistnum +1;
@@ -208,10 +208,10 @@ int xmp_array_owner(xmp_desc_t d, int ndims, int index[ndims], int dim){
 
 int xmp_array_lead_dim(xmp_desc_t d, int size[]){
 
-   int i, ndims, ierr;
+   int i, ndims;
   _XMP_array_t *a = (_XMP_array_t *)d;
 
-  ierr = xmp_array_ndims(d, &ndims);
+  xmp_array_ndims(d, &ndims);
   for (i=0;i<ndims;i++){
     size[i] = a->info[i].par_size;
   }
@@ -249,14 +249,14 @@ int xmp_align_format(xmp_desc_t d, int dim){
 
 int xmp_align_size(xmp_desc_t d, int dim){
 
-  int format, ival=0, idim, ierr;
+  int format, ival=0, idim;
   xmp_desc_t dt;
 
   _XMP_array_t *a = (_XMP_array_t *)d;
 
   format = xmp_align_format(d,dim);
-  ierr = xmp_align_axis(d,dim,&idim);
-  ierr = xmp_align_template(d,&dt);
+  xmp_align_axis(d,dim,&idim);
+  xmp_align_template(d,&dt);
 
   _XMP_template_t *t = (_XMP_template_t *)dt;
 
@@ -362,11 +362,11 @@ int xmp_dist_format(xmp_desc_t d, int dim, int *format){
 
 int xmp_dist_blocksize(xmp_desc_t d, int dim, int *blocksize){
 
-  int format,ierr;
+  int format;
 
   _XMP_template_t *t = (_XMP_template_t *)d;
 
-  ierr = xmp_dist_format(d,dim,&format);
+  xmp_dist_format(d,dim,&format);
 
   if (format == XMP_BLOCK){
     *blocksize = t->chunk[dim-1].par_chunk_width;
@@ -451,11 +451,11 @@ int xmp_nodes_comm(xmp_desc_t d, void **comm){
 
 int xmp_nodes_equiv(xmp_desc_t d, xmp_desc_t *dn, int lb[], int ub[], int st[]){
 
-  int i,ndims, ierr;
+  int i, ndims;
   _XMP_nodes_t *n = (_XMP_nodes_t *)d;
 
   *dn = (xmp_desc_t)(n->inherit_nodes);
-  ierr = xmp_nodes_ndims(*dn, &ndims);
+  xmp_nodes_ndims(*dn, &ndims);
 
   for (i=0; i<ndims; i++){
     lb[i]= n ->inherit_info[i].lower;
@@ -509,8 +509,10 @@ void *xmp_malloc(xmp_desc_t d, int size){
   _XMP_array_info_t *ai = &(a->info[0]);
 
   _XMP_template_t *t = a->align_template;
+
+  if (!t->is_fixed) _XMP_fatal("target template is not fixed");
+
   int tdim = ai->align_template_index;
-  _XMP_template_chunk_t *chunk = &(t->chunk[tdim]);
   _XMP_template_info_t *info = &(t->info[tdim]);
 
   a->is_allocated = t->is_owner;

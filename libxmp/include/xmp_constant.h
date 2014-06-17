@@ -57,6 +57,9 @@
 #define _XMP_N_REDUCE_FIRSTMIN			311
 #define _XMP_N_REDUCE_LASTMAX			312
 #define _XMP_N_REDUCE_LASTMIN			313
+#define _XMP_N_REDUCE_EQV                       314
+#define _XMP_N_REDUCE_NEQV                      315
+#define _XMP_N_REDUCE_MINUS                     316
 
 // defined in exc.xcalablemp.XMPshadow
 #define _XMP_N_SHADOW_NONE			400

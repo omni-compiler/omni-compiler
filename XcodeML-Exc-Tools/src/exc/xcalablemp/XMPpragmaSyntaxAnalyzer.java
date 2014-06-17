@@ -1056,6 +1056,8 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     switch (pg_tok()) {
       case '+':
         return Xcons.IntConstant(XMPcollective.REDUCE_SUM);
+      case '-':
+        return Xcons.IntConstant(XMPcollective.REDUCE_MINUS);
       case '*':
         return Xcons.IntConstant(XMPcollective.REDUCE_PROD);
       case '&':
@@ -1121,6 +1123,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
     pg_get_token();
     switch (reductionKind) {
       case XMPcollective.REDUCE_SUM:
+      case XMPcollective.REDUCE_MINUS:
       case XMPcollective.REDUCE_PROD:
       case XMPcollective.REDUCE_BAND:
       case XMPcollective.REDUCE_LAND:
@@ -1211,7 +1214,7 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
   private XobjList parse_WAIT_clause() throws XmException, XMPexception {
     if (pg_tok() != '('){
       pg_get_token();
-      return Xcons.List(Xcons.IntConstant(0));  // 0 is a number of args
+      return Xcons.List();
     }
     else{
       pg_get_token(); 
@@ -1220,11 +1223,11 @@ public class XMPpragmaSyntaxAnalyzer implements ExternalPragmaLexer {
 	pg_get_token();
         Xobject tag = pg_parse_expr();
         pg_get_token();
-        return Xcons.List(Xcons.IntConstant(2), nodeName, tag);
+        return Xcons.List(nodeName, tag);
       }
       else{  // if(pg_tok() == ')')
 	pg_get_token();
-	return Xcons.List(Xcons.IntConstant(1), nodeName);
+	return Xcons.List(nodeName);
       }
     }
   }

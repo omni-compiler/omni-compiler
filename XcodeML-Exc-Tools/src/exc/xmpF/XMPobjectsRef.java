@@ -121,6 +121,11 @@ public class XMPobjectsRef {
   private final static int REF_ALL   = 0;
   private final static int REF_INDEX = 1;
   private final static int REF_RANGE = 2;
+  private final static int REF_RANGE_NOLB = 3;
+  private final static int REF_RANGE_NOUB = 4;
+  private final static int REF_RANGE_NOLBUB = 5;
+
+  private final static Xobject DUMMY = Xcons.IntConstant(-1);
 
   public Block buildConstructor(XMPenv env){
     Block b = Bcons.emptyBlock();
@@ -158,19 +163,69 @@ public class XMPobjectsRef {
 			    Xcons.IntConstant(0));
       }
       else { // triplet
-	  Xobject lower, upper;
+	Xobject lower, upper;
+	boolean noLB_flag = false, noUB_flag = false;
+
+	if (d_info.hasLower()){
 	  lower = d_info.getLower();
+	}
+	else {
 
-	  Xobject decl_upper = refObject.getKind() == XMPobject.NODES ?
-	      ((XMPnodes)refObject).getInfoAt(i).getUpper() :
-	      ((XMPtemplate)refObject).getUpperAt(i);
-	  upper = d_info.getUpper() != null ? d_info.getUpper() : decl_upper;
+	  Xobject decl_lower;
 
-	  stride = d_info.getStride();
-	      
-	  args = Xcons.List(descId.Ref(),
-			    Xcons.IntConstant(i),Xcons.IntConstant(REF_RANGE),
-			    lower, upper, stride);
+	  if (refObject.getKind() == XMPobject.NODES){
+	    decl_lower = Xcons.IntConstant(1);
+	  }
+	  else { // XMPobject.TEMPLATE
+	    decl_lower = ((XMPtemplate)refObject).getLowerAt(i);
+	    if (decl_lower == null){ // if not fixed
+	      decl_lower = DUMMY;
+	      noLB_flag = true;
+	    }
+	  }
+
+	  lower = decl_lower;
+
+	}
+
+	if (d_info.hasUpper()){
+	  upper = d_info.getUpper();
+	}
+	else {
+
+	  Xobject decl_upper;
+
+	  if (refObject.getKind() == XMPobject.NODES){
+	    decl_upper = ((XMPnodes)refObject).getInfoAt(i).getUpper();
+	    if (decl_upper == null){
+	      decl_upper = DUMMY;
+	      noUB_flag = true;
+	    }
+	  }
+	  else { // XMPobject.TEMPLATE
+	    decl_upper = ((XMPtemplate)refObject).getUpperAt(i);
+	    if (decl_upper == null){ // if not fixed
+	      decl_upper = DUMMY;
+	      noUB_flag = true;
+	    }
+
+	  }
+
+	  upper = decl_upper;
+
+	}
+
+	stride = d_info.getStride();
+
+	int refType;
+	if (!noLB_flag && !noUB_flag) refType = REF_RANGE;
+	else if (noLB_flag && !noUB_flag) refType = REF_RANGE_NOLB;
+	else if (!noLB_flag && noUB_flag) refType = REF_RANGE_NOUB;
+	else refType = REF_RANGE_NOLBUB;
+
+	args = Xcons.List(descId.Ref(),
+			  Xcons.IntConstant(i),Xcons.IntConstant(refType),
+			  lower, upper, stride);
       }
       // } else if(!d_info.hasLower()){
       // 	args = Xcons.List(descId.Ref(),

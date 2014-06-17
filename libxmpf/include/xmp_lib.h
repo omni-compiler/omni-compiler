@@ -6,4 +6,7 @@ end type xmp_desc
 interface
 integer(4) function xmp_num_nodes()
   end function xmp_num_nodes
+
+integer(4) function xmp_node_num()
+  end function xmp_node_num
 end interface

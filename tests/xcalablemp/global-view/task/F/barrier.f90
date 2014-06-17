@@ -1,13 +1,11 @@
-      program main
-      include 'xmp_lib.h'
+program main
+  include 'xmp_lib.h'
 !$xmp nodes p(*)
 
-      if(xmp_num_nodes().lt.4) then
-!$xmp task on p(1)
-         print *, 'You have to run this program by more than 3 nodes.'
-!$xmp end task
-         call exit(1)
-      endif
+  if(xmp_num_nodes().lt.4) then
+     print *, 'You have to run this program by more than 3 nodes.'
+     call exit(1)
+  endif
 
 !$xmp task on p(1:3)
 !$xmp barrier
@@ -16,7 +14,7 @@
 !$xmp barrier
 
 !$xmp task on p(1)      
-      write(*,*) "PASS"
+  write(*,*) "PASS"
 !$xmp end task
-      end
+end program main
 

@@ -35,6 +35,11 @@ GASNET_CPPFLAGS="@GASNET_CPPFLAGS@"
 TMP_FILE="${INPFILE}"
 REPLACE_PRAGMA_CMD=""
 INCLUDES=""
+
+if [ "${OM_USE_XMPF}" = "1" ]; then
+    NO_REPLACE_PRAGMA="1"
+fi
+
 newOpts=""
 for i in ${OM_OPTIONS}; do
     case ${i} in

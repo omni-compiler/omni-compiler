@@ -15,10 +15,6 @@ contains
 
     !$xmp barrier
 
-    !$xmp loop on t(i)
-    do i=1, 10
-       write(*,*) a(i)
-    end do
     write(*,*) "PASS"
   end subroutine foo
 end module second

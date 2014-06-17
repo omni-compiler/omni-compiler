@@ -314,8 +314,8 @@ void _XMP_set_template_size(_XMP_template_t *t, int dim, ...) {
   }
   va_end(args);
 
-  _XMP_calc_template_size(t);
   t->is_fixed = true;
+  _XMP_calc_template_size(t);
 
 }
 

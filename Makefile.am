@@ -64,39 +64,40 @@ release-deb:
 release: release-rpm release-deb
 
 BASE_TESTDIR  = "tests/xcalablemp/"
-SUB_TESTDIRS  = "others/F" "others/C"
-SUB_TESTDIRS += "global-view/shadow-reflect/C/"
+
+SUB_TESTDIRS = "global-view/array/C/" "global-view/array/F/"
+SUB_TESTDIRS += "global-view/bcast/C/"
+SUB_TESTDIRS += "global-view/loop/C" "global-view/loop/F"
 SUB_TESTDIRS += "global-view/reduction/C" "global-view/reduction/F"
+SUB_TESTDIRS += "global-view/shadow-reflect/C/"
 SUB_TESTDIRS += "global-view/task/C"  "global-view/task/F"
+SUB_TESTDIRS += "global-view/template_fix/C/" "global-view/template_fix/F/"
+SUB_TESTDIRS += "others/F" "others/C"
 if GASNET
-#  SUB_TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
+   SUB_TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
    SUB_TESTDIRS += "local-view/coarray/C"
 endif
 if FJRDMA
-#  SUB_TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
+   SUB_TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
    SUB_TESTDIRS += "local-view/coarray/C"
 endif
 
 tests: tests-dummy
 tests-dummy:
-	@for dir in $(SUB_TESTDIRS); do \
-	  make -C $(BASE_TESTDIR)$$dir; \
-	  if [ $$? -ne 0 ]; then \
-	    exit 1; \
-	  fi; \
+	@for subdir in $(SUB_TESTDIRS) ; do \
+	$(MAKE) -C $(BASE_TESTDIR)/$$subdir ; \
+	if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 clean-tests:
-	@for dir in $(SUB_TESTDIRS); do \
-	  make clean -C $(BASE_TESTDIR)$$dir; \
+	@for subdir in $(SUB_TESTDIRS) ; do \
+	(cd $(BASE_TESTDIR)/$$subdir && $(MAKE) clean ) ;\
 	done
 
 run-tests:
-	@for dir in $(SUB_TESTDIRS); do \
-	  make run -C $(BASE_TESTDIR)$$dir; \
-	  if [ $$? -ne 0 ]; then \
-	    exit 1; \
-	  fi; \
+	@for subdir in $(SUB_TESTDIRS); do \
+	make run -C $(BASE_TESTDIR)$$subdir; \
+	if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 clean-local:
