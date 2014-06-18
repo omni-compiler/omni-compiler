@@ -139,8 +139,7 @@ public class XMPrewriteExpr {
       throw new XMPexception("unknown co-array expression"); 
     } 
     else if ((leftExpr.Opcode() == Xcode.CO_ARRAY_REF) || (rightExpr.Opcode() == Xcode.CO_ARRAY_REF)) {
-      rewriteCoarrayAssignExpr(myExpr, exprParentBlock, localXMPsymbolTable, iter);
-      return null;
+      return rewriteCoarrayAssignExpr(myExpr, exprParentBlock, localXMPsymbolTable, iter);
     } 
     else {
       return rewriteExpr(myExpr, exprParentBlock);
@@ -388,12 +387,8 @@ public class XMPrewriteExpr {
     return newExpr;
   }
 
-  private void rewriteCoarrayAssignExpr(Xobject myExpr, Block exprParentBlock, XMPsymbolTable localXMPsymbolTable, 
-                                        BasicBlockExprIterator iter) throws XMPexception {
-    // Memo: This function translates a coarray syntax (a[1:2:1]:[9] = b) into 4 functions.
-    // Return value type of this function is void. Because when XobjList is returned, upper 
-    // process is abort. There, a coarray syntax is translated directly in this function.
-
+  private Xobject rewriteCoarrayAssignExpr(Xobject myExpr, Block exprParentBlock, XMPsymbolTable localXMPsymbolTable, 
+                                           BasicBlockExprIterator iter) throws XMPexception {
     assert myExpr.Opcode() == Xcode.ASSIGN_EXPR;
 
     Xobject leftExpr    = myExpr.getArg(0);
@@ -649,6 +644,12 @@ public class XMPrewriteExpr {
     newExpr = funcId.Call(funcArgs);
     newExpr.setIsRewrittedByXmp(true);
     iter.insertStatement(newExpr);
+
+    return null;
+    // Memo: This function translates a coarray syntax (a[1:2:1]:[9] = b) into 4 functions.
+    // This function returns null pointer except for shortcut functions. The reason of returning
+    // null pointer, when XobjList is returned, an upper process is abort.
+    // Therefore this function translates the coarray syntax directly.
   }
 
   private boolean is_stride_1(int dim, XobjList tripletList)
