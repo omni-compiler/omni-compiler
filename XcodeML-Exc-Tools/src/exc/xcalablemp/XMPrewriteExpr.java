@@ -116,7 +116,7 @@ public class XMPrewriteExpr {
       try {
         switch (expr.Opcode()) {
           case ASSIGN_EXPR:
-	    iter.setExpr(rewriteAssignExpr(expr, iter.getBasicBlock().getParent(), localXMPsymbolTable));
+	    iter.setExpr(rewriteAssignExpr(expr, iter.getBasicBlock().getParent(), localXMPsymbolTable, iter));
             break;
           default:
 	    iter.setExpr(rewriteExpr(expr, iter.getBasicBlock().getParent()));
@@ -128,7 +128,8 @@ public class XMPrewriteExpr {
     }
   }
 
-  private Xobject rewriteAssignExpr(Xobject myExpr, Block exprParentBlock, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+  private Xobject rewriteAssignExpr(Xobject myExpr, Block exprParentBlock, XMPsymbolTable localXMPsymbolTable,
+                                    BasicBlockExprIterator iter) throws XMPexception {
     assert myExpr.Opcode() == Xcode.ASSIGN_EXPR;
 
     Xobject leftExpr = myExpr.getArg(0);
@@ -138,7 +139,8 @@ public class XMPrewriteExpr {
       throw new XMPexception("unknown co-array expression"); 
     } 
     else if ((leftExpr.Opcode() == Xcode.CO_ARRAY_REF) || (rightExpr.Opcode() == Xcode.CO_ARRAY_REF)) {
-      return rewriteCoarrayAssignExpr(myExpr, exprParentBlock, localXMPsymbolTable);
+      rewriteCoarrayAssignExpr(myExpr, exprParentBlock, localXMPsymbolTable, iter);
+      return null;
     } 
     else {
       return rewriteExpr(myExpr, exprParentBlock);
@@ -386,11 +388,14 @@ public class XMPrewriteExpr {
     return newExpr;
   }
 
-  private Xobject rewriteCoarrayAssignExpr(Xobject myExpr, Block exprParentBlock,
-                                           XMPsymbolTable localXMPsymbolTable) throws XMPexception {
+  private void rewriteCoarrayAssignExpr(Xobject myExpr, Block exprParentBlock, XMPsymbolTable localXMPsymbolTable, 
+                                        BasicBlockExprIterator iter) throws XMPexception {
+    // Memo: This function translates a coarray syntax (a[1:2:1]:[9] = b) into 4 functions.
+    // Return value type of this function is void. Because when XobjList is returned, upper 
+    // process is abort. There, a coarray syntax is translated directly in this function.
+
     assert myExpr.Opcode() == Xcode.ASSIGN_EXPR;
 
-    Block b = Bcons.emptyBlock(); 
     Xobject leftExpr    = myExpr.getArg(0);
     Xobject rightExpr   = myExpr.getArg(1);
     Xobject coarrayExpr = null;
@@ -521,7 +526,7 @@ public class XMPrewriteExpr {
     }
     Xobject newExpr = funcId.Call(funcArgs);
     newExpr.setIsRewrittedByXmp(true);
-    b.add(newExpr);
+    iter.insertStatement(newExpr);
 
     // Set function _XMP_coarray_rdma_array_set_X()
     funcArgs = Xcons.List();
@@ -580,7 +585,7 @@ public class XMPrewriteExpr {
     }
     newExpr = funcId.Call(funcArgs);
     newExpr.setIsRewrittedByXmp(true);
-    b.add(newExpr);
+    iter.insertStatement(newExpr);
 
     // Set function _XMP_coarray_rdma_node_set_X()
     funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_node_set_" + Integer.toString(imageDims));
@@ -590,7 +595,7 @@ public class XMPrewriteExpr {
     }
     newExpr = funcId.Call(funcArgs);
     newExpr.setIsRewrittedByXmp(true);
-    b.add(newExpr);
+    iter.insertStatement(newExpr);
 
     // Set function _XMP_coarray_rdma_do()
     funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_do");
@@ -643,9 +648,7 @@ public class XMPrewriteExpr {
 
     newExpr = funcId.Call(funcArgs);
     newExpr.setIsRewrittedByXmp(true);
-    b.add(newExpr);
-
-    return b.toXobject();
+    iter.insertStatement(newExpr);
   }
 
   private boolean is_stride_1(int dim, XobjList tripletList)
