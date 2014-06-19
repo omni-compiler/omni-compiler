@@ -68,11 +68,11 @@ SUB_TESTDIRS += "global-view/template_fix/C/" "global-view/template_fix/F/"
 SUB_TESTDIRS += "others/F" "others/C"
 if GASNET
    SUB_TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
-   SUB_TESTDIRS += "local-view/coarray/C"
+   SUB_TESTDIRS += "local-view/coarray/C" "local-view/other/C"
 endif
 if FJRDMA
    SUB_TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
-   SUB_TESTDIRS += "local-view/coarray/C"
+   SUB_TESTDIRS += "local-view/coarray/C" "local-view/other/C"
 endif
 
 .PHONY: tests clean-tests run-tests clean-local

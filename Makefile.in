@@ -82,9 +82,11 @@ target_triplet = @target@
 @ENABLE_ACC_TRUE@am__append_2 = @LIBACC_DIR@ @LIBACC_HEADER_DIR@
 @ENABLE_ATOOL_TRUE@am__append_3 = @ATOOL_DIR@
 @GASNET_TRUE@am__append_4 = "local-view/post-wait/C" \
-@GASNET_TRUE@	"local-view/coarray/C" "local-view/coarray/C"
+@GASNET_TRUE@	"local-view/coarray/C" "local-view/coarray/C" \
+@GASNET_TRUE@	"local-view/other/C"
 @FJRDMA_TRUE@am__append_5 = "local-view/post-wait/C" \
-@FJRDMA_TRUE@	"local-view/coarray/C" "local-view/coarray/C"
+@FJRDMA_TRUE@	"local-view/coarray/C" "local-view/coarray/C" \
+@FJRDMA_TRUE@	"local-view/other/C"
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
