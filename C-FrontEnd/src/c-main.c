@@ -16,11 +16,6 @@
 #include "c-ptree.h"
 
 
-/* display parse tree before making XcodeML */
-static unsigned _SW_DISP_PTREE = 000;        // switch bits for dynamic debugging
-#define _DISP_PTREE_IF(flag, expr, msg)  if ((flag) & _SW_DISP_PTREE) dispParseTree(stderr, expr, msg)
-
-
 /**
  * C_Front main.
  */
@@ -53,8 +48,7 @@ main(int argc, char** argv)
     int convertedFileId = 0;
 
     CExpr *expr = execParse(fpIn);
-    _DISP_PTREE_IF(001, expr, "execParse");
-    //    dispParseTree(stderr, expr, "execParse");
+    //dispParseTree(stderr, expr, "execParse");
 
     if(s_inFile)
         fclose(fpIn);
@@ -63,7 +57,7 @@ main(int argc, char** argv)
         goto end;
 
     reduceExpr(expr);
-    _DISP_PTREE_IF(002, expr, "reduceExpr");
+    dispParseTree(stderr, expr, "reduceExpr");
 
     if(s_hasError)
         goto end;
@@ -72,15 +66,15 @@ main(int argc, char** argv)
         printf("compiling ...\n");
 
     compile(expr);
-    _DISP_PTREE_IF(004, expr, "compile");
+    //dispParseTree(stderr, expr, "compile");
 
     if(s_hasError)
         goto end;
 
     convertSyntax(expr);
-    _DISP_PTREE_IF(010, expr, "convertSyntax");
+    //dispParseTree(stderr, expr, "convertSyntax");
     collectTypeDesc(expr);
-    _DISP_PTREE_IF(020, expr, "collectTypeDesc");
+    //dispParseTree(stderr, expr, "collectTypeDesc");
 
     if(s_hasError)
         goto end;

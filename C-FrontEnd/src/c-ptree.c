@@ -46,6 +46,8 @@ static char *_getCExprCodeEnumString(CExprCodeEnum code);
 static void _printExprHead(FILE *fp, char *str, CExprCommon *expr, int indent);
 static void _printNewlineAndIndent(FILE *fp, int indent);
 
+
+
 /**
  * \brief
  * display struct CExpr as a parse tree (PT)
@@ -67,6 +69,19 @@ dispParseTree(FILE *fp, CExpr *expr, char *title)
     fprintf(fp, "\n");
     fprintf(fp, "[%s] end.\n", msg);
 }
+
+/**
+   for debugging
+**/
+int _ptree(CExpr *expr)
+{
+  if (expr) {
+    dispParseTree(stdout, expr, "parse tree");
+    return 1;
+  }
+  return 0;
+}
+
 
 
 static void 
@@ -148,7 +163,27 @@ _printExprHead(FILE *fp, char *str, CExprCommon *expr, int indent)
     _printNewlineAndIndent(fp, indent);
     fprintf(fp, "%s", str);
     fprintf(fp, "(line=%d)", expr->e_lineNumInfo.ln_rawLineNum);
-    fprintf(fp, " %s", _getCExprCodeEnumString(EXPR_CODE(expr)));
+    fprintf(fp, " e_refCount=%d", expr->e_refCount);
+    fprintf(fp, " e_struct=%d", expr->e_struct);
+    fprintf(fp, " e_exprCode=%s", _getCExprCodeEnumString(EXPR_CODE(expr)));
+
+    if (expr->e_symTab) fprintf(fp, " e_symTab");
+    if (expr->e_exprsType) fprintf(fp, " e_exprsType");
+    if (expr->e_parentExpr) fprintf(fp, " e_parentExpr");
+    if (expr->e_gccAttrPre) fprintf(fp, " e_gccAttrPre");
+    if (expr->e_gccAttrPost) fprintf(fp, " e_gccAttrPost");
+
+    if (expr->e_isError) fprintf(fp, " e_isError");
+    if (expr->e_isConstValue) fprintf(fp, " e_isConstValue");
+    if (expr->e_isConstValueChcked) fprintf(fp, " e_isConstValueChcked");
+    if (expr->e_gccExtension) fprintf(fp, " e_gccExtension");
+    if (expr->e_isCompleted ) fprintf(fp, " e_isCompleted");
+    if (expr->e_hasInit     ) fprintf(fp, " e_hasInit");
+    if (expr->e_isCompiled  ) fprintf(fp, " e_isCompiled");
+    if (expr->e_isConverted ) fprintf(fp, " e_isConverted");
+    if (expr->e_isGenerated ) fprintf(fp, " e_isGenerated");
+    if (expr->e_isGccSyntax ) fprintf(fp, " e_isGccSyntax");
+    if (expr->e_isDeleting  ) fprintf(fp, " e_isDeleting");
 }
 
 static void
@@ -237,6 +272,8 @@ static void
 _dispInnerExprOfArrayDecl(FILE *fp, CExprOfArrayDecl *expr, int indent)
 {
     DISP_EXPR_HEAD(ArrayDecl);
+    if (expr->e_isVariable) fprintf(fp, " e_isVariable");
+    if (expr->e_isStatic) fprintf(fp, " e_isStatic");
     _dispExprBlock(fp, expr->e_typeQualExpr, indent + 1, "e_typeQualExpr");
     _dispExprBlock(fp, expr->e_lenExpr, indent + 1, "e_lenExpr");
 }
@@ -261,6 +298,7 @@ _dispInnerExprOfTypeDesc(FILE *fp, CExprOfTypeDesc *expr, int indent)
     _dispExprBlock(fp, expr->e_len.eln_lenExpr, indent + 1, "e_len.eln_lenExpr");
     _dispExprBlock(fp, expr->e_len.eln_orgLenExpr, indent + 1, "e_len.eln_orgLenExpr");
     DISP_STRING(e_typeId);
+    DISP_STRING(e_cotypeId);
 
     //refType is only for reference
 }

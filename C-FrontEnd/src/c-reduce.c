@@ -14,6 +14,9 @@
 #include "c-option.h"
 
 PRIVATE_STATIC CExpr* reduceExpr1(CExpr *expr, CExpr *parent, int *isReduced);
+PRIVATE_STATIC CExprOfTypeDesc *
+reduce_declarator_1(CExpr *declr, CExpr *parent, int *isReduced, CCOL_DListNode *ite,
+                    CExprOfTypeDesc *htd, CExprOfTypeDesc *ptd);
 
 
 /**
@@ -505,7 +508,7 @@ reduce_declSpecs(CExpr *declSpecs, CExpr *parent, int *isReduced)
  *      declared symbol
  */
 PRIVATE_STATIC void
-collectSpecs(CExpr *declr, CExpr *stack, CExpr **sym)
+collectSpecs(CExpr *declr, CExpr *stack, CExpr *costack, CExpr **sym)
 {
     CCOL_DListNode *ite, *iten;
     CExpr *innerDeclr = NULL;
@@ -520,7 +523,7 @@ collectSpecs(CExpr *declr, CExpr *stack, CExpr **sym)
 
     /** 1. braced declarator */
     if(innerDeclr) {
-        collectSpecs(innerDeclr, stack, sym);
+        collectSpecs(innerDeclr, stack, costack, sym);
     }
 
     int isReduced1 = 0;
@@ -531,8 +534,11 @@ collectSpecs(CExpr *declr, CExpr *stack, CExpr **sym)
 
         switch(EXPR_CODE(expr)) {
         case EC_ARRAY_DECL:
-        case EC_COARRAY_DECL:
             exprListAdd(stack, reduceExpr1(expr, declr, &isReduced1));
+            exprListRemove(declr, ite);
+            break;
+        case EC_COARRAY_DECL:
+            exprListAdd(costack, reduceExpr1(expr, declr, &isReduced1));
             exprListRemove(declr, ite);
             break;
         case EC_PARAMS:
@@ -681,120 +687,19 @@ reduce_declarator(CExpr *declr, CExpr *parent, int *isReduced)
 {
     assertExprCode(declr, EC_LDECLARATOR);
     *isReduced = 1;
-    CExpr *sym = NULL, *stack;
+    CExpr *sym = NULL, *stack, *costack;
     stack = exprList(EC_LDECLARATOR);
-    collectSpecs(declr, stack, &sym);
+    costack = exprList(EC_LDECLARATOR);
+    collectSpecs(declr, stack, costack, &sym);
     CCOL_DListNode *ite;
     CExprOfTypeDesc *htd = NULL, *ptd = NULL;
 
     EXPR_FOREACH(ite, stack) {
-
         if(htd == NULL) {
             htd = allocExprOfTypeDesc();
             exprCopyLineNum((CExpr*)htd, declr);
         }
-
-        CExpr *expr = EXPR_L_DATA(ite);
-        exprJoinAttr((CExpr*)htd, expr);
-
-        if(EXPR_ISNULL(expr)) {
-            continue;
-        }
-
-        if(EXPR_CODE(expr) == EC_TYPE_DESC) {
-            assert(ptd);
-            assertExpr((CExpr*)ptd, ETYP_IS_POINTER(ptd));
-            ptd->e_tq = EXPR_T(expr)->e_tq;
-            exprJoinAttrToPre((CExpr*)ptd, expr);
-            continue;
-        }
-
-        CExprOfTypeDesc *td;
-        if(ptd == NULL) {
-            td = htd;
-        } else {
-            td = allocExprOfTypeDesc();
-            exprCopyLineNum((CExpr*)td, expr);
-        }
-
-        if(ptd) {
-            ptd->e_typeExpr = (CExpr*)td;
-            EXPR_REF(td);
-        }
-
-        switch(EXPR_CODE(expr)) {
-        case EC_POINTER_DECL:
-            td->e_tdKind = TD_POINTER;
-            break;
-        case EC_PARAMS:
-            td->e_tdKind = TD_FUNC;
-            td->e_paramExpr = expr;
-            EXPR_REF(expr);
-            break;
-        case EC_IDENTS:
-            td->e_tdKind = TD_FUNC_OLDSTYLE;
-            td->e_paramExpr = expr;
-            EXPR_REF(expr);
-            break;
-        case EC_GCC_ATTRS:
-            reduceExpr1(expr, NULL, isReduced);
-            exprJoinAttr((CExpr*)td, expr);
-            break;
-        case EC_ARRAY_DECL:
-        case EC_COARRAY_DECL:
-            {
-                CExprOfArrayDecl *ary = EXPR_ARRAYDECL(expr);
-                if (EXPR_CODE(expr) == EC_COARRAY_DECL)
-                    td->e_tdKind = TD_COARRAY;
-                else
-                    td->e_tdKind = TD_ARRAY;
-
-                if(EXPR_ISNULL(ary->e_lenExpr) == 0) {
-                    int isReduced1 = 0;
-                    td->e_len.eln_lenExpr = reduceExpr1(ary->e_lenExpr, expr, &isReduced1);
-                    ary->e_lenExpr = NULL;
-                }
-
-                td->e_len.eln_isVariable = ary->e_isVariable;
-                td->e_len.eln_isStatic = ary->e_isStatic;
-
-                if(EXPR_ISNULL(ary->e_typeQualExpr) == 0) {
-                    CCOL_DListNode *tqite;
-                    EXPR_FOREACH(tqite, ary->e_typeQualExpr) {
-                        CExpr *tq = EXPR_L_DATA(tqite);
-                        assertExprCode(tq, EC_TYPEQUAL);
-                        switch(EXPR_GENERALCODE(tq)->e_code) {
-                        case TQ_CONST:
-                            td->e_len.eln_isConst = 1;
-                            break;
-                        case TQ_VOLATILE:
-                            td->e_len.eln_isVolatile = 1;
-                            break;
-                        case TQ_RESTRICT:
-                            td->e_len.eln_isRestrict = 1;
-                            break;
-                        case TQ_INLINE:
-                            addError(tq, CERR_010);
-                            break;
-                        default:
-                            ABORT();
-                        }
-                    }
-                }
-            }
-            break;
-        default:
-            ABORT();
-        }
-
-        if(ptd && ptd->e_typeExpr && ETYP_IS_ARRAY(ptd)) {
-            CExprOfTypeDesc *rtd = getRefTypeWithoutFix(td);
-            if(rtd && ETYP_IS_FUNC(rtd)) {
-                addError((CExpr*)ptd, CERR_112);
-            }
-        }
-
-        ptd = td;
+        ptd = reduce_declarator_1(declr, parent, isReduced, ite, htd, ptd);
     }
 
     EXPR_UNREF(sym);
@@ -811,6 +716,112 @@ reduce_declarator(CExpr *declr, CExpr *parent, int *isReduced)
 
     return newDeclr;
 }
+
+
+PRIVATE_STATIC CExprOfTypeDesc *
+reduce_declarator_1(CExpr *declr, CExpr *parent, int *isReduced,
+                    CCOL_DListNode *ite, CExprOfTypeDesc *htd, 
+                    CExprOfTypeDesc *ptd)
+{
+    CExpr *expr = EXPR_L_DATA(ite);
+    exprJoinAttr((CExpr*)htd, expr);
+
+    if(EXPR_ISNULL(expr)) {
+        return ptd;
+    }
+
+    if(EXPR_CODE(expr) == EC_TYPE_DESC) {
+        assert(ptd);
+        assertExpr((CExpr*)ptd, ETYP_IS_POINTER(ptd));
+        ptd->e_tq = EXPR_T(expr)->e_tq;
+        exprJoinAttrToPre((CExpr*)ptd, expr);
+        return ptd;
+    }
+
+    CExprOfTypeDesc *td;
+    if(ptd == NULL) {
+        td = htd;
+    } else {
+        td = allocExprOfTypeDesc();
+        exprCopyLineNum((CExpr*)td, expr);
+    }
+
+    if(ptd) {
+        ptd->e_typeExpr = (CExpr*)td;
+        EXPR_REF(td);
+    }
+
+    switch(EXPR_CODE(expr)) {
+    case EC_POINTER_DECL:
+        td->e_tdKind = TD_POINTER;
+        break;
+    case EC_PARAMS:
+        td->e_tdKind = TD_FUNC;
+        td->e_paramExpr = expr;
+        EXPR_REF(expr);
+        break;
+    case EC_IDENTS:
+        td->e_tdKind = TD_FUNC_OLDSTYLE;
+        td->e_paramExpr = expr;
+        EXPR_REF(expr);
+        break;
+    case EC_GCC_ATTRS:
+        reduceExpr1(expr, NULL, isReduced);
+        exprJoinAttr((CExpr*)td, expr);
+        break;
+    case EC_ARRAY_DECL:
+        {
+            CExprOfArrayDecl *ary = EXPR_ARRAYDECL(expr);
+            td->e_tdKind = TD_ARRAY;
+
+            if(EXPR_ISNULL(ary->e_lenExpr) == 0) {
+                int isReduced1 = 0;
+                td->e_len.eln_lenExpr = reduceExpr1(ary->e_lenExpr, expr, &isReduced1);
+                ary->e_lenExpr = NULL;
+            }
+
+            td->e_len.eln_isVariable = ary->e_isVariable;
+            td->e_len.eln_isStatic = ary->e_isStatic;
+
+            if(EXPR_ISNULL(ary->e_typeQualExpr) == 0) {
+                CCOL_DListNode *tqite;
+                EXPR_FOREACH(tqite, ary->e_typeQualExpr) {
+                    CExpr *tq = EXPR_L_DATA(tqite);
+                    assertExprCode(tq, EC_TYPEQUAL);
+                    switch(EXPR_GENERALCODE(tq)->e_code) {
+                    case TQ_CONST:
+                        td->e_len.eln_isConst = 1;
+                        break;
+                    case TQ_VOLATILE:
+                        td->e_len.eln_isVolatile = 1;
+                        break;
+                    case TQ_RESTRICT:
+                        td->e_len.eln_isRestrict = 1;
+                        break;
+                    case TQ_INLINE:
+                        addError(tq, CERR_010);
+                        break;
+                    default:
+                      ABORT();
+                    }
+                }
+            }
+        }
+        break;
+    default:
+      ABORT();
+    }
+
+    if(ptd && ptd->e_typeExpr && ETYP_IS_ARRAY(ptd)) {
+        CExprOfTypeDesc *rtd = getRefTypeWithoutFix(td);
+        if(rtd && ETYP_IS_FUNC(rtd)) {
+            addError((CExpr*)ptd, CERR_112);
+        }
+    }
+
+    return td;
+}
+
 
 
 /**

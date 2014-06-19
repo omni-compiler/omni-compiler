@@ -979,8 +979,9 @@ typedef struct CExprOfTypeDesc {
     //! pre-declarared symbol type
     struct CExprOfTypeDesc *e_preDeclType;
 
-    //! type ID for XcodeML
+    //! type ID and cotype ID for XcodeML
     char                *e_typeId;
+    char                *e_cotypeId;
 
     //! alignment of type
     int                 e_align;
@@ -1057,6 +1058,8 @@ typedef struct CExprOfTypeDesc {
     unsigned int        e_isSizeZero    : 1;
     //! for Output XcodeML : disable to output typeId
     unsigned int        e_isNoTypeId    : 1;
+    //! for Output XcodeML : disable to output cotypeId
+    unsigned int        e_isNoCotypeId    : 1;
     //! for Output XcodeML : is marked for any purpose
     unsigned int        e_isMarked      : 1;
     //! for Output XcodeML : same type exists in typeTable
@@ -1265,6 +1268,8 @@ extern int                    isSubArrayRef2(CExpr *expr);
 #define EXPRS_TYPE(x)               (EXPR_C(x)->e_exprsType)
 //! get type ID for XcodeML
 #define EXPR_TYPEID(x)              (EXPRS_TYPE(x)->e_typeId)
+//! get "cotype ID", representing coarray dimensions, for XcodeML
+#define EXPR_COTYPEID(x)            (EXPRS_TYPE(x)->e_cotypeId)
 //! get parent node
 #define EXPR_PARENT(x)              (EXPR_C(x)->e_parentExpr)
 //! has gcc attributes
