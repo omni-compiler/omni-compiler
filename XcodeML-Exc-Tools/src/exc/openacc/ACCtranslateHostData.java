@@ -43,14 +43,14 @@ public class ACCtranslateHostData {
     }
   }
   
-  private void rewriteVar(ACCvar var){
+ private void rewriteVar(ACCvar var){
     String hostName = var.getName();
     Xobject deviceAddr = hostDataInfo.getDevicePtr(hostName).Ref();
-    
+
     BasicBlockExprIterator iter = new BasicBlockExprIterator(pb.getBody());
     for (iter.init(); !iter.end(); iter.next()) {
       Xobject expr = iter.getExpr();
-      topdownXobjectIterator exprIter = new topdownXobjectIterator(expr);
+      XobjectIterator exprIter = new bottomupXobjectIterator(expr);
       for (exprIter.init(); !exprIter.end(); exprIter.next()) {
         Xobject x = exprIter.getXobject();
         switch (x.Opcode()) {
@@ -58,40 +58,45 @@ public class ACCtranslateHostData {
         {
           String varName = x.getName();
           if(! varName.equals(hostName)) break;
-          ACC.fatal("can't rewrite '" + varName + "' with that's device pointer");
-        }
-        case ADDR_OF:
-        {
-          Xobject v = x.getArg(0);
-          if(! v.getName().equals(hostName)) break;
-          //deviceAddr.setType(Xtype.Pointer(v.Type()));
-          exprIter.setXobject(Xcons.Cast(Xtype.Pointer(v.Type()), deviceAddr));
-          rewriteVar(var);
-          return;
-        }
-//        case VAR: 
-//        {
-//          String varName = x.getName();
-//          if(! varName.equals(hostName)) break;
-//          exprIter.setXobject(deviceAddr);
-//        } break;
+
+          Xtype varType = var.getId().Type();
+          Xobject new_x;
+          if(varType.isArray() || varType.isPointer()){
+            new_x = Xcons.Cast(varType, deviceAddr);  
+          }else{
+            new_x = Xcons.PointerRef(Xcons.Cast(Xtype.Pointer(varType), deviceAddr));
+          }
+          exprIter.setXobject(new_x);
+        }break;
         case ARRAY_ADDR:
         {
           String arrayName = x.getName();
+          Xtype t = x.Type();
           if(! arrayName.equals(hostName)) break;
-          exprIter.setXobject(Xcons.Cast(x.Type(), deviceAddr));
+          exprIter.setXobject(Xcons.Cast(Xtype.Pointer(x.Type().getRef()), deviceAddr));
         }break;
-//        case ARRAY_REF:
-//        {
-//          String arrayName = x.getArg(0).getName();
-//          if(! arrayName.equals(hostName)) break;
-//          Xobject new_x = deviceAddr.copy();
-//          new_x.setType(x.getArg(0).Type());
-//          exprIter.setXobject(new_x);
-//        } break;
+        case ARRAY_REF:
+        {
+          Xobject arrayAddr = x.getArg(0);
+          if(arrayAddr.Opcode() == Xcode.ARRAY_ADDR)break;
+          exprIter.setXobject(convertArrayRef(x));
+        } break;
         default:
         }
       }
     }
+  }
+
+  private Xobject convertArrayRef(Xobject x)
+  {
+    if(x.Opcode() != Xcode.ARRAY_REF) return x;
+    Xobject arrayAddr = x.getArg(0);
+    XobjList indexList = (XobjList)(x.getArg(1)); 
+
+    Xobject result = arrayAddr;
+    for(Xobject idx : indexList){
+      result = Xcons.PointerRef(Xcons.binaryOp(Xcode.PLUS_EXPR, result, idx));
+    }
+    return result;
   }
 }

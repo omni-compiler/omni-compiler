@@ -50,6 +50,8 @@ run: $(EXES)
 	$(XRUN) data_present_float.x
 	$(XRUN) data_present_double.x
 
+	$(XRUN) host_data.x
+
 update_host_subarray_type:
 	$(XCC) -o update_host_subarray_char.x update_host_subarray.c -DCHAR
 	$(XCC) -o update_host_subarray_short.x update_host_subarray.c -DSHORT
