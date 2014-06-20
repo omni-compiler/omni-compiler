@@ -209,7 +209,7 @@ _dispInnerExprOfSymbol(FILE *fp, CExprOfSymbol *expr, int indent)
     if (expr->e_isGccLabelDecl) fprintf(fp, " e_isGccLabelDecl");
     if (expr->e_isConstButUnreducable) fprintf(fp, " e_isConstButUnreducable");
     _dispExprBlock(fp, expr->e_valueExpr, indent + 1, "e_valueExpr");
-    _dispExprBlock(fp, expr->e_codimensions, indent + 1, "e_codimensions");
+    //_dispExprBlock(fp, expr->e_codimensions, indent + 1, "e_codimensions");
 }
 
 

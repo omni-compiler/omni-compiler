@@ -681,7 +681,7 @@ typedef struct CExprOfSymbol {
      */
     struct CExprOfTypeDesc  *e_headType;
     //! list of coarray dimensions (ID=284)
-    CExpr                   *e_codimensions;
+    //CExpr                   *e_codimensions;
     //! reference to declarator
     CExpr                   *e_declrExpr;
     //! order in SymbolTable

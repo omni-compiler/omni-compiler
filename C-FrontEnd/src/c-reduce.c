@@ -702,18 +702,21 @@ reduce_declarator(CExpr *declr, CExpr *parent, int *isReduced)
         ptd = reduce_declarator_1(declr, parent, isReduced, ite, htd, ptd);
     }
 
-    // costack, which represents a list of codimension exprs, might be 
-    // evaluated here. (ID=284)
+    EXPR_FOREACH(ite, costack) {
+        if(htd == NULL) {
+            htd = allocExprOfTypeDesc();
+            exprCopyLineNum((CExpr*)htd, declr);
+        }
+        ptd = reduce_declarator_1(declr, parent, isReduced, ite, htd, ptd);
+    }
 
     EXPR_UNREF(sym);
     CExpr *newDeclr = (CExpr*)allocExprOfBinaryNode1(
         EC_DECLARATOR, (CExpr*)htd, (CExpr*)sym);
     EXPR_C(newDeclr)->e_hasInit = EXPR_C(declr)->e_hasInit;
     exprCopyLineNum(newDeclr, declr);
-    if(sym) {
+    if(sym)
         EXPR_SYMBOL(sym)->e_declrExpr = newDeclr;
-        EXPR_SYMBOL(sym)->e_codimensions = costack;
-    }
     EXPR_REF(newDeclr);
     exprJoinAttr(newDeclr, declr);
     freeExpr(declr);
@@ -775,6 +778,7 @@ reduce_declarator_1(CExpr *declr, CExpr *parent, int *isReduced,
         exprJoinAttr((CExpr*)td, expr);
         break;
     case EC_ARRAY_DECL:
+    case EC_COARRAY_DECL:
         {
             CExprOfArrayDecl *ary = EXPR_ARRAYDECL(expr);
             td->e_tdKind = TD_ARRAY;
