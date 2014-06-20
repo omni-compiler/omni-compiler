@@ -200,7 +200,16 @@ _dispInnerExprOfSymbol(FILE *fp, CExprOfSymbol *expr, int indent)
 {
     DISP_EXPR_HEAD(Symbol);
     DISP_STRING(e_symName);
+    if (expr->e_symType   ) fprintf(fp, " e_symType=%d", expr->e_symType);
+    if (expr->e_headType  ) fprintf(fp, " e_headType");
+    if (expr->e_declrExpr ) fprintf(fp, " e_declrExpr");
+    if (expr->e_putOrder  ) fprintf(fp, " e_putOrder=%d", expr->e_putOrder);
+    if (expr->e_isGlobal  ) fprintf(fp, " e_isGlobal");
+    if (expr->e_isEnumInited) fprintf(fp, " e_isEnumInited");
+    if (expr->e_isGccLabelDecl) fprintf(fp, " e_isGccLabelDecl");
+    if (expr->e_isConstButUnreducable) fprintf(fp, " e_isConstButUnreducable");
     _dispExprBlock(fp, expr->e_valueExpr, indent + 1, "e_valueExpr");
+    _dispExprBlock(fp, expr->e_codimensions, indent + 1, "e_codimensions");
 }
 
 
@@ -298,7 +307,6 @@ _dispInnerExprOfTypeDesc(FILE *fp, CExprOfTypeDesc *expr, int indent)
     _dispExprBlock(fp, expr->e_len.eln_lenExpr, indent + 1, "e_len.eln_lenExpr");
     _dispExprBlock(fp, expr->e_len.eln_orgLenExpr, indent + 1, "e_len.eln_orgLenExpr");
     DISP_STRING(e_typeId);
-    DISP_STRING(e_cotypeId);
 
     //refType is only for reference
 }

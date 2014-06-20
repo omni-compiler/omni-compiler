@@ -2234,7 +2234,6 @@ copyExprOfTypeDesc(CExprOfTypeDesc *src)
     EXPR_SET0(dst->e_len.eln_lenExpr, copyExpr(src->e_len.eln_lenExpr));
     EXPR_SET0(dst->e_len.eln_orgLenExpr, copyExpr(src->e_len.eln_orgLenExpr));
     dst->e_typeId = ccol_strdup(src->e_typeId, MAX_NAME_SIZ);
-    dst->e_cotypeId = ccol_strdup(src->e_cotypeId, MAX_NAME_SIZ);
 
     return dst;
 }
@@ -2269,8 +2268,6 @@ duplicateExprOfTypeDesc(CExprOfTypeDesc *src)
         EXPR_REF(dst->e_len.eln_orgLenExpr);
     if(dst->e_typeId)
         dst->e_typeId = ccol_strdup(dst->e_typeId, MAX_NAME_SIZ);
-    if(dst->e_cotypeId)
-        dst->e_cotypeId = ccol_strdup(dst->e_cotypeId, MAX_NAME_SIZ);
 
     return dst;
 }
@@ -2298,8 +2295,6 @@ innerFreeExprOfTypeDesc(CExprOfTypeDesc *expr)
         freeExpr(expr->e_len.eln_orgLenExpr);
     if(expr->e_typeId)
         free(expr->e_typeId);
-    if(expr->e_cotypeId)
-        free(expr->e_cotypeId);
 
     //refType is only for reference
 }

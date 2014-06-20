@@ -57,7 +57,7 @@ main(int argc, char** argv)
         goto end;
 
     reduceExpr(expr);
-    dispParseTree(stderr, expr, "reduceExpr");
+    //dispParseTree(stderr, expr, "reduceExpr");
 
     if(s_hasError)
         goto end;
@@ -74,7 +74,7 @@ main(int argc, char** argv)
     convertSyntax(expr);
     //dispParseTree(stderr, expr, "convertSyntax");
     collectTypeDesc(expr);
-    //dispParseTree(stderr, expr, "collectTypeDesc");
+    dispParseTree(stderr, expr, "collectTypeDesc");
 
     if(s_hasError)
         goto end;
