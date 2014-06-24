@@ -48,7 +48,7 @@ main(int argc, char** argv)
     int convertedFileId = 0;
 
     CExpr *expr = execParse(fpIn);
-    //dispParseTree(stderr, expr, "execParse");
+    dispParseTree(stdout, expr, "execParse");
 
     if(s_inFile)
         fclose(fpIn);
@@ -57,7 +57,7 @@ main(int argc, char** argv)
         goto end;
 
     reduceExpr(expr);
-    //dispParseTree(stderr, expr, "reduceExpr");
+    //dispParseTree(stdout, expr, "reduceExpr");
 
     if(s_hasError)
         goto end;
@@ -66,15 +66,15 @@ main(int argc, char** argv)
         printf("compiling ...\n");
 
     compile(expr);
-    //dispParseTree(stderr, expr, "compile");
+    //dispParseTree(stdout, expr, "compile");
 
     if(s_hasError)
         goto end;
 
     convertSyntax(expr);
-    //dispParseTree(stderr, expr, "convertSyntax");
+    //dispParseTree(stdout, expr, "convertSyntax");
     collectTypeDesc(expr);
-    dispParseTree(stderr, expr, "collectTypeDesc");
+    dispParseTree(stdout, expr, "collectTypeDesc");
 
     if(s_hasError)
         goto end;

@@ -538,7 +538,8 @@ collectSpecs(CExpr *declr, CExpr *stack, CExpr *costack, CExpr **sym)
             exprListRemove(declr, ite);
             break;
         case EC_COARRAY_DECL:
-            exprListAdd(costack, reduceExpr1(expr, declr, &isReduced1));
+            exprListAdd(costack, reduceExpr1(((CExprOfArrayDecl*)expr)->e_lenExpr,
+                                             declr, &isReduced1));
             exprListRemove(declr, ite);
             break;
         case EC_PARAMS:
@@ -689,11 +690,11 @@ reduce_declarator(CExpr *declr, CExpr *parent, int *isReduced)
     *isReduced = 1;
     CExpr *sym = NULL, *stack, *costack;
     stack = exprList(EC_LDECLARATOR);
-    costack = exprList(EC_LDECLARATOR);
+    costack = exprList(EC_XMP_COARRAY_DIMENSIONS);   // (ID=284,TRY5)
     collectSpecs(declr, stack, costack, &sym);
     CCOL_DListNode *ite;
-    CExprOfTypeDesc *htd = NULL, *ptd = NULL;
 
+    CExprOfTypeDesc *htd = NULL, *ptd = NULL;
     EXPR_FOREACH(ite, stack) {
         if(htd == NULL) {
             htd = allocExprOfTypeDesc();
@@ -702,6 +703,9 @@ reduce_declarator(CExpr *declr, CExpr *parent, int *isReduced)
         ptd = reduce_declarator_1(declr, parent, isReduced, ite, htd, ptd);
     }
 
+#define TRY5
+
+#ifdef TRY4
     EXPR_FOREACH(ite, costack) {
         if(htd == NULL) {
             htd = allocExprOfTypeDesc();
@@ -709,6 +713,7 @@ reduce_declarator(CExpr *declr, CExpr *parent, int *isReduced)
         }
         ptd = reduce_declarator_1(declr, parent, isReduced, ite, htd, ptd);
     }
+#endif
 
     EXPR_UNREF(sym);
     CExpr *newDeclr = (CExpr*)allocExprOfBinaryNode1(
@@ -721,6 +726,32 @@ reduce_declarator(CExpr *declr, CExpr *parent, int *isReduced)
     exprJoinAttr(newDeclr, declr);
     freeExpr(declr);
     freeExpr(stack);
+
+#ifdef TRY4A
+    /*   set e_codimensions (ID=284)
+     */
+    CExprOfTypeDesc *htd2 = NULL, *ptd2 = NULL;
+    EXPR_FOREACH(ite, costack) {
+        if(htd2 == NULL) {
+            htd2 = allocExprOfTypeDesc();
+            exprCopyLineNum((CExpr*)htd2, declr);
+        }
+        ptd2 = reduce_declarator_1(declr, parent, isReduced, ite, htd2, ptd2);
+    }
+    if (htd2) {
+      EXPR_SYMBOL(sym)->e_codimensions = (CExpr*)htd2;
+      EXPR_REF(htd2);
+    }
+#endif
+
+#ifdef TRY5
+    if (EXPR_L_SIZE(costack) > 0) {
+        EXPR_SYMBOL(sym)->e_codimensions = costack;
+        EXPR_REF(costack);
+    } else {
+      freeExpr(costack);
+    }
+#endif
 
     return newDeclr;
 }

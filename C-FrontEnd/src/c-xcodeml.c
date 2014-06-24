@@ -414,6 +414,13 @@ outxContext(FILE *fp, int indent, CExpr *expr)
         outx_NUMBER_CONST(fp, indent, EXPR_NUMBERCONST(expr)); break;
     case EC_COMPOUND_LITERAL:
         outx_COMPOUND_LITERAL(fp, indent, expr); break;
+    case EC_COARRAY_DECL:
+        if(EXPR_ARRAYDECL(expr)->e_lenExpr)
+            outxContext(fp, indent + 1, EXPR_ARRAYDECL(expr)->e_lenExpr);
+        else
+            outxPrint(fp, indent + 1, "<unknown/>\n");
+        break;
+ break;
 
     // Primary Expression
     #define OUTX_OP(tag) outxChildrenForExpr(fp, indent, expr, tag); break;
@@ -492,11 +499,11 @@ outxContext(FILE *fp, int indent, CExpr *expr)
     // Statements
     #define OUTX_SIMPLE_STMT(tag) outxChildrenForStmt(fp, indent, expr, tag);
     case EC_COMP_STMT:
-	if(((CExprOfList *)expr)->e_aux_info != NULL){
-	    out_PRAGMA_COMP_STMT(fp, indent, expr);
-	    break;
-	}
-	outx_COMP_STMT(fp, indent, expr); break;
+        if(((CExprOfList *)expr)->e_aux_info != NULL){
+            out_PRAGMA_COMP_STMT(fp, indent, expr);
+            break;
+        }
+        outx_COMP_STMT(fp, indent, expr); break;
     case EC_IF_STMT:
         outx_IF_STMT(fp, indent, expr); break;
     case EC_WHILE_STMT:
@@ -581,7 +588,6 @@ outxContext(FILE *fp, int indent, CExpr *expr)
     case EC_DECL_SPECS:
     case EC_LDECLARATOR:
     case EC_ARRAY_DECL:
-    case EC_COARRAY_DECL:
     case EC_POINTER_DECL:
     case EC_PARAM:
     case EC_TYPENAME:
@@ -1510,6 +1516,11 @@ outxSymbols0(FILE *fp, int indent, CSymbolTable *symTab, int symbolsFlags)
 
         if(gak != GAK_UNDEF)
             outxGccAttrVarOrFunc(fp, indent + 1, td, gak);
+
+        /*  coarray 
+         */ 
+        if (sym->e_codimensions)
+          outxContextWithTag(fp, indent + 1, sym->e_codimensions, "codimensions");
 
         outxPrint(fp, indent, "</id>\n");
     }

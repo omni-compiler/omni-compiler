@@ -25,6 +25,11 @@
 #define DISP_STRING(str)    if (expr->str) fprintf(fp, " %s=\"%s\"", #str, expr->str);
 #define DISP_EXPR_HEAD(str)   _printExprHead(fp, #str, (CExprCommon*)expr, indent)
 
+const char *NAME_e_struct[] = CExprStructEnumNamesDef;
+const char *NAME_e_symType[] = CSymbolTypeEnumNamesDef;
+const char *NAME_e_tdKind[] = CTypeDescKindEnumNamesDef;
+const char *NAME_e_basicType[] = CBasicTypeEnumCcodeDef;
+
 static void _dispExpr(FILE *fp, CExpr *expr, int indent);
 static void _dispExprBlock(FILE *fp, CExpr *expr, int indent, char *terminal);
 
@@ -152,7 +157,7 @@ _dispExprBlock(FILE *fp, CExpr *expr, int indent, char *terminal)
 
     if (expr && terminal) {
         _printNewlineAndIndent(fp, indent);
-        fprintf(fp, "end_of %s", terminal);
+        fprintf(fp, "+end of %s", terminal);
     }
 }
 
@@ -164,7 +169,7 @@ _printExprHead(FILE *fp, char *str, CExprCommon *expr, int indent)
     fprintf(fp, "%s", str);
     fprintf(fp, "(line=%d)", expr->e_lineNumInfo.ln_rawLineNum);
     fprintf(fp, " e_refCount=%d", expr->e_refCount);
-    fprintf(fp, " e_struct=%d", expr->e_struct);
+    fprintf(fp, " e_struct=%s", NAME_e_struct[expr->e_struct]);
     fprintf(fp, " e_exprCode=%s", _getCExprCodeEnumString(EXPR_CODE(expr)));
 
     if (expr->e_symTab) fprintf(fp, " e_symTab");
@@ -200,7 +205,7 @@ _dispInnerExprOfSymbol(FILE *fp, CExprOfSymbol *expr, int indent)
 {
     DISP_EXPR_HEAD(Symbol);
     DISP_STRING(e_symName);
-    if (expr->e_symType   ) fprintf(fp, " e_symType=%d", expr->e_symType);
+    if (expr->e_symType   ) fprintf(fp, " e_symType=%s", NAME_e_symType[expr->e_symType]);
     if (expr->e_headType  ) fprintf(fp, " e_headType");
     if (expr->e_declrExpr ) fprintf(fp, " e_declrExpr");
     if (expr->e_putOrder  ) fprintf(fp, " e_putOrder=%d", expr->e_putOrder);
@@ -209,7 +214,7 @@ _dispInnerExprOfSymbol(FILE *fp, CExprOfSymbol *expr, int indent)
     if (expr->e_isGccLabelDecl) fprintf(fp, " e_isGccLabelDecl");
     if (expr->e_isConstButUnreducable) fprintf(fp, " e_isConstButUnreducable");
     _dispExprBlock(fp, expr->e_valueExpr, indent + 1, "e_valueExpr");
-    //_dispExprBlock(fp, expr->e_codimensions, indent + 1, "e_codimensions");
+    _dispExprBlock(fp, expr->e_codimensions, indent + 1, "e_codimensions");
 }
 
 
@@ -301,6 +306,57 @@ static void
 _dispInnerExprOfTypeDesc(FILE *fp, CExprOfTypeDesc *expr, int indent)
 {
     DISP_EXPR_HEAD(TypeDesc);
+    if (expr->e_tdKind ) fprintf(fp, " e_tdKind=%s", NAME_e_tdKind[expr->e_tdKind]);
+    if (expr->e_basicType) fprintf(fp, " e_basicType=%s", NAME_e_basicType[expr->e_basicType]);
+
+    if (expr->e_bitLen ) fprintf(fp, " e_bitLen=%d", expr->e_bitLen);
+    if (expr->e_refType ) fprintf(fp, " e_refType");
+    if (expr->e_preDeclType ) fprintf(fp, " e_preDeclType");
+    if (expr->e_typeId ) fprintf(fp, " e_typeId");
+    if (expr->e_align ) fprintf(fp, " e_align=%d", expr->e_align);
+    if (expr->e_size ) fprintf(fp, " e_size=%d", expr->e_size);
+    if (expr->e_symbol) fprintf(fp, " e_symbol");
+    if (expr->e_len.eln_len ) fprintf(fp, " e_len.eln_len=%u", expr->e_len.eln_len);
+
+    if (expr->e_len.eln_isVariable ) fprintf(fp, " e_len.eln_isVariable");
+    if (expr->e_len.eln_isFlexible ) fprintf(fp, " e_len.eln_isFlexible");
+    if (expr->e_len.eln_isStatic   ) fprintf(fp, " e_len.eln_isStatic");
+    if (expr->e_len.eln_isConst    ) fprintf(fp, " e_len.eln_isConst");
+    if (expr->e_len.eln_isVolatile ) fprintf(fp, " e_len.eln_isVolatile");
+    if (expr->e_len.eln_isRestrict ) fprintf(fp, " e_len.eln_isRestrict");
+
+    if (expr->e_tq.etq_isConst) fprintf(fp, " e_tq.etq_isConst");
+    if (expr->e_tq.etq_isInline) fprintf(fp, " e_tq.etq_isInline");
+    if (expr->e_tq.etq_isVolatile) fprintf(fp, " e_tq.etq_isVolatile");
+    if (expr->e_tq.etq_isRestrict) fprintf(fp, " e_tq.etq_isRestrict");
+
+    if (expr->e_sc.esc_isAuto) fprintf(fp, " e_sc.esc_isAuto");
+    if (expr->e_sc.esc_isStatic) fprintf(fp, " e_sc.esc_isStatic");
+    if (expr->e_sc.esc_isExtern) fprintf(fp, " e_sc.esc_isExtern");
+    if (expr->e_sc.esc_isRegister) fprintf(fp, " e_sc.esc_isRegister");
+    if (expr->e_sc.esc_isGccThread) fprintf(fp, " e_sc.esc_isGccThread");
+
+    if (expr->e_isTypeDef    ) fprintf(fp, " e_isTypeDef");
+    if (expr->e_isExist      ) fprintf(fp, " e_isExist");
+    if (expr->e_isNoMemDecl  ) fprintf(fp, " e_isNoMemDecl");
+    if (expr->e_isAnonTag    ) fprintf(fp, " e_isAnonTag");
+    if (expr->e_isAnonMember ) fprintf(fp, " e_isAnonMember");
+    if (expr->e_isDefined    ) fprintf(fp, " e_isDefined");
+    if (expr->e_isUsed       ) fprintf(fp, " e_isUsed");
+    if (expr->e_isExprsType  ) fprintf(fp, " e_isExprsType");
+    if (expr->e_isCollected  ) fprintf(fp, " e_isCollected");
+    if (expr->e_isTemporary  ) fprintf(fp, " e_isTemporary");
+    if (expr->e_isFixed      ) fprintf(fp, " e_isFixed");
+    if (expr->e_isCompiling  ) fprintf(fp, " e_isCompiling");
+    if (expr->e_isGccConst   ) fprintf(fp, " e_isGccConst");
+    if (expr->e_isGccAttrDuplicated) fprintf(fp, " e_isGccAttrDuplicated");
+    if (expr->e_isSizeUnreducable) fprintf(fp, " e_isSizeUnreducable");
+    if (expr->e_isSizeZero   ) fprintf(fp, " e_isSizeZero");
+    if (expr->e_isNoTypeId   ) fprintf(fp, " e_isNoTypeId");
+    if (expr->e_isMarked     ) fprintf(fp, " e_isMarked");
+    if (expr->e_isDuplicated ) fprintf(fp, " e_isDuplicated");
+    if (expr->e_isDifferentQaulifierFromRefType) fprintf(fp, " e_isDifferentQaulifierFromRefType");
+
     _dispExprBlock(fp, expr->e_typeExpr, indent + 1, "e_typeExpr");
     _dispExprBlock(fp, expr->e_paramExpr, indent + 1, "e_paramExpr");
     _dispExprBlock(fp, expr->e_bitLenExpr, indent + 1, "e_bitLenExpr");

@@ -680,10 +680,10 @@ typedef struct CExprOfSymbol {
      * - e_symType = ST_MEMBER : pointer type of member ref
      */
     struct CExprOfTypeDesc  *e_headType;
-    //! list of coarray dimensions (ID=284)
-    //CExpr                   *e_codimensions;
     //! reference to declarator
     CExpr                   *e_declrExpr;
+    //! list of coarray dimensions (ID=284)
+    CExpr                   *e_codimensions;
     //! order in SymbolTable
     int                     e_putOrder;
     //! is global symbol 

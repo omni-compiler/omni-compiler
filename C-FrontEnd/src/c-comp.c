@@ -526,6 +526,16 @@ compile_declarator0(
     CExprOfTypeDesc *regType;
     int isTypeDef = headType->e_isTypeDef;
 
+    // coarray
+    if(sym && sym->e_codimensions) {
+        CExprIterator ite;
+        EXPR_FOREACH_MULTI(ite, sym->e_codimensions) {
+            /* compile_typeDesc((CExprOfTypeDesc*)ite.node, declrContext); */
+            compile1(ite.node, sym->e_codimensions);
+        }
+    }
+
+
     if(declrType) {
         regType = declrType;
         transferScspecFlag(declrType, headType);
@@ -1088,27 +1098,26 @@ compile_dataDefOrDecl(CExpr *dataDef, CExpr *parent)
             CExpr *initDecl = EXPR_L_DATA(ite);
             assertExprCode(initDecl, EC_INIT_DECL);
 
-	    if (EXPR_CODE(initDecl) == EC_XMP_COARRAY_DIMENSIONS) continue;
+            if (EXPR_CODE(initDecl) == EC_XMP_COARRAY_DIMENSIONS) continue;
             
             CExpr *declr = exprListHeadData(initDecl);
             assertExpr(initDecl, declr);
             assertExprCode(declr, EC_DECLARATOR);
 
-	    /* if (EXPR_CODE(declr) == EC_COARRAY_DECL){ */
-	      /* CExpr* coarrayNameList = EMPTY_LIST; */
-	      /* CCOL_DListNode *ite; */
-	      /* EXPR_FOREACH(ite, EXPR_B(declr)->e_nodes[0]){ */
-	      /* 	coarrayNameList = exprListAdd(coarrayNameList, EXPR_L_DATA(ite)); */
-	      /* } */
-	      /* CExpr *coarrayDecl = XMP_LIST2(coarrayNameList, EXPR_B(declr)->e_nodes[1]); */
-	      /* compile_coarrayDeclaration(EXPR_B(coarrayDecl)); */
-
-	    /*   EXPR_FOREACH(ite, declr) { */
-	    /* 	declr = EXPR_L_DATA(ite); */
-	    /* 	break; */
-	    /*   } */
-	    /*   //declr = EXPR_B(declr)->e_nodes[0]; */
-	    /* } */
+            /* if (EXPR_CODE(declr) == EC_COARRAY_DECL){ */
+            /*     CExpr* coarrayNameList = EMPTY_LIST; */
+            /*     CCOL_DListNode *ite; */
+            /*     EXPR_FOREACH(ite, EXPR_B(declr)->e_nodes[0]){ */
+            /*         coarrayNameList = exprListAdd(coarrayNameList, EXPR_L_DATA(ite)); */
+            /*     } */
+            /*     CExpr *coarrayDecl = XMP_LIST2(coarrayNameList, EXPR_B(declr)->e_nodes[1]); */
+            /*     compile_coarrayDeclaration(EXPR_B(coarrayDecl)); */
+            /*     EXPR_FOREACH(ite, declr) { */
+            /*         declr = EXPR_L_DATA(ite); */
+            /*         break; */
+            /*     } */
+            /*     //declr = EXPR_B(declr)->e_nodes[0]; */
+            /* } */
 
             if(existsTypeDesc(td0) == 0) {
                 if(td0->e_typeExpr && EXPR_CODE(td0->e_typeExpr) == EC_IDENT)
@@ -2103,17 +2112,9 @@ compile1(CExpr *expr, CExpr *parent)
         goto end;
 	
     case EC_XMP_DESC_OF:
-	EXPR_ISCOMPILED(expr) = 1;
-	return;
+        EXPR_ISCOMPILED(expr) = 1;
+        return;
 
-    /* case EC_COARRAY_DECL: { */
-    /*   CCOL_DListNode *ite; */
-    /*   EXPR_FOREACH(ite, expr) { */
-    /* 	compile1(EXPR_L_DATA(ite), expr); */
-    /* 	break; */
-    /*   } */
-    /*   return; */
-    /* } */
     default:
         if(isScopedStmt(expr)) {
             if(parent && EXPR_CODE(parent) == EC_FUNC_DEF) {
@@ -2140,21 +2141,21 @@ compile1(CExpr *expr, CExpr *parent)
         compile1(ite.node, expr);
 
     if (EXPR_CODE(expr) == EC_COMP_STMT){
-      CExprOfList *body = (CExprOfList *)expr;
-      CExprOfList *clauseList = (CExprOfList *)body->e_aux_info;
-      if (clauseList){
-      	int code = clauseList->e_aux;
-      	if (code == XMP_POST){
-      	  CExpr *tag = EXPR_L_DATA(ccol_DListAt(EXPR_DLIST(EXPR_L(clauseList)), 1));
-      	  compile1(tag, expr);
-      	}
-	else if(code == XMP_WAIT){
-	  if(EXPR_DLIST(EXPR_L(clauseList))->dl_head != NULL){
-	    CExpr *tag = EXPR_L_DATA(ccol_DListAt(EXPR_DLIST(EXPR_L(clauseList)), 1));
-	    compile1(tag, expr);
-	  }
-	}
-      }
+        CExprOfList *body = (CExprOfList *)expr;
+        CExprOfList *clauseList = (CExprOfList *)body->e_aux_info;
+        if (clauseList){
+            int code = clauseList->e_aux;
+            if (code == XMP_POST){
+                CExpr *tag = EXPR_L_DATA(ccol_DListAt(EXPR_DLIST(EXPR_L(clauseList)), 1));
+                compile1(tag, expr);
+            }
+            else if(code == XMP_WAIT){
+                if(EXPR_DLIST(EXPR_L(clauseList))->dl_head != NULL){
+                    CExpr *tag = EXPR_L_DATA(ccol_DListAt(EXPR_DLIST(EXPR_L(clauseList)), 1));
+                    compile1(tag, expr);
+                }
+            }
+        }
     }
 
  end:
