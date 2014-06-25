@@ -15,6 +15,8 @@
 #include "c-option.h"
 #include "c-ptree.h"
 
+extern unsigned int s_dispParseTree;
+
 
 /**
  * C_Front main.
@@ -48,7 +50,8 @@ main(int argc, char** argv)
     int convertedFileId = 0;
 
     CExpr *expr = execParse(fpIn);
-    dispParseTree(stdout, expr, "execParse");
+    if (s_dispParseTree & 0x1)
+        dispParseTree(stderr, expr, "execParse");
 
     if(s_inFile)
         fclose(fpIn);
@@ -57,7 +60,7 @@ main(int argc, char** argv)
         goto end;
 
     reduceExpr(expr);
-    //dispParseTree(stdout, expr, "reduceExpr");
+    //dispParseTree(stderr, expr, "reduceExpr");
 
     if(s_hasError)
         goto end;
@@ -66,15 +69,18 @@ main(int argc, char** argv)
         printf("compiling ...\n");
 
     compile(expr);
-    //dispParseTree(stdout, expr, "compile");
+    if (s_dispParseTree & 0x1)
+      dispParseTree(stderr, expr, "compile");
 
     if(s_hasError)
         goto end;
 
     convertSyntax(expr);
-    //dispParseTree(stdout, expr, "convertSyntax");
+    //dispParseTree(stderr, expr, "convertSyntax");
+
     collectTypeDesc(expr);
-    dispParseTree(stdout, expr, "collectTypeDesc");
+    if (s_dispParseTree & 0x1)
+        dispParseTree(stderr, expr, "collectTypeDesc");
 
     if(s_hasError)
         goto end;

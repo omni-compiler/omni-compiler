@@ -330,8 +330,13 @@ outxChildren(FILE *fp, int indent, CExpr *expr)
 
     CExprIterator ite;
     EXPR_FOREACH_MULTI(ite, expr)
-        if(ite.node)
-            outxContext(fp, indent, ite.node);
+        if(ite.node) {
+            if(EXPR_CODE(ite.node) == EC_NULL_NODE &&
+               expr && EXPR_CODE(expr) == EC_XMP_COARRAY_DIMENSIONS)
+                outxPrint(fp, indent, "<asterisc/>\n");
+            else
+                outxContext(fp, indent, ite.node);
+        }
 }
 
 
@@ -414,13 +419,6 @@ outxContext(FILE *fp, int indent, CExpr *expr)
         outx_NUMBER_CONST(fp, indent, EXPR_NUMBERCONST(expr)); break;
     case EC_COMPOUND_LITERAL:
         outx_COMPOUND_LITERAL(fp, indent, expr); break;
-    case EC_COARRAY_DECL:
-        if(EXPR_ARRAYDECL(expr)->e_lenExpr)
-            outxContext(fp, indent + 1, EXPR_ARRAYDECL(expr)->e_lenExpr);
-        else
-            outxPrint(fp, indent + 1, "<unknown/>\n");
-        break;
- break;
 
     // Primary Expression
     #define OUTX_OP(tag) outxChildrenForExpr(fp, indent, expr, tag); break;
@@ -450,9 +448,9 @@ outxContext(FILE *fp, int indent, CExpr *expr)
     case EC_XMP_DESC_OF:
         // OUTX_OP("xmpDescOf"); 
         outxTagForExpr(fp, indent, expr, "xmpDescOf", 0, NULL);
-	outxPrint(fp, indent+1, 
-		  "<Var type=\"int\" scope=\"global\">%s</Var>\n",
-		  EXPR_SYMBOL(EXPR_L_AT(expr,0))->e_symName);
+        outxPrint(fp, indent+1, 
+                  "<Var type=\"int\" scope=\"global\">%s</Var>\n",
+                  EXPR_SYMBOL(EXPR_L_AT(expr,0))->e_symName);
         outxTagClose(fp, indent, "xmpDescOf");
 	break;
 
@@ -608,6 +606,7 @@ outxContext(FILE *fp, int indent, CExpr *expr)
     case EC_GCC_ASM_CLOBS:
     case EC_XMP_COARRAY_DECLARATION:
     case EC_XMP_COARRAY_DIM_DEFS:
+    case EC_COARRAY_DECL:
     case EC_FLEXIBLE_STAR:
     case EC_PRAGMA_PACK:
     case EC_UNDEF:

@@ -2531,7 +2531,9 @@ resolveType_coArrayRef(CExprOfBinaryNode *expr)
         return NULL;
     }
 
-    CExprOfTypeDesc *td = ETYP_IS_ARRAY(btd) ? btd : allocPointerTypeDesc(btd);
+    /* ID=269 */
+    /* CExprOfTypeDesc *td = ETYP_IS_ARRAY(btd) ? btd : allocPointerTypeDesc(btd); */
+    CExprOfTypeDesc *td = btd;
 
     return td;
 }

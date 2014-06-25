@@ -23,7 +23,8 @@
 #include "c-expr.h"
 
 #define DISP_STRING(str)    if (expr->str) fprintf(fp, " %s=\"%s\"", #str, expr->str);
-#define DISP_EXPR_HEAD(str)   _printExprHead(fp, #str, (CExprCommon*)expr, indent)
+#define DISP_EXPR_COMMON1(str)   _printExprCommon1(fp, #str, (CExprCommon*)expr, indent)
+#define DISP_EXPR_COMMON2(str)   _printExprCommon2(fp, #str, (CExprCommon*)expr, indent)
 
 const char *NAME_e_struct[] = CExprStructEnumNamesDef;
 const char *NAME_e_symType[] = CSymbolTypeEnumNamesDef;
@@ -48,7 +49,8 @@ static void _dispInnerExprOfErrorNode(FILE *fp, CExprOfErrorNode *expr, int inde
 static void _dispInnerExprOfNull(FILE *fp, CExprOfNull *expr, int indent);
 
 static char *_getCExprCodeEnumString(CExprCodeEnum code);
-static void _printExprHead(FILE *fp, char *str, CExprCommon *expr, int indent);
+static void _printExprCommon1(FILE *fp, char *str, CExprCommon *expr, int indent);
+static void _printExprCommon2(FILE *fp, char *str, CExprCommon *expr, int indent);
 static void _printNewlineAndIndent(FILE *fp, int indent);
 
 
@@ -150,30 +152,17 @@ _dispExpr(FILE *fp, CExpr *expr, int indent)
 }
 
 
-static void 
-_dispExprBlock(FILE *fp, CExpr *expr, int indent, char *terminal)
-{
-    _dispExpr(fp, expr, indent);
-
-    if (expr && terminal) {
-        _printNewlineAndIndent(fp, indent);
-        fprintf(fp, "+end of %s", terminal);
-    }
-}
-
-
 static void
-_printExprHead(FILE *fp, char *str, CExprCommon *expr, int indent)
+_printExprCommon1(FILE *fp, char *str, CExprCommon *expr, int indent)
 {
     _printNewlineAndIndent(fp, indent);
     fprintf(fp, "%s", str);
     fprintf(fp, "(line=%d)", expr->e_lineNumInfo.ln_rawLineNum);
     fprintf(fp, " e_refCount=%d", expr->e_refCount);
-    fprintf(fp, " e_struct=%s", NAME_e_struct[expr->e_struct]);
-    fprintf(fp, " e_exprCode=%s", _getCExprCodeEnumString(EXPR_CODE(expr)));
+    fprintf(fp, " STRUCT_%s", NAME_e_struct[expr->e_struct]);
+    fprintf(fp, " %s", _getCExprCodeEnumString(EXPR_CODE(expr)));
 
     if (expr->e_symTab) fprintf(fp, " e_symTab");
-    if (expr->e_exprsType) fprintf(fp, " e_exprsType");
     if (expr->e_parentExpr) fprintf(fp, " e_parentExpr");
     if (expr->e_gccAttrPre) fprintf(fp, " e_gccAttrPre");
     if (expr->e_gccAttrPost) fprintf(fp, " e_gccAttrPost");
@@ -192,9 +181,28 @@ _printExprHead(FILE *fp, char *str, CExprCommon *expr, int indent)
 }
 
 static void
+_printExprCommon2(FILE *fp, char *str, CExprCommon *expr, int indent)
+{
+    _dispExprBlock(fp, (CExpr*)expr->e_exprsType, indent + 1, "e_exprsType");
+}
+
+
+static void 
+_dispExprBlock(FILE *fp, CExpr *expr, int indent, char *terminal)
+{
+    _dispExpr(fp, expr, indent);
+
+    if (expr && terminal) {
+        _printNewlineAndIndent(fp, indent);
+        fprintf(fp, ".end of %s", terminal);
+    }
+}
+
+
+static void
 _printNewlineAndIndent(FILE *fp, int indent)
 {
-    fputc('\n', fp);
+    fprintf(fp, "\n ");
     for (int i = 0; i < indent; i++)
         fprintf(fp, "| ");
 }
@@ -203,9 +211,9 @@ _printNewlineAndIndent(FILE *fp, int indent)
 static void
 _dispInnerExprOfSymbol(FILE *fp, CExprOfSymbol *expr, int indent)
 {
-    DISP_EXPR_HEAD(Symbol);
+    DISP_EXPR_COMMON1(Symbol);
     DISP_STRING(e_symName);
-    if (expr->e_symType   ) fprintf(fp, " e_symType=%s", NAME_e_symType[expr->e_symType]);
+    if (expr->e_symType   ) fprintf(fp, " ST_%s", NAME_e_symType[expr->e_symType]);
     if (expr->e_headType  ) fprintf(fp, " e_headType");
     if (expr->e_declrExpr ) fprintf(fp, " e_declrExpr");
     if (expr->e_putOrder  ) fprintf(fp, " e_putOrder=%d", expr->e_putOrder);
@@ -213,6 +221,7 @@ _dispInnerExprOfSymbol(FILE *fp, CExprOfSymbol *expr, int indent)
     if (expr->e_isEnumInited) fprintf(fp, " e_isEnumInited");
     if (expr->e_isGccLabelDecl) fprintf(fp, " e_isGccLabelDecl");
     if (expr->e_isConstButUnreducable) fprintf(fp, " e_isConstButUnreducable");
+    DISP_EXPR_COMMON2(Symbol);
     _dispExprBlock(fp, expr->e_valueExpr, indent + 1, "e_valueExpr");
     _dispExprBlock(fp, expr->e_codimensions, indent + 1, "e_codimensions");
 }
@@ -221,36 +230,40 @@ _dispInnerExprOfSymbol(FILE *fp, CExprOfSymbol *expr, int indent)
 static void
 _dispInnerExprOfNumberConst(FILE *fp, CExprOfNumberConst *expr, int indent)
 {
-    DISP_EXPR_HEAD(NumberConst);
+    DISP_EXPR_COMMON1(NumberConst);
     DISP_STRING(e_orgToken);
+    DISP_EXPR_COMMON2(NumberConst);
 }
 
 
 static void
 _dispInnerExprOfCharConst(FILE *fp, CExprOfCharConst *expr, int indent)
 {
-    DISP_EXPR_HEAD(CharConst);
+    DISP_EXPR_COMMON1(CharConst);
     DISP_STRING(e_orgToken);
     DISP_STRING(e_token);
+    DISP_EXPR_COMMON2(CharConst);
 }
 
 
 static void
 _dispInnerExprOfStringConst(FILE *fp, CExprOfStringConst *expr, int indent)
 {
-    DISP_EXPR_HEAD(StringConst);
+    DISP_EXPR_COMMON1(StringConst);
     DISP_STRING(e_orgToken);
+    DISP_EXPR_COMMON2(StringConst);
 }
 
 
 static void
 _dispInnerExprOfList(FILE *fp, CExprOfList *expr, int indent)
 {
-    DISP_EXPR_HEAD(List);
+    DISP_EXPR_COMMON1(List);
+    DISP_EXPR_COMMON2(List);
 
     CCOL_DListNode *ite, *iten;
     EXPR_FOREACH_SAFE(ite, iten, expr) {
-        _dispExpr(fp, CCOL_DL_DATA(ite), indent + 1);
+        _dispExprBlock(fp, CCOL_DL_DATA(ite), indent + 1, "an element");
     }
 
     _dispExprBlock(fp, (CExpr*)expr->e_symbol, indent + 1, "e_symbol");
@@ -261,14 +274,16 @@ _dispInnerExprOfList(FILE *fp, CExprOfList *expr, int indent)
 static void
 _dispInnerExprOfGeneralCode(FILE *fp, CExprOfGeneralCode *expr, int indent)
 {
-    DISP_EXPR_HEAD(GeneralCode);
+    DISP_EXPR_COMMON1(GeneralCode);
+    DISP_EXPR_COMMON2(GeneralCode);
 }
 
 
 static void
 _dispInnerExprOfUnaryNode(FILE *fp, CExprOfUnaryNode *expr, int indent)
 {
-    DISP_EXPR_HEAD(UnaryNode);
+    DISP_EXPR_COMMON1(UnaryNode);
+    DISP_EXPR_COMMON2(UnaryNode);
     _dispExprBlock(fp, expr->e_node, indent + 1, "operand e_node");
 }
 
@@ -276,7 +291,8 @@ _dispInnerExprOfUnaryNode(FILE *fp, CExprOfUnaryNode *expr, int indent)
 static void
 _dispInnerExprOfBinaryNode(FILE *fp, CExprOfBinaryNode *expr, int indent)
 {
-    DISP_EXPR_HEAD(BinaryNode);
+    DISP_EXPR_COMMON1(BinaryNode);
+    DISP_EXPR_COMMON2(BinaryNode);
     _dispExprBlock(fp, expr->e_nodes[0], indent + 1, "first operand e_nodes[0]");
     _dispExprBlock(fp, expr->e_nodes[1], indent + 1, "second operand e_nodes[1]");
 }
@@ -285,9 +301,10 @@ _dispInnerExprOfBinaryNode(FILE *fp, CExprOfBinaryNode *expr, int indent)
 static void
 _dispInnerExprOfArrayDecl(FILE *fp, CExprOfArrayDecl *expr, int indent)
 {
-    DISP_EXPR_HEAD(ArrayDecl);
+    DISP_EXPR_COMMON1(ArrayDecl);
     if (expr->e_isVariable) fprintf(fp, " e_isVariable");
     if (expr->e_isStatic) fprintf(fp, " e_isStatic");
+    DISP_EXPR_COMMON2(ArrayDecl);
     _dispExprBlock(fp, expr->e_typeQualExpr, indent + 1, "e_typeQualExpr");
     _dispExprBlock(fp, expr->e_lenExpr, indent + 1, "e_lenExpr");
 }
@@ -296,17 +313,18 @@ _dispInnerExprOfArrayDecl(FILE *fp, CExprOfArrayDecl *expr, int indent)
 static void
 _dispInnerExprOfDirective(FILE *fp, CExprOfDirective *expr, int indent)
 {
-    DISP_EXPR_HEAD(Directive);
+    DISP_EXPR_COMMON1(Directive);
     DISP_STRING(e_direcArgs);
     DISP_STRING(e_direcName);
+    DISP_EXPR_COMMON2(Directive);
 }
 
 
 static void
 _dispInnerExprOfTypeDesc(FILE *fp, CExprOfTypeDesc *expr, int indent)
 {
-    DISP_EXPR_HEAD(TypeDesc);
-    if (expr->e_tdKind ) fprintf(fp, " e_tdKind=%s", NAME_e_tdKind[expr->e_tdKind]);
+    DISP_EXPR_COMMON1(TypeDesc);
+    if (expr->e_tdKind ) fprintf(fp, " TD_%s", NAME_e_tdKind[expr->e_tdKind]);
     if (expr->e_basicType) fprintf(fp, " e_basicType=%s", NAME_e_basicType[expr->e_basicType]);
 
     if (expr->e_bitLen ) fprintf(fp, " e_bitLen=%d", expr->e_bitLen);
@@ -357,6 +375,7 @@ _dispInnerExprOfTypeDesc(FILE *fp, CExprOfTypeDesc *expr, int indent)
     if (expr->e_isDuplicated ) fprintf(fp, " e_isDuplicated");
     if (expr->e_isDifferentQaulifierFromRefType) fprintf(fp, " e_isDifferentQaulifierFromRefType");
 
+    DISP_EXPR_COMMON2(TypeDesc);
     _dispExprBlock(fp, expr->e_typeExpr, indent + 1, "e_typeExpr");
     _dispExprBlock(fp, expr->e_paramExpr, indent + 1, "e_paramExpr");
     _dispExprBlock(fp, expr->e_bitLenExpr, indent + 1, "e_bitLenExpr");
@@ -371,7 +390,8 @@ _dispInnerExprOfTypeDesc(FILE *fp, CExprOfTypeDesc *expr, int indent)
 static void
 _dispInnerExprOfErrorNode(FILE *fp, CExprOfErrorNode *expr, int indent)
 {
-    DISP_EXPR_HEAD(ErrorNode);
+    DISP_EXPR_COMMON1(ErrorNode);
+    DISP_EXPR_COMMON2(Symbol);
     _dispExprBlock(fp, expr->e_nearExpr, indent + 1, "e_nearExpr");
 }
 
@@ -379,7 +399,8 @@ _dispInnerExprOfErrorNode(FILE *fp, CExprOfErrorNode *expr, int indent)
 static void
 _dispInnerExprOfNull(FILE *fp, CExprOfNull *expr, int indent)
 {
-    DISP_EXPR_HEAD(Null);
+    DISP_EXPR_COMMON1(Null);
+    DISP_EXPR_COMMON2(Null);
 }
 
 
