@@ -19,11 +19,6 @@ all default: $(EXES)
 	$(XRUN) -n 4 $<
 
 
-#-- special rules
-278-hyphen_d.x: 278-hyphen_d.c
-	$(XCC) -o $@ $< -DDEFINED_AT_COMPILE_TIME='"happy'\ guppy\"
-
-
 #-- cleaning
 clean:
 	rm -f $(EXES) $(C_OBJS)

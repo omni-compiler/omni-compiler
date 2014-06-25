@@ -522,7 +522,7 @@ public class ACCvar {
     }
     case Xtype.POINTER:
     {
-	Xtype elementType = getElementType(varType);//varType.getRef(); //TODO support pointer of pointer of int
+	Xtype elementType = varType.getRef(); //TODO support pointer of pointer of int
 	if(isSubarray()){
 	    sizeObj = Xcons.binaryOp(Xcode.MUL_EXPR, g_subarray.getNumberOfElement(), Xcons.SizeOf(elementType));
 	}else{

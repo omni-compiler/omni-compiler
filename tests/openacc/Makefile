@@ -7,7 +7,7 @@ EXES = $(C_EXES)
 
 .PHONY: clean all default run
 
-all default: $(EXES) update_host_subarray_type update_device_subarray_type
+all default: $(EXES) update_host_subarray_type update_device_subarray_type data_present_type
 
 .SUFFIXES: .x
 
@@ -44,6 +44,14 @@ run: $(EXES)
 	$(XRUN) update_device_subarray_float.x
 	$(XRUN) update_device_subarray_double.x
 
+	$(XRUN) data_present_char.x
+	$(XRUN) data_present_short.x
+	$(XRUN) data_present_int.x
+	$(XRUN) data_present_float.x
+	$(XRUN) data_present_double.x
+
+	$(XRUN) host_data.x
+
 update_host_subarray_type:
 	$(XCC) -o update_host_subarray_char.x update_host_subarray.c -DCHAR
 	$(XCC) -o update_host_subarray_short.x update_host_subarray.c -DSHORT
@@ -58,5 +66,12 @@ update_device_subarray_type:
 	$(XCC) -o update_device_subarray_float.x update_device_subarray.c -DFLOAT
 	$(XCC) -o update_device_subarray_double.x update_device_subarray.c -DDOUBLE
 
+data_present_type:
+	$(XCC) -o data_present_char.x data_present.c -DCHAR
+	$(XCC) -o data_present_short.x data_present.c -DSHORT
+	$(XCC) -o data_present_int.x data_present.c -DINT
+	$(XCC) -o data_present_float.x data_present.c -DFLOAT
+	$(XCC) -o data_present_double.x data_present.c -DDOUBLE
+
 clean:
-	rm -f $(EXES) $(C_OBJS) *.cu
+	rm -f $(EXES) $(C_OBJS) *.cu *.x
