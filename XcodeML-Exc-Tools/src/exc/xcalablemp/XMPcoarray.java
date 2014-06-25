@@ -92,6 +92,10 @@ public class XMPcoarray {
       throw new XMPexception("coarray '" + coarrayName + "' is not declared");
     }
 
+    boolean is_output = true;
+    if(varId.getStorageClass() == StorageClass.EXTERN)
+      is_output = false;
+
     int imageDim = XMPutil.countElmts((XobjList)coarrayDecl.getArg(1));
     boolean isArray = false;
     int varDim = 0;
@@ -124,44 +128,50 @@ public class XMPcoarray {
     }
 
     // _XMP_coarray_malloc_set()
-    String funcName = new String("_XMP_coarray_malloc_set");
-    XobjList funcArgs = Xcons.List(Xcons.SizeOf(elmtType), Xcons.IntConstant(varDim), Xcons.IntConstant(imageDim));
-    if(varId.getStorageClass() != StorageClass.EXTERN){
-      globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
-    }
+    //    String funcName = new String("_XMP_coarray_malloc_set");
+    //    XobjList funcArgs = Xcons.List(Xcons.SizeOf(elmtType), Xcons.IntConstant(varDim), Xcons.IntConstant(imageDim));
+    //    if(is_output){
+    //      globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
+    //    }
 
-    // _XMP_coarray_malloc_array_info()
-    funcName = new String("_XMP_coarray_malloc_array_info");
+    // _XMP_coarray_malloc_array_info_X()
+    String funcName = new String("_XMP_coarray_malloc_info_");
+    funcName = funcName + Integer.toString(varDim);
+    XobjList funcArgs = Xcons.List();
     Vector<Integer> sizeVector = new Vector<Integer>(varDim);
-    if(isArray){
+    if(!isArray){
+      sizeVector.add(new Integer(1));
+      funcArgs.add(Xcons.IntConstant(1));
+    }
+    else{
       for(int i=0;i<varDim;i++,varType=varType.getRef()){
         int dimSize = (int)varType.getArraySize();
         if((dimSize == 0) || (dimSize == -1)) {
           throw new XMPexception("array size should be declared statically");
         }
-	funcArgs = Xcons.List(Xcons.IntConstant(i), Xcons.IntConstant(dimSize));
-        if(varId.getStorageClass() != StorageClass.EXTERN){
-          globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
-        }
         sizeVector.add(new Integer(dimSize));
+        funcArgs.add(Xcons.IntConstant(dimSize));
       }
     }
-    else{
-      funcArgs = Xcons.List(Xcons.IntConstant(0), Xcons.IntConstant(1));
-      if(varId.getStorageClass() != StorageClass.EXTERN){
-        globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
-      }
-      sizeVector.add(new Integer(1));
-    }  
+    
+    if(is_output){
+      funcArgs.add(Xcons.SizeOf(elmtType));
+      globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
+    }
 
-    // _XMP_coarray_malloc_image_info()
-    funcName = new String("_XMP_coarray_malloc_image_info");
+    // _XMP_coarray_malloc_image_info_X()
+    if(is_output){
+      funcName = new String("_XMP_coarray_malloc_image_info_");
+      funcName = funcName + Integer.toString(imageDim);
+      funcArgs = Xcons.List();
+      for(int i=0;i<imageDim-1;i++){
+        funcArgs.add(((XobjList)coarrayDecl.getArg(1)).getArg(i));
+      }
+      globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
+    }
+
     Vector<Integer> imageVector = new Vector<Integer>(imageDim);
     for(int i=0;i<imageDim-1;i++){
-      funcArgs = Xcons.List(Xcons.IntConstant(i), ((XobjList)coarrayDecl.getArg(1)).getArg(i));
-      if(varId.getStorageClass() != StorageClass.EXTERN){
-        globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
-      }
       imageVector.add(((XobjList)coarrayDecl.getArg(1)).getArg(i).getInt());
     }
     imageVector.add(XMPcoarray.ASTERISK);
@@ -187,7 +197,7 @@ public class XMPcoarray {
 
     funcArgs = Xcons.List(descId.getAddr(), addrId.getAddr());
 
-    if(varId.getStorageClass() != StorageClass.EXTERN){
+    if(is_output){
       globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
     }
     

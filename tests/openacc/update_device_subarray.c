@@ -39,14 +39,10 @@ typedef struct quad{
 #endif
 
 #ifndef TYPE
-//#define TYPE quad
-//#define ZEROVAL (quad){0,0,0,0}
-//#define SETVAL (quad){i,j,k,l}
-//#define STRUCT
-
-#define TYPE char
-#define ZEROVAL (0)
-#define SETVAL (i*11 + j*13 + k*17 + l*19)%128
+#define TYPE quad
+#define ZEROVAL (quad){0,0,0,0}
+#define SETVAL (quad){i,j,k,l}
+#define STRUCT
 #endif
 
 /*

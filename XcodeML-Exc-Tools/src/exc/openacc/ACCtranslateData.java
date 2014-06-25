@@ -101,14 +101,19 @@ public class ACCtranslateData {
       Xtype elementType = null;
       int dim = 0; //?? it should be 0
       if(varType.isArray()){
-	  ArrayType arrayType = (ArrayType)varType;
-          elementType = arrayType.getArrayElementType();
-          dim = arrayType.getNumDimensions();
-      }else if(var.isSubarray()){
-          elementType = var.getElementType(varType);
-          dim = var.getSubscripts().Nargs();
+          if(var.isSubarray()){
+              elementType = var.getElementType(varType);
+              dim = var.getSubscripts().Nargs();
+          }else{
+              ArrayType arrayType = (ArrayType)varType;
+              elementType = arrayType.getArrayElementType();
+              dim = arrayType.getNumDimensions();
+          }
       }else if(varType.isPointer()){
           elementType = varType.getRef();
+          if(var.isSubarray()){
+              dim = var.getSubscripts().Nargs(); 
+          }
       }else{
 	  elementType = varType;
       }
@@ -141,7 +146,7 @@ public class ACCtranslateData {
       if(var.isPresent()){
 	//initializeBlock = createFuncCallBlock(GPU_FIND_DATA_FUNC_NAME, Xcons.List(hostDesc.getAddr(), deviceAddr.getAddr(), addrObj, offsetObj, sizeObj));
 	initializeBlock = createFuncCallBlock("_ACC_gpu2_find_data", initArgs);  
-        finalizeBlock = Bcons.emptyBlock(); //createFuncCallBlock(GPU_FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
+        finalizeBlock = createFuncCallBlock(GPU_FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
       }else if(var.isPresentOr()){
         initializeBlock = createFuncCallBlock(GPU_PRESENT_OR_INIT_DATA_FUNC_NAME, Xcons.List(hostDesc.getAddr(), deviceAddr.getAddr(), addrObj, offsetObj, sizeObj));
         finalizeBlock = createFuncCallBlock(GPU_FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
