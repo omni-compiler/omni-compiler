@@ -80,7 +80,7 @@ dispParseTree(FILE *fp, CExpr *expr, char *title)
 /**
    for debugging
 **/
-int _ptree(CExpr *expr)
+int ptree(CExpr *expr)
 {
   if (expr) {
     dispParseTree(stdout, expr, "parse tree");

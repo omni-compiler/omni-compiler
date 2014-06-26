@@ -1654,11 +1654,18 @@ isLValue(CExpr *e, CExprOfTypeDesc *td, int modifiable, CExpr *ope)
     fprintf(stderr, "\nhelloooo\n\n");
 
     if(ETYP_IS_PTR_OR_ARRAY(td) == 0 &&
-        isPointerOrArrayRef(e) == 0 &&
-        isConstExpr(e, 1) &&
-        (modifiable || (ec == EC_COMPOUND_LITERAL)))
-        return 0;
+       isPointerOrArrayRef(e) == 0 &&
+       isConstExpr(e, 1) &&
+       (modifiable || (ec == EC_COMPOUND_LITERAL))) {
 
+        // ID=308
+        // ignore the result of error check for coindexed object
+        if (EXPR_CODE(e) == EC_XMP_COARRAY_REF) {
+            return 1;
+        }
+
+        return 0;
+    }
     return 1;
 }
 
