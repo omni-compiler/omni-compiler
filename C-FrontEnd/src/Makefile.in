@@ -108,7 +108,7 @@ am_C_Front_OBJECTS = c-parser.$(OBJEXT) c-lexer.$(OBJEXT) \
 	c-pragma.$(OBJEXT) c-omp-pragma.$(OBJEXT) \
 	c-xmp-pragma.$(OBJEXT) c-acc-pragma.$(OBJEXT) \
 	c-omp-xcodeml.$(OBJEXT) c-xmp-xcodeml.$(OBJEXT) \
-	c-acc-xcodeml.$(OBJEXT)
+	c-acc-xcodeml.$(OBJEXT) c-ptree.$(OBJEXT)
 C_Front_OBJECTS = $(am_C_Front_OBJECTS)
 C_Front_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -497,7 +497,7 @@ C_Front_SOURCES = \
 	c-gcctype.c c-option.c c-type.c c-convert.c \
 	ccol-list.c ccol-hash.c c-main.c \
 	c-pragma.c c-omp-pragma.c c-xmp-pragma.c c-acc-pragma.c \
-	c-omp-xcodeml.c c-xmp-xcodeml.c c-acc-xcodeml.c
+	c-omp-xcodeml.c c-xmp-xcodeml.c c-acc-xcodeml.c c-ptree.c
 
 EXTRA_C_Front_SOURCES = c-dbgmain.c
 AM_YFLAGS = -v -d

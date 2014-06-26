@@ -80,7 +80,7 @@ dispParseTree(FILE *fp, CExpr *expr, char *title)
 /**
    for debugging
 **/
-int _ptree(CExpr *expr)
+int ptree(CExpr *expr)
 {
   if (expr) {
     dispParseTree(stdout, expr, "parse tree");
@@ -223,7 +223,7 @@ _dispInnerExprOfSymbol(FILE *fp, CExprOfSymbol *expr, int indent)
     if (expr->e_isConstButUnreducable) fprintf(fp, " e_isConstButUnreducable");
     DISP_EXPR_COMMON2(Symbol);
     _dispExprBlock(fp, expr->e_valueExpr, indent + 1, "e_valueExpr");
-    _dispExprBlock(fp, expr->e_codimensions, indent + 1, "e_codimensions");
+    //_dispExprBlock(fp, expr->e_codimensions, indent + 1, "e_codimensions");
 }
 
 

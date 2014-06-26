@@ -1649,17 +1649,19 @@ isLValue(CExpr *e, CExprOfTypeDesc *td, int modifiable, CExpr *ope)
             return 0;
     }
 
-    // ID=308
-    // skip errorcheck for coindexed object as LHS of assignment stmt.
-
-
     if(ETYP_IS_PTR_OR_ARRAY(td) == 0 &&
-        isPointerOrArrayRef(e) == 0 &&
-        isConstExpr(e, 1) &&
-        (modifiable || (ec == EC_COMPOUND_LITERAL)))
-    fprintf(stderr, "\nhelloooo\n\n");
-        return 0;
+       isPointerOrArrayRef(e) == 0 &&
+       isConstExpr(e, 1) &&
+       (modifiable || (ec == EC_COMPOUND_LITERAL))) {
 
+        // ID=308
+        // ignore the result of error check for coindexed object
+        if (EXPR_CODE(e) == EC_XMP_COARRAY_REF) {
+            return 1;
+        }
+
+        return 0;
+    }
     return 1;
 }
 

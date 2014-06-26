@@ -18,7 +18,7 @@
 #include "c-error.h"
 
 extern void dispParseTree(FILE *fp, CExpr *expr, char *title);
-extern int _ptree(CExpr *expr);
+extern int ptree(CExpr *expr);
 
 #endif /*  _C_PTREE_H_ */
 
