@@ -1649,6 +1649,10 @@ isLValue(CExpr *e, CExprOfTypeDesc *td, int modifiable, CExpr *ope)
             return 0;
     }
 
+    // ID=308
+    // skip errorcheck for coindexed object as LHS of assignment stmt.
+    fprintf(stderr, "\nhelloooo\n\n");
+
     if(ETYP_IS_PTR_OR_ARRAY(td) == 0 &&
         isPointerOrArrayRef(e) == 0 &&
         isConstExpr(e, 1) &&
