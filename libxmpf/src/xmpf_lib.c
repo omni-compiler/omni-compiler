@@ -61,15 +61,15 @@ size_t xmp_array_type_size(xmp_desc_t d) {
   return a->type_size;
  
 }
+*/
 
-int xmp_array_gsize(xmp_desc_t d, int dim) {
+int xmp_array_gsize_(xmp_desc_t **d, int *dim) {
 
-  _XMP_array_t *a = (_XMP_array_t *)d;
+  _XMP_array_t *a = *(_XMP_array_t **)d;
 
-  return a->info[dim-1].ser_size;
+  return a->info[*dim-1].ser_size;
 
 }
-*/
 
 int xmp_array_lsize_(xmp_desc_t **d, int *dim, int *lsize){
 

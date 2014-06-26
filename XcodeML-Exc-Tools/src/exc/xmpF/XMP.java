@@ -44,7 +44,11 @@ public class XMP {
   public final static int GMOVE_OUT	= 402;
 
   public final static int MAX_DIM			= 7;
+  public final static int MAX_ASSUMED_SHAPE             = 16;
   public final static int NONBASIC_TYPE			= 99 /*599*/;
+
+  public final static String SIZE_ARRAY_NAME            = "xmp_size_array";
+  public final static String XMP_COMMON_NAME            = "XMP_COMMON";
 
   public final static String PREFIX_			= "XMP__";
   public final static String DESC_PREFIX_		= "XMP_DESC_";
@@ -208,6 +212,29 @@ public class XMP {
       return NONBASIC_TYPE;
     }
     return t;
+  }
+
+  public static Ident declOrGetSizeArray(Block b, XMPenv env){
+
+    Ident sizeArray = env.findVarIdent(SIZE_ARRAY_NAME, b);
+
+    if (sizeArray == null){
+
+      Xobject sizeExprs[] = new Xobject[2];
+      sizeExprs[0] = Xcons.FindexRange(Xcons.IntConstant(0), Xcons.IntConstant(XMP.MAX_ASSUMED_SHAPE - 1));
+      sizeExprs[1] = Xcons.FindexRange(Xcons.IntConstant(0), Xcons.IntConstant(XMP.MAX_DIM - 1));
+      Xtype sizeArrayType = Xtype.Farray(Xtype.FintType, sizeExprs);
+      sizeArray = env.declIdent(SIZE_ARRAY_NAME, sizeArrayType, false, b);
+      sizeArray.setStorageClass(StorageClass.FCOMMON);
+
+      Xobject decls = env.getCurrentDef().getBlock().getBody().getDecls();
+      decls.add(Xcons.List(Xcode.F_COMMON_DECL,
+			   Xcons.List(Xcode.F_VAR_LIST,
+				      Xcons.Symbol(Xcode.IDENT, XMP_COMMON_NAME),
+				      Xcons.List(Xcons.FvarRef(sizeArray)))));
+    }
+
+    return sizeArray;
   }
 
   public static void exitByError() {

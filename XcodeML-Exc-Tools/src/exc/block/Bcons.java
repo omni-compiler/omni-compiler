@@ -345,7 +345,12 @@ public class Bcons
                 b.setLineNo(v.getLineNo());
                 b_list.add(b);
             }
-            Statement s = new Statement(v.getArg(0));
+            //Statement s = new Statement(v.getArg(0));
+	    Statement s = null;
+	    if (v.getArg(0).Opcode() == Xcode.FUNCTION_CALL)
+	      s = new Statement(v);
+	    else
+	      s = new Statement(v.getArg(0));
             s.setLineNo(v.getLineNo());
             b.getBasicBlock().add(s);
             break;
@@ -437,8 +442,12 @@ public class Bcons
 
         case EXPR_STATEMENT:
             /* signle statement Basic Block */
-            return Statement(v.getArg(0));
-        
+            //return Statement(v.getArg(0));
+	    if (v.getArg(0).Opcode() == Xcode.FUNCTION_CALL)
+	      return Statement(v);
+	    else
+	      return Statement(v.getArg(0));
+
         case PRAGMA_LINE:
         case TEXT:
             return new SimpleBlock(statement_list_code(), BasicBlock.Statement(v));

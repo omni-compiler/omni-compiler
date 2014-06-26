@@ -37,8 +37,22 @@ public class XMParray {
   StorageClass sclass;
   boolean is_linearized = false;
 
+  private int NthAssumedShape = -1;
+
   // null constructor
   public XMParray() { }
+
+  public XMParray(XMParray orig, Ident newId, String newName, Ident newLocalId){
+    arrayId = newId;
+    name = newName;
+    type = orig.type;
+    elementType = orig.elementType;
+    localId = newLocalId;
+    dims = orig.dims;
+    descId = orig.descId;
+    template = orig.template;
+    sclass = orig.sclass;
+  }    
 
   public String toString(){
     String s = "{Array("+name+", id="+arrayId+"):";
@@ -114,6 +128,10 @@ public class XMParray {
 
   public int getShadowRight(int index) {
     return dims.elementAt(index).shadow_right;
+  }
+
+  public Ident getSizeVarAt(int index) {
+    return dims.elementAt(index).a_dim_size_var;
   }
 
   public Ident getArrayId() {
@@ -238,13 +256,45 @@ public class XMParray {
     Xtype localType = null;
     Xobject sizeExprs[];
     switch(sclass){
-    case FPARAM:
-      sizeExprs = new Xobject[1];
-      sizeExprs[0] = Xcons.FindexRange(Xcons.IntConstant(0),
-				       Xcons.IntConstant(1));
-      localType = Xtype.Farray(elementType,sizeExprs);
-      setLinearized(true);
+    case FPARAM: {
+
+      if (type.isFassumedShape()){
+	Xobject id_list = env.getCurrentDef().getBlock().getBody().getIdentList();
+	int k = 0;
+	for (Xobject i: (XobjList) id_list){
+	  Ident id = (Ident)i;
+	  if (id.Type().isFassumedShape()){
+	    if (id.getSym().equals(name)){
+	      NthAssumedShape = k;
+	      break;
+	    }
+	    k++;
+	  }
+	}
+	if (NthAssumedShape == -1) XMP.fatal("non-dummy argument cannot have a deferred shape.");
+      }
+
+      Xtype ftype = env.getCurrentDef().getDef().getNameObj().Type();
+
+      if (env.getCurrentDef().getDef().getParent() != null ||
+	  (ftype.isFsubroutine() && NthAssumedShape >= 0 &&
+	   NthAssumedShape < XMP.MAX_ASSUMED_SHAPE)){ // to assumed-shape
+	sizeExprs = new Xobject[arrayDim];
+	for (int i = 0; i < arrayDim; i++)
+	  sizeExprs[i] = Xcons.FindexRangeOfAssumedShape(Xcons.IntConstant(0));
+	localType = Xtype.Farray(elementType, sizeExprs);
+	localType.setTypeQualFlags(type.getTypeQualFlags());
+      }
+      else { // now linearize it
+	sizeExprs = new Xobject[1];
+	sizeExprs[0] = Xcons.FindexRange(Xcons.IntConstant(0),
+					 Xcons.IntConstant(1));
+	localType = Xtype.Farray(elementType, sizeExprs);
+	setLinearized(true);
+      }
       break;
+
+    }
     case FLOCAL:
     case FSAVE:
       sizeExprs = new Xobject[arrayDim];
@@ -474,19 +524,33 @@ public class XMParray {
 
     if (type.isFallocatable()) return;
 
+    Ident sizeArray = null;
+    if (type.isFassumedShape()){
+      sizeArray = XMP.declOrGetSizeArray(body.getHead(), env);
+    }
+
     f = env.declInternIdent(XMP.array_align_info_f,Xtype.FsubroutineType);
     for(int i = 0; i < dims.size(); i++){
       XMPdimInfo info = dims.elementAt(i);
+
+      Xobject upper = null;
+      if (info.getUpper() == null && NthAssumedShape >= 0 && NthAssumedShape < XMP.MAX_ASSUMED_SHAPE){
+	upper = Xcons.FarrayRef(sizeArray.Ref(), Xcons.IntConstant(NthAssumedShape), Xcons.IntConstant(i));
+      }
+      else {
+	upper = info.getUpper();
+      }
+
       if(info.isAlignAny()){
 	args = Xcons.List(descId.Ref(),Xcons.IntConstant(i),
-			  info.getLower(),info.getUpper(),
+			  info.getLower(), upper,
 			  Xcons.IntConstant(-1),
 			  Xcons.IntConstant(0));
       } else {
 	Xobject off = info.getAlignSubscriptOffset();
 	if(off == null) off = Xcons.IntConstant(0);
 	args = Xcons.List(descId.Ref(),Xcons.IntConstant(i),
-			  info.getLower(),info.getUpper(),
+			  info.getLower(), upper,
 			  Xcons.IntConstant(info.getAlignSubscriptIndex()),
 			  off);
       }

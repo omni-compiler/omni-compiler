@@ -87,8 +87,12 @@ public class XMPrewriteExpr
 	    Ident f = env.declInternIdent(XMP.finalize_all_f, Xtype.FsubroutineType);
 	    Xobject call = f.callSubroutine();
 	    st.insert(call);
-	  break;
+	    break;
 	  }
+
+	case EXPR_STATEMENT: // subroutine call
+	  insertSizeArray(st, fb);
+	  break;
 
 	}
       }
@@ -509,4 +513,103 @@ public class XMPrewriteExpr
       return null;
     }
   }
+
+  private void insertSizeArray(Statement st, FunctionBlock fb){
+
+    Xobject x = st.getExpr().getArg(0);
+    if (x.Opcode() != Xcode.FUNCTION_CALL) return;
+
+    Ident sizeArray = XMP.declOrGetSizeArray(fb, env);
+
+    String fname = x.getArg(0).getString();
+    Xtype ftype = x.getArg(0).Type();
+    XobjList arg_list = (XobjList)x.getArg(1);
+
+    //
+    // get interface of each argument
+    //
+
+    XobjList param_list = null;
+    if (ftype != null){
+      // internal or module procedures
+      param_list = (XobjList)ftype.getFuncParam();
+    }
+
+    if (param_list == null){
+	    
+      XobjList decl_list = (XobjList)fb.getBody().getDecls();
+
+      // retrieve interface block
+    DECLLOOP: for (Xobject decl: decl_list){
+	if (decl.Opcode() == Xcode.F_INTERFACE_DECL){
+	  XobjList func_list = (XobjList)decl.getArg(3);
+	  for (Xobject func: func_list){
+	    if (func.getArg(0).getString().equals(fname)){
+	      ftype = func.getArg(0).Type();
+	      param_list = (XobjList)ftype.getFuncParam();
+	      break DECLLOOP;
+	    }
+	  }
+	}
+      }
+    }
+
+    if (param_list == null) return;
+
+    int k = 0;
+    for (int i = 0; i < param_list.Nargs(); i++){
+
+      if (!param_list.getArg(i).Type().isFassumedShape()) continue;
+	
+      Xobject arg = arg_list.getArg(i);
+      Ident id = env.findVarIdent(arg.getName(), fb);
+      XMParray array = XMParray.getArray(id);
+
+      Xtype atype;
+      int arrayDim;
+      Ident sizeFunc;
+      Xobject arg0;
+
+      if (array != null){
+	atype = array.getType();
+	arrayDim = array.getDim();
+	//sizeFunc = env.declIntrinsicIdent("xmp_array_gsize", Xtype.FintFunctionType);
+	sizeFunc = env.declExternIdent("xmp_array_gsize", Xtype.FintFunctionType);
+	arg0 = array.getDescId().Ref();
+      }
+      else {
+	atype = arg.Type();
+	arrayDim = atype.getNumDimensions();
+	sizeFunc = env.declIntrinsicIdent("size", Xtype.FintFunctionType);
+	arg0 = arg;
+      }
+
+      if (atype.isFallocatable() || atype.isFassumedShape()){
+	for (int j = 0; j < arrayDim; j++){
+	  Xobject lhs = Xcons.FarrayRef(sizeArray.Ref(), Xcons.IntConstant(k), Xcons.IntConstant(j));
+	  Xobject rhs = sizeFunc.Call(Xcons.List(arg0, Xcons.IntConstant(j+1)));
+	  st.insert(Xcons.Set(lhs, rhs));
+	}
+      }
+      else {
+	Xobject declSize[] = atype.getFarraySizeExpr();
+	for (int j = 0; j < arrayDim; j++){
+	  Xobject lhs = Xcons.FarrayRef(sizeArray.Ref(), Xcons.IntConstant(k), Xcons.IntConstant(j));
+	  Xobject rhs = Xcons.binaryOp(Xcode.PLUS_EXPR,
+				       Xcons.binaryOp(Xcode.MINUS_EXPR,
+						      declSize[j].getArg(1),
+						      declSize[j].getArg(0)),
+				       Xcons.IntConstant(1));
+	  st.insert(Xcons.Set(lhs, rhs));
+	}
+
+      }
+
+      k++;
+      if (k >= XMP.MAX_ASSUMED_SHAPE) break;
+
+    }
+
+  }
+
 }

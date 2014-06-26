@@ -267,6 +267,11 @@ public class XobjectDef extends PropObject implements IXobject, XobjectVisitable
     return null;
   }
     
+  public Ident findIdent(String name)
+  {
+    return findIdent(name, IXobject.FINDKIND_ANY);
+  }
+
   public Ident findVarIdent(String name)
   {
     return findIdent(name, IXobject.FINDKIND_VAR);
