@@ -2105,7 +2105,7 @@ cat << EOF
     Fortran Compiler FLAG : "$BEFC_OPTION"
 EOF
 
-if test "$target" != "Kcomputer-linux-gnu" -o "$target" != "FX10-linux-gnu"; then
+if test "$target" != "Kcomputer-linux-gnu" -a "$target" != "FX10-linux-gnu"; then
   echo ""
   echo "  Options:"
   echo "    GASNet                : $use_gasnet"
