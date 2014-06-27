@@ -113,6 +113,9 @@ public class ACCtranslateData {
           elementType = varType.getRef();
           if(var.isSubarray()){
               dim = var.getSubscripts().Nargs(); 
+              for(int i=1; i<dim;i++){
+		  elementType = elementType.getRef();
+              }
           }
       }else{
 	  elementType = varType;
