@@ -27,6 +27,8 @@ for i in ${OM_OPTIONS}; do
         -enable-gpu)
             LIBS="${LIBS} -L${GPGPU_PREFIX}/lib64 -lxmp_gpu -lcudart"
             newOpts="${newOpts} ${i}";;
+	-facc)
+	    LIBS="${LIBS} -L${GPGPU_PREFIX}/lib64 -lacc -lcudart";;
         -prof-scalasca)
             hasScalasca=1;;
         -prof-tlog)
