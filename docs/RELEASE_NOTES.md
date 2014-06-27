@@ -1,7 +1,7 @@
 Omni Compiler Software RELEASE NOTES
 
 # ver. 0.8.0      2014/04/25
-* Support Coarray communication for the K computer.
+* Support Coarray communication for the K computer and FX10.
 * Support the gblock distribution
 * Support the template_fix directive
 * Support the array directive (with some restrictions)
@@ -17,7 +17,7 @@ Omni Compiler Software RELEASE NOTES
 
 # ver. 0.6.1      2013/03/27
 * Supports stride Coarray function. (only by using GASNet)
-* Supports coarray function on the K computer.
+* Supports coarray function on the K computer and FX10.
 
 # ver. 0.6.0      2012/11/12
 * Initial release of XcalableMP Fortran compiler.

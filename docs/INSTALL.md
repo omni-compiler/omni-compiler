@@ -21,8 +21,8 @@ HOW TO INSTALL
  * flex gcc gfortran gcc-c++ java-1.7.0-openjdk-devel ant openmpi-devel libxml2-devel byacc make
 
 ## Usage of local-view operations (coarray, post/wait, lock/unlock)
- * Need to install GASNet (http://gasnet.lbl.gov) except for the K computer.
- * On the K computer, you can use local-view operations by using Fujitsu RDMA.
+ * Need to install GASNet (http://gasnet.lbl.gov) except for the K computer and FX10.
+ * On the K computer or FX10, you can use local-view operations by using Fujitsu RDMA.
 
 ## Usage of OpenACC compiler
  * Need to install CUDA (https://developer.nvidia.com/cuda-zone).
@@ -40,8 +40,9 @@ HOW TO INSTALL
  If you want to use OpenACC compiler
     $ ./configure --with-gpuDir=[CUDA-INSTALL-DIR] --enable-openacc --prefix=[INSTALL-DIR]
 
-### On the K computer
+### On the K computer or FX10
     $ ./configure --target=Kcomputer-linux-gnu --prefix=[INSTALL-DIR]
+    $ ./configure --target=FX10-linux-gnu --prefix=[INSTALL-DIR]
 
 ### On Cray machines
     $ ./configure --target=Cray-linux-gnu --prefix=[INSTALL-DIR]
