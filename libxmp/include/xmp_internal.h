@@ -42,6 +42,8 @@ extern int _XMPF_running;
 
 #ifdef __cplusplus
 extern "C" {
+#define restrict __restrict__
+#define template template_
 #endif
 
 // ----- libxmp ------------------------------------------------------
