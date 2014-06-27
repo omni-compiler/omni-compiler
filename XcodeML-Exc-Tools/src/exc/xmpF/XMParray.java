@@ -258,7 +258,13 @@ public class XMParray {
     switch(sclass){
     case FPARAM: {
 
-      if (type.isFassumedShape()){
+      Xtype ftype = env.getCurrentDef().getDef().getNameObj().Type();
+
+      if (ftype.isFunction() && !ftype.isFsubroutine() && type.isFassumedShape()){
+	XMP.fatal("assumed-shape distributed arrays in functions are not supported.");
+      }
+
+      if (ftype.isFsubroutine() && type.isFassumedShape()){
 	Xobject id_list = env.getCurrentDef().getBlock().getBody().getIdentList();
 	int k = 0;
 	for (Xobject i: (XobjList) id_list){
@@ -274,11 +280,8 @@ public class XMParray {
 	if (NthAssumedShape == -1) XMP.fatal("non-dummy argument cannot have a deferred shape.");
       }
 
-      Xtype ftype = env.getCurrentDef().getDef().getNameObj().Type();
-
       if (env.getCurrentDef().getDef().getParent() != null ||
-	  (ftype.isFsubroutine() && NthAssumedShape >= 0 &&
-	   NthAssumedShape < XMP.MAX_ASSUMED_SHAPE)){ // to assumed-shape
+	  (NthAssumedShape >= 0 && NthAssumedShape < XMP.MAX_ASSUMED_SHAPE)){ // to assumed-shape
 	sizeExprs = new Xobject[arrayDim];
 	for (int i = 0; i < arrayDim; i++)
 	  sizeExprs[i] = Xcons.FindexRangeOfAssumedShape(Xcons.IntConstant(0));

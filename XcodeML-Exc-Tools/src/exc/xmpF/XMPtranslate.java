@@ -116,8 +116,13 @@ public class XMPtranslate implements XobjectDefVisitor
       Ident id = d.findIdent(j.getName());
       args.add(id.Ref());
     }
-        
-    newFuncBody.add(funcId.callSubroutine(args));
+
+    if (funcType.isFsubroutine())
+      newFuncBody.add(funcId.callSubroutine(args));
+    else {
+      Ident dummy = Ident.FidentNotExternal(XMP.genSym("XMP_dummy"), funcType.getRef());
+      newFuncBody.add(Xcons.Set(dummy.Ref(), funcId.Call(args)));
+    }
 
     Xobject newDef = Xcons.List(Xcode.FUNCTION_DEFINITION, d.getNameObj(), (Xobject)idList,
 				(Xobject)decls, newFuncBody.toXobject());
@@ -143,10 +148,17 @@ public class XMPtranslate implements XobjectDefVisitor
 	  int arrayDim = type.getNumDimensions();
 	  Xobject sizeExprs[] = new Xobject[arrayDim];
 	  for (int i = 0; i < arrayDim; i++){
-	    sizeExprs[i] = Xcons.FindexRange(Xcons.IntConstant(0),
-					     Xcons.binaryOp(Xcode.MINUS_EXPR,
-							    array.getSizeVarAt(i),
-							    Xcons.IntConstant(1)));
+	    Xobject lb;
+	    if (array.isDistributed(i)){
+	      sizeExprs[i] = Xcons.FindexRange(Xcons.IntConstant(0),
+					       Xcons.binaryOp(Xcode.MINUS_EXPR,
+							      array.getSizeVarAt(i),
+							      Xcons.IntConstant(1)));
+	    }
+	    else {
+	      sizeExprs[i] = Xcons.FindexRange(type.getFarraySizeExpr()[i].getArg(0),
+					       type.getFarraySizeExpr()[i].getArg(1));
+	    }
 	  }
 	  Xtype localType = Xtype.Farray(type.getRef(), sizeExprs);
 	  localType.setTypeQualFlags(type.getTypeQualFlags());
