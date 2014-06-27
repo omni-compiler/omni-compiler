@@ -23,6 +23,8 @@ extern "C" {
   void _ACC_gpu_find_data(void **host_data_desc, void **device_addr, void *addr, size_t offset, size_t size);
   void _ACC_gpu2_init_data(void **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);  
   void _ACC_gpu2_copy_data(void *desc, int direction, int isAsync, ...);
+  void _ACC_gpu2_copy_subdata(void *desc, int direction, int asyncId, ...);
+  void _ACC_gpu2_find_data(void **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);
 
   void _ACC_gpu_get_data(void **host_data_desc, void **device_addr, void *host_addr, size_t size);
 
