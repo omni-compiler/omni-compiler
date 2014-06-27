@@ -1,7 +1,7 @@
 program main
   include 'xmp_lib.h'
   integer,parameter:: N=100
-  integer random_array(N*N), ans_val, val, result
+  integer random_array(N*N), ans_val, result
   integer a(N,N), sa
   real*8  b(N,N), sb
   real*4  c(N,N), sc

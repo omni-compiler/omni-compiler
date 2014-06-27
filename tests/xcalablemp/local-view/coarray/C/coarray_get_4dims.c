@@ -84,5 +84,7 @@ int main(){
   if(xmp_node_num() == 1)
     if(ret == 0) printf("PASS\n");
     else fprintf(stderr, "ERROR\n");
+
+  return ret;
 }
 

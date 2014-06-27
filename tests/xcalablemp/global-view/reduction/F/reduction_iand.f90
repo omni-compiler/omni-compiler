@@ -1,7 +1,7 @@
 program main
   include 'xmp_lib.h'
   integer,parameter:: N=10
-  integer random_array(N), ans_val, val
+  integer random_array(N), ans_val
   integer a(N), sa, result
   real tmp(N)
 !$xmp nodes p(*)

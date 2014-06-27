@@ -567,7 +567,7 @@ IS_CRAY="No"
 IS_AIX="No"
 AIX_OPT=""
 if test "$target" != "$host"; then
-  if test "$target" = "Kcomputer-linux-gnu"; then
+  if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
     BECC="mpifccpx"
     BEFC="mpifrtpx"
     BECC_OPTION="-Xg -noansi -Kfast"
@@ -614,7 +614,7 @@ if test "$IS_AIX" = "Yes"; then
   AH_TEMPLATE(AIX_64BIT, [aix int64_t])
 fi
 
-AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu")
+AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
 AC_SUBST(FJRDMA)
 
 # --------------------------------------------------------------------
@@ -651,7 +651,7 @@ AC_SUBST(SUPERUX)
 # Specify Options of Backend C Compiler when compiling XMP code
 IS_PGCC="No"
 AC_MSG_CHECKING([backend C compiler])
-if test "$target" = "Kcomputer-linux-gnu"; then
+if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT="-Xg -noansi"
   OMC_CONF_LNK_OPT="-Kopenmp"
@@ -739,7 +739,7 @@ if test $enableF2F = yes; then
   AC_PROG_FC([${FC},gfortran,ifort])
   AC_MSG_CHECKING([backend Fortran compiler])
 
-  if test "$target" = "Kcomputer-linux-gnu"; then
+  if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
     OMF_CONF_LX2X_OPT=""
     OMF_CONF_NTV_OPT="-Free"
     OMF_CONF_LNK_OPT="-Kopenmp"
@@ -827,7 +827,7 @@ NM=""
 # check ranlib & ar & nm
 if test "$target" != "$host"; then
    case "$target" in
-	Kcomputer-linux-gnu)
+	Kcomputer-linux-gnu|FX10-linux-gnu)
 #		AC_CHECK_TOOL([RANLIB], [ranlibpx], [:])
 		AC_CHECK_PROG([RANLIB], [ranlibpx], [ranlibpx], [:])
 		if test "${RANLIB}" = ":"; then
@@ -945,7 +945,7 @@ fi
 # check CC for libraries
 if test "$target" != "$host"; then
    case "$target" in
-	Kcomputer-linux-gnu)
+	Kcomputer-linux-gnu|FX10-linux-gnu)
 		CC_LIB="fccpx -Xg -std=gnu99"
 		AC_SUBST(CC_LIB) ;;
         MIC-linux-gnu)
@@ -1999,7 +1999,7 @@ esac
 
 if test "$target" != "$host"; then
    case "$target" in
-        Kcomputer-linux-gnu)
+        Kcomputer-linux-gnu|FX10-linux-gnu)
                 LDFLAGS="";;
         MIC-linux-gnu)
                 LDFLAGS="";;
@@ -2105,7 +2105,7 @@ cat << EOF
     Fortran Compiler FLAG : "$BEFC_OPTION"
 EOF
 
-if test "$target" != "Kcomputer-linux-gnu"; then
+if test "$target" != "Kcomputer-linux-gnu" -a "$target" != "FX10-linux-gnu"; then
   echo ""
   echo "  Options:"
   echo "    GASNet                : $use_gasnet"
