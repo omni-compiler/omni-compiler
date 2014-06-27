@@ -259,15 +259,14 @@ int xmp_align_size(xmp_desc_t d, int dim){
 
   return ival;
 }
+*/
 
-xmp_desc_t xmp_align_template(xmp_desc_t d){
+int xmp_align_template_(xmp_desc_t **d, xmp_desc_t *dt){
 
-  _XMP_array_t *a = (_XMP_array_t *)d;
-
-  return (xmp_desc_t)(a->align_template);
-
+  return xmp_align_template(*d, dt);
 }
 
+/*
 _Bool xmp_template_fixed(xmp_desc_t d){
 
   _XMP_template_t *t = (_XMP_template_t *)d;
@@ -338,39 +337,33 @@ int xmp_dist_stride(xmp_desc_t d, int dim){
   return t->chunk[dim-1].par_stride;
 
 }
-
-xmp_desc_t xmp_dist_nodes(xmp_desc_t d){
-
-  _XMP_template_t *t = (_XMP_template_t *)d;
-
-  return (xmp_desc_t)(t->onto_nodes);
-
-}
-
-int xmp_nodes_ndim(xmp_desc_t d){
-
-  _XMP_nodes_t *n = (_XMP_nodes_t *)d;
-
-    return n->dim;
-
-}
-
-int xmp_nodes_index(xmp_desc_t d, int dim){
-
-  _XMP_nodes_t *n = (_XMP_nodes_t *)d;
-
-  return n->info[dim-1].rank;
-
-}
-
-int xmp_nodes_size(xmp_desc_t d, int dim){
-
-  _XMP_nodes_t *n = (_XMP_nodes_t *)d;
-
-  return n->info[dim-1].size;
-
-}
 */
+
+int xmp_dist_nodes_(xmp_desc_t **d, xmp_desc_t *dn){
+
+  return xmp_dist_nodes(*d, dn);
+
+}
+
+int xmp_nodes_ndims_(xmp_desc_t **d, int *ndims){
+
+  return xmp_nodes_ndims(*d, ndims);
+
+}
+
+int xmp_nodes_index_(xmp_desc_t **d, int *dim, int *index){
+
+  return xmp_nodes_index(*d, *dim, index);
+
+}
+
+
+int xmp_nodes_size_(xmp_desc_t **d, int *dim, int *size){
+
+  return xmp_nodes_size(*d, *dim, size);
+
+}
+
 
 void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
 
