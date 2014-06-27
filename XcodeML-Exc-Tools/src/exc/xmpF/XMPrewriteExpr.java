@@ -214,13 +214,35 @@ public class XMPrewriteExpr
 	{
 	  String fname = x.getArg(0).getString();
 	  if (fname.equalsIgnoreCase("xmp_desc_of")){
-	      XMParray array = (XMParray) x.getArg(1).getArg(0).getProp(XMP.arrayProp);
-	      if (array == null){
-		XMP.errorAt(block,"xmp_desc_of applied to non-global data");
-		XMP.exitByError();
-	      }
+
+	    XMParray array = (XMParray) x.getArg(1).getArg(0).getProp(XMP.arrayProp);
+	    if (array != null){
 	      Xobject desc = array.getDescId();
 	      iter.setXobject(desc);
+	      break;
+	    }
+
+	    String objName = x.getArg(1).getArg(0).getString();
+	    XMPobject obj = env.findXMPobject(objName, block);
+	    if (obj != null) {
+	      Xobject desc = obj.getDescId();
+	      iter.setXobject(desc);
+	      break;
+	    }
+
+	    XMP.errorAt(block, "xmp_desc_of applied to non-XMP object");
+	    XMP.exitByError();
+
+	    break;
+
+	      //XMParray array = (XMParray) x.getArg(1).getArg(0).getProp(XMP.arrayProp);
+	      // if (array == null){
+	      // 	XMP.errorAt(block,"xmp_desc_of applied to non-global data");
+	      // 	XMP.exitByError();
+	      // }
+	      // Xobject desc = array.getDescId();
+	      // iter.setXobject(desc);
+
 	  }
 	  else if (fname.equalsIgnoreCase("xmp_transpose")){
 	    XMParray array0 = (XMParray) x.getArg(1).getArg(0).getProp(XMP.arrayProp);

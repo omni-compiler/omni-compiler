@@ -1678,6 +1678,15 @@ AC_ARG_WITH(gpucc,
 AC_SUBST(GPU_CMD)
 
 # --------------------------------------------------------------------
+# specify GPU C compiler flags
+
+AC_ARG_WITH(gpu-cflags,
+    [  --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)],
+    [GPU_CFLAGS="${withval}"], [GPU_CFLAGS="-arch=sm_20 -O3"])
+
+AC_SUBST(GPU_CFLAGS)
+
+# --------------------------------------------------------------------
 # specify libgpu path
 
 AC_ARG_WITH(gpuDir,
