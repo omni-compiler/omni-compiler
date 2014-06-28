@@ -113,9 +113,7 @@ public class ACCtranslateData {
           elementType = varType.getRef();
           if(var.isSubarray()){
               dim = var.getSubscripts().Nargs(); 
-              for(int i=1; i<dim;i++){
-		  elementType = elementType.getRef();
-              }
+							elementType = var.getElementType(varType);
           }
       }else{
 	  elementType = varType;
@@ -151,7 +149,8 @@ public class ACCtranslateData {
 	initializeBlock = createFuncCallBlock("_ACC_gpu2_find_data", initArgs);  
         finalizeBlock = createFuncCallBlock(GPU_FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
       }else if(var.isPresentOr()){
-        initializeBlock = createFuncCallBlock(GPU_PRESENT_OR_INIT_DATA_FUNC_NAME, Xcons.List(hostDesc.getAddr(), deviceAddr.getAddr(), addrObj, offsetObj, sizeObj));
+					//        initializeBlock = createFuncCallBlock(GPU_PRESENT_OR_INIT_DATA_FUNC_NAME, Xcons.List(hostDesc.getAddr(), deviceAddr.getAddr(), addrObj, offsetObj, sizeObj));
+	initializeBlock = createFuncCallBlock("_ACC_gpu2_pinit_data", initArgs);
         finalizeBlock = createFuncCallBlock(GPU_FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
       }else{
 	//initializeBlock = createFuncCallBlock(GPU_INIT_DATA_FUNC_NAME, Xcons.List(hostDesc.getAddr(), deviceAddr.getAddr(), addrObj, offsetObj, sizeObj));

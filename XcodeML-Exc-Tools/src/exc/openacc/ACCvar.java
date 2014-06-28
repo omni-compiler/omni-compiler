@@ -652,7 +652,7 @@ public class ACCvar {
           return ((ArrayType)t).getArrayElementType();
       }else if(t.isPointer()){
           return getElementType(t.getRef());
-      }else if(t.isBasic()){
+      }else if(t.isBasic() || t.isStruct()){
           return t;
       }else{
           return null;

@@ -46,65 +46,115 @@ void _ACC_gpu_init_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, vo
   _ACC_gpu_add_data(host_data_d);
 }
 
+#define INIT_DEFAULT 0
+#define INIT_PRESENT 1
+#define INIT_PRESENTOR 2
+
+static void init_data(int mode, _ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, va_list args);
 void _ACC_gpu2_init_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...){
+	va_list args;
+	va_start(args, dim);
+	init_data(INIT_DEFAULT, host_data_desc, device_addr, addr, type_size, dim, args);
+	va_end(args);
+}
+void _ACC_gpu2_pinit_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...){
+	va_list args;
+	va_start(args, dim);
+	init_data(INIT_PRESENTOR, host_data_desc, device_addr, addr, type_size, dim, args);
+	va_end(args);
+}
+void _ACC_gpu2_find_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...){
+	va_list args;
+	va_start(args, dim);
+	init_data(INIT_PRESENT, host_data_desc, device_addr, addr, type_size, dim, args);
+	va_end(args);
+}
 
-  va_list args;
-  int i;
+static void init_data(int mode, _ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, va_list args){
+
+	//  va_list args;
   _ACC_gpu_data_t *host_data_d = NULL;
-
-  // alloc desciptors
-  host_data_d = (_ACC_gpu_data_t *)_ACC_alloc(sizeof(_ACC_gpu_data_t));
-
-  // init host descriptor
-  host_data_d->host_addr = addr;
-  host_data_d->type_size = type_size;
-  host_data_d->dim = dim;
 
   // set array info
   _ACC_gpu_array_t *array_info = (_ACC_gpu_array_t *)_ACC_alloc(dim * sizeof(_ACC_gpu_array_t));
-  va_start(args, dim);
-  for(i=0;i<dim;i++){
+	//  va_start(args, dim);
+	//printf("array");
+  for(int i=0;i<dim;i++){
     array_info[i].dim_offset = va_arg(args, int);
     if(i != 0 && array_info[i].dim_offset != 0){
       _ACC_fatal("Non-zero lower is allowed only top dimension");
     }
     array_info[i].dim_elmnts = va_arg(args, int);
+		//printf("[%d:%d]", array_info[i].dim_offset, array_info[i].dim_elmnts );
   }
-  va_end(args);
+	//printf("\n");
+  //va_end(args);
   int accumulation = 1;
-  for(i=dim-1; i >= 0; i--){
+  for(int i=dim-1; i >= 0; i--){
     array_info[i].dim_acc = accumulation;
     accumulation *= array_info[i].dim_elmnts;
   }
-  host_data_d->array_info = array_info;
   size_t size = accumulation * type_size;
-  size_t offset = array_info[0].dim_offset * array_info[0].dim_acc * type_size;
+  size_t offset = (dim > 0)? array_info[0].dim_offset * array_info[0].dim_acc * type_size : 0;
 
-  //device memory alloc
-  _ACC_gpu_alloc(&(host_data_d->device_addr), size);
+	_ACC_gpu_data_t *present_host_data_d = NULL;
+	void *present_dev_addr;
+	//find host_data_d
+	if(mode == INIT_PRESENT || mode == INIT_PRESENTOR){
+		_ACC_gpu_get_data_sub(&present_host_data_d, &present_dev_addr, addr, offset, size);
+	}
+
+	if(mode == INIT_PRESENT){
+		if(present_host_data_d == NULL){
+			_ACC_fatal("gpu2 data not found");			
+		}
+	}
+
+  // alloc & init host descriptor
+	host_data_d = (_ACC_gpu_data_t *)_ACC_alloc(sizeof(_ACC_gpu_data_t));
+  host_data_d->host_addr = addr;
+	////device_addr
   host_data_d->offset = offset;
   host_data_d->size = size;
-  host_data_d->is_original = true;
+  /////host_data_d->is_original = true;
+	/////is_pagelocked;
+	/////is_original
+  host_data_d->type_size = type_size;
+  host_data_d->dim = dim;
+  host_data_d->array_info = array_info;
+
+
+	if(present_host_data_d == NULL){
+		//device memory alloc
+		_ACC_gpu_alloc(&(host_data_d->device_addr), size);
+		host_data_d->is_original = true;
+
+		//about pagelock
+		unsigned int flags;
+		cudaHostGetFlags(&flags, addr);
+		cudaError_t error = cudaGetLastError();
+		if(error == cudaSuccess){
+			//printf("memory is pagelocked\n");
+			host_data_d->is_pagelocked = true;
+		}else{
+			//printf("memory is not pagelocked\n");
+			host_data_d->is_pagelocked = false;
+		}
+		host_data_d->is_registered = false;
+
+		_ACC_gpu_add_data(host_data_d);
+	}else{
+		host_data_d->device_addr = (void *)((char*)(present_dev_addr) + offset);
+		host_data_d->is_original = false;
+    host_data_d->is_pagelocked = present_host_data_d->is_pagelocked;
+    host_data_d->is_registered = present_host_data_d->is_registered;
+	}
 
   //printf("hostaddr=%p, size=%zu, offset=%zu\n", addr, size, offset);
-  // about pagelock
-  unsigned int flags;
-  cudaHostGetFlags(&flags, addr);
-  cudaError_t error = cudaGetLastError();
-  if(error == cudaSuccess){
-    //printf("memory is pagelocked\n");
-    host_data_d->is_pagelocked = true;
-  }else{
-    //printf("memory is not pagelocked\n");
-    host_data_d->is_pagelocked = false;
-  }
-  host_data_d->is_registered = false;
 
   // init params
   *host_data_desc = host_data_d;
   *device_addr = (void *)((char*)(host_data_d->device_addr) - offset);
-
-  _ACC_gpu_add_data(host_data_d);
 }
 
 
@@ -118,7 +168,6 @@ void _ACC_gpu_pinit_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, v
   if(present_host_data_desc != NULL){
     is_present = 1;
   }
-
 
   // alloc desciptor
   host_data_d = (_ACC_gpu_data_t *)_ACC_alloc(sizeof(_ACC_gpu_data_t));
@@ -554,6 +603,7 @@ void _ACC_gpu_find_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, vo
   }
 }
 
+/*
 void _ACC_gpu2_find_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...){
   int i;
   va_list args;
@@ -586,6 +636,7 @@ void _ACC_gpu2_find_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, v
   (*host_data_desc)->type_size = type_size;
   (*host_data_desc)->dim = dim;
 }
+*/
 
 static void register_memory(void *host_addr, size_t size){
   printf("register_memory\n");
