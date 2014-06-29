@@ -30,7 +30,7 @@ extern "C" {
   void _ACC_gpu_calloc(void **addr, size_t size);
   void _ACC_gpu_free(void *addr);
   void _ACC_gpu_copy(void *host_addr, void *device_addr, size_t size, int direction);
-  void _ACC_gpu_copy_async_all(void *host_addr, void *device_addr, size_t size, int direction);
+  //  void _ACC_gpu_copy_async_all(void *host_addr, void *device_addr, size_t size, int direction);
   void _ACC_gpu_copy_async(void *host_addr, void *device_addr, size_t size, int direction, int id);
 
   //acc_gpu_data_table.c

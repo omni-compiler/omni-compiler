@@ -145,15 +145,6 @@ void _ACC_copy_data(_ACC_gpu_data_t *desc, int direction, int asyncId){
     _ACC_gpu_copy(host_addr, dev_addr, size, direction);
     break;
   case ACC_ASYNC_NOVAL:
-    {
-      //pagelock if data is not pagelocked
-      if(desc->is_pagelocked == false && desc->is_registered == false){
-	register_memory(desc->host_addr, desc->size);
-	desc->is_registered = true;
-      }
-      _ACC_gpu_copy_async_all(host_addr, dev_addr, size, direction);
-      break;
-    }
   default:
     {
       //pagelock if data is not pagelocked
@@ -194,27 +185,13 @@ static void copy_subdata_using_pack_vector(_ACC_gpu_data_t *desc, int direction,
   if(direction == 400){
     //host to device
     _ACC_pack_vector(host_buf, host_data, count, blocklength, stride, type_size);
-    switch(asyncId){
-    case ACC_ASYNC_SYNC:
-    case ACC_ASYNC_NOVAL:
-      _ACC_gpu_copy_async_all(host_buf, dev_buf, buf_size, _ACC_GPU_COPY_HOST_TO_DEVICE);
-      break;
-    default:
-      _ACC_gpu_copy_async(host_buf, dev_buf, buf_size, _ACC_GPU_COPY_HOST_TO_DEVICE, asyncId);
-    }
+    _ACC_gpu_copy_async(host_buf, dev_buf, buf_size, _ACC_GPU_COPY_HOST_TO_DEVICE, asyncId);
     _ACC_gpu_unpack_vector(dev_data, dev_buf, count, blocklength, stride, type_size, asyncId);
     cudaThreadSynchronize();
   }else{
     //device to host
     _ACC_gpu_pack_vector(dev_buf, dev_data, count, blocklength, stride, type_size, asyncId);
-    switch(asyncId){
-    case ACC_ASYNC_SYNC:
-    case ACC_ASYNC_NOVAL:
-      _ACC_gpu_copy_async_all(host_buf, dev_buf, buf_size, _ACC_GPU_COPY_DEVICE_TO_HOST);
-      break;
-    default:
-      _ACC_gpu_copy_async(host_buf, dev_buf, buf_size, _ACC_GPU_COPY_DEVICE_TO_HOST, asyncId);
-    }
+    _ACC_gpu_copy_async(host_buf, dev_buf, buf_size, _ACC_GPU_COPY_DEVICE_TO_HOST, asyncId);
     cudaThreadSynchronize();
     _ACC_unpack_vector(host_data, host_buf, count, blocklength, stride, type_size);
   }
