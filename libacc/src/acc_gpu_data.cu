@@ -12,19 +12,19 @@ static void unregister_memory(void *host_addr);
 #define INIT_PRESENTOR 2
 
 static void init_data(int mode, _ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, va_list args);
-void _ACC_gpu_init_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...){
+void _ACC_init_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...){
 	va_list args;
 	va_start(args, dim);
 	init_data(INIT_DEFAULT, host_data_desc, device_addr, addr, type_size, dim, args);
 	va_end(args);
 }
-void _ACC_gpu_pinit_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...){
+void _ACC_pinit_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...){
 	va_list args;
 	va_start(args, dim);
 	init_data(INIT_PRESENTOR, host_data_desc, device_addr, addr, type_size, dim, args);
 	va_end(args);
 }
-void _ACC_gpu_find_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...){
+void _ACC_find_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...){
 	va_list args;
 	va_start(args, dim);
 	init_data(INIT_PRESENT, host_data_desc, device_addr, addr, type_size, dim, args);
@@ -118,7 +118,7 @@ static void init_data(int mode, _ACC_gpu_data_t **host_data_desc, void **device_
   *device_addr = (void *)((char*)(host_data_d->device_addr) - offset);
 }
 
-void _ACC_gpu_finalize_data(_ACC_gpu_data_t *desc) {
+void _ACC_finalize_data(_ACC_gpu_data_t *desc) {
   if(desc->is_original == true){
     if(desc->is_registered == true){
       unregister_memory(desc->host_addr);
@@ -134,7 +134,7 @@ void _ACC_gpu_finalize_data(_ACC_gpu_data_t *desc) {
   _ACC_free(desc);
 }
 
-void _ACC_gpu_copy_data(_ACC_gpu_data_t *desc, int direction, int asyncId){
+void _ACC_copy_data(_ACC_gpu_data_t *desc, int direction, int asyncId){
   _ACC_gpu_copy_async((void*)((char*)(desc->host_addr)), (void*)((char *)(desc->device_addr) - desc->offset), desc->size, direction, asyncId);
   void *host_addr = (void*)((char*)(desc->host_addr));
   void *dev_addr = (void*)((char *)(desc->device_addr) - desc->offset);
@@ -166,9 +166,9 @@ void _ACC_gpu_copy_data(_ACC_gpu_data_t *desc, int direction, int asyncId){
   }
 }
 
-void _ACC_gpu_pcopy_data(_ACC_gpu_data_t *desc, int direction, int asyncId){
+void _ACC_pcopy_data(_ACC_gpu_data_t *desc, int direction, int asyncId){
   if(desc->is_original == true){
-    _ACC_gpu_copy_data(desc, direction, asyncId);
+    _ACC_copy_data(desc, direction, asyncId);
   }
 }
 
@@ -327,7 +327,7 @@ static void find_contiguous(int dim, _ACC_gpu_array_t *array_info, int *trans_in
 }
 */
 
-void _ACC_gpu_copy_subdata(_ACC_gpu_data_t *desc, int direction, int asyncId, ...){
+void _ACC_copy_subdata(_ACC_gpu_data_t *desc, int direction, int asyncId, ...){
   int dim = desc->dim;
   int *trans_info = (int *)_ACC_alloc(dim * 3 * sizeof(int));
   int *info_lower = trans_info;

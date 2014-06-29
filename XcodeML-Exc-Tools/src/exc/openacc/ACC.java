@@ -17,13 +17,13 @@ public class ACC {
   public static final int HOST_TO_DEVICE = 400;
   public static final int DEVICE_TO_HOST = 401;
 
-  public static final String INIT_DATA_FUNC_NAME = "_ACC_gpu_init_data";
-  public static final String PRESENT_OR_INIT_DATA_FUNC_NAME = "_ACC_gpu_pinit_data";
-  public static final String FINALIZE_DATA_FUNC_NAME = "_ACC_gpu_finalize_data";
-  public static final String COPY_DATA_FUNC_NAME = "_ACC_gpu_copy_data";
-  public static final String COPY_SUBDATA_FUNC_NAME = "_ACC_gpu_copy_subdata";
-  public static final String PRESENT_OR_COPY_DATA_FUNC_NAME = "_ACC_gpu_pcopy_data";
-  public static final String FIND_DATA_FUNC_NAME = "_ACC_gpu_find_data";
+  public static final String INIT_DATA_FUNC_NAME = "_ACC_init_data";
+  public static final String PRESENT_OR_INIT_DATA_FUNC_NAME = "_ACC_pinit_data";
+  public static final String FINALIZE_DATA_FUNC_NAME = "_ACC_finalize_data";
+  public static final String COPY_DATA_FUNC_NAME = "_ACC_copy_data";
+  public static final String COPY_SUBDATA_FUNC_NAME = "_ACC_copy_subdata";
+  public static final String PRESENT_OR_COPY_DATA_FUNC_NAME = "_ACC_pcopy_data";
+  public static final String FIND_DATA_FUNC_NAME = "_ACC_find_data";
 
 
   public static Xobject createBasicTypeConstantObj(Xtype type) {
