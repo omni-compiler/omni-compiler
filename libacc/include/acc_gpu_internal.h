@@ -15,22 +15,14 @@ extern "C" {
   int _ACC_gpu_get_device_num();
 
   //acc_gpu_data.c
-  //  void _ACC_gpu_init_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t size);
-  void _ACC_gpu_init_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t offset, size_t size);
-  void _ACC_gpu_pinit_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t offset, size_t size);
+  void _ACC_gpu_init_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);
+  void _ACC_gpu_pinit_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);
+  void _ACC_gpu_find_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);
   void _ACC_gpu_finalize_data(_ACC_gpu_data_t *desc);
-  //  void _ACC_gpu_copy_data(_ACC_gpu_data_t *desc, int direction);
-  void _ACC_gpu_copy_data(_ACC_gpu_data_t *desc, size_t offset, size_t size, int direction);
-  void _ACC_gpu_copy_data_async_default(_ACC_gpu_data_t *desc, size_t offset, size_t size, int direction);
-  void _ACC_gpu_pcopy_data(_ACC_gpu_data_t *desc, size_t offset, size_t size, int direction);
-  void _ACC_gpu_find_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t offset, size_t size);
-
-  void _ACC_gpu2_init_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);
-  void _ACC_gpu2_find_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);
-  void _ACC_gpu2_pinit_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);
-  void _ACC_gpu2_copy_data(_ACC_gpu_data_t *desc, int direction, int asyncId);
-  void _ACC_gpu2_copy_subdata(_ACC_gpu_data_t *desc, int direction, int asyncId, ...);
-
+  void _ACC_gpu_pcopy_data(_ACC_gpu_data_t *desc, int direction, int asyncId);
+  void _ACC_gpu_copy_data(_ACC_gpu_data_t *desc, int direction, int asyncId);
+  void _ACC_gpu_copy_subdata(_ACC_gpu_data_t *desc, int direction, int asyncId, ...);
+  //void _ACC_gpu_copy_data_async_default(_ACC_gpu_data_t *desc, size_t offset, size_t size, int direction);
 
   //acc_gpu_util.cu
   void _ACC_gpu_alloc(void **addr, size_t size);
