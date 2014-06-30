@@ -766,6 +766,9 @@ FJRDMA
 FJRDMA_FALSE
 FJRDMA_TRUE
 AIX_OPT
+NATIVE_DOPT
+PPCC_OPT
+PPCC
 ENABLE_ATOOL
 ENABLE_ATOOL_FALSE
 ENABLE_ATOOL_TRUE
@@ -17112,6 +17115,19 @@ else  # if "--target" option is not used in ./configure
   BEFC="mpif90"
   BEFC_MODINC="-M"
 fi
+
+PPCC="${BECC}"
+PPCC_OPT="-E"
+NATIVE_DOPT="-D_XCALABLEMP"
+
+if test "$target" = "powerpc-ibm-none"; then
+PPCC="gcc"
+PPCC_OPT="-E --std=c99"
+NATIVE_DOPT="-WF,-D_XCALABLEMP"
+fi
+
+
+
 
 
 if test "$IS_AIX" = "Yes"; then
