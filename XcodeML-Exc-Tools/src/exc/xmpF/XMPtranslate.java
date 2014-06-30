@@ -4,6 +4,7 @@
  *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
  *  $
  */
+
 package exc.xmpF;
 
 import exc.object.*;
@@ -16,6 +17,8 @@ public class XMPtranslate implements XobjectDefVisitor
 {
   BlockPrintWriter debug_out;
   XMPenv env;
+
+  private final static String XMP_GENERATED_CHILD = "XMP_GENERATED_CHILD";
 
   // alorithms
   XMPanalyzePragma anaPragma = new XMPanalyzePragma();
@@ -49,10 +52,137 @@ public class XMPtranslate implements XobjectDefVisitor
     d.setName(XMPmainFunc);
   }
 
+  private XobjectDef wrap_external(XobjectDef d){
+    String name = d.getName();
+
+    Xtype funcType = d.getFuncType().copy();
+    Ident funcId = Ident.FidentNotExternal("xmpf_" + name, funcType);
+    funcId.setProp(XMP_GENERATED_CHILD, true);
+
+    // generate child's ID list
+
+    Xobject idList = d.getFuncIdList();
+    Xobject childIdList = Xcons.List();
+
+    for (Xobject k: (XobjList)idList){
+      Ident id = (Ident)k;
+      if (id.getStorageClass() == StorageClass.FPARAM){
+    	childIdList.add(id.copy());
+      }
+    }
+
+    // generate child's declarations
+
+    Xobject decls = d.getFuncDecls();
+    Xobject childDecls = Xcons.List();
+
+    for (Xobject kk: (XobjList)decls){
+      Ident id = d.findIdent(kk.getArg(0).getName());
+      if (id.getStorageClass() == StorageClass.FPARAM){
+	childDecls.add(kk.copy());
+      }
+    }
+
+    // generate new body
+
+    Xobject funcBody = d.getFuncBody();
+    BlockList newFuncBody = Bcons.emptyBody();
+
+    XobjectIterator i = new topdownXobjectIterator(funcBody);
+    for (i.init(); !i.end(); i.next()) {
+      Xobject xx = i.getXobject();
+      if (xx != null && xx.Opcode() == Xcode.XMP_PRAGMA){
+	String pragma = xx.getArg(0).getString();
+	if (pragma.equals("NODES") || pragma.equals("TEMPLATE") || pragma.equals("DISTRIBUTE") ||
+	    pragma.equals("ALIGN") || pragma.equals("SHADOW") || pragma.equals("LOCAL_ALIAS") ||
+	    pragma.equals("COARRAY")){
+	  Block pb = Bcons.PRAGMA(xx.Opcode(), xx.getArg(0).getString(), xx.getArg(1), null);
+	  newFuncBody.add(pb);
+	  i.setXobject(null);
+	}
+      }
+    }
+
+    // generate child
+
+    XobjectDef newChild = XobjectDef.Func(funcId, childIdList, childDecls, funcBody);
+    newChild.setParent(d);
+    d.getChildren().add(newChild);
+
+    // replace it
+
+    Xobject args = Xcons.List();
+    for (Xobject j: (XobjList)funcType.getFuncParam()){
+      Ident id = d.findIdent(j.getName());
+      args.add(id.Ref());
+    }
+
+    if (funcType.isFsubroutine())
+      newFuncBody.add(funcId.callSubroutine(args));
+    else {
+      Ident dummy = Ident.FidentNotExternal(XMP.genSym("XMP_dummy"), funcType.getRef());
+      newFuncBody.add(Xcons.Set(dummy.Ref(), funcId.Call(args)));
+    }
+
+    Xobject newDef = Xcons.List(Xcode.FUNCTION_DEFINITION, d.getNameObj(), (Xobject)idList,
+				(Xobject)decls, newFuncBody.toXobject());
+    d.setDef(newDef);
+
+    return newChild;
+
+  }
+
+  public void copyXMParray(XobjectDef d){
+
+    Xobject idList = d.getFuncIdList();
+    for (Xobject k: (XobjList)idList){
+      Ident id = (Ident)k;
+      if (id.getStorageClass() == StorageClass.FPARAM){
+	Ident idInParent = d.getParent().findIdent(id.getName());
+	if (idInParent == null) XMP.fatal("internal error: not included in the parent function");
+	XMParray array = XMParray.getArray(idInParent);
+
+	if (array != null){
+
+	  Xtype type = idInParent.Type();
+	  int arrayDim = type.getNumDimensions();
+	  Xobject sizeExprs[] = new Xobject[arrayDim];
+	  for (int i = 0; i < arrayDim; i++){
+	    Xobject lb;
+	    if (array.isDistributed(i)){
+	      sizeExprs[i] = Xcons.FindexRange(Xcons.IntConstant(0),
+					       Xcons.binaryOp(Xcode.MINUS_EXPR,
+							      array.getSizeVarAt(i),
+							      Xcons.IntConstant(1)));
+	    }
+	    else {
+	      sizeExprs[i] = Xcons.FindexRange(type.getFarraySizeExpr()[i].getArg(0),
+					       type.getFarraySizeExpr()[i].getArg(1));
+	    }
+	  }
+	  Xtype localType = Xtype.Farray(type.getRef(), sizeExprs);
+	  localType.setTypeQualFlags(type.getTypeQualFlags());
+
+	  String localName = XMP.PREFIX_ + id.getName();
+	  Ident localId = Ident.FidentNotExternal(localName, localType);
+	  localId.setStorageClass(id.getStorageClass());
+	  localId.setValue(Xcons.Symbol(Xcode.VAR, localType, localName));
+
+	  XMParray newArray = new XMParray(array, id, id.getName(), localId);
+	  XMParray.setArray(id, newArray);
+	}
+
+      }
+    }
+
+  }
+
+
   // do transform takes three passes
   public void doDef(XobjectDef d) {
     FuncDefBlock fd = null;
     Boolean is_module = d.isFmoduleDef();
+    XobjectDef newChild = null;
 
     XMP.resetError();
 
@@ -66,6 +196,9 @@ public class XMPtranslate implements XobjectDefVisitor
 	ft.setIsFprogram(false);
 	replace_main(d);
       }
+      else if (d.getParent() == null){ // neither internal nor module procedures
+      	newChild = wrap_external(d);
+      }
       fd = new FuncDefBlock(d);
     } else 
       XMP.fatal("Fotran: unknown decls");
@@ -73,6 +206,12 @@ public class XMPtranslate implements XobjectDefVisitor
     if(XMP.hasError())
       return;
         
+    // distributed dummy arrays in the generated chidren shares their XMParray objects with
+    // those in the parent.
+    if (d.getNameObj().getProp(XMP_GENERATED_CHILD) != null){
+      copyXMParray(d);
+    }
+
     anaPragma.run(fd,env);
     if(XMP.hasError()) return;
 
@@ -91,6 +230,9 @@ public class XMPtranslate implements XobjectDefVisitor
       out.print(fd.getDef().getDef());
       System.out.println("---- final ---- ");
     }
+
+    if (newChild != null) doDef(newChild);
+
   }
 
   FuncDefBlock XMPmoduleBlock(XobjectDef def){
