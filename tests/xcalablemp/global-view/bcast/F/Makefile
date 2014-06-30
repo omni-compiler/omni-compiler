@@ -15,6 +15,17 @@ all default: $(EXES)
 
 run: $(EXES)
 	$(XRUN) -n 4 ./bcast.x
+	$(XRUN) -n 4 ./bcast2.x
+	$(XRUN) -n 4 ./bcast3.x
+	$(XRUN) -n 4 ./bcast4.x
+	$(XRUN) -n 8 ./bcast5.x
+	$(XRUN) -n 4 ./bcast6.x
+	$(XRUN) -n 4 ./bcast7.x
+	$(XRUN) -n 4 ./bcast8.x
+	$(XRUN) -n 8 ./bcast9.x
+	$(XRUN) -n 8 ./bcast10.x
+	$(XRUN) -n 8 ./bcast11.x
+	$(XRUN) -n 8 ./bcast12.x
 
 clean:
 	rm -f $(EXES) $(OBJS)
