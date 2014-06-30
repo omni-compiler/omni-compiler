@@ -23,7 +23,7 @@
 #include "c-expr.h"
 
 #define DISP_STRING(str)    if (expr->str) fprintf(fp, " %s=\"%s\"", #str, expr->str);
-#define DISP_EXPR_COMMON1(str)   _printExprCommon1(fp, #str, (CExprCommon*)expr, indent)
+#define DISP_EXPR_COMMON1(str)   if (_printExprCommon1(fp, #str, (CExprCommon*)expr, indent)) return
 #define DISP_EXPR_COMMON2(str)   _printExprCommon2(fp, #str, (CExprCommon*)expr, indent)
 
 const char *NAME_e_struct[] = CExprStructEnumNamesDef;
@@ -49,11 +49,13 @@ static void _dispInnerExprOfErrorNode(FILE *fp, CExprOfErrorNode *expr, int inde
 static void _dispInnerExprOfNull(FILE *fp, CExprOfNull *expr, int indent);
 
 static char *_getCExprCodeEnumString(CExprCodeEnum code);
-static void _printExprCommon1(FILE *fp, char *str, CExprCommon *expr, int indent);
+static int _printExprCommon1(FILE *fp, char *str, CExprCommon *expr, int indent);
 static void _printExprCommon2(FILE *fp, char *str, CExprCommon *expr, int indent);
 static void _printNewlineAndIndent(FILE *fp, int indent);
 
-
+#define MAX_REFADDR   1000
+void* _refAddr[MAX_REFADDR];
+int   _n_refAddr;
 
 /**
  * \brief
@@ -68,6 +70,8 @@ void
 dispParseTree(FILE *fp, CExpr *expr, char *title)
 {
     char *msg;
+
+    _n_refAddr = 0;
 
     msg = title ? title : "PARSE TREE";
 
@@ -152,7 +156,7 @@ _dispExpr(FILE *fp, CExpr *expr, int indent)
 }
 
 
-static void
+static int
 _printExprCommon1(FILE *fp, char *str, CExprCommon *expr, int indent)
 {
     _printNewlineAndIndent(fp, indent);
@@ -177,7 +181,17 @@ _printExprCommon1(FILE *fp, char *str, CExprCommon *expr, int indent)
     if (expr->e_isConverted ) fprintf(fp, " e_isConverted");
     if (expr->e_isGenerated ) fprintf(fp, " e_isGenerated");
     if (expr->e_isGccSyntax ) fprintf(fp, " e_isGccSyntax");
-    if (expr->e_isDeleting  ) fprintf(fp, " e_isDeleting");
+	if (expr->e_isDeleting	) fprintf(fp, " e_isDeleting");
+
+	fprintf(fp, " (%p)", (void*)expr);
+	if ( _n_refAddr == MAX_REFADDR)
+      return 1;
+	for (int i = 0; i < _n_refAddr; i++) {
+	  if ((void*)expr == _refAddr[i])
+		return 1;
+	}
+    _refAddr[_n_refAddr++] = (void*)expr;
+    return 0;
 }
 
 static void
