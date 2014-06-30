@@ -608,6 +608,19 @@ else  # if "--target" option is not used in ./configure
   BEFC_MODINC="-M"
 fi
 
+PPCC="${BECC}"
+PPCC_OPT="-E"
+NATIVE_DOPT="-D_XCALABLEMP"
+
+if test "$target" = "powerpc-ibm-none"; then
+PPCC="gcc"
+PPCC_OPT="-E --std=c99"
+NATIVE_DOPT="-WF,-D_XCALABLEMP"
+fi
+AC_SUBST(PPCC)
+AC_SUBST(PPCC_OPT)
+AC_SUBST(NATIVE_DOPT)
+
 AC_SUBST(AIX_OPT)
 if test "$IS_AIX" = "Yes"; then
   AC_DEFINE(AIX_64BIT)
