@@ -519,7 +519,7 @@ public class XMPrewriteExpr
     Xobject x = st.getExpr().getArg(0);
     if (x.Opcode() != Xcode.FUNCTION_CALL) return;
 
-    Ident sizeArray = XMP.declOrGetSizeArray(fb, env);
+    Ident sizeArray = env.declOrGetSizeArray(fb);
 
     String fname = x.getArg(0).getString();
     Xtype ftype = x.getArg(0).Type();
@@ -606,7 +606,9 @@ public class XMPrewriteExpr
       }
 
       k++;
-      if (k >= XMP.MAX_ASSUMED_SHAPE) break;
+      if (k > XMP.MAX_ASSUMED_SHAPE){
+	XMP.fatal("too many assumed-shape arguments (MAX = " + XMP.MAX_ASSUMED_SHAPE + ").");
+      }
 
     }
 

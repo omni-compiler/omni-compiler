@@ -278,6 +278,9 @@ public class XMParray {
 	  }
 	}
 	if (NthAssumedShape == -1) XMP.fatal("non-dummy argument cannot have a deferred shape.");
+	if (NthAssumedShape >= XMP.MAX_ASSUMED_SHAPE){
+	  XMP.fatal("too many assumed-shape arguments (MAX = " + XMP.MAX_ASSUMED_SHAPE + ").");
+	}
       }
 
       if (env.getCurrentDef().getDef().getParent() != null ||
@@ -529,7 +532,7 @@ public class XMParray {
 
     Ident sizeArray = null;
     if (type.isFassumedShape()){
-      sizeArray = XMP.declOrGetSizeArray(body.getHead(), env);
+      sizeArray = env.declOrGetSizeArray(body.getHead());
     }
 
     f = env.declInternIdent(XMP.array_align_info_f,Xtype.FsubroutineType);

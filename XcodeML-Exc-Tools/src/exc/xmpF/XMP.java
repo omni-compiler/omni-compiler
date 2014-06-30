@@ -214,29 +214,6 @@ public class XMP {
     return t;
   }
 
-  public static Ident declOrGetSizeArray(Block b, XMPenv env){
-
-    Ident sizeArray = env.findVarIdent(SIZE_ARRAY_NAME, b);
-
-    if (sizeArray == null){
-
-      Xobject sizeExprs[] = new Xobject[2];
-      sizeExprs[0] = Xcons.FindexRange(Xcons.IntConstant(0), Xcons.IntConstant(XMP.MAX_ASSUMED_SHAPE - 1));
-      sizeExprs[1] = Xcons.FindexRange(Xcons.IntConstant(0), Xcons.IntConstant(XMP.MAX_DIM - 1));
-      Xtype sizeArrayType = Xtype.Farray(Xtype.FintType, sizeExprs);
-      sizeArray = env.declIdent(SIZE_ARRAY_NAME, sizeArrayType, false, b);
-      sizeArray.setStorageClass(StorageClass.FCOMMON);
-
-      Xobject decls = env.getCurrentDef().getBlock().getBody().getDecls();
-      decls.add(Xcons.List(Xcode.F_COMMON_DECL,
-			   Xcons.List(Xcode.F_VAR_LIST,
-				      Xcons.Symbol(Xcode.IDENT, XMP_COMMON_NAME),
-				      Xcons.List(Xcons.FvarRef(sizeArray)))));
-    }
-
-    return sizeArray;
-  }
-
   public static void exitByError() {
     if (errorFlag) System.exit(1);
   }
