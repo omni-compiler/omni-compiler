@@ -310,7 +310,13 @@ void compile_OMP_directive(expr x)
 	if(CTL_TYPE(ctl_top) == CTL_OMP &&
 	   CTL_OMP_ARG_DIR(ctl_top) == OMP_F_SINGLE){
 	    dclause = CTL_OMP_ARG_DCLAUSE(ctl_top);
-	    if(EXPR_ARG2(x) != NULL) list_put_last(dclause,EXPR_ARG2(x));
+	    //if(EXPR_ARG2(x) != NULL) list_put_last(dclause,EXPR_ARG2(x));
+	    if (EXPR_ARG2(x) != NULL){
+	      list lp;
+	      FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(x)){
+		list_put_last(dclause, LIST_ITEM(lp));
+	      }
+	    }
 	    CTL_BLOCK(ctl_top) = 
 		OMP_pragma_list(OMP_SINGLE,dclause,CURRENT_STATEMENTS);
 	    EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top));
