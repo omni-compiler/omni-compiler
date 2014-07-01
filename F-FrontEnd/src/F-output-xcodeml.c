@@ -2398,7 +2398,7 @@ outx_OMP_dir_string(int l,expv v)
   case OMP_ORDERED: s = "ORDERED"; break;
   case OMP_THREADPRIVATE: s = "THREADPRIVATE"; break;
   default:
-    fatal("out_OMP_dir_string: unknown value=%\n",EXPV_INT_VALUE(v));
+    fatal("out_OMP_dir_string: unknown value=%d\n",EXPV_INT_VALUE(v));
   }
   outx_printi(l, "<string>%s</string>\n", s);
 }
@@ -2445,12 +2445,13 @@ outx_OMP_dir_clause_list(int l,expv v)
     case OMP_DATA_REDUCTION_MAX: s = "DATA_REDUCTION_MAX"; break;
     case OMP_DATA_REDUCTION_EQV: s = "DATA_REDUCTION_EQV"; break;
     case OMP_DATA_REDUCTION_NEQV: s = "DATA_REDUCTION_NEQV"; break;
+    case OMP_DATA_COPYPRIVATE: s = "DATA_COPYPRIVATE"; break;
     case OMP_DIR_ORDERED: s = "DIR_ORDERED"; break;
     case OMP_DIR_IF: s = "DIR_IF"; break;
     case OMP_DIR_NOWAIT: s = "DIR_NOWAIT"; break;
     case OMP_DIR_SCHEDULE: s = "DIR_SCHEDULE"; break;
     default:
-      fatal("out_OMP_dir_clause: unknown value=%\n",EXPV_INT_VALUE(v));
+      fatal("out_OMP_dir_clause: unknown value=%d\n",EXPV_INT_VALUE(v));
     }
     outx_printi(l+2, "<string>%s</string>\n", s);
     outx_expv_withListTag(l+2, EXPR_ARG2(vv));

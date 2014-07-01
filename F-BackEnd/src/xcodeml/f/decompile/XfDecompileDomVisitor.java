@@ -3451,6 +3451,7 @@ public class XfDecompileDomVisitor {
             _writeLineDirective(n);
             
             boolean nowaitFlag = false;
+            boolean copyprivateFlag = false;
             
             XmfWriter writer = _context.getWriter();
 
@@ -3491,6 +3492,7 @@ public class XfDecompileDomVisitor {
 
             // clause
             Node clause = dir.getNextSibling();
+	    Node copyprivate_arg = null;
 
             NodeList list0 = clause.getChildNodes();
             for (int i = 0; i < list0.getLength(); i++){          
@@ -3519,12 +3521,14 @@ public class XfDecompileDomVisitor {
                 else if (clauseName.equals("DATA_REDUCTION_MAX"))   {clauseName = "REDUCTION"; operator = "max";}
                 else if (clauseName.equals("DATA_REDUCTION_EQV"))   {clauseName = "REDUCTION"; operator = ".eqv.";}
                 else if (clauseName.equals("DATA_REDUCTION_NEQV"))  {clauseName = "REDUCTION"; operator = ".neqv.";}
+		else if (clauseName.equals("DATA_COPYPRIVATE"))     {clauseName = "COPYPRIVATE"; copyprivateFlag = true;
+		  copyprivate_arg = childNode.getFirstChild().getNextSibling();}
                 else if (clauseName.equals("DIR_ORDERED"))           clauseName = "ORDERED";
                 else if (clauseName.equals("DIR_IF"))                clauseName = "IF";
                 else if (clauseName.equals("DIR_NOWAIT"))           {clauseName = "NOWAIT";    nowaitFlag = true;}
                 else if (clauseName.equals("DIR_SCHEDULE"))          clauseName = "SCHEDULE";
             
-                if (!clauseName.equals("NOWAIT")){
+                if (!clauseName.equals("NOWAIT") && !clauseName.equals("COPYPRIVATE")){
 		  writer.writeToken(clauseName);
                 
 		  Node arg = childNode.getFirstChild().getNextSibling();
@@ -3590,6 +3594,17 @@ public class XfDecompileDomVisitor {
 	    if (!dirName.equals("ATOMIC")){
 	      writer.writeToken("!$OMP END " + dirName);
 	      if (nowaitFlag) writer.writeToken("NOWAIT");
+	      if (copyprivateFlag){
+		writer.writeToken("COPYPRIVATE (");
+		NodeList varList = copyprivate_arg.getChildNodes();
+		invokeEnter(varList.item(0));
+		for (int j = 1; j < varList.getLength(); j++){
+		  Node var = varList.item(j);
+		  writer.writeToken(",");
+		  invokeEnter(var);
+		}
+		writer.writeToken(")");
+	      }
 	      writer.setupNewLine();
 	    }
 	    //	    writer.setStatementMode(prevMode);

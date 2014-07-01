@@ -1981,10 +1981,11 @@ compile_coarray_ref(expr coarrayRef){
   //
 
   expv cosubs = list0(LIST);
-  expv codims = list0(LIST);
+  //expv codims = list0(LIST);
 
   /* get codims and cosubs*/
-  if (compile_array_ref_dimension(image_selector, codims, cosubs)){
+  //if (compile_array_ref_dimension(image_selector, codims, cosubs)){
+  if (compile_array_ref_dimension(image_selector, cosubs, NULL)){
     return NULL;
   }
 

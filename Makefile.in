@@ -356,6 +356,7 @@ MKDIR = @MKDIR@
 MKDIR_P = @MKDIR_P@
 MKRULESDIR = @MKRULESDIR@
 MM5TGT = @MM5TGT@
+NATIVE_DOPT = @NATIVE_DOPT@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
@@ -397,6 +398,8 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PERL5 = @PERL5@
 POW_LIB = @POW_LIB@
+PPCC = @PPCC@
+PPCC_OPT = @PPCC_OPT@
 PPTGT = @PPTGT@
 RANLIB = @RANLIB@
 RM = @RM@
@@ -547,12 +550,13 @@ DEB_VER_FILE = "/etc/debian_version"
 RH_REL_FILE = "/etc/redhat-release"
 BASE_TESTDIR = "tests/xcalablemp/"
 SUB_TESTDIRS = "global-view/array/C/" "global-view/array/F/" \
-	"global-view/bcast/C/" "global-view/loop/C" \
-	"global-view/loop/F" "global-view/reduction/C" \
-	"global-view/reduction/F" "global-view/shadow-reflect/C/" \
-	"global-view/task/C" "global-view/task/F" \
-	"global-view/template_fix/C/" "global-view/template_fix/F/" \
-	"others/F" "others/C" $(am__append_4) $(am__append_5)
+	"global-view/bcast/C/" "global-view/bcast/F/" \
+	"global-view/loop/C" "global-view/loop/F" \
+	"global-view/reduction/C" "global-view/reduction/F" \
+	"global-view/shadow-reflect/C/" "global-view/task/C" \
+	"global-view/task/F" "global-view/template_fix/C/" \
+	"global-view/template_fix/F/" "others/F" "others/C" \
+	$(am__append_4) $(am__append_5)
 DELETABLES = \
 	C-BackEnd/ant.properties \
 	C-BackEnd/bin/C_Back \

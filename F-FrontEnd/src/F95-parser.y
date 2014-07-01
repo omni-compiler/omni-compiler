@@ -233,8 +233,9 @@
 %token OMPKW_FLUSH
 %token OMPKW_THREADPRIVATE
 %token OMPKW_WORKSHARE
+%token OMPKW_COPYPRIVATE
 
-%type <val> omp_directive omp_nowait_option omp_clause_option omp_clause_list omp_clause omp_list /*omp_common_list*/ omp_default_attr omp_copyin_list omp_schedule_arg
+%type <val> omp_directive omp_nowait_option omp_end_clause_option omp_end_clause_list omp_end_clause omp_clause_option omp_clause_list omp_clause omp_list /*omp_common_list*/ omp_default_attr omp_copyin_list omp_schedule_arg
 %type <code> omp_schedule_attr omp_reduction_op
 
 /* XcalableMP directive */
@@ -1676,7 +1677,7 @@ omp_directive:
 	  { $$ = OMP_LIST(OMP_F_SECTION,NULL); }
 	| OMPKW_SINGLE omp_clause_option
 	  { $$ = OMP_LIST(OMP_F_SINGLE,$2); }
-	| OMPKW_END OMPKW_SINGLE omp_nowait_option
+	| OMPKW_END OMPKW_SINGLE omp_end_clause_option
 	  { $$ = OMP_LIST(OMP_F_END_SINGLE,$3); }
 	| OMPKW_MASTER
 	  { $$ = OMP_LIST(OMP_F_MASTER,NULL); }
@@ -1718,6 +1719,27 @@ omp_nowait_option:
 	{ $$ = NULL; }
 	| OMPKW_NOWAIT
 	{ $$ = OMP_LIST(OMP_DIR_NOWAIT,NULL); }
+	;
+
+omp_end_clause_option:
+	{ $$ = NULL; }
+	| omp_end_clause_list
+	;
+
+omp_end_clause_list:
+	  omp_end_clause
+	 { $$ = list1(LIST,$1); }
+	| omp_end_clause_list ',' omp_end_clause
+	 { $$ = list_put_last($1,$3); }
+	| omp_end_clause_list omp_end_clause
+	 { $$ = list_put_last($1,$2); }
+	;
+
+omp_end_clause:
+	  OMPKW_NOWAIT
+	{ $$ = OMP_LIST(OMP_DIR_NOWAIT,NULL); }
+	| OMPKW_COPYPRIVATE '(' omp_list ')'
+        { $$ = OMP_LIST(OMP_DATA_COPYPRIVATE,$3); }
 	;
 
 omp_clause_option:
