@@ -333,7 +333,7 @@ outxChildren(FILE *fp, int indent, CExpr *expr)
         if(ite.node) {
             if(EXPR_CODE(ite.node) == EC_NULL_NODE &&
                expr && EXPR_CODE(expr) == EC_XMP_COARRAY_DIMENSIONS)
-                outxPrint(fp, indent, "<asterisc/>\n");
+                outxPrint(fp, indent, "<list/>\n");
             else
                 outxContext(fp, indent, ite.node);
         }
