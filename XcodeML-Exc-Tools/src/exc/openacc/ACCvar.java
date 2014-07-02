@@ -646,6 +646,10 @@ public class ACCvar {
     return g_subarray != null;
   }
   
+  public Xtype getElementType(){
+    return getElementType(id.Type());
+  }
+  
   Xtype getElementType(Xtype t)
   {
       if(t.isArray()){
@@ -655,8 +659,23 @@ public class ACCvar {
       }else if(t.isBasic() || t.isStruct()){
           return t;
       }else{
+          ACC.fatal("unexpected type");
           return null;
       }
+  }
+  
+  public int getDim()
+  {
+    Xtype t = id.Type();
+    if(t.isArray()){
+      return ((ArrayType)t).getNumDimensions();
+    }else if(t.isPointer()){
+      if(isSubarray()){
+        return getSubscripts().Nargs();
+      }
+    }
+    
+    return 0;
   }
 
   class Subarray{

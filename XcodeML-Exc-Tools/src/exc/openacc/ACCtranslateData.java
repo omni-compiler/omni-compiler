@@ -50,11 +50,6 @@ public class ACCtranslateData {
 
     VarScope varScope = _isGlobal? VarScope.GLOBAL : VarScope.LOCAL;
     
-    /**
-     * varはサブアレイでもよい。ただし各APIやACCInfo.isVarAllocatedなどが対応する必要あり。
-     * 
-     */
-    
     for(Iterator<ACCvar> iter = dataInfo.getVars(); iter.hasNext(); ){
       ACCvar var = iter.next();
       Ident varId = var.getId();
@@ -73,8 +68,6 @@ public class ACCtranslateData {
       
       String varName = var.getName();
       Xobject addrObj = var.getAddress();
-      Xobject sizeObj = var.getSize();
-      Xobject offsetObj = var.getOffset();
       Ident deviceAddr = Ident.Var(GPU_DEVICE_PTR_PREFIX + varName, Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType), varScope);
       Ident hostDesc = Ident.Var(GPU_HOST_DESC_PREFIX + varName, Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType), varScope);
       var.setDevicePtr(deviceAddr);
@@ -87,8 +80,9 @@ public class ACCtranslateData {
 
       //setup array dim
       Xtype varType = var.getId().Type();
-      Xtype elementType = null;
-      int dim = 0; //?? it should be 0
+      Xtype elementType = var.getElementType();
+      int dim = var.getDim();
+/*      
       if(varType.isArray()){
           if(var.isSubarray()){
               elementType = var.getElementType(varType);
@@ -102,11 +96,12 @@ public class ACCtranslateData {
           elementType = varType.getRef();
           if(var.isSubarray()){
               dim = var.getSubscripts().Nargs(); 
-							elementType = var.getElementType(varType);
+              elementType = var.getElementType(varType);
           }
       }else{
 	  elementType = varType;
       }
+      */
       XobjList suffixArgs = Xcons.List();
       {
           if(varType.isArray()){
