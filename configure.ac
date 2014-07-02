@@ -486,6 +486,10 @@ AC_ARG_ENABLE(atool,
     [  --enable-atool                 enable atool (false default).],
     [doatool=$enableval], [doatool=no])
 
+AC_ARG_ENABLE(tca,
+    [  --enable-tca                   enable Tightly Coupled Accelerators (false default).],
+    [dotca=$enableval], [dotca=no])
+
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
@@ -505,7 +509,6 @@ XMP_ENABLE_GPU=0
 if test "x${doXmpGpu}" = "xyes"; then
     XMP_ENABLE_GPU=1
 fi
-
 AM_CONDITIONAL(ENABLE_XMP_GPU, test "x${doXmpGpu}" = "xyes")
 AC_SUBST(XMP_ENABLE_GPU)
 
@@ -515,7 +518,6 @@ if test "x${doOpenAcc}" = "xyes"; then
 fi
 AM_CONDITIONAL(ENABLE_ACC, test "x${doOpenAcc}" = "xyes")
 AC_SUBST(ENABLE_ACC)
-
  
 ENABLE_ATOOL=0
 if test "x${doatool}" = "xyes"; then
@@ -523,6 +525,13 @@ if test "x${doatool}" = "xyes"; then
 fi
 AM_CONDITIONAL(ENABLE_ATOOL, test "x${doatool}" = "xyes")
 AC_SUBST(ENABLE_ATOOL)
+
+#ENABLE_TCA=0
+#if test "x${dotca}" = "xyes"; then
+#   ENABLE_TCA=1
+#fi
+AM_CONDITIONAL(ENABLE_TCA, test "x${dotca}" = "xyes")
+AC_SUBST(ENABLE_TCA)
 
 # check gcc version
 AC_MSG_CHECKING(gcc version)
@@ -2142,5 +2151,8 @@ EOF
   echo "    OpenACC               : $doOpenAcc"
 fi
 
+if test "x${dotca}" = "xyes"; then
+  echo "    TCA                   : $dotca"
+fi
 echo "=================================================="
 

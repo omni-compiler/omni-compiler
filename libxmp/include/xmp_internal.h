@@ -195,6 +195,10 @@ extern void _XMP_threads_finalize(void);
 }
 #endif
 
+// for TCA
+#ifdef _XMP_TCA
+extern void tcaInit();
+#endif
 
 // ----- for coarray & post/wait -------------------
 #if defined(_XMP_COARRAY_FJRDMA) || defined(_XMP_COARRAY_GASNET)

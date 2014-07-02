@@ -769,6 +769,9 @@ AIX_OPT
 NATIVE_DOPT
 PPCC_OPT
 PPCC
+ENABLE_TCA
+ENABLE_TCA_FALSE
+ENABLE_TCA_TRUE
 ENABLE_ATOOL
 ENABLE_ATOOL_FALSE
 ENABLE_ATOOL_TRUE
@@ -952,6 +955,7 @@ enable_openacc
 with_cppflag
 with_backend_cflag
 enable_atool
+enable_tca
 with_backend_cc
 with_backend_fc
 enable_mreal
@@ -1622,6 +1626,7 @@ Optional Features:
   --enable-xmpgpu                enable XcalableMP-GPU (false default).
   --enable-openacc               enable OpenACC (false default).
   --enable-atool                 enable atool (false default).
+  --enable-tca                   enable Tightly Coupled Accelerators (false default).
   --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default).
 
 Optional Packages:
@@ -4719,8 +4724,7 @@ else
     ;;
   *)
     lt_cv_sys_max_cmd_len=`(getconf ARG_MAX) 2> /dev/null`
-    if test -n "$lt_cv_sys_max_cmd_len" && \
-	test undefined != "$lt_cv_sys_max_cmd_len"; then
+    if test -n "$lt_cv_sys_max_cmd_len"; then
       lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \/ 4`
       lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \* 3`
     else
@@ -6283,7 +6287,7 @@ ia64-*-hpux*)
   rm -rf conftest*
   ;;
 
-x86_64-*kfreebsd*-gnu|x86_64-*linux*|powerpc*-*linux*| \
+x86_64-*kfreebsd*-gnu|x86_64-*linux*|ppc*-*linux*|powerpc*-*linux*| \
 s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
   # Find out which ABI we are using.
   echo 'int i;' > conftest.$ac_ext
@@ -6299,19 +6303,9 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	    LD="${LD-ld} -m elf_i386_fbsd"
 	    ;;
 	  x86_64-*linux*)
-	    case `/usr/bin/file conftest.o` in
-	      *x86-64*)
-		LD="${LD-ld} -m elf32_x86_64"
-		;;
-	      *)
-		LD="${LD-ld} -m elf_i386"
-		;;
-	    esac
+	    LD="${LD-ld} -m elf_i386"
 	    ;;
-	  powerpc64le-*)
-	    LD="${LD-ld} -m elf32lppclinux"
-	    ;;
-	  powerpc64-*)
+	  ppc64-*linux*|powerpc64-*linux*)
 	    LD="${LD-ld} -m elf32ppclinux"
 	    ;;
 	  s390x-*linux*)
@@ -6330,10 +6324,7 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	  x86_64-*linux*)
 	    LD="${LD-ld} -m elf_x86_64"
 	    ;;
-	  powerpcle-*)
-	    LD="${LD-ld} -m elf64lppc"
-	    ;;
-	  powerpc-*)
+	  ppc*-*linux*|powerpc*-*linux*)
 	    LD="${LD-ld} -m elf64ppc"
 	    ;;
 	  s390*-*linux*|s390*-*tpf*)
@@ -12803,6 +12794,14 @@ else
 fi
 
 
+# Check whether --enable-tca was given.
+if test "${enable_tca+set}" = set; then :
+  enableval=$enable_tca; dotca=$enableval
+else
+  dotca=no
+fi
+
+
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -17003,7 +17002,6 @@ XMP_ENABLE_GPU=0
 if test "x${doXmpGpu}" = "xyes"; then
     XMP_ENABLE_GPU=1
 fi
-
  if test "x${doXmpGpu}" = "xyes"; then
   ENABLE_XMP_GPU_TRUE=
   ENABLE_XMP_GPU_FALSE='#'
@@ -17028,7 +17026,6 @@ fi
 
 
 
-
 ENABLE_ATOOL=0
 if test "x${doatool}" = "xyes"; then
    ENABLE_ATOOL=1
@@ -17039,6 +17036,20 @@ fi
 else
   ENABLE_ATOOL_TRUE='#'
   ENABLE_ATOOL_FALSE=
+fi
+
+
+
+#ENABLE_TCA=0
+#if test "x${dotca}" = "xyes"; then
+#   ENABLE_TCA=1
+#fi
+ if test "x${dotca}" = "xyes"; then
+  ENABLE_TCA_TRUE=
+  ENABLE_TCA_FALSE='#'
+else
+  ENABLE_TCA_TRUE='#'
+  ENABLE_TCA_FALSE=
 fi
 
 
@@ -26392,6 +26403,10 @@ if test -z "${ENABLE_ATOOL_TRUE}" && test -z "${ENABLE_ATOOL_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_ATOOL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${ENABLE_TCA_TRUE}" && test -z "${ENABLE_TCA_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_TCA\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${FJRDMA_TRUE}" && test -z "${FJRDMA_FALSE}"; then
   as_fn_error $? "conditional \"FJRDMA\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -29291,5 +29306,8 @@ EOF
   echo "    OpenACC               : $doOpenAcc"
 fi
 
+if test "x${dotca}" = "xyes"; then
+  echo "    TCA                   : $dotca"
+fi
 echo "=================================================="
 
