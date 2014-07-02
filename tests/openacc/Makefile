@@ -17,6 +17,7 @@ all default: $(EXES) update_host_subarray_type update_device_subarray_type data_
 run: $(EXES)
 	$(XRUN) parallel_private.x
 	$(XRUN) parallel-loop_private.x
+	$(XRUN) parallel-loop_reduction.x
 	$(XRUN) loop_private_gang.x
 	$(XRUN) loop_private_vector.x
 	$(XRUN) parallel_if.x

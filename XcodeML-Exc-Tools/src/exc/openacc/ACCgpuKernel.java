@@ -1356,7 +1356,9 @@ public class ACCgpuKernel {
     //useMemPoolVarId
     for(Ident id : _outerIdList){
       if(kernelInfo.isVarReduction(id.getName())){
-	_useMemPoolOuterIdSet.add(id);      
+        if(! kernelInfo.isVarAllocated(id)){
+          _useMemPoolOuterIdSet.add(id);
+        }
       }
     }
   }
