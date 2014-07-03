@@ -25,8 +25,8 @@ if FJRDMA
     AM_CFLAGS        += -std=gnu99 -D_XMP_COARRAY_FJRDMA
 endif
 
-if ENABLE_TCA
-    AM_CFLAGS        += -D_XMP_TCA
+if TCA
+    AM_CFLAGS        += -D_XMP_TCA -I@TCA_PREFIX@
 endif
 
 xmp_pack_vector.o: xmp_pack_vector.c

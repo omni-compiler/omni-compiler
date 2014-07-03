@@ -486,10 +486,6 @@ AC_ARG_ENABLE(atool,
     [  --enable-atool                 enable atool (false default).],
     [doatool=$enableval], [doatool=no])
 
-AC_ARG_ENABLE(tca,
-    [  --enable-tca                   enable Tightly Coupled Accelerators (false default).],
-    [dotca=$enableval], [dotca=no])
-
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
@@ -525,13 +521,6 @@ if test "x${doatool}" = "xyes"; then
 fi
 AM_CONDITIONAL(ENABLE_ATOOL, test "x${doatool}" = "xyes")
 AC_SUBST(ENABLE_ATOOL)
-
-#ENABLE_TCA=0
-#if test "x${dotca}" = "xyes"; then
-#   ENABLE_TCA=1
-#fi
-AM_CONDITIONAL(ENABLE_TCA, test "x${dotca}" = "xyes")
-AC_SUBST(ENABLE_TCA)
 
 # check gcc version
 AC_MSG_CHECKING(gcc version)
@@ -1614,6 +1603,23 @@ fi
 AC_SUBST(LIBXML_PREFIX)
 
 # --------------------------------------------------------------------
+# TCA
+AC_ARG_WITH(TCADir,
+    [  --with-TCADir=DIR           TCA install directory],
+    [TCA_PREFIX="${withval}"])
+
+use_tca=no
+if test "${TCA_PREFIX}" != ""; then
+   use_tca=yes
+   if ! test -f $TCA_PREFIX/tca-api.h; then
+      AC_MSG_ERROR([$TCA_PREFIX/tca-api.h not found. Please check --with-TCADir=<DIR>])
+   fi
+fi
+
+AM_CONDITIONAL(TCA, test x${use_tca} = xyes)
+AC_SUBST(TCA_PREFIX)
+
+# --------------------------------------------------------------------
 # specify GASNet path
 
 default_gasnetDir=""
@@ -1626,7 +1632,7 @@ use_gasnet=no
 if test "${GASNET_PREFIX}" != ""; then
   use_gasnet=yes
   if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
-	  AC_MSG_ERROR([${GASNET_PREFIX}/include/gasnet.h not found. Please attach or check --with-gasnetDir])
+	  AC_MSG_ERROR([${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnetDir])
   fi
 fi
 
@@ -2151,8 +2157,8 @@ EOF
   echo "    OpenACC               : $doOpenAcc"
 fi
 
-if test "x${dotca}" = "xyes"; then
-  echo "    TCA                   : $dotca"
+if test "${use_tca}" = "yes"; then
+  echo "    TCA                   : yes"
 fi
 echo "=================================================="
 

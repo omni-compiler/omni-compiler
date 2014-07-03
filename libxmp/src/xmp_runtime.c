@@ -4,6 +4,9 @@
 #include "mpi-ext.h"
 #endif
 #include <stdio.h>
+#ifdef _XMP_TCA
+#include "tca-api.h"
+#endif
 
 static int _XMP_runtime_working = _XMP_N_INT_FALSE;
 

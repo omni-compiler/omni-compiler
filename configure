@@ -692,6 +692,9 @@ GASNET_CONDUIT
 GASNET_PREFIX
 GASNET_FALSE
 GASNET_TRUE
+TCA_PREFIX
+TCA_FALSE
+TCA_TRUE
 LIBXML_PREFIX
 omniQRealFillGap
 omniQRealPrecInLimb
@@ -769,9 +772,6 @@ AIX_OPT
 NATIVE_DOPT
 PPCC_OPT
 PPCC
-ENABLE_TCA
-ENABLE_TCA_FALSE
-ENABLE_TCA_TRUE
 ENABLE_ATOOL
 ENABLE_ATOOL_FALSE
 ENABLE_ATOOL_TRUE
@@ -955,7 +955,6 @@ enable_openacc
 with_cppflag
 with_backend_cflag
 enable_atool
-enable_tca
 with_backend_cc
 with_backend_fc
 enable_mreal
@@ -963,6 +962,7 @@ with_gmpLibDir
 with_gmpIncDir
 with_precision
 with_libxmlDir
+with_TCADir
 with_gasnetDir
 with_gasnet_conduit
 with_gpucc
@@ -1626,7 +1626,6 @@ Optional Features:
   --enable-xmpgpu                enable XcalableMP-GPU (false default).
   --enable-openacc               enable OpenACC (false default).
   --enable-atool                 enable atool (false default).
-  --enable-tca                   enable Tightly Coupled Accelerators (false default).
   --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default).
 
 Optional Packages:
@@ -1647,6 +1646,7 @@ Optional Packages:
   --with-gmpIncDir=DIR        where the GNU-MP include headers are for quad-real support.
   --with-precision=NUM        the default precision of real*16 in bits (128).
   --with-libxmlDir=DIR        libxml install directory (default: /usr)
+  --with-TCADir=DIR           TCA install directory
   --with-gasnetDir=DIR        GASNet install directory
   --with-gasnet-conduit=NAME  GASNet conduit
   --with-gpucc=CMD            GPU C compiler (default: nvcc)
@@ -5125,6 +5125,10 @@ freebsd* | dragonfly*)
   fi
   ;;
 
+gnu*)
+  lt_cv_deplibs_check_method=pass_all
+  ;;
+
 haiku*)
   lt_cv_deplibs_check_method=pass_all
   ;;
@@ -5163,11 +5167,11 @@ irix5* | irix6* | nonstopux*)
   ;;
 
 # This must be glibc/ELF.
-linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
+linux* | k*bsd*-gnu | kopensolaris*-gnu)
   lt_cv_deplibs_check_method=pass_all
   ;;
 
-netbsd* | netbsdelf*-gnu)
+netbsd*)
   if echo __ELF__ | $CC -E - | $GREP __ELF__ > /dev/null; then
     lt_cv_deplibs_check_method='match_pattern /lib[^/]+(\.so\.[0-9]+\.[0-9]+|_pic\.a)$'
   else
@@ -8132,7 +8136,7 @@ lt_prog_compiler_static=
       lt_prog_compiler_static='-non_shared'
       ;;
 
-    linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
+    linux* | k*bsd*-gnu | kopensolaris*-gnu)
       case $cc_basename in
       # old Intel for x86_64 which still supported -KPIC.
       ecc*)
@@ -8610,9 +8614,6 @@ $as_echo_n "checking whether the $compiler linker ($LD) supports shared librarie
   openbsd*)
     with_gnu_ld=no
     ;;
-  linux* | k*bsd*-gnu | gnu*)
-    link_all_deplibs=no
-    ;;
   esac
 
   ld_shlibs=yes
@@ -8834,7 +8835,7 @@ _LT_EOF
       fi
       ;;
 
-    netbsd* | netbsdelf*-gnu)
+    netbsd*)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	archive_cmds='$LD -Bshareable $libobjs $deplibs $linker_flags -o $lib'
 	wlarc=
@@ -9011,7 +9012,6 @@ _LT_EOF
 	if test "$aix_use_runtimelinking" = yes; then
 	  shared_flag="$shared_flag "'${wl}-G'
 	fi
-	link_all_deplibs=no
       else
 	# not using gcc
 	if test "$host_cpu" = ia64; then
@@ -9465,7 +9465,7 @@ $as_echo "$lt_cv_irix_exported_symbol" >&6; }
       link_all_deplibs=yes
       ;;
 
-    netbsd* | netbsdelf*-gnu)
+    netbsd*)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	archive_cmds='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'  # a.out
       else
@@ -10302,6 +10302,17 @@ freebsd* | dragonfly*)
   esac
   ;;
 
+gnu*)
+  version_type=linux # correct to gnu/linux during the next big refactor
+  need_lib_prefix=no
+  need_version=no
+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}${major} ${libname}${shared_ext}'
+  soname_spec='${libname}${release}${shared_ext}$major'
+  shlibpath_var=LD_LIBRARY_PATH
+  shlibpath_overrides_runpath=no
+  hardcode_into_libs=yes
+  ;;
+
 haiku*)
   version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
@@ -10418,7 +10429,7 @@ linux*oldld* | linux*aout* | linux*coff*)
   ;;
 
 # This must be glibc/ELF.
-linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
+linux* | k*bsd*-gnu | kopensolaris*-gnu)
   version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
   need_version=no
@@ -10480,18 +10491,6 @@ fi
   # people can always --disable-shared, the test was removed, and we
   # assume the GNU/Linux dynamic linker is in use.
   dynamic_linker='GNU/Linux ld.so'
-  ;;
-
-netbsdelf*-gnu)
-  version_type=linux
-  need_lib_prefix=no
-  need_version=no
-  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
-  soname_spec='${libname}${release}${shared_ext}$major'
-  shlibpath_var=LD_LIBRARY_PATH
-  shlibpath_overrides_runpath=no
-  hardcode_into_libs=yes
-  dynamic_linker='NetBSD ld.elf_so'
   ;;
 
 netbsd*)
@@ -12794,14 +12793,6 @@ else
 fi
 
 
-# Check whether --enable-tca was given.
-if test "${enable_tca+set}" = set; then :
-  enableval=$enable_tca; dotca=$enableval
-else
-  dotca=no
-fi
-
-
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -14466,6 +14457,9 @@ fi
         ld_shlibs_CXX=yes
         ;;
 
+      gnu*)
+        ;;
+
       haiku*)
         archive_cmds_CXX='$CC -shared $libobjs $deplibs $compiler_flags ${wl}-soname $wl$soname -o $lib'
         link_all_deplibs_CXX=yes
@@ -14627,7 +14621,7 @@ fi
         inherit_rpath_CXX=yes
         ;;
 
-      linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
+      linux* | k*bsd*-gnu | kopensolaris*-gnu)
         case $cc_basename in
           KCC*)
 	    # Kuck and Associates, Inc. (KAI) C++ Compiler
@@ -15487,7 +15481,7 @@ lt_prog_compiler_static_CXX=
 	    ;;
 	esac
 	;;
-      linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
+      linux* | k*bsd*-gnu | kopensolaris*-gnu)
 	case $cc_basename in
 	  KCC*)
 	    # KAI C++ Compiler
@@ -15551,7 +15545,7 @@ lt_prog_compiler_static_CXX=
 	    ;;
 	esac
 	;;
-      netbsd* | netbsdelf*-gnu)
+      netbsd*)
 	;;
       *qnx* | *nto*)
         # QNX uses GNU C++, but need to define -shared option too, otherwise
@@ -15921,9 +15915,6 @@ $as_echo_n "checking whether the $compiler linker ($LD) supports shared librarie
       exclude_expsyms_CXX='[_]+GLOBAL_OFFSET_TABLE_|[_]+GLOBAL__[FID]_.*|[_]+head_[A-Za-z0-9_]+_dll|[A-Za-z0-9_]+_dll_iname'
       ;;
     esac
-    ;;
-  linux* | k*bsd*-gnu | gnu*)
-    link_all_deplibs_CXX=no
     ;;
   *)
     export_symbols_cmds_CXX='$NM $libobjs $convenience | $global_symbol_pipe | $SED '\''s/.* //'\'' | sort | uniq > $export_symbols'
@@ -16359,6 +16350,17 @@ freebsd* | dragonfly*)
   esac
   ;;
 
+gnu*)
+  version_type=linux # correct to gnu/linux during the next big refactor
+  need_lib_prefix=no
+  need_version=no
+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}${major} ${libname}${shared_ext}'
+  soname_spec='${libname}${release}${shared_ext}$major'
+  shlibpath_var=LD_LIBRARY_PATH
+  shlibpath_overrides_runpath=no
+  hardcode_into_libs=yes
+  ;;
+
 haiku*)
   version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
@@ -16475,7 +16477,7 @@ linux*oldld* | linux*aout* | linux*coff*)
   ;;
 
 # This must be glibc/ELF.
-linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
+linux* | k*bsd*-gnu | kopensolaris*-gnu)
   version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
   need_version=no
@@ -16537,18 +16539,6 @@ fi
   # people can always --disable-shared, the test was removed, and we
   # assume the GNU/Linux dynamic linker is in use.
   dynamic_linker='GNU/Linux ld.so'
-  ;;
-
-netbsdelf*-gnu)
-  version_type=linux
-  need_lib_prefix=no
-  need_version=no
-  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
-  soname_spec='${libname}${release}${shared_ext}$major'
-  shlibpath_var=LD_LIBRARY_PATH
-  shlibpath_overrides_runpath=no
-  hardcode_into_libs=yes
-  dynamic_linker='NetBSD ld.elf_so'
   ;;
 
 netbsd*)
@@ -17036,20 +17026,6 @@ fi
 else
   ENABLE_ATOOL_TRUE='#'
   ENABLE_ATOOL_FALSE=
-fi
-
-
-
-#ENABLE_TCA=0
-#if test "x${dotca}" = "xyes"; then
-#   ENABLE_TCA=1
-#fi
- if test "x${dotca}" = "xyes"; then
-  ENABLE_TCA_TRUE=
-  ENABLE_TCA_FALSE='#'
-else
-  ENABLE_TCA_TRUE='#'
-  ENABLE_TCA_FALSE=
 fi
 
 
@@ -17974,7 +17950,7 @@ lt_prog_compiler_static_FC=
       lt_prog_compiler_static_FC='-non_shared'
       ;;
 
-    linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
+    linux* | k*bsd*-gnu | kopensolaris*-gnu)
       case $cc_basename in
       # old Intel for x86_64 which still supported -KPIC.
       ecc*)
@@ -18437,9 +18413,6 @@ $as_echo_n "checking whether the $compiler linker ($LD) supports shared librarie
   openbsd*)
     with_gnu_ld=no
     ;;
-  linux* | k*bsd*-gnu | gnu*)
-    link_all_deplibs_FC=no
-    ;;
   esac
 
   ld_shlibs_FC=yes
@@ -18661,7 +18634,7 @@ _LT_EOF
       fi
       ;;
 
-    netbsd* | netbsdelf*-gnu)
+    netbsd*)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	archive_cmds_FC='$LD -Bshareable $libobjs $deplibs $linker_flags -o $lib'
 	wlarc=
@@ -18838,7 +18811,6 @@ _LT_EOF
 	if test "$aix_use_runtimelinking" = yes; then
 	  shared_flag="$shared_flag "'${wl}-G'
 	fi
-	link_all_deplibs_FC=no
       else
 	# not using gcc
 	if test "$host_cpu" = ia64; then
@@ -19242,7 +19214,7 @@ $as_echo "$lt_cv_irix_exported_symbol" >&6; }
       link_all_deplibs_FC=yes
       ;;
 
-    netbsd* | netbsdelf*-gnu)
+    netbsd*)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	archive_cmds_FC='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'  # a.out
       else
@@ -19914,6 +19886,17 @@ freebsd* | dragonfly*)
   esac
   ;;
 
+gnu*)
+  version_type=linux # correct to gnu/linux during the next big refactor
+  need_lib_prefix=no
+  need_version=no
+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}${major} ${libname}${shared_ext}'
+  soname_spec='${libname}${release}${shared_ext}$major'
+  shlibpath_var=LD_LIBRARY_PATH
+  shlibpath_overrides_runpath=no
+  hardcode_into_libs=yes
+  ;;
+
 haiku*)
   version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
@@ -20030,7 +20013,7 @@ linux*oldld* | linux*aout* | linux*coff*)
   ;;
 
 # This must be glibc/ELF.
-linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
+linux* | k*bsd*-gnu | kopensolaris*-gnu)
   version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
   need_version=no
@@ -20086,18 +20069,6 @@ fi
   # people can always --disable-shared, the test was removed, and we
   # assume the GNU/Linux dynamic linker is in use.
   dynamic_linker='GNU/Linux ld.so'
-  ;;
-
-netbsdelf*-gnu)
-  version_type=linux
-  need_lib_prefix=no
-  need_version=no
-  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
-  soname_spec='${libname}${release}${shared_ext}$major'
-  shlibpath_var=LD_LIBRARY_PATH
-  shlibpath_overrides_runpath=no
-  hardcode_into_libs=yes
-  dynamic_linker='NetBSD ld.elf_so'
   ;;
 
 netbsd*)
@@ -25346,6 +25317,33 @@ fi
 
 
 # --------------------------------------------------------------------
+# TCA
+
+# Check whether --with-TCADir was given.
+if test "${with_TCADir+set}" = set; then :
+  withval=$with_TCADir; TCA_PREFIX="${withval}"
+fi
+
+
+use_tca=no
+if test "${TCA_PREFIX}" != ""; then
+   use_tca=yes
+   if ! test -f $TCA_PREFIX/tca-api.h; then
+      as_fn_error $? "$TCA_PREFIX/tca-api.h not found. Please check --with-TCADir=<DIR>" "$LINENO" 5
+   fi
+fi
+
+ if test x${use_tca} = xyes; then
+  TCA_TRUE=
+  TCA_FALSE='#'
+else
+  TCA_TRUE='#'
+  TCA_FALSE=
+fi
+
+
+
+# --------------------------------------------------------------------
 # specify GASNet path
 
 default_gasnetDir=""
@@ -25363,7 +25361,7 @@ use_gasnet=no
 if test "${GASNET_PREFIX}" != ""; then
   use_gasnet=yes
   if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
-	  as_fn_error $? "${GASNET_PREFIX}/include/gasnet.h not found. Please attach or check --with-gasnetDir" "$LINENO" 5
+	  as_fn_error $? "${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnetDir" "$LINENO" 5
   fi
 fi
 
@@ -26403,10 +26401,6 @@ if test -z "${ENABLE_ATOOL_TRUE}" && test -z "${ENABLE_ATOOL_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_ATOOL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${ENABLE_TCA_TRUE}" && test -z "${ENABLE_TCA_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_TCA\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${FJRDMA_TRUE}" && test -z "${FJRDMA_FALSE}"; then
   as_fn_error $? "conditional \"FJRDMA\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -26420,6 +26414,10 @@ if test -z "${SUPERUX_TRUE}" && test -z "${SUPERUX_FALSE}"; then
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
+if test -z "${TCA_TRUE}" && test -z "${TCA_FALSE}"; then
+  as_fn_error $? "conditional \"TCA\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${GASNET_TRUE}" && test -z "${GASNET_FALSE}"; then
   as_fn_error $? "conditional \"GASNET\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -29306,8 +29304,8 @@ EOF
   echo "    OpenACC               : $doOpenAcc"
 fi
 
-if test "x${dotca}" = "xyes"; then
-  echo "    TCA                   : $dotca"
+if test "${use_tca}" = "yes"; then
+  echo "    TCA                   : yes"
 fi
 echo "=================================================="
 

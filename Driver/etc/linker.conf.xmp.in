@@ -43,6 +43,11 @@ done
 GASNET_LIB="@GASNET_LIBS@"
 LIBS="${INIT_MODULE_OBJ} ${LIBS} -lxmp ${GASNET_LIB}"
 
+TCA_LIB="@TCA_PREFIX@"
+if test "${TCA_LIB}" != ""; then
+  LIBS="${LIBS} -L${TCA_LIB} -ltca"
+fi
+
 LINKER="@BECC@"
 if test ${hasScalasca} -eq 1; then
     LINKER="scalasca --instrument @BECC@"
