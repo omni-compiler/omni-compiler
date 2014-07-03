@@ -431,6 +431,7 @@ top_srcdir = @top_srcdir@
 bin_SCRIPTS = bin/C_Back
 java_DATA = build/om-c-back.jar
 ANT = @ANTCOM@ -buildfile build.xml
+SRC = $(wildcard src/*/*/*/*.java)
 all: all-am
 
 .SUFFIXES:
@@ -685,7 +686,7 @@ uninstall-am: uninstall-binSCRIPTS uninstall-javaDATA
 
 all-local: $(java_DATA)
 
-$(java_DATA):
+$(java_DATA): $(SRC)
 	$(ANT) jar
 
 jar:

@@ -120,8 +120,14 @@ public class XcodeMLtools_C extends XcodeMLtools {
 
   @Override
   Xobject toXobject(Node n) {
+    //////
+    System.out.println("[into toXobject]");
+    //////
     if (n == null)
       return null;
+    //////
+    System.out.println("Node n="+n);
+    //////
 
     Xcode code = nameTable.getXcode(n.getNodeName());
     if (code == null) {
@@ -164,22 +170,25 @@ public class XcodeMLtools_C extends XcodeMLtools {
       XobjArgs argBody = arg.nextArgs().nextArgs().nextArgs();
       Xobject stmts = argBody.getArg();
       if (stmts != null) {
-	switch (stmts.Opcode()) {
-	case LIST:
-	  stmts = Xcons.CompoundStatement(
+        switch (stmts.Opcode()) {
+        case LIST:
+          stmts = Xcons.CompoundStatement(
 					  Xcons.IDList(), Xcons.List(), stmts);
-	  argBody.setArg(stmts);
-	  break;
-	case COMPOUND_STATEMENT:
-	  break;
-	default:
-	  fatal("Invalid function body");
-	}
+          argBody.setArg(stmts);
+          break;
+        case COMPOUND_STATEMENT:
+          break;
+        default:
+          fatal("Invalid function body");
+        }
       }
       return xlist;
     }
 
     case VAR_DECL:
+      ////
+      System.out.println("case VAR_DECL. n="+n);
+      ////
       return enterAsXobjList(n,
 			     code,
 			     type,
@@ -188,6 +197,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
 			     getContentText(getElement(n, "name")), // symbolName
 			     null, // symbolScope
 			     getContent(getElement(n, "value")),
+			     getElement(n, "codimensions"),   // added ID=284
 			     getElement(n, "gccAsm"));
 
     case FUNCTION_DECL:
@@ -552,6 +562,9 @@ public class XcodeMLtools_C extends XcodeMLtools {
       ident.setIsDeclared(true);
     }
 
+    //////
+    System.out.println("[outof toXobject ?]");
+    //////
     return ident;
   }
 

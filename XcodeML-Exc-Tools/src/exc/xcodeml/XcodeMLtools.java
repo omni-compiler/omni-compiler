@@ -42,14 +42,19 @@ public abstract class XcodeMLtools {
   public Document readDocument(Reader reader) {
     Document doc = null;
     String s = null;
+
+    //////
+    System.out.println("[into readDocument]");
+    //////
+
     try {
       StringBuilder sb = new StringBuilder(1024 * 4);
       BufferedReader br = new BufferedReader(reader);
       String line = null;
 
       while((line = br.readLine()) != null) {
-	sb.append(line);
-	sb.append("\n");
+        sb.append(line);
+        sb.append("\n");
       }
 
       s = sb.toString();
@@ -64,6 +69,11 @@ public abstract class XcodeMLtools {
       fatal("error in DOM read e=" + e);
       System.exit(1);
     }
+
+    //////
+    System.out.println("[outof readDocument]");
+    //////
+
     return doc;
   }
 
@@ -91,6 +101,10 @@ public abstract class XcodeMLtools {
   abstract Xobject toXobject(Node n);
 
   public XobjectFile read(Reader reader) {
+    //////
+    System.out.println("[into read]");
+    //////
+
     Document doc = readDocument(reader);
     Node rootNode = doc.getDocumentElement();
     if (rootNode.getNodeName() != "XcodeProgram")
@@ -127,15 +141,24 @@ public abstract class XcodeMLtools {
     n = getElement(rootNode, "globalDeclarations");
     list = n.getChildNodes();
     for (int i = 0; i < list.getLength(); i++) {
+      //////
+      System.out.println("for i="+i);
+      //////
       nn = list.item(i);
+      //////
+      System.out.println("  nn="+nn);
+      /////
       if (nn.getNodeType() != Node.ELEMENT_NODE)
-	continue;
+        continue;
       enterGlobalDecl(nn);
     }
 
     setIdentDecl(xobjFile);
     xobjFile.setParentRecursively(null);
 
+    //////
+    System.out.println("[outof read]");
+    //////
     return xobjFile;
   }
 

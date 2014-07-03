@@ -331,8 +331,7 @@ outxChildren(FILE *fp, int indent, CExpr *expr)
     CExprIterator ite;
     EXPR_FOREACH_MULTI(ite, expr)
         if(ite.node) {
-            if(EXPR_CODE(ite.node) == EC_NULL_NODE &&
-               expr && EXPR_CODE(expr) == EC_XMP_COARRAY_DIMENSIONS)
+            if(EXPR_CODE(ite.node) == EC_NULL_NODE)   // ID=284
                 outxPrint(fp, indent, "<list/>\n");
             else
                 outxContext(fp, indent, ite.node);
@@ -1516,11 +1515,6 @@ outxSymbols0(FILE *fp, int indent, CSymbolTable *symTab, int symbolsFlags)
         if(gak != GAK_UNDEF)
             outxGccAttrVarOrFunc(fp, indent + 1, td, gak);
 
-        /*  coarray 
-         */ 
-        if (sym->e_codimensions)
-          outxContextWithTag(fp, indent + 1, sym->e_codimensions, "codimensions");
-
         outxPrint(fp, indent, "</id>\n");
     }
 
@@ -2009,6 +2003,8 @@ outx_INIT_DECL(FILE *fp, int indent, CExpr *initDecl)
         sym->e_symType == ST_TYPE || td->e_isTypeDef)
         return;
 
+    CExpr *codims = sym->e_codimensions;      // ID=284
+
     CExpr *asmExpr = exprListNextNData(initDecl, 1);
     CExprOfTypeDesc *tdo = getRefType(td);
     int isFunc = ETYP_IS_FUNC(tdo);
@@ -2026,6 +2022,8 @@ outx_INIT_DECL(FILE *fp, int indent, CExpr *initDecl)
         outxPrint(fp, indent + 1, "<name>%s</name>\n", sym->e_symName);
         if(EXPR_ISNULL(init) == 0)
             outxContextWithTag(fp, indent + 1, EXPR_U(init)->e_node, "value");
+        if(EXPR_ISNULL(codims) == 0)  // ID=284
+            outxContextWithTag(fp, indent + 1, codims, "codimensions");
         if(EXPR_ISNULL(asmExpr) == 0)
             outx_GCC_ASM_EXPR(fp, indent + 1, asmExpr);
         outxTagClose(fp, indent, varDeclTag);

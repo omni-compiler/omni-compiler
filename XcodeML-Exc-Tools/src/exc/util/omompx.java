@@ -124,8 +124,14 @@ public class omompx
     boolean useRelaxerTranslatorInput = false;
     boolean useRelaxerTranslatorOutput = false;
     boolean useRelaxerDecompilerIutput = false;
-        
+
+
+    System.out.println("stop here");
+
     for(int i = 0; i < args.length; ++i) {
+
+      System.out.println("for i="+i);
+
       String arg = args[i];
       String narg = (i < args.length - 1) ? args[i + 1] : null;
     
@@ -218,6 +224,9 @@ public class omompx
       } else {
         error("too many arguments");
       }
+    
+      System.out.println("end for i="+i);
+      
     }
         
     if (all_profile == true || selective_profile == true) {
@@ -264,6 +273,11 @@ public class omompx
     XobjectFile xobjFile;
     String srcPath = inXmlFile;
 
+    ///// test from here
+    //    XobjectFile f = new XobjectFile();
+    //    f.Input("/home/iwashita/Project/OMNI-git/TEST/284-codimension/__omni_tmp__/tmps.fine.xml");
+    //    f.Output("/home/iwashita/Project/OMNI-git/TEST/284-codimension/__omni_tmp__/tmps.fine.output.xml");
+    ///// test finished
     if (useRelaxerTranslatorInput) {
       if (XmOption.getLanguage() == XmLanguage.F) {
         // read XcodeML/Fortran
@@ -297,6 +311,9 @@ public class omompx
         xmProg = null;
       }
     } else { // useRelaxer
+      //////
+      System.out.println("Here useRelaxer in omompx");
+      /////
       XcodeMLtools tools = null;
       if (XmOption.getLanguage() == XmLanguage.F) {
         tools = new XcodeMLtools_F();
@@ -311,6 +328,10 @@ public class omompx
       //srcPath = xobjFile.getSourceFileName();
     }
         
+    /////
+    System.out.println("xobjFile was made");
+    /////
+
     String baseName = null;
     if(dump || srcPath == null || srcPath.indexOf("<") >= 0 ) {
       srcPath = null;
