@@ -131,8 +131,8 @@ void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t 
 
     }
 
-    (*lb) -= off;
-    (*ub) -= off;
+    //(*lb) -= off;
+    //(*ub) -= off;
 
     (*ub)--; // because upper bound in Fortran is inclusive
   }
