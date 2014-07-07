@@ -774,6 +774,11 @@ outxStructOrUnionType(FILE *fp, int indent, CExprOfTypeDesc *typeDesc, const cha
                 if(isBfTag)
                     outxContextWithTag(fp, indent + 3, memType->e_bitLenExpr, "bitField");
 
+                // ID=284 output codimensions in <id> block
+                CExpr *codims = sym->e_codimensions;
+                if(EXPR_ISNULL(codims) == 0)
+                    outxContextWithTag(fp, indent + 3, codims, "codimensions");
+
                 outxGccAttrVarOrFunc(fp, indent + 3, memType, GAK_VAR);
 
                 outxTagClose(fp, indent + 2, idTag);
@@ -1512,6 +1517,11 @@ outxSymbols0(FILE *fp, int indent, CSymbolTable *symTab, int symbolsFlags)
 
         outxPrint(fp, indent + 1, "<name>%s</name>\n", sym->e_symName);
 
+        // ID=284 output codimensions in <id> block
+        CExpr *codims = sym->e_codimensions;
+        if(EXPR_ISNULL(codims) == 0)
+            outxContextWithTag(fp, indent + 1, codims, "codimensions");
+
         if(gak != GAK_UNDEF)
             outxGccAttrVarOrFunc(fp, indent + 1, td, gak);
 
@@ -2003,8 +2013,6 @@ outx_INIT_DECL(FILE *fp, int indent, CExpr *initDecl)
         sym->e_symType == ST_TYPE || td->e_isTypeDef)
         return;
 
-    CExpr *codims = sym->e_codimensions;      // ID=284
-
     CExpr *asmExpr = exprListNextNData(initDecl, 1);
     CExprOfTypeDesc *tdo = getRefType(td);
     int isFunc = ETYP_IS_FUNC(tdo);
@@ -2022,8 +2030,6 @@ outx_INIT_DECL(FILE *fp, int indent, CExpr *initDecl)
         outxPrint(fp, indent + 1, "<name>%s</name>\n", sym->e_symName);
         if(EXPR_ISNULL(init) == 0)
             outxContextWithTag(fp, indent + 1, EXPR_U(init)->e_node, "value");
-        if(EXPR_ISNULL(codims) == 0)  // ID=284
-            outxContextWithTag(fp, indent + 1, codims, "codimensions");
         if(EXPR_ISNULL(asmExpr) == 0)
             outx_GCC_ASM_EXPR(fp, indent + 1, asmExpr);
         outxTagClose(fp, indent, varDeclTag);

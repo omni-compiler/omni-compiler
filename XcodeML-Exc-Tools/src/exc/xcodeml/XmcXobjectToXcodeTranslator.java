@@ -109,6 +109,10 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         addChildNodes(e,
                       transValue(ident.getEnumValue()));
 
+        // codimensions for coarray (ID=284)
+        addChildNodes(e,
+                      transCodimensions(ident.getCodimensions()));
+
         // gcc attributes
         addChildNodes(e,
                       trans(ident.getGccAttributes()));
@@ -479,8 +483,7 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = addChildNodes(createElement(name),
                               transName(xobj.getArg(0)),
                               transValue(xobj.getArgOrNull(1)),
-                              transCodimensions(xobj.getArgOrNull(2)),                // ID=284
-                              trans(xobj.getArgOrNull(3)));
+                              trans(xobj.getArgOrNull(2)));
             break;
         case FUNCTION_DECL:
             e = addChildNodes(createElement(name),
