@@ -159,10 +159,17 @@ public class XMPtranslateLocalPragma {
     BlockList funcBody = Bcons.emptyBody();
     
     for(int i=0;i<funcArgs.Nargs();i++){
-      Xobject arg = funcArgs.getArg(i);
-
+      Xobject array = funcArgs.getArg(i);
+      String arrayName = array.getString();
+      XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
+      if(alignedArray == null){
+        XMP.fatal(arrayName + " is not aligned.");
+      }
+      if(!alignedArray.hasShadow()){
+        XMP.fatal(arrayName + " is not shadowed.");
+      }
       // is shadow ?
-      funcBody.add(Bcons.Statement(funcId.Call(Xcons.List(arg))));
+      funcBody.add(Bcons.Statement(funcId.Call(Xcons.List(array))));
     }
     
     Block funcCallBlock = Bcons.COMPOUND(funcBody);
