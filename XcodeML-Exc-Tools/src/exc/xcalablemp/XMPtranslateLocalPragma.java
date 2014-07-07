@@ -91,6 +91,8 @@ public class XMPtranslateLocalPragma {
 	{ translateWaitAsync(pb);               break; }
       case TEMPLATE_FIX:
 	{ translateTemplateFix(pb);             break; }
+      case REFLECT_TCA:
+        { translateReflectTCA(pb);              break; }
       case GPU_REPLICATE:
         { translateGpuData(pb);			break; }
       case GPU_REPLICATE_SYNC:
@@ -136,8 +138,8 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private void translateTemplateFix(PragmaBlock pb) throws XMPexception {
-
+  private void translateTemplateFix(PragmaBlock pb) throws XMPexception 
+  {
     XobjList templateDecl = (XobjList)pb.getClauses();
     XobjList templateNameList = (XobjList)templateDecl.getArg(1);
     XobjList templateDeclCopy = (XobjList)templateDecl.copy();
@@ -150,6 +152,30 @@ public class XMPtranslateLocalPragma {
     }
   }
 
+  private void translateReflectTCA(PragmaBlock pb) throws XMPexception 
+  {
+    Ident funcId = _globalDecl.declExternFunc("_XMP_reflect_tca");
+    XobjList funcArgs = (XobjList)pb.getClauses().getArg(0);
+    BlockList funcBody = Bcons.emptyBody();
+    
+    for(int i=0;i<funcArgs.Nargs();i++){
+      Xobject array = funcArgs.getArg(i);
+      String arrayName = array.getString();
+      XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
+      if(alignedArray == null){
+        XMP.fatal(arrayName + " is not aligned.");
+      }
+      if(!alignedArray.hasShadow()){
+        XMP.fatal(arrayName + " is not shadowed.");
+      }
+      // is shadow ?
+      funcBody.add(Bcons.Statement(funcId.Call(Xcons.List(array))));
+    }
+    
+    Block funcCallBlock = Bcons.COMPOUND(funcBody);
+    pb.replace(funcCallBlock);
+  }
+  
   private void translateDistribute(PragmaBlock pb) throws XMPexception {
     checkDeclPragmaLocation(pb);
 
