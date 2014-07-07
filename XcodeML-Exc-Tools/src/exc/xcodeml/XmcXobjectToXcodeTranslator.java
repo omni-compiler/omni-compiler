@@ -141,6 +141,22 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         }
     }
 
+    // ID=284
+    private Node transCodimensions(Xobject xobj) {
+        if (xobj == null) {
+            return null;
+        }
+        Element codims = createElement("codimensions");
+        for (Xobject a : (XobjList)xobj) {
+            if (a.Opcode() == Xcode.LIST) {
+                addChildNodes(codims, createElement("list"));
+            } else {
+                addChildNodes(codims, transExprOrError(a));
+            }
+        }
+        return codims;
+    }
+
     private Element transFuncDefParams(XobjList declList, XobjList identList) {
         Element eParams = createElement("params");
 
@@ -463,7 +479,8 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = addChildNodes(createElement(name),
                               transName(xobj.getArg(0)),
                               transValue(xobj.getArgOrNull(1)),
-                              trans(xobj.getArgOrNull(2)));
+                              transCodimensions(xobj.getArgOrNull(2)),                // ID=284
+                              trans(xobj.getArgOrNull(3)));
             break;
         case FUNCTION_DECL:
             e = addChildNodes(createElement(name),

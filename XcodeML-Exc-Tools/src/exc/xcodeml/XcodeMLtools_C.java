@@ -120,14 +120,8 @@ public class XcodeMLtools_C extends XcodeMLtools {
 
   @Override
   Xobject toXobject(Node n) {
-    //////
-    System.out.println("[into toXobject]");
-    //////
     if (n == null)
       return null;
-    //////
-    System.out.println("Node n="+n);
-    //////
 
     Xcode code = nameTable.getXcode(n.getNodeName());
     if (code == null) {
@@ -186,9 +180,6 @@ public class XcodeMLtools_C extends XcodeMLtools {
     }
 
     case VAR_DECL:
-      ////
-      System.out.println("case VAR_DECL. n="+n);
-      ////
       return enterAsXobjList(n,
 			     code,
 			     type,
@@ -562,9 +553,6 @@ public class XcodeMLtools_C extends XcodeMLtools {
       ident.setIsDeclared(true);
     }
 
-    //////
-    System.out.println("[outof toXobject ?]");
-    //////
     return ident;
   }
 

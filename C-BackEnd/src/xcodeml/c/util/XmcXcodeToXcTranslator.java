@@ -574,11 +574,6 @@ public class XmcXcodeToXcTranslator {
     class VarDeclVisitor extends XcodeNodeVisitor {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
-
-
-          System.out.println("xcodeml.c.util.XmcXcodeToXcTranslator.XcodeNodeVisitor.enter yahoooo");
-          System.out.println("xcodeml.c.util.XmcXcodeToXcTranslator.XcodeNodeVisitor.enter yahoooo");
-
             XcIdent ident = _getIdent(tc,
                                       XcSymbolKindEnum.VAR,
                                       getElement(n, "name"));
