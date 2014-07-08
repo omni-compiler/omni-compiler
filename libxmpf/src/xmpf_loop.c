@@ -140,6 +140,8 @@ void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t 
     ; /* the nest is not aligned with any dimension of the template. */
   }
 
+  //xmpf_dbg_printf("loop = (%d : %d)\n", *lb, *ub);
+
   return;
 
 }
