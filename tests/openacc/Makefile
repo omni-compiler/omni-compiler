@@ -24,7 +24,7 @@ run: $(EXES)
 	$(XRUN) loop_reduction_int.x
 	$(XRUN) loop_reduction_float.x
 	$(XRUN) loop_reduction_double.x
-#	$(XRUN) loop_reduction.x
+	$(XRUN) loop_reduction.x
 	$(XRUN) loop_private.x
 	$(XRUN) kernel_config.x
 	$(XRUN) update_array.x

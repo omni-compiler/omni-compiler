@@ -54,7 +54,7 @@ for i in "$@"; do
 	    args=("${args[@]}" "--Wp-no-replace-pragma");;
 	-facc)
 	    if test @ENABLE_ACC@ -eq 1; then
-		args=("${args[@]}" "--Wf${i}" "--Wx${i}" "--Wl${i}" "--Wn${i}")
+		args=("${args[@]}" "--Wf${i}" "--Wx${i}" "--Wl${i}" "--Wn-omniacc")
 	    else
 		echo "warning: -facc option is unavailable, rebuild the compiler with ./configure --enable-openacc"
             fi;;

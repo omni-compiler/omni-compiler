@@ -40,7 +40,7 @@ for i in ${OM_OPTIONS}; do
             if [ -f "${INPFILE_FILENAME}.cu" ]; then
                 ${GPU_COMPILER} @GPU_CFLAGS@ -I"${OMNI_HOME}/include" -c "${INPFILE_FILENAME}.cu" -o "${INPFILE_FILENAME}.xmpgpu.o"
             fi;;
-        -acc | -facc)
+        -omniacc)
             if [ -f "${INPFILE_FILENAME}.cu" ]; then
                 GPUCMD="${GPU_COMPILER} @GPU_CFLAGS@ -I"${OMNI_HOME}/include" -c "${INPFILE_FILENAME}.cu" -o "${INPFILE_FILENAME}.accgpu.o""
 		$GPUCMD

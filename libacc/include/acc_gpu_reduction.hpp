@@ -120,7 +120,7 @@ void reduceInBlock(T *resultInBlock, T resultInThread, int kind){
   if(threadIdx.x < 32) warpReduce(tmp, kind);
 
   if(threadIdx.x == 0){
-    *resultInBlock = tmp[0];
+    *resultInBlock = op(tmp[0], *resultInBlock, kind);
   }
   __syncthreads(); //sync for next reduction among threads
 }
@@ -147,6 +147,9 @@ static void reduceInGridDefault(T *resultInGrid, T resultInBlock, int kind, T *t
       part_result = op(part_result, tmp[idx], kind);
     }
     T result;
+    if(threadIdx.x == 0){
+      _ACC_gpu_init_reduction_var(&result, kind);
+    }
     reduceInBlock(&result, part_result, kind);
     if(threadIdx.x == 0){
       *resultInGrid = op(*resultInGrid, result, kind);
@@ -225,6 +228,9 @@ template<typename T>
 __device__
 static void _ACC_gpu_reduce_block_thread_x(T *result, T resultInThread, int kind){
   T resultInBlock;
+  if(threadIdx.x == 0){
+    _ACC_gpu_init_reduction_var(&resultInBlock, kind);
+  }
   reduceInBlock(&resultInBlock, resultInThread, kind);
   reduceInGrid(result, resultInBlock, kind, NULL, NULL);
 }
@@ -233,6 +239,9 @@ template<typename T>
 __device__
 static void _ACC_gpu_reduce_block_thread_x(T *result, T resultInThread, int kind, T *tmp, unsigned int *cnt){
   T resultInBlock;
+  if(threadIdx.x == 0){ 
+    _ACC_gpu_init_reduction_var(&resultInBlock, kind);
+  }
   reduceInBlock(&resultInBlock, resultInThread, kind);
   reduceInGrid(result, resultInBlock, kind, tmp, cnt);
 }
@@ -294,6 +303,9 @@ static void reduceInGridDefault_new(T *result, T *tmp, int kind){
     part_result = op(part_result, tmp[idx], kind);
   }
   T resultInGrid;
+  if(threadIdx.x == 0){
+    _ACC_gpu_init_reduction_var(&resultInGrid, kind);
+  }
   reduceInBlock(&resultInGrid, part_result, kind);
   if(threadIdx.x == 0){
     *result = op(*result, resultInGrid, kind);

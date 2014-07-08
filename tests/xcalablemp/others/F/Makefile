@@ -37,8 +37,8 @@ arg.o: arg.f90
 	$(XFC) -c arg.f90
 
 run: $(EXES)
-	$(XRUN) -np 2 module_test.x
-	$(XRUN) -np 2 exit.x
+	$(XRUN) -np 2 ./module_test.x
+	$(XRUN) -np 2 ./exit.x
 	$(XRUN) -np 2 ./module_test0.x
 	$(XRUN) -np 4 ./arg.x
 
