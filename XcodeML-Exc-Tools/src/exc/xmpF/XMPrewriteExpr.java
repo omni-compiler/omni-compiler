@@ -219,6 +219,8 @@ public class XMPrewriteExpr
 	  String fname = x.getArg(0).getString();
 	  if (fname.equalsIgnoreCase("xmp_desc_of")){
 
+	    env.removeIdent(fname, block);
+
 	    XMParray array = (XMParray) x.getArg(1).getArg(0).getProp(XMP.arrayProp);
 	    if (array != null){
 	      Xobject desc = array.getDescId();
@@ -231,6 +233,7 @@ public class XMPrewriteExpr
 	    if (obj != null) {
 	      Xobject desc = obj.getDescId();
 	      iter.setXobject(desc);
+	      env.removeIdent(objName, block);
 	      break;
 	    }
 
