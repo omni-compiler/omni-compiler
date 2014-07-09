@@ -5125,10 +5125,6 @@ freebsd* | dragonfly*)
   fi
   ;;
 
-gnu*)
-  lt_cv_deplibs_check_method=pass_all
-  ;;
-
 haiku*)
   lt_cv_deplibs_check_method=pass_all
   ;;
@@ -5167,11 +5163,11 @@ irix5* | irix6* | nonstopux*)
   ;;
 
 # This must be glibc/ELF.
-linux* | k*bsd*-gnu | kopensolaris*-gnu)
+linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
   lt_cv_deplibs_check_method=pass_all
   ;;
 
-netbsd*)
+netbsd* | netbsdelf*-gnu)
   if echo __ELF__ | $CC -E - | $GREP __ELF__ > /dev/null; then
     lt_cv_deplibs_check_method='match_pattern /lib[^/]+(\.so\.[0-9]+\.[0-9]+|_pic\.a)$'
   else
@@ -8136,7 +8132,7 @@ lt_prog_compiler_static=
       lt_prog_compiler_static='-non_shared'
       ;;
 
-    linux* | k*bsd*-gnu | kopensolaris*-gnu)
+    linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
       case $cc_basename in
       # old Intel for x86_64 which still supported -KPIC.
       ecc*)
@@ -8614,6 +8610,9 @@ $as_echo_n "checking whether the $compiler linker ($LD) supports shared librarie
   openbsd*)
     with_gnu_ld=no
     ;;
+  linux* | k*bsd*-gnu | gnu*)
+    link_all_deplibs=no
+    ;;
   esac
 
   ld_shlibs=yes
@@ -8835,7 +8834,7 @@ _LT_EOF
       fi
       ;;
 
-    netbsd*)
+    netbsd* | netbsdelf*-gnu)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	archive_cmds='$LD -Bshareable $libobjs $deplibs $linker_flags -o $lib'
 	wlarc=
@@ -9012,6 +9011,7 @@ _LT_EOF
 	if test "$aix_use_runtimelinking" = yes; then
 	  shared_flag="$shared_flag "'${wl}-G'
 	fi
+	link_all_deplibs=no
       else
 	# not using gcc
 	if test "$host_cpu" = ia64; then
@@ -9465,7 +9465,7 @@ $as_echo "$lt_cv_irix_exported_symbol" >&6; }
       link_all_deplibs=yes
       ;;
 
-    netbsd*)
+    netbsd* | netbsdelf*-gnu)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	archive_cmds='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'  # a.out
       else
@@ -10302,17 +10302,6 @@ freebsd* | dragonfly*)
   esac
   ;;
 
-gnu*)
-  version_type=linux # correct to gnu/linux during the next big refactor
-  need_lib_prefix=no
-  need_version=no
-  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}${major} ${libname}${shared_ext}'
-  soname_spec='${libname}${release}${shared_ext}$major'
-  shlibpath_var=LD_LIBRARY_PATH
-  shlibpath_overrides_runpath=no
-  hardcode_into_libs=yes
-  ;;
-
 haiku*)
   version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
@@ -10429,7 +10418,7 @@ linux*oldld* | linux*aout* | linux*coff*)
   ;;
 
 # This must be glibc/ELF.
-linux* | k*bsd*-gnu | kopensolaris*-gnu)
+linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
   version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
   need_version=no
@@ -10491,6 +10480,18 @@ fi
   # people can always --disable-shared, the test was removed, and we
   # assume the GNU/Linux dynamic linker is in use.
   dynamic_linker='GNU/Linux ld.so'
+  ;;
+
+netbsdelf*-gnu)
+  version_type=linux
+  need_lib_prefix=no
+  need_version=no
+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
+  soname_spec='${libname}${release}${shared_ext}$major'
+  shlibpath_var=LD_LIBRARY_PATH
+  shlibpath_overrides_runpath=no
+  hardcode_into_libs=yes
+  dynamic_linker='NetBSD ld.elf_so'
   ;;
 
 netbsd*)
@@ -14457,9 +14458,6 @@ fi
         ld_shlibs_CXX=yes
         ;;
 
-      gnu*)
-        ;;
-
       haiku*)
         archive_cmds_CXX='$CC -shared $libobjs $deplibs $compiler_flags ${wl}-soname $wl$soname -o $lib'
         link_all_deplibs_CXX=yes
@@ -14621,7 +14619,7 @@ fi
         inherit_rpath_CXX=yes
         ;;
 
-      linux* | k*bsd*-gnu | kopensolaris*-gnu)
+      linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
         case $cc_basename in
           KCC*)
 	    # Kuck and Associates, Inc. (KAI) C++ Compiler
@@ -15481,7 +15479,7 @@ lt_prog_compiler_static_CXX=
 	    ;;
 	esac
 	;;
-      linux* | k*bsd*-gnu | kopensolaris*-gnu)
+      linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
 	case $cc_basename in
 	  KCC*)
 	    # KAI C++ Compiler
@@ -15545,7 +15543,7 @@ lt_prog_compiler_static_CXX=
 	    ;;
 	esac
 	;;
-      netbsd*)
+      netbsd* | netbsdelf*-gnu)
 	;;
       *qnx* | *nto*)
         # QNX uses GNU C++, but need to define -shared option too, otherwise
@@ -15915,6 +15913,9 @@ $as_echo_n "checking whether the $compiler linker ($LD) supports shared librarie
       exclude_expsyms_CXX='[_]+GLOBAL_OFFSET_TABLE_|[_]+GLOBAL__[FID]_.*|[_]+head_[A-Za-z0-9_]+_dll|[A-Za-z0-9_]+_dll_iname'
       ;;
     esac
+    ;;
+  linux* | k*bsd*-gnu | gnu*)
+    link_all_deplibs_CXX=no
     ;;
   *)
     export_symbols_cmds_CXX='$NM $libobjs $convenience | $global_symbol_pipe | $SED '\''s/.* //'\'' | sort | uniq > $export_symbols'
@@ -16350,17 +16351,6 @@ freebsd* | dragonfly*)
   esac
   ;;
 
-gnu*)
-  version_type=linux # correct to gnu/linux during the next big refactor
-  need_lib_prefix=no
-  need_version=no
-  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}${major} ${libname}${shared_ext}'
-  soname_spec='${libname}${release}${shared_ext}$major'
-  shlibpath_var=LD_LIBRARY_PATH
-  shlibpath_overrides_runpath=no
-  hardcode_into_libs=yes
-  ;;
-
 haiku*)
   version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
@@ -16477,7 +16467,7 @@ linux*oldld* | linux*aout* | linux*coff*)
   ;;
 
 # This must be glibc/ELF.
-linux* | k*bsd*-gnu | kopensolaris*-gnu)
+linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
   version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
   need_version=no
@@ -16539,6 +16529,18 @@ fi
   # people can always --disable-shared, the test was removed, and we
   # assume the GNU/Linux dynamic linker is in use.
   dynamic_linker='GNU/Linux ld.so'
+  ;;
+
+netbsdelf*-gnu)
+  version_type=linux
+  need_lib_prefix=no
+  need_version=no
+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
+  soname_spec='${libname}${release}${shared_ext}$major'
+  shlibpath_var=LD_LIBRARY_PATH
+  shlibpath_overrides_runpath=no
+  hardcode_into_libs=yes
+  dynamic_linker='NetBSD ld.elf_so'
   ;;
 
 netbsd*)
@@ -17124,9 +17126,9 @@ PPCC_OPT="-E"
 NATIVE_DOPT="-D_XCALABLEMP"
 
 if test "$target" = "powerpc-ibm-none"; then
-PPCC="gcc"
-PPCC_OPT="-E --std=c99"
-NATIVE_DOPT="-WF,-D_XCALABLEMP"
+  PPCC="gcc"
+  PPCC_OPT="-E --std=c99"
+  NATIVE_DOPT="-WF,-D_XCALABLEMP"
 fi
 
 
@@ -17211,7 +17213,7 @@ $as_echo_n "checking backend C compiler... " >&6; }
 if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT="-Xg -noansi"
-  OMC_CONF_LNK_OPT="-Kopenmp"
+  OMC_CONF_LNK_OPT="-Kfast,openmp"
   BECC_OMP_OPTION="-Kfast,openmp"
 elif test "$target" = "Cray-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
@@ -17228,7 +17230,7 @@ elif test "$target" = "powerpc-ibm-none"; then
   OMC_CONF_NTV_OPT=""
   DRIVER="/bgsys/drivers/ppcfloor"
   OMC_CONF_LNK_OPT="-I/usr/local/bg/include \
-                -L/usr/local/bg/lib -lkek -L${DRIVER}/bgpm/lib/ -lbgpm   -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
+                -L/usr/local/bg/lib -lkek -L${DRIVER}/bgpm/lib/ -lbgpm -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
   BECC_OMP_OPTION=""
 elif test "$target" = "powerpc64-hitachi-aix"; then
   OMC_CONF_LX2X_OPT=""
@@ -17240,10 +17242,10 @@ else
   case $chk in
   cc* | gcc* | Apple*)
     OMC_CONF_LX2X_OPT=""
-    OMC_CONF_NTV_OPT="-std=gnu99 -Wno-implicit -Wno-attributes"
-    OMC_CONF_LNK_OPT="-fopenmp"
-    BECC_OPTION="-std=gnu99 -Wall -Wpointer-arith"
-    BECC_OMP_OPTION="-fopenmp"
+    OMC_CONF_NTV_OPT="-O2 -std=gnu99 -Wno-implicit -Wno-attributes"
+    OMC_CONF_LNK_OPT="-O2 -fopenmp"
+    BECC_OPTION="-O2 -std=gnu99 -Wall -Wpointer-arith"
+    BECC_OMP_OPTION="-O2 -fopenmp"
     ;;
   *ICC*)
     OMC_CONF_LX2X_OPT=""
@@ -17253,14 +17255,14 @@ else
     BECC_OMP_OPTION="-openmp"
     ;;
   *)
-    chk2=`$BECC --version | head -n2 | tail -n1`
+    chk2=`$BECC --version 2> /dev/null | head -n2 | tail -n1`
     case $chk2 in
     pgcc*)
       OMC_CONF_LX2X_OPT=""
-      OMC_CONF_NTV_OPT="-D_XMP_PGI"
-      OMC_CONF_LNK_OPT="-mp"
-      BECC_OPTION="-c99 -Minform=warn"
-      BECC_OMP_OPTION="-mp"
+      OMC_CONF_NTV_OPT="-O2 -D_XMP_PGI"
+      OMC_CONF_LNK_OPT="-O2 -mp"
+      BECC_OPTION="-O2 -c99 -Minform=warn"
+      BECC_OMP_OPTION="-O2 -mp"
       IS_PGCC="Yes"
       ;;
     *)
@@ -17950,7 +17952,7 @@ lt_prog_compiler_static_FC=
       lt_prog_compiler_static_FC='-non_shared'
       ;;
 
-    linux* | k*bsd*-gnu | kopensolaris*-gnu)
+    linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
       case $cc_basename in
       # old Intel for x86_64 which still supported -KPIC.
       ecc*)
@@ -18413,6 +18415,9 @@ $as_echo_n "checking whether the $compiler linker ($LD) supports shared librarie
   openbsd*)
     with_gnu_ld=no
     ;;
+  linux* | k*bsd*-gnu | gnu*)
+    link_all_deplibs_FC=no
+    ;;
   esac
 
   ld_shlibs_FC=yes
@@ -18634,7 +18639,7 @@ _LT_EOF
       fi
       ;;
 
-    netbsd*)
+    netbsd* | netbsdelf*-gnu)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	archive_cmds_FC='$LD -Bshareable $libobjs $deplibs $linker_flags -o $lib'
 	wlarc=
@@ -18811,6 +18816,7 @@ _LT_EOF
 	if test "$aix_use_runtimelinking" = yes; then
 	  shared_flag="$shared_flag "'${wl}-G'
 	fi
+	link_all_deplibs_FC=no
       else
 	# not using gcc
 	if test "$host_cpu" = ia64; then
@@ -19214,7 +19220,7 @@ $as_echo "$lt_cv_irix_exported_symbol" >&6; }
       link_all_deplibs_FC=yes
       ;;
 
-    netbsd*)
+    netbsd* | netbsdelf*-gnu)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	archive_cmds_FC='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'  # a.out
       else
@@ -19886,17 +19892,6 @@ freebsd* | dragonfly*)
   esac
   ;;
 
-gnu*)
-  version_type=linux # correct to gnu/linux during the next big refactor
-  need_lib_prefix=no
-  need_version=no
-  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}${major} ${libname}${shared_ext}'
-  soname_spec='${libname}${release}${shared_ext}$major'
-  shlibpath_var=LD_LIBRARY_PATH
-  shlibpath_overrides_runpath=no
-  hardcode_into_libs=yes
-  ;;
-
 haiku*)
   version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
@@ -20013,7 +20008,7 @@ linux*oldld* | linux*aout* | linux*coff*)
   ;;
 
 # This must be glibc/ELF.
-linux* | k*bsd*-gnu | kopensolaris*-gnu)
+linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
   version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
   need_version=no
@@ -20069,6 +20064,18 @@ fi
   # people can always --disable-shared, the test was removed, and we
   # assume the GNU/Linux dynamic linker is in use.
   dynamic_linker='GNU/Linux ld.so'
+  ;;
+
+netbsdelf*-gnu)
+  version_type=linux
+  need_lib_prefix=no
+  need_version=no
+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
+  soname_spec='${libname}${release}${shared_ext}$major'
+  shlibpath_var=LD_LIBRARY_PATH
+  shlibpath_overrides_runpath=no
+  hardcode_into_libs=yes
+  dynamic_linker='NetBSD ld.elf_so'
   ;;
 
 netbsd*)
@@ -20375,8 +20382,8 @@ $as_echo_n "checking backend Fortran compiler... " >&6; }
 
   if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
     OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT="-Free"
-    OMF_CONF_LNK_OPT="-Kopenmp"
+    OMF_CONF_NTV_OPT="-Free -Kfast,openmp"
+    OMF_CONF_LNK_OPT="-Kfast,openmp"
   elif test "$target" = "Cray-linux-gnu"; then
     OMF_CONF_LX2X_OPT=""
     OMF_CONF_NTV_OPT="-f free"
@@ -20394,7 +20401,7 @@ $as_echo_n "checking backend Fortran compiler... " >&6; }
     OMF_CONF_NTV_OPT="-qextname -qnomixed -q64"
     OMF_CONF_LNK_OPT="-q64"
   else
-    chk=`$BEFC --version | head -n1`
+    chk=`$BEFC --version 2> /dev/null | head -n1`
     case $chk in
     GNU*)
       OMF_CONF_LX2X_OPT="-gnu"
@@ -20409,12 +20416,12 @@ $as_echo_n "checking backend Fortran compiler... " >&6; }
       BEFC_MODINC="-module"
       ;;
     *)
-      chk2=`$BEFC --version | head -n2 | tail -n1`
+      chk2=`$BEFC --version 2>/dev/null | head -n2 | tail -n1`
       case $chk2 in
-      pgfortran*)
+      pgf90*)
         OMF_CONF_LX2X_OPT=""
-        OMF_CONF_NTV_OPT=""
-        OMF_CONF_LNK_OPT="-mp"
+        OMF_CONF_NTV_OPT="-O2"
+        OMF_CONF_LNK_OPT="-O2 -mp"
 	;;
       *)
       echo "No supported Fortran compiler was found."
@@ -20425,7 +20432,7 @@ $as_echo_n "checking backend Fortran compiler... " >&6; }
       echo " - Cray Fortran (ftn)"
       echo " - IBM Fortran (mpixlf90_r)"
       echo " - Hitachi Fortran (mpif90)"
-      echo " - PGI Fortran (pgfortran)"
+      echo " - PGI Fortran (mpif90)"
       exit 1
       ;;
     esac
