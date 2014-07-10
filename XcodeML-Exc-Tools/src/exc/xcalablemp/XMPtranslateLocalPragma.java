@@ -194,9 +194,12 @@ public class XMPtranslateLocalPragma {
       XMP.fatal("width clause in reflect_init has been not developed yet.");
     }
 
+    XobjList args = Xcons.List();
     for(int i=0;i<funcArgs.Nargs();i++){
       Xobject array = funcArgs.getArg(i);
       String arrayName = array.getString();
+      Ident arrayId = _globalDecl.findVarIdent(XMP.ADDR_PREFIX_ + arrayName);
+      args.add(arrayId);
       XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
       if(alignedArray == null){
         XMP.fatal(arrayName + " is not aligned.");
@@ -207,8 +210,9 @@ public class XMPtranslateLocalPragma {
       
       funcBody.add(Bcons.Statement(funcIdAcc.Call(Xcons.List(array))));
     }
-    
-    Block funcCallBlock = Bcons.COMPOUND(funcBody);
+   
+    Block funcCallBlock = Bcons.PRAGMA(Xcode.ACC_PRAGMA, "host_data use_device", (Xobject)args, funcBody);
+
     pb.replace(funcCallBlock);
   }
   
