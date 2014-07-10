@@ -112,6 +112,7 @@ public class omompx
     boolean xcalableMPthreads = false;
     boolean xcalableMPGPU = false;
     boolean xmpf = false;
+    boolean xcalableACC = false;
     boolean outputXcode = false;
     boolean outputDecomp = false;
     boolean dump = false;
@@ -152,6 +153,10 @@ public class omompx
         xcalableMPGPU = true;
       } else if(arg.equals("-fxmpf")) {
         xmpf = true;
+      } else if(arg.equals("-fxacc")) {
+	xcalableMP = true;
+	xcalableACC = true;
+	XMP.ACC = true;
       } else if(arg.equals("-w")) {
         if(narg == null)
           error("needs argument after -w");

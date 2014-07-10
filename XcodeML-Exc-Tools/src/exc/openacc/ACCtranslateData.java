@@ -19,6 +19,17 @@ public class ACCtranslateData {
   private final static String GPU_DEVICE_PTR_PREFIX = "_ACC_GPU_DEVICE_ADDR_";
   private final static String GPU_HOST_DESC_PREFIX = "_ACC_GPU_HOST_DESC_";
   
+  private static final String GPU_INIT_DATA_FUNC_NAME = "_ACC_gpu_init_data";
+  private static final String GPU_PRESENT_OR_INIT_DATA_FUNC_NAME = "_ACC_gpu_pinit_data";
+  private static final String GPU_FINALIZE_DATA_FUNC_NAME = "_ACC_gpu_finalize_data";
+  //private static final String GPU_PRESENT_OR_FINALIZE_DATA_FUNC_NAME = "_ACC_gpu_pfinalize_data";
+  private static final String GPU_COPY_DATA_FUNC_NAME = "_ACC_gpu_copy_data";
+  private static final String GPU_PRESENT_OR_COPY_DATA_FUNC_NAME = "_ACC_gpu_pcopy_data";
+  private static final String GPU_FIND_DATA_FUNC_NAME = "_ACC_gpu_find_data";
+  
+  
+  private static final int GPU_COPY_HOST_TO_DEVICE = 400;
+  private static final int GPU_COPY_DEVICE_TO_HOST = 401;
   
   ACCtranslateData(PragmaBlock pb){
     init(pb);
@@ -50,6 +61,11 @@ public class ACCtranslateData {
 
     VarScope varScope = _isGlobal? VarScope.GLOBAL : VarScope.LOCAL;
     
+    /**
+     * varはサブアレイでもよい。ただし各APIやACCInfo.isVarAllocatedなどが対応する必要あり。
+     * 
+     */
+    
     for(Iterator<ACCvar> iter = dataInfo.getVars(); iter.hasNext(); ){
       ACCvar var = iter.next();
       Ident varId = var.getId();
@@ -68,6 +84,8 @@ public class ACCtranslateData {
       
       String varName = var.getName();
       Xobject addrObj = var.getAddress();
+      Xobject sizeObj = var.getSize();
+      Xobject offsetObj = var.getOffset();
       Ident deviceAddr = Ident.Var(GPU_DEVICE_PTR_PREFIX + varName, Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType), varScope);
       Ident hostDesc = Ident.Var(GPU_HOST_DESC_PREFIX + varName, Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType), varScope);
       var.setDevicePtr(deviceAddr);
@@ -80,9 +98,8 @@ public class ACCtranslateData {
 
       //setup array dim
       Xtype varType = var.getId().Type();
-      Xtype elementType = var.getElementType();
-      int dim = var.getDim();
-/*      
+      Xtype elementType = null;
+      int dim = 0; //?? it should be 0
       if(varType.isArray()){
           if(var.isSubarray()){
               elementType = var.getElementType(varType);
@@ -96,12 +113,10 @@ public class ACCtranslateData {
           elementType = varType.getRef();
           if(var.isSubarray()){
               dim = var.getSubscripts().Nargs(); 
-              elementType = var.getElementType(varType);
           }
       }else{
 	  elementType = varType;
       }
-      */
       XobjList suffixArgs = Xcons.List();
       {
           if(varType.isArray()){
@@ -129,14 +144,16 @@ public class ACCtranslateData {
       XobjList initArgs = Xcons.List(hostDesc.getAddr(), deviceAddr.getAddr(), addrObj, Xcons.SizeOf(elementType), Xcons.IntConstant(dim));
       initArgs.mergeList(suffixArgs);
       if(var.isPresent()){
-	initializeBlock = createFuncCallBlock(ACC.FIND_DATA_FUNC_NAME, initArgs);  
-        finalizeBlock = createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
+	//initializeBlock = createFuncCallBlock(GPU_FIND_DATA_FUNC_NAME, Xcons.List(hostDesc.getAddr(), deviceAddr.getAddr(), addrObj, offsetObj, sizeObj));
+	initializeBlock = createFuncCallBlock("_ACC_gpu2_find_data", initArgs);  
+        finalizeBlock = createFuncCallBlock(GPU_FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
       }else if(var.isPresentOr()){
-	initializeBlock = createFuncCallBlock(ACC.PRESENT_OR_INIT_DATA_FUNC_NAME, initArgs);
-        finalizeBlock = createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
+        initializeBlock = createFuncCallBlock(GPU_PRESENT_OR_INIT_DATA_FUNC_NAME, Xcons.List(hostDesc.getAddr(), deviceAddr.getAddr(), addrObj, offsetObj, sizeObj));
+        finalizeBlock = createFuncCallBlock(GPU_FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
       }else{
-	initializeBlock = createFuncCallBlock(ACC.INIT_DATA_FUNC_NAME, initArgs);
-        finalizeBlock = createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
+	//initializeBlock = createFuncCallBlock(GPU_INIT_DATA_FUNC_NAME, Xcons.List(hostDesc.getAddr(), deviceAddr.getAddr(), addrObj, offsetObj, sizeObj));
+	initializeBlock = createFuncCallBlock("_ACC_gpu2_init_data", initArgs);
+        finalizeBlock = createFuncCallBlock(GPU_FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
       }
       
       initBlockList.add(initializeBlock);
@@ -149,17 +166,17 @@ public class ACCtranslateData {
       boolean copyDtoH = var.copiesDtoH();
       if(var.isPresentOr()){
         if(copyHtoD){
-	    copyHostToDeviceFunc = createFuncCallBlock(ACC.PRESENT_OR_COPY_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref(), Xcons.IntConstant(ACC.HOST_TO_DEVICE), Xcons.IntConstant(ACC.ACC_ASYNC_SYNC)));
+          copyHostToDeviceFunc = createFuncCallBlock(GPU_PRESENT_OR_COPY_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref(), offsetObj, sizeObj, Xcons.IntConstant(GPU_COPY_HOST_TO_DEVICE)));
         }
         if(copyDtoH){
-	  copyDeviceToHostFunc = createFuncCallBlock(ACC.PRESENT_OR_COPY_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref(), Xcons.IntConstant(ACC.DEVICE_TO_HOST), Xcons.IntConstant(ACC.ACC_ASYNC_SYNC)));
+          copyDeviceToHostFunc = createFuncCallBlock(GPU_PRESENT_OR_COPY_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref(), offsetObj, sizeObj, Xcons.IntConstant(GPU_COPY_DEVICE_TO_HOST)));
         }
       }else if(var.allocatesDeviceMemory()){
         if(copyHtoD){
-	    copyHostToDeviceFunc = createFuncCallBlock(ACC.COPY_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref(), Xcons.IntConstant(ACC.HOST_TO_DEVICE), Xcons.IntConstant(ACC.ACC_ASYNC_SYNC)));
+          copyHostToDeviceFunc = createFuncCallBlock(GPU_COPY_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref(), offsetObj, sizeObj, Xcons.IntConstant(GPU_COPY_HOST_TO_DEVICE)));
         }
         if(copyDtoH){
-	    copyDeviceToHostFunc = createFuncCallBlock(ACC.COPY_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref(), Xcons.IntConstant(ACC.DEVICE_TO_HOST), Xcons.IntConstant(ACC.ACC_ASYNC_SYNC)));
+          copyDeviceToHostFunc = createFuncCallBlock(GPU_COPY_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref(), offsetObj, sizeObj, Xcons.IntConstant(GPU_COPY_DEVICE_TO_HOST)));
         }
       }
       copyinBlockList.add(copyHostToDeviceFunc);

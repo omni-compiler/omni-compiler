@@ -65,7 +65,7 @@ extern void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...);
 extern void _XMP_dealloc_array(_XMP_array_t *array_desc);
 
 // xmp_array_section.c
-extern void _XMP_normalize_array_section(_XMP_gmv_desc_t *gmv_desc, int idim, int *lower, int *upper, int *stride);
+extern void _XMP_normalize_array_section(int *lower, int *upper, int *stride);
 // FIXME make these static
 extern void _XMP_pack_array_BASIC(void *buffer, void *src, int array_type,
                                          int array_dim, int *l, int *u, int *s, unsigned long long *d);

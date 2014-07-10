@@ -135,7 +135,7 @@ public class XMP {
 	  t = BasicType.SHORT;
 	  break;
 	case 4:
-	  t = BasicType.INT;
+	  t = BasicType.LONG;
 	  break;
 	case 8:
 	  t = BasicType.LONGLONG;

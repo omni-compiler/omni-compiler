@@ -27,8 +27,6 @@ for i in ${OM_OPTIONS}; do
         -enable-gpu)
             LIBS="${LIBS} -L${GPGPU_PREFIX}/lib64 -lxmp_gpu -lcudart"
             newOpts="${newOpts} ${i}";;
-	-facc)
-	    LIBS="${LIBS} -L${GPGPU_PREFIX}/lib64 -lacc -lcudart";;
         -prof-scalasca)
             hasScalasca=1;;
         -prof-tlog)
@@ -42,11 +40,6 @@ done
 
 GASNET_LIB="@GASNET_LIBS@"
 LIBS="${INIT_MODULE_OBJ} ${LIBS} -lxmp ${GASNET_LIB}"
-
-TCA_LIB="@TCA_PREFIX@"
-if test "${TCA_LIB}" != ""; then
-  LIBS="${LIBS} -L${TCA_LIB} -ltca"
-fi
 
 LINKER="@BECC@"
 if test ${hasScalasca} -eq 1; then

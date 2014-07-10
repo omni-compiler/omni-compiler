@@ -32,6 +32,8 @@ public class XMP {
 
   private static boolean errorFlag			= false;
 
+  public static boolean ACC = false;
+
   public static Xobject createBasicTypeConstantObj(Xtype type) {
     return Xcons.IntConstant(type.getBasicType() + 500);
   }

@@ -505,6 +505,7 @@ XMP_ENABLE_GPU=0
 if test "x${doXmpGpu}" = "xyes"; then
     XMP_ENABLE_GPU=1
 fi
+
 AM_CONDITIONAL(ENABLE_XMP_GPU, test "x${doXmpGpu}" = "xyes")
 AC_SUBST(XMP_ENABLE_GPU)
 
@@ -514,6 +515,7 @@ if test "x${doOpenAcc}" = "xyes"; then
 fi
 AM_CONDITIONAL(ENABLE_ACC, test "x${doOpenAcc}" = "xyes")
 AC_SUBST(ENABLE_ACC)
+
  
 ENABLE_ATOOL=0
 if test "x${doatool}" = "xyes"; then
@@ -611,9 +613,9 @@ PPCC_OPT="-E"
 NATIVE_DOPT="-D_XCALABLEMP"
 
 if test "$target" = "powerpc-ibm-none"; then
-  PPCC="gcc"
-  PPCC_OPT="-E --std=c99"
-  NATIVE_DOPT="-WF,-D_XCALABLEMP"
+PPCC="gcc"
+PPCC_OPT="-E --std=c99"
+NATIVE_DOPT="-WF,-D_XCALABLEMP"
 fi
 AC_SUBST(PPCC)
 AC_SUBST(PPCC_OPT)
@@ -665,7 +667,7 @@ AC_MSG_CHECKING([backend C compiler])
 if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT="-Xg -noansi"
-  OMC_CONF_LNK_OPT="-Kfast,openmp"
+  OMC_CONF_LNK_OPT="-Kopenmp"
   BECC_OMP_OPTION="-Kfast,openmp"
 elif test "$target" = "Cray-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
@@ -682,7 +684,7 @@ elif test "$target" = "powerpc-ibm-none"; then
   OMC_CONF_NTV_OPT=""
   DRIVER="/bgsys/drivers/ppcfloor"
   OMC_CONF_LNK_OPT="-I/usr/local/bg/include \
-                -L/usr/local/bg/lib -lkek -L${DRIVER}/bgpm/lib/ -lbgpm -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
+                -L/usr/local/bg/lib -lkek -L${DRIVER}/bgpm/lib/ -lbgpm   -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
   BECC_OMP_OPTION=""
 elif test "$target" = "powerpc64-hitachi-aix"; then
   OMC_CONF_LX2X_OPT=""
@@ -694,10 +696,10 @@ else
   case $chk in
   cc* | gcc* | Apple*)
     OMC_CONF_LX2X_OPT=""
-    OMC_CONF_NTV_OPT="-O2 -std=gnu99 -Wno-implicit -Wno-attributes"
-    OMC_CONF_LNK_OPT="-O2 -fopenmp"
-    BECC_OPTION="-O2 -std=gnu99 -Wall -Wpointer-arith"
-    BECC_OMP_OPTION="-O2 -fopenmp"
+    OMC_CONF_NTV_OPT="-std=gnu99 -Wno-implicit -Wno-attributes"
+    OMC_CONF_LNK_OPT="-fopenmp"
+    BECC_OPTION="-std=gnu99 -Wall -Wpointer-arith"
+    BECC_OMP_OPTION="-fopenmp"
     ;;
   *ICC*)
     OMC_CONF_LX2X_OPT=""
@@ -707,14 +709,14 @@ else
     BECC_OMP_OPTION="-openmp"
     ;;
   *)
-    chk2=`$BECC --version 2> /dev/null | head -n2 | tail -n1`
+    chk2=`$BECC --version | head -n2 | tail -n1`
     case $chk2 in
     pgcc*)
       OMC_CONF_LX2X_OPT=""
-      OMC_CONF_NTV_OPT="-O2 -D_XMP_PGI"
-      OMC_CONF_LNK_OPT="-O2 -mp"
-      BECC_OPTION="-O2 -c99 -Minform=warn"
-      BECC_OMP_OPTION="-O2 -mp"
+      OMC_CONF_NTV_OPT="-D_XMP_PGI"
+      OMC_CONF_LNK_OPT="-mp"
+      BECC_OPTION="-c99 -Minform=warn"
+      BECC_OMP_OPTION="-mp"
       IS_PGCC="Yes"
       ;;
     *)
@@ -752,8 +754,8 @@ if test $enableF2F = yes; then
 
   if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
     OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT="-Free -Kfast,openmp"
-    OMF_CONF_LNK_OPT="-Kfast,openmp"
+    OMF_CONF_NTV_OPT="-Free"
+    OMF_CONF_LNK_OPT="-Kopenmp"
   elif test "$target" = "Cray-linux-gnu"; then
     OMF_CONF_LX2X_OPT=""
     OMF_CONF_NTV_OPT="-f free"
@@ -771,7 +773,7 @@ if test $enableF2F = yes; then
     OMF_CONF_NTV_OPT="-qextname -qnomixed -q64"
     OMF_CONF_LNK_OPT="-q64"
   else
-    chk=`$BEFC --version 2> /dev/null | head -n1`
+    chk=`$BEFC --version | head -n1`
     case $chk in
     GNU*)
       OMF_CONF_LX2X_OPT="-gnu"
@@ -786,12 +788,12 @@ if test $enableF2F = yes; then
       BEFC_MODINC="-module"
       ;;
     *)
-      chk2=`$BEFC --version 2>/dev/null | head -n2 | tail -n1`
+      chk2=`$BEFC --version | head -n2 | tail -n1`
       case $chk2 in
-      pgf90*)
+      pgfortran*)
         OMF_CONF_LX2X_OPT=""
-        OMF_CONF_NTV_OPT="-O2"
-        OMF_CONF_LNK_OPT="-O2 -mp"
+        OMF_CONF_NTV_OPT=""
+        OMF_CONF_LNK_OPT="-mp"
 	;;
       *)
       echo "No supported Fortran compiler was found."
@@ -802,7 +804,7 @@ if test $enableF2F = yes; then
       echo " - Cray Fortran (ftn)"
       echo " - IBM Fortran (mpixlf90_r)"
       echo " - Hitachi Fortran (mpif90)"
-      echo " - PGI Fortran (mpif90)"
+      echo " - PGI Fortran (pgfortran)"
       exit 1
       ;;
     esac
@@ -1603,23 +1605,6 @@ fi
 AC_SUBST(LIBXML_PREFIX)
 
 # --------------------------------------------------------------------
-# TCA
-AC_ARG_WITH(TCADir,
-    [  --with-TCADir=DIR           TCA install directory],
-    [TCA_PREFIX="${withval}"])
-
-use_tca=no
-if test "${TCA_PREFIX}" != ""; then
-   use_tca=yes
-   if ! test -f $TCA_PREFIX/tca-api.h; then
-      AC_MSG_ERROR([$TCA_PREFIX/tca-api.h not found. Please check --with-TCADir=<DIR>])
-   fi
-fi
-
-AM_CONDITIONAL(TCA, test x${use_tca} = xyes)
-AC_SUBST(TCA_PREFIX)
-
-# --------------------------------------------------------------------
 # specify GASNet path
 
 default_gasnetDir=""
@@ -1632,7 +1617,7 @@ use_gasnet=no
 if test "${GASNET_PREFIX}" != ""; then
   use_gasnet=yes
   if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
-	  AC_MSG_ERROR([${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnetDir])
+	  AC_MSG_ERROR([${GASNET_PREFIX}/include/gasnet.h not found. Please attach or check --with-gasnetDir])
   fi
 fi
 
@@ -2157,8 +2142,5 @@ EOF
   echo "    OpenACC               : $doOpenAcc"
 fi
 
-if test "${use_tca}" = "yes"; then
-  echo "    TCA                   : yes"
-fi
 echo "=================================================="
 

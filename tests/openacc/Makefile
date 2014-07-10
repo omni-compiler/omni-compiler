@@ -17,14 +17,13 @@ all default: $(EXES) update_host_subarray_type update_device_subarray_type data_
 run: $(EXES)
 	$(XRUN) parallel_private.x
 	$(XRUN) parallel-loop_private.x
-	$(XRUN) parallel-loop_reduction.x
 	$(XRUN) loop_private_gang.x
 	$(XRUN) loop_private_vector.x
 	$(XRUN) parallel_if.x
 	$(XRUN) loop_reduction_int.x
 	$(XRUN) loop_reduction_float.x
 	$(XRUN) loop_reduction_double.x
-	$(XRUN) loop_reduction.x
+#	$(XRUN) loop_reduction.x
 	$(XRUN) loop_private.x
 	$(XRUN) kernel_config.x
 	$(XRUN) update_array.x

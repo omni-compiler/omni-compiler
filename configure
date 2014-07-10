@@ -692,9 +692,6 @@ GASNET_CONDUIT
 GASNET_PREFIX
 GASNET_FALSE
 GASNET_TRUE
-TCA_PREFIX
-TCA_FALSE
-TCA_TRUE
 LIBXML_PREFIX
 omniQRealFillGap
 omniQRealPrecInLimb
@@ -962,7 +959,6 @@ with_gmpLibDir
 with_gmpIncDir
 with_precision
 with_libxmlDir
-with_TCADir
 with_gasnetDir
 with_gasnet_conduit
 with_gpucc
@@ -1646,7 +1642,6 @@ Optional Packages:
   --with-gmpIncDir=DIR        where the GNU-MP include headers are for quad-real support.
   --with-precision=NUM        the default precision of real*16 in bits (128).
   --with-libxmlDir=DIR        libxml install directory (default: /usr)
-  --with-TCADir=DIR           TCA install directory
   --with-gasnetDir=DIR        GASNet install directory
   --with-gasnet-conduit=NAME  GASNet conduit
   --with-gpucc=CMD            GPU C compiler (default: nvcc)
@@ -4724,7 +4719,8 @@ else
     ;;
   *)
     lt_cv_sys_max_cmd_len=`(getconf ARG_MAX) 2> /dev/null`
-    if test -n "$lt_cv_sys_max_cmd_len"; then
+    if test -n "$lt_cv_sys_max_cmd_len" && \
+	test undefined != "$lt_cv_sys_max_cmd_len"; then
       lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \/ 4`
       lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \* 3`
     else
@@ -6287,7 +6283,7 @@ ia64-*-hpux*)
   rm -rf conftest*
   ;;
 
-x86_64-*kfreebsd*-gnu|x86_64-*linux*|ppc*-*linux*|powerpc*-*linux*| \
+x86_64-*kfreebsd*-gnu|x86_64-*linux*|powerpc*-*linux*| \
 s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
   # Find out which ABI we are using.
   echo 'int i;' > conftest.$ac_ext
@@ -6303,9 +6299,19 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	    LD="${LD-ld} -m elf_i386_fbsd"
 	    ;;
 	  x86_64-*linux*)
-	    LD="${LD-ld} -m elf_i386"
+	    case `/usr/bin/file conftest.o` in
+	      *x86-64*)
+		LD="${LD-ld} -m elf32_x86_64"
+		;;
+	      *)
+		LD="${LD-ld} -m elf_i386"
+		;;
+	    esac
 	    ;;
-	  ppc64-*linux*|powerpc64-*linux*)
+	  powerpc64le-*)
+	    LD="${LD-ld} -m elf32lppclinux"
+	    ;;
+	  powerpc64-*)
 	    LD="${LD-ld} -m elf32ppclinux"
 	    ;;
 	  s390x-*linux*)
@@ -6324,7 +6330,10 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	  x86_64-*linux*)
 	    LD="${LD-ld} -m elf_x86_64"
 	    ;;
-	  ppc*-*linux*|powerpc*-*linux*)
+	  powerpcle-*)
+	    LD="${LD-ld} -m elf64lppc"
+	    ;;
+	  powerpc-*)
 	    LD="${LD-ld} -m elf64ppc"
 	    ;;
 	  s390*-*linux*|s390*-*tpf*)
@@ -16994,6 +17003,7 @@ XMP_ENABLE_GPU=0
 if test "x${doXmpGpu}" = "xyes"; then
     XMP_ENABLE_GPU=1
 fi
+
  if test "x${doXmpGpu}" = "xyes"; then
   ENABLE_XMP_GPU_TRUE=
   ENABLE_XMP_GPU_FALSE='#'
@@ -17015,6 +17025,7 @@ else
   ENABLE_ACC_TRUE='#'
   ENABLE_ACC_FALSE=
 fi
+
 
 
 
@@ -17126,9 +17137,9 @@ PPCC_OPT="-E"
 NATIVE_DOPT="-D_XCALABLEMP"
 
 if test "$target" = "powerpc-ibm-none"; then
-  PPCC="gcc"
-  PPCC_OPT="-E --std=c99"
-  NATIVE_DOPT="-WF,-D_XCALABLEMP"
+PPCC="gcc"
+PPCC_OPT="-E --std=c99"
+NATIVE_DOPT="-WF,-D_XCALABLEMP"
 fi
 
 
@@ -17213,7 +17224,7 @@ $as_echo_n "checking backend C compiler... " >&6; }
 if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT="-Xg -noansi"
-  OMC_CONF_LNK_OPT="-Kfast,openmp"
+  OMC_CONF_LNK_OPT="-Kopenmp"
   BECC_OMP_OPTION="-Kfast,openmp"
 elif test "$target" = "Cray-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
@@ -17230,7 +17241,7 @@ elif test "$target" = "powerpc-ibm-none"; then
   OMC_CONF_NTV_OPT=""
   DRIVER="/bgsys/drivers/ppcfloor"
   OMC_CONF_LNK_OPT="-I/usr/local/bg/include \
-                -L/usr/local/bg/lib -lkek -L${DRIVER}/bgpm/lib/ -lbgpm -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
+                -L/usr/local/bg/lib -lkek -L${DRIVER}/bgpm/lib/ -lbgpm   -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
   BECC_OMP_OPTION=""
 elif test "$target" = "powerpc64-hitachi-aix"; then
   OMC_CONF_LX2X_OPT=""
@@ -17242,10 +17253,10 @@ else
   case $chk in
   cc* | gcc* | Apple*)
     OMC_CONF_LX2X_OPT=""
-    OMC_CONF_NTV_OPT="-O2 -std=gnu99 -Wno-implicit -Wno-attributes"
-    OMC_CONF_LNK_OPT="-O2 -fopenmp"
-    BECC_OPTION="-O2 -std=gnu99 -Wall -Wpointer-arith"
-    BECC_OMP_OPTION="-O2 -fopenmp"
+    OMC_CONF_NTV_OPT="-std=gnu99 -Wno-implicit -Wno-attributes"
+    OMC_CONF_LNK_OPT="-fopenmp"
+    BECC_OPTION="-std=gnu99 -Wall -Wpointer-arith"
+    BECC_OMP_OPTION="-fopenmp"
     ;;
   *ICC*)
     OMC_CONF_LX2X_OPT=""
@@ -17255,14 +17266,14 @@ else
     BECC_OMP_OPTION="-openmp"
     ;;
   *)
-    chk2=`$BECC --version 2> /dev/null | head -n2 | tail -n1`
+    chk2=`$BECC --version | head -n2 | tail -n1`
     case $chk2 in
     pgcc*)
       OMC_CONF_LX2X_OPT=""
-      OMC_CONF_NTV_OPT="-O2 -D_XMP_PGI"
-      OMC_CONF_LNK_OPT="-O2 -mp"
-      BECC_OPTION="-O2 -c99 -Minform=warn"
-      BECC_OMP_OPTION="-O2 -mp"
+      OMC_CONF_NTV_OPT="-D_XMP_PGI"
+      OMC_CONF_LNK_OPT="-mp"
+      BECC_OPTION="-c99 -Minform=warn"
+      BECC_OMP_OPTION="-mp"
       IS_PGCC="Yes"
       ;;
     *)
@@ -20382,8 +20393,8 @@ $as_echo_n "checking backend Fortran compiler... " >&6; }
 
   if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
     OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT="-Free -Kfast,openmp"
-    OMF_CONF_LNK_OPT="-Kfast,openmp"
+    OMF_CONF_NTV_OPT="-Free"
+    OMF_CONF_LNK_OPT="-Kopenmp"
   elif test "$target" = "Cray-linux-gnu"; then
     OMF_CONF_LX2X_OPT=""
     OMF_CONF_NTV_OPT="-f free"
@@ -20401,7 +20412,7 @@ $as_echo_n "checking backend Fortran compiler... " >&6; }
     OMF_CONF_NTV_OPT="-qextname -qnomixed -q64"
     OMF_CONF_LNK_OPT="-q64"
   else
-    chk=`$BEFC --version 2> /dev/null | head -n1`
+    chk=`$BEFC --version | head -n1`
     case $chk in
     GNU*)
       OMF_CONF_LX2X_OPT="-gnu"
@@ -20416,12 +20427,12 @@ $as_echo_n "checking backend Fortran compiler... " >&6; }
       BEFC_MODINC="-module"
       ;;
     *)
-      chk2=`$BEFC --version 2>/dev/null | head -n2 | tail -n1`
+      chk2=`$BEFC --version | head -n2 | tail -n1`
       case $chk2 in
-      pgf90*)
+      pgfortran*)
         OMF_CONF_LX2X_OPT=""
-        OMF_CONF_NTV_OPT="-O2"
-        OMF_CONF_LNK_OPT="-O2 -mp"
+        OMF_CONF_NTV_OPT=""
+        OMF_CONF_LNK_OPT="-mp"
 	;;
       *)
       echo "No supported Fortran compiler was found."
@@ -20432,7 +20443,7 @@ $as_echo_n "checking backend Fortran compiler... " >&6; }
       echo " - Cray Fortran (ftn)"
       echo " - IBM Fortran (mpixlf90_r)"
       echo " - Hitachi Fortran (mpif90)"
-      echo " - PGI Fortran (mpif90)"
+      echo " - PGI Fortran (pgfortran)"
       exit 1
       ;;
     esac
@@ -25324,33 +25335,6 @@ fi
 
 
 # --------------------------------------------------------------------
-# TCA
-
-# Check whether --with-TCADir was given.
-if test "${with_TCADir+set}" = set; then :
-  withval=$with_TCADir; TCA_PREFIX="${withval}"
-fi
-
-
-use_tca=no
-if test "${TCA_PREFIX}" != ""; then
-   use_tca=yes
-   if ! test -f $TCA_PREFIX/tca-api.h; then
-      as_fn_error $? "$TCA_PREFIX/tca-api.h not found. Please check --with-TCADir=<DIR>" "$LINENO" 5
-   fi
-fi
-
- if test x${use_tca} = xyes; then
-  TCA_TRUE=
-  TCA_FALSE='#'
-else
-  TCA_TRUE='#'
-  TCA_FALSE=
-fi
-
-
-
-# --------------------------------------------------------------------
 # specify GASNet path
 
 default_gasnetDir=""
@@ -25368,7 +25352,7 @@ use_gasnet=no
 if test "${GASNET_PREFIX}" != ""; then
   use_gasnet=yes
   if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
-	  as_fn_error $? "${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnetDir" "$LINENO" 5
+	  as_fn_error $? "${GASNET_PREFIX}/include/gasnet.h not found. Please attach or check --with-gasnetDir" "$LINENO" 5
   fi
 fi
 
@@ -26421,10 +26405,6 @@ if test -z "${SUPERUX_TRUE}" && test -z "${SUPERUX_FALSE}"; then
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
-if test -z "${TCA_TRUE}" && test -z "${TCA_FALSE}"; then
-  as_fn_error $? "conditional \"TCA\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${GASNET_TRUE}" && test -z "${GASNET_FALSE}"; then
   as_fn_error $? "conditional \"GASNET\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -29311,8 +29291,5 @@ EOF
   echo "    OpenACC               : $doOpenAcc"
 fi
 
-if test "${use_tca}" = "yes"; then
-  echo "    TCA                   : yes"
-fi
 echo "=================================================="
 

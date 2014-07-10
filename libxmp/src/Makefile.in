@@ -83,7 +83,6 @@ target_triplet = @target@
 @GASNET_TRUE@am__append_2 = -D_XMP_COARRAY_GASNET $(GASNET_CPPFLAGS) $(GASNET_CFLAGS)
 @FJRDMA_TRUE@am__append_3 = xmp_coarray_set.c xmp_coarray_do.c xmp_fjrdma_coarray_set.c xmp_fjrdma_coarray_do.c xmp_post_wait.c xmp_fjrdma_post_wait.c
 @FJRDMA_TRUE@am__append_4 = -std=gnu99 -D_XMP_COARRAY_FJRDMA
-@TCA_TRUE@am__append_5 = -D_XMP_TCA -I@TCA_PREFIX@
 subdir = ./libxmp/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -404,7 +403,6 @@ SR16000 = @SR16000@
 STRIP = @STRIP@
 SUPERUX = @SUPERUX@
 TARGET_ARCH = @TARGET_ARCH@
-TCA_PREFIX = @TCA_PREFIX@
 TOPDIR = @TOPDIR@
 TYPE_INT16 = @TYPE_INT16@
 TYPE_INT32 = @TYPE_INT32@
@@ -511,7 +509,7 @@ XMP_INC_DIR = ../include
 TLOG_INC_DIR = $(top_builddir)/@LIBTLOG_MPI_DIR@
 lib_LIBRARIES = libxmp.a
 AM_CFLAGS = -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR) @BECC_OPTION@ \
-	$(am__append_2) $(am__append_4) $(am__append_5)
+	$(am__append_2) $(am__append_4)
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS)
 

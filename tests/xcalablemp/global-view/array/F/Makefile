@@ -15,7 +15,6 @@ all default: $(EXES)
 
 run: $(EXES)
 	$(XRUN) -n 4 ./array.x
-	$(XRUN) -n 4 ./offset.x
 
 clean:
 	rm -f $(EXES) $(OBJS)

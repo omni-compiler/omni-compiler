@@ -124,8 +124,8 @@ char *xmpDirectiveName(int c)
   case XMP_POST: return "POST";
   case XMP_WAIT: return "WAIT";
   case XMP_TEMPLATE_FIX: return "TEMPLATE_FIX";
-  case XMP_REFLECT_TCA: return "REFLECT_TCA";
   case XMP_WAIT_ASYNC: return "WAIT_ASYNC";
-  default: return "OMP???";
+  case XMP_DEVICE: return "DEVICE";
+  default: return "XMP???";
   }
 }

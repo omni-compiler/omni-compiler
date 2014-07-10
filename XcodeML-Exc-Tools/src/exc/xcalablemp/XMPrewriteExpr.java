@@ -1729,14 +1729,33 @@ public class XMPrewriteExpr {
       Block block = bIter.getBlock();
       if (block.Opcode() == Xcode.ACC_PRAGMA){
 	Xobject clauses = ((PragmaBlock)block).getClauses();
+	BlockList newBody = Bcons.emptyBody();
 	if (clauses != null){
-	  BlockList newBody = Bcons.emptyBody();
+	  //BlockList newBody = Bcons.emptyBody();
 	  rewriteACCClauses(clauses, (PragmaBlock)block, fb, localXMPsymbolTable, newBody);
-	  if(!newBody.isEmpty()){
+	  if(!newBody.isEmpty() && !XMP.ACC){
 	    bIter.setBlock(Bcons.COMPOUND(newBody));
-    	    newBody.add(Bcons.COMPOUND(Bcons.blockList(block))); //newBody.add(block);
+	    newBody.add(Bcons.COMPOUND(Bcons.blockList(block))); //newBody.add(block);
 	  }
 	}
+
+	if (XMP.ACC){
+	  BlockList deviceLoop = Bcons.emptyBody();
+
+	  Ident var = deviceLoop.declLocalIdent("_XACC_loop", Xtype.intType);
+	  Ident fid0 = _globalDecl.declExternFunc("xacc_get_num_current_devices", Xtype.intType);
+
+	  Block newBlock = Bcons.FORall(var.Ref(), Xcons.IntConstant(0), fid0.Call(), Xcons.IntConstant(1),
+					Xcode.LOG_LT_EXPR, newBody);
+
+	  deviceLoop.add(newBlock);
+	  bIter.setBlock(Bcons.COMPOUND(deviceLoop));
+
+	  Ident fid1 = _globalDecl.declExternFunc("xacc_set_current_device_num");
+	  newBody.insert(fid1.Call(Xcons.List(var.Ref())));
+	  newBody.add(Bcons.COMPOUND(Bcons.blockList(block)));
+	}
+
       }
     }
   }
