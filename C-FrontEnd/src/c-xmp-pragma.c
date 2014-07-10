@@ -16,6 +16,7 @@
 #include "c-const.h"
 #include "c-option.h"
 #include "c-xmp.h"
+extern char* lexSkipSharp(char *);
 
 /*
  * <XMPPragma> <string> directive_name </string> args_list body </XMPPragma>
@@ -59,17 +60,18 @@ static CExpr* parse_COARRAY_clause();
 static CExpr* parse_ARRAY_clause();
 static CExpr* parse_POST_clause();
 static CExpr* parse_WAIT_clause();
-static CExpr* parse_LOCAL_ALIAS_clause();
+//static CExpr* parse_LOCAL_ALIAS_clause();
 static CExpr* parse_WIDTH_list();
 static CExpr* parse_WAIT_ASYNC_clause();
 static CExpr* parse_TEMPLATE_FIX_clause();
+
 static CExpr* parse_REFLECT_INIT_clause();
 
 static CExpr* parse_COL2_name_list();
 static CExpr* parse_XMP_subscript_list();
 static CExpr* parse_XMP_size_list();
 static CExpr* parse_XMP_range_list();
-static CExpr* parse_XMP_C_subscript_list();
+//static CExpr* parse_XMP_C_subscript_list();
 static CExpr* parse_ON_ref();
 static CExpr* parse_XMP_dist_fmt_list();
 static CExpr* parse_Reduction_opt();
@@ -451,16 +453,15 @@ CExpr* parse_SHADOW_clause() {
     return NULL;
 }
 
-
 CExpr* parse_TASK_clause() {
     CExpr* onRef = NULL;
     CExpr* opt;
 
     if(PG_IS_IDENT("on"))
-	pg_get_token();
+      pg_get_token();
     else {
-	XMP_Error0("'on' is missing");
-	goto err;
+      XMP_Error0("'on' is missing");
+      goto err;
     }
 	
     //onRef = parse_ON_ref();
@@ -487,10 +488,10 @@ CExpr* parse_LOOP_clause()
     }
 
     if(PG_IS_IDENT("on"))
-	pg_get_token();
+      pg_get_token();
     else {
-	XMP_Error0("'on' is missing");
-	goto err;
+      XMP_Error0("'on' is missing");
+      goto err;
     }
     
     onRef = parse_ON_ref();
@@ -521,7 +522,6 @@ CExpr *parse_XMP_shadow_width_list()
     }
 
     while(1){
-
       v1 = v2 = NULL;
       type = (CExpr*)allocExprOfNumberConst2(SHADOW_NORMAL, BT_INT);
 
@@ -583,15 +583,13 @@ CExpr *parse_XMP_align_subscript_list()
     list_expr = EMPTY_LIST;
 
     if(pg_tok != '(') {
-	addFatal(NULL,"parse_XMP_align_subscript_list: first token= '('");
+      addFatal(NULL,"parse_XMP_align_subscript_list: first token= '('");
     }
 
     pg_get_token();
 
     while(1){
-
 	v = NULL;
-
 	switch(pg_tok){
 	case ')':  goto err;
 	case ',':  goto err;
@@ -927,6 +925,7 @@ CExpr *parse_XMP_align_source_list()
 }
 
 
+#ifdef not
 CExpr *parse_XMP_C_subscript_list()
 {
     CExpr* list;
@@ -976,6 +975,7 @@ CExpr *parse_XMP_C_subscript_list()
     XMP_has_err = 1;
     return NULL;
 }
+#endif
 
 CExpr *parse_XMP_dist_fmt_list()
 {
@@ -1611,10 +1611,10 @@ static CExpr* parse_WAIT_clause()
   return XMP_LIST2(nodeNum, tag);
 }
 
-static CExpr* parse_LOCAL_ALIAS_clause()
-{
-    return NULL;
-}
+//static CExpr* parse_LOCAL_ALIAS_clause()
+//{
+//    return NULL;
+//}
 
 static CExpr* parse_WIDTH_list()
 {
@@ -1741,10 +1741,25 @@ static CExpr* parse_TEMPLATE_FIX_clause()
 static CExpr* parse_REFLECT_INIT_clause()
 {
   if (pg_tok != '('){
-    XMP_Error0(" #pragma xmp reflect_init (array-name) [width (reflect-width)].");
+    XMP_Error0(" #pragma xmp reflect_init (array-name) [width (reflect-width)] [host|acc].");
     XMP_has_err = 1;
     return NULL;
   }
-  CExpr *varList = parse_name_list();
-  return XMP_LIST1(varList);
+
+  CExpr *arrayNameList = parse_name_list();
+  CExpr *widthList = parse_WIDTH_list();
+  CExpr *acc_or_host1 = (CExpr *)allocExprOfNull();
+  CExpr *acc_or_host2 = (CExpr *)allocExprOfNull();
+
+  if(PG_IS_IDENT("acc") || PG_IS_IDENT("host")){
+    acc_or_host1 = XMP_LIST1(pg_tok_val);
+    pg_get_token();
+  }
+
+  if(PG_IS_IDENT("acc") || PG_IS_IDENT("host")){
+    acc_or_host2 = XMP_LIST1(pg_tok_val);
+    pg_get_token();
+  }
+  
+  return XMP_LIST4(arrayNameList, widthList, acc_or_host1, acc_or_host2);
 }

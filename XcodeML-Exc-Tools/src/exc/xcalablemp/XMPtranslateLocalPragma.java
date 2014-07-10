@@ -154,10 +154,46 @@ public class XMPtranslateLocalPragma {
 
   private void translateReflectInit(PragmaBlock pb) throws XMPexception 
   {
-    Ident funcId = _globalDecl.declExternFunc("_XMP_reflect_init");
-    XobjList funcArgs = (XobjList)pb.getClauses().getArg(0);
-    BlockList funcBody = Bcons.emptyBody();
-    
+    Ident funcIdAcc       = _globalDecl.declExternFunc("_XMP_reflect_init_acc");
+    XobjList funcArgs     = (XobjList)pb.getClauses().getArg(0);
+    XobjList widthList    = (XobjList)pb.getClauses().getArg(1);
+    XobjList acc_or_host1 = (XobjList)pb.getClauses().getArg(2);
+    XobjList acc_or_host2 = (XobjList)pb.getClauses().getArg(3);
+    BlockList funcBody    = Bcons.emptyBody();
+
+    boolean isHost = false;
+    boolean isAcc  = false;
+
+    if(acc_or_host1.Nargs() == 0 && acc_or_host2.Nargs() == 0){
+      isHost = true;
+    }
+    else{
+      if(acc_or_host1.Nargs() != 0){
+        if(acc_or_host1.getArg(0).getName() == "acc"){
+          isAcc = true;
+        }
+        else if(acc_or_host1.getArg(0).getName() == "host"){
+          isHost = true;
+        }
+      }
+      if(acc_or_host2.Nargs() != 0){
+        if(acc_or_host2.getArg(0).getName() == "acc"){
+          isAcc = true;
+        }
+        else if(acc_or_host2.getArg(0).getName() == "host"){
+          isHost = true;
+        }
+      }
+    }
+
+    if(isHost){
+      XMP.fatal("reflect_init for host has been not developed yet.");
+    }
+
+    if(widthList.Nargs() != 0){
+      XMP.fatal("width clause in reflect_init has been not developed yet.");
+    }
+
     for(int i=0;i<funcArgs.Nargs();i++){
       Xobject array = funcArgs.getArg(i);
       String arrayName = array.getString();
@@ -168,8 +204,8 @@ public class XMPtranslateLocalPragma {
       if(!alignedArray.hasShadow()){
         XMP.fatal(arrayName + " is not shadowed.");
       }
-      // is shadow ?
-      funcBody.add(Bcons.Statement(funcId.Call(Xcons.List(array))));
+      
+      funcBody.add(Bcons.Statement(funcIdAcc.Call(Xcons.List(array))));
     }
     
     Block funcCallBlock = Bcons.COMPOUND(funcBody);
