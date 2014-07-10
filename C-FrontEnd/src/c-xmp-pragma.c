@@ -63,7 +63,7 @@ static CExpr* parse_LOCAL_ALIAS_clause();
 static CExpr* parse_WIDTH_list();
 static CExpr* parse_WAIT_ASYNC_clause();
 static CExpr* parse_TEMPLATE_FIX_clause();
-static CExpr* parse_REFLECT_TCA_clause();
+static CExpr* parse_REFLECT_INIT_clause();
 
 static CExpr* parse_COL2_name_list();
 static CExpr* parse_XMP_subscript_list();
@@ -228,10 +228,10 @@ int parse_XMP_pragma()
       pg_get_token();
       pg_XMP_list = parse_TEMPLATE_FIX_clause();
     }
-    else if (PG_IS_IDENT("reflect_tca")) {
-      pg_XMP_pragma = XMP_REFLECT_TCA;
+    else if (PG_IS_IDENT("reflect_init")) {
+      pg_XMP_pragma = XMP_REFLECT_INIT;
       pg_get_token();
-      pg_XMP_list = parse_REFLECT_TCA_clause();
+      pg_XMP_list = parse_REFLECT_INIT_clause();
 #ifdef not
     } else if (PG_IS_IDENT("sync_memory")) {
 	pg_XMP_pragma = XMP_SYNC_MEMORY;
@@ -1738,10 +1738,10 @@ static CExpr* parse_TEMPLATE_FIX_clause()
     return NULL;
 }
 
-static CExpr* parse_REFLECT_TCA_clause()
+static CExpr* parse_REFLECT_INIT_clause()
 {
   if (pg_tok != '('){
-    XMP_Error0(" #pragma xmp reflect_tca (array-name).");
+    XMP_Error0(" #pragma xmp reflect_init (array-name) [width (reflect-width)].");
     XMP_has_err = 1;
     return NULL;
   }

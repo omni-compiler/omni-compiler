@@ -91,8 +91,8 @@ public class XMPtranslateLocalPragma {
 	{ translateWaitAsync(pb);               break; }
       case TEMPLATE_FIX:
 	{ translateTemplateFix(pb);             break; }
-      case REFLECT_TCA:
-        { translateReflectTCA(pb);              break; }
+      case REFLECT_INIT:
+        { translateReflectInit(pb);             break; }
       case GPU_REPLICATE:
         { translateGpuData(pb);			break; }
       case GPU_REPLICATE_SYNC:
@@ -152,9 +152,9 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private void translateReflectTCA(PragmaBlock pb) throws XMPexception 
+  private void translateReflectInit(PragmaBlock pb) throws XMPexception 
   {
-    Ident funcId = _globalDecl.declExternFunc("_XMP_reflect_tca");
+    Ident funcId = _globalDecl.declExternFunc("_XMP_reflect_init");
     XobjList funcArgs = (XobjList)pb.getClauses().getArg(0);
     BlockList funcBody = Bcons.emptyBody();
     
