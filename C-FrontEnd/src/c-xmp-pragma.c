@@ -229,20 +229,14 @@ int parse_XMP_pragma()
         pg_XMP_list = parse_WAIT_ASYNC_clause();
     }
     else if (PG_IS_IDENT("template_fix")) {
-<<<<<<< HEAD
         pg_XMP_pragma = XMP_TEMPLATE_FIX;
         pg_get_token();
         pg_XMP_list = parse_TEMPLATE_FIX_clause();
-=======
-      pg_XMP_pragma = XMP_TEMPLATE_FIX;
-      pg_get_token();
-      pg_XMP_list = parse_TEMPLATE_FIX_clause();
     }
     else if (PG_IS_IDENT("reflect_init")) {
-      pg_XMP_pragma = XMP_REFLECT_INIT;
-      pg_get_token();
-      pg_XMP_list = parse_REFLECT_INIT_clause();
->>>>>>> master
+        pg_XMP_pragma = XMP_REFLECT_INIT;
+        pg_get_token();
+        pg_XMP_list = parse_REFLECT_INIT_clause();
 #ifdef not
     } else if (PG_IS_IDENT("sync_memory")) {
         pg_XMP_pragma = XMP_SYNC_MEMORY;
