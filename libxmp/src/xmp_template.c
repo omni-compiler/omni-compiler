@@ -439,13 +439,13 @@ void _XMP_dist_template_GBLOCK(_XMP_template_t *template, int template_index, in
     }
     chunk->mapping_array = rsum_array;
 
+    template->is_owner = false;
     if (nodes->is_member && rsum_array[ni->rank + 1] != rsum_array[ni->rank]) {
       chunk->par_lower = rsum_array[ni->rank];
       if (chunk->par_lower < ti->ser_upper){
 	chunk->par_upper = min(ti->ser_upper, rsum_array[ni->rank + 1] - 1);
+	template->is_owner = true;
       }
-      else
-	template->is_owner = false;
     }
 
     chunk->par_width = 1;
