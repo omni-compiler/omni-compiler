@@ -1,8 +1,8 @@
 XFC     = xmpf90 -O2
 XRUN    = mpirun
-EXES    = exit.x module_test.x module_test0.x
+EXES    = exit.x module_test.x module_test0.x arg.x
 
-all: module_test.x exit.x module_test0.x
+all: module_test.x exit.x module_test0.x arg.x
 
 module_test0.x: module0.o main.o
 	$(XFC) -o module_test0.x module0.o main.o
@@ -30,10 +30,17 @@ module0.o: module0.f90
 main.o: main.f90 module0.o
 	$(XFC) -c main.f90 -Jmod
 
+arg.x: arg.o
+	$(XFC) -o arg.x arg.o
+
+arg.o: arg.f90
+	$(XFC) -c arg.f90
+
 run: $(EXES)
-	$(XRUN) -np 2 module_test.x
-	$(XRUN) -np 2 exit.x
+	$(XRUN) -np 2 ./module_test.x
+	$(XRUN) -np 2 ./exit.x
 	$(XRUN) -np 2 ./module_test0.x
+	$(XRUN) -np 4 ./arg.x
 
 clean:
 	rm -f $(EXES) *.o *.*mod

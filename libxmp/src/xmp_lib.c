@@ -413,7 +413,7 @@ int xmp_nodes_index(xmp_desc_t d, int dim, int *index){
 
   _XMP_nodes_t *n = (_XMP_nodes_t *)d;
 
-  *index = n->info[dim-1].rank;
+  *index = n->info[dim-1].rank + 1;
 
   return 0;
 
@@ -433,7 +433,7 @@ int xmp_nodes_rank(xmp_desc_t d, int *rank){
 
   _XMP_nodes_t *n = (_XMP_nodes_t *)d;
 
-  *rank = n->comm_rank;
+  *rank = n->comm_rank + 1;
 
   return 0;
 

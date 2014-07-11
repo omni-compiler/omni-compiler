@@ -83,6 +83,8 @@ target_triplet = @target@
 @GASNET_TRUE@am__append_2 = -D_XMP_COARRAY_GASNET $(GASNET_CPPFLAGS) $(GASNET_CFLAGS)
 @FJRDMA_TRUE@am__append_3 = xmp_coarray_set.c xmp_coarray_do.c xmp_fjrdma_coarray_set.c xmp_fjrdma_coarray_do.c xmp_post_wait.c xmp_fjrdma_post_wait.c
 @FJRDMA_TRUE@am__append_4 = -std=gnu99 -D_XMP_COARRAY_FJRDMA
+@TCA_TRUE@am__append_5 = xmp_tca.c
+@TCA_TRUE@am__append_6 = -D_XMP_TCA -I@TCA_PREFIX@
 subdir = ./libxmp/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -145,7 +147,7 @@ am__libxmp_a_SOURCES_DIST = $(XMP_INC_DIR)/xmp_internal.h \
 	xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c \
 	xmp_post_wait.c xmp_gasnet_post_wait.c \
 	xmp_fjrdma_coarray_set.c xmp_fjrdma_coarray_do.c \
-	xmp_fjrdma_post_wait.c
+	xmp_fjrdma_post_wait.c xmp_tca.c
 @GASNET_TRUE@am__objects_1 = xmp_coarray_set.$(OBJEXT) \
 @GASNET_TRUE@	xmp_coarray_do.$(OBJEXT) \
 @GASNET_TRUE@	xmp_gasnet_coarray.$(OBJEXT) xmp_lock.$(OBJEXT) \
@@ -157,6 +159,7 @@ am__libxmp_a_SOURCES_DIST = $(XMP_INC_DIR)/xmp_internal.h \
 @FJRDMA_TRUE@	xmp_fjrdma_coarray_do.$(OBJEXT) \
 @FJRDMA_TRUE@	xmp_post_wait.$(OBJEXT) \
 @FJRDMA_TRUE@	xmp_fjrdma_post_wait.$(OBJEXT)
+@TCA_TRUE@am__objects_3 = xmp_tca.$(OBJEXT)
 am_libxmp_a_OBJECTS = xmp_lib.$(OBJEXT) xmp_util.$(OBJEXT) \
 	xmp_world.$(OBJEXT) xmp_nodes_stack.$(OBJEXT) \
 	xmp_nodes.$(OBJEXT) xmp_template.$(OBJEXT) \
@@ -166,7 +169,8 @@ am_libxmp_a_OBJECTS = xmp_lib.$(OBJEXT) xmp_util.$(OBJEXT) \
 	xmp_gmove.$(OBJEXT) xmp_math_function.$(OBJEXT) \
 	xmp_runtime.$(OBJEXT) xmp_tlog_runtime.$(OBJEXT) \
 	xmp_io.$(OBJEXT) xmp_reflect.$(OBJEXT) \
-	xmp_pack_vector.$(OBJEXT) $(am__objects_1) $(am__objects_2)
+	xmp_pack_vector.$(OBJEXT) $(am__objects_1) $(am__objects_2) \
+	$(am__objects_3)
 libxmp_a_OBJECTS = $(am_libxmp_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -288,6 +292,7 @@ GASNET_LDFLAGS = @GASNET_LDFLAGS@
 GASNET_LIBS = @GASNET_LIBS@
 GASNET_PREFIX = @GASNET_PREFIX@
 GPGPU_PREFIX = @GPGPU_PREFIX@
+GPU_CFLAGS = @GPU_CFLAGS@
 GPU_CMD = @GPU_CMD@
 GREP = @GREP@
 INCLUDECOM = @INCLUDECOM@
@@ -338,6 +343,7 @@ MKDIR = @MKDIR@
 MKDIR_P = @MKDIR_P@
 MKRULESDIR = @MKRULESDIR@
 MM5TGT = @MM5TGT@
+NATIVE_DOPT = @NATIVE_DOPT@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
@@ -379,6 +385,8 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PERL5 = @PERL5@
 POW_LIB = @POW_LIB@
+PPCC = @PPCC@
+PPCC_OPT = @PPCC_OPT@
 PPTGT = @PPTGT@
 RANLIB = @RANLIB@
 RM = @RM@
@@ -399,6 +407,7 @@ SR16000 = @SR16000@
 STRIP = @STRIP@
 SUPERUX = @SUPERUX@
 TARGET_ARCH = @TARGET_ARCH@
+TCA_PREFIX = @TCA_PREFIX@
 TOPDIR = @TOPDIR@
 TYPE_INT16 = @TYPE_INT16@
 TYPE_INT32 = @TYPE_INT32@
@@ -505,7 +514,7 @@ XMP_INC_DIR = ../include
 TLOG_INC_DIR = $(top_builddir)/@LIBTLOG_MPI_DIR@
 lib_LIBRARIES = libxmp.a
 AM_CFLAGS = -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR) @BECC_OPTION@ \
-	$(am__append_2) $(am__append_4)
+	$(am__append_2) $(am__append_4) $(am__append_6)
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS)
 
@@ -517,7 +526,8 @@ libxmp_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h \
 	xmp_reduce.c xmp_bcast.c xmp_align.c xmp_shadow.c \
 	xmp_array_section.c xmp_loop.c xmp_gmove.c xmp_math_function.c \
 	xmp_runtime.c xmp_tlog_runtime.c xmp_io.c xmp_reflect.c \
-	xmp_pack_vector.c $(am__append_1) $(am__append_3)
+	xmp_pack_vector.c $(am__append_1) $(am__append_3) \
+	$(am__append_5)
 @GASNET_TRUE@AM_LDFLAGS = $(GASNET_LDFLAGS) $(GASNET_LIBS)
 all: all-am
 

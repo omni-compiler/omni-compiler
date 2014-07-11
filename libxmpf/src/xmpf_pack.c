@@ -908,8 +908,10 @@ static void _XMP_unpack_array_7_GENERAL(void *dst_addr, void *buf_addr, size_t t
 }
 
 
-void _XMP_normalize_array_section(int *lower, int *upper, int *stride) {
+void _XMP_normalize_array_section(_XMP_gmv_desc_t *gmv_desc, int idim, int *lower, int *upper, int *stride) {
   // setup temporary variables
+
+  _XMP_array_t *array = gmv_desc->a_desc;
   int l, u;
   int s = *(stride);
   if (s > 0) {
@@ -921,9 +923,21 @@ void _XMP_normalize_array_section(int *lower, int *upper, int *stride) {
     u = *lower;
   }
   else {
-    l = *lower;
-    u = *lower;
-    s = 1;
+    if (*lower==0 && *upper==0){
+      if (gmv_desc->is_global == true){
+         l = array->info[idim].ser_lower;
+         u = array->info[idim].ser_upper;
+         s = 1;
+      }else{
+         l = gmv_desc->a_lb[idim];
+         u = gmv_desc->a_ub[idim];
+         s = 1;
+      }
+    }else{
+      l = *lower;
+      u = *lower;
+      s = 1;
+    }
    // _XMP_fatal("the stride of <array-section> is 0");
    // l = 0; u = 0; // XXX dummy
   }
@@ -931,16 +945,14 @@ void _XMP_normalize_array_section(int *lower, int *upper, int *stride) {
   // normalize values
   if (s > 0) {
     u = u - ((u - l) % s);
-    *upper = u;
-    *stride = s;
   }
   else {
     s = -s;
     l = l + ((u - l) % s);
-    *lower = l;
-    *upper = u;
-    *stride = s;
   }
+  *lower = l;
+  *upper = u;
+  *stride = s;
 }
 
 void _XMP_pack_array_BASIC(void *buffer, void *src, int array_type,

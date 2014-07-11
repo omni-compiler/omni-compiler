@@ -25,6 +25,11 @@ if FJRDMA
     AM_CFLAGS        += -std=gnu99 -D_XMP_COARRAY_FJRDMA
 endif
 
+if TCA
+    libxmp_a_SOURCES += xmp_tca.c
+    AM_CFLAGS        += -D_XMP_TCA -I@TCA_PREFIX@
+endif
+
 xmp_pack_vector.o: xmp_pack_vector.c
 	@BECC@ $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) @BECC_OMP_OPTION@ -c $<

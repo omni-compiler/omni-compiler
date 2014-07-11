@@ -1879,8 +1879,8 @@ public class XmcXcodeToXcTranslator {
 	    Node dir = n.getFirstChild();
 	    String dirName = XmDomUtil.getContentText(dir).toLowerCase();
 
-	    if (dirName.equals("parallel_loop")) 	dirName = "parallel loop";
-	    else if (dirName.equals("kernels_loop"))dirName = "kernels loop";
+	    if (dirName.equals("parallel_loop"))     dirName = "parallel loop";
+	    else if (dirName.equals("kernels_loop")) dirName = "kernels loop";
 
 	    obj.setLine("#pragma acc " + dirName);
 
@@ -1902,10 +1902,29 @@ public class XmcXcodeToXcTranslator {
 		return;
 	    }
 
+            if (dirName.equals("host_data use_device")){
+              NodeList varList = dir.getNextSibling().getChildNodes();
+              obj.addToken("(");
+              enterVarListNode(tc, obj, varList);
+              obj.addToken(")");
+
+              Node clause = dir.getNextSibling();
+              Node body = clause.getNextSibling();
+              NodeList list2 = body.getChildNodes();
+              for (int i = 0; i < list2.getLength(); i++){
+                Node childNode = list2.item(i);
+                if (childNode.getNodeType() != Node.ELEMENT_NODE) {
+                  continue;
+                }
+                enterNodes(tc, parent, childNode);
+              }
+              return;
+            }
+
 	    // clause
 	    Node clause = dir.getNextSibling();
-
 	    NodeList list0 = clause.getChildNodes();
+
 	    for (int i = 0; i < list0.getLength(); i++){          
 		Node childNode = list0.item(i);
 		if (childNode.getNodeType() != Node.ELEMENT_NODE) {
@@ -1930,6 +1949,7 @@ public class XmcXcodeToXcTranslator {
 		obj.addToken(clauseName);
 
 		Node arg = childNode.getFirstChild().getNextSibling();
+
 		if (arg != null){
 		    obj.addToken("(");
 		    if (operator != "") obj.addToken(operator + " :");

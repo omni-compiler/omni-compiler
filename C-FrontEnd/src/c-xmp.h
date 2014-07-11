@@ -31,6 +31,8 @@ enum XMP_pragma {
     XMP_END_TASK	= 120,
     XMP_END_TASKS	= 121,
 
+    XMP_REFLECT_INIT    = 122,
+
     XMP_MASTER_IO	= 130,
     XMP_MASTER_IO_BEGIN	= 131,
     XMP_END_MASTER_IO	= 132,

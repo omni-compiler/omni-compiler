@@ -447,12 +447,40 @@ public class XMPtransPragma
     for(Ident id: info.getInfoVarIdents()){
       Xtype type = id.Type();
       Xobject size_expr = Xcons.IntConstant(1);
-      if(type.isFarray()){
-	for(Xobject s: type.getFarraySizeExpr()){
-	  size_expr = Xcons.binaryOp(Xcode.MUL_EXPR,size_expr,s);
+
+      if (type.isFarray()){
+
+	if (type.isFassumedSize()){
+	  XMP.fatal("assumed-size array cannot be the target of bcast.");
 	}
+
+	if (!type.isFassumedShape() && !type.isFallocatable()){
+	  for (Xobject s: type.getFarraySizeExpr()){
+	    //size_expr = Xcons.binaryOp(Xcode.MUL_EXPR,size_expr,s);
+
+	    Xobject size;
+	    if (s.Opcode() == Xcode.F_INDEX_RANGE){
+	      Xobject lb = s.getArg(0);
+	      Xobject ub = s.getArg(1);
+	      size = Xcons.binaryOp(Xcode.MINUS_EXPR, ub, lb);
+	      size = Xcons.binaryOp(Xcode.PLUS_EXPR, size, Xcons.IntConstant(1));
+	    }
+	    else {
+	      size = s;
+	    }
+
+	    size_expr = Xcons.binaryOp(Xcode.MUL_EXPR, size_expr, size);
+	  }
+
+	}
+	else {
+	  Ident size_func = env.declIntrinsicIdent("size", Xtype.FintFunctionType);
+	  size_expr = size_func.Call(Xcons.List(id.Ref()));
+	}
+
 	type = type.getRef();
       }
+
       if(!type.isBasic()){
 	XMP.fatal("bcast for non-basic type ="+type);
       }

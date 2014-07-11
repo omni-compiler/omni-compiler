@@ -106,25 +106,26 @@ void outx_XMP_Clause(FILE *fp, int indent, CExprOfList* clauseList)
 char *xmpDirectiveName(int c)
 {
   switch(c){
-  case XMP_NODES: return "NODES";
-  case XMP_TEMPLATE: return "TEMPLATE";
-  case XMP_DISTRIBUTE: return "DISTRIBUTE";
-  case XMP_ALIGN: return "ALIGN";
-  case XMP_SHADOW: return "SHADOW";
-  case XMP_TASK: return "TASK";
-  case XMP_TASKS: return "TASKS";
-  case XMP_LOOP: return "LOOP";
-  case XMP_REFLECT: return "REFLECT";
-  case XMP_GMOVE: return "GMOVE";
-  case XMP_BARRIER: return "BARRIER";
-  case XMP_REDUCTION: return "REDUCTION";
-  case XMP_BCAST: return "BCAST";
-  case XMP_COARRAY: return "COARRAY";
-  case XMP_ARRAY: return "ARRAY";
-  case XMP_POST: return "POST";
-  case XMP_WAIT: return "WAIT";
+  case XMP_NODES:        return "NODES";
+  case XMP_TEMPLATE:     return "TEMPLATE";
+  case XMP_DISTRIBUTE:   return "DISTRIBUTE";
+  case XMP_ALIGN:        return "ALIGN";
+  case XMP_SHADOW:       return "SHADOW";
+  case XMP_TASK:         return "TASK";
+  case XMP_TASKS:        return "TASKS";
+  case XMP_LOOP:         return "LOOP";
+  case XMP_REFLECT:      return "REFLECT";
+  case XMP_GMOVE:        return "GMOVE";
+  case XMP_BARRIER:      return "BARRIER";
+  case XMP_REDUCTION:    return "REDUCTION";
+  case XMP_BCAST:        return "BCAST";
+  case XMP_COARRAY:      return "COARRAY";
+  case XMP_ARRAY:        return "ARRAY";
+  case XMP_POST:         return "POST";
+  case XMP_WAIT:         return "WAIT";
   case XMP_TEMPLATE_FIX: return "TEMPLATE_FIX";
-  case XMP_WAIT_ASYNC: return "WAIT_ASYNC";
-  default: return "OMP???";
+  case XMP_REFLECT_INIT: return "REFLECT_INIT";
+  case XMP_WAIT_ASYNC:   return "WAIT_ASYNC";
+  default:               return "OMP???";
   }
 }
