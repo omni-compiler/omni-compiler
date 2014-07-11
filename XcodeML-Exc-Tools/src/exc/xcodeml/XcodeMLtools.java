@@ -136,10 +136,7 @@ public abstract class XcodeMLtools {
     setIdentDecl(xobjFile);
     xobjFile.setParentRecursively(null);
 
-    //////
-    System.out.println("[outof read]");
-    //////
-    return xobjFile;
+     return xobjFile;
   }
 
   Xobject toIdentList(Node n) {
@@ -164,15 +161,15 @@ public abstract class XcodeMLtools {
       if (decls == null)
 	continue;
       for (Xobject decl : (XobjList) decls) {
-	//if (decl.Opcode() == Xcode.VAR_DECL) {
-	if (decl != null && decl.Opcode() == Xcode.VAR_DECL) {
-	  String name = decl.getArg(0).getName();
-	  Ident id = def.findIdent(name, IXobject.FINDKIND_VAR);
-	  if (id != null && id.Type() != null
-	      && id.Type().isFparameter()) {
-	    id.setFparamValue(decl.getArgOrNull(1));
-	  }
-	}
+          //if (decl.Opcode() == Xcode.VAR_DECL) {
+        if (decl != null && decl.Opcode() == Xcode.VAR_DECL) {
+          String name = decl.getArg(0).getName();
+          Ident id = def.findIdent(name, IXobject.FINDKIND_VAR);
+          if (id != null && id.Type() != null
+            && id.Type().isFparameter()) {
+            id.setFparamValue(decl.getArgOrNull(1));
+          }
+        }
       }
     }
   }

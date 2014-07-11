@@ -183,15 +183,17 @@ _printExprCommon1(FILE *fp, char *str, CExprCommon *expr, int indent)
     if (expr->e_isGccSyntax ) fprintf(fp, " e_isGccSyntax");
 	if (expr->e_isDeleting	) fprintf(fp, " e_isDeleting");
 
-	fprintf(fp, " (%p)", (void*)expr);
+    //	fprintf(fp, " (%p)", (void*)expr);
 	if ( _n_refAddr == MAX_REFADDR)
-      return 1;
+        return 1;        /* supress further more display */
 	for (int i = 0; i < _n_refAddr; i++) {
-	  if ((void*)expr == _refAddr[i])
-		return 1;
+        if ((void*)expr == _refAddr[i]) {   /* already displayed the same address */
+            return 1;
+            fprintf(fp, " (duplicated address)", (void*)expr);
+        }
 	}
     _refAddr[_n_refAddr++] = (void*)expr;
-    return 0;
+    return 0;   /* first appearance of the address */
 }
 
 static void

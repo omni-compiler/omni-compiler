@@ -703,18 +703,6 @@ reduce_declarator(CExpr *declr, CExpr *parent, int *isReduced)
         ptd = reduce_declarator_1(declr, parent, isReduced, ite, htd, ptd);
     }
 
-#define TRY5
-
-#ifdef TRY4
-    EXPR_FOREACH(ite, costack) {
-        if(htd == NULL) {
-            htd = allocExprOfTypeDesc();
-            exprCopyLineNum((CExpr*)htd, declr);
-        }
-        ptd = reduce_declarator_1(declr, parent, isReduced, ite, htd, ptd);
-    }
-#endif
-
     EXPR_UNREF(sym);
     CExpr *newDeclr = (CExpr*)allocExprOfBinaryNode1(
         EC_DECLARATOR, (CExpr*)htd, (CExpr*)sym);
@@ -727,31 +715,15 @@ reduce_declarator(CExpr *declr, CExpr *parent, int *isReduced)
     freeExpr(declr);
     freeExpr(stack);
 
-#ifdef TRY4A
-    /*   set e_codimensions (ID=284)
-     */
-    CExprOfTypeDesc *htd2 = NULL, *ptd2 = NULL;
-    EXPR_FOREACH(ite, costack) {
-        if(htd2 == NULL) {
-            htd2 = allocExprOfTypeDesc();
-            exprCopyLineNum((CExpr*)htd2, declr);
-        }
-        ptd2 = reduce_declarator_1(declr, parent, isReduced, ite, htd2, ptd2);
-    }
-    if (htd2) {
-      EXPR_SYMBOL(sym)->e_codimensions = (CExpr*)htd2;
-      EXPR_REF(htd2);
-    }
-#endif
 
-#ifdef TRY5
+    /*   set e_codimensions (ID=284) try5 or later
+     */
     if (EXPR_L_SIZE(costack) > 0) {
         EXPR_SYMBOL(sym)->e_codimensions = costack;
         EXPR_REF(costack);
     } else {
       freeExpr(costack);
     }
-#endif
 
     return newDeclr;
 }
@@ -1040,6 +1012,11 @@ reduce_funcDefOldStyle(CExpr *expr, CExpr *parent, int *isReduced)
 
                 hsym->e_headType = EXPR_T(td1);
                 EXPRS_TYPE(hsym) = EXPR_T(td2);
+                // ID=284 copying codimensions of function parameter
+                if (sym->e_codimensions) {
+                    hsym->e_codimensions = sym->e_codimensions;
+                    sym->e_codimensions = NULL;
+                }
             }
         }
     }
