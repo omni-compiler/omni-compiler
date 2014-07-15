@@ -728,7 +728,7 @@ int _XMP_lidx_GBLOCK(_XMP_array_t *a, int i_dim, int global_idx)
     _XMP_template_chunk_t *template_chunk = &(template->chunk[tdim]);
 
     int rank = template_chunk->onto_nodes_info->rank;
-    unsigned long long *mapping_array = template_chunk->mapping_array;
+    long long *mapping_array = template_chunk->mapping_array;
 
     //_XMP_G2L(global_idx + off, &l_idx, a->align_template, tdim);
     //_XMP_G2L(ai->par_lower + off, &l_base, a->align_template, tdim);

@@ -432,10 +432,10 @@ void _XMP_dist_template_GBLOCK(_XMP_template_t *template, int template_index, in
 
   if (mapping_array){
 
-    unsigned long long *rsum_array = _XMP_alloc(sizeof(unsigned long long) * (ni->size + 1));
+    long long *rsum_array = _XMP_alloc(sizeof(long long) * (ni->size + 1));
     rsum_array[0] = ti->ser_lower;
     for (unsigned long long i = 1; i <= ni->size; i++){
-      rsum_array[i] = rsum_array[i-1] + (unsigned long long)mapping_array[i-1];
+      rsum_array[i] = rsum_array[i-1] + (long long)mapping_array[i-1];
     }
     chunk->mapping_array = rsum_array;
 
@@ -589,7 +589,7 @@ int _XMP_calc_template_owner_SCALAR(_XMP_template_t *template, int dim_index, lo
       }
     case _XMP_N_DIST_GBLOCK:
       {
-	unsigned long long *m = chunk->mapping_array;
+	long long *m = chunk->mapping_array;
 	int np = chunk->onto_nodes_info->size;
 	for (int i = 0; i < np; i++){
 	  if (m[i] <= ref_index && ref_index < m[i+1]){
