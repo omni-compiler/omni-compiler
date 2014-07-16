@@ -10,7 +10,7 @@ void _XMP_pack_vector(char * restrict dst, char * restrict src,
 		      int count, int blocklength, long stride){
   long i;
   if (_xmp_omp_num_procs > 1 && count > 8 * _xmp_omp_num_procs){
-#pragma omp parallel for
+#pragma omp parallel for private(i)
     for (i = 0; i < count; i++){
       memcpy(dst + i * blocklength, src + i * stride, blocklength);
     }
@@ -28,7 +28,7 @@ void _XMP_pack_vector2(char * restrict dst, char * restrict src,
                        int nnodes, int type_size, int src_block_dim){
   long j,k;
   if (src_block_dim == 1){
-#pragma omp parallel for
+#pragma omp parallel for private(j,k)
     for (j = 0; j < count; j++){
       for (k = 0; k < nnodes; k++){
         memcpy(dst + ((k * count +j ) * blocklength ) * type_size,
@@ -43,7 +43,7 @@ void _XMP_unpack_vector(char * restrict dst, char * restrict src,
 			int count, int blocklength, long stride){
   long i;
   if (_xmp_omp_num_procs > 1 && count > 8 * _xmp_omp_num_procs){
-#pragma omp parallel for
+#pragma omp parallel for private(i)
     for (i = 0; i < count; i++){
       memcpy(dst + i * stride, src + i * blocklength, blocklength);
     }
@@ -62,14 +62,14 @@ void _XMPF_unpack_transpose_vector(char * restrict dst, char * restrict src,
   long i,j;
   if (dst_block_dim == 1){
     if (type_size == 16){
-      long ii,jj,nblk=16;
+      long ii,jj,imin,jmin,nblk=16;
       double _Complex *dst0 = (double _Complex *)dst;
       double _Complex *src0 = (double _Complex *)src;
       for (jj = 0; jj < src_stride; jj+=nblk){
-        long jmin=((jj+nblk) < src_stride)? (jj+nblk):src_stride;
-#pragma omp parallel for
+        jmin=((jj+nblk) < src_stride)? (jj+nblk):src_stride;
+#pragma omp parallel for private(i,j,ii,imin)
         for (ii = 0; ii < dst_stride; ii+=nblk){
-          long imin=((ii+nblk) < dst_stride)? (ii+nblk):dst_stride;
+          imin=((ii+nblk) < dst_stride)? (ii+nblk):dst_stride;
           for (j = jj; j < jmin; j++){
             for (i = ii; i < imin; i++){
               dst0[j * dst_stride + i] = src0[i * src_stride + j];
