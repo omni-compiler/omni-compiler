@@ -615,6 +615,11 @@ if test "$target" = "powerpc-ibm-none"; then
   PPCC_OPT="-E --std=c99"
   NATIVE_DOPT="-WF,-D_XCALABLEMP"
 fi
+
+if test "$target" = "powerpc64-hitachi-aix"; then
+  NATIVE_DOPT="-WF,-D_XCALABLEMP"
+fi
+
 AC_SUBST(PPCC)
 AC_SUBST(PPCC_OPT)
 AC_SUBST(NATIVE_DOPT)
@@ -688,7 +693,7 @@ elif test "$target" = "powerpc64-hitachi-aix"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT="-q64"
   OMC_CONF_LNK_OPT="-q64"
-  BECC_OMP_OPTION="-parallel"
+  BECC_OMP_OPTION="-O5 -qhot -qsmp=omp -qsimd=auto"
 else
   chk=`$BECC --version | head -n1`
   case $chk in

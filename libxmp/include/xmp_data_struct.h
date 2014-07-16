@@ -79,7 +79,7 @@ typedef struct _XMP_template_chunk_type {
   int par_stride;
   unsigned long long par_chunk_width;
   int dist_manner;
-  unsigned long long *mapping_array;
+  long long *mapping_array;
   _Bool is_regular_chunk;
 
   // enable when dist_manner is not _XMP_N_DIST_DUPLICATION
