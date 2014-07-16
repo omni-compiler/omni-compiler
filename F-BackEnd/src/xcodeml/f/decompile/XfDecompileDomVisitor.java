@@ -35,21 +35,25 @@ import xcodeml.util.XmTranslationException;
  * Decompiler of XcodeML/F DOM nodes.
  */
 public class XfDecompileDomVisitor {
+    static final int PRIO_LOW = 0; /* lowest */
 
-  static final int PRIO_LOW = 0; /* lowest */
+    static final int PRIO_DEFINED_BINARY = 1; /* defined binary operation */
 
-  static final int PRIO_EQV = 1; /* EQV, NEQV */
-  static final int PRIO_OR = 2; /* .OR. */
-  static final int PRIO_AND = 3; /* .AND. */
+    static final int PRIO_EQV = 2; /* EQV, NEQV */
+    static final int PRIO_OR = 3; /* .OR. */
+    static final int PRIO_AND = 4; /* .AND. */
+    static final int PRIO_NOT = 5; /* .NOT. */
 
-  static final int PRIO_COMP = 4; /* <, >,...  */
-  
-  static final int PRIO_CONCAT = 5; 
+    static final int PRIO_COMP = 6; /* <, >,...  */
 
-  static final int PRIO_PLUS_MINUS = 6;
-  static final int PRIO_MUL_DIV = 7;
-  static final int PRIO_POWER = 8;
-  static final int PRIO_HIGH = 10;
+    static final int PRIO_CONCAT = 7;
+
+    static final int PRIO_PLUS_MINUS = 8;
+    static final int PRIO_UNARY_MINUS = 9;
+    static final int PRIO_MUL_DIV = 10;
+    static final int PRIO_POWER = 11;
+    static final int PRIO_DEFINED_UNARY = 12;
+    static final int PRIO_HIGH = 13;
 
     static public String nodeToString(Node n) {
         String ret = null;
@@ -961,14 +965,16 @@ public class XfDecompileDomVisitor {
      *            Grouping flag.
      */
     private void _writeBinaryExpr(Node leftExpr, Node rightExpr,
-                                  String operation) {
+                                  String operation, boolean grouping) {
         XmfWriter writer = _context.getWriter();
-	boolean need_paren;
-	int op_prio = operator_priority(operation);
+        boolean need_paren;
+        int op_prio = operator_priority(operation);
 
-	need_paren = false;
-	if(op_prio > operator_priority(leftExpr))
-	  need_paren = true;
+        if (grouping) writer.writeToken("(");
+
+        need_paren = false;
+        if(op_prio > operator_priority(leftExpr))
+            need_paren = true;
 
         if (need_paren) writer.writeToken("(");
         invokeEnter(leftExpr);
@@ -978,70 +984,95 @@ public class XfDecompileDomVisitor {
         writer.writeToken(operation);
         writer.writeToken(" ");
 
-	need_paren = false;
-	if(op_prio == PRIO_POWER ||
-	   op_prio >= operator_priority(rightExpr))
-	  need_paren = true;
+        need_paren = false;
+        if(op_prio == PRIO_POWER ||
+                op_prio >= operator_priority(rightExpr))
+            need_paren = true;
 
         if (need_paren) writer.writeToken("(");
         invokeEnter(rightExpr);
         if (need_paren) writer.writeToken(")");
+        if (grouping) writer.writeToken(")");
     }
 
     int operator_priority(String operator){
 
-	if (operator.equals("=") || operator.equals("=>"))
-	    return PRIO_LOW;
+        if (operator.equals("=") || operator.equals("=>"))
+            return PRIO_LOW;
 
-	if (operator.equals("-") || operator.equals("+")) 
-	    return PRIO_PLUS_MINUS;
-	if (operator.equals("*") || operator.equals("/")) 
-	    return PRIO_MUL_DIV;
-	if (operator.equals("**")) 
-	    return PRIO_POWER;
-    
-	if (operator.equals("<") || operator.equals(">") || 
-	   operator.equals("<=") || operator.equals(">=") ||
-	   operator.equals("/=") || operator.equals("=="))
-	    return PRIO_COMP;
-    
-	if (operator.equals("//")) return PRIO_CONCAT;
+        if (operator.equals("-") || operator.equals("+"))
+            return PRIO_PLUS_MINUS;
+        if (operator.equals("*") || operator.equals("/"))
+            return PRIO_MUL_DIV;
+        if (operator.equals("**"))
+            return PRIO_POWER;
 
-	if (operator.equals(".AND.")) return PRIO_AND;
-	if (operator.equals(".OR."))  return PRIO_OR;
-	if (operator.equals(".NEQV.") || operator.equals(".EQV."))
-	    return PRIO_EQV;
+        if (operator.equals("<") || operator.equals(">") ||
+                operator.equals("<=") || operator.equals(">=") ||
+                operator.equals("/=") || operator.equals("=="))
+            return PRIO_COMP;
 
-	return PRIO_HIGH;
+        if (operator.equals("//")) return PRIO_CONCAT;
+
+        if (operator.equals(".NOT.")) return PRIO_NOT;
+        if (operator.equals(".AND.")) return PRIO_AND;
+        if (operator.equals(".OR."))  return PRIO_OR;
+        if (operator.equals(".NEQV.") || operator.equals(".EQV."))
+            return PRIO_EQV;
+
+        if(operator.startsWith(".") && operator.endsWith("."))
+            return PRIO_DEFINED_BINARY;
+
+        return PRIO_HIGH;
     }
 
     int operator_priority(Node expr){
 
-	String name = expr.getNodeName();
+        String name = expr.getNodeName();
 
-	if (name.equals("FassignStatement") ||
-	    name.equals("FpointerAssignStatement")) return PRIO_LOW;
+        if (name.equals("FassignStatement") ||
+                name.equals("FpointerAssignStatement")) return PRIO_LOW;
 
-	if (name.equals("plusExpr") || name.equals("minusExpr"))
-	    return PRIO_PLUS_MINUS;
-	if (name.equals("divExpr") || name.equals("mulExpr"))
-	    return PRIO_MUL_DIV;
-	if (name.equals("FpowerExpr"))
-	    return PRIO_POWER;
-    
-	if (name.equals("logLTExpr") || name.equals("logGTExpr") ||
-	    name.equals("logLEExpr") || name.equals("logGEExpr") ||
-	    name.equals("logEQExpr") || name.equals("logNEQExpr"))
-	    return PRIO_COMP;
-    
-	if (name.equals("FconcatExpr")) return PRIO_CONCAT;
+        if (name.equals("userBinaryExpr")) return PRIO_DEFINED_BINARY;
 
-	if (name.equals("logAndExpr")) return PRIO_AND;
-	if (name.equals("logOrExpr"))  return PRIO_OR;
-	if (name.equals("logEQVExpr") ||name.equals("logNEQVExpr"))
-	    return PRIO_EQV;
+        if (name.equals("plusExpr") || name.equals("minusExpr"))
+            return PRIO_PLUS_MINUS;
+        if (name.equals("unaryMinusExpr"))
+            return PRIO_UNARY_MINUS;
+        if (name.equals("divExpr") || name.equals("mulExpr"))
+            return PRIO_MUL_DIV;
+        if (name.equals("FpowerExpr"))
+            return PRIO_POWER;
 
-	return PRIO_HIGH;
+        if (name.equals("logLTExpr") || name.equals("logGTExpr") ||
+                name.equals("logLEExpr") || name.equals("logGEExpr") ||
+                name.equals("logEQExpr") || name.equals("logNEQExpr"))
+            return PRIO_COMP;
+
+        if (name.equals("FconcatExpr")) return PRIO_CONCAT;
+
+        if (name.equals("logNotExpr")) return PRIO_NOT;
+        if (name.equals("logAndExpr")) return PRIO_AND;
+        if (name.equals("logOrExpr"))  return PRIO_OR;
+        if (name.equals("logEQVExpr") ||name.equals("logNEQVExpr"))
+            return PRIO_EQV;
+
+        if (name.equals("userUnaryExpr")) return PRIO_DEFINED_BINARY;
+
+        return PRIO_HIGH;
+    }
+
+    private boolean _checkBinaryExprRequireGrouping(Node expr) {
+        Node parent = expr.getParentNode();
+
+        String name = parent.getNodeName();
+
+        if (!(name.equals("unaryMinusExpr"))
+            && !(name.equals("userUnaryExpr"))
+            && !(name.equals("logNotExpr")))
+            return false;
+
+        return operator_priority(parent) > operator_priority(expr);
     }
 
     /**
@@ -1057,10 +1088,10 @@ public class XfDecompileDomVisitor {
      *            Grouping flag.
      */
     private void _writeBinaryExpr(ArrayList<Node> exprNodes, int offset,
-                                  String operation) {
+                                  String operation, boolean grouping) {
         _writeBinaryExpr(exprNodes.get(offset),
                          exprNodes.get(offset + 1),
-                         operation);
+                         operation, grouping);
     }
 
     /**
@@ -1343,7 +1374,7 @@ public class XfDecompileDomVisitor {
             _writeLineDirective(n);
 
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "=");
+                             "=", false);
 
             writer.setupNewLine();
         }
@@ -1463,7 +1494,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "/");
+                             "/", _checkBinaryExprRequireGrouping(n));
         }
     }
 
@@ -1936,7 +1967,8 @@ public class XfDecompileDomVisitor {
          *      )
          */
         @Override public void enter(Node n) {
-            _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0, "//");
+            _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
+                             "//", _checkBinaryExprRequireGrouping(n));
         }
     }
 
@@ -3389,7 +3421,7 @@ public class XfDecompileDomVisitor {
             XmfWriter writer = _context.getWriter();
 
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "=>");
+                             "=>", false);
 
             writer.setupNewLine();
         }
@@ -3411,7 +3443,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "**");
+                             "**", false);
         }
     }
 
@@ -4547,7 +4579,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             ".AND.");
+                             ".AND.", _checkBinaryExprRequireGrouping(n));
         }
     }
 
@@ -4567,7 +4599,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "==");
+                             "==", _checkBinaryExprRequireGrouping(n));
         }
     }
 
@@ -4587,7 +4619,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             ".EQV.");
+                             ".EQV.", _checkBinaryExprRequireGrouping(n));
         }
     }
 
@@ -4607,7 +4639,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             ">=");
+                             ">=", _checkBinaryExprRequireGrouping(n));
         }
     }
 
@@ -4627,7 +4659,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             ">");
+                             ">", _checkBinaryExprRequireGrouping(n));
         }
     }
 
@@ -4647,7 +4679,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "<=");
+                             "<=", _checkBinaryExprRequireGrouping(n));
         }
     }
 
@@ -4667,7 +4699,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "<");
+                             "<", _checkBinaryExprRequireGrouping(n));
         }
     }
 
@@ -4687,7 +4719,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "/=");
+                             "/=", _checkBinaryExprRequireGrouping(n));
         }
     }
 
@@ -4707,7 +4739,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             ".NEQV.");
+                             ".NEQV.", _checkBinaryExprRequireGrouping(n));
         }
     }
 
@@ -4746,7 +4778,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             ".OR.");
+                             ".OR.", _checkBinaryExprRequireGrouping(n));
         }
     }
 
@@ -4784,7 +4816,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "-");
+                             "-", _checkBinaryExprRequireGrouping(n));
         }
     }
 
@@ -4804,7 +4836,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "*");
+                             "*", _checkBinaryExprRequireGrouping(n));
         }
     }
 
@@ -4927,7 +4959,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "+");
+                             "+", _checkBinaryExprRequireGrouping(n));
         }
     }
 
@@ -5177,7 +5209,7 @@ public class XfDecompileDomVisitor {
             }
 
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             name);
+                             name, _checkBinaryExprRequireGrouping(n));
         }
     }
 
