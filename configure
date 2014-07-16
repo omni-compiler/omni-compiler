@@ -17234,11 +17234,13 @@ elif test "$target" = "powerpc-ibm-none"; then
   DRIVER="/bgsys/drivers/ppcfloor"
   OMC_CONF_LNK_OPT="-I/usr/local/bg/include \
                 -L/usr/local/bg/lib -lkek -L${DRIVER}/bgpm/lib/ -lbgpm -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
+  BECC_OPTION="-O5"
   BECC_OMP_OPTION=""
 elif test "$target" = "powerpc64-hitachi-aix"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT="-q64"
   OMC_CONF_LNK_OPT="-q64"
+  BECC_OPTION="-O5"
   BECC_OMP_OPTION="-O5 -qhot -qsmp=omp -qsimd=auto"
 else
   chk=`$BECC --version | head -n1`
