@@ -1,0 +1,606 @@
+<XcodeProgram source="unary_ops.f90"
+              language="Fortran"
+              time="2014-07-16 16:03:55"
+              compiler-info="XcodeML/Fortran-FrontEnd"
+              version="1.0">
+  <typeTable>
+    <FbasicType type="I164a9d0" intent="in" ref="Fint"/>
+    <FbasicType type="L164d180" intent="in" ref="Flogical"/>
+    <FbasicType type="V16507e0" ref="FnumericAll"/>
+    <FbasicType type="V1650b90" ref="FnumericAll"/>
+    <FbasicType type="V1648080" ref="FnumericAll"/>
+    <FbasicType type="V1649210" ref="FnumericAll"/>
+    <FbasicType type="V1650920" ref="FnumericAll"/>
+    <FbasicType type="V1650cf0" ref="FnumericAll"/>
+    <FbasicType type="I16515d0" intent="in" ref="Fint"/>
+    <FbasicType type="L16518d0" intent="in" ref="Flogical"/>
+    <FfunctionType type="F1650740" return_type="V1648080"/>
+    <FfunctionType type="F1650af0" return_type="V1649210"/>
+    <FfunctionType type="F1650f40" return_type="Fint">
+      <params>
+        <name type="I16515d0">in</name>
+      </params>
+    </FfunctionType>
+    <FfunctionType type="F1651230" return_type="Flogical">
+      <params>
+        <name type="L16518d0">in</name>
+      </params>
+    </FfunctionType>
+    <FfunctionType type="F164a150" return_type="Fint">
+      <params>
+        <name type="I164a9d0">in</name>
+      </params>
+    </FfunctionType>
+    <FfunctionType type="F164c900" return_type="Flogical">
+      <params>
+        <name type="L164d180">in</name>
+      </params>
+    </FfunctionType>
+    <FfunctionType type="F16471d0" return_type="V16507e0"/>
+    <FfunctionType type="F1647ce0" return_type="Fint">
+      <params>
+        <name type="I164a9d0">in</name>
+      </params>
+    </FfunctionType>
+    <FfunctionType type="F1648360" return_type="V1650b90"/>
+    <FfunctionType type="F1648e70" return_type="Flogical">
+      <params>
+        <name type="L164d180">in</name>
+      </params>
+    </FfunctionType>
+    <FfunctionType type="F1650230" return_type="Fvoid" is_program="true"/>
+  </typeTable>
+  <globalSymbols>
+    <id sclass="ffunc">
+      <name>m</name>
+    </id>
+    <id type="F1650230" sclass="ffunc">
+      <name>main</name>
+    </id>
+  </globalSymbols>
+  <globalDeclarations>
+    <FmoduleDefinition name="m" lineno="1" file="unary_ops.f90">
+      <symbols>
+        <id type="F16471d0" sclass="ffunc">
+          <name>.myunarymathop.</name>
+        </id>
+        <id type="F1648360" sclass="ffunc">
+          <name>.myunarylogop.</name>
+        </id>
+      </symbols>
+      <declarations>
+        <FinterfaceDecl name=".myunarymathop." is_operator="true" lineno="2" file="unary_ops.f90">
+          <FmoduleProcedureDecl is_module_specified="true" lineno="3" file="unary_ops.f90">
+            <name>math_func</name>
+          </FmoduleProcedureDecl>
+        </FinterfaceDecl>
+        <FinterfaceDecl name=".myunarylogop." is_operator="true" lineno="5" file="unary_ops.f90">
+          <FmoduleProcedureDecl is_module_specified="true" lineno="6" file="unary_ops.f90">
+            <name>logical_func</name>
+          </FmoduleProcedureDecl>
+        </FinterfaceDecl>
+      </declarations>
+      <FcontainsStatement lineno="2" file="unary_ops.f90">
+        <FfunctionDefinition lineno="9" file="unary_ops.f90">
+          <name type="F164a150">math_func</name>
+          <symbols>
+            <id type="F164a150" sclass="ffunc">
+              <name>math_func</name>
+            </id>
+            <id type="I164a9d0" sclass="fparam">
+              <name>in</name>
+            </id>
+          </symbols>
+          <declarations>
+            <varDecl lineno="9" file="unary_ops.f90">
+              <name type="F164a150">math_func</name>
+            </varDecl>
+            <varDecl lineno="10" file="unary_ops.f90">
+              <name type="I164a9d0">in</name>
+            </varDecl>
+          </declarations>
+          <body>
+            <FassignStatement lineno="13" file="unary_ops.f90">
+              <Var type="Fint" scope="local">math_func</Var>
+              <plusExpr type="I164a9d0">
+                <Var type="I164a9d0" scope="local">in</Var>
+                <FintConstant type="Fint">2</FintConstant>
+              </plusExpr>
+            </FassignStatement>
+          </body>
+        </FfunctionDefinition>
+        <FfunctionDefinition lineno="15" file="unary_ops.f90">
+          <name type="F164c900">logical_func</name>
+          <symbols>
+            <id type="F164c900" sclass="ffunc">
+              <name>logical_func</name>
+            </id>
+            <id type="L164d180" sclass="fparam">
+              <name>in</name>
+            </id>
+          </symbols>
+          <declarations>
+            <varDecl lineno="15" file="unary_ops.f90">
+              <name type="F164c900">logical_func</name>
+            </varDecl>
+            <varDecl lineno="16" file="unary_ops.f90">
+              <name type="L164d180">in</name>
+            </varDecl>
+          </declarations>
+          <body>
+            <FassignStatement lineno="19" file="unary_ops.f90">
+              <Var type="Flogical" scope="local">logical_func</Var>
+              <logNotExpr type="L164d180">
+                <Var type="L164d180" scope="local">in</Var>
+              </logNotExpr>
+            </FassignStatement>
+          </body>
+        </FfunctionDefinition>
+      </FcontainsStatement>
+    </FmoduleDefinition>
+    <FfunctionDefinition lineno="23" file="unary_ops.f90">
+      <name type="F1650230">main</name>
+      <symbols>
+        <id type="F1650740" sclass="ffunc" declared_in="m">
+          <name>.myunarymathop.</name>
+        </id>
+        <id type="F1650af0" sclass="ffunc" declared_in="m">
+          <name>.myunarylogop.</name>
+        </id>
+        <id type="Fint" sclass="flocal">
+          <name>x</name>
+        </id>
+        <id type="Fint" sclass="flocal">
+          <name>y</name>
+        </id>
+        <id type="Fint" sclass="flocal">
+          <name>z</name>
+        </id>
+        <id type="Flogical" sclass="flocal">
+          <name>u</name>
+        </id>
+        <id type="Flogical" sclass="flocal">
+          <name>v</name>
+        </id>
+        <id type="Flogical" sclass="flocal">
+          <name>t</name>
+        </id>
+      </symbols>
+      <declarations>
+        <FuseDecl name="m" lineno="24" file="unary_ops.f90">
+        </FuseDecl>
+        <varDecl lineno="26" file="unary_ops.f90">
+          <name type="Fint">x</name>
+          <value>
+            <FintConstant type="Fint">1</FintConstant>
+          </value>
+        </varDecl>
+        <varDecl lineno="26" file="unary_ops.f90">
+          <name type="Fint">y</name>
+          <value>
+            <FintConstant type="Fint">2</FintConstant>
+          </value>
+        </varDecl>
+        <varDecl lineno="26" file="unary_ops.f90">
+          <name type="Fint">z</name>
+          <value>
+            <FintConstant type="Fint">3</FintConstant>
+          </value>
+        </varDecl>
+        <varDecl lineno="27" file="unary_ops.f90">
+          <name type="Flogical">u</name>
+          <value>
+            <FlogicalConstant type="Flogical">.TRUE.</FlogicalConstant>
+          </value>
+        </varDecl>
+        <varDecl lineno="27" file="unary_ops.f90">
+          <name type="Flogical">v</name>
+          <value>
+            <FlogicalConstant type="Flogical">.FALSE.</FlogicalConstant>
+          </value>
+        </varDecl>
+        <varDecl lineno="27" file="unary_ops.f90">
+          <name type="Flogical">t</name>
+          <value>
+            <FlogicalConstant type="Flogical">.TRUE.</FlogicalConstant>
+          </value>
+        </varDecl>
+      </declarations>
+      <body>
+        <FassignStatement lineno="29" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <userUnaryExpr name=".myunarymathop." type="FnumericAll">
+            <Var type="Fint" scope="local">x</Var>
+          </userUnaryExpr>
+        </FassignStatement>
+        <FassignStatement lineno="30" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <userUnaryExpr name=".myunarymathop." type="FnumericAll">
+            <functionCall type="Fint">
+              <name type="F1650f40">math_func</name>
+              <arguments>
+                <Var type="Fint" scope="local">x</Var>
+              </arguments>
+            </functionCall>
+          </userUnaryExpr>
+        </FassignStatement>
+        <FassignStatement lineno="31" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <userUnaryExpr name=".myunarymathop." type="FnumericAll">
+            <FintConstant type="Fint">4</FintConstant>
+          </userUnaryExpr>
+        </FassignStatement>
+        <FassignStatement lineno="32" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <userUnaryExpr name=".myunarymathop." type="FnumericAll">
+            <unaryMinusExpr type="Fint">
+              <Var type="Fint" scope="local">x</Var>
+            </unaryMinusExpr>
+          </userUnaryExpr>
+        </FassignStatement>
+        <FassignStatement lineno="33" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <userUnaryExpr name=".myunarymathop." type="FnumericAll">
+            <unaryMinusExpr type="Fint">
+              <FintConstant type="Fint">4</FintConstant>
+            </unaryMinusExpr>
+          </userUnaryExpr>
+        </FassignStatement>
+        <FassignStatement lineno="34" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <userUnaryExpr name=".myunarymathop." type="FnumericAll">
+            <userUnaryExpr name=".myunarymathop." type="FnumericAll">
+              <unaryMinusExpr type="Fint">
+                <Var type="Fint" scope="local">x</Var>
+              </unaryMinusExpr>
+            </userUnaryExpr>
+          </userUnaryExpr>
+        </FassignStatement>
+        <FassignStatement lineno="35" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <userUnaryExpr name=".myunarymathop." type="FnumericAll">
+            <plusExpr type="Fint">
+              <Var type="Fint" scope="local">x</Var>
+              <Var type="Fint" scope="local">z</Var>
+            </plusExpr>
+          </userUnaryExpr>
+        </FassignStatement>
+        <FassignStatement lineno="36" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <userUnaryExpr name=".myunarymathop." type="FnumericAll">
+            <FpowerExpr type="Fint">
+              <Var type="Fint" scope="local">x</Var>
+              <Var type="Fint" scope="local">z</Var>
+            </FpowerExpr>
+          </userUnaryExpr>
+        </FassignStatement>
+        <FassignStatement lineno="37" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <userUnaryExpr name=".myunarymathop." type="FnumericAll">
+            <plusExpr type="Fint">
+              <mulExpr type="Fint">
+                <Var type="Fint" scope="local">x</Var>
+                <Var type="Fint" scope="local">z</Var>
+              </mulExpr>
+              <FintConstant type="Fint">1</FintConstant>
+            </plusExpr>
+          </userUnaryExpr>
+        </FassignStatement>
+        <FassignStatement lineno="38" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <userUnaryExpr name=".myunarymathop." type="FnumericAll">
+            <plusExpr type="Fint">
+              <mulExpr type="Fint">
+                <Var type="Fint" scope="local">x</Var>
+                <Var type="Fint" scope="local">z</Var>
+              </mulExpr>
+              <FintConstant type="Fint">1</FintConstant>
+            </plusExpr>
+          </userUnaryExpr>
+        </FassignStatement>
+        <FassignStatement lineno="40" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <unaryMinusExpr type="Fint">
+            <Var type="Fint" scope="local">x</Var>
+          </unaryMinusExpr>
+        </FassignStatement>
+        <FassignStatement lineno="41" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <unaryMinusExpr type="Fint">
+            <functionCall type="Fint">
+              <name type="F1650f40">math_func</name>
+              <arguments>
+                <Var type="Fint" scope="local">x</Var>
+              </arguments>
+            </functionCall>
+          </unaryMinusExpr>
+        </FassignStatement>
+        <FassignStatement lineno="42" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <unaryMinusExpr type="Fint">
+            <FintConstant type="Fint">4</FintConstant>
+          </unaryMinusExpr>
+        </FassignStatement>
+        <FassignStatement lineno="43" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <unaryMinusExpr type="Fint">
+            <unaryMinusExpr type="Fint">
+              <Var type="Fint" scope="local">x</Var>
+            </unaryMinusExpr>
+          </unaryMinusExpr>
+        </FassignStatement>
+        <FassignStatement lineno="44" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <unaryMinusExpr type="Fint">
+            <unaryMinusExpr type="Fint">
+              <FintConstant type="Fint">4</FintConstant>
+            </unaryMinusExpr>
+          </unaryMinusExpr>
+        </FassignStatement>
+        <FassignStatement lineno="45" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <unaryMinusExpr type="Fint">
+            <unaryMinusExpr type="Fint">
+              <unaryMinusExpr type="Fint">
+                <Var type="Fint" scope="local">x</Var>
+              </unaryMinusExpr>
+            </unaryMinusExpr>
+          </unaryMinusExpr>
+        </FassignStatement>
+        <FassignStatement lineno="46" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <unaryMinusExpr type="Fint">
+            <plusExpr type="Fint">
+              <Var type="Fint" scope="local">x</Var>
+              <Var type="Fint" scope="local">z</Var>
+            </plusExpr>
+          </unaryMinusExpr>
+        </FassignStatement>
+        <FassignStatement lineno="47" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <unaryMinusExpr type="Fint">
+            <FpowerExpr type="Fint">
+              <Var type="Fint" scope="local">x</Var>
+              <Var type="Fint" scope="local">z</Var>
+            </FpowerExpr>
+          </unaryMinusExpr>
+        </FassignStatement>
+        <FassignStatement lineno="48" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <unaryMinusExpr type="Fint">
+            <FpowerExpr type="Fint">
+              <Var type="Fint" scope="local">x</Var>
+              <unaryMinusExpr type="Fint">
+                <Var type="Fint" scope="local">z</Var>
+              </unaryMinusExpr>
+            </FpowerExpr>
+          </unaryMinusExpr>
+        </FassignStatement>
+        <FassignStatement lineno="49" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <unaryMinusExpr type="Fint">
+            <plusExpr type="Fint">
+              <mulExpr type="Fint">
+                <Var type="Fint" scope="local">x</Var>
+                <Var type="Fint" scope="local">z</Var>
+              </mulExpr>
+              <FintConstant type="Fint">1</FintConstant>
+            </plusExpr>
+          </unaryMinusExpr>
+        </FassignStatement>
+        <FassignStatement lineno="50" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <plusExpr type="Fint">
+            <unaryMinusExpr type="Fint">
+              <mulExpr type="Fint">
+                <Var type="Fint" scope="local">x</Var>
+                <Var type="Fint" scope="local">z</Var>
+              </mulExpr>
+            </unaryMinusExpr>
+            <FintConstant type="Fint">1</FintConstant>
+          </plusExpr>
+        </FassignStatement>
+        <FassignStatement lineno="51" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <plusExpr type="Fint">
+            <unaryMinusExpr type="Fint">
+              <mulExpr type="Fint">
+                <Var type="Fint" scope="local">x</Var>
+                <Var type="Fint" scope="local">z</Var>
+              </mulExpr>
+            </unaryMinusExpr>
+            <FintConstant type="Fint">1</FintConstant>
+          </plusExpr>
+        </FassignStatement>
+        <FassignStatement lineno="53" file="unary_ops.f90">
+          <Var type="Flogical" scope="local">v</Var>
+          <userUnaryExpr name=".myunarylogop." type="FnumericAll">
+            <Var type="Flogical" scope="local">u</Var>
+          </userUnaryExpr>
+        </FassignStatement>
+        <FassignStatement lineno="54" file="unary_ops.f90">
+          <Var type="Flogical" scope="local">v</Var>
+          <userUnaryExpr name=".myunarylogop." type="FnumericAll">
+            <functionCall type="Flogical">
+              <name type="F1651230">logical_func</name>
+              <arguments>
+                <Var type="Flogical" scope="local">u</Var>
+              </arguments>
+            </functionCall>
+          </userUnaryExpr>
+        </FassignStatement>
+        <FassignStatement lineno="55" file="unary_ops.f90">
+          <Var type="Flogical" scope="local">v</Var>
+          <userUnaryExpr name=".myunarylogop." type="FnumericAll">
+            <FlogicalConstant type="Flogical">.TRUE.</FlogicalConstant>
+          </userUnaryExpr>
+        </FassignStatement>
+        <FassignStatement lineno="56" file="unary_ops.f90">
+          <Var type="Flogical" scope="local">v</Var>
+          <userUnaryExpr name=".myunarylogop." type="FnumericAll">
+            <logNotExpr type="Flogical">
+              <Var type="Flogical" scope="local">u</Var>
+            </logNotExpr>
+          </userUnaryExpr>
+        </FassignStatement>
+        <FassignStatement lineno="57" file="unary_ops.f90">
+          <Var type="Flogical" scope="local">v</Var>
+          <userUnaryExpr name=".myunarylogop." type="FnumericAll">
+            <logNotExpr type="Flogical">
+              <FlogicalConstant type="Flogical">.TRUE.</FlogicalConstant>
+            </logNotExpr>
+          </userUnaryExpr>
+        </FassignStatement>
+        <FassignStatement lineno="58" file="unary_ops.f90">
+          <Var type="Flogical" scope="local">v</Var>
+          <userUnaryExpr name=".myunarylogop." type="FnumericAll">
+            <userUnaryExpr name=".myunarylogop." type="FnumericAll">
+              <logNotExpr type="Flogical">
+                <Var type="Flogical" scope="local">u</Var>
+              </logNotExpr>
+            </userUnaryExpr>
+          </userUnaryExpr>
+        </FassignStatement>
+        <FassignStatement lineno="59" file="unary_ops.f90">
+          <Var type="Flogical" scope="local">v</Var>
+          <userUnaryExpr name=".myunarylogop." type="FnumericAll">
+            <logAndExpr type="Flogical">
+              <Var type="Flogical" scope="local">u</Var>
+              <Var type="Flogical" scope="local">t</Var>
+            </logAndExpr>
+          </userUnaryExpr>
+        </FassignStatement>
+        <FassignStatement lineno="60" file="unary_ops.f90">
+          <Var type="Flogical" scope="local">v</Var>
+          <userUnaryExpr name=".myunarylogop." type="FnumericAll">
+            <logOrExpr type="Flogical">
+              <logAndExpr type="Flogical">
+                <Var type="Flogical" scope="local">u</Var>
+                <Var type="Flogical" scope="local">t</Var>
+              </logAndExpr>
+              <FlogicalConstant type="Flogical">.TRUE.</FlogicalConstant>
+            </logOrExpr>
+          </userUnaryExpr>
+        </FassignStatement>
+        <FassignStatement lineno="61" file="unary_ops.f90">
+          <Var type="Flogical" scope="local">v</Var>
+          <userUnaryExpr name=".myunarylogop." type="FnumericAll">
+            <logOrExpr type="Flogical">
+              <logAndExpr type="Flogical">
+                <Var type="Flogical" scope="local">u</Var>
+                <Var type="Flogical" scope="local">t</Var>
+              </logAndExpr>
+              <FlogicalConstant type="Flogical">.TRUE.</FlogicalConstant>
+            </logOrExpr>
+          </userUnaryExpr>
+        </FassignStatement>
+        <FassignStatement lineno="63" file="unary_ops.f90">
+          <Var type="Flogical" scope="local">v</Var>
+          <logNotExpr type="Flogical">
+            <Var type="Flogical" scope="local">u</Var>
+          </logNotExpr>
+        </FassignStatement>
+        <FassignStatement lineno="64" file="unary_ops.f90">
+          <Var type="Flogical" scope="local">v</Var>
+          <logNotExpr type="Flogical">
+            <functionCall type="Flogical">
+              <name type="F1651230">logical_func</name>
+              <arguments>
+                <Var type="Flogical" scope="local">u</Var>
+              </arguments>
+            </functionCall>
+          </logNotExpr>
+        </FassignStatement>
+        <FassignStatement lineno="65" file="unary_ops.f90">
+          <Var type="Flogical" scope="local">v</Var>
+          <logNotExpr type="Flogical">
+            <FlogicalConstant type="Flogical">.TRUE.</FlogicalConstant>
+          </logNotExpr>
+        </FassignStatement>
+        <FassignStatement lineno="66" file="unary_ops.f90">
+          <Var type="Flogical" scope="local">v</Var>
+          <logNotExpr type="Flogical">
+            <logNotExpr type="Flogical">
+              <Var type="Flogical" scope="local">u</Var>
+            </logNotExpr>
+          </logNotExpr>
+        </FassignStatement>
+        <FassignStatement lineno="67" file="unary_ops.f90">
+          <Var type="Flogical" scope="local">v</Var>
+          <logNotExpr type="Flogical">
+            <logNotExpr type="Flogical">
+              <FlogicalConstant type="Flogical">.TRUE.</FlogicalConstant>
+            </logNotExpr>
+          </logNotExpr>
+        </FassignStatement>
+        <FassignStatement lineno="68" file="unary_ops.f90">
+          <Var type="Flogical" scope="local">v</Var>
+          <logNotExpr type="Flogical">
+            <logNotExpr type="Flogical">
+              <logNotExpr type="Flogical">
+                <Var type="Flogical" scope="local">u</Var>
+              </logNotExpr>
+            </logNotExpr>
+          </logNotExpr>
+        </FassignStatement>
+        <FassignStatement lineno="69" file="unary_ops.f90">
+          <Var type="Flogical" scope="local">v</Var>
+          <logNotExpr type="Flogical">
+            <logAndExpr type="Flogical">
+              <Var type="Flogical" scope="local">u</Var>
+              <Var type="Flogical" scope="local">t</Var>
+            </logAndExpr>
+          </logNotExpr>
+        </FassignStatement>
+        <FassignStatement lineno="70" file="unary_ops.f90">
+          <Var type="Flogical" scope="local">v</Var>
+          <logNotExpr type="Flogical">
+            <logOrExpr type="Flogical">
+              <logAndExpr type="Flogical">
+                <Var type="Flogical" scope="local">u</Var>
+                <Var type="Flogical" scope="local">t</Var>
+              </logAndExpr>
+              <FlogicalConstant type="Flogical">.TRUE.</FlogicalConstant>
+            </logOrExpr>
+          </logNotExpr>
+        </FassignStatement>
+        <FassignStatement lineno="71" file="unary_ops.f90">
+          <Var type="Flogical" scope="local">v</Var>
+          <logOrExpr type="Flogical">
+            <logNotExpr type="Flogical">
+              <logAndExpr type="Flogical">
+                <Var type="Flogical" scope="local">u</Var>
+                <Var type="Flogical" scope="local">t</Var>
+              </logAndExpr>
+            </logNotExpr>
+            <FlogicalConstant type="Flogical">.TRUE.</FlogicalConstant>
+          </logOrExpr>
+        </FassignStatement>
+        <FassignStatement lineno="73" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <unaryMinusExpr type="Fint">
+            <mulExpr type="Fint">
+              <FintConstant type="Fint">4</FintConstant>
+              <userUnaryExpr name=".myunarymathop." type="FnumericAll">
+                <FintConstant type="Fint">4</FintConstant>
+              </userUnaryExpr>
+            </mulExpr>
+          </unaryMinusExpr>
+        </FassignStatement>
+        <FassignStatement lineno="74" file="unary_ops.f90">
+          <Var type="Fint" scope="local">y</Var>
+          <unaryMinusExpr type="Fint">
+            <mulExpr type="Fint">
+              <FintConstant type="Fint">4</FintConstant>
+              <userUnaryExpr name=".myunarymathop." type="FnumericAll">
+                <unaryMinusExpr type="Fint">
+                  <Var type="Fint" scope="local">x</Var>
+                </unaryMinusExpr>
+              </userUnaryExpr>
+            </mulExpr>
+          </unaryMinusExpr>
+        </FassignStatement>
+      </body>
+    </FfunctionDefinition>
+  </globalDeclarations>
+</XcodeProgram>
