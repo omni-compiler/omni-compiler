@@ -743,6 +743,10 @@ int _XMP_exec_task_NODES_ENTIRE(_XMP_task_desc_t **task_desc, _XMP_nodes_t *ref_
 }
 
 void _XMP_exec_task_NODES_FINALIZE(_XMP_task_desc_t *task_desc){
+  if(task_desc == NULL) return;
+  _XMP_finalize_comm(task_desc->nodes->comm);
+  _XMP_free(task_desc->nodes->inherit_info);
+  _XMP_free(task_desc->nodes);
   _XMP_free(task_desc);
 }
 
@@ -773,13 +777,13 @@ int _XMP_exec_task_NODES_PART(_XMP_task_desc_t **task_desc, _XMP_nodes_t *ref_no
   if (*task_desc == NULL) {
     desc = (_XMP_task_desc_t *)_XMP_alloc(sizeof(_XMP_task_desc_t));
     *task_desc = desc;
-    //printf("communicator created.\n");
+    //    printf("communicator created.\n");
   } else {
     desc = *task_desc;
     if (_XMP_compare_task_exec_cond(desc, ref_nodes, ref_lower, ref_upper, ref_stride)) {
       if (desc->execute) {
         _XMP_push_nodes(desc->nodes);
-	//printf("communicator reused.\n");
+	//	printf("communicator reused.\n");
         return _XMP_N_INT_TRUE;
       } else {
         return _XMP_N_INT_FALSE;
@@ -787,7 +791,7 @@ int _XMP_exec_task_NODES_PART(_XMP_task_desc_t **task_desc, _XMP_nodes_t *ref_no
     } else {
       if (desc->nodes != NULL) {
         _XMP_finalize_nodes(desc->nodes);
-	//printf("communicator freed.\n");
+	//	printf("communicator freed.\n");
       }
     }
   }
