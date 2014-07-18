@@ -7,7 +7,7 @@ int a[20], a_test[20];
 float b[4][10], b_test[4][10];
 double c[2][10][10], c_test[2][10][10];
 long d[3][2][3][2], d_test[3][2][3][2];
-int *status, return_val = 0;
+int status, return_val = 0;
 #pragma xmp nodes p(2)
 #pragma xmp coarray a, b, c, d : [*]
 
@@ -48,7 +48,7 @@ void initialize(int me){
 }
 
 void communicate_1(int me){
-  xmp_sync_all(status);
+  xmp_sync_all(&status);
   if(me == 2){
     int tmp[100];
     tmp[3:5:2] = a[2:5]:[1]; // get
@@ -67,7 +67,7 @@ void communicate_1(int me){
     a_test[0] = 999; a_test[1] = 1000;
   }
   
-  xmp_sync_all(status);
+  xmp_sync_all(&status);
 }
 
 void check_1(int me){
@@ -80,13 +80,13 @@ void check_1(int me){
 	     me, i, i, a[i], a_test[i]);
     }
   }
-  xmp_sync_all(status);
+  xmp_sync_all(&status);
   if(flag == TRUE)   printf("[%d] check_1 : PASS\n", me);
   else return_val = 1;
 }
 
 void communicate_2(int me){
-  xmp_sync_all(status);
+  xmp_sync_all(&status);
   if(me == 1){
     b[2][2:3:2]:[2] = b[1][1:3];  // put
     b[3][2:3] = b[2][1:3:2]:[2];  // get
@@ -100,11 +100,11 @@ void communicate_2(int me){
     b_test[2][6] = 13;
   }
   
-  xmp_sync_all(status);
+  xmp_sync_all(&status);
 }
 
 void check_2(int me){
-  xmp_sync_all(status);
+  xmp_sync_all(&status);
   int i, j, flag = TRUE;
   
   for(i=0;i<4;i++){
@@ -116,13 +116,13 @@ void check_2(int me){
       }
     }
   }
-  xmp_sync_all(status);
+  xmp_sync_all(&status);
   if(flag == TRUE)   printf("[%d] check_2 : PASS\n", me);
   else return_val = 1;
 }
 
 void communicate_3(int me){
-  xmp_sync_all(status);
+  xmp_sync_all(&status);
   if(me == 2){
     c[1][2:2:3][0:1:2]:[1] = c[1][1:2:5][1];   // put
   }
@@ -141,11 +141,11 @@ void communicate_3(int me){
     c_test[0][1][0] = 112; c_test[0][3][0] = 132; c_test[0][5][0] = 152;
   }
   
-  xmp_sync_all(status);
+  xmp_sync_all(&status);
 }
 
 void check_3(int me){
-  xmp_sync_all(status);
+  xmp_sync_all(&status);
   int i, j, m, flag = TRUE;
 
   for(i=0;i<2;i++){
@@ -159,7 +159,7 @@ void check_3(int me){
       }
     }
   }
-  xmp_sync_all(status);
+  xmp_sync_all(&status);
   if(flag == TRUE)   printf("[%d] check_3 : PASS\n", me);
   else return_val = 1;
 }
