@@ -97,6 +97,56 @@ static __device__ void warpReduce(volatile T sdata[64], int kind){
   sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 1], kind);
 }
 
+#if __CUDA_ARCH__ >= 300
+static __inline__ __device__
+double __shfl_xor(double var, int laneMask, int width=warpSize)
+{
+  int hi, lo;
+  asm volatile( "mov.b64 { %0, %1 }, %2;" : "=r"(lo), "=r"(hi) : "d"(var) );
+  hi = __shfl_xor( hi, laneMask, width );
+  lo = __shfl_xor( lo, laneMask, width );
+  return __hiloint2double( hi, lo );
+}
+template<typename T>
+static __device__
+void reduceInBlock(T *resultInBlock, T resultInThread, int kind){
+  __shared__ T tmp[32];
+
+  unsigned int warpId = threadIdx.x >> 5;
+  unsigned int lane = threadIdx.x & (32 - 1);
+
+  T v = resultInThread;
+  v = op(v, __shfl_xor(v, 16), kind);
+  v = op(v, __shfl_xor(v, 8), kind);
+  v = op(v, __shfl_xor(v, 4), kind);
+  v = op(v, __shfl_xor(v, 2), kind);
+  v = op(v, __shfl_xor(v, 1), kind);
+
+  if(lane == 0){
+    tmp[warpId] = v;
+  }
+  __syncthreads();
+  
+  if(threadIdx.x < 32){
+    unsigned int nwarps = blockDim.x >> 5 ;
+    T v;
+    if(threadIdx.x < nwarps){
+      v = tmp[threadIdx.x];
+    }else{
+      _ACC_gpu_init_reduction_var(&v, kind);
+    }
+    v = op(v, __shfl_xor(v, 16), kind);
+    v = op(v, __shfl_xor(v, 8), kind);
+    v = op(v, __shfl_xor(v, 4), kind);
+    v = op(v, __shfl_xor(v, 2), kind);
+    v = op(v, __shfl_xor(v, 1), kind);
+    if(threadIdx.x==0){
+      *resultInBlock = op(v, *resultInBlock, kind);
+    }
+  }
+  __syncthreads();
+}
+#else
 template<typename T>
 static __device__
 void reduceInBlock(T *resultInBlock, T resultInThread, int kind){
@@ -124,6 +174,7 @@ void reduceInBlock(T *resultInBlock, T resultInThread, int kind){
   }
   __syncthreads(); //sync for next reduction among threads
 }
+#endif
 
 template<typename T>
 __device__

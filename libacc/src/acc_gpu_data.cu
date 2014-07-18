@@ -135,7 +135,6 @@ void _ACC_finalize_data(_ACC_gpu_data_t *desc) {
 }
 
 void _ACC_copy_data(_ACC_gpu_data_t *desc, int direction, int asyncId){
-  _ACC_gpu_copy_async((void*)((char*)(desc->host_addr)), (void*)((char *)(desc->device_addr) - desc->offset), desc->size, direction, asyncId);
   void *host_addr = (void*)((char*)(desc->host_addr));
   void *dev_addr = (void*)((char *)(desc->device_addr) - desc->offset);
   size_t size = desc->size;
