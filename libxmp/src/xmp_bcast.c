@@ -114,7 +114,7 @@ void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int co
 	if (_XMP_M_COUNT_TRIPLETi(from_lower, from_upper, from_stride) != 1) {
 	  _XMP_fatal("multiple source nodes indicated in bcast directive");
 	}
-	
+
 	root += (acc_nodes_size * (from_lower));
       }
       
@@ -122,14 +122,15 @@ void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int co
     }
   }
   else{
-    for (int i = 0; i < from_dim; i++) {
-      //      while(inherit_info[i].shrink){ i++; }
-      if(inherit_info[i].shrink == 1){
+    int inherit_node_dim = bcast_nodes->inherit_nodes->dim;
+    for (int i = 0; i < inherit_node_dim; i++) {
+      if(inherit_info[i].shrink){
 	va_arg(args, int);
 	continue;
       }
-      int size = inherit_info[i].upper - inherit_info[i].lower + 1;
 
+      int size = inherit_info[i].upper - inherit_info[i].lower + 1;
+      
       if(size == 0) {  // skip arguments
 	va_arg(args, int);   // is_astrisk 
 	va_arg(args, int);   // from_lower
@@ -138,22 +139,21 @@ void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int co
 	continue;
       }
       int rank = from_nodes->info[i].rank;
-
+      
       if (va_arg(args, int) == 1) {
-        root += (acc_nodes_size * rank);
+	root += (acc_nodes_size * rank);
       }
       else {
-        from_lower = va_arg(args, int) - 1;
-        from_upper = va_arg(args, int) - 1;
-        from_stride = va_arg(args, int);
+	from_lower = va_arg(args, int) - 1;
+	from_upper = va_arg(args, int) - 1;
+	from_stride = va_arg(args, int);
 	// check <from-ref> 
 	if (_XMP_M_COUNT_TRIPLETi(from_lower, from_upper, from_stride) != 1) {
-          _XMP_fatal("multiple source nodes indicated in bcast directive");
-        }
-
-        root += (acc_nodes_size * (from_lower - inherit_info[i].lower));
+	  _XMP_fatal("multiple source nodes indicated in bcast directive");
+	}
+	root += (acc_nodes_size * (from_lower - inherit_info[i].lower));
       }
-
+      
       acc_nodes_size *= size;
     }
   }
@@ -168,7 +168,3 @@ void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int co
 
   MPI_Type_free(&mpi_datatype);
 }
-
-// void _XMP_M_BCAST_EXEC_OMITTED(void *addr, int count, size_t datatype_size)
-// void _XMP_M_BCAST_EXEC_GLOBAL(void *addr, int count, size_t datatype_size, int from_lower, int from_upper, int from_stride)
-// void _XMP_M_BCAST_EXEC_NODES(void *addr, int count, size_t datatype_size, _XMP_nodes_t *from_nodes, ...)

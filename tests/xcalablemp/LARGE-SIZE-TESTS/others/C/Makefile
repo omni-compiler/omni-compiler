@@ -15,7 +15,7 @@ all default: $(EXES)
 	$(XCC) -o $@ $<
 
 run: 
-	$(XRUN) -np 32 free_task_descriptor.x
+	$(XRUN) -np 32 077_free_task_descriptor.x
 
 clean:
 	rm -f $(EXES) $(C_OBJS)
