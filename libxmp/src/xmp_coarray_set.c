@@ -73,8 +73,8 @@ static size_t check_env_size_coarray(char *env){
 
 void _XMP_coarray_initialize(int argc, char **argv)
 {
-  MPI_Comm_rank(MPI_COMM_WORLD, _XMP_world_rank);
-  MPI_Comm_size(MPI_COMM_WORLD, _XMP_world_size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &_XMP_world_rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &_XMP_world_size);
 
   _xmp_heap_size   = check_env_size_coarray("XMP_COARRAY_HEAP_SIZE");
   _xmp_stride_size = check_env_size_coarray("XMP_COARRAY_STRIDE_SIZE");
