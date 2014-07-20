@@ -123,11 +123,11 @@ void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int co
   }
   else{
     int inherit_node_dim = bcast_nodes->inherit_nodes->dim;
+
     for (int i = 0; i < inherit_node_dim; i++) {
-      if(inherit_info[i].shrink){
-	va_arg(args, int);
+
+      if(inherit_info[i].shrink) // skip i
 	continue;
-      }
 
       int size = inherit_info[i].upper - inherit_info[i].lower + 1;
       
@@ -138,19 +138,21 @@ void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int co
 	va_arg(args, int);   // from_stride
 	continue;
       }
-      int rank = from_nodes->info[i].rank;
-      
-      if (va_arg(args, int) == 1) {
+
+      int is_astrisk = va_arg(args, int);
+      if (is_astrisk == 1){
+	int rank = from_nodes->info[i].rank;
 	root += (acc_nodes_size * rank);
       }
       else {
 	from_lower = va_arg(args, int) - 1;
 	from_upper = va_arg(args, int) - 1;
-	from_stride = va_arg(args, int);
+	va_arg(args, int); // skip from_stride
+
 	// check <from-ref> 
-	if (_XMP_M_COUNT_TRIPLETi(from_lower, from_upper, from_stride) != 1) {
+	if(from_lower != from_upper)
 	  _XMP_fatal("multiple source nodes indicated in bcast directive");
-	}
+
 	root += (acc_nodes_size * (from_lower - inherit_info[i].lower));
       }
       
