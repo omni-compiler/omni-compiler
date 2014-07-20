@@ -96,6 +96,8 @@ typedef struct _XMP_coarray_list_type {
   struct _XMP_coarray_list_type *next;
 } _XMP_coarray_list_t;
 
+extern int _gasnet_mynode;
+extern int _gasnet_nodes;
 extern _XMP_coarray_list_t *_XMP_coarray_list_head;
 extern _XMP_coarray_list_t *_XMP_coarray_list_tail;
 

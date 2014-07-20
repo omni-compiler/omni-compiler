@@ -1,4 +1,4 @@
-#include <stdio.h>
+s#include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
 #include <assert.h>

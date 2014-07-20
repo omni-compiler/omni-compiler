@@ -34,7 +34,7 @@ static size_t check_env_size_coarray(char *env){
       case 'G':
         times = 1024*1024*1024; break;
       default:
-	if(_XMP_world_rank == 0)
+	if(_gasnet_mynode == 0)
 	  fprintf(stderr, "[ERROR] Unexpected Charactor in %s=%s\n", env, env_val);
         _XMP_fatal_nomsg();
       }
@@ -43,7 +43,7 @@ static size_t check_env_size_coarray(char *env){
     // check num
     for(int i=0;i<len;i++){
       if(! isdigit(env_val[i])){
-	if(_XMP_world_rank == 0)
+	if(_gasnet_mynode == 0)
 	  fprintf(stderr, "[ERROR] Unexpected Charactor in %s=%s\n", env, env_val);
         _XMP_fatal_nomsg();
       }
@@ -62,7 +62,7 @@ static size_t check_env_size_coarray(char *env){
   }
 
   if(size <= 0){
-    if(_XMP_world_rank == 0){
+    if(_gasnet_mynode == 0){
       fprintf(stderr, "[ERROR] Unexpected value of %s=%s\n", env, env_val);
     }
     _XMP_fatal_nomsg();
@@ -77,7 +77,7 @@ void _XMP_coarray_initialize(int argc, char **argv)
   _xmp_stride_size = check_env_size_coarray("XMP_COARRAY_STRIDE_SIZE");
 
   if(_xmp_heap_size <= _xmp_stride_size){
-    if(_XMP_world_rank == 0){
+    if(_gasnet_mynode == 0){
       fprintf(stderr, "[ERROR] XMP_COARRAY_STRIDE_SIZE is too big.\n");
       fprintf(stderr, "[ERROR] Please set XMP_COARRAY_STRIDE_SIZE(%zu) less than XMP_COARRAY_HEAP_SIZE(%zu).\n", 
 	      _xmp_stride_size, _xmp_heap_size);

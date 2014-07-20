@@ -715,7 +715,7 @@ void _XMP_coarray_shortcut_put(const int target, const _XMP_coarray_t *dst, cons
 
 #ifdef _XMP_COARRAY_GASNET
   gasnet_put_nbi_bulk(rank, dst->addr[rank]+dst_offset,
-		      src->addr[_XMP_world_rank]+src_offset, transfer_size);
+		      src->addr[_gasnet_mynode]+src_offset, transfer_size);
 #elif _XMP_COARRAY_FJRDMA
   _XMP_fjrdma_shortcut_put(rank, (uint64_t)dst_offset, (uint64_t)src_offset, dst, src, transfer_size);
 #endif
@@ -728,7 +728,7 @@ void _XMP_coarray_shortcut_get(const int target, const _XMP_coarray_t *dst, cons
   int rank = target - 1;
   
 #ifdef _XMP_COARRAY_GASNET
-  gasnet_get_bulk(dst->addr[_XMP_world_rank]+dst_offset, rank, src->addr[rank]+src_offset, transfer_size);
+  gasnet_get_bulk(dst->addr[_gasnet_mynode]+dst_offset, rank, src->addr[rank]+src_offset, transfer_size);
 #elif _XMP_COARRAY_FJRDMA
   _XMP_fjrdma_shortcut_get(rank, (uint64_t)dst_offset, (uint64_t)src_offset, dst, src, transfer_size);
 #endif
