@@ -42,7 +42,7 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, const size_t co
     _xmp_coarray_shift += ((coarray_size / _XMP_GASNET_ALIGNMENT) + 1) * _XMP_GASNET_ALIGNMENT;
   }
   
-  if(_xmp_coarray_shift > _xmp_heap_size){
+  if(_xmp_coarray_shift > _xmp_heap_size || !(_xmp_coarray_shift == 0 && _xmp_heap_size==0) ){
     if(_XMP_world_rank == 0){
       fprintf(stderr, "[ERROR] Cannot allocate coarray. Heap memory size of corray is too small.\n");
       fprintf(stderr, "        Please set the environmental variable \"XMP_COARRAY_HEAP_SIZE\".\n");
@@ -1594,7 +1594,7 @@ void _xmp_gasnet_unpack(gasnet_token_t t, const char* src_addr, const size_t nby
 
 static void coarray_stride_size_error(size_t request_size){
   if(_XMP_world_rank == 0){
-    fprintf(stderr, "[ERROR] Coarray stride transfer size is too big.\n");
+    fprintf(stderr, "[ERROR] Memory size for coarray stride transfer is too small.\n");
     fprintf(stderr, "        Please set the environmental variable \"XMP_COARRAY_STRIDE_SIZE\".\n");
     fprintf(stderr, "        e.g.) export XMP_COARRAY_STRIDE_SIZE=%zuM (or more).\n", (request_size/1024/1024)+1);
   }
