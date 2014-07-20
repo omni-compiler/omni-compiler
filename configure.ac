@@ -2123,7 +2123,7 @@ ${MAKE} clean
 # Edit version file
 VERSIONTXT="./Driver/etc/version"
 if test -d .git; then
-  VERSION=`git log --date=short --pretty=format:"Release Day:%ad, Hash Value:%h" -1`
+  VERSION=`git log --date=short --pretty=format:"Last Commit Day:%ad, Hash Value:%h" -1`
   echo -n Version:${XMPPKG_VERSION}, ${VERSION} > ${VERSIONTXT}
 fi
 
