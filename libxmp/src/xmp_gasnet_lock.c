@@ -9,7 +9,7 @@ void _xmp_gasnet_lock_initialize(xmp_gasnet_lock_t* lock, int number_of_elements
   for(i=0;i<number_of_elements;i++){
     gasnet_hsl_init(&((lock + i)->hsl));
     (lock + i)->islocked = _XMP_N_INT_FALSE;
-    (lock + i)->wait_size = MIN(_XMP_LOCK_CHUNK, _gasnet_nodes);
+    (lock + i)->wait_size = MIN(_XMP_LOCK_CHUNK, _XMP_world_size);
     (lock + i)->wait_list = malloc((lock + i)->wait_size * sizeof(int));
     (lock + i)->wait_head = 0;
     (lock + i)->wait_tail = 0;
@@ -30,7 +30,7 @@ void _xmp_gasnet_do_lock(int target_node, xmp_gasnet_lock_t* lock, int *replysta
       int  old_head = lock->wait_head;
       int  old_size = lock->wait_size;
       int  leading = old_size - old_head;
-      lock->wait_size = MIN(old_size + _XMP_LOCK_CHUNK, _gasnet_nodes);
+      lock->wait_size = MIN(old_size + _XMP_LOCK_CHUNK, _XMP_world_size);
       lock->wait_list = malloc(lock->wait_size * sizeof(int));
       memcpy(lock->wait_list, old_list+old_head, leading*sizeof(int));
       memcpy(lock->wait_list+leading, old_list, old_head*sizeof(int));
@@ -54,7 +54,7 @@ volatile static int local_handoffarg;
 
 void _xmp_gasnet_lock(_XMP_coarray_t* c, int position, int target_node){
   xmp_gasnet_lock_t *lockaddr = (xmp_gasnet_lock_t *)(c->addr[target_node]) + position;
-  if(target_node == _gasnet_mynode){
+  if(target_node == _XMP_world_rank){
     _xmp_gasnet_do_lock(target_node, lockaddr, (int *)(&local_lockstate));
   }else{
     local_lockstate = _XMP_LOCKSTATE_WAITING;
@@ -65,7 +65,7 @@ void _xmp_gasnet_lock(_XMP_coarray_t* c, int position, int target_node){
     gasnett_local_wmb();
 
     // only supports 64 bits arch.
-    gasnet_AMRequestShort3(target_node, _XMP_GASNET_LOCK_REQUEST, _gasnet_mynode, HIWORD(lockaddr), LOWORD(lockaddr));
+    gasnet_AMRequestShort3(target_node, _XMP_GASNET_LOCK_REQUEST, _XMP_world_rank, HIWORD(lockaddr), LOWORD(lockaddr));
   }
 
   GASNET_BLOCKUNTIL(local_lockstate != (int)_XMP_LOCKSTATE_WAITING);
@@ -89,9 +89,9 @@ void _xmp_gasnet_do_unlock(int target_node, xmp_gasnet_lock_t *lock, int *replys
 
 void _xmp_gasnet_unlock(_XMP_coarray_t* c, int position, int target_node){
   xmp_gasnet_lock_t *lockaddr = (xmp_gasnet_lock_t *)(c->addr[target_node]) + position;
-  if(target_node == _gasnet_mynode){
+  if(target_node == _XMP_world_rank){
     upcr_poll();
-    _xmp_gasnet_do_unlock(_gasnet_mynode, lockaddr, (int *)&local_lockstate, (int *)&local_handoffarg);
+    _xmp_gasnet_do_unlock(_XMP_world_rank, lockaddr, (int *)&local_lockstate, (int *)&local_handoffarg);
   } else{
     local_lockstate = _XMP_LOCKSTATE_WAITING;
 
@@ -102,7 +102,7 @@ void _xmp_gasnet_unlock(_XMP_coarray_t* c, int position, int target_node){
     gasnett_local_wmb();
 
     // only supports 64 bits arch.
-    gasnet_AMRequestShort3(target_node, _XMP_GASNET_UNLOCK_REQUEST, _gasnet_mynode, HIWORD(lockaddr), LOWORD(lockaddr));
+    gasnet_AMRequestShort3(target_node, _XMP_GASNET_UNLOCK_REQUEST, _XMP_world_rank, HIWORD(lockaddr), LOWORD(lockaddr));
   }
 
   GASNET_BLOCKUNTIL(local_lockstate != (int)_XMP_LOCKSTATE_WAITING);
@@ -111,7 +111,7 @@ void _xmp_gasnet_unlock(_XMP_coarray_t* c, int position, int target_node){
     /* tell the next locker that he acquired */
     int next_node = local_handoffarg;
     
-    if(next_node == _gasnet_mynode){
+    if(next_node == _XMP_world_rank){
       _xmp_gasnet_do_setlockstate(_XMP_LOCKSTATE_GRANTED);
     } else{
       gasnet_AMRequestShort1(next_node, _XMP_GASNET_SETLOCKSTATE, _XMP_LOCKSTATE_GRANTED);

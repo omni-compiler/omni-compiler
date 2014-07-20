@@ -8,18 +8,6 @@ static int _coarray_dims, _image_dims, *_image_num, _array_dims;
 static int _transfer_coarray_elmts, _transfer_array_elmts;
 static _XMP_array_section_t *_coarray, *_array;
 
-//void _XMP_coarray_rdma_set(const int coarray_dims, const int array_dims, const int image_dims)
-//{
-//  _coarray      = malloc(sizeof(_XMP_array_section_t) * coarray_dims);
-//  _array        = malloc(sizeof(_XMP_array_section_t) * array_dims);
-//  _coarray_dims = coarray_dims;
-//  _array_dims   = array_dims;
-//  _image_num    = malloc(sizeof(int) * image_dims);
-//  _image_dims   = image_dims;
-//  _transfer_coarray_elmts = 1;
-//  _transfer_array_elmts   = 1;
-//}
-
 void _XMP_coarray_rdma_coarray_set_1(const int start1, const int length1, const int stride1)
 {
   _transfer_coarray_elmts = length1;
@@ -715,7 +703,7 @@ void _XMP_coarray_shortcut_put(const int target, const _XMP_coarray_t *dst, cons
 
 #ifdef _XMP_COARRAY_GASNET
   gasnet_put_nbi_bulk(rank, dst->addr[rank]+dst_offset,
-		      src->addr[_gasnet_mynode]+src_offset, transfer_size);
+		      src->addr[_XMP_world_rank]+src_offset, transfer_size);
 #elif _XMP_COARRAY_FJRDMA
   _XMP_fjrdma_shortcut_put(rank, (uint64_t)dst_offset, (uint64_t)src_offset, dst, src, transfer_size);
 #endif
@@ -728,7 +716,7 @@ void _XMP_coarray_shortcut_get(const int target, const _XMP_coarray_t *dst, cons
   int rank = target - 1;
   
 #ifdef _XMP_COARRAY_GASNET
-  gasnet_get_bulk(dst->addr[_gasnet_mynode]+dst_offset, rank, src->addr[rank]+src_offset, transfer_size);
+  gasnet_get_bulk(dst->addr[_XMP_world_rank]+dst_offset, rank, src->addr[rank]+src_offset, transfer_size);
 #elif _XMP_COARRAY_FJRDMA
   _XMP_fjrdma_shortcut_get(rank, (uint64_t)dst_offset, (uint64_t)src_offset, dst, src, transfer_size);
 #endif

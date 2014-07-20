@@ -51,10 +51,10 @@ void _xmp_gasnet_post_request(gasnet_token_t token, const int node, const int ta
 
 void _xmp_gasnet_post(const int target_node, const int tag)
 {
-  if(target_node == _gasnet_mynode){
-    _xmp_gasnet_do_post(_gasnet_mynode, tag);
+  if(target_node == _XMP_world_rank){
+    _xmp_gasnet_do_post(_XMP_world_rank, tag);
   } else{
-    gasnet_AMRequestShort2(target_node, _XMP_GASNET_POST_REQUEST, _gasnet_mynode, tag);
+    gasnet_AMRequestShort2(target_node, _XMP_GASNET_POST_REQUEST, _XMP_world_rank, tag);
   }
 }
 

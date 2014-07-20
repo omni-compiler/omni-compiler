@@ -17,11 +17,8 @@ void _XMP_init(int argc, char** argv)
 {
   if (!_XMP_runtime_working) {
     MPI_Init(&argc, &argv);
-#ifdef _XMP_COARRAY_GASNET
+#if defined(_XMP_COARRAY_GASNET) || defined(_XMP_COARRAY_FJRDMA)
     _XMP_coarray_initialize(argc, argv);
-    _XMP_post_wait_initialize();
-#elif _XMP_COARRAY_FJRDMA
-    _XMP_fjrdma_initialize(argc, argv);
     _XMP_post_wait_initialize();
 #endif
 
