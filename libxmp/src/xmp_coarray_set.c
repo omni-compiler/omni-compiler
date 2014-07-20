@@ -11,51 +11,55 @@ static size_t _elmt_size;
 static int _coarray_dims, _image_dims, *_image_elmts;
 static int *_coarray_elmts, _total_coarray_elmts;
 
+// The last word must be "M"
+static void check_last_word(char *env, char *env_val)
+{
+  int len = strlen(env_val);
+  char last_char = env_val[len-1];
+  if(last_char != 'M'){
+    if(_XMP_world_rank == 0){
+      fprintf(stderr, "[ERROR] Unexpected Charactor in %s=%s\n", env, env_val);
+      fprintf(stderr, "        The last Character must be M (e.g. %s=16M)\n", env);
+    }
+    _XMP_fatal_nomsg();
+  }
+}
+
+// Is "env_val" all number except for the last word ?
+static void check_num(char *env, char *env_val)
+{
+  int len = strlen(env_val);
+
+  for(int i=0;i<len-1;i++){
+    if(! isdigit(env_val[i])){
+      if(_XMP_world_rank == 0)
+	fprintf(stderr, "[ERROR] Unexpected Charactor in %s=%s\n", env, env_val);
+      _XMP_fatal_nomsg();
+    }
+  }
+}
+
+static size_t get_coarray_memory_size(char *env, char *env_val){
+  check_last_word(env, env_val);
+  check_num(env, env_val);
+  return (size_t)atoi(env_val) * 1024 * 1024;
+}
+
 static size_t check_env_size_coarray(char *env){
   size_t size = 0;
   char *env_val;
 
   if((env_val = getenv(env)) != NULL){
-    int len = strlen(env_val), times = 1;
-    char last_char = env_val[len-1];
-    if(!isdigit(last_char)){
-      len--;
-      switch (last_char){
-      case 'k':
-        times = 1000; break;
-      case 'K':
-        times = 1024; break;
-      case 'm':
-        times = 1000*1000; break;
-      case 'M':
-        times = 1024*1024; break;
-      case 'g':
-	times = 1000*1000*1000; break;
-      case 'G':
-        times = 1024*1024*1024; break;
-      default:
-	if(_XMP_world_rank == 0)
-	  fprintf(stderr, "[ERROR] Unexpected Charactor in %s=%s\n", env, env_val);
-        _XMP_fatal_nomsg();
-      }
-    }
-
-    // check num
-    for(int i=0;i<len;i++){
-      if(! isdigit(env_val[i])){
-	if(_XMP_world_rank == 0)
-	  fprintf(stderr, "[ERROR] Unexpected Charactor in %s=%s\n", env, env_val);
-        _XMP_fatal_nomsg();
-      }
-    }
-    size = atoi(env_val) * times;
+    size = get_coarray_memory_size(env, env_val);
   }
   else{
     if(strcmp(env, "XMP_COARRAY_HEAP_SIZE") == 0){
-      size = _XMP_DEFAULT_COARRAY_HEAP_SIZE;
+      env_val = _XMP_DEFAULT_COARRAY_HEAP_SIZE;
+      size = get_coarray_memory_size(env, env_val);
     }
     else if(strcmp(env, "XMP_COARRAY_STRIDE_SIZE") == 0){
-      size = _XMP_DEFAULT_COARRAY_STRIDE_SIZE;
+      env_val = _XMP_DEFAULT_COARRAY_STRIDE_SIZE;
+      size = get_coarray_memory_size(env, env_val);
     }
     else
       _XMP_fatal("Internal Error in xmp_coarray_set.c");
@@ -78,15 +82,7 @@ void _XMP_coarray_initialize(int argc, char **argv)
 
   _xmp_heap_size   = check_env_size_coarray("XMP_COARRAY_HEAP_SIZE");
   _xmp_stride_size = check_env_size_coarray("XMP_COARRAY_STRIDE_SIZE");
-
-  if(_xmp_heap_size <= _xmp_stride_size){
-    if(_XMP_world_rank == 0){
-      fprintf(stderr, "[ERROR] XMP_COARRAY_STRIDE_SIZE is too big.\n");
-      fprintf(stderr, "[ERROR] Please set XMP_COARRAY_STRIDE_SIZE(%zu) less than XMP_COARRAY_HEAP_SIZE(%zu).\n", 
-	      _xmp_stride_size, _xmp_heap_size);
-    }
-    _XMP_fatal_nomsg();
-  }
+  _xmp_heap_size  += _xmp_stride_size;
 
 #ifdef _XMP_COARRAY_GASNET
   _XMP_gasnet_initialize(argc, argv, _xmp_heap_size, _xmp_stride_size);
@@ -95,7 +91,6 @@ void _XMP_coarray_initialize(int argc, char **argv)
 #else
   _XMP_fatal("Cannt use Coarray Function");
 #endif
-
 }
 
 void _XMP_coarray_finalize(const int return_val)
@@ -106,23 +101,6 @@ void _XMP_coarray_finalize(const int return_val)
   _XMP_fjrdma_finalize();
 #endif
 }
-
-//void _XMP_coarray_malloc_set(const size_t elmt_size, const int coarray_dims, const int image_dims)
-//{
-//  _elmt_size     = elmt_size;
-//  _coarray_dims  = coarray_dims;
-//  _coarray_elmts = malloc(sizeof(int) * coarray_dims);
-//  _image_dims    = image_dims;
-//  _image_elmts   = malloc(sizeof(int) * image_dims);
-//  _total_coarray_elmts = 1;
-//}
-
-//void _XMP_coarray_malloc_info_1(const int dim, const int coarray_elmts)
-//{
-//  _coarray_elmts[dim]   = coarray_elmts;
-//  _total_coarray_elmts *= coarray_elmts;
-//}
-
 
 void _XMP_coarray_malloc_info_1(const int n1, const size_t elmt_size)
 {

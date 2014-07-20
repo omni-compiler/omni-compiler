@@ -25,10 +25,20 @@ README
 
 ## Environment Variable
 * XMP_COARRAY_HEAP_SIZE
- The default size is 16MB. Note that on the K computer this value is not used.
- If you want to change this size, please set it as below.
+ **Note that on the K computer this value is not used.**
+ This value is used to malloc for coarray. Therefore, this value must be 
+ set as a total coarray size. The default size is 16MB.
+ If you want to change this value, please set it as below.
 
     export XMP_COARRAY_HEAP_SIZE=128M
+
+* XMP_COARRAY_STRIDE_SIZE
+ **Note that on the K computer this value is not used.**
+ This value is used to malloc for coarray stride operations.
+ The default size is 1MB.
+ If you want to change this value, please set it as below.
+
+    export XMP_COARRAY_STRIDE_SIZE=32M
 
 # Profiling Options in XMP/C
  XMP supports profiler interfaces of Scalasca and tlog.

@@ -45,7 +45,8 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, const size_t co
   if(_xmp_coarray_shift > _xmp_heap_size){
     if(_XMP_world_rank == 0){
       fprintf(stderr, "[ERROR] Cannot allocate coarray. Heap memory size of corray is too small.\n");
-      fprintf(stderr, "[ERROR] Please set XMP_COARRAY_HEAP_SIZE=%zu (or more).\n", _xmp_coarray_shift);
+      fprintf(stderr, "        Please set the environmental variable \"XMP_COARRAY_HEAP_SIZE\".\n");
+      fprintf(stderr, "        e.g.) export XMP_COARRAY_HEAP_SIZE=%zuM (or more).\n", (_xmp_coarray_shift/1024/1024)+1);
     }
     _XMP_fatal_nomsg();
   }
@@ -1593,8 +1594,9 @@ void _xmp_gasnet_unpack(gasnet_token_t t, const char* src_addr, const size_t nby
 
 static void coarray_stride_size_error(size_t request_size){
   if(_XMP_world_rank == 0){
-    fprintf(stderr, "[ERROR] Corray stride transfer size is too big.\n");
-    fprintf(stderr, "[ERROR] Please set XMP_COARRAY_STRIDE_SIZE=%zu (or more).\n", request_size);
+    fprintf(stderr, "[ERROR] Coarray stride transfer size is too big.\n");
+    fprintf(stderr, "        Please set the environmental variable \"XMP_COARRAY_STRIDE_SIZE\".\n");
+    fprintf(stderr, "        e.g.) export XMP_COARRAY_STRIDE_SIZE=%zuM (or more).\n", (request_size/1024/1024)+1);
   }
   _XMP_fatal_nomsg();
 }
@@ -1622,7 +1624,7 @@ static void XMP_gasnet_from_c_to_nonc_put(const int target_image, const size_t s
 			   LOWORD(dst->addr[target_image]), dst_dims, _xmp_gasnet_stride_wait_size);
   }
   else{
-    coarray_stride_size_error(transfer_size+1);
+    coarray_stride_size_error(transfer_size);
   }
   _xmp_gasnet_stride_wait_size++;
 }
@@ -1650,7 +1652,7 @@ static void XMP_gasnet_from_nonc_to_nonc_put(const int target_image, const int d
                            LOWORD(dst->addr[target_image]), dst_dims, _xmp_gasnet_stride_wait_size);
   }
   else{
-    coarray_stride_size_error(tsize+1);
+    coarray_stride_size_error(tsize);
   }
 
   GASNET_BLOCKUNTIL(_xmp_gasnet_stride_queue[_xmp_gasnet_stride_wait_size] == 1);
