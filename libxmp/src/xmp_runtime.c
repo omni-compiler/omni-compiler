@@ -16,6 +16,9 @@ int _XMPF_running = 0;
 void _XMP_init(int argc, char** argv)
 {
   if (!_XMP_runtime_working) {
+    _XMP_init_world(NULL, NULL);
+    _XMP_runtime_working = _XMP_N_INT_TRUE;
+
 #ifdef _XMP_COARRAY_GASNET
     _XMP_coarray_initialize(argc, argv);
     _XMP_post_wait_initialize();
@@ -28,9 +31,6 @@ void _XMP_init(int argc, char** argv)
 #ifdef _XMP_TCA
     tcaInit();
 #endif
-
-    _XMP_init_world(NULL, NULL);
-    _XMP_runtime_working = _XMP_N_INT_TRUE;
   }
   _XMP_check_reflect_type();
 }

@@ -328,9 +328,6 @@ void _XMP_align_array_CYCLIC(_XMP_array_t *array, int array_index, int template_
   ai->align_template_index = template_index;
 }
 
-#define MAX(a,b)  ( (a)>(b) ? (a) : (b) )
-#define MIN(a,b)  ( (a)<(b) ? (a) : (b) )
-
 void _XMP_align_array_BLOCK_CYCLIC(_XMP_array_t *array, int array_index, int template_index,
                                    long long align_subscript, int *temp0) {
   _XMP_template_t *template = array->align_template;

@@ -29,13 +29,11 @@ gasnet_handlerentry_t htable[] = {
 
 void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, const size_t coarray_size)
 {
-  int numprocs;
   char **each_addr;  // head address of a local array on each node
 
-  numprocs = gasnet_nodes();
-  each_addr = (char **)_XMP_alloc(sizeof(char *) * numprocs);
+  each_addr = (char **)_XMP_alloc(sizeof(char *) * _XMP_world_size);
 
-  for(int i=0;i<numprocs;i++)
+  for(int i=0;i<_XMP_world_size;i++)
     each_addr[i] = (char *)(_xmp_gasnet_buf[i]) + _xmp_coarray_shift;
 
   if(coarray_size % _XMP_GASNET_ALIGNMENT == 0)
@@ -43,17 +41,17 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, const size_t co
   else{
     _xmp_coarray_shift += ((coarray_size / _XMP_GASNET_ALIGNMENT) + 1) * _XMP_GASNET_ALIGNMENT;
   }
-    
+  
   if(_xmp_coarray_shift > _xmp_heap_size){
-    if(gasnet_mynode() == 0){
-      fprintf(stderr, "Cannot allocate coarray. Now HEAP SIZE is %zu MB\n", _xmp_heap_size/1024/1024);
-      fprintf(stderr, "But %zu MB is needed\n", _xmp_coarray_shift/1024/1024);
+    if(_XMP_world_rank == 0){
+      fprintf(stderr, "[ERROR] Cannot allocate coarray. Heap memory size of corray is too small.\n");
+      fprintf(stderr, "[ERROR] Please set XMP_COARRAY_HEAP_SIZE=%zu (or more).\n", _xmp_coarray_shift);
     }
-    _XMP_fatal("Please set XMP_COARRAY_HEAP_SIZE=<number> (MB)\n");
+    _XMP_fatal_nomsg();
   }
 
   coarray->addr = each_addr;
-  *addr = each_addr[gasnet_mynode()];
+  *addr = each_addr[_XMP_world_rank];
 }
 
 void _XMP_gasnet_initialize(int argc, char **argv, const size_t xmp_heap_size, const size_t xmp_stride_size)
@@ -70,22 +68,28 @@ void _XMP_gasnet_initialize(int argc, char **argv, const size_t xmp_heap_size, c
     gasnet_init(&argc, &s);
   }
 
-  if(xmp_heap_size % GASNET_PAGESIZE != 0)
-    _xmp_heap_size = (xmp_heap_size/GASNET_PAGESIZE -1) * GASNET_PAGESIZE;
-  else
+  if(xmp_heap_size % GASNET_PAGESIZE != 0){
+    if(xmp_heap_size <= GASNET_PAGESIZE){
+      _xmp_heap_size = GASNET_PAGESIZE;
+    }
+    else{
+      _xmp_heap_size = (xmp_heap_size/GASNET_PAGESIZE + 1) * GASNET_PAGESIZE;
+    }
+  }
+  else{
     _xmp_heap_size = xmp_heap_size;
+  }
 
   _xmp_stride_size = xmp_stride_size;
 
   gasnet_attach(htable, sizeof(htable)/sizeof(gasnet_handlerentry_t), (uintptr_t)_xmp_heap_size, 0); 
-  int numprocs = gasnet_nodes();
 
-  _xmp_gasnet_buf = (char **)malloc(sizeof(char*) * numprocs);
+  _xmp_gasnet_buf = (char **)malloc(sizeof(char*) * _XMP_world_size);
 
   gasnet_node_t i;
-  gasnet_seginfo_t *s = (gasnet_seginfo_t *)malloc(gasnet_nodes()*sizeof(gasnet_seginfo_t)); 
-  gasnet_getSegmentInfo(s, gasnet_nodes());
-  for(i=0;i<numprocs;i++)
+  gasnet_seginfo_t *s = (gasnet_seginfo_t *)malloc(_XMP_world_size*sizeof(gasnet_seginfo_t)); 
+  gasnet_getSegmentInfo(s, _XMP_world_size);
+  for(i=0;i<_XMP_world_size;i++)
     _xmp_gasnet_buf[i] =  (char*)s[i].addr;
 
   _xmp_coarray_shift = xmp_stride_size;
@@ -1569,7 +1573,7 @@ void _xmp_gasnet_unpack_using_buf(gasnet_token_t t, const int addr_hi, const int
 {
   size_t dst_info_size = sizeof(_XMP_array_section_t) * dst_dims;
   _XMP_array_section_t *dst = malloc(dst_info_size);
-  char* src_addr = _xmp_gasnet_buf[gasnet_mynode()];
+  char* src_addr = _xmp_gasnet_buf[_XMP_world_rank];
   memcpy(dst, src_addr, dst_info_size);
   XMP_unpack((char *)UPCRI_MAKEWORD(addr_hi,addr_lo), dst_dims, src_addr+dst_info_size, dst);
   free(dst);
@@ -1587,10 +1591,12 @@ void _xmp_gasnet_unpack(gasnet_token_t t, const char* src_addr, const size_t nby
   gasnet_AMReplyShort1(t, _XMP_GASNET_UNPACK_REPLY, ith);
 }
 
-static void coarray_stride_size_error(){
-  fprintf(stderr, "Corray stride transfer size is too big\n");
-  fprintf(stderr, "Reconfigure environmental variant BUFFER_FOR_STRIDE_SIZE > %zu\n", _xmp_stride_size);
-  _XMP_fatal("");
+static void coarray_stride_size_error(size_t request_size){
+  if(_XMP_world_rank == 0){
+    fprintf(stderr, "[ERROR] Corray stride transfer size is too big.\n");
+    fprintf(stderr, "[ERROR] Please set XMP_COARRAY_STRIDE_SIZE=%zu (or more).\n", request_size);
+  }
+  _XMP_fatal_nomsg();
 }
 
 static void XMP_gasnet_from_c_to_nonc_put(const int target_image, const size_t src_point, const int dst_dims, 
@@ -1616,7 +1622,7 @@ static void XMP_gasnet_from_c_to_nonc_put(const int target_image, const size_t s
 			   LOWORD(dst->addr[target_image]), dst_dims, _xmp_gasnet_stride_wait_size);
   }
   else{
-    coarray_stride_size_error();
+    coarray_stride_size_error(transfer_size+1);
   }
   _xmp_gasnet_stride_wait_size++;
 }
@@ -1644,7 +1650,7 @@ static void XMP_gasnet_from_nonc_to_nonc_put(const int target_image, const int d
                            LOWORD(dst->addr[target_image]), dst_dims, _xmp_gasnet_stride_wait_size);
   }
   else{
-    coarray_stride_size_error();
+    coarray_stride_size_error(tsize+1);
   }
 
   GASNET_BLOCKUNTIL(_xmp_gasnet_stride_queue[_xmp_gasnet_stride_wait_size] == 1);
@@ -1693,12 +1699,12 @@ static void XMP_gasnet_from_c_to_nonc_get(const int target_image, const size_t s
 					  const void *dst, const _XMP_coarray_t *src, const size_t transfer_size)
 {
   if(transfer_size < _xmp_stride_size){
-    char* src_addr = (char *)_xmp_gasnet_buf[gasnet_mynode()];
+    char* src_addr = (char *)_xmp_gasnet_buf[_XMP_world_rank];
     gasnet_get_bulk(src_addr, target_image, ((char *)src->addr[target_image])+src_point, (size_t)transfer_size);
     XMP_unpack(((char *)dst), dst_dims, src_addr, dst_info);
   }
   else{
-    coarray_stride_size_error();
+    coarray_stride_size_error(transfer_size);
   }
 }
 
@@ -1707,7 +1713,7 @@ void _xmp_gasnet_pack(gasnet_token_t t, const char* info, const size_t am_reques
 		      const size_t tansfer_size, const int dst_addr_hi, const int dst_addr_lo)
 {
   _XMP_array_section_t *src_info = (_XMP_array_section_t *)info;
-  char *archive = _xmp_gasnet_buf[gasnet_mynode()];
+  char *archive = _xmp_gasnet_buf[_XMP_world_rank];
   XMP_pack(archive, (char *)UPCRI_MAKEWORD(src_addr_hi,src_addr_lo), src_dims, src_info);
   gasnet_AMReplyMedium2(t, _XMP_GASNET_UNPACK_GET_REPLY, archive, tansfer_size,
       			dst_addr_hi, dst_addr_lo);
@@ -1758,7 +1764,7 @@ void _xmp_gasnet_pack_using_buf(gasnet_token_t t, const char* info, const size_t
 				const int target_image)
 {
   _XMP_array_section_t *src_info = (_XMP_array_section_t *)info;
-  char *archive = _xmp_gasnet_buf[gasnet_mynode()];
+  char *archive = _xmp_gasnet_buf[_XMP_world_rank];
   XMP_pack(archive, (char *)UPCRI_MAKEWORD(src_addr_hi,src_addr_lo), src_dims, src_info);
   gasnet_AMReplyShort0(t, _XMP_GASNET_UNPACK_GET_REPLY_USING_BUF);
 }
@@ -1781,13 +1787,13 @@ static void XMP_gasnet_from_nonc_to_c_get(const int target_image, const int src_
   else if(transfer_size < _xmp_stride_size){
     gasnet_AMRequestMedium4(target_image, _XMP_GASNET_PACK_USGIN_BUF, archive, am_request_size,
                             HIWORD(src->addr[target_image]), LOWORD(src->addr[target_image]), src_dims,
-                            gasnet_mynode());
+                            _XMP_world_rank);
     GASNET_BLOCKUNTIL(done_get_flag == _XMP_N_INT_TRUE);
-    gasnet_get_bulk(_xmp_gasnet_buf[gasnet_mynode()], target_image, _xmp_gasnet_buf[target_image], transfer_size);
-    memcpy(((char *)dst)+dst_point, _xmp_gasnet_buf[gasnet_mynode()], transfer_size);
+    gasnet_get_bulk(_xmp_gasnet_buf[_XMP_world_rank], target_image, _xmp_gasnet_buf[target_image], transfer_size);
+    memcpy(((char *)dst)+dst_point, _xmp_gasnet_buf[_XMP_world_rank], transfer_size);
   }
   else{
-    coarray_stride_size_error();
+    coarray_stride_size_error(transfer_size);
   }
 }
 
@@ -1816,15 +1822,15 @@ static void XMP_gasnet_from_nonc_to_nonc_get(const int target_image, const int d
     memcpy(archive, src_info, am_request_size);
     gasnet_AMRequestMedium4(target_image, _XMP_GASNET_PACK_USGIN_BUF, archive, am_request_size,
                             HIWORD(src->addr[target_image]), LOWORD(src->addr[target_image]), src_dims,
-                            gasnet_mynode());
+                            _XMP_world_rank);
     GASNET_BLOCKUNTIL(done_get_flag == _XMP_N_INT_TRUE);
-    gasnet_get_bulk(_xmp_gasnet_buf[gasnet_mynode()], target_image, _xmp_gasnet_buf[target_image], 
+    gasnet_get_bulk(_xmp_gasnet_buf[_XMP_world_rank], target_image, _xmp_gasnet_buf[target_image], 
 		    transfer_size);
-    XMP_unpack((char *)dst, dst_dims, _xmp_gasnet_buf[gasnet_mynode()], dst_info);
+    XMP_unpack((char *)dst, dst_dims, _xmp_gasnet_buf[_XMP_world_rank], dst_info);
     free(archive);
   }
   else{
-    coarray_stride_size_error();
+    coarray_stride_size_error(transfer_size);
   }
 }
 

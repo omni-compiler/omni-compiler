@@ -10,6 +10,13 @@
 extern int _XMPC_running;
 extern int _XMPF_running;
 
+#ifndef MIN
+#define MIN(a,b)  ( (a)<(b) ? (a) : (b) )
+#endif
+
+#ifndef MAX
+#define MAX(a,b)  ( (a)>(b) ? (a) : (b) )
+#endif
 // --------------- including headers  --------------------------------
 #include <mpi.h>
 #include <stddef.h>
@@ -175,6 +182,7 @@ extern unsigned long long _XMP_get_on_ref_id(void);
 extern void *_XMP_alloc(size_t size);
 extern void _XMP_free(void *p);
 extern void _XMP_fatal(char *msg);
+extern void _XMP_fatal_nomsg();
 extern void _XMP_unexpected_error(void);
 
 // xmp_world.c
