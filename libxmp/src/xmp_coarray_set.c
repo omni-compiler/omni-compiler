@@ -65,7 +65,7 @@ static size_t check_env_size_coarray(char *env){
       _XMP_fatal("Internal Error in xmp_coarray_set.c");
   }
 
-  if(size <= 0){
+  if(size < 0){
     if(_XMP_world_rank == 0){
       fprintf(stderr, "[ERROR] Unexpected value of %s=%s\n", env, env_val);
     }
@@ -77,14 +77,11 @@ static size_t check_env_size_coarray(char *env){
 
 void _XMP_coarray_initialize(int argc, char **argv)
 {
-  MPI_Comm_rank(MPI_COMM_WORLD, &_XMP_world_rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &_XMP_world_size);
-
+#ifdef _XMP_COARRAY_GASNET
   _xmp_heap_size   = check_env_size_coarray("XMP_COARRAY_HEAP_SIZE");
   _xmp_stride_size = check_env_size_coarray("XMP_COARRAY_STRIDE_SIZE");
   _xmp_heap_size  += _xmp_stride_size;
 
-#ifdef _XMP_COARRAY_GASNET
   _XMP_gasnet_initialize(argc, argv, _xmp_heap_size, _xmp_stride_size);
 #elif _XMP_COARRAY_FJRDMA
   _XMP_fjrdma_initialize();
