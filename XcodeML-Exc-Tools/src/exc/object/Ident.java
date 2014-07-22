@@ -44,6 +44,8 @@ public class Ident extends Xobject
     private Xobject fparam_value;
     /** Fortran: declared module */
     private String declared_module;
+    /** Codimensions for coarray (ID=284) */
+    private Xobject codimensions;
   
     // constructor
     public Ident(String name, StorageClass stg_class, Xtype type, Xobject v, VarScope scope)
@@ -147,7 +149,17 @@ public class Ident extends Xobject
 
    public void setValue(Xobject value)
     {
-      this.value = value;
+        this.value = value;
+    }
+
+   public Xobject getCodimensions()     // for coarray (ID=284)
+    {
+        return codimensions;
+    }
+
+   public void setCodimensions(Xobject codimensions)     // for coarray (ID=284)
+    {
+        this.codimensions = codimensions;
     }
 
     public boolean isDeclared()

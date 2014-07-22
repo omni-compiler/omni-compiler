@@ -91,8 +91,8 @@ public class XMPtranslateLocalPragma {
 	{ translateWaitAsync(pb);               break; }
       case TEMPLATE_FIX:
 	{ translateTemplateFix(pb);             break; }
-      case REFLECT_TCA:
-        { translateReflectTCA(pb);              break; }
+      case REFLECT_INIT:
+        { translateReflectInit(pb);             break; }
       case GPU_REPLICATE:
         { translateGpuData(pb);			break; }
       case GPU_REPLICATE_SYNC:
@@ -152,15 +152,55 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private void translateReflectTCA(PragmaBlock pb) throws XMPexception 
+  private void translateReflectInit(PragmaBlock pb) throws XMPexception 
   {
-    Ident funcId = _globalDecl.declExternFunc("_XMP_reflect_tca");
-    XobjList funcArgs = (XobjList)pb.getClauses().getArg(0);
-    BlockList funcBody = Bcons.emptyBody();
-    
+    Ident funcIdAcc       = _globalDecl.declExternFunc("_XMP_reflect_init_acc");
+    XobjList funcArgs     = (XobjList)pb.getClauses().getArg(0);
+    XobjList widthList    = (XobjList)pb.getClauses().getArg(1);
+    XobjList acc_or_host1 = (XobjList)pb.getClauses().getArg(2);
+    XobjList acc_or_host2 = (XobjList)pb.getClauses().getArg(3);
+    BlockList funcBody    = Bcons.emptyBody();
+
+    boolean isHost = false;
+    boolean isAcc  = false;
+
+    if(acc_or_host1.Nargs() == 0 && acc_or_host2.Nargs() == 0){
+      isHost = true;
+    }
+    else{
+      if(acc_or_host1.Nargs() != 0){
+        if(acc_or_host1.getArg(0).getName() == "acc"){
+          isAcc = true;
+        }
+        else if(acc_or_host1.getArg(0).getName() == "host"){
+          isHost = true;
+        }
+      }
+      if(acc_or_host2.Nargs() != 0){
+        if(acc_or_host2.getArg(0).getName() == "acc"){
+          isAcc = true;
+        }
+        else if(acc_or_host2.getArg(0).getName() == "host"){
+          isHost = true;
+        }
+      }
+    }
+
+    if(isHost){
+      XMP.fatal("reflect_init for host has been not developed yet.");
+    }
+
+    if(widthList.Nargs() != 0){
+      XMP.fatal("width clause in reflect_init has been not developed yet.");
+    }
+
+    XobjList args = Xcons.List();
     for(int i=0;i<funcArgs.Nargs();i++){
       Xobject array = funcArgs.getArg(i);
       String arrayName = array.getString();
+      Ident arrayId = _globalDecl.findVarIdent(XMP.ADDR_PREFIX_ + arrayName);
+      args.add(arrayId);
+
       XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
       if(alignedArray == null){
         XMP.fatal(arrayName + " is not aligned.");
@@ -168,11 +208,13 @@ public class XMPtranslateLocalPragma {
       if(!alignedArray.hasShadow()){
         XMP.fatal(arrayName + " is not shadowed.");
       }
-      // is shadow ?
-      funcBody.add(Bcons.Statement(funcId.Call(Xcons.List(array))));
+
+      Ident arrayDesc = _globalDecl.findVarIdent(XMP.DESC_PREFIX_ + arrayName);
+      funcBody.add(Bcons.Statement(funcIdAcc.Call(Xcons.List(array, arrayDesc.Ref()))));
     }
-    
-    Block funcCallBlock = Bcons.COMPOUND(funcBody);
+   
+    Block funcCallBlock = Bcons.PRAGMA(Xcode.ACC_PRAGMA, "host_data use_device", (Xobject)args, funcBody);
+
     pb.replace(funcCallBlock);
   }
   
@@ -2803,7 +2845,9 @@ public class XMPtranslateLocalPragma {
               tempArgs.add(Xcons.Cast(castType, t.getArg(1)));
             }
             // stride
-            if (t.getArg(2) == null) tempArgs.add(Xcons.Cast(castType, Xcons.IntConstant(1)));
+            if (t.getArg(2) == null || t.getArg(2).equals(Xcons.IntConstant(1))){
+              tempArgs.add(Xcons.Cast(castType, Xcons.IntConstant(1)));
+            }
             else {
               splitComm = true;
               // XXX stride: always int

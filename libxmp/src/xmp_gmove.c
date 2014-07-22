@@ -940,65 +940,132 @@ static _Bool _XMP_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
 
 }
 
-void _XMP_G2L_rank(long long int global_idx, int *local_idx,
+void _XMP_align_G2L_idx(long long int global_idx, int *local_idx,
+              _XMP_array_t *array, int array_axis)
+{
+  _XMP_template_t *template = array->align_template;
+  int template_index = array->info[array_axis].align_template_index;
+  int offset = array->info[array_axis].align_subscript;
+  _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
+  _XMP_nodes_info_t *n_info = chunk->onto_nodes_info;
+  long long base = array->info[array_axis].ser_lower;
+
+  switch(array->info[array_axis].align_manner){
+  case _XMP_N_ALIGN_DUPLICATION:
+    {
+      *local_idx = global_idx - base;
+    }
+    break;
+  case _XMP_N_ALIGN_BLOCK:
+    {
+      *local_idx = (global_idx + offset - base) % chunk->par_chunk_width;
+    }
+    break;
+  case _XMP_N_ALIGN_CYCLIC:
+    {
+      *local_idx = (global_idx + offset - base) / n_info->size;
+    }
+    break;
+  case _XMP_N_ALIGN_BLOCK_CYCLIC:
+    {
+      int off = global_idx + offset - base;
+      int w = chunk->par_width;
+      *local_idx = (off / (n_info->size*w)) * w + off%w;
+    }
+    break;
+  case _XMP_N_ALIGN_GBLOCK:
+    {
+      for(int i=1;i<(n_info->size+1);i++){
+        if(global_idx + offset < chunk->mapping_array[i]){
+          *local_idx = global_idx + offset - chunk ->mapping_array[i-1];
+          break;
+        }
+      } 
+    }
+    break;
+  case _XMP_N_ALIGN_NOT_ALIGNED:
+    {
+      *local_idx=global_idx - base;
+    }
+    break;
+  default:
+    _XMP_fatal("_XMP_: unknown chunk dist_manner");
+  }
+
+}
+
+void _XMP_align_G2L_rank(long long int global_idx, int *rank,
+              _XMP_array_t *array, int array_axis)
+{
+  _XMP_template_t *template = array->align_template;
+  int template_index = array->info[array_axis].align_template_index;
+  int offset = array->info[array_axis].align_subscript;
+  _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
+  _XMP_nodes_info_t *n_info = chunk->onto_nodes_info;
+  long long base = array->info[array_axis].ser_lower;
+
+  switch(array->info[array_axis].align_manner){
+  case _XMP_N_ALIGN_DUPLICATION:
+    {
+      *rank=0;
+    }
+    break;
+  case _XMP_N_ALIGN_BLOCK:
+    {
+      *rank = (global_idx + offset - base) / chunk->par_chunk_width;
+    }
+    break;
+  case _XMP_N_ALIGN_CYCLIC:
+    {
+      *rank=(global_idx + offset - base)%n_info->size;
+    }
+    break;
+  case _XMP_N_ALIGN_BLOCK_CYCLIC:
+    {
+      int off = global_idx + offset - base;
+      int w = chunk->par_width;
+      *rank=(off/w)% (n_info->size);
+    }
+    break;
+  case _XMP_N_ALIGN_GBLOCK:
+    {
+      for(int i=1;i<(n_info->size+1);i++){
+        if(global_idx + offset < chunk->mapping_array[i]){
+          *rank = i - 1;
+          break;
+        }
+      } 
+    }
+    break;
+  case _XMP_N_ALIGN_NOT_ALIGNED:
+    {
+      *rank=0;
+    }
+    break;
+  default:
+    _XMP_fatal("_XMP_: unknown chunk dist_manner");
+  }
+
+}
+void _XMP_align_local_idx(long long int global_idx, int *local_idx,
+              _XMP_array_t *array, int array_axis, int *rank)
+{
+    _XMP_array_info_t *ai = &array->info[array_axis];
+    int lshadow = ai->shadow_size_lo;
+    int l_base;
+    _XMP_align_G2L_idx(ai->par_lower, &l_base, array, array_axis);
+    _XMP_align_G2L_idx(global_idx, local_idx, array, array_axis);
+    _XMP_align_G2L_rank(global_idx, rank, array, array_axis);
+    *local_idx = *local_idx - l_base + lshadow;
+}
+
+void _XMP_gmove_align_local_idx(long long int global_idx, int *local_idx,
               _XMP_gmv_desc_t *gmv_desc, int array_axis, int *rank)
 {
   if (gmv_desc->is_global == true){
     _XMP_array_t *array = gmv_desc->a_desc;
-    _XMP_template_t *template = array->align_template;
-    int template_index = array->info[array_axis].align_template_index;
-    _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
-    _XMP_nodes_info_t *n_info = chunk->onto_nodes_info;
-    long long base = array->info[array_axis].ser_lower;
+    _XMP_align_local_idx(global_idx, local_idx, array, array_axis, rank);
 
-    // NOTE: local_idx is 0-origin.
-
-    switch(array->info[array_axis].align_manner){
-    case _XMP_N_ALIGN_DUPLICATION:
-      {
-        *local_idx = global_idx - base;
-      }
-      break;
-    case _XMP_N_ALIGN_BLOCK:
-      {
-      *local_idx = (global_idx - base) % chunk->par_chunk_width + array->info[array_axis].shadow_size_lo;
-      *rank = (global_idx - base) / chunk->par_chunk_width;
-      }
-      break;
-    case _XMP_N_ALIGN_CYCLIC:
-      {
-      *local_idx = (global_idx - base) / n_info->size;
-      *rank=(global_idx - base)%n_info->size;
-      }
-      break;
-    case _XMP_N_ALIGN_BLOCK_CYCLIC:
-      {
-        int off = global_idx - base;
-        int w = chunk->par_width;
-        *local_idx = (off / (n_info->size*w)) * w + off%w;
-        *rank=(off/w)% (n_info->size);
-      }
-      break;
-    case _XMP_N_ALIGN_GBLOCK:
-      {
-        for(int i=1;i<(n_info->size+1);i++){
-          if(global_idx < chunk->mapping_array[i]){
-            *local_idx = global_idx - chunk->mapping_array[i-1] + array->info[array_axis].shadow_size_lo;
-            *rank = i - 1;
-            break;
-          }
-        } 
-      }
-      break;
-    case _XMP_N_ALIGN_NOT_ALIGNED:
-      {
-        *local_idx=global_idx - base;
-        *rank=0;
-      }
-      break;
-    default:
-      _XMP_fatal("_XMP_: unknown chunk dist_manner");
-    }
   }else{
     *local_idx=global_idx - gmv_desc->a_lb[array_axis];
     *rank=0;
@@ -1369,7 +1436,7 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
     jj=0;
     for (j = src_l[i]; j<=src_u[i]; j+=src_s[i]){
 
-      _XMP_G2L_rank(j, &(src_local_idx[i][jj]),
+      _XMP_gmove_align_local_idx(j, &(src_local_idx[i][jj]),
                     gmv_desc_rightp, i, &(src_irank[i][jj]));
       jj++;
 
@@ -1411,7 +1478,7 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
       dst_num_myindex=0;
       for (j = dst_l[i]; j<=dst_u[i]; j+=dst_s[i]){
 
-        _XMP_G2L_rank(j, &dst_local_idx[i][jj],
+        _XMP_gmove_align_local_idx(j, &dst_local_idx[i][jj],
                       gmv_desc_leftp, i, &dst_irank[i][jj]);
         if (dst_irank[i][jj] == dst_myindex[i]) dst_num_myindex++;
         jj++;
@@ -1428,7 +1495,7 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
       jj=0;
       dst_num_myindex=0;
       for (j = dst_l[i]; j<=dst_u[i]; j+=dst_s[i]){
-        _XMP_G2L_rank(j, &dst_local_idx[i][jj],
+        _XMP_gmove_align_local_idx(j, &dst_local_idx[i][jj],
                       gmv_desc_leftp, i, &dst_irank[i][jj]);
         if (dst_irank[i][jj] == dst_myindex[i]) dst_num_myindex++;
         jj++;
@@ -1950,8 +2017,8 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
 
     for (int i=0;i<dst_dim;i++){
       int dummy;
-      _XMP_G2L_rank(dst_l[i], &dst_l[i], gmv_desc_leftp, 0, &dummy);
-      _XMP_G2L_rank(dst_u[i], &dst_u[i], gmv_desc_leftp, 0, &dummy);
+      _XMP_gmove_align_local_idx(dst_l[i], &dst_l[i], gmv_desc_leftp, 0, &dummy);
+      _XMP_gmove_align_local_idx(dst_u[i], &dst_u[i], gmv_desc_leftp, 0, &dummy);
     }
 
     if (root_rank == myrank){

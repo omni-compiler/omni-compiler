@@ -2568,7 +2568,7 @@ outx_udefOp(int l, expv v)
         TOPT_TYPEONLY|TOPT_NEXTLINE);
 
     outx_expv(l1, EXPR_ARG2(v));
-    if(EXPR_ARG3(v) != NULL)
+    if(EXPR_CODE(v) == F95_USER_DEFINED_BINARY_EXPR)
         outx_expv(l1, EXPR_ARG3(v));
 
     outx_expvClose(l, v);

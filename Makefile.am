@@ -57,42 +57,71 @@ release-deb:
 release: release-rpm release-deb
 
 BASE_TESTDIR  = "tests/xcalablemp/"
-
-SUB_TESTDIRS = "global-view/array/C/" "global-view/array/F/"
-SUB_TESTDIRS += "global-view/bcast/C/" "global-view/bcast/F/"
-SUB_TESTDIRS += "global-view/loop/C" "global-view/loop/F"
-SUB_TESTDIRS += "global-view/reduction/C" "global-view/reduction/F"
-SUB_TESTDIRS += "global-view/shadow-reflect/C/"
-SUB_TESTDIRS += "global-view/task/C"  "global-view/task/F"
-SUB_TESTDIRS += "global-view/template_fix/C/" "global-view/template_fix/F/"
-SUB_TESTDIRS += "others/F" "others/C"
+TESTDIRS = "global-view/array/C/" "global-view/array/F/"
+TESTDIRS += "global-view/bcast/C/" "global-view/bcast/F/"
+TESTDIRS += "global-view/loop/C" "global-view/loop/F"
+TESTDIRS += "global-view/reduction/C" "global-view/reduction/F"
+TESTDIRS += "global-view/shadow-reflect/C/"
+TESTDIRS += "global-view/task/C"  "global-view/task/F"
+TESTDIRS += "global-view/template_fix/C/" "global-view/template_fix/F/"
+TESTDIRS += "others/F" "others/C"
 if GASNET
-   SUB_TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
-   SUB_TESTDIRS += "local-view/coarray/C" "local-view/other/C"
+   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
+   TESTDIRS += "local-view/coarray/C" "local-view/other/C"
 endif
 if FJRDMA
-   SUB_TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
-   SUB_TESTDIRS += "local-view/coarray/C" "local-view/other/C"
+   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
+   TESTDIRS += "local-view/coarray/C" "local-view/other/C"
 endif
 
-.PHONY: tests clean-tests run-tests clean-local
+BASE_LARGE_TESTDIR = "tests/xcalablemp/LARGE-SIZE-TESTS/"
+LARGE_TESTDIRS = "others/C"
+if GASNET
+   LARGE_TESTDIRS += "local-view/coarray/C/"
+endif
+if FJRDMA
+   LARGE_TESTDIRS += "local-view/coarray/C/"
+endif
+
+.PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests all-tests clean-all-tests run-all-tests
 
 tests: 
-	@for subdir in $(SUB_TESTDIRS) ; do \
+	@for subdir in $(TESTDIRS) ; do \
 	$(MAKE) -C $(BASE_TESTDIR)/$$subdir ; \
 	if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 clean-tests:
-	@for subdir in $(SUB_TESTDIRS) ; do \
+	@for subdir in $(TESTDIRS) ; do \
 	(cd $(BASE_TESTDIR)/$$subdir && $(MAKE) clean ) ;\
 	done
 
 run-tests:
-	@for subdir in $(SUB_TESTDIRS); do \
-	make run -C $(BASE_TESTDIR)$$subdir; \
+	@for subdir in $(TESTDIRS); do \
+	$(MAKE) run -C $(BASE_TESTDIR)$$subdir; \
 	if test $$? -ne 0; then exit 1; fi ;\
 	done
+
+large-tests:
+	@for subdir in $(LARGE_TESTDIRS) ; do \
+	$(MAKE) -C $(BASE_LARGE_TESTDIR)/$$subdir ; \
+	if test $$? -ne 0; then exit 1; fi ;\
+	done
+
+clean-large-tests:
+	@for subdir in $(LARGE_TESTDIRS) ; do \
+	(cd $(BASE_LARGE_TESTDIR)/$$subdir && $(MAKE) clean ) ;\
+	done
+
+run-large-tests:
+	@for subdir in $(LARGE_TESTDIRS); do \
+	$(MAKE) run -C $(BASE_LARGE_TESTDIR)$$subdir; \
+	if test $$? -ne 0; then exit 1; fi ;\
+	done
+
+all-tests: tests large-tests
+clean-all-tests: clean-tests clean-large-tests
+run-all-tests: run-tests run-large-tests
 
 clean-local:
 	rm -rf autom4te.cache

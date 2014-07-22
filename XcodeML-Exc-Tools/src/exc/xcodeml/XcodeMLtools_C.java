@@ -164,17 +164,17 @@ public class XcodeMLtools_C extends XcodeMLtools {
       XobjArgs argBody = arg.nextArgs().nextArgs().nextArgs();
       Xobject stmts = argBody.getArg();
       if (stmts != null) {
-	switch (stmts.Opcode()) {
-	case LIST:
-	  stmts = Xcons.CompoundStatement(
+        switch (stmts.Opcode()) {
+        case LIST:
+          stmts = Xcons.CompoundStatement(
 					  Xcons.IDList(), Xcons.List(), stmts);
-	  argBody.setArg(stmts);
-	  break;
-	case COMPOUND_STATEMENT:
-	  break;
-	default:
-	  fatal("Invalid function body");
-	}
+          argBody.setArg(stmts);
+          break;
+        case COMPOUND_STATEMENT:
+          break;
+        default:
+          fatal("Invalid function body");
+        }
       }
       return xlist;
     }
@@ -510,6 +510,9 @@ public class XcodeMLtools_C extends XcodeMLtools {
     // get enum member value
     Xobject enumValue = toXobject(getContent(getElement(n, "value")));
 
+    // get codimensions ID=284
+    Xobject codims = toXobject(getElement(n, "codimensions"));
+
     // get gcc attributes
     Xobject gccAttrs = getGccAttributes(n);
 
@@ -546,6 +549,9 @@ public class XcodeMLtools_C extends XcodeMLtools {
     Ident ident = new Ident(name, sclass, type, addr,
 			    optionalFlags, gccAttrs,
 			    bitField, bitFieldExpr, enumValue, null);
+    // for coarray, set codiemnsions (ID=284)
+    if (codims != null)
+        ident.setCodimensions(codims);
 
     // declaring
     if (sclass != null && sclass.isVarOrFunc()) {

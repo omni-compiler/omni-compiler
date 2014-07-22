@@ -327,7 +327,7 @@ void _XMP_sched_loop_template_GBLOCK(int ser_init, int ser_cond, int ser_step,
   int template_lower = template_chunk->par_lower;
   int template_upper = template_chunk->par_upper;
   int template_stride = template_chunk->par_stride;
-  unsigned long long *mapping_array = template_chunk->mapping_array;
+  long long *mapping_array = template_chunk->mapping_array;
 
   int reverse_iter = _XMP_N_INT_FALSE;
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step, reverse_iter)

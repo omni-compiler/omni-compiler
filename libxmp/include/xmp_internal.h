@@ -10,6 +10,13 @@
 extern int _XMPC_running;
 extern int _XMPF_running;
 
+#ifndef MIN
+#define MIN(a,b)  ( (a)<(b) ? (a) : (b) )
+#endif
+
+#ifndef MAX
+#define MAX(a,b)  ( (a)>(b) ? (a) : (b) )
+#endif
 // --------------- including headers  --------------------------------
 #include <mpi.h>
 #include <stddef.h>
@@ -175,6 +182,7 @@ extern unsigned long long _XMP_get_on_ref_id(void);
 extern void *_XMP_alloc(size_t size);
 extern void _XMP_free(void *p);
 extern void _XMP_fatal(char *msg);
+extern void _XMP_fatal_nomsg();
 extern void _XMP_unexpected_error(void);
 
 // xmp_world.c
@@ -198,8 +206,8 @@ extern void _XMP_threads_finalize(void);
 
 // ----- for coarray & post/wait -------------------
 #if defined(_XMP_COARRAY_FJRDMA) || defined(_XMP_COARRAY_GASNET)
-#define _XMP_DEFAULT_COARRAY_HEAP_SIZE (16*1024*1024)  // 16MB
-#define _XMP_DEFAULT_COARRAY_STRIDE_SIZE (1*1024*1024)  // 1MB
+#define _XMP_DEFAULT_COARRAY_HEAP_SIZE   "16M"  // 16MB
+#define _XMP_DEFAULT_COARRAY_STRIDE_SIZE "1M"  // 1MB
 #define _XMP_POST_WAIT_QUEUESIZE 32
 #define _XMP_POST_WAIT_QUEUECHUNK 512
 #define FLAG_NIC (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN)

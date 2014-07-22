@@ -48,8 +48,8 @@ public abstract class XcodeMLtools {
       String line = null;
 
       while((line = br.readLine()) != null) {
-	sb.append(line);
-	sb.append("\n");
+        sb.append(line);
+        sb.append("\n");
       }
 
       s = sb.toString();
@@ -129,14 +129,14 @@ public abstract class XcodeMLtools {
     for (int i = 0; i < list.getLength(); i++) {
       nn = list.item(i);
       if (nn.getNodeType() != Node.ELEMENT_NODE)
-	continue;
+        continue;
       enterGlobalDecl(nn);
     }
 
     setIdentDecl(xobjFile);
     xobjFile.setParentRecursively(null);
 
-    return xobjFile;
+     return xobjFile;
   }
 
   Xobject toIdentList(Node n) {
@@ -161,15 +161,15 @@ public abstract class XcodeMLtools {
       if (decls == null)
 	continue;
       for (Xobject decl : (XobjList) decls) {
-	//if (decl.Opcode() == Xcode.VAR_DECL) {
-	if (decl != null && decl.Opcode() == Xcode.VAR_DECL) {
-	  String name = decl.getArg(0).getName();
-	  Ident id = def.findIdent(name, IXobject.FINDKIND_VAR);
-	  if (id != null && id.Type() != null
-	      && id.Type().isFparameter()) {
-	    id.setFparamValue(decl.getArgOrNull(1));
-	  }
-	}
+          //if (decl.Opcode() == Xcode.VAR_DECL) {
+        if (decl != null && decl.Opcode() == Xcode.VAR_DECL) {
+          String name = decl.getArg(0).getName();
+          Ident id = def.findIdent(name, IXobject.FINDKIND_VAR);
+          if (id != null && id.Type() != null
+            && id.Type().isFparameter()) {
+            id.setFparamValue(decl.getArgOrNull(1));
+          }
+        }
       }
     }
   }

@@ -14,6 +14,7 @@ public class XcodeMLNameTable_C extends XcodeMLNameTable {
 		new XcodeMLName(Xcode.LIST, "list"),
 		new XcodeMLName(Xcode.STRING, "string"),
 		new XcodeMLName(Xcode.LIST, "value"),
+		new XcodeMLName(Xcode.LIST, "codimensions"),        // added ID=284
 
 		new XcodeMLName(Xcode.STRING_CONSTANT, "stringConstant"),
 		new XcodeMLName(Xcode.INT_CONSTANT, "intConstant"),

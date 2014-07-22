@@ -20,6 +20,19 @@ HOW TO INSTALL
 
  * flex gcc gfortran gcc-c++ java-1.7.0-openjdk-devel ant openmpi-devel libxml2-devel byacc make
 
+## On BlueGene/Q
+ Need to install openJDK(openjdk1.7.0-ppc-aix-port-linux-ppc64-b**.tar.bz2) downloaded from the following URL:
+ http://cr.openjdk.java.net/~simonis/ppc-aix-port/
+
+## Usage of IBM Java Compiler
+ Need to change import setting
+ import com.sun.org.apache.xml.internal.serializer.OutputPropertiesFactory; ->  import org.apache.xml.serializer.OutputPropertiesFactory;
+ in 
+ * XcodeML-Common/src/xcodeml/util/XmUtil.java
+ * XcodeML-Exc-Tools/src/exc/util/omompx.java
+ * XcodeML-Exc-Tools/src/exc/openacc/ACCmain.java
+ * F-BackEnd/src/xcodeml/f/decompile/XfDecompileDomVisitor.java
+
 ## Usage of local-view operations (coarray, post/wait, lock/unlock)
  * Need to install GASNet (http://gasnet.lbl.gov) except for the K computer and FX10.
  * On the K computer or FX10, you can use local-view operations by using Fujitsu RDMA.

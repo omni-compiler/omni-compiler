@@ -6,10 +6,11 @@ bin_SCRIPTS=bin/C_Back
 java_DATA = build/om-c-back.jar
 ANT = @ANTCOM@ -buildfile build.xml
 MKDIR_P = @MKDIR_P@
+SRC = $(wildcard src/*/*/*/*.java)
 
 all-local: $(java_DATA)
 
-$(java_DATA):
+$(java_DATA): $(SRC)
 	$(ANT) jar
 
 jar:

@@ -26,6 +26,7 @@ if FJRDMA
 endif
 
 if TCA
+    libxmp_a_SOURCES += xmp_reflect_acc.c
     AM_CFLAGS        += -D_XMP_TCA -I@TCA_PREFIX@
 endif
 

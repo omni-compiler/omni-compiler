@@ -328,8 +328,6 @@ void _XMP_align_array_CYCLIC(_XMP_array_t *array, int array_index, int template_
   ai->align_template_index = template_index;
 }
 
-#define MIN(a,b)  ( (a)<(b) ? (a) : (b) )
-
 void _XMP_align_array_BLOCK_CYCLIC(_XMP_array_t *array, int array_index, int template_index,
                                    long long align_subscript, int *temp0) {
   _XMP_template_t *template = array->align_template;
@@ -353,20 +351,62 @@ void _XMP_align_array_BLOCK_CYCLIC(_XMP_array_t *array, int array_index, int tem
 
   if (template->is_owner) {
 
+    int cycle = chunk->par_stride;
+    int rank = chunk->onto_nodes_info->rank;
+    int nsize = chunk->onto_nodes_info->size;
+
+    //
+    // set par_lower
+    //
+
 /*     ai->par_lower = chunk->par_lower - ti->ser_lower; */
 /*     ai->par_upper = chunk->par_upper - ti->ser_lower; */
 /*     ai->par_stride = chunk->par_stride; */
 /*     ai->par_size = chunk->par_chunk_width; */
 
-    int cycle = chunk->par_stride;
-    int rank = chunk->onto_nodes_info->rank;
-    int nsize = chunk->onto_nodes_info->size;
-    int rank_lb = ((ai->ser_lower + align_subscript - ti->ser_lower) / 2) % nsize;
+    /* //int rank_lb = ((ai->ser_lower + align_subscript - ti->ser_lower) / 2) % nsize; */
+    /* int rank_lb = ((ai->ser_lower + align_subscript - ti->ser_lower) / chunk->par_width) % nsize; */
+    /* //int mod = _XMP_modi_ll_i(rank - rank_lb, nsize); */
+    /* int mod = rank + rank_lb; */
+
+    /* int v_lower = ti->ser_lower - align_subscript; */
+
+    /* ai->par_lower = MAX(ai->ser_lower, (long long)(mod * chunk->par_width) + v_lower); */
+
+    /* //ai->par_lower = mod * chunk->par_width + ai->ser_lower; */
+
+    /* xmp_dbg_printf("par_lower = %d, mod = %d, par_width = %d, ser_lower = %d\n", */
+    /* 		   ai->par_lower, mod, chunk->par_width, ai->ser_lower); */
+
+    /* // */
+    /* // set par_upper and par_size */
+    /* // */
+
+    /* int dist = (ai->ser_upper - (mod * chunk->par_width + ai->ser_lower)) / cycle; */
+    /* int diff = ai->ser_upper - (ai->par_lower + (dist * cycle) + (chunk->par_width - 1)); */
+    /* if (diff > 0){ */
+    /*   ai->par_upper = ai->par_lower + (dist * cycle) + (chunk->par_width - 1); */
+    /*   ai->par_size = (dist + 1) * chunk->par_width; */
+    /* } */
+    /* else { */
+    /*   ai->par_upper = ai->ser_upper; */
+    /*   ai->par_size = (dist + 1) * chunk->par_width + diff; */
+    /* } */
+
+    int rank_dist = (ai->ser_lower + align_subscript - ti->ser_lower) / chunk->par_width;
+    int v_lower = ti->ser_lower + chunk->par_width * rank_dist - align_subscript;
+    int rank_lb = rank_dist % nsize;
     int mod = _XMP_modi_ll_i(rank - rank_lb, nsize);
-    int dist = (ai->ser_upper - (mod * chunk->par_width + ai->ser_lower)) / cycle;
+    ai->par_lower = MAX(ai->ser_lower, (long long)(mod * chunk->par_width) + v_lower);
 
-    ai->par_lower = mod * chunk->par_width + ai->ser_lower;
+    /* xmp_dbg_printf("par_lower = %d, mod = %d, par_width = %d, ser_lower = %d\n", */
+    /* 		   ai->par_lower, mod, chunk->par_width, ai->ser_lower); */
 
+    //
+    // set par_upper and par_size
+    //
+
+    int dist = (ai->ser_upper - (mod * chunk->par_width + v_lower)) / cycle;
     int diff = ai->ser_upper - (ai->par_lower + (dist * cycle) + (chunk->par_width - 1));
     if (diff > 0){
       ai->par_upper = ai->par_lower + (dist * cycle) + (chunk->par_width - 1);
@@ -728,7 +768,7 @@ int _XMP_lidx_GBLOCK(_XMP_array_t *a, int i_dim, int global_idx)
     _XMP_template_chunk_t *template_chunk = &(template->chunk[tdim]);
 
     int rank = template_chunk->onto_nodes_info->rank;
-    unsigned long long *mapping_array = template_chunk->mapping_array;
+    long long *mapping_array = template_chunk->mapping_array;
 
     //_XMP_G2L(global_idx + off, &l_idx, a->align_template, tdim);
     //_XMP_G2L(ai->par_lower + off, &l_base, a->align_template, tdim);

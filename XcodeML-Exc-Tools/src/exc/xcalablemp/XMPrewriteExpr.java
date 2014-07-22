@@ -1618,7 +1618,9 @@ public class XMPrewriteExpr {
     }
 
     XMPnodes n = t.getOntoNodes();
-    int ni = t.getOntoNodesIndexAt(ti).getInt();
+    int ni = -1;
+    if (t.getDistMannerAt(ti) != XMPtemplate.DUPLICATION)
+      ni = t.getOntoNodesIndexAt(ti).getInt();
 
     XobjList args = null;
     switch (t.getDistMannerAt(ti)) {
