@@ -26,6 +26,7 @@ void _XMP_init(int argc, char** argv)
 
 #ifdef _XMP_TCA
     tcaInit();
+    tcaDMADescInt_init(); // Initialize Descriptor (Internal Memory) Mode
 #endif
   }
   _XMP_init_world(NULL, NULL);

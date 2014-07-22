@@ -200,6 +200,7 @@ public class XMPtranslateLocalPragma {
       String arrayName = array.getString();
       Ident arrayId = _globalDecl.findVarIdent(XMP.ADDR_PREFIX_ + arrayName);
       args.add(arrayId);
+
       XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
       if(alignedArray == null){
         XMP.fatal(arrayName + " is not aligned.");
@@ -207,8 +208,9 @@ public class XMPtranslateLocalPragma {
       if(!alignedArray.hasShadow()){
         XMP.fatal(arrayName + " is not shadowed.");
       }
-      
-      funcBody.add(Bcons.Statement(funcIdAcc.Call(Xcons.List(array))));
+
+      Ident arrayDesc = _globalDecl.findVarIdent(XMP.DESC_PREFIX_ + arrayName);
+      funcBody.add(Bcons.Statement(funcIdAcc.Call(Xcons.List(array, arrayDesc.Ref()))));
     }
    
     Block funcCallBlock = Bcons.PRAGMA(Xcode.ACC_PRAGMA, "host_data use_device", (Xobject)args, funcBody);

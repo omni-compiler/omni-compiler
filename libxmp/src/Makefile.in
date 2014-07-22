@@ -83,7 +83,7 @@ target_triplet = @target@
 @GASNET_TRUE@am__append_2 = -D_XMP_COARRAY_GASNET $(GASNET_CPPFLAGS) $(GASNET_CFLAGS)
 @FJRDMA_TRUE@am__append_3 = xmp_coarray_set.c xmp_coarray_do.c xmp_fjrdma_coarray_set.c xmp_fjrdma_coarray_do.c xmp_post_wait.c xmp_fjrdma_post_wait.c
 @FJRDMA_TRUE@am__append_4 = -std=gnu99 -D_XMP_COARRAY_FJRDMA
-@TCA_TRUE@am__append_5 = xmp_tca.c
+@TCA_TRUE@am__append_5 = xmp_reflect_acc.c
 @TCA_TRUE@am__append_6 = -D_XMP_TCA -I@TCA_PREFIX@
 subdir = ./libxmp/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
@@ -147,7 +147,7 @@ am__libxmp_a_SOURCES_DIST = $(XMP_INC_DIR)/xmp_internal.h \
 	xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c \
 	xmp_post_wait.c xmp_gasnet_post_wait.c \
 	xmp_fjrdma_coarray_set.c xmp_fjrdma_coarray_do.c \
-	xmp_fjrdma_post_wait.c xmp_tca.c
+	xmp_fjrdma_post_wait.c xmp_reflect_acc.c
 @GASNET_TRUE@am__objects_1 = xmp_coarray_set.$(OBJEXT) \
 @GASNET_TRUE@	xmp_coarray_do.$(OBJEXT) \
 @GASNET_TRUE@	xmp_gasnet_coarray.$(OBJEXT) xmp_lock.$(OBJEXT) \
@@ -159,7 +159,7 @@ am__libxmp_a_SOURCES_DIST = $(XMP_INC_DIR)/xmp_internal.h \
 @FJRDMA_TRUE@	xmp_fjrdma_coarray_do.$(OBJEXT) \
 @FJRDMA_TRUE@	xmp_post_wait.$(OBJEXT) \
 @FJRDMA_TRUE@	xmp_fjrdma_post_wait.$(OBJEXT)
-@TCA_TRUE@am__objects_3 = xmp_tca.$(OBJEXT)
+@TCA_TRUE@am__objects_3 = xmp_reflect_acc.$(OBJEXT)
 am_libxmp_a_OBJECTS = xmp_lib.$(OBJEXT) xmp_util.$(OBJEXT) \
 	xmp_world.$(OBJEXT) xmp_nodes_stack.$(OBJEXT) \
 	xmp_nodes.$(OBJEXT) xmp_template.$(OBJEXT) \
