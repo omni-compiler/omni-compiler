@@ -407,9 +407,9 @@ static void preprocess(char *srcFileName){
 	fclose(src->file);
 
 	//output filename
-	fprintf(output, "# 1 \"%s\" 1\n", includeFilePath);
+	fprintf(output, "# 1 \"%s\"\n", includeFilePath);
 	preprocess(includeFilePath);
-	fprintf(output, "# %d \"%s\" 2\n", src->curLine , src->filename);
+	fprintf(output, "# %d \"%s\"\n", src->curLine , src->filename);
 
 	//reopen
 	src->file = fopen(src->filename, "r");
