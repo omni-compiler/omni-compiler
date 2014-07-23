@@ -540,6 +540,13 @@ void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...) {
   // set members
   array_desc->array_addr_p = *array_addr;
   array_desc->total_elmts = total_elmts;
+
+#ifdef _XMP_TCA
+  // set TCA handle
+  array_desc->tca_src_handle = (tcaHandle*)_XMP_alloc(sizeof(tcaHandle));
+  array_desc->tca_dst_handle = (tcaHandle**)_XMP_alloc(sizeof(tcaHandle*) * _XMP_world_size);
+  array_desc->has_handle     = _XMP_N_INT_FALSE;
+#endif
 }
 
 void _XMP_alloc_array_EXTERN(void **array_addr, _XMP_array_t *array_desc, ...) {

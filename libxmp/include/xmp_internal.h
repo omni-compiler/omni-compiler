@@ -301,5 +301,11 @@ struct _XMPTIMING
 
 #endif
 
+#ifdef _XMP_TCA
+#include <stdio.h>
+#include <stdlib.h>
+#include <tca-api.h>
+#endif
+
 #endif // _XMP_INTERNAL
 

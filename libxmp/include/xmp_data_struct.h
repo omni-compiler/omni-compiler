@@ -188,6 +188,11 @@ typedef struct _XMP_array_type {
   uint64_t rdma_addr;
   int rdma_memid;
 #endif
+#if defined(_XMP_TCA)
+  void* tca_src_handle;
+  void** tca_dst_handle;
+  _Bool has_handle;
+#endif
   unsigned long long total_elmts;
   // --------------------------------
 
