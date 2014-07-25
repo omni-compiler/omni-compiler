@@ -14,6 +14,7 @@ all default: $(EXES)
 	$(XCC) -o $@ $<
 
 run: $(EXES)
+	$(XRUN) -n 2 ./314_loop.x
 	$(XRUN) -n 4 ./gblock.x
 	$(XRUN) -n 4 ./reduction_and.x
 	$(XRUN) -n 4 ./reduction_firstmax.x
