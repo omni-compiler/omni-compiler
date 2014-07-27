@@ -19,6 +19,7 @@ extern int _XMPF_running;
 #endif
 // --------------- including headers  --------------------------------
 #include <mpi.h>
+#include <stdio.h>
 #include <stddef.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -302,10 +303,24 @@ struct _XMPTIMING
 #endif
 
 #ifdef _XMP_TCA
-#include <stdio.h>
-#include <stdlib.h>
-#include <tca-api.h>
+#define TCA_CHECK(tca_call) do { \
+  int status = tca_call;         \
+  if(status != TCA_SUCCESS) {    \
+  if(status == TCA_ERROR_INVALID_VALUE) {                 \
+  fprintf(stderr,"(TCA) error TCA API, INVALID_VALUE\n"); \
+  exit(-1);                                               \
+  }else if(status == TCA_ERROR_OUT_OF_MEMORY){            \
+  fprintf(stderr,"(TCA) error TCA API, OUT_OF_MEMORY\n"); \
+  exit(-1);                                               \
+  }else if(status == TCA_ERROR_NOT_SUPPORTED){            \
+  fprintf(stderr,"(TCA) error TCA API, NOT_SUPPORTED\n"); \
+  exit(-1);                                               \
+  }else{                                                  \
+  fprintf(stderr,"(TCA) error TCA API, UNKWON\n");        \
+  exit(-1); \
+  }         \
+  }         \
+  }while (0)
 #endif
 
 #endif // _XMP_INTERNAL
-

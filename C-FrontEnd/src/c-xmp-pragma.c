@@ -69,6 +69,7 @@ static CExpr* parse_WAIT_ASYNC_clause();
 static CExpr* parse_TEMPLATE_FIX_clause();
 
 static CExpr* parse_REFLECT_INIT_clause();
+static CExpr* parse_REFLECT_DO_clause();
 
 static CExpr* parse_COL2_name_list();
 static CExpr* parse_XMP_subscript_list();
@@ -237,6 +238,11 @@ int parse_XMP_pragma()
         pg_XMP_pragma = XMP_REFLECT_INIT;
         pg_get_token();
         pg_XMP_list = parse_REFLECT_INIT_clause();
+    }
+    else if (PG_IS_IDENT("reflect_do")) {
+      pg_XMP_pragma = XMP_REFLECT_DO;
+      pg_get_token();
+      pg_XMP_list = parse_REFLECT_DO_clause();
 #ifdef not
     } else if (PG_IS_IDENT("sync_memory")) {
         pg_XMP_pragma = XMP_SYNC_MEMORY;
@@ -1809,4 +1815,29 @@ static CExpr* parse_REFLECT_INIT_clause()
   }
   
   return XMP_LIST4(arrayNameList, widthList, acc_or_host1, acc_or_host2);
+}
+
+static CExpr* parse_REFLECT_DO_clause()
+{
+  if (pg_tok != '('){
+    XMP_Error0(" #pragma xmp reflect_do (array-name) [host|acc].");
+    XMP_has_err = 1;
+    return NULL;
+  }
+
+  CExpr *arrayNameList = parse_name_list();
+  CExpr *acc_or_host1 = (CExpr *)allocExprOfNull();
+  CExpr *acc_or_host2 = (CExpr *)allocExprOfNull();
+
+  if(PG_IS_IDENT("acc") || PG_IS_IDENT("host")){
+    acc_or_host1 = XMP_LIST1(pg_tok_val);
+    pg_get_token();
+  }
+
+  if(PG_IS_IDENT("acc") || PG_IS_IDENT("host")){
+    acc_or_host2 = XMP_LIST1(pg_tok_val);
+    pg_get_token();
+  }
+
+  return XMP_LIST3(arrayNameList, acc_or_host1, acc_or_host2);
 }

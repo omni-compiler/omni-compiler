@@ -154,10 +154,19 @@ extern void _XMP_coarray_shortcut_put_f(const int*, const void*, const void*, co
 extern void _XMP_coarray_shortcut_get(const int, const void*, const void*, const size_t, const size_t, const size_t);
 extern void _XMP_coarray_shortcut_get_f(const int*, const void*, const void*, const size_t*, const size_t*, const size_t*);
 
-// xmp_tca.c
+// xmp_reflect_acc.c
 extern void _XMP_reflect_init_acc(void *, void *);
 extern void _XMP_reflect_do_acc(void *);
 extern void _XMP_reflect_acc(void *);
+
+#ifdef _XMP_TCA
+// xmp_tca.c
+extern void _XMP_init_tca();
+extern void _XMP_alloc_tca(void *);
+extern void _XMP_create_TCA_handle(void *, void *);
+extern void _XMP_create_TCA_desc(void *);
+extern void _XMP_reflect_do_tca(_XMP_array_t *);
+#endif
 
 // xmp_gmove.c
 extern void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, void *array, ...);
