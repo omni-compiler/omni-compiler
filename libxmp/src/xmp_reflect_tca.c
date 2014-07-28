@@ -1,8 +1,8 @@
 #include "xmp_internal.h"
 #include "tca-api.h"
 #define _XMP_TCA_DMAC 0
-#define _XMP_TCA_CHAIN_FLAG (tcaDMANotify|tcaDMANotifySelf|tcaDMAContinue)
-#define _XMP_TCA_LAST_FLAG  (tcaDMANotify|tcaDMANotifySelf)
+#define _XMP_TCA_CHAIN_FLAG (tcaDMANotify|tcaDMAContinue)
+#define _XMP_TCA_LAST_FLAG  (tcaDMANotify)
 #define _DBG
 
 void _XMP_create_TCA_handle(void *acc_addr, _XMP_array_t *adesc)
@@ -260,15 +260,11 @@ void _XMP_reflect_do_tca(_XMP_array_t *adesc){
     printf("[%d] hi wait from %d\n", _XMP_world_rank, hi_rank);
 #endif
 
-    if(hi_rank != -1){
-      tcaWaitDMARecvDesc(&h[_XMP_world_rank], adesc->wait_slot, adesc->wait_tag);
-      tcaWaitDMARecvDesc(&h[hi_rank], adesc->wait_slot, adesc->wait_tag);
-    }
+    if(lo_rank != -1)
+      tcaWaitDMARecvDesc(&h[lo_rank], adesc->wait_slot, adesc->wait_tag);
 
-    if(lo_rank != -1){
-      tcaWaitDMARecvDesc(&h[_XMP_world_rank], adesc->wait_slot, adesc->wait_tag);
+    if(hi_rank != -1)
       tcaWaitDMARecvDesc(&h[hi_rank], adesc->wait_slot, adesc->wait_tag);
-    }
   }
 #ifdef _DBG
   printf("[%d] wait finish\n", _XMP_world_rank);
