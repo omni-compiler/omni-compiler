@@ -362,8 +362,10 @@ void _ACC_copy_subdata(_ACC_gpu_data_t *desc, int direction, int asyncId, ...){
     if(info_lower[i] != 0 || info_length[i] != array_info[i].dim_elmnts) break;
   }
    
-  offset += array_info[i].dim_acc * info_lower[i];
-  i--; //skip sub-range dim
+  if(i >= 0){
+    offset += array_info[i].dim_acc * info_lower[i];
+    i--; //skip sub-range dim
+  }
 
   //skip all range=1 dim
   for(; i >= 0; i--){
