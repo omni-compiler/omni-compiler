@@ -6,15 +6,15 @@ contains
   end function func
 end program test
 
-module mmm
+module external_mmm
 contains
   integer function func(k)
     func = k
   end function func
-end module mmm
+end module external_mmm
 
 subroutine sub
-  use mmm
+  use external_mmm
   i = func(3)
 end subroutine sub
 
