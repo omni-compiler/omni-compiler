@@ -48,10 +48,10 @@ HOW TO INSTALL
     $ ./configure --with-backend-cc=mpicc --prefix=[INSTALL-DIR]
 
  If you want to use Coarray functions
-    $ ./configure --with-gasnetDir=[GASNet-INSTALL-DIR] --with-gasnet-conduit=[GASNet-Conduit] --prefix=[INSTALL-DIR]
+    $ ./configure --with-gasnet=[GASNet-INSTALL-DIR] --with-gasnet-conduit=[GASNet-Conduit] --prefix=[INSTALL-DIR]
 
  If you want to use OpenACC compiler
-    $ ./configure --with-gpuDir=[CUDA-INSTALL-DIR] --enable-openacc --prefix=[INSTALL-DIR]
+    $ ./configure --with-cuda=[CUDA-INSTALL-DIR] --enable-openacc --prefix=[INSTALL-DIR]
 
 ### On the K computer or FX10
     $ ./configure --target=Kcomputer-linux-gnu --prefix=[INSTALL-DIR]
