@@ -958,16 +958,16 @@ enable_atool
 with_backend_cc
 with_backend_fc
 enable_mreal
-with_gmpLibDir
-with_gmpIncDir
+with_gmp_lib
+with_gmp_include
 with_precision
-with_libxmlDir
-with_TCADir
-with_gasnetDir
+with_libxml
+with_TCA
+with_gasnet
 with_gasnet_conduit
 with_gpucc
 with_gpu_cflags
-with_gpuDir
+with_cuda
 with_omni
 with_nativeCompiler
 with_cpp
@@ -1642,16 +1642,16 @@ Optional Packages:
   --with-backend-cflag=OPT    Backend C compiler options for optimization
   --with-backend-cc=CMD       Backend C compiler (default: mpicc)
   --with-backend-fc=CMD       Backend F90 compiler (default: mpif90)
-  --with-gmpLibDir=DIR        where the GNU-MP library is for quad-real support.
-  --with-gmpIncDir=DIR        where the GNU-MP include headers are for quad-real support.
+  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support.
+  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support.
   --with-precision=NUM        the default precision of real*16 in bits (128).
-  --with-libxmlDir=DIR        libxml install directory (default: /usr)
-  --with-TCADir=DIR           TCA install directory
-  --with-gasnetDir=DIR        GASNet install directory
+  --with-libxml=DIR           libxml installation path (default: /usr)
+  --with-TCA=DIR              TCA installation path
+  --with-gasnet=DIR           GASNet installation path
   --with-gasnet-conduit=NAME  GASNet conduit
   --with-gpucc=CMD            GPU C compiler (default: nvcc)
   --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)
-  --with-gpuDir=DIR           GPGPU tooklit install directory (default: /usr/local/cuda)
+  --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)
   --with-omni             specify where the omni is installed (prefix
                           default).
   --with-nativeCompiler   specify a native fortran compiler ("gfortran"
@@ -25047,14 +25047,8 @@ rm -f ./hasqd.* ./hasqd
 # --------------------------------------------------------------------
 # quad real support
 
-if test "${OS}" = "linux"; then
-    gmpIncDir=/usr/include
-    gmpLibDir=/usr/lib
-else
-    gmpIncDir=/usr/local/include
-    gmpLibDir=/usr/local/lib
-fi
-
+gmp-include="/usr/include"
+gmp-lib="/usr/lib"
 gmpIncOpt=""
 gmpDirOpt=""
 qRealPrecBits=128
@@ -25068,39 +25062,39 @@ fi
 
 
 
-# Check whether --with-gmpLibDir was given.
-if test "${with_gmpLibDir+set}" = set; then :
-  withval=$with_gmpLibDir; gmpLibDir=$withval
+# Check whether --with-gmp-lib was given.
+if test "${with_gmp_lib+set}" = set; then :
+  withval=$with_gmp_lib; gmp-lib=$withval
 else
   true
 fi
 
 
 
-# Check whether --with-gmpIncDir was given.
-if test "${with_gmpIncDir+set}" = set; then :
-  withval=$with_gmpIncDir; gmpIncDir=$withval
+# Check whether --with-gmp-include was given.
+if test "${with_gmp_include+set}" = set; then :
+  withval=$with_gmp_include; gmp-include=$withval
 else
   true
 fi
 
 
 if test "x${doQReal}" = "xyes"; then
-    if test -f ${gmpIncDir}/gmp.h; then
+    if test -f ${gmp-include}/gmp.h; then
         true
     else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't find ${gmpIncDir}/gmp.h. exit." >&5
-$as_echo "can't find ${gmpIncDir}/gmp.h. exit." >&6; }
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't find ${gmp-include}/gmp.h. exit." >&5
+$as_echo "can't find ${gmp-include}/gmp.h. exit." >&6; }
         exit 1
     fi
-    gmpLibs=`ls ${gmpLibDir}/libgmp.* 2> /dev/null`
+    gmpLibs=`ls ${gmp-include}/libgmp.* 2> /dev/null`
     if test "x${gmpLibs}" = "x"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't find ${gmpLibDir}/libgmp.*. exit." >&5
-$as_echo "can't find ${gmpLibDir}/libgmp.*. exit." >&6; }
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't find ${gmp-lib}/libgmp.*. exit." >&5
+$as_echo "can't find ${gmp-lib}/libgmp.*. exit." >&6; }
         exit 1
     fi
-    gmpIncOpt="-I${gmpIncDir}"
-    gmpLibOpt="-L${gmpLibDir} -lgmp"
+    gmpIncOpt="-I${gmp-include}"
+    gmpLibOpt="-L${gmp-lib} -lgmp"
 fi
 
 
@@ -25309,16 +25303,16 @@ fi
 default_libxmlDir="/usr"
 
 
-# Check whether --with-libxmlDir was given.
-if test "${with_libxmlDir+set}" = set; then :
-  withval=$with_libxmlDir; LIBXML_PREFIX="${withval}"
+# Check whether --with-libxml was given.
+if test "${with_libxml+set}" = set; then :
+  withval=$with_libxml; LIBXML_PREFIX="${withval}"
 else
   LIBXML_PREFIX="${default_libxmlDir}"
 fi
 
 
 if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
-   as_fn_error $? "parser.h not found. Please attach or check --with-libxmlDir=<DIR>. See ./configure --help" "$LINENO" 5
+   as_fn_error $? "parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help" "$LINENO" 5
 fi
 
 
@@ -25326,9 +25320,9 @@ fi
 # --------------------------------------------------------------------
 # TCA
 
-# Check whether --with-TCADir was given.
-if test "${with_TCADir+set}" = set; then :
-  withval=$with_TCADir; TCA_PREFIX="${withval}"
+# Check whether --with-TCA was given.
+if test "${with_TCA+set}" = set; then :
+  withval=$with_TCA; TCA_PREFIX="${withval}"
 fi
 
 
@@ -25336,7 +25330,7 @@ use_tca=no
 if test "${TCA_PREFIX}" != ""; then
    use_tca=yes
    if ! test -f $TCA_PREFIX/tca-api.h; then
-      as_fn_error $? "$TCA_PREFIX/tca-api.h not found. Please check --with-TCADir=<DIR>" "$LINENO" 5
+      as_fn_error $? "$TCA_PREFIX/tca-api.h not found. Please check --with-TCA=<DIR>" "$LINENO" 5
    fi
 fi
 
@@ -25356,9 +25350,9 @@ fi
 default_gasnetDir=""
 
 
-# Check whether --with-gasnetDir was given.
-if test "${with_gasnetDir+set}" = set; then :
-  withval=$with_gasnetDir; GASNET_PREFIX="${withval}"
+# Check whether --with-gasnet was given.
+if test "${with_gasnet+set}" = set; then :
+  withval=$with_gasnet; GASNET_PREFIX="${withval}"
 else
   GASNET_PREFIX="${default_gasnetDir}"
 fi
@@ -25368,7 +25362,7 @@ use_gasnet=no
 if test "${GASNET_PREFIX}" != ""; then
   use_gasnet=yes
   if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
-	  as_fn_error $? "${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnetDir" "$LINENO" 5
+	  as_fn_error $? "${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnet" "$LINENO" 5
   fi
 fi
 
@@ -25476,9 +25470,9 @@ fi
 # specify libgpu path
 
 
-# Check whether --with-gpuDir was given.
-if test "${with_gpuDir+set}" = set; then :
-  withval=$with_gpuDir; GPGPU_PREFIX="${withval}"
+# Check whether --with-cuda was given.
+if test "${with_cuda+set}" = set; then :
+  withval=$with_cuda; GPGPU_PREFIX="${withval}"
 else
   GPGPU_PREFIX="/usr/local/cuda"
 fi
