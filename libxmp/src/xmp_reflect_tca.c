@@ -3,20 +3,26 @@
 #define _XMP_TCA_DMAC 0
 #define _XMP_TCA_CHAIN_FLAG (tcaDMANotify|tcaDMAContinue)
 #define _XMP_TCA_LAST_FLAG  (tcaDMANotify)
-#define _DBG
 
 void _XMP_create_TCA_handle(void *acc_addr, _XMP_array_t *adesc)
 {
   if(adesc->set_handle)
     return;
 
-  size_t size = (size_t)(adesc->type_size * adesc->total_elmts); // local array size
+  // 64KB align ?
+  long tmp = ((long)acc_addr/65536)*65536;
+  if(tmp != (long)acc_addr){
+    _XMP_fatal("An array is not aligned at 64KB.");
+    return;
+  }
 
+  size_t size = (size_t)(adesc->type_size * adesc->total_elmts);
+
+#if 0
+  printf("[%d] tcaCreateHandle size = %d addr=%p\n", _XMP_world_rank, size, acc_addr);
+#endif
   tcaHandle tmp_handle;
   TCA_CHECK(tcaCreateHandle(&tmp_handle, acc_addr, size, tcaMemoryGPU));
-#ifdef _DBG
-  printf("[%d] tcaCreateHandle %d\n", _XMP_world_rank, size);
-#endif
 
   adesc->tca_handle = _XMP_alloc(sizeof(tcaHandle) * _XMP_world_size);
   MPI_Allgather(&tmp_handle, sizeof(tcaHandle), MPI_BYTE,
@@ -183,9 +189,9 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
 
 	tcaSetDMADescInt_Memcpy(dma_slot, &dma_slot, &h[lo_rank], lo_dst_offset, 
 				&h[_XMP_world_rank], lo_src_offset, reflect->blocklength, 
-				tcaDMANotify, adesc->wait_slot, adesc->wait_tag);
+				flag, adesc->wait_slot, adesc->wait_tag);
 
-#ifdef _DBG
+#if 1
 	printf("[%d] lo_rank = %d lo_src_offset=%d lo_dst_offset=%d reflect->blocklength = %d\n", 
 	       _XMP_world_rank, lo_rank, lo_src_offset, lo_dst_offset, reflect->blocklength);
 #endif
@@ -201,8 +207,8 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
 	
 	tcaSetDMADescInt_Memcpy(dma_slot, &dma_slot, &h[hi_rank], hi_dst_offset,
 				&h[_XMP_world_rank], hi_src_offset, reflect->blocklength,
-				tcaDMANotify, adesc->wait_slot, adesc->wait_tag);
-#ifdef _DBG
+				flag, adesc->wait_slot, adesc->wait_tag);
+#if 1
 	printf("[%d] hi_rank = %d hi_src_offset=%d hi_dst_offset=%d reflect->blocklength = %d\n",
                _XMP_world_rank, hi_rank, hi_src_offset, hi_dst_offset, reflect->blocklength);
 #endif
@@ -214,7 +220,7 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
   }
 
   tcaSetDMAChainInt(_XMP_TCA_DMAC, adesc->dma_slot);
-#ifdef _DBG
+#if 0
   printf("[%d] DMA SLOT = %d\n", _XMP_world_rank, dma_slot);
 #endif
 }
@@ -255,9 +261,11 @@ void _XMP_reflect_do_tca(_XMP_array_t *adesc){
     int lo_rank = adesc->info[i].reflect_acc_sched->lo_rank;
     int hi_rank = adesc->info[i].reflect_acc_sched->hi_rank;
 
-#ifdef _DBG
-    printf("[%d] lo wait from %d\n", _XMP_world_rank, lo_rank);
-    printf("[%d] hi wait from %d\n", _XMP_world_rank, hi_rank);
+#if 0
+    if(lo_rank != -1)
+      printf("[%d] lo wait from %d\n", _XMP_world_rank, lo_rank);
+    if(hi_rank != -1)
+      printf("[%d] hi wait from %d\n", _XMP_world_rank, hi_rank);
 #endif
 
     if(lo_rank != -1)
@@ -266,7 +274,7 @@ void _XMP_reflect_do_tca(_XMP_array_t *adesc){
     if(hi_rank != -1)
       tcaWaitDMARecvDesc(&h[hi_rank], adesc->wait_slot, adesc->wait_tag);
   }
-#ifdef _DBG
+#if 0
   printf("[%d] wait finish\n", _XMP_world_rank);
 #endif
 }
