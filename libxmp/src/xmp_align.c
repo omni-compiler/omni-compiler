@@ -128,8 +128,10 @@ void _XMP_finalize_array_desc(_XMP_array_t *array) {
     _XMP_finalize_comm(array->align_comm);
   }
 
-  if (array->array_nodes)
-    _XMP_finalize_nodes(array->array_nodes);
+  if (array->is_shrunk_template){
+    if (array->array_nodes)
+      _XMP_finalize_nodes(array->array_nodes);
+  }
 
   _XMP_free(array);
 }
@@ -708,6 +710,7 @@ void _XMP_init_array_nodes(_XMP_array_t *array) {
 
   int template_dim = align_template->dim;
   int align_template_shrink[template_dim];
+  int align_template_num=0;
   long long align_template_lower[template_dim];
   long long align_template_upper[template_dim];
   long long align_template_stride[template_dim];
@@ -721,15 +724,24 @@ void _XMP_init_array_nodes(_XMP_array_t *array) {
     int align_template_index = info->align_template_index;
     if (align_template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
       align_template_shrink[align_template_index] = 0;
-
+      align_template_num++;
       align_template_lower[align_template_index] = info->ser_lower + info->align_subscript;
       align_template_upper[align_template_index] = info->ser_upper + info->align_subscript;
       align_template_stride[align_template_index] = 1;
     }
   }
 
-  array->array_nodes = _XMP_create_nodes_by_template_ref(align_template, align_template_shrink,
-                                                         align_template_lower, align_template_upper, align_template_stride);
+  if(template_dim == align_template_num){
+    array->is_shrunk_template = false;
+  }else if (template_dim > align_template_num){
+    array->is_shrunk_template = true;
+  }
+
+  if (array->is_shrunk_template){
+    array->array_nodes = _XMP_create_nodes_by_template_ref(align_template, align_template_shrink,
+                                                           align_template_lower, align_template_upper, align_template_stride);
+  }
+
 }
 
 unsigned long long _XMP_get_array_total_elmts(_XMP_array_t *array) {

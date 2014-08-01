@@ -209,6 +209,7 @@ typedef struct _XMP_array_type {
   int align_comm_rank;
   // ----------------------------------------
 
+  _Bool is_shrunk_template;
   _XMP_nodes_t *array_nodes;
 
   _XMP_template_t *align_template;
