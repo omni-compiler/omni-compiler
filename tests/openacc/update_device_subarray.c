@@ -102,18 +102,22 @@ int main()
   return 0;
 }
 
-int test_update_device(TYPE *a, int i_low, int i_len, int j_low, int j_len, int k_low, int k_len, int l_low, int l_len)
+int test_update_device(TYPE *a_in, int i_low, int i_len, int j_low, int j_len, int k_low, int k_len, int l_low, int l_len)
 {
   int i,j,k,l;
   int flag = 0;
+  TYPE (*a)[J][K][L] = (TYPE (*)[J][K][L])a_in;
   
 #pragma acc data present(a[0:I][0:J][0:K][0:L])
   {
     //set zero
-#pragma acc parallel loop
-    for(i=0;i<I*J*K*L;i++){
-      a[i] = (ZEROVAL);
-    }
+#pragma acc parallel loop collapse(4)
+    for(i = 0; i < I; i++)
+      for(j = 0; j < J; j++)
+	for(k = 0; k < K; k++)
+	  for(l = 0; l < L; l++)
+	    a[i][j][k][l] = (ZEROVAL);
+    
 
 #pragma acc update device(a[i_low:i_len][j_low:j_len][k_low:k_len][l_low:l_len])
 
@@ -123,7 +127,7 @@ int test_update_device(TYPE *a, int i_low, int i_len, int j_low, int j_len, int 
       for(j = 0; j < J; j++){
 	for(k = 0; k < K; k++){
 	  for(l = 0; l < L; l++){
-	    TYPE v = a[(((i*J)+j)*K+k)*L+l];
+	    TYPE v = a[i][j][k][l];
 	    if( (i>=i_low&&i<i_low+i_len) && (j>=j_low&&j<j_low+j_len) && (k>=k_low&&k<k_low+k_len) && (l>=l_low&&l<l_low+l_len) ){
 #ifndef STRUCT
 	      if(v != (SETVAL)){

@@ -104,6 +104,12 @@ public class ACCtranslateData {
       */
       XobjList suffixArgs = Xcons.List();
       {
+	  for(Xobject x : var.getSubscripts()){
+	      suffixArgs.add(x.left());
+	      suffixArgs.add(x.right());
+	  }
+      }
+      if(false){
           if(varType.isArray()){
               Xtype t = varType;
               while(t.isArray()){
