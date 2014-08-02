@@ -795,7 +795,7 @@ if test $enableF2F = yes; then
     *)
       chk2=`$BEFC --version 2>/dev/null | head -n2 | tail -n1`
       case $chk2 in
-      pgf90*)
+      pgfortran*|pgf95*|pgf90*)
         OMF_CONF_LX2X_OPT=""
         OMF_CONF_NTV_OPT="-O2"
         OMF_CONF_LNK_OPT="-O2 -mp"

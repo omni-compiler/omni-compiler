@@ -43,31 +43,33 @@ HOW TO INSTALL
 # Install Step
 ## Configure
 ### On a general linux cluster
-    $ ./configure --prefix=[INSTALL-DIR]
+    $ ./configure --prefix=[INSTALLATION PATH]
          or
-    $ ./configure --with-backend-cc=mpicc --prefix=[INSTALL-DIR]
+    $ ./configure --with-backend-cc=mpicc --prefix=[INSTALLATION PATH]  // In most case, a bacnend compiler is "mpicc".
+         or
+    $ ./configure CPP="pgcc -E" CC=gcc FC=gfortran  // To use a PGI compiler
 
  If you want to use Coarray functions
-    $ ./configure --with-gasnet=[GASNet-INSTALL-DIR] --with-gasnet-conduit=[GASNet-Conduit] --prefix=[INSTALL-DIR]
+    $ ./configure --with-gasnet=[GASNet INSTALLATION PATH] --with-gasnet-conduit=[GASNet-Conduit]
 
  If you want to use OpenACC compiler
-    $ ./configure --with-cuda=[CUDA-INSTALL-DIR] --enable-openacc --prefix=[INSTALL-DIR]
+    $ ./configure --with-cuda=[CUDA INSTALLATION PATH] --enable-openacc
 
 ### On the K computer or FX10
-    $ ./configure --target=Kcomputer-linux-gnu --prefix=[INSTALL-DIR]
-    $ ./configure --target=FX10-linux-gnu --prefix=[INSTALL-DIR]
+    $ ./configure --target=Kcomputer-linux-gnu --prefix=[INSTALLATION PATH]
+    $ ./configure --target=FX10-linux-gnu --prefix=[INSTALLATION PATH]
 
 ### On Cray machines
-    $ ./configure --target=Cray-linux-gnu --prefix=[INSTALL-DIR]
+    $ ./configure --target=Cray-linux-gnu --prefix=[INSTALLATION PATH]
 
 ### On SX machines
-    $ ./configure --target=sx --prefix=[INSTALL-DIR]
+    $ ./configure --target=sx --prefix=[INSTALLATION PATH]
 
 ## Build
     $ make; make install
 
 ## Set PATH
-    $ export PATH=[INSTALL-DIR]/bin:$PATH
+    $ export PATH=[INSTALLATION PATH]/bin:$PATH
 
 ## Test (Optional)
     $ make tests
@@ -81,4 +83,3 @@ HOW TO INSTALL
  issuing autogen.sh on the top directory would be a solution.
  And if the build still failed even after issuing the autogen.sh,
  you should update your autotools (autoconf/automake/libtools) to the latest ones.
-
