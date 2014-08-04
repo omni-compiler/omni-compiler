@@ -174,18 +174,33 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
     _XMP_array_info_t *ai = &(adesc->info[i]);
     _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
     int count = reflect->count;
-    int flag;
+    tcaDMAFlag flag;
     off_t lo_dst_offset = reflect->lo_dst_offset;
     off_t lo_src_offset = reflect->lo_src_offset;
     off_t hi_dst_offset = reflect->hi_dst_offset;
     off_t hi_src_offset = reflect->hi_src_offset;
 
+    if(lo_dst_offset%16 != lo_src_offset%16){
+      fprintf(stderr, "16 bits of destination and source pointers must be the same. dest = %ld src = %ld\n", 
+	      lo_dst_offset, lo_src_offset);
+      _XMP_fatal_nomsg();
+      return;
+    }
+    if(hi_dst_offset%16 != hi_src_offset%16){
+      fprintf(stderr, "16 bits of destination and source pointers must be the same. dest = %ld src = %ld\n",
+	      hi_dst_offset, hi_src_offset);
+      _XMP_fatal_nomsg();
+      return;
+    }
+
     for(int c=0;c<count;c++){
       if(lo_rank != -1){
-	if(j != num_of_neighbors-1)
+	if(j != num_of_neighbors-1){
 	  flag = _XMP_TCA_CHAIN_FLAG;
-	else
+	}
+	else{
 	  flag = _XMP_TCA_LAST_FLAG;
+	}
 
 	tcaSetDMADescInt_Memcpy(dma_slot, &dma_slot, &h[lo_rank], lo_dst_offset, 
 				&h[_XMP_world_rank], lo_src_offset, reflect->blocklength, 
@@ -200,10 +215,12 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
 	j++;
       }
       if(hi_rank != -1){
-	if(j != num_of_neighbors-1)
+	if(j != num_of_neighbors-1){
 	  flag = _XMP_TCA_CHAIN_FLAG;
-	else
+	}
+	else{
 	  flag = _XMP_TCA_LAST_FLAG;
+	}
 	
 	tcaSetDMADescInt_Memcpy(dma_slot, &dma_slot, &h[hi_rank], hi_dst_offset,
 				&h[_XMP_world_rank], hi_src_offset, reflect->blocklength,
