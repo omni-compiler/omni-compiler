@@ -5017,6 +5017,7 @@ define_internal_subprog(EXT_ID child_ext_ids)
 
     FOREACH_EXT_ID(ep, child_ext_ids) {
         if(EXT_PROC_CLASS(ep) == EP_PROC || EXT_PROC_CLASS(ep) == EP_INTERFACE) {
+	    EXT_PROC_IS_INTERNAL(ep) = TRUE;
             tp = EXT_PROC_TYPE(ep);
             ip = find_ident(EXT_SYM(ep));
             if (PROC_EXT_ID(ip) == ep)

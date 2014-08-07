@@ -795,7 +795,7 @@ if test $enableF2F = yes; then
     *)
       chk2=`$BEFC --version 2>/dev/null | head -n2 | tail -n1`
       case $chk2 in
-      pgf90*)
+      pgfortran*|pgf95*|pgf90*)
         OMF_CONF_LX2X_OPT=""
         OMF_CONF_NTV_OPT="-O2"
         OMF_CONF_LNK_OPT="-O2 -mp"
@@ -1406,14 +1406,8 @@ rm -f ./hasqd.* ./hasqd
 # --------------------------------------------------------------------
 # quad real support
 
-if test "${OS}" = "linux"; then
-    gmpIncDir=/usr/include
-    gmpLibDir=/usr/lib
-else
-    gmpIncDir=/usr/local/include
-    gmpLibDir=/usr/local/lib
-fi
-
+gmp-include="/usr/include"
+gmp-lib="/usr/lib"
 gmpIncOpt=""
 gmpDirOpt=""
 qRealPrecBits=128
@@ -1422,28 +1416,28 @@ AC_ARG_ENABLE(mreal,
     [  --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default).],
     [doQReal=$enableval], [doQReal=no])
 
-AC_ARG_WITH(gmpLibDir,
-    [  --with-gmpLibDir=DIR        where the GNU-MP library is for quad-real support.],
-    [gmpLibDir=$withval], [true])
+AC_ARG_WITH(gmp-lib,
+    [  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support.],
+    [gmp-lib=$withval], [true])
 
-AC_ARG_WITH(gmpIncDir,
-    [  --with-gmpIncDir=DIR        where the GNU-MP include headers are for quad-real support.],
-    [gmpIncDir=$withval], [true])
+AC_ARG_WITH(gmp-include,
+    [  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support.],
+    [gmp-include=$withval], [true])
 
 if test "x${doQReal}" = "xyes"; then
-    if test -f ${gmpIncDir}/gmp.h; then
+    if test -f ${gmp-include}/gmp.h; then
         true
     else
-        AC_MSG_RESULT([can't find ${gmpIncDir}/gmp.h. exit.])
+        AC_MSG_RESULT([can't find ${gmp-include}/gmp.h. exit.])
         exit 1
     fi
-    gmpLibs=`ls ${gmpLibDir}/libgmp.* 2> /dev/null`
+    gmpLibs=`ls ${gmp-include}/libgmp.* 2> /dev/null`
     if test "x${gmpLibs}" = "x"; then
-        AC_MSG_RESULT([can't find ${gmpLibDir}/libgmp.*. exit.])
+        AC_MSG_RESULT([can't find ${gmp-lib}/libgmp.*. exit.])
         exit 1
     fi
-    gmpIncOpt="-I${gmpIncDir}"
-    gmpLibOpt="-L${gmpLibDir} -lgmp"
+    gmpIncOpt="-I${gmp-include}"
+    gmpLibOpt="-L${gmp-lib} -lgmp"
 fi
 
 AC_ARG_WITH(precision,
@@ -1599,27 +1593,27 @@ AC_SUBST(omniQRealFillGap)
 # specify libxmp path
 default_libxmlDir="/usr"
 
-AC_ARG_WITH(libxmlDir,
-    [  --with-libxmlDir=DIR        libxml install directory (default: /usr)],
+AC_ARG_WITH(libxml,
+    [  --with-libxml=DIR           libxml installation path (default: /usr)],
     [LIBXML_PREFIX="${withval}"], [LIBXML_PREFIX="${default_libxmlDir}"])
 
 if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
-   AC_MSG_ERROR([parser.h not found. Please attach or check --with-libxmlDir=<DIR>. See ./configure --help])
+   AC_MSG_ERROR([parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help])
 fi
 
 AC_SUBST(LIBXML_PREFIX)
 
 # --------------------------------------------------------------------
 # TCA
-AC_ARG_WITH(TCADir,
-    [  --with-TCADir=DIR           TCA install directory],
+AC_ARG_WITH(TCA,
+    [  --with-TCA=DIR              TCA installation path],
     [TCA_PREFIX="${withval}"])
 
 use_tca=no
 if test "${TCA_PREFIX}" != ""; then
    use_tca=yes
    if ! test -f $TCA_PREFIX/tca-api.h; then
-      AC_MSG_ERROR([$TCA_PREFIX/tca-api.h not found. Please check --with-TCADir=<DIR>])
+      AC_MSG_ERROR([$TCA_PREFIX/tca-api.h not found. Please check --with-TCA=<DIR>])
    fi
 fi
 
@@ -1631,15 +1625,15 @@ AC_SUBST(TCA_PREFIX)
 
 default_gasnetDir=""
 
-AC_ARG_WITH(gasnetDir,
-    [  --with-gasnetDir=DIR        GASNet install directory],
+AC_ARG_WITH(gasnet,
+    [  --with-gasnet=DIR           GASNet installation path],
     [GASNET_PREFIX="${withval}"], [GASNET_PREFIX="${default_gasnetDir}"])
 
 use_gasnet=no
 if test "${GASNET_PREFIX}" != ""; then
   use_gasnet=yes
   if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
-	  AC_MSG_ERROR([${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnetDir])
+	  AC_MSG_ERROR([${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnet])
   fi
 fi
 
@@ -1724,8 +1718,8 @@ AC_SUBST(GPU_CFLAGS)
 # --------------------------------------------------------------------
 # specify libgpu path
 
-AC_ARG_WITH(gpuDir,
-    [  --with-gpuDir=DIR           GPGPU tooklit install directory (default: /usr/local/cuda)],
+AC_ARG_WITH(cuda,
+    [  --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)],
     [GPGPU_PREFIX="${withval}"], [GPGPU_PREFIX="/usr/local/cuda"])
 
 AC_SUBST(GPGPU_PREFIX)

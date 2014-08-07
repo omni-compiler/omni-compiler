@@ -210,6 +210,7 @@ declare_procedure(enum name_class class,
         }
         if (type != NULL) {
             declare_id_type(id, type);
+	    TYPE_SET_FOR_FUNC_SELF(type);
         }
         ID_LINE(id) = EXPR_LINE(name); /* set line_no */
         PROC_CLASS(id) = P_THISPROC;

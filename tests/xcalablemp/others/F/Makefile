@@ -2,7 +2,7 @@ XFC     = xmpf90 -O2
 XRUN    = mpirun
 EXES    = exit.x module_test.x module_test0.x arg.x
 
-all: module_test.x exit.x module_test0.x arg.x
+all: module_test.x exit.x module_test0.x arg.x external.o interface.o xmp_lib.o
 
 module_test0.x: module0.o main.o
 	$(XFC) -o module_test0.x module0.o main.o
@@ -27,6 +27,9 @@ module0.o: module0.f90
 	mkdir -p mod
 	$(XFC) -c module0.f90 -Jmod
 
+external.o: external.f90
+	$(XFC) -c external.f90
+
 main.o: main.f90 module0.o
 	$(XFC) -c main.f90 -Jmod
 
@@ -35,6 +38,12 @@ arg.x: arg.o
 
 arg.o: arg.f90
 	$(XFC) -c arg.f90
+
+interface.o: interface.f90
+	$(XFC) -c interface.f90
+
+xmp_lib.o: xmp_lib.f90
+	$(XFC) -c xmp_lib.f90
 
 run: $(EXES)
 	$(XRUN) -np 2 ./module_test.x

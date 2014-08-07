@@ -14,6 +14,7 @@ all default: $(EXES)
 	$(XCC) -o $@ $<
 
 run: $(EXES)
+	$(XRUN) -n 2 ./315_loop.x
 	$(XRUN) -n 4 ./reduction_iand.x
 	$(XRUN) -n 4 ./reduction_ieor.x
 	$(XRUN) -n 4 ./reduction_ior.x

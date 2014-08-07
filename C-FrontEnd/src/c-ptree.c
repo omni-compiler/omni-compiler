@@ -189,7 +189,7 @@ _printExprCommon1(FILE *fp, char *str, CExprCommon *expr, int indent)
 	for (int i = 0; i < _n_refAddr; i++) {
         if ((void*)expr == _refAddr[i]) {   /* already displayed the same address */
             return 1;
-            fprintf(fp, " (duplicated address)", (void*)expr);
+	    //            fprintf(fp, " (duplicated address)", (void*)expr);
         }
 	}
     _refAddr[_n_refAddr++] = (void*)expr;

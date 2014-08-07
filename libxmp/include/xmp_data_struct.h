@@ -127,7 +127,11 @@ typedef struct _XMP_reflect_sched_type {
   long long stride;
 
   int lo_rank, hi_rank;
-
+  
+#if defined(_XMP_TCA)
+  off_t lo_src_offset, lo_dst_offset;
+  off_t hi_src_offset, hi_dst_offset;
+#endif
 } _XMP_reflect_sched_t;
 
 // aligned array descriptor
@@ -165,7 +169,7 @@ typedef struct _XMP_array_info_type {
   int shadow_size_hi;
 
   _XMP_reflect_sched_t *reflect_sched;
-
+  _XMP_reflect_sched_t *reflect_acc_sched;
   // enable when is_shadow_comm_member is true
   _XMP_comm_t *shadow_comm;
   int shadow_comm_size;
@@ -188,6 +192,13 @@ typedef struct _XMP_array_type {
   uint64_t rdma_addr;
   int rdma_memid;
 #endif
+#if defined(_XMP_TCA)
+  void* tca_handle;
+  _Bool set_handle;  // If tca_handle has been set, set_handle = true
+  int   dma_slot;
+  int   wait_slot;
+  int   wait_tag;
+#endif
   unsigned long long total_elmts;
   // --------------------------------
 
@@ -198,9 +209,7 @@ typedef struct _XMP_array_type {
   int align_comm_rank;
   // ----------------------------------------
 
-  //int num_reqs;
-  //MPI_Request *mpi_req_shadow;
-
+  _Bool is_shrunk_template;
   _XMP_nodes_t *array_nodes;
 
   _XMP_template_t *align_template;

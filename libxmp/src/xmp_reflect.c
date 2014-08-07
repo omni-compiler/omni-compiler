@@ -1334,7 +1334,7 @@ int _XMP_get_owner_pos(_XMP_array_t *a, int dim, int index){
   case _XMP_N_ALIGN_GBLOCK:
     {
       int tpos = index + align_offset; // tlb is not subtracted because the mapping_array is 1-origin.
-      unsigned long long *m = a->align_template->chunk[tdim].mapping_array;
+      unsigned long long *m = (unsigned long long *)a->align_template->chunk[tdim].mapping_array;
       int np = a->align_template->chunk[tdim].onto_nodes_info->size;
       for (int i = 0; i < np; i++){
 	if (m[i] <= tpos && tpos < m[i+1]){

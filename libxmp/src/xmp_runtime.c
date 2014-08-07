@@ -4,12 +4,8 @@
 #include "mpi-ext.h"
 #endif
 #include <stdio.h>
-#ifdef _XMP_TCA
-#include "tca-api.h"
-#endif
 
 static int _XMP_runtime_working = _XMP_N_INT_FALSE;
-
 int _XMPC_running = 1;
 int _XMPF_running = 0;
 
@@ -25,8 +21,7 @@ void _XMP_init(int argc, char** argv)
 #endif
 
 #ifdef _XMP_TCA
-    tcaInit();
-    tcaDMADescInt_init(); // Initialize Descriptor (Internal Memory) Mode
+    _XMP_init_tca();
 #endif
   }
   _XMP_init_world(NULL, NULL);
