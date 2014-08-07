@@ -1,37 +1,55 @@
+#include "acc_internal.h"
 #include "acc_gpu_internal.h"
 
-static void* mpool_ptr = NULL;
-static char mpool_flags[_ACC_GPU_MPOOL_NUM_BLOCKS];
+//static void* mpool_ptr = NULL;
+//static char mpool_flags[_ACC_GPU_MPOOL_NUM_BLOCKS];
+//static char* mpool_flags = NULL;
 
-void _ACC_gpu_mpool_init();
-void _ACC_gpu_mpool_finalize();
+typedef struct mpool{
+  void *ptr;
+  char flags[_ACC_GPU_MPOOL_NUM_BLOCKS];
+}mpool;
+
+static mpool *mpool_p;
+
+//void _ACC_gpu_mpool_init();
+//void _ACC_gpu_mpool_finalize();
 void _ACC_gpu_mpool_alloc_block(void **);
 void _ACC_gpu_mpool_free_block(void *);
-
-void _ACC_gpu_mpool_init()
+#include<stdio.h>
+void* _ACC_gpu_mpool_init()
 {
-  _ACC_gpu_alloc(&mpool_ptr, _ACC_GPU_MPOOL_BLOCK_SIZE * _ACC_GPU_MPOOL_NUM_BLOCKS * sizeof(char));
-  int i;
-  for(i=0;i<_ACC_GPU_MPOOL_NUM_BLOCKS;i++){
-    mpool_flags[i]=~0;
+  //printf("mpool \n");
+  mpool *p = (mpool*)_ACC_alloc(sizeof(mpool));
+  _ACC_gpu_alloc(&(p->ptr), _ACC_GPU_MPOOL_BLOCK_SIZE * _ACC_GPU_MPOOL_NUM_BLOCKS * sizeof(char));
+  for(int i=0;i<_ACC_GPU_MPOOL_NUM_BLOCKS;i++){
+    p->flags[i]=~0;
   }
+  mpool_p = p;
+  return p;
 }
 
-void _ACC_gpu_mpool_finalize()
+void _ACC_gpu_mpool_finalize(void *p)
 {
-  if(mpool_ptr != NULL){
-    _ACC_gpu_free(mpool_ptr);
+  mpool* mpool_ptr = (mpool*)p;
+  if(mpool_ptr->ptr != NULL){
+    _ACC_gpu_free(mpool_ptr->ptr);
   }
-  mpool_ptr = NULL;
+  mpool_ptr->ptr = NULL;
+}
+
+void _ACC_gpu_mpool_set(void* p)
+{
+  mpool_p = (mpool*)p;
 }
 
 void _ACC_gpu_mpool_alloc_block(void **ptr)
 {
   int i;
   for(i=0;i<_ACC_GPU_MPOOL_NUM_BLOCKS;i++){
-    if(mpool_flags[i]){
-      mpool_flags[i] = 0;
-      *ptr = ((char*)mpool_ptr) + _ACC_GPU_MPOOL_BLOCK_SIZE * i;
+    if(mpool_p->flags[i]){
+      mpool_p->flags[i] = 0;
+      *ptr = ((char*)mpool_p->ptr) + _ACC_GPU_MPOOL_BLOCK_SIZE * i;
       return;
     }
   }
@@ -41,9 +59,9 @@ void _ACC_gpu_mpool_alloc_block(void **ptr)
 
 void _ACC_gpu_mpool_free_block(void *ptr)
 {
-  long long i = ((long long)((char*)ptr - (char*)mpool_ptr)) / _ACC_GPU_MPOOL_BLOCK_SIZE;
+  long long i = ((long long)((char*)ptr - (char*)mpool_p->ptr)) / _ACC_GPU_MPOOL_BLOCK_SIZE;
   if(i>=0 && i<_ACC_GPU_MPOOL_NUM_BLOCKS){
-    mpool_flags[i] = ~0;
+    mpool_p->flags[i] = ~0;
   }else{
     _ACC_gpu_free(ptr);
   }

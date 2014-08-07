@@ -52,6 +52,7 @@ run: $(EXES)
 	$(XRUN) data_present_double.x
 
 	$(XRUN) host_data.x
+	$(XRUN) multi_device.x
 
 update_host_subarray_type:
 	$(XCC) -o update_host_subarray_char.x update_host_subarray.c -DCHAR

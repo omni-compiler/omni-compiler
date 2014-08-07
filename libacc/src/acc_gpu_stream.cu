@@ -28,7 +28,7 @@ typedef struct Cell
 typedef Cell** StreamMap;
 
 static StreamMap stream_map = NULL;
-static int table_size = 0;
+static const int table_size = 16;
 
 static Cell* alloc_cell(int id);
 static void free_cell(Cell* cell);
@@ -54,44 +54,53 @@ static Cell* alloc_cell(int id)
 static void free_cell(Cell* cell)
 {
   if(cell == NULL) return;
-  destroy_stream(cell->stream);
+  if(cell->id != ACC_ASYNC_SYNC){
+    destroy_stream(cell->stream);
+  }
   _ACC_gpu_mpool_free_block(cell->mpool);
   _ACC_gpu_free(cell->block_count);
   _ACC_free(cell);
 }
 
-void _ACC_gpu_init_stream_map(int size)
+void* _ACC_gpu_init_stream_map(int size)
 {
   //printf("init_map\n");
-  table_size = size;
-  if(stream_map != NULL){
-    _ACC_gpu_finalize_stream_map();
-  }
-  stream_map = (StreamMap)_ACC_alloc(table_size * sizeof(Cell *));
+  //table_size = size;
+  StreamMap map;
+  map = (StreamMap)_ACC_alloc(table_size * sizeof(Cell *));
   int i;
-  for(i=0;i<table_size;i++) stream_map[i] = NULL;
+  for(i=0;i<table_size;i++) map[i] = NULL;
+
+  stream_map = map;
 
   async_sync_cell = alloc_cell(ACC_ASYNC_SYNC);
   async_noval_cell = alloc_cell(ACC_ASYNC_NOVAL);
   add_cell(ACC_ASYNC_SYNC, async_sync_cell);
   add_cell(ACC_ASYNC_NOVAL, async_noval_cell);
+
+  return map;
 }
 
-void _ACC_gpu_finalize_stream_map()
+void _ACC_gpu_finalize_stream_map(void* map)
 {
   //printf("finalize map\n");
   int i;
-  if(stream_map == NULL) return;
+  if(map == NULL) return;
+  StreamMap st_map = (StreamMap)map;
   for(i=0;i<table_size;i++){
-    Cell *head = stream_map[i], *cur, *next;
+    Cell *head = st_map[i], *cur, *next;
     for(cur = head; cur != NULL; cur = next){
       next = cur->next;
       free_cell(cur);
       cur = NULL;
     }
   }
-  _ACC_free(stream_map);
-  stream_map = NULL;
+  _ACC_free(st_map);
+}
+
+void _ACC_gpu_set_stream_map(void* map)
+{
+  stream_map = (StreamMap)map;
 }
 
 static void add_cell(int id, Cell *cell)
