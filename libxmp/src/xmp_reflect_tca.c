@@ -266,7 +266,7 @@ void _XMP_alloc_tca(_XMP_array_t *adesc)
     adesc->info[i].reflect_acc_sched = _XMP_alloc(sizeof(_XMP_reflect_sched_t));
 
   adesc->wait_slot = 0;  // No change ?
-  adesc->wait_tag  = 0;  // No change ?
+  adesc->wait_tag  = 0x100;  // No change ?
 }
 
 void _XMP_reflect_do_tca(_XMP_array_t *adesc){
