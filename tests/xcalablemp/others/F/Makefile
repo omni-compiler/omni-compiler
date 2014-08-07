@@ -2,7 +2,7 @@ XFC     = xmpf90 -O2
 XRUN    = mpirun
 EXES    = exit.x module_test.x module_test0.x arg.x
 
-all: module_test.x exit.x module_test0.x arg.x external.o
+all: module_test.x exit.x module_test0.x arg.x external.o interface.o
 
 module_test0.x: module0.o main.o
 	$(XFC) -o module_test0.x module0.o main.o
@@ -38,6 +38,9 @@ arg.x: arg.o
 
 arg.o: arg.f90
 	$(XFC) -c arg.f90
+
+interface.o: interface.f90
+	$(XFC) -c interface.f90
 
 run: $(EXES)
 	$(XRUN) -np 2 ./module_test.x

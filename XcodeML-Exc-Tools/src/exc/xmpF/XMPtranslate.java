@@ -77,6 +77,7 @@ public class XMPtranslate implements XobjectDefVisitor
     Xobject childDecls = Xcons.List();
 
     for (Xobject kk: (XobjList)decls){
+      if (kk.getArg(0) == null) continue;
       Ident id = d.findIdent(kk.getArg(0).getName());
       if (id != null && id.getStorageClass() == StorageClass.FPARAM){
 	childDecls.add(kk.copy());
