@@ -42,8 +42,9 @@ extern "C" {
   void _ACC_gpu_get_data_sub(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *host_addr, size_t offset, size_t size);
 
   //acc_gpu_stream.cu
-  void _ACC_gpu_init_stream_map(int table_size);
-  void _ACC_gpu_finalize_stream_map();
+  void* _ACC_gpu_init_stream_map(int table_size);
+  void _ACC_gpu_finalize_stream_map(void*);
+  void _ACC_gpu_set_stream_map(void*);
   void _ACC_gpu_wait(int id);
   void _ACC_gpu_wait_all();
   int _ACC_gpu_test(int id);
@@ -54,8 +55,9 @@ extern "C" {
   void _ACC_gpu_get_block_count_async(unsigned **count, int id);
 
   //acc_gpu_mpool.cu
-  void _ACC_gpu_mpool_init();
-  void _ACC_gpu_mpool_finalize();
+  void* _ACC_gpu_mpool_init();
+  void _ACC_gpu_mpool_finalize(void *);
+  void _ACC_gpu_mpool_set(void *);
   void _ACC_gpu_mpool_alloc_block(void **);
   void _ACC_gpu_mpool_free_block(void *);
   void _ACC_gpu_mpool_alloc(void **ptr, long long size, void *mpool, long long *pos);

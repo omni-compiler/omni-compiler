@@ -30,7 +30,9 @@ typedef struct pair{
 #define SETVAL (pair){1,2}
 #endif
 
-void sub(TYPE *a1, TYPE *a2, TYPE *a3){
+void sub(TYPE *a1, TYPE *a2_, TYPE *a3_){
+  TYPE (*a2)[20] = (TYPE (*)[20])a2_;
+  TYPE (*a3)[20][30] = (TYPE (*)[20][30])a3_;
 #pragma acc data present(a1[0:100], a2[0:10][0:20], a3[:10][:20][:30])
   {
     int i,j,k;
@@ -42,7 +44,7 @@ void sub(TYPE *a1, TYPE *a2, TYPE *a3){
 #pragma acc parallel loop collapse(2)
     for(i=0;i<10;i++){
       for(j=0;j<20;j++){
-	a2[i*10+j] = SETVAL;
+	a2[i][j] = SETVAL;
       }
     }
     
@@ -50,7 +52,7 @@ void sub(TYPE *a1, TYPE *a2, TYPE *a3){
     for(i=0;i<10;i++){
       for(j=0;j<20;j++){
 	for(k=0;k<30;k++){
-	  a3[(i*10+j)*20+k] = SETVAL;
+	  a3[i][j][k] = SETVAL;
 	}
       }
     }
@@ -73,7 +75,7 @@ int main()
     return 1;
   }
   
-#pragma acc data copy(a1, a2, a3, b1[0:100], b2[0:10][0:20], b3[0:10][0:20][0:30])
+#pragma acc data copy(a1, a2, a3, b1[0:100], b2[0:10*20], b3[0:10*20*30])
   {
     sub((TYPE*)a1, (TYPE*)a2, (TYPE*)a3);
     sub(b1, b2, b3);

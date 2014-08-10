@@ -11,7 +11,7 @@ int main()
 
 #pragma acc parallel loop reduction(+:sum)
   for(i=0;i<100;i++){
-    sum = array[i];
+    sum += array[i];
   }
   //verify
   if(sum != 4950) return 1;
@@ -20,7 +20,7 @@ int main()
   sum = 0;
 #pragma acc parallel loop reduction(+:sum) copy(sum)
   for(i=0;i<100;i++){
-    sum = array[i];
+    sum += array[i];
   }
   //verify
   if(sum != 4950) return 2;
@@ -31,7 +31,7 @@ int main()
   {
 #pragma acc parallel loop reduction(+:sum)
     for(i=0;i<50;i++){
-      sum = array[i];
+      sum += array[i];
     }
   }
   //verify
@@ -43,7 +43,7 @@ int main()
   {
 #pragma acc parallel loop reduction(+:sum)
     for(i=50;i<100;i++){
-      sum = array[i];
+      sum += array[i];
     }
   }
   //vefify
