@@ -269,7 +269,6 @@ void _XMP_alloc_tca(_XMP_array_t *adesc)
 }
 
 void _XMP_reflect_do_tca(_XMP_array_t *adesc){
-  MPI_Barrier(MPI_COMM_WORLD);
   tcaStartDMADesc(_XMP_TCA_DMAC);
   
   int array_dim = adesc->dim;
