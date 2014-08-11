@@ -995,7 +995,7 @@ public class XMPrewriteExpr {
     if(entity != null){
       if(entity.getKind() == XMPobject.TEMPLATE){
 	Ident XmpDescOfFuncId = _globalDecl.declExternFunc("_XMP_desc_of", myExpr.Type());
-	e = XmpDescOfFuncId.Call(Xcons.List(entity.getDescId()));
+	e = XmpDescOfFuncId.Call(Xcons.List(entity.getDescId().Ref()));
       } 
       else{
 	throw new XMPexception("Bad entity name for xmp_desc_of()");
@@ -1008,7 +1008,7 @@ public class XMPrewriteExpr {
 	throw new XMPexception(arrayName + " is not aligned global array or tempalte descriptor.");
 
       Ident XmpDescOfFuncId =  _globalDecl.declExternFunc("_XMP_desc_of", myExpr.Type());
-      e = XmpDescOfFuncId.Call(Xcons.List(alignedArray.getDescId())); 
+      e = XmpDescOfFuncId.Call(Xcons.List(alignedArray.getDescId().Ref())); 
     }
 
     return e;

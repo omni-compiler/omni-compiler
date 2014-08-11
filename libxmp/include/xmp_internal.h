@@ -323,4 +323,8 @@ struct _XMPTIMING
   }while (0)
 #endif
 
+void _XMP_reflect_do_gpu(_XMP_array_t *array_desc);
+void _XMP_reflect_init_gpu(void *acc_addr, _XMP_array_t *array_desc);
+int _XMP_get_owner_pos(_XMP_array_t *a, int dim, int index);
+
 #endif // _XMP_INTERNAL
