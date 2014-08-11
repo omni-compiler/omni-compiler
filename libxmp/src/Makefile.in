@@ -85,6 +85,8 @@ target_triplet = @target@
 @FJRDMA_TRUE@am__append_4 = -std=gnu99 -D_XMP_COARRAY_FJRDMA
 @TCA_TRUE@am__append_5 = xmp_reflect_tca.c
 @TCA_TRUE@am__append_6 = -D_XMP_TCA -I@TCA_PREFIX@
+@ENABLE_XACC_TRUE@am__append_7 = xmp_reflect_gpu.c xmp_gpu_pack.cu
+@ENABLE_XACC_TRUE@am__append_8 = -D_XMP_XACC -I@GPGPU_PREFIX@
 subdir = ./libxmp/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -147,7 +149,8 @@ am__libxmp_a_SOURCES_DIST = $(XMP_INC_DIR)/xmp_internal.h \
 	xmp_coarray_do.c xmp_gasnet_coarray.c xmp_lock.c \
 	xmp_gasnet_lock.c xmp_post_wait.c xmp_gasnet_post_wait.c \
 	xmp_fjrdma_coarray_set.c xmp_fjrdma_coarray_do.c \
-	xmp_fjrdma_post_wait.c xmp_reflect_tca.c
+	xmp_fjrdma_post_wait.c xmp_reflect_tca.c xmp_reflect_gpu.c \
+	xmp_gpu_pack.cu
 @GASNET_TRUE@am__objects_1 = xmp_coarray_set.$(OBJEXT) \
 @GASNET_TRUE@	xmp_coarray_do.$(OBJEXT) \
 @GASNET_TRUE@	xmp_gasnet_coarray.$(OBJEXT) xmp_lock.$(OBJEXT) \
@@ -160,6 +163,8 @@ am__libxmp_a_SOURCES_DIST = $(XMP_INC_DIR)/xmp_internal.h \
 @FJRDMA_TRUE@	xmp_post_wait.$(OBJEXT) \
 @FJRDMA_TRUE@	xmp_fjrdma_post_wait.$(OBJEXT)
 @TCA_TRUE@am__objects_3 = xmp_reflect_tca.$(OBJEXT)
+@ENABLE_XACC_TRUE@am__objects_4 = xmp_reflect_gpu.$(OBJEXT) \
+@ENABLE_XACC_TRUE@	xmp_gpu_pack.$(OBJEXT)
 am_libxmp_a_OBJECTS = xmp_lib.$(OBJEXT) xmp_util.$(OBJEXT) \
 	xmp_world.$(OBJEXT) xmp_nodes_stack.$(OBJEXT) \
 	xmp_nodes.$(OBJEXT) xmp_template.$(OBJEXT) \
@@ -170,7 +175,8 @@ am_libxmp_a_OBJECTS = xmp_lib.$(OBJEXT) xmp_util.$(OBJEXT) \
 	xmp_runtime.$(OBJEXT) xmp_tlog_runtime.$(OBJEXT) \
 	xmp_io.$(OBJEXT) xmp_reflect.$(OBJEXT) \
 	xmp_pack_vector.$(OBJEXT) xmp_reflect_acc.$(OBJEXT) \
-	$(am__objects_1) $(am__objects_2) $(am__objects_3)
+	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
+	$(am__objects_4)
 libxmp_a_OBJECTS = $(am_libxmp_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -277,6 +283,7 @@ ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 ENABLE_ACC = @ENABLE_ACC@
 ENABLE_ATOOL = @ENABLE_ATOOL@
+ENABLE_XACC = @ENABLE_XACC@
 EXEEXT = @EXEEXT@
 F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
@@ -514,7 +521,8 @@ XMP_INC_DIR = ../include
 TLOG_INC_DIR = $(top_builddir)/@LIBTLOG_MPI_DIR@
 lib_LIBRARIES = libxmp.a
 AM_CFLAGS = -I$(XMP_INC_DIR) -I$(TLOG_INC_DIR) @BECC_OPTION@ \
-	$(am__append_2) $(am__append_4) $(am__append_6)
+	$(am__append_2) $(am__append_4) $(am__append_6) \
+	$(am__append_8)
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS)
 
@@ -527,12 +535,14 @@ libxmp_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h \
 	xmp_array_section.c xmp_loop.c xmp_gmove.c xmp_math_function.c \
 	xmp_runtime.c xmp_tlog_runtime.c xmp_io.c xmp_reflect.c \
 	xmp_pack_vector.c xmp_reflect_acc.c $(am__append_1) \
-	$(am__append_3) $(am__append_5)
+	$(am__append_3) $(am__append_5) $(am__append_7)
 @GASNET_TRUE@AM_LDFLAGS = $(GASNET_LDFLAGS) $(GASNET_LIBS)
+@ENABLE_XACC_TRUE@GPUCC = @GPU_CMD@
+@ENABLE_XACC_TRUE@GPUCFLAGS = @GPU_CFLAGS@
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .lo .o .obj
+.SUFFIXES: .c .cu .lo .o .obj
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -827,6 +837,8 @@ uninstall-am: uninstall-libLIBRARIES
 
 
 @GASNET_TRUE@    include @GASNET_PREFIX@/include/@GASNET_CONDUIT@-conduit/@GASNET_CONDUIT@-seq.mak
+@ENABLE_XACC_TRUE@.cu.o:
+@ENABLE_XACC_TRUE@	$(GPUCC) $(GPUCFLAGS) -I$(XMP_INC_DIR) -c $@ $<
 
 xmp_pack_vector.o: xmp_pack_vector.c
 	@BECC@ $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \

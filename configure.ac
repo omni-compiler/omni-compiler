@@ -486,6 +486,10 @@ AC_ARG_ENABLE(atool,
     [  --enable-atool                 enable atool (false default).],
     [doatool=$enableval], [doatool=no])
 
+AC_ARG_ENABLE(xacc,
+    [  --enable-xacc                  enable XcalableACC (false default).],
+    [xacc=$enableval], [xacc=no])
+
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
@@ -521,6 +525,13 @@ if test "x${doatool}" = "xyes"; then
 fi
 AM_CONDITIONAL(ENABLE_ATOOL, test "x${doatool}" = "xyes")
 AC_SUBST(ENABLE_ATOOL)
+
+#ENABLE_XACC=0
+#if test "x${xacc}" = "xyes"; then
+#   ENABLE_XACC=1
+#fi
+AM_CONDITIONAL(ENABLE_XACC, test "x${xacc}" = "xyes")
+AC_SUBST(ENABLE_XACC)
 
 # check gcc version
 AC_MSG_CHECKING(gcc version)
