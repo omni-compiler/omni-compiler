@@ -103,6 +103,10 @@ extern _XMP_coarray_list_t *_XMP_coarray_list_tail;
 extern void _XMP_coarray_initialize(int, char **);
 extern void _XMP_coarray_finalize(const int);
 
+// xmp_intrinsic.c
+extern void xmp_transpose(void *dst_p, void *src_p, int opt);
+extern void xmp_matmul(void *x_p, void *a_p, void *b_p);
+
 // xmp_loop.c
 extern int _XMP_sched_loop_template_width_1(int ser_init, int ser_cond, int ser_step,
                                             int *par_init, int *par_cond, int *par_step,

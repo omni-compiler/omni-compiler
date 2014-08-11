@@ -334,4 +334,8 @@ extern void _XMP_gpu_sync(void *desc, int direction);
 extern void _XMP_gpu_pack_shadow_NORMAL(void *desc, void **lo_buffer, void **hi_buffer, int array_index);
 extern void _XMP_gpu_unpack_shadow_NORMAL(void *desc, void *lo_buffer, void *hi_buffer, int array_index);
 
+// xmp_intrinsic.c
+extern void xmp_transpose(void *dst_d, void *src_d, int opt);
+extern void xmp_matmul(void *x_p, void *a_p, void *b_p);
+
 #endif // _XMP_RUNTIME_FUNC_DECL

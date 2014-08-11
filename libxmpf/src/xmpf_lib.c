@@ -5,6 +5,7 @@
  */
 
 #include "xmpf_internal.h"
+#include "xmp_internal.h"
 //#include "xmpf.h"
 
 typedef void *xmp_desc_t;
@@ -177,6 +178,10 @@ int xmp_nodes_size_(xmp_desc_t **d, int *dim, int *size){
 
 void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
 
+#if 1
+   xmp_transpose(*dst_d, *src_d, *opt);
+   return;
+#else
   _XMP_array_t *dst_array = *(_XMP_array_t **)dst_d;
   _XMP_array_t *src_array = *(_XMP_array_t **)src_d;
 
@@ -266,4 +271,10 @@ void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
 
 
   return;
+#endif
+}
+
+
+void xmp_matmul_(_XMP_array_t **x_d, _XMP_array_t **a_d, _XMP_array_t **b_d){
+   xmp_matmul(*x_d, *a_d, *b_d);
 }
