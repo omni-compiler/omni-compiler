@@ -31,6 +31,17 @@ if TCA
     AM_CFLAGS        += -D_XMP_TCA -I@TCA_PREFIX@
 endif
 
+if ENABLE_XACC
+    libxmp_a_SOURCES += xmp_reflect_gpu.c xmp_gpu_pack.cu
+    AM_CFLAGS        += -D_XMP_XACC -I@GPGPU_PREFIX@
+    GPUCC             = @GPU_CMD@
+    GPUCFLAGS         = @GPU_CFLAGS@
+.cu.o:
+	$(GPUCC) $(GPUCFLAGS) -I$(XMP_INC_DIR) -c $@ $<
+endif
+
+
+
 xmp_pack_vector.o: xmp_pack_vector.c
 	@BECC@ $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) @BECC_OMP_OPTION@ -c $<
