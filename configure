@@ -772,6 +772,9 @@ AIX_OPT
 NATIVE_DOPT
 PPCC_OPT
 PPCC
+ENABLE_XACC
+ENABLE_XACC_FALSE
+ENABLE_XACC_TRUE
 ENABLE_ATOOL
 ENABLE_ATOOL_FALSE
 ENABLE_ATOOL_TRUE
@@ -955,6 +958,7 @@ enable_openacc
 with_cppflag
 with_backend_cflag
 enable_atool
+enable_xacc
 with_backend_cc
 with_backend_fc
 enable_mreal
@@ -1626,6 +1630,7 @@ Optional Features:
   --enable-xmpgpu                enable XcalableMP-GPU (false default).
   --enable-openacc               enable OpenACC (false default).
   --enable-atool                 enable atool (false default).
+  --enable-xacc                  enable XcalableACC (false default).
   --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default).
 
 Optional Packages:
@@ -12793,6 +12798,14 @@ else
 fi
 
 
+# Check whether --enable-xacc was given.
+if test "${enable_xacc+set}" = set; then :
+  enableval=$enable_xacc; xacc=$enableval
+else
+  xacc=no
+fi
+
+
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -17026,6 +17039,20 @@ fi
 else
   ENABLE_ATOOL_TRUE='#'
   ENABLE_ATOOL_FALSE=
+fi
+
+
+
+#ENABLE_XACC=0
+#if test "x${xacc}" = "xyes"; then
+#   ENABLE_XACC=1
+#fi
+ if test "x${xacc}" = "xyes"; then
+  ENABLE_XACC_TRUE=
+  ENABLE_XACC_FALSE='#'
+else
+  ENABLE_XACC_TRUE='#'
+  ENABLE_XACC_FALSE=
 fi
 
 
@@ -26400,6 +26427,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_ATOOL_TRUE}" && test -z "${ENABLE_ATOOL_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_ATOOL\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_XACC_TRUE}" && test -z "${ENABLE_XACC_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_XACC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${FJRDMA_TRUE}" && test -z "${FJRDMA_FALSE}"; then
