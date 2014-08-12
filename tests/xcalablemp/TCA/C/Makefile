@@ -16,6 +16,8 @@ all default: $(EXES)
 run: $(EXES)
 	$(XRUN) -n 2 ./reflect_acc_1.x
 	$(XRUN) -n 8 ./reflect_acc_2.x
+	$(XRUN) -n 4 ./reflect_acc_2_dup_1.x
+	$(XRUN) -n 4 ./reflect_acc_2_dup_2.x
 
 clean:
 	rm -f $(EXES) $(OBJS)
