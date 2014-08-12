@@ -23,7 +23,7 @@ int main()
   int lo_shadow_index = width * (node_id-1) - 1;
   int hi_shadow_index = width * (node_id);
   a[lo_shadow_index] = a[hi_shadow_index] = DUMMY_VAL;
-
+#pragma xmp barrier
 #pragma acc data copy(a)
   {
 #pragma xmp reflect_init (a) acc

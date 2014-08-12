@@ -50,6 +50,7 @@ int main(int argc, char **argv)
     for(int j=hi_shadow_index_2;j<hi_shadow_index_2;j++)
       a[i][j] = DUMMY_VAL;
 
+#pragma xmp barrier
 #pragma acc data copy(a)
   {
 #pragma xmp reflect_init (a) acc
