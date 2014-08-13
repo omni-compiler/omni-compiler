@@ -286,6 +286,9 @@ static int _XMP_compare_nodes(_XMP_nodes_t *a, _XMP_nodes_t *b) {
   return _XMP_N_INT_TRUE;
 }
 
+#include <stdlib.h>
+#include <stdio.h>
+
 _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim, int *dim_size, int is_static) {
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_dup(MPI_COMM_WORLD, comm);
@@ -295,6 +298,42 @@ _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim, int *dim_size, int is_stati
   // calc inherit info
   n->inherit_nodes = NULL;
   n->inherit_info = NULL;
+
+  // set dim_size if XMP_NODE_SIZEn is set.
+
+  if (!is_static){
+
+    is_static = _XMP_N_INT_TRUE;
+
+    for (int i = 0; i < dim; i++){
+
+      if (dim_size[i] == -1){
+
+	char name[20];
+	sprintf(name, "XMP_NODE_SIZE%d", i);
+	char *size = getenv(name);
+
+	if (!size){
+	  if (i == dim - 1){
+	    is_static = _XMP_N_INT_FALSE;
+	    break;
+	  }
+	  else _XMP_fatal("XMP_NODE_SIZE not specified although '*' is in the dimension of a node array\n");
+	}
+	else {
+	  dim_size[i] = atoi(size);
+	  if (dim_size[i] <= 0 || dim_size[i] > _XMP_world_size){
+	    _XMP_fatal("Wrong value in XMP_NODE_SIZE\n");
+	  }
+	}
+
+      }
+
+    }
+
+  }
+
+  //for (int i = 0; i < dim; i++) xmpf_dbg_printf("%d (%d) %d\n", dim_size[i], i, is_static);
 
   // calc info
   _XMP_init_nodes_info(n, dim_size, is_static);
@@ -465,12 +504,17 @@ void _XMP_init_nodes_STATIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...) {
 
 void _XMP_init_nodes_DYNAMIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...) {
   int dim_size[dim - 1];
+  int *dim_size_p[dim];
 
   va_list args;
   va_start(args, dim);
-  for (int i = 0; i < dim - 1; i++) {
+  for (int i = 0; i < dim; i++) {
+    dim_size_p[i] = NULL;
     int dim_size_temp = va_arg(args, int);
-    if (dim_size_temp <= 0) {
+    if (dim_size_temp == -1){
+      dim_size_p[i] = va_arg(args, int *);
+    }
+    else if (dim_size_temp <= 0) {
       _XMP_fatal("<nodes-size> should be less or equal to zero");
     }
 
@@ -481,8 +525,12 @@ void _XMP_init_nodes_DYNAMIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...) {
     _XMP_init_nodes_struct_GLOBAL(dim, dim_size, _XMP_N_INT_FALSE);
   *nodes = n;
 
-  int *last_dim_size_p = va_arg(args, int *);
-  *last_dim_size_p = n->info[dim - 1].size;
+  /* int *last_dim_size_p = va_arg(args, int *); */
+  /* *last_dim_size_p = n->info[dim - 1].size; */
+  for (int i = 0; i < dim; i++){
+    if (dim_size_p[i]) *dim_size_p[i] = n->info[i].size;
+  }
+
   for (int i = 0; i < dim; i++) {
     int *rank_p = va_arg(args, int *);
     *rank_p = n->info[i].rank;

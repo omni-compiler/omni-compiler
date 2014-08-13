@@ -1,8 +1,8 @@
 XFC     = xmpf90 -O2
 XRUN    = mpirun
-EXES    = exit.x module_test.x module_test0.x arg.x
+EXES    = exit.x module_test.x module_test0.x arg.x dnodes.x
 
-all: module_test.x exit.x module_test0.x arg.x external.o interface.o xmp_lib.o
+all: module_test.x exit.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o
 
 module_test0.x: module0.o main.o
 	$(XFC) -o module_test0.x module0.o main.o
@@ -39,6 +39,12 @@ arg.x: arg.o
 arg.o: arg.f90
 	$(XFC) -c arg.f90
 
+dnodes.x: dnodes.o
+	$(XFC) -o dnodes.x dnodes.o
+
+dnodes.o: dnodes.f90
+	$(XFC) -c dnodes.f90
+
 interface.o: interface.f90
 	$(XFC) -c interface.f90
 
@@ -50,6 +56,9 @@ run: $(EXES)
 	$(XRUN) -np 2 ./exit.x
 	$(XRUN) -np 2 ./module_test0.x
 	$(XRUN) -np 4 ./arg.x
+	export XMP_NODE_SIZE0=2; \
+	export XMP_NODE_SIZE1=2; \
+	$(XRUN) -np 8 ./dnodes.x
 
 clean:
 	rm -f $(EXES) *.o *.*mod
