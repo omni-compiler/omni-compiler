@@ -993,7 +993,7 @@ public class XMPrewriteExpr {
     Xobject e = null;
 
     if(entity != null){
-      if(entity.getKind() == XMPobject.TEMPLATE){
+      if(entity.getKind() == XMPobject.TEMPLATE || entity.getKind() == XMPobject.NODES){
 	Ident XmpDescOfFuncId = _globalDecl.declExternFunc("_XMP_desc_of", myExpr.Type());
 	e = XmpDescOfFuncId.Call(Xcons.List(entity.getDescId().Ref()));
       } 
