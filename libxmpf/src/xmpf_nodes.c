@@ -47,7 +47,14 @@ void xmpf_nodes_dim_triplet__(_XMP_nodes_t *n_desc, int *i_dim, int *shrink,
 
 void xmpf_nodes_init_global__(_XMP_nodes_t **n_desc)
 {
-  int is_static = (_xmpf_nodes_dim_size[_xmpf_nodes_n_dim - 1] != -1);
+  int is_static = 1;
+
+  for (int i = 0; i < _xmpf_nodes_n_dim; i++){
+    if (_xmpf_nodes_dim_size[i] == -1){
+      is_static = 0;
+      break;
+    }
+  }
   
   *n_desc = _XMP_init_nodes_struct_GLOBAL(_xmpf_nodes_n_dim,
 					  _xmpf_nodes_dim_size,is_static);

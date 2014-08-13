@@ -94,12 +94,14 @@ public class XMPnodes extends XMPobject {
     boolean isDynamic = false;
     for(int k = 0; k < _dim; k++){
       if(_sizeVector.elementAt(k).isStar()){
-	if(k == (_dim-1))
-	  isDynamic = true;
-	else {
-	  XMP.errorAt(pb,"* must be only in the last dimension in nodes");
-	  return;
-	}
+	isDynamic = true;
+	break;
+	// if(k == (_dim-1))
+	//   isDynamic = true;
+	// else {
+	//   XMP.errorAt(pb,"* must be only in the last dimension in nodes");
+	//   return;
+	// }
       }
     }
 
