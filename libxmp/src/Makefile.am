@@ -32,7 +32,7 @@ if TCA
 endif
 
 if ENABLE_XACC
-    libxmp_a_SOURCES += xmp_reflect_gpu.c xmp_gpu_pack.cu
+    libxmp_a_SOURCES += xmp_reflect_gpu.c xmp_gpu_pack.cu xmp_reduce_gpu.c
     AM_CFLAGS        += -D_XMP_XACC -I@GPGPU_PREFIX@
     GPUCC             = @GPU_CMD@
     GPUCFLAGS         = @GPU_CFLAGS@

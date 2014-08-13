@@ -85,7 +85,7 @@ target_triplet = @target@
 @FJRDMA_TRUE@am__append_4 = -std=gnu99 -D_XMP_COARRAY_FJRDMA
 @TCA_TRUE@am__append_5 = xmp_reflect_tca.c
 @TCA_TRUE@am__append_6 = -D_XMP_TCA -I@TCA_PREFIX@
-@ENABLE_XACC_TRUE@am__append_7 = xmp_reflect_gpu.c xmp_gpu_pack.cu
+@ENABLE_XACC_TRUE@am__append_7 = xmp_reflect_gpu.c xmp_gpu_pack.cu xmp_reduce_gpu.c
 @ENABLE_XACC_TRUE@am__append_8 = -D_XMP_XACC -I@GPGPU_PREFIX@
 subdir = ./libxmp/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
@@ -150,7 +150,7 @@ am__libxmp_a_SOURCES_DIST = $(XMP_INC_DIR)/xmp_internal.h \
 	xmp_gasnet_lock.c xmp_post_wait.c xmp_gasnet_post_wait.c \
 	xmp_fjrdma_coarray_set.c xmp_fjrdma_coarray_do.c \
 	xmp_fjrdma_post_wait.c xmp_reflect_tca.c xmp_reflect_gpu.c \
-	xmp_gpu_pack.cu
+	xmp_gpu_pack.cu xmp_reduce_gpu.c
 @GASNET_TRUE@am__objects_1 = xmp_coarray_set.$(OBJEXT) \
 @GASNET_TRUE@	xmp_coarray_do.$(OBJEXT) \
 @GASNET_TRUE@	xmp_gasnet_coarray.$(OBJEXT) xmp_lock.$(OBJEXT) \
@@ -164,7 +164,8 @@ am__libxmp_a_SOURCES_DIST = $(XMP_INC_DIR)/xmp_internal.h \
 @FJRDMA_TRUE@	xmp_fjrdma_post_wait.$(OBJEXT)
 @TCA_TRUE@am__objects_3 = xmp_reflect_tca.$(OBJEXT)
 @ENABLE_XACC_TRUE@am__objects_4 = xmp_reflect_gpu.$(OBJEXT) \
-@ENABLE_XACC_TRUE@	xmp_gpu_pack.$(OBJEXT)
+@ENABLE_XACC_TRUE@	xmp_gpu_pack.$(OBJEXT) \
+@ENABLE_XACC_TRUE@	xmp_reduce_gpu.$(OBJEXT)
 am_libxmp_a_OBJECTS = xmp_lib.$(OBJEXT) xmp_util.$(OBJEXT) \
 	xmp_world.$(OBJEXT) xmp_nodes_stack.$(OBJEXT) \
 	xmp_nodes.$(OBJEXT) xmp_template.$(OBJEXT) \

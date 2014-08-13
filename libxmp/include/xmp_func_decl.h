@@ -237,6 +237,13 @@ extern void _XMP_reduce_FLMM_CLAUSE(void *data_addr, int count, int datatype, in
 extern int _XMP_init_reduce_comm_NODES(void *nodes, ...);
 extern int _XMP_init_reduce_comm_TEMPLATE(void *template, ...);
 
+// xmp_reduce_gpu.c
+extern void _XMP_reduce_gpu_NODES_ENTIRE(void *nodes, void *dev_addr, int count, int datatype, int op);
+//extern void _XMP_reduce_gpu_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op, int num_locs, ...);
+extern void _XMP_reduce_gpu_CLAUSE(void *dev_addr, int count, int datatype, int op);
+//extern void _XMP_reduce_gpu_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, int num_locs, ...);
+
+
 // xmp_reflect.c
 extern void _XMP_set_reflect__(void *a, int dim, int lwidth, int uwidth, int is_periodic);
 extern void _XMP_reflect__(char *a);
@@ -251,6 +258,7 @@ extern char *_XMP_desc_of(void *p);
 
 // xmp_shadow.c
 extern void _XMP_init_shadow(void *array, ...);
+
 extern void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_addr, void *array_desc, int array_index);
 extern void _XMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_addr, void *array_desc, int array_index);
 extern void _XMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,
