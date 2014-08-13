@@ -8,7 +8,7 @@ long b[2], b_test[2];
 float c[2][3], c_test[2][3];
 double d[2][3][4], d_test[2][3][4];
 #pragma xmp coarray a,b,c,d : [*]
-int *status, return_val = 0;
+int status, return_val = 0;
 
 void initialize_coarrays(int me){
   int i, j, k, n = 100 * (me - 1);
@@ -36,7 +36,7 @@ void initialize_coarrays(int me){
       }
     }
   }
-  xmp_sync_all(status);
+  xmp_sync_all(&status);
 }
 
 void communicate_1(int me){
@@ -46,7 +46,7 @@ void communicate_1(int me){
     tmp = a;
     a = a:[2];
   }
-  xmp_sync_all(status);
+  xmp_sync_all(&status);
   if(me == 1){  // put
     a:[2] = tmp;
   }
@@ -58,7 +58,7 @@ void communicate_1(int me){
     a_test = 1;
   }
   
-  xmp_sync_all(status);
+  xmp_sync_all(&status);
 }
 
 void check_1(int me){
@@ -74,7 +74,7 @@ void communicate_2(int me){
   if(me == 2){
     long tmp = 99;
     b[0]:[1] = tmp;   // put
-    xmp_sync_memory(status);
+    xmp_sync_memory(&status);
     b[1] = b[0]:[1];  // get
   }
   
@@ -85,7 +85,7 @@ void communicate_2(int me){
     b_test[1] = 99;
   }
   
-  xmp_sync_all(status);
+  xmp_sync_all(&status);
 }
 
 void check_2(int me){
@@ -107,7 +107,7 @@ void communicate_3(int me){
   float tmp[2][3];
 
   tmp[0][0] = 9.1;
-  xmp_sync_all(status);
+  xmp_sync_all(&status);
   if(me == 1){
     c[1][1]:[2] = tmp[0][0]; // put
 	} 
@@ -119,7 +119,7 @@ void communicate_3(int me){
     c_test[1][1] = 9.1;
     c_test[1][2] = 3;
   }
-  xmp_sync_all(status);
+  xmp_sync_all(&status);
 }
 
 void check_3(int me){
@@ -142,7 +142,7 @@ void check_3(int me){
 void communicate_4(int me){
   int dest = 2, src = 1;
 
-  xmp_sync_all(status);
+  xmp_sync_all(&status);
   if(me == src){
     double tmp;
     tmp = d[0][1][2];
@@ -163,7 +163,7 @@ void communicate_4(int me){
   else if(me == src){
     d_test[1][1][2] = 118;
   }
-  xmp_sync_all(status);
+  xmp_sync_all(&status);
 }
 
 void check_4(int me){

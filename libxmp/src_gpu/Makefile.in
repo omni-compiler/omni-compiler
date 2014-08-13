@@ -149,8 +149,6 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include -I$(top_builddir)/Driver/atool/src/include/nata
 depcomp =
 am__depfiles_maybe =
-COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -218,7 +216,7 @@ BECC_OPTION = @BECC_OPTION@
 BEFC = @BEFC@
 BEFC_MODINC = @BEFC_MODINC@
 BEFC_OPTION = @BEFC_OPTION@
-CC = @CC@
+CC = @BECC@
 CCDEPMODE = @CCDEPMODE@
 CC_LIB = @CC_LIB@
 CFLAGS = @CFLAGS@
@@ -244,6 +242,7 @@ ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 ENABLE_ACC = @ENABLE_ACC@
 ENABLE_ATOOL = @ENABLE_ATOOL@
+ENABLE_XACC = @ENABLE_XACC@
 EXEEXT = @EXEEXT@
 F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
@@ -259,6 +258,7 @@ GASNET_LDFLAGS = @GASNET_LDFLAGS@
 GASNET_LIBS = @GASNET_LIBS@
 GASNET_PREFIX = @GASNET_PREFIX@
 GPGPU_PREFIX = @GPGPU_PREFIX@
+GPU_CFLAGS = @GPU_CFLAGS@
 GPU_CMD = @GPU_CMD@
 GREP = @GREP@
 INCLUDECOM = @INCLUDECOM@
@@ -309,6 +309,7 @@ MKDIR = @MKDIR@
 MKDIR_P = @MKDIR_P@
 MKRULESDIR = @MKRULESDIR@
 MM5TGT = @MM5TGT@
+NATIVE_DOPT = @NATIVE_DOPT@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
@@ -350,6 +351,8 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PERL5 = @PERL5@
 POW_LIB = @POW_LIB@
+PPCC = @PPCC@
+PPCC_OPT = @PPCC_OPT@
 PPTGT = @PPTGT@
 RANLIB = @RANLIB@
 RM = @RM@
@@ -370,6 +373,7 @@ SR16000 = @SR16000@
 STRIP = @STRIP@
 SUPERUX = @SUPERUX@
 TARGET_ARCH = @TARGET_ARCH@
+TCA_PREFIX = @TCA_PREFIX@
 TOPDIR = @TOPDIR@
 TYPE_INT16 = @TYPE_INT16@
 TYPE_INT32 = @TYPE_INT32@
@@ -474,13 +478,17 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 XMP_INC_DIR = ../include
 GPUCC = @GPU_CMD@
+GPUCFLAGS = @GPU_CFLAGS@
+AM_CFLAGS = -I$(XMP_INC_DIR) @BECC_OPTION@ #-I$(TLOG_INC_DIR) 
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS)
+
 lib_LIBRARIES = libxmp_gpu.a
 libxmp_gpu_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h \
                                   $(XMP_INC_DIR)/xmp_data_struct.h xmp_gpu_internal.h \
                                   xmp_gpu_lib.c xmp_gpu_shadow.c
 
 libxmp_gpu_a_LIBADD = xmp_gpu_runtime.o xmp_gpu_util.o xmp_gpu_data.o xmp_gpu_sync.o xmp_gpu_array_section.o
-AM_CFLAGS = -Wall -std=c99 -I$(XMP_INC_DIR)
 all: all-am
 
 .SUFFIXES:
@@ -779,7 +787,7 @@ uninstall-am: uninstall-libLIBRARIES
 
 
 .cu.o:
-	$(GPUCC) -I$(XMP_INC_DIR) -O2 -c $@ $<
+	$(GPUCC) $(GPUCFLAGS) -I$(XMP_INC_DIR) -c $@ $<
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

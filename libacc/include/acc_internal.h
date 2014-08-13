@@ -7,6 +7,8 @@
 //debug flag
 //#define DEBUG
 
+#define ACC_ASYNC_SYNC (-1)
+#define ACC_ASYNC_NOVAL (-2)
 
 //device type
 typedef enum acc_device_t{

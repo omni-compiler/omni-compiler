@@ -6,33 +6,35 @@
 #include "mpi.h"
 #include "mpi-ext.h"
 #include "xmp_internal.h"
-#include "xmp.h"
-#define MEMID 0
 #define TAG 0
-static int FLAG_NIC= (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN);
-static int SEND_NIC= FJMPI_RDMA_LOCAL_NIC0;
+#define MAXSIZE 16777212
 static int _num_of_puts = 0;
 static struct FJMPI_Rdma_cq cq;
 
 void _XMP_fjrdma_shortcut_put(const int target_image, const uint64_t dst_point, const uint64_t src_point,
-			      const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, const int transfer_size)
+			      const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, const size_t transfer_size)
 {
+  if(transfer_size > MAXSIZE){
+    fprintf(stderr, "transfer_size is too large %zu\n", transfer_size);
+    exit(1);
+  }
+
   uint64_t raddr = (uint64_t)dst_desc->addr[target_image] + dst_point;
   uint64_t laddr = (uint64_t)src_desc->addr[_XMP_world_rank] + src_point;
   FJMPI_Rdma_put(target_image, TAG, raddr, laddr, transfer_size, FLAG_NIC);
   _num_of_puts++;
 }
 
-static void XMP_fjrdma_from_c_to_c_put(int target_image, uint64_t dst_point, uint64_t src_point,
-				       _XMP_coarray_t *dst_desc, void *src, _XMP_coarray_t *src_desc,
-				       long long transfer_size)
+static void XMP_fjrdma_from_c_to_c_put(const int target_image, const uint64_t dst_point, const uint64_t src_point,
+				       const _XMP_coarray_t *dst_desc, const void *src, const _XMP_coarray_t *src_desc,
+				       const size_t transfer_size)
 /* If a local array is a coarray, src_desc != NULL. */
 {
   uint64_t raddr = (uint64_t)dst_desc->addr[target_image] + dst_point;
   uint64_t laddr;
 
   if(src_desc == NULL)
-    laddr = FJMPI_Rdma_reg_mem(MEMID, (void *)((char *)src+src_point), (size_t)transfer_size);
+    laddr = FJMPI_Rdma_reg_mem(MEMID, (void *)((char *)src+src_point), transfer_size);
   else
     laddr = (uint64_t)src_desc->addr[_XMP_world_rank] + src_point;
 
@@ -42,11 +44,15 @@ static void XMP_fjrdma_from_c_to_c_put(int target_image, uint64_t dst_point, uin
     FJMPI_Rdma_dereg_mem(MEMID);
 }
 
-void _XMP_fjrdma_put(int dst_continuous, int src_continuous, int target_image, int dst_dims, int src_dims, 
-		     _XMP_array_section_t *dst_info, _XMP_array_section_t *src_info,
-		     _XMP_coarray_t *dst_desc, void *src, _XMP_coarray_t *src_desc, long long length)
+void _XMP_fjrdma_put(const int dst_continuous, const int src_continuous, const int target_image, const int dst_dims, const int src_dims, 
+		     const _XMP_array_section_t *dst_info, const _XMP_array_section_t *src_info,
+		     const _XMP_coarray_t *dst_desc, const void *src, const _XMP_coarray_t *src_desc, const int length)
 {
-  long long transfer_size = dst_desc->elmt_size * length;
+  size_t transfer_size = dst_desc->elmt_size * length;
+  if(transfer_size > MAXSIZE){
+    fprintf(stderr, "transfer_size is too large %zu\n", transfer_size);
+    exit(1);
+  }
   _num_of_puts++;
 
   if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
@@ -61,8 +67,13 @@ void _XMP_fjrdma_put(int dst_continuous, int src_continuous, int target_image, i
 
 void _XMP_fjrdma_shortcut_get(const int target_image, const uint64_t dst_point, const uint64_t src_point,
 			      const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
-			      const int transfer_size)
+			      const size_t transfer_size)
 {
+  if(transfer_size > MAXSIZE){
+    fprintf(stderr, "transfer_size is too large %d\n", transfer_size);
+    exit(1);
+  }
+
   uint64_t raddr = (uint64_t)src_desc->addr[target_image] + src_point;
   uint64_t laddr = (uint64_t)dst_desc->addr[_XMP_world_rank] + dst_point;
   
@@ -74,16 +85,16 @@ void _XMP_fjrdma_shortcut_get(const int target_image, const uint64_t dst_point, 
   while(FJMPI_Rdma_poll_cq(SEND_NIC, &cq) != FJMPI_RDMA_NOTICE);
 }
 
-static void XMP_fjrdma_from_c_to_c_get(int target_image, uint64_t dst_point, uint64_t src_point,
-				       void *dst, _XMP_coarray_t *dst_desc, _XMP_coarray_t *src_desc, 
-				       long long transfer_size)
+static void XMP_fjrdma_from_c_to_c_get(const int target_image, const uint64_t dst_point, const uint64_t src_point,
+				       const void *dst, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
+				       const size_t transfer_size)
 /* If a local array is a coarray, dst_desc != NULL. */
 {
   uint64_t raddr = (uint64_t)src_desc->addr[target_image] + src_point;
   uint64_t laddr;
 
   if(dst_desc == NULL)
-    laddr = FJMPI_Rdma_reg_mem(MEMID, (void *)((char *)dst+dst_point), (size_t)transfer_size);
+    laddr = FJMPI_Rdma_reg_mem(MEMID, (void *)((char *)dst+dst_point), transfer_size);
   else
     laddr = (uint64_t)dst_desc->addr[_XMP_world_rank] + dst_point;
   
@@ -99,11 +110,15 @@ static void XMP_fjrdma_from_c_to_c_get(int target_image, uint64_t dst_point, uin
     FJMPI_Rdma_dereg_mem(MEMID);
 }
 
-void _XMP_fjrdma_get(int src_continuous, int dst_continuous, int target_image, int src_dims, int dst_dims, 
-		     _XMP_array_section_t *src_info, _XMP_array_section_t *dst_info,
-		     _XMP_coarray_t *src_desc, void *dst, _XMP_coarray_t *dst_desc, long long length)
+void _XMP_fjrdma_get(const int src_continuous, const int dst_continuous, const int target_image, const int src_dims, const int dst_dims, 
+		     const _XMP_array_section_t *src_info, const _XMP_array_section_t *dst_info,
+		     const _XMP_coarray_t *src_desc, const void *dst, const _XMP_coarray_t *dst_desc, const int length)
 {
-  long long transfer_size = src_desc->elmt_size * length;
+  size_t transfer_size = src_desc->elmt_size * length;
+  if(transfer_size > MAXSIZE){
+    fprintf(stderr, "transfer_size is too large %zu\n", transfer_size);
+    exit(1);
+  }
   
   if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
     uint64_t dst_point = (uint64_t)get_offset(dst_info, dst_dims);
@@ -117,14 +132,10 @@ void _XMP_fjrdma_get(int src_continuous, int dst_continuous, int target_image, i
 
 void _XMP_fjrdma_sync_memory()
 {
-  int num_of_notice = 0;
-
-  while(num_of_notice != _num_of_puts){
+  while(_num_of_puts != 0){
     if(FJMPI_Rdma_poll_cq(SEND_NIC, &cq) == FJMPI_RDMA_NOTICE)
-      num_of_notice++;
+      _num_of_puts--;
   }
-
-  _num_of_puts = 0;
 }
 
 void _XMP_fjrdma_sync_all()

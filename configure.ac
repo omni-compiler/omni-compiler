@@ -1,6 +1,6 @@
-dnl    This file is an input file used by the GNU "autoconf" program to
-dnl    generate the file "configure", which is run during Omni installation
-dnl    to configure the system for the local environment.
+#    This file is an input file used by the GNU "autoconf" program to
+#    generate the file "configure", which is run during Omni installation
+#    to configure the system for the local environment.
 
 AC_PREREQ(2.60)
 LT_PREREQ(2.4)
@@ -8,7 +8,7 @@ LT_PREREQ(2.4)
 # --------------------------------------------------------------------
 # Let the initiation begin....
 
-AC_INIT([Omni Compiler], [0.8.0], [xmp-users@hpcs.cs.tsukuba.ac.jp], [omni_xmp])
+AC_INIT([Omni Compiler], [0.8.0], [h-murai@riken.jp], [omni])
 
 AC_CONFIG_AUX_DIR([./buildutils])
 AC_CONFIG_MACRO_DIR([./buildutils])
@@ -35,23 +35,11 @@ AC_SUBST(LIBTOOL_DEPS)
 AM_INIT_AUTOMAKE([no-define foreign])
 AM_MAINTAINER_MODE([enable])
 
-AC_PREFIX_DEFAULT(/usr/local/omni3)
-if test "${prefix}" = "NONE"; then
-	prefix=/usr/local/omni3
-fi
-if test "${exec_prefix}" = "NONE"; then
-    exec_prefix='${prefix}'
-fi
-program_prefix=''
-
 TOPDIR=${ac_pwd}
 AC_SUBST(TOPDIR)
 
 # --------------------------------------------------------------------
-
-# --------------------------------------------------------------------
 # check project dirs
-
 AC_MSG_CHECKING(check XcodeML-Common project exists)
 
 if test -e "XcodeML-Common/Makefile.am"; then
@@ -81,7 +69,6 @@ fi
 AC_SUBST(C_FRONTEND_DIR)
 
 #----
-
 AC_MSG_CHECKING(check C-BackEnd project exists)
 
 if test -e "C-BackEnd/Makefile.am" -a -e "C-BackEnd/ant.properties.in"; then
@@ -98,7 +85,6 @@ fi
 AC_SUBST(C_BACKEND_DIR)
 
 #----
-
 AC_MSG_CHECKING(check F-FrontEnd project exists)
 
 if test -e "F-FrontEnd/src/Makefile.am"; then
@@ -113,7 +99,6 @@ fi
 AC_SUBST(F_FRONTEND_DIR)
 
 #----
-
 AC_MSG_CHECKING(check F-BackEnd project exists)
 
 if test -e "F-BackEnd/Makefile.am" -a -e "F-BackEnd/ant.properties.in"; then
@@ -144,7 +129,6 @@ fi
 AC_SUBST(F_BACKEND_DIR)
 
 #----
-
 AC_MSG_CHECKING(check XcodeML-Exc-Tools project exists)
 
 if test -e "XcodeML-Exc-Tools/Makefile.am" -a -e "XcodeML-Exc-Tools/ant.properties.in"; then
@@ -161,7 +145,6 @@ fi
 AC_SUBST(XCODEML_EXC_TOOLS_DIR)
 
 #----
-
 AC_MSG_CHECKING(check Driver project exists)
 
 if test -e "Driver/src/Makefile.am"; then
@@ -197,30 +180,25 @@ if test -e "Driver/src/Makefile.am"; then
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omfnative)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omflinker)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/omf.conf)
-
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/xmpcc)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/pp.conf.xmp)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/l2x.conf.xmp)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/x2x.conf.xmp)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/native.conf.xmp)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.xmp)
-
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/xmpf90)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/pp.conf.xmpf)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/l2x.conf.xmpf)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/x2x.conf.xmpf)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/native.conf.xmpf)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.xmpf)
-
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/pp.conf.acc)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/l2x.conf.acc)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/x2x.conf.acc)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/native.conf.acc)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.acc)
-
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/setup.conf)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omtranslate)
-
     AC_MSG_RESULT(yes)
 else
     OMDRIVER_DIR=''
@@ -234,19 +212,16 @@ LIBXMP_HEADER_DIR=libxmp/include
 LIBXMP_DIR=libxmp/src
 LIBXMP_THREADS_DIR=libxmp/src_threads
 LIBXMP_GPU_DIR=libxmp/src_gpu
-
 AC_CONFIG_FILES($LIBXMP_HEADER_DIR/Makefile)
 AC_CONFIG_FILES($LIBXMP_DIR/Makefile)
 AC_CONFIG_FILES($LIBXMP_THREADS_DIR/Makefile)
 AC_CONFIG_FILES($LIBXMP_GPU_DIR/Makefile)
-
 AC_SUBST(LIBXMP_HEADER_DIR)
 AC_SUBST(LIBXMP_DIR)
 AC_SUBST(LIBXMP_THREADS_DIR)
 AC_SUBST(LIBXMP_GPU_DIR)
 
 #----
-
 LIBXMPF_HEADER_DIR=libxmpf/include
 LIBXMPF_DIR=libxmpf/src
 #LIBXMPF_THREADS_DIR=libxmpf/src_threads
@@ -261,14 +236,6 @@ AC_SUBST(LIBXMPF_HEADER_DIR)
 AC_SUBST(LIBXMPF_DIR)
 #AC_SUBST(LIBXMPF_THREADS_DIR)
 #AC_SUBST(LIBXMPF_GPU_DIR)
-
-#----
-
-#TESTS_DIR=tests
-#AC_CONFIG_FILES($TESTS_DIR/C-test/Makefile)
-#AC_CONFIG_FILES($TESTS_DIR/tiny/Makefile)
-#AC_CONFIG_FILES($TESTS_DIR/clinpack/Makefile)
-#AC_CONFIG_FILES($TESTS_DIR/F-test/OMP-test/Makefile)
 
 # --------------------------------------------------------------------
 # First of all, check on what system we are running.
@@ -328,8 +295,6 @@ AC_SUBST(OS)
 AC_SUBST(CPU)
 AC_SUBST(MM5TGT)
 AC_SUBST(PPTGT)
-
-# --------------------------------------------------------------------
 
 # --------------------------------------------------------------------
 # OpenMP runtime checking
@@ -448,9 +413,6 @@ esac
 OMPC_LIB_ASM=${ompcLibAsmSrcs}
 
 # --------------------------------------------------------------------
-
-# --------------------------------------------------------------------
-
 genLibTargetTmpl () {
     dir=$1
     tmpl=${dir}/target.tmpl
@@ -463,7 +425,6 @@ genLibTargetTmpl () {
 }
 
 #----
-
 LIBOMPC_DIR="libompc/src"
 AC_CONFIG_FILES($LIBOMPC_DIR/Makefile)
 LIBOMPF_DIR="libompf/src"
@@ -481,7 +442,6 @@ AC_SUBST(LIBTLOG_DIR)
 AC_SUBST(LIBTLOG_MPI_DIR)
 
 #----
-
 LIBACC_DIR=libacc/src
 LIBACC_HEADER_DIR=libacc/include
 AC_CONFIG_FILES($LIBACC_DIR/Makefile)
@@ -526,6 +486,10 @@ AC_ARG_ENABLE(atool,
     [  --enable-atool                 enable atool (false default).],
     [doatool=$enableval], [doatool=no])
 
+AC_ARG_ENABLE(xacc,
+    [  --enable-xacc                  enable XcalableACC (false default).],
+    [xacc=$enableval], [xacc=no])
+
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
@@ -545,7 +509,6 @@ XMP_ENABLE_GPU=0
 if test "x${doXmpGpu}" = "xyes"; then
     XMP_ENABLE_GPU=1
 fi
-
 AM_CONDITIONAL(ENABLE_XMP_GPU, test "x${doXmpGpu}" = "xyes")
 AC_SUBST(XMP_ENABLE_GPU)
 
@@ -555,7 +518,6 @@ if test "x${doOpenAcc}" = "xyes"; then
 fi
 AM_CONDITIONAL(ENABLE_ACC, test "x${doOpenAcc}" = "xyes")
 AC_SUBST(ENABLE_ACC)
-
  
 ENABLE_ATOOL=0
 if test "x${doatool}" = "xyes"; then
@@ -564,11 +526,18 @@ fi
 AM_CONDITIONAL(ENABLE_ATOOL, test "x${doatool}" = "xyes")
 AC_SUBST(ENABLE_ATOOL)
 
+#ENABLE_XACC=0
+#if test "x${xacc}" = "xyes"; then
+#   ENABLE_XACC=1
+#fi
+AM_CONDITIONAL(ENABLE_XACC, test "x${xacc}" = "xyes")
+AC_SUBST(ENABLE_XACC)
+
 # check gcc version
 AC_MSG_CHECKING(gcc version)
-changequote(<<, >>)dnl
+changequote(<<, >>)
 gccVer=`${CC} --version 2>&1 | head -n1 | sed 's:[^ ]* [^ ]* ::' | sed 's: .*::'`
-changequote([, ])dnl
+changequote([, ])
 AC_MSG_RESULT($gccVer)
 
 case $gccVer in
@@ -607,7 +576,7 @@ IS_CRAY="No"
 IS_AIX="No"
 AIX_OPT=""
 if test "$target" != "$host"; then
-  if test "$target" = "Kcomputer-linux-gnu"; then
+  if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
     BECC="mpifccpx"
     BEFC="mpifrtpx"
     BECC_OPTION="-Xg -noansi -Kfast"
@@ -647,11 +616,33 @@ else  # if "--target" option is not used in ./configure
   BEFC="mpif90"
   BEFC_MODINC="-M"
 fi
+
+PPCC="${BECC}"
+PPCC_OPT="-E"
+NATIVE_DOPT="-D_XCALABLEMP"
+
+if test "$target" = "powerpc-ibm-none"; then
+  PPCC="gcc"
+  PPCC_OPT="-E --std=c99"
+  NATIVE_DOPT="-WF,-D_XCALABLEMP"
+fi
+
+if test "$target" = "powerpc64-hitachi-aix"; then
+  NATIVE_DOPT="-WF,-D_XCALABLEMP"
+fi
+
+AC_SUBST(PPCC)
+AC_SUBST(PPCC_OPT)
+AC_SUBST(NATIVE_DOPT)
+
 AC_SUBST(AIX_OPT)
 if test "$IS_AIX" = "Yes"; then
   AC_DEFINE(AIX_64BIT)
   AH_TEMPLATE(AIX_64BIT, [aix int64_t])
 fi
+
+AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
+AC_SUBST(FJRDMA)
 
 # --------------------------------------------------------------------
 # specify Backend C compiler
@@ -687,10 +678,10 @@ AC_SUBST(SUPERUX)
 # Specify Options of Backend C Compiler when compiling XMP code
 IS_PGCC="No"
 AC_MSG_CHECKING([backend C compiler])
-if test "$target" = "Kcomputer-linux-gnu"; then
+if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT="-Xg -noansi"
-  OMC_CONF_LNK_OPT="-Kopenmp"
+  OMC_CONF_LNK_OPT="-Kfast,openmp"
   BECC_OMP_OPTION="-Kfast,openmp"
 elif test "$target" = "Cray-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
@@ -707,22 +698,24 @@ elif test "$target" = "powerpc-ibm-none"; then
   OMC_CONF_NTV_OPT=""
   DRIVER="/bgsys/drivers/ppcfloor"
   OMC_CONF_LNK_OPT="-I/usr/local/bg/include \
-                -L/usr/local/bg/lib -lkek -L${DRIVER}/bgpm/lib/ -lbgpm   -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
-  BECC_OMP_OPTION=""
+                -L/usr/local/bg/lib -lkek -L${DRIVER}/bgpm/lib/ -lbgpm -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
+  BECC_OPTION="-O5"
+  BECC_OMP_OPTION="-O5  -qhot -qsmp=omp -qsimd=auto"
 elif test "$target" = "powerpc64-hitachi-aix"; then
   OMC_CONF_LX2X_OPT=""
-  OMC_CONF_NTV_OPT="-q64"
-  OMC_CONF_LNK_OPT="-q64"
-  BECC_OMP_OPTION="-parallel"
+  OMC_CONF_NTV_OPT="-q64 -qhot -qsmp=omp -qsimd=auto"
+  OMC_CONF_LNK_OPT="-q64 -qhot -qsmp=omp -qsimd=auto"
+  BECC_OPTION="-O5"
+  BECC_OMP_OPTION="-O5 -qhot -qsmp=omp -qsimd=auto"
 else
   chk=`$BECC --version | head -n1`
   case $chk in
-  gcc* | Apple*)
+  cc* | gcc* | Apple*)
     OMC_CONF_LX2X_OPT=""
-    OMC_CONF_NTV_OPT="-std=gnu99 -Wno-implicit -Wno-attributes"
-    OMC_CONF_LNK_OPT="-fopenmp"
-    BECC_OPTION="-std=gnu99 -Wall -Wpointer-arith"
-    BECC_OMP_OPTION="-fopenmp"
+    OMC_CONF_NTV_OPT="-O2 -std=gnu99 -Wno-implicit -Wno-attributes"
+    OMC_CONF_LNK_OPT="-O2 -fopenmp"
+    BECC_OPTION="-O2 -std=gnu99 -Wall -Wpointer-arith"
+    BECC_OMP_OPTION="-O2 -fopenmp"
     ;;
   *ICC*)
     OMC_CONF_LX2X_OPT=""
@@ -732,14 +725,14 @@ else
     BECC_OMP_OPTION="-openmp"
     ;;
   *)
-    chk2=`$BECC --version | head -n2 | tail -n1`
+    chk2=`$BECC --version 2> /dev/null | head -n2 | tail -n1`
     case $chk2 in
     pgcc*)
       OMC_CONF_LX2X_OPT=""
-      OMC_CONF_NTV_OPT="-D_XMP_PGI"
-      OMC_CONF_LNK_OPT="-mp"
-      BECC_OPTION="-c99 -Minform=warn"
-      BECC_OMP_OPTION="-mp"
+      OMC_CONF_NTV_OPT="-O2 -D_XMP_PGI"
+      OMC_CONF_LNK_OPT="-O2 -mp"
+      BECC_OPTION="-O2 -c99 -Minform=warn"
+      BECC_OMP_OPTION="-O2 -mp"
       IS_PGCC="Yes"
       ;;
     *)
@@ -767,9 +760,7 @@ AC_SUBST(OMC_CONF_NTV_OPT)
 AC_SUBST(OMC_CONF_LNK_OPT)
 AC_SUBST(BECC_OMP_OPTION)
 AC_SUBST(BECC_OPTION)
-
 AC_SUBST(IS_PGCC)
-# --------------------------------------------------------------------
 
 # --------------------------------------------------------------------
 # Specify Options of Backend Fortran Compiler
@@ -777,10 +768,10 @@ if test $enableF2F = yes; then
   AC_PROG_FC([${FC},gfortran,ifort])
   AC_MSG_CHECKING([backend Fortran compiler])
 
-  if test "$target" = "Kcomputer-linux-gnu"; then
+  if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
     OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT="-Free"
-    OMF_CONF_LNK_OPT="-Kopenmp"
+    OMF_CONF_NTV_OPT="-Free -Kfast,openmp"
+    OMF_CONF_LNK_OPT="-Kfast,openmp"
   elif test "$target" = "Cray-linux-gnu"; then
     OMF_CONF_LX2X_OPT=""
     OMF_CONF_NTV_OPT="-f free"
@@ -791,14 +782,14 @@ if test $enableF2F = yes; then
     OMF_CONF_LNK_OPT="-Popenmp"
   elif test "$target" = "powerpc-ibm-none"; then
     OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT="-qextname"
+    OMF_CONF_NTV_OPT="-qextname -O5 -qhot -qsmp=omp -qsimd=auto -q64"
     OMF_CONF_LNK_OPT="-I/usr/local/bg/include -g -O3 -qhot -qsmp=omp -qsimd=auto -q64 -qsource -qlist"
   elif test "$target" = "powerpc64-hitachi-aix"; then
     OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT="-qextname -qnomixed -q64"
-    OMF_CONF_LNK_OPT="-q64"
+    OMF_CONF_NTV_OPT="-qextname -qnomixed -q64  -O5 -qhot -qsmp=omp -qsimd=auto"
+    OMF_CONF_LNK_OPT="-q64  -O5 -qhot -qsmp=omp -qsimd=auto"
   else
-    chk=`$BEFC --version | head -n1`
+    chk=`$BEFC --version 2> /dev/null | head -n1`
     case $chk in
     GNU*)
       OMF_CONF_LX2X_OPT="-gnu"
@@ -813,12 +804,12 @@ if test $enableF2F = yes; then
       BEFC_MODINC="-module"
       ;;
     *)
-      chk2=`$BEFC --version | head -n2 | tail -n1`
+      chk2=`$BEFC --version 2>/dev/null | head -n2 | tail -n1`
       case $chk2 in
-      pgfortran*)
+      pgfortran*|pgf95*|pgf90*)
         OMF_CONF_LX2X_OPT=""
-        OMF_CONF_NTV_OPT=""
-        OMF_CONF_LNK_OPT="-mp"
+        OMF_CONF_NTV_OPT="-O2"
+        OMF_CONF_LNK_OPT="-O2 -mp"
 	;;
       *)
       echo "No supported Fortran compiler was found."
@@ -829,7 +820,7 @@ if test $enableF2F = yes; then
       echo " - Cray Fortran (ftn)"
       echo " - IBM Fortran (mpixlf90_r)"
       echo " - Hitachi Fortran (mpif90)"
-      echo " - PGI Fortran (pgfortran)"
+      echo " - PGI Fortran (mpif90)"
       exit 1
       ;;
     esac
@@ -865,7 +856,7 @@ NM=""
 # check ranlib & ar & nm
 if test "$target" != "$host"; then
    case "$target" in
-	Kcomputer-linux-gnu)
+	Kcomputer-linux-gnu|FX10-linux-gnu)
 #		AC_CHECK_TOOL([RANLIB], [ranlibpx], [:])
 		AC_CHECK_PROG([RANLIB], [ranlibpx], [ranlibpx], [:])
 		if test "${RANLIB}" = ":"; then
@@ -983,7 +974,7 @@ fi
 # check CC for libraries
 if test "$target" != "$host"; then
    case "$target" in
-	Kcomputer-linux-gnu)
+	Kcomputer-linux-gnu|FX10-linux-gnu)
 		CC_LIB="fccpx -Xg -std=gnu99"
 		AC_SUBST(CC_LIB) ;;
         MIC-linux-gnu)
@@ -1010,10 +1001,8 @@ else
 fi
 
 # check zip
-
 ZIPCOM=""
 AC_PATH_PROG(ZIPCOM, zip, zip, ${PATH}:/bin:/usr/bin:/usr/local/bin:/opt/bin:/opt/local/bin)
-
 AC_SUBST(ZIPCOM)
 
 # check Perl versoin is 5
@@ -1097,12 +1086,11 @@ fi
 AC_SUBST(isIBMJava6)
 
 # check Java VM version is Sun Java6
-
 isSunJava6=no
 if test "x${useJava}" = "xyes"; then
     AC_MSG_CHECKING([Sun Java6 or later])
 
-    changequote(<<, >>)dnl
+    changequote(<<, >>)
     case $target in
       powerpc-ibm-none|powerpc64-hitachi-aix)
         chk=`${JAVACOM} -fullversion 2>&1 | sed -e 's:openjdk[\t ]*full[\t ]*version[\t ]*::g' -e 's:\"::g'`
@@ -1111,7 +1099,7 @@ if test "x${useJava}" = "xyes"; then
         chk=`${JAVACOM} -fullversion 2>&1 | sed -e 's:java[\t ]*full[\t ]*version[\t ]*::g' -e 's:\"::g'`
 	;;
     esac 
-    changequote([, ])dnl
+    changequote([, ])
 
     if test "x${chk}" = "x"; then
         AC_MSG_RESULT([no])
@@ -1134,7 +1122,6 @@ fi
 AC_SUBST(isSunJava6)
 
 # check java type
-
 javaType=unknown
 if test "x${useJava}" = "xyes"; then
     if test "x${isIBMJava6}" = "xyes"; then
@@ -1145,9 +1132,7 @@ if test "x${useJava}" = "xyes"; then
 fi
 AC_SUBST(javaType)
 
-
 # check ant
-
 ANTCOM=""
 AC_PATH_PROG(ANTCOM, ant, , ${PATH}:/bin:/usr/bin:/usr/local/bin:/opt/bin:/opt/local/bin)
 
@@ -1183,19 +1168,12 @@ AC_SUBST(javadir)
 JAVA_OPT="-Xmx1024m"
 AC_SUBST(JAVA_OPT)
 
-
-# --------------------------------------------------------------------
-
 #--------------------------------------------------------------------
-#    endian check
-
+# endian check
 AC_C_BIGENDIAN
-
-#--------------------------------------------------------------------
 
 # --------------------------------------------------------------------
 # Checks for types
-
 AC_C_CONST
 AC_C_INLINE
 AC_TYPE_SIZE_T
@@ -1203,8 +1181,6 @@ AC_TYPE_MODE_T
 AC_TYPE_PID_T
 AC_TYPE_UID_T
 AC_STRUCT_TM
-
-# --------------------------------------------------------------------
 
 # --------------------------------------------------------------------
 # Checks for header files
@@ -1215,8 +1191,6 @@ AC_HEADER_STDC
 AC_HEADER_TIME
 
 AC_CHECK_HEADERS([fcntl.h libintl.h malloc.h stddef.h stdint.h limits.h strings.h unistd.h errno.h locale.h sys/time.h sys/resource.h sys/wait.h sys/stat.h assert.h])
-
-# --------------------------------------------------------------------
 
 # --------------------------------------------------------------------
 # Checks for library functions.
@@ -1251,8 +1225,6 @@ AC_CHECK_FUNC(strtoul, , AC_MSG_ERROR([strtoul not found]))
 AC_CHECK_FUNC(strtoll, , AC_MSG_ERROR([strtoll not found]))
 AC_CHECK_FUNC(strtoull, , AC_MSG_ERROR([strtoull not found]))
 AC_CHECK_FUNC(strtold, , AC_MSG_ERROR([strtold not found]))
-
-# --------------------------------------------------------------------
 
 #--------------------------------------------------------------------
 #    The code below deals with several issues related to gettimeofday:
@@ -1373,9 +1345,6 @@ AC_SUBST(F2C_INT64_FLAGS)
 rm -rf ./szchk ./szchk.*
 
 # --------------------------------------------------------------------
-
-
-# --------------------------------------------------------------------
 # check size of integer enough to hold size of void *
 
 AC_MSG_CHECKING([integer type enough to hold void pointer])
@@ -1396,9 +1365,6 @@ fi
 INT_ENUFF_FOR_VOIDP=$voidPint
 AC_SUBST(INT_ENUFF_FOR_VOIDP)
 rm -f ./chkvoidp.* ./chkvoidp
-
-# --------------------------------------------------------------------
-
 
 # --------------------------------------------------------------------
 # check 64 bit virtual address
@@ -1425,8 +1391,6 @@ else
     fi
 fi
 rm -f ./addr64.* ./addr64
-# --------------------------------------------------------------------
-
 
 # --------------------------------------------------------------------
 # has printf "%qd"
@@ -1449,20 +1413,12 @@ if test "x${hasQD}" = "xyes"; then
     AH_TEMPLATE(HAVE_QUAD_PRINT, [has printf "%qd"])
 fi
 rm -f ./hasqd.* ./hasqd
-# --------------------------------------------------------------------
-
 
 # --------------------------------------------------------------------
 # quad real support
 
-if test "${OS}" = "linux"; then
-    gmpIncDir=/usr/include
-    gmpLibDir=/usr/lib
-else
-    gmpIncDir=/usr/local/include
-    gmpLibDir=/usr/local/lib
-fi
-
+gmp-include="/usr/include"
+gmp-lib="/usr/lib"
 gmpIncOpt=""
 gmpDirOpt=""
 qRealPrecBits=128
@@ -1471,28 +1427,28 @@ AC_ARG_ENABLE(mreal,
     [  --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default).],
     [doQReal=$enableval], [doQReal=no])
 
-AC_ARG_WITH(gmpLibDir,
-    [  --with-gmpLibDir=DIR        where the GNU-MP library is for quad-real support.],
-    [gmpLibDir=$withval], [true])
+AC_ARG_WITH(gmp-lib,
+    [  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support.],
+    [gmp-lib=$withval], [true])
 
-AC_ARG_WITH(gmpIncDir,
-    [  --with-gmpIncDir=DIR        where the GNU-MP include headers are for quad-real support.],
-    [gmpIncDir=$withval], [true])
+AC_ARG_WITH(gmp-include,
+    [  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support.],
+    [gmp-include=$withval], [true])
 
 if test "x${doQReal}" = "xyes"; then
-    if test -f ${gmpIncDir}/gmp.h; then
+    if test -f ${gmp-include}/gmp.h; then
         true
     else
-        AC_MSG_RESULT([can't find ${gmpIncDir}/gmp.h. exit.])
+        AC_MSG_RESULT([can't find ${gmp-include}/gmp.h. exit.])
         exit 1
     fi
-    gmpLibs=`ls ${gmpLibDir}/libgmp.* 2> /dev/null`
+    gmpLibs=`ls ${gmp-include}/libgmp.* 2> /dev/null`
     if test "x${gmpLibs}" = "x"; then
-        AC_MSG_RESULT([can't find ${gmpLibDir}/libgmp.*. exit.])
+        AC_MSG_RESULT([can't find ${gmp-lib}/libgmp.*. exit.])
         exit 1
     fi
-    gmpIncOpt="-I${gmpIncDir}"
-    gmpLibOpt="-L${gmpLibDir} -lgmp"
+    gmpIncOpt="-I${gmp-include}"
+    gmpLibOpt="-L${gmp-lib} -lgmp"
 fi
 
 AC_ARG_WITH(precision,
@@ -1589,9 +1545,9 @@ if test "x${doQReal}" = "xyes"; then
             subStr="${TYPE_INT32} _gap_;";;
         *)
             # lim == long long, exp == short
-            changequote(<<, >>)dnl
+            changequote(<<, >>)
             subStr="char _gap_[${gapInByte}];"
-            changequote([, ])dnl
+            changequote([, ])
             ;;
         esac
     fi
@@ -1648,30 +1604,47 @@ AC_SUBST(omniQRealFillGap)
 # specify libxmp path
 default_libxmlDir="/usr"
 
-AC_ARG_WITH(libxmlDir,
-    [  --with-libxmlDir=DIR        libxml install directory (default: /usr)],
+AC_ARG_WITH(libxml,
+    [  --with-libxml=DIR           libxml installation path (default: /usr)],
     [LIBXML_PREFIX="${withval}"], [LIBXML_PREFIX="${default_libxmlDir}"])
 
 if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
-   AC_MSG_ERROR([parser.h not found. Please attach or check --with-libxmlDir=<DIR>. See ./configure --help])
+   AC_MSG_ERROR([parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help])
 fi
 
 AC_SUBST(LIBXML_PREFIX)
+
+# --------------------------------------------------------------------
+# TCA
+AC_ARG_WITH(TCA,
+    [  --with-TCA=DIR              TCA installation path],
+    [TCA_PREFIX="${withval}"])
+
+use_tca=no
+if test "${TCA_PREFIX}" != ""; then
+   use_tca=yes
+   if ! test -f $TCA_PREFIX/tca-api.h; then
+      AC_MSG_ERROR([$TCA_PREFIX/tca-api.h not found. Please check --with-TCA=<DIR>])
+   fi
+fi
+
+AM_CONDITIONAL(TCA, test x${use_tca} = xyes)
+AC_SUBST(TCA_PREFIX)
 
 # --------------------------------------------------------------------
 # specify GASNet path
 
 default_gasnetDir=""
 
-AC_ARG_WITH(gasnetDir,
-    [  --with-gasnetDir=DIR        GASNet install directory],
+AC_ARG_WITH(gasnet,
+    [  --with-gasnet=DIR           GASNet installation path],
     [GASNET_PREFIX="${withval}"], [GASNET_PREFIX="${default_gasnetDir}"])
 
 use_gasnet=no
 if test "${GASNET_PREFIX}" != ""; then
   use_gasnet=yes
   if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
-	  AC_MSG_ERROR([${GASNET_PREFIX}/include/gasnet.h not found. Please attach or check --with-gasnetDir])
+	  AC_MSG_ERROR([${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnet])
   fi
 fi
 
@@ -1736,15 +1709,6 @@ AC_SUBST(GASNET_LDFLAGS)
 AC_SUBST(GASNET_LIBS)
 
 # --------------------------------------------------------------------
-# specify Fujitsu RDMA
-
-AC_ARG_ENABLE(fjrdma,
-    [  --enable-fjrdma                use Fujitsu RDMA], , )
-
-AM_CONDITIONAL(FJRDMA, test "${enable_fjrdma+set}" = set)
-AC_SUBST(FJRDMA)
-
-# --------------------------------------------------------------------
 # specify GPU C compiler
 
 AC_ARG_WITH(gpucc,
@@ -1754,17 +1718,22 @@ AC_ARG_WITH(gpucc,
 AC_SUBST(GPU_CMD)
 
 # --------------------------------------------------------------------
+# specify GPU C compiler flags
+
+AC_ARG_WITH(gpu-cflags,
+    [  --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)],
+    [GPU_CFLAGS="${withval}"], [GPU_CFLAGS="-arch=sm_20 -O3"])
+
+AC_SUBST(GPU_CFLAGS)
 
 # --------------------------------------------------------------------
 # specify libgpu path
 
-AC_ARG_WITH(gpuDir,
-    [  --with-gpuDir=DIR           GPGPU tooklit install directory (default: /usr/local/cuda)],
+AC_ARG_WITH(cuda,
+    [  --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)],
     [GPGPU_PREFIX="${withval}"], [GPGPU_PREFIX="/usr/local/cuda"])
 
 AC_SUBST(GPGPU_PREFIX)
-
-# --------------------------------------------------------------------
 
 # --------------------------------------------------------------------
 # Export Omni Config Variable
@@ -1854,7 +1823,6 @@ AC_CONFIG_FILES(
 )
 
 # --------------------------------------------------------------------
-
 ATOOL_DIR=./Driver/atool
 AC_SUBST(ATOOL_DIR)
 
@@ -1882,7 +1850,6 @@ AC_CHECK_HEADER(pthread.h, [AC_DEFINE([HAVE_PTHREAD_H], [1], [ ])])
 AC_CHECK_HEADER(stdbool.h, [AC_DEFINE([HAVE_STDBOOL_H], [1], [ ])])
 AC_CHECK_HEADER(sys/resource.h, [AC_DEFINE([HAVE_SYS_RESOURCE_H], [1], [ ])])
 AC_CHECK_HEADER(regex.h, [AC_DEFINE([HAVE_REGEX_H], [1], [ ])])
-
 AC_CHECK_FUNC(strtold, [AC_DEFINE([HAVE_STRTOLD], [1], [ ])])
 
 # Assume 32 bit for cross compilation.
@@ -2014,11 +1981,10 @@ AC_SUBST(cppCmd)
 # sysdeps.
 
 #eval `echo ${target} | awk -F- '{ printf "tagCPU=%s; tagOS=%s;\n", $1, $3 }'`
-
-#changequote(<<, >>)dnl
+#changequote(<<, >>)
 #CPU=`echo ${tagCPU} | tr '[A-Z]' '[a-z]'`
 #OS=`echo ${tagOS} | tr '[A-Z]' '[a-z]'` 
-#changequote([, ])dnl
+#changequote([, ])
 #unset tagOS tagCPU
 
 HOSTARCH=`./buildutils/config.guess | grep -v Linking`
@@ -2082,7 +2048,7 @@ esac
 
 if test "$target" != "$host"; then
    case "$target" in
-        Kcomputer-linux-gnu)
+        Kcomputer-linux-gnu|FX10-linux-gnu)
                 LDFLAGS="";;
         MIC-linux-gnu)
                 LDFLAGS="";;
@@ -2103,7 +2069,6 @@ else
 
 fi
 
-
 OS_CXXFLAGS=${OS_CFLAGS}
 AC_SUBST(MAKE)
 AC_SUBST(OS_CPPFLAGS)
@@ -2112,10 +2077,10 @@ AC_SUBST(OS_CXXFLAGS)
 AC_SUBST(OS_LDFLAGS)
 AC_SUBST(OS_LIBS)
 
-changequote(<<, >>)dnl
+changequote(<<, >>)
 CPUDEF=NATA_CPU_`echo $CPU | tr '[a-z]' '[A-Z]'`
 OSDEF=NATA_OS_`echo $OS | tr '[a-z]' '[A-Z]'`
-changequote([, ])dnl
+changequote([, ])
 AC_SUBST(CPUDEF)
 AC_SUBST(OSDEF)
 AC_SUBST(API_FLAVOR)
@@ -2159,11 +2124,53 @@ unset program_transform_name
 AC_OUTPUT
 ${MAKE} clean
 
-###################
+# ----------------------
 # Edit version file
-###################
 VERSIONTXT="./Driver/etc/version"
 if test -d .git; then
-  VERSION=`git log --date=short --pretty=format:"Release Day:%ad, Hash Value:%h" -1`
+  VERSION=`git log --date=short --pretty=format:"Last Commit Day:%ad, Hash Value:%h" -1`
   echo -n Version:${XMPPKG_VERSION}, ${VERSION} > ${VERSIONTXT}
 fi
+
+# ----------------------
+# Output
+
+cat << EOF
+==================================================
+  -- Configuration Summary --
+
+  PREFIX : ${prefix}
+
+  Local Compiler:
+    C Compiler            : $CC
+    C Compiler FLAG       : "$CFLAG"
+    Fortran Compiler      : $FC
+    Fortran Compiler FLAG : "$FFLAG"
+  
+  Backend Compiler:
+    C Compiler            : $BECC
+    C Compiler FLAG       : "$BECC_OPTION"
+    Fortran Compiler      : $BEFC
+    Fortran Compiler FLAG : "$BEFC_OPTION"
+EOF
+
+if test "$target" != "Kcomputer-linux-gnu" -a "$target" != "FX10-linux-gnu"; then
+  echo ""
+  echo "  Options:"
+  echo "    GASNet                : $use_gasnet"
+
+  if test "${use_gasnet}" = yes; then
+  cat << EOF
+      Installed in        : $GASNET_PREFIX
+      Conduit             : $GASNET_CONDUIT
+
+EOF
+  fi
+  echo "    OpenACC               : $doOpenAcc"
+fi
+
+if test "${use_tca}" = "yes"; then
+  echo "    TCA                   : yes"
+fi
+echo "=================================================="
+

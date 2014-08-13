@@ -434,11 +434,10 @@ ccol_DListNextN(CCOL_DListNode *x, unsigned int n)
 
     assert(x != NULL);
     next = x;
-
     for(i = 0; i < n; ++i) {
         next = next->dln_next;
         if(next == NULL)
-            return NULL;
+	  return NULL;
     }
 
     return next;

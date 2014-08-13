@@ -62,6 +62,7 @@ extern char* lexSkipWordP(char *p);
 extern char* lexSkipWord(char *p);
 extern char* lexSkipSpaceP(char *p);
 extern char* lexSkipSpace(char *p);
+extern char* lexSkipSharp(char *p);
 extern char* lexConvertUnderscorePragma(char *p);
 
 #endif // _C_PRAGMA_H_

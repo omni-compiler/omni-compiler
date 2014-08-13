@@ -1,3 +1,5 @@
+#!/bin/bash
+
 hasScalasca=0
 hasTlog=0
 newOpts=''
@@ -5,14 +7,17 @@ newOpts=''
 LOCK_TYPE=@OMP_LOCK_TYPE@
 LIB_THREAD=@OMP_THREAD_TYPE@
 LIB_OMPC=ompc_${LOCK_TYPE}_${LIB_THREAD}
+GPGPU_PREFIX=@GPGPU_PREFIX@
 PID=$$
 INIT_MODULE_OBJ="/tmp/_xmpc_init_${PID}.o"
 
-CMD="@OMNI_HOME@/bin/xmp_collect_init --cc @BECC@ --PID ${PID} --C $*"
+CMD="@OMNI_HOME@/bin/xmp_collect_init"
+args=( --cc @BECC@ --PID ${PID} --C "$@" )
+set -- ${args[@]}
 if [ "${OM_VERBOSE}" = "1" ]; then
-    echo $CMD
+    echo $CMD "$@"
 fi
-$CMD
+$CMD "$@"
 
 for i in ${OM_OPTIONS}; do
     case ${i} in
@@ -20,7 +25,10 @@ for i in ${OM_OPTIONS}; do
             INPFILES="${INPFILES} ${OMNI_HOME}/lib/omp${OM_LANGID}_main.o"
             LIBS="${LIBS} -lxmp_threads -l${LIB_OMPC} -l${LIB_THREAD} -ltlog";;
         -enable-gpu)
-            LIBS="${LIBS} -L${GPGPU_PREFIX}/lib64 -lxmp_gpu -lcudart";;
+            LIBS="${LIBS} -L${GPGPU_PREFIX}/lib64 -lxmp_gpu -lcudart"
+            newOpts="${newOpts} ${i}";;
+	-facc)
+	    LIBS="${LIBS} -L${GPGPU_PREFIX}/lib64 -lacc -lcudart";;
         -prof-scalasca)
             hasScalasca=1;;
         -prof-tlog)
@@ -34,6 +42,11 @@ done
 
 GASNET_LIB="@GASNET_LIBS@"
 LIBS="${INIT_MODULE_OBJ} ${LIBS} -lxmp ${GASNET_LIB}"
+
+TCA_LIB="@TCA_PREFIX@"
+if test "${TCA_LIB}" != ""; then
+  LIBS="${LIBS} -L${TCA_LIB} -ltca"
+fi
 
 LINKER="@BECC@"
 if test ${hasScalasca} -eq 1; then

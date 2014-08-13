@@ -66,6 +66,8 @@ public class XMPdimInfo {
     return lower; 
   }
 
+  //public Xobject getLower() { return lower; }
+
   public void setLower(Xobject l) {
     lower = l;
   }

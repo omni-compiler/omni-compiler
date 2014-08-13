@@ -1,41 +1,40 @@
-#include<xmp.h>
-#include<stdio.h>
-#include<stdlib.h>   
-#pragma xmp nodes p(*)
-int procs, id, mask, val, i, w, result = 0;
+#include <xmp.h>
+#include <stdio.h> 
+#include <stdlib.h>
+#define N 4
+int random_array[N], ans=-1, val=-1, i, result=0;
+#pragma xmp nodes p(4)
+#pragma xmp template t(0:3)
+#pragma xmp distribute t(block) onto p
 
-int main(void){
-  if(xmp_num_nodes() > 31){
-    printf("%s\n","You have to run this program by less than 32 nodes.");
-    exit(1);
+int main(void)
+{
+  srand(0);
+  for(i=0;i<N;i++){
+    random_array[i] = rand();
+    ans = ans & random_array[i];
   }
+  
+#pragma xmp loop on t(i)
+  for(i=0;i<N;i++)
+    val = random_array[i];
 
-  procs = xmp_num_nodes();
-  id = xmp_num_nodes()-1;
+#pragma xmp reduction(&:val)
 
-  w=1;
-  for(i=0;i<procs;i++){
-    w*2;
-  }
-
-  for(i=0;i<w;i++){
-    mask = 1 << id;
-    val = !(i & mask);
-#pragma xmp reduction(&:val)  
-    if(!val != i){
-      result += -1;
-    }
-  }
+  if(val != ans)
+    result = -1;
 
 #pragma xmp reduction(+:result)
 #pragma xmp task on p(1)
   {
     if(result == 0){
       printf("PASS\n");
-    } else{
-      printf("ERROR\n");
+    }
+    else{
+      fprintf(stderr, "ERROR\n");
       exit(1);
     }
   }
+
   return 0;
 }

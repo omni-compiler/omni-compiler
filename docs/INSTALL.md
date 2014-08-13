@@ -20,9 +20,22 @@ HOW TO INSTALL
 
  * flex gcc gfortran gcc-c++ java-1.7.0-openjdk-devel ant openmpi-devel libxml2-devel byacc make
 
-## Usage of coarray functions
- * Need to install GASNet (http://gasnet.lbl.gov) except for the K computer.
- * On the K computer, attach "--enable-fjrdma" option when executing ./configure.
+## On BlueGene/Q
+ Need to install openJDK(openjdk1.7.0-ppc-aix-port-linux-ppc64-b**.tar.bz2) downloaded from the following URL:
+ http://cr.openjdk.java.net/~simonis/ppc-aix-port/
+
+## Usage of IBM Java Compiler
+ Need to change import setting
+ import com.sun.org.apache.xml.internal.serializer.OutputPropertiesFactory; ->  import org.apache.xml.serializer.OutputPropertiesFactory;
+ in 
+ * XcodeML-Common/src/xcodeml/util/XmUtil.java
+ * XcodeML-Exc-Tools/src/exc/util/omompx.java
+ * XcodeML-Exc-Tools/src/exc/openacc/ACCmain.java
+ * F-BackEnd/src/xcodeml/f/decompile/XfDecompileDomVisitor.java
+
+## Usage of local-view operations (coarray, post/wait, lock/unlock)
+ * Need to install GASNet (http://gasnet.lbl.gov) except for the K computer and FX10.
+ * On the K computer or FX10, you can use local-view operations by using Fujitsu RDMA.
 
 ## Usage of OpenACC compiler
  * Need to install CUDA (https://developer.nvidia.com/cuda-zone).
@@ -30,30 +43,33 @@ HOW TO INSTALL
 # Install Step
 ## Configure
 ### On a general linux cluster
-    $ ./configure --prefix=[INSTALL-DIR]
+    $ ./configure --prefix=[INSTALLATION PATH]
          or
-    $ ./configure --with-backend-cc=mpicc --prefix=[INSTALL-DIR]
+    $ ./configure --with-backend-cc=mpicc --prefix=[INSTALLATION PATH]  // In most case, a bacnend compiler is "mpicc".
+         or
+    $ ./configure CPP="pgcc -E" CC=gcc FC=gfortran  // To use a PGI compiler
 
  If you want to use Coarray functions
-    $ ./configure --with-gasnetDir=[GASNet-INSTALL-DIR] --with-gasnet-conduit=[GASNet-Conduit] --prefix=[INSTALL-DIR]
+    $ ./configure --with-gasnet=[GASNet INSTALLATION PATH] --with-gasnet-conduit=[GASNet-Conduit]
 
  If you want to use OpenACC compiler
-    $ ./configure --with-gpuDir=[CUDA-INSTALL-DIR] --enable-openacc --prefix=[INSTALL-DIR]
+    $ ./configure --with-cuda=[CUDA INSTALLATION PATH] --enable-openacc
 
-### On the K computer
-    $ ./configure --target=Kcomputer-linux-gnu --enable-fjrdma --prefix=[INSTALL-DIR]
+### On the K computer or FX10
+    $ ./configure --target=Kcomputer-linux-gnu --prefix=[INSTALLATION PATH]
+    $ ./configure --target=FX10-linux-gnu --prefix=[INSTALLATION PATH]
 
 ### On Cray machines
-    $ ./configure --target=Cray-linux-gnu --prefix=[INSTALL-DIR]
+    $ ./configure --target=Cray-linux-gnu --prefix=[INSTALLATION PATH]
 
 ### On SX machines
-    $ ./configure --target=sx --prefix=[INSTALL-DIR]
+    $ ./configure --target=sx --prefix=[INSTALLATION PATH]
 
 ## Build
     $ make; make install
 
 ## Set PATH
-    $ export PATH=[INSTALL-DIR]/bin:$PATH
+    $ export PATH=[INSTALLATION PATH]/bin:$PATH
 
 ## Test (Optional)
     $ make tests
@@ -67,4 +83,3 @@ HOW TO INSTALL
  issuing autogen.sh on the top directory would be a solution.
  And if the build still failed even after issuing the autogen.sh,
  you should update your autotools (autoconf/automake/libtools) to the latest ones.
-

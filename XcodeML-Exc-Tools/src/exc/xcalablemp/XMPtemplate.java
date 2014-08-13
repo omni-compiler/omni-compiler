@@ -385,10 +385,10 @@ public class XMPtemplate extends XMPobject {
     templateObject.setIsDistributed();
   }
 
-  private static void setupDistribution(XobjList distManner, XMPtemplate templateObject,
-					int templateDimIdx, int nodesDimIdx,
-					XMPglobalDecl globalDecl, boolean isLocalPragma, boolean isTFIX,
-					PragmaBlock pb) throws XMPexception {
+  private static Block setupDistribution(XobjList distManner, XMPtemplate templateObject,
+					 int templateDimIdx, int nodesDimIdx,
+					 XMPglobalDecl globalDecl, boolean isLocalPragma, boolean isTFIX,
+					 PragmaBlock pb) throws XMPexception {
 
     XobjList funcArgs = null;
     int distMannerValue = distManner.getArg(0).getInt();
@@ -447,7 +447,7 @@ public class XMPtemplate extends XMPobject {
         throw new XMPexception("unknown distribute manner");
     }
 
-    if (templateObject.isFixed() || isTFIX){
+    if (templateObject.isFixed()){
 
       if (isLocalPragma) {
 	Block parentBlock = pb.getParentBlock();
@@ -459,13 +459,21 @@ public class XMPtemplate extends XMPobject {
       }
 
     }
+    else if (isTFIX){
+      Ident funcId = globalDecl.declExternFunc("_XMP_dist_template_" + distMannerName);
+      return Bcons.Statement(funcId.Call(funcArgs));
+    }
 
     templateObject.setDistMannerAt(distMannerValue, templateDimIdx);
+
+    return null;
   }
 
 
   public static void translateTemplateFix(XobjList tfixDecl, XMPglobalDecl globalDecl,
 					  PragmaBlock pb) throws XMPexception {
+
+    BlockList tFixFuncBody = Bcons.emptyBody();
 
     Block parentBlock = pb.getParentBlock();
 
@@ -519,7 +527,7 @@ public class XMPtemplate extends XMPobject {
 
     XobjArgs sizeArgs = tObject.isFixed() ? sizeArgs_decl : sizeArgs_tfix;
 
-    XobjList tArgs = Xcons.List(tObject.getDescId(), Xcons.IntConstant(tDim));
+    XobjList tArgs = Xcons.List(tObject.getDescId().Ref(), Xcons.IntConstant(tDim));
 
     for (i = sizeArgs; i != null; i = i.nextArgs()) {
       Xobject tSpec = i.getArg();
@@ -535,17 +543,24 @@ public class XMPtemplate extends XMPobject {
 
     tObject.createSizeVector();
 
-    String constructorName = new String("_XMP_set_template_size_");
-    XMPlocalDecl.addConstructorCall2(constructorName, tArgs, globalDecl, parentBlock);
+    Ident funcId;
+
+    //String constructorName = new String("_XMP_set_template_size");
+    //XMPlocalDecl.addConstructorCall2(constructorName, tArgs, globalDecl, parentBlock);
+    funcId = globalDecl.declExternFunc("_XMP_set_template_size");
+    tFixFuncBody.add(Bcons.Statement(funcId.Call(tArgs)));
 
     //
     // create _XMP_init_template_chunk
     //
       
-    XMPlocalDecl.addConstructorCall2("_XMP_init_template_chunk",
-				     Xcons.List(tObject.getDescId().Ref(),
-						nObject.getDescId().Ref()),
-				     globalDecl, parentBlock);
+    // XMPlocalDecl.addConstructorCall2("_XMP_init_template_chunk",
+    // 				     Xcons.List(tObject.getDescId().Ref(),
+    // 						nObject.getDescId().Ref()),
+    // 				     globalDecl, parentBlock);
+    funcId = globalDecl.declExternFunc("_XMP_init_template_chunk");
+    tFixFuncBody.add(Bcons.Statement(funcId.Call(Xcons.List(tObject.getDescId().Ref(),
+    							    nObject.getDescId().Ref()))));
 
     //
     // create _XMP_dist_template_XXX
@@ -585,7 +600,8 @@ public class XMPtemplate extends XMPobject {
       XobjList distManner = (XobjList)i.getArg();
       int distMannerValue = distManner.getArg(0).getInt();
 
-      XMPtemplate.setupDistribution(distManner, tObject, tDimIdx, nDimIdx, globalDecl, true, true, pb);
+      Block b = XMPtemplate.setupDistribution(distManner, tObject, tDimIdx, nDimIdx, globalDecl, true, true, pb);
+      tFixFuncBody.add(b);
 
       switch (distMannerValue) {
       case XMPtemplate.BLOCK:
@@ -615,6 +631,9 @@ public class XMPtemplate extends XMPobject {
 
     tObject.setIsFixed();
     tObject.setDistributionIsFixed();
+
+    Block tFixFuncCallBlock = Bcons.COMPOUND(tFixFuncBody);
+    pb.replace(tFixFuncCallBlock);
 
   }
 

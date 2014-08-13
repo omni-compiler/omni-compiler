@@ -156,7 +156,7 @@ void _XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
     dst_u[i] = gmv_desc_leftp->ub[i];
     dst_s[i] = gmv_desc_leftp->st[i];
     dst_d[i] = dst_array->info[i].dim_acc;
-    _XMP_normalize_array_section(&(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
+    _XMP_normalize_array_section(gmv_desc_leftp, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
     dst_total_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
   }
 
@@ -170,7 +170,7 @@ void _XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
     src_u[i] = gmv_desc_rightp->ub[i];
     src_s[i] = gmv_desc_rightp->st[i];
     src_d[i] = src_array->info[i].dim_acc;
-    _XMP_normalize_array_section(&(src_l[i]), &(src_u[i]), &(src_s[i]));
+    _XMP_normalize_array_section(gmv_desc_rightp, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
     src_total_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
   }
 
@@ -212,7 +212,7 @@ void _XMPF_gmove_garray_larray(_XMP_gmv_desc_t *gmv_desc_leftp,
     dst_u[i] = gmv_desc_leftp->ub[i];
     dst_s[i] = gmv_desc_leftp->st[i];
     dst_d[i] = dst_array->info[i].dim_acc;
-    _XMP_normalize_array_section(&(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
+    _XMP_normalize_array_section(gmv_desc_leftp, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
     dst_total_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
   }
 
@@ -227,7 +227,7 @@ void _XMPF_gmove_garray_larray(_XMP_gmv_desc_t *gmv_desc_leftp,
     src_u[i] = gmv_desc_rightp->ub[i];
     src_s[i] = gmv_desc_rightp->st[i];
     src_d[i] = src_array->info[i].dim_acc;
-    _XMP_normalize_array_section(&(src_l[i]), &(src_u[i]), &(src_s[i]));
+    _XMP_normalize_array_section(gmv_desc_rightp, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
     src_total_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
   }
 
@@ -329,7 +329,7 @@ void _XMPF_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
     }else{
       dst_d[i] = dst_d[i-1]*(gmv_desc_leftp->a_ub[i] - gmv_desc_leftp->a_lb[i]+1);
     }
-    _XMP_normalize_array_section(&(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
+    _XMP_normalize_array_section(gmv_desc_leftp, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
     dst_total_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
   }
 
@@ -344,7 +344,7 @@ void _XMPF_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
     src_u[i] = gmv_desc_rightp->ub[i];
     src_s[i] = gmv_desc_rightp->st[i];
     src_d[i] = src_array->info[i].dim_acc;
-    _XMP_normalize_array_section(&(src_l[i]), &(src_u[i]), &(src_s[i]));
+    _XMP_normalize_array_section(gmv_desc_rightp, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
     src_total_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
   }
 

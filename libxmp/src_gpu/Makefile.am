@@ -1,6 +1,10 @@
 XMP_INC_DIR=../include
-CC=@CC@
+CC=@BECC@
 GPUCC=@GPU_CMD@
+GPUCFLAGS=@GPU_CFLAGS@
+AM_CFLAGS = -I$(XMP_INC_DIR) @BECC_OPTION@ #-I$(TLOG_INC_DIR) 
+COMPILE=$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS)
 
 lib_LIBRARIES			= libxmp_gpu.a
 libxmp_gpu_a_SOURCES		= $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h \
@@ -10,6 +14,6 @@ libxmp_gpu_a_SOURCES		= $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constan
 libxmp_gpu_a_LIBADD		= xmp_gpu_runtime.o xmp_gpu_util.o xmp_gpu_data.o xmp_gpu_sync.o xmp_gpu_array_section.o
 
 .cu.o:
-	$(GPUCC) -I$(XMP_INC_DIR) -O2 -c $@ $<
+	$(GPUCC) $(GPUCFLAGS) -I$(XMP_INC_DIR) -c $@ $<
 
-AM_CFLAGS			= -Wall -std=c99 -I$(XMP_INC_DIR)
+

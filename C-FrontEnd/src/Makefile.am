@@ -35,7 +35,7 @@ C_Front_SOURCES=\
 	c-gcctype.c c-option.c c-type.c c-convert.c \
 	ccol-list.c ccol-hash.c c-main.c \
 	c-pragma.c c-omp-pragma.c c-xmp-pragma.c c-acc-pragma.c \
-	c-omp-xcodeml.c c-xmp-xcodeml.c c-acc-xcodeml.c
+	c-omp-xcodeml.c c-xmp-xcodeml.c c-acc-xcodeml.c c-ptree.c
 
 ccol.h: ccol-list.h ccol-hash.h
 ccol-list.c: ccol-list.h

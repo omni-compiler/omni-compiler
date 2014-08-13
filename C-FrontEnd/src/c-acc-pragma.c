@@ -376,7 +376,7 @@ static CExpr* parse_ACC_namelist()
       args = exprListAdd(args, v);
     }else{
       list = parse_ACC_C_subscript_list();
-      CExprOfBinaryNode* arrayRef = exprBinary(EC_ARRAY_REF, v, list);
+      CExpr* arrayRef = exprBinary(EC_ARRAY_REF, v, list);
       args = exprListAdd(args, (CExpr*)arrayRef);
     }
 

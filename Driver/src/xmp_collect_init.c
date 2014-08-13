@@ -42,6 +42,40 @@ int is_AIX = FALSE;
 #define IS_VALID_STRING(s)	\
     (((s) != NULL && *(s) != '\0') ? TRUE : FALSE)
 
+
+/**
+ * quote arguments to be accepted in system() 
+ *
+ * */
+static void strcpy_escaped(char *s1, char *s2)
+{
+  char *src, *dst;
+  unsigned c;
+
+  for (src = s2, dst = s1; (c = *(src++)) != '\0'; ) {
+    if (strchr("|&;<>()$`'\\\"#*[]? ", c) != NULL) {
+      *(dst++) = '\\';
+      *(dst++) = c;
+    } else if(c == '\t') {
+      *(dst++) = '\\';
+      *(dst++) = 't';
+    } else if(c == '\n') {
+      *(dst++) = '\\';
+      *(dst++) = 'n';
+    } else {
+      *(dst++) = c;
+    }
+  }
+  *dst = '\0';
+}
+
+static void strcat_escaped(char *s1, char *s2)
+{
+  strcpy_escaped(s1 + strlen(s1), s2);
+}
+
+
+
 int main(int argc, char *argv[])
 {
     int i, len;
@@ -183,56 +217,54 @@ int main(int argc, char *argv[])
     //    strcpy(command_buf,"nm");
     strcpy(command_buf, NM);
     for (i = 0; i < n_files; i++){
-	arg = files[i];
-	len = strlen(arg);
-	if (len > 2 && 
-	    (strcmp(&arg[len-2], ".o") == 0 || strcmp(&arg[len-2], ".a") == 0)){
-	    strcat(command_buf, " ");
-	    strcat(command_buf, arg);
-	}
+        arg = files[i];
+        len = strlen(arg);
+        if (len > 2 && 
+            (strcmp(&arg[len-2], ".o") == 0 || strcmp(&arg[len-2], ".a") == 0)){
+            strcat(command_buf, " ");
+            strcat_escaped(command_buf, arg);
+        }
     }
 
     fp = popen(command_buf, "r");
     if (fp == NULL){
-	fprintf(stderr, "error: %s execution failure.\n", NM);
+        fprintf(stderr, "error: %s execution failure.\n", NM);
         return 1;
     }
     init_name_len = strlen(MODULE_INIT_NAME);
     init_name_len_ = strlen(MODULE_INIT_NAME_);
-    char prev[MAX_BUF];
-    char *prev_ans="T";
     while(fscanf(fp,"%s",buf) == 1){
       if(strncmp(buf,".jwe",4) == 0 || strncmp(buf,"jpj.",4) == 0){
-	is_K_FC = TRUE;
-	continue; // Fortran compiler on the K computer
+        is_K_FC = TRUE;
+        continue; // Fortran compiler on the K computer
       }
 
       if(strncmp(buf,"_xmpc_init_all",14) == 0 || 
-	 strncmp(buf,"_xmpf_main_",11) == 0) is_Mac = TRUE;
+         strncmp(buf,"_xmpf_main_",11) == 0) is_Mac = TRUE;
 
       if(strncmp(buf,".xmpf_main_",11)==0||
-	 strncmp(buf,".xmpc_init_all",14)==0) is_AIX = TRUE;
+         strncmp(buf,".xmpc_init_all",14)==0) is_AIX = TRUE;
       // On Mac OS X (Darwin), all module is added "_".
       // For example, __shadow_xmpc_module_init_ -> ___shadow_xmpc_module_init_
       
       len = strlen(buf);
       if(len > init_name_len && 
-	 strcmp(buf+(len-init_name_len),MODULE_INIT_NAME) == 0){
-	module_init_names[n_module_init++] = strdup(buf);
+         strcmp(buf+(len-init_name_len),MODULE_INIT_NAME) == 0){
+        module_init_names[n_module_init++] = strdup(buf);
       } 
       else if(len > init_name_len_ && 
-	      strcmp(buf+(len-init_name_len_),MODULE_INIT_NAME_) == 0){
-	module_init_names[n_module_init++] = strdup(buf);
+              strcmp(buf+(len-init_name_len_),MODULE_INIT_NAME_) == 0){
+        module_init_names[n_module_init++] = strdup(buf);
       }
       else{
-	// for the Cray
-	// In Cray machines, when module name "foo", 
-	// a subroutine for "foo" is converted to "foo_xmpf_module_init_$foo_".
-	int module_name_len = (len - init_name_len - 2) / 2;
-	if(len > init_name_len &&
-	   strncmp(buf+module_name_len,MODULE_INIT_NAME,init_name_len) == 0){
-	  module_init_names[n_module_init++] = strdup(buf);
-	}
+        // for the Cray
+        // In Cray machines, when module name "foo", 
+        // a subroutine for "foo" is converted to "foo_xmpf_module_init_$foo_".
+        int module_name_len = (len - init_name_len - 2) / 2;
+        if(len > init_name_len &&
+           strncmp(buf+module_name_len,MODULE_INIT_NAME,init_name_len) == 0){
+          module_init_names[n_module_init++] = strdup(buf);
+        }
       }
     } 
     fclose(fp);
@@ -250,19 +282,19 @@ int main(int argc, char *argv[])
     
     if(!is_K_FC){
       for(i=0; i<n_module_init;i++){
-	char *name = module_init_names[i];
-	if(is_Mac)
+        char *name = module_init_names[i];
+        if(is_Mac)
         strcpy(name, name+sizeof(char)); // Remove the first charactor of function name
-	if(is_AIX)                                   // ___shadow_xmpc_module_init_ -> __shadow_xmpc_module_init_
-	  {
-	    if(strncmp(name,".",1)==0)
-	      {
-		fprintf(fp,"asm(\".extern  %s[GL]\");\n",name);
-		break;
-	      }
-	  }
-	else
-	  fprintf(fp,"extern void %s();\n",name);
+        if(is_AIX)                                   // ___shadow_xmpc_module_init_ -> __shadow_xmpc_module_init_
+          {
+            if(strncmp(name,".",1)==0)
+              {
+                fprintf(fp,"asm(\".extern  %s[GL]\");\n",name);
+                break;
+              }
+          }
+        else
+          fprintf(fp,"extern void %s();\n",name);
      }
       fprintf(fp,"\n");
     }
@@ -273,29 +305,29 @@ int main(int argc, char *argv[])
       char *name = module_init_names[i];
      if(strchr(name,'.') != NULL){
        if(is_AIX)
-	 {
-	   fprintf(fp, "asm(\"mr 31,1\");\n"); 
-	   fprintf(fp, "asm(\"nop\");\n");
-	   fprintf(fp,"\t%s();\n",strcpy(name,name+1));
-	   break;
-	 }
+         {
+           fprintf(fp, "asm(\"mr 31,1\");\n"); 
+           fprintf(fp, "asm(\"nop\");\n");
+           fprintf(fp,"\t%s();\n",strcpy(name,name+1));
+           break;
+         }
        else
-	 {
-	   fprintf(fp, "asm(\"call %s\");\n", name);  // asm("call func"); 
-	   fprintf(fp, "asm(\"nop\");");
-	 }
+         {
+           fprintf(fp, "asm(\"call %s\");\n", name);  // asm("call func"); 
+           fprintf(fp, "asm(\"nop\");");
+         }
       }
       else
-	fprintf(fp,"\t%s();\n",name);
+        fprintf(fp,"\t%s();\n",name);
     }
     fprintf(fp,"}\n");
     fclose(fp);
     sprintf(command_buf,"%s -c -o %s %s %s",
-	    cc_command, init_func_object, init_func_source, cc_option);
+            cc_command, init_func_object, init_func_source, cc_option);
 
     if(debug_flag) printf("command = '%s'\n",command_buf);
     if(system(command_buf) < 0){
-	fprintf(stderr,"error in execting '%s'\n",command_buf);
+        fprintf(stderr,"error in execting '%s'\n",command_buf);
         return 1;
     }
 

@@ -2398,7 +2398,7 @@ outx_OMP_dir_string(int l,expv v)
   case OMP_ORDERED: s = "ORDERED"; break;
   case OMP_THREADPRIVATE: s = "THREADPRIVATE"; break;
   default:
-    fatal("out_OMP_dir_string: unknown value=%\n",EXPV_INT_VALUE(v));
+    fatal("out_OMP_dir_string: unknown value=%d\n",EXPV_INT_VALUE(v));
   }
   outx_printi(l, "<string>%s</string>\n", s);
 }
@@ -2445,12 +2445,13 @@ outx_OMP_dir_clause_list(int l,expv v)
     case OMP_DATA_REDUCTION_MAX: s = "DATA_REDUCTION_MAX"; break;
     case OMP_DATA_REDUCTION_EQV: s = "DATA_REDUCTION_EQV"; break;
     case OMP_DATA_REDUCTION_NEQV: s = "DATA_REDUCTION_NEQV"; break;
+    case OMP_DATA_COPYPRIVATE: s = "DATA_COPYPRIVATE"; break;
     case OMP_DIR_ORDERED: s = "DIR_ORDERED"; break;
     case OMP_DIR_IF: s = "DIR_IF"; break;
     case OMP_DIR_NOWAIT: s = "DIR_NOWAIT"; break;
     case OMP_DIR_SCHEDULE: s = "DIR_SCHEDULE"; break;
     default:
-      fatal("out_OMP_dir_clause: unknown value=%\n",EXPV_INT_VALUE(v));
+      fatal("out_OMP_dir_clause: unknown value=%d\n",EXPV_INT_VALUE(v));
     }
     outx_printi(l+2, "<string>%s</string>\n", s);
     outx_expv_withListTag(l+2, EXPR_ARG2(vv));
@@ -2567,7 +2568,7 @@ outx_udefOp(int l, expv v)
         TOPT_TYPEONLY|TOPT_NEXTLINE);
 
     outx_expv(l1, EXPR_ARG2(v));
-    if(EXPR_ARG3(v) != NULL)
+    if(EXPR_CODE(v) == F95_USER_DEFINED_BINARY_EXPR)
         outx_expv(l1, EXPR_ARG3(v));
 
     outx_expvClose(l, v);
@@ -3369,7 +3370,13 @@ outx_functionType_EXT(int l, EXT_ID ep)
         outx_true(TYPE_IS_RECURSIVE(tp), "is_recursive");
         outx_true(TYPE_IS_PURE(tp), "is_pure");
         outx_true(TYPE_IS_ELEMENTAL(tp), "is_elemental");
-        outx_true(TYPE_IS_EXTERNAL(tp), "is_external");
+
+	if (TYPE_IS_EXTERNAL(tp) ||
+	    (XMP_flag && !TYPE_IS_FOR_FUNC_SELF(tp) &&
+	     !EXT_PROC_IS_INTRINSIC(ep) && !EXT_PROC_IS_MODULE_PROCEDURE(ep) && !EXT_PROC_IS_INTERNAL(ep))){
+	  outx_true(TRUE, "is_external");
+	}
+
         outx_true(TYPE_IS_PUBLIC(tp), "is_public");
         outx_true(TYPE_IS_PRIVATE(tp), "is_private");
     }

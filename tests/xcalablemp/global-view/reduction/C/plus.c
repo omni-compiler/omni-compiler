@@ -6,9 +6,9 @@ static const int N=1000;
 #pragma xmp nodes p(*)
 #pragma xmp template t(0:N-1)
 #pragma xmp distribute t(cyclic) onto p
-int a[N], sa, procs, w, remain, *w1, i, j, result = 0;
-double b[N],sb;
-float c[N],sc;
+int a[N],   sa=0, procs, w, remain, *w1, i, j, result = 0;
+double b[N],sb=0.0;
+float c[N], sc=0.0;
 #pragma xmp align a[i] with t(i)
 #pragma xmp align b[i] with t(i)
 #pragma xmp align c[i] with t(i)
@@ -19,10 +19,6 @@ int main(void){
     exit(1);
   }
 
-  sa=0;
-  sb=0.0;
-  sc=0.0;
-
 #pragma xmp loop on t(i)
   for(i=0;i<N;i++){
     a[i]=1;
@@ -31,21 +27,18 @@ int main(void){
   }
 
 #pragma xmp loop on t(i)
-  for(i=0;i<N;i++){
+  for(i=0;i<N;i++)
     sa = sa+a[i];
-  }
 #pragma xmp reduction (+:sa) on p(1:2) 
   
 #pragma xmp loop on t(i)
-  for(i=0;i<N;i++){
+  for(i=0;i<N;i++)
     sb = sb+b[i];
-  }
 #pragma xmp reduction(+:sb) on p(2:3) 
 
 #pragma xmp loop on t(i)
-  for(i=0;i<N;i++){
+  for(i=0;i<N;i++)
     sc = sc+c[i];
-  }
 #pragma xmp reduction(+:sc) on p(3:4) 
   
   procs = xmp_num_nodes();
@@ -103,4 +96,3 @@ int main(void){
 
   return 0;
 }
- 

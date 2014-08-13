@@ -1429,7 +1429,7 @@ resolveType_binaryArithOp(CExprOfBinaryNode *expr)
     int b1 = isBasicTypeOrEnum(tdo1);
     int b2 = isBasicTypeOrEnum(tdo2);
 
-    if(b1 == 0 || b2 == 0) {
+    if ((b1 == 0 || b2 == 0) && !isSubArrayRef(e1) && !isSubArrayRef(e2)){
         // allow 'pointer - pointer'
         isCompatiblePointerType(td1, td2, &td, (ec != EC_MINUS));
         if(td == NULL) {
@@ -1439,6 +1439,12 @@ resolveType_binaryArithOp(CExprOfBinaryNode *expr)
             td = &s_addrIntTypeDesc;
         }
     } else {
+      if (isSubArrayRef(e1)){
+	tdo1 = getRefType(EXPR_T(tdo1->e_typeExpr));
+      }
+      if (isSubArrayRef(e2)){
+	tdo2 = getRefType(EXPR_T(tdo2->e_typeExpr));
+      }
         CBasicTypeEnum b1 = getBasicTypeWithEnum(tdo1);
         CBasicTypeEnum b2 = getBasicTypeWithEnum(tdo2);
         int isReal1 = (b1 < BT_FLOAT_IMAGINARY);
@@ -1644,11 +1650,18 @@ isLValue(CExpr *e, CExprOfTypeDesc *td, int modifiable, CExpr *ope)
     }
 
     if(ETYP_IS_PTR_OR_ARRAY(td) == 0 &&
-        isPointerOrArrayRef(e) == 0 &&
-        isConstExpr(e, 1) &&
-        (modifiable || (ec == EC_COMPOUND_LITERAL)))
-        return 0;
+       isPointerOrArrayRef(e) == 0 &&
+       isConstExpr(e, 1) &&
+       (modifiable || (ec == EC_COMPOUND_LITERAL))) {
 
+        // ID=308
+        // ignore the result of error check for coindexed object
+        if (EXPR_CODE(e) == EC_XMP_COARRAY_REF) {
+            return 1;
+        }
+
+        return 0;
+    }
     return 1;
 }
 
@@ -2525,7 +2538,9 @@ resolveType_coArrayRef(CExprOfBinaryNode *expr)
         return NULL;
     }
 
-    CExprOfTypeDesc *td = ETYP_IS_ARRAY(btd) ? btd : allocPointerTypeDesc(btd);
+    /* ID=269 */
+    /* CExprOfTypeDesc *td = ETYP_IS_ARRAY(btd) ? btd : allocPointerTypeDesc(btd); */
+    CExprOfTypeDesc *td = btd;
 
     return td;
 }
@@ -4588,8 +4603,8 @@ isCompatiblePointerType(CExprOfTypeDesc *td1, CExprOfTypeDesc *td2,
 
     int p1 = ETYP_IS_POINTER(tdo1);
     int p2 = ETYP_IS_POINTER(tdo2);
-    int a1 = ETYP_IS_ARRAY(tdo1);
-    int a2 = ETYP_IS_ARRAY(tdo2);
+    int a1 = ETYP_IS_ARRAY(tdo1) || ETYP_IS_COARRAY(tdo1);
+    int a2 = ETYP_IS_ARRAY(tdo2) || ETYP_IS_COARRAY(tdo2);
 
     if(p1 == 0 && p2 == 0 && a1 == 0 && a2 == 0) 
         return 0;

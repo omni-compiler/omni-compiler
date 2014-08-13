@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # $TSUKUBA_Release: Omni OpenMP Compiler 3 $
 # $TSUKUBA_Copyright:
@@ -6,5 +6,5 @@
 #  $
 
 COMPILER="@OM_EXEC_F_COMPILER@"
-. ${OMNI_HOME}/bin/omnative $*
+. ${OMNI_HOME}/bin/omnative "$@"
 

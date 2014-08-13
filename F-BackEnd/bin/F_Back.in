@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # $TSUKUBA_Release: Omni OpenMP Compiler 3 $
 # $TSUKUBA_Copyright:
@@ -18,10 +18,10 @@ OMNI_JAR1="${OMNI_HOME}/share/xcalablemp/om-f-back.jar"
 OMNI_JAR2="${OMNI_HOME}/share/xcalablemp/om-common.jar"
 
 if [ -f $OMNI_JAR1 -a -f $OMNI_JAR2 ]; then
-    ${OMNI_JAVA} ${OMNI_JAVA_OPT} -cp ${OMNI_JAR2}:${OMNI_JAR1} xcodeml.f.util.omx2f $@
+    ${OMNI_JAVA} ${OMNI_JAVA_OPT} -cp ${OMNI_JAR2}:${OMNI_JAR1} xcodeml.f.util.omx2f "$@"
 elif [ -f "${OMNI_HOME}/F-BackEnd/classes/xcodeml/f/util/omx2f.class" ]; then
     export CLASSPATH="${OMNI_HOME}/C-BackEnd/classes:${OMNI_HOME}/F-BackEnd/classes:${OMNI_HOME}/F-BackEnd/binding/classes:${OMNI_HOME}/XcodeML-Common/classes"
-    ${OMNI_JAVA} ${OMNI_JAVA_OPT} xcodeml.f.util.omx2f $@
+    ${OMNI_JAVA} ${OMNI_JAVA_OPT} xcodeml.f.util.omx2f "$@"
 else
   echo ${OMNI_JAR1} not found.
   exit 1

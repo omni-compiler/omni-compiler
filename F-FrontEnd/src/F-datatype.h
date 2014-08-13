@@ -121,6 +121,7 @@ typedef struct type_descriptor
 #define TYPE_EXFLAGS_USED_EXPLICIT  0x00000004 /* OBSOLETE: not used anymore */
 #define TYPE_EXFLAGS_NOT_FIXED      0x00000008 /* type is not fixed, since expression
                                                   contains undefined function. */
+#define TYPE_EXFLAGS_FOR_FUNC_SELF  0x00000010 /* type is for the function itself */
         uint32_t exflags;
     } attr; /* FbasicType */
     struct {
@@ -244,6 +245,11 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_IS_NOT_FIXED(tp)       ((tp)->attr.exflags &   TYPE_EXFLAGS_NOT_FIXED)
 #define TYPE_SET_NOT_FIXED(tp)      ((tp)->attr.exflags |=  TYPE_EXFLAGS_NOT_FIXED)
 #define TYPE_UNSET_NOT_FIXED(tp)    ((tp)->attr.exflags &= ~TYPE_EXFLAGS_NOT_FIXED)
+
+#define TYPE_IS_FOR_FUNC_SELF(tp)   ((tp)->attr.exflags &   TYPE_EXFLAGS_FOR_FUNC_SELF)
+#define TYPE_SET_FOR_FUNC_SELF(tp)  ((tp)->attr.exflags |=  TYPE_EXFLAGS_FOR_FUNC_SELF)
+#define TYPE_UNSET_FOR_FUNC_SELF(tp) ((tp)->attr.exflags &= ~TYPE_EXFLAGS_FOR_FUNC_SELF)
+
 #define TYPE_HAS_INTENT(tp)      (TYPE_IS_INTENT_IN(tp) || \
                 TYPE_IS_INTENT_OUT(tp) || TYPE_IS_INTENT_INOUT(tp))
 #define IS_TYPE_PUBLICORPRIVATE(tp)  \

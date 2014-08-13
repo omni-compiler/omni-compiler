@@ -330,8 +330,12 @@ outxChildren(FILE *fp, int indent, CExpr *expr)
 
     CExprIterator ite;
     EXPR_FOREACH_MULTI(ite, expr)
-        if(ite.node)
-            outxContext(fp, indent, ite.node);
+        if(ite.node) {
+            if(EXPR_CODE(ite.node) == EC_NULL_NODE)   // ID=284
+                outxPrint(fp, indent, "<list/>\n");
+            else
+                outxContext(fp, indent, ite.node);
+        }
 }
 
 
@@ -443,9 +447,9 @@ outxContext(FILE *fp, int indent, CExpr *expr)
     case EC_XMP_DESC_OF:
         // OUTX_OP("xmpDescOf"); 
         outxTagForExpr(fp, indent, expr, "xmpDescOf", 0, NULL);
-	outxPrint(fp, indent+1, 
-		  "<Var type=\"int\" scope=\"global\">%s</Var>\n",
-		  EXPR_SYMBOL(EXPR_L_AT(expr,0))->e_symName);
+        outxPrint(fp, indent+1, 
+                  "<Var type=\"int\" scope=\"global\">%s</Var>\n",
+                  EXPR_SYMBOL(EXPR_L_AT(expr,0))->e_symName);
         outxTagClose(fp, indent, "xmpDescOf");
 	break;
 
@@ -492,11 +496,11 @@ outxContext(FILE *fp, int indent, CExpr *expr)
     // Statements
     #define OUTX_SIMPLE_STMT(tag) outxChildrenForStmt(fp, indent, expr, tag);
     case EC_COMP_STMT:
-	if(((CExprOfList *)expr)->e_aux_info != NULL){
-	    out_PRAGMA_COMP_STMT(fp, indent, expr);
-	    break;
-	}
-	outx_COMP_STMT(fp, indent, expr); break;
+        if(((CExprOfList *)expr)->e_aux_info != NULL){
+            out_PRAGMA_COMP_STMT(fp, indent, expr);
+            break;
+        }
+        outx_COMP_STMT(fp, indent, expr); break;
     case EC_IF_STMT:
         outx_IF_STMT(fp, indent, expr); break;
     case EC_WHILE_STMT:
@@ -581,7 +585,6 @@ outxContext(FILE *fp, int indent, CExpr *expr)
     case EC_DECL_SPECS:
     case EC_LDECLARATOR:
     case EC_ARRAY_DECL:
-    case EC_COARRAY_DECL:
     case EC_POINTER_DECL:
     case EC_PARAM:
     case EC_TYPENAME:
@@ -602,6 +605,7 @@ outxContext(FILE *fp, int indent, CExpr *expr)
     case EC_GCC_ASM_CLOBS:
     case EC_XMP_COARRAY_DECLARATION:
     case EC_XMP_COARRAY_DIM_DEFS:
+    case EC_COARRAY_DECL:
     case EC_FLEXIBLE_STAR:
     case EC_PRAGMA_PACK:
     case EC_UNDEF:
@@ -769,6 +773,11 @@ outxStructOrUnionType(FILE *fp, int indent, CExprOfTypeDesc *typeDesc, const cha
 
                 if(isBfTag)
                     outxContextWithTag(fp, indent + 3, memType->e_bitLenExpr, "bitField");
+
+                // ID=284 output codimensions in <id> block
+                CExpr *codims = sym->e_codimensions;
+                if(EXPR_ISNULL(codims) == 0)
+                    outxContextWithTag(fp, indent + 3, codims, "codimensions");
 
                 outxGccAttrVarOrFunc(fp, indent + 3, memType, GAK_VAR);
 
@@ -1507,6 +1516,11 @@ outxSymbols0(FILE *fp, int indent, CSymbolTable *symTab, int symbolsFlags)
         fprintf(fp, ">\n");
 
         outxPrint(fp, indent + 1, "<name>%s</name>\n", sym->e_symName);
+
+        // ID=284 output codimensions in <id> block
+        CExpr *codims = sym->e_codimensions;
+        if(EXPR_ISNULL(codims) == 0)
+            outxContextWithTag(fp, indent + 1, codims, "codimensions");
 
         if(gak != GAK_UNDEF)
             outxGccAttrVarOrFunc(fp, indent + 1, td, gak);
@@ -2692,7 +2706,6 @@ outputXcodeML(FILE *fp, CExpr *expr)
     setTypeIds();
     setExprParent(expr, NULL);
     fprintf(fp, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", s_xmlEncoding);
-    //    fprintf(fp, "<?xml version=\"1.0/1.2\" encoding=\"%s\"?>\n", s_xmlEncoding);
     if(EXPR_ISNULL(expr))
         outx_EXT_DEFS(fp, 0, NULL);
     else

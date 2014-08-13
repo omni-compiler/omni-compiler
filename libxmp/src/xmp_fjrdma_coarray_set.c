@@ -9,7 +9,8 @@
 #include "xmp.h"
 #define MEMID_MAX 511
 #define TAG 0
-static int _memid = 1; // _memid = 0 (macro MEMID in xmp_fjrdma_coarray_do.c) is used to put/get operations.
+static int _memid = 2; // _memid = 0 (macro MEMID in xmp_internal.h) is used to put/get operations.
+                       // _memid = 1 (macro POST_WAID_ID in xmp_internal.h) is used to post/wait operations.
 
 void _XMP_fjrdma_initialize()
 {
@@ -23,12 +24,12 @@ void _XMP_fjrdma_finalize()
   if(ret) _XMP_fatal("FJMPI_Rdma_init error!");
 }
 
-void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray, void **buf, unsigned long long coarray_size)
+void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray, void **buf, const size_t coarray_size)
 {
   uint64_t *each_addr = _XMP_alloc(sizeof(uint64_t) * _XMP_world_size);
   int memid = _memid++;
   if(_memid == MEMID_MAX)
-    _XMP_fatal("Too many coarrays. Number of coarrays is not more than 511.");
+    _XMP_fatal("Too many coarrays. Number of coarrays is not more than 510.");
 
   *buf = _XMP_alloc(coarray_size);
   uint64_t laddr = FJMPI_Rdma_reg_mem(memid, *buf, coarray_size);

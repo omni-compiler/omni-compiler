@@ -53,8 +53,10 @@ unsigned int s_useBuiltinVaArg          = 1;
 unsigned int s_transFuncInInit          = 0;
 unsigned int s_useXMP                   = 0;
 unsigned int s_useACC                   = 0;
-unsigned int s_debugSymbol		= 0;
+unsigned int s_debugSymbol	            = 0;
 unsigned int s_arrayToPointer           = 0;
+
+unsigned int s_dispParseTree            = 0;
 
 #define CEXPR_OPTVAL_CHARLEN 128
 
@@ -186,6 +188,7 @@ usage(const char *argv0)
         "-fxmp                     translate xmp pragma directive.",
         "--verbose                 print syntax tree transformation statistics and",
         "                          processing status.",
+        "--debug                   dump parse tree to stdout.",
         "",
     };
 
@@ -447,10 +450,10 @@ procOptions(int argc, char **argv)
             narg = argv[i + 1];
 
         if(arg[0] != '-') {
-	    if(s_inFile == NULL){
+            if(s_inFile == NULL){
                 s_inFile = arg;
-		strcpy(s_sourceFileName, s_inFile);
-	    }
+                strcpy(s_sourceFileName, s_inFile);
+            }
             else {
                 fprintf(stderr, CERR_504, arg);
                 fprintf(stderr, "\n");
@@ -509,13 +512,13 @@ procOptions(int argc, char **argv)
             } else if(strcmp(arg, "--m64") == 0) {
                 setOptSizeSet(CSIZESET_M64);
             } else if(strcmp(arg, "-fxmp") == 0) {
-	      s_useXMP = 1;
+                s_useXMP = 1;
             } else if(strcmp(arg, "-facc") == 0) {
                 s_useACC = 1;
             } else if(strcmp(arg, "-fopenmp") == 0) {
                 /* accept but no action */
-	    } else if(strcmp(arg, "--array-to-pointer") == 0) {
-	        s_arrayToPointer = 1;
+            } else if(strcmp(arg, "--array-to-pointer") == 0) {
+                s_arrayToPointer = 1;
             } else if(strncmp(arg, COPT_SIZE, lenOptSize) == 0) {
                 NEEDS_VALUE(COPT_SIZE);
                 if(setOptSize(arg + lenOptSize, val) == 0)
@@ -530,6 +533,8 @@ procOptions(int argc, char **argv)
             } else if(strcmp(arg, "--version") == 0) {
                 version();
                 exit(0);
+            } else if(strcmp(arg, "--debug") == 0) {
+                s_dispParseTree = 1;
             } else if(strcmp(arg, "--help") == 0 || strcmp(arg, "-h") == 0) {
                 usage(argv[0]);
                 exit(0);

@@ -58,7 +58,7 @@ extern void _xmp_gasnet_setlockstate(gasnet_token_t, int);
 extern void _xmp_gasnet_do_setlockstate(int);
 extern void _xmp_gasnet_unlock_request(gasnet_token_t, int, uint32_t, uint32_t);
 extern void _xmp_gasnet_lockhandoff(gasnet_token_t, int);
-extern void _xmp_gasnet_post_request(gasnet_token_t, int, int);
+extern void _xmp_gasnet_post_request(gasnet_token_t, const int, const int);
 extern void _xmp_gasnet_pack_using_buf(gasnet_token_t, const char*, const size_t,
 				       const int, const int, const int, const int);
 extern void _xmp_gasnet_unpack_get_reply_using_buf(gasnet_token_t);
@@ -137,13 +137,10 @@ extern void _xmp_gasnet_unpack_get_reply_nonc(gasnet_token_t, char *, size_t, co
 
 #define _xmp_lock_t xmp_gasnet_lock_t
 
-#endif // _XMP_COARRAY_GASNET
-
 extern void _xmp_lock(_XMP_coarray_t*, int, int);
 extern void _xmp_unlock(_XMP_coarray_t*, int, int);
 extern void _xmp_lock_initialize(_xmp_lock_t*, int);
 
-extern void _XMP_post(void*, int, ...);
-extern void _XMP_wait(int, int);
+#endif // _XMP_COARRAY_GASNET
 #endif
 

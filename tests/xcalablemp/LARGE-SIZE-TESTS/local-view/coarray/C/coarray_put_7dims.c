@@ -123,7 +123,7 @@ end:
   xmp_sync_all(&status);
 #pragma xmp bcast(ret) from p2(2)
   if(xmp_node_num() == 1)
-    if(ret == 0) fprintf(stderr, "PASS\n");
+    if(ret == 0) printf("PASS\n");
     else fprintf(stderr, "ERROR\n");
 
   return ret;

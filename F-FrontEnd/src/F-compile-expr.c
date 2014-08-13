@@ -802,6 +802,20 @@ compile_expression(expr x)
         }
 
         case F95_USER_DEFINED_BINARY_EXPR:
+        {
+            expr id = EXPR_ARG1(x);
+            left = compile_expression(EXPR_ARG2(x));
+            if (left == NULL) {
+                goto err;
+            }
+            if ((right = compile_expression(EXPR_ARG3(x))) == NULL) {
+                goto err;
+            }
+            tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+
+            return expv_user_def_cons(F95_USER_DEFINED_BINARY_EXPR,tp,id,left,right);
+        }
+
         case F95_USER_DEFINED_UNARY_EXPR:
         {
             expr id = EXPR_ARG1(x);
@@ -809,13 +823,9 @@ compile_expression(expr x)
             if (left == NULL) {
                 goto err;
             }
-            right = compile_expression(EXPR_ARG3(x));
             tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
 
-            if (right != NULL)
-                return expv_user_def_cons(F95_USER_DEFINED_BINARY_EXPR,tp,id,left,right);
-            else
-                return expv_user_def_cons(F95_USER_DEFINED_UNARY_EXPR,tp,id,left,right);
+            return expv_user_def_cons(F95_USER_DEFINED_UNARY_EXPR,tp,id,left,NULL);
         }
 
 
@@ -1981,10 +1991,11 @@ compile_coarray_ref(expr coarrayRef){
   //
 
   expv cosubs = list0(LIST);
-  expv codims = list0(LIST);
+  //expv codims = list0(LIST);
 
   /* get codims and cosubs*/
-  if (compile_array_ref_dimension(image_selector, codims, cosubs)){
+  //if (compile_array_ref_dimension(image_selector, codims, cosubs)){
+  if (compile_array_ref_dimension(image_selector, cosubs, NULL)){
     return NULL;
   }
 

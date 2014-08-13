@@ -91,6 +91,10 @@ public class XMPtranslateLocalPragma {
 	{ translateWaitAsync(pb);               break; }
       case TEMPLATE_FIX:
 	{ translateTemplateFix(pb);             break; }
+      case REFLECT_INIT:
+        { translateReflectInit(pb);             break; }
+      case REFLECT_DO:
+      { translateReflectDo(pb);                 break; }
       case GPU_REPLICATE:
         { translateGpuData(pb);			break; }
       case GPU_REPLICATE_SYNC:
@@ -136,9 +140,8 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private void translateTemplateFix(PragmaBlock pb) throws XMPexception {
-    checkDeclPragmaLocation(pb);
-
+  private void translateTemplateFix(PragmaBlock pb) throws XMPexception 
+  {
     XobjList templateDecl = (XobjList)pb.getClauses();
     XobjList templateNameList = (XobjList)templateDecl.getArg(1);
     XobjList templateDeclCopy = (XobjList)templateDecl.copy();
@@ -151,6 +154,128 @@ public class XMPtranslateLocalPragma {
     }
   }
 
+  private void translateReflectInit(PragmaBlock pb) throws XMPexception 
+  {
+    XobjList funcArgs     = (XobjList)pb.getClauses().getArg(0);
+    XobjList widthList    = (XobjList)pb.getClauses().getArg(1);
+    XobjList acc_or_host1 = (XobjList)pb.getClauses().getArg(2);
+    XobjList acc_or_host2 = (XobjList)pb.getClauses().getArg(3);
+    BlockList funcBody    = Bcons.emptyBody();
+
+    boolean isHost = false;
+    boolean isAcc  = false;
+
+    if(acc_or_host1.Nargs() == 0 && acc_or_host2.Nargs() == 0){
+      isHost = true;
+    }
+    else{
+      if(acc_or_host1.Nargs() != 0){
+        if(acc_or_host1.getArg(0).getName() == "acc"){
+          isAcc = true;
+        }
+        else if(acc_or_host1.getArg(0).getName() == "host"){
+          isHost = true;
+        }
+      }
+      if(acc_or_host2.Nargs() != 0){
+        if(acc_or_host2.getArg(0).getName() == "acc"){
+          isAcc = true;
+        }
+        else if(acc_or_host2.getArg(0).getName() == "host"){
+          isHost = true;
+        }
+      }
+    }
+
+    if(isHost){
+      XMP.fatal("reflect_init for host has been not developed yet.");
+    }
+
+    Ident funcIdAcc = _globalDecl.declExternFunc("_XMP_reflect_init_acc");
+
+    if(widthList.Nargs() != 0){
+      XMP.fatal("width clause in reflect_init has been not developed yet.");
+    }
+
+    XobjList args = Xcons.List();
+    for(int i=0;i<funcArgs.Nargs();i++){
+      Xobject array = funcArgs.getArg(i);
+      String arrayName = array.getString();
+      Ident arrayId = _globalDecl.findVarIdent(XMP.ADDR_PREFIX_ + arrayName);
+      args.add(arrayId);
+
+      XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
+      if(alignedArray == null){
+        XMP.fatal(arrayName + " is not aligned.");
+      }
+      if(!alignedArray.hasShadow()){
+        XMP.fatal(arrayName + " is not shadowed.");
+      }
+
+      Ident arrayDesc = _globalDecl.findVarIdent(XMP.DESC_PREFIX_ + arrayName);
+      funcBody.add(Bcons.Statement(funcIdAcc.Call(Xcons.List(array, arrayDesc.Ref()))));
+    }
+   
+    Block funcCallBlock = Bcons.PRAGMA(Xcode.ACC_PRAGMA, "host_data use_device", (Xobject)args, funcBody);
+
+    pb.replace(funcCallBlock);
+  }
+
+  private void translateReflectDo(PragmaBlock pb) throws XMPexception
+  {
+    XobjList funcArgs     = (XobjList)pb.getClauses().getArg(0);
+    XobjList acc_or_host1 = (XobjList)pb.getClauses().getArg(1);
+    XobjList acc_or_host2 = (XobjList)pb.getClauses().getArg(2);
+    boolean isHost = false;
+    boolean isAcc  = false;
+
+    if(acc_or_host1.Nargs() == 0 && acc_or_host2.Nargs() == 0){
+      isHost = true;
+    }
+    else{
+      if(acc_or_host1.Nargs() != 0){
+        if(acc_or_host1.getArg(0).getName() == "acc"){
+          isAcc = true;
+        }
+        else if(acc_or_host1.getArg(0).getName() == "host"){
+          isHost = true;
+        }
+      }
+      if(acc_or_host2.Nargs() != 0){
+        if(acc_or_host2.getArg(0).getName() == "acc"){
+          isAcc = true;
+        }
+        else if(acc_or_host2.getArg(0).getName() == "host"){
+          isHost = true;
+        }
+      }
+    }
+
+    if(isHost){
+      XMP.fatal("reflect_do for host has been not developed yet.");
+    }
+
+    Ident funcIdAcc = _globalDecl.declExternFunc("_XMP_reflect_do_acc");
+    Block funcBody  = Bcons.emptyBlock();
+    
+    for(int i=0;i<funcArgs.Nargs();i++){
+      Xobject array = funcArgs.getArg(i);
+      String arrayName = array.getString();
+
+      XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
+      if(alignedArray == null){
+        XMP.fatal(arrayName + " is not aligned.");
+      }
+      if(!alignedArray.hasShadow()){
+        XMP.fatal(arrayName + " is not shadowed.");
+      }
+      Ident arrayDesc = _globalDecl.findVarIdent(XMP.DESC_PREFIX_ + arrayName);
+      funcBody.add(funcIdAcc.Call(Xcons.List(arrayDesc.Ref())));
+    }
+
+    pb.replace(funcBody);
+  }
+  
   private void translateDistribute(PragmaBlock pb) throws XMPexception {
     checkDeclPragmaLocation(pb);
 
@@ -197,55 +322,73 @@ public class XMPtranslateLocalPragma {
 
     XobjList onRef = (XobjList)postDecl.getArg(0);
     String nodeName = onRef.getArg(0).getString();
-    //XMPnodes nodeObj = _globalDecl.getXMPnodes(nodeName, localXMPsymbolTable);
+
     XMPnodes nodeObj = _globalDecl.getXMPnodes(nodeName, pb);
-    if (nodeObj == null) {
-	throw new XMPexception("cannot find '" + nodeName + "' nodes");
+    if(nodeObj == null){
+      throw new XMPexception("cannot find '" + nodeName + "' nodes");
     }
     args = Xcons.List(nodeObj.getDescId().Ref());
     
     XobjList nodeList = (XobjList)onRef.getArg(1);
 
-    if(nodeObj.getDim() < nodeList.Nargs()){
-	throw new XMPexception("Error. more node arguments");
+    if(nodeObj.getDim() != nodeList.Nargs()){
+      throw new XMPexception("Error. Dimension of node is different.");
     }
-    else if(nodeObj.getDim() > nodeList.Nargs()){
-	throw new XMPexception("Error. less node argument");
-    }
-    args.add(Xcons.IntConstant(nodeObj.getDim()));
+
+    String funcName = "_XMP_post_" + String.valueOf(nodeObj.getDim());
+
     for(int i=0;i<nodeObj.getDim();i++)
-	args.add(nodeList.getArg(i).getArg(0));
+      args.add(nodeList.getArg(i).getArg(0));
 
     Xobject tag = postDecl.getArg(1);
     args.add(tag);
 
-    pb.replace(_globalDecl.createFuncCallBlock("_XMP_post", args));
+    pb.replace(_globalDecl.createFuncCallBlock(funcName, args));
   }
 
   private void translateWait(PragmaBlock pb) throws XMPexception {
     checkDeclPragmaLocation(pb);
     XobjList waitDecl = (XobjList)pb.getClauses();
-    Xobject numOfArgs = waitDecl.getArg(0); 
-    XobjList args = null;
-    Xobject waitNode = null;
-    Xobject tag = null;
+    int numOfArgs = waitDecl.Nargs();
 
-    switch (numOfArgs.getInt()) {
-    case 0:  // no arguments
-      args = Xcons.List(numOfArgs);
-      break;
-    case 1:  // only node
-      waitNode = (Xobject)waitDecl.getArg(1).getArg(1);
-      args = Xcons.List(numOfArgs, waitNode);
-      break;
-    case 2:
-      waitNode = (Xobject)waitDecl.getArg(1).getArg(1);
-      tag = waitDecl.getArg(2);
-      args = Xcons.List(numOfArgs, waitNode, tag);
-      break;
+    // no arguments
+    if(numOfArgs == 0){
+      pb.replace(_globalDecl.createFuncCallBlock("_XMP_wait", null));
+      return;
     }
 
-    pb.replace(_globalDecl.createFuncCallBlock("_XMP_wait", args));
+    // only node
+    XobjList onRef = (XobjList)waitDecl.getArg(0);
+    String nodeName = onRef.getArg(0).getString();
+    XobjList nodeList = (XobjList)onRef.getArg(1);
+    XMPnodes nodeObj = _globalDecl.getXMPnodes(nodeName, pb);
+    String funcName = null;
+    XobjList args = Xcons.List(nodeObj.getDescId().Ref());
+
+    if(nodeObj == null){
+      throw new XMPexception("cannot find '" + nodeName + "' nodes");
+    }
+    if(nodeObj.getDim() != nodeList.Nargs()){
+      throw new XMPexception("Error. Dimension of node is different.");
+    }
+
+    for(int i=0;i<nodeList.Nargs();i++)
+      args.add(onRef.getArg(1).getArg(i));
+
+    if(numOfArgs == 1){
+      funcName = "_XMP_wait_notag_" + String.valueOf(nodeObj.getDim());
+      pb.replace(_globalDecl.createFuncCallBlock(funcName, args));
+      return;
+    }
+    
+    // node and tag
+    if(numOfArgs == 2){ // node and tag
+      funcName = "_XMP_wait_tag_" + String.valueOf(nodeObj.getDim());
+      Xobject tag = waitDecl.getArg(1);
+      args.add(tag);
+      pb.replace(_globalDecl.createFuncCallBlock(funcName, args));
+      return;
+    }
   }
 
   private void translateLocalAlias(PragmaBlock pb) throws XMPexception {
@@ -808,6 +951,9 @@ public class XMPtranslateLocalPragma {
       switch (reductionOp.getInt()) {
         case XMPcollective.REDUCE_SUM:
           redOp = OMPpragma.DATA_REDUCTION_PLUS;
+          break;
+        case XMPcollective.REDUCE_MINUS:
+          redOp = OMPpragma.DATA_REDUCTION_MINUS;
           break;
         case XMPcollective.REDUCE_PROD:
           redOp = OMPpragma.DATA_REDUCTION_MUL;
@@ -1516,6 +1662,7 @@ public class XMPtranslateLocalPragma {
     XobjInt reductionOp = (XobjInt)reductionRef.getArg(0);
     switch (reductionOp.getInt()) {
       case XMPcollective.REDUCE_SUM:
+      case XMPcollective.REDUCE_MINUS:
       case XMPcollective.REDUCE_PROD:
       case XMPcollective.REDUCE_BAND:
       case XMPcollective.REDUCE_LAND:
@@ -1660,6 +1807,7 @@ public class XMPtranslateLocalPragma {
   private boolean needsInitialization(int reductionOp) throws XMPexception {
     switch (reductionOp) {
       case XMPcollective.REDUCE_SUM:
+      case XMPcollective.REDUCE_MINUS:
       case XMPcollective.REDUCE_PROD:
       case XMPcollective.REDUCE_BXOR:
       case XMPcollective.REDUCE_LXOR:
@@ -1739,6 +1887,7 @@ public class XMPtranslateLocalPragma {
   private Xobject selectReductionInitValueObj(int reductionOp, Xobject varRef, Xobject zero, Xobject one) throws XMPexception {
     switch (reductionOp) {
       case XMPcollective.REDUCE_SUM:
+      case XMPcollective.REDUCE_MINUS:
         return zero;
       case XMPcollective.REDUCE_PROD:
         return one;
@@ -1765,6 +1914,7 @@ public class XMPtranslateLocalPragma {
   private void createFLMMreductionArgs(int op, XobjList locationVars, XobjList funcArgs, PragmaBlock pb) throws XMPexception {
     switch (op) {
       case XMPcollective.REDUCE_SUM:
+      case XMPcollective.REDUCE_MINUS:
       case XMPcollective.REDUCE_PROD:
       case XMPcollective.REDUCE_BAND:
       case XMPcollective.REDUCE_LAND:
@@ -2753,7 +2903,9 @@ public class XMPtranslateLocalPragma {
               tempArgs.add(Xcons.Cast(castType, t.getArg(1)));
             }
             // stride
-            if (t.getArg(2) == null) tempArgs.add(Xcons.Cast(castType, Xcons.IntConstant(1)));
+            if (t.getArg(2) == null || t.getArg(2).equals(Xcons.IntConstant(1))){
+              tempArgs.add(Xcons.Cast(castType, Xcons.IntConstant(1)));
+            }
             else {
               splitComm = true;
               // XXX stride: always int
@@ -2852,14 +3004,16 @@ public class XMPtranslateLocalPragma {
     XMPpair<XMPalignedArray, XobjList> leftExprInfo = getXMPalignedArrayExpr(pb, left);
     XMPalignedArray leftAlignedArray = leftExprInfo.getFirst();
 
-    Xobject right = assignStmt.right();
-    XMPpair<XMPalignedArray, XobjList> rightExprInfo = getXMPalignedArrayExpr(pb, right);
-    XMPalignedArray rightAlignedArray = rightExprInfo.getFirst();
+    // Xobject right = assignStmt.right();
+    // XMPpair<XMPalignedArray, XobjList> rightExprInfo = getXMPalignedArrayExpr(pb, right);
+    // XMPalignedArray rightAlignedArray = rightExprInfo.getFirst();
 
-    List<Ident> varList = new ArrayList<Ident>();
-    List<Xobject> lbList = new ArrayList<Xobject>();
-    List<Xobject> lenList = new ArrayList<Xobject>();
-    List<Xobject> stList = new ArrayList<Xobject>();
+    List<Ident> varList = new ArrayList<Ident>(XMP.MAX_DIM);
+    List<Ident> varListTemplate = new ArrayList<Ident>(XMP.MAX_DIM);
+    for (int i = 0; i < XMP.MAX_DIM; i++) varListTemplate.add(null);
+    List<Xobject> lbList = new ArrayList<Xobject>(XMP.MAX_DIM);
+    List<Xobject> lenList = new ArrayList<Xobject>(XMP.MAX_DIM);
+    List<Xobject> stList = new ArrayList<Xobject>(XMP.MAX_DIM);
 
     //
     // convert LHS
@@ -2870,8 +3024,24 @@ public class XMPtranslateLocalPragma {
     }
 
     String arrayName = getArrayName(left);
-    Ident arrayId = pb.findVarIdent(arrayName);
-    Xtype arrayType = arrayId.Type();
+
+    //Ident arrayId = pb.findVarIdent(arrayName);
+    //Xtype arrayType = arrayId.Type();
+
+    XMPalignedArray array = _globalDecl.getXMPalignedArray(arrayName, pb);
+    Xtype arrayType = null;
+    if (array != null){
+      arrayType = array.getArrayType();
+    }
+    else {
+      Ident arrayId = pb.findVarIdent(arrayName);
+      if (arrayId != null){
+	arrayType = arrayId.Type();
+      }
+    }
+	
+    if (arrayType == null) throw new XMPexception("array should be declared statically");
+
     Xtype elemType = arrayType.getArrayElementType();
     int n = arrayType.getNumDimensions();
 
@@ -2882,10 +3052,6 @@ public class XMPtranslateLocalPragma {
       long dimSize = arrayType.getArraySize();
       Xobject sizeExpr;
       if (dimSize == 0 || arrayType.getKind() == Xtype.POINTER){
-
-	XMPalignedArray array = _globalDecl.getXMPalignedArray(arrayName);
-	if (array == null) throw new XMPexception("array size should be declared statically");
-
 	Ident ret = declIdentWithBlock(pb, "XMP_" + arrayName + "_ret" + Integer.toString(i),
 				       Xtype.intType);
 	Ident sz = declIdentWithBlock(pb, "XMP_" + arrayName + "_ub" + Integer.toString(i),
@@ -2913,6 +3079,7 @@ public class XMPtranslateLocalPragma {
 
       var = declIdentWithBlock(pb, "_XMP_loop_i" + Integer.toString(i), Xtype.intType);
       varList.add(var);
+      varListTemplate.set(leftAlignedArray.getAlignSubscriptIndexAt(i), var);
 
       lb = ((XobjList)sub).getArg(0);
       if (lb == null) lb = Xcons.IntConstant(0);
@@ -2950,8 +3117,24 @@ public class XMPtranslateLocalPragma {
       int k = 0;
 
       String arrayName1 = getArrayName(x);
-      Ident arrayId1 = pb.findVarIdent(arrayName);
-      Xtype arrayType1 = arrayId.Type();
+
+      //Ident arrayId1 = pb.findVarIdent(arrayName1);
+      //Xtype arrayType1 = arrayId.Type();
+
+      XMPalignedArray array1 = _globalDecl.getXMPalignedArray(arrayName1, pb);
+      Xtype arrayType1 = null;
+      if (array1 != null){
+	arrayType1 = array1.getArrayType();
+      }
+      else {
+	Ident arrayId1 = pb.findVarIdent(arrayName1);
+	if (arrayId1 != null){
+	  arrayType1 = arrayId1.Type();
+	}
+      }
+	
+      if (arrayType1 == null) throw new XMPexception("array should be declared statically");
+
       Xtype elemType1 = arrayType1.getArrayElementType();
       int m = arrayType1.getNumDimensions();
 
@@ -2972,7 +3155,10 @@ public class XMPtranslateLocalPragma {
 	if (st == null) st = Xcons.IntConstant(1);
 
 	Xobject expr;
-	expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
+	//expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
+	Ident loopVar = varListTemplate.get(array1.getAlignSubscriptIndexAt(i));
+	if (loopVar == null) XMP.fatal("array on rhs does not conform to that on lhs.");
+	expr = Xcons.binaryOp(Xcode.MUL_EXPR, loopVar.Ref(), st);
 	expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
 
 	subscripts1.setArg(i, expr);
@@ -3060,7 +3246,10 @@ public class XMPtranslateLocalPragma {
 	  else st = Xcons.IntConstant(1);
 
 	  Xobject expr;
-	  expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
+	  //expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
+	  Ident loopVar = varListTemplate.get(i);
+	  if (loopVar == null) XMP.fatal("template-ref does not conform to that on lhs.");
+	  expr = Xcons.binaryOp(Xcode.MUL_EXPR, varListTemplate.get(i).Ref(), st);
 	  expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
     	  subscriptList.add(expr);
 	  k++;
@@ -3089,7 +3278,10 @@ public class XMPtranslateLocalPragma {
 	  lb = tlb.Ref();
 	}
 
-	Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, varList.get(i).Ref(), lb);
+	//Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, varList.get(i).Ref(), lb);
+	Ident loopVar = varListTemplate.get(i);
+	if (loopVar == null) XMP.fatal("template-ref does not conform to the array on lhs.");
+	Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, loopVar.Ref(), lb);
     	subscriptList.add(expr);
       }
     }

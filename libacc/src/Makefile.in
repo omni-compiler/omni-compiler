@@ -131,7 +131,7 @@ am__v_AR_1 =
 libacc_a_AR = $(AR) $(ARFLAGS)
 libacc_a_DEPENDENCIES = acc_runtime.o acc_gpu_data_table.o acc_util.o \
 	acc_gpu_runtime.o acc_gpu_data.o acc_gpu_stream.o \
-	acc_gpu_util.o acc_gpu_mpool.o
+	acc_gpu_util.o acc_gpu_mpool.o acc_gpu_pack.o
 am_libacc_a_OBJECTS = acc_gpu_data_table.$(OBJEXT) \
 	acc_runtime.$(OBJEXT) acc_util.$(OBJEXT)
 libacc_a_OBJECTS = $(am_libacc_a_OBJECTS)
@@ -245,6 +245,7 @@ ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 ENABLE_ACC = @ENABLE_ACC@
 ENABLE_ATOOL = @ENABLE_ATOOL@
+ENABLE_XACC = @ENABLE_XACC@
 EXEEXT = @EXEEXT@
 F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
@@ -260,6 +261,7 @@ GASNET_LDFLAGS = @GASNET_LDFLAGS@
 GASNET_LIBS = @GASNET_LIBS@
 GASNET_PREFIX = @GASNET_PREFIX@
 GPGPU_PREFIX = @GPGPU_PREFIX@
+GPU_CFLAGS = @GPU_CFLAGS@
 GPU_CMD = @GPU_CMD@
 GREP = @GREP@
 INCLUDECOM = @INCLUDECOM@
@@ -310,6 +312,7 @@ MKDIR = @MKDIR@
 MKDIR_P = @MKDIR_P@
 MKRULESDIR = @MKRULESDIR@
 MM5TGT = @MM5TGT@
+NATIVE_DOPT = @NATIVE_DOPT@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
@@ -351,6 +354,8 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PERL5 = @PERL5@
 POW_LIB = @POW_LIB@
+PPCC = @PPCC@
+PPCC_OPT = @PPCC_OPT@
 PPTGT = @PPTGT@
 RANLIB = @RANLIB@
 RM = @RM@
@@ -371,6 +376,7 @@ SR16000 = @SR16000@
 STRIP = @STRIP@
 SUPERUX = @SUPERUX@
 TARGET_ARCH = @TARGET_ARCH@
+TCA_PREFIX = @TCA_PREFIX@
 TOPDIR = @TOPDIR@
 TYPE_INT16 = @TYPE_INT16@
 TYPE_INT32 = @TYPE_INT32@
@@ -481,7 +487,7 @@ libacc_a_SOURCES = $(ACC_INC_DIR)/acc_internal.h $(ACC_INC_DIR)/acc_gpu_internal
 			  acc_gpu_data_table.c acc_runtime.c acc_util.c
 
 libacc_a_LIBADD = acc_runtime.o acc_gpu_data_table.o acc_util.o \
-			  acc_gpu_runtime.o acc_gpu_data.o acc_gpu_stream.o acc_gpu_util.o acc_gpu_mpool.o
+			  acc_gpu_runtime.o acc_gpu_data.o acc_gpu_stream.o acc_gpu_util.o acc_gpu_mpool.o acc_gpu_pack.o
 
 all: all-am
 

@@ -101,6 +101,10 @@ public class XMPalignedArray {
     return _type;
   }
 
+  public Xtype getArrayType() {
+    return _arrayType;
+  }
+
   public int getDim() {
     return _dim;
   }
@@ -500,6 +504,10 @@ public class XMPalignedArray {
     XobjList alignSubscriptExprList = (XobjList)alignSubscriptList.right();
 
     // check <align-source> list
+    if(arrayType.getRef().getKind() == Xtype.POINTER){
+      throw new XMPexception("Pointer to pointer \"" + arrayName + "\" can not be used.");
+    }
+
     if (XMPutil.countElmts(alignSourceList) != arrayDim) {
       throw new XMPexception("the number of <align-source>s is not the same with array dimension");
     }
