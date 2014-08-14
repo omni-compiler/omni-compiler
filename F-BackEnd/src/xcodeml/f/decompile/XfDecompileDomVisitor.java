@@ -22,7 +22,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import com.sun.org.apache.xml.internal.serializer.OutputPropertiesFactory;
+import org.apache.xml.serializer.OutputPropertiesFactory;
 
 import xcodeml.XmException;
 import xcodeml.f.util.XmfNodeVisitorMap;
