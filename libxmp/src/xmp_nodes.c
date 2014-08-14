@@ -503,7 +503,7 @@ void _XMP_init_nodes_STATIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...) {
 }
 
 void _XMP_init_nodes_DYNAMIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...) {
-  int dim_size[dim - 1];
+  int dim_size[dim];
   int *dim_size_p[dim];
 
   va_list args;
