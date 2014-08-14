@@ -15,9 +15,11 @@ all default: $(EXES)
 .c.x:
 	$(XCC) -o $@ $<
 
-.x:
-	$(XRUN) -n 4 $<
-
+run:
+	$(XRUN) -n 4 ./macro_in_pragma.x
+	export XMP_NODE_SIZE0=2; \
+	export XMP_NODE_SIZE1=2; \
+	$(XRUN) -n 8 ./dnodes.x
 
 #-- cleaning
 clean:

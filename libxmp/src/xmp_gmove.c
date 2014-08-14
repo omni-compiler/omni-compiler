@@ -115,7 +115,7 @@ static void _XMP_calc_gmove_rank_array_SCALAR(_XMP_array_t *array, int *ref_inde
       int onto_nodes_index = chunk->onto_nodes_index;
       _XMP_ASSERT(array_nodes_index != _XMP_N_NO_ONTO_NODES);
 
-      int array_nodes_index = _XMP_calc_nodes_index_from_inherit_nodes_index(array->array_nodes, onto_nodes_index);
+      int array_nodes_index = _XMP_calc_nodes_index_from_inherit_nodes_index(array->shrunk_template_nodes, onto_nodes_index);
       rank_array[array_nodes_index] = _XMP_calc_template_owner_SCALAR(template, template_index,
                                                                       ref_index[i] + ai->align_subscript);
     }
@@ -123,7 +123,7 @@ static void _XMP_calc_gmove_rank_array_SCALAR(_XMP_array_t *array, int *ref_inde
 }
 
 int _XMP_calc_gmove_array_owner_linear_rank_SCALAR(_XMP_array_t *array, int *ref_index) {
-  _XMP_nodes_t *array_nodes = array->array_nodes;
+  _XMP_nodes_t *array_nodes = array->shrunk_template_nodes;
   int array_nodes_dim = array_nodes->dim;
   int rank_array[array_nodes_dim];
 
@@ -133,7 +133,7 @@ int _XMP_calc_gmove_array_owner_linear_rank_SCALAR(_XMP_array_t *array, int *ref
 }
 
 static _XMP_nodes_ref_t *_XMP_create_gmove_nodes_ref_SCALAR(_XMP_array_t *array, int *ref_index) {
-  _XMP_nodes_t *array_nodes = array->array_nodes;
+  _XMP_nodes_t *array_nodes = array->shrunk_template_nodes;
   int array_nodes_dim = array_nodes->dim;
   int rank_array[array_nodes_dim];
 
@@ -340,7 +340,7 @@ int _XMP_calc_global_index_BCAST(int dst_dim, int *dst_l, int *dst_u, int *dst_s
       int onto_nodes_index = template->chunk[template_index].onto_nodes_index;
       _XMP_ASSERT(onto_nodes_index != _XMP_N_NO_ONTO_NODES);
 
-      int array_nodes_index = _XMP_calc_nodes_index_from_inherit_nodes_index(src_array->array_nodes, onto_nodes_index);
+      int array_nodes_index = _XMP_calc_nodes_index_from_inherit_nodes_index(src_array->shrunk_template_nodes, onto_nodes_index);
       int rank = src_array_nodes_ref[array_nodes_index];
 
       // calc template info
@@ -377,8 +377,8 @@ void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datatype,
                          int *dst_lower, int *dst_upper, int *dst_stride, unsigned long long *dst_dim_acc,
                          _XMP_array_t *src_array, int *src_array_nodes_ref,
                          int *src_lower, int *src_upper, int *src_stride, unsigned long long *src_dim_acc) {
-  _XMP_nodes_t *dst_array_nodes = dst_array->array_nodes;
-  _XMP_nodes_t *src_array_nodes = src_array->array_nodes;
+  _XMP_nodes_t *dst_array_nodes = dst_array->shrunk_template_nodes;
+  _XMP_nodes_t *src_array_nodes = src_array->shrunk_template_nodes;
   void *dst_addr = dst_array->array_addr_p;
   void *src_addr = src_array->array_addr_p;
   int dst_dim = dst_array->dim;
@@ -2107,7 +2107,7 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
     MPI_Type_contiguous(type_size, MPI_BYTE, &mpi_datatype);
     MPI_Type_commit(&mpi_datatype);
 
-    _XMP_nodes_t *dst_array_nodes = dst_array->array_nodes;
+    _XMP_nodes_t *dst_array_nodes = dst_array->shrunk_template_nodes;
     int dst_array_nodes_dim = dst_array_nodes->dim;
     int dst_array_nodes_ref[dst_array_nodes_dim];
     for (int i = 0; i < dst_array_nodes_dim; i++) {
@@ -2129,7 +2129,7 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
       }
     }
 
-    _XMP_nodes_t *src_array_nodes = src_array->array_nodes;
+    _XMP_nodes_t *src_array_nodes = src_array->shrunk_template_nodes;
     int src_array_nodes_dim = src_array_nodes->dim;
     int src_array_nodes_ref[src_array_nodes_dim];
 
@@ -2257,7 +2257,7 @@ void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size,
     _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
     _XMP_ASSERT(exec_nodes->is_member);
 
-    _XMP_nodes_t *array_nodes = src_array->array_nodes;
+    _XMP_nodes_t *array_nodes = src_array->shrunk_template_nodes;
     int array_nodes_dim = array_nodes->dim;
     int array_nodes_ref[array_nodes_dim];
     for (int i = 0; i < array_nodes_dim; i++) {
@@ -2557,7 +2557,7 @@ void _XMP_gmove_BCAST_TO_NOTALIGNED_ARRAY(_XMP_array_t *dst_array, _XMP_array_t 
   MPI_Type_contiguous(type_size, MPI_BYTE, &mpi_datatype);
   MPI_Type_commit(&mpi_datatype);
 
-  _XMP_nodes_t *src_array_nodes = src_array->array_nodes;
+  _XMP_nodes_t *src_array_nodes = src_array->shrunk_template_nodes;
   _XMP_template_t *dst_template = dst_array->align_template;  // Note: dst_template and src_template are the same.
   _XMP_template_t *src_template = src_array->align_template;
 

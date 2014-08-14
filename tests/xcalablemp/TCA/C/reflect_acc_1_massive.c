@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <xmp.h>
 #define SIZE (100)
+#define TIMES (100)
 #pragma xmp nodes p(*)
 #pragma xmp template t(0:SIZE-1)
 #pragma xmp distribute t(block) onto p
@@ -27,7 +28,10 @@ int main()
 #pragma acc data copy(a)
   {
 #pragma xmp reflect_init (a) acc
+    for(int i=0;i<TIMES;i++)
+      {
 #pragma xmp reflect_do (a) acc
+      }
     }
   
   // Check 

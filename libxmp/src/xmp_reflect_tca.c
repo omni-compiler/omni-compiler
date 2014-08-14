@@ -3,6 +3,47 @@
 #define _XMP_TCA_DMAC 0
 #define _XMP_TCA_CHAIN_FLAG (tcaDMANotify|tcaDMAContinue)
 #define _XMP_TCA_LAST_FLAG  (tcaDMANotify)
+int first_send_flag;
+
+static int is_first_send_node(_XMP_array_t *adesc){
+  if(_XMP_world_rank == 0)
+    return _XMP_N_INT_TRUE;
+  
+  int array_dim = adesc->dim;
+  int shadow_dim = 0;
+  for(int i=0;i<array_dim;i++){
+    _XMP_array_info_t *ai = &(adesc->info[i]);
+    if(ai->shadow_type == _XMP_N_SHADOW_NONE)
+      continue;
+    shadow_dim++;
+  }
+  
+  _XMP_nodes_t *n = adesc->align_template->onto_nodes;
+  int width = n->comm_size;
+  if(shadow_dim > 1)
+    width /= n->info[shadow_dim-1].size;
+
+#if 1
+  if(_XMP_world_rank == 1) 
+    printf("width = %d\n", width);
+#endif
+
+  int tmp_r = 0, r = 0;
+  for(int i=1;i<_XMP_world_size/2;i++){
+    if(tmp_r%width == width - 1)
+      r = tmp_r + 1;
+    else if(tmp_r%width == width - 2)
+      r = tmp_r + 3;
+    else
+      r = tmp_r + 2;
+    
+    if(r == _XMP_world_rank)
+      return _XMP_N_INT_TRUE;
+
+    tmp_r = r;
+  }
+  return _XMP_N_INT_FALSE;
+}
 
 void _XMP_create_TCA_handle(void *acc_addr, _XMP_array_t *adesc)
 {
@@ -159,14 +200,18 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
   
   for(int i=0;i<array_dim;i++){
     _XMP_array_info_t *ai = &(adesc->info[i]);
+    if(ai->shadow_type == _XMP_N_SHADOW_NONE)
+      continue;
     int is_periodic = _XMP_N_INT_FALSE; // FIX me
     _XMP_reflect_acc_sched_dim(adesc, i, is_periodic);
   }
 
   int num_of_neighbors = 0;
   for(int i=0;i<array_dim;i++){
-    int lo_rank = adesc->info[i].reflect_acc_sched->lo_rank;
-    int hi_rank = adesc->info[i].reflect_acc_sched->hi_rank;
+    _XMP_array_info_t *ai = &(adesc->info[i]);
+    if(ai->shadow_type == _XMP_N_SHADOW_NONE)  continue;
+    int lo_rank = ai->reflect_acc_sched->lo_rank;
+    int hi_rank = ai->reflect_acc_sched->hi_rank;
     if(lo_rank != -1)
       num_of_neighbors++;
     if(hi_rank != -1)
@@ -176,9 +221,11 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
   int j = 0;
   tcaHandle* h = (tcaHandle*)adesc->tca_handle;
   for(int i=0;i<array_dim;i++){
-    int lo_rank = adesc->info[i].reflect_acc_sched->lo_rank;
-    int hi_rank = adesc->info[i].reflect_acc_sched->hi_rank;
     _XMP_array_info_t *ai = &(adesc->info[i]);
+    if(ai->shadow_type == _XMP_N_SHADOW_NONE)  continue;
+
+    int lo_rank = ai->reflect_acc_sched->lo_rank;
+    int hi_rank = ai->reflect_acc_sched->hi_rank;
     _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
     int count = reflect->count;
     off_t lo_dst_offset = reflect->lo_dst_offset;
@@ -204,6 +251,10 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
 	tcaSetDMADescInt_Memcpy(dma_slot, &dma_slot, &h[lo_rank], lo_dst_offset, 
 				&h[_XMP_world_rank], lo_src_offset, reflect->blocklength, 
 				getFlag(j, num_of_neighbors), adesc->wait_slot, adesc->wait_tag);
+#if 0
+	printf("[%d] tcaSetDMADescInt_Memcpy   lo_rank = %d lo_dst_offset = %zd lo_src_offset=%zd\n", 
+	       _XMP_world_rank, lo_rank, lo_dst_offset, lo_src_offset);
+#endif
 	j++;
 	lo_src_offset += reflect->stride;
 	lo_dst_offset += reflect->stride;
@@ -212,6 +263,10 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
 	tcaSetDMADescInt_Memcpy(dma_slot, &dma_slot, &h[hi_rank], hi_dst_offset,
 				&h[_XMP_world_rank], hi_src_offset, reflect->blocklength,
 				getFlag(j, num_of_neighbors), adesc->wait_slot, adesc->wait_tag);
+#if 0
+        printf("[%d] tcaSetDMADescInt_Memcpy   hi_rank = %d hi_dst_offset = %zd hi_src_offset=%zd\n",
+               _XMP_world_rank, hi_rank, hi_dst_offset, hi_src_offset);
+#endif
 	j++;
 	hi_src_offset += reflect->stride;
 	hi_dst_offset += reflect->stride;
@@ -224,12 +279,20 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
 	tcaSetDMADescInt_Memcpy2D(dma_slot, &dma_slot, &h[lo_rank], lo_dst_offset, pitch,
 				   &h[_XMP_world_rank], lo_src_offset, pitch,
 				   width, count, getFlag(j, num_of_neighbors), adesc->wait_slot, adesc->wait_tag);
+#if 0
+        printf("[%d] tcaSetDMADescInt_Memcpy2D lo_rank = %d lo_dst_offset = %zd lo_src_offset=%zd pitch=%d width=%d count=%d\n",
+               _XMP_world_rank, lo_rank, lo_dst_offset, lo_src_offset, pitch, width, count);
+#endif
 	j++;
       }
       if(hi_rank != -1){
 	tcaSetDMADescInt_Memcpy2D(dma_slot, &dma_slot, &h[hi_rank], hi_dst_offset, pitch,
 				   &h[_XMP_world_rank], hi_src_offset, pitch,
 				   width, count, getFlag(j, num_of_neighbors), adesc->wait_slot, adesc->wait_tag);
+#if 0
+        printf("[%d] tcaSetDMADescInt_Memcpy2D hi_rank = %d hi_dst_offset = %zd hi_src_offset=%zd pitch=%d width=%d count=%d\n",
+               _XMP_world_rank, hi_rank, hi_dst_offset, hi_src_offset, pitch, width, count);
+#endif
 	j++;
       }
     }
@@ -247,6 +310,11 @@ void _XMP_create_TCA_desc(_XMP_array_t *adesc)
   create_TCA_desc_intraMEM(adesc);
   //  else
   //    create_TCA_desc_hostMEM(array_desc);
+
+  first_send_flag = is_first_send_node(adesc);
+#if 1
+  printf("[%d] %d\n", _XMP_world_rank, first_send_flag);
+#endif
 }
 
 void _XMP_init_tca()
@@ -261,22 +329,29 @@ void _XMP_alloc_tca(_XMP_array_t *adesc)
 {
   adesc->set_handle = _XMP_N_INT_FALSE;
   int array_dim = adesc->dim;
-  for(int i=0;i<array_dim;i++)
-    adesc->info[i].reflect_acc_sched = _XMP_alloc(sizeof(_XMP_reflect_sched_t));
+  for(int i=0;i<array_dim;i++){
+    _XMP_array_info_t *ai = &(adesc->info[i]);
+    if(ai->shadow_type == _XMP_N_SHADOW_NONE)
+      continue;
+    ai->reflect_acc_sched = _XMP_alloc(sizeof(_XMP_reflect_sched_t));
+  }
 
   adesc->wait_slot = 0;  // No change ?
   adesc->wait_tag  = 0x100;  // No change ?
 }
 
-void _XMP_reflect_do_tca(_XMP_array_t *adesc){
-  tcaStartDMADesc(_XMP_TCA_DMAC);
-  
+static void _XMP_refect_wait_tca(_XMP_array_t *adesc)
+{
   int array_dim = adesc->dim;
   tcaHandle* h = (tcaHandle*)adesc->tca_handle;
+  
   for(int i=0;i<array_dim;i++){
-    int lo_rank = adesc->info[i].reflect_acc_sched->lo_rank;
-    int hi_rank = adesc->info[i].reflect_acc_sched->hi_rank;
-
+    _XMP_array_info_t *ai = &(adesc->info[i]);
+    if(ai->shadow_type == _XMP_N_SHADOW_NONE)
+      continue;
+    int lo_rank = ai->reflect_acc_sched->lo_rank;
+    int hi_rank = ai->reflect_acc_sched->hi_rank;
+    
 #if 0
     if(lo_rank != -1)
       printf("[%d] lo wait from %d\n", _XMP_world_rank, lo_rank);
@@ -290,7 +365,16 @@ void _XMP_reflect_do_tca(_XMP_array_t *adesc){
     if(hi_rank != -1)
       tcaWaitDMARecvDesc(&h[hi_rank], adesc->wait_slot, adesc->wait_tag);
   }
-#if 0
-  printf("[%d] wait finish\n", _XMP_world_rank);
-#endif
+}
+
+void _XMP_reflect_do_tca(_XMP_array_t *adesc)
+{
+  if(first_send_flag){
+    tcaStartDMADesc(_XMP_TCA_DMAC);
+    _XMP_refect_wait_tca(adesc);
+  }
+  else{
+    _XMP_refect_wait_tca(adesc);
+    tcaStartDMADesc(_XMP_TCA_DMAC);
+  }
 }

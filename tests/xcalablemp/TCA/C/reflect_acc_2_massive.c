@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <xmp.h>
 #define N 64
+#define TIMES 1
 double a[N][N];
 #define P 2
 #define Q 4
@@ -54,7 +55,10 @@ int main(int argc, char **argv)
 #pragma acc data copy(a)
   {
 #pragma xmp reflect_init (a) acc
+    for(int i=0;i<TIMES;i++)
+      {
 #pragma xmp reflect_do (a) acc
+      }
   }
 
 #pragma xmp loop (j, i) on t(j, i)
