@@ -16,7 +16,7 @@ all default: $(EXES)
 	$(XCC) -o $@ $<
 
 run:
-	$(XRUN) -n 4 macro_in_pragma.x
+	$(XRUN) -n 4 ./macro_in_pragma.x
 	export XMP_NODE_SIZE0=2; \
 	export XMP_NODE_SIZE1=2; \
 	$(XRUN) -n 8 ./dnodes.x
