@@ -106,6 +106,7 @@ public class XMPnodes extends XMPobject {
           nodesSizeId = globalDecl.declStaticIdent(XMP.NODES_SIZE_PREFIX_ + nodesName, Xtype.intType);
         }
 
+	if (inheritInfo.getFirst().equals("GLOBAL")) nodesArgs.add(Xcons.IntConstant(-1));
         nodesArgs.add(Xcons.Cast(Xtype.Pointer(Xtype.intType), nodesSizeId.getAddr()));
         nodesSize = nodesSizeId.Ref();
       } else {
