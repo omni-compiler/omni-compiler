@@ -219,7 +219,7 @@ typedef struct _XMP_array_type {
   // ----------------------------------------
 
   _Bool is_shrunk_template;
-  _XMP_nodes_t *array_nodes;
+  _XMP_nodes_t *shrunk_template_nodes;
 
   _XMP_template_t *align_template;
   _XMP_array_info_t info[1];
