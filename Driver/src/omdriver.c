@@ -62,6 +62,7 @@ static const opt_pair opt_pair_table[] = {
     { OPT_X2L_B,          MOD_X2L,  1, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_NTV_N,          MOD_NTV,  1, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_NTV_MODPATH,    MOD_NTV,  1, 1, 0, 1, OPT_INVALID_CODE },
+    { OPT_NTV_OPENMP,     MOD_NTV,  1, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_LNK_OUTPUT,     MOD_LNK,  0, 1, 0, 0, OPT_INVALID_CODE },
     { OPT_LNK_L,          MOD_LNK,  1, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_LX2X_TRANS,     MOD_DRV , 1, 1, 0, 1, OPT_INVALID_CODE },

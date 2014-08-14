@@ -146,6 +146,7 @@
 #define OPT_LX2X_TRANS          "-T"
 #define OPT_NTV_N               "--Wn"
 #define OPT_NTV_MODPATH         "-moddir"
+#define OPT_NTV_OPENMP          "-openmp"
 #define OPT_LNK_L               "--Wl"
 /** for Driver */
 #define OPT_INVALID_CODE        "-"
