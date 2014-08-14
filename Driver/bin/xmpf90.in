@@ -28,6 +28,9 @@ for i in "$@"; do
                     prev_args="-M";;
                 -tmp)
                     args=("${args[@]}" "--Wn${i}");;
+		-openmp|-omp)
+		    args=("${args[@]}" "-fopenmp")
+		    args=("${args[@]}" "-openmp");;
                 *)
                     args=("${args[@]}" "${i}");;
             esac;;

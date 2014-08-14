@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 # $TSUKUBA_Release: Omni OpenMP Compiler 3 $
 # $TSUKUBA_Copyright:
@@ -29,7 +29,6 @@ if [ ! -z "${OM_TRANSLATORS}" ]; then
         fi
     done;
 fi
-
 GPU_COMPILER="@GPU_CMD@"
 INPFILE_BASENAME=`basename "${INPFILE}"`
 INPFILE_FILENAME=${INPFILE_BASENAME%.*}
@@ -45,6 +44,8 @@ for i in ${OM_OPTIONS}; do
                 GPUCMD="${GPU_COMPILER} @GPU_CFLAGS@ -I"${OMNI_HOME}/include" -c "${INPFILE_FILENAME}.cu" -o "${INPFILE_FILENAME}.accgpu.o""
 		$GPUCMD
             fi;;
+	-openmp)
+	    newOpts="${newOpts} ${OMP_CONF_LNK_OPT}";;
         -tmp)
             cp "${INPFILE}" "__omni_tmp_${INPFILE_BASENAME}";;
         -moddir?*)
