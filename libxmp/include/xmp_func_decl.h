@@ -237,11 +237,11 @@ extern void _XMP_reduce_FLMM_CLAUSE(void *data_addr, int count, int datatype, in
 extern int _XMP_init_reduce_comm_NODES(void *nodes, ...);
 extern int _XMP_init_reduce_comm_TEMPLATE(void *template, ...);
 
-// xmp_reduce_gpu.c
-extern void _XMP_reduce_gpu_NODES_ENTIRE(void *nodes, void *dev_addr, int count, int datatype, int op);
-//extern void _XMP_reduce_gpu_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op, int num_locs, ...);
-extern void _XMP_reduce_gpu_CLAUSE(void *dev_addr, int count, int datatype, int op);
-//extern void _XMP_reduce_gpu_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, int num_locs, ...);
+// xmp_reduce_acc.c
+extern void _XMP_reduce_acc_NODES_ENTIRE(void *nodes, void *dev_addr, int count, int datatype, int op);
+extern void _XMP_reduce_acc_FLMM_NODES_ENTIRE(void *nodes, void *addr, int count, int datatype, int op, int num_locs, ...);
+extern void _XMP_reduce_acc_CLAUSE(void *dev_addr, int count, int datatype, int op);
+extern void _XMP_reduce_acc_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, int num_locs, ...);
 
 
 // xmp_reflect.c
