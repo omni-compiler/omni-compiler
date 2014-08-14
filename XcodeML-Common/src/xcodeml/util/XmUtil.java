@@ -22,7 +22,7 @@ import javax.xml.transform.stream.StreamSource;
 import xcodeml.XmException;
 import xcodeml.XmObj;
 
-import org.apache.xml.serializer.OutputPropertiesFactory;
+import com.sun.org.apache.xml.internal.serializer.OutputPropertiesFactory;
 
 public class XmUtil
 {
