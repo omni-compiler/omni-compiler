@@ -533,6 +533,7 @@ static void _XMP_reflect_start(_XMP_array_t *a, int dummy)
     //printf("dim=%d\n", i);
 
     _XMP_array_info_t *ai = &(a->info[i]);
+    if(! ai->is_shadow_comm_member) continue;
     _XMP_reflect_sched_t *reflect = ai->reflect_sched;
     int lo_width = reflect->lo_width;
     int hi_width = reflect->hi_width;
@@ -560,6 +561,7 @@ static void _XMP_reflect_start(_XMP_array_t *a, int dummy)
 
   for (int i = 0; i < a->dim; i++){
     _XMP_array_info_t *ai = &(a->info[i]);
+    if(! ai->is_shadow_comm_member) continue;
     _XMP_reflect_sched_t *reflect = ai->reflect_sched;
     int lo_width = reflect->lo_width;
     int hi_width = reflect->hi_width;
@@ -577,6 +579,7 @@ static void _XMP_reflect_start(_XMP_array_t *a, int dummy)
 
   for (int i = 0; i < a->dim; i++){
     _XMP_array_info_t *ai = &(a->info[i]);
+    if(! ai->is_shadow_comm_member) continue;
     _XMP_reflect_sched_t *reflect = ai->reflect_sched;
     int lo_width = reflect->lo_width;
     int hi_width = reflect->hi_width;
@@ -596,6 +599,7 @@ static void _XMP_reflect_wait(_XMP_array_t *a)
   //for (int i = 0; i < a->dim; i++){
   for (int i = a->dim-1; i >= 0; i--){
     _XMP_array_info_t *ai = &(a->info[i]);
+    if(! ai->is_shadow_comm_member) continue;
     _XMP_reflect_sched_t *reflect = ai->reflect_sched;
     int lo_width = reflect->lo_width;
     int hi_width = reflect->hi_width;
@@ -633,6 +637,7 @@ static void _XMP_reflect_wait(_XMP_array_t *a)
 
     for(int i = a->dim-1; i >= 0; i--){
       _XMP_array_info_t *ai = &(a->info[i]);
+      if(! ai->is_shadow_comm_member) continue;
       _XMP_reflect_sched_t *reflect = ai->reflect_sched;
       int lo_width = reflect->lo_width;
       int hi_width = reflect->hi_width;
@@ -673,6 +678,7 @@ static void _XMP_reflect_gpu_pack(_XMP_array_t *a)
 
   for (int i = lb; i < ub; i++){
     _XMP_array_info_t *ai = &(a->info[i]);
+    if(! ai->is_shadow_comm_member) continue;
     _XMP_reflect_sched_t *reflect = ai->reflect_sched;
     int lo_width = reflect->lo_width;
     int hi_width = reflect->hi_width;
@@ -716,6 +722,7 @@ static void _XMP_reflect_gpu_unpack(_XMP_array_t *a)
   //for (int i = lb; i < ub; i++){
   for(int i = ub - 1; i >= lb; i--){
     _XMP_array_info_t *ai = &(a->info[i]);
+    if(! ai->is_shadow_comm_member) continue;
     _XMP_reflect_sched_t *reflect = ai->reflect_sched;
     int lo_width = reflect->lo_width;
     int hi_width = reflect->hi_width;
