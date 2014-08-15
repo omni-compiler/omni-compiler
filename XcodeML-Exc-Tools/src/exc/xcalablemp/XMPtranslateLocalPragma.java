@@ -1272,7 +1272,7 @@ public class XMPtranslateLocalPragma {
       XobjList reductionRef = (XobjList)it.next();
       Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb,
                                                                        true, schedBaseBlock, reductionInitIfBlock);
-      String reductionFuncType = createReductionFuncType(reductionRef, pb);
+      String reductionFuncType = createReductionFuncType(reductionRef, pb, false);
 
       reductionBody.add(createReductionFuncCallBlock(false, reductionFuncType + "_CLAUSE",
                                                      null, reductionFuncArgsList));
@@ -1609,9 +1609,21 @@ public class XMPtranslateLocalPragma {
 
     // create function arguments
     XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
+    XobjList accOrHost = (XobjList)reductionDecl.getArg(2);
+    boolean isHost = false;
+    boolean isACC = false;
+    for (Xobject x : accOrHost){
+      if(x.getSym().equals("acc")) isACC = true;
+      else if(x.getSym().equals("host")) isHost = true;
+    }
+    if(!isHost && !isACC){
+      isHost = true;
+    }else if(isHost && isACC){
+      XMP.fatal("reduction of both host and acc is unimplemented");
+    }
     Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb,
                                                                      false, null, null);
-    String reductionFuncType = createReductionFuncType(reductionRef, pb);
+    String reductionFuncType = createReductionFuncType(reductionRef, pb, isACC);
 
     // create function call
     Block reductionFuncCallBlock = null;
@@ -1636,10 +1648,20 @@ public class XMPtranslateLocalPragma {
       }
     }
     
+    if(isACC){
+      XobjList vars = Xcons.List();
+      XobjList reductionSpecList = (XobjList)reductionRef.getArg(1);
+      for(Xobject x : reductionSpecList){
+        vars.add(x.getArg(0));
+      }
+      reductionFuncCallBlock =
+      Bcons.PRAGMA(Xcode.ACC_PRAGMA, "HOST_DATA",
+            Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"), vars)), Bcons.blockList(reductionFuncCallBlock));
+    }
     pb.replace(reductionFuncCallBlock);
 
     // add function calls for profiling                                                                                    
-    Xobject profileClause = reductionDecl.getArg(2);
+    Xobject profileClause = reductionDecl.getArg(3);
     if( _all_profile || (profileClause != null && _selective_profile)){
         if (doScalasca == true) {
             XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp reduction:" + pb.getLineNo()));
@@ -1658,7 +1680,7 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private String createReductionFuncType(XobjList reductionRef, PragmaBlock pb) throws XMPexception {
+  private String createReductionFuncType(XobjList reductionRef, PragmaBlock pb, boolean isACC) throws XMPexception {
     XobjInt reductionOp = (XobjInt)reductionRef.getArg(0);
     switch (reductionOp.getInt()) {
       case XMPcollective.REDUCE_SUM:
@@ -1672,12 +1694,12 @@ public class XMPtranslateLocalPragma {
       case XMPcollective.REDUCE_LXOR:
       case XMPcollective.REDUCE_MAX:
       case XMPcollective.REDUCE_MIN:
-        return new String("reduce");
+        return isACC? new String("reduce_acc") : new String("reduce");
       case XMPcollective.REDUCE_FIRSTMAX:
       case XMPcollective.REDUCE_FIRSTMIN:
       case XMPcollective.REDUCE_LASTMAX:
       case XMPcollective.REDUCE_LASTMIN:
-        return new String("reduce_FLMM");
+        return isACC? new String("reduce_acc_FLMM") : new String("reduce_FLMM");
       default:
         throw new XMPexception("unknown reduce operation");
     }

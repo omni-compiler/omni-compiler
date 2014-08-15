@@ -30,7 +30,6 @@ HOW TO INSTALL
  in 
  * XcodeML-Common/src/xcodeml/util/XmUtil.java
  * XcodeML-Exc-Tools/src/exc/util/omompx.java
- * XcodeML-Exc-Tools/src/exc/openacc/ACCmain.java
  * F-BackEnd/src/xcodeml/f/decompile/XfDecompileDomVisitor.java
 
 ## Usage of local-view operations (coarray, post/wait, lock/unlock)
