@@ -199,6 +199,14 @@ extern void _XMP_init_world(int *argc, char ***argv);
 extern void _XMP_finalize_world(void);
 extern int _XMP_split_world_by_color(int color);
 
+#ifdef _XMP_XACC
+extern void _XMP_reflect_do_gpu(_XMP_array_t *array_desc);
+extern void _XMP_reflect_init_gpu(void *acc_addr, _XMP_array_t *array_desc);
+extern int _XMP_get_owner_pos(_XMP_array_t *a, int dim, int index);
+extern void _XMP_reduce_gpu_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op);
+extern void _XMP_reduce_gpu_CLAUSE(void *data_addr, int count, int datatype, int op);
+#endif
+
 // ----- libxmp_threads ----------------------------------------------
 // xmp_threads_runtime.c
 extern void _XMP_threads_init(void);
@@ -326,9 +334,5 @@ struct _XMPTIMING
   }         \
   }while (0)
 #endif
-
-void _XMP_reflect_do_gpu(_XMP_array_t *array_desc);
-void _XMP_reflect_init_gpu(void *acc_addr, _XMP_array_t *array_desc);
-int _XMP_get_owner_pos(_XMP_array_t *a, int dim, int index);
 
 #endif // _XMP_INTERNAL

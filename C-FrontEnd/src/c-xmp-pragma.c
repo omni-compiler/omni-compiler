@@ -1414,10 +1414,20 @@ static CExpr* parse_REDUCTION_clause()
 {
     CExpr* reductionRef = parse_Reduction_ref();
     CExpr* onRef = (CExpr *)allocExprOfNull();
+    CExpr* acc_or_host = (CExpr *)allocExprOfNull();
 
     if (PG_IS_IDENT("on")) {
       pg_get_token();
       onRef = parse_task_ON_ref();
+    }
+
+    if(PG_IS_IDENT("acc") || PG_IS_IDENT("host")){
+      acc_or_host = XMP_LIST1(pg_tok_val);
+      pg_get_token();
+      if(PG_IS_IDENT("acc") || PG_IS_IDENT("host")){
+	acc_or_host = exprListAdd(acc_or_host, pg_tok_val);
+	pg_get_token();
+      }
     }
 
     CExpr* profileClause = (CExpr *)allocExprOfNull();
@@ -1426,7 +1436,7 @@ static CExpr* parse_REDUCTION_clause()
     /* 	    pg_get_token(); */
     /* 	} */
 
-    return XMP_LIST3(reductionRef, onRef, profileClause);
+    return XMP_LIST4(reductionRef, onRef, acc_or_host, profileClause);
 }
 
 static CExpr* parse_BARRIER_clause()
