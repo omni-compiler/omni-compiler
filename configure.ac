@@ -1417,8 +1417,8 @@ rm -f ./hasqd.* ./hasqd
 # --------------------------------------------------------------------
 # quad real support
 
-gmp-include="/usr/include"
-gmp-lib="/usr/lib"
+gmp-include=/usr/include
+gmp-lib=/usr/lib
 gmpIncOpt=""
 gmpDirOpt=""
 qRealPrecBits=128
