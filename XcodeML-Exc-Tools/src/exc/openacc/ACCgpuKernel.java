@@ -1188,11 +1188,13 @@ public class ACCgpuKernel {
         if(asyncExp != null){
           deviceKernelCall.setProp(ACCgpuDecompiler.GPU_FUNC_CONF_ASYNC, (Object)Xcons.List(asyncExp));
         }else{
-          deviceKernelCall.setProp(ACCgpuDecompiler.GPU_FUNC_CONF_ASYNC, (Object)Xcons.List());
+          deviceKernelCall.setProp(ACCgpuDecompiler.GPU_FUNC_CONF_ASYNC, (Object)Xcons.List(Xcons.IntConstant(ACC.ACC_ASYNC_NOVAL)));
         }
       }catch(Exception e){
         ACC.fatal("can't set async prop");   
       }
+    }else{
+      deviceKernelCall.setProp(ACCgpuDecompiler.GPU_FUNC_CONF_ASYNC, (Object)Xcons.List(Xcons.IntConstant(ACC.ACC_ASYNC_SYNC)));
     }
 
     if(sharedMemory.isUsed()){
