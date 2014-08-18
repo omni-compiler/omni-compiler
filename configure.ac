@@ -1417,8 +1417,8 @@ rm -f ./hasqd.* ./hasqd
 # --------------------------------------------------------------------
 # quad real support
 
-gmp-include="/usr/include"
-gmp-lib="/usr/lib"
+gmpInclude=/usr/include
+gmpLib=/usr/lib
 gmpIncOpt=""
 gmpDirOpt=""
 qRealPrecBits=128
@@ -1429,26 +1429,26 @@ AC_ARG_ENABLE(mreal,
 
 AC_ARG_WITH(gmp-lib,
     [  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support.],
-    [gmp-lib=$withval], [true])
+    [gmpLib=$withval], [true])
 
 AC_ARG_WITH(gmp-include,
     [  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support.],
-    [gmp-include=$withval], [true])
+    [gmpInclude=$withval], [true])
 
 if test "x${doQReal}" = "xyes"; then
-    if test -f ${gmp-include}/gmp.h; then
+    if test -f ${gmpInclude}/gmp.h; then
         true
     else
-        AC_MSG_RESULT([can't find ${gmp-include}/gmp.h. exit.])
+        AC_MSG_RESULT([can't find ${gmpInclude}/gmp.h. exit.])
         exit 1
     fi
-    gmpLibs=`ls ${gmp-include}/libgmp.* 2> /dev/null`
+    gmpLibs=`ls ${gmpInclude}/libgmp.* 2> /dev/null`
     if test "x${gmpLibs}" = "x"; then
-        AC_MSG_RESULT([can't find ${gmp-lib}/libgmp.*. exit.])
+        AC_MSG_RESULT([can't find ${gmpLib}/libgmp.*. exit.])
         exit 1
     fi
-    gmpIncOpt="-I${gmp-include}"
-    gmpLibOpt="-L${gmp-lib} -lgmp"
+    gmpIncOpt="-I${gmpInclude}"
+    gmpLibOpt="-L${gmpLib} -lgmp"
 fi
 
 AC_ARG_WITH(precision,

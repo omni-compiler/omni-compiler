@@ -198,11 +198,12 @@ public class XMPtranslateLocalPragma {
     }
 
     XobjList args = Xcons.List();
+    args.add(Xcons.String("USE_DEVICE"));
     for(int i=0;i<funcArgs.Nargs();i++){
       Xobject array = funcArgs.getArg(i);
       String arrayName = array.getString();
       Ident arrayId = _globalDecl.findVarIdent(XMP.ADDR_PREFIX_ + arrayName);
-      args.add(arrayId);
+      args.add(Xcons.List(arrayId.Ref()));
 
       XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
       if(alignedArray == null){
@@ -216,7 +217,7 @@ public class XMPtranslateLocalPragma {
       funcBody.add(Bcons.Statement(funcIdAcc.Call(Xcons.List(array, arrayDesc.Ref()))));
     }
    
-    Block funcCallBlock = Bcons.PRAGMA(Xcode.ACC_PRAGMA, "host_data use_device", (Xobject)args, funcBody);
+    Block funcCallBlock = Bcons.PRAGMA(Xcode.ACC_PRAGMA, "HOST_DATA", (Xobject)Xcons.List(args), funcBody);
 
     pb.replace(funcCallBlock);
   }
