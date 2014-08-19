@@ -1218,6 +1218,7 @@ public class XmfXobjectToXmObjTranslator
             bt.setIntent(XbfFbasicType.INTENT_OUT);
         if(type.isFintentINOUT())
             bt.setIntent(XbfFbasicType.INTENT_INOUT);
+        bt.setIsCrayPointer(toBool(type.isFcrayPointer()));
     }
 
     private IXbfTypeTableChoice transType(Xtype type)

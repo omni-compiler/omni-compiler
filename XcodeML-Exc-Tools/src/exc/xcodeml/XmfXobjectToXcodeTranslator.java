@@ -811,7 +811,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                       "is_optional", toBoolStr(type.isFoptional()),
                       "is_save", toBoolStr(type.isFsave()),
                       "is_parameter", toBoolStr(type.isFparameter()),
-                      "is_allocatable", toBoolStr(type.isFallocatable()));
+                      "is_allocatable", toBoolStr(type.isFallocatable()),
+                      "is_cray_pointer", toBoolStr(type.isFcrayPointer()));
         if (type.isFintentIN()) {
             addAttributes(basicTypeElem, "intent", "in");
         }
