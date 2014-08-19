@@ -101,6 +101,20 @@ void _ACC_gpu_finalize_stream_map(void* map)
 void _ACC_gpu_set_stream_map(void* map)
 {
   stream_map = (StreamMap)map;
+
+  int hash = calc_hash(ACC_ASYNC_SYNC);
+  for(Cell *cur = stream_map[hash]; cur != NULL; cur = cur->next){
+    if(cur->id == ACC_ASYNC_SYNC){
+      async_sync_cell = cur;
+    }
+  }
+
+  hash = calc_hash(ACC_ASYNC_NOVAL);
+  for(Cell *cur = stream_map[hash]; cur != NULL; cur = cur->next){
+    if(cur->id == ACC_ASYNC_NOVAL){
+      async_noval_cell = cur;
+    }
+  }
 }
 
 static void add_cell(int id, Cell *cell)

@@ -136,7 +136,7 @@
 #define OPT_L2X_SAVE            "--save"
 #define OPT_L2X_SAVEEQ          "--save="
 #define OPT_L2X_F               "--Wf"
-#define OPT_L2X_FOPENMP   	"-fopenmp"
+//#define OPT_L2X_FOPENMP   	"-fopenmp"
 /** for LX2X */
 #define OPT_LX2X_X              "--Wx"
 #define OPT_LX2X_MODPATH        "-M"
@@ -146,6 +146,7 @@
 #define OPT_LX2X_TRANS          "-T"
 #define OPT_NTV_N               "--Wn"
 #define OPT_NTV_MODPATH         "-moddir"
+#define OPT_NTV_OPENMP          "-openmp"
 #define OPT_LNK_L               "--Wl"
 /** for Driver */
 #define OPT_INVALID_CODE        "-"
