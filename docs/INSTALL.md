@@ -20,11 +20,7 @@ HOW TO INSTALL
 
  * flex gcc gfortran gcc-c++ java-1.7.0-openjdk-devel ant openmpi-devel libxml2-devel byacc make
 
-## On BlueGene/Q
- Need to install openJDK(openjdk1.7.0-ppc-aix-port-linux-ppc64-b**.tar.bz2) downloaded from the following URL:
- http://cr.openjdk.java.net/~simonis/ppc-aix-port/
-
-## Usage of IBM Java Compiler
+## If using the IBM Java Compiler
  Need to change import setting
  import com.sun.org.apache.xml.internal.serializer.OutputPropertiesFactory; ->  import org.apache.xml.serializer.OutputPropertiesFactory;
  in 
@@ -44,15 +40,13 @@ HOW TO INSTALL
 ### On a general linux cluster
     $ ./configure --prefix=[INSTALLATION PATH]
          or
-    $ ./configure --with-backend-cc=mpicc --prefix=[INSTALLATION PATH]  // In most case, a bacnend compiler is "mpicc".
-         or
     $ ./configure CPP="pgcc -E" CC=gcc FC=gfortran  // To use a PGI compiler
 
  If you want to use Coarray functions
     $ ./configure --with-gasnet=[GASNet INSTALLATION PATH] --with-gasnet-conduit=[GASNet-Conduit]
 
  If you want to use OpenACC compiler
-    $ ./configure --with-cuda=[CUDA INSTALLATION PATH] --enable-openacc
+    $ ./configure --enable-openacc --with-cuda=[CUDA INSTALLATION PATH]
 
 ### On the K computer or FX10
     $ ./configure --target=Kcomputer-linux-gnu --prefix=[INSTALLATION PATH]
@@ -63,6 +57,12 @@ HOW TO INSTALL
 
 ### On SX machines
     $ ./configure --target=sx --prefix=[INSTALLATION PATH]
+
+### On BlueGene/Q
+    First of all, you need to install openJDK (openjdk1.7.0-ppc-aix-port-linux-ppc64-b**.tar.bz2)
+    from http://cr.openjdk.java.net/~simonis/ppc-aix-port/
+    After that, please set PATH.
+    $ ./configure --target=powerpc-ibm-none --prefix=[INSTALLATION PATH]
 
 ## Build
     $ make; make install
