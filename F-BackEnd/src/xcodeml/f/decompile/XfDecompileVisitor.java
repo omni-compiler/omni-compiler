@@ -681,7 +681,7 @@ public class XfDecompileVisitor extends RVisitorBase
         for (XbfFbasicType basicTypeElem : basicTypeArray) {
             if (basicTypeElem.getIsSave()) {
                 writer.writeToken(", ");
-                writer.writeToken("SAVE");
+                writer.writeToken("SAVE1111");
                 break;
             }
         }
@@ -698,6 +698,14 @@ public class XfDecompileVisitor extends RVisitorBase
             if (basicTypeElem.getIsAllocatable()) {
                 writer.writeToken(", ");
                 writer.writeToken("ALLOCATABLE");
+                break;
+            }
+        }
+
+        for (XbfFbasicType basicTypeElem : basicTypeArray) {       // (ID=60)
+            if (basicTypeElem.getIsCrayPointer()) {
+                writer.writeToken(", ");
+                writer.writeToken("CRAYPOINTER111");
                 break;
             }
         }

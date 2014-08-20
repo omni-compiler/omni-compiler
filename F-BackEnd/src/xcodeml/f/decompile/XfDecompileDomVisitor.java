@@ -186,7 +186,7 @@ public class XfDecompileDomVisitor {
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_save")) {
                 writer.writeToken(", ");
-                writer.writeToken("SAVE");
+                writer.writeToken("SAVE222");
                 break;
             }
         }
@@ -203,6 +203,14 @@ public class XfDecompileDomVisitor {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_allocatable")) {
                 writer.writeToken(", ");
                 writer.writeToken("ALLOCATABLE");
+                break;
+            }
+        }
+
+        for (Node basicTypeNode : basicTypeNodeArray) {  // (ID=60)
+            if (XmDomUtil.getAttrBool(basicTypeNode, "is_cray_pointer")) {
+                writer.writeToken(", ");
+                writer.writeToken("CRAYPOINTER222");
                 break;
             }
         }

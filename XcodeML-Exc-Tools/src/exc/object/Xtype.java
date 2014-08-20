@@ -477,6 +477,18 @@ public class Xtype
         setTypeQualFlag(TQ_FALLOCATABLE, enabled);
     }
 
+    /** Fortran : return if it is a cray pointer (ID=60) */
+    public final boolean isFcrayPointer()
+    {
+        return getTypeQualFlag(TQ_FCRAY_POINTER);
+    }
+    
+    /** Fortran : set qualifier 'cray pointer' (ID=60) */
+    public final void setIsFcrayPointer(boolean enabled)
+    {
+        setTypeQualFlag(TQ_FCRAY_POINTER, enabled);
+    }
+
     /** Fortran : return if is qualified by 'intent(in)' */
     public final boolean isFintentIN()
     {
@@ -511,18 +523,6 @@ public class Xtype
     public final void setIsFintentINOUT(boolean enabled)
     {
         setTypeQualFlag(TQ_FINTENT_INOUT, enabled);
-    }
-
-    /** Fortran : return if it is a cray pointer (ID=60) */
-    public final boolean isFcrayPointer()
-    {
-        return getTypeQualFlag(TQ_FCRAY_POINTER);
-    }
-    
-    /** Fortran : set qualifier 'cray pointer' (ID=60) */
-    public final void setIsFcrayPointer(boolean enabled)
-    {
-        setTypeQualFlag(TQ_FCRAY_POINTER, enabled);
     }
 
     /** Fortran : return if is qualified by 'program' */
