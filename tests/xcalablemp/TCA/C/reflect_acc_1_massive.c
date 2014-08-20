@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <xmp.h>
-#define SIZE (100)
+#define SIZE (64*1024)
 #define TIMES (100)
 #pragma xmp nodes p(*)
 #pragma xmp template t(0:SIZE-1)
