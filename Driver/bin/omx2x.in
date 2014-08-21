@@ -95,7 +95,13 @@ if [ "${OM_VERBOSE}" = "1" ]; then
   echo ${X2X_CMD} "$@"
 fi
 ${X2X_CMD} "$@" || exit $?
-xmllint --format "${TMP_OUTFILE}" >"${OUTFILE}" || mv "${TMP_OUTFILE}" "${OUTFILE}" || exit $?
+
+which xmllint >/dev/null 2>&1
+if [ "$?" = "0" ]; then
+    xmllint --format "${TMP_OUTFILE}" >"${OUTFILE}" || exit $?
+else
+    mv "${TMP_OUTFILE}" "${OUTFILE}" || exit $?
+fi
 
 if [ "${OM_USE_XMPF}" = "1" ]; then
     mv "${BNAME}.in.F90" "${BNAME}.F90" || exit $?
