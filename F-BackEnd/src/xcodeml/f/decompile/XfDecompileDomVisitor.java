@@ -186,7 +186,7 @@ public class XfDecompileDomVisitor {
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_save")) {
                 writer.writeToken(", ");
-                writer.writeToken("SAVE222");
+                writer.writeToken("SAVE");
                 break;
             }
         }
@@ -210,7 +210,7 @@ public class XfDecompileDomVisitor {
         for (Node basicTypeNode : basicTypeNodeArray) {  // (ID=60)
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_cray_pointer")) {
                 writer.writeToken(", ");
-                writer.writeToken("CRAYPOINTER222");
+                writer.writeToken("$$SystemError (Cray Pointer #002)$$");
                 break;
             }
         }
