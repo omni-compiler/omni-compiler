@@ -17,7 +17,6 @@ NP=8
 #----------------
 module purge
 export MODULEPATH=/work/TCAPROF/hanawa/Modules:$MODULEPATH
-module load cuda/6.0 pgi/13.10
+module load cuda/6.0 mvapich2/gdr-2.0b-cuda6
 cd $PBS_O_WORKDIR
-PATH=/work/XMPTCA/mnakao/work/mvapich2-2.0/bin/:$PATH
 mpirun_rsh -np $NP -hostfile $PBS_NODEFILE MV2_ENABLE_AFFINITY=0 MV2_SHOW_CPU_BINDING=1 numactl --cpunodebind=0 --localalloc ./reflect_acc_2_massive.x
