@@ -210,7 +210,7 @@ public class XfDecompileDomVisitor {
         for (Node basicTypeNode : basicTypeNodeArray) {  // (ID=60)
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_cray_pointer")) {
                 writer.writeToken(", ");
-                writer.writeToken("$$SystemError (Cray Pointer #002)$$");
+                writer.writeToken("$$Error (Cray Pointer #2)$$");
                 break;
             }
         }
@@ -434,7 +434,7 @@ public class XfDecompileDomVisitor {
          * added for cray pointer (ID=60)
          */
         if (_isCrayPointer(topTypeChoice, lowTypeChoice)) {
-            _writeCrayPointerDecl(symbol);
+            _writeCrayPointerDecl(symbol, node);
             return;
         }
 
@@ -879,28 +879,15 @@ public class XfDecompileDomVisitor {
      * @param  symbol
      *
      */
-    private void _writeCrayPointerDecl(XfSymbol symbol) {
+    private void _writeCrayPointerDecl(XfSymbol symbol, Node node) {
         XmfWriter writer = _context.getWriter();
         writer.writeToken("POINTER (");
         writer.writeToken(symbol.getSymbolName());
         writer.writeToken(",");
-        /* Rest part will be written out of _writeSymbolDecl(symbol,n). */
-    }
-
-    /**
-     * Check if the symbol is a cray pointer. (ID=60)
-     *
-     * @param  symbol
-     * @return true/false
-     *
-     * Should be modified if the better programming would be found.
-     */
-    private boolean _isCrayPointer(XfSymbol symbol) {
-        XfTypeManagerForDom.TypeList typeList = getTypeList(symbol.getDerivedName());
-        assert typeList != null;
-        Node topTypeChoice = typeList.getFirst();
-        Node lowTypeChoice = typeList.getLast();
-        return _isCrayPointer(topTypeChoice, lowTypeChoice);
+        Node valueNode = XmDomUtil.getElement(node, "value");
+        if (valueNode != null)
+            invokeEnter(valueNode);
+        writer.writeToken(")");
     }
 
     /**
@@ -5439,14 +5426,8 @@ public class XfDecompileDomVisitor {
             Node valueNode = XmDomUtil.getElement(n, "value");
             if (valueNode != null) {
                 XmfWriter writer = _context.getWriter();
-                if (_isCrayPointer(symbol)) {
-                    /* Previous part was written in _writeCrayPointerDecl() called in _writeSymbolDecl(). */
-                    invokeEnter(valueNode);
-                    writer.writeToken(")");
-                } else {
-                    writer.writeToken(" = ");
-                    invokeEnter(valueNode);
-                }
+                writer.writeToken(" = ");
+                invokeEnter(valueNode);
             }
 
             _context.getWriter().setupNewLine();

@@ -486,6 +486,43 @@ public class XfDecompileVisitor extends RVisitorBase
     }
 
     /**
+     * Write cray-pointer declaration statment (ID=60)
+     *
+     * @param  symbol
+     *
+     */
+    private boolean _writeCrayPointerDecl(XfSymbol symbol) {
+        XmfWriter writer = _context.getWriter();
+        writer.writeToken("POINTER (");
+        writer.writeToken(symbol.getSymbolName());
+        writer.writeToken(",");
+        // **** not supported yet ****
+        //        XbfValue value = symbol.getValue();
+        //        if (value != null)
+        //            invokeEnter(value);
+        writer.writeToken(")");
+        return false;
+    }
+
+    /**
+     * Check if the symbol is a cray pointer. (ID=60)
+     *
+     * @param  top, low
+     * @return true/false
+     *
+     * Should be modified if the better programming would be found.
+     */
+    private boolean _isCrayPointer(IXbfTypeTableChoice top, IXbfTypeTableChoice low) {
+        if (top != null && ((XbfFbasicType)top).getIsCrayPointer())
+            return true;
+
+        if (low != null && ((XbfFbasicType)low).getIsCrayPointer())
+            return true;
+
+        return false;
+    }
+
+    /**
      * Write kind and length in character declaration.
      *
      * @param symbol
@@ -681,7 +718,7 @@ public class XfDecompileVisitor extends RVisitorBase
         for (XbfFbasicType basicTypeElem : basicTypeArray) {
             if (basicTypeElem.getIsSave()) {
                 writer.writeToken(", ");
-                writer.writeToken("SAVE1111");
+                writer.writeToken("SAVE");
                 break;
             }
         }
@@ -705,7 +742,7 @@ public class XfDecompileVisitor extends RVisitorBase
         for (XbfFbasicType basicTypeElem : basicTypeArray) {       // (ID=60)
             if (basicTypeElem.getIsCrayPointer()) {
                 writer.writeToken(", ");
-                writer.writeToken("CRAYPOINTER111");
+                writer.writeToken("$$Error (Cray Pointer #1)$$");
                 break;
             }
         }
@@ -944,6 +981,13 @@ public class XfDecompileVisitor extends RVisitorBase
         IXbfTypeTableChoice lowTypeChoice = typeList.getLast();
 
         XmfWriter writer = _context.getWriter();
+
+        /*
+         * added for cray pointer (ID=60)
+         */
+        if (_isCrayPointer(topTypeChoice, lowTypeChoice)) {
+            return _writeCrayPointerDecl(symbol);
+        }
 
         // ================
         // Top type element
