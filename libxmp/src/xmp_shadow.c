@@ -248,6 +248,7 @@ void _XMP_init_shadow(_XMP_array_t *array, ...) {
 	      sched->hi_recv_buf = NULL;
 	      ai->reflect_sched = sched;
 	    }
+	    ai->reflect_acc_sched = NULL;
 
             _XMP_create_shadow_comm(array, i);
           }
