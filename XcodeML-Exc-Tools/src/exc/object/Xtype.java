@@ -69,6 +69,7 @@ public class Xtype
     public static final int TQ_FEXTERNAL            = 1 << 21;  // external
     public static final int TQ_FSEQUENCE            = 1 << 22;  // sequence
     public static final int TQ_FINTERNAL_PRIVATE    = 1 << 23;  // private in structure decl
+    public static final int TQ_FCRAY_POINTER        = 1 << 24;  // cray pointer (ID=60)
     
     private String type_id;
     private int type_kind;
@@ -474,6 +475,18 @@ public class Xtype
     public final void setIsFallocatable(boolean enabled)
     {
         setTypeQualFlag(TQ_FALLOCATABLE, enabled);
+    }
+
+    /** Fortran : return if it is a cray pointer (ID=60) */
+    public final boolean isFcrayPointer()
+    {
+        return getTypeQualFlag(TQ_FCRAY_POINTER);
+    }
+    
+    /** Fortran : set qualifier 'cray pointer' (ID=60) */
+    public final void setIsFcrayPointer(boolean enabled)
+    {
+        setTypeQualFlag(TQ_FCRAY_POINTER, enabled);
     }
 
     /** Fortran : return if is qualified by 'intent(in)' */

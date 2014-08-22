@@ -1212,6 +1212,7 @@ public class XmfXobjectToXmObjTranslator
         bt.setIsPublic(toBool(type.isFpublic()));
         bt.setIsSave(toBool(type.isFsave()));
         bt.setIsTarget(toBool(type.isFtarget()));
+        bt.setIsCrayPointer(toBool(type.isFcrayPointer()));
         if(type.isFintentIN())
             bt.setIntent(XbfFbasicType.INTENT_IN);
         if(type.isFintentOUT())
