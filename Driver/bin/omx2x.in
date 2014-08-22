@@ -97,7 +97,7 @@ fi
 ${X2X_CMD} "$@" || exit $?
 
 which xmllint >/dev/null 2>&1
-if [ "$?" = "0" ]; then
+if [ $? -eq 0 ]; then
     xmllint --format "${TMP_OUTFILE}" >"${OUTFILE}" || exit $?
 else
     mv "${TMP_OUTFILE}" "${OUTFILE}" || exit $?
