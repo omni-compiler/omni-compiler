@@ -430,6 +430,14 @@ public class XfDecompileDomVisitor {
 
         XmfWriter writer = _context.getWriter();
 
+        /*
+         * added for cray pointer (ID=60)
+         */
+        if (_isCrayPointer(topTypeChoice, lowTypeChoice)) {
+            _writeCrayPointerDecl(symbol);
+            return;
+        }
+
         // ================
         // Top type element
         // ================
@@ -851,6 +859,7 @@ public class XfDecompileDomVisitor {
         }
     }
 
+
     /**
      * Write simple primitive symbol declaration.
      *
@@ -862,6 +871,61 @@ public class XfDecompileDomVisitor {
         writer.writeToken(symbol.getTypeId().fortranName());
         writer.writeToken(" :: ");
         writer.writeToken(symbol.getSymbolName());
+    }
+
+    /**
+     * Write cray-pointer declaration statment (ID=60)
+     *
+     * @param  symbol
+     *
+     */
+    private void _writeCrayPointerDecl(XfSymbol symbol) {
+        XmfWriter writer = _context.getWriter();
+        writer.writeToken("POINTER (");
+        writer.writeToken(symbol.getSymbolName());
+        writer.writeToken(",");
+        /* Rest part will be written out of _writeSymbolDecl(symbol,n). */
+    }
+
+    /**
+     * Check if the symbol is a cray pointer. (ID=60)
+     *
+     * @param  symbol
+     * @return true/false
+     *
+     * Should be modified if the better programming would be found.
+     */
+    private boolean _isCrayPointer(XfSymbol symbol) {
+        XfTypeManagerForDom.TypeList typeList = getTypeList(symbol.getDerivedName());
+        assert typeList != null;
+        Node topTypeChoice = typeList.getFirst();
+        Node lowTypeChoice = typeList.getLast();
+        return _isCrayPointer(topTypeChoice, lowTypeChoice);
+    }
+
+    /**
+     * Check if the symbol is a cray pointer. (ID=60)
+     *
+     * @param  top, low
+     * @return true/false
+     *
+     * Should be modified if the better programming would be found.
+     */
+    private boolean _isCrayPointer(Node top, Node low) {
+        String topName = top.getNodeName();
+        if ("FbasicType".equals(topName) &&
+            XmDomUtil.getAttrBool(top, "is_cray_pointer")) {
+            return true;
+        }
+            
+        String lowName = low.getNodeName();
+        if ("FbasicType".equals(lowName) &&
+            XmDomUtil.getAttrBool(low, "is_cray_pointer")) {
+            System.out.println("gaccha low");
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -5375,8 +5439,14 @@ public class XfDecompileDomVisitor {
             Node valueNode = XmDomUtil.getElement(n, "value");
             if (valueNode != null) {
                 XmfWriter writer = _context.getWriter();
-                writer.writeToken(" = ");
-                invokeEnter(valueNode);
+                if (_isCrayPointer(symbol)) {
+                    /* Previous part was written in _writeCrayPointerDecl() called in _writeSymbolDecl(). */
+                    invokeEnter(valueNode);
+                    writer.writeToken(")");
+                } else {
+                    writer.writeToken(" = ");
+                    invokeEnter(valueNode);
+                }
             }
 
             _context.getWriter().setupNewLine();
