@@ -276,6 +276,42 @@ int xmp_align_size(xmp_desc_t d, int dim){
   return ival;
 }
 
+int xmp_align_replicated(xmp_desc_t d, int dim, int *replicated){
+
+  _XMP_array_t *a = (_XMP_array_t *)d;
+
+  int andims, nndims, axis, counter=0; 
+  xmp_desc_t dt, dn;
+
+  xmp_align_template(d, &dt);
+  xmp_dist_nodes(dt, &dn);
+  xmp_array_ndims(d, &andims);
+  xmp_nodes_ndims(dn, &nndims);
+
+  for(int i=0; i<andims; i++){
+    xmp_align_axis(d, i+1, &axis);
+    if (axis <= 0){
+      counter = counter +1;
+    }
+  }
+
+  if (counter != nndims){
+    *replicated=1;
+    for(int i=0; i<andims; i++){
+      xmp_align_axis(d, i+1, &axis);
+      if (dim == axis){
+        *replicated=0;
+        break;
+      }
+    }
+  }else{
+    *replicated=0;
+  }
+
+  return 0;
+
+}
+
 int xmp_align_template(xmp_desc_t d, xmp_desc_t *dt){
 
   _XMP_array_t *a = (_XMP_array_t *)d;
@@ -399,6 +435,42 @@ int xmp_dist_nodes(xmp_desc_t d, xmp_desc_t *dn){
 
 }
 
+int xmp_dist_axis(xmp_desc_t d, int dim, int *axis){
+
+  _XMP_template_t *t = (_XMP_template_t *)d;
+
+  *axis = t->chunk[dim-1].onto_nodes_index + 1;
+
+  return 0;
+
+}
+
+int xmp_dist_gblockmap(xmp_desc_t d, int dim, int *map){
+
+  _XMP_template_t *t = (_XMP_template_t *)d;
+  _XMP_template_chunk_t *chunk = &(t->chunk[dim-1]);
+
+  int axis, size;
+  xmp_desc_t dn;
+  xmp_dist_nodes(d, &dn);
+  xmp_dist_axis(d, dim, &axis);
+  xmp_nodes_size(dn, axis, &size);
+
+  for (int i=0; i<size-1; i++){
+    map[i] = chunk->mapping_array[i+1]-chunk->mapping_array[i];
+  }
+  if (size > 1){
+    map[size-1] = t->info[dim-1].ser_size - map[size-2];
+  }else if (size == 1){
+    map[0] =  t->info[dim-1].ser_size;
+  }else{
+    return -1;
+  }
+
+  return 0;
+
+}
+
 int xmp_nodes_ndims(xmp_desc_t d, int *ndims){
 
   _XMP_nodes_t *n = (_XMP_nodes_t *)d;
@@ -455,16 +527,19 @@ int xmp_nodes_equiv(xmp_desc_t d, xmp_desc_t *dn, int lb[], int ub[], int st[]){
   _XMP_nodes_t *n = (_XMP_nodes_t *)d;
 
   *dn = (xmp_desc_t)(n->inherit_nodes);
-  xmp_nodes_ndims(*dn, &ndims);
+  if (*dn != NULL){
+    xmp_nodes_ndims(*dn, &ndims);
 
-  for (i=0; i<ndims; i++){
-    lb[i]= n ->inherit_info[i].lower;
-    ub[i]= n ->inherit_info[i].upper;
-    st[i]= n ->inherit_info[i].stride;
+    for (i=0; i<ndims; i++){
+      lb[i]= n ->inherit_info[i].lower+1;
+      ub[i]= n ->inherit_info[i].upper+1;
+      st[i]= n ->inherit_info[i].stride;
+    }
+    return 0;
+
+  }else{
+    return -1;
   }
-
-  return 0;
-
 }
 extern void _XMP_sched_loop_template_BLOCK(int, int, int, int *, int *, int *, void *, int);
 extern void _XMP_sched_loop_template_CYCLIC(int, int, int, int *, int *, int *, void *, int);

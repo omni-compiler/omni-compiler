@@ -439,6 +439,8 @@ void _XMP_dist_template_GBLOCK(_XMP_template_t *template, int template_index, in
     }
     chunk->mapping_array = rsum_array;
 
+    if (ti->ser_upper >= rsum_array[ni->size]) _XMP_fatal("The size of the template exceeds the sum of the mapping array.");
+
     template->is_owner = false;
     if (nodes->is_member && rsum_array[ni->rank + 1] != rsum_array[ni->rank]) {
       chunk->par_lower = rsum_array[ni->rank];

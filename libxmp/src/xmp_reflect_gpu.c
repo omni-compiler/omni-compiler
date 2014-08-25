@@ -128,7 +128,22 @@ static void _XMP_reflect_sched(_XMP_array_t *a, int *lwidth, int *uwidth,
     }
     else if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
 
-      _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+      _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
+
+      if(reflect == NULL){
+	reflect = _XMP_alloc(sizeof(_XMP_reflect_sched_t));
+	reflect->is_periodic = -1; /* not used yet */
+	reflect->datatype_lo = MPI_DATATYPE_NULL;
+	reflect->datatype_hi = MPI_DATATYPE_NULL;
+	for (int j = 0; j < 4; j++) reflect->req[j] = MPI_REQUEST_NULL;
+	reflect->lo_send_buf = NULL;
+	reflect->lo_recv_buf = NULL;
+	reflect->hi_send_buf = NULL;
+	reflect->hi_recv_buf = NULL;
+	ai->reflect_acc_sched = reflect;
+      }else{
+	//
+      }
 
       if (lwidth[i] || uwidth[i]){
 
@@ -177,7 +192,7 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     _XMP_fatal("reflect width is larger than shadow width.");
   }
 
-  _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+  _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
 
   int target_tdim = ai->align_template_index;
   _XMP_nodes_info_t *ni = adesc->align_template->chunk[target_tdim].onto_nodes_info;
@@ -201,10 +216,14 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   int type_size = adesc->type_size;
   void *array_addr = adesc->array_addr_p;
 
-  void *lo_send_array, *lo_recv_array;
-  void *hi_send_array, *hi_recv_array;
-  void *lo_send_dev_array, *lo_recv_dev_array;
-  void *hi_send_dev_array, *hi_recv_dev_array;
+  void *lo_send_array = NULL;
+  void *lo_recv_array = NULL;
+  void *hi_send_array = NULL;
+  void *hi_recv_array = NULL;
+  void *lo_send_dev_array = NULL;
+  void *lo_recv_dev_array = NULL;
+  void *hi_send_dev_array = NULL;
+  void *hi_recv_dev_array = NULL;
 
   void *lo_send_buf = NULL;
   void *lo_recv_buf = NULL;
@@ -360,10 +379,10 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     _XMP_gpu_host_free(reflect->lo_recv_buf);
     _XMP_gpu_host_free(reflect->hi_send_buf);
     _XMP_gpu_host_free(reflect->hi_recv_buf);
-    _XMP_gpu_free(reflect->lo_send_dev_buf);
-    _XMP_gpu_free(reflect->lo_recv_dev_buf);
-    _XMP_gpu_free(reflect->hi_send_dev_buf);
-    _XMP_gpu_free(reflect->hi_recv_dev_buf);
+    //_XMP_gpu_free(reflect->lo_send_dev_buf);
+    //_XMP_gpu_free(reflect->lo_recv_dev_buf);
+    //_XMP_gpu_free(reflect->hi_send_dev_buf);
+    //_XMP_gpu_free(reflect->hi_recv_dev_buf);
   }
   if ((_XMPF_running && target_dim == ndims - 1) ||
       (_XMPC_running && target_dim == 0)){
@@ -519,6 +538,7 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   // gpu async
   reflect->lo_async_id = _XMP_gpu_alloc_async_id();
   reflect->hi_async_id = _XMP_gpu_alloc_async_id();
+
 }
 
 static void _XMP_reflect_start(_XMP_array_t *a, int dummy)
@@ -534,7 +554,7 @@ static void _XMP_reflect_start(_XMP_array_t *a, int dummy)
 
     _XMP_array_info_t *ai = &(a->info[i]);
     if(! ai->is_shadow_comm_member) continue;
-    _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+    _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
     int lo_width = reflect->lo_width;
     int hi_width = reflect->hi_width;
     if (!lo_width && !hi_width) continue;
@@ -562,7 +582,7 @@ static void _XMP_reflect_start(_XMP_array_t *a, int dummy)
   for (int i = 0; i < a->dim; i++){
     _XMP_array_info_t *ai = &(a->info[i]);
     if(! ai->is_shadow_comm_member) continue;
-    _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+    _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
     int lo_width = reflect->lo_width;
     int hi_width = reflect->hi_width;
     if (!lo_width && !hi_width) continue;
@@ -580,7 +600,7 @@ static void _XMP_reflect_start(_XMP_array_t *a, int dummy)
   for (int i = 0; i < a->dim; i++){
     _XMP_array_info_t *ai = &(a->info[i]);
     if(! ai->is_shadow_comm_member) continue;
-    _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+    _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
     int lo_width = reflect->lo_width;
     int hi_width = reflect->hi_width;
     if (!lo_width && !hi_width) continue;
@@ -600,7 +620,7 @@ static void _XMP_reflect_wait(_XMP_array_t *a)
   for (int i = a->dim-1; i >= 0; i--){
     _XMP_array_info_t *ai = &(a->info[i]);
     if(! ai->is_shadow_comm_member) continue;
-    _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+    _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
     int lo_width = reflect->lo_width;
     int hi_width = reflect->hi_width;
     if (!lo_width && !hi_width) continue;
@@ -638,7 +658,7 @@ static void _XMP_reflect_wait(_XMP_array_t *a)
     for(int i = a->dim-1; i >= 0; i--){
       _XMP_array_info_t *ai = &(a->info[i]);
       if(! ai->is_shadow_comm_member) continue;
-      _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+      _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
       int lo_width = reflect->lo_width;
       int hi_width = reflect->hi_width;
       if (!lo_width && !hi_width) continue;
@@ -679,7 +699,7 @@ static void _XMP_reflect_gpu_pack(_XMP_array_t *a)
   for (int i = lb; i < ub; i++){
     _XMP_array_info_t *ai = &(a->info[i]);
     if(! ai->is_shadow_comm_member) continue;
-    _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+    _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
     int lo_width = reflect->lo_width;
     int hi_width = reflect->hi_width;
 
@@ -723,7 +743,7 @@ static void _XMP_reflect_gpu_unpack(_XMP_array_t *a)
   for(int i = ub - 1; i >= lb; i--){
     _XMP_array_info_t *ai = &(a->info[i]);
     if(! ai->is_shadow_comm_member) continue;
-    _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+    _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
     int lo_width = reflect->lo_width;
     int hi_width = reflect->hi_width;
 
