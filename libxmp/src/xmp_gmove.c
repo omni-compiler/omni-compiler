@@ -958,29 +958,24 @@ void _XMP_align_G2L_idx(long long int global_idx, int *local_idx,
     break;
   case _XMP_N_ALIGN_BLOCK:
     {
-      *local_idx = (global_idx + offset - base) % chunk->par_chunk_width;
+      *local_idx = (global_idx - base) - n_info->rank * chunk->par_chunk_width;
     }
     break;
   case _XMP_N_ALIGN_CYCLIC:
     {
-      *local_idx = (global_idx + offset - base) / n_info->size;
+      *local_idx = (global_idx - base) / n_info->size;
     }
     break;
   case _XMP_N_ALIGN_BLOCK_CYCLIC:
     {
-      int off = global_idx + offset - base;
+      int off = global_idx - base;
       int w = chunk->par_width;
       *local_idx = (off / (n_info->size*w)) * w + off%w;
     }
     break;
   case _XMP_N_ALIGN_GBLOCK:
     {
-      for(int i=1;i<(n_info->size+1);i++){
-        if(global_idx + offset < chunk->mapping_array[i]){
-          *local_idx = global_idx + offset - chunk ->mapping_array[i-1];
-          break;
-        }
-      } 
+    *local_idx = global_idx - chunk->mapping_array[n_info->rank];
     }
     break;
   case _XMP_N_ALIGN_NOT_ALIGNED:
