@@ -4,7 +4,7 @@ TESTS = $(wildcard *.c)
 EXES  = $(TESTS:.c=.x)
 OBJS  = $(TESTS:.c=.o)
 
-.PHONY: clean all default run chk
+.PHONY: clean all default run
 
 all default: chk.o $(EXES)
 
