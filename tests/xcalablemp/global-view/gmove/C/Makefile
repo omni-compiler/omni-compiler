@@ -6,7 +6,7 @@ OBJS  = $(TESTS:.c=.o)
 
 .PHONY: clean all default run
 
-all default: chk.o $(EXES)
+all default: $(EXES)
 
 .SUFFIXES: .x .c
 
