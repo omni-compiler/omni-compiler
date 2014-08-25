@@ -1,18 +1,20 @@
 XFC     = xmpf90 -O2
 XRUN    = mpiexec
-F_TESTS = $(wildcard *.f90)
-F_EXES  = $(F_TESTS:.f90=.x)
-F_OBJS  = $(F_TESTS:.f90=.o)
-EXES    = $(F_EXES)
+TESTS = $(wildcard *.f90)
+EXES  = $(TESTS:.f90=.x)
+OBJS  = $(TESTS:.f90=.o)
 
-.PHONY: clean all default run
+.PHONY: clean all default run chk
 
-all default: $(EXES)
+all default: chk.o $(EXES)
 
 .SUFFIXES: .x .f90
 
-.f90.x:
-	$(XFC) -o $@ $< ./chk/chk.f90
+chk.o: ./chk/chk.f90
+	$(XFC) -c $^ -o $@
+
+%.x: %.f90 chk.o
+	$(XFC) -o $@ $< ./chk.o
 
 run: $(EXES)
 	$(XRUN) -n 2 ./gmove_lc_1a1t_b.x
@@ -80,4 +82,4 @@ run: $(EXES)
 	$(XRUN) -n 16 ./gmove_G2L_1a4t_bc.x
 
 clean:
-	rm -f $(EXES) $(F_OBJS) _xmpf_module_INIT.o chk.o
+	rm -f $(EXES) $(OBJS) _xmpf_module_INIT.o chk.o
