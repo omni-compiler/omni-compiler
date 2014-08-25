@@ -1,7 +1,8 @@
 #define N 2
 #include <stdio.h>
 #include <math.h>
-#include <xmp.h>
+
+extern int chk_int(int ierr);
 
 int n=N;
 double a[n][n];
@@ -12,10 +13,8 @@ double a[n][n];
 
 int main(){
 
-  int i0,i1,myrank,ierr;
+  int i0,i1,ierr;
   double b[N][N],err;
-
-  myrank=xmp_node_num();
 
   for(i0=0;i0<n;i0++){
 #pragma xmp loop (i1) on tx(*,i1)
@@ -41,11 +40,6 @@ int main(){
   }
 
 #pragma xmp reduction (MAX:err)
-  if (myrank ==1){
-    printf("max error=%f\n",err);
-  }
   ierr=err;
-
-  return ierr;
-
+  chk_int(ierr);
 }

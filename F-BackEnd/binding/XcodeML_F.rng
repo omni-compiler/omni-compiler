@@ -177,6 +177,11 @@
     </attribute>
   </optional>
   <optional>
+    <attribute name="is_cray_pointer">
+      <ref name="defChoiceBoolean"/>
+    </attribute>
+  </optional>
+  <optional>
     <attribute name="intent">
       <ref name="defChoiceIntent"/>
     </attribute>

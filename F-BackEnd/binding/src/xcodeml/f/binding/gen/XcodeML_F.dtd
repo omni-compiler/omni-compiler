@@ -422,6 +422,7 @@
 <!ATTLIST FbasicType is_save CDATA #IMPLIED>
 <!ATTLIST FbasicType is_parameter CDATA #IMPLIED>
 <!ATTLIST FbasicType is_allocatable CDATA #IMPLIED>
+<!ATTLIST FbasicType is_cray_pointer CDATA #IMPLIED>
 <!ATTLIST FbasicType intent (in|out|inout) "in">
 
 <!ELEMENT logGTExpr ((FlogicalConstant | logGTExpr | logLEExpr | FstructConstructor | FconcatExpr | userBinaryExpr | FcharacterConstant | logNEQVExpr | mulExpr | varRef | plusExpr | logAndExpr | userUnaryExpr | logOrExpr | logEQVExpr | functionCall | logEQExpr | FarrayConstructor | logGEExpr | unaryMinusExpr | FdoLoop | FpowerExpr | divExpr | FmemberRef | FcoArrayRef | logNotExpr | FcharacterRef | FcomplexConstant | FrealConstant | FarrayRef | minusExpr | logLTExpr | logNEQExpr | Var | FintConstant), (FlogicalConstant | logGTExpr | logLEExpr | FstructConstructor | FconcatExpr | userBinaryExpr | FcharacterConstant | logNEQVExpr | mulExpr | varRef | plusExpr | logAndExpr | userUnaryExpr | logEQVExpr | functionCall | logOrExpr | logEQExpr | FarrayConstructor | logGEExpr | unaryMinusExpr | FdoLoop | FpowerExpr | divExpr | FmemberRef | logNotExpr | FcoArrayRef | FcharacterRef | FcomplexConstant | FrealConstant | FarrayRef | minusExpr | logLTExpr | logNEQExpr | Var | FintConstant))>
