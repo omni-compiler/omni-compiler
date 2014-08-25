@@ -228,7 +228,7 @@ void xmpf_array_get_local_size__(_XMP_array_t **a_desc, int *i_dim, int *lb, int
 
 
 void xmpf_array_get_local_size_off__(_XMP_array_t **a_desc, int *i_dim,
-				     int *size, int *off)
+				     int *size, int *off, int *blk_off)
 {
   _XMP_array_t *array = *a_desc;
   _XMP_array_info_t *ai = &(array->info[*i_dim]);
@@ -254,6 +254,8 @@ void xmpf_array_get_local_size_off__(_XMP_array_t **a_desc, int *i_dim,
 
       *off = lidx_on_template - template_local_lower;
 
+      if (blk_off) *blk_off = ai->par_lower - ai->shadow_size_lo;
+
 /*       _XMP_template_chunk_t *tchunk = &(template->chunk[ai->align_template_index]); */
 /*       //_XMP_template_info_t *ti = &(template->info[ai->align_template_index]); */
 
@@ -265,11 +267,13 @@ void xmpf_array_get_local_size_off__(_XMP_array_t **a_desc, int *i_dim,
     else {
       *size = ai->ser_upper - ai->ser_lower + 1;
       *off = ai->ser_lower; // dummy
+      if (blk_off) *blk_off = ai->ser_lower; // dummy
     }
   }
   else {
     *size = 0;
     *off = 0;
+    if (blk_off) *blk_off = 0;
   }    
 
   //xmpf_dbg_printf("array_get_size = (%d:%d)\n", *lb, *ub);
