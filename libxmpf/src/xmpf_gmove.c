@@ -372,7 +372,7 @@ void _XMPF_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
   _XMP_ASSERT(exec_nodes->is_member);
 
-  _XMP_nodes_t *array_nodes = src_array->shrunk_template_nodes;
+  _XMP_nodes_t *array_nodes = src_array->array_nodes;
   int array_nodes_dim = array_nodes->dim;
   int array_nodes_ref[array_nodes_dim];
   for (int i = 0; i < array_nodes_dim; i++) {
