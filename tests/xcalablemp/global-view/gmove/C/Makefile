@@ -4,14 +4,17 @@ TESTS = $(wildcard *.c)
 EXES  = $(TESTS:.c=.x)
 OBJS  = $(TESTS:.c=.o)
 
-.PHONY: clean all default run
+.PHONY: clean all default run chk
 
-all default: $(EXES)
+all default: chk.o $(EXES)
 
 .SUFFIXES: .x .c
 
-.c.x:
-	$(XCC) -o $@ $< ./chk/chk.c
+chk.o: ./chk/chk.c
+	$(XCC) -c $^ -o $@
+
+%.x: %.c chk.o
+	$(XCC) -o $@ $< ./chk.o
 
 run: $(EXES)
 	$(XRUN) -n 2 ./gmove_lc_1a1t_b.x
