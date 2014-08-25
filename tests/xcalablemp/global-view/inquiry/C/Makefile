@@ -14,7 +14,7 @@ all default: $(EXES)
 	$(XCC) -o $@ $<
 
 run: $(EXES)
-	$(XRUN) -n 24 ./inquiry.x
+	$(XRUN) -n 12 ./inquiry.x
 
 clean:
 	rm -f $(EXES) $(OBJS)

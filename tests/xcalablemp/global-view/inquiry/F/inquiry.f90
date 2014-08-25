@@ -10,7 +10,7 @@ logical lval
 integer map(2)
 integer a(6,9,16), a1(6), b(6)
 integer m(2)=(/2,4/)
-!$xmp nodes p(2,3,4)
+!$xmp nodes p(2,3,2)
 !$xmp nodes p1(2)=p(1:2,1,1)
 !$xmp template t(16,6,9)
 !$xmp template t1(6)
@@ -55,7 +55,7 @@ if (irank==11) then
   ierr=xmp_nodes_size(dn, 2, ival)
   call check(ival, 3, error)
   ierr=xmp_nodes_size(dn, 3, ival)
-  call check(ival, 4, error)
+  call check(ival, 2, error)
 
   !ierr=xmp_nodes_attr(dn, attr)
   !ierr=xmp_nodes_attr(dn1, attr)
