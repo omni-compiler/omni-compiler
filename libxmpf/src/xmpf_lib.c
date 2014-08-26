@@ -107,13 +107,19 @@ int xmp_align_offset_(xmp_desc_t **d, int *dim, int *offset){
 
 }
 
+int xmp_align_replicated_(xmp_desc_t **d, int *dim, int *replicated){
+
+  return xmp_align_replicated(*d, *dim, replicated);
+
+}
+
 int xmp_align_template_(xmp_desc_t **d, xmp_desc_t *dt){
 
   return xmp_align_template(*d, dt);
 }
 
 
-_Bool xmp_template_fixed_(xmp_desc_t **d, int *fixed){
+int xmp_template_fixed_(xmp_desc_t **d, int *fixed){
 
   return xmp_template_fixed(*d, fixed);
 
@@ -149,9 +155,21 @@ int xmp_dist_blocksize_(xmp_desc_t **d, int *dim, int *blocksize){
 
 }
 
+int xmp_dist_gblockmap_(xmp_desc_t **d, int *dim, int *map){
+
+  return xmp_dist_gblockmap(*d, *dim, map);
+
+}
+
 int xmp_dist_nodes_(xmp_desc_t **d, xmp_desc_t *dn){
 
   return xmp_dist_nodes(*d, dn);
+
+}
+
+int xmp_dist_axis_(xmp_desc_t **d, int *dim, int *axis){
+
+  return xmp_dist_axis(*d, *dim, axis);
 
 }
 
@@ -174,6 +192,11 @@ int xmp_nodes_size_(xmp_desc_t **d, int *dim, int *size){
 
 }
 
+int xmp_nodes_equiv_(xmp_desc_t **d, xmp_desc_t *dn, int *lb, int *ub, int *st){
+
+  return xmp_nodes_equiv(*d, dn, lb, ub, st);
+
+}
 
 void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
 

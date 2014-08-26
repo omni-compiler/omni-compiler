@@ -329,6 +329,7 @@ public class XobjectFile extends XobjectDefEnv
         if(type.isFintentIN())      out.print(" fintentIN");
         if(type.isFintentOUT())     out.print(" fintentOUT");
         if(type.isFintentINOUT())   out.print(" fintentINOUT");
+        if(type.isFcrayPointer())   out.print(" fcrayPointer");  // (ID=60)
         if(type.isFprogram())       out.print(" fprogram");
         if(type.isFintrinsic())     out.print(" fintrinsic");
         if(type.isFrecursive())     out.print(" frecursive");

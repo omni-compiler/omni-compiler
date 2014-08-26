@@ -25,6 +25,7 @@ public class XMPdimInfo {
   Xobject align_subscript_offset;
   Ident a_dim_size_var; 
   Ident a_offset_var;
+  Ident a_blk_offset_var;
 
   final static int ALIGN_NONE = 0;
   final static int ALIGN_SET = 1;
@@ -148,14 +149,17 @@ public class XMPdimInfo {
   
   public boolean isAlignAny() { return  align_status == ALIGN_ANY; }
 
-  public void setArrayInfoVar(Ident size_var, Ident off_var){
+  public void setArrayInfoVar(Ident size_var, Ident off_var, Ident blk_off_var){
     a_dim_size_var = size_var;
     a_offset_var = off_var;
+    a_blk_offset_var = blk_off_var;
   }
 
   public Ident getArraySizeVar() { return a_dim_size_var; }
   
   public Ident getArrayOffsetVar() { return a_offset_var; }
+
+  public Ident getArrayBlkOffsetVar() { return a_blk_offset_var; }
 
   /*
    * parse dim expression

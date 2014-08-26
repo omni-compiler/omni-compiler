@@ -129,8 +129,8 @@ void _XMP_finalize_array_desc(_XMP_array_t *array) {
   }
 
   if (array->is_shrunk_template){
-    if (array->shrunk_template_nodes)
-      _XMP_finalize_nodes(array->shrunk_template_nodes);
+    if (array->array_nodes)
+      _XMP_finalize_nodes(array->array_nodes);
   }
 
   _XMP_free(array);
@@ -738,8 +738,10 @@ void _XMP_init_array_nodes(_XMP_array_t *array) {
   }
 
   if (array->is_shrunk_template){
-    array->shrunk_template_nodes = _XMP_create_nodes_by_template_ref(align_template, align_template_shrink,
+    array->array_nodes = _XMP_create_nodes_by_template_ref(align_template, align_template_shrink,
 								     align_template_lower, align_template_upper, align_template_stride);
+  }else{
+    array->array_nodes = align_template->onto_nodes;
   }
 
 }
@@ -768,7 +770,7 @@ void _XMP_align_array_noalloc(_XMP_array_t *a, int adim, int tdim, long long ali
   ai->temp0 = temp0;
   a->array_addr_p = (void *)acc0; // temporarily stored to this member
 
-  a->shrunk_template_nodes = NULL;
+  a->array_nodes = NULL;
 }
 
 
