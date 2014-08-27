@@ -14,7 +14,7 @@ all default: $(EXES)
 	$(XCC) -o $@ $<
 
 run: $(EXES)
-	$(XRUN) -n 12 ./inquiry.x
+	$(XRUN) -n 4 ./gblock.x
 
 clean:
 	rm -f $(EXES) $(OBJS)

@@ -56,7 +56,7 @@ OM_OPTIONS="${newOpts}"
 
 if [ -z "${NO_REPLACE_PRAGMA}" ]; then
     PID=$$
-    TMP_FILE="__omni_tmp__pp_${PID}.c"
+    TMP_FILE="${OUTFILE%/*}/__omni_tmp__pp_${PID}.c"
     REPLACE_PRAGMA_CMD="@OMNI_HOME@/bin/om_replace_pragma"
     RPC_ARGS=( "${INPFILE}" -o "${TMP_FILE}" ${INCLUDES} )
 fi
@@ -93,8 +93,4 @@ if [ "${REPLACE_PRAGMA_CMD}" != "" ]; then
 else
     set -- "${CMD_ARGS[@]}"
     $CMD "$@" > "${OUTFILE}" || exit $?
-fi
-
-if [ "${REPLACE_PRAGMA_CMD}" != "" ]; then
-    rm "${TMP_FILE}"
 fi

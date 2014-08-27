@@ -543,11 +543,25 @@ public class XMPrewriteExpr
 	  }
       }
 
-      Ident f = env.declInternIdent("xmpf_local_idx_",
-				    Xtype.Function(Xtype.intType));
-      Xobject x = f.Call(Xcons.List(a.getDescId().Ref(),
-				    Xcons.IntConstant(dim_i),
-				    i.getArg(0)));
+      Xobject x = null;
+      switch (a.getDistMannerAt(dim_i)){
+      case XMPtemplate.BLOCK:
+      case XMPtemplate.GBLOCK:
+	{
+	  x = Xcons.binaryOp(Xcode.MINUS_EXPR, i.getArg(0), a.getBlkOffsetVarAt(dim_i).Ref());
+	  break;
+	}
+      default:
+	{
+	  Ident f = env.declInternIdent("xmpf_local_idx_",
+					Xtype.Function(Xtype.intType));
+	  x = f.Call(Xcons.List(a.getDescId().Ref(),
+				Xcons.IntConstant(dim_i),
+				i.getArg(0)));
+	  break;
+	}
+      }
+
       i.setArg(0,x);
       return i;
 

@@ -4,7 +4,7 @@
 
 int a[6][9][16], a1[6], b[6];
 int m[2]={2,4};
-#pragma xmp nodes p(2,3,4)
+#pragma xmp nodes p(2,3,2)
 #pragma xmp nodes p1(2)=p(1:2,1,1)
 #pragma xmp template t(0:15,0:5,0:8)
 #pragma xmp template t1(0:5)
@@ -60,7 +60,7 @@ int main(){
     ierr=xmp_nodes_size(dn, 2, &ival);
     check(ival, 3, &error);
     ierr=xmp_nodes_size(dn, 3, &ival);
-    check(ival, 4, &error);
+    check(ival, 2, &error);
 
     ierr=xmp_nodes_equiv(dn1, &dn2, lb, ub, st);
     check(lb[0], 1, &error);
