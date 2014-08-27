@@ -13,7 +13,7 @@ import xcodeml.util.XmOption;
 import xcodeml.util.XmXmObjToXobjectTranslator;
 
 import exc.openmp.OMPpragmaLexer;
-import exc.xcalablemp.XMPpragmaSyntaxAnalyzer;
+// import exc.xcalablemp.XMPpragmaSyntaxAnalyzer;
 
 /**
  * Base pragma lexer.
@@ -254,10 +254,10 @@ public abstract class PragmaLexer
                 if(XmOption.isOpenMP())
                     r = new OMPpragmaLexer(this).continueLex();
             }
-            else if(pg_is_ident("xmp")) {
-                if(XmOption.isXcalableMP())
-                    r = new XMPpragmaSyntaxAnalyzer(this).continueLex();
-            }
+            // else if(pg_is_ident("xmp")) {
+            //     if(XmOption.isXcalableMP())
+            //         r = new XMPpragmaSyntaxAnalyzer(this).continueLex();
+            // }
         }
 
         // external pramga

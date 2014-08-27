@@ -17,7 +17,7 @@ import xcodeml.XmException;
 import xcodeml.binding.XmXcodeProgram;
 import xcodeml.f.binding.gen.XbfXcodeProgram;
 import xcodeml.f.binding.gen.XcodeML_FFactory;
-import xcodeml.f.decompile.XfDecompileVisitor;
+// import xcodeml.f.decompile.XfDecompileVisitor;
 import xcodeml.f.decompile.XfDecompileDomVisitor;
 import xcodeml.f.decompile.XmfDecompilerContext;
 import xcodeml.util.XmDecompiler;
@@ -36,37 +36,37 @@ public class XmfDecompiler implements XmDecompiler
     {
     }
 
-    @Override
-    public boolean decompile(XmDecompilerContext context, Reader reader, Writer writer) throws XmException
-    {
-        XbfXcodeProgram xmprog = XcodeML_FFactory.getFactory().createXbfXcodeProgram();
-        List<String> errorList = new ArrayList<String>();
-        XmfValidator validator = new XmfValidator();
+    // @Override
+    // public boolean decompile(XmDecompilerContext context, Reader reader, Writer writer) throws XmException
+    // {
+    //     XbfXcodeProgram xmprog = XcodeML_FFactory.getFactory().createXbfXcodeProgram();
+    //     List<String> errorList = new ArrayList<String>();
+    //     XmfValidator validator = new XmfValidator();
 
-        if(!validator.read(reader, xmprog, errorList)) {
-            for (String error : errorList) {
-                XmLog.error(error);
-            }
-            return false;
-        }
+    //     if(!validator.read(reader, xmprog, errorList)) {
+    //         for (String error : errorList) {
+    //             XmLog.error(error);
+    //         }
+    //         return false;
+    //     }
         
-        decompile(context, xmprog, writer);
-        return true;
-    }
+    //     decompile(context, xmprog, writer);
+    //     return true;
+    // }
 
-    @Override
-    public void decompile(XmDecompilerContext context, XmXcodeProgram xmprog, Writer writer) throws XmException
-    {
-        XmfDecompilerContext fcontext = (XmfDecompilerContext)context;
-        XmfWriter fwriter = new XmfWriter(new PrintWriter(writer));
-        fwriter.setMaxColumnCount(fcontext.getMaxColumnCount());
-        fcontext.setWriter(fwriter);
-        XfDecompileVisitor visitor = new XfDecompileVisitor(fcontext);
-        if (!visitor.invokeEnter((XbfXcodeProgram)xmprog)) {
-            throw new XmException(fcontext.getLastErrorMessage(), fcontext.getLastCause());
-        }
-        fwriter.flush();
-    }
+    // @Override
+    // public void decompile(XmDecompilerContext context, XmXcodeProgram xmprog, Writer writer) throws XmException
+    // {
+    //     XmfDecompilerContext fcontext = (XmfDecompilerContext)context;
+    //     XmfWriter fwriter = new XmfWriter(new PrintWriter(writer));
+    //     fwriter.setMaxColumnCount(fcontext.getMaxColumnCount());
+    //     fcontext.setWriter(fwriter);
+    //     XfDecompileVisitor visitor = new XfDecompileVisitor(fcontext);
+    //     if (!visitor.invokeEnter((XbfXcodeProgram)xmprog)) {
+    //         throw new XmException(fcontext.getLastErrorMessage(), fcontext.getLastCause());
+    //     }
+    //     fwriter.flush();
+    // }
 
     @Override
     public void decompile(XmDecompilerContext context, Document xcode, Writer writer) throws XmException {

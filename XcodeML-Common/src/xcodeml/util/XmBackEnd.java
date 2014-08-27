@@ -25,6 +25,10 @@ import xcodeml.util.XmOption;
 import xcodeml.util.XmToolFactory;
 import xcodeml.util.XmValidator;
 
+import org.w3c.dom.Document;
+import javax.xml.parsers.ParserConfigurationException;
+import org.xml.sax.SAXException;
+
 /**
  * Run XcodeML decompiler.
  */
@@ -204,17 +208,33 @@ public class XmBackEnd
             if(maxColumns > 0) {
                 context.setProperty(XmDecompilerContext.KEY_MAX_COLUMNS, "" + maxColumns);
             }
-            
-            try {
-                decompiler.decompile(context, xmprog, writer);
-            } catch(XmBindingException e) {
-                _error(e, "Error at decompiling");
-                _error("  location: " + e.getElementDesc());
-                return 1;
-            } catch(XmException e) {
-                _error(e, "Error at decompiling");
-                return 1;
-            }
+
+	    try {
+	      javax.xml.parsers.DocumentBuilderFactory docFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+	      javax.xml.parsers.DocumentBuilder builder = docFactory.newDocumentBuilder();
+	      Document xcodeDoc = builder.parse(_inputFilePath);
+	      decompiler.decompile(context, xcodeDoc, writer);
+	    } catch (ParserConfigurationException e) {
+	      _error(e, "Error at decompiling");
+	      return 1;
+	    } catch (SAXException e) {
+	      _error(e, "Error at decompiling");
+	      return 1;
+	    } catch (IOException e) {
+	      _error(e, "Error at decompiling");
+	      return 1;
+	    }
+
+            // try {
+            //     decompiler.decompile(context, xmprog, writer);
+            // } catch(XmBindingException e) {
+            //     _error(e, "Error at decompiling");
+            //     _error("  location: " + e.getElementDesc());
+            //     return 1;
+            // } catch(XmException e) {
+            //     _error(e, "Error at decompiling");
+            //     return 1;
+            // }
             writer.flush();
 
             return 0;
