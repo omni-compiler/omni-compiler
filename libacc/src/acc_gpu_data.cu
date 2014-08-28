@@ -11,46 +11,36 @@ static void unregister_memory(void *host_addr);
 #define INIT_PRESENT 1
 #define INIT_PRESENTOR 2
 
-static void init_data(int mode, _ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, va_list args);
-void _ACC_init_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...){
-	va_list args;
-	va_start(args, dim);
-	init_data(INIT_DEFAULT, host_data_desc, device_addr, addr, type_size, dim, args);
-	va_end(args);
+static void init_data(int mode, _ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]);
+void _ACC_init_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]){
+  init_data(INIT_DEFAULT, host_data_desc, device_addr, addr, type_size, dim, lower, length);
 }
-void _ACC_pinit_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...){
-	va_list args;
-	va_start(args, dim);
-	init_data(INIT_PRESENTOR, host_data_desc, device_addr, addr, type_size, dim, args);
-	va_end(args);
+void _ACC_pinit_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]){
+  init_data(INIT_PRESENTOR, host_data_desc, device_addr, addr, type_size, dim, lower, length);
 }
-void _ACC_find_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...){
-	va_list args;
-	va_start(args, dim);
-	init_data(INIT_PRESENT, host_data_desc, device_addr, addr, type_size, dim, args);
-	va_end(args);
+void _ACC_find_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]){
+  init_data(INIT_PRESENT, host_data_desc, device_addr, addr, type_size, dim, lower, length);
 }
 
-static void init_data(int mode, _ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, va_list args){
-
-	//  va_list args;
+static void init_data(int mode, _ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]){
+  //  va_list args;
   _ACC_gpu_data_t *host_data_d = NULL;
 
   // set array info
   _ACC_gpu_array_t *array_info = (_ACC_gpu_array_t *)_ACC_alloc(dim * sizeof(_ACC_gpu_array_t));
-	//  va_start(args, dim);
-	//printf("array");
+  //  va_start(args, dim);
+  //printf("array");
   for(int i=0;i<dim;i++){
-    array_info[i].dim_offset = va_arg(args, int);
+    array_info[i].dim_offset = lower[i];//va_arg(args, int);
     if(i != 0 && array_info[i].dim_offset != 0){
       _ACC_fatal("Non-zero lower is allowed only top dimension");
     }
-    array_info[i].dim_elmnts = va_arg(args, int);
-		//printf("[%d:%d]", array_info[i].dim_offset, array_info[i].dim_elmnts );
+    array_info[i].dim_elmnts = length[i];//va_arg(args, int);
+	//printf("[%llu:%llu]", array_info[i].dim_offset, array_info[i].dim_elmnts );
   }
-	//printf("\n");
+  //printf("\n");
   //va_end(args);
-  int accumulation = 1;
+  unsigned long long accumulation = 1;
   for(int i=dim-1; i >= 0; i--){
     array_info[i].dim_acc = accumulation;
     accumulation *= array_info[i].dim_elmnts;
@@ -58,58 +48,58 @@ static void init_data(int mode, _ACC_gpu_data_t **host_data_desc, void **device_
   size_t size = accumulation * type_size;
   size_t offset = (dim > 0)? array_info[0].dim_offset * array_info[0].dim_acc * type_size : 0;
 
-	_ACC_gpu_data_t *present_host_data_d = NULL;
-	void *present_dev_addr;
-	//find host_data_d
-	if(mode == INIT_PRESENT || mode == INIT_PRESENTOR){
-		_ACC_gpu_get_data_sub(&present_host_data_d, &present_dev_addr, addr, offset, size);
-	}
+  _ACC_gpu_data_t *present_host_data_d = NULL;
+  void *present_dev_addr;
+  //find host_data_d
+  if(mode == INIT_PRESENT || mode == INIT_PRESENTOR){
+	_ACC_gpu_get_data_sub(&present_host_data_d, &present_dev_addr, addr, offset, size);
+  }
 
-	if(mode == INIT_PRESENT){
-		if(present_host_data_d == NULL){
-			_ACC_fatal("gpu2 data not found");			
-		}
+  if(mode == INIT_PRESENT){
+	if(present_host_data_d == NULL){
+	  _ACC_fatal("gpu2 data not found");			
 	}
+  }
 
   // alloc & init host descriptor
-	host_data_d = (_ACC_gpu_data_t *)_ACC_alloc(sizeof(_ACC_gpu_data_t));
+  host_data_d = (_ACC_gpu_data_t *)_ACC_alloc(sizeof(_ACC_gpu_data_t));
   host_data_d->host_addr = addr;
-	////device_addr
+  ////device_addr
   host_data_d->offset = offset;
   host_data_d->size = size;
   /////host_data_d->is_original = true;
-	/////is_pagelocked;
-	/////is_original
+  /////is_pagelocked;
+  /////is_original
   host_data_d->type_size = type_size;
   host_data_d->dim = dim;
   host_data_d->array_info = array_info;
 
 
-	if(present_host_data_d == NULL){
-		//device memory alloc
-		_ACC_gpu_alloc(&(host_data_d->device_addr), size);
-		host_data_d->is_original = true;
+  if(present_host_data_d == NULL){
+	//device memory alloc
+	_ACC_gpu_alloc(&(host_data_d->device_addr), size);
+	host_data_d->is_original = true;
 
-		//about pagelock
-		unsigned int flags;
-		cudaHostGetFlags(&flags, addr);
-		cudaError_t error = cudaGetLastError();
-		if(error == cudaSuccess){
-			//printf("memory is pagelocked\n");
-			host_data_d->is_pagelocked = true;
-		}else{
-			//printf("memory is not pagelocked\n");
-			host_data_d->is_pagelocked = false;
-		}
-		host_data_d->is_registered = false;
-
-		_ACC_gpu_add_data(host_data_d);
+	//about pagelock
+	unsigned int flags;
+	cudaHostGetFlags(&flags, addr);
+	cudaError_t error = cudaGetLastError();
+	if(error == cudaSuccess){
+	  //printf("memory is pagelocked\n");
+	  host_data_d->is_pagelocked = true;
 	}else{
-		host_data_d->device_addr = (void *)((char*)(present_dev_addr) + offset);
-		host_data_d->is_original = false;
+	  //printf("memory is not pagelocked\n");
+	  host_data_d->is_pagelocked = false;
+	}
+	host_data_d->is_registered = false;
+
+	_ACC_gpu_add_data(host_data_d);
+  }else{
+	host_data_d->device_addr = (void *)((char*)(present_dev_addr) + offset);
+	host_data_d->is_original = false;
     host_data_d->is_pagelocked = present_host_data_d->is_pagelocked;
     host_data_d->is_registered = present_host_data_d->is_registered;
-	}
+  }
 
   //printf("hostaddr=%p, size=%zu, offset=%zu\n", addr, size, offset);
 
@@ -162,7 +152,7 @@ void _ACC_pcopy_data(_ACC_gpu_data_t *desc, int direction, int asyncId){
   }
 }
 
-static void copy_subdata_using_pack_vector(_ACC_gpu_data_t *desc, int direction, int asyncId, int offset, int count, int blocklength, int stride)
+static void copy_subdata_using_pack_vector(_ACC_gpu_data_t *desc, int direction, int asyncId, unsigned long long offset, unsigned long long count, unsigned long long blocklength, unsigned long long stride)
 {
   void *dev_buf;
   void *host_buf;
@@ -201,15 +191,15 @@ static void copy_subdata_using_pack_vector(_ACC_gpu_data_t *desc, int direction,
   _ACC_free(host_buf);
 }
 
-static void copy_subdata_using_pack(_ACC_gpu_data_t *desc, int direction, int isAsync, int *trans_info){
+static void copy_subdata_using_pack(_ACC_gpu_data_t *desc, int direction, int isAsync, unsigned long long *trans_info){
   int i;
   int dim = desc->dim;
   void *dev_buf;
   void *host_buf = NULL;
-  int *info_length = trans_info + dim;
+  unsigned long long *info_length = trans_info + dim;
   const char useAsync = 0;
 
-  int total_elmnts = 1;
+  unsigned long long total_elmnts = 1;
   for(i=0;i<dim;i++){
     total_elmnts *= info_length[i];
   }
@@ -229,8 +219,8 @@ static void copy_subdata_using_pack(_ACC_gpu_data_t *desc, int direction, int is
   _ACC_gpu_mpool_get(&mpool);
   _ACC_gpu_mpool_alloc((void**)&dev_buf, buf_size, mpool, &mpool_pos);
   //alloc and copy of trans_info
-  int *dev_trans_info;
-  size_t trans_info_size = desc->dim * 3 * sizeof(int);
+  unsigned long long *dev_trans_info;
+  size_t trans_info_size = desc->dim * 3 * sizeof(unsigned long long);
   _ACC_gpu_mpool_alloc((void**)&dev_trans_info, trans_info_size, mpool, &mpool_pos);
   _ACC_gpu_copy(trans_info, dev_trans_info, trans_info_size, 400);
 
@@ -303,23 +293,23 @@ static void find_contiguous(int dim, _ACC_gpu_array_t *array_info, int *trans_in
 }
 */
 
-void _ACC_copy_subdata(_ACC_gpu_data_t *desc, int direction, int asyncId, ...){
+void _ACC_copy_subdata(_ACC_gpu_data_t *desc, int direction, int asyncId, unsigned long long lower[], unsigned long long length[]){
   int dim = desc->dim;
-  int *trans_info = (int *)_ACC_alloc(dim * 3 * sizeof(int));
-  int *info_lower = trans_info;
-  int *info_length = trans_info + dim;
-  int *info_dim_acc = trans_info + dim*2;
+  unsigned long long *trans_info = (unsigned long long *)_ACC_alloc(dim * 3 * sizeof(unsigned long long));
+  unsigned long long *info_lower = trans_info;
+  unsigned long long *info_length = trans_info + dim;
+  unsigned long long *info_dim_acc = trans_info + dim*2;
   _ACC_gpu_array_t *array_info = desc->array_info;
   int i;
 
-  va_list args;
-  va_start(args, asyncId);
+  // va_list args;
+  // va_start(args, asyncId);
   for(i=0;i<dim;i++){
-    info_lower[i] = va_arg(args, int);
-    info_length[i] = va_arg(args, int);
+    info_lower[i] = lower[i];//va_arg(args, int);
+    info_length[i] = length[i];//va_arg(args, int);
     info_dim_acc[i] = desc->array_info[i].dim_acc;
   }
-  va_end(args);
+  // va_end(args);
 
   //int next_dim;
   
@@ -330,12 +320,12 @@ void _ACC_copy_subdata(_ACC_gpu_data_t *desc, int direction, int asyncId, ...){
       
   if(i < 0){
     //all data copy
-    //    printf("sequencial\n");
+	// printf("sequencial\n");
     _ACC_gpu_copy(desc->host_addr, (void*)((char *)(desc->device_addr) - desc->offset),desc-> size, direction);
     return;
   }
 
-  int offset, blockLength;
+  unsigned long long offset, blockLength;
   blockLength = array_info[i].dim_acc * info_length[i];
   offset = array_info[i].dim_acc * info_lower[i];
   i--; //skip sub-range dim
@@ -349,13 +339,13 @@ void _ACC_copy_subdata(_ACC_gpu_data_t *desc, int direction, int asyncId, ...){
   if(i < 0){
     size_t offset_size = offset * desc->type_size;
     size_t size = blockLength * desc->type_size;
-    //    printf("sequencial\n");
+    //   printf("sequencial\n");
     _ACC_gpu_copy((void*)((char*)(desc->host_addr) + offset_size), (void*)((char *)(desc->device_addr) + offset_size - desc->offset), size, direction);
     return;
   }
   
-  int stride = array_info[i].dim_acc;
-  int count = 1;
+  unsigned long long stride = array_info[i].dim_acc;
+  unsigned long long count = 1;
   //skip all full-range dim
   for(; i >= 0; i--){
     count *= info_length[i];
@@ -375,12 +365,12 @@ void _ACC_copy_subdata(_ACC_gpu_data_t *desc, int direction, int asyncId, ...){
 
   if(i < 0){
     // block stride
-    //    printf("block stride\n");
+	//printf("block stride(%llu,%llu,%llu)\n", count, blockLength, stride);
     copy_subdata_using_pack_vector(desc, direction, asyncId, offset, count, blockLength, stride);
     return;
   }
 
-  //  printf("unknown\n");
+  //printf("unknown\n");
   copy_subdata_using_pack(desc, direction, asyncId, trans_info);
 }
 

@@ -53,6 +53,7 @@ run: $(EXES)
 
 	$(XRUN) host_data.x
 	$(XRUN) multi_device.x
+	$(XRUN) longlong_loopvar.x
 
 update_host_subarray_type:
 	$(XCC) -o update_host_subarray_char.x update_host_subarray.c -DCHAR

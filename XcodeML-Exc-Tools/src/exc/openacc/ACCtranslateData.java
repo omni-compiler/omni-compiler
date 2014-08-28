@@ -82,26 +82,7 @@ public class ACCtranslateData {
       Xtype varType = var.getId().Type();
       Xtype elementType = var.getElementType();
       int dim = var.getDim();
-/*      
-      if(varType.isArray()){
-          if(var.isSubarray()){
-              elementType = var.getElementType(varType);
-              dim = var.getSubscripts().Nargs();
-          }else{
-              ArrayType arrayType = (ArrayType)varType;
-              elementType = arrayType.getArrayElementType();
-              dim = arrayType.getNumDimensions();
-          }
-      }else if(varType.isPointer()){
-          elementType = varType.getRef();
-          if(var.isSubarray()){
-              dim = var.getSubscripts().Nargs(); 
-              elementType = var.getElementType(varType);
-          }
-      }else{
-	  elementType = varType;
-      }
-      */
+
       XobjList suffixArgs = Xcons.List();
       {
 	  for(Xobject x : var.getSubscripts()){
@@ -109,41 +90,33 @@ public class ACCtranslateData {
 	      suffixArgs.add(x.right());
 	  }
       }
-      if(false){
-          if(varType.isArray()){
-              Xtype t = varType;
-              while(t.isArray()){
-                  ArrayType arrayType = (ArrayType)t;
-                  int length = (int)arrayType.getArraySize();
-                  Xobject lengthObj = (length > 0 )? Xcons.IntConstant(length) : arrayType.getArraySizeExpr();
-                  suffixArgs.add(Xcons.IntConstant(0));
-                  suffixArgs.add(lengthObj);
-                  t = arrayType.getRef();
-              }
-	  }else if(var.isSubarray()){
-              XobjList subs = var.getSubscripts();
-              for(Xobject x : subs){
-                  suffixArgs.add(x.left());
-                  suffixArgs.add(x.right());
-              }
-	  }else{
-	      //initArgs.add(Xcons.IntConstant(0));
-              //initArgs.add(var.getNumElements());
-          }
+
+      XobjList lowerList = Xcons.List();
+      XobjList lengthList = Xcons.List();
+      BlockList body = Bcons.emptyBody();
+      for(Xobject x : var.getSubscripts()){
+        lowerList.add(x.left());
+        lengthList.add(x.right());
       }
 
       XobjList initArgs = Xcons.List(hostDesc.getAddr(), deviceAddr.getAddr(), addrObj, Xcons.SizeOf(elementType), Xcons.IntConstant(dim));
-      initArgs.mergeList(suffixArgs);
+      //initArgs.mergeList(suffixArgs);
+      String initFuncName;
       if(var.isPresent()){
-	initializeBlock = createFuncCallBlock(ACC.FIND_DATA_FUNC_NAME, initArgs);  
-        finalizeBlock = createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
+        initFuncName = ACC.FIND_DATA_FUNC_NAME;
+	//initializeBlock = createFuncCallBlock(ACC.FIND_DATA_FUNC_NAME, initArgs);  
+        //finalizeBlock = createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
       }else if(var.isPresentOr()){
-	initializeBlock = createFuncCallBlock(ACC.PRESENT_OR_INIT_DATA_FUNC_NAME, initArgs);
-        finalizeBlock = createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
+        initFuncName = ACC.PRESENT_OR_INIT_DATA_FUNC_NAME;
+	//initializeBlock = createFuncCallBlock(ACC.PRESENT_OR_INIT_DATA_FUNC_NAME, initArgs);
+        //finalizeBlock = createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
       }else{
-	initializeBlock = createFuncCallBlock(ACC.INIT_DATA_FUNC_NAME, initArgs);
-        finalizeBlock = createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
+        initFuncName = ACC.INIT_DATA_FUNC_NAME;
+	//initializeBlock = createFuncCallBlock(ACC.INIT_DATA_FUNC_NAME, initArgs);
+        //finalizeBlock = createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
       }
+      initializeBlock = ACCutil.createFuncCallBlockWithArrayRange(initFuncName, initArgs, Xcons.List(lowerList, lengthList));
+      finalizeBlock = createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
       
       initBlockList.add(initializeBlock);
       finalizeBlockList.add(finalizeBlock);
