@@ -37,12 +37,27 @@ static void ungetChar_(int c, SrcFile *sf){
   ungetc(c, sf->file);
 }
 
+//return char except CR
+static int getChar__(SrcFile *sf)
+{
+  int c;
+  c = getc(sf->file);
+  if(c == '\r'){
+    int nc = getc(sf->file);
+    if(nc != '\n'){
+      ungetc(nc, sf->file);
+    }
+    return '\n';
+  }
+  return c;
+}
+
 //return char except disabled-return
 static int getChar_(SrcFile *sf)
 {
   int c;
-  while( (c = getc(sf->file)) == '\\' ){
-    int nc = getc(sf->file);
+  while( (c = getChar__(sf)) == '\\' ){
+    int nc = getChar__(sf);
     if(nc == '\n'){
       sf->numEscapedLFs++;
       (sf->curLine)++;

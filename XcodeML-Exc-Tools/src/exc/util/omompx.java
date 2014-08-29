@@ -78,6 +78,7 @@ public class omompx
       "  -gnu         decompile for GNU Fortran (default).",
       "  -intel       decompile for Intel Fortran.",
       "  -M dir       specify where to search for .xmod files",
+      "  -max_assumed_shape=N  set max number of assumed-shape arrays of a proedure (for Fortran).",
       "  -decomp      output decompiled source code.",
       "",
       " Debug Options:",
@@ -211,6 +212,9 @@ public class omompx
           else {
             XcodeMLtools_Fmod.addSearchPath(arg.substring(2));
           }
+      } else if (arg.startsWith("-max_assumed_shape=")) {
+	  String n = arg.substring(19);
+	  exc.xmpF.XMP.MAX_ASSUMED_SHAPE = Integer.parseInt(n);
       } else if(arg.startsWith("-")){
         error("unknown option " + arg);
       } else if(inXmlFile == null) {
