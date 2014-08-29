@@ -940,46 +940,97 @@ static _Bool _XMP_gmove_transpose(_XMP_gmv_desc_t *gmv_desc_leftp,
 
 }
 
-void _XMP_align_G2L_idx(long long int global_idx, int *local_idx,
-              _XMP_array_t *array, int array_axis)
+void _XMP_align_local_idx(long long int global_idx, int *local_idx,
+              _XMP_array_t *array, int array_axis, int *rank)
 {
   _XMP_template_t *template = array->align_template;
   int template_index = array->info[array_axis].align_template_index;
-  int offset = array->info[array_axis].align_subscript;
   _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XMP_nodes_info_t *n_info = chunk->onto_nodes_info;
   long long base = array->info[array_axis].ser_lower;
+  long long tbase = template->info[template_index].ser_lower;
+  int offset = array->info[array_axis].align_subscript + (base - tbase);
+  int irank, idiv, imod;
 
   switch(array->info[array_axis].align_manner){
   case _XMP_N_ALIGN_DUPLICATION:
     {
-      *local_idx = global_idx - base;
+      *rank=0;
+      *local_idx = global_idx + offset - base;
     }
     break;
   case _XMP_N_ALIGN_BLOCK:
     {
-      *local_idx = (global_idx - base) - n_info->rank * chunk->par_chunk_width;
+      *rank = (global_idx + offset - base) / chunk->par_chunk_width;
+      *local_idx = (global_idx + offset - base ) - *rank * chunk->par_chunk_width + array->info[array_axis].shadow_size_lo;
+      idiv = offset / (chunk->par_chunk_width);
+      if (*rank == idiv){
+        *local_idx = *local_idx - offset%(chunk->par_chunk_width);
+      }
     }
     break;
   case _XMP_N_ALIGN_CYCLIC:
     {
-      *local_idx = (global_idx - base) / n_info->size;
+      idiv = offset/n_info->size;
+      imod = offset%n_info->size;
+      *rank = (global_idx + offset - base) % n_info->size;
+      *local_idx = (global_idx + offset - base) / n_info->size;
+      if (imod > *rank){
+        *local_idx = *local_idx - (idiv + 1);
+      } else {
+        *local_idx = *local_idx - idiv;
+      }
     }
     break;
   case _XMP_N_ALIGN_BLOCK_CYCLIC:
     {
-      int off = global_idx - base;
       int w = chunk->par_width;
+      idiv = (offset/w)/n_info->size;
+      int imod1 = (offset/w)%n_info->size;
+      int imod2 = offset%w;
+      int off = global_idx + offset - base;
       *local_idx = (off / (n_info->size*w)) * w + off%w;
+
+      *rank=(off/w)% (n_info->size);
+      if (imod1 > 0){
+        if (imod1 == *rank ){
+          *local_idx = *local_idx - idiv*w-imod2;
+        }else if (imod1 > *rank){
+          *local_idx = *local_idx - (idiv+1)*w;
+        }
+      }else if (imod1 == 0){
+        if (imod1 == *rank ){
+          *local_idx = *local_idx - idiv*w -imod2;
+        }else{
+          *local_idx = *local_idx - idiv*w;
+        }
+      }
     }
     break;
   case _XMP_N_ALIGN_GBLOCK:
     {
-    *local_idx = global_idx - chunk->mapping_array[n_info->rank];
+      for(int i=1;i<(n_info->size+1);i++){
+        if(global_idx + offset < chunk->mapping_array[i]+ (base - tbase)){
+          *rank = i - 1;
+          break;
+        }
+      }
+      *local_idx = global_idx + offset - chunk->mapping_array[*rank]- (base - tbase) + array->info[array_axis].shadow_size_lo;
+      for(int i=1;i<n_info->size+1;i++){
+        if(offset < chunk->mapping_array[i]+(base-tbase)){
+          irank = i - 1;
+          idiv = offset - (chunk->mapping_array[i-1] + (base - tbase) - base);
+          break;
+        }
+      }
+      if (*rank == irank){
+        *local_idx = *local_idx - idiv;
+      }
     }
     break;
   case _XMP_N_ALIGN_NOT_ALIGNED:
     {
+      *rank=0;
       *local_idx=global_idx - base;
     }
     break;
@@ -987,71 +1038,6 @@ void _XMP_align_G2L_idx(long long int global_idx, int *local_idx,
     _XMP_fatal("_XMP_: unknown chunk dist_manner");
   }
 
-}
-
-void _XMP_align_G2L_rank(long long int global_idx, int *rank,
-              _XMP_array_t *array, int array_axis)
-{
-  _XMP_template_t *template = array->align_template;
-  int template_index = array->info[array_axis].align_template_index;
-  int offset = array->info[array_axis].align_subscript;
-  _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
-  _XMP_nodes_info_t *n_info = chunk->onto_nodes_info;
-  long long base = array->info[array_axis].ser_lower;
-
-  switch(array->info[array_axis].align_manner){
-  case _XMP_N_ALIGN_DUPLICATION:
-    {
-      *rank=0;
-    }
-    break;
-  case _XMP_N_ALIGN_BLOCK:
-    {
-      *rank = (global_idx + offset - base) / chunk->par_chunk_width;
-    }
-    break;
-  case _XMP_N_ALIGN_CYCLIC:
-    {
-      *rank=(global_idx + offset - base)%n_info->size;
-    }
-    break;
-  case _XMP_N_ALIGN_BLOCK_CYCLIC:
-    {
-      int off = global_idx + offset - base;
-      int w = chunk->par_width;
-      *rank=(off/w)% (n_info->size);
-    }
-    break;
-  case _XMP_N_ALIGN_GBLOCK:
-    {
-      for(int i=1;i<(n_info->size+1);i++){
-        if(global_idx + offset < chunk->mapping_array[i]){
-          *rank = i - 1;
-          break;
-        }
-      } 
-    }
-    break;
-  case _XMP_N_ALIGN_NOT_ALIGNED:
-    {
-      *rank=0;
-    }
-    break;
-  default:
-    _XMP_fatal("_XMP_: unknown chunk dist_manner");
-  }
-
-}
-void _XMP_align_local_idx(long long int global_idx, int *local_idx,
-              _XMP_array_t *array, int array_axis, int *rank)
-{
-    _XMP_array_info_t *ai = &array->info[array_axis];
-    int lshadow = ai->shadow_size_lo;
-    int l_base;
-    _XMP_align_G2L_idx(ai->par_lower, &l_base, array, array_axis);
-    _XMP_align_G2L_idx(global_idx, local_idx, array, array_axis);
-    _XMP_align_G2L_rank(global_idx, rank, array, array_axis);
-    *local_idx = *local_idx - l_base + lshadow;
 }
 
 void _XMP_gmove_align_local_idx(long long int global_idx, int *local_idx,
