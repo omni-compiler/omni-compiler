@@ -67,6 +67,9 @@ public enum ACCpragma {
   //update clause
   HOST,
   DEVICE,
+
+  //XACC
+  ON_DEVICE,
   
   //internal
   _BLOCK,

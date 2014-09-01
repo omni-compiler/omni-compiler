@@ -156,7 +156,7 @@ public class omompx
       } else if(arg.equals("-fxacc")) {
 	xcalableMP = true;
 	xcalableACC = true;
-	XMP.ACC = true;
+	XMP.XACC = true;
       } else if(arg.equals("-w")) {
         if(narg == null)
           error("needs argument after -w");

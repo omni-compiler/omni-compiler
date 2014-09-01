@@ -1730,28 +1730,33 @@ public class XMPrewriteExpr {
       if (block.Opcode() == Xcode.ACC_PRAGMA){
 	Xobject clauses = ((PragmaBlock)block).getClauses();
 	BlockList newBody = Bcons.emptyBody();
+	XMPdevice onDevice = null;
 	if (clauses != null){
 	  //BlockList newBody = Bcons.emptyBody();
-	  rewriteACCClauses(clauses, (PragmaBlock)block, fb, localXMPsymbolTable, newBody);
-	  if(!newBody.isEmpty() && !XMP.ACC){
+	  onDevice = rewriteACCClauses(clauses, (PragmaBlock)block, fb, localXMPsymbolTable, newBody);
+	  if(!newBody.isEmpty() && !XMP.XACC){
 	    bIter.setBlock(Bcons.COMPOUND(newBody));
 	    newBody.add(Bcons.COMPOUND(Bcons.blockList(block))); //newBody.add(block);
 	  }
 	}
 
-	if (XMP.ACC){
+	if (XMP.XACC && onDevice != null){
 	  BlockList deviceLoop = Bcons.emptyBody();
 
-	  Ident var = deviceLoop.declLocalIdent("_XACC_loop", Xtype.intType);
-	  Ident fid0 = _globalDecl.declExternFunc("xacc_get_num_current_devices", Xtype.intType);
+	  Ident fid2 = _globalDecl.declExternFunc("acc_set_device_type");
+	  deviceLoop.insert(fid2.Call(Xcons.List(onDevice.getAccDevice().Ref())));
 
-	  Block newBlock = Bcons.FORall(var.Ref(), Xcons.IntConstant(0), fid0.Call(), Xcons.IntConstant(1),
-					Xcode.LOG_LT_EXPR, newBody);
+	  Ident var = deviceLoop.declLocalIdent("_XACC_loop", Xtype.intType);
+	  // Ident fid0 = _globalDecl.declExternFunc("xacc_get_num_current_devices",
+	  // 					  Xtype.intType);
+
+	  Block newBlock = Bcons.FORall(var.Ref(), onDevice.getLower(), onDevice.getUpper(),
+					onDevice.getStride(), Xcode.LOG_LE_EXPR, newBody);
 
 	  deviceLoop.add(newBlock);
 	  bIter.setBlock(Bcons.COMPOUND(deviceLoop));
 
-	  Ident fid1 = _globalDecl.declExternFunc("xacc_set_current_device_num");
+	  Ident fid1 = _globalDecl.declExternFunc("acc_set_device_num");
 	  newBody.insert(fid1.Call(Xcons.List(var.Ref())));
 	  newBody.add(Bcons.COMPOUND(Bcons.blockList(block)));
 	}
@@ -1763,8 +1768,10 @@ public class XMPrewriteExpr {
   /*
    * rewrite ACC clauses
    */
-  private void rewriteACCClauses(Xobject expr, PragmaBlock pragmaBlock, Block block,
-      XMPsymbolTable localXMPsymbolTable, BlockList body){
+  private XMPdevice rewriteACCClauses(Xobject expr, PragmaBlock pragmaBlock, Block block,
+				      XMPsymbolTable localXMPsymbolTable, BlockList body){
+
+    XMPdevice onDevice = null;
 
     bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
 
@@ -1786,6 +1793,13 @@ public class XMPrewriteExpr {
     	  case FIRSTPRIVATE:   
     	  case DEVICE_RESIDENT:
     	    break;
+	  case ON_DEVICE: {
+	    String deviceName = x.right().getString();
+	    onDevice = (XMPdevice)_globalDecl.getXMPobject(deviceName, block);
+	    if (onDevice == null) XMP.error(x.getLineNo(), "wrong device in on_device");
+	    iter.setXobject(null);
+	    continue;
+	  }
     	  default:
             if(!accClause.isDataClause()) continue;
     	  }
@@ -1845,6 +1859,8 @@ public class XMPrewriteExpr {
 	}
       }
     }
+
+    return onDevice;
   }
   
   private Xobject rewriteACCArrayAddr(Xobject arrayAddr, Block block, BlockList body) throws XMPexception {

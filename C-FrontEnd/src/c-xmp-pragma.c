@@ -59,7 +59,7 @@ static CExpr* parse_COARRAY_clause();
 static CExpr* parse_ARRAY_clause();
 static CExpr* parse_POST_clause();
 static CExpr* parse_WAIT_clause();
-static CExpr* parse_LOCAL_ALIAS_clause();
+//static CExpr* parse_LOCAL_ALIAS_clause();
 static CExpr* parse_WIDTH_list();
 static CExpr* parse_WAIT_ASYNC_clause();
 static CExpr* parse_TEMPLATE_FIX_clause();
@@ -69,7 +69,7 @@ static CExpr* parse_COL2_name_list();
 static CExpr* parse_XMP_subscript_list();
 static CExpr* parse_XMP_size_list();
 static CExpr* parse_XMP_range_list();
-static CExpr* parse_XMP_C_subscript_list();
+//static CExpr* parse_XMP_C_subscript_list();
 static CExpr* parse_ON_ref();
 static CExpr* parse_XMP_dist_fmt_list();
 static CExpr* parse_Reduction_opt();
@@ -931,55 +931,55 @@ CExpr *parse_XMP_align_source_list()
 }
 
 
-CExpr *parse_XMP_C_subscript_list()
-{
-    CExpr* list;
-    CExpr *v1,*v2,*v3;
+/* CExpr *parse_XMP_C_subscript_list() */
+/* { */
+/*     CExpr* list; */
+/*     CExpr *v1,*v2,*v3; */
 
-    list = EMPTY_LIST;
-    if(pg_tok != '[') {
-	addFatal(NULL,"parse_XMP_C_subscript_list: first token != '['");
-    }
+/*     list = EMPTY_LIST; */
+/*     if(pg_tok != '[') { */
+/* 	addFatal(NULL,"parse_XMP_C_subscript_list: first token != '['"); */
+/*     } */
 
-    while(1){
-	v1 = v2 = v3 = NULL;
-	if(pg_tok != '[') break;
-	pg_get_token();
+/*     while(1){ */
+/* 	v1 = v2 = v3 = NULL; */
+/* 	if(pg_tok != '[') break; */
+/* 	pg_get_token(); */
 
-	switch(pg_tok){
-	case ']':  goto err;
-	case ':':
-	    break;
-	default:
-	    v1 = pg_parse_expr();
-	}
+/* 	switch(pg_tok){ */
+/* 	case ']':  goto err; */
+/* 	case ':': */
+/* 	    break; */
+/* 	default: */
+/* 	    v1 = pg_parse_expr(); */
+/* 	} */
 	
-	if(pg_tok != ':') goto next;
-	pg_get_token();
-	switch(pg_tok){
-	case ']':  goto next;
-	case ':':
-	    break;
-	default:
-	    v2 = pg_parse_expr();
-	}
+/* 	if(pg_tok != ':') goto next; */
+/* 	pg_get_token(); */
+/* 	switch(pg_tok){ */
+/* 	case ']':  goto next; */
+/* 	case ':': */
+/* 	    break; */
+/* 	default: */
+/* 	    v2 = pg_parse_expr(); */
+/* 	} */
 
-	if(pg_tok != ':') goto next;
-	pg_get_token();
-	v3 = pg_parse_expr(); 
+/* 	if(pg_tok != ':') goto next; */
+/* 	pg_get_token(); */
+/* 	v3 = pg_parse_expr();  */
 	
-      next:
-	list = exprListAdd(list, XMP_LIST3(v1,v2,v3));
-	if(pg_tok == ']')  pg_get_token();
-	else goto err;
-    }
-    return list;
+/*       next: */
+/* 	list = exprListAdd(list, XMP_LIST3(v1,v2,v3)); */
+/* 	if(pg_tok == ']')  pg_get_token(); */
+/* 	else goto err; */
+/*     } */
+/*     return list; */
 
-  err:
-    XMP_Error0("Syntax error in scripts of XMP directive");
-    XMP_has_err = 1;
-    return NULL;
-}
+/*   err: */
+/*     XMP_Error0("Syntax error in scripts of XMP directive"); */
+/*     XMP_has_err = 1; */
+/*     return NULL; */
+/* } */
 
 CExpr *parse_XMP_dist_fmt_list()
 {
@@ -1630,10 +1630,10 @@ static CExpr* parse_WAIT_clause()
   return XMP_LIST2(nodeNum, tag);
 }
 
-static CExpr* parse_LOCAL_ALIAS_clause()
-{
-    return NULL;
-}
+/* static CExpr* parse_LOCAL_ALIAS_clause() */
+/* { */
+/*     return NULL; */
+/* } */
 
 static CExpr* parse_WIDTH_list()
 {
@@ -1760,7 +1760,7 @@ static CExpr* parse_TEMPLATE_FIX_clause()
 static CExpr* parse_DEVICE_clause()
 {
   CExpr* deviceName = NULL;
-  CExpr* inheritedDevice;
+  CExpr* deviceRef;
 
   //
   // parse <device-name>
@@ -1785,17 +1785,22 @@ static CExpr* parse_DEVICE_clause()
 
   pg_get_token();
 
-  CExpr *ref_device, *subscripts;
+  CExpr *ref_device;
 
   // parse <device-ref>
-  if (pg_tok == PG_IDENT) {
-    ref_device = pg_tok_val;
-    pg_get_token();
-  } 
+
+  if (pg_tok != PG_IDENT) {
+    XMP_Error0("'<device-ref>' is expected");
+    goto err;
+  }
+
+  ref_device = pg_tok_val;
+  pg_get_token();
 
   // parse [subscript]
-  if (pg_tok != '['){
-    XMP_Error0("'[' is expected");
+
+  if (pg_tok != '('){
+    XMP_Error0("'(' is expected");
     goto err;
   }
 
@@ -1804,7 +1809,7 @@ static CExpr* parse_DEVICE_clause()
   CExpr *v1 = NULL, *v2 = NULL, *v3 = NULL;
 
   switch (pg_tok){
-  case ']':
+  case ')':
   case ',':
   case '*':
     goto err;
@@ -1822,7 +1827,7 @@ static CExpr* parse_DEVICE_clause()
 
   pg_get_token();
   switch (pg_tok){
-  case ']':
+  case ')':
     goto end;
   case ':':
     break;
@@ -1837,16 +1842,16 @@ static CExpr* parse_DEVICE_clause()
  end:
 
   if (v3 == NULL) v3 = (CExpr*)allocExprOfNumberConst2(1, BT_INT);
-  inheritedDevice = XMP_LIST2(ref_device, XMP_LIST3(v1,v2,v3));
+  deviceRef = XMP_LIST2(ref_device, XMP_LIST3(v1,v2,v3));
 
-  if (pg_tok != ']'){
-    XMP_Error0("']' is expected");
+  if (pg_tok != ')'){
+    XMP_Error0("')' is expected");
     goto err;
   }
 
   pg_get_token();
   
-  return XMP_LIST2(deviceName, inheritedDevice);
+  return XMP_LIST2(deviceName, deviceRef);
 
  err:
   XMP_has_err = 1;

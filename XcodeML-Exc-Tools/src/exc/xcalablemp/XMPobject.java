@@ -12,6 +12,7 @@ import java.util.Vector;
 public class XMPobject {
   public final static int NODES		= 100;
   public final static int TEMPLATE	= 101;
+  public final static int DEVICE	= 102;
 
   private int			_kind;
   private String		_name;

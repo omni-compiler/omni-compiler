@@ -68,8 +68,7 @@ enum ACC_pragma_clause {
     ACC_SEQ,
     ACC_INDEPENDENT,
 
-    XACC_ON_DEVICE_TYPE,
-    XACC_ON_DEVICE_NUM,
+    XACC_ON_DEVICE,
 
     ACC_HOST,
     ACC_DEVICE,
