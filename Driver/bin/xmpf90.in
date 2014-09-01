@@ -29,7 +29,7 @@ for i in "$@"; do
                 -tmp)
                     args=("${args[@]}" "--Wn${i}");;
 		-openmp|-omp)
-		    args=("${args[@]}" "-fopenmp")
+		    args=("${args[@]}" "-OPENMP")
 		    args=("${args[@]}" "-openmp");;
                 *)
                     args=("${args[@]}" "${i}");;

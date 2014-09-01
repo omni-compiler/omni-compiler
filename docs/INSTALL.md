@@ -63,6 +63,8 @@ HOW TO INSTALL
     from http://cr.openjdk.java.net/~simonis/ppc-aix-port/
     After that, please set PATH.
     $ ./configure --target=powerpc-ibm-none --prefix=[INSTALLATION PATH]
+## On SR16000 machines
+   $ ./configure --target=powerpc64-hitachi-aix  --with-nativecompiler=gcc --with-cpp="xlc -E" --prefix=[INSTALLATION PATH]
 
 ## Build
     $ make; make install
