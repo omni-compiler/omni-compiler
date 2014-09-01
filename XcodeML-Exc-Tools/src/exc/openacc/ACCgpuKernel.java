@@ -755,14 +755,28 @@ public class ACCgpuKernel {
     XobjList vIdxIdList = Xcons.IDList();
     XobjList nIterIdList = Xcons.IDList();
     XobjList indVarIdList = Xcons.IDList();
+    Boolean has64bitIndVar = false;
     for(CforBlock tmpForBlock : collapsedForBlockList){
       String indVarName = tmpForBlock.getInductionVar().getName();
+      Xtype indVarType = tmpForBlock.findVarIdent(indVarName).Type();
+      Xtype idxVarType = Xtype.unsignedType;
+      switch(indVarType.getBasicType()){
+      case BasicType.INT:
+      case BasicType.UNSIGNED_INT:
+        idxVarType = Xtype.unsignedType;
+        break;
+      case BasicType.LONGLONG:
+      case BasicType.UNSIGNED_LONGLONG:
+        idxVarType = Xtype.unsignedlonglongType;
+        has64bitIndVar = true;
+        break;
+      }
       Xobject init = tmpForBlock.getLowerBound();
       Xobject cond = tmpForBlock.getUpperBound();
       Xobject step = tmpForBlock.getStep();
-      Ident vIdxId = Ident.Local("_ACC_idx_" + indVarName, Xtype.intType);
-      Ident indVarId = Ident.Local(indVarName, Xtype.intType);
-      Ident nIterId = Ident.Local("_ACC_niter_" + indVarName, Xtype.intType);
+      Ident vIdxId = Ident.Local("_ACC_idx_" + indVarName, idxVarType);
+      Ident indVarId = Ident.Local(indVarName, indVarType);
+      Ident nIterId = Ident.Local("_ACC_niter_" + indVarName, idxVarType);
       Block calcNiterFuncCall = ACCutil.createFuncCallBlock("_ACC_calc_niter", Xcons.List(nIterId.getAddr(),init,cond,step));
       Block calcIdxFuncCall = ACCutil.createFuncCallBlock("_ACC_gpu_calc_idx", Xcons.List(vIdxId.Ref(), indVarId.getAddr(), init, cond, step));
       
@@ -775,13 +789,14 @@ public class ACCgpuKernel {
       calcIdxFuncCalls.add(calcIdxFuncCall);
     }
     
+    Xtype globalIdxType = has64bitIndVar? Xtype.unsignedlonglongType : Xtype.unsignedType;
     
-    Ident iterInit = Ident.Local("_ACC_" + execMethodName + "_init", Xtype.intType);
-    Ident iterCond = Ident.Local("_ACC_" + execMethodName + "_cond", Xtype.intType);
-    Ident iterStep = Ident.Local("_ACC_" + execMethodName + "_step", Xtype.intType);
-    Ident iterIdx = Ident.Local("_ACC_" + execMethodName + "_idx", Xtype.intType);
+    Ident iterInit = Ident.Local("_ACC_" + execMethodName + "_init", globalIdxType);
+    Ident iterCond = Ident.Local("_ACC_" + execMethodName + "_cond", globalIdxType);
+    Ident iterStep = Ident.Local("_ACC_" + execMethodName + "_step", globalIdxType);
+    Ident iterIdx = Ident.Local("_ACC_" + execMethodName + "_idx", globalIdxType);
     localIds_2.mergeList(Xcons.List(iterIdx, iterInit, iterCond, iterStep));
-    Ident iterCnt = Ident.Local("_ACC_" + execMethodName + "_cnt", Xtype.intType);
+    Ident iterCnt = Ident.Local("_ACC_" + execMethodName + "_cnt", globalIdxType);
     localIds_2.add(iterCnt);
 
     XobjList initIterFuncArgs = Xcons.List(iterInit.getAddr(), iterCond.getAddr(), iterStep.getAddr());

@@ -43,8 +43,10 @@ void _ACC_gpu_calloc(void **addr, size_t size)
 void _ACC_gpu_copy(void *host_addr, void *device_addr, size_t size, int direction){
   cudaError_t cuda_err;
   if(direction == _ACC_GPU_COPY_HOST_TO_DEVICE){
+	_ACC_DEBUG("copy host(%p) to dev(%p), size(%zd)\n", host_addr, device_addr, size)
     cuda_err = cudaMemcpy(device_addr, host_addr, size, cudaMemcpyHostToDevice);
   }else if(direction == _ACC_GPU_COPY_DEVICE_TO_HOST){
+	_ACC_DEBUG("copy dev(%p) to host(%p), size(%zd)\n", device_addr, host_addr, size)
     cuda_err = cudaMemcpy(host_addr, device_addr, size, cudaMemcpyDeviceToHost);
   }else{
     _ACC_fatal("invaild direction in 'gpu_copy'");
