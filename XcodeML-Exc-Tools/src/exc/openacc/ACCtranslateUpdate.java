@@ -57,19 +57,26 @@ public class ACCtranslateUpdate {
       }
 
       XobjList copyFuncArgs = Xcons.List(hostDescId.Ref(), dirObj, asyncExpr);
+      Block copyFunc;
       if(var.isSubarray()){
         XobjList subarrayList = var.getSubscripts();
+        XobjList lowerList = Xcons.List();
+        XobjList lengthList = Xcons.List();
         for(Xobject x : subarrayList){
           XobjList rangeList = (XobjList)x;
-          copyFuncArgs.add(rangeList.left());
-          copyFuncArgs.add(rangeList.right());
+          //copyFuncArgs.add(rangeList.left());
+          //copyFuncArgs.add(rangeList.right());
+          lowerList.add(rangeList.left());
+          lengthList.add(rangeList.right());
         }
 	copyFuncName = ACC.COPY_SUBDATA_FUNC_NAME;
+	copyFunc = ACCutil.createFuncCallBlockWithArrayRange(copyFuncName, copyFuncArgs, Xcons.List(lowerList, lengthList));
       }else{
 	copyFuncName = ACC.COPY_DATA_FUNC_NAME;
+	copyFunc = ACCutil.createFuncCallBlock(copyFuncName, copyFuncArgs);
       }
 
-      Block copyFunc = ACCutil.createFuncCallBlock(copyFuncName, copyFuncArgs);
+      //Block copyFunc = ACCutil.createFuncCallBlock(copyFuncName, copyFuncArgs);
       replaceBody.add(copyFunc);
     }
     

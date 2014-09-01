@@ -57,7 +57,7 @@ extern "C" {
 
 #ifdef DEBUG
 //#define _ACC_DEBUG(...) {printf("%s(l.%d):", __func__, __LINE__); printf(__VA_ARGS__);}
-#define _ACC_DEBUG(...) {printf("%s(%d)[%s]: ", __FILE__, __LINE__, __func__); printf(__VA_ARGS__);}
+#define _ACC_DEBUG(...) printf("%s(%d)[%s]: ", __FILE__, __LINE__, __func__); printf(__VA_ARGS__);
 #else
 #define _ACC_DEBUG(...)
 #endif

@@ -15,13 +15,17 @@ extern "C" {
   int _ACC_gpu_get_device_num();
 
   //acc_gpu_data.c
-  void _ACC_init_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);
-  void _ACC_pinit_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);
-  void _ACC_find_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);
+  //  void _ACC_init_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);
+  //  void _ACC_pinit_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);
+  //  void _ACC_find_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);
+  void _ACC_init_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]);
+  void _ACC_pinit_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]);
+  void _ACC_find_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]);
   void _ACC_finalize_data(_ACC_gpu_data_t *desc);
   void _ACC_pcopy_data(_ACC_gpu_data_t *desc, int direction, int asyncId);
   void _ACC_copy_data(_ACC_gpu_data_t *desc, int direction, int asyncId);
-  void _ACC_copy_subdata(_ACC_gpu_data_t *desc, int direction, int asyncId, ...);
+  //  void _ACC_copy_subdata(_ACC_gpu_data_t *desc, int direction, int asyncId, ...);
+  void _ACC_copy_subdata(_ACC_gpu_data_t *desc, int direction, int asyncId, unsigned long long lower[], unsigned long long length[]);
   //void _ACC_gpu_copy_data_async_default(_ACC_gpu_data_t *desc, size_t offset, size_t size, int direction);
 
   //acc_gpu_util.cu
@@ -64,14 +68,14 @@ extern "C" {
   void _ACC_gpu_mpool_free(void *ptr, void *mpool);
 
   //acc_gpu_pack.cu
-  void _ACC_gpu_pack_data(void *dst, void *src, int dim, int total_elmnts, int type_size, int* info);
-  void _ACC_gpu_unpack_data(void *dst, void *src, int dim, int total_elmnts, int type_size, int* info);
-  void _ACC_gpu_pack_data_host(void *dst, void *src, int dim, int total_elmnts, int type_size, int* info);
-  void _ACC_gpu_unpack_data_host(void *dst, void *src, int dim, int total_elmnts, int type_size, int* info);
-  void _ACC_gpu_pack_vector(void *dst, void *src, int count, int blocklength, int stride, size_t typesize, int asyncId);
-  void _ACC_gpu_unpack_vector(void *dst, void *src, int count, int blocklength, int stride, size_t typesize, int asyncId);
-  void _ACC_pack_vector(void *dst, void *src, int count, int blocklength, int stride, size_t typesize);
-  void _ACC_unpack_vector(void *dst, void *src, int count, int blocklength, int stride, size_t typesize);
+  void _ACC_gpu_pack_data(void *dst, void *src, int dim, unsigned long long total_elmnts, int type_size, unsigned long long* info);
+  void _ACC_gpu_unpack_data(void *dst, void *src, int dim, unsigned long long total_elmnts, int type_size, unsigned long long* info);
+  void _ACC_gpu_pack_data_host(void *dst, void *src, int dim, unsigned long long total_elmnts, int type_size, unsigned long long* info);
+  void _ACC_gpu_unpack_data_host(void *dst, void *src, int dim, unsigned long long total_elmnts, int type_size, unsigned long long* info);
+  void _ACC_gpu_pack_vector(void *dst, void *src, unsigned long long count, unsigned long long blocklength, unsigned long long stride, size_t typesize, int asyncId);
+  void _ACC_gpu_unpack_vector(void *dst, void *src, unsigned long long count, unsigned long long blocklength, unsigned long long stride, size_t typesize, int asyncId);
+  void _ACC_pack_vector(void *dst, void *src, unsigned long long count, unsigned long long blocklength, unsigned long long stride, size_t typesize);
+  void _ACC_unpack_vector(void *dst, void *src, unsigned long long count, unsigned long long blocklength, unsigned long long stride, size_t typesize);
 
   //temporal funcdef
   int _ACC_gpu_get_num_devices();

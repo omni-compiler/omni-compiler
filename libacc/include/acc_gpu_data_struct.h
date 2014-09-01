@@ -5,9 +5,9 @@
 #include <stdbool.h>
 
 typedef struct _ACC_gpu_array_type{
-  int dim_offset; //offset of the dimension. same as "lower"
-  int dim_elmnts; //the number of elements of the dimension. same as "length"
-  int dim_acc; //the accumulation of lower dimensional elements
+  unsigned long long dim_offset; //offset of the dimension. same as "lower"
+  unsigned long long dim_elmnts; //the number of elements of the dimension. same as "length"
+  unsigned long long dim_acc; //the accumulation of lower dimensional elements
 } _ACC_gpu_array_t;
 
 

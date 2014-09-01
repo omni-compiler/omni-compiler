@@ -6,7 +6,7 @@
 #include "acc_gpu_reduction.hpp"
 
 #define _ACC_M_FLOORi(a_, b_) ((a_) / (b_))
-#define _ACC_M_COUNT_TRIPLETi(l_, u_, s_) (_ACC_M_MAX(0, _ACC_M_FLOORi((u_) - (l_), s_) + 1))
+#define _ACC_M_COUNT_TRIPLETi(l_, u_, s_) ( ((u_) >= (l_))? _ACC_M_FLOORi((u_) - (l_), s_) + 1 : 0)
 #define _ACC_M_CEILi(a_, b_) (((a_) % (b_)) == 0 ? ((a_) / (b_)) : ((a_) / (b_)) + 1)
 #define _ACC_M_MAX(a_, b_) ((a_) > (b_) ? (a_) : (b_))
 #define _ACC_M_MIN(a_, b_) ((a_) > (b_) ? (b_) : (a_))
@@ -33,30 +33,43 @@ void init_block_thread_x_id_iter(int *b_init, int *b_cond, int *b_step, int b_to
   *b_step = blockDim.x; //128
 }
 */
+
+template<typename T, typename T0, typename T1, typename T2>
 __device__
-static void _ACC_gpu_init_block_x_iter(int *gang_iter, int *gang_cond, int *gang_step, int lower, int upper, int strid){
-  int totaliter = _ACC_M_COUNT_TRIPLETi(lower, upper-1, strid);
+static void _ACC_gpu_init_block_x_iter(T *gang_iter, T *gang_cond, T *gang_step, T0 lower, T1 upper, T2 strid){
+  T totaliter = _ACC_M_COUNT_TRIPLETi(lower, upper-1, strid);
   *gang_iter = _ACC_M_CEILi(totaliter, gridDim.x) * blockIdx.x;
   *gang_cond = _ACC_M_MIN(_ACC_M_CEILi(totaliter, gridDim.x) * (blockIdx.x + 1), totaliter);
   *gang_step = 1;
 }
 
+template<typename T, typename T0, typename T1, typename T2>
 __device__
-static void _ACC_gpu_init_thread_x_iter(int *iter, int *cond, int *step, int lower, int upper, int strid){
-  int totaliter = _ACC_M_COUNT_TRIPLETi(lower, upper-1, strid);
+static void _ACC_gpu_init_thread_x_iter(T *iter, T *cond, T *step, T0 lower, T1 upper, T2 strid){
+  T totaliter = _ACC_M_COUNT_TRIPLETi(lower, upper-1, strid);
   *iter = threadIdx.x;
   *cond = totaliter;
   *step = blockDim.x;
 }
 
+// __device__
+// static void _ACC_gpu_init_block_thread_x_iter(int *bt_idx, int *bt_cond, int *bt_step, int lower, int upper, int strid){
+//   int totalIter = _ACC_M_COUNT_TRIPLETi(lower, upper - 1, strid);
+//   int gang_size = _ACC_M_CEILi(totalIter, gridDim.x);
+//   //  int mod = gang_size % blockDim.x;
+//   //  if(mod != 0){ gang_size = gang_size - mod + blockDim.x; }
+//   *bt_idx  = gang_size * blockIdx.x + threadIdx.x;
+//   //*bt_cond = _ACC_M_MIN(*bt_idx + gang_size, totalIter); //incorrect!
+//   *bt_cond = _ACC_M_MIN(gang_size * (blockIdx.x + 1), totalIter);
+//   *bt_step = blockDim.x;
+// }
+
+template<typename T, typename T0, typename T1, typename T2>
 __device__
-static void _ACC_gpu_init_block_thread_x_iter(int *bt_idx, int *bt_cond, int *bt_step, int lower, int upper, int strid){
-  int totalIter = _ACC_M_COUNT_TRIPLETi(lower, upper - 1, strid);
-  int gang_size = _ACC_M_CEILi(totalIter, gridDim.x);
-  //  int mod = gang_size % blockDim.x;
-  //  if(mod != 0){ gang_size = gang_size - mod + blockDim.x; }
+static void _ACC_gpu_init_block_thread_x_iter(T *bt_idx, T *bt_cond, T *bt_step, T0 lower, T1 upper, T2 strid){
+  T totalIter = _ACC_M_COUNT_TRIPLETi(lower, upper - 1, strid);
+  T gang_size = _ACC_M_CEILi(totalIter, gridDim.x);
   *bt_idx  = gang_size * blockIdx.x + threadIdx.x;
-  //*bt_cond = _ACC_M_MIN(*bt_idx + gang_size, totalIter); //incorrect!
   *bt_cond = _ACC_M_MIN(gang_size * (blockIdx.x + 1), totalIter);
   *bt_step = blockDim.x;
 }
@@ -71,8 +84,9 @@ static void _ACC_gpu_init_block_thread_y_iter(int *bt_idx, int *bt_cond, int *bt
   *bt_step = blockDim.y;
 }
 
+template<typename T, typename T0, typename T1, typename T2, typename T3>
 __device__
-static void _ACC_gpu_calc_idx(int id, int *idx, int lower, int upper, int stride){
+static void _ACC_gpu_calc_idx(T id, T0 *idx, T1 lower, T2 upper, T3 stride){
   *idx = lower + stride * id;
 }
 
@@ -153,14 +167,28 @@ static void _ACC_calc_niter(int *niter, int init, int cond, int step){
   *niter = _ACC_M_COUNT_TRIPLETi(init, cond - 1, step);
 }
 
+template<typename T, typename T0, typename T1, typename T2>
+__device__
+static void _ACC_calc_niter(T *niter, T0 init, T1 cond, T2 step){
+  *niter = _ACC_M_COUNT_TRIPLETi(init, cond - 1, step);
+}
+
 __device__
 static int _ACC_calc_vidx(int *idx, int niter, int total_idx){
   *idx = total_idx % niter;
   return total_idx / niter;
 }
 
+template<typename T, typename T0, typename T1>
 __device__
-static void _ACC_gpu_init_iter_cnt(int *cnt, int init, int cond, int step){
+static int _ACC_calc_vidx(T *idx, T0 niter, T1 total_idx){
+  *idx = total_idx % niter;
+  return total_idx / niter;
+}
+
+template<typename T, typename T0, typename T1, typename T2>
+__device__
+static void _ACC_gpu_init_iter_cnt(T *cnt, T0 init, T1 cond, T2 step){
   *cnt = _ACC_M_COUNT_TRIPLETi(init, cond - 1, step);
 }
 
