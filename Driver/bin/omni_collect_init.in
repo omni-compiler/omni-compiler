@@ -1,0 +1,151 @@
+#!/bin/bash
+#
+# V2
+#
+
+VERBOSE=no
+#VERBOSE=yes
+
+NM=@NM@
+
+USAGE='usage: '$0' <option> ... <input_file> ...
+  <option>
+    --help               this help
+    --verbose            verbose mode
+    --F | --C            which language (necessary)
+    --prefix <prefix>    prefix characters of the target procecdure names, such as xmpf and xmpc
+    -o <output_file>     name of the output file (*.f90 or *.c file is expected)
+  <input_file>           input file name (.o and .a files are expected)
+'
+
+#--------------------------------------------------------------
+# option analysis
+#--------------------------------------------------------------
+INFILES=()
+while [ -n "$1" ]; do
+    case "$1" in
+    --help)     HELP=yes;;
+    --verbose)  VERBOSE=yes;;
+    --F)        LANG=F;;
+    --C)        LANG=C;;
+    --prefix)   shift; PREFIX="$1";;
+    -o)         shift; OUTFILE="$1";;
+    *.o)        INFILES+=("$1");;
+    *.a)        INFILES+=("$1");;
+    *)          echo "$0: illegal filename $1" 1>&2; HELP=yes;;
+    esac
+    shift
+done
+
+if [ "$HELP" = "yes" -o "$LANG" = "" ]; then
+   echo $USAGE 1>&2
+   exit 1
+fi
+
+if [ "$VERBOSE" = "yes" ]; then
+   echo ---------------------------
+   echo NM=$NM
+   echo HELP=$HELP
+   echo VERBOSE=$VERBOSE
+   echo LANG=$LANG
+   echo PREFIX=$PREFIX
+   echo INFILES=${INFILES[@]}
+   echo OUTFILE=$OUTFILE
+   echo ---------------------------
+fi
+
+
+#--------------------------------------------------------------
+# find names ${PREFIX}_init_* and ${PREFIX}_finalize_*
+#--------------------------------------------------------------
+
+#--- get candidates
+candidates=`$NM "${INFILES[@]}" | awk 'NF >= 2 && $(NF-1) == "T" { print $NF }'`
+
+#--- select ${PREFIX}_init_*
+ini_names=()
+for name in $candidates; do
+    if [[ ${name} =~ ^${PREFIX}_init_ ]]; then
+        case "$LANG" in
+            F) ini_names+=( ${name%_} );;
+            C) ini_names+=( ${name} );;
+        esac
+    fi
+done
+
+#--- select ${PREFIX}_finalize_*
+fin_names=()
+for name in $candidates; do
+    if [[ ${name} =~ ^${PREFIX}_finalize_ ]]; then
+        case "$LANG" in
+            F) fin_names+=( ${name%_} );;
+            C) fin_names+=( ${name} );;
+        esac
+    fi
+done
+
+if [ "$VERBOSE" = "yes" ]; then
+    echo "candidates="$candidates
+    echo "ini_names =""${ini_names[@]}"
+    echo "fin_names= ""${fin_names[@]}"
+fi
+
+
+#--------------------------------------------------------------
+# file output
+#--------------------------------------------------------------
+
+fortran_output() {
+    echo "subroutine ${PREFIX}_collect_init"
+    for name in "${ini_names[@]}"; do
+        echo "  call ${name}"
+    done
+    echo "end subroutine"
+    echo
+    echo "subroutine ${PREFIX}_collect_finalize"
+    for name in "${fin_names[@]}"; do
+        echo "  call ${name};"
+    done
+    echo "end subroutine"
+}
+
+c_output() {
+    for name in "${ini_names[@]}" "${fin_names[@]}"; do
+        echo "extern void ${name}(void);"
+    done
+    echo
+    echo "void ${PREFIX}_collect_init() {"
+    for name in "${ini_names[@]}"; do
+        echo "  ${name}();"
+    done
+    echo "}"
+    echo
+    echo "void ${PREFIX}_collect_finalize() {"
+    for name in "${fin_names[@]}"; do
+        echo "  ${name}();"
+    done
+    echo "}"
+}
+
+file_output() {
+    case "$LANG" in
+        F) fortran_output;;
+        C) c_output;;
+    esac
+}    
+
+if [ "$VERBOSE" = "yes" ]; then
+    echo ---------------------------------------------- output $OUTFILE
+    file_output
+    echo ------------------------------------------ end output $OUTFILE
+fi
+
+if [ -z "$OUTFILE" ]; then
+    file_output
+else
+    file_output > $OUTFILE
+fi
+
+exit 0
+
+

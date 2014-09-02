@@ -10,23 +10,43 @@ LIB_OMPC=ompc_${LOCK_TYPE}_${LIB_THREAD}
 
 IS_CRAY=@IS_CRAY@
 PID=$$
-INIT_MODULE_OBJ="/tmp/_xmpf_init_${PID}.o"
 
+files=( "$@" )
+
+#-------------------------------------------------
+# call xmp_collect_init, which will be abolished
+#-------------------------------------------------
+INIT_MODULE_OBJ="/tmp/_xmpf_init_${PID}.o"
 if [ "${IS_CRAY}" = "Yes" ]; then
    CMD="@OMNI_HOME@/bin/xmp_collect_init"
-   args=( --cc @BECC@ --PID ${PID} --F --OPTION -hgnu "$@" )
+   args=( --cc @BECC@ --PID ${PID} --F --OPTION -hgnu "${files[@]}" )
    set -- "${args[@]}"
 else
    CMD="@OMNI_HOME@/bin/xmp_collect_init"
-   args=( --cc @BECC@ --PID ${PID} --F "$@" )
+   args=( --cc @BECC@ --PID ${PID} --F "${files[@]}" )
    set -- "${args[@]}"
 fi
 
 if [ "${OM_VERBOSE}" = "1" ]; then
     echo $CMD "$@"
 fi
-$CMD "$@"
+$CMD "$@" || exit 1
 
+#-------------------------------------------------
+# call omni_collect_init
+#-------------------------------------------------
+COLLECT_INIT_SRC="/tmp/_xmpf_collect_init_${PID}.f90"
+CMD="@OMNI_HOME@/bin/omni_collect_init"
+args=( --F --prefix xmpf -o ${COLLECT_INIT_SRC} "${files[@]}" )
+set -- ${args[@]}
+if [ "${OM_VERBOSE}" = "1" ]; then
+    echo $CMD "$@"
+fi
+$CMD "$@" || exit 1
+
+#-------------------------------------------------
+# set linker options
+#-------------------------------------------------
 for i in ${OM_OPTIONS}; do
     case ${i} in
         -enable-threads)
@@ -46,7 +66,7 @@ for i in ${OM_OPTIONS}; do
 done
 
 GASNET_LIBS="@GASNET_LIBS@"
-LIBS="@OMNI_HOME@/lib/xmpf_main.o ${INIT_MODULE_OBJ} ${LIBS} -lxmpf -lxmp ${GASNET_LIBS}"
+LIBS="@OMNI_HOME@/lib/xmpf_main.o ${COLLECT_INIT_SRC} ${INIT_MODULE_OBJ} ${LIBS} -lxmpf -lxmp ${GASNET_LIBS}"
 
 LINKER=@BEFC@
 if test ${hasScalasca} -eq 1; then
