@@ -1,0 +1,1 @@
+include_HEADERS = xacc_internal.h

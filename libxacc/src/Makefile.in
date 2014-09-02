@@ -79,7 +79,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-subdir = ./libxmp/src_gpu
+subdir = ./libxacc/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/buildutils/libtool.m4 \
@@ -128,12 +128,10 @@ AM_V_AR = $(am__v_AR_@AM_V@)
 am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
 am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
-libxmp_gpu_a_AR = $(AR) $(ARFLAGS)
-libxmp_gpu_a_DEPENDENCIES = xmp_gpu_runtime.o xmp_gpu_util.o \
-	xmp_gpu_data.o xmp_gpu_sync.o xmp_gpu_array_section.o
-am_libxmp_gpu_a_OBJECTS = xmp_gpu_lib.$(OBJEXT) \
-	xmp_gpu_shadow.$(OBJEXT)
-libxmp_gpu_a_OBJECTS = $(am_libxmp_gpu_a_OBJECTS)
+libxacc_a_AR = $(AR) $(ARFLAGS)
+libxacc_a_LIBADD =
+am_libxacc_a_OBJECTS = xacc_device_stack.$(OBJEXT)
+libxacc_a_OBJECTS = $(am_libxacc_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -162,15 +160,12 @@ am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
 am__v_CC_0 = @echo "  CC      " $@;
 am__v_CC_1 = 
 CCLD = $(CC)
-LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libxmp_gpu_a_SOURCES)
-DIST_SOURCES = $(libxmp_gpu_a_SOURCES)
+SOURCES = $(libxacc_a_SOURCES)
+DIST_SOURCES = $(libxacc_a_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -476,23 +471,21 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-XMP_INC_DIR = ../include
-GPUCC = @GPU_CMD@
-GPUCFLAGS = @GPU_CFLAGS@
-AM_CFLAGS = -I$(XMP_INC_DIR) @BECC_OPTION@ #-I$(TLOG_INC_DIR) 
+XACC_INC_DIR = ../include
+TLOG_INC_DIR = $(top_builddir)/@LIBTLOG_MPI_DIR@
+lib_LIBRARIES = libxacc.a
+AM_CFLAGS = -I$(XACC_INC_DIR) -I$(TLOG_INC_DIR) @BECC_OPTION@ 
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS)
 
-lib_LIBRARIES = libxmp_gpu.a
-libxmp_gpu_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h \
-                                  $(XMP_INC_DIR)/xmp_data_struct.h xmp_gpu_internal.h \
-                                  xmp_gpu_lib.c xmp_gpu_shadow.c
+LINK = $(CCLD) $(AM_CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+libxacc_a_SOURCES = $(XACC_INC_DIR)/xacc_internal.h \
+                   xacc_device_stack.c
 
-libxmp_gpu_a_LIBADD = xmp_gpu_runtime.o xmp_gpu_util.o xmp_gpu_data.o xmp_gpu_sync.o xmp_gpu_array_section.o
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .cu .lo .o .obj
+.SUFFIXES: .c .lo .o .obj
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -502,9 +495,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./libxmp/src_gpu/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./libxacc/src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps ./libxmp/src_gpu/Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps ./libxacc/src/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -555,10 +548,10 @@ uninstall-libLIBRARIES:
 clean-libLIBRARIES:
 	-test -z "$(lib_LIBRARIES)" || rm -f $(lib_LIBRARIES)
 
-libxmp_gpu.a: $(libxmp_gpu_a_OBJECTS) $(libxmp_gpu_a_DEPENDENCIES) $(EXTRA_libxmp_gpu_a_DEPENDENCIES) 
-	$(AM_V_at)-rm -f libxmp_gpu.a
-	$(AM_V_AR)$(libxmp_gpu_a_AR) libxmp_gpu.a $(libxmp_gpu_a_OBJECTS) $(libxmp_gpu_a_LIBADD)
-	$(AM_V_at)$(RANLIB) libxmp_gpu.a
+libxacc.a: $(libxacc_a_OBJECTS) $(libxacc_a_DEPENDENCIES) $(EXTRA_libxacc_a_DEPENDENCIES) 
+	$(AM_V_at)-rm -f libxacc.a
+	$(AM_V_AR)$(libxacc_a_AR) libxacc.a $(libxacc_a_OBJECTS) $(libxacc_a_LIBADD)
+	$(AM_V_at)$(RANLIB) libxacc.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -702,7 +695,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libLIBRARIES clean-libtool \
+clean-am: clean-generic clean-libLIBRARIES clean-libtool clean-local \
 	mostlyclean-am
 
 distclean: distclean-am
@@ -772,8 +765,8 @@ uninstall-am: uninstall-libLIBRARIES
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am check check-am clean clean-generic \
-	clean-libLIBRARIES clean-libtool cscopelist-am ctags ctags-am \
-	distclean distclean-compile distclean-generic \
+	clean-libLIBRARIES clean-libtool clean-local cscopelist-am \
+	ctags ctags-am distclean distclean-compile distclean-generic \
 	distclean-libtool distclean-tags distdir dvi dvi-am html \
 	html-am info info-am install install-am install-data \
 	install-data-am install-dvi install-dvi-am install-exec \
@@ -785,9 +778,10 @@ uninstall-am: uninstall-libLIBRARIES
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags tags-am uninstall uninstall-am uninstall-libLIBRARIES
 
+#					$(XMP_INC_DIR)/xmp_internal.h
 
-.cu.o:
-	$(GPUCC) $(GPUCFLAGS) -I$(XMP_INC_DIR) -c $@ $<
+clean-local:
+	rm -f *~ *.core core core.*
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

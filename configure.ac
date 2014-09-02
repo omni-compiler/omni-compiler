@@ -449,6 +449,13 @@ AC_CONFIG_FILES($LIBACC_HEADER_DIR/Makefile)
 AC_SUBST(LIBACC_DIR)
 AC_SUBST(LIBACC_HEADER_DIR)
 
+LIBXACC_DIR=libxacc/src
+LIBXACC_HEADER_DIR=libxacc/include
+AC_CONFIG_FILES($LIBXACC_DIR/Makefile)
+AC_CONFIG_FILES($LIBXACC_HEADER_DIR/Makefile)
+AC_SUBST(LIBXACC_DIR)
+AC_SUBST(LIBXACC_HEADER_DIR)
+
 # --------------------------------------------------------------------
 # check what CC will be used, and set compile flags
 
