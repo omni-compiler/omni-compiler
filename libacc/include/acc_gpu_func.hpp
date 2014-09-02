@@ -2,6 +2,7 @@
 #ifndef _ACC_GPU_FUNC
 #define _ACC_GPU_FUNC
 
+#include "acc_internal.h"
 #include "acc_gpu_internal.h"
 #include "acc_gpu_reduction.hpp"
 

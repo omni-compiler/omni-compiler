@@ -55,6 +55,7 @@ run: $(EXES)
 	$(XRUN) multi_device.x
 	$(XRUN) longlong_loopvar.x
 	$(XRUN) data_subarray.x
+	$(XRUN) kernel_sync.x
 
 update_host_subarray_type:
 	$(XCC) -o update_host_subarray_char.x update_host_subarray.c -DCHAR
