@@ -38,6 +38,14 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
     ai->ser_lower = 0;
     ai->ser_upper = 0;
     ai->ser_size = 0;
+    ai->par_lower = 0;
+    ai->par_upper = 0;
+    ai->par_stride = 0;
+    ai->par_size = 0;
+    ai->local_lower = 0;
+    ai->local_upper = 0;
+    ai->local_stride = 0;
+    ai->alloc_size = 0;
 
     ai->shadow_type = _XMP_N_SHADOW_NONE;
     ai->shadow_size_lo  = 0;
