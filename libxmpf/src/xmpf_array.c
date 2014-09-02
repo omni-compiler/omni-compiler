@@ -106,19 +106,19 @@ void xmpf_align_info__(_XMP_array_t **a_desc, int *a_idx,
   chunk = &(a->align_template->chunk[t_index]);
   switch (chunk->dist_manner){
   case _XMP_N_DIST_DUPLICATION:
-    _XMP_align_array_DUPLICATION(a, *a_idx, *t_idx, *off);
+    _XMP_align_array_DUPLICATION(a, *a_idx, *t_idx, (long long)(*off));
     break;
   case _XMP_N_DIST_BLOCK:
-    _XMP_align_array_BLOCK(a, *a_idx, *t_idx, *off, &tmp);
+    _XMP_align_array_BLOCK(a, *a_idx, *t_idx, (long long)(*off), &tmp);
     break;
   case _XMP_N_DIST_CYCLIC:
-    _XMP_align_array_CYCLIC(a, *a_idx, *t_idx, *off, &tmp);
+    _XMP_align_array_CYCLIC(a, *a_idx, *t_idx, (long long)(*off), &tmp);
     break;
   case _XMP_N_DIST_BLOCK_CYCLIC:
-    _XMP_align_array_BLOCK_CYCLIC(a, *a_idx, *t_idx, *off, &tmp);
+    _XMP_align_array_BLOCK_CYCLIC(a, *a_idx, *t_idx, (long long)(*off), &tmp);
     break;
   case _XMP_N_DIST_GBLOCK:
-    _XMP_align_array_GBLOCK(a, *a_idx, *t_idx, *off, &tmp);
+    _XMP_align_array_GBLOCK(a, *a_idx, *t_idx, (long long)(*off), &tmp);
     break;
   default:
     _XMP_fatal("xmpf_align_array: unknown chunk dist_manner");

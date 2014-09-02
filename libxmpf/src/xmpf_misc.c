@@ -65,7 +65,7 @@ void xmpf_debug_()
 void xmpf_print_(char *msg, int l)
 {
   char buf[512];
-  strncpy(buf,msg,l);
+  strncpy(buf,msg,(size_t)l);
   buf[l] = '\0';
   printf("[%d] %s\n",_XMP_world_rank, buf);
   MPI_Barrier(MPI_COMM_WORLD);
@@ -95,8 +95,8 @@ void xmpf_array___(_XMP_array_t **a_desc)
 
 void dumy(void)
 {
-  _XMP_pack_array(NULL, NULL, 0, 0, 0, NULL, NULL, NULL, NULL);
-  _XMP_unpack_array(NULL, NULL, 0, 0, 0, NULL, NULL, NULL, NULL);
+  _XMP_pack_array(NULL, NULL, 0, (size_t)0, 0, NULL, NULL, NULL, NULL);
+  _XMP_unpack_array(NULL, NULL, 0, (size_t)0, 0, NULL, NULL, NULL, NULL);
 }
 
 
