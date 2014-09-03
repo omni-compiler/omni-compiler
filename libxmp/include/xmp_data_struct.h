@@ -130,6 +130,34 @@ typedef struct _XMP_reflect_sched_type {
 
 } _XMP_reflect_sched_t;
 
+//XACC
+typedef  int acc_device_t;
+typedef struct _XACC_device_type {
+  acc_device_t acc_device;
+  int lb;
+  int ub;
+  int step;
+  int size;
+} _XACC_device_t;
+
+typedef struct _XACC_array_info_type {
+  int device_layout_manner;
+
+  int lower;
+  int upper;
+  int stride;
+  int size;
+
+  unsigned long long device_dim_acc;
+}_XACC_array_info_t;
+
+typedef struct _XACC_array_type {
+  _XACC_array_info_t *info;
+  unsigned long long alloc_offset;
+  unsigned long long alloc_size;  
+}_XACC_array_t;
+
+
 // aligned array descriptor
 typedef struct _XMP_array_info_type {
   _Bool is_shadow_comm_member;
@@ -205,6 +233,8 @@ typedef struct _XMP_array_type {
 
   _XMP_template_t *align_template;
   _XMP_array_info_t info[1];
+  _XACC_device_t *device_type;
+  _XACC_array_t *device_array;
 } _XMP_array_t;
 
 typedef struct _XMP_task_desc_type {

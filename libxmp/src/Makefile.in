@@ -141,7 +141,7 @@ am__libxmp_a_SOURCES_DIST = $(XMP_INC_DIR)/xmp_internal.h \
 	xmp_reduce.c xmp_bcast.c xmp_align.c xmp_shadow.c \
 	xmp_array_section.c xmp_loop.c xmp_gmove.c xmp_math_function.c \
 	xmp_runtime.c xmp_tlog_runtime.c xmp_io.c xmp_reflect.c \
-	xmp_pack_vector.c xmp_coarray_set.c xmp_coarray_do.c \
+	xmp_pack_vector.c xacc.c xmp_coarray_set.c xmp_coarray_do.c \
 	xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c \
 	xmp_post_wait.c xmp_gasnet_post_wait.c \
 	xmp_fjrdma_coarray_set.c xmp_fjrdma_coarray_do.c \
@@ -166,7 +166,8 @@ am_libxmp_a_OBJECTS = xmp_lib.$(OBJEXT) xmp_util.$(OBJEXT) \
 	xmp_gmove.$(OBJEXT) xmp_math_function.$(OBJEXT) \
 	xmp_runtime.$(OBJEXT) xmp_tlog_runtime.$(OBJEXT) \
 	xmp_io.$(OBJEXT) xmp_reflect.$(OBJEXT) \
-	xmp_pack_vector.$(OBJEXT) $(am__objects_1) $(am__objects_2)
+	xmp_pack_vector.$(OBJEXT) xacc.$(OBJEXT) $(am__objects_1) \
+	$(am__objects_2)
 libxmp_a_OBJECTS = $(am_libxmp_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -523,7 +524,7 @@ libxmp_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h \
 	xmp_reduce.c xmp_bcast.c xmp_align.c xmp_shadow.c \
 	xmp_array_section.c xmp_loop.c xmp_gmove.c xmp_math_function.c \
 	xmp_runtime.c xmp_tlog_runtime.c xmp_io.c xmp_reflect.c \
-	xmp_pack_vector.c $(am__append_1) $(am__append_3)
+	xmp_pack_vector.c xacc.c $(am__append_1) $(am__append_3)
 @GASNET_TRUE@AM_LDFLAGS = $(GASNET_LDFLAGS) $(GASNET_LIBS)
 all: all-am
 
