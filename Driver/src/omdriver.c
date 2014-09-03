@@ -56,7 +56,7 @@ static const opt_pair opt_pair_table[] = {
     { OPT_L2X_SAVE,       MOD_L2X,  0, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_L2X_SAVEEQ,     MOD_L2X,  0, 1, 0, 1, OPT_INVALID_CODE },
     { OPT_L2X_F,          MOD_L2X,  1, 0, 0, 0, OPT_INVALID_CODE },
-    { OPT_L2X_FOPENMP,    MOD_L2X,  1, 0, 0, 0, OPT_INVALID_CODE },
+    { OPT_L2X_OPENMP,     MOD_L2X,  1, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_LX2X_X,         MOD_LX2X, 1, 0, 0, 0, OPT_INVALID_CODE },
     { OPT_LX2X_MODPATH,   MOD_LX2X, 1, 1, 0, 1, OPT_INVALID_CODE },
     { OPT_X2L_B,          MOD_X2L,  1, 0, 0, 0, OPT_INVALID_CODE },

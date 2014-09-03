@@ -4,6 +4,14 @@
 # $TSUKUBA_Copyright:
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
+newOpts=''
+for i in $@ ; do
+    case "${i}" in
+        -OPENMP)
+            newOpts="${newOpts} -fopenmp" ;;
+        *);;
+    esac
+done
 
-L2X="${OMNI_HOME}/bin/F_Front -I@OMNI_HOME@/include"
+L2X="${OMNI_HOME}/bin/F_Front ${newOpts} -I@OMNI_HOME@/include"
 . ${OMNI_HOME}/bin/oml2x "$@"

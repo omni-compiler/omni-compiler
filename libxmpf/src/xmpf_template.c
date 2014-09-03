@@ -6,7 +6,7 @@
 
 void xmpf_template_alloc__(_XMP_template_t **t_desc, int *n_dim, int *is_fixed)
 {
-  *t_desc = _XMP_create_template_desc(*n_dim, *is_fixed);
+  *t_desc = _XMP_create_template_desc(*n_dim, (_Bool)(*is_fixed));
 }
 
 
@@ -76,7 +76,7 @@ void xmpf_template_init__(_XMP_template_t **t_desc, _XMP_nodes_t  **n_desc)
 	_XMP_fatal("chunk size is nagative in DIST_BLOCK");
       else {
 	/* size must be check */
-	_XMP_dist_template_BLOCK_CYCLIC(t, t_idx, n_idx, chunk_size);
+	_XMP_dist_template_BLOCK_CYCLIC(t, t_idx, n_idx, (unsigned long long)chunk_size);
       }
       n_idx++;
       break;
@@ -85,7 +85,7 @@ void xmpf_template_init__(_XMP_template_t **t_desc, _XMP_nodes_t  **n_desc)
       else if (chunk_size <= 0)
 	_XMP_fatal("chunk size is nagative in DIST_CYCLIC");
       else
-	_XMP_dist_template_BLOCK_CYCLIC(t, t_idx, n_idx, chunk_size);
+	_XMP_dist_template_BLOCK_CYCLIC(t, t_idx, n_idx, (unsigned long long)chunk_size);
       n_idx++;
       break;
     case _XMP_N_DIST_GBLOCK:
