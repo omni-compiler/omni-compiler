@@ -72,6 +72,7 @@ enum ACC_pragma_clause {
     XACC_LAYOUT,
     XACC_LAYOUT_DUPLICATION,
     XACC_LAYOUT_BLOCK,
+    XACC_ON,
 
     ACC_HOST,
     ACC_DEVICE,
