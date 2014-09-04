@@ -111,7 +111,7 @@ outx_ACC_Clause(FILE *fp, int indent, CExprOfList* clause)
       break;
 
   case XACC_LAYOUT:
-      outx_XACC_Clause_Args(fp, indent1+1, arg);
+      outx_XACC_Clause_Args(fp, indent1+1, (CExprOfList*)arg);
       break;
 
   default:
@@ -223,6 +223,7 @@ char *accClauseName(int c)
 
   case XACC_ON_DEVICE: return "ON_DEVICE";
   case XACC_LAYOUT: return "LAYOUT";
+  case XACC_ON: return "ON";
 
   case ACC_HOST: return "HOST";
   case ACC_DEVICE: return "DEVICE";

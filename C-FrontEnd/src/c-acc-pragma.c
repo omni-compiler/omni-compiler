@@ -63,6 +63,7 @@ static CExpr* parse_ACC_reduction_namelist(int *r);
 static CExpr* parse_ACC_clause_arg(void);
 static CExpr* parse_ACC_C_subscript_list(void);
 static CExpr* parse_XACC_layout_clause_arg(void);
+static CExpr* parse_XACC_on_clause_arg(void);
 
 #define ACC_PG_LIST(pg,args) _omp_pg_list(pg,args)
 #define ACC_LIST2(arg1,arg2) (CExpr*)allocExprOfList2(EC_UNDEF,arg1,arg2)
@@ -350,6 +351,10 @@ static CExpr* parse_ACC_clauses()
 	    pg_get_token();
 	    if ((v = parse_XACC_layout_clause_arg()) == NULL) goto syntax_err;
 	    c = ACC_PG_LIST(XACC_LAYOUT, v);
+	} else if (s_useXACC && PG_IS_IDENT("on")){
+	    pg_get_token();
+	    if((v = parse_ACC_namelist()) == NULL) goto syntax_err;
+	    c = ACC_PG_LIST(XACC_ON, v);
 	} else {
 	  addError(NULL,"unknown ACC directive clause '%s'",pg_tok_buf);
 	    goto syntax_err;
@@ -490,6 +495,11 @@ static CExpr* parse_ACC_C_subscript_list()
       break;
     case ':':
       v1 = (CExpr*)allocExprOfNumberConst2(0, BT_INT);
+      break;
+    case '*':
+      if(! s_useXACC) goto err;
+      v1 = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "* @{ASTERISK}@", CT_UNDEF);
+      pg_get_token();
       break;
     default:
       v1 = pg_parse_expr();
