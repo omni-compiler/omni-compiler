@@ -62,6 +62,7 @@ static CExpr* parse_ACC_namelist(void);
 static CExpr* parse_ACC_reduction_namelist(int *r);
 static CExpr* parse_ACC_clause_arg(void);
 static CExpr* parse_ACC_C_subscript_list(void);
+static CExpr* parse_XACC_layout_clause_arg(void);
 
 #define ACC_PG_LIST(pg,args) _omp_pg_list(pg,args)
 #define ACC_LIST2(arg1,arg2) (CExpr*)allocExprOfList2(EC_UNDEF,arg1,arg2)
@@ -345,6 +346,10 @@ static CExpr* parse_ACC_clauses()
 	    pg_get_token();
 	    if ((v = parse_ACC_clause_arg()) == NULL) goto syntax_err;
 	    c = ACC_PG_LIST(XACC_ON_DEVICE, v);
+	} else if (s_useXACC && PG_IS_IDENT("layout")){
+	    pg_get_token();
+	    if ((v = parse_XACC_layout_clause_arg()) == NULL) goto syntax_err;
+	    c = ACC_PG_LIST(XACC_LAYOUT, v);
 	} else {
 	  addError(NULL,"unknown ACC directive clause '%s'",pg_tok_buf);
 	    goto syntax_err;
@@ -521,4 +526,64 @@ static CExpr* parse_ACC_C_subscript_list()
 }
 
 
+CExpr *parse_XACC_layout_fmt_list()
+{
+    CExpr* list;
+    CExpr *v;
 
+    list = EMPTY_LIST;
+    if(pg_tok != '(') {
+	addFatal(NULL,"parse_ACC_dist_fmt_list: first token= '('");
+    }
+    
+    pg_get_token();
+    while(1){
+	// parse <dist-format> := { * | block }
+	if(pg_tok != '[') goto syntax_err;
+	pg_get_token();
+
+	if (pg_tok == '*') {
+	    pg_get_token();
+	    v = ACC_PG_LIST(XACC_LAYOUT_DUPLICATION,NULL);
+	} else if (PG_IS_IDENT("block")) {
+	    pg_get_token();
+	    v = ACC_PG_LIST(XACC_LAYOUT_BLOCK,NULL);
+	} else goto syntax_err;
+
+	list = exprListAdd(list, v);
+
+	if(pg_tok != ']') goto syntax_err;
+	pg_get_token();
+
+	if(pg_tok == ')'){
+	    pg_get_token();
+	    break;
+	} else if(pg_tok == '['){
+	    continue;
+	} else goto syntax_err;
+	
+    }
+    return list;
+
+  syntax_err:
+    addError(NULL, "syntax error in layout description");
+    return NULL;
+}
+
+CExpr* parse_XACC_layout_clause_arg() 
+{
+    CExpr* layoutFormatList;
+
+    // parse (<dist-format>, ...)
+    if (pg_tok != '('){
+	addError(NULL,"'(' is expected after 'layout' clause");
+	goto err;
+    } else {
+	layoutFormatList = parse_XACC_layout_fmt_list();
+    }
+
+    return layoutFormatList;
+
+  err:
+    return NULL;
+}

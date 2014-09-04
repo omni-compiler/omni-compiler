@@ -58,6 +58,29 @@ out_ACC_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr)
 }
 
 void
+outx_XACC_Clause_Args(FILE *fp, int indent, CExprOfList* args)
+{
+    int indent1 = indent+1;
+    CCOL_DListNode *ite;
+    outxPrint(fp,indent,"<list>\n");
+    EXPR_FOREACH(ite, args) {
+	CExprOfList *node = (CExprOfList*)EXPR_L_DATA(ite);
+	//	outx_ACC_Clause(fp, indent1, node);
+	outxPrint(fp, indent1 , "<list>\n");
+	switch(node->e_aux){
+	case XACC_LAYOUT_DUPLICATION:
+	    outxPrint(fp, indent1+1, "<intConstant type=\"int\">100<!-- NO_DIST--></intConstant>\n");
+	    break;
+	case XACC_LAYOUT_BLOCK:
+	    outxPrint(fp, indent1+1, "<intConstant type=\"int\">101<!-- BLOCK --></intConstant>\n");
+	    break;
+	}
+	outxPrint(fp, indent1 , "</list>\n");
+    }
+    outxPrint(fp,indent,"</list>\n");
+}
+
+void
 outx_ACC_Clause(FILE *fp, int indent, CExprOfList* clause)
 {
   int indent1 = indent+1;
@@ -85,6 +108,10 @@ outx_ACC_Clause(FILE *fp, int indent, CExprOfList* clause)
   case ACC_COLLAPSE:
   case XACC_ON_DEVICE:
       outxContext(fp,indent1+1,arg);
+      break;
+
+  case XACC_LAYOUT:
+      outx_XACC_Clause_Args(fp, indent1+1, arg);
       break;
 
   default:
@@ -195,6 +222,7 @@ char *accClauseName(int c)
   case ACC_INDEPENDENT: return "INDEPENDENT";
 
   case XACC_ON_DEVICE: return "ON_DEVICE";
+  case XACC_LAYOUT: return "LAYOUT";
 
   case ACC_HOST: return "HOST";
   case ACC_DEVICE: return "DEVICE";
