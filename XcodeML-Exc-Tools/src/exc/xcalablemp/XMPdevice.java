@@ -100,12 +100,12 @@ public class XMPdevice extends XMPobject {
 
     // add constructor call
     if (isLocalPragma){
-      XMPlocalDecl.addConstructorCall2("_XMP_init_device", deviceArgs, globalDecl, parentBlock);
-      XMPlocalDecl.insertDestructorCall2("_XMP_finalize_device", Xcons.List(deviceDescId.Ref()),
+      XMPlocalDecl.addConstructorCall2("_XACC_init_device", deviceArgs, globalDecl, parentBlock);
+      XMPlocalDecl.insertDestructorCall2("_XACC_finalize_device", Xcons.List(deviceDescId.Ref()),
 					 globalDecl, parentBlock);
     }
     else {
-      globalDecl.addGlobalInitFuncCall("_XMP_init_device", deviceArgs);
+      globalDecl.addGlobalInitFuncCall("_XACC_init_device", deviceArgs);
     }
 
     // declare device object

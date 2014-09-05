@@ -1765,7 +1765,7 @@ public class XMPrewriteExpr {
 
 	if(XMP.XACC && onDevice != null){
 	  if(pragma == ACCpragma.DATA || pragma == ACCpragma.PARALLEL_LOOP){
-            Ident fid = _globalDecl.declExternFunc("_XACC_set_device_num");
+            Ident fid = _globalDecl.declExternFunc("acc_set_device_num");
             
             //base
             BlockList baseBody = Bcons.emptyBody();
@@ -1822,8 +1822,8 @@ public class XMPrewriteExpr {
                   }
                   XobjList schedLoopFuncArgs = 
                       Xcons.List(oldInit,oldCond, oldStep,
-                          loopInitId.Ref(), loopCondId.Ref(), loopStepId.Ref(), 
-                          on.getArrayDesc().Ref(), Xcons.IntConstant(dim), baseDeviceLoopVarId.Ref());
+                          loopInitId.getAddr(), loopCondId.getAddr(), loopStepId.getAddr(), 
+								 on.getArrayDesc().Ref(), Xcons.IntConstant(dim), baseDeviceLoopVarId.Ref());
                   baseDeviceLoopBody.insert(schedLoopFuncId.Call(schedLoopFuncArgs));
                   
                   //rewrite loop iter
