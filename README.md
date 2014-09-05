@@ -40,6 +40,19 @@ README
 
     export XMP_COARRAY_STRIDE_SIZE=32M
 
+* XMP_NODE_SIZEn
+ This value specifies the extent of the n'th dimension of the non-primary node
+ array that is declaread as '*' and not the last one. Note that n is 0-origin.
+ For example, when XMP_NODE_SIZE0 and XMP_NODE_SIZE1 are set as follows:
+
+    $ export XMP_NODE_SIZE0=4
+    $ export XMP_NODE_SIZE1=4
+
+ and the program is run on 32 nodes in all, the shape of the node array p declared as
+ follows is assumed to be 4x4x2.
+
+    !$xmp nodes p(*,*,*)
+
 # Profiling Options in XMP/C
  XMP supports profiler interfaces of Scalasca and tlog.
  The tlog is included in XMP.
