@@ -1,9 +1,8 @@
 #!/bin/bash
 #
-# V2
+# V3
 #
 
-VERBOSE=no
 #VERBOSE=yes
 
 NM=@NM@
@@ -56,75 +55,88 @@ fi
 
 
 #--------------------------------------------------------------
-# find names ${PREFIX}_init_* and ${PREFIX}_finalize_*
+# find names ${PREFIX}_{init|finalize}_* 
 #--------------------------------------------------------------
 
 #--- get candidates
 candidates=`$NM "${INFILES[@]}" | awk 'NF >= 2 && $(NF-1) == "T" { print $NF }'`
 
-#--- select ${PREFIX}_init_*
-ini_names=()
+#--- choose candidates "${PREFIX}_{init|finalize}_*_?*" and rename them if needed
+procedures=()
 for name in $candidates; do
-    if [[ ${name} =~ ^${PREFIX}_init_ ]]; then
-        case "$LANG" in
-            F) ini_names+=( ${name%_} );;
-            C) ini_names+=( ${name} );;
-        esac
-    fi
+    case $name in
+        ${PREFIX}_init_*_?* | ${PREFIX}_finalize_*_?* )
+            case "$LANG" in
+                F) procedures+=( ${name%_} );;    # get name from "name_"
+                C) procedures+=( $name );;
+            esac;;
+        ${PREFIX}_init_* | ${PREFIX}_finalize_* )
+            echo found illegal name of init/finalize procedure: \"${name}\"
+            error=yes;;
+    esac
 done
+if [ "${error}" = "yes" ]; then
+    exit 1
+fi
 
-#--- select ${PREFIX}_finalize_*
-fin_names=()
-for name in $candidates; do
-    if [[ ${name} =~ ^${PREFIX}_finalize_ ]]; then
-        case "$LANG" in
-            F) fin_names+=( ${name%_} );;
-            C) fin_names+=( ${name} );;
-        esac
-    fi
+#--- classify the chosen names by keywords
+groupnames=()
+for name in "${procedures[@]}"; do
+    # separate procedure name "prefix_{init|finalize}_keywd_reststring"
+    # into three parts, groupname, '_' and basename, where
+    #  groupname is "prefix_{init|finalize}_keywd" and
+    #  basename is any string possibly including '_'
+    basename=${name#${PREFIX}_*_*_}
+    groupname=${name%_${basename}}
+
+    # append part1 to keystrings if not appended yet
+    case "${groupnames[*]}" in
+        $groupname)  ;;
+        *)           groupnames+=( $groupname );;
+    esac
 done
 
 if [ "$VERBOSE" = "yes" ]; then
+    echo ------------
     echo "candidates="$candidates
-    echo "ini_names =""${ini_names[@]}"
-    echo "fin_names= ""${fin_names[@]}"
+    echo "procedures=${procedures[@]}"
+    echo "groupnames=${groupnames[@]}"
+    echo ------------
 fi
-
 
 #--------------------------------------------------------------
 # file output
 #--------------------------------------------------------------
 
 fortran_output() {
-    echo "subroutine ${PREFIX}_collect_init"
-    for name in "${ini_names[@]}"; do
-        echo "  call ${name}"
+    for groupname in "${groupnames[@]}"; do
+        echo "subroutine ${groupname}"
+        for name in "${procedures[@]}"; do
+            if [[ ${name} =~ ${groupname}_* ]]; then
+                echo "  call ${name}"
+            fi
+        done
+        echo "end subroutine"
+        echo
     done
-    echo "end subroutine"
-    echo
-    echo "subroutine ${PREFIX}_collect_finalize"
-    for name in "${fin_names[@]}"; do
-        echo "  call ${name};"
-    done
-    echo "end subroutine"
 }
 
 c_output() {
-    for name in "${ini_names[@]}" "${fin_names[@]}"; do
-        echo "extern void ${name}(void);"
+    for groupname in "${groupnames[@]}"; do
+        echo "extern void ${groupname}(void);"
     done
     echo
-    echo "void ${PREFIX}_collect_init() {"
-    for name in "${ini_names[@]}"; do
-        echo "  ${name}();"
+
+    for groupname in "${groupnames[@]}"; do
+        echo "void ${groupname}() {"
+        for name in "${procedures[@]}"; do
+            if [[ ${name} =~ ${groupname}_* ]]; then
+                echo "  ${name}();"
+            fi
+        done
+        echo "}"
+        echo
     done
-    echo "}"
-    echo
-    echo "void ${PREFIX}_collect_finalize() {"
-    for name in "${fin_names[@]}"; do
-        echo "  ${name}();"
-    done
-    echo "}"
 }
 
 file_output() {

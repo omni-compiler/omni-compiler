@@ -35,7 +35,7 @@ $CMD "$@" || exit 1
 #-------------------------------------------------
 # call omni_collect_init
 #-------------------------------------------------
-COLLECT_INIT_SRC="/tmp/_xmpf_collect_init_${PID}.f90"
+COLLECT_INIT_SRC="/tmp/omni_collect_init_${PID}.f90"
 CMD="@OMNI_HOME@/bin/omni_collect_init"
 args=( --F --prefix xmpf -o ${COLLECT_INIT_SRC} "${files[@]}" )
 set -- ${args[@]}
