@@ -45,6 +45,15 @@ HOW TO INSTALL
  If you want to use Coarray functions
     $ ./configure --with-gasnet=[GASNet INSTALLATION PATH] --with-gasnet-conduit=[GASNet-Conduit]
 
+    The "GASNet-Conduit" is a method how GASnet uses an interconnect.
+
+    If you omit "--with-gasnet-conduit=[GASNet-Conduit]",
+    the Omni compiler automatically selects an appropriate conduit.
+
+    If you specify "--with-gasnet-conduit=mpi", the execute file can execute on the most clusters.
+    If a running system is equipped with InfiniBand, "--with-gasnet-conduit=ibv" is the best selection.
+    For information of other conduits, please see the GASNet website (http://gasnet.lbl.gov).
+
  If you want to use OpenACC compiler
     $ ./configure --enable-openacc --with-cuda=[CUDA INSTALLATION PATH]
 
