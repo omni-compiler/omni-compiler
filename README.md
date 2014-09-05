@@ -23,7 +23,7 @@ README
  Please use the command for running mpi program on your environment.
     $ mpirun -np 4 test
 
-## Environment Variable
+## Environment Variables
 * XMP_COARRAY_HEAP_SIZE
  **Note that on the K computer this value is not used.**
  This value is used to malloc for coarray. Therefore, this value must be 
@@ -52,6 +52,16 @@ README
  follows is assumed to be 4x4x2.
 
     !$xmp nodes p(*,*,*)
+
+## Compiler Options
+* -openmp
+* -omp
+ These options enable handling of OpenMP directives.
+
+* -max_assumed_shape=N
+ This option specifies the maximum number of assumed-shape array arguments of an XMP/F
+ procedure. The default is 16. If the number of them exceeds this value, the result is
+ not guaranteed.
 
 # Profiling Options in XMP/C
  XMP supports profiler interfaces of Scalasca and tlog.
