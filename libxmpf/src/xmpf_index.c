@@ -76,12 +76,12 @@ int xmpf_local_idx__(_XMP_array_t **a_desc, int *i_dim, int *global_idx)
     _XMP_array_t *a = *a_desc;
     int l_idx, l_base;
     _XMP_array_info_t *ai = &a->info[*i_dim];
-    int off = ai->align_subscript;
+    long long off = ai->align_subscript;
     int tdim = ai->align_template_index;
     int lshadow = ai->shadow_size_lo;
 
-    _XMP_G2L(*global_idx + off, &l_idx, a->align_template, tdim);
-    _XMP_G2L(ai->par_lower + off, &l_base, a->align_template, tdim);
+    _XMP_G2L((long long)(*global_idx) + off, &l_idx, a->align_template, tdim);
+    _XMP_G2L((long long)ai->par_lower + off, &l_base, a->align_template, tdim);
     l_idx = l_idx - l_base + lshadow;
 
     return l_idx;
