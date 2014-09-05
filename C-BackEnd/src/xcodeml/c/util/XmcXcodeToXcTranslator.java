@@ -2604,6 +2604,7 @@ public class XmcXcodeToXcTranslator {
             if (ident == null) {
                 if (name.startsWith("_XMP_")) return new XcIdent(name);
                 if (name.startsWith("_ACC_")) return new XcIdent(name);
+                if (name.startsWith("_XACC_")) return new XcIdent(name);
 
                 throw new XmTranslationException(stringContentNode, "variable or function '" + name
                     + "' is not defined");
