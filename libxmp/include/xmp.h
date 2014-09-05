@@ -21,11 +21,16 @@
 #define XMP_GBLOCK					2103
 
 #include "stddef.h"
+#include "mpi.h"
 
 typedef void *xmp_desc_t;
 
 // ----- libxmp
-extern void	xmp_MPI_comm(void **comm);
+extern MPI_Comm	xmp_get_mpi_comm(void);
+extern void	xmp_init_mpi(int *argc, char ***argv);
+extern void	xmp_finalize_mpi(void);
+extern void	xmp_init(int *argc, char ***argv);
+extern void	xmp_finalize(void);
 extern int	xmp_num_nodes(void);
 extern int	xmp_node_num(void);
 extern void	xmp_barrier(void);

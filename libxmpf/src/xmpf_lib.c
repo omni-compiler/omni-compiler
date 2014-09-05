@@ -8,11 +8,23 @@
 #include "xmp.h"
 //#include "xmpf.h"
 
-/*
-void xmp_MPI_comm(void **comm) {
-  *comm = _XMP_get_execution_nodes()->comm;
+int xmp_get_mpi_comm_(void) {
+  return xmp_get_mpi_comm();
 }
-*/
+
+void xmp_init_mpi_(void) {
+}
+
+void xmp_finalize_mpi_(void) {
+}
+
+void xmp_init_() {
+  _XMP_init(NULL, NULL);
+}
+
+void xmp_finalize_(void) {
+  xmp_finalize();
+}
 
 int xmp_num_nodes_(void) {
   return _XMP_get_execution_nodes()->comm_size;

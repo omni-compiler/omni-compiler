@@ -10,9 +10,24 @@
 #include "xmp.h"
 #include <stddef.h>
 
-// FIXME utility functions
-void xmp_MPI_comm(void **comm) {
-  *comm = _XMP_get_execution_nodes()->comm;
+MPI_Comm xmp_get_mpi_comm(void) {
+  MPI_Comm *comm0;
+  comm0=_XMP_get_execution_nodes()->comm;
+  return *comm0;
+}
+
+void xmp_init_mpi(int *argc, char ***argv) {
+}
+
+void xmp_finalize_mpi(void) {
+}
+
+void xmp_init(int *argc, char ***argv) {
+  _XMP_init(*argc, *argv);
+}
+
+void xmp_finalize(void) {
+  _XMP_finalize(0);
 }
 
 int xmp_num_nodes(void) {
