@@ -1719,6 +1719,20 @@ public class XMPrewriteExpr {
     }
   }
   
+//  private Block makeDeviceLoop(BlockList body, XMPdevice device, Ident loop){
+//    BlockList ret_body = Bcons.emptyBody();
+//    Ident var = ret_body.declLocalIdent("_XACC_deviceloop_" + device.getName(), Xtype.intType);
+//    Ident fid = _globalDecl.declExternFunc("_XACC_set_device_num");
+//    
+//    body.insert(fid.Call(Xcons.List(var.Ref(), device.getAccDevice().Ref())));
+//    
+//    Block deviceLoopBlock = Bcons.FORall(var.Ref(), device.getLower(), device.getUpper(),
+//        device.getStride(), Xcode.LOG_LE_EXPR, body);
+//    ret_body.add(deviceLoopBlock);
+//    
+//    return Bcons.COMPOUND(ret_body);
+//  }
+  
   /*
    * rewrite ACC pragmas
    */
@@ -1728,50 +1742,267 @@ public class XMPrewriteExpr {
     for (bIter.init(); !bIter.end(); bIter.next()){
       Block block = bIter.getBlock();
       if (block.Opcode() == Xcode.ACC_PRAGMA){
-	Xobject clauses = ((PragmaBlock)block).getClauses();
+        PragmaBlock pb = (PragmaBlock)block;
+	Xobject clauses = pb.getClauses();
+	
+	ACCpragma pragma = ACCpragma.valueOf(((PragmaBlock)block).getPragma());
 	BlockList newBody = Bcons.emptyBody();
 	XMPdevice onDevice = null;
+	XMPlayout layout = null;
+	XMPon on = null;
 	if (clauses != null){
+	  onDevice = getXACCdevice((XobjList)clauses, fb);
+	  layout = getXACClayout((XobjList)clauses);//, fb);
+	  on = getXACCon((XobjList)clauses, fb);
 	  //BlockList newBody = Bcons.emptyBody();
-	  onDevice = rewriteACCClauses(clauses, (PragmaBlock)block, fb, localXMPsymbolTable, newBody);
+	  //rewriteACCClauses(clauses, (PragmaBlock)block, fb, localXMPsymbolTable, newBody);
 	  if(!newBody.isEmpty() && !XMP.XACC){
 	    bIter.setBlock(Bcons.COMPOUND(newBody));
 	    newBody.add(Bcons.COMPOUND(Bcons.blockList(block))); //newBody.add(block);
 	  }
 	}
+	
 
-	if (XMP.XACC && onDevice != null){
-	  BlockList deviceLoop = Bcons.emptyBody();
+	if(XMP.XACC && onDevice != null){
+	  if(pragma == ACCpragma.DATA || pragma == ACCpragma.PARALLEL_LOOP){
+            Ident fid = _globalDecl.declExternFunc("_XACC_set_device_num");
+            
+            //base
+            BlockList baseBody = Bcons.emptyBody();
+            BlockList baseDeviceLoopBody = Bcons.emptyBody();
+            Ident baseDeviceLoopVarId = baseBody.declLocalIdent("_XACC_device_" + onDevice.getName(), Xtype.intType);
+            baseBody.add(Bcons.FORall(baseDeviceLoopVarId.Ref(), onDevice.getLower(), onDevice.getUpper(),
+                onDevice.getStride(), Xcode.LOG_LE_EXPR, baseDeviceLoopBody));
+            baseDeviceLoopBody.add(fid.Call(Xcons.List(baseDeviceLoopVarId.Ref(), onDevice.getAccDevice().Ref())));
+            rewriteACCClauses(clauses, pb, (Block)fb, localXMPsymbolTable, newBody, baseDeviceLoopBody, baseDeviceLoopVarId, onDevice, layout);
+            BlockList pbBody;
+            if(pragma == ACCpragma.DATA){
+              pbBody = null;
+            }else{
+              pbBody = pb.getBody();
+            }
+            baseDeviceLoopBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pb.getPragma(), clauses, pbBody));
+            
+            if(pragma == ACCpragma.DATA){
+              BlockList beginBody = baseBody.copy();
+              BlockList endBody = baseBody.copy();
 
-	  Ident fid2 = _globalDecl.declExternFunc("acc_set_device_type");
-	  deviceLoop.insert(fid2.Call(Xcons.List(onDevice.getAccDevice().Ref())));
+              rewriteXACCPragmaData(beginBody, true);
+              rewriteXACCPragmaData(endBody, false);
 
-	  Ident var = deviceLoop.declLocalIdent("_XACC_loop", Xtype.intType);
-	  // Ident fid0 = _globalDecl.declExternFunc("xacc_get_num_current_devices",
-	  // 					  Xtype.intType);
+ 
+              newBody.add(Bcons.COMPOUND(beginBody));
+              newBody.add(Bcons.COMPOUND(block.getBody()));	    
+              newBody.add(Bcons.COMPOUND(endBody));
+            }else{
+              CforBlock forBlock = (CforBlock)pb.getBody().getHead();
+              String loopVarName = forBlock.getInductionVar().getSym();
 
-	  Block newBlock = Bcons.FORall(var.Ref(), onDevice.getLower(), onDevice.getUpper(),
-					onDevice.getStride(), Xcode.LOG_LE_EXPR, newBody);
-
-	  deviceLoop.add(newBlock);
-	  bIter.setBlock(Bcons.COMPOUND(deviceLoop));
-
-	  Ident fid1 = _globalDecl.declExternFunc("acc_set_device_num");
-	  newBody.insert(fid1.Call(Xcons.List(var.Ref())));
-	  newBody.add(Bcons.COMPOUND(Bcons.blockList(block)));
+              try{
+                int dim = on.getCorrespondingDim(loopVarName);
+                if(dim >= 0){
+                  XMPlayout myLayout = on.getLayout();
+                  String layoutSym = XMPlayout.getDistMannerString(myLayout.getDistMannerAt(dim));
+                  Ident loopInitId = baseDeviceLoopBody.declLocalIdent("_XACC_loop_init_" + loopVarName, Xtype.intType);
+                  Ident loopCondId = baseDeviceLoopBody.declLocalIdent("_XACC_loop_cond_" + loopVarName, Xtype.intType);
+                  Ident loopStepId = baseDeviceLoopBody.declLocalIdent("_XACC_loop_step_" + loopVarName, Xtype.intType);
+                  Ident schedLoopFuncId = _globalDecl.declExternFunc("_XACC_sched_loop_layout_"+ layoutSym);
+                  Xobject oldInit, oldCond, oldStep;
+                  XobjList loopIter = XMPutil.getLoopIter(forBlock, loopVarName);
+                  
+                  //get old loop iter
+                  if(loopIter != null){
+                    oldInit = ((Ident)loopIter.getArg(0)).Ref();
+                    oldCond = ((Ident)loopIter.getArg(1)).Ref();
+                    oldStep = ((Ident)loopIter.getArg(2)).Ref();
+                  }else{
+                    oldInit = forBlock.getLowerBound();
+                    oldCond = forBlock.getUpperBound();
+                    oldStep = forBlock.getStep();
+                  }
+                  XobjList schedLoopFuncArgs = 
+                      Xcons.List(oldInit,oldCond, oldStep,
+                          loopInitId.Ref(), loopCondId.Ref(), loopStepId.Ref(), 
+                          on.getArrayDesc().Ref(), Xcons.IntConstant(dim), baseDeviceLoopVarId.Ref());
+                  baseDeviceLoopBody.insert(schedLoopFuncId.Call(schedLoopFuncArgs));
+                  
+                  //rewrite loop iter
+                  forBlock.setLowerBound(loopInitId.Ref());
+                  forBlock.setUpperBound(loopCondId.Ref());
+                  forBlock.setStep(loopStepId.Ref());
+                }
+                newBody.add(Bcons.COMPOUND(baseBody));
+              } catch (XMPexception e) {
+                XMP.error(pb.getLineNo(), e.getMessage());
+              }
+              
+            }            
+            bIter.setBlock(Bcons.COMPOUND(newBody));
+	  }
+          continue;
+	}else{
+	  rewriteACCClauses(clauses, (PragmaBlock)block, fb, localXMPsymbolTable, newBody, null, null, null, null);      
 	}
 
+	/*
+	if (XMP.XACC && onDevice != null){
+          Ident fid1 = _globalDecl.declExternFunc("_XMP_set_device_num");
+	  if(pragma == ACCpragma.PARALLEL_LOOP){// || pragma == ACCpragma.DATA){
+	    BlockList deviceLoop = Bcons.emptyBody();
+	    Ident var = deviceLoop.declLocalIdent("_XACC_loop", Xtype.intType);
+	    //Ident var = deviceLoop.declLocalIdent("_XACC_loop", Xtype.intType);
+	    // Ident fid0 = _globalDecl.declExternFunc("xacc_get_num_current_devices",
+	    // 					  Xtype.intType);
+
+	    Block deviceLoopBlock = Bcons.FORall(var.Ref(), onDevice.getLower(), onDevice.getUpper(),
+	        onDevice.getStride(), Xcode.LOG_LE_EXPR, newBody);
+
+	    deviceLoop.add(deviceLoopBlock);
+	    bIter.setBlock(Bcons.COMPOUND(deviceLoop));
+
+
+	    newBody.insert(fid1.Call(Xcons.List(var.Ref(), onDevice.getAccDevice().Ref())));
+	    newBody.add(Bcons.COMPOUND(Bcons.blockList(block)));
+	  }else if(pragma == ACCpragma.DATA){
+	    Ident var = newBody.declLocalIdent("_XACC_loop", Xtype.intType);
+	    Block exitDataBlock;// = Bcons.emptyBlock();
+	    Block enterDataBlock;// = Bcons.emptyBlock();
+	    Xobject setDeviceCall = fid1.Call(Xcons.List(var.Ref(), onDevice.getAccDevice().Ref()));
+	    
+	    enterDataBlock = Bcons.PRAGMA(Xcode.ACC_PRAGMA, "update", clauses, null);
+	    exitDataBlock = Bcons.PRAGMA(Xcode.ACC_PRAGMA, "update", Xcons.List(), null);
+	    
+	    BlockList deviceLoopEnterDataBody = Bcons.emptyBody();
+	    deviceLoopEnterDataBody.add(setDeviceCall);
+	    deviceLoopEnterDataBody.add(enterDataBlock);
+	    
+	    Block deviceLoopEnterData = Bcons.FORall(var.Ref(), onDevice.getLower(), onDevice.getUpper(),
+                onDevice.getStride(), Xcode.LOG_LE_EXPR, deviceLoopEnterDataBody);
+	    
+	    BlockList deviceLoopExitDataBody = Bcons.emptyBody();
+            deviceLoopExitDataBody.add(setDeviceCall);
+            deviceLoopExitDataBody.add(exitDataBlock);
+            
+            Block deviceLoopExitData = Bcons.FORall(var.Ref(), onDevice.getLower(), onDevice.getUpper(),
+                onDevice.getStride(), Xcode.LOG_LE_EXPR, deviceLoopExitDataBody);
+            
+            //XobjList clauses = pb. 
+            
+	    
+	    bIter.setBlock(Bcons.COMPOUND(newBody));
+	    newBody.add(deviceLoopEnterData);
+	    newBody.add(Bcons.COMPOUND(block.getBody()));
+	    newBody.add(deviceLoopExitData);
+	  }
+	}
+*/
       }
     }
   }
 
+  private void rewriteXACCPragmaData(BlockList body, Boolean isEnter) {
+    PragmaBlock pb = null;
+    
+    BlockIterator iter = new topdownBlockIterator(body);
+    for(iter.init(); !iter.end(); iter.next()){
+      Block block = iter.getBlock();
+      if(block.Opcode() == Xcode.ACC_PRAGMA){
+        pb = (PragmaBlock)block;
+      }
+    }
+    
+    XobjList clauses = (XobjList)pb.getClauses();
+    pb.setBody(Bcons.emptyBody());
+    for(XobjArgs arg = clauses.getArgs(); arg != null; arg = arg.nextArgs()){
+      Xobject clause = arg.getArg();
+      if(clause == null) continue; 
+      Xobject clauseArg = clause.right();
+      String clauseName = clause.left().getName();
+      ACCpragma pragma = ACCpragma.valueOf(clauseName);
+      ACCpragma newClause = null;
+      switch(pragma){
+      case COPY:
+        newClause = isEnter? ACCpragma.COPYIN : ACCpragma.COPYOUT;
+        break;
+      //case COPYIN:
+        //newClause = isEnter? ACCpragma.COPYIN : ACCpragma.DELETE;
+      default:
+        
+      }
+      if(newClause != null){
+        arg.setArg(Xcons.List(Xcons.String(newClause.getName()), clauseArg));
+      }
+    }
+  }
+
+  private XMPdevice getXACCdevice(XobjList clauses, Block block){
+    XMPdevice onDevice = null;
+    
+    for(XobjArgs arg = clauses.getArgs(); arg != null; arg = arg.nextArgs()){
+      Xobject x = arg.getArg();
+      if(x == null) continue;
+      String clauseName = x.left().getString();
+      ACCpragma accClause = ACCpragma.valueOf(clauseName);
+      //if(accClause == null) continue;
+      if(accClause == ACCpragma.ON_DEVICE){
+        String deviceName = x.right().getString();
+        onDevice = (XMPdevice)_globalDecl.getXMPobject(deviceName, block);
+        if (onDevice == null) XMP.error(x.getLineNo(), "wrong device in on_device");
+        arg.setArg(null);
+      }
+    }
+    return onDevice;
+  }
+  
+  private XMPlayout getXACClayout(XobjList clauses){
+    XMPlayout layout = null;
+    
+    for(XobjArgs arg = clauses.getArgs(); arg != null; arg = arg.nextArgs()){
+      Xobject x = arg.getArg();
+      if(x == null) continue;
+      String clauseName = x.left().getString();
+      ACCpragma accClause = ACCpragma.valueOf(clauseName);
+      if(accClause == ACCpragma.LAYOUT){
+        layout = new XMPlayout((XobjList)x.right());
+        arg.setArg(null);
+      }
+    }
+    
+    return layout;
+  }
+  
+  private XMPon getXACCon(XobjList clauses, Block b){
+    //XMPlayout layout = null;
+    XMPon on = null;
+    
+    for(XobjArgs arg = clauses.getArgs(); arg != null; arg = arg.nextArgs()){
+      Xobject x = arg.getArg();
+      if(x == null) continue;
+      String clauseName = x.left().getString();
+      ACCpragma accClause = ACCpragma.valueOf(clauseName);
+      if(accClause == ACCpragma.ON){
+        //layout = new XMPlayout((XobjList)x.right());
+        XobjList clauseArg = (XobjList)x.right();
+        XobjList array = (XobjList)clauseArg.getArg(0);
+        XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(array.getArg(0).getSym());
+        if(alignedArray == null){
+          XMP.fatal("no aligned array");
+        }
+        on = new XMPon(array, alignedArray);
+        arg.setArg(null);
+      }
+    }
+    
+    return on;
+  }
+  
   /*
    * rewrite ACC clauses
    */
   private XMPdevice rewriteACCClauses(Xobject expr, PragmaBlock pragmaBlock, Block block,
-				      XMPsymbolTable localXMPsymbolTable, BlockList body){
+				      XMPsymbolTable localXMPsymbolTable, BlockList body, BlockList devLoopBody, Ident devLoopId, XMPdevice onDevice, XMPlayout layout){
 
-    XMPdevice onDevice = null;
+//    XMPdevice onDevice = null;
 
     bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
 
@@ -1793,14 +2024,7 @@ public class XMPrewriteExpr {
     	  case FIRSTPRIVATE:   
     	  case DEVICE_RESIDENT:
     	    break;
-	  case ON_DEVICE: {
-	    String deviceName = x.right().getString();
-	    onDevice = (XMPdevice)_globalDecl.getXMPobject(deviceName, block);
-	    if (onDevice == null) XMP.error(x.getLineNo(), "wrong device in on_device");
-	    iter.setXobject(null);
-	    continue;
-	  }
-    	  default:
+	  default:
             if(!accClause.isDataClause()) continue;
     	  }
 	  
@@ -1810,7 +2034,7 @@ public class XMPrewriteExpr {
 	    if(item.Opcode() == Xcode.VAR){
 	      //item is variable or arrayAddr
 	      try{
-		itemList.setArg(i, rewriteACCArrayAddr(item, pragmaBlock, body));
+		itemList.setArg(i, rewriteACCArrayAddr(item, pragmaBlock, body, devLoopBody, devLoopId, onDevice, layout));
 	      }catch (XMPexception e){
 		XMP.error(x.getLineNo(), e.getMessage());
 	      }
@@ -1855,15 +2079,15 @@ public class XMPrewriteExpr {
 	  // add the loop variable to the clause
 	  if (!flag){
 	    itemList.add(loop_var);
-	  }
+	    }
 	}
+      } 
       }
-    }
-
-    return onDevice;
+    return null;
   }
   
-  private Xobject rewriteACCArrayAddr(Xobject arrayAddr, Block block, BlockList body) throws XMPexception {
+  private Xobject rewriteACCArrayAddr(Xobject arrayAddr, Block block, BlockList body, BlockList deviceLoopBody,
+        Ident deviceLoopCounter, XMPdevice onDevice, XMPlayout layout) throws XMPexception {
       XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayAddr.getSym(), block);
       XMPcoarray coarray = _globalDecl.getXMPcoarray(arrayAddr.getSym(), block);
 
@@ -1875,15 +2099,40 @@ public class XMPrewriteExpr {
 		  alignedArray.isParameter()){
 	      Xobject arrayAddrRef = alignedArray.getAddrId().Ref();
 	      Ident descId = alignedArray.getDescId();
+	      XobjList arrayRef;
 	      
-	      
+	      if(deviceLoopCounter == null){
 	      String arraySizeName = "_ACC_size_" + arrayAddr.getSym();
 	      Ident arraySizeId = body.declLocalIdent(arraySizeName, Xtype.unsignedlonglongType);
 
 	      Block getArraySizeFuncCall = _globalDecl.createFuncCallBlock("_XMP_get_array_total_elmts", Xcons.List(descId.Ref()));
 	      body.insert(Xcons.Set(arraySizeId.Ref(), getArraySizeFuncCall.toXobject()));
 	      
-	      XobjList arrayRef = Xcons.List(arrayAddrRef, Xcons.List(Xcons.IntConstant(0), arraySizeId.Ref()));
+	      arrayRef = Xcons.List(arrayAddrRef, Xcons.List(Xcons.IntConstant(0), arraySizeId.Ref()));
+	      }else{
+	        String arraySizeName = "_XACC_size_" + arrayAddr.getSym();
+	        String arrayOffsetName = "_XACC_offset_" + arrayAddr.getSym();
+	        Ident arraySizeId = deviceLoopBody.declLocalIdent(arraySizeName, Xtype.unsignedlonglongType);
+	        Ident arrayOffsetId = deviceLoopBody.declLocalIdent(arrayOffsetName, Xtype.unsignedlonglongType);
+	        Block getRangeFuncCall = _globalDecl.createFuncCallBlock("_XACC_get_size", Xcons.List(descId.Ref(), arrayOffsetId.getAddr(), arraySizeId.getAddr(), deviceLoopCounter.Ref()));
+	        deviceLoopBody.add(getRangeFuncCall);
+	        arrayRef = Xcons.List(arrayAddrRef, Xcons.List(arrayOffsetId.Ref(), arraySizeId.Ref()));
+	        /*	        
+	        _XACC_init_device_array(_XMP_DESC_a, _XMP_DESC_d);
+	        _XACC_split_device_array_BLOCK(_XMP_DESC_a, 0);
+	        _XACC_calc_size(_XMP_DESC_a);
+	        */
+	        Block initDeviceArrayFuncCall = _globalDecl.createFuncCallBlock("_XACC_init_device_array", Xcons.List(descId.Ref(), onDevice.getDescId().Ref()));
+	        body.add(initDeviceArrayFuncCall);
+	        for(int dim = alignedArray.getDim() - 1; dim >= 0; dim--){
+	          String mannerStr = XMPlayout.getDistMannerString(layout.getDistMannerAt(dim));
+	          Block splitDeviceArrayBlockCall = _globalDecl.createFuncCallBlock("_XACC_split_device_array_" + mannerStr, Xcons.List(descId.Ref(), Xcons.IntConstant(dim)));
+	          body.add(splitDeviceArrayBlockCall);
+	        }
+	        Block calcDeviceArraySizeCall = _globalDecl.createFuncCallBlock("_XACC_calc_size", Xcons.List(descId.Ref()));
+                body.add(calcDeviceArraySizeCall);
+                alignedArray.setLayout(layout);
+	      }
 	      
 	      arrayRef.setIsRewrittedByXmp(true);
 	      return arrayRef;

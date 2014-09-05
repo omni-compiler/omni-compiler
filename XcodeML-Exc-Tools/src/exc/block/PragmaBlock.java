@@ -61,4 +61,14 @@ public class PragmaBlock extends CompoundBlock
         x.setLineNo(getLineNo());
         return x;
     }
+
+    @Override
+    public PragmaBlock copy()
+    {
+        return new PragmaBlock(
+            code,
+            new String(pragma),
+            (args != null)? args.copy() : null,
+            (body != null)? body.copy() : null);
+    }
 }

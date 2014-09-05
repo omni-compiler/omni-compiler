@@ -70,6 +70,8 @@ public enum ACCpragma {
 
   //XACC
   ON_DEVICE,
+  LAYOUT,
+  ON,
   
   //internal
   _BLOCK,

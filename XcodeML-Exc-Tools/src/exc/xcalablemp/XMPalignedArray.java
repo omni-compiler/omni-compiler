@@ -41,6 +41,7 @@ public class XMPalignedArray {
   private boolean               _isParameter;
   private boolean               _isLocal;
   private boolean               _isPointer;
+  private XMPlayout             _deviceLayout;
 
   public static int convertDistMannerToAlignManner(int distManner) throws XMPexception {
     switch (distManner) {
@@ -91,6 +92,7 @@ public class XMPalignedArray {
     _isParameter = false;
     _isLocal = false;
     _isPointer = false;
+    _deviceLayout = null;
   }
 
   public String getName() {
@@ -830,5 +832,12 @@ public class XMPalignedArray {
     }
 
     // create runtime func call
+  }
+  
+  public void setLayout(XMPlayout layout){
+    _deviceLayout = layout;
+  }
+  public XMPlayout getLayout(){
+    return _deviceLayout;
   }
 }
