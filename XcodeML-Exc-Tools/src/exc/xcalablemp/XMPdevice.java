@@ -8,7 +8,10 @@ package exc.xcalablemp;
 
 import exc.block.*;
 import exc.object.*;
+
 import java.util.Vector;
+
+import xcodeml.IXobject;
 
 public class XMPdevice extends XMPobject {
 
@@ -77,12 +80,14 @@ public class XMPdevice extends XMPobject {
       inheritedDeviceId = XMPlocalDecl.findLocalIdent(pb, inheritedDeviceName);
     }
     else {
-      inheritedDeviceId = globalDecl.findVarIdent(inheritedDeviceName);
+      inheritedDeviceId = globalDecl.getEnv().findIdent(inheritedDeviceName, IXobject.FINDKIND_ANY);
+//      inheritedDeviceId = globalDecl.findVarIdent(inheritedDeviceName);
+      
     }
     if (inheritedDeviceId == null) throw new XMPexception("'" + inheritedDeviceName + "' is not declared");
 
     // create function call
-    XobjList deviceArgs = Xcons.List(deviceDescId.getAddr(), inheritedDeviceId.Ref());
+    XobjList deviceArgs = Xcons.List(deviceDescId.getAddr(), getDeviceRef(inheritedDeviceId));
 
     XobjList subscript = (XobjList)inheritDecl.getArg(1);
 
@@ -118,5 +123,17 @@ public class XMPdevice extends XMPobject {
     }
 
   }
+  
+  public static Xobject getDeviceRef(Ident id)
+  {
+    if(id.getStorageClass() == StorageClass.MOE){
+      return Xcons.SymbolRef(id);
+    }else{
+      return id.Ref();
+    }
+  }
 
+  public Xobject getDeviceRef() {
+    return getDeviceRef(_accDevice);
+  }
 }

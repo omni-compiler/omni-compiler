@@ -1773,7 +1773,7 @@ public class XMPrewriteExpr {
             Ident baseDeviceLoopVarId = baseBody.declLocalIdent("_XACC_device_" + onDevice.getName(), Xtype.intType);
             baseBody.add(Bcons.FORall(baseDeviceLoopVarId.Ref(), onDevice.getLower(), onDevice.getUpper(),
                 onDevice.getStride(), Xcode.LOG_LE_EXPR, baseDeviceLoopBody));
-            baseDeviceLoopBody.add(fid.Call(Xcons.List(baseDeviceLoopVarId.Ref(), onDevice.getAccDevice().Ref())));
+            baseDeviceLoopBody.add(fid.Call(Xcons.List(baseDeviceLoopVarId.Ref(), onDevice.getDeviceRef())));
             rewriteACCClauses(clauses, pb, (Block)fb, localXMPsymbolTable, newBody, baseDeviceLoopBody, baseDeviceLoopVarId, onDevice, layout);
             BlockList pbBody;
             if(pragma == ACCpragma.DATA){
