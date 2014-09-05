@@ -5,7 +5,6 @@
  */
 
 #include "xmpf_internal.h"
-#include "xmp_internal.h"
 //#include "xmpf.h"
 
 typedef void *xmp_desc_t;
