@@ -10,10 +10,11 @@
 #include "xmp.h"
 #include <stddef.h>
 
-MPI_Comm xmp_get_mpi_comm(void) {
+//MPI_Comm xmp_get_mpi_comm(void) {
+int xmp_get_mpi_comm(void) {
   MPI_Comm *comm0;
   comm0=_XMP_get_execution_nodes()->comm;
-  return *comm0;
+  return *(int *)comm0;
 }
 
 void xmp_init_mpi(int *argc, char ***argv) {

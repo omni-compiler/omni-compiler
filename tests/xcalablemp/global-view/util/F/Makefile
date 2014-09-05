@@ -22,14 +22,14 @@ sub_mpi.o: ./sub/sub_mpi.f90
 	$(XFC) -o $@ $<
 
 mpi_xmp.x: mpi_xmp.f90 ixmp_sub.o
-	$(COMPILER) -openmp -o $@ mpi_xmp.f90 ixmp_sub.o -L../../../../../libxmpf/src -lxmpf -L../../../../../libxmp/src -lxmp
+	$(COMPILER) -fopenmp -o $@ mpi_xmp.f90 ixmp_sub.o -L../../../../../libxmpf/src -lxmpf -L../../../../../libxmp/src -lxmp
 
 xmp_mpi.x: xmp_mpi.f90 sub_mpi.o
 	$(XFC) -o $@ xmp_mpi.f90 sub_mpi.o
 
 run: $(EXES)
 	$(XRUN) -n 12 ./inquiry.x
-	$(XRUN) -n  4 ./xmp_mpi.x
+#	$(XRUN) -n  4 ./xmp_mpi.x
 	$(XRUN) -n  4 ./mpi_xmp.x
 
 clean:

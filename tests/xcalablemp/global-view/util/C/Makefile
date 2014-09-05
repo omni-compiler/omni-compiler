@@ -22,7 +22,7 @@ sub_mpi.o: ./sub/sub_mpi.c
 	$(XCC) -o $@ $<
 
 mpi_xmp.x: mpi_xmp.c ixmp_sub.o
-	$(COMPILER) -o $@ -openmp mpi_xmp.c ixmp_sub.o -L../../../../../libxmp/src -lxmp
+	$(COMPILER) -o $@ -fopenmp mpi_xmp.c ixmp_sub.o -L../../../../../libxmp/src -lxmp
 
 xmp_mpi.x: xmp_mpi.c sub_mpi.o
 	$(XCC) -o $@ xmp_mpi.c sub_mpi.o
