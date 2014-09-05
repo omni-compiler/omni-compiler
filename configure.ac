@@ -199,6 +199,7 @@ if test -e "Driver/src/Makefile.am"; then
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.acc)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/setup.conf)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omtranslate)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omni_collect_init)
     AC_MSG_RESULT(yes)
 else
     OMDRIVER_DIR=''
@@ -780,7 +781,7 @@ if test $enableF2F = yes; then
 
   if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
     OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT="-Free -Kfast,openmp"
+    OMF_CONF_NTV_OPT="-Free -Kfast"
     OMF_CONF_LNK_OPT="-Kfast,openmp"
   elif test "$target" = "Cray-linux-gnu"; then
     OMF_CONF_LX2X_OPT=""

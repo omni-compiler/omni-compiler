@@ -9,16 +9,36 @@ LIB_THREAD=@OMP_THREAD_TYPE@
 LIB_OMPC=ompc_${LOCK_TYPE}_${LIB_THREAD}
 GPGPU_PREFIX=@GPGPU_PREFIX@
 PID=$$
-INIT_MODULE_OBJ="/tmp/_xmpc_init_${PID}.o"
 
+files=( "$@" )
+
+#-------------------------------------------------
+# call xmp_collect_init, which will be abolished
+#-------------------------------------------------
+INIT_MODULE_OBJ="/tmp/_xmpc_init_${PID}.o"
 CMD="@OMNI_HOME@/bin/xmp_collect_init"
-args=( --cc @BECC@ --PID ${PID} --C "$@" )
+args=( --cc @BECC@ --PID ${PID} --C "${files[@]}" )
 set -- ${args[@]}
 if [ "${OM_VERBOSE}" = "1" ]; then
     echo $CMD "$@"
 fi
-$CMD "$@"
+$CMD "$@" || exit 1
 
+#-------------------------------------------------
+# call omni_collect_init
+#-------------------------------------------------
+COLLECT_INIT_SRC="/tmp/omni_collect_init_${PID}.c"
+CMD="@OMNI_HOME@/bin/omni_collect_init"
+args=( --C --prefix xmpc -o ${COLLECT_INIT_SRC} "${files[@]}" )
+set -- ${args[@]}
+if [ "${OM_VERBOSE}" = "1" ]; then
+    echo $CMD "$@"
+fi
+$CMD "$@" || exit 1
+
+#-------------------------------------------------
+# set linker options
+#-------------------------------------------------
 for i in ${OM_OPTIONS}; do
     case ${i} in
         -enable-threads)
@@ -41,7 +61,7 @@ for i in ${OM_OPTIONS}; do
 done
 
 GASNET_LIB="@GASNET_LIBS@"
-LIBS="${INIT_MODULE_OBJ} ${LIBS} -lxmp ${GASNET_LIB}"
+LIBS="${COLLECT_INIT_SRC} ${INIT_MODULE_OBJ} ${LIBS} -lxmp ${GASNET_LIB}"
 
 TCA_LIB="@TCA_PREFIX@"
 if test "${TCA_LIB}" != ""; then

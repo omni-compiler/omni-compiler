@@ -5,9 +5,8 @@
  */
 
 #include "xmpf_internal.h"
+#include "xmp.h"
 //#include "xmpf.h"
-
-typedef void *xmp_desc_t;
 
 /*
 void xmp_MPI_comm(void **comm) {

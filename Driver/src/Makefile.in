@@ -494,7 +494,7 @@ bin_SCRIPTS = \
 	../bin/omf2f ../bin/ompf90 ../bin/omf2x ../bin/omfx2x ../bin/omx2f ../bin/omfpp \
 	../bin/omfnative ../bin/omflinker \
 	../bin/xmpcc ../bin/xmpf90 \
-	../bin/omtranslate
+	../bin/omtranslate ../bin/omni_collect_init
 
 sysconf_DATA = ../etc/omc.conf ../etc/omf.conf \
 	../etc/java.conf \
