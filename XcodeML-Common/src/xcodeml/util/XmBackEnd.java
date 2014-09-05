@@ -177,16 +177,16 @@ public class XmBackEnd
             return 1;
         }
 
-        XmXcodeProgram xmprog = _toolFactory.createXcodeProgram();
-        XmValidator validator = _toolFactory.createValidator();
+        // XmXcodeProgram xmprog = _toolFactory.createXcodeProgram();
+        // XmValidator validator = _toolFactory.createValidator();
         List<String> errorList = new ArrayList<String>();
 
         try {
-            if(validator.read(_reader, xmprog, errorList) == false) {
-                for(String error : errorList)
-                    _error("Error at reading XML file: " + error);
-                return 1;
-            }
+            // if(validator.read(_reader, xmprog, errorList) == false) {
+            //     for(String error : errorList)
+            //         _error("Error at reading XML file: " + error);
+            //     return 1;
+            // }
             
             if(addXml) {
                 if(!_openInputFile())

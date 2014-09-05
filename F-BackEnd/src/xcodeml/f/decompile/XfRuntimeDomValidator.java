@@ -61,7 +61,7 @@ public class XfRuntimeDomValidator {
             if (n == null)
                 throw new IllegalArgumentException();
 
-            if (XfUtil.isNullOrEmpty(XmDomUtil.getAttr(n, "type"))) {
+            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "type"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -70,7 +70,7 @@ public class XfRuntimeDomValidator {
                 return false;
             }
 
-            if (XfUtil.isNullOrEmpty(XmDomUtil.getAttr(n, "ref"))) {
+            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "ref"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -90,7 +90,7 @@ public class XfRuntimeDomValidator {
             if (n == null)
                 throw new IllegalArgumentException();
 
-            if (XfUtil.isNullOrEmpty(XmDomUtil.getAttr(n, "type"))) {
+            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "type"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -99,7 +99,7 @@ public class XfRuntimeDomValidator {
                 return false;
             }
 
-            if (XfUtil.isNullOrEmpty(XmDomUtil.getAttr(n, "return_type"))) {
+            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "return_type"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -118,7 +118,7 @@ public class XfRuntimeDomValidator {
             if (n == null)
                 throw new IllegalArgumentException();
 
-            if (XfUtil.isNullOrEmpty(XmDomUtil.getAttr(n, "type"))) {
+            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "type"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -137,7 +137,7 @@ public class XfRuntimeDomValidator {
             if (n == null)
                 throw new IllegalArgumentException();
 
-            if (XfUtil.isNullOrEmpty(XmDomUtil.getAttr(n, "name"))) {
+            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "name"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -156,7 +156,7 @@ public class XfRuntimeDomValidator {
             if (n == null)
                 throw new IllegalArgumentException();
 
-            if (XfUtil.isNullOrEmpty(XmDomUtil.getAttr(n, "name"))) {
+            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "name"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -175,7 +175,7 @@ public class XfRuntimeDomValidator {
             if (n == null)
                 throw new IllegalArgumentException();
 
-            if (XfUtil.isNullOrEmpty(XmDomUtil.getAttr(n, "name"))) {
+            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "name"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -194,7 +194,7 @@ public class XfRuntimeDomValidator {
             if (n == null)
                 throw new IllegalArgumentException();
 
-            if (XfUtil.isNullOrEmpty(XmDomUtil.getAttr(n, "name"))) {
+            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "name"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -213,7 +213,7 @@ public class XfRuntimeDomValidator {
             if (n == null)
                 throw new IllegalArgumentException();
 
-            if (XfUtil.isNullOrEmpty(XmDomUtil.getAttr(n, "label_name"))) {
+            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "label_name"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -232,7 +232,7 @@ public class XfRuntimeDomValidator {
             if (n == null)
                 throw new IllegalArgumentException();
 
-            if (XfUtil.isNullOrEmpty(XmDomUtil.getAttr(n, "format"))) {
+            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "format"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -251,7 +251,7 @@ public class XfRuntimeDomValidator {
             if (n == null)
                 throw new IllegalArgumentException();
 
-            if (XfUtil.isNullOrEmpty(XmDomUtil.getAttr(n, "format"))) {
+            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "format"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -270,7 +270,7 @@ public class XfRuntimeDomValidator {
             if (n == null)
                 throw new IllegalArgumentException();
 
-            if (XfUtil.isNullOrEmpty(XmDomUtil.getAttr(n, "member"))) {
+            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "member"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -289,7 +289,7 @@ public class XfRuntimeDomValidator {
             if (n == null)
                 throw new IllegalArgumentException();
 
-            if (XfUtil.isNullOrEmpty(XmDomUtil.getAttr(n, "sclass"))) {
+            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "sclass"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -298,7 +298,7 @@ public class XfRuntimeDomValidator {
                 return false;
             }
 
-            if (XfUtil.isNullOrEmpty(XmDomUtil.getAttr(n, "type"))) {
+            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "type"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -317,7 +317,7 @@ public class XfRuntimeDomValidator {
             if (n == null)
                 throw new IllegalArgumentException();
 
-            if (XfUtil.isNullOrEmpty(XmDomUtil.getAttr(n, "type"))) {
+            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "type"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -336,7 +336,7 @@ public class XfRuntimeDomValidator {
             if (n == null)
                 throw new IllegalArgumentException();
 
-            if (XfUtil.isNullOrEmpty(XmDomUtil.getAttr(n, "use_name"))) {
+            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "use_name"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -345,7 +345,7 @@ public class XfRuntimeDomValidator {
                 return false;
             }
 
-            if (XfUtil.isNullOrEmpty(XmDomUtil.getAttr(n, "local_name"))) {
+            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "local_name"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -364,7 +364,7 @@ public class XfRuntimeDomValidator {
             if (n == null)
                 throw new IllegalArgumentException();
 
-            if (XfUtil.isNullOrEmpty(XmDomUtil.getAttr(n, "use_name"))) {
+            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "use_name"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -383,7 +383,7 @@ public class XfRuntimeDomValidator {
             if (n == null)
                 throw new IllegalArgumentException();
 
-            if (XfUtil.isNullOrEmpty(XmDomUtil.getAttr(n, "name"))) {
+            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "name"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,

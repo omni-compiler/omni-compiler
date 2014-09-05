@@ -15,8 +15,8 @@ import org.w3c.dom.Document;
 
 import xcodeml.XmException;
 import xcodeml.binding.XmXcodeProgram;
-import xcodeml.f.binding.gen.XbfXcodeProgram;
-import xcodeml.f.binding.gen.XcodeML_FFactory;
+// import xcodeml.f.binding.gen.XbfXcodeProgram;
+// import xcodeml.f.binding.gen.XcodeML_FFactory;
 // import xcodeml.f.decompile.XfDecompileVisitor;
 import xcodeml.f.decompile.XfDecompileDomVisitor;
 import xcodeml.f.decompile.XmfDecompilerContext;
