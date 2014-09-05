@@ -202,7 +202,7 @@ int xmp_nodes_equiv_(xmp_desc_t **d, xmp_desc_t *dn, int *lb, int *ub, int *st){
 void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
 
 #if 1
-   xmp_transpose(*dst_d, *src_d, *opt);
+   xmpf_transpose(*dst_d, *src_d, *opt);
    return;
 #else
   _XMP_array_t *dst_array = *(_XMP_array_t **)dst_d;
@@ -299,5 +299,5 @@ void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
 
 
 void xmp_matmul_(_XMP_array_t **x_d, _XMP_array_t **a_d, _XMP_array_t **b_d){
-   xmp_matmul(*x_d, *a_d, *b_d);
+   xmpf_matmul(*x_d, *a_d, *b_d);
 }
