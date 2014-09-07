@@ -41,6 +41,8 @@ public class ACCtranslateLocalPragma {
     case KERNELS:
       translateKernels(pb); break;
     case DATA:
+    case ENTER_DATA:
+    case EXIT_DATA:
       translateData(pb); break;
     case HOST_DATA:
       //translateHostData(pb); 
