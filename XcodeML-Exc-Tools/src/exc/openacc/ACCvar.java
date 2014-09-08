@@ -361,11 +361,11 @@ public class ACCvar {
       break;
     case Xtype.POINTER:
     {
-      if(isSubarray()){
+		//      if(isSubarray()){
         addrObj = id.Ref();
-      }else{
-        addrObj = id.getAddr();
-      }
+		//      }else{
+		//        addrObj = id.getAddr();
+		//      }
       break;
     }
     case Xtype.ARRAY:
