@@ -2126,6 +2126,7 @@ public class XMPrewriteExpr {
 	        _XACC_split_device_array_BLOCK(_XMP_DESC_a, 0);
 	        _XACC_calc_size(_XMP_DESC_a);
 	        */
+			if(layout != null){
 	        Block initDeviceArrayFuncCall = _globalDecl.createFuncCallBlock("_XACC_init_device_array", Xcons.List(descId.Ref(), onDevice.getDescId().Ref()));
 	        body.add(initDeviceArrayFuncCall);
 	        for(int dim = alignedArray.getDim() - 1; dim >= 0; dim--){
@@ -2136,6 +2137,7 @@ public class XMPrewriteExpr {
 	        Block calcDeviceArraySizeCall = _globalDecl.createFuncCallBlock("_XACC_calc_size", Xcons.List(descId.Ref()));
                 body.add(calcDeviceArraySizeCall);
                 alignedArray.setLayout(layout);
+			}
 	      }
 	      
 	      arrayRef.setIsRewrittedByXmp(true);
