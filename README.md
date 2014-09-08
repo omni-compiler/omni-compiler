@@ -23,12 +23,45 @@ README
  Please use the command for running mpi program on your environment.
     $ mpirun -np 4 test
 
-## Environment Variable
+## Environment Variables
 * XMP_COARRAY_HEAP_SIZE
- The default size is 16MB. Note that on the K computer this value is not used.
- If you want to change this size, please set a value by the Mega Byte.
+ **Note that on the K computer this value is not used.**
+ This value is used to malloc for coarray. Therefore, this value must be 
+ set as a total coarray size. The default size is 16MB.
+ If you want to change this value, please set it as below.
 
-    export XMP_COARRAY_HEAP_SIZE=128
+    export XMP_COARRAY_HEAP_SIZE=128M
+
+* XMP_COARRAY_STRIDE_SIZE
+ **Note that on the K computer this value is not used.**
+ This value is used to malloc for coarray stride operations.
+ The default size is 1MB.
+ If you want to change this value, please set it as below.
+
+    export XMP_COARRAY_STRIDE_SIZE=32M
+
+* XMP_NODE_SIZEn
+ This value specifies the extent of the n'th dimension of the non-primary node
+ array that is declaread as '*' and not the last one. Note that n is 0-origin.
+ For example, when XMP_NODE_SIZE0 and XMP_NODE_SIZE1 are set as follows:
+
+    $ export XMP_NODE_SIZE0=4
+    $ export XMP_NODE_SIZE1=4
+
+ and the program is run on 32 nodes in all, the shape of the node array p declared as
+ follows is assumed to be 4x4x2.
+
+    !$xmp nodes p(*,*,*)
+
+## Compiler Options
+* -openmp
+* -omp
+ These options enable handling of OpenMP directives.
+
+* -max_assumed_shape=N
+ This option specifies the maximum number of assumed-shape array arguments of an XMP/F
+ procedure. The default is 16. If the number of them exceeds this value, the result is
+ not guaranteed.
 
 # Profiling Options in XMP/C
  XMP supports profiler interfaces of Scalasca and tlog.

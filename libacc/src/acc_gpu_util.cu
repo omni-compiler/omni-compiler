@@ -43,8 +43,10 @@ void _ACC_gpu_calloc(void **addr, size_t size)
 void _ACC_gpu_copy(void *host_addr, void *device_addr, size_t size, int direction){
   cudaError_t cuda_err;
   if(direction == _ACC_GPU_COPY_HOST_TO_DEVICE){
+	_ACC_DEBUG("copy host(%p) to dev(%p), size(%zd)\n", host_addr, device_addr, size)
     cuda_err = cudaMemcpy(device_addr, host_addr, size, cudaMemcpyHostToDevice);
   }else if(direction == _ACC_GPU_COPY_DEVICE_TO_HOST){
+	_ACC_DEBUG("copy dev(%p) to host(%p), size(%zd)\n", device_addr, host_addr, size)
     cuda_err = cudaMemcpy(host_addr, device_addr, size, cudaMemcpyDeviceToHost);
   }else{
     _ACC_fatal("invaild direction in 'gpu_copy'");
@@ -55,27 +57,6 @@ void _ACC_gpu_copy(void *host_addr, void *device_addr, size_t size, int directio
     _ACC_fatal( (char *)err_str );
   }
 }
-
-void _ACC_gpu_copy_async_all(void *host_addr, void *device_addr, size_t size, int direction){
-  //printf("_ACC_gpu_copy_async_all\n");
-  cudaError_t cuda_err;
-
-  switch(direction){
-  case _ACC_GPU_COPY_HOST_TO_DEVICE:
-    cuda_err = cudaMemcpyAsync(device_addr, host_addr, size, cudaMemcpyHostToDevice);
-    break;
-  case _ACC_GPU_COPY_DEVICE_TO_HOST:
-    cuda_err = cudaMemcpyAsync(host_addr, device_addr, size, cudaMemcpyDeviceToHost);
-    break;
-  default:
-    _ACC_fatal("invaild direction in 'gpu_copy_async_all'");
-  }
-  
-  if(cuda_err != cudaSuccess){
-    _ACC_gpu_fatal(cuda_err);
-  }
-}
-
 
 void _ACC_gpu_copy_async(void *host_addr, void *device_addr, size_t size, int direction, int id){
   //printf("_ACC_gpu_copy_async\n");

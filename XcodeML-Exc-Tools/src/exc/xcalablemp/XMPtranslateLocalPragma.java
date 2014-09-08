@@ -91,6 +91,10 @@ public class XMPtranslateLocalPragma {
 	{ translateWaitAsync(pb);               break; }
       case TEMPLATE_FIX:
 	{ translateTemplateFix(pb);             break; }
+      case REFLECT_INIT:
+        { translateReflectInit(pb);             break; }
+      case REFLECT_DO:
+      { translateReflectDo(pb);                 break; }
       case GPU_REPLICATE:
         { translateGpuData(pb);			break; }
       case GPU_REPLICATE_SYNC:
@@ -140,8 +144,8 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private void translateTemplateFix(PragmaBlock pb) throws XMPexception {
-
+  private void translateTemplateFix(PragmaBlock pb) throws XMPexception 
+  {
     XobjList templateDecl = (XobjList)pb.getClauses();
     XobjList templateNameList = (XobjList)templateDecl.getArg(1);
     XobjList templateDeclCopy = (XobjList)templateDecl.copy();
@@ -154,6 +158,129 @@ public class XMPtranslateLocalPragma {
     }
   }
 
+  private void translateReflectInit(PragmaBlock pb) throws XMPexception 
+  {
+    XobjList funcArgs     = (XobjList)pb.getClauses().getArg(0);
+    XobjList widthList    = (XobjList)pb.getClauses().getArg(1);
+    XobjList acc_or_host1 = (XobjList)pb.getClauses().getArg(2);
+    XobjList acc_or_host2 = (XobjList)pb.getClauses().getArg(3);
+    BlockList funcBody    = Bcons.emptyBody();
+
+    boolean isHost = false;
+    boolean isAcc  = false;
+
+    if(acc_or_host1.Nargs() == 0 && acc_or_host2.Nargs() == 0){
+      isHost = true;
+    }
+    else{
+      if(acc_or_host1.Nargs() != 0){
+        if(acc_or_host1.getArg(0).getName() == "acc"){
+          isAcc = true;
+        }
+        else if(acc_or_host1.getArg(0).getName() == "host"){
+          isHost = true;
+        }
+      }
+      if(acc_or_host2.Nargs() != 0){
+        if(acc_or_host2.getArg(0).getName() == "acc"){
+          isAcc = true;
+        }
+        else if(acc_or_host2.getArg(0).getName() == "host"){
+          isHost = true;
+        }
+      }
+    }
+
+    if(isHost){
+      XMP.fatal("reflect_init for host has been not developed yet.");
+    }
+
+    Ident funcIdAcc = _globalDecl.declExternFunc("_XMP_reflect_init_acc");
+
+    if(widthList.Nargs() != 0){
+      XMP.fatal("width clause in reflect_init has been not developed yet.");
+    }
+
+    XobjList args = Xcons.List();
+    args.add(Xcons.String("USE_DEVICE"));
+    for(int i=0;i<funcArgs.Nargs();i++){
+      Xobject array = funcArgs.getArg(i);
+      String arrayName = array.getString();
+      Ident arrayId = _globalDecl.findVarIdent(XMP.ADDR_PREFIX_ + arrayName);
+      args.add(Xcons.List(arrayId.Ref()));
+
+      XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
+      if(alignedArray == null){
+        XMP.fatal(arrayName + " is not aligned.");
+      }
+      if(!alignedArray.hasShadow()){
+        XMP.fatal(arrayName + " is not shadowed.");
+      }
+
+      Ident arrayDesc = _globalDecl.findVarIdent(XMP.DESC_PREFIX_ + arrayName);
+      funcBody.add(Bcons.Statement(funcIdAcc.Call(Xcons.List(array, arrayDesc.Ref()))));
+    }
+   
+    Block funcCallBlock = Bcons.PRAGMA(Xcode.ACC_PRAGMA, "HOST_DATA", (Xobject)Xcons.List(args), funcBody);
+
+    pb.replace(funcCallBlock);
+  }
+
+  private void translateReflectDo(PragmaBlock pb) throws XMPexception
+  {
+    XobjList funcArgs     = (XobjList)pb.getClauses().getArg(0);
+    XobjList acc_or_host1 = (XobjList)pb.getClauses().getArg(1);
+    XobjList acc_or_host2 = (XobjList)pb.getClauses().getArg(2);
+    boolean isHost = false;
+    boolean isAcc  = false;
+
+    if(acc_or_host1.Nargs() == 0 && acc_or_host2.Nargs() == 0){
+      isHost = true;
+    }
+    else{
+      if(acc_or_host1.Nargs() != 0){
+        if(acc_or_host1.getArg(0).getName() == "acc"){
+          isAcc = true;
+        }
+        else if(acc_or_host1.getArg(0).getName() == "host"){
+          isHost = true;
+        }
+      }
+      if(acc_or_host2.Nargs() != 0){
+        if(acc_or_host2.getArg(0).getName() == "acc"){
+          isAcc = true;
+        }
+        else if(acc_or_host2.getArg(0).getName() == "host"){
+          isHost = true;
+        }
+      }
+    }
+
+    if(isHost){
+      XMP.fatal("reflect_do for host has been not developed yet.");
+    }
+
+    Ident funcIdAcc = _globalDecl.declExternFunc("_XMP_reflect_do_acc");
+    Block funcBody  = Bcons.emptyBlock();
+    
+    for(int i=0;i<funcArgs.Nargs();i++){
+      Xobject array = funcArgs.getArg(i);
+      String arrayName = array.getString();
+
+      XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
+      if(alignedArray == null){
+        XMP.fatal(arrayName + " is not aligned.");
+      }
+      if(!alignedArray.hasShadow()){
+        XMP.fatal(arrayName + " is not shadowed.");
+      }
+      Ident arrayDesc = _globalDecl.findVarIdent(XMP.DESC_PREFIX_ + arrayName);
+      funcBody.add(funcIdAcc.Call(Xcons.List(arrayDesc.Ref())));
+    }
+
+    pb.replace(funcBody);
+  }
+  
   private void translateDistribute(PragmaBlock pb) throws XMPexception {
     checkDeclPragmaLocation(pb);
 
@@ -1156,7 +1283,7 @@ public class XMPtranslateLocalPragma {
       XobjList reductionRef = (XobjList)it.next();
       Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb,
                                                                        true, schedBaseBlock, reductionInitIfBlock);
-      String reductionFuncType = createReductionFuncType(reductionRef, pb);
+      String reductionFuncType = createReductionFuncType(reductionRef, pb, false);
 
       reductionBody.add(createReductionFuncCallBlock(false, reductionFuncType + "_CLAUSE",
                                                      null, reductionFuncArgsList));
@@ -1493,9 +1620,21 @@ public class XMPtranslateLocalPragma {
 
     // create function arguments
     XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
+    XobjList accOrHost = (XobjList)reductionDecl.getArg(2);
+    boolean isHost = false;
+    boolean isACC = false;
+    for (Xobject x : accOrHost){
+      if(x.getSym().equals("acc")) isACC = true;
+      else if(x.getSym().equals("host")) isHost = true;
+    }
+    if(!isHost && !isACC){
+      isHost = true;
+    }else if(isHost && isACC){
+      XMP.fatal("reduction of both host and acc is unimplemented");
+    }
     Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb,
                                                                      false, null, null);
-    String reductionFuncType = createReductionFuncType(reductionRef, pb);
+    String reductionFuncType = createReductionFuncType(reductionRef, pb, isACC);
 
     // create function call
     Block reductionFuncCallBlock = null;
@@ -1520,10 +1659,20 @@ public class XMPtranslateLocalPragma {
       }
     }
     
+    if(isACC){
+      XobjList vars = Xcons.List();
+      XobjList reductionSpecList = (XobjList)reductionRef.getArg(1);
+      for(Xobject x : reductionSpecList){
+        vars.add(x.getArg(0));
+      }
+      reductionFuncCallBlock =
+      Bcons.PRAGMA(Xcode.ACC_PRAGMA, "HOST_DATA",
+            Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"), vars)), Bcons.blockList(reductionFuncCallBlock));
+    }
     pb.replace(reductionFuncCallBlock);
 
     // add function calls for profiling                                                                                    
-    Xobject profileClause = reductionDecl.getArg(2);
+    Xobject profileClause = reductionDecl.getArg(3);
     if( _all_profile || (profileClause != null && _selective_profile)){
         if (doScalasca == true) {
             XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp reduction:" + pb.getLineNo()));
@@ -1542,7 +1691,7 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private String createReductionFuncType(XobjList reductionRef, PragmaBlock pb) throws XMPexception {
+  private String createReductionFuncType(XobjList reductionRef, PragmaBlock pb, boolean isACC) throws XMPexception {
     XobjInt reductionOp = (XobjInt)reductionRef.getArg(0);
     switch (reductionOp.getInt()) {
       case XMPcollective.REDUCE_SUM:
@@ -1556,12 +1705,12 @@ public class XMPtranslateLocalPragma {
       case XMPcollective.REDUCE_LXOR:
       case XMPcollective.REDUCE_MAX:
       case XMPcollective.REDUCE_MIN:
-        return new String("reduce");
+        return isACC? new String("reduce_acc") : new String("reduce");
       case XMPcollective.REDUCE_FIRSTMAX:
       case XMPcollective.REDUCE_FIRSTMIN:
       case XMPcollective.REDUCE_LASTMAX:
       case XMPcollective.REDUCE_LASTMIN:
-        return new String("reduce_FLMM");
+        return isACC? new String("reduce_acc_FLMM") : new String("reduce_FLMM");
       default:
         throw new XMPexception("unknown reduce operation");
     }
@@ -2787,7 +2936,9 @@ public class XMPtranslateLocalPragma {
               tempArgs.add(Xcons.Cast(castType, t.getArg(1)));
             }
             // stride
-            if (t.getArg(2) == null) tempArgs.add(Xcons.Cast(castType, Xcons.IntConstant(1)));
+            if (t.getArg(2) == null || t.getArg(2).equals(Xcons.IntConstant(1))){
+              tempArgs.add(Xcons.Cast(castType, Xcons.IntConstant(1)));
+            }
             else {
               splitComm = true;
               // XXX stride: always int

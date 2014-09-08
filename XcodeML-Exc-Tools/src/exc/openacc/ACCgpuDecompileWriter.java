@@ -458,6 +458,11 @@ public class ACCgpuDecompileWriter extends PrintWriter {
           if(ACC.debugFlag){
             println("_ACC_GPU_CHECK_ERROR(\"" + funcName + "\");"); //for debugging
           }
+        }else if(!propAsync.isEmpty()){
+          //_ACC_gpu_sync_kernel(id)のような関数呼び出しにする
+          print("if(");
+          print(propAsync.getArg(0));
+          println(" == ACC_ASYNC_SYNC) _ACC_gpu_wait(ACC_ASYNC_SYNC);");
         }
         print("}");
       }

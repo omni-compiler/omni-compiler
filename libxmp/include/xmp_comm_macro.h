@@ -14,6 +14,12 @@ _XMP_reduce_NODES_ENTIRE(_XMP_get_execution_nodes(), addr, count, datatype, op)
 #define _XMP_M_REDUCE_FLMM_EXEC(addr, count, datatype, op, num_locs, ...) \
 _XMP_reduce_FLMM_NODES_ENTIRE(_XMP_get_execution_nodes(), addr, count, datatype, op, num_locs, __VA_ARGS__)
 
+#define _XMP_M_REDUCE_ACC_EXEC(addr, count, datatype, op) \
+_XMP_reduce_acc_NODES_ENTIRE(_XMP_get_execution_nodes(), addr, count, datatype, op)
+
+#define _XMP_M_REDUCE_ACC_FLMM_EXEC(addr, count, datatype, op, num_locs, ...) \
+_XMP_reduce_acc_FLMM_NODES_ENTIRE(_XMP_get_execution_nodes(), addr, count, datatype, op, num_locs, __VA_ARGS__)
+
 // bcast
 #define _XMP_M_BCAST_EXEC_OMITTED(addr, count, datatype_size) \
 _XMP_bcast_NODES_ENTIRE_OMITTED(_XMP_get_execution_nodes(), addr, count, datatype_size)

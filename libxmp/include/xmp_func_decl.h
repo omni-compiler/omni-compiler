@@ -154,6 +154,20 @@ extern void _XMP_coarray_shortcut_put_f(const int*, const void*, const void*, co
 extern void _XMP_coarray_shortcut_get(const int, const void*, const void*, const size_t, const size_t, const size_t);
 extern void _XMP_coarray_shortcut_get_f(const int*, const void*, const void*, const size_t*, const size_t*, const size_t*);
 
+// xmp_reflect_acc.c
+extern void _XMP_reflect_init_acc(void *, void *);
+extern void _XMP_reflect_do_acc(void *);
+extern void _XMP_reflect_acc(void *);
+
+#ifdef _XMP_TCA
+// xmp_tca.c
+extern void _XMP_init_tca();
+extern void _XMP_alloc_tca(void *);
+extern void _XMP_create_TCA_handle(void *, void *);
+extern void _XMP_create_TCA_desc(void *);
+extern void _XMP_reflect_do_tca(_XMP_array_t *);
+#endif
+
 // xmp_gmove.c
 extern void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, void *array, ...);
 extern int _XMP_gmove_HOMECOPY_SCALAR(void *array, ...);
@@ -223,6 +237,13 @@ extern void _XMP_reduce_FLMM_CLAUSE(void *data_addr, int count, int datatype, in
 extern int _XMP_init_reduce_comm_NODES(void *nodes, ...);
 extern int _XMP_init_reduce_comm_TEMPLATE(void *template, ...);
 
+// xmp_reduce_acc.c
+extern void _XMP_reduce_acc_NODES_ENTIRE(void *nodes, void *dev_addr, int count, int datatype, int op);
+extern void _XMP_reduce_acc_FLMM_NODES_ENTIRE(void *nodes, void *addr, int count, int datatype, int op, int num_locs, ...);
+extern void _XMP_reduce_acc_CLAUSE(void *dev_addr, int count, int datatype, int op);
+extern void _XMP_reduce_acc_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, int num_locs, ...);
+
+
 // xmp_reflect.c
 extern void _XMP_set_reflect__(void *a, int dim, int lwidth, int uwidth, int is_periodic);
 extern void _XMP_reflect__(char *a);
@@ -237,6 +258,7 @@ extern char *_XMP_desc_of(void *p);
 
 // xmp_shadow.c
 extern void _XMP_init_shadow(void *array, ...);
+
 extern void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_addr, void *array_desc, int array_index);
 extern void _XMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_addr, void *array_desc, int array_index);
 extern void _XMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_buffer,

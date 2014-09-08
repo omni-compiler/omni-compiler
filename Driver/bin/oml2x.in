@@ -28,6 +28,20 @@ if [ ! -z "${OM_TRANSLATORS}" ]; then
         fi
     done;
 fi
+newOpts=''
+for i in ${OM_OPTIONS}; do
+    case "${i}" in
+        -enable-gpu)
+            if ls *.xmpgpu.o >/dev/null 2>&1; then
+                INPFILES=("${INPFILES[@]}" *.xmpgpu.o)
+            fi;;
+        -OPENMP)
+	    newOpts="${newOpts} -fopenmp";;
+        *)
+            newOpts="${newOpts} ${i}";;
+    esac
+done
+OM_OPTIONS="${newOpts}"
 
 #--- unescape space characters, which are espaced in omdriver.c (ID=278)
 OM_OPTION_ARR=()

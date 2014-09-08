@@ -208,6 +208,32 @@ int parse_ACC_pragma()
 	goto chk_end;
     }
 
+    if(PG_IS_IDENT("enter")){
+	pg_get_token();
+	if(pg_tok == PG_IDENT){
+	    if(PG_IS_IDENT("data")){	/* enter data */
+		pg_ACC_pragma = ACC_ENTER_DATA;
+		pg_get_token();
+		if((pg_ACC_list = parse_ACC_clauses()) == NULL) goto syntax_err;
+		ret= PRAGMA_EXEC;
+		goto chk_end;
+	    }
+	}
+    }
+
+    if(PG_IS_IDENT("exit")){
+	pg_get_token();
+	if(pg_tok == PG_IDENT){
+	    if(PG_IS_IDENT("data")){	/* enter data */
+		pg_ACC_pragma = ACC_EXIT_DATA;
+		pg_get_token();
+		if((pg_ACC_list = parse_ACC_clauses()) == NULL) goto syntax_err;
+		ret= PRAGMA_EXEC;
+		goto chk_end;
+	    }
+	}
+    }
+
     addError(NULL,"ACC: unknown ACC directive, '%s'",pg_tok_buf);
   syntax_err:
     return 0;
@@ -253,6 +279,10 @@ static CExpr* parse_ACC_clauses()
 	  pg_get_token();
 	  if((v = parse_ACC_namelist()) == NULL) goto syntax_err;
 	  c = ACC_PG_LIST(ACC_CREATE,v);
+      } else if(PG_IS_IDENT("delete")){
+	  pg_get_token();
+	  if((v = parse_ACC_namelist()) == NULL) goto syntax_err;
+	  c = ACC_PG_LIST(ACC_DELETE,v);
       } else if(PG_IS_IDENT("present")){
 	  pg_get_token();
 	  if((v = parse_ACC_namelist()) == NULL) goto syntax_err;
@@ -392,7 +422,7 @@ static CExpr* parse_ACC_namelist()
       args = exprListAdd(args, v);
     }else{
       list = parse_ACC_C_subscript_list();
-      CExprOfBinaryNode* arrayRef = exprBinary(EC_ARRAY_REF, v, list);
+      CExpr* arrayRef = exprBinary(EC_ARRAY_REF, v, list);
       args = exprListAdd(args, (CExpr*)arrayRef);
     }
 

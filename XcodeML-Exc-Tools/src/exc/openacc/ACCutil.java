@@ -223,5 +223,25 @@ public class ACCutil {
 	  }
     return name; 
   }
+  
+  public static Block createFuncCallBlockWithArrayRange(String funcName, XobjList args, XobjList arrayArgs)
+  {
+    XobjList funcArgs = (args != null)? (XobjList)args.copy() : Xcons.List();
+    int i = 0;
+    BlockList body = Bcons.emptyBody();
+    XobjList declList = Xcons.List();
+    for(Xobject x : arrayArgs){
+      XobjList arrayElements = (XobjList)x;
+      Ident id = body.declLocalIdent("_ACC_funcarg_"+i, Xtype.Array(Xtype.unsignedlonglongType, null));
+      id.setIsDeclared(true);
+      declList.add(Xcons.List(Xcode.VAR_DECL, id, arrayElements, null));
+      funcArgs.add(id.Ref());
+      i++;
+    }
+    
+    body.setDecls(declList);
+    body.add(ACCutil.createFuncCallBlock(funcName, funcArgs));
+    return Bcons.COMPOUND(body);
+  }
 }
 

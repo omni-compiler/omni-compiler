@@ -95,6 +95,7 @@ public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializa
     private Boolean isSave_;
     private Boolean isParameter_;
     private Boolean isAllocatable_;
+    private Boolean isCrayPointer_;   // (ID=60)
     private String intent_;
     private XbfKind kind_;
     private IXbfFbasicTypeChoice content_;
@@ -237,6 +238,7 @@ public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializa
         setIsSave(source.getIsSave());
         setIsParameter(source.getIsParameter());
         setIsAllocatable(source.getIsAllocatable());
+        setIsCrayPointer(source.getIsCrayPointer());    // (ID=60)
         setIntent(source.getIntent());
         if (source.kind_ != null) {
             setKind((XbfKind)source.getKind().clone());
@@ -295,6 +297,7 @@ public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializa
         isSave_ = URelaxer.getAttributePropertyAsBooleanObject(element, "is_save");
         isParameter_ = URelaxer.getAttributePropertyAsBooleanObject(element, "is_parameter");
         isAllocatable_ = URelaxer.getAttributePropertyAsBooleanObject(element, "is_allocatable");
+        isCrayPointer_ = URelaxer.getAttributePropertyAsBooleanObject(element, "is_cray_pointer");  // (ID=60)
         intent_ = URelaxer.getAttributePropertyAsString(element, "intent");
         if (XbfKind.isMatch(stack)) {
             setKind(factory.createXbfKind(stack));
@@ -362,6 +365,9 @@ public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializa
         }
         if (this.isAllocatable_ != null) {
             URelaxer.setAttributePropertyByBoolean(element, "is_allocatable", this.isAllocatable_);
+        }
+        if (this.isCrayPointer_ != null) {  // (ID=60)
+            URelaxer.setAttributePropertyByBoolean(element, "is_allocatable", this.isCrayPointer_);
         }
         if (this.intent_ != null) {
             URelaxer.setAttributePropertyByString(element, "intent", this.intent_);
@@ -988,6 +994,67 @@ public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializa
     }
 
     /**
+     * Gets the boolean property <b>isCrayPointer</b>.  (ID=60)
+     *
+     * @return boolean
+     */
+    public boolean getIsCrayPointer() {
+        if (isCrayPointer_ == null) {
+            return(false);
+        }
+        return (isCrayPointer_.booleanValue());
+    }
+
+    /**
+     * Gets the boolean property <b>isCrayPointer</b>.  (ID=60)
+     *
+     * @param isCrayPointer
+     * @return boolean
+     */
+    public boolean getIsCrayPointer(boolean isCrayPointer) {
+        if (isCrayPointer_ == null) {
+            return(isCrayPointer);
+        }
+        return (this.isCrayPointer_.booleanValue());
+    }
+
+    /**
+     * Gets the boolean property <b>isCrayPointer</b>.  (ID=60)
+     *
+     * @return Boolean
+     */
+    public Boolean getIsCrayPointerAsBoolean() {
+        return (isCrayPointer_);
+    }
+
+    /**
+     * Check the boolean property <b>isCrayPointer</b>.  (ID=60)
+     *
+     * @return boolean
+     */
+    public boolean checkIsCrayPointer() {
+        return (isCrayPointer_ != null);
+    }
+
+    /**
+     * Sets the boolean property <b>isCrayPointer</b>.  (ID=60)
+     *
+     * @param isCrayPointer
+     */
+    public void setIsCrayPointer(boolean isCrayPointer) {
+        this.isCrayPointer_ = new Boolean(isCrayPointer);
+    }
+
+    /**
+     * Sets the boolean property <b>isCrayPointer</b>.  (ID=60)
+     *
+     * @param isCrayPointer
+     */
+    public void setIsCrayPointer(Boolean isCrayPointer) {
+        this.isCrayPointer_ = isCrayPointer;
+    }
+
+    /**
      * Gets the String property <b>intent</b>.
      *
      * @return String
@@ -1137,6 +1204,11 @@ public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializa
             buffer.append(URelaxer.getString(getIsAllocatable()));
             buffer.append("\"");
         }
+        if (isCrayPointer_ != null) {   // (ID=60)
+            buffer.append(" is_cray_pointer=\"");
+            buffer.append(URelaxer.getString(getIsCrayPointer()));
+            buffer.append("\"");
+        }
         if (intent_ != null) {
             buffer.append(" intent=\"");
             buffer.append(URelaxer.escapeAttrQuot(URelaxer.getString(getIntent())));
@@ -1217,6 +1289,11 @@ public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializa
             buffer.write(URelaxer.getString(getIsAllocatable()));
             buffer.write("\"");
         }
+        if (isCrayPointer_ != null) {   // (ID=60)
+            buffer.write(" is_cray_pointer=\"");
+            buffer.write(URelaxer.getString(getIsCrayPointer()));
+            buffer.write("\"");
+        }
         if (intent_ != null) {
             buffer.write(" intent=\"");
             buffer.write(URelaxer.escapeAttrQuot(URelaxer.getString(getIntent())));
@@ -1294,6 +1371,11 @@ public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializa
         if (isAllocatable_ != null) {
             buffer.print(" is_allocatable=\"");
             buffer.print(URelaxer.getString(getIsAllocatable()));
+            buffer.print("\"");
+        }
+        if (isCrayPointer_ != null) {    // (ID=60)
+            buffer.print(" is_cray_pointer=\"");
+            buffer.print(URelaxer.getString(getIsCrayPointer()));
             buffer.print("\"");
         }
         if (intent_ != null) {
@@ -1437,6 +1519,15 @@ public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializa
      *
      * @return String
      */
+    public String getIsCrayPointerAsString() {
+        return (URelaxer.getString(getIsCrayPointer()));
+    }
+
+    /**
+     * Gets the property value as String.
+     *
+     * @return String
+     */
     public String getIntentAsString() {
         return (URelaxer.getString(getIntent()));
     }
@@ -1529,6 +1620,15 @@ public class XbfFbasicType extends xcodeml.f.XmfObj implements java.io.Serializa
      */
     public void setIsAllocatableByString(String string) {
         setIsAllocatable(new Boolean(string).booleanValue());
+    }
+
+    /**
+     * Sets the property value by String. (ID=60)
+     *
+     * @param string
+     */
+    public void setIsCrayPointerByString(String string) {
+        setIsCrayPointer(new Boolean(string).booleanValue());
     }
 
     /**

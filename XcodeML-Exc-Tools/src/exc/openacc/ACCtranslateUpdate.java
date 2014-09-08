@@ -6,14 +6,6 @@ import exc.block.*;
 import exc.object.*;
 
 public class ACCtranslateUpdate {
-  private final static String GPU_COPY_DATA_FUNC_NAME = "_ACC_gpu_copy_data";
-  private final static String GPU_ASYNC_FUNC_SUFFIX = "_async";
-  private final static String GPU_ASYNC_DEFAULT_FUNC_SUFFIX = "_async_default";
-  private final static int GPU_COPY_HOST_TO_DEVICE = 400;
-  private final static int GPU_COPY_DEVICE_TO_HOST = 401;
-  private final static int ACC_ASYNC_SYNC = -1;
-  private final static int ACC_ASYNC_NOVAL = -2;
-  
   private PragmaBlock pb;
   private ACCinfo updateInfo;
   private ACCglobalDecl globalDecl;
@@ -46,40 +38,45 @@ public class ACCtranslateUpdate {
 
       Xobject dirObj = null;
       if(var.copiesDtoH()){ //update host
-        dirObj = Xcons.IntConstant(GPU_COPY_DEVICE_TO_HOST);
+        dirObj = Xcons.IntConstant(ACC.DEVICE_TO_HOST);
       }else if(var.copiesHtoD()){ //update device
-        dirObj = Xcons.IntConstant(GPU_COPY_HOST_TO_DEVICE);
+        dirObj = Xcons.IntConstant(ACC.HOST_TO_DEVICE);
       }else{
         throw new ACCexception(var + " does not have update direction");
       }
 
-      //String copyFuncName = GPU_COPY_DATA_FUNC_NAME;
-      //XobjList copyFuncArgs = Xcons.List(hostDescId.Ref(), var.getOffset(), var.getSize(), dirObj);
-      String copyFuncName = null;//"_ACC_gpu2_copy_data";//GPU_COPY_DATA_FUNC_NAME;
-      Xobject asyncExpr = Xcons.IntConstant(ACC_ASYNC_SYNC);
+      String copyFuncName = null;
+      Xobject asyncExpr = Xcons.IntConstant(ACC.ACC_ASYNC_SYNC);
       if(updateInfo.isAsync()){
         Xobject expr = updateInfo.getAsyncExp(); 
         if(expr != null){ //async(expr)
 	    asyncExpr = expr;
         }else{
-	    asyncExpr = Xcons.IntConstant(ACC_ASYNC_NOVAL);
+	    asyncExpr = Xcons.IntConstant(ACC.ACC_ASYNC_NOVAL);
         }
       }
 
       XobjList copyFuncArgs = Xcons.List(hostDescId.Ref(), dirObj, asyncExpr);
+      Block copyFunc;
       if(var.isSubarray()){
         XobjList subarrayList = var.getSubscripts();
+        XobjList lowerList = Xcons.List();
+        XobjList lengthList = Xcons.List();
         for(Xobject x : subarrayList){
           XobjList rangeList = (XobjList)x;
-          copyFuncArgs.add(rangeList.left());
-          copyFuncArgs.add(rangeList.right());
+          //copyFuncArgs.add(rangeList.left());
+          //copyFuncArgs.add(rangeList.right());
+          lowerList.add(rangeList.left());
+          lengthList.add(rangeList.right());
         }
-	copyFuncName = "_ACC_gpu2_copy_subdata";
+	copyFuncName = ACC.COPY_SUBDATA_FUNC_NAME;
+	copyFunc = ACCutil.createFuncCallBlockWithArrayRange(copyFuncName, copyFuncArgs, Xcons.List(lowerList, lengthList));
       }else{
-	copyFuncName = "_ACC_gpu2_copy_data";
+	copyFuncName = ACC.COPY_DATA_FUNC_NAME;
+	copyFunc = ACCutil.createFuncCallBlock(copyFuncName, copyFuncArgs);
       }
 
-      Block copyFunc = ACCutil.createFuncCallBlock(copyFuncName, copyFuncArgs);
+      //Block copyFunc = ACCutil.createFuncCallBlock(copyFuncName, copyFuncArgs);
       replaceBody.add(copyFunc);
     }
     

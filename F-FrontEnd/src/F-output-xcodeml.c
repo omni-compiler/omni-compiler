@@ -2568,7 +2568,7 @@ outx_udefOp(int l, expv v)
         TOPT_TYPEONLY|TOPT_NEXTLINE);
 
     outx_expv(l1, EXPR_ARG2(v));
-    if(EXPR_ARG3(v) != NULL)
+    if(EXPR_CODE(v) == F95_USER_DEFINED_BINARY_EXPR)
         outx_expv(l1, EXPR_ARG3(v));
 
     outx_expvClose(l, v);
@@ -3370,7 +3370,13 @@ outx_functionType_EXT(int l, EXT_ID ep)
         outx_true(TYPE_IS_RECURSIVE(tp), "is_recursive");
         outx_true(TYPE_IS_PURE(tp), "is_pure");
         outx_true(TYPE_IS_ELEMENTAL(tp), "is_elemental");
-        outx_true(TYPE_IS_EXTERNAL(tp), "is_external");
+
+	if (TYPE_IS_EXTERNAL(tp) ||
+	    (XMP_flag && !TYPE_IS_FOR_FUNC_SELF(tp) &&
+	     !EXT_PROC_IS_INTRINSIC(ep) && !EXT_PROC_IS_MODULE_PROCEDURE(ep) && !EXT_PROC_IS_INTERNAL(ep))){
+	  outx_true(TRUE, "is_external");
+	}
+
         outx_true(TYPE_IS_PUBLIC(tp), "is_public");
         outx_true(TYPE_IS_PRIVATE(tp), "is_private");
     }

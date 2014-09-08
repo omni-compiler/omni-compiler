@@ -78,6 +78,12 @@ public class XMParray {
     return template.getDistMannerAt(idx) != XMPtemplate.DUPLICATION;
   }
 
+  public int getDistMannerAt(int index){
+    int idx = dims.elementAt(index).getAlignSubscriptIndex();
+    if(idx < 0) return -1; // not distributed
+    return template.getDistMannerAt(idx);
+  }    
+
   public void setAlignSubscriptIndexAt(int alignSubscriptIndex, 
 				       int index) {
     dims.elementAt(index).align_subscript_index = alignSubscriptIndex;
@@ -94,6 +100,10 @@ public class XMParray {
 
   public Xobject getAlignSubscriptOffsetAt(int index) {
     return dims.elementAt(index).align_subscript_offset;
+  }
+
+  public Ident getBlkOffsetVarAt(int index) {
+    return dims.elementAt(index).getArrayBlkOffsetVar();
   }
 
   public void setShadow(int left, int right, int index) {
@@ -417,6 +427,8 @@ public class XMParray {
       info.setArrayInfoVar(env.declIdent(desc_id_name+"_size_"+dim_i,
 					 Xtype.FintType),
 			   env.declIdent(desc_id_name+"_off_"+dim_i,
+					 Xtype.FintType),
+			   env.declIdent(desc_id_name+"_blkoff_"+dim_i,
 					 Xtype.FintType));
       dim_i++;
     }
@@ -593,7 +605,8 @@ public class XMParray {
 	body.add(f.callSubroutine(Xcons.List(descId.Ref(),
 					     Xcons.IntConstant(i),
 					     info.getArraySizeVar().Ref(),
-					     info.getArrayOffsetVar().Ref())));
+					     info.getArrayOffsetVar().Ref(),
+					     info.getArrayBlkOffsetVar().Ref())));
 	if(alloc_size == null)
 	  alloc_size = info.getArraySizeVar().Ref();
 	else
@@ -616,7 +629,8 @@ public class XMParray {
 	body.add(f.callSubroutine(Xcons.List(descId.Ref(),
 					     Xcons.IntConstant(i),
 					     info.getArraySizeVar().Ref(),
-					     info.getArrayOffsetVar().Ref())));
+					     info.getArrayOffsetVar().Ref(),
+					     info.getArrayBlkOffsetVar().Ref())));
 	if (isDistributed(i)){
 	    // distributed
 	    Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,
@@ -725,9 +739,10 @@ public class XMParray {
 	f = env.declInternIdent(XMP.array_get_local_size_f,
 			      Xtype.FsubroutineType);
 	st.insert(f.callSubroutine(Xcons.List(descId.Ref(),
-					     Xcons.IntConstant(i),
-					     info.getArraySizeVar().Ref(),
-					     info.getArrayOffsetVar().Ref())));
+					      Xcons.IntConstant(i),
+					      info.getArraySizeVar().Ref(),
+					      info.getArrayOffsetVar().Ref(),
+					      info.getArrayBlkOffsetVar().Ref())));
 	if(alloc_size == null)
 	  alloc_size = info.getArraySizeVar().Ref();
 	else
@@ -748,9 +763,10 @@ public class XMParray {
 	f = env.declInternIdent(XMP.array_get_local_size_f,
 			      Xtype.FsubroutineType);
 	st.insert(f.callSubroutine(Xcons.List(descId.Ref(),
-					     Xcons.IntConstant(i),
-					     info.getArraySizeVar().Ref(),
-					     info.getArrayOffsetVar().Ref())));
+					      Xcons.IntConstant(i),
+					      info.getArraySizeVar().Ref(),
+					      info.getArrayOffsetVar().Ref(),
+					      info.getArrayBlkOffsetVar().Ref())));
 	if (isDistributed(i)){
 	    // distributed
 	    Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,

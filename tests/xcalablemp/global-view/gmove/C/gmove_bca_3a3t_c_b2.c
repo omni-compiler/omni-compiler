@@ -1,7 +1,8 @@
 #define NMAX 16
 #include <stdio.h>
 #include <stdlib.h>
-#include <xmp.h>
+
+extern int chk_int(int ierr);
 
 int n=NMAX;
 int a[n][n][n],b[n][n][n];
@@ -15,9 +16,7 @@ int a[n][n][n],b[n][n][n];
 
 int main(){
 
-  int i0,i1,i2,myrank,ierr;
-
-  myrank=xmp_node_num();
+  int i0,i1,i2,ierr;
 
 #pragma xmp loop (i0,i1,i2) on tx(i0,i1,i2)
   for(i0=0;i0<n;i0++){
@@ -51,10 +50,5 @@ int main(){
   }
 
 #pragma xmp reduction (MAX:ierr)
-  if (myrank ==1){
-    printf("max error=%d\n",ierr);
-  }
-
-  return ierr;
-
+  chk_int(ierr);
 }

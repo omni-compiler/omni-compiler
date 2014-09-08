@@ -19,23 +19,19 @@ static uint64_t *_each_addr, _laddr;
 static double *_token;
 static post_wait_obj_t pw;
 static struct FJMPI_Rdma_cq cq;
-static int _myrank, _size;
 
 void _xmp_fjrdma_post_wait_initialize()
 {
-  MPI_Comm_size(MPI_COMM_WORLD, &_size);
-  MPI_Comm_rank(MPI_COMM_WORLD, &_myrank);
-
   pw.wait_num  = 0;
   pw.list      = malloc(sizeof(request_list_t) * _XMP_POST_WAIT_QUEUESIZE);
   pw.list_size = _XMP_POST_WAIT_QUEUESIZE;
   
-  _each_addr = _XMP_alloc(sizeof(uint64_t) * _size);
+  _each_addr = _XMP_alloc(sizeof(uint64_t) * _XMP_world_size);
   _token     = _XMP_alloc(sizeof(double));
   _laddr     = FJMPI_Rdma_reg_mem(POST_WAIT_ID, _token, sizeof(double));
 
-  for(int i=0;i<_size;i++)
-    if(i != _myrank)
+  for(int i=0;i<_XMP_world_size;i++)
+    if(i != _XMP_world_rank)
       while((_each_addr[i] = FJMPI_Rdma_get_remote_addr(i, POST_WAIT_ID)) == FJMPI_RDMA_ERROR);
 }
 
@@ -61,7 +57,7 @@ void _xmp_fjrdma_post(const int target_node, const int tag)
     exit(1);
   }
 
-  if(target_node != _myrank){
+  if(target_node != _XMP_world_rank){
     FJMPI_Rdma_put(target_node, tag, _each_addr[target_node], _laddr, sizeof(double), FLAG_NIC_POST_WAIT);
     while(FJMPI_Rdma_poll_cq(SEND_NIC_POST, &cq) != FJMPI_RDMA_NOTICE);
   }

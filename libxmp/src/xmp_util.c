@@ -40,6 +40,10 @@ void _XMP_fatal(char *msg) {
   MPI_Abort(MPI_COMM_WORLD, 1);
 }
 
+void _XMP_fatal_nomsg(){
+  MPI_Abort(MPI_COMM_WORLD, 1);
+}
+
 void _XMP_unexpected_error(void) {
   _XMP_fatal("unexpected error in runtime");
 }

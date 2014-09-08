@@ -14,7 +14,6 @@ typedef struct post_wait_obj{
 } post_wait_obj_t;
 
 static post_wait_obj_t pw;
-static int _mynode;
 
 void _xmp_gasnet_post_wait_initialize()
 {
@@ -22,7 +21,6 @@ void _xmp_gasnet_post_wait_initialize()
   pw.wait_num            = 0;
   pw.list                = malloc(sizeof(request_list_t) * _XMP_POST_WAIT_QUEUESIZE);
   pw.list_size           = _XMP_POST_WAIT_QUEUESIZE;
-  _mynode                = gasnet_mynode();
 }
 
 static void _xmp_pw_push(const int node, const int tag)
@@ -53,10 +51,10 @@ void _xmp_gasnet_post_request(gasnet_token_t token, const int node, const int ta
 
 void _xmp_gasnet_post(const int target_node, const int tag)
 {
-  if(target_node == _mynode){
-    _xmp_gasnet_do_post(_mynode, tag);
+  if(target_node == _XMP_world_rank){
+    _xmp_gasnet_do_post(_XMP_world_rank, tag);
   } else{
-    gasnet_AMRequestShort2(target_node, _XMP_GASNET_POST_REQUEST, _mynode, tag);
+    gasnet_AMRequestShort2(target_node, _XMP_GASNET_POST_REQUEST, _XMP_world_rank, tag);
   }
 }
 

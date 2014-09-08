@@ -10,8 +10,16 @@
 extern int _XMPC_running;
 extern int _XMPF_running;
 
+#ifndef MIN
+#define MIN(a,b)  ( (a)<(b) ? (a) : (b) )
+#endif
+
+#ifndef MAX
+#define MAX(a,b)  ( (a)>(b) ? (a) : (b) )
+#endif
 // --------------- including headers  --------------------------------
 #include <mpi.h>
+#include <stdio.h>
 #include <stddef.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -65,7 +73,7 @@ extern void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...);
 extern void _XMP_dealloc_array(_XMP_array_t *array_desc);
 
 // xmp_array_section.c
-extern void _XMP_normalize_array_section(int *lower, int *upper, int *stride);
+extern void _XMP_normalize_array_section(_XMP_gmv_desc_t *gmv_desc, int idim, int *lower, int *upper, int *stride);
 // FIXME make these static
 extern void _XMP_pack_array_BASIC(void *buffer, void *src, int array_type,
                                          int array_dim, int *l, int *u, int *s, unsigned long long *d);
@@ -175,6 +183,7 @@ extern unsigned long long _XMP_get_on_ref_id(void);
 extern void *_XMP_alloc(size_t size);
 extern void _XMP_free(void *p);
 extern void _XMP_fatal(char *msg);
+extern void _XMP_fatal_nomsg();
 extern void _XMP_unexpected_error(void);
 
 // xmp_world.c
@@ -185,6 +194,14 @@ extern void *_XMP_world_nodes;
 extern void _XMP_init_world(int *argc, char ***argv);
 extern void _XMP_finalize_world(void);
 extern int _XMP_split_world_by_color(int color);
+
+#ifdef _XMP_XACC
+extern void _XMP_reflect_do_gpu(_XMP_array_t *array_desc);
+extern void _XMP_reflect_init_gpu(void *acc_addr, _XMP_array_t *array_desc);
+extern int _XMP_get_owner_pos(_XMP_array_t *a, int dim, int index);
+extern void _XMP_reduce_gpu_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op);
+extern void _XMP_reduce_gpu_CLAUSE(void *data_addr, int count, int datatype, int op);
+#endif
 
 // ----- libxmp_threads ----------------------------------------------
 // xmp_threads_runtime.c
@@ -198,8 +215,8 @@ extern void _XMP_threads_finalize(void);
 
 // ----- for coarray & post/wait -------------------
 #if defined(_XMP_COARRAY_FJRDMA) || defined(_XMP_COARRAY_GASNET)
-#define _XMP_DEFAULT_COARRAY_HEAP_SIZE (16*1024*1024)  // 16MB
-#define _XMP_DEFAULT_COARRAY_STRIDE_SIZE (1*1024*1024)  // 1MB
+#define _XMP_DEFAULT_COARRAY_HEAP_SIZE   "16M"  // 16MB
+#define _XMP_DEFAULT_COARRAY_STRIDE_SIZE "1M"  // 1MB
 #define _XMP_POST_WAIT_QUEUESIZE 32
 #define _XMP_POST_WAIT_QUEUECHUNK 512
 #define FLAG_NIC (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN)
@@ -294,7 +311,6 @@ struct _XMPTIMING
 #endif
 
 
-
 // for XACC
 void _XACC_init_device(_XACC_device_t** desc, acc_device_t device, int lower, int upper, int step);
 int _XACC_get_num_current_devices();
@@ -321,5 +337,25 @@ void _XACC_sched_loop_layout_BLOCK(int init,
                                    int dim,
                                    int deviceNum);
 
-#endif // _XMP_INTERNAL
+#ifdef _XMP_TCA
+#define TCA_CHECK(tca_call) do { \
+  int status = tca_call;         \
+  if(status != TCA_SUCCESS) {    \
+  if(status == TCA_ERROR_INVALID_VALUE) {                 \
+  fprintf(stderr,"(TCA) error TCA API, INVALID_VALUE\n"); \
+  exit(-1);                                               \
+  }else if(status == TCA_ERROR_OUT_OF_MEMORY){            \
+  fprintf(stderr,"(TCA) error TCA API, OUT_OF_MEMORY\n"); \
+  exit(-1);                                               \
+  }else if(status == TCA_ERROR_NOT_SUPPORTED){            \
+  fprintf(stderr,"(TCA) error TCA API, NOT_SUPPORTED\n"); \
+  exit(-1);                                               \
+  }else{                                                  \
+  fprintf(stderr,"(TCA) error TCA API, UNKWON\n");        \
+  exit(-1); \
+  }         \
+  }         \
+  }while (0)
+#endif
 
+#endif // _XMP_INTERNAL

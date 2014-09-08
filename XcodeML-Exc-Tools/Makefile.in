@@ -193,6 +193,7 @@ ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 ENABLE_ACC = @ENABLE_ACC@
 ENABLE_ATOOL = @ENABLE_ATOOL@
+ENABLE_XACC = @ENABLE_XACC@
 EXEEXT = @EXEEXT@
 F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
@@ -325,6 +326,7 @@ SR16000 = @SR16000@
 STRIP = @STRIP@
 SUPERUX = @SUPERUX@
 TARGET_ARCH = @TARGET_ARCH@
+TCA_PREFIX = @TCA_PREFIX@
 TOPDIR = @TOPDIR@
 TYPE_INT16 = @TYPE_INT16@
 TYPE_INT32 = @TYPE_INT32@
@@ -434,6 +436,7 @@ top_srcdir = @top_srcdir@
 #  $
 java_DATA = build/om-exc-tools.jar
 ANT = @ANTCOM@ -buildfile build.xml
+SRC = $(wildcard src/*/*/*.java)
 all: all-am
 
 .SUFFIXES:
@@ -652,7 +655,7 @@ uninstall-am: uninstall-javaDATA
 
 all-local: $(java_DATA)
 
-$(java_DATA):
+$(java_DATA): $(SRC)
 	$(ANT) jar
 
 jar:

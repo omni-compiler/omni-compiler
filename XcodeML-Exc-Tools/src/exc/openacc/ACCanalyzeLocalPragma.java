@@ -91,6 +91,10 @@ public class ACCanalyzeLocalPragma {
       analyzeUpdate(pb); break;
     case WAIT:
       analyzeWait(pb); break;
+    case ENTER_DATA:
+      analyzeEnterData(pb); break;
+    case EXIT_DATA:
+      analyzeExitData(pb); break;
 
     default:
       throw new ACCexception("'" + pragmaName.toLowerCase() + "' directive is not supported yet");
@@ -438,6 +442,62 @@ public class ACCanalyzeLocalPragma {
     ACC.debug("wait directive : " + arg);
     
     accInfo.setWaitExp(arg);
+  }
+  
+  private void analyzeEnterData(PragmaBlock pb) throws ACCexception{
+    XobjList clauseList = (XobjList)pb.getClauses();
+    ACCinfo accInfo = new ACCinfo(ACCpragma.ENTER_DATA, pb, _globalDecl);
+    ACCutil.setACCinfo(pb, accInfo);
+    
+    ACC.debug("enter data directive : " + clauseList);
+    
+    for(Xobject o : clauseList){
+      XobjList clause = (XobjList)o;
+      ACCpragma clauseName = ACCpragma.valueOf(clause.getArg(0));
+      Xobject clauseArgs = (clause.Nargs() > 1)? clause.getArg(1) : null;
+            
+      switch(clauseName){
+      case IF:
+        accInfo.setIfCond(clauseArgs); break;
+      case ASYNC:
+        accInfo.setAsyncExp(clauseArgs); break;
+      case COPYIN:
+      case CREATE:
+      case PRESENT_OR_COPYIN:
+      case PRESENT_OR_CREATE:
+        analyzeVarList(accInfo, clauseName, (XobjList)clauseArgs);
+        break;
+      default:
+        ACC.fatal("'" + clauseName +"' clause is not allowed in 'enter data' directive");
+      }
+    }
+  }
+  
+  private void analyzeExitData(PragmaBlock pb) throws ACCexception{
+    XobjList clauseList = (XobjList)pb.getClauses();
+    ACCinfo accInfo = new ACCinfo(ACCpragma.EXIT_DATA, pb, _globalDecl);
+    ACCutil.setACCinfo(pb, accInfo);
+    
+    ACC.debug("exit data directive : " + clauseList);
+    
+    for(Xobject o : clauseList){
+      XobjList clause = (XobjList)o;
+      ACCpragma clauseName = ACCpragma.valueOf(clause.getArg(0));
+      Xobject clauseArgs = (clause.Nargs() > 1)? clause.getArg(1) : null;
+            
+      switch(clauseName){
+      case IF:
+        accInfo.setIfCond(clauseArgs); break;
+      case ASYNC:
+        accInfo.setAsyncExp(clauseArgs); break;
+      case COPYOUT:
+      case DELETE:
+        analyzeVarList(accInfo, clauseName, (XobjList)clauseArgs);
+        break;
+      default:
+        ACC.fatal("'" + clauseName +"' clause is not allowed in 'exit data' directive");
+      }
+    }
   }
   
   //Utility methods

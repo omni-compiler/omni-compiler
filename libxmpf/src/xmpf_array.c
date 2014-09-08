@@ -38,6 +38,14 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
     ai->ser_lower = 0;
     ai->ser_upper = 0;
     ai->ser_size = 0;
+    ai->par_lower = 0;
+    ai->par_upper = 0;
+    ai->par_stride = 0;
+    ai->par_size = 0;
+    ai->local_lower = 0;
+    ai->local_upper = 0;
+    ai->local_stride = 0;
+    ai->alloc_size = 0;
 
     ai->shadow_type = _XMP_N_SHADOW_NONE;
     ai->shadow_size_lo  = 0;
@@ -106,19 +114,19 @@ void xmpf_align_info__(_XMP_array_t **a_desc, int *a_idx,
   chunk = &(a->align_template->chunk[t_index]);
   switch (chunk->dist_manner){
   case _XMP_N_DIST_DUPLICATION:
-    _XMP_align_array_DUPLICATION(a, *a_idx, *t_idx, *off);
+    _XMP_align_array_DUPLICATION(a, *a_idx, *t_idx, (long long)(*off));
     break;
   case _XMP_N_DIST_BLOCK:
-    _XMP_align_array_BLOCK(a, *a_idx, *t_idx, *off, &tmp);
+    _XMP_align_array_BLOCK(a, *a_idx, *t_idx, (long long)(*off), &tmp);
     break;
   case _XMP_N_DIST_CYCLIC:
-    _XMP_align_array_CYCLIC(a, *a_idx, *t_idx, *off, &tmp);
+    _XMP_align_array_CYCLIC(a, *a_idx, *t_idx, (long long)(*off), &tmp);
     break;
   case _XMP_N_DIST_BLOCK_CYCLIC:
-    _XMP_align_array_BLOCK_CYCLIC(a, *a_idx, *t_idx, *off, &tmp);
+    _XMP_align_array_BLOCK_CYCLIC(a, *a_idx, *t_idx, (long long)(*off), &tmp);
     break;
   case _XMP_N_DIST_GBLOCK:
-    _XMP_align_array_GBLOCK(a, *a_idx, *t_idx, *off, &tmp);
+    _XMP_align_array_GBLOCK(a, *a_idx, *t_idx, (long long)(*off), &tmp);
     break;
   default:
     _XMP_fatal("xmpf_align_array: unknown chunk dist_manner");
@@ -228,7 +236,7 @@ void xmpf_array_get_local_size__(_XMP_array_t **a_desc, int *i_dim, int *lb, int
 
 
 void xmpf_array_get_local_size_off__(_XMP_array_t **a_desc, int *i_dim,
-				     int *size, int *off)
+				     int *size, int *off, int *blk_off)
 {
   _XMP_array_t *array = *a_desc;
   _XMP_array_info_t *ai = &(array->info[*i_dim]);
@@ -254,6 +262,8 @@ void xmpf_array_get_local_size_off__(_XMP_array_t **a_desc, int *i_dim,
 
       *off = lidx_on_template - template_local_lower;
 
+      if (blk_off) *blk_off = ai->par_lower - ai->shadow_size_lo;
+
 /*       _XMP_template_chunk_t *tchunk = &(template->chunk[ai->align_template_index]); */
 /*       //_XMP_template_info_t *ti = &(template->info[ai->align_template_index]); */
 
@@ -265,11 +275,13 @@ void xmpf_array_get_local_size_off__(_XMP_array_t **a_desc, int *i_dim,
     else {
       *size = ai->ser_upper - ai->ser_lower + 1;
       *off = ai->ser_lower; // dummy
+      if (blk_off) *blk_off = ai->ser_lower; // dummy
     }
   }
   else {
     *size = 0;
     *off = 0;
+    if (blk_off) *blk_off = 0;
   }    
 
   //xmpf_dbg_printf("array_get_size = (%d:%d)\n", *lb, *ub);

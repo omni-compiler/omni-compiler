@@ -1,61 +1,62 @@
 package exc.openacc;
 import exc.object.*;
-
 import java.util.*;
+
+
 
 public class ACCvar {
   private Ident id;
-  private ACCpragma atr;
-  
-  private ACCvar parent = null;
   
   private boolean isSpecifiedDataAttribute = false;
+  private EnumSet<Attribute> atrEnumSet = EnumSet.noneOf(Attribute.class);
   
   //for data clause
-  private boolean isPresent = false;
-  private boolean isPresentOr = false;
-  private boolean allocatesDeviceMemory = false;
-  private boolean copyHostToDevice = false;
-  private boolean copyDeviceToHost = false;
   private Ident deviceptr = null;
   private Ident hostDesc = null;
   
   //for reduction clause
   private ACCpragma reductionOp = null;
   
-  //for parallel, kernels directive
-  private boolean isFirstprivate = false;
-  private boolean isPrivate = false;
-  
-  //for cache directive
-  private boolean isCache = false;
-  
-  //for use_device clause
-  private boolean isUse_device = false;
+  //array dimension
+  private int dim; // 0 means scalar
+  private Xtype elementType;
   
   //for subarray
-  private XobjList subscriptList = null;
+  private XobjList rangeList = Xcons.List();
+  private boolean isSubarray = false;
   
-  private Subarray g_subarray = null;
-  
-  private Set<Subarray> subarraySet = new HashSet<Subarray>();
+  public static enum Attribute{
+    isPresent,
+    isPresentOr,
+    create,
+    delete,
+    copyHostToDevice,
+    copyDeviceToHost,
+    isFirstprivate,
+    isPrivate,
+    isCache,
+    isUseDevice,
+    isReduction
+  }
   
   ACCvar(Ident id, ACCpragma atr, ACCvar parent) throws ACCexception{
     this(id, null, atr, parent);
   }
   ACCvar(Ident id, XobjList subscripts, ACCpragma atr, ACCvar parent) throws ACCexception{
     this.id = id;
-    this.atr = atr;
-    this.parent = parent;
-    ArrayRange [] arrayRangeArray;
     
     if(subscripts != null && !subscripts.isEmpty()){
-      arrayRangeArray = makeArrayRangeArray(subscripts);
-      g_subarray = new Subarray(arrayRangeArray, atr);
-      subscriptList = subscripts;//cache の動作確認用に一時的に追加
+      rangeList = makeRange(subscripts);
+      isSubarray = true;
     }else{
-      //arrayRangeArray = makeArrayRangeArray(id.Type());
+      rangeList = makeRange(id.Type());
     }
+    
+    dim = rangeList.Nargs();
+
+    //System.out.println("var : " + getName());
+    //System.out.println("rang=" + rangeList);
+    //System.out.println("type=" + elementType);
     setAttribute(atr);
 
     if(parent != null && id == parent.getId()){
@@ -76,90 +77,77 @@ public class ACCvar {
     
     switch(atr){
     case COPY:
-      allocatesDeviceMemory = copyHostToDevice = copyDeviceToHost = true;
+      atrEnumSet.add(Attribute.create);
+      atrEnumSet.add(Attribute.copyHostToDevice);
+      atrEnumSet.add(Attribute.copyDeviceToHost);
       break;
     case COPYIN:
-      allocatesDeviceMemory = copyHostToDevice = true;
+      atrEnumSet.add(Attribute.create);
+      atrEnumSet.add(Attribute.copyHostToDevice);
       break;
     case COPYOUT:
-      allocatesDeviceMemory = copyDeviceToHost = true;
+      atrEnumSet.add(Attribute.create);
+      atrEnumSet.add(Attribute.copyDeviceToHost);
       break;
     case CREATE:
-      allocatesDeviceMemory = true;
+      atrEnumSet.add(Attribute.create);
+      break;
+    case DELETE:
+      atrEnumSet.add(Attribute.delete);
       break;
     case PRESENT:
-      isPresent = true;
+      atrEnumSet.add(Attribute.isPresent);
       break;
     case PRESENT_OR_COPY:
-      isPresentOr = true;
-      allocatesDeviceMemory = copyHostToDevice = copyDeviceToHost = true;
+      atrEnumSet.add(Attribute.isPresentOr);
+      atrEnumSet.add(Attribute.create);
+      atrEnumSet.add(Attribute.copyHostToDevice);
+      atrEnumSet.add(Attribute.copyDeviceToHost);
       break;
     case PRESENT_OR_COPYIN:
-      isPresentOr = true;
-      allocatesDeviceMemory = copyHostToDevice = true;
+      atrEnumSet.add(Attribute.isPresentOr);
+      atrEnumSet.add(Attribute.create);
+      atrEnumSet.add(Attribute.copyHostToDevice);
       break;
     case PRESENT_OR_COPYOUT:
-      isPresentOr = true;
-      allocatesDeviceMemory = copyDeviceToHost = true;
+      atrEnumSet.add(Attribute.isPresentOr);
+      atrEnumSet.add(Attribute.create);
+      atrEnumSet.add(Attribute.copyDeviceToHost);
       break;
     case PRESENT_OR_CREATE:
-      isPresentOr = true;
-      allocatesDeviceMemory = true;
+      atrEnumSet.add(Attribute.isPresentOr);
+      atrEnumSet.add(Attribute.create);
       break;
     case DEVICEPTR:
       deviceptr = id;
       break;
     case PRIVATE:
-      isPrivate = true;
+      atrEnumSet.add(Attribute.isPrivate);
       break;
     case FIRSTPRIVATE:
-      isFirstprivate = true;
+      atrEnumSet.add(Attribute.isFirstprivate);
       break;
     case CACHE:
-      isCache = true;
+      atrEnumSet.add(Attribute.isCache);
       break;
     case HOST:
-      copyDeviceToHost = true;
+      atrEnumSet.add(Attribute.copyDeviceToHost);
       break;
     case DEVICE:
-      copyHostToDevice = true;
+      atrEnumSet.add(Attribute.copyHostToDevice);
       break;
     case USE_DEVICE:
-      isUse_device = true;
+      atrEnumSet.add(Attribute.isUseDevice);
       break;
     default:
       if(atr.isReduction()){
+        atrEnumSet.add(Attribute.isReduction);
         reductionOp = atr;
       }else{
         throw new ACCexception("var:"+id.getName()+", attribute:" + atr +" is not valid");
       } 
     }
   }
-  
-//  public void setAttribute(ACCpragma atr) throws ACCexception{
-//    switch(atr){
-//    case DEVICEPTR:
-//      deviceptr = id;
-//      break;
-//    case USE_DEVICE:
-//      isUse_device = true;
-//      break;
-//    default:
-//      setAttribute(atr, makeArrayRangeArray(id.Type()));
-//    }
-//  }
-//  public void setAttribute(ACCpragma atr, XobjList subscripts) throws ACCexception{
-//    Subarray subarray = getSubarray(makeArrayRangeArray(subscripts));
-//    if(subarray != null){
-//      subarray.setAttribute(atr);
-//    }
-//  }
-//  public void setAttribute(ACCpragma atr, ArrayRange [] arrayRangeArray) throws ACCexception{
-//    Subarray subarray = getSubarray(arrayRangeArray);
-//    if(subarray != null){
-//      subarray.setAttribute(atr);
-//    }
-//  }
   
   public String getName(){
     return id.getName();
@@ -170,113 +158,46 @@ public class ACCvar {
     return getName();
   }
   
+  
   public boolean isPresent(){
-    return isPresent;
+    return atrEnumSet.contains(Attribute.isPresent);
   }
   public boolean isPresentOr(){
-    return isPresentOr;
+    return atrEnumSet.contains(Attribute.isPresentOr);
   }
   public boolean allocatesDeviceMemory(){
-    return allocatesDeviceMemory;
+    return atrEnumSet.contains(Attribute.create);
   }
   public boolean copiesHtoD(){
-    return copyHostToDevice;
+    return atrEnumSet.contains(Attribute.copyHostToDevice);
   }
   public boolean copiesDtoH(){
-    return copyDeviceToHost;
+    return atrEnumSet.contains(Attribute.copyDeviceToHost);
   }
-
   public boolean isPrivate(){
-    return isPrivate;
+    return atrEnumSet.contains(Attribute.isPrivate);
   }
   public boolean isFirstprivate(){
-    return isFirstprivate;
+    return atrEnumSet.contains(Attribute.isFirstprivate);
   } 
   public boolean isReduction(){
-    return (reductionOp != null);
+    return atrEnumSet.contains(Attribute.isReduction);
   }
   public boolean isCache(){
-    return isCache;
+    return atrEnumSet.contains(Attribute.isCache);
   }
-/*
-//  public boolean isPresent(){ 
-//    for(Subarray subarray : subarraySet){ //サブアレイ指定されていない部分はどうするのか？
-//      if(! subarray.attribute.isPresent){
-//        return false;
-//      }
-//    }
-//    return true;
-//  }
-//  public boolean isPresentOr(){
-//    for(Subarray subarray : subarraySet){
-//      if(! subarray.attribute.isPresentOr){
-//        return false;
-//      }
-//    }
-//    return true;
-//  }
-//  public boolean isReduction(){
-//    for(Subarray subarray : subarraySet){
-//      if(subarray.attribute.reductionOp == null){
-//        return false;
-//      }
-//    }
-//    return true;
-//  }
-//  public boolean isPrivate(){
-//    for(Subarray subarray : subarraySet){
-//      if(! subarray.attribute.isPrivate){
-//        return false;
-//      }
-//    }
-//    return true;
-//  }
-//  public boolean isFirstprivate(){
-//    for(Subarray subarray : subarraySet){
-//      if(! subarray.attribute.isFirstprivate){
-//        return false;
-//      }
-//    }
-//    return true;
-//  }
-//  public boolean isCache(){
-//    for(Subarray subarray : subarraySet){
-//      if(! subarray.attribute.isCache){
-//        return false;
-//      }
-//    }
-//    return true;
-//  }
-//  public boolean allocatesDeviceMemory(){
-//    for(Subarray subarray : subarraySet){
-//      if(! subarray.attribute.allocatesDeviceMemory){
-//        return false;
-//      }
-//    }
-//    return true;
-//  }
-//  public boolean copiesHtoD(){
-//    for(Subarray subarray : subarraySet){
-//      if(! subarray.attribute.copyHostToDevice){
-//        return false;
-//      }
-//    }
-//    return true;
-//  }
-//  public boolean copiesDtoH(){
-//    for(Subarray subarray : subarraySet){
-//      if(! subarray.attribute.copyDeviceToHost){
-//        return false;
-//      }
-//    }
-//    return true;
-//  }
-*/
+
+  public boolean is(Attribute attr)
+  {
+    return atrEnumSet.contains(attr);
+  }
+  
+  
   public Ident getId(){
     return id;
   }
   public boolean isUse_device(){
-    return isUse_device;
+    return atrEnumSet.contains(Attribute.isUseDevice);
   }
   public Ident getDevicePtr(){
     return deviceptr;
@@ -293,180 +214,145 @@ public class ACCvar {
   public boolean isAllocated(){
     //return deviceptr != null;
     //return allocatesDeviceMemory();
-    return (deviceptr != null ) || allocatesDeviceMemory;
+    //return (deviceptr != null ) || allocatesDeviceMemory;
+    return (deviceptr != null ) || atrEnumSet.contains(Attribute.create);
   }
   public ACCpragma getReductionOperator(){
     return reductionOp;
   }
   public boolean contains(XobjList subscripts){
     return true;
-  }
-  private XobjList getSubscripts(Xtype type) throws ACCexception{
-    if(type.isArray()){
-      ArrayType arrayType = (ArrayType)type;
-      long arraySize = arrayType.getArraySize();
-      Xobject arraySizeObj;
-      if ((arraySize == 0)){// || (arraySize == -1)) {
-        throw new ACCexception("array size should be declared statically");
-      }else if(arraySize==-1){
-        arraySizeObj = arrayType.getArraySizeExpr();
-      }else{
-        arraySizeObj = Xcons.LongLongConstant(0,arraySize);
-      }
-      XobjList subscripts = getSubscripts(arrayType.getRef());
-      subscripts.cons(makeSubscript(Xcons.IntConstant(0), arraySizeObj));
-      return subscripts;
-    }else{
-      return Xcons.List(); //Xcons.List(Xcons.List(Xcons.IntConstant(0), Xcons.IntConstant(1)));
-    }
+    //FIXME implement!
   }
   
-  private XobjList makeSubscript(Xobject lower, Xobject length){
-    return Xcons.List(lower, length);
-  }
-//  private XobjList fixSubscript(XobjList subscripts) throws ACCexception{
-//    XobjList arrayDim = getSubscripts(id.Type());
-//    
-//    XobjList result = Xcons.List();
-//    int dim = 0;
-//    for(Xobject sub : subscripts){
-//      if(sub.Opcode()!=Xcode.LIST){
-//        result.add(ACCutil.foldIntConstant(sub));
-//      }else{
-//        Xobject lower = sub.getArg(0);
-//        Xobject length = sub.getArgOrNull(1);
-//        lower = ACCutil.foldIntConstant(lower);
-//        if(length==null){
-//          length = Xcons.binaryOp(Xcode.MINUS_EXPR, arrayDim.getArg(dim).getArg(1), lower);
-//        }
-//        length = ACCutil.foldIntConstant(length);
-//        result.add(Xcons.List(lower,length));
-//      }
-//      dim++;
-//    }
-//    return result;
-//  }
-  private List<ArrayRange> makeSubscripts(XobjList xSubscriptList) throws ACCexception{
-    List<ArrayRange> subscriptList = new ArrayList<ArrayRange>();
-    
-    Xtype type = id.Type();
-    for(Xobject xs : xSubscriptList){
-      if(! type.isArray()){
-        throw new ACCexception("too many subscripts");
-      }
-      ArrayType arrayType = (ArrayType)type;
-      if(xs.Opcode() != Xcode.LIST){
-        subscriptList.add(new ArrayRange(xs, 1));
-      }else{
-        Xobject lower = xs.getArg(0);
-        Xobject length = xs.getArgOrNull(1);
-        if(length == null){
-          length = Xcons.binaryOp(Xcode.MINUS_EXPR, getArraySize(arrayType), lower);
+  private void addRange(XobjList rangeList, Xobject range, ArrayType arrayType) throws ACCexception{
+    Xobject lower, length;
+    if(range.Opcode() != Xcode.LIST){ //scalar
+      lower = range;
+      length = Xcons.IntConstant(1);
+    }else{ //sub
+      lower = range.getArg(0);
+      length = range.getArgOrNull(1);
+      if(length == null){
+        if(arrayType != null){
+          length = Xcons.binaryOp(Xcode.MINUS_EXPR, getArraySize(arrayType), lower);  
+        }else{
+          throw new ACCexception("length is unspecified");
         }
-        subscriptList.add(new ArrayRange(lower, length));
       }
-      type = arrayType.getRef();//getArrayElementType();
     }
-    if(type.isArray()){
-      throw new ACCexception("too few subscripts");
+    if(arrayType != null && isCorrectRange(arrayType, lower, length) == false){
+      throw new ACCexception("array bound exceeded : " + getName());
     }
-    return subscriptList;
+    rangeList.add(Xcons.List(lower, length));
   }
   
-  private ArrayRange [] makeArrayRangeArray(XobjList xSubscriptList) throws ACCexception{
-    //int arrayDim = id.Type().getNumDimensions();
-      
-    List<ArrayRange> arrayRangeList = new ArrayList<ArrayRange>();
-    //List<ArrayRange> subscriptList = new ArrayList<ArrayRange>();
-    
+  private XobjList makeRange(XobjList subscript) throws ACCexception{
+    XobjList rangeList = Xcons.List();
     Xtype type = id.Type();
-    //int dim = 0;
-    for(Xobject xs : xSubscriptList){
-	switch(type.getKind()){
-	case Xtype.ARRAY:
-	    ArrayType arrayType = (ArrayType)type;
-	    if(xs.Opcode() != Xcode.LIST){
-		//arrayRangeArray[dim] = new ArrayRange(xs, 1);
-		arrayRangeList.add(new ArrayRange(xs, 1));
-	    }else{
-		Xobject lower = xs.getArg(0);
-		Xobject length = xs.getArgOrNull(1);
-		if(length == null){
-		    length = Xcons.binaryOp(Xcode.MINUS_EXPR, getArraySize(arrayType), lower);
-		}
-		//arrayRangeArray[dim] = new ArrayRange(lower, length);
-		arrayRangeList.add(new ArrayRange(lower, length));
-	    }
-	    type = arrayType.getRef();
-	    break;
-	case Xtype.POINTER:
-	    if(xs.Opcode() == Xcode.LIST){
-		Xobject lower = xs.getArg(0);
-		Xobject length = xs.getArgOrNull(1);
-		if(length != null){
-		    arrayRangeList.add(new ArrayRange(lower, length));
-		    break;
-		}
-	    }
-	    throw new ACCexception("unshaped pointer");
-	default:
-	    throw new ACCexception("too many subscripts");   
-	}
-
-      //dim++;
+    XobjArgs args = subscript.getArgs();
+    while(args != null){
+      Xobject range = args.getArg();
+      switch(type.getKind()){
+      case Xtype.ARRAY:
+        ArrayType arrayType = (ArrayType)type;
+        addRange(rangeList, range, arrayType);
+        type = arrayType.getRef();
+        break;
+      case Xtype.POINTER:
+        if(range.Opcode() == Xcode.LIST){
+          addRange(rangeList, range, null);
+          type = type.getRef();
+          if(false){
+            if(type.isBasic() || type.isEnum() || type.isStruct()){
+              for(; args != null; args = args.nextArgs()){
+                range = args.getArg();
+                addRange(rangeList, range, null);
+              }
+            }
+          }
+          break;
+        }
+        throw new ACCexception("unshaped pointer");
+      default:
+        throw new ACCexception("too many subscripts");   
+      }
+      if(args != null) args = args.nextArgs();
     }
     if(type.isArray()){
       throw new ACCexception("too few subscripts");
     }
+    this.elementType = type;
+    return rangeList;
+  }
+  
+  private boolean isCorrectRange(ArrayType arrayType, Xobject lower, Xobject length){
+    Xobject size = getArraySize(arrayType);
+    size = ACCutil.foldIntConstant_mod(size);
+    if(! size.isIntConstant()) return true;
+    int sizeInt = size.getInt();
     
-    ArrayRange [] arrayRangeArray = new ArrayRange[arrayRangeList.size()];
-    for(int i = 0; i < arrayRangeList.size(); i++){
-	arrayRangeArray[i] = arrayRangeList.get(i);
+    Xobject lower2 = ACCutil.foldIntConstant_mod(lower);
+    Xobject length2 = ACCutil.foldIntConstant_mod(length);
+    int lowerInt = 0;
+    int lengthInt = 1;
+    if(lower2.isIntConstant()){
+      lowerInt = lower2.getInt();
     }
-
-    return arrayRangeArray;
+    if(length2.isIntConstant()){
+      lengthInt = length2.getInt();
+    }
+    
+    if(lowerInt < 0 || lengthInt < 1) return false;
+    if(lowerInt + lengthInt > sizeInt) return false;
+    
+    return true;
   }
   
-  //make ArrayRangeArray from id.Type()
-  private ArrayRange [] makeArrayRangeArray(Xtype type){
-    int arrayDim = type.getNumDimensions();
-    ArrayRange [] arrayRangeArray = new ArrayRange[arrayDim];
-
-    for(int i = 0; i < arrayDim; i++){
-      if(type.isArray()){
-        arrayRangeArray[i] = new ArrayRange(0, getArraySize((ArrayType)type));
-        type = ((ArrayType)type).getRef();
+  private XobjList makeRange(Xtype type){
+    XobjList rangeList = Xcons.List();
+    
+    while(true){
+      switch(type.getKind()){
+      case Xtype.ARRAY:
+      {
+        ArrayType arrayType = (ArrayType)type;
+        rangeList.add(Xcons.List(Xcons.IntConstant(0), getArraySize(arrayType)));
+        type = arrayType.getRef();
+      } break;
+      case Xtype.BASIC:
+      case Xtype.STRUCT:
+      case Xtype.ENUM:
+        this.elementType = type;
+        return rangeList;
+      case Xtype.POINTER:
+        ACC.warning("pointer reference was treated as array reference in '" + getName() +"'");
+        rangeList.add(Xcons.List(Xcons.IntConstant(0), Xcons.IntConstant(1)));
+        type = type.getRef();
+        break;
+      default:
+        ACC.fatal("unsupposed type");
       }
     }
-    return arrayRangeArray;
   }
-
+  
   private Xobject getArraySize(ArrayType arrayType){
-      long arraySize = arrayType.getArraySize();
-      if (arraySize <= 0){
-        return arrayType.getArraySizeExpr();
-      }
-      if(arraySize > Integer.MAX_VALUE){
-        return Xcons.LongLongConstant(0,arraySize);
-      }
-      else{
-        return Xcons.IntConstant((int)arraySize);
-      }
-  }
-  
-  private Subarray getSubarray(ArrayRange [] arrayRangeArray){
-    for(Subarray subarray : subarraySet){
-      if(subarray.isSameRangeWith(arrayRangeArray)){
-        return subarray;
-      }
+    long arraySize = arrayType.getArraySize();
+    if (arraySize <= 0){
+      return arrayType.getArraySizeExpr();
     }
-    return null;
+    if(arraySize > Integer.MAX_VALUE){
+      return Xcons.LongLongConstant(0,arraySize);
+    }
+    else{
+      return Xcons.IntConstant((int)arraySize);
+    }
   }
   
   public Xobject getAddress() throws ACCexception{
     Xobject addrObj = null;
     Xtype varType = id.Type();
-    
+
     switch (varType.getKind()) {
     case Xtype.BASIC:
     case Xtype.STRUCT:
@@ -475,12 +361,12 @@ public class ACCvar {
       break;
     case Xtype.POINTER:
     {
-	if(isSubarray()){
-	    addrObj = id.Ref();
-	}else{
-	    addrObj = id.getAddr();
-	}
-	break;
+      if(isSubarray()){
+        addrObj = id.Ref();
+      }else{
+        addrObj = id.getAddr();
+      }
+      break;
     }
     case Xtype.ARRAY:
     {
@@ -502,100 +388,21 @@ public class ACCvar {
     }
     return addrObj;
   }
+
   public Xobject getSize() throws ACCexception{
-    Xobject sizeObj = null;
-    Xtype varType = id.Type();
-    
-    switch (varType.getKind()) {
-    case Xtype.ARRAY:
-    {
-      ArrayType arrayVarType = (ArrayType)varType;
-      Xtype arrayElementType = varType.getArrayElementType();
-      if(isSubarray()){
-        sizeObj = Xcons.binaryOp(Xcode.MUL_EXPR, g_subarray.getNumberOfElement(), Xcons.SizeOf(arrayElementType)); 
-      }else{
-        sizeObj = Xcons.binaryOp(Xcode.MUL_EXPR, 
-            ACCutil.getArrayElmtCountObj(arrayVarType),
-            Xcons.SizeOf(((ArrayType)varType).getArrayElementType()));
-      }
-      break;
+    Xobject size = Xcons.SizeOf(elementType);
+    for(Xobject x : rangeList){
+      size = Xcons.binaryOp(Xcode.MUL_EXPR, size, (XobjList)x.left());
     }
-    case Xtype.POINTER:
-    {
-	Xtype elementType = varType.getRef(); //TODO support pointer of pointer of int
-	if(isSubarray()){
-	    sizeObj = Xcons.binaryOp(Xcode.MUL_EXPR, g_subarray.getNumberOfElement(), Xcons.SizeOf(elementType));
-	}else{
-	    sizeObj = Xcons.SizeOf(varType);
-	}
-	break;
-    }
-    default:
-      sizeObj = Xcons.SizeOf(varType);
-      break;
-    }
-    return sizeObj;
-  }
-  public Xobject getNumElements() throws ACCexception{
-      Xobject elementsObj = null;
-      Xtype varType = id.Type();
-      
-      switch (varType.getKind()) {
-      case Xtype.ARRAY:
-      {
-        ArrayType arrayType = (ArrayType)varType;
-        Xtype arrayElementType = varType.getArrayElementType();
-        if(isSubarray()){
-          elementsObj = g_subarray.getNumberOfElement();
-        }else{
-          elementsObj = ACCutil.getArrayElmtCountObj(arrayType);
-        }
-        break;
-      }
-      case Xtype.POINTER:
-      {
-          Xtype elementType = getElementType(varType);//varType.getRef(); //TODO support pointer of pointer of int
-          if(isSubarray()){
-              elementsObj = g_subarray.getNumberOfElement();
-          }else{
-              elementsObj = Xcons.IntConstant(1);
-          }
-          break;
-      }
-      default:
-        elementsObj = Xcons.IntConstant(1);//Xcons.SizeOf(varType);
-        break;
-      }
-      return elementsObj;
-    }
-  public Xobject getOffset() throws ACCexception{
-    Xobject offsetObj = null;
-    Xtype varType = id.Type();
-    
-    switch (varType.getKind()) {
-    case Xtype.ARRAY:
-    {
-      Xtype arrayElementType = varType.getArrayElementType();
-      if(isSubarray()){
-        offsetObj = Xcons.binaryOp(Xcode.MUL_EXPR, g_subarray.getOffsetCount(), Xcons.SizeOf(arrayElementType)); 
-      }else{
-        offsetObj = Xcons.IntConstant(0);
-      }
-      break;
-    }
-    default:
-      offsetObj = Xcons.IntConstant(0);
-      break;
-    }
-    return offsetObj;
+    return size;
   }
   
   /////////////////
   
   public boolean conllidesWith(XobjList subscripts){
-    int dim = Math.max(this.subscriptList.Nargs(), subscripts.Nargs());
+    int dim = Math.max(this.rangeList.Nargs(), subscripts.Nargs());
     for(int i=0;i<dim;i++){
-      Xobject s1 = this.subscriptList.getArg(i);
+      Xobject s1 = this.rangeList.getArg(i);
       Xobject s2 = subscripts.getArg(i);
       long low1=0,len1=1,low2=0,len2=1;
       try{
@@ -638,272 +445,22 @@ public class ACCvar {
       return (low2+len2 > low1);
     }
   }
+  
   public XobjList getSubscripts(){
-    return subscriptList;
+    return rangeList;
   }
   
-  boolean isSubarray(){
-    return g_subarray != null;
+  public boolean isSubarray(){
+    return isSubarray;
   }
   
-  Xtype getElementType(Xtype t)
-  {
-      if(t.isArray()){
-          return ((ArrayType)t).getArrayElementType();
-      }else if(t.isPointer()){
-          return getElementType(t.getRef());
-      }else if(t.isBasic()){
-          return t;
-      }else{
-          return null;
-      }
+  public Xtype getElementType(){
+    return this.elementType;
   }
 
-  class Subarray{
-    private Attribute attribute;
-    private ArrayRange [] arrayRangeArray;
-    Subarray(ArrayRange [] arrayRangeArray){
-      this.arrayRangeArray = arrayRangeArray;
-    }
-    Subarray(ArrayRange [] arrayRangeArray, ACCpragma atr) throws ACCexception{
-      this.arrayRangeArray = arrayRangeArray;
-      attribute = new Attribute(atr);
-    }
-    void setAttribute(ACCpragma atrPragma) throws ACCexception{
-      attribute.setAttribute(atrPragma);
-    }
-    boolean hasIntersection(ArrayRange [] arrayRangeArray){
-      int dim = this.arrayRangeArray.length;
-      if(arrayRangeArray.length != dim){
-        return false;
-      }
-      for(int i = 0; i < dim; i++){
-        if((this.arrayRangeArray)[i].hasIntersection(arrayRangeArray[i])){
-          return true;
-        }
-      }
-      return false;
-    }
-    boolean isSameRangeWith(ArrayRange [] arrayRangeArray){
-      int dim = this.arrayRangeArray.length;
-      if(arrayRangeArray.length != dim){
-        return false;
-      }
-      for(int i = 0; i < dim; i++){
-        if((this.arrayRangeArray)[i].isSameWith(arrayRangeArray[i])){
-          return true;
-        }
-      }
-      return false;
-    }
-    Xobject getNumberOfElement(){
-      int dim = this.arrayRangeArray.length;
-      Xobject numberOfElement = Xcons.IntConstant(1);
-      for(int i = 0; i < dim; i++){
-        numberOfElement = Xcons.binaryOp(Xcode.MUL_EXPR, numberOfElement, arrayRangeArray[i].getLengthObj());
-      }
-      return numberOfElement;
-    }
-    Xobject getOffsetCount(){
-      int dim = this.arrayRangeArray.length;
-      if(dim == 0){
-        return Xcons.IntConstant(0);
-      }
-      Xobject numberOfLowerElement = Xcons.IntConstant(1);
-      for(int i = 1; i < dim; i++){
-        numberOfLowerElement = Xcons.binaryOp(Xcode.MUL_EXPR, numberOfLowerElement, arrayRangeArray[i].getLengthObj());
-      }
-      return Xcons.binaryOp(Xcode.MUL_EXPR, arrayRangeArray[0].getLowerObj(), numberOfLowerElement);
-    }
+  public int getDim(){
+    return this.dim;
   }
-  
-  class Attribute{
-    //for data clause
-    private boolean isPresent = false;
-    private boolean isPresentOr = false;
-    private boolean allocatesDeviceMemory = false; //it may be unnecessary
-    private boolean copyHostToDevice = false;
-    private boolean copyDeviceToHost = false;
-    
-    //for reduction clause
-    private ACCpragma reductionOp = null;
-    
-    //for parallel, kernels directive
-    private boolean isFirstprivate = false;
-    private boolean isPrivate = false;
-    
-    //for cache directive
-    private boolean isCache = false;
-
-    private boolean isSpecifiedDataAttribute = false;
-
-    public Attribute(ACCpragma atr) throws ACCexception{
-      setAttribute(atr);
-    }
-    
-    public void setAttribute(ACCpragma atr) throws ACCexception{
-      if(atr.isDataClause() && isSpecifiedDataAttribute){
-        throw new ACCexception("data attribute is already specified");
-      }
-      if(atr.isDataClause()){
-        isSpecifiedDataAttribute = true;  
-      }
-      
-      switch(atr){
-      case COPY:
-        allocatesDeviceMemory = copyHostToDevice = copyDeviceToHost = true;
-        break;
-      case COPYIN:
-        allocatesDeviceMemory = copyHostToDevice = true;
-        break;
-      case COPYOUT:
-        allocatesDeviceMemory = copyDeviceToHost = true;
-        break;
-      case CREATE:
-        allocatesDeviceMemory = true;
-        break;
-      case PRESENT:
-        isPresent = true;
-        break;
-      case PRESENT_OR_COPY:
-        isPresentOr = true;
-        allocatesDeviceMemory = copyHostToDevice = copyDeviceToHost = true;
-        break;
-      case PRESENT_OR_COPYIN:
-        isPresentOr = true;
-        allocatesDeviceMemory = copyHostToDevice = true;
-        break;
-      case PRESENT_OR_COPYOUT:
-        isPresentOr = true;
-        allocatesDeviceMemory = copyDeviceToHost = true;
-        break;
-      case PRESENT_OR_CREATE:
-        isPresentOr = true;
-        allocatesDeviceMemory = true;
-        break;
-      case PRIVATE:
-        isPrivate = true;
-        break;
-      case FIRSTPRIVATE:
-        isFirstprivate = true;
-        break;
-      case CACHE:
-        isCache = true;
-        break;
-      case HOST:
-        copyDeviceToHost = true;
-        break;
-      case DEVICE:
-        copyHostToDevice = true;
-        break;
-      default:
-        if(atr.isReduction()){
-          reductionOp = atr;
-        }else{
-          throw new ACCexception("invalid attribute");
-        } 
-      }
-    }
-  }
-  
-  class ArrayRange{
-    private long longLower;
-    private long longLength;
-    private Xobject xLower = null, xLength = null;
-    
-    ArrayRange(Xobject lower, Xobject length){
-      setLower(lower);
-      setLength(length);
-    }
-    ArrayRange(Xobject lower, int length){
-      setLower(lower);
-      longLength = (long)length;
-    }
-    ArrayRange(int lower, Xobject length){
-      longLower = (long)lower;
-      setLength(length);
-    }
-    ArrayRange(int lower, int length){
-      longLower = (long)lower;
-      longLength = (long)length;
-    }
-    
-    private void setLower(Xobject lower){
-      try{
-        longLower = toLong(lower);
-      }catch(Exception e){
-        xLower = lower;
-      }
-    }
-    private void setLength(Xobject length){
-      try{
-        longLength = toLong(length);
-      }catch(Exception e){
-        xLength = length;
-      }
-    }
-    
-    @Override
-    public String toString(){
-      String strLower, strLength;
-      strLower = isLowerConstant()? Long.toString(longLower) : xLower.toString();
-      strLength = isLengthConstant()? Long.toString(longLength) : xLength.toString();
-      return "[" + strLower + ":" + strLength + "]"; 
-    }
-    
-    private long toLong(Xobject x) throws Exception{
-      if(x.isIntConstant()){
-        return x.getInt();
-      }
-      if(x.Opcode() == Xcode.LONGLONG_CONSTANT){ 
-        return x.getLong();
-      }
-      throw new Exception();
-    }
-    
-    public boolean isLowerConstant(){
-      return xLower == null;
-    }
-    public boolean isLengthConstant(){
-      return xLength == null;
-    }
-    
-    public boolean hasIntersection(ArrayRange s){
-      if(!this.isLowerConstant() || !s.isLowerConstant()){
-        return false;
-      }
-      if(this.longLower > s.longLower){
-        return s.hasIntersection(this);
-      }
-      if(this.isLengthConstant()){  //low1+len1 > low2
-        return (this.longLower + this.longLength > s.longLower);
-      }
-      return false;
-    }
-    
-    public boolean isSingle(){
-      return (longLength == 1);
-    }
-    public boolean isSameWith(ArrayRange ar){
-      if(isLowerConstant() && isLengthConstant()){
-        return longLower == ar.longLower && longLength == ar.longLength;
-      }
-      return false;
-    }
-    public Xobject getLowerObj(){
-      if(isLowerConstant()){
-        return Xcons.LongLongConstant(0, longLower);
-      }else{
-        return xLower;
-      }
-    }
-    public Xobject getLengthObj(){
-      if(isLengthConstant()){
-        return Xcons.LongLongConstant(0, longLength);
-      }else{
-        return xLength;
-      }
-    }
-  }
-
 }
+
+

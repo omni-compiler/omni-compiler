@@ -5,13 +5,22 @@
 #define BUF_LEN 256
 
 int _ACC_gpu_device_count;
-int _ACC_gpu_max_thread;
-int _ACC_gpu_max_block_dim_x;
-int _ACC_gpu_max_block_dim_y;
-int _ACC_gpu_max_block_dim_z;
+//int _ACC_gpu_max_thread;
+//int _ACC_gpu_max_block_dim_x;
+//int _ACC_gpu_max_block_dim_y;
+//int _ACC_gpu_max_block_dim_z;
 
 static int current_device_num = 0;
 static void init_device(int dev_num);
+static void finalize_device(int dev_num);
+
+typedef struct acc_context{
+  void *stream_map;
+  void *mpool;
+}acc_context;
+
+acc_context *contexts;
+
 
 void _ACC_gpu_init(void) {
   cudaError_t cuda_err;
@@ -28,14 +37,22 @@ void _ACC_gpu_init(void) {
 
   _ACC_DEBUG("Total number of GPUs = %d\n", _ACC_gpu_device_count)
 
-  //init each GPUs
+  contexts = (acc_context*)_ACC_alloc(sizeof(acc_context) * _ACC_gpu_device_count);
+
+  //init each GPU
   for(i=0;i<_ACC_gpu_device_count;i++){
     init_device(i);
   }
 }
 
 void _ACC_gpu_finalize(void) {
-  return;
+  //finalize each GPU
+  for(int i=0;i<_ACC_gpu_device_count;i++){
+    _ACC_gpu_set_device_num(i+1);
+    finalize_device(i);
+  }
+
+  _ACC_free(contexts);
 }
 
 int _ACC_gpu_get_num_devices()
@@ -72,20 +89,32 @@ static void init_device(int dev_num){
   int *dummy;
   _ACC_gpu_alloc((void **)&dummy, sizeof(int));
   _ACC_gpu_free(dummy);
+
+
+  //init mpool
+  contexts[dev_num].mpool = _ACC_gpu_mpool_init();
+  //init stream hashmap
+  contexts[dev_num].stream_map = _ACC_gpu_init_stream_map(16);
+}
+
+static void finalize_device(int dev_num){
+  
+  //finalize stream hashmap for previous device
+  acc_context cont = contexts[dev_num];
+  //printf("finalize_map(%d, %p)\n", dev_num, cont.stream_map);
+  _ACC_gpu_finalize_stream_map(cont.stream_map);
+  _ACC_gpu_mpool_finalize(cont.mpool);
 }
 
 void _ACC_gpu_set_device_num(int num)
 {
+  /* num is 1-origin */
   _ACC_DEBUG("device_num(%d)\n",num)
   cudaError_t cuda_err;
 
   if(num < 0 || num > _ACC_gpu_device_count){
     _ACC_fatal("invalid device num in _ACC_gpu_set_device_num");
   }
-
-  //finalize stream hashmap for previous device
-  _ACC_gpu_finalize_stream_map();
-  _ACC_gpu_mpool_finalize();
 
   if(num == 0){ // 0 means default device num
     current_device_num = 0;
@@ -97,21 +126,10 @@ void _ACC_gpu_set_device_num(int num)
     _ACC_fatal("fail to set GPU device in _ACC_gpu_set_device_num");
   }
   
-  cudaDeviceProp dev_prop;
-  cuda_err = cudaGetDeviceProperties(&dev_prop, current_device_num);
-  if(cuda_err != cudaSuccess){
-    _ACC_fatal("fail to get GPU device properties in _ACC_gpu_set_device_num");
-  }
+  acc_context cont = contexts[current_device_num];
+  _ACC_gpu_set_stream_map(cont.stream_map);
+  _ACC_gpu_mpool_set(cont.mpool);
 
-  _ACC_gpu_max_thread = dev_prop.maxThreadsPerBlock;
-  _ACC_gpu_max_block_dim_x = dev_prop.maxGridSize[0];
-  _ACC_gpu_max_block_dim_y = dev_prop.maxGridSize[1];
-  _ACC_gpu_max_block_dim_z = dev_prop.maxGridSize[2];
-
-  //init mpool
-  _ACC_gpu_mpool_init();
-  //init stream hashmap
-  _ACC_gpu_init_stream_map(64);
 }
 
 int _ACC_gpu_get_device_num(){

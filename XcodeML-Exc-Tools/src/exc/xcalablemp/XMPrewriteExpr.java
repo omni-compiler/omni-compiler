@@ -993,9 +993,9 @@ public class XMPrewriteExpr {
     Xobject e = null;
 
     if(entity != null){
-      if(entity.getKind() == XMPobject.TEMPLATE){
+      if(entity.getKind() == XMPobject.TEMPLATE || entity.getKind() == XMPobject.NODES){
 	Ident XmpDescOfFuncId = _globalDecl.declExternFunc("_XMP_desc_of", myExpr.Type());
-	e = XmpDescOfFuncId.Call(Xcons.List(entity.getDescId()));
+	e = XmpDescOfFuncId.Call(Xcons.List(entity.getDescId().Ref()));
       } 
       else{
 	throw new XMPexception("Bad entity name for xmp_desc_of()");
@@ -1008,7 +1008,7 @@ public class XMPrewriteExpr {
 	throw new XMPexception(arrayName + " is not aligned global array or tempalte descriptor.");
 
       Ident XmpDescOfFuncId =  _globalDecl.declExternFunc("_XMP_desc_of", myExpr.Type());
-      e = XmpDescOfFuncId.Call(Xcons.List(alignedArray.getDescId())); 
+      e = XmpDescOfFuncId.Call(Xcons.List(alignedArray.getDescId().Ref())); 
     }
 
     return e;
@@ -1343,30 +1343,30 @@ public class XMPrewriteExpr {
           }
         }
       case XMPalignedArray.GBLOCK:
-        XobjList args = Xcons.List(alignedArray.getDescId().Ref(), Xcons.IntConstant(index), indexRef);
-        Ident f = _globalDecl.declExternFunc("_XMP_lidx_GBLOCK");
-        return f.Call(args);
+        // XobjList args = Xcons.List(alignedArray.getDescId().Ref(), Xcons.IntConstant(index), indexRef);
+        // Ident f = _globalDecl.declExternFunc("_XMP_lidx_GBLOCK");
+        // return f.Call(args);
 
-        //        if (alignedArray.hasShadow()) {
-        //          XMPshadow shadow = alignedArray.getShadowAt(index);
-        //          switch (shadow.getType()) {
-        //            case XMPshadow.SHADOW_NONE:
-        //            case XMPshadow.SHADOW_NORMAL:
-        //              {
-        //                XobjList args = Xcons.List(indexRef, alignedArray.getGtolTemp0IdAt(index).Ref());
-        //                return XMP.getMacroId("_XMP_M_CALC_INDEX_GBLOCK").Call(args);
-        //              }
-        //            case XMPshadow.SHADOW_FULL:
-        //              return indexRef;
-        //            default:
-        //              throw new XMPexception("unknown shadow type");
-        //          }
-        // }        
-        //        else {
-        //          XobjList args = Xcons.List(indexRef,
-        //                                     alignedArray.getGtolTemp0IdAt(index).Ref());
-        //          return XMP.getMacroId("_XMP_M_CALC_INDEX_GBLOCK").Call(args);
-        //        }
+	if (alignedArray.hasShadow()) {
+	  XMPshadow shadow = alignedArray.getShadowAt(index);
+	  switch (shadow.getType()) {
+	  case XMPshadow.SHADOW_NONE:
+	  case XMPshadow.SHADOW_NORMAL:
+	    {
+	      XobjList args = Xcons.List(indexRef, alignedArray.getGtolTemp0IdAt(index).Ref());
+	      return XMP.getMacroId("_XMP_M_CALC_INDEX_GBLOCK").Call(args);
+	    }
+	  case XMPshadow.SHADOW_FULL:
+	    return indexRef;
+	  default:
+	    throw new XMPexception("unknown shadow type");
+	  }
+        }        
+	else {
+	  XobjList args = Xcons.List(indexRef,
+				     alignedArray.getGtolTemp0IdAt(index).Ref());
+	  return XMP.getMacroId("_XMP_M_CALC_INDEX_GBLOCK").Call(args);
+	}
       default:
         throw new XMPexception("unknown align manner for array '" + alignedArray.getName()  + "'");
     }
@@ -1618,7 +1618,9 @@ public class XMPrewriteExpr {
     }
 
     XMPnodes n = t.getOntoNodes();
-    int ni = t.getOntoNodesIndexAt(ti).getInt();
+    int ni = -1;
+    if (t.getDistMannerAt(ti) != XMPtemplate.DUPLICATION)
+      ni = t.getOntoNodesIndexAt(ti).getInt();
 
     XobjList args = null;
     switch (t.getDistMannerAt(ti)) {

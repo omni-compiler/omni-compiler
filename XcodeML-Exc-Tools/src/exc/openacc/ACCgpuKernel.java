@@ -322,9 +322,9 @@ public class ACCgpuKernel {
     }
     
     //if block reduction is used
-    if(reductionManager.hasBlockReduction){
+    deviceKernelLocalIds.mergeList(reductionManager.getBlockReductionLocalIds());
+    if(reductionManager.hasUsingTmpReduction()){
       deviceKernelParamIds.mergeList(reductionManager.getBlockReductionParamIds());
-      deviceKernelLocalIds.mergeList(reductionManager.getBlockReductionLocalIds());
       allocList.add(Xcons.List(reductionManager.tempPtr, Xcons.IntConstant(0), reductionManager.totalElementSize ));
     }
     
@@ -335,17 +335,12 @@ public class ACCgpuKernel {
     if(sharedMemory.isUsed()){
       deviceKernelBody.add(sharedMemory.makeInitFunc());
     }
-    if(reductionManager.hasBlockReduction){    
-      //deviceKernelBody.add(reductionManager.makeInitFunc());
-      deviceKernelBody.add(reductionManager.makeLocalVarInitFuncs());
-    }
+    deviceKernelBody.add(reductionManager.makeLocalVarInitFuncs());
     
     for(Block b : initBlocks) deviceKernelBody.add(b);
     deviceKernelBody.add(deviceKernelMainBlock);
     
-    if(reductionManager.hasBlockReduction){
-      deviceKernelBody.add(reductionManager.makeReduceAndFinalizeFuncs());
-    }
+    deviceKernelBody.add(reductionManager.makeReduceAndFinalizeFuncs());
     
     deviceKernelBody.setIdentList(deviceKernelLocalIds);
     deviceKernelBody.setDecls(ACCutil.getDecls(deviceKernelLocalIds)); //is this need?
@@ -760,14 +755,28 @@ public class ACCgpuKernel {
     XobjList vIdxIdList = Xcons.IDList();
     XobjList nIterIdList = Xcons.IDList();
     XobjList indVarIdList = Xcons.IDList();
+    Boolean has64bitIndVar = false;
     for(CforBlock tmpForBlock : collapsedForBlockList){
       String indVarName = tmpForBlock.getInductionVar().getName();
+      Xtype indVarType = tmpForBlock.findVarIdent(indVarName).Type();
+      Xtype idxVarType = Xtype.unsignedType;
+      switch(indVarType.getBasicType()){
+      case BasicType.INT:
+      case BasicType.UNSIGNED_INT:
+        idxVarType = Xtype.unsignedType;
+        break;
+      case BasicType.LONGLONG:
+      case BasicType.UNSIGNED_LONGLONG:
+        idxVarType = Xtype.unsignedlonglongType;
+        has64bitIndVar = true;
+        break;
+      }
       Xobject init = tmpForBlock.getLowerBound();
       Xobject cond = tmpForBlock.getUpperBound();
       Xobject step = tmpForBlock.getStep();
-      Ident vIdxId = Ident.Local("_ACC_idx_" + indVarName, Xtype.intType);
-      Ident indVarId = Ident.Local(indVarName, Xtype.intType);
-      Ident nIterId = Ident.Local("_ACC_niter_" + indVarName, Xtype.intType);
+      Ident vIdxId = Ident.Local("_ACC_idx_" + indVarName, idxVarType);
+      Ident indVarId = Ident.Local(indVarName, indVarType);
+      Ident nIterId = Ident.Local("_ACC_niter_" + indVarName, idxVarType);
       Block calcNiterFuncCall = ACCutil.createFuncCallBlock("_ACC_calc_niter", Xcons.List(nIterId.getAddr(),init,cond,step));
       Block calcIdxFuncCall = ACCutil.createFuncCallBlock("_ACC_gpu_calc_idx", Xcons.List(vIdxId.Ref(), indVarId.getAddr(), init, cond, step));
       
@@ -780,13 +789,14 @@ public class ACCgpuKernel {
       calcIdxFuncCalls.add(calcIdxFuncCall);
     }
     
+    Xtype globalIdxType = has64bitIndVar? Xtype.unsignedlonglongType : Xtype.unsignedType;
     
-    Ident iterInit = Ident.Local("_ACC_" + execMethodName + "_init", Xtype.intType);
-    Ident iterCond = Ident.Local("_ACC_" + execMethodName + "_cond", Xtype.intType);
-    Ident iterStep = Ident.Local("_ACC_" + execMethodName + "_step", Xtype.intType);
-    Ident iterIdx = Ident.Local("_ACC_" + execMethodName + "_idx", Xtype.intType);
+    Ident iterInit = Ident.Local("_ACC_" + execMethodName + "_init", globalIdxType);
+    Ident iterCond = Ident.Local("_ACC_" + execMethodName + "_cond", globalIdxType);
+    Ident iterStep = Ident.Local("_ACC_" + execMethodName + "_step", globalIdxType);
+    Ident iterIdx = Ident.Local("_ACC_" + execMethodName + "_idx", globalIdxType);
     localIds_2.mergeList(Xcons.List(iterIdx, iterInit, iterCond, iterStep));
-    Ident iterCnt = Ident.Local("_ACC_" + execMethodName + "_cnt", Xtype.intType);
+    Ident iterCnt = Ident.Local("_ACC_" + execMethodName + "_cnt", globalIdxType);
     localIds_2.add(iterCnt);
 
     XobjList initIterFuncArgs = Xcons.List(iterInit.getAddr(), iterCond.getAddr(), iterStep.getAddr());
@@ -1156,7 +1166,7 @@ public class ACCgpuKernel {
     }
     
     //add blockReduction cnt & tmp
-    if(reductionManager.hasBlockReduction){
+    if(reductionManager.hasUsingTmpReduction()){
       Ident blockCountId = Ident.Local("_ACC_gpu_block_count", Xtype.Pointer(Xtype.unsignedType));
       launchFuncLocalIds.add(blockCountId);
       deviceKernelCallArgs.add(blockCountId.Ref());
@@ -1188,11 +1198,13 @@ public class ACCgpuKernel {
         if(asyncExp != null){
           deviceKernelCall.setProp(ACCgpuDecompiler.GPU_FUNC_CONF_ASYNC, (Object)Xcons.List(asyncExp));
         }else{
-          deviceKernelCall.setProp(ACCgpuDecompiler.GPU_FUNC_CONF_ASYNC, (Object)Xcons.List());
+          deviceKernelCall.setProp(ACCgpuDecompiler.GPU_FUNC_CONF_ASYNC, (Object)Xcons.List(Xcons.IntConstant(ACC.ACC_ASYNC_NOVAL)));
         }
       }catch(Exception e){
         ACC.fatal("can't set async prop");   
       }
+    }else{
+      deviceKernelCall.setProp(ACCgpuDecompiler.GPU_FUNC_CONF_ASYNC, (Object)Xcons.List(Xcons.IntConstant(ACC.ACC_ASYNC_SYNC)));
     }
 
     if(sharedMemory.isUsed()){
@@ -1356,7 +1368,9 @@ public class ACCgpuKernel {
     //useMemPoolVarId
     for(Ident id : _outerIdList){
       if(kernelInfo.isVarReduction(id.getName())){
-	_useMemPoolOuterIdSet.add(id);      
+        if(! kernelInfo.isVarAllocated(id)){
+          _useMemPoolOuterIdSet.add(id);
+        }
       }
     }
   }
@@ -1998,7 +2012,6 @@ public class ACCgpuKernel {
   class ReductionManager{
     Ident counterPtr = null;
     Ident tempPtr = null;
-    boolean hasBlockReduction = false;
     List<Reduction> reductionList = new ArrayList<Reduction>();
     Xobject totalElementSize = Xcons.IntConstant(0);
     Map<Reduction, Xobject> offsetMap = new HashMap<Reduction, Xobject>();
@@ -2053,7 +2066,7 @@ public class ACCgpuKernel {
        *   }
        * }
        */
-      XobjList idList = Xcons.List(isLastVar);
+      XobjList idList = Xcons.List();
       BlockList body = Bcons.emptyBody(idList, ACCutil.getDecls(idList));
       
       //Ident reductionCnt = Ident.Var("hoge_kernel" + "_red_cnt", Xtype.unsignedType, Xtype.Pointer(Xtype.unsignedType), VarScope.GLOBAL);
@@ -2070,24 +2083,41 @@ public class ACCgpuKernel {
       while(blockRedIter.hasNext()){
         Reduction reduction = blockRedIter.next();
 //        Xobject tmpPtr = Xcons.PointerRef(tempPtrPtr.Ref());
+        Ident tmpVar = Ident.Local("_ACC_gpu_reduction_tmp_" + reduction.var.getName(), reduction.varId.Type());
         if(reduction.useThread()){
-          body.add(reduction.makeThreadReductionFuncCall());
+          idList.add(tmpVar);
+          body.add(ACCutil.createFuncCallBlock("_ACC_gpu_init_reduction_var", Xcons.List(tmpVar.getAddr(), Xcons.IntConstant(reduction.getReductionKindInt()))));
+          body.add(reduction.makeThreadReductionFuncCall(tmpVar));
+          //body.add(Bcons.Statement(Xcons.Set(reduction.localVarId.Ref(), tmpVar.Ref())));
         }
-        if(reduction.useBlock()){
-          body.add(reduction.makeTempWriteFuncCall(tempPtr, offsetMap.get(reduction)));
+        if(reduction.useBlock() && reduction.usesTmp()){
+          if(reduction.useThread()){
+            body.add(reduction.makeTempWriteFuncCall(tmpVar, tempPtr, offsetMap.get(reduction)));
+          }else{
+            body.add(reduction.makeTempWriteFuncCall(tempPtr, offsetMap.get(reduction)));
+          }
+          
+          Block blockReduction = reduction.makeBlockReductionFuncCall(tempPtr, offsetMap.get(reduction));
+          thenBody.add(blockReduction);
+        }else{
+          if(reduction.useThread()){
+            body.add(reduction.makeAtomicBlockReductionFuncCall(tmpVar));
+          }else{
+            body.add(reduction.makeAtomicBlockReductionFuncCall(null));
+          }
         }
-        
-        Block blockReduction = reduction.makeBlockReductionFuncCall(tempPtr, offsetMap.get(reduction));
-        thenBody.add(blockReduction);
       }
       
-      thenBody.add(reductionManager.makeFinalizeFunc());
+      //thenBody.add(reductionManager.makeFinalizeFunc());
       
-      body.add(ACCutil.createFuncCallBlock("_ACC_gpu_is_last_block", Xcons.List(isLastVar.getAddr(), counterPtr.Ref())));
+      if(! thenBody.isEmpty()){
+        idList.add(isLastVar);
+        body.add(ACCutil.createFuncCallBlock("_ACC_gpu_is_last_block", Xcons.List(isLastVar.getAddr(), counterPtr.Ref())));
+        body.add(Bcons.IF(isLastVar.Ref(), Bcons.COMPOUND(thenBody), null));
+      }
       
-      //Xcons.binaryOp(Xcode.LOG_NEQ_EXPR, isLastVar.Ref(), Xcons.IntConstant(0))
-      body.add(Bcons.IF(isLastVar.Ref(), Bcons.COMPOUND(thenBody), null));
-
+      body.setDecls(ACCutil.getDecls(idList));
+      body.setIdentList(idList);
       return Bcons.COMPOUND(body);
     }
 
@@ -2108,11 +2138,14 @@ public class ACCgpuKernel {
 //      }
       
       if(execMethod == ACCpragma._BLOCK || execMethod == ACCpragma._BLOCK_THREAD){
-        hasBlockReduction = true;
+        //hasBlockReduction = true;
       }else{
 	return reduction;
       }
       
+      if(! reduction.usesTmp()) return reduction;
+
+      //tmp setting
       offsetMap.put(reduction, totalElementSize);
       
 
@@ -2138,6 +2171,10 @@ public class ACCgpuKernel {
     
     Iterator<Reduction> BlockReductionIterator(){
       return new BlockReductionIterator(reductionList);
+    }
+    
+    boolean hasUsingTmpReduction(){
+      return ! offsetMap.isEmpty();
     }
     
     class BlockReductionIterator implements Iterator<Reduction>{
@@ -2205,6 +2242,7 @@ public class ACCgpuKernel {
 //	this.launchFuncLocalId = Ident.Local("_ACC_red_var_"+varId.getName(), Xtype.Pointer(varId.Type()));
 //      }
     }
+
     public void rewrite(Block b) {
       BasicBlockExprIterator iter = new BasicBlockExprIterator(b);
       for (iter.init(); !iter.end(); iter.next()) {
@@ -2255,19 +2293,41 @@ public class ACCgpuKernel {
       return ACCutil.createFuncCallBlock("_ACC_gpu_reduction_block", args);
     }
     
-    public Block makeThreadReductionFuncCall(){
-      XobjList args = Xcons.List(localVarId.Ref(), Xcons.IntConstant(getReductionKindInt()));
-      if(execMethod == ACCpragma._THREAD){
-        args.cons(varId.getAddr());
+    public Block makeAtomicBlockReductionFuncCall(Ident tmpVar) {
+      XobjList args;
+      if(tmpVar != null){
+        args = Xcons.List(varId.Ref(), Xcons.IntConstant(getReductionKindInt()), tmpVar.Ref());
       }else{
-        args.cons(localVarId.getAddr());
+        args = Xcons.List(varId.Ref(), Xcons.IntConstant(getReductionKindInt()), localVarId.Ref());
       }
-      return ACCutil.createFuncCallBlock("_ACC_gpu_reduction_thread", args);
+      return ACCutil.createFuncCallBlock("_ACC_gpu_reduction_block", args);
+    }
+    
+    public Block makeThreadReductionFuncCall(){
+      //XobjList args = Xcons.List(localVarId.Ref(), Xcons.IntConstant(getReductionKindInt()));
+      if(execMethod == ACCpragma._THREAD){
+        //args.cons(varId.getAddr());
+        return makeThreadReductionFuncCall(varId);
+      }else{
+        return makeThreadReductionFuncCall(localVarId);
+        //args.cons(localVarId.getAddr());
+      }
+      //return ACCutil.createFuncCallBlock("_ACC_gpu_reduction_thread", args);
+    }
+    
+    public Block makeThreadReductionFuncCall(Ident varId){
+      XobjList args = Xcons.List(varId.getAddr(), localVarId.Ref(), Xcons.IntConstant(getReductionKindInt()));
+      return ACCutil.createFuncCallBlock("_ACC_gpu_reduction_thread",  args);
     }
     
     public Block makeTempWriteFuncCall(Ident tmpPtrId, Xobject tmpOffsetElementSize){
       Xobject tmpAddr = Xcons.binaryOp(Xcode.PLUS_EXPR, tmpPtrId.Ref(), tmpOffsetElementSize);
       return ACCutil.createFuncCallBlock("_ACC_gpu_reduction_tmp", Xcons.List(localVarId.Ref(), tmpPtrId.Ref(), tmpOffsetElementSize));
+    }
+    
+    public Block makeTempWriteFuncCall(Ident id, Ident tmpPtrId, Xobject tmpOffsetElementSize){
+      Xobject tmpAddr = Xcons.binaryOp(Xcode.PLUS_EXPR, tmpPtrId.Ref(), tmpOffsetElementSize);
+      return ACCutil.createFuncCallBlock("_ACC_gpu_reduction_tmp", Xcons.List(id.Ref(), tmpPtrId.Ref(), tmpOffsetElementSize));
     }
     
     private int getReductionKindInt(){
@@ -2289,6 +2349,16 @@ public class ACCgpuKernel {
     public boolean useBlock(){
       if(execMethod != ACCpragma._THREAD) return true;
       else return false;
+    }
+    public boolean usesTmp(){
+      ACCpragma op = var.getReductionOperator();
+      switch(var.getId().Type().getBasicType()){
+      case BasicType.FLOAT:
+      case BasicType.INT:
+        if(op != ACCpragma.REDUCTION_MUL) return false;
+        else return true;
+      }
+      return true;
     }
   }
 }

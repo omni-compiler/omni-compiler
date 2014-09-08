@@ -682,6 +682,8 @@ typedef struct CExprOfSymbol {
     struct CExprOfTypeDesc  *e_headType;
     //! reference to declarator
     CExpr                   *e_declrExpr;
+    //! list of coarray dimensions (ID=284)
+    CExpr                   *e_codimensions;
     //! order in SymbolTable
     int                     e_putOrder;
     //! is global symbol 
@@ -979,7 +981,7 @@ typedef struct CExprOfTypeDesc {
     //! pre-declarared symbol type
     struct CExprOfTypeDesc *e_preDeclType;
 
-    //! type ID for XcodeML
+    //! type ID and cotype ID for XcodeML (ID=284)
     char                *e_typeId;
 
     //! alignment of type

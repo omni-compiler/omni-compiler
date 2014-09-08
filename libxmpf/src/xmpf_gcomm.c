@@ -46,7 +46,7 @@ void _XMPF_bcast_on_nodes(void *data_addr, int count, int datatype,
 
   _XMP_ASSERT(!on_desc || on_desc->ref_kind == XMP_OBJ_REF_NODES);
 
-  size_t size = _XMP_get_datatype_size(datatype);
+  int size = (int)_XMP_get_datatype_size(datatype);
 
   int root = 0;
 
@@ -169,7 +169,7 @@ void _XMPF_bcast_on_template(void *data_addr, int count, int datatype,
 
   _XMP_ASSERT(on_desc || on_desc->ref_kind == XMP_OBJ_REF_TEMPL);
 
-  size_t size = _XMP_get_datatype_size(datatype);
+  int size = (int)_XMP_get_datatype_size(datatype);
 
   _XMP_RETURN_IF_SINGLE;
 
@@ -198,7 +198,7 @@ void _XMPF_bcast_on_template(void *data_addr, int count, int datatype,
 
     for (int i = 0; i < from->dim; i++){
 
-      int from_idx;
+      int from_idx = -1;
 
       switch (on_desc->subscript_type[i]){
       case SUBSCRIPT_SCALAR:
@@ -234,7 +234,7 @@ void _XMPF_bcast_on_template(void *data_addr, int count, int datatype,
       int j = from->chunk[i].onto_nodes_index;
       if (j != _XMP_N_NO_ONTO_NODES){
 	// 0-origin
-	from_idx_in_nodes[j] = _XMP_calc_template_owner_SCALAR(from, j, from_idx);
+	from_idx_in_nodes[j] = _XMP_calc_template_owner_SCALAR(from, j, (long long)from_idx);
       }
 
     }

@@ -692,6 +692,9 @@ GASNET_CONDUIT
 GASNET_PREFIX
 GASNET_FALSE
 GASNET_TRUE
+TCA_PREFIX
+TCA_FALSE
+TCA_TRUE
 LIBXML_PREFIX
 omniQRealFillGap
 omniQRealPrecInLimb
@@ -769,6 +772,9 @@ AIX_OPT
 NATIVE_DOPT
 PPCC_OPT
 PPCC
+ENABLE_XACC
+ENABLE_XACC_FALSE
+ENABLE_XACC_TRUE
 ENABLE_ATOOL
 ENABLE_ATOOL_FALSE
 ENABLE_ATOOL_TRUE
@@ -954,18 +960,21 @@ enable_openacc
 with_cppflag
 with_backend_cflag
 enable_atool
+enable_xacc
+enable_KRDMA
 with_backend_cc
 with_backend_fc
 enable_mreal
-with_gmpLibDir
-with_gmpIncDir
+with_gmp_lib
+with_gmp_include
 with_precision
-with_libxmlDir
-with_gasnetDir
+with_libxml
+with_TCA
+with_gasnet
 with_gasnet_conduit
 with_gpucc
 with_gpu_cflags
-with_gpuDir
+with_cuda
 with_omni
 with_nativeCompiler
 with_cpp
@@ -1624,6 +1633,8 @@ Optional Features:
   --enable-xmpgpu                enable XcalableMP-GPU (false default).
   --enable-openacc               enable OpenACC (false default).
   --enable-atool                 enable atool (false default).
+  --enable-xacc                  enable XcalableACC (false default).
+  --enable-KRDMA                 enable RDMA functions on the K compiter.
   --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default).
 
 Optional Packages:
@@ -1640,15 +1651,16 @@ Optional Packages:
   --with-backend-cflag=OPT    Backend C compiler options for optimization
   --with-backend-cc=CMD       Backend C compiler (default: mpicc)
   --with-backend-fc=CMD       Backend F90 compiler (default: mpif90)
-  --with-gmpLibDir=DIR        where the GNU-MP library is for quad-real support.
-  --with-gmpIncDir=DIR        where the GNU-MP include headers are for quad-real support.
+  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support.
+  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support.
   --with-precision=NUM        the default precision of real*16 in bits (128).
-  --with-libxmlDir=DIR        libxml install directory (default: /usr)
-  --with-gasnetDir=DIR        GASNet install directory
+  --with-libxml=DIR           libxml installation path (default: /usr)
+  --with-TCA=DIR              TCA installation path
+  --with-gasnet=DIR           GASNet installation path
   --with-gasnet-conduit=NAME  GASNet conduit
   --with-gpucc=CMD            GPU C compiler (default: nvcc)
   --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)
-  --with-gpuDir=DIR           GPGPU tooklit install directory (default: /usr/local/cuda)
+  --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)
   --with-omni             specify where the omni is installed (prefix
                           default).
   --with-nativeCompiler   specify a native fortran compiler ("gfortran"
@@ -12450,6 +12462,8 @@ if test -e "Driver/src/Makefile.am"; then
 
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omtranslate"
 
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omni_collect_init"
+
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 else
@@ -12796,6 +12810,14 @@ if test "${enable_atool+set}" = set; then :
   enableval=$enable_atool; doatool=$enableval
 else
   doatool=no
+fi
+
+
+# Check whether --enable-xacc was given.
+if test "${enable_xacc+set}" = set; then :
+  enableval=$enable_xacc; xacc=$enableval
+else
+  xacc=no
 fi
 
 
@@ -16998,7 +17020,6 @@ XMP_ENABLE_GPU=0
 if test "x${doXmpGpu}" = "xyes"; then
     XMP_ENABLE_GPU=1
 fi
-
  if test "x${doXmpGpu}" = "xyes"; then
   ENABLE_XMP_GPU_TRUE=
   ENABLE_XMP_GPU_FALSE='#'
@@ -17023,7 +17044,6 @@ fi
 
 
 
-
 ENABLE_ATOOL=0
 if test "x${doatool}" = "xyes"; then
    ENABLE_ATOOL=1
@@ -17034,6 +17054,20 @@ fi
 else
   ENABLE_ATOOL_TRUE='#'
   ENABLE_ATOOL_FALSE=
+fi
+
+
+
+#ENABLE_XACC=0
+#if test "x${xacc}" = "xyes"; then
+#   ENABLE_XACC=1
+#fi
+ if test "x${xacc}" = "xyes"; then
+  ENABLE_XACC_TRUE=
+  ENABLE_XACC_FALSE='#'
+else
+  ENABLE_XACC_TRUE='#'
+  ENABLE_XACC_FALSE=
 fi
 
 
@@ -17132,10 +17166,15 @@ PPCC_OPT="-E"
 NATIVE_DOPT="-D_XCALABLEMP"
 
 if test "$target" = "powerpc-ibm-none"; then
-PPCC="gcc"
-PPCC_OPT="-E --std=c99"
-NATIVE_DOPT="-WF,-D_XCALABLEMP"
+  PPCC="gcc"
+  PPCC_OPT="-E --std=c99"
+  NATIVE_DOPT="-WF,-D_XCALABLEMP"
 fi
+
+if test "$target" = "powerpc64-hitachi-aix"; then
+  NATIVE_DOPT="-WF,-D_XCALABLEMP"
+fi
+
 
 
 
@@ -17147,7 +17186,17 @@ if test "$IS_AIX" = "Yes"; then
 
 fi
 
- if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
+# Add temporarily by mnakao
+enableKRDMA=""
+# Check whether --enable-KRDMA was given.
+if test "${enable_KRDMA+set}" = set; then :
+  enableval=$enable_KRDMA; enableKRDMA=$enableval
+else
+  enableKRDMA=no
+fi
+
+
+ if test x${enableKRDMA} = xyes; then
   FJRDMA_TRUE=
   FJRDMA_FALSE='#'
 else
@@ -17156,6 +17205,10 @@ else
 fi
 
 
+# End Add temporarily
+
+#AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
+#AC_SUBST(FJRDMA)
 
 # --------------------------------------------------------------------
 # specify Backend C compiler
@@ -17219,7 +17272,7 @@ $as_echo_n "checking backend C compiler... " >&6; }
 if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT="-Xg -noansi"
-  OMC_CONF_LNK_OPT="-Kopenmp"
+  OMC_CONF_LNK_OPT="-Kfast,openmp"
   BECC_OMP_OPTION="-Kfast,openmp"
 elif test "$target" = "Cray-linux-gnu"; then
   OMC_CONF_LX2X_OPT=""
@@ -17233,25 +17286,27 @@ elif test "$target" = "sx-nec-superux"; then
   BECC_OMP_OPTION="-Popenmp"
 elif test "$target" = "powerpc-ibm-none"; then
   OMC_CONF_LX2X_OPT=""
-  OMC_CONF_NTV_OPT=""
+  OMC_CONF_NTV_OPT="-q64"
   DRIVER="/bgsys/drivers/ppcfloor"
   OMC_CONF_LNK_OPT="-I/usr/local/bg/include \
-                -L/usr/local/bg/lib -lkek -L${DRIVER}/bgpm/lib/ -lbgpm   -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
-  BECC_OMP_OPTION=""
+                -L/usr/local/bg/lib -lkek -L${DRIVER}/bgpm/lib/ -lbgpm -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
+  BECC_OPTION="-O5"
+  BECC_OMP_OPTION="-O5  -qhot -qsmp=omp -qsimd=auto"
 elif test "$target" = "powerpc64-hitachi-aix"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT="-q64"
-  OMC_CONF_LNK_OPT="-q64"
-  BECC_OMP_OPTION="-parallel"
+  OMC_CONF_LNK_OPT="-q64 -qhot -qsmp=omp -qsimd=auto"
+  BECC_OPTION="-O5"
+  BECC_OMP_OPTION="-O5 -qhot -qsmp=omp -qsimd=auto"
 else
   chk=`$BECC --version | head -n1`
   case $chk in
   cc* | gcc* | Apple*)
     OMC_CONF_LX2X_OPT=""
-    OMC_CONF_NTV_OPT="-std=gnu99 -Wno-implicit -Wno-attributes"
-    OMC_CONF_LNK_OPT="-fopenmp"
-    BECC_OPTION="-std=gnu99 -Wall -Wpointer-arith"
-    BECC_OMP_OPTION="-fopenmp"
+    OMC_CONF_NTV_OPT="-O2 -std=gnu99 -Wno-implicit -Wno-attributes"
+    OMC_CONF_LNK_OPT="-O2 -fopenmp"
+    BECC_OPTION="-O2 -std=gnu99 -Wall -Wpointer-arith"
+    BECC_OMP_OPTION="-O2 -fopenmp"
     ;;
   *ICC*)
     OMC_CONF_LX2X_OPT=""
@@ -17261,14 +17316,14 @@ else
     BECC_OMP_OPTION="-openmp"
     ;;
   *)
-    chk2=`$BECC --version | head -n2 | tail -n1`
+    chk2=`$BECC --version 2> /dev/null | head -n2 | tail -n1`
     case $chk2 in
     pgcc*)
       OMC_CONF_LX2X_OPT=""
-      OMC_CONF_NTV_OPT="-D_XMP_PGI"
-      OMC_CONF_LNK_OPT="-mp"
-      BECC_OPTION="-c99 -Minform=warn"
-      BECC_OMP_OPTION="-mp"
+      OMC_CONF_NTV_OPT="-O2 -D_XMP_PGI"
+      OMC_CONF_LNK_OPT="-O2 -mp"
+      BECC_OPTION="-O2 -c99 -Minform=warn"
+      BECC_OMP_OPTION="-O2 -mp"
       IS_PGCC="Yes"
       ;;
     *)
@@ -20383,8 +20438,8 @@ $as_echo_n "checking backend Fortran compiler... " >&6; }
 
   if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
     OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT="-Free"
-    OMF_CONF_LNK_OPT="-Kopenmp"
+    OMF_CONF_NTV_OPT="-Free -Kfast"
+    OMF_CONF_LNK_OPT="-Kfast,openmp"
   elif test "$target" = "Cray-linux-gnu"; then
     OMF_CONF_LX2X_OPT=""
     OMF_CONF_NTV_OPT="-f free"
@@ -20395,14 +20450,14 @@ $as_echo_n "checking backend Fortran compiler... " >&6; }
     OMF_CONF_LNK_OPT="-Popenmp"
   elif test "$target" = "powerpc-ibm-none"; then
     OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT="-qextname"
+    OMF_CONF_NTV_OPT="-qextname -O5 -q64"
     OMF_CONF_LNK_OPT="-I/usr/local/bg/include -g -O3 -qhot -qsmp=omp -qsimd=auto -q64 -qsource -qlist"
   elif test "$target" = "powerpc64-hitachi-aix"; then
     OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT="-qextname -qnomixed -q64"
-    OMF_CONF_LNK_OPT="-q64"
+    OMF_CONF_NTV_OPT="-qextname -qnomixed -q64  -O5"
+    OMF_CONF_LNK_OPT="-q64  -O5 -qhot -qsmp=omp -qsimd=auto"
   else
-    chk=`$BEFC --version | head -n1`
+    chk=`$BEFC --version 2> /dev/null | head -n1`
     case $chk in
     GNU*)
       OMF_CONF_LX2X_OPT="-gnu"
@@ -20417,12 +20472,12 @@ $as_echo_n "checking backend Fortran compiler... " >&6; }
       BEFC_MODINC="-module"
       ;;
     *)
-      chk2=`$BEFC --version | head -n2 | tail -n1`
+      chk2=`$BEFC --version 2>/dev/null | head -n2 | tail -n1`
       case $chk2 in
-      pgfortran*)
+      pgfortran*|pgf95*|pgf90*)
         OMF_CONF_LX2X_OPT=""
-        OMF_CONF_NTV_OPT=""
-        OMF_CONF_LNK_OPT="-mp"
+        OMF_CONF_NTV_OPT="-O2"
+        OMF_CONF_LNK_OPT="-O2 -mp"
 	;;
       *)
       echo "No supported Fortran compiler was found."
@@ -20433,7 +20488,7 @@ $as_echo_n "checking backend Fortran compiler... " >&6; }
       echo " - Cray Fortran (ftn)"
       echo " - IBM Fortran (mpixlf90_r)"
       echo " - Hitachi Fortran (mpif90)"
-      echo " - PGI Fortran (pgfortran)"
+      echo " - PGI Fortran (mpif90)"
       exit 1
       ;;
     esac
@@ -25048,14 +25103,8 @@ rm -f ./hasqd.* ./hasqd
 # --------------------------------------------------------------------
 # quad real support
 
-if test "${OS}" = "linux"; then
-    gmpIncDir=/usr/include
-    gmpLibDir=/usr/lib
-else
-    gmpIncDir=/usr/local/include
-    gmpLibDir=/usr/local/lib
-fi
-
+gmpInclude=/usr/include
+gmpLib=/usr/lib
 gmpIncOpt=""
 gmpDirOpt=""
 qRealPrecBits=128
@@ -25069,39 +25118,39 @@ fi
 
 
 
-# Check whether --with-gmpLibDir was given.
-if test "${with_gmpLibDir+set}" = set; then :
-  withval=$with_gmpLibDir; gmpLibDir=$withval
+# Check whether --with-gmp-lib was given.
+if test "${with_gmp_lib+set}" = set; then :
+  withval=$with_gmp_lib; gmpLib=$withval
 else
   true
 fi
 
 
 
-# Check whether --with-gmpIncDir was given.
-if test "${with_gmpIncDir+set}" = set; then :
-  withval=$with_gmpIncDir; gmpIncDir=$withval
+# Check whether --with-gmp-include was given.
+if test "${with_gmp_include+set}" = set; then :
+  withval=$with_gmp_include; gmpInclude=$withval
 else
   true
 fi
 
 
 if test "x${doQReal}" = "xyes"; then
-    if test -f ${gmpIncDir}/gmp.h; then
+    if test -f ${gmpInclude}/gmp.h; then
         true
     else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't find ${gmpIncDir}/gmp.h. exit." >&5
-$as_echo "can't find ${gmpIncDir}/gmp.h. exit." >&6; }
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't find ${gmpInclude}/gmp.h. exit." >&5
+$as_echo "can't find ${gmpInclude}/gmp.h. exit." >&6; }
         exit 1
     fi
-    gmpLibs=`ls ${gmpLibDir}/libgmp.* 2> /dev/null`
+    gmpLibs=`ls ${gmpInclude}/libgmp.* 2> /dev/null`
     if test "x${gmpLibs}" = "x"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't find ${gmpLibDir}/libgmp.*. exit." >&5
-$as_echo "can't find ${gmpLibDir}/libgmp.*. exit." >&6; }
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't find ${gmpLib}/libgmp.*. exit." >&5
+$as_echo "can't find ${gmpLib}/libgmp.*. exit." >&6; }
         exit 1
     fi
-    gmpIncOpt="-I${gmpIncDir}"
-    gmpLibOpt="-L${gmpLibDir} -lgmp"
+    gmpIncOpt="-I${gmpInclude}"
+    gmpLibOpt="-L${gmpLib} -lgmp"
 fi
 
 
@@ -25310,16 +25359,43 @@ fi
 default_libxmlDir="/usr"
 
 
-# Check whether --with-libxmlDir was given.
-if test "${with_libxmlDir+set}" = set; then :
-  withval=$with_libxmlDir; LIBXML_PREFIX="${withval}"
+# Check whether --with-libxml was given.
+if test "${with_libxml+set}" = set; then :
+  withval=$with_libxml; LIBXML_PREFIX="${withval}"
 else
   LIBXML_PREFIX="${default_libxmlDir}"
 fi
 
 
 if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
-   as_fn_error $? "parser.h not found. Please attach or check --with-libxmlDir=<DIR>. See ./configure --help" "$LINENO" 5
+   as_fn_error $? "parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help" "$LINENO" 5
+fi
+
+
+
+# --------------------------------------------------------------------
+# TCA
+
+# Check whether --with-TCA was given.
+if test "${with_TCA+set}" = set; then :
+  withval=$with_TCA; TCA_PREFIX="${withval}"
+fi
+
+
+use_tca=no
+if test "${TCA_PREFIX}" != ""; then
+   use_tca=yes
+   if ! test -f $TCA_PREFIX/tca-api.h; then
+      as_fn_error $? "$TCA_PREFIX/tca-api.h not found. Please check --with-TCA=<DIR>" "$LINENO" 5
+   fi
+fi
+
+ if test x${use_tca} = xyes; then
+  TCA_TRUE=
+  TCA_FALSE='#'
+else
+  TCA_TRUE='#'
+  TCA_FALSE=
 fi
 
 
@@ -25330,9 +25406,9 @@ fi
 default_gasnetDir=""
 
 
-# Check whether --with-gasnetDir was given.
-if test "${with_gasnetDir+set}" = set; then :
-  withval=$with_gasnetDir; GASNET_PREFIX="${withval}"
+# Check whether --with-gasnet was given.
+if test "${with_gasnet+set}" = set; then :
+  withval=$with_gasnet; GASNET_PREFIX="${withval}"
 else
   GASNET_PREFIX="${default_gasnetDir}"
 fi
@@ -25342,7 +25418,7 @@ use_gasnet=no
 if test "${GASNET_PREFIX}" != ""; then
   use_gasnet=yes
   if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
-	  as_fn_error $? "${GASNET_PREFIX}/include/gasnet.h not found. Please attach or check --with-gasnetDir" "$LINENO" 5
+	  as_fn_error $? "${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnet" "$LINENO" 5
   fi
 fi
 
@@ -25450,9 +25526,9 @@ fi
 # specify libgpu path
 
 
-# Check whether --with-gpuDir was given.
-if test "${with_gpuDir+set}" = set; then :
-  withval=$with_gpuDir; GPGPU_PREFIX="${withval}"
+# Check whether --with-cuda was given.
+if test "${with_cuda+set}" = set; then :
+  withval=$with_cuda; GPGPU_PREFIX="${withval}"
 else
   GPGPU_PREFIX="/usr/local/cuda"
 fi
@@ -26382,6 +26458,10 @@ if test -z "${ENABLE_ATOOL_TRUE}" && test -z "${ENABLE_ATOOL_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_ATOOL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${ENABLE_XACC_TRUE}" && test -z "${ENABLE_XACC_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_XACC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${FJRDMA_TRUE}" && test -z "${FJRDMA_FALSE}"; then
   as_fn_error $? "conditional \"FJRDMA\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -26395,6 +26475,10 @@ if test -z "${SUPERUX_TRUE}" && test -z "${SUPERUX_FALSE}"; then
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
+if test -z "${TCA_TRUE}" && test -z "${TCA_FALSE}"; then
+  as_fn_error $? "conditional \"TCA\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${GASNET_TRUE}" && test -z "${GASNET_FALSE}"; then
   as_fn_error $? "conditional \"GASNET\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -27523,6 +27607,7 @@ do
     "$OMDRIVER_DIR/../etc/linker.conf.acc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/linker.conf.acc" ;;
     "$OMDRIVER_DIR/../etc/setup.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/setup.conf" ;;
     "$OMDRIVER_DIR/../bin/omtranslate") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omtranslate" ;;
+    "$OMDRIVER_DIR/../bin/omni_collect_init") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omni_collect_init" ;;
     "$LIBXMP_HEADER_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_HEADER_DIR/Makefile" ;;
     "$LIBXMP_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_DIR/Makefile" ;;
     "$LIBXMP_THREADS_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_THREADS_DIR/Makefile" ;;
@@ -29242,7 +29327,7 @@ ${MAKE} clean
 # Edit version file
 VERSIONTXT="./Driver/etc/version"
 if test -d .git; then
-  VERSION=`git log --date=short --pretty=format:"Release Day:%ad, Hash Value:%h" -1`
+  VERSION=`git log --date=short --pretty=format:"Last Commit Day:%ad, Hash Value:%h" -1`
   echo -n Version:${XMPPKG_VERSION}, ${VERSION} > ${VERSIONTXT}
 fi
 
@@ -29283,5 +29368,8 @@ EOF
   echo "    OpenACC               : $doOpenAcc"
 fi
 
+if test "${use_tca}" = "yes"; then
+  echo "    TCA                   : yes"
+fi
 echo "=================================================="
 

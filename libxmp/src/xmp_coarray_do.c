@@ -8,18 +8,6 @@ static int _coarray_dims, _image_dims, *_image_num, _array_dims;
 static int _transfer_coarray_elmts, _transfer_array_elmts;
 static _XMP_array_section_t *_coarray, *_array;
 
-//void _XMP_coarray_rdma_set(const int coarray_dims, const int array_dims, const int image_dims)
-//{
-//  _coarray      = malloc(sizeof(_XMP_array_section_t) * coarray_dims);
-//  _array        = malloc(sizeof(_XMP_array_section_t) * array_dims);
-//  _coarray_dims = coarray_dims;
-//  _array_dims   = array_dims;
-//  _image_num    = malloc(sizeof(int) * image_dims);
-//  _image_dims   = image_dims;
-//  _transfer_coarray_elmts = 1;
-//  _transfer_array_elmts   = 1;
-//}
-
 void _XMP_coarray_rdma_coarray_set_1(const int start1, const int length1, const int stride1)
 {
   _transfer_coarray_elmts = length1;

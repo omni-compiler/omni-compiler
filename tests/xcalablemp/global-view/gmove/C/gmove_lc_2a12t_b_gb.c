@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <xmp.h>
+
+extern int chk_int(int ierr);
 
 int n=16;
 int a[n][n],b[n][n];
@@ -16,9 +17,7 @@ int m1[2]={9,7};
 
 int main(){
 
-  int i0,i1,myrank,ierr;
-
-  myrank=xmp_node_num();
+  int i0,i1,ierr;
 
 #pragma xmp loop (i0) on tx(i0)
   for(i0=0;i0<n;i0++){
@@ -46,10 +45,5 @@ int main(){
   }
 
 #pragma xmp reduction (MAX:ierr)
-  if (myrank ==1){
-    printf("max error=%d\n",ierr);
-  }
-
-  return ierr;
-
+  chk_int(ierr);
 }

@@ -37,12 +37,27 @@ static void ungetChar_(int c, SrcFile *sf){
   ungetc(c, sf->file);
 }
 
+//return char except CR
+static int getChar__(SrcFile *sf)
+{
+  int c;
+  c = getc(sf->file);
+  if(c == '\r'){
+    int nc = getc(sf->file);
+    if(nc != '\n'){
+      ungetc(nc, sf->file);
+    }
+    return '\n';
+  }
+  return c;
+}
+
 //return char except disabled-return
 static int getChar_(SrcFile *sf)
 {
   int c;
-  while( (c = getc(sf->file)) == '\\' ){
-    int nc = getc(sf->file);
+  while( (c = getChar__(sf)) == '\\' ){
+    int nc = getChar__(sf);
     if(nc == '\n'){
       sf->numEscapedLFs++;
       (sf->curLine)++;
@@ -407,9 +422,9 @@ static void preprocess(char *srcFileName){
 	fclose(src->file);
 
 	//output filename
-	fprintf(output, "# 1 \"%s\" 1\n", includeFilePath);
+	fprintf(output, "# 1 \"%s\"\n", includeFilePath);
 	preprocess(includeFilePath);
-	fprintf(output, "# %d \"%s\" 2\n", src->curLine , src->filename);
+	fprintf(output, "# %d \"%s\"\n", src->curLine , src->filename);
 
 	//reopen
 	src->file = fopen(src->filename, "r");

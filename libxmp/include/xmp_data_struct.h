@@ -79,7 +79,7 @@ typedef struct _XMP_template_chunk_type {
   int par_stride;
   unsigned long long par_chunk_width;
   int dist_manner;
-  unsigned long long *mapping_array;
+  long long *mapping_array;
   _Bool is_regular_chunk;
 
   // enable when dist_manner is not _XMP_N_DIST_DUPLICATION
@@ -128,6 +128,19 @@ typedef struct _XMP_reflect_sched_type {
 
   int lo_rank, hi_rank;
 
+#if defined(_XMP_XACC)
+  void *lo_send_dev_buf, *lo_recv_dev_buf;
+  void *hi_send_dev_buf, *hi_recv_dev_buf;
+  void *lo_send_dev_array, *lo_recv_dev_array;
+  void *hi_send_dev_array, *hi_recv_dev_array;
+  void *lo_async_id;
+  void *hi_async_id;
+#endif
+  
+#if defined(_XMP_TCA)
+  off_t lo_src_offset, lo_dst_offset;
+  off_t hi_src_offset, hi_dst_offset;
+#endif
 } _XMP_reflect_sched_t;
 
 //XACC
@@ -193,7 +206,7 @@ typedef struct _XMP_array_info_type {
   int shadow_size_hi;
 
   _XMP_reflect_sched_t *reflect_sched;
-
+  _XMP_reflect_sched_t *reflect_acc_sched;
   // enable when is_shadow_comm_member is true
   _XMP_comm_t *shadow_comm;
   int shadow_comm_size;
@@ -216,6 +229,13 @@ typedef struct _XMP_array_type {
   uint64_t rdma_addr;
   int rdma_memid;
 #endif
+#if defined(_XMP_TCA)
+  void* tca_handle;
+  _Bool set_handle;  // If tca_handle has been set, set_handle = true
+  int   dma_slot;
+  int   wait_slot;
+  int   wait_tag;
+#endif
   unsigned long long total_elmts;
   // --------------------------------
 
@@ -226,9 +246,7 @@ typedef struct _XMP_array_type {
   int align_comm_rank;
   // ----------------------------------------
 
-  //int num_reqs;
-  //MPI_Request *mpi_req_shadow;
-
+  _Bool is_shrunk_template;
   _XMP_nodes_t *array_nodes;
 
   _XMP_template_t *align_template;

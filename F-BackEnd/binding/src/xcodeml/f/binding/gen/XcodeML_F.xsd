@@ -72,6 +72,7 @@
     <xsd:attribute name="is_save" type="xsd:boolean"/>
     <xsd:attribute name="is_parameter" type="xsd:boolean"/>
     <xsd:attribute name="is_allocatable" type="xsd:boolean"/>
+    <xsd:attribute name="is_cray_pointer" type="xsd:boolean"/>
     <xsd:attribute name="intent">
       <xsd:simpleType>
         <xsd:restriction base="xsd:token">

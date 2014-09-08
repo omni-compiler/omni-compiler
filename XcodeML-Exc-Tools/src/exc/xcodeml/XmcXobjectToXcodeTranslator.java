@@ -109,6 +109,10 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         addChildNodes(e,
                       transValue(ident.getEnumValue()));
 
+        // codimensions for coarray (ID=284)
+        addChildNodes(e,
+                      transCodimensions(ident.getCodimensions()));
+
         // gcc attributes
         addChildNodes(e,
                       trans(ident.getGccAttributes()));
@@ -139,6 +143,22 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         } else {
             return trans(xobj);
         }
+    }
+
+    // ID=284
+    private Node transCodimensions(Xobject xobj) {
+        if (xobj == null) {
+            return null;
+        }
+        Element codims = createElement("codimensions");
+        for (Xobject a : (XobjList)xobj) {
+            if (a.Opcode() == Xcode.LIST) {
+                addChildNodes(codims, createElement("list"));
+            } else {
+                addChildNodes(codims, transExprOrError(a));
+            }
+        }
+        return codims;
     }
 
     private Element transFuncDefParams(XobjList declList, XobjList identList) {

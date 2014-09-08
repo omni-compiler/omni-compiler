@@ -16,7 +16,6 @@ static int calc_hash(int id);
 static void create_stream(cudaStream_t *stream);
 static void destroy_stream(cudaStream_t stream);
 
-
 typedef struct Cell
 {
   int id;
@@ -29,73 +28,128 @@ typedef struct Cell
 typedef Cell** StreamMap;
 
 static StreamMap stream_map = NULL;
-static int table_size = 0;
-static void* default_mpool;
-static unsigned* default_count;
+static const int table_size = 16;
 
-void _ACC_gpu_init_stream_map(int size)
-{
-  table_size = size;
-  if(stream_map != NULL){
-    _ACC_gpu_finalize_stream_map();
-  }
-  stream_map = (StreamMap)_ACC_alloc(table_size * sizeof(Cell *));
-  int i;
-  for(i=0;i<table_size;i++) stream_map[i] = NULL;
-  _ACC_gpu_mpool_alloc_block(&default_mpool);
-  _ACC_gpu_calloc((void**)&default_count, sizeof(unsigned));
-}
+static Cell* alloc_cell(int id);
+static void free_cell(Cell* cell);
+static void add_cell(int id, Cell *cell);
 
-void _ACC_gpu_finalize_stream_map()
-{
-  int i;
-  for(i=0;i<table_size;i++){
-    Cell *head = stream_map[i], *cur;
-    for(cur = head; cur != NULL; cur = cur->next){
-      destroy_stream(cur->stream);
-      _ACC_gpu_mpool_free_block(cur->mpool);
-      _ACC_gpu_free(cur->block_count);
-      _ACC_free(cur);
-    }
-  }
-  _ACC_free(stream_map);
-  stream_map = NULL;
-  _ACC_gpu_mpool_free_block(default_mpool);
-  _ACC_gpu_free(default_count);
-}
+static Cell* async_sync_cell;
+static Cell* async_noval_cell;
 
-static Cell* alloc_stream(int id)
+static Cell* alloc_cell(int id)
 {
   Cell *new_cell = (Cell *)_ACC_alloc(sizeof(Cell));
-  create_stream(&(new_cell->stream));
+  if(id != ACC_ASYNC_SYNC){
+    create_stream(&(new_cell->stream));
+  }else{
+    new_cell->stream = 0;
+  }
   new_cell->id = id;
   _ACC_gpu_mpool_alloc_block(&new_cell->mpool);
   _ACC_gpu_calloc((void**)&new_cell->block_count, sizeof(unsigned));
   return new_cell;
 }
 
-cudaStream_t _ACC_gpu_get_stream(int id)
+static void free_cell(Cell* cell)
 {
-  if(id == ACC_ASYNC_SYNC || id == ACC_ASYNC_NOVAL){
-    return 0;
+  if(cell == NULL) return;
+  if(cell->id != ACC_ASYNC_SYNC){
+    destroy_stream(cell->stream);
   }
-  int hash = calc_hash(id);
+  _ACC_gpu_mpool_free_block(cell->mpool);
+  _ACC_gpu_free(cell->block_count);
+  _ACC_free(cell);
+}
 
-  Cell *cur;
-  Cell *head = stream_map[hash];
-  for(cur = head; cur != NULL; cur = cur->next){
-    if(cur->id == id){
-      return cur->stream;
+void* _ACC_gpu_init_stream_map(int size)
+{
+  //printf("init_map\n");
+  //table_size = size;
+  StreamMap map;
+  map = (StreamMap)_ACC_alloc(table_size * sizeof(Cell *));
+  int i;
+  for(i=0;i<table_size;i++) map[i] = NULL;
+
+  stream_map = map;
+
+  async_sync_cell = alloc_cell(ACC_ASYNC_SYNC);
+  async_noval_cell = alloc_cell(ACC_ASYNC_NOVAL);
+  add_cell(ACC_ASYNC_SYNC, async_sync_cell);
+  add_cell(ACC_ASYNC_NOVAL, async_noval_cell);
+
+  return map;
+}
+
+void _ACC_gpu_finalize_stream_map(void* map)
+{
+  //printf("finalize map\n");
+  int i;
+  if(map == NULL) return;
+  StreamMap st_map = (StreamMap)map;
+  for(i=0;i<table_size;i++){
+    Cell *head = st_map[i], *cur, *next;
+    for(cur = head; cur != NULL; cur = next){
+      next = cur->next;
+      free_cell(cur);
+      cur = NULL;
     }
   }
-			  
-  //if not found, create & put stream
-  Cell *new_cell = alloc_stream(id);
-  new_cell->next = head;
+  _ACC_free(st_map);
+}
 
-  stream_map[hash]=new_cell;
+void _ACC_gpu_set_stream_map(void* map)
+{
+  stream_map = (StreamMap)map;
 
-  return new_cell->stream;
+  int hash = calc_hash(ACC_ASYNC_SYNC);
+  for(Cell *cur = stream_map[hash]; cur != NULL; cur = cur->next){
+    if(cur->id == ACC_ASYNC_SYNC){
+      async_sync_cell = cur;
+    }
+  }
+
+  hash = calc_hash(ACC_ASYNC_NOVAL);
+  for(Cell *cur = stream_map[hash]; cur != NULL; cur = cur->next){
+    if(cur->id == ACC_ASYNC_NOVAL){
+      async_noval_cell = cur;
+    }
+  }
+}
+
+static void add_cell(int id, Cell *cell)
+{
+  int hash = calc_hash(id);
+  cell->next = stream_map[hash];
+  stream_map[hash] = cell;
+}
+
+static Cell* get_cell(int id)
+{
+  //printf("get_cell(%d)\n", id);
+  if(id == ACC_ASYNC_SYNC || id == ACC_ASYNC_NOVAL){
+    return async_sync_cell;
+  }
+  
+  int hash = calc_hash(id);
+  
+  for(Cell *cur = stream_map[hash]; cur != NULL; cur = cur->next){
+    if(cur->id == id){
+      return cur;
+    }
+  }
+
+  Cell *new_cell = alloc_cell(id);
+  add_cell(id, new_cell);
+  return new_cell;
+}
+
+
+
+cudaStream_t _ACC_gpu_get_stream(int id)
+{
+  Cell *cell = get_cell(id);
+  return cell->stream;
 }
 
 
@@ -106,7 +160,6 @@ void _ACC_gpu_wait(int id){
 
   if(error != cudaSuccess){
     _ACC_gpu_fatal(error);
-    
   }
 }
 
@@ -124,6 +177,20 @@ void _ACC_gpu_wait_all(){
   }
 }
 
+/*
+void _ACC_gpu_wait_async(int id1, int id2){
+  //id2 waits completion of id1)
+  if(id1 == id2){
+    _ACC_gpu_wait(id1);
+    return;
+  }
+
+  cudaStream_t stream1 = _ACC_gpu_getstream(id1);
+  cudaStream_t stream2 = _ACC_gpu_getstream(id2);
+  cudaEvent_t waitEvent;
+  cudaEventCreate(&waitEvent);
+}
+*/
 
 //test func
 int _ACC_gpu_test(int id)
@@ -140,7 +207,6 @@ int _ACC_gpu_test(int id)
 int _ACC_gpu_test_all()
 {
   int i;
-  //int result = 0;
   for(i=0;i<table_size;i++){
     Cell *head = stream_map[i], *cur;
     for(cur = head; cur != NULL; cur = cur->next){
@@ -159,7 +225,11 @@ int _ACC_gpu_test_all()
 //internal functions
 static int calc_hash(int id)
 {
-  return id%table_size;
+  int r = id%table_size;
+  if(r < 0){
+    r += table_size;
+  }
+  return r;
 }
 static void create_stream(cudaStream_t *stream)
 {
@@ -178,7 +248,7 @@ static void destroy_stream(cudaStream_t stream)
 }
 
 
-
+/*
 //for test
 static void print()
 {
@@ -198,8 +268,9 @@ static void print()
     printf("null\n");
   }
 }
+*/
 
-/*
+ /*
 int main(void) //for test
 {
   _ACC_gpu_init_stream_map(4);
@@ -218,55 +289,25 @@ int main(void) //for test
   _ACC_gpu_finalize_stream_map();
   print();
 }
-*/
+ */
 
 void _ACC_gpu_mpool_get(void **ptr)
 {
-  *ptr = default_mpool;
+  *ptr = async_sync_cell->mpool;
 }
 void _ACC_gpu_mpool_get_async(void **ptr, int id)
 {
-  int hash = calc_hash(id);
-
-  Cell *cur;
-  Cell *head = stream_map[hash];
-  for(cur = head; cur != NULL; cur = cur->next){
-    if(cur->id == id){
-      *ptr = cur->mpool;
-      return;
-    }
-  }
-			  
-  //if not found, create & put stream
-  Cell *new_cell = alloc_stream(id);
-  new_cell->next = head;
-  stream_map[hash]=new_cell;
-
-  *ptr = new_cell->mpool;
+  Cell *cell = get_cell(id);
+  *ptr = cell->mpool;
 }
 
 void _ACC_gpu_get_block_count(unsigned **count)
 {
-  *count = default_count;
+  *count = async_sync_cell->block_count;
 }
 
 void _ACC_gpu_get_block_count_async(unsigned **count, int id)
 {
-  int hash = calc_hash(id);
-
-  Cell *cur;
-  Cell *head = stream_map[hash];
-  for(cur = head; cur != NULL; cur = cur->next){
-    if(cur->id == id){
-      *count = cur->block_count;
-      return;
-    }
-  }
-			  
-  //if not found, create & put stream
-  Cell *new_cell = alloc_stream(id);
-  new_cell->next = head;
-  stream_map[hash]=new_cell;
-
-  *count = new_cell->block_count;
+  Cell *cell = get_cell(id);
+  *count = cell->block_count;
 }

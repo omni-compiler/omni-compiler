@@ -656,7 +656,8 @@ public class XmfXmObjToXobjectTranslator extends RVisitorBase
             (xmobj.getIsPrivate() ? Xtype.TQ_FPRIVATE : 0) |
             (xmobj.getIsPublic() ? Xtype.TQ_FPUBLIC : 0) |
             (xmobj.getIsSave() ? Xtype.TQ_FSAVE : 0) |
-            (xmobj.getIsTarget() ? Xtype.TQ_FTARGET : 0);
+            (xmobj.getIsTarget() ? Xtype.TQ_FTARGET : 0) |
+            (xmobj.getIsCrayPointer() ? Xtype.TQ_FCRAY_POINTER : 0);
 
         String intent = xmobj.getIntent();
         if(intent != null) {
