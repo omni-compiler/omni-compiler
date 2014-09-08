@@ -5,6 +5,7 @@
  */
 
 #include "xmpf_internal.h"
+#include "xmp_internal.h"
 #include "xmp.h"
 //#include "xmpf.h"
 
