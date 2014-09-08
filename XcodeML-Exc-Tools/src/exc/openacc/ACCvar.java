@@ -29,6 +29,7 @@ public class ACCvar {
     isPresent,
     isPresentOr,
     create,
+    delete,
     copyHostToDevice,
     copyDeviceToHost,
     isFirstprivate,
@@ -90,6 +91,9 @@ public class ACCvar {
       break;
     case CREATE:
       atrEnumSet.add(Attribute.create);
+      break;
+    case DELETE:
+      atrEnumSet.add(Attribute.delete);
       break;
     case PRESENT:
       atrEnumSet.add(Attribute.isPresent);

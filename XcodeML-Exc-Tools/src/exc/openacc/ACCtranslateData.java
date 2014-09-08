@@ -102,24 +102,24 @@ public class ACCtranslateData {
       XobjList initArgs = Xcons.List(hostDesc.getAddr(), deviceAddr.getAddr(), addrObj, Xcons.SizeOf(elementType), Xcons.IntConstant(dim));
       //initArgs.mergeList(suffixArgs);
       String initFuncName;
-      if(var.isPresent()){
-        initFuncName = ACC.FIND_DATA_FUNC_NAME;
-	//initializeBlock = createFuncCallBlock(ACC.FIND_DATA_FUNC_NAME, initArgs);  
-        //finalizeBlock = createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
-      }else if(var.isPresentOr()){
-        initFuncName = ACC.PRESENT_OR_INIT_DATA_FUNC_NAME;
-	//initializeBlock = createFuncCallBlock(ACC.PRESENT_OR_INIT_DATA_FUNC_NAME, initArgs);
-        //finalizeBlock = createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
+      if(dataInfo.pragma != ACCpragma.EXIT_DATA){
+        if(var.isPresent()){
+          initFuncName = ACC.FIND_DATA_FUNC_NAME;
+        }else if(var.isPresentOr()){
+          initFuncName = ACC.PRESENT_OR_INIT_DATA_FUNC_NAME;
+        }else{
+          initFuncName = ACC.INIT_DATA_FUNC_NAME;
+        }
       }else{
-        initFuncName = ACC.INIT_DATA_FUNC_NAME;
-	//initializeBlock = createFuncCallBlock(ACC.INIT_DATA_FUNC_NAME, initArgs);
-        //finalizeBlock = createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
+        initFuncName = ACC.FIND_DATA_FUNC_NAME;
       }
       initializeBlock = ACCutil.createFuncCallBlockWithArrayRange(initFuncName, initArgs, Xcons.List(lowerList, lengthList));
-      finalizeBlock = createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
-      
       initBlockList.add(initializeBlock);
-      finalizeBlockList.add(finalizeBlock);
+
+      if(dataInfo.pragma != ACCpragma.ENTER_DATA){
+        finalizeBlock = createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
+        finalizeBlockList.add(finalizeBlock);
+      }
       
       //copy data
       Block copyHostToDeviceFunc = Bcons.emptyBlock();

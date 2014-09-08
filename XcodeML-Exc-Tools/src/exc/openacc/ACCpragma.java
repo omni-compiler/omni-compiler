@@ -7,6 +7,8 @@ public enum ACCpragma {
   PARALLEL,
   KERNELS,
   DATA,
+  ENTER_DATA,
+  EXIT_DATA,
   HOST_DATA,
   LOOP,
   CACHE,
@@ -46,6 +48,7 @@ public enum ACCpragma {
   COPYIN,
   COPYOUT,
   CREATE,
+  DELETE,
   PRESENT,
   PRESENT_OR_COPY,
   PRESENT_OR_COPYIN,
@@ -93,7 +96,8 @@ public enum ACCpragma {
     case COPY:  
     case COPYIN:  
     case COPYOUT:
-    case CREATE:      
+    case CREATE: 
+    case DELETE:
     case PRESENT:
     case PRESENT_OR_COPY:
     case PRESENT_OR_COPYIN:
@@ -115,6 +119,8 @@ public enum ACCpragma {
     case PARALLEL:
     case KERNELS:
     case DATA:
+    case ENTER_DATA:
+    case EXIT_DATA:
     case HOST_DATA:
     case CACHE:
     case DECLARE:
