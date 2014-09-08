@@ -1914,7 +1914,7 @@ public class XMPrewriteExpr {
     }
     
     XobjList clauses = (XobjList)pb.getClauses();
-    Block newPB = Bcons.PRAGMA(Xcode.ACC_PRAGMA, isEnter? "enter data" : "exit data", clauses, null);
+    Block newPB = Bcons.PRAGMA(Xcode.ACC_PRAGMA, isEnter? "ENTER_DATA" : "EXIT_DATA", clauses, null);
     pb.setBody(Bcons.emptyBody());
     for(XobjArgs arg = clauses.getArgs(); arg != null; arg = arg.nextArgs()){
       Xobject clause = arg.getArg();
@@ -1933,7 +1933,7 @@ public class XMPrewriteExpr {
         
       }
       if(newClause != null){
-        arg.setArg(Xcons.List(Xcons.String(newClause.getName()), clauseArg));
+		arg.setArg(Xcons.List(Xcons.String(newClause.toString()), clauseArg));
       }
     }
     pb.replace(newPB);

@@ -109,6 +109,7 @@ public class ACCanalyzeLocalPragma {
     ACC.debug("parallel directive : " + clauseList);
     
     for(Xobject o : clauseList){
+	  if(o == null) continue;
       XobjList clause = (XobjList)o;
       ACCpragma clauseName = ACCpragma.valueOf(clause.getArg(0));
       Xobject clauseArgs = clause.getArgOrNull(1);//(clause.Nargs() > 1)? clause.getArg(1) : null;
@@ -155,6 +156,7 @@ public class ACCanalyzeLocalPragma {
     ACC.debug("kernels directive : " + clauseList);
     
     for(Xobject o : clauseList){
+	  if(o == null) continue;
       XobjList clause = (XobjList)o;
       ACCpragma clauseName = ACCpragma.valueOf(clause.getArg(0));
       Xobject clauseArgs = (clause.Nargs() > 1)? clause.getArg(1) : null;
@@ -189,6 +191,7 @@ public class ACCanalyzeLocalPragma {
     ACC.debug("data directive : " + clauseList);
     
     for(Xobject o : clauseList){
+	  if(o == null) continue;
       XobjList clause = (XobjList)o;
       ACCpragma clauseName = ACCpragma.valueOf(clause.getArg(0));
       Xobject clauseArgs = (clause.Nargs() > 1)? clause.getArg(1) : null;
@@ -215,6 +218,7 @@ public class ACCanalyzeLocalPragma {
     ACC.debug("host_data directive : " + clauseList);
     
     for(Xobject o : clauseList){
+	  if(o == null) continue;
       XobjList clause = (XobjList)o;
       ACCpragma clauseName = ACCpragma.valueOf(clause.getArg(0));
       Xobject clauseArgs = (clause.Nargs() > 1)? clause.getArg(1) : null;
@@ -243,6 +247,7 @@ public class ACCanalyzeLocalPragma {
     ACC.debug("loop directive : " + clauseList);
     
     for(Xobject o : clauseList){
+	  if(o == null) continue;
       XobjList clause = (XobjList)o;
       ACCpragma clauseName = ACCpragma.valueOf(clause.getArg(0));
       Xobject clauseArgs = (clause.Nargs() > 1)? clause.getArg(1) : null;
@@ -323,6 +328,7 @@ public class ACCanalyzeLocalPragma {
     ACC.debug("parallel loop directive : " + clauseList);
     
     for(Xobject o : clauseList){
+	  if(o == null) continue;
       XobjList clause = (XobjList)o;
       ACCpragma clauseName = ACCpragma.valueOf(clause.getArg(0));
       Xobject clauseArgs = (clause.Nargs() > 1)? clause.getArg(1) : null;
@@ -389,6 +395,7 @@ public class ACCanalyzeLocalPragma {
     ACC.debug("declare directive : " + clauseList);
     
     for(Xobject o : clauseList){
+	  if(o == null) continue;
       XobjList clause = (XobjList)o;
       ACCpragma clauseName = ACCpragma.valueOf(clause.getArg(0));
       Xobject clauseArgs = (clause.Nargs() > 1)? clause.getArg(1) : null;
@@ -412,6 +419,7 @@ public class ACCanalyzeLocalPragma {
     ACC.debug("update directive : " + clauseList);
     
     for(Xobject o : clauseList){
+	  if(o == null) continue;
       XobjList clause = (XobjList)o;
       ACCpragma clauseName = ACCpragma.valueOf(clause.getArg(0));
       Xobject clauseArgs = (clause.Nargs() > 1)? clause.getArg(1) : null;
@@ -452,6 +460,7 @@ public class ACCanalyzeLocalPragma {
     ACC.debug("enter data directive : " + clauseList);
     
     for(Xobject o : clauseList){
+      if(o == null) continue;
       XobjList clause = (XobjList)o;
       ACCpragma clauseName = ACCpragma.valueOf(clause.getArg(0));
       Xobject clauseArgs = (clause.Nargs() > 1)? clause.getArg(1) : null;
@@ -481,6 +490,7 @@ public class ACCanalyzeLocalPragma {
     ACC.debug("exit data directive : " + clauseList);
     
     for(Xobject o : clauseList){
+	  if(o == null) continue;
       XobjList clause = (XobjList)o;
       ACCpragma clauseName = ACCpragma.valueOf(clause.getArg(0));
       Xobject clauseArgs = (clause.Nargs() > 1)? clause.getArg(1) : null;
