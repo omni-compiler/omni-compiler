@@ -487,6 +487,7 @@ pg_term_expr(int pre)
         break;
     }
 
+    exprSetExprsType(e, &s_numTypeDescs[BT_INT]);
     return e;
 
   next:

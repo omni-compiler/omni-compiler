@@ -85,6 +85,8 @@ static void compile_ACC_name_list _ANSI_ARGS_((expr x));
 static int pg_ACC_pragma;
 CExpr* pg_ACC_list;
 
+extern int s_useXACC;
+
 /*
  * for OpenACC directives
  */
@@ -339,6 +341,10 @@ static CExpr* parse_ACC_clauses()
 	} else if(PG_IS_IDENT("independent")){
 	    pg_get_token();
 	    c = ACC_PG_LIST(ACC_INDEPENDENT,NULL);
+	} else if (s_useXACC && PG_IS_IDENT("on_device")){
+	    pg_get_token();
+	    if ((v = parse_ACC_clause_arg()) == NULL) goto syntax_err;
+	    c = ACC_PG_LIST(XACC_ON_DEVICE, v);
 	} else {
 	  addError(NULL,"unknown ACC directive clause '%s'",pg_tok_buf);
 	    goto syntax_err;

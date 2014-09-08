@@ -53,6 +53,7 @@ unsigned int s_useBuiltinVaArg          = 1;
 unsigned int s_transFuncInInit          = 0;
 unsigned int s_useXMP                   = 0;
 unsigned int s_useACC                   = 0;
+unsigned int s_useXACC                  = 0;
 unsigned int s_debugSymbol	            = 0;
 unsigned int s_arrayToPointer           = 0;
 
@@ -517,6 +518,10 @@ procOptions(int argc, char **argv)
                 s_useACC = 1;
             } else if(strcmp(arg, "-fopenmp") == 0) {
                 /* accept but no action */
+	    } else if(strcmp(arg, "-fxacc") == 0) {
+	        s_useXMP = 1;
+		s_useACC = 1;
+	        s_useXACC = 1;
             } else if(strcmp(arg, "--array-to-pointer") == 0) {
                 s_arrayToPointer = 1;
             } else if(strncmp(arg, COPT_SIZE, lenOptSize) == 0) {

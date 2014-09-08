@@ -38,10 +38,12 @@ enum XMP_pragma {
     XMP_GLOBAL_IO_BEGIN	= 135,
     XMP_END_GLOBAL_IO	= 136,
 
+    XMP_DEVICE          = 1001,
+
     XMP_DIR_END
 };
 
-#define IS_XMP_PRAGMA_CODE(code) (((int)(code)) >= 100 && ((int)(code)) < 200)
+#define IS_XMP_PRAGMA_CODE(code) ((((int)(code)) >= 100 && ((int)(code)) < 200) || (int)(code) >= 1000)
 
 enum XMP_pragma_clause {
     XMP_NODES_INHERIT_GLOBAL = 10,

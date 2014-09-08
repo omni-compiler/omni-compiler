@@ -41,6 +41,8 @@ public enum XMPpragma {
   GPU_BARRIER,
   GPU_LOOP,
 
+  DEVICE,
+
   // clause
   GPU_PRIVATE,
   GPU_FIRSTPRIVATE,

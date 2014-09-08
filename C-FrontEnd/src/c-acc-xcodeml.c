@@ -83,6 +83,7 @@ outx_ACC_Clause(FILE *fp, int indent, CExprOfList* clause)
   case ACC_VECTOR:
   case ACC_VECT_LEN:
   case ACC_COLLAPSE:
+  case XACC_ON_DEVICE:
       outxContext(fp,indent1+1,arg);
       break;
 
@@ -192,6 +193,8 @@ char *accClauseName(int c)
   case ACC_VECTOR: return "VECTOR";
   case ACC_SEQ: return "SEQ";
   case ACC_INDEPENDENT: return "INDEPENDENT";
+
+  case XACC_ON_DEVICE: return "ON_DEVICE";
 
   case ACC_HOST: return "HOST";
   case ACC_DEVICE: return "DEVICE";
