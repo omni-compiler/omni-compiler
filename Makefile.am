@@ -66,6 +66,7 @@ TESTDIRS += "global-view/task/C"  "global-view/task/F"
 TESTDIRS += "global-view/template_fix/C/" "global-view/template_fix/F/"
 TESTDIRS += "global-view/gmove/C/" "global-view/gmove/F/"
 TESTDIRS += "global-view/gblock/C/" "global-view/gblock/F/"
+TESTDIRS += "global-view/align/C/" "global-view/align/F/"
 TESTDIRS += "others/F" "others/C"
 if GASNET
    TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
