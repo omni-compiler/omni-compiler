@@ -8,7 +8,7 @@ package xcodeml.c.type;
 
 import java.util.Set;
 
-import xcodeml.c.binding.gen.IRVisitable;
+//import xcodeml.c.binding.gen.IRVisitable;
 
 /**
  * Implements the interface allows type objects to evaluate not in typeTable,
@@ -39,14 +39,14 @@ public interface XcLazyEvalType
      *
      * @return xcodeml bindings which is not evaluated.
      */
-    public IRVisitable[] getLazyBindings();
+    // public IRVisitable[] getLazyBindings();
 
     /**
      * Sets xcodeml bindings need to be evaluated after.
      *
      * @param xcodeml bindings.
      */
-    public void setLazyBindings(IRVisitable[] bindings);
+    // public void setLazyBindings(IRVisitable[] bindings);
 
     /** 
      * return xcodeml DOM nodes which is not evaluated.

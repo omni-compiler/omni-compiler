@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.HashSet;
 
 import xcodeml.XmException;
-import xcodeml.c.binding.gen.IRVisitable;
+//import xcodeml.c.binding.gen.IRVisitable;
 import xcodeml.c.decompile.XcExprObj;
 import xcodeml.c.decompile.XcObj;
 import xcodeml.c.obj.XcNode;
@@ -68,7 +68,7 @@ public class XcIdent extends XcObj implements XcExprObj, XcGccAttributable, XcLa
 
     private boolean               _isIncompleteType;
 
-    private IRVisitable[]         _arraySizeBindings;
+    // private IRVisitable[]         _arraySizeBindings;
 
     private org.w3c.dom.Node[]    _arraySizeBindingNodes;
 
@@ -476,17 +476,17 @@ public class XcIdent extends XcObj implements XcExprObj, XcGccAttributable, XcLa
         _isLazyEvalType = enable;
     }
 
-    @Override
-    public void setLazyBindings(IRVisitable[] bindings)
-    {
-        _arraySizeBindings = bindings;
-    }
-
-    @Override
-    public IRVisitable[] getLazyBindings()
-    {
-        return _arraySizeBindings;
-    }
+//     @Override
+//     public void setLazyBindings(IRVisitable[] bindings)
+//     {
+//         _arraySizeBindings = bindings;
+//     }
+// 
+//     @Override
+//     public IRVisitable[] getLazyBindings()
+//     {
+//         return _arraySizeBindings;
+//     }
 
     @Override
     public org.w3c.dom.Node[] getLazyBindingNodes() {

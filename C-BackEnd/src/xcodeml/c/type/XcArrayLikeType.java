@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.HashSet;
 
 import xcodeml.XmException;
-import xcodeml.c.binding.gen.IRVisitable;
+//import xcodeml.c.binding.gen.IRVisitable;
 import xcodeml.c.decompile.XcConstObj;
 import xcodeml.c.decompile.XcExprObj;
 import xcodeml.c.obj.XcNode;
@@ -32,7 +32,7 @@ public abstract class XcArrayLikeType extends XcExtType implements XcLazyEvalTyp
 
     private boolean               _isLazyEvalType = false;
 
-    private IRVisitable[]         _arraySizeBindings;
+    // private IRVisitable[]         _arraySizeBindings;
 
     private org.w3c.dom.Node[]    _arraySizeBindingNodes;
 
@@ -179,21 +179,21 @@ public abstract class XcArrayLikeType extends XcExtType implements XcLazyEvalTyp
         _isLazyEvalType = enable;
     }
 
-    @Override
-    public void setLazyBindings(IRVisitable[] bindings)
-    {
-        _arraySizeBindings = bindings;
-    }
+    // @Override
+    // public void setLazyBindings(IRVisitable[] bindings)
+    // {
+    //     _arraySizeBindings = bindings;
+    // }
 
     @Override
     public void setLazyBindings(org.w3c.dom.Node[] nodes) {
         _arraySizeBindingNodes = nodes;
     }
 
-    @Override
-    public IRVisitable[] getLazyBindings() {
-        return _arraySizeBindings;
-    }
+    // @Override
+    // public IRVisitable[] getLazyBindings() {
+    //     return _arraySizeBindings;
+    // }
 
     @Override
     public org.w3c.dom.Node[] getLazyBindingNodes() {
