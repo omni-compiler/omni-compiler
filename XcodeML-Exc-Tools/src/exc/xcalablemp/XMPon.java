@@ -10,14 +10,14 @@ public class XMPon {
   public final static int BLOCK       = 101;
   
   //private Ident _descId;
-  private XMPalignedArray _alignedArray;
+  //private XMPalignedArray _alignedArray;
   private Vector<Xobject>     _onVector;
-  
-  public XMPon(XobjList arrayRef, XMPalignedArray alignedArray) {
+  private XACCdeviceArray _deviceArray;
+  public XMPon(XobjList arrayRef, XACCdeviceArray deviceArray) {
     _onVector = new Vector<Xobject>();
     //_descId = 
-    _alignedArray = alignedArray;
-    
+    //_alignedArray = alignedArray;
+    _deviceArray = deviceArray;
     
     XobjArgs arg = arrayRef.getArgs();
     Xobject arrayname = arg.getArg();
@@ -29,7 +29,7 @@ public class XMPon {
     }    
   }
   public Ident getArrayDesc(){
-    return _alignedArray.getDescId();//_descId;
+    return _deviceArray.getDescId(); 
   }
   public Xobject getLoopVarAt(int index) throws XMPexception {
     return _onVector.get(index);
@@ -46,6 +46,7 @@ public class XMPon {
     return -1;
   }
   public XMPlayout getLayout(){
-    return _alignedArray.getLayout();
+    //return _alignedArray.getLayout();
+    return _deviceArray.getLayout();
   }
 }

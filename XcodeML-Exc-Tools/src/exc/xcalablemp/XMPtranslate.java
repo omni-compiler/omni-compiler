@@ -19,6 +19,7 @@ public class XMPtranslate implements XobjectDefVisitor {
   private XMPrewriteExpr		_rewriteExpr;
   private boolean                       _all_profile;
   private boolean                       _selective_profile;
+  private XACCtranslatePragma _xacc_translator;
 
   public XMPtranslate(XMPglobalDecl globalDecl) {
     // FIXME current implementation only supports C language
@@ -32,6 +33,7 @@ public class XMPtranslate implements XobjectDefVisitor {
 
     _all_profile = false;
     _selective_profile = false;
+    _xacc_translator = new XACCtranslatePragma(globalDecl);
   }
 
   public void finalize() {
@@ -46,6 +48,7 @@ public class XMPtranslate implements XobjectDefVisitor {
     if (!def.isFuncDef()) {
       Xobject x = def.getDef();
       if (x.Opcode() == Xcode.XMP_PRAGMA) _translateGlobalPragma.translate(x);
+      if (x.Opcode() == Xcode.ACC_PRAGMA) _xacc_translator.translate(x);
       return;
     }
         

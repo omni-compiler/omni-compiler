@@ -834,10 +834,10 @@ public class XMPalignedArray {
     // create runtime func call
   }
   
-  public void setLayout(XMPlayout layout){
-    _deviceLayout = layout;
-  }
-  public XMPlayout getLayout(){
-    return _deviceLayout;
-  }
+//  public void setLayout(XMPlayout layout){
+//    _deviceLayout = layout;
+//  }
+//  public XMPlayout getLayout(){
+//    return _deviceLayout;
+//  }
 }

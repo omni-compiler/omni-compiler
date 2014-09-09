@@ -12,14 +12,20 @@ import xcodeml.util.XmOption;
 public class XMPglobalDecl {
   private XobjectFile		_env;
   private XMPsymbolTable	_globalObjectTable;
-  private XobjList		_globalConstructorFuncBody;
-  private XobjList		_globalDestructorFuncBody;
-
+  private XobjList              _globalConstructorFuncBody;
+  private XobjList              _globalDestructorFuncBody;
+  private XobjList              _xaccGlobalConstructorFuncBody;
+  private XobjList              _xaccGlobalDestructorFuncBody;
+  public static final String    XACC_CONSTRUCTOR_FUNC_NAME = "_XACC_init";
+  public static final String    XACC_DESTRUCTOR_FUNC_NAME = "_XACC_finalize";
+  
   public XMPglobalDecl(XobjectFile env) {
     _env = env;
     _globalObjectTable = new XMPsymbolTable();
     _globalConstructorFuncBody = Xcons.List();
     _globalDestructorFuncBody = Xcons.List();
+    _xaccGlobalConstructorFuncBody = Xcons.List();
+    _xaccGlobalDestructorFuncBody = Xcons.List();
   }
 
   public void checkObjectNameCollision(String name) throws XMPexception {
@@ -75,6 +81,11 @@ public class XMPglobalDecl {
       _globalConstructorFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT,
                                                  declExternFunc("_XMP_threads_init").Call(null)));
     }
+    
+    if (XMP.XACC){
+      setupXACCGlobalConstructor();
+      addGlobalInitFuncCall(XACC_CONSTRUCTOR_FUNC_NAME, Xcons.List());
+    }
 		
     //    Ident argv = Ident.Param("argv", Xtype.Pointer(Xtype.Pointer(Xtype.charType)));   // create "int argc" & "char **argv"
     //    XobjList args = Xcons.List(Ident.Param("argc", Xtype.intType), argv);
@@ -111,6 +122,11 @@ public class XMPglobalDecl {
     if (XmOption.isXcalableMPthreads()) {
       _globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT,
                                                declExternFunc("_XMP_threads_finalize").Call(null)));
+    }
+    
+    if (XMP.XACC){
+      setupXACCGlobalDestructor();
+      addGlobalFinalizeFuncCall(XACC_DESTRUCTOR_FUNC_NAME, Xcons.List());
     }
 
     //    _globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT,
@@ -392,5 +408,56 @@ public class XMPglobalDecl {
   public void finalize() {
     _env.collectAllTypes();
     _env.fixupTypeRef();
+  }
+  
+  ///for XACC
+  public XACCdeviceArray getXACCdeviceArray(String name) {
+    return _globalObjectTable.getXACCdeviceArray(name);
+  }
+
+  public XACCdeviceArray getXACCdeviceArray(String name, Block block) {
+    XACCdeviceArray a = null;
+
+    // local
+    for (Block b = block; b != null; b = b.getParentBlock()){
+      XMPsymbolTable symTab = XMPlocalDecl.declXMPsymbolTable2(b);
+      if (symTab != null) a = symTab.getXACCdeviceArray(name);
+      if (a != null) return a;
+    }
+
+    // parameter
+    XMPsymbolTable symTab = XMPlocalDecl.getXMPsymbolTable(block);
+    if (symTab != null) a = symTab.getXACCdeviceArray(name);
+    if (a != null) return a;
+
+    // global
+    a = getXACCdeviceArray(name);
+    if (a != null) return a;
+
+    return null;
+  }
+  public void putXACCdeviceArray(XACCdeviceArray array) {
+    _globalObjectTable.putXACCdeviceArray(array);
+  }
+  
+  public void addXACCconstructor(Xobject x){
+    _xaccGlobalConstructorFuncBody.add(x);
+  }
+  public void addXACCdestructor(Xobject x){
+    _xaccGlobalDestructorFuncBody.add(x);
+  }
+  
+  private void setupXACCGlobalConstructor(){
+    Xtype funcType = Xtype.Function(Xtype.voidType);
+    Ident funcId = _env.declStaticIdent(XACC_CONSTRUCTOR_FUNC_NAME, funcType);
+    _env.add(XobjectDef.Func(funcId, null, null, Xcons.List(Xcode.COMPOUND_STATEMENT,
+                             (Xobject)null, null, _xaccGlobalConstructorFuncBody)));
+  }
+  
+  private void setupXACCGlobalDestructor(){
+    Xtype funcType = Xtype.Function(Xtype.voidType);
+    Ident funcId = _env.declStaticIdent(XACC_DESTRUCTOR_FUNC_NAME, funcType);
+    _env.add(XobjectDef.Func(funcId, null, null, Xcons.List(Xcode.COMPOUND_STATEMENT,
+                             (Xobject)null, null, _xaccGlobalDestructorFuncBody)));
   }
 }

@@ -12,11 +12,13 @@ public class XMPsymbolTable {
   private HashMap<String, XMPobject> _XMPobjectTable;
   private HashMap<String, XMPalignedArray> _XMPalignedArrayTable;
   private HashMap<String, XMPcoarray> _XMPcoarrayTable;
+  private HashMap<String, XACCdeviceArray> _XACCdeviceArrayTable;
 
   public XMPsymbolTable() {
     _XMPobjectTable = new HashMap<String, XMPobject>();
     _XMPalignedArrayTable = new HashMap<String, XMPalignedArray>();
     _XMPcoarrayTable = new HashMap<String, XMPcoarray>();
+    _XACCdeviceArrayTable = new HashMap<String, XACCdeviceArray>();
   }
 
   public void putXMPobject(XMPobject o) {
@@ -57,5 +59,13 @@ public class XMPsymbolTable {
 
   public XMPcoarray getXMPcoarray(String name) {
     return _XMPcoarrayTable.get(name);
+  }
+  
+  public void putXACCdeviceArray(XACCdeviceArray array) {
+    _XACCdeviceArrayTable.put(array.getName(), array);
+  }
+
+  public XACCdeviceArray getXACCdeviceArray(String name) {
+    return _XACCdeviceArrayTable.get(name);
   }
 }
