@@ -20,6 +20,7 @@ run:
 	export XMP_NODE_SIZE0=2; \
 	export XMP_NODE_SIZE1=2; \
 	$(XRUN) -n 8 ./dnodes.x
+	$(XRUN) -n 1 ./openmp.x
 
 #-- cleaning
 clean:
