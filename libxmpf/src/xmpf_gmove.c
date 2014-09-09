@@ -14,7 +14,7 @@ void *_XMP_get_array_addr(_XMP_array_t *a, int *gidx)
     _XMP_array_info_t *ai = &(a->info[i]);
     _XMP_template_info_t *ti = &(a->align_template->info[ai->align_template_index]);
     _XMP_template_chunk_t *tc = &(a->align_template->chunk[ai->align_template_index]);
-    int lidx;
+    int lidx = 0;
     int offset;
     int glb, t_lb, np, w;
     int l_shadow;
@@ -144,7 +144,7 @@ void _XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
   _XMP_ASSERT(src_array->type == type);
   _XMP_ASSERT(src_array->type_size == type_size);
 
-  unsigned long long gmove_total_elmts = 0;
+  //unsigned long long gmove_total_elmts = 0;
 
   // get dst info
   unsigned long long dst_total_elmts = 1;
@@ -177,7 +177,7 @@ void _XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
   if (dst_total_elmts != src_total_elmts) {
     _XMP_fatal("bad assign statement for gmove");
   } else {
-    gmove_total_elmts = dst_total_elmts;
+    //gmove_total_elmts = dst_total_elmts;
   }
 
   _XMP_gmove_array_array_common(gmv_desc_leftp, gmv_desc_rightp, dst_l, dst_u, dst_s, dst_d, src_l, src_u, src_s, src_d);
