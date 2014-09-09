@@ -1585,12 +1585,6 @@ public class XMPrewriteExpr {
   private static Xobject calcShadow(XMPtemplate t, int ti, XMPalignedArray a, int ai,
                                     Xobject expr) throws XMPexception {
     expr.setIsRewrittedByXmp(true);
-    XMPtemplate alignedTemplate = a.getAlignTemplate();
-    if (t != alignedTemplate) {
-      throw new XMPexception("array '" + a.getName() + "' is aligned by template '" + alignedTemplate.getName() +
-                             "'. loop is distributed by template '" + t.getName() + "'.");
-    }
-
     if(a.getAlignSubscriptIndexAt(ai) != null){  // null is an asterisk
       if (ti != a.getAlignSubscriptIndexAt(ai).intValue()) {
 	throw new XMPexception("array ref is not consistent with array alignment");
