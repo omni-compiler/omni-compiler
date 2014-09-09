@@ -151,15 +151,21 @@ typedef struct _XACC_device_type {
   int ub;
   int step;
   int size;
+
 } _XACC_device_t;
 
 typedef struct _XACC_array_info_type {
   int device_layout_manner;
 
-  int lower;
-  int upper;
-  int stride;
-  int size;
+  int par_lower;
+  int par_upper;
+  int par_stride;
+  //int size;
+  int local_lower;
+  int local_upper;
+  int local_stride;
+  int alloc_size;
+
 
   unsigned long long device_dim_acc;
 }_XACC_array_info_t;

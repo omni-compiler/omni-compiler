@@ -352,6 +352,7 @@ extern void _XACC_get_device_info(void *desc, int* lower, int* upper, int* step)
 
 extern void _XACC_init_device_array(void* array, void* device);
 extern void _XACC_split_device_array_BLOCK(void* array, int dim);
+extern void _XACC_split_device_array_DUPLICATION(void* array, int dim);
 extern void _XACC_calc_size(void* array);
 
 extern void _XACC_get_size(void* array, unsigned long long* offset,

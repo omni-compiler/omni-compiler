@@ -1798,6 +1798,9 @@ public class XMPrewriteExpr {
               newBody.add(Bcons.COMPOUND(endBody));
             }else{
               CforBlock forBlock = (CforBlock)pb.getBody().getHead();
+              if(! forBlock.isCanonical()){
+				  forBlock.Canonicalize();
+              }
               String loopVarName = forBlock.getInductionVar().getSym();
 
               try{
@@ -2130,7 +2133,9 @@ public class XMPrewriteExpr {
 	        Block initDeviceArrayFuncCall = _globalDecl.createFuncCallBlock("_XACC_init_device_array", Xcons.List(descId.Ref(), onDevice.getDescId().Ref()));
 	        body.add(initDeviceArrayFuncCall);
 	        for(int dim = alignedArray.getDim() - 1; dim >= 0; dim--){
-	          String mannerStr = XMPlayout.getDistMannerString(layout.getDistMannerAt(dim));
+				int distManner = layout.getDistMannerAt(dim);
+				//if(distManner == XMPlayout.DUPLICATION) continue;
+	          String mannerStr = XMPlayout.getDistMannerString(distManner);
 	          Block splitDeviceArrayBlockCall = _globalDecl.createFuncCallBlock("_XACC_split_device_array_" + mannerStr, Xcons.List(descId.Ref(), Xcons.IntConstant(dim)));
 	          body.add(splitDeviceArrayBlockCall);
 	        }

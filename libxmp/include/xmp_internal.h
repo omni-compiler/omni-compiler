@@ -323,6 +323,7 @@ void _XACC_get_device_info(void *desc, int* lower, int* upper, int* step);
 
 void _XACC_init_device_array(_XMP_array_t* array, _XACC_device_t* device);
 void _XACC_split_device_array_BLOCK(_XMP_array_t* array, int dim);
+void _XACC_split_device_array_DUPLICATION(_XMP_array_t* array, int dim);
 void _XACC_calc_size(_XMP_array_t* array);
 
 void _XACC_get_size(_XMP_array_t* array, unsigned long long* offset,
