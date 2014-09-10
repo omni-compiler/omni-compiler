@@ -66,16 +66,35 @@ outx_XACC_Clause_Args(FILE *fp, int indent, CExprOfList* args)
     EXPR_FOREACH(ite, args) {
 	CExprOfList *node = (CExprOfList*)EXPR_L_DATA(ite);
 	//	outx_ACC_Clause(fp, indent1, node);
-	outxPrint(fp, indent1 , "<list>\n");
-	switch(node->e_aux){
-	case XACC_LAYOUT_DUPLICATION:
-	    outxPrint(fp, indent1+1, "<intConstant type=\"int\">100<!-- NO_DIST--></intConstant>\n");
-	    break;
-	case XACC_LAYOUT_BLOCK:
-	    outxPrint(fp, indent1+1, "<intConstant type=\"int\">101<!-- BLOCK --></intConstant>\n");
-	    break;
+	if(EXPR_CODE(node) == EC_UNDEF){
+	  if(node->e_aux == 0){
+	    outx_XACC_Clause_Args(fp, indent1, (CExprOfList*)node);
+	  }else{
+	    CExpr *arg = exprListHeadData((CExpr *)node);
+	    outxPrint(fp, indent1 , "<list>\n");
+	    switch(node->e_aux){
+	    case XACC_LAYOUT_DUPLICATION:
+	      outxPrint(fp, indent1+1, "<intConstant type=\"int\">100<!-- NO_DIST--></intConstant>\n");
+	      break;
+	    case XACC_LAYOUT_BLOCK:
+	      outxPrint(fp, indent1+1, "<intConstant type=\"int\">101<!-- BLOCK --></intConstant>\n");
+	      break;
+	    case XACC_SHADOW_NONE:
+	      outxPrint(fp, indent1+1, "<intConstant type=\"int\">200<!-- NONE --></intConstant>\n");
+	      break;
+	    case XACC_SHADOW_NORMAL:
+	      outxPrint(fp, indent1+1, "<intConstant type=\"int\">201<!-- NORMAL --></intConstant>\n");
+	      break;
+	    case XACC_SHADOW_FULL:
+	      outxPrint(fp, indent1+1, "<intConstant type=\"int\">202<!-- FULL --></intConstant>\n");
+	      break;
+	    }
+	    outx_XACC_Clause_Args(fp, indent1+1, (CExprOfList*)arg);
+	    outxPrint(fp, indent1 , "</list>\n");
+	  }
+	}else{
+	  outxContext(fp,indent1,node);
 	}
-	outxPrint(fp, indent1 , "</list>\n");
     }
     outxPrint(fp,indent,"</list>\n");
 }
@@ -111,6 +130,7 @@ outx_ACC_Clause(FILE *fp, int indent, CExprOfList* clause)
       break;
 
   case XACC_LAYOUT:
+  case XACC_SHADOW:
       outx_XACC_Clause_Args(fp, indent1+1, (CExprOfList*)arg);
       break;
 
@@ -226,6 +246,7 @@ char *accClauseName(int c)
   case XACC_ON_DEVICE: return "ON_DEVICE";
   case XACC_LAYOUT: return "LAYOUT";
   case XACC_ON: return "ON";
+  case XACC_SHADOW: return "SHADOW";
 
   case ACC_HOST: return "HOST";
   case ACC_DEVICE: return "DEVICE";

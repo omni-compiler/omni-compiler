@@ -63,7 +63,7 @@ static CExpr* parse_ACC_reduction_namelist(int *r);
 static CExpr* parse_ACC_clause_arg(void);
 static CExpr* parse_ACC_C_subscript_list(void);
 static CExpr* parse_XACC_layout_clause_arg(void);
-static CExpr* parse_XACC_on_clause_arg(void);
+static CExpr* parse_XACC_shadow_clause_arg(void);
 
 #define ACC_PG_LIST(pg,args) _omp_pg_list(pg,args)
 #define ACC_LIST2(arg1,arg2) (CExpr*)allocExprOfList2(EC_UNDEF,arg1,arg2)
@@ -202,7 +202,7 @@ int parse_ACC_pragma()
 	    CExpr *x;
 	    if((x = parse_ACC_clause_arg()) == NULL) 
 		goto syntax_err;
-	    pg_ACC_list = allocExprOfList1(EC_UNDEF,x);
+	    pg_ACC_list = (CExpr*)allocExprOfList1(EC_UNDEF,x);
 	} else pg_ACC_list = NULL;
 	ret= PRAGMA_EXEC;
 	goto chk_end;
@@ -385,6 +385,10 @@ static CExpr* parse_ACC_clauses()
 	    pg_get_token();
 	    if((v = parse_ACC_namelist()) == NULL) goto syntax_err;
 	    c = ACC_PG_LIST(XACC_ON, v);
+	} else if (s_useXACC && PG_IS_IDENT("shadow")){
+	    pg_get_token();
+	    if((v = parse_XACC_shadow_clause_arg()) == NULL) goto syntax_err;
+	    c = ACC_PG_LIST(XACC_SHADOW, v);
 	} else {
 	  addError(NULL,"unknown ACC directive clause '%s'",pg_tok_buf);
 	    goto syntax_err;
@@ -626,4 +630,79 @@ CExpr* parse_XACC_layout_clause_arg()
 
   err:
     return NULL;
+}
+
+CExpr* parse_XACC_shadow_clause_arg() {
+
+  CExpr* list;
+  CExpr *v1,*v2;
+  //  CExpr *type;
+  int type;
+
+  list = EMPTY_LIST;
+  if(pg_tok != '(') {
+    addFatal(NULL,"parse_XACC_shadow_width_list: first token= '('");
+  }
+  pg_get_token();
+
+  while(1){
+    v1 = v2 = NULL;
+    //type = (CExpr*)allocExprOfNumberConst2(XACC_SHADOW_NORMAL, BT_INT);
+    //type = (CExpr*)ACC_PG_LIST(XACC_SHADOW_NORMAL, NULL);
+    type = XACC_SHADOW_NORMAL;
+
+    if (pg_tok != '[') break;
+    pg_get_token();
+
+    switch(pg_tok){
+    case ']':
+    case ',':
+    case ':':
+      goto err;
+    case '*':
+      //type = (CExpr*)ACC_PG_LIST(XACC_SHADOW_FULL, NULL);
+      type = XACC_SHADOW_FULL;
+      pg_get_token();
+      goto next;
+    default:
+      v1 = pg_parse_expr();
+    }
+	
+    if (pg_tok != ':'){
+      v2 = v1;
+      goto next;
+    }
+
+    pg_get_token();
+    switch(pg_tok){
+    case ']':
+    case ',':
+    case ':':
+      goto err;
+    default:
+      v2 = pg_parse_expr();
+    }
+
+  next:
+    if (v1 && v2 && isConstZero(v1) && isConstZero(v2)){
+      //type = (CExpr*)ACC_PG_LIST(XACC_SHADOW_NONE, NULL);
+      type = XACC_SHADOW_NONE;
+    }
+    //list = exprListAdd(list, ACC_LIST2(type, ACC_LIST2(v1,v2)));
+    list = exprListAdd(list, ACC_PG_LIST(type, ACC_LIST2(v1,v2)));
+
+    if(pg_tok == ']') pg_get_token();
+    else goto err;
+  }
+
+  if(pg_tok != ')'){
+    goto err;
+  }
+  pg_get_token();
+
+  return list;
+
+ err:
+  addError(NULL,"Syntax error in scripts of XACC directive");
+  return NULL;
 }
