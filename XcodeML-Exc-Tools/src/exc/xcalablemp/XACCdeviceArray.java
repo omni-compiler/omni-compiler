@@ -7,11 +7,11 @@ public class XACCdeviceArray {
   private XMPalignedArray _alignedArray;
   private Ident _descId;
   
-  public XACCdeviceArray(XMPalignedArray alignedArray, XMPlayout layout)
+  public XACCdeviceArray(Ident descId, XMPalignedArray alignedArray, XMPlayout layout)
   {
     _alignedArray = alignedArray;
     _deviceLayout = layout;
-    _descId = alignedArray.getDescId();
+    _descId = descId;//alignedArray.getDescId();
   }
   
   public String getName(){

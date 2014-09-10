@@ -75,6 +75,7 @@ public enum ACCpragma {
   ON_DEVICE,
   LAYOUT,
   ON,
+  SHADOW,
   
   //internal
   _BLOCK,

@@ -17,6 +17,9 @@ public class XMPon {
     _onVector = new Vector<Xobject>();
     //_descId = 
     //_alignedArray = alignedArray;
+    if(deviceArray == null){
+      XMP.fatal("null layoutedArray");
+    }
     _deviceArray = deviceArray;
     
     XobjArgs arg = arrayRef.getArgs();

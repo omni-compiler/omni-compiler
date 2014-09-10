@@ -10,6 +10,7 @@ public class XACCtranslatePragma {
   //XACCsymbolTable _globalSymbolTable;
   private XMPglobalDecl _globalDecl;
   //private XACCglobalDecl _xaccGlobalDecl;
+  static final String XACC_DESC_PREFIX = "_XACC_DESC_";
   
   public XACCtranslatePragma(XMPglobalDecl globalDecl){
     //_globalSymbolTable = new XACCsymbolTable();
@@ -122,7 +123,7 @@ public class XACCtranslatePragma {
         if (clauses != null){
           device = getXACCdevice((XobjList)clauses, fb);
           layout = getXACClayout((XobjList)clauses);
-          on = getXACCon((XobjList)clauses, fb);
+          on = getXACCon((XobjList)clauses, block);
 
           if(!newBody.isEmpty() && !XMP.XACC){
             bIter.setBlock(Bcons.COMPOUND(newBody));
@@ -336,6 +337,7 @@ public class XACCtranslatePragma {
   
   private XMPlayout getXACClayout(XobjList clauses){
     XMPlayout layout = null;
+    Xobject shadow = null;
     
     for(XobjArgs arg = clauses.getArgs(); arg != null; arg = arg.nextArgs()){
       Xobject x = arg.getArg();
@@ -345,7 +347,14 @@ public class XACCtranslatePragma {
       if(accClause == ACCpragma.LAYOUT){
         layout = new XMPlayout((XobjList)x.right());
         arg.setArg(null);
+      }else if(accClause == ACCpragma.SHADOW){
+        shadow = (XobjList)x.right();
+        arg.setArg(null);
       }
+    }
+    
+    if(layout != null && shadow != null){
+      layout.setShadow(shadow);
     }
     
     return layout;
@@ -415,7 +424,7 @@ public class XACCtranslatePragma {
             if(item.Opcode() == Xcode.VAR){
               //item is variable or arrayAddr
               try{
-                itemList.setArg(i, rewriteACCArrayAddr(item, pragmaBlock, body, devLoopBody, devLoopId, onDevice, layout));
+                itemList.setArg(i, rewriteACCArrayAddr(item, pragmaBlock.getParentBlock()/*not correct*/, body, devLoopBody, devLoopId, onDevice, layout));
               }catch (XMPexception e){
                 XMP.error(x.getLineNo(), e.getMessage());
               }
@@ -491,39 +500,57 @@ public class XACCtranslatePragma {
               
               arrayRef = Xcons.List(arrayAddrRef, Xcons.List(Xcons.IntConstant(0), arraySizeId.Ref()));
               }else{
-                String arraySizeName = "_XACC_size_" + arrayAddr.getSym();
-                String arrayOffsetName = "_XACC_offset_" + arrayAddr.getSym();
-                Ident arraySizeId = deviceLoopBody.declLocalIdent(arraySizeName, Xtype.unsignedlonglongType);
-                Ident arrayOffsetId = deviceLoopBody.declLocalIdent(arrayOffsetName, Xtype.unsignedlonglongType);
-                Block getRangeFuncCall = _globalDecl.createFuncCallBlock("_XACC_get_size", Xcons.List(descId.Ref(), arrayOffsetId.getAddr(), arraySizeId.getAddr(), deviceLoopCounter.Ref()));
-                deviceLoopBody.add(getRangeFuncCall);
-                arrayRef = Xcons.List(arrayAddrRef, Xcons.List(arrayOffsetId.Ref(), arraySizeId.Ref()));
+
                 /*              
                 _XACC_init_device_array(_XMP_DESC_a, _XMP_DESC_d);
                 _XACC_split_device_array_BLOCK(_XMP_DESC_a, 0);
                 _XACC_calc_size(_XMP_DESC_a);
                 */
-                        if(layout != null){
-                Block initDeviceArrayFuncCall = _globalDecl.createFuncCallBlock("_XACC_init_device_array", Xcons.List(descId.Ref(), onDevice.getDescId().Ref()));
-                body.add(initDeviceArrayFuncCall);
-                for(int dim = alignedArray.getDim() - 1; dim >= 0; dim--){
-                                int distManner = layout.getDistMannerAt(dim);
-                                //if(distManner == XMPlayout.DUPLICATION) continue;
-                  String mannerStr = XMPlayout.getDistMannerString(distManner);
-                  Block splitDeviceArrayBlockCall = _globalDecl.createFuncCallBlock("_XACC_split_device_array_" + mannerStr, Xcons.List(descId.Ref(), Xcons.IntConstant(dim)));
-                  body.add(splitDeviceArrayBlockCall);
+                Ident layoutedArrayDescId = null;
+                if(layout != null){
+                  layoutedArrayDescId = body.declLocalIdent(XACC_DESC_PREFIX + arrayAddr.getSym(), Xtype.voidPtrType);
+                  Block initDeviceArrayFuncCall = _globalDecl.createFuncCallBlock("_XACC_init_layouted_array", Xcons.List(layoutedArrayDescId.getAddr(), descId.Ref(), onDevice.getDescId().Ref()));
+                  body.add(initDeviceArrayFuncCall);
+                  for(int dim = alignedArray.getDim() - 1; dim >= 0; dim--){
+                    int distManner = layout.getDistMannerAt(dim);
+                    //if(distManner == XMPlayout.DUPLICATION) continue;
+                    String mannerStr = XMPlayout.getDistMannerString(distManner);
+                    Block splitDeviceArrayBlockCall = _globalDecl.createFuncCallBlock("_XACC_split_layouted_array_" + mannerStr, Xcons.List(layoutedArrayDescId.Ref(), Xcons.IntConstant(dim)));
+                    body.add(splitDeviceArrayBlockCall);
+                    int shadowType = layout.getShadowTypeAt(dim);
+                    if(shadowType != XMPlayout.SHADOW_NONE){
+                      String shadowTypeStr = XMPlayout.getShadowTypeString(shadowType);
+
+                      Block setShadowFuncCall = _globalDecl.createFuncCallBlock("_XACC_set_shadow_" + shadowTypeStr, 
+                          Xcons.List(layoutedArrayDescId.Ref(), Xcons.IntConstant(dim), layout.getShadowLoAt(dim), layout.getShadowHiAt(dim)));
+                      body.add(setShadowFuncCall);
+                    }
+                  }
+                  Block calcDeviceArraySizeCall = _globalDecl.createFuncCallBlock("_XACC_calc_size", Xcons.List(layoutedArrayDescId.Ref()));
+                  body.add(calcDeviceArraySizeCall);
+                  //alignedArray.setLayout(layout);
+
+
+                  XACCdeviceArray deviceArray = new XACCdeviceArray(layoutedArrayDescId, alignedArray, layout); 
+                  if(block != null){
+                    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable2(block);
+                    localXMPsymbolTable.putXACCdeviceArray(deviceArray);
+                  }else{
+                    _globalDecl.putXACCdeviceArray(deviceArray);
+                  }
                 }
-                Block calcDeviceArraySizeCall = _globalDecl.createFuncCallBlock("_XACC_calc_size", Xcons.List(descId.Ref()));
-                body.add(calcDeviceArraySizeCall);
-                //alignedArray.setLayout(layout);
-                XACCdeviceArray deviceArray = new XACCdeviceArray(alignedArray, layout); 
-                if(block != null){
-                  XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable2(block);
-                  localXMPsymbolTable.putXACCdeviceArray(deviceArray);
-                }else{
-                  _globalDecl.putXACCdeviceArray(deviceArray);
+                if(layoutedArrayDescId == null){
+                  XACCdeviceArray layoutedArray = _globalDecl.getXACCdeviceArray(arrayAddr.getSym(), block);
+                  layoutedArrayDescId = layoutedArray.getDescId();
                 }
-                }
+                
+                String arraySizeName = "_XACC_size_" + arrayAddr.getSym();
+                String arrayOffsetName = "_XACC_offset_" + arrayAddr.getSym();
+                Ident arraySizeId = deviceLoopBody.declLocalIdent(arraySizeName, Xtype.unsignedlonglongType);
+                Ident arrayOffsetId = deviceLoopBody.declLocalIdent(arrayOffsetName, Xtype.unsignedlonglongType);
+                Block getRangeFuncCall = _globalDecl.createFuncCallBlock("_XACC_get_size", Xcons.List(layoutedArrayDescId.Ref(), arrayOffsetId.getAddr(), arraySizeId.getAddr(), deviceLoopCounter.Ref()));
+                deviceLoopBody.add(getRangeFuncCall);
+                arrayRef = Xcons.List(arrayAddrRef, Xcons.List(arrayOffsetId.Ref(), arraySizeId.Ref()));
               }
               
               arrayRef.setIsRewrittedByXmp(true);
