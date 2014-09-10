@@ -21,6 +21,7 @@ run:
 	export XMP_NODE_SIZE1=2; \
 	$(XRUN) -n 8 ./dnodes.x
 	$(XRUN) -n 1 ./openmp.x
+	$(XRUN) -n 1 ./119.x
 
 #-- cleaning
 clean:
