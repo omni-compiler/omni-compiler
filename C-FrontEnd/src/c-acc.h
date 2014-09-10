@@ -21,6 +21,9 @@ enum ACC_pragma {
     ACC_PARALLEL_LOOP	= 209,
     ACC_KERNELS_LOOP	= 210,
 
+    ACC_ENTER_DATA  = 211,
+    ACC_EXIT_DATA   = 212,
+
     ACC_DIR_END
 };
 
@@ -37,6 +40,7 @@ enum ACC_pragma_clause {
     ACC_COPYIN,
     ACC_COPYOUT,
     ACC_CREATE,
+    ACC_DELETE,
     ACC_PRESENT,
     ACC_PRESENT_OR_COPY,
     ACC_PRESENT_OR_COPYIN,

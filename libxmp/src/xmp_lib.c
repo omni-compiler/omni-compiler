@@ -557,9 +557,9 @@ int xmp_nodes_equiv(xmp_desc_t d, xmp_desc_t *dn, int lb[], int ub[], int st[]){
     return -1;
   }
 }
-extern void _XMP_sched_loop_template_BLOCK(int, int, int, int *, int *, int *, void *, int);
-extern void _XMP_sched_loop_template_CYCLIC(int, int, int, int *, int *, int *, void *, int);
-extern void _XMP_sched_loop_template_BLOCK_CYCLIC(int, int, int, int *, int *, int *, void *, int);
+/* extern void _XMP_sched_loop_template_BLOCK(int, int, int, int *, int *, int *, void *, int); */
+/* extern void _XMP_sched_loop_template_CYCLIC(int, int, int, int *, int *, int *, void *, int); */
+/* extern void _XMP_sched_loop_template_BLOCK_CYCLIC(int, int, int, int *, int *, int *, void *, int); */
 void xmp_sched_template_index(int* local_start_index, int* local_end_index, 
 			     const int global_start_index, const int global_end_index, const int step, 
 			     const xmp_desc_t template, const int template_dim)

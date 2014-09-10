@@ -192,7 +192,7 @@ class XfTypeManagerForDom {
 
         if (XfStorageClass.FTYPE_NAME.toXcodeString().equalsIgnoreCase(sclass)) {
             String typeName = XmDomUtil.getAttr(idNode, "type");
-            if (XfUtil.isNullOrEmpty(typeName) != false) {
+            if (XfUtilForDom.isNullOrEmpty(typeName) != false) {
                 // Ignore invalid type name.
                 return;
             }
@@ -224,7 +224,7 @@ class XfTypeManagerForDom {
     public void addType(Node typeNode)
     {
         String typeNameOrg = XmDomUtil.getAttr(typeNode, "type");
-        if (XfUtil.isNullOrEmpty(typeNameOrg) != false) {
+        if (XfUtilForDom.isNullOrEmpty(typeNameOrg) != false) {
             // Ignore invalid type name.
             return;
         }
@@ -256,7 +256,7 @@ class XfTypeManagerForDom {
     /** @return DOM node one of { FbasicType, FfunctionType, FstructType }. */
     public Node findType(String typeName)
     {
-        if (XfUtil.isNullOrEmpty(typeName) != false) {
+        if (XfUtilForDom.isNullOrEmpty(typeName) != false) {
             return null;
         }
 
@@ -271,7 +271,7 @@ class XfTypeManagerForDom {
         }
 
         String typeName = XmDomUtil.getAttr(nameNode, "type");
-        if (XfUtil.isNullOrEmpty(typeName) != false) {
+        if (XfUtilForDom.isNullOrEmpty(typeName) != false) {
             return findTypeFromSymbol(XmDomUtil.getContentText(nameNode));
         }
         return findType(typeName);
@@ -285,7 +285,7 @@ class XfTypeManagerForDom {
      */
     public Node findTypeFromSymbol(String symbolName)
     {
-        if (XfUtil.isNullOrEmpty(symbolName) != false) {
+        if (XfUtilForDom.isNullOrEmpty(symbolName) != false) {
             return null;
         }
 
@@ -304,11 +304,11 @@ class XfTypeManagerForDom {
      */
     public void putAliasTypeName(String typeId, String typeName)
     {
-        if (XfUtil.isNullOrEmpty(typeName)) {
+        if (XfUtilForDom.isNullOrEmpty(typeName)) {
             return;
         }
 
-        if (XfUtil.isNullOrEmpty(typeId)) {
+        if (XfUtilForDom.isNullOrEmpty(typeId)) {
             return;
         }
 
@@ -324,7 +324,7 @@ class XfTypeManagerForDom {
      */
     public String getAliasTypeName(String typeName)
     {
-        if (XfUtil.isNullOrEmpty(typeName) != false) {
+        if (XfUtilForDom.isNullOrEmpty(typeName) != false) {
             return null;
         }
 
@@ -355,7 +355,7 @@ class XfTypeManagerForDom {
     {
         TypeList typeList = new TypeList();
 
-        if (XfUtil.isNullOrEmpty(typeName) != false) {
+        if (XfUtilForDom.isNullOrEmpty(typeName) != false) {
             // Return empty type list.
             return typeList;
         }

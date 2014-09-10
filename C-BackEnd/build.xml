@@ -8,7 +8,7 @@
   <property environment="env"/>
   <property file="ant.properties"/>
 
-  <property name="relaxer.jar" value="${relaxer.home}/Relaxer.jar"/>
+  <!-- <property name="relaxer.jar" value="${relaxer.home}/Relaxer.jar"/> -->
   <property name="junit.jar" value="../XcodeML-Common/tools/junit4-4.3.1.jar"/>
   <property name="src.dir" value="src"/>
   <property name="classes.dir" value="classes"/>
@@ -17,17 +17,17 @@
   <property name="testclasses.dir" value="testclasses"/>
   <property name="doc.dir" value="docs"/>
   <property name="schema.basename" value="XcodeML_${target.lang.ID}"/>
-  <property name="schema" value="binding/${schema.basename}.rng"/>
+  <!-- <property name="schema" value="binding/${schema.basename}.rng"/> -->
   <property name="package" value="xcodeml"/>
-  <property name="binding.src.dir" value="binding/src"/>
-  <property name="binding.classes.dir" value="binding/classes"/>
+  <!-- <property name="binding.src.dir" value="binding/src"/> -->
+  <!-- <property name="binding.classes.dir" value="binding/classes"/> -->
   <property name="class.name.prefix" value="Xb${target.lang.id}"/>
-  <property name="binding.pkg" value="xcodeml.${target.lang.id}.binding"/>
-  <property name="binding.pkgpath" value="xcodeml/${target.lang.id}/binding"/>
-  <property name="binding.gen.pkg" value="${binding.pkg}.gen"/>
-  <property name="binding.pkg.dir" value="${binding.src.dir}/${binding.pkgpath}"/>
-  <property name="relaxer.output" value="${binding.pkg.dir}/gen"/>
-  <property name="dtdfile.output" value="${binding.classes.dir}/${binding.pkgpath}/gen"/>
+  <!-- <property name="binding.pkg" value="xcodeml.${target.lang.id}.binding"/> -->
+  <!-- <property name="binding.pkgpath" value="xcodeml/${target.lang.id}/binding"/> -->
+  <!-- <property name="binding.gen.pkg" value="${binding.pkg}.gen"/> -->
+  <!-- <property name="binding.pkg.dir" value="${binding.src.dir}/${binding.pkgpath}"/> -->
+  <!-- <property name="relaxer.output" value="${binding.pkg.dir}/gen"/> -->
+  <!-- <property name="dtdfile.output" value="${binding.classes.dir}/${binding.pkgpath}/gen"/> -->
   <property name="xcodeml_common.classes.dir" value="../XcodeML-Common/classes"/>
   <property name="backend.jar" value="${build.dir}/om-${target.lang.id}-back.jar"/>
   <property name="test.backend.jar" value="${build.dir}/om-${target.lang.id}-back-test.jar"/>
@@ -35,7 +35,7 @@
   <path id="class.path">
     <pathelement path="${xcodeml_common.classes.dir}"/>
     <pathelement path="${classes.dir}"/>
-    <pathelement path="${binding.classes.dir}"/>
+    <!-- <pathelement path="${binding.classes.dir}"/> -->
   </path>
 
   <path id="test.class.path">
@@ -43,7 +43,7 @@
     <pathelement path="${xcodeml_common.classes.dir}"/>
     <pathelement path="${classes.dir}"/>
     <pathelement path="${testclasses.dir}"/>
-    <pathelement path="${binding.classes.dir}"/>
+    <!-- <pathelement path="${binding.classes.dir}"/> -->
   </path>
 
   <target name="test">
@@ -62,7 +62,7 @@
     <mkdir dir="${doc.dir}"/>
     <javadoc destdir="${doc.dir}" Locale="en" access="public">
       <sourcepath>
-        <pathelement path="${binding.src.dir}"/>
+        <!-- <pathelement path="${binding.src.dir}"/> -->
         <pathelement path="${src.dir}"/>
       </sourcepath>
     </javadoc>
@@ -72,7 +72,7 @@
     <mkdir dir="${build.dir}"/>
     <jar jarfile="${test.backend.jar}">
       <fileset dir="${classes.dir}"/>
-      <fileset dir="${binding.classes.dir}"/>
+      <!-- <fileset dir="${binding.classes.dir}"/> -->
       <fileset dir="${testclasses.dir}"/>
     </jar>
   </target>
@@ -81,7 +81,7 @@
     <mkdir dir="${build.dir}"/>
     <jar jarfile="${backend.jar}">
       <fileset dir="${classes.dir}"/>
-      <fileset dir="${binding.classes.dir}"/>
+      <!-- <fileset dir="${binding.classes.dir}"/> -->
     </jar>
   </target>
 
@@ -93,72 +93,73 @@
     </javac>
   </target>
 
-  <target name="compile" depends="compile-bindings">
+  <!-- <target name="compile" depends="compile-bindings"> -->
+  <target name="compile">
     <mkdir dir="${classes.dir}"/>
     <javac srcdir="${src.dir}" destdir="${classes.dir}" debug="${debug}"
 	   encoding="utf-8">
       <classpath refid="class.path"/>
     </javac>
-    <copy
-      file="${relaxer.output}/${schema.basename}.xsd"
-      tofile="${dtdfile.output}/${schema.basename}.xsd"
-    />
-    <copy
-      file="${relaxer.output}/${schema.basename}.dtd"
-      tofile="${dtdfile.output}/${schema.basename}.dtd"
-    />
+    <!-- <copy -->
+    <!--   file="${relaxer.output}/${schema.basename}.xsd" -->
+    <!--   tofile="${dtdfile.output}/${schema.basename}.xsd" -->
+    <!-- /> -->
+    <!-- <copy -->
+    <!--   file="${relaxer.output}/${schema.basename}.dtd" -->
+    <!--   tofile="${dtdfile.output}/${schema.basename}.dtd" -->
+    <!-- /> -->
   </target>
 
-  <target name="compile-bindings">
-    <mkdir dir="${binding.classes.dir}"/>
-    <javac srcdir="${binding.src.dir}" destdir="${binding.classes.dir}"
-	   debug="${debug}" encoding="utf-8">
-      <classpath>
-        <pathelement path="${xcodeml_common.classes.dir}"/>
-      </classpath>
-    </javac>
-  </target>
+  <!-- <target name="compile-bindings"> -->
+  <!--   <mkdir dir="${binding.classes.dir}"/> -->
+  <!--   <javac srcdir="${binding.src.dir}" destdir="${binding.classes.dir}" -->
+  <!-- 	   debug="${debug}" encoding="utf-8"> -->
+  <!--     <classpath> -->
+  <!--       <pathelement path="${xcodeml_common.classes.dir}"/> -->
+  <!--     </classpath> -->
+  <!--   </javac> -->
+  <!-- </target> -->
 
-  <target name="relaxer" depends="relaxer_xsd,relaxer_dtd">
-    <java jar="${relaxer.jar}" fork="true">
-      <classpath>
-        <pathelement location="${relaxer.jar}"/>
-      </classpath>
-      <arg line="-dir:${relaxer.output}"/>
-      <arg line="-validation:relax"/>
-      <arg line="${schema} -verbose -java" />
-      <arg line="-java.pattern.visitor"/>
-      <arg line="-java.pattern.factory"/>
-      <arg line="-java.pattern.composite"/>
-      <arg line="-java.package:${binding.gen.pkg}"/>
-      <arg line="-java.name.class.prefix:${class.name.prefix}"/>
-    </java>
-    <exec executable="../buildutils/postrelaxer.pl">
-      <arg line="${relaxer.output}"/>
-    </exec>
-  </target>
+  <!-- <target name="relaxer" depends="relaxer_xsd,relaxer_dtd"> -->
+  <!--   <java jar="${relaxer.jar}" fork="true"> -->
+  <!--     <classpath> -->
+  <!--       <pathelement location="${relaxer.jar}"/> -->
+  <!--     </classpath> -->
+  <!--     <arg line="-dir:${relaxer.output}"/> -->
+  <!--     <arg line="-validation:relax"/> -->
+  <!--     <arg line="${schema} -verbose -java" /> -->
+  <!--     <arg line="-java.pattern.visitor"/> -->
+  <!--     <arg line="-java.pattern.factory"/> -->
+  <!--     <arg line="-java.pattern.composite"/> -->
+  <!--     <arg line="-java.package:${binding.gen.pkg}"/> -->
+  <!--     <arg line="-java.name.class.prefix:${class.name.prefix}"/> -->
+  <!--   </java> -->
+  <!--   <exec executable="../buildutils/postrelaxer.pl"> -->
+  <!--     <arg line="${relaxer.output}"/> -->
+  <!--   </exec> -->
+  <!-- </target> -->
   
-  <target name="relaxer_xsd">
-    <java jar="${relaxer.jar}" fork="true">
-      <classpath>
-        <pathelement location="${relaxer.jar}"/>
-      </classpath>
-      <arg line="-dir:${relaxer.output}"/>
-      <arg line="-validation:relax"/>
-      <arg line="${schema} -verbose -xsd -xsd.policy:type" />
-    </java>
-  </target>
+  <!-- <target name="relaxer_xsd"> -->
+  <!--   <java jar="${relaxer.jar}" fork="true"> -->
+  <!--     <classpath> -->
+  <!--       <pathelement location="${relaxer.jar}"/> -->
+  <!--     </classpath> -->
+  <!--     <arg line="-dir:${relaxer.output}"/> -->
+  <!--     <arg line="-validation:relax"/> -->
+  <!--     <arg line="${schema} -verbose -xsd -xsd.policy:type" /> -->
+  <!--   </java> -->
+  <!-- </target> -->
   
-  <target name="relaxer_dtd">
-    <java jar="${relaxer.jar}" fork="true">
-      <classpath>
-        <pathelement location="${relaxer.jar}"/>
-      </classpath>
-      <arg line="-dir:${relaxer.output}"/>
-      <arg line="-validation:relax"/>
-      <arg line="${schema} -verbose -dtd"/>
-    </java>
-  </target>
+  <!-- <target name="relaxer_dtd"> -->
+  <!--   <java jar="${relaxer.jar}" fork="true"> -->
+  <!--     <classpath> -->
+  <!--       <pathelement location="${relaxer.jar}"/> -->
+  <!--     </classpath> -->
+  <!--     <arg line="-dir:${relaxer.output}"/> -->
+  <!--     <arg line="-validation:relax"/> -->
+  <!--     <arg line="${schema} -verbose -dtd"/> -->
+  <!--   </java> -->
+  <!-- </target> -->
 
   <target name="clean-doc">
     <delete dir="${doc.dir}"/>
@@ -168,14 +169,14 @@
     <delete dir="${build.dir}"/>
     <delete dir="${classes.dir}"/>
     <delete dir="${testclasses.dir}"/>
-    <delete dir="${binding.classes.dir}"/>
+    <!-- <delete dir="${binding.classes.dir}"/> -->
   </target>
 
-  <target name="clean-bindings">
-    <delete>
-      <fileset dir="${binding.classes.dir}" includes="**/*.class"/>
-      <fileset dir="${relaxer.output}" includes="**/*.java"/>
-    </delete>
-  </target>
+  <!-- <target name="clean-bindings"> -->
+  <!--   <delete> -->
+  <!--     <fileset dir="${binding.classes.dir}" includes="**/*.class"/> -->
+  <!--     <fileset dir="${relaxer.output}" includes="**/*.java"/> -->
+  <!--   </delete> -->
+  <!-- </target> -->
 
 </project>

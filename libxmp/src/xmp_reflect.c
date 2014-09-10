@@ -289,9 +289,10 @@ static void _XMP_reflect_normal_sched_dim(_XMP_array_t *adesc, int target_dim,
   // setup MPI_data_type
   //
 
-  int count, blocklength, stride;
+  int count = 0, blocklength = 0;
+  long long stride = 0;
 
-  if (_XMPF_running & !_XMPC_running){ /* for XMP/F */
+  if (_XMPF_running & (!_XMPC_running)){ /* for XMP/F */
 
     count = 1;
     blocklength = type_size;
@@ -307,7 +308,7 @@ static void _XMP_reflect_normal_sched_dim(_XMP_array_t *adesc, int target_dim,
     }
 
   }
-  else if (!_XMPF_running & _XMPC_running){ /* for XMP/C */
+  else if ((!_XMPF_running) & _XMPC_running){ /* for XMP/C */
 
     count = 1;
     blocklength = type_size;
@@ -507,8 +508,8 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   int type_size = adesc->type_size;
   void *array_addr = adesc->array_addr_p;
 
-  void *lo_send_array, *lo_recv_array;
-  void *hi_send_array, *hi_recv_array;
+  void *lo_send_array = NULL, *lo_recv_array = NULL;
+  void *hi_send_array = NULL, *hi_recv_array = NULL;
 
 /*   void *lo_send_buf = array_addr; */
 /*   void *lo_recv_buf = array_addr; */
@@ -526,10 +527,10 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   // setup data_type
   //
 
-  int count, blocklength;
-  long long stride;
+  int count = 0, blocklength = 0;
+  long long stride = 0;
 
-  if (_XMPF_running & !_XMPC_running){ /* for XMP/F */
+  if (_XMPF_running & (!_XMPC_running)){ /* for XMP/F */
 
     count = 1;
     blocklength = type_size;
@@ -545,7 +546,7 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     }
 
   }
-  else if (!_XMPF_running & _XMPC_running){ /* for XMP/C */
+  else if ((!_XMPF_running) & _XMPC_running){ /* for XMP/C */
 
     count = 1;
     blocklength = type_size;
@@ -930,7 +931,8 @@ static void _XMP_reflect_rdma_sched_dim(_XMP_array_t *adesc, int target_dim,
   // calculate offset
   //
 
-  int count, blocklength, stride;
+  int count = 0, blocklength = 0;
+  long long stride = 0;
 
   if (_XMPF_running & !_XMPC_running){ /* for XMP/F */
 
@@ -1491,13 +1493,13 @@ void _XMP_pop_async(int async_id)
 void _XMP_reflect_pack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic)
 {
 
-  int lb, ub;
+  int lb = 0, ub = 0;
 
-  if (_XMPF_running & !_XMPC_running){ /* for XMP/F */
+  if (_XMPF_running & (!_XMPC_running)){ /* for XMP/F */
     lb = 0;
     ub = a->dim - 1;
   }
-  else if (!_XMPF_running & _XMPC_running){ /* for XMP/C */
+  else if ((!_XMPF_running) & _XMPC_running){ /* for XMP/C */
     lb = 1;
     ub = a->dim;
   }
@@ -1538,13 +1540,13 @@ void _XMP_reflect_pack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_period
 void _XMP_reflect_unpack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic)
 {
 
-  int lb, ub;
+  int lb = 0, ub = 0;
 
-  if (_XMPF_running & !_XMPC_running){ /* for XMP/F */
+  if (_XMPF_running & (!_XMPC_running)){ /* for XMP/F */
     lb = 0;
     ub = a->dim - 1;
   }
-  else if (!_XMPF_running & _XMPC_running){ /* for XMP/C */
+  else if ((!_XMPF_running) & _XMPC_running){ /* for XMP/C */
     lb = 1;
     ub = a->dim;
   }

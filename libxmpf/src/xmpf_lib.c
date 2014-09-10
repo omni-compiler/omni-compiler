@@ -20,7 +20,7 @@ void xmp_finalize_mpi_(void) {
 }
 
 void xmp_init_() {
-  _XMP_init(NULL, NULL);
+  _XMP_init(0, NULL);
 }
 
 void xmp_finalize_(void) {

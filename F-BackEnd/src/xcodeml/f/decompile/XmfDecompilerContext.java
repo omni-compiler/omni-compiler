@@ -19,14 +19,14 @@ public class XmfDecompilerContext implements XmDecompilerContext
     private String _lastErrorMessage = null;
 
     private XmfWriter  _writer;
-    private XfTypeManager _typeManager;
+    //private XfTypeManager _typeManager;
     private XfTypeManagerForDom _typeManagerForDom;
 
     private Exception _lastCause;
 
     public XmfDecompilerContext()
     {
-        _typeManager = new XfTypeManager();
+        //_typeManager = new XfTypeManager();
         _typeManagerForDom = new XfTypeManagerForDom();
     }
 
@@ -109,14 +109,14 @@ public class XmfDecompilerContext implements XmDecompilerContext
         _writer = writer;
     }
 
-    /**
-     * Get type manager.
-     * @return Instance of XfTypeManager.
-     */
-    public XfTypeManager getTypeManager()
-    {
-        return _typeManager;
-    }
+    // /**
+    //  * Get type manager.
+    //  * @return Instance of XfTypeManager.
+    //  */
+    // public XfTypeManager getTypeManager()
+    // {
+    //     return _typeManager;
+    // }
 
     /**
      * Get type manager.

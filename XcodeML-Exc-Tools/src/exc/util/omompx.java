@@ -122,9 +122,9 @@ public class omompx
     boolean doScalasca = false;
     boolean doTlog = false;
     int maxColumns = 0;
-    boolean useRelaxerTranslatorInput = false;
-    boolean useRelaxerTranslatorOutput = false;
-    boolean useRelaxerDecompilerIutput = false;
+    // boolean useRelaxerTranslatorInput = false;
+    // boolean useRelaxerTranslatorOutput = false;
+    // boolean useRelaxerDecompilerIutput = false;
         
     for(int i = 0; i < args.length; ++i) {
       String arg = args[i];
@@ -192,16 +192,16 @@ public class omompx
         doScalasca = true;
       } else if (arg.equals("-with-tlog")) {
         doTlog = true;
-      } else if (arg.equals("-use-relaxer")) {
-        useRelaxerTranslatorInput = true;
-        useRelaxerTranslatorOutput = true;
-        useRelaxerDecompilerIutput = true;
-      } else if (arg.equals("-use-relaxer-tin")) {
-        useRelaxerTranslatorInput = true;
-      } else if (arg.equals("-use-relaxer-tout")) {
-        useRelaxerTranslatorOutput = true;
-      } else if (arg.equals("-use-relaxer-din")) {
-        useRelaxerDecompilerIutput = true;
+      // } else if (arg.equals("-use-relaxer")) {
+      //   useRelaxerTranslatorInput = true;
+      //   useRelaxerTranslatorOutput = true;
+      //   useRelaxerDecompilerIutput = true;
+      // } else if (arg.equals("-use-relaxer-tin")) {
+      //   useRelaxerTranslatorInput = true;
+      // } else if (arg.equals("-use-relaxer-tout")) {
+      //   useRelaxerTranslatorOutput = true;
+      // } else if (arg.equals("-use-relaxer-din")) {
+      //   useRelaxerDecompilerIutput = true;
       } else if (arg.startsWith("-M")) {
           if (arg.equals("-M")) {
             if (narg == null)
@@ -268,39 +268,39 @@ public class omompx
     XobjectFile xobjFile;
     String srcPath = inXmlFile;
 
-    if (useRelaxerTranslatorInput) {
-      if (XmOption.getLanguage() == XmLanguage.F) {
-        // read XcodeML/Fortran
-        XcodeMLtools_F tools = new XcodeMLtools_F();
-        xobjFile = tools.read(reader);
-        if (inXmlFile != null) {
-          reader.close();
-        }
-      } else {
-        // read XcodeML/C
-        List<String> readErrorList = new ArrayList<String>();
-        XmXcodeProgram xmProg = toolFactory.createXcodeProgram();
-        XmValidator validator = toolFactory.createValidator();
+    // if (useRelaxerTranslatorInput) {
+    //   if (XmOption.getLanguage() == XmLanguage.F) {
+    //     // read XcodeML/Fortran
+    //     XcodeMLtools_F tools = new XcodeMLtools_F();
+    //     xobjFile = tools.read(reader);
+    //     if (inXmlFile != null) {
+    //       reader.close();
+    //     }
+    //   } else {
+    //     // read XcodeML/C
+    //     List<String> readErrorList = new ArrayList<String>();
+    //     XmXcodeProgram xmProg = toolFactory.createXcodeProgram();
+    //     XmValidator validator = toolFactory.createValidator();
 
-        if(!validator.read(reader, xmProg, readErrorList)) {
-          for (String error : readErrorList) {
-            System.err.println(error);
-            //	    System.exit(1);
-          }
-        }
+    //     if(!validator.read(reader, xmProg, readErrorList)) {
+    //       for (String error : readErrorList) {
+    //         System.err.println(error);
+    //         //	    System.exit(1);
+    //       }
+    //     }
 
-        if(inXmlFile != null) {
-          reader.close();
-        }
+    //     if(inXmlFile != null) {
+    //       reader.close();
+    //     }
 
-        srcPath = xmProg.getSource();
+    //     srcPath = xmProg.getSource();
 
-        // translate XcodeML to Xcode
-        XmXmObjToXobjectTranslator xm2xc_translator = toolFactory.createXmObjToXobjectTranslator();
-        xobjFile = (XobjectFile)xm2xc_translator.translate((XmObj)xmProg);
-        xmProg = null;
-      }
-    } else { // useRelaxer
+    //     // translate XcodeML to Xcode
+    //     XmXmObjToXobjectTranslator xm2xc_translator = toolFactory.createXmObjToXobjectTranslator();
+    //     xobjFile = (XobjectFile)xm2xc_translator.translate((XmObj)xmProg);
+    //     xmProg = null;
+    //   }
+    // } else { // useRelaxer
       XcodeMLtools tools = null;
       if (XmOption.getLanguage() == XmLanguage.F) {
         tools = new XcodeMLtools_F();
@@ -313,7 +313,7 @@ public class omompx
         reader.close();
       }
       //srcPath = xobjFile.getSourceFileName();
-    }
+    // }
         
     String baseName = null;
     if(dump || srcPath == null || srcPath.indexOf("<") >= 0 ) {
@@ -454,29 +454,29 @@ public class omompx
     XmXcodeProgram xmprog = null;
     Document xcodeDoc = null;
 
-    if (useRelaxerTranslatorOutput) {
-      XmXobjectToXmObjTranslator xc2xm_translator = 
-        toolFactory.createXobjectToXmObjTranslator();
-      xmprog = (XmXcodeProgram)xc2xm_translator.translate(xobjFile);
-      xobjFile = null;
-      // Output XcodeML
-      if(indent) {
-        StringBuffer buf = new StringBuffer(1024 * 1024);
-        xmprog.makeTextElement(buf);
-        if(!dump && !outputDecomp) {
-          xmprog = null;
-        }
-        StringReader xmlReader = new StringReader(buf.toString());
-        buf = null;
-        XmUtil.transformToIndentedXml(2, xmlReader, xmlWriter);
-        xmlReader.close();
-      } else {
-        xmprog.makeTextElement(xmlWriter);
-        if(!dump && !outputDecomp) {
-          xmprog = null;
-        }
-      }
-    } else { // useRelaxer
+    // if (useRelaxerTranslatorOutput) {
+    //   XmXobjectToXmObjTranslator xc2xm_translator = 
+    //     toolFactory.createXobjectToXmObjTranslator();
+    //   xmprog = (XmXcodeProgram)xc2xm_translator.translate(xobjFile);
+    //   xobjFile = null;
+    //   // Output XcodeML
+    //   if(indent) {
+    //     StringBuffer buf = new StringBuffer(1024 * 1024);
+    //     xmprog.makeTextElement(buf);
+    //     if(!dump && !outputDecomp) {
+    //       xmprog = null;
+    //     }
+    //     StringReader xmlReader = new StringReader(buf.toString());
+    //     buf = null;
+    //     XmUtil.transformToIndentedXml(2, xmlReader, xmlWriter);
+    //     xmlReader.close();
+    //   } else {
+    //     xmprog.makeTextElement(xmlWriter);
+    //     if(!dump && !outputDecomp) {
+    //       xmprog = null;
+    //     }
+    //   }
+    // } else { // useRelaxer
       XmXobjectToXcodeTranslator xc2xcodeTranslator = null;
 
       if (lang.equals("F")) {
@@ -512,22 +512,22 @@ public class omompx
         xmprog = null;
       } else {
         // read XcodeML/C again. Make xmprog.
-        if (outXmlFile != null && useRelaxerDecompilerIutput) {
-          reader = new BufferedReader(new FileReader(outXmlFile));
-          List<String> readErrorList = new ArrayList<String>();
-          xmprog = toolFactory.createXcodeProgram();
-          XmValidator validator = toolFactory.createValidator();
-          if (!validator.read(reader, xmprog, readErrorList)) {
-            for (String error : readErrorList) {
-              System.err.println(error);
-              System.exit(1);
-            }
-          }
-          reader.close();
-          xcodeDoc = null;
-        }
+        // if (outXmlFile != null && useRelaxerDecompilerIutput) {
+        //   reader = new BufferedReader(new FileReader(outXmlFile));
+        //   List<String> readErrorList = new ArrayList<String>();
+        //   xmprog = toolFactory.createXcodeProgram();
+        //   XmValidator validator = toolFactory.createValidator();
+        //   if (!validator.read(reader, xmprog, readErrorList)) {
+        //     for (String error : readErrorList) {
+        //       System.err.println(error);
+        //       System.exit(1);
+        //     }
+        //   }
+        //   reader.close();
+        //   xcodeDoc = null;
+        // }
       }
-    }
+    // }
         
     xmlWriter.flush();
         
@@ -563,16 +563,16 @@ public class omompx
       }
             
       XmDecompiler decompiler = toolFactory.createDecompiler();
-      if (useRelaxerDecompilerIutput) {
-        decompiler.decompile(context, xmprog, decompWriter);
-      } else {
+      // if (useRelaxerDecompilerIutput) {
+      //   decompiler.decompile(context, xmprog, decompWriter);
+      // } else {
         if (xcodeDoc == null) {
           javax.xml.parsers.DocumentBuilderFactory docFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
           javax.xml.parsers.DocumentBuilder builder = docFactory.newDocumentBuilder();
           xcodeDoc = builder.parse(outXmlFile);
         }
         decompiler.decompile(context, xcodeDoc, decompWriter);
-      }
+      // }
       decompWriter.flush();
     
       if(!dump && outputDecomp) {
