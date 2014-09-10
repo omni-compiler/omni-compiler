@@ -350,9 +350,9 @@ extern void _XACC_get_current_device_info(int* lower, int* upper, int* step);
 extern void _XACC_get_device_info(void *desc, int* lower, int* upper, int* step);
 
 
-extern void _XACC_init_device_array(void* array, void* device);
-extern void _XACC_split_device_array_BLOCK(void* array, int dim);
-extern void _XACC_split_device_array_DUPLICATION(void* array, int dim);
+extern void _XACC_init_layouted_array(void **layoutedArray, void* alignedArray, void* device);
+extern void _XACC_split_layouted_array_BLOCK(void* array, int dim);
+extern void _XACC_split_layouted_array_DUPLICATION(void* array, int dim);
 extern void _XACC_calc_size(void* array);
 
 extern void _XACC_get_size(void* array, unsigned long long* offset,
@@ -366,6 +366,7 @@ extern void _XACC_sched_loop_layout_BLOCK(int init,
                                    void* array_desc,
                                    int dim,
                                    int deviceNum);
+extern void _XACC_set_shadow_NORMAL(void* array_desc, int dim , int lo, int hi)
 
 
 #endif // _XMP_RUNTIME_FUNC_DECL

@@ -119,6 +119,8 @@ libtlog/src_mpi/Makefile
 libtlog/src_mpi/bin/tlogview
 libtlog/src_threads/Makefile
 libtool
+libxacc/include/Makefile
+libxacc/src/Makefile
 libxmp/include/Makefile
 libxmp/src/Makefile
 libxmp/src_gpu/Makefile

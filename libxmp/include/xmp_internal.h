@@ -321,12 +321,12 @@ void _XACC_get_device_info(void *desc, int* lower, int* upper, int* step);
 //void _XMP_init_device(void* desc, acc_device_t device, int lower, int upper, int step);
 //void _XMP_get_device_info(void *desc, int* lower, int* upper, int* step);
 
-void _XACC_init_device_array(_XMP_array_t* array, _XACC_device_t* device);
-void _XACC_split_device_array_BLOCK(_XMP_array_t* array, int dim);
-void _XACC_split_device_array_DUPLICATION(_XMP_array_t* array, int dim);
-void _XACC_calc_size(_XMP_array_t* array);
+void _XACC_init_layouted_array(_XACC_arrays_t **array, _XMP_array_t *alignedArray, _XACC_device_t* device);
+void _XACC_split_layouted_array_BLOCK(_XACC_arrays_t* array, int dim);
+void _XACC_split_layouted_array_DUPLICATION(_XACC_arrays_t* array, int dim);
+void _XACC_calc_size(_XACC_arrays_t* array);
 
-void _XACC_get_size(_XMP_array_t* array, unsigned long long* offset,
+void _XACC_get_size(_XACC_arrays_t* array, unsigned long long* offset,
                unsigned long long* size, int deviceNum);
 void _XACC_sched_loop_layout_BLOCK(int init,
                                    int cond,
@@ -334,9 +334,10 @@ void _XACC_sched_loop_layout_BLOCK(int init,
                                    int* sched_init,
                                    int* sched_cond,
                                    int* sched_step,
-                                   _XMP_array_t* array_desc,
+                                   _XACC_arrays_t* array_desc,
                                    int dim,
                                    int deviceNum);
+void _XACC_set_shadow_NORMAL(_XACC_arrays_t* array_desc, int dim , int lo, int hi);
 
 #ifdef _XMP_TCA
 #define TCA_CHECK(tca_call) do { \

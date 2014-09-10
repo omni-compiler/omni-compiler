@@ -77,34 +77,70 @@ void _XACC_get_current_device_info(int* lower, int* upper, int* step)
 
 
 
-void _XACC_init_device_array(_XMP_array_t* array, _XACC_device_t* device){
-  array->device_type = device;
-  int dim = array->dim;
+void _XACC_init_layouted_array(_XACC_arrays_t **arrays, _XMP_array_t* alignedArray, _XACC_device_t* device){
+  _XACC_arrays_t* layoutedArray = (_XACC_arrays_t*)_XMP_alloc(sizeof(_XACC_arrays_t));
+
+  layoutedArray->device_type = device;
+  //alignedArray->device_type = device;
+  int dim = alignedArray->dim;
   int num_devices = device->size;
-  array->device_array = (_XACC_array_t*)_XMP_alloc(sizeof(_XACC_array_t) * num_devices);
+  layoutedArray->device_array = (_XACC_array_t*)_XMP_alloc(sizeof(_XACC_array_t) * num_devices);
   for(int dev = 0; dev < num_devices; dev++){
-    _XACC_array_info_t* d_info = (_XACC_array_info_t*)_XMP_alloc(sizeof(_XACC_array_info_t) * dim);
-    array->device_array[dev].info = d_info;
+    _XACC_array_info_t* d_array_info = (_XACC_array_info_t*)_XMP_alloc(sizeof(_XACC_array_info_t) * dim);
+    _XMP_array_info_t *h_array_info = alignedArray->info;
+    layoutedArray->device_array[dev].info = d_array_info;
+    int i;
+    for(i = 0; i <dim; i++){
+      d_array_info[i].device_layout_manner = _XMP_N_DIST_DUPLICATION;
+      d_array_info[i].par_lower = h_array_info[i].par_lower;
+      d_array_info[i].par_upper = h_array_info[i].par_upper;
+      d_array_info[i].par_stride = h_array_info[i].par_stride;
+      d_array_info[i].par_size = h_array_info[i].par_size;
+
+      d_array_info[i].alloc_size = h_array_info[i].alloc_size;
+
+      d_array_info[i].local_lower = h_array_info[i].local_lower;
+      d_array_info[i].local_upper = h_array_info[i].local_upper;
+      d_array_info[i].local_stride = h_array_info[i].local_stride;
+
+      d_array_info[i].shadow_size_lo = h_array_info[i].shadow_size_lo;
+      d_array_info[i].shadow_size_hi = h_array_info[i].shadow_size_hi;
+
+    printf("dim=%d, host par (%d, %d, %d) local(%d, %d, %d, %d)\n",
+           dim,
+           h_array_info[i].par_lower,
+           h_array_info[i].par_upper,
+           h_array_info[i].par_stride,
+           h_array_info[i].local_lower,
+           h_array_info[i].local_upper,
+           h_array_info[i].local_stride,
+           h_array_info[i].alloc_size);
+
+    }
   }
+  layoutedArray->dim = dim;
+  *arrays = layoutedArray;
 }
 
-void _XACC_split_device_array_DUPLICATION(_XMP_array_t* array_desc, int dim){
-  _XMP_array_info_t *h_array_info = &(array_desc->info[dim]);
+void _XACC_split_layouted_array_DUPLICATION(_XACC_arrays_t* array_desc, int dim){
+  /* _XMP_array_info_t *h_array_info = &(array_desc->info[dim]); */
 
-  int num_devices = array_desc->device_type->size;
-  for(int dev = 0; dev < num_devices; dev++){
-    _XACC_array_info_t *d_array_info = &(array_desc->device_array[dev].info[dim]);
-    d_array_info->device_layout_manner = _XMP_N_DIST_DUPLICATION;
+  /* int num_devices = array_desc->device_type->size; */
+  /* for(int dev = 0; dev < num_devices; dev++){ */
+  /*   _XACC_array_info_t *d_array_info = &(array_desc->device_array[dev].info[dim]); */
+  /*   d_array_info->device_layout_manner = _XMP_N_DIST_DUPLICATION; */
 
-    d_array_info->par_lower = h_array_info->par_lower;
-    d_array_info->par_upper = h_array_info->par_upper;
-    d_array_info->par_stride = h_array_info->par_stride;
+  /*   d_array_info->par_lower = h_array_info->par_lower; */
+  /*   d_array_info->par_upper = h_array_info->par_upper; */
+  /*   d_array_info->par_stride = h_array_info->par_stride; */
 
-    d_array_info->alloc_size = h_array_info->alloc_size;
+  /*   d_array_info->alloc_size = h_array_info->alloc_size; */
 
-    d_array_info->local_lower = h_array_info->local_lower;
-    d_array_info->local_upper = h_array_info->local_upper;
-    d_array_info->local_stride = h_array_info->local_stride;
+  /*   d_array_info->local_lower = h_array_info->local_lower; */
+  /*   d_array_info->local_upper = h_array_info->local_upper; */
+  /*   d_array_info->local_stride = h_array_info->local_stride; */
+
+
 
     /* printf("dim=%d, dup par (%d, %d, %d) local(%d, %d, %d, %d)\n", */
     /*        dim, */
@@ -116,36 +152,35 @@ void _XACC_split_device_array_DUPLICATION(_XMP_array_t* array_desc, int dim){
     /*        d_array_info->local_stride, */
     /*        d_array_info->alloc_size); */
 
-  }
+  /* } */
 }
 
-void _XACC_split_device_array_BLOCK(_XMP_array_t* array_desc, int dim){
-  _XMP_array_info_t *h_array_info = &(array_desc->info[dim]);
-
+void _XACC_split_layouted_array_BLOCK(_XACC_arrays_t* array_desc, int dim){
   int num_devices = array_desc->device_type->size;
   for(int dev = 0; dev < num_devices; dev++){
     _XACC_array_info_t *d_array_info = &(array_desc->device_array[dev].info[dim]);
     d_array_info->device_layout_manner = _XMP_N_DIST_BLOCK;
 
-
-    unsigned long long size = _XMP_M_CEILi(h_array_info->par_size, num_devices);
-    d_array_info->par_stride =h_array_info->par_stride;    
-    d_array_info->par_lower = h_array_info->par_lower + size * dev;
+    unsigned long long size = _XMP_M_CEILi(d_array_info->par_size, num_devices);
+    //d_array_info->par_stride;// = h_array_info->par_stride;    
+    d_array_info->par_lower += size * dev;
     
     if(dev != num_devices - 1){
-      d_array_info->par_upper = h_array_info->par_lower + size * (dev+1);
+      d_array_info->par_upper = d_array_info->par_lower + size;
     }else{
-      d_array_info->par_upper = h_array_info->par_upper;
+      //      d_array_info->par_upper = h_array_info->par_upper;
     }
-    d_array_info->local_stride = h_array_info->local_stride;
-    d_array_info->local_lower = h_array_info->local_lower + size * dev;
+    //d_array_info->local_stride = h_array_info->local_stride;
+    d_array_info->local_lower += size * dev;
     if(dev != num_devices - 1){
-      d_array_info->local_upper = h_array_info->local_lower + size * (dev + 1);
+      d_array_info->local_upper = d_array_info->local_lower + size;
     }else{
-      d_array_info->local_upper = h_array_info->local_upper;
+      //      d_array_info->local_upper = h_array_info->local_upper;
     }
 
-    d_array_info->alloc_size = size;
+    d_array_info->alloc_size = size 
+      + d_array_info->shadow_size_lo 
+      + d_array_info->shadow_size_hi;
 
 /* #if not */
 /*     int size = h_array_info->par_size / num_devices; */
@@ -173,27 +208,86 @@ void _XACC_split_device_array_BLOCK(_XMP_array_t* array_desc, int dim){
     /*        d_array_info->size); */
   }
 }
-void _XACC_calc_size(_XMP_array_t* array_desc){
+
+void _XACC_set_shadow_NORMAL(_XACC_arrays_t* array_desc, int dim , int lo, int hi)
+{
+  int num_devices = array_desc->device_type->size;
+  for(int dev = 0; dev < num_devices; dev++){
+    _XACC_array_info_t *d_array_info = &(array_desc->device_array[dev].info[dim]);
+
+      int d_lo = lo;
+      int d_hi = hi;
+      int h_lo = d_array_info->shadow_size_lo;
+      int h_hi = d_array_info->shadow_size_hi;
+
+      if((d_lo != 0 || d_hi != 0) && (h_lo != 0 || h_hi != 0)){
+        if(d_lo != h_lo || d_hi != h_hi){
+          //has error
+        }
+      }else if((d_lo == 0 && d_hi == 0) && (h_lo == 0 && h_hi == 0)){
+        //no error
+      }else if((d_lo == 0 && d_hi == 0) && (h_lo != 0 || h_hi != 0)){
+        //no
+      }else{
+        //only d has shadow
+        if(dev != 0){
+          d_array_info->shadow_size_lo = lo;
+          d_array_info->local_lower += lo;
+          d_array_info->local_upper += lo;
+        }
+        if(dev != num_devices -1){
+          d_array_info->shadow_size_hi = hi;
+          d_array_info->local_upper += hi;
+        }
+      }
+
+    /* d_array_info->shadow_size_lo = lo; */
+    /* d_array_info->shadow_size_hi = hi; */
+
+    printf("shadow dim=%d, lo=%d,hi=%d\n", dim, lo, hi);
+    /* printf("dim=%d, par (%d, %d, %d) local(%d, %d, %d, %d)\n", */
+    /*        dim, */
+    /*        d_array_info->par_lower, */
+    /*        d_array_info->par_upper, */
+    /*        d_array_info->par_stride, */
+    /*        d_array_info->local_lower, */
+    /*        d_array_info->local_upper, */
+    /*        d_array_info->local_stride, */
+    /*        d_array_info->alloc_size); */
+  }    
+
+
+}
+
+void _XACC_calc_size(_XACC_arrays_t* array_desc){
   int num_devices = array_desc->device_type->size;
   for(int dev = 0; dev < num_devices; dev++){
     unsigned long long device_acc = 1;
     unsigned long long device_offset = 0;
     int dim = array_desc->dim;
     _XACC_array_t *d_array_desc = &(array_desc->device_array[dev]);
-    for(int i = dim - 1; i >= 0; i--){
+    for(int i = dim - 1; i > 0; i--){
       _XACC_array_info_t* info = &(d_array_desc->info[i]);
       info->device_dim_acc = device_acc;
-      device_offset += device_acc * info->local_lower;
+      device_offset += device_acc * (info->local_lower - info->shadow_size_lo);
       device_acc *= info->alloc_size;
+    }
+    {
+      _XACC_array_info_t* info = &(d_array_desc->info[0]);
+      info->device_dim_acc = device_acc;
+      device_offset += device_acc * info->local_lower;
+      //shadowもコピーするなら下
+      //device_offset += device_acc * (info->local_lower - info->shadow_size_lo);
+      device_acc *= (info->alloc_size - info->shadow_size_lo - info->shadow_size_hi);
     }
 
     d_array_desc->alloc_size = device_acc; //num elements
     d_array_desc->alloc_offset = device_offset; //num elements
-    /* printf("alloc (%llu, %llu)@dev\n",  device_offset, device_acc); */
+    printf("alloc (%llu, %llu)@dev\n",  device_offset, device_acc);
   }
 }
 
-static _XACC_array_t* get_device_array(_XMP_array_t* array_desc, int deviceNum)
+static _XACC_array_t* get_device_array(_XACC_arrays_t* array_desc, int deviceNum)
 {
   _XACC_device_t* device = array_desc->device_type;
   int lower = device->lb;
@@ -203,7 +297,7 @@ static _XACC_array_t* get_device_array(_XMP_array_t* array_desc, int deviceNum)
   return &(array_desc->device_array[n]);
 }
 
-void _XACC_get_size(_XMP_array_t* array_desc, unsigned long long* offset,
+void _XACC_get_size(_XACC_arrays_t* array_desc, unsigned long long* offset,
                     unsigned long long* size, int deviceNum)
 {
   _XACC_array_t* device_array = get_device_array(array_desc, deviceNum);
@@ -217,15 +311,15 @@ void _XACC_sched_loop_layout_BLOCK(int init,
                               int* sched_init,
                               int* sched_cond,
                               int* sched_step,
-                              _XMP_array_t* array_desc,
+                              _XACC_arrays_t* array_desc,
                               int dim,
                               int deviceNum)
 {
   _XACC_array_t* device_array = get_device_array(array_desc, deviceNum);
   _XACC_array_info_t* info = &device_array->info[dim];
-  *sched_init = info->local_lower;
-  *sched_cond = info->local_upper + 1;
+  *sched_init = info->local_lower - info->shadow_size_lo;
+  *sched_cond = info->local_upper - info->shadow_size_lo + 1;
   *sched_step = info->local_stride;
-  /* printf("orginal loop (%d, %d, %d)\n", init, cond,step); */
-  /* printf("loop(%d, %d, %d)@%d\n", *sched_init, *sched_cond, *sched_step, deviceNum) */;
+  printf("loop org(%d, %d, %d), mod(%d, %d, %d)@%d\n",
+         init, cond,step, *sched_init, *sched_cond, *sched_step, deviceNum);
 }

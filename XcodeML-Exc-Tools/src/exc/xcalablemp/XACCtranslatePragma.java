@@ -517,6 +517,7 @@ public class XACCtranslatePragma {
                     String mannerStr = XMPlayout.getDistMannerString(distManner);
                     Block splitDeviceArrayBlockCall = _globalDecl.createFuncCallBlock("_XACC_split_layouted_array_" + mannerStr, Xcons.List(layoutedArrayDescId.Ref(), Xcons.IntConstant(dim)));
                     body.add(splitDeviceArrayBlockCall);
+					if(! layout.hasShadow()) continue;
                     int shadowType = layout.getShadowTypeAt(dim);
                     if(shadowType != XMPlayout.SHADOW_NONE){
                       String shadowTypeStr = XMPlayout.getShadowTypeString(shadowType);

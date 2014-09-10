@@ -160,12 +160,16 @@ typedef struct _XACC_array_info_type {
   int par_lower;
   int par_upper;
   int par_stride;
-  //int size;
+  int par_size;
   int local_lower;
   int local_upper;
   int local_stride;
+  //  int local_size;
   int alloc_size;
 
+  //  int shadow_type;
+  int shadow_size_lo;
+  int shadow_size_hi;
 
   unsigned long long device_dim_acc;
 }_XACC_array_info_t;
@@ -175,6 +179,12 @@ typedef struct _XACC_array_type {
   unsigned long long alloc_offset;
   unsigned long long alloc_size;  
 }_XACC_array_t;
+
+typedef struct _XACC_arrays_type{
+  _XACC_device_t *device_type;
+  _XACC_array_t *device_array;
+  int dim;
+}_XACC_arrays_t;  
 
 
 // aligned array descriptor
@@ -257,8 +267,6 @@ typedef struct _XMP_array_type {
 
   _XMP_template_t *align_template;
   _XMP_array_info_t info[1];
-  _XACC_device_t *device_type;
-  _XACC_array_t *device_array;
 } _XMP_array_t;
 
 typedef struct _XMP_task_desc_type {

@@ -18,6 +18,7 @@ public class XMPlayout {
   private Vector<Xobject>     _shadowLoVector;
   private Vector<Xobject>     _shadowHiVector;
   //private Vector<Xobject>       _sizeVector;
+  private boolean hasShadow = false;
   
   public XMPlayout(XobjList layout) {
     //super(XMPobject.LAYOUT, name, dim, descId);
@@ -56,6 +57,7 @@ public class XMPlayout {
   }
   
   public void setShadow(Xobject shadow){
+    hasShadow = true;
     for(Xobject x : (XobjList)shadow){
       int type = x.getArg(0).getInt();
       Xobject widthList = (XobjList)x.getArg(1);
@@ -85,5 +87,8 @@ public class XMPlayout {
     default:
       throw new XMPexception("unknown shadow type");
     }
+  }
+  public boolean hasShadow(){
+    return hasShadow;
   }
 }
