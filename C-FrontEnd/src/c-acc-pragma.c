@@ -205,7 +205,7 @@ int parse_ACC_pragma()
 	if(pg_tok == '('){
 	  if((x = parse_ACC_clause_arg()) == NULL)
 	    goto syntax_err;
-	  //pg_ACC_list = exprListAdd(pg_ACC_list, ACC_PG_LIST(ACC_WAIT_ARG, x));
+	  x = ACC_PG_LIST(ACC_WAIT_ARG, x);
 	}
 	//CExpr* pg_ACC_list_2;
 	if((pg_ACC_list = parse_ACC_clauses()) == NULL){
