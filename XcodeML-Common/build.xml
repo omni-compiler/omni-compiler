@@ -67,7 +67,7 @@
   <target name="compile-test" depends="compile">
     <mkdir dir="${testclasses.dir}"/>
     <javac srcdir="${tests.dir}" destdir="${testclasses.dir}" debug="${debug}"
-	   encoding="utf8">
+	   encoding="utf8" includeantruntime="false">
       <classpath refid="test.class.path"/>
     </javac>
   </target>
@@ -75,7 +75,7 @@
   <target name="compile">
     <mkdir dir="${classes.dir}"/>
     <javac srcdir="${src.dir}" destdir="${classes.dir}" debug="${debug}"
-	   encoding="utf8">
+	   encoding="utf8" includeantruntime="false">
       <classpath refid="class.path"/>
     </javac>
   </target>
