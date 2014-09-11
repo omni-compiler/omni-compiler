@@ -22,8 +22,6 @@ import javax.xml.transform.stream.StreamSource;
 import xcodeml.XmException;
 import xcodeml.XmObj;
 
-import com.sun.org.apache.xml.internal.serializer.OutputPropertiesFactory;
-
 public class XmUtil
 {
     /**
@@ -45,11 +43,8 @@ public class XmUtil
         } catch(TransformerConfigurationException e) {
             throw new XmException(e);
         }
-        
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+       
         transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-        transformer.setOutputProperty(
-            OutputPropertiesFactory.S_KEY_INDENT_AMOUNT, "" + indentSpaces);
         
         try {
             transformer.transform(new StreamSource(reader), new StreamResult(writer));
