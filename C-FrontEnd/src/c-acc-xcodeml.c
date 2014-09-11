@@ -20,6 +20,8 @@ void out_ACC_subscript(FILE *fp, int indent, CExpr *subscript);
 
 char *accDirectiveName(int c);
 char *accClauseName(int c);
+void
+outx_XACC_Clause_Args(FILE *fp, int indent, CExprOfList* args);
 
 void
 out_ACC_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr)
@@ -36,9 +38,13 @@ out_ACC_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr)
 	      accDirectiveName(pragma_code));
 
     switch(pragma_code){
-    case ACC_WAIT:
-    outxChildren(fp,indent1,(CExpr *)clauseList);
-    goto end;
+      //      case ACC_WAIT:
+      //    outxChildren(fp,indent1,(CExpr *)clauseList);
+      //    goto end;
+    case XACC_DEVICE:
+      outx_XACC_Clause_Args(fp, indent1, clauseList);
+      goto end;
+
     case ACC_CACHE:
       if(EXPR_L_SIZE(clauseList) != 0)
 	  out_ACC_name_list(fp, indent1, clauseList);
@@ -48,7 +54,11 @@ out_ACC_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr)
     outxPrint(fp,indent1,"<list>\n");
     EXPR_FOREACH(ite, clauseList){
 	CExpr *node = EXPR_L_DATA(ite);
-	outx_ACC_Clause(fp,indent1+1,(CExprOfList *)node);
+	if(EXPR_CODE(node) != EC_UNDEF){
+	  outxContext(fp, indent1+1, node);
+	}else{
+	  outx_ACC_Clause(fp,indent1+1,(CExprOfList *)node);
+	}
     }
     outxPrint(fp,indent1,"</list>\n");
 
@@ -126,6 +136,7 @@ outx_ACC_Clause(FILE *fp, int indent, CExprOfList* clause)
   case ACC_VECT_LEN:
   case ACC_COLLAPSE:
   case XACC_ON_DEVICE:
+  case ACC_WAIT_ARG:
       outxContext(fp,indent1+1,arg);
       break;
 
@@ -133,6 +144,7 @@ outx_ACC_Clause(FILE *fp, int indent, CExprOfList* clause)
   case XACC_SHADOW:
       outx_XACC_Clause_Args(fp, indent1+1, (CExprOfList*)arg);
       break;
+
 
   default:
       namelist = (CExprOfList *)arg;
@@ -224,6 +236,7 @@ char *accDirectiveName(int c)
   case ACC_KERNELS_LOOP:return "KERNELS_LOOP";
   case ACC_ENTER_DATA: return "ENTER_DATA";
   case ACC_EXIT_DATA: return "EXIT_DATA";
+  case XACC_DEVICE: return "DEVICE";
   default: return "??ACC??";
   }
 }
@@ -280,6 +293,8 @@ char *accClauseName(int c)
   case ACC_REDUCTION_LOGOR: return "REDUCTION_LOGOR";
   case ACC_REDUCTION_MIN: return "REDUCTION_MIN";
   case ACC_REDUCTION_MAX: return "REDUCTION_MAX";
+
+  case ACC_WAIT_ARG: return "WAIT_ARG";
 
   default:  return "???ACC clause???";
   }

@@ -64,9 +64,11 @@ static CExpr* parse_ACC_clause_arg(void);
 static CExpr* parse_ACC_C_subscript_list(void);
 static CExpr* parse_XACC_layout_clause_arg(void);
 static CExpr* parse_XACC_shadow_clause_arg(void);
+static CExpr* parse_XACC_device_arg(void);
 
 #define ACC_PG_LIST(pg,args) _omp_pg_list(pg,args)
 #define ACC_LIST2(arg1,arg2) (CExpr*)allocExprOfList2(EC_UNDEF,arg1,arg2)
+#define ACC_LIST3(arg1,arg2,arg3) (CExpr*)allocExprOfList3(EC_UNDEF,arg1,arg2,arg3)
 
 static CExpr* _omp_pg_list(int omp_code,CExpr* args)
 {
@@ -198,12 +200,21 @@ int parse_ACC_pragma()
     if(PG_IS_IDENT("wait")){
 	pg_ACC_pragma = ACC_WAIT;
 	pg_get_token();
+	CExpr *x = NULL;
+
 	if(pg_tok == '('){
-	    CExpr *x;
-	    if((x = parse_ACC_clause_arg()) == NULL) 
-		goto syntax_err;
-	    pg_ACC_list = (CExpr*)allocExprOfList1(EC_UNDEF,x);
-	} else pg_ACC_list = NULL;
+	  if((x = parse_ACC_clause_arg()) == NULL)
+	    goto syntax_err;
+	  //pg_ACC_list = exprListAdd(pg_ACC_list, ACC_PG_LIST(ACC_WAIT_ARG, x));
+	}
+	//CExpr* pg_ACC_list_2;
+	if((pg_ACC_list = parse_ACC_clauses()) == NULL){
+	  pg_ACC_list = EMPTY_LIST;
+	}
+	if(x != NULL){
+	  pg_ACC_list = exprListCons(x, pg_ACC_list);
+	}
+
 	ret= PRAGMA_EXEC;
 	goto chk_end;
     }
@@ -232,6 +243,14 @@ int parse_ACC_pragma()
 		goto chk_end;
 	    }
 	}
+    }
+
+    if (s_useXACC && PG_IS_IDENT("device")){
+	pg_ACC_pragma = XACC_DEVICE;
+	pg_get_token();
+	if((pg_ACC_list = parse_XACC_device_arg()) == NULL)  goto syntax_err;
+	ret= PRAGMA_EXEC;
+	goto chk_end;
     }
 
     addError(NULL,"ACC: unknown ACC directive, '%s'",pg_tok_buf);
@@ -336,6 +355,11 @@ static CExpr* parse_ACC_clauses()
 	  if(pg_tok != '(') v = NULL;
 	    else if((v = parse_ACC_clause_arg()) == NULL) goto syntax_err;
 	    c = ACC_PG_LIST(ACC_ASYNC,v);
+      } else if(PG_IS_IDENT("wait")){  // arg
+	  pg_get_token();
+	  if(pg_tok != '(') v = NULL;
+	  else if((v = parse_ACC_clause_arg()) == NULL) goto syntax_err;
+	  c = ACC_PG_LIST(ACC_WAIT_ARG,v);
       } else if(PG_IS_IDENT("gang")){
 	  pg_get_token();
 	  if(pg_tok != '(') v = NULL;
@@ -704,5 +728,105 @@ CExpr* parse_XACC_shadow_clause_arg() {
 
  err:
   addError(NULL,"Syntax error in scripts of XACC directive");
+  return NULL;
+}
+
+static CExpr* parse_XACC_device_arg()
+{
+  CExpr* deviceName = NULL;
+  CExpr* deviceRef;
+  CExpr *ref_device = allocExprOfSymbol2("acc_device_default");
+
+  //
+  // parse <device-name>
+  //
+
+  if (pg_tok != PG_IDENT){
+    addError(NULL, "'<device-name>' is expected");
+    goto err;
+  }
+
+  deviceName = pg_tok_val;
+  pg_get_token();
+
+  //
+  // parse =<device-ref>[subscript] }
+  //
+
+  if (pg_tok == '='){
+    //specified ref_device
+    pg_get_token();    
+
+    // parse <device-ref>
+
+    if (pg_tok != PG_IDENT) {
+      addError(NULL, "'<device-ref>' is expected");
+      goto err;
+    }
+
+    ref_device = pg_tok_val;
+    pg_get_token();
+  }
+
+  // parse [subscript]
+
+  if (pg_tok != '('){
+    addError(NULL, "'(' is expected");
+    goto err;
+  }
+
+  pg_get_token();
+
+  CExpr *v1 = NULL, *v2 = NULL, *v3 = NULL;
+
+  switch (pg_tok){
+  case ')':
+  case ',':
+    goto err;
+  case ':':
+    break;
+  case '*':
+    pg_get_token();
+    goto end;
+  default:
+    v1 = pg_parse_expr();
+  }
+	
+  if (pg_tok != ':'){ // scalar
+    v2 = v1;
+    v3 = (CExpr*)allocExprOfNumberConst2(1, BT_INT);
+    goto end;
+  }
+
+  pg_get_token();
+  switch (pg_tok){
+  case ')':
+    goto err;
+  case ':':
+  default:
+    v2 = pg_parse_expr();
+  }
+
+  if (pg_tok != ':'){
+    v3 = (CExpr*)allocExprOfNumberConst2(1, BT_INT);
+    goto end;
+  }
+  pg_get_token();
+  v3 = pg_parse_expr(); 
+	
+ end:
+
+  deviceRef = ACC_LIST2(ref_device, ACC_LIST3(v1,v2,v3));
+
+  if (pg_tok != ')'){
+    addError(NULL, "')' is expected");
+    goto err;
+  }
+
+  pg_get_token();
+  
+  return ACC_LIST2(deviceName, deviceRef);
+
+ err:
   return NULL;
 }
