@@ -1886,15 +1886,15 @@ public class XmcXcodeToXcTranslator {
 
 	    obj.setLine("#pragma acc " + dirName);
 
-	    if (dirName.equals("wait")){
-		Node arg = dir.getNextSibling();
-		if(! arg.getNodeName().equals("list")){
-		    obj.addToken("(");
-		    enterIntExprNode(tc, obj, arg);
-		    obj.addToken(")");
-		}
-		return;
-	    }
+//	    if (dirName.equals("wait")){
+//		Node arg = dir.getNextSibling();
+//		if(! arg.getNodeName().equals("list")){
+//		    obj.addToken("(");
+//		    enterIntExprNode(tc, obj, arg);
+//		    obj.addToken(")");
+//		}
+//		return;
+//	    }
 
 	    if (dirName.equals("cache")){
 		NodeList varList = dir.getNextSibling().getChildNodes();
@@ -1938,6 +1938,7 @@ public class XmcXcodeToXcTranslator {
 
 		if (clauseName.equals("dev_resident"))          clauseName = "device_resident";	  
 		else if (clauseName.equals("vect_len"))         clauseName = "vector_length";
+		else if (clauseName.equals("wait_arg"))         clauseName = ""; 
 		else if (clauseName.equals("reduction_plus"))  {clauseName = "reduction"; operator = "+";}
 		else if (clauseName.equals("reduction_mul"))   {clauseName = "reduction"; operator = "*";}
 		else if (clauseName.equals("reduction_bitand")){clauseName = "reduction"; operator = "&";}

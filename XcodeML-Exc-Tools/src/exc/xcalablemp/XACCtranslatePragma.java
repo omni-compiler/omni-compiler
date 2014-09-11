@@ -22,17 +22,38 @@ public class XACCtranslatePragma {
     String pragmaName = x.getArg(0).getName();
     ACCpragma pragma = ACCpragma.valueOf(pragmaName);
 
-    switch(pragma){
-    case DECLARE:
-      translateDeclare(x); break;
-    default:
-      XMP.fatal("unimplemented xacc pragma :" + pragma.getName());
+    try{
+      switch(pragma){
+      case DECLARE:
+        translateDeclare(x); break;
+      case DEVICE:
+        translateDevice(x); break;
+      default:
+        XMP.fatal("unimplemented xacc pragma :" + pragma.getName());
+      }
+    } catch (XMPexception e) {
+      XMP.error(x.getLineNo(), e.getMessage());
     }
-
+  }
+  
+  private void translateDevice(Xobject x) throws XMPexception{
+    XobjList deviceDecl = (XobjList)x.getArg(1);
+    XobjList deviceDeclCopy = (XobjList)deviceDecl.copy();
+    XMPdevice.translateDevice(deviceDeclCopy, _globalDecl, false, null);
+    
+    //remove pragma
+    XobjectDef def = (XobjectDef)x.getParent();
+    Iterator<XobjectDef> iter = _globalDecl.getEnv().iterator();
+    while(iter.hasNext()){
+      XobjectDef d = iter.next();
+      if(def == d){
+        iter.remove();
+      }
+    }
   }
   
   private void translateDeclare(Xobject x){
-    System.out.println("trans decl");
+    //System.out.println("trans decl");
     XobjList clauses = (XobjList)x.getArg(1);
     ACCpragma pragma = ACCpragma.DECLARE;
     
@@ -84,7 +105,7 @@ public class XACCtranslatePragma {
     }
     x.setArg(1, Xcons.List());
     
-    System.out.print("trans decl end");
+    //System.out.print("trans decl end");
   }
   
   private XMPdevice getXACCdevice(XobjList clauses){
@@ -133,7 +154,7 @@ public class XACCtranslatePragma {
         
 
         if(XMP.XACC && device != null){
-          if(pragma == ACCpragma.DATA || pragma == ACCpragma.PARALLEL_LOOP){
+          if(pragma == ACCpragma.DATA || pragma == ACCpragma.PARALLEL_LOOP || pragma == ACCpragma.WAIT){
             Ident fid = _globalDecl.declExternFunc("acc_set_device_num");
             
             //base
@@ -145,7 +166,7 @@ public class XACCtranslatePragma {
             baseDeviceLoopBody.add(fid.Call(Xcons.List(baseDeviceLoopVarId.Ref(), device.getDeviceRef())));
             rewriteACCClauses(clauses, pb, newBody, baseDeviceLoopBody, baseDeviceLoopVarId, device, layout);
             BlockList pbBody;
-            if(pragma == ACCpragma.DATA){
+            if(pragma == ACCpragma.DATA || pragma == ACCpragma.WAIT){
               pbBody = null;
             }else{
               pbBody = pb.getBody();
@@ -163,7 +184,7 @@ public class XACCtranslatePragma {
               newBody.add(Bcons.COMPOUND(beginBody));
               newBody.add(Bcons.COMPOUND(block.getBody()));         
               newBody.add(Bcons.COMPOUND(endBody));
-            }else{
+            }else if(pragma == ACCpragma.PARALLEL_LOOP){
               CforBlock forBlock = (CforBlock)pb.getBody().getHead();
               if(! forBlock.isCanonical()){
                                   forBlock.Canonicalize();
@@ -208,7 +229,9 @@ public class XACCtranslatePragma {
                 XMP.error(pb.getLineNo(), e.getMessage());
               }
               
-            }            
+            }else{ //for wait
+              newBody.add(Bcons.COMPOUND(baseBody));
+            }
             bIter.setBlock(Bcons.COMPOUND(newBody));
           }
           continue;

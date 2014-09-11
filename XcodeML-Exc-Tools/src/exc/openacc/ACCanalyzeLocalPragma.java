@@ -443,13 +443,28 @@ public class ACCanalyzeLocalPragma {
   }
   
   private void analyzeWait(PragmaBlock pb) throws ACCexception{
-    Xobject arg = pb.getClauses();
+    XobjList clauseList = (XobjList)pb.getClauses();
     ACCinfo accInfo = new ACCinfo(ACCpragma.WAIT, pb, _globalDecl);
     ACCutil.setACCinfo(pb, accInfo);
     
-    ACC.debug("wait directive : " + arg);
+    ACC.debug("wait directive : " + clauseList);
     
-    accInfo.setWaitExp(arg);
+    for(Xobject o : clauseList){
+      if(o == null) continue;
+      XobjList clause = (XobjList)o;
+      ACCpragma clauseName = ACCpragma.valueOf(clause.getArg(0));
+      Xobject clauseArgs = (clause.Nargs() > 1)? clause.getArg(1) : null;
+
+      switch(clauseName){
+      case WAIT_ARG:
+        accInfo.setWaitExp(clauseArgs); break;
+//      case ASYNC:
+//        accInfo.setAsyncExp(clauseArgs); break;
+      default:
+        ACC.fatal("'" + clauseName +"' clause is not allowed in 'wait' directive");
+      }
+    }
+    //accInfo.setWaitExp(arg);
   }
   
   private void analyzeEnterData(PragmaBlock pb) throws ACCexception{

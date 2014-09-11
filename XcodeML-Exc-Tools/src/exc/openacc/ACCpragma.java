@@ -77,6 +77,8 @@ public enum ACCpragma {
   ON,
   SHADOW,
   
+  WAIT_ARG,
+  
   //internal
   _BLOCK,
   _BLOCK_THREAD,
