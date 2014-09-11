@@ -1,1 +1,1 @@
-include_HEADERS = xacc_internal.h
+include_HEADERS = xacc_func_decl.h

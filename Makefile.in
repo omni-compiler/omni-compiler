@@ -80,15 +80,16 @@ host_triplet = @host@
 target_triplet = @target@
 @ENABLE_XMP_GPU_TRUE@am__append_1 = @LIBXMP_GPU_DIR@
 @ENABLE_ACC_TRUE@am__append_2 = @LIBACC_DIR@ @LIBACC_HEADER_DIR@
-@ENABLE_ATOOL_TRUE@am__append_3 = @ATOOL_DIR@
-@GASNET_TRUE@am__append_4 = "local-view/post-wait/C" \
+@ENABLE_XACC_TRUE@am__append_3 = @LIBXACC_DIR@ @LIBXACC_HEADER_DIR@
+@ENABLE_ATOOL_TRUE@am__append_4 = @ATOOL_DIR@
+@GASNET_TRUE@am__append_5 = "local-view/post-wait/C" \
 @GASNET_TRUE@	"local-view/coarray/C" "local-view/coarray/C" \
 @GASNET_TRUE@	"local-view/other/C"
-@FJRDMA_TRUE@am__append_5 = "local-view/post-wait/C" \
+@FJRDMA_TRUE@am__append_6 = "local-view/post-wait/C" \
 @FJRDMA_TRUE@	"local-view/coarray/C" "local-view/coarray/C" \
 @FJRDMA_TRUE@	"local-view/other/C"
-@GASNET_TRUE@am__append_6 = "local-view/coarray/C/"
-@FJRDMA_TRUE@am__append_7 = "local-view/coarray/C/"
+@GASNET_TRUE@am__append_7 = "local-view/coarray/C/"
+@FJRDMA_TRUE@am__append_8 = "local-view/coarray/C/"
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
@@ -202,8 +203,8 @@ DIST_SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ @C_BACKEND_DIR@ \
 	@OMDRIVER_DIR@ @LIBOMPC_DIR@ @LIBOMPF_DIR@ @LIBTLOG_DIR@ \
 	@LIBTLOG_MPI_DIR@ @LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ \
 	@LIBXMP_THREADS_DIR@ @LIBXMPF_HEADER_DIR@ @LIBXMPF_DIR@ \
-	@LIBXMP_GPU_DIR@ @LIBACC_DIR@ @LIBACC_HEADER_DIR@ @ATOOL_DIR@ \
-	$(am__empty)
+	@LIBXMP_GPU_DIR@ @LIBACC_DIR@ @LIBACC_HEADER_DIR@ \
+	@LIBXACC_DIR@ @LIBXACC_HEADER_DIR@ @ATOOL_DIR@ $(am__empty)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -541,7 +542,7 @@ top_srcdir = @top_srcdir@
 @SUPERUX_FALSE@	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ \
 @SUPERUX_FALSE@	@LIBXMP_THREADS_DIR@ @LIBXMPF_HEADER_DIR@ \
 @SUPERUX_FALSE@	@LIBXMPF_DIR@ $(am__append_1) $(am__append_2) \
-@SUPERUX_FALSE@	$(am__append_3)
+@SUPERUX_FALSE@	$(am__append_3) $(am__append_4)
 @SUPERUX_TRUE@SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ \
 @SUPERUX_TRUE@	@C_BACKEND_DIR@ @F_FRONTEND_DIR@ @F_BACKEND_DIR@ \
 @SUPERUX_TRUE@	@XCODEML_EXC_TOOLS_DIR@ @OMDRIVER_DIR@ \
@@ -549,7 +550,7 @@ top_srcdir = @top_srcdir@
 @SUPERUX_TRUE@	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ \
 @SUPERUX_TRUE@	@LIBXMP_THREADS_DIR@ @LIBXMPF_HEADER_DIR@ \
 @SUPERUX_TRUE@	@LIBXMPF_DIR@ $(am__append_1) $(am__append_2) \
-@SUPERUX_TRUE@	$(am__append_3)
+@SUPERUX_TRUE@	$(am__append_3) $(am__append_4)
 XMPPKG_TMPDIR_TOP := "/tmp/@XMPPKG_NAME@"
 XMPPKG_TMPDIR := $(XMPPKG_TMPDIR_TOP)/$(shell mktemp -u --tmpdir=/)
 DEB_VER_FILE = "/etc/debian_version"
@@ -563,10 +564,10 @@ TESTDIRS = "global-view/array/C/" "global-view/array/F/" \
 	"global-view/task/F" "global-view/template_fix/C/" \
 	"global-view/template_fix/F/" "global-view/gmove/C/" \
 	"global-view/gmove/F/" "global-view/gblock/C/" \
-	"global-view/gblock/F/" "others/F" "others/C" $(am__append_4) \
-	$(am__append_5)
+	"global-view/gblock/F/" "others/F" "others/C" $(am__append_5) \
+	$(am__append_6)
 BASE_LARGE_TESTDIR = "tests/xcalablemp/LARGE-SIZE-TESTS/"
-LARGE_TESTDIRS = "others/C" $(am__append_6) $(am__append_7)
+LARGE_TESTDIRS = "others/C" $(am__append_7) $(am__append_8)
 DELETABLES = \
 	C-BackEnd/ant.properties \
 	C-BackEnd/bin/C_Back \
@@ -664,9 +665,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps ./Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

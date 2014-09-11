@@ -1,23 +1,9 @@
+#include <stdio.h>
 #include "xmp_internal.h"
-#include "xmp_data_struct.h"
 #include "xmp_math_function.h"
-
-/* void _XACC_init_device_array(_XMP_array_t* array, _XACC_device_t* device); */
-/* void _XACC_split_device_array_BLOCK(_XMP_array_t* array, int dim); */
-/* void _XACC_calc_size(_XMP_array_t* array); */
-
-/* void _XACC_get_size(_XMP_array_t* array, unsigned long long* offset, */
-/*                unsigned long long* size, int deviceNum); */
-/* void _XACC_sched_loop_layout_BLOCK(int init, */
-/*                                    int cond, */
-/*                                    int step, */
-/*                                    int* sched_init, */
-/*                                    int* sched_cond, */
-/*                                    int* sched_step, */
-/*                                    _XMP_array_t* array_desc, */
-/*                                    int dim, */
-/*                                    int deviceNum); */
-
+#include "xmp_data_struct.h"
+#include "xacc_internal.h"
+#include "xacc_data_struct.h"
 
 static _XACC_device_t *_XACC_current_device = NULL;
 typedef _XACC_device_t xacc_device_t;
@@ -323,3 +309,20 @@ void _XACC_sched_loop_layout_BLOCK(int init,
   printf("loop org(%d, %d, %d), mod(%d, %d, %d)@%d\n",
          init, cond,step, *sched_init, *sched_cond, *sched_step, deviceNum);
 }
+
+/*
+void _XACC_reflect_init(void *acc_addr, _XACC_arrays_t *arrays_desc)
+{
+  int numDevice = arrays_desc->deviceNum;
+  int dev;
+  for(dev=0; dev < deviceNum; dev++){
+    _XACC_array_t* device_array = &(array_desc->device_array[dev]);
+    _XACC_array_info_t* info = &device_array->info[0];
+
+    if(info->device_layout_manner != _XMP_N_DIST_BLOCK){
+      return;
+    }
+  }
+}
+*/
+    

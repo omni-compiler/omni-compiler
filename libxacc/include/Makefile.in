@@ -448,7 +448,7 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-include_HEADERS = xacc_internal.h
+include_HEADERS = xacc_func_decl.h
 all: all-am
 
 .SUFFIXES:
