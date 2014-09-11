@@ -146,8 +146,8 @@ end if
 end program test_inquiry
 
 subroutine check(iresult,ians,error)
-  integer irslt,ians,error
-  !print *, 'result=',irslt,'answer',ians
+  integer iresult,ians,error
+  !print *, 'result=',iresult,'answer',ians
   if(iresult .ne. ians) then
     error=error+1
   end if
