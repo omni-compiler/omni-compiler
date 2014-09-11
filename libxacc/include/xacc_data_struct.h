@@ -36,12 +36,15 @@ typedef struct _XACC_array_type {
   _XACC_array_info_t *info;
   unsigned long long alloc_offset;
   unsigned long long alloc_size;  
+  void *deviceptr;
 }_XACC_array_t;
 
 typedef struct _XACC_arrays_type{
   _XACC_device_t *device_type;
   _XACC_array_t *device_array;
   int dim;
+  void *hostptr;
+  size_t type_size;
 }_XACC_arrays_t;  
 
 

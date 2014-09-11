@@ -4,6 +4,7 @@
 #include "xmp_data_struct.h"
 #include "xacc_internal.h"
 #include "xacc_data_struct.h"
+#include "include/cuda_runtime.h"
 
 static _XACC_device_t *_XACC_current_device = NULL;
 typedef _XACC_device_t xacc_device_t;
@@ -105,6 +106,8 @@ void _XACC_init_layouted_array(_XACC_arrays_t **arrays, _XMP_array_t* alignedArr
     }
   }
   layoutedArray->dim = dim;
+  layoutedArray->hostptr = alignedArray->array_addr_p;
+  layoutedArray->type_size = alignedArray->type_size;
   *arrays = layoutedArray;
 }
 
@@ -261,10 +264,12 @@ void _XACC_calc_size(_XACC_arrays_t* array_desc){
     {
       _XACC_array_info_t* info = &(d_array_desc->info[0]);
       info->device_dim_acc = device_acc;
-      device_offset += device_acc * info->local_lower;
-      //shadowもコピーするなら下
-      //device_offset += device_acc * (info->local_lower - info->shadow_size_lo);
-      device_acc *= (info->alloc_size - info->shadow_size_lo - info->shadow_size_hi);
+      //old
+      //device_offset += device_acc * info->local_lower;
+      //device_acc *= (info->alloc_size - info->shadow_size_lo - info->shadow_size_hi);
+      //new
+      device_offset += device_acc * (info->local_lower - info->shadow_size_lo);
+      device_acc *= (info->alloc_size);
     }
 
     d_array_desc->alloc_size = device_acc; //num elements
@@ -303,16 +308,68 @@ void _XACC_sched_loop_layout_BLOCK(int init,
 {
   _XACC_array_t* device_array = get_device_array(array_desc, deviceNum);
   _XACC_array_info_t* info = &device_array->info[dim];
-  *sched_init = info->local_lower - info->shadow_size_lo;
-  *sched_cond = info->local_upper - info->shadow_size_lo + 1;
+
+  int lb = info->local_lower - info->shadow_size_lo;
+  int ub = info->local_upper - info->shadow_size_lo;;
+
+  int r_init, r_cond;
+  
+  if(init < lb){
+    r_init = lb;
+  }else if(init > ub){
+    r_init = ub;
+  }else{
+    r_init = init;
+  }
+
+  if(cond <= lb){
+    r_cond = lb;
+  }else if(cond > ub){
+    r_cond = ub + 1;
+  }else{
+    r_cond = cond;
+  }
+
+  printf("lb=%d, ub =%d, rinit=%d,rcond=%d\n", lb, ub,r_init, r_cond);
+
+  *sched_init = r_init - lb;//info->local_lower - info->shadow_size_lo;
+  *sched_cond = r_cond - lb;//info->local_upper - info->shadow_size_lo + 1;
   *sched_step = info->local_stride;
+
   printf("loop org(%d, %d, %d), mod(%d, %d, %d)@%d\n",
          init, cond,step, *sched_init, *sched_cond, *sched_step, deviceNum);
 }
 
-/*
-void _XACC_reflect_init(void *acc_addr, _XACC_arrays_t *arrays_desc)
+void _XACC_set_deviceptr(_XACC_arrays_t *arrays_desc, void *deviceptr, int deviceNum)
 {
+  _XACC_array_t* arrayOnDevice = get_device_array(arrays_desc, deviceNum);
+  arrayOnDevice->deviceptr = deviceptr;
+}
+
+void _XACC_reflect_init(_XACC_arrays_t *arrays_desc)
+{
+  _XACC_device_t *device = arrays_desc->device_type;
+  int d;
+  cudaError_t cudaError;
+  for(d = device->lb; d < device->ub; d += device->step){
+    cudaError = cudaSetDevice(d);
+    if(cudaError != cudaSuccess){
+      _XMP_fatal("failed to set device");
+      return;
+    }
+    int d2;
+    for(d2 = device->lb; d2 < device->ub; d2 += device->step){
+      if(d == d2) continue;
+      cudaError = cudaDeviceEnablePeerAccess(d2, 0);
+      if(cudaError != cudaSuccess){
+        _XMP_fatal("failed to enable pper access");
+        return;
+      }
+    }
+  }
+}
+/*
+void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
   int numDevice = arrays_desc->deviceNum;
   int dev;
   for(dev=0; dev < deviceNum; dev++){

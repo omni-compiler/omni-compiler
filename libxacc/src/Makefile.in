@@ -475,9 +475,10 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 XMP_INC_DIR = ../../libxmp/include
 XACC_INC_DIR = ../include
+CUDA_DIR = @GPGPU_PREFIX@
 TLOG_INC_DIR = $(top_builddir)/@LIBTLOG_MPI_DIR@
 lib_LIBRARIES = libxacc.a
-AM_CFLAGS = -I$(XMP_INC_DIR) -I$(XACC_INC_DIR) -I$(TLOG_INC_DIR) @BECC_OPTION@ 
+AM_CFLAGS = -I$(XMP_INC_DIR) -I$(XACC_INC_DIR) -I$(CUDA_DIR) -I$(TLOG_INC_DIR) @BECC_OPTION@ 
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS)
 
