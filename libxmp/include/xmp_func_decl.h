@@ -366,7 +366,7 @@ extern void _XACC_sched_loop_layout_BLOCK(int init,
                                    void* array_desc,
                                    int dim,
                                    int deviceNum);
-extern void _XACC_set_shadow_NORMAL(void* array_desc, int dim , int lo, int hi)
+extern void _XACC_set_shadow_NORMAL(void* array_desc, int dim , int lo, int hi);
 
 
 #endif // _XMP_RUNTIME_FUNC_DECL
