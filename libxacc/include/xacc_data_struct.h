@@ -36,6 +36,8 @@ typedef struct _XACC_array_type {
   _XACC_array_info_t *info;
   unsigned long long alloc_offset;
   unsigned long long alloc_size;  
+  unsigned long long copy_offset;
+  unsigned long long copy_size;
   void *deviceptr;
 }_XACC_array_t;
 

@@ -268,13 +268,21 @@ void _XACC_calc_size(_XACC_arrays_t* array_desc){
       //device_offset += device_acc * info->local_lower;
       //device_acc *= (info->alloc_size - info->shadow_size_lo - info->shadow_size_hi);
       //new
-      device_offset += device_acc * (info->local_lower - info->shadow_size_lo);
-      device_acc *= (info->alloc_size);
+      //device_offset += device_acc * (info->local_lower - info->shadow_size_lo);
+      //device_acc *= (info->alloc_size);
+
+      
+      d_array_desc->alloc_size = device_acc * info->alloc_size;
+      d_array_desc->alloc_offset = device_offset + device_acc * (info->local_lower - info->shadow_size_lo);
+      d_array_desc->copy_size = device_acc * (info->alloc_size - info->shadow_size_lo - info->shadow_size_hi);
+      d_array_desc->copy_offset = device_offset + device_acc * info->local_lower;
     }
 
-    d_array_desc->alloc_size = device_acc; //num elements
-    d_array_desc->alloc_offset = device_offset; //num elements
-    printf("alloc (%llu, %llu)@dev\n",  device_offset, device_acc);
+    printf("alloc(%llu, %llu), copy(%llu, %llu)@dev\n",
+           d_array_desc->alloc_offset,
+           d_array_desc->alloc_size,
+           d_array_desc->copy_offset,
+           d_array_desc->copy_size);
   }
 }
 
@@ -294,6 +302,14 @@ void _XACC_get_size(_XACC_arrays_t* array_desc, unsigned long long* offset,
   _XACC_array_t* device_array = get_device_array(array_desc, deviceNum);
   *size = device_array->alloc_size;
   *offset = device_array->alloc_offset;
+}
+
+void _XACC_get_copy_size(_XACC_arrays_t* array_desc, unsigned long long* offset,
+                         unsigned long long* size, int deviceNum)
+{
+  _XACC_array_t* device_array = get_device_array(array_desc, deviceNum);
+  *size = device_array->copy_size;
+  *offset = device_array->copy_offset;
 }
 
 void _XACC_sched_loop_layout_BLOCK(int init,

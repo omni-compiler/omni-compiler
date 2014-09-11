@@ -13,6 +13,8 @@ extern void _XACC_calc_size(void* array);
 
 extern void _XACC_get_size(void* array, unsigned long long* offset,
                unsigned long long* size, int deviceNum);
+extern void _XACC_get_copy_size(void* array, unsigned long long* offset,
+               unsigned long long* size, int deviceNum);
 extern void _XACC_sched_loop_layout_BLOCK(int init,
                                    int cond,
                                    int step,
