@@ -741,19 +741,7 @@ void _XMP_init_array_nodes(_XMP_array_t *array) {
     array->array_nodes = _XMP_create_nodes_by_template_ref(align_template, align_template_shrink,
 								     align_template_lower, align_template_upper, align_template_stride);
   }else{
-    int onto_nodes_dim = align_template->onto_nodes->dim;
-    _XMP_nodes_inherit_info_t *inherit_info = _XMP_alloc(sizeof(_XMP_nodes_inherit_info_t) * onto_nodes_dim);
-
-    for(int i=0;i<onto_nodes_dim;i++){
-      int isize = align_template->onto_nodes->info[i].size;
-      inherit_info[i].shrink = _XMP_N_INT_FALSE;
-      inherit_info[i].lower = 1;
-      inherit_info[i].upper = isize;
-      inherit_info[i].stride = 1;
-    }
-    array->array_nodes = align_template->onto_nodes;
-    align_template->onto_nodes->inherit_nodes = align_template->onto_nodes;
-    align_template->onto_nodes->inherit_info = inherit_info;
+    array->array_nodes =_XMP_create_temporary_nodes(align_template->onto_nodes);
   }
 
 }

@@ -40,7 +40,6 @@ int main(){
 #pragma xmp loop (i1) on tx(i1,*)
     for(i1=0;i1<n;i1++){
       ierr=ierr+abs(b[i0][i1]-i0-i1-1);
-      printf("i0=%d,i1=%d,b=%d,ans=%d,irank=%d\n",i0,i1,b[i0][i1],i0+i1+1,irank);
     }
   }
 

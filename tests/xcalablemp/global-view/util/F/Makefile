@@ -28,7 +28,6 @@ xmp_mpi.x: xmp_mpi.f90 sub_mpi.o
 	$(XFC) -o $@ xmp_mpi.f90 sub_mpi.o
 
 run: $(EXES)
-	$(XRUN) -n 12 ./inquiry.x
 #	$(XRUN) -n  4 ./xmp_mpi.x
 	$(XRUN) -n  4 ./mpi_xmp.x
 
