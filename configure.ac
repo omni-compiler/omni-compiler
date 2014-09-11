@@ -1176,7 +1176,8 @@ javadir='${prefix}/share/xcalablemp'
 AC_SUBST(javadir)
 
 # java option
-JAVA_OPT="-Xmx1024m"
+# Fix: #338
+JAVA_OPT="-Xmx1024m -Xms1024m"
 AC_SUBST(JAVA_OPT)
 
 #--------------------------------------------------------------------
