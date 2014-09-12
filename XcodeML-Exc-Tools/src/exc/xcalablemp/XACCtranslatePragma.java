@@ -344,6 +344,10 @@ public class XACCtranslatePragma {
         XobjList newClauseArg = Xcons.List();
         for(Xobject x : (XobjList)clauseArg){
           String varName = x.getArg(0).getSym();
+          if(isEnter){
+			  newClauseArg.add(x);
+			  continue;
+          }
           if(varName.startsWith("_XMP_ADDR_")){
             String oldVarName = varName.substring(10);
             Ident copyOffsetId = pb.findVarIdent("_XACC_copy_offset_" + oldVarName);

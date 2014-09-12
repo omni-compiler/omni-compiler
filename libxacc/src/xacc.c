@@ -180,15 +180,15 @@ void _XACC_split_layouted_array_BLOCK(_XACC_arrays_t* array_desc, int dim){
 /* #endif */
 
     
-    /* printf("dim=%d, block par (%d, %d, %d) local(%d, %d, %d, %d)\n", */
-    /*        dim, */
-    /*        d_array_info->par_lower, */
-    /*        d_array_info->par_upper, */
-    /*        d_array_info->par_stride, */
-    /*        d_array_info->local_lower, */
-    /*        d_array_info->local_upper, */
-    /*        d_array_info->local_stride, */
-    /*        d_array_info->alloc_size); */
+    printf("dim=%d, block par (%d, %d, %d) local(%d, %d, %d, %d)\n",
+           dim,
+           d_array_info->par_lower,
+           d_array_info->par_upper,
+           d_array_info->par_stride,
+           d_array_info->local_lower,
+           d_array_info->local_upper,
+           d_array_info->local_stride,
+           d_array_info->alloc_size);
 
     /* printf("block par (%d, %d, %d, %d)\n",  */
     /*        d_array_info->lower, */
