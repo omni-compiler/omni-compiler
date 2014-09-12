@@ -30,11 +30,26 @@ public class ACCtranslateUpdate {
     for(Iterator<ACCvar> iter = updateInfo.getVars(); iter.hasNext(); ){
       ACCvar var = iter.next();
       String varName = var.getName();
+      if(ACC.VERSION < 20){
       if(! updateInfo.isVarAllocated(varName)){
         throw new ACCexception(var + " is not allocated in device memory");
       }
+      }
       
       Ident hostDescId = updateInfo.getHostDescId(varName);//var.getHostDesc();
+      if(hostDescId == null){
+        XobjList lowerList = Xcons.List();
+        XobjList lengthList = Xcons.List();
+        for(Xobject x : var.getSubscripts()){
+          lowerList.add(x.left());
+          lengthList.add(x.right());
+        }
+        Ident deviceAddrId = replaceBody.declLocalIdent(ACC.DEVICE_PTR_PREFIX + varName, Xtype.voidPtrType); 
+        hostDescId = replaceBody.declLocalIdent(ACC.DESCRIPTOR_PREFIX + varName, Xtype.voidPtrType);
+        XobjList initArgs = Xcons.List(hostDescId.getAddr(), deviceAddrId.getAddr(), var.getAddress(), Xcons.SizeOf(var.getElementType()), Xcons.IntConstant(var.getDim()));
+        Block findFuncCall = ACCutil.createFuncCallBlockWithArrayRange(ACC.FIND_DATA_FUNC_NAME, initArgs, Xcons.List(lowerList, lengthList));
+        replaceBody.add(findFuncCall);
+      }
 
       Xobject dirObj = null;
       if(var.copiesDtoH()){ //update host

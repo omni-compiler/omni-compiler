@@ -16,8 +16,6 @@ public class ACCtranslateData {
   private XobjList declList;
   private boolean _isGlobal;
   
-  private final static String GPU_DEVICE_PTR_PREFIX = "_ACC_GPU_DEVICE_ADDR_";
-  private final static String GPU_HOST_DESC_PREFIX = "_ACC_GPU_HOST_DESC_";
   
   
   ACCtranslateData(PragmaBlock pb){
@@ -68,8 +66,8 @@ public class ACCtranslateData {
       
       String varName = var.getName();
       Xobject addrObj = var.getAddress();
-      Ident deviceAddr = Ident.Var(GPU_DEVICE_PTR_PREFIX + varName, Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType), varScope);
-      Ident hostDesc = Ident.Var(GPU_HOST_DESC_PREFIX + varName, Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType), varScope);
+      Ident deviceAddr = Ident.Var(ACC.DEVICE_PTR_PREFIX + varName, Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType), varScope);
+      Ident hostDesc = Ident.Var(ACC.DESCRIPTOR_PREFIX + varName, Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType), varScope);
       var.setDevicePtr(deviceAddr);
       var.setHostDesc(hostDesc);
       idList.add(deviceAddr);

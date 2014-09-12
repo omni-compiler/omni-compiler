@@ -25,6 +25,10 @@ public class ACC {
   public static final String PRESENT_OR_COPY_DATA_FUNC_NAME = "_ACC_pcopy_data";
   public static final String FIND_DATA_FUNC_NAME = "_ACC_find_data";
 
+  public static final String DEVICE_PTR_PREFIX = "_ACC_GPU_DEVICE_ADDR_";
+  public static final String DESCRIPTOR_PREFIX = "_ACC_GPU_HOST_DESC_";
+  
+  public static int VERSION = 20;
 
   public static Xobject createBasicTypeConstantObj(Xtype type) {
     return Xcons.IntConstant(type.getBasicType() + 500);
