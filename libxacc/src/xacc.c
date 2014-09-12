@@ -155,14 +155,14 @@ void _XACC_split_layouted_array_BLOCK(_XACC_arrays_t* array_desc, int dim){
     d_array_info->par_lower += size * dev;
     
     if(dev != num_devices - 1){
-      d_array_info->par_upper = d_array_info->par_lower + size;
+      d_array_info->par_upper = d_array_info->par_lower + size - 1;
     }else{
       //      d_array_info->par_upper = h_array_info->par_upper;
     }
     //d_array_info->local_stride = h_array_info->local_stride;
     d_array_info->local_lower += size * dev;
     if(dev != num_devices - 1){
-      d_array_info->local_upper = d_array_info->local_lower + size;
+      d_array_info->local_upper = d_array_info->local_lower + size - 1;
     }else{
       //      d_array_info->local_upper = h_array_info->local_upper;
     }
@@ -333,7 +333,7 @@ void _XACC_sched_loop_layout_BLOCK(int init,
   if(init < lb){
     r_init = lb;
   }else if(init > ub){
-    r_init = ub;
+    r_init = ub + 1;
   }else{
     r_init = init;
   }
@@ -348,8 +348,8 @@ void _XACC_sched_loop_layout_BLOCK(int init,
 
   printf("lb=%d, ub =%d, rinit=%d,rcond=%d\n", lb, ub,r_init, r_cond);
 
-  *sched_init = r_init - lb;//info->local_lower - info->shadow_size_lo;
-  *sched_cond = r_cond - lb;//info->local_upper - info->shadow_size_lo + 1;
+  *sched_init = r_init;// - lb;//info->local_lower - info->shadow_size_lo;
+  *sched_cond = r_cond;// - lb;//info->local_upper - info->shadow_size_lo + 1;
   *sched_step = info->local_stride;
 
   printf("loop org(%d, %d, %d), mod(%d, %d, %d)@%d\n",
