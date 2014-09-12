@@ -444,7 +444,8 @@ public class XMPrewriteExpr
     }
 
     Xobject off2 = a.getAlignSubscriptOffsetAt(dim_i);
-    Xobject off3 = on_ref.getLoopOffset(loop_idx);
+    //Xobject off3 = on_ref.getLoopOffset(loop_idx);
+    Xobject off3 = on_ref.getLoopOffset(on_ref.getLoopOnIndex(loop_idx));
     Xobject off4 = null;
     if (off3 != null){
       if (off2 != null)
