@@ -34,9 +34,16 @@ void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray, void **buf, const size_t coa
   *buf = _XMP_alloc(coarray_size);
   uint64_t laddr = FJMPI_Rdma_reg_mem(memid, *buf, coarray_size);
 
-  for(int i=0; i<_XMP_world_size; i++)
-    if(i != _XMP_world_rank)
-      while((each_addr[i] = FJMPI_Rdma_get_remote_addr(i, memid)) == FJMPI_RDMA_ERROR);
+  for(int ncount=0,i=1; i<_XMP_world_size; ncount++,i++){
+    int partner_rank = (_XMP_world_rank+i)%_XMP_world_size;
+    if(partner_rank != _XMP_world_rank)
+      while((each_addr[partner_rank] = FJMPI_Rdma_get_remote_addr(partner_rank, memid)) == FJMPI_RDMA_ERROR);
+
+    if(ncount >= 3000){
+      MPI_Barrier(MPI_COMM_WORLD);
+      ncount = 0;
+    }
+  }
 
   // Memo: Reterun wrong local address by using FJMPI_Rdma_get_remote_addr.
   // So FJMPI_Rdma_reg_mem should be used.
