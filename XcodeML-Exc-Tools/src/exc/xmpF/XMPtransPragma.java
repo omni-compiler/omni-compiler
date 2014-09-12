@@ -397,7 +397,9 @@ public class XMPtransPragma
       Xobject size_expr = Xcons.IntConstant(1);
       if(type.isFarray()){
 	for(Xobject s: type.getFarraySizeExpr()){
-	  size_expr = Xcons.binaryOp(Xcode.MUL_EXPR,size_expr,s);
+          Xobject length = Xcons.binaryOp(Xcode.PLUS_EXPR, Xcons.IntConstant(1),
+                                          Xcons.binaryOp(Xcode.MINUS_EXPR, s.getArg(1), s.getArg(0)));
+	  size_expr = Xcons.binaryOp(Xcode.MUL_EXPR,size_expr, length);
 	}
 	type = type.getRef();
       }

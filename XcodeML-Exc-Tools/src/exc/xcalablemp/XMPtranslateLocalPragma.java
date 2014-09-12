@@ -546,7 +546,6 @@ public class XMPtranslateLocalPragma {
 
     // create function arguments
     XobjList onRef = (XobjList)taskDecl.getArg(0);
-    //XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
     XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
     String execFuncSurfix = execOnRefArgs.getFirst();
     XobjList execFuncArgs = execOnRefArgs.getThird();
@@ -558,8 +557,8 @@ public class XMPtranslateLocalPragma {
 
     // create function call
     BlockList taskFuncCallBlockList = Bcons.emptyBody();
-    Ident taskDescId = taskBody.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.AUTO,
-					       Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
+    Ident taskDescId = taskFuncCallBlockList.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.AUTO,
+                                                            Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
 
     execFuncArgs.cons(taskDescId.getAddr());
     Ident execFuncId = execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.intType);
@@ -1547,7 +1546,8 @@ public class XMPtranslateLocalPragma {
 
     // create function call
     BlockList taskBody = Bcons.emptyBody();
-    Ident taskDescId = Ident.Local("_XMP_TASK_desc", Xtype.voidPtrType);
+    Ident taskDescId = taskBody.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.AUTO,
+                                               Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
     execFuncArgs.cons(taskDescId.getAddr());
     Ident execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.intType);
     Block execBlock = Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), body, null);
@@ -2064,7 +2064,6 @@ public class XMPtranslateLocalPragma {
     XobjList fromRef = (XobjList)bcastDecl.getArg(1);
     XMPpair<String, XobjList> execFromRefArgs = null;
     if (fromRef != null && fromRef.Nargs() != 0){
-      //execFromRefArgs = createExecFromRefArgs(fromRef, localXMPsymbolTable);
       execFromRefArgs = createExecFromRefArgs(fromRef, pb);
     }
 
@@ -2072,7 +2071,6 @@ public class XMPtranslateLocalPragma {
     if (onRef == null || onRef.getArgs() == null) {
 	bcastFuncCallBlock = createBcastFuncCallBlock(true, "EXEC", null, bcastArgsList, execFromRefArgs);
     } else {
-      //XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
       XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
 
       String execFuncSurfix = execOnRefArgs.getFirst();

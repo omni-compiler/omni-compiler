@@ -161,6 +161,7 @@ extern void _XMP_sched_loop_template_GBLOCK(int ser_init, int ser_cond, int ser_
 					    _XMP_template_t *template, int template_index);
 
 // xmp_nodes.c
+extern _XMP_nodes_t *_XMP_create_temporary_nodes(_XMP_nodes_t *n);
 extern _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim, int *dim_size, int is_static);
 extern _XMP_nodes_t *_XMP_init_nodes_struct_EXEC(int dim, int *dim_size, int is_static);
 extern _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NUMBER(int dim, int ref_lower, int ref_upper, int ref_stride,

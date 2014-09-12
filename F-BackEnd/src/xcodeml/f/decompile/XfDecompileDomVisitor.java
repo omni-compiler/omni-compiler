@@ -22,7 +22,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import com.sun.org.apache.xml.internal.serializer.OutputPropertiesFactory;
 
 import xcodeml.XmException;
 import xcodeml.f.util.XmfNodeVisitorMap;
@@ -62,9 +61,6 @@ public class XfDecompileDomVisitor {
                 StringWriter w = new StringWriter();
                 Transformer t = 
                     TransformerFactory.newInstance().newTransformer();
-                t.setOutputProperty(OutputKeys.INDENT, "yes");
-                t.setOutputProperty(
-                    OutputPropertiesFactory.S_KEY_INDENT_AMOUNT, "" + 2);
                 t.transform(new DOMSource(n),
                             new StreamResult(w));
                 ret = w.toString();

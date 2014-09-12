@@ -76,21 +76,13 @@ public class XMPglobalDecl {
                                                  declExternFunc("_XMP_threads_init").Call(null)));
     }
 		
-    //    Ident argv = Ident.Param("argv", Xtype.Pointer(Xtype.Pointer(Xtype.charType)));   // create "int argc" & "char **argv"
-    //    XobjList args = Xcons.List(Ident.Param("argc", Xtype.intType), argv);
-    
     String fullPath = _env.getSourceFileName();
     int dot = fullPath.lastIndexOf('.');
     int sep = fullPath.lastIndexOf('/');
     String moduleName = fullPath.substring(sep + 1, dot);                 // ./fuga/hoge.c -> hoge
     moduleName = "__" + moduleName + "_xmpc_module_init_";                // __hoge_xmpc_module_init_
 
-    //    _globalConstructorFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT, declExternFunc(moduleName).Call(null)));
     Xtype funcType = Xtype.Function(Xtype.voidType);
-
-    //    Ident constructor = new Ident("constructor", null, null, null, null);
-    //    funcType.setGccAttributes(Xcons.List(Xcode.GCC_ATTRIBUTES,
-    //					 Xcons.List(Xcode.GCC_ATTRIBUTE, constructor, Xcons.List())));
     Ident funcId = _env.declExternIdent(moduleName, funcType);
     
     _env.add(XobjectDef.Func(funcId, null, null, 
@@ -113,15 +105,7 @@ public class XMPglobalDecl {
                                                declExternFunc("_XMP_threads_finalize").Call(null)));
     }
 
-    //    _globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT,
-    //                                             declExternFunc("_XMP_finalize").Call(null)));
-
     Xtype funcType = Xtype.Function(Xtype.voidType);
-    //    funcType.setGccAttributes(Xcons.List(Xcode.GCC_ATTRIBUTES,
-    //                              Xcons.List(Xcode.GCC_ATTRIBUTE,
-    //                              new Ident("destructor", null, null, null, null), Xcons.List())));
-    //    Ident funcId = _env.declStaticIdent("_XMP_destructor", funcType);
-
     String fullPath = _env.getSourceFileName();
     int dot = fullPath.lastIndexOf('.');
     int sep = fullPath.lastIndexOf('/');
@@ -180,22 +164,7 @@ public class XMPglobalDecl {
     return _globalObjectTable.getXMPobject(name);
   }
 
-  // public XMPobject getXMPobject(String name, XMPsymbolTable localXMPsymbolTable) {
-  //   XMPobject o = null;
-
-  //   if (localXMPsymbolTable != null) {
-  //     o = localXMPsymbolTable.getXMPobject(name);
-  //   }
-
-  //   if (o == null) {
-  //     o = getXMPobject(name);
-  //   }
-
-  //   return o;
-  // }
-
   public XMPobject getXMPobject(String name, Block block) {
-
     XMPobject o = null;
 
     // local
@@ -220,20 +189,6 @@ public class XMPglobalDecl {
   public XMPnodes getXMPnodes(String name) {
     return _globalObjectTable.getXMPnodes(name);
   }
-
-  // public XMPnodes getXMPnodes(String name, XMPsymbolTable localXMPsymbolTable) {
-  //   XMPnodes n = null;
-
-  //   if (localXMPsymbolTable != null) {
-  //     n = localXMPsymbolTable.getXMPnodes(name);
-  //   }
-
-  //   if (n == null) {
-  //     n = getXMPnodes(name);
-  //   }
-
-  //   return n;
-  // }
 
   public XMPnodes getXMPnodes(String name, Block block) {
 
@@ -262,22 +217,7 @@ public class XMPglobalDecl {
     return _globalObjectTable.getXMPtemplate(name);
   }
 
-  // public XMPtemplate getXMPtemplate(String name, XMPsymbolTable localXMPsymbolTable) {
-  //   XMPtemplate t = null;
-
-  //   if (localXMPsymbolTable != null) {
-  //     t = localXMPsymbolTable.getXMPtemplate(name);
-  //   }
-
-  //   if (t == null) {
-  //     t = getXMPtemplate(name);
-  //   }
-
-  //   return t;
-  // }
-
   public XMPtemplate getXMPtemplate(String name, Block block) {
-
     XMPtemplate t = null;
 
     // local
@@ -307,22 +247,7 @@ public class XMPglobalDecl {
     return _globalObjectTable.getXMPalignedArray(name);
   }
 
-  // public XMPalignedArray getXMPalignedArray(String name, XMPsymbolTable localXMPsymbolTable) {
-  //   XMPalignedArray a = null;
-
-  //   if (localXMPsymbolTable != null) {
-  //     a = localXMPsymbolTable.getXMPalignedArray(name);
-  //   }
-
-  //   if (a == null) {
-  //     a = getXMPalignedArray(name);
-  //   }
-
-  //   return a;
-  // }
-
   public XMPalignedArray getXMPalignedArray(String name, Block block) {
-
     XMPalignedArray a = null;
 
     // local
@@ -352,22 +277,7 @@ public class XMPglobalDecl {
     return _globalObjectTable.getXMPcoarray(name);
   }
 
-  // public XMPcoarray getXMPcoarray(String name, XMPsymbolTable localXMPsymbolTable) {
-  //   XMPcoarray c = null;
-
-  //   if (localXMPsymbolTable != null) {
-  //     c = localXMPsymbolTable.getXMPcoarray(name);
-  //   }
-
-  //   if (c == null) {
-  //     c = getXMPcoarray(name);
-  //   }
-
-  //   return c;
-  // }
-
   public XMPcoarray getXMPcoarray(String name, Block block) {
-
     XMPcoarray c = null;
 
     // local

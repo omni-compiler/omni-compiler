@@ -78,6 +78,7 @@ run: $(EXES)
 	$(XRUN) -n 8 ./gmove_G2L_1a3t_bc2.x
 	$(XRUN) -n 8 ./gmove_G2L_1a3t_bc.x
 	$(XRUN) -n 16 ./gmove_G2L_1a4t_bc.x
+	$(XRUN) -n 4 ./337_gmove.x
 
 clean:
 	rm -f $(EXES) $(OBJS) chk.o

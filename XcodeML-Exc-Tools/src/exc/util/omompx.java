@@ -47,7 +47,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import com.sun.org.apache.xml.internal.serializer.OutputPropertiesFactory;
 import xcodeml.XmException;
 
 /**
@@ -71,7 +70,6 @@ public class omompx
       "  -xc          process XcodeML/C document.",
       "  -xf          process XcodeML/Fortran document.",
       "  -l           suppress line directive in decompiled code.",
-      "  -i           output indented XcodeML.",
       "  -fopenmp     enable OpenMP translation.",
       "  -fatomicio   enable transforming Fortran IO statements to atomic operations.",
       "  -w N         set max columns to N for Fortran source.",
@@ -116,7 +114,6 @@ public class omompx
     boolean outputXcode = false;
     boolean outputDecomp = false;
     boolean dump = false;
-    boolean indent = false;
     boolean all_profile = false;
     boolean selective_profile = false;
     boolean doScalasca = false;
@@ -138,8 +135,6 @@ public class omompx
         lang = "F";
       } else if(arg.equals("-l")) {
         XmOption.setIsSuppressLineDirective(true);
-      } else if(arg.equals("-i")) {
-        indent = true;
       } else if(arg.equals("-fopenmp")) {
         openMP = true;
       } else if(arg.equals("-facc")) {
@@ -164,7 +159,6 @@ public class omompx
         outputDecomp = true;
       } else if(arg.equals("-dump")) {
         dump = true;
-        indent = true;
         outputXcode = true;
         outputDecomp = true;
       } else if(arg.equals("-d")) {
@@ -496,11 +490,6 @@ public class omompx
 
       transformer.setOutputProperty(OutputKeys.METHOD, "xml");
 
-      if (indent) {
-        final int indentSpaces = 2;
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-        transformer.setOutputProperty(OutputPropertiesFactory.S_KEY_INDENT_AMOUNT, "" + indentSpaces);
-      }
       try {
         transformer.transform(new DOMSource(xcodeDoc),
                               new StreamResult(xmlWriter));

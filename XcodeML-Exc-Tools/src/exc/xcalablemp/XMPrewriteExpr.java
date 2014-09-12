@@ -88,27 +88,26 @@ public class XMPrewriteExpr {
 
   private void rewriteFuncExprs(FunctionBlock funcBlock, XMPsymbolTable localXMPsymbolTable) {
     // insert TASK descripter for cache mechanism.
-    if(_globalDecl.findVarIdent(funcBlock.getName()).Type().isInline() == false){
-
+    //    if(_globalDecl.findVarIdent(funcBlock.getName()).Type().isInline() == false){
       // This decleartion is inserted into the first point of each function.
-      BlockList taskBody = funcBlock.getBody().getHead().getBody();
-      Ident taskDescId = taskBody.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.AUTO,
-						 Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
+      //      BlockList taskBody = funcBlock.getBody().getHead().getBody();
+      //      Ident taskDescId = taskBody.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.AUTO,
+      //                                                 Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
       
       // insert Finalize function into the last point of each function.
-      XobjList arg = Xcons.List(Xcode.POINTER_REF, taskDescId.Ref());
-      Ident taskFuncId = _globalDecl.declExternFunc("_XMP_exec_task_NODES_FINALIZE");
-      taskBody.add(taskFuncId.Call(arg));
-
+      //      XobjList arg = Xcons.List(Xcode.POINTER_REF, taskDescId.Ref());
+      //      Ident taskFuncId = _globalDecl.declExternFunc("_XMP_exec_task_NODES_FINALIZE");
+      //      taskBody.add(taskFuncId.Call(arg));
+      
       // insert Finalize function into the previous point of return statement
-      BlockIterator i = new topdownBlockIterator(taskBody);
-      for (i.init(); !i.end(); i.next()) {
-	Block b = i.getBlock();
-	if (b.Opcode() == Xcode.RETURN_STATEMENT){
-	  b.insert(taskFuncId.Call(arg));
-	}
-      }
-    }
+      //      BlockIterator i = new topdownBlockIterator(taskBody);
+      //      for (i.init(); !i.end(); i.next()) {
+      //      	Block b = i.getBlock();
+      //      	if (b.Opcode() == Xcode.RETURN_STATEMENT){
+      //          b.ainsert(taskFuncId.Call(arg));
+      //        }
+      //      }
+      //    }
 
     BasicBlockExprIterator iter = new BasicBlockExprIterator(funcBlock);
     for (iter.init(); !iter.end(); iter.next()) {

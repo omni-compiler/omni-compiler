@@ -20,14 +20,6 @@ HOW TO INSTALL
 
  * flex gcc gfortran gcc-c++ java-1.7.0-openjdk-devel ant openmpi-devel libxml2-devel byacc make
 
-## If using the IBM Java Compiler
- Need to change import setting
- import com.sun.org.apache.xml.internal.serializer.OutputPropertiesFactory; ->  import org.apache.xml.serializer.OutputPropertiesFactory;
- in 
- * XcodeML-Common/src/xcodeml/util/XmUtil.java
- * XcodeML-Exc-Tools/src/exc/util/omompx.java
- * F-BackEnd/src/xcodeml/f/decompile/XfDecompileDomVisitor.java
-
 ## Usage of local-view operations (coarray, post/wait, lock/unlock)
  * Need to install GASNet (http://gasnet.lbl.gov) except for the K computer and FX10.
  * On the K computer or FX10, you can use local-view operations by using Fujitsu RDMA.
