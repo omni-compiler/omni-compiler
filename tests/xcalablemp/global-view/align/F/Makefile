@@ -15,6 +15,7 @@ all default: $(EXES)
 
 run: $(EXES)
 	$(XRUN) -n 2 ./offset.x
+	$(XRUN) -n 4 ./offset2.x
 
 clean:
 	rm -f $(EXES) $(OBJS)

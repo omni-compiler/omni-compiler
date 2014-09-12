@@ -20,8 +20,8 @@
 #define XMP_CYCLIC					2102
 #define XMP_GBLOCK					2103
 
-#include "stddef.h"
-//#include "mpi.h"
+#include <stddef.h>
+#include <mpi.h>
 
 typedef void *xmp_desc_t;
 
