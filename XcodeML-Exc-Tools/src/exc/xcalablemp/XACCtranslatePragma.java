@@ -309,6 +309,7 @@ public class XACCtranslatePragma {
     XobjList clauses = (XobjList)pb.getClauses();
     Block newPB = Bcons.PRAGMA(Xcode.ACC_PRAGMA, isEnter? "ENTER_DATA" : "EXIT_DATA", clauses, null);
     pb.setBody(Bcons.emptyBody());
+    XobjList copyClauses = Xcons.List();
     for(XobjArgs arg = clauses.getArgs(); arg != null; arg = arg.nextArgs()){
       Xobject clause = arg.getArg();
       if(clause == null) continue; 
@@ -316,27 +317,60 @@ public class XACCtranslatePragma {
       String clauseName = clause.left().getName();
       ACCpragma pragma = ACCpragma.valueOf(clauseName);
       ACCpragma newClause = null;
+      ACCpragma newCopyClause = null;
       switch(pragma){
       case COPY:
-        newClause = isEnter? ACCpragma.COPYIN : ACCpragma.COPYOUT;
+        newClause = isEnter? ACCpragma.CREATE : ACCpragma.DELETE;
+        newCopyClause = isEnter? ACCpragma.DEVICE : ACCpragma.HOST;
         break;
       case CREATE:
         newClause = isEnter? ACCpragma.CREATE : ACCpragma.DELETE;
         break;
       case COPYIN:
-        newClause = isEnter? ACCpragma.COPYIN : ACCpragma.DELETE;
+        newClause = isEnter? ACCpragma.CREATE : ACCpragma.DELETE;
+        newCopyClause = isEnter? ACCpragma.DEVICE : null;
         break;
       case COPYOUT:
         newClause = isEnter? ACCpragma.CREATE : ACCpragma.COPYOUT;
+        newCopyClause = isEnter? null : ACCpragma.HOST;
         break;
       default:
-        
+        continue;
       }
       if(newClause != null){
-                arg.setArg(Xcons.List(Xcons.String(newClause.toString()), clauseArg));
+        arg.setArg(Xcons.List(Xcons.String(newClause.toString()), clauseArg));
+      }
+      if(newCopyClause != null){
+        XobjList newClauseArg = Xcons.List();
+        for(Xobject x : (XobjList)clauseArg){
+          String varName = x.getArg(0).getSym();
+          if(varName.startsWith("_XMP_ADDR_")){
+            String oldVarName = varName.substring(10);
+            Ident copyOffsetId = pb.findVarIdent("_XACC_copy_offset_" + oldVarName);
+            Ident copySizeId = pb.findVarIdent("_XACC_copy_size_" + oldVarName);
+            newClauseArg.add(Xcons.List(x.getArg(0), Xcons.List(copyOffsetId.Ref(), copySizeId.Ref())));
+          }
+        }
+        copyClauses.add(Xcons.List(Xcons.String(newCopyClause.toString()), newClauseArg));
       }
     }
-    pb.replace(newPB);
+    
+    
+    //pb.add(newCopyPB);
+    
+    if(copyClauses.isEmpty()){
+      pb.replace(newPB);
+      return;
+    }
+    
+    Block newCopyPB = Bcons.PRAGMA(Xcode.ACC_PRAGMA, ACCpragma.UPDATE.toString(), copyClauses, null);
+    if(isEnter){
+      pb.replace(newPB);
+      pb.getParent().add(newCopyPB);
+    }else{
+      pb.replace(newCopyPB);
+      pb.getParent().add(newPB);
+    }
   }
 
   private XMPdevice getXACCdevice(XobjList clauses, Block block){
@@ -574,6 +608,12 @@ public class XACCtranslatePragma {
                 Ident arrayOffsetId = deviceLoopBody.declLocalIdent(arrayOffsetName, Xtype.unsignedlonglongType);
                 Block getRangeFuncCall = _globalDecl.createFuncCallBlock("_XACC_get_size", Xcons.List(layoutedArrayDescId.Ref(), arrayOffsetId.getAddr(), arraySizeId.getAddr(), deviceLoopCounter.Ref()));
                 deviceLoopBody.add(getRangeFuncCall);
+                String arrayCopySizeName = "_XACC_copy_size_" + arrayAddr.getSym();
+                String arrayCopyOffsetName = "_XACC_copy_offset_" + arrayAddr.getSym();
+                Ident arrayCopySizeId = deviceLoopBody.declLocalIdent(arrayCopySizeName, Xtype.unsignedlonglongType);
+                Ident arrayCopyOffsetId = deviceLoopBody.declLocalIdent(arrayCopyOffsetName, Xtype.unsignedlonglongType);
+                Block getCopyRangeFuncCall = _globalDecl.createFuncCallBlock("_XACC_get_copy_size", Xcons.List(layoutedArrayDescId.Ref(), arrayCopyOffsetId.getAddr(), arrayCopySizeId.getAddr(), deviceLoopCounter.Ref()));
+                deviceLoopBody.add(getCopyRangeFuncCall);
                 arrayRef = Xcons.List(arrayAddrRef, Xcons.List(arrayOffsetId.Ref(), arraySizeId.Ref()));
               }
               
