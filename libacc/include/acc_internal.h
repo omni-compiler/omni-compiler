@@ -20,6 +20,9 @@ typedef enum acc_device_t{
 }acc_device_t;
 
 
+struct _ACC_memory_map_type;
+typedef struct _ACC_memory_map_type _ACC_memory_map_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -49,6 +52,12 @@ extern "C" {
   void* acc_malloc( size_t );
   void acc_free( void* );
 
+  //acc_memory_map.c
+  void _ACC_memory_map_add(_ACC_memory_map_t* map, void *addr, size_t size, void *data);
+  void* _ACC_memory_map_remove(_ACC_memory_map_t* map, void *addr, size_t size);
+  void* _ACC_memory_map_find(_ACC_memory_map_t* map, void *addr, size_t size);
+  _ACC_memory_map_t* _ACC_memory_map_create();
+  void _ACC_memory_map_destroy(_ACC_memory_map_t* map);
 
 #ifdef __cplusplus
 }

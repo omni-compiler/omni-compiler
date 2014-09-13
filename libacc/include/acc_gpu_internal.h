@@ -38,12 +38,13 @@ extern "C" {
   void _ACC_gpu_copy_async(void *host_addr, void *device_addr, size_t size, int direction, int id);
 
   //acc_gpu_data_table.c
-  void _ACC_gpu_init_data_table();
-  void _ACC_gpu_finalize_data_table();
+  _ACC_memory_map_t* _ACC_gpu_init_data_table();
+  void _ACC_gpu_finalize_data_table(_ACC_memory_map_t*);
   void _ACC_gpu_add_data(_ACC_gpu_data_t *host_desc);
   _Bool _ACC_gpu_remove_data(_ACC_gpu_data_t *host_desc);
   void _ACC_gpu_get_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *host_addr, size_t size);
   void _ACC_gpu_get_data_sub(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *host_addr, size_t offset, size_t size);
+  void _ACC_gpu_set_data_table(_ACC_memory_map_t*);
 
   //acc_gpu_stream.cu
   void* _ACC_gpu_init_stream_map(int table_size);

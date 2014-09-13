@@ -17,6 +17,7 @@ static void finalize_device(int dev_num);
 typedef struct acc_context{
   void *stream_map;
   void *mpool;
+  _ACC_memory_map_t *memory_map;
 }acc_context;
 
 acc_context *contexts;
@@ -92,6 +93,7 @@ static void init_device(int dev_num){
 
 
   //init mpool
+  contexts[dev_num].memory_map = _ACC_gpu_init_data_table();
   contexts[dev_num].mpool = _ACC_gpu_mpool_init();
   //init stream hashmap
   contexts[dev_num].stream_map = _ACC_gpu_init_stream_map(16);
@@ -104,6 +106,7 @@ static void finalize_device(int dev_num){
   //printf("finalize_map(%d, %p)\n", dev_num, cont.stream_map);
   _ACC_gpu_finalize_stream_map(cont.stream_map);
   _ACC_gpu_mpool_finalize(cont.mpool);
+  _ACC_gpu_finalize_data_table(cont.memory_map);
 }
 
 void _ACC_gpu_set_device_num(int num)
@@ -127,6 +130,7 @@ void _ACC_gpu_set_device_num(int num)
   }
   
   acc_context cont = contexts[current_device_num];
+  _ACC_gpu_set_data_table(cont.memory_map);
   _ACC_gpu_set_stream_map(cont.stream_map);
   _ACC_gpu_mpool_set(cont.mpool);
 
