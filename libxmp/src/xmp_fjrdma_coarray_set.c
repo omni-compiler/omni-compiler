@@ -12,8 +12,12 @@
 static int _memid = 2; // _memid = 0 (macro MEMID in xmp_internal.h) is used to put/get operations.
                        // _memid = 1 (macro POST_WAID_ID in xmp_internal.h) is used to post/wait operations.
 
-void _XMP_fjrdma_initialize()
+void _XMP_fjrdma_initialize(int argc, char **argv)
 {
+  MPI_Init(&argc, &argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &_XMP_world_rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &_XMP_world_size);
+
   int ret = FJMPI_Rdma_init();
   if(ret) _XMP_fatal("FJMPI_Rdma_init error!");
 }
