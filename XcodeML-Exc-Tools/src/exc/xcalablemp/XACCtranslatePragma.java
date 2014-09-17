@@ -135,8 +135,16 @@ public class XACCtranslatePragma {
       if (block.Opcode() == Xcode.ACC_PRAGMA){
         PragmaBlock pb = (PragmaBlock)block;
         Xobject clauses = pb.getClauses();
-        
+
         ACCpragma pragma = ACCpragma.valueOf(((PragmaBlock)block).getPragma());
+
+        if(pragma == ACCpragma.DATA){
+          XACCrewriteACCdata rewriter = new XACCrewriteACCdata(_globalDecl, pb);
+          Block replaceBlock = rewriter.makeReplaceBlock();
+          bIter.setBlock(replaceBlock);
+          continue;
+        }
+        
         BlockList newBody = Bcons.emptyBody();
         XMPdevice device = null;
         XMPlayout layout = null;
@@ -377,7 +385,7 @@ public class XACCtranslatePragma {
     }
   }
 
-  private XMPdevice getXACCdevice(XobjList clauses, Block block){
+  public XMPdevice getXACCdevice(XobjList clauses, Block block){
     XMPdevice onDevice = null;
     
     for(XobjArgs arg = clauses.getArgs(); arg != null; arg = arg.nextArgs()){
@@ -396,7 +404,7 @@ public class XACCtranslatePragma {
     return onDevice;
   }
   
-  private XMPlayout getXACClayout(XobjList clauses){
+  public XMPlayout getXACClayout(XobjList clauses){
     XMPlayout layout = null;
     Xobject shadow = null;
     
@@ -421,7 +429,7 @@ public class XACCtranslatePragma {
     return layout;
   }
   
-  private XMPon getXACCon(XobjList clauses, Block b){
+  public XMPon getXACCon(XobjList clauses, Block b){
     //XMPlayout layout = null;
     XMPon on = null;
     
