@@ -279,8 +279,8 @@ extern void _XMP_threads_finalize(void);
 
 // ----- for coarray & post/wait -------------------
 #if defined(_XMP_COARRAY_FJRDMA) || defined(_XMP_COARRAY_GASNET)
-#define _XMP_DEFAULT_COARRAY_HEAP_SIZE   "16M"  // 16MB
-#define _XMP_DEFAULT_COARRAY_STRIDE_SIZE "1M"  // 1MB
+#define _XMP_DEFAULT_COARRAY_HEAP_SIZE   "26M" 
+#define _XMP_DEFAULT_COARRAY_STRIDE_SIZE "5M"
 #define _XMP_POST_WAIT_QUEUESIZE 32
 #define _XMP_POST_WAIT_QUEUECHUNK 512
 #define FLAG_NIC (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN)
@@ -323,7 +323,7 @@ extern void _xmp_gasnet_wait_notag(const int);
 
 #ifdef _XMP_COARRAY_FJRDMA
 #include <mpi-ext.h>
-extern void _XMP_fjrdma_initialize();
+extern void _XMP_fjrdma_initialize(int, char**);
 extern void _XMP_fjrdma_finalize();
 extern void _XMP_fjrdma_sync_memory();
 extern void _XMP_fjrdma_sync_all();

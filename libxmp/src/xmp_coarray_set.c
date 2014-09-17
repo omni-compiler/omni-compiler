@@ -81,10 +81,9 @@ void _XMP_coarray_initialize(int argc, char **argv)
   _xmp_heap_size   = check_env_size_coarray("XMP_COARRAY_HEAP_SIZE");
   _xmp_stride_size = check_env_size_coarray("XMP_COARRAY_STRIDE_SIZE");
   _xmp_heap_size  += _xmp_stride_size;
-
   _XMP_gasnet_initialize(argc, argv, _xmp_heap_size, _xmp_stride_size);
 #elif _XMP_COARRAY_FJRDMA
-  _XMP_fjrdma_initialize();
+  _XMP_fjrdma_initialize(argc, argv);
 #else
   _XMP_fatal("Cannt use Coarray Function");
 #endif
