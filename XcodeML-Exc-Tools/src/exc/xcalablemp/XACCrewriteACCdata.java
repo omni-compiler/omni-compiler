@@ -7,69 +7,69 @@ import exc.object.*;
 import exc.openacc.ACCpragma;
 
 public class XACCrewriteACCdata {
-  private PragmaBlock pb;
-  private XobjList clauses; 
-  private XMPglobalDecl _globalDecl;
-  private BlockList mainBody;
+  protected PragmaBlock pb;
+  protected XobjList clauses; 
+  protected XMPglobalDecl _globalDecl;
+  protected BlockList mainBody;
   private BlockList deviceLoopBody;
   private BlockList initDeviceLoopBody;
   private BlockList finalizeDeviceLoopBody;
+ // protected DeviceLoop initDeviceLoop;
+  //protected DeviceLoop mainDeviceLoop;
+  //protected DeviceLoop finalizeDeviceLoop;
+  
   //private Map<String, XACCdeviceArray> layoutedArrayMap;
   private XMPsymbolTable localSymbolTable;
-  private XMPdevice device = null;
-  private XMPlayout layout = null;
+  protected XMPdevice device = null;
+  protected XMPlayout layout = null;
+  protected XMPon on = null;
   static final String XACC_DESC_PREFIX = "_XACC_DESC_";
-  private Block replaceBlock;
+  protected Block replaceBlock;
   
   public XACCrewriteACCdata(XMPglobalDecl decl, PragmaBlock pb) {
     this.pb = pb;
     this.clauses = (XobjList)pb.getClauses();
-    // TODO Auto-generated constructor stub
     this._globalDecl = decl;
     mainBody = Bcons.emptyBody();
     deviceLoopBody = Bcons.emptyBody();
     replaceBlock = Bcons.COMPOUND(mainBody);
     localSymbolTable = XMPlocalDecl.declXMPsymbolTable2(replaceBlock); //new XMPsymbolTable();
+
+    XACCtranslatePragma trans = new XACCtranslatePragma(_globalDecl);
+    if (clauses != null){
+      device = trans.getXACCdevice((XobjList)clauses, pb);
+      layout = trans.getXACClayout((XobjList)clauses);
+      on = trans.getXACCon((XobjList)clauses, pb);
+    }
   }
   
   public Block makeReplaceBlock(){
-    XACCtranslatePragma trans = new XACCtranslatePragma(_globalDecl);
-    
+    if(device == null) return null;
+
     //XMPdevice device = null;
     //XMPlayout layout = null;
-    XMPon on = null;
-    if (clauses != null){
-      device = trans.getXACCdevice((XobjList)clauses, pb);
-       layout = trans.getXACClayout((XobjList)clauses);
-      on = trans.getXACCon((XobjList)clauses, pb);
-    }
     
-    Ident fid = _globalDecl.declExternFunc("acc_set_device_num");
 
-    if(device == null) return null;
     
-    //base
-    //Ident baseDeviceLoopVarId = mainBody.declLocalIdent("_XACC_device_" + device.getName(), Xtype.intType);
-    //mainBody.add(Bcons.FORall(baseDeviceLoopVarId.Ref(), device.getLower(), device.getUpper(),
-        //device.getStride(), Xcode.LOG_LE_EXPR, deviceLoopBody));
-    //deviceLoopBody.add(fid.Call(Xcons.List(baseDeviceLoopVarId.Ref(), device.getDeviceRef())));
-    //rewriteACCClauses(clauses, pb, newBody, baseDeviceLoopBody, baseDeviceLoopVarId, device, layout);
+    //Ident fid = _globalDecl.declExternFunc("acc_set_device_num");
 
-    BlockList pbBody  = null;
 
-    deviceLoopBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pb.getPragma(), clauses, pbBody));
+    
+    //BlockList pbBody  = null;
+
+    //deviceLoopBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pb.getPragma(), clauses, pbBody));
     
     XobjList createArgs = Xcons.List();
     XobjList updateDeviceArgs = Xcons.List();
     XobjList updateHostArgs = Xcons.List();
     XobjList deleteArgs = Xcons.List();
     analyzeClause(createArgs, updateDeviceArgs, updateHostArgs, deleteArgs);
-    Block beginDeviceLoop = makeBeginDeviceLoop(createArgs, updateDeviceArgs);
-    Block endDeviceLoop = makeEndDeviceLoop(deleteArgs, updateHostArgs);
+    Block beginDeviceLoopBlock = makeBeginDeviceLoop(createArgs, updateDeviceArgs);
+    Block endDeviceLoopBlock = makeEndDeviceLoop(deleteArgs, updateHostArgs);
     
-    add(beginDeviceLoop);
+    add(beginDeviceLoopBlock);
     add(Bcons.COMPOUND(pb.getBody()));
-    add(endDeviceLoop);
+    add(endDeviceLoopBlock);
     
     return replaceBlock; //Bcons.COMPOUND(mainBody);
   }
@@ -108,49 +108,42 @@ public class XACCrewriteACCdata {
     }
   }
   
-  private Block makeBeginDeviceLoop(XobjList createArgs, XobjList updateDeviceArgs)
+  protected Block makeBeginDeviceLoop(XobjList createArgs, XobjList updateDeviceArgs)
   {
-    Ident fid = _globalDecl.declExternFunc("acc_set_device_num");
-    BlockList loopBody = Bcons.emptyBody();
-    BlockList body = Bcons.emptyBody();
     
-    Ident deviceLoopVarId = body.declLocalIdent("_XACC_device_" + device.getName(), Xtype.intType);
-    body.add(Bcons.FORall(deviceLoopVarId.Ref(), device.getLower(), device.getUpper(),
-        device.getStride(), Xcode.LOG_LE_EXPR, loopBody));
-    loopBody.add(fid.Call(Xcons.List(deviceLoopVarId.Ref(), device.getDeviceRef())));
+    DeviceLoop deviceLoop = new DeviceLoop(device);
 
-    rewriteXACCClause(ACCpragma.CREATE, createArgs, loopBody, deviceLoopVarId);
-    rewriteXACCClause(ACCpragma.DEVICE, updateDeviceArgs, loopBody, deviceLoopVarId);
+    if(! createArgs.isEmpty()){
+      rewriteXACCClause(ACCpragma.CREATE, createArgs, deviceLoop);
+      deviceLoop.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, ACCpragma.ENTER_DATA.toString(), Xcons.List(Xcons.List(Xcons.String(ACCpragma.CREATE.toString()), createArgs)), null));
+    }
+    if(! updateDeviceArgs.isEmpty()){
+      rewriteXACCClause(ACCpragma.DEVICE, updateDeviceArgs, deviceLoop);
+      deviceLoop.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, ACCpragma.UPDATE.toString(), Xcons.List(Xcons.List(Xcons.String(ACCpragma.DEVICE.toString()), updateDeviceArgs)), null));
+    }
     
-    loopBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, ACCpragma.ENTER_DATA.toString(), Xcons.List(Xcons.List(Xcons.String(ACCpragma.CREATE.toString()), createArgs)), null));
-    loopBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, ACCpragma.UPDATE.toString(), Xcons.List(Xcons.List(Xcons.String(ACCpragma.DEVICE.toString()), updateDeviceArgs)), null));
-    
-    return Bcons.COMPOUND(body);
+    return deviceLoop.makeBlock();
   }
   
-  private Block makeEndDeviceLoop(XobjList deleteArgs, XobjList updateHostArgs)
+  protected Block makeEndDeviceLoop(XobjList deleteArgs, XobjList updateHostArgs)
   {
-    Ident fid = _globalDecl.declExternFunc("acc_set_device_num");
-    BlockList loopBody = Bcons.emptyBody();
-    BlockList body = Bcons.emptyBody();
+    DeviceLoop deviceLoop = new DeviceLoop(device);
     
-    Ident deviceLoopVarId = body.declLocalIdent("_XACC_device_" + device.getName(), Xtype.intType);
-    body.add(Bcons.FORall(deviceLoopVarId.Ref(), device.getLower(), device.getUpper(),
-        device.getStride(), Xcode.LOG_LE_EXPR, loopBody));
-    loopBody.add(fid.Call(Xcons.List(deviceLoopVarId.Ref(), device.getDeviceRef())));
-
-    rewriteXACCClause(ACCpragma.HOST, updateHostArgs, loopBody, deviceLoopVarId);
-    rewriteXACCClause(ACCpragma.DELETE, deleteArgs, loopBody, deviceLoopVarId);
+    if(! updateHostArgs.isEmpty()){
+      rewriteXACCClause(ACCpragma.HOST, updateHostArgs, deviceLoop);
+      deviceLoop.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, ACCpragma.UPDATE.toString(), Xcons.List(Xcons.List(Xcons.String(ACCpragma.HOST.toString()), updateHostArgs)), null));
+    }
+    if(! deleteArgs.isEmpty()){
+      rewriteXACCClause(ACCpragma.DELETE, deleteArgs, deviceLoop);
+      deviceLoop.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, ACCpragma.EXIT_DATA.toString(), Xcons.List(Xcons.List(Xcons.String(ACCpragma.DELETE.toString()), deleteArgs)), null));
+    }
     
-    loopBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, ACCpragma.UPDATE.toString(), Xcons.List(Xcons.List(Xcons.String(ACCpragma.HOST.toString()), updateHostArgs)), null));
-    loopBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, ACCpragma.EXIT_DATA.toString(), Xcons.List(Xcons.List(Xcons.String(ACCpragma.DELETE.toString()), deleteArgs)), null));
-
-    return Bcons.COMPOUND(body);
+    return deviceLoop.makeBlock();
   }
 
 
   
-  private void rewriteXACCClause(ACCpragma clause, XobjList clauseArgs, BlockList body, Ident deviceLoopVarId){
+  protected void rewriteXACCClause(ACCpragma clause, XobjList clauseArgs, DeviceLoop deviceLoop){
     switch(clause){
     case HOST:
     case DEVICE:
@@ -168,7 +161,7 @@ public class XACCrewriteACCdata {
       if(item.Opcode() == Xcode.VAR){
         //item is variable or arrayAddr
         try{
-          args.setArg(rewriteXACCArrayAddr(item, body, clause, deviceLoopVarId));
+          args.setArg(rewriteXACCArrayAddr(item, clause, deviceLoop));
         }catch(XMPexception e){
           XMP.error(item.getLineNo(), e.getMessage());
         }
@@ -176,12 +169,12 @@ public class XACCrewriteACCdata {
     }
   }
   
-  private void add(Block b)
+  protected void add(Block b)
   {
     mainBody.add(b);
   }
   
-  private Xobject rewriteXACCArrayAddr(Xobject arrayAddr, BlockList body, ACCpragma clause, Ident deviceLoopCounterId) throws XMPexception{
+  private Xobject rewriteXACCArrayAddr(Xobject arrayAddr, ACCpragma clause, DeviceLoop deviceLoop) throws XMPexception{
     XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayAddr.getSym(), pb);
     XMPcoarray coarray = _globalDecl.getXMPcoarray(arrayAddr.getSym(), pb);
 
@@ -197,10 +190,10 @@ public class XACCrewriteACCdata {
         //normal array
         if(device == null){
           String arraySizeName = "_ACC_size_" + arrayAddr.getSym();
-          Ident arraySizeId = body.declLocalIdent(arraySizeName, Xtype.unsignedlonglongType);
+          Ident arraySizeId = deviceLoop.getBody().declLocalIdent(arraySizeName, Xtype.unsignedlonglongType);
 
           Block getArraySizeFuncCall = _globalDecl.createFuncCallBlock("_XMP_get_array_total_elmts", Xcons.List(descId.Ref()));
-          body.insert(Xcons.Set(arraySizeId.Ref(), getArraySizeFuncCall.toXobject()));
+          deviceLoop.getBody().insert(Xcons.Set(arraySizeId.Ref(), getArraySizeFuncCall.toXobject()));
 
           XobjList arrayRef = Xcons.List(arrayAddrRef, Xcons.List(Xcons.IntConstant(0), arraySizeId.Ref()));
           return arrayRef;
@@ -258,10 +251,10 @@ public class XACCrewriteACCdata {
         {
           String arraySizeName = "_XACC_size_" + arrayAddr.getSym();
           String arrayOffsetName = "_XACC_offset_" + arrayAddr.getSym();
-          Ident arraySizeId = body.declLocalIdent(arraySizeName, Xtype.unsignedlonglongType);
-          Ident arrayOffsetId = body.declLocalIdent(arrayOffsetName, Xtype.unsignedlonglongType);
-          Block getRangeFuncCall = _globalDecl.createFuncCallBlock("_XACC_get_size", Xcons.List(layoutedArrayDescId.Ref(), arrayOffsetId.getAddr(), arraySizeId.getAddr(), deviceLoopCounterId.Ref()));
-          body.add(getRangeFuncCall);
+          Ident arraySizeId = deviceLoop.getBody().declLocalIdent(arraySizeName, Xtype.unsignedlonglongType);
+          Ident arrayOffsetId = deviceLoop.getBody().declLocalIdent(arrayOffsetName, Xtype.unsignedlonglongType);
+          Block getRangeFuncCall = _globalDecl.createFuncCallBlock("_XACC_get_size", Xcons.List(layoutedArrayDescId.Ref(), arrayOffsetId.getAddr(), arraySizeId.getAddr(), deviceLoop.getLoopVarId().Ref()));
+          deviceLoop.add(getRangeFuncCall);
           arrayRef = Xcons.List(arrayAddrRef, Xcons.List(arrayOffsetId.Ref(), arraySizeId.Ref()));
         } break;
         case HOST:
@@ -269,10 +262,10 @@ public class XACCrewriteACCdata {
         {
           String arrayCopySizeName = "_XACC_copy_size_" + arrayAddr.getSym();
           String arrayCopyOffsetName = "_XACC_copy_offset_" + arrayAddr.getSym();
-          Ident arrayCopySizeId = body.declLocalIdent(arrayCopySizeName, Xtype.unsignedlonglongType);
-          Ident arrayCopyOffsetId = body.declLocalIdent(arrayCopyOffsetName, Xtype.unsignedlonglongType);
-          Block getCopyRangeFuncCall = _globalDecl.createFuncCallBlock("_XACC_get_copy_size", Xcons.List(layoutedArrayDescId.Ref(), arrayCopyOffsetId.getAddr(), arrayCopySizeId.getAddr(), deviceLoopCounterId.Ref()));
-          body.add(getCopyRangeFuncCall);
+          Ident arrayCopySizeId = deviceLoop.getBody().declLocalIdent(arrayCopySizeName, Xtype.unsignedlonglongType);
+          Ident arrayCopyOffsetId = deviceLoop.getBody().declLocalIdent(arrayCopyOffsetName, Xtype.unsignedlonglongType);
+          Block getCopyRangeFuncCall = _globalDecl.createFuncCallBlock("_XACC_get_copy_size", Xcons.List(layoutedArrayDescId.Ref(), arrayCopyOffsetId.getAddr(), arrayCopySizeId.getAddr(), deviceLoop.getLoopVarId().Ref()));
+          deviceLoop.add(getCopyRangeFuncCall);
           arrayRef = Xcons.List(arrayAddrRef, Xcons.List(arrayCopyOffsetId.Ref(), arrayCopySizeId.Ref()));
         } break;
         }
@@ -286,10 +279,10 @@ public class XACCrewriteACCdata {
       Ident descId = coarray.getDescId();
       
       String arraySizeName = "_ACC_size_" + arrayAddr.getSym();
-      Ident arraySizeId = body.declLocalIdent(arraySizeName, Xtype.unsignedlonglongType);
+      Ident arraySizeId = deviceLoop.getBody().declLocalIdent(arraySizeName, Xtype.unsignedlonglongType);
       
       Block getArraySizeFuncCall = _globalDecl.createFuncCallBlock("_XMP_get_array_total_elmts", Xcons.List(descId.Ref()));
-      body.insert(Xcons.Set(arraySizeId.Ref(), getArraySizeFuncCall.toXobject()));
+      deviceLoop.getBody().insert(Xcons.Set(arraySizeId.Ref(), getArraySizeFuncCall.toXobject()));
       
       XobjList arrayRef = Xcons.List(coarrayAddrRef, Xcons.List(Xcons.IntConstant(0), arraySizeId.Ref()));
       
@@ -297,6 +290,46 @@ public class XACCrewriteACCdata {
       return arrayRef;
     } else{ // no execute
       return arrayAddr;
+    }
+  }
+  
+  
+  class DeviceLoop
+  {
+    private BlockList loopBody;
+    private BlockList body;
+    private Ident loopVarId;
+    private XMPdevice dev;
+
+    public DeviceLoop(XMPdevice d){
+      this.dev = d;
+      loopBody = Bcons.emptyBody();
+      body = Bcons.emptyBody();
+      loopVarId = body.declLocalIdent("_XACC_device_" + dev.getName(), Xtype.intType);
+    }
+    
+    public Ident getLoopVarId() {
+      return loopVarId;
+    }
+
+    public Block makeBlock(){
+      if(loopBody.isEmpty()) return Bcons.emptyBlock();
+      body.add(Bcons.FORall(loopVarId.Ref(), dev.getLower(), dev.getUpper(),
+          dev.getStride(), Xcode.LOG_LE_EXPR, loopBody));
+      Ident fid = _globalDecl.declExternFunc("acc_set_device_num");
+      loopBody.insert(fid.Call(Xcons.List(loopVarId.Ref(), dev.getDeviceRef())));
+      return Bcons.COMPOUND(body);
+    }
+    
+    public void add(Block b){
+      loopBody.add(b);
+    }
+    public BlockList getBody()
+    {
+      return loopBody;
+    }
+    public Ident declLocalIdent(String name, Xtype t){
+      return loopBody.declLocalIdent(name, t);
     }
   }
 }

@@ -143,6 +143,11 @@ public class XACCtranslatePragma {
           Block replaceBlock = rewriter.makeReplaceBlock();
           bIter.setBlock(replaceBlock);
           continue;
+        }else if(pragma == ACCpragma.PARALLEL_LOOP){
+          XACCrewriteACCparallel rewriter = new XACCrewriteACCparallel(_globalDecl, pb);
+          Block replaceBlock = rewriter.makeReplaceBlock();
+          bIter.setBlock(replaceBlock);
+          continue;
         }
         
         BlockList newBody = Bcons.emptyBody();
