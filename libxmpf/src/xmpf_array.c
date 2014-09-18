@@ -86,6 +86,12 @@ void xmpf_array_deallocate__(_XMP_array_t **a_desc)
 
 }
 
+void xmp_f_init_allocated__(_XMP_array_t **a_desc)
+{
+  _XMP_array_t *a = *a_desc;
+  a->is_allocated = a->align_template->is_owner;
+}
+
 void xmpf_align_info__(_XMP_array_t **a_desc, int *a_idx, 
 		       int *lower, int *upper, int *t_idx, int *off)
 {
@@ -109,7 +115,7 @@ void xmpf_align_info__(_XMP_array_t **a_desc, int *a_idx,
     _XMP_fatal("The align-target template is not fixed");
   }
 
-  a->is_allocated = a->align_template->is_owner;
+  //a->is_allocated = a->align_template->is_owner;
 
   chunk = &(a->align_template->chunk[t_index]);
   switch (chunk->dist_manner){
