@@ -236,6 +236,7 @@ public class XACCrewriteACCdata {
         switch(clause){
         case CREATE:
         case DELETE:
+        case PRESENT:
         {
           String arraySizeName = "_XACC_size_" + arrayAddr.getSym();
           String arrayOffsetName = "_XACC_offset_" + arrayAddr.getSym();
@@ -256,6 +257,8 @@ public class XACCrewriteACCdata {
           deviceLoop.add(getCopyRangeFuncCall);
           arrayRef = Xcons.List(arrayAddrRef, Xcons.List(arrayCopyOffsetId.Ref(), arrayCopySizeId.Ref()));
         } break;
+        default:
+          throw new XMPexception("unimplemented for "+clause.getName());
         }
         arrayRef.setIsRewrittedByXmp(true);
         return arrayRef; 

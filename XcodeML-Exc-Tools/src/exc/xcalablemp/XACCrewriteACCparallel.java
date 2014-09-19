@@ -40,6 +40,8 @@ public class XACCrewriteACCparallel extends XACCrewriteACCdata{
   private Block makeMainDeviceLoop(XobjList kernelClauses) {
     DeviceLoop deviceLoop = new DeviceLoop(device);
     
+    rewriteXACCClauses(kernelClauses, deviceLoop);
+    
     CforBlock forBlock = (CforBlock)pb.getBody().getHead();
     if(! forBlock.isCanonical()){
                         forBlock.Canonicalize();
