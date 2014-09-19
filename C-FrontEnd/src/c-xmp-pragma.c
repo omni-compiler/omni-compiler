@@ -67,7 +67,6 @@ static CExpr* parse_WAIT_clause();
 static CExpr* parse_WIDTH_list();
 static CExpr* parse_WAIT_ASYNC_clause();
 static CExpr* parse_TEMPLATE_FIX_clause();
-static CExpr* parse_DEVICE_clause();
 
 static CExpr* parse_REFLECT_INIT_clause();
 static CExpr* parse_REFLECT_DO_clause();
@@ -84,14 +83,11 @@ static CExpr* parse_XMP_opt();
 
 static CExpr* _xmp_pg_list(int omp_code,CExpr* args);
 
-extern int s_useXACC;
-
 #define XMP_PG_LIST(pg,args) _xmp_pg_list(pg,args)
 #define XMP_LIST1(arg1) (CExpr*)allocExprOfList1(EC_UNDEF,arg1)
 #define XMP_LIST2(arg1,arg2) (CExpr*)allocExprOfList2(EC_UNDEF,arg1,arg2)
 #define XMP_LIST3(arg1,arg2,arg3) (CExpr*)allocExprOfList3(EC_UNDEF,arg1,arg2,arg3)
 #define XMP_LIST4(arg1,arg2,arg3,arg4) (CExpr*)allocExprOfList4(EC_UNDEF,arg1,arg2,arg3,arg4)
-#define XMP_LIST5(arg1,arg2,arg3,arg4,arg5) (CExpr*)allocExprOfList5(EC_UNDEF,arg1,arg2,arg3,arg4,arg5)
 
 #define XMP_Error0(msg) addError(NULL,msg)
 #define XMP_error1(msg,arg1) addError(NULL,msg,arg1)
@@ -261,10 +257,6 @@ int parse_XMP_pragma()
         pg_get_token();
         pg_XMP_list = parse_LOCAL_ALIAS_clause();
 #endif
-    } else if (s_useXACC && PG_IS_IDENT("device")) {
-        pg_XMP_pragma = XMP_DEVICE;
-	pg_get_token();
-	pg_XMP_list = parse_DEVICE_clause();
     } else {
         addError(NULL,"unknown XcalableMP directive, '%s'",pg_tok_buf);
     syntax_err:
@@ -916,9 +908,7 @@ CExpr *parse_XMP_align_source_list()
 	switch (pg_tok){
 	case ']':  goto err;
 	case ':':
-	  v = NULL;
-	  pg_get_token();
-	  break;
+	  v = NULL; break;
 	case '*':
 	  v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "* @{ASTERISK}@", CT_UNDEF);
 	  pg_get_token();
@@ -980,7 +970,7 @@ CExpr *parse_XMP_C_subscript_list()
 
 	if(pg_tok != ':') goto next;
 	pg_get_token();
-	v3 = pg_parse_expr();
+	v3 = pg_parse_expr(); 
 	
       next:
 	list = exprListAdd(list, XMP_LIST3(v1,v2,v3));
@@ -1405,28 +1395,13 @@ static CExpr* parse_REFLECT_clause()
       pg_get_token();
     }
 
-    extern int s_useXACC;
-
-    CExpr *on = (CExpr*)allocExprOfNumberConst2(0, BT_INT);
-
-    if (s_useXACC){
-      if (PG_IS_IDENT("host")){
-	on = (CExpr*)allocExprOfNumberConst2(1, BT_INT);
-	pg_get_token();
-      }
-      else if (PG_IS_IDENT("device")){
-	on = (CExpr*)allocExprOfNumberConst2(2, BT_INT);
-	pg_get_token();
-      }
-    }
-
     CExpr *profileClause = (CExpr *)allocExprOfNull();
     /* if (pg_is_ident("profile")) { */
     /*     profileClause = Xcons.StringConstant("profile"); */
     /*     pg_get_token(); */
     /* } */
 
-    return XMP_LIST5(arrayNameList, widthList, async, on, profileClause);
+    return XMP_LIST4(arrayNameList, widthList, async, profileClause);
 
  err:
     XMP_Error0("syntax error in the REFLECT directive");
@@ -1824,107 +1799,6 @@ static CExpr* parse_TEMPLATE_FIX_clause()
   err:
     XMP_has_err = 1;
     return NULL;
-}
-
-static CExpr* parse_DEVICE_clause()
-{
-  CExpr* deviceName = NULL;
-  CExpr* deviceRef;
-
-  //
-  // parse <device-name>
-  //
-
-  if (pg_tok != PG_IDENT){
-    XMP_Error0("'<device-name>' is expected");
-    goto err;
-  }
-
-  deviceName = pg_tok_val;
-  pg_get_token();
-
-  //
-  // parse =<device-ref>[subscript] }
-  //
-
-  if (pg_tok != '='){
-    XMP_Error0("'=' is expected");
-    goto err;
-  }
-
-  pg_get_token();
-
-  CExpr *ref_device;
-
-  // parse <device-ref>
-
-  if (pg_tok != PG_IDENT) {
-    XMP_Error0("'<device-ref>' is expected");
-    goto err;
-  }
-
-  ref_device = pg_tok_val;
-  pg_get_token();
-
-  // parse [subscript]
-
-  if (pg_tok != '('){
-    XMP_Error0("'(' is expected");
-    goto err;
-  }
-
-  pg_get_token();
-
-  CExpr *v1 = NULL, *v2 = NULL, *v3 = NULL;
-
-  switch (pg_tok){
-  case ')':
-  case ',':
-  case '*':
-    goto err;
-  case ':':
-    break;
-  default:
-    v1 = pg_parse_expr();
-  }
-	
-  if (pg_tok != ':'){ // scalar
-    v2 = v1;
-    v3 = (CExpr*)allocExprOfNumberConst2(1, BT_INT);
-    goto end;
-  }
-
-  pg_get_token();
-  switch (pg_tok){
-  case ')':
-    goto end;
-  case ':':
-    break;
-  default:
-    v2 = pg_parse_expr();
-  }
-
-  if (pg_tok != ':') goto end;
-  pg_get_token();
-  v3 = pg_parse_expr(); 
-	
- end:
-
-  if (v3 == NULL) v3 = (CExpr*)allocExprOfNumberConst2(1, BT_INT);
-  deviceRef = XMP_LIST2(ref_device, XMP_LIST3(v1,v2,v3));
-
-  if (pg_tok != ')'){
-    XMP_Error0("')' is expected");
-    goto err;
-  }
-
-  pg_get_token();
-  
-  return XMP_LIST2(deviceName, deviceRef);
-
- err:
-  XMP_has_err = 1;
-  return NULL;
 }
 
 static CExpr* parse_REFLECT_INIT_clause()

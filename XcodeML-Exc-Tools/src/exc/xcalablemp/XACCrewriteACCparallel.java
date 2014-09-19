@@ -12,7 +12,6 @@ public class XACCrewriteACCparallel extends XACCrewriteACCdata{
 
   @Override
   public Block makeReplaceBlock(){
-    //super.makeReplaceBlock();
     XACCtranslatePragma trans = new XACCtranslatePragma(_globalDecl);
     
     if(device == null) return null;

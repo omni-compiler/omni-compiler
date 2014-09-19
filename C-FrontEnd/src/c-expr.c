@@ -1840,16 +1840,6 @@ allocExprOfList4(CExprCodeEnum exprCode, CExpr *expr1, CExpr *expr2,
 }
 
 
-CExprOfList*
-allocExprOfList5(CExprCodeEnum exprCode, CExpr *expr1, CExpr *expr2,
-		 CExpr *expr3, CExpr *expr4, CExpr *expr5)
-{
-  CExprOfList *expr = allocExprOfList4(exprCode, expr1, expr2, expr3, expr4);
-  exprListAdd((CExpr*)expr, expr5);
-  return expr;
-}
-
-
 /**
  * \brief
  * free CExprOfList

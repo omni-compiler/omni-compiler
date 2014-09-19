@@ -46,18 +46,6 @@ public class XACCrewriteACCdata {
   public Block makeReplaceBlock(){
     if(device == null) return null;
 
-    //XMPdevice device = null;
-    //XMPlayout layout = null;
-    
-
-    
-    //Ident fid = _globalDecl.declExternFunc("acc_set_device_num");
-
-
-    
-    //BlockList pbBody  = null;
-
-    //deviceLoopBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pb.getPragma(), clauses, pbBody));
     
     XobjList createArgs = Xcons.List();
     XobjList updateDeviceArgs = Xcons.List();
