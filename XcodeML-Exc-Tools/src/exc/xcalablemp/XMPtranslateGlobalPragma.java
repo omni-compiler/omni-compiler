@@ -49,11 +49,6 @@ public class XMPtranslateGlobalPragma {
       case LOCAL_ALIAS:
         translateLocalAlias(x);
         break;
-
-      case DEVICE:
-	translateDevice(x);
-	break;
-
       default:
         throw new XMPexception("'" + pragmaName.toLowerCase() + "' directive is not supported yet");
     }
@@ -141,11 +136,4 @@ public class XMPtranslateGlobalPragma {
       XMPcoarray.translateCoarray(coarrayDeclCopy, _globalDecl, false, null);
     }
   }
-
-  private void translateDevice(Xobject devicePragma) throws XMPexception {
-    XobjList deviceDecl = (XobjList)devicePragma.getArg(1);
-    XobjList deviceDeclCopy = (XobjList)deviceDecl.copy();
-    XMPdevice.translateDevice(deviceDeclCopy, _globalDecl, false, null);
-  }
-
 }

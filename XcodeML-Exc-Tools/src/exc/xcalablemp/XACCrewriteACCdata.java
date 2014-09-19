@@ -20,9 +20,9 @@ public class XACCrewriteACCdata {
   
   //private Map<String, XACCdeviceArray> layoutedArrayMap;
   private XMPsymbolTable localSymbolTable;
-  protected XMPdevice device = null;
-  protected XMPlayout layout = null;
-  protected XMPon on = null;
+  protected XACCdevice device = null;
+  protected XACClayout layout = null;
+  protected XACCon on = null;
   static final String XACC_DESC_PREFIX = "_XACC_DESC_";
   protected Block replaceBlock;
   
@@ -206,13 +206,13 @@ public class XACCrewriteACCdata {
           add(initDeviceArrayFuncCall);
           for(int dim = alignedArray.getDim() - 1; dim >= 0; dim--){
             int distManner = layout.getDistMannerAt(dim);
-            String mannerStr = XMPlayout.getDistMannerString(distManner);
+            String mannerStr = XACClayout.getDistMannerString(distManner);
             Block splitDeviceArrayBlockCall = _globalDecl.createFuncCallBlock("_XACC_split_layouted_array_" + mannerStr, Xcons.List(layoutedArrayDescId.Ref(), Xcons.IntConstant(dim)));
             add(splitDeviceArrayBlockCall);
             if(! layout.hasShadow()) continue;
             int shadowType = layout.getShadowTypeAt(dim);
-            if(shadowType != XMPlayout.SHADOW_NONE){
-              String shadowTypeStr = XMPlayout.getShadowTypeString(shadowType);
+            if(shadowType != XACClayout.SHADOW_NONE){
+              String shadowTypeStr = XACClayout.getShadowTypeString(shadowType);
 
               Block setShadowFuncCall = _globalDecl.createFuncCallBlock("_XACC_set_shadow_" + shadowTypeStr, 
                   Xcons.List(layoutedArrayDescId.Ref(), Xcons.IntConstant(dim), layout.getShadowLoAt(dim), layout.getShadowHiAt(dim)));
@@ -290,9 +290,9 @@ public class XACCrewriteACCdata {
     private BlockList loopBody;
     private BlockList body;
     private Ident loopVarId;
-    private XMPdevice dev;
+    private XACCdevice dev;
 
-    public DeviceLoop(XMPdevice d){
+    public DeviceLoop(XACCdevice d){
       this.dev = d;
       loopBody = Bcons.emptyBody();
       body = Bcons.emptyBody();

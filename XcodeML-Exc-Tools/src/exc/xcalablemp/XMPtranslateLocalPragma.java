@@ -105,10 +105,6 @@ public class XMPtranslateLocalPragma {
         { break; }
       case GPU_LOOP:
         { translateGpuLoop(pb);			break; }
-
-      case DEVICE:
-	{ translateDevice(pb);                  break; }
-
       default:
         throw new XMPexception("'" + pragmaName.toLowerCase() + "' directive is not supported yet");
     }
@@ -497,12 +493,6 @@ public class XMPtranslateLocalPragma {
     // replace pragma
     Block loopFuncCallBlock = Bcons.COMPOUND(loopBody);
     pb.replace(loopFuncCallBlock);
-  }
-
-  private void translateDevice(PragmaBlock pb) throws XMPexception {
-    XobjList deviceDecl = (XobjList)pb.getClauses();
-    XobjList deviceDeclCopy = (XobjList)deviceDecl.copy();
-    XMPdevice.translateDevice(deviceDeclCopy, _globalDecl, true, pb);
   }
 
   private void analyzeFollowingGpuLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {

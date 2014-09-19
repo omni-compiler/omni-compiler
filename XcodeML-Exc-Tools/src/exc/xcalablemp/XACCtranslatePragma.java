@@ -39,7 +39,7 @@ public class XACCtranslatePragma {
   private void translateDevice(Xobject x) throws XMPexception{
     XobjList deviceDecl = (XobjList)x.getArg(1);
     XobjList deviceDeclCopy = (XobjList)deviceDecl.copy();
-    XMPdevice.translateDevice(deviceDeclCopy, _globalDecl, false, null);
+    XACCdevice.translateDevice(deviceDeclCopy, _globalDecl, false, null);
     
     //remove pragma
     XobjectDef def = (XobjectDef)x.getParent();
@@ -59,9 +59,9 @@ public class XACCtranslatePragma {
     
     BlockList newBody = Bcons.emptyBody();
     
-    XMPdevice device = null;
-    XMPlayout layout = null;
-    XMPon on = null;
+    XACCdevice device = null;
+    XACClayout layout = null;
+    XACCon on = null;
     if (clauses != null){
       device = getXACCdevice(clauses);
       layout = getXACClayout(clauses);
@@ -108,8 +108,8 @@ public class XACCtranslatePragma {
     //System.out.print("trans decl end");
   }
   
-  private XMPdevice getXACCdevice(XobjList clauses){
-    XMPdevice onDevice = null;
+  private XACCdevice getXACCdevice(XobjList clauses){
+    XACCdevice onDevice = null;
     
     for(XobjArgs arg = clauses.getArgs(); arg != null; arg = arg.nextArgs()){
       Xobject x = arg.getArg();
@@ -119,7 +119,7 @@ public class XACCtranslatePragma {
       //if(accClause == null) continue;
       if(accClause == ACCpragma.ON_DEVICE){
         String deviceName = x.right().getString();
-        onDevice = (XMPdevice)_globalDecl.getXMPobject(deviceName);
+        onDevice = (XACCdevice)_globalDecl.getXMPobject(deviceName);
         if (onDevice == null) XMP.error(x.getLineNo(), "wrong device in on_device");
         arg.setArg(null);
       }
@@ -151,9 +151,9 @@ public class XACCtranslatePragma {
         }
         
         BlockList newBody = Bcons.emptyBody();
-        XMPdevice device = null;
-        XMPlayout layout = null;
-        XMPon on = null;
+        XACCdevice device = null;
+        XACClayout layout = null;
+        XACCon on = null;
         if (clauses != null){
           device = getXACCdevice((XobjList)clauses, fb);
           layout = getXACClayout((XobjList)clauses);
@@ -207,8 +207,8 @@ public class XACCtranslatePragma {
               try{
                 int dim = on.getCorrespondingDim(loopVarName);
                 if(dim >= 0){
-                  XMPlayout myLayout = on.getLayout();
-                  String layoutSym = XMPlayout.getDistMannerString(myLayout.getDistMannerAt(dim));
+                  XACClayout myLayout = on.getLayout();
+                  String layoutSym = XACClayout.getDistMannerString(myLayout.getDistMannerAt(dim));
                   Ident loopInitId = baseDeviceLoopBody.declLocalIdent("_XACC_loop_init_" + loopVarName, Xtype.intType);
                   Ident loopCondId = baseDeviceLoopBody.declLocalIdent("_XACC_loop_cond_" + loopVarName, Xtype.intType);
                   Ident loopStepId = baseDeviceLoopBody.declLocalIdent("_XACC_loop_step_" + loopVarName, Xtype.intType);
@@ -390,8 +390,8 @@ public class XACCtranslatePragma {
     }
   }
 
-  public XMPdevice getXACCdevice(XobjList clauses, Block block){
-    XMPdevice onDevice = null;
+  public XACCdevice getXACCdevice(XobjList clauses, Block block){
+    XACCdevice onDevice = null;
     
     for(XobjArgs arg = clauses.getArgs(); arg != null; arg = arg.nextArgs()){
       Xobject x = arg.getArg();
@@ -401,7 +401,7 @@ public class XACCtranslatePragma {
       //if(accClause == null) continue;
       if(accClause == ACCpragma.ON_DEVICE){
         String deviceName = x.right().getString();
-        onDevice = (XMPdevice)_globalDecl.getXMPobject(deviceName, block);
+        onDevice = (XACCdevice)_globalDecl.getXMPobject(deviceName, block);
         if (onDevice == null) XMP.error(x.getLineNo(), "wrong device in on_device");
         arg.setArg(null);
       }
@@ -409,8 +409,8 @@ public class XACCtranslatePragma {
     return onDevice;
   }
   
-  public XMPlayout getXACClayout(XobjList clauses){
-    XMPlayout layout = null;
+  public XACClayout getXACClayout(XobjList clauses){
+    XACClayout layout = null;
     Xobject shadow = null;
     
     for(XobjArgs arg = clauses.getArgs(); arg != null; arg = arg.nextArgs()){
@@ -419,7 +419,7 @@ public class XACCtranslatePragma {
       String clauseName = x.left().getString();
       ACCpragma accClause = ACCpragma.valueOf(clauseName);
       if(accClause == ACCpragma.LAYOUT){
-        layout = new XMPlayout((XobjList)x.right());
+        layout = new XACClayout((XobjList)x.right());
         arg.setArg(null);
       }else if(accClause == ACCpragma.SHADOW){
         shadow = (XobjList)x.right();
@@ -434,9 +434,9 @@ public class XACCtranslatePragma {
     return layout;
   }
   
-  public XMPon getXACCon(XobjList clauses, Block b){
+  public XACCon getXACCon(XobjList clauses, Block b){
     //XMPlayout layout = null;
-    XMPon on = null;
+    XACCon on = null;
     
     for(XobjArgs arg = clauses.getArgs(); arg != null; arg = arg.nextArgs()){
       Xobject x = arg.getArg();
@@ -452,7 +452,7 @@ public class XACCtranslatePragma {
           XMP.fatal("no aligned array");
         }
         XACCdeviceArray deviceArray = _globalDecl.getXACCdeviceArray(array.getArg(0).getSym(), b);
-        on = new XMPon(array, deviceArray);
+        on = new XACCon(array, deviceArray);
         arg.setArg(null);
       }
     }
@@ -463,8 +463,8 @@ public class XACCtranslatePragma {
   /*
    * rewrite ACC clauses
    */
-  private XMPdevice rewriteACCClauses(Xobject expr, PragmaBlock pragmaBlock,
-                                      BlockList body, BlockList devLoopBody, Ident devLoopId, XMPdevice onDevice, XMPlayout layout){
+  private XACCdevice rewriteACCClauses(Xobject expr, PragmaBlock pragmaBlock,
+                                      BlockList body, BlockList devLoopBody, Ident devLoopId, XACCdevice onDevice, XACClayout layout){
 
 //    XMPdevice onDevice = null;
 
@@ -551,7 +551,7 @@ public class XACCtranslatePragma {
   }
   
   private Xobject rewriteACCArrayAddr(Xobject arrayAddr, Block block, BlockList body, BlockList deviceLoopBody,
-        Ident deviceLoopCounter, XMPdevice onDevice, XMPlayout layout) throws XMPexception {
+        Ident deviceLoopCounter, XACCdevice onDevice, XACClayout layout) throws XMPexception {
       XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayAddr.getSym(), block);
       XMPcoarray coarray = _globalDecl.getXMPcoarray(arrayAddr.getSym(), block);
 
@@ -588,13 +588,13 @@ public class XACCtranslatePragma {
                   for(int dim = alignedArray.getDim() - 1; dim >= 0; dim--){
                     int distManner = layout.getDistMannerAt(dim);
                     //if(distManner == XMPlayout.DUPLICATION) continue;
-                    String mannerStr = XMPlayout.getDistMannerString(distManner);
+                    String mannerStr = XACClayout.getDistMannerString(distManner);
                     Block splitDeviceArrayBlockCall = _globalDecl.createFuncCallBlock("_XACC_split_layouted_array_" + mannerStr, Xcons.List(layoutedArrayDescId.Ref(), Xcons.IntConstant(dim)));
                     body.add(splitDeviceArrayBlockCall);
 					if(! layout.hasShadow()) continue;
                     int shadowType = layout.getShadowTypeAt(dim);
-                    if(shadowType != XMPlayout.SHADOW_NONE){
-                      String shadowTypeStr = XMPlayout.getShadowTypeString(shadowType);
+                    if(shadowType != XACClayout.SHADOW_NONE){
+                      String shadowTypeStr = XACClayout.getShadowTypeString(shadowType);
 
                       Block setShadowFuncCall = _globalDecl.createFuncCallBlock("_XACC_set_shadow_" + shadowTypeStr, 
                           Xcons.List(layoutedArrayDescId.Ref(), Xcons.IntConstant(dim), layout.getShadowLoAt(dim), layout.getShadowHiAt(dim)));

@@ -3,19 +3,19 @@ package exc.xcalablemp;
 import java.util.HashMap;
 
 public class XACCsymbolTable {
-  private HashMap<String, XMPdevice> _XACCdeviceTable;
+  private HashMap<String, XACCdevice> _XACCdeviceTable;
   private HashMap<String, XACCdeviceArray> _XACCdeviceArrayTable;
   
   public XACCsymbolTable() {
-    _XACCdeviceTable = new HashMap<String, XMPdevice>();
+    _XACCdeviceTable = new HashMap<String, XACCdevice>();
     _XACCdeviceArrayTable = new HashMap<String, XACCdeviceArray>();
   }
 
-  public void putXMPdevice(XMPdevice o) {
+  public void putXMPdevice(XACCdevice o) {
     _XACCdeviceTable.put(o.getName(), o);
   }
 
-  public XMPdevice getXMPdevice(String name) {
+  public XACCdevice getXMPdevice(String name) {
     return _XACCdeviceTable.get(name);
   }
 

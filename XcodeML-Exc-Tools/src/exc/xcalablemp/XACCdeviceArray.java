@@ -3,11 +3,11 @@ package exc.xcalablemp;
 import exc.object.Ident;
 
 public class XACCdeviceArray {
-  private XMPlayout _deviceLayout;
+  private XACClayout _deviceLayout;
   private XMPalignedArray _alignedArray;
   private Ident _descId;
   
-  public XACCdeviceArray(Ident descId, XMPalignedArray alignedArray, XMPlayout layout)
+  public XACCdeviceArray(Ident descId, XMPalignedArray alignedArray, XACClayout layout)
   {
     _alignedArray = alignedArray;
     _deviceLayout = layout;
@@ -17,10 +17,10 @@ public class XACCdeviceArray {
   public String getName(){
     return _alignedArray.getName();
   }
-  public void setLayout(XMPlayout layout){
+  public void setLayout(XACClayout layout){
     _deviceLayout = layout;
   }
-  public XMPlayout getLayout(){
+  public XACClayout getLayout(){
     return _deviceLayout;
   }
   public Ident getDescId(){

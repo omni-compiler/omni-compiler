@@ -51,8 +51,8 @@ public class XACCrewriteACCparallel extends XACCrewriteACCdata{
     try{
       int dim = on.getCorrespondingDim(loopVarName);
       if(dim >= 0){
-        XMPlayout myLayout = on.getLayout();
-        String layoutSym = XMPlayout.getDistMannerString(myLayout.getDistMannerAt(dim));
+        XACClayout myLayout = on.getLayout();
+        String layoutSym = XACClayout.getDistMannerString(myLayout.getDistMannerAt(dim));
         Ident loopInitId = deviceLoop.declLocalIdent("_XACC_loop_init_" + loopVarName, Xtype.intType);
         Ident loopCondId = deviceLoop.declLocalIdent("_XACC_loop_cond_" + loopVarName, Xtype.intType);
         Ident loopStepId = deviceLoop.declLocalIdent("_XACC_loop_step_" + loopVarName, Xtype.intType);

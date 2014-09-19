@@ -4,7 +4,7 @@ import java.util.Vector;
 
 import exc.object.*;
 
-public class XMPlayout {
+public class XACClayout {
   public final static int DUPLICATION = 100;
   public final static int BLOCK       = 101;
   
@@ -20,7 +20,7 @@ public class XMPlayout {
   //private Vector<Xobject>       _sizeVector;
   private boolean hasShadow = false;
   
-  public XMPlayout(XobjList layout) {
+  public XACClayout(XobjList layout) {
     //super(XMPobject.LAYOUT, name, dim, descId);
     _layoutMannerVector = new Vector<Integer>();
     _layoutWidthVector = new Vector<Xobject>();

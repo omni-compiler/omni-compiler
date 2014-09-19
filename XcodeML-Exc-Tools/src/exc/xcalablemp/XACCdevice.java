@@ -13,12 +13,12 @@ import java.util.Vector;
 
 import xcodeml.IXobject;
 
-public class XMPdevice extends XMPobject {
+public class XACCdevice extends XMPobject {
 
   Ident _accDevice;
   Xobject _stride;
 
-  public XMPdevice(String name, Ident descId, Ident deviceRefId, Xobject lower, Xobject upper, Xobject stride) {
+  public XACCdevice(String name, Ident descId, Ident deviceRefId, Xobject lower, Xobject upper, Xobject stride) {
     super(XMPobject.DEVICE, name, 1, descId);
     _accDevice = deviceRefId;
     addLower(lower);
@@ -114,7 +114,7 @@ public class XMPdevice extends XMPobject {
     }
 
     // declare device object
-    XMPdevice deviceObject = new XMPdevice(deviceName, deviceDescId, inheritedDeviceId, lower, upper, stride);
+    XACCdevice deviceObject = new XACCdevice(deviceName, deviceDescId, inheritedDeviceId, lower, upper, stride);
     if (isLocalPragma){
       localXMPsymbolTable.putXMPobject(deviceObject);
     }
