@@ -443,8 +443,8 @@ public class XMPglobalDecl {
   public void addXACCconstructor(Xobject x){
     _xaccGlobalConstructorFuncBody.add(x);
   }
-  public void addXACCdestructor(Xobject x){
-    _xaccGlobalDestructorFuncBody.add(x);
+  public void insertXACCdestructor(Xobject x){
+    _xaccGlobalDestructorFuncBody.insert(x);
   }
   
   private void setupXACCGlobalConstructor(){

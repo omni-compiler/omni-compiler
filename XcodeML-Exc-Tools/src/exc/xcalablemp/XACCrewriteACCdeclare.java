@@ -57,7 +57,7 @@ public class XACCrewriteACCdeclare extends XACCrewriteACCdata{
       
       //_globalDecl.addXACCconstructor(beginDeviceLoopBlock.toXobject());
       _globalDecl.addXACCconstructor(mainBody.toXobject());
-      _globalDecl.addXACCdestructor(endDeviceLoopBlock.toXobject());
+      _globalDecl.insertXACCdestructor(endDeviceLoopBlock.toXobject());
       
       return null;
     }else{

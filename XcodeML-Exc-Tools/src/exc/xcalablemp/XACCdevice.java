@@ -108,9 +108,13 @@ public class XACCdevice extends XMPobject {
       XMPlocalDecl.addConstructorCall2("_XACC_init_device", deviceArgs, globalDecl, parentBlock);
       XMPlocalDecl.insertDestructorCall2("_XACC_finalize_device", Xcons.List(deviceDescId.Ref()),
 					 globalDecl, parentBlock);
+      
     }
     else {
-      globalDecl.addGlobalInitFuncCall("_XACC_init_device", deviceArgs);
+      //globalDecl.addGlobalInitFuncCall("_XACC_init_device", deviceArgs);
+      Ident funcId = globalDecl.declExternFunc("_XACC_init_device");
+      globalDecl.addXACCconstructor(Xcons.List(Xcode.EXPR_STATEMENT, funcId.Call(deviceArgs)));
+      
     }
 
     // declare device object
