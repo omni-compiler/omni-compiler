@@ -405,10 +405,10 @@ static CExpr* parse_ACC_clauses()
 	    pg_get_token();
 	    if ((v = parse_XACC_layout_clause_arg()) == NULL) goto syntax_err;
 	    c = ACC_PG_LIST(XACC_LAYOUT, v);
-	} else if (s_useXACC && PG_IS_IDENT("on")){
-	    pg_get_token();
-	    if((v = parse_ACC_namelist()) == NULL) goto syntax_err;
-	    c = ACC_PG_LIST(XACC_ON, v);
+	/* } else if (s_useXACC && PG_IS_IDENT("on")){ */
+	/*     pg_get_token(); */
+	/*     if((v = parse_ACC_namelist()) == NULL) goto syntax_err; */
+	/*     c = ACC_PG_LIST(XACC_ON, v); */
 	} else if (s_useXACC && PG_IS_IDENT("shadow")){
 	    pg_get_token();
 	    if((v = parse_XACC_shadow_clause_arg()) == NULL) goto syntax_err;
@@ -600,11 +600,12 @@ CExpr *parse_XACC_layout_fmt_list()
     CExpr *v;
 
     list = EMPTY_LIST;
-    if(pg_tok != '(') {
-	addFatal(NULL,"parse_ACC_dist_fmt_list: first token= '('");
-    }
+    /* if(pg_tok != '(') { */
+    /* 	addFatal(NULL,"parse_ACC_dist_fmt_list: first token= '('"); */
+    /* } */
     
-    pg_get_token();
+    /* pg_get_token(); */
+
     while(1){
 	// parse <dist-format> := { * | block }
 	if(pg_tok != '[') goto syntax_err;
@@ -616,7 +617,10 @@ CExpr *parse_XACC_layout_fmt_list()
 	} else if (PG_IS_IDENT("block")) {
 	    pg_get_token();
 	    v = ACC_PG_LIST(XACC_LAYOUT_BLOCK,NULL);
-	} else goto syntax_err;
+	} else {
+	    v = pg_tok_val;
+	    pg_get_token();
+	}
 
 	list = exprListAdd(list, v);
 
@@ -640,17 +644,27 @@ CExpr *parse_XACC_layout_fmt_list()
 
 CExpr* parse_XACC_layout_clause_arg() 
 {
-    CExpr* layoutFormatList;
+    CExpr* layoutFormatList = NULL;
+    CExpr* v = NULL;
+    CExpr* list = EMPTY_LIST;
 
     // parse (<dist-format>, ...)
     if (pg_tok != '('){
 	addError(NULL,"'(' is expected after 'layout' clause");
 	goto err;
-    } else {
-	layoutFormatList = parse_XACC_layout_fmt_list();
+    }
+    pg_get_token();
+
+    if (pg_tok != '['){
+	v = pg_tok_val;
+	list = exprListAdd(list, v);
+	pg_get_token();
     }
 
-    return layoutFormatList;
+    layoutFormatList = parse_XACC_layout_fmt_list();
+    list = exprListAdd(list, layoutFormatList);
+
+    return list;
 
   err:
     return NULL;

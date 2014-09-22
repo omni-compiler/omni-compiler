@@ -22,7 +22,7 @@ public class XACCrewriteACCdata {
   private XMPsymbolTable localSymbolTable;
   protected XACCdevice device = null;
   protected XACClayout layout = null;
-  protected XACCon on = null;
+  protected XACClayoutRef on = null;
   static final String XACC_DESC_PREFIX = "_XACC_DESC_";
   protected Block replaceBlock;
   
@@ -39,7 +39,7 @@ public class XACCrewriteACCdata {
     if (clauses != null){
       device = trans.getXACCdevice((XobjList)clauses, pb);
       layout = trans.getXACClayout((XobjList)clauses);
-      on = trans.getXACCon((XobjList)clauses, pb);
+      on = trans.getXACClayoutRef((XobjList)clauses, pb);//trans.getXACCon((XobjList)clauses, pb);
     }
   }
   

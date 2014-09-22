@@ -61,7 +61,7 @@ public class XACCtranslatePragma {
     
     XACCdevice device = null;
     XACClayout layout = null;
-    XACCon on = null;
+    XACClayoutRef on = null;
     if (clauses != null){
       device = getXACCdevice(clauses);
       layout = getXACClayout(clauses);
@@ -153,11 +153,11 @@ public class XACCtranslatePragma {
         BlockList newBody = Bcons.emptyBody();
         XACCdevice device = null;
         XACClayout layout = null;
-        XACCon on = null;
+        XACClayoutRef on = null;
         if (clauses != null){
           device = getXACCdevice((XobjList)clauses, fb);
           layout = getXACClayout((XobjList)clauses);
-          on = getXACCon((XobjList)clauses, block);
+          on = getXACClayoutRef((XobjList)clauses, block); //getXACCon((XobjList)clauses, block);
 
           if(!newBody.isEmpty() && !XMP.XACC){
             bIter.setBlock(Bcons.COMPOUND(newBody));
@@ -419,9 +419,15 @@ public class XACCtranslatePragma {
       String clauseName = x.left().getString();
       ACCpragma accClause = ACCpragma.valueOf(clauseName);
       if(accClause == ACCpragma.LAYOUT){
-        layout = new XACClayout((XobjList)x.right());
-        arg.setArg(null);
-      }else if(accClause == ACCpragma.SHADOW){
+        XobjList layoutArgs = (XobjList)x.right();
+        XobjList layoutList;
+        XACCdeviceArray layoutedArray = null;
+        if(layoutArgs.Nargs() == 1){
+          layoutList = (XobjList)layoutArgs.getArg(0);
+          layout = new XACClayout(layoutList);
+          arg.setArg(null);
+        }
+      }else if(accClause == ACCpragma.SHADOW && layout != null){
         shadow = (XobjList)x.right();
         arg.setArg(null);
       }
@@ -434,9 +440,38 @@ public class XACCtranslatePragma {
     return layout;
   }
   
-  public XACCon getXACCon(XobjList clauses, Block b){
+  public XACClayoutRef getXACClayoutRef(XobjList clauses, Block b){
+    XACClayoutRef layoutRef = null;
+    
+    for(XobjArgs arg = clauses.getArgs(); arg != null; arg = arg.nextArgs()){
+      Xobject x = arg.getArg();
+      if(x == null) continue;
+      String clauseName = x.left().getString();
+      ACCpragma accClause = ACCpragma.valueOf(clauseName);
+      if(accClause == ACCpragma.LAYOUT){
+        XobjList layoutArgs = (XobjList)x.right();
+        XobjList layoutList;
+        if(layoutArgs.Nargs() == 2){
+          layoutList = (XobjList)layoutArgs.getArg(1);
+          
+          XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(layoutArgs.getArg(0).getSym());
+          if(alignedArray == null){
+            XMP.fatal("no aligned array");
+          }
+          XACCdeviceArray layoutedArray = _globalDecl.getXACCdeviceArray(layoutArgs.getArg(0).getSym(), b);
+          layoutRef = new XACClayoutRef(layoutList, layoutedArray);
+        }
+
+        arg.setArg(null);
+      }
+    }
+    
+    return layoutRef;
+  }
+  
+  public XACClayoutRef getXACCon(XobjList clauses, Block b){
     //XMPlayout layout = null;
-    XACCon on = null;
+    XACClayoutRef on = null;
     
     for(XobjArgs arg = clauses.getArgs(); arg != null; arg = arg.nextArgs()){
       Xobject x = arg.getArg();
@@ -452,7 +487,7 @@ public class XACCtranslatePragma {
           XMP.fatal("no aligned array");
         }
         XACCdeviceArray deviceArray = _globalDecl.getXACCdeviceArray(array.getArg(0).getSym(), b);
-        on = new XACCon(array, deviceArray);
+        on = new XACClayoutRef(array, deviceArray);
         arg.setArg(null);
       }
     }

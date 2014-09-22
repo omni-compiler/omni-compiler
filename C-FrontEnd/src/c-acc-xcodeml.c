@@ -99,7 +99,7 @@ outx_XACC_Clause_Args(FILE *fp, int indent, CExprOfList* args)
 	      outxPrint(fp, indent1+1, "<intConstant type=\"int\">202<!-- FULL --></intConstant>\n");
 	      break;
 	    }
-	    outx_XACC_Clause_Args(fp, indent1+1, (CExprOfList*)arg);
+	    //outx_XACC_Clause_Args(fp, indent1+1, (CExprOfList*)arg);
 	    outxPrint(fp, indent1 , "</list>\n");
 	  }
 	}else{

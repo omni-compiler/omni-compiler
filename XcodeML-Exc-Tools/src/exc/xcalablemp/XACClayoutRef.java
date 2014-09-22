@@ -5,7 +5,7 @@ import java.util.Vector;
 import exc.block.*;
 import exc.object.*;
 
-public class XACCon {
+public class XACClayoutRef {
   public final static int DUPLICATION = 100;
   public final static int BLOCK       = 101;
   
@@ -13,7 +13,7 @@ public class XACCon {
   //private XMPalignedArray _alignedArray;
   private Vector<Xobject>     _onVector;
   private XACCdeviceArray _deviceArray;
-  public XACCon(XobjList arrayRef, XACCdeviceArray deviceArray) {
+  public XACClayoutRef(XobjList layoutList, XACCdeviceArray deviceArray) {
     _onVector = new Vector<Xobject>();
     //_descId = 
     //_alignedArray = alignedArray;
@@ -22,12 +22,8 @@ public class XACCon {
     }
     _deviceArray = deviceArray;
     
-    XobjArgs arg = arrayRef.getArgs();
-    Xobject arrayname = arg.getArg();
-    arg = arg.nextArgs();
     
-    
-    for(;arg != null; arg = arg.nextArgs()){
+    for(XobjArgs arg = layoutList.getArgs();arg != null; arg = arg.nextArgs()){
       _onVector.add(arg.getArg());
     }    
   }
