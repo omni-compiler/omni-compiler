@@ -53,62 +53,77 @@ public class XACCtranslatePragma {
   }
   
   private void translateDeclare(Xobject x){
+    
+    XACCrewriteACCdeclare rewriter = new XACCrewriteACCdeclare(_globalDecl, x);
+    rewriter.makeReplaceBlock();
+    
+    //remove pragma
+    XobjectDef def = (XobjectDef)x.getParent();
+    Iterator<XobjectDef> iter = _globalDecl.getEnv().iterator();
+    while(iter.hasNext()){
+      XobjectDef d = iter.next();
+      if(def == d){
+        iter.remove();
+      }
+    }
+    return;
+    
     //System.out.println("trans decl");
-    XobjList clauses = (XobjList)x.getArg(1);
-    ACCpragma pragma = ACCpragma.DECLARE;
-    
-    BlockList newBody = Bcons.emptyBody();
-    
-    XACCdevice device = null;
-    XACClayout layout = null;
-    XACClayoutRef on = null;
-    if (clauses != null){
-      device = getXACCdevice(clauses);
-      layout = getXACClayout(clauses);
-    }
-    
-    if(XMP.XACC){
-      Ident fid = _globalDecl.declExternFunc("acc_set_device_num");
-      
-      //base
-      BlockList baseBody = Bcons.emptyBody();
-      BlockList baseDeviceLoopBody = Bcons.emptyBody();
-      Ident baseDeviceLoopVarId = baseBody.declLocalIdent("_XACC_device_" + device.getName(), Xtype.intType);
-      baseBody.add(Bcons.FORall(baseDeviceLoopVarId.Ref(), device.getLower(), device.getUpper(),
-          device.getStride(), Xcode.LOG_LE_EXPR, baseDeviceLoopBody));
-      baseDeviceLoopBody.add(fid.Call(Xcons.List(baseDeviceLoopVarId.Ref(), device.getDeviceRef())));
-      rewriteACCClauses(clauses, null, newBody, baseDeviceLoopBody, baseDeviceLoopVarId, device, layout);
-      
-
-      baseDeviceLoopBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, ACCpragma.DECLARE.toString(), clauses, null));
-      
-      BlockList beginBody = baseBody.copy();
-      BlockList endBody = baseBody.copy();
-
-      rewriteXACCPragmaData(beginBody, true);
-      rewriteXACCPragmaData(endBody, false);
-
-      _globalDecl.addXACCconstructor(beginBody.toXobject());
-      _globalDecl.addXACCdestructor(endBody.toXobject());
-      
-//      Ident initFuncId = _globalDecl.declGlobalIdent("_XACC_init", Xtype.Function(Xtype.voidType));
-//      XobjectDef initFuncDef = XobjectDef.Func(initFuncId, Xcons.List(), null, beginBody.toXobject());
-//      _globalDecl.getEnv().add(initFuncDef);
-//      _globalDecl.addGlobalInitFuncCall("_XACC_init", Xcons.List());
+//    XobjList clauses = (XobjList)x.getArg(1);
+//    ACCpragma pragma = ACCpragma.DECLARE;
+//    
+//    BlockList newBody = Bcons.emptyBody();
+//    
+//    XACCdevice device = null;
+//    XACClayout layout = null;
+//    XACClayoutRef on = null;
+//    if (clauses != null){
+//      device = getXACCdevice(clauses);
+//      layout = getXACClayout(clauses);
+//    }
+//    
+//    if(XMP.XACC){
+//      Ident fid = _globalDecl.declExternFunc("acc_set_device_num");
 //      
-//      Ident finalizeFuncId = _globalDecl.declGlobalIdent("_XACC_finalize", Xtype.Function(Xtype.voidType));
-//      XobjectDef finalizeFuncDef = XobjectDef.Func(finalizeFuncId, Xcons.List(), null, endBody.toXobject());
-//      _globalDecl.getEnv().add(finalizeFuncDef);
-//      _globalDecl.addGlobalFinalizeFuncCall("_XACC_finalize", Xcons.List());
-    }else{
-      //do anything
-    }
-    x.setArg(1, Xcons.List());
-    
-    //System.out.print("trans decl end");
+//      //base
+//      BlockList baseBody = Bcons.emptyBody();
+//      BlockList baseDeviceLoopBody = Bcons.emptyBody();
+//      Ident baseDeviceLoopVarId = baseBody.declLocalIdent("_XACC_device_" + device.getName(), Xtype.intType);
+//      baseBody.add(Bcons.FORall(baseDeviceLoopVarId.Ref(), device.getLower(), device.getUpper(),
+//          device.getStride(), Xcode.LOG_LE_EXPR, baseDeviceLoopBody));
+//      baseDeviceLoopBody.add(fid.Call(Xcons.List(baseDeviceLoopVarId.Ref(), device.getDeviceRef())));
+//      rewriteACCClauses(clauses, null, newBody, baseDeviceLoopBody, baseDeviceLoopVarId, device, layout);
+//      
+//
+//      baseDeviceLoopBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, ACCpragma.DECLARE.toString(), clauses, null));
+//      
+//      BlockList beginBody = baseBody.copy();
+//      BlockList endBody = baseBody.copy();
+//
+//      rewriteXACCPragmaData(beginBody, true);
+//      rewriteXACCPragmaData(endBody, false);
+//
+//      _globalDecl.addXACCconstructor(beginBody.toXobject());
+//      _globalDecl.addXACCdestructor(endBody.toXobject());
+//      
+////      Ident initFuncId = _globalDecl.declGlobalIdent("_XACC_init", Xtype.Function(Xtype.voidType));
+////      XobjectDef initFuncDef = XobjectDef.Func(initFuncId, Xcons.List(), null, beginBody.toXobject());
+////      _globalDecl.getEnv().add(initFuncDef);
+////      _globalDecl.addGlobalInitFuncCall("_XACC_init", Xcons.List());
+////      
+////      Ident finalizeFuncId = _globalDecl.declGlobalIdent("_XACC_finalize", Xtype.Function(Xtype.voidType));
+////      XobjectDef finalizeFuncDef = XobjectDef.Func(finalizeFuncId, Xcons.List(), null, endBody.toXobject());
+////      _globalDecl.getEnv().add(finalizeFuncDef);
+////      _globalDecl.addGlobalFinalizeFuncCall("_XACC_finalize", Xcons.List());
+//    }else{
+//      //do anything
+//    }
+//    x.setArg(1, Xcons.List());
+//    
+//    //System.out.print("trans decl end");
   }
   
-  private XACCdevice getXACCdevice(XobjList clauses){
+  public XACCdevice getXACCdevice(XobjList clauses){
     XACCdevice onDevice = null;
     
     for(XobjArgs arg = clauses.getArgs(); arg != null; arg = arg.nextArgs()){
@@ -148,6 +163,13 @@ public class XACCtranslatePragma {
           Block replaceBlock = rewriter.makeReplaceBlock();
           bIter.setBlock(replaceBlock);
           continue;
+        }else if(pragma == ACCpragma.UPDATE){
+          XACCrewriteACCdata rewriter = new XACCrewriteACCdata(_globalDecl, pb);
+          Block replaceBlock = rewriter.makeReplaceBlock();
+          bIter.setBlock(replaceBlock);
+          continue;
+        }else if(pragma == ACCpragma.DECLARE){
+          XMP.fatal("local declare is not supported yet");
         }
         
         BlockList newBody = Bcons.emptyBody();

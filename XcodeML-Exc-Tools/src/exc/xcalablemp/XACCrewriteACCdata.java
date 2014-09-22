@@ -25,6 +25,12 @@ public class XACCrewriteACCdata {
   protected XACClayoutRef on = null;
   static final String XACC_DESC_PREFIX = "_XACC_DESC_";
   protected Block replaceBlock;
+  protected Boolean isGlobal = false;
+  
+  public XACCrewriteACCdata()
+  {
+    
+  }
   
   public XACCrewriteACCdata(XMPglobalDecl decl, PragmaBlock pb) {
     this.pb = pb;
@@ -89,6 +95,12 @@ public class XACCrewriteACCdata {
         createArgs.mergeList((XobjList)clauseArg);
         updateHostArgs.mergeList((XobjList)clauseArg);
         deleteArgs.mergeList((XobjList)clauseArg);
+        break;
+      case HOST:
+        updateHostArgs.mergeList((XobjList)clauseArg);
+        break;
+      case DEVICE:
+        updateDeviceArgs.mergeList((XobjList)clauseArg);
         break;
       default:
         continue;
@@ -193,15 +205,16 @@ public class XACCrewriteACCdata {
         
         String arrayName = arrayAddr.getSym();
         XACCdeviceArray layoutedArray = null;
-        layoutedArray = _globalDecl.getXACCdeviceArray(arrayName);
-        if(layoutedArray == null && pb != null){
-          layoutedArray = _globalDecl.getXACCdeviceArray(arrayName, pb);
-        }
-        if(layoutedArray == null){
-          layoutedArray = localSymbolTable.getXACCdeviceArray(arrayName);
-        }
+//        layoutedArray = _globalDecl.getXACCdeviceArray(arrayName);
+//        if(layoutedArray == null && pb != null){
+//          layoutedArray = _globalDecl.getXACCdeviceArray(arrayName, pb);
+//        }
+//        if(layoutedArray == null){
+//          layoutedArray = localSymbolTable.getXACCdeviceArray(arrayName);
+//        }
+        layoutedArray = getXACClayoutedArray(arrayName);
         if(layoutedArray == null && layout != null){
-          Ident layoutedArrayDescId = mainBody.declLocalIdent(XACC_DESC_PREFIX + arrayName, Xtype.voidPtrType);
+          Ident layoutedArrayDescId = declIdent(XACC_DESC_PREFIX + arrayName, Xtype.voidPtrType);
           Block initDeviceArrayFuncCall = _globalDecl.createFuncCallBlock("_XACC_init_layouted_array", Xcons.List(layoutedArrayDescId.getAddr(), descId.Ref(), device.getDescId().Ref()));
           add(initDeviceArrayFuncCall);
           for(int dim = alignedArray.getDim() - 1; dim >= 0; dim--){
@@ -223,11 +236,12 @@ public class XACCrewriteACCdata {
           add(calcDeviceArraySizeCall);
 
           layoutedArray = new XACCdeviceArray(layoutedArrayDescId, alignedArray, layout);
-          if(pb != null){
-            localSymbolTable.putXACCdeviceArray(layoutedArray);
-          }else{            
-            _globalDecl.putXACCdeviceArray(layoutedArray);
-          }
+//          if(pb != null){
+//            localSymbolTable.putXACCdeviceArray(layoutedArray);
+//          }else{            
+//            _globalDecl.putXACCdeviceArray(layoutedArray);
+//          }
+          putXACClayoutedArray(layoutedArray);
         }
 
         Ident layoutedArrayDescId = layoutedArray.getDescId(); 
@@ -281,6 +295,40 @@ public class XACCrewriteACCdata {
       return arrayRef;
     } else{ // no execute
       return arrayAddr;
+    }
+    
+  }
+  
+  protected XACCdeviceArray getXACClayoutedArray(String arrayName)
+  {
+    XACCdeviceArray layoutedArray = null;
+    if(! isGlobal){
+      layoutedArray = localSymbolTable.getXACCdeviceArray(arrayName);
+      if(layoutedArray == null){
+        layoutedArray = _globalDecl.getXACCdeviceArray(arrayName, pb);
+      }
+    }
+    
+    if(layoutedArray == null){
+      layoutedArray = _globalDecl.getXACCdeviceArray(arrayName);
+    }
+    return layoutedArray;
+  }
+  
+  protected void putXACClayoutedArray(XACCdeviceArray layoutedArray)
+  {
+    if(isGlobal){
+      _globalDecl.putXACCdeviceArray(layoutedArray);
+    }else{            
+      localSymbolTable.putXACCdeviceArray(layoutedArray);
+    }
+  }
+  
+  protected Ident declIdent(String name, Xtype t){
+    if(isGlobal){
+      return _globalDecl.declGlobalIdent(name, t);
+    }else{
+      return mainBody.declLocalIdent(name, t);
     }
   }
   
