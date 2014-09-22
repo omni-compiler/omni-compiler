@@ -31,17 +31,22 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, const size_t co
 {
   char **each_addr;  // head address of a local array on each node
 
+  fprintf(stderr, "    herein _XMP_gasnet_malloc_do(%p, %p, %lld)\n", coarray, addr, (long long)coarray_size);
   each_addr = (char **)_XMP_alloc(sizeof(char *) * _XMP_world_size);
 
-  for(int i=0;i<_XMP_world_size;i++)
+  for(int i=0;i<_XMP_world_size;i++) {
     each_addr[i] = (char *)(_xmp_gasnet_buf[i]) + _xmp_coarray_shift;
+    fprintf(stderr, "     i=%d, _xmp_gasnet_buf[i]=%p, each_addr[i]=%p\n", i, _xmp_gasnet_buf[i], each_addr[i]);
+  }
 
+  fprintf(stderr, "     coarray_size=%llu, _XMP_GASNET_ALIGNMENT=%llu\n", (long long unsigned)coarray_size, (long long unsigned)_XMP_GASNET_ALIGNMENT);
   if(coarray_size % _XMP_GASNET_ALIGNMENT == 0)
     _xmp_coarray_shift += coarray_size;
   else{
     _xmp_coarray_shift += ((coarray_size / _XMP_GASNET_ALIGNMENT) + 1) * _XMP_GASNET_ALIGNMENT;
   }
   
+  fprintf(stderr, "     _xmp_coarray_shift=%llu, _xmp_heap_size=%llu\n", (long long unsigned)_xmp_coarray_shift, (long long unsigned)_xmp_heap_size);
   if(_xmp_coarray_shift > _xmp_heap_size){
     if(_XMP_world_rank == 0){
       fprintf(stderr, "[ERROR] Cannot allocate coarray. Heap memory size of corray is too small.\n");
@@ -53,6 +58,7 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, const size_t co
 
   coarray->addr = each_addr;
   *addr = each_addr[_XMP_world_rank];
+  fprintf(stderr, "    outof  _XMP_gasnet_malloc_do(%p, %p, %lld)\n", coarray, addr, (long long)coarray_size);
 }
 
 void _XMP_gasnet_initialize(int argc, char **argv, const size_t xmp_heap_size, const size_t xmp_stride_size)

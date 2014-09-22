@@ -11,6 +11,7 @@ int _XMPF_running = 0;
 
 void _XMP_init(int argc, char** argv)
 {
+  fprintf(stdout, "inside _XMP_init\n");
   if (!_XMP_runtime_working) {
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &_XMP_world_rank);
@@ -24,9 +25,11 @@ void _XMP_init(int argc, char** argv)
     _XMP_init_tca();
 #endif
   }
+  fprintf(stdout, "mid _XMP_init\n");
   _XMP_init_world(NULL, NULL);
   _XMP_runtime_working = _XMP_N_INT_TRUE;
   _XMP_check_reflect_type();
+  fprintf(stdout, "exit  _XMP_init\n");
 }
 
 void _XMP_finalize(int return_val)

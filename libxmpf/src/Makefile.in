@@ -134,7 +134,8 @@ am_libxmpf_a_OBJECTS = xmpf_array.$(OBJEXT) xmpf_gcomm.$(OBJEXT) \
 	xmpf_gmove.$(OBJEXT) xmpf_index.$(OBJEXT) xmpf_lib.$(OBJEXT) \
 	xmpf_loop.$(OBJEXT) xmpf_misc.$(OBJEXT) xmpf_nodes.$(OBJEXT) \
 	xmpf_pack.$(OBJEXT) xmpf_reflect.$(OBJEXT) xmpf_task.$(OBJEXT) \
-	xmpf_template.$(OBJEXT)
+	xmpf_template.$(OBJEXT) xmpf_coarray.$(OBJEXT) \
+	xmpf_coarray_wrap.$(OBJEXT)
 libxmpf_a_OBJECTS = $(am_libxmpf_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -168,6 +169,21 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
+FCCOMPILE = $(FC) $(AM_FCFLAGS) $(FCFLAGS)
+LTFCCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(FC) $(AM_FCFLAGS) $(FCFLAGS)
+AM_V_FC = $(am__v_FC_@AM_V@)
+am__v_FC_ = $(am__v_FC_@AM_DEFAULT_V@)
+am__v_FC_0 = @echo "  FC      " $@;
+am__v_FC_1 = 
+FCLD = $(FC)
+FCLINK = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(FCLD) $(AM_FCFLAGS) $(FCFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_FCLD = $(am__v_FCLD_@AM_V@)
+am__v_FCLD_ = $(am__v_FCLD_@AM_DEFAULT_V@)
+am__v_FCLD_0 = @echo "  FCLD    " $@;
+am__v_FCLD_1 = 
 SOURCES = $(libxmpf_a_SOURCES)
 DIST_SOURCES = $(libxmpf_a_SOURCES)
 am__can_run_installinfo = \
@@ -486,7 +502,7 @@ lib_LIBRARIES = libxmpf.a
 libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_array.c xmpf_gcomm.c \
                     xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c \
                     xmpf_nodes.c xmpf_pack.c xmpf_reflect.c \
-                    xmpf_task.c xmpf_template.c
+                    xmpf_task.c xmpf_template.c xmpf_coarray.c xmpf_coarray_wrap.f90
 
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS)
@@ -495,7 +511,7 @@ LINK = $(CCLD) $(AM_CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .lo .o .obj
+.SUFFIXES: .c .f90 .lo .o .obj
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -577,6 +593,15 @@ distclean-compile:
 
 .c.lo:
 	$(AM_V_CC)$(LTCOMPILE) -c -o $@ $<
+
+.f90.o:
+	$(AM_V_FC)$(FCCOMPILE) -c -o $@ $<
+
+.f90.obj:
+	$(AM_V_FC)$(FCCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+.f90.lo:
+	$(AM_V_FC)$(LTFCCOMPILE) -c -o $@ $<
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -789,6 +814,9 @@ uninstall-am: uninstall-libLIBRARIES
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags tags-am uninstall uninstall-am uninstall-libLIBRARIES
 
+
+xmpf_coarray_wrap.o: xmpf_coarray_wrap.f90
+	@BEFC@ @BEFC_OPTION@ -c xmpf_coarray_wrap.f90
 
 xmpf_main.o: xmpf_main.f
 	@BEFC@ @BEFC_OPTION@ -c xmpf_main.f

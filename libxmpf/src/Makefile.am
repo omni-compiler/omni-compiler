@@ -11,11 +11,14 @@ lib_LIBRARIES     = libxmpf.a
 libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_array.c xmpf_gcomm.c \
                     xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c \
                     xmpf_nodes.c xmpf_pack.c xmpf_reflect.c \
-                    xmpf_task.c xmpf_template.c
+                    xmpf_task.c xmpf_template.c xmpf_coarray.c xmpf_coarray_wrap.f90
 
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS)
 LINK = $(CCLD) $(AM_CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+
+xmpf_coarray_wrap.o: xmpf_coarray_wrap.f90
+	@BEFC@ @BEFC_OPTION@ -c xmpf_coarray_wrap.f90
 
 xmpf_main.o: xmpf_main.f
 	@BEFC@ @BEFC_OPTION@ -c xmpf_main.f
