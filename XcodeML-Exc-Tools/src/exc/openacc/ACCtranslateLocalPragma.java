@@ -45,7 +45,7 @@ public class ACCtranslateLocalPragma {
     case EXIT_DATA:
       translateData(pb); break;
     case HOST_DATA:
-      //translateHostData(pb); 
+      translateHostData(pb); 
       break;
     case LOOP: break;
     case CACHE:
@@ -94,6 +94,11 @@ public class ACCtranslateLocalPragma {
   
   private void translateWait(PragmaBlock pb) throws ACCexception{
     ACCtranslateWait translator = new ACCtranslateWait(pb);
+    translator.translate();
+  }
+  
+  private void translateHostData(PragmaBlock pb) throws ACCexception{
+    ACCtranslateHostData translator = new ACCtranslateHostData(pb);
     translator.translate();
   }
 }

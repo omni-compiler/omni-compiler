@@ -129,8 +129,11 @@ public class ACCrewritePragma implements XobjectDefVisitor{
             if(info.getPragma() == ACCpragma.HOST_DATA){
               ACCtranslateHostData hostdata = new ACCtranslateHostData(pb);
               hostdata.rewrite();
-              Block newBlock = Bcons.COMPOUND(pb.getBody());
-              pb.replace(newBlock);
+              //Block newBlock = Bcons.COMPOUND(pb.getBody());
+              BlockList newBody = Bcons.emptyBody(info.getIdList(),info.getDeclList());
+              if(info.getBeginBlock() != null) newBody.add(info.getBeginBlock());
+              newBody.add(Bcons.COMPOUND(pb.getBody()));
+              pb.replace(Bcons.COMPOUND(newBody));
             }else if(info.getPragma() == ACCpragma.DECLARE){
               ACCtranslateDeclare declare = new ACCtranslateDeclare(pb);
               declare.rewrite();

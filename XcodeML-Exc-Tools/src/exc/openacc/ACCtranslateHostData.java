@@ -14,6 +14,7 @@ public class ACCtranslateHostData {
   private List<Block> copyinBlockList;
   private List<Block> copyoutBlockList;
   private List<Block> finalizeBlockList;
+  private XobjList idList;
 
   ACCtranslateHostData(PragmaBlock pb){
     this.pb = pb;
@@ -25,15 +26,54 @@ public class ACCtranslateHostData {
     copyinBlockList = new ArrayList<Block>();
     copyoutBlockList = new ArrayList<Block>();
     finalizeBlockList = new ArrayList<Block>();
+    idList = Xcons.IDList();
   }
   
   public void translate() throws ACCexception{
-    if(ACC.debugFlag){
-      System.out.println("translate host_data");
+    ACC.debug("translate host_data");
+    
+    Iterator<ACCvar> iter = hostDataInfo.getVars();
+    while(iter.hasNext()){
+      ACCvar var = iter.next();
+      Ident devicePtrId = hostDataInfo.getDevicePtr(var.getName());
+      if(devicePtrId != null) continue;
+      String varName = var.getName();
+      Xobject addrObj;
+      try{
+        addrObj = var.getAddress();
+        devicePtrId = Ident.Local(ACC.DEVICE_PTR_PREFIX + varName, Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType));
+        Ident hostDesc = Ident.Local(ACC.DESCRIPTOR_PREFIX + varName, Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType));
+        var.setDevicePtr(devicePtrId);
+        var.setHostDesc(hostDesc);
+
+        idList.add(devicePtrId);
+        idList.add(hostDesc);
+
+        //setup array dim
+        Xtype varType = var.getId().Type();
+        Xtype elementType = var.getElementType();
+        int dim = var.getDim();
+
+        XobjList lowerList = Xcons.List();
+        XobjList lengthList = Xcons.List();
+        for(Xobject x : var.getSubscripts()){
+          lowerList.add(x.left());
+          lengthList.add(x.right());
+        }
+
+        XobjList initArgs = Xcons.List(hostDesc.getAddr(), devicePtrId.getAddr(), addrObj, Xcons.SizeOf(elementType), Xcons.IntConstant(dim));
+        //initArgs.mergeList(suffixArgs);
+        String initFuncName = ACC.FIND_DATA_FUNC_NAME;
+        Block initializeBlock = ACCutil.createFuncCallBlockWithArrayRange(initFuncName, initArgs, Xcons.List(lowerList, lengthList));
+        initBlockList.add(initializeBlock);
+      }catch(ACCexception e){
+        ACC.fatal(e.getMessage());
+      }
     }
-    
-    //if(hostDataInfo.isDisabled()) return;
-    
+    hostDataInfo.setIdList(idList);
+    BlockList initBlockBody = Bcons.emptyBody();
+    for(Block b: initBlockList) initBlockBody.add(b);
+    hostDataInfo.setBeginBlock(Bcons.COMPOUND(initBlockBody));
   }
   
   public void rewrite(){
@@ -45,7 +85,8 @@ public class ACCtranslateHostData {
   
  private void rewriteVar(ACCvar var){
     String hostName = var.getName();
-    Xobject deviceAddr = hostDataInfo.getDevicePtr(hostName).Ref();
+    Ident devicePtrId = hostDataInfo.getDevicePtr(hostName);
+    Xobject deviceAddr = devicePtrId.Ref();
 
     BasicBlockExprIterator iter = new BasicBlockExprIterator(pb.getBody());
     for (iter.init(); !iter.end(); iter.next()) {

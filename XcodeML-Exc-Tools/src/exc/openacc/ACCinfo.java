@@ -427,8 +427,10 @@ public class ACCinfo {
       break;
       
     case USE_DEVICE:
-      if(! isVarAllocated(varName)){
-        throw new ACCexception("'" + varName + "' is not allocated");
+      if(ACC.VERSION < 20){
+        if(! isVarAllocated(varName)){
+          throw new ACCexception("'" + varName + "' is not allocated");
+        }
       }
       break;
       
