@@ -385,18 +385,56 @@ void _XACC_reflect_init(_XACC_arrays_t *arrays_desc)
     }
   }
 }
-/*
-void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
-  int numDevice = arrays_desc->deviceNum;
-  int dev;
-  for(dev=0; dev < deviceNum; dev++){
-    _XACC_array_t* device_array = &(array_desc->device_array[dev]);
-    _XACC_array_info_t* info = &device_array->info[0];
 
-    if(info->device_layout_manner != _XMP_N_DIST_BLOCK){
+void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
+  int numDevices = arrays_desc->device_type->size;
+  int dev;
+  for(dev=0; dev < numDevices; dev++){
+    _XACC_array_t* device_array = &(arrays_desc->device_array[dev]);
+    _XACC_array_info_t* info0 = &device_array->info[0];
+
+    if(info0->device_layout_manner != _XMP_N_DIST_BLOCK){
       return;
     }
+
+    size_t type_size = arrays_desc->type_size;
+    if(dev > 0){
+      _XACC_array_t* lower_device_array = &(arrays_desc->device_array[dev-1]);
+      _XACC_array_info_t* lower_info0 = &lower_device_array->info[0];
+
+      unsigned long long loSendOffset;
+      unsigned long long loSendElements;
+
+      loSendOffset = info0->device_dim_acc * info0->local_lower;
+      loSendElements = info0->device_dim_acc * info0->shadow_size_lo;
+      //printf("loSendOffset=%lld, size=%lld, recvOffset=%lld\n", loSendOffset, loSendSize, loRecvOffset);
+
+      size_t loSendSize = type_size * loSendElements;
+      char* sendPtr= (char*)device_array->deviceptr + loSendOffset * type_size;
+      char* recvPtr= (char*)lower_device_array->deviceptr + loSendOffset * type_size;
+      //printf("sendP=%p, recvP=%p, size=%zd\n", sendPtr,recvPtr,loSendSize);
+      cudaMemcpy(recvPtr, sendPtr, loSendSize, cudaMemcpyDefault);
+    }
+
+    if(dev < numDevices - 1){
+      _XACC_array_t* upper_device_array = &(arrays_desc->device_array[dev+1]);
+      _XACC_array_info_t* upper_info0 = &upper_device_array->info[0];
+
+      unsigned long long hiSendOffset;
+      unsigned long long hiSendElements;
+
+      hiSendOffset = info0->device_dim_acc * info0->local_upper;
+      hiSendElements = info0->device_dim_acc * info0->shadow_size_hi;
+      printf("hiSendOffset=%lld, elements=%lld\n", hiSendOffset, hiSendElements);
+      
+      size_t hiSendSize = hiSendElements * type_size;
+      char* sendPtr= (char*)device_array->deviceptr + hiSendOffset * type_size;
+      char* recvPtr= (char*)upper_device_array->deviceptr + hiSendOffset * type_size;
+      cudaMemcpy(recvPtr, sendPtr, hiSendSize, cudaMemcpyDefault);
+    }
+
+    //cudaMemcpy(, cudaMemcpyDefault);
   }
 }
-*/
+
     
