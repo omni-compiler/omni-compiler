@@ -1,6 +1,6 @@
 package exc.xcalablemp;
 
-import java.util.Map;
+import java.util.*;
 
 import exc.block.*;
 import exc.object.*;
@@ -259,6 +259,11 @@ public class XACCrewriteACCdata {
           Block getRangeFuncCall = _globalDecl.createFuncCallBlock("_XACC_get_size", Xcons.List(layoutedArrayDescId.Ref(), arrayOffsetId.getAddr(), arraySizeId.getAddr(), deviceLoop.getLoopVarId().Ref()));
           deviceLoop.add(getRangeFuncCall);
           arrayRef = Xcons.List(arrayAddrRef, Xcons.List(arrayOffsetId.Ref(), arraySizeId.Ref()));
+          
+          if(clause == ACCpragma.CREATE){
+            Block setDevicePtrFuncCall = _globalDecl.createFuncCallBlock("_XACC_set_deviceptr", Xcons.List(layoutedArrayDescId.Ref(), arrayAddrRef, deviceLoop.getLoopVarId().Ref()));
+            deviceLoop.addToEnd(Bcons.PRAGMA(Xcode.ACC_PRAGMA, ACCpragma.HOST_DATA.toString(), Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"), Xcons.List(arrayAddrRef))), Bcons.blockList(setDevicePtrFuncCall)));
+          }
         } break;
         case HOST:
         case DEVICE:
@@ -339,12 +344,16 @@ public class XACCrewriteACCdata {
     private BlockList body;
     private Ident loopVarId;
     private XACCdevice dev;
+    private List<Block> beginBlocks;
+    private List<Block> endBlocks;
 
     public DeviceLoop(XACCdevice d){
       this.dev = d;
       loopBody = Bcons.emptyBody();
       body = Bcons.emptyBody();
       loopVarId = body.declLocalIdent("_XACC_device_" + dev.getName(), Xtype.intType);
+      beginBlocks = new ArrayList<Block>();
+      endBlocks = new ArrayList<Block>();
     }
     
     public Ident getLoopVarId() {
@@ -356,12 +365,20 @@ public class XACCrewriteACCdata {
       body.add(Bcons.FORall(loopVarId.Ref(), dev.getLower(), dev.getUpper(),
           dev.getStride(), Xcode.LOG_LE_EXPR, loopBody));
       Ident fid = _globalDecl.declExternFunc("acc_set_device_num");
+      for(Block b : beginBlocks) loopBody.insert(b);
+      for(Block b : endBlocks) loopBody.add(b);
       loopBody.insert(fid.Call(Xcons.List(loopVarId.Ref(), dev.getDeviceRef())));
       return Bcons.COMPOUND(body);
     }
     
     public void add(Block b){
       loopBody.add(b);
+    }
+    public void addToBegin(Block b){
+      beginBlocks.add(b);
+    }
+    public void addToEnd(Block b){
+      endBlocks.add(b);
     }
     public BlockList getBody()
     {
