@@ -360,6 +360,7 @@ void _XACC_set_deviceptr(_XACC_arrays_t *arrays_desc, void *deviceptr, int devic
 {
   _XACC_array_t* arrayOnDevice = get_device_array(arrays_desc, deviceNum);
   arrayOnDevice->deviceptr = deviceptr;
+  printf("deviceptr=%p@%d\n", deviceptr, deviceNum);
 }
 
 void _XACC_reflect_init(_XACC_arrays_t *arrays_desc)
