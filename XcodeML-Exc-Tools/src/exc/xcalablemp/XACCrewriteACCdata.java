@@ -262,7 +262,7 @@ public class XACCrewriteACCdata {
           
           if(clause == ACCpragma.CREATE){
             Block setDevicePtrFuncCall = _globalDecl.createFuncCallBlock("_XACC_set_deviceptr", Xcons.List(layoutedArrayDescId.Ref(), arrayAddrRef, deviceLoop.getLoopVarId().Ref()));
-            deviceLoop.addToEnd(Bcons.PRAGMA(Xcode.ACC_PRAGMA, ACCpragma.HOST_DATA.toString(), Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"), Xcons.List(arrayAddrRef))), Bcons.blockList(setDevicePtrFuncCall)));
+            deviceLoop.addToEnd(Bcons.PRAGMA(Xcode.ACC_PRAGMA, ACCpragma.HOST_DATA.toString(), Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"), Xcons.List(Xcons.List(arrayAddrRef, Xcons.List(arrayOffsetId.Ref(),arraySizeId.Ref()))))), Bcons.blockList(setDevicePtrFuncCall)));
           }
         } break;
         case HOST:
