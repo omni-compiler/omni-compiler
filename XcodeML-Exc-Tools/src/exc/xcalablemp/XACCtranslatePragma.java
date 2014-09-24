@@ -443,7 +443,7 @@ public class XACCtranslatePragma {
       if(accClause == ACCpragma.LAYOUT){
         XobjList layoutArgs = (XobjList)x.right();
         XobjList layoutList;
-        XACCdeviceArray layoutedArray = null;
+        XACClayoutedArray layoutedArray = null;
         if(layoutArgs.Nargs() == 1){
           layoutList = (XobjList)layoutArgs.getArg(0);
           layout = new XACClayout(layoutList);
@@ -480,7 +480,7 @@ public class XACCtranslatePragma {
           if(alignedArray == null){
             XMP.fatal("no aligned array");
           }
-          XACCdeviceArray layoutedArray = _globalDecl.getXACCdeviceArray(layoutArgs.getArg(0).getSym(), b);
+          XACClayoutedArray layoutedArray = _globalDecl.getXACCdeviceArray(layoutArgs.getArg(0).getSym(), b);
           layoutRef = new XACClayoutRef(layoutList, layoutedArray);
         }
 
@@ -508,7 +508,7 @@ public class XACCtranslatePragma {
         if(alignedArray == null){
           XMP.fatal("no aligned array");
         }
-        XACCdeviceArray deviceArray = _globalDecl.getXACCdeviceArray(array.getArg(0).getSym(), b);
+        XACClayoutedArray deviceArray = _globalDecl.getXACCdeviceArray(array.getArg(0).getSym(), b);
         on = new XACClayoutRef(array, deviceArray);
         arg.setArg(null);
       }
@@ -663,7 +663,7 @@ public class XACCtranslatePragma {
                   //alignedArray.setLayout(layout);
 
 
-                  XACCdeviceArray deviceArray = new XACCdeviceArray(layoutedArrayDescId, alignedArray, layout); 
+                  XACClayoutedArray deviceArray = new XACClayoutedArray(layoutedArrayDescId, alignedArray, layout); 
                   if(block != null){
                     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable2(block);
                     localXMPsymbolTable.putXACCdeviceArray(deviceArray);
@@ -672,7 +672,7 @@ public class XACCtranslatePragma {
                   }
                 }
                 if(layoutedArrayDescId == null){
-                  XACCdeviceArray layoutedArray = _globalDecl.getXACCdeviceArray(arrayAddr.getSym(), block);
+                  XACClayoutedArray layoutedArray = _globalDecl.getXACCdeviceArray(arrayAddr.getSym(), block);
                   layoutedArrayDescId = layoutedArray.getDescId();
                 }
                 

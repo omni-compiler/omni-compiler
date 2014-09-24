@@ -204,7 +204,7 @@ public class XACCrewriteACCdata {
         //device array
         
         String arrayName = arrayAddr.getSym();
-        XACCdeviceArray layoutedArray = null;
+        XACClayoutedArray layoutedArray = null;
 //        layoutedArray = _globalDecl.getXACCdeviceArray(arrayName);
 //        if(layoutedArray == null && pb != null){
 //          layoutedArray = _globalDecl.getXACCdeviceArray(arrayName, pb);
@@ -235,7 +235,7 @@ public class XACCrewriteACCdata {
           Block calcDeviceArraySizeCall = _globalDecl.createFuncCallBlock("_XACC_calc_size", Xcons.List(layoutedArrayDescId.Ref()));
           add(calcDeviceArraySizeCall);
 
-          layoutedArray = new XACCdeviceArray(layoutedArrayDescId, alignedArray, layout);
+          layoutedArray = new XACClayoutedArray(layoutedArrayDescId, alignedArray, layout);
 //          if(pb != null){
 //            localSymbolTable.putXACCdeviceArray(layoutedArray);
 //          }else{            
@@ -304,9 +304,9 @@ public class XACCrewriteACCdata {
     
   }
   
-  protected XACCdeviceArray getXACClayoutedArray(String arrayName)
+  protected XACClayoutedArray getXACClayoutedArray(String arrayName)
   {
-    XACCdeviceArray layoutedArray = null;
+    XACClayoutedArray layoutedArray = null;
     if(! isGlobal){
       layoutedArray = localSymbolTable.getXACCdeviceArray(arrayName);
       if(layoutedArray == null){
@@ -320,7 +320,7 @@ public class XACCrewriteACCdata {
     return layoutedArray;
   }
   
-  protected void putXACClayoutedArray(XACCdeviceArray layoutedArray)
+  protected void putXACClayoutedArray(XACClayoutedArray layoutedArray)
   {
     if(isGlobal){
       _globalDecl.putXACCdeviceArray(layoutedArray);

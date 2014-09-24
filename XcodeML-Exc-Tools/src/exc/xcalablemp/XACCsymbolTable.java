@@ -4,11 +4,11 @@ import java.util.HashMap;
 
 public class XACCsymbolTable {
   private HashMap<String, XACCdevice> _XACCdeviceTable;
-  private HashMap<String, XACCdeviceArray> _XACCdeviceArrayTable;
+  private HashMap<String, XACClayoutedArray> _XACCdeviceArrayTable;
   
   public XACCsymbolTable() {
     _XACCdeviceTable = new HashMap<String, XACCdevice>();
-    _XACCdeviceArrayTable = new HashMap<String, XACCdeviceArray>();
+    _XACCdeviceArrayTable = new HashMap<String, XACClayoutedArray>();
   }
 
   public void putXMPdevice(XACCdevice o) {
@@ -19,11 +19,11 @@ public class XACCsymbolTable {
     return _XACCdeviceTable.get(name);
   }
 
-  public void putXACCdeviceArray(XACCdeviceArray array) {
+  public void putXACCdeviceArray(XACClayoutedArray array) {
     _XACCdeviceArrayTable.put(array.getName(), array);
   }
 
-  public XACCdeviceArray getXACCdeviceArray(String name) {
+  public XACClayoutedArray getXACCdeviceArray(String name) {
     return _XACCdeviceArrayTable.get(name);
   }
 }

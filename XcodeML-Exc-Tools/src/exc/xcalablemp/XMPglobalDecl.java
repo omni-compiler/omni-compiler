@@ -411,12 +411,12 @@ public class XMPglobalDecl {
   }
   
   ///for XACC
-  public XACCdeviceArray getXACCdeviceArray(String name) {
+  public XACClayoutedArray getXACCdeviceArray(String name) {
     return _globalObjectTable.getXACCdeviceArray(name);
   }
 
-  public XACCdeviceArray getXACCdeviceArray(String name, Block block) {
-    XACCdeviceArray a = null;
+  public XACClayoutedArray getXACCdeviceArray(String name, Block block) {
+    XACClayoutedArray a = null;
 
     // local
     for (Block b = block; b != null; b = b.getParentBlock()){
@@ -436,7 +436,7 @@ public class XMPglobalDecl {
 
     return null;
   }
-  public void putXACCdeviceArray(XACCdeviceArray array) {
+  public void putXACCdeviceArray(XACClayoutedArray array) {
     _globalObjectTable.putXACCdeviceArray(array);
   }
   

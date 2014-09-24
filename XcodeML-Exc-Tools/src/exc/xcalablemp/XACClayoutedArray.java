@@ -2,12 +2,12 @@ package exc.xcalablemp;
 
 import exc.object.Ident;
 
-public class XACCdeviceArray {
+public class XACClayoutedArray {
   private XACClayout _deviceLayout;
   private XMPalignedArray _alignedArray;
   private Ident _descId;
   
-  public XACCdeviceArray(Ident descId, XMPalignedArray alignedArray, XACClayout layout)
+  public XACClayoutedArray(Ident descId, XMPalignedArray alignedArray, XACClayout layout)
   {
     _alignedArray = alignedArray;
     _deviceLayout = layout;

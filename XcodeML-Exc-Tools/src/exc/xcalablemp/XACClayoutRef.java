@@ -12,8 +12,8 @@ public class XACClayoutRef {
   //private Ident _descId;
   //private XMPalignedArray _alignedArray;
   private Vector<Xobject>     _onVector;
-  private XACCdeviceArray _deviceArray;
-  public XACClayoutRef(XobjList layoutList, XACCdeviceArray deviceArray) {
+  private XACClayoutedArray _deviceArray;
+  public XACClayoutRef(XobjList layoutList, XACClayoutedArray deviceArray) {
     _onVector = new Vector<Xobject>();
     //_descId = 
     //_alignedArray = alignedArray;
