@@ -368,18 +368,32 @@ void _XACC_reflect_init(_XACC_arrays_t *arrays_desc)
   _XACC_device_t *device = arrays_desc->device_type;
   int d;
   cudaError_t cudaError;
-  for(d = device->lb; d < device->ub; d += device->step){
-    cudaError = cudaSetDevice(d);
+  printf("deviceInfo(%d,%d,%d)\n", device->lb,device->ub,device->step);
+  for(d = device->lb; d <= device->ub; d += device->step){
+    cudaError = cudaSetDevice(d-1);
     if(cudaError != cudaSuccess){
       _XMP_fatal("failed to set device");
       return;
     }
+
     int d2;
-    for(d2 = device->lb; d2 < device->ub; d2 += device->step){
-      if(d == d2) continue;
-      cudaError = cudaDeviceEnablePeerAccess(d2, 0);
+    
+    d2 = d - device->step;
+    if(d2 >= device->lb){
+      printf("eneblePeerAccess(%d) on %d\n", d2-1, d-1);
+      cudaError = cudaDeviceEnablePeerAccess(d2-1, 0);
       if(cudaError != cudaSuccess){
-        _XMP_fatal("failed to enable pper access");
+        _XMP_fatal("failed to enable peer access");
+        return;
+      }
+    }
+
+    d2 = d + device->step;
+    if(d2 <= device->ub){
+      printf("eneblePeerAccess(%d) on %d\n", d2-1, d-1);
+      cudaError = cudaDeviceEnablePeerAccess(d2-1, 0);
+      if(cudaError != cudaSuccess){
+        _XMP_fatal("failed to enable peer access");
         return;
       }
     }
@@ -400,7 +414,7 @@ void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
     size_t type_size = arrays_desc->type_size;
     if(dev > 0){
       _XACC_array_t* lower_device_array = &(arrays_desc->device_array[dev-1]);
-      _XACC_array_info_t* lower_info0 = &lower_device_array->info[0];
+      //      _XACC_array_info_t* lower_info0 = &lower_device_array->info[0];
 
       unsigned long long loSendOffset;
       unsigned long long loSendElements;
@@ -418,7 +432,7 @@ void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
 
     if(dev < numDevices - 1){
       _XACC_array_t* upper_device_array = &(arrays_desc->device_array[dev+1]);
-      _XACC_array_info_t* upper_info0 = &upper_device_array->info[0];
+      //      _XACC_array_info_t* upper_info0 = &upper_device_array->info[0];
 
       unsigned long long hiSendOffset;
       unsigned long long hiSendElements;
