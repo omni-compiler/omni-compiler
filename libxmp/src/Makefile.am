@@ -46,5 +46,9 @@ xmp_pack_vector.o: xmp_pack_vector.c
 	@BECC@ $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) @BECC_OMP_OPTION@ -c $<
 
+xmp_intrinsic.o: xmp_intrinsic.c
+	@BECC@ $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) @BECC_OMP_OPTION@ -c $<
+
 clean-local:
 	rm -f *~ *.core core core.*
