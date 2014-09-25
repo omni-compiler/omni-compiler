@@ -1995,6 +1995,7 @@ public class XmcXcodeToXcTranslator {
 	}
 
 	private void enterVarNode(TranslationContext tc, XcDirectiveObj obj, Node n){
+	    if(n == null) return;
 	    if(n.getNodeName().equals("list")){
 		//array
 		String arrayDim = "";

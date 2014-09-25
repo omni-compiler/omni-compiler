@@ -199,11 +199,19 @@ public class XMPtranslateLocalPragma {
 
     XobjList args = Xcons.List();
     args.add(Xcons.String("USE_DEVICE"));
+    XobjList useDeviceArgs = Xcons.List();
+    args.add(useDeviceArgs);
     for(int i=0;i<funcArgs.Nargs();i++){
       Xobject array = funcArgs.getArg(i);
       String arrayName = array.getString();
+      
+      XACClayoutedArray layoutedArray = _globalDecl.getXACCdeviceArray(arrayName, pb);
+      if(layoutedArray != null){
+        Ident arrayDesc = layoutedArray.getDescId();
+        funcBody.add(_globalDecl.createFuncCallBlock("_XACC_reflect_init", Xcons.List(arrayDesc.Ref())));
+      }else{
       Ident arrayId = _globalDecl.findVarIdent(XMP.ADDR_PREFIX_ + arrayName);
-      args.add(Xcons.List(arrayId.Ref()));
+      useDeviceArgs.add(Xcons.List(arrayId.Ref()));
 
       XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
       if(alignedArray == null){
@@ -215,6 +223,7 @@ public class XMPtranslateLocalPragma {
 
       Ident arrayDesc = _globalDecl.findVarIdent(XMP.DESC_PREFIX_ + arrayName);
       funcBody.add(Bcons.Statement(funcIdAcc.Call(Xcons.List(array, arrayDesc.Ref()))));
+      }
     }
    
     Block funcCallBlock = Bcons.PRAGMA(Xcode.ACC_PRAGMA, "HOST_DATA", (Xobject)Xcons.List(args), funcBody);
@@ -263,6 +272,12 @@ public class XMPtranslateLocalPragma {
       Xobject array = funcArgs.getArg(i);
       String arrayName = array.getString();
 
+      XACClayoutedArray layoutedArray = _globalDecl.getXACCdeviceArray(arrayName, pb);
+      if(layoutedArray != null){
+        Ident arrayDesc = layoutedArray.getDescId();
+        Ident funcId = _globalDecl.declExternFunc("_XACC_reflect_do");
+        funcBody.add(funcId.Call(Xcons.List(arrayDesc.Ref())));
+      }else{
       XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
       if(alignedArray == null){
         XMP.fatal(arrayName + " is not aligned.");
@@ -272,6 +287,7 @@ public class XMPtranslateLocalPragma {
       }
       Ident arrayDesc = _globalDecl.findVarIdent(XMP.DESC_PREFIX_ + arrayName);
       funcBody.add(funcIdAcc.Call(Xcons.List(arrayDesc.Ref())));
+      }
     }
 
     pb.replace(funcBody);
