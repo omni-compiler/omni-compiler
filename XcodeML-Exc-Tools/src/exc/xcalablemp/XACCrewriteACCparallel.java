@@ -118,7 +118,7 @@ public class XACCrewriteACCparallel extends XACCrewriteACCdata{
     for(Xobject x : clauses){
       if(x == null) continue;
       String clauseName = x.left().getSym();
-      XobjList clauseArgs = (XobjList)x.right();
+      Xobject clauseArgs = x.right();
       ACCpragma clause = ACCpragma.valueOf(clauseName);
       rewriteXACCClause(clause, clauseArgs, deviceLoop);
     }

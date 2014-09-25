@@ -143,7 +143,7 @@ public class XACCrewriteACCdata {
 
 
   
-  protected void rewriteXACCClause(ACCpragma clause, XobjList clauseArgs, DeviceLoop deviceLoop){
+  protected void rewriteXACCClause(ACCpragma clause, Xobject clauseArgs, DeviceLoop deviceLoop){
     switch(clause){
     case HOST:
     case DEVICE:
