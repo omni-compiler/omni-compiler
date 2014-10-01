@@ -11,6 +11,7 @@ int _ACC_gpu_device_count;
 //int _ACC_gpu_max_block_dim_z;
 
 static int current_device_num = 0;
+static int default_device_num = 0;
 static void init_device(int dev_num);
 static void finalize_device(int dev_num);
 
@@ -22,6 +23,14 @@ typedef struct acc_context{
 
 acc_context *contexts;
 
+static int get_actual_device_num(int n)
+{
+  if(n == -1){
+	return default_device_num;
+  }else{
+	return n;
+  }
+}
 
 void _ACC_gpu_init(void) {
   cudaError_t cuda_err;
@@ -44,11 +53,6 @@ void _ACC_gpu_init(void) {
 	contexts[i].stream_map = NULL;
 	contexts[i].mpool = NULL;
   }
-
-  // //init each GPU
-  // for(i=0;i<_ACC_gpu_device_count;i++){
-  //   init_device(i);
-  // }
 
   _ACC_gpu_set_device_num(0); //set device to default
 }
@@ -75,23 +79,55 @@ int _ACC_gpu_get_num_devices()
   return count;
 }
 
+static int allocDevice(int dev_num)
+{
+  _ACC_DEBUG("alloc device (%d)\n", dev_num)
+  if (cudaSetDevice(dev_num) != cudaSuccess) {
+    return 1;
+  }
+  int *dummy;
+  if(cudaMalloc((void**)&dummy, sizeof(int)) != cudaSuccess){
+	return 1;
+  }
+  _ACC_gpu_free(dummy);
+  return 0;
+}
+
 static void init_device(int dev_num){ //0-based
   cudaError_t cuda_err;
   _ACC_DEBUG("initializing GPU %d\n",dev_num)
 
+
+  if(dev_num == -1){ //default device num
+	int i;
+	for(i = 0; i < _ACC_gpu_device_count; i++){
+	  if( allocDevice(i) == 0){
+		default_device_num = i;
+		break;
+	  }
+	}
+	if(i == _ACC_gpu_device_count){
+	  _ACC_fatal("failed to alloc GPU device");
+	}
+  }else{
+	if( allocDevice(dev_num) != 0){
+	  _ACC_fatal("failed to alloc GPU device");
+	}
+  }
+	/*
   if (cudaSetDevice(dev_num) != cudaSuccess) {
     _ACC_fatal("fail to set GPU device");
   }
   int *dummy;
   _ACC_gpu_alloc((void **)&dummy, sizeof(int));
   _ACC_gpu_free(dummy);
-  
+	*/
   // if(cudaDeviceReset() != cudaSuccess){
   //   _ACC_fatal("failed to reset GPU");
   // }
 
   cudaDeviceProp dev_prop;
-  cuda_err = cudaGetDeviceProperties(&dev_prop, dev_num);
+  cuda_err = cudaGetDeviceProperties(&dev_prop, get_actual_device_num(dev_num));
   if(cuda_err != cudaSuccess){
     _ACC_fatal("fail to get GPU device properties");
   }
@@ -102,10 +138,10 @@ static void init_device(int dev_num){ //0-based
 
 
   //init mpool
-  contexts[dev_num].isInitialized = 1;
-  contexts[dev_num].mpool = _ACC_gpu_mpool_init();
+	contexts[get_actual_device_num(dev_num)].isInitialized = 1;
+  contexts[get_actual_device_num(dev_num)].mpool = _ACC_gpu_mpool_init();
   //init stream hashmap
-  contexts[dev_num].stream_map = _ACC_gpu_init_stream_map(16);
+  contexts[get_actual_device_num(dev_num)].stream_map = _ACC_gpu_init_stream_map(16);
 }
 
 static void finalize_device(int dev_num){
@@ -113,11 +149,11 @@ static void finalize_device(int dev_num){
   //finalize stream hashmap for previous device
   acc_context cont = contexts[dev_num];
   //printf("finalize_map(%d, %p)\n", dev_num, cont.stream_map);
-  if(contexts[dev_num].isInitialized){
+  if(contexts[get_actual_device_num(dev_num)].isInitialized){
 	_ACC_gpu_finalize_stream_map(cont.stream_map);
 	_ACC_gpu_mpool_finalize(cont.mpool);
   }
-  contexts[dev_num].isInitialized = 0;
+  contexts[get_actual_device_num(dev_num)].isInitialized = 0;
 }
 
 void _ACC_gpu_set_device_num(int num)
@@ -131,12 +167,14 @@ void _ACC_gpu_set_device_num(int num)
   }
 
   if(num == 0){ // 0 means default device num
-    current_device_num = 0;
+    current_device_num = -1;
+	cuda_err = cudaSetDevice(default_device_num);
   }else{
     current_device_num = num - 1;
+	cuda_err = cudaSetDevice(current_device_num);
   }
 
-  if (cudaSetDevice(current_device_num) != cudaSuccess) {
+  if (cuda_err != cudaSuccess) {
     _ACC_fatal("fail to set GPU device in _ACC_gpu_set_device_num");
   }
   
@@ -147,32 +185,40 @@ void _ACC_gpu_set_device_num(int num)
 }
 
 int _ACC_gpu_get_device_num(){
-  return current_device_num + 1;
+  return get_actual_device_num(current_device_num) + 1;
 }
 
 void _ACC_gpu_init_device_if_not_inited(int num) //0-based
 {
-  if(! contexts[num].isInitialized){
+  if(! contexts[get_actual_device_num(num)].isInitialized){
 	init_device(num);
   }
 }
 
+void _ACC_gpu_init_current_device_if_not_inited()
+{
+  _ACC_gpu_init_device_if_not_inited(current_device_num);
+}
+
+
 void* _ACC_gpu_get_current_stream_map()
 {
   _ACC_DEBUG("get_current_stream_map\n")
-  void *stream_map = contexts[current_device_num].stream_map;
+  void *stream_map = contexts[get_actual_device_num(current_device_num)].stream_map;
   if(stream_map == NULL){
 	_ACC_gpu_init_device_if_not_inited(current_device_num);
   }
-  return contexts[current_device_num].stream_map;
+  return contexts[get_actual_device_num(current_device_num)].stream_map;
 }
 
 void* _ACC_gpu_get_current_mpool()
 {
   _ACC_DEBUG("get_current_mpool\n")
-  void *mpool = contexts[current_device_num].mpool;
+	//  int dev_num;
+	//  dev_num = (current_device_num == -1)? default_device_num : current_device_num;
+  void *mpool = contexts[get_actual_device_num(current_device_num)].mpool;
   if(mpool == NULL){
 	_ACC_gpu_init_device_if_not_inited(current_device_num);
   }
-  return contexts[current_device_num].mpool;
+  return contexts[get_actual_device_num(current_device_num)].mpool;
 }

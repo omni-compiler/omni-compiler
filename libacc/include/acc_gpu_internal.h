@@ -15,6 +15,7 @@ extern "C" {
   int _ACC_gpu_get_device_num();
   void *_ACC_gpu_get_current_stream_map();
   void* _ACC_gpu_get_current_mpool();
+  void _ACC_gpu_init_current_device_if_not_inited();
 
   //acc_gpu_data.c
   //  void _ACC_init_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);

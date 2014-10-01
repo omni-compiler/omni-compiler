@@ -6,6 +6,7 @@ void _ACC_gpu_alloc(void **addr, size_t size)
 {
   //printf("_ACC_gpu_alloc\n");
   _ACC_DEBUG("alloc addr=%p, size=%zd\n", addr, size)
+  _ACC_gpu_init_current_device_if_not_inited();
   cudaError_t cuda_err = cudaMalloc(addr, size);
   if (cuda_err != cudaSuccess) {
     printf("failed to allocate data on GPU\n");
