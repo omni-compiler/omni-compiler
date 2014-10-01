@@ -30,6 +30,7 @@ typedef struct _XACC_array_info_type {
   int shadow_size_hi;
 
   unsigned long long device_dim_acc;
+  _XMP_reflect_sched_t *reflect_sched;
 }_XACC_array_info_t;
 
 typedef struct _XACC_array_type {
@@ -47,6 +48,7 @@ typedef struct _XACC_arrays_type{
   int dim;
   void *hostptr;
   size_t type_size;
+  _XMP_array_t *xmp_array;
 }_XACC_arrays_t;  
 
 

@@ -1,10 +1,21 @@
 #include <stdio.h>
+#if 0
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 #include "xmp_data_struct.h"
 #include "xacc_internal.h"
 #include "xacc_data_struct.h"
 #include "include/cuda_runtime.h"
+#else
+#define _XMP_XACC
+#include "../../libxmp/include/xmp_internal.h"
+#include "../../libxmp/include/xmp_math_function.h"
+#include "../../libxmp/include/xmp_data_struct.h"
+#include "../include/xacc_internal.h"
+#include "../include/xacc_data_struct.h"
+#include "/usr/local/cuda/include/cuda_runtime.h"
+#endif
+
 
 static _XACC_device_t *_XACC_current_device = NULL;
 typedef _XACC_device_t xacc_device_t;
@@ -108,6 +119,7 @@ void _XACC_init_layouted_array(_XACC_arrays_t **arrays, _XMP_array_t* alignedArr
   layoutedArray->dim = dim;
   layoutedArray->hostptr = alignedArray->array_addr_p;
   layoutedArray->type_size = alignedArray->type_size;
+  layoutedArray->xmp_array = alignedArray;
   *arrays = layoutedArray;
 }
 
@@ -363,6 +375,8 @@ void _XACC_set_deviceptr(_XACC_arrays_t *arrays_desc, void *deviceptr, int devic
   printf("deviceptr=%p@%d\n", deviceptr, deviceNum);
 }
 
+static void _XACC_reflect_sched_dim(_XACC_arrays_t *a, int target_device, int target_dim);
+
 void _XACC_reflect_init(_XACC_arrays_t *arrays_desc)
 {
   _XACC_device_t *device = arrays_desc->device_type;
@@ -398,11 +412,155 @@ void _XACC_reflect_init(_XACC_arrays_t *arrays_desc)
       }
     }
   }
+
+
+  int dim = arrays_desc->dim;
+  //他ノードとの通信のセットアップ
+  //  int *lwidth = _XMP_alloc(sizeof(int)*dim);
+  //  int *uwidth = _XMP_alloc(sizeof(int)*dim);
+  for(int i = 0; i < arrays_desc->device_type->size; i++){
+    _XACC_array_t *array_desc = arrays_desc->device_array + i;
+    for(int j = 0; j < dim; j++){
+      _XACC_array_info_t *ai = array_desc->info + j;
+      if(ai->shadow_size_lo != 0 || ai->shadow_size_hi != 0){
+        _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+
+        if(reflect == NULL){
+          reflect = _XMP_alloc(sizeof(_XMP_reflect_sched_t));
+          reflect->is_periodic = -1; /* not used yet */
+          reflect->datatype_lo = MPI_DATATYPE_NULL;
+          reflect->datatype_hi = MPI_DATATYPE_NULL;
+          for (int k = 0; k < 4; k++) reflect->req[j] = MPI_REQUEST_NULL;
+          reflect->lo_send_buf = NULL;
+          reflect->lo_recv_buf = NULL;
+          reflect->hi_send_buf = NULL;
+          reflect->hi_recv_buf = NULL;
+          ai->reflect_sched = reflect;
+        }
+
+        reflect->lo_width = ai->shadow_size_lo;
+        reflect->hi_width = ai->shadow_size_hi;
+        reflect->is_periodic = -1;
+
+        _XACC_reflect_sched_dim(arrays_desc, i, j);
+      }
+    }
+  }
+
+}
+
+static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_device, int target_dim){
+  //if (lwidth == 0 && uwidth == 0) return;
+
+  _XACC_array_t *array_desc = arrays_desc->device_array + target_device;
+  _XACC_array_info_t *ai = array_desc->info + target_dim;
+  _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+  if (reflect->lo_width > ai->shadow_size_lo || reflect->hi_width > ai->shadow_size_hi){
+    _XMP_fatal("reflect width is larger than shadow width.");
+  }
+
+  int target_tdim = (arrays_desc->xmp_array->info + target_dim)->align_template_index;
+  _XMP_nodes_info_t *xmp_ni =   arrays_desc->xmp_array->align_template->chunk[target_tdim].onto_nodes_info;
+  int ndims = arrays_desc->dim;
+
+  _XMP_array_t *xmp_adesc = arrays_desc->xmp_array;
+  _XMP_array_info_t *xmp_ai = xmp_adesc->info + target_dim;
+  
+  // 0-origin
+  int my_pos = xmp_ni->rank;
+  int lb_pos = _XMP_get_owner_pos(xmp_adesc, target_dim, xmp_ai->ser_lower);
+  int ub_pos = _XMP_get_owner_pos(xmp_adesc, target_dim, xmp_ai->ser_upper);
+  int lo_pos = (my_pos == lb_pos) ? ub_pos : my_pos - 1;
+  int hi_pos = (my_pos == ub_pos) ? lb_pos : my_pos + 1;
+
+  MPI_Comm *comm = xmp_adesc->align_template->onto_nodes->comm;
+  int my_rank = xmp_adesc->align_template->onto_nodes->comm_rank;
+
+  int lo_rank = my_rank + (lo_pos - my_pos) * xmp_ni->multiplier;
+  int hi_rank = my_rank + (hi_pos - my_pos) * xmp_ni->multiplier;
+
+  int type_size = xmp_adesc->type_size;
+  void *array_addr = array_desc->deviceptr;/////xmp_adesc->array_addr_p;
+
+  void *lo_send_array = NULL;
+  void *lo_recv_array = NULL;
+  void *hi_send_array = NULL;
+  void *hi_recv_array = NULL;
+  void *lo_send_buf = NULL;
+  void *lo_recv_buf = NULL;
+  void *hi_send_buf = NULL;
+  void *hi_recv_buf = NULL;
+
+  int lo_buf_size = 0;
+  int hi_buf_size = 0;
+
+  //
+  // setup data_type
+  //
+
+  int count, blocklength;
+  long long stride;
+  int count_offset = 0;
+
+  if (_XMPF_running && (!_XMPC_running)){ /* for XMP/F */
+
+    count = 1;
+    blocklength = type_size;
+    stride = ainfo[0].alloc_size * type_size;
+
+    for (int i = ndims - 2; i >= target_dim; i--){
+      count *= ainfo[i+1].alloc_size;
+    }
+
+    for (int i = 1; i <= target_dim; i++){
+      blocklength *= ainfo[i-1].alloc_size;
+      stride *= ainfo[i].alloc_size;
+    }
+
+  }
+  else if ((!_XMPF_running) && _XMPC_running){ /* for XMP/C */
+
+    count = 1;
+    blocklength = type_size;
+    stride = ainfo[ndims-1].alloc_size * type_size;
+
+    
+    if(target_dim > 0){
+      count *= ainfo[0].par_size;
+      count_offset = ainfo[0].shadow_size_lo;
+    }
+    for (int i = 1; i < target_dim; i++){
+      count *= ainfo[i].alloc_size;
+    }
+
+    for (int i = ndims - 2; i >= target_dim; i--){
+      blocklength *= ainfo[i+1].alloc_size;
+      stride *= ainfo[i].alloc_size;
+    }
+
+    /* for (int i = target_dim + 1; i < ndims; i++){ */
+    /*   blocklength *= ainfo[i].alloc_size; */
+    /* } */
+    /* for (int i = target_dim; i < ndims - 1; i++){ */
+    /*   stride *= ainfo[i].alloc_size; */
+    /* } */
+
+    //    printf("count =%d, blength=%d, stride=%d\n", count ,blocklength,stride);
+    //    printf("ainfo[0].par_size=%d\n", ainfo[0].par_size);
+    //    printf("count_ofset=%d,\n", count_offset);
+  }
+  else {
+    _XMP_fatal("cannot determin the base language.");
+  }
+
 }
 
 void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
   int numDevices = arrays_desc->device_type->size;
   int dev;
+
+  //他ノードとの通信の開始
+
   for(dev=0; dev < numDevices; dev++){
     _XACC_array_t* device_array = &(arrays_desc->device_array[dev]);
     _XACC_array_info_t* info0 = &device_array->info[0];
@@ -449,6 +607,10 @@ void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
 
     //cudaMemcpy(, cudaMemcpyDefault);
   }
+
+  //他ノードとの通信の待機
+
+
 }
 
     
