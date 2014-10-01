@@ -20,14 +20,6 @@ HOW TO INSTALL
 
  * flex gcc gfortran gcc-c++ java-1.7.0-openjdk-devel ant openmpi-devel libxml2-devel byacc make
 
-## If using the IBM Java Compiler
- Need to change import setting
- import com.sun.org.apache.xml.internal.serializer.OutputPropertiesFactory; ->  import org.apache.xml.serializer.OutputPropertiesFactory;
- in 
- * XcodeML-Common/src/xcodeml/util/XmUtil.java
- * XcodeML-Exc-Tools/src/exc/util/omompx.java
- * F-BackEnd/src/xcodeml/f/decompile/XfDecompileDomVisitor.java
-
 ## Usage of local-view operations (coarray, post/wait, lock/unlock)
  * Need to install GASNet (http://gasnet.lbl.gov) except for the K computer and FX10.
  * On the K computer or FX10, you can use local-view operations by using Fujitsu RDMA.
@@ -44,6 +36,15 @@ HOW TO INSTALL
 
  If you want to use Coarray functions
     $ ./configure --with-gasnet=[GASNet INSTALLATION PATH] --with-gasnet-conduit=[GASNet-Conduit]
+
+    The "GASNet-Conduit" is a method how GASnet uses an interconnect.
+
+    If you omit "--with-gasnet-conduit=[GASNet-Conduit]",
+    the Omni compiler automatically selects an appropriate conduit.
+
+    If you specify "--with-gasnet-conduit=mpi", the execute file can execute on the most clusters.
+    If a running system is equipped with InfiniBand, "--with-gasnet-conduit=ibv" is the best selection.
+    For information of other conduits, please see the GASNet website (http://gasnet.lbl.gov).
 
  If you want to use OpenACC compiler
     $ ./configure --enable-openacc --with-cuda=[CUDA INSTALLATION PATH]

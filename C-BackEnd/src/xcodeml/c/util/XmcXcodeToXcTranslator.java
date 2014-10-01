@@ -1881,6 +1881,8 @@ public class XmcXcodeToXcTranslator {
 
 	    if (dirName.equals("parallel_loop"))     dirName = "parallel loop";
 	    else if (dirName.equals("kernels_loop")) dirName = "kernels loop";
+	    else if (dirName.equals("enter_data")) dirName = "enter data";
+	    else if (dirName.equals("exit_data")) dirName = "exit data";
 
 	    obj.setLine("#pragma acc " + dirName);
 

@@ -22,7 +22,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import com.sun.org.apache.xml.internal.serializer.OutputPropertiesFactory;
 
 import xcodeml.XmException;
 import xcodeml.f.util.XmfNodeVisitorMap;
@@ -62,9 +61,6 @@ public class XfDecompileDomVisitor {
                 StringWriter w = new StringWriter();
                 Transformer t = 
                     TransformerFactory.newInstance().newTransformer();
-                t.setOutputProperty(OutputKeys.INDENT, "yes");
-                t.setOutputProperty(
-                    OutputPropertiesFactory.S_KEY_INDENT_AMOUNT, "" + 2);
                 t.transform(new DOMSource(n),
                             new StreamResult(w));
                 ret = w.toString();
@@ -774,21 +770,21 @@ public class XfDecompileDomVisitor {
      * @return Instance of XfSymbol.
      */
     private XfSymbol _makeSymbol(String symbolName, String typeName) {
-        if (XfUtil.isNullOrEmpty(symbolName)) {
+        if (XfUtilForDom.isNullOrEmpty(symbolName)) {
             // Symbol name is empty.
             return null;
         }
 
         XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
 
-        if (XfUtil.isNullOrEmpty(typeName)) {
+        if (XfUtilForDom.isNullOrEmpty(typeName)) {
             Node idNode = typeManager.findSymbol(symbolName);
             if (idNode == null) {
                 // Symbol not found.
                 return null;
             }
             typeName = XmDomUtil.getAttr(idNode, "type");
-            if (XfUtil.isNullOrEmpty(typeName)) {
+            if (XfUtilForDom.isNullOrEmpty(typeName)) {
                 // Type name of symbol is empty.
                 return null;
             }
@@ -1669,7 +1665,7 @@ public class XfDecompileDomVisitor {
             _invokeEnterAndWriteDelim(allocNodes, ", ");
 
             String statName = XmDomUtil.getAttr(n, "stat_name");
-            if (XfUtil.isNullOrEmpty(statName) == false) {
+            if (XfUtilForDom.isNullOrEmpty(statName) == false) {
                 writer.writeToken(", ");
                 writer.writeToken("STAT = ");
                 writer.writeToken(statName);
@@ -1827,7 +1823,7 @@ public class XfDecompileDomVisitor {
             }
 
             String constuctName = XmDomUtil.getAttr(n, "construct_name");
-            if (XfUtil.isNullOrEmpty(constuctName) == false) {
+            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
                 writer.writeToken(" ");
                 writer.writeToken(constuctName);
             }
@@ -1861,7 +1857,7 @@ public class XfDecompileDomVisitor {
             XmfWriter writer = _context.getWriter();
 
             String kind = XmDomUtil.getAttr(n, "kind");
-            if (XfUtil.isNullOrEmpty(kind) == false) {
+            if (XfUtilForDom.isNullOrEmpty(kind) == false) {
                 writer.writeToken(kind + "_");
             }
 
@@ -1968,7 +1964,7 @@ public class XfDecompileDomVisitor {
                 fail(n);
             }
             String typeName = XmDomUtil.getAttr(n, "type");
-            if (XfUtil.isNullOrEmpty(typeName) == false) {
+            if (XfUtilForDom.isNullOrEmpty(typeName) == false) {
                 XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
                 String bottomTypeName = typeManager.getBottomTypeName(typeName);
                 if (bottomTypeName == null) {
@@ -2100,7 +2096,7 @@ public class XfDecompileDomVisitor {
             writer.writeToken("CYCLE");
 
             String constuctName = XmDomUtil.getAttr(n, "construct_name");
-            if (XfUtil.isNullOrEmpty(constuctName) == false) {
+            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
                 writer.writeToken(" ");
                 writer.writeToken(constuctName);
             }
@@ -2186,7 +2182,7 @@ public class XfDecompileDomVisitor {
             _invokeEnterAndWriteDelim(allocNodes, ", ");
 
             String statName = XmDomUtil.getAttr(n, "stat_name");
-            if (XfUtil.isNullOrEmpty(statName) == false) {
+            if (XfUtilForDom.isNullOrEmpty(statName) == false) {
                 writer.writeToken(", ");
                 writer.writeToken("STAT = ");
                 writer.writeToken(statName);
@@ -2258,7 +2254,7 @@ public class XfDecompileDomVisitor {
 
             XmfWriter writer = _context.getWriter();
             String constuctName = XmDomUtil.getAttr(n, "construct_name");
-            if (XfUtil.isNullOrEmpty(constuctName) == false) {
+            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
                 writer.writeToken(constuctName);
                 writer.writeToken(": ");
             }
@@ -2281,7 +2277,7 @@ public class XfDecompileDomVisitor {
             writer.decrementIndentLevel();
 
             writer.writeToken("END DO");
-            if (XfUtil.isNullOrEmpty(constuctName) == false) {
+            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
                 writer.writeToken(" ");
                 writer.writeToken(constuctName);
             }
@@ -2311,7 +2307,7 @@ public class XfDecompileDomVisitor {
 
             XmfWriter writer = _context.getWriter();
             String constuctName = XmDomUtil.getAttr(n, "construct_name");
-            if (XfUtil.isNullOrEmpty(constuctName) == false) {
+            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
                 writer.writeToken(constuctName);
                 writer.writeToken(": ");
             }
@@ -2327,7 +2323,7 @@ public class XfDecompileDomVisitor {
             writer.decrementIndentLevel();
 
             writer.writeToken("END DO");
-            if (XfUtil.isNullOrEmpty(constuctName) == false) {
+            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
                 writer.writeToken(" ");
                 writer.writeToken(constuctName);
             }
@@ -2437,7 +2433,7 @@ public class XfDecompileDomVisitor {
                 if (typeId != XfType.VOID) {
                     String functionResultName =
                         XmDomUtil.getAttr(functionTypeNode, "result_name");
-                    if (XfUtil.isNullOrEmpty(functionResultName) == false) {
+                    if (XfUtilForDom.isNullOrEmpty(functionResultName) == false) {
                         writer.writeToken(" RESULT(" + functionResultName + ")");
                     }
                 }
@@ -2520,7 +2516,7 @@ public class XfDecompileDomVisitor {
             writer.writeToken("EXIT");
 
             String constuctName = XmDomUtil.getAttr(n, "construct_name");
-            if (XfUtil.isNullOrEmpty(constuctName) == false) {
+            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
                 writer.writeToken(" ");
                 writer.writeToken(constuctName);
             }
@@ -2669,7 +2665,7 @@ public class XfDecompileDomVisitor {
                 writer.writeToken(")");
                 String functionResultName =
                     XmDomUtil.getAttr(functionTypeNode, "result_name");
-                if (XfUtil.isNullOrEmpty(functionResultName) == false) {
+                if (XfUtilForDom.isNullOrEmpty(functionResultName) == false) {
                     writer.writeToken(" RESULT(" + functionResultName + ")");
                 }
             }
@@ -2845,7 +2841,7 @@ public class XfDecompileDomVisitor {
                 writer.writeToken(")");
                 String functionResultName =
                     XmDomUtil.getAttr(functionTypeNode, "result_name");
-                if (XfUtil.isNullOrEmpty(functionResultName) == false) {
+                if (XfUtilForDom.isNullOrEmpty(functionResultName) == false) {
                     writer.writeToken(" RESULT(" + functionResultName + ")");
                 }
             }
@@ -2924,7 +2920,7 @@ public class XfDecompileDomVisitor {
 
             XmfWriter writer = _context.getWriter();
             String constuctName = XmDomUtil.getAttr(n, "construct_name");
-            if (XfUtil.isNullOrEmpty(constuctName) == false) {
+            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
                 writer.writeToken(constuctName);
                 writer.writeToken(": ");
             }
@@ -2940,7 +2936,7 @@ public class XfDecompileDomVisitor {
             Node elseNode = XmDomUtil.getElement(n, "else");
             if (elseNode != null) {
                 writer.writeToken("ELSE");
-                if (XfUtil.isNullOrEmpty(constuctName) == false) {
+                if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
                     writer.writeToken(" ");
                     writer.writeToken(constuctName);
                 }
@@ -2950,7 +2946,7 @@ public class XfDecompileDomVisitor {
             }
 
             writer.writeToken("END IF");
-            if (XfUtil.isNullOrEmpty(constuctName) == false) {
+            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
                 writer.writeToken(" ");
                 writer.writeToken(constuctName);
             }
@@ -3006,7 +3002,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             String content = XmDomUtil.getContentText(n);
-            if (XfUtil.isNullOrEmpty(content)) {
+            if (XfUtilForDom.isNullOrEmpty(content)) {
                 _context.setLastErrorMessage(
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_SEMANTICS,
@@ -3015,7 +3011,7 @@ public class XfDecompileDomVisitor {
             }
 
             String typeName = XmDomUtil.getAttr(n, "type");
-            if (XfUtil.isNullOrEmpty(typeName) == false) {
+            if (XfUtilForDom.isNullOrEmpty(typeName) == false) {
                 XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
                 String bottomTypeName = typeManager.getBottomTypeName(typeName);
                 if (bottomTypeName == null) {
@@ -3042,7 +3038,7 @@ public class XfDecompileDomVisitor {
             XmfWriter writer = _context.getWriter();
 
             String kind = XmDomUtil.getAttr(n, "kind");
-            if (XfUtil.isNullOrEmpty(kind) == false) {
+            if (XfUtilForDom.isNullOrEmpty(kind) == false) {
                 writer.writeToken(content + "_" + kind);
             } else {
 		/* check minus number */
@@ -3093,7 +3089,7 @@ public class XfDecompileDomVisitor {
                 writer.writeToken(interfaceName);
                 writer.writeToken(")");
             } else {
-                if (XfUtil.isNullOrEmpty(interfaceName) == false) {
+                if (XfUtilForDom.isNullOrEmpty(interfaceName) == false) {
                     writer.writeToken(" ");
                     writer.writeToken(interfaceName);
                 }
@@ -3128,7 +3124,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             String content = XmDomUtil.getContentText(n);
-            if (XfUtil.isNullOrEmpty(content)) {
+            if (XfUtilForDom.isNullOrEmpty(content)) {
                 _context.setLastErrorMessage(
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_SEMANTICS,
@@ -3137,7 +3133,7 @@ public class XfDecompileDomVisitor {
             }
 
             String typeName = XmDomUtil.getAttr(n, "type");
-            if (XfUtil.isNullOrEmpty(typeName) == false) {
+            if (XfUtilForDom.isNullOrEmpty(typeName) == false) {
                 XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
                 String bottomTypeName = typeManager.getBottomTypeName(typeName);
                 if (bottomTypeName == null) {
@@ -3164,7 +3160,7 @@ public class XfDecompileDomVisitor {
             XmfWriter writer = _context.getWriter();
 
             String kind = XmDomUtil.getAttr(n, "kind");
-            if (XfUtil.isNullOrEmpty(kind) == false) {
+            if (XfUtilForDom.isNullOrEmpty(kind) == false) {
                 writer.writeToken(content + "_" + kind);
             } else {
                 writer.writeToken(content);
@@ -3783,7 +3779,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             String content = XmDomUtil.getContentText(n);
-            if (XfUtil.isNullOrEmpty(content)) {
+            if (XfUtilForDom.isNullOrEmpty(content)) {
                 _context.setLastErrorMessage(
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_SEMANTICS,
@@ -3792,7 +3788,7 @@ public class XfDecompileDomVisitor {
             }
 
             String typeName = XmDomUtil.getAttr(n, "type");
-            if (XfUtil.isNullOrEmpty(typeName) == false) {
+            if (XfUtilForDom.isNullOrEmpty(typeName) == false) {
                 XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
                 String bottomTypeName = typeManager.getBottomTypeName(typeName);
                 if (bottomTypeName == null) {
@@ -3820,7 +3816,7 @@ public class XfDecompileDomVisitor {
 
             String kind = XmDomUtil.getAttr(n, "kind");
             // gfortran rejects kind with 'd'/'q' exponent
-            if (XfUtil.isNullOrEmpty(kind) == false &&
+            if (XfUtilForDom.isNullOrEmpty(kind) == false &&
                 ((content.toLowerCase().indexOf("d") < 0) &&
                  (content.toLowerCase().indexOf("q") < 0))) {
                 writer.writeToken(content + "_" + kind);
@@ -3915,7 +3911,7 @@ public class XfDecompileDomVisitor {
 
             XmfWriter writer = _context.getWriter();
             String constuctName = XmDomUtil.getAttr(n, "construct_name");
-            if (XfUtil.isNullOrEmpty(constuctName) == false) {
+            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
                 writer.writeToken(constuctName);
                 writer.writeToken(": ");
             }
@@ -3931,7 +3927,7 @@ public class XfDecompileDomVisitor {
             _invokeEnter(caseLabelNodes);
 
             writer.writeToken("END SELECT");
-            if (XfUtil.isNullOrEmpty(constuctName) == false) {
+            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
                 writer.writeToken(" ");
                 writer.writeToken(constuctName);
             }
@@ -3960,9 +3956,9 @@ public class XfDecompileDomVisitor {
 
             String code = XmDomUtil.getAttr(n, "code");
             String message = XmDomUtil.getAttr(n, "message");
-            if (XfUtil.isNullOrEmpty(code) == false) {
+            if (XfUtilForDom.isNullOrEmpty(code) == false) {
                 writer.writeToken(code);
-            } else if (XfUtil.isNullOrEmpty(message) == false) {
+            } else if (XfUtilForDom.isNullOrEmpty(message) == false) {
                 writer.writeLiteralString(message);
             }
 
@@ -3991,9 +3987,9 @@ public class XfDecompileDomVisitor {
 
             String code = XmDomUtil.getAttr(n, "code");
             String message = XmDomUtil.getAttr(n, "message");
-            if (XfUtil.isNullOrEmpty(code) == false) {
+            if (XfUtilForDom.isNullOrEmpty(code) == false) {
                 writer.writeToken(code);
-            } else if (XfUtil.isNullOrEmpty(message) == false) {
+            } else if (XfUtilForDom.isNullOrEmpty(message) == false) {
                 writer.writeLiteralString(message);
             } else {
                 writer.writeToken("0");
@@ -4170,7 +4166,7 @@ public class XfDecompileDomVisitor {
             }
 
             String functionName = XmDomUtil.getContentText(functionNameNode);
-            if (XfUtil.isNullOrEmpty(functionName)) {
+            if (XfUtilForDom.isNullOrEmpty(functionName)) {
                 _context.debugPrintLine("Function name is empty.");
                 _context.setLastErrorMessage(
                     XfUtilForDom.formatError(functionNameNode,
@@ -4282,11 +4278,11 @@ public class XfDecompileDomVisitor {
                 String localName = XmDomUtil.getAttr(renameNode, "local_name");
                 String useName = XmDomUtil.getAttr(renameNode, "use_name");
                 writer.writeToken(", ");
-                if (XfUtil.isNullOrEmpty(localName) == false) {
+                if (XfUtilForDom.isNullOrEmpty(localName) == false) {
                     writer.writeToken(localName);
                     writer.writeToken(" => ");
                 }
-                if (XfUtil.isNullOrEmpty(useName) == false) {
+                if (XfUtilForDom.isNullOrEmpty(useName) == false) {
                     writer.writeToken(useName);
                 }
             }
@@ -4344,11 +4340,11 @@ public class XfDecompileDomVisitor {
                 }
                 String localName = XmDomUtil.getAttr(renamableNode, "local_name");
                 String useName = XmDomUtil.getAttr(renamableNode, "use_name");
-                if (XfUtil.isNullOrEmpty(localName) == false) {
+                if (XfUtilForDom.isNullOrEmpty(localName) == false) {
                     writer.writeToken(localName);
                     writer.writeToken(" => ");
                 }
-                if (XfUtil.isNullOrEmpty(useName) == false) {
+                if (XfUtilForDom.isNullOrEmpty(useName) == false) {
                     writer.writeToken(useName);
                 }
                 ++renamableCount;
@@ -4458,7 +4454,7 @@ public class XfDecompileDomVisitor {
 
             writer.writeToken("GOTO ");
             String labelName = XmDomUtil.getAttr(n, "label_name");
-            if (XfUtil.isNullOrEmpty(labelName) == false) {
+            if (XfUtilForDom.isNullOrEmpty(labelName) == false) {
                 writer.writeToken(labelName);
             } else {
                 ArrayList<Node> childNodes = XmDomUtil.collectChildNodes(n);
@@ -5258,7 +5254,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             String name = XmDomUtil.getAttr(n, "name");
-            if (XfUtil.isNullOrEmpty(name)) {
+            if (XfUtilForDom.isNullOrEmpty(name)) {
                 _context.setLastErrorMessage(
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -5289,7 +5285,7 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             String name = XmDomUtil.getAttr(n, "name");
-            if (XfUtil.isNullOrEmpty(name)) {
+            if (XfUtilForDom.isNullOrEmpty(name)) {
                 _context.setLastErrorMessage(
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
@@ -5452,13 +5448,13 @@ public class XfDecompileDomVisitor {
             if (_isInvokeNodeOf("FcommonDecl", 1)) {
                 // Parent node is XbfFcommonDecl
                 writer.writeToken("/");
-                if (XfUtil.isNullOrEmpty(name) == false) {
+                if (XfUtilForDom.isNullOrEmpty(name) == false) {
                     writer.writeToken(name);
                 }
                 writer.writeToken("/ ");
             } else if (_isInvokeNodeOf("FnamelistDecl", 1)) {
                 // Parent node is XbfFnamelistDecl
-                if (XfUtil.isNullOrEmpty(name)) {
+                if (XfUtilForDom.isNullOrEmpty(name)) {
                     _context.setLastErrorMessage(
                         XfUtilForDom.formatError(n,
                                                  XfError.XCODEML_NEED_ATTR,

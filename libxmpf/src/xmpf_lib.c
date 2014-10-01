@@ -5,14 +5,27 @@
  */
 
 #include "xmpf_internal.h"
+#include "xmp_internal.h"
 #include "xmp.h"
 //#include "xmpf.h"
 
-/*
-void xmp_MPI_comm(void **comm) {
-  *comm = _XMP_get_execution_nodes()->comm;
+int xmp_get_mpi_comm_(void) {
+  return xmp_get_mpi_comm();
 }
-*/
+
+void xmp_init_mpi_(void) {
+}
+
+void xmp_finalize_mpi_(void) {
+}
+
+void xmp_init_() {
+  _XMP_init(0, NULL);
+}
+
+void xmp_finalize_(void) {
+  xmp_finalize();
+}
 
 int xmp_num_nodes_(void) {
   return _XMP_get_execution_nodes()->comm_size;
@@ -199,6 +212,10 @@ int xmp_nodes_equiv_(xmp_desc_t **d, xmp_desc_t *dn, int *lb, int *ub, int *st){
 
 void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
 
+#if 1
+   xmpf_transpose(*dst_d, *src_d, *opt);
+   return;
+#else
   _XMP_array_t *dst_array = *(_XMP_array_t **)dst_d;
   _XMP_array_t *src_array = *(_XMP_array_t **)src_d;
 
@@ -288,4 +305,10 @@ void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
 
 
   return;
+#endif
+}
+
+
+void xmp_matmul_(_XMP_array_t **x_d, _XMP_array_t **a_d, _XMP_array_t **b_d){
+   xmpf_matmul(*x_d, *a_d, *b_d);
 }

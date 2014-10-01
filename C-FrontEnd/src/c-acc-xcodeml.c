@@ -174,6 +174,8 @@ char *accDirectiveName(int c)
   case ACC_WAIT: return "WAIT";
   case ACC_PARALLEL_LOOP: return "PARALLEL_LOOP";
   case ACC_KERNELS_LOOP:return "KERNELS_LOOP";
+  case ACC_ENTER_DATA: return "ENTER_DATA";
+  case ACC_EXIT_DATA: return "EXIT_DATA";
   default: return "??ACC??";
   }
 }
@@ -207,6 +209,7 @@ char *accClauseName(int c)
   case ACC_COPY: return "COPY";
   case ACC_COPYIN: return "COPYIN";
   case ACC_COPYOUT: return "COPYOUT";
+  case ACC_DELETE: return "DELETE";
 
   case ACC_PRESENT: return "PRESENT";
   case ACC_PRESENT_OR_CREATE: return "PRESENT_OR_CREATE";

@@ -385,6 +385,7 @@ public class ACCinfo {
     case COPYIN:
     case COPYOUT:
     case CREATE:
+    case DELETE:
       if(isVarAllocated(varId)){
         throw new ACCexception("'" + varName + "' is already allocated on device memory");
       }

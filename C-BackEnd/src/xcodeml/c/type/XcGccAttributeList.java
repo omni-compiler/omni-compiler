@@ -13,8 +13,8 @@ import java.util.List;
 import java.util.Set;
 
 import xcodeml.XmException;
-import xcodeml.c.binding.gen.IRVisitable;
-import xcodeml.c.binding.gen.XbcGccAttributes;
+//import xcodeml.c.binding.gen.IRVisitable;
+//import xcodeml.c.binding.gen.XbcGccAttributes;
 import xcodeml.c.decompile.XcObj;
 import xcodeml.c.obj.XcNode;
 import xcodeml.c.util.XmcWriter;
@@ -28,7 +28,7 @@ public class XcGccAttributeList extends XcObj implements XcLazyEvalType
 
     private final String attrDelim = ", ";
 
-    private IRVisitable[] _bindings;
+    // private IRVisitable[] _bindings;
 
     private org.w3c.dom.Node[] _bindingNodes;
 
@@ -41,11 +41,11 @@ public class XcGccAttributeList extends XcObj implements XcLazyEvalType
         _isLazyEvalType = false;
     }
 
-    public XcGccAttributeList(XbcGccAttributes xbcAttrs)
-    {
-        _bindings = xbcAttrs.getGccAttribute();
-        _isLazyEvalType = true;
-    }
+    // public XcGccAttributeList(XbcGccAttributes xbcAttrs)
+    // {
+    //     _bindings = xbcAttrs.getGccAttribute();
+    //     _isLazyEvalType = true;
+    // }
 
     public XcGccAttributeList(org.w3c.dom.Node attrsNode)
     {
@@ -135,11 +135,11 @@ public class XcGccAttributeList extends XcObj implements XcLazyEvalType
         return _dependVariables;
     }
 
-    @Override
-    public IRVisitable[] getLazyBindings()
-    {
-        return _bindings;
-    }
+    // @Override
+    // public IRVisitable[] getLazyBindings()
+    // {
+    //     return _bindings;
+    // }
 
     @Override
     public org.w3c.dom.Node[] getLazyBindingNodes() {
@@ -158,11 +158,11 @@ public class XcGccAttributeList extends XcObj implements XcLazyEvalType
         _isLazyEvalType = enable;
     }
 
-    @Override
-    public void setLazyBindings(IRVisitable[] bindings)
-    {
-        _bindings = bindings;
-    }
+    // @Override
+    // public void setLazyBindings(IRVisitable[] bindings)
+    // {
+    //     _bindings = bindings;
+    // }
 
     @Override
     public void setLazyBindings(org.w3c.dom.Node[] nodes) {

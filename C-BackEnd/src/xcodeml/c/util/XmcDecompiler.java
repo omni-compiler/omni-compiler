@@ -13,10 +13,10 @@ import java.util.ArrayList;
 import org.w3c.dom.Document;
 
 import xcodeml.XmException;
-import xcodeml.binding.XmXcodeProgram;
-import xcodeml.c.binding.gen.XbcXcodeProgram;
-import xcodeml.c.binding.gen.XcodeML_CFactory;
-import xcodeml.c.decompile.XcBindingVisitor;
+// import xcodeml.binding.XmXcodeProgram;
+// import xcodeml.c.binding.gen.XbcXcodeProgram;
+// import xcodeml.c.binding.gen.XcodeML_CFactory;
+// import xcodeml.c.decompile.XcBindingVisitor;
 import xcodeml.c.decompile.XcProgramObj;
 import xcodeml.util.XmDecompiler;
 import xcodeml.util.XmDecompilerContext;
@@ -34,32 +34,32 @@ public class XmcDecompiler implements XmDecompiler
     {
     }
 
-    @Override
-    public boolean decompile(XmDecompilerContext context, Reader reader, Writer writer) throws XmException
-    {
-        XbcXcodeProgram xmprog = XcodeML_CFactory.getFactory().createXbcXcodeProgram();
-        List<String> errorList = new ArrayList<String>();
-        XmcValidator validator = new XmcValidator();
+    // @Override
+    // public boolean decompile(XmDecompilerContext context, Reader reader, Writer writer) throws XmException
+    // {
+    //     XbcXcodeProgram xmprog = XcodeML_CFactory.getFactory().createXbcXcodeProgram();
+    //     List<String> errorList = new ArrayList<String>();
+    //     XmcValidator validator = new XmcValidator();
 
-        if(!validator.read(reader, xmprog, errorList)) {
-            for (String error : errorList) {
-                XmLog.error(error);
-            }
-            return false;
-        }
+    //     if(!validator.read(reader, xmprog, errorList)) {
+    //         for (String error : errorList) {
+    //             XmLog.error(error);
+    //         }
+    //         return false;
+    //     }
         
-        decompile(context, xmprog, writer);
-        return true;
-    }
+    //     decompile(context, xmprog, writer);
+    //     return true;
+    // }
 
-    @Override
-    public void decompile(XmDecompilerContext context, XmXcodeProgram xmprog, Writer writer) throws XmException
-    {
-        XcProgramObj prog = XcBindingVisitor.createXcProgramObj((XbcXcodeProgram)xmprog);
-        XmcWriter xmcWriter = new XmcWriter(writer);
-        prog.writeTo(xmcWriter);
-        xmcWriter.flush();
-    }
+    // @Override
+    // public void decompile(XmDecompilerContext context, XmXcodeProgram xmprog, Writer writer) throws XmException
+    // {
+    //     XcProgramObj prog = XcBindingVisitor.createXcProgramObj((XbcXcodeProgram)xmprog);
+    //     XmcWriter xmcWriter = new XmcWriter(writer);
+    //     prog.writeTo(xmcWriter);
+    //     xmcWriter.flush();
+    // }
 
     @Override
     public void decompile(XmDecompilerContext context, Document xcode, Writer writer) throws XmException {

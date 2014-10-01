@@ -68,18 +68,7 @@ size_t _XMP_get_datatype_size(int datatype);
 
 /* From xmpf_gcomm.c */
 int _XMPF_get_owner_pos_BLOCK(_XMP_array_t *a, int dim, int index);
-
-/* From xmp_template.c */
-_XMP_template_t *_XMP_create_template_desc(int dim, _Bool is_fixed);
-void _XMP_calc_template_size(_XMP_template_t *t);
-void _XMP_dist_template_DUPLICATION(_XMP_template_t *template, int template_index);
-void _XMP_dist_template_BLOCK(_XMP_template_t *template, int template_index, int nodes_index);
-void _XMP_dist_template_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index);
-void _XMP_dist_template_BLOCK_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index, unsigned long long width);
-void _XMP_dist_template_GBLOCK(_XMP_template_t *template, int template_index, int nodes_index, int *mapping_array);
-void _XMP_init_template_chunk(_XMP_template_t *template, _XMP_nodes_t *nodes);
 _Bool _XMP_is_entire(_XMP_object_ref_t *rp);
-
 
 /* From xmp_align.c */
 void _XMP_finalize_array_desc(_XMP_array_t *array);

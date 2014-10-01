@@ -1,4 +1,4 @@
-program tgmove
+program loop
 integer i
 integer,parameter :: n=8
 integer a(n)
@@ -12,4 +12,8 @@ do i=1,n
   a(i)=i
 end do
 
-end program tgmove
+!$xmp task on p(1)
+write(*,*) "PASS"
+!$xmp end task
+
+end program loop

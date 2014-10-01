@@ -10,7 +10,7 @@ all default: $(EXES)
 
 .SUFFIXES: .x .c
 
-.c.x:
+%.x: %.c 
 	$(XCC) -o $@ $<
 
 run: $(EXES)

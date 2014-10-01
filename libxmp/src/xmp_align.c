@@ -741,7 +741,7 @@ void _XMP_init_array_nodes(_XMP_array_t *array) {
     array->array_nodes = _XMP_create_nodes_by_template_ref(align_template, align_template_shrink,
 								     align_template_lower, align_template_upper, align_template_stride);
   }else{
-    array->array_nodes = align_template->onto_nodes;
+    array->array_nodes =_XMP_create_temporary_nodes(align_template->onto_nodes);
   }
 
 }

@@ -286,6 +286,38 @@ static int _XMP_compare_nodes(_XMP_nodes_t *a, _XMP_nodes_t *b) {
   return _XMP_N_INT_TRUE;
 }
 
+_XMP_nodes_t *_XMP_create_temporary_nodes(_XMP_nodes_t *n){
+  int is_member = n->is_member;
+  int onto_nodes_dim = n->dim;
+  int onto_nodes_size = n->comm_size;
+  int dim_size[onto_nodes_dim];
+  _XMP_nodes_t *new_node = _XMP_create_new_nodes(is_member, onto_nodes_dim, onto_nodes_size, n->comm);
+
+  _XMP_nodes_inherit_info_t *inherit_info = _XMP_alloc(sizeof(_XMP_nodes_inherit_info_t) * onto_nodes_dim);
+
+  for(int i=0;i<onto_nodes_dim;i++){
+    int isize = n->info[i].size;
+    inherit_info[i].shrink = _XMP_N_INT_FALSE;
+    inherit_info[i].lower = 1;
+    inherit_info[i].upper = isize;
+    inherit_info[i].stride = 1;
+    dim_size[i] = isize;
+  }
+
+  new_node->inherit_nodes = new_node;
+  new_node->inherit_info = inherit_info;
+
+  _XMP_init_nodes_info(new_node, dim_size, _XMP_N_INT_TRUE);
+
+  new_node->info[0].multiplier = 1;
+  for (int i = 1; i < onto_nodes_dim; i++){
+    new_node->info[i].multiplier = new_node->info[i-1].multiplier * dim_size[i-1];
+  }
+
+  return new_node;
+
+}
+
 #include <stdlib.h>
 #include <stdio.h>
 

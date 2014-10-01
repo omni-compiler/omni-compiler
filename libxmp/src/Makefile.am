@@ -12,7 +12,7 @@ libxmp_a_SOURCES = $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_constant.h $
                    xmp_nodes.c xmp_template.c xmp_barrier.c xmp_reduce.c xmp_bcast.c \
                    xmp_align.c xmp_shadow.c xmp_array_section.c xmp_loop.c xmp_gmove.c \
                    xmp_math_function.c xmp_runtime.c xmp_tlog_runtime.c xmp_io.c xmp_reflect.c xmp_pack_vector.c \
-		   xmp_reflect_acc.c xmp_reduce_acc.c
+		   xmp_reflect_acc.c xmp_reduce_acc.c xmp_intrinsic.c
 
 if GASNET
     include @GASNET_PREFIX@/include/@GASNET_CONDUIT@-conduit/@GASNET_CONDUIT@-seq.mak
@@ -43,6 +43,10 @@ endif
 
 
 xmp_pack_vector.o: xmp_pack_vector.c
+	@BECC@ $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) @BECC_OMP_OPTION@ -c $<
+
+xmp_intrinsic.o: xmp_intrinsic.c
 	@BECC@ $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) @BECC_OMP_OPTION@ -c $<
 

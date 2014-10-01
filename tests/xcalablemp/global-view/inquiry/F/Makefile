@@ -1,4 +1,4 @@
-XCC     = xmpf90 -O2
+XFC     = xmpf90 -O2
 XRUN    = mpiexec
 TESTS = $(wildcard *.f90)
 EXES  = $(TESTS:.f90=.x)
@@ -10,8 +10,8 @@ all default: $(EXES)
 
 .SUFFIXES: .x .f90
 
-.f90.x:
-	$(XCC) -o $@ $<
+%.x: %.f90
+	$(XFC) -o $@ $<
 
 run: $(EXES)
 	$(XRUN) -n 12 ./inquiry.x
