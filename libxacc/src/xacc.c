@@ -440,7 +440,7 @@ void _XACC_reflect_init(_XACC_arrays_t *arrays_desc)
 
         reflect->lo_width = ai->shadow_size_lo;
         reflect->hi_width = ai->shadow_size_hi;
-        reflect->is_periodic = -1;
+        reflect->is_periodic = 0;
 
         _XACC_reflect_sched_dim(arrays_desc, i, j);
       }
@@ -562,7 +562,8 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
       if (i == target_dim) {
 	//printf("ainfo[%d].local_upper=%d\n",i,ainfo[i].local_upper);
 	lb_send = ainfo[i].local_upper - lwidth + 1;
-	lb_recv = ainfo[i].shadow_size_lo - lwidth;;
+	//lb_recv = ainfo[i].shadow_size_lo - lwidth;;
+	lb_recv = ainfo[i].local_lower - lwidth;
       }else {
 	// Note: including shadow area
 	lb_send = 0;
@@ -677,13 +678,13 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
   int src, dst;
   int is_periodic = reflect->is_periodic;
   int num_devices = arrays_desc->device_type->size;
-  if (!is_periodic && my_pos == lb_pos && target_device == 0){ // no periodic
+  if (!is_periodic && my_pos == lb_pos && (target_dim != 0 || target_device == 0)){ // no periodic
     lo_rank = MPI_PROC_NULL;
   }else if(target_device != 0){
     lo_rank = my_rank;
   }
 
-  if (!is_periodic && my_pos == ub_pos && target_device == num_devices - 1){ // no periodic
+  if (!is_periodic && my_pos == ub_pos && (target_dim != 0 || target_device == num_devices - 1)){ // no periodic
     hi_rank = MPI_PROC_NULL;
   }else if(target_device != num_devices -1){
     hi_rank = my_rank;
@@ -707,8 +708,8 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
     MPI_Request_free(&reflect->req[1]);
   }
 
-  printf("lo_recv pos=%lld, @rank=%d,dev=%d\n", (long long )(lo_recv_buf - array_addr), my_rank, target_device);
-  printf("lo_send pos=%lld, @rank=%d,dev=%d\n", (long long )(lo_send_buf - array_addr), my_rank, target_device);
+  printf("lo_recv pos=%lld, from(%d) @rank=%d,dev=%d\n", (long long )(lo_recv_buf - array_addr), src, my_rank, target_device);
+  printf("lo_send pos=%lld, to(%d) @rank=%d,dev=%d\n", (long long )(lo_send_buf - array_addr), dst, my_rank, target_device);
   MPI_Recv_init(lo_recv_buf, 1, reflect->datatype_lo, src,
 		_XMP_N_MPI_TAG_REFLECT_LO, *comm, &reflect->req[0]);
   MPI_Send_init(lo_send_buf, 1, reflect->datatype_lo, dst,
@@ -733,8 +734,8 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
     MPI_Request_free(&reflect->req[3]);
   }
 
-  printf("hi_recv pos=%lld, @rank=%d,dev=%d\n", (long long )(hi_recv_buf - array_addr), my_rank, target_device);
-  printf("hi_send pos=%lld, @rank=%d,dev=%d\n", (long long )(hi_send_buf - array_addr), my_rank, target_device);
+  printf("hi_recv pos=%lld, from(%d) @rank=%d,dev=%d\n", (long long )(hi_recv_buf - array_addr), src, my_rank, target_device);
+  printf("hi_send pos=%lld, to(%d) @rank=%d,dev=%d\n", (long long )(hi_send_buf - array_addr), dst, my_rank, target_device);
   MPI_Recv_init(hi_recv_buf, 1, reflect->datatype_hi, src,
 		_XMP_N_MPI_TAG_REFLECT_HI, *comm, &reflect->req[2]);
   MPI_Send_init(hi_send_buf, 1, reflect->datatype_hi, dst,
@@ -797,6 +798,7 @@ void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
   //他ノードとの通信の開始
   _XACC_reflect_do_inter_start(arrays_desc);
 
+  /*
   for(dev=0; dev < numDevices; dev++){
     _XACC_array_t* device_array = &(arrays_desc->device_array[dev]);
     _XACC_array_info_t* info0 = &device_array->info[0];
@@ -843,6 +845,7 @@ void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
 
     //cudaMemcpy(, cudaMemcpyDefault);
   }
+  */
 
   //他ノードとの通信の待機
   _XACC_reflect_do_inter_wait(arrays_desc);
