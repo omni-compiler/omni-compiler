@@ -673,7 +673,7 @@ token()
     case '(': 
         paren_level++; 
 	/* or interface operator (/), (/=), or (//) */
-	if (*bufptr == '/' && !st_OMP_flag) {
+	if (*bufptr == '/') {
 	    char *save = ++bufptr; /* check 'interface operator (/)' ? */
 
 	    while(isspace(*bufptr)) bufptr++;  /* skip white space */
@@ -702,6 +702,10 @@ token()
 		  return '(';
 		}
 	      }
+	    }
+	    else if (st_OMP_flag){
+	      bufptr = save - 1;
+	      return '(';
 	    }
 	    bufptr = save;		
 	    return L_ARRAY_CONSTRUCTOR;
@@ -760,7 +764,7 @@ token()
             bufptr++;
             return(NE);
         } 
-        if (*bufptr == ')' && !st_OMP_flag) {
+        if (*bufptr == ')') {
             bufptr++;
             paren_level--; 
             { /* check 'interface operator (/)' ? */
@@ -771,6 +775,10 @@ token()
                     bufptr = save - 1;
                     return '/';
                 }
+		if (st_OMP_flag){
+		  bufptr = save - 1;
+		  return '/';
+		}
                 bufptr = save;
             }
             return R_ARRAY_CONSTRUCTOR;
