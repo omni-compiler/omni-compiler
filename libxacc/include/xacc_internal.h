@@ -49,3 +49,10 @@ void _XACC_sched_loop_layout_BLOCK(int init,
                                    int dim,
                                    int deviceNum);
 void _XACC_set_shadow_NORMAL(_XACC_arrays_t* array_desc, int dim , int lo, int hi);
+
+
+//xacc_util.c
+/* void _XACC_gpu_alloc(void **addr, size_t size); */
+/* void _XACC_gpu_free(void *addr); */
+/* void* _XACC_gpu_host_alloc(size_t size); */
+/* void _XACC_gpu_host_free(void *addr); */

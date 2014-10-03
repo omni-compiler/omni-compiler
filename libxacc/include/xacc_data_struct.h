@@ -29,7 +29,7 @@ typedef struct _XACC_array_info_type {
   int shadow_size_lo;
   int shadow_size_hi;
 
-  unsigned long long device_dim_acc;
+  unsigned long long dim_acc;
   _XMP_reflect_sched_t *reflect_sched;
 }_XACC_array_info_t;
 

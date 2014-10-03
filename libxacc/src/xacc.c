@@ -269,13 +269,13 @@ void _XACC_calc_size(_XACC_arrays_t* array_desc){
     _XACC_array_t *d_array_desc = &(array_desc->device_array[dev]);
     for(int i = dim - 1; i > 0; i--){
       _XACC_array_info_t* info = &(d_array_desc->info[i]);
-      info->device_dim_acc = device_acc;
+      info->dim_acc = device_acc;
       device_offset += device_acc * (info->local_lower - info->shadow_size_lo);
       device_acc *= info->alloc_size;
     }
     {
       _XACC_array_info_t* info = &(d_array_desc->info[0]);
-      info->device_dim_acc = device_acc;
+      info->dim_acc = device_acc;
       //old
       //device_offset += device_acc * info->local_lower;
       //device_acc *= (info->alloc_size - info->shadow_size_lo - info->shadow_size_hi);
@@ -430,7 +430,7 @@ void _XACC_reflect_init(_XACC_arrays_t *arrays_desc)
           reflect->is_periodic = -1; /* not used yet */
           reflect->datatype_lo = MPI_DATATYPE_NULL;
           reflect->datatype_hi = MPI_DATATYPE_NULL;
-          for (int k = 0; k < 4; k++) reflect->req[j] = MPI_REQUEST_NULL;
+          for (int k = 0; k < 4; k++) reflect->req[k] = MPI_REQUEST_NULL;
           reflect->lo_send_buf = NULL;
           reflect->lo_recv_buf = NULL;
           reflect->hi_send_buf = NULL;
@@ -454,6 +454,7 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
 
   _XACC_array_t *array_desc = arrays_desc->device_array + target_device;
   _XACC_array_info_t *ai = array_desc->info + target_dim;
+  _XACC_array_info_t *ainfo = array_desc->info;
   _XMP_reflect_sched_t *reflect = ai->reflect_sched;
   if (reflect->lo_width > ai->shadow_size_lo || reflect->hi_width > ai->shadow_size_hi){
     _XMP_fatal("reflect width is larger than shadow width.");
@@ -517,14 +518,11 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
       stride *= ainfo[i].alloc_size;
     }
 
-  }
-  else if ((!_XMPF_running) && _XMPC_running){ /* for XMP/C */
-
+  } else if ((!_XMPF_running) && _XMPC_running){ /* for XMP/C */
     count = 1;
     blocklength = type_size;
     stride = ainfo[ndims-1].alloc_size * type_size;
 
-    
     if(target_dim > 0){
       count *= ainfo[0].par_size;
       count_offset = ainfo[0].shadow_size_lo;
@@ -545,21 +543,259 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
     /*   stride *= ainfo[i].alloc_size; */
     /* } */
 
-    //    printf("count =%d, blength=%d, stride=%d\n", count ,blocklength,stride);
-    //    printf("ainfo[0].par_size=%d\n", ainfo[0].par_size);
-    //    printf("count_ofset=%d,\n", count_offset);
+    printf("count =%d, blength=%d, stride=%lld\n", count, blocklength, stride);
+    printf("ainfo[0].par_size=%d\n", ainfo[0].par_size);
+    printf("count_ofset=%d,\n", count_offset);
   }
   else {
     _XMP_fatal("cannot determin the base language.");
   }
 
+  int lwidth = reflect->lo_width;
+  if (lwidth){
+    lo_send_array = lo_recv_array = (void *)((char*)array_addr + count_offset * stride);
+
+    for (int i = 0; i < ndims; i++) {
+      int lb_send, lb_recv;
+      unsigned long long dim_acc;
+
+      if (i == target_dim) {
+	//printf("ainfo[%d].local_upper=%d\n",i,ainfo[i].local_upper);
+	lb_send = ainfo[i].local_upper - lwidth + 1;
+	lb_recv = ainfo[i].shadow_size_lo - lwidth;;
+      }else {
+	// Note: including shadow area
+	lb_send = 0;
+	lb_recv = 0;
+      }
+
+      dim_acc = ainfo[i].dim_acc;
+
+      lo_send_array = (void *)((char *)lo_send_array + lb_send * dim_acc * type_size);
+      lo_recv_array = (void *)((char *)lo_recv_array + lb_recv * dim_acc * type_size);
+    }
+
+    lo_send_buf = lo_send_array;
+    lo_recv_buf = lo_recv_array;
+  }
+
+  int uwidth = reflect->hi_width;
+  if (uwidth){
+    hi_send_array = hi_recv_array = (void *)((char*)array_addr + count_offset * stride);
+
+    for (int i = 0; i < ndims; i++) {
+      int lb_send, lb_recv;
+      unsigned long long dim_acc;
+
+      if (i == target_dim) {
+	lb_send = ainfo[i].local_lower;
+	lb_recv = ainfo[i].local_upper + 1;
+      }else {
+	// Note: including shadow area
+	lb_send = 0;
+	lb_recv = 0;
+      }
+
+      dim_acc = ainfo[i].dim_acc;
+
+      hi_send_array = (void *)((char *)hi_send_array + lb_send * dim_acc * type_size);
+      hi_recv_array = (void *)((char *)hi_recv_array + lb_recv * dim_acc * type_size);
+    }
+
+    hi_send_buf = hi_send_array;
+    hi_recv_buf = hi_recv_array;
+  }
+
+  // for lower reflect
+
+  if (reflect->datatype_lo != MPI_DATATYPE_NULL){
+    MPI_Type_free(&reflect->datatype_lo);
+  }
+
+  printf("lower type_vector(%d, %d, %lld) @ rank=%d,dev=%d\n",count, blocklength * lwidth,stride,my_rank, target_device);
+  MPI_Type_vector(count, blocklength * lwidth, stride,
+		  MPI_BYTE, &reflect->datatype_lo);
+  MPI_Type_commit(&reflect->datatype_lo);
+
+  // for upper reflect
+
+  if (reflect->datatype_hi != MPI_DATATYPE_NULL){
+    MPI_Type_free(&reflect->datatype_hi);
+  }
+
+  printf("upper type_vector(%d, %d, %lld) @ rank=%d,dev=%d\n",count, blocklength * uwidth,stride,my_rank,target_device);
+  MPI_Type_vector(count, blocklength * uwidth, stride,
+		  MPI_BYTE, &reflect->datatype_hi);
+  MPI_Type_commit(&reflect->datatype_hi);
+
+  
+  /*
+  //alloc buffer
+  if ((_XMPF_running && target_dim != ndims - 1) ||
+      (_XMPC_running && target_dim != 0)){
+    _XACC_gpu_host_free(reflect->lo_send_buf);
+    _XACC_gpu_host_free(reflect->lo_recv_buf);
+    _XACC_gpu_host_free(reflect->hi_send_buf);
+    _XACC_gpu_host_free(reflect->hi_recv_buf);
+  }
+  if ((_XMPF_running && target_dim == ndims - 1) ||
+      (_XMPC_running && target_dim == 0)){
+    _XACC_gpu_host_free(reflect->lo_send_buf);
+    _XACC_gpu_host_free(reflect->lo_recv_buf);
+    _XACC_gpu_host_free(reflect->hi_send_buf);
+    _XACC_gpu_host_free(reflect->hi_recv_buf);
+  }
+
+  if (lwidth){
+
+    lo_buf_size = lwidth * blocklength * count;
+
+    if ((_XMPF_running && target_dim == ndims - 1) ||
+	(_XMPC_running && target_dim == 0)){
+      lo_send_buf = _XMP_gpu_host_alloc(lo_buf_size);
+      lo_recv_buf = _XMP_gpu_host_alloc(lo_buf_size);
+      lo_send_dev_buf = lo_send_dev_array;
+      lo_recv_dev_buf = lo_recv_dev_array;
+    } else {
+      _XMP_TSTART(t0);
+      lo_send_buf = _XMP_gpu_host_alloc(lo_buf_size);
+      lo_recv_buf = _XMP_gpu_host_alloc(lo_buf_size);
+
+      _XMP_gpu_alloc((void **)&lo_send_dev_buf, lo_buf_size); //lo_send_dev_buf = _XMP_gpu_alloc(lo_buf_size);
+      _XMP_gpu_alloc((void **)&lo_recv_dev_buf, lo_buf_size); //lo_recv_dev_buf = _XMP_gpu_alloc(lo_buf_size);
+      _XMP_TEND2(xmptiming_.t_mem, xmptiming_.tdim_mem[target_dim], t0);
+    }
+
+  }
+  */
+
+
+  //
+  // initialize communication
+  //
+
+  int src, dst;
+  int is_periodic = reflect->is_periodic;
+  int num_devices = arrays_desc->device_type->size;
+  if (!is_periodic && my_pos == lb_pos && target_device == 0){ // no periodic
+    lo_rank = MPI_PROC_NULL;
+  }else if(target_device != 0){
+    lo_rank = my_rank;
+  }
+
+  if (!is_periodic && my_pos == ub_pos && target_device == num_devices - 1){ // no periodic
+    hi_rank = MPI_PROC_NULL;
+  }else if(target_device != num_devices -1){
+    hi_rank = my_rank;
+  }
+
+  // for lower shadow
+
+  if (lwidth){
+    src = lo_rank;
+    dst = hi_rank;
+  } else {
+    src = MPI_PROC_NULL;
+    dst = MPI_PROC_NULL;
+  }
+
+  if (reflect->req[0] != MPI_REQUEST_NULL){
+    MPI_Request_free(&reflect->req[0]);
+  }
+	
+  if (reflect->req[1] != MPI_REQUEST_NULL){
+    MPI_Request_free(&reflect->req[1]);
+  }
+
+  printf("lo_recv pos=%lld, @rank=%d,dev=%d\n", (long long )(lo_recv_buf - array_addr), my_rank, target_device);
+  printf("lo_send pos=%lld, @rank=%d,dev=%d\n", (long long )(lo_send_buf - array_addr), my_rank, target_device);
+  MPI_Recv_init(lo_recv_buf, 1, reflect->datatype_lo, src,
+		_XMP_N_MPI_TAG_REFLECT_LO, *comm, &reflect->req[0]);
+  MPI_Send_init(lo_send_buf, 1, reflect->datatype_lo, dst,
+		_XMP_N_MPI_TAG_REFLECT_LO, *comm, &reflect->req[1]);
+
+
+  // for upper shadow
+
+  if (uwidth){
+    src = hi_rank;
+    dst = lo_rank;
+  } else {
+    src = MPI_PROC_NULL;
+    dst = MPI_PROC_NULL;
+  }
+
+  if (reflect->req[2] != MPI_REQUEST_NULL){
+    MPI_Request_free(&reflect->req[2]);
+  }
+	
+  if (reflect->req[3] != MPI_REQUEST_NULL){
+    MPI_Request_free(&reflect->req[3]);
+  }
+
+  printf("hi_recv pos=%lld, @rank=%d,dev=%d\n", (long long )(hi_recv_buf - array_addr), my_rank, target_device);
+  printf("hi_send pos=%lld, @rank=%d,dev=%d\n", (long long )(hi_send_buf - array_addr), my_rank, target_device);
+  MPI_Recv_init(hi_recv_buf, 1, reflect->datatype_hi, src,
+		_XMP_N_MPI_TAG_REFLECT_HI, *comm, &reflect->req[2]);
+  MPI_Send_init(hi_send_buf, 1, reflect->datatype_hi, dst,
+		_XMP_N_MPI_TAG_REFLECT_HI, *comm, &reflect->req[3]);
+
+  reflect->count = count;
+  reflect->blocklength = blocklength;
+  reflect->stride = stride;
+
+  reflect->lo_send_array = lo_send_array;
+  reflect->lo_recv_array = lo_recv_array;
+  reflect->hi_send_array = hi_send_array;
+  reflect->hi_recv_array = hi_recv_array;
+
+  reflect->lo_send_buf = lo_send_buf;
+  reflect->lo_recv_buf = lo_recv_buf;
+  reflect->hi_send_buf = hi_send_buf;
+  reflect->hi_recv_buf = hi_recv_buf;
+
+  reflect->lo_rank = lo_rank;
+  reflect->hi_rank = hi_rank;
 }
+
+
+void _XACC_reflect_do_inter_start(_XACC_arrays_t *arrays_desc)
+{
+  int dim = arrays_desc->dim;
+  for(int i = 0; i < arrays_desc->device_type->size; i++){
+    _XACC_array_t *array_desc = arrays_desc->device_array + i;
+    for(int j = 0; j < dim; j++){
+      _XACC_array_info_t *ai = array_desc->info + j;
+      if(ai->shadow_size_lo != 0 || ai->shadow_size_hi != 0){
+        _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+        MPI_Startall(4, reflect->req);
+      }
+    }
+  }
+}
+
+void _XACC_reflect_do_inter_wait(_XACC_arrays_t *arrays_desc)
+{
+  int dim = arrays_desc->dim;
+  for(int i = 0; i < arrays_desc->device_type->size; i++){
+    _XACC_array_t *array_desc = arrays_desc->device_array + i;
+    for(int j = 0; j < dim; j++){
+      _XACC_array_info_t *ai = array_desc->info + j;
+      if(ai->shadow_size_lo != 0 || ai->shadow_size_hi != 0){
+        _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+        MPI_Waitall(4, reflect->req, MPI_STATUSES_IGNORE);
+      }
+    }
+  }
+}
+
 
 void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
   int numDevices = arrays_desc->device_type->size;
   int dev;
 
   //他ノードとの通信の開始
+  _XACC_reflect_do_inter_start(arrays_desc);
 
   for(dev=0; dev < numDevices; dev++){
     _XACC_array_t* device_array = &(arrays_desc->device_array[dev]);
@@ -577,8 +813,8 @@ void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
       unsigned long long loSendOffset;
       unsigned long long loSendElements;
 
-      loSendOffset = info0->device_dim_acc * info0->local_lower;
-      loSendElements = info0->device_dim_acc * info0->shadow_size_lo;
+      loSendOffset = info0->dim_acc * info0->local_lower;
+      loSendElements = info0->dim_acc * info0->shadow_size_lo;
       //printf("loSendOffset=%lld, size=%lld, recvOffset=%lld\n", loSendOffset, loSendSize, loRecvOffset);
 
       size_t loSendSize = type_size * loSendElements;
@@ -595,8 +831,8 @@ void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
       unsigned long long hiSendOffset;
       unsigned long long hiSendElements;
 
-      hiSendOffset = info0->device_dim_acc * info0->local_upper;
-      hiSendElements = info0->device_dim_acc * info0->shadow_size_hi;
+      hiSendOffset = info0->dim_acc * info0->local_upper;
+      hiSendElements = info0->dim_acc * info0->shadow_size_hi;
       printf("hiSendOffset=%lld, elements=%lld\n", hiSendOffset, hiSendElements);
       
       size_t hiSendSize = hiSendElements * type_size;
@@ -609,8 +845,7 @@ void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
   }
 
   //他ノードとの通信の待機
-
+  _XACC_reflect_do_inter_wait(arrays_desc);
 
 }
 
-    
