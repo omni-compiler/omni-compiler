@@ -104,6 +104,8 @@ void _XACC_init_layouted_array(_XACC_arrays_t **arrays, _XMP_array_t* alignedArr
       d_array_info[i].shadow_size_lo = h_array_info[i].shadow_size_lo;
       d_array_info[i].shadow_size_hi = h_array_info[i].shadow_size_hi;
 
+      d_array_info[i].reflect_sched = NULL;
+
     printf("dim=%d, host par (%d, %d, %d) local(%d, %d, %d, %d)\n",
            dim,
            h_array_info[i].par_lower,
