@@ -649,18 +649,18 @@ if test "$IS_AIX" = "Yes"; then
   AH_TEMPLATE(AIX_64BIT, [aix int64_t])
 fi
 
-# Add temporarily by mnakao
-enableKRDMA=""
-AC_ARG_ENABLE(KRDMA,
-   [  --enable-KRDMA                 enable RDMA functions on the K compiter.],
-   [enableKRDMA=$enableval], [enableKRDMA=no])
-
-AM_CONDITIONAL(FJRDMA, test x${enableKRDMA} = xyes)
-AC_SUBST(FJRDMA)
-# End Add temporarily
-
-#AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
+## Add temporarily by mnakao
+#enableKRDMA=""
+#AC_ARG_ENABLE(KRDMA,
+#   [  --enable-KRDMA                 enable RDMA functions on the K compiter.],
+#   [enableKRDMA=$enableval], [enableKRDMA=no])
+#
+#AM_CONDITIONAL(FJRDMA, test x${enableKRDMA} = xyes)
 #AC_SUBST(FJRDMA)
+## End Add temporarily
+
+AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
+AC_SUBST(FJRDMA)
 
 # --------------------------------------------------------------------
 # specify Backend C compiler
@@ -1183,7 +1183,9 @@ javadir='${prefix}/share/xcalablemp'
 AC_SUBST(javadir)
 
 # java option
-JAVA_OPT="-Xmx1024m"
+# Fix: #338
+#JAVA_OPT="-Xmx1024m -Xms1024m"
+JAVA_OPT="-Xmx200m -Xms200m"
 AC_SUBST(JAVA_OPT)
 
 #--------------------------------------------------------------------

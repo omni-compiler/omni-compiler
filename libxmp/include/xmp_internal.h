@@ -57,6 +57,8 @@ extern "C" {
 // ----- libxmp ------------------------------------------------------
 // xmp_align.c
 extern void _XMP_calc_array_dim_elmts(_XMP_array_t *array, int array_index);
+extern void _XMP_finalize_array_desc(_XMP_array_t *array);
+extern void _XMP_align_array_NOT_ALIGNED(_XMP_array_t *array, int array_index);
 extern void _XMP_align_array_DUPLICATION(_XMP_array_t *array, int array_index, int template_index,
                                   long long align_subscript);
 extern void _XMP_align_array_BLOCK(_XMP_array_t *array, int array_index, int template_index,
@@ -89,6 +91,7 @@ extern void _XMP_unpack_array(void *dst, void *buffer, int array_type, size_t ar
                               int array_dim, int *l, int *u, int *s, unsigned long long *d);
 
 // xmp_barrier.c
+extern void _XMP_barrier_NODES_ENTIRE(_XMP_nodes_t *nodes);
 extern void _XMP_barrier_EXEC(void);
 
 // xmp_coarray.c
@@ -103,6 +106,36 @@ extern _XMP_coarray_list_t *_XMP_coarray_list_tail;
 extern void _XMP_coarray_initialize(int, char **);
 extern void _XMP_coarray_finalize(const int);
 
+// xmp_intrinsic.c
+extern void xmpf_transpose(void *dst_p, void *src_p, int opt);
+extern void xmpf_matmul(void *x_p, void *a_p, void *b_p);
+
+// xmp_gmove.c
+extern void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
+					int dim_index, int *lower, int *upper, int *stride);
+extern int _XMP_calc_gmove_array_owner_linear_rank_SCALAR(_XMP_array_t *array, int *ref_index);
+extern void _XMP_gmove_bcast_SCALAR(void *dst_addr, void *src_addr,
+				    size_t type_size, int root_rank);
+extern unsigned long long _XMP_gmove_bcast_ARRAY(void *dst_addr, int dst_dim,
+					  int *dst_l, int *dst_u, int *dst_s, unsigned long long *dst_d,
+					  void *src_addr, int src_dim,
+					  int *src_l, int *src_u, int *src_s, unsigned long long *src_d,
+					  int type, size_t type_size, int root_rank);
+extern int _XMP_check_gmove_array_ref_inclusion_SCALAR(_XMP_array_t *array, int array_index,
+						       int ref_index);
+extern void _XMP_gmove_localcopy_ARRAY(int type, int type_size,
+                                       void *dst_addr, int dst_dim,
+                                       int *dst_l, int *dst_u, int *dst_s, unsigned long long *dst_d,
+                                       void *src_addr, int src_dim,
+                                       int *src_l, int *src_u, int *src_s, unsigned long long *src_d);
+extern int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_index,
+					   int *dst_l, int *dst_u, int *dst_s,
+					   int *src_l, int *src_u, int *src_s);
+extern int _XMP_calc_global_index_BCAST(int dst_dim, int *dst_l, int *dst_u, int *dst_s,
+					_XMP_array_t *src_array, int *src_array_nodes_ref,
+					int *src_l, int *src_u, int *src_s);
+extern void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long *src_d);
+
 // xmp_loop.c
 extern int _XMP_sched_loop_template_width_1(int ser_init, int ser_cond, int ser_step,
                                             int *par_init, int *par_cond, int *par_step,
@@ -111,8 +144,24 @@ extern int _XMP_sched_loop_template_width_N(int ser_init, int ser_cond, int ser_
                                             int *par_init, int *par_cond, int *par_step,
                                             int template_lower, int template_upper, int template_stride,
                                             int width, int template_ser_lower, int template_ser_upper);
+extern void _XMP_sched_loop_template_DUPLICATION(int ser_init, int ser_cond, int ser_step,
+						 int *par_init, int *par_cond, int *par_step,
+						 _XMP_template_t *template, int template_index);
+extern void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
+					   int *par_init, int *par_cond, int *par_step,
+					   _XMP_template_t *template, int template_index);
+extern void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_step,
+					    int *par_init, int *par_cond, int *par_step,
+					    _XMP_template_t *template, int template_index);
+extern void _XMP_sched_loop_template_BLOCK_CYCLIC(int ser_init, int ser_cond, int ser_step,
+						  int *par_init, int *par_cond, int *par_step,
+						  _XMP_template_t *template, int template_index);
+extern void _XMP_sched_loop_template_GBLOCK(int ser_init, int ser_cond, int ser_step,
+					    int *par_init, int *par_cond, int *par_step,
+					    _XMP_template_t *template, int template_index);
 
 // xmp_nodes.c
+extern _XMP_nodes_t *_XMP_create_temporary_nodes(_XMP_nodes_t *n);
 extern _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim, int *dim_size, int is_static);
 extern _XMP_nodes_t *_XMP_init_nodes_struct_EXEC(int dim, int *dim_size, int is_static);
 extern _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NUMBER(int dim, int ref_lower, int ref_upper, int ref_stride,
@@ -154,6 +203,20 @@ void _XMPF_unpack_transpose_vector(char * restrict dst, char * restrict src,
                                    int type_size, int dst_block_dim);
 void _XMP_check_reflect_type(void);
 
+// xmp_reduce.c
+extern void _XMP_reduce_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op);
+
+// xmp_reflect.c
+extern void _XMP_set_reflect__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
+			       int is_periodic);
+extern void _XMP_reflect__(_XMP_array_t *a);
+extern void _XMP_wait_async__(int async_id);
+extern void _XMP_reflect_async__(_XMP_array_t *a, int async_id);
+
+// xmp_runtime.c
+extern void _XMP_init(int argc, char** argv);
+extern void _XMP_finalize(int return_val);
+
 // xmp_shadow.c
 extern void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index);
 extern void _XMP_reflect_shadow_FULL(void *array_addr, _XMP_array_t *array_desc, int array_index);
@@ -176,7 +239,8 @@ void _XMP_dist_template_DUPLICATION(_XMP_template_t *template, int template_inde
 void _XMP_dist_template_BLOCK(_XMP_template_t *template, int template_index, int nodes_index);
 void _XMP_dist_template_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index) ;
 void _XMP_dist_template_BLOCK_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index, unsigned long long width);
-
+void _XMP_dist_template_GBLOCK(_XMP_template_t *template, int template_index, int nodes_index,
+			       int *mapping_array);
 
 // xmp_util.c
 extern unsigned long long _XMP_get_on_ref_id(void);
@@ -215,8 +279,8 @@ extern void _XMP_threads_finalize(void);
 
 // ----- for coarray & post/wait -------------------
 #if defined(_XMP_COARRAY_FJRDMA) || defined(_XMP_COARRAY_GASNET)
-#define _XMP_DEFAULT_COARRAY_HEAP_SIZE   "16M"  // 16MB
-#define _XMP_DEFAULT_COARRAY_STRIDE_SIZE "1M"  // 1MB
+#define _XMP_DEFAULT_COARRAY_HEAP_SIZE   "26M" 
+#define _XMP_DEFAULT_COARRAY_STRIDE_SIZE "5M"
 #define _XMP_POST_WAIT_QUEUESIZE 32
 #define _XMP_POST_WAIT_QUEUECHUNK 512
 #define FLAG_NIC (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN)
@@ -259,7 +323,7 @@ extern void _xmp_gasnet_wait_notag(const int);
 
 #ifdef _XMP_COARRAY_FJRDMA
 #include <mpi-ext.h>
-extern void _XMP_fjrdma_initialize();
+extern void _XMP_fjrdma_initialize(int, char**);
 extern void _XMP_fjrdma_finalize();
 extern void _XMP_fjrdma_sync_memory();
 extern void _XMP_fjrdma_sync_all();

@@ -69,6 +69,9 @@ void _XMP_gasnet_initialize(int argc, char **argv, const size_t xmp_heap_size, c
     gasnet_init(&argc, &s);
   }
 
+  _XMP_world_rank = gasnet_mynode();
+  _XMP_world_size = gasnet_nodes();
+
   if(xmp_heap_size % GASNET_PAGESIZE != 0){
     if(xmp_heap_size <= GASNET_PAGESIZE){
       _xmp_heap_size = GASNET_PAGESIZE;

@@ -71,6 +71,7 @@ public class XMP {
   public final static String template_dealloc_f = "xmpf_template_dealloc_";
 
   public final static String array_alloc_f = "xmpf_array_alloc_";
+  public final static String init_allocated_f = "xmp_f_init_allocated_";
   public final static String array_align_info_f = "xmpf_align_info_";
   public final static String array_init_f = "xmpf_array_init_";
   public final static String array_get_local_size_f = "xmpf_array_get_local_size_off_";

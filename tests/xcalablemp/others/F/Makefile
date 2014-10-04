@@ -2,7 +2,7 @@ XFC     = xmpf90 -O2
 XRUN    = mpirun
 EXES    = exit.x module_test.x module_test0.x arg.x dnodes.x
 
-all: module_test.x exit.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o
+all: module_test.x exit.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o
 
 module_test0.x: module0.o main.o
 	$(XFC) -o module_test0.x module0.o main.o
@@ -50,6 +50,9 @@ interface.o: interface.f90
 
 xmp_lib.o: xmp_lib.f90
 	$(XFC) -c xmp_lib.f90
+
+threadprivate.o: threadprivate.f90
+	$(XFC) -c -openmp threadprivate.f90
 
 run: $(EXES)
 	$(XRUN) -np 2 ./module_test.x

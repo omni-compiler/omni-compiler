@@ -11,6 +11,8 @@
   real, parameter :: PI = 3.14159265359
   integer :: result = 0
 
+  integer istart = 1, iend = 100
+
 !$xmp loop on t(i)
   do i = 1, 100
      a0(i) = real(i) * (2. * PI / 100.)
@@ -35,12 +37,30 @@
 !$xmp reduction(+:result)
 
 !$xmp task on p(1)
-  if ( result .eq. 0 ) then
-     write(*,*) "PASS"
-  else
+  if ( result /= 0 ) then
      write(*,*) "ERROR"
      call exit(1)
   endif
+!$xmp end task
+
+
+!$xmp array on t(istart:iend)
+  c(istart:iend) = sin(a(istart:iend) + b(istart:iend))
+
+!$xmp loop on t(i)
+  do i = 1, 100
+     if (c0(i) /= c(i)) result = -1
+  end do
+
+!$xmp reduction(+:result)
+
+!$xmp task on p(1)
+  if ( result /= 0 ) then
+     write(*,*) "ERROR"
+     call exit(1)
+  endif
+
+  write(*,*) "PASS"
 !$xmp end task
 
 end program

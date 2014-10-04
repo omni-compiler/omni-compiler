@@ -5,11 +5,12 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-_ACC_memory_map_t* map = NULL;
+//_ACC_memory_map_t* map = NULL;
 
 _ACC_memory_map_t* _ACC_gpu_init_data_table()
 {
   _ACC_DEBUG("initialize table\n")
+  _ACC_memory_map_t* map;
   map = _ACC_memory_map_create();
   return map;
 }
@@ -23,12 +24,14 @@ void _ACC_gpu_finalize_data_table(_ACC_memory_map_t* map)
 void _ACC_gpu_add_data(_ACC_gpu_data_t *host_desc)
 {
   _ACC_DEBUG("add");
+  _ACC_memory_map_t *map = (_ACC_memory_map_t*)_ACC_gpu_get_current_memory_map();
   _ACC_memory_map_add(map, (char*)host_desc->host_addr + host_desc->offset, host_desc->size, host_desc);
 }
 
 _Bool _ACC_gpu_remove_data(_ACC_gpu_data_t *host_desc)
 {
   _ACC_DEBUG("remove");
+  _ACC_memory_map_t *map = (_ACC_memory_map_t*)_ACC_gpu_get_current_memory_map();
   void *result = _ACC_memory_map_remove(map, (char*)host_desc->host_addr + host_desc->offset, host_desc->size);
   return (result != NULL)? true : false;
 }
@@ -36,6 +39,7 @@ _Bool _ACC_gpu_remove_data(_ACC_gpu_data_t *host_desc)
 void _ACC_gpu_get_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *host_addr, size_t size)
 {
   _ACC_DEBUG("get\n")
+  _ACC_memory_map_t *map = (_ACC_memory_map_t*)_ACC_gpu_get_current_memory_map();
   _ACC_gpu_data_t *host_desc = (_ACC_gpu_data_t*)_ACC_memory_map_find(map, host_addr, size);
   if(host_desc == NULL){
     _ACC_DEBUG("data not found\n")
@@ -58,6 +62,7 @@ void _ACC_gpu_get_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, voi
 void _ACC_gpu_get_data_sub(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *host_addr, size_t offset, size_t size)
 {
   _ACC_DEBUG("get_sub\n")
+  _ACC_memory_map_t *map = (_ACC_memory_map_t*)_ACC_gpu_get_current_memory_map();
   _ACC_gpu_data_t *host_desc = (_ACC_gpu_data_t*)_ACC_memory_map_find(map, (char*)host_addr + offset, size);
 
   if(host_desc == NULL){
@@ -85,5 +90,5 @@ void _ACC_gpu_get_data_sub(_ACC_gpu_data_t **host_data_desc, void **device_addr,
 
 void _ACC_gpu_set_data_table(_ACC_memory_map_t* m)
 {
-  map = m;
+  //  map = m;
 }

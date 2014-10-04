@@ -49,4 +49,5 @@ int main(void)
    
    free (a);
    free (m);
+   return 0;
 }

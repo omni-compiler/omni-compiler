@@ -41,6 +41,7 @@ run: $(EXES)
 	$(XRUN) -n 8 ./reduction_or2.x
 	$(XRUN) -n 8 ./reduction_plus.x
 	$(XRUN) -n 16 ./reduction_plus3.x
+	$(XRUN) -n 2 ./different_template.x
 
 clean:
 	rm -f $(EXES) $(OBJS)

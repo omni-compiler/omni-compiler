@@ -396,10 +396,10 @@ void compile_OMP_directive(expr x)
 	return;
 
     case OMP_F_THREADPRIVATE:
-	/* c = EXPR_ARG2(x); */
-	/* compile_OMP_name_list(c); */
-	/* output_statement(OMP_pragma_list(OMP_THREADPRIVATE,c,NULL)); */
-      warning("OMP THREADPRIVATE not supported yet");
+	c = EXPR_ARG2(x);
+	compile_OMP_name_list(c);
+	output_statement(OMP_pragma_list(OMP_THREADPRIVATE,c,NULL));
+      //warning("OMP THREADPRIVATE not supported yet");
 	return;
 
     case OMP_F_WORKSHARE:
@@ -618,7 +618,7 @@ void compile_OMP_name_list(expr x)
     list lp;
     expr v;
     ID id;
-    EXT_ID ext_id;
+    //EXT_ID ext_id;
 
     FOR_ITEMS_IN_LIST(lp,x){
 	v = LIST_ITEM(lp);
@@ -629,14 +629,15 @@ void compile_OMP_name_list(expr x)
 		error("common name is expected in list of OpenMP directive");
 		continue;
 	    }
-#ifdef not
-	    if((ext_id = findCommon(v)) == NULL){
-		error("common name '%s'in OpenMP directive is undefined",
+
+	    //if((ext_id = findCommon(v)) == NULL){
+	    if ((id = find_common_ident(EXPR_SYM(v))) == NULL){
+		error("common name '%s' in OpenMP directive is undefined",
 		      SYM_NAME(EXPR_SYM(v)));
 		continue;
 	    }
-#endif
-	    LIST_ITEM(lp) = expv_sym_term(IDENT,NULL,EXT_SYM(ext_id));
+
+	    LIST_ITEM(lp) = expv_sym_term(IDENT, NULL, ID_SYM(id));
 	    continue;
 	} else if(EXPR_CODE(v) != IDENT){
 	    error("variable is expected in list of OpenMP directive");

@@ -976,12 +976,30 @@ public class XMPanalyzePragma
 	      lb = tlb.Ref();
 	    }
 	  }
+	  else if (lb.Opcode() == Xcode.VAR){
+	    String lbName = lb.getString();
+	    Ident lbId = env.findVarIdent(lbName, pb);
+	    if (lbId == null) {
+	      XMP.errorAt(pb, "variable '" + lbName + "' is not declared");
+	      return null;
+	    }
+	    lb = lbId.Ref();
+	  }
 
 	  Xobject st = ((XobjList)sub).getArg(2);
 	  if (st != null){
 	    if (st.Opcode() == Xcode.INT_CONSTANT && ((XobjInt)st).getInt() == 0){ // scalar
 	      subscriptList.add(sub);
 	      continue;
+	    }
+	    else if (st.Opcode() == Xcode.VAR){
+	      String stName = st.getString();
+	      Ident stId = env.findVarIdent(stName, pb);
+	      if (stId == null) {
+		XMP.errorAt(pb, "variable '" + stName + "' is not declared");
+		return null;
+	      }
+	      st = stId.Ref();
 	    }
 	  }
 	  else st = Xcons.IntConstant(1);

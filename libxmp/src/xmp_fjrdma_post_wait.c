@@ -30,9 +30,16 @@ void _xmp_fjrdma_post_wait_initialize()
   _token     = _XMP_alloc(sizeof(double));
   _laddr     = FJMPI_Rdma_reg_mem(POST_WAIT_ID, _token, sizeof(double));
 
-  for(int i=0;i<_XMP_world_size;i++)
-    if(i != _XMP_world_rank)
-      while((_each_addr[i] = FJMPI_Rdma_get_remote_addr(i, POST_WAIT_ID)) == FJMPI_RDMA_ERROR);
+  for(int ncount=0,i=1; i<_XMP_world_size; ncount++,i++){
+    int partner_rank = (_XMP_world_rank+i)%_XMP_world_size;
+    if(partner_rank != _XMP_world_rank)
+      while((_each_addr[partner_rank] = FJMPI_Rdma_get_remote_addr(partner_rank, POST_WAIT_ID)) == FJMPI_RDMA_ERROR);
+
+    if(ncount >= 3000){
+      MPI_Barrier(MPI_COMM_WORLD);
+      ncount = 0;
+    }
+  }
 }
 
 static void _xmp_pw_push(const int node, const int tag)

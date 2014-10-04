@@ -540,6 +540,10 @@ public class XMParray {
 		      template.getDescId().Ref());
     body.add(f.callSubroutine(args));
 
+    f = env.declInternIdent(XMP.init_allocated_f, Xtype.FsubroutineType);
+    args = Xcons.List(descId.Ref());
+    body.add(f.callSubroutine(args));
+
     if (type.isFallocatable()) return;
 
     Ident sizeArray = null;
@@ -679,6 +683,10 @@ public class XMParray {
     Xobject args;
 
     // Following codes come from XMParray.buildConstructor
+
+    f = env.declInternIdent(XMP.init_allocated_f, Xtype.FsubroutineType);
+    args = Xcons.List(descId.Ref());
+    st.insert(f.callSubroutine(args));
 
     f = env.declInternIdent(XMP.array_align_info_f,Xtype.FsubroutineType);
     for(int i = 0; i < dims.size(); i++){

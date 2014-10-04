@@ -44,6 +44,7 @@ Driver/bin/omfx2x
 Driver/bin/oml2x
 Driver/bin/omlinker
 Driver/bin/omnative
+Driver/bin/omni_collect_init
 Driver/bin/ompcc
 Driver/bin/ompf90
 Driver/bin/ompp

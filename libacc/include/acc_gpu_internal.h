@@ -13,6 +13,10 @@ extern "C" {
   void _ACC_gpu_finalize(void);
   void _ACC_gpu_set_device_num(int num);
   int _ACC_gpu_get_device_num();
+  void *_ACC_gpu_get_current_stream_map();
+  void* _ACC_gpu_get_current_mpool();
+  void* _ACC_gpu_get_current_memory_map();
+  void _ACC_gpu_init_current_device_if_not_inited();
 
   //acc_gpu_data.c
   //  void _ACC_init_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);

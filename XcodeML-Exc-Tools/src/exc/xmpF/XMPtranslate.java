@@ -78,6 +78,7 @@ public class XMPtranslate implements XobjectDefVisitor
 
     for (Xobject kk: (XobjList)decls){
       if (kk.getArg(0) == null) continue;
+      if (kk.Opcode() == Xcode.F_COMMON_DECL) continue;
       Ident id = d.findIdent(kk.getArg(0).getName());
       if (id != null && id.getStorageClass() == StorageClass.FPARAM){
 	childDecls.add(kk.copy());

@@ -12,8 +12,12 @@
 static int _memid = 2; // _memid = 0 (macro MEMID in xmp_internal.h) is used to put/get operations.
                        // _memid = 1 (macro POST_WAID_ID in xmp_internal.h) is used to post/wait operations.
 
-void _XMP_fjrdma_initialize()
+void _XMP_fjrdma_initialize(int argc, char **argv)
 {
+  MPI_Init(&argc, &argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &_XMP_world_rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &_XMP_world_size);
+
   int ret = FJMPI_Rdma_init();
   if(ret) _XMP_fatal("FJMPI_Rdma_init error!");
 }
@@ -34,9 +38,16 @@ void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray, void **buf, const size_t coa
   *buf = _XMP_alloc(coarray_size);
   uint64_t laddr = FJMPI_Rdma_reg_mem(memid, *buf, coarray_size);
 
-  for(int i=0; i<_XMP_world_size; i++)
-    if(i != _XMP_world_rank)
-      while((each_addr[i] = FJMPI_Rdma_get_remote_addr(i, memid)) == FJMPI_RDMA_ERROR);
+  for(int ncount=0,i=1; i<_XMP_world_size; ncount++,i++){
+    int partner_rank = (_XMP_world_rank+i)%_XMP_world_size;
+    if(partner_rank != _XMP_world_rank)
+      while((each_addr[partner_rank] = FJMPI_Rdma_get_remote_addr(partner_rank, memid)) == FJMPI_RDMA_ERROR);
+
+    if(ncount >= 3000){
+      MPI_Barrier(MPI_COMM_WORLD);
+      ncount = 0;
+    }
+  }
 
   // Memo: Reterun wrong local address by using FJMPI_Rdma_get_remote_addr.
   // So FJMPI_Rdma_reg_mem should be used.

@@ -5,6 +5,7 @@
  */
 
 #include "xmpf_internal.h"
+#include "xmp_internal.h"
 #include "xmp.h"
 //#include "xmpf.h"
 
@@ -19,7 +20,7 @@ void xmp_finalize_mpi_(void) {
 }
 
 void xmp_init_() {
-  _XMP_init(NULL, NULL);
+  _XMP_init(0, NULL);
 }
 
 void xmp_finalize_(void) {
@@ -211,6 +212,10 @@ int xmp_nodes_equiv_(xmp_desc_t **d, xmp_desc_t *dn, int *lb, int *ub, int *st){
 
 void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
 
+#if 1
+   xmpf_transpose(*dst_d, *src_d, *opt);
+   return;
+#else
   _XMP_array_t *dst_array = *(_XMP_array_t **)dst_d;
   _XMP_array_t *src_array = *(_XMP_array_t **)src_d;
 
@@ -300,4 +305,10 @@ void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
 
 
   return;
+#endif
+}
+
+
+void xmp_matmul_(_XMP_array_t **x_d, _XMP_array_t **a_d, _XMP_array_t **b_d){
+   xmpf_matmul(*x_d, *a_d, *b_d);
 }

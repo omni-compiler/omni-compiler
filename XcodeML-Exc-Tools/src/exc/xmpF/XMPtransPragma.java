@@ -48,6 +48,19 @@ public class XMPtransPragma
     BlockList epilog = Bcons.emptyBody();
     buildXMPobjectBlock(prolog, epilog);
     
+    // move OMP_THREADPRIVATE to the head of prolog
+    // NOTE: Hereafter any addition of statements to prolog must be done
+    //       at its tail.
+    BlockIterator j = new bottomupBlockIterator(fblock.getBody().getHead());
+    for(j.init(); !j.end(); j.next()){
+      b = j.getBlock();
+      if (b.Opcode() == Xcode.OMP_PRAGMA &&
+	  ((PragmaBlock)b).getPragma().equals("THREADPRIVATE")){
+	prolog.insert(b);
+	b.remove();
+      }
+    }
+
     if(env.currentDefIsModule()){
       Xtype save_logical = Xtype.FlogicalType.copy();
       save_logical.setIsFsave(true);
@@ -397,7 +410,9 @@ public class XMPtransPragma
       Xobject size_expr = Xcons.IntConstant(1);
       if(type.isFarray()){
 	for(Xobject s: type.getFarraySizeExpr()){
-	  size_expr = Xcons.binaryOp(Xcode.MUL_EXPR,size_expr,s);
+          Xobject length = Xcons.binaryOp(Xcode.PLUS_EXPR, Xcons.IntConstant(1),
+                                          Xcons.binaryOp(Xcode.MINUS_EXPR, s.getArg(1), s.getArg(0)));
+	  size_expr = Xcons.binaryOp(Xcode.MUL_EXPR,size_expr, length);
 	}
 	type = type.getRef();
       }

@@ -1704,7 +1704,7 @@ omp_directive:
 	| OMPKW_END OMPKW_ORDERED
 	  { $$ = OMP_LIST(OMP_F_END_ORDERED,NULL); }
 	| OMPKW_THREADPRIVATE '(' omp_copyin_list ')'
- 	  { $$ = OMP_LIST(OMP_F_THREADPRIVATE,NULL); } /* NOTE: must be fixed */
+ 	  { $$ = OMP_LIST(OMP_F_THREADPRIVATE,$3); } /* NOTE: must be fixed */
 	| OMPKW_WORKSHARE
 	  { $$ = NULL; }
 	| OMPKW_END OMPKW_WORKSHARE omp_nowait_option
