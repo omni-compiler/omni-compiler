@@ -1,5 +1,5 @@
 #include <stdio.h>
-#if 0
+#if 1
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 #include "xmp_data_struct.h"
@@ -360,14 +360,14 @@ void _XACC_sched_loop_layout_BLOCK(int init,
     r_cond = cond;
   }
 
-  printf("lb=%d, ub =%d, rinit=%d,rcond=%d\n", lb, ub,r_init, r_cond);
+  //printf("lb=%d, ub =%d, rinit=%d,rcond=%d\n", lb, ub,r_init, r_cond);
 
   *sched_init = r_init;// - lb;//info->local_lower - info->shadow_size_lo;
   *sched_cond = r_cond;// - lb;//info->local_upper - info->shadow_size_lo + 1;
   *sched_step = info->local_stride;
 
-  printf("loop org(%d, %d, %d), mod(%d, %d, %d)@%d\n",
-         init, cond,step, *sched_init, *sched_cond, *sched_step, deviceNum);
+  //printf("loop org(%d, %d, %d), mod(%d, %d, %d)@%d\n",
+  //       init, cond,step, *sched_init, *sched_cond, *sched_step, deviceNum);
 }
 
 void _XACC_set_deviceptr(_XACC_arrays_t *arrays_desc, void *deviceptr, int deviceNum)
@@ -384,6 +384,7 @@ void _XACC_reflect_init(_XACC_arrays_t *arrays_desc)
   _XACC_device_t *device = arrays_desc->device_type;
   int d;
   cudaError_t cudaError;
+  /*
   printf("deviceInfo(%d,%d,%d)\n", device->lb,device->ub,device->step);
   for(d = device->lb; d <= device->ub; d += device->step){
     cudaError = cudaSetDevice(d-1);
@@ -414,7 +415,7 @@ void _XACC_reflect_init(_XACC_arrays_t *arrays_desc)
       }
     }
   }
-
+*/
 
   int dim = arrays_desc->dim;
   //他ノードとの通信のセットアップ
