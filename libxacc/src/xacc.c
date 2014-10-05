@@ -405,9 +405,14 @@ static void enablePeerAccess(_XACC_device_t *device)
 	cudaError = cudaDeviceEnablePeerAccess(d2-1, 0);
 	if(cudaError == cudaErrorPeerAccessAlreadyEnabled){
 	  //
+	}else if(cudaError == cudaErrorInvalidDevice){
+	  fprintf(stderr, "failed to enable peer access, invalidDevice\n");
+	}else if(cudaError == cudaErrorInvalidValue){
+	  fprintf(stderr, "failed to enable peer access, invalid value\n");
 	}else if(cudaError != cudaSuccess){
-	  fprintf(stderr, "failed to enable peer access, %d", (int)cudaError);
-	  return;
+
+	  fprintf(stderr, "failed to enable peer access, %d, (%d,%d), %s\n", (int)cudaError, d-1,d2-1, cudaGetErrorString(cudaError));
+	  //	  return;
 	}
       }
     }
@@ -424,9 +429,13 @@ static void enablePeerAccess(_XACC_device_t *device)
 	cudaError = cudaDeviceEnablePeerAccess(d2-1, 0);
 	if(cudaError == cudaErrorPeerAccessAlreadyEnabled){
 	  //
+	}else if(cudaError == cudaErrorInvalidDevice){
+	  fprintf(stderr, "failed to enable peer access, invalidDevice\n");
+	}else if(cudaError == cudaErrorInvalidValue){
+	  fprintf(stderr, "failed to enable peer access, invalid value\n");
 	}else if(cudaError != cudaSuccess){
-	  fprintf(stderr, "failed to enable peer access, %d", (int)cudaError);
-	  return;
+	  fprintf(stderr, "failed to enable peer access, %d, (%d,%d), %s\n", (int)cudaError, d-1,d2-1, cudaGetErrorString(cudaError));
+	  //	  return;
 	}
       }
     }
@@ -555,7 +564,9 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
     stride = ainfo[ndims-1].alloc_size * type_size;
 
     if(target_dim > 0){
-      count *= ainfo[0].par_size;
+      //count *= ainfo[0].par_size;
+      //count_offset = ainfo[0].shadow_size_lo;
+      count *= ainfo[0].alloc_size - ainfo[0].shadow_size_lo - ainfo[0].shadow_size_hi;
       count_offset = ainfo[0].shadow_size_lo;
     }
     for (int i = 1; i < target_dim; i++){
