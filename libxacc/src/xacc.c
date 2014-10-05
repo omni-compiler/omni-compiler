@@ -608,8 +608,10 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
 	lb_recv = ainfo[i].local_lower - lwidth;
       }else {
 	// Note: including shadow area
-	lb_send = 0;
-	lb_recv = 0;
+	//lb_send = 0;
+	//lb_recv = 0;
+	lb_send = ainfo[i].local_lower - ainfo[i].shadow_size_lo;
+	lb_recv = ainfo[i].local_lower - ainfo[i].shadow_size_lo;
       }
 
       dim_acc = ainfo[i].dim_acc;
@@ -635,8 +637,10 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
 	lb_recv = ainfo[i].local_upper + 1;
       }else {
 	// Note: including shadow area
-	lb_send = 0;
-	lb_recv = 0;
+	/* lb_send = 0; */
+	/* lb_recv = 0; */
+	lb_send = ainfo[i].local_lower - ainfo[i].shadow_size_lo;
+	lb_recv = ainfo[i].local_lower - ainfo[i].shadow_size_lo;
       }
 
       dim_acc = ainfo[i].dim_acc;
@@ -720,15 +724,15 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
   int src, dst;
   int is_periodic = reflect->is_periodic;
   int num_devices = arrays_desc->device_type->size;
-  if (!is_periodic && my_pos == lb_pos && (target_dim != 0 || target_device == 0)){ // no periodic
+  if (!is_periodic && my_pos == lb_pos){ // && (target_dim != 0 || target_device == 0)){ // no periodic
     lo_rank = MPI_PROC_NULL;
-  }else if(target_device != 0){
+  }else if(target_dim == 0 && target_device == 0){
     lo_rank = MPI_PROC_NULL; //lo_rank = my_rank;
   }
 
-  if (!is_periodic && my_pos == ub_pos && (target_dim != 0 || target_device == num_devices - 1)){ // no periodic
+  if (!is_periodic && my_pos == ub_pos){ // && (target_dim != 0 || target_device == num_devices - 1)){ // no periodic
     hi_rank = MPI_PROC_NULL;
-  }else if(target_device != num_devices -1){
+  }else if(target_dim == 0 && target_device != num_devices -1){
     hi_rank = MPI_PROC_NULL; //hi_rank = my_rank;
   }
 
