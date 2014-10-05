@@ -1,5 +1,6 @@
 #include <stdio.h>
 #if 1
+#define _XMP_XACC
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 #include "xmp_data_struct.h"
@@ -402,8 +403,10 @@ static void enablePeerAccess(_XACC_device_t *device)
       if(canAccess == 0){
 	printf("eneblePeerAccess(%d) on %d\n", d2-1, d-1);
 	cudaError = cudaDeviceEnablePeerAccess(d2-1, 0);
-	if(cudaError != cudaSuccess){
-	  _XMP_fatal("failed to enable peer access");
+	if(cudaError == cudaErrorPeerAccessAlreadyEnabled){
+	  //
+	}else if(cudaError != cudaSuccess){
+	  fprintf(stderr, "failed to enable peer access, %d", (int)cudaError);
 	  return;
 	}
       }
@@ -419,8 +422,10 @@ static void enablePeerAccess(_XACC_device_t *device)
       if(canAccess == 0){
 	printf("eneblePeerAccess(%d) on %d\n", d2-1, d-1);
 	cudaError = cudaDeviceEnablePeerAccess(d2-1, 0);
-	if(cudaError != cudaSuccess){
-	  _XMP_fatal("failed to enable peer access");
+	if(cudaError == cudaErrorPeerAccessAlreadyEnabled){
+	  //
+	}else if(cudaError != cudaSuccess){
+	  fprintf(stderr, "failed to enable peer access, %d", (int)cudaError);
 	  return;
 	}
       }
@@ -437,6 +442,8 @@ void _XACC_reflect_init(_XACC_arrays_t *arrays_desc)
   _XACC_device_t *device = arrays_desc->device_type;
   int d;
   cudaError_t cudaError;
+
+  enablePeerAccess(device);
 
   int dim = arrays_desc->dim;
   //他ノードとの通信のセットアップ
