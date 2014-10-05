@@ -377,15 +377,12 @@ void _XACC_set_deviceptr(_XACC_arrays_t *arrays_desc, void *deviceptr, int devic
   printf("deviceptr=%p@%d\n", deviceptr, deviceNum);
 }
 
-static void _XACC_reflect_sched_dim(_XACC_arrays_t *a, int target_device, int target_dim);
-
-void _XACC_reflect_init(_XACC_arrays_t *arrays_desc)
+static void enablePeerAccess(_XACC_device_t *device)
 {
-  _XACC_device_t *device = arrays_desc->device_type;
+  printf("deviceInfo(%d,%d,%d)\n", device->lb,device->ub,device->step);
   int d;
   cudaError_t cudaError;
-  /*
-  printf("deviceInfo(%d,%d,%d)\n", device->lb,device->ub,device->step);
+
   for(d = device->lb; d <= device->ub; d += device->step){
     cudaError = cudaSetDevice(d-1);
     if(cudaError != cudaSuccess){
@@ -397,25 +394,49 @@ void _XACC_reflect_init(_XACC_arrays_t *arrays_desc)
     
     d2 = d - device->step;
     if(d2 >= device->lb){
-      printf("eneblePeerAccess(%d) on %d\n", d2-1, d-1);
-      cudaError = cudaDeviceEnablePeerAccess(d2-1, 0);
+      int canAccess;
+      cudaError = cudaDeviceCanAccessPeer(&canAccess, d-1, d2-1);
       if(cudaError != cudaSuccess){
-        _XMP_fatal("failed to enable peer access");
-        return;
+	_XMP_fatal("failed to check access peer");
+      }
+      if(canAccess == 0){
+	printf("eneblePeerAccess(%d) on %d\n", d2-1, d-1);
+	cudaError = cudaDeviceEnablePeerAccess(d2-1, 0);
+	if(cudaError != cudaSuccess){
+	  _XMP_fatal("failed to enable peer access");
+	  return;
+	}
       }
     }
 
     d2 = d + device->step;
     if(d2 <= device->ub){
-      printf("eneblePeerAccess(%d) on %d\n", d2-1, d-1);
-      cudaError = cudaDeviceEnablePeerAccess(d2-1, 0);
+      int canAccess;
+      cudaError = cudaDeviceCanAccessPeer(&canAccess, d-1, d2-1);
       if(cudaError != cudaSuccess){
-        _XMP_fatal("failed to enable peer access");
-        return;
+	_XMP_fatal("failed to check access peer");
+      }
+      if(canAccess == 0){
+	printf("eneblePeerAccess(%d) on %d\n", d2-1, d-1);
+	cudaError = cudaDeviceEnablePeerAccess(d2-1, 0);
+	if(cudaError != cudaSuccess){
+	  _XMP_fatal("failed to enable peer access");
+	  return;
+	}
       }
     }
   }
-*/
+
+
+}
+
+static void _XACC_reflect_sched_dim(_XACC_arrays_t *a, int target_device, int target_dim);
+
+void _XACC_reflect_init(_XACC_arrays_t *arrays_desc)
+{
+  _XACC_device_t *device = arrays_desc->device_type;
+  int d;
+  cudaError_t cudaError;
 
   int dim = arrays_desc->dim;
   //他ノードとの通信のセットアップ
@@ -684,13 +705,13 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
   if (!is_periodic && my_pos == lb_pos && (target_dim != 0 || target_device == 0)){ // no periodic
     lo_rank = MPI_PROC_NULL;
   }else if(target_device != 0){
-    lo_rank = my_rank;
+    lo_rank = MPI_PROC_NULL; //lo_rank = my_rank;
   }
 
   if (!is_periodic && my_pos == ub_pos && (target_dim != 0 || target_device == num_devices - 1)){ // no periodic
     hi_rank = MPI_PROC_NULL;
   }else if(target_device != num_devices -1){
-    hi_rank = my_rank;
+    hi_rank = MPI_PROC_NULL; //hi_rank = my_rank;
   }
 
   // for lower shadow
@@ -793,7 +814,6 @@ void _XACC_reflect_do_inter_wait(_XACC_arrays_t *arrays_desc)
   }
 }
 
-
 void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
   int numDevices = arrays_desc->device_type->size;
   int dev;
@@ -801,7 +821,6 @@ void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
   //他ノードとの通信の開始
   _XACC_reflect_do_inter_start(arrays_desc);
 
-  /*
   for(dev=0; dev < numDevices; dev++){
     _XACC_array_t* device_array = &(arrays_desc->device_array[dev]);
     _XACC_array_info_t* info0 = &device_array->info[0];
@@ -838,7 +857,7 @@ void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
 
       hiSendOffset = info0->dim_acc * info0->local_upper;
       hiSendElements = info0->dim_acc * info0->shadow_size_hi;
-      printf("hiSendOffset=%lld, elements=%lld\n", hiSendOffset, hiSendElements);
+      //      printf("hiSendOffset=%lld, elements=%lld\n", hiSendOffset, hiSendElements);
       
       size_t hiSendSize = hiSendElements * type_size;
       char* sendPtr= (char*)device_array->deviceptr + hiSendOffset * type_size;
@@ -848,7 +867,7 @@ void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
 
     //cudaMemcpy(, cudaMemcpyDefault);
   }
-  */
+ 
 
   //他ノードとの通信の待機
   _XACC_reflect_do_inter_wait(arrays_desc);
