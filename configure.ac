@@ -2063,6 +2063,8 @@ if test "$target" != "$host"; then
    case "$target" in
         Kcomputer-linux-gnu|FX10-linux-gnu)
                 LDFLAGS="";;
+                BLASLIB="-SSL2BLAMP"
+                AC_SUBST(BLASLIB);;
         MIC-linux-gnu)
                 LDFLAGS="";;
         sx-nec-superux)
