@@ -56,8 +56,8 @@ public class XMPtransPragma
       b = j.getBlock();
       if (b.Opcode() == Xcode.OMP_PRAGMA &&
 	  ((PragmaBlock)b).getPragma().equals("THREADPRIVATE")){
-	prolog.insert(b);
 	b.remove();
+	prolog.insert(b);
       }
     }
 

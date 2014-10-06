@@ -93,14 +93,16 @@ public class XMPtranslate implements XobjectDefVisitor
     XobjectIterator i = new topdownXobjectIterator(funcBody);
     for (i.init(); !i.end(); i.next()) {
       Xobject xx = i.getXobject();
-      if (xx != null && xx.Opcode() == Xcode.XMP_PRAGMA){
-	String pragma = xx.getArg(0).getString();
-	if (pragma.equals("NODES") || pragma.equals("TEMPLATE") || pragma.equals("DISTRIBUTE") ||
-	    pragma.equals("ALIGN") || pragma.equals("SHADOW") || pragma.equals("LOCAL_ALIAS") ||
-	    pragma.equals("COARRAY")){
-	  Block pb = Bcons.PRAGMA(xx.Opcode(), xx.getArg(0).getString(), xx.getArg(1), null);
-	  newFuncBody.add(pb);
-	  i.setXobject(null);
+      if (xx != null){
+	if (xx.Opcode() == Xcode.XMP_PRAGMA || xx.Opcode() == Xcode.OMP_PRAGMA){
+	  String pragma = xx.getArg(0).getString();
+	  if (pragma.equals("NODES") || pragma.equals("TEMPLATE") || pragma.equals("DISTRIBUTE") ||
+	      pragma.equals("ALIGN") || pragma.equals("SHADOW") || pragma.equals("LOCAL_ALIAS") ||
+	      pragma.equals("COARRAY") || pragma.equals("THREADPRIVATE")){
+	    Block pb = Bcons.PRAGMA(xx.Opcode(), xx.getArg(0).getString(), xx.getArg(1), null);
+	    newFuncBody.add(pb);
+	    i.setXobject(null);
+	  }
 	}
       }
     }
