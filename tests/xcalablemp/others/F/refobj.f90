@@ -14,4 +14,8 @@ program refobj
   write(*,931) t0
 931 format(1X,F16.3)
 
+!$xmp task on p1(1,1)
+  write(*,*) "PASS"
+!$xmp end task
+
 end program refobj

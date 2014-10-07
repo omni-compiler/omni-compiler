@@ -592,7 +592,11 @@ public class XMPanalyzePragma
     if(!op.isIntConstant()) XMP.fatal("reduction: op is not INT");
 
     Vector<Ident> reduction_vars = new Vector<Ident>();
-    for(Xobject v: (XobjList)reductionSpec.getArg(1)){
+    Vector<Vector<Ident>> reduction_pos_vars = new Vector<Vector<Ident>>();
+
+    for(Xobject w: (XobjList)reductionSpec.getArg(1)){
+
+      Xobject v = w.getArg(0);
       if(!v.isVariable()){
 	XMP.errorAt(pb,"not variable in reduction spec list");
       }
@@ -601,8 +605,22 @@ public class XMPanalyzePragma
 	XMP.errorAt(pb,"variable '"+v.getName()+"' in reduction is not found");
       }
       reduction_vars.add(id);
+
+      Vector<Ident> plist = new Vector<Ident>();
+      if (w.getArg(1) != null){
+	for (Xobject p: (XobjList)w.getArg(1)){
+	  Ident pid = env.findVarIdent(p.getName(), pb);
+	  if (pid == null){
+	    XMP.errorAt(pb, "variable '" + p.getName() + "' in reduction is not found");
+	  }
+	  plist.add(pid);
+	}
+      }
+
+      reduction_pos_vars.add(plist);
     }
-    info.setReductionInfo(op.getInt(),reduction_vars);
+
+    info.setReductionInfo(op.getInt(), reduction_vars, reduction_pos_vars);
   }
 
   private void analyzeBcast(Xobject bcastDecl, 

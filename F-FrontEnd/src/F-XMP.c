@@ -57,6 +57,11 @@ int XMP_reduction_op(expr v)
     if(strcmp("ior",s) == 0) return (int)XMP_DATA_REDUCE_BOR;
     if(strcmp("ieor",s) == 0) return (int)XMP_DATA_REDUCE_BXOR;
 
+    if (strcmp("firstmax", s) == 0) return (int)XMP_DATA_REDUCE_FIRSTMAX;
+    if (strcmp("firstmin", s) == 0) return (int)XMP_DATA_REDUCE_FIRSTMIN;
+    if (strcmp("lastmax", s) == 0) return (int)XMP_DATA_REDUCE_LASTMAX;
+    if (strcmp("lastmin", s) == 0) return (int)XMP_DATA_REDUCE_LASTMIN;
+
     error("bad intrinsic function in REDUCTION clause of XMP");
     return XMP_DATA_REDUCE_SUM;	/* dummy */
 }

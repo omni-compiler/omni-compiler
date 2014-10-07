@@ -405,7 +405,14 @@ public class XMPtransPragma
     int op = info.getReductionOp();
     Ident f = env.declInternIdent(XMP.reduction_f,
 				  Xtype.FsubroutineType);
-    for(Ident id: info.getReductionVars()){
+    Ident f2 = env.declInternIdent(XMP.reduction_loc_f, Xtype.FsubroutineType);
+
+    //for(Ident id: info.getReductionVars()){
+    for (int i = 0; i < info.getReductionVars().size(); i++){
+
+      Ident id = info.getReductionVars().elementAt(i);
+      Vector<Ident> pos_vars = info.getReductionPosVars().elementAt(i);
+
       Xtype type = id.Type();
       Xobject size_expr = Xcons.IntConstant(1);
       if(type.isFarray()){
@@ -419,10 +426,21 @@ public class XMPtransPragma
       if(!type.isBasic()){
 	XMP.fatal("reduction for non-basic type ="+type);
       }
+
       Xobject args = Xcons.List(id.Ref(),size_expr,
 				XMP.typeIntConstant(type),
 				Xcons.IntConstant(op),
 				on_ref_arg);
+
+      args.add(Xcons.IntConstant(pos_vars.size()));
+
+      int j = 0;
+      for (Ident pos: pos_vars){
+	Xobject args2 = Xcons.List(Xcons.IntConstant(j), pos.Ref(), XMP.typeIntConstant(pos.Type()));
+	ret_body.add(f2.callSubroutine(args2));
+	j++;
+      }
+	  
       ret_body.add(f.callSubroutine(args));
     }
     return Bcons.COMPOUND(ret_body);

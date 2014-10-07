@@ -37,6 +37,7 @@ public class XMPinfo
   // for reduction
   int reduction_op; 
   Vector<Ident> reduction_vars; 
+  Vector<Vector<Ident>> reduction_pos_vars;
 
   // for bcast
   XMPobjectsRef bcast_from; // and on_ref, info_vars
@@ -111,9 +112,10 @@ public class XMPinfo
       return widthList;
   }
 
-  public void setReductionInfo(int op, Vector<Ident> vars){
+  public void setReductionInfo(int op, Vector<Ident> vars, Vector<Vector<Ident>> pos_vars){
     reduction_op = op;
     reduction_vars = vars;
+    reduction_pos_vars = pos_vars;
   }
 
   public void setBcastInfo(XMPobjectsRef from, XMPobjectsRef on,
@@ -125,6 +127,7 @@ public class XMPinfo
 
   public int getReductionOp() { return reduction_op; }
   public Vector<Ident> getReductionVars() { return reduction_vars; }
+  public Vector<Vector<Ident>> getReductionPosVars() { return reduction_pos_vars; }
 
   public XMPobjectsRef getBcastFrom() { return bcast_from; }
 
