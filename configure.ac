@@ -487,6 +487,10 @@ AC_ARG_ENABLE(atool,
     [  --enable-atool                 enable atool (false default).],
     [doatool=$enableval], [doatool=no])
 
+AC_ARG_ENABLE(KEK,
+    [  --enable-KEK                   enable KEK option (false default).],
+    [doKEK=$enableval], [doKEK=no])
+
 AC_ARG_ENABLE(xacc,
     [  --enable-xacc                  enable XcalableACC (false default).],
     [xacc=$enableval], [xacc=no])
@@ -708,8 +712,13 @@ elif test "$target" = "powerpc-ibm-none"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT="-q64"
   DRIVER="/bgsys/drivers/ppcfloor"
+if test "x${doKEK}" = "xyes"; then
   OMC_CONF_LNK_OPT="-I/usr/local/bg/include \
                 -L/usr/local/bg/lib -lkek -L${DRIVER}/bgpm/lib/ -lbgpm -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
+else
+  OMC_CONF_LNK_OPT="-I/usr/local/bg/include \
+                -L/usr/local/bg/lib -L${DRIVER}/bgpm/lib/ -lbgpm -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
+fi
   BECC_OPTION="-O5"
   BECC_OMP_OPTION="-O5  -qhot -qsmp=omp -qsimd=auto"
 elif test "$target" = "powerpc64-hitachi-aix"; then

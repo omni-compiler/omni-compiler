@@ -959,6 +959,7 @@ enable_openacc
 with_cppflag
 with_backend_cflag
 enable_atool
+enable_KEK
 enable_xacc
 with_backend_cc
 with_backend_fc
@@ -1631,6 +1632,7 @@ Optional Features:
   --enable-xmpgpu                enable XcalableMP-GPU (false default).
   --enable-openacc               enable OpenACC (false default).
   --enable-atool                 enable atool (false default).
+  --enable-KEK                   enable KEK option (false default).
   --enable-xacc                  enable XcalableACC (false default).
   --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default).
 
@@ -12801,6 +12803,14 @@ else
 fi
 
 
+# Check whether --enable-KEK was given.
+if test "${enable_KEK+set}" = set; then :
+  enableval=$enable_KEK; doKEK=$enableval
+else
+  doKEK=no
+fi
+
+
 # Check whether --enable-xacc was given.
 if test "${enable_xacc+set}" = set; then :
   enableval=$enable_xacc; xacc=$enableval
@@ -17272,8 +17282,13 @@ elif test "$target" = "powerpc-ibm-none"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT="-q64"
   DRIVER="/bgsys/drivers/ppcfloor"
+if test "x${doKEK}" = "xyes"; then
   OMC_CONF_LNK_OPT="-I/usr/local/bg/include \
                 -L/usr/local/bg/lib -lkek -L${DRIVER}/bgpm/lib/ -lbgpm -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
+else
+  OMC_CONF_LNK_OPT="-I/usr/local/bg/include \
+                -L/usr/local/bg/lib -L${DRIVER}/bgpm/lib/ -lbgpm -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
+fi
   BECC_OPTION="-O5"
   BECC_OMP_OPTION="-O5  -qhot -qsmp=omp -qsimd=auto"
 elif test "$target" = "powerpc64-hitachi-aix"; then
