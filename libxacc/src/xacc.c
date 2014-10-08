@@ -18,6 +18,12 @@
 #endif
 
 
+#define _TLOG
+
+#ifdef _TLOG
+#include "tlog.h"
+#endif
+
 static _XACC_device_t *_XACC_current_device = NULL;
 typedef _XACC_device_t xacc_device_t;
 
@@ -107,15 +113,15 @@ void _XACC_init_layouted_array(_XACC_arrays_t **arrays, _XMP_array_t* alignedArr
 
       d_array_info[i].reflect_sched = NULL;
 
-    printf("dim=%d, host par (%d, %d, %d) local(%d, %d, %d, %d)\n",
-           dim,
-           h_array_info[i].par_lower,
-           h_array_info[i].par_upper,
-           h_array_info[i].par_stride,
-           h_array_info[i].local_lower,
-           h_array_info[i].local_upper,
-           h_array_info[i].local_stride,
-           h_array_info[i].alloc_size);
+    /* printf("dim=%d, host par (%d, %d, %d) local(%d, %d, %d, %d)\n", */
+    /*        dim, */
+    /*        h_array_info[i].par_lower, */
+    /*        h_array_info[i].par_upper, */
+    /*        h_array_info[i].par_stride, */
+    /*        h_array_info[i].local_lower, */
+    /*        h_array_info[i].local_upper, */
+    /*        h_array_info[i].local_stride, */
+    /*        h_array_info[i].alloc_size); */
 
     }
   }
@@ -195,15 +201,15 @@ void _XACC_split_layouted_array_BLOCK(_XACC_arrays_t* array_desc, int dim){
 /* #endif */
 
     
-    printf("dim=%d, block par (%d, %d, %d) local(%d, %d, %d, %d)\n",
-           dim,
-           d_array_info->par_lower,
-           d_array_info->par_upper,
-           d_array_info->par_stride,
-           d_array_info->local_lower,
-           d_array_info->local_upper,
-           d_array_info->local_stride,
-           d_array_info->alloc_size);
+    /* printf("dim=%d, block par (%d, %d, %d) local(%d, %d, %d, %d)\n", */
+    /*        dim, */
+    /*        d_array_info->par_lower, */
+    /*        d_array_info->par_upper, */
+    /*        d_array_info->par_stride, */
+    /*        d_array_info->local_lower, */
+    /*        d_array_info->local_upper, */
+    /*        d_array_info->local_stride, */
+    /*        d_array_info->alloc_size); */
 
     /* printf("block par (%d, %d, %d, %d)\n",  */
     /*        d_array_info->lower, */
@@ -248,7 +254,7 @@ void _XACC_set_shadow_NORMAL(_XACC_arrays_t* array_desc, int dim , int lo, int h
     /* d_array_info->shadow_size_lo = lo; */
     /* d_array_info->shadow_size_hi = hi; */
 
-    printf("shadow dim=%d, lo=%d,hi=%d\n", dim, lo, hi);
+      //    printf("shadow dim=%d, lo=%d,hi=%d\n", dim, lo, hi);
     /* printf("dim=%d, par (%d, %d, %d) local(%d, %d, %d, %d)\n", */
     /*        dim, */
     /*        d_array_info->par_lower, */
@@ -293,11 +299,11 @@ void _XACC_calc_size(_XACC_arrays_t* array_desc){
       d_array_desc->copy_offset = device_offset + device_acc * info->local_lower;
     }
 
-    printf("alloc(%llu, %llu), copy(%llu, %llu)@dev\n",
-           d_array_desc->alloc_offset,
-           d_array_desc->alloc_size,
-           d_array_desc->copy_offset,
-           d_array_desc->copy_size);
+    /* printf("alloc(%llu, %llu), copy(%llu, %llu)@dev\n", */
+    /*        d_array_desc->alloc_offset, */
+    /*        d_array_desc->alloc_size, */
+    /*        d_array_desc->copy_offset, */
+    /*        d_array_desc->copy_size); */
   }
 }
 
@@ -375,12 +381,12 @@ void _XACC_set_deviceptr(_XACC_arrays_t *arrays_desc, void *deviceptr, int devic
 {
   _XACC_array_t* arrayOnDevice = get_device_array(arrays_desc, deviceNum);
   arrayOnDevice->deviceptr = deviceptr;
-  printf("deviceptr=%p@%d\n", deviceptr, deviceNum);
+  //  printf("deviceptr=%p@%d\n", deviceptr, deviceNum);
 }
 
 static void enablePeerAccess(_XACC_device_t *device)
 {
-  printf("deviceInfo(%d,%d,%d)\n", device->lb,device->ub,device->step);
+  //  printf("deviceInfo(%d,%d,%d)\n", device->lb,device->ub,device->step);
   int d;
   cudaError_t cudaError;
 
@@ -401,7 +407,7 @@ static void enablePeerAccess(_XACC_device_t *device)
 	_XMP_fatal("failed to check access peer");
       }
       if(canAccess == 0){
-	printf("eneblePeerAccess(%d) on %d\n", d2-1, d-1);
+	//	printf("eneblePeerAccess(%d) on %d\n", d2-1, d-1);
 	cudaError = cudaDeviceEnablePeerAccess(d2-1, 0);
 	if(cudaError == cudaErrorPeerAccessAlreadyEnabled){
 	  //
@@ -425,7 +431,7 @@ static void enablePeerAccess(_XACC_device_t *device)
 	_XMP_fatal("failed to check access peer");
       }
       if(canAccess == 0){
-	printf("eneblePeerAccess(%d) on %d\n", d2-1, d-1);
+	//	printf("eneblePeerAccess(%d) on %d\n", d2-1, d-1);
 	cudaError = cudaDeviceEnablePeerAccess(d2-1, 0);
 	if(cudaError == cudaErrorPeerAccessAlreadyEnabled){
 	  //
@@ -585,9 +591,9 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
     /*   stride *= ainfo[i].alloc_size; */
     /* } */
 
-    printf("count =%d, blength=%d, stride=%lld\n", count, blocklength, stride);
-    printf("ainfo[0].par_size=%d\n", ainfo[0].par_size);
-    printf("count_ofset=%d,\n", count_offset);
+    /* printf("count =%d, blength=%d, stride=%lld\n", count, blocklength, stride); */
+    /* printf("ainfo[0].par_size=%d\n", ainfo[0].par_size); */
+    /* printf("count_ofset=%d,\n", count_offset); */
   }
   else {
     _XMP_fatal("cannot determin the base language.");
@@ -659,7 +665,7 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
     MPI_Type_free(&reflect->datatype_lo);
   }
 
-  printf("lower type_vector(%d, %d, %lld) @ rank=%d,dev=%d\n",count, blocklength * lwidth,stride,my_rank, target_device);
+  //printf("lower type_vector(%d, %d, %lld) @ rank=%d,dev=%d\n",count, blocklength * lwidth,stride,my_rank, target_device);
   MPI_Type_vector(count, blocklength * lwidth, stride,
 		  MPI_BYTE, &reflect->datatype_lo);
   MPI_Type_commit(&reflect->datatype_lo);
@@ -670,7 +676,7 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
     MPI_Type_free(&reflect->datatype_hi);
   }
 
-  printf("upper type_vector(%d, %d, %lld) @ rank=%d,dev=%d\n",count, blocklength * uwidth,stride,my_rank,target_device);
+  //printf("upper type_vector(%d, %d, %lld) @ rank=%d,dev=%d\n",count, blocklength * uwidth,stride,my_rank,target_device);
   MPI_Type_vector(count, blocklength * uwidth, stride,
 		  MPI_BYTE, &reflect->datatype_hi);
   MPI_Type_commit(&reflect->datatype_hi);
@@ -754,12 +760,19 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
     MPI_Request_free(&reflect->req[1]);
   }
 
-  printf("lo_recv pos=%lld, from(%d) @rank=%d,dev=%d\n", (long long )(lo_recv_buf - array_addr), src, my_rank, target_device);
-  printf("lo_send pos=%lld, to(%d) @rank=%d,dev=%d\n", (long long )(lo_send_buf - array_addr), dst, my_rank, target_device);
+  //  printf("lo_recv pos=%lld, from(%d) @rank=%d,dev=%d\n", (long long )(lo_recv_buf - array_addr), src, my_rank, target_device);
+  //  printf("lo_send pos=%lld, to(%d) @rank=%d,dev=%d\n", (long long )(lo_send_buf - array_addr), dst, my_rank, target_device);
+  int tag_offset;
+  if(target_dim == 0){
+    tag_offset = 0;
+  }else{
+    tag_offset = target_device * 1000;
+  }
+  
   MPI_Recv_init(lo_recv_buf, 1, reflect->datatype_lo, src,
-		_XMP_N_MPI_TAG_REFLECT_LO, *comm, &reflect->req[0]);
+		_XMP_N_MPI_TAG_REFLECT_LO + tag_offset, *comm, &reflect->req[0]);
   MPI_Send_init(lo_send_buf, 1, reflect->datatype_lo, dst,
-		_XMP_N_MPI_TAG_REFLECT_LO, *comm, &reflect->req[1]);
+		_XMP_N_MPI_TAG_REFLECT_LO + tag_offset, *comm, &reflect->req[1]);
 
 
   // for upper shadow
@@ -780,12 +793,12 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
     MPI_Request_free(&reflect->req[3]);
   }
 
-  printf("hi_recv pos=%lld, from(%d) @rank=%d,dev=%d\n", (long long )(hi_recv_buf - array_addr), src, my_rank, target_device);
-  printf("hi_send pos=%lld, to(%d) @rank=%d,dev=%d\n", (long long )(hi_send_buf - array_addr), dst, my_rank, target_device);
+  /* printf("hi_recv pos=%lld, from(%d) @rank=%d,dev=%d\n", (long long )(hi_recv_buf - array_addr), src, my_rank, target_device); */
+  /* printf("hi_send pos=%lld, to(%d) @rank=%d,dev=%d\n", (long long )(hi_send_buf - array_addr), dst, my_rank, target_device); */
   MPI_Recv_init(hi_recv_buf, 1, reflect->datatype_hi, src,
-		_XMP_N_MPI_TAG_REFLECT_HI, *comm, &reflect->req[2]);
+		_XMP_N_MPI_TAG_REFLECT_HI + tag_offset, *comm, &reflect->req[2]);
   MPI_Send_init(hi_send_buf, 1, reflect->datatype_hi, dst,
-		_XMP_N_MPI_TAG_REFLECT_HI, *comm, &reflect->req[3]);
+		_XMP_N_MPI_TAG_REFLECT_HI + tag_offset, *comm, &reflect->req[3]);
 
   reflect->count = count;
   reflect->blocklength = blocklength;
@@ -840,8 +853,18 @@ void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
   int numDevices = arrays_desc->device_type->size;
   int dev;
 
+#ifdef _TLOG
+  tlog_log(TLOG_EVENT_1_IN);
+#endif
+
   //他ノードとの通信の開始
   _XACC_reflect_do_inter_start(arrays_desc);
+
+#ifdef _TLOG
+  tlog_log(TLOG_EVENT_1_OUT);
+  tlog_log(TLOG_EVENT_2_IN);
+#endif
+
 
   for(dev=0; dev < numDevices; dev++){
     _XACC_array_t* device_array = &(arrays_desc->device_array[dev]);
@@ -890,9 +913,17 @@ void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
     //cudaMemcpy(, cudaMemcpyDefault);
   }
  
+#ifdef _TLOG
+  tlog_log(TLOG_EVENT_2_OUT);
+  tlog_log(TLOG_EVENT_3_IN);
+#endif
 
   //他ノードとの通信の待機
   _XACC_reflect_do_inter_wait(arrays_desc);
+
+#ifdef _TLOG
+  tlog_log(TLOG_EVENT_3_OUT);
+#endif
 
 }
 
