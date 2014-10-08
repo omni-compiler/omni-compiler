@@ -14,7 +14,8 @@
 static void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype) {
   switch (datatype) {
     case _XMP_N_TYPE_BOOL:
-      { *mpi_datatype = MPI_C_BOOL;			*datatype_size = sizeof(_Bool); 			break; }
+      //{ *mpi_datatype = MPI_C_BOOL;			*datatype_size = sizeof(_Bool); 			break; }
+      { *mpi_datatype = MPI_LOGICAL;			*datatype_size = sizeof(_Bool); 			break; }
     case _XMP_N_TYPE_CHAR:
       { *mpi_datatype = MPI_SIGNED_CHAR;		*datatype_size = sizeof(char); 				break; }
     case _XMP_N_TYPE_UNSIGNED_CHAR:
