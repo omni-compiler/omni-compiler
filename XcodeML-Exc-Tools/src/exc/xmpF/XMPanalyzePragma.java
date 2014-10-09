@@ -710,6 +710,10 @@ public class XMPanalyzePragma
   }
 
   private boolean checkGmoveOperand(Xobject x, PragmaBlock pb){
+
+    Ident id = null;
+    XMParray array = null;
+
     switch(x.Opcode()){
     case F_ARRAY_REF:
       Xobject a = x.getArg(0);
@@ -718,15 +722,24 @@ public class XMPanalyzePragma
       a = a.getArg(0);
       if(a.Opcode() != Xcode.VAR)
 	XMP.fatal("not VAR for F_VAR_REF");
-      Ident id = env.findVarIdent(a.getName(),pb);
+      id = env.findVarIdent(a.getName(),pb);
       if(id == null)
 	XMP.fatal("array in F_ARRAY_REF is not declared");
-      XMParray array = XMParray.getArray(id);
+      array = XMParray.getArray(id);
       if(array != null){
 	if (XMPpragma.valueOf(pb.getPragma()) != XMPpragma.ARRAY) a.setProp(XMP.RWprotected,array);
 	return true;
       }
-    case VAR: /* it ok */
+      break;
+    case VAR:
+      id = env.findVarIdent(x.getName(), pb);
+      if (id == null)
+	XMP.fatal("variable" + x.getName() + "is not declared");
+      array = XMParray.getArray(id);
+      if (array != null){
+	if (XMPpragma.valueOf(pb.getPragma()) != XMPpragma.ARRAY) x.setProp(XMP.RWprotected, array);
+	return true;
+      }
       break;
     default:
       XMP.errorAt(pb,"gmove must be followed by simple assignment");

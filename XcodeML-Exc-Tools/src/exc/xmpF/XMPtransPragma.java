@@ -611,11 +611,12 @@ public class XMPtransPragma
     Ident descId = env.declObjectId(XMP.genSym("gmv"),pb);
     Ident f; 
     Xobject args;
-    
+    XMParray array = null;
+
     switch(x.Opcode()){
     case F_ARRAY_REF:
       Xobject a = x.getArg(0).getArg(0);
-      XMParray array = (XMParray)a.getProp(XMP.RWprotected);
+      array = (XMParray)a.getProp(XMP.RWprotected);
       if(array != null){
 	f = env.declInternIdent(XMP.gmove_g_alloc_f, Xtype.FsubroutineType);
 	args = Xcons.List(descId.Ref(), array.getDescId().Ref());
@@ -703,11 +704,33 @@ public class XMPtransPragma
 	}
       }
       break;
-    case VAR: /* it ok */
-      f = env.declInternIdent(XMP.gmove_l_alloc_f, Xtype.FsubroutineType);
-      args = Xcons.List(descId.Ref(),x,Xcons.IntConstant(0));
-      bb.add(f.callSubroutine(args));
+
+    case VAR:
+
+      array = (XMParray)x.getProp(XMP.RWprotected);
+
+      if (array != null){
+	f = env.declInternIdent(XMP.gmove_g_alloc_f, Xtype.FsubroutineType);
+	args = Xcons.List(descId.Ref(), array.getDescId().Ref());
+	bb.add(f.callSubroutine(args));
+	
+	f = env.declInternIdent(XMP.gmove_g_dim_info_f, Xtype.FsubroutineType);
+ 	for (int i = 0; i < array.getDim(); i++){
+	  args = Xcons.List(descId.Ref(),Xcons.IntConstant(i),
+			    Xcons.IntConstant(GMOVE_ALL),
+			    Xcons.IntConstant(0),
+			    Xcons.IntConstant(0),Xcons.IntConstant(0));
+	  bb.add(f.callSubroutine(args));
+	}
+      }
+      else {
+	f = env.declInternIdent(XMP.gmove_l_alloc_f, Xtype.FsubroutineType);
+	args = Xcons.List(descId.Ref(), x, Xcons.IntConstant(0));
+	bb.add(f.callSubroutine(args));
+      }
+
       break;
+
     default:
       XMP.errorAt(pb,"gmove must be followed by simple assignment");
     }
