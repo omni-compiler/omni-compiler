@@ -35,6 +35,8 @@ void xacc_set_device_num(int num, xacc_device_t device);
 //int xacc_get_device_num(xacc_device_t device); // current
 
 
+const static char usePacking = 0;
+
 acc_device_t xacc_get_current_device(){
   return _XACC_current_device->acc_device;
 }
@@ -541,6 +543,8 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
   int lo_buf_size = 0;
   int hi_buf_size = 0;
 
+  
+
   //
   // setup data_type
   //
@@ -666,11 +670,11 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
   }
 
   //printf("lower type_vector(%d, %d, %lld) @ rank=%d,dev=%d\n",count, blocklength * lwidth,stride,my_rank, target_device);
-  if(count != 1){
+  if(usePacking || count == 1){
+    MPI_Type_contiguous(blocklength * lwidth, MPI_BYTE, &reflect->datatype_lo);
+  }else{
   MPI_Type_vector(count, blocklength * lwidth, stride, //(count!=1)?stride:blocklength*lwidth,
 		  MPI_BYTE, &reflect->datatype_lo);
-  }else{
-    MPI_Type_contiguous(blocklength * lwidth, MPI_BYTE, &reflect->datatype_lo);
   }
   MPI_Type_commit(&reflect->datatype_lo);
 
@@ -681,54 +685,62 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
   }
 
   //printf("upper type_vector(%d, %d, %lld) @ rank=%d,dev=%d\n",count, blocklength * uwidth,stride,my_rank,target_device);
-  if(count != 1){
+  if(usePacking || count == 1){
+    MPI_Type_contiguous(blocklength * uwidth, MPI_BYTE, &reflect->datatype_hi);
+  }else{
   MPI_Type_vector(count, blocklength * uwidth, stride, //(count!=1)?stride:blocklength * uwidth,
 		  MPI_BYTE, &reflect->datatype_hi);
-  }else{
-    MPI_Type_contiguous(blocklength * uwidth, MPI_BYTE, &reflect->datatype_hi);
   }
   MPI_Type_commit(&reflect->datatype_hi);
 
   
-  /*
   //alloc buffer
-  if ((_XMPF_running && target_dim != ndims - 1) ||
-      (_XMPC_running && target_dim != 0)){
-    _XACC_gpu_host_free(reflect->lo_send_buf);
-    _XACC_gpu_host_free(reflect->lo_recv_buf);
-    _XACC_gpu_host_free(reflect->hi_send_buf);
-    _XACC_gpu_host_free(reflect->hi_recv_buf);
-  }
-  if ((_XMPF_running && target_dim == ndims - 1) ||
-      (_XMPC_running && target_dim == 0)){
-    _XACC_gpu_host_free(reflect->lo_send_buf);
-    _XACC_gpu_host_free(reflect->lo_recv_buf);
-    _XACC_gpu_host_free(reflect->hi_send_buf);
-    _XACC_gpu_host_free(reflect->hi_recv_buf);
+  if(usePacking){
+    /* _XACC_gpu_host_free(reflect->lo_send_buf); */
+    /* _XACC_gpu_host_free(reflect->lo_recv_buf); */
+    /* _XACC_gpu_host_free(reflect->hi_send_buf); */
+    /* _XACC_gpu_host_free(reflect->hi_recv_buf); */
+    CUDA_SAFE_CALL(cudaFree(reflect->lo_send_buf));
+    CUDA_SAFE_CALL(cudaFree(reflect->lo_recv_buf));
+    CUDA_SAFE_CALL(cudaFree(reflect->hi_send_buf));
+    CUDA_SAFE_CALL(cudaFree(reflect->hi_recv_buf));
+    /* _XACC_gpu_free(reflect->lo_send_buf); */
+    /* _XACC_gpu_free(reflect->lo_recv_buf); */
+    /* _XACC_gpu_free(reflect->hi_send_buf); */
+    /* _XACC_gpu_free(reflect->hi_recv_buf); */
   }
 
+  // for lower reflect
   if (lwidth){
-
-    lo_buf_size = lwidth * blocklength * count;
-
-    if ((_XMPF_running && target_dim == ndims - 1) ||
+    if (!usePacking ||
+	(_XMPF_running && target_dim == ndims - 1) ||
 	(_XMPC_running && target_dim == 0)){
-      lo_send_buf = _XMP_gpu_host_alloc(lo_buf_size);
-      lo_recv_buf = _XMP_gpu_host_alloc(lo_buf_size);
-      lo_send_dev_buf = lo_send_dev_array;
-      lo_recv_dev_buf = lo_recv_dev_array;
+      lo_send_buf = lo_send_array;
+      lo_recv_buf = lo_recv_array;
     } else {
-      _XMP_TSTART(t0);
-      lo_send_buf = _XMP_gpu_host_alloc(lo_buf_size);
-      lo_recv_buf = _XMP_gpu_host_alloc(lo_buf_size);
-
-      _XMP_gpu_alloc((void **)&lo_send_dev_buf, lo_buf_size); //lo_send_dev_buf = _XMP_gpu_alloc(lo_buf_size);
-      _XMP_gpu_alloc((void **)&lo_recv_dev_buf, lo_buf_size); //lo_recv_dev_buf = _XMP_gpu_alloc(lo_buf_size);
-      _XMP_TEND2(xmptiming_.t_mem, xmptiming_.tdim_mem[target_dim], t0);
+      lo_buf_size = lwidth * blocklength * count;
+      //      lo_send_buf = _XACC_gpu_alloc(lo_buf_size); 
+      //      lo_recv_buf = _XACC_gpu_alloc(lo_buf_size);
+      CUDA_SAFE_CALL(cudaMalloc((void**)&lo_send_buf, lo_buf_size));
+      CUDA_SAFE_CALL(cudaMalloc((void**)&lo_recv_buf, lo_buf_size));
     }
-
   }
-  */
+
+  // for upper reflect
+  if (uwidth){
+    if (!usePacking ||
+	(_XMPF_running && target_dim == ndims - 1) ||
+	(_XMPC_running && target_dim == 0)){
+      hi_send_buf = hi_send_array;
+      hi_recv_buf = hi_recv_array;
+    } else {
+      hi_buf_size = uwidth * blocklength * count;
+      //      hi_send_buf = _XACC_gpu_alloc(hi_buf_size);
+      //      hi_recv_buf = _XACC_gpu_alloc(hi_buf_size);
+      CUDA_SAFE_CALL(cudaMalloc((void**)&hi_send_buf, hi_buf_size));
+      CUDA_SAFE_CALL(cudaMalloc((void**)&hi_recv_buf, hi_buf_size));
+    }
+  }
 
 
   //

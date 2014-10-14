@@ -19,6 +19,7 @@
 /* void _XMP_init_device(void* desc, acc_device_t device, int lower, int upper, int step); */
 /* void _XMP_get_device_info(void *desc, int* lower, int* upper, int* step); */
 
+#include <stdlib.h>
 #include "xacc_data_struct.h"
 
 void _XACC_init_device(_XACC_device_t** desc, acc_device_t device, int lower, int upper, int step);
@@ -56,3 +57,34 @@ void _XACC_set_shadow_NORMAL(_XACC_arrays_t* array_desc, int dim , int lo, int h
 /* void _XACC_gpu_free(void *addr); */
 /* void* _XACC_gpu_host_alloc(size_t size); */
 /* void _XACC_gpu_host_free(void *addr); */
+
+
+// Macro to catch CUDA errors in CUDA runtime calls
+#define CUDA_SAFE_CALL(call)						\
+  do {                                                                  \
+    cudaError_t err = call;						\
+    if (cudaSuccess != err) {						\
+      fprintf (stderr, "Cuda error in file '%s' in line %i : %s.\n",	\
+	       __FILE__, __LINE__, cudaGetErrorString(err) );		\
+      exit(EXIT_FAILURE);						\
+    }									\
+  } while (0)
+
+// Macro to catch CUDA errors in kernel launches
+#define CHECK_LAUNCH_ERROR()						\
+  do {                                                                  \
+    /* Check synchronous errors, i.e. pre-launch */			\
+    cudaError_t err = cudaGetLastError();				\
+    if (cudaSuccess != err) {						\
+      fprintf (stderr, "Cuda error in file '%s' in line %i : %s.\n",	\
+	       __FILE__, __LINE__, cudaGetErrorString(err) );		\
+      exit(EXIT_FAILURE);						\
+    }									\
+    /* Check asynchronous errors, i.e. kernel failed (ULF) */		\
+    err = cudaThreadSynchronize();					\
+    if (cudaSuccess != err) {						\
+      fprintf (stderr, "Cuda error in file '%s' in line %i : %s.\n",	\
+	       __FILE__, __LINE__, cudaGetErrorString( err) );		\
+      exit(EXIT_FAILURE);						\
+    }									\
+  } while (0)
