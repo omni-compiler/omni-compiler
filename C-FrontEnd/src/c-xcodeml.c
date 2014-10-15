@@ -2376,13 +2376,6 @@ extern unsigned int s_arrayToPointer;
 void
 outx_ARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
 {
-  CExpr *aryExpr = aryRef->e_nodes[0];
-  CExprOfTypeDesc *aryTd = EXPRS_TYPE(aryExpr);
-  CExprOfTypeDesc *aryTdo = getRefType(aryTd);
-
-  CExpr *dim = aryRef->e_nodes[1];
-  CExpr *dimLwr = exprListHeadData(dim);
-
   if (isSubArrayRef2((CExpr*)aryRef)){
     //sub array
 /*     CExprOfTypeDesc *dimTd = EXPR_T(exprListNextNData(dim, 3)); */
@@ -2394,6 +2387,13 @@ outx_ARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
   else {
 
     //normal array
+
+    CExpr *aryExpr = aryRef->e_nodes[0];
+    CExprOfTypeDesc *aryTd = EXPRS_TYPE(aryExpr);
+    CExprOfTypeDesc *aryTdo = getRefType(aryTd);
+
+    CExpr *dim = aryRef->e_nodes[1];
+    CExpr *dimLwr = exprListHeadData(dim);
 
     CExpr *parent = EXPR_PARENT(aryRef);
     CExprCodeEnum pec = EXPR_CODE(parent);
@@ -2468,41 +2468,44 @@ outx_SUBARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
 
     outxPrint(fp, indent, "<indexRange>\n");
 
-    CExprOfTypeDesc *aryTd = EXPRS_TYPE(aryExpr);
-    CExprOfTypeDesc *aryTdo = getRefType(aryTd);
+    /* CExprOfTypeDesc *aryTd = EXPRS_TYPE(aryExpr); */
+    /* CExprOfTypeDesc *aryTdo = getRefType(aryTd); */
 
     CExpr *dimUpr = exprListNextNData(dim, 1);
     CExpr *dimStp = exprListNextNData(dim, 2);
 
     outxContextWithTag(fp, indent + 1, dimLwr, "lowerBound");
 
-    CExpr *tmpUpr = NULL;
+    /* CExpr *tmpUpr = NULL; */
 
-    if (EXPR_ISNULL(dimUpr)) {
-      dimUpr = aryTdo->e_len.eln_lenExpr;
-      if (dimUpr) {
-	// complete subarray ref upper bound
-	if (dimUpr && EXPR_CODE(dimUpr) == EC_NUMBER_CONST) {
-	  tmpUpr = (CExpr*)allocExprOfNumberConst2(
-			     getNumberConstAsLong(dimUpr) - 1, BT_INT);
-	}
-	else {
-	  tmpUpr = exprBinary(EC_MINUS, dimUpr,
-			      (CExpr*)allocExprOfNumberConst2(1, BT_INT));
-	}
-      }
-      dimUpr = tmpUpr;
-    }
+    /* if (EXPR_ISNULL(dimUpr)) { */
+    /*   dimUpr = aryTdo->e_len.eln_lenExpr; */
+    /*   if (dimUpr) { */
+    /* 	// complete subarray ref upper bound */
+    /* 	if (dimUpr && EXPR_CODE(dimUpr) == EC_NUMBER_CONST) { */
+    /* 	  tmpUpr = (CExpr*)allocExprOfNumberConst2( */
+    /* 			     getNumberConstAsLong(dimUpr) - 1, BT_INT); */
+    /* 	} */
+    /* 	else { */
+    /* 	  tmpUpr = exprBinary(EC_MINUS, dimUpr, */
+    /* 			      (CExpr*)allocExprOfNumberConst2(1, BT_INT)); */
+    /* 	} */
+    /*   } */
+    /*   dimUpr = tmpUpr; */
+    /* } */
     
-    if (dimUpr)
-      outxContextWithTag(fp, indent + 1, dimUpr, "upperBound");
+    /* if (dimUpr) */
+    /*   outxContextWithTag(fp, indent + 1, dimUpr, "upperBound"); */
+
+    // dimUper should be resolved in resolveType_subArrayRef
+    outxContextWithTag(fp, indent + 1, dimUpr, "upperBound");
 
     outxContextWithTag(fp, indent + 1, dimStp, "step");
     
     outxPrint(fp, indent, "</indexRange>\n");
 
-    if (tmpUpr)
-      freeExpr(tmpUpr);
+    /* if (tmpUpr) */
+    /*   freeExpr(tmpUpr); */
   }
 }
 

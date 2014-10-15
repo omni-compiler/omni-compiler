@@ -2377,10 +2377,20 @@ resolveType_subArrayRef(CExprOfBinaryNode *expr)
     // and get number of subarray dimensions
     int subAryDims = 0;
     CExpr *aryExpr = (CExpr*)expr;
-    while(aryExpr && isSubArrayRef(aryExpr)) {
+    /* while(aryExpr && isSubArrayRef(aryExpr)) { */
+    /*     ++subAryDims; */
+    /*     CCOL_DL_ADD(&aryRefs, aryExpr); */
+    /*     aryExpr = EXPR_B(aryExpr)->e_nodes[0]; */
+    /* } */
+    while (aryExpr && EXPR_CODE(aryExpr) == EC_ARRAY_REF){
+      if (isSubArrayRef(aryExpr)){
         ++subAryDims;
         CCOL_DL_ADD(&aryRefs, aryExpr);
-        aryExpr = EXPR_B(aryExpr)->e_nodes[0];
+      }
+      else {
+	resolveType(aryExpr);
+      }
+      aryExpr = EXPR_B(aryExpr)->e_nodes[0];
     }
 
     if(aryExpr == NULL) {
@@ -2405,18 +2415,36 @@ resolveType_subArrayRef(CExprOfBinaryNode *expr)
     CExprOfTypeDesc *td = NULL;
     CExprOfTypeDesc *tmpTd = aryTd, *elemTd0 = NULL;
 
-    while(ETYP_IS_ARRAY(tmpTd)) {
-        ++aryDims;
-        // order of aryTds is reverse to that of aryRefs
-        CCOL_DL_CONS(&aryTds, tmpTd);
+    /* while(ETYP_IS_ARRAY(tmpTd)) { */
+    /*     ++aryDims; */
+    /*     // order of aryTds is reverse to that of aryRefs */
+    /*     CCOL_DL_CONS(&aryTds, tmpTd); */
 
-        if(aryDims == subAryDims) {
-            elemTd0 = EXPR_T(tmpTd->e_typeExpr);
-            break;
-        }
+    /*     if(aryDims == subAryDims) { */
+    /*         elemTd0 = EXPR_T(tmpTd->e_typeExpr); */
+    /*         break; */
+    /*     } */
 
-        tmpTd = EXPR_T(tmpTd->e_typeExpr);
-        tmpTd = getRefType(tmpTd);
+    /*     tmpTd = EXPR_T(tmpTd->e_typeExpr); */
+    /*     tmpTd = getRefType(tmpTd); */
+    /* } */
+    aryExpr = (CExpr*)expr;
+    while (ETYP_IS_ARRAY(tmpTd)){
+
+      if (isSubArrayRef(aryExpr)){
+	++aryDims;
+	// order of aryTds is reverse to that of aryRefs
+	CCOL_DL_CONS(&aryTds, tmpTd);
+      }
+
+      if (aryDims == subAryDims){
+	elemTd0 = EXPR_T(tmpTd->e_typeExpr);
+	break;
+      }
+
+      tmpTd = EXPR_T(tmpTd->e_typeExpr);
+      tmpTd = getRefType(tmpTd);
+      aryExpr = EXPR_B(aryExpr)->e_nodes[0];
     }
 
     if(elemTd0 == NULL) {
