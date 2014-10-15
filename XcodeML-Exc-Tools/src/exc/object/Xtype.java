@@ -10,6 +10,7 @@ import exc.block.Block;
 import exc.util.MachineDepConst;
 
 import xcodeml.util.XmOption;
+import static xcodeml.util.XmLog.fatal;
 
 public class Xtype
 {
@@ -94,6 +95,9 @@ public class Xtype
     /** type name */
     protected Ident tag;
     
+    /** coarray information (ID=060) */
+    protected Fcoarray coarray = new Fcoarray(null);
+
     /*
      * for pre-defined basic type
      */
@@ -226,23 +230,37 @@ public class Xtype
     };
 
     // constructor
-    public Xtype(int kind, String id, int typeQualFlags, Xobject gccAttrs, Ident tag)
+    public Xtype(int kind, String id, int typeQualFlags, Xobject gccAttrs,
+                 Ident tag, Xobject[] codimensions)
     {
         this.type_kind = kind;
         this.type_id = id;
         setTypeQualFlags(typeQualFlags);
         this.gcc_attrs = gccAttrs;
         this.tag = tag;
+        setCodimensions(codimensions);
+    }
+
+    public Xtype(int kind, String id, int typeQualFlags, Xobject gccAttrs,
+                 Ident tag)
+    {
+        this(kind, id, typeQualFlags, gccAttrs, tag, null);
+    }
+    
+    public Xtype(int kind, String id, int typeQualFlags, Xobject gccAttrs,
+                 Xobject[] codimensions)
+    {
+        this(kind, id, typeQualFlags, gccAttrs, null, codimensions);
     }
     
     public Xtype(int kind, String id, int typeQualFlags, Xobject gccAttrs)
     {
-    	this(kind, id, typeQualFlags, gccAttrs, null);
+        this(kind, id, typeQualFlags, gccAttrs, null, null);
     }
     
     public Xtype(int kind)
     {
-        this(kind, null, 0, null, null);
+        this(kind, null, 0, null, null, null);
     }
 
     /** return if is qualifed by qualifier,
@@ -689,18 +707,6 @@ public class Xtype
         throw new UnsupportedOperationException();
     }
 
-    /** Fortarn: get Fortran coarray cosize expressions */
-    public Xobject[] getFcoarrayCosizeExpr()
-    {
-        throw new UnsupportedOperationException();
-    }
-
-    /** Fortarn: get Fortran coarray size expressions */
-    public Xobject[] getFcoarraySizeExpr()
-    {
-        throw new UnsupportedOperationException();
-    }
-
     /** Fortran: return if is assumed size array */
     public boolean isFassumedSize()
     {
@@ -743,6 +749,26 @@ public class Xtype
         throw new UnsupportedOperationException();
     }
 
+    /*
+     *  implements Fcoarray
+     */
+    public int getNumCodimensions()
+    {
+        return coarray.getNumCodimensions();
+    }
+    public Xobject[] getCodimensions()
+    {
+        return coarray.getCodimensions();
+    }
+    public void setCodimensions(Xobject[] codimensions)
+    {
+        coarray.setCodimensions(codimensions);
+    }
+     public Xobject[] copyCodimensions()
+    {
+        return coarray.copyCodimensions();
+    }
+
     /** @deprecated */
     @Deprecated
     public XobjList getMoeList()
@@ -771,7 +797,7 @@ public class Xtype
     /** create copy */
     protected Xtype copy(String id)
     {
-        return new Xtype(type_kind, id, getTypeQualFlags(), gcc_attrs, tag);
+        return new Xtype(type_kind, id, getTypeQualFlags(), gcc_attrs, tag, copyCodimensions());
     }
     
     /** create copy. created copy references this instance as copied */

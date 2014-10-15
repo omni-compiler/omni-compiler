@@ -841,6 +841,11 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                 addChildNodes(typeElem,
                               transKind(type.getFkind()),
                               transLen(type));
+                /////// ZANTEI //////
+                for (Xobject codim : type.getCodimensions()) {
+                    addChildNode(typeElem, trans(codim));
+                }
+                ////////////////////
                 setBasicTypeFlags(typeElem, type);
                 break;
 
@@ -851,20 +856,11 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                 for (Xobject sizeExpr : type.getFarraySizeExpr()) {
                     addChildNode(typeElem, trans(sizeExpr));
                 }
-                setBasicTypeFlags(typeElem, type);
-                break;
-
-            case Xtype.F_COARRAY:                                // ID=060
-                typeElem = createElement("FbasicType");
-                addAttributes(typeElem,
-                              "ref", type.getRef().getXcodeFId());
-                for (Xobject sizeExpr : type.getFarraySizeExpr()) {
-                    addChildNode(typeElem, trans(sizeExpr));
+                /////// ZANTEI //////
+                for (Xobject codim : type.getCodimensions()) {
+                    addChildNode(typeElem, trans(codim));
                 }
-                ////// ZANTEI VERSION //////
-                for (Xobject cosizeExpr : type.getFcoarrayCosizeExpr()) {
-                    addChildNode(typeElem, trans(cosizeExpr));
-                }
+                ////////////////////
                 setBasicTypeFlags(typeElem, type);
                 break;
 

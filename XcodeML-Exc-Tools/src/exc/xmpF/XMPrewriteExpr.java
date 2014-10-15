@@ -37,10 +37,10 @@ public class XMPrewriteExpr
 
       Xtype xtype = obj.Type();
       if (xtype.getKind() == xtype.F_COARRAY) {
-        FcoarrayType cotype = (FcoarrayType)xtype;
+        ///        FcoarrayType cotype = (FcoarrayType)xtype;
       ////////////////////
 
-        System.out.println("--- gaccha coarray");
+        System.out.println("--- ???? ");
       ////////////////////
 
       }

@@ -47,20 +47,22 @@ public class BasicType extends Xtype
     /** Fortran len parameter */
     private Xobject flen;
 
-    /** constructor */
-    public BasicType(int basic_type)
-    {
-        this(basic_type, null, 0, null, null, null);
-    }
+    /** coarray information and methods */
+    private Fcoarray coarray = null;
 
     /** constructor */
     public BasicType(int basic_type, String id, int typeQualFlags, Xobject gccAttrs,
-            Xobject fkind, Xobject flen)
+                     Xobject fkind, Xobject flen, Xobject[] codimensions)
     {
-        super(Xtype.BASIC, id, typeQualFlags, gccAttrs);
+        super(Xtype.BASIC, id, typeQualFlags, gccAttrs, codimensions);
         this.basic_type = basic_type;
         this.fkind = fkind;
         this.flen = flen;
+    }
+
+    public BasicType(int basic_type)
+    {
+        this(basic_type, null, 0, null, null, null);
     }
 
     public BasicType(int basic_type, int typeQualFlags)
@@ -68,6 +70,12 @@ public class BasicType extends Xtype
         this(basic_type, null, typeQualFlags, null, null, null);
     }
     
+    public BasicType(int basic_type, String id, int typeQualFlags, Xobject gccAttrs,
+                     Xobject fkind, Xobject flen)
+    {
+        this(basic_type, id, typeQualFlags, gccAttrs, fkind, flen, null);
+    }
+
     /** return basic type */
     @Override
     public int getBasicType()
@@ -194,8 +202,9 @@ public class BasicType extends Xtype
     @Override
     public Xtype copy(String id)
     {
-        BasicType t = new BasicType(basic_type, id, getTypeQualFlags(),
-            getGccAttributes(), getFkind(), getFlen());
-        return t;
+        BasicType type = new BasicType(basic_type, id, getTypeQualFlags(),
+                                       getGccAttributes(), getFkind(), getFlen(),
+                                       copyCodimensions());
+        return type;
     }
 }

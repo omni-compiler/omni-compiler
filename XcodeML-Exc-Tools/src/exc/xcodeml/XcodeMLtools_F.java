@@ -165,15 +165,11 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	type.setTypeQualFlags(tq);
       } else {
 	type = new BasicType(ti.type.getBasicType(), tid, tq, null,
-			     fkind, flen);
+			     fkind, flen, cosizeExprs);             // ID=060
       }
     } else {
       Xtype ref = getType(getAttr(n, "ref"));
-      type = new FarrayType(tid, ref, tq, sizeExprs);
-    }
-
-    if (cosizeExprs != null) {                                 // ID=060
-      type = new FcoarrayType(type, cosizeExprs);
+      type = new FarrayType(tid, ref, tq, sizeExprs, cosizeExprs);    // ID=060
     }
 
     xobjFile.addType(type);
