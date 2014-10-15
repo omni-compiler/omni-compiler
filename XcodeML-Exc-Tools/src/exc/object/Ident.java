@@ -45,7 +45,8 @@ public class Ident extends Xobject
     /** Fortran: declared module */
     private String declared_module;
     /** Codimensions for coarray (ID=284) */
-    private Xobject codimensions;
+    private Xobject codimensions;      // Codimensions might be moved into this.type like Fortran.
+                                       // See exc.object.FarrayType
   
     // constructor
     public Ident(String name, StorageClass stg_class, Xtype type, Xobject v, VarScope scope)

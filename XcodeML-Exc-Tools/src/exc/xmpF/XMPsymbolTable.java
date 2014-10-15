@@ -76,9 +76,9 @@ public class XMPsymbolTable {
   /*
    * coarray
    */
-  public void putXMPcoarray(XMPcoarray array) {
-    coarrayTable.put(array.getName(), array);
-    coarrays.add(array);
+  public void putXMPcoarray(XMPcoarray coarray) {
+    coarrayTable.put(coarray.getName(), coarray);
+    coarrays.add(coarray);
   }
 
   public XMPcoarray getXMPcoarray(String name) {

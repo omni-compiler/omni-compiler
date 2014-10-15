@@ -36,6 +36,7 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.F_RENAMABLE, "renamable"),
 			new XcodeMLName(Xcode.F_ARRAY_INDEX, "arrayIndex"),
 			new XcodeMLName(Xcode.F_INDEX_RANGE, "indexRange"),
+			new XcodeMLName(Xcode.F_CO_SHAPE, "coShape"),           // ID=060
 			new XcodeMLName(Xcode.F_DO_LOOP, "FdoLoop"),
 			new XcodeMLName(Xcode.F_NAMED_VALUE, "namedValue"),
 			new XcodeMLName(Xcode.F_NAMED_VALUE_LIST, "namedValueList"),

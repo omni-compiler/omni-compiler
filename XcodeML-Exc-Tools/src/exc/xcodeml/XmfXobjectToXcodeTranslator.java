@@ -835,22 +835,36 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         } else {
             switch (type.getKind()) {
             case Xtype.BASIC:
+                typeElem = createElement("FbasicType");
+                addAttributes(typeElem,
+                              "ref", BasicType.getTypeInfo(type.getBasicType()).fname);
+                addChildNodes(typeElem,
+                              transKind(type.getFkind()),
+                              transLen(type));
+                setBasicTypeFlags(typeElem, type);
+                break;
+
             case Xtype.F_ARRAY:
                 typeElem = createElement("FbasicType");
-                if (type.getKind() == Xtype.BASIC) {
-                    addAttributes(typeElem,
-                                  "ref", BasicType.getTypeInfo(type.getBasicType()).fname);
-                    addChildNodes(typeElem,
-                                  transKind(type.getFkind()),
-                                  transLen(type));
-                } else {
-                    addAttributes(typeElem,
-                                  "ref", type.getRef().getXcodeFId());
-                    for (Xobject sizeExpr : type.getFarraySizeExpr()) {
-                        addChildNode(typeElem, trans(sizeExpr));
-                    }
+                addAttributes(typeElem,
+                              "ref", type.getRef().getXcodeFId());
+                for (Xobject sizeExpr : type.getFarraySizeExpr()) {
+                    addChildNode(typeElem, trans(sizeExpr));
                 }
+                setBasicTypeFlags(typeElem, type);
+                break;
 
+            case Xtype.F_COARRAY:                                // ID=060
+                typeElem = createElement("FbasicType");
+                addAttributes(typeElem,
+                              "ref", type.getRef().getXcodeFId());
+                for (Xobject sizeExpr : type.getFarraySizeExpr()) {
+                    addChildNode(typeElem, trans(sizeExpr));
+                }
+                ////// ZANTEI VERSION //////
+                for (Xobject cosizeExpr : type.getFcoarrayCosizeExpr()) {
+                    addChildNode(typeElem, trans(cosizeExpr));
+                }
                 setBasicTypeFlags(typeElem, type);
                 break;
 

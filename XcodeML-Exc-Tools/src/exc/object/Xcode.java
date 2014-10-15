@@ -265,6 +265,9 @@ public enum Xcode
     LOWER_BOUND                     ( 193, 'L', null, null),
     UPPER_BOUND                     ( 194, 'L', null, null),
     STEP                            ( 195, 'L', null, null),
+     // -----------------
+     // added for coarray
+    F_CO_SHAPE                      ( 196, 'L', null, null),         // ID=060
      // Codes dynamically assignable
     DYN_1                           ( 1001, 'L', null, null),
     DYN_2                           ( 1002, 'L', null, null),

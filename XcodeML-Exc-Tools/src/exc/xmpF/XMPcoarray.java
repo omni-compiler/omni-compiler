@@ -9,54 +9,65 @@ package exc.xmpF;
 import exc.object.*;
 import exc.block.*;
 import java.util.Vector;
+import java.util.Iterator;
 
+/*
+ * Fortran Coarray Object
+ */
 public class XMPcoarray {
-  public final static int ACC_BIT_XOR	= 1;
 
-  private String		_name;
-  private Xtype			_elmtType;
-  private int			_varDim;
-  private Vector<Long>		_sizeVector;
-  private Xobject		_varAddr;
-  private Ident			_varId;
-  private Ident			_descId;
+  private XMParray array;
+  private Xobject[] cosizeExprs;
 
-  public XMPcoarray(String name, Xtype elmtType, int varDim, Vector<Long> sizeVector,
-                    Xobject varAddr, Ident varId, Ident descId) {
-    _name = name;
-    _elmtType = elmtType;
-    _varDim = varDim;
-    _sizeVector = sizeVector;
-    _varAddr = varAddr;
-    _varId = varId;
-    _descId = descId;
+  private Ident ident;
+
+  public XMPcoarray(XMParray array) {
+    this.array = array;
+    this.cosizeExprs = null;
+  }
+
+  public XMPcoarray(XMParray array, Xobject[] cosizeExprs) {
+    this.array = array;
+    this.cosizeExprs = cosizeExprs;
+  }
+
+  public XMPcoarray(Ident ident) {
+    this.ident = ident;
+    //    this.cosizeExprs = ident.type.cosizeExprs;
+  }
+
+  public String toString(){
+    String s = "{Coarray("+array.getName()+", id="+array.getArrayId()+"):";
+    s += "dims="+array.getDim()+",";
+    s += "codims="+cosizeExprs.length;
+    return s+"}";
   }
 
   public String getName() {
-    return _name;
+    return array.getName();
   }
 
-  public Xtype getElmtType() {
-    return _elmtType;
+  public Xtype getType() {
+    return array.getType();
   }
 
-  public int getVarDim() {
-    return _varDim;
+  public int getDim(){
+    return array.getDim();
   }
 
-  public int getSizeAt(int index) {
-    return _sizeVector.get(index).intValue();
-  }
+  /* 
+   * Method to translate a coarray declaration
+   */
+  public static void analyzeCoarray() {}
 
-  public Xobject getVarAddr() {
-    return _varAddr;
+  /*
+(Xobject a, Xobject arrayArgs,
+				  Xobject templ, Xobject tempArgs,
+				  XMPenv env, PragmaBlock pb){
+    XMParray arrayObject = new XMParray();
+    arrayObject.parseAlign(a,arrayArgs,templ,tempArgs,env,pb);
+    env.declXMParray(arrayObject,pb);
   }
+  */
 
-  public Ident getVarId() {
-    return _varId;
-  }
-
-  public Ident getDescId() {
-    return _descId;
-  }
 }

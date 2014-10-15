@@ -24,6 +24,7 @@ public class Xtype
     public final static int POINTER         = 7;
     public final static int F_ARRAY         = 8;
     public final static int XMP_CO_ARRAY    = 9;
+    public final static int F_COARRAY       = 10;        // ID=060
 
     final static String kind_names[] = {
         "UNDEF",
@@ -36,6 +37,7 @@ public class Xtype
         "POINTER",
         "F_ARRAY",
         "XMP_COARRAY",
+        "F_COARRAY",        // ID=060
     };
     
     //
@@ -69,7 +71,7 @@ public class Xtype
     public static final int TQ_FEXTERNAL            = 1 << 21;  // external
     public static final int TQ_FSEQUENCE            = 1 << 22;  // sequence
     public static final int TQ_FINTERNAL_PRIVATE    = 1 << 23;  // private in structure decl
-    public static final int TQ_FCRAY_POINTER        = 1 << 24;  // cray pointer (ID=60)
+    public static final int TQ_FCRAY_POINTER        = 1 << 24;  // cray pointer (ID=060)
     
     private String type_id;
     private int type_kind;
@@ -477,13 +479,13 @@ public class Xtype
         setTypeQualFlag(TQ_FALLOCATABLE, enabled);
     }
 
-    /** Fortran : return if it is a cray pointer (ID=60) */
+    /** Fortran : return if it is a cray pointer (ID=060) */
     public final boolean isFcrayPointer()
     {
         return getTypeQualFlag(TQ_FCRAY_POINTER);
     }
     
-    /** Fortran : set qualifier 'cray pointer' (ID=60) */
+    /** Fortran : set qualifier 'cray pointer' (ID=060) */
     public final void setIsFcrayPointer(boolean enabled)
     {
         setTypeQualFlag(TQ_FCRAY_POINTER, enabled);
@@ -683,6 +685,18 @@ public class Xtype
 
     /** Fortarn: get Fortran array size expressions */
     public Xobject[] getFarraySizeExpr()
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    /** Fortarn: get Fortran coarray cosize expressions */
+    public Xobject[] getFcoarrayCosizeExpr()
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    /** Fortarn: get Fortran coarray size expressions */
+    public Xobject[] getFcoarraySizeExpr()
     {
         throw new UnsupportedOperationException();
     }

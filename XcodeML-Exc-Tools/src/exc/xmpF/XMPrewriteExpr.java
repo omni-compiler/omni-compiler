@@ -27,6 +27,25 @@ public class XMPrewriteExpr
     FunctionBlock fb = def.getBlock();
     if (fb == null) return;
 
+    // rewrite coarray declarations (ID=060)
+
+    Xobject idList = def.getDef().getFuncIdList();
+    for (Xobject obj: (XobjList)idList) {
+      ////////////////////
+      System.out.println("find var "+obj.getName());
+      ////////////////////
+
+      Xtype xtype = obj.Type();
+      if (xtype.getKind() == xtype.F_COARRAY) {
+        FcoarrayType cotype = (FcoarrayType)xtype;
+      ////////////////////
+
+        System.out.println("--- gaccha coarray");
+      ////////////////////
+
+      }
+    }
+
     // rewrite return statements
 
     BlockIterator iter5 = new topdownBlockIterator(fb);
