@@ -17317,9 +17317,9 @@ else
     ;;
   *ICC*)
     OMC_CONF_LX2X_OPT=""
-    OMC_CONF_NTV_OPT="-std=gnu99 -w"
-    OMC_CONF_LNK_OPT="-openmp"
-    BECC_OPTION="-std=gnu99 -Wall -Wpointer-arith"
+    OMC_CONF_NTV_OPT="-fast -std=gnu99 -w"
+    OMC_CONF_LNK_OPT="-fast -openmp"
+    BECC_OPTION="-fast -std=gnu99 -Wall -Wpointer-arith"
     BECC_OMP_OPTION="-openmp"
     ;;
   *)
@@ -20479,8 +20479,8 @@ $as_echo_n "checking backend Fortran compiler... " >&6; }
       ;;
     *IFORT*)
       OMF_CONF_LX2X_OPT="-intel"
-      OMF_CONF_NTV_OPT="-auto"
-      OMF_CONF_LNK_OPT="-threads -openmp"
+      OMF_CONF_NTV_OPT="-auto -fast"
+      OMF_CONF_LNK_OPT="-threads -openmp -fast"
       BEFC_MODINC="-module"
       ;;
     *)
