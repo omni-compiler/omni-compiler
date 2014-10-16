@@ -739,7 +739,7 @@ else
     ;;
   *ICC*)
     OMC_CONF_LX2X_OPT=""
-    OMC_CONF_NTV_OPT="-fast -std=gnu99 -w"
+    OMC_CONF_NTV_OPT="-std=gnu99 -w"
     OMC_CONF_LNK_OPT="-fast -openmp"
     BECC_OPTION="-fast -std=gnu99 -Wall -Wpointer-arith"
     BECC_OMP_OPTION="-openmp"
