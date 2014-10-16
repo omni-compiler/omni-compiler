@@ -10,20 +10,19 @@ package exc.object;
 import static xcodeml.util.XmLog.fatal;
 
 /**
- * information and methods about Fortran coarray
+ * information and methods about co-shape of Fortran coarray
  */
-public class Fcoarray
+public class Coshape
 {
-  /** codimension expressions */
   private Xobject[] codimensions;
-  private int numCodimensions;
+  private int corank;
 
   /** constructor */
-  public Fcoarray()
+  public Coshape()
   {
     setCodimensions(new Xobject[0]);
   }
-  public Fcoarray(Xobject[] codimensions)
+  public Coshape(Xobject[] codimensions)
   {
     setCodimensions(codimensions);
   }
@@ -32,16 +31,16 @@ public class Fcoarray
   {
     if (codimensions != null) {
       this.codimensions = codimensions;
-      numCodimensions = codimensions.length;
+      corank = codimensions.length;
     } else {   // non-coarray
       this.codimensions = new Xobject[0];
-      numCodimensions = 0;
+      corank = 0;
     }
   }
 
-  public int getNumCodimensions()
+  public int getCorank()
   {
-    return numCodimensions;
+    return corank;
   }
 
   public Xobject[] getCodimensions()
@@ -51,15 +50,18 @@ public class Fcoarray
 
   public Xobject[] copyCodimensions()
   {
-    Xobject[] codimensions1 = new Xobject[numCodimensions];
-    System.arraycopy(codimensions, 0, codimensions1, 0, numCodimensions);
+    Xobject[] codimensions1 = new Xobject[corank];
+    //    System.arraycopy(codimensions, 0, codimensions1, 0, corank);
+    // better implementation to handle general expressions?
+    for (int i = 0; i < corank; i++)
+      codimensions1[i] = codimensions[i].copy();
     return codimensions1;
   }
 
-  public Fcoarray copy()
+  public Coshape copy()
   {
     Xobject[] codim1 = copyCodimensions();
-    return new Fcoarray(codim1);
+    return new Coshape(codim1);
   }
 }
 

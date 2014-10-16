@@ -16,13 +16,21 @@ public abstract class CompositeType extends Xtype
     /** original type (to suppress output same type) */
     protected CompositeType original;
 
-    protected CompositeType(int type_kind, String id, XobjList id_list, int typeQualFlags, Xobject gccAttrs)
+    protected CompositeType(int type_kind, String id, XobjList id_list, int typeQualFlags,
+                            Xobject gccAttrs, Xobject[] codimensions)
     {
-        super(type_kind, id, typeQualFlags, gccAttrs);
+        super(type_kind, id, typeQualFlags, gccAttrs, codimensions);
         if(id_list == null)
             id_list = Xcons.List();
         this.id_list = id_list;
     }
+
+    protected CompositeType(int type_kind, String id, XobjList id_list, int typeQualFlags,
+                            Xobject gccAttrs)
+    {
+        this(type_kind, id, id_list, typeQualFlags, gccAttrs, null);
+    }
+
 
     @Override
     public final XobjList getMemberList()

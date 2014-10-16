@@ -9,6 +9,7 @@ package exc.xmpF;
 import exc.object.*;
 import exc.block.*;
 import java.util.*;
+import static xcodeml.util.XmLog.fatal;
 
 /**
  * pass2: check and write variables
@@ -32,15 +33,14 @@ public class XMPrewriteExpr
     Xobject idList = def.getDef().getFuncIdList();
     for (Xobject obj: (XobjList)idList) {
       ////////////////////
-      System.out.println("find var "+obj.getName());
+      System.out.println("find var "+obj.getName()+" corank="+obj.Type().getCorank());
       ////////////////////
 
       Xtype xtype = obj.Type();
       if (xtype.getKind() == xtype.F_COARRAY) {
-        ///        FcoarrayType cotype = (FcoarrayType)xtype;
       ////////////////////
 
-        System.out.println("--- ???? ");
+        fatal("unexpected xtype.getKind() xtype.F_COARRAY");
       ////////////////////
 
       }

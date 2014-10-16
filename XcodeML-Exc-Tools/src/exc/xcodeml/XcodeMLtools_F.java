@@ -26,7 +26,6 @@ import org.w3c.dom.NodeList;
 
 import exc.object.BasicType;
 import exc.object.FarrayType;
-import exc.object.FcoarrayType;         // ID=060
 import exc.object.FunctionType;
 import exc.object.Ident;
 import exc.object.StorageClass;
@@ -159,10 +158,11 @@ public class XcodeMLtools_F extends XcodeMLtools {
     Xtype type;
 
     if (sizeExprs == null) {
-      if (ti == null) { // inherited type
+      if (ti == null) { // inherited type such as structure
 	Xtype ref = getType(getAttr(n, "ref"));
 	type = ref.inherit(tid);
 	type.setTypeQualFlags(tq);
+        type.setCodimensions(cosizeExprs);                           // ID=060
       } else {
 	type = new BasicType(ti.type.getBasicType(), tid, tq, null,
 			     fkind, flen, cosizeExprs);             // ID=060

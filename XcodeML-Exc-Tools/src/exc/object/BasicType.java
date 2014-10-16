@@ -47,9 +47,6 @@ public class BasicType extends Xtype
     /** Fortran len parameter */
     private Xobject flen;
 
-    /** coarray information and methods */
-    private Fcoarray coarray = null;
-
     /** constructor */
     public BasicType(int basic_type, String id, int typeQualFlags, Xobject gccAttrs,
                      Xobject fkind, Xobject flen, Xobject[] codimensions)

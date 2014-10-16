@@ -841,11 +841,6 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                 addChildNodes(typeElem,
                               transKind(type.getFkind()),
                               transLen(type));
-                /////// ZANTEI //////
-                for (Xobject codim : type.getCodimensions()) {
-                    addChildNode(typeElem, trans(codim));
-                }
-                ////////////////////
                 setBasicTypeFlags(typeElem, type);
                 break;
 
@@ -856,11 +851,6 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                 for (Xobject sizeExpr : type.getFarraySizeExpr()) {
                     addChildNode(typeElem, trans(sizeExpr));
                 }
-                /////// ZANTEI //////
-                for (Xobject codim : type.getCodimensions()) {
-                    addChildNode(typeElem, trans(codim));
-                }
-                ////////////////////
                 setBasicTypeFlags(typeElem, type);
                 break;
 
@@ -897,6 +887,17 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
         addAttributes(typeElem,
                       "type", type.getXcodeFId());
+
+        /*
+         *  add <coShape> block if it has codimensions (ID=060)
+         */
+        if (type.getCorank() > 0) {
+          Element typeElem1 = createElement("coShape");
+          addChildNode(typeElem, typeElem1);
+
+          for (Xobject codimension : type.getCodimensions())
+            addChildNode(typeElem1, trans(codimension));
+        }
 
         return typeElem;
     }

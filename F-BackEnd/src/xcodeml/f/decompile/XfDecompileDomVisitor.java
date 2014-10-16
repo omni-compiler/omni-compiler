@@ -203,7 +203,7 @@ public class XfDecompileDomVisitor {
             }
         }
 
-        for (Node basicTypeNode : basicTypeNodeArray) {  // (ID=60)
+        for (Node basicTypeNode : basicTypeNodeArray) {  // (ID=060)
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_cray_pointer")) {
                 writer.writeToken(", ");
                 writer.writeToken("$$Error (Cray Pointer #2)$$");
@@ -427,7 +427,7 @@ public class XfDecompileDomVisitor {
         XmfWriter writer = _context.getWriter();
 
         /*
-         * added for cray pointer (ID=60)
+         * added for cray pointer (ID=060)
          */
         if (_isCrayPointer(topTypeChoice, lowTypeChoice)) {
             _writeCrayPointerDecl(symbol, node);
@@ -1245,8 +1245,11 @@ public class XfDecompileDomVisitor {
          * @see xcodeml.f.binding.gen.RVisitorBase#enter(xcodeml.f.binding.gen.
          *      XbfCoShape)
          */
-        @Override public void enter(Node n) {
-            _invokeChildEnter(n);
+        @Override public void enter(Node n) {              // ID=060
+            XmfWriter writer = _context.getWriter();
+            writer.writeToken("[");
+            _invokeChildEnterAndWriteDelim(n, ", ");
+            writer.writeToken("]");
         }
     }
 

@@ -96,7 +96,7 @@ public class Xtype
     protected Ident tag;
     
     /** coarray information (ID=060) */
-    protected Fcoarray coarray = new Fcoarray(null);
+    protected Coshape coshape = new Coshape();
 
     /*
      * for pre-defined basic type
@@ -750,23 +750,23 @@ public class Xtype
     }
 
     /*
-     *  implements Fcoarray
+     *  implements Coshape
      */
-    public int getNumCodimensions()
+    public int getCorank()
     {
-        return coarray.getNumCodimensions();
+        return coshape.getCorank();
     }
     public Xobject[] getCodimensions()
     {
-        return coarray.getCodimensions();
+        return coshape.getCodimensions();
     }
     public void setCodimensions(Xobject[] codimensions)
     {
-        coarray.setCodimensions(codimensions);
+        coshape.setCodimensions(codimensions);
     }
      public Xobject[] copyCodimensions()
     {
-        return coarray.copyCodimensions();
+        return coshape.copyCodimensions();
     }
 
     /** @deprecated */
