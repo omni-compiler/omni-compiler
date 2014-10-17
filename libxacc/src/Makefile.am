@@ -3,6 +3,7 @@ XMP_INC_DIR   = ../../libxmp/include
 XACC_INC_DIR  = ../include
 CUDA_DIR	  = @GPGPU_PREFIX@
 GPUCC		= @GPU_CMD@
+GPUCFLAGS	= @GPU_CFLAGS@
 TLOG_INC_DIR  = $(top_builddir)/@LIBTLOG_MPI_DIR@
 lib_LIBRARIES = libxacc.a
 AM_CFLAGS     = -I$(XMP_INC_DIR) -I$(XACC_INC_DIR) -I$(CUDA_DIR) -I$(TLOG_INC_DIR) @BECC_OPTION@ 

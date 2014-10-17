@@ -20,6 +20,7 @@
 /* void _XMP_get_device_info(void *desc, int* lower, int* upper, int* step); */
 
 #include <stdlib.h>
+#include <cuda_runtime.h>
 #include "xacc_data_struct.h"
 
 void _XACC_init_device(_XACC_device_t** desc, acc_device_t device, int lower, int upper, int step);
@@ -58,6 +59,9 @@ void _XACC_set_shadow_NORMAL(_XACC_arrays_t* array_desc, int dim , int lo, int h
 /* void* _XACC_gpu_host_alloc(size_t size); */
 /* void _XACC_gpu_host_free(void *addr); */
 
+//xacc_pack.cu
+void _XACC_gpu_pack_vector_async(char * restrict dst, char * restrict src, int count, int blocklength, long stride, size_t typesize, cudaStream_t stream);
+void _XACC_gpu_unpack_vector_async(char * restrict dst, char * restrict src, int count, int blocklength, long stride, size_t typesize, cudaStream_t stream);
 
 // Macro to catch CUDA errors in CUDA runtime calls
 #define CUDA_SAFE_CALL(call)						\
