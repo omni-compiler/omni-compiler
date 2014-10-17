@@ -61,7 +61,4 @@ if [ "${OM_VERBOSE}" = "1" ]; then
     echo $CMD "$@"
 fi
 
-$CMD "$@"
-
-exit $?
-
+exec $CMD "$@"
