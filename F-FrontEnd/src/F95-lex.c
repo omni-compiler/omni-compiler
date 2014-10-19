@@ -775,7 +775,7 @@ token()
                     bufptr = save - 1;
                     return '/';
                 }
-		if (st_OMP_flag){
+		if (st_XMP_flag || st_OMP_flag){
 		  bufptr = save - 1;
 		  return '/';
 		}

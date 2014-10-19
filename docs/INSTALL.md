@@ -32,7 +32,8 @@ HOW TO INSTALL
 ### On a general linux cluster
     $ ./configure --prefix=[INSTALLATION PATH]
          or
-    $ ./configure CPP="pgcc -E" CC=gcc FC=gfortran  // To use a PGI compiler
+    $ ./configure CPP="pgcc -E" CC=gcc FC=gfortran                                      // PGI compiler
+    $ ./configure CC=icc FC=ifort --with-backend-cc=mpiicc --with-backend-fc=mpiifort  // Intel compiler
 
  If you want to use Coarray functions
     $ ./configure --with-gasnet=[GASNet INSTALLATION PATH] --with-gasnet-conduit=[GASNet-Conduit]

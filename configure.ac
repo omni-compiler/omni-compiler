@@ -494,6 +494,10 @@ AC_ARG_ENABLE(atool,
     [  --enable-atool                 enable atool (false default).],
     [doatool=$enableval], [doatool=no])
 
+AC_ARG_ENABLE(KEK,
+    [  --enable-KEK                   enable KEK option (false default).],
+    [doKEK=$enableval], [doKEK=no])
+
 AC_ARG_ENABLE(xacc,
     [  --enable-xacc                  enable XcalableACC (false default).],
     [xacc=$enableval], [xacc=no])
@@ -650,17 +654,17 @@ if test "$IS_AIX" = "Yes"; then
 fi
 
 ## Add temporarily by mnakao
-#enableKRDMA=""
-#AC_ARG_ENABLE(KRDMA,
-#   [  --enable-KRDMA                 enable RDMA functions on the K compiter.],
-#   [enableKRDMA=$enableval], [enableKRDMA=no])
-#
-#AM_CONDITIONAL(FJRDMA, test x${enableKRDMA} = xyes)
-#AC_SUBST(FJRDMA)
+enableKRDMA=""
+AC_ARG_ENABLE(KRDMA,
+   [  --enable-KRDMA                 enable RDMA functions on the K compiter.],
+   [enableKRDMA=$enableval], [enableKRDMA=no])
+
+AM_CONDITIONAL(FJRDMA, test x${enableKRDMA} = xyes)
+AC_SUBST(FJRDMA)
 ## End Add temporarily
 
-AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
-AC_SUBST(FJRDMA)
+#AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
+#AC_SUBST(FJRDMA)
 
 # --------------------------------------------------------------------
 # specify Backend C compiler
@@ -715,8 +719,13 @@ elif test "$target" = "powerpc-ibm-none"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT="-q64"
   DRIVER="/bgsys/drivers/ppcfloor"
+if test "x${doKEK}" = "xyes"; then
   OMC_CONF_LNK_OPT="-I/usr/local/bg/include \
                 -L/usr/local/bg/lib -lkek -L${DRIVER}/bgpm/lib/ -lbgpm -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
+else
+  OMC_CONF_LNK_OPT="-I/usr/local/bg/include \
+                -L/usr/local/bg/lib -L${DRIVER}/bgpm/lib/ -lbgpm -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
+fi
   BECC_OPTION="-O5"
   BECC_OMP_OPTION="-O5  -qhot -qsmp=omp -qsimd=auto"
 elif test "$target" = "powerpc64-hitachi-aix"; then
@@ -738,8 +747,8 @@ else
   *ICC*)
     OMC_CONF_LX2X_OPT=""
     OMC_CONF_NTV_OPT="-std=gnu99 -w"
-    OMC_CONF_LNK_OPT="-openmp"
-    BECC_OPTION="-std=gnu99 -Wall -Wpointer-arith"
+    OMC_CONF_LNK_OPT="-fast -openmp"
+    BECC_OPTION="-fast -std=gnu99 -Wall -Wpointer-arith"
     BECC_OMP_OPTION="-openmp"
     ;;
   *)
@@ -817,8 +826,8 @@ if test $enableF2F = yes; then
       ;;
     *IFORT*)
       OMF_CONF_LX2X_OPT="-intel"
-      OMF_CONF_NTV_OPT="-auto"
-      OMF_CONF_LNK_OPT="-threads -openmp"
+      OMF_CONF_NTV_OPT="-auto -fast"
+      OMF_CONF_LNK_OPT="-threads -openmp -fast"
       BEFC_MODINC="-module"
       ;;
     *)
@@ -2069,7 +2078,9 @@ esac
 if test "$target" != "$host"; then
    case "$target" in
         Kcomputer-linux-gnu|FX10-linux-gnu)
-                LDFLAGS="";;
+                LDFLAGS=""
+                BLASLIB="-SSL2BLAMP"
+                AC_SUBST(BLASLIB);;
         MIC-linux-gnu)
                 LDFLAGS="";;
         sx-nec-superux)

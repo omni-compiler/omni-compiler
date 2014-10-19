@@ -105,7 +105,7 @@ public class XMPobjectsRef {
     }
 
     // allocate DescId
-    descId = env.declObjectId(XMP.genSym(refName), pb);
+    descId = env.declObjectId(XMP.genSym("XMP_REF_"+refName), pb);
   }
 
   public void setLoopDimInfo(Vector<XMPdimInfo> dims) { loop_dims = dims;}

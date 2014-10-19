@@ -9,29 +9,54 @@ void xmpf_end_task__(void);
 //
 // reduction
 //
-void xmpf_reduction__(void *data_addr, int *count, int *datatype, int *op,
-		      _XMP_object_ref_t **r_desc)
+
+void *xmpf_reduction_loc_vars[_XMP_N_MAX_LOC_VAR];
+int xmpf_reduction_loc_types[_XMP_N_MAX_LOC_VAR];
+
+void xmpf_reduction_loc__(int *dim, void *loc, int *datatype)
 {
+  xmpf_reduction_loc_vars[*dim] = loc;
+  xmpf_reduction_loc_types[*dim] = *datatype;
+}
+
+
+void xmpf_reduction__(void *data_addr, int *count, int *datatype, int *op,
+		      _XMP_object_ref_t **r_desc, int *num_locs)
+{
+  _XMP_nodes_t *nodes;
+
   if (*r_desc){
 
     if (_XMP_is_entire(*r_desc)){
       if ((*r_desc)->ref_kind == XMP_OBJ_REF_NODES){
-	_XMP_reduce_NODES_ENTIRE((*r_desc)->n_desc, data_addr, *count, *datatype, *op);
+	nodes = (*r_desc)->n_desc;
+	if (*num_locs == 0) _XMP_reduce_NODES_ENTIRE(nodes, data_addr, *count, *datatype, *op);
+	else _XMPF_reduce_FLMM_NODES_ENTIRE(nodes, data_addr, *count, *datatype, *op, *num_locs,
+					    xmpf_reduction_loc_vars, xmpf_reduction_loc_types);
       }
       else {
-	_XMP_reduce_NODES_ENTIRE((*r_desc)->t_desc->onto_nodes, data_addr, *count, *datatype, *op);
+	nodes = (*r_desc)->t_desc->onto_nodes;
+	if (*num_locs == 0) _XMP_reduce_NODES_ENTIRE(nodes, data_addr, *count, *datatype, *op);
+	else _XMPF_reduce_FLMM_NODES_ENTIRE(nodes, data_addr, *count, *datatype, *op, *num_locs,
+					    xmpf_reduction_loc_vars, xmpf_reduction_loc_types);
       }
     }
     else {
       if (xmpf_test_task_on__(r_desc)){
-	_XMP_reduce_NODES_ENTIRE(_XMP_get_execution_nodes(), data_addr, *count, *datatype, *op);
+	nodes = _XMP_get_execution_nodes();
+	if (*num_locs == 0) _XMP_reduce_NODES_ENTIRE(nodes, data_addr, *count, *datatype, *op);
+	else _XMPF_reduce_FLMM_NODES_ENTIRE(nodes, data_addr, *count, *datatype, *op, *num_locs,
+					    xmpf_reduction_loc_vars, xmpf_reduction_loc_types);
 	xmpf_end_task__();
       }
     }
 
   }
   else {
-    _XMP_reduce_NODES_ENTIRE(_XMP_get_execution_nodes(), data_addr, *count, *datatype, *op);
+    nodes = _XMP_get_execution_nodes();
+    if (*num_locs == 0) _XMP_reduce_NODES_ENTIRE(nodes, data_addr, *count, *datatype, *op);
+    else _XMPF_reduce_FLMM_NODES_ENTIRE(nodes, data_addr, *count, *datatype, *op, *num_locs,
+					xmpf_reduction_loc_vars, xmpf_reduction_loc_types);
   }
 
 }
