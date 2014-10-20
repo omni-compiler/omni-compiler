@@ -968,7 +968,9 @@ static void reflect_pack_start_all(_XACC_arrays_t *arrays_desc)
 
   for(int i = 0; i < arrays_desc->device_type->size; i++){
     _XACC_array_t *array_desc = arrays_desc->device_array + i;
-    cudaSetDevice(i);
+    if(useKernelPacking){
+      cudaSetDevice(i);
+    }
 
     for(int j = 0; j < dim; j++){
       if(j == 0) continue;
