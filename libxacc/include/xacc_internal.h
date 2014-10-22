@@ -62,6 +62,12 @@ void _XACC_set_shadow_NORMAL(_XACC_arrays_t* array_desc, int dim , int lo, int h
 //xacc_pack.cu
 void _XACC_gpu_pack_vector_async(char * restrict dst, char * restrict src, int count, int blocklength, long stride, size_t typesize, cudaStream_t stream);
 void _XACC_gpu_unpack_vector_async(char * restrict dst, char * restrict src, int count, int blocklength, long stride, size_t typesize, cudaStream_t stream);
+void _XACC_gpu_pack_vector2_async(char * __restrict__ dst0, char * __restrict__ src0, int blocklength0, long stride0,
+				  char * __restrict__ dst1, char * __restrict__ src1, int blocklength1, long stride1,
+				  int count, size_t typesize, cudaStream_t st);
+void _XACC_gpu_unpack_vector2_async(char * __restrict__ dst0, char * __restrict__ src0, int blocklength0, long stride0,
+				    char * __restrict__ dst1, char * __restrict__ src1, int blocklength1, long stride1,
+				    int count, size_t typesize, cudaStream_t st);
 
 // Macro to catch CUDA errors in CUDA runtime calls
 #define CUDA_SAFE_CALL(call)						\
