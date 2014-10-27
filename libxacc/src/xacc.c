@@ -22,6 +22,9 @@
 
 #ifdef _TLOG
 #include "tlog.h"
+#define TLOG_LOG(log) do{tlog_log((log));}while(0)
+#else
+#define TLOG_LOG(log) do{}while(0)
 #endif
 
 static _XACC_device_t *_XACC_current_device = NULL;
@@ -1153,9 +1156,9 @@ static void _XACC_reflect_do_inter_start_dim0(_XACC_arrays_t *arrays_desc)
     _XACC_array_info_t *ai = array_desc->info + j;
     if(ai->shadow_size_lo != 0 || ai->shadow_size_hi != 0){
       _XMP_reflect_sched_t *reflect = ai->reflect_sched;
-      tlog_log(TLOG_EVENT_5_IN);
+      TLOG_LOG(TLOG_EVENT_5_IN);
       MPI_Startall(4, reflect->req);
-      tlog_log(TLOG_EVENT_5_OUT);
+      TLOG_LOG(TLOG_EVENT_5_OUT);
     }
   }
 }
@@ -1168,9 +1171,9 @@ static void _XACC_reflect_do_inter_wait_dim0(_XACC_arrays_t *arrays_desc)
     _XACC_array_info_t *ai = array_desc->info + j;
     if(ai->shadow_size_lo != 0 || ai->shadow_size_hi != 0){
       _XMP_reflect_sched_t *reflect = ai->reflect_sched;
-      tlog_log(TLOG_EVENT_6_IN);
+      TLOG_LOG(TLOG_EVENT_6_IN);
       MPI_Waitall(4, reflect->req, MPI_STATUSES_IGNORE);
-      tlog_log(TLOG_EVENT_6_OUT);
+      TLOG_LOG(TLOG_EVENT_6_OUT);
     }
   }
 }
@@ -1290,27 +1293,20 @@ void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
   /*   CUDA_SAFE_CALL(cudaDeviceSynchronize()); */
   /* } */
 
-#ifdef _TLOG
-  tlog_log(TLOG_EVENT_1_IN);
-#endif
+  TLOG_LOG(TLOG_EVENT_1_IN);
 
   //他ノードとの通信の開始
   _XACC_reflect_do_intra_start(arrays_desc);
   _XACC_reflect_do_inter_start(arrays_desc);
 
-#ifdef _TLOG
-  tlog_log(TLOG_EVENT_1_OUT);
-  tlog_log(TLOG_EVENT_2_IN);
-#endif
+  TLOG_LOG(TLOG_EVENT_1_OUT);
+  TLOG_LOG(TLOG_EVENT_2_IN);
 
   //他ノードとの通信の待機
   _XACC_reflect_do_intra_wait(arrays_desc);
   _XACC_reflect_do_inter_wait(arrays_desc);
  
-
-#ifdef _TLOG
-  tlog_log(TLOG_EVENT_2_OUT);
-#endif
+  TLOG_LOG(TLOG_EVENT_2_OUT);
 
   /* for(dev=0; dev < 2; dev++){ */
   /*   CUDA_SAFE_CALL(cudaSetDevice(dev)); */
