@@ -1,12 +1,13 @@
-#include "xmp_internal.h"
-#include "include/cuda_runtime.h"
+//#include "/include/xmp_internal.h"
+//#include "include/cuda_runtime.h"
+#define _XMP_XACC
+#include "../include/xmp_internal.h"
+#include "/usr/local/cuda/include/cuda_runtime.h"
 #include<stdio.h>
 #include<stdlib.h>
 
 void _XMP_reflect_do_gpu(_XMP_array_t *array_desc);
 void _XMP_reflect_init_gpu(void *acc_addr, _XMP_array_t *array_desc);
-
-static void _XMP_gpu_wait_async(void *);
 
 void _XMP_gpu_pack_vector_async(char * restrict dst, char * restrict src, int count, int blocklength, long stride, size_t typesize, void* async_id);
 void _XMP_gpu_unpack_vector_async(char * restrict dst, char * restrict src, int count, int blocklength, long stride, size_t typesize, void* async_id);
@@ -14,8 +15,6 @@ void _XMP_gpu_unpack_vector_async(char * restrict dst, char * restrict src, int 
 static void _XMP_reflect_gpu_unpack(_XMP_array_t *a);
 static void _XMP_reflect_gpu_pack(_XMP_array_t *a);
 static void _XMP_reflect_wait(_XMP_array_t *a);
-static void _XMP_gpu_update_host_async(void *dst, void *src, size_t size, void* async_id);
-static void _XMP_gpu_update_device_async(void *dst, void *src, size_t size, void* async_id);
 
 static void _XMP_reflect_start(_XMP_array_t *a, int dummy);
 static void _XMP_reflect_sched(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic, int is_async, void *dev_addr);
@@ -26,58 +25,27 @@ static int _xmp_lwidth[_XMP_N_MAX_DIM] = {0};
 static int _xmp_uwidth[_XMP_N_MAX_DIM] = {0};
 static int _xmp_is_periodic[_XMP_N_MAX_DIM] = {0};
 
-void _XMP_gpu_update_host_async(void *dst, void *src, size_t size, void *async_id)
+// Macro to catch CUDA errors in CUDA runtime calls
+#define CUDA_SAFE_CALL(call)						\
+  do {                                                                  \
+    cudaError_t err = call;						\
+    if (cudaSuccess != err) {						\
+      fprintf (stderr, "Cuda error in file '%s' in line %i : %s.\n",	\
+	       __FILE__, __LINE__, cudaGetErrorString(err) );		\
+      exit(EXIT_FAILURE);						\
+    }									\
+  } while (0)
+
+static void gpu_memcpy_async(void *dst, void *src, size_t size, void *async_id)
 {
   cudaStream_t st = *((cudaStream_t*)async_id);
-  cudaMemcpyAsync(dst, src, size, cudaMemcpyDeviceToHost, st);
+  CUDA_SAFE_CALL(cudaMemcpyAsync(dst, src, size, cudaMemcpyDefault, st));
 }
-void _XMP_gpu_update_device_async(void *dst, void *src, size_t size, void *async_id)
+
+static void gpu_wait_async(void *async_id)
 {
   cudaStream_t st = *((cudaStream_t*)async_id);
-  cudaMemcpyAsync(dst, src, size, cudaMemcpyHostToDevice, st);
-}
-void _XMP_gpu_wait_async(void *async_id)
-{
-  cudaStream_t st = *((cudaStream_t*)async_id);
-  cudaStreamSynchronize(st);
-}
-
-void* _XMP_gpu_host_alloc(size_t size)
-{
-  void *p;
-  cudaMallocHost((void**)&p, size);
-  if(p == NULL){
-    printf("null returned\n");
-  }
-  return p;
-}
-void _XMP_gpu_host_free(void *addr)
-{
-  cudaFreeHost(addr);
-}
-
-void _XMP_gpu_alloc(void **addr, size_t size) {
-  if (cudaMalloc(addr, size) != cudaSuccess) {
-    _XMP_fatal("failed to allocate data on GPU");
-  }
-}
-
-void _XMP_gpu_free(void *addr) {
-  if (cudaFree(addr) != cudaSuccess) {
-    _XMP_fatal("failed to free data on GPU");
-  }
-}
-void* _XMP_gpu_alloc_async_id()
-{
-  cudaStream_t *st = (cudaStream_t*)malloc(sizeof(cudaStream_t));
-  cudaStreamCreate(st);
-  return st;
-}
-
-void _XMP_gpu_free_async_id(void *async_id)
-{
-  cudaStreamDestroy(*((cudaStream_t*)async_id));
-  free(async_id);
+  CUDA_SAFE_CALL(cudaStreamSynchronize(st));
 }
 
 void _XMP_reflect_init_gpu(void *dev_addr,_XMP_array_t *a)
@@ -140,6 +108,10 @@ static void _XMP_reflect_sched(_XMP_array_t *a, int *lwidth, int *uwidth,
 	reflect->lo_recv_buf = NULL;
 	reflect->hi_send_buf = NULL;
 	reflect->hi_recv_buf = NULL;
+	reflect->lo_send_host_buf = NULL;
+	reflect->lo_recv_host_buf = NULL;
+	reflect->hi_send_host_buf = NULL;
+	reflect->hi_recv_host_buf = NULL;
 	ai->reflect_acc_sched = reflect;
       }else{
 	//
@@ -214,26 +186,26 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   int hi_rank = my_rank + (hi_pos - my_pos) * ni->multiplier;
 
   int type_size = adesc->type_size;
-  void *array_addr = adesc->array_addr_p;
+  //void *array_addr = adesc->array_addr_p;
 
   void *lo_send_array = NULL;
   void *lo_recv_array = NULL;
   void *hi_send_array = NULL;
   void *hi_recv_array = NULL;
-  void *lo_send_dev_array = NULL;
-  void *lo_recv_dev_array = NULL;
-  void *hi_send_dev_array = NULL;
-  void *hi_recv_dev_array = NULL;
-
-  void *lo_send_buf = NULL;
-  void *lo_recv_buf = NULL;
-  void *hi_send_buf = NULL;
-  void *hi_recv_buf = NULL;
 
   void *lo_send_dev_buf = NULL;
   void *lo_recv_dev_buf = NULL;
   void *hi_send_dev_buf = NULL;
   void *hi_recv_dev_buf = NULL;
+  void *lo_send_host_buf = NULL;
+  void *lo_recv_host_buf = NULL;
+  void *hi_send_host_buf = NULL;
+  void *hi_recv_host_buf = NULL;
+
+  void *mpi_lo_send_buf = NULL;
+  void *mpi_lo_recv_buf = NULL;
+  void *mpi_hi_send_buf = NULL;
+  void *mpi_hi_recv_buf = NULL;
 
   int lo_buf_size = 0;
   int hi_buf_size = 0;
@@ -242,11 +214,11 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   // setup data_type
   //
 
-  int count, blocklength;
-  long long stride;
+  int count = 0, blocklength = 0;
+  long long stride = 0;
   int count_offset = 0;
 
-  if (_XMPF_running & !_XMPC_running){ /* for XMP/F */
+  if (_XMPF_running && !_XMPC_running){ /* for XMP/F */
 
     count = 1;
     blocklength = type_size;
@@ -262,7 +234,7 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     }
 
   }
-  else if (!_XMPF_running & _XMPC_running){ /* for XMP/C */
+  else if (!_XMPF_running && _XMPC_running){ /* for XMP/C */
 
     count = 1;
     blocklength = type_size;
@@ -304,70 +276,78 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   // for lower reflect
 
   if (lwidth){
-
-    lo_send_array = lo_recv_array = (void *)((char*)array_addr + count_offset * stride);
-    lo_send_dev_array = lo_recv_dev_array = (void *)((char*)dev_array_addr + count_offset * stride);
+    lo_send_array = lo_recv_array = (void *)((char*)dev_array_addr + count_offset * stride);
 
     for (int i = 0; i < ndims; i++) {
-
       int lb_send, lb_recv;
       unsigned long long dim_acc;
 
       if (i == target_dim) {
 	//printf("ainfo[%d].local_upper=%d\n",i,ainfo[i].local_upper);
 	lb_send = ainfo[i].local_upper - lwidth + 1;
-	lb_recv = ainfo[i].shadow_size_lo - lwidth;;
-      }
-      else {
+	lb_recv = ainfo[i].shadow_size_lo - lwidth; ////ainfo[i].local_lower - lwidth;
+      } else {
 	// Note: including shadow area
-	lb_send = 0;
-	lb_recv = 0;
+	lb_send = 0; //// ainfo[i].local_lower - ainfo[i].shadow_size_lo;
+	lb_recv = 0; //// ainfo[i].local_lower - ainfo[i].shadow_size_lo;
       }
 
       dim_acc = ainfo[i].dim_acc;
 
       lo_send_array = (void *)((char *)lo_send_array + lb_send * dim_acc * type_size);
       lo_recv_array = (void *)((char *)lo_recv_array + lb_recv * dim_acc * type_size);
-      lo_send_dev_array = (void *)((char *)lo_send_dev_array + lb_send * dim_acc * type_size);
-      lo_recv_dev_array = (void *)((char *)lo_recv_dev_array + lb_recv * dim_acc * type_size);
-
     }
-
   }
 
   // for upper reflect
 
   if (uwidth){
-
-    hi_send_array = hi_recv_array = (void *)((char*)array_addr + count_offset * stride);
-    hi_send_dev_array = hi_recv_dev_array = (void *)((char*)dev_array_addr + count_offset * stride);
-
+    hi_send_array = hi_recv_array = (void *)((char*)dev_array_addr + count_offset * stride);
 
     for (int i = 0; i < ndims; i++) {
-
       int lb_send, lb_recv;
       unsigned long long dim_acc;
 
       if (i == target_dim) {
 	lb_send = ainfo[i].local_lower;
 	lb_recv = ainfo[i].local_upper + 1;
-      }
-      else {
+      } else {
 	// Note: including shadow area
-	lb_send = 0;
-	lb_recv = 0;
+	lb_send = 0; //ainfo[i].local_lower - ainfo[i].shadow_size_lo;
+	lb_recv = 0; //ainfo[i].local_lower - ainfo[i].shadow_size_lo;
       }
 
       dim_acc = ainfo[i].dim_acc;
 
       hi_send_array = (void *)((char *)hi_send_array + lb_send * dim_acc * type_size);
       hi_recv_array = (void *)((char *)hi_recv_array + lb_recv * dim_acc * type_size);
-      hi_send_dev_array = (void *)((char *)hi_send_dev_array + lb_send * dim_acc * type_size);
-      hi_recv_dev_array = (void *)((char *)hi_recv_dev_array + lb_recv * dim_acc * type_size);
-
     }
-
   }
+
+  // for lower reflect
+  if (reflect->datatype_lo != MPI_DATATYPE_NULL){
+    MPI_Type_free(&reflect->datatype_lo);
+  }
+  if(1){ //usePacking || count == 1
+    MPI_Type_contiguous(blocklength * lwidth * count, MPI_BYTE, &reflect->datatype_lo);
+  }else{
+    MPI_Type_vector(count, blocklength * lwidth, stride,
+		    MPI_BYTE, &reflect->datatype_lo);
+  }
+  MPI_Type_commit(&reflect->datatype_lo);
+
+  // for upper reflect
+  if (reflect->datatype_hi != MPI_DATATYPE_NULL){
+    MPI_Type_free(&reflect->datatype_hi);
+  }
+  if(1){ //usePacking || count == 1
+    MPI_Type_contiguous(blocklength * uwidth * count, MPI_BYTE, &reflect->datatype_hi);
+  }else{
+    MPI_Type_vector(count, blocklength * uwidth, stride, //(count!=1)?stride:blocklength * uwidth,
+		    MPI_BYTE, &reflect->datatype_hi);
+  }
+  MPI_Type_commit(&reflect->datatype_hi);
+
 
   //
   // Allocate buffers
@@ -375,21 +355,22 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 
   if ((_XMPF_running && target_dim != ndims - 1) ||
       (_XMPC_running && target_dim != 0)){
-    _XMP_gpu_host_free(reflect->lo_send_buf);
-    _XMP_gpu_host_free(reflect->lo_recv_buf);
-    _XMP_gpu_host_free(reflect->hi_send_buf);
-    _XMP_gpu_host_free(reflect->hi_recv_buf);
-    //_XMP_gpu_free(reflect->lo_send_dev_buf);
-    //_XMP_gpu_free(reflect->lo_recv_dev_buf);
-    //_XMP_gpu_free(reflect->hi_send_dev_buf);
-    //_XMP_gpu_free(reflect->hi_recv_dev_buf);
+    CUDA_SAFE_CALL(cudaFreeHost(reflect->lo_send_host_buf));
+    CUDA_SAFE_CALL(cudaFreeHost(reflect->lo_recv_host_buf));
+    CUDA_SAFE_CALL(cudaFreeHost(reflect->hi_send_host_buf));
+    CUDA_SAFE_CALL(cudaFreeHost(reflect->hi_recv_host_buf));
+    
+    CUDA_SAFE_CALL(cudaFree(reflect->lo_send_buf));
+    CUDA_SAFE_CALL(cudaFree(reflect->lo_recv_buf));
+    CUDA_SAFE_CALL(cudaFree(reflect->hi_send_buf));
+    CUDA_SAFE_CALL(cudaFree(reflect->hi_recv_buf));
   }
   if ((_XMPF_running && target_dim == ndims - 1) ||
       (_XMPC_running && target_dim == 0)){
-    _XMP_gpu_host_free(reflect->lo_send_buf);
-    _XMP_gpu_host_free(reflect->lo_recv_buf);
-    _XMP_gpu_host_free(reflect->hi_send_buf);
-    _XMP_gpu_host_free(reflect->hi_recv_buf);
+    CUDA_SAFE_CALL(cudaFreeHost(reflect->lo_send_host_buf));
+    CUDA_SAFE_CALL(cudaFreeHost(reflect->lo_recv_host_buf));
+    CUDA_SAFE_CALL(cudaFreeHost(reflect->hi_send_host_buf));
+    CUDA_SAFE_CALL(cudaFreeHost(reflect->hi_recv_host_buf));
   }
   
 
@@ -401,18 +382,23 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 
     if ((_XMPF_running && target_dim == ndims - 1) ||
 	(_XMPC_running && target_dim == 0)){
-      lo_send_buf = _XMP_gpu_host_alloc(lo_buf_size);
-      lo_recv_buf = _XMP_gpu_host_alloc(lo_buf_size);
-      lo_send_dev_buf = lo_send_dev_array;
-      lo_recv_dev_buf = lo_recv_dev_array;
+      CUDA_SAFE_CALL(cudaMallocHost((void**)&lo_send_host_buf, lo_buf_size));
+      CUDA_SAFE_CALL(cudaMallocHost((void**)&lo_recv_host_buf, lo_buf_size));
+
+      lo_send_dev_buf = lo_send_array;
+      lo_recv_dev_buf = lo_recv_array;
+      mpi_lo_send_buf = lo_send_host_buf;
+      mpi_lo_recv_buf = lo_recv_host_buf;
     }
     else {
       _XMP_TSTART(t0);
-      lo_send_buf = _XMP_gpu_host_alloc(lo_buf_size);
-      lo_recv_buf = _XMP_gpu_host_alloc(lo_buf_size);
+      CUDA_SAFE_CALL(cudaMallocHost((void**)&lo_send_host_buf, lo_buf_size));
+      CUDA_SAFE_CALL(cudaMallocHost((void**)&lo_recv_host_buf, lo_buf_size));
+      CUDA_SAFE_CALL(cudaMalloc((void **)&lo_send_dev_buf, lo_buf_size));
+      CUDA_SAFE_CALL(cudaMalloc((void **)&lo_recv_dev_buf, lo_buf_size));
 
-      _XMP_gpu_alloc((void **)&lo_send_dev_buf, lo_buf_size); //lo_send_dev_buf = _XMP_gpu_alloc(lo_buf_size);
-      _XMP_gpu_alloc((void **)&lo_recv_dev_buf, lo_buf_size); //lo_recv_dev_buf = _XMP_gpu_alloc(lo_buf_size);
+      mpi_lo_send_buf = lo_send_host_buf;
+      mpi_lo_recv_buf = lo_recv_host_buf;
       _XMP_TEND2(xmptiming_.t_mem, xmptiming_.tdim_mem[target_dim], t0);
     }
 
@@ -426,17 +412,23 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 
     if ((_XMPF_running && target_dim == ndims - 1) ||
 	(_XMPC_running && target_dim == 0)){
-      hi_send_buf = _XMP_gpu_host_alloc(hi_buf_size);
-      hi_recv_buf = _XMP_gpu_host_alloc(hi_buf_size);
-      hi_send_dev_buf = hi_send_dev_array;
-      hi_recv_dev_buf = hi_recv_dev_array;
+      CUDA_SAFE_CALL(cudaMallocHost((void**)&hi_send_host_buf, hi_buf_size));
+      CUDA_SAFE_CALL(cudaMallocHost((void**)&hi_recv_host_buf, hi_buf_size));
+
+      hi_send_dev_buf = hi_send_array;
+      hi_recv_dev_buf = hi_recv_array;
+      mpi_hi_send_buf = hi_send_host_buf;
+      mpi_hi_recv_buf = hi_recv_host_buf;
     }
     else {
       _XMP_TSTART(t0);
-      hi_send_buf = _XMP_gpu_host_alloc(hi_buf_size);
-      hi_recv_buf = _XMP_gpu_host_alloc(hi_buf_size);
-      _XMP_gpu_alloc((void **)&hi_send_dev_buf, hi_buf_size); //hi_send_dev_buf = _XMP_gpu_alloc(hi_buf_size);
-      _XMP_gpu_alloc((void **)&hi_recv_dev_buf, hi_buf_size); //hi_recv_dev_buf = _XMP_gpu_alloc(hi_buf_size);
+      CUDA_SAFE_CALL(cudaMallocHost((void**)&hi_send_host_buf, hi_buf_size));
+      CUDA_SAFE_CALL(cudaMallocHost((void**)&hi_recv_host_buf, hi_buf_size));
+      CUDA_SAFE_CALL(cudaMalloc((void **)&hi_send_dev_buf, hi_buf_size));
+      CUDA_SAFE_CALL(cudaMalloc((void **)&hi_recv_dev_buf, hi_buf_size));
+
+      mpi_hi_send_buf = hi_send_host_buf;
+      mpi_hi_recv_buf = hi_recv_host_buf;
       _XMP_TEND2(xmptiming_.t_mem, xmptiming_.tdim_mem[target_dim], t0);
     }
 
@@ -461,8 +453,7 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   if (lwidth){
     src = lo_rank;
     dst = hi_rank;
-  }
-  else {
+  } else {
     src = MPI_PROC_NULL;
     dst = MPI_PROC_NULL;
   }
@@ -475,9 +466,9 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     MPI_Request_free(&reflect->req[1]);
   }
 
-  MPI_Recv_init(lo_recv_buf, lo_buf_size, MPI_BYTE, src,
+  MPI_Recv_init(mpi_lo_recv_buf, 1, reflect->datatype_lo, src,
 		_XMP_N_MPI_TAG_REFLECT_LO, *comm, &reflect->req[0]);
-  MPI_Send_init(lo_send_buf, lo_buf_size, MPI_BYTE, dst,
+  MPI_Send_init(mpi_lo_send_buf, 1, reflect->datatype_lo, dst,
 		_XMP_N_MPI_TAG_REFLECT_LO, *comm, &reflect->req[1]);
 
   // for upper shadow
@@ -485,8 +476,7 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   if (uwidth){
     src = hi_rank;
     dst = lo_rank;
-  }
-  else {
+  } else {
     src = MPI_PROC_NULL;
     dst = MPI_PROC_NULL;
   }
@@ -499,9 +489,9 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     MPI_Request_free(&reflect->req[3]);
   }
 
-  MPI_Recv_init(hi_recv_buf, hi_buf_size, MPI_BYTE, src,
+  MPI_Recv_init(mpi_hi_recv_buf, 1, reflect->datatype_hi, src,
 		_XMP_N_MPI_TAG_REFLECT_HI, *comm, &reflect->req[2]);
-  MPI_Send_init(hi_send_buf, hi_buf_size, MPI_BYTE, dst,
+  MPI_Send_init(mpi_hi_send_buf, 1, reflect->datatype_hi, dst,
 		_XMP_N_MPI_TAG_REFLECT_HI, *comm, &reflect->req[3]);
 
   //
@@ -517,27 +507,24 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   reflect->hi_send_array = hi_send_array;
   reflect->hi_recv_array = hi_recv_array;
 
-  reflect->lo_send_buf = lo_send_buf;
-  reflect->lo_recv_buf = lo_recv_buf;
-  reflect->hi_send_buf = hi_send_buf;
-  reflect->hi_recv_buf = hi_recv_buf;
+  reflect->lo_send_buf = lo_send_dev_buf;
+  reflect->lo_recv_buf = lo_recv_dev_buf;
+  reflect->hi_send_buf = hi_send_dev_buf;
+  reflect->hi_recv_buf = hi_recv_dev_buf;
 
-  reflect->lo_send_dev_array = lo_send_dev_array;
-  reflect->lo_recv_dev_array = lo_recv_dev_array;
-  reflect->hi_send_dev_array = hi_send_dev_array;
-  reflect->hi_recv_dev_array = hi_recv_dev_array;
-
-  reflect->lo_send_dev_buf = lo_send_dev_buf;
-  reflect->lo_recv_dev_buf = lo_recv_dev_buf;
-  reflect->hi_send_dev_buf = hi_send_dev_buf;
-  reflect->hi_recv_dev_buf = hi_recv_dev_buf;
+  reflect->lo_send_host_buf = lo_send_host_buf;
+  reflect->lo_recv_host_buf = lo_recv_host_buf;
+  reflect->hi_send_host_buf = hi_send_host_buf;
+  reflect->hi_recv_host_buf = hi_recv_host_buf;
 
   reflect->lo_rank = lo_rank;
   reflect->hi_rank = hi_rank;
 
   // gpu async
-  reflect->lo_async_id = _XMP_gpu_alloc_async_id();
-  reflect->hi_async_id = _XMP_gpu_alloc_async_id();
+  reflect->lo_async_id = _XMP_alloc(sizeof(cudaStream_t));
+  reflect->hi_async_id = _XMP_alloc(sizeof(cudaStream_t));
+  CUDA_SAFE_CALL(cudaStreamCreate(reflect->lo_async_id));
+  CUDA_SAFE_CALL(cudaStreamCreate(reflect->hi_async_id));
 
 }
 
@@ -562,21 +549,15 @@ static void _XMP_reflect_start(_XMP_array_t *a, int dummy)
     if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
       size_t lo_buf_size = lo_width * reflect->blocklength * reflect->count;
       size_t hi_buf_size = hi_width * reflect->blocklength * reflect->count;
-      //printf("move");
       if(lo_width && reflect->hi_rank != MPI_PROC_NULL){
-	_XMP_gpu_update_host_async(reflect->lo_send_buf, reflect->lo_send_dev_buf, lo_buf_size, reflect->lo_async_id);
+	gpu_memcpy_async(reflect->lo_send_host_buf, reflect->lo_send_buf, lo_buf_size, reflect->lo_async_id);
       }
       if(hi_width && reflect->lo_rank != MPI_PROC_NULL){
-	_XMP_gpu_update_host_async(reflect->hi_send_buf, reflect->hi_send_dev_buf, hi_buf_size, reflect->hi_async_id);
+	gpu_memcpy_async(reflect->hi_send_host_buf, reflect->hi_send_buf, hi_buf_size, reflect->hi_async_id);
       }
-      //      _XMP_gpu_wait_async(reflect->lo_async_id);
-      //      _XMP_gpu_wait_async(reflect->hi_async_id);
-      //_XMP_TSTART(t0);
-      //MPI_Startall(4, reflect->req);
-      //_XMP_TEND2(xmptiming_.t_comm, xmptiming_.tdim_comm[i], t0);
-
+      //gpu_wait_async(reflect->lo_async_id);
+      //gpu_wait_async(reflect->hi_async_id);
     }
-
   }
 
   for (int i = 0; i < a->dim; i++){
@@ -589,10 +570,10 @@ static void _XMP_reflect_start(_XMP_array_t *a, int dummy)
 
     if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
       if(lo_width && reflect->hi_rank != MPI_PROC_NULL){
-	_XMP_gpu_wait_async(reflect->lo_async_id);
+	gpu_wait_async(reflect->lo_async_id);
       }
       if(hi_width && reflect->lo_rank != MPI_PROC_NULL){
-	_XMP_gpu_wait_async(reflect->hi_async_id);
+	gpu_wait_async(reflect->hi_async_id);
       }
     }
   }
@@ -624,8 +605,7 @@ static void _XMP_reflect_wait(_XMP_array_t *a)
     int lo_width = reflect->lo_width;
     int hi_width = reflect->hi_width;
     if (!lo_width && !hi_width) continue;
-    //    if (!lwidth[i] && !uwidth[i]) continue;
-    //    _XMP_array_info_t *ai = &(a->info[i]);
+
     if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
       _XMP_TSTART(t0);
       MPI_Waitall(4, reflect->req, MPI_STATUSES_IGNORE);
@@ -633,16 +613,11 @@ static void _XMP_reflect_wait(_XMP_array_t *a)
 
       if(lo_width && reflect->lo_rank != MPI_PROC_NULL){
 	size_t lo_buf_size = lo_width * reflect->blocklength * reflect->count;
-	//_XMP_gpu_update_device_async(reflect->lo_recv_dev_buf, reflect->lo_recv_buf, lo_buf_size, reflect->lo_async_id);
-	//	cudaStream_t lo_stream = 
-	cudaMemcpyAsync(reflect->lo_recv_dev_buf, reflect->lo_recv_buf, lo_buf_size, 
-			cudaMemcpyHostToDevice, *(cudaStream_t*)reflect->lo_async_id);
+	gpu_memcpy_async(reflect->lo_recv_buf, reflect->lo_recv_host_buf, lo_buf_size, reflect->lo_async_id);
       }
       if(hi_width && reflect->hi_rank != MPI_PROC_NULL){
 	size_t hi_buf_size = hi_width * reflect->blocklength * reflect->count;
-	//_XMP_gpu_update_device_async(reflect->hi_recv_dev_buf, reflect->hi_recv_buf, hi_buf_size, reflect->hi_async_id);
-	cudaMemcpyAsync(reflect->hi_recv_dev_buf, reflect->hi_recv_buf, hi_buf_size, 
-			cudaMemcpyHostToDevice, *(cudaStream_t*)reflect->hi_async_id);
+	gpu_memcpy_async(reflect->hi_recv_buf, reflect->hi_recv_host_buf, hi_buf_size, reflect->hi_async_id);
       }
     }
     else if (ai->shadow_type == _XMP_N_SHADOW_FULL){
@@ -665,12 +640,10 @@ static void _XMP_reflect_wait(_XMP_array_t *a)
 
       if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
 	if(lo_width && reflect->lo_rank != MPI_PROC_NULL){
-	  //_XMP_gpu_wait_async(reflect->lo_async_id);
-	  cudaStreamSynchronize(*(cudaStream_t*)reflect->lo_async_id);
+	  gpu_wait_async(reflect->lo_async_id);
 	}
 	if(hi_width && reflect->hi_rank != MPI_PROC_NULL){
-	  //_XMP_gpu_wait_async(reflect->hi_async_id);
-	  cudaStreamSynchronize(*(cudaStream_t*)reflect->hi_async_id);
+	  gpu_wait_async(reflect->hi_async_id);
 	}
       }
     }
@@ -682,13 +655,13 @@ static void _XMP_reflect_wait(_XMP_array_t *a)
 static void _XMP_reflect_gpu_pack(_XMP_array_t *a)
 {
 
-  int lb, ub;
+  int lb = 0, ub = 0;
 
-  if (_XMPF_running & !_XMPC_running){ /* for XMP/F */
+  if (_XMPF_running && !_XMPC_running){ /* for XMP/F */
     lb = 0;
     ub = a->dim - 1;
   }
-  else if (!_XMPF_running & _XMPC_running){ /* for XMP/C */
+  else if (!_XMPF_running && _XMPC_running){ /* for XMP/C */
     lb = 1;
     ub = a->dim;
   }
@@ -706,16 +679,16 @@ static void _XMP_reflect_gpu_pack(_XMP_array_t *a)
     if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
       // for lower reflect
       if (lo_width && reflect->hi_rank != MPI_PROC_NULL){
-	_XMP_gpu_pack_vector_async((char *)reflect->lo_send_dev_buf,
-				   (char *)reflect->lo_send_dev_array,
+	_XMP_gpu_pack_vector_async((char *)reflect->lo_send_buf,
+				   (char *)reflect->lo_send_array,
 				   reflect->count, lo_width * reflect->blocklength,
 				   reflect->stride, a->type_size, reflect->lo_async_id);
       }
 
       // for upper reflect
       if (hi_width && reflect->lo_rank != MPI_PROC_NULL){
-	_XMP_gpu_pack_vector_async((char *)reflect->hi_send_dev_buf,
-				   (char *)reflect->hi_send_dev_array,
+	_XMP_gpu_pack_vector_async((char *)reflect->hi_send_buf,
+				   (char *)reflect->hi_send_array,
 				   reflect->count, hi_width * reflect->blocklength,
 				   reflect->stride, a->type_size, reflect->hi_async_id);
       }
@@ -727,12 +700,12 @@ static void _XMP_reflect_gpu_pack(_XMP_array_t *a)
 static void _XMP_reflect_gpu_unpack(_XMP_array_t *a)
 {
 
-  int lb, ub;
+  int lb = 0, ub = 0;
 
-  if (_XMPF_running & !_XMPC_running){ /* for XMP/F */
+  if (_XMPF_running && !_XMPC_running){ /* for XMP/F */
     lb = 0;
     ub = a->dim - 1;
-  } else if (!_XMPF_running & _XMPC_running){ /* for XMP/C */
+  } else if (!_XMPF_running && _XMPC_running){ /* for XMP/C */
     lb = 1;
     ub = a->dim;
   } else {
@@ -750,16 +723,16 @@ static void _XMP_reflect_gpu_unpack(_XMP_array_t *a)
     if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
       // for lower reflect
       if (lo_width && reflect->lo_rank != MPI_PROC_NULL){
-	_XMP_gpu_unpack_vector_async((char *)reflect->lo_recv_dev_array,
-				     (char *)reflect->lo_recv_dev_buf,
+	_XMP_gpu_unpack_vector_async((char *)reflect->lo_recv_array,
+				     (char *)reflect->lo_recv_buf,
 				     reflect->count, lo_width * reflect->blocklength,
 				     reflect->stride, a->type_size, reflect->lo_async_id);
       }
 
       // for upper reflect
       if (hi_width && reflect->hi_rank != MPI_PROC_NULL){
-	_XMP_gpu_unpack_vector_async((char *)reflect->hi_recv_dev_array,
-				     (char *)reflect->hi_recv_dev_buf,
+	_XMP_gpu_unpack_vector_async((char *)reflect->hi_recv_array,
+				     (char *)reflect->hi_recv_buf,
 				     reflect->count, hi_width * reflect->blocklength,
 				     reflect->stride, a->type_size, reflect->hi_async_id);
       }
