@@ -8,66 +8,103 @@ package exc.xmpF;
 
 import exc.object.*;
 import exc.block.*;
-import java.util.Vector;
-import java.util.Iterator;
+import java.util.*;
 
 /*
  * Fortran Coarray Object
  */
 public class XMPcoarray {
 
-  private XMParray array;
-  private Xobject[] cosizeExprs;
-
-  private Ident ident;
-
-  public XMPcoarray(XMParray array) {
-    this.array = array;
-    this.cosizeExprs = null;
+  private class CoarrayInfo {
+    Ident body;
+    Xtype orgType;
+    CoarrayInfo(Ident ident) {
+      body = ident;
+      orgType = ident.Type().copy();
+    }
   }
 
-  public XMPcoarray(XMParray array, Xobject[] cosizeExprs) {
-    this.array = array;
-    this.cosizeExprs = cosizeExprs;
+  private FuncDefBlock def;
+  private ArrayList<CoarrayInfo> coarrayList;
+
+  //------------------------------
+  //  CONSTRUCTOR
+  //------------------------------
+  public XMPcoarray(FuncDefBlock def) {
+    this.def = def;
+    setCoarrayList(def);
   }
 
-  public XMPcoarray(Ident ident) {
-    this.ident = ident;
-    //    this.cosizeExprs = ident.type.cosizeExprs;
+  //------------------------------
+  //  TRANSLATION
+  //------------------------------
+  public void run() {
+    for (CoarrayInfo info: coarrayList)
+      run(info);
   }
 
-  public String toString(){
-    String s = "{Coarray("+array.getName()+", id="+array.getArrayId()+"):";
-    s += "dims="+array.getDim()+",";
-    s += "codims="+cosizeExprs.length;
-    return s+"}";
+  public void run(CoarrayInfo coarray) {
+
+    coarray.body.Type().resetCodimensions();
+
+    ///////////
+    System.out.println(display(coarray));    
+    ///////////
+
+
+
   }
 
-  public String getName() {
-    return array.getName();
+  //------------------------------
+  //  UTILITIES
+  //------------------------------
+  public ArrayList<CoarrayInfo> getCoarrayList() {
+    return coarrayList;
   }
 
-  public Xtype getType() {
-    return array.getType();
+  public void setCoarrayList(FuncDefBlock def) {
+    coarrayList = new ArrayList();
+    Xobject idList = def.getDef().getFuncIdList();
+    for (Xobject obj: (XobjList)idList) {
+      Ident ident = (Ident)obj;
+      if (ident.Type().getCorank() > 0)
+        coarrayList.add(new CoarrayInfo(ident));
+    }
   }
 
-  public int getDim(){
-    return array.getDim();
+  public String toString() {
+    String s = "{";
+    String delim = "";
+    for (CoarrayInfo info: coarrayList) {
+      s += delim + toString(info);
+      delim = ",";
+    }
+    return s + "}";
+  }
+  public String toString(CoarrayInfo info) {
+    return toString(info.body);
+  }
+  public String toString(Xobject obj) {
+    return "Xobject(" + obj.getName()
+      + ",rank=" + obj.Type().getNumDimensions()
+      + ",corank=" + obj.Type().getCorank()
+      + ")";
+  }
+  public String toString(Xtype type) {
+    return "Xtype(rank=" + type.getNumDimensions()
+      + ",corank=" + type.getCorank()
+      + ")";
   }
 
-  /* 
-   * Method to translate a coarray declaration
-   */
-  public static void analyzeCoarray() {}
-
-  /*
-(Xobject a, Xobject arrayArgs,
-				  Xobject templ, Xobject tempArgs,
-				  XMPenv env, PragmaBlock pb){
-    XMParray arrayObject = new XMParray();
-    arrayObject.parseAlign(a,arrayArgs,templ,tempArgs,env,pb);
-    env.declXMParray(arrayObject,pb);
+  private String display() {
+    String s = "";
+    for (CoarrayInfo info: coarrayList)
+      s += display(info) + "\n";
+    return s;
   }
-  */
-
+  private String display(CoarrayInfo info) {
+    return "{body:" + toString(info.body)
+      + ", orgType:" + toString(info.orgType)
+      + "}";
+  }
 }

@@ -28,26 +28,11 @@ public class XMPrewriteExpr
     FunctionBlock fb = def.getBlock();
     if (fb == null) return;
 
-    // rewrite coarray declarations (ID=060)
-
-    Xobject idList = def.getDef().getFuncIdList();
-    for (Xobject obj: (XobjList)idList) {
-      ////////////////////
-      System.out.println("find var "+obj.getName()+" corank="+obj.Type().getCorank());
-      ////////////////////
-
-      Xtype xtype = obj.Type();
-      if (xtype.getKind() == xtype.F_COARRAY) {
-      ////////////////////
-
-        fatal("unexpected xtype.getKind() xtype.F_COARRAY");
-      ////////////////////
-
-      }
-    }
+    // translate coarray into one-sided comm. code (ID=060)
+    XMPcoarray coarray = new XMPcoarray(def);
+    coarray.run();
 
     // rewrite return statements
-
     BlockIterator iter5 = new topdownBlockIterator(fb);
     for (iter5.init(); !iter5.end(); iter5.next()){
       if (iter5.getBlock().Opcode() == Xcode.RETURN_STATEMENT){
@@ -57,7 +42,6 @@ public class XMPrewriteExpr
     }
 
     // rewrite allocate, deallocate, and stop statements
-
     BasicBlockIterator iter3 = new BasicBlockIterator(fb);
     for (iter3.init(); !iter3.end(); iter3.next()){
       StatementIterator iter4 = iter3.getBasicBlock().statements();

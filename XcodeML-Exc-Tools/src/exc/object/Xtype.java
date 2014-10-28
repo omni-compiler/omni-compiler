@@ -764,6 +764,10 @@ public class Xtype
     {
         coshape.setCodimensions(codimensions);
     }
+    public void resetCodimensions()
+    {
+        coshape.resetCodimensions();
+    }
      public Xobject[] copyCodimensions()
     {
         return coshape.copyCodimensions();

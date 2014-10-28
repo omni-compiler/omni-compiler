@@ -27,6 +27,15 @@ public class Coshape
     setCodimensions(codimensions);
   }
 
+  public int getCorank()
+  {
+    return corank;
+  }
+  public Xobject[] getCodimensions()
+  {
+    return codimensions;
+  }
+
   public void setCodimensions(Xobject[] codimensions)
   {
     if (codimensions != null) {
@@ -38,21 +47,19 @@ public class Coshape
     }
   }
 
-  public int getCorank()
+  public void resetCodimensions()
   {
-    return corank;
-  }
-
-  public Xobject[] getCodimensions()
-  {
-    return codimensions;
+    if (codimensions != null) {
+      this.codimensions = new Xobject[0];
+      corank = 0;
+    }
   }
 
   public Xobject[] copyCodimensions()
   {
     Xobject[] codimensions1 = new Xobject[corank];
+    // which is good?
     //    System.arraycopy(codimensions, 0, codimensions1, 0, corank);
-    // better implementation to handle general expressions?
     for (int i = 0; i < corank; i++)
       codimensions1[i] = codimensions[i].copy();
     return codimensions1;
