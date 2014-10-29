@@ -62,7 +62,7 @@ void _XMP_reflect_init_gpu(void *dev_addr,_XMP_array_t *a)
 
   static char isFlagSetted = 0;
   if(! isFlagSetted ){
-    char *mode_str = getenv("_XACC_COMM_MODE");
+    char *mode_str = getenv("XACC_COMM_MODE");
     if(mode_str !=  NULL){
       int mode = atoi(mode_str);
       switch(mode){
