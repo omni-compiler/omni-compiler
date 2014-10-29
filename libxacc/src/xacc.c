@@ -18,7 +18,7 @@
 #endif
 
 
-#define _TLOG
+//#define _TLOG
 
 #ifdef _TLOG
 #include "tlog.h"
@@ -1150,32 +1150,63 @@ static void _XACC_reflect_do_inter_wait_dev(_XACC_arrays_t *arrays_desc, int i)
 
 static void _XACC_reflect_do_inter_start_dim0(_XACC_arrays_t *arrays_desc)
 {
-  for(int i = 0; i < arrays_desc->device_type->size; i++){
-    _XACC_array_t *array_desc = arrays_desc->device_array + i;
-    int j = 0;
-    _XACC_array_info_t *ai = array_desc->info + j;
-    if(ai->shadow_size_lo != 0 || ai->shadow_size_hi != 0){
-      _XMP_reflect_sched_t *reflect = ai->reflect_sched;
-      TLOG_LOG(TLOG_EVENT_5_IN);
-      MPI_Startall(4, reflect->req);
-      TLOG_LOG(TLOG_EVENT_5_OUT);
-    }
+  /* for(int i = 0; i < arrays_desc->device_type->size; i++){ */
+  /*   _XACC_array_t *array_desc = arrays_desc->device_array + i; */
+  /*   int j = 0; */
+  /*   _XACC_array_info_t *ai = array_desc->info + j; */
+  /*   if(ai->shadow_size_lo != 0 || ai->shadow_size_hi != 0){ */
+  /*     _XMP_reflect_sched_t *reflect = ai->reflect_sched; */
+  /*     TLOG_LOG(TLOG_EVENT_5_IN); */
+  /*     MPI_Startall(4, reflect->req); */
+  /*     TLOG_LOG(TLOG_EVENT_5_OUT); */
+  /*   } */
+  /* } */
+  {
+    _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->lb - 1;
+    _XACC_array_info_t *ai = array_desc->info + 0;
+    _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+    MPI_Start(reflect->req + 0); //lo recv                                                                                                                                                        
+    MPI_Start(reflect->req + 3); //hi send                                                                                                                                                        
   }
+  {
+    _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->ub - 1;
+    _XACC_array_info_t *ai = array_desc->info + 0;
+    _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+    MPI_Start(reflect->req + 1); //lo send                                                                                                                                                        
+    MPI_Start(reflect->req + 2); //hi recv                                                                                                                                                        
+  }
+
 }
 
 static void _XACC_reflect_do_inter_wait_dim0(_XACC_arrays_t *arrays_desc)
 {
-  for(int i = 0; i < arrays_desc->device_type->size; i++){
-    _XACC_array_t *array_desc = arrays_desc->device_array + i;
-    int j = 0;
-    _XACC_array_info_t *ai = array_desc->info + j;
-    if(ai->shadow_size_lo != 0 || ai->shadow_size_hi != 0){
-      _XMP_reflect_sched_t *reflect = ai->reflect_sched;
-      TLOG_LOG(TLOG_EVENT_6_IN);
-      MPI_Waitall(4, reflect->req, MPI_STATUSES_IGNORE);
-      TLOG_LOG(TLOG_EVENT_6_OUT);
-    }
+  /* for(int i = 0; i < arrays_desc->device_type->size; i++){ */
+  /*   _XACC_array_t *array_desc = arrays_desc->device_array + i; */
+  /*   int j = 0; */
+  /*   _XACC_array_info_t *ai = array_desc->info + j; */
+  /*   if(ai->shadow_size_lo != 0 || ai->shadow_size_hi != 0){ */
+  /*     _XMP_reflect_sched_t *reflect = ai->reflect_sched; */
+  /*     TLOG_LOG(TLOG_EVENT_6_IN); */
+  /*     MPI_Waitall(4, reflect->req, MPI_STATUSES_IGNORE); */
+  /*     TLOG_LOG(TLOG_EVENT_6_OUT); */
+  /*   } */
+  /* } */
+
+  {
+    _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->lb - 1;
+    _XACC_array_info_t *ai = array_desc->info + 0;
+    _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+    MPI_Wait(reflect->req + 0, MPI_STATUS_IGNORE); //lo recv                                                                                                                                      
+    MPI_Wait(reflect->req + 3, MPI_STATUS_IGNORE); //hi send                                                                                                                                      
   }
+  {
+    _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->ub - 1;
+    _XACC_array_info_t *ai = array_desc->info + 0;
+    _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+    MPI_Wait(reflect->req + 1, MPI_STATUS_IGNORE); //lo send                                                                                                                                      
+    MPI_Wait(reflect->req + 2, MPI_STATUS_IGNORE); //hi recv                                                                                                                                      
+  }
+
 }
 
 
@@ -1183,13 +1214,14 @@ static void _XACC_reflect_do_inter_start(_XACC_arrays_t *arrays_desc)
 {
   int numDevices = arrays_desc->device_type->size;
 
-  _XACC_reflect_do_inter_start_dim0(arrays_desc);
 
   //reflect_enqueue_pack_unpack(arrays_desc);
   if(usePacking){
     reflect_pack_start_all(arrays_desc);
     //    reflect_pack_wait_all(arrays_desc);
   }
+
+  _XACC_reflect_do_inter_start_dim0(arrays_desc);
 
   for(int i = 0; i < numDevices; i++){
    _XACC_reflect_do_inter_start_dev(arrays_desc, i);
