@@ -52,6 +52,25 @@ public class FarrayType extends Xtype
     }
 
     @Override
+    public Xobject getFtotalSizeExpr()
+    {
+        Xobject[] sizes = getFarraySizeExpr();
+        Xobject totalSize = null;
+        for (Xobject size1: sizes) {
+            if (size1 == null)
+                return null;
+            if (totalSize == null)
+                totalSize = size1;
+            else
+                totalSize = Xcons.binaryOp(Xcode.MUL_EXPR,
+                                           totalSize, size1);
+        }
+        if (totalSize == null)
+            return Xcons.IntConstant(1);
+        return totalSize;
+    }
+
+    @Override
     public void convertFindexRange(boolean extendsLowerBound, boolean extendsUpperBound, Block b)
     {
         if(isFassumedShape()) {

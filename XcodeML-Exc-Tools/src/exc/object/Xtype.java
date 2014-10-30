@@ -72,7 +72,7 @@ public class Xtype
     public static final int TQ_FEXTERNAL            = 1 << 21;  // external
     public static final int TQ_FSEQUENCE            = 1 << 22;  // sequence
     public static final int TQ_FINTERNAL_PRIVATE    = 1 << 23;  // private in structure decl
-    public static final int TQ_FCRAY_POINTER        = 1 << 24;  // cray pointer (ID=060)
+    public static final int TQ_FCRAY_POINTER        = 1 << 24;  // cray pointer (ID=060c)
     
     private String type_id;
     private int type_kind;
@@ -95,7 +95,7 @@ public class Xtype
     /** type name */
     protected Ident tag;
     
-    /** coarray information (ID=060) */
+    /** coshape infos. incl. corank and codimensions (ID=060) */
     protected Coshape coshape = new Coshape();
 
     /*
@@ -497,13 +497,13 @@ public class Xtype
         setTypeQualFlag(TQ_FALLOCATABLE, enabled);
     }
 
-    /** Fortran : return if it is a cray pointer (ID=060) */
+    /** Fortran : return if it is a cray pointer (ID=060c) */
     public final boolean isFcrayPointer()
     {
         return getTypeQualFlag(TQ_FCRAY_POINTER);
     }
     
-    /** Fortran : set qualifier 'cray pointer' (ID=060) */
+    /** Fortran : set qualifier 'cray pointer' (ID=060c) */
     public final void setIsFcrayPointer(boolean enabled)
     {
         setTypeQualFlag(TQ_FCRAY_POINTER, enabled);
@@ -623,7 +623,7 @@ public class Xtype
         return getTypeQualFlag(TQ_FINTERNAL_PRIVATE);
     }
     
-    /** Fortran : set qualifier 'private ' in structure decl */
+    /** Fortran : set qualifier 'private' in structure decl */
     public final void setIsFinternalPrivate(boolean enabled)
     {
         setTypeQualFlag(TQ_FINTERNAL_PRIVATE, enabled);
@@ -703,6 +703,12 @@ public class Xtype
 
     /** Fortarn: get Fortran array size expressions */
     public Xobject[] getFarraySizeExpr()
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    /** Fortran: get Fortran array/scalar total size */
+    public Xobject getFtotalSizeExpr()
     {
         throw new UnsupportedOperationException();
     }
@@ -926,7 +932,7 @@ public class Xtype
         return null;
     }
     
-    /** Fortran: return if len parameter is varaible value */
+    /** Fortran: return if len parameter is variable value */
     public boolean isFlenVariable()
     {
         return false;

@@ -11,78 +11,76 @@ import exc.block.*;
 import java.util.*;
 
 /*
- * Fortran Coarray Object
+ * Coarray Object
  */
 public class XMPcoarray {
 
-  private class CoarrayInfo {
-    Ident body;
-    Xtype orgType;
-    CoarrayInfo(Ident ident) {
-      body = ident;
-      orgType = ident.Type().copy();
-    }
-  }
-
-  private FuncDefBlock def;
-  private ArrayList<CoarrayInfo> coarrayList;
+  private Ident ident;
+  Xtype orgType;
 
   //------------------------------
   //  CONSTRUCTOR
   //------------------------------
-  public XMPcoarray(FuncDefBlock def) {
-    this.def = def;
-    setCoarrayList(def);
-  }
-
-  //------------------------------
-  //  TRANSLATION
-  //------------------------------
-  public void run() {
-    for (CoarrayInfo info: coarrayList)
-      run(info);
-  }
-
-  public void run(CoarrayInfo coarray) {
-
-    coarray.body.Type().resetCodimensions();
-
-    ///////////
-    System.out.println(display(coarray));    
-    ///////////
-
-
-
+  public XMPcoarray(Ident ident) {
+    this.ident = ident;
+    orgType = ident.Type().copy();
   }
 
   //------------------------------
   //  UTILITIES
   //------------------------------
-  public ArrayList<CoarrayInfo> getCoarrayList() {
-    return coarrayList;
+  public Boolean isScalar() {
+    return (ident.Type().getNumDimensions() == 0);
   }
 
-  public void setCoarrayList(FuncDefBlock def) {
-    coarrayList = new ArrayList();
-    Xobject idList = def.getDef().getFuncIdList();
-    for (Xobject obj: (XobjList)idList) {
-      Ident ident = (Ident)obj;
-      if (ident.Type().getCorank() > 0)
-        coarrayList.add(new CoarrayInfo(ident));
-    }
+  public Boolean isAllocatable() {
+    return ident.Type().isFallocatable();
+  }
+
+  public Boolean isPointer() {
+    return ident.Type().isFpointer();
+  }
+
+  public Boolean isAssumedSize() {
+    return ident.Type().isFassumedSize();
+  }
+
+  public Boolean isAssumedShape() {
+    return ident.Type().isFassumedShape();
+  }
+
+  public Boolean isExplicitShape() {
+    return (!isAssumedSize() && !isAssumedShape() &&
+            !isAllocatable() && !isPointer());
+  }
+
+
+  public Ident getIdent() {
+    return ident;
+  }
+
+  public void setIdent(Ident ident) {
+    this.ident = ident;
+  }
+
+  public Xobject[] getCodimensions() {
+    return ident.Type().getCodimensions();
+  }
+
+  public void setCodimensions(Xobject[] codimensions) {
+    ident.Type().setCodimensions(codimensions);
+  }
+
+  public void resetCodimensions() {
+    ident.Type().resetCodimensions();
+  }
+
+  public String getName() {
+    return ident.getName();
   }
 
   public String toString() {
-    String s = "{";
-    String delim = "";
-    for (CoarrayInfo info: coarrayList) {
-      s += delim + toString(info);
-      delim = ",";
-    }
-    return s + "}";
-  }
-  public String toString(CoarrayInfo info) {
-    return toString(info.body);
+    return toString(ident);
   }
   public String toString(Xobject obj) {
     return "Xobject(" + obj.getName()
@@ -96,15 +94,10 @@ public class XMPcoarray {
       + ")";
   }
 
-  private String display() {
-    String s = "";
-    for (CoarrayInfo info: coarrayList)
-      s += display(info) + "\n";
-    return s;
-  }
-  private String display(CoarrayInfo info) {
-    return "{body:" + toString(info.body)
-      + ", orgType:" + toString(info.orgType)
+  public String display() {
+    return "{ident:" + toString(ident)
+      + ", orgType:" + toString(orgType)
       + "}";
   }
 }
+

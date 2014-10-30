@@ -23,6 +23,12 @@ public class StructType extends CompositeType
     }
 
     @Override
+    public Xobject getFtotalSizeExpr()
+    {
+        return Xcons.IntConstant(1);
+    }
+
+    @Override
     public Xtype copy(String id)
     {
         StructType t = new StructType(id, getMemberList(), getTypeQualFlags(),

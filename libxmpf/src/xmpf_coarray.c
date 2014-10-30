@@ -1,5 +1,5 @@
 #include "xmpf_internal.h"
-
+/*********
 void xmpf_coarray_malloc__(int *size, size_t *element, void **pointer)
 {
   void *co_desc;
@@ -16,12 +16,12 @@ void xmpf_coarray_malloc__(int *size, size_t *element, void **pointer)
   *pointer = co_addr;
   fprintf(stdout, "finished libxmpf/src/xmpf_coarray.c\n");
 }
+************/
 
-
-void xmpf_coarray_malloc_(void **pointer, int *size, int *elem)
+void xmpf_coarray_malloc_(void **pointer, int *size, int *unit)
 {
   int n_elems = *size;
-  size_t elem_size = (size_t)(*elem);
+  size_t elem_size = (size_t)(*unit);
 
   fprintf(stdout, "here libxmpf/src/xmpf_coarray.c n_elems=%d, elem_size=%d\n", n_elems, (int)(elem_size));
 

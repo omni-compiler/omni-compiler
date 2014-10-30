@@ -80,6 +80,12 @@ public class BasicType extends Xtype
         return basic_type;
     }
 
+    @Override
+    public Xobject getFtotalSizeExpr()
+    {
+        return Xcons.IntConstant(1);
+    }
+
     public final static TypeInfo getTypeInfo(int bt)
     {
         for(int i = 0; i < type_infos.length; ++i) {

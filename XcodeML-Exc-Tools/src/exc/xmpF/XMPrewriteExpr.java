@@ -28,9 +28,10 @@ public class XMPrewriteExpr
     FunctionBlock fb = def.getBlock();
     if (fb == null) return;
 
-    // translate coarray into one-sided comm. code (ID=060)
-    XMPcoarray coarray = new XMPcoarray(def);
-    coarray.run();
+    // translate all about coarray (ID=060)
+    //    XMPtransCoarray transCoarray = new XMPtransCoarray(def, env);
+    XMPtransCoarray transCoarray = new XMPtransCoarray(def);
+    transCoarray.run();
 
     // rewrite return statements
     BlockIterator iter5 = new topdownBlockIterator(fb);
