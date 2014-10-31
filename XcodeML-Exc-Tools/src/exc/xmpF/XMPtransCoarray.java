@@ -15,6 +15,10 @@ import java.util.*;
  */
 public class XMPtransCoarray {
 
+  final String CRAYPOINTER_PREFIX = "xmpf_cptr_";
+  final String MALLOC_LIB_NAME = "xmp_coarray_malloc";
+  final String COMMONBLOCK_NAME = "xmpf_cptr";
+
   private FuncDefBlock procDef;
   private String procName;
   private BlockList procDecls;
@@ -24,7 +28,7 @@ public class XMPtransCoarray {
   //     add/removeIdent, findLocalDecl(String)
 
   private Vector<XMPcoarray> coarrayList;
-  private XMPinitProc initProc;
+  private XMPinitProcedure initProcedure;
 
   //------------------------------
   //  CONSTRUCTOR
@@ -43,13 +47,13 @@ public class XMPtransCoarray {
   //  TRANSLATION
   //------------------------------
   public void run() {
-    initProc = new XMPinitProc(procDef);
+    initProcedure = new XMPinitProcedure(procDef);
 
     for (XMPcoarray coarray: coarrayList)
       transCoarrayDecl(coarray);
     ///    XMP.exitByError();   // exit if error has found.
 
-    initProc.finalize();
+    initProcedure.finalize();
   }
 
   public void transCoarrayDecl(XMPcoarray coarray) {
@@ -69,42 +73,62 @@ public class XMPtransCoarray {
     Ident ident = coarray.getIdent();
 
     //   convert from ------------------------------------------
-    //     subroutine foo
+    //     subroutine fff
     //       real var(10,20)[4,*]
+    //       ...
+    //     end subroutine
     //   -------------------------------------------------------
     //   to ----------------------------------------------------
-    //     subroutine foo
-    //       real var(10,20)                                           ! (2)
-    //       pointer (xmpf_craypointer_var, var)                       ! (3)
-    //   and ---------------------------------------------------
-    //     subroutine xmpf_init_foo   ! or xmpf_init_1host_name_foo
-    //       call xmp_coarray_malloc(xmp_craypointer_var,  &
-    //                               size(var), sizeof(var(1,1)))      ! (4)
+    //     subroutine fff
+    //       real xxx(10,20)                                   ! (1)
+    //       pointer (xmpf_cptr_xxx, xxx)                      ! (2)
+    //       common /xmpf_cptr/...,xmpf_cptr_xxx,...           ! (4)
+    //       ...
+    //     end subroutine
+    //     subroutine xmpf_init_unique_name_from_fff
+    //       common /xmpf_cptr/...,xmpf_cptr_xxx,...           ! (4)
+    //       call xmp_coarray_malloc(xmpf_cptr_xxx,200,4)      ! (3)
+    //       ...
+    //     end subroutine
     //   -------------------------------------------------------
 
-    // (1) error check
+    // (0) error check
     if (!coarray.isScalar() && !coarray.isExplicitShape())
       XMP.error("Coarray must be scalar or explicit shape: "+name);
 
-    // (2) remove codimensions form coarray
+    // (1) remove codimensions form coarray
     coarray.resetCodimensions();
 
-    // (3) declaration of a cray pointer
-    Ident cpIdent = procDecls.declLocalIdent("xmpf_craypointer_"+name,
+    // (2) declaration of a cray pointer
+    Ident cpIdent = procDecls.declLocalIdent(CRAYPOINTER_PREFIX + name,
                                              BasicType.Fint8Type,
                                              StorageClass.FLOCAL,
                                              Xcons.FvarRef(ident));  // ident.Ref() for C
     cpIdent.Type().setIsFcrayPointer(true);
 
-    // (4) memory allocation
-    //Xobject unit = ident.getFelementLengthExpr(); 
-    Xobject unit = Xcons.IntConstant(4);      //**** TEMPORARY ****
-    Xobject size = ident.Type().getFtotalSizeExpr();
-    Xobject args = Xcons.List(Xcons.FvarRef(cpIdent), size, unit);
-    Ident mallocIdent = procDecls.declLocalIdent("xmp_coarray_malloc",
+    // (3) generate call stmt
+    Xobject elem = ident.Type().getFelementLengthExpr(); 
+    if (elem == null)
+      XMP.error("Restriction: could not get the element length of: "
+                + coarray.getName());
+    if (!elem.isIntConstant())
+      XMP.error("Restriction: could not evaluate the element length of: "
+                + coarray.getName());
+
+    Xobject count = ident.Type().getFnumElementsExpr();
+    if (count == null)
+      XMP.error("Restriction: could not get the number of elements of: "
+                + coarray.getName());
+    if (!count.isIntConstant())
+      XMP.error("Restriction: could not evaluate the number of elements of: "
+                + coarray.getName());
+
+    /* call MALLOC_LIB_NAME(cpIdent,count,elem) */
+    Ident mallocIdent = procDecls.declLocalIdent(MALLOC_LIB_NAME,
                                                  BasicType.FsubroutineType);
+    Xobject args = Xcons.List(Xcons.FvarRef(cpIdent), count, elem);
     Xobject callStmt = Xcons.functionCall(mallocIdent, args);
-    initProc.add(callStmt);
+    initProcedure.addStmt(callStmt);
 
     ///////////
     System.out.println(coarray.display());    

@@ -46,6 +46,13 @@ public class XobjArgs
         return new XobjArgs(x, a);
     }
     
+    public XobjArgs simple()
+    {
+        Xobject arg2 = (arg == null) ? null : arg.simple();
+        XobjArgs next2 = (next == null) ? null : next.simple();
+        return new XobjArgs(arg2, next2);
+    }
+
     @Override
     public String toString()
     {

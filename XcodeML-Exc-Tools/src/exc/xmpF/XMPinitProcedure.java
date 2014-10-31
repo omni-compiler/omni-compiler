@@ -14,40 +14,32 @@ import java.util.*;
 /*
  * create subroutine xmpf_init_xxx
  */
-public class XMPinitProc {
+public class XMPinitProcedure {
 
-  final String NamePrefix = "xmpf_init";
+  final String INITPROC_PREFIX = "xmpf_init";
 
   private String name;
-  private BlockList blockList;
+  private Vector<Ident> idents = new Vector();
+  private Vector<Xobject> decls = new Vector();
+  private Vector<Ident> commonVars = new Vector();
+  private Vector<Xobject> stmts = new Vector();
 
   //------------------------------
   //  constructor/destructor
   //------------------------------
-  public XMPinitProc(String... names) {  // host-to-guest order
-    setName(makeInitProcName(names));
-    initBlockList();
+  public XMPinitProcedure(String... names) {  // host-to-guest order
+    name = genProcedureName(names);
+    idents.add(Ident.Fident(name, Xtype.FsubroutineType));
   }
 
-  public XMPinitProc(FuncDefBlock def) {
+  public XMPinitProcedure(FuncDefBlock def) {
     String[] names = getHostNames(def);
-    setName(makeInitProcName(names));
-    initBlockList();
+    name = genProcedureName(names);
+    idents.add(Ident.Fident(name, Xtype.FsubroutineType));
   }
 
   public void finalize() {
-    ///////
-    System.out.println("XMPinitProc.finalize");
-    System.out.println("name: "+name);
-    System.out.println("blockList.id_list: ");
-    System.out.println("---------------------------------------------------------------------------");
-    System.out.println(blockList.getIdentList());
-    System.out.println("---------------------------------------------------------------------------");
-    System.out.println("blockList.decls: ");
-    System.out.println("---------------------------------------------------------------------------");
-    System.out.println(blockList.getDecls());
-    System.out.println("---------------------------------------------------------------------------");
-    ///////
+    finalTest();
   }
 
   //------------------------------
@@ -61,27 +53,44 @@ public class XMPinitProc {
     this.name = name;
   }
 
-  public void add(Ident ident) {
-    blockList.addIdent(ident);
+  public void addIdent(Ident ident) {
+    idents.add(ident);
   }
 
-  public void add(Xobject stmt) {
-    blockList.add(stmt);
+  public void addCommonVar(Ident ident) {
+    commonVars.add(ident);
   }
 
-  public void insert(Xobject stmt) {
-    blockList.insert(stmt);
+  public void addStmt(Xobject stmt) {
+    stmts.add(stmt);
+  }
+
+  public void insertStmt(Xobject stmt) {
+    stmts.add(0, stmt);
   }
 
 
   //------------------------------
   //  parts
   //------------------------------
-  private void initBlockList() {
-    blockList = new BlockList();
-    Ident ident = Ident.Fident(name, Xtype.FsubroutineType);
-    blockList.addIdent(ident);
+  private void finalTest() {
+    System.out.println("[XMPinitProc.finalize]");
+    System.out.println("name:");
+    System.out.println(name);
+    System.out.println("idents:");
+    for (Ident id: idents)
+      System.out.println(id);
+    System.out.println("decls:");
+    for (Xobject decl: decls)
+      System.out.println(decl);
+    System.out.println("commonVars:");
+    for (Xobject cvar: commonVars)
+      System.out.println(cvar);
+    System.out.println("stmts:");
+    for (Xobject stmt: stmts)
+      System.out.println(stmts);
   }
+
 
   private String[] getHostNames(FuncDefBlock procDef) {
     Vector<String> list = new Vector();
@@ -101,9 +110,9 @@ public class XMPinitProc {
     return names;
 }
 
-  private String makeInitProcName(String... names) { // host-to-guest order
+  private String genProcedureName(String... names) { // host-to-guest order
     int n = names.length;
-    String initProcName = NamePrefix;
+    String initProcName = INITPROC_PREFIX;
     for (int i = 0; i < n; i++) {
       initProcName += "_";
       StringTokenizer st = new StringTokenizer(names[i], "_");

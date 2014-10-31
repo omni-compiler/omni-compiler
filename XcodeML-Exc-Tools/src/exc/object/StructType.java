@@ -23,10 +23,25 @@ public class StructType extends CompositeType
     }
 
     @Override
-    public Xobject getFtotalSizeExpr()
+    public Xobject getFnumElementsExpr()
     {
         return Xcons.IntConstant(1);
     }
+
+    @Override
+    public Xobject getFelementLengthExpr()
+    {
+        throw new UnsupportedOperationException
+          ("Restriction: could not get size of a structure");
+    }
+
+    @Override
+    public int getFelementLength()
+    {
+        throw new UnsupportedOperationException
+          ("Restriction: could not get size of a structure as integer");
+    }
+
 
     @Override
     public Xtype copy(String id)

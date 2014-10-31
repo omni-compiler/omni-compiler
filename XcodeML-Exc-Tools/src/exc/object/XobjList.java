@@ -416,6 +416,82 @@ public class XobjList extends Xobject implements Iterable<Xobject>, XobjContaine
     }
 
     @Override
+    public Xobject simple()
+    {
+        Xobject obj2 = copy();
+        obj2.setArgs(args.simple());
+        return obj2;
+    }
+
+    @Override
+    public Xobject getFnumElementsExpr()
+    {
+        if (code != Xcode.F_INDEX_RANGE) {
+            throw new UnsupportedOperationException
+              ("Internal error: wrong usage of getFnumElementsExpr()");
+        }
+
+        Xobject lb = getArg(0);
+        Xobject ub = getArg(1);
+        Xobject st = getArg(2);
+
+        if (ub == null)    // illegal
+          return null;
+
+        Xobject result;
+
+        if (st == null) {
+          if (lb == null) {
+            result = ub.copy();
+          } else if (lb.isIntConstant() && ub.isIntConstant()) {
+            // max(ub-lb+1,0)
+            int extent = ub.getInt() - lb.getInt() + 1;
+            if (extent < 0) extent = 0;
+            result = Xcons.IntConstant(extent);
+          } else {
+            // max(ub-lb+1,0)
+            Xobject max = 
+              Xcons.Ident("max", StorageClass.FFUNC, Xtype.Fint4Type, null, null);
+            Xobject arg1 =
+              Xcons.binaryOp(Xcode.PLUS_EXPR,
+                             Xcons.binaryOp(Xcode.MINUS_EXPR, ub, lb),
+                             Xcons.IntConstant(1));
+            Xobject arg2 = Xcons.IntConstant(0);
+            result = Xcons.functionCall(max, Xcons.List(arg1, arg2));
+          }
+        } else {  // st != null
+          if (lb == null)
+            lb = Xcons.IntConstant(1);
+          if (lb.isIntConstant() && ub.isIntConstant() && st.isIntConstant()) {
+            // if st>0 max((ub-lb+st)/st,0) else max((lb-ub+(-st))/(-st),0)
+            int ist = st.getInt();
+            int extent = (ist > 0) ?
+              (ub.getInt() - lb.getInt() + ist) / ist :
+              (lb.getInt() - ub.getInt() - ist) / (-ist);
+            if (extent < 0) extent = 0;
+            result = Xcons.IntConstant(extent);
+          } else {
+            // max((ub-lb+st)/st,0) where operation '/' is in Fortran syntax.
+            Xobject max = 
+              Xcons.Ident("max", StorageClass.FFUNC, Xtype.Fint4Type, null, null);
+            Xobject arg1 = 
+              Xcons.binaryOp(Xcode.DIV_EXPR,
+                             Xcons.binaryOp(Xcode.PLUS_EXPR,
+                                            Xcons.binaryOp(Xcode.MINUS_EXPR,
+                                                           ub,
+                                                           lb),
+                                            st),
+                             st);
+            Xobject arg2 = Xcons.IntConstant(0);
+            result = Xcons.functionCall(max, Xcons.List(arg1, arg2));
+          }
+        }
+
+        return result;
+    }
+
+
+    @Override
     public Ident find(String name, int find_kind)
     {
         return findIdent(name, find_kind);

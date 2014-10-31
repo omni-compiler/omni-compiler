@@ -522,6 +522,26 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
         return o;
     }
 
+
+    /** Fortran: get Fortran array size or 1 for scalar */
+    public Xobject getFnumElementsExpr()
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    /** Fortran: get Fortran type element length (bytes) in Expr */
+    public Xobject getFelementLengthExpr()
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    /** Fortran: get Fortran type element length (bytes) in integer */
+    public int getFelementLength()
+    {
+        throw new UnsupportedOperationException();
+    }
+
+
     /**
      * 
      * Dummy method at base class, it causes exception.
@@ -849,6 +869,27 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
         return null;
     }
     
+    //---- use XobjSymplifier tool
+  /***************************
+    public Xobject simplify()
+    {
+        XobjSymplifier xsimple = new XobjSymplifier();
+        return xsimple.run(this);
+    }
+    public Xobject simplify(FuncDefBlock def)
+    {
+        XobjSymplifier xsimple = new XojbSymplifier(def);
+        return xsimple.run(this);
+    }
+  **************************/
+
+    //---- another trial version of simplifier
+    public Xobject simple()
+    {
+        // default execution
+        return this;
+    }
+
     public Ident findVarIdent(String name)
     {
         return find(name, IXobject.FINDKIND_VAR);

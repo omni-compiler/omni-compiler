@@ -52,23 +52,45 @@ public class FarrayType extends Xtype
     }
 
     @Override
-    public Xobject getFtotalSizeExpr()
+    public Xobject getFnumElementsExpr()
     {
-        Xobject[] sizes = getFarraySizeExpr();
-        Xobject totalSize = null;
-        for (Xobject size1: sizes) {
-            if (size1 == null)
-                return null;
-            if (totalSize == null)
-                totalSize = size1;
-            else
-                totalSize = Xcons.binaryOp(Xcode.MUL_EXPR,
-                                           totalSize, size1);
+      Xobject[] sizes = getFarraySizeExpr();
+      Xobject totalSize = Xcons.IntConstant(1);
+      for (Xobject size1: sizes) {
+        if (size1 == null)
+          return null;
+
+        size1 = size1.simple();
+
+        if (size1.code == Xcode.F_INDEX_RANGE) {
+          System.out.println("");
+          System.out.println("size1.code="+size1.code);
+          System.out.println("");
+          size1 = size1.getFnumElementsExpr();   // evaluate ub-lb+1 if needed
         }
-        if (totalSize == null)
-            return Xcons.IntConstant(1);
-        return totalSize;
+
+        if (size1.isZeroConstant())
+          return Xcons.IntConstant(0);
+        else if (size1.isIntConstant() && totalSize.isIntConstant())
+          totalSize = Xcons.IntConstant(totalSize.getInt() * size1.getInt());
+        else
+          totalSize = Xcons.binaryOp(Xcode.MUL_EXPR, totalSize, size1);
+      }
+      return totalSize;
     }
+
+    @Override
+    public Xobject getFelementLengthExpr()
+    {
+      return getRef().getFelementLengthExpr();
+    }
+
+    @Override
+    public int getFelementLength()
+    {
+      return getRef().getFelementLength();
+    }
+
 
     @Override
     public void convertFindexRange(boolean extendsLowerBound, boolean extendsUpperBound, Block b)

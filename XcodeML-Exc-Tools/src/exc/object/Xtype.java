@@ -707,8 +707,20 @@ public class Xtype
         throw new UnsupportedOperationException();
     }
 
-    /** Fortran: get Fortran array/scalar total size */
-    public Xobject getFtotalSizeExpr()
+    /** Fortran: get Fortran array size or 1 for scalar */
+    public Xobject getFnumElementsExpr()
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    /** Fortran: get Fortran type element length (bytes) in Expr */
+    public Xobject getFelementLengthExpr()
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    /** Fortran: get Fortran type element length (bytes) in integer */
+    public int getFelementLength()
     {
         throw new UnsupportedOperationException();
     }
