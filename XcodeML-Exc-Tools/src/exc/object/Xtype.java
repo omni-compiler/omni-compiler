@@ -7,6 +7,7 @@
 package exc.object;
 
 import exc.block.Block;
+import exc.block.BlockList;
 import exc.util.MachineDepConst;
 
 import xcodeml.util.XmOption;
@@ -708,19 +709,19 @@ public class Xtype
     }
 
     /** Fortran: get Fortran array size or 1 for scalar */
-    public Xobject getFnumElementsExpr()
+    public Xobject getTotalArraySizeExpr(BlockList decls)
     {
         throw new UnsupportedOperationException();
     }
 
     /** Fortran: get Fortran type element length (bytes) in Expr */
-    public Xobject getFelementLengthExpr()
+    public Xobject getElementLengthExpr(BlockList decls)
     {
         throw new UnsupportedOperationException();
     }
 
     /** Fortran: get Fortran type element length (bytes) in integer */
-    public int getFelementLength()
+    public int getElementLength(BlockList decls)
     {
         throw new UnsupportedOperationException();
     }
@@ -770,23 +771,23 @@ public class Xtype
     /*
      *  implements Coshape
      */
-    public int getCorank()
+    public int getCorank()                // for coarray Fortran (ID=060)
     {
         return coshape.getCorank();
     }
-    public Xobject[] getCodimensions()
+    public Xobject[] getCodimensions()     // for coarray Fortran (ID=060)
     {
         return coshape.getCodimensions();
     }
-    public void setCodimensions(Xobject[] codimensions)
+    public void setCodimensions(Xobject[] codimensions) // for coarray Fortran (ID=06)
     {
         coshape.setCodimensions(codimensions);
     }
-    public void resetCodimensions()
+    public void clearCodimensions()        // for coarray Fortran (ID=060)
     {
-        coshape.resetCodimensions();
+        coshape.clearCodimensions();
     }
-     public Xobject[] copyCodimensions()
+     public Xobject[] copyCodimensions()        // for coarray Fortran (ID=060)
     {
         return coshape.copyCodimensions();
     }

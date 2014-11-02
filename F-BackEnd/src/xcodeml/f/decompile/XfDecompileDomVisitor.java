@@ -879,7 +879,7 @@ public class XfDecompileDomVisitor {
      */
     private void _writeCrayPointerDecl(XfSymbol symbol, Node node) {
         Node valueNode = XmDomUtil.getElement(node, "value");
-        if (vauleNode == null)
+        if (valueNode == null)
           return;    // special handling for generating xmpf_init_ routine
         XmfWriter writer = _context.getWriter();
         writer.writeToken("POINTER (");

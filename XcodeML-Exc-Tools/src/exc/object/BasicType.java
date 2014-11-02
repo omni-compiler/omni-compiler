@@ -4,7 +4,12 @@
  *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
  *  $
  */
+
 package exc.object;
+import exc.block.BlockList;
+
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Xtype object to present Basic type, such as int, char, ...
@@ -197,28 +202,80 @@ public class BasicType extends Xtype
     }
     
     @Override
-    public Xobject getFnumElementsExpr()
+    public Xobject getTotalArraySizeExpr(BlockList decls)
     {
         return Xcons.IntConstant(1);
     }
 
     @Override
-    public Xobject getFelementLengthExpr()
+    public Xobject getElementLengthExpr(BlockList decls)
     {
-        int len = getFelementLength();
-        if (len < 0)   // error
-            return null;
+        int len = getElementLength(decls);
         return Xcons.IntConstant(len);
     }
 
     @Override
-    public int getFelementLength()
+    public int getElementLength(BlockList decls)
     {
-      System.out.println("here "+toString());
-      //
-      //**** TEMPORARY ****
-      //
-      return 4;
+      //////////////
+      // TEMPORARY
+      //////////////
+      Map<Integer,Integer> default_len = new HashMap<Integer,Integer>() {
+        {
+          put(UNDEF                  , 0 );   // 0 means error
+          put(VOID                   , 0 );
+          put(BOOL                   , 4 );
+          put(CHAR                   , 1 );    // ???
+          put(UNSIGNED_CHAR          , 1 );
+          put(SHORT                  , 2 );    // ???
+          put(UNSIGNED_SHORT         , 2 );    // ???
+          put(INT                    , 4 );
+          put(UNSIGNED_INT           , 4 );
+          put(LONG                   , 4 );    // ???
+          put(UNSIGNED_LONG          , 4 );    // ???
+          put(LONGLONG               , 8 );    // ???
+          put(UNSIGNED_LONGLONG      , 8 );    // ???
+          put(FLOAT                  , 4 );
+          put(DOUBLE                 , 8 );
+          put(LONG_DOUBLE            , 8 );    // ???
+          put(FLOAT_IMAGINARY        , 4 );
+          put(DOUBLE_IMAGINARY       , 8 );
+          put(LONG_DOUBLE_IMAGINARY  , 8 );    // ???
+          put(FLOAT_COMPLEX          , 8 );
+          put(DOUBLE_COMPLEX         ,16 );
+          put(LONG_DOUBLE_COMPLEX    ,16 );    // ???
+          put(GCC_BUILTIN_VA_LIST    , 0 );
+          put(F_CHARACTER            , 1 );
+          put(F_NUMERIC              , 0 );
+          put(F_NUMERIC_ALL          , 0 );
+        }
+      };
+
+      // case: Fortran character type
+      if (basic_type == F_CHARACTER) {   
+        if (fkind != null && flen.getInt() != 1) {
+            throw new UnsupportedOperationException
+              ("unsupported kind parameter for character: " + flen.getInt());
+        }
+        return (flen == null) ?
+          default_len.get(basic_type) : flen.getInt();
+      }
+
+      // case: Fortran kind-parameter specified
+      if (fkind != null) {
+        if (basic_type == FLOAT_COMPLEX ||
+            basic_type == DOUBLE_COMPLEX ||
+            basic_type == LONG_DOUBLE_COMPLEX)
+          return fkind.getInt() * 2;
+        return fkind.getInt();
+      }
+
+      // otherwise
+      int len = default_len.get(basic_type);
+      if (len < 0)
+        throw new UnsupportedOperationException
+          ("internal error: unexpected type here. basic_type=" + basic_type);
+      return len;
     }
 
 

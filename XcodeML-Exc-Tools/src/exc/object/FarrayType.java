@@ -7,6 +7,7 @@
 package exc.object;
 
 import exc.block.Block;
+import exc.block.BlockList;
 
 /**
  * Represents Fortran array type.
@@ -52,21 +53,22 @@ public class FarrayType extends Xtype
     }
 
     @Override
-    public Xobject getFnumElementsExpr()
+    public Xobject getTotalArraySizeExpr(BlockList decls)
     {
       Xobject[] sizes = getFarraySizeExpr();
+      if (sizes == null)
+        throw new UnsupportedOperationException
+          ("internal error: getFarraySizeExpr() failed");
+
       Xobject totalSize = Xcons.IntConstant(1);
       for (Xobject size1: sizes) {
         if (size1 == null)
-          return null;
-
-        size1 = size1.simple();
+          throw new UnsupportedOperationException
+            ("internal error: size of a dimension unclear");
 
         if (size1.code == Xcode.F_INDEX_RANGE) {
-          System.out.println("");
-          System.out.println("size1.code="+size1.code);
-          System.out.println("");
-          size1 = size1.getFnumElementsExpr();   // evaluate ub-lb+1 if needed
+          // evaluate size from lb:ub or from lb:ub:st
+          size1 = size1.getTotalArraySizeExpr(decls);   
         }
 
         if (size1.isZeroConstant())
@@ -80,15 +82,15 @@ public class FarrayType extends Xtype
     }
 
     @Override
-    public Xobject getFelementLengthExpr()
+    public Xobject getElementLengthExpr(BlockList decls)
     {
-      return getRef().getFelementLengthExpr();
+      return getRef().getElementLengthExpr(decls);
     }
 
     @Override
-    public int getFelementLength()
+    public int getElementLength(BlockList decls)
     {
-      return getRef().getFelementLength();
+      return getRef().getElementLength(decls);
     }
 
 

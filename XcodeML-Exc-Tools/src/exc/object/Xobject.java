@@ -11,6 +11,8 @@ import exc.util.XobjectVisitor;
 import xcodeml.IXobject;
 import xcodeml.XmException;
 import xcodeml.util.XmOption;
+import exc.block.BlockList;
+
 
 /**
  * Abstract class of expression tree objects in Xobject.
@@ -524,21 +526,21 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
 
 
     /** Fortran: get Fortran array size or 1 for scalar */
-    public Xobject getFnumElementsExpr()
+    public Xobject getTotalArraySizeExpr(BlockList decls)
     {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("(in Xobject)");
     }
 
     /** Fortran: get Fortran type element length (bytes) in Expr */
-    public Xobject getFelementLengthExpr()
+    public Xobject getElementLengthExpr(BlockList decls)
     {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("(in Xobject)");
     }
 
     /** Fortran: get Fortran type element length (bytes) in integer */
-    public int getFelementLength()
+    public int getElementLength(BlockList decls)
     {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("(in Xobject)");
     }
 
 
@@ -869,23 +871,11 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
         return null;
     }
     
-    //---- use XobjSymplifier tool
-  /***************************
-    public Xobject simplify()
+    public Xobject cfold(BlockList decls)
     {
-        XobjSymplifier xsimple = new XobjSymplifier();
-        return xsimple.run(this);
-    }
-    public Xobject simplify(FuncDefBlock def)
-    {
-        XobjSymplifier xsimple = new XojbSymplifier(def);
-        return xsimple.run(this);
-    }
-  **************************/
-
-    //---- another trial version of simplifier
-    public Xobject simple()
-    {
+      ////////////////////
+      System.out.println("[[ cfold in Xobject ]] "+toString());
+      ////////////////////
         // default execution
         return this;
     }

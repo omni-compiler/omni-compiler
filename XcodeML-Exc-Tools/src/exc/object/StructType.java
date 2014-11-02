@@ -5,6 +5,7 @@
  *  $
  */
 package exc.object;
+import exc.block.BlockList;
 
 /**
  * Represents C-struct / Fortran-type type.
@@ -23,20 +24,20 @@ public class StructType extends CompositeType
     }
 
     @Override
-    public Xobject getFnumElementsExpr()
+    public Xobject getTotalArraySizeExpr(BlockList decls)
     {
         return Xcons.IntConstant(1);
     }
 
     @Override
-    public Xobject getFelementLengthExpr()
+    public Xobject getElementLengthExpr(BlockList decls)
     {
         throw new UnsupportedOperationException
           ("Restriction: could not get size of a structure");
     }
 
     @Override
-    public int getFelementLength()
+    public int getElementLength(BlockList decls)
     {
         throw new UnsupportedOperationException
           ("Restriction: could not get size of a structure as integer");

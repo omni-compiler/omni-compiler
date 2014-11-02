@@ -29,8 +29,7 @@ public class XMPrewriteExpr
     if (fb == null) return;
 
     // translate all about coarray (ID=060)
-    //    XMPtransCoarray transCoarray = new XMPtransCoarray(def, env);
-    XMPtransCoarray transCoarray = new XMPtransCoarray(def);
+    XMPtransCoarray transCoarray = new XMPtransCoarray(def, env);
     transCoarray.run();
 
     // rewrite return statements

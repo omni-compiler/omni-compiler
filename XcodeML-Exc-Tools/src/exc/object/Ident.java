@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import exc.util.XobjectVisitor;
+import exc.block.BlockList;
 import xcodeml.util.XmLog;
 import xcodeml.util.XmOption;
 
@@ -153,14 +154,19 @@ public class Ident extends Xobject
         this.value = value;
     }
 
-   public Xobject getCodimensions()     // for coarray (ID=284)
+   public Xobject getCodimensions()     // for coarray C (ID=284)
     {
         return codimensions;
     }
 
-   public void setCodimensions(Xobject codimensions)     // for coarray (ID=284)
+   public void setCodimensions(Xobject codimensions)     // for coarray C (ID=284)
     {
         this.codimensions = codimensions;
+    }
+
+    public int getCorank()                // for coarray Fortran (ID=060)
+    {
+        return (Type() == null) ? 0 : Type().getCorank();
     }
 
     public boolean isDeclared()
@@ -219,6 +225,17 @@ public class Ident extends Xobject
         setOptionalFlag(OPT_USED_IN_ARRAY_SIZE, enabled);
     }
     
+    @Override
+    public Xobject cfold(BlockList decls)
+    {
+      ////////////////////
+      System.out.println("[[ cfold in Ident ]] " + toString());
+      ////////////////////
+      if (fparam_value != null)
+        return fparam_value.cfold(decls);
+      return this;
+    }
+
     @Override
     public Xobject copy() {
       return new Ident(name, stg_class, type, value, declared, getOptionalFlags(),

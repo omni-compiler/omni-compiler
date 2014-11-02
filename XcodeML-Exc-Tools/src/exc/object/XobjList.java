@@ -9,6 +9,7 @@ package exc.object;
 import java.util.Iterator;
 
 import xcodeml.IXobject;
+import exc.block.BlockList;
 
 /**
  * Xobject which contains the list of Xobjects.
@@ -416,19 +417,27 @@ public class XobjList extends Xobject implements Iterable<Xobject>, XobjContaine
     }
 
     @Override
-    public Xobject simple()
+    public Xobject cfold(BlockList decls)
     {
-        Xobject obj2 = copy();
-        obj2.setArgs(args.simple());
-        return obj2;
+      ////////////////////
+      System.out.println("[[ cfold in XobjList ]] "+toString());
+      ////////////////////
+
+        Xobject that = copy();
+        for (XobjArgs a = ((XobjList)that).args;
+             a != null; a = a.nextArgs()) {
+          if (a.getArg() != null)
+            a.setArg(a.getArg().cfold(decls));
+        }
+        return (Xobject)that;
     }
 
-    @Override
-    public Xobject getFnumElementsExpr()
+
+    public Xobject getTotalArraySizeExpr(BlockList decls)
     {
         if (code != Xcode.F_INDEX_RANGE) {
             throw new UnsupportedOperationException
-              ("Internal error: wrong usage of getFnumElementsExpr()");
+              ("Internal error: wrong usage of getTotalArraySizeExpr()");
         }
 
         Xobject lb = getArg(0);
@@ -436,7 +445,11 @@ public class XobjList extends Xobject implements Iterable<Xobject>, XobjContaine
         Xobject st = getArg(2);
 
         if (ub == null)    // illegal
-          return null;
+          throw new UnsupportedOperationException
+            ("internal error: unexpected null ub");
+
+        ub = ub.cfold(decls);
+        lb = (lb == null) ? null : lb.cfold(decls);
 
         Xobject result;
 
@@ -450,8 +463,9 @@ public class XobjList extends Xobject implements Iterable<Xobject>, XobjContaine
             result = Xcons.IntConstant(extent);
           } else {
             // max(ub-lb+1,0)
-            Xobject max = 
-              Xcons.Ident("max", StorageClass.FFUNC, Xtype.Fint4Type, null, null);
+            //Xobject max = 
+            // Xcons.Ident("max", StorageClass.FFUNC, Xtype.Fint4Type, null, null);
+            Xobject max = decls.declLocalIdent("max", Xtype.FintFunctionType);
             Xobject arg1 =
               Xcons.binaryOp(Xcode.PLUS_EXPR,
                              Xcons.binaryOp(Xcode.MINUS_EXPR, ub, lb),
@@ -472,8 +486,9 @@ public class XobjList extends Xobject implements Iterable<Xobject>, XobjContaine
             result = Xcons.IntConstant(extent);
           } else {
             // max((ub-lb+st)/st,0) where operation '/' is in Fortran syntax.
-            Xobject max = 
-              Xcons.Ident("max", StorageClass.FFUNC, Xtype.Fint4Type, null, null);
+            //Xobject max = 
+            //  Xcons.Ident("max", StorageClass.FFUNC, Xtype.Fint4Type, null, null);
+            Xobject max = decls.declLocalIdent("max", Xtype.FintFunctionType);
             Xobject arg1 = 
               Xcons.binaryOp(Xcode.DIV_EXPR,
                              Xcons.binaryOp(Xcode.PLUS_EXPR,
