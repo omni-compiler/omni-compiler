@@ -472,6 +472,12 @@ dumpExpr1(FILE *fp, CExpr *expr, int indent, int child)
 }
 
 
+void
+dumpExpr0(CExpr *expr)
+{
+    dumpExpr1(stdout, expr, 0, 1);
+}
+
 /**
  * \brief
  * dump node

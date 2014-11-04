@@ -457,6 +457,12 @@ array_ref:
 array_dimension:
       exprs
             { STAT_TRACE(("{array_dimension#1}")); $$ = exprList1(EC_ARRAY_DIMENSION, $1); }
+    /* | ':' */
+    /*         { STAT_TRACE(("{array_dimension#4}")); $$ = exprSubArrayDimension(NULL, NULL, NULL); } */
+    /* | exprs ':' exprs */
+    /*         { STAT_TRACE(("{array_dimension#2}")); $$ = exprSubArrayDimension($1, $3, NULL); } */
+    /* | exprs ':' exprs ':' exprs */
+    /*         { STAT_TRACE(("{array_dimension#3}")); $$ = exprSubArrayDimension($1, $3, $5); } */
     | opt_exprs ':' opt_exprs
             { STAT_TRACE(("{array_dimension#2}")); $$ = exprSubArrayDimension($1, $3, NULL); }
     | opt_exprs ':' opt_exprs ':' opt_exprs

@@ -153,7 +153,7 @@ int xmpf_loop_test_skip__(_XMP_object_ref_t **r_desc, int *rdim, int *i)
 /*   int index = *i + rp->offset[*rdim]; */
 /*   int tdim = rp->offset[*rdim]; */
   int index = *i + rp->REF_OFFSET[*rdim];
-  int tdim = rp->REF_OFFSET[*rdim];
+  int tdim = rp->REF_INDEX[*rdim];
 
   _XMP_template_t *tp = rp->t_desc;
   _XMP_template_chunk_t *cp = &tp->chunk[tdim];
