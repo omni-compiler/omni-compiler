@@ -38,8 +38,8 @@ void xacc_set_device_num(int num, xacc_device_t device);
 //int xacc_get_device_num(xacc_device_t device); // current
 
 
-const static char usePacking = 1;
-const static char useKernelPacking = 1;
+static const char usePacking = 1;
+static const char useKernelPacking = 1;
 
 acc_device_t xacc_get_current_device(){
   return _XACC_current_device->acc_device;
@@ -65,10 +65,10 @@ void _XACC_init_device(_XACC_device_t** desc, acc_device_t device, int lower, in
 {
   _XACC_device_t* xacc_device = (_XACC_device_t*)_XMP_alloc(sizeof(_XACC_device_t));
   xacc_device->acc_device = device;
-  xacc_device->lb = lower;
-  xacc_device->ub = upper;
+  xacc_device->lb = lower - 1;
+  xacc_device->ub = upper - 1;
   xacc_device->step = step;
-  xacc_device->size = upper - lower + 1; //must consider step
+  xacc_device->size = (upper - lower) / step + 1;
 
   *desc = xacc_device;
 }
@@ -76,8 +76,8 @@ void _XACC_init_device(_XACC_device_t** desc, acc_device_t device, int lower, in
 void _XACC_get_device_info(void *desc, int* lower, int* upper, int* step)
 {
   _XACC_device_t* xacc_device = (_XACC_device_t*)desc;
-  *lower = xacc_device->lb;
-  *upper = xacc_device->ub;
+  *lower = xacc_device->lb + 1;
+  *upper = xacc_device->ub + 1;
   *step  = xacc_device->step;
 }
 void _XACC_get_current_device_info(int* lower, int* upper, int* step)
@@ -94,9 +94,8 @@ void _XACC_init_layouted_array(_XACC_arrays_t **arrays, _XMP_array_t* alignedArr
   layoutedArray->device_type = device;
   //alignedArray->device_type = device;
   int dim = alignedArray->dim;
-  int num_devices = device->size;
-  layoutedArray->device_array = (_XACC_array_t*)_XMP_alloc(sizeof(_XACC_array_t) * num_devices);
-  for(int dev = 0; dev < num_devices; dev++){
+  layoutedArray->device_array = (_XACC_array_t*)_XMP_alloc(sizeof(_XACC_array_t) * device->size);
+  for(int dev = device->lb; dev <= device->ub; dev += device->step){
     _XACC_array_info_t* d_array_info = (_XACC_array_info_t*)_XMP_alloc(sizeof(_XACC_array_info_t) * dim);
     _XMP_array_info_t *h_array_info = alignedArray->info;
     layoutedArray->device_array[dev].info = d_array_info;
@@ -172,23 +171,24 @@ void _XACC_split_layouted_array_DUPLICATION(_XACC_arrays_t* array_desc, int dim)
 }
 
 void _XACC_split_layouted_array_BLOCK(_XACC_arrays_t* array_desc, int dim){
-  int num_devices = array_desc->device_type->size;
-  for(int dev = 0; dev < num_devices; dev++){
+  //int num_devices = array_desc->device_type->size;
+  _XACC_device_t* device = array_desc->device_type;
+  for(int dev = device->lb; dev <= device->ub; dev += device->step){
     _XACC_array_info_t *d_array_info = &(array_desc->device_array[dev].info[dim]);
     d_array_info->device_layout_manner = _XMP_N_DIST_BLOCK;
 
-    unsigned long long size = _XMP_M_CEILi(d_array_info->par_size, num_devices);
+    unsigned long long size = _XMP_M_CEILi(d_array_info->par_size, device->size);
     //d_array_info->par_stride;// = h_array_info->par_stride;    
     d_array_info->par_lower += size * dev;
     
-    if(dev != num_devices - 1){
+    if(dev != device->size - 1){
       d_array_info->par_upper = d_array_info->par_lower + size - 1;
     }else{
       //      d_array_info->par_upper = h_array_info->par_upper;
     }
     //d_array_info->local_stride = h_array_info->local_stride;
     d_array_info->local_lower += size * dev;
-    if(dev != num_devices - 1){
+    if(dev != device->size - 1){
       d_array_info->local_upper = d_array_info->local_lower + size - 1;
     }else{
       //      d_array_info->local_upper = h_array_info->local_upper;
@@ -227,8 +227,9 @@ void _XACC_split_layouted_array_BLOCK(_XACC_arrays_t* array_desc, int dim){
 
 void _XACC_set_shadow_NORMAL(_XACC_arrays_t* array_desc, int dim , int lo, int hi)
 {
-  int num_devices = array_desc->device_type->size;
-  for(int dev = 0; dev < num_devices; dev++){
+  //int num_devices = array_desc->device_type->size;
+  _XACC_device_t* device = array_desc->device_type;
+  for(int dev = device->lb; dev <= device->ub; dev += device->step){
     _XACC_array_info_t *d_array_info = &(array_desc->device_array[dev].info[dim]);
 
       int d_lo = lo;
@@ -251,7 +252,7 @@ void _XACC_set_shadow_NORMAL(_XACC_arrays_t* array_desc, int dim , int lo, int h
           d_array_info->local_lower += lo;
           d_array_info->local_upper += lo;
         }
-        if(dev != num_devices -1){
+        if(dev != device->size -1){
           d_array_info->shadow_size_hi = hi;
           d_array_info->local_upper += hi;
         }
@@ -276,8 +277,9 @@ void _XACC_set_shadow_NORMAL(_XACC_arrays_t* array_desc, int dim , int lo, int h
 }
 
 void _XACC_calc_size(_XACC_arrays_t* array_desc){
-  int num_devices = array_desc->device_type->size;
-  for(int dev = 0; dev < num_devices; dev++){
+  //int num_devices = array_desc->device_type->size;
+  _XACC_device_t * device = array_desc->device_type;
+  for(int dev = device->lb; dev <= device->ub; dev += device->step){
     unsigned long long device_acc = 1;
     unsigned long long device_offset = 0;
     int dim = array_desc->dim;
@@ -315,11 +317,9 @@ void _XACC_calc_size(_XACC_arrays_t* array_desc){
 
 static _XACC_array_t* get_device_array(_XACC_arrays_t* array_desc, int deviceNum)
 {
+  /* deviceNum is 1-based */
   _XACC_device_t* device = array_desc->device_type;
-  int lower = device->lb;
-  int step = device->step;
-  
-  int n = (deviceNum - lower) / step;
+  int n = ((deviceNum - 1) - device->lb) / device->step;
   return &(array_desc->device_array[n]);
 }
 
@@ -397,7 +397,7 @@ static void enablePeerAccess(_XACC_device_t *device)
   cudaError_t cudaError;
 
   for(d = device->lb; d <= device->ub; d += device->step){
-    cudaError = cudaSetDevice(d-1);
+    cudaError = cudaSetDevice(d);
     if(cudaError != cudaSuccess){
       _XMP_fatal("failed to set device");
       return;
@@ -408,13 +408,13 @@ static void enablePeerAccess(_XACC_device_t *device)
     d2 = d - device->step;
     if(d2 >= device->lb){
       int canAccess;
-      cudaError = cudaDeviceCanAccessPeer(&canAccess, d-1, d2-1);
+      cudaError = cudaDeviceCanAccessPeer(&canAccess, d, d2);
       if(cudaError != cudaSuccess){
 	_XMP_fatal("failed to check access peer");
       }
       if(canAccess == 0){
 	//	printf("eneblePeerAccess(%d) on %d\n", d2-1, d-1);
-	cudaError = cudaDeviceEnablePeerAccess(d2-1, 0);
+	cudaError = cudaDeviceEnablePeerAccess(d2, 0);
 	if(cudaError == cudaErrorPeerAccessAlreadyEnabled){
 	  //
 	}else if(cudaError == cudaErrorInvalidDevice){
@@ -423,7 +423,7 @@ static void enablePeerAccess(_XACC_device_t *device)
 	  fprintf(stderr, "failed to enable peer access, invalid value\n");
 	}else if(cudaError != cudaSuccess){
 
-	  fprintf(stderr, "failed to enable peer access, %d, (%d,%d), %s\n", (int)cudaError, d-1,d2-1, cudaGetErrorString(cudaError));
+	  fprintf(stderr, "failed to enable peer access, %d, (%d,%d), %s\n", (int)cudaError, d,d2, cudaGetErrorString(cudaError));
 	  //	  return;
 	}
       }
@@ -432,13 +432,13 @@ static void enablePeerAccess(_XACC_device_t *device)
     d2 = d + device->step;
     if(d2 <= device->ub){
       int canAccess;
-      cudaError = cudaDeviceCanAccessPeer(&canAccess, d-1, d2-1);
+      cudaError = cudaDeviceCanAccessPeer(&canAccess, d, d2);
       if(cudaError != cudaSuccess){
 	_XMP_fatal("failed to check access peer");
       }
       if(canAccess == 0){
 	//	printf("eneblePeerAccess(%d) on %d\n", d2-1, d-1);
-	cudaError = cudaDeviceEnablePeerAccess(d2-1, 0);
+	cudaError = cudaDeviceEnablePeerAccess(d2, 0);
 	if(cudaError == cudaErrorPeerAccessAlreadyEnabled){
 	  //
 	}else if(cudaError == cudaErrorInvalidDevice){
@@ -446,7 +446,7 @@ static void enablePeerAccess(_XACC_device_t *device)
 	}else if(cudaError == cudaErrorInvalidValue){
 	  fprintf(stderr, "failed to enable peer access, invalid value\n");
 	}else if(cudaError != cudaSuccess){
-	  fprintf(stderr, "failed to enable peer access, %d, (%d,%d), %s\n", (int)cudaError, d-1,d2-1, cudaGetErrorString(cudaError));
+	  fprintf(stderr, "failed to enable peer access, %d, (%d,%d), %s\n", (int)cudaError, d,d2, cudaGetErrorString(cudaError));
 	  //	  return;
 	}
       }
@@ -470,7 +470,7 @@ void _XACC_reflect_init(_XACC_arrays_t *arrays_desc)
   //他ノードとの通信のセットアップ
   //  int *lwidth = _XMP_alloc(sizeof(int)*dim);
   //  int *uwidth = _XMP_alloc(sizeof(int)*dim);
-  for(int i = 0; i < arrays_desc->device_type->size; i++){
+  for(int i = device->lb; i <= device->ub; i+= device->step){
     _XACC_array_t *array_desc = arrays_desc->device_array + i;
     for(int j = 0; j < dim; j++){
       _XACC_array_info_t *ai = array_desc->info + j;
@@ -1038,8 +1038,8 @@ static void reflect_unpack_wait(_XMP_reflect_sched_t *reflect)
 static void reflect_pack_start_all(_XACC_arrays_t *arrays_desc)
 {
   int dim = arrays_desc->dim;
-
-  for(int i = 0; i < arrays_desc->device_type->size; i++){
+  _XACC_device_t *device = arrays_desc->device_type;
+  for(int i = device->lb; i <= device->ub; i += device->step){
     _XACC_array_t *array_desc = arrays_desc->device_array + i;
     if(useKernelPacking){
       CUDA_SAFE_CALL(cudaSetDevice(i));
@@ -1060,7 +1060,8 @@ static void reflect_pack_wait_all(_XACC_arrays_t *arrays_desc)
 {
   int dim = arrays_desc->dim;
 
-  for(int i = 0; i < arrays_desc->device_type->size; i++){
+  _XACC_device_t *device = arrays_desc->device_type;
+  for(int i = device->lb; i <= device->ub; i += device->step){
     _XACC_array_t *array_desc = arrays_desc->device_array + i;
 
     for(int j = 0; j < dim; j++){
@@ -1078,7 +1079,8 @@ static void reflect_unpack_start_all(_XACC_arrays_t *arrays_desc)
 {
   int dim = arrays_desc->dim;
 
-  for(int i = 0; i < arrays_desc->device_type->size; i++){
+  _XACC_device_t *device = arrays_desc->device_type;
+  for(int i = device->lb; i <= device->ub; i += device->step){  
     _XACC_array_t *array_desc = arrays_desc->device_array + i;
     if(useKernelPacking){
       CUDA_SAFE_CALL(cudaSetDevice(i));
@@ -1099,7 +1101,9 @@ static void reflect_unpack_wait_all(_XACC_arrays_t *arrays_desc)
 {
   int dim = arrays_desc->dim;
 
-  for(int i = 0; i < arrays_desc->device_type->size; i++){
+  _XACC_device_t *device = arrays_desc->device_type;
+  for(int i = device->lb; i <= device->ub; i += device->step){
+
     _XACC_array_t *array_desc = arrays_desc->device_array + i;
     for(int j = 0; j < dim; j++){
       if(j == 0) continue;
@@ -1162,14 +1166,14 @@ static void _XACC_reflect_do_inter_start_dim0(_XACC_arrays_t *arrays_desc)
   /*   } */
   /* } */
   {
-    _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->lb - 1;
+    _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->lb;
     _XACC_array_info_t *ai = array_desc->info + 0;
     _XMP_reflect_sched_t *reflect = ai->reflect_sched;
     MPI_Start(reflect->req + 0); //lo recv                                                                                                                                                        
     MPI_Start(reflect->req + 3); //hi send                                                                                                                                                        
   }
   {
-    _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->ub - 1;
+    _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->ub;
     _XACC_array_info_t *ai = array_desc->info + 0;
     _XMP_reflect_sched_t *reflect = ai->reflect_sched;
     MPI_Start(reflect->req + 1); //lo send                                                                                                                                                        
@@ -1193,14 +1197,14 @@ static void _XACC_reflect_do_inter_wait_dim0(_XACC_arrays_t *arrays_desc)
   /* } */
 
   {
-    _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->lb - 1;
+    _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->lb;
     _XACC_array_info_t *ai = array_desc->info + 0;
     _XMP_reflect_sched_t *reflect = ai->reflect_sched;
     MPI_Wait(reflect->req + 0, MPI_STATUS_IGNORE); //lo recv                                                                                                                                      
     MPI_Wait(reflect->req + 3, MPI_STATUS_IGNORE); //hi send                                                                                                                                      
   }
   {
-    _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->ub - 1;
+    _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->ub;
     _XACC_array_info_t *ai = array_desc->info + 0;
     _XMP_reflect_sched_t *reflect = ai->reflect_sched;
     MPI_Wait(reflect->req + 1, MPI_STATUS_IGNORE); //lo send                                                                                                                                      
@@ -1212,9 +1216,6 @@ static void _XACC_reflect_do_inter_wait_dim0(_XACC_arrays_t *arrays_desc)
 
 static void _XACC_reflect_do_inter_start(_XACC_arrays_t *arrays_desc)
 {
-  int numDevices = arrays_desc->device_type->size;
-
-
   //reflect_enqueue_pack_unpack(arrays_desc);
   if(usePacking){
     reflect_pack_start_all(arrays_desc);
@@ -1223,18 +1224,20 @@ static void _XACC_reflect_do_inter_start(_XACC_arrays_t *arrays_desc)
 
   _XACC_reflect_do_inter_start_dim0(arrays_desc);
 
-  for(int i = 0; i < numDevices; i++){
+  _XACC_device_t *device = arrays_desc->device_type;
+  for(int i = device->lb; i <= device->ub; i += device->step){
    _XACC_reflect_do_inter_start_dev(arrays_desc, i);
   }
 }
 
 static void _XACC_reflect_do_inter_wait(_XACC_arrays_t *arrays_desc)
 {
-  int numDevices = arrays_desc->device_type->size;
+  //  int numDevices = arrays_desc->device_type->size;
 
   _XACC_reflect_do_inter_wait_dim0(arrays_desc);
 
-  for(int i = 0; i < numDevices; i++){
+  _XACC_device_t *device = arrays_desc->device_type;
+  for(int i = device->lb; i <= device->ub; i += device->step){   
    _XACC_reflect_do_inter_wait_dev(arrays_desc, i);
   }
 
@@ -1246,12 +1249,13 @@ static void _XACC_reflect_do_inter_wait(_XACC_arrays_t *arrays_desc)
 
 static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
 {
-  int dev;
   int numDevices = arrays_desc->device_type->size;
 
   if(numDevices == 1) return;
 
-  for(dev=0; dev < numDevices; dev++){
+  _XACC_device_t *device = arrays_desc->device_type;
+  for(int dev = device->lb; dev <= device->ub; dev += device->step){
+
     _XACC_array_t* device_array = &(arrays_desc->device_array[dev]);
     _XACC_array_info_t* info0 = &device_array->info[0];
     _XMP_reflect_sched_t *reflect = info0->reflect_sched;
@@ -1293,12 +1297,13 @@ static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
 
 static void _XACC_reflect_do_intra_wait(_XACC_arrays_t *arrays_desc)
 {
-  int dev;
   int numDevices = arrays_desc->device_type->size;
 
   if(numDevices == 1) return;
 
-  for(dev=0; dev < numDevices; dev++){
+  //  for(dev=0; dev < numDevices; dev++){
+  _XACC_device_t *device = arrays_desc->device_type;
+  for(int dev = device->lb; dev <= device->ub; dev += device->step){
     _XACC_array_t* device_array = &(arrays_desc->device_array[dev]);
     _XACC_array_info_t* info0 = &device_array->info[0];
     _XMP_reflect_sched_t *reflect = info0->reflect_sched;
