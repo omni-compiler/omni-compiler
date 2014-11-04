@@ -98,3 +98,12 @@ void _XACC_gpu_unpack_vector2_async(char * __restrict__ dst0, char * __restrict_
       exit(EXIT_FAILURE);						\
     }									\
   } while (0)
+
+//#define _TLOG
+
+#ifdef _TLOG
+#include "tlog.h"
+#define TLOG_LOG(log) do{tlog_log((log));}while(0)
+#else
+#define TLOG_LOG(log) do{}while(0)
+#endif

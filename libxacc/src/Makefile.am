@@ -12,7 +12,7 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 LINK = $(CCLD) $(AM_CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 
 libxacc_a_SOURCES = $(XACC_INC_DIR)/xacc_internal.h \
-	xacc.c xacc_pack.cu
+	xacc.c xacc_pack.cu xacc_reflect.c
 #                   xacc_device_stack.c
 #					$(XMP_INC_DIR)/xmp_internal.h
 
