@@ -54,6 +54,9 @@ public class XMPtranslate implements XobjectDefVisitor {
         
     FuncDefBlock fd = new FuncDefBlock(def);
 
+    // fix subarrays
+    fixSubArrayRef(fd);
+
     // translate directives
     _translateLocalPragma.translate(fd);
 
@@ -202,5 +205,73 @@ public class XMPtranslate implements XobjectDefVisitor {
 
   public void setTlogEnabled(boolean v) {
       _translateLocalPragma.setTlogEnabled(v);
+  }
+
+  private void fixSubArrayRef(FuncDefBlock def){
+
+    FunctionBlock fb = def.getBlock();
+    if (fb == null) return;
+
+    BlockIterator iter = new bottomupBlockIterator(fb);
+    for (iter.init(); !iter.end(); iter.next()){
+      Block block = iter.getBlock();
+
+      XobjectIterator iter2 = new bottomupXobjectIterator(block.toXobject());
+      for (iter2.init(); !iter2.end(); iter2.next()){
+
+	Xobject x = iter2.getXobject();
+	if (x != null && x.Opcode() == Xcode.SUB_ARRAY_REF){
+
+	  String arrayName = x.getArg(0).getSym();
+
+	  Ident arrayId = null;
+	  if (block.getBody() != null) arrayId = block.getBody().findLocalIdent(arrayName);
+	  if (arrayId == null) arrayId = block.findVarIdent(arrayName);
+	  if (arrayId == null) arrayId = _globalDecl.findVarIdent(arrayName);
+	  if (arrayId == null) continue;
+
+	  Xtype arrayType = arrayId.Type();
+
+	  int n = arrayType.getNumDimensions();
+
+	  XobjList subscripts = (XobjList)x.getArg(1);
+
+	  for (int i = 0; i < n; i++, arrayType = arrayType.getRef()){
+
+	    long dimSize = arrayType.getArraySize();
+	    Xobject sizeExpr;
+	    if (dimSize == 0 || arrayType.getKind() == Xtype.POINTER){
+	      continue;
+	    }
+	    else if (dimSize == -1){
+	      sizeExpr = arrayType.getArraySizeExpr();
+	    }
+	    else {
+	      sizeExpr = Xcons.IntConstant((int)dimSize);
+	    }
+
+	    Xobject sub = subscripts.getArg(i);
+
+	    Xobject lb, len, st;
+
+	    if (sub.Opcode() != Xcode.LIST) continue;
+
+	    lb = ((XobjList)sub).getArg(0);
+	    if (lb == null) lb = Xcons.IntConstant(0);
+	    len = ((XobjList)sub).getArg(1);
+	    //if (len == null) len = Xcons.binaryOp(Xcode.MINUS_EXPR, sizeExpr, lb);
+	    if (len == null) len = sizeExpr;
+	    st = ((XobjList)sub).getArg(2);
+	    if (st == null) st = Xcons.IntConstant(1);
+
+	    subscripts.setArg(i, Xcons.List(lb, len, st));
+	  }
+
+	}
+
+      }
+
+    }
+
   }
 }

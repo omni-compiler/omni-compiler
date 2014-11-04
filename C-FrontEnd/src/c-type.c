@@ -2261,35 +2261,36 @@ fixSubArrayRef(CExprOfBinaryNode *aryRef, CExprOfTypeDesc *orgTd,
     //create variable array type for subarray
 
     // create array size expr
-    //   step=1 : upper - lower + 1
-    //   step>1 : (upper - lower) / step + 1
+    // NOTE: the second arg should be the length.
     CExpr *lowerExpr = exprListNextNData(dim, 0);
-    CExpr *upperExpr = exprListNextNData(dim, 1);
+    CExpr *lenExpr = exprListNextNData(dim, 1);
     CExpr *stepExpr  = exprListNextNData(dim, 2);
 
-    if(resolveType(lowerExpr) == NULL)
-        return NULL;
-    if(resolveType(stepExpr) == NULL)
-        return NULL;
+    resolveType(lowerExpr);
+    resolveType(lenExpr);
+    resolveType(stepExpr);
 
-    if(EXPR_ISNULL(upperExpr)) {
-        CExpr *upperExpr1 = orgTd->e_len.eln_lenExpr;
-        if(EXPR_ISNULL(upperExpr1)) {
-            addError((CExpr*)aryRef, CERR_134);
-            return NULL;
-        }
-        upperExpr1 = copyExpr(upperExpr1);
-				//				upperExpr1 = exprBinary(EC_MINUS, upperExpr1,
-				//				            (CExpr*)allocExprOfNumberConst2(1, BT_INT));
-				upperExpr1 = exprBinary(EC_MINUS, upperExpr1, lowerExpr);
+    /* if(resolveType(lowerExpr) == NULL) */
+    /*     return NULL; */
+    /* if(resolveType(stepExpr) == NULL) */
+    /*     return NULL; */
 
-        EXPR_REF(upperExpr1);
-        exprReplace(dim, upperExpr, upperExpr1);
-        upperExpr = upperExpr1;
-    }
+    /* if(EXPR_ISNULL(lenExpr)) { */
+    /*     CExpr *lenExpr1 = orgTd->e_len.eln_lenExpr; */
+    /*     if(EXPR_ISNULL(lenExpr1)) { */
+    /*         addError((CExpr*)aryRef, CERR_134); */
+    /*         return NULL; */
+    /*     } */
+    /*     lenExpr1 = copyExpr(lenExpr1); */
+    /* 	lenExpr1 = exprBinary(EC_MINUS, lenExpr1, lowerExpr); */
 
-    if(resolveType(upperExpr) == NULL)
-        return NULL;
+    /*     EXPR_REF(lenExpr1); */
+    /*     exprReplace(dim, lenExpr, lenExpr1); */
+    /*     lenExpr = lenExpr1; */
+    /* } */
+
+    /* if(resolveType(lenExpr) == NULL) */
+    /*     return NULL; */
 
     CExprOfTypeDesc *td = allocExprOfTypeDesc();
     addTypeDesc(td);
@@ -2301,20 +2302,6 @@ fixSubArrayRef(CExprOfBinaryNode *aryRef, CExprOfTypeDesc *orgTd,
     addTypeDesc(elemTd);
     td->e_len.eln_isVariable = 1;
 
-    long step;
-    CExpr *len1 = exprBinary(EC_MINUS, upperExpr, lowerExpr);
-    exprCopyLineNum(len1, (CExpr*)aryRef);
-    CExpr *len2;
-    if(getCastedLongValueOfExpr(stepExpr, &step) && step == 1) {
-        len2 = len1;
-    } else {
-        len2 = exprBinary(EC_DIV, len1, stepExpr);
-    }
-    exprCopyLineNum(len2, (CExpr*)aryRef);
-    CExpr *lenExpr = exprBinary(EC_PLUS, len2, (CExpr*)allocExprOfNumberConst2(1, BT_INT));
-    exprCopyLineNum(lenExpr, (CExpr*)aryRef);
-
-    EXPR_REF(lenExpr);
     td->e_len.eln_lenExpr = lenExpr;
     td->e_isSizeUnreducable = 1;
     exprListAdd(dim, (CExpr*)td);
@@ -2323,6 +2310,77 @@ fixSubArrayRef(CExprOfBinaryNode *aryRef, CExprOfTypeDesc *orgTd,
 
     return td;
 }
+/* PRIVATE_STATIC CExprOfTypeDesc* */
+/* fixSubArrayRef(CExprOfBinaryNode *aryRef, CExprOfTypeDesc *orgTd, */
+/*     CExprOfTypeDesc *elemTd) */
+/* { */
+/*     CExpr *dim = aryRef->e_nodes[1]; */
+
+/*     //create variable array type for subarray */
+
+/*     // create array size expr */
+/*     //   step=1 : upper - lower + 1 */
+/*     //   step>1 : (upper - lower) / step + 1 */
+/*     CExpr *lowerExpr = exprListNextNData(dim, 0); */
+/*     CExpr *upperExpr = exprListNextNData(dim, 1); */
+/*     CExpr *stepExpr  = exprListNextNData(dim, 2); */
+
+/*     if(resolveType(lowerExpr) == NULL) */
+/*         return NULL; */
+/*     if(resolveType(stepExpr) == NULL) */
+/*         return NULL; */
+
+/*     if(EXPR_ISNULL(upperExpr)) { */
+/*         CExpr *upperExpr1 = orgTd->e_len.eln_lenExpr; */
+/*         if(EXPR_ISNULL(upperExpr1)) { */
+/*             addError((CExpr*)aryRef, CERR_134); */
+/*             return NULL; */
+/*         } */
+/*         upperExpr1 = copyExpr(upperExpr1); */
+/* 				//				upperExpr1 = exprBinary(EC_MINUS, upperExpr1, */
+/* 				//				            (CExpr*)allocExprOfNumberConst2(1, BT_INT)); */
+/* 				upperExpr1 = exprBinary(EC_MINUS, upperExpr1, lowerExpr); */
+
+/*         EXPR_REF(upperExpr1); */
+/*         exprReplace(dim, upperExpr, upperExpr1); */
+/*         upperExpr = upperExpr1; */
+/*     } */
+
+/*     if(resolveType(upperExpr) == NULL) */
+/*         return NULL; */
+
+/*     CExprOfTypeDesc *td = allocExprOfTypeDesc(); */
+/*     addTypeDesc(td); */
+/*     exprCopyLineNum((CExpr*)td, (CExpr*)aryRef); */
+/*     td->e_tdKind = TD_ARRAY; */
+/*     EXPR_REF(elemTd); */
+/*     elemTd->e_isUsed = 1; */
+/*     td->e_typeExpr = (CExpr*)elemTd; */
+/*     addTypeDesc(elemTd); */
+/*     td->e_len.eln_isVariable = 1; */
+
+/*     long step; */
+/*     CExpr *len1 = exprBinary(EC_MINUS, upperExpr, lowerExpr); */
+/*     exprCopyLineNum(len1, (CExpr*)aryRef); */
+/*     CExpr *len2; */
+/*     if(getCastedLongValueOfExpr(stepExpr, &step) && step == 1) { */
+/*         len2 = len1; */
+/*     } else { */
+/*         len2 = exprBinary(EC_DIV, len1, stepExpr); */
+/*     } */
+/*     exprCopyLineNum(len2, (CExpr*)aryRef); */
+/*     CExpr *lenExpr = exprBinary(EC_PLUS, len2, (CExpr*)allocExprOfNumberConst2(1, BT_INT)); */
+/*     exprCopyLineNum(lenExpr, (CExpr*)aryRef); */
+
+/*     EXPR_REF(lenExpr); */
+/*     td->e_len.eln_lenExpr = lenExpr; */
+/*     td->e_isSizeUnreducable = 1; */
+/*     exprListAdd(dim, (CExpr*)td); */
+
+/*     exprSetExprsType((CExpr*)aryRef, td); */
+
+/*     return td; */
+/* } */
 
 
 PRIVATE_STATIC void
@@ -2362,6 +2420,34 @@ completeCoarrayRefOfSubArray(CExpr *expr)
  * @return
  *      NULL or expression's type
  */
+/* CExprOfTypeDesc* */
+/* resolveType_subArrayRef(CExprOfBinaryNode *expr) */
+/* { */
+/*   assertExpr(expr->e_nodes[1], EXPR_L_SIZE(expr->e_nodes[1]) == 3); */
+
+/*   completeCoarrayRefOfSubArray((CExpr*)expr); */
+
+/*   CExpr *aryExpr = expr->e_nodes[0]; */
+/*   assertExpr((CExpr*)expr, aryExpr); */
+/*   //CExprOfTypeDesc *td0 = EXPRS_TYPE(aryExpr); */
+/*   CExprOfTypeDesc *td0 = resolveType(aryExpr); */
+/*   if (td0 == NULL) return NULL; */
+
+/*   CExprOfTypeDesc *aryTd = getRefType(td0); */
+/*   if (aryTd == NULL) { */
+/*     addError((CExpr*)expr, CERR_076); */
+/*     return NULL; */
+/*   } */
+
+/*   CExprOfTypeDesc *elemTd = EXPR_T(aryTd->e_typeExpr); */
+/*   if (elemTd == NULL) return NULL; */
+
+/*   //elemTd = fixSubArrayRef(expr, aryTd, elemTd); */
+
+/*   return elemTd; */
+
+/* } */
+
 CExprOfTypeDesc*
 resolveType_subArrayRef(CExprOfBinaryNode *expr)
 {

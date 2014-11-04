@@ -129,10 +129,8 @@ typedef struct _XMP_reflect_sched_type {
   int lo_rank, hi_rank;
 
 #if defined(_XMP_XACC)
-  void *lo_send_dev_buf, *lo_recv_dev_buf;
-  void *hi_send_dev_buf, *hi_recv_dev_buf;
-  void *lo_send_dev_array, *lo_recv_dev_array;
-  void *hi_send_dev_array, *hi_recv_dev_array;
+  void *lo_send_host_buf, *lo_recv_host_buf;
+  void *hi_send_host_buf, *hi_recv_host_buf;
   void *lo_async_id;
   void *hi_async_id;
   void *event_packed;

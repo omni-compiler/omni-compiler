@@ -114,10 +114,13 @@ public class ACCtranslateData {
       initializeBlock = ACCutil.createFuncCallBlockWithArrayRange(initFuncName, initArgs, Xcons.List(lowerList, lengthList));
       initBlockList.add(initializeBlock);
 
-      if(dataInfo.pragma != ACCpragma.ENTER_DATA){
-        finalizeBlock = createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref()));
+      //if(dataInfo.pragma != ACCpragma.ENTER_DATA){    
+        int finalizeKind = 0;
+        if(dataInfo.pragma == ACCpragma.ENTER_DATA) finalizeKind = 1;
+        else if(dataInfo.pragma == ACCpragma.EXIT_DATA)finalizeKind = 2;
+        finalizeBlock = createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDesc.Ref(), Xcons.IntConstant(finalizeKind)));
         finalizeBlockList.add(finalizeBlock);
-      }
+      //}
       
       //copy data
       Block copyHostToDeviceFunc = Bcons.emptyBlock();

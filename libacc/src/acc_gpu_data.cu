@@ -57,7 +57,7 @@ static void init_data(int mode, _ACC_gpu_data_t **host_data_desc, void **device_
 
   if(mode == INIT_PRESENT){
 	if(present_host_data_d == NULL){
-	  _ACC_fatal("gpu2 data not found");			
+	  _ACC_fatal("data not found");
 	}
   }
 
@@ -108,8 +108,11 @@ static void init_data(int mode, _ACC_gpu_data_t **host_data_desc, void **device_
   *device_addr = (void *)((char*)(host_data_d->device_addr) - offset);
 }
 
-void _ACC_finalize_data(_ACC_gpu_data_t *desc) {
-  if(desc->is_original == true){
+void _ACC_finalize_data(_ACC_gpu_data_t *desc, int type) {
+  //  printf("finalize\n");
+  //type 0:data, 1:enter data, 2:exit data
+  if((type == 0 && desc->is_original == true) || type == 2){
+	//	printf("desc=%p, %d\n", desc,type);
     if(desc->is_registered == true){
       unregister_memory(desc->host_addr);
     }
@@ -121,6 +124,8 @@ void _ACC_finalize_data(_ACC_gpu_data_t *desc) {
     //desc->device_addr = NULL;
   }
 
+  //  printf("free desc\n");
+  _ACC_free(desc->array_info);
   _ACC_free(desc);
 }
 

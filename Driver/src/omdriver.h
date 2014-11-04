@@ -140,6 +140,7 @@
 /** for LX2X */
 #define OPT_LX2X_X              "--Wx"
 #define OPT_LX2X_MODPATH        "-M"
+#define OPT_LX2X_MAX_ASSUMED_SHAPE "-max_assumed_shape="
 /** for X2L */
 #define OPT_X2L_B               "--Wb"
 /** for X2L */
