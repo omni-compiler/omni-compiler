@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import exc.util.XobjectVisitor;
-import exc.block.BlockList;
+import exc.block.Block;
 import xcodeml.util.XmLog;
 import xcodeml.util.XmOption;
 
@@ -226,14 +226,13 @@ public class Ident extends Xobject
     }
     
     @Override
-    public Xobject cfold(BlockList decls)
+    public Xobject cfold(XobjectDef def, Block block)
     {
-      ////////////////////
-      System.out.println("[[ cfold in Ident ]] " + toString());
-      ////////////////////
-      if (fparam_value != null)
-        return fparam_value.cfold(decls);
-      return this;
+      if (fparam_value != null) {
+        Xobject that = ((XobjList)fparam_value).args.arg;
+        return that.copy();
+      }
+      return this.copy();
     }
 
     @Override

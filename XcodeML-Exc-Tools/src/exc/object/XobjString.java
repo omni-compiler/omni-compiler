@@ -5,7 +5,7 @@
  *  $
  */
 package exc.object;
-import exc.block.BlockList;
+import exc.block.Block;
 
 public class XobjString extends XobjConst
 {
@@ -57,16 +57,13 @@ public class XobjString extends XobjConst
     }
 
     @Override
-    public Xobject cfold(BlockList decls)
+    public Xobject cfold(XobjectDef def, Block block)
     {
-      ////////////////////
-      System.out.println("[[ cfold in XobjString ]] value=" + value);
-      ////////////////////
       if (value == null) 
-        return this;
+        return this.copy();
 
-      Ident ident = decls.getDecls().findIdent(value);
-      return ident.cfold(decls);
+      Ident ident = def.findVarIdent(value);
+      return ident.cfold(def, block);
     }
 
     @Override

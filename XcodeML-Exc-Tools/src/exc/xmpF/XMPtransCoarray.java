@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xmpF;
 
 import exc.object.*;
@@ -15,46 +9,56 @@ import java.util.*;
  */
 public class XMPtransCoarray 
 {
-  final String MALLOC_LIB_NAME = "xmp_coarray_malloc";
-  final String COMMONBLOCK_PREFIX = "xmpf_cptr_";
-  final String INITPROC_PREFIX = "xmpf_init";
+  final static String COMMON_PREFIX = "xmpf_cptr_";
+  final static String INITPROC_PREFIX = "xmpf_init";
+  final static String CRAYPOINTER_PREFIX = "xmpf_cptr_";
+  final static String MALLOC_LIB_NAME = "xmpf_coarray_malloc";
 
 
-  private FuncDefBlock def;
-  // - specification part of the procedure.
-  // - contains (Xobject)id_list and (Xobject)decls.
-  // - useful methods are:
+  //private FuncDefBlock def;          // (XobjectDef)def.getDef() is more useful????
+  // contains
+  //  - XobjectDef def
+  //  - FunbtionBlock fblock
+  // useful methods are:
   //     add/removeIdent, findLocalDecl(String)
 
   private XMPenv env;
-  // contains 
-  // - XobjectFile env = getEnv();
 
   private String name;
   private BlockList decls;
 
+  private XobjectDef def;
+  private FunctionBlock fblock;
+
   private Vector<XMPcoarray> staticCoarrays;
   private Vector<XMPcoarray> allocCoarrays;
-  private XMPinitProcedure initProcedure;
+
+  //private XMPinitProcedure initProcedure;
+  private String initProcTextForFile;
+
+  //CollectInit mediator
+  XMPcollectInit collectInit;
+
+  private String commonName;
 
   //------------------------------
   //  CONSTRUCTOR
   //------------------------------
-  public XMPtransCoarray(FuncDefBlock def, XMPenv env) {
-    this.def = def;
+  public XMPtransCoarray(FuncDefBlock funcDef, XMPenv env) {
+    def = funcDef.getDef();
+    fblock = funcDef.getBlock();
     this.env = env;
-    FunctionBlock fblock = def.getBlock();
     name = fblock.getName();
-    decls = fblock.getBody();
+    commonName = COMMON_PREFIX + name;
 
     // set all static/allocatable coarrays in this procedure
     staticCoarrays = new Vector<XMPcoarray>();
     allocCoarrays = new Vector<XMPcoarray>();
-    Xobject idList = def.getDef().getFuncIdList();
+    Xobject idList = def.getFuncIdList();
     for (Xobject obj: (XobjList)idList) {
       Ident ident = (Ident)obj;
       if (ident.getCorank() > 0) {   // found a coarray
-        XMPcoarray coarray = new XMPcoarray(ident, decls);
+        XMPcoarray coarray = new XMPcoarray(ident, def, fblock);
         if (coarray.isAllocatable())
           allocCoarrays.add(coarray);
         else
@@ -70,11 +74,15 @@ public class XMPtransCoarray
   //  TRANSLATION
   //------------------------------
   public void run() {
-    if (staticCoarrays.size() > 0) {
-      // This procedure has static coarrays.
+    // initialize for the file
+    collectInit = new XMPcollectInit(MALLOC_LIB_NAME);
+
+    if (staticCoarrays.size() > 0) {  // static coarrays included
       transStaticCoarrays();
     }
 
+    // write Tail Text into env
+    collectInit.finalize(env);
   }
 
 
@@ -98,6 +106,7 @@ public class XMPtransCoarray
   //       pointer (xxxx_V2, V2)                               ! b
   //       common /xmpf_yyyy_zzzz_EX1/xxxx_V1,xxxx_V2          ! c
   //     end subroutine
+  //
   //     subroutine xmpf_init_zzzz_EX1                         ! d
   //       common /xmpf_yyyy_zzzz_EX1/xxxx_V1,xxxx_V2          ! e
   //       call xmp_coarray_malloc(xxxx_V1,200,4)              ! f
@@ -119,28 +128,12 @@ public class XMPtransCoarray
       coarray.declareCrayPointer();
 
     // generate common stmt in this procedure (c)
-    genCommonStmt(COMMONBLOCK_PREFIX + name, staticCoarrays, def);
-
-    // generate common stmt in init procedure (e)
-    //////////////////////////
-    // ?????
-    //genCommonStmt(COMMONBLOCK_PREFIX + name, staticCoarrays, newProc.getDef());
-    //////////////////////////
-
-    // generate call stmts. (f)
-    // TEMPOERARY ... stmts not used
-    //////////////////////////
-    Vector<Xobject> stmts = new Vector();
-    for (XMPcoarray coarray: staticCoarrays) {
-      Xobject stmt = coarray.genMallocCallStmt();
-      stmts.add(stmt);
-    }
+    genCommonStmt(commonName, staticCoarrays, def);
 
     // output init procedure (d)
-    // TEMPOERARY 
-    //////////////////////////
-    genSubroutine(newProcName, COMMONBLOCK_PREFIX + name);
-    //////////////////////////
+    //genInitRoutine(newProcName, commonName);
+    genInitRoutine_string(newProcName);
+
   }
 
 
@@ -165,7 +158,7 @@ public class XMPtransCoarray
   //  parts
   //------------------------------
   private void genCommonStmt(String commonName, Vector<XMPcoarray> coarrays,
-                             FuncDefBlock def) {
+                             XobjectDef def) {
 
     /* cf. XMPenv.declOrGetSizeArray
      */
@@ -181,42 +174,58 @@ public class XMPtransCoarray
     }
 
     // declaration 
-    Xobject decls = def.getBlock().getBody().getDecls();
+    Xobject decls = fblock.getBody().getDecls();
     decls.add(Xcons.List(Xcode.F_COMMON_DECL,
                          Xcons.List(Xcode.F_VAR_LIST, cnameObj, varList)));
   }
 
-  private void genSubroutine(String newProcName, String commonName) {
-    /////////////////
-    System.out.println("I want to generate Xobject describing the following 'init-subroutine':");
-    System.out.println("  -----------------------------------------------");
-    /////////////////
+  /*
+   * suspended
+   *  This method could be better...
+   */
+  private void genInitRoutine(String newProcName, String commonName) {
 
-    System.out.println("  subroutine " + newProcName);
+    Xtype type = Xtype.FexternalSubroutineType;
+    Ident ident = Ident.Fident(newProcName, Xtype.FexternalSubroutineType);
+    /* or using Xcons.Symbol or Xcons.Ident */
+    Xobject id_list = Xcons.List();
+    Xobject decls = Xcons.List();
+    Block body = new Block(Xcode.FUNCTION_DEFINITION, null);
+    //Xobject body = Xcons.List();
+    //BlockList blockList = Bcons.emptyBody();
 
-    // common stmt
-    String s =         "    COMMON / " + commonName + " /";
-    String delim = " ";
-    for (XMPcoarray coarray: staticCoarrays) {
-      s += delim + coarray.getCrayPointerName();
-      delim = " , ";
-    }
-    System.out.println(s);
+    FunctionBlock newFblock = new FunctionBlock((Xobject)ident, id_list, decls, body,
+                                                (Xobject)null/*gcc_attrs*/,
+                                                fblock.getEnv());
+
+    //XobjectDef newFunc = XobjectDef.Func(ident, id_list, decls, body);
+    //FunctionBlock newFblock = Bcons.buildFunctionBlock(newFunc);
+
+    //newBody.setIdentList(idList);
+    //newBody.setDecls(declList);
+
+
+    Xobject newFblockObj = newFblock.toXobject();
+    env.getEnv().add(newFblockObj);
+  }      
+
+  /*
+   * temporary but reliable method
+   */
+  private void genInitRoutine_string(String newProcName) {
+    // init for each init routine
+    collectInit.openProcText(newProcName, commonName);
 
     // malloc call stmts
     for (XMPcoarray coarray: staticCoarrays) {
       int elem = coarray.getElementLength();
       int count = coarray.getTotalArraySize();
-      System.out.println("    CALL " + MALLOC_LIB_NAME + "( " +
-                         coarray.getCrayPointerName() + ", " +
-                         count + ", " + elem + " )");
+      String cptrName = coarray.getCrayPointerName();
+      collectInit.addForVarText(cptrName, count, elem);
     }
 
-    System.out.println("  end subroutine " + newProcName);
-
-    /////////////////
-    System.out.println("  -----------------------------------------------");
-    /////////////////
+    // finalize for each init routine
+    collectInit.closeProcText();
   }
 
 
@@ -240,8 +249,8 @@ public class XMPtransCoarray
 
   private String[] getHostNames() {
     Vector<String> list = new Vector();
-    list.add(def.getDef().getName());
-    XobjectDef parentDef = def.getDef().getParent();
+    list.add(def.getName());
+    XobjectDef parentDef = def.getParent();
     while (parentDef != null) {
       list.add(parentDef.getName());
       parentDef = parentDef.getParent();

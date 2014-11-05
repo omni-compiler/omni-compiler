@@ -315,4 +315,17 @@ public class XMPenv {
     return sizeArray;
   }
 
+  /*
+   *  wrapper -- for collect init
+   */
+  public String getTailText() {
+    return env.getTailText();
+  }
+  public void clearTailText() {
+    env.clearTailText();
+  }
+  public void addTailText(String text) {
+    env.addTailText(text);
+  }
+
 }

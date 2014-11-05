@@ -6,12 +6,12 @@
  */
 package exc.object;
 
+import exc.block.Block;
 import exc.util.XobjectVisitable;
 import exc.util.XobjectVisitor;
 import xcodeml.IXobject;
 import xcodeml.XmException;
 import xcodeml.util.XmOption;
-import exc.block.BlockList;
 
 
 /**
@@ -525,25 +525,6 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
     }
 
 
-    /** Fortran: get Fortran array size or 1 for scalar */
-    public Xobject getTotalArraySizeExpr(BlockList decls)
-    {
-        throw new UnsupportedOperationException("(in Xobject)");
-    }
-
-    /** Fortran: get Fortran type element length (bytes) in Expr */
-    public Xobject getElementLengthExpr(BlockList decls)
-    {
-        throw new UnsupportedOperationException("(in Xobject)");
-    }
-
-    /** Fortran: get Fortran type element length (bytes) in integer */
-    public int getElementLength(BlockList decls)
-    {
-        throw new UnsupportedOperationException("(in Xobject)");
-    }
-
-
     /**
      * 
      * Dummy method at base class, it causes exception.
@@ -871,13 +852,10 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
         return null;
     }
     
-    public Xobject cfold(BlockList decls)
+    public Xobject cfold(XobjectDef def, Block block)
     {
-      ////////////////////
-      System.out.println("[[ cfold in Xobject ]] "+toString());
-      ////////////////////
-        // default execution
-        return this;
+      /* default */
+      return this.copy();
     }
 
     public Ident findVarIdent(String name)

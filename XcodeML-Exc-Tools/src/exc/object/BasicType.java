@@ -6,7 +6,7 @@
  */
 
 package exc.object;
-import exc.block.BlockList;
+import exc.block.Block;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -202,20 +202,20 @@ public class BasicType extends Xtype
     }
     
     @Override
-    public Xobject getTotalArraySizeExpr(BlockList decls)
+    public Xobject getTotalArraySizeExpr(XobjectDef def, Block block)
     {
         return Xcons.IntConstant(1);
     }
 
     @Override
-    public Xobject getElementLengthExpr(BlockList decls)
+    public Xobject getElementLengthExpr(XobjectDef def, Block block)
     {
-        int len = getElementLength(decls);
+      int len = getElementLength(def, block);
         return Xcons.IntConstant(len);
     }
 
     @Override
-    public int getElementLength(BlockList decls)
+    public int getElementLength(XobjectDef def, Block block)
     {
       //////////////
       // TEMPORARY
@@ -242,7 +242,7 @@ public class BasicType extends Xtype
           put(DOUBLE_IMAGINARY       , 8 );
           put(LONG_DOUBLE_IMAGINARY  , 8 );    // ???
           put(FLOAT_COMPLEX          , 8 );
-          put(DOUBLE_COMPLEX         ,16 );
+          put(DOUBLE_COMPLEX         , 8 ); // should be 16 but bug347. 
           put(LONG_DOUBLE_COMPLEX    ,16 );    // ???
           put(GCC_BUILTIN_VA_LIST    , 0 );
           put(F_CHARACTER            , 1 );

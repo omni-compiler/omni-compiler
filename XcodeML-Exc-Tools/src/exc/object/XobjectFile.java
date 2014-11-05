@@ -33,6 +33,8 @@ public class XobjectFile extends XobjectDefEnv
     public boolean debugFlag;
     public static boolean gcc_huge_common_bug;
     
+    private String tailText = "";     // for collectInit temporary version
+
     /** default constructor */
     public XobjectFile()
     {
@@ -540,4 +542,19 @@ public class XobjectFile extends XobjectDefEnv
             collectType(i.getGccAttributes());
         }
     }
+
+
+    /*
+     *  handling Tail Text -- for collect init
+     */
+    public String getTailText() {
+        return tailText;
+    }
+    public void clearTailText() {
+        tailText = "";
+    }
+    public void addTailText(String text) {
+        tailText += text;
+    }
+
 }

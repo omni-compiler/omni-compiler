@@ -7,7 +7,6 @@
 package exc.object;
 
 import exc.block.Block;
-import exc.block.BlockList;
 import exc.util.MachineDepConst;
 
 import xcodeml.util.XmOption;
@@ -709,19 +708,19 @@ public class Xtype
     }
 
     /** Fortran: get Fortran array size or 1 for scalar */
-    public Xobject getTotalArraySizeExpr(BlockList decls)
+    public Xobject getTotalArraySizeExpr(XobjectDef def, Block block)
     {
         throw new UnsupportedOperationException();
     }
 
     /** Fortran: get Fortran type element length (bytes) in Expr */
-    public Xobject getElementLengthExpr(BlockList decls)
+    public Xobject getElementLengthExpr(XobjectDef def, Block block)
     {
         throw new UnsupportedOperationException();
     }
 
     /** Fortran: get Fortran type element length (bytes) in integer */
-    public int getElementLength(BlockList decls)
+    public int getElementLength(XobjectDef def, Block block)
     {
         throw new UnsupportedOperationException();
     }

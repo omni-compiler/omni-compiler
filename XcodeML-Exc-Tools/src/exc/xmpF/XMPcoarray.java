@@ -15,26 +15,28 @@ import java.util.*;
  */
 public class XMPcoarray {
 
-  final String CRAYPOINTER_PREFIX = "xmpf_cptr_";
-  final String MALLOC_LIB_NAME = "xmp_coarray_malloc";
-
   private String name;
   private Ident ident;
-  private BlockList decls;
+  //  private BlockList decls;
+  private XobjectDef def;
+  private FunctionBlock fblock;
 
   private Xtype originalType;
   private String crayPointerName;
   private Ident crayPointerId;
 
+  private String commonName;
+
   //------------------------------
   //  CONSTRUCTOR
   //------------------------------
-  public XMPcoarray(Ident ident, BlockList decls) {
+  public XMPcoarray(Ident ident, XobjectDef def, FunctionBlock fblock) {
     this.ident = ident;
-    this.decls = decls;
+    this.def = def;
+    this.fblock = fblock;
     name = ident.getName();
     originalType = ident.Type().copy();  // not sure how deep this copy
-    crayPointerName = CRAYPOINTER_PREFIX + name;
+    crayPointerName = XMPtransCoarray.CRAYPOINTER_PREFIX + name;
     crayPointerId = null;
   }
 
@@ -45,7 +47,8 @@ public class XMPcoarray {
     if (crayPointerId != null)
       XMP.error("Internal error: crayPointerId has already declared.");
 
-    // both declaration into decls and set crayPointerId
+    // declaration into fblock.decls and set crayPointerId
+    BlockList decls = fblock.getBody();
     crayPointerId = decls.declLocalIdent(crayPointerName,
                                          BasicType.Fint8Type,
                                          StorageClass.FLOCAL,
@@ -54,14 +57,15 @@ public class XMPcoarray {
   }
 
   public Xobject genMallocCallStmt() {
-      Ident mallocId = decls.declLocalIdent(MALLOC_LIB_NAME,
-                                            BasicType.FsubroutineType);
-      Xobject varRef = Xcons.FvarRef(getCrayPointerId());
-      Xobject elem = getElementLengthExpr(); 
-      Xobject count = getTotalArraySizeExpr();
-      Xobject args = Xcons.List(varRef, count, elem);
-      Xobject stmt = Xcons.functionCall(mallocId, args);
-      return stmt;
+    BlockList decls = fblock.getBody();
+    Ident mallocId = decls.declLocalIdent(XMPtransCoarray.MALLOC_LIB_NAME,
+                                          BasicType.FsubroutineType);
+    Xobject varRef = Xcons.FvarRef(getCrayPointerId());
+    Xobject elem = getElementLengthExpr(); 
+    Xobject count = getTotalArraySizeExpr();
+    Xobject args = Xcons.List(varRef, count, elem);
+    Xobject stmt = Xcons.functionCall(mallocId, args);
+    return stmt;
   }
 
 
@@ -82,45 +86,40 @@ public class XMPcoarray {
   //------------------------------
   //  inquiring interface
   //------------------------------
-  public Xobject getElementLengthExpr() {
-    return getElementLengthExpr(decls);
+  public int getElementLength() {
+    Xobject elem = getElementLengthExpr(); 
+    if (!elem.isIntConstant()) {
+      XMP.error("Restriction: could not evaluate the element length of: "+name);
+      return 0;
+    }
+    return elem.getInt();
   }
-  public Xobject getElementLengthExpr(BlockList decls) {
-    Xobject elem = ident.Type().getElementLengthExpr(decls); 
+  public Xobject getElementLengthExpr() {
+    return getElementLengthExpr(def, fblock);
+  }
+  public Xobject getElementLengthExpr(XobjectDef def, Block block) {
+    Xobject elem = ident.Type().getElementLengthExpr(def, block); 
     if (elem == null)
       XMP.error("Restriction: could not get the element length of: "+name);
-    if (!elem.isIntConstant())
-      XMP.error("Restriction: could not evaluate the element length of: "+name);
     return elem;
   }
 
-  public int getElementLength() {
-    return getElementLength(decls);
-  }
-  public int getElementLength(BlockList decls) {
-    return getElementLengthExpr(decls).getInt();
-  }
-
-  public Xobject getTotalArraySizeExpr() {
-    return getTotalArraySizeExpr(decls);
-  }
-  public Xobject getTotalArraySizeExpr(BlockList decls) {
-    Xobject size = ident.Type().getTotalArraySizeExpr(decls);
-    if (size == null)
-      XMP.error("Restriction: could not get the size of: "+name);
-    return size;
-  }
-
   public int getTotalArraySize() {
-    return getTotalArraySize(decls);
-  }
-  public int getTotalArraySize(BlockList decls) {
-    Xobject size = getTotalArraySizeExpr(decls);
+    Xobject size = getTotalArraySizeExpr();
     if (!size.isIntConstant()) {
       XMP.error("Restriction: could not evaluate the total size of: "+name);
       return 0;
     }
     return size.getInt();
+  }
+  public Xobject getTotalArraySizeExpr() {
+    return getTotalArraySizeExpr(def, fblock);
+  }
+  public Xobject getTotalArraySizeExpr(XobjectDef def, Block block) {
+    Xobject size = ident.Type().getTotalArraySizeExpr(def, block);
+    if (size == null)
+      XMP.error("Restriction: could not get the size of: "+name);
+    return size;
   }
 
   public Boolean isScalar() {

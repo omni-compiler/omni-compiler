@@ -570,11 +570,15 @@ public class omompx
         }
         decompiler.decompile(context, xcodeDoc, decompWriter);
       // }
-      decompWriter.flush();
+
+        // for collect-init
+        decompWriter.write(xobjFile.getTailText());
+
+        decompWriter.flush();
     
-      if(!dump && outputDecomp) {
-        decompWriter.close();
-      }
+        if(!dump && outputDecomp) {
+          decompWriter.close();
+        }
     }
   }
 }
