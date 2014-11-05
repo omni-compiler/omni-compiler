@@ -89,6 +89,7 @@ static void memcpy2D_async(char * __restrict__ dst, long dst_stride, char * __re
   default:
     memcpy2D_kernel<char><<<gridSize, blockSize, 0, st>>>(dst, src, count, blocklength, dst_stride, src_stride);
   }
+  //CHECK_LAUNCH_ERROR();
 }
 
 void _XACC_gpu_pack_vector_async(char * __restrict__ dst, char * __restrict__ src, int count, int blocklength, long stride, size_t typesize, cudaStream_t st)

@@ -20,7 +20,7 @@
 /* void _XMP_get_device_info(void *desc, int* lower, int* upper, int* step); */
 
 #include <stdlib.h>
-#include <cuda_runtime.h>
+#include "include/cuda_runtime.h"
 #include "xacc_data_struct.h"
 
 void _XACC_init_device(_XACC_device_t** desc, acc_device_t device, int lower, int upper, int step);

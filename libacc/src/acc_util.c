@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "acc_internal.h"
+#include <signal.h>
 
 void *_ACC_alloc(size_t size) {
   void *addr;
@@ -18,7 +19,8 @@ void _ACC_free(void *p) {
 
 void _ACC_fatal(const char *msg) {
   fprintf(stderr, "OpenACC runtime error: %s\n", msg);
-  exit(1);
+  //exit(1);
+  raise(SIGQUIT);
 }
 
 void _ACC_unexpected_error(void) {

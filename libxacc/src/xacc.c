@@ -1,5 +1,5 @@
 #include <stdio.h>
-#if 0
+#if 1
 #define _XMP_XACC
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
