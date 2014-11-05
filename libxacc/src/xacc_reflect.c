@@ -18,8 +18,8 @@
 #endif
 
 static char packVector = 1;
-static const char useKernelPacking = 1;
 static char useHostBuffer = 1;
+static const char useKernelPacking = 1; //use kernel for packing
 
 static void _XACC_reflect_sched_dim(_XACC_arrays_t *a, int target_device, int target_dim);
 
@@ -571,13 +571,13 @@ static void reflect_pack_start(_XMP_reflect_sched_t *reflect, size_t type_size)
     int hi_width = reflect->hi_width;
     char *lo_send_buf,*lo_send_array;
     char *hi_send_buf,*hi_send_array;
-    if (lo_width && reflect->hi_rank != MPI_PROC_NULL){
+    if (reflect->hi_rank != MPI_PROC_NULL){
       lo_send_buf = (char*)reflect->lo_send_buf;
       lo_send_array = (char*)reflect->lo_send_array;
     }else{
       lo_send_buf = lo_send_array = NULL;
     }
-    if (hi_width && reflect->lo_rank != MPI_PROC_NULL){
+    if (reflect->lo_rank != MPI_PROC_NULL){
       hi_send_buf = (char*)reflect->hi_send_buf;
       hi_send_array = (char*)reflect->hi_send_array;
     }else{
@@ -593,68 +593,47 @@ static void reflect_pack_start(_XMP_reflect_sched_t *reflect, size_t type_size)
 				 hi_width * reflect->blocklength,
 				 reflect->stride,
 				 reflect->count, type_size, *st);
-  
   }else{
-
-  // for lower reflect
-  int lo_width = reflect->lo_width;
-  if (lo_width && reflect->hi_rank != MPI_PROC_NULL){
-    if(useKernelPacking){
-      _XACC_gpu_pack_vector_async((char *)reflect->lo_send_buf,
-				  (char *)reflect->lo_send_array,
-				  reflect->count, lo_width * reflect->blocklength,
-				  reflect->stride, type_size, *st);
-    }else{
+    // for lower reflect
+    int lo_width = reflect->lo_width;
+    if (reflect->hi_rank != MPI_PROC_NULL){
       CUDA_SAFE_CALL(cudaMemcpy2DAsync(reflect->lo_send_buf,
-				       lo_width * reflect->blocklength,//type_size,
+				       lo_width * reflect->blocklength,
 				       reflect->lo_send_array,
 				       reflect->stride,
 				       lo_width * reflect->blocklength,
 				       reflect->count, cudaMemcpyDefault, *st));
     }
-  }
 
-  // for upper reflect
-  int hi_width = reflect->hi_width;
-  if (hi_width && reflect->lo_rank != MPI_PROC_NULL){
-    if(useKernelPacking){
-      _XACC_gpu_pack_vector_async((char *)reflect->hi_send_buf,
-				  (char *)reflect->hi_send_array,
-				  reflect->count, hi_width * reflect->blocklength,
-				  reflect->stride, type_size, *st);
-    }else{
+    // for upper reflect
+    int hi_width = reflect->hi_width;
+    if (reflect->lo_rank != MPI_PROC_NULL){
       CUDA_SAFE_CALL(cudaMemcpy2DAsync(reflect->hi_send_buf,
-				       hi_width * reflect->blocklength, //type_size,
+				       hi_width * reflect->blocklength,
 				       reflect->hi_send_array,
 				       reflect->stride,
 				       hi_width * reflect->blocklength,
 				       reflect->count, cudaMemcpyDefault, *st));
     }
   }
-  }
-
-
-  cudaEvent_t *ev = (cudaEvent_t*)(reflect->event_packed);
-  //CUDA_SAFE_CALL(cudaEventRecord(*ev, *st));
 }
 
 static void reflect_unpack_start(_XMP_reflect_sched_t *reflect, size_t type_size)
 {
   cudaStream_t *st = (cudaStream_t*)(reflect->lo_async_id);
-
   
   if(useKernelPacking){
     int lo_width = reflect->lo_width;
     int hi_width = reflect->hi_width;
     char *lo_recv_array, *lo_recv_buf;
     char *hi_recv_array, *hi_recv_buf;
-    if (lo_width && reflect->lo_rank != MPI_PROC_NULL){
+    if (reflect->lo_rank != MPI_PROC_NULL){
       lo_recv_array = (char *)reflect->lo_recv_array;
       lo_recv_buf = (char *)reflect->lo_recv_buf;
     }else{
       lo_recv_array = lo_recv_buf = NULL;
     }
-    if (hi_width && reflect->hi_rank != MPI_PROC_NULL){
+    if (reflect->hi_rank != MPI_PROC_NULL){
       hi_recv_array = (char *)reflect->hi_recv_array;
       hi_recv_buf = (char *)reflect->hi_recv_buf;
     }else{
@@ -671,54 +650,35 @@ static void reflect_unpack_start(_XMP_reflect_sched_t *reflect, size_t type_size
 				   reflect->stride,
 				   reflect->count, type_size, *st);
   }else{
-
-  int lo_width = reflect->lo_width;
-  if (lo_width && reflect->lo_rank != MPI_PROC_NULL){
-    if(useKernelPacking){
-      _XACC_gpu_unpack_vector_async((char *)reflect->lo_recv_array,
-				    (char *)reflect->lo_recv_buf,
-				    reflect->count, lo_width * reflect->blocklength,
-				    reflect->stride, type_size, *st);
-    }else{
+    int lo_width = reflect->lo_width;
+    if (reflect->lo_rank != MPI_PROC_NULL){
       CUDA_SAFE_CALL(cudaMemcpy2DAsync(reflect->lo_recv_array,
 				       reflect->stride,
 				       reflect->lo_recv_buf,
-				       lo_width * reflect->blocklength, //type_size,
+				       lo_width * reflect->blocklength,
 				       lo_width * reflect->blocklength,
 				       reflect->count, cudaMemcpyDefault, *st));
     }
-  }
-  int hi_width = reflect->hi_width;
-  if (hi_width && reflect->hi_rank != MPI_PROC_NULL){
-    if(useKernelPacking){
-      _XACC_gpu_unpack_vector_async((char *)reflect->hi_recv_array,
-				    (char *)reflect->hi_recv_buf,
-				    reflect->count, hi_width * reflect->blocklength,
-				    reflect->stride, type_size, *st);
-    }else{
+    int hi_width = reflect->hi_width;
+    if (reflect->hi_rank != MPI_PROC_NULL){
       CUDA_SAFE_CALL(cudaMemcpy2DAsync(reflect->hi_recv_array,
 				       reflect->stride,
 				       reflect->hi_recv_buf,
-				       hi_width * reflect->blocklength, //type_size,
+				       hi_width * reflect->blocklength,
 				       hi_width * reflect->blocklength,
 				       reflect->count, cudaMemcpyDefault, *st));
     }
   }
-
-  }
-  
-  cudaEvent_t *ev = (cudaEvent_t*)(reflect->event_unpacked);
-  //  CUDA_SAFE_CALL(cudaEventRecord(*ev, *st));
 }
 
 static void reflect_pack_wait(_XMP_reflect_sched_t *reflect)
 {
   //cudaEvent_t *ev = (cudaEvent_t*)reflect->event_packed;
   //CUDA_SAFE_CALL(cudaEventSynchronize(*ev));
-  int lo_width = reflect->lo_width;
-  int hi_width = reflect->hi_width;
-  if ((lo_width && reflect->lo_rank != MPI_PROC_NULL) ||
-      (hi_width && reflect->hi_rank != MPI_PROC_NULL)){
+  //  int lo_width = reflect->lo_width;
+  //  int hi_width = reflect->hi_width;
+  if (reflect->lo_rank != MPI_PROC_NULL ||
+      reflect->hi_rank != MPI_PROC_NULL){
     cudaStream_t *st = (cudaStream_t*)(reflect->lo_async_id);
     CUDA_SAFE_CALL(cudaStreamSynchronize(*st));
   }
@@ -728,10 +688,8 @@ static void reflect_unpack_wait(_XMP_reflect_sched_t *reflect)
 {
   //cudaEvent_t *ev = (cudaEvent_t*)reflect->event_unpacked;
   //CUDA_SAFE_CALL(cudaEventSynchronize(*ev));
-  int lo_width = reflect->lo_width;
-  int hi_width = reflect->hi_width;
-  if ((lo_width && reflect->lo_rank != MPI_PROC_NULL) ||
-      (hi_width && reflect->hi_rank != MPI_PROC_NULL)){
+  if (reflect->lo_rank != MPI_PROC_NULL ||
+      reflect->hi_rank != MPI_PROC_NULL){
     cudaStream_t *st = (cudaStream_t*)(reflect->lo_async_id);
     CUDA_SAFE_CALL(cudaStreamSynchronize(*st));
   }
@@ -743,12 +701,18 @@ static void reflect_update_host(_XMP_reflect_sched_t *reflect)
   if(reflect->hi_rank != MPI_PROC_NULL){
     int lo_width = reflect->lo_width;
     size_t lo_buf_size = lo_width * reflect->blocklength * reflect->count;
-    CUDA_SAFE_CALL(cudaMemcpyAsync(reflect->lo_send_host_buf, reflect->lo_send_buf, lo_buf_size, cudaMemcpyDeviceToHost, *st));
+    CUDA_SAFE_CALL(cudaMemcpyAsync(reflect->lo_send_host_buf,
+				   reflect->lo_send_buf,
+				   lo_buf_size,
+				   cudaMemcpyDeviceToHost, *st));
   }
   if(reflect->lo_rank != MPI_PROC_NULL){
     int hi_width = reflect->hi_width;
     size_t hi_buf_size = hi_width * reflect->blocklength * reflect->count;
-    CUDA_SAFE_CALL(cudaMemcpyAsync(reflect->hi_send_host_buf, reflect->hi_send_buf, hi_buf_size, cudaMemcpyDeviceToHost, *st));
+    CUDA_SAFE_CALL(cudaMemcpyAsync(reflect->hi_send_host_buf,
+				   reflect->hi_send_buf,
+				   hi_buf_size,
+				   cudaMemcpyDeviceToHost, *st));
   }
 }
 
@@ -758,12 +722,18 @@ static void reflect_update_device(_XMP_reflect_sched_t *reflect)
   if(reflect->lo_rank != MPI_PROC_NULL){
     int lo_width = reflect->lo_width;
     size_t lo_buf_size = lo_width * reflect->blocklength * reflect->count;
-    CUDA_SAFE_CALL(cudaMemcpyAsync(reflect->lo_recv_buf, reflect->lo_recv_host_buf, lo_buf_size, cudaMemcpyHostToDevice, *st));
+    CUDA_SAFE_CALL(cudaMemcpyAsync(reflect->lo_recv_buf,
+				   reflect->lo_recv_host_buf,
+				   lo_buf_size,
+				   cudaMemcpyHostToDevice, *st));
   }
   if(reflect->hi_rank != MPI_PROC_NULL){
     int hi_width = reflect->hi_width;
     size_t hi_buf_size = hi_width * reflect->blocklength * reflect->count;
-    CUDA_SAFE_CALL(cudaMemcpyAsync(reflect->hi_recv_buf, reflect->hi_recv_host_buf, hi_buf_size, cudaMemcpyHostToDevice, *st));
+    CUDA_SAFE_CALL(cudaMemcpyAsync(reflect->hi_recv_buf,
+				   reflect->hi_recv_host_buf,
+				   hi_buf_size,
+				   cudaMemcpyHostToDevice, *st));
   }
 }
 
@@ -801,13 +771,12 @@ static void reflect_pack_wait_all(_XACC_arrays_t *arrays_desc)
     _XACC_array_t *array_desc = arrays_desc->device_array + i;
 
     for(int j = 0; j < dim; j++){
-      if(! useHostBuffer){
-      	if(j == 0) continue;
-      }
       _XACC_array_info_t *ai = array_desc->info + j;
       if(ai->shadow_size_lo != 0 || ai->shadow_size_hi != 0){
 	_XMP_reflect_sched_t *reflect = ai->reflect_sched;
-	reflect_pack_wait(reflect);
+	if( j != 0 || useHostBuffer){
+	  reflect_pack_wait(reflect);
+	}
       }
     }
   }
@@ -848,13 +817,12 @@ static void reflect_unpack_wait_all(_XACC_arrays_t *arrays_desc)
 
     _XACC_array_t *array_desc = arrays_desc->device_array + i;
     for(int j = 0; j < dim; j++){
-      if(! useHostBuffer){
-	if(j == 0) continue;
-      }
       _XACC_array_info_t *ai = array_desc->info + j;
       if(ai->shadow_size_lo != 0 || ai->shadow_size_hi != 0){
 	_XMP_reflect_sched_t *reflect = ai->reflect_sched;
-	reflect_unpack_wait(reflect);
+	if( j != 0 || useHostBuffer){
+	  reflect_unpack_wait(reflect);
+	}
       }
     }
   }
@@ -898,17 +866,6 @@ static void _XACC_reflect_do_inter_wait_dev(_XACC_arrays_t *arrays_desc, int i)
 
 static void _XACC_reflect_do_inter_start_dim0(_XACC_arrays_t *arrays_desc)
 {
-  /* for(int i = 0; i < arrays_desc->device_type->size; i++){ */
-  /*   _XACC_array_t *array_desc = arrays_desc->device_array + i; */
-  /*   int j = 0; */
-  /*   _XACC_array_info_t *ai = array_desc->info + j; */
-  /*   if(ai->shadow_size_lo != 0 || ai->shadow_size_hi != 0){ */
-  /*     _XMP_reflect_sched_t *reflect = ai->reflect_sched; */
-  /*     TLOG_LOG(TLOG_EVENT_5_IN); */
-  /*     MPI_Startall(4, reflect->req); */
-  /*     TLOG_LOG(TLOG_EVENT_5_OUT); */
-  /*   } */
-  /* } */
   {
     _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->lb;
     _XACC_array_info_t *ai = array_desc->info + 0;
@@ -936,18 +893,6 @@ static void _XACC_reflect_do_inter_start_dim0(_XACC_arrays_t *arrays_desc)
 
 static void _XACC_reflect_do_inter_wait_dim0(_XACC_arrays_t *arrays_desc)
 {
-  /* for(int i = 0; i < arrays_desc->device_type->size; i++){ */
-  /*   _XACC_array_t *array_desc = arrays_desc->device_array + i; */
-  /*   int j = 0; */
-  /*   _XACC_array_info_t *ai = array_desc->info + j; */
-  /*   if(ai->shadow_size_lo != 0 || ai->shadow_size_hi != 0){ */
-  /*     _XMP_reflect_sched_t *reflect = ai->reflect_sched; */
-  /*     TLOG_LOG(TLOG_EVENT_6_IN); */
-  /*     MPI_Waitall(4, reflect->req, MPI_STATUSES_IGNORE); */
-  /*     TLOG_LOG(TLOG_EVENT_6_OUT); */
-  /*   } */
-  /* } */
-
   {
     _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->lb;
     _XACC_array_info_t *ai = array_desc->info + 0;
@@ -962,13 +907,11 @@ static void _XACC_reflect_do_inter_wait_dim0(_XACC_arrays_t *arrays_desc)
     MPI_Wait(reflect->req + 1, MPI_STATUS_IGNORE); //lo send                                                                                                                                      
     MPI_Wait(reflect->req + 2, MPI_STATUS_IGNORE); //hi recv                                                                                                                                      
   }
-
 }
 
 
 static void _XACC_reflect_do_inter_start(_XACC_arrays_t *arrays_desc)
 {
-  //reflect_enqueue_pack_unpack(arrays_desc);
   if(packVector){
     reflect_pack_start_all(arrays_desc);
     //    reflect_pack_wait_all(arrays_desc);
@@ -984,8 +927,6 @@ static void _XACC_reflect_do_inter_start(_XACC_arrays_t *arrays_desc)
 
 static void _XACC_reflect_do_inter_wait(_XACC_arrays_t *arrays_desc)
 {
-  //  int numDevices = arrays_desc->device_type->size;
-
   _XACC_reflect_do_inter_wait_dim0(arrays_desc);
 
   _XACC_device_t *device = arrays_desc->device_type;
@@ -1022,11 +963,10 @@ static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
       _XACC_array_info_t* lower_info0 = &lower_device_array->info[0];
       _XMP_reflect_sched_t* lo_reflect = lower_info0->reflect_sched;
 
-      size_t loSendSize = reflect->blocklength*reflect->hi_width;//type_size * loSendElements;
-      char* sendPtr= reflect->hi_send_buf;//(char*)device_array->deviceptr + loSendOffset * type_size;
-      char* recvPtr= lo_reflect->hi_recv_buf;//(char*)lower_device_array->deviceptr + loSendOffset * type_size;
+      size_t loSendSize = reflect->blocklength*reflect->hi_width;
+      char* sendPtr= reflect->hi_send_buf;
+      char* recvPtr= lo_reflect->hi_recv_buf;
       //printf("sendP=%p, recvP=%p, size=%zd\n", sendPtr,recvPtr,loSendSize);
-      //cudaMemcpy(recvPtr, sendPtr, loSendSize, cudaMemcpyDefault);
       CUDA_SAFE_CALL(cudaMemcpyAsync(recvPtr, sendPtr, loSendSize, cudaMemcpyDeviceToDevice, *st));
       
     }
@@ -1036,12 +976,10 @@ static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
       _XACC_array_info_t* upper_info0 = &upper_device_array->info[0];
       _XMP_reflect_sched_t* hi_reflect = upper_info0->reflect_sched;
 
-      size_t hiSendSize = reflect->blocklength*reflect->lo_width; //hiSendElements * type_size;
-      char* sendPtr= reflect->lo_send_buf; //(char*)device_array->deviceptr + hiSendOffset * type_size;
-      char* recvPtr= hi_reflect->lo_recv_buf; //(char*)upper_device_array->deviceptr + hiSendOffset * type_size;
-      //cudaMemcpy(recvPtr, sendPtr, hiSendSize, cudaMemcpyDefault);
+      size_t hiSendSize = reflect->blocklength*reflect->lo_width;
+      char* sendPtr= reflect->lo_send_buf;
+      char* recvPtr= hi_reflect->lo_recv_buf;
       cudaStream_t *st = (cudaStream_t*)reflect->lo_async_id;
-      //cudaMemcpy(recvPtr, sendPtr, hiSendSize, cudaMemcpyDefault);
       CUDA_SAFE_CALL(cudaMemcpyAsync(recvPtr, sendPtr, hiSendSize, cudaMemcpyDeviceToDevice, *st));
     }
   }
@@ -1053,7 +991,6 @@ static void _XACC_reflect_do_intra_wait(_XACC_arrays_t *arrays_desc)
 
   if(numDevices == 1) return;
 
-  //  for(dev=0; dev < numDevices; dev++){
   _XACC_device_t *device = arrays_desc->device_type;
   for(int dev = device->lb; dev <= device->ub; dev += device->step){
     _XACC_array_t* device_array = &(arrays_desc->device_array[dev]);
@@ -1075,30 +1012,18 @@ static void _XACC_reflect_do_intra_wait(_XACC_arrays_t *arrays_desc)
 }
 
 void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
-  /* int dev; */
-  /* int numDevices = arrays_desc->device_type->size; */
-  /* for(dev=0; dev < 2; dev++){ */
-  /*   CUDA_SAFE_CALL(cudaSetDevice(dev)); */
-  /*   CUDA_SAFE_CALL(cudaDeviceSynchronize()); */
-  /* } */
-
   TLOG_LOG(TLOG_EVENT_1_IN);
 
-  //他ノードとの通信の開始
+  //start comm
   _XACC_reflect_do_intra_start(arrays_desc);
   _XACC_reflect_do_inter_start(arrays_desc);
 
   TLOG_LOG(TLOG_EVENT_1_OUT);
   TLOG_LOG(TLOG_EVENT_2_IN);
 
-  //他ノードとの通信の待機
+  //wait comm
   _XACC_reflect_do_intra_wait(arrays_desc);
   _XACC_reflect_do_inter_wait(arrays_desc);
  
   TLOG_LOG(TLOG_EVENT_2_OUT);
-
-  /* for(dev=0; dev < 2; dev++){ */
-  /*   CUDA_SAFE_CALL(cudaSetDevice(dev)); */
-  /*   CUDA_SAFE_CALL(cudaDeviceSynchronize()); */
-  /* } */
 }
