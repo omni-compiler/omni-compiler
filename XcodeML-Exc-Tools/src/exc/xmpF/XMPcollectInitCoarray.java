@@ -14,7 +14,7 @@ import java.util.*;
 /*
  * create subroutine xmpf_init_xxx
  */
-public class XMPcollectInit {
+public class XMPcollectInitCoarray {
 
   final String ProcTextSeparator = "\n";
 
@@ -33,7 +33,7 @@ public class XMPcollectInit {
   //------------------------------
   //  constructor/finalizer
   //------------------------------
-  public XMPcollectInit(String mallocName) {
+  public XMPcollectInitCoarray(String mallocName) {
     _init_forFile();
     this.mallocName = mallocName;
   }
@@ -66,16 +66,25 @@ public class XMPcollectInit {
     String text = ProcTextSeparator;
     text += "SUBROUTINE " + procName + "\n";
 
-    // common stmt
-    text += " COMMON / " + commonName + " /";
+    // type specification stmt
+    text += " INTEGER(8) ::";
     String delim = " ";
     for (String name: varNames) {
       text += delim + name;
       delim = ", ";
     }
+    text += "\n";
+
+    // common stmt
+    text += " COMMON / " + commonName + " /";
+    delim = " ";
+    for (String name: varNames) {
+      text += delim + name;
+      delim = ", ";
+    }
+    text += "\n";
 
     // call stmts
-    text += "\n";
     for (String stmt: stmts) {
       text += stmt;
     }

@@ -37,7 +37,7 @@ public class XMPtransCoarray
   private String initProcTextForFile;
 
   //CollectInit mediator
-  XMPcollectInit collectInit;
+  XMPcollectInitCoarray collectInit;
 
   private String commonName;
 
@@ -75,7 +75,7 @@ public class XMPtransCoarray
   //------------------------------
   public void run() {
     // initialize for the file
-    collectInit = new XMPcollectInit(MALLOC_LIB_NAME);
+    collectInit = new XMPcollectInitCoarray(MALLOC_LIB_NAME);
 
     if (staticCoarrays.size() > 0) {  // static coarrays included
       transStaticCoarrays();
