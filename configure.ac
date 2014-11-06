@@ -1911,14 +1911,15 @@ omniBinDir=''
 omniLibDir=''
 omniEtcDir="${OM_DRIVER_CONF_DIR}/"
 omniIncDir=''
-AC_ARG_WITH([omni],
-	[AS_HELP_STRING([--with-omni],
-		[specify where the omni is installed (prefix default).])],
-	[tmpOmniDir=${withval}],
-	[tmpOmniDir=${prefix}])
-if test -z "${tmpOmniDir}"; then
-    tmpOmniDir=${defaultOmniDir}
-fi
+#AC_ARG_WITH([omni],
+#	[AS_HELP_STRING([--with-omni],
+#		[specify where the omni is installed (prefix default).])],
+#	[tmpOmniDir=${withval}],
+#	[tmpOmniDir=${prefix}])
+#if test -z "${tmpOmniDir}"; then
+#    tmpOmniDir=${defaultOmniDir}
+#fi
+
 AC_MSG_CHECKING([the Omni is installed at "${tmpOmniDir}"])
 if test -d "${tmpOmniDir}"; then
     if test -x "${tmpOmniDir}/bin/F_Front"; then
@@ -1944,13 +1945,13 @@ AC_SUBST(omniEtcDir)
 AC_SUBST(omniIncDir)
 
 # native compiler
-tmpNativeCompiler=''
-AC_ARG_WITH([nativeCompiler],
-	[AS_HELP_STRING([--with-nativeCompiler],
-		[specify a native fortran compiler ("gfortran" default).])],
-	[tmpNativeCompiler=${withval}],
-	[tmpNativeCompiler="gfortran"])
-nativeCompiler=${tmpNativeCompiler}
+#tmpNativeCompiler=''
+#AC_ARG_WITH([nativeCompiler],
+#	[AS_HELP_STRING([--with-nativeCompiler],
+#		[specify a native fortran compiler ("gfortran" default).])],
+#	[tmpNativeCompiler=${withval}],
+#	[tmpNativeCompiler="gfortran"])
+nativeCompiler=${FC}
 AC_SUBST(nativeCompiler)
 
 checkCpp() {
@@ -1973,11 +1974,12 @@ checkCpp() {
 # cpp
 cppCmd=''
 tmpCppCmd=''
-AC_ARG_WITH([cpp],
-	[AS_HELP_STRING([--with-cpp],
-		[specify a cpp command (native compiler default).])],
-	[tmpCppCmd=${withval}],
-	[tmpCppCmd=${nativeCompiler}])
+#AC_ARG_WITH([cpp],
+#	[AS_HELP_STRING([--with-cpp],
+#		[specify a cpp command (native compiler default).])],
+#	[tmpCppCmd=${withval}],
+#	[tmpCppCmd=${nativeCompiler}])
+tmpCppCmd=${CPP}
 AC_MSG_CHECKING(["${tmpCppCmd}" is a C preprosessor])
 checkCpp ${tmpCppCmd}
 if test $? -eq 0; then

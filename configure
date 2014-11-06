@@ -975,9 +975,6 @@ with_gasnet_conduit
 with_gpucc
 with_gpu_cflags
 with_cuda
-with_omni
-with_nativeCompiler
-with_cpp
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1662,11 +1659,6 @@ Optional Packages:
   --with-gpucc=CMD            GPU C compiler (default: nvcc)
   --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)
   --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)
-  --with-omni             specify where the omni is installed (prefix
-                          default).
-  --with-nativeCompiler   specify a native fortran compiler ("gfortran"
-                          default).
-  --with-cpp              specify a cpp command (native compiler default).
 
 Some influential environment variables:
   CC          C compiler command
@@ -26068,17 +26060,15 @@ omniBinDir=''
 omniLibDir=''
 omniEtcDir="${OM_DRIVER_CONF_DIR}/"
 omniIncDir=''
+#AC_ARG_WITH([omni],
+#	[AS_HELP_STRING([--with-omni],
+#		[specify where the omni is installed (prefix default).])],
+#	[tmpOmniDir=${withval}],
+#	[tmpOmniDir=${prefix}])
+#if test -z "${tmpOmniDir}"; then
+#    tmpOmniDir=${defaultOmniDir}
+#fi
 
-# Check whether --with-omni was given.
-if test "${with_omni+set}" = set; then :
-  withval=$with_omni; tmpOmniDir=${withval}
-else
-  tmpOmniDir=${prefix}
-fi
-
-if test -z "${tmpOmniDir}"; then
-    tmpOmniDir=${defaultOmniDir}
-fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking the Omni is installed at \"${tmpOmniDir}\"" >&5
 $as_echo_n "checking the Omni is installed at \"${tmpOmniDir}\"... " >&6; }
 if test -d "${tmpOmniDir}"; then
@@ -26107,16 +26097,13 @@ fi
 
 
 # native compiler
-tmpNativeCompiler=''
-
-# Check whether --with-nativeCompiler was given.
-if test "${with_nativeCompiler+set}" = set; then :
-  withval=$with_nativeCompiler; tmpNativeCompiler=${withval}
-else
-  tmpNativeCompiler="gfortran"
-fi
-
-nativeCompiler=${tmpNativeCompiler}
+#tmpNativeCompiler=''
+#AC_ARG_WITH([nativeCompiler],
+#	[AS_HELP_STRING([--with-nativeCompiler],
+#		[specify a native fortran compiler ("gfortran" default).])],
+#	[tmpNativeCompiler=${withval}],
+#	[tmpNativeCompiler="gfortran"])
+nativeCompiler=${FC}
 
 
 checkCpp() {
@@ -26139,14 +26126,12 @@ checkCpp() {
 # cpp
 cppCmd=''
 tmpCppCmd=''
-
-# Check whether --with-cpp was given.
-if test "${with_cpp+set}" = set; then :
-  withval=$with_cpp; tmpCppCmd=${withval}
-else
-  tmpCppCmd=${nativeCompiler}
-fi
-
+#AC_ARG_WITH([cpp],
+#	[AS_HELP_STRING([--with-cpp],
+#		[specify a cpp command (native compiler default).])],
+#	[tmpCppCmd=${withval}],
+#	[tmpCppCmd=${nativeCompiler}])
+tmpCppCmd=${CPP}
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking \"${tmpCppCmd}\" is a C preprosessor" >&5
 $as_echo_n "checking \"${tmpCppCmd}\" is a C preprosessor... " >&6; }
 checkCpp ${tmpCppCmd}

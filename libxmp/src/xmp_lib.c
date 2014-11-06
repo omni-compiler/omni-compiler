@@ -4,17 +4,15 @@
  *  $
  */
 
-#include "mpi.h"
 #include "stdlib.h"
 #include "xmp_internal.h"
 #include "xmp.h"
 #include <stddef.h>
 
-//MPI_Comm xmp_get_mpi_comm(void) {
-int xmp_get_mpi_comm(void) {
-  MPI_Comm *comm0;
-  comm0=_XMP_get_execution_nodes()->comm;
-  return *(int *)comm0;
+MPI_Comm xmp_get_mpi_comm(void) {
+  MPI_Comm *comm;
+  comm=_XMP_get_execution_nodes()->comm;
+  return *comm;
 }
 
 void xmp_init_mpi(int *argc, char ***argv) {
