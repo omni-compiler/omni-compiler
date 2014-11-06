@@ -109,7 +109,8 @@ size_t _XMP_get_datatype_size(int datatype)
   switch (datatype){
 
   case _XMP_N_TYPE_BOOL:
-    size = SIZEOF__BOOL; break;
+    size = _XMPF_running ? SIZEOF_UNSIGNED_INT : SIZEOF__BOOL;
+    break;
 
   case _XMP_N_TYPE_CHAR:
   case _XMP_N_TYPE_UNSIGNED_CHAR:
