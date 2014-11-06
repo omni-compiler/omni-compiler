@@ -622,6 +622,22 @@ else  # if "--target" option is not used in ./configure
   BEFC_MODINC="-M"
 fi
 
+# --------------------------------------------------------------------
+# specify Backend C compiler
+AC_ARG_WITH(backend-cc,
+    [  --with-backend-cc=CMD       Backend C compiler (default: mpicc)],
+    [BECC="${withval}"], [BECC="${BECC}"])
+
+# --------------------------------------------------------------------
+# specify Backend F90 compiler
+AC_ARG_WITH(backend-fc,
+    [  --with-backend-fc=CMD       Backend F90 compiler (default: mpif90)],
+    [BEFC="${withval}"], [BEFC="${BEFC}"])
+
+# --------------------------------------------------------------------
+AC_SUBST(BECC)
+AC_SUBST(BEFC)
+
 PPCC="${BECC}"
 PPCC_OPT="-E"
 NATIVE_DOPT="-D_XCALABLEMP"
@@ -659,21 +675,6 @@ AC_SUBST(FJRDMA)
 #AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
 #AC_SUBST(FJRDMA)
 
-# --------------------------------------------------------------------
-# specify Backend C compiler
-AC_ARG_WITH(backend-cc,
-    [  --with-backend-cc=CMD       Backend C compiler (default: mpicc)],
-    [BECC="${withval}"], [BECC="${BECC}"])
-
-# --------------------------------------------------------------------
-# specify Backend F90 compiler
-AC_ARG_WITH(backend-fc,
-    [  --with-backend-fc=CMD       Backend F90 compiler (default: mpif90)],
-    [BEFC="${withval}"], [BEFC="${BEFC}"])
-
-# --------------------------------------------------------------------
-AC_SUBST(BECC)
-AC_SUBST(BEFC)
 
 AC_SUBST(BEFC_MODINC)
 
