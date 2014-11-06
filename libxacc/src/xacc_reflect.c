@@ -753,6 +753,7 @@ static void reflect_pack_start_all(_XACC_arrays_t *arrays_desc)
 	_XMP_reflect_sched_t *reflect = ai->reflect_sched;
 	if(j != 0){
 	  reflect_pack_start(reflect, arrays_desc->type_size);
+	  TLOG_LOG(TLOG_EVENT_9);
 	}
 	if(useHostBuffer){
 	  reflect_update_host(reflect);
@@ -776,6 +777,7 @@ static void reflect_pack_wait_all(_XACC_arrays_t *arrays_desc)
 	_XMP_reflect_sched_t *reflect = ai->reflect_sched;
 	if( j != 0 || useHostBuffer){
 	  reflect_pack_wait(reflect);
+	  TLOG_LOG(TLOG_EVENT_1);
 	}
       }
     }
@@ -802,6 +804,7 @@ static void reflect_unpack_start_all(_XACC_arrays_t *arrays_desc)
 	}
 	if(j != 0){
 	  reflect_unpack_start(reflect, arrays_desc->type_size);
+	  TLOG_LOG(TLOG_EVENT_1);
 	}
       }
     }
@@ -822,6 +825,7 @@ static void reflect_unpack_wait_all(_XACC_arrays_t *arrays_desc)
 	_XMP_reflect_sched_t *reflect = ai->reflect_sched;
 	if( j != 0 || useHostBuffer){
 	  reflect_unpack_wait(reflect);
+	  TLOG_LOG(TLOG_EVENT_1);
 	}
       }
     }
@@ -841,9 +845,11 @@ static void _XACC_reflect_do_inter_start_dev(_XACC_arrays_t *arrays_desc, int i)
 
       if(packVector){
 	reflect_pack_wait(reflect);
+	TLOG_LOG(TLOG_EVENT_2);
       }
 
       MPI_Startall(4, reflect->req);
+      TLOG_LOG(TLOG_EVENT_1);
     }
   }
 }
@@ -860,6 +866,7 @@ static void _XACC_reflect_do_inter_wait_dev(_XACC_arrays_t *arrays_desc, int i)
       _XMP_reflect_sched_t *reflect = ai->reflect_sched;
 
       MPI_Waitall(4, reflect->req, MPI_STATUSES_IGNORE);
+      TLOG_LOG(TLOG_EVENT_1);
     }
   }
 }
@@ -888,7 +895,7 @@ static void _XACC_reflect_do_inter_start_dim0(_XACC_arrays_t *arrays_desc)
     MPI_Start(reflect->req + 1); //lo send                                                                                                                                                        
     MPI_Start(reflect->req + 2); //hi recv                                                                                                                                                        
   }
-
+  TLOG_LOG(TLOG_EVENT_1);
 }
 
 static void _XACC_reflect_do_inter_wait_dim0(_XACC_arrays_t *arrays_desc)
@@ -907,36 +914,47 @@ static void _XACC_reflect_do_inter_wait_dim0(_XACC_arrays_t *arrays_desc)
     MPI_Wait(reflect->req + 1, MPI_STATUS_IGNORE); //lo send                                                                                                                                      
     MPI_Wait(reflect->req + 2, MPI_STATUS_IGNORE); //hi recv                                                                                                                                      
   }
+  TLOG_LOG(TLOG_EVENT_1);
 }
 
 
 static void _XACC_reflect_do_inter_start(_XACC_arrays_t *arrays_desc)
 {
   if(packVector){
+    TLOG_LOG(TLOG_EVENT_3_IN);
     reflect_pack_start_all(arrays_desc);
+    TLOG_LOG(TLOG_EVENT_3_OUT);
     //    reflect_pack_wait_all(arrays_desc);
   }
 
+  TLOG_LOG(TLOG_EVENT_4_IN);
   _XACC_reflect_do_inter_start_dim0(arrays_desc);
 
   _XACC_device_t *device = arrays_desc->device_type;
   for(int i = device->lb; i <= device->ub; i += device->step){
    _XACC_reflect_do_inter_start_dev(arrays_desc, i);
   }
+  TLOG_LOG(TLOG_EVENT_4_OUT);
 }
 
 static void _XACC_reflect_do_inter_wait(_XACC_arrays_t *arrays_desc)
 {
+  TLOG_LOG(TLOG_EVENT_6_IN);
   _XACC_reflect_do_inter_wait_dim0(arrays_desc);
 
   _XACC_device_t *device = arrays_desc->device_type;
   for(int i = device->lb; i <= device->ub; i += device->step){   
    _XACC_reflect_do_inter_wait_dev(arrays_desc, i);
   }
+  TLOG_LOG(TLOG_EVENT_6_OUT);
 
   if(packVector){
+    TLOG_LOG(TLOG_EVENT_7_IN);
     reflect_unpack_start_all(arrays_desc);
+    TLOG_LOG(TLOG_EVENT_7_OUT);
+    TLOG_LOG(TLOG_EVENT_8_IN);
     reflect_unpack_wait_all(arrays_desc);
+    TLOG_LOG(TLOG_EVENT_8_OUT);
   }
 }
 
@@ -946,6 +964,7 @@ static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
 
   if(numDevices == 1) return;
 
+  TLOG_LOG(TLOG_EVENT_2_IN);
   _XACC_device_t *device = arrays_desc->device_type;
   for(int dev = device->lb; dev <= device->ub; dev += device->step){
 
@@ -968,7 +987,7 @@ static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
       char* recvPtr= lo_reflect->hi_recv_buf;
       //printf("sendP=%p, recvP=%p, size=%zd\n", sendPtr,recvPtr,loSendSize);
       CUDA_SAFE_CALL(cudaMemcpyAsync(recvPtr, sendPtr, loSendSize, cudaMemcpyDeviceToDevice, *st));
-      
+      TLOG_LOG(TLOG_EVENT_9);
     }
 
     if(dev < numDevices - 1){
@@ -981,8 +1000,10 @@ static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
       char* recvPtr= hi_reflect->lo_recv_buf;
       cudaStream_t *st = (cudaStream_t*)reflect->lo_async_id;
       CUDA_SAFE_CALL(cudaMemcpyAsync(recvPtr, sendPtr, hiSendSize, cudaMemcpyDeviceToDevice, *st));
+      TLOG_LOG(TLOG_EVENT_9);
     }
   }
+  TLOG_LOG(TLOG_EVENT_2_OUT);
 }
 
 static void _XACC_reflect_do_intra_wait(_XACC_arrays_t *arrays_desc)
@@ -990,6 +1011,7 @@ static void _XACC_reflect_do_intra_wait(_XACC_arrays_t *arrays_desc)
   int numDevices = arrays_desc->device_type->size;
 
   if(numDevices == 1) return;
+  TLOG_LOG(TLOG_EVENT_9_IN);
 
   _XACC_device_t *device = arrays_desc->device_type;
   for(int dev = device->lb; dev <= device->ub; dev += device->step){
@@ -1007,23 +1029,18 @@ static void _XACC_reflect_do_intra_wait(_XACC_arrays_t *arrays_desc)
     /* } */
     if(dev > 0 || dev < numDevices- 1){
       CUDA_SAFE_CALL(cudaStreamSynchronize(*(cudaStream_t*)(reflect->lo_async_id)));
+      TLOG_LOG(TLOG_EVENT_1);
     }
   }
+  TLOG_LOG(TLOG_EVENT_9_OUT);
 }
 
 void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
-  TLOG_LOG(TLOG_EVENT_1_IN);
-
   //start comm
   _XACC_reflect_do_intra_start(arrays_desc);
   _XACC_reflect_do_inter_start(arrays_desc);
 
-  TLOG_LOG(TLOG_EVENT_1_OUT);
-  TLOG_LOG(TLOG_EVENT_2_IN);
-
   //wait comm
   _XACC_reflect_do_intra_wait(arrays_desc);
   _XACC_reflect_do_inter_wait(arrays_desc);
- 
-  TLOG_LOG(TLOG_EVENT_2_OUT);
 }
