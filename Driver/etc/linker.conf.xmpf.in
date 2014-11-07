@@ -14,7 +14,7 @@ PID=$$
 files=( "$@" )
 
 #-------------------------------------------------
-# call xmp_collect_init, which will be abolished
+# call xmp_collect_init
 #-------------------------------------------------
 INIT_MODULE_OBJ="/tmp/_xmpf_init_${PID}.o"
 if [ "${IS_CRAY}" = "Yes" ]; then
@@ -33,11 +33,11 @@ fi
 $CMD "$@" || exit 1
 
 #-------------------------------------------------
-# call omni_collect_init
+# call omni_traverse
 #-------------------------------------------------
-COLLECT_INIT_SRC="/tmp/omni_collect_init_${PID}.f90"
-CMD="@OMNI_HOME@/bin/omni_collect_init"
-args=( --F --prefix xmpf -o ${COLLECT_INIT_SRC} "${files[@]}" )
+TRAVERSER="/tmp/omni_traverse_${PID}.f90"
+CMD="@OMNI_HOME@/bin/omni_traverse"
+args=( --F --prefix xmpf -o ${TRAVERSER} "${files[@]}" )
 set -- ${args[@]}
 if [ "${OM_VERBOSE}" = "1" ]; then
     echo $CMD "$@"
@@ -66,7 +66,7 @@ for i in ${OM_OPTIONS}; do
 done
 
 GASNET_LIBS="@GASNET_LIBS@"
-LIBS="@OMNI_HOME@/lib/xmpf_main.o ${COLLECT_INIT_SRC} ${INIT_MODULE_OBJ} ${LIBS} -lxmpf -lxmp ${GASNET_LIBS}"
+LIBS="@OMNI_HOME@/lib/xmpf_main.o ${TRAVERSER} ${INIT_MODULE_OBJ} ${LIBS} -lxmpf -lxmp ${GASNET_LIBS}"
 
 LINKER=@BEFC@
 if test ${hasScalasca} -eq 1; then

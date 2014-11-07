@@ -55,23 +55,23 @@ fi
 
 
 #--------------------------------------------------------------
-# find names ${PREFIX}_{init|finalize}_* 
+# find names ${PREFIX}_traverse_* 
 #--------------------------------------------------------------
 
 #--- get candidates
 candidates=`$NM "${INFILES[@]}" | awk 'NF >= 2 && $(NF-1) == "T" { print $NF }'`
 
-#--- choose candidates "${PREFIX}_{init|finalize}_*_?*" and rename them if needed
+#--- choose candidates "${PREFIX}_traverse_*_?*" and rename them if needed
 procedures=()
 for name in $candidates; do
     case $name in
-        ${PREFIX}_init_*_?* | ${PREFIX}_finalize_*_?* )
+        ${PREFIX}_traverse_*_?* )
             case "$LANG" in
                 F) procedures+=( ${name%_} );;    # get name from "name_"
                 C) procedures+=( $name );;
             esac;;
-        ${PREFIX}_init_* | ${PREFIX}_finalize_* )
-            echo found illegal name of init/finalize procedure: \"${name}\"
+        ${PREFIX}_traverse_* )
+            echo found unacceptable name of traverse procedure: \"${name}\"
             error=yes;;
     esac
 done
@@ -82,9 +82,9 @@ fi
 #--- classify the chosen names by keywords
 groupnames=()
 for name in "${procedures[@]}"; do
-    # separate procedure name "prefix_{init|finalize}_keywd_reststring"
+    # separate procedure name "prefix_travserse_keywd_reststring"
     # into three parts, groupname, '_' and basename, where
-    #  groupname is "prefix_{init|finalize}_keywd" and
+    #  groupname is "prefix_travserse_keywd" and
     #  basename is any string possibly including '_'
     basename=${name#${PREFIX}_*_*_}
     groupname=${name%_${basename}}

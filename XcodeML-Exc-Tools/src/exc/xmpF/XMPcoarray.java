@@ -15,17 +15,19 @@ import java.util.*;
  */
 public class XMPcoarray {
 
-  private String name;
-  private Ident ident;
-  //  private BlockList decls;
-  private XobjectDef def;
-  private FunctionBlock fblock;
+  final static String CRAYPOINTER_PREFIX = "xmpf_cptr";
 
+  private Ident ident;
+  private String name;
   private Xtype originalType;
   private String crayPointerName;
   private Ident crayPointerId;
 
   private String commonName;
+
+  private XobjectDef def;
+  private FunctionBlock fblock;
+
 
   //------------------------------
   //  CONSTRUCTOR
@@ -36,7 +38,7 @@ public class XMPcoarray {
     this.fblock = fblock;
     name = ident.getName();
     originalType = ident.Type().copy();  // not sure how deep this copy
-    crayPointerName = XMPtransCoarray.CRAYPOINTER_PREFIX + name;
+    crayPointerName = CRAYPOINTER_PREFIX + "_" + name;
     crayPointerId = null;
   }
 
@@ -56,9 +58,9 @@ public class XMPcoarray {
     crayPointerId.Type().setIsFcrayPointer(true);
   }
 
-  public Xobject genMallocCallStmt() {
+  public Xobject genMallocCallStmt(String mallocLibName) {
     BlockList decls = fblock.getBody();
-    Ident mallocId = decls.declLocalIdent(XMPtransCoarray.MALLOC_LIB_NAME,
+    Ident mallocId = decls.declLocalIdent(mallocLibName,
                                           BasicType.FsubroutineType);
     Xobject varRef = Xcons.FvarRef(getCrayPointerId());
     Xobject elem = getElementLengthExpr(); 

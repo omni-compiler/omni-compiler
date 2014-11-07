@@ -13,7 +13,7 @@ PID=$$
 files=( "$@" )
 
 #-------------------------------------------------
-# call xmp_collect_init, which will be abolished
+# call xmp_collect_init
 #-------------------------------------------------
 INIT_MODULE_OBJ="/tmp/_xmpc_init_${PID}.o"
 CMD="@OMNI_HOME@/bin/xmp_collect_init"
@@ -25,11 +25,11 @@ fi
 $CMD "$@" || exit 1
 
 #-------------------------------------------------
-# call omni_collect_init
+# call omni_traverse
 #-------------------------------------------------
-COLLECT_INIT_SRC="/tmp/omni_collect_init_${PID}.c"
-CMD="@OMNI_HOME@/bin/omni_collect_init"
-args=( --C --prefix xmpc -o ${COLLECT_INIT_SRC} "${files[@]}" )
+TRAVERSER="/tmp/omni_traverse_${PID}.c"
+CMD="@OMNI_HOME@/bin/omni_traverse"
+args=( --C --prefix xmpc -o ${TRAVERSER} "${files[@]}" )
 set -- ${args[@]}
 if [ "${OM_VERBOSE}" = "1" ]; then
     echo $CMD "$@"
@@ -61,7 +61,7 @@ for i in ${OM_OPTIONS}; do
 done
 
 GASNET_LIB="@GASNET_LIBS@"
-LIBS="${COLLECT_INIT_SRC} ${INIT_MODULE_OBJ} ${LIBS} -lxmp ${GASNET_LIB}"
+LIBS="${TRAVERSER} ${INIT_MODULE_OBJ} ${LIBS} -lxmp ${GASNET_LIB}"
 
 TCA_LIB="@TCA_PREFIX@"
 if test "${TCA_LIB}" != ""; then
