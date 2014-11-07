@@ -1566,8 +1566,23 @@ static int l2g(_XMP_array_t *array_d, int dim, int idx)
       break;
    case _XMP_N_ALIGN_BLOCK_CYCLIC:
       chunk = &(array_d->align_template->chunk[array_d->info[dim].align_template_index]);
-      ret = array_d->info[dim].par_lower+lidx%chunk->par_width
-         +(lidx/chunk->par_width)*chunk->onto_nodes_info->size*chunk->par_width;
+      if(array_d->info[dim].align_subscript){
+         int rank;
+         int offset = array_d->info[dim].align_subscript%chunk->par_width;
+         rank = (array_d->info[dim].align_subscript/chunk->par_width)%chunk->onto_nodes_info->size;
+         if(rank == chunk->onto_nodes_info->rank){
+            lidx += offset;
+            ret = array_d->info[dim].par_lower+lidx%chunk->par_width
+               +(lidx/chunk->par_width)*chunk->onto_nodes_info->size*chunk->par_width;
+            ret -= offset;
+         } else {
+            ret = array_d->info[dim].par_lower+lidx%chunk->par_width
+               +(lidx/chunk->par_width)*chunk->onto_nodes_info->size*chunk->par_width;
+         }
+      } else {
+         ret = array_d->info[dim].par_lower+lidx%chunk->par_width
+            +(lidx/chunk->par_width)*chunk->onto_nodes_info->size*chunk->par_width;
+      }
       break;
    case _XMP_N_ALIGN_GBLOCK:
       ret = lidx+array_d->info[dim].par_lower;
@@ -2139,7 +2154,7 @@ static void xmp_matmul_no_opt(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
          }
          if(x_d->is_allocated && xp == d2p(x_d, 1)){
             for(i=b_d->info[0].ser_lower; i<=b_d->info[0].ser_upper; i++){
-               b_recv_size[b2e[g2p_array(b_d, i, j-x_d->info[0].ser_lower+b_d->info[1].ser_lower)]] += b_d->type_size;
+               b_recv_size[b2e[g2p_array(b_d, i, j-x_d->info[1].ser_lower+b_d->info[1].ser_lower)]] += b_d->type_size;
             }
          }
       }
@@ -2153,6 +2168,21 @@ static void xmp_matmul_no_opt(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
 #ifdef DEBUG
       fflush(stdout);
       MPI_Barrier(*(MPI_Comm*)(_XMP_get_execution_nodes()->comm));
+      for(i=0; i<_XMP_get_execution_nodes()->comm_size; i++){
+         if(i == _XMP_get_execution_nodes()->comm_rank){
+            printf(" rank %d: send ", i);
+            for(j=0; j<_XMP_get_execution_nodes()->comm_size; j++){
+               printf("%d ", send_size[j]);
+            }
+            printf(": recv ");
+            for(j=0; j<_XMP_get_execution_nodes()->comm_size; j++){
+               printf("%d ", b_recv_size[j]);
+            }
+            printf(": cp_size %d\n", cp_size);
+         }
+         fflush(stdout);
+         MPI_Barrier(*(MPI_Comm*)(_XMP_get_execution_nodes()->comm));
+      }
 #endif
       if(x_d->is_allocated){
          for(j=0; j<proc_size(b_d, 0); j++){
@@ -2346,10 +2376,10 @@ static void xmp_matmul_no_opt(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
                   char *b_p = (char*)(b_buf+b_recv_pos[b2e[g2p_array(b_d,k+b_d->info[0].ser_lower,gi)]]
                                       +(b_idx0+b_offset[b2e[g2p_array(b_d,k+b_d->info[0].ser_lower,gi)]])*b_d->type_size);
 #ifdef DEBUG
-                  if(i==x_d->info[0].local_lower+0 && j==x_d->info[1].local_lower+0 &&
+                  if(j==x_d->info[0].local_lower+0 && i==x_d->info[1].local_lower+0 &&
                      _XMP_get_execution_nodes()->comm_rank == 0){
                      printf("%4d x %4d: %d %d %d\n", *((int*)a_p), *((int*)b_p),
-                            k+b_d->info[0].ser_lower, b2e[g2p_array(b_d,k+b_d->info[0].ser_lower,gi)], b_idx0);
+                            i, l2g(x_d, 1, i), gi);
                   }
 #endif
                   a_offset[a2e[g2p_array(a_d,gj,k+a_d->info[1].ser_lower)]]++;
