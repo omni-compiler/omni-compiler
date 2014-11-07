@@ -101,7 +101,7 @@ public class XMPtransCoarray
   //       common /xmpf_yyyy_zzzz_EX1/xxxx_V1,xxxx_V2          ! c
   //     end subroutine
   // -------------------------------------------------------
-  // and generate initialization routine (see XMPinitCoarray)
+  // and generate initialization routine (see XMPcoarrayInitProcedure)
   //
 
   private void transStaticCoarrays() {
@@ -118,11 +118,11 @@ public class XMPtransCoarray
     genCommonStmt(commonName, staticCoarrays, def);
 
     // output init procedure
-    XMPinitCoarray initCoarray = new XMPinitCoarray();
-    initCoarray.genInitRoutine(staticCoarrays, newProcName, commonName);
+    XMPcoarrayInitProcedure coarrayInit = new XMPcoarrayInitProcedure();
+    coarrayInit.genInitRoutine(staticCoarrays, newProcName, commonName);
 
     // finalize the init procedure
-    initCoarray.finalize(env);
+    coarrayInit.finalize(env);
   }
 
 

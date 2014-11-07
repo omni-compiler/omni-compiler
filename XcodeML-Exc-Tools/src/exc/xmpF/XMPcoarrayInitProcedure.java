@@ -15,7 +15,7 @@ import java.util.*;
  * create an initialization subroutine 
  *  corresponding to the procedure
  */
-public class XMPinitCoarray {
+public class XMPcoarrayInitProcedure {
 
   final static String MALLOC_LIB_NAME = "xmpf_coarray_malloc";
   final static String ProcTextSeparator = "\n";
@@ -37,7 +37,7 @@ public class XMPinitCoarray {
   //------------------------------
   //  constructor/finalizer
   //------------------------------
-  public XMPinitCoarray() {
+  public XMPcoarrayInitProcedure() {
     _init_forFile();
   }
 
@@ -117,7 +117,7 @@ public class XMPinitCoarray {
     text += "\n";
 
     if (DEBUG) {
-      text += " WRITE(*,*) \"[XMPinitCoarray] start SUBROUTINE " +
+      text += " WRITE(*,*) \"[XMPcoarrayInitProcedure] start SUBROUTINE " +
         procName + "\"\n";
     }
 
@@ -130,7 +130,7 @@ public class XMPinitCoarray {
     }
 
     if (DEBUG) {
-      text += " WRITE(*,*) \"[XMPinitCoarray] end SUBROUTINE " +
+      text += " WRITE(*,*) \"[XMPcoarrayInitProcedure] end SUBROUTINE " +
         procName + "\"\n";
     }
     text += "END SUBROUTINE " + procName + "\n";
