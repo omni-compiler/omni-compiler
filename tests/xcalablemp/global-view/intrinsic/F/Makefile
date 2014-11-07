@@ -18,8 +18,8 @@ chk.o: ./chk/chk.f90
 
 run: $(EXES)
 	$(XRUN) -n 4 ./intrinsic_transpose.x
-	$(XRUN) -n 4 ./intrinsic_matmul.x
-	$(XRUN) -n 4 ./intrinsic_matmul_replica.x
+#	$(XRUN) -n 4 ./intrinsic_matmul.x
+#	$(XRUN) -n 4 ./intrinsic_matmul_replica.x
 
 clean:
 	rm -f $(EXES) $(OBJS) _xmpf_module_INIT.o chk.o
