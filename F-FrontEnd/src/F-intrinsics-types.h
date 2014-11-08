@@ -137,6 +137,9 @@ typedef enum {
     /* Character inquiry functions. */
     INTR_LEN,
 
+    /* F77 non-standard*/
+    INTR_LOC,
+
     /* F90 numeric functions. */
     INTR_CEILING,
     INTR_FLOOR,
