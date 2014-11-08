@@ -8,7 +8,7 @@ LT_PREREQ(2.4)
 # --------------------------------------------------------------------
 # Let the initiation begin....
 
-AC_INIT([Omni Compiler], [0.8.0], [h-murai@riken.jp], [omni])
+AC_INIT([Omni Compiler], [0.9.0], [h-murai@riken.jp], [omni])
 
 AC_CONFIG_AUX_DIR([./buildutils])
 AC_CONFIG_MACRO_DIR([./buildutils])
