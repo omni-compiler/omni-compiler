@@ -21,8 +21,14 @@ HOW TO INSTALL
  * flex gcc gfortran gcc-c++ java-1.7.0-openjdk-devel ant openmpi-devel libxml2-devel byacc make
 
 ## Usage of local-view operations (coarray, post/wait, lock/unlock)
- * Need to install GASNet (http://gasnet.lbl.gov) except for the K computer and FX10.
- * On the K computer or FX10, you can use local-view operations by using Fujitsu RDMA.
+### On the K computer and FX10
+ * Note that some bugs exist in the Fujitsu compiler when using large number of nodes (> 10,000 nodes).
+ * Don't use the local-view operations on a large number of nodes.
+ * To use the local-view operations, please add "--enable-KRDMA" option in ./configure script as follows:
+ $ ./configure --target=Kcomputer-linux-gnu --enable-KRDMA 
+
+### Except for the K computer and FX10
+ * Before installing the Omni compiler, please install GASNet (http://gasnet.lbl.gov).
 
 ## Usage of OpenACC compiler
  * Need to install CUDA (https://developer.nvidia.com/cuda-zone).
@@ -65,6 +71,7 @@ HOW TO INSTALL
     from http://cr.openjdk.java.net/~simonis/ppc-aix-port/
     After that, please set PATH.
     $ ./configure --target=powerpc-ibm-none --prefix=[INSTALLATION PATH]
+
 ## On SR16000 machines
    $ ./configure --target=powerpc64-hitachi-aix  --with-nativecompiler=gcc --with-cpp="xlc -E" --prefix=[INSTALLATION PATH]
 

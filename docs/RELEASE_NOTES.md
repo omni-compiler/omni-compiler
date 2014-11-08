@@ -1,5 +1,9 @@
 Omni Compiler Software RELEASE NOTES
 
+# ver. 0.9.0      2014/11/14
+* Support post/wait operations for the K computer and FX10.
+* Fixed lots of bugs.
+
 # ver. 0.8.0      2014/04/25
 * Support Coarray communication for the K computer and FX10.
 * Support the gblock distribution
