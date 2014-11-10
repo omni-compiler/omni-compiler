@@ -73,7 +73,7 @@ HOW TO INSTALL
     $ ./configure --target=powerpc-ibm-none --prefix=[INSTALLATION PATH]
 
 ## On SR16000 machines
-   $ ./configure --target=powerpc64-hitachi-aix  --with-nativecompiler=gcc --with-cpp="xlc -E" --prefix=[INSTALLATION PATH]
+   $ ./configure --target=powerpc64-hitachi-aix CPP=cpp --prefix=[INSTALLATION PATH]
 
 ## Build
     $ make; make install
