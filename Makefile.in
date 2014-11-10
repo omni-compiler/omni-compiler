@@ -565,7 +565,8 @@ TESTDIRS = "global-view/array/C/" "global-view/array/F/" \
 	"global-view/gmove/F/" "global-view/inquiry/C/" \
 	"global-view/inquiry/F/" "global-view/gblock/C/" \
 	"global-view/gblock/F/" "global-view/align/C/" \
-	"global-view/align/F/" "global-view/util/C/" \
+	"global-view/align/F/" "global-view/intrinsic/C/" \
+	"global-view/intrinsic/F/" "global-view/util/C/" \
 	"global-view/util/F/" "others/F" "others/C" $(am__append_4) \
 	$(am__append_5)
 BASE_LARGE_TESTDIR = "tests/xcalablemp/LARGE-SIZE-TESTS/"

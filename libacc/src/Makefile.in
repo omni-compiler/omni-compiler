@@ -150,8 +150,6 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include -I$(top_builddir)/Driver/atool/src/include/nata
 depcomp =
 am__depfiles_maybe =
-COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -165,9 +163,6 @@ am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
 am__v_CC_0 = @echo "  CC      " $@;
 am__v_CC_1 = 
 CCLD = $(CC)
-LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
@@ -220,7 +215,7 @@ BEFC = @BEFC@
 BEFC_MODINC = @BEFC_MODINC@
 BEFC_OPTION = @BEFC_OPTION@
 BLASLIB = @BLASLIB@
-CC = @CC@
+CC = @BECC@
 CCDEPMODE = @CCDEPMODE@
 CC_LIB = @CC_LIB@
 CFLAGS = @CFLAGS@
@@ -482,6 +477,12 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACC_INC_DIR = ../include
 GPUCC = @GPU_CMD@
+GPUCFLAGS = @GPU_CFLAGS@
+AM_CFLAGS = -I$(ACC_INC_DIR) @BECC_OPTION@ 
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS)
+
+LINK = $(CCLD) $(AM_CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 lib_LIBRARIES = libacc.a
 libacc_a_SOURCES = $(ACC_INC_DIR)/acc_internal.h $(ACC_INC_DIR)/acc_gpu_internal.h \
 			  $(ACC_INC_DIR)/acc_gpu_constant.h $(ACC_INC_DIR)/acc_gpu_data_struct.h \
@@ -566,6 +567,9 @@ mostlyclean-compile:
 
 distclean-compile:
 	-rm -f *.tab.c
+
+.c.o:
+	$(AM_V_CC)$(COMPILE) -c -o $@ $<
 
 .c.obj:
 	$(AM_V_CC)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
@@ -785,10 +789,7 @@ uninstall-am: uninstall-libLIBRARIES
 
 
 .cu.o:
-	$(GPUCC) -I$(ACC_INC_DIR) -O3 -c -o $@ $<
-
-.c.o:
-	$(CC) -I$(ACC_INC_DIR) -O3 -c -o $@ $<
+	$(GPUCC) $(GPUCFLAGS) -I$(ACC_INC_DIR) -c -o $@ $<
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

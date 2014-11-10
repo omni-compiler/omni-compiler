@@ -98,6 +98,8 @@ static __device__ void warpReduce(volatile T sdata[64], int kind){
 }
 
 #if __CUDA_ARCH__ >= 300
+#include <cuda.h>
+#if CUDA_VERSION <= 6000
 static __inline__ __device__
 double __shfl_xor(double var, int laneMask, int width=warpSize)
 {
@@ -107,6 +109,7 @@ double __shfl_xor(double var, int laneMask, int width=warpSize)
   lo = __shfl_xor( lo, laneMask, width );
   return __hiloint2double( hi, lo );
 }
+#endif
 template<typename T>
 static __device__
 void reduceInBlock(T *resultInBlock, T resultInThread, int kind){

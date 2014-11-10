@@ -8,7 +8,7 @@ LT_PREREQ(2.4)
 # --------------------------------------------------------------------
 # Let the initiation begin....
 
-AC_INIT([Omni Compiler], [0.8.0], [h-murai@riken.jp], [omni])
+AC_INIT([Omni Compiler], [0.9.0], [h-murai@riken.jp], [omni])
 
 AC_CONFIG_AUX_DIR([./buildutils])
 AC_CONFIG_MACRO_DIR([./buildutils])
@@ -622,6 +622,22 @@ else  # if "--target" option is not used in ./configure
   BEFC_MODINC="-M"
 fi
 
+# --------------------------------------------------------------------
+# specify Backend C compiler
+AC_ARG_WITH(backend-cc,
+    [  --with-backend-cc=CMD       Backend C compiler (default: mpicc)],
+    [BECC="${withval}"], [BECC="${BECC}"])
+
+# --------------------------------------------------------------------
+# specify Backend F90 compiler
+AC_ARG_WITH(backend-fc,
+    [  --with-backend-fc=CMD       Backend F90 compiler (default: mpif90)],
+    [BEFC="${withval}"], [BEFC="${BEFC}"])
+
+# --------------------------------------------------------------------
+AC_SUBST(BECC)
+AC_SUBST(BEFC)
+
 PPCC="${BECC}"
 PPCC_OPT="-E"
 NATIVE_DOPT="-D_XCALABLEMP"
@@ -659,21 +675,6 @@ AC_SUBST(FJRDMA)
 #AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
 #AC_SUBST(FJRDMA)
 
-# --------------------------------------------------------------------
-# specify Backend C compiler
-AC_ARG_WITH(backend-cc,
-    [  --with-backend-cc=CMD       Backend C compiler (default: mpicc)],
-    [BECC="${withval}"], [BECC="${BECC}"])
-
-# --------------------------------------------------------------------
-# specify Backend F90 compiler
-AC_ARG_WITH(backend-fc,
-    [  --with-backend-fc=CMD       Backend F90 compiler (default: mpif90)],
-    [BEFC="${withval}"], [BEFC="${BEFC}"])
-
-# --------------------------------------------------------------------
-AC_SUBST(BECC)
-AC_SUBST(BEFC)
 
 AC_SUBST(BEFC_MODINC)
 
@@ -740,8 +741,8 @@ else
   *ICC*)
     OMC_CONF_LX2X_OPT=""
     OMC_CONF_NTV_OPT="-std=gnu99 -w"
-    OMC_CONF_LNK_OPT="-fast -openmp"
-    BECC_OPTION="-fast -std=gnu99 -Wall -Wpointer-arith"
+    OMC_CONF_LNK_OPT="-O2 -openmp"
+    BECC_OPTION="-O2 -std=gnu99 -Wall -Wpointer-arith"
     BECC_OMP_OPTION="-openmp"
     ;;
   *)
@@ -813,8 +814,8 @@ if test $enableF2F = yes; then
     case $chk in
     GNU*)
       OMF_CONF_LX2X_OPT="-gnu"
-      OMF_CONF_NTV_OPT="-ffree-form"
-      OMF_CONF_LNK_OPT="-fopenmp -lgomp"
+      OMF_CONF_NTV_OPT="-ffree-form -fcray-pointer"
+      OMF_CONF_LNK_OPT="-fopenmp -lgomp -fcray-pointer"
       BEFC_MODINC="-J"  
       ;;
     *IFORT*)

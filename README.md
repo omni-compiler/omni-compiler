@@ -6,7 +6,7 @@ README
 -----
 # Implementation Status
  Some features in the language specification are not supported in this release.
- (You can download the specification of XMP from "http://www.xcalablemp.org".)
+ (You can download the specification of XMP from "http://www.xcalablemp.org.")
 
  Please show "docs/STATUS/$(version).md"
 
@@ -20,25 +20,24 @@ README
     $ ompcc -acc -O2 test.c -o test
 
 ## Run
- Please use the command for running mpi program on your environment.
+ Please use the mpi command on your environment.
     $ mpirun -np 4 test
 
 ## Environment Variables
 * XMP_COARRAY_HEAP_SIZE
  **Note that on the K computer this value is not used.**
- This value is used to malloc for coarray. Therefore, this value must be 
- set as a total coarray size. The default size is 16MB.
- If you want to change this value, please set it as below.
+ This value specifies memory size for coarray. The default size is 16MB.
+ To set this value, please execute as follows:
 
-    export XMP_COARRAY_HEAP_SIZE=128M
+    $ export XMP_COARRAY_HEAP_SIZE=128M
 
 * XMP_COARRAY_STRIDE_SIZE
  **Note that on the K computer this value is not used.**
- This value is used to malloc for coarray stride operations.
+ This value specifies memory size for coarray stride operation.
  The default size is 1MB.
- If you want to change this value, please set it as below.
+ To set this value, please execute as follows:
 
-    export XMP_COARRAY_STRIDE_SIZE=32M
+    $ export XMP_COARRAY_STRIDE_SIZE=32M
 
 * XMP_NODE_SIZEn
  This value specifies the extent of the n'th dimension of the non-primary node
@@ -64,21 +63,18 @@ README
  not guaranteed.
 
 # Profiling Options in XMP/C
- XMP supports profiler interfaces of Scalasca and tlog.
- The tlog is included in XMP.
- If you want to use the profiler interface of Scalasca,
- you need to download and compile it from Scalasca website.
- Moreover you need to set an environmental variable as below,
+ Omni XMP compiler supports profiler interfaces of Scalasca and tlog.
+ The tlog is included in this package. To use the profiler interface of Scalasca,
+ you need to download and compile it from Scalasca website (http://www.scalasca.org).
+ To use the scalasca, please set the following environmental variable.
 
     $ export SCALASCA_HOME = [Scalasca-INSTALL-DIR]
 
- If you want to specify directives for profiling,
- please add "profile" to directive.
+ To specify directives for profiling, please add "profile" to directive.
 
      #pragma xmp loop on t(i) profile
 
- When you want to compile XMP source code with profiling,
- please add some of below options.
+ To compile XMP source code with profiling, please add following options.
     -profile         Emit XMP directive profiling code only for specified directives
     -allprofile      Emit XMP directive profiling code for all directives
     -with-scalasca   Emit Scalasca instrumentation

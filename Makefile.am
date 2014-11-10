@@ -68,6 +68,7 @@ TESTDIRS += "global-view/gmove/C/" "global-view/gmove/F/"
 TESTDIRS += "global-view/inquiry/C/" "global-view/inquiry/F/"
 TESTDIRS += "global-view/gblock/C/" "global-view/gblock/F/"
 TESTDIRS += "global-view/align/C/" "global-view/align/F/"
+TESTDIRS += "global-view/intrinsic/C/" "global-view/intrinsic/F/"
 TESTDIRS += "global-view/util/C/" "global-view/util/F/"
 TESTDIRS += "others/F" "others/C"
 if GASNET
