@@ -28,7 +28,7 @@ public class XMPrewriteExpr
     FunctionBlock fb = def.getBlock();
     if (fb == null) return;
 
-    // translate all about coarray (ID=060)
+    // translate all about coarray #060
     XMPtransCoarray transCoarray = new XMPtransCoarray(def, env);
     transCoarray.run();
 
@@ -171,6 +171,7 @@ public class XMPrewriteExpr
     for(iter.init(); !iter.end();iter.next()){
       Xobject x = iter.getXobject();
       if (x == null)  continue;
+      if (x.Opcode() == null) continue;      // #060  see [Xmp-dev:4675]
       switch (x.Opcode()) {
       case VAR:
 	{
@@ -214,9 +215,9 @@ public class XMPrewriteExpr
         // XXX delete this
       case CO_ARRAY_REF:
 	{
-	  System.out.println("coarray not yet: "+ x);
 	  break;
 	}
+
       case FUNCTION_CALL:
 	{
 	  String fname = x.getArg(0).getString();

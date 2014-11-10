@@ -9,7 +9,11 @@ import java.util.*;
  */
 public class XMPtransCoarray 
 {
-  final static String COMMON_PREFIX = "xmpf_cptr";
+  private int DEBUG = 1;       // change me in debugger
+
+  // constants
+  final static String DESCRIPTOR_PREFIX  = "xmpf_codescr";
+  final static String CRAYPOINTER_PREFIX = "xmpf_crayptr";
   final static String INITPROC_PREFIX = "xmpf_traverse_initcoarray";
 
   //private FuncDefBlock def;          // (XobjectDef)def.getDef() is more useful????
@@ -22,7 +26,6 @@ public class XMPtransCoarray
   private XMPenv env;
 
   private String name;
-  private BlockList decls;
 
   private XobjectDef def;
   private FunctionBlock fblock;
@@ -34,7 +37,7 @@ public class XMPtransCoarray
   private String initProcTextForFile;
 
   private String newProcName;
-  private String commonName;
+  private String commonName1, commonName2;
 
   //------------------------------
   //  CONSTRUCTOR
@@ -45,7 +48,8 @@ public class XMPtransCoarray
     this.env = env;
     name = fblock.getName();
     newProcName = genNewProcName();
-    commonName = COMMON_PREFIX + "_" + name;
+    commonName1 = DESCRIPTOR_PREFIX + "_" + name;
+    commonName2 = CRAYPOINTER_PREFIX + "_" + name;
 
     // set all static/allocatable coarrays in this procedure
     staticCoarrays = new Vector<XMPcoarray>();
@@ -70,102 +74,223 @@ public class XMPtransCoarray
   //  TRANSLATION
   //------------------------------
   public void run() {
+    Vector<XMPcoarray> allCoarrays = new Vector<XMPcoarray>();
+    allCoarrays.addAll(staticCoarrays);
+    allCoarrays.addAll(allocCoarrays);
 
-    // translation (1)
-    if (staticCoarrays.size() > 0) {
-      transStaticCoarrays();
-    }
+    // (0-1) declare idents of cray pointers & descriptors
+    for (XMPcoarray coarray: allCoarrays)
+      coarray.declareIdents(CRAYPOINTER_PREFIX, DESCRIPTOR_PREFIX);
 
+    // (0-2) generate common stmt in this procedure
+    if (! allCoarrays.isEmpty())
+      genCommonStmt(commonName1, commonName2, allCoarrays, def);
+
+    // (1) replace coindexed variable assignment stmts with call stmts
+    replaceCoidxVarStmts(allCoarrays);
+
+    // (2) replace coindexed objects with function references
+    replaceCoidxObjs(allCoarrays);
+
+    // (3) replace static coarrays & generate allocation
+    if (! staticCoarrays.isEmpty())
+      transStaticCoarrays(staticCoarrays);
+
+    // (4) replace allocatable coarrays & generate allocation
+    if (! allocCoarrays.isEmpty())
+      transAllocCoarrays(allocCoarrays);
 
   }
 
 
   //-----------------------------------------------------
-  //  TRANSLATION (1) local/static coarrays
+  //  TRANSLATION (1)
+  //  convert statements whose LHS are coindexed variables
+  //  to subroutine calls
   //-----------------------------------------------------
+  private void replaceCoidxVarStmts(Vector<XMPcoarray> coarrays) {
 
+    BlockIterator bi = new topdownBlockIterator(fblock);
+    for (bi.init(); !bi.end(); bi.next()) {
+      BasicBlock bb = bi.getBlock().getBasicBlock();
+      if (bb == null) continue;
+      for (Statement s = bb.getHead(); s != null; s = s.getNext()) {
+        Xobject assignExpr = s.getExpr();
+        if (assignExpr == null) continue;
+        if (_isCoidxVarStmt(assignExpr)) {
+          Xobject assignExpr2 = genCommPutStmt(assignExpr, coarrays);
+          s.insert(assignExpr2);
+          s.remove();
+        }
+      }
+    }
+
+
+    /*******************
+    for (bi.init(); !bi.end(); bi.next()) {
+      BasicBlock bb = bi.getBlock().getBasicBlock();
+      if (bb == null) continue;
+      for (Statement s = bb.getHead(); s != null; s = s.getNext()) {
+        Xobject xobj = s.getExpr();
+        if (xobj == null) continue;
+        if (_isCoidxVarStmt(xobj)) {
+          if (DEBUG == 1) {
+            System.out.println("[XMPtransCoarray] #z " + 
+                               "found a coindex-var stmt. lhs="+xobj.getArg(0));
+          }
+        }
+      }
+    }
+    ***************/
+
+  }
+
+
+  private Boolean _isCoidxVarStmt(Xobject xobj) {
+    if (xobj.Opcode() == Xcode.F_ASSIGN_STATEMENT) {
+      Xobject lhs = xobj.getArg(0);
+      if (lhs.Opcode() == Xcode.CO_ARRAY_REF)
+        return true;
+    }
+    return false;
+  }
+
+
+  /*
+   * generate statement from:
+   *    v(be(0):en(0):st(0),..)[coidx] = rhs
+   * to:
+   *    call commPutLibName(descriptor, rank, lbounds, ubounds, 
+   *                        starts, lengths, strides, coidx, rhs)
+   */
+  private Xobject genCommPutStmt(Xobject assignExpr,
+                                 Vector<XMPcoarray> coarrays) {
+    Xobject lhs = assignExpr.getArg(0);
+    Xobject rhs = assignExpr.getArg(1);
+
+    XMPcoindexObj coidxObj = new XMPcoindexObj(lhs, coarrays);
+    return coidxObj.genCommPutStmt(rhs);
+  }
+
+  //-----------------------------------------------------
+  //  TRANSLATION (2)
+  //  convert coindexed objects to function references
+  //-----------------------------------------------------
+  private void replaceCoidxObjs(Vector<XMPcoarray> coarrays) {
+    XobjectIterator xi = new bottomupXobjectIterator(def.getFuncBody());
+
+    for (xi.init(); !xi.end(); xi.next()) {
+      Xobject xobj = xi.getXobject();
+      if (xobj == null)
+        continue;
+
+      if (xobj.Opcode() == Xcode.CO_ARRAY_REF) {
+        if (DEBUG==2) System.out.println("  gaccha CO_ARRAY_REF  xobj.Opcode()="+xobj.Opcode());
+      }
+    }
+
+  /***********
+    XobjectIterator xi = new topdownXobjectIterator(def.getFuncBody());
+    for (xi.init(); !xi.end(); xi.next()) {
+      Xobject xobj = xi.getXobject();
+      if (xobj == null) continue;
+      if (_isCoidxVarStmt(xobj)) {
+        if (DEBUG == 1) {
+          System.out.println("[XMPtransCoarray] #2" + 
+                             "found a coindex-var stmt. lhs="+xobj.getArg(0));
+        }
+
+        Xobject xobj2 = _genCommPutStmt(xobj, COMM_PUT_LIB_NAME);
+        
+      }
+    }
+  ***************/
+  }
+
+
+  //-----------------------------------------------------
+  //  TRANSLATION (3)
+  //  malloc static coarrays
+  //-----------------------------------------------------
+  //
   // convert from:
-  // -------------------------------------------------------
+  // --------------------------------------------
   //     subroutine EX1
   //       real :: V1(10,20)[4,*]
   //       complex(8) :: V2[*]
   //     end subroutine
-  // -------------------------------------------------------
+  // --------------------------------------------
   // to:
-  // -------------------------------------------------------
+  // --------------------------------------------
   //     subroutine EX1
-  //       real :: V1(10,20)                                   ! a
-  //       complex(8) :: V2                                    ! a
-  //       pointer (xxxx_V1, V1)                               ! b
-  //       pointer (xxxx_V2, V2)                               ! b
-  //       common /xmpf_yyyy_zzzz_EX1/xxxx_V1,xxxx_V2          ! c
-  //     end subroutine
-  // -------------------------------------------------------
-  // and generate initialization routine (see XMPcoarrayInitProcedure)
+  //       real :: V1(10,20)                                  ! a
+  //       complex(8) :: V2                                   ! a
+  //       integer :: desc_V1                                 ! b
+  //       integer :: desc_V2                                 ! b
+  //       pointer (ptr_V1, V1)                               ! b
+  //       pointer (ptr_V2, V2)                               ! b
+  //       common /xmpf_desc_EX1/desc_V1,desc_V2              ! c
+  //       common /xmpf_ptr_EX1/ptr_V1,ptr_V2                 ! c
   //
+  //     end subroutine
+  // --------------------------------------------
+  // and generate and add an initialization routine into the
+  // same file (see XMPcoarrayInitProcedure)
+  //
+  private void transStaticCoarrays(Vector<XMPcoarray> coarrays) {
 
-  private void transStaticCoarrays() {
-
-    // remove codimensions form coarray (a)
-    for (XMPcoarray coarray: staticCoarrays)
-      coarray.clearCodimensions();
-
-    // declare ident of a cray pointer (b)
-    for (XMPcoarray coarray: staticCoarrays)
-      coarray.declareCrayPointer();
-
-    // generate common stmt in this procedure (c)
-    genCommonStmt(commonName, staticCoarrays, def);
+    // remove codimensions form coarray declaration (a)
+    for (XMPcoarray coarray: coarrays)
+      coarray.removeCodimensions();
 
     // output init procedure
     XMPcoarrayInitProcedure coarrayInit = new XMPcoarrayInitProcedure();
-    coarrayInit.genInitRoutine(staticCoarrays, newProcName, commonName);
+    coarrayInit.genInitRoutine(coarrays, newProcName,
+                               commonName1, commonName2);
 
     // finalize the init procedure
     coarrayInit.finalize(env);
   }
 
 
-  //------------------------------
-  //  TRANSLATION (2) local/allocatable coarray
-  //------------------------------
-  public void transCoarrayDeclAllocatable(XMPcoarray coarray) {
-    XMP.error("Allocatable coarry is not supported yet: "+coarray.getName());
+  //-----------------------------------------------------
+  //  TRANSLATION (4)
+  //  malloc allocatable coarrays
+  //-----------------------------------------------------
+  private void transAllocCoarrays(Vector<XMPcoarray> coarrays) {
+    for (XMPcoarray coarray: coarrays)
+      XMP.error("Not supported: allocatable coarry: "+coarray.getName());
   }
 
 
-  //------------------------------
-  //  TRANSLATION (3) module/static coarray
-  //------------------------------
-
-
-  //------------------------------
-  //  TRANSLATION (4) module/allocatable coarray
-  //------------------------------
-
-  //------------------------------
+  //-----------------------------------------------------
   //  parts
-  //------------------------------
-  private void genCommonStmt(String commonName, Vector<XMPcoarray> coarrays,
-                             XobjectDef def) {
+  //-----------------------------------------------------
+  private void genCommonStmt(String commonName1, String commonName2,
+                             Vector<XMPcoarray> coarrays, XobjectDef def) {
 
-    /* cf. XMPenv.declOrGetSizeArray
-     */
+    /* cf. XMPenv.declOrGetSizeArray */
 
     // common block name
-    Xobject cnameObj = Xcons.Symbol(Xcode.IDENT, commonName);
+    Xobject cnameObj1 = Xcons.Symbol(Xcode.IDENT, commonName1);
+    Xobject cnameObj2 = Xcons.Symbol(Xcode.IDENT, commonName2);
 
     // list of common vars
-    Xobject varList = Xcons.List();
+    Xobject varList1 = Xcons.List();
+    Xobject varList2 = Xcons.List();
     for (XMPcoarray coarray: coarrays) {
+      Ident descrId = coarray.getDescriptorId();
       Ident cptrId = coarray.getCrayPointerId();
-      varList.add(Xcons.FvarRef(cptrId));
+      varList1.add(Xcons.FvarRef(descrId));
+      varList2.add(Xcons.FvarRef(cptrId));
     }
 
     // declaration 
     Xobject decls = fblock.getBody().getDecls();
     decls.add(Xcons.List(Xcode.F_COMMON_DECL,
-                         Xcons.List(Xcode.F_VAR_LIST, cnameObj, varList)));
+                         Xcons.List(Xcode.F_VAR_LIST, cnameObj1, varList1)));
+    decls.add(Xcons.List(Xcode.F_COMMON_DECL,
+                         Xcons.List(Xcode.F_VAR_LIST, cnameObj2, varList2)));
   }
 
   private String genNewProcName() {
@@ -203,25 +328,5 @@ public class XMPtransCoarray
     return names;
   }
 
-
-  //------------------------------
-  //  UTILITIES
-  //------------------------------
-  public String toString() {
-    String s = "{";
-    String delim = "";
-    for (XMPcoarray coarray: staticCoarrays) {
-      s += delim + coarray.toString();
-      delim = ",";
-    }
-    return s + "}";
-  }
-
-  public String display() {
-    String s = "[static coarrays in " + name;
-    for (XMPcoarray coarray: staticCoarrays)
-      s += coarray.display() + "\n";
-    return s;
-  }
 }
 

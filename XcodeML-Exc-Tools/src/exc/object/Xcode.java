@@ -136,7 +136,7 @@ public enum Xcode
      // L   SUBA_UPPER_BOUND           
      // L   SUBA_STEP                  
     CO_ARRAY_REF                    (  99, 'L', null, null),
-    CO_ARRAY_ASSIGN_EXPR            ( 100, 'L', null, null),
+    CO_ARRAY_ASSIGN_EXPR            ( 100, 'L', null, null),   // not used??
      // -----------------
      // Fortran: Declaration / Definition
     F_DATA_DECL                     ( 101, 'L', null, null),

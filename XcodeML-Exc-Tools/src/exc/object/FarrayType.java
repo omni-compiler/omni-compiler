@@ -51,7 +51,7 @@ public class FarrayType extends Xtype
     }
 
     @Override
-    public Xobject getTotalArraySizeExpr(XobjectDef def, Block block)
+    public Xobject getTotalArraySizeExpr(Block block)
     {
       Xobject[] sizes = getFarraySizeExpr();
       if (sizes == null)
@@ -60,46 +60,124 @@ public class FarrayType extends Xtype
 
       Xobject totalSize = Xcons.IntConstant(1);
       for (int i = 0; i < sizes.length; i++) {
-        Xobject size1 = sizes[i];
-        if (size1 == null)
-          throw new UnsupportedOperationException
-            ("internal error: null size of a dimension of array");
-
-        if (size1.code == Xcode.F_INDEX_RANGE) {
-          // evaluate size from lb:ub 
-
-          Xobject lb = size1.getArg(0);
-          Xobject ub = size1.getArg(1);
-          Xobject st = size1.getArg(2);
-          if (st != null)    // illegal in array declaration
-            throw new UnsupportedOperationException
-              ("internal error: stride specified in array specification");
-
-          size1 = _getSizeFromLbUb(lb, ub, def, block);
-        }
-
-        if (size1.isZeroConstant())
+        Xobject extent = getExtent(i, block);
+        if (extent.isZeroConstant())
           return Xcons.IntConstant(0);
-        else if (size1.isIntConstant() && totalSize.isIntConstant())
-          totalSize = Xcons.IntConstant(totalSize.getInt() * size1.getInt());
+        else if (extent.isIntConstant() && totalSize.isIntConstant())
+          totalSize = Xcons.IntConstant(totalSize.getInt() * extent.getInt());
         else
-          totalSize = Xcons.binaryOp(Xcode.MUL_EXPR, totalSize, size1);
+          totalSize = Xcons.binaryOp(Xcode.MUL_EXPR, totalSize, extent);
       }
       return totalSize;
     }
   
 
-    private Xobject _getSizeFromLbUb(Xobject lb, Xobject ub,
-                                     XobjectDef def, Block block)
+    /*
+     *  get lower-bound of array specification
+     */
+    public Xobject getLbound(int i, Block block) {
+      Xobject[] sizes = getFarraySizeExpr();
+
+      Xobject lbound;
+      if (sizes[i].code == Xcode.F_INDEX_RANGE)
+        lbound = sizes[i].getArg(0);
+      else
+        lbound = sizes[i];
+
+      return lbound.cfold(block);
+    }
+
+    public Xobject[] getLbounds(Block block) {
+      Xobject[] sizes = getFarraySizeExpr();
+      int n = sizes.length;
+      Xobject[] lbounds = new Xobject[n];
+
+      for (int i = 0; i < n; i++)
+        lbounds[i] = getLbound(i, block);
+
+      return lbounds;
+    }
+
+    /*
+     *  get upper-bound of array specification
+     */
+    public Xobject getUbound(int i, Block block) {
+      Xobject[] sizes = getFarraySizeExpr();
+
+      Xobject ubound;
+      if (sizes[i].code == Xcode.F_INDEX_RANGE)
+        ubound = sizes[i].getArg(1);
+      else
+        ubound = sizes[i];
+
+      return ubound.cfold(block);
+    }
+
+    public Xobject[] getUbounds(Block block) {
+      Xobject[] sizes = getFarraySizeExpr();
+      int n = sizes.length;
+      Xobject[] ubounds = new Xobject[n];
+
+      for (int i = 0; i < n; i++)
+        ubounds[i] = getUbound(i, block);
+
+      return ubounds;
+    }
+
+    /*
+     *  get extents of array specification
+     */
+    public Xobject getExtent(int i, Block block) {
+      Xobject[] sizes = getFarraySizeExpr();
+
+      Xobject extent;
+      if (sizes[i].code == Xcode.F_INDEX_RANGE)
+        extent = getSizeFromLbUb(sizes[i].getArg(0),
+                                 sizes[i].getArg(1), block);
+      else
+        extent = Xcons.IntConstant(1);
+
+      return extent;
+    }
+
+    public Xobject[] getExtents(Block block) {
+      Xobject[] sizes = getFarraySizeExpr();
+      int n = sizes.length;
+      Xobject[] extents = new Xobject[n];
+
+      for (int i = 0; i < n; i++)
+        extents[i] = getExtent(i, block);
+
+      return extents;
+    }
+
+
+    // case: get size optionally with subscript range
+    public Xobject getSizeFromLbUb(int i, Xobject lb, Xobject ub, Block block)
+    {
+      if (lb == null)
+        lb = getLbound(i, block);
+      if (ub == null)
+        ub = getUbound(i, block);
+
+      return getSizeFromLbUb(lb, ub, block);
+    }
+
+
+    // case: get size of the range [lb, ub]
+    public Xobject getSizeFromLbUb(Xobject lb, Xobject ub, Block block)
     {
       if (ub == null)    // illegal
         throw new UnsupportedOperationException
-          ("internal error: upper-bound absent in array specification");
-      ub = ub.cfold(def, block);
+          ("internal error: upper-bound is null");
+      ub = ub.cfold(block);
 
       if (lb == null)
         return ub;
-      lb = lb.cfold(def, block);
+      lb = lb.cfold(block);
+
+      if (ub.equals(lb))     // it's scalar
+        return Xcons.IntConstant(1);
 
       if (lb.isIntConstant()) {
         if (lb.getInt() == 1) {
@@ -108,7 +186,8 @@ public class FarrayType extends Xtype
         if (ub.isIntConstant()) {
           // max(ub-lb+1,0)
           int extent = ub.getInt() - lb.getInt() + 1;
-          if (extent < 0) extent = 0;
+          if (extent < 0)
+            extent = 0;
           return Xcons.IntConstant(extent);
         } 
       }
@@ -119,67 +198,93 @@ public class FarrayType extends Xtype
       Xobject arg2 = Xcons.IntConstant(0);
       Xobject max = block.getBody().declLocalIdent("max", Xtype.FintFunctionType);
       Xobject result = Xcons.functionCall(max, Xcons.List(arg1, arg2));
-      return result.cfold(def, block);
+      return result.cfold(block);
     }
 
-    // not used so far
-    private Xobject _getSizeFromLbUbSt(Xobject lb, Xobject ub, Xobject st,
-                                       XobjectDef def, Block block)
-    {
-      if (st == null)
-        return _getSizeFromLbUb(lb, ub, def, block);
-      st = st.cfold(def, block);
-      if (st.isIntConstant() && st.getInt() == 1)
-        return _getSizeFromLbUb(lb, ub, def, block);
 
-      if (ub == null)    // illegal
+    /*
+     *  get number from triplet i1:i2:i3
+     */
+
+    // case: get number with array specification
+    //       thus, i1 or i2 can be null
+    public Xobject getSizeFromTriplet(int i, Xobject i1, Xobject i2, Xobject i3,
+                                      Block block)
+    {
+      if (i1 == null)
+        i1 = getLbound(i, block);
+      if (i2 == null)
+        i2 = getUbound(i, block);
+      return getSizeFromTriplet(i1, i2, i3, block);
+    }
+
+    // case: get number w/o array specification
+    public Xobject getSizeFromTriplet(Xobject i1, Xobject i2, Xobject i3,
+                                      Block block)
+    {
+      if (i3 == null)
+        return getSizeFromLbUb(i1, i2, block);
+
+      i3 = i3.cfold(block);
+      if (i3.isIntConstant()) {
+        if (i3.getInt() == 1)
+          return getSizeFromLbUb(i1, i2, block);
+        else if (i3.getInt() == -1)
+          return getSizeFromLbUb(i2, i1, block);
+      }
+
+      if (i2 == null)    // illegal
         throw new UnsupportedOperationException
           ("internal error: upper-bound absent in array specification");
-      ub = ub.cfold(def, block);
+      i2 = i2.cfold(block);
 
-      if (lb == null)
-        lb = Xcons.IntConstant(1);
+      if (i1 == null)
+        i1 = Xcons.IntConstant(1);
       else 
-        lb = lb.cfold(def, block);
+        i1 = i1.cfold(block);
 
-      if (lb.isIntConstant() && ub.isIntConstant() && st.isIntConstant()) {
-        // max((ub-lb+st)/st,0)       if st > 0
-        // max((lb-ub+(-st))/(-st),0) if st < 0
-        int ist = st.getInt();
+      if (i2.equals(i1))     // it's scalar
+        return Xcons.IntConstant(1);
+
+      if (i1.isIntConstant() && i2.isIntConstant() && i3.isIntConstant()) {
+        // max((i2-i1+i3)/i3,0)       if i3 > 0
+        // max((i1-i2+(-i3))/(-i3),0) if i3 < 0
+        int ist = i3.getInt();
         int extent = (ist > 0) ?
-          (ub.getInt() - lb.getInt() + ist) / ist :
-          (lb.getInt() - ub.getInt() - ist) / (-ist);
+          (i2.getInt() - i1.getInt() + ist) / ist :
+          (i1.getInt() - i2.getInt() - ist) / (-ist);
         if (extent < 0)
           extent = 0;
         return Xcons.IntConstant(extent);
       }
 
-      // max( int((ub-lb+st)/st), 0 )
-      Xobject e1 = Xcons.binaryOp(Xcode.MINUS_EXPR, ub, lb);
-      Xobject e2 = Xcons.binaryOp(Xcode.PLUS_EXPR, e1, st);
-      Xobject arg1 = Xcons.binaryOp(Xcode.DIV_EXPR, e2, st);
+      // max( int((i2-i1+i3)/i3), 0 )
+      Xobject e1 = Xcons.binaryOp(Xcode.MINUS_EXPR, i2, i1);
+      Xobject e2 = Xcons.binaryOp(Xcode.PLUS_EXPR, e1, i3);
+      Xobject arg1 = Xcons.binaryOp(Xcode.DIV_EXPR, e2, i3);
       Xobject arg2 = Xcons.IntConstant(0);
       Xobject max = block.getBody().declLocalIdent("max", Xtype.FintFunctionType);
       Xobject result = Xcons.functionCall(max, Xcons.List(arg1, arg2));
-      return result.cfold(def, block);
+      return result.cfold(block);
     }
 
 
     @Override
-    public Xobject getElementLengthExpr(XobjectDef def, Block block)
+    public Xobject getElementLengthExpr(Block block)
     {
-      return getRef().getElementLengthExpr(def, block);
+      return getRef().getElementLengthExpr(block);
     }
 
     @Override
-    public int getElementLength(XobjectDef def, Block block)
+    public int getElementLength(Block block)
     {
-      return getRef().getElementLength(def, block);
+      return getRef().getElementLength(block);
     }
 
 
     @Override
-    public void convertFindexRange(boolean extendsLowerBound, boolean extendsUpperBound, Block b)
+    public void convertFindexRange(boolean extendsLowerBound,
+                                   boolean extendsUpperBound, Block b)
     {
         if(isFassumedShape()) {
             for(int i = 0; i < sizeExprs.length; ++i) {

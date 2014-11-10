@@ -57,13 +57,14 @@ public class XobjString extends XobjConst
     }
 
     @Override
-    public Xobject cfold(XobjectDef def, Block block)
+    public Xobject cfold(Block block)
     {
       if (value == null) 
         return this.copy();
 
-      Ident ident = def.findVarIdent(value);
-      return ident.cfold(def, block);
+      Ident ident = block.getBody().getIdentList().findVarIdent(value);
+
+      return ident.cfold(block);
     }
 
     @Override

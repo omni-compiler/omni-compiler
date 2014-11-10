@@ -15,19 +15,23 @@ import java.util.*;
  */
 public class XMPcoarray {
 
-  final static String CRAYPOINTER_PREFIX = "xmpf_cptr";
-
+  // attributes
   private Ident ident;
   private String name;
   private Xtype originalType;
-  private String crayPointerName;
-  private Ident crayPointerId;
 
-  private String commonName;
+  // corresponding cray pointer and descriptor
+  private String crayPtrName = null;
+  private Ident crayPtrId = null;
+  private String descrName = null;
+  private Ident descrId = null;
 
-  private XobjectDef def;
-  private FunctionBlock fblock;
+  // context
+  protected XobjectDef def;
+  protected FunctionBlock fblock;
 
+  // for debug
+  private Boolean DEBUG = false;        // switch me on debugger
 
   //------------------------------
   //  CONSTRUCTOR
@@ -37,30 +41,41 @@ public class XMPcoarray {
     this.def = def;
     this.fblock = fblock;
     name = ident.getName();
+    //coshape = _getCoshape(
     originalType = ident.Type().copy();  // not sure how deep this copy
-    crayPointerName = CRAYPOINTER_PREFIX + "_" + name;
-    crayPointerId = null;
+    if (DEBUG) System.out.println("[XMPcoarray] new coarray = "+this);
   }
 
   //------------------------------
-  //  actions about malloc coarray
+  //  actions
   //------------------------------
-  public void declareCrayPointer() {
-    if (crayPointerId != null)
-      XMP.error("Internal error: crayPointerId has already declared.");
+  public void declareIdents(String crayPtrPrefix, String descrPrefix) {
 
-    // declaration into fblock.decls and set crayPointerId
-    BlockList decls = fblock.getBody();
-    crayPointerId = decls.declLocalIdent(crayPointerName,
-                                         BasicType.Fint8Type,
-                                         StorageClass.FLOCAL,
-                                         Xcons.FvarRef(ident));  // ident.Ref() for C
-    crayPointerId.Type().setIsFcrayPointer(true);
+    crayPtrName = crayPtrPrefix + "_" + name;
+    descrName = descrPrefix + "_" + name;
+
+    // declaration into fblock and set crayPtrId
+    BlockList blist = fblock.getBody();
+
+    // for descriptor
+    descrId = blist.declLocalIdent(descrName,
+                                   BasicType.FintType,
+                                   StorageClass.FLOCAL,
+                                   null);
+
+    // for cray pointer
+    crayPtrId = blist.declLocalIdent(crayPtrName,
+                                     BasicType.Fint8Type,   // FintType ??
+                                     StorageClass.FLOCAL,
+                                     Xcons.FvarRef(ident));  // ident.Ref() for C
+    crayPtrId.Type().setIsFcrayPointer(true);
   }
 
+
+  /*** not used now ***/
   public Xobject genMallocCallStmt(String mallocLibName) {
-    BlockList decls = fblock.getBody();
-    Ident mallocId = decls.declLocalIdent(mallocLibName,
+    BlockList blist = fblock.getBody();
+    Ident mallocId = blist.declLocalIdent(mallocLibName,
                                           BasicType.FsubroutineType);
     Xobject varRef = Xcons.FvarRef(getCrayPointerId());
     Xobject elem = getElementLengthExpr(); 
@@ -86,7 +101,7 @@ public class XMPcoarray {
   }
 
   //------------------------------
-  //  inquiring interface
+  //  evaluation
   //------------------------------
   public int getElementLength() {
     Xobject elem = getElementLengthExpr(); 
@@ -97,10 +112,10 @@ public class XMPcoarray {
     return elem.getInt();
   }
   public Xobject getElementLengthExpr() {
-    return getElementLengthExpr(def, fblock);
+    return getElementLengthExpr(fblock);
   }
-  public Xobject getElementLengthExpr(XobjectDef def, Block block) {
-    Xobject elem = ident.Type().getElementLengthExpr(def, block); 
+  public Xobject getElementLengthExpr(Block block) {
+    Xobject elem = ident.Type().getElementLengthExpr(block);    // see BasicType.java
     if (elem == null)
       XMP.error("Restriction: could not get the element length of: "+name);
     return elem;
@@ -115,15 +130,38 @@ public class XMPcoarray {
     return size.getInt();
   }
   public Xobject getTotalArraySizeExpr() {
-    return getTotalArraySizeExpr(def, fblock);
+    return getTotalArraySizeExpr(fblock);
   }
-  public Xobject getTotalArraySizeExpr(XobjectDef def, Block block) {
-    Xobject size = ident.Type().getTotalArraySizeExpr(def, block);
+  public Xobject getTotalArraySizeExpr(Block block) {
+    Xobject size = ident.Type().getTotalArraySizeExpr(block);
     if (size == null)
       XMP.error("Restriction: could not get the size of: "+name);
     return size;
   }
 
+  public int getRank() {
+    return ident.Type().getNumDimensions();
+  }
+
+  public Xobject getLbound(int i) {
+    FarrayType ftype = (FarrayType)ident.Type();
+    return ftype.getLbound(i, fblock);
+  }
+
+  public Xobject getUbound(int i) {
+    FarrayType ftype = (FarrayType)ident.Type();
+    return ftype.getUbound(i, fblock);
+  }
+
+  public Xobject getSizeFromTriplet(int i, Xobject i1, Xobject i2,
+                                    Xobject i3) {
+    FarrayType ftype = (FarrayType)ident.Type();
+    return ftype.getSizeFromTriplet(i, i1, i2, i3, fblock);
+  }
+
+  //------------------------------
+  //  inquiring interface
+  //------------------------------
   public Boolean isScalar() {
     return (ident.Type().getNumDimensions() == 0);
   }
@@ -154,18 +192,19 @@ public class XMPcoarray {
   }
 
   public String getCrayPointerName() {
-    return crayPointerName;
+    return crayPtrName;
   }
-
-  public void setCrayPointerId(String crayPointerName) {
-    this.crayPointerName = crayPointerName;
-  }
-
-  /* crayPointerId is set only in declareCrayPointer()
-   */
 
   public Ident getCrayPointerId() {
-    return crayPointerId;
+    return crayPtrId;
+  }
+
+  public String getDescriptorName() {
+    return descrName;
+  }
+
+  public Ident getDescriptorId() {
+    return descrId;
   }
 
   public Xobject[] getCodimensions() {
@@ -176,8 +215,12 @@ public class XMPcoarray {
     ident.Type().setCodimensions(codimensions);
   }
 
-  public void clearCodimensions() {
-    ident.Type().clearCodimensions();
+  public void removeCodimensions() {
+    ident.Type().removeCodimensions();
+  }
+
+  public int getCorank() {
+    return ident.Type().getCorank();
   }
 
   public String getName() {

@@ -24,20 +24,20 @@ public class StructType extends CompositeType
     }
 
     @Override
-    public Xobject getTotalArraySizeExpr(XobjectDef def, Block block)
+    public Xobject getTotalArraySizeExpr(Block block)
     {
         return Xcons.IntConstant(1);
     }
 
     @Override
-    public Xobject getElementLengthExpr(XobjectDef def, Block block)
+    public Xobject getElementLengthExpr(Block block)
     {
         throw new UnsupportedOperationException
           ("Restriction: could not get size of a structure");
     }
 
     @Override
-    public int getElementLength(XobjectDef def, Block block)
+    public int getElementLength(Block block)
     {
         throw new UnsupportedOperationException
           ("Restriction: could not get size of a structure as integer");

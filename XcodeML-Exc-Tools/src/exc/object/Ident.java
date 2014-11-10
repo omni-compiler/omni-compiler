@@ -5,12 +5,12 @@
  *  $
  */
 package exc.object;
+import exc.block.Block;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import exc.util.XobjectVisitor;
-import exc.block.Block;
 import xcodeml.util.XmLog;
 import xcodeml.util.XmOption;
 
@@ -159,12 +159,12 @@ public class Ident extends Xobject
         return codimensions;
     }
 
-   public void setCodimensions(Xobject codimensions)     // for coarray C (ID=284)
+   public void setCodimensions(Xobject codimensions)     // for coarray C (#284)
     {
         this.codimensions = codimensions;
     }
 
-    public int getCorank()                // for coarray Fortran (ID=060)
+    public int getCorank()                // for coarray Fortran (#060)
     {
         return (Type() == null) ? 0 : Type().getCorank();
     }
@@ -226,11 +226,11 @@ public class Ident extends Xobject
     }
     
     @Override
-    public Xobject cfold(XobjectDef def, Block block)
+    public Xobject cfold(Block block)
     {
       if (fparam_value != null) {
         Xobject that = ((XobjList)fparam_value).args.arg;
-        return that.copy();
+        return that.cfold(block);
       }
       return this.copy();
     }

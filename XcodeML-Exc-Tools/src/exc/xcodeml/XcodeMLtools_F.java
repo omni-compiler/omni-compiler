@@ -362,7 +362,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
       return Xcons.Symbol(code, type, getContentText(n));
 
     case F_ALLOC:
-    case F_ARRAY_REF: {
+    case F_ARRAY_REF:
+    case CO_ARRAY_REF: {
       NodeList list = n.getChildNodes();
       int i;
       x = null;

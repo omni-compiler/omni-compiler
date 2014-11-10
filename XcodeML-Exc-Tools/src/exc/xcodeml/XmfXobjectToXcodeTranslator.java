@@ -582,6 +582,14 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             }
             break;
 
+        case CO_ARRAY_REF:                                 // #060
+            e = addChildNode(createElement(name),
+                             trans(xobj.getArg(0)));
+            for (Xobject a : (XobjList)xobj.getArg(1)) {
+                addChildNode(e, trans(a));
+            }
+            break;
+
         case F_USER_UNARY_EXPR:
         case LOG_NOT_EXPR:
         case UNARY_MINUS_EXPR:

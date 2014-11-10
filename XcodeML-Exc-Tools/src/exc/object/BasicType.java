@@ -202,23 +202,24 @@ public class BasicType extends Xtype
     }
     
     @Override
-    public Xobject getTotalArraySizeExpr(XobjectDef def, Block block)
+    public Xobject getTotalArraySizeExpr(Block block)
     {
         return Xcons.IntConstant(1);
     }
 
     @Override
-    public Xobject getElementLengthExpr(XobjectDef def, Block block)
+    public Xobject getElementLengthExpr(Block block)
     {
-      int len = getElementLength(def, block);
+      int len = getElementLength(block);
         return Xcons.IntConstant(len);
     }
 
     @Override
-    public int getElementLength(XobjectDef def, Block block)
+    public int getElementLength(Block block)
     {
       //////////////
       // TEMPORARY
+      //  assuming default integer as integer*4, etc.
       //////////////
       Map<Integer,Integer> default_len = new HashMap<Integer,Integer>() {
         {

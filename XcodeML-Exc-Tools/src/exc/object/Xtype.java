@@ -707,20 +707,20 @@ public class Xtype
         throw new UnsupportedOperationException();
     }
 
-    /** Fortran: get Fortran array size or 1 for scalar */
-    public Xobject getTotalArraySizeExpr(XobjectDef def, Block block)
+    /** Fortran: get Fortran array size or 1 for scalar */     // #060
+    public Xobject getTotalArraySizeExpr(Block block)
     {
         throw new UnsupportedOperationException();
     }
 
-    /** Fortran: get Fortran type element length (bytes) in Expr */
-    public Xobject getElementLengthExpr(XobjectDef def, Block block)
+    /** Fortran: get Fortran type element length (bytes) in Expr */     // #060
+    public Xobject getElementLengthExpr(Block block)
     {
         throw new UnsupportedOperationException();
     }
 
-    /** Fortran: get Fortran type element length (bytes) in integer */
-    public int getElementLength(XobjectDef def, Block block)
+    /** Fortran: get Fortran type element length (bytes) in integer */     // #060
+    public int getElementLength(Block block)
     {
         throw new UnsupportedOperationException();
     }
@@ -782,9 +782,9 @@ public class Xtype
     {
         coshape.setCodimensions(codimensions);
     }
-    public void clearCodimensions()        // for coarray Fortran (ID=060)
+    public void removeCodimensions()        // for coarray Fortran (ID=060)
     {
-        coshape.clearCodimensions();
+        coshape.removeCodimensions();
     }
      public Xobject[] copyCodimensions()        // for coarray Fortran (ID=060)
     {

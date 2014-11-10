@@ -47,7 +47,7 @@ public class Coshape
     }
   }
 
-  public void clearCodimensions()
+  public void removeCodimensions()
   {
     if (codimensions != null) {
       this.codimensions = new Xobject[0];

@@ -47,10 +47,10 @@ public class XobjArgs
         return new XobjArgs(x, a);
     }
     
-    public XobjArgs cfold(XobjectDef def, Block block)
+    public XobjArgs cfold(Block block)
     {
-        Xobject arg2 = (arg == null) ? null : arg.cfold(def, block);
-        XobjArgs next2 = (next == null) ? null : next.cfold(def, block);
+        Xobject arg2 = (arg == null) ? null : arg.cfold(block);
+        XobjArgs next2 = (next == null) ? null : next.cfold(block);
         return new XobjArgs(arg2, next2);
     }
 

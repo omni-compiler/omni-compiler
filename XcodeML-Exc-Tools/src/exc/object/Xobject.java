@@ -852,7 +852,7 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
         return null;
     }
     
-    public Xobject cfold(XobjectDef def, Block block)
+    public Xobject cfold(Block block)
     {
       /* default */
       return this.copy();
