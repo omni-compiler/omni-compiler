@@ -46,11 +46,11 @@ void _XMP_gpu_pack_vector_async(char * __restrict__ dst, char * __restrict__ src
   int bx = 1, by;
   int tx = 1, ty;
   int tmp = blocklength_c;
-  while(tmp > 1){
-    tmp = (tmp - 1)/2 + 1;
-    tx *= 2;
-    if(tx >= numThreads){
-      break;
+  if(tmp >= numThreads){
+    tx = numThreads;
+  }else{
+    while(tx < tmp){
+      tx <<= 1;
     }
   }
   ty = numThreads / tx;
@@ -109,11 +109,11 @@ void _XMP_gpu_unpack_vector_async(char * __restrict__ dst, char * __restrict__ s
   int bx = 1, by;
   int tx = 1, ty;
   int tmp = blocklength_c;
-  while(tmp > 1){
-    tmp = (tmp - 1)/2 + 1;
-    tx *= 2;
-    if(tx >= numThreads){
-      break;
+  if(tmp >= numThreads){
+    tx = numThreads;
+  }else{
+    while(tx < tmp){
+      tx <<= 1;
     }
   }
   ty = numThreads / tx;
@@ -206,11 +206,11 @@ static void memcpy2D2_async(char * __restrict__ dst0, long dst_stride0, char * _
   }else{
     tmp = (blocklength_c[0] < blocklength_c[1])? blocklength_c[0] : blocklength_c[1];
   }
-  while(tmp > 1){
-    tmp = (tmp - 1)/2 + 1;
-    tx *= 2;
-    if(tx >= numThreads){
-      break;
+  if(tmp >= numThreads){
+    tx = numThreads;
+  }else{
+    while(tx < tmp){
+      tx <<= 1;
     }
   }
   ty = numThreads / tx;
