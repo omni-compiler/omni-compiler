@@ -9,7 +9,7 @@ import java.util.*;
  */
 public class XMPtransCoarray 
 {
-  private int DEBUG = 1;       // change me in debugger
+  private Boolean DEBUG = false;       // change me in debugger
 
   // constants
   final static String DESCRIPTOR_PREFIX  = "xmpf_codescr";
@@ -58,7 +58,7 @@ public class XMPtransCoarray
     for (Xobject obj: (XobjList)idList) {
       Ident ident = (Ident)obj;
       if (ident.getCorank() > 0) {   // found a coarray
-        XMPcoarray coarray = new XMPcoarray(ident, def, fblock);
+        XMPcoarray coarray = new XMPcoarray(ident, funcDef, env);
         if (coarray.isAllocatable())
           allocCoarrays.add(coarray);
         else
@@ -99,7 +99,6 @@ public class XMPtransCoarray
     // (4) replace allocatable coarrays & generate allocation
     if (! allocCoarrays.isEmpty())
       transAllocCoarrays(allocCoarrays);
-
   }
 
 
@@ -109,40 +108,43 @@ public class XMPtransCoarray
   //  to subroutine calls
   //-----------------------------------------------------
   private void replaceCoidxVarStmts(Vector<XMPcoarray> coarrays) {
+    /*****************************
+    XobjectIterator xi = new bottomupXobjectIterator(def.getFuncBody());
+    for (xi.init(); !xi.end(); xi.next()) {
+      Xobject xobj = xi.getXobject();
+      if (xobj == null)
+        continue;
+
+      if (xobj.Opcode() == Xcode.F_ASSIGN_STATEMENT &&
+          xobj.getArg(0).Opcode() == Xcode.CO_ARRAY_REF) {
+
+        // found statement to be converted
+        Xobject callExpr = genPutCommCallStmt(xobj, coarrays);
+        xi.setXobject(callExpr);
+      }
+
+    }
+    *******************************/
 
     BlockIterator bi = new topdownBlockIterator(fblock);
+
     for (bi.init(); !bi.end(); bi.next()) {
       BasicBlock bb = bi.getBlock().getBasicBlock();
       if (bb == null) continue;
       for (Statement s = bb.getHead(); s != null; s = s.getNext()) {
         Xobject assignExpr = s.getExpr();
-        if (assignExpr == null) continue;
+        if (assignExpr == null)
+          continue;
+
         if (_isCoidxVarStmt(assignExpr)) {
-          Xobject assignExpr2 = genCommPutStmt(assignExpr, coarrays);
-          s.insert(assignExpr2);
-          s.remove();
+          // found -- convert the statement
+          Xobject callExpr = genPutCommCallStmt(assignExpr, coarrays);
+          //s.insert(callExpr);
+          //s.remove();
+          s.setExpr(callExpr);
         }
       }
     }
-
-
-    /*******************
-    for (bi.init(); !bi.end(); bi.next()) {
-      BasicBlock bb = bi.getBlock().getBasicBlock();
-      if (bb == null) continue;
-      for (Statement s = bb.getHead(); s != null; s = s.getNext()) {
-        Xobject xobj = s.getExpr();
-        if (xobj == null) continue;
-        if (_isCoidxVarStmt(xobj)) {
-          if (DEBUG == 1) {
-            System.out.println("[XMPtransCoarray] #z " + 
-                               "found a coindex-var stmt. lhs="+xobj.getArg(0));
-          }
-        }
-      }
-    }
-    ***************/
-
   }
 
 
@@ -157,19 +159,19 @@ public class XMPtransCoarray
 
 
   /*
-   * generate statement from:
-   *    v(be(0):en(0):st(0),..)[coidx] = rhs
+   * convert a statement:
+   *    v(s1,s2,...)[cs1,cs2,...] = rhs
    * to:
-   *    call commPutLibName(descriptor, rank, lbounds, ubounds, 
-   *                        starts, lengths, strides, coidx, rhs)
+   *    external :: PutCommLibName
+   *    call PutCommLibName(..., rhs)
    */
-  private Xobject genCommPutStmt(Xobject assignExpr,
-                                 Vector<XMPcoarray> coarrays) {
+  private Xobject genPutCommCallStmt(Xobject assignExpr,
+                                     Vector<XMPcoarray> coarrays) {
     Xobject lhs = assignExpr.getArg(0);
     Xobject rhs = assignExpr.getArg(1);
 
     XMPcoindexObj coidxObj = new XMPcoindexObj(lhs, coarrays);
-    return coidxObj.genCommPutStmt(rhs);
+    return coidxObj.genPutCommCallStmt(rhs);
   }
 
   //-----------------------------------------------------
@@ -177,7 +179,7 @@ public class XMPtransCoarray
   //  convert coindexed objects to function references
   //-----------------------------------------------------
   private void replaceCoidxObjs(Vector<XMPcoarray> coarrays) {
-    XobjectIterator xi = new bottomupXobjectIterator(def.getFuncBody());
+    XobjectIterator xi = new topdownXobjectIterator(def.getFuncBody());
 
     for (xi.init(); !xi.end(); xi.next()) {
       Xobject xobj = xi.getXobject();
@@ -185,26 +187,37 @@ public class XMPtransCoarray
         continue;
 
       if (xobj.Opcode() == Xcode.CO_ARRAY_REF) {
-        if (DEBUG==2) System.out.println("  gaccha CO_ARRAY_REF  xobj.Opcode()="+xobj.Opcode());
-      }
-    }
+        // found coindexed object to be converted to the function reference
 
-  /***********
-    XobjectIterator xi = new topdownXobjectIterator(def.getFuncBody());
-    for (xi.init(); !xi.end(); xi.next()) {
-      Xobject xobj = xi.getXobject();
-      if (xobj == null) continue;
-      if (_isCoidxVarStmt(xobj)) {
-        if (DEBUG == 1) {
-          System.out.println("[XMPtransCoarray] #2" + 
-                             "found a coindex-var stmt. lhs="+xobj.getArg(0));
+        ///////
+        // TEMPORARY 
+        ///////
+        if (xi.getParent().Opcode() == Xcode.F_ASSIGN_STATEMENT &&
+            xi.getParent().getArg(0) == xobj) {
+          // found zombi coindexed object
+          if (DEBUG) System.out.println("found zombi: "+xobj);
+          // do nothing 
         }
 
-        Xobject xobj2 = _genCommPutStmt(xobj, COMM_PUT_LIB_NAME);
-        
+        else {
+          Xobject funcCall = genGetCommFunction(xobj, coarrays);
+          xi.setXobject(funcCall);
+        }
       }
     }
-  ***************/
+  }
+
+  /*
+   * convert expression:
+   *    v(s1,s2,...)[cs1,cs2,...]
+   * to:
+   *    type,external,dimension(:,:,..) :: commGetLibName_M
+   *    commGetLibName_M(...)
+   */
+  private Xobject genGetCommFunction(Xobject funcRef,
+                                     Vector<XMPcoarray> coarrays) {
+    XMPcoindexObj coidxObj = new XMPcoindexObj(funcRef, coarrays);
+    return coidxObj.genGetCommFunction();
   }
 
 

@@ -27,6 +27,7 @@ public class XMPcoarray {
   private Ident descrId = null;
 
   // context
+  protected XMPenv env;
   protected XobjectDef def;
   protected FunctionBlock fblock;
 
@@ -36,10 +37,11 @@ public class XMPcoarray {
   //------------------------------
   //  CONSTRUCTOR
   //------------------------------
-  public XMPcoarray(Ident ident, XobjectDef def, FunctionBlock fblock) {
+  public XMPcoarray(Ident ident, FuncDefBlock funcDef, XMPenv env) {
     this.ident = ident;
-    this.def = def;
-    this.fblock = fblock;
+    this.env = env;
+    def = funcDef.getDef();
+    fblock = funcDef.getBlock();
     name = ident.getName();
     //coshape = _getCoshape(
     originalType = ident.Type().copy();  // not sure how deep this copy
@@ -153,6 +155,18 @@ public class XMPcoarray {
     return ftype.getUbound(i, fblock);
   }
 
+  public Xobject getSizeFromIndexRange(Xobject range)
+  {
+    FarrayType ftype = (FarrayType)ident.Type();
+    return ftype.getSizeFromIndexRange(range, fblock);
+  }
+
+  public Xobject getSizeFromLbUb(Xobject lb, Xobject ub)
+  {
+    FarrayType ftype = (FarrayType)ident.Type();
+    return ftype.getSizeFromLbUb(lb, ub, fblock);
+  }
+
   public Xobject getSizeFromTriplet(int i, Xobject i1, Xobject i2,
                                     Xobject i3) {
     FarrayType ftype = (FarrayType)ident.Type();
@@ -189,6 +203,10 @@ public class XMPcoarray {
 
   public Ident getIdent() {
     return ident;
+  }
+
+  public XMPenv getEnv() {
+    return env;
   }
 
   public String getCrayPointerName() {

@@ -152,6 +152,16 @@ public class FarrayType extends Xtype
     }
 
 
+    public Xobject getSizeFromIndexRange(Xobject range, Block block)
+    {
+      if (range == null)    // illegal
+        throw new UnsupportedOperationException
+          ("internal error: index range is null");
+      Xobject lb = range.getArg(0);
+      Xobject ub = range.getArg(1);
+      return getSizeFromLbUb(lb, ub, block);
+    }
+
     // case: get size optionally with subscript range
     public Xobject getSizeFromLbUb(int i, Xobject lb, Xobject ub, Block block)
     {
