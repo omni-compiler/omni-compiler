@@ -105,7 +105,7 @@ void _ACC_gpu_get_data_sub(_ACC_gpu_data_t **host_data_desc, void **device_addr,
       _ACC_gpu_data_t *host_data_copy = NULL;
       host_data_copy = (_ACC_gpu_data_t *)_ACC_alloc(sizeof(_ACC_gpu_data_t));
       host_data_copy->host_addr = host_addr;
-      host_data_copy->device_addr = (current_data->device_addr) + (begin - host_begin);
+      host_data_copy->device_addr = ((char*)current_data->device_addr) + ((char*)begin - (char*)host_begin);
       host_data_copy->size = size;
       host_data_copy->is_original = false;
       host_data_copy->offset = offset;

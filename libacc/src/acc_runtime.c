@@ -32,7 +32,7 @@ void _ACC_init(int argc, char** argv) {
   
   //get environment variable
   char *acc_device_type_str;
-  acc_device_t device_t;
+  acc_device_t device_t = acc_device_default;
   acc_device_type_str = getenv("ACC_DEVICE_TYPE");
   if(acc_device_type_str == NULL){ // if not defined
     //acc_set_device_type(acc_device_default);
@@ -218,6 +218,7 @@ int acc_async_test( int id )
     return _ACC_gpu_test(id);    
   default:
     _ACC_fatal("acc_async_test : invalid device type");
+    return 0;
   }
 }
 
@@ -230,6 +231,7 @@ int acc_async_test_all()
     return _ACC_gpu_test_all();
   default:
     _ACC_fatal("acc_async_test_all : invalid device type");
+    return 0;
   }
 }
 
@@ -357,6 +359,7 @@ void* acc_malloc( size_t size )
 
   default:
     _ACC_fatal("acc_malloc : unknown device type");
+    return NULL;
   }
 }
 
