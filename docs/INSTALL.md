@@ -55,6 +55,9 @@ HOW TO INSTALL
 
  If you want to use OpenACC compiler
     $ ./configure --enable-openacc --with-cuda=[CUDA INSTALLATION PATH]
+    
+    If you want to compile for Kepler or newer GPU, you should specify '--with-gpu-cflags="-arch=sm_XX -O3"'
+    (XX is compute capability version of the GPU).
 
 ### On the K computer or FX10
     $ ./configure --target=Kcomputer-linux-gnu --prefix=[INSTALLATION PATH]
