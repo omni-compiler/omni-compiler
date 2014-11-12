@@ -5,6 +5,7 @@ Omni Compiler Software RELEASE NOTES
 * Support the XMP_NODE_SIZEn environment variable to specify an extent of a non-primary
   node array at runtime.
 * Support elemental functions in array constructs.
+* Support programming interface for MPI.
 * Fixed lots of bugs.
 
 # ver. 0.8.0      2014/04/25
