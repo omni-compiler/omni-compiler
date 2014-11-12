@@ -40,7 +40,7 @@ README
     $ export XMP_COARRAY_STRIDE_SIZE=32M
 
 * XMP_NODE_SIZEn
- This value specifies the extent of the n'th dimension of the non-primary node
+ This value specifies the extent of the n'th dimension of a non-primary node
  array that is declaread as '*' and not the last one. Note that n is 0-origin.
  For example, when XMP_NODE_SIZE0 and XMP_NODE_SIZE1 are set as follows:
 
@@ -61,6 +61,10 @@ README
  This option specifies the maximum number of assumed-shape array arguments of an XMP/F
  procedure. The default is 16. If the number of them exceeds this value, the result is
  not guaranteed.
+
+* -J dir
+ This option adds the directory "dir" to the list of directories to be searched for and put
+ module information files by the compiler.
 
 # Profiling Options in XMP/C
  Omni XMP compiler supports profiler interfaces of Scalasca and tlog.
