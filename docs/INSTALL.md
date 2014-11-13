@@ -22,10 +22,9 @@ HOW TO INSTALL
 
 ## Usage of local-view operations (coarray, post/wait, lock/unlock)
 ### On the K computer and FX10
- * Note that some bugs exist in the Fujitsu compiler when using large number of nodes (> 10,000 nodes).
- * Don't use the local-view operations on a large number of nodes.
- * To use the local-view operations, please add "--enable-KRDMA" option in ./configure script as follows:
- $ ./configure --target=Kcomputer-linux-gnu --enable-KRDMA 
+ * To use the local-view operations, please add "--enable-KRDMA" option in ./configure script.
+ * Don't use the local-view operations on a large number of nodes (> 10,000 nodes) due to some bugs of the Fujitsu compiler.
+ $ ./configure --target=Kcomputer-linux-gnu --enable-KRDMA
 
 ### Except for the K computer and FX10
  * Before installing the Omni compiler, please install GASNet (http://gasnet.lbl.gov).
@@ -70,12 +69,11 @@ HOW TO INSTALL
     $ ./configure --target=sx --prefix=[INSTALLATION PATH]
 
 ### On BlueGene/Q
-    First of all, you need to install openJDK (openjdk1.7.0-ppc-aix-port-linux-ppc64-b**.tar.bz2)
-    from http://cr.openjdk.java.net/~simonis/ppc-aix-port/
-    After that, please set PATH.
+    We recommend to install openJDK for AIX (e.g. openjdk1.7.0-ppc-aix-port-linux-ppc64-b**.tar.bz2,
+    from http://cr.openjdk.java.net/~simonis/ppc-aix-port/).
     $ ./configure --target=powerpc-ibm-none --prefix=[INSTALLATION PATH]
 
-## On SR16000 machines
+### On SR16000 machines
    $ ./configure --target=powerpc64-hitachi-aix CPP=cpp --prefix=[INSTALLATION PATH]
 
 ## Build
