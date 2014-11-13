@@ -13,8 +13,9 @@
 
 static void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype) {
   switch (datatype) {
-//  case _XMP_N_TYPE_BOOL:
-//    { *mpi_datatype = MPI_C_BOOL;			*datatype_size = sizeof(_Bool); 			break; }
+    case _XMP_N_TYPE_BOOL:
+      //{ *mpi_datatype = MPI_C_BOOL;			*datatype_size = sizeof(_Bool); 			break; }
+      { *mpi_datatype = MPI_LOGICAL;			*datatype_size = sizeof(_Bool); 			break; }
     case _XMP_N_TYPE_CHAR:
       { *mpi_datatype = MPI_SIGNED_CHAR;		*datatype_size = sizeof(char); 				break; }
     case _XMP_N_TYPE_UNSIGNED_CHAR:
@@ -278,6 +279,60 @@ void _XMP_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes,
     _XMP_free(loc_temp);
   }
   va_end(args);
+
+  _XMP_free(temp_buffer);
+  _XMP_free(cmp_buffer);
+}
+
+// not use variable-length arguments
+void _XMPF_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes,
+				    void *addr, int count, int datatype, int op,
+				    int num_locs, void **loc_vars, int *loc_types) {
+
+  if (count == 0) {
+    return; // FIXME not good implementation
+  }
+
+  if (!nodes->is_member) {
+    return;
+  }
+
+  // setup information
+  MPI_Datatype mpi_datatype;
+  size_t datatype_size;
+  MPI_Op mpi_op;
+  _XMP_setup_reduce_type(&mpi_datatype, &datatype_size, datatype);
+  _XMP_setup_reduce_op(&mpi_op, op);
+
+  // reduce <reduction-variable>
+  size_t n = datatype_size * count;
+  void *temp_buffer = _XMP_alloc(n);
+  memcpy(temp_buffer, addr, n);
+
+  MPI_Allreduce(temp_buffer, addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm));
+
+  // compare results
+  n = sizeof(int) * count;
+  int *cmp_buffer = _XMP_alloc(n);
+  _XMP_compare_reduce_results(cmp_buffer, temp_buffer, addr, count, datatype);
+
+  // reduce <location-variable>
+  for (int i = 0; i < num_locs; i++) {
+    void *loc = loc_vars[i];
+    int loc_datatype = loc_types[i];
+
+    _XMP_setup_reduce_type(&mpi_datatype, &datatype_size, loc_datatype);
+    _XMP_setup_reduce_FLMM_op(&mpi_op, op);
+    _XMP_init_localtion_variables(loc, count, loc_datatype, cmp_buffer, op);
+
+    n = datatype_size * count;
+    void *loc_temp = _XMP_alloc(n);
+    memcpy(loc_temp, loc, n);
+
+    MPI_Allreduce(loc_temp, loc, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm));
+
+    _XMP_free(loc_temp);
+  }
 
   _XMP_free(temp_buffer);
   _XMP_free(cmp_buffer);

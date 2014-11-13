@@ -1,5 +1,6 @@
 INCDIR = ../../../../../Driver/etc
-include $(INCDIR)/native.conf.xmp
+MPICOMPILER=$(shell cat $(INCDIR)/native.conf.xmp | grep "COMPILER=" | sed "s/COMPILER=//g" | sed "s/\"//g")
+GASNETLIB=$(shell cat $(INCDIR)/linker.conf.xmp | grep "GASNET_LIB=" | sed "s/GASNET_LIB=//g" | sed "s/\"//g")
 XCC     = xmpcc -O2
 XRUN    = mpiexec
 TESTS = $(wildcard *.c)
@@ -16,13 +17,13 @@ ixmp_sub.o: ./sub/ixmp_sub.c
 	$(XCC) -c $^ -o $@
 
 sub_mpi.o: ./sub/sub_mpi.c
-	$(COMPILER) -c $^ -o $@
+	$(MPICOMPILER) -c $^ -o $@
 
 %.x: %.c 
 	$(XCC) -o $@ $<
 
 mpi_xmp.x: mpi_xmp.c ixmp_sub.o
-	$(COMPILER) -o $@ -fopenmp mpi_xmp.c ixmp_sub.o -L../../../../../libxmp/src -lxmp
+	$(MPICOMPILER) -o $@ -fopenmp mpi_xmp.c ixmp_sub.o -L../../../../../libxmp/src -lxmp $(GASNETLIB)
 
 xmp_mpi.x: xmp_mpi.c sub_mpi.o
 	$(XCC) -o $@ xmp_mpi.c sub_mpi.o

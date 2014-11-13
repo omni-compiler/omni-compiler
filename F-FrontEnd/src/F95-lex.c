@@ -61,6 +61,7 @@ extern struct keyword_token dot_keywords[],keywords[];
 extern struct keyword_token end_keywords[];
 
 extern int ocl_flag;
+extern int cdir_flag;
 extern int max_name_len; //  maximum identifier name length
 extern int dollar_ok;    // accept '$' in identifier or not. 
 
@@ -134,6 +135,7 @@ sentinel_list sentinels;
 #define OMP_SENTINEL "!$omp"
 #define XMP_SENTINEL "!$xmp"
 #define OCL_SENTINEL "!ocl"
+#define CDIR_SENTINEL "!cdir"
 
 /* sentinel list functions */
 static void init_sentinel_list( sentinel_list * p );
@@ -290,6 +292,7 @@ initialize_lex()
     add_sentinel( &sentinels, OMP_SENTINEL );
     add_sentinel( &sentinels, XMP_SENTINEL );
     if (ocl_flag) add_sentinel( &sentinels, OCL_SENTINEL );
+    if (cdir_flag) add_sentinel( &sentinels, CDIR_SENTINEL );
 }
 
 static void
@@ -673,7 +676,7 @@ token()
     case '(': 
         paren_level++; 
 	/* or interface operator (/), (/=), or (//) */
-	if (*bufptr == '/' && !st_OMP_flag) {
+	if (*bufptr == '/') {
 	    char *save = ++bufptr; /* check 'interface operator (/)' ? */
 
 	    while(isspace(*bufptr)) bufptr++;  /* skip white space */
@@ -702,6 +705,10 @@ token()
 		  return '(';
 		}
 	      }
+	    }
+	    else if (st_OMP_flag){
+	      bufptr = save - 1;
+	      return '(';
 	    }
 	    bufptr = save;		
 	    return L_ARRAY_CONSTRUCTOR;
@@ -760,7 +767,7 @@ token()
             bufptr++;
             return(NE);
         } 
-        if (*bufptr == ')' && !st_OMP_flag) {
+        if (*bufptr == ')') {
             bufptr++;
             paren_level--; 
             { /* check 'interface operator (/)' ? */
@@ -771,6 +778,10 @@ token()
                     bufptr = save - 1;
                     return '/';
                 }
+		if (st_XMP_flag || st_OMP_flag){
+		  bufptr = save - 1;
+		  return '/';
+		}
                 bufptr = save;
             }
             return R_ARRAY_CONSTRUCTOR;
@@ -2095,6 +2106,11 @@ again:
                 st_XMP_flag = TRUE;
             }else if( strcasecmp( sentinel_name( &sentinels, index ), OCL_SENTINEL )== 0 ){
 	        char buff[256] = "ocl";
+		strcat(buff, p);
+                set_pragma_str( buff );
+                st_PRAGMA_flag = TRUE;
+            }else if( strcasecmp( sentinel_name( &sentinels, index ), CDIR_SENTINEL )== 0 ){
+	        char buff[256] = "cdir";
 		strcat(buff, p);
                 set_pragma_str( buff );
                 st_PRAGMA_flag = TRUE;

@@ -98,7 +98,6 @@ public class XmBackEnd
                 return false;
             }
         }
-        
         try {
             if(_inputFilePath == null) {
                 _reader = new BufferedReader(new InputStreamReader(System.in));
@@ -212,7 +211,11 @@ public class XmBackEnd
 	    try {
 	      javax.xml.parsers.DocumentBuilderFactory docFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
 	      javax.xml.parsers.DocumentBuilder builder = docFactory.newDocumentBuilder();
-	      Document xcodeDoc = builder.parse(_inputFilePath);
+	      Document xcodeDoc;
+	      if (_inputFilePath != null)
+		xcodeDoc = builder.parse(_inputFilePath);
+	      else
+		xcodeDoc = builder.parse(System.in);
 	      decompiler.decompile(context, xcodeDoc, writer);
 	    } catch (ParserConfigurationException e) {
 	      _error(e, "Error at decompiling");

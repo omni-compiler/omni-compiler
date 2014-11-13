@@ -8,7 +8,7 @@ LT_PREREQ(2.4)
 # --------------------------------------------------------------------
 # Let the initiation begin....
 
-AC_INIT([Omni Compiler], [0.8.0], [h-murai@riken.jp], [omni])
+AC_INIT([Omni Compiler], [0.9.0], [h-murai@riken.jp], [omni])
 
 AC_CONFIG_AUX_DIR([./buildutils])
 AC_CONFIG_MACRO_DIR([./buildutils])
@@ -487,6 +487,10 @@ AC_ARG_ENABLE(atool,
     [  --enable-atool                 enable atool (false default).],
     [doatool=$enableval], [doatool=no])
 
+AC_ARG_ENABLE(KEK,
+    [  --enable-KEK                   enable KEK option (false default).],
+    [doKEK=$enableval], [doKEK=no])
+
 AC_ARG_ENABLE(xacc,
     [  --enable-xacc                  enable XcalableACC (false default).],
     [xacc=$enableval], [xacc=no])
@@ -618,6 +622,22 @@ else  # if "--target" option is not used in ./configure
   BEFC_MODINC="-M"
 fi
 
+# --------------------------------------------------------------------
+# specify Backend C compiler
+AC_ARG_WITH(backend-cc,
+    [  --with-backend-cc=CMD       Backend C compiler (default: mpicc)],
+    [BECC="${withval}"], [BECC="${BECC}"])
+
+# --------------------------------------------------------------------
+# specify Backend F90 compiler
+AC_ARG_WITH(backend-fc,
+    [  --with-backend-fc=CMD       Backend F90 compiler (default: mpif90)],
+    [BEFC="${withval}"], [BEFC="${BEFC}"])
+
+# --------------------------------------------------------------------
+AC_SUBST(BECC)
+AC_SUBST(BEFC)
+
 PPCC="${BECC}"
 PPCC_OPT="-E"
 NATIVE_DOPT="-D_XCALABLEMP"
@@ -643,33 +663,18 @@ if test "$IS_AIX" = "Yes"; then
 fi
 
 ## Add temporarily by mnakao
-#enableKRDMA=""
-#AC_ARG_ENABLE(KRDMA,
-#   [  --enable-KRDMA                 enable RDMA functions on the K compiter.],
-#   [enableKRDMA=$enableval], [enableKRDMA=no])
-#
-#AM_CONDITIONAL(FJRDMA, test x${enableKRDMA} = xyes)
-#AC_SUBST(FJRDMA)
+enableKRDMA=""
+AC_ARG_ENABLE(KRDMA,
+   [  --enable-KRDMA                 enable RDMA functions on the K compiter.],
+   [enableKRDMA=$enableval], [enableKRDMA=no])
+
+AM_CONDITIONAL(FJRDMA, test x${enableKRDMA} = xyes)
+AC_SUBST(FJRDMA)
 ## End Add temporarily
 
-AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
-AC_SUBST(FJRDMA)
+#AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
+#AC_SUBST(FJRDMA)
 
-# --------------------------------------------------------------------
-# specify Backend C compiler
-AC_ARG_WITH(backend-cc,
-    [  --with-backend-cc=CMD       Backend C compiler (default: mpicc)],
-    [BECC="${withval}"], [BECC="${BECC}"])
-
-# --------------------------------------------------------------------
-# specify Backend F90 compiler
-AC_ARG_WITH(backend-fc,
-    [  --with-backend-fc=CMD       Backend F90 compiler (default: mpif90)],
-    [BEFC="${withval}"], [BEFC="${BEFC}"])
-
-# --------------------------------------------------------------------
-AC_SUBST(BECC)
-AC_SUBST(BEFC)
 
 AC_SUBST(BEFC_MODINC)
 
@@ -708,8 +713,13 @@ elif test "$target" = "powerpc-ibm-none"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT="-q64"
   DRIVER="/bgsys/drivers/ppcfloor"
+if test "x${doKEK}" = "xyes"; then
   OMC_CONF_LNK_OPT="-I/usr/local/bg/include \
                 -L/usr/local/bg/lib -lkek -L${DRIVER}/bgpm/lib/ -lbgpm -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
+else
+  OMC_CONF_LNK_OPT="-I/usr/local/bg/include \
+                -L/usr/local/bg/lib -L${DRIVER}/bgpm/lib/ -lbgpm -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
+fi
   BECC_OPTION="-O5"
   BECC_OMP_OPTION="-O5  -qhot -qsmp=omp -qsimd=auto"
 elif test "$target" = "powerpc64-hitachi-aix"; then
@@ -731,8 +741,8 @@ else
   *ICC*)
     OMC_CONF_LX2X_OPT=""
     OMC_CONF_NTV_OPT="-std=gnu99 -w"
-    OMC_CONF_LNK_OPT="-openmp"
-    BECC_OPTION="-std=gnu99 -Wall -Wpointer-arith"
+    OMC_CONF_LNK_OPT="-O2 -openmp"
+    BECC_OPTION="-O2 -std=gnu99 -Wall -Wpointer-arith"
     BECC_OMP_OPTION="-openmp"
     ;;
   *)
@@ -804,14 +814,14 @@ if test $enableF2F = yes; then
     case $chk in
     GNU*)
       OMF_CONF_LX2X_OPT="-gnu"
-      OMF_CONF_NTV_OPT="-ffree-form"
-      OMF_CONF_LNK_OPT="-fopenmp -lgomp"
+      OMF_CONF_NTV_OPT="-ffree-form -fcray-pointer"
+      OMF_CONF_LNK_OPT="-fopenmp -lgomp -fcray-pointer"
       BEFC_MODINC="-J"  
       ;;
     *IFORT*)
       OMF_CONF_LX2X_OPT="-intel"
-      OMF_CONF_NTV_OPT="-auto"
-      OMF_CONF_LNK_OPT="-threads -openmp"
+      OMF_CONF_NTV_OPT="-auto -fast"
+      OMF_CONF_LNK_OPT="-threads -openmp -fast"
       BEFC_MODINC="-module"
       ;;
     *)
@@ -1902,14 +1912,15 @@ omniBinDir=''
 omniLibDir=''
 omniEtcDir="${OM_DRIVER_CONF_DIR}/"
 omniIncDir=''
-AC_ARG_WITH([omni],
-	[AS_HELP_STRING([--with-omni],
-		[specify where the omni is installed (prefix default).])],
-	[tmpOmniDir=${withval}],
-	[tmpOmniDir=${prefix}])
-if test -z "${tmpOmniDir}"; then
-    tmpOmniDir=${defaultOmniDir}
-fi
+#AC_ARG_WITH([omni],
+#	[AS_HELP_STRING([--with-omni],
+#		[specify where the omni is installed (prefix default).])],
+#	[tmpOmniDir=${withval}],
+#	[tmpOmniDir=${prefix}])
+#if test -z "${tmpOmniDir}"; then
+#    tmpOmniDir=${defaultOmniDir}
+#fi
+
 AC_MSG_CHECKING([the Omni is installed at "${tmpOmniDir}"])
 if test -d "${tmpOmniDir}"; then
     if test -x "${tmpOmniDir}/bin/F_Front"; then
@@ -1935,13 +1946,13 @@ AC_SUBST(omniEtcDir)
 AC_SUBST(omniIncDir)
 
 # native compiler
-tmpNativeCompiler=''
-AC_ARG_WITH([nativeCompiler],
-	[AS_HELP_STRING([--with-nativeCompiler],
-		[specify a native fortran compiler ("gfortran" default).])],
-	[tmpNativeCompiler=${withval}],
-	[tmpNativeCompiler="gfortran"])
-nativeCompiler=${tmpNativeCompiler}
+#tmpNativeCompiler=''
+#AC_ARG_WITH([nativeCompiler],
+#	[AS_HELP_STRING([--with-nativeCompiler],
+#		[specify a native fortran compiler ("gfortran" default).])],
+#	[tmpNativeCompiler=${withval}],
+#	[tmpNativeCompiler="gfortran"])
+nativeCompiler=${FC}
 AC_SUBST(nativeCompiler)
 
 checkCpp() {
@@ -1964,11 +1975,12 @@ checkCpp() {
 # cpp
 cppCmd=''
 tmpCppCmd=''
-AC_ARG_WITH([cpp],
-	[AS_HELP_STRING([--with-cpp],
-		[specify a cpp command (native compiler default).])],
-	[tmpCppCmd=${withval}],
-	[tmpCppCmd=${nativeCompiler}])
+#AC_ARG_WITH([cpp],
+#	[AS_HELP_STRING([--with-cpp],
+#		[specify a cpp command (native compiler default).])],
+#	[tmpCppCmd=${withval}],
+#	[tmpCppCmd=${nativeCompiler}])
+tmpCppCmd=${CPP}
 AC_MSG_CHECKING(["${tmpCppCmd}" is a C preprosessor])
 checkCpp ${tmpCppCmd}
 if test $? -eq 0; then
@@ -2062,7 +2074,9 @@ esac
 if test "$target" != "$host"; then
    case "$target" in
         Kcomputer-linux-gnu|FX10-linux-gnu)
-                LDFLAGS="";;
+                LDFLAGS=""
+                BLASLIB="-SSL2BLAMP"
+                AC_SUBST(BLASLIB);;
         MIC-linux-gnu)
                 LDFLAGS="";;
         sx-nec-superux)

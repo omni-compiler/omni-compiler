@@ -153,7 +153,7 @@ int xmpf_loop_test_skip__(_XMP_object_ref_t **r_desc, int *rdim, int *i)
 /*   int index = *i + rp->offset[*rdim]; */
 /*   int tdim = rp->offset[*rdim]; */
   int index = *i + rp->REF_OFFSET[*rdim];
-  int tdim = rp->REF_OFFSET[*rdim];
+  int tdim = rp->REF_INDEX[*rdim];
 
   _XMP_template_t *tp = rp->t_desc;
   _XMP_template_chunk_t *cp = &tp->chunk[tdim];
@@ -164,6 +164,7 @@ int xmpf_loop_test_skip__(_XMP_object_ref_t **r_desc, int *rdim, int *i)
   case _XMP_N_DIST_DUPLICATION:
     return 0;
   case _XMP_N_DIST_BLOCK:
+  case _XMP_N_DIST_GBLOCK:
     // par_lower and par_upper is 0-origin. How about index ?
     return (index < cp->par_lower || cp->par_upper < index);
   case _XMP_N_DIST_CYCLIC:

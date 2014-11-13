@@ -1,6 +1,11 @@
 ACC_INC_DIR=../include
-CC=@CC@
+CC=@BECC@
 GPUCC=@GPU_CMD@
+GPUCFLAGS=@GPU_CFLAGS@
+AM_CFLAGS     = -I$(ACC_INC_DIR) @BECC_OPTION@ 
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS)
+LINK = $(CCLD) $(AM_CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 
 lib_LIBRARIES		= libacc.a
 libacc_a_SOURCES	= $(ACC_INC_DIR)/acc_internal.h $(ACC_INC_DIR)/acc_gpu_internal.h \
@@ -11,7 +16,5 @@ libacc_a_LIBADD		= acc_runtime.o acc_gpu_data_table.o acc_util.o \
 			  acc_gpu_runtime.o acc_gpu_data.o acc_gpu_stream.o acc_gpu_util.o acc_gpu_mpool.o acc_gpu_pack.o
 
 .cu.o:
-	$(GPUCC) -I$(ACC_INC_DIR) -O3 -c -o $@ $<
+	$(GPUCC) $(GPUCFLAGS) -I$(ACC_INC_DIR) -c -o $@ $<
 
-.c.o:
-	$(CC) -I$(ACC_INC_DIR) -O3 -c -o $@ $<

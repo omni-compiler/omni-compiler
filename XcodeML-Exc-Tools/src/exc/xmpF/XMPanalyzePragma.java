@@ -592,7 +592,11 @@ public class XMPanalyzePragma
     if(!op.isIntConstant()) XMP.fatal("reduction: op is not INT");
 
     Vector<Ident> reduction_vars = new Vector<Ident>();
-    for(Xobject v: (XobjList)reductionSpec.getArg(1)){
+    Vector<Vector<Ident>> reduction_pos_vars = new Vector<Vector<Ident>>();
+
+    for(Xobject w: (XobjList)reductionSpec.getArg(1)){
+
+      Xobject v = w.getArg(0);
       if(!v.isVariable()){
 	XMP.errorAt(pb,"not variable in reduction spec list");
       }
@@ -601,8 +605,22 @@ public class XMPanalyzePragma
 	XMP.errorAt(pb,"variable '"+v.getName()+"' in reduction is not found");
       }
       reduction_vars.add(id);
+
+      Vector<Ident> plist = new Vector<Ident>();
+      if (w.getArg(1) != null){
+	for (Xobject p: (XobjList)w.getArg(1)){
+	  Ident pid = env.findVarIdent(p.getName(), pb);
+	  if (pid == null){
+	    XMP.errorAt(pb, "variable '" + p.getName() + "' in reduction is not found");
+	  }
+	  plist.add(pid);
+	}
+      }
+
+      reduction_pos_vars.add(plist);
     }
-    info.setReductionInfo(op.getInt(),reduction_vars);
+
+    info.setReductionInfo(op.getInt(), reduction_vars, reduction_pos_vars);
   }
 
   private void analyzeBcast(Xobject bcastDecl, 
@@ -692,6 +710,10 @@ public class XMPanalyzePragma
   }
 
   private boolean checkGmoveOperand(Xobject x, PragmaBlock pb){
+
+    Ident id = null;
+    XMParray array = null;
+
     switch(x.Opcode()){
     case F_ARRAY_REF:
       Xobject a = x.getArg(0);
@@ -700,15 +722,24 @@ public class XMPanalyzePragma
       a = a.getArg(0);
       if(a.Opcode() != Xcode.VAR)
 	XMP.fatal("not VAR for F_VAR_REF");
-      Ident id = env.findVarIdent(a.getName(),pb);
+      id = env.findVarIdent(a.getName(),pb);
       if(id == null)
 	XMP.fatal("array in F_ARRAY_REF is not declared");
-      XMParray array = XMParray.getArray(id);
+      array = XMParray.getArray(id);
       if(array != null){
 	if (XMPpragma.valueOf(pb.getPragma()) != XMPpragma.ARRAY) a.setProp(XMP.RWprotected,array);
 	return true;
       }
-    case VAR: /* it ok */
+      break;
+    case VAR:
+      id = env.findVarIdent(x.getName(), pb);
+      if (id == null)
+	XMP.fatal("variable" + x.getName() + "is not declared");
+      array = XMParray.getArray(id);
+      if (array != null){
+	if (XMPpragma.valueOf(pb.getPragma()) != XMPpragma.ARRAY) x.setProp(XMP.RWprotected, array);
+	return true;
+      }
       break;
     default:
       XMP.errorAt(pb,"gmove must be followed by simple assignment");
