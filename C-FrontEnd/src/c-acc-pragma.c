@@ -198,7 +198,7 @@ int parse_ACC_pragma()
 	    CExpr *x;
 	    if((x = parse_ACC_clause_arg()) == NULL) 
 		goto syntax_err;
-	    pg_ACC_list = allocExprOfList1(EC_UNDEF,x);
+	    pg_ACC_list = (CExpr*)allocExprOfList1(EC_UNDEF,x);
 	} else pg_ACC_list = NULL;
 	ret= PRAGMA_EXEC;
 	goto chk_end;

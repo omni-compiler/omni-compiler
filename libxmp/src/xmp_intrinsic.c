@@ -379,7 +379,17 @@ static void array_duplicate(_XMP_array_t *dst_d, MPI_Request *send_req, MPI_Requ
 {
    _XMP_nodes_t *nodes=dst_d->align_template->onto_nodes;;
    int dim0rank=-1, dim1rank=-1, dist_dim=0;
+   int dst_alloc_size[2];
    int i, j, k;
+
+   /* allocate check */
+   if(dst_d->is_allocated){
+      dst_alloc_size[0] = dst_d->info[0].alloc_size;
+      dst_alloc_size[1] = dst_d->info[1].alloc_size;
+   } else {
+      dst_alloc_size[0] = 0;
+      dst_alloc_size[1] = 0;
+   }
 
    if(dst_d->info[0].align_manner == _XMP_N_ALIGN_BLOCK ||
       dst_d->info[0].align_manner == _XMP_N_ALIGN_CYCLIC ||
@@ -426,13 +436,13 @@ static void array_duplicate(_XMP_array_t *dst_d, MPI_Request *send_req, MPI_Requ
                size *= nodes->info[j].size;
             }
             if(recv_rank > -1){
-               MPI_Isend(dst_d->array_addr_p, dst_d->type_size*dst_d->info[0].alloc_size*dst_d->info[1].alloc_size,
+               MPI_Isend(dst_d->array_addr_p, dst_d->type_size*dst_alloc_size[0]*dst_alloc_size[1],
                          MPI_BYTE, recv_rank, 99, *(MPI_Comm*)(nodes->comm), &send_req[recv_rank]);
                /* printf(" duplicate send %d -> %d\n", send_rank, recv_rank); */
             }
          }
       } else {               /* recv */
-         MPI_Recv(dst_d->array_addr_p, dst_d->type_size*dst_d->info[0].alloc_size*dst_d->info[1].alloc_size,
+         MPI_Recv(dst_d->array_addr_p, dst_d->type_size*dst_alloc_size[0]*dst_alloc_size[1],
                   MPI_BYTE, send_rank, 99, *(MPI_Comm*)(nodes->comm), MPI_STATUSES_IGNORE);
          /* printf(" duplicate recv %d -> %d\n", send_rank, nodes->comm_rank); */
       }
@@ -453,6 +463,8 @@ static void xmp_transpose_no_opt(_XMP_array_t *dst_d, _XMP_array_t *src_d, int o
    int  *send_size;
    int  *recv_size;
    int  *recv_pos;
+   int   dst_alloc_size[2];
+   int   src_alloc_size[2];
    int i, j, k, l, m;
 
 #ifdef DEBUG
@@ -463,6 +475,22 @@ static void xmp_transpose_no_opt(_XMP_array_t *dst_d, _XMP_array_t *src_d, int o
 #ifdef DEBUG
    /* show_array(src_d, addr_p);  /\* debug write *\/ */
 #endif
+
+   /* allocate check */
+   if(dst_d->is_allocated){
+      dst_alloc_size[0] = dst_d->info[0].alloc_size;
+      dst_alloc_size[1] = dst_d->info[1].alloc_size;
+   } else {
+      dst_alloc_size[0] = 0;
+      dst_alloc_size[1] = 0;
+   }
+   if(src_d->is_allocated){
+      src_alloc_size[0] = src_d->info[0].alloc_size;
+      src_alloc_size[1] = src_d->info[1].alloc_size;
+   } else {
+      src_alloc_size[0] = 0;
+      src_alloc_size[1] = 0;
+   }
 
    /* translate_ranks */
    /* printf("execute comm size: %d\n",  _XMP_get_execution_nodes()->comm_size); */
@@ -592,9 +620,9 @@ static void xmp_transpose_no_opt(_XMP_array_t *dst_d, _XMP_array_t *src_d, int o
    }
 #endif
 
-   /* transpose & pack src array */
+  /* transpose & pack src array */
    if(src_d->is_allocated){
-      send_buf = (char*)_XMP_alloc(src_d->info[0].alloc_size*src_d->info[1].alloc_size*src_d->type_size
+      send_buf = (char*)_XMP_alloc(src_alloc_size[0]*src_alloc_size[1]*src_d->type_size
                                    *_XMP_get_execution_nodes()->comm_size);
    } else {
       send_buf = NULL;
@@ -602,12 +630,12 @@ static void xmp_transpose_no_opt(_XMP_array_t *dst_d, _XMP_array_t *src_d, int o
    
    if(opt &&
       src_d->is_allocated &&
-      dst_d->info[0].alloc_size*dst_d->info[1].alloc_size*dst_d->type_size <=
-      src_d->info[0].alloc_size*src_d->info[1].alloc_size*src_d->type_size){
+      dst_alloc_size[0]*dst_alloc_size[1]*dst_d->type_size <=
+      src_alloc_size[0]*src_alloc_size[1]*src_d->type_size){
       recv_buf = (char*)src_d->array_addr_p;
    } else {
       if(dst_d->is_allocated){
-         recv_buf = (char*)_XMP_alloc(dst_d->info[0].alloc_size*dst_d->info[1].alloc_size*dst_d->type_size);
+         recv_buf = (char*)_XMP_alloc(dst_alloc_size[0]*dst_alloc_size[1]*dst_d->type_size);
       } else {
          recv_buf = NULL;
       }
@@ -617,7 +645,7 @@ static void xmp_transpose_no_opt(_XMP_array_t *dst_d, _XMP_array_t *src_d, int o
    recv_pos = (int*)_XMP_alloc(_XMP_get_execution_nodes()->comm_size*sizeof(int));
    send_req = (MPI_Request*)_XMP_alloc(_XMP_get_execution_nodes()->comm_size*sizeof(MPI_Request));
    recv_req = (MPI_Request*)_XMP_alloc(_XMP_get_execution_nodes()->comm_size*sizeof(MPI_Request));
-   send_buf_offset = src_d->info[0].alloc_size*src_d->info[1].alloc_size*src_d->type_size;
+   send_buf_offset = src_alloc_size[0]*src_alloc_size[1]*src_d->type_size;
    for(m=0; m<_XMP_get_execution_nodes()->comm_size; m++){
       send_size[m] = 0;
       recv_size[m] = 0;
@@ -636,7 +664,7 @@ static void xmp_transpose_no_opt(_XMP_array_t *dst_d, _XMP_array_t *src_d, int o
                _XMP_align_local_idx((long long int)i, &li, src_d, 0, &r);
                /* lj = g_to_l(src_d, 1, j); */
                _XMP_align_local_idx((long long int)j, &lj, src_d, 1, &r);
-               k = (lj*src_d->info[0].alloc_size+li)*src_d->type_size;
+               k = (lj*src_alloc_size[0]+li)*src_d->type_size;
                memcpy(send_buf+send_buf_offset*m+send_size[m], addr_p+k, src_d->type_size);
                send_size[m] += src_d->type_size;
                /* for(l=0; l<src_d->type_size; l++){ */
@@ -661,7 +689,7 @@ static void xmp_transpose_no_opt(_XMP_array_t *dst_d, _XMP_array_t *src_d, int o
                _XMP_align_local_idx((long long int)i, &li, src_d, 0, &r);
                /* lj = g_to_l(src_d, 1, j); */
                _XMP_align_local_idx((long long int)j, &lj, src_d, 1, &r);
-               k = (li*src_d->info[1].alloc_size+lj)*src_d->type_size;
+               k = (li*src_alloc_size[1]+lj)*src_d->type_size;
                memcpy(send_buf+send_buf_offset*m+send_size[m], addr_p+k, src_d->type_size);
                send_size[m] += src_d->type_size;
                /* for(l=0; l<src_d->type_size; l++){ */
@@ -756,7 +784,7 @@ static void xmp_transpose_no_opt(_XMP_array_t *dst_d, _XMP_array_t *src_d, int o
                _XMP_align_local_idx((long long int)i, &li, dst_d, 0, &r);
                /* lj = g_to_l(dst_d, 1, j); */
                _XMP_align_local_idx((long long int)j, &lj, dst_d, 1, &r);
-               k = (lj*dst_d->info[0].alloc_size+li)*dst_d->type_size;
+               k = (lj*dst_alloc_size[0]+li)*dst_d->type_size;
                memcpy(addr_p+k, recv_buf+recv_pos[m], dst_d->type_size);
                recv_pos[m] += dst_d->type_size;
                /* for(l=0; l<dst_d->type_size; l++){ */
@@ -776,7 +804,7 @@ static void xmp_transpose_no_opt(_XMP_array_t *dst_d, _XMP_array_t *src_d, int o
                _XMP_align_local_idx((long long int)i, &li, dst_d, 0, &r);
                /* lj = g_to_l(dst_d, 1, j); */
                _XMP_align_local_idx((long long int)j, &lj, dst_d, 1, &r);
-               k = (li*dst_d->info[1].alloc_size+lj)*dst_d->type_size;
+               k = (li*dst_alloc_size[1]+lj)*dst_d->type_size;
                memcpy(addr_p+k, recv_buf+recv_pos[m], dst_d->type_size);
                recv_pos[m] += dst_d->type_size;
                /* for(l=0; l<dst_d->type_size; l++){ */
@@ -824,26 +852,44 @@ static void xmp_transpose_alltoall(_XMP_array_t *dst_d, _XMP_array_t *src_d, int
    int dst_w;
    int buf_size;
    int type_size;
+   int dst_alloc_size[2];
+   int src_alloc_size[2];
    
 #ifdef DEBUG
    show_all(src_d);             /* debug write */
    show_all(dst_d);             /* debug write */
 #endif
    
+   /* allocate check */
+   if(dst_d->is_allocated){
+      dst_alloc_size[0] = dst_d->info[0].alloc_size;
+      dst_alloc_size[1] = dst_d->info[1].alloc_size;
+   } else {
+      dst_alloc_size[0] = 0;
+      dst_alloc_size[1] = 0;
+   }
+   if(src_d->is_allocated){
+      src_alloc_size[0] = src_d->info[0].alloc_size;
+      src_alloc_size[1] = src_d->info[1].alloc_size;
+   } else {
+      src_alloc_size[0] = 0;
+      src_alloc_size[1] = 0;
+   }
+
    /* start_collection("other1"); */
    type_size = dst_d->type_size;
    buf_size =
       (dst_d->info[0].local_upper-dst_d->info[0].local_lower+1) * 
       (dst_d->info[1].local_upper-dst_d->info[1].local_lower+1);
-   if(opt && buf_size <= dst_d->info[0].alloc_size*dst_d->info[1].alloc_size){
+   if(opt && buf_size <= dst_alloc_size[0]*dst_alloc_size[1]){
       send_buf = (char*)(dst_d->array_addr_p);
    } else {
-      send_buf = (char*)_XMP_alloc(type_size*src_d->info[0].alloc_size*src_d->info[1].alloc_size);
+      send_buf = (char*)_XMP_alloc(type_size*src_alloc_size[0]*src_alloc_size[1]);
    }
    if(xmpf_running){           /* Fortran */
       if(dist_dim == 0 && dst_d->info[dist_dim].shadow_size_lo == 0 && dst_d->info[dist_dim].shadow_size_hi == 0){
          recv_buf = (char*)(dst_d->array_addr_p);
-      } else if(opt && buf_size <= src_d->info[0].alloc_size*src_d->info[1].alloc_size){
+      } else if(opt && buf_size <= src_alloc_size[0]*src_alloc_size[1]){
          recv_buf = (char*)(src_d->array_addr_p);
       } else {
          recv_buf = (char*)_XMP_alloc(type_size*buf_size);
@@ -851,7 +897,7 @@ static void xmp_transpose_alltoall(_XMP_array_t *dst_d, _XMP_array_t *src_d, int
    } else {
       if(dist_dim == 1 && dst_d->info[dist_dim].shadow_size_lo == 0 && dst_d->info[dist_dim].shadow_size_hi == 0){
          recv_buf = (char*)(dst_d->array_addr_p);
-      } else if(opt && buf_size <= src_d->info[0].alloc_size*src_d->info[1].alloc_size){
+      } else if(opt && buf_size <= src_alloc_size[0]*src_alloc_size[1]){
          recv_buf = (char*)(src_d->array_addr_p);
       } else {
          recv_buf = (char*)_XMP_alloc(type_size*buf_size);
@@ -875,7 +921,7 @@ static void xmp_transpose_alltoall(_XMP_array_t *dst_d, _XMP_array_t *src_d, int
                l = src_d->info[1].local_lower+k*dst_w+j;
                for(i=src_d->info[0].local_lower; i<=src_d->info[0].local_upper; i++){
                   memcpy(send_buf+(k*offset_size+(i-src_d->info[0].local_lower)*dst_w+j)*type_size,
-                         addr_p+(l*src_d->info[0].alloc_size+i)*type_size, type_size);
+                         addr_p+(l*src_alloc_size[0]+i)*type_size, type_size);
                }
             }
          }
@@ -885,7 +931,7 @@ static void xmp_transpose_alltoall(_XMP_array_t *dst_d, _XMP_array_t *src_d, int
          /*       for(i=0; i<dst_w; i++){ */
          /*          l = src_d->info[0].local_lower+k*dst_w+i; */
          /*          memcpy(send_buf+(k*offset_size+i*src_w+j-src_d->info[1].local_lower)*type_size, */
-         /*                 addr_p+(j*src_d->info[0].alloc_size+l)*type_size, */
+         /*                 addr_p+(j*src_alloc_size[0]+l)*type_size, */
          /*                 type_size); */
          /*       } */
          /*    } */
@@ -893,12 +939,12 @@ static void xmp_transpose_alltoall(_XMP_array_t *dst_d, _XMP_array_t *src_d, int
          if(type_size == 16){
             /* start_collection("feast_pack"); */
             double _Complex *buf_p = (double _Complex*)send_buf;
-            double _Complex *base_p = (double _Complex*)(addr_p+(src_d->info[0].alloc_size*src_d->info[1].local_lower+src_d->info[0].local_lower)
+            double _Complex *base_p = (double _Complex*)(addr_p+(src_alloc_size[0]*src_d->info[1].local_lower+src_d->info[0].local_lower)
                                                          *type_size);
             int nblk = 32;
             int dim0_size = src_d->info[0].local_upper-src_d->info[0].local_lower+1;
             int dim1_size = src_d->info[1].local_upper-src_d->info[1].local_lower+1;
-            int alloc_size = src_d->info[0].alloc_size;
+            int alloc_size = src_alloc_size[0];
 #pragma omp parallel for private(j,i)
             for(j=0; j<dim1_size; j+=nblk){
                for(i=0; i<dim0_size; i+=nblk){
@@ -911,12 +957,12 @@ static void xmp_transpose_alltoall(_XMP_array_t *dst_d, _XMP_array_t *src_d, int
             }
             /* stop_collection("feast_pack"); */
          } else {
-            char *base_p = (char*)(addr_p+(src_d->info[0].alloc_size*src_d->info[1].local_lower+src_d->info[0].local_lower)
+            char *base_p = (char*)(addr_p+(src_alloc_size[0]*src_d->info[1].local_lower+src_d->info[0].local_lower)
                                    *type_size);
             int nblk = 32;
             int dim0_size = src_d->info[0].local_upper-src_d->info[0].local_lower+1;
             int dim1_size = src_d->info[1].local_upper-src_d->info[1].local_lower+1;
-            int alloc_size = src_d->info[0].alloc_size;
+            int alloc_size = src_alloc_size[0];
 #pragma omp parallel for private(j,i)
             for(j=0; j<dim1_size; j+=nblk){
                for(i=0; i<dim0_size; i+=nblk){
@@ -936,7 +982,7 @@ static void xmp_transpose_alltoall(_XMP_array_t *dst_d, _XMP_array_t *src_d, int
                for(i=0; i<dst_w; i++){
                   l = src_d->info[1].local_lower+k*dst_w+i;
                   memcpy(send_buf+(k*offset_size+i*src_w+j-src_d->info[0].local_lower)*type_size,
-                         addr_p+(j*src_d->info[1].alloc_size+l)*type_size,
+                         addr_p+(j*src_alloc_size[1]+l)*type_size,
                          type_size);
                }
             }
@@ -947,7 +993,7 @@ static void xmp_transpose_alltoall(_XMP_array_t *dst_d, _XMP_array_t *src_d, int
                l = src_d->info[0].local_lower+k*dst_w+j;
                for(i=src_d->info[1].local_lower; i<=src_d->info[1].local_upper; i++){
                   memcpy(send_buf+(k*offset_size+(i-src_d->info[1].local_lower)*dst_w+j)*type_size,
-                         addr_p+(l*src_d->info[1].alloc_size+i)*type_size, type_size);
+                         addr_p+(l*src_alloc_size[1]+i)*type_size, type_size);
                }
             }
          }
@@ -988,7 +1034,7 @@ static void xmp_transpose_alltoall(_XMP_array_t *dst_d, _XMP_array_t *src_d, int
 #pragma omp parallel for private(j,k)
          for(j=dst_d->info[1].local_lower; j<=dst_d->info[1].local_upper; j++){
             for(k=0; k<_XMP_get_execution_nodes()->comm_size; k++){
-               memcpy(addr_p+(dst_d->info[0].alloc_size*j+src_w*k+dst_d->info[0].local_lower)*type_size,
+               memcpy(addr_p+(dst_alloc_size[0]*j+src_w*k+dst_d->info[0].local_lower)*type_size,
                       recv_buf+(k*src_w*dst_w+(j-dst_d->info[1].local_lower)*src_w)*type_size,
                       src_w*type_size);
             }
@@ -996,7 +1042,7 @@ static void xmp_transpose_alltoall(_XMP_array_t *dst_d, _XMP_array_t *src_d, int
          /* stop_collection("feast_unpack"); */
       } else if(dst_d->info[0].shadow_size_lo != 0 || dst_d->info[0].shadow_size_hi != 0){
          for(j=dst_d->info[1].local_lower; j<=dst_d->info[1].local_upper; j++){
-            memcpy(addr_p+(dst_d->info[0].alloc_size*j+dst_d->info[0].local_lower)*type_size,
+            memcpy(addr_p+(dst_alloc_size[0]*j+dst_d->info[0].local_lower)*type_size,
                    recv_buf+((j-dst_d->info[1].local_lower)*dst_w)*type_size,
                    src_w*type_size);
          }
@@ -1005,14 +1051,14 @@ static void xmp_transpose_alltoall(_XMP_array_t *dst_d, _XMP_array_t *src_d, int
       if(dist_dim == 0){
          for(j=dst_d->info[0].local_lower; j<=dst_d->info[0].local_upper; j++){
             for(k=0; k<_XMP_get_execution_nodes()->comm_size; k++){
-               memcpy(addr_p+(dst_d->info[1].alloc_size*j+src_w*k+dst_d->info[1].local_lower)*type_size,
+               memcpy(addr_p+(dst_alloc_size[1]*j+src_w*k+dst_d->info[1].local_lower)*type_size,
                       recv_buf+(k*src_w*dst_w+(j-dst_d->info[0].local_lower)*src_w)*type_size,
                       src_w*type_size);
             }
          }
       } else if(dst_d->info[1].shadow_size_lo != 0 || dst_d->info[1].shadow_size_hi != 0){
          for(j=dst_d->info[0].local_lower; j<=dst_d->info[0].local_upper; j++){
-            memcpy(addr_p+(dst_d->info[1].alloc_size*j+dst_d->info[1].local_lower)*type_size,
+            memcpy(addr_p+(dst_alloc_size[1]*j+dst_d->info[1].local_lower)*type_size,
                    recv_buf+((j-dst_d->info[0].local_lower)*dst_w)*type_size,
                    src_w*type_size);
          }
@@ -1170,6 +1216,8 @@ void xmp_transpose(void *dst_p, void *src_p, int opt)
    int dist_dim;
    int regular;
    int duplicate;
+   int dst_alloc_size[2];
+   int src_alloc_size[2];
    int i, j, k;
 
    dst_d = (_XMP_array_t*)dst_p;
@@ -1188,7 +1236,23 @@ void xmp_transpose(void *dst_p, void *src_p, int opt)
       _XMP_fatal("xmp_transpose: argument is not distributed");
       return;
    }
-      
+
+   /* allocate check */
+   if(dst_d->is_allocated){
+      dst_alloc_size[0] = dst_d->info[0].alloc_size;
+      dst_alloc_size[1] = dst_d->info[1].alloc_size;
+   } else {
+      dst_alloc_size[0] = 0;
+      dst_alloc_size[1] = 0;
+   }
+   if(src_d->is_allocated){
+      src_alloc_size[0] = src_d->info[0].alloc_size;
+      src_alloc_size[1] = src_d->info[1].alloc_size;
+   } else {
+      src_alloc_size[0] = 0;
+      src_alloc_size[1] = 0;
+   }
+
    /* same nodes? */
    same_nodes=1;
    if(_XMP_get_execution_nodes()->comm_size != dst_d->align_template->onto_nodes->comm_size) same_nodes = 0;
@@ -1307,8 +1371,8 @@ void xmp_transpose(void *dst_p, void *src_p, int opt)
                di = j-src_d->info[1].local_lower+dst_d->info[0].local_lower;
                for(i=src_d->info[0].local_lower; i<=src_d->info[0].local_upper; i++){
                   dj = i-src_d->info[0].local_lower+dst_d->info[1].local_lower;
-                  memcpy(dst_array_p+(dj*dst_d->info[0].alloc_size+di)*dst_d->type_size,
-                         src_array_p+(j*src_d->info[0].alloc_size+i)*src_d->type_size,
+                  memcpy(dst_array_p+(dj*dst_alloc_size[0]+di)*dst_d->type_size,
+                         src_array_p+(j*src_alloc_size[0]+i)*src_d->type_size,
                          src_d->type_size);
                }
             }
@@ -1319,8 +1383,8 @@ void xmp_transpose(void *dst_p, void *src_p, int opt)
                dj = i-src_d->info[0].local_lower+dst_d->info[1].local_lower;
                for(j=src_d->info[1].local_lower; j<=src_d->info[1].local_upper; j++){
                   di = j-src_d->info[1].local_lower+dst_d->info[0].local_lower;
-                  memcpy(dst_array_p+(di*dst_d->info[1].alloc_size+dj)*dst_d->type_size,
-                         src_array_p+(i*src_d->info[1].alloc_size+j)*src_d->type_size,
+                  memcpy(dst_array_p+(di*dst_alloc_size[1]+dj)*dst_d->type_size,
+                         src_array_p+(i*src_alloc_size[1]+j)*src_d->type_size,
                          src_d->type_size);
                }
             }
@@ -1566,8 +1630,23 @@ static int l2g(_XMP_array_t *array_d, int dim, int idx)
       break;
    case _XMP_N_ALIGN_BLOCK_CYCLIC:
       chunk = &(array_d->align_template->chunk[array_d->info[dim].align_template_index]);
-      ret = array_d->info[dim].par_lower+lidx%chunk->par_width
-         +(lidx/chunk->par_width)*chunk->onto_nodes_info->size*chunk->par_width;
+      if(array_d->info[dim].align_subscript){
+         int rank;
+         int offset = array_d->info[dim].align_subscript%chunk->par_width;
+         rank = (array_d->info[dim].align_subscript/chunk->par_width)%chunk->onto_nodes_info->size;
+         if(rank == chunk->onto_nodes_info->rank){
+            lidx += offset;
+            ret = array_d->info[dim].par_lower+lidx%chunk->par_width
+               +(lidx/chunk->par_width)*chunk->onto_nodes_info->size*chunk->par_width;
+            ret -= offset;
+         } else {
+            ret = array_d->info[dim].par_lower+lidx%chunk->par_width
+               +(lidx/chunk->par_width)*chunk->onto_nodes_info->size*chunk->par_width;
+         }
+      } else {
+         ret = array_d->info[dim].par_lower+lidx%chunk->par_width
+            +(lidx/chunk->par_width)*chunk->onto_nodes_info->size*chunk->par_width;
+      }
       break;
    case _XMP_N_ALIGN_GBLOCK:
       ret = lidx+array_d->info[dim].par_lower;
@@ -1746,6 +1825,9 @@ static void xmp_matmul_no_opt(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
    int *b_recv_size, *b_recv_pos;
    int  buf_offset;
    char *send_buf, *a_buf, *b_buf;
+   int  x_alloc_size[2];
+   int  a_alloc_size[2];
+   int  b_alloc_size[2];
    int i, j, k;
    
 #ifdef DEBUG
@@ -1753,6 +1835,29 @@ static void xmp_matmul_no_opt(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
 #endif
    
    exec_comm = (MPI_Comm*)(_XMP_get_execution_nodes()->comm);
+
+   /* allocate check */
+   if(x_d->is_allocated){
+      x_alloc_size[0] = x_d->info[0].alloc_size;
+      x_alloc_size[1] = x_d->info[1].alloc_size;
+   } else {
+      x_alloc_size[0] = 0;
+      x_alloc_size[1] = 0;
+   }
+   if(a_d->is_allocated){
+      a_alloc_size[0] = a_d->info[0].alloc_size;
+      a_alloc_size[1] = a_d->info[1].alloc_size;
+   } else {
+      a_alloc_size[0] = 0;
+      a_alloc_size[1] = 0;
+   }
+   if(b_d->is_allocated){
+      b_alloc_size[0] = b_d->info[0].alloc_size;
+      b_alloc_size[1] = b_d->info[1].alloc_size;
+   } else {
+      b_alloc_size[0] = 0;
+      b_alloc_size[1] = 0;
+   }
 
    /* translate ranks */
    e2e = (int*)_XMP_alloc(_XMP_get_execution_nodes()->comm_size*sizeof(int));
@@ -1895,8 +2000,8 @@ static void xmp_matmul_no_opt(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
 
    /* allocate buffer */
    if(a_d->is_allocated || b_d->is_allocated){
-      buf_offset = (a_d->info[0].alloc_size*a_d->info[1].alloc_size > b_d->info[0].alloc_size*b_d->info[1].alloc_size)?
-         a_d->info[0].alloc_size*a_d->info[1].alloc_size: b_d->info[0].alloc_size*b_d->info[1].alloc_size;
+      buf_offset = (a_alloc_size[0]*a_alloc_size[1] > b_alloc_size[0]*b_alloc_size[1])?
+         a_alloc_size[0]*a_alloc_size[1]: b_alloc_size[0]*b_alloc_size[1];
    } else {
       buf_offset = 0;
    }
@@ -1940,7 +2045,7 @@ static void xmp_matmul_no_opt(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
          if(a_d->is_allocated && ap == d2p(a_d, 0)){
             for(i=a_d->info[1].local_lower; i<=a_d->info[1].local_upper; i++){
                memcpy(send_buf+send_pos[xp]+send_size[xp],
-                      addr_p+(a_d->info[0].alloc_size*i+aj)*a_d->type_size,
+                      addr_p+(a_alloc_size[0]*i+aj)*a_d->type_size,
                       cp_size);
                send_size[xp] += cp_size;
             }
@@ -2012,7 +2117,7 @@ static void xmp_matmul_no_opt(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
          _XMP_align_local_idx((long long int)(j-x_d->info[0].ser_lower+a_d->info[0].ser_lower), &aj, a_d, 0, &ap);
          if(a_d->is_allocated && ap == d2p(a_d, 0)){
             memcpy(send_buf+send_pos[xp]+send_size[xp],
-                   addr_p+(a_d->info[1].alloc_size*aj+a_d->info[1].local_lower)*a_d->type_size,
+                   addr_p+(a_alloc_size[1]*aj+a_d->info[1].local_lower)*a_d->type_size,
                    cp_size);
             send_size[xp] += cp_size;
          }
@@ -2133,13 +2238,13 @@ static void xmp_matmul_no_opt(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
          _XMP_align_local_idx((long long int)(j-x_d->info[1].ser_lower+b_d->info[1].ser_lower), &bj, b_d, 1, &bp);
          if(b_d->is_allocated && bp == d2p(b_d, 1)){
             memcpy(send_buf+send_pos[xp]+send_size[xp],
-                   addr_p+(b_d->info[0].alloc_size*bj+b_d->info[0].local_lower)*b_d->type_size,
+                   addr_p+(b_alloc_size[0]*bj+b_d->info[0].local_lower)*b_d->type_size,
                    cp_size);
             send_size[xp] += cp_size;
          }
          if(x_d->is_allocated && xp == d2p(x_d, 1)){
             for(i=b_d->info[0].ser_lower; i<=b_d->info[0].ser_upper; i++){
-               b_recv_size[b2e[g2p_array(b_d, i, j-x_d->info[0].ser_lower+b_d->info[1].ser_lower)]] += b_d->type_size;
+               b_recv_size[b2e[g2p_array(b_d, i, j-x_d->info[1].ser_lower+b_d->info[1].ser_lower)]] += b_d->type_size;
             }
          }
       }
@@ -2153,6 +2258,21 @@ static void xmp_matmul_no_opt(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
 #ifdef DEBUG
       fflush(stdout);
       MPI_Barrier(*(MPI_Comm*)(_XMP_get_execution_nodes()->comm));
+      for(i=0; i<_XMP_get_execution_nodes()->comm_size; i++){
+         if(i == _XMP_get_execution_nodes()->comm_rank){
+            printf(" rank %d: send ", i);
+            for(j=0; j<_XMP_get_execution_nodes()->comm_size; j++){
+               printf("%d ", send_size[j]);
+            }
+            printf(": recv ");
+            for(j=0; j<_XMP_get_execution_nodes()->comm_size; j++){
+               printf("%d ", b_recv_size[j]);
+            }
+            printf(": cp_size %d\n", cp_size);
+         }
+         fflush(stdout);
+         MPI_Barrier(*(MPI_Comm*)(_XMP_get_execution_nodes()->comm));
+      }
 #endif
       if(x_d->is_allocated){
          for(j=0; j<proc_size(b_d, 0); j++){
@@ -2205,7 +2325,7 @@ static void xmp_matmul_no_opt(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
          if(b_d->is_allocated && bp == d2p(b_d, 1)){
             for(i=b_d->info[0].local_lower; i<=b_d->info[0].local_upper; i++){
                memcpy(send_buf+send_pos[xp]+send_size[xp],
-                      addr_p+(b_d->info[1].alloc_size*i+bj)*b_d->type_size,
+                      addr_p+(b_alloc_size[1]*i+bj)*b_d->type_size,
                       cp_size);
                send_size[xp] += cp_size;
             }
@@ -2336,7 +2456,7 @@ static void xmp_matmul_no_opt(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
             for(j=x_d->info[0].local_lower; j<=x_d->info[0].local_upper; j++){
                int gj = l2g(x_d, 0, j)-x_d->info[0].ser_lower+a_d->info[0].ser_lower;
                _XMP_align_local_idx((long long int)(gj), &a_idx0, a_d, 0, &a_rank0);
-               char *x_p = (char*)(x_d->array_addr_p)+(i*x_d->info[0].alloc_size+j)*x_d->type_size;
+               char *x_p = (char*)(x_d->array_addr_p)+(i*x_alloc_size[0]+j)*x_d->type_size;
                memset(x_p, 0, x_d->type_size);
                for(k=0; k<a_d->info[1].ser_size; k++){
                   _XMP_align_local_idx((long long int)(k+a_d->info[1].ser_lower), &a_idx1, a_d, 1, &a_rank1);
@@ -2346,10 +2466,10 @@ static void xmp_matmul_no_opt(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
                   char *b_p = (char*)(b_buf+b_recv_pos[b2e[g2p_array(b_d,k+b_d->info[0].ser_lower,gi)]]
                                       +(b_idx0+b_offset[b2e[g2p_array(b_d,k+b_d->info[0].ser_lower,gi)]])*b_d->type_size);
 #ifdef DEBUG
-                  if(i==x_d->info[0].local_lower+0 && j==x_d->info[1].local_lower+0 &&
+                  if(j==x_d->info[0].local_lower+0 && i==x_d->info[1].local_lower+0 &&
                      _XMP_get_execution_nodes()->comm_rank == 0){
                      printf("%4d x %4d: %d %d %d\n", *((int*)a_p), *((int*)b_p),
-                            k+b_d->info[0].ser_lower, b2e[g2p_array(b_d,k+b_d->info[0].ser_lower,gi)], b_idx0);
+                            i, l2g(x_d, 1, i), gi);
                   }
 #endif
                   a_offset[a2e[g2p_array(a_d,gj,k+a_d->info[1].ser_lower)]]++;
@@ -2386,7 +2506,7 @@ static void xmp_matmul_no_opt(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
             for(i=x_d->info[1].local_lower; i<=x_d->info[1].local_upper; i++){
                int gi = l2g(x_d, 1, i)-x_d->info[1].ser_lower+b_d->info[1].ser_lower;
                _XMP_align_local_idx((long long int)(gi), &b_idx1, b_d, 1, &b_rank1);
-               char *x_p = (char*)(x_d->array_addr_p)+(j*x_d->info[1].alloc_size+i)*x_d->type_size;
+               char *x_p = (char*)(x_d->array_addr_p)+(j*x_alloc_size[1]+i)*x_d->type_size;
                memset(x_p, 0, x_d->type_size);
                for(k=0; k<a_d->info[1].ser_size; k++){
                   _XMP_align_local_idx((long long int)(k+a_d->info[1].ser_lower), &a_idx1, a_d, 1, &a_rank1);
@@ -2451,6 +2571,9 @@ static void xmp_matmul_allgather(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_arra
    char *send_buf=NULL, *recv_buf=NULL;
    int regular=0;
    int type_size=x_d->type_size;
+   int x_alloc_size[2];
+   int a_alloc_size[2];
+   int b_alloc_size[2];
    int i, j, k, l;
    
    exec_comm = (MPI_Comm*)(_XMP_get_execution_nodes()->comm);
@@ -2460,6 +2583,29 @@ static void xmp_matmul_allgather(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_arra
    show_array(b_d, NULL);
 #endif
    
+   /* allocate check */
+   if(x_d->is_allocated){
+      x_alloc_size[0] = x_d->info[0].alloc_size;
+      x_alloc_size[1] = x_d->info[1].alloc_size;
+   } else {
+      x_alloc_size[0] = 0;
+      x_alloc_size[1] = 0;
+   }
+   if(a_d->is_allocated){
+      a_alloc_size[0] = a_d->info[0].alloc_size;
+      a_alloc_size[1] = a_d->info[1].alloc_size;
+   } else {
+      a_alloc_size[0] = 0;
+      a_alloc_size[1] = 0;
+   }
+   if(b_d->is_allocated){
+      b_alloc_size[0] = b_d->info[0].alloc_size;
+      b_alloc_size[1] = b_d->info[1].alloc_size;
+   } else {
+      b_alloc_size[0] = 0;
+      b_alloc_size[1] = 0;
+   }
+
    if(xmpf_running){           /* Fortran */
       if(dist_dim == 0){
          int recv_count[_XMP_get_execution_nodes()->comm_size];
@@ -2489,7 +2635,7 @@ static void xmp_matmul_allgather(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_arra
          for(i=b_d->info[0].local_lower; i<=b_d->info[0].local_upper; i++){
             for(j=b_d->info[1].local_lower; j<=b_d->info[1].local_upper; j++){
                memcpy(dst_p+(dim1_size*(i-b_d->info[0].local_lower)+j-b_d->info[1].local_lower)*type_size,
-                      src_p+(b_d->info[0].alloc_size*j+i)*type_size, type_size);
+                      src_p+(b_alloc_size[0]*j+i)*type_size, type_size);
             }
          }
 #ifdef DEBUG
@@ -2547,14 +2693,14 @@ static void xmp_matmul_allgather(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_arra
 #ifdef DEBUG
          show_array_ij((int*)recv_buf, b_d->info[1].ser_size, b_d->info[0].ser_size);
 #endif
-         memset((char*)x_d->array_addr_p, 0, x_d->info[0].alloc_size*x_d->info[1].alloc_size*type_size);
+         memset((char*)x_d->array_addr_p, 0, x_alloc_size[0]*x_alloc_size[1]*type_size);
          for(k=0; k<b_d->info[0].ser_size; k++){
             for(j=x_d->info[1].local_lower; j<=x_d->info[1].local_upper; j++){
                int bj=j-x_d->info[1].local_lower;
                for(i=x_d->info[0].local_lower; i<=x_d->info[0].local_upper; i++){
                   int ai=i-x_d->info[0].local_lower+a_d->info[0].local_lower;
-                  char *x_p = ((char*)x_d->array_addr_p+(j*x_d->info[0].alloc_size+i)*x_d->type_size);
-                  char *a_p = ((char*)a_d->array_addr_p+(a_d->info[0].alloc_size*k+ai)*type_size);
+                  char *x_p = ((char*)x_d->array_addr_p+(j*x_alloc_size[0]+i)*x_d->type_size);
+                  char *a_p = ((char*)a_d->array_addr_p+(a_alloc_size[0]*k+ai)*type_size);
                   char *b_p = (recv_buf+(b_d->info[1].ser_size*k+bj)*type_size);
                   var_mul(x_d, x_p, a_p, b_p);
 /*                   *x_p += *a_p * *b_p; */
@@ -2598,7 +2744,7 @@ static void xmp_matmul_allgather(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_arra
             char *src_p = (char*)(a_d->array_addr_p);
             for(i=a_d->info[1].local_lower; i<=a_d->info[1].local_upper; i++){
                memcpy(dst_p+(dim0_size*(i-a_d->info[1].local_lower))*type_size,
-                      src_p+(a_d->info[0].alloc_size*i)*type_size, type_size*dim0_size);
+                      src_p+(a_alloc_size[0]*i)*type_size, type_size*dim0_size);
             }
          }
 #ifdef DEBUG
@@ -2656,15 +2802,15 @@ static void xmp_matmul_allgather(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_arra
 #ifdef DEBUG
          show_array_ij((int*)recv_buf, a_d->info[0].ser_size, a_d->info[1].ser_size);
 #endif
-         memset((char*)x_d->array_addr_p, 0, x_d->info[0].alloc_size*x_d->info[1].alloc_size*type_size);
+         memset((char*)x_d->array_addr_p, 0, x_alloc_size[0]*x_alloc_size[1]*type_size);
          for(k=0; k<b_d->info[0].ser_size; k++){
             for(j=x_d->info[1].local_lower; j<=x_d->info[1].local_upper; j++){
                int bj=j-x_d->info[1].local_lower;
                for(i=x_d->info[0].local_lower; i<=x_d->info[0].local_upper; i++){
                   int ai=i-x_d->info[0].local_lower+a_d->info[0].local_lower;
-                  char *x_p = ((char*)x_d->array_addr_p+(j*x_d->info[0].alloc_size+i)*x_d->type_size);
+                  char *x_p = ((char*)x_d->array_addr_p+(j*x_alloc_size[0]+i)*x_d->type_size);
                   char *a_p = (recv_buf+(a_d->info[0].ser_size*k+ai)*type_size);
-                  char *b_p = ((char*)b_d->array_addr_p+(b_d->info[0].alloc_size*bj+k+b_d->info[0].local_lower)*type_size);
+                  char *b_p = ((char*)b_d->array_addr_p+(b_alloc_size[0]*bj+k+b_d->info[0].local_lower)*type_size);
                   var_mul(x_d, x_p, a_p, b_p);
 /*                   *x_p += *a_p * *b_p; */
 /* #ifdef DEBUG */
@@ -2707,7 +2853,7 @@ static void xmp_matmul_allgather(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_arra
          for(i=b_d->info[0].local_lower; i<=b_d->info[0].local_upper; i++){
             for(j=b_d->info[1].local_lower; j<=b_d->info[1].local_upper; j++){
                memcpy(dst_p+(dim0_size*(j-b_d->info[1].local_lower)+i-b_d->info[0].local_lower)*type_size,
-                      src_p+(b_d->info[1].alloc_size*i+j)*type_size, type_size);
+                      src_p+(b_alloc_size[1]*i+j)*type_size, type_size);
             }
          }
 #ifdef DEBUG
@@ -2770,11 +2916,11 @@ static void xmp_matmul_allgather(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_arra
                int ai=i-x_d->info[0].local_lower+a_d->info[0].local_lower;
                for(j=x_d->info[1].local_lower; j<=x_d->info[1].local_upper; j++){
                   int bj=j-x_d->info[1].local_lower;
-                  char *x_p = ((char*)x_d->array_addr_p+(i*x_d->info[1].alloc_size+j)*x_d->type_size);
+                  char *x_p = ((char*)x_d->array_addr_p+(i*x_alloc_size[1]+j)*x_d->type_size);
                   memset(x_p, 0, type_size);
                   for(k=0; k<_XMP_get_execution_nodes()->comm_size; k++){
                      for(l=0; l<dim0_size; l++){
-                        char *a_p = ((char*)a_d->array_addr_p+(ai*a_d->info[1].alloc_size+k*dim0_size+l)*type_size);
+                        char *a_p = ((char*)a_d->array_addr_p+(ai*a_alloc_size[1]+k*dim0_size+l)*type_size);
                         char *b_p = (recv_buf+(dim0_size*dim1_size*k+bj*dim0_size+l)*type_size);
                         var_mul(x_d, x_p, a_p, b_p);
 /*                         *x_p += *a_p * *b_p; */
@@ -2793,12 +2939,12 @@ static void xmp_matmul_allgather(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_arra
                int ai=i-x_d->info[0].local_lower+a_d->info[0].local_lower;
                for(j=x_d->info[1].local_lower; j<=x_d->info[1].local_upper; j++){
                   int bj=j-x_d->info[1].local_lower;
-                  char *x_p = ((char*)x_d->array_addr_p+(i*x_d->info[1].alloc_size+j)*x_d->type_size);
+                  char *x_p = ((char*)x_d->array_addr_p+(i*x_alloc_size[1]+j)*x_d->type_size);
                   *x_p = 0;
                   int kk = a_d->info[0].local_lower;
                   for(k=0; k<_XMP_get_execution_nodes()->comm_size; k++){
                      for(l=0; l<recv_count[k]; l++){
-                        char *a_p = ((char*)a_d->array_addr_p+(ai*a_d->info[1].alloc_size+kk)*type_size);
+                        char *a_p = ((char*)a_d->array_addr_p+(ai*a_alloc_size[1]+kk)*type_size);
                         char *b_p = (recv_buf+recv_offset[k]+(bj*recv_count[k]+l)*type_size);
                         var_mul(x_d, x_p, a_p, b_p);
                         kk++;
@@ -2845,7 +2991,7 @@ static void xmp_matmul_allgather(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_arra
             char *src_p = (char*)(a_d->array_addr_p);
             for(i=a_d->info[0].local_lower; i<=a_d->info[0].local_upper; i++){
                memcpy(dst_p+(dim1_size*(i-a_d->info[0].local_lower))*type_size,
-                      src_p+(a_d->info[1].alloc_size*i)*type_size, type_size*dim1_size);
+                      src_p+(a_alloc_size[1]*i)*type_size, type_size*dim1_size);
             }
          }
 #ifdef DEBUG
@@ -2908,12 +3054,12 @@ static void xmp_matmul_allgather(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_arra
                int ai=i-x_d->info[0].local_lower;
                for(j=x_d->info[1].local_lower; j<=x_d->info[1].local_upper; j++){
                   int bj=j-x_d->info[1].local_lower+b_d->info[1].local_lower;
-                  char *x_p = ((char*)x_d->array_addr_p+(i*x_d->info[1].alloc_size+j)*x_d->type_size);
+                  char *x_p = ((char*)x_d->array_addr_p+(i*x_alloc_size[1]+j)*x_d->type_size);
                   memset(x_p, 0, type_size);
                   for(k=0; k<_XMP_get_execution_nodes()->comm_size; k++){
                      for(l=0; l<dim1_size; l++){
                         char *a_p = (recv_buf+(dim1_size*dim0_size*k+ai*dim1_size+l)*type_size);
-                        char *b_p = ((char*)b_d->array_addr_p+(b_d->info[1].alloc_size*(dim1_size*k+l)+bj)*type_size);
+                        char *b_p = ((char*)b_d->array_addr_p+(b_alloc_size[1]*(dim1_size*k+l)+bj)*type_size);
                         var_mul(x_d, x_p, a_p, b_p);
 /*                         *x_p += *a_p * *b_p; */
 /* #ifdef DEBUG */
@@ -2931,13 +3077,13 @@ static void xmp_matmul_allgather(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_arra
                int ai=i-x_d->info[0].local_lower;
                for(j=x_d->info[1].local_lower; j<=x_d->info[1].local_upper; j++){
                   int bj=j-x_d->info[1].local_lower+b_d->info[0].local_lower;
-                  char *x_p = ((char*)x_d->array_addr_p+(i*x_d->info[1].alloc_size+j)*x_d->type_size);
+                  char *x_p = ((char*)x_d->array_addr_p+(i*x_alloc_size[1]+j)*x_d->type_size);
                   *x_p = 0;
                   int kk=b_d->info[0].local_lower;
                   for(k=0; k<_XMP_get_execution_nodes()->comm_size; k++){
                      for(l=0; l<recv_count[k]; l++){
                         char *a_p = (recv_buf+recv_offset[k]+(recv_count[k]*ai+l)*type_size);
-                        char *b_p = ((char*)b_d->array_addr_p+(b_d->info[1].alloc_size*kk+bj)*type_size);
+                        char *b_p = ((char*)b_d->array_addr_p+(b_alloc_size[1]*kk+bj)*type_size);
                         var_mul(x_d, x_p, a_p, b_p);
                         kk++;
 /*                         *x_p += *a_p * *b_p; */
@@ -2980,6 +3126,9 @@ static void xmp_matmul_blockf(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
    int b_offset[_XMP_get_execution_nodes()->comm_size];
    int regular=0;
    int type_size=x_d->type_size;
+   int x_alloc_size[2];
+   int a_alloc_size[2];
+   int b_alloc_size[2];
    int i, j, k;
    
    exec_comm = (MPI_Comm*)(_XMP_get_execution_nodes()->comm);
@@ -2989,11 +3138,34 @@ static void xmp_matmul_blockf(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
    show_array(a_d, NULL);
 #endif
 
+   /* allocate check */
+   if(x_d->is_allocated){
+      x_alloc_size[0] = x_d->info[0].alloc_size;
+      x_alloc_size[1] = x_d->info[1].alloc_size;
+   } else {
+      x_alloc_size[0] = 0;
+      x_alloc_size[1] = 0;
+   }
+   if(a_d->is_allocated){
+      a_alloc_size[0] = a_d->info[0].alloc_size;
+      a_alloc_size[1] = a_d->info[1].alloc_size;
+   } else {
+      a_alloc_size[0] = 0;
+      a_alloc_size[1] = 0;
+   }
+   if(b_d->is_allocated){
+      b_alloc_size[0] = b_d->info[0].alloc_size;
+      b_alloc_size[1] = b_d->info[1].alloc_size;
+   } else {
+      b_alloc_size[0] = 0;
+      b_alloc_size[1] = 0;
+   }
+
    /* send buffer allocate */
-   dim0_size=(x_d->info[0].alloc_size > a_d->info[0].alloc_size)? x_d->info[0].alloc_size: a_d->info[0].alloc_size;
-   dim0_size=(dim0_size > b_d->info[0].alloc_size)? dim0_size: b_d->info[0].alloc_size;
-   dim1_size=(x_d->info[1].alloc_size > a_d->info[1].alloc_size)? x_d->info[1].alloc_size: a_d->info[1].alloc_size;
-   dim1_size=(dim1_size > b_d->info[1].alloc_size)? dim1_size: b_d->info[1].alloc_size;
+   dim0_size=(x_alloc_size[0] > a_alloc_size[0])? x_alloc_size[0]: a_alloc_size[0];
+   dim0_size=(dim0_size > b_alloc_size[0])? dim0_size: b_alloc_size[0];
+   dim1_size=(x_alloc_size[1] > a_alloc_size[1])? x_alloc_size[1]: a_alloc_size[1];
+   dim1_size=(dim1_size > b_alloc_size[1])? dim1_size: b_alloc_size[1];
    send_buf = (char*)_XMP_alloc(dim0_size*dim1_size*type_size);
    
    /* a gather */
@@ -3023,14 +3195,14 @@ static void xmp_matmul_blockf(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
    
    /* pack */
    if(a_d->info[0].shadow_size_lo == 0 && a_d->info[0].shadow_size_hi == 0){
-      a_send_buf = (char*)a_d->array_addr_p+a_d->info[0].alloc_size*a_d->info[1].local_lower;
+      a_send_buf = (char*)a_d->array_addr_p+a_alloc_size[0]*a_d->info[1].local_lower;
    } else {
       a_send_buf = send_buf;
       char *dst_p = send_buf;
       char *src_p = (char*)(a_d->array_addr_p);
       for(i=a_d->info[1].local_lower; i<=a_d->info[1].local_upper; i++){
          memcpy(dst_p+(dim0_size*(i-a_d->info[1].local_lower))*type_size,
-                src_p+(a_d->info[0].alloc_size*i+a_d->info[0].local_lower)*type_size, type_size*dim0_size);
+                src_p+(a_alloc_size[0]*i+a_d->info[0].local_lower)*type_size, type_size*dim0_size);
       }
    }
    a_recv_buf = (char*)_XMP_alloc(dim0_size*a_d->info[1].ser_size*type_size);
@@ -3124,7 +3296,7 @@ static void xmp_matmul_blockf(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
    for(i=b_d->info[0].local_lower; i<=b_d->info[0].local_upper; i++){
       for(j=b_d->info[1].local_lower; j<=b_d->info[1].local_upper; j++){
          memcpy(dst_p+(dim1_size*(i-b_d->info[0].local_lower)+j-b_d->info[1].local_lower)*type_size,
-                src_p+(b_d->info[0].alloc_size*j+i)*type_size, type_size);
+                src_p+(b_alloc_size[0]*j+i)*type_size, type_size);
       }
    }
    b_recv_buf = (char*)_XMP_alloc(b_d->info[0].ser_size*dim1_size*type_size);
@@ -3192,10 +3364,10 @@ static void xmp_matmul_blockf(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
    /* case _XMP_N_TYPE_FLOAT: */
    /*    { */
    /*       char *dst_p = (char*)x_d->array_addr_p */
-   /*          + (x_d->info[0].alloc_size*x_d->info[1].local_lower+x_d->info[0].local_lower)*type_size; */
+   /*          + (x_alloc_size[0]*x_d->info[1].local_lower+x_d->info[0].local_lower)*type_size; */
    /*       float alpha=1.0; */
    /*       float beta=0.0; */
-   /*       int   ldc = x_d->info[0].alloc_size; */
+   /*       int   ldc = x_alloc_size[0]; */
    /*       sgemm_("N", "T", &dim0_size, &dim1_size, &k, &alpha, (float*)a_recv_buf, &dim0_size, */
    /*              (float*)b_recv_buf, &dim1_size, &beta, (float*)dst_p, &ldc, 1, 1); */
    /*    } */
@@ -3203,16 +3375,16 @@ static void xmp_matmul_blockf(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
    case _XMP_N_TYPE_DOUBLE:
       {
          char *dst_p = (char*)x_d->array_addr_p
-            + (x_d->info[0].alloc_size*x_d->info[1].local_lower+x_d->info[0].local_lower)*type_size;
+            + (x_alloc_size[0]*x_d->info[1].local_lower+x_d->info[0].local_lower)*type_size;
          double alpha=1.0;
          double beta=0.0;
-         int   ldc = x_d->info[0].alloc_size;
+         int   ldc = x_alloc_size[0];
          dgemm_("N", "T", &dim0_size, &dim1_size, &k, &alpha, (double*)a_recv_buf, &dim0_size,
                 (double*)b_recv_buf, &dim1_size, &beta, (double*)dst_p, &ldc, 1, 1);
       }
       break;
    default:
-      memset((char*)x_d->array_addr_p, 0, x_d->info[0].alloc_size*x_d->info[1].alloc_size*type_size);
+      memset((char*)x_d->array_addr_p, 0, x_alloc_size[0]*x_alloc_size[1]*type_size);
       int iblk=128/type_size*8;
       int jblk=8;
       for(k=0; k<b_d->info[0].ser_size; k++){
@@ -3221,7 +3393,7 @@ static void xmp_matmul_blockf(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
                for(int jj=j; jj<j+jblk && jj<dim1_size; jj++){
                   char *b_p = b_recv_buf+(k*dim1_size+jj)*type_size;
                   for(int ii=i; ii<i+iblk && ii<dim0_size; ii++){
-                     char *x_p = ((char*)x_d->array_addr_p+((jj+x_d->info[1].local_lower)*x_d->info[0].alloc_size
+                     char *x_p = ((char*)x_d->array_addr_p+((jj+x_d->info[1].local_lower)*x_alloc_size[0]
                                                             +ii+x_d->info[0].local_lower)*type_size);
                      char *a_p = a_recv_buf+(k*dim0_size+ii)*type_size;
                      var_mul(x_d, x_p, a_p, b_p);
@@ -3235,7 +3407,7 @@ static void xmp_matmul_blockf(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
 #else
    dim0_size = x_d->info[0].local_upper-x_d->info[0].local_lower+1;
    dim1_size = x_d->info[1].local_upper-x_d->info[1].local_lower+1;
-   memset((char*)x_d->array_addr_p, 0, x_d->info[0].alloc_size*x_d->info[1].alloc_size*type_size);
+   memset((char*)x_d->array_addr_p, 0, x_alloc_size[0]*x_alloc_size[1]*type_size);
    int iblk=128/type_size*8;
    int jblk=8;
    for(k=0; k<b_d->info[0].ser_size; k++){
@@ -3244,7 +3416,7 @@ static void xmp_matmul_blockf(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
             for(int jj=j; jj<j+jblk && jj<dim1_size; jj++){
                char *b_p = b_recv_buf+(k*dim1_size+jj)*type_size;
                for(int ii=i; ii<i+iblk && ii<dim0_size; ii++){
-                  char *x_p = ((char*)x_d->array_addr_p+((jj+x_d->info[1].local_lower)*x_d->info[0].alloc_size
+                  char *x_p = ((char*)x_d->array_addr_p+((jj+x_d->info[1].local_lower)*x_alloc_size[0]
                                                          +ii+x_d->info[0].local_lower)*type_size);
                   char *a_p = a_recv_buf+(k*dim0_size+ii)*type_size;
                   var_mul(x_d, x_p, a_p, b_p);
@@ -3285,6 +3457,9 @@ static void xmp_matmul_blockc(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
    int b_offset[_XMP_get_execution_nodes()->comm_size];
    int regular=0;
    int type_size=x_d->type_size;
+   int x_alloc_size[2];
+   int a_alloc_size[2];
+   int b_alloc_size[2];
    int i, j, k;
    
    exec_comm = (MPI_Comm*)(_XMP_get_execution_nodes()->comm);
@@ -3294,11 +3469,34 @@ static void xmp_matmul_blockc(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
    show_array(a_d, NULL);
 #endif
 
+   /* allocate check */
+   if(x_d->is_allocated){
+      x_alloc_size[0] = x_d->info[0].alloc_size;
+      x_alloc_size[1] = x_d->info[1].alloc_size;
+   } else {
+      x_alloc_size[0] = 0;
+      x_alloc_size[1] = 0;
+   }
+   if(a_d->is_allocated){
+      a_alloc_size[0] = a_d->info[0].alloc_size;
+      a_alloc_size[1] = a_d->info[1].alloc_size;
+   } else {
+      a_alloc_size[0] = 0;
+      a_alloc_size[1] = 0;
+   }
+   if(b_d->is_allocated){
+      b_alloc_size[0] = b_d->info[0].alloc_size;
+      b_alloc_size[1] = b_d->info[1].alloc_size;
+   } else {
+      b_alloc_size[0] = 0;
+      b_alloc_size[1] = 0;
+   }
+
    /* send buffer allocate */
-   dim0_size=(x_d->info[0].alloc_size > a_d->info[0].alloc_size)? x_d->info[0].alloc_size: a_d->info[0].alloc_size;
-   dim0_size=(dim0_size > b_d->info[0].alloc_size)? dim0_size: b_d->info[0].alloc_size;
-   dim1_size=(x_d->info[1].alloc_size > a_d->info[1].alloc_size)? x_d->info[1].alloc_size: a_d->info[1].alloc_size;
-   dim1_size=(dim1_size > b_d->info[1].alloc_size)? dim1_size: b_d->info[1].alloc_size;
+   dim0_size=(x_alloc_size[0] > a_alloc_size[0])? x_alloc_size[0]: a_alloc_size[0];
+   dim0_size=(dim0_size > b_alloc_size[0])? dim0_size: b_alloc_size[0];
+   dim1_size=(x_alloc_size[1] > a_alloc_size[1])? x_alloc_size[1]: a_alloc_size[1];
+   dim1_size=(dim1_size > b_alloc_size[1])? dim1_size: b_alloc_size[1];
    send_buf = (char*)_XMP_alloc(dim0_size*dim1_size*type_size);
 
    /* a gather */
@@ -3333,7 +3531,7 @@ static void xmp_matmul_blockc(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
    for(i=a_d->info[0].local_lower; i<=a_d->info[0].local_upper; i++){
       for(j=a_d->info[1].local_lower; j<=a_d->info[1].local_upper; j++){
          memcpy(dst_p+(dim0_size*(j-a_d->info[1].local_lower)+i-a_d->info[0].local_lower)*type_size,
-                src_p+(a_d->info[1].alloc_size*i+j)*type_size, type_size);
+                src_p+(a_alloc_size[1]*i+j)*type_size, type_size);
       }
    }
    a_recv_buf = (char*)_XMP_alloc(dim0_size*a_d->info[1].ser_size*type_size);
@@ -3422,14 +3620,14 @@ static void xmp_matmul_blockc(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
 
    /* pack */
    if(b_d->info[1].shadow_size_lo == 0 && b_d->info[1].shadow_size_hi == 0){
-      b_send_buf = (char*)b_d->array_addr_p+b_d->info[1].alloc_size*b_d->info[0].local_lower;
+      b_send_buf = (char*)b_d->array_addr_p+b_alloc_size[1]*b_d->info[0].local_lower;
    } else {
       b_send_buf = send_buf;
       char *dst_p = b_send_buf;
       char *src_p = (char*)(b_d->array_addr_p);
       for(i=b_d->info[0].local_lower; i<=b_d->info[0].local_upper; i++){
          memcpy(dst_p+(dim1_size*(i-b_d->info[0].local_lower))*type_size,
-                src_p+(b_d->info[1].alloc_size*i+b_d->info[1].local_lower)*type_size, type_size*dim1_size);
+                src_p+(b_alloc_size[1]*i+b_d->info[1].local_lower)*type_size, type_size*dim1_size);
       }
    }
    b_recv_buf = (char*)_XMP_alloc(b_d->info[0].ser_size*dim1_size*type_size);
@@ -3491,7 +3689,7 @@ static void xmp_matmul_blockc(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
    /* TODO: X = AT * B -> DGEMM */
    dim0_size = x_d->info[0].local_upper-x_d->info[0].local_lower+1;
    dim1_size = x_d->info[1].local_upper-x_d->info[1].local_lower+1;
-   memset((char*)x_d->array_addr_p, 0, x_d->info[0].alloc_size*x_d->info[1].alloc_size*type_size);
+   memset((char*)x_d->array_addr_p, 0, x_alloc_size[0]*x_alloc_size[1]*type_size);
    int iblk=128/type_size*8;
    int jblk=8;
    for(k=0; k<b_d->info[0].ser_size; k++){
@@ -3500,7 +3698,7 @@ static void xmp_matmul_blockc(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
             for(int ii=i; ii<i+iblk && ii<dim0_size; ii++){
                char *a_p = a_recv_buf+(k*dim0_size+ii)*type_size;
                for(int jj=j; jj<j+jblk && jj<dim1_size; jj++){
-                  char *x_p = ((char*)x_d->array_addr_p+((ii+x_d->info[0].local_lower)*x_d->info[1].alloc_size
+                  char *x_p = ((char*)x_d->array_addr_p+((ii+x_d->info[0].local_lower)*x_alloc_size[1]
                                                          +jj+x_d->info[1].local_lower)*type_size);
                   char *b_p = b_recv_buf+(k*dim1_size+jj)*type_size;
 #ifdef DEBUG

@@ -225,6 +225,11 @@ public class XobjList extends Xobject implements Iterable<Xobject>, XobjContaine
             return null;
         Xobject a = tail.arg;
         XobjArgs orgTail = tail;
+	if (args == tail){
+	    args = null;
+	    tail = null;
+	    return a;
+	}
         tail = args;
         while(tail.next != orgTail) {
             tail = tail.next;

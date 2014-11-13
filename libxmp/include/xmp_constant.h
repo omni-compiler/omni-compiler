@@ -10,6 +10,7 @@
 #define _XMP_N_INT_TRUE				1
 #define _XMP_N_INT_FALSE			0
 #define _XMP_N_MAX_DIM				7
+#define _XMP_N_MAX_LOC_VAR                      16
 
 // constants for mpi tag
 #define _XMP_N_MPI_TAG_GMOVE			10

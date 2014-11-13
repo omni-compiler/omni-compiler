@@ -26,8 +26,7 @@
 typedef void *xmp_desc_t;
 
 // ----- libxmp
-//extern MPI_Comm	xmp_get_mpi_comm(void);
-extern int	xmp_get_mpi_comm(void);
+extern MPI_Comm	xmp_get_mpi_comm(void);
 extern void	xmp_init_mpi(int *argc, char ***argv);
 extern void	xmp_finalize_mpi(void);
 extern void	xmp_init(int *argc, char ***argv);

@@ -1221,7 +1221,7 @@ public class XMPtranslateLocalPragma {
 					       String[] insertedIteraterList) throws XMPexception {
     if(v.Opcode() != Xcode.INT_CONSTANT){
       XobjList vList = null;
-      if(v.isVariable()){
+      if(v.isVariable() || v instanceof XobjConst){
         vList = Xcons.List(v);
       }
       else{
@@ -3088,7 +3088,7 @@ public class XMPtranslateLocalPragma {
         sizeExpr = arrayType.getArraySizeExpr();
       }
       else {
-        sizeExpr = Xcons.LongLongConstant(0, dimSize);
+	sizeExpr = Xcons.LongLongConstant(0, dimSize);
       }
 
       Xobject sub = subscripts.getArg(i);
@@ -3105,7 +3105,8 @@ public class XMPtranslateLocalPragma {
       lb = ((XobjList)sub).getArg(0);
       if (lb == null) lb = Xcons.IntConstant(0);
       len = ((XobjList)sub).getArg(1);
-      if (len == null) len = Xcons.binaryOp(Xcode.MINUS_EXPR, sizeExpr, lb);
+      //if (len == null) len = Xcons.binaryOp(Xcode.MINUS_EXPR, sizeExpr, lb);
+      if (len == null) len = sizeExpr;
       st = ((XobjList)sub).getArg(2);
       if (st == null) st = Xcons.IntConstant(1);
 

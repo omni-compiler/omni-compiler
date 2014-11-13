@@ -9,8 +9,10 @@
 #include "xmp.h"
 //#include "xmpf.h"
 
-int xmp_get_mpi_comm_(void) {
-  return xmp_get_mpi_comm();
+MPI_Fint xmp_get_mpi_comm_(void) {
+  MPI_Comm commc = xmp_get_mpi_comm();
+  MPI_Fint commf = MPI_Comm_c2f(commc);
+  return commf;
 }
 
 void xmp_init_mpi_(void) {

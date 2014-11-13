@@ -749,7 +749,8 @@ public class XcodeMLtools_C extends XcodeMLtools {
       XobjList subList = Xcons.List();
       for (Node childNode : childNodes){
 	Xobject arg = toXobject(childNode);
-	subList.add(arg.getArg(0));
+	if (arg != null && arg.Nargs() != 0) subList.add(arg.getArg(0));
+	else subList.add(null);
       }
       objList.add(subList);
     }

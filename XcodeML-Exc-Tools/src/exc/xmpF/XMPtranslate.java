@@ -78,6 +78,7 @@ public class XMPtranslate implements XobjectDefVisitor
 
     for (Xobject kk: (XobjList)decls){
       if (kk.getArg(0) == null) continue;
+      if (kk.Opcode() == Xcode.F_COMMON_DECL) continue;
       Ident id = d.findIdent(kk.getArg(0).getName());
       if (id != null && id.getStorageClass() == StorageClass.FPARAM){
 	childDecls.add(kk.copy());
@@ -92,14 +93,16 @@ public class XMPtranslate implements XobjectDefVisitor
     XobjectIterator i = new topdownXobjectIterator(funcBody);
     for (i.init(); !i.end(); i.next()) {
       Xobject xx = i.getXobject();
-      if (xx != null && xx.Opcode() == Xcode.XMP_PRAGMA){
-	String pragma = xx.getArg(0).getString();
-	if (pragma.equals("NODES") || pragma.equals("TEMPLATE") || pragma.equals("DISTRIBUTE") ||
-	    pragma.equals("ALIGN") || pragma.equals("SHADOW") || pragma.equals("LOCAL_ALIAS") ||
-	    pragma.equals("COARRAY")){
-	  Block pb = Bcons.PRAGMA(xx.Opcode(), xx.getArg(0).getString(), xx.getArg(1), null);
-	  newFuncBody.add(pb);
-	  i.setXobject(null);
+      if (xx != null){
+	if (xx.Opcode() == Xcode.XMP_PRAGMA || xx.Opcode() == Xcode.OMP_PRAGMA){
+	  String pragma = xx.getArg(0).getString();
+	  if (pragma.equals("NODES") || pragma.equals("TEMPLATE") || pragma.equals("DISTRIBUTE") ||
+	      pragma.equals("ALIGN") || pragma.equals("SHADOW") || pragma.equals("LOCAL_ALIAS") ||
+	      pragma.equals("COARRAY") || pragma.equals("THREADPRIVATE")){
+	    Block pb = Bcons.PRAGMA(xx.Opcode(), xx.getArg(0).getString(), xx.getArg(1), null);
+	    newFuncBody.add(pb);
+	    i.setXobject(null);
+	  }
 	}
       }
     }

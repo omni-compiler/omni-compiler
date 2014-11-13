@@ -93,6 +93,7 @@ public class XMPnodes extends XMPobject {
     nodesArgs.mergeList(inheritInfo.getSecond());
 
     String allocType = "STATIC";
+    int j = 0;
     for (XobjArgs i = nodesDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
       Xobject nodesSize = i.getArg();
       if (nodesSize == null || (nodesSize instanceof XobjList && ((XobjList)nodesSize).Nargs() == 0)) {
@@ -101,9 +102,9 @@ public class XMPnodes extends XMPobject {
         Ident nodesSizeId = null;
         if (isLocalPragma) {
           //nodesSizeId = XMPlocalDecl.addObjectId(XMP.NODES_SIZE_PREFIX_ + nodesName, Xtype.intType, pb);
-	  nodesSizeId = XMPlocalDecl.addObjectId2(XMP.NODES_SIZE_PREFIX_ + nodesName, Xtype.intType, parentBlock);
+	  nodesSizeId = XMPlocalDecl.addObjectId2(XMP.NODES_SIZE_PREFIX_ + nodesName + "_" + j, Xtype.intType, parentBlock);
         } else {
-          nodesSizeId = globalDecl.declStaticIdent(XMP.NODES_SIZE_PREFIX_ + nodesName, Xtype.intType);
+          nodesSizeId = globalDecl.declStaticIdent(XMP.NODES_SIZE_PREFIX_ + nodesName + "_" + j, Xtype.intType);
         }
 
 	if (inheritInfo.getFirst().equals("GLOBAL")) nodesArgs.add(Xcons.IntConstant(-1));
@@ -114,6 +115,8 @@ public class XMPnodes extends XMPobject {
       }
 
       nodesObject.addUpper(nodesSize);
+
+      j++;
     }
 
     for (int i = 0; i < nodesDim; i++) {

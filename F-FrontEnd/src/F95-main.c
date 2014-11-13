@@ -40,6 +40,7 @@ int auto_save_attr_kb = -1;
 
 int endlineno_flag = 0;
 int ocl_flag = 0;
+int cdir_flag = 0;
 int max_name_len = -1;
 int dollar_ok = 0; // accept '$' in identifier or not. 
 
@@ -390,6 +391,8 @@ char *argv[];
  	    endlineno_flag = 1;
 	} else if (strcmp(argv[0], "-ocl") == 0) {
  	    ocl_flag = 1;
+	} else if (strcmp(argv[0], "-cdir") == 0) {
+ 	    cdir_flag = 1;
         } else if (strcmp(argv[0], "--help") == 0) {
             usage();
             exit(0);
