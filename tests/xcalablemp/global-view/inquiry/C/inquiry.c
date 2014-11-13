@@ -4,6 +4,7 @@
 
 int a[6][9][16], a1[6], b[6];
 int m[2]={2,4};
+int gidx[3]={3,3,3}, lidx[3];
 #pragma xmp nodes p(2,3,2)
 #pragma xmp nodes p1(2)=p(1:2,1,1)
 #pragma xmp template t(0:15,0:5,0:8)
@@ -158,6 +159,11 @@ int main(){
     check(ival, 0, &error);
     ierr=xmp_array_ushadow(xmp_desc_of(a), 3, &ival);
     check(ival, 2, &error);
+    ierr=xmp_array_gtol(xmp_desc_of(a), gidx, lidx);
+    check(lidx[0], 1, &error);
+    check(lidx[1], 1, &error);
+    check(lidx[2], 4, &error);
+
 
     if(error == 0){
       printf("PASS\n");
