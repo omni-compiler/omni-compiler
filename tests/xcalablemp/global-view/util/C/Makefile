@@ -1,4 +1,5 @@
 INCDIR = ../../../../../Driver/etc
+OMP_OPT=$(shell cat $(INCDIR)/native.conf.xmp | grep "OMP_CONF_LNK_OPT=" | sed "s/OMP_CONF_LNK_OPT=//g" | sed "s/\"//g")
 MPICOMPILER=$(shell cat $(INCDIR)/native.conf.xmp | grep "COMPILER=" | sed "s/COMPILER=//g" | sed "s/\"//g")
 GASNETLIB=$(shell cat $(INCDIR)/linker.conf.xmp | grep "GASNET_LIB=" | sed "s/GASNET_LIB=//g" | sed "s/\"//g")
 XCC     = xmpcc -O2
@@ -23,7 +24,7 @@ sub_mpi.o: ./sub/sub_mpi.c
 	$(XCC) -o $@ $<
 
 mpi_xmp.x: mpi_xmp.c ixmp_sub.o
-	$(MPICOMPILER) -o $@ -fopenmp mpi_xmp.c ixmp_sub.o -L../../../../../libxmp/src -lxmp $(GASNETLIB)
+	$(MPICOMPILER) -o $@ $(OMP_OPT) mpi_xmp.c ixmp_sub.o -L../../../../../libxmp/src -lxmp $(GASNETLIB)
 
 xmp_mpi.x: xmp_mpi.c sub_mpi.o
 	$(XCC) -o $@ xmp_mpi.c sub_mpi.o
