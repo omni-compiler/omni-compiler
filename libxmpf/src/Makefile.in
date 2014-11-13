@@ -135,7 +135,8 @@ am_libxmpf_a_OBJECTS = xmpf_array.$(OBJEXT) xmpf_gcomm.$(OBJEXT) \
 	xmpf_loop.$(OBJEXT) xmpf_misc.$(OBJEXT) xmpf_nodes.$(OBJEXT) \
 	xmpf_pack.$(OBJEXT) xmpf_reflect.$(OBJEXT) xmpf_task.$(OBJEXT) \
 	xmpf_template.$(OBJEXT) xmpf_coarray.$(OBJEXT) \
-	xmpf_coarray_wrap.$(OBJEXT)
+	xmpf_coarray_put77.$(OBJEXT)
+
 libxmpf_a_OBJECTS = $(am_libxmpf_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -502,7 +503,8 @@ lib_LIBRARIES = libxmpf.a
 libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_array.c xmpf_gcomm.c \
                     xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c \
                     xmpf_nodes.c xmpf_pack.c xmpf_reflect.c \
-                    xmpf_task.c xmpf_template.c xmpf_coarray.c xmpf_coarray_wrap.f90
+                    xmpf_task.c xmpf_template.c xmpf_coarray.c \
+                    xmpf_coarray_put77.c
 
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS)
@@ -814,9 +816,6 @@ uninstall-am: uninstall-libLIBRARIES
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags tags-am uninstall uninstall-am uninstall-libLIBRARIES
 
-
-xmpf_coarray_wrap.o: xmpf_coarray_wrap.f90
-	@BEFC@ @BEFC_OPTION@ -c xmpf_coarray_wrap.f90
 
 xmpf_main.o: xmpf_main.f
 	@BEFC@ @BEFC_OPTION@ -c xmpf_main.f

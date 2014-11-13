@@ -248,7 +248,7 @@ extern void _XMP_coarray_rdma_node_set_1(const int);
 //extern void _XMP_coarray_rdma_node_set_7(const int, const int, const int, const int, const int, const int, const int);
 
 //extern void _XMP_coarray_rdma_do_f(const int*, const void*, const void*, const void*);
-//extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void *);
+extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void *);
 //extern void _XMP_coarray_sync_all();
 //extern void _XMP_coarray_sync_memory();
 //extern void xmp_sync_memory(const int* status);
@@ -263,4 +263,27 @@ extern void _XMP_coarray_rdma_node_set_1(const int);
 //extern void _XMP_coarray_shortcut_put_f(const int*, const void*, const void*, const size_t*, const size_t*, const size_t*);
 //extern void _XMP_coarray_shortcut_get(const int, const void*, const void*, const size_t, const size_t, const size_t);
 //extern void _XMP_coarray_shortcut_get_f(const int*, const void*, const void*, const size_t*, const size_t*, const size_t*);
+
+/*
+ *   for xmpf_coarray routines
+ */
+typedef struct {
+  int     is_used;
+  void   *co_desc;
+  void   *co_addr;
+  int     n_elems;
+  size_t  elem_size;
+} coarray_info_t;
+
+#define CO_RDMA_GET  700
+#define CO_RDMA_PUT  701
+
+/* xmpf_coarray */
+extern void xmpf_coarray_malloc_(int *descrId, void **pointer, int *size, int *unit);
+extern void xmpf_coarray_malloc(int *descrId, void* *pointer, int n_elems, size_t elem_size);
+extern coarray_info_t *get_coarray_info(int id);
+
+/* xmpf_coarray_put77.c */
+extern void xmpf_coarray_put77d0_(int *descrId, int *elemLen, void *baseAddr,
+                                  int *coindex, void *rhs );
 

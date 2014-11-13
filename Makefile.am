@@ -166,7 +166,7 @@ DELETABLES	= \
 	Driver/bin/xmpcc \
 	Driver/bin/xmpf90 \
 	Driver/bin/omtranslate \
-	Driver/bin/omni_collect_init \
+	Driver/bin/omni_traverse \
 	Driver/etc/java.conf \
 	Driver/etc/l2x.conf.openmp \
 	Driver/etc/l2x.conf.xmp \

@@ -1,43 +1,55 @@
 #include "xmpf_internal.h"
 
 #define DESCR_ID_MAX   250
+#define SMALL_WORK_SIZE_KB  10
+
 #define BOOL int
 #define TRUE   1
 #define FALSE  0
 
-typedef struct {
-  BOOL is_used;
-  void *co_desc;
-  void *co_addr;
-} _info_t;
 
-static _info_t _descTab[DESCR_ID_MAX] = {};
+static coarray_info_t _descTab[DESCR_ID_MAX] = {};
 static int _nextId = 0;
 
-static int _set_descTab(void *co_desc, void *co_addr);
+static int _set_descTab(void *co_desc, void *co_addr, int n_elems, size_t elem_size);
 static int _getNextUnusedIdx();
+
 
 void xmpf_coarray_malloc_(int *descrId, void **pointer, int *size, int *unit)
 {
-  int n_elems = *size;
-  size_t elem_size = (size_t)(*unit);
-  void *co_desc;
-  void *co_addr;
-  int idx;
+  xmpf_coarray_malloc(descrId, pointer, *size, (size_t)(*unit));
+}
 
-  _XMP_coarray_malloc_info_1(n_elems, elem_size);   // in xmp_coarray_set.c
-  _XMP_coarray_malloc_image_info_1();            // in xmp_coarray_set.c
-  _XMP_coarray_malloc_do(&co_desc, &co_addr);    // in xmp_coarray_set.c
+void xmpf_coarray_malloc(int *descrId, void* *pointer, int n_elems, size_t elem_size)
+{
+  void* co_desc;
+  void* co_addr;
+
+  _XMP_coarray_malloc_info_1(n_elems, elem_size);  // see libxmp/src/xmp_coarray_set.c
+  _XMP_coarray_malloc_image_info_1();              // see libxmp/src/xmp_coarray_set.c
+  _XMP_coarray_malloc_do(&co_desc, &co_addr);      // see libxmp/src/xmp_coarray_set.c
   *pointer = co_addr;
 
   /* set table */
-  idx = _set_descTab(co_desc, co_addr);
-  *descrId = _set_descTab(co_desc, co_addr);
+  *descrId = _set_descTab(co_desc, co_addr, n_elems, elem_size);
 }
 
 
+coarray_info_t *get_coarray_info(int idx)
+{
+#if 1
+  fprintf(stdout, "get idx=%d, is_used=%d, co_desc=%p, "
+          "co_addr=%p, n_elems=%d, elem_size=%ld\n",
+          idx, _descTab[idx].is_used, _descTab[idx].co_desc,
+          _descTab[idx].co_addr, _descTab[idx].n_elems,
+          _descTab[idx].elem_size);
+#endif
 
-static int _set_descTab(void *co_desc, void *co_addr)
+  return &(_descTab[idx]);
+}
+
+
+static int _set_descTab(void *co_desc, void *co_addr, int n_elems, size_t elem_size)
 {
   int idx;
 
@@ -50,10 +62,22 @@ static int _set_descTab(void *co_desc, void *co_addr)
   _descTab[idx].is_used = TRUE;
   _descTab[idx].co_desc = co_desc;
   _descTab[idx].co_addr = co_addr;
+  _descTab[idx].n_elems = n_elems;
+  _descTab[idx].elem_size = elem_size;
+
+#if 1
+  fprintf(stdout, "set idx=%d, is_used=%d, co_desc=%p, "
+          "co_addr=%p, n_elems=%d, elem_size=%ld\n",
+          idx, _descTab[idx].is_used, _descTab[idx].co_desc,
+          _descTab[idx].co_addr, _descTab[idx].n_elems,
+          _descTab[idx].elem_size);
+#endif
+
   return idx;
 }
 
   
+
 static int _getNextUnusedIdx() {
   int i;
 
