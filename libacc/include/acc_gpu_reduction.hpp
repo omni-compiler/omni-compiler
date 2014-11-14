@@ -97,6 +97,15 @@ static __device__ void warpReduce(volatile T sdata[64], int kind){
   sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 1], kind);
 }
 
+template<typename T>
+static __device__ void warpReduce32(volatile T sdata[64], int kind){
+  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 16], kind);
+  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 8], kind);
+  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 4], kind);
+  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 2], kind);
+  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 1], kind);
+}
+
 #if __CUDA_ARCH__ >= 300
 #include <cuda.h>
 #if CUDA_VERSION <= 6000
@@ -155,6 +164,7 @@ static __device__
 void reduceInBlock(T *resultInBlock, T resultInThread, int kind){
   __shared__ T tmp[64];
 
+  if(blockDim.x >= 64){
   if(threadIdx.x < 64){
     tmp[threadIdx.x] = resultInThread;
   }
@@ -171,6 +181,10 @@ void reduceInBlock(T *resultInBlock, T resultInThread, int kind){
   }
 
   if(threadIdx.x < 32) warpReduce(tmp, kind);
+  }else{
+    tmp[threadIdx.x] = resultInThread;
+    warpReduce32(tmp, kind);
+  }
 
   if(threadIdx.x == 0){
     *resultInBlock = op(tmp[0], *resultInBlock, kind);
