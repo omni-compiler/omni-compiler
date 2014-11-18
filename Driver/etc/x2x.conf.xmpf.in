@@ -1,1 +1,10 @@
+#!/bin/bash 
+
+IS_MPI3=@ENABLE_MPI3@
+
 CMD_OPT="${CMD_OPT} -fxmpf "
+
+if [ ${IS_MPI3} = 1 ]; then
+CMD_OPT="${CMD_OPT} -mpi3"
+fi
+
