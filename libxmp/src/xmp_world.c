@@ -14,7 +14,17 @@ void *_XMP_world_nodes;
 void _XMP_init_world(int *argc, char ***argv) {
   int flag = 0;
   MPI_Initialized(&flag);
-  if (!flag) MPI_Init(argc, argv);
+  if (!flag) {
+#ifndef _XMP_XACC
+    MPI_Init(argc, argv);
+#else
+    int provided;
+    MPI_Init_thread(argc, argv, MPI_THREAD_MULTIPLE, &provided);
+    if(provided != MPI_THREAD_MULTIPLE){
+      _XMP_fatal("MPI_THREAD_MULTIPLE is not provided");
+    }
+#endif
+  }
   
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_dup(MPI_COMM_WORLD, comm);

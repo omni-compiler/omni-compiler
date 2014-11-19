@@ -99,11 +99,17 @@ void _XACC_gpu_unpack_vector2_async(char * __restrict__ dst0, char * __restrict_
     }									\
   } while (0)
 
+#include <omp.h>
+
 //#define _TLOG
 
 #ifdef _TLOG
 #include "tlog.h"
+#ifdef _OPENMP
+#define TLOG_LOG(log) do{if(omp_get_thread_num()==0)tlog_log((log));}while(0)
+#else
 #define TLOG_LOG(log) do{tlog_log((log));}while(0)
+#endif
 #else
 #define TLOG_LOG(log) do{}while(0)
 #endif

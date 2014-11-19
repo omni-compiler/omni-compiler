@@ -741,10 +741,13 @@ static void reflect_pack_start_all(_XACC_arrays_t *arrays_desc)
 {
   int dim = arrays_desc->dim;
   _XACC_device_t *device = arrays_desc->device_type;
+#pragma omp for
   for(int i = device->lb; i <= device->ub; i += device->step){
     _XACC_array_t *array_desc = arrays_desc->device_array + i;
     if(useKernelPacking){
+#ifdef _OPENMP
       CUDA_SAFE_CALL(cudaSetDevice(i));
+#endif
     }
 
     for(int j = 0; j < dim; j++){
@@ -768,6 +771,7 @@ static void reflect_pack_wait_all(_XACC_arrays_t *arrays_desc)
   int dim = arrays_desc->dim;
 
   _XACC_device_t *device = arrays_desc->device_type;
+#pragma omp for
   for(int i = device->lb; i <= device->ub; i += device->step){
     _XACC_array_t *array_desc = arrays_desc->device_array + i;
 
@@ -789,10 +793,13 @@ static void reflect_unpack_start_all(_XACC_arrays_t *arrays_desc)
   int dim = arrays_desc->dim;
 
   _XACC_device_t *device = arrays_desc->device_type;
+#pragma omp for
   for(int i = device->lb; i <= device->ub; i += device->step){  
     _XACC_array_t *array_desc = arrays_desc->device_array + i;
     if(useKernelPacking){
+#ifndef _OPENMP
       CUDA_SAFE_CALL(cudaSetDevice(i));
+#endif
     }
 
     for(int j = 0; j < dim; j++){
@@ -816,6 +823,7 @@ static void reflect_unpack_wait_all(_XACC_arrays_t *arrays_desc)
   int dim = arrays_desc->dim;
 
   _XACC_device_t *device = arrays_desc->device_type;
+#pragma omp for
   for(int i = device->lb; i <= device->ub; i += device->step){
 
     _XACC_array_t *array_desc = arrays_desc->device_array + i;
@@ -873,6 +881,9 @@ static void _XACC_reflect_do_inter_wait_dev(_XACC_arrays_t *arrays_desc, int i)
 
 static void _XACC_reflect_do_inter_start_dim0(_XACC_arrays_t *arrays_desc)
 {
+#ifdef _OPENMP
+  if(omp_get_thread_num() == 0)
+#endif
   {
     _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->lb;
     _XACC_array_info_t *ai = array_desc->info + 0;
@@ -884,7 +895,10 @@ static void _XACC_reflect_do_inter_start_dim0(_XACC_arrays_t *arrays_desc)
     MPI_Start(reflect->req + 0); //lo recv                                                                                                                                                        
     MPI_Start(reflect->req + 3); //hi send                                                                                                                                                        
   }
-  {
+#ifdef _OPENMP
+  if(omp_get_thread_num() == omp_get_num_threads() - 1)
+#endif
+    {
     _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->ub;
     _XACC_array_info_t *ai = array_desc->info + 0;
     _XMP_reflect_sched_t *reflect = ai->reflect_sched;
@@ -900,6 +914,9 @@ static void _XACC_reflect_do_inter_start_dim0(_XACC_arrays_t *arrays_desc)
 
 static void _XACC_reflect_do_inter_wait_dim0(_XACC_arrays_t *arrays_desc)
 {
+#ifdef _OPENMP
+  if(omp_get_thread_num() == 0)
+#endif
   {
     _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->lb;
     _XACC_array_info_t *ai = array_desc->info + 0;
@@ -907,6 +924,9 @@ static void _XACC_reflect_do_inter_wait_dim0(_XACC_arrays_t *arrays_desc)
     MPI_Wait(reflect->req + 0, MPI_STATUS_IGNORE); //lo recv                                                                                                                                      
     MPI_Wait(reflect->req + 3, MPI_STATUS_IGNORE); //hi send                                                                                                                                      
   }
+#ifdef _OPENMP
+  if(omp_get_thread_num() == omp_get_num_threads() - 1)
+#endif
   {
     _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->ub;
     _XACC_array_info_t *ai = array_desc->info + 0;
@@ -931,6 +951,7 @@ static void _XACC_reflect_do_inter_start(_XACC_arrays_t *arrays_desc)
   _XACC_reflect_do_inter_start_dim0(arrays_desc);
 
   _XACC_device_t *device = arrays_desc->device_type;
+#pragma omp for
   for(int i = device->lb; i <= device->ub; i += device->step){
    _XACC_reflect_do_inter_start_dev(arrays_desc, i);
   }
@@ -943,6 +964,7 @@ static void _XACC_reflect_do_inter_wait(_XACC_arrays_t *arrays_desc)
   _XACC_reflect_do_inter_wait_dim0(arrays_desc);
 
   _XACC_device_t *device = arrays_desc->device_type;
+#pragma omp for
   for(int i = device->lb; i <= device->ub; i += device->step){   
    _XACC_reflect_do_inter_wait_dev(arrays_desc, i);
   }
@@ -966,6 +988,7 @@ static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
 
   TLOG_LOG(TLOG_EVENT_2_IN);
   _XACC_device_t *device = arrays_desc->device_type;
+#pragma omp for
   for(int dev = device->lb; dev <= device->ub; dev += device->step){
 
     _XACC_array_t* device_array = &(arrays_desc->device_array[dev]);
@@ -973,10 +996,9 @@ static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
     _XMP_reflect_sched_t *reflect = info0->reflect_sched;
 
     if(info0->device_layout_manner != _XMP_N_DIST_BLOCK){
-      return;
+      //return;
     }
 
-    cudaStream_t *st = (cudaStream_t*)reflect->lo_async_id;
     if(dev > 0){
       _XACC_array_t* lower_device_array = &(arrays_desc->device_array[dev-1]);
       _XACC_array_info_t* lower_info0 = &lower_device_array->info[0];
@@ -985,8 +1007,9 @@ static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
       size_t loSendSize = reflect->blocklength*reflect->hi_width;
       char* sendPtr= reflect->hi_send_buf;
       char* recvPtr= lo_reflect->hi_recv_buf;
-      //printf("sendP=%p, recvP=%p, size=%zd\n", sendPtr,recvPtr,loSendSize);
+      cudaStream_t *st = (cudaStream_t*)reflect->hi_async_id;
       CUDA_SAFE_CALL(cudaMemcpyAsync(recvPtr, sendPtr, loSendSize, cudaMemcpyDeviceToDevice, *st));
+      //CUDA_SAFE_CALL(cudaMemcpy(recvPtr, sendPtr, loSendSize, cudaMemcpyDeviceToDevice));
       TLOG_LOG(TLOG_EVENT_9);
     }
 
@@ -1000,6 +1023,7 @@ static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
       char* recvPtr= hi_reflect->lo_recv_buf;
       cudaStream_t *st = (cudaStream_t*)reflect->lo_async_id;
       CUDA_SAFE_CALL(cudaMemcpyAsync(recvPtr, sendPtr, hiSendSize, cudaMemcpyDeviceToDevice, *st));
+      //CUDA_SAFE_CALL(cudaMemcpy(recvPtr, sendPtr, hiSendSize, cudaMemcpyDeviceToDevice));
       TLOG_LOG(TLOG_EVENT_9);
     }
   }
@@ -1014,28 +1038,39 @@ static void _XACC_reflect_do_intra_wait(_XACC_arrays_t *arrays_desc)
   TLOG_LOG(TLOG_EVENT_9_IN);
 
   _XACC_device_t *device = arrays_desc->device_type;
+#pragma omp for
   for(int dev = device->lb; dev <= device->ub; dev += device->step){
     _XACC_array_t* device_array = &(arrays_desc->device_array[dev]);
     _XACC_array_info_t* info0 = &device_array->info[0];
     _XMP_reflect_sched_t *reflect = info0->reflect_sched;
     if(info0->device_layout_manner != _XMP_N_DIST_BLOCK){
-      return;
+      //return;
     }
-    /* if(dev > 0){ */
-    /*   cudaStreamSynchronize(*(cudaStream_t*)(reflect->hi_async_id)); */
-    /* } */
-    /* if(dev < numDevices - 1){ */
-    /*   cudaStreamSynchronize(*(cudaStream_t*)(reflect->lo_async_id)); */
-    /* } */
-    if(dev > 0 || dev < numDevices- 1){
-      CUDA_SAFE_CALL(cudaStreamSynchronize(*(cudaStream_t*)(reflect->lo_async_id)));
-      TLOG_LOG(TLOG_EVENT_1);
+    if(dev > 0){
+      cudaStreamSynchronize(*(cudaStream_t*)(reflect->hi_async_id));
     }
+    if(dev < numDevices - 1){
+      cudaStreamSynchronize(*(cudaStream_t*)(reflect->lo_async_id));
+    }
+    /* if(dev > 0 || dev < numDevices- 1){ */
+    /*   CUDA_SAFE_CALL(cudaStreamSynchronize(*(cudaStream_t*)(reflect->lo_async_id))); */
+    /*   TLOG_LOG(TLOG_EVENT_1); */
+    /* } */
   }
   TLOG_LOG(TLOG_EVENT_9_OUT);
 }
 
 void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
+  int  numDevices = arrays_desc->device_type->size;
+  TLOG_LOG(TLOG_EVENT_8);
+#pragma omp parallel num_threads(numDevices)
+  {
+  _XACC_device_t *device = arrays_desc->device_type;
+#pragma omp for
+  for(int dev = device->lb; dev <= device->ub; dev += device->step){
+    CUDA_SAFE_CALL(cudaSetDevice(dev));
+  }
+    
   //start comm
   _XACC_reflect_do_intra_start(arrays_desc);
   _XACC_reflect_do_inter_start(arrays_desc);
@@ -1043,4 +1078,6 @@ void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
   //wait comm
   _XACC_reflect_do_intra_wait(arrays_desc);
   _XACC_reflect_do_inter_wait(arrays_desc);
+  }
+  TLOG_LOG(TLOG_EVENT_8);
 }
