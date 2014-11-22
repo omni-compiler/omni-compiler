@@ -896,7 +896,11 @@ static void _XACC_reflect_do_inter_start_dim0(_XACC_arrays_t *arrays_desc)
     MPI_Start(reflect->req + 3); //hi send                                                                                                                                                        
   }
 #ifdef _OPENMP
+#ifdef _USE_OMP_ONLY_PACK
+  if(omp_get_thread_num() == 0)
+#else
   if(omp_get_thread_num() == omp_get_num_threads() - 1)
+#endif
 #endif
     {
     _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->ub;
@@ -925,7 +929,11 @@ static void _XACC_reflect_do_inter_wait_dim0(_XACC_arrays_t *arrays_desc)
     MPI_Wait(reflect->req + 3, MPI_STATUS_IGNORE); //hi send                                                                                                                                      
   }
 #ifdef _OPENMP
+#ifdef _USE_OMP_ONLY_PACK
+  if(omp_get_thread_num() == 0)
+#else
   if(omp_get_thread_num() == omp_get_num_threads() - 1)
+#endif    
 #endif
   {
     _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->ub;
@@ -947,11 +955,21 @@ static void _XACC_reflect_do_inter_start(_XACC_arrays_t *arrays_desc)
     //    reflect_pack_wait_all(arrays_desc);
   }
 
+#ifdef _USE_OMP_ONLY_PACK
+  TLOG_LOG(TLOG_EVENT_1_IN);
+#pragma omp barrier
+  TLOG_LOG(TLOG_EVENT_1_OUT);
+#endif
+
   TLOG_LOG(TLOG_EVENT_4_IN);
   _XACC_reflect_do_inter_start_dim0(arrays_desc);
 
   _XACC_device_t *device = arrays_desc->device_type;
+#ifdef _USE_OMP_ONLY_PACK
+  if(omp_get_thread_num() == 0)
+#else    
 #pragma omp for
+#endif
   for(int i = device->lb; i <= device->ub; i += device->step){
    _XACC_reflect_do_inter_start_dev(arrays_desc, i);
   }
@@ -964,13 +982,22 @@ static void _XACC_reflect_do_inter_wait(_XACC_arrays_t *arrays_desc)
   _XACC_reflect_do_inter_wait_dim0(arrays_desc);
 
   _XACC_device_t *device = arrays_desc->device_type;
+#ifdef _USE_OMP_ONLY_PACK
+  if(omp_get_thread_num() == 0)
+#else    
 #pragma omp for
+#endif    
   for(int i = device->lb; i <= device->ub; i += device->step){   
    _XACC_reflect_do_inter_wait_dev(arrays_desc, i);
   }
   TLOG_LOG(TLOG_EVENT_6_OUT);
 
   if(packVector){
+#ifdef _USE_OMP_ONLY_PACK
+    TLOG_LOG(TLOG_EVENT_1_IN);
+#pragma omp barrier
+    TLOG_LOG(TLOG_EVENT_1_OUT);
+#endif
     TLOG_LOG(TLOG_EVENT_7_IN);
     reflect_unpack_start_all(arrays_desc);
     TLOG_LOG(TLOG_EVENT_7_OUT);
@@ -988,7 +1015,11 @@ static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
 
   TLOG_LOG(TLOG_EVENT_2_IN);
   _XACC_device_t *device = arrays_desc->device_type;
+/* #ifdef _USE_OMP_ONLY_PACK */
+/*   if(omp_get_thread_num() == 0) */
+/* #else */
 #pragma omp for
+/* #endif */
   for(int dev = device->lb; dev <= device->ub; dev += device->step){
 
     _XACC_array_t* device_array = &(arrays_desc->device_array[dev]);
@@ -1038,7 +1069,11 @@ static void _XACC_reflect_do_intra_wait(_XACC_arrays_t *arrays_desc)
   TLOG_LOG(TLOG_EVENT_9_IN);
 
   _XACC_device_t *device = arrays_desc->device_type;
+/* #ifdef _USE_OMP_ONLY_PACK */
+/*   if(omp_get_thread_num() == 0) */
+/* #else */
 #pragma omp for
+/* #endif     */
   for(int dev = device->lb; dev <= device->ub; dev += device->step){
     _XACC_array_t* device_array = &(arrays_desc->device_array[dev]);
     _XACC_array_info_t* info0 = &device_array->info[0];

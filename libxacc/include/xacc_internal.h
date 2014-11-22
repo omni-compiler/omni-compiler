@@ -101,6 +101,8 @@ void _XACC_gpu_unpack_vector2_async(char * __restrict__ dst0, char * __restrict_
 
 #include <omp.h>
 
+#define _USE_OMP_ONLY_PACK
+
 //#define _TLOG
 
 #ifdef _TLOG
