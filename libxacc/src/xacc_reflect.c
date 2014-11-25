@@ -1018,9 +1018,11 @@ static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
 /* #ifdef _USE_OMP_ONLY_PACK */
 /*   if(omp_get_thread_num() == 0) */
 /* #else */
-#pragma omp for
+//#pragma omp for
 /* #endif */
-  for(int dev = device->lb; dev <= device->ub; dev += device->step){
+  if(omp_get_thread_num() != 0)
+    for(int dev = device->lb + device->step *(omp_get_thread_num()-1) ; dev <= device->ub; dev += (device->step * (omp_get_num_threads()-1))){
+//for(int dev = device->lb ; dev <= device->ub; dev += device->step){
 
     _XACC_array_t* device_array = &(arrays_desc->device_array[dev]);
     _XACC_array_info_t* info0 = &device_array->info[0];
@@ -1107,12 +1109,12 @@ void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
   }
     
   //start comm
-  _XACC_reflect_do_intra_start(arrays_desc);
   _XACC_reflect_do_inter_start(arrays_desc);
+  _XACC_reflect_do_intra_start(arrays_desc);
 
   //wait comm
-  _XACC_reflect_do_intra_wait(arrays_desc);
   _XACC_reflect_do_inter_wait(arrays_desc);
+  _XACC_reflect_do_intra_wait(arrays_desc);
   }
   TLOG_LOG(TLOG_EVENT_8);
 }
