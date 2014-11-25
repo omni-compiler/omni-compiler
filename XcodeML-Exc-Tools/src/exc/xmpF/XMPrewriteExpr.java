@@ -495,34 +495,36 @@ public class XMPrewriteExpr
 	return i;
       }
 
-      // check this expression is ver+offset
-      Xobject e = i.getArg(0);
-      // we need normalize?
-      Xobject v = null;
-      Xobject offset = null;
-      if(e.isVariable()){
-	v = e;
-      } else {
-	switch(e.Opcode()){
-	case PLUS_EXPR:
-	  if(e.left().isVariable()){
-	    v = e.left();
-	    offset = e.right();
-	  } else if(e.right().isVariable()){
-	    v = e.right();
-	    offset = e.left();
-	  }
-	  break;
-	case MINUS_EXPR:
-	  if(e.left().isVariable()){
-	    v = e.left();
-	    offset = Xcons.unaryOp(Xcode.UNARY_MINUS_EXPR,e.right());
-	  }
-	  break;
-	}
-      }
+      if (!a.isFullShadow(dim_i)){
 
-      if (v != null){
+	// check this expression is ver+offset
+	Xobject e = i.getArg(0);
+	// we need normalize?
+	Xobject v = null;
+	Xobject offset = null;
+	if(e.isVariable()){
+	  v = e;
+	} else {
+	  switch(e.Opcode()){
+	  case PLUS_EXPR:
+	    if(e.left().isVariable()){
+	      v = e.left();
+	      offset = e.right();
+	    } else if(e.right().isVariable()){
+	      v = e.right();
+	      offset = e.left();
+	    }
+	    break;
+	  case MINUS_EXPR:
+	    if(e.left().isVariable()){
+	      v = e.left();
+	      offset = Xcons.unaryOp(Xcode.UNARY_MINUS_EXPR,e.right());
+	    }
+	    break;
+	  }
+	}
+
+	if (v != null){
 	  v = convertLocalIndex(v, dim_i, a, bb, block);
 	  if (v != null){
 	      if (localIndexOffset != null){
@@ -542,6 +544,8 @@ public class XMPrewriteExpr
 	      i.setArg(0, v);
 	      return i;
 	  }
+	}
+
       }
 
       Xobject x = null;

@@ -1,8 +1,6 @@
 program test_inquiry
 include 'xmp_lib.h'
-integer*8 xmp_desc_of
 integer ierr, irank, error
-integer xmp_node_num
 type(xmp_desc) dt, dt1, dn, dn1, dn2
 integer lb(3),ub(3), st(3)
 integer ival
@@ -10,6 +8,7 @@ logical lval
 integer map(2)
 integer a(6,9,16), a1(6), b(6)
 integer m(2)=(/2,4/)
+integer gidx(3)=(/4,4,4/), lidx(3)
 !$xmp nodes p(2,3,2)
 !$xmp nodes p1(2)=p(1:2,1,1)
 !$xmp template t(16,6,9)
@@ -134,6 +133,10 @@ if (irank==11) then
   call check(ival, 1, error)
   ierr=xmp_array_ushadow(xmp_desc_of(a), 1, ival)
   call check(ival, 2, error)
+  ierr=xmp_array_gtol(xmp_desc_of(a), gidx, lidx)
+  call check(lidx(1), 1, error)
+  call check(lidx(2), 1, error)
+  call check(lidx(3), 3, error)
 
   if ( error .eq. 0 ) then
      write(*,*) "PASS"

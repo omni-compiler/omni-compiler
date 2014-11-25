@@ -122,6 +122,8 @@ if test ${doProf} -eq 1 -a ${doScalasca} -eq 0; then
     args=("${args[@]}" "--Wl-ltlog_mpi")
 fi
 
+
+
 set -- "${args[@]}"
 
 exec ${BINDIR}/omdriver --xc -Txmp "$@"

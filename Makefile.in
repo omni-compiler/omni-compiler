@@ -293,6 +293,7 @@ ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 ENABLE_ACC = @ENABLE_ACC@
 ENABLE_ATOOL = @ENABLE_ATOOL@
+ENABLE_MPI3 = @ENABLE_MPI3@
 ENABLE_XACC = @ENABLE_XACC@
 EXEEXT = @EXEEXT@
 F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
@@ -360,6 +361,7 @@ MKDIR = @MKDIR@
 MKDIR_P = @MKDIR_P@
 MKRULESDIR = @MKRULESDIR@
 MM5TGT = @MM5TGT@
+MPI3_OPT = @MPI3_OPT@
 NATIVE_DOPT = @NATIVE_DOPT@
 NM = @NM@
 NMEDIT = @NMEDIT@
@@ -558,7 +560,8 @@ TESTDIRS = "global-view/array/C/" "global-view/array/F/" \
 	"global-view/bcast/C/" "global-view/bcast/F/" \
 	"global-view/loop/C" "global-view/loop/F" \
 	"global-view/reduction/C" "global-view/reduction/F" \
-	"global-view/shadow-reflect/C/" "global-view/task/C" \
+	"global-view/shadow-reflect/C/" \
+	"global-view/shadow-reflect/F/" "global-view/task/C" \
 	"global-view/task/F" "global-view/template_fix/C/" \
 	"global-view/template_fix/F/" "global-view/gmove/C/" \
 	"global-view/gmove/F/" "global-view/inquiry/C/" \
@@ -667,9 +670,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps ./Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

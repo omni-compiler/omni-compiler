@@ -233,6 +233,19 @@ int xmp_array_lead_dim(xmp_desc_t d, int size[]){
   return 0;
 }
 
+int xmp_array_gtol(xmp_desc_t d, int g_idx[], int l_idx[]){
+
+  int i, ndims, rank;
+  _XMP_array_t *a = (_XMP_array_t *)d;
+
+  xmp_array_ndims(d, &ndims);
+  for (i=0;i<ndims;i++){
+    _XMP_align_local_idx((long long int)g_idx[i], &l_idx[i], a, i, &rank);
+  }
+
+  return 0;
+}
+
 int xmp_align_axis(xmp_desc_t d, int dim, int *axis){
 
   _XMP_array_t *a = (_XMP_array_t *)d;
