@@ -83,7 +83,7 @@ void _XACC_init_layouted_array(_XACC_arrays_t **arrays, _XMP_array_t* alignedArr
   layoutedArray->device_type = device;
   //alignedArray->device_type = device;
   int dim = alignedArray->dim;
-  layoutedArray->device_array = (_XACC_array_t*)_XMP_alloc(sizeof(_XACC_array_t) * device->size);
+  layoutedArray->device_array = (_XACC_array_t*)_XMP_alloc(sizeof(_XACC_array_t) * (device->ub + 1));
   for(int dev = device->lb; dev <= device->ub; dev += device->step){
     _XACC_array_info_t* d_array_info = (_XACC_array_info_t*)_XMP_alloc(sizeof(_XACC_array_info_t) * dim);
     _XMP_array_info_t *h_array_info = alignedArray->info;
@@ -170,14 +170,14 @@ void _XACC_split_layouted_array_BLOCK(_XACC_arrays_t* array_desc, int dim){
     //d_array_info->par_stride;// = h_array_info->par_stride;    
     d_array_info->par_lower += size * dev;
     
-    if(dev != device->size - 1){
+    if(dev != device->ub){
       d_array_info->par_upper = d_array_info->par_lower + size - 1;
     }else{
       //      d_array_info->par_upper = h_array_info->par_upper;
     }
     //d_array_info->local_stride = h_array_info->local_stride;
     d_array_info->local_lower += size * dev;
-    if(dev != device->size - 1){
+    if(dev != device->ub){
       d_array_info->local_upper = d_array_info->local_lower + size - 1;
     }else{
       //      d_array_info->local_upper = h_array_info->local_upper;
