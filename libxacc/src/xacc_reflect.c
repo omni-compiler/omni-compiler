@@ -451,16 +451,17 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
 
   int src, dst;
   int is_periodic = reflect->is_periodic;
-  int num_devices = arrays_desc->device_type->size;
+  //int num_devices = arrays_desc->device_type->size;
+  _XACC_device_t *device = arrays_desc->device_type;
   if (!is_periodic && my_pos == lb_pos){ // && (target_dim != 0 || target_device == 0)){ // no periodic
     lo_rank = MPI_PROC_NULL;
-  }else if(target_dim == 0 && target_device != 0){
+  }else if(target_dim == 0 && target_device != device->lb){
     lo_rank = MPI_PROC_NULL; //lo_rank = my_rank;
   }
 
   if (!is_periodic && my_pos == ub_pos){ // && (target_dim != 0 || target_device == num_devices - 1)){ // no periodic
     hi_rank = MPI_PROC_NULL;
-  }else if(target_dim == 0 && target_device != num_devices - 1){
+  }else if(target_dim == 0 && target_device != device->ub){
     hi_rank = MPI_PROC_NULL; //hi_rank = my_rank;
   }
 
@@ -1032,7 +1033,7 @@ static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
       //return;
     }
 
-    if(dev > 0){
+    if(dev > device->lb){
       _XACC_array_t* lower_device_array = &(arrays_desc->device_array[dev-1]);
       _XACC_array_info_t* lower_info0 = &lower_device_array->info[0];
       _XMP_reflect_sched_t* lo_reflect = lower_info0->reflect_sched;
@@ -1046,7 +1047,7 @@ static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
       TLOG_LOG(TLOG_EVENT_9);
     }
 
-    if(dev < numDevices - 1){
+    if(dev < device->ub){
       _XACC_array_t* upper_device_array = &(arrays_desc->device_array[dev+1]);
       _XACC_array_info_t* upper_info0 = &upper_device_array->info[0];
       _XMP_reflect_sched_t* hi_reflect = upper_info0->reflect_sched;
@@ -1083,10 +1084,10 @@ static void _XACC_reflect_do_intra_wait(_XACC_arrays_t *arrays_desc)
     if(info0->device_layout_manner != _XMP_N_DIST_BLOCK){
       //return;
     }
-    if(dev > 0){
+    if(dev > device->lb){
       cudaStreamSynchronize(*(cudaStream_t*)(reflect->hi_async_id));
     }
-    if(dev < numDevices - 1){
+    if(dev < device->ub){
       cudaStreamSynchronize(*(cudaStream_t*)(reflect->lo_async_id));
     }
     /* if(dev > 0 || dev < numDevices- 1){ */
