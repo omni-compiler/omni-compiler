@@ -258,6 +258,41 @@ typedef enum {
     /* F95 intrinsic subroutines. */
     INTR_CPU_TIME,
 
+    INTR_DESC_OF,
+    INTR_GET_MPI_COMM,
+    INTR_NUM_NODES,
+    INTR_NODE_NUM,
+    INTR_ALL_NUM_NODES,
+    INTR_ALL_NODE_NUM,
+    INTR_WTIME,
+    INTR_WTICK,
+
+    INTR_ARRAY_NDIMS,
+    INTR_ARRAY_LBOUND,
+    INTR_ARRAY_UBOUND,
+    INTR_ARRAY_LSIZE,
+    INTR_ARRAY_USHADOW,
+    INTR_ARRAY_LSHADOW,
+    INTR_ARRAY_LEAD_DIM,
+    INTR_ARRAY_GTOL,
+    INTR_ALIGN_AXIS,
+    INTR_ALIGN_OFFSET,
+    INTR_ALIGN_REPLICATED,
+    INTR_ALIGN_TEMPLATE,
+    INTR_TEMPLATE_FIXED,
+    INTR_TEMPLATE_NDIMS,
+    INTR_TEMPLATE_LBOUND,
+    INTR_TEMPLATE_UBOUND,
+    INTR_DIST_FORMAT,
+    INTR_DIST_BLOCKSIZE,
+    INTR_DIST_GBLOCKMAP,
+    INTR_DIST_NODES,
+    INTR_DIST_AXIS,
+    INTR_NODES_NDIMS,
+    INTR_NODES_INDEX,
+    INTR_NODES_SIZE,
+    INTR_NODES_EQUIV,
+
     INTR_END
 
 } INTR_OPS;
@@ -304,6 +339,9 @@ typedef struct {
 
                         /* -7 : return type always comforms to the
                             left hand. */
+
+                        /* -8 : return type is external. XMP original 
+                            intrinsic functions use this type. */
 
     int langSpec;
 } intrinsic_entry;

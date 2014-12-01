@@ -776,6 +776,10 @@ BECC
 ENABLE_XACC
 ENABLE_XACC_FALSE
 ENABLE_XACC_TRUE
+MPI3_OPT
+ENABLE_MPI3
+ENABLE_MPI3_FALSE
+ENABLE_MPI3_TRUE
 ENABLE_ATOOL
 ENABLE_ATOOL_FALSE
 ENABLE_ATOOL_TRUE
@@ -953,6 +957,7 @@ enable_silent_rules
 enable_maintainer_mode
 with_thread
 with_lock
+with_mpi3
 enable_debug
 enable_xmpgpu
 enable_openacc
@@ -1645,6 +1650,7 @@ Optional Packages:
                         (or the compiler's sysroot if not specified).
   --with-thread               type of openmp thread
   --with-lock                 type of openmp lock
+  --with-mpi3                 MPI3 option (default: no).
   --with-cppflag=OPT          C preprocessor options
   --with-backend-cflag=OPT    Backend C compiler options for optimization
   --with-backend-cc=CMD       Backend C compiler (default: mpicc)
@@ -4726,8 +4732,7 @@ else
     ;;
   *)
     lt_cv_sys_max_cmd_len=`(getconf ARG_MAX) 2> /dev/null`
-    if test -n "$lt_cv_sys_max_cmd_len" && \
-	test undefined != "$lt_cv_sys_max_cmd_len"; then
+    if test -n "$lt_cv_sys_max_cmd_len"; then
       lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \/ 4`
       lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \* 3`
     else
@@ -6294,7 +6299,7 @@ ia64-*-hpux*)
   rm -rf conftest*
   ;;
 
-x86_64-*kfreebsd*-gnu|x86_64-*linux*|powerpc*-*linux*| \
+x86_64-*kfreebsd*-gnu|x86_64-*linux*|ppc*-*linux*|powerpc*-*linux*| \
 s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
   # Find out which ABI we are using.
   echo 'int i;' > conftest.$ac_ext
@@ -6310,19 +6315,9 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	    LD="${LD-ld} -m elf_i386_fbsd"
 	    ;;
 	  x86_64-*linux*)
-	    case `/usr/bin/file conftest.o` in
-	      *x86-64*)
-		LD="${LD-ld} -m elf32_x86_64"
-		;;
-	      *)
-		LD="${LD-ld} -m elf_i386"
-		;;
-	    esac
+	    LD="${LD-ld} -m elf_i386"
 	    ;;
-	  powerpc64le-*)
-	    LD="${LD-ld} -m elf32lppclinux"
-	    ;;
-	  powerpc64-*)
+	  ppc64-*linux*|powerpc64-*linux*)
 	    LD="${LD-ld} -m elf32ppclinux"
 	    ;;
 	  s390x-*linux*)
@@ -6341,10 +6336,7 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	  x86_64-*linux*)
 	    LD="${LD-ld} -m elf_x86_64"
 	    ;;
-	  powerpcle-*)
-	    LD="${LD-ld} -m elf64lppc"
-	    ;;
-	  powerpc-*)
+	  ppc*-*linux*|powerpc*-*linux*)
 	    LD="${LD-ld} -m elf64ppc"
 	    ;;
 	  s390*-*linux*|s390*-*tpf*)
@@ -12610,6 +12602,16 @@ else
 fi
 
 
+
+# Check whether --with-mpi3 was given.
+if test "${with_mpi3+set}" = set; then :
+  withval=$with_mpi3; useMPI3=$withval
+else
+  useMPI3=no
+fi
+
+
+
 case $OS in
     solaris*)
 	def_thread_type=solaris
@@ -17061,6 +17063,23 @@ else
   ENABLE_ATOOL_TRUE='#'
   ENABLE_ATOOL_FALSE=
 fi
+
+
+
+ENABLE_MPI3=0
+MPI3_OPT=""
+if test "x${useMPI3}" = "xyes"; then
+   MPI3_OPT="-D_XMP_MPI3"
+   ENABLE_MPI3=1
+fi
+ if test "x${useMPI3}" = "xyes"; then
+  ENABLE_MPI3_TRUE=
+  ENABLE_MPI3_FALSE='#'
+else
+  ENABLE_MPI3_TRUE='#'
+  ENABLE_MPI3_FALSE=
+fi
+
 
 
 
@@ -26465,6 +26484,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_ATOOL_TRUE}" && test -z "${ENABLE_ATOOL_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_ATOOL\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_MPI3_TRUE}" && test -z "${ENABLE_MPI3_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_MPI3\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_XACC_TRUE}" && test -z "${ENABLE_XACC_FALSE}"; then
