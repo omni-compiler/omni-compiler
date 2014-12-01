@@ -210,10 +210,13 @@ compile_intrinsic_call(ID id, expv args) {
         /* set external id for functionType's type ID.
          * dont call declare_external_id() */
         extid = new_external_id_for_external_decl(ID_SYM(id), ftp);
-        EXT_PROC_CLASS(extid) = EP_INTRINSIC;
         ID_TYPE(id) = ftp;
         PROC_EXT_ID(id) = extid;
-
+        if(TYPE_IS_EXTERNAL(tp)){
+           ID_STORAGE(id) = STG_EXT;
+        }else{
+           EXT_PROC_CLASS(extid) = EP_INTRINSIC;
+        }
         ret = expv_cons(FUNCTION_CALL, tp, symV, args);
     }
 
@@ -1223,6 +1226,18 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
                 TYPE_BASIC_TYPE(lhsTp) = TYPE_LHS;
                 TYPE_ATTR_FLAGS(lhsTp) |= TYPE_ATTR_TARGET;
                 ret = lhsTp;
+                break;
+            }
+
+            case -8: {
+                bType = intr_type_to_basic_type(INTR_RETURN_TYPE(ep));
+                if (bType == TYPE_UNKNOWN) {
+                    fatal("invalid intrinsic return type (case -8).");
+                    return NULL;
+                } else {
+                    ret = type_basic(bType);
+                }
+                TYPE_SET_EXTERNAL(ret);
                 break;
             }
 
