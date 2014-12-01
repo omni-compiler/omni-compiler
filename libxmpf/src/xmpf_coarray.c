@@ -1,89 +1,68 @@
 #include "xmpf_internal.h"
 
-#define DESCR_ID_MAX   250
-#define SMALL_WORK_SIZE_KB  10
+typedef struct {
+  BOOL    is_used;
+  void   *desc;
+  void   *orgAddr;
+  int     count;
+  size_t  element;
+} _coarrayInfo_t;
 
-#define BOOL int
-#define TRUE   1
-#define FALSE  0
-
-
-static coarray_info_t _descTab[DESCR_ID_MAX] = {};
+static _coarrayInfo_t _coarrayInfoTab[DESCR_ID_MAX] = {};
 static int _nextId = 0;
 
-static int _set_descTab(void *co_desc, void *co_addr, int n_elems, size_t elem_size);
-static int _getNextUnusedIdx();
+static int _getNewSerno();
+static int _set_coarrayInfo(void *desc, void *orgAddr, int count, size_t element);
 
 
-void xmpf_coarray_malloc_(int *descrId, void **pointer, int *size, int *unit)
+/*****************************************\
+  internal information management
+\*****************************************/
+
+int xmpf_get_coarrayElement(int serno)
 {
-  xmpf_coarray_malloc(descrId, pointer, *size, (size_t)(*unit));
+  return _coarrayInfoTab[serno].element;
 }
 
-void xmpf_coarray_malloc(int *descrId, void* *pointer, int n_elems, size_t elem_size)
+void* xmpf_get_coarrayDesc(int serno)
 {
-  void* co_desc;
-  void* co_addr;
-
-  _XMP_coarray_malloc_info_1(n_elems, elem_size);  // see libxmp/src/xmp_coarray_set.c
-  _XMP_coarray_malloc_image_info_1();              // see libxmp/src/xmp_coarray_set.c
-  _XMP_coarray_malloc_do(&co_desc, &co_addr);      // see libxmp/src/xmp_coarray_set.c
-  *pointer = co_addr;
-
-  /* set table */
-  *descrId = _set_descTab(co_desc, co_addr, n_elems, elem_size);
+  return _coarrayInfoTab[serno].desc;
 }
 
-
-coarray_info_t *get_coarray_info(int idx)
+int xmpf_get_coarrayStart(int serno, void* baseAddr)
 {
-#if 1
-  fprintf(stdout, "get idx=%d, is_used=%d, co_desc=%p, "
-          "co_addr=%p, n_elems=%d, elem_size=%ld\n",
-          idx, _descTab[idx].is_used, _descTab[idx].co_desc,
-          _descTab[idx].co_addr, _descTab[idx].n_elems,
-          _descTab[idx].elem_size);
-#endif
-
-  return &(_descTab[idx]);
+  int element = _coarrayInfoTab[serno].element;
+  void* orgAddr = _coarrayInfoTab[serno].orgAddr;
+  int start = ((size_t)baseAddr - (size_t)orgAddr) / element;
+  return start;
 }
 
 
-static int _set_descTab(void *co_desc, void *co_addr, int n_elems, size_t elem_size)
+int _set_coarrayInfo(void *desc, void *orgAddr, int count, size_t element)
 {
-  int idx;
+  int serno;
 
-  idx = _getNextUnusedIdx();
-  if (idx < 0) {         /* fail */
-    _XMP_fatal("xmpf_coarray.c: no more descriptor table.");
-    return idx;
+  serno = _getNewSerno();
+  if (serno < 0) {         /* fail */
+    _XMP_fatal("xmpf_coarray.c: no more desc table.");
+    return serno;
   }
 
-  _descTab[idx].is_used = TRUE;
-  _descTab[idx].co_desc = co_desc;
-  _descTab[idx].co_addr = co_addr;
-  _descTab[idx].n_elems = n_elems;
-  _descTab[idx].elem_size = elem_size;
+  _coarrayInfoTab[serno].is_used = TRUE;
+  _coarrayInfoTab[serno].desc = desc;
+  _coarrayInfoTab[serno].orgAddr = orgAddr;
+  _coarrayInfoTab[serno].count = count;
+  _coarrayInfoTab[serno].element = element;
 
-#if 1
-  fprintf(stdout, "set idx=%d, is_used=%d, co_desc=%p, "
-          "co_addr=%p, n_elems=%d, elem_size=%ld\n",
-          idx, _descTab[idx].is_used, _descTab[idx].co_desc,
-          _descTab[idx].co_addr, _descTab[idx].n_elems,
-          _descTab[idx].elem_size);
-#endif
-
-  return idx;
+  return serno;
 }
 
-  
-
-static int _getNextUnusedIdx() {
+static int _getNewSerno() {
   int i;
 
   /* try white area */
   for (i = _nextId; i < DESCR_ID_MAX; i++) {
-    if (! _descTab[i].is_used) {
+    if (! _coarrayInfoTab[i].is_used) {
       ++_nextId;
       return i;
     }
@@ -91,7 +70,7 @@ static int _getNextUnusedIdx() {
 
   /* try reuse */
   for (i = 0; i < _nextId; i++) {
-    if (! _descTab[i].is_used) {
+    if (! _coarrayInfoTab[i].is_used) {
       _nextId = i + 1;
       return i;
     }
@@ -99,6 +78,30 @@ static int _getNextUnusedIdx() {
 
   /* error: no room */
   return -1;
+}
+
+
+/*****************************************\
+  MALLOC
+\*****************************************/
+
+void xmpf_coarray_malloc_(int *serno, void **pointer, int *count, int *element)
+{
+  xmpf_coarray_malloc(serno, pointer, *count, (size_t)(*element));
+}
+
+void xmpf_coarray_malloc(int *serno, void **pointer, int count, size_t element)
+{
+  void* desc;
+  void* orgAddr;
+
+  // see libxmp/src/xmp_coarray_set.c
+  _XMP_coarray_malloc_info_1(count, element);  
+  _XMP_coarray_malloc_image_info_1();
+  _XMP_coarray_malloc_do(&desc, &orgAddr);
+
+  *pointer = orgAddr;
+  *serno = _set_coarrayInfo(desc, orgAddr, count, element);
 }
 
 

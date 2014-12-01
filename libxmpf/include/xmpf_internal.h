@@ -264,26 +264,43 @@ extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void
 //extern void _XMP_coarray_shortcut_get(const int, const void*, const void*, const size_t, const size_t, const size_t);
 //extern void _XMP_coarray_shortcut_get_f(const int*, const void*, const void*, const size_t*, const size_t*, const size_t*);
 
-/*
- *   for xmpf_coarray routines
- */
-typedef struct {
-  int     is_used;
-  void   *co_desc;
-  void   *co_addr;
-  int     n_elems;
-  size_t  elem_size;
-} coarray_info_t;
 
-#define CO_RDMA_GET  700
-#define CO_RDMA_PUT  701
+/******************************************\
+    COARRAY
+\******************************************/
+#define BOOL   int
+#define TRUE   1
+#define FALSE  0
+
+/*-- limitations --*/
+#define DESCR_ID_MAX   250
+
+/*-- thresholds --*/
+#define SMALL_WORK_SIZE_KB  10
+
+/*-- codes --*/
+#define COARRAY_GET_CODE  700
+#define COARRAY_PUT_CODE  701
 
 /* xmpf_coarray */
-extern void xmpf_coarray_malloc_(int *descrId, void **pointer, int *size, int *unit);
-extern void xmpf_coarray_malloc(int *descrId, void* *pointer, int n_elems, size_t elem_size);
-extern coarray_info_t *get_coarray_info(int id);
+extern int xmpf_get_coarrayElement(int serno);
+extern void *xmpf_get_coarrayDesc(int serno);
+extern int xmpf_get_coarrayStart(int serno, void* baseAddr);
+
+extern void xmpf_coarray_malloc_(int *serno, void **pointer, int *count, int *element);
+extern void xmpf_coarray_malloc(int *serno, void **pointer, int count, size_t element);
+
+/* xmpf_coarray_put_array */
+extern void xmpf_coarray_put_array_(int* desc, void** baseAddr,
+                                    int* rank, void* nextAddr[], int count[],
+                                    int* coindex, void** rhs);
+extern void xmpf_coarray_put_array(int desc, void* baseAddr,
+                                   int rank, void* nextAddr[], int count[],
+                                   int coindex, void* rhs);
+
 
 /* xmpf_coarray_put77.c */
-extern void xmpf_coarray_put77d0_(int *descrId, int *elemLen, void *baseAddr,
-                                  int *coindex, void *rhs );
-
+/*
+extern void xmpf_coarray_put77d0_(int *serno, int *count, void *baseAddr,
+                                  int *coindex, void *rhs);
+*/
