@@ -109,6 +109,13 @@ int xmp_array_lead_dim_(xmp_desc_t **d, int size[]){
   return 0;
 }
 
+int xmp_array_gtol_(xmp_desc_t **d, int *g_idx, int *l_idx){
+
+  xmp_array_gtol(*d, g_idx, l_idx);
+
+  return 0;
+}
+
 int xmp_align_axis_(xmp_desc_t **d, int *dim, int *axis){
 
   return xmp_align_axis(*d, *dim, axis);

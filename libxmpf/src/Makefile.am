@@ -5,7 +5,7 @@ XMPF_INC_DIR =../include
 #TLOG_INC_DIR=$(top_builddir)/@LIBTLOG_MPI_DIR@
 #GASNET_INC_DIR=@GASNET_PREFIX@/include
 #GASNET_CONDUIT_DIR=$(GASNET_INC_DIR)/@GASNET_CONDUIT@-conduit
-AM_CFLAGS = -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) -I$(XMP_SRC_DIR)  @BECC_OPTION@
+AM_CFLAGS = -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) -I$(XMP_SRC_DIR)  @BECC_OPTION@ @MPI3_OPT@
 
 lib_LIBRARIES     = libxmpf.a
 libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_array.c xmpf_gcomm.c \
