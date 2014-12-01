@@ -319,6 +319,11 @@ AC_ARG_WITH(lock,
     [  --with-lock                 type of openmp lock],
     [lock_type=$withval], [lock_type=""])
 
+AC_ARG_WITH(mpi3,
+    [  --with-mpi3                 MPI3 option (default: no).],
+    [useMPI3=$withval], [useMPI3=no])
+
+
 case $OS in
     solaris*)
 	def_thread_type=solaris
@@ -530,6 +535,16 @@ if test "x${doatool}" = "xyes"; then
 fi
 AM_CONDITIONAL(ENABLE_ATOOL, test "x${doatool}" = "xyes")
 AC_SUBST(ENABLE_ATOOL)
+
+ENABLE_MPI3=0
+MPI3_OPT=""
+if test "x${useMPI3}" = "xyes"; then
+   MPI3_OPT="-D_XMP_MPI3"
+   ENABLE_MPI3=1
+fi
+AM_CONDITIONAL(ENABLE_MPI3, test "x${useMPI3}" = "xyes")
+AC_SUBST(ENABLE_MPI3)
+AC_SUBST(MPI3_OPT)
 
 #ENABLE_XACC=0
 #if test "x${xacc}" = "xyes"; then

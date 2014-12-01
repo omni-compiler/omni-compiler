@@ -55,6 +55,7 @@ extern int      xmp_array_lshadow(xmp_desc_t d, int dim, int *lshadow);
 extern int      xmp_array_ushadow(xmp_desc_t d, int dim, int *ushadow);
 extern int      xmp_array_owner(xmp_desc_t d, int ndims, int index[], int dim);
 extern int      xmp_array_lead_dim(xmp_desc_t d, int size[]);
+extern int      xmp_array_gtol(xmp_desc_t d, int g_idx[], int lidx[]);
 extern int      xmp_align_axis(xmp_desc_t d, int dim, int *axis);
 extern int      xmp_align_offset(xmp_desc_t d, int dim, int *offset);
 extern int      xmp_align_format(xmp_desc_t d, int dim);
