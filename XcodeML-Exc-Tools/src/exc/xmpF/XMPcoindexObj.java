@@ -16,6 +16,9 @@ import java.util.*;
 public class XMPcoindexObj {
 
   // constants
+  final static String LIB_PUT_ARRAY_NAME = "xmpf_coarray_put_array";
+  final static String LIB_GET_ARRAY_NAME = "xmpf_coarray_get_array";
+
   final static String PUT77_LIB_PREFIX = "xmpf_coarray_put77";
   final static String GET77_LIB_PREFIX = "xmpf_coarray_get77";
   final static String PUT90_LIB_PREFIX = "xmpf_coarray_put90";
@@ -115,14 +118,13 @@ public class XMPcoindexObj {
   //  run
   //------------------------------
   public Xobject genGetCommFunction() {
-    _GetF77styleActualArgs actualArgs = new _GetF77styleActualArgs();
+    //    _GetF77styleActualArgs actualArgs = new _GetF77styleActualArgs();
+    _GetActualArgsType2 actualArgs = new _GetActualArgsType2();
 
     Xtype xtype = getType().copy();
     xtype.removeCodimensions();
 
-    String funcName = 
-      GET77_LIB_PREFIX + _getTypeSuffix(xtype) + "d" + actualArgs.rank;
-
+    String funcName = LIB_GET_ARRAY_NAME;
     Ident funcIdent = getEnv().findVarIdent(funcName, null);
     if (funcIdent == null) {
       Xtype baseType = _getBasicType(xtype);   // temporary version
@@ -134,10 +136,10 @@ public class XMPcoindexObj {
   }
 
   public Xobject genPutCommCallStmt(Xobject rhs) {
-    _GetF77styleActualArgs actualArgs = new _GetF77styleActualArgs();
-    actualArgs.args.add(rhs);
+    //    _GetF77styleActualArgs actualArgs = new _GetF77styleActualArgs();
+    _GetActualArgsType2 actualArgs = new _GetActualArgsType2(rhs);
 
-    String subrName = PUT77_LIB_PREFIX + "d" + actualArgs.rank;
+    String subrName = LIB_PUT_ARRAY_NAME;
     Ident subrIdent = getEnv().findVarIdent(subrName, null);
     if (subrIdent == null)
       subrIdent = getEnv().declExternIdent(subrName,
@@ -148,8 +150,53 @@ public class XMPcoindexObj {
   }
 
 
+  /* generate actual arguments Type-2
+   * cf. libxmpf/src/xmpf_coarray_put.c
+   *
+   * void xmpf_coarray_{put|get}_array_
+   *    (int* serno, void** baseAddr,
+   *     int* rank, void* nextAddr[], int count[],
+   *     int* coindex [, void** rhs] )
+   */
+  private class _GetActualArgsType2
+  {
+    public Xobject args;
+    public int rank;
+
+    public _GetActualArgsType2() {
+      XMPcoarray coarray = getCoarray();
+      BlockList blist = getBlockList();
+
+      Xobject serno = coarray.getDescriptorId();
+      Xobject baseAddr = getBaseAddr();
+      Xobject coindex = getCoindex();
+
+      int hostRank = coarray.getRank();
+      Xobject nextAddr = new XobjList(Xcode.F_ARRAY_CONSTRUCTOR);
+      Xobject count = new XobjList(Xcode.F_ARRAY_CONSTRUCTOR);
+      int rank = 0;
+      for (int i = 0; i < hostRank; i++) {
+        if (isTripletIndex(i)) {
+          ++rank;
+          nextAddr.add(getNeighboringAddr(i));
+          count.add(getSizeFromTriplet(i));
+        }
+      }
+
+      args = Xcons.List(serno, baseAddr, Xcons.IntConstant(rank),
+                        nextAddr, count, coindex);
+    }
+
+    public _GetActualArgsType2(Xobject rhs) {
+      this();
+      this.args.add(rhs);
+    }
+  }
+
+    
+
   /* generate actual arguments of F77-style interface 
-   *  ( desc, elemLen, baseAddr &a(0,0,..,0),
+   *  ( serno, elemLen, baseAddr &a(0,0,..,0),
    *    size[0],   stride[0],   neighborAddr &a(1,0,..,0),
    *    size[1],   stride[1],   neighborAddr &a(0,1,..,0),
    *    ...
@@ -164,10 +211,10 @@ public class XMPcoindexObj {
       XMPcoarray coarray = getCoarray();
       BlockList blist = getBlockList();
 
-      Xobject desc = coarray.getDescriptorId();
+      Xobject serno = coarray.getDescriptorId();
       Xobject elemLen = coarray.getElementLengthExpr();
       Xobject baseAddr = getBaseAddr();
-      args = Xcons.List(desc, elemLen, baseAddr);
+      args = Xcons.List(serno, elemLen, baseAddr);
 
       int rank = coarray.getRank();
       int count = 0;

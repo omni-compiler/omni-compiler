@@ -14,9 +14,9 @@ void xmpf_coarray_put_array_(int* serno, void** baseAddr,
 }
   
 
-exern void xmpf_coarray_put_array(int serno, void* baseAddr,
-                                  int rank, void* nextAddr[], int count[],
-                                  int coindex, void* rhs)
+void xmpf_coarray_put_array(int serno, void* baseAddr,
+                            int rank, void* nextAddr[], int count[],
+                            int coindex, void* rhs)
 {
   int start = xmpf_get_coarrayStart(serno, baseAddr);
 
@@ -36,7 +36,7 @@ void _coarray_putVector(int serno, int start, int count,
   _XMP_coarray_rdma_coarray_set_1(start, count, 1);    // LHS
   _XMP_coarray_rdma_array_set_1(0, count, 1, 1, 1);    // RHS
   _XMP_coarray_rdma_node_set_1(coindex);
-  _XMP_coarray_rdma_do(CO_RDMA_PUT, desc, rhs, NULL);
+  _XMP_coarray_rdma_do(COARRAY_PUT_CODE, desc, rhs, NULL);
 }
 
 

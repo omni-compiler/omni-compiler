@@ -59,7 +59,7 @@ public class XMPcoarray {
     // declaration into fblock and set crayPtrId
     BlockList blist = fblock.getBody();
 
-    // for descriptor
+    // for descriptor (serial number of the coarray)
     descrId = blist.declLocalIdent(descrName,
                                    BasicType.FintType,
                                    StorageClass.FLOCAL,
