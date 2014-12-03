@@ -9,7 +9,7 @@
 
       !! This subroutine is sutomatically generated.
       !! see Driver/bin/omni_traverse.in
-      call xmpf_traverse_initcoarray
+      call xmpf_traverse
 
       !! user's main program
       call xmpf_main

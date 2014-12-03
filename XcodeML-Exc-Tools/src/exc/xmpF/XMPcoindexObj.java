@@ -16,8 +16,13 @@ import java.util.*;
 public class XMPcoindexObj {
 
   // constants
-  final static String LIB_PUT_ARRAY_NAME = "xmpf_coarray_put_array";
-  final static String LIB_GET_ARRAY_NAME = "xmpf_coarray_get_array";
+  /* Type-4 */
+  final static String PUT_ARRAY_NAME = "xmpf_coarray_put_array";
+  final static String GET_ARRAY_NAME = "xmpf_coarray_get_array";
+
+  /* Type-3 */
+  final static String PUT_ARRAY_PREFIX = "xmpf_coarray_put";
+  final static String GET_ARRAY_PREFIX = "xmpf_coarray_get";
 
   final static String PUT77_LIB_PREFIX = "xmpf_coarray_put77";
   final static String GET77_LIB_PREFIX = "xmpf_coarray_get77";
@@ -29,10 +34,10 @@ public class XMPcoindexObj {
   Xobject obj;          // Xcode.CO_ARRAY_REF
   Xobject args;
   Xobject coindex;
+  int rank;            // rank of the reference
 
   // mediator
   XMPcoarray coarray;
-
 
   //------------------------------
   //  CONSTRUCTOR
@@ -41,8 +46,7 @@ public class XMPcoindexObj {
     assert (obj.Opcode() == Xcode.CO_ARRAY_REF);
     this.obj = obj;
     this.coarray = coarray;
-    name = coarray.getName();
-    coindex = _getCoindex();
+    _commonConstructor();
   }
 
   /* find XMPcoarray and construct
@@ -50,19 +54,27 @@ public class XMPcoindexObj {
   public XMPcoindexObj(Xobject obj, Vector<XMPcoarray> coarrays) {
     assert (obj.Opcode() == Xcode.CO_ARRAY_REF);
     this.obj = obj;
-
     Xobject varRef = obj.getArg(0).getArg(0);
-    if (varRef.Opcode() == Xcode.F_ARRAY_REF) {
+    if (varRef.Opcode() == Xcode.F_ARRAY_REF) {    // array
       name = varRef.getArg(0).getArg(0).getName();
-      args = varRef.getArg(1);
-    } else {
+    } else {                                       // scalar
       name = varRef.getName();
-      args = null;
     }
     this.coarray = _findCoarrayInCoarrays(name, coarrays);
-    this.coindex = _getCoindex();
+    _commonConstructor();
   }
 
+  private void _commonConstructor() {
+    name = coarray.getName();
+    coindex = _getCoindex();
+    Xobject varRef = obj.getArg(0).getArg(0);
+    if (varRef.Opcode() == Xcode.F_ARRAY_REF) {    // array
+      args = varRef.getArg(1);
+    } else {                                       // scalar
+      args = null;
+    }
+    rank = _getRank();
+  }    
 
   private Xobject _getCoindex() {
     Xobject cosubList = obj.getArg(1);
@@ -103,6 +115,13 @@ public class XMPcoindexObj {
     return coindex;
   }
 
+  private int _getRank() {
+    int count = 0;
+    for (int i = 0; i < coarray.getRank(); i++)
+      if (isTripletIndex(i)) ++count;
+    return count;
+  }
+
   private XMPcoarray _findCoarrayInCoarrays(String name,
                                             Vector<XMPcoarray> coarrays) {
     for (XMPcoarray coarray: coarrays) {
@@ -117,83 +136,74 @@ public class XMPcoindexObj {
   //------------------------------
   //  run
   //------------------------------
-  public Xobject genGetCommFunction() {
-    //    _GetF77styleActualArgs actualArgs = new _GetF77styleActualArgs();
-    _GetActualArgsType2 actualArgs = new _GetActualArgsType2();
+  public Xobject genFuncRef_getArray() {
+    Xobject actualArgs = _makeActualArgs_type4();
 
     Xtype xtype = getType().copy();
     xtype.removeCodimensions();
 
-    String funcName = LIB_GET_ARRAY_NAME;
+    String funcName = GET_ARRAY_NAME;
     Ident funcIdent = getEnv().findVarIdent(funcName, null);
     if (funcIdent == null) {
       Xtype baseType = _getBasicType(xtype);   // temporary version
       Xtype funcType = Xtype.Function(baseType);
       funcIdent = getEnv().declExternIdent(funcName, funcType);
     }                                           
-    Xobject funcRef = funcIdent.Call(actualArgs.args);
+    Xobject funcRef = funcIdent.Call(actualArgs);
     return funcRef;
   }
 
-  public Xobject genPutCommCallStmt(Xobject rhs) {
-    //    _GetF77styleActualArgs actualArgs = new _GetF77styleActualArgs();
-    _GetActualArgsType2 actualArgs = new _GetActualArgsType2(rhs);
+  public Xobject genCallStmt_putArray(Xobject rhs) {
+    Xobject actualArgs = _makeActualArgs_type4(rhs);
 
-    String subrName = LIB_PUT_ARRAY_NAME;
+    String subrName = PUT_ARRAY_NAME;
     Ident subrIdent = getEnv().findVarIdent(subrName, null);
     if (subrIdent == null)
       subrIdent = getEnv().declExternIdent(subrName,
                                            BasicType.FexternalSubroutineType);
-    Xobject subrCall = subrIdent.callSubroutine(actualArgs.args);
+    Xobject subrCall = subrIdent.callSubroutine(actualArgs);
 
     return subrCall;
   }
 
 
-  /* generate actual arguments Type-2
+  /* generate actual arguments Type-4
    * cf. libxmpf/src/xmpf_coarray_put.c
    *
-   * void xmpf_coarray_{put|get}_array_
-   *    (int* serno, void** baseAddr,
-   *     int* rank, void* nextAddr[], int count[],
-   *     int* coindex [, void** rhs] )
+   * void xmpf_coarray_{put|get}_array
+   *       (int serno, void* baseAddr, int coindex, [void* rhs,] int rank,
+   *        void* nextAddr1, int count1,
+   *        ...
+   *        void* nextAddrN, int countN )
+   *   where N is rank of the reference (0<=N<=15 in Fortran 2008).
    */
-  private class _GetActualArgsType2
-  {
-    public Xobject args;
-    public int rank;
-
-    public _GetActualArgsType2() {
-      XMPcoarray coarray = getCoarray();
-      BlockList blist = getBlockList();
-
-      Xobject serno = coarray.getDescriptorId();
-      Xobject baseAddr = getBaseAddr();
-      Xobject coindex = getCoindex();
-
-      int hostRank = coarray.getRank();
-      Xobject nextAddr = new XobjList(Xcode.F_ARRAY_CONSTRUCTOR);
-      Xobject count = new XobjList(Xcode.F_ARRAY_CONSTRUCTOR);
-      int rank = 0;
-      for (int i = 0; i < hostRank; i++) {
-        if (isTripletIndex(i)) {
-          ++rank;
-          nextAddr.add(getNeighboringAddr(i));
-          count.add(getSizeFromTriplet(i));
-        }
-      }
-
-      args = Xcons.List(serno, baseAddr, Xcons.IntConstant(rank),
-                        nextAddr, count, coindex);
-    }
-
-    public _GetActualArgsType2(Xobject rhs) {
-      this();
-      this.args.add(rhs);
-    }
+  private Xobject _makeActualArgs_type4() {
+    return _makeActualArgs_type4(null);
   }
 
-    
+  private Xobject _makeActualArgs_type4(Xobject rhs) {
+    XMPcoarray coarray = getCoarray();
+
+    Xobject serno = coarray.getDescriptorId();
+    Xobject baseAddr = getBaseAddr();
+    Xobject coindex = getCoindex();
+    Xobject actualArgs = Xcons.List(serno, baseAddr, coindex);
+
+    if (rhs != null)
+      actualArgs.add(rhs);
+
+    actualArgs.add(Xcons.IntConstant(rank));
+
+    int hostRank = coarray.getRank();
+    for (int i = 0; i < hostRank; i++) {
+      if (isTripletIndex(i)) {
+        actualArgs.add(getNeighboringAddr(i));
+        actualArgs.add(getSizeFromTriplet(i));
+      }
+    }
+
+    return actualArgs;
+  }
 
   /* generate actual arguments of F77-style interface 
    *  ( serno, elemLen, baseAddr &a(0,0,..,0),

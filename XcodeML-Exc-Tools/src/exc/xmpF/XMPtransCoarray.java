@@ -119,7 +119,7 @@ public class XMPtransCoarray
           xobj.getArg(0).Opcode() == Xcode.CO_ARRAY_REF) {
 
         // found statement to be converted
-        Xobject callExpr = genPutCommCallStmt(xobj, coarrays);
+        Xobject callExpr = genCallStmt_putArray(xobj, coarrays);
         xi.setXobject(callExpr);
       }
 
@@ -138,7 +138,7 @@ public class XMPtransCoarray
 
         if (_isCoidxVarStmt(assignExpr)) {
           // found -- convert the statement
-          Xobject callExpr = genPutCommCallStmt(assignExpr, coarrays);
+          Xobject callExpr = genCallStmt_putArray(assignExpr, coarrays);
           //s.insert(callExpr);
           //s.remove();
           s.setExpr(callExpr);
@@ -165,13 +165,13 @@ public class XMPtransCoarray
    *    external :: PutCommLibName
    *    call PutCommLibName(..., rhs)
    */
-  private Xobject genPutCommCallStmt(Xobject assignExpr,
+  private Xobject genCallStmt_putArray(Xobject assignExpr,
                                      Vector<XMPcoarray> coarrays) {
     Xobject lhs = assignExpr.getArg(0);
     Xobject rhs = assignExpr.getArg(1);
 
     XMPcoindexObj coidxObj = new XMPcoindexObj(lhs, coarrays);
-    return coidxObj.genPutCommCallStmt(rhs);
+    return coidxObj.genCallStmt_putArray(rhs);
   }
 
   //-----------------------------------------------------
@@ -200,7 +200,7 @@ public class XMPtransCoarray
         }
 
         else {
-          Xobject funcCall = genGetCommFunction(xobj, coarrays);
+          Xobject funcCall = genFuncRef_getArray(xobj, coarrays);
           xi.setXobject(funcCall);
         }
       }
@@ -214,10 +214,10 @@ public class XMPtransCoarray
    *    type,external,dimension(:,:,..) :: commGetLibName_M
    *    commGetLibName_M(...)
    */
-  private Xobject genGetCommFunction(Xobject funcRef,
+  private Xobject genFuncRef_getArray(Xobject funcRef,
                                      Vector<XMPcoarray> coarrays) {
     XMPcoindexObj coidxObj = new XMPcoindexObj(funcRef, coarrays);
-    return coidxObj.genGetCommFunction();
+    return coidxObj.genFuncRef_getArray();
   }
 
 

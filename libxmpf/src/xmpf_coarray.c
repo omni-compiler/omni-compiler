@@ -19,17 +19,17 @@ static int _set_coarrayInfo(void *desc, void *orgAddr, int count, size_t element
   internal information management
 \*****************************************/
 
-int xmpf_get_coarrayElement(int serno)
+int _XMPF_get_coarrayElement(int serno)
 {
   return _coarrayInfoTab[serno].element;
 }
 
-void* xmpf_get_coarrayDesc(int serno)
+void* _XMPF_get_coarrayDesc(int serno)
 {
   return _coarrayInfoTab[serno].desc;
 }
 
-int xmpf_get_coarrayStart(int serno, void* baseAddr)
+int _XMPF_get_coarrayStart(int serno, void* baseAddr)
 {
   int element = _coarrayInfoTab[serno].element;
   void* orgAddr = _coarrayInfoTab[serno].orgAddr;
@@ -87,10 +87,10 @@ static int _getNewSerno() {
 
 void xmpf_coarray_malloc_(int *serno, void **pointer, int *count, int *element)
 {
-  xmpf_coarray_malloc(serno, pointer, *count, (size_t)(*element));
+  _XMPF_coarray_malloc(serno, pointer, *count, (size_t)(*element));
 }
 
-void xmpf_coarray_malloc(int *serno, void **pointer, int count, size_t element)
+void _XMPF_coarray_malloc(int *serno, void **pointer, int count, size_t element)
 {
   void* desc;
   void* orgAddr;
@@ -103,5 +103,24 @@ void xmpf_coarray_malloc(int *serno, void **pointer, int count, size_t element)
   *pointer = orgAddr;
   *serno = _set_coarrayInfo(desc, orgAddr, count, element);
 }
+
+
+/*****************************************\
+  wrappers
+\*****************************************/
+
+void xmp_sync_memory_()
+{
+  int status;
+  xmp_sync_memory(&status);
+}
+
+void xmp_sync_all_()
+{
+  int status;
+  xmp_sync_all(&status);
+}
+
+
 
 
