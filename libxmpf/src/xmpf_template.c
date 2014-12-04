@@ -91,7 +91,8 @@ void xmpf_template_init__(_XMP_template_t **t_desc, _XMP_nodes_t  **n_desc)
     case _XMP_N_DIST_GBLOCK:
       {
 	int *mapping_array = xmpf_template_mapping_array[t_idx];
-	_XMP_dist_template_GBLOCK(t, t_idx, n_idx, mapping_array);
+	int tmp; /* dummy */
+	_XMP_dist_template_GBLOCK(t, t_idx, n_idx, mapping_array, &tmp);
       }
       n_idx++;
       break;

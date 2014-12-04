@@ -3519,7 +3519,10 @@ public class XfDecompileDomVisitor {
             _writeLineDirective(n);
 
             String content = XmDomUtil.getContentText(n);
-            if (content.startsWith("!$") == false) {
+	    if (content.startsWith("cdir") == true){
+	      content = "!" + content;
+	    }
+            else if (content.startsWith("!$") == false) {
                 content = "!$" + content;
             }
 

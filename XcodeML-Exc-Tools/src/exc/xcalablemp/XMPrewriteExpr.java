@@ -1632,9 +1632,12 @@ public class XMPrewriteExpr {
         args = Xcons.List(expr, t.getWidthAt(ti), t.getLowerAt(ti), n.getSizeAt(ni), n.getRankAt(ni));
         break;
       case XMPtemplate.GBLOCK:
+        // _XMP_M_LTOG_TEMPLATE_GBLOCK(_l, _x)
+	args = Xcons.List(expr, t.getGtolTemp0IdAt(ti).Ref());
+	break;
         // _XMP_M_LTOG_TEMPLATE_GBLOCK(_l, _m, _p)
-	args = Xcons.List(expr, t.getDescId().Ref(), Xcons.IntConstant(ti));
-	return XMP.getMacroId("_XMP_L2G_GBLOCK", Xtype.intType).Call(args);
+	//args = Xcons.List(expr, t.getDescId().Ref(), Xcons.IntConstant(ti));
+	//return XMP.getMacroId("_XMP_L2G_GBLOCK", Xtype.intType).Call(args);
       default:
         throw new XMPexception("unknown distribution manner");
     }

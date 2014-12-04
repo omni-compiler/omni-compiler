@@ -243,7 +243,7 @@ void _XMP_dist_template_BLOCK(_XMP_template_t *template, int template_index, int
 void _XMP_dist_template_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index) ;
 void _XMP_dist_template_BLOCK_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index, unsigned long long width);
 void _XMP_dist_template_GBLOCK(_XMP_template_t *template, int template_index, int nodes_index,
-			       int *mapping_array);
+			       int *mapping_array, int *temp0);
 
 // xmp_util.c
 extern unsigned long long _XMP_get_on_ref_id(void);
