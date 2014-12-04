@@ -383,14 +383,11 @@ static void array_duplicate(_XMP_array_t *dst_d, MPI_Request *send_req, MPI_Requ
    int i, j, k;
 
    /* allocate check */
-   if(dst_d->is_allocated){
-      dst_alloc_size[0] = dst_d->info[0].alloc_size;
-      dst_alloc_size[1] = dst_d->info[1].alloc_size;
-   } else {
-      dst_alloc_size[0] = 0;
-      dst_alloc_size[1] = 0;
-   }
-
+   if(!(dst_d->is_allocated)) return;
+   
+   dst_alloc_size[0] = dst_d->info[0].alloc_size;
+   dst_alloc_size[1] = dst_d->info[1].alloc_size;
+   
    if(dst_d->info[0].align_manner == _XMP_N_ALIGN_BLOCK ||
       dst_d->info[0].align_manner == _XMP_N_ALIGN_CYCLIC ||
       dst_d->info[0].align_manner == _XMP_N_ALIGN_BLOCK_CYCLIC ||
@@ -436,15 +433,17 @@ static void array_duplicate(_XMP_array_t *dst_d, MPI_Request *send_req, MPI_Requ
                size *= nodes->info[j].size;
             }
             if(recv_rank > -1){
+               /* printf(" duplicate send %d -> %d\n", send_rank, recv_rank); */
                MPI_Isend(dst_d->array_addr_p, dst_d->type_size*dst_alloc_size[0]*dst_alloc_size[1],
                          MPI_BYTE, recv_rank, 99, *(MPI_Comm*)(nodes->comm), &send_req[recv_rank]);
-               /* printf(" duplicate send %d -> %d\n", send_rank, recv_rank); */
             }
          }
+         MPI_Waitall(nodes->comm_size, send_req, MPI_STATUSES_IGNORE);
+
       } else {               /* recv */
+         /* printf(" duplicate recv %d -> %d\n", send_rank, nodes->comm_rank); */
          MPI_Recv(dst_d->array_addr_p, dst_d->type_size*dst_alloc_size[0]*dst_alloc_size[1],
                   MPI_BYTE, send_rank, 99, *(MPI_Comm*)(nodes->comm), MPI_STATUSES_IGNORE);
-         /* printf(" duplicate recv %d -> %d\n", send_rank, nodes->comm_rank); */
       }
    }
 }
