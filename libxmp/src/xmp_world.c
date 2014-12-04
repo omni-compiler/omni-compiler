@@ -15,7 +15,7 @@ void _XMP_init_world(int *argc, char ***argv) {
   int flag = 0;
   MPI_Initialized(&flag);
   if (!flag) {
-#ifndef _XMP_XACC
+#if 1
     MPI_Init(argc, argv);
 #else
     int provided;
