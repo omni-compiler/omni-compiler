@@ -419,7 +419,7 @@ void _XMP_dist_template_BLOCK_CYCLIC(_XMP_template_t *template, int template_ind
 #define min(x,y) ((x) < (y) ? (x) : (y))
 
 void _XMP_dist_template_GBLOCK(_XMP_template_t *template, int template_index, int nodes_index,
-			       int *mapping_array) {
+			       int *mapping_array, int *temp0) {
 
   _XMP_ASSERT(template->is_fixed);
   _XMP_ASSERT(template->is_distributed);
@@ -463,6 +463,8 @@ void _XMP_dist_template_GBLOCK(_XMP_template_t *template, int template_index, in
 
   chunk->onto_nodes_index = nodes_index;
   chunk->onto_nodes_info = ni;
+
+  *temp0 = chunk->par_lower;
 }
 
 _XMP_nodes_t *_XMP_create_nodes_by_template_ref(_XMP_template_t *ref_template, int *shrink,
@@ -694,11 +696,11 @@ int _XMP_calc_template_par_triplet(_XMP_template_t *template, int template_index
 }
 
 
-long long int _XMP_L2G_GBLOCK(int local_idx, _XMP_template_t *template, int template_index)
-{
-  _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
-  _XMP_ASSERT(chunk->dist_manner == _XMP_N_DIST_GBLOCK);
-  _XMP_nodes_info_t *n_info = chunk->onto_nodes_info;
-  long long int global_idx = local_idx + chunk->mapping_array[n_info->rank];
-  return global_idx;
-}
+/* long long int _XMP_L2G_GBLOCK(int local_idx, _XMP_template_t *template, int template_index) */
+/* { */
+/*   _XMP_template_chunk_t *chunk = &(template->chunk[template_index]); */
+/*   _XMP_ASSERT(chunk->dist_manner == _XMP_N_DIST_GBLOCK); */
+/*   _XMP_nodes_info_t *n_info = chunk->onto_nodes_info; */
+/*   long long int global_idx = local_idx + chunk->mapping_array[n_info->rank]; */
+/*   return global_idx; */
+/* } */
