@@ -28,6 +28,7 @@ public class XMPtemplate extends XMPobject {
   private Vector<Xobject>       _widthVector;
   private XobjList              _decl;
   private XobjList              _distDecl;
+  private Vector<Ident>		_gtolTemp0IdVector;
 
   public XMPtemplate(String name, int dim, Ident descId) {
     super(XMPobject.TEMPLATE, name, dim, descId);
@@ -40,11 +41,13 @@ public class XMPtemplate extends XMPobject {
     _distMannerVector = new Vector<Integer>();
     _sizeVector = new Vector<Xobject>();
     _widthVector = new Vector<Xobject>();
+    _gtolTemp0IdVector = new Vector<Ident>();
 
     for (int i = 0; i < dim; i++) {
       _ontoNodesIndexVector.add(null);
       _distMannerVector.add(null);
       _widthVector.add(null);
+      _gtolTemp0IdVector.add(null);
     }
     
     _decl = null;
@@ -168,6 +171,14 @@ public class XMPtemplate extends XMPobject {
 
   public XobjList getDistDecl(){
     return _distDecl;
+  }
+
+  public void setGtolTemp0IdAt(Ident temp0Id, int index) {
+    _gtolTemp0IdVector.setElementAt(temp0Id, index);
+  }
+
+  public Ident getGtolTemp0IdAt(int index) {
+    return _gtolTemp0IdVector.get(index);
   }
 
   @Override
@@ -435,10 +446,26 @@ public class XMPtemplate extends XMPobject {
 	    mappingArrayArg = Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0));
 	    templateObject.setDistributionIsFixed(false);
 	  }
-          funcArgs = Xcons.List(templateObject.getDescId().Ref(),
-                                Xcons.IntConstant(templateDimIdx),
-                                Xcons.IntConstant(nodesDimIdx),
-                                mappingArrayArg);
+
+	  if (templateObject.isFixed() || isTFIX){
+	    Ident gtolTemp0Id = null;
+	    String tempName = XMP.GTOL_PREFIX_ + "temp0_" + templateObject.getName() + "_" + templateDimIdx;
+	    if (isLocalPragma) {
+	      Block parentBlock = pb.getParentBlock();
+	      gtolTemp0Id = XMPlocalDecl.addObjectId2(tempName, Xtype.intType, parentBlock);
+	    }
+	    else {
+	      gtolTemp0Id = globalDecl.declStaticIdent(tempName, Xtype.intType);
+	    }
+
+	    templateObject.setGtolTemp0IdAt(gtolTemp0Id, templateDimIdx);
+
+	    funcArgs = Xcons.List(templateObject.getDescId().Ref(),
+				  Xcons.IntConstant(templateDimIdx),
+				  Xcons.IntConstant(nodesDimIdx),
+				  mappingArrayArg, gtolTemp0Id.getAddr());
+	  }
+
           templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
 	  templateObject.setWidthAt(mappingArray, templateDimIdx);
           break;

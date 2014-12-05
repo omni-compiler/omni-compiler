@@ -383,14 +383,11 @@ static void array_duplicate(_XMP_array_t *dst_d, MPI_Request *send_req, MPI_Requ
    int i, j, k;
 
    /* allocate check */
-   if(dst_d->is_allocated){
-      dst_alloc_size[0] = dst_d->info[0].alloc_size;
-      dst_alloc_size[1] = dst_d->info[1].alloc_size;
-   } else {
-      dst_alloc_size[0] = 0;
-      dst_alloc_size[1] = 0;
-   }
-
+   if(!(dst_d->is_allocated)) return;
+   
+   dst_alloc_size[0] = dst_d->info[0].alloc_size;
+   dst_alloc_size[1] = dst_d->info[1].alloc_size;
+   
    if(dst_d->info[0].align_manner == _XMP_N_ALIGN_BLOCK ||
       dst_d->info[0].align_manner == _XMP_N_ALIGN_CYCLIC ||
       dst_d->info[0].align_manner == _XMP_N_ALIGN_BLOCK_CYCLIC ||
@@ -436,15 +433,17 @@ static void array_duplicate(_XMP_array_t *dst_d, MPI_Request *send_req, MPI_Requ
                size *= nodes->info[j].size;
             }
             if(recv_rank > -1){
+               /* printf(" duplicate send %d -> %d\n", send_rank, recv_rank); */
                MPI_Isend(dst_d->array_addr_p, dst_d->type_size*dst_alloc_size[0]*dst_alloc_size[1],
                          MPI_BYTE, recv_rank, 99, *(MPI_Comm*)(nodes->comm), &send_req[recv_rank]);
-               /* printf(" duplicate send %d -> %d\n", send_rank, recv_rank); */
             }
          }
+         MPI_Waitall(nodes->comm_size, send_req, MPI_STATUSES_IGNORE);
+
       } else {               /* recv */
+         /* printf(" duplicate recv %d -> %d\n", send_rank, nodes->comm_rank); */
          MPI_Recv(dst_d->array_addr_p, dst_d->type_size*dst_alloc_size[0]*dst_alloc_size[1],
                   MPI_BYTE, send_rank, 99, *(MPI_Comm*)(nodes->comm), MPI_STATUSES_IGNORE);
-         /* printf(" duplicate recv %d -> %d\n", send_rank, nodes->comm_rank); */
       }
    }
 }
@@ -2461,6 +2460,7 @@ static void xmp_matmul_no_opt(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
                for(k=0; k<a_d->info[1].ser_size; k++){
                   _XMP_align_local_idx((long long int)(k+a_d->info[1].ser_lower), &a_idx1, a_d, 1, &a_rank1);
                   _XMP_align_local_idx((long long int)(k+b_d->info[0].ser_lower), &b_idx0, b_d, 0, &b_rank0);
+                  b_idx0 -= b_d->info[0].shadow_size_lo;
                   char *a_p = (char*)(a_buf+a_recv_pos[a2e[g2p_array(a_d,gj,k+a_d->info[1].ser_lower)]]
                                       +(a_offset[a2e[g2p_array(a_d,gj,k+a_d->info[1].ser_lower)]])*a_d->type_size);
                   char *b_p = (char*)(b_buf+b_recv_pos[b2e[g2p_array(b_d,k+b_d->info[0].ser_lower,gi)]]
@@ -2510,17 +2510,18 @@ static void xmp_matmul_no_opt(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
                memset(x_p, 0, x_d->type_size);
                for(k=0; k<a_d->info[1].ser_size; k++){
                   _XMP_align_local_idx((long long int)(k+a_d->info[1].ser_lower), &a_idx1, a_d, 1, &a_rank1);
+                  a_idx1 -= a_d->info[1].shadow_size_lo;
                   _XMP_align_local_idx((long long int)(k+b_d->info[0].ser_lower), &b_idx0, b_d, 0, &b_rank0);
                   char *a_p = (char*)(a_buf+a_recv_pos[a2e[g2p_array(a_d,gj,k+a_d->info[1].ser_lower)]]
                                       +(a_idx1+a_offset[a2e[g2p_array(a_d,gj,k+a_d->info[1].ser_lower)]])*a_d->type_size);
                   char *b_p = (char*)(b_buf+b_recv_pos[b2e[g2p_array(b_d,k+b_d->info[0].ser_lower,gi)]]
                                       +(b_offset[b2e[g2p_array(b_d,k+b_d->info[0].ser_lower,gi)]])*b_d->type_size);
 #ifdef DEBUG
-                  if(i==x_d->info[0].local_lower+7 && j==x_d->info[1].local_lower+7 &&
-                     _XMP_get_execution_nodes()->comm_rank == 5){
+                  if(i==x_d->info[0].local_lower+0 && j==x_d->info[1].local_lower+0 &&
+                     _XMP_get_execution_nodes()->comm_rank == 0){
                      printf("%4d x %4d: %d + %d, %d\n", *(int*)a_p, *(int*)b_p,
-                            a_idx1, g2p_array(a_d,gj,k+a_d->info[1].ser_lower),
-                            a_offset[a2e[g2p_array(a_d,gj,k+a_d->info[1].ser_lower)]]);
+                            a_idx1, a_offset[a2e[g2p_array(a_d,gj,k+a_d->info[1].ser_lower)]],
+                            g2p_array(a_d,gj,k+a_d->info[1].ser_lower));
                   }
 #endif
                   b_offset[b2e[g2p_array(b_d,k+b_d->info[0].ser_lower,gi)]]++;

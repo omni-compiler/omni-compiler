@@ -720,5 +720,71 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_CPU_TIME,    INTR_NAME_GENERIC,      "cpu_time",     0,      { INTR_TYPE_REAL },                                    INTR_TYPE_NONE, 1, -6, LANGSPEC_F95 },
     { INTR_CPU_TIME,    INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_DREAL },                                   INTR_TYPE_NONE, 1, -6, LANGSPEC_F95 },
 
+    { INTR_DESC_OF,        INTR_NAME_GENERIC,      "xmp_desc_of",         0,      {INTR_TYPE_ANY},       INTR_TYPE_DREAL,  1, -8, LANGSPEC_NONSTD },
+
+    { INTR_GET_MPI_COMM,        INTR_NAME_GENERIC,      "xmp_get_mpi_comm",         0,      {},       INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
+
+    { INTR_NUM_NODES,        INTR_NAME_GENERIC,      "xmp_num_nodes",         0,      {},       INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
+
+    { INTR_NODE_NUM,         INTR_NAME_GENERIC,      "xmp_node_num",          0,      {},       INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
+
+    { INTR_ALL_NUM_NODES,        INTR_NAME_GENERIC,      "xmp_all_num_nodes",         0,      {},       INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
+
+    { INTR_ALL_NODE_NUM,         INTR_NAME_GENERIC,      "xmp_all_node_num",          0,      {},       INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
+
+    { INTR_WTIME,         INTR_NAME_GENERIC,      "xmp_wtime",          0,      {},       INTR_TYPE_DREAL,  0, -8, LANGSPEC_NONSTD },
+
+    { INTR_WTICK,         INTR_NAME_GENERIC,      "xmp_wtick",          0,      {},       INTR_TYPE_DREAL,  0, -8, LANGSPEC_NONSTD },
+
+    { INTR_ARRAY_NDIMS,         INTR_NAME_GENERIC,      "xmp_array_ndims",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT},       INTR_TYPE_INT, 2, -8, LANGSPEC_NONSTD },
+
+    { INTR_ARRAY_LBOUND,         INTR_NAME_GENERIC,      "xmp_array_lbound",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT},       INTR_TYPE_INT, 3, -8, LANGSPEC_NONSTD },
+
+    { INTR_ARRAY_UBOUND,         INTR_NAME_GENERIC,      "xmp_array_ubound",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT},       INTR_TYPE_INT, 3, -8, LANGSPEC_NONSTD },
+
+    { INTR_ARRAY_LSIZE,         INTR_NAME_GENERIC,      "xmp_array_lsize",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT},       INTR_TYPE_INT, 3, -8, LANGSPEC_NONSTD },
+
+    { INTR_ARRAY_USHADOW,         INTR_NAME_GENERIC,      "xmp_array_ushadow",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT},       INTR_TYPE_INT, 3, -8, LANGSPEC_NONSTD },
+
+    { INTR_ARRAY_LSHADOW,         INTR_NAME_GENERIC,      "xmp_array_lshadow",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT},       INTR_TYPE_INT, 3, -8, LANGSPEC_NONSTD },
+
+    { INTR_ARRAY_LEAD_DIM,         INTR_NAME_GENERIC,      "xmp_array_lead_dim",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT_ARRAY},       INTR_TYPE_INT, 2, -8, LANGSPEC_NONSTD },
+
+    { INTR_ARRAY_GTOL,         INTR_NAME_GENERIC,      "xmp_array_gtol",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT_ARRAY, INTR_TYPE_INT_ARRAY},       INTR_TYPE_INT, 3, -8, LANGSPEC_NONSTD },
+
+    { INTR_ALIGN_AXIS,         INTR_NAME_GENERIC,      "xmp_align_axis",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT},       INTR_TYPE_INT, 3, -8, LANGSPEC_NONSTD },
+
+    { INTR_ALIGN_OFFSET,         INTR_NAME_GENERIC,      "xmp_align_offset",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT},       INTR_TYPE_INT, 3, -8, LANGSPEC_NONSTD },
+
+    { INTR_ALIGN_REPLICATED,         INTR_NAME_GENERIC,      "xmp_align_replicated",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_LOGICAL},       INTR_TYPE_INT, 3, -8, LANGSPEC_NONSTD },
+
+    { INTR_ALIGN_TEMPLATE,         INTR_NAME_GENERIC,      "xmp_align_template",          0,      {INTR_TYPE_ANY, INTR_TYPE_ANY},       INTR_TYPE_INT, 2, -8, LANGSPEC_NONSTD },
+
+    { INTR_TEMPLATE_FIXED,         INTR_NAME_GENERIC,      "xmp_template_fixed",          0,      {INTR_TYPE_ANY, INTR_TYPE_LOGICAL},       INTR_TYPE_INT, 2, -8, LANGSPEC_NONSTD },
+
+    { INTR_TEMPLATE_NDIMS,         INTR_NAME_GENERIC,      "xmp_template_ndims",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT},       INTR_TYPE_INT, 2, -8, LANGSPEC_NONSTD },
+
+    { INTR_TEMPLATE_LBOUND,         INTR_NAME_GENERIC,      "xmp_template_lbound",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT},       INTR_TYPE_INT, 3, -8, LANGSPEC_NONSTD },
+
+    { INTR_TEMPLATE_UBOUND,         INTR_NAME_GENERIC,      "xmp_template_ubound",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT},       INTR_TYPE_INT, 3, -8, LANGSPEC_NONSTD },
+
+    { INTR_DIST_FORMAT,         INTR_NAME_GENERIC,      "xmp_dist_format",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT},       INTR_TYPE_INT, 3, -8, LANGSPEC_NONSTD },
+
+    { INTR_DIST_BLOCKSIZE,         INTR_NAME_GENERIC,      "xmp_dist_blocksize",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT},       INTR_TYPE_INT, 3, -8, LANGSPEC_NONSTD },
+
+    { INTR_DIST_GBLOCKMAP,         INTR_NAME_GENERIC,      "xmp_dist_gblockmap",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT_ARRAY},       INTR_TYPE_INT, 3, -8, LANGSPEC_NONSTD },
+
+    { INTR_DIST_NODES,         INTR_NAME_GENERIC,      "xmp_dist_nodes",          0,      {INTR_TYPE_ANY, INTR_TYPE_ANY},       INTR_TYPE_INT, 2, -8, LANGSPEC_NONSTD },
+
+    { INTR_DIST_AXIS,         INTR_NAME_GENERIC,      "xmp_dist_axis",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT},       INTR_TYPE_INT, 3, -8, LANGSPEC_NONSTD },
+
+    { INTR_NODES_NDIMS,         INTR_NAME_GENERIC,      "xmp_nodes_ndims",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT},       INTR_TYPE_INT, 2, -8, LANGSPEC_NONSTD },
+
+    { INTR_NODES_INDEX,         INTR_NAME_GENERIC,      "xmp_nodes_index",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT},       INTR_TYPE_INT, 3, -8, LANGSPEC_NONSTD },
+
+    { INTR_NODES_SIZE,         INTR_NAME_GENERIC,      "xmp_nodes_size",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT},       INTR_TYPE_INT, 3, -8, LANGSPEC_NONSTD },
+
+    { INTR_NODES_EQUIV,         INTR_NAME_GENERIC,      "xmp_nodes_equiv",          0,      {INTR_TYPE_ANY, INTR_TYPE_ANY, INTR_TYPE_INT_ARRAY, INTR_TYPE_INT_ARRAY, INTR_TYPE_INT_ARRAY},       INTR_TYPE_INT, 5, -8, LANGSPEC_NONSTD },
+
     { INTR_END }
 };
