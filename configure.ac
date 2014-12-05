@@ -2185,9 +2185,9 @@ cat << EOF
 
   Local Compiler:
     C Compiler            : $CC
-    C Compiler FLAG       : "$CFLAG"
+    C Compiler FLAG       : "$CFLAGS"
     Fortran Compiler      : $FC
-    Fortran Compiler FLAG : "$FFLAG"
+    Fortran Compiler FLAG : "$FCFLAGS"
   
   Backend Compiler:
     C Compiler            : $BECC
