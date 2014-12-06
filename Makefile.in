@@ -1150,14 +1150,14 @@ uninstall-am:
 release-rpm:
 	if test -f $(RH_REL_FILE) ; then \
 		mkdir -p $(XMPPKG_TMPDIR_TOP); \
-		$(SHELL) release/make_rpm.sh $(CURDIR) $(XMPPKG_TMPDIR_TOP); \
+		bash release/make_rpm.sh $(CURDIR) $(XMPPKG_TMPDIR_TOP); \
 		rm -rf $(XMPPKG_TMPDIR_TOP); \
 	fi
 
 release-deb:
 	if test -f $(DEB_VER_FILE) ; then \
 		mkdir -p $(XMPPKG_TMPDIR); \
-		$(SHELL) release/make_deb.sh $(CURDIR) $(XMPPKG_TMPDIR); \
+		bash release/make_deb.sh $(CURDIR) $(XMPPKG_TMPDIR); \
 		rm -rf $(XMPPKG_TMPDIR_TOP); \
 	fi
 

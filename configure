@@ -3052,14 +3052,6 @@ test -n "$target_alias" &&
 ac_config_headers="$ac_config_headers include/config.h Driver/atool/src/include/nata/nata_config.h"
 
 
-SHELL=`which bash` > /dev/null 2>&1
-if test $? -ne 0 -o -z "${SHELL}"; then
-   as_fn_error $? "To run libtool you need a bash, not /bin/sh." "$LINENO" 5
-   exit 1
-fi
-export SHELL
-
-
 case `pwd` in
   *\ * | *\	*)
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Libtool does not cope well with whitespace in \`pwd\`" >&5

@@ -5,7 +5,6 @@ HOW TO INSTALL
  * C and Fortran Compilers (supports C99 and Fortran 90)
  * C++
  * Java Compiler
- * Apache Ant (1.8.1 or later)
  * MPI Implementation (supports MPI-2)
  * libxml2
  * make
@@ -13,12 +12,12 @@ HOW TO INSTALL
 ## On Debian GNU/Linux and Ubuntu
  The following packages may be needed to be installed previously:
 
- * flex gcc gfortran g++ openjdk-7-jdk ant libopenmpi-dev openmpi-bin libxml2-dev byacc make
+ * flex gcc gfortran g++ openjdk-7-jdk libopenmpi-dev openmpi-bin libxml2-dev byacc make
 
 ## On Red Hat and CentOS
  The following packages may be needed to be installed previously:
 
- * flex gcc gfortran gcc-c++ java-1.7.0-openjdk-devel ant openmpi-devel libxml2-devel byacc make
+ * flex gcc gfortran gcc-c++ java-1.7.0-openjdk-devel openmpi-devel libxml2-devel byacc make
 
 ## Usage of local-view operations (coarray, post/wait, lock/unlock)
 ### On the K computer and FX10
