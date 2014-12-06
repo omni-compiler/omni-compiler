@@ -82,7 +82,12 @@ target_triplet = @target@
 subdir = ./libxmpf/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/buildutils/libtool.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/buildutils/ac_prog_jar.m4 \
+	$(top_srcdir)/buildutils/ac_prog_java.m4 \
+	$(top_srcdir)/buildutils/ac_prog_java_works.m4 \
+	$(top_srcdir)/buildutils/ac_prog_javac.m4 \
+	$(top_srcdir)/buildutils/ac_prog_javac_works.m4 \
+	$(top_srcdir)/buildutils/libtool.m4 \
 	$(top_srcdir)/buildutils/ltoptions.m4 \
 	$(top_srcdir)/buildutils/ltsugar.m4 \
 	$(top_srcdir)/buildutils/ltversion.m4 \
@@ -199,7 +204,6 @@ ACLOCAL = @ACLOCAL@
 AIX_OPT = @AIX_OPT@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
-ANTCOM = @ANTCOM@
 API_FLAVOR = @API_FLAVOR@
 AR = @AR@
 ARFLAGS = @ARFLAGS@
@@ -272,10 +276,9 @@ INT_ENUFF_FOR_VOIDP = @INT_ENUFF_FOR_VOIDP@
 IS_AIX = @IS_AIX@
 IS_CRAY = @IS_CRAY@
 IS_PGCC = @IS_PGCC@
-JARCOM = @JARCOM@
-JAVACCOM = @JAVACCOM@
-JAVACOM = @JAVACOM@
-JAVA_HOME = @JAVA_HOME@
+JAR = @JAR@
+JAVA = @JAVA@
+JAVAC = @JAVAC@
 JAVA_OPT = @JAVA_OPT@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
@@ -306,7 +309,6 @@ MAINT = @MAINT@
 MAKE = @MAKE@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
-MKDIR = @MKDIR@
 MKDIR_P = @MKDIR_P@
 MKRULESDIR = @MKRULESDIR@
 MM5TGT = @MM5TGT@
@@ -357,7 +359,6 @@ PPCC = @PPCC@
 PPCC_OPT = @PPCC_OPT@
 PPTGT = @PPTGT@
 RANLIB = @RANLIB@
-RM = @RM@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
@@ -400,7 +401,6 @@ XMPPKG_VERSION = @XMPPKG_VERSION@
 XMP_ENABLE_GPU = @XMP_ENABLE_GPU@
 YACC = @YACC@
 YFLAGS = @YFLAGS@
-ZIPCOM = @ZIPCOM@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -440,9 +440,6 @@ htmldir = @htmldir@
 includedir = @includedir@
 infodir = @infodir@
 install_sh = @install_sh@
-isIBMJava6 = @isIBMJava6@
-isSunJava6 = @isSunJava6@
-javaType = @javaType@
 javadir = @javadir@
 libdir = @libdir@
 libexecdir = @libexecdir@
@@ -478,6 +475,7 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+uudecode = @uudecode@
 XMP_INC_DIR = ../../libxmp/include
 XMP_SRC_DIR = ../../libxmp/src
 XMPF_INC_DIR = ../include

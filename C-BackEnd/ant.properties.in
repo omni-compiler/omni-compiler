@@ -1,4 +1,0 @@
-relaxer.home=${env.RELAXER_HOME}
-debug=true
-target.lang.id=c
-target.lang.ID=C

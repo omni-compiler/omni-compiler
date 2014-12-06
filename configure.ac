@@ -13,8 +13,6 @@ AC_INIT([Omni Compiler], [0.9.0], [h-murai@riken.jp], [omni])
 AC_CONFIG_AUX_DIR([./buildutils])
 AC_CONFIG_MACRO_DIR([./buildutils])
 
-AC_CANONICAL_BUILD
-AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
 AC_CONFIG_SRCDIR([include/exc_platform.h])
@@ -45,7 +43,6 @@ AC_MSG_CHECKING(check XcodeML-Common project exists)
 if test -e "XcodeML-Common/Makefile.am"; then
     XCODEML_COMMON_DIR=XcodeML-Common
     AC_CONFIG_FILES($XCODEML_COMMON_DIR/Makefile)
-    AC_CONFIG_FILES($XCODEML_COMMON_DIR/ant.properties)
     AC_MSG_RESULT(yes)
 else
     XCODEML_COMMON_DIR=''
@@ -71,10 +68,9 @@ AC_SUBST(C_FRONTEND_DIR)
 #----
 AC_MSG_CHECKING(check C-BackEnd project exists)
 
-if test -e "C-BackEnd/Makefile.am" -a -e "C-BackEnd/ant.properties.in"; then
+if test -e "C-BackEnd/Makefile.am"; then
     C_BACKEND_DIR=C-BackEnd
     AC_CONFIG_FILES($C_BACKEND_DIR/Makefile)
-    AC_CONFIG_FILES($C_BACKEND_DIR/ant.properties)
     AC_CONFIG_FILES($C_BACKEND_DIR/bin/C_Back)
     AC_MSG_RESULT(yes)
 else
@@ -101,10 +97,9 @@ AC_SUBST(F_FRONTEND_DIR)
 #----
 AC_MSG_CHECKING(check F-BackEnd project exists)
 
-if test -e "F-BackEnd/Makefile.am" -a -e "F-BackEnd/ant.properties.in"; then
+if test -e "F-BackEnd/Makefile.am"; then
     F_BACKEND_DIR=F-BackEnd
     AC_CONFIG_FILES($F_BACKEND_DIR/Makefile)
-    AC_CONFIG_FILES($F_BACKEND_DIR/ant.properties)
     AC_CONFIG_FILES($F_BACKEND_DIR/bin/F_Back)
     AC_CONFIG_FILES($F_BACKEND_DIR/bin/F_Trans)
     AC_CONFIG_FILES($F_BACKEND_DIR/bin/F_Decomp)
@@ -131,10 +126,9 @@ AC_SUBST(F_BACKEND_DIR)
 #----
 AC_MSG_CHECKING(check XcodeML-Exc-Tools project exists)
 
-if test -e "XcodeML-Exc-Tools/Makefile.am" -a -e "XcodeML-Exc-Tools/ant.properties.in"; then
+if test -e "XcodeML-Exc-Tools/Makefile.am"; then
     XCODEML_EXC_TOOLS_DIR=XcodeML-Exc-Tools
     AC_CONFIG_FILES($XCODEML_EXC_TOOLS_DIR/Makefile)
-    AC_CONFIG_FILES($XCODEML_EXC_TOOLS_DIR/ant.properties)
     AC_CONFIG_FILES($XCODEML_EXC_TOOLS_DIR/src/exc/util/MachineDepConst.java)
     AC_MSG_RESULT(yes)
 else
@@ -893,13 +887,11 @@ NM=""
 if test "$target" != "$host"; then
    case "$target" in
 	Kcomputer-linux-gnu|FX10-linux-gnu)
-#		AC_CHECK_TOOL([RANLIB], [ranlibpx], [:])
 		AC_CHECK_PROG([RANLIB], [ranlibpx], [ranlibpx], [:])
 		if test "${RANLIB}" = ":"; then
 		    AC_MSG_ERROR([ranlibpx not found]);
 		fi		    
 
-#		AC_CHECK_TOOL([AR], [arpx], [:])
 		AC_CHECK_PROG([AR], [arpx], [arpx], [:])
 		if test "${AR}" = ":"; then
 		    AC_MSG_ERROR([arpx not found]);
@@ -908,19 +900,12 @@ if test "$target" != "$host"; then
 		ARFLAGS="cru"
 		AC_SUBST(ARFLAGS)
 
-#		AC_CHECK_TOOL([NM], [nmpx], [:])
 		AC_CHECK_PROG([NM], [nmpx], [nmpx], [:])
 		if test "${AR}" = ":"; then
 		    AC_MSG_ERROR([nmpx not found]);
 		fi ;;
 	sx-nec-superux)
-#		AC_CHECK_TOOL([RANLIB], [echo], [echo], [:])
 		AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
-#		if test "${RANLIB}" = ":"; then
-#		    AC_MSG_ERROR([sxranlib not found]);
-#		fi		    
-
-#		AC_CHECK_TOOL([AR], [sxar], [:])
 		AC_CHECK_PROG([AR], [sxar], [sxar], [:])
 		if test "${AR}" = ":"; then
 		    AC_MSG_ERROR([sxar not found]);
@@ -929,19 +914,12 @@ if test "$target" != "$host"; then
 		ARFLAGS="cru"
 		AC_SUBST(ARFLAGS)
 
-#		AC_CHECK_TOOL([NM], [sxnm], [:])
 		AC_CHECK_PROG([NM], [sxnm], [sxnm], [:])
 		if test "${NM}" = ":"; then
 		    AC_MSG_ERROR([sxnm not found]);
 		fi ;;
 	powerpc64-hitachi-aix)
-#                AC_CHECK_TOOL([RANLIB], [echo], [:])
                 AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
-#                if test "${RANLIB}" = ":"; then
-#                    AC_MSG_ERROR([ranlib not found]);
-#                fi
-
-#                AC_CHECK_TOOL([AR], [ar], [:])
                 AC_CHECK_PROG([AR], [ar], [ar], [:])
                 if test "${AR}" = ":"; then
                     AC_MSG_ERROR([ar not found]);
@@ -950,19 +928,12 @@ if test "$target" != "$host"; then
                 ARFLAGS="-X32_64 cru"
                 AC_SUBST(ARFLAGS)
 
-#                AC_CHECK_TOOL([NM], [nm], [:])
                 AC_CHECK_PROG([NM], [nm], [nm], [:])
                 if test "${NM}" = ":"; then
                     AC_MSG_ERROR([nm not found]);
                 fi ;;         
 	powerpc-ibm-none)
-#                AC_CHECK_TOOL([RANLIB], [echo], [:])
                 AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
-#                if test "${RANLIB}" = ":"; then
-#                    AC_MSG_ERROR([bgranlib not found]);
-#                fi
-
-#                AC_CHECK_TOOL([AR], [ar], [:])
                 AC_CHECK_PROG([AR], [ar], [ar], [:])
                 if test "${AR}" = ":"; then
                     AC_MSG_ERROR([bgar not found]);
@@ -971,18 +942,15 @@ if test "$target" != "$host"; then
                 ARFLAGS="cru"
                 AC_SUBST(ARFLAGS)
 
-#                AC_CHECK_TOOL([NM], [nm], [:])
                 AC_CHECK_PROG([NM], [nm], [nm], [:])
                 if test "${NM}" = ":"; then
                     AC_MSG_ERROR([nm not found]);
                 fi ;;         
 	Cray-linux-gnu)
 		AC_PROG_RANLIB
-#		AC_CHECK_TOOL([AR], [ar], [:])
 		AC_CHECK_PROG([AR], [ar], [ar], [:])
 		ARFLAGS="cru"
 		AC_SUBST(ARFLAGS)
-#		AC_CHECK_TOOL([NM], [nm], [:])
 		AC_CHECK_PROG([NM], [nm], [nm], [:])
                 ;;
 	*)
@@ -1036,11 +1004,6 @@ else
 
 fi
 
-# check zip
-ZIPCOM=""
-AC_PATH_PROG(ZIPCOM, zip, zip, ${PATH}:/bin:/usr/bin:/usr/local/bin:/opt/bin:/opt/local/bin)
-AC_SUBST(ZIPCOM)
-
 # check Perl versoin is 5
 PERL5=""
 AC_PATH_PROGS(PERL5, perl)
@@ -1068,135 +1031,15 @@ fi
 AC_SUBST(PERL5)
 
 # check lex and yacc
-
 AC_PROG_LEX
-#AC_CHECK_PROGS([LEX], [flex]) 
-if test $LEX = ":"; then
-exit 1
-fi
 AC_PROG_YACC
 
 # --------------------------------------------------------------------
 # check java
+AC_PROG_JAVA
+AC_PROG_JAVAC
+AC_PROG_JAR
 
-useJava=yes
-
-JAVACOM=""
-AC_PATH_PROG(JAVACOM, java, java, ${JAVA_HOME}/bin)
-JAVA_HOME=`$JAVACOM -classpath buildutils javahome`
-java_home_base=`basename ${JAVA_HOME}`
-
-if test "${java_home_base}" = "jre"; then
-    JAVA_HOME=`dirname ${JAVA_HOME}`
-fi
-
-AC_SUBST(JAVA_HOME)
-
-JAVACCOM=""
-AC_PATH_PROG(JAVACCOM, javac, javac, ${JAVA_HOME}/bin:${PATH}:/usr/java/default/bin:/bin:/usr/bin:/usr/local/bin:/opt/bin:/opt/local/bin)
-
-JARCOM=""
-AC_PATH_PROG(JARCOM, jar, jar, ${JAVA_HOME}/bin)
-
-AC_SUBST(JAVACOM)
-AC_SUBST(JAVACCOM)
-AC_SUBST(JARCOM)
-
-# check Java VM is IBM Java6
-
-isIBMJava6=no
-if test "x${useJava}" = "xyes"; then
-    AC_MSG_CHECKING([IBM Java6 or later])
-    jTmp=/tmp/.omniJavaChk.$$
-    ${JAVACOM} -fullversion > ${jTmp} 2>&1
-    chk=`grep 'JRE 1.6.0 IBM' ${jTmp}` || `grep 'JRE 1.7.0 IBM' ${jTmp}` || `grep 'JRE 1.8.0 IBM' ${jTmp}`
-    if test "x${chk}" = "x"; then
-        AC_MSG_RESULT([no])
-    else
-        AC_MSG_RESULT([yes])
-        isIBMJava6=yes
-    fi
-    rm -f ${jTmp}
-    unset chk jTmp
-fi
-AC_SUBST(isIBMJava6)
-
-# check Java VM version is Sun Java6
-isSunJava6=no
-if test "x${useJava}" = "xyes"; then
-    AC_MSG_CHECKING([Sun Java6 or later])
-
-    changequote(<<, >>)
-    case $target in
-      powerpc-ibm-none|powerpc64-hitachi-aix)
-        chk=`${JAVACOM} -fullversion 2>&1 | sed -e 's:openjdk[\t ]*full[\t ]*version[\t ]*::g' -e 's:\"::g'`
-      ;;
-	*)
-        chk=`${JAVACOM} -fullversion 2>&1 | sed -e 's:java[\t ]*full[\t ]*version[\t ]*::g' -e 's:\"::g'`
-	;;
-    esac 
-    changequote([, ])
-
-    if test "x${chk}" = "x"; then
-        AC_MSG_RESULT([no])
-    fi
-    case $chk in
-    1.6*|1.7*|1.8*)
-        isSunJava6=yes
-        AC_MSG_RESULT([yes]);;
-    *)
-        isSunJava6=no
-        AC_MSG_RESULT([no]);;
-    esac
-    unset chk
-fi
-
-if test "${isSunJava6}" = "no" -a "${isIBMJava6}" = "no"; then
-    AC_MSG_ERROR([Java6 or later not found]);
-fi
-
-AC_SUBST(isSunJava6)
-
-# check java type
-javaType=unknown
-if test "x${useJava}" = "xyes"; then
-    if test "x${isIBMJava6}" = "xyes"; then
-        javaType=ibm
-    elif test "x${isSunJava6}" = "xyes"; then
-        javaType=sun
-    fi
-fi
-AC_SUBST(javaType)
-
-# check ant
-ANTCOM=""
-AC_PATH_PROG(ANTCOM, ant, , ${PATH}:/bin:/usr/bin:/usr/local/bin:/opt/bin:/opt/local/bin)
-
-if test "$ANTCOM" = ""; then
-    AC_MSG_ERROR([requires Apache Ant])
-fi
-
-ANTCOM="JAVA_HOME=$JAVA_HOME ${ANTCOM}"
-AC_SUBST(ANTCOM)
-
-# check relaxer
-#relaxerDir=/usr/local/relaxer
-#AC_MSG_CHECKING([for relaxer])
-#AC_ARG_WITH(relaxerDir,
-#    [  --with-relaxerDir=DIR  specify where the Relaxer is installed.],
-#    [relaxerDir=$withval], [relaxerDir=/usr/local/relaxer])
-#
-#if test -e "${relaxerHome}/Relaxer.jar" ; then
-#    AC_MSG_RESULT($relaxerDir)
-#    RELAXER_DIR="${relaxerDir}"
-#else
-#    AC_MSG_RESULT(no)
-#    RELAXER_DIR=""
-#fi
-#
-#AC_SUBST(RELAXER_DIR)
-
-# set java library install dir to install target of java_DATA
 javadir='${prefix}/share/xcalablemp'
 AC_SUBST(javadir)
 
@@ -1864,12 +1707,6 @@ AC_CONFIG_FILES(
 ATOOL_DIR=./Driver/atool
 AC_SUBST(ATOOL_DIR)
 
-RM="rm -f"
-AC_SUBST(RM)
-
-MKDIR="mkdir -p"
-AC_SUBST(MKDIR)
-
 # headers/macros
 AC_CHECK_HEADER(sys/param.h, [AC_DEFINE([HAVE_SYS_PARAM_H], [1], [ ])])
 AC_CHECK_HEADER(ctype.h, [AC_DEFINE([HAVE_CTYPE_H], [1], [ ])])
@@ -2185,15 +2022,15 @@ cat << EOF
 
   Local Compiler:
     C Compiler            : $CC
-    C Compiler FLAG       : "$CFLAGS"
+    C Compiler FLAG       : $CFLAGS
     Fortran Compiler      : $FC
-    Fortran Compiler FLAG : "$FCFLAGS"
+    Fortran Compiler FLAG : $FCFLAGS
   
   Backend Compiler:
     C Compiler            : $BECC
-    C Compiler FLAG       : "$BECC_OPTION"
+    C Compiler FLAG       : $BECC_OPTION
     Fortran Compiler      : $BEFC
-    Fortran Compiler FLAG : "$BEFC_OPTION"
+    Fortran Compiler FLAG : $BEFC_OPTION
 EOF
 
 if test "$target" != "Kcomputer-linux-gnu" -a "$target" != "FX10-linux-gnu"; then
@@ -2215,4 +2052,3 @@ if test "${use_tca}" = "yes"; then
   echo "    TCA                   : yes"
 fi
 echo "=================================================="
-

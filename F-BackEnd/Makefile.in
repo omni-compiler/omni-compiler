@@ -14,7 +14,6 @@
 
 @SET_MAKE@
 
-
 VPATH = @srcdir@
 am__is_gnu_make = test -n '$(MAKEFILE_LIST)' && test -n '$(MAKELEVEL)'
 am__make_running_with_option = \
@@ -83,7 +82,12 @@ target_triplet = @target@
 subdir = ./F-BackEnd
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/buildutils/libtool.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/buildutils/ac_prog_jar.m4 \
+	$(top_srcdir)/buildutils/ac_prog_java.m4 \
+	$(top_srcdir)/buildutils/ac_prog_java_works.m4 \
+	$(top_srcdir)/buildutils/ac_prog_javac.m4 \
+	$(top_srcdir)/buildutils/ac_prog_javac_works.m4 \
+	$(top_srcdir)/buildutils/libtool.m4 \
 	$(top_srcdir)/buildutils/ltoptions.m4 \
 	$(top_srcdir)/buildutils/ltsugar.m4 \
 	$(top_srcdir)/buildutils/ltversion.m4 \
@@ -123,7 +127,7 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(javadir)"
+am__installdirs = "$(DESTDIR)$(bindir)"
 SCRIPTS = $(bin_SCRIPTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -146,14 +150,12 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
-DATA = $(java_DATA)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AIX_OPT = @AIX_OPT@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
-ANTCOM = @ANTCOM@
 API_FLAVOR = @API_FLAVOR@
 AR = @AR@
 ARFLAGS = @ARFLAGS@
@@ -226,10 +228,9 @@ INT_ENUFF_FOR_VOIDP = @INT_ENUFF_FOR_VOIDP@
 IS_AIX = @IS_AIX@
 IS_CRAY = @IS_CRAY@
 IS_PGCC = @IS_PGCC@
-JARCOM = @JARCOM@
-JAVACCOM = @JAVACCOM@
-JAVACOM = @JAVACOM@
-JAVA_HOME = @JAVA_HOME@
+JAR = @JAR@
+JAVA = @JAVA@
+JAVAC = @JAVAC@
 JAVA_OPT = @JAVA_OPT@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
@@ -260,7 +261,6 @@ MAINT = @MAINT@
 MAKE = @MAKE@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
-MKDIR = @MKDIR@
 MKDIR_P = @MKDIR_P@
 MKRULESDIR = @MKRULESDIR@
 MM5TGT = @MM5TGT@
@@ -311,7 +311,6 @@ PPCC = @PPCC@
 PPCC_OPT = @PPCC_OPT@
 PPTGT = @PPTGT@
 RANLIB = @RANLIB@
-RM = @RM@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
@@ -354,7 +353,6 @@ XMPPKG_VERSION = @XMPPKG_VERSION@
 XMP_ENABLE_GPU = @XMP_ENABLE_GPU@
 YACC = @YACC@
 YFLAGS = @YFLAGS@
-ZIPCOM = @ZIPCOM@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -394,9 +392,6 @@ htmldir = @htmldir@
 includedir = @includedir@
 infodir = @infodir@
 install_sh = @install_sh@
-isIBMJava6 = @isIBMJava6@
-isSunJava6 = @isSunJava6@
-javaType = @javaType@
 javadir = @javadir@
 libdir = @libdir@
 libexecdir = @libexecdir@
@@ -432,15 +427,11 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-
-# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
-# $TSUKUBA_Copyright:
-#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
-#  $
+uudecode = @uudecode@
 bin_SCRIPTS = bin/F_Back bin/F_Trans bin/F_Decomp
-java_DATA = build/om-f-back.jar
-ANT = @ANTCOM@ -buildfile build.xml
-SRC = $(wildcard *.java)
+TARGET = build/om-f-back.jar
+SRC = $(wildcard src/xcodeml/f/*/*.java)
+CLASS = $(SRC:.java=.class)
 all: all-am
 
 .SUFFIXES:
@@ -515,27 +506,6 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
-install-javaDATA: $(java_DATA)
-	@$(NORMAL_INSTALL)
-	@list='$(java_DATA)'; test -n "$(javadir)" || list=; \
-	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(javadir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(javadir)" || exit 1; \
-	fi; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(javadir)'"; \
-	  $(INSTALL_DATA) $$files "$(DESTDIR)$(javadir)" || exit $$?; \
-	done
-
-uninstall-javaDATA:
-	@$(NORMAL_UNINSTALL)
-	@list='$(java_DATA)'; test -n "$(javadir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	dir='$(DESTDIR)$(javadir)'; $(am__uninstall_files_from_dir)
 tags TAGS:
 
 ctags CTAGS:
@@ -575,12 +545,11 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(SCRIPTS) $(DATA) all-local
+all-am: Makefile $(SCRIPTS) all-local
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(javadir)"; do \
+	for dir in "$(DESTDIR)$(bindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
-install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
 uninstall: uninstall-am
@@ -624,13 +593,13 @@ dvi-am:
 
 html: html-am
 
-html-am: html-local
+html-am:
 
 info: info-am
 
 info-am:
 
-install-data-am: install-javaDATA
+install-data-am:
 
 install-dvi: install-dvi-am
 
@@ -674,41 +643,40 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binSCRIPTS uninstall-javaDATA
+uninstall-am: uninstall-binSCRIPTS
 
 .MAKE: install-am install-strip
 
 .PHONY: all all-am all-local check check-am clean clean-generic \
 	clean-libtool clean-local cscopelist-am ctags-am distclean \
 	distclean-generic distclean-libtool distdir dvi dvi-am html \
-	html-am html-local info info-am install install-am \
-	install-binSCRIPTS install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am install-javaDATA \
-	install-man install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-generic mostlyclean-libtool pdf pdf-am \
-	ps ps-am tags-am uninstall uninstall-am uninstall-binSCRIPTS \
-	uninstall-javaDATA
+	html-am info info-am install install-am install-binSCRIPTS \
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags-am uninstall \
+	uninstall-am uninstall-binSCRIPTS
 
 
-all-local: $(java_DATA)
+all-local: $(TARGET)
 
-$(java_DATA): $(SRC)
-	$(ANT) jar
+$(TARGET): $(CLASS)
+	cd src; $(JAR) cf ../$@ xcodeml/f/*/*.class
 
-jar:
-	$(ANT) jar
-
-jar-test:
-	$(ANT) jar-test
+$(CLASS): $(SRC)
+	$(JAVAC) src/xcodeml/f/*/*.java -g -classpath ../XcodeML-Common/build/om-common.jar -Xlint:deprecation
 
 clean-local:
-	$(ANT) clean
+	rm -f $(TARGET) $(CLASS)
 
-html-local:
-	$(ANT) document
+install: $(TARGET)
+	mkdir -p ${javadir}
+	$(INSTALL) $^ ${javadir}
+
+.NOTPARALLEL:
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

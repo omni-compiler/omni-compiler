@@ -1183,6 +1183,11 @@ AC_SUBST([am__tar])
 AC_SUBST([am__untar])
 ]) # _AM_PROG_TAR
 
+m4_include([buildutils/ac_prog_jar.m4])
+m4_include([buildutils/ac_prog_java.m4])
+m4_include([buildutils/ac_prog_java_works.m4])
+m4_include([buildutils/ac_prog_javac.m4])
+m4_include([buildutils/ac_prog_javac_works.m4])
 m4_include([buildutils/libtool.m4])
 m4_include([buildutils/ltoptions.m4])
 m4_include([buildutils/ltsugar.m4])

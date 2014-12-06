@@ -1,6 +1,7 @@
 /Makefile
 /config.log
 /config.status
+*.class
 *.[aox]
 C-FrontEnd/src/c-parser.output
 C-BackEnd/Makefile
