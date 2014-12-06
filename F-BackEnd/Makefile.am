@@ -6,6 +6,7 @@ CLASS       = $(SRC:.java=.class)
 all-local: $(TARGET)
 
 $(TARGET): $(CLASS)
+	mkdir -p build
 	cd src; $(JARCOM) cf ../$@ xcodeml/f/*/*.class
 
 $(CLASS): $(SRC)
