@@ -782,9 +782,6 @@ ENABLE_ATOOL_TRUE
 ENABLE_ACC
 ENABLE_ACC_FALSE
 ENABLE_ACC_TRUE
-XMP_ENABLE_GPU
-ENABLE_XMP_GPU_FALSE
-ENABLE_XMP_GPU_TRUE
 am__fastdepCXX_FALSE
 am__fastdepCXX_TRUE
 CXXDEPMODE
@@ -17014,19 +17011,12 @@ else
     debCppFlags="-DNDEBUG"
 fi
 
-XMP_ENABLE_GPU=0
-if test "x${doXmpGpu}" = "xyes"; then
-    XMP_ENABLE_GPU=1
-fi
- if test "x${doXmpGpu}" = "xyes"; then
-  ENABLE_XMP_GPU_TRUE=
-  ENABLE_XMP_GPU_FALSE='#'
-else
-  ENABLE_XMP_GPU_TRUE='#'
-  ENABLE_XMP_GPU_FALSE=
-fi
-
-
+#XMP_ENABLE_GPU=0
+#if test "x${doXmpGpu}" = "xyes"; then
+#    XMP_ENABLE_GPU=1
+#fi
+#AM_CONDITIONAL(ENABLE_XMP_GPU, test "x${doXmpGpu}" = "xyes")
+#AC_SUBST(XMP_ENABLE_GPU)
 
 ENABLE_ACC=0
 if test "x${doOpenAcc}" = "xyes"; then
@@ -26314,10 +26304,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCXX_TRUE}" && test -z "${am__fastdepCXX_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCXX\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${ENABLE_XMP_GPU_TRUE}" && test -z "${ENABLE_XMP_GPU_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_XMP_GPU\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_ACC_TRUE}" && test -z "${ENABLE_ACC_FALSE}"; then

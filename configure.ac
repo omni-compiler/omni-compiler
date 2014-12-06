@@ -509,12 +509,12 @@ else
     debCppFlags="-DNDEBUG"
 fi
 
-XMP_ENABLE_GPU=0
-if test "x${doXmpGpu}" = "xyes"; then
-    XMP_ENABLE_GPU=1
-fi
-AM_CONDITIONAL(ENABLE_XMP_GPU, test "x${doXmpGpu}" = "xyes")
-AC_SUBST(XMP_ENABLE_GPU)
+#XMP_ENABLE_GPU=0
+#if test "x${doXmpGpu}" = "xyes"; then
+#    XMP_ENABLE_GPU=1
+#fi
+#AM_CONDITIONAL(ENABLE_XMP_GPU, test "x${doXmpGpu}" = "xyes")
+#AC_SUBST(XMP_ENABLE_GPU)
 
 ENABLE_ACC=0
 if test "x${doOpenAcc}" = "xyes"; then
