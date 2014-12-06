@@ -1036,9 +1036,94 @@ AC_PROG_YACC
 
 # --------------------------------------------------------------------
 # check java
-AC_PROG_JAVA
-AC_PROG_JAVAC
-AC_PROG_JAR
+useJava=yes
+
+JAVACOM=""
+AC_PATH_PROG(JAVACOM, java, java, ${JAVA_HOME}/bin)
+JAVA_HOME=`$JAVACOM -classpath buildutils javahome`
+java_home_base=`basename ${JAVA_HOME}`
+
+if test "${java_home_base}" = "jre"; then
+    JAVA_HOME=`dirname ${JAVA_HOME}`
+fi
+
+AC_SUBST(JAVA_HOME)
+
+JAVACCOM=""
+AC_PATH_PROG(JAVACCOM, javac, javac, ${JAVA_HOME}/bin:${PATH}:/usr/java/default/bin:/bin:/usr/bin:/usr/local/bin:/opt/bin:/opt/local/bin)
+
+JARCOM=""
+AC_PATH_PROG(JARCOM, jar, jar, ${JAVA_HOME}/bin)
+
+AC_SUBST(JAVACOM)
+AC_SUBST(JAVACCOM)
+AC_SUBST(JARCOM)
+
+# check Java VM is IBM Java6
+
+isIBMJava6=no
+if test "x${useJava}" = "xyes"; then
+    AC_MSG_CHECKING([IBM Java6 or later])
+    jTmp=/tmp/.omniJavaChk.$$
+    ${JAVACOM} -fullversion > ${jTmp} 2>&1
+    chk=`grep 'JRE 1.6.0 IBM' ${jTmp}` || `grep 'JRE 1.7.0 IBM' ${jTmp}` || `grep 'JRE 1.8.0 IBM' ${jTmp}`
+    if test "x${chk}" = "x"; then
+        AC_MSG_RESULT([no])
+    else
+        AC_MSG_RESULT([yes])
+        isIBMJava6=yes
+    fi
+    rm -f ${jTmp}
+    unset chk jTmp
+fi
+AC_SUBST(isIBMJava6)
+
+# check Java VM version is Sun Java6
+isSunJava6=no
+if test "x${useJava}" = "xyes"; then
+    AC_MSG_CHECKING([Sun Java6 or later])
+
+    changequote(<<, >>)
+    case $target in
+      powerpc-ibm-none|powerpc64-hitachi-aix)
+        chk=`${JAVACOM} -fullversion 2>&1 | sed -e 's:openjdk[\t ]*full[\t ]*version[\t ]*::g' -e 's:\"::g'`
+      ;;
+        *)
+        chk=`${JAVACOM} -fullversion 2>&1 | sed -e 's:java[\t ]*full[\t ]*version[\t ]*::g' -e 's:\"::g'`
+        ;;
+    esac
+    changequote([, ])
+
+    if test "x${chk}" = "x"; then
+        AC_MSG_RESULT([no])
+    fi
+    case $chk in
+    1.6*|1.7*|1.8*)
+        isSunJava6=yes
+        AC_MSG_RESULT([yes]);;
+    *)
+        isSunJava6=no
+        AC_MSG_RESULT([no]);;
+    esac
+    unset chk
+fi
+
+if test "${isSunJava6}" = "no" -a "${isIBMJava6}" = "no"; then
+    AC_MSG_ERROR([Java6 or later not found]);
+fi
+
+AC_SUBST(isSunJava6)
+
+# check java type
+javaType=unknown
+if test "x${useJava}" = "xyes"; then
+    if test "x${isIBMJava6}" = "xyes"; then
+        javaType=ibm
+    elif test "x${isSunJava6}" = "xyes"; then
+        javaType=sun
+    fi
+fi
+AC_SUBST(javaType)
 
 javadir='${prefix}/share/xcalablemp'
 AC_SUBST(javadir)

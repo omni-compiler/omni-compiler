@@ -5,10 +5,10 @@ CLASS  = $(SRC:.java=.class)
 all-local: $(TARGET)
 
 $(TARGET): $(CLASS)
-	cd src;	$(JAR) cf ../$@ ./xcodeml/*.class ./xcodeml/*/*.class
+	cd src;	$(JARCOM) cf ../$@ ./xcodeml/*.class ./xcodeml/*/*.class
 
 $(CLASS): $(SRC)
-	$(JAVAC) -g src/xcodeml/*.java src/xcodeml/*/*.java -Xlint:deprecation
+	$(JAVACCOM) -g src/xcodeml/*.java src/xcodeml/*/*.java -Xlint:deprecation
 
 clean-local:
 	rm -f $(TARGET) $(CLASS)
