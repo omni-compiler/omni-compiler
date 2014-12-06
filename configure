@@ -654,6 +654,7 @@ omniEtcDir
 omniLibDir
 omniBinDir
 omniDir
+RM
 ATOOL_DIR
 XMPPKG_CHANGELOG_DATE
 XMPPKG_PRIORITY
@@ -25488,6 +25489,9 @@ ac_config_files="$ac_config_files Makefile release/debian/changelog release/debi
 
 # --------------------------------------------------------------------
 ATOOL_DIR=./Driver/atool
+
+
+RM="rm -f"
 
 
 # headers/macros

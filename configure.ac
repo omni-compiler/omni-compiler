@@ -1784,6 +1784,9 @@ AC_CONFIG_FILES(
 ATOOL_DIR=./Driver/atool
 AC_SUBST(ATOOL_DIR)
 
+RM="rm -f"
+AC_SUBST(RM)
+
 # headers/macros
 AC_CHECK_HEADER(sys/param.h, [AC_DEFINE([HAVE_SYS_PARAM_H], [1], [ ])])
 AC_CHECK_HEADER(ctype.h, [AC_DEFINE([HAVE_CTYPE_H], [1], [ ])])
