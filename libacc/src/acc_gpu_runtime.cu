@@ -136,6 +136,8 @@ static void init_device(int dev_num){ //0-based
   _ACC_DEBUG("cc : %d.%d\n",dev_prop.major, dev_prop.minor)
   _ACC_DEBUG("#sm : %d\n",dev_prop.multiProcessorCount)
 
+  cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+
 
   //init mpool
 	contexts[get_actual_device_num(dev_num)].isInitialized = 1;
