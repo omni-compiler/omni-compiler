@@ -28,7 +28,8 @@ endif
 
 XMPPKG_NAME:="@XMPPKG_NAME@"
 XMPPKG_TMPDIR_TOP:="/tmp/@XMPPKG_NAME@"
-XMPPKG_TMPDIR:=$(XMPPKG_TMPDIR_TOP)/$(shell mktemp -u --tmpdir=/)
+#XMPPKG_TMPDIR:=$(XMPPKG_TMPDIR_TOP)/$(shell mktemp -u --tmpdir=/)
+XMPPKG_TMPDIR:=$(XMPPKG_TMPDIR_TOP)/tmp.$$
 DEB_VER_FILE="/etc/debian_version"
 RH_REL_FILE="/etc/redhat-release"
 

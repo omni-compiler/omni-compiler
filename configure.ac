@@ -18,6 +18,14 @@ AC_CANONICAL_TARGET
 AC_CONFIG_SRCDIR([include/exc_platform.h])
 AC_CONFIG_HEADER([include/config.h Driver/atool/src/include/nata/nata_config.h])
 
+SHELL=`which bash` > /dev/null 2>&1
+if test $? -ne 0 -o -z "${SHELL}"; then
+   AC_MSG_ERROR([To run libtool you need a bash, not /bin/sh.])
+   exit 1
+fi
+export SHELL
+AC_SUBST(SHELL)
+
 LT_INIT
 AC_SUBST(LIBTOOL)
 AC_SUBST(LIBTOOL_DEPS)
