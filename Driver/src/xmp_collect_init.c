@@ -306,7 +306,7 @@ int main(int argc, char *argv[])
      if(strchr(name,'.') != NULL){
        if(is_AIX)
          {
-           fprintf(fp, "asm(\"mr 31,1\");\n"); 
+           //fprintf(fp, "asm(\"mr 31,1\");\n"); 
            fprintf(fp, "asm(\"nop\");\n");
            fprintf(fp,"\t%s();\n",strcpy(name,name+1));
            break;

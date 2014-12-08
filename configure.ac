@@ -729,14 +729,14 @@ else
   OMC_CONF_LNK_OPT="-I/usr/local/bg/include \
                 -L/usr/local/bg/lib -L${DRIVER}/bgpm/lib/ -lbgpm -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
 fi
-  BECC_OPTION="-O5"
-  BECC_OMP_OPTION="-O5  -qhot -qsmp=omp -qsimd=auto"
+  BECC_OPTION=""
+  BECC_OMP_OPTION="-qhot -qsmp=omp -qsimd=auto"
 elif test "$target" = "powerpc64-hitachi-aix"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT="-q64"
   OMC_CONF_LNK_OPT="-q64 -qhot -qsmp=omp -qsimd=auto"
-  BECC_OPTION="-O5"
-  BECC_OMP_OPTION="-O5 -qhot -qsmp=omp -qsimd=auto"
+  BECC_OPTION=""
+  BECC_OMP_OPTION="-qhot -qsmp=omp -qsimd=auto"
 else
   chk=`$BECC --version | head -n1`
   case $chk in
@@ -812,12 +812,12 @@ if test $enableF2F = yes; then
     OMF_CONF_LNK_OPT="-Popenmp"
   elif test "$target" = "powerpc-ibm-none"; then
     OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT="-qextname -O5 -q64"
+    OMF_CONF_NTV_OPT="-qextname -q64"
     OMF_CONF_LNK_OPT="-I/usr/local/bg/include -g -O3 -qhot -qsmp=omp -qsimd=auto -q64 -qsource -qlist"
   elif test "$target" = "powerpc64-hitachi-aix"; then
     OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT="-qextname -qnomixed -q64  -O5"
-    OMF_CONF_LNK_OPT="-q64  -O5 -qhot -qsmp=omp -qsimd=auto"
+    OMF_CONF_NTV_OPT="-qextname -qnomixed -q64"
+    OMF_CONF_LNK_OPT="-q64 -qhot -qsmp=omp -qsimd=auto"
   else
     chk=`$BEFC --version 2> /dev/null | head -n1`
     case $chk in
