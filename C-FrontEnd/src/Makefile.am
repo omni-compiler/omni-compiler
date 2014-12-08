@@ -85,3 +85,4 @@ html-local:
 	if test ! -e "../doc"; then mkdir ../doc; fi
 	doxygen >/dev/null
 
+.NOTPARALLEL:
