@@ -8,8 +8,10 @@ $(TARGET): $(CLASS)
 	mkdir -p build
 	cd src;	$(JARCOM) cf ../$@ ./xcodeml/*.class ./xcodeml/*/*.class
 
-$(CLASS): $(SRC)
-	$(JAVACCOM) -g src/xcodeml/*.java src/xcodeml/*/*.java -Xlint:deprecation
+SUFFIXES: .class .java
+
+.java.class:
+	$(JAVACCOM) $< -classpath ./src -Xlint:deprecation
 
 clean-local:
 	rm -f $(TARGET) $(CLASS)
@@ -17,5 +19,3 @@ clean-local:
 install: $(TARGET)
 	mkdir -p ${javadir}
 	$(INSTALL) $^ ${javadir}
-
-.NOTPARALLEL:

@@ -433,6 +433,7 @@ CLASS = $(SRC:.java=.class)
 all: all-am
 
 .SUFFIXES:
+.SUFFIXES: .class .java
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -665,8 +666,8 @@ $(TARGET): $(CLASS)
 	mkdir -p build
 	cd src; $(JARCOM) cf ../$@ xcodeml/f/*/*.class
 
-$(CLASS): $(SRC)
-	$(JAVACCOM) src/xcodeml/f/*/*.java -g -classpath ../XcodeML-Common/build/om-common.jar -Xlint:deprecation
+.java.class:
+	$(JAVACCOM) $< -classpath ../XcodeML-Common/build/om-common.jar:./src -Xlint:deprecation
 
 clean-local:
 	rm -f $(TARGET) $(CLASS)
@@ -674,8 +675,6 @@ clean-local:
 install: $(TARGET)
 	mkdir -p ${javadir}
 	$(INSTALL) $^ ${javadir}
-
-.NOTPARALLEL:
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
