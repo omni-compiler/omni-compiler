@@ -66,11 +66,20 @@ public class XMPcoarray {
                                    null);
 
     // for cray pointer
+    Xtype crayPtrType = Xtype.Farray(BasicType.FintType);   // or Fint8Type ?
+    /****
+    Xtype crayPtrType = new FarrayType(null,
+                                       BasicType.FintType,   // or Fint8Type ?
+                                       0,
+                                       null);
+    crayPtrType.generateId();
+    ****/
+    crayPtrType.setIsFcrayPointer(true);
+
     crayPtrId = blist.declLocalIdent(crayPtrName,
-                                     BasicType.Fint8Type,   // FintType ??
+                                     crayPtrType,
                                      StorageClass.FLOCAL,
                                      Xcons.FvarRef(ident));  // ident.Ref() for C
-    crayPtrId.Type().setIsFcrayPointer(true);
   }
 
 

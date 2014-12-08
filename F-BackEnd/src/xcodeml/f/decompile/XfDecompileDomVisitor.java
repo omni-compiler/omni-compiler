@@ -203,7 +203,7 @@ public class XfDecompileDomVisitor {
             }
         }
 
-        for (Node basicTypeNode : basicTypeNodeArray) {  // (ID=060c)
+        for (Node basicTypeNode : basicTypeNodeArray) {  // #060c
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_cray_pointer")) {
                 writer.writeToken(", ");
                 writer.writeToken("$$Error (Cray Pointer #2)$$");
@@ -427,7 +427,7 @@ public class XfDecompileDomVisitor {
         XmfWriter writer = _context.getWriter();
 
         /*
-         * added for cray pointer (ID=060c)
+         * added for cray pointer (#060c)
          */
         if (_isCrayPointer(topTypeChoice, lowTypeChoice)) {
             _writeCrayPointerDecl(symbol, node);
@@ -891,7 +891,7 @@ public class XfDecompileDomVisitor {
     }
 
     /**
-     * Check if the symbol is a cray pointer. (ID=060c)
+     * Check if the symbol is a cray pointer. (#060c)
      *
      * @param  top, low
      * @return true/false
@@ -908,7 +908,6 @@ public class XfDecompileDomVisitor {
         String lowName = low.getNodeName();
         if ("FbasicType".equals(lowName) &&
             XmDomUtil.getAttrBool(low, "is_cray_pointer")) {
-            System.out.println("gaccha low");
             return true;
         }
 
@@ -5148,10 +5147,10 @@ public class XfDecompileDomVisitor {
                         fail(n);
                     }
 
-                    Boolean writeValue = _writeSymbolDecl(symbol, n);       // ID=060c
+                    Boolean writeValue = _writeSymbolDecl(symbol, n);       // #060c
 
                     Node valueNode = XmDomUtil.getElement(idNode, "value");
-                    if (writeValue && valueNode != null) {                  // ID=060c
+                    if (writeValue && valueNode != null) {                  // #060c
                         XmfWriter writer = _context.getWriter();
                         Node tn = typeManager.findType(typeName);
 
@@ -5426,10 +5425,10 @@ public class XfDecompileDomVisitor {
                 fail(nameNode);
             }
 
-            Boolean writeValue = _writeSymbolDecl(symbol, n);       // ID=060c
+            Boolean writeValue = _writeSymbolDecl(symbol, n);       // #060c
 
             Node valueNode = XmDomUtil.getElement(n, "value");
-            if (writeValue && valueNode != null) {       // ID=060c
+            if (writeValue && valueNode != null) {       // #060c
                 XmfWriter writer = _context.getWriter();
                 writer.writeToken(" = ");
                 invokeEnter(valueNode);
