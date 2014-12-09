@@ -283,6 +283,9 @@ extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void
 #define COARRAY_PUT_CODE  701
 
 /* xmpf_coarray.c */
+extern int _XMPF_coarrayMsg;          // default: message off
+extern void _XMPF_coarray_msg(int *sw);
+
 extern int _XMPF_get_coarrayElement(int serno);
 extern void *_XMPF_get_coarrayDesc(int serno);
 extern int _XMPF_get_coarrayStart(int serno, void* baseAddr);
@@ -298,12 +301,3 @@ extern void xmp_sync_all_(void);
 /* Type-4 */
 extern void xmpf_coarray_put_array_(int *serno, void *baseAddr, int *coindex,
                                     void *rhs, int *rank, ...);
-extern void _XMPF_coarray_put_array(int serno, void *baseAddr, int coindex,
-                                   void *rts, int rank, ...);
-
-
-/* xmpf_coarray_put77.c */
-/*
-extern void xmpf_coarray_put77d0_(int *serno, int *count, void *baseAddr,
-                                  int *coindex, void *rhs);
-*/

@@ -19,6 +19,8 @@ static int _set_coarrayInfo(void *desc, void *orgAddr, int count, size_t element
   internal information management
 \*****************************************/
 
+int _XMPF_coarrayMsg = 0;          // default: message off
+
 int _XMPF_get_coarrayElement(int serno)
 {
   return _coarrayInfoTab[serno].element;
@@ -82,6 +84,16 @@ static int _getNewSerno() {
 
 
 /*****************************************\
+  switches
+\*****************************************/
+
+void xmpf_coarray_msg_(int *sw)
+{
+  _XMPF_coarrayMsg = *sw;
+}
+
+
+/*****************************************\
   MALLOC
 \*****************************************/
 
@@ -112,13 +124,27 @@ void _XMPF_coarray_malloc(int *serno, void **pointer, int count, size_t element)
 void xmp_sync_memory_()
 {
   int status;
+
+  if (_XMPF_coarrayMsg)
+    fprintf(stderr, "**** symc_memory (%s)\n", __FUNCTION__);
+
   xmp_sync_memory(&status);
+
+  if (_XMPF_coarrayMsg)
+    fprintf(stderr, "**** end sync_memory, status=%d\n", status);
 }
 
 void xmp_sync_all_()
 {
   int status;
+
+  if (_XMPF_coarrayMsg)
+    fprintf(stderr, "**** symc_all (%s)\n", __FUNCTION__);
+
   xmp_sync_all(&status);
+
+  if (_XMPF_coarrayMsg)
+    fprintf(stderr, "**** end sync_all, status=%d\n", status);
 }
 
 
