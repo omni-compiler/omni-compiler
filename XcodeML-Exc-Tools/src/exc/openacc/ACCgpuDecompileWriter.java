@@ -478,6 +478,17 @@ public class ACCgpuDecompileWriter extends PrintWriter {
       print(v.left());
       print(")--");
       break;
+      
+    case PRE_INCR_EXPR:
+      print("++(");
+      print(v.left());
+      print(")");
+      break;
+    case PRE_DECR_EXPR:
+      print("--(");
+      print(v.left());
+      print(")");
+      break;
 
     case SIZE_OF_EXPR:    /* (SIZE_OF_EXPR type-or-expr) */
       print("sizeof(");

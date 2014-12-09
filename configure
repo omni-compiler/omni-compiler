@@ -654,7 +654,6 @@ omniEtcDir
 omniLibDir
 omniBinDir
 omniDir
-MKDIR
 RM
 ATOOL_DIR
 XMPPKG_CHANGELOG_DATE
@@ -724,7 +723,6 @@ POW_LIB
 LIBOBJS
 JAVA_OPT
 javadir
-ANTCOM
 javaType
 isSunJava6
 isIBMJava6
@@ -738,7 +736,6 @@ LEXLIB
 LEX_OUTPUT_ROOT
 LEX
 PERL5
-ZIPCOM
 CC_LIB
 ARFLAGS
 BASH
@@ -786,9 +783,6 @@ ENABLE_ATOOL_TRUE
 ENABLE_ACC
 ENABLE_ACC_FALSE
 ENABLE_ACC_TRUE
-XMP_ENABLE_GPU
-ENABLE_XMP_GPU_FALSE
-ENABLE_XMP_GPU_TRUE
 am__fastdepCXX_FALSE
 am__fastdepCXX_TRUE
 CXXDEPMODE
@@ -12225,8 +12219,6 @@ if test -e "XcodeML-Common/Makefile.am"; then
     XCODEML_COMMON_DIR=XcodeML-Common
     ac_config_files="$ac_config_files $XCODEML_COMMON_DIR/Makefile"
 
-    ac_config_files="$ac_config_files $XCODEML_COMMON_DIR/ant.properties"
-
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 else
@@ -12259,11 +12251,9 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking check C-BackEnd project exists" >&5
 $as_echo_n "checking check C-BackEnd project exists... " >&6; }
 
-if test -e "C-BackEnd/Makefile.am" -a -e "C-BackEnd/ant.properties.in"; then
+if test -e "C-BackEnd/Makefile.am"; then
     C_BACKEND_DIR=C-BackEnd
     ac_config_files="$ac_config_files $C_BACKEND_DIR/Makefile"
-
-    ac_config_files="$ac_config_files $C_BACKEND_DIR/ant.properties"
 
     ac_config_files="$ac_config_files $C_BACKEND_DIR/bin/C_Back"
 
@@ -12299,11 +12289,9 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking check F-BackEnd project exists" >&5
 $as_echo_n "checking check F-BackEnd project exists... " >&6; }
 
-if test -e "F-BackEnd/Makefile.am" -a -e "F-BackEnd/ant.properties.in"; then
+if test -e "F-BackEnd/Makefile.am"; then
     F_BACKEND_DIR=F-BackEnd
     ac_config_files="$ac_config_files $F_BACKEND_DIR/Makefile"
-
-    ac_config_files="$ac_config_files $F_BACKEND_DIR/ant.properties"
 
     ac_config_files="$ac_config_files $F_BACKEND_DIR/bin/F_Back"
 
@@ -12337,11 +12325,9 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking check XcodeML-Exc-Tools project exists" >&5
 $as_echo_n "checking check XcodeML-Exc-Tools project exists... " >&6; }
 
-if test -e "XcodeML-Exc-Tools/Makefile.am" -a -e "XcodeML-Exc-Tools/ant.properties.in"; then
+if test -e "XcodeML-Exc-Tools/Makefile.am"; then
     XCODEML_EXC_TOOLS_DIR=XcodeML-Exc-Tools
     ac_config_files="$ac_config_files $XCODEML_EXC_TOOLS_DIR/Makefile"
-
-    ac_config_files="$ac_config_files $XCODEML_EXC_TOOLS_DIR/ant.properties"
 
     ac_config_files="$ac_config_files $XCODEML_EXC_TOOLS_DIR/src/exc/util/MachineDepConst.java"
 
@@ -17024,19 +17010,12 @@ else
     debCppFlags="-DNDEBUG"
 fi
 
-XMP_ENABLE_GPU=0
-if test "x${doXmpGpu}" = "xyes"; then
-    XMP_ENABLE_GPU=1
-fi
- if test "x${doXmpGpu}" = "xyes"; then
-  ENABLE_XMP_GPU_TRUE=
-  ENABLE_XMP_GPU_FALSE='#'
-else
-  ENABLE_XMP_GPU_TRUE='#'
-  ENABLE_XMP_GPU_FALSE=
-fi
-
-
+#XMP_ENABLE_GPU=0
+#if test "x${doXmpGpu}" = "xyes"; then
+#    XMP_ENABLE_GPU=1
+#fi
+#AM_CONDITIONAL(ENABLE_XMP_GPU, test "x${doXmpGpu}" = "xyes")
+#AC_SUBST(XMP_ENABLE_GPU)
 
 ENABLE_ACC=0
 if test "x${doOpenAcc}" = "xyes"; then
@@ -17321,14 +17300,14 @@ else
   OMC_CONF_LNK_OPT="-I/usr/local/bg/include \
                 -L/usr/local/bg/lib -L${DRIVER}/bgpm/lib/ -lbgpm -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
 fi
-  BECC_OPTION="-O5"
-  BECC_OMP_OPTION="-O5  -qhot -qsmp=omp -qsimd=auto"
+  BECC_OPTION=""
+  BECC_OMP_OPTION="-qhot -qsmp=omp -qsimd=auto"
 elif test "$target" = "powerpc64-hitachi-aix"; then
   OMC_CONF_LX2X_OPT=""
   OMC_CONF_NTV_OPT="-q64"
   OMC_CONF_LNK_OPT="-q64 -qhot -qsmp=omp -qsimd=auto"
-  BECC_OPTION="-O5"
-  BECC_OMP_OPTION="-O5 -qhot -qsmp=omp -qsimd=auto"
+  BECC_OPTION=""
+  BECC_OMP_OPTION="-qhot -qsmp=omp -qsimd=auto"
 else
   chk=`$BECC --version | head -n1`
   case $chk in
@@ -20481,12 +20460,12 @@ $as_echo_n "checking backend Fortran compiler... " >&6; }
     OMF_CONF_LNK_OPT="-Popenmp"
   elif test "$target" = "powerpc-ibm-none"; then
     OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT="-qextname -O5 -q64"
+    OMF_CONF_NTV_OPT="-qextname -q64"
     OMF_CONF_LNK_OPT="-I/usr/local/bg/include -g -O3 -qhot -qsmp=omp -qsimd=auto -q64 -qsource -qlist"
   elif test "$target" = "powerpc64-hitachi-aix"; then
     OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT="-qextname -qnomixed -q64  -O5"
-    OMF_CONF_LNK_OPT="-q64  -O5 -qhot -qsmp=omp -qsimd=auto"
+    OMF_CONF_NTV_OPT="-qextname -qnomixed -q64"
+    OMF_CONF_LNK_OPT="-q64 -qhot -qsmp=omp -qsimd=auto"
   else
     chk=`$BEFC --version 2> /dev/null | head -n1`
     case $chk in
@@ -20730,7 +20709,6 @@ NM=""
 if test "$target" != "$host"; then
    case "$target" in
 	Kcomputer-linux-gnu|FX10-linux-gnu)
-#		AC_CHECK_TOOL([RANLIB], [ranlibpx], [:])
 		# Extract the first word of "ranlibpx", so it can be a program name with args.
 set dummy ranlibpx; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -20773,7 +20751,6 @@ fi
 		    as_fn_error $? "ranlibpx not found" "$LINENO" 5;
 		fi
 
-#		AC_CHECK_TOOL([AR], [arpx], [:])
 		# Extract the first word of "arpx", so it can be a program name with args.
 set dummy arpx; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -20819,7 +20796,6 @@ fi
 		ARFLAGS="cru"
 
 
-#		AC_CHECK_TOOL([NM], [nmpx], [:])
 		# Extract the first word of "nmpx", so it can be a program name with args.
 set dummy nmpx; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -20862,7 +20838,6 @@ fi
 		    as_fn_error $? "nmpx not found" "$LINENO" 5;
 		fi ;;
 	sx-nec-superux)
-#		AC_CHECK_TOOL([RANLIB], [echo], [echo], [:])
 		# Extract the first word of "echo", so it can be a program name with args.
 set dummy echo; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -20901,11 +20876,6 @@ $as_echo "no" >&6; }
 fi
 
 
-#		if test "${RANLIB}" = ":"; then
-#		    AC_MSG_ERROR([sxranlib not found]);
-#		fi
-
-#		AC_CHECK_TOOL([AR], [sxar], [:])
 		# Extract the first word of "sxar", so it can be a program name with args.
 set dummy sxar; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -20951,7 +20921,6 @@ fi
 		ARFLAGS="cru"
 
 
-#		AC_CHECK_TOOL([NM], [sxnm], [:])
 		# Extract the first word of "sxnm", so it can be a program name with args.
 set dummy sxnm; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -20994,7 +20963,6 @@ fi
 		    as_fn_error $? "sxnm not found" "$LINENO" 5;
 		fi ;;
 	powerpc64-hitachi-aix)
-#                AC_CHECK_TOOL([RANLIB], [echo], [:])
                 # Extract the first word of "echo", so it can be a program name with args.
 set dummy echo; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -21033,11 +21001,6 @@ $as_echo "no" >&6; }
 fi
 
 
-#                if test "${RANLIB}" = ":"; then
-#                    AC_MSG_ERROR([ranlib not found]);
-#                fi
-
-#                AC_CHECK_TOOL([AR], [ar], [:])
                 # Extract the first word of "ar", so it can be a program name with args.
 set dummy ar; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -21083,7 +21046,6 @@ fi
                 ARFLAGS="-X32_64 cru"
 
 
-#                AC_CHECK_TOOL([NM], [nm], [:])
                 # Extract the first word of "nm", so it can be a program name with args.
 set dummy nm; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -21126,7 +21088,6 @@ fi
                     as_fn_error $? "nm not found" "$LINENO" 5;
                 fi ;;
 	powerpc-ibm-none)
-#                AC_CHECK_TOOL([RANLIB], [echo], [:])
                 # Extract the first word of "echo", so it can be a program name with args.
 set dummy echo; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -21165,11 +21126,6 @@ $as_echo "no" >&6; }
 fi
 
 
-#                if test "${RANLIB}" = ":"; then
-#                    AC_MSG_ERROR([bgranlib not found]);
-#                fi
-
-#                AC_CHECK_TOOL([AR], [ar], [:])
                 # Extract the first word of "ar", so it can be a program name with args.
 set dummy ar; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -21215,7 +21171,6 @@ fi
                 ARFLAGS="cru"
 
 
-#                AC_CHECK_TOOL([NM], [nm], [:])
                 # Extract the first word of "nm", so it can be a program name with args.
 set dummy nm; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -21350,7 +21305,6 @@ else
   RANLIB="$ac_cv_prog_RANLIB"
 fi
 
-#		AC_CHECK_TOOL([AR], [ar], [:])
 		# Extract the first word of "ar", so it can be a program name with args.
 set dummy ar; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -21391,7 +21345,6 @@ fi
 
 		ARFLAGS="cru"
 
-#		AC_CHECK_TOOL([NM], [nm], [:])
 		# Extract the first word of "nm", so it can be a program name with args.
 set dummy nm; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -22091,52 +22044,6 @@ else
 
 fi
 
-# check zip
-ZIPCOM=""
-# Extract the first word of "zip", so it can be a program name with args.
-set dummy zip; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_ZIPCOM+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $ZIPCOM in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_ZIPCOM="$ZIPCOM" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-as_dummy="${PATH}:/bin:/usr/bin:/usr/local/bin:/opt/bin:/opt/local/bin"
-for as_dir in $as_dummy
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_ZIPCOM="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_path_ZIPCOM" && ac_cv_path_ZIPCOM="zip"
-  ;;
-esac
-fi
-ZIPCOM=$ac_cv_path_ZIPCOM
-if test -n "$ZIPCOM"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ZIPCOM" >&5
-$as_echo "$ZIPCOM" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-
-
 # check Perl versoin is 5
 PERL5=""
 for ac_prog in perl
@@ -22211,7 +22118,6 @@ fi
 
 
 # check lex and yacc
-
 for ac_prog in flex lex
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
@@ -22371,10 +22277,6 @@ fi
 rm -f conftest.l $LEX_OUTPUT_ROOT.c
 
 fi
-#AC_CHECK_PROGS([LEX], [flex])
-if test $LEX = ":"; then
-exit 1
-fi
 for ac_prog in 'bison -y' byacc
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
@@ -22421,7 +22323,6 @@ test -n "$YACC" || YACC="yacc"
 
 # --------------------------------------------------------------------
 # check java
-
 useJava=yes
 
 JAVACOM=""
@@ -22599,9 +22500,9 @@ $as_echo_n "checking Sun Java6 or later... " >&6; }
       powerpc-ibm-none|powerpc64-hitachi-aix)
         chk=`${JAVACOM} -fullversion 2>&1 | sed -e 's:openjdk[\t ]*full[\t ]*version[\t ]*::g' -e 's:\"::g'`
       ;;
-	*)
+        *)
         chk=`${JAVACOM} -fullversion 2>&1 | sed -e 's:java[\t ]*full[\t ]*version[\t ]*::g' -e 's:\"::g'`
-	;;
+        ;;
     esac
 
 
@@ -22639,75 +22540,6 @@ if test "x${useJava}" = "xyes"; then
 fi
 
 
-# check ant
-ANTCOM=""
-# Extract the first word of "ant", so it can be a program name with args.
-set dummy ant; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_ANTCOM+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $ANTCOM in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_ANTCOM="$ANTCOM" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-as_dummy="${PATH}:/bin:/usr/bin:/usr/local/bin:/opt/bin:/opt/local/bin"
-for as_dir in $as_dummy
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_ANTCOM="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-ANTCOM=$ac_cv_path_ANTCOM
-if test -n "$ANTCOM"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ANTCOM" >&5
-$as_echo "$ANTCOM" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-
-if test "$ANTCOM" = ""; then
-    as_fn_error $? "requires Apache Ant" "$LINENO" 5
-fi
-
-ANTCOM="JAVA_HOME=$JAVA_HOME ${ANTCOM}"
-
-
-# check relaxer
-#relaxerDir=/usr/local/relaxer
-#AC_MSG_CHECKING([for relaxer])
-#AC_ARG_WITH(relaxerDir,
-#    [  --with-relaxerDir=DIR  specify where the Relaxer is installed.],
-#    [relaxerDir=$withval], [relaxerDir=/usr/local/relaxer])
-#
-#if test -e "${relaxerHome}/Relaxer.jar" ; then
-#    AC_MSG_RESULT($relaxerDir)
-#    RELAXER_DIR="${relaxerDir}"
-#else
-#    AC_MSG_RESULT(no)
-#    RELAXER_DIR=""
-#fi
-#
-#AC_SUBST(RELAXER_DIR)
-
-# set java library install dir to install target of java_DATA
 javadir='${prefix}/share/xcalablemp'
 
 
@@ -25663,9 +25495,6 @@ ATOOL_DIR=./Driver/atool
 RM="rm -f"
 
 
-MKDIR="mkdir -p"
-
-
 # headers/macros
 ac_fn_c_check_header_mongrel "$LINENO" "sys/param.h" "ac_cv_header_sys_param_h" "$ac_includes_default"
 if test "x$ac_cv_header_sys_param_h" = xyes; then :
@@ -26472,10 +26301,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCXX_TRUE}" && test -z "${am__fastdepCXX_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCXX\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${ENABLE_XMP_GPU_TRUE}" && test -z "${ENABLE_XMP_GPU_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_XMP_GPU\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_ACC_TRUE}" && test -z "${ENABLE_ACC_FALSE}"; then
@@ -27575,19 +27400,15 @@ do
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "$XCODEML_COMMON_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $XCODEML_COMMON_DIR/Makefile" ;;
-    "$XCODEML_COMMON_DIR/ant.properties") CONFIG_FILES="$CONFIG_FILES $XCODEML_COMMON_DIR/ant.properties" ;;
     "$C_FRONTEND_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $C_FRONTEND_DIR/Makefile" ;;
     "$C_BACKEND_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $C_BACKEND_DIR/Makefile" ;;
-    "$C_BACKEND_DIR/ant.properties") CONFIG_FILES="$CONFIG_FILES $C_BACKEND_DIR/ant.properties" ;;
     "$C_BACKEND_DIR/bin/C_Back") CONFIG_FILES="$CONFIG_FILES $C_BACKEND_DIR/bin/C_Back" ;;
     "$F_FRONTEND_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $F_FRONTEND_DIR/Makefile" ;;
     "$F_BACKEND_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $F_BACKEND_DIR/Makefile" ;;
-    "$F_BACKEND_DIR/ant.properties") CONFIG_FILES="$CONFIG_FILES $F_BACKEND_DIR/ant.properties" ;;
     "$F_BACKEND_DIR/bin/F_Back") CONFIG_FILES="$CONFIG_FILES $F_BACKEND_DIR/bin/F_Back" ;;
     "$F_BACKEND_DIR/bin/F_Trans") CONFIG_FILES="$CONFIG_FILES $F_BACKEND_DIR/bin/F_Trans" ;;
     "$F_BACKEND_DIR/bin/F_Decomp") CONFIG_FILES="$CONFIG_FILES $F_BACKEND_DIR/bin/F_Decomp" ;;
     "$XCODEML_EXC_TOOLS_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $XCODEML_EXC_TOOLS_DIR/Makefile" ;;
-    "$XCODEML_EXC_TOOLS_DIR/ant.properties") CONFIG_FILES="$CONFIG_FILES $XCODEML_EXC_TOOLS_DIR/ant.properties" ;;
     "$XCODEML_EXC_TOOLS_DIR/src/exc/util/MachineDepConst.java") CONFIG_FILES="$CONFIG_FILES $XCODEML_EXC_TOOLS_DIR/src/exc/util/MachineDepConst.java" ;;
     "$OMDRIVER_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/Makefile" ;;
     "$OMDRIVER_DIR/../bin/ompp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/ompp" ;;
@@ -29372,15 +29193,15 @@ cat << EOF
 
   Local Compiler:
     C Compiler            : $CC
-    C Compiler FLAG       : "$CFLAG"
+    C Compiler FLAG       : $CFLAGS
     Fortran Compiler      : $FC
-    Fortran Compiler FLAG : "$FFLAG"
+    Fortran Compiler FLAG : $FCFLAGS
 
   Backend Compiler:
     C Compiler            : $BECC
-    C Compiler FLAG       : "$BECC_OPTION"
+    C Compiler FLAG       : $BECC_OPTION
     Fortran Compiler      : $BEFC
-    Fortran Compiler FLAG : "$BEFC_OPTION"
+    Fortran Compiler FLAG : $BEFC_OPTION
 EOF
 
 if test "$target" != "Kcomputer-linux-gnu" -a "$target" != "FX10-linux-gnu"; then
@@ -29402,4 +29223,3 @@ if test "${use_tca}" = "yes"; then
   echo "    TCA                   : yes"
 fi
 echo "=================================================="
-

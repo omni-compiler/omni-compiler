@@ -6,29 +6,6 @@ bin_PROGRAMS=C_Front
 
 MKDIR_P = @MKDIR_P@
 
-# trace color (1:mono 2:color)
-#DEBUG_FLAGS+=-DCEXPR_TRACE_COLOR=1
-#DEBUG_FLAGS+=-DCEXPR_TRACE_COLOR=2
-
-# yacc state trace
-#DEBUG_FLAGS+=-DCEXPR_DEBUG_STAT
-
-# debug symbol table
-#DEBUG_FLAGS+=-DCEXPR_DEBUG_SYMBOL
-
-# debug gcc attribute/extension counts
-#DEBUG_FLAGS+=-DCEXPR_DEBUG_GCCATTR
-
-# debug malloc/free
-#DEBUG_FLAGS+=-DCCOL_DEBUG_MEM
-#DEBUG_FLAGS+=-DCEXPR_DEBUG_MEM
-
-# debug XcodeML output
-#DEBUG_FLAGS+=-DXCODEML_DEBUG
-
-# debug memory leak
-#DEBUG_FLAGS+=-DMTRACE
-
 C_Front_SOURCES=\
 	c-parser.y c-lexer.l c-expr.c c-token.c c-exprcode.c \
 	c-dump.c c-comp.c c-reduce.c c-xcodeml.c c-const.c \

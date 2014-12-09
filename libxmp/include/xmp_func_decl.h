@@ -278,7 +278,7 @@ extern void _XMP_dist_template_BLOCK(void *template, int template_index, int nod
 extern void _XMP_dist_template_CYCLIC(void *template, int template_index, int nodes_index);
 extern void _XMP_dist_template_BLOCK_CYCLIC(void *template, int template_index, int nodes_index, unsigned long long width);
 extern void _XMP_dist_template_GBLOCK(void *template, int template_index, int nodes_index,
-				      int *mapping_array);
+				      int *mapping_array, int *temp0);
 
 extern int _XMP_exec_task_TEMPLATE_PART(void **task_desc, void *ref_template, ...);
 extern long long int _XMP_L2G_GBLOCK(int local_idx, void *template, int template_index);

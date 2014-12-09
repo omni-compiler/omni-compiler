@@ -2,82 +2,66 @@
 # $TSUKUBA_Copyright:
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
-if !SUPERUX
 SUBDIRS=@XCODEML_COMMON_DIR@ \
-	@C_FRONTEND_DIR@ @C_BACKEND_DIR@ \
-	@F_FRONTEND_DIR@ @F_BACKEND_DIR@ \
-	@XCODEML_EXC_TOOLS_DIR@ \
-	@OMDRIVER_DIR@ \
-	@LIBOMPC_DIR@ @LIBOMPF_DIR@ @LIBTLOG_DIR@ @LIBTLOG_MPI_DIR@ \
-	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ @LIBXMP_THREADS_DIR@ \
-	@LIBXMPF_HEADER_DIR@ @LIBXMPF_DIR@
-else
-SUBDIRS=@XCODEML_COMMON_DIR@ \
-	@C_FRONTEND_DIR@ @C_BACKEND_DIR@ \
-	@F_FRONTEND_DIR@ @F_BACKEND_DIR@ \
-	@XCODEML_EXC_TOOLS_DIR@ \
-	@OMDRIVER_DIR@ \
+        @C_FRONTEND_DIR@ @C_BACKEND_DIR@ \
+        @F_FRONTEND_DIR@ @F_BACKEND_DIR@ \
+        @XCODEML_EXC_TOOLS_DIR@  @OMDRIVER_DIR@ \
 	@LIBTLOG_DIR@ @LIBTLOG_MPI_DIR@ \
-	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ @LIBXMP_THREADS_DIR@ \
-	@LIBXMPF_HEADER_DIR@ @LIBXMPF_DIR@ 
+        @LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ @LIBXMP_THREADS_DIR@ \
+        @LIBXMPF_HEADER_DIR@ @LIBXMPF_DIR@
+
+if !SUPERUX
+    SUBDIRS+=@LIBOMPC_DIR@ @LIBOMPF_DIR@
 endif
 
-if ENABLE_XMP_GPU
-SUBDIRS+=@LIBXMP_GPU_DIR@
-endif
+#if ENABLE_XMP_GPU
+#  SUBDIRS+=@LIBXMP_GPU_DIR@
+#endif
 
 if ENABLE_ACC
-SUBDIRS+=@LIBACC_DIR@ @LIBACC_HEADER_DIR@
+    SUBDIRS+=@LIBACC_DIR@ @LIBACC_HEADER_DIR@
 endif
 
 if ENABLE_ATOOL
-SUBDIRS+=@ATOOL_DIR@
+    SUBDIRS+=@ATOOL_DIR@
 endif
 
 XMPPKG_NAME:="@XMPPKG_NAME@"
 XMPPKG_TMPDIR_TOP:="/tmp/@XMPPKG_NAME@"
-XMPPKG_TMPDIR:=$(XMPPKG_TMPDIR_TOP)/$(shell mktemp -u --tmpdir=/)
+#XMPPKG_TMPDIR:=$(XMPPKG_TMPDIR_TOP)/$(shell mktemp -u --tmpdir=/)
+XMPPKG_TMPDIR:=$(XMPPKG_TMPDIR_TOP)/tmp.$$
 DEB_VER_FILE="/etc/debian_version"
 RH_REL_FILE="/etc/redhat-release"
 
 release-rpm:
 	if test -f $(RH_REL_FILE) ; then \
 		mkdir -p $(XMPPKG_TMPDIR_TOP); \
-		$(SHELL) release/make_rpm.sh $(CURDIR) $(XMPPKG_TMPDIR_TOP); \
+		bash release/make_rpm.sh $(CURDIR) $(XMPPKG_TMPDIR_TOP); \
 		rm -rf $(XMPPKG_TMPDIR_TOP); \
 	fi
 
 release-deb:
 	if test -f $(DEB_VER_FILE) ; then \
 		mkdir -p $(XMPPKG_TMPDIR); \
-		$(SHELL) release/make_deb.sh $(CURDIR) $(XMPPKG_TMPDIR); \
+		bash release/make_deb.sh $(CURDIR) $(XMPPKG_TMPDIR); \
 		rm -rf $(XMPPKG_TMPDIR_TOP); \
 	fi
 
 release: release-rpm release-deb
 
 BASE_TESTDIR  = "tests/xcalablemp/"
-TESTDIRS = "global-view/array/C/" "global-view/array/F/"
-TESTDIRS += "global-view/bcast/C/" "global-view/bcast/F/"
-TESTDIRS += "global-view/loop/C" "global-view/loop/F"
-TESTDIRS += "global-view/reduction/C" "global-view/reduction/F"
-TESTDIRS += "global-view/shadow-reflect/C/" "global-view/shadow-reflect/F/"
-TESTDIRS += "global-view/task/C"  "global-view/task/F"
-TESTDIRS += "global-view/template_fix/C/" "global-view/template_fix/F/"
-TESTDIRS += "global-view/gmove/C/" "global-view/gmove/F/"
-TESTDIRS += "global-view/inquiry/C/" "global-view/inquiry/F/"
-TESTDIRS += "global-view/gblock/C/" "global-view/gblock/F/"
-TESTDIRS += "global-view/align/C/" "global-view/align/F/"
-TESTDIRS += "global-view/intrinsic/C/" "global-view/intrinsic/F/"
-TESTDIRS += "global-view/util/C/" "global-view/util/F/"
-TESTDIRS += "others/F" "others/C"
+TESTDIRS = "global-view/array/C/" "global-view/array/F/" "global-view/bcast/C/" "global-view/bcast/F/" \
+	   "global-view/loop/C" "global-view/loop/F" "global-view/reduction/C" "global-view/reduction/F" \
+	   "global-view/shadow-reflect/C/" "global-view/shadow-reflect/F/" "global-view/task/C"  "global-view/task/F" \
+	   "global-view/template_fix/C/" "global-view/template_fix/F/" "global-view/gmove/C/" "global-view/gmove/F/" \
+	   "global-view/inquiry/C/" "global-view/inquiry/F/" "global-view/gblock/C/" "global-view/gblock/F/" \
+	   "global-view/align/C/" "global-view/align/F/" "global-view/intrinsic/C/" "global-view/intrinsic/F/" \
+	   "global-view/util/C/" "global-view/util/F/" "others/F" "others/C"
 if GASNET
-   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
-   TESTDIRS += "local-view/coarray/C" "local-view/other/C"
+   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"
 endif
 if FJRDMA
-   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C"
-   TESTDIRS += "local-view/coarray/C" "local-view/other/C"
+   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"
 endif
 
 BASE_LARGE_TESTDIR = "tests/xcalablemp/LARGE-SIZE-TESTS/"
@@ -136,9 +120,7 @@ clean-local:
 		-name '*.core' \
 	\) -exec rm -f {} \;
 
-DELETABLES	= \
-	C-BackEnd/ant.properties \
-	C-BackEnd/bin/C_Back \
+DELETABLES = C-BackEnd/bin/C_Back \
 	C-FrontEnd/src/c-exprcode.c \
 	C-FrontEnd/src/c-exprcode.h \
 	C-FrontEnd/src/c-parser.c \
@@ -194,7 +176,6 @@ DELETABLES	= \
 	Driver/etc/x2x.conf.acc \
 	Driver/etc/setup.conf \
 	C-FrontEnd/src/c-token.c \
-	F-BackEnd/ant.properties \
 	F-BackEnd/bin/F_Back \
 	F-BackEnd/bin/F_Trans \
 	F-BackEnd/bin/F_Decomp \
@@ -202,8 +183,6 @@ DELETABLES	= \
 	F-FrontEnd/src/C-exprcode.h \
 	F-FrontEnd/src/F95-parser.c \
 	F-FrontEnd/src/F95-parser.output \
-	XcodeML-Common/ant.properties \
-	XcodeML-Exc-Tools/ant.properties \
 	XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java \
 	autom4te.cache/ \
 	libtlog/src_mpi/bin/tlogview \

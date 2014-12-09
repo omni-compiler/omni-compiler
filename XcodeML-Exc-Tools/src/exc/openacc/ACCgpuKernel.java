@@ -557,7 +557,7 @@ public class ACCgpuKernel {
       loopStack.push(new Loop(forBlock));
       BlockList body = Bcons.blockList(makeCoreBlock(initBlocks, forBlock.getBody(), paramIds, localIds, prevExecMethodName, deviceKernelName));
       loopStack.pop();
-      if(prevExecMethodName != null && prevExecMethodName.equals("thread_x")){
+      if(prevExecMethodName != null && (prevExecMethodName.equals("thread_x") || prevExecMethodName.equals("block_thread_x"))){
 	return Bcons.FOR(forBlock.getInitBBlock(), forBlock.getCondBBlock(), forBlock.getIterBBlock(), body);
       }
       forBlock.Canonicalize();

@@ -78,15 +78,15 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@ENABLE_XMP_GPU_TRUE@am__append_1 = @LIBXMP_GPU_DIR@
+@SUPERUX_FALSE@am__append_1 = @LIBOMPC_DIR@ @LIBOMPF_DIR@
+
+#if ENABLE_XMP_GPU
+#  SUBDIRS+=@LIBXMP_GPU_DIR@
+#endif
 @ENABLE_ACC_TRUE@am__append_2 = @LIBACC_DIR@ @LIBACC_HEADER_DIR@
 @ENABLE_ATOOL_TRUE@am__append_3 = @ATOOL_DIR@
-@GASNET_TRUE@am__append_4 = "local-view/post-wait/C" \
-@GASNET_TRUE@	"local-view/coarray/C" "local-view/coarray/C" \
-@GASNET_TRUE@	"local-view/other/C"
-@FJRDMA_TRUE@am__append_5 = "local-view/post-wait/C" \
-@FJRDMA_TRUE@	"local-view/coarray/C" "local-view/coarray/C" \
-@FJRDMA_TRUE@	"local-view/other/C"
+@GASNET_TRUE@am__append_4 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"
+@FJRDMA_TRUE@am__append_5 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"
 @GASNET_TRUE@am__append_6 = "local-view/coarray/C/"
 @FJRDMA_TRUE@am__append_7 = "local-view/coarray/C/"
 subdir = .
@@ -199,11 +199,10 @@ CTAGS = ctags
 CSCOPE = cscope
 DIST_SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ @C_BACKEND_DIR@ \
 	@F_FRONTEND_DIR@ @F_BACKEND_DIR@ @XCODEML_EXC_TOOLS_DIR@ \
-	@OMDRIVER_DIR@ @LIBOMPC_DIR@ @LIBOMPF_DIR@ @LIBTLOG_DIR@ \
-	@LIBTLOG_MPI_DIR@ @LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ \
-	@LIBXMP_THREADS_DIR@ @LIBXMPF_HEADER_DIR@ @LIBXMPF_DIR@ \
-	@LIBXMP_GPU_DIR@ @LIBACC_DIR@ @LIBACC_HEADER_DIR@ @ATOOL_DIR@ \
-	$(am__empty)
+	@OMDRIVER_DIR@ @LIBTLOG_DIR@ @LIBTLOG_MPI_DIR@ \
+	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ @LIBXMP_THREADS_DIR@ \
+	@LIBXMPF_HEADER_DIR@ @LIBXMPF_DIR@ @LIBOMPC_DIR@ @LIBOMPF_DIR@ \
+	@LIBACC_DIR@ @LIBACC_HEADER_DIR@ @ATOOL_DIR@ $(am__empty)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -250,7 +249,6 @@ ACLOCAL = @ACLOCAL@
 AIX_OPT = @AIX_OPT@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
-ANTCOM = @ANTCOM@
 API_FLAVOR = @API_FLAVOR@
 AR = @AR@
 ARFLAGS = @ARFLAGS@
@@ -357,7 +355,6 @@ MAINT = @MAINT@
 MAKE = @MAKE@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
-MKDIR = @MKDIR@
 MKDIR_P = @MKDIR_P@
 MKRULESDIR = @MKRULESDIR@
 MM5TGT = @MM5TGT@
@@ -448,10 +445,8 @@ XMPPKG_SUMMARY = @XMPPKG_SUMMARY@
 XMPPKG_URL = @XMPPKG_URL@
 XMPPKG_VENDOR = @XMPPKG_VENDOR@
 XMPPKG_VERSION = @XMPPKG_VERSION@
-XMP_ENABLE_GPU = @XMP_ENABLE_GPU@
 YACC = @YACC@
 YFLAGS = @YFLAGS@
-ZIPCOM = @ZIPCOM@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -534,25 +529,15 @@ top_srcdir = @top_srcdir@
 # $TSUKUBA_Copyright:
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
-@SUPERUX_FALSE@SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ \
-@SUPERUX_FALSE@	@C_BACKEND_DIR@ @F_FRONTEND_DIR@ \
-@SUPERUX_FALSE@	@F_BACKEND_DIR@ @XCODEML_EXC_TOOLS_DIR@ \
-@SUPERUX_FALSE@	@OMDRIVER_DIR@ @LIBOMPC_DIR@ @LIBOMPF_DIR@ \
-@SUPERUX_FALSE@	@LIBTLOG_DIR@ @LIBTLOG_MPI_DIR@ \
-@SUPERUX_FALSE@	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ \
-@SUPERUX_FALSE@	@LIBXMP_THREADS_DIR@ @LIBXMPF_HEADER_DIR@ \
-@SUPERUX_FALSE@	@LIBXMPF_DIR@ $(am__append_1) $(am__append_2) \
-@SUPERUX_FALSE@	$(am__append_3)
-@SUPERUX_TRUE@SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ \
-@SUPERUX_TRUE@	@C_BACKEND_DIR@ @F_FRONTEND_DIR@ @F_BACKEND_DIR@ \
-@SUPERUX_TRUE@	@XCODEML_EXC_TOOLS_DIR@ @OMDRIVER_DIR@ \
-@SUPERUX_TRUE@	@LIBTLOG_DIR@ @LIBTLOG_MPI_DIR@ \
-@SUPERUX_TRUE@	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ \
-@SUPERUX_TRUE@	@LIBXMP_THREADS_DIR@ @LIBXMPF_HEADER_DIR@ \
-@SUPERUX_TRUE@	@LIBXMPF_DIR@ $(am__append_1) $(am__append_2) \
-@SUPERUX_TRUE@	$(am__append_3)
+SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ @C_BACKEND_DIR@ \
+	@F_FRONTEND_DIR@ @F_BACKEND_DIR@ @XCODEML_EXC_TOOLS_DIR@ \
+	@OMDRIVER_DIR@ @LIBTLOG_DIR@ @LIBTLOG_MPI_DIR@ \
+	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ @LIBXMP_THREADS_DIR@ \
+	@LIBXMPF_HEADER_DIR@ @LIBXMPF_DIR@ $(am__append_1) \
+	$(am__append_2) $(am__append_3)
 XMPPKG_TMPDIR_TOP := "/tmp/@XMPPKG_NAME@"
-XMPPKG_TMPDIR := $(XMPPKG_TMPDIR_TOP)/$(shell mktemp -u --tmpdir=/)
+#XMPPKG_TMPDIR:=$(XMPPKG_TMPDIR_TOP)/$(shell mktemp -u --tmpdir=/)
+XMPPKG_TMPDIR := $(XMPPKG_TMPDIR_TOP)/tmp.$$
 DEB_VER_FILE = "/etc/debian_version"
 RH_REL_FILE = "/etc/redhat-release"
 BASE_TESTDIR = "tests/xcalablemp/"
@@ -573,9 +558,7 @@ TESTDIRS = "global-view/array/C/" "global-view/array/F/" \
 	$(am__append_5)
 BASE_LARGE_TESTDIR = "tests/xcalablemp/LARGE-SIZE-TESTS/"
 LARGE_TESTDIRS = "others/C" $(am__append_6) $(am__append_7)
-DELETABLES = \
-	C-BackEnd/ant.properties \
-	C-BackEnd/bin/C_Back \
+DELETABLES = C-BackEnd/bin/C_Back \
 	C-FrontEnd/src/c-exprcode.c \
 	C-FrontEnd/src/c-exprcode.h \
 	C-FrontEnd/src/c-parser.c \
@@ -631,7 +614,6 @@ DELETABLES = \
 	Driver/etc/x2x.conf.acc \
 	Driver/etc/setup.conf \
 	C-FrontEnd/src/c-token.c \
-	F-BackEnd/ant.properties \
 	F-BackEnd/bin/F_Back \
 	F-BackEnd/bin/F_Trans \
 	F-BackEnd/bin/F_Decomp \
@@ -639,8 +621,6 @@ DELETABLES = \
 	F-FrontEnd/src/C-exprcode.h \
 	F-FrontEnd/src/F95-parser.c \
 	F-FrontEnd/src/F95-parser.output \
-	XcodeML-Common/ant.properties \
-	XcodeML-Exc-Tools/ant.properties \
 	XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java \
 	autom4te.cache/ \
 	libtlog/src_mpi/bin/tlogview \
@@ -670,9 +650,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps ./Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -1172,14 +1152,14 @@ uninstall-am:
 release-rpm:
 	if test -f $(RH_REL_FILE) ; then \
 		mkdir -p $(XMPPKG_TMPDIR_TOP); \
-		$(SHELL) release/make_rpm.sh $(CURDIR) $(XMPPKG_TMPDIR_TOP); \
+		bash release/make_rpm.sh $(CURDIR) $(XMPPKG_TMPDIR_TOP); \
 		rm -rf $(XMPPKG_TMPDIR_TOP); \
 	fi
 
 release-deb:
 	if test -f $(DEB_VER_FILE) ; then \
 		mkdir -p $(XMPPKG_TMPDIR); \
-		$(SHELL) release/make_deb.sh $(CURDIR) $(XMPPKG_TMPDIR); \
+		bash release/make_deb.sh $(CURDIR) $(XMPPKG_TMPDIR); \
 		rm -rf $(XMPPKG_TMPDIR_TOP); \
 	fi
 

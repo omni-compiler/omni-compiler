@@ -49,5 +49,18 @@ int main()
   //vefify
   if(sum != 3825) return 4;
 
+
+  sum = 50;
+#pragma acc parallel loop reduction(+:sum) vector_length(32)
+  for(i=0;i<100;i++) sum += array[i];
+  //vefify
+  if(sum != 5000) return 5;
+
+  sum = 50;
+#pragma acc parallel loop reduction(+:sum) vector_length(512)
+  for(i=0;i<100;i++) sum += array[i];
+  //vefify
+  if(sum != 5000) return 6;
+  
   return 0;
 }

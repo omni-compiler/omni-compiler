@@ -29,3 +29,19 @@ integer irank, xmp_node_num, ierr
   endif
 return
 end subroutine
+
+subroutine chk_int3(ierr, n)
+integer ierr
+!$xmp nodes p(*)
+
+!$xmp task on p(n)
+  if ( ierr .eq. 0 ) then
+     write(*,*) "PASS"
+  else
+     write(*,*) "ERROR"
+     call exit(1)
+  endif
+!$xmp end task
+
+return
+end subroutine

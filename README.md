@@ -1,7 +1,7 @@
 README
 
 # How to install
- Please show "docs/INSTALL.md"
+ Please show "INSTALL.md"
 
 -----
 # Implementation Status

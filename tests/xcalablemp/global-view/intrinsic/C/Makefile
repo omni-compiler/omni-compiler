@@ -18,8 +18,11 @@ chk.o: ./chk/chk.c
 
 run: $(EXES)
 	$(XRUN) -n 4 ./intrinsic_transpose.x
+	$(XRUN) -n 8 ./intrinsic_transpose_FJ.x
+	$(XRUN) -n 16 ./intrinsic_transpose_101_FJ.x
 	$(XRUN) -n 4 ./intrinsic_matmul.x
 	$(XRUN) -n 4 ./intrinsic_matmul_replica.x
+	$(XRUN) -n 8 ./intrinsic_matmul_FJ.x
 
 clean:
 	rm -f $(EXES) $(OBJS) chk.o
