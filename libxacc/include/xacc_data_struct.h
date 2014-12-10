@@ -44,7 +44,7 @@ typedef struct _XACC_array_type {
 
 typedef struct _XACC_arrays_type{
   _XACC_device_t *device_type;
-  _XACC_array_t *device_array;
+  _XACC_array_t *array;
   int dim;
   void *hostptr;
   size_t type_size;

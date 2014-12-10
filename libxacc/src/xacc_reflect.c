@@ -123,7 +123,7 @@ void _XACC_reflect_init(_XACC_arrays_t *arrays_desc)
   //  int *lwidth = _XMP_alloc(sizeof(int)*dim);
   //  int *uwidth = _XMP_alloc(sizeof(int)*dim);
   for(int i = device->lb; i <= device->ub; i+= device->step){
-    _XACC_array_t *array_desc = arrays_desc->device_array + i;
+    _XACC_array_t *array_desc = arrays_desc->array + i;
     for(int j = 0; j < dim; j++){
       _XACC_array_info_t *ai = array_desc->info + j;
       if(ai->shadow_size_lo != 0 || ai->shadow_size_hi != 0){
@@ -160,7 +160,7 @@ void _XACC_reflect_init(_XACC_arrays_t *arrays_desc)
 static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_device, int target_dim){
   //if (lwidth == 0 && uwidth == 0) return;
 
-  _XACC_array_t *array_desc = arrays_desc->device_array + target_device;
+  _XACC_array_t *array_desc = arrays_desc->array + target_device;
   _XACC_array_info_t *ai = array_desc->info + target_dim;
   _XACC_array_info_t *ainfo = array_desc->info;
   _XMP_reflect_sched_t *reflect = ai->reflect_sched;
@@ -756,7 +756,7 @@ static void reflect_pack_start_all(_XACC_arrays_t *arrays_desc)
   _XACC_device_t *device = arrays_desc->device_type;
 #pragma omp for
   for(int i = device->lb; i <= device->ub; i += device->step){
-    _XACC_array_t *array_desc = arrays_desc->device_array + i;
+    _XACC_array_t *array_desc = arrays_desc->array + i;
     if(useKernelPacking){
 #ifdef _USE_OMP
       CUDA_SAFE_CALL(cudaSetDevice(i));
@@ -786,7 +786,7 @@ static void reflect_pack_wait_all(_XACC_arrays_t *arrays_desc)
   _XACC_device_t *device = arrays_desc->device_type;
 #pragma omp for
   for(int i = device->lb; i <= device->ub; i += device->step){
-    _XACC_array_t *array_desc = arrays_desc->device_array + i;
+    _XACC_array_t *array_desc = arrays_desc->array + i;
 
     for(int j = 0; j < dim; j++){
       _XACC_array_info_t *ai = array_desc->info + j;
@@ -808,7 +808,7 @@ static void reflect_unpack_start_all(_XACC_arrays_t *arrays_desc)
   _XACC_device_t *device = arrays_desc->device_type;
 #pragma omp for
   for(int i = device->lb; i <= device->ub; i += device->step){  
-    _XACC_array_t *array_desc = arrays_desc->device_array + i;
+    _XACC_array_t *array_desc = arrays_desc->array + i;
     if(useKernelPacking){
 #ifndef _USE_OMP
       CUDA_SAFE_CALL(cudaSetDevice(i));
@@ -839,7 +839,7 @@ static void reflect_unpack_wait_all(_XACC_arrays_t *arrays_desc)
 #pragma omp for
   for(int i = device->lb; i <= device->ub; i += device->step){
 
-    _XACC_array_t *array_desc = arrays_desc->device_array + i;
+    _XACC_array_t *array_desc = arrays_desc->array + i;
     for(int j = 0; j < dim; j++){
       _XACC_array_info_t *ai = array_desc->info + j;
       if(ai->shadow_size_lo != 0 || ai->shadow_size_hi != 0){
@@ -856,7 +856,7 @@ static void reflect_unpack_wait_all(_XACC_arrays_t *arrays_desc)
 static void _XACC_reflect_do_inter_start_dev(_XACC_arrays_t *arrays_desc, int i)
 {
   int dim = arrays_desc->dim;
-  _XACC_array_t *array_desc = arrays_desc->device_array + i;
+  _XACC_array_t *array_desc = arrays_desc->array + i;
 
   for(int j = 0; j < dim; j++){
     if(j==0)continue;
@@ -878,7 +878,7 @@ static void _XACC_reflect_do_inter_start_dev(_XACC_arrays_t *arrays_desc, int i)
 static void _XACC_reflect_do_inter_wait_dev(_XACC_arrays_t *arrays_desc, int i)
 {
   int dim = arrays_desc->dim;
-  _XACC_array_t *array_desc = arrays_desc->device_array + i;
+  _XACC_array_t *array_desc = arrays_desc->array + i;
 
   for(int j = 0; j < dim; j++){
     if(j==0)continue;
@@ -896,7 +896,7 @@ static void _XACC_reflect_do_inter_start_dim0(_XACC_arrays_t *arrays_desc)
 {
 #pragma omp master
   {
-    _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->lb;
+    _XACC_array_t *array_desc = arrays_desc->array + arrays_desc->device_type->lb;
     _XACC_array_info_t *ai = array_desc->info + 0;
     _XMP_reflect_sched_t *reflect = ai->reflect_sched;
     if(useHostBuffer){
@@ -908,7 +908,7 @@ static void _XACC_reflect_do_inter_start_dim0(_XACC_arrays_t *arrays_desc)
   }
 #pragma omp master
   {
-    _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->ub;
+    _XACC_array_t *array_desc = arrays_desc->array + arrays_desc->device_type->ub;
     _XACC_array_info_t *ai = array_desc->info + 0;
     _XMP_reflect_sched_t *reflect = ai->reflect_sched;
     if(useHostBuffer){
@@ -925,7 +925,7 @@ static void _XACC_reflect_do_inter_wait_dim0(_XACC_arrays_t *arrays_desc)
 {
 #pragma omp master
   {
-    _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->lb;
+    _XACC_array_t *array_desc = arrays_desc->array + arrays_desc->device_type->lb;
     _XACC_array_info_t *ai = array_desc->info + 0;
     _XMP_reflect_sched_t *reflect = ai->reflect_sched;
     MPI_Wait(reflect->req + 0, MPI_STATUS_IGNORE); //lo recv                                                                                                                                      
@@ -933,7 +933,7 @@ static void _XACC_reflect_do_inter_wait_dim0(_XACC_arrays_t *arrays_desc)
   }
 #pragma omp master
   {
-    _XACC_array_t *array_desc = arrays_desc->device_array + arrays_desc->device_type->ub;
+    _XACC_array_t *array_desc = arrays_desc->array + arrays_desc->device_type->ub;
     _XACC_array_info_t *ai = array_desc->info + 0;
     _XMP_reflect_sched_t *reflect = ai->reflect_sched;
     MPI_Wait(reflect->req + 1, MPI_STATUS_IGNORE); //lo send                                                                                                                                      
@@ -1008,7 +1008,7 @@ static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
 #else
     for(int dev = device->lb ; dev <= device->ub; dev += device->step){
 #endif
-    _XACC_array_t* device_array = &(arrays_desc->device_array[dev]);
+    _XACC_array_t* device_array = &(arrays_desc->array[dev]);
     _XACC_array_info_t* info0 = &device_array->info[0];
     _XMP_reflect_sched_t *reflect = info0->reflect_sched;
 
@@ -1017,7 +1017,7 @@ static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
     }
 
     if(dev > device->lb){
-      _XACC_array_t* lower_device_array = &(arrays_desc->device_array[dev-1]);
+      _XACC_array_t* lower_device_array = &(arrays_desc->array[dev-1]);
       _XACC_array_info_t* lower_info0 = &lower_device_array->info[0];
       _XMP_reflect_sched_t* lo_reflect = lower_info0->reflect_sched;
 
@@ -1031,7 +1031,7 @@ static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
     }
 
     if(dev < device->ub){
-      _XACC_array_t* upper_device_array = &(arrays_desc->device_array[dev+1]);
+      _XACC_array_t* upper_device_array = &(arrays_desc->array[dev+1]);
       _XACC_array_info_t* upper_info0 = &upper_device_array->info[0];
       _XMP_reflect_sched_t* hi_reflect = upper_info0->reflect_sched;
 
@@ -1057,7 +1057,7 @@ static void _XACC_reflect_do_intra_wait(_XACC_arrays_t *arrays_desc)
   _XACC_device_t *device = arrays_desc->device_type;
 #pragma omp for
   for(int dev = device->lb; dev <= device->ub; dev += device->step){
-    _XACC_array_t* device_array = &(arrays_desc->device_array[dev]);
+    _XACC_array_t* device_array = &(arrays_desc->array[dev]);
     _XACC_array_info_t* info0 = &device_array->info[0];
     _XMP_reflect_sched_t *reflect = info0->reflect_sched;
     if(info0->device_layout_manner != _XMP_N_DIST_BLOCK){

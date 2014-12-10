@@ -84,11 +84,11 @@ void _XACC_init_layouted_array(_XACC_arrays_t **arrays, _XMP_array_t* alignedArr
   layoutedArray->device_type = device;
   //alignedArray->device_type = device;
   int dim = alignedArray->dim;
-  layoutedArray->device_array = (_XACC_array_t*)_XMP_alloc(sizeof(_XACC_array_t) * (device->ub + 1));
+  layoutedArray->array = (_XACC_array_t*)_XMP_alloc(sizeof(_XACC_array_t) * (device->ub + 1));
   for(int dev = device->lb; dev <= device->ub; dev += device->step){
     _XACC_array_info_t* d_array_info = (_XACC_array_info_t*)_XMP_alloc(sizeof(_XACC_array_info_t) * dim);
     _XMP_array_info_t *h_array_info = alignedArray->info;
-    layoutedArray->device_array[dev].info = d_array_info;
+    layoutedArray->array[dev].info = d_array_info;
     int i;
     for(i = 0; i <dim; i++){
       d_array_info[i].device_layout_manner = _XMP_N_DIST_DUPLICATION;
@@ -164,7 +164,7 @@ void _XACC_split_layouted_array_BLOCK(_XACC_arrays_t* array_desc, int dim){
   //int num_devices = array_desc->device_type->size;
   _XACC_device_t* device = array_desc->device_type;
   for(int dev = device->lb; dev <= device->ub; dev += device->step){
-    _XACC_array_info_t *d_array_info = &(array_desc->device_array[dev].info[dim]);
+    _XACC_array_info_t *d_array_info = &(array_desc->array[dev].info[dim]);
     d_array_info->device_layout_manner = _XMP_N_DIST_BLOCK;
 
     unsigned long long size = _XMP_M_CEILi(d_array_info->par_size, device->size);
@@ -222,7 +222,7 @@ void _XACC_set_shadow_NORMAL(_XACC_arrays_t* array_desc, int dim , int lo, int h
   //int num_devices = array_desc->device_type->size;
   _XACC_device_t* device = array_desc->device_type;
   for(int dev = device->lb; dev <= device->ub; dev += device->step){
-    _XACC_array_info_t *d_array_info = &(array_desc->device_array[dev].info[dim]);
+    _XACC_array_info_t *d_array_info = &(array_desc->array[dev].info[dim]);
 
       int d_lo = lo;
       int d_hi = hi;
@@ -275,7 +275,7 @@ void _XACC_calc_size(_XACC_arrays_t* array_desc){
     unsigned long long device_acc = 1;
     unsigned long long device_offset = 0;
     int dim = array_desc->dim;
-    _XACC_array_t *d_array_desc = &(array_desc->device_array[dev]);
+    _XACC_array_t *d_array_desc = &(array_desc->array[dev]);
     for(int i = dim - 1; i > 0; i--){
       _XACC_array_info_t* info = &(d_array_desc->info[i]);
       info->dim_acc = device_acc;
@@ -307,19 +307,19 @@ void _XACC_calc_size(_XACC_arrays_t* array_desc){
   }
 }
 
-static _XACC_array_t* get_device_array(_XACC_arrays_t* array_desc, int deviceNum)
+static _XACC_array_t* get_array(_XACC_arrays_t* array_desc, int deviceNum)
 {
   /* deviceNum is 1-based */
-  _XACC_device_t* device = array_desc->device_type;
+  //_XACC_device_t* device = array_desc->device_type;
   //int n = ((deviceNum - 1) - device->lb) / device->step;
   int n = deviceNum - 1;
-  return &(array_desc->device_array[n]);
+  return &(array_desc->array[n]);
 }
 
 void _XACC_get_size(_XACC_arrays_t* array_desc, unsigned long long* offset,
                     unsigned long long* size, int deviceNum)
 {
-  _XACC_array_t* device_array = get_device_array(array_desc, deviceNum);
+  _XACC_array_t* device_array = get_array(array_desc, deviceNum);
   *size = device_array->alloc_size;
   *offset = device_array->alloc_offset;
 }
@@ -327,7 +327,7 @@ void _XACC_get_size(_XACC_arrays_t* array_desc, unsigned long long* offset,
 void _XACC_get_copy_size(_XACC_arrays_t* array_desc, unsigned long long* offset,
                          unsigned long long* size, int deviceNum)
 {
-  _XACC_array_t* device_array = get_device_array(array_desc, deviceNum);
+  _XACC_array_t* device_array = get_array(array_desc, deviceNum);
   *size = device_array->copy_size;
   *offset = device_array->copy_offset;
 }
@@ -342,7 +342,7 @@ void _XACC_sched_loop_layout_BLOCK(int init,
                               int dim,
                               int deviceNum)
 {
-  _XACC_array_t* device_array = get_device_array(array_desc, deviceNum);
+  _XACC_array_t* device_array = get_array(array_desc, deviceNum);
   _XACC_array_info_t* info = &device_array->info[dim];
 
   int lb = info->local_lower - info->shadow_size_lo;
@@ -378,7 +378,7 @@ void _XACC_sched_loop_layout_BLOCK(int init,
 
 void _XACC_set_deviceptr(_XACC_arrays_t *arrays_desc, void *deviceptr, int deviceNum)
 {
-  _XACC_array_t* arrayOnDevice = get_device_array(arrays_desc, deviceNum);
+  _XACC_array_t* arrayOnDevice = get_array(arrays_desc, deviceNum);
   arrayOnDevice->deviceptr = deviceptr;
   //  printf("deviceptr=%p@%d\n", deviceptr, deviceNum);
 }
