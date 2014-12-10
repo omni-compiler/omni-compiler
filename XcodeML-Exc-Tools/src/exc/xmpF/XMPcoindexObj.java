@@ -60,7 +60,7 @@ public class XMPcoindexObj {
     } else {                                       // scalar
       name = varRef.getName();
     }
-    this.coarray = _findCoarrayInCoarrays(name, coarrays);
+    coarray = _findCoarrayInCoarrays(name, coarrays);
     _commonConstructor();
   }
 
@@ -81,7 +81,13 @@ public class XMPcoindexObj {
     Xobject[] codims = coarray.getCodimensions();
     int corank = coarray.getCorank();
 
-    // first cosubscript c0 of cosubscrList
+    ///
+    System.out.println("");
+    System.out.println("cosubList="+cosubList);
+    System.out.println("codims="+codims);
+    System.out.println("corank="+corank);
+    ///
+
     Xobject cosub0 = cosubList.getArg(0).getArg(0);
     //    if (cosub instanceof Ident)
     //      cosub = ((Ident)cosub).Ref().cfold(getBlock());
@@ -94,9 +100,16 @@ public class XMPcoindexObj {
     //
     Xobject coindex = cosub0;               // =coindex[0]
     Xobject factor = null;                  // factor f
+
     for (int i = 1; i < corank; i++) {
+
+      //////
+      System.out.println("codims["+(i-1)+"]="+codims[i-1]);
+      //////
+
+
       // factor[i] = factor[i-1] * cosize[i-1]
-      if (i == 1) 
+      if (i == 1)
         factor = coarray.getSizeFromIndexRange(codims[0]);
       else 
         factor = Xcons.binaryOp(Xcode.MUL_EXPR,

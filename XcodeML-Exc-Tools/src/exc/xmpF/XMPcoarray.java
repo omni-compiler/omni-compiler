@@ -166,7 +166,15 @@ public class XMPcoarray {
 
   public Xobject getSizeFromIndexRange(Xobject range)
   {
-    FarrayType ftype = (FarrayType)ident.Type();
+    //////
+    System.out.println("range="+range);
+    System.out.println("ident="+ident);
+    //////
+    //    FarrayType ftype = (FarrayType)ident.Type();
+    FarrayType ftype = new FarrayType("", null, 0, null);
+    //////
+    //System.out.println("ftype="+ftype);
+    //////
     return ftype.getSizeFromIndexRange(range, fblock);
   }
 
