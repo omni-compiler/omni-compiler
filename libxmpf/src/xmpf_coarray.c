@@ -125,26 +125,22 @@ void xmp_sync_memory_()
 {
   int status;
 
-  if (_XMPF_coarrayMsg)
-    fprintf(stderr, "**** symc_memory (%s)\n", __FUNCTION__);
-
   xmp_sync_memory(&status);
 
   if (_XMPF_coarrayMsg)
-    fprintf(stderr, "**** end sync_memory, status=%d\n", status);
+    fprintf(stderr, "**** done sync_memory, status=%d (%s)\n",
+            status, __FILE__);
 }
 
 void xmp_sync_all_()
 {
   int status;
 
-  if (_XMPF_coarrayMsg)
-    fprintf(stderr, "**** symc_all (%s)\n", __FUNCTION__);
-
   xmp_sync_all(&status);
 
   if (_XMPF_coarrayMsg)
-    fprintf(stderr, "**** end sync_all, status=%d\n", status);
+    fprintf(stderr, "**** done sync_all, status=%d (%s)\n",
+            status, __FILE__);
 }
 
 

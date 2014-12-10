@@ -284,7 +284,7 @@ extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void
 
 /* xmpf_coarray.c */
 extern int _XMPF_coarrayMsg;          // default: message off
-extern void _XMPF_coarray_msg(int *sw);
+extern void xmpf_coarray_msg_(int *sw);
 
 extern int _XMPF_get_coarrayElement(int serno);
 extern void *_XMPF_get_coarrayDesc(int serno);

@@ -344,6 +344,10 @@ public class XMPcoindexObj {
     return getNeighboringAddr(-1);
   }
 
+  /* get address of
+      a(i[0], ..., i[hostRank-1])  for rank=-1
+      a(i[0], ..., i[rank]+stride[rank], ..., i[hostRank-1]) for rank>=0
+  */
   public Xobject getNeighboringAddr(int rank) {
     Xobject baseAddr;
     if (obj.Opcode() == Xcode.CO_ARRAY_REF)
@@ -364,7 +368,7 @@ public class XMPcoindexObj {
       if (i == rank) {
         start = Xcons.binaryOp(Xcode.PLUS_EXPR,
                                start, 
-                               Xcons.IntConstant(1));
+                               getStride(i));
       }
       Xobject arg2 = Xcons.FarrayIndex(start);
       args2.setArg(i, arg2);
