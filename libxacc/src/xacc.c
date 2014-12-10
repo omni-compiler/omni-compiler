@@ -176,6 +176,7 @@ void _XACC_split_layouted_array_BLOCK(_XACC_arrays_t* array_desc, int dim){
     }else{
       //      d_array_info->par_upper = h_array_info->par_upper;
     }
+    d_array_info->par_size = d_array_info->par_upper - d_array_info->par_lower + 1;
     //d_array_info->local_stride = h_array_info->local_stride;
     d_array_info->local_lower += size * (dev - device->lb);
     if(dev != device->ub){
@@ -197,11 +198,12 @@ void _XACC_split_layouted_array_BLOCK(_XACC_arrays_t* array_desc, int dim){
 /* #endif */
 
     
-    /* fprintf(stderr, "dim=%d, block par (%d, %d, %d) local(%d, %d, %d, %d)\n", */
+    /* fprintf(stderr, "dim=%d, block par (%d, %d, %d, %d) local(%d, %d, %d) alloc(%d)\n", */
     /*        dim, */
     /*        d_array_info->par_lower, */
     /*        d_array_info->par_upper, */
     /*        d_array_info->par_stride, */
+    /*        d_array_info->par_size,	     */
     /*        d_array_info->local_lower, */
     /*        d_array_info->local_upper, */
     /*        d_array_info->local_stride, */
