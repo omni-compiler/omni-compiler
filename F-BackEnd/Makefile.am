@@ -9,8 +9,8 @@ $(TARGET): $(CLASS)
 	mkdir -p build
 	cd src; $(JARCOM) cf ../$@ xcodeml/f/*/*.class
 
-$(CLASS): $(SRC)
-	$(JAVACCOM) src/xcodeml/f/*/*.java -g -classpath ../XcodeML-Common/build/om-common.jar -Xlint:deprecation
+.java.class:
+	$(JAVACCOM) $< -classpath ../XcodeML-Common/build/om-common.jar:./src -Xlint:deprecation
 
 clean-local:
 	rm -f $(TARGET) $(CLASS)
@@ -18,5 +18,3 @@ clean-local:
 install: $(TARGET)
 	mkdir -p ${javadir}
 	$(INSTALL) $^ ${javadir}
-
-.NOTPARALLEL:
