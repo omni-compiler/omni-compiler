@@ -18,9 +18,14 @@ chk.o: ./chk/chk.f90
 
 run: $(EXES)
 	$(XRUN) -n 4 ./intrinsic_transpose.x
+	$(XRUN) -n 4 ./intrinsic_transpose_4_FJ.x
+	$(XRUN) -n 8 ./intrinsic_transpose_8_FJ.x
 	$(XRUN) -n 16 ./intrinsic_transpose_FJ.x
 	$(XRUN) -n 4 ./intrinsic_matmul.x
 	$(XRUN) -n 4 ./intrinsic_matmul_replica.x
+	$(XRUN) -n 2 ./intrinsic_matmul_2_FJ.x
+	$(XRUN) -n 4 ./intrinsic_matmul_4_FJ.x
+	$(XRUN) -n 8 ./intrinsic_matmul_8_FJ.x
 	$(XRUN) -n 16 ./intrinsic_matmul_FJ.x
 
 clean:

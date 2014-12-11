@@ -22,6 +22,7 @@ run: $(EXES)
 	$(XRUN) -n 16 ./intrinsic_transpose_101_FJ.x
 	$(XRUN) -n 4 ./intrinsic_matmul.x
 	$(XRUN) -n 4 ./intrinsic_matmul_replica.x
+	$(XRUN) -n 4 ./intrinsic_matmul_4_FJ.x
 	$(XRUN) -n 8 ./intrinsic_matmul_FJ.x
 
 clean:
