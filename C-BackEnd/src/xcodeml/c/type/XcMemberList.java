@@ -42,7 +42,7 @@ public final class XcMemberList extends XcIdentList
             String symbol = ident.getSymbol();
             XcType type = ident.getType();
 
-            ident.appendGccExtMark(w);
+            ident.appendGccExtension(w);
 
             type.appendDeclCode(w, symbol, true, false);
 
