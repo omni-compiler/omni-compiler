@@ -20,7 +20,7 @@
 static char packVector = 1;
 static char useHostBuffer = 1;
 static const char useKernelPacking = 1; //use kernel for packing
-static const int useSingleStreamLimit = 16384;
+static const int useSingleStreamLimit = 16384; //# of elements
 
 static void _XACC_reflect_sched_dim(_XACC_arrays_t *a, int target_device, int target_dim);
 
@@ -538,7 +538,7 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
   cudaStream_t *lo_stream = (cudaStream_t*)_XMP_alloc(sizeof(cudaStream_t));
   CUDA_SAFE_CALL(cudaStreamCreate(lo_stream));
   reflect->lo_async_id = (void*)lo_stream;
-  if(src != MPI_PROC_NULL && dst != MPI_PROC_NULL && lo_buf_size <= useSingleStreamLimit){
+  if((src != MPI_PROC_NULL && dst != MPI_PROC_NULL && (lo_buf_size / type_size) <= useSingleStreamLimit) || !useHostBuffer){
     reflect->hi_async_id = NULL;
   }else{
     cudaStream_t *hi_stream = (cudaStream_t*)_XMP_alloc(sizeof(cudaStream_t));
