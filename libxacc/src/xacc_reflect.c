@@ -1092,7 +1092,7 @@ static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
   _XACC_device_t *device = arrays_desc->device_type;
 #ifdef _USE_OMP
   if(omp_get_thread_num() != 0)
-    for(int dev = device->lb + device->step *(omp_get_thread_num() - 1) ; dev <= device->ub; dev += (device->step * (omp_get_num_threads()-1))){
+    for(int dev = device->lb + device->step * omp_get_thread_num() ; dev <= device->ub; dev += (device->step * (omp_get_num_threads()-1))){
 #else
     for(int dev = device->lb ; dev <= device->ub; dev += device->step){
 #endif
@@ -1107,30 +1107,33 @@ static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
     if(dev > device->lb){
       _XACC_array_t* lower_device_array = &(arrays_desc->array[dev-1]);
       _XACC_array_info_t* lower_info0 = &lower_device_array->info[0];
-      _XMP_reflect_sched_t* lo_reflect = lower_info0->reflect_sched;
+      _XMP_reflect_sched_t* lower_reflect = lower_info0->reflect_sched;
 
-      size_t loSendSize = reflect->blocklength*reflect->hi_width;
-      char* sendPtr= reflect->hi_send_buf;
-      char* recvPtr= lo_reflect->hi_recv_buf;
-      cudaStream_t *st = (cudaStream_t*)reflect->hi_async_id;
-      CUDA_SAFE_CALL(cudaMemcpyAsync(recvPtr, sendPtr, loSendSize, cudaMemcpyDeviceToDevice, *st));
+      /* size_t loSendSize = reflect->blocklength*reflect->hi_width; */
+      /* char* sendPtr= reflect->hi_send_buf; */
+      /* char* recvPtr= lower_reflect->hi_recv_buf; */
+      cudaStream_t *st_lo = (cudaStream_t*)reflect->lo_async_id;
+      cudaStream_t *st_hi = (cudaStream_t*)reflect->hi_async_id;
+      CUDA_SAFE_CALL(cudaMemcpyAsync(lower_reflect->hi_recv_buf, reflect->hi_send_buf, reflect->blocklength*reflect->hi_width, cudaMemcpyDeviceToDevice, *st_lo));
+      TLOG_LOG(TLOG_EVENT_9);
+      CUDA_SAFE_CALL(cudaMemcpyAsync(reflect->lo_recv_buf, lower_reflect->lo_send_buf, reflect->blocklength*reflect->lo_width, cudaMemcpyDeviceToDevice, *st_hi));
       //CUDA_SAFE_CALL(cudaMemcpy(recvPtr, sendPtr, loSendSize, cudaMemcpyDeviceToDevice));
       TLOG_LOG(TLOG_EVENT_9);
     }
 
-    if(dev < device->ub){
-      _XACC_array_t* upper_device_array = &(arrays_desc->array[dev+1]);
-      _XACC_array_info_t* upper_info0 = &upper_device_array->info[0];
-      _XMP_reflect_sched_t* hi_reflect = upper_info0->reflect_sched;
+    /* if(dev < device->ub){ */
+    /*   _XACC_array_t* upper_device_array = &(arrays_desc->array[dev+1]); */
+    /*   _XACC_array_info_t* upper_info0 = &upper_device_array->info[0]; */
+    /*   _XMP_reflect_sched_t* hi_reflect = upper_info0->reflect_sched; */
 
-      size_t hiSendSize = reflect->blocklength*reflect->lo_width;
-      char* sendPtr= reflect->lo_send_buf;
-      char* recvPtr= hi_reflect->lo_recv_buf;
-      cudaStream_t *st = (cudaStream_t*)reflect->lo_async_id;
-      CUDA_SAFE_CALL(cudaMemcpyAsync(recvPtr, sendPtr, hiSendSize, cudaMemcpyDeviceToDevice, *st));
-      //CUDA_SAFE_CALL(cudaMemcpy(recvPtr, sendPtr, hiSendSize, cudaMemcpyDeviceToDevice));
-      TLOG_LOG(TLOG_EVENT_9);
-    }
+    /*   size_t hiSendSize = reflect->blocklength*reflect->lo_width; */
+    /*   char* sendPtr= reflect->lo_send_buf; */
+    /*   char* recvPtr= hi_reflect->lo_recv_buf; */
+    /*   cudaStream_t *st = (cudaStream_t*)reflect->lo_async_id; */
+    /*   CUDA_SAFE_CALL(cudaMemcpyAsync(recvPtr, sendPtr, hiSendSize, cudaMemcpyDeviceToDevice, *st)); */
+    /*   //CUDA_SAFE_CALL(cudaMemcpy(recvPtr, sendPtr, hiSendSize, cudaMemcpyDeviceToDevice)); */
+    /*   TLOG_LOG(TLOG_EVENT_9); */
+    /* } */
   }
   TLOG_LOG(TLOG_EVENT_2_OUT);
 }
@@ -1152,15 +1155,9 @@ static void _XACC_reflect_do_intra_wait(_XACC_arrays_t *arrays_desc)
       //return;
     }
     if(dev > device->lb){
+      cudaStreamSynchronize(*(cudaStream_t*)(reflect->lo_async_id));
       cudaStreamSynchronize(*(cudaStream_t*)(reflect->hi_async_id));
     }
-    if(dev < device->ub){
-      cudaStreamSynchronize(*(cudaStream_t*)(reflect->lo_async_id));
-    }
-    /* if(dev > 0 || dev < numDevices- 1){ */
-    /*   CUDA_SAFE_CALL(cudaStreamSynchronize(*(cudaStream_t*)(reflect->lo_async_id))); */
-    /*   TLOG_LOG(TLOG_EVENT_1); */
-    /* } */
   }
   TLOG_LOG(TLOG_EVENT_9_OUT);
 }
