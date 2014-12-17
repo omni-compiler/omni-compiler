@@ -56,10 +56,11 @@ static void enablePeerAccess(_XACC_device_t *device)
 	}else if(cudaError == cudaErrorInvalidValue){
 	  fprintf(stderr, "failed to enable peer access, invalid value\n");
 	}else if(cudaError != cudaSuccess){
-
 	  fprintf(stderr, "failed to enable peer access, %d, (%d,%d), %s\n", (int)cudaError, d,d2, cudaGetErrorString(cudaError));
 	  //	  return;
 	}
+      }else{
+	fprintf(stderr, "already enabled peer access, (%d,%d)\n", d, d2);
       }
     }
 
@@ -845,7 +846,7 @@ static void reflect_pack_start_all(_XACC_arrays_t *arrays_desc)
   for(int i = device->lb; i <= device->ub; i += device->step){
     _XACC_array_t *array_desc = arrays_desc->array + i;
     if(useKernelPacking){
-#ifdef _USE_OMP
+#ifndef _USE_OMP
       CUDA_SAFE_CALL(cudaSetDevice(i));
 #endif
     }
