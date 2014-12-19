@@ -32,7 +32,7 @@ public class XMPcoindexObj {
   // attributes
   String name;
   Xobject obj;          // Xcode.CO_ARRAY_REF
-  Xobject args;
+  Xobject subscripts;
   Xobject coindex;
   int rank;            // rank of the reference
 
@@ -69,9 +69,9 @@ public class XMPcoindexObj {
     coindex = _getCoindex();
     Xobject varRef = obj.getArg(0).getArg(0);
     if (varRef.Opcode() == Xcode.F_ARRAY_REF) {    // array
-      args = varRef.getArg(1);
+      subscripts = varRef.getArg(1);
     } else {                                       // scalar
-      args = null;
+      subscripts = null;
     }
     rank = _getRank();
   }    
@@ -149,7 +149,7 @@ public class XMPcoindexObj {
   //------------------------------
   //  run
   //------------------------------
-  public Xobject genFuncRef_getArray() {
+  public Xobject toFuncRef() {
     Xobject actualArgs = _makeActualArgs_type4();
 
     Xtype xtype = getType().copy();
@@ -166,7 +166,7 @@ public class XMPcoindexObj {
     return funcRef;
   }
 
-  public Xobject genCallStmt_putArray(Xobject rhs) {
+  public Xobject toCallStmt(Xobject rhs) {
     Xobject actualArgs = _makeActualArgs_type4(rhs);
 
     String subrName = PUT_ARRAY_NAME;
@@ -344,13 +344,13 @@ public class XMPcoindexObj {
   //  evaluation
   //------------------------------
   public Boolean isScalarIndex(int i) {
-    Xobject arg = args.getArg(i);
-    return (arg.Opcode() == Xcode.F_ARRAY_INDEX);
+    Xobject subscr = subscripts.getArg(i);
+    return (subscr.Opcode() == Xcode.F_ARRAY_INDEX);
   }
 
   public Boolean isTripletIndex(int i) {
-    Xobject arg = args.getArg(i);
-    return (arg.Opcode() == Xcode.F_INDEX_RANGE);
+    Xobject subscr = subscripts.getArg(i);
+    return (subscr.Opcode() == Xcode.F_INDEX_RANGE);
   }
 
   public Xobject getBaseAddr() {
@@ -374,7 +374,7 @@ public class XMPcoindexObj {
 
     Xobject obj2 = baseAddr.getArg(0);
     assert (obj2.Opcode() == Xcode.F_ARRAY_REF);
-    Xobject args2 = obj2.getArg(1);
+    Xobject subscripts2 = obj2.getArg(1);
 
     for (int i = 0; i < hostRank; i++) {
       Xobject start = getStart(i);
@@ -383,27 +383,27 @@ public class XMPcoindexObj {
                                start, 
                                getStride(i));
       }
-      Xobject arg2 = Xcons.FarrayIndex(start);
-      args2.setArg(i, arg2);
+      Xobject subscr2 = Xcons.FarrayIndex(start);
+      subscripts2.setArg(i, subscr2);
     }
 
     return baseAddr;
   }
 
   public Xobject getStart(int i) {
-    Xobject arg = args.getArg(i);
+    Xobject subscr = subscripts.getArg(i);
     Xobject start;
-    switch(arg.Opcode()) {
+    switch(subscr.Opcode()) {
     case F_ARRAY_INDEX:         // scalar
-      start = arg.getArg(0);
+      start = subscr.getArg(0);
       break;
     case F_INDEX_RANGE:         // triplet
-      start = arg.getArg(0);
+      start = subscr.getArg(0);
       if (start == null) 
         start = coarray.getLbound(i);
       break;
     default:        // vector subscript is not supported
-      XMP.error("internal error: unexpected Xcode: "+arg.Opcode());
+      XMP.error("internal error: unexpected Xcode: "+subscr.Opcode());
       start = null;
       break;
     }
@@ -411,19 +411,19 @@ public class XMPcoindexObj {
   }
 
   public Xobject getEnd(int i) {
-    Xobject arg = args.getArg(i);
+    Xobject subscr = subscripts.getArg(i);
     Xobject end;
-    switch(arg.Opcode()) {
+    switch(subscr.Opcode()) {
     case F_ARRAY_INDEX:         // scalar
-      end = arg.getArg(0);
+      end = subscr.getArg(0);
       break;
     case F_INDEX_RANGE:         // triplet
-      end = arg.getArg(1);
+      end = subscr.getArg(1);
       if (end == null) 
         end = coarray.getUbound(i);
       break;
     default:        // vector subscript is not supported
-      XMP.error("internal error: unexpected Xcode: "+arg.Opcode());
+      XMP.error("internal error: unexpected Xcode: "+subscr.Opcode());
       end = null;
       break;
     }
@@ -431,19 +431,19 @@ public class XMPcoindexObj {
   }
 
   public Xobject getStride(int i) {
-    Xobject arg = args.getArg(i);
+    Xobject subscr = subscripts.getArg(i);
     Xobject stride;
-    switch(arg.Opcode()) {
+    switch(subscr.Opcode()) {
     case F_ARRAY_INDEX:         // scalar
       stride = Xcons.IntConstant(1);
       break;
     case F_INDEX_RANGE:         // triplet
-      stride = arg.getArg(2);
+      stride = subscr.getArg(2);
       if (stride == null)
         stride = Xcons.IntConstant(1);
       break;
     default:        // vector subscript is not supported
-      XMP.error("internal error: unexpected Xcode: "+arg.Opcode());
+      XMP.error("internal error: unexpected Xcode: "+subscr.Opcode());
       stride = null;
       break;
     }
@@ -451,20 +451,20 @@ public class XMPcoindexObj {
   }
 
   public Xobject getSizeFromTriplet(int i) {
-    Xobject arg = args.getArg(i);
+    Xobject subscr = subscripts.getArg(i);
     Xobject size;
-    switch(arg.Opcode()) {
+    switch(subscr.Opcode()) {
     case F_ARRAY_INDEX:         // scalar
       size = Xcons.IntConstant(1);
       break;
     case F_INDEX_RANGE:         // triplet
-      Xobject i1 = arg.getArg(0);  // can be null
-      Xobject i2 = arg.getArg(1);  // can be null
-      Xobject i3 = arg.getArg(2);  // can be null
+      Xobject i1 = subscr.getArg(0);  // can be null
+      Xobject i2 = subscr.getArg(1);  // can be null
+      Xobject i3 = subscr.getArg(2);  // can be null
       size = coarray.getSizeFromTriplet(i, i1, i2, i3);
       break;
     default:        // vector subscript is not supported
-      XMP.error("internal error: unexpected Xcode: "+arg.Opcode());
+      XMP.error("internal error: unexpected Xcode: "+subscr.Opcode());
       size = null;
       break;
     }

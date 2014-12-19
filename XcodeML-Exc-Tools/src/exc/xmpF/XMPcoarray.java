@@ -43,14 +43,16 @@ public class XMPcoarray {
     def = funcDef.getDef();
     fblock = funcDef.getBlock();
     name = ident.getName();
-    //coshape = _getCoshape(
-    originalType = ident.Type().copy();  // not sure how deep this copy
+    originalType = ident.Type().copy();  // not sure how deep this copy is
     if (DEBUG) System.out.println("[XMPcoarray] new coarray = "+this);
   }
 
   //------------------------------
   //  actions
   //------------------------------
+
+  // declare cray-pointer and decriptor correspoinding to the coarray.
+  //
   public void declareIdents(String crayPtrPrefix, String descrPrefix) {
 
     crayPtrName = crayPtrPrefix + "_" + name;

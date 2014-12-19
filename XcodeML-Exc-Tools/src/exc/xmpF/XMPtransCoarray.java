@@ -78,11 +78,8 @@ public class XMPtransCoarray
     allCoarrays.addAll(staticCoarrays);
     allCoarrays.addAll(allocCoarrays);
 
-    // (0-1) declare idents of cray pointers & descriptors
-    for (XMPcoarray coarray: allCoarrays)
-      coarray.declareIdents(CRAYPOINTER_PREFIX, DESCRIPTOR_PREFIX);
-
-    // (0-2) generate common stmt in this procedure
+    // (0) declare cray-pointers and descriptors and
+    //     generate common stmt in this procedure
     if (! allCoarrays.isEmpty())
       genCommonStmt(commonName1, commonName2, allCoarrays, def);
 
@@ -99,6 +96,43 @@ public class XMPtransCoarray
     // (4) replace allocatable coarrays & generate allocation
     if (! allocCoarrays.isEmpty())
       transAllocCoarrays(allocCoarrays);
+  }
+
+
+  //-----------------------------------------------------
+  //  TRANSLATION (0) 
+  //  declare cray-pointers and descriptors and
+  //  generate common stmt in this procedure
+  //-----------------------------------------------------
+  private void genCommonStmt(String commonName1, String commonName2,
+                             Vector<XMPcoarray> coarrays, XobjectDef def) {
+
+    // declare idents of cray pointers & descriptors
+    for (XMPcoarray coarray: coarrays)
+      coarray.declareIdents(CRAYPOINTER_PREFIX, DESCRIPTOR_PREFIX);
+
+    /* cf. XMPenv.declOrGetSizeArray */
+
+    // common block name
+    Xobject cnameObj1 = Xcons.Symbol(Xcode.IDENT, commonName1);
+    Xobject cnameObj2 = Xcons.Symbol(Xcode.IDENT, commonName2);
+
+    // list of common vars
+    Xobject varList1 = Xcons.List();
+    Xobject varList2 = Xcons.List();
+    for (XMPcoarray coarray: coarrays) {
+      Ident descrId = coarray.getDescriptorId();
+      Ident cptrId = coarray.getCrayPointerId();
+      varList1.add(Xcons.FvarRef(descrId));
+      varList2.add(Xcons.FvarRef(cptrId));
+    }
+
+    // declaration 
+    Xobject decls = fblock.getBody().getDecls();
+    decls.add(Xcons.List(Xcode.F_COMMON_DECL,
+                         Xcons.List(Xcode.F_VAR_LIST, cnameObj1, varList1)));
+    decls.add(Xcons.List(Xcode.F_COMMON_DECL,
+                         Xcons.List(Xcode.F_VAR_LIST, cnameObj2, varList2)));
   }
 
 
@@ -138,7 +172,7 @@ public class XMPtransCoarray
 
         if (_isCoidxVarStmt(assignExpr)) {
           // found -- convert the statement
-          Xobject callExpr = genCallStmt_putArray(assignExpr, coarrays);
+          Xobject callExpr = coidxVarStmtToCallStmt(assignExpr, coarrays);
           //s.insert(callExpr);
           //s.remove();
           s.setExpr(callExpr);
@@ -165,13 +199,13 @@ public class XMPtransCoarray
    *    external :: PutCommLibName
    *    call PutCommLibName(..., rhs)
    */
-  private Xobject genCallStmt_putArray(Xobject assignExpr,
-                                     Vector<XMPcoarray> coarrays) {
+  private Xobject coidxVarStmtToCallStmt(Xobject assignExpr,
+                                         Vector<XMPcoarray> coarrays) {
     Xobject lhs = assignExpr.getArg(0);
     Xobject rhs = assignExpr.getArg(1);
 
     XMPcoindexObj coidxObj = new XMPcoindexObj(lhs, coarrays);
-    return coidxObj.genCallStmt_putArray(rhs);
+    return coidxObj.toCallStmt(rhs);
   }
 
   //-----------------------------------------------------
@@ -200,7 +234,7 @@ public class XMPtransCoarray
         }
 
         else {
-          Xobject funcCall = genFuncRef_getArray(xobj, coarrays);
+          Xobject funcCall = coidxObjToFuncRef(xobj, coarrays);
           xi.setXobject(funcCall);
         }
       }
@@ -214,10 +248,10 @@ public class XMPtransCoarray
    *    type,external,dimension(:,:,..) :: commGetLibName_M
    *    commGetLibName_M(...)
    */
-  private Xobject genFuncRef_getArray(Xobject funcRef,
-                                     Vector<XMPcoarray> coarrays) {
+  private Xobject coidxObjToFuncRef(Xobject funcRef,
+                                    Vector<XMPcoarray> coarrays) {
     XMPcoindexObj coidxObj = new XMPcoindexObj(funcRef, coarrays);
-    return coidxObj.genFuncRef_getArray();
+    return coidxObj.toFuncRef();
   }
 
 
@@ -279,33 +313,6 @@ public class XMPtransCoarray
   //-----------------------------------------------------
   //  parts
   //-----------------------------------------------------
-  private void genCommonStmt(String commonName1, String commonName2,
-                             Vector<XMPcoarray> coarrays, XobjectDef def) {
-
-    /* cf. XMPenv.declOrGetSizeArray */
-
-    // common block name
-    Xobject cnameObj1 = Xcons.Symbol(Xcode.IDENT, commonName1);
-    Xobject cnameObj2 = Xcons.Symbol(Xcode.IDENT, commonName2);
-
-    // list of common vars
-    Xobject varList1 = Xcons.List();
-    Xobject varList2 = Xcons.List();
-    for (XMPcoarray coarray: coarrays) {
-      Ident descrId = coarray.getDescriptorId();
-      Ident cptrId = coarray.getCrayPointerId();
-      varList1.add(Xcons.FvarRef(descrId));
-      varList2.add(Xcons.FvarRef(cptrId));
-    }
-
-    // declaration 
-    Xobject decls = fblock.getBody().getDecls();
-    decls.add(Xcons.List(Xcode.F_COMMON_DECL,
-                         Xcons.List(Xcode.F_VAR_LIST, cnameObj1, varList1)));
-    decls.add(Xcons.List(Xcode.F_COMMON_DECL,
-                         Xcons.List(Xcode.F_VAR_LIST, cnameObj2, varList2)));
-  }
-
   private String genNewProcName() {
     return genNewProcName(getHostNames());
   }
