@@ -1,6 +1,8 @@
 #ifndef _ACC_GPU_INTERNAL
 #define _ACC_GPU_INTERNAL
 
+#include "cuda_runtime.h"
+
 #include "acc_gpu_constant.h"
 #include "acc_gpu_data_struct.h"
 
@@ -85,12 +87,12 @@ extern "C" {
   //temporal funcdef
   int _ACC_gpu_get_num_devices();
 
-#ifdef __CUDACC__
+  //#ifdef __CUDACC__
   //acc_gpu_util.cu
   void _ACC_gpu_fatal(cudaError_t error);
   //acc_gpu_stream.cu
   cudaStream_t _ACC_gpu_get_stream(int id);
-#endif
+  //#endif
   
 #ifdef __cplusplus
 }

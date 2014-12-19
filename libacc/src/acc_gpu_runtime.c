@@ -128,7 +128,7 @@ static void init_device(int dev_num){ //0-based
   //   _ACC_fatal("failed to reset GPU");
   // }
 
-  cudaDeviceProp dev_prop;
+  struct cudaDeviceProp dev_prop;
   cuda_err = cudaGetDeviceProperties(&dev_prop, get_actual_device_num(dev_num));
   if(cuda_err != cudaSuccess){
     _ACC_fatal("fail to get GPU device properties");

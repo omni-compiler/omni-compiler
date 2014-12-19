@@ -234,7 +234,7 @@ static void copy_subdata_using_pack(_ACC_gpu_data_t *desc, int direction, int is
     //host to device
     _ACC_gpu_pack_data_host(host_buf, desc->host_addr, desc->dim, total_elmnts, desc->type_size, trans_info);
     if(useAsync){
-      cudaMemcpyAsync(dev_buf, host_buf, buf_size, cudaMemcpyHostToDevice);
+      cudaMemcpyAsync(dev_buf, host_buf, buf_size, cudaMemcpyHostToDevice, 0);
     }else{
       _ACC_gpu_copy(host_buf, dev_buf, buf_size, 400);
     }
@@ -248,7 +248,7 @@ static void copy_subdata_using_pack(_ACC_gpu_data_t *desc, int direction, int is
     void *dev_data = (void*)((char*)(desc->device_addr) - desc->offset);
     _ACC_gpu_pack_data(dev_buf, dev_data, desc->dim, total_elmnts, desc->type_size, dev_trans_info);
     if(useAsync){
-      cudaMemcpyAsync(host_buf, dev_buf, buf_size, cudaMemcpyDeviceToHost);
+      cudaMemcpyAsync(host_buf, dev_buf, buf_size, cudaMemcpyDeviceToHost, 0);
       cudaThreadSynchronize();
     }else{
       _ACC_gpu_copy(host_buf, dev_buf, buf_size, 401);
