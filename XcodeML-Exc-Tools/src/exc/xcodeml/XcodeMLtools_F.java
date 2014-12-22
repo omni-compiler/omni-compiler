@@ -89,7 +89,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
       | (getAttrBool(n, "is_public") ? Xtype.TQ_FPUBLIC : 0)
       | (getAttrBool(n, "is_save") ? Xtype.TQ_FSAVE : 0)
       | (getAttrBool(n, "is_target") ? Xtype.TQ_FTARGET : 0)
-      | (getAttrBool(n, "is_cray_pointer") ? Xtype.TQ_FCRAY_POINTER : 0); //ID=060c
+      | (getAttrBool(n, "is_cray_pointer") ? Xtype.TQ_FCRAY_POINTER : 0); //#060c
 
     String intent = getAttr(n, "intent");
 
@@ -115,7 +115,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
       NodeList list = n.getChildNodes();
       if (list.getLength() > 0) {
 	List<Xobject> sizeExprList = new ArrayList<Xobject>();
-	List<Xobject> cosizeExprList = new ArrayList<Xobject>();            // ID=060
+	List<Xobject> cosizeExprList = new ArrayList<Xobject>();            // #060
 	for (int i = 0; i < list.getLength(); i++) {
 	  nn = list.item(i);
 	  if (nn.getNodeType() != Node.ELEMENT_NODE)
@@ -127,7 +127,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	  if (x.Opcode() == Xcode.F_ARRAY_INDEX
 	      || x.Opcode() == Xcode.F_INDEX_RANGE) {
 	    sizeExprList.add(x);
-	  } else if (x.Opcode() == Xcode.F_CO_SHAPE) {              // ID=060
+	  } else if (x.Opcode() == Xcode.F_CO_SHAPE) {              // #060
             NodeList colist = nn.getChildNodes();
             for (int j = 0; j < colist.getLength(); j++) {
               nnn = colist.item(j);
@@ -149,7 +149,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	if (sizeExprList.size() > 0) {
 	  sizeExprs = sizeExprList.toArray(new Xobject[0]);
 	}
-	if (cosizeExprList.size() > 0) {                                // ID=060
+	if (cosizeExprList.size() > 0) {                                // #060
 	  cosizeExprs = cosizeExprList.toArray(new Xobject[0]);
 	}
       }
@@ -162,14 +162,14 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	Xtype ref = getType(getAttr(n, "ref"));
 	type = ref.inherit(tid);
 	type.setTypeQualFlags(tq);
-        type.setCodimensions(cosizeExprs);                           // ID=060
+        type.setCodimensions(cosizeExprs);                           // #060
       } else {
 	type = new BasicType(ti.type.getBasicType(), tid, tq, null,
-			     fkind, flen, cosizeExprs);             // ID=060
+			     fkind, flen, cosizeExprs);             // #060
       }
     } else {
       Xtype ref = getType(getAttr(n, "ref"));
-      type = new FarrayType(tid, ref, tq, sizeExprs, cosizeExprs);    // ID=060
+      type = new FarrayType(tid, ref, tq, sizeExprs, cosizeExprs);    // #060
     }
 
     xobjFile.addType(type);

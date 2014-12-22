@@ -168,16 +168,9 @@ public class XMPcoarray {
 
   public Xobject getSizeFromIndexRange(Xobject range)
   {
-    //////
-    System.out.println("range="+range);
-    System.out.println("ident="+ident);
-    //////
-    //    FarrayType ftype = (FarrayType)ident.Type();
-    FarrayType ftype = new FarrayType("", null, 0, null);
-    //////
-    //System.out.println("ftype="+ftype);
-    //////
-    return ftype.getSizeFromIndexRange(range, fblock);
+    FindexRange indexRange = new FindexRange(range, fblock);
+    return indexRange.getExtent(0);
+    //return ftype.getSizeFromIndexRange(range, fblock);
   }
 
   public Xobject getSizeFromLbUb(Xobject lb, Xobject ub)
@@ -245,7 +238,8 @@ public class XMPcoarray {
   }
 
   public Xobject[] getCodimensions() {
-    return ident.Type().getCodimensions();
+    Xobject[] codims = ident.Type().getCodimensions();
+    return codims;
   }
 
   public void setCodimensions(Xobject[] codimensions) {

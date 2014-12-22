@@ -17,12 +17,12 @@ public class XMPcoindexObj {
 
   // constants
   /* Type-4 */
-  final static String PUT_ARRAY_NAME = "xmpf_coarray_put_array";
-  final static String GET_ARRAY_NAME = "xmpf_coarray_get_array";
+  final static String COARRAYPUT_NAME = "xmpf_coarray_put_array";
+  final static String COARRAYGET_NAME = "xmpf_coarray_get_array";
 
   /* Type-3 */
-  final static String PUT_ARRAY_PREFIX = "xmpf_coarray_put";
-  final static String GET_ARRAY_PREFIX = "xmpf_coarray_get";
+  final static String COARRAYPUT_PREFIX = "xmpf_coarray_put";
+  final static String COARRAYGET_PREFIX = "xmpf_coarray_get";
 
   final static String PUT77_LIB_PREFIX = "xmpf_coarray_put77";
   final static String GET77_LIB_PREFIX = "xmpf_coarray_get77";
@@ -46,7 +46,7 @@ public class XMPcoindexObj {
     assert (obj.Opcode() == Xcode.CO_ARRAY_REF);
     this.obj = obj;
     this.coarray = coarray;
-    _commonConstructor();
+    _constructor_sub();
   }
 
   /* find XMPcoarray and construct
@@ -61,10 +61,10 @@ public class XMPcoindexObj {
       name = varRef.getName();
     }
     coarray = _findCoarrayInCoarrays(name, coarrays);
-    _commonConstructor();
+    _constructor_sub();
   }
 
-  private void _commonConstructor() {
+  private void _constructor_sub() {
     name = coarray.getName();
     coindex = _getCoindex();
     Xobject varRef = obj.getArg(0).getArg(0);
@@ -81,50 +81,32 @@ public class XMPcoindexObj {
     Xobject[] codims = coarray.getCodimensions();
     int corank = coarray.getCorank();
 
-    ///
-    System.out.println("");
-    System.out.println("cosubList="+cosubList);
-    System.out.println("codims="+codims);
-    System.out.println("corank="+corank);
-    ///
+    // coindex(1) = c[0]                                     for 1-dimensional
+    // coindex(d) = coindex(d-1) + factor(d-1) * (c[d-1]-1)  for d-dimensional
+    //   where factor(i) = cosize[0] * ... * cosize[i-1]  (i>0)
 
-    Xobject cosub0 = cosubList.getArg(0).getArg(0);
-    //    if (cosub instanceof Ident)
-    //      cosub = ((Ident)cosub).Ref().cfold(getBlock());
-    //    else
-    //      cosub = cosub.cfold(getBlock());
+    Xobject c = cosubList.getArg(0).getArg(0);         // =c[0]
+    Xobject coindex = c;                               // =coindex(1)
+    if (corank == 1)
+      return coindex;
 
-    // if d-dimensional:
-    //   coindex = c[0] + f[1] * (c[1]-1) +...+ f[d-1] * (c[d-1]-1)
-    //   where factor f[i] = cosize[0] * ... * cosize[i-1]
-    //
-    Xobject coindex = cosub0;               // =coindex[0]
-    Xobject factor = null;                  // factor f
+    Xobject cosize = coarray.getSizeFromIndexRange(codims[0]);   // =cosize[0]
+    Xobject factor = cosize;                               // =factor(1)
 
-    for (int i = 1; i < corank; i++) {
+    for (int i = 2; ; i++) {
+      // coindex(i) = coindex(i-1) + factor(i-1) * (c[i-1]-1)
+      c = cosubList.getArg(i-1).getArg(0);                   // =c[i-1]
+      Xobject tmp1 = Xcons.binaryOp(Xcode.MINUS_EXPR, c, Xcons.IntConstant(1));
+      Xobject tmp2 = Xcons.binaryOp(Xcode.MUL_EXPR, factor, tmp1);
+      coindex = Xcons.binaryOp(Xcode.PLUS_EXPR, coindex, tmp2);
+      if (i == corank)
+        break;
 
-      //////
-      System.out.println("codims["+(i-1)+"]="+codims[i-1]);
-      //////
-
-
-      // factor[i] = factor[i-1] * cosize[i-1]
-      if (i == 1)
-        factor = coarray.getSizeFromIndexRange(codims[0]);
-      else 
-        factor = Xcons.binaryOp(Xcode.MUL_EXPR,
-                                factor,
-                                coarray.getSizeFromIndexRange(codims[i-1]));
-
-      // coindex[i] = coindex[i-1] + f[i-1] * (c[i]-1)
-      Xobject cosub = cosubList.getArg(i).getArg(0);
-      Xobject tmp1 = Xcons.binaryOp(Xcode.MINUS_EXPR,
-                                    cosub, Xcons.IntConstant(1));
-      Xobject tmp2 = Xcons.binaryOp(Xcode.MUL_EXPR,
-                                    factor, tmp1);
-      coindex = Xcons.binaryOp(Xcode.PLUS_EXPR,
-                               coindex, tmp2);
+      // factor(i) = factor(i-1) * cosize[i-1]
+      cosize = coarray.getSizeFromIndexRange(codims[i-1]);
+      factor = Xcons.binaryOp(Xcode.MUL_EXPR, factor, cosize);
     }
+
     return coindex;
   }
 
@@ -155,10 +137,10 @@ public class XMPcoindexObj {
     Xtype xtype = getType().copy();
     xtype.removeCodimensions();
 
-    String funcName = GET_ARRAY_NAME;
+    String funcName = COARRAYGET_NAME;
     Ident funcIdent = getEnv().findVarIdent(funcName, null);
     if (funcIdent == null) {
-      Xtype baseType = _getBasicType(xtype);   // temporary version
+      Xtype baseType = _getBasicType(xtype);   // regard type as its basic type
       Xtype funcType = Xtype.Function(baseType);
       funcIdent = getEnv().declExternIdent(funcName, funcType);
     }                                           
@@ -169,7 +151,7 @@ public class XMPcoindexObj {
   public Xobject toCallStmt(Xobject rhs) {
     Xobject actualArgs = _makeActualArgs_type4(rhs);
 
-    String subrName = PUT_ARRAY_NAME;
+    String subrName = COARRAYPUT_NAME;
     Ident subrIdent = getEnv().findVarIdent(subrName, null);
     if (subrIdent == null)
       subrIdent = getEnv().declExternIdent(subrName,

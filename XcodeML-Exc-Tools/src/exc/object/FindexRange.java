@@ -24,9 +24,17 @@ public class FindexRange
   public FindexRange(Xobject[] subscripts) {
     this(subscripts, null);
   }
+
   public FindexRange(Xobject[] subscripts, Block block) {
-    this.rank = subscripts.length;
+    rank = subscripts.length;
     this.subscripts = subscripts;
+    this.block = block;
+  }
+
+  public FindexRange(Xobject subscript, Block block) {
+    rank = 1;
+    subscripts = new Xobject[1];
+    subscripts[0] = subscript;
     this.block = block;
   }
 

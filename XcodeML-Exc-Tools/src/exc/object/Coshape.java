@@ -14,6 +14,8 @@ import static xcodeml.util.XmLog.fatal;
  */
 public class Coshape
 {
+  private final static int MAX_CORANK = 31;
+
   private Xobject[] codimensions;
   private int corank;
 
