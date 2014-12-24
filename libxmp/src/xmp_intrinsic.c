@@ -5920,6 +5920,14 @@ void xmpf_pack(void *v_p, void *a_p, void *m_p)
 }
 
 
+void xmpf_pack_mask(void *v_p, void *a_p, void *m_p)
+{
+   xmpf_running = 1;
+   xmp_pack(v_p, a_p, m_p);
+   xmpf_running = 0;
+}
+
+
 void xmpf_pack_nomask(void *v_p, void *a_p)
 {
    xmpf_running = 1;
@@ -6188,21 +6196,25 @@ void xmp_unpack(void *a_p, void *v_p, void *m_p)
 
 void xmp_unpack_mask(void *a_p, void *v_p, void *m_p)
 {
-   xmpf_running = 1;
    xmp_unpack(v_p, a_p, m_p);
-   xmpf_running = 0;
 }
 
 
 void xmp_unpack_nomask(void *a_p, void *v_p)
 {
-   xmpf_running = 1;
    xmp_unpack(a_p, v_p, NULL);
-   xmpf_running = 0;
 }
 
 
 void xmpf_unpack(void *a_p, void *v_p, void *m_p)
+{
+   xmpf_running = 1;
+   xmp_unpack(a_p, v_p, m_p);
+   xmpf_running = 0;
+}
+
+
+void xmpf_unpack_mask(void *a_p, void *v_p, void *m_p)
 {
    xmpf_running = 1;
    xmp_unpack(a_p, v_p, m_p);

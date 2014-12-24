@@ -379,6 +379,28 @@ void xmp_pack_(_XMP_array_t **v_d, _XMP_array_t **a_d, _XMP_array_t **m_d){
    xmpf_pack(*v_d, *a_d, *m_d);
 }
 
+
+void xmp_pack_mask_(_XMP_array_t **v_d, _XMP_array_t **a_d, _XMP_array_t **m_d){
+   xmpf_pack(*v_d, *a_d, *m_d);
+}
+
+
+void xmp_pack_nomask_(_XMP_array_t **v_d, _XMP_array_t **a_d){
+   xmpf_pack(*v_d, *a_d, NULL);
+}
+
+
 void xmp_unpack_(_XMP_array_t **a_d, _XMP_array_t **v_d, _XMP_array_t **m_d){
    xmpf_unpack(*a_d, *v_d, *m_d);
 }
+
+
+void xmp_unpack_mask_(_XMP_array_t **a_d, _XMP_array_t **v_d, _XMP_array_t **m_d){
+   xmpf_unpack(*a_d, *v_d, *m_d);
+}
+
+
+void xmp_unpack_nomask_(_XMP_array_t **a_d, _XMP_array_t **v_d){
+   xmpf_unpack(*a_d, *v_d, NULL);
+}
+
