@@ -2025,6 +2025,7 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
   size_t type_size;
   int dst_dim = gmv_desc_leftp->ndims;
   int src_dim = gmv_desc_rightp->ndims;
+  int dst_template_index, src_template_index;
 
   if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true){
     dst_array = gmv_desc_leftp->a_desc;
@@ -2110,14 +2111,16 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
         if(src_dim==src_template->dim){
 
           for(int i=0; i<dst_dim;i++){
-            if (dst_array->info[i].align_manner !=_XMP_N_ALIGN_BLOCK){
+            if ((dst_array->info[i].align_subscript != 0 ) 
+               || (dst_array->info[i].align_manner !=_XMP_N_ALIGN_BLOCK)){
               dst_chk_flag=0;
               break;
             }
           }
 
           for(int i=0; i<src_dim;i++){
-             if (src_array->info[i].align_manner !=_XMP_N_ALIGN_BLOCK){
+            if ((src_array->info[i].align_subscript != 0 ) 
+               || (src_array->info[i].align_manner !=_XMP_N_ALIGN_BLOCK)){
                 src_chk_flag=0;
                 break;
              }
@@ -2126,7 +2129,10 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
         }
      }else if (dst_dim < dst_template->dim){
         if(src_dim < src_template->dim){
-          if(dst_template->dim > 2 || src_template->dim > 2){
+          if(dst_template->dim > 2 
+            || src_template->dim > 2
+            || dst_array->info[0].align_subscript != 0
+            || src_array->info[0].align_subscript != 0){
              _XMP_fatal("not implemented yet");
           }
         }
