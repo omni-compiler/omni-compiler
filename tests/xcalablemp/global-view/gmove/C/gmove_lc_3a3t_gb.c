@@ -46,7 +46,7 @@ int main(){
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
       for(k=0;k<n;k++){
-        err=err+fabs(b[i][j][k]-i-j-k-2);
+        err=err+fabs(b[i][j][k]-i-j-k-3);
       }
     }
   }
