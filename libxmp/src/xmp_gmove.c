@@ -719,6 +719,7 @@ static _Bool is_same_alignmanner(_XMP_array_t *adesc0, _XMP_array_t *adesc1)
 {
   _XMP_template_t *t0 = (_XMP_template_t *)adesc0->align_template;
   _XMP_template_t *t1 = (_XMP_template_t *)adesc1->align_template;
+  int taxis0, taxis1, naxis0, naxis1, nsize0, nsize1;
 
   if (adesc0->dim != adesc1->dim) return false;
 
@@ -729,11 +730,33 @@ static _Bool is_same_alignmanner(_XMP_array_t *adesc0, _XMP_array_t *adesc1)
        return false;
     }else{
        if(adesc0->info[i].align_manner==_XMP_N_ALIGN_BLOCK_CYCLIC
-         && t0->chunk[idim0].par_width != t1->chunk[idim1].par_width) return false;
+         && t0->chunk[idim0].par_width != t1->chunk[idim1].par_width){
+         return false;
+       }else if(adesc0->info[i].align_manner==_XMP_N_ALIGN_GBLOCK){
+         xmp_align_axis(adesc0, i+1, &taxis0);
+         xmp_align_axis(adesc1, i+1, &taxis1);
+         xmp_dist_axis(t0, taxis0, &naxis0);
+         xmp_dist_axis(t1, taxis1, &naxis1);
+         xmp_nodes_size(adesc0->array_nodes, naxis0, &nsize0);
+         xmp_nodes_size(adesc1->array_nodes, naxis1, &nsize1);
+         int map0[nsize0], map1[nsize1];
+         xmp_dist_gblockmap(t0, naxis0, map0);
+         xmp_dist_gblockmap(t1, naxis1, map1);
+         if (nsize0 == nsize1){
+           for(int ii=0; ii<nsize0; ii++){
+             if (map0[ii] != map1[ii]){
+                return false;
+             }
+           }
+         }else{
+           return false;
+         }
+       }
     }
   }
 
   return true;
+
 }
 
 
@@ -2086,7 +2109,7 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
 
   int chk_flag=0, dst_chk_flag, src_chk_flag;
 
-  if (gmv_desc_leftp->is_global == true 
+  if (gmv_desc_leftp->is_global == true
      && gmv_desc_rightp->is_global == true){
 
      for(int i=0; i<dst_template->dim;i++){
@@ -2135,6 +2158,20 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
             || src_array->info[0].align_subscript != 0){
              _XMP_fatal("not implemented yet");
           }
+        }else{
+          dst_chk_flag=0;
+          src_chk_flag=0;
+        }
+     }else if (dst_dim > dst_template->dim){
+        if (src_dim > src_template->dim){
+           if (_XMPF_running == 1
+               && _XMPC_running == 0){
+              dst_chk_flag=0;
+              src_chk_flag=0;
+           }
+        }else{
+           dst_chk_flag=0;
+           src_chk_flag=0;
         }
      }
 
