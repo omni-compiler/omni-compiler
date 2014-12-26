@@ -7,7 +7,7 @@
 # $Id$
 
 genJARjdk () {
-    @JARCOM@ cf ${target} $*
+    @JAR@ cf ${target} $*
 }
 
 genJARkaffe () {

@@ -1234,7 +1234,7 @@ char* lexConvertUnderscorePragma(char *p)
   
   p = lexSkipSpace(p);
   if(strncmp(p, "_Pragma", strlen("_Pragma")) == 0){
-    p += strlen("_Pragma");
+    p += strlen("_Pragma"); 
     strncpy(q, "#pragma ", strlen("#pragma "));
     q+=strlen("#pragma ");
   }

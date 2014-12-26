@@ -45,11 +45,11 @@ for i in ${OM_OPTIONS}; do
 		$GPUCMD
             fi;;
 	-openmp)
-	    newOpts="${newOpts} ${OMP_CONF_LNK_OPT}";;
+	    newOpts="${newOpts} @MPI_OPENMP_FLAG@";;
         -tmp)
             cp "${INPFILE}" "__omni_tmp_${INPFILE_BASENAME}";;
         -moddir?*)
-            j=@BEFC_MODINC@
+            j=@MPI_MODINC@
             case ${j} in
                 -to);;
                 -module)

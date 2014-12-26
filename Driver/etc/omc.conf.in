@@ -9,8 +9,8 @@ Linker=@OMNI_HOME@/bin/omclinker
 # for options
 PreprocessorOption=
 L2XOption=
-LX2XOption=@OMC_CONF_LX2X_OPT@
+LX2XOption=@OMNI_LX2X_CFLAGS@
 X2LOption=
-NativeCompilerOption=@OMC_CONF_NTV_OPT@
-LinkerOption=@OMC_CONF_LNK_OPT@
+NativeCompilerOption=@OMNI_NTV_CFLAGS@
+LinkerOption=@OMNI_LNK_CFLAGS@
 TempDir=/tmp

@@ -1,8 +1,7 @@
 INCDIR = ../../../../../Driver/etc
-NTV_OPT=$(shell cat $(INCDIR)/omf.conf | grep "NativeCompilerOption=" | sed "s/NativeCompilerOption=//g" | sed "s/\"//g")
-OMP_OPT=$(shell cat $(INCDIR)/native.conf.xmpf | grep "OMP_CONF_LNK_OPT=" | sed "s/OMP_CONF_LNK_OPT=//g" | sed "s/\"//g")
-MPICOMPILER=$(shell cat $(INCDIR)/native.conf.xmpf | grep "COMPILER=" | sed "s/COMPILER=//g" | sed "s/\"//g")
-GASNETLIB=$(shell cat $(INCDIR)/linker.conf.xmp | grep "GASNET_LIB=" | sed "s/GASNET_LIB=//g" | sed "s/\"//g")
+XMP_LINK_FLAGS=$(shell awk -FLinkerOption= '/LinkerOption=/ {print $$2}' $(INCDIR)/omf.conf | sed "s/\"//g")
+MPI_FC=$(shell awk -FCOMPILER= '/COMPILER=/ {print $$2}' $(INCDIR)/native.conf.xmpf         | sed "s/\"//g")
+GASNET_LIB=$(shell awk -FGASNET_LIB= '/GASNET_LIB=/ {print $$2}' $(INCDIR)/linker.conf.xmp  | sed "s/\"//g")
 XFC     = xmpf90 -O2
 XRUN    = mpiexec
 TESTS = $(wildcard *.f90)
@@ -19,13 +18,13 @@ ixmp_sub.o: ./sub/ixmp_sub.f90
 	$(XFC) -c $^ -o $@
 
 sub_mpi.o: ./sub/sub_mpi.f90
-	$(MPICOMPILER) $(NTV_OPT) -c $^ -o $@
+	$(MPI_FC) $(XMP_LINK_FLAGS) -c $^ -o $@
 
 %.x: %.f90
 	$(XFC) -o $@ $<
 
 mpi_xmp.x: mpi_xmp.f90 ixmp_sub.o
-	$(MPICOMPILER) $(NTV_OPT) $(OMP_OPT) -o $@ mpi_xmp.f90 ixmp_sub.o -L../../../../../libxmpf/src -lxmpf -L../../../../../libxmp/src -lxmp $(GASNETLIB)
+	$(MPI_FC) $(XMP_LINK_FLAGS) -o $@ mpi_xmp.f90 ixmp_sub.o -L../../../../../libxmpf/src -lxmpf -L../../../../../libxmp/src -lxmp $(GASNET_LIB)
 
 xmp_mpi.x: xmp_mpi.f90 sub_mpi.o
 	$(XFC) -o $@ xmp_mpi.f90 sub_mpi.o

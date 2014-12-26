@@ -19,11 +19,11 @@ files=( "$@" )
 INIT_MODULE_OBJ="/tmp/_xmpf_init_${PID}.o"
 if [ "${IS_CRAY}" = "Yes" ]; then
    CMD="@OMNI_HOME@/bin/xmp_collect_init"
-   args=( --cc @BECC@ --PID ${PID} --F --OPTION -hgnu "${files[@]}" )
+   args=( --cc @MPI_CC@ --PID ${PID} --F --OPTION -hgnu "${files[@]}" )
    set -- "${args[@]}"
 else
    CMD="@OMNI_HOME@/bin/xmp_collect_init"
-   args=( --cc @BECC@ --PID ${PID} --F "${files[@]}" )
+   args=( --cc @MPI_CC@ --PID ${PID} --F "${files[@]}" )
    set -- "${args[@]}"
 fi
 
@@ -72,9 +72,9 @@ else  # ${COLLECT_INIT_SRC} is empty
     LIBS="@OMNI_HOME@/lib/xmpf_main.o ${INIT_MODULE_OBJ} ${LIBS} -lxmpf -lxmp ${GASNET_LIBS} @BLASLIB@"
 fi
 
-LINKER=@BEFC@
+LINKER=@MPI_FC@
 if test ${hasScalasca} -eq 1; then
-    LINKER="scalasca --instrument @BEFC@"
+    LINKER="scalasca --instrument @MPI_FC@"
 fi
 
 OM_OPTIONS="${newOpts} -L${OMNI_HOME}/lib"

@@ -17,7 +17,7 @@ files=( "$@" )
 #-------------------------------------------------
 INIT_MODULE_OBJ="/tmp/_xmpc_init_${PID}.o"
 CMD="@OMNI_HOME@/bin/xmp_collect_init"
-args=( --cc @BECC@ --PID ${PID} --C "${files[@]}" )
+args=( --cc @MPI_CC@ --PID ${PID} --C "${files[@]}" )
 set -- ${args[@]}
 if [ "${OM_VERBOSE}" = "1" ]; then
     echo $CMD "$@"
@@ -68,9 +68,9 @@ if test "${TCA_LIB}" != ""; then
   LIBS="${LIBS} -L${TCA_LIB} -ltca"
 fi
 
-LINKER="@BECC@"
+LINKER="@MPI_CC@"
 if test ${hasScalasca} -eq 1; then
-    LINKER="scalasca --instrument @BECC@"
+    LINKER="scalasca --instrument @MPI_CC@"
 fi
 
 OM_OPTIONS="${newOpts} -L${OMNI_HOME}/lib"

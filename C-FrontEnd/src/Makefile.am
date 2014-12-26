@@ -37,25 +37,11 @@ c-omp-pragma.c: c-pragma.h c-omp.h
 c-xmp-pragma.c: c-pragma.h c-xmp.h
 c-acc-pragma.c: c-pragma.h c-acc.h
 c-xcodeml.c: c-expr.h
-c-const.c: c-expr.h c-const.h
-c-comp.c: c-expr.h c-comp.h
-c-option.c: c-expr.h c-option.h
-c-pragma.c: c-pragma.h c-omp.h c-xmp.h c-acc.h
-c-omp-pragma.c: c-pragma.h c-omp.h
-c-xmp-pragma.c: c-pragma.h c-xmp.h
-c-acc-pragma.c: c-pragma.h c-acc.h
-c-omp-pragma.c: c-pragma.h c-omp.h
-c-xmp-pragma.c: c-pragma.h c-xmp.h
-c-acc-pragma.c: c-pragma.h c-acc.h
-c-xcodeml.c: c-expr.h
-c-omp-xcodeml.c: c-expr.h c-omp.h
-c-xmp-xcodeml.c: c-expr.h c-xmp.h
-c-acc-xcodeml.c: c-expr.h c-acc.h
 
 EXTRA_C_Front_SOURCES=c-dbgmain.c
 
 AM_YFLAGS=-v -d
-AM_CFLAGS=-std=c99 -Wall $(DEBUG_FLAGS) $(AIX_OPT)
+#AM_CFLAGS=-std=c99 -Wall $(DEBUG_FLAGS)
 
 $(C_Front_SOURCES): c-exprcode.h
 

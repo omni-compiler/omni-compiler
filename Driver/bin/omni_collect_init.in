@@ -5,7 +5,7 @@
 
 #VERBOSE=yes
 
-NM=@NM@
+NM="@NM@"
 
 USAGE='usage: '$0' <option> ... <input_file> ...
   <option>

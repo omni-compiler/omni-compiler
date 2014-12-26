@@ -1,7 +1,7 @@
 #OM_OPTIONS="${OM_OPTIONS} -fxmp"
-IS_PGCC=@IS_PGCC@
+IS_PGI=@IS_PGI@
 
-if [ "${IS_PGCC}" = "Yes" ]; then
+if [ "${IS_PGI}" = "Yes" ]; then
   OM_OPTIONS="${OM_OPTIONS} --no-builtin-va-arg"
 else
   OM_OPTIONS="${OM_OPTIONS}"

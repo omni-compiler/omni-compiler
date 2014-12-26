@@ -65,15 +65,15 @@ HOW TO INSTALL
     $ ./configure --target=Cray-linux-gnu --prefix=[INSTALLATION PATH]
 
 ### On SX machines
-    $ ./configure --target=sx --prefix=[INSTALLATION PATH]
+    $ ./configure --target=sx-nec-superux --prefix=[INSTALLATION PATH]
 
 ### On BlueGene/Q
     We recommend to install openJDK for AIX (e.g. openjdk1.7.0-ppc-aix-port-linux-ppc64-b**.tar.bz2,
     from http://cr.openjdk.java.net/~simonis/ppc-aix-port/).
-    $ ./configure --target=powerpc-ibm-none --prefix=[INSTALLATION PATH]
+    $ ./configure --target=powerpc-ibm-cnk --prefix=[INSTALLATION PATH]
 
 ### On SR16000 machines
-   $ ./configure --target=powerpc64-hitachi-aix CPP=cpp --prefix=[INSTALLATION PATH]
+   $ ./configure --target=powerpc-hitachi-aix CPP=cpp --prefix=[INSTALLATION PATH]
 
 ## Build
     $ make; make install
