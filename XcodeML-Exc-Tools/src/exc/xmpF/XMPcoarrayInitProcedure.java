@@ -110,40 +110,20 @@ public class XMPcoarrayInitProcedure {
     text += "SUBROUTINE " + procName + "\n";
 
     // type specification stmt for varNames1
-    text += " INTEGER ::";
-    String delim = " ";
-    for (String name: varNames1) {
-      text += delim + name;
-      delim = ", ";
-    }
-    text += "\n";
+    for (String name: varNames1)
+      text += " INTEGER :: " + name + "\n";
 
     // type specification stmt for varNames2
-    text += " INTEGER(8) ::";
-    delim = " ";
-    for (String name: varNames2) {
-      text += delim + name;
-      delim = ", ";
-    }
-    text += "\n";
+    for (String name: varNames2)
+      text += " INTEGER(8) :: " + name + "\n";
 
     // common stmt for varNames1
-    text += " COMMON / " + commonName1 + " /";
-    delim = " ";
-    for (String name: varNames1) {
-      text += delim + name;
-      delim = ", ";
-    }
-    text += "\n";
+    for (String name: varNames1)
+      text += " COMMON / " + commonName1 + " / " + name + "\n";
 
     // common stmt for varNames2
-    text += " COMMON / " + commonName2 + " /";
-    delim = " ";
-    for (String name: varNames2) {
-      text += delim + name;
-      delim = ", ";
-    }
-    text += "\n";
+    for (String name: varNames2)
+      text += " COMMON / " + commonName2 + " / " + name + "\n";
 
     if (DEBUG) {
       text += " WRITE(*,*) \"[XMPcoarrayInitProcedure] start SUBROUTINE " +
@@ -169,7 +149,7 @@ public class XMPcoarrayInitProcedure {
 
   /*
    * suspended
-   *  This method could be better but not used...
+   *  This method could be better but not completed...
    */
   public void genInitRoutine__NOT_USED__(Vector<XMPcoarray> staticCoarrays,
                                          String newProcName, String commonName,

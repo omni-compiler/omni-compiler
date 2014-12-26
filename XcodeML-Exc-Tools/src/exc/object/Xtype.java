@@ -778,7 +778,7 @@ public class Xtype
     {
         return coshape.getCodimensions();
     }
-    public void setCodimensions(Xobject[] codimensions) // for coarray Fortran (ID=06)
+    public void setCodimensions(Xobject[] codimensions) // for coarray Fortran (ID=060)
     {
         coshape.setCodimensions(codimensions);
     }

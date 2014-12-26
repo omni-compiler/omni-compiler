@@ -6,6 +6,7 @@
  */
 package exc.object;
 import exc.block.Block;
+import exc.xmpF.XMPenv;
 
 /**
  * methods for Fortran index range both for:
@@ -16,30 +17,37 @@ public class FindexRange
 {
   private int rank;
   private Xobject[] subscripts;
-  private Block block;
+  private Block block = null;
+  private XMPenv env = null;
 
   /*
    *  constructor
    */
   public FindexRange(Xobject[] subscripts) {
-    this(subscripts, null);
-  }
-
-  public FindexRange(Xobject[] subscripts, Block block) {
     rank = subscripts.length;
     this.subscripts = subscripts;
+  }
+  public FindexRange(Xobject[] subscripts, Block block) {
+    this(subscripts);
     this.block = block;
   }
+  public FindexRange(Xobject[] subscripts, Block block, XMPenv env) {
+    this(subscripts, block);
+    this.env = env;
+  }
 
-  public FindexRange(Xobject subscript, Block block) {
+  public FindexRange(Xobject subscript) {
     rank = 1;
     subscripts = new Xobject[1];
     subscripts[0] = subscript;
+  }
+  public FindexRange(Xobject subscript, Block block) {
+    this(subscript);
     this.block = block;
   }
-
-  public void setBlock(Block block) {
-    this.block = block;
+  public FindexRange(Xobject subscript, Block block, XMPenv env) {
+    this(subscript, block);
+    this.env = env;
   }
 
 
@@ -151,8 +159,8 @@ public class FindexRange
     Xobject e1 = Xcons.binaryOp(Xcode.MINUS_EXPR, ub, lb);
     Xobject arg1 = Xcons.binaryOp(Xcode.PLUS_EXPR, e1, Xcons.IntConstant(1));
     Xobject arg2 = Xcons.IntConstant(0);
-    Xobject max = block.getBody().declLocalIdent("max", Xtype.FintFunctionType);
-    Xobject result = Xcons.functionCall(max, Xcons.List(arg1, arg2));
+    Ident max = env.declIntrinsicIdent("max", Xtype.FintFunctionType);
+    Xobject result = max.Call(Xcons.List(arg1, arg2));
     return result.cfold(block);
   }
 
@@ -214,8 +222,8 @@ public class FindexRange
     Xobject e2 = Xcons.binaryOp(Xcode.PLUS_EXPR, e1, i3);
     Xobject arg1 = Xcons.binaryOp(Xcode.DIV_EXPR, e2, i3);
     Xobject arg2 = Xcons.IntConstant(0);
-    Xobject max = block.getBody().declLocalIdent("max", Xtype.FintFunctionType);
-    Xobject result = Xcons.functionCall(max, Xcons.List(arg1, arg2));
+    Ident max = env.declIntrinsicIdent("max", Xtype.FintFunctionType);
+    Xobject result = max.Call(Xcons.List(arg1, arg2));
     return result.cfold(block);
   }
 

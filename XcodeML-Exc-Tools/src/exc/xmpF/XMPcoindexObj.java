@@ -17,12 +17,12 @@ public class XMPcoindexObj {
 
   // constants
   /* Type-4 */
-  final static String COARRAYPUT_NAME = "xmpf_coarray_put_array";
+  final static String COARRAYPUT_NAME = "xmpf_coarray_put_array";    // selected
   final static String COARRAYGET_NAME = "xmpf_coarray_get_array";
 
   /* Type-3 */
   final static String COARRAYPUT_PREFIX = "xmpf_coarray_put";
-  final static String COARRAYGET_PREFIX = "xmpf_coarray_get";
+  final static String COARRAYGET_PREFIX = "xmpf_coarray_get";    // selected
 
   final static String PUT77_LIB_PREFIX = "xmpf_coarray_put77";
   final static String GET77_LIB_PREFIX = "xmpf_coarray_get77";
@@ -132,24 +132,28 @@ public class XMPcoindexObj {
   //  run
   //------------------------------
   public Xobject toFuncRef() {
-    Xobject actualArgs = _makeActualArgs_type4();
+    // type-5 used
+    Xobject actualArgs = _makeActualArgs_type5();
 
     Xtype xtype = getType().copy();
     xtype.removeCodimensions();
 
-    String funcName = COARRAYGET_NAME;
+    String funcName = COARRAYGET_PREFIX + rank + "d";
     Ident funcIdent = getEnv().findVarIdent(funcName, null);
     if (funcIdent == null) {
       Xtype baseType = _getBasicType(xtype);   // regard type as its basic type
+                                               //// RETHINK! It might be neutral type?
       Xtype funcType = Xtype.Function(baseType);
       funcIdent = getEnv().declExternIdent(funcName, funcType);
     }                                           
+
     Xobject funcRef = funcIdent.Call(actualArgs);
     return funcRef;
   }
 
   public Xobject toCallStmt(Xobject rhs) {
-    Xobject actualArgs = _makeActualArgs_type4(rhs);
+    // type-5 used
+    Xobject actualArgs = _makeActualArgs_type5(rhs);
 
     String subrName = COARRAYPUT_NAME;
     Ident subrIdent = getEnv().findVarIdent(subrName, null);
@@ -162,11 +166,19 @@ public class XMPcoindexObj {
   }
 
 
-  /* generate actual arguments Type-4
+  /* generate actual arguments Type-4 and Type-5
    * cf. libxmpf/src/xmpf_coarray_put.c
    *
-   * void xmpf_coarray_{put|get}_array
-   *       (int serno, void* baseAddr, int coindex, [void* rhs,] int rank,
+   * Type-4: (not used now)
+   *       (int serno, void* baseAddr, int coindex,
+   *        [void* rhs,] int rank,
+   *        void* nextAddr1, int count1,
+   *        ...
+   *        void* nextAddrN, int countN )
+   *
+   * Type-5:
+   *       (int serno, void* baseAddr, int element, int coindex,
+   *        [void* rhs,] int rank,
    *        void* nextAddr1, int count1,
    *        ...
    *        void* nextAddrN, int countN )
@@ -175,7 +187,6 @@ public class XMPcoindexObj {
   private Xobject _makeActualArgs_type4() {
     return _makeActualArgs_type4(null);
   }
-
   private Xobject _makeActualArgs_type4(Xobject rhs) {
     XMPcoarray coarray = getCoarray();
 
@@ -183,6 +194,34 @@ public class XMPcoindexObj {
     Xobject baseAddr = getBaseAddr();
     Xobject coindex = getCoindex();
     Xobject actualArgs = Xcons.List(serno, baseAddr, coindex);
+
+    if (rhs != null)
+      actualArgs.add(rhs);
+
+    actualArgs.add(Xcons.IntConstant(rank));
+
+    int hostRank = coarray.getRank();
+    for (int i = 0; i < hostRank; i++) {
+      if (isTripletIndex(i)) {
+        actualArgs.add(getNeighboringAddr(i));
+        actualArgs.add(getSizeFromTriplet(i));
+      }
+    }
+
+    return actualArgs;
+  }
+
+  private Xobject _makeActualArgs_type5() {
+    return _makeActualArgs_type5(null);
+  }
+  private Xobject _makeActualArgs_type5(Xobject rhs) {
+    XMPcoarray coarray = getCoarray();
+
+    Xobject serno = coarray.getDescriptorId();
+    Xobject baseAddr = getBaseAddr();
+    Xobject element = coarray.getElementLengthExpr();
+    Xobject coindex = getCoindex();
+    Xobject actualArgs = Xcons.List(serno, baseAddr, element, coindex);
 
     if (rhs != null)
       actualArgs.add(rhs);

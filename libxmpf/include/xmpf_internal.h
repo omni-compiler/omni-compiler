@@ -28,6 +28,8 @@
 #define SUBSCRIPT_NOLBUB   5
 #define SUBSCRIPT_NONE     6
 
+#define MAX_RANK 31
+
 typedef struct _XMP_object_ref_type {
   int ref_kind; 
   _XMP_template_t *t_desc;
@@ -298,6 +300,10 @@ extern void xmp_sync_all_(void);
 
 
 /* xmpf_coarray_put.c */
-/* Type-4 */
-extern void xmpf_coarray_put_array_(int *serno, void *baseAddr, int *coindex,
-                                    void *rhs, int *rank, ...);
+extern void xmpf_coarray_put_array_(int *serno, void *baseAddr, int *element,
+                                    int *coindex, void *rhs, int *rank, ...);
+
+/* xmpf_coarray_get.c */
+extern void xmpf_coarray_get_array_(int *serno, void *baseAddr, int *element,
+                                    int *coindex, void *result, int *rank, ...);
+

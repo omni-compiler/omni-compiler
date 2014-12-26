@@ -61,7 +61,7 @@ public class XMPcoarray {
     // declaration into fblock and set crayPtrId
     BlockList blist = fblock.getBody();
 
-    // for descriptor (serial number of the coarray)
+    // for descriptor (the serial number of the coarray)
     descrId = blist.declLocalIdent(descrName,
                                    BasicType.FintType,
                                    StorageClass.FLOCAL,
@@ -69,19 +69,11 @@ public class XMPcoarray {
 
     // for cray pointer
     Xtype crayPtrType = Xtype.Farray(BasicType.FintType);   // or Fint8Type ?
-    /****
-    Xtype crayPtrType = new FarrayType(null,
-                                       BasicType.FintType,   // or Fint8Type ?
-                                       0,
-                                       null);
-    crayPtrType.generateId();
-    ****/
     crayPtrType.setIsFcrayPointer(true);
-
     crayPtrId = blist.declLocalIdent(crayPtrName,
                                      crayPtrType,
                                      StorageClass.FLOCAL,
-                                     Xcons.FvarRef(ident));  // ident.Ref() for C
+                                     Xcons.FvarRef(ident));  // ident.Ref() if C
   }
 
 
@@ -124,6 +116,7 @@ public class XMPcoarray {
     }
     return elem.getInt();
   }
+
   public Xobject getElementLengthExpr() {
     return getElementLengthExpr(fblock);
   }
@@ -156,34 +149,56 @@ public class XMPcoarray {
     return ident.Type().getNumDimensions();
   }
 
-  public Xobject getLbound(int i) {
+
+  public Xobject[] getShape() {
+    if (getRank() == 0)
+      return new Xobject[0];
+
+    FarrayType ftype = (FarrayType)ident.Type();
+    return ftype.getFarraySizeExpr();
+  }
+
+  public FindexRange getFindexRange() {
+    Xobject[] shape = getShape();
+    FindexRange indexRange = new FindexRange(shape, fblock, env);
+    return indexRange;
+  }
+
+
+  public Xobject getLbound(int i)
+  {
     FarrayType ftype = (FarrayType)ident.Type();
     return ftype.getLbound(i, fblock);
   }
 
-  public Xobject getUbound(int i) {
+  public Xobject getUbound(int i)
+  {
     FarrayType ftype = (FarrayType)ident.Type();
     return ftype.getUbound(i, fblock);
   }
 
-  public Xobject getSizeFromIndexRange(Xobject range)
-  {
-    FindexRange indexRange = new FindexRange(range, fblock);
-    return indexRange.getExtent(0);
-    //return ftype.getSizeFromIndexRange(range, fblock);
-  }
-
   public Xobject getSizeFromLbUb(Xobject lb, Xobject ub)
   {
-    FarrayType ftype = (FarrayType)ident.Type();
-    return ftype.getSizeFromLbUb(lb, ub, fblock);
+    return getFindexRange().getSizeFromLbUb(lb, ub);
   }
 
-  public Xobject getSizeFromTriplet(int i, Xobject i1, Xobject i2,
-                                    Xobject i3) {
-    FarrayType ftype = (FarrayType)ident.Type();
-    return ftype.getSizeFromTriplet(i, i1, i2, i3, fblock);
+  public Xobject getSizeFromIndexRange(Xobject range)
+  {
+    Xobject i1 = range.getArg(0);
+    Xobject i2 = range.getArg(1);
+    Xobject i3 = range.getArg(2);
+    return getFindexRange().getSizeFromTriplet(i1, i2, i3);
   }
+
+  public Xobject getSizeFromTriplet(Xobject i1, Xobject i2, Xobject i3)
+  {
+    return getFindexRange().getSizeFromTriplet(i1, i2, i3);
+  }
+  public Xobject getSizeFromTriplet(int i, Xobject i1, Xobject i2, Xobject i3)
+  {
+    return getFindexRange().getSizeFromTriplet(i, i1, i2, i3);
+  }
+
 
   //------------------------------
   //  inquiring interface

@@ -62,7 +62,13 @@ public class XobjString extends XobjConst
       if (value == null) 
         return this.copy();
 
-      Ident ident = block.getBody().getIdentList().findVarIdent(value);
+      Xobject id_list = block.getBody().getIdentList();
+      if (id_list == null)
+        return this.copy();
+
+      Ident ident = id_list.findVarIdent(value);
+      if (ident == null)
+        return this.copy();
 
       return ident.cfold(block);
     }
