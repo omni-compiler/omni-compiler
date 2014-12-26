@@ -627,8 +627,8 @@ elif test "$target" = "MIC-linux-gnu"; then
   MPI_OPENMP_FLAG="-mp"
 
 # MPI C
-  MPI_CPP=$MPI_CC
   MPI_CC="mpiicc"
+  MPI_CPP=$MPI_CC
   MPI_CPPFLAGS="-E -std=gnu99"
   MPI_CFLAGS="-fast $MPI_OPENMP_FLAG"
   MPI_CLIBS=""
@@ -656,8 +656,8 @@ elif test "$target" = "Cray-linux-gnu"; then
   MPI_OPENMP_FLAG="-h omp"
 
 # MPI C
-  MPI_CPP=$MPI_CC
   MPI_CC="cc"
+  MPI_CPP=$MPI_CC
   MPI_CPPFLAGS="-E"
   MPI_CFLAGS="-O2 $MPI_OPENMP_FLAG"
   MPI_CLIBS=""
@@ -685,8 +685,8 @@ elif test "$target" = "sx-nec-superux"; then
   MPI_OPENMP_FLAG="-Popenmp"
 
 # MPI C
-  MPI_CPP=$MPI_CC
   MPI_CC="sxmpic++"
+  MPI_CPP=$MPI_CC
   MPI_CPPFLAGS="-E"
   MPI_CFLAGS="-O2 $MPI_OPENMP_FLAG"
   MPI_CLIBS=""
@@ -716,13 +716,13 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   MPI_OPENMP_FLAG="-qsmp=omp"
 
 # MPI C
-  MPI_CPP=$MPI_CC
   MPI_DIR="/bgsys/drivers/V1R2M1/ppc64/comm/bin/xl/"
   if test -d $MPI_DIR; then
     MPI_CC="$MPI_DIR/mpixlcxx_r"
   else
     MPI_CC="mpixlcxx_r"
   fi
+  MPI_CPP=$MPI_CC
   MPI_CPPFLAGS="-E"
   MPI_CFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist $INC_PATH $MPI_OPENMP_FLAG"
 
@@ -768,8 +768,8 @@ elif test "$target" = "powerpc-hitachi-aix"; then
   MPI_OPENMP_FLAG="-qsmp=omp"
 
 # MPI C
-  MPI_CPP=$MPI_CC
   MPI_CC="mpCC_r"
+  MPI_CPP=$MPI_CC
   MPI_CPPFLAGS="-E"
   MPI_CFLAGS="-q64 -qipa -qhot -qsimd=auto -O5 $MPI_OPENMP_FLAG"
   MPI_CLIBS=""
