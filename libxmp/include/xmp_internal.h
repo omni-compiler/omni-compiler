@@ -109,6 +109,12 @@ extern void _XMP_coarray_finalize(const int);
 // xmp_intrinsic.c
 extern void xmpf_transpose(void *dst_p, void *src_p, int opt);
 extern void xmpf_matmul(void *x_p, void *a_p, void *b_p);
+extern void xmpf_pack_mask(void *v_p, void *a_p, void *m_p);
+extern void xmpf_pack_nomask(void *v_p, void *a_p);
+extern void xmpf_pack(void *v_p, void *a_p, void *m_p);
+extern void xmpf_unpack_mask(void *a_p, void *v_p, void *m_p);
+extern void xmpf_unpack_nomask(void *a_p, void *v_p);
+extern void xmpf_unpack(void *a_p, void *v_p, void *m_p);
 
 // xmp_gmove.c
 extern void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,

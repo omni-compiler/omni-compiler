@@ -719,6 +719,7 @@ static _Bool is_same_alignmanner(_XMP_array_t *adesc0, _XMP_array_t *adesc1)
 {
   _XMP_template_t *t0 = (_XMP_template_t *)adesc0->align_template;
   _XMP_template_t *t1 = (_XMP_template_t *)adesc1->align_template;
+  int taxis0, taxis1, naxis0, naxis1, nsize0, nsize1;
 
   if (adesc0->dim != adesc1->dim) return false;
 
@@ -729,11 +730,33 @@ static _Bool is_same_alignmanner(_XMP_array_t *adesc0, _XMP_array_t *adesc1)
        return false;
     }else{
        if(adesc0->info[i].align_manner==_XMP_N_ALIGN_BLOCK_CYCLIC
-         && t0->chunk[idim0].par_width != t1->chunk[idim1].par_width) return false;
+         && t0->chunk[idim0].par_width != t1->chunk[idim1].par_width){
+         return false;
+       }else if(adesc0->info[i].align_manner==_XMP_N_ALIGN_GBLOCK){
+         xmp_align_axis(adesc0, i+1, &taxis0);
+         xmp_align_axis(adesc1, i+1, &taxis1);
+         xmp_dist_axis(t0, taxis0, &naxis0);
+         xmp_dist_axis(t1, taxis1, &naxis1);
+         xmp_nodes_size(adesc0->array_nodes, naxis0, &nsize0);
+         xmp_nodes_size(adesc1->array_nodes, naxis1, &nsize1);
+         int map0[nsize0], map1[nsize1];
+         xmp_dist_gblockmap(t0, naxis0, map0);
+         xmp_dist_gblockmap(t1, naxis1, map1);
+         if (nsize0 == nsize1){
+           for(int ii=0; ii<nsize0; ii++){
+             if (map0[ii] != map1[ii]){
+                return false;
+             }
+           }
+         }else{
+           return false;
+         }
+       }
     }
   }
 
   return true;
+
 }
 
 
@@ -2018,12 +2041,14 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
 
   _XMP_array_t *dst_array;
   _XMP_array_t *src_array = gmv_desc_rightp->a_desc;
+  _XMP_template_t *dst_template, *src_template;
 
   void *dst_addr, *src_addr;
   int type;
   size_t type_size;
   int dst_dim = gmv_desc_leftp->ndims;
   int src_dim = gmv_desc_rightp->ndims;
+  int dst_template_index, src_template_index;
 
   if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true){
     dst_array = gmv_desc_leftp->a_desc;
@@ -2031,6 +2056,8 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
     type_size = dst_array->type_size;
     dst_addr = dst_array->array_addr_p;
     src_addr = src_array->array_addr_p;
+    dst_template = dst_array->align_template;
+    src_template = src_array->align_template;
   }else if(gmv_desc_leftp->is_global == false && gmv_desc_rightp->is_global == true){
     dst_addr = gmv_desc_leftp->local_data;
     src_addr = src_array->array_addr_p;
@@ -2080,7 +2107,77 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
 
 // temporary check flag : chk_flag
 
-  int chk_flag=0;
+  int chk_flag=0, dst_chk_flag, src_chk_flag;
+
+  if (gmv_desc_leftp->is_global == true
+     && gmv_desc_rightp->is_global == true){
+
+     for(int i=0; i<dst_template->dim;i++){
+       if (dst_template->chunk[i].dist_manner !=_XMP_N_DIST_BLOCK){
+          dst_chk_flag=0;
+          break;
+       }else{
+          dst_chk_flag=1;
+       }
+     }
+
+     for(int i=0; i<src_template->dim;i++){
+       if (src_template->chunk[i].dist_manner !=_XMP_N_DIST_BLOCK){
+          src_chk_flag=0;
+          break;
+       }else{
+          src_chk_flag=1;
+       }
+     }
+
+     if (dst_dim==dst_template->dim){ 
+        if(src_dim==src_template->dim){
+
+          for(int i=0; i<dst_dim;i++){
+            if ((dst_array->info[i].align_subscript != 0 ) 
+               || (dst_array->info[i].align_manner !=_XMP_N_ALIGN_BLOCK)){
+              dst_chk_flag=0;
+              break;
+            }
+          }
+
+          for(int i=0; i<src_dim;i++){
+            if ((src_array->info[i].align_subscript != 0 ) 
+               || (src_array->info[i].align_manner !=_XMP_N_ALIGN_BLOCK)){
+                src_chk_flag=0;
+                break;
+             }
+          }
+
+        }
+     }else if (dst_dim < dst_template->dim){
+        if(src_dim < src_template->dim){
+          if(dst_template->dim > 2 
+            || src_template->dim > 2
+            || dst_array->info[0].align_subscript != 0
+            || src_array->info[0].align_subscript != 0){
+             _XMP_fatal("not implemented yet");
+          }
+        }else{
+          dst_chk_flag=0;
+          src_chk_flag=0;
+        }
+     }else if (dst_dim > dst_template->dim){
+        if (src_dim > src_template->dim){
+           if (_XMPF_running == 1
+               && _XMPC_running == 0){
+              dst_chk_flag=0;
+              src_chk_flag=0;
+           }
+        }else{
+           dst_chk_flag=0;
+           src_chk_flag=0;
+        }
+     }
+
+     if (dst_chk_flag==1 && src_chk_flag==1) chk_flag=1;
+
+  }
 
   if (chk_flag == 1) {
 
@@ -2098,14 +2195,12 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
 
     for(int i=0;i<dst_dim;i++){
       if (dst_array->info[i].align_manner ==_XMP_N_ALIGN_BLOCK_CYCLIC){
-//        chk_flag=0;
         break;
       }
     }
 
     for(int i=0;i<src_dim;i++){
       if (src_array->info[i].align_manner ==_XMP_N_ALIGN_BLOCK_CYCLIC){
-//        chk_flag=0;
         break;
       }
     }

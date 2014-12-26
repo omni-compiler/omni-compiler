@@ -321,3 +321,86 @@ void xmp_transpose_(_XMP_array_t **dst_d, _XMP_array_t **src_d, int *opt){
 void xmp_matmul_(_XMP_array_t **x_d, _XMP_array_t **a_d, _XMP_array_t **b_d){
    xmpf_matmul(*x_d, *a_d, *b_d);
 }
+
+
+void xmp_gather_(_XMP_array_t **x_d, _XMP_array_t **a_d, ... )
+{
+  int          i;
+  va_list      valst;
+  _XMP_array_t *idx_p;
+  _XMP_array_t **idx_pp;
+  _XMP_array_t **idx_array;
+  _XMP_array_t *x_p = *(_XMP_array_t **)x_d;
+  _XMP_array_t *a_p = *(_XMP_array_t **)a_d;
+
+  idx_array = (_XMP_array_t **)_XMP_alloc(sizeof(_XMP_array_t *)*a_p->dim);
+
+  va_start( valst, a_d );
+
+  for(i=0;i<a_p->dim;i++){
+     idx_pp = va_arg( valst , _XMP_array_t** );
+     idx_p  = *(_XMP_array_t **)idx_pp;
+     idx_array[i] = idx_p;
+  }
+
+  va_end(valst);
+
+   xmpf_gather(*x_d, *a_d, idx_array);
+
+   _XMP_free(idx_array);
+}
+
+void xmp_scatter_(_XMP_array_t **x_d, _XMP_array_t **a_d, ... )
+{
+  int          i;
+  va_list      valst;
+  _XMP_array_t **idx_pp;
+  _XMP_array_t **idx_array;
+  _XMP_array_t *x_p = *(_XMP_array_t **)x_d;
+  _XMP_array_t *a_p = *(_XMP_array_t **)a_d;
+
+  idx_array = (_XMP_array_t **)_XMP_alloc(sizeof(_XMP_array_t *)*a_p->dim);
+
+  va_start( valst, a_d );
+
+  for(i=0;i<x_p->dim;i++){
+     idx_pp = va_arg( valst , _XMP_array_t** );
+     idx_array[i] = *(_XMP_array_t **)idx_pp;
+  }
+
+  va_end(valst);
+
+   xmpf_scatter(*x_d, *a_d, idx_array);
+
+   _XMP_free(idx_array);
+}
+
+void xmp_pack_(_XMP_array_t **v_d, _XMP_array_t **a_d, _XMP_array_t **m_d){
+   xmpf_pack(*v_d, *a_d, *m_d);
+}
+
+
+void xmp_pack_mask_(_XMP_array_t **v_d, _XMP_array_t **a_d, _XMP_array_t **m_d){
+   xmpf_pack(*v_d, *a_d, *m_d);
+}
+
+
+void xmp_pack_nomask_(_XMP_array_t **v_d, _XMP_array_t **a_d){
+   xmpf_pack(*v_d, *a_d, NULL);
+}
+
+
+void xmp_unpack_(_XMP_array_t **a_d, _XMP_array_t **v_d, _XMP_array_t **m_d){
+   xmpf_unpack(*a_d, *v_d, *m_d);
+}
+
+
+void xmp_unpack_mask_(_XMP_array_t **a_d, _XMP_array_t **v_d, _XMP_array_t **m_d){
+   xmpf_unpack(*a_d, *v_d, *m_d);
+}
+
+
+void xmp_unpack_nomask_(_XMP_array_t **a_d, _XMP_array_t **v_d){
+   xmpf_unpack(*a_d, *v_d, NULL);
+}
+

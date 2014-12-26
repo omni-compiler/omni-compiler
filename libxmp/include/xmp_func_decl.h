@@ -345,5 +345,13 @@ extern void _XMP_gpu_unpack_shadow_NORMAL(void *desc, void *lo_buffer, void *hi_
 // xmp_intrinsic.c
 extern void xmp_transpose(void *dst_d, void *src_d, int opt);
 extern void xmp_matmul(void *x_p, void *a_p, void *b_p);
+extern void xmp_pack_mask(void *v_p, void *a_p, void *m_p);
+extern void xmp_pack_nomask(void *v_p, void *a_p);
+extern void xmp_pack(void *v_p, void *a_p, void *m_p);
+extern void xmp_unpack_mask(void *a_p, void *v_p, void *m_p);
+extern void xmp_unpack_nomask(void *a_p, void *v_p);
+extern void xmp_unpack(void *a_p, void *v_p, void *m_p);
+extern void xmp_gather(void *, void *, ...);
+extern void xmp_scatter(void *, void *, ...);
 
 #endif // _XMP_RUNTIME_FUNC_DECL
