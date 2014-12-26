@@ -613,11 +613,13 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
   MPI_FCLIBS=""
 
 # Omni C
+  OMNI_L2X_CFLAGS=""
   OMNI_LX2X_CFLAGS=""
   OMNI_NTV_CFLAGS="-Xg -noansi"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
 # Omni F
+  OMNI_L2X_FCFLAGS=""
   OMNI_LX2X_FCFLAGS=""
   OMNI_NTV_FCFLAGS="-Free"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
@@ -642,11 +644,13 @@ elif test "$target" = "MIC-linux-gnu"; then
   MPI_FCLIBS=""
 
 # Omni C
+  OMNI_L2X_CFLAGS=""
   OMNI_LX2X_CFLAGS=""
   OMNI_NTV_CFLAGS="-std=gnu99"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
 # Omni F
+  OMNI_L2X_FCFLAGS=""
   OMNI_LX2X_FCFLAGS=""
   OMNI_NTV_FCFLAGS=""
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
@@ -671,11 +675,13 @@ elif test "$target" = "Cray-linux-gnu"; then
   MPI_FCLIBS=""
 
 # Omni C
+  OMNI_L2X_CFLAGS=""
   OMNI_LX2X_CFLAGS=""
   OMNI_NTV_CFLAGS="-hgnu -D_XMP_CRAY"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
 # Omni F
+  OMNI_L2X_FCFLAGS=""
   OMNI_LX2X_FCFLAGS=""
   OMNI_NTV_FCFLAGS="-f free"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
@@ -700,11 +706,13 @@ elif test "$target" = "sx-nec-superux"; then
   MPI_FCLIBS=""
 
 # Omni C
+  OMNI_L2X_CFLAGS=""
   OMNI_LX2X_CFLAGS=""
   OMNI_NTV_CFLAGS="-Kgcc -w"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
-# Omni F  
+# Omni F
+  OMNI_L2X_FCFLAGS=""
   OMNI_LX2X_FCFLAGS=""
   OMNI_NTV_FCFLAGS="-f4 -w"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
@@ -754,11 +762,13 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   MPI_FCLIBS=$MPI_CLIBS
 
 # Omni C
+  OMNI_L2X_CFLAGS=""
   OMNI_LX2X_CFLAGS=""
   OMNI_NTV_CFLAGS="-q64 -qipa"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
 # Omni F
+  OMNI_L2X_FCFLAGS=""
   OMNI_LX2X_FCFLAGS=""
   OMNI_NTV_FCFLAGS="-q64 -qipa -qextname"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
@@ -783,11 +793,13 @@ elif test "$target" = "powerpc-hitachi-aix"; then
   MPI_FCLIBS=""
 
 # Omni C
+  OMNI_L2X_CFLAGS=""
   OMNI_LX2X_CFLAGS=""
   OMNI_NTV_CFLAGS="-q64 -qipa"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
 # Omni F
+  OMNI_L2X_FCFLAGS=""
   OMNI_LX2X_FCFLAGS=""
   OMNI_NTV_FCFLAGS="-q64 -qipa -qextname"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
@@ -822,11 +834,13 @@ else
     MPI_FCLIBS=""
 
     # Omni C
+    OMNI_L2X_CFLAGS=""
     OMNI_LX2X_CFLAGS=""
     OMNI_NTV_CFLAGS="-std=gnu99"
     OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
     # Omni F
+    OMNI_L2X_FCFLAGS=""
     OMNI_LX2X_FCFLAGS="-gnu"
     OMNI_NTV_FCFLAGS="-ffree-form -fcray-pointer"
     OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS -fopenmp -lgomp"
@@ -842,7 +856,7 @@ else
     MPI_CLIBS=""
 
     # MPI F
-    MPI_FC="mpifort"
+    MPI_FC="mpiifort"
     MPI_FPP=$MPI_FC
     MPI_FPPFLAGS="-E"
     MPI_FCFLAGS="-O2 $MPI_OPENMP_FLAG"
@@ -850,11 +864,13 @@ else
     MPI_FCLIBS=""
 
     # Omni C
+    OMNI_L2X_CFLAGS=""
     OMNI_LX2X_CFLAGS=""
     OMNI_NTV_CFLAGS="-std=gnu99"
     OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
     # Omni F
+    OMNI_L2X_FCFLAGS=""
     OMNI_LX2X_FCFLAGS="-intel"
     OMNI_NTV_FCFLAGS=""
     OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
@@ -881,14 +897,20 @@ else
       MPI_FCLIBS=""
 
       # Omni C
+      OMNI_L2X_CFLAGS="--no-builtin-va-arg"
       OMNI_LX2X_CFLAGS=""
       OMNI_NTV_CFLAGS="-D_XMP_PGI"
       OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
       # Omni F
+      OMNI_L2X_FCFLAGS=""
       OMNI_LX2X_FCFLAGS=""
       OMNI_NTV_FCFLAGS=""
       OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
+
+      # Special options
+      IS_PGI="Yes"
+      AC_SUBST(IS_PGI)
       ;;
     *)
       echo "No supported compiler was found."
@@ -1005,6 +1027,7 @@ AC_SUBST(MPI_FCLIBS)
 OMNI_C_PP="$MPI_CPP $MPI_CPPFLAGS"
 AC_SUBST(OMNI_C_PP)
 
+AC_SUBST(OMNI_L2X_CFLAGS)
 AC_SUBST(OMNI_LX2X_CFLAGS)
 AC_SUBST(OMNI_NTV_CFLAGS)
 AC_SUBST(OMNI_LNK_CFLAGS)
@@ -1012,6 +1035,7 @@ AC_SUBST(OMNI_LNK_CFLAGS)
 # Omni F
 OMNI_F_PP="$MPI_FPP $MPI_FPPFLAGS"
 AC_SUBST(OMNI_F_PP)
+AC_SUBST(OMNI_L2X_FCFLAGS)
 AC_SUBST(OMNI_LX2X_FCFLAGS)
 AC_SUBST(OMNI_NTV_FCFLAGS)
 AC_SUBST(OMNI_LNK_FCFLAGS)
@@ -1019,10 +1043,10 @@ AC_SUBST(OMNI_LNK_FCFLAGS)
 # Other options
 chk=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1 | grep pgcc`
 AM_CONDITIONAL(IS_PGI, test "$chk" != "")
+
 AM_CONDITIONAL(IS_CRAY, test "$target" = "Cray-linux-gnu")
 AM_CONDITIONAL(IS_SUPERUX, test "$target" = "sx-nec-superux")
 
-AC_SUBST(IS_PGI)
 AC_SUBST(IS_CRAY)
 AC_SUBST(IS_SUPERUX)
 
