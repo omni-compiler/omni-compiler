@@ -1,14 +1,9 @@
-# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
-# $TSUKUBA_Copyright:
-#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
-#  $
-
-CC                = @BECC@
+CC                = @MPI_CC@
 include_HEADERS	  = tlog.h
 lib_LIBRARIES	  = libtlog.a
 libtlog_a_SOURCES = tlog-ompc.c tlog.c tlog-time.c
 
-AM_CFLAGS     = @BECC_OPTION@ 
+AM_CFLAGS     = @MPI_CFLAGS@ 
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS)
 LINK = $(CCLD) $(AM_CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@

@@ -105,6 +105,18 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                                         trans(ident.getBitFieldExpr())));
         }
 
+        // gccThread
+        if (ident.isGccThread()) {
+            addAttributes(e,
+                          "is_gccThread", "1");
+        }
+
+        // gccExtension
+        if (ident.isGccExtension()) {
+            addAttributes(e,
+                          "is_gccExtension", "1");
+        }
+
         // enum member value
         addChildNodes(e,
                       transValue(ident.getEnumValue()));

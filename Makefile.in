@@ -78,11 +78,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@SUPERUX_FALSE@am__append_1 = @LIBOMPC_DIR@ @LIBOMPF_DIR@
-
-#if ENABLE_XMP_GPU
-#  SUBDIRS+=@LIBXMP_GPU_DIR@
-#endif
+@IS_SUPERUX_FALSE@am__append_1 = @LIBOMPC_DIR@ @LIBOMPF_DIR@
 @ENABLE_ACC_TRUE@am__append_2 = @LIBACC_DIR@ @LIBACC_HEADER_DIR@
 @ENABLE_ATOOL_TRUE@am__append_3 = @ATOOL_DIR@
 @GASNET_TRUE@am__append_4 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"
@@ -246,7 +242,6 @@ am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
   | sed 's|^\./|$(prefix)/|' | grep -v '$(infodir)/dir$$'
 distcleancheck_listfiles = find . -type f -print
 ACLOCAL = @ACLOCAL@
-AIX_OPT = @AIX_OPT@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 API_FLAVOR = @API_FLAVOR@
@@ -257,17 +252,9 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
-BASH = @BASH@
-BECC = @BECC@
-BECC_OMP_OPTION = @BECC_OMP_OPTION@
-BECC_OPTION = @BECC_OPTION@
-BEFC = @BEFC@
-BEFC_MODINC = @BEFC_MODINC@
-BEFC_OPTION = @BEFC_OPTION@
 BLASLIB = @BLASLIB@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
-CC_LIB = @CC_LIB@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
@@ -291,14 +278,12 @@ ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 ENABLE_ACC = @ENABLE_ACC@
 ENABLE_ATOOL = @ENABLE_ATOOL@
-ENABLE_MPI3 = @ENABLE_MPI3@
 ENABLE_XACC = @ENABLE_XACC@
 EXEEXT = @EXEEXT@
 F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
 FGREP = @FGREP@
-FJRDMA = @FJRDMA@
 F_BACKEND_DIR = @F_BACKEND_DIR@
 F_FRONTEND_DIR = @F_FRONTEND_DIR@
 GASNET_CFLAGS = @GASNET_CFLAGS@
@@ -318,14 +303,13 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INT_ENUFF_FOR_VOIDP = @INT_ENUFF_FOR_VOIDP@
-IS_AIX = @IS_AIX@
 IS_CRAY = @IS_CRAY@
-IS_PGCC = @IS_PGCC@
-JARCOM = @JARCOM@
-JAVACCOM = @JAVACCOM@
-JAVACOM = @JAVACOM@
-JAVA_HOME = @JAVA_HOME@
-JAVA_OPT = @JAVA_OPT@
+IS_PGI = @IS_PGI@
+IS_SUPERUX = @IS_SUPERUX@
+JAR = @JAR@
+JAVA = @JAVA@
+JAVAC = @JAVAC@
+JAVA_OPTION = @JAVA_OPTION@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LEX = @LEX@
@@ -358,20 +342,28 @@ MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
 MKRULESDIR = @MKRULESDIR@
 MM5TGT = @MM5TGT@
-MPI3_OPT = @MPI3_OPT@
-NATIVE_DOPT = @NATIVE_DOPT@
+MPI_CC = @MPI_CC@
+MPI_CFLAGS = @MPI_CFLAGS@
+MPI_CLIBS = @MPI_CLIBS@
+MPI_FC = @MPI_FC@
+MPI_FCFLAGS = @MPI_FCFLAGS@
+MPI_FCLIBS = @MPI_FCLIBS@
+MPI_MODINC = @MPI_MODINC@
+MPI_OPENMP_FLAG = @MPI_OPENMP_FLAG@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
-OMC_CONF_LNK_OPT = @OMC_CONF_LNK_OPT@
-OMC_CONF_LX2X_OPT = @OMC_CONF_LX2X_OPT@
-OMC_CONF_NTV_OPT = @OMC_CONF_NTV_OPT@
 OMDRIVER_DIR = @OMDRIVER_DIR@
-OMF_CONF_LNK_OPT = @OMF_CONF_LNK_OPT@
-OMF_CONF_LX2X_OPT = @OMF_CONF_LX2X_OPT@
-OMF_CONF_NTV_OPT = @OMF_CONF_NTV_OPT@
+OMNI_C_PP = @OMNI_C_PP@
+OMNI_F_PP = @OMNI_F_PP@
 OMNI_HOME = @OMNI_HOME@
+OMNI_LNK_CFLAGS = @OMNI_LNK_CFLAGS@
+OMNI_LNK_FCFLAGS = @OMNI_LNK_FCFLAGS@
+OMNI_LX2X_CFLAGS = @OMNI_LX2X_CFLAGS@
+OMNI_LX2X_FCFLAGS = @OMNI_LX2X_FCFLAGS@
+OMNI_NTV_CFLAGS = @OMNI_NTV_CFLAGS@
+OMNI_NTV_FCFLAGS = @OMNI_NTV_FCFLAGS@
 OMP_LOCK_TYPE = @OMP_LOCK_TYPE@
 OMP_THREAD_TYPE = @OMP_THREAD_TYPE@
 OM_DRIVER_CONF_DIR = @OM_DRIVER_CONF_DIR@
@@ -401,8 +393,6 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PERL5 = @PERL5@
 POW_LIB = @POW_LIB@
-PPCC = @PPCC@
-PPCC_OPT = @PPCC_OPT@
 PPTGT = @PPTGT@
 RANLIB = @RANLIB@
 RM = @RM@
@@ -419,9 +409,7 @@ SIZEOF_UNSIGNED_LONG_LONG = @SIZEOF_UNSIGNED_LONG_LONG@
 SIZEOF_UNSIGNED_SHORT = @SIZEOF_UNSIGNED_SHORT@
 SIZEOF_VOID_P = @SIZEOF_VOID_P@
 SIZEOF__BOOL = @SIZEOF__BOOL@
-SR16000 = @SR16000@
 STRIP = @STRIP@
-SUPERUX = @SUPERUX@
 TARGET_ARCH = @TARGET_ARCH@
 TCA_PREFIX = @TCA_PREFIX@
 TOPDIR = @TOPDIR@
@@ -486,9 +474,6 @@ htmldir = @htmldir@
 includedir = @includedir@
 infodir = @infodir@
 install_sh = @install_sh@
-isIBMJava6 = @isIBMJava6@
-isSunJava6 = @isSunJava6@
-javaType = @javaType@
 javadir = @javadir@
 libdir = @libdir@
 libexecdir = @libexecdir@
@@ -524,11 +509,6 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-
-# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
-# $TSUKUBA_Copyright:
-#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
-#  $
 SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ @C_BACKEND_DIR@ \
 	@F_FRONTEND_DIR@ @F_BACKEND_DIR@ @XCODEML_EXC_TOOLS_DIR@ \
 	@OMDRIVER_DIR@ @LIBTLOG_DIR@ @LIBTLOG_MPI_DIR@ \
@@ -536,7 +516,6 @@ SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ @C_BACKEND_DIR@ \
 	@LIBXMPF_HEADER_DIR@ @LIBXMPF_DIR@ $(am__append_1) \
 	$(am__append_2) $(am__append_3)
 XMPPKG_TMPDIR_TOP := "/tmp/@XMPPKG_NAME@"
-#XMPPKG_TMPDIR:=$(XMPPKG_TMPDIR_TOP)/$(shell mktemp -u --tmpdir=/)
 XMPPKG_TMPDIR := $(XMPPKG_TMPDIR_TOP)/tmp.$$
 DEB_VER_FILE = "/etc/debian_version"
 RH_REL_FILE = "/etc/redhat-release"
@@ -650,9 +629,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps ./Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

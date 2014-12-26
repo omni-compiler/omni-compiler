@@ -6,12 +6,12 @@ all-local: $(TARGET)
 
 $(TARGET): $(CLASS)
 	mkdir -p build
-	cd src;	$(JARCOM) cf ../$@ ./xcodeml/*.class ./xcodeml/*/*.class
+	cd src;	$(JAR) cf ../$@ ./xcodeml/*.class ./xcodeml/*/*.class
 
 SUFFIXES: .class .java
 
 .java.class:
-	$(JAVACCOM) $< -classpath ./src -Xlint:deprecation
+	$(JAVAC) $< -classpath ./src -Xlint:deprecation
 
 clean-local:
 	rm -f $(TARGET) $(CLASS)

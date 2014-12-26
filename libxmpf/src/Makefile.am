@@ -1,11 +1,13 @@
-CC=@BECC@
+CC=@MPI_CC@
+FC=@MPI_FC@
+FCFLAGS=@MPI_FCFLAGS@
 XMP_INC_DIR  =../../libxmp/include
 XMP_SRC_DIR  =../../libxmp/src
 XMPF_INC_DIR =../include
 #TLOG_INC_DIR=$(top_builddir)/@LIBTLOG_MPI_DIR@
 #GASNET_INC_DIR=@GASNET_PREFIX@/include
 #GASNET_CONDUIT_DIR=$(GASNET_INC_DIR)/@GASNET_CONDUIT@-conduit
-AM_CFLAGS = -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) -I$(XMP_SRC_DIR)  @BECC_OPTION@ @MPI3_OPT@
+AM_CFLAGS = -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) -I$(XMP_SRC_DIR) @MPI_CFLAGS@
 
 lib_LIBRARIES     = libxmpf.a
 libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_array.c xmpf_gcomm.c \
@@ -16,10 +18,12 @@ libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_array.c xmpf_gcomm.c \
 
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS)
-LINK = $(CCLD) $(AM_CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+FCCOMPILE = $(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS)
+LINK = $(CC) $(AM_CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@ @MPI_CLIBS@
 
 xmpf_main.o: xmpf_main.f
-	@BEFC@ @BEFC_OPTION@ -c xmpf_main.f
+	$(FC) $(FCFLAGS) -c xmpf_main.f
 
 install-exec-local: xmpf_main.o
 	test -z $(DESTDIR)$(libdir) || /bin/mkdir -p $(DESTDIR)$(libdir)

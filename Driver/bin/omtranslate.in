@@ -33,4 +33,4 @@ if test $? -ne 0; then
     exit 1
 fi
 
-exec ${OMNI_JAVA} ${OMNI_JAVA_OPT} exc.util.omompx ${1+"$@"}
+exec ${OMNI_JAVA} ${OMNI_JAVA_OPTION} exc.util.omompx ${1+"$@"}

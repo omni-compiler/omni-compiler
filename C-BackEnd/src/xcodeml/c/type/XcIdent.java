@@ -289,12 +289,16 @@ public class XcIdent extends XcObj implements XcExprObj, XcGccAttributable, XcLa
         _valueExpr = expr;
     }
 
-    public final void appendGccExtMark(XmcWriter w) throws XmException
+    public final void appendGccExtension(XmcWriter w) throws XmException
     {
         if(_isGccExtension)
             w.addSpc("__extension__");
-        if(_isGccThread)
-            w.addSpc("__thread");
+    }
+
+    public final void appendGccThread(XmcWriter w) throws XmException
+    {
+      if(_isGccThread)
+        w.addSpc("__thread");
     }
 
     @Override
@@ -362,7 +366,7 @@ public class XcIdent extends XcObj implements XcExprObj, XcGccAttributable, XcLa
     {
         w.noLfOrLf();
 
-        appendGccExtMark(w);
+        appendGccExtension(w);
 
         if(_isTypedef) {
             w.addSpc("typedef ");
@@ -404,10 +408,10 @@ public class XcIdent extends XcObj implements XcExprObj, XcGccAttributable, XcLa
           append as follows.
 
           case if ident of {var, func}Decl
-          {static,auto,extern,register} __extension__ __thread (type and symbol and attr)
+          __extension__ {static,auto,extern,register} __thread (type and symbol and attr)
         */
 
-        appendGccExtMark(w);
+        appendGccExtension(w);
 
         if(_isStatic)
             w.addSpc("static");
@@ -417,6 +421,8 @@ public class XcIdent extends XcObj implements XcExprObj, XcGccAttributable, XcLa
             w.addSpc("extern");
         else if(_isRegister)
             w.addSpc("register");
+
+        appendGccThread(w);
 
         _type.appendDeclCode(w, _symbol, true, isPreDecl, attrOfDeclOrDef);
     }

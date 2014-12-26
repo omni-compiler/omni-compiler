@@ -7,7 +7,7 @@
 #MODE=1         # generate subroutines respectively for all groups
 MODE=2          # generate one subroutine for all proceures of all groups
 
-NM=@NM@
+NM="@NM@"
 
 USAGE='usage: '$0' <option> ... <input_file> ...
   <option>
