@@ -18,6 +18,7 @@ run: $(EXES)
 	$(XRUN) parallel_private.x
 	$(XRUN) parallel-loop_private.x
 	$(XRUN) parallel-loop_reduction.x
+	$(XRUN) parallel-loop_reduction_double.x
 	$(XRUN) loop_private_gang.x
 	$(XRUN) loop_private_vector.x
 	$(XRUN) parallel_if.x

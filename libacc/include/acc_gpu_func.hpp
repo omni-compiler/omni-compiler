@@ -23,6 +23,7 @@
 #define _ACC_thread_x_id threadIdx.x
 #define _ACC_thread_y_id threadIdx.y
 #define _ACC_thread_z_id threadIdx.z
+#define _ACC_grid_x_dim gridDim.x
 
 /*
 void init_block_thread_x_id_iter(int *b_init, int *b_cond, int *b_step, int b_total){
