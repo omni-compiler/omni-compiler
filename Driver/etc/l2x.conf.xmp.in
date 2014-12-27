@@ -1,8 +1,3 @@
 #OM_OPTIONS="${OM_OPTIONS} -fxmp"
-IS_PGI=@IS_PGI@
+OM_OPTIONS="${OM_OPTIONS}"
 
-if [ "${IS_PGI}" = "Yes" ]; then
-  OM_OPTIONS="${OM_OPTIONS} --no-builtin-va-arg"
-else
-  OM_OPTIONS="${OM_OPTIONS}"
-fi

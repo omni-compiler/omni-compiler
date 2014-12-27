@@ -478,6 +478,7 @@ AC_ARG_ENABLE(xacc,
 # --------------------------------------------------------------------
 # check basic commands
 
+AC_PROG_CPP
 AC_PROG_CC
 AC_PROG_FC
 AC_PROG_CXX
@@ -1741,6 +1742,7 @@ AC_SUBST(OM_DRIVER_CONF_DIR)
 AH_TEMPLATE(OM_DRIVER_CONF_DIR, [omni compiler driver configuration file directory])
 AC_DEFINE_UNQUOTED(OM_DRIVER_CONF_DIR, "${OM_DRIVER_CONF_DIR}")
 
+OM_EXEC_C_PP="${MPI_CPP}"
 AC_SUBST(OM_EXEC_C_PP)
 
 OM_EXEC_C_COMPILER="${MPI_CC}"

@@ -7,7 +7,7 @@
 #ifndef _XMP_RUNTIME_FUNC_DECL
 #define _XMP_RUNTIME_FUNC_DECL
 
-#if !defined(_XMP_CRAY) && !defined(_XMP_PGI)
+#if !defined(_XMP_CRAY)
 #include <stddef.h>
 #endif
 
