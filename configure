@@ -764,8 +764,6 @@ ENABLE_ATOOL_TRUE
 ENABLE_ACC
 ENABLE_ACC_FALSE
 ENABLE_ACC_TRUE
-FJRDMA_FALSE
-FJRDMA_TRUE
 YFLAGS
 YACC
 LEXLIB
@@ -781,6 +779,9 @@ CXX
 ac_ct_FC
 FCFLAGS
 FC
+FJRDMA
+FJRDMA_FALSE
+FJRDMA_TRUE
 LIBACC_HEADER_DIR
 LIBACC_DIR
 LIBTLOG_MPI_DIR
@@ -941,8 +942,8 @@ enable_debug
 enable_openacc
 enable_atool
 enable_xacc
-enable_FJRDMA
 enable_mpi3
+enable_FJRDMA
 enable_mreal
 with_gmp_lib
 with_gmp_include
@@ -1604,8 +1605,8 @@ Optional Features:
   --enable-openacc               enable OpenACC (false default).
   --enable-atool                 enable atool (false default).
   --enable-xacc                  enable XcalableACC (false default).
-  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10.
   --enable-mpi3                  enable MPI3 (false default).
+  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10.
   --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default).
 
 Optional Packages:
@@ -12553,7 +12554,7 @@ ac_config_files="$ac_config_files $LIBACC_HEADER_DIR/Makefile"
 # --------------------------------------------------------------------
 # Check whether --enable-debug was given.
 if test "${enable_debug+set}" = set; then :
-  enableval=$enable_debug; doDebug=$enableval
+  enableval=$enable_debug; doDebug=yes
 else
   doDebug=no
 fi
@@ -12561,11 +12562,11 @@ fi
 
 #AC_ARG_ENABLE(xmpgpu,
 #    [  --enable-xmpgpu                enable XcalableMP-GPU (false default).],
-#    [doXmpGpu=$enableval], [doXmpGpu=no])
+#    [doXmpGpu=yes], [doXmpGpu=no])
 
 # Check whether --enable-openacc was given.
 if test "${enable_openacc+set}" = set; then :
-  enableval=$enable_openacc; doOpenAcc=$enableval
+  enableval=$enable_openacc; doOpenAcc=yes
 else
   doOpenAcc=no
 fi
@@ -12573,7 +12574,7 @@ fi
 
 # Check whether --enable-atool was given.
 if test "${enable_atool+set}" = set; then :
-  enableval=$enable_atool; doatool=$enableval
+  enableval=$enable_atool; doatool=yes
 else
   doatool=no
 fi
@@ -12581,10 +12582,43 @@ fi
 
 # Check whether --enable-xacc was given.
 if test "${enable_xacc+set}" = set; then :
-  enableval=$enable_xacc; xacc=$enableval
+  enableval=$enable_xacc; xacc=yes
 else
   xacc=no
 fi
+
+
+# Check whether --enable-mpi3 was given.
+if test "${enable_mpi3+set}" = set; then :
+  enableval=$enable_mpi3; doMPI3=yes
+else
+  doMPI3=no
+fi
+
+
+## Add temporarily by mnakao
+# Check whether --enable-FJRDMA was given.
+if test "${enable_FJRDMA+set}" = set; then :
+  enableval=$enable_FJRDMA; enableFJRDMA=yes
+else
+  enableFJRDMA=no
+fi
+
+
+ if test x${enableFJRDMA} = xyes; then
+  FJRDMA_TRUE=
+  FJRDMA_FALSE='#'
+else
+  FJRDMA_TRUE='#'
+  FJRDMA_FALSE=
+fi
+
+## End Add temporarily
+
+## Delete temporarily by mnakao
+#AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
+## End Delete temporarily
+
 
 
 # --------------------------------------------------------------------
@@ -20211,33 +20245,6 @@ test -n "$YACC" || YACC="yacc"
 
 
 # --------------------------------------------------------------------
-# RDMA for the K computer and FX10
-
-## Add temporarily by mnakao
-enableFJRDMA=""
-# Check whether --enable-FJRDMA was given.
-if test "${enable_FJRDMA+set}" = set; then :
-  enableval=$enable_FJRDMA; enableFJRDMA=$enableval
-else
-  enableFJRDMA=no
-fi
-
-
- if test x${enableFJRDMA} = xyes; then
-  FJRDMA_TRUE=
-  FJRDMA_FALSE='#'
-else
-  FJRDMA_TRUE='#'
-  FJRDMA_FALSE=
-fi
-
-#AC_SUBST(FJRDMA)
-## End Add temporarily
-
-#AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
-#AC_SUBST(FJRDMA)
-
-# --------------------------------------------------------------------
 # set XMP-dev
 
 #XMP_ENABLE_GPU=0
@@ -20732,6 +20739,15 @@ else
   esac
 fi
 
+# MPI3 for MPI FLAGS
+if test "x${doMPI3}" = "xyes"; then
+   MPI_CPPFLAGS="$MPI_CPPFLAGS -D_XMP_MPI3"
+   MPI_FPPFLAGS="$MPI_FPPFLAGS -D_XMP_MPI3"
+   MPI_CFLAGS="$MPI_CFLAGS -D_XMP_MPI3"
+   MPI_FCFLAGS="$MPI_FCFLAGS -D_XMP_MPI3"
+   OMNI_LX2X_CFLAGS="$OMNI_LX2X_CFLAGS -mpi3"
+fi
+
 if test "${userFCFLAGS}" != ""; then
   FCFLAGS="${userFCFLAGS}"
 fi
@@ -20754,21 +20770,6 @@ fi
 
 if test "${userMPI_FCLIBS}" != ""; then
   MPI_FCLIBS="${userMPI_FCLIBS}"
-fi
-
-# check MPI3 for MPI_CFLAGS, MPI_FCFLAGS, and OMNI_LX2X_CFLAGS
-# Check whether --enable-mpi3 was given.
-if test "${enable_mpi3+set}" = set; then :
-  enableval=$enable_mpi3; doMPI3=$enableval
-else
-  doMPI3=no
-fi
-
-
-if test "x${doMPI3}" = "xyes"; then
-   MPI_CFLAGS="$MPI_CFLAGS -D_XMP_MPI3"
-   MPI_FCFLAGS="$MPI_FCFLAGS -D_XMP_MPI3"
-   OMNI_LX2X_CFLAGS="$OMNI_LX2X_CFLAGS -mpi3"
 fi
 
 # MPI OpenMP
@@ -24183,7 +24184,7 @@ qRealPrecBits=128
 
 # Check whether --enable-mreal was given.
 if test "${enable_mreal+set}" = set; then :
-  enableval=$enable_mreal; doQReal=$enableval
+  enableval=$enable_mreal; doQReal=yes
 else
   doQReal=no
 fi
@@ -24428,14 +24429,12 @@ fi
 
 # --------------------------------------------------------------------
 # specify libxmp path
-default_libxmlDir="/usr"
-
 
 # Check whether --with-libxml was given.
 if test "${with_libxml+set}" = set; then :
   withval=$with_libxml; LIBXML_PREFIX="${withval}"
 else
-  LIBXML_PREFIX="${default_libxmlDir}"
+  LIBXML_PREFIX="/usr"
 fi
 
 
@@ -24450,13 +24449,13 @@ fi
 
 # Check whether --with-TCA was given.
 if test "${with_TCA+set}" = set; then :
-  withval=$with_TCA; TCA_PREFIX="${withval}"
+  withval=$with_TCA; TCA_PREFIX="${withval}"; use_tca=yes
+else
+  use_tca=no
 fi
 
 
-use_tca=no
-if test "${TCA_PREFIX}" != ""; then
-   use_tca=yes
+if test x$use_tca = xyes; then
    if ! test -f $TCA_PREFIX/tca-api.h; then
       as_fn_error $? "$TCA_PREFIX/tca-api.h not found. Please check --with-TCA=<DIR>" "$LINENO" 5
    fi
@@ -24475,22 +24474,17 @@ fi
 # --------------------------------------------------------------------
 # specify GASNet path
 
-default_gasnetDir=""
-
-
 # Check whether --with-gasnet was given.
 if test "${with_gasnet+set}" = set; then :
-  withval=$with_gasnet; GASNET_PREFIX="${withval}"
+  withval=$with_gasnet; GASNET_PREFIX="${withval}"; use_gasnet=yes
 else
-  GASNET_PREFIX="${default_gasnetDir}"
+  use_gasnet=no
 fi
 
 
-use_gasnet=no
-if test "${GASNET_PREFIX}" != ""; then
-  use_gasnet=yes
+if test x$use_gasnet = xyes; then
   if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
-	  as_fn_error $? "${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnet" "$LINENO" 5
+    as_fn_error $? "${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnet" "$LINENO" 5
   fi
 fi
 
@@ -24516,7 +24510,7 @@ else
 fi
 
 
-if test "${use_gasnet}" = yes; then
+if test x${use_gasnet} = xyes; then
   gasnet_conduit_flag=no
   if test "${GASNET_CONDUIT}" = ""; then
     for c in smp udp mpi gm lapi elan vapi ibv portals gemini shmem dcmf sci
@@ -25439,12 +25433,12 @@ if test -z "${MAINTAINER_MODE_TRUE}" && test -z "${MAINTAINER_MODE_FALSE}"; then
   as_fn_error $? "conditional \"MAINTAINER_MODE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${am__fastdepCXX_TRUE}" && test -z "${am__fastdepCXX_FALSE}"; then
-  as_fn_error $? "conditional \"am__fastdepCXX\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${FJRDMA_TRUE}" && test -z "${FJRDMA_FALSE}"; then
   as_fn_error $? "conditional \"FJRDMA\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${am__fastdepCXX_TRUE}" && test -z "${am__fastdepCXX_FALSE}"; then
+  as_fn_error $? "conditional \"am__fastdepCXX\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_ACC_TRUE}" && test -z "${ENABLE_ACC_FALSE}"; then
@@ -28365,17 +28359,18 @@ if test "$target" != "Kcomputer-linux-gnu" -a "$target" != "FX10-linux-gnu"; the
   echo "  Options:"
   echo "    GASNet                : $use_gasnet"
 
-  if test "${use_gasnet}" = yes; then
-  cat << EOF
-      Installed in        : $GASNET_PREFIX
-      Conduit             : $GASNET_CONDUIT
-
-EOF
+  if test x${use_gasnet} = xyes; then
+    echo "      Installed in        : $GASNET_PREFIX"
+    echo "      Conduit             : $GASNET_CONDUIT"
   fi
   echo "    OpenACC               : $doOpenAcc"
 fi
 
-if test "${use_tca}" = "yes"; then
+if test x${use_tca} = xyes; then
   echo "    TCA                   : yes"
+fi
+
+if test x${doMPI3} = xyes; then
+  echo "    MPI3                  : yes"
 fi
 echo "=================================================="

@@ -457,23 +457,41 @@ AC_SUBST(LIBACC_HEADER_DIR)
 # --------------------------------------------------------------------
 AC_ARG_ENABLE(debug,
     [  --enable-debug                 enable generate executable with debug symbol (false default).],
-    [doDebug=$enableval], [doDebug=no])
+    [doDebug=yes], [doDebug=no])
 
 #AC_ARG_ENABLE(xmpgpu,
 #    [  --enable-xmpgpu                enable XcalableMP-GPU (false default).],
-#    [doXmpGpu=$enableval], [doXmpGpu=no])
+#    [doXmpGpu=yes], [doXmpGpu=no])
 
 AC_ARG_ENABLE(openacc,
     [  --enable-openacc               enable OpenACC (false default).],
-    [doOpenAcc=$enableval], [doOpenAcc=no])
+    [doOpenAcc=yes], [doOpenAcc=no])
 
 AC_ARG_ENABLE(atool,
     [  --enable-atool                 enable atool (false default).],
-    [doatool=$enableval], [doatool=no])
+    [doatool=yes], [doatool=no])
 
 AC_ARG_ENABLE(xacc,
     [  --enable-xacc                  enable XcalableACC (false default).],
-    [xacc=$enableval], [xacc=no])
+    [xacc=yes], [xacc=no])
+
+AC_ARG_ENABLE(mpi3,
+    [  --enable-mpi3                  enable MPI3 (false default).],
+    [doMPI3=yes], [doMPI3=no])
+
+## Add temporarily by mnakao
+AC_ARG_ENABLE(FJRDMA,
+   [  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10.],
+   [enableFJRDMA=yes], [enableFJRDMA=no])
+
+AM_CONDITIONAL(FJRDMA, test x${enableFJRDMA} = xyes)
+## End Add temporarily
+
+## Delete temporarily by mnakao
+#AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
+## End Delete temporarily 
+
+AC_SUBST(FJRDMA)
 
 # --------------------------------------------------------------------
 # check basic commands
@@ -487,22 +505,6 @@ AC_PROG_MAKE_SET
 AC_PROG_AWK
 AC_PROG_LEX
 AC_PROG_YACC
-
-# --------------------------------------------------------------------
-# RDMA for the K computer and FX10
-
-## Add temporarily by mnakao
-enableFJRDMA=""
-AC_ARG_ENABLE(FJRDMA,
-   [  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10.],
-   [enableFJRDMA=$enableval], [enableFJRDMA=no])
-
-AM_CONDITIONAL(FJRDMA, test x${enableFJRDMA} = xyes)
-#AC_SUBST(FJRDMA)
-## End Add temporarily
-
-#AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
-#AC_SUBST(FJRDMA)
 
 # --------------------------------------------------------------------
 # set XMP-dev
@@ -975,6 +977,15 @@ else
   esac
 fi
 
+# MPI3 for MPI FLAGS
+if test "x${doMPI3}" = "xyes"; then
+   MPI_CPPFLAGS="$MPI_CPPFLAGS -D_XMP_MPI3"
+   MPI_FPPFLAGS="$MPI_FPPFLAGS -D_XMP_MPI3"
+   MPI_CFLAGS="$MPI_CFLAGS -D_XMP_MPI3"
+   MPI_FCFLAGS="$MPI_FCFLAGS -D_XMP_MPI3"
+   OMNI_LX2X_CFLAGS="$OMNI_LX2X_CFLAGS -mpi3"
+fi
+
 if test "${userFCFLAGS}" != ""; then
   FCFLAGS="${userFCFLAGS}"
 fi
@@ -997,17 +1008,6 @@ fi
 
 if test "${userMPI_FCLIBS}" != ""; then
   MPI_FCLIBS="${userMPI_FCLIBS}"
-fi
-
-# check MPI3 for MPI_CFLAGS, MPI_FCFLAGS, and OMNI_LX2X_CFLAGS
-AC_ARG_ENABLE(mpi3,
-    [  --enable-mpi3                  enable MPI3 (false default).],
-    [doMPI3=$enableval], [doMPI3=no])
-
-if test "x${doMPI3}" = "xyes"; then
-   MPI_CFLAGS="$MPI_CFLAGS -D_XMP_MPI3"
-   MPI_FCFLAGS="$MPI_FCFLAGS -D_XMP_MPI3"
-   OMNI_LX2X_CFLAGS="$OMNI_LX2X_CFLAGS -mpi3"
 fi
 
 # MPI OpenMP
@@ -1413,7 +1413,7 @@ qRealPrecBits=128
 
 AC_ARG_ENABLE(mreal,
     [  --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default).],
-    [doQReal=$enableval], [doQReal=no])
+    [doQReal=yes], [doQReal=no])
 
 AC_ARG_WITH(gmp-lib,
     [  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support.],
@@ -1590,11 +1590,9 @@ AC_SUBST(omniQRealFillGap)
 
 # --------------------------------------------------------------------
 # specify libxmp path
-default_libxmlDir="/usr"
-
 AC_ARG_WITH(libxml,
     [  --with-libxml=DIR           libxml installation path (default: /usr)],
-    [LIBXML_PREFIX="${withval}"], [LIBXML_PREFIX="${default_libxmlDir}"])
+    [LIBXML_PREFIX="${withval}"], [LIBXML_PREFIX="/usr"])
 
 if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
    AC_MSG_ERROR([parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help])
@@ -1606,11 +1604,9 @@ AC_SUBST(LIBXML_PREFIX)
 # set TCA
 AC_ARG_WITH(TCA,
     [  --with-TCA=DIR              TCA installation path],
-    [TCA_PREFIX="${withval}"])
+    [TCA_PREFIX="${withval}"; use_tca=yes], [use_tca=no])
 
-use_tca=no
-if test "${TCA_PREFIX}" != ""; then
-   use_tca=yes
+if test x$use_tca = xyes; then
    if ! test -f $TCA_PREFIX/tca-api.h; then
       AC_MSG_ERROR([$TCA_PREFIX/tca-api.h not found. Please check --with-TCA=<DIR>])
    fi
@@ -1621,18 +1617,13 @@ AC_SUBST(TCA_PREFIX)
 
 # --------------------------------------------------------------------
 # specify GASNet path
-
-default_gasnetDir=""
-
 AC_ARG_WITH(gasnet,
     [  --with-gasnet=DIR           GASNet installation path],
-    [GASNET_PREFIX="${withval}"], [GASNET_PREFIX="${default_gasnetDir}"])
+    [GASNET_PREFIX="${withval}"; use_gasnet=yes], [use_gasnet=no])
 
-use_gasnet=no
-if test "${GASNET_PREFIX}" != ""; then
-  use_gasnet=yes
+if test x$use_gasnet = xyes; then
   if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
-	  AC_MSG_ERROR([${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnet])
+    AC_MSG_ERROR([${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnet])
   fi
 fi
 
@@ -1646,7 +1637,7 @@ AC_ARG_WITH(gasnet_conduit,
     [  --with-gasnet-conduit=NAME  GASNet conduit],
     [GASNET_CONDUIT="${withval}"], [GASNET_CONDUIT="${default_gasnet_conduit}"])
 
-if test "${use_gasnet}" = yes; then
+if test x${use_gasnet} = xyes; then
   gasnet_conduit_flag=no
   if test "${GASNET_CONDUIT}" = ""; then
     for c in smp udp mpi gm lapi elan vapi ibv portals gemini shmem dcmf sci
@@ -2105,17 +2096,18 @@ if test "$target" != "Kcomputer-linux-gnu" -a "$target" != "FX10-linux-gnu"; the
   echo "  Options:"
   echo "    GASNet                : $use_gasnet"
 
-  if test "${use_gasnet}" = yes; then
-  cat << EOF
-      Installed in        : $GASNET_PREFIX
-      Conduit             : $GASNET_CONDUIT
-
-EOF
+  if test x${use_gasnet} = xyes; then
+    echo "      Installed in        : $GASNET_PREFIX"
+    echo "      Conduit             : $GASNET_CONDUIT"
   fi
   echo "    OpenACC               : $doOpenAcc"
 fi
 
-if test "${use_tca}" = "yes"; then
+if test x${use_tca} = xyes; then
   echo "    TCA                   : yes"
+fi
+
+if test x${doMPI3} = xyes; then
+  echo "    MPI3                  : yes"
 fi
 echo "=================================================="
