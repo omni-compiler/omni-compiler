@@ -174,6 +174,7 @@ void _ACC_gpu_wait_all(){
     Cell *head = stream_map[i], *cur;
     for(cur = head; cur != NULL; cur = cur->next){
       //do something
+      if(cur->id == ACC_ASYNC_NOVAL) continue;
       cudaError_t error = cudaStreamSynchronize(cur->stream);
       if(error != cudaSuccess){
 	_ACC_gpu_fatal(error);
