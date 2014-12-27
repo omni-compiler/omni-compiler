@@ -1000,11 +1000,11 @@ if test "${userMPI_FCLIBS}" != ""; then
 fi
 
 # check MPI3 for MPI_CFLAGS, MPI_FCFLAGS, and OMNI_LX2X_CFLAGS
-AC_ARG_WITH(mpi3,
-    [  --with-mpi3                 MPI3 option (default: no).],
-    [useMPI3=$withval], [useMPI3=no])
+AC_ARG_ENABLE(mpi3,
+    [  --enable-mpi3                  enable MPI3 (false default).],
+    [doMPI3=$enableval], [doMPI3=no])
 
-if test "x${useMPI3}" = "xyes"; then
+if test "x${doMPI3}" = "xyes"; then
    MPI_CFLAGS="$MPI_CFLAGS -D_XMP_MPI3"
    MPI_FCFLAGS="$MPI_FCFLAGS -D_XMP_MPI3"
    OMNI_LX2X_CFLAGS="$OMNI_LX2X_CFLAGS -mpi3"

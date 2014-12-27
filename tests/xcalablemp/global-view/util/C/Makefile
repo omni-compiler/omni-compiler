@@ -1,7 +1,8 @@
 INCDIR = ../../../../../Driver/etc
-XMP_LINK_FLAGS=$(shell awk -FLinkerOption= '/LinkerOption=/ {print $$2}' $(INCDIR)/omc.conf | sed "s/\"//g")
-MPI_CC:=$(shell awk -FCOMPILER= '/COMPILER=/ {print $$2}' $(INCDIR)/native.conf.xmp         | sed "s/\"//g")
-GASNET_LIB=$(shell awk -FGASNET_LIB= '/GASNET_LIB=/ {print $$2}' $(INCDIR)/linker.conf.xmp  | sed "s/\"//g")
+XMP_LINK_FLAGS=$(shell grep "LinkerOption=" $(INCDIR)/omc.conf | sed "s/LinkerOption=//g" | sed "s/\"//g")
+MPI_CC:=$(shell grep "COMPILER=" $(INCDIR)/native.conf.xmp | sed "s/COMPILER=//g"         | sed "s/\"//g")
+GASNET_LIB=$(shell grep "GASNET_LIB=" $(INCDIR)/linker.conf.xmp | sed "s/GASNET_LIB=//g"  | sed "s/\"//g")
+
 XCC     = xmpcc -O2
 XRUN    = mpiexec
 TESTS = $(wildcard *.c)

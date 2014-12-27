@@ -942,7 +942,7 @@ enable_openacc
 enable_atool
 enable_xacc
 enable_FJRDMA
-with_mpi3
+enable_mpi3
 enable_mreal
 with_gmp_lib
 with_gmp_include
@@ -1605,6 +1605,7 @@ Optional Features:
   --enable-atool                 enable atool (false default).
   --enable-xacc                  enable XcalableACC (false default).
   --enable-FJRDMA                enable RDMA functions on the K compiter or FX10.
+  --enable-mpi3                  enable MPI3 (false default).
   --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default).
 
 Optional Packages:
@@ -1617,7 +1618,6 @@ Optional Packages:
                         (or the compiler's sysroot if not specified).
   --with-thread               type of openmp thread
   --with-lock                 type of openmp lock
-  --with-mpi3                 MPI3 option (default: no).
   --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support.
   --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support.
   --with-precision=NUM        the default precision of real*16 in bits (128).
@@ -20757,16 +20757,15 @@ if test "${userMPI_FCLIBS}" != ""; then
 fi
 
 # check MPI3 for MPI_CFLAGS, MPI_FCFLAGS, and OMNI_LX2X_CFLAGS
-
-# Check whether --with-mpi3 was given.
-if test "${with_mpi3+set}" = set; then :
-  withval=$with_mpi3; useMPI3=$withval
+# Check whether --enable-mpi3 was given.
+if test "${enable_mpi3+set}" = set; then :
+  enableval=$enable_mpi3; doMPI3=$enableval
 else
-  useMPI3=no
+  doMPI3=no
 fi
 
 
-if test "x${useMPI3}" = "xyes"; then
+if test "x${doMPI3}" = "xyes"; then
    MPI_CFLAGS="$MPI_CFLAGS -D_XMP_MPI3"
    MPI_FCFLAGS="$MPI_FCFLAGS -D_XMP_MPI3"
    OMNI_LX2X_CFLAGS="$OMNI_LX2X_CFLAGS -mpi3"
