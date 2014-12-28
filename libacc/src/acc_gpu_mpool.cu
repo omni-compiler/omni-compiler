@@ -71,7 +71,7 @@ void _ACC_gpu_mpool_free_block(void *ptr)
 }
 
 void _ACC_gpu_mpool_alloc(void **ptr, long long size, void *mpool, long long *pos){
-  const int align = 128;
+  const int align = 8;
   long long aligned_size = ((size - 1) / align + 1) * align;
   if(*pos + aligned_size <= _ACC_GPU_MPOOL_BLOCK_SIZE){
     *ptr = ((char*)mpool) + *pos;
