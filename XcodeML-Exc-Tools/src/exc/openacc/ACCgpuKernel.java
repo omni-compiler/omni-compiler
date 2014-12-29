@@ -799,7 +799,7 @@ public class ACCgpuKernel {
     Ident iterIdx = Ident.Local("_ACC_" + execMethodName + "_idx", globalIdxType);
     localIds_2.mergeList(Xcons.List(iterIdx, iterInit, iterCond, iterStep));
     Ident iterCnt = Ident.Local("_ACC_" + execMethodName + "_cnt", globalIdxType);
-    localIds_2.add(iterCnt);
+    //localIds_2.add(iterCnt);
 
     XobjList initIterFuncArgs = Xcons.List(iterInit.getAddr(), iterCond.getAddr(), iterStep.getAddr());
     Xobject nIterAll = Xcons.IntConstant(1);
@@ -807,13 +807,13 @@ public class ACCgpuKernel {
       Ident nIterId = (Ident)x;
       nIterAll = Xcons.binaryOp(Xcode.MUL_EXPR, nIterAll, nIterId.Ref());
     }
-    initIterFuncArgs.mergeList(Xcons.List(Xcons.IntConstant(0), nIterAll, Xcons.IntConstant(1)));
+    initIterFuncArgs.add(nIterAll);//initIterFuncArgs.mergeList(Xcons.List(Xcons.IntConstant(0), nIterAll, Xcons.IntConstant(1)));
 
     Block initIterFunc = ACCutil.createFuncCallBlock("_ACC_gpu_init_" + execMethodName + "_iter", initIterFuncArgs); 
     beginBlocks.add(initIterFunc);
     
-    Block initIterCntFunc = ACCutil.createFuncCallBlock("_ACC_gpu_init_iter_cnt", Xcons.List(iterCnt.getAddr(), iterInit.Ref(), iterCond.Ref(), iterStep.Ref()));
-    beginBlocks.add(initIterCntFunc);
+    //Block initIterCntFunc = ACCutil.createFuncCallBlock("_ACC_gpu_init_iter_cnt", Xcons.List(iterCnt.getAddr(), iterInit.Ref(), iterCond.Ref(), iterStep.Ref()));
+    //beginBlocks.add(initIterCntFunc);
 
     //make clac each idx from virtual idx
     Block calcEachVidxBlock = makeCalcIdxFuncCall(vIdxIdList, nIterIdList, iterIdx);
@@ -905,7 +905,8 @@ public class ACCgpuKernel {
     
     //rewirteCacheVars
     rewriteCacheVar(coreBlock, cachedIds, cacheIds, cacheOffsetIds, cacheSizeIds);
-    forBlockList.add(Bcons.IF(Xcons.binaryOp(Xcode.LOG_LT_EXPR, iterIdx.Ref(), iterCond.Ref()), coreBlock, null));    //forBlockList.add(coreBlock);
+    forBlockList.add(coreBlock);
+    //forBlockList.add(Bcons.IF(Xcons.binaryOp(Xcode.LOG_LT_EXPR, iterIdx.Ref(), iterCond.Ref()), coreBlock, null));
     
     //add the cache barrier func
     if(! cacheLoadBlocks.isEmpty()){
@@ -929,8 +930,10 @@ public class ACCgpuKernel {
 //        );
     resultCenterBlock = Bcons.FOR(
       Xcons.Set(iterIdx.Ref(), iterInit.Ref()),
-      Xcons.binaryOp(Xcode.LOG_NEQ_EXPR, iterCnt.Ref(), Xcons.IntConstant(0)),
-      Xcons.List(Xcode.COMMA_EXPR, Xcons.asgOp(Xcode.ASG_MINUS_EXPR, iterCnt.Ref(), Xcons.IntConstant(1)), Xcons.asgOp(Xcode.ASG_PLUS_EXPR, iterIdx.Ref(), iterStep.Ref())),
+      Xcons.binaryOp(Xcode.LOG_LT_EXPR, iterIdx.Ref(), iterCond.Ref()),
+      Xcons.asgOp(Xcode.ASG_PLUS_EXPR, iterIdx.Ref(), iterStep.Ref()),
+      //Xcons.binaryOp(Xcode.LOG_NEQ_EXPR, iterCnt.Ref(), Xcons.IntConstant(0)),
+      //Xcons.List(Xcode.COMMA_EXPR, Xcons.asgOp(Xcode.ASG_MINUS_EXPR, iterCnt.Ref(), Xcons.IntConstant(1)), Xcons.asgOp(Xcode.ASG_PLUS_EXPR, iterIdx.Ref(), iterStep.Ref())),
       Bcons.COMPOUND(forBlockList)
       );
 
