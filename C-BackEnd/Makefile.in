@@ -374,11 +374,9 @@ top_srcdir = @top_srcdir@
 bin_SCRIPTS = bin/C_Back
 TARGET = build/om-c-back.jar
 SRC = $(wildcard src/xcodeml/c/*/*.java)
-CLASS = $(SRC:.java=.class)
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .class .java
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -607,14 +605,10 @@ uninstall-am: uninstall-binSCRIPTS
 
 all-local: $(TARGET)
 
-$(TARGET): $(CLASS)
+$(TARGET): $(SRC)
+	$(JAVAC) src/xcodeml/c/*/*.java -classpath ../XcodeML-Common/build/om-common.jar:./src -Xlint:deprecation
 	mkdir -p build
 	cd src; $(JAR) cf ../$@ xcodeml/c/*/*.class
-
-SUFFIXES: .class .java
-
-.java.class:
-	$(JAVAC) $< -classpath ../XcodeML-Common/build/om-common.jar:./src -Xlint:deprecation
 
 clean-local:
 	rm -f $(TARGET) $(CLASS)

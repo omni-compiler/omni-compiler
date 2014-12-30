@@ -343,11 +343,9 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 TARGET = build/om-common.jar
 SRC = $(wildcard src/xcodeml/*.java src/xcodeml/*/*.java)
-CLASS = $(SRC:.java=.class)
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .class .java
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -537,14 +535,10 @@ uninstall-am:
 
 all-local: $(TARGET)
 
-$(TARGET): $(CLASS)
+$(TARGET): $(SRC)
+	$(JAVAC) src/xcodeml/*.java src/xcodeml/*/*.java -classpath ./src -Xlint:deprecation
 	mkdir -p build
 	cd src;	$(JAR) cf ../$@ ./xcodeml/*.class ./xcodeml/*/*.class
-
-SUFFIXES: .class .java
-
-.java.class:
-	$(JAVAC) $< -classpath ./src -Xlint:deprecation
 
 clean-local:
 	rm -f $(TARGET) $(CLASS)
