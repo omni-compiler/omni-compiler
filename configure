@@ -648,7 +648,6 @@ OS_CPPFLAGS
 MAKE
 BLASLIB
 cppCmd
-nativeCompiler
 omniIncDir
 omniEtcDir
 omniLibDir
@@ -3026,7 +3025,7 @@ ac_config_headers="$ac_config_headers include/config.h Driver/atool/src/include/
 # --------------------------------------------------------------------
 # check bash
 SHELL=`which bash` 1> /dev/null 2> /dev/null
-if test $? -ne 0 -o -z "${SHELL}"; then
+if test $? -ne 0; then
    as_fn_error $? "To run libtool you need a bash, not /bin/sh." "$LINENO" 5
    exit 1
 fi
@@ -3035,7 +3034,7 @@ export SHELL
 
 # --------------------------------------------------------------------
 # check existence of commands set by user
-for cmd	in $MPI_CC $MPI_FC $JAVA $JAVAC $JAR
+for cmd	in $CC $FC $MPI_CC $MPI_FC $JAVA $JAVAC $JAR
 do
   if test "$cmd" != ""; then
     which $cmd 2> /dev/null 1> /dev/null
@@ -21668,7 +21667,6 @@ $as_echo "no" >&6; }
     fi
     rm -f ${pTmp}
     unset chk pTmp
-
 fi
 
 
@@ -24235,7 +24233,6 @@ else
 fi
 
 
-
 # libgmp check
 omniLimbT="int"
 omniExpT="int"
@@ -25144,9 +25141,6 @@ fi
 
 
 
-nativeCompiler=${FC}
-
-
 checkCpp() {
     __ret=1
     __tmpFileBase=/tmp/.cpptest.$$
@@ -25213,7 +25207,7 @@ OS_LDFLAGS=''
 OS_LIBS=''
 OS_CFLAGS=''
 if test -z "${MAKE}"; then
-	MAKE=make
+  MAKE=make
 fi
 
 API_FLAVOR=NATA_API_POSIX

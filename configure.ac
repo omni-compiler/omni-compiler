@@ -14,7 +14,7 @@ AC_CONFIG_HEADER([include/config.h Driver/atool/src/include/nata/nata_config.h])
 # --------------------------------------------------------------------
 # check bash
 SHELL=`which bash` 1> /dev/null 2> /dev/null
-if test $? -ne 0 -o -z "${SHELL}"; then
+if test $? -ne 0; then
    AC_MSG_ERROR([To run libtool you need a bash, not /bin/sh.])
    exit 1
 fi
@@ -23,7 +23,7 @@ AC_SUBST(SHELL)
 
 # --------------------------------------------------------------------
 # check existence of commands set by user
-for cmd	in $MPI_CC $MPI_FC $JAVA $JAVAC $JAR
+for cmd	in $CC $FC $MPI_CC $MPI_FC $JAVA $JAVAC $JAR
 do
   if test "$cmd" != ""; then
     which $cmd 2> /dev/null 1> /dev/null
@@ -1078,7 +1078,7 @@ elif test "$target" = "powerpc-ibm-cnk"; then
     AC_CHECK_PROG([NM], [nm], [nm], [:])
 
 else
-   AC_PROG_RANLIB
+   AC_CHECK_TOOL([RANLIB], [ranlib], [:])
    AC_CHECK_TOOL([AR], [ar], [:])
    ARFLAGS="cru"
    AC_CHECK_TOOL([NM], [nm], [:])
@@ -1121,7 +1121,6 @@ else
     fi
     rm -f ${pTmp}
     unset chk pTmp
-
 fi
 AC_SUBST(PERL5)
 
@@ -1442,7 +1441,6 @@ fi
 AC_ARG_WITH(precision,
     [  --with-precision=NUM        the default precision of real*16 in bits (128).],
     [qRealPrecBits=$withval], [qRealPrecBits=128])
-
 
 # libgmp check
 omniLimbT="int"
@@ -1882,9 +1880,6 @@ AC_SUBST(omniLibDir)
 AC_SUBST(omniEtcDir)
 AC_SUBST(omniIncDir)
 
-nativeCompiler=${FC}
-AC_SUBST(nativeCompiler)
-
 checkCpp() {
     __ret=1
     __tmpFileBase=/tmp/.cpptest.$$
@@ -1942,7 +1937,7 @@ OS_LDFLAGS=''
 OS_LIBS=''
 OS_CFLAGS=''
 if test -z "${MAKE}"; then
-	MAKE=make
+  MAKE=make
 fi
 
 API_FLAVOR=NATA_API_POSIX

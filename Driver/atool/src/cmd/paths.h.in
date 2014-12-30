@@ -5,7 +5,7 @@
 #define	DEFAULT_FRONTEND	"@omniBinDir@F_Front"
 #define DEFAULT_TRANSLATOR	""
 #define DEFAULT_DECOMPILER	"@omniBinDir@F_Back"
-#define DEFAULT_NATIVE		"@nativeCompiler@"
+#define DEFAULT_NATIVE		"@FC@"
 #define DEFAULT_PRELINKER	"@omniBinDir@xmp_collect_init"
 
 #define OMNI_INCDIR		"@omniIncDir@"
