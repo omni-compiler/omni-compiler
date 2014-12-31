@@ -854,7 +854,13 @@ else
 
     # MPI C
     MPI_CPP=$MPI_CC
-    MPI_CPPFLAGS="-E -std=gnu99"
+    ver=`$MPI_CC --version 2> /dev/null | head -n1`
+    case $ver in
+    *15*)
+      MPI_CPPFLAGS="-E -std=gnu99 -no-gcc" ;;
+    *)
+      MPI_CPPFLAGS="-E -std=gnu99" ;;
+    esac
     MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $MPI_OPENMP_FLAG"
     MPI_CLIBS=""
 
