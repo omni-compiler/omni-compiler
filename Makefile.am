@@ -38,7 +38,7 @@ release-deb:
 
 release: release-rpm release-deb
 
-BASE_TESTDIR  = "tests/xcalablemp/"
+BASE_TESTDIR = "tests/xcalablemp/"
 TESTDIRS = "global-view/array/C/" "global-view/array/F/" "global-view/bcast/C/" "global-view/bcast/F/" \
 	   "global-view/loop/C" "global-view/loop/F" "global-view/reduction/C" "global-view/reduction/F" \
 	   "global-view/shadow-reflect/C/" "global-view/shadow-reflect/F/" "global-view/task/C"  "global-view/task/F" \
@@ -46,23 +46,19 @@ TESTDIRS = "global-view/array/C/" "global-view/array/F/" "global-view/bcast/C/" 
 	   "global-view/inquiry/C/" "global-view/inquiry/F/" "global-view/gblock/C/" "global-view/gblock/F/" \
 	   "global-view/align/C/" "global-view/align/F/" "global-view/intrinsic/C/" "global-view/intrinsic/F/" \
 	   "global-view/util/C/" "global-view/util/F/" "others/F" "others/C"
-if GASNET
-   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"
-endif
-if FJRDMA
-   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"
-endif
-
 BASE_LARGE_TESTDIR = "tests/xcalablemp/LARGE-SIZE-TESTS/"
 LARGE_TESTDIRS = "others/C"
+
 if GASNET
+   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"
    LARGE_TESTDIRS += "local-view/coarray/C/"
 endif
 if FJRDMA
+   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"
    LARGE_TESTDIRS += "local-view/coarray/C/"
 endif
 
-.PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests all-tests clean-all-tests run-all-tests
+.PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests
 
 tests: 
 	@for subdir in $(TESTDIRS) ; do \
@@ -97,10 +93,6 @@ run-large-tests:
 	$(MAKE) run -C $(BASE_LARGE_TESTDIR)$$subdir; \
 	if test $$? -ne 0; then exit 1; fi ;\
 	done
-
-all-tests: tests large-tests
-clean-all-tests: clean-tests clean-large-tests
-run-all-tests: run-tests run-large-tests
 
 clean-local:
 	rm -rf autom4te.cache
@@ -190,4 +182,3 @@ distclean-local:
 	if test ! -z "$(DELETABLES)"; then \
 		rm -rf $(DELETABLES) ; \
 	fi	
-
