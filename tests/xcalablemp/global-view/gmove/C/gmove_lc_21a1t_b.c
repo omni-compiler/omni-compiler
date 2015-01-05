@@ -5,13 +5,12 @@ extern int chk_int(int ierr);
 
 int n=16;
 int a[n][n],b[n];
-int m1[4]={3,4,3,6};
 #pragma xmp nodes p(4)
 #pragma xmp nodes q(4)
 #pragma xmp template tx(0:n-1)
 #pragma xmp template ty(0:n-1)
 #pragma xmp distribute tx(block) onto p
-#pragma xmp distribute ty(gblock(m1)) onto q
+#pragma xmp distribute ty(block) onto q
 #pragma xmp align a[i0][*] with tx(i0)
 #pragma xmp align b[i0] with ty(i0)
 
@@ -32,7 +31,7 @@ int main(){
   }
 
 #pragma xmp gmove
-  b[0:n]=a[0:n][0:1];
+  b[0:n]=a[0][0:n];
 
   ierr=0;
 #pragma xmp loop (i0) on ty(i0)
