@@ -12,19 +12,41 @@ static void dist_keys(void *a, int *size, int *start,
 static void kway_inplace_merge_sort(void *a, int *start, int k);
 
 
-#define PROTOTYPE_COMPARE(_type) \
-  static int compare_##_type##s(const void *a, const void *b);
+static int compare_SHORT            (const void *a, const void *b);
+static int compare_UNSIGNED_SHORT   (const void *a, const void *b);
+static int compare_INT              (const void *a, const void *b);
+static int compare_UNSIGNED_INT     (const void *a, const void *b);
+static int compare_LONG             (const void *a, const void *b);
+static int compare_UNSIGNED_LONG    (const void *a, const void *b);
+static int compare_LONGLONG         (const void *a, const void *b);
+static int compare_UNSIGNED_LONGLONG(const void *a, const void *b);
+static int compare_FLOAT            (const void *a, const void *b);
+static int compare_DOUBLE           (const void *a, const void *b);
+static int compare_LONG_DOUBLE      (const void *a, const void *b);
 
-#define PROTOTYPE_PIVOT(_type) \
-  static void get_rotate_pivot_for_##_type(void *p, const void *a, const int an, \
-					     const void *b, const int bn);
 
-PROTOTYPE_COMPARE(int)
-PROTOTYPE_COMPARE(float)
-
-PROTOTYPE_PIVOT(int)
-PROTOTYPE_PIVOT(float)
-
+static void get_rotate_pivot_for_SHORT            (void *p, const void *a, const int an,
+						   const void *b, const int bn);
+static void get_rotate_pivot_for_UNSIGNED_SHORT   (void *p, const void *a, const int an,
+						   const void *b, const int bn);
+static void get_rotate_pivot_for_INT              (void *p, const void *a, const int an,
+						   const void *b, const int bn);
+static void get_rotate_pivot_for_UNSIGNED_INT     (void *p, const void *a, const int an,
+						   const void *b, const int bn);
+static void get_rotate_pivot_for_LONG             (void *p, const void *a, const int an,
+						   const void *b, const int bn);
+static void get_rotate_pivot_for_UNSIGNED_LONG    (void *p, const void *a, const int an,
+						   const void *b, const int bn);
+static void get_rotate_pivot_for_LONGLONG         (void *p, const void *a, const int an,
+						   const void *b, const int bn);
+static void get_rotate_pivot_for_UNSIGNED_LONGLONG(void *p, const void *a, const int an,
+						   const void *b, const int bn);
+static void get_rotate_pivot_for_FLOAT            (void *p, const void *a, const int an,
+						   const void *b, const int bn);
+static void get_rotate_pivot_for_DOUBLE           (void *p, const void *a, const int an,
+						   const void *b, const int bn);
+static void get_rotate_pivot_for_LONG_DOUBLE      (void *p, const void *a, const int an,
+						   const void *b, const int bn);
 
 MPI_Comm *comm;
 int me;
@@ -70,54 +92,70 @@ static void set_funcs(_XMP_array_t *a_desc){
 
   switch (a_desc->type){
 
-  case _XMP_N_TYPE_BOOL:
-    break;
-
-  case _XMP_N_TYPE_CHAR:
-  case _XMP_N_TYPE_UNSIGNED_CHAR:
-    break;
-
   case _XMP_N_TYPE_SHORT:
+    compare_func = compare_SHORT;
+    get_rotate_pivot = get_rotate_pivot_for_SHORT;
+    break;
+
   case _XMP_N_TYPE_UNSIGNED_SHORT:
+    compare_func = compare_UNSIGNED_SHORT;
+    get_rotate_pivot = get_rotate_pivot_for_UNSIGNED_SHORT;
     break;
 
   case _XMP_N_TYPE_INT:
+    compare_func = compare_INT;
+    get_rotate_pivot = get_rotate_pivot_for_INT;
+    break;
+
   case _XMP_N_TYPE_UNSIGNED_INT:
-    compare_func = compare_ints;
-    get_rotate_pivot = get_rotate_pivot_for_int;
+    compare_func = compare_UNSIGNED_INT;
+    get_rotate_pivot = get_rotate_pivot_for_UNSIGNED_INT;
     break;
 
   case _XMP_N_TYPE_LONG:
+    compare_func = compare_LONG;
+    get_rotate_pivot = get_rotate_pivot_for_LONG;
+    break;
+
   case _XMP_N_TYPE_UNSIGNED_LONG:
+    compare_func = compare_UNSIGNED_LONG;
+    get_rotate_pivot = get_rotate_pivot_for_UNSIGNED_LONG;
     break;
 
   case _XMP_N_TYPE_LONGLONG:
+    compare_func = compare_LONGLONG;
+    get_rotate_pivot = get_rotate_pivot_for_LONGLONG;
+    break;
+
   case _XMP_N_TYPE_UNSIGNED_LONGLONG:
+    compare_func = compare_UNSIGNED_LONGLONG;
+    get_rotate_pivot = get_rotate_pivot_for_UNSIGNED_LONGLONG;
     break;
 
   case _XMP_N_TYPE_FLOAT:
   case _XMP_N_TYPE_FLOAT_IMAGINARY:
-    compare_func = compare_floats;
-    get_rotate_pivot = get_rotate_pivot_for_float;
+    compare_func = compare_FLOAT;
+    get_rotate_pivot = get_rotate_pivot_for_FLOAT;
     break;
 
   case _XMP_N_TYPE_DOUBLE:
   case _XMP_N_TYPE_DOUBLE_IMAGINARY:
+    compare_func = compare_DOUBLE;
+    get_rotate_pivot = get_rotate_pivot_for_DOUBLE;
     break;
 
   case _XMP_N_TYPE_LONG_DOUBLE:
   case _XMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
+    compare_func = compare_LONG_DOUBLE;
+    get_rotate_pivot = get_rotate_pivot_for_LONG_DOUBLE;
     break;
 
+  case _XMP_N_TYPE_BOOL:
+  case _XMP_N_TYPE_CHAR:
+  case _XMP_N_TYPE_UNSIGNED_CHAR:
   case _XMP_N_TYPE_FLOAT_COMPLEX:
-    break;
-
   case _XMP_N_TYPE_DOUBLE_COMPLEX:
-    break;
-
   case _XMP_N_TYPE_LONG_DOUBLE_COMPLEX:
-    break;
-
   case _XMP_N_TYPE_NONBASIC:
   default:
     break;
@@ -434,7 +472,7 @@ static void kway_inplace_merge_sort(void *a, int *start, int k){
 //
 
 #define COMPARE(_type) \
-static int compare_##_type##s(const void *a, const void *b){ \
+(const void *a, const void *b){ \
   if (*(_type *)a < *(_type *)b){ \
     return -1; \
   } \
@@ -444,12 +482,22 @@ static int compare_##_type##s(const void *a, const void *b){ \
   return 1; \
 }
 
-COMPARE(int)
-COMPARE(float)
+static int compare_SHORT               COMPARE(short)
+static int compare_UNSIGNED_SHORT      COMPARE(unsigned short)
+static int compare_INT                 COMPARE(int)
+static int compare_UNSIGNED_INT        COMPARE(unsigned int)
+static int compare_LONG                COMPARE(long)
+static int compare_UNSIGNED_LONG       COMPARE(unsigned long)
+static int compare_LONGLONG            COMPARE(long long)
+static int compare_UNSIGNED_LONGLONG   COMPARE(unsigned long long)
+static int compare_FLOAT               COMPARE(float)
+static int compare_DOUBLE              COMPARE(double)
+static int compare_LONG_DOUBLE	       COMPARE(long double)
+
 
 #define PIVOT(_type) \
-static void get_rotate_pivot_for_##_type(void *p, const void *a, const int an, \
-				                  const void *b, const int bn){ \
+(void *p, const void *a, const int an, \
+          const void *b, const int bn){ \
   _type am, bm; \
   if (an > 0){ \
     if (an % 2 == 0) \
@@ -470,35 +518,14 @@ static void get_rotate_pivot_for_##_type(void *p, const void *a, const int an, \
   memcpy(p, &tmp, datasize); \
 }
 
-PIVOT(int)
-PIVOT(float)
-
-/* static void get_rotate_pivot_for_int(void *p, const void *a, const int an, */
-/* 				              const void *b, const int bn){ */
-
-/*   int am, bm; */
-
-/*   if (an > 0){ */
-/*     if (an % 2 == 0) */
-/*       am = (((int *)a)[an / 2] + ((int *)a)[an / 2 - 1]) / 2; */
-/*     else */
-/*       am = ((int *)a)[an / 2]; */
-/*   } */
-
-/*   if (bn > 0){ */
-/*     if (bn % 2 == 0) */
-/*       bm = (((int *)b)[bn / 2] + ((int *)b)[bn / 2 - 1]) / 2; */
-/*     else */
-/*       bm = ((int *)b)[bn / 2]; */
-/*   } */
-
-/*   int tmp; */
-
-/*   // weighted mean is better? */
-/*   if (an > 0 && bn > 0) tmp = (am + bm) / 2; */
-/*   else if (an > 0 && bn == 0) tmp = am; */
-/*   else if (an == 0 && bn > 0) tmp = bm; */
-
-/*   memcpy(p, &tmp, datasize); */
-
-/* } */
+static void get_rotate_pivot_for_SHORT               PIVOT(short)
+static void get_rotate_pivot_for_UNSIGNED_SHORT      PIVOT(unsigned short)
+static void get_rotate_pivot_for_INT                 PIVOT(int)
+static void get_rotate_pivot_for_UNSIGNED_INT        PIVOT(unsigned int)
+static void get_rotate_pivot_for_LONG                PIVOT(long)
+static void get_rotate_pivot_for_UNSIGNED_LONG       PIVOT(unsigned long)
+static void get_rotate_pivot_for_LONGLONG            PIVOT(long long)
+static void get_rotate_pivot_for_UNSIGNED_LONGLONG   PIVOT(unsigned long long)
+static void get_rotate_pivot_for_FLOAT               PIVOT(float)
+static void get_rotate_pivot_for_DOUBLE              PIVOT(double)
+static void get_rotate_pivot_for_LONG_DOUBLE         PIVOT(long double)

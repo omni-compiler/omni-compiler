@@ -1,7 +1,7 @@
-sort: xmp_sort_up.o sort.o
-	xmpcc -o $@ xmp_sort_up.o sort.o
+sort: xmp_sort.o sort.o
+	xmpcc -o $@ xmp_sort.o sort.o
 
-xmp_sort_up.o: xmp_sort_up.c
+xmp_sort.o: xmp_sort.c
 	mpicc -c -I ~/work/omni-compiler/libxmp/include/ $< -std=gnu99
 
 sort.o: sort.c
