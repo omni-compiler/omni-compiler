@@ -36,8 +36,7 @@ HOW TO INSTALL
 ### On a general linux cluster
     $ ./configure --prefix=[INSTALLATION PATH]
          or
-    $ ./configure CPP="pgcc -E" CC=gcc FC=gfortran                                      // PGI compiler
-    $ ./configure CC=icc FC=ifort --with-backend-cc=mpiicc --with-backend-fc=mpiifort  // Intel compiler
+    $ ./configure CC=gcc FC=gfortran   // PGI compiler
 
  If you want to use Coarray functions
     $ ./configure --with-gasnet=[GASNet INSTALLATION PATH] --with-gasnet-conduit=[GASNet-Conduit]
@@ -64,16 +63,16 @@ HOW TO INSTALL
 ### On Cray machines
     $ ./configure --target=Cray-linux-gnu --prefix=[INSTALLATION PATH]
 
-### On SX machines
+### On NEC SX machines
     $ ./configure --target=sx-nec-superux --prefix=[INSTALLATION PATH]
 
-### On BlueGene/Q
+### On IBM BlueGene/Q
     We recommend to install openJDK for AIX (e.g. openjdk1.7.0-ppc-aix-port-linux-ppc64-b**.tar.bz2,
     from http://cr.openjdk.java.net/~simonis/ppc-aix-port/).
     $ ./configure --target=powerpc-ibm-cnk --prefix=[INSTALLATION PATH]
 
-### On SR16000 machines
-   $ ./configure --target=powerpc-hitachi-aix CPP=cpp --prefix=[INSTALLATION PATH]
+### On HITACHI SR16000 machines
+   $ ./configure --target=powerpc-hitachi-aix --prefix=[INSTALLATION PATH]
 
 ## Build
     $ make; make install

@@ -82,8 +82,8 @@ target_triplet = @target@
 @ENABLE_ACC_TRUE@am__append_2 = @LIBACC_DIR@ @LIBACC_HEADER_DIR@
 @ENABLE_ATOOL_TRUE@am__append_3 = @ATOOL_DIR@
 @GASNET_TRUE@am__append_4 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"
-@FJRDMA_TRUE@am__append_5 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"
-@GASNET_TRUE@am__append_6 = "local-view/coarray/C/"
+@GASNET_TRUE@am__append_5 = "local-view/coarray/C/"
+@FJRDMA_TRUE@am__append_6 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"
 @FJRDMA_TRUE@am__append_7 = "local-view/coarray/C/"
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
@@ -284,6 +284,7 @@ F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
 FGREP = @FGREP@
+FJRDMA = @FJRDMA@
 F_BACKEND_DIR = @F_BACKEND_DIR@
 F_FRONTEND_DIR = @F_FRONTEND_DIR@
 GASNET_CFLAGS = @GASNET_CFLAGS@
@@ -358,6 +359,8 @@ OMDRIVER_DIR = @OMDRIVER_DIR@
 OMNI_C_PP = @OMNI_C_PP@
 OMNI_F_PP = @OMNI_F_PP@
 OMNI_HOME = @OMNI_HOME@
+OMNI_L2X_CFLAGS = @OMNI_L2X_CFLAGS@
+OMNI_L2X_FCFLAGS = @OMNI_L2X_FCFLAGS@
 OMNI_LNK_CFLAGS = @OMNI_LNK_CFLAGS@
 OMNI_LNK_FCFLAGS = @OMNI_LNK_FCFLAGS@
 OMNI_LX2X_CFLAGS = @OMNI_LX2X_CFLAGS@
@@ -481,7 +484,6 @@ localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
-nativeCompiler = @nativeCompiler@
 oldincludedir = @oldincludedir@
 omniBinDir = @omniBinDir@
 omniDir = @omniDir@
@@ -534,9 +536,9 @@ TESTDIRS = "global-view/array/C/" "global-view/array/F/" \
 	"global-view/align/F/" "global-view/intrinsic/C/" \
 	"global-view/intrinsic/F/" "global-view/util/C/" \
 	"global-view/util/F/" "others/F" "others/C" $(am__append_4) \
-	$(am__append_5)
+	$(am__append_6)
 BASE_LARGE_TESTDIR = "tests/xcalablemp/LARGE-SIZE-TESTS/"
-LARGE_TESTDIRS = "others/C" $(am__append_6) $(am__append_7)
+LARGE_TESTDIRS = "others/C" $(am__append_5) $(am__append_7)
 DELETABLES = C-BackEnd/bin/C_Back \
 	C-FrontEnd/src/c-exprcode.c \
 	C-FrontEnd/src/c-exprcode.h \
@@ -1144,7 +1146,7 @@ release-deb:
 
 release: release-rpm release-deb
 
-.PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests all-tests clean-all-tests run-all-tests
+.PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests
 
 tests: 
 	@for subdir in $(TESTDIRS) ; do \
@@ -1179,10 +1181,6 @@ run-large-tests:
 	$(MAKE) run -C $(BASE_LARGE_TESTDIR)$$subdir; \
 	if test $$? -ne 0; then exit 1; fi ;\
 	done
-
-all-tests: tests large-tests
-clean-all-tests: clean-tests clean-large-tests
-run-all-tests: run-tests run-large-tests
 
 clean-local:
 	rm -rf autom4te.cache

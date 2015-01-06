@@ -648,7 +648,6 @@ OS_CPPFLAGS
 MAKE
 BLASLIB
 cppCmd
-nativeCompiler
 omniIncDir
 omniEtcDir
 omniLibDir
@@ -730,7 +729,6 @@ PERL5
 ARFLAGS
 IS_SUPERUX
 IS_CRAY
-IS_PGI
 IS_SUPERUX_FALSE
 IS_SUPERUX_TRUE
 IS_CRAY_FALSE
@@ -740,10 +738,12 @@ IS_PGI_TRUE
 OMNI_LNK_FCFLAGS
 OMNI_NTV_FCFLAGS
 OMNI_LX2X_FCFLAGS
+OMNI_L2X_FCFLAGS
 OMNI_F_PP
 OMNI_LNK_CFLAGS
 OMNI_NTV_CFLAGS
 OMNI_LX2X_CFLAGS
+OMNI_L2X_CFLAGS
 OMNI_C_PP
 MPI_FCLIBS
 MPI_MODINC
@@ -753,6 +753,7 @@ MPI_CLIBS
 MPI_CFLAGS
 MPI_CC
 MPI_OPENMP_FLAG
+IS_PGI
 ENABLE_XACC
 ENABLE_XACC_FALSE
 ENABLE_XACC_TRUE
@@ -762,8 +763,6 @@ ENABLE_ATOOL_TRUE
 ENABLE_ACC
 ENABLE_ACC_FALSE
 ENABLE_ACC_TRUE
-FJRDMA_FALSE
-FJRDMA_TRUE
 YFLAGS
 YACC
 LEXLIB
@@ -779,6 +778,9 @@ CXX
 ac_ct_FC
 FCFLAGS
 FC
+FJRDMA
+FJRDMA_FALSE
+FJRDMA_TRUE
 LIBACC_HEADER_DIR
 LIBACC_DIR
 LIBTLOG_MPI_DIR
@@ -944,8 +946,8 @@ enable_debug
 enable_openacc
 enable_atool
 enable_xacc
+enable_mpi3
 enable_FJRDMA
-with_mpi3
 enable_mreal
 with_gmp_lib
 with_gmp_include
@@ -1612,6 +1614,7 @@ Optional Features:
   --enable-openacc               enable OpenACC (false default).
   --enable-atool                 enable atool (false default).
   --enable-xacc                  enable XcalableACC (false default).
+  --enable-mpi3                  enable MPI3 (false default).
   --enable-FJRDMA                enable RDMA functions on the K compiter or FX10.
   --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default).
 
@@ -1625,7 +1628,6 @@ Optional Packages:
                         (or the compiler's sysroot if not specified).
   --with-thread               type of openmp thread
   --with-lock                 type of openmp lock
-  --with-mpi3                 MPI3 option (default: no).
   --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support.
   --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support.
   --with-precision=NUM        the default precision of real*16 in bits (128).
@@ -3033,7 +3035,7 @@ ac_config_headers="$ac_config_headers include/config.h Driver/atool/src/include/
 # --------------------------------------------------------------------
 # check bash
 SHELL=`which bash` 1> /dev/null 2> /dev/null
-if test $? -ne 0 -o -z "${SHELL}"; then
+if test $? -ne 0; then
    as_fn_error $? "To run libtool you need a bash, not /bin/sh." "$LINENO" 5
    exit 1
 fi
@@ -3042,7 +3044,7 @@ export SHELL
 
 # --------------------------------------------------------------------
 # check existence of commands set by user
-for cmd	in $MPI_CC $MPI_FC $JAVA $JAVAC $JAR
+for cmd	in $CC $FC $MPI_CC $MPI_FC $JAVA $JAVAC $JAR
 do
   if test "$cmd" != ""; then
     which $cmd 2> /dev/null 1> /dev/null
@@ -12724,7 +12726,7 @@ ac_config_files="$ac_config_files $LIBACC_HEADER_DIR/Makefile"
 # --------------------------------------------------------------------
 # Check whether --enable-debug was given.
 if test "${enable_debug+set}" = set; then :
-  enableval=$enable_debug; doDebug=$enableval
+  enableval=$enable_debug; doDebug=yes
 else
   doDebug=no
 fi
@@ -12732,11 +12734,11 @@ fi
 
 #AC_ARG_ENABLE(xmpgpu,
 #    [  --enable-xmpgpu                enable XcalableMP-GPU (false default).],
-#    [doXmpGpu=$enableval], [doXmpGpu=no])
+#    [doXmpGpu=yes], [doXmpGpu=no])
 
 # Check whether --enable-openacc was given.
 if test "${enable_openacc+set}" = set; then :
-  enableval=$enable_openacc; doOpenAcc=$enableval
+  enableval=$enable_openacc; doOpenAcc=yes
 else
   doOpenAcc=no
 fi
@@ -12744,7 +12746,7 @@ fi
 
 # Check whether --enable-atool was given.
 if test "${enable_atool+set}" = set; then :
-  enableval=$enable_atool; doatool=$enableval
+  enableval=$enable_atool; doatool=yes
 else
   doatool=no
 fi
@@ -12752,14 +12754,184 @@ fi
 
 # Check whether --enable-xacc was given.
 if test "${enable_xacc+set}" = set; then :
-  enableval=$enable_xacc; xacc=$enableval
+  enableval=$enable_xacc; xacc=yes
 else
   xacc=no
 fi
 
 
+# Check whether --enable-mpi3 was given.
+if test "${enable_mpi3+set}" = set; then :
+  enableval=$enable_mpi3; doMPI3=yes
+else
+  doMPI3=no
+fi
+
+
+## Add temporarily by mnakao
+# Check whether --enable-FJRDMA was given.
+if test "${enable_FJRDMA+set}" = set; then :
+  enableval=$enable_FJRDMA; enableFJRDMA=yes
+else
+  enableFJRDMA=no
+fi
+
+
+ if test x${enableFJRDMA} = xyes; then
+  FJRDMA_TRUE=
+  FJRDMA_FALSE='#'
+else
+  FJRDMA_TRUE='#'
+  FJRDMA_FALSE=
+fi
+
+## End Add temporarily
+
+## Delete temporarily by mnakao
+#AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
+## End Delete temporarily
+
+
+
 # --------------------------------------------------------------------
 # check basic commands
+
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking how to run the C preprocessor" >&5
+$as_echo_n "checking how to run the C preprocessor... " >&6; }
+# On Suns, sometimes $CPP names a directory.
+if test -n "$CPP" && test -d "$CPP"; then
+  CPP=
+fi
+if test -z "$CPP"; then
+  if ${ac_cv_prog_CPP+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+      # Double quotes because CPP needs to be expanded
+    for CPP in "$CC -E" "$CC -E -traditional-cpp" "/lib/cpp"
+    do
+      ac_preproc_ok=false
+for ac_c_preproc_warn_flag in '' yes
+do
+  # Use a header file that comes with gcc, so configuring glibc
+  # with a fresh cross-compiler works.
+  # Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+  # <limits.h> exists even on freestanding compilers.
+  # On the NeXT, cc -E runs the code through the compiler's parser,
+  # not just through cpp. "Syntax error" is here to catch this case.
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __STDC__
+# include <limits.h>
+#else
+# include <assert.h>
+#endif
+		     Syntax error
+_ACEOF
+if ac_fn_c_try_cpp "$LINENO"; then :
+
+else
+  # Broken: fails on valid input.
+continue
+fi
+rm -f conftest.err conftest.i conftest.$ac_ext
+
+  # OK, works on sane cases.  Now check whether nonexistent headers
+  # can be detected and how.
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <ac_nonexistent.h>
+_ACEOF
+if ac_fn_c_try_cpp "$LINENO"; then :
+  # Broken: success on invalid input.
+continue
+else
+  # Passes both tests.
+ac_preproc_ok=:
+break
+fi
+rm -f conftest.err conftest.i conftest.$ac_ext
+
+done
+# Because of `break', _AC_PREPROC_IFELSE's cleaning code was skipped.
+rm -f conftest.i conftest.err conftest.$ac_ext
+if $ac_preproc_ok; then :
+  break
+fi
+
+    done
+    ac_cv_prog_CPP=$CPP
+
+fi
+  CPP=$ac_cv_prog_CPP
+else
+  ac_cv_prog_CPP=$CPP
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $CPP" >&5
+$as_echo "$CPP" >&6; }
+ac_preproc_ok=false
+for ac_c_preproc_warn_flag in '' yes
+do
+  # Use a header file that comes with gcc, so configuring glibc
+  # with a fresh cross-compiler works.
+  # Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+  # <limits.h> exists even on freestanding compilers.
+  # On the NeXT, cc -E runs the code through the compiler's parser,
+  # not just through cpp. "Syntax error" is here to catch this case.
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __STDC__
+# include <limits.h>
+#else
+# include <assert.h>
+#endif
+		     Syntax error
+_ACEOF
+if ac_fn_c_try_cpp "$LINENO"; then :
+
+else
+  # Broken: fails on valid input.
+continue
+fi
+rm -f conftest.err conftest.i conftest.$ac_ext
+
+  # OK, works on sane cases.  Now check whether nonexistent headers
+  # can be detected and how.
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <ac_nonexistent.h>
+_ACEOF
+if ac_fn_c_try_cpp "$LINENO"; then :
+  # Broken: success on invalid input.
+continue
+else
+  # Passes both tests.
+ac_preproc_ok=:
+break
+fi
+rm -f conftest.err conftest.i conftest.$ac_ext
+
+done
+# Because of `break', _AC_PREPROC_IFELSE's cleaning code was skipped.
+rm -f conftest.i conftest.err conftest.$ac_ext
+if $ac_preproc_ok; then :
+
+else
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "C preprocessor \"$CPP\" fails sanity check
+See \`config.log' for more details" "$LINENO" 5; }
+fi
+
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -20304,33 +20476,6 @@ test -n "$YACC" || YACC="yacc"
 
 
 # --------------------------------------------------------------------
-# RDMA for the K computer and FX10
-
-## Add temporarily by mnakao
-enableFJRDMA=""
-# Check whether --enable-FJRDMA was given.
-if test "${enable_FJRDMA+set}" = set; then :
-  enableval=$enable_FJRDMA; enableFJRDMA=$enableval
-else
-  enableFJRDMA=no
-fi
-
-
- if test x${enableFJRDMA} = xyes; then
-  FJRDMA_TRUE=
-  FJRDMA_FALSE='#'
-else
-  FJRDMA_TRUE='#'
-  FJRDMA_FALSE=
-fi
-
-#AC_SUBST(FJRDMA)
-## End Add temporarily
-
-#AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
-#AC_SUBST(FJRDMA)
-
-# --------------------------------------------------------------------
 # set XMP-dev
 
 #XMP_ENABLE_GPU=0
@@ -20464,11 +20609,13 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
   MPI_FCLIBS=""
 
 # Omni C
+  OMNI_L2X_CFLAGS=""
   OMNI_LX2X_CFLAGS=""
   OMNI_NTV_CFLAGS="-Xg -noansi"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
 # Omni F
+  OMNI_L2X_FCFLAGS=""
   OMNI_LX2X_FCFLAGS=""
   OMNI_NTV_FCFLAGS="-Free"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
@@ -20493,11 +20640,13 @@ elif test "$target" = "MIC-linux-gnu"; then
   MPI_FCLIBS=""
 
 # Omni C
+  OMNI_L2X_CFLAGS=""
   OMNI_LX2X_CFLAGS=""
   OMNI_NTV_CFLAGS="-std=gnu99"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
 # Omni F
+  OMNI_L2X_FCFLAGS=""
   OMNI_LX2X_FCFLAGS=""
   OMNI_NTV_FCFLAGS=""
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
@@ -20522,11 +20671,13 @@ elif test "$target" = "Cray-linux-gnu"; then
   MPI_FCLIBS=""
 
 # Omni C
+  OMNI_L2X_CFLAGS=""
   OMNI_LX2X_CFLAGS=""
   OMNI_NTV_CFLAGS="-hgnu -D_XMP_CRAY"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
 # Omni F
+  OMNI_L2X_FCFLAGS=""
   OMNI_LX2X_FCFLAGS=""
   OMNI_NTV_FCFLAGS="-f free"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
@@ -20551,11 +20702,13 @@ elif test "$target" = "sx-nec-superux"; then
   MPI_FCLIBS=""
 
 # Omni C
+  OMNI_L2X_CFLAGS=""
   OMNI_LX2X_CFLAGS=""
   OMNI_NTV_CFLAGS="-Kgcc -w"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
 # Omni F
+  OMNI_L2X_FCFLAGS=""
   OMNI_LX2X_FCFLAGS=""
   OMNI_NTV_FCFLAGS="-f4 -w"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
@@ -20605,11 +20758,13 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   MPI_FCLIBS=$MPI_CLIBS
 
 # Omni C
+  OMNI_L2X_CFLAGS=""
   OMNI_LX2X_CFLAGS=""
   OMNI_NTV_CFLAGS="-q64 -qipa"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
 # Omni F
+  OMNI_L2X_FCFLAGS=""
   OMNI_LX2X_FCFLAGS=""
   OMNI_NTV_FCFLAGS="-q64 -qipa -qextname"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
@@ -20634,11 +20789,13 @@ elif test "$target" = "powerpc-hitachi-aix"; then
   MPI_FCLIBS=""
 
 # Omni C
+  OMNI_L2X_CFLAGS=""
   OMNI_LX2X_CFLAGS=""
   OMNI_NTV_CFLAGS="-q64 -qipa"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
 # Omni F
+  OMNI_L2X_FCFLAGS=""
   OMNI_LX2X_FCFLAGS=""
   OMNI_NTV_FCFLAGS="-q64 -qipa -qextname"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
@@ -20673,11 +20830,13 @@ else
     MPI_FCLIBS=""
 
     # Omni C
+    OMNI_L2X_CFLAGS=""
     OMNI_LX2X_CFLAGS=""
     OMNI_NTV_CFLAGS="-std=gnu99"
     OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
     # Omni F
+    OMNI_L2X_FCFLAGS=""
     OMNI_LX2X_FCFLAGS="-gnu"
     OMNI_NTV_FCFLAGS="-ffree-form -fcray-pointer"
     OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS -fopenmp -lgomp"
@@ -20688,12 +20847,18 @@ else
 
     # MPI C
     MPI_CPP=$MPI_CC
-    MPI_CPPFLAGS="-E -std=gnu99"
+    ver=`$MPI_CC --version 2> /dev/null | head -n1`
+    case $ver in
+    *15*)
+      MPI_CPPFLAGS="-E -std=gnu99 -no-gcc" ;;
+    *)
+      MPI_CPPFLAGS="-E -std=gnu99" ;;
+    esac
     MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $MPI_OPENMP_FLAG"
     MPI_CLIBS=""
 
     # MPI F
-    MPI_FC="mpifort"
+    MPI_FC="mpiifort"
     MPI_FPP=$MPI_FC
     MPI_FPPFLAGS="-E"
     MPI_FCFLAGS="-O2 $MPI_OPENMP_FLAG"
@@ -20701,11 +20866,13 @@ else
     MPI_FCLIBS=""
 
     # Omni C
+    OMNI_L2X_CFLAGS=""
     OMNI_LX2X_CFLAGS=""
     OMNI_NTV_CFLAGS="-std=gnu99"
     OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
     # Omni F
+    OMNI_L2X_FCFLAGS=""
     OMNI_LX2X_FCFLAGS="-intel"
     OMNI_NTV_FCFLAGS=""
     OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
@@ -20732,14 +20899,20 @@ else
       MPI_FCLIBS=""
 
       # Omni C
+      OMNI_L2X_CFLAGS="--no-builtin-va-arg"
       OMNI_LX2X_CFLAGS=""
       OMNI_NTV_CFLAGS="-D_XMP_PGI"
       OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
       # Omni F
+      OMNI_L2X_FCFLAGS=""
       OMNI_LX2X_FCFLAGS=""
       OMNI_NTV_FCFLAGS=""
       OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
+
+      # Special options
+      IS_PGI="Yes"
+
       ;;
     *)
       echo "No supported compiler was found."
@@ -20803,6 +20976,15 @@ else
   esac
 fi
 
+# MPI3 for MPI FLAGS
+if test "x${doMPI3}" = "xyes"; then
+   MPI_CPPFLAGS="$MPI_CPPFLAGS -D_XMP_MPI3"
+   MPI_FPPFLAGS="$MPI_FPPFLAGS -D_XMP_MPI3"
+   MPI_CFLAGS="$MPI_CFLAGS -D_XMP_MPI3"
+   MPI_FCFLAGS="$MPI_FCFLAGS -D_XMP_MPI3"
+   OMNI_LX2X_CFLAGS="$OMNI_LX2X_CFLAGS -mpi3"
+fi
+
 if test "${userFCFLAGS}" != ""; then
   FCFLAGS="${userFCFLAGS}"
 fi
@@ -20827,22 +21009,6 @@ if test "${userMPI_FCLIBS}" != ""; then
   MPI_FCLIBS="${userMPI_FCLIBS}"
 fi
 
-# check MPI3 for MPI_CFLAGS, MPI_FCFLAGS, and OMNI_LX2X_CFLAGS
-
-# Check whether --with-mpi3 was given.
-if test "${with_mpi3+set}" = set; then :
-  withval=$with_mpi3; useMPI3=$withval
-else
-  useMPI3=no
-fi
-
-
-if test "x${useMPI3}" = "xyes"; then
-   MPI_CFLAGS="$MPI_CFLAGS -D_XMP_MPI3"
-   MPI_FCFLAGS="$MPI_FCFLAGS -D_XMP_MPI3"
-   OMNI_LX2X_CFLAGS="$OMNI_LX2X_CFLAGS -mpi3"
-fi
-
 # MPI OpenMP
 
 
@@ -20865,8 +21031,10 @@ OMNI_C_PP="$MPI_CPP $MPI_CPPFLAGS"
 
 
 
+
 # Omni F
 OMNI_F_PP="$MPI_FPP $MPI_FPPFLAGS"
+
 
 
 
@@ -20881,6 +21049,7 @@ else
   IS_PGI_TRUE='#'
   IS_PGI_FALSE=
 fi
+
 
  if test "$target" = "Cray-linux-gnu"; then
   IS_CRAY_TRUE=
@@ -20897,7 +21066,6 @@ else
   IS_SUPERUX_TRUE='#'
   IS_SUPERUX_FALSE=
 fi
-
 
 
 
@@ -21737,7 +21905,6 @@ $as_echo "no" >&6; }
     fi
     rm -f ${pTmp}
     unset chk pTmp
-
 fi
 
 
@@ -24253,7 +24420,7 @@ qRealPrecBits=128
 
 # Check whether --enable-mreal was given.
 if test "${enable_mreal+set}" = set; then :
-  enableval=$enable_mreal; doQReal=$enableval
+  enableval=$enable_mreal; doQReal=yes
 else
   doQReal=no
 fi
@@ -24302,7 +24469,6 @@ if test "${with_precision+set}" = set; then :
 else
   qRealPrecBits=128
 fi
-
 
 
 # libgmp check
@@ -24498,14 +24664,12 @@ fi
 
 # --------------------------------------------------------------------
 # specify libxmp path
-default_libxmlDir="/usr"
-
 
 # Check whether --with-libxml was given.
 if test "${with_libxml+set}" = set; then :
   withval=$with_libxml; LIBXML_PREFIX="${withval}"
 else
-  LIBXML_PREFIX="${default_libxmlDir}"
+  LIBXML_PREFIX="/usr"
 fi
 
 
@@ -24520,13 +24684,13 @@ fi
 
 # Check whether --with-TCA was given.
 if test "${with_TCA+set}" = set; then :
-  withval=$with_TCA; TCA_PREFIX="${withval}"
+  withval=$with_TCA; TCA_PREFIX="${withval}"; use_tca=yes
+else
+  use_tca=no
 fi
 
 
-use_tca=no
-if test "${TCA_PREFIX}" != ""; then
-   use_tca=yes
+if test x$use_tca = xyes; then
    if ! test -f $TCA_PREFIX/tca-api.h; then
       as_fn_error $? "$TCA_PREFIX/tca-api.h not found. Please check --with-TCA=<DIR>" "$LINENO" 5
    fi
@@ -24545,22 +24709,17 @@ fi
 # --------------------------------------------------------------------
 # specify GASNet path
 
-default_gasnetDir=""
-
-
 # Check whether --with-gasnet was given.
 if test "${with_gasnet+set}" = set; then :
-  withval=$with_gasnet; GASNET_PREFIX="${withval}"
+  withval=$with_gasnet; GASNET_PREFIX="${withval}"; use_gasnet=yes
 else
-  GASNET_PREFIX="${default_gasnetDir}"
+  use_gasnet=no
 fi
 
 
-use_gasnet=no
-if test "${GASNET_PREFIX}" != ""; then
-  use_gasnet=yes
+if test x$use_gasnet = xyes; then
   if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
-	  as_fn_error $? "${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnet" "$LINENO" 5
+    as_fn_error $? "${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnet" "$LINENO" 5
   fi
 fi
 
@@ -24586,7 +24745,7 @@ else
 fi
 
 
-if test "${use_gasnet}" = yes; then
+if test x${use_gasnet} = xyes; then
   gasnet_conduit_flag=no
   if test "${GASNET_CONDUIT}" = ""; then
     for c in smp udp mpi gm lapi elan vapi ibv portals gemini shmem dcmf sci
@@ -24703,6 +24862,7 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+OM_EXEC_C_PP="${MPI_CPP}"
 
 
 OM_EXEC_C_COMPILER="${MPI_CC}"
@@ -25219,9 +25379,6 @@ fi
 
 
 
-nativeCompiler=${FC}
-
-
 checkCpp() {
     __ret=1
     __tmpFileBase=/tmp/.cpptest.$$
@@ -25288,7 +25445,7 @@ OS_LDFLAGS=''
 OS_LIBS=''
 OS_CFLAGS=''
 if test -z "${MAKE}"; then
-	MAKE=make
+  MAKE=make
 fi
 
 API_FLAVOR=NATA_API_POSIX
@@ -25516,12 +25673,12 @@ if test -z "${MAINTAINER_MODE_TRUE}" && test -z "${MAINTAINER_MODE_FALSE}"; then
   as_fn_error $? "conditional \"MAINTAINER_MODE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${am__fastdepCXX_TRUE}" && test -z "${am__fastdepCXX_FALSE}"; then
-  as_fn_error $? "conditional \"am__fastdepCXX\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${FJRDMA_TRUE}" && test -z "${FJRDMA_FALSE}"; then
   as_fn_error $? "conditional \"FJRDMA\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${am__fastdepCXX_TRUE}" && test -z "${am__fastdepCXX_FALSE}"; then
+  as_fn_error $? "conditional \"am__fastdepCXX\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_ACC_TRUE}" && test -z "${ENABLE_ACC_FALSE}"; then
@@ -28440,17 +28597,18 @@ if test "$target" != "Kcomputer-linux-gnu" -a "$target" != "FX10-linux-gnu"; the
   echo "  Options:"
   echo "    GASNet                : $use_gasnet"
 
-  if test "${use_gasnet}" = yes; then
-  cat << EOF
-      Installed in        : $GASNET_PREFIX
-      Conduit             : $GASNET_CONDUIT
-
-EOF
+  if test x${use_gasnet} = xyes; then
+    echo "      Installed in        : $GASNET_PREFIX"
+    echo "      Conduit             : $GASNET_CONDUIT"
   fi
   echo "    OpenACC               : $doOpenAcc"
 fi
 
-if test "${use_tca}" = "yes"; then
+if test x${use_tca} = xyes; then
   echo "    TCA                   : yes"
+fi
+
+if test x${doMPI3} = xyes; then
+  echo "    MPI3                  : yes"
 fi
 echo "=================================================="

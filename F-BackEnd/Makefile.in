@@ -144,6 +144,7 @@ F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
 FGREP = @FGREP@
+FJRDMA = @FJRDMA@
 F_BACKEND_DIR = @F_BACKEND_DIR@
 F_FRONTEND_DIR = @F_FRONTEND_DIR@
 GASNET_CFLAGS = @GASNET_CFLAGS@
@@ -218,6 +219,8 @@ OMDRIVER_DIR = @OMDRIVER_DIR@
 OMNI_C_PP = @OMNI_C_PP@
 OMNI_F_PP = @OMNI_F_PP@
 OMNI_HOME = @OMNI_HOME@
+OMNI_L2X_CFLAGS = @OMNI_L2X_CFLAGS@
+OMNI_L2X_FCFLAGS = @OMNI_L2X_FCFLAGS@
 OMNI_LNK_CFLAGS = @OMNI_LNK_CFLAGS@
 OMNI_LNK_FCFLAGS = @OMNI_LNK_FCFLAGS@
 OMNI_LX2X_CFLAGS = @OMNI_LX2X_CFLAGS@
@@ -341,7 +344,6 @@ localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
-nativeCompiler = @nativeCompiler@
 oldincludedir = @oldincludedir@
 omniBinDir = @omniBinDir@
 omniDir = @omniDir@
@@ -372,11 +374,9 @@ top_srcdir = @top_srcdir@
 bin_SCRIPTS = bin/F_Back bin/F_Trans bin/F_Decomp
 TARGET = build/om-f-back.jar
 SRC = $(wildcard src/xcodeml/f/*/*.java)
-CLASS = $(SRC:.java=.class)
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .class .java
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -605,12 +605,10 @@ uninstall-am: uninstall-binSCRIPTS
 
 all-local: $(TARGET)
 
-$(TARGET): $(CLASS)
+$(TARGET): $(SRC)
+	$(JAVAC) src/xcodeml/f/*/*.java -classpath ../XcodeML-Common/build/om-common.jar:./src -Xlint:deprecation
 	mkdir -p build
 	cd src; $(JAR) cf ../$@ xcodeml/f/*/*.class
-
-.java.class:
-	$(JAVAC) $< -classpath ../XcodeML-Common/build/om-common.jar:./src -Xlint:deprecation
 
 clean-local:
 	rm -f $(TARGET) $(CLASS)

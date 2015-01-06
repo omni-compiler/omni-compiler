@@ -10,7 +10,7 @@ typedef struct request_list{
 } request_list_t;
 
 typedef struct post_wait_obj{
-  int             wait_num;  /* How many requests form post node are waited */
+  int             wait_num;  /* How many post requests are waited */
   request_list_t  *list;
   int             list_size;
 } post_wait_obj_t;
@@ -23,8 +23,8 @@ static struct FJMPI_Rdma_cq cq;
 void _xmp_fjrdma_post_wait_initialize()
 {
   pw.wait_num  = 0;
-  pw.list      = malloc(sizeof(request_list_t) * _XMP_POST_WAIT_QUEUESIZE);
-  pw.list_size = _XMP_POST_WAIT_QUEUESIZE;
+  pw.list      = malloc(sizeof(request_list_t) * _XMP_POST_WAIT_QUEUE_DEFAULT_SIZE);
+  pw.list_size = _XMP_POST_WAIT_QUEUE_DEFAULT_SIZE;
   
   _each_addr = _XMP_alloc(sizeof(uint64_t) * _XMP_world_size);
   _token     = _XMP_alloc(sizeof(double));
@@ -44,9 +44,9 @@ void _xmp_fjrdma_post_wait_initialize()
 
 static void _xmp_pw_push(const int node, const int tag)
 {
-  if(pw.list_size == pw.wait_num){
+  if(pw.wait_num == pw.list_size){
     request_list_t *old_list = pw.list;
-    pw.list_size += _XMP_POST_WAIT_QUEUECHUNK;
+    pw.list_size += _XMP_POST_WAIT_QUEUE_INCREMENT_SIZE;
     pw.list = malloc(sizeof(request_list_t) * pw.list_size);
     memcpy(pw.list, old_list, sizeof(request_list_t) * pw.wait_num);
     free(old_list);

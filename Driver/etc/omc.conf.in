@@ -8,7 +8,7 @@ Linker=@OMNI_HOME@/bin/omclinker
 
 # for options
 PreprocessorOption=
-L2XOption=
+L2XOption=@OMNI_L2X_CFLAGS@
 LX2XOption=@OMNI_LX2X_CFLAGS@
 X2LOption=
 NativeCompilerOption=@OMNI_NTV_CFLAGS@

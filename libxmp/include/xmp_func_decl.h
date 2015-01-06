@@ -7,10 +7,8 @@
 #ifndef _XMP_RUNTIME_FUNC_DECL
 #define _XMP_RUNTIME_FUNC_DECL
 
-#ifndef _XMP_CRAY
-#ifndef _XMP_PGI
+#if !defined(_XMP_CRAY)
 #include <stddef.h>
-#endif
 #endif
 
 // ----- libxml

@@ -152,6 +152,7 @@ F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
 FGREP = @FGREP@
+FJRDMA = @FJRDMA@
 F_BACKEND_DIR = @F_BACKEND_DIR@
 F_FRONTEND_DIR = @F_FRONTEND_DIR@
 GASNET_CFLAGS = @GASNET_CFLAGS@
@@ -226,6 +227,8 @@ OMDRIVER_DIR = @OMDRIVER_DIR@
 OMNI_C_PP = @OMNI_C_PP@
 OMNI_F_PP = @OMNI_F_PP@
 OMNI_HOME = @OMNI_HOME@
+OMNI_L2X_CFLAGS = @OMNI_L2X_CFLAGS@
+OMNI_L2X_FCFLAGS = @OMNI_L2X_FCFLAGS@
 OMNI_LNK_CFLAGS = @OMNI_LNK_CFLAGS@
 OMNI_LNK_FCFLAGS = @OMNI_LNK_FCFLAGS@
 OMNI_LX2X_CFLAGS = @OMNI_LX2X_CFLAGS@
@@ -349,7 +352,6 @@ localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
-nativeCompiler = @nativeCompiler@
 oldincludedir = @oldincludedir@
 omniBinDir = @omniBinDir@
 omniDir = @omniDir@
@@ -388,7 +390,7 @@ F_Front_SOURCES = F95-main.c C-expr-mem.c C-exprcode.c F-datatype.c F-ident.c \
 	F-module-procedure.c
 
 AM_YFLAGS = -v
-AM_CFLAGS = -DBUGFIX -D__XCODEML__ -DYYDEBUG -I$(LIBXML_PREFIX)/include/libxml2 -Wall
+AM_CFLAGS = -DBUGFIX -D__XCODEML__ -DYYDEBUG -I$(LIBXML_PREFIX)/include/libxml2 
 F_Front_LDADD = -L$(LIBXML_PREFIX)/lib -lxml2 -lm
 all: all-am
 
