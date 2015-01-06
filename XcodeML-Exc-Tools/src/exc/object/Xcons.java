@@ -383,7 +383,8 @@ public class Xcons
                 t = ConversionIntegral(lt, rt);
                 break;
             }
-            if(lt.isFloating() && rt.isFloating()) {
+            //if(lt.isFloating() && rt.isFloating()) {
+            if(lt.isNumeric() && rt.isNumeric()) {           // #357
                 t = BasicType.Conversion(lt, rt);
                 break;
             }
@@ -412,7 +413,8 @@ public class Xcons
                 t = ConversionIntegral(lt, rt);
                 break;
             }
-            if(lt.isFloating() && rt.isFloating()) {
+            //if(lt.isFloating() && rt.isFloating()) {
+            if(lt.isNumeric() && rt.isNumeric()) {           // #357
                 t = BasicType.Conversion(lt, rt);
                 break;
             }
@@ -423,6 +425,10 @@ public class Xcons
                 return x;
             if(lt.isIntegral() && rt.isIntegral()) {
                 t = ConversionIntegral(lt, rt);
+                break;
+            }
+            if(lt.isNumeric() && rt.isNumeric()) {           // #357
+                t = BasicType.Conversion(lt, rt);
                 break;
             }
             fatal("BinaryOp: bad type");

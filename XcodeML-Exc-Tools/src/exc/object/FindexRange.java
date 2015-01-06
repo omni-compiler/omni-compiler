@@ -142,22 +142,30 @@ public class FindexRange
     if (ub.equals(lb))     // it's scalar
       return Xcons.IntConstant(1);
 
+    Xobject arg1;
     if (lb.isIntConstant()) {
-      if (lb.getInt() == 1) {
-        return ub;
-      } 
       if (ub.isIntConstant()) {
-        // max(ub-lb+1,0)
+        // max((ub-lb+1),0)
         int extent = ub.getInt() - lb.getInt() + 1;
         if (extent < 0)
           extent = 0;
         return Xcons.IntConstant(extent);
-      } 
+      } else {
+        // max(ub-(lb-1),0)
+        Xobject tmp = Xcons.IntConstant(lb.getInt() - 1);
+        arg1 = Xcons.binaryOp(Xcode.MINUS_EXPR, ub, tmp);
+      }
+    } else {
+      if (ub.isIntConstant()) {
+        // max((ub+1)-lb,0)
+        Xobject tmp = Xcons.IntConstant(ub.getInt() + 1);
+        arg1 = Xcons.binaryOp(Xcode.MINUS_EXPR, tmp, lb);
+      } else {
+        // max(ub-lb+1,0)
+        Xobject tmp = Xcons.binaryOp(Xcode.MINUS_EXPR, ub, lb);
+        arg1 = Xcons.binaryOp(Xcode.PLUS_EXPR, tmp, Xcons.IntConstant(1));
+      }
     }
-
-    // max(ub-lb+1,0)
-    Xobject e1 = Xcons.binaryOp(Xcode.MINUS_EXPR, ub, lb);
-    Xobject arg1 = Xcons.binaryOp(Xcode.PLUS_EXPR, e1, Xcons.IntConstant(1));
     Xobject arg2 = Xcons.IntConstant(0);
     Ident max = env.declIntrinsicIdent("max", Xtype.FintFunctionType);
     Xobject result = max.Call(Xcons.List(arg1, arg2));

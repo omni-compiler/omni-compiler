@@ -161,6 +161,13 @@ public class BasicType extends Xtype
         return (basic_type >= FLOAT_COMPLEX) && (basic_type <= LONG_DOUBLE_COMPLEX);
     }
     
+    @Override                           // #357
+    public boolean isNumeric()
+    {
+        return isIntegral() || isFloating() || isComplexOrImaginary() ||
+          (basic_type == F_NUMERIC) || (basic_type == F_NUMERIC_ALL);
+    }
+    
     @Override
     public boolean isVoid()
     {

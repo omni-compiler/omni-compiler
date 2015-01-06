@@ -921,7 +921,8 @@ public class Xtype
     }
 
     /** return if is numeric type */
-    public final boolean isNumeric()
+    //public final boolean isNumeric()       #357
+    public boolean isNumeric()
     {
         return isIntegral() || isFloating() || isComplexOrImaginary();
     }

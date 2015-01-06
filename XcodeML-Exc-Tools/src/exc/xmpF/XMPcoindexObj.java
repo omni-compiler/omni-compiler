@@ -88,7 +88,7 @@ public class XMPcoindexObj {
     Xobject c = cosubList.getArg(0).getArg(0);         // =c[0]
     Xobject coindex = c;                               // =coindex(1)
     if (corank == 1)
-      return coindex;
+      return _genInt(coindex);
 
     Xobject cosize = coarray.getSizeFromIndexRange(codims[0]);   // =cosize[0]
     Xobject factor = cosize;                               // =factor(1)
@@ -107,8 +107,28 @@ public class XMPcoindexObj {
       factor = Xcons.binaryOp(Xcode.MUL_EXPR, factor, cosize);
     }
 
-    return coindex;
+    return _genInt(coindex);
   }
+
+  private Xobject _genInt(Xobject expr) {
+    if (expr.Type().isBasic() &&
+        expr.Type().getBasicType() == BasicType.INT) {
+      if (expr.isIntConstant()) {
+        if ("4".equals(((XobjConst)expr).getFkind()))
+          // found it seems a 4-byte integer literal constant
+          return expr;
+      }
+      Xobject fkind = expr.Type().getFkind();
+      if (fkind != null && fkind.getInt() == 4)
+        // found it is a 4-byte integer expression
+        return expr;
+    }
+
+    Ident intrinsicInt =
+      getEnv().declIntrinsicIdent("int", Xtype.FintFunctionType);
+
+    return intrinsicInt.Call(Xcons.List(expr));
+  }    
 
   private int _getRank() {
     int count = 0;
@@ -221,6 +241,7 @@ public class XMPcoindexObj {
     Xobject baseAddr = getBaseAddr();
     Xobject element = coarray.getElementLengthExpr();
     Xobject coindex = getCoindex();
+
     Xobject actualArgs = Xcons.List(serno, baseAddr, element, coindex);
 
     if (rhs != null)
@@ -321,7 +342,6 @@ public class XMPcoindexObj {
     return key + bytes;
   }
 
-  /// TEMPORARY VERSION
   /// see also BasicType.getElementLength
   private String _getTypeSuffixKey(Xtype xtype) {
     String key = null;
@@ -483,6 +503,12 @@ public class XMPcoindexObj {
       Xobject i2 = subscr.getArg(1);  // can be null
       Xobject i3 = subscr.getArg(2);  // can be null
       size = coarray.getSizeFromTriplet(i, i1, i2, i3);
+      if (!size.Type().isBasic() &&
+          size.Type().getBasicType() != BasicType.INT) {
+        Ident intrinsicInt =
+          getEnv().declIntrinsicIdent("int", Xtype.FintFunctionType);
+        size = intrinsicInt.Call(Xcons.List(size));
+      }
       break;
     default:        // vector subscript is not supported
       XMP.error("internal error: unexpected Xcode: "+subscr.Opcode());

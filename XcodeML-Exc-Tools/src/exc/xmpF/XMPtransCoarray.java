@@ -89,11 +89,14 @@ public class XMPtransCoarray
     if (! allCoarrays.isEmpty())
       genCommonStmt(commonName1, commonName2, allCoarrays, def);
 
-    // d. replace coindexed variable assignment stmts with call stmts
-    replaceCoidxVarStmts(allCoarrays);
 
+    //////////////////////////////
     // e. replace coindexed objects with function references
     replaceCoidxObjs(allCoarrays);
+
+    // d. replace coindexed variable assignment stmts with call stmts
+    replaceCoidxVarStmts(allCoarrays);
+    //////////////////////////////
 
     // b. replace static coarrays & generate allocation
     if (! staticCoarrays.isEmpty())
@@ -143,35 +146,39 @@ public class XMPtransCoarray
 
 
   //-----------------------------------------------------
-  //  TRANSLATION d.
+  //  TRANSLATION d. (PUT)
   //  convert statements whose LHS are coindexed variables
   //  to subroutine calls
   //-----------------------------------------------------
   private void replaceCoidxVarStmts(Vector<XMPcoarray> coarrays) {
-    /***********************
-    XobjectIterator xi = new bottomupXobjectIterator(def.getFuncBody());
+    /************************
+    //XobjectIterator xi = new bottomupXobjectIterator(def.getFuncBody());
+    XobjectIterator xi = new topdownXobjectIterator(def.getFuncBody());
 
     for (xi.init(); !xi.end(); xi.next()) {
       Xobject xobj = xi.getXobject();
-      if (xobj == null)
+
+      if (xobj == null) {
         continue;
+      }
 
       if (xobj.Opcode() == Xcode.F_ASSIGN_STATEMENT) {
+        // found an assignment statement
 
         if (xobj.getArg(0).Opcode() == Xcode.CO_ARRAY_REF) {
-
-          // found statement to be converted
+          // found its left-hand side is a coindexed variable
           Xobject callExpr = coidxVarStmtToCallStmt(xobj, coarrays);
           xi.setXobject(callExpr);
         }
       }
 
     }
-    ***************************/
+    *********************/
 
     BlockIterator bi = new topdownBlockIterator(fblock);
 
     for (bi.init(); !bi.end(); bi.next()) {
+
       BasicBlock bb = bi.getBlock().getBasicBlock();
       if (bb == null) continue;
       for (Statement s = bb.getHead(); s != null; s = s.getNext()) {
@@ -187,6 +194,15 @@ public class XMPtransCoarray
           s.setExpr(callExpr);
         }
       }
+
+      /***************
+      Xobject stmt = bi.getBlock().toXobject();
+      if (_isCoidxVarStmt(stmt)) {
+        // found an assignment stmt whose LHS is a coindexed variable
+        Xobject callExpr = coidxVarStmtToCallStmt(stmt, coarrays);
+        bi.setBlock(Bcons.Statement(callExpr));
+      }
+      ***************/
     }
   }
 
@@ -219,7 +235,7 @@ public class XMPtransCoarray
 
 
   //-----------------------------------------------------
-  //  TRANSLATION e.
+  //  TRANSLATION e. (GET)
   //  convert coindexed objects to function references
   //-----------------------------------------------------
   private void replaceCoidxObjs(Vector<XMPcoarray> coarrays) {
