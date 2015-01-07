@@ -28,8 +28,8 @@ void _XMP_init_world(int *argc, char ***argv) {
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_dup(MPI_COMM_WORLD, comm);
   _XMP_nodes_t *n = _XMP_create_nodes_by_comm(_XMP_N_INT_TRUE, comm);
-  _XMP_world_size = n->comm_size;
-  _XMP_world_rank = n->comm_rank;
+  _XMP_world_size = _XMP_num_threads;
+  _XMP_world_rank = _XMP_thread_num;
   _XMP_world_nodes = n;
   _XMP_push_nodes(n);
 }

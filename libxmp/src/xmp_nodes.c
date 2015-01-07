@@ -28,11 +28,7 @@ static _XMP_nodes_t *_XMP_create_new_nodes(int is_member, int dim, int comm_size
     MPI_Comm_size(*((MPI_Comm *)comm), &size);
     MPI_Comm_rank(*((MPI_Comm *)comm), &rank);
 
-    n->comm_rank = rank;
-
-    if (size != comm_size) {
-      _XMP_fatal("cannot create a new nodes descriptor: communicator size is not correct");
-    }
+    n->comm_rank = _XMP_thread_num;
   } else {
     n->comm_rank = _XMP_N_INVALID_RANK;
   }
