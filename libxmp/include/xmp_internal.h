@@ -407,4 +407,7 @@ struct _XMPTIMING
   }while (0)
 #endif
 
+extern __thread int _XMP_num_threads;
+extern __thread int _XMP_thread_num;
+
 #endif // _XMP_INTERNAL

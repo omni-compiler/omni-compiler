@@ -12,9 +12,18 @@ __thread int _XMP_world_rank;
 __thread void *_XMP_world_nodes;
 
 void _XMP_init_world(int *argc, char ***argv) {
-  int flag = 0;
-  MPI_Initialized(&flag);
-  if (!flag) MPI_Init(argc, argv);
+  if (_XMP_thread_num == 0) {
+    int flag = 0;
+    MPI_Initialized(&flag);
+    if (!flag) {
+      int provided;
+      MPI_Init_thread(argc, argv, MPI_THREAD_MULTIPLE, &provided);
+      if (provided < MPI_THREAD_SERIALIZED) {
+        _XMP_fatal("The MPI library does not have thread support");
+      }
+    }
+  }
+  _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
   
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_dup(MPI_COMM_WORLD, comm);
@@ -23,17 +32,17 @@ void _XMP_init_world(int *argc, char ***argv) {
   _XMP_world_rank = n->comm_rank;
   _XMP_world_nodes = n;
   _XMP_push_nodes(n);
-
-  MPI_Barrier(MPI_COMM_WORLD);
 }
 
 void _XMP_finalize_world(void) {
-  MPI_Barrier(MPI_COMM_WORLD);
+  _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
 
-  int flag = 0;
-  MPI_Finalized(&flag);
-  if (!flag) {
-    MPI_Finalize();
+  if (_XMP_thread_num == 0) {
+    int flag = 0;
+    MPI_Finalized(&flag);
+    if (!flag) {
+      MPI_Finalize();
+    }
   }
 }
 
