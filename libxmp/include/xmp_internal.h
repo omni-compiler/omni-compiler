@@ -236,6 +236,9 @@ extern void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index);
 extern void _XMP_reflect_shadow_FULL(void *array_addr, _XMP_array_t *array_desc, int array_index);
 extern void _XMP_init_shadow(_XMP_array_t *array, ...);
 
+// xmp_sort.c
+extern void _XMP_sort(_XMP_array_t *a_desc, _XMP_array_t *b_desc, int is_up);
+
 // xmp_template.c
 extern _XMP_template_t *_XMP_create_template_desc(int dim, _Bool is_fixed);
 extern int _XMP_check_template_ref_inclusion(int ref_lower, int ref_upper, int ref_stride,

@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void xmp_sort_up(xmp_desc_t a, xmp_desc_t b);
-void xmp_sort_down(xmp_desc_t a, xmp_desc_t b);
+//void xmp_sort_up(xmp_desc_t a, xmp_desc_t b);
+//void xmp_sort_down(xmp_desc_t a, xmp_desc_t b);
 
 int main(int argc, char *argv[]){
 
@@ -16,7 +16,7 @@ int main(int argc, char *argv[]){
   int n = 0;
 
   for (int i = 0; i < nprocs; i++){
-    m[i] = (i + 1) * nprocs * 5;
+    m[i] = (i + 1) * nprocs * 100;
     n += m[i];
   }
 
@@ -28,16 +28,13 @@ int main(int argc, char *argv[]){
 #pragma xmp template t1(0:n-1)
 #pragma xmp distribute t1(block) onto p
 
-#pragma xmp template t2(0:n-1)
-#pragma xmp distribute t2(cyclic) onto p
-
   //#pragma xmp distribute t(block) onto p
 
   //
   // int
   //
 
-  //if (me == 0) printf("check for int starts...\n");
+  if (me == 0) printf("check for int starts...\n");
 
   int a0[n], b0[n];
 #pragma xmp align a0[i] with t0(i)
@@ -91,7 +88,7 @@ int main(int argc, char *argv[]){
   // float
   //
 
-  //if (me == 0) printf("check for float starts...\n");
+  if (me == 0) printf("check for float starts...\n");
 
   float a1[n], b1[n];
 #pragma xmp align a1[i] with t0(i)
@@ -145,7 +142,7 @@ int main(int argc, char *argv[]){
   // double
   //
 
-  //if (me == 0) printf("check for double starts...\n");
+  if (me == 0) printf("check for double starts...\n");
 
   double a2[n], b2[n];
 #pragma xmp align a2[i] with t0(i)
