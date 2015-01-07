@@ -85,6 +85,40 @@ void _XMP_set_reflect__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
 
 //double t0, t_sched = 0, t_start = 0, t_wait = 0;
 
+void _XMP_thread_reflect_exec(_XMP_array_t *array) {
+  for (int i = 0; i < array->dim; i++) {
+    _XMP_thread_reflect_sched_t *reflect = array->info[i].thread_reflect_sched;
+    
+    if (!(reflect->do_lower_reflect || reflect->do_upper_reflect)) return;
+    
+    _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
+    
+    if (reflect->do_lower_reflect) {
+      char *src = reflect->lo_src_buf;
+      char *dst = reflect->lo_dst_buf;
+      int blocklength = reflect->blocklength * reflect->lo_width;
+      for (int j = 0; j < reflect->count; j++) {
+        memcpy(dst, src, blocklength);
+        src += reflect->lo_stride;
+        dst += reflect->dst_stride;
+      }
+    }
+    
+    if (reflect->do_upper_reflect) {
+      char *src = reflect->hi_src_buf;
+      char *dst = reflect->hi_dst_buf;
+      int blocklength = reflect->blocklength * reflect->hi_width;
+      for (int j = 0; j < reflect->count; j++) {
+        memcpy(dst, src, blocklength);
+        src += reflect->hi_stride;
+        dst += reflect->dst_stride;
+      }
+    }
+    
+    _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
+  }
+}
+
 void _XMP_reflect__(_XMP_array_t *a)
 {
   _XMP_RETURN_IF_SINGLE;
@@ -107,12 +141,14 @@ void _XMP_reflect__(_XMP_array_t *a)
   //  t_sched = t_sched + (MPI_Wtime() - t0);
 
   //  t0 = MPI_Wtime();
-  _XMP_reflect_start(a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, 0);
+  //_XMP_reflect_start(a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, 0);
   //  t_start = t_start + (MPI_Wtime() - t0);
 
   //  t0 = MPI_Wtime();
-  _XMP_reflect_wait(a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic);
+  //_XMP_reflect_wait(a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic);
   //  t_wait = t_wait + (MPI_Wtime() - t0);
+  
+  _XMP_thread_reflect_exec(a);
 
   _xmpf_set_reflect_flag = 0;
   for (int i = 0; i < a->dim; i++){
