@@ -4,7 +4,7 @@
 #include <omp.h>
 #include <complex.h>
 
-int _xmp_omp_num_procs = 1;
+__thread int _xmp_omp_num_procs = 1;
 
 void _XMP_pack_vector(char * restrict dst, char * restrict src,
 		      int count, int blocklength, long stride){
@@ -91,7 +91,7 @@ void _XMPF_unpack_transpose_vector(char * restrict dst, char * restrict src,
 
 #include "xmp_internal.h"
 
-int _xmp_reflect_pack_flag = 0;
+__thread int _xmp_reflect_pack_flag = 0;
 
 void _XMP_check_reflect_type(void)
 {

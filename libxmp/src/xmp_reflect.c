@@ -10,7 +10,7 @@ typedef struct _XMP_async_comm {
 
 #define _XMP_ASYNC_COMM_SIZE 511
 
-_XMP_async_comm_t _XMP_async_comm_tab[_XMP_ASYNC_COMM_SIZE] = { {0, 0, NULL, NULL} };
+__thread _XMP_async_comm_t _XMP_async_comm_tab[_XMP_ASYNC_COMM_SIZE] = { {0, 0, NULL, NULL} };
 
 #define _XMP_MAX_ASYNC_REQS (4 * _XMP_N_MAX_DIM * 10)
 
@@ -66,12 +66,12 @@ void xmp_dbg_printf(char *fmt,...)
 double t0, t1;
 #endif
 
-extern int _xmp_reflect_pack_flag;
+extern __thread int _xmp_reflect_pack_flag;
 
-static int _xmpf_set_reflect_flag = 0;
-static int _xmp_lwidth[_XMP_N_MAX_DIM] = {0};
-static int _xmp_uwidth[_XMP_N_MAX_DIM] = {0};
-static int _xmp_is_periodic[_XMP_N_MAX_DIM] = {0};
+static __thread int _xmpf_set_reflect_flag = 0;
+static __thread int _xmp_lwidth[_XMP_N_MAX_DIM] = {0};
+static __thread int _xmp_uwidth[_XMP_N_MAX_DIM] = {0};
+static __thread int _xmp_is_periodic[_XMP_N_MAX_DIM] = {0};
 
 
 void _XMP_set_reflect__(_XMP_array_t *a, int dim, int lwidth, int uwidth,

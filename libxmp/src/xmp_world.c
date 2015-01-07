@@ -7,9 +7,9 @@
 #include "mpi.h"
 #include "xmp_internal.h"
 
-int _XMP_world_size;
-int _XMP_world_rank;
-void *_XMP_world_nodes;
+__thread int _XMP_world_size;
+__thread int _XMP_world_rank;
+__thread void *_XMP_world_nodes;
 
 void _XMP_init_world(int *argc, char ***argv) {
   int flag = 0;

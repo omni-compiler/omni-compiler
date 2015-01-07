@@ -7,8 +7,8 @@
 #ifndef _XMP_INTERNAL
 #define _XMP_INTERNAL
 
-extern int _XMPC_running;
-extern int _XMPF_running;
+extern __thread int _XMPC_running;
+extern __thread int _XMPF_running;
 
 #ifndef MIN
 #define MIN(a,b)  ( (a)<(b) ? (a) : (b) )
@@ -260,9 +260,9 @@ extern void _XMP_fatal_nomsg();
 extern void _XMP_unexpected_error(void);
 
 // xmp_world.c
-extern int _XMP_world_size;
-extern int _XMP_world_rank;
-extern void *_XMP_world_nodes;
+extern __thread int _XMP_world_size;
+extern __thread int _XMP_world_rank;
+extern __thread void *_XMP_world_nodes;
 
 extern void _XMP_init_world(int *argc, char ***argv);
 extern void _XMP_finalize_world(void);

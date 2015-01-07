@@ -12,7 +12,7 @@ typedef struct _XMP_nodes_dish_type {
   struct _XMP_nodes_dish_type *prev;
 } _XMP_nodes_dish_t;
 
-static _XMP_nodes_dish_t *_XMP_nodes_stack_top = NULL;
+static __thread _XMP_nodes_dish_t *_XMP_nodes_stack_top = NULL;
 
 void _XMP_push_nodes(_XMP_nodes_t *nodes) {
   _XMP_nodes_dish_t *new_dish = _XMP_alloc(sizeof(_XMP_nodes_dish_t));

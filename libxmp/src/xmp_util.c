@@ -10,7 +10,7 @@
 #include "mpi.h"
 #include "xmp_internal.h"
 
-static unsigned long long _XMP_on_ref_id_count = 0;
+static __thread unsigned long long _XMP_on_ref_id_count = 0;
 
 unsigned long long _XMP_get_on_ref_id(void) {
   if (_XMP_on_ref_id_count == ULLONG_MAX) {
