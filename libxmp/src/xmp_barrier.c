@@ -20,3 +20,19 @@ void _XMP_barrier_EXEC(void) {
 
   MPI_Barrier(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm));
 }
+
+void _XMP_thread_barrier(volatile _XMP_thread_barrier_t *barrier, int nthreads) {
+  _XMP_RETURN_IF_SINGLE;
+  if (barrier == NULL) return;
+  
+  _Bool sense = barrier->sense;
+  int count = __sync_fetch_and_add(&barrier->count, 1);
+  if (count == nthreads - 1) {
+    barrier->count = 0;
+    barrier->sense = !sense;
+  } else {
+    while (barrier->sense == sense) ;
+  }
+}
+
+_XMP_thread_barrier_t _XMP_thread_barrier_key;

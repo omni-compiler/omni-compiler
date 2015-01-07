@@ -305,4 +305,9 @@ typedef struct _XMP_gpu_data_type {
   size_t size;
 } _XMP_gpu_data_t;
 
+typedef struct _XMP_thread_barrier_type {
+  _Bool sense;
+  int count;
+} _XMP_thread_barrier_t;
+
 #endif // _XMP_DATA_STRUCT

@@ -93,6 +93,8 @@ extern void _XMP_unpack_array(void *dst, void *buffer, int array_type, size_t ar
 // xmp_barrier.c
 extern void _XMP_barrier_NODES_ENTIRE(_XMP_nodes_t *nodes);
 extern void _XMP_barrier_EXEC(void);
+extern void _XMP_thread_barrier(volatile _XMP_thread_barrier_t *barrier, int nthreads);
+extern _XMP_thread_barrier_t _XMP_thread_barrier_key;
 
 // xmp_coarray.c
 typedef struct _XMP_coarray_list_type {
