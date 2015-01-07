@@ -183,6 +183,95 @@ int xmp_test_async_(int *async_id)
 
 }
 
+static void _XMP_thread_reflect_sched_dim(_XMP_array_t *array, int target_dim,
+    int lwidth, int uwidth, _Bool is_periodic) {
+  _XMP_array_info_t *ainfo = array->info;
+  _XMP_array_info_t *ai = &(ainfo[target_dim]);
+  
+  _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
+
+  int target_tdim = ai->align_template_index;
+  _XMP_nodes_info_t *ni = array->align_template->chunk[target_tdim].onto_nodes_info;
+  
+  int ndims = array->dim;
+  
+  int my_pos = ni->rank;
+  int lb_pos = _XMP_get_owner_pos(array, target_dim, ai->ser_lower);
+  int ub_pos = _XMP_get_owner_pos(array, target_dim, ai->ser_upper);
+  int lo_pos = (my_pos == lb_pos) ? ub_pos : my_pos - 1;
+  int hi_pos = (my_pos == ub_pos) ? lb_pos : my_pos + 1;
+  
+  int my_rank = _XMP_thread_num;
+  int lo_rank = my_rank + (lo_pos - my_pos) * ni->multiplier;
+  int hi_rank = my_rank + (hi_pos - my_pos) * ni->multiplier;
+  
+  _XMP_array_info_t *lo_ainfo = array->desc_table[lo_rank]->info;
+  _XMP_array_info_t *lo_ai = &(lo_ainfo[target_dim]);
+  _XMP_array_info_t *hi_ainfo = array->desc_table[hi_rank]->info;
+  _XMP_array_info_t *hi_ai = &(hi_ainfo[target_dim]);
+  
+  void *lo_array_addr = array->desc_table[lo_rank]->array_addr_p;
+  void *hi_array_addr = array->desc_table[hi_rank]->array_addr_p;
+
+  int type_size = array->type_size;
+  
+  int count = 1;
+  for (int i = 0; i < target_dim; i++) {
+    count *= ainfo[i].alloc_size;
+  }
+  
+  int blocklength = type_size;
+  for (int i = ndims - 1; i > target_dim; i--) {
+    blocklength *= ainfo[i].alloc_size;
+  }
+  
+  long long dst_stride = type_size;
+  for (int i = ndims - 1; i >= target_dim; i--) {
+    dst_stride *= ainfo[i].alloc_size;
+  }
+  
+  long long lo_stride = type_size, hi_stride = type_size;
+  void *lo_dst_buf, *hi_dst_buf;
+  void *lo_src_buf, *hi_src_buf;
+  
+  _Bool do_lower_reflect = (lwidth != 0) && ((my_pos != lb_pos) || is_periodic);
+  _Bool do_upper_reflect = (uwidth != 0) && ((my_pos != ub_pos) || is_periodic);
+  
+  if (do_lower_reflect) {
+    for (int i = ndims - 1; i >= target_dim; i--) {
+      lo_stride *= lo_ainfo[i].alloc_size;
+    }
+    
+    int lo_dst_offset = ai->shadow_size_lo - lwidth;
+    int lo_src_offset = lo_ai->local_upper - lwidth + 1;
+    lo_dst_buf = (void *)((char *)array->array_addr_p + lo_dst_offset * ai->dim_acc * type_size);
+    lo_src_buf = (void *)((char *)lo_array_addr + lo_src_offset * lo_ai->dim_acc * type_size);
+  }
+  
+  if (do_upper_reflect) {
+    for (int i = ndims - 1; i >= target_dim; i--) {
+      hi_stride *= hi_ainfo[i].alloc_size;
+    }
+    
+    int hi_dst_offset = ai->local_upper + 1;
+    int hi_src_offset = hi_ai->local_lower;
+    hi_dst_buf = (void *)((char *)array->array_addr_p + hi_dst_offset * ai->dim_acc * type_size);
+    hi_src_buf = (void *)((char *)hi_array_addr + hi_src_offset * hi_ai->dim_acc * type_size);
+  }
+  
+  _XMP_thread_reflect_sched_t *reflect = ai->thread_reflect_sched;
+  reflect->do_lower_reflect = do_lower_reflect;
+  reflect->do_upper_reflect = do_upper_reflect;
+  reflect->lo_src_buf = lo_src_buf;
+  reflect->hi_src_buf = hi_src_buf;
+  reflect->lo_dst_buf = lo_dst_buf;
+  reflect->hi_dst_buf = hi_dst_buf;
+  reflect->count = count;
+  reflect->blocklength = blocklength;
+  reflect->dst_stride = dst_stride;
+  reflect->lo_stride = lo_stride;
+  reflect->hi_stride = hi_stride;
+}
 
 static void _XMP_reflect_sched(_XMP_array_t *a, int *lwidth, int *uwidth,
 				int *is_periodic, int is_async)
@@ -196,36 +285,17 @@ static void _XMP_reflect_sched(_XMP_array_t *a, int *lwidth, int *uwidth,
       continue;
     }
     else if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
-
-      _XMP_reflect_sched_t *reflect = ai->reflect_sched;
-
-      if (lwidth[i] || uwidth[i]){
-
-	_XMP_ASSERT(reflect);
-
-	if (reflect->is_periodic == -1 /* not set yet */ ||
-	    lwidth[i] != reflect->lo_width ||
-	    uwidth[i] != reflect->hi_width ||
-	    is_periodic[i] != reflect->is_periodic){
-
-	  reflect->lo_width = lwidth[i];
-	  reflect->hi_width = uwidth[i];
-	  reflect->is_periodic = is_periodic[i];
-
-#if !defined(OMNI_TARGET_CPU_KCOMPUTER) || !defined(K_RDMA_REFLECT)
-	  if (_xmp_reflect_pack_flag && !is_async){
-	    _XMP_reflect_pcopy_sched_dim(a, i, lwidth[i], uwidth[i], is_periodic[i]);
-	  }
-	  else {
-	    _XMP_reflect_normal_sched_dim(a, i, lwidth[i], uwidth[i], is_periodic[i]);
-	  }
-#else
-	  _XMP_reflect_rdma_sched_dim(a, i, lwidth[i], uwidth[i], is_periodic[i]);
-#endif
-
-	}
+      _XMP_thread_reflect_sched_t *reflect = ai->thread_reflect_sched;
+      if (lwidth[i] != 0 || uwidth[i] != 0) {
+        _XMP_ASSERT(reflect);
+        if (lwidth[i] != reflect->lo_width || uwidth[i] != reflect->hi_width
+            || reflect->is_periodic != is_periodic[i]) {
+          reflect->lo_width = lwidth[i];
+          reflect->hi_width = uwidth[i];
+          reflect->is_periodic = is_periodic;
+          _XMP_thread_reflect_sched_dim(a, i, lwidth[i], uwidth[i], is_periodic[i]);
+        }
       }
-
     }
     else { /* _XMP_N_SHADOW_FULL */
       ;
