@@ -18,7 +18,7 @@ void _XMP_barrier_NODES_ENTIRE(_XMP_nodes_t *nodes) {
 void _XMP_barrier_EXEC(void) {
   _XMP_RETURN_IF_SINGLE;
 
-  MPI_Barrier(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm));
+  _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
 }
 
 void _XMP_thread_barrier(volatile _XMP_thread_barrier_t *barrier, int nthreads) {
