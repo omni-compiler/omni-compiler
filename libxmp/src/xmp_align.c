@@ -132,6 +132,12 @@ void _XMP_finalize_array_desc(_XMP_array_t *array) {
     if (array->array_nodes)
       _XMP_finalize_nodes(array->array_nodes);
   }
+  
+  _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
+  if (_XMP_thread_num == 0) {
+    _XMP_free(array->desc_table);
+  }
+  _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
 
   _XMP_free(array);
 }
@@ -513,6 +519,8 @@ EXIT_CALC_PARALLEL_MEMBERS:
   ai->align_template_index = template_index;
 }
 
+_XMP_array_t **_XMP_array_desc_table;
+
 void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...) {
   if (!array_desc->is_allocated) {
     *array_addr = NULL;
@@ -538,6 +546,15 @@ void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...) {
   }
 
   *array_addr = _XMP_alloc(total_elmts * (array_desc->type_size));
+  
+  _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
+  if (_XMP_thread_num == 0) {
+    _XMP_array_desc_table = _XMP_alloc(_XMP_num_threads * sizeof(_XMP_array_t *));
+  }
+  _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
+  _XMP_array_desc_table[_XMP_thread_num] = array_desc;
+  array_desc->desc_table = _XMP_array_desc_table;
+  _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
 
   // set members
   array_desc->array_addr_p = *array_addr;
