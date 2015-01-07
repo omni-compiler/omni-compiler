@@ -249,6 +249,9 @@ void _XMP_init_shadow(_XMP_array_t *array, ...) {
 	      ai->reflect_sched = sched;
 	    }
 	    ai->reflect_acc_sched = NULL;
+            if (!ai->thread_reflect_sched) {
+              ai->thread_reflect_sched = _XMP_alloc(sizeof(_XMP_thread_reflect_sched_t));
+            }
 
             _XMP_create_shadow_comm(array, i);
           }

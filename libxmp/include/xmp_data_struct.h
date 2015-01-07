@@ -142,6 +142,17 @@ typedef struct _XMP_reflect_sched_type {
 #endif
 } _XMP_reflect_sched_t;
 
+typedef struct _XMP_thread_reflect_sched_type {
+  _Bool is_periodic;
+  _Bool do_lower_reflect, do_upper_reflect;
+  int lo_width, hi_width;
+  void *lo_src_buf, *hi_src_buf;
+  void *lo_dst_buf, *hi_dst_buf;
+  int count;
+  int blocklength;
+  long long dst_stride, hi_stride, lo_stride;
+} _XMP_thread_reflect_sched_t;
+
 // aligned array descriptor
 typedef struct _XMP_array_info_type {
   _Bool is_shadow_comm_member;
@@ -178,6 +189,7 @@ typedef struct _XMP_array_info_type {
 
   _XMP_reflect_sched_t *reflect_sched;
   _XMP_reflect_sched_t *reflect_acc_sched;
+  _XMP_thread_reflect_sched_t *thread_reflect_sched;
   // enable when is_shadow_comm_member is true
   _XMP_comm_t *shadow_comm;
   int shadow_comm_size;

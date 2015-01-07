@@ -115,6 +115,9 @@ void _XMP_finalize_array_desc(_XMP_array_t *array) {
       _XMP_free(reflect_sched);
     }
 
+    if (ai->thread_reflect_sched) {
+      _XMP_free(ai->thread_reflect_sched);
+    }
   }
 
 /*   for (int i = 0; i < array->num_reqs; i++){ */
