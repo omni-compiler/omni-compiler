@@ -128,15 +128,15 @@ static void init_device(int dev_num){ //0-based
   //   _ACC_fatal("failed to reset GPU");
   // }
 
-  struct cudaDeviceProp dev_prop;
-  cuda_err = cudaGetDeviceProperties(&dev_prop, get_actual_device_num(dev_num));
-  if(cuda_err != cudaSuccess){
-    _ACC_fatal("fail to get GPU device properties");
-  }
-  _ACC_DEBUG("name : %s\n", dev_prop.name)
-  _ACC_DEBUG("clock : %dKHz\n", dev_prop.clockRate)
-  _ACC_DEBUG("cc : %d.%d\n",dev_prop.major, dev_prop.minor)
-  _ACC_DEBUG("#sm : %d\n",dev_prop.multiProcessorCount)
+  /* cudaDeviceProp dev_prop; */
+  /* cuda_err = cudaGetDeviceProperties(&dev_prop, get_actual_device_num(dev_num)); */
+  /* if(cuda_err != cudaSuccess){ */
+  /*   _ACC_fatal("fail to get GPU device properties"); */
+  /* } */
+  /* _ACC_DEBUG("name : %s\n", dev_prop.name) */
+  /* _ACC_DEBUG("clock : %dKHz\n", dev_prop.clockRate) */
+  /* _ACC_DEBUG("cc : %d.%d\n",dev_prop.major, dev_prop.minor) */
+  /* _ACC_DEBUG("#sm : %d\n",dev_prop.multiProcessorCount) */
 
 
   //init mpool
