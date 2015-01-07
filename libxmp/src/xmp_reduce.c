@@ -227,6 +227,40 @@ void _XMP_reduce_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int da
   MPI_Allreduce(MPI_IN_PLACE, addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm));
 }
 
+double *_XMP_reduce_field;
+
+void _XMP_reduce_threads(void *addr, int count, int datatype, int op) {
+  // assume count == 1 && datatype == double
+  
+  double *daddr = (double *)addr;
+  _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
+  if (_XMP_thread_num == 0) {
+    _XMP_reduce_field = _XMP_alloc(_XMP_num_threads * sizeof(double));
+  }
+  _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
+  _XMP_reduce_field[_XMP_thread_num] = *daddr;
+  _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
+  
+  double result;
+  if (op == _XMP_N_REDUCE_SUM) {
+    result = 0.0;
+    for (int i = 0; i < _XMP_num_threads; i++) {
+      result += _XMP_reduce_field[i];
+    }
+  } else if (op == _XMP_N_REDUCE_MAX) {
+    result = DBL_MIN;
+    for (int i = 0; i < _XMP_num_threads; i++) {
+      result = result < _XMP_reduce_field[i] ? _XMP_reduce_field[i] : result;
+    }
+  }
+  *daddr = result;
+  
+  _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
+  if (_XMP_thread_num == 0) {
+    _XMP_free(_XMP_reduce_field);
+  }
+}
+
 // _XMP_M_REDUCE_EXEC(addr, count, datatype, op) is in xmp_comm_macro.h
 
 void _XMP_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes,
