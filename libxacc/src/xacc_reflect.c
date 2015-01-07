@@ -539,7 +539,8 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
   cudaStream_t *lo_stream = (cudaStream_t*)_XMP_alloc(sizeof(cudaStream_t));
   CUDA_SAFE_CALL(cudaStreamCreate(lo_stream));
   reflect->lo_async_id = (void*)lo_stream;
-  if((src != MPI_PROC_NULL && dst != MPI_PROC_NULL && (lo_buf_size / type_size) <= useSingleStreamLimit) || !useHostBuffer){
+  if(!useHostBuffer ||
+     (target_dim != 0 && (src != MPI_PROC_NULL && dst != MPI_PROC_NULL && (lo_buf_size / type_size) <= useSingleStreamLimit)) ){
     reflect->hi_async_id = NULL;
   }else{
     cudaStream_t *hi_stream = (cudaStream_t*)_XMP_alloc(sizeof(cudaStream_t));
@@ -842,7 +843,7 @@ static void reflect_pack_start_all(_XACC_arrays_t *arrays_desc)
 {
   int dim = arrays_desc->dim;
   _XACC_device_t *device = arrays_desc->device_type;
-#pragma omp for
+#pragma omp for nowait
   for(int i = device->lb; i <= device->ub; i += device->step){
     _XACC_array_t *array_desc = arrays_desc->array + i;
     if(useKernelPacking){
@@ -872,7 +873,7 @@ static void reflect_pack_wait_all(_XACC_arrays_t *arrays_desc)
   int dim = arrays_desc->dim;
 
   _XACC_device_t *device = arrays_desc->device_type;
-#pragma omp for
+#pragma omp for nowait
   for(int i = device->lb; i <= device->ub; i += device->step){
     _XACC_array_t *array_desc = arrays_desc->array + i;
 
@@ -894,7 +895,7 @@ static void reflect_unpack_start_all(_XACC_arrays_t *arrays_desc)
   int dim = arrays_desc->dim;
 
   _XACC_device_t *device = arrays_desc->device_type;
-#pragma omp for
+#pragma omp for nowait
   for(int i = device->lb; i <= device->ub; i += device->step){  
     _XACC_array_t *array_desc = arrays_desc->array + i;
     if(useKernelPacking){
@@ -924,7 +925,7 @@ static void reflect_unpack_wait_all(_XACC_arrays_t *arrays_desc)
   int dim = arrays_desc->dim;
 
   _XACC_device_t *device = arrays_desc->device_type;
-#pragma omp for
+#pragma omp for nowait
   for(int i = device->lb; i <= device->ub; i += device->step){
 
     _XACC_array_t *array_desc = arrays_desc->array + i;
@@ -1040,9 +1041,11 @@ static void _XACC_reflect_do_inter_start(_XACC_arrays_t *arrays_desc)
     //    reflect_pack_wait_all(arrays_desc);
   }
 
-/*   TLOG_LOG(TLOG_EVENT_1_IN); */
-/* #pragma omp barrier */
-/*   TLOG_LOG(TLOG_EVENT_1_OUT); */
+#ifdef _USE_OMP  
+  TLOG_LOG(TLOG_EVENT_1_IN);
+#pragma omp barrier
+  TLOG_LOG(TLOG_EVENT_1_OUT);
+#endif  
 
   TLOG_LOG(TLOG_EVENT_4_IN);
   _XACC_reflect_do_inter_start_dim0(arrays_desc);
@@ -1114,9 +1117,9 @@ static void _XACC_reflect_do_intra_start(_XACC_arrays_t *arrays_desc)
       /* char* recvPtr= lower_reflect->hi_recv_buf; */
       cudaStream_t *st_lo = (cudaStream_t*)reflect->lo_async_id;
       cudaStream_t *st_hi = (cudaStream_t*)reflect->hi_async_id;
-      CUDA_SAFE_CALL(cudaMemcpyAsync(lower_reflect->hi_recv_buf, reflect->hi_send_buf, reflect->blocklength*reflect->hi_width, cudaMemcpyDeviceToDevice, *st_lo));
+      CUDA_SAFE_CALL(cudaMemcpyAsync(lower_reflect->hi_recv_buf, reflect->hi_send_buf, reflect->blocklength*reflect->hi_width, cudaMemcpyDeviceToDevice, *st_hi));
       TLOG_LOG(TLOG_EVENT_9);
-      CUDA_SAFE_CALL(cudaMemcpyAsync(reflect->lo_recv_buf, lower_reflect->lo_send_buf, reflect->blocklength*reflect->lo_width, cudaMemcpyDeviceToDevice, *st_hi));
+      CUDA_SAFE_CALL(cudaMemcpyAsync(reflect->lo_recv_buf, lower_reflect->lo_send_buf, reflect->blocklength*reflect->lo_width, cudaMemcpyDeviceToDevice, *st_lo));
       //CUDA_SAFE_CALL(cudaMemcpy(recvPtr, sendPtr, loSendSize, cudaMemcpyDeviceToDevice));
       TLOG_LOG(TLOG_EVENT_9);
     }
@@ -1146,7 +1149,7 @@ static void _XACC_reflect_do_intra_wait(_XACC_arrays_t *arrays_desc)
   TLOG_LOG(TLOG_EVENT_9_IN);
 
   _XACC_device_t *device = arrays_desc->device_type;
-#pragma omp for
+#pragma omp for nowait
   for(int dev = device->lb; dev <= device->ub; dev += device->step){
     _XACC_array_t* device_array = &(arrays_desc->array[dev]);
     _XACC_array_info_t* info0 = &device_array->info[0];
@@ -1168,7 +1171,7 @@ void _XACC_reflect_do(_XACC_arrays_t *arrays_desc){
 #pragma omp parallel num_threads(numDevices)
   {
   _XACC_device_t *device = arrays_desc->device_type;
-#pragma omp for
+#pragma omp for nowait
   for(int dev = device->lb; dev <= device->ub; dev += device->step){
     CUDA_SAFE_CALL(cudaSetDevice(dev));
   }
