@@ -539,8 +539,8 @@ static void _XACC_reflect_sched_dim(_XACC_arrays_t *arrays_desc, int target_devi
   cudaStream_t *lo_stream = (cudaStream_t*)_XMP_alloc(sizeof(cudaStream_t));
   CUDA_SAFE_CALL(cudaStreamCreate(lo_stream));
   reflect->lo_async_id = (void*)lo_stream;
-  if(!useHostBuffer ||
-     (target_dim != 0 && (src != MPI_PROC_NULL && dst != MPI_PROC_NULL && (lo_buf_size / type_size) <= useSingleStreamLimit)) ){
+  if(target_dim != 0 &&
+     (!useHostBuffer || (src != MPI_PROC_NULL && dst != MPI_PROC_NULL && (lo_buf_size / type_size) <= useSingleStreamLimit)) ){
     reflect->hi_async_id = NULL;
   }else{
     cudaStream_t *hi_stream = (cudaStream_t*)_XMP_alloc(sizeof(cudaStream_t));
@@ -604,7 +604,7 @@ static void reflect_pack_start(_XMP_reflect_sched_t *reflect, size_t type_size)
     }
     if(lo_send_buf == NULL && hi_send_buf == NULL) return;
 
-    if(reflect->lo_rank != MPI_PROC_NULL && reflect->hi_rank != MPI_PROC_NULL && reflect->hi_async_id == NULL){
+    if(!useHostBuffer || (reflect->lo_rank != MPI_PROC_NULL && reflect->hi_rank != MPI_PROC_NULL && reflect->hi_async_id == NULL)){
       _XACC_gpu_pack_vector2_async(lo_send_buf,
 				   lo_send_array,
 				   lo_width * reflect->blocklength,
@@ -673,7 +673,7 @@ static void reflect_unpack_start(_XMP_reflect_sched_t *reflect, size_t type_size
       hi_recv_array = hi_recv_buf = NULL;
     }
     if(lo_recv_buf == NULL && hi_recv_buf == NULL) return;
-    if(reflect->lo_rank != MPI_PROC_NULL && reflect->hi_rank != MPI_PROC_NULL && reflect->hi_async_id == NULL){
+    if(!useHostBuffer || (reflect->lo_rank != MPI_PROC_NULL && reflect->hi_rank != MPI_PROC_NULL && reflect->hi_async_id == NULL)){
       _XACC_gpu_unpack_vector2_async(lo_recv_array,
 				     lo_recv_buf,
 				     lo_width * reflect->blocklength,
