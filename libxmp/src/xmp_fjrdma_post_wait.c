@@ -3,25 +3,25 @@
 #include <string.h>
 #include <stdio.h>
 
-typedef struct post_request_info{
+typedef struct _XMP_post_request_info{
   int node;
   int tag;
-} post_request_info_t;
+} _XMP_post_request_info_t;
 
-typedef struct post_request{
-  int                 num;      /* How many post requests are in table */
-  int                 max_size; /* Max size of table */
-  post_request_info_t *table;
-} post_request_t;
+typedef struct _XMP_post_request{
+  int                      num;      /* How many post requests are in table */
+  int                      max_size; /* Max size of table */
+  _XMP_post_request_info_t *table;
+} _XMP_post_request_t;
 
 static uint64_t _local_rdma_addr, *_remote_rdma_addr;
-static post_request_t _post_request;
+static _XMP_post_request_t _post_request;
 
 void _xmp_fjrdma_post_wait_initialize()
 {
   _post_request.num      = 0;
   _post_request.max_size = _XMP_POST_REQUEST_INITIAL_TABLE_SIZE;
-  _post_request.table    = malloc(sizeof(post_request_info_t) * _post_request.max_size);
+  _post_request.table    = malloc(sizeof(_XMP_post_request_info_t) * _post_request.max_size);
   
   double *_token    = _XMP_alloc(sizeof(double));
   _local_rdma_addr  = FJMPI_Rdma_reg_mem(_XMP_POST_REQUEST_ID, _token, sizeof(double));
@@ -44,10 +44,10 @@ void _xmp_fjrdma_post_wait_initialize()
 static void add_request(const int node, const int tag)
 {
   if(_post_request.num == _post_request.max_size){  // If table is full
-    post_request_info_t *old_table = _post_request.table;
+    _XMP_post_request_info_t *old_table = _post_request.table;
     _post_request.max_size += _XMP_POST_REQUEST_INCREMENT_TABLE_SIZE;
-    _post_request.table = malloc(sizeof(post_request_info_t) * _post_request.max_size);
-    memcpy(_post_request.table, old_table, sizeof(post_request_info_t) * _post_request.num);
+    _post_request.table = malloc(sizeof(_XMP_post_request_info_t) * _post_request.max_size);
+    memcpy(_post_request.table, old_table, sizeof(_XMP_post_request_info_t) * _post_request.num);
     free(old_table);
   }
   

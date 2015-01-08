@@ -1,26 +1,26 @@
 #include "xmp_internal.h"
 #include "xmp_atomic.h"
 
-typedef struct post_request_info{
+typedef struct _XMP_post_request_info{
   int node;
   int tag;
-} post_request_info_t;
+} _XMP_post_request_info_t;
 
-typedef struct post_request{
-  int                 num;      /* How many post requests are in table */
-  int                 max_size; /* Max size of table */
-  post_request_info_t *table;
-  gasnet_hsl_t        hsl;
-} post_request_t;
+typedef struct _XMP_post_request{
+  int                      num;      /* How many post requests are in table */
+  int                      max_size; /* Max size of table */
+  _XMP_post_request_info_t *table;
+  gasnet_hsl_t             hsl;
+} _XMP_post_request_t;
 
-static post_request_t _post_request;
+static _XMP_post_request_t _post_request;
 
 void _xmp_gasnet_post_wait_initialize()
 {
   gasnet_hsl_init(&_post_request.hsl);
   _post_request.num      = 0;
   _post_request.max_size = _XMP_POST_REQUEST_INITIAL_TABLE_SIZE;
-  _post_request.table    = malloc(sizeof(post_request_info_t) * _post_request.max_size);
+  _post_request.table    = malloc(sizeof(_XMP_post_request_info_t) * _post_request.max_size);
 }
 
 static void add_request(const int node, const int tag)
@@ -34,10 +34,10 @@ static void do_post(const int node, const int tag)
 {
   gasnet_hsl_lock(&_post_request.hsl);
   if(_post_request.num == _post_request.max_size){
-    post_request_info_t *old_table = _post_request.table;
+    _XMP_post_request_info_t *old_table = _post_request.table;
     _post_request.max_size += _XMP_POST_REQUEST_INCREMENT_TABLE_SIZE;
-    _post_request.table = malloc(sizeof(post_request_info_t) * _post_request.max_size);
-    memcpy(_post_request.table, old_table, sizeof(post_request_info_t) * _post_request.num);
+    _post_request.table = malloc(sizeof(_XMP_post_request_info_t) * _post_request.max_size);
+    memcpy(_post_request.table, old_table, sizeof(_XMP_post_request_info_t) * _post_request.num);
     free(old_table);
   }
   add_request(node, tag);
