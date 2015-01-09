@@ -546,38 +546,39 @@ EXIT_CALC_PARALLEL_MEMBERS:
 void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...) {
   if (!array_desc->is_allocated) {
     *array_addr = NULL;
-    return;
-  }
+  } else {
+    unsigned long long total_elmts = 1;
+    int dim = array_desc->dim;
+    va_list args;
+    va_start(args, array_desc);
+    for (int i = dim - 1; i >= 0; i--) {
+      unsigned long long *acc = va_arg(args, unsigned long long *);
+      *acc = total_elmts;
 
-  unsigned long long total_elmts = 1;
-  int dim = array_desc->dim;
-  va_list args;
-  va_start(args, array_desc);
-  for (int i = dim - 1; i >= 0; i--) {
-    unsigned long long *acc = va_arg(args, unsigned long long *);
-    *acc = total_elmts;
+      array_desc->info[i].dim_acc = total_elmts;
 
-    array_desc->info[i].dim_acc = total_elmts;
+      total_elmts *= array_desc->info[i].alloc_size;
+    }
+    va_end(args);
 
-    total_elmts *= array_desc->info[i].alloc_size;
-  }
-  va_end(args);
+    for (int i = 0; i < dim; i++) {
+      _XMP_calc_array_dim_elmts(array_desc, i);
+    }
 
-  for (int i = 0; i < dim; i++) {
-    _XMP_calc_array_dim_elmts(array_desc, i);
-  }
+    *array_addr = _XMP_alloc(total_elmts * (array_desc->type_size));
 
-  *array_addr = _XMP_alloc(total_elmts * (array_desc->type_size));
+    __sync_fetch_and_add(array_desc->num_allocations, 1);
 
-  __sync_fetch_and_add(array_desc->num_allocations, 1);
-
-  // set members
-  array_desc->array_addr_p = *array_addr;
-  array_desc->total_elmts = total_elmts;
+    // set members
+    array_desc->array_addr_p = *array_addr;
+    array_desc->total_elmts = total_elmts;
 
 #ifdef _XMP_TCA
-  _XMP_alloc_tca(array_desc);
+    _XMP_alloc_tca(array_desc);
 #endif
+  }
+
+  _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
 }
 
 void _XMP_alloc_array_EXTERN(void **array_addr, _XMP_array_t *array_desc, ...) {
