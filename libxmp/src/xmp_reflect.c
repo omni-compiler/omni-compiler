@@ -97,7 +97,7 @@ void _XMP_thread_reflect_exec(_XMP_array_t *array) {
       continue;
     }
     
-    _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
+    _XMP_thread_barrier(array->barrier, array->num_allocations);
     
     if (reflect->do_lower_reflect) {
       char *src = reflect->lo_src_buf;
@@ -121,7 +121,7 @@ void _XMP_thread_reflect_exec(_XMP_array_t *array) {
       }
     }
     
-    _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
+    _XMP_thread_barrier(array->barrier, array->num_allocations);
   }
 }
 
