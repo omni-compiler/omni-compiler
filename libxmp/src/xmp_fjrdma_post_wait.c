@@ -1,5 +1,5 @@
 /**
- * Implementation of post/wait directives by using Fujitsu RDMA
+ * post/wait functions using Fujitsu RDMA
  *
  * @file
  */
@@ -20,6 +20,9 @@ typedef struct _XMP_postreq{
   int                 maxsize; /**< Max size of table */
 } _XMP_postreq_t;
 
+/**
+ * Address for using RDMA
+ */
 static uint64_t _local_rdma_addr, *_remote_rdma_addr;
 static _XMP_postreq_t _postreq;
 

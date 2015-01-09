@@ -287,21 +287,13 @@ extern void _XMP_threads_finalize(void);
 
 
 // ----- for coarray & post/wait -------------------
-#if defined(_XMP_COARRAY_FJRDMA) || defined(_XMP_COARRAY_GASNET)
+#if defined(_XMP_COARRAY_GASNET) || defined(_XMP_COARRAY_FJRDMA)
 #define _XMP_DEFAULT_COARRAY_HEAP_SIZE   "26M" 
 #define _XMP_DEFAULT_COARRAY_STRIDE_SIZE "5M"
-#define FLAG_NIC (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN)
-#define SEND_NIC FJMPI_RDMA_LOCAL_NIC0
-#define MEMID 0
-extern size_t get_offset(const _XMP_array_section_t *, const int);
-
-extern void _XMP_post_wait_initialize();
-#define _XMP_POSTREQ_SEND_NIC FJMPI_RDMA_LOCAL_NIC2
-#define _XMP_POSTREQ_RECV_NIC FJMPI_RDMA_LOCAL_NIC3
 #define _XMP_POSTREQ_INITIAL_TABLESIZE 32
 #define _XMP_POSTREQ_INCREMENT_TABLESIZE 512
-#define _XMP_POSTREQ_NIC_FLAG (FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_REMOTE_NIC3 | FJMPI_RDMA_REMOTE_NOTICE)
-#define _XMP_POSTREQ_ID 1
+extern size_t get_offset(const _XMP_array_section_t *, const int);
+extern void _XMP_post_wait_initialize();
 #endif
 
 #ifdef _XMP_COARRAY_GASNET
@@ -326,12 +318,20 @@ extern void _XMP_gasnet_sync_all();
 extern void _XMP_gasnet_sync_memory();
 extern void _xmp_gasnet_post_wait_initialize();
 extern void _xmp_gasnet_post(const int, const int);
-extern void _xmp_gasnet_wait();
-extern void _xmp_gasnet_wait_tag(const int, const int);
-extern void _xmp_gasnet_wait_notag(const int);
+extern void _xmp_gasnet_wait_noargs();
+extern void _xmp_gasnet_wait_node(const int);
+extern void _xmp_gasnet_wait(const int, const int);
 #endif
 
 #ifdef _XMP_COARRAY_FJRDMA
+#define FLAG_NIC (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN)
+#define SEND_NIC FJMPI_RDMA_LOCAL_NIC0
+#define _XMP_POSTREQ_SEND_NIC FJMPI_RDMA_LOCAL_NIC2
+#define _XMP_POSTREQ_RECV_NIC FJMPI_RDMA_LOCAL_NIC3
+#define _XMP_POSTREQ_NIC_FLAG (FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_REMOTE_NIC3 | FJMPI_RDMA_REMOTE_NOTICE)
+#define MEMID 0
+#define _XMP_POSTREQ_ID 1
+
 #include <mpi-ext.h>
 extern void _XMP_fjrdma_initialize(int, char**);
 extern void _XMP_fjrdma_finalize();
@@ -346,9 +346,9 @@ extern void _XMP_fjrdma_shortcut_put(const int, const uint64_t, const uint64_t, 
 extern void _XMP_fjrdma_shortcut_get(const int, const uint64_t, const uint64_t, const _XMP_coarray_t *, const _XMP_coarray_t *, const size_t);
 extern void _xmp_fjrdma_post_wait_initialize();
 extern void _xmp_fjrdma_post(const int, const int);
-extern void _xmp_fjrdma_wait();
-extern void _xmp_fjrdma_wait_tag(const int, const int);
-extern void _xmp_fjrdma_wait_notag(const int);
+extern void _xmp_fjrdma_wait_noargs();
+extern void _xmp_fjrdma_wait_node(const int);
+extern void _xmp_fjrdma_wait(const int, const int);
 #endif
 
 #ifdef _XMP_TIMING

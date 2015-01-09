@@ -1,5 +1,5 @@
 /**
- * Implementation of post/wait directives by using GASNet
+ * post/wait functions using GASNet
  *
  * @file
  */

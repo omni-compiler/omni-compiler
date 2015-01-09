@@ -1,3 +1,8 @@
+/**
+ * Wrapper functions for post/wait
+ *
+ * @file
+ */
 #include "xmp_internal.h"
 
 void _XMP_post_wait_initialize()
