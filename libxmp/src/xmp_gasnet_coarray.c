@@ -15,7 +15,7 @@ gasnet_handlerentry_t htable[] = {
   { _XMP_GASNET_SETLOCKSTATE,               _xmp_gasnet_setlockstate },
   { _XMP_GASNET_UNLOCK_REQUEST,             _xmp_gasnet_unlock_request },
   { _XMP_GASNET_LOCKHANDOFF,                _xmp_gasnet_lockhandoff },
-  { _XMP_GASNET_POST_REQUEST,               _xmp_gasnet_post_request },
+  { _XMP_GASNET_POSTREQ,                    _xmp_gasnet_postreq },
   { _XMP_GASNET_UNPACK,                     _xmp_gasnet_unpack },
   { _XMP_GASNET_UNPACK_USING_BUF,           _xmp_gasnet_unpack_using_buf },
   { _XMP_GASNET_UNPACK_REPLY,               _xmp_gasnet_unpack_reply },

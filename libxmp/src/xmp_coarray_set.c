@@ -6,11 +6,11 @@
 #include "xmp_internal.h"
 #include "xmp_constant.h"
 
-static size_t _xmp_heap_size, _xmp_stride_size;
 static size_t _elmt_size;
 static int _coarray_dims, _image_dims, *_image_elmts;
 static int *_coarray_elmts, _total_coarray_elmts;
 
+#ifdef _XMP_COARRAY_GASNET
 // The last word must be "M"
 static void check_last_word(char *env, char *env_val)
 {
@@ -65,19 +65,14 @@ static size_t check_env_size_coarray(char *env){
       _XMP_fatal("Internal Error in xmp_coarray_set.c");
   }
 
-  if(size < 0){
-    if(_XMP_world_rank == 0){
-      fprintf(stderr, "[ERROR] Unexpected value of %s=%s\n", env, env_val);
-    }
-    _XMP_fatal_nomsg();
-  }
-
   return size;
 }
+#endif
 
 void _XMP_coarray_initialize(int argc, char **argv)
 {
 #ifdef _XMP_COARRAY_GASNET
+  size_t _xmp_heap_size, _xmp_stride_size;
   _xmp_heap_size   = check_env_size_coarray("XMP_COARRAY_HEAP_SIZE");
   _xmp_stride_size = check_env_size_coarray("XMP_COARRAY_STRIDE_SIZE");
   _xmp_heap_size  += _xmp_stride_size;
