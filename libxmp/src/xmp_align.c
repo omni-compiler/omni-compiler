@@ -26,6 +26,8 @@ void _XMP_calc_array_dim_elmts(_XMP_array_t *array, int array_index) {
   array->info[array_index].dim_elmts = dim_elmts;
 }
 
+int *_XMP_array_num_allocations;
+_XMP_thread_barrier_t *_XMP_array_barrier;
 _XMP_array_t **_XMP_array_desc_table;
 
 void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int dim,
@@ -79,9 +81,15 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
 
   _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
   if (_XMP_thread_num == 0) {
+    _XMP_array_num_allocations = _XMP_alloc(sizeof(int));
+    _XMP_array_barrier = _XMP_alloc(sizeof(_XMP_thread_barrier_t));
     _XMP_array_desc_table = _XMP_alloc(_XMP_num_threads * sizeof(_XMP_array_t *));
+    *_XMP_array_num_allocations = 0;
+    memset(_XMP_array_barrier, 0, sizeof(_XMP_thread_barrier_t));
   }
   _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
+  a->num_allocations = _XMP_array_num_allocations;
+  a->barrier = _XMP_array_barrier;
   _XMP_array_desc_table[_XMP_thread_num] = a;
   a->desc_table = _XMP_array_desc_table;
   _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
@@ -149,6 +157,8 @@ void _XMP_finalize_array_desc(_XMP_array_t *array) {
   
   _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
   if (_XMP_thread_num == 0) {
+    _XMP_free(array->num_allocations);
+    _XMP_free(array->barrier);
     _XMP_free(array->desc_table);
   }
   _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
@@ -558,6 +568,8 @@ void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...) {
   }
 
   *array_addr = _XMP_alloc(total_elmts * (array_desc->type_size));
+
+  __sync_fetch_and_add(array_desc->num_allocations, 1);
 
   // set members
   array_desc->array_addr_p = *array_addr;

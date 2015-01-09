@@ -14,6 +14,11 @@
 
 #define _XMP_comm_t void
 
+typedef struct _XMP_thread_barrier_type {
+  _Bool sense;
+  int count;
+} _XMP_thread_barrier_t;
+
 // nodes descriptor
 typedef struct _XMP_nodes_inherit_info_type {
   int shrink;
@@ -232,6 +237,8 @@ typedef struct _XMP_array_type {
   _Bool is_shrunk_template;
   _XMP_nodes_t *array_nodes;
   
+  int *num_allocations;
+  _XMP_thread_barrier_t *barrier;
   struct _XMP_array_type **desc_table;
 
   _XMP_template_t *align_template;
@@ -318,10 +325,5 @@ typedef struct _XMP_gpu_data_type {
   _XMP_gpu_array_t *device_array_desc;
   size_t size;
 } _XMP_gpu_data_t;
-
-typedef struct _XMP_thread_barrier_type {
-  _Bool sense;
-  int count;
-} _XMP_thread_barrier_t;
 
 #endif // _XMP_DATA_STRUCT
