@@ -1,5 +1,5 @@
 /**
- * post/wait functions using GASNet
+ * Post/wait functions using GASNet
  *
  * @file
  */
@@ -60,6 +60,9 @@ void _xmp_gasnet_postreq(gasnet_token_t token, const int node, const int tag)
 
 /**
  * Post operation
+ *
+ * @param[in] node node number
+ * @param[in] tag  tag
  */
 void _xmp_gasnet_post(const int node, const int tag)
 {

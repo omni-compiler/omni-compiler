@@ -1,5 +1,5 @@
 /**
- * post/wait functions using Fujitsu RDMA
+ * Post/wait functions using Fujitsu RDMA
  *
  * @file
  */
@@ -69,6 +69,12 @@ static void add_postreq(const int node, const int tag)
   _postreq.num++;
 }
 
+/**
+ * Post operation
+ *
+ * @param[in] node node number
+ * @param[in] tag  tag
+ */
 void _xmp_fjrdma_post(const int node, const int tag)
 {
   if(tag < 0 || tag > 14){
