@@ -87,9 +87,15 @@ void _XMP_set_reflect__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
 
 void _XMP_thread_reflect_exec(_XMP_array_t *array) {
   for (int i = 0; i < array->dim; i++) {
-    _XMP_thread_reflect_sched_t *reflect = array->info[i].thread_reflect_sched;
-    
-    if (!(reflect->do_lower_reflect || reflect->do_upper_reflect)) return;
+    _XMP_array_info_t *ai = &(array->info[i]);
+    if (ai->shadow_type != _XMP_N_SHADOW_NORMAL) {
+      continue;
+    }
+
+    _XMP_thread_reflect_sched_t *reflect = ai->thread_reflect_sched;
+    if (!(reflect->do_lower_reflect || reflect->do_upper_reflect)) {
+      continue;
+    }
     
     _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
     
