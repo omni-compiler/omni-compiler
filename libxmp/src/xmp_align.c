@@ -527,29 +527,36 @@ _XMP_array_t **_XMP_array_desc_table;
 void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...) {
   if (!array_desc->is_allocated) {
     *array_addr = NULL;
-    return;
+  } else {
+    unsigned long long total_elmts = 1;
+    int dim = array_desc->dim;
+    va_list args;
+    va_start(args, array_desc);
+    for (int i = dim - 1; i >= 0; i--) {
+      unsigned long long *acc = va_arg(args, unsigned long long *);
+      *acc = total_elmts;
+
+      array_desc->info[i].dim_acc = total_elmts;
+
+      total_elmts *= array_desc->info[i].alloc_size;
+    }
+    va_end(args);
+
+    for (int i = 0; i < dim; i++) {
+      _XMP_calc_array_dim_elmts(array_desc, i);
+    }
+
+    *array_addr = _XMP_alloc(total_elmts * (array_desc->type_size));
+
+    // set members
+    array_desc->array_addr_p = *array_addr;
+    array_desc->total_elmts = total_elmts;
+
+#ifdef _XMP_TCA
+    _XMP_alloc_tca(array_desc);
+#endif
   }
 
-  unsigned long long total_elmts = 1;
-  int dim = array_desc->dim;
-  va_list args;
-  va_start(args, array_desc);
-  for (int i = dim - 1; i >= 0; i--) {
-    unsigned long long *acc = va_arg(args, unsigned long long *);
-    *acc = total_elmts;
-
-    array_desc->info[i].dim_acc = total_elmts;
-
-    total_elmts *= array_desc->info[i].alloc_size;
-  }
-  va_end(args);
-
-  for (int i = 0; i < dim; i++) {
-    _XMP_calc_array_dim_elmts(array_desc, i);
-  }
-
-  *array_addr = _XMP_alloc(total_elmts * (array_desc->type_size));
-  
   _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
   if (_XMP_thread_num == 0) {
     _XMP_array_desc_table = _XMP_alloc(_XMP_num_threads * sizeof(_XMP_array_t *));
@@ -558,14 +565,6 @@ void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...) {
   _XMP_array_desc_table[_XMP_thread_num] = array_desc;
   array_desc->desc_table = _XMP_array_desc_table;
   _XMP_thread_barrier(&_XMP_thread_barrier_key, _XMP_num_threads);
-
-  // set members
-  array_desc->array_addr_p = *array_addr;
-  array_desc->total_elmts = total_elmts;
-
-#ifdef _XMP_TCA
-  _XMP_alloc_tca(array_desc);
-#endif
 }
 
 void _XMP_alloc_array_EXTERN(void **array_addr, _XMP_array_t *array_desc, ...) {
