@@ -43,7 +43,7 @@ extern void _xmp_gasnet_unpack_get_reply(gasnet_token_t, char *, size_t, const i
 #define _XMP_GASNET_SETLOCKSTATE               201
 #define _XMP_GASNET_UNLOCK_REQUEST             202
 #define _XMP_GASNET_LOCKHANDOFF                203
-#define _XMP_GASNET_POST_REQUEST               204
+#define _XMP_GASNET_POSTREQ                    204
 #define _XMP_GASNET_UNPACK                     205
 #define _XMP_GASNET_UNPACK_USING_BUF           206
 #define _XMP_GASNET_UNPACK_REPLY               207
@@ -58,7 +58,7 @@ extern void _xmp_gasnet_setlockstate(gasnet_token_t, int);
 extern void _xmp_gasnet_do_setlockstate(int);
 extern void _xmp_gasnet_unlock_request(gasnet_token_t, int, uint32_t, uint32_t);
 extern void _xmp_gasnet_lockhandoff(gasnet_token_t, int);
-extern void _xmp_gasnet_post_request(gasnet_token_t, const int, const int);
+extern void _xmp_gasnet_postreq(gasnet_token_t, const int, const int);
 extern void _xmp_gasnet_pack_using_buf(gasnet_token_t, const char*, const size_t,
 				       const int, const int, const int, const int);
 extern void _xmp_gasnet_unpack_get_reply_using_buf(gasnet_token_t);

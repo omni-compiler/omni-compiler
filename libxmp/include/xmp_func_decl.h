@@ -300,22 +300,22 @@ extern void _XMP_post_5(const void*, const int n1, const int n2, const int n3, c
 extern void _XMP_post_6(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int n6, const int t);
 extern void _XMP_post_7(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int n6, const int n7, const int t);
 
-extern void _XMP_wait();
-extern void _XMP_wait_tag_1(const void*, const int n1, const int t);
-extern void _XMP_wait_tag_2(const void*, const int n1, const int n2, const int t);
-extern void _XMP_wait_tag_3(const void*, const int n1, const int n2, const int n3, const int t);
-extern void _XMP_wait_tag_4(const void*, const int n1, const int n2, const int n3, const int n4, const int t);
-extern void _XMP_wait_tag_5(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int t);
-extern void _XMP_wait_tag_6(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int n6, const int t);
-extern void _XMP_wait_tag_7(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int n6, const int n7, const int t);
+extern void _XMP_wait_noargs();
+extern void _XMP_wait_1(const void*, const int n1, const int t);
+extern void _XMP_wait_2(const void*, const int n1, const int n2, const int t);
+extern void _XMP_wait_3(const void*, const int n1, const int n2, const int n3, const int t);
+extern void _XMP_wait_4(const void*, const int n1, const int n2, const int n3, const int n4, const int t);
+extern void _XMP_wait_5(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int t);
+extern void _XMP_wait_6(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int n6, const int t);
+extern void _XMP_wait_7(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int n6, const int n7, const int t);
 
-extern void _XMP_wait_notag_1(const void*, const int n1);
-extern void _XMP_wait_notag_2(const void*, const int n1, const int n2);
-extern void _XMP_wait_notag_3(const void*, const int n1, const int n2, const int n3);
-extern void _XMP_wait_notag_4(const void*, const int n1, const int n2, const int n3, const int n4);
-extern void _XMP_wait_notag_5(const void*, const int n1, const int n2, const int n3, const int n4, const int n5);
-extern void _XMP_wait_notag_6(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int n6);
-extern void _XMP_wait_notag_7(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int n6, const int n7);
+extern void _XMP_wait_node_1(const void*, const int n1);
+extern void _XMP_wait_node_2(const void*, const int n1, const int n2);
+extern void _XMP_wait_node_3(const void*, const int n1, const int n2, const int n3);
+extern void _XMP_wait_node_4(const void*, const int n1, const int n2, const int n3, const int n4);
+extern void _XMP_wait_node_5(const void*, const int n1, const int n2, const int n3, const int n4, const int n5);
+extern void _XMP_wait_node_6(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int n6);
+extern void _XMP_wait_node_7(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int n6, const int n7);
 
 // ----- libxmp_threads
 // xmp_threads_runtime.c

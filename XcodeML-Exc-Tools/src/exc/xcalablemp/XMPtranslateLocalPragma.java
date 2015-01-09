@@ -354,7 +354,7 @@ public class XMPtranslateLocalPragma {
 
     // no arguments
     if(numOfArgs == 0){
-      pb.replace(_globalDecl.createFuncCallBlock("_XMP_wait", null));
+      pb.replace(_globalDecl.createFuncCallBlock("_XMP_wait_noargs", null));
       return;
     }
 
@@ -377,14 +377,14 @@ public class XMPtranslateLocalPragma {
       args.add(onRef.getArg(1).getArg(i));
 
     if(numOfArgs == 1){
-      funcName = "_XMP_wait_notag_" + String.valueOf(nodeObj.getDim());
+      funcName = "_XMP_wait_node_" + String.valueOf(nodeObj.getDim());
       pb.replace(_globalDecl.createFuncCallBlock(funcName, args));
       return;
     }
     
     // node and tag
     if(numOfArgs == 2){ // node and tag
-      funcName = "_XMP_wait_tag_" + String.valueOf(nodeObj.getDim());
+      funcName = "_XMP_wait_" + String.valueOf(nodeObj.getDim());
       Xobject tag = waitDecl.getArg(1);
       args.add(tag);
       pb.replace(_globalDecl.createFuncCallBlock(funcName, args));
