@@ -59,6 +59,7 @@ static void get_rotate_pivot_for_DOUBLE           (void *p, const void *a, const
 static void get_rotate_pivot_for_LONG_DOUBLE      (void *p, const void *a, const int an,
 						   const void *b, const int bn);
 
+int dbg_flag = 0;
 
 MPI_Comm *comm;
 int me;
@@ -69,13 +70,17 @@ void (*get_rotate_pivot)(void *p, const void *a, const int an, const void *b, co
 size_t datasize;
 MPI_Datatype mpi_type;
 
-//#define dbg_printf printf
+#define dbg_printf printf
 
-void dbg_printf(char *fmt, ...){
-  ;
-}
+/* void dbg_printf(char *fmt, ...){ */
+/*   ; */
+/* } */
 
-#define THRESHOLD 100
+#define THRESHOLD_BSEARCH 8
+//#define THRESHOLD_2WAY 16
+#define THRESHOLD_2WAY 32
+#define THRESHOLD_KWAY THRESHOLD_2WAY*2
+//#define THRESHOLD_KWAY 100
 
 
 void xmp_sort_up(_XMP_array_t *a_desc, _XMP_array_t *b_desc){
@@ -249,14 +254,14 @@ static void do_sort(void *a, int n, _XMP_array_t *b_desc){
   /*   } */
   /* } */
 
-  //MPI_Barrier(*comm);
+  MPI_Barrier(*comm);
 
   /* if (me == 0) */
   /*   printf("done\n"); */
 
   // gmove
   dbg_printf("(%d) gmove\n", me);
-  do_gmove(buf, bufStart, b_desc);
+  //do_gmove(buf, bufStart, b_desc);
 
   free(pivot);
   free(buf);
@@ -352,10 +357,24 @@ static void dist_keys(void *a, int *size, int *start,
 }
 
 
+// n : length of a
+// m : index of the first element larger than p
 static void my_bsearch(void *p, void *a, int n, int *m){
 
-  if (n < THRESHOLD){
-    int i = 0;
+  if (compare_func(a, p) > 0){ // if p < a[0]
+    /* if (me == 1){ */
+    /*   dbg_printf("(%d) a = %d, p = %d\n", me, *(int *)a, *(int *)p); */
+    /* } */
+    *m = 0;
+    return;
+  }
+  else if (compare_func((char *)a + (n - 1) * datasize, p) < 0){ // if a[n-1] < p
+    *m = n;
+    return;
+  }
+
+  if (n < THRESHOLD_BSEARCH){
+    int i;
     for (i = 0; i < n; i++){
       if (compare_func((char *)a + i * datasize, p) > 0) break; // if a[i] > p
     }
@@ -366,15 +385,18 @@ static void my_bsearch(void *p, void *a, int n, int *m){
   int mid = n / 2;
 
   if (compare_func((char *)a + mid * datasize, p) < 0){ // if a[mid] < p
-    my_bsearch(p, (char *)a + mid * datasize, n - mid, m);
-    *m = mid + (*m);
+    my_bsearch(p, (char *)a + (mid + 1) * datasize, n - mid - 1, m);
+    *m = mid + 1 + (*m);
   }
   else if (compare_func((char *)a + mid * datasize, p) > 0){ // if a[mid] > p
-    my_bsearch(p, a, mid, m);
+    my_bsearch(p, a, mid + 1, m);
   }
   else { // if a[mid] == p
-    int i = mid;
-    while (compare_func((char *)a + i * datasize, p) == 0) i++; // if a[mid] == p
+    int i;
+    for (i = mid; i < n; i++){
+      if (compare_func((char *)a + i * datasize, p) != 0) break; // if a[i] == p
+    }
+    //while (compare_func((char *)a + i * datasize, p) == 0) i++; // if a[mid] == p
     *m = i;
   }
   
@@ -401,22 +423,23 @@ static void rotate(void *a, int l, int m, int r){
   reverse(a, l, r);
 }
 
-
+// n : length of a
+// m : LENGTH of the first half of a (the base index of the second half)
 static void two_way_inplace_merge_sort(void *a, int n, int m){
 
-  /* if (me == 3){ */
-  /*   dbg_printf("(%d) two_way_inplace_merge_sort\n", me); */
-  /*   dbg_printf("(%d)   n = %d, m = %d\n", me, n, m); */
-  /*   dbg_printf("(%d)   a = ( ", me); */
-  /*   for (int i = 0; i < n; i++){ */
-  /*     dbg_printf("%.1f ", ((double *)a)[i]); */
-  /*   } */
-  /*   dbg_printf(")\n"); */
-  /* } */
+  if (me == 2 && dbg_flag){
+    dbg_printf("(%d) two_way_inplace_merge_sort\n", me);
+    dbg_printf("(%d)   n = %d, m = %d\n", me, n, m);
+    dbg_printf("(%d)   a = ( ", me);
+    for (int i = 0; i < n; i++){
+      dbg_printf("%d ", ((int *)a)[i]);
+    }
+    dbg_printf(")\n");
+  }
 
-  if (m <= 0 || m > n) return;
+  if (m <= 0 || m >= n) return;
 
-  if (n < THRESHOLD){
+  if (n < THRESHOLD_2WAY){
     qsort(a, n, datasize, compare_func);
     return;
   }
@@ -430,43 +453,83 @@ static void two_way_inplace_merge_sort(void *a, int n, int m){
 
   get_rotate_pivot(&p, a, an, b, bn);
 
-  int mid_a, mid_b;
+  int mid_a, mid_b; // index of the first element larger than p
 
   my_bsearch(&p, a, an, &mid_a);
   my_bsearch(&p, b, bn, &mid_b);
 
-  /* if (me == 2){ */
-  /*   dbg_printf("(%d) p = %.1f, mid_a = %d, mid_b = %d\n", me, (double)p, mid_a, mid_b); */
+  if (mid_a == an && mid_b == bn){
+    // pivot couldn't be selected properly; use quick sort.
+    qsort(a, n, datasize, compare_func);
+    return;
+  }
 
-  /*   dbg_printf("(%d) before ( ", me); */
-  /*   for (int i = 0; i < n; i++){ */
-  /*     dbg_printf("%.1f ", ((double *)a)[i]); */
-  /*   } */
-  /*   dbg_printf(")\n"); */
-  /* } */
+  if (me == 2 && dbg_flag){
+    dbg_printf("(%d) p = %d, mid_a = %d, an = %d, mid_b = %d, bn = %d\n", me, (int)p, mid_a, an, mid_b, bn);
+    dbg_printf("(%d) before ( ", me);
+    for (int i = 0; i < n; i++){
+      dbg_printf("%d ", ((int *)a)[i]);
+    }
+    dbg_printf(")\n");
+  }
   rotate(a, mid_a, m, mid_b + m - 1);
-  /* if (me == 2){ */
-  /*   dbg_printf("(%d) after ( ", me); */
-  /*   for (int i = 0; i < n; i++){ */
-  /*     dbg_printf("%.1f ", ((double *)a)[i]); */
-  /*   } */
-  /*   dbg_printf(")\n"); */
-  /* } */
+  if (me == 2 && dbg_flag){
+    dbg_printf("(%d) after ( ", me);
+    for (int i = 0; i < n; i++){
+      dbg_printf("%d ", ((int *)a)[i]);
+    }
+    dbg_printf(")\n");
+  }
 
   int new_an = mid_a + mid_b;
   int new_mid_a = mid_a;
   int new_bn = n - new_an;
   int new_mid_b = m - mid_a;;
 
-  if (mid_a > 0 && mid_a < an)
-    two_way_inplace_merge_sort(a, new_an, new_mid_a);
-  if (mid_b > 0 && mid_b < bn)
+  //if (mid_a > 0 && mid_a < an)
+  if (mid_a > 0 && mid_b > 0)
+    qsort(a, new_an, datasize, compare_func);
+  //two_way_inplace_merge_sort(a, new_an, new_mid_a);
+
+  /* rotate(a, mid_a, m, mid_b + m - 1); */
+  /* if (me == 2 && dbg_flag){ */
+  /*   dbg_printf("(%d) after qsort( ", me); */
+  /*   for (int i = 0; i < n; i++){ */
+  /*     dbg_printf("%d ", ((int *)a)[i]); */
+  /*   } */
+  /*   dbg_printf(")\n"); */
+  /* } */
+
+  //if (mid_b > 0 && mid_b < bn)
+  if (mid_a < an && mid_b < bn)
+    //qsort((char *)a + new_an * datasize, new_bn, datasize, compare_func);
     two_way_inplace_merge_sort((char *)a + new_an * datasize, new_bn, new_mid_b);
+
+  if (me == 2 && dbg_flag){
+    dbg_printf("(%d) done two_way_inplace_merge_sort\n", me);
+    dbg_printf("(%d)   n = %d, m = %d\n", me, n, m);
+    dbg_printf("(%d)   a = ( ", me);
+    for (int i = 0; i < n; i++){
+      dbg_printf("%d ", ((int *)a)[i]);
+    }
+    dbg_printf(")\n");
+  }
 
 }
 
 
+// start : start[i] is the base index of the i'th sequence
 static void kway_inplace_merge_sort(void *a, int *start, int k){
+
+  if (me == 2){
+    dbg_printf("(%d) kway_inplace_merge_sort\n", me);
+    dbg_printf("(%d)   an = %d, k = %d\n", me, start[k] - start[0], k);
+    /* dbg_printf("(%d)  d = ( ", me); */
+    /* for (int i = 0; i < start[k] - start[0]; i++){ */
+    /*   dbg_printf("%d ", ((int *)a)[i]); */
+    /* } */
+    /* dbg_printf(")\n"); */
+  }
 
   if (k == 1) return;
 
@@ -485,35 +548,47 @@ static void kway_inplace_merge_sort(void *a, int *start, int k){
   /*   dbg_printf("), k = %d, an = %d\n", k, an); */
   /* } */
 
-  if (an < THRESHOLD){
+  if (an < THRESHOLD_KWAY){
     qsort(a, an, datasize, compare_func);
     return;
   }
 
   if (k == 2){
     two_way_inplace_merge_sort(a, an,  start[1] - start[0]);
+    /* if (me == 2){ */
+    /*   dbg_printf("(%d)  c = ( ", me); */
+    /*   for (int i = 0; i < an; i++){ */
+    /* 	dbg_printf("%d ", ((int *)a)[i]); */
+    /*   } */
+    /*   dbg_printf(")\n"); */
+    /* } */
     return;
   }
   else {
     int m = k / 2;
     kway_inplace_merge_sort(a, start, m);
     kway_inplace_merge_sort((char *)a + (start[m] - start[0]) * datasize, start + m, k - m);
-    /* if (me == 2){ */
-    /*   dbg_printf("(%d)  d = ( ", me); */
-    /*   for (int i = 0; i < an; i++){ */
-    /* 	dbg_printf("%.1f ", ((double *)a)[i]); */
-    /*   } */
-    /*   dbg_printf(")\n"); */
-    /*   dbg_printf("\nBEFORE 2way\n\n"); */
-    /* } */
+
+    if (me == 2 && an == 2532){
+      dbg_printf("(%d) %d,  d = ( ", me, an);
+      for (int i = 0; i < an; i++){
+    	dbg_printf("%d ", ((int *)a)[i]);
+      }
+      dbg_printf(")\n");
+      dbg_flag = 1;
+    }
+
     two_way_inplace_merge_sort(a, an, start[m] - start[0]);
-    /* if (me == 2){ */
-    /*   dbg_printf("(%d)  c = ( ", me); */
-    /*   for (int i = 0; i < an; i++){ */
-    /* 	dbg_printf("%.1f ", ((double *)a)[i]); */
-    /*   } */
-    /*   dbg_printf(")\n"); */
-    /* } */
+
+    if (me == 2 && an == 2532){
+      dbg_printf("(%d) %d,  c = ( ", me, an);
+      for (int i = 0; i < an; i++){
+    	dbg_printf("%d ", ((int *)a)[i]);
+      }
+      dbg_printf(")\n");
+      dbg_flag = 0;
+    }
+
     return;
   }
 
@@ -524,6 +599,14 @@ static void kway_inplace_merge_sort(void *a, int *start, int k){
 //
 
 static void do_gmove(void *buf, int *bufStart, _XMP_array_t *b_desc){
+
+  /* if (me == 3){ */
+  /*   dbg_printf("(%d) buf = ( ", me); */
+  /*   for (int i = 0; i < bufStart[nprocs]; i++){ */
+  /*     dbg_printf("%d ", ((int *)buf)[i]); */
+  /*   } */
+  /*   dbg_printf(")\n"); */
+  /* } */
 
   _XMP_nodes_t *n_desc = b_desc->array_nodes;
   _XMP_template_t *t_desc;
@@ -536,18 +619,8 @@ static void do_gmove(void *buf, int *bufStart, _XMP_array_t *b_desc){
 
   int dummy0, dummy1;
 
-  //printf("(%d) size = %d\n", me, bufStart[nprocs]);
-
   MPI_Allgather(&bufStart[nprocs], 1, MPI_INT,
 		m, 1, MPI_INT, *comm);
-
-  /* printf("(%d) m = ( ", me); */
-  /* for (int i = 0; i < nprocs; i++){ */
-  /*   printf("%d ", m[i]); */
-  /* } */
-  /* printf(")\n"); */
-
-  //if (_XMPC_running){
 
   _XMP_init_template_FIXED(&t_desc, 1, (long long)0, (long long)(n - 1));
   _XMP_init_template_chunk(t_desc, n_desc);
@@ -566,8 +639,6 @@ static void do_gmove(void *buf, int *bufStart, _XMP_array_t *b_desc){
   _XMP_gmove_SENDRECV_ARRAY(b_desc, buf_desc, type, datasize,
   			    b_desc->info[0].ser_lower, n, 1, (unsigned long long)1,
   			    0, n, 1, (unsigned long long)1);
-
-  //}
 
   _XMP_finalize_array_desc(buf_desc);
   _XMP_finalize_template(t_desc);

@@ -34,7 +34,7 @@ int main(int argc, char *argv[]){
   // int
   //
 
-  if (me == 0) printf("check for int starts...\n");
+  //if (me == 0) printf("check for int starts...\n");
 
   int a0[n], b0[n];
 #pragma xmp align a0[i] with t0(i)
@@ -57,6 +57,7 @@ int main(int argc, char *argv[]){
 #pragma xmp loop on t1(i) reduction(+:result)
   for (int i = 1; i < n; i++){
     if (b0[i-1] > b0[i]){
+      //      printf("(%d) %d %d %d\n", me, i, b0[i-1], b0[i]);
       result = 1;
     }
   }
@@ -88,7 +89,7 @@ int main(int argc, char *argv[]){
   // float
   //
 
-  if (me == 0) printf("check for float starts...\n");
+  //if (me == 0) printf("check for float starts...\n");
 
   float a1[n], b1[n];
 #pragma xmp align a1[i] with t0(i)
@@ -142,7 +143,7 @@ int main(int argc, char *argv[]){
   // double
   //
 
-  if (me == 0) printf("check for double starts...\n");
+  //if (me == 0) printf("check for double starts...\n");
 
   double a2[n], b2[n];
 #pragma xmp align a2[i] with t0(i)
