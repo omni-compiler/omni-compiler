@@ -72,6 +72,7 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
     ai->shadow_size_hi  = 0;
 
     ai->reflect_sched = NULL;
+    ai->thread_reflect_sched = NULL;
 
     ai->shadow_comm = NULL;
     ai->shadow_comm_size = 1;
