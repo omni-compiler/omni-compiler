@@ -102,6 +102,7 @@ static void shift_postreq(const int index)
   _postreq.num--;
 }
 
+// If the table does not have the post request, return false;
 static bool remove_postreq_node(const int node)
 {
   for(int i=_postreq.num-1;i>=0;i--){
@@ -113,6 +114,7 @@ static bool remove_postreq_node(const int node)
   return _XMP_N_INT_FALSE;
 }
 
+// If the table does not have the post request, return false;
 static bool remove_postreq(const int node, const int tag)
 {
   for(int i=_postreq.num-1;i>=0;i--){
@@ -135,8 +137,8 @@ void _xmp_fjrdma_wait(const int node, const int tag)
   struct FJMPI_Rdma_cq cq;
 
   while(1){
-    bool has_table = remove_postreq(node, tag); // If the table does not have the post request, return false;
-    if(has_table) break;
+    bool table_has_postreq = remove_postreq(node, tag);
+    if(table_has_postreq) break;
 
     if(FJMPI_Rdma_poll_cq(_XMP_POSTREQ_RECV_NIC, &cq) == FJMPI_RDMA_HALFWAY_NOTICE)
       add_postreq(cq.pid, cq.tag);
@@ -153,8 +155,8 @@ void _xmp_fjrdma_wait_node(const int node)
   struct FJMPI_Rdma_cq cq;
 
   while(1){
-    bool has_table = remove_postreq_node(node); // If the table does not have the post request, return false;
-    if(has_table) break;
+    bool table_has_postreq = remove_postreq_node(node);
+    if(table_has_postreq) break;
     
     if(FJMPI_Rdma_poll_cq(_XMP_POSTREQ_RECV_NIC, &cq) == FJMPI_RDMA_HALFWAY_NOTICE)
       add_postreq(cq.pid, cq.tag);
