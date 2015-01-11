@@ -4,7 +4,6 @@
  * @file
  */
 #include "xmp_internal.h"
-#include "xmp_atomic.h"
 
 /* postreq = post request */
 typedef struct _XMP_postreq_info{
