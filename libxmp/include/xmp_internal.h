@@ -289,8 +289,8 @@ extern void _XMP_threads_finalize(void);
 #if defined(_XMP_COARRAY_GASNET) || defined(_XMP_COARRAY_FJRDMA)
 #define _XMP_DEFAULT_COARRAY_HEAP_SIZE   "26M" 
 #define _XMP_DEFAULT_COARRAY_STRIDE_SIZE "5M"
-#define _XMP_POSTREQ_INITIAL_TABLESIZE 32
-#define _XMP_POSTREQ_INCREMENT_TABLESIZE 512
+#define _XMP_POSTREQ_INITIAL_TABLE_SIZE 32
+#define _XMP_POSTREQ_INCREMENT_TABLE_SIZE 512
 extern size_t get_offset(const _XMP_array_section_t *, const int);
 extern void _XMP_post_wait_initialize();
 #endif

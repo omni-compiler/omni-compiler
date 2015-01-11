@@ -12,10 +12,10 @@ typedef struct _XMP_postreq_info{
 } _XMP_postreq_info_t;
 
 typedef struct _XMP_postreq{
-  _XMP_postreq_info_t *table;  /**< Table for post requests */
-  int                 num;     /**< How many post requests are in table */
-  int                 maxsize; /**< Max size of table */
-  gasnet_hsl_t        hsl;     /**< Lock object for GASNet */
+  _XMP_postreq_info_t *table;   /**< Table for post requests */
+  int                 num;      /**< How many post requests are in table */
+  int                 max_size; /**< Max size of table */
+  gasnet_hsl_t        hsl;      /**< Lock object for GASNet */
 } _XMP_postreq_t;
 
 static _XMP_postreq_t _postreq;
@@ -26,9 +26,9 @@ static _XMP_postreq_t _postreq;
 void _xmp_gasnet_post_wait_initialize()
 {
   gasnet_hsl_init(&_postreq.hsl);
-  _postreq.num     = 0;
-  _postreq.maxsize = _XMP_POSTREQ_INITIAL_TABLESIZE;
-  _postreq.table   = malloc(sizeof(_XMP_postreq_info_t) * _postreq.maxsize);
+  _postreq.num      = 0;
+  _postreq.max_size = _XMP_POSTREQ_INITIAL_TABLE_SIZE;
+  _postreq.table    = malloc(sizeof(_XMP_postreq_info_t) * _postreq.max_size);
 }
 
 static void add_request(const int node, const int tag)
@@ -41,10 +41,10 @@ static void add_request(const int node, const int tag)
 static void do_post(const int node, const int tag)
 {
   gasnet_hsl_lock(&_postreq.hsl);
-  if(_postreq.num == _postreq.maxsize){
+  if(_postreq.num == _postreq.max_size){
     _XMP_postreq_info_t *old_table = _postreq.table;
-    _postreq.maxsize += _XMP_POSTREQ_INCREMENT_TABLESIZE;
-    _postreq.table = malloc(sizeof(_XMP_postreq_info_t) * _postreq.maxsize);
+    _postreq.max_size += _XMP_POSTREQ_INCREMENT_TABLE_SIZE;
+    _postreq.table = malloc(sizeof(_XMP_postreq_info_t) * _postreq.max_size);
     memcpy(_postreq.table, old_table, sizeof(_XMP_postreq_info_t) * _postreq.num);
     free(old_table);
   }
@@ -82,7 +82,7 @@ static void shift_postreq(const int index)
   _postreq.num--;
 }
 
-static int remove_request_noargs()
+static bool remove_request_noargs()
 {
   if(_postreq.num > 0){
     _postreq.num--;
@@ -91,7 +91,7 @@ static int remove_request_noargs()
   return _XMP_N_INT_FALSE;
 }
 
-static int remove_request_node(const int node)
+static bool remove_request_node(const int node)
 {
   for(int i=_postreq.num-1;i>=0;i--){
     if(node == _postreq.table[i].node){
@@ -102,7 +102,7 @@ static int remove_request_node(const int node)
   return _XMP_N_INT_FALSE;
 }
 
-static int remove_request(const int node, const int tag)
+static bool remove_request(const int node, const int tag)
 {
   for(int i=_postreq.num-1;i>=0;i--){
     if(node == _postreq.table[i].node && tag == _postreq.table[i].tag){
