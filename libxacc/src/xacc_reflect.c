@@ -734,13 +734,17 @@ static void reflect_pack_wait(_XMP_reflect_sched_t *reflect)
 /* #endif */
 /*   } */
 
-  if (reflect->hi_rank != MPI_PROC_NULL){
+  if((!useHostBuffer && (reflect->hi_rank != MPI_PROC_NULL || reflect->lo_rank != MPI_PROC_NULL))
+      || (reflect->hi_rank != MPI_PROC_NULL && reflect->lo_rank != MPI_PROC_NULL && reflect->hi_async_id == NULL)){
     cudaStream_t *st_lo = (cudaStream_t*)(reflect->lo_async_id);
     CUDA_SAFE_CALL(cudaStreamSynchronize(*st_lo));
-  }
-  if (reflect->lo_rank != MPI_PROC_NULL){
-    cudaStream_t *st_hi = (cudaStream_t*)(reflect->hi_async_id);
-    if(st_hi != NULL){
+  }else{  
+    if (reflect->hi_rank != MPI_PROC_NULL){
+      cudaStream_t *st_lo = (cudaStream_t*)(reflect->lo_async_id);
+      CUDA_SAFE_CALL(cudaStreamSynchronize(*st_lo));
+    }
+    if (reflect->lo_rank != MPI_PROC_NULL){
+      cudaStream_t *st_hi = (cudaStream_t*)(reflect->hi_async_id);
       CUDA_SAFE_CALL(cudaStreamSynchronize(*st_hi));
     }
   }
@@ -761,13 +765,17 @@ static void reflect_unpack_wait(_XMP_reflect_sched_t *reflect)
 /*     CUDA_SAFE_CALL(cudaEventSynchronize(*ev)); */
 /* #endif */
 
-  if (reflect->lo_rank != MPI_PROC_NULL){
+  if((!useHostBuffer && (reflect->hi_rank != MPI_PROC_NULL || reflect->lo_rank != MPI_PROC_NULL))
+     || (reflect->hi_rank != MPI_PROC_NULL && reflect->lo_rank != MPI_PROC_NULL && reflect->hi_async_id == NULL)){
     cudaStream_t *st_lo = (cudaStream_t*)(reflect->lo_async_id);
     CUDA_SAFE_CALL(cudaStreamSynchronize(*st_lo));
-  }
-  if (reflect->hi_rank != MPI_PROC_NULL){
-    cudaStream_t *st_hi = (cudaStream_t*)(reflect->hi_async_id);
-    if(st_hi != NULL){
+  }else{
+    if (reflect->lo_rank != MPI_PROC_NULL){
+      cudaStream_t *st_lo = (cudaStream_t*)(reflect->lo_async_id);
+      CUDA_SAFE_CALL(cudaStreamSynchronize(*st_lo));
+    }
+    if (reflect->hi_rank != MPI_PROC_NULL){
+      cudaStream_t *st_hi = (cudaStream_t*)(reflect->hi_async_id);
       CUDA_SAFE_CALL(cudaStreamSynchronize(*st_hi));
     }
   }
