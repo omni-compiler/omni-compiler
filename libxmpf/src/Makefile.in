@@ -103,10 +103,15 @@ libxmpf_a_OBJECTS = $(am_libxmpf_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include -I$(top_builddir)/Driver/atool/src/include/nata
 depcomp =
 am__depfiles_maybe =
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
+LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
 SOURCES = $(libxmpf_a_SOURCES)
 DIST_SOURCES = $(libxmpf_a_SOURCES)
 am__can_run_installinfo = \
@@ -162,12 +167,7 @@ FGREP = @FGREP@
 FJRDMA = @FJRDMA@
 F_BACKEND_DIR = @F_BACKEND_DIR@
 F_FRONTEND_DIR = @F_FRONTEND_DIR@
-GASNET_CFLAGS = @GASNET_CFLAGS@
-GASNET_CONDUIT = @GASNET_CONDUIT@
-GASNET_CPPFLAGS = @GASNET_CPPFLAGS@
-GASNET_LDFLAGS = @GASNET_LDFLAGS@
 GASNET_LIBS = @GASNET_LIBS@
-GASNET_PREFIX = @GASNET_PREFIX@
 GPGPU_PREFIX = @GPGPU_PREFIX@
 GPU_CFLAGS = @GPU_CFLAGS@
 GPU_CMD = @GPU_CMD@
@@ -289,7 +289,6 @@ SIZEOF_VOID_P = @SIZEOF_VOID_P@
 SIZEOF__BOOL = @SIZEOF__BOOL@
 STRIP = @STRIP@
 TARGET_ARCH = @TARGET_ARCH@
-TCA_PREFIX = @TCA_PREFIX@
 TOPDIR = @TOPDIR@
 TYPE_INT16 = @TYPE_INT16@
 TYPE_INT32 = @TYPE_INT32@
@@ -387,21 +386,14 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 XMP_INC_DIR = ../../libxmp/include
-XMP_SRC_DIR = ../../libxmp/src
 XMPF_INC_DIR = ../include
-#TLOG_INC_DIR=$(top_builddir)/@LIBTLOG_MPI_DIR@
-#GASNET_INC_DIR=@GASNET_PREFIX@/include
-#GASNET_CONDUIT_DIR=$(GASNET_INC_DIR)/@GASNET_CONDUIT@-conduit
-AM_CFLAGS = -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) -I$(XMP_SRC_DIR) @MPI_CFLAGS@
+AM_CFLAGS = -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) @MPI_CFLAGS@
+AM_LDFLAGS = @MPI_CLIBS@
 lib_LIBRARIES = libxmpf.a
 libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_array.c xmpf_gcomm.c \
                     xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c \
                     xmpf_nodes.c xmpf_pack.c xmpf_reflect.c xmpf_task.c xmpf_template.c
 
-COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	$(CPPFLAGS) $(AM_CFLAGS)
-
-LINK = $(CC) $(AM_CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@ @MPI_CLIBS@
 all: all-am
 
 .SUFFIXES:

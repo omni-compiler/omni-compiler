@@ -288,7 +288,7 @@ extern void _XMP_threads_finalize(void);
 // ----- for coarray & post/wait -------------------
 #if defined(_XMP_COARRAY_GASNET) || defined(_XMP_COARRAY_FJRDMA)
 #define _XMP_DEFAULT_COARRAY_HEAP_SIZE   "27M"
-#define _XMP_DEFAULT_COARRAY_STRIDE_SIZE "5M "
+#define _XMP_DEFAULT_COARRAY_STRIDE_SIZE "5M"
 /* Momo:
    Each process allocates 32MByte (27M+5M), and the test program uses up to 16 process
    on a single node. Therefore the node needs 512MByte (32M*16) for coarray operation. 

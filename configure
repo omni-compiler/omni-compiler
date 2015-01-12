@@ -680,21 +680,6 @@ OM_EXEC_C_COMPILER
 OM_EXEC_C_PP
 OM_DRIVER_CONF_DIR
 OMNI_HOME
-GPGPU_PREFIX
-GPU_CFLAGS
-GPU_CMD
-GASNET_LIBS
-GASNET_LDFLAGS
-GASNET_CFLAGS
-GASNET_CPPFLAGS
-GASNET_CONDUIT
-GASNET_PREFIX
-GASNET_FALSE
-GASNET_TRUE
-TCA_PREFIX
-TCA_FALSE
-TCA_TRUE
-LIBXML_PREFIX
 omniQRealFillGap
 omniQRealPrecInLimb
 omniLimbT
@@ -753,6 +738,15 @@ MPI_CLIBS
 MPI_CFLAGS
 MPI_CC
 MPI_OPENMP_FLAG
+GASNET_LIBS
+GASNET_FALSE
+GASNET_TRUE
+TCA_FALSE
+TCA_TRUE
+LIBXML_PREFIX
+GPGPU_PREFIX
+GPU_CFLAGS
+GPU_CMD
 IS_PGI
 ENABLE_XACC
 ENABLE_XACC_FALSE
@@ -943,17 +937,17 @@ enable_atool
 enable_xacc
 enable_mpi3
 enable_FJRDMA
-enable_mreal
-with_gmp_lib
-with_gmp_include
-with_precision
+with_gpucc
+with_gpu_cflags
+with_cuda
 with_libxml
 with_TCA
 with_gasnet
 with_gasnet_conduit
-with_gpucc
-with_gpu_cflags
-with_cuda
+enable_mreal
+with_gmp_lib
+with_gmp_include
+with_precision
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1618,16 +1612,16 @@ Optional Packages:
                         (or the compiler's sysroot if not specified).
   --with-thread               type of openmp thread
   --with-lock                 type of openmp lock
-  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support.
-  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support.
-  --with-precision=NUM        the default precision of real*16 in bits (128).
+  --with-gpucc=CMD            GPU C compiler (default: nvcc)
+  --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)
+  --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)
   --with-libxml=DIR           libxml installation path (default: /usr)
   --with-TCA=DIR              TCA installation path
   --with-gasnet=DIR           GASNet installation path
   --with-gasnet-conduit=NAME  GASNet conduit
-  --with-gpucc=CMD            GPU C compiler (default: nvcc)
-  --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)
-  --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)
+  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support.
+  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support.
+  --with-precision=NUM        the default precision of real*16 in bits (128).
 
 Some influential environment variables:
   CC          C compiler command
@@ -20698,8 +20692,186 @@ else
   esac
 fi
 
-# Set user defined value.
+# --------------------------------------------------------------------
+# specify GPU C compiler
 
+
+# Check whether --with-gpucc was given.
+if test "${with_gpucc+set}" = set; then :
+  withval=$with_gpucc; GPU_CMD="${withval}"
+else
+  GPU_CMD="nvcc"
+fi
+
+
+
+
+# --------------------------------------------------------------------
+# specify GPU C compiler flags
+
+
+# Check whether --with-gpu-cflags was given.
+if test "${with_gpu_cflags+set}" = set; then :
+  withval=$with_gpu_cflags; GPU_CFLAGS="${withval}"
+else
+  GPU_CFLAGS="-arch=sm_20 -O3"
+fi
+
+
+
+
+# --------------------------------------------------------------------
+# specify libgpu path
+
+
+# Check whether --with-cuda was given.
+if test "${with_cuda+set}" = set; then :
+  withval=$with_cuda; GPGPU_PREFIX="${withval}"
+else
+  GPGPU_PREFIX="/usr/local/cuda"
+fi
+
+
+
+
+# --------------------------------------------------------------------
+# specify libxmp path
+
+
+# Check whether --with-libxml was given.
+if test "${with_libxml+set}" = set; then :
+  withval=$with_libxml; LIBXML_PREFIX="${withval}"
+else
+  LIBXML_PREFIX="/usr"
+fi
+
+
+if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
+   as_fn_error $? "parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help" "$LINENO" 5
+fi
+
+
+
+# --------------------------------------------------------------------
+# set TCA
+
+
+# Check whether --with-TCA was given.
+if test "${with_TCA+set}" = set; then :
+  withval=$with_TCA; TCA_PREFIX="${withval}"; use_tca=yes
+else
+  use_tca=no
+fi
+
+
+if test x$use_tca = xyes; then
+   if ! test -f $TCA_PREFIX/tca-api.h; then
+      as_fn_error $? "$TCA_PREFIX/tca-api.h not found. Please check --with-TCA=<DIR>" "$LINENO" 5
+   fi
+
+  MPI_CPPFLAGS="${MPI_CPPFLAGS} -I${TCA_PREFIX}"
+  MPI_CFLAGS="${MPI_CFLAGS} -I${TCA_PREFIX}"
+  MPI_CLIBS="${MPI_CLIBS} -L${TCA_PREFIX} -ltca"
+fi
+
+ if test x${use_tca} = xyes; then
+  TCA_TRUE=
+  TCA_FALSE='#'
+else
+  TCA_TRUE='#'
+  TCA_FALSE=
+fi
+
+# --------------------------------------------------------------------
+# specify GASNet path
+
+
+# Check whether --with-gasnet was given.
+if test "${with_gasnet+set}" = set; then :
+  withval=$with_gasnet; GASNET_PREFIX="${withval}"; use_gasnet=yes
+else
+  use_gasnet=no
+fi
+
+
+if test x$use_gasnet = xyes; then
+  if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
+    as_fn_error $? "${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnet" "$LINENO" 5
+  fi
+fi
+
+ if test x${use_gasnet} = xyes; then
+  GASNET_TRUE=
+  GASNET_FALSE='#'
+else
+  GASNET_TRUE='#'
+  GASNET_FALSE=
+fi
+
+
+# --------------------------------------------------------------------
+# specify GASNet conduit
+
+
+# Check whether --with-gasnet_conduit was given.
+if test "${with_gasnet_conduit+set}" = set; then :
+  withval=$with_gasnet_conduit; GASNET_CONDUIT="${withval}"
+else
+  GASNET_CONDUIT="${default_gasnet_conduit}"
+fi
+
+
+if test x${use_gasnet} = xyes; then
+  gasnet_conduit_flag=no
+  if test "${GASNET_CONDUIT}" = ""; then
+    for c in smp udp mpi gm lapi elan vapi ibv portals gemini shmem dcmf sci
+    do
+      if test -d ${GASNET_PREFIX}/include/${c}-conduit; then
+         GASNET_CONDUIT=${c}
+         gasnet_conduit_flag=yes
+      fi
+    done
+  else
+    gasnet_conduit_flag=yes
+  fi
+
+  if test "${gasnet_conduit_flag}" = no || ! test -d $GASNET_PREFIX/include/${GASNET_CONDUIT}-conduit; then
+    as_fn_error $? "${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit not found. Please attach or check --with-gasnet-conduit" "$LINENO" 5
+  else
+    # Create temporary Makefile to set $(GASNET_CPPFLAGS) $(GASNET_CFLAGS) $(GASNET_LDFLAGS) $(GASNET_LIBS)
+    __ECHO=""
+    if test $OS = "darwin"; then
+        __ECHO="echo"
+    else
+        __ECHO="echo -e"
+    fi
+    tmp_file=_XMP_makefile.$$
+    mak_file=${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit/${GASNET_CONDUIT}-seq.mak
+
+    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CPPFLAGS)" > ${tmp_file}
+    GASNET_CPPFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
+    GASNET_CPPFLAGS="${GASNET_CPPFLAGS} -D_XMP_COARRAY_GASNET"
+
+    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CFLAGS)"   > ${tmp_file}
+    GASNET_CFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
+
+    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LDFLAGS)"  > ${tmp_file}
+    GASNET_LDFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
+
+    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LIBS)"     > ${tmp_file}
+    GASNET_LIBS=`make -s -f ${tmp_file} 2>/dev/null`
+    rm ${tmp_file}
+    unset __ECHO
+  fi
+
+  MPI_CPPFLAGS="${MPI_CPPFLAGS} ${GASNET_CPPFLAGS}"
+  MPI_CFLAGS="${MPI_CFLAGS} ${GASNET_CFLAGS} ${GASNET_CPPFLAGS}"
+  MPI_CLIBS="${MPI_CLIBS} ${GASNET_LDFLAGS} ${GASNET_LIBS}"
+fi
+
+
+
+# Set user defined value.
 if test "${userMPI_CPP}" != ""; then
   MPI_CPP="${userMPI_CPP}"
 fi
@@ -24431,181 +24603,6 @@ fi
 
 
 # --------------------------------------------------------------------
-# specify libxmp path
-
-# Check whether --with-libxml was given.
-if test "${with_libxml+set}" = set; then :
-  withval=$with_libxml; LIBXML_PREFIX="${withval}"
-else
-  LIBXML_PREFIX="/usr"
-fi
-
-
-if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
-   as_fn_error $? "parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help" "$LINENO" 5
-fi
-
-
-
-# --------------------------------------------------------------------
-# set TCA
-
-# Check whether --with-TCA was given.
-if test "${with_TCA+set}" = set; then :
-  withval=$with_TCA; TCA_PREFIX="${withval}"; use_tca=yes
-else
-  use_tca=no
-fi
-
-
-if test x$use_tca = xyes; then
-   if ! test -f $TCA_PREFIX/tca-api.h; then
-      as_fn_error $? "$TCA_PREFIX/tca-api.h not found. Please check --with-TCA=<DIR>" "$LINENO" 5
-   fi
-fi
-
- if test x${use_tca} = xyes; then
-  TCA_TRUE=
-  TCA_FALSE='#'
-else
-  TCA_TRUE='#'
-  TCA_FALSE=
-fi
-
-
-
-# --------------------------------------------------------------------
-# specify GASNet path
-
-# Check whether --with-gasnet was given.
-if test "${with_gasnet+set}" = set; then :
-  withval=$with_gasnet; GASNET_PREFIX="${withval}"; use_gasnet=yes
-else
-  use_gasnet=no
-fi
-
-
-if test x$use_gasnet = xyes; then
-  if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
-    as_fn_error $? "${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnet" "$LINENO" 5
-  fi
-fi
-
- if test x${use_gasnet} = xyes; then
-  GASNET_TRUE=
-  GASNET_FALSE='#'
-else
-  GASNET_TRUE='#'
-  GASNET_FALSE=
-fi
-
-
-
-# --------------------------------------------------------------------
-# specify GASNet conduit
-
-
-# Check whether --with-gasnet_conduit was given.
-if test "${with_gasnet_conduit+set}" = set; then :
-  withval=$with_gasnet_conduit; GASNET_CONDUIT="${withval}"
-else
-  GASNET_CONDUIT="${default_gasnet_conduit}"
-fi
-
-
-if test x${use_gasnet} = xyes; then
-  gasnet_conduit_flag=no
-  if test "${GASNET_CONDUIT}" = ""; then
-    for c in smp udp mpi gm lapi elan vapi ibv portals gemini shmem dcmf sci
-    do
-      if test -d ${GASNET_PREFIX}/include/${c}-conduit; then
-         GASNET_CONDUIT=${c}
-         gasnet_conduit_flag=yes
-      fi
-    done
-  else
-    gasnet_conduit_flag=yes
-  fi
-
-  if test "${gasnet_conduit_flag}" = no || ! test -d $GASNET_PREFIX/include/${GASNET_CONDUIT}-conduit; then
-    as_fn_error $? "${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit not found. Please attach or check --with-gasnet-conduit" "$LINENO" 5
-  else
-    # Create temporary Makefile to set $(GASNET_CPPFLAGS) $(GASNET_CFLAGS) $(GASNET_LDFLAGS) $(GASNET_LIBS)
-    __ECHO=""
-    if test $OS = "darwin"; then
-        __ECHO="echo"
-    else
-	__ECHO="echo -e"
-    fi
-    tmp_file=_XMP_makefile.$$
-    mak_file=${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit/${GASNET_CONDUIT}-seq.mak
-
-    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CPPFLAGS)" > ${tmp_file}
-    GASNET_CPPFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
-    GASNET_CPPFLAGS="${GASNET_CPPFLAGS} -D_XMP_COARRAY_GASNET"
-
-    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CFLAGS)"   > ${tmp_file}
-    GASNET_CFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
-
-    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LDFLAGS)"  > ${tmp_file}
-    GASNET_LDFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
-
-    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LIBS)"     > ${tmp_file}
-    GASNET_LIBS=`make -s -f ${tmp_file} 2>/dev/null`
-    rm ${tmp_file}
-    unset __ECHO
-  fi
-fi
-
-
-
-
-
-
-
-# --------------------------------------------------------------------
-# specify GPU C compiler
-
-
-# Check whether --with-gpucc was given.
-if test "${with_gpucc+set}" = set; then :
-  withval=$with_gpucc; GPU_CMD="${withval}"
-else
-  GPU_CMD="nvcc"
-fi
-
-
-
-
-# --------------------------------------------------------------------
-# specify GPU C compiler flags
-
-
-# Check whether --with-gpu-cflags was given.
-if test "${with_gpu_cflags+set}" = set; then :
-  withval=$with_gpu_cflags; GPU_CFLAGS="${withval}"
-else
-  GPU_CFLAGS="-arch=sm_20 -O3"
-fi
-
-
-
-
-# --------------------------------------------------------------------
-# specify libgpu path
-
-
-# Check whether --with-cuda was given.
-if test "${with_cuda+set}" = set; then :
-  withval=$with_cuda; GPGPU_PREFIX="${withval}"
-else
-  GPGPU_PREFIX="/usr/local/cuda"
-fi
-
-
-
-
-# --------------------------------------------------------------------
 # Export Omni Config Variable
 
 OMNI_HOME=${prefix}
@@ -25453,6 +25450,14 @@ if test -z "${ENABLE_XACC_TRUE}" && test -z "${ENABLE_XACC_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_XACC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${TCA_TRUE}" && test -z "${TCA_FALSE}"; then
+  as_fn_error $? "conditional \"TCA\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${GASNET_TRUE}" && test -z "${GASNET_FALSE}"; then
+  as_fn_error $? "conditional \"GASNET\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${IS_PGI_TRUE}" && test -z "${IS_PGI_FALSE}"; then
   as_fn_error $? "conditional \"IS_PGI\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -25466,14 +25471,6 @@ if test -z "${IS_SUPERUX_TRUE}" && test -z "${IS_SUPERUX_FALSE}"; then
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
-if test -z "${TCA_TRUE}" && test -z "${TCA_FALSE}"; then
-  as_fn_error $? "conditional \"TCA\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${GASNET_TRUE}" && test -z "${GASNET_FALSE}"; then
-  as_fn_error $? "conditional \"GASNET\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 
 : "${CONFIG_STATUS=./config.status}"
 ac_write_fail=0
