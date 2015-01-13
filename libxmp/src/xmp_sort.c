@@ -70,17 +70,15 @@ void (*get_rotate_pivot)(void *p, const void *a, const int an, const void *b, co
 size_t datasize;
 MPI_Datatype mpi_type;
 
-#define dbg_printf printf
+//#define dbg_printf printf
 
-/* void dbg_printf(char *fmt, ...){ */
-/*   ; */
-/* } */
+void dbg_printf(char *fmt, ...){
+  ;
+}
 
 #define THRESHOLD_BSEARCH 8
-//#define THRESHOLD_2WAY 16
 #define THRESHOLD_2WAY 32
 #define THRESHOLD_KWAY THRESHOLD_2WAY*2
-//#define THRESHOLD_KWAY 100
 
 
 void xmp_sort_up(_XMP_array_t *a_desc, _XMP_array_t *b_desc){
@@ -254,14 +252,14 @@ static void do_sort(void *a, int n, _XMP_array_t *b_desc){
   /*   } */
   /* } */
 
-  MPI_Barrier(*comm);
+  //MPI_Barrier(*comm);
 
   /* if (me == 0) */
   /*   printf("done\n"); */
 
   // gmove
   dbg_printf("(%d) gmove\n", me);
-  //do_gmove(buf, bufStart, b_desc);
+  do_gmove(buf, bufStart, b_desc);
 
   free(pivot);
   free(buf);
@@ -488,8 +486,8 @@ static void two_way_inplace_merge_sort(void *a, int n, int m){
 
   //if (mid_a > 0 && mid_a < an)
   if (mid_a > 0 && mid_b > 0)
-    qsort(a, new_an, datasize, compare_func);
-  //two_way_inplace_merge_sort(a, new_an, new_mid_a);
+    //qsort(a, new_an, datasize, compare_func);
+    two_way_inplace_merge_sort(a, new_an, new_mid_a);
 
   /* rotate(a, mid_a, m, mid_b + m - 1); */
   /* if (me == 2 && dbg_flag){ */

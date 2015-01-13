@@ -27,6 +27,7 @@ run: $(EXES)
 	$(XRUN) -n 4 ./intrinsic_matmul_4_FJ.x
 	$(XRUN) -n 8 ./intrinsic_matmul_8_FJ.x
 	$(XRUN) -n 16 ./intrinsic_matmul_FJ.x
+	$(XRUN) -n 8 ./intrinsic_sort.x
 
 clean:
-	rm -f $(EXES) $(OBJS) _xmpf_module_INIT.o chk.o
+	rm -f $(EXES) $(OBJS) _xmpf_module_INIT.o chk.o *.mod *.xmod
