@@ -181,7 +181,8 @@ AWK = @AWK@
 BLASLIB = @BLASLIB@
 CC = @MPI_CC@
 CCDEPMODE = @CCDEPMODE@
-CFLAGS = @CFLAGS@
+CFLAGS = @MPI_CFLAGS@ -I../include -I$(TLOG_INC_DIR) $(am__append_2) \
+	$(am__append_4) $(am__append_6) $(am__append_8)
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CPU = @CPU@
@@ -233,7 +234,7 @@ JAVA = @JAVA@
 JAVAC = @JAVAC@
 JAVA_OPTION = @JAVA_OPTION@
 LD = @LD@
-LDFLAGS = @LDFLAGS@
+LDFLAGS = @MPI_CLIBS@
 LEX = @LEX@
 LEXLIB = @LEXLIB@
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
@@ -433,10 +434,6 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 TLOG_INC_DIR = $(top_builddir)/@LIBTLOG_MPI_DIR@
 lib_LIBRARIES = libxmp.a
-AM_CFLAGS = @MPI_CFLAGS@ -I../include -I$(TLOG_INC_DIR) \
-	$(am__append_2) $(am__append_4) $(am__append_6) \
-	$(am__append_8)
-AM_LDFLAGS = @MPI_CLIBS@
 libxmp_a_SOURCES = ../include/xmp_internal.h ../include/xmp_constant.h \
 	../include/xmp_data_struct.h ../include/xmp_math_function.h \
 	xmp_lib.c xmp_util.c xmp_world.c xmp_nodes_stack.c xmp_nodes.c \

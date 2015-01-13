@@ -28313,6 +28313,8 @@ if test -d .git; then
   if test $? -eq 0; then
     VERSION=`git log --date=short --pretty=format:"Last Commit Day:%ad, Hash Value:%h" -1`
     echo -n Version:${XMPPKG_VERSION}, ${VERSION} > ${VERSIONTXT}
+  else
+    echo -n "This omni compiler was compiled on no-git environment however git clone it." > ${VERSIONTXT}
   fi
 fi
 

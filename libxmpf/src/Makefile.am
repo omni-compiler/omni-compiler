@@ -3,8 +3,8 @@ FC           = @MPI_FC@
 FCFLAGS      = @MPI_FCFLAGS@
 XMP_INC_DIR  =../../libxmp/include
 XMPF_INC_DIR =../include
-AM_CFLAGS    = -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) @MPI_CFLAGS@
-AM_LDFLAGS   = @MPI_CLIBS@
+CFLAGS       = -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) @MPI_CFLAGS@
+LDFLAGS      = @MPI_CLIBS@
 
 lib_LIBRARIES     = libxmpf.a
 libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_array.c xmpf_gcomm.c \
