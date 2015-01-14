@@ -89,6 +89,9 @@ extern void     xmp_sync_image(int image, int* status);
 extern void     xmp_sync_images(int num, int* image_set, int* status);
 extern void     xmp_sync_images_all(int* status);
 
+extern void     xmp_sort_up(xmp_desc_t a_desc, xmp_desc_t b_desc);
+extern void     xmp_sort_down(xmp_desc_t a_desc, xmp_desc_t b_desc);
+
 extern void    *xmp_malloc(xmp_desc_t d, int size);
 extern void     xmp_free(xmp_desc_t d);
 

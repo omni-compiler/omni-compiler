@@ -57,6 +57,8 @@ extern "C" {
 // ----- libxmp ------------------------------------------------------
 // xmp_align.c
 extern void _XMP_calc_array_dim_elmts(_XMP_array_t *array, int array_index);
+extern void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int dim,
+				 int type, size_t type_size, ...);
 extern void _XMP_finalize_array_desc(_XMP_array_t *array);
 extern void _XMP_align_array_NOT_ALIGNED(_XMP_array_t *array, int array_index);
 extern void _XMP_align_array_DUPLICATION(_XMP_array_t *array, int array_index, int template_index,
@@ -70,6 +72,7 @@ extern void _XMP_align_array_BLOCK_CYCLIC(_XMP_array_t *array, int array_index, 
 extern void _XMP_align_array_GBLOCK(_XMP_array_t *array, int array_index, int template_index,
 				    long long align_subscript, int *temp0);
 extern void _XMP_init_array_nodes(_XMP_array_t *array);
+extern void _XMP_init_array_comm(_XMP_array_t *array, ...);
 extern void _XMP_init_array_comm2(_XMP_array_t *array, int args[]);
 extern void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...);
 extern void _XMP_dealloc_array(_XMP_array_t *array_desc);
@@ -140,6 +143,8 @@ extern int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_
 extern int _XMP_calc_global_index_BCAST(int dst_dim, int *dst_l, int *dst_u, int *dst_s,
 					_XMP_array_t *src_array, int *src_array_nodes_ref,
 					int *src_l, int *src_u, int *src_s);
+extern void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
+				      int type, size_t type_size, ...);
 extern void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long *src_d);
 
 // xmp_loop.c
@@ -231,15 +236,20 @@ extern void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index);
 extern void _XMP_reflect_shadow_FULL(void *array_addr, _XMP_array_t *array_desc, int array_index);
 extern void _XMP_init_shadow(_XMP_array_t *array, ...);
 
+// xmp_sort.c
+extern void _XMP_sort(_XMP_array_t *a_desc, _XMP_array_t *b_desc, int is_up);
+
 // xmp_template.c
 extern _XMP_template_t *_XMP_create_template_desc(int dim, _Bool is_fixed);
 extern int _XMP_check_template_ref_inclusion(int ref_lower, int ref_upper, int ref_stride,
                                              _XMP_template_t *t, int index);
+extern void _XMP_init_template_FIXED(_XMP_template_t **template, int dim, ...);
 extern _XMP_nodes_t *_XMP_create_nodes_by_template_ref(_XMP_template_t *ref_template, int *shrink,
                                                        long long *ref_lower, long long *ref_upper, long long *ref_stride);
 
 extern void _XMP_calc_template_size(_XMP_template_t *t);
 extern void _XMP_init_template_chunk(_XMP_template_t *template, _XMP_nodes_t *nodes);
+extern void _XMP_finalize_template(_XMP_template_t *template);
 extern int _XMP_calc_template_owner_SCALAR(_XMP_template_t *ref_template, int dim_index, long long ref_index);
 extern int _XMP_calc_template_par_triplet(_XMP_template_t *template, int template_index, int nodes_rank,
                                           int *template_lower, int *template_upper, int *template_stride);

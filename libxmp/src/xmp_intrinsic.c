@@ -5643,14 +5643,13 @@ void xmp_pack(void *v_p, void *a_p, void *m_p)
    int i;
    MPI_Comm *comm;
    int myrank,size;
-   MPI_Request *com_req1, *com_req2;
+   MPI_Request *com_req1;
    int *offset;
    int *lindx;
    int *lindx2;
    int wkcount;
    int masknum;
    int localnum_a;
-   int localnum_v;
    int *maskflag;
    int *pickindx;
    int icounter;
@@ -5758,30 +5757,22 @@ void xmp_pack(void *v_p, void *a_p, void *m_p)
    /* gen maskXXX */
    masknum=1;
    localnum_a=1;
-   localnum_v=1;
    for(i=0; i<a_d->dim; i++){
       masknum  *= (a_d->info[i].ser_upper - a_d->info[i].ser_lower + 1);
       localnum_a *= (a_d->info[i].local_upper - a_d->info[i].local_lower + 1);
    }
-   for(i=0; i<v_d->dim; i++){
-      localnum_v *= (v_d->info[i].local_upper - v_d->info[i].local_lower + 1);
-   }
    maskflag = (int*)_XMP_alloc(masknum*sizeof(int));
    pickindx = (int*)_XMP_alloc(masknum*sizeof(int));
 
-   com_req1 = (MPI_Request*)_XMP_alloc(localnum_a*sizeof(MPI_Request));
-   com_req2 = (MPI_Request*)_XMP_alloc(localnum_v*sizeof(MPI_Request));
+   com_req1 = (MPI_Request*)_XMP_alloc(size*sizeof(MPI_Request));
 
    /* init maksXXX */
    for(i=0;i<masknum;i++){
      maskflag[i]=0;
      pickindx[i]=v_d->info[0].ser_lower - 1;
    }
-   for(i=0;i<localnum_a;i++){
+   for(i=0;i<size;i++){
      com_req1[i] = MPI_REQUEST_NULL;
-   }
-   for(i=0;i<localnum_v;i++){
-     com_req2[i] = MPI_REQUEST_NULL;
    }
 
    wkcount=0;
@@ -5839,9 +5830,9 @@ void xmp_pack(void *v_p, void *a_p, void *m_p)
 
    /* send packing data */
    comcount=0;
+   buf = (char*)_XMP_alloc(a_d->type_size*localnum_a);
    for(i=0;i<size;i++){
       if(listinfo1[i].num > 0){
-         buf = (char*)_XMP_alloc(a_d->type_size*listinfo1[i].num);
          p = listinfo1[i].head;
          for(j=0;j<listinfo1[i].num;j++){
             memcpy(buf+j*a_d->type_size,
@@ -5852,13 +5843,7 @@ void xmp_pack(void *v_p, void *a_p, void *m_p)
          MPI_Isend(buf, a_d->type_size*listinfo1[i].num, MPI_BYTE,
                    i, 99, *comm, &com_req1[comcount]);
          comcount++;
-         _XMP_free(buf);
       }
-   }
-
-
-   if(comcount > 0){
-      MPI_Waitall(comcount, com_req1, MPI_STATUSES_IGNORE);
    }
 
    /* recv packing data */
@@ -5880,19 +5865,20 @@ void xmp_pack(void *v_p, void *a_p, void *m_p)
       }
    }
 
+   if(comcount > 0){
+      MPI_Waitall(comcount, com_req1, MPI_STATUSES_IGNORE);
+   }
+   _XMP_free(buf);
+
    /* duplicate */
    duplicate_copy(v_d);
-
-/* packing */
 
    _XMP_free(maskflag);
    _XMP_free(pickindx);
    _XMP_free(com_req1);
-   _XMP_free(com_req2);
    _XMP_free(offset);
    _XMP_free(lindx);
    _XMP_free(lindx2);
-   /* packing */
    _XMP_free(listinfo1);
    _XMP_free(listinfo2);
 
@@ -5945,13 +5931,12 @@ void xmp_unpack(void *a_p, void *v_p, void *m_p)
    int i;
    MPI_Comm *comm;
    int myrank,size;
-   MPI_Request *com_req1, *com_req2;
+   MPI_Request *com_req2;
    int *offset;
    int *lindx;
    int *lindx2;
    int wkcount;
    int masknum;
-   int localnum_a;
    int localnum_v;
    int *maskflag;
    int *pickindx;
@@ -6055,11 +6040,9 @@ void xmp_unpack(void *a_p, void *v_p, void *m_p)
 
    /* gen maskXXX */
    masknum=1;
-   localnum_a=1;
    localnum_v=1;
    for(i=0; i<a_d->dim; i++){
       masknum  *= (a_d->info[i].ser_upper - a_d->info[i].ser_lower + 1);
-      localnum_a *= (a_d->info[i].local_upper - a_d->info[i].local_lower + 1);
    }
    for(i=0; i<v_d->dim; i++){
       localnum_v *= (v_d->info[i].local_upper - v_d->info[i].local_lower + 1);
@@ -6067,18 +6050,14 @@ void xmp_unpack(void *a_p, void *v_p, void *m_p)
    maskflag = (int*)_XMP_alloc(masknum*sizeof(int));
    pickindx = (int*)_XMP_alloc(masknum*sizeof(int));
 
-   com_req1 = (MPI_Request*)_XMP_alloc(localnum_a*sizeof(MPI_Request));
-   com_req2 = (MPI_Request*)_XMP_alloc(localnum_v*sizeof(MPI_Request));
+   com_req2 = (MPI_Request*)_XMP_alloc(size*sizeof(MPI_Request));
 
    /* init maksXXX */
    for(i=0;i<masknum;i++){
      maskflag[i]=0;
      pickindx[i]=v_d->info[0].ser_lower - 1;
    }
-   for(i=0;i<localnum_a;i++){
-     com_req1[i] = MPI_REQUEST_NULL;
-   }
-   for(i=0;i<localnum_v;i++){
+   for(i=0;i<size;i++){
      com_req2[i] = MPI_REQUEST_NULL;
    }
 
@@ -6136,10 +6115,10 @@ void xmp_unpack(void *a_p, void *v_p, void *m_p)
    }
 
   /* send packing data */
+   buf = (char*)_XMP_alloc(v_d->type_size*localnum_v);
    comcount=0;
    for(i=0;i<size;i++){
       if(listinfo2[i].num > 0){
-         buf = (char*)_XMP_alloc(v_d->type_size*listinfo2[i].num);
          p = listinfo2[i].head;
          for(j=0;j<listinfo2[i].num;j++){
             memcpy(buf+j*v_d->type_size,
@@ -6150,12 +6129,7 @@ void xmp_unpack(void *a_p, void *v_p, void *m_p)
          MPI_Isend(buf, v_d->type_size*listinfo2[i].num, MPI_BYTE,
                    i, 99, *comm, &com_req2[comcount]);
          comcount++;
-         _XMP_free(buf);
       }
-   }
-
-   if(comcount > 0){
-      MPI_Waitall(comcount, com_req2, MPI_STATUSES_IGNORE);
    }
 
    /* recv packing data */
@@ -6176,17 +6150,20 @@ void xmp_unpack(void *a_p, void *v_p, void *m_p)
       }
    }
 
+   if(comcount > 0){
+      MPI_Waitall(comcount, com_req2, MPI_STATUSES_IGNORE);
+   }
+   _XMP_free(buf);
+
    /* duplicate */
    duplicate_copy(a_d);
 
    _XMP_free(maskflag);
    _XMP_free(pickindx);
-   _XMP_free(com_req1);
    _XMP_free(com_req2);
    _XMP_free(offset);
    _XMP_free(lindx);
    _XMP_free(lindx2);
-/* packing */
    _XMP_free(listinfo1);
    _XMP_free(listinfo2);
 
