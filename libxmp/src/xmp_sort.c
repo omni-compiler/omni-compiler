@@ -96,7 +96,19 @@ void _XMP_sort(_XMP_array_t *a_desc, _XMP_array_t *b_desc, int is_up){
   void *a_adr = a_desc->array_addr_p;
   int a_lshadow = a_desc->info[0].shadow_size_lo;
 
-  int size = a_desc->info[0].par_size;
+  int a_size = a_desc->info[0].ser_size;
+  int a_ndims = a_desc->dim;
+  int a_type = a_desc->type;
+
+  int b_size = b_desc->info[0].ser_size;
+  int b_ndims = b_desc->dim;
+  int b_type = b_desc->type;
+
+  if (a_size != b_size) _XMP_fatal("xmp_sort: different size for array arguments");
+  if (a_ndims != 1 || b_ndims != 1) _XMP_fatal("xmp_sort: array arguments must be one-dimensional");
+  if (a_type != b_type) _XMP_fatal("xmp_sort: different type for array arguments");
+
+  int lsize = a_desc->info[0].par_size;
 
   comm = a_desc->array_nodes->comm;
   me = a_desc->array_nodes->comm_rank;
@@ -105,7 +117,7 @@ void _XMP_sort(_XMP_array_t *a_desc, _XMP_array_t *b_desc, int is_up){
   set_funcs(a_desc, is_up);
   datasize = a_desc->type_size;
 
-  do_sort((char *)a_adr + a_lshadow * datasize, size, b_desc);
+  do_sort((char *)a_adr + a_lshadow * datasize, lsize, b_desc);
 
 }
 
@@ -191,6 +203,7 @@ static void set_funcs(_XMP_array_t *a_desc, int is_up){
   case _XMP_N_TYPE_LONG_DOUBLE_COMPLEX:
   case _XMP_N_TYPE_NONBASIC:
   default:
+    _XMP_fatal("xmp_sort: array arguments must be of a numerical type");
     break;
   }
 
@@ -260,10 +273,10 @@ static void do_sort(void *a, int n, _XMP_array_t *b_desc){
 
 static void comp_pivots(void *a, int n, void *pivot){
 
-  if (n < nprocs){
-    fprintf(stderr, "a is too small\n");
-    exit(1);
-  }
+  /* if (n < nprocs){ */
+  /*   fprintf(stderr, "a is too small\n"); */
+  /*   exit(1); */
+  /* } */
 
   void *tmp = calloc(nprocs * nprocs, datasize);
   //int tmp[nprocs * nprocs];
@@ -275,7 +288,8 @@ static void comp_pivots(void *a, int n, void *pivot){
   // Sampling
   for (int i = 0; i < nprocs; i++){
     //tmp[me * nprocs + i] = a[(i * n) / nprocs];
-    memcpy((char *)tmp + datasize * (me * nprocs + i), (char *)a + datasize * ((i * n) / nprocs),
+    memcpy((char *)tmp + datasize * (me * nprocs + i),
+	   (char *)a + datasize * (((i + 1) * n) / nprocs),
 	   datasize);
   }
 
