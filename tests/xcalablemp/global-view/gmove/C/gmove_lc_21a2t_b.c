@@ -20,9 +20,6 @@ int main(){
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
       a[i][j]=i+j+2;
-      if(i==0){
-        printf("i=%d,j=%d, a=%lf\n",i,j,a[i][j]);
-      }
     }
   }
 
