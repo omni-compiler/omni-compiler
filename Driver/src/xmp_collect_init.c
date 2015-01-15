@@ -266,7 +266,7 @@ int main(int argc, char *argv[])
       /*     module_init_names[n_module_init++] = strdup(buf); */
       /*   } */
       /* } */
-      if (strstr(buf, MODULE_INIT_NAME) != NULL){
+      if (strstr(buf, MODULE_INIT_NAME) != NULL && strchr(buf, '.') == NULL){
 	module_init_names[n_module_init++] = strdup(buf);
       }
     } 
@@ -287,7 +287,7 @@ int main(int argc, char *argv[])
       for(i=0; i<n_module_init;i++){
         char *name = module_init_names[i];
         if(is_Mac)
-        strcpy(name, name+sizeof(char)); // Remove the first charactor of function name
+	  strcpy(name, name+sizeof(char)); // Remove the first charactor of function name
         if(is_AIX)                                   // ___shadow_xmpc_module_init_ -> __shadow_xmpc_module_init_
           {
             if(strncmp(name,".",1)==0)
