@@ -96,6 +96,7 @@ public class Xtype
     protected Ident tag;
     
     /** coshape infos. incl. corank and codimensions (ID=060) */
+    protected boolean is_coarray = false;
     protected Coshape coshape = new Coshape();
 
     /*
@@ -768,25 +769,43 @@ public class Xtype
     }
 
     /*
-     *  implements Coshape
+     *  implements Coshape (#060)
      */
-    public int getCorank()                // for coarray Fortran (ID=060)
+    public int getCorank()
     {
         return coshape.getCorank();
     }
-    public Xobject[] getCodimensions()     // for coarray Fortran (ID=060)
+    public boolean isCoarray()
+    {
+        return is_coarray;
+    }
+    public void setIsCoarray(boolean is_coarray)
+    {
+        this.is_coarray = is_coarray;
+    }
+    public boolean wasCoarray()
+    {
+        return getCorank() > 0;
+    }
+    public Xobject[] getCodimensions()
     {
         return coshape.getCodimensions();
     }
-    public void setCodimensions(Xobject[] codimensions) // for coarray Fortran (ID=060)
+    public void setCodimensions(Xobject[] codimensions)
     {
         coshape.setCodimensions(codimensions);
+        is_coarray  = (getCorank() > 0);
     }
-    public void removeCodimensions()        // for coarray Fortran (ID=060)
+    public void removeCodimensions()
     {
         coshape.removeCodimensions();
+        is_coarray  = false;
     }
-     public Xobject[] copyCodimensions()        // for coarray Fortran (ID=060)
+    public void hideCodimensions()
+    {
+        is_coarray  = false;
+    }
+     public Xobject[] copyCodimensions()
     {
         return coshape.copyCodimensions();
     }

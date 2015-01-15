@@ -180,9 +180,15 @@ public class Xcons
         return new XobjList(Xcode.ID_LIST);
     }
 
-    public static Ident Ident(String name, StorageClass stg_class, Xtype type, Xobject v, VarScope scope)
+    public static Ident Ident(String name, StorageClass stg_class, Xtype type,
+                              Xobject v, VarScope scope)
     {
-        return new Ident(name, stg_class, type, v, scope);
+        return new Ident(name, stg_class, type, v, scope, null);
+    }
+    public static Ident Ident(String name, StorageClass stg_class, Xtype type,
+                              Xobject v, VarScope scope, Xobject codimensions)
+    {
+        return new Ident(name, stg_class, type, v, scope, codimensions);
     }
     
     //

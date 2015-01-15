@@ -104,7 +104,7 @@ public class XobjectFile extends XobjectDefEnv
         addrType = Xtype.Pointer(t);
         
         return new Ident(name, sclass, t,
-            Xcons.Symbol(addrCode, addrType, name), VarScope.GLOBAL);
+                         Xcons.Symbol(addrCode, addrType, name), VarScope.GLOBAL, null);
     }
 
     /**

@@ -680,8 +680,9 @@ public class XcodeMLtools_F extends XcodeMLtools {
     }
 
     // create ident
+    //   ### It might be better to set codimensions here...
     Ident ident = new Ident(name, sclass, type, addr, 0, null, 0, null,
-			    null, null);
+			    null, null, null/*codimensions*/);
 
     if (type != null && StorageClass.FTYPE_NAME.equals(sclass))
       type.setTagIdent(ident);

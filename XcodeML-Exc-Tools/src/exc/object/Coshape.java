@@ -33,6 +33,7 @@ public class Coshape
   {
     return corank;
   }
+
   public Xobject[] getCodimensions()
   {
     return codimensions;

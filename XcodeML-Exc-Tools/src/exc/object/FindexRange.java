@@ -108,6 +108,21 @@ public class FindexRange
   }
 
 
+  public Xobject getTotalArraySizeExpr() {
+    Xobject totalSize = Xcons.IntConstant(1);
+    for (int i = 0; i < rank; i++) {
+      Xobject extent = getExtent(i);
+      if (extent.isZeroConstant())
+        return Xcons.IntConstant(0);
+      else if (extent.isIntConstant() && totalSize.isIntConstant())
+        totalSize = Xcons.IntConstant(totalSize.getInt() * extent.getInt());
+      else
+        totalSize = Xcons.binaryOp(Xcode.MUL_EXPR, totalSize, extent);
+    }
+    return totalSize;
+  }
+
+
   /*
    *  get size from lower and upper bounds
    */

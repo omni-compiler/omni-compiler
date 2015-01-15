@@ -900,7 +900,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         /*
          *  add <coShape> block if it has codimensions (ID=060)
          */
-        if (type.getCorank() > 0) {
+        if (type.isCoarray()) {
           Element typeElem1 = createElement("coShape");
           addChildNode(typeElem, typeElem1);
 

@@ -18,6 +18,7 @@ public class XMPcoarray {
   // attributes
   private Ident ident;
   private String name;
+  private FindexRange indexRange;
   private Xtype originalType;
 
   // corresponding cray pointer and descriptor
@@ -135,15 +136,19 @@ public class XMPcoarray {
     }
     return size.getInt();
   }
+
   public Xobject getTotalArraySizeExpr() {
-    return getTotalArraySizeExpr(fblock);
-  }
-  public Xobject getTotalArraySizeExpr(Block block) {
-    Xobject size = ident.Type().getTotalArraySizeExpr(block);
+    Xobject size = getFindexRange().getTotalArraySizeExpr();
     if (size == null)
       XMP.error("Restriction: could not get the size of: "+name);
     return size;
   }
+
+  /*********** not used 
+  public Xobject getTotalArraySizeExpr(Block block) {
+    //// wrong way because of lack of env
+    //Xobject size = ident.Type().getTotalArraySizeExpr(block);
+    ****/
 
   public int getRank() {
     return ident.Type().getNumDimensions();
@@ -159,9 +164,19 @@ public class XMPcoarray {
   }
 
   public FindexRange getFindexRange() {
-    Xobject[] shape = getShape();
-    FindexRange indexRange = new FindexRange(shape, fblock, env);
+    if (indexRange == null)
+      _setFindexRange();
     return indexRange;
+  }
+
+  public void _setFindexRange() {
+    Xobject[] shape = getShape();
+    indexRange = new FindexRange(shape, fblock, env);
+  }
+
+  private void _setFindexRange(Block block, XMPenv env) {
+    Xobject[] sizes = getShape();
+    indexRange = new FindexRange(sizes, block, env);
   }
 
 
@@ -263,6 +278,10 @@ public class XMPcoarray {
 
   public void removeCodimensions() {
     ident.Type().removeCodimensions();
+  }
+
+  public void hideCodimensions() {
+    ident.Type().setIsCoarray(false);
   }
 
   public int getCorank() {
