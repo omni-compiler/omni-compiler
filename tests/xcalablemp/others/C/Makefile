@@ -38,6 +38,7 @@ run:
 	XMP_NODE_SIZE0=2 $(XRUN) -n 4 ./343_dynamicnode.x
 	XMP_NODE_SIZE0=4 $(XRUN) -n 4 ./343_dynamicnode.x
 	$(XRUN) -n 1 ./344_include.x
+	$(XRUN) -n 1 ./293-hyphen.x
 
 #-- cleaning
 clean:
