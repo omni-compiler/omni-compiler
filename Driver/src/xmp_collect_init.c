@@ -140,8 +140,8 @@ int main(int argc, char *argv[])
                         if (debug_flag) fprintf(stderr, "Fortran mode\n");
                         INIT_MODULE_OBJ   = "_xmpf_module_INIT.o";
                         INIT_PREFIX       = "_xmpf_init_";
-                        MODULE_INIT_NAME  = "_xmpf_module_init_";
-                        MODULE_INIT_NAME_ = "_xmpf_module_init__";
+                        MODULE_INIT_NAME  = "xmpf_module_init_";
+                        MODULE_INIT_NAME_ = "xmpf_module_init__";
                         MODULE_INIT_ENTRY_NAME = "xmpf_module_init__";
                         break;
                     }
@@ -234,37 +234,40 @@ int main(int argc, char *argv[])
     init_name_len = strlen(MODULE_INIT_NAME);
     init_name_len_ = strlen(MODULE_INIT_NAME_);
     while(fscanf(fp,"%s",buf) == 1){
-      if(strncmp(buf,".jwe",4) == 0 || strncmp(buf,"jpj.",4) == 0){
-        is_K_FC = TRUE;
-        continue; // Fortran compiler on the K computer
-      }
+      /* if(strncmp(buf,".jwe",4) == 0 || strncmp(buf,"jpj.",4) == 0){ */
+      /*   is_K_FC = TRUE; */
+      /*   continue; // Fortran compiler on the K computer */
+      /* } */
 
-      if(strncmp(buf,"_xmpc_init_all",14) == 0 || 
+      if(strncmp(buf,"_xmpc_init_all",14) == 0 ||
          strncmp(buf,"_xmpf_main_",11) == 0) is_Mac = TRUE;
 
-      if(strncmp(buf,".xmpf_main_",11)==0||
-         strncmp(buf,".xmpc_init_all",14)==0) is_AIX = TRUE;
-      // On Mac OS X (Darwin), all module is added "_".
-      // For example, __shadow_xmpc_module_init_ -> ___shadow_xmpc_module_init_
+      /* if(strncmp(buf,".xmpf_main_",11)==0|| */
+      /*    strncmp(buf,".xmpc_init_all",14)==0) is_AIX = TRUE; */
+      /* // On Mac OS X (Darwin), all module is added "_". */
+      /* // For example, __shadow_xmpc_module_init_ -> ___shadow_xmpc_module_init_ */
       
-      len = strlen(buf);
-      if(len > init_name_len && 
-         strcmp(buf+(len-init_name_len),MODULE_INIT_NAME) == 0){
-        module_init_names[n_module_init++] = strdup(buf);
-      } 
-      else if(len > init_name_len_ && 
-              strcmp(buf+(len-init_name_len_),MODULE_INIT_NAME_) == 0){
-        module_init_names[n_module_init++] = strdup(buf);
-      }
-      else{
-        // for the Cray
-        // In Cray machines, when module name "foo", 
-        // a subroutine for "foo" is converted to "foo_xmpf_module_init_$foo_".
-        int module_name_len = (len - init_name_len - 2) / 2;
-        if(len > init_name_len &&
-           strncmp(buf+module_name_len,MODULE_INIT_NAME,init_name_len) == 0){
-          module_init_names[n_module_init++] = strdup(buf);
-        }
+      /* len = strlen(buf); */
+      /* if(len > init_name_len &&  */
+      /*    strcmp(buf+(len-init_name_len),MODULE_INIT_NAME) == 0){ */
+      /*   module_init_names[n_module_init++] = strdup(buf); */
+      /* }  */
+      /* else if(len > init_name_len_ &&  */
+      /*         strcmp(buf+(len-init_name_len_),MODULE_INIT_NAME_) == 0){ */
+      /*   module_init_names[n_module_init++] = strdup(buf); */
+      /* } */
+      /* else{ */
+      /*   // for the Cray */
+      /*   // In Cray machines, when module name "foo",  */
+      /*   // a subroutine for "foo" is converted to "foo_xmpf_module_init_$foo_". */
+      /*   int module_name_len = (len - init_name_len - 2) / 2; */
+      /*   if(len > init_name_len && */
+      /*      strncmp(buf+module_name_len,MODULE_INIT_NAME,init_name_len) == 0){ */
+      /*     module_init_names[n_module_init++] = strdup(buf); */
+      /*   } */
+      /* } */
+      if (strstr(buf, MODULE_INIT_NAME) != NULL){
+	module_init_names[n_module_init++] = strdup(buf);
       }
     } 
     fclose(fp);
