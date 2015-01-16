@@ -42,16 +42,12 @@ static void do_post(const int node, const int tag)
 {
   gasnet_hsl_lock(&_postreq.hsl);
   if(_postreq.num == _postreq.max_size){
-    void *new_ptr;
+    _XMP_postreq_info_t *old_table = _postreq.table;
     _postreq.max_size += _XMP_POSTREQ_INCREMENT_TABLE_SIZE;
-    if((new_ptr = (char *)realloc(_postreq.table, _postreq.max_size)) == NULL){
-      _XMP_fatal("Cannot realloc memory");
-    }
-    else{
-      _postreq.table = new_ptr;
-    }
+    _postreq.table = malloc(sizeof(_XMP_postreq_info_t) * _postreq.max_size);
+    memcpy(_postreq.table, old_table, sizeof(_XMP_postreq_info_t) * _postreq.num);
+    free(old_table);
   }
-
   add_request(node, tag);
   gasnet_hsl_unlock(&_postreq.hsl);
 }
