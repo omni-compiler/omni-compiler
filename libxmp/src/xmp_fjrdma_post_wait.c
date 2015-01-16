@@ -57,13 +57,16 @@ void _xmp_fjrdma_post_wait_initialize()
 static void add_postreq(const int node, const int tag)
 {
   if(_postreq.num == _postreq.max_size){  // If table is full
-    _XMP_postreq_info_t *old_table = _postreq.table;
+    void *new_ptr;
     _postreq.max_size += _XMP_POSTREQ_INCREMENT_TABLE_SIZE;
-    _postreq.table = malloc(sizeof(_XMP_postreq_info_t) * _postreq.max_size);
-    memcpy(_postreq.table, old_table, sizeof(_XMP_postreq_info_t) * _postreq.num);
-    free(old_table);
+    if((new_ptr = (char *)realloc(_postreq.table, _postreq.max_size)) == NULL){
+      _XMP_fatal("Cannot realloc memory");
+    }
+    else{
+      _postreq.table = new_ptr;
+    }
   }
-  
+
   _postreq.table[_postreq.num].node = node;
   _postreq.table[_postreq.num].tag  = tag;
   _postreq.num++;
