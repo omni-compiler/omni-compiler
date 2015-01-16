@@ -158,7 +158,7 @@ function xmp_set_parameters()
 
 function xmp_check_file_exist()
 {
-    [ "$c_files" = "" ] && xmp_error_exit "no input files."
+    ([ "$c_files" = "" ] && [ "$obj_files" = "" ]) && xmp_error_exit "no input files."
 }
 
 function xmp_exec()
