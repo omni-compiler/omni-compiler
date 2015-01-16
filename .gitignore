@@ -137,5 +137,6 @@ tests/C-test/Makefile
 tests/F-test/OMP-test/Makefile
 tests/clinpack/Makefile
 tests/tiny/Makefile
+tests/xcalablemp/global-view/intrinsic/F/*mod
 tests/xcalablemp/others/F/*mod
-
+*/build.xml

@@ -21,9 +21,9 @@ HOW TO INSTALL
 
 ## Usage of local-view operations (coarray, post/wait, lock/unlock)
 ### On the K computer and FX10
- * To use the local-view operations, please add "--enable-KRDMA" option in ./configure script.
+ * To use the local-view operations, please add "--enable-FJRDMA" option in ./configure script.
  * Don't use the local-view operations on a large number of nodes (> 10,000 nodes) due to some bugs of the Fujitsu compiler.
- $ ./configure --target=Kcomputer-linux-gnu --enable-KRDMA
+ $ ./configure --target=Kcomputer-linux-gnu --enable-FJRDMA
 
 ### Except for the K computer and FX10
  * Before installing the Omni compiler, please install GASNet (http://gasnet.lbl.gov).

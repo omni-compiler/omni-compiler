@@ -680,21 +680,6 @@ OM_EXEC_C_COMPILER
 OM_EXEC_C_PP
 OM_DRIVER_CONF_DIR
 OMNI_HOME
-GPGPU_PREFIX
-GPU_CFLAGS
-GPU_CMD
-GASNET_LIBS
-GASNET_LDFLAGS
-GASNET_CFLAGS
-GASNET_CPPFLAGS
-GASNET_CONDUIT
-GASNET_PREFIX
-GASNET_FALSE
-GASNET_TRUE
-TCA_PREFIX
-TCA_FALSE
-TCA_TRUE
-LIBXML_PREFIX
 omniQRealFillGap
 omniQRealPrecInLimb
 omniLimbT
@@ -753,6 +738,15 @@ MPI_CLIBS
 MPI_CFLAGS
 MPI_CC
 MPI_OPENMP_FLAG
+GASNET_LIBS
+GASNET_FALSE
+GASNET_TRUE
+TCA_FALSE
+TCA_TRUE
+LIBXML_PREFIX
+GPGPU_PREFIX
+GPU_CFLAGS
+GPU_CMD
 IS_PGI
 ENABLE_XACC
 ENABLE_XACC_FALSE
@@ -948,17 +942,17 @@ enable_atool
 enable_xacc
 enable_mpi3
 enable_FJRDMA
-enable_mreal
-with_gmp_lib
-with_gmp_include
-with_precision
+with_gpucc
+with_gpu_cflags
+with_cuda
 with_libxml
 with_TCA
 with_gasnet
 with_gasnet_conduit
-with_gpucc
-with_gpu_cflags
-with_cuda
+enable_mreal
+with_gmp_lib
+with_gmp_include
+with_precision
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1628,16 +1622,16 @@ Optional Packages:
                         (or the compiler's sysroot if not specified).
   --with-thread               type of openmp thread
   --with-lock                 type of openmp lock
-  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support.
-  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support.
-  --with-precision=NUM        the default precision of real*16 in bits (128).
+  --with-gpucc=CMD            GPU C compiler (default: nvcc)
+  --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)
+  --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)
   --with-libxml=DIR           libxml installation path (default: /usr)
   --with-TCA=DIR              TCA installation path
   --with-gasnet=DIR           GASNet installation path
   --with-gasnet-conduit=NAME  GASNet conduit
-  --with-gpucc=CMD            GPU C compiler (default: nvcc)
-  --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)
-  --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)
+  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support.
+  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support.
+  --with-precision=NUM        the default precision of real*16 in bits (128).
 
 Some influential environment variables:
   CC          C compiler command
@@ -5143,6 +5137,10 @@ freebsd* | dragonfly*)
   fi
   ;;
 
+gnu*)
+  lt_cv_deplibs_check_method=pass_all
+  ;;
+
 haiku*)
   lt_cv_deplibs_check_method=pass_all
   ;;
@@ -5181,11 +5179,11 @@ irix5* | irix6* | nonstopux*)
   ;;
 
 # This must be glibc/ELF.
-linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
+linux* | k*bsd*-gnu | kopensolaris*-gnu)
   lt_cv_deplibs_check_method=pass_all
   ;;
 
-netbsd* | netbsdelf*-gnu)
+netbsd*)
   if echo __ELF__ | $CC -E - | $GREP __ELF__ > /dev/null; then
     lt_cv_deplibs_check_method='match_pattern /lib[^/]+(\.so\.[0-9]+\.[0-9]+|_pic\.a)$'
   else
@@ -8150,7 +8148,7 @@ lt_prog_compiler_static=
       lt_prog_compiler_static='-non_shared'
       ;;
 
-    linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
+    linux* | k*bsd*-gnu | kopensolaris*-gnu)
       case $cc_basename in
       # old Intel for x86_64 which still supported -KPIC.
       ecc*)
@@ -8628,9 +8626,6 @@ $as_echo_n "checking whether the $compiler linker ($LD) supports shared librarie
   openbsd*)
     with_gnu_ld=no
     ;;
-  linux* | k*bsd*-gnu | gnu*)
-    link_all_deplibs=no
-    ;;
   esac
 
   ld_shlibs=yes
@@ -8852,7 +8847,7 @@ _LT_EOF
       fi
       ;;
 
-    netbsd* | netbsdelf*-gnu)
+    netbsd*)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	archive_cmds='$LD -Bshareable $libobjs $deplibs $linker_flags -o $lib'
 	wlarc=
@@ -9029,7 +9024,6 @@ _LT_EOF
 	if test "$aix_use_runtimelinking" = yes; then
 	  shared_flag="$shared_flag "'${wl}-G'
 	fi
-	link_all_deplibs=no
       else
 	# not using gcc
 	if test "$host_cpu" = ia64; then
@@ -9483,7 +9477,7 @@ $as_echo "$lt_cv_irix_exported_symbol" >&6; }
       link_all_deplibs=yes
       ;;
 
-    netbsd* | netbsdelf*-gnu)
+    netbsd*)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	archive_cmds='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'  # a.out
       else
@@ -10320,6 +10314,17 @@ freebsd* | dragonfly*)
   esac
   ;;
 
+gnu*)
+  version_type=linux # correct to gnu/linux during the next big refactor
+  need_lib_prefix=no
+  need_version=no
+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}${major} ${libname}${shared_ext}'
+  soname_spec='${libname}${release}${shared_ext}$major'
+  shlibpath_var=LD_LIBRARY_PATH
+  shlibpath_overrides_runpath=no
+  hardcode_into_libs=yes
+  ;;
+
 haiku*)
   version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
@@ -10436,7 +10441,7 @@ linux*oldld* | linux*aout* | linux*coff*)
   ;;
 
 # This must be glibc/ELF.
-linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
+linux* | k*bsd*-gnu | kopensolaris*-gnu)
   version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
   need_version=no
@@ -10498,18 +10503,6 @@ fi
   # people can always --disable-shared, the test was removed, and we
   # assume the GNU/Linux dynamic linker is in use.
   dynamic_linker='GNU/Linux ld.so'
-  ;;
-
-netbsdelf*-gnu)
-  version_type=linux
-  need_lib_prefix=no
-  need_version=no
-  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
-  soname_spec='${libname}${release}${shared_ext}$major'
-  shlibpath_var=LD_LIBRARY_PATH
-  shlibpath_overrides_runpath=no
-  hardcode_into_libs=yes
-  dynamic_linker='NetBSD ld.elf_so'
   ;;
 
 netbsd*)
@@ -14216,7 +14209,7 @@ lt_prog_compiler_static_FC=
       lt_prog_compiler_static_FC='-non_shared'
       ;;
 
-    linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
+    linux* | k*bsd*-gnu | kopensolaris*-gnu)
       case $cc_basename in
       # old Intel for x86_64 which still supported -KPIC.
       ecc*)
@@ -14679,9 +14672,6 @@ $as_echo_n "checking whether the $compiler linker ($LD) supports shared librarie
   openbsd*)
     with_gnu_ld=no
     ;;
-  linux* | k*bsd*-gnu | gnu*)
-    link_all_deplibs_FC=no
-    ;;
   esac
 
   ld_shlibs_FC=yes
@@ -14903,7 +14893,7 @@ _LT_EOF
       fi
       ;;
 
-    netbsd* | netbsdelf*-gnu)
+    netbsd*)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	archive_cmds_FC='$LD -Bshareable $libobjs $deplibs $linker_flags -o $lib'
 	wlarc=
@@ -15080,7 +15070,6 @@ _LT_EOF
 	if test "$aix_use_runtimelinking" = yes; then
 	  shared_flag="$shared_flag "'${wl}-G'
 	fi
-	link_all_deplibs_FC=no
       else
 	# not using gcc
 	if test "$host_cpu" = ia64; then
@@ -15484,7 +15473,7 @@ $as_echo "$lt_cv_irix_exported_symbol" >&6; }
       link_all_deplibs_FC=yes
       ;;
 
-    netbsd* | netbsdelf*-gnu)
+    netbsd*)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	archive_cmds_FC='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'  # a.out
       else
@@ -16156,6 +16145,17 @@ freebsd* | dragonfly*)
   esac
   ;;
 
+gnu*)
+  version_type=linux # correct to gnu/linux during the next big refactor
+  need_lib_prefix=no
+  need_version=no
+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}${major} ${libname}${shared_ext}'
+  soname_spec='${libname}${release}${shared_ext}$major'
+  shlibpath_var=LD_LIBRARY_PATH
+  shlibpath_overrides_runpath=no
+  hardcode_into_libs=yes
+  ;;
+
 haiku*)
   version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
@@ -16272,7 +16272,7 @@ linux*oldld* | linux*aout* | linux*coff*)
   ;;
 
 # This must be glibc/ELF.
-linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
+linux* | k*bsd*-gnu | kopensolaris*-gnu)
   version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
   need_version=no
@@ -16328,18 +16328,6 @@ fi
   # people can always --disable-shared, the test was removed, and we
   # assume the GNU/Linux dynamic linker is in use.
   dynamic_linker='GNU/Linux ld.so'
-  ;;
-
-netbsdelf*-gnu)
-  version_type=linux
-  need_lib_prefix=no
-  need_version=no
-  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
-  soname_spec='${libname}${release}${shared_ext}$major'
-  shlibpath_var=LD_LIBRARY_PATH
-  shlibpath_overrides_runpath=no
-  hardcode_into_libs=yes
-  dynamic_linker='NetBSD ld.elf_so'
   ;;
 
 netbsd*)
@@ -17697,6 +17685,9 @@ fi
         ld_shlibs_CXX=yes
         ;;
 
+      gnu*)
+        ;;
+
       haiku*)
         archive_cmds_CXX='$CC -shared $libobjs $deplibs $compiler_flags ${wl}-soname $wl$soname -o $lib'
         link_all_deplibs_CXX=yes
@@ -17858,7 +17849,7 @@ fi
         inherit_rpath_CXX=yes
         ;;
 
-      linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
+      linux* | k*bsd*-gnu | kopensolaris*-gnu)
         case $cc_basename in
           KCC*)
 	    # Kuck and Associates, Inc. (KAI) C++ Compiler
@@ -18700,7 +18691,7 @@ lt_prog_compiler_static_CXX=
 	    ;;
 	esac
 	;;
-      linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
+      linux* | k*bsd*-gnu | kopensolaris*-gnu)
 	case $cc_basename in
 	  KCC*)
 	    # KAI C++ Compiler
@@ -18764,7 +18755,7 @@ lt_prog_compiler_static_CXX=
 	    ;;
 	esac
 	;;
-      netbsd* | netbsdelf*-gnu)
+      netbsd*)
 	;;
       *qnx* | *nto*)
         # QNX uses GNU C++, but need to define -shared option too, otherwise
@@ -19134,9 +19125,6 @@ $as_echo_n "checking whether the $compiler linker ($LD) supports shared librarie
       exclude_expsyms_CXX='[_]+GLOBAL_OFFSET_TABLE_|[_]+GLOBAL__[FID]_.*|[_]+head_[A-Za-z0-9_]+_dll|[A-Za-z0-9_]+_dll_iname'
       ;;
     esac
-    ;;
-  linux* | k*bsd*-gnu | gnu*)
-    link_all_deplibs_CXX=no
     ;;
   *)
     export_symbols_cmds_CXX='$NM $libobjs $convenience | $global_symbol_pipe | $SED '\''s/.* //'\'' | sort | uniq > $export_symbols'
@@ -19572,6 +19560,17 @@ freebsd* | dragonfly*)
   esac
   ;;
 
+gnu*)
+  version_type=linux # correct to gnu/linux during the next big refactor
+  need_lib_prefix=no
+  need_version=no
+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}${major} ${libname}${shared_ext}'
+  soname_spec='${libname}${release}${shared_ext}$major'
+  shlibpath_var=LD_LIBRARY_PATH
+  shlibpath_overrides_runpath=no
+  hardcode_into_libs=yes
+  ;;
+
 haiku*)
   version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
@@ -19688,7 +19687,7 @@ linux*oldld* | linux*aout* | linux*coff*)
   ;;
 
 # This must be glibc/ELF.
-linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
+linux* | k*bsd*-gnu | kopensolaris*-gnu)
   version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
   need_version=no
@@ -19750,18 +19749,6 @@ fi
   # people can always --disable-shared, the test was removed, and we
   # assume the GNU/Linux dynamic linker is in use.
   dynamic_linker='GNU/Linux ld.so'
-  ;;
-
-netbsdelf*-gnu)
-  version_type=linux
-  need_lib_prefix=no
-  need_version=no
-  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
-  soname_spec='${libname}${release}${shared_ext}$major'
-  shlibpath_var=LD_LIBRARY_PATH
-  shlibpath_overrides_runpath=no
-  hardcode_into_libs=yes
-  dynamic_linker='NetBSD ld.elf_so'
   ;;
 
 netbsd*)
@@ -20777,27 +20764,27 @@ elif test "$target" = "powerpc-hitachi-aix"; then
   MPI_CC="mpCC_r"
   MPI_CPP=$MPI_CC
   MPI_CPPFLAGS="-E"
-  MPI_CFLAGS="-q64 -qipa -qhot -qsimd=auto -O5 $MPI_OPENMP_FLAG"
+  MPI_CFLAGS="-q64 -qhot -qsimd=auto -O5 $MPI_OPENMP_FLAG"
   MPI_CLIBS=""
 
 # MPI F
   MPI_FC="mpxlf90_r"
   MPI_FPP=$MPI_FC
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-q64 -qipa -qhot -qsimd=auto -O5 -qextname $MPI_OPENMP_FLAG"
+  MPI_FCFLAGS="-q64 -qhot -qsimd=auto -O5 -qextname $MPI_OPENMP_FLAG"
   MPI_MODINC="-I"
   MPI_FCLIBS=""
 
 # Omni C
   OMNI_L2X_CFLAGS=""
   OMNI_LX2X_CFLAGS=""
-  OMNI_NTV_CFLAGS="-q64 -qipa"
+  OMNI_NTV_CFLAGS="-q64"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
 # Omni F
   OMNI_L2X_FCFLAGS=""
   OMNI_LX2X_FCFLAGS=""
-  OMNI_NTV_FCFLAGS="-q64 -qipa -qextname"
+  OMNI_NTV_FCFLAGS="-q64 -qextname"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
 
 else
@@ -20930,8 +20917,186 @@ else
   esac
 fi
 
-# Set user defined value.
+# --------------------------------------------------------------------
+# specify GPU C compiler
 
+
+# Check whether --with-gpucc was given.
+if test "${with_gpucc+set}" = set; then :
+  withval=$with_gpucc; GPU_CMD="${withval}"
+else
+  GPU_CMD="nvcc"
+fi
+
+
+
+
+# --------------------------------------------------------------------
+# specify GPU C compiler flags
+
+
+# Check whether --with-gpu-cflags was given.
+if test "${with_gpu_cflags+set}" = set; then :
+  withval=$with_gpu_cflags; GPU_CFLAGS="${withval}"
+else
+  GPU_CFLAGS="-arch=sm_20 -O3"
+fi
+
+
+
+
+# --------------------------------------------------------------------
+# specify libgpu path
+
+
+# Check whether --with-cuda was given.
+if test "${with_cuda+set}" = set; then :
+  withval=$with_cuda; GPGPU_PREFIX="${withval}"
+else
+  GPGPU_PREFIX="/usr/local/cuda"
+fi
+
+
+
+
+# --------------------------------------------------------------------
+# specify libxmp path
+
+
+# Check whether --with-libxml was given.
+if test "${with_libxml+set}" = set; then :
+  withval=$with_libxml; LIBXML_PREFIX="${withval}"
+else
+  LIBXML_PREFIX="/usr"
+fi
+
+
+if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
+   as_fn_error $? "parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help" "$LINENO" 5
+fi
+
+
+
+# --------------------------------------------------------------------
+# set TCA
+
+
+# Check whether --with-TCA was given.
+if test "${with_TCA+set}" = set; then :
+  withval=$with_TCA; TCA_PREFIX="${withval}"; use_tca=yes
+else
+  use_tca=no
+fi
+
+
+if test x$use_tca = xyes; then
+   if ! test -f $TCA_PREFIX/tca-api.h; then
+      as_fn_error $? "$TCA_PREFIX/tca-api.h not found. Please check --with-TCA=<DIR>" "$LINENO" 5
+   fi
+
+  MPI_CPPFLAGS="${MPI_CPPFLAGS} -I${TCA_PREFIX}"
+  MPI_CFLAGS="${MPI_CFLAGS} -I${TCA_PREFIX}"
+  MPI_CLIBS="${MPI_CLIBS} -L${TCA_PREFIX} -ltca"
+fi
+
+ if test x${use_tca} = xyes; then
+  TCA_TRUE=
+  TCA_FALSE='#'
+else
+  TCA_TRUE='#'
+  TCA_FALSE=
+fi
+
+# --------------------------------------------------------------------
+# specify GASNet path
+
+
+# Check whether --with-gasnet was given.
+if test "${with_gasnet+set}" = set; then :
+  withval=$with_gasnet; GASNET_PREFIX="${withval}"; use_gasnet=yes
+else
+  use_gasnet=no
+fi
+
+
+if test x$use_gasnet = xyes; then
+  if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
+    as_fn_error $? "${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnet" "$LINENO" 5
+  fi
+fi
+
+ if test x${use_gasnet} = xyes; then
+  GASNET_TRUE=
+  GASNET_FALSE='#'
+else
+  GASNET_TRUE='#'
+  GASNET_FALSE=
+fi
+
+
+# --------------------------------------------------------------------
+# specify GASNet conduit
+
+
+# Check whether --with-gasnet_conduit was given.
+if test "${with_gasnet_conduit+set}" = set; then :
+  withval=$with_gasnet_conduit; GASNET_CONDUIT="${withval}"
+else
+  GASNET_CONDUIT="${default_gasnet_conduit}"
+fi
+
+
+if test x${use_gasnet} = xyes; then
+  gasnet_conduit_flag=no
+  if test "${GASNET_CONDUIT}" = ""; then
+    for c in smp udp mpi gm lapi elan vapi ibv portals gemini shmem dcmf sci
+    do
+      if test -d ${GASNET_PREFIX}/include/${c}-conduit; then
+         GASNET_CONDUIT=${c}
+         gasnet_conduit_flag=yes
+      fi
+    done
+  else
+    gasnet_conduit_flag=yes
+  fi
+
+  if test "${gasnet_conduit_flag}" = no || ! test -d $GASNET_PREFIX/include/${GASNET_CONDUIT}-conduit; then
+    as_fn_error $? "${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit not found. Please attach or check --with-gasnet-conduit" "$LINENO" 5
+  else
+    # Create temporary Makefile to set $(GASNET_CPPFLAGS) $(GASNET_CFLAGS) $(GASNET_LDFLAGS) $(GASNET_LIBS)
+    __ECHO=""
+    if test $OS = "darwin"; then
+        __ECHO="echo"
+    else
+        __ECHO="echo -e"
+    fi
+    tmp_file=_XMP_makefile.$$
+    mak_file=${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit/${GASNET_CONDUIT}-seq.mak
+
+    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CPPFLAGS)" > ${tmp_file}
+    GASNET_CPPFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
+    GASNET_CPPFLAGS="${GASNET_CPPFLAGS} -D_XMP_COARRAY_GASNET"
+
+    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CFLAGS)"   > ${tmp_file}
+    GASNET_CFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
+
+    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LDFLAGS)"  > ${tmp_file}
+    GASNET_LDFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
+
+    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LIBS)"     > ${tmp_file}
+    GASNET_LIBS=`make -s -f ${tmp_file} 2>/dev/null`
+    rm ${tmp_file}
+    unset __ECHO
+  fi
+
+  MPI_CPPFLAGS="${MPI_CPPFLAGS} ${GASNET_CPPFLAGS}"
+  MPI_CFLAGS="${MPI_CFLAGS} ${GASNET_CFLAGS} ${GASNET_CPPFLAGS}"
+  MPI_CLIBS="${MPI_CLIBS} ${GASNET_LDFLAGS} ${GASNET_LIBS}"
+fi
+
+
+
+# Set user defined value.
 if test "${userMPI_CPP}" != ""; then
   MPI_CPP="${userMPI_CPP}"
 fi
@@ -24663,181 +24828,6 @@ fi
 
 
 # --------------------------------------------------------------------
-# specify libxmp path
-
-# Check whether --with-libxml was given.
-if test "${with_libxml+set}" = set; then :
-  withval=$with_libxml; LIBXML_PREFIX="${withval}"
-else
-  LIBXML_PREFIX="/usr"
-fi
-
-
-if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
-   as_fn_error $? "parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help" "$LINENO" 5
-fi
-
-
-
-# --------------------------------------------------------------------
-# set TCA
-
-# Check whether --with-TCA was given.
-if test "${with_TCA+set}" = set; then :
-  withval=$with_TCA; TCA_PREFIX="${withval}"; use_tca=yes
-else
-  use_tca=no
-fi
-
-
-if test x$use_tca = xyes; then
-   if ! test -f $TCA_PREFIX/tca-api.h; then
-      as_fn_error $? "$TCA_PREFIX/tca-api.h not found. Please check --with-TCA=<DIR>" "$LINENO" 5
-   fi
-fi
-
- if test x${use_tca} = xyes; then
-  TCA_TRUE=
-  TCA_FALSE='#'
-else
-  TCA_TRUE='#'
-  TCA_FALSE=
-fi
-
-
-
-# --------------------------------------------------------------------
-# specify GASNet path
-
-# Check whether --with-gasnet was given.
-if test "${with_gasnet+set}" = set; then :
-  withval=$with_gasnet; GASNET_PREFIX="${withval}"; use_gasnet=yes
-else
-  use_gasnet=no
-fi
-
-
-if test x$use_gasnet = xyes; then
-  if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
-    as_fn_error $? "${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnet" "$LINENO" 5
-  fi
-fi
-
- if test x${use_gasnet} = xyes; then
-  GASNET_TRUE=
-  GASNET_FALSE='#'
-else
-  GASNET_TRUE='#'
-  GASNET_FALSE=
-fi
-
-
-
-# --------------------------------------------------------------------
-# specify GASNet conduit
-
-
-# Check whether --with-gasnet_conduit was given.
-if test "${with_gasnet_conduit+set}" = set; then :
-  withval=$with_gasnet_conduit; GASNET_CONDUIT="${withval}"
-else
-  GASNET_CONDUIT="${default_gasnet_conduit}"
-fi
-
-
-if test x${use_gasnet} = xyes; then
-  gasnet_conduit_flag=no
-  if test "${GASNET_CONDUIT}" = ""; then
-    for c in smp udp mpi gm lapi elan vapi ibv portals gemini shmem dcmf sci
-    do
-      if test -d ${GASNET_PREFIX}/include/${c}-conduit; then
-         GASNET_CONDUIT=${c}
-         gasnet_conduit_flag=yes
-      fi
-    done
-  else
-    gasnet_conduit_flag=yes
-  fi
-
-  if test "${gasnet_conduit_flag}" = no || ! test -d $GASNET_PREFIX/include/${GASNET_CONDUIT}-conduit; then
-    as_fn_error $? "${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit not found. Please attach or check --with-gasnet-conduit" "$LINENO" 5
-  else
-    # Create temporary Makefile to set $(GASNET_CPPFLAGS) $(GASNET_CFLAGS) $(GASNET_LDFLAGS) $(GASNET_LIBS)
-    __ECHO=""
-    if test $OS = "darwin"; then
-        __ECHO="echo"
-    else
-	__ECHO="echo -e"
-    fi
-    tmp_file=_XMP_makefile.$$
-    mak_file=${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit/${GASNET_CONDUIT}-seq.mak
-
-    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CPPFLAGS)" > ${tmp_file}
-    GASNET_CPPFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
-    GASNET_CPPFLAGS="${GASNET_CPPFLAGS} -D_XMP_COARRAY_GASNET"
-
-    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CFLAGS)"   > ${tmp_file}
-    GASNET_CFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
-
-    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LDFLAGS)"  > ${tmp_file}
-    GASNET_LDFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
-
-    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LIBS)"     > ${tmp_file}
-    GASNET_LIBS=`make -s -f ${tmp_file} 2>/dev/null`
-    rm ${tmp_file}
-    unset __ECHO
-  fi
-fi
-
-
-
-
-
-
-
-# --------------------------------------------------------------------
-# specify GPU C compiler
-
-
-# Check whether --with-gpucc was given.
-if test "${with_gpucc+set}" = set; then :
-  withval=$with_gpucc; GPU_CMD="${withval}"
-else
-  GPU_CMD="nvcc"
-fi
-
-
-
-
-# --------------------------------------------------------------------
-# specify GPU C compiler flags
-
-
-# Check whether --with-gpu-cflags was given.
-if test "${with_gpu_cflags+set}" = set; then :
-  withval=$with_gpu_cflags; GPU_CFLAGS="${withval}"
-else
-  GPU_CFLAGS="-arch=sm_20 -O3"
-fi
-
-
-
-
-# --------------------------------------------------------------------
-# specify libgpu path
-
-
-# Check whether --with-cuda was given.
-if test "${with_cuda+set}" = set; then :
-  withval=$with_cuda; GPGPU_PREFIX="${withval}"
-else
-  GPGPU_PREFIX="/usr/local/cuda"
-fi
-
-
-
-
-# --------------------------------------------------------------------
 # Export Omni Config Variable
 
 OMNI_HOME=${prefix}
@@ -25693,6 +25683,14 @@ if test -z "${ENABLE_XACC_TRUE}" && test -z "${ENABLE_XACC_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_XACC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${TCA_TRUE}" && test -z "${TCA_FALSE}"; then
+  as_fn_error $? "conditional \"TCA\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${GASNET_TRUE}" && test -z "${GASNET_FALSE}"; then
+  as_fn_error $? "conditional \"GASNET\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${IS_PGI_TRUE}" && test -z "${IS_PGI_FALSE}"; then
   as_fn_error $? "conditional \"IS_PGI\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -25706,14 +25704,6 @@ if test -z "${IS_SUPERUX_TRUE}" && test -z "${IS_SUPERUX_FALSE}"; then
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
-if test -z "${TCA_TRUE}" && test -z "${TCA_FALSE}"; then
-  as_fn_error $? "conditional \"TCA\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${GASNET_TRUE}" && test -z "${GASNET_FALSE}"; then
-  as_fn_error $? "conditional \"GASNET\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 
 : "${CONFIG_STATUS=./config.status}"
 ac_write_fail=0
@@ -28554,6 +28544,8 @@ if test -d .git; then
   if test $? -eq 0; then
     VERSION=`git log --date=short --pretty=format:"Last Commit Day:%ad, Hash Value:%h" -1`
     echo -n Version:${XMPPKG_VERSION}, ${VERSION} > ${VERSIONTXT}
+  else
+    echo -n "This omni compiler was compiled on no-git environment however git clone it." > ${VERSIONTXT}
   fi
 fi
 

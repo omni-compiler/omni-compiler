@@ -75,9 +75,8 @@ for opt in ${OM_OPTIONS}; do
     OM_OPTION_ARR=( "${OM_OPTION_ARR[@]}" "$opt1" )
 done
 
-GASNET_CPPFLAGS="@GASNET_CPPFLAGS@"
 CMD=${COMPILER}
-args=( "${OM_OPTION_ARR[@]}" ${GASNET_CPPFLAGS} -c "${INPFILE}" -o "${OUTFILE}" )
+args=( "${OM_OPTION_ARR[@]}" -c "${INPFILE}" -o "${OUTFILE}" )
 set -- "${args[@]}"
 
 if [ "${OM_VERBOSE}" = "1" ]; then

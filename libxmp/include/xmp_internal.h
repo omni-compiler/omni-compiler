@@ -57,6 +57,8 @@ extern "C" {
 // ----- libxmp ------------------------------------------------------
 // xmp_align.c
 extern void _XMP_calc_array_dim_elmts(_XMP_array_t *array, int array_index);
+extern void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int dim,
+				 int type, size_t type_size, ...);
 extern void _XMP_finalize_array_desc(_XMP_array_t *array);
 extern void _XMP_align_array_NOT_ALIGNED(_XMP_array_t *array, int array_index);
 extern void _XMP_align_array_DUPLICATION(_XMP_array_t *array, int array_index, int template_index,
@@ -70,6 +72,7 @@ extern void _XMP_align_array_BLOCK_CYCLIC(_XMP_array_t *array, int array_index, 
 extern void _XMP_align_array_GBLOCK(_XMP_array_t *array, int array_index, int template_index,
 				    long long align_subscript, int *temp0);
 extern void _XMP_init_array_nodes(_XMP_array_t *array);
+extern void _XMP_init_array_comm(_XMP_array_t *array, ...);
 extern void _XMP_init_array_comm2(_XMP_array_t *array, int args[]);
 extern void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...);
 extern void _XMP_dealloc_array(_XMP_array_t *array_desc);
@@ -140,6 +143,8 @@ extern int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_
 extern int _XMP_calc_global_index_BCAST(int dst_dim, int *dst_l, int *dst_u, int *dst_s,
 					_XMP_array_t *src_array, int *src_array_nodes_ref,
 					int *src_l, int *src_u, int *src_s);
+extern void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
+				      int type, size_t type_size, ...);
 extern void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long *src_d);
 
 // xmp_loop.c
@@ -231,15 +236,20 @@ extern void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index);
 extern void _XMP_reflect_shadow_FULL(void *array_addr, _XMP_array_t *array_desc, int array_index);
 extern void _XMP_init_shadow(_XMP_array_t *array, ...);
 
+// xmp_sort.c
+extern void _XMP_sort(_XMP_array_t *a_desc, _XMP_array_t *b_desc, int is_up);
+
 // xmp_template.c
 extern _XMP_template_t *_XMP_create_template_desc(int dim, _Bool is_fixed);
 extern int _XMP_check_template_ref_inclusion(int ref_lower, int ref_upper, int ref_stride,
                                              _XMP_template_t *t, int index);
+extern void _XMP_init_template_FIXED(_XMP_template_t **template, int dim, ...);
 extern _XMP_nodes_t *_XMP_create_nodes_by_template_ref(_XMP_template_t *ref_template, int *shrink,
                                                        long long *ref_lower, long long *ref_upper, long long *ref_stride);
 
 extern void _XMP_calc_template_size(_XMP_template_t *t);
 extern void _XMP_init_template_chunk(_XMP_template_t *template, _XMP_nodes_t *nodes);
+extern void _XMP_finalize_template(_XMP_template_t *template);
 extern int _XMP_calc_template_owner_SCALAR(_XMP_template_t *ref_template, int dim_index, long long ref_index);
 extern int _XMP_calc_template_par_triplet(_XMP_template_t *template, int template_index, int nodes_rank,
                                           int *template_lower, int *template_upper, int *template_stride);
@@ -285,24 +295,20 @@ extern void _XMP_threads_finalize(void);
 }
 #endif
 
-
 // ----- for coarray & post/wait -------------------
-#if defined(_XMP_COARRAY_FJRDMA) || defined(_XMP_COARRAY_GASNET)
-#define _XMP_DEFAULT_COARRAY_HEAP_SIZE   "26M" 
+#if defined(_XMP_COARRAY_GASNET) || defined(_XMP_COARRAY_FJRDMA)
+#define _XMP_DEFAULT_COARRAY_HEAP_SIZE   "27M"
 #define _XMP_DEFAULT_COARRAY_STRIDE_SIZE "5M"
-#define _XMP_POST_WAIT_QUEUE_DEFAULT_SIZE 32
-#define _XMP_POST_WAIT_QUEUE_INCREMENT_SIZE 512
-#define FLAG_NIC (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN)
-#define FLAG_NIC_POST_WAIT (FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_REMOTE_NIC3 | FJMPI_RDMA_REMOTE_NOTICE)
-#define SEND_NIC FJMPI_RDMA_LOCAL_NIC0
-#define SEND_NIC_POST FJMPI_RDMA_LOCAL_NIC2
-#define RECV_NIC_POST FJMPI_RDMA_LOCAL_NIC3
-#define MEMID 0
-#define POST_WAIT_ID 1
+/* Momo:
+   Each process allocates 32MByte (27M+5M), and the test program uses up to 16 process
+   on a single node. Therefore the node needs 512MByte (32M*16) for coarray operation. 
+*/
+#define _XMP_POSTREQ_INITIAL_TABLE_SIZE 32      /**< This value is trial */
+#define _XMP_POSTREQ_INCREMENT_TABLE_SIZE 512   /**< This value is trial */
 extern size_t get_offset(const _XMP_array_section_t *, const int);
+extern void _XMP_post_wait_initialize();
 #endif
 
-extern void _XMP_post_wait_initialize();
 #ifdef _XMP_COARRAY_GASNET
 #include <gasnet.h>
 #define _XMP_GASNET_STRIDE_INIT_SIZE 16
@@ -325,12 +331,20 @@ extern void _XMP_gasnet_sync_all();
 extern void _XMP_gasnet_sync_memory();
 extern void _xmp_gasnet_post_wait_initialize();
 extern void _xmp_gasnet_post(const int, const int);
-extern void _xmp_gasnet_wait();
-extern void _xmp_gasnet_wait_tag(const int, const int);
-extern void _xmp_gasnet_wait_notag(const int);
+extern void _xmp_gasnet_wait_noargs();
+extern void _xmp_gasnet_wait_node(const int);
+extern void _xmp_gasnet_wait(const int, const int);
 #endif
 
 #ifdef _XMP_COARRAY_FJRDMA
+#define FLAG_NIC (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN)
+#define SEND_NIC FJMPI_RDMA_LOCAL_NIC0
+#define _XMP_POSTREQ_SEND_NIC FJMPI_RDMA_LOCAL_NIC2
+#define _XMP_POSTREQ_RECV_NIC FJMPI_RDMA_LOCAL_NIC3
+#define _XMP_POSTREQ_NIC_FLAG (FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_REMOTE_NIC3 | FJMPI_RDMA_REMOTE_NOTICE)
+#define MEMID 0
+#define _XMP_POSTREQ_ID 1
+
 #include <mpi-ext.h>
 extern void _XMP_fjrdma_initialize(int, char**);
 extern void _XMP_fjrdma_finalize();
@@ -345,9 +359,9 @@ extern void _XMP_fjrdma_shortcut_put(const int, const uint64_t, const uint64_t, 
 extern void _XMP_fjrdma_shortcut_get(const int, const uint64_t, const uint64_t, const _XMP_coarray_t *, const _XMP_coarray_t *, const size_t);
 extern void _xmp_fjrdma_post_wait_initialize();
 extern void _xmp_fjrdma_post(const int, const int);
-extern void _xmp_fjrdma_wait();
-extern void _xmp_fjrdma_wait_tag(const int, const int);
-extern void _xmp_fjrdma_wait_notag(const int);
+extern void _xmp_fjrdma_wait_noargs();
+extern void _xmp_fjrdma_wait_node(const int);
+extern void _xmp_fjrdma_wait(const int, const int);
 #endif
 
 #ifdef _XMP_TIMING
@@ -403,5 +417,147 @@ struct _XMPTIMING
   }         \
   }while (0)
 #endif
+
+#ifdef _XMP_COARRAY_GASNET
+#define _XMP_LOCK_CHUNK 8       // for lock
+
+typedef struct xmp_lock{
+  int islocked;
+  gasnet_hsl_t  hsl;
+  int  wait_size;   /* How many elements in wait_list */
+  int  wait_head;   /* Index for next dequeue */
+  int  wait_tail;   /* Index for next enqueue */
+  int *wait_list;   /* Circular queue of waiting threads */
+} xmp_gasnet_lock_t;
+
+typedef enum {
+  _XMP_LOCKSTATE_WAITING = 300,    /* waiting for a reply */
+  _XMP_LOCKSTATE_GRANTED,    /* lock attempt granted */
+  _XMP_LOCKSTATE_FAILED,     /* lock attempt failed */
+  _XMP_LOCKSTATE_HANDOFF,    /* unlock op complete--handoff in progress */
+  _XMP_LOCKSTATE_DONE        /* unlock op complete */
+} xmp_gasnet_lock_state_t;
+
+extern void _xmp_gasnet_lock(_XMP_coarray_t*, int, int);
+extern void _xmp_gasnet_unlock(_XMP_coarray_t*, int, int);
+extern void _xmp_gasnet_do_lock(int, xmp_gasnet_lock_t*, int*);
+extern void _xmp_gasnet_lock_initialize(xmp_gasnet_lock_t*, int);
+extern void _xmp_gasnet_do_unlock(int, xmp_gasnet_lock_t*, int*, int*);
+extern void _xmp_gasnet_do_lockhandoff(int);
+extern void _xmp_gasnet_unpack(gasnet_token_t, const char*, const size_t, 
+			       const int, const int, const int, const int);
+extern void _xmp_gasnet_unpack_using_buf(gasnet_token_t, const int, const int, const int, const int);
+extern void _xmp_gasnet_unpack_reply(gasnet_token_t, const int);
+extern void _xmp_gasnet_pack(gasnet_token_t, const char*, const size_t, 
+			     const int, const int, const int, const size_t, const int, const int);
+extern void _xmp_gasnet_unpack_get_reply(gasnet_token_t, char *, size_t, const int, const int);
+
+/* Every handler function needs a uniqe number between 200-255.   
+ * The Active Message library reserves ID's 1-199 for itself: client libs must
+ * use IDs between 200-255. 
+ */
+#define _XMP_GASNET_LOCK_REQUEST               200
+#define _XMP_GASNET_SETLOCKSTATE               201
+#define _XMP_GASNET_UNLOCK_REQUEST             202
+#define _XMP_GASNET_LOCKHANDOFF                203
+#define _XMP_GASNET_POSTREQ                    204
+#define _XMP_GASNET_UNPACK                     205
+#define _XMP_GASNET_UNPACK_USING_BUF           206
+#define _XMP_GASNET_UNPACK_REPLY               207
+#define _XMP_GASNET_PACK                       208
+#define _XMP_GASNET_UNPACK_GET_REPLY           209
+#define _XMP_GASNET_PACK_USGIN_BUF             210
+#define _XMP_GASNET_UNPACK_GET_REPLY_USING_BUF 211
+#define _XMP_GASNET_PACK_GET_HANDLER           212
+#define _XMP_GASNET_UNPACK_GET_REPLY_NONC      213
+extern void _xmp_gasnet_lock_request(gasnet_token_t, int, uint32_t, uint32_t);
+extern void _xmp_gasnet_setlockstate(gasnet_token_t, int);
+extern void _xmp_gasnet_do_setlockstate(int);
+extern void _xmp_gasnet_unlock_request(gasnet_token_t, int, uint32_t, uint32_t);
+extern void _xmp_gasnet_lockhandoff(gasnet_token_t, int);
+extern void _xmp_gasnet_postreq(gasnet_token_t, const int, const int);
+extern void _xmp_gasnet_pack_using_buf(gasnet_token_t, const char*, const size_t,
+				       const int, const int, const int, const int);
+extern void _xmp_gasnet_unpack_get_reply_using_buf(gasnet_token_t);
+extern void _xmp_gasnet_pack_get(gasnet_token_t, const char*, const size_t, const int,
+				 const int, const int, const int, const size_t, const int, const int);
+extern void _xmp_gasnet_unpack_get_reply_nonc(gasnet_token_t, char *, size_t, const int, const int, const int);
+
+/*  Macros for splitting and reassembling 64-bit quantities  */
+#define HIWORD(arg)     ((uint32_t) (((uint64_t)(arg)) >> 32))
+#if PLATFORM_COMPILER_CRAY || PLATFORM_COMPILER_INTEL
+/* workaround irritating warning #69: Integer conversion resulted in truncation.                                 
+   which happens whenever Cray C or Intel C sees address-of passed to SEND_PTR                                   
+*/
+#define LOWORD(arg)     ((uint32_t) (((uint64_t)(arg)) & 0xFFFFFFFF))
+#else
+#define LOWORD(arg)     ((uint32_t) ((uint64_t)(arg)))
+#endif
+#define UPCRI_MAKEWORD(hi,lo) (   (((uint64_t)(hi)) << 32) \
+                                  | (((uint64_t)(lo)) & 0xffffffff) )
+
+/* These macros are referred from upcr.h of Berkeley UPC */
+/*                                                                                                                 
+ * Network polling                                                                                                 
+ * ===============                                                                                                 
+ *                                                                                                                 
+ * The upcr_poll() function explicitly causes the runtime to attempt to make                                       
+ * progress on any network requests that may be pending.  While many other                                         
+ * runtime functions implicitly do this as well (i.e. most of those which call                                     
+ * the network layer) this function may be useful in cases where a large amount                                    
+ * of time has elapsed since the last runtime call (e.g. if a great deal of                                        
+ * application-level calculation is taking place).  This function may also be                                      
+ * indirectly when a upc_fence is used.                                                                            
+ *                                                                                                                 
+ * upcr_poll() also provides a null strict reference, corresponding to upc_fence in the                            
+ * UPC memory model.                                                                                               
+ * DOB: we should really rename upcr_poll to upcr_fence, but this would break                                      
+ * compatibility between old runtimes and new translators, so until the next                                       
+ * major runtime interface upgrade, (b)upc_poll expands to upcr_poll_nofence,                                      
+ * which polls without the overhead of strict memory fences.                                                       
+ */
+
+/* Bug 2996 - upcr_poll_nofence should also yield in polite mode to get                                          
+ * resonable performance from a spin-loop constructed according to our                                           
+ * recommendations.                                                                                              
+ * The bug was first seen w/ smp-conduit, but when using a network we                                            
+ * cannot claim to know if gasnet_AMPoll() is going to yield or not.                                             
+ * With an RMDA-capable transport one actually could expect that it                                              
+ * would NOT.                                                                                                    
+ */
+#define upcr_poll_nofence() do {        \
+    gasnet_AMPoll();			\
+  } while (0)
+#if GASNET_CONDUIT_SMP && !UPCRI_UPC_PTHREADS && !GASNET_PSHM
+/* in the special case of exactly one UPC thread, nothing is required for                                        
+ * correctness of fence (poll is likely a no-op as well, included solely                                         
+ * for tracing purposes)                                                                                         
+ */
+#define upcr_poll() upcr_poll_nofence()
+#else
+/* in all other cases, a fence needs to act as a null strict reference,                                          
+ * which means we need an architectural membar & optimization barrier to                                         
+ * ensure that surrounding relaxed shared and local operations are not                                           
+ * reordered in any way across this point (which could be visible if other                                       
+ * CPU's or an RDMA enabled NIC are modifying memory via strict operations).                                     
+ * We need both an WMB and RMB within the fence, but it doesn't actually matter                                  
+ * whether they come before or after the optional poll (which is added as                                        
+ * a performance optimization, to help ensure progress in spin-loops using fence).                               
+ * We combine them in a call to gasnett_local_mb(), which on some architectures                                  
+ * can be slightly more efficient than WMB and RMB called in sequence.                                           
+ */
+#define upcr_poll() do {              \
+    gasnett_local_mb();               \
+    upcr_poll_nofence();              \
+  } while (0)
+#endif
+
+#define _xmp_lock_t xmp_gasnet_lock_t
+
+extern void _xmp_lock(_XMP_coarray_t*, int, int);
+extern void _xmp_unlock(_XMP_coarray_t*, int, int);
+extern void _xmp_lock_initialize(_xmp_lock_t*, int);
+
+#endif // _XMP_COARRAY_GASNET
 
 #endif // _XMP_INTERNAL

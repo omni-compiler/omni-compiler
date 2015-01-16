@@ -784,27 +784,27 @@ elif test "$target" = "powerpc-hitachi-aix"; then
   MPI_CC="mpCC_r"
   MPI_CPP=$MPI_CC
   MPI_CPPFLAGS="-E"
-  MPI_CFLAGS="-q64 -qipa -qhot -qsimd=auto -O5 $MPI_OPENMP_FLAG"
+  MPI_CFLAGS="-q64 -qhot -qsimd=auto -O5 $MPI_OPENMP_FLAG"
   MPI_CLIBS=""
 
 # MPI F
   MPI_FC="mpxlf90_r"
   MPI_FPP=$MPI_FC
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-q64 -qipa -qhot -qsimd=auto -O5 -qextname $MPI_OPENMP_FLAG"
+  MPI_FCFLAGS="-q64 -qhot -qsimd=auto -O5 -qextname $MPI_OPENMP_FLAG"
   MPI_MODINC="-I"
   MPI_FCLIBS=""
 
 # Omni C
   OMNI_L2X_CFLAGS=""
   OMNI_LX2X_CFLAGS=""
-  OMNI_NTV_CFLAGS="-q64 -qipa"
+  OMNI_NTV_CFLAGS="-q64"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
 # Omni F
   OMNI_L2X_FCFLAGS=""
   OMNI_LX2X_FCFLAGS=""
-  OMNI_NTV_FCFLAGS="-q64 -qipa -qextname"
+  OMNI_NTV_FCFLAGS="-q64 -qextname"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
 
 else
@@ -937,8 +937,137 @@ else
   esac
 fi
 
-# Set user defined value.
+# --------------------------------------------------------------------
+# specify GPU C compiler
 
+AC_ARG_WITH(gpucc,
+    [  --with-gpucc=CMD            GPU C compiler (default: nvcc)],
+    [GPU_CMD="${withval}"], [GPU_CMD="nvcc"])
+
+AC_SUBST(GPU_CMD)
+
+# --------------------------------------------------------------------
+# specify GPU C compiler flags
+
+AC_ARG_WITH(gpu-cflags,
+    [  --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)],
+    [GPU_CFLAGS="${withval}"], [GPU_CFLAGS="-arch=sm_20 -O3"])
+
+AC_SUBST(GPU_CFLAGS)
+
+# --------------------------------------------------------------------
+# specify libgpu path
+
+AC_ARG_WITH(cuda,
+    [  --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)],
+    [GPGPU_PREFIX="${withval}"], [GPGPU_PREFIX="/usr/local/cuda"])
+
+AC_SUBST(GPGPU_PREFIX)
+
+# --------------------------------------------------------------------
+# specify libxmp path
+
+AC_ARG_WITH(libxml,
+    [  --with-libxml=DIR           libxml installation path (default: /usr)],
+    [LIBXML_PREFIX="${withval}"], [LIBXML_PREFIX="/usr"])
+
+if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
+   AC_MSG_ERROR([parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help])
+fi
+
+AC_SUBST(LIBXML_PREFIX)
+
+# --------------------------------------------------------------------
+# set TCA
+
+AC_ARG_WITH(TCA,
+    [  --with-TCA=DIR              TCA installation path],
+    [TCA_PREFIX="${withval}"; use_tca=yes], [use_tca=no])
+
+if test x$use_tca = xyes; then
+   if ! test -f $TCA_PREFIX/tca-api.h; then
+      AC_MSG_ERROR([$TCA_PREFIX/tca-api.h not found. Please check --with-TCA=<DIR>])
+   fi
+
+  MPI_CPPFLAGS="${MPI_CPPFLAGS} -I${TCA_PREFIX}"
+  MPI_CFLAGS="${MPI_CFLAGS} -I${TCA_PREFIX}"
+  MPI_CLIBS="${MPI_CLIBS} -L${TCA_PREFIX} -ltca"
+fi
+
+AM_CONDITIONAL(TCA, test x${use_tca} = xyes)
+# --------------------------------------------------------------------
+# specify GASNet path
+
+AC_ARG_WITH(gasnet,
+    [  --with-gasnet=DIR           GASNet installation path],
+    [GASNET_PREFIX="${withval}"; use_gasnet=yes], [use_gasnet=no])
+
+if test x$use_gasnet = xyes; then
+  if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
+    AC_MSG_ERROR([${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnet])
+  fi
+fi
+
+AM_CONDITIONAL(GASNET, test x${use_gasnet} = xyes)
+
+# --------------------------------------------------------------------
+# specify GASNet conduit
+
+AC_ARG_WITH(gasnet_conduit,
+    [  --with-gasnet-conduit=NAME  GASNet conduit],
+    [GASNET_CONDUIT="${withval}"], [GASNET_CONDUIT="${default_gasnet_conduit}"])
+
+if test x${use_gasnet} = xyes; then
+  gasnet_conduit_flag=no
+  if test "${GASNET_CONDUIT}" = ""; then
+    for c in smp udp mpi gm lapi elan vapi ibv portals gemini shmem dcmf sci
+    do
+      if test -d ${GASNET_PREFIX}/include/${c}-conduit; then
+         GASNET_CONDUIT=${c}
+         gasnet_conduit_flag=yes
+      fi
+    done
+  else
+    gasnet_conduit_flag=yes
+  fi
+
+  if test "${gasnet_conduit_flag}" = no || ! test -d $GASNET_PREFIX/include/${GASNET_CONDUIT}-conduit; then
+    AC_MSG_ERROR([${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit not found. Please attach or check --with-gasnet-conduit])
+  else
+    # Create temporary Makefile to set $(GASNET_CPPFLAGS) $(GASNET_CFLAGS) $(GASNET_LDFLAGS) $(GASNET_LIBS)
+    __ECHO=""
+    if test $OS = "darwin"; then
+        __ECHO="echo"
+    else
+        __ECHO="echo -e"
+    fi
+    tmp_file=_XMP_makefile.$$
+    mak_file=${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit/${GASNET_CONDUIT}-seq.mak
+
+    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CPPFLAGS)" > ${tmp_file}
+    GASNET_CPPFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
+    GASNET_CPPFLAGS="${GASNET_CPPFLAGS} -D_XMP_COARRAY_GASNET"
+
+    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CFLAGS)"   > ${tmp_file}
+    GASNET_CFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
+
+    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LDFLAGS)"  > ${tmp_file}
+    GASNET_LDFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
+
+    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LIBS)"     > ${tmp_file}
+    GASNET_LIBS=`make -s -f ${tmp_file} 2>/dev/null`
+    rm ${tmp_file}
+    unset __ECHO
+  fi
+
+  MPI_CPPFLAGS="${MPI_CPPFLAGS} ${GASNET_CPPFLAGS}"
+  MPI_CFLAGS="${MPI_CFLAGS} ${GASNET_CFLAGS} ${GASNET_CPPFLAGS}"
+  MPI_CLIBS="${MPI_CLIBS} ${GASNET_LDFLAGS} ${GASNET_LIBS}"
+fi
+
+AC_SUBST(GASNET_LIBS)
+
+# Set user defined value.
 if test "${userMPI_CPP}" != ""; then
   MPI_CPP="${userMPI_CPP}"
 fi
@@ -1593,132 +1722,6 @@ AC_SUBST(omniQRealPrecInLimb)
 AC_SUBST(omniQRealFillGap)
 
 # --------------------------------------------------------------------
-# specify libxmp path
-AC_ARG_WITH(libxml,
-    [  --with-libxml=DIR           libxml installation path (default: /usr)],
-    [LIBXML_PREFIX="${withval}"], [LIBXML_PREFIX="/usr"])
-
-if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
-   AC_MSG_ERROR([parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help])
-fi
-
-AC_SUBST(LIBXML_PREFIX)
-
-# --------------------------------------------------------------------
-# set TCA
-AC_ARG_WITH(TCA,
-    [  --with-TCA=DIR              TCA installation path],
-    [TCA_PREFIX="${withval}"; use_tca=yes], [use_tca=no])
-
-if test x$use_tca = xyes; then
-   if ! test -f $TCA_PREFIX/tca-api.h; then
-      AC_MSG_ERROR([$TCA_PREFIX/tca-api.h not found. Please check --with-TCA=<DIR>])
-   fi
-fi
-
-AM_CONDITIONAL(TCA, test x${use_tca} = xyes)
-AC_SUBST(TCA_PREFIX)
-
-# --------------------------------------------------------------------
-# specify GASNet path
-AC_ARG_WITH(gasnet,
-    [  --with-gasnet=DIR           GASNet installation path],
-    [GASNET_PREFIX="${withval}"; use_gasnet=yes], [use_gasnet=no])
-
-if test x$use_gasnet = xyes; then
-  if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
-    AC_MSG_ERROR([${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnet])
-  fi
-fi
-
-AM_CONDITIONAL(GASNET, test x${use_gasnet} = xyes)
-AC_SUBST(GASNET_PREFIX)
-
-# --------------------------------------------------------------------
-# specify GASNet conduit
-
-AC_ARG_WITH(gasnet_conduit,
-    [  --with-gasnet-conduit=NAME  GASNet conduit],
-    [GASNET_CONDUIT="${withval}"], [GASNET_CONDUIT="${default_gasnet_conduit}"])
-
-if test x${use_gasnet} = xyes; then
-  gasnet_conduit_flag=no
-  if test "${GASNET_CONDUIT}" = ""; then
-    for c in smp udp mpi gm lapi elan vapi ibv portals gemini shmem dcmf sci
-    do
-      if test -d ${GASNET_PREFIX}/include/${c}-conduit; then
-         GASNET_CONDUIT=${c}
-         gasnet_conduit_flag=yes
-      fi
-    done
-  else
-    gasnet_conduit_flag=yes
-  fi
-
-  if test "${gasnet_conduit_flag}" = no || ! test -d $GASNET_PREFIX/include/${GASNET_CONDUIT}-conduit; then
-    AC_MSG_ERROR([${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit not found. Please attach or check --with-gasnet-conduit])
-  else
-    # Create temporary Makefile to set $(GASNET_CPPFLAGS) $(GASNET_CFLAGS) $(GASNET_LDFLAGS) $(GASNET_LIBS)
-    __ECHO=""
-    if test $OS = "darwin"; then
-        __ECHO="echo"
-    else
-	__ECHO="echo -e"
-    fi
-    tmp_file=_XMP_makefile.$$
-    mak_file=${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit/${GASNET_CONDUIT}-seq.mak
-
-    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CPPFLAGS)" > ${tmp_file}
-    GASNET_CPPFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
-    GASNET_CPPFLAGS="${GASNET_CPPFLAGS} -D_XMP_COARRAY_GASNET"
-    
-    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CFLAGS)"   > ${tmp_file}
-    GASNET_CFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
-
-    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LDFLAGS)"  > ${tmp_file}
-    GASNET_LDFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
-
-    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LIBS)"     > ${tmp_file}
-    GASNET_LIBS=`make -s -f ${tmp_file} 2>/dev/null`
-    rm ${tmp_file}
-    unset __ECHO
-  fi
-fi
-
-AC_SUBST(GASNET_CONDUIT)
-AC_SUBST(GASNET_CPPFLAGS)
-AC_SUBST(GASNET_CFLAGS)
-AC_SUBST(GASNET_LDFLAGS)
-AC_SUBST(GASNET_LIBS)
-
-# --------------------------------------------------------------------
-# specify GPU C compiler
-
-AC_ARG_WITH(gpucc,
-    [  --with-gpucc=CMD            GPU C compiler (default: nvcc)],
-    [GPU_CMD="${withval}"], [GPU_CMD="nvcc"])
-
-AC_SUBST(GPU_CMD)
-
-# --------------------------------------------------------------------
-# specify GPU C compiler flags
-
-AC_ARG_WITH(gpu-cflags,
-    [  --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)],
-    [GPU_CFLAGS="${withval}"], [GPU_CFLAGS="-arch=sm_20 -O3"])
-
-AC_SUBST(GPU_CFLAGS)
-
-# --------------------------------------------------------------------
-# specify libgpu path
-
-AC_ARG_WITH(cuda,
-    [  --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)],
-    [GPGPU_PREFIX="${withval}"], [GPGPU_PREFIX="/usr/local/cuda"])
-
-AC_SUBST(GPGPU_PREFIX)
-
-# --------------------------------------------------------------------
 # Export Omni Config Variable
 
 OMNI_HOME=${prefix}
@@ -2054,6 +2057,8 @@ if test -d .git; then
   if test $? -eq 0; then
     VERSION=`git log --date=short --pretty=format:"Last Commit Day:%ad, Hash Value:%h" -1`
     echo -n Version:${XMPPKG_VERSION}, ${VERSION} > ${VERSIONTXT}
+  else
+    echo -n "This omni compiler was compiled on no-git environment however git clone it." > ${VERSIONTXT}
   fi
 fi
 

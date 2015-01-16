@@ -24,6 +24,7 @@ run: $(EXES)
 	$(XRUN) -n 4 ./intrinsic_matmul_replica.x
 	$(XRUN) -n 4 ./intrinsic_matmul_4_FJ.x
 	$(XRUN) -n 8 ./intrinsic_matmul_FJ.x
+	$(XRUN) -n 8 ./intrinsic_sort.x
 
 clean:
 	rm -f $(EXES) $(OBJS) chk.o

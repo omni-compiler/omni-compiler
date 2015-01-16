@@ -79,8 +79,9 @@ public class XMPglobalDecl {
     String fullPath = _env.getSourceFileName();
     int dot = fullPath.lastIndexOf('.');
     int sep = fullPath.lastIndexOf('/');
-    String moduleName = fullPath.substring(sep + 1, dot);                 // ./fuga/hoge.c -> hoge
-    moduleName = "__" + moduleName + "_xmpc_module_init_";                // __hoge_xmpc_module_init_
+    String moduleName = fullPath.substring(sep + 1, dot);          // ./fuga/hoge-a.c -> hoge-a
+    moduleName = moduleName.replaceAll("-", "_XMPHYPHEN_");        // hoge_XMPHYPHEN_a
+    moduleName = "__" + moduleName + "_xmpc_module_init_";         // __hoge_XMPHYPHEN_a_xmpc_module_init_
 
     Xtype funcType = Xtype.Function(Xtype.voidType);
     Ident funcId = _env.declExternIdent(moduleName, funcType);
@@ -109,8 +110,9 @@ public class XMPglobalDecl {
     String fullPath = _env.getSourceFileName();
     int dot = fullPath.lastIndexOf('.');
     int sep = fullPath.lastIndexOf('/');
-    String moduleName =fullPath.substring(sep + 1, dot);                 // ./fuga/hoge.c -> hoge
-    moduleName = "__" + moduleName + "_xmpc_module_finalize_";           // __hoge_xmpc_module_finalize_
+    String moduleName =fullPath.substring(sep + 1, dot);           // ./fuga/hoge.c -> hoge
+    moduleName = moduleName.replaceAll("-", "_XMPHYPHEN_");        // hoge_XMPHYPHEN_a
+    moduleName = "__" + moduleName + "_xmpc_module_finalize_";     // __hoge_xmpc_module_finalize_
     Ident funcId = _env.declExternIdent(moduleName, funcType);
 
     _env.add(XobjectDef.Func(funcId, null, null, Xcons.List(Xcode.COMPOUND_STATEMENT,

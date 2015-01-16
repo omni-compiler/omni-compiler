@@ -1,128 +1,177 @@
+/**
+ * Post/wait functions using Fujitsu RDMA
+ *
+ * @file
+ */
 #include "xmp_internal.h"
-#include "xmp_atomic.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-typedef struct request_list{
+/* postreq = post request */
+typedef struct _XMP_postreq_info{
   int node;
   int tag;
-} request_list_t;
+} _XMP_postreq_info_t;
 
-typedef struct post_wait_obj{
-  int             wait_num;  /* How many post requests are waited */
-  request_list_t  *list;
-  int             list_size;
-} post_wait_obj_t;
+typedef struct _XMP_postreq{
+  _XMP_postreq_info_t *table;   /**< Table for post requests */
+  int                 num;      /**< How many post requests are in table */
+  int                 max_size; /**< Max size of table */
+} _XMP_postreq_t;
 
-static uint64_t *_each_addr, _laddr;
-static double *_token;
-static post_wait_obj_t pw;
-static struct FJMPI_Rdma_cq cq;
+/**
+ * Address for using RDMA
+ */
+static uint64_t _local_rdma_addr, *_remote_rdma_addr;
+static _XMP_postreq_t _postreq;
 
+/**
+ * Initialize environment for post/wait directives
+ */
 void _xmp_fjrdma_post_wait_initialize()
 {
-  pw.wait_num  = 0;
-  pw.list      = malloc(sizeof(request_list_t) * _XMP_POST_WAIT_QUEUE_DEFAULT_SIZE);
-  pw.list_size = _XMP_POST_WAIT_QUEUE_DEFAULT_SIZE;
+  _postreq.num      = 0;
+  _postreq.max_size = _XMP_POSTREQ_INITIAL_TABLE_SIZE;
+  _postreq.table    = malloc(sizeof(_XMP_postreq_info_t) * _postreq.max_size);
   
-  _each_addr = _XMP_alloc(sizeof(uint64_t) * _XMP_world_size);
-  _token     = _XMP_alloc(sizeof(double));
-  _laddr     = FJMPI_Rdma_reg_mem(POST_WAIT_ID, _token, sizeof(double));
+  double *token    = _XMP_alloc(sizeof(double));
+  _local_rdma_addr  = FJMPI_Rdma_reg_mem(_XMP_POSTREQ_ID, token, sizeof(double));
+  _remote_rdma_addr = _XMP_alloc(sizeof(uint64_t) * _XMP_world_size);
 
+  // Obtain remote RDMA addresses
+  // Reduce network overload by Fujitsu (This process is temporal)
   for(int ncount=0,i=1; i<_XMP_world_size; ncount++,i++){
     int partner_rank = (_XMP_world_rank+i)%_XMP_world_size;
     if(partner_rank != _XMP_world_rank)
-      while((_each_addr[partner_rank] = FJMPI_Rdma_get_remote_addr(partner_rank, POST_WAIT_ID)) == FJMPI_RDMA_ERROR);
+      while((_remote_rdma_addr[partner_rank] = FJMPI_Rdma_get_remote_addr(partner_rank, _XMP_POSTREQ_ID)) == FJMPI_RDMA_ERROR);
 
     if(ncount >= 3000){
       MPI_Barrier(MPI_COMM_WORLD);
       ncount = 0;
     }
   }
+  // (end of temporal process)
 }
 
-static void _xmp_pw_push(const int node, const int tag)
+static void add_postreq(const int node, const int tag)
 {
-  if(pw.wait_num == pw.list_size){
-    request_list_t *old_list = pw.list;
-    pw.list_size += _XMP_POST_WAIT_QUEUE_INCREMENT_SIZE;
-    pw.list = malloc(sizeof(request_list_t) * pw.list_size);
-    memcpy(pw.list, old_list, sizeof(request_list_t) * pw.wait_num);
-    free(old_list);
+  if(_postreq.num == _postreq.max_size){  // If table is full
+    _XMP_postreq_info_t *old_table = _postreq.table;
+    _postreq.max_size += _XMP_POSTREQ_INCREMENT_TABLE_SIZE;
+    _postreq.table = malloc(sizeof(_XMP_postreq_info_t) * _postreq.max_size);
+    memcpy(_postreq.table, old_table, sizeof(_XMP_postreq_info_t) * _postreq.num);
+    free(old_table);
   }
   
-  pw.list[pw.wait_num].node = node;
-  pw.list[pw.wait_num].tag  = tag;
-  pw.wait_num++;
+  _postreq.table[_postreq.num].node = node;
+  _postreq.table[_postreq.num].tag  = tag;
+  _postreq.num++;
 }
 
-void _xmp_fjrdma_post(const int target_node, const int tag)
+/**
+ * Post operation
+ *
+ * @param[in] node node number
+ * @param[in] tag  tag
+ */
+void _xmp_fjrdma_post(const int node, const int tag)
 {
   if(tag < 0 || tag > 14){
-    fprintf(stderr, "tag is %d : On the K computer or FX10, 0 <= tag && tag <= 14\n", tag);
-    exit(1);
+    fprintf(stderr, "tag is %d : On the K computer or FX10, 0 <= tag <= 14\n", tag);
+    _XMP_fatal_nomsg();
   }
 
-  if(target_node != _XMP_world_rank){
-    FJMPI_Rdma_put(target_node, tag, _each_addr[target_node], _laddr, sizeof(double), FLAG_NIC_POST_WAIT);
-    while(FJMPI_Rdma_poll_cq(SEND_NIC_POST, &cq) != FJMPI_RDMA_NOTICE);
+  if(node == _XMP_world_rank){
+    add_postreq(node, tag);
   }
   else{
-    _xmp_pw_push(target_node, tag);
+    FJMPI_Rdma_put(node, tag, _remote_rdma_addr[node], _local_rdma_addr, sizeof(double), _XMP_POSTREQ_NIC_FLAG);
+    struct FJMPI_Rdma_cq cq;
+    while(FJMPI_Rdma_poll_cq(_XMP_POSTREQ_SEND_NIC, &cq) != FJMPI_RDMA_NOTICE);
   }
 }
 
-static void _xmp_pw_cutdown(const int index)
+static void shift_postreq(const int index)
 {
-  if(index != pw.wait_num-1){  // Not tail index
-    for(int i=index+1;i<pw.wait_num;i++){
-      pw.list[i-1] = pw.list[i];
+  if(index != _postreq.num-1){  // Not last request
+    for(int i=index+1;i<_postreq.num;i++){
+      _postreq.table[i-1] = _postreq.table[i];
     }
   }
-  pw.wait_num--;
+  _postreq.num--;
 }
 
-static int _xmp_pw_remove_notag(const int node)
+// If the table does not have the post request, return false;
+static bool remove_postreq_node(const int node)
 {
-  for(int i=pw.wait_num-1;i>=0;i--){
-    if(node == pw.list[i].node){
-      _xmp_pw_cutdown(i);
+  for(int i=_postreq.num-1;i>=0;i--){
+    if(node == _postreq.table[i].node){
+      shift_postreq(i);
       return _XMP_N_INT_TRUE;
     }
   }
   return _XMP_N_INT_FALSE;
 }
 
-static int _xmp_pw_remove(const int node, const int tag)
+// If the table does not have the post request, return false;
+static bool remove_postreq(const int node, const int tag)
 {
-  for(int i=pw.wait_num-1;i>=0;i--){
-    if(node == pw.list[i].node && tag == pw.list[i].tag){
-      _xmp_pw_cutdown(i);
+  for(int i=_postreq.num-1;i>=0;i--){
+    if(node == _postreq.table[i].node && tag == _postreq.table[i].tag){
+      shift_postreq(i);
       return _XMP_N_INT_TRUE;
     }
   }
   return _XMP_N_INT_FALSE;
 }
 
-void _xmp_fjrdma_wait_tag(const int node, const int tag)
+/**
+ * Wait operation with node-ref and tag
+ *
+ * @param[in] node node number
+ * @param[in] tag  tag
+ */
+void _xmp_fjrdma_wait(const int node, const int tag)
 {
-  while(!_xmp_pw_remove(node, tag))
-    if(FJMPI_Rdma_poll_cq(RECV_NIC_POST, &cq) == FJMPI_RDMA_HALFWAY_NOTICE)
-      _xmp_pw_push(cq.pid, cq.tag);
+  struct FJMPI_Rdma_cq cq;
+
+  while(1){
+    bool table_has_postreq = remove_postreq(node, tag);
+    if(table_has_postreq) break;
+
+    if(FJMPI_Rdma_poll_cq(_XMP_POSTREQ_RECV_NIC, &cq) == FJMPI_RDMA_HALFWAY_NOTICE)
+      add_postreq(cq.pid, cq.tag);
+  }
 }
 
-void _xmp_fjrdma_wait_notag(const int node)
+/**
+ * Wait operation with only node-ref
+ *
+ * @param[in] node node number
+ */
+void _xmp_fjrdma_wait_node(const int node)
 {
-  while(!_xmp_pw_remove_notag(node))
-    if(FJMPI_Rdma_poll_cq(RECV_NIC_POST, &cq) == FJMPI_RDMA_HALFWAY_NOTICE)
-      _xmp_pw_push(cq.pid, cq.tag);
+  struct FJMPI_Rdma_cq cq;
+
+  while(1){
+    bool table_has_postreq = remove_postreq_node(node);
+    if(table_has_postreq) break;
+    
+    if(FJMPI_Rdma_poll_cq(_XMP_POSTREQ_RECV_NIC, &cq) == FJMPI_RDMA_HALFWAY_NOTICE)
+      add_postreq(cq.pid, cq.tag);
+  }
 }
 
-void _xmp_fjrdma_wait()
+/**
+ * Wait operation without node-ref and tag
+ */
+void _xmp_fjrdma_wait_noargs()
 {
-  if(pw.wait_num == 0)
-    while(FJMPI_Rdma_poll_cq(RECV_NIC_POST, &cq) != FJMPI_RDMA_HALFWAY_NOTICE);
+  if(_postreq.num == 0){
+    struct FJMPI_Rdma_cq cq;
+    while(FJMPI_Rdma_poll_cq(_XMP_POSTREQ_RECV_NIC, &cq) != FJMPI_RDMA_HALFWAY_NOTICE);
+  }
   else
-    pw.wait_num--;
+    _postreq.num--;
 }
