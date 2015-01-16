@@ -2298,7 +2298,9 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
 
     if (is_same_array_shape(dst_array, src_array) &&
         is_whole(gmv_desc_leftp) && is_whole(gmv_desc_rightp) &&
-        is_one_block(dst_array) && is_one_block(src_array)){
+        is_one_block(dst_array) && is_one_block(src_array) &&
+        (dst_array->dim >= dst_array->align_template->dim) &&
+        (src_array->dim >= src_array->align_template->dim)){
       if (_XMP_gmove_transpose(gmv_desc_leftp, gmv_desc_rightp)) return;
     }
   }
