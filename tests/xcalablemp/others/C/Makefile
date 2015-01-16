@@ -1,5 +1,4 @@
-INCDIR = ../../../../Driver/etc
-include $(INCDIR)/native.conf.xmp
+COMPILER=$(shell xmpcc --show-env | grep OMNI_MPICC_CMD | sed 's/OMNI_MPICC_CMD=//' | sed "s/\"//g")
 MPIPATH=$(shell which $(COMPILER) | sed "s/bin\/$(COMPILER)/include/g")
 XCC     = xmpcc -O2
 XRUN    = mpirun

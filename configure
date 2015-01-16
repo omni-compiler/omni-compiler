@@ -724,18 +724,20 @@ OMNI_LNK_FCFLAGS
 OMNI_NTV_FCFLAGS
 OMNI_LX2X_FCFLAGS
 OMNI_L2X_FCFLAGS
-OMNI_F_PP
 OMNI_LNK_CFLAGS
 OMNI_NTV_CFLAGS
 OMNI_LX2X_CFLAGS
 OMNI_L2X_CFLAGS
-OMNI_C_PP
 MPI_FCLIBS
 MPI_MODINC
 MPI_FCFLAGS
+MPI_FPPFLAGS
+MPI_FPP
 MPI_FC
 MPI_CLIBS
 MPI_CFLAGS
+MPI_CPPFLAGS
+MPI_CPP
 MPI_CC
 MPI_OPENMP_FLAG
 GASNET_LIBS
@@ -12203,19 +12205,9 @@ if test -e "Driver/src/Makefile.am"; then
 
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/ompcc"
 
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omcpp"
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/xmpcc"
 
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omc2x"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omcx2x"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omx2c"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omcnative"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omclinker"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/omc.conf"
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/xmpcc.conf"
 
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omf2f"
 
@@ -12234,18 +12226,6 @@ if test -e "Driver/src/Makefile.am"; then
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omflinker"
 
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/omf.conf"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/xmpcc"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/pp.conf.xmp"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/l2x.conf.xmp"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/x2x.conf.xmp"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/native.conf.xmp"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/linker.conf.xmp"
 
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/xmpf90"
 
@@ -20867,6 +20847,7 @@ if test x${use_gasnet} = xyes; then
   MPI_CPPFLAGS="${MPI_CPPFLAGS} ${GASNET_CPPFLAGS}"
   MPI_CFLAGS="${MPI_CFLAGS} ${GASNET_CFLAGS} ${GASNET_CPPFLAGS}"
   MPI_CLIBS="${MPI_CLIBS} ${GASNET_LDFLAGS} ${GASNET_LIBS}"
+  OMNI_LNK_CFLAGS="${OMNI_LNK_CFLAGS} ${GASNET_LIBS}"
 fi
 
 
@@ -20957,24 +20938,23 @@ fi
 
 
 
+
+
 # MPI F
 
 
 
 
 
+
+
 # Omni C
-OMNI_C_PP="$MPI_CPP $MPI_CPPFLAGS"
-
-
 
 
 
 
 
 # Omni F
-OMNI_F_PP="$MPI_FPP $MPI_FPPFLAGS"
-
 
 
 
@@ -26556,13 +26536,8 @@ do
     "$OMDRIVER_DIR/../etc/linker.conf.openmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/linker.conf.openmp" ;;
     "$OMDRIVER_DIR/../bin/omc2c") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omc2c" ;;
     "$OMDRIVER_DIR/../bin/ompcc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/ompcc" ;;
-    "$OMDRIVER_DIR/../bin/omcpp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omcpp" ;;
-    "$OMDRIVER_DIR/../bin/omc2x") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omc2x" ;;
-    "$OMDRIVER_DIR/../bin/omcx2x") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omcx2x" ;;
-    "$OMDRIVER_DIR/../bin/omx2c") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omx2c" ;;
-    "$OMDRIVER_DIR/../bin/omcnative") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omcnative" ;;
-    "$OMDRIVER_DIR/../bin/omclinker") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omclinker" ;;
-    "$OMDRIVER_DIR/../etc/omc.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/omc.conf" ;;
+    "$OMDRIVER_DIR/../bin/xmpcc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/xmpcc" ;;
+    "$OMDRIVER_DIR/../etc/xmpcc.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/xmpcc.conf" ;;
     "$OMDRIVER_DIR/../bin/omf2f") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omf2f" ;;
     "$OMDRIVER_DIR/../bin/ompf90") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/ompf90" ;;
     "$OMDRIVER_DIR/../bin/omfpp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omfpp" ;;
@@ -26572,12 +26547,6 @@ do
     "$OMDRIVER_DIR/../bin/omfnative") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omfnative" ;;
     "$OMDRIVER_DIR/../bin/omflinker") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omflinker" ;;
     "$OMDRIVER_DIR/../etc/omf.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/omf.conf" ;;
-    "$OMDRIVER_DIR/../bin/xmpcc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/xmpcc" ;;
-    "$OMDRIVER_DIR/../etc/pp.conf.xmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/pp.conf.xmp" ;;
-    "$OMDRIVER_DIR/../etc/l2x.conf.xmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/l2x.conf.xmp" ;;
-    "$OMDRIVER_DIR/../etc/x2x.conf.xmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/x2x.conf.xmp" ;;
-    "$OMDRIVER_DIR/../etc/native.conf.xmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/native.conf.xmp" ;;
-    "$OMDRIVER_DIR/../etc/linker.conf.xmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/linker.conf.xmp" ;;
     "$OMDRIVER_DIR/../bin/xmpf90") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/xmpf90" ;;
     "$OMDRIVER_DIR/../etc/pp.conf.xmpf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/pp.conf.xmpf" ;;
     "$OMDRIVER_DIR/../etc/l2x.conf.xmpf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/l2x.conf.xmpf" ;;

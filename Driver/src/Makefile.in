@@ -57,7 +57,8 @@ target_triplet = @target@
 bin_PROGRAMS = omdriver$(EXEEXT) xmp_collect_init$(EXEEXT) \
 	om_replace_pragma$(EXEEXT)
 subdir = ./Driver/src
-DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
+DIST_COMMON = $(dist_libexec_SCRIPTS) $(srcdir)/Makefile.am \
+	$(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -68,7 +69,7 @@ CONFIG_HEADER = $(top_builddir)/include/config.h \
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)" \
-	"$(DESTDIR)$(sysconfdir)"
+	"$(DESTDIR)$(libexecdir)" "$(DESTDIR)$(sysconfdir)"
 PROGRAMS = $(bin_PROGRAMS)
 om_replace_pragma_SOURCES = om_replace_pragma.c
 om_replace_pragma_OBJECTS = om_replace_pragma.$(OBJEXT)
@@ -107,7 +108,7 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-SCRIPTS = $(bin_SCRIPTS)
+SCRIPTS = $(bin_SCRIPTS) $(dist_libexec_SCRIPTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include -I$(top_builddir)/Driver/atool/src/include/nata
 depcomp =
 am__depfiles_maybe =
@@ -232,9 +233,13 @@ MM5TGT = @MM5TGT@
 MPI_CC = @MPI_CC@
 MPI_CFLAGS = @MPI_CFLAGS@
 MPI_CLIBS = @MPI_CLIBS@
+MPI_CPP = @MPI_CPP@
+MPI_CPPFLAGS = @MPI_CPPFLAGS@
 MPI_FC = @MPI_FC@
 MPI_FCFLAGS = @MPI_FCFLAGS@
 MPI_FCLIBS = @MPI_FCLIBS@
+MPI_FPP = @MPI_FPP@
+MPI_FPPFLAGS = @MPI_FPPFLAGS@
 MPI_MODINC = @MPI_MODINC@
 MPI_OPENMP_FLAG = @MPI_OPENMP_FLAG@
 NM = @NM@
@@ -242,8 +247,6 @@ NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 OMDRIVER_DIR = @OMDRIVER_DIR@
-OMNI_C_PP = @OMNI_C_PP@
-OMNI_F_PP = @OMNI_F_PP@
 OMNI_HOME = @OMNI_HOME@
 OMNI_L2X_CFLAGS = @OMNI_L2X_CFLAGS@
 OMNI_L2X_FCFLAGS = @OMNI_L2X_FCFLAGS@
@@ -397,18 +400,17 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 bin_SCRIPTS = ../bin/ompp ../bin/oml2x ../bin/omx2x ../bin/omx2l ../bin/omnative ../bin/omlinker \
-	../bin/omc2c ../bin/ompcc ../bin/omc2x ../bin/omcx2x ../bin/omx2c ../bin/omcpp \
-	../bin/omcnative ../bin/omclinker ../bin/omf2f ../bin/ompf90 ../bin/omf2x ../bin/omfx2x \
-        ../bin/omx2f ../bin/omfpp ../bin/omfnative ../bin/omflinker ../bin/xmpcc ../bin/xmpf90 \
+	../bin/omc2c ../bin/ompcc ../bin/omf2f ../bin/ompf90 ../bin/omf2x ../bin/omfx2x \
+        ../bin/omx2f ../bin/omfpp ../bin/omfnative ../bin/omflinker ../bin/xmpf90 ../bin/xmpcc\
 	../bin/omtranslate ../bin/omni_collect_init
 
-sysconf_DATA = ../etc/omc.conf ../etc/omf.conf ../etc/java.conf ../etc/pp.conf.openmp ../etc/native.conf.openmp \
-        ../etc/linker.conf.openmp ../etc/l2x.conf.openmp ../etc/x2x.conf.openmp ../etc/pp.conf.xmp \
-	../etc/native.conf.xmp ../etc/linker.conf.xmp ../etc/l2x.conf.xmp ../etc/x2x.conf.xmp ../etc/pp.conf.xmpf \
+sysconf_DATA = ../etc/xmpcc.conf ../etc/omf.conf ../etc/java.conf ../etc/pp.conf.openmp ../etc/native.conf.openmp \
+        ../etc/linker.conf.openmp ../etc/l2x.conf.openmp ../etc/x2x.conf.openmp ../etc/pp.conf.xmpf \
 	../etc/native.conf.xmpf ../etc/linker.conf.xmpf ../etc/l2x.conf.xmpf ../etc/x2x.conf.xmpf \
 	../etc/pp.conf.acc ../etc/native.conf.acc ../etc/linker.conf.acc ../etc/l2x.conf.acc ../etc/x2x.conf.acc \
 	../etc/setup.conf ../etc/version
 
+dist_libexec_SCRIPTS = ../libexec/driver_common.sh
 omdriver_SOURCES = omdriver.c
 xmp_collect_init_SOURCES = xmp_collect_init.c
 xmp_collect_init_CPPFLAGS = -DNM="\"$(NM)\""
@@ -536,6 +538,41 @@ uninstall-binSCRIPTS:
 	files=`for p in $$list; do echo "$$p"; done | \
 	       sed -e 's,.*/,,;$(transform)'`; \
 	dir='$(DESTDIR)$(bindir)'; $(am__uninstall_files_from_dir)
+install-dist_libexecSCRIPTS: $(dist_libexec_SCRIPTS)
+	@$(NORMAL_INSTALL)
+	@list='$(dist_libexec_SCRIPTS)'; test -n "$(libexecdir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(libexecdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(libexecdir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  if test -f "$$d$$p"; then echo "$$d$$p"; echo "$$p"; else :; fi; \
+	done | \
+	sed -e 'p;s,.*/,,;n' \
+	    -e 'h;s|.*|.|' \
+	    -e 'p;x;s,.*/,,;$(transform)' | sed 'N;N;N;s,\n, ,g' | \
+	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1; } \
+	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
+	    if ($$2 == $$4) { files[d] = files[d] " " $$1; \
+	      if (++n[d] == $(am__install_max)) { \
+		print "f", d, files[d]; n[d] = 0; files[d] = "" } } \
+	    else { print "f", d "/" $$4, $$1 } } \
+	  END { for (d in files) print "f", d, files[d] }' | \
+	while read type dir files; do \
+	     if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
+	     test -z "$$files" || { \
+	       echo " $(INSTALL_SCRIPT) $$files '$(DESTDIR)$(libexecdir)$$dir'"; \
+	       $(INSTALL_SCRIPT) $$files "$(DESTDIR)$(libexecdir)$$dir" || exit $$?; \
+	     } \
+	; done
+
+uninstall-dist_libexecSCRIPTS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(dist_libexec_SCRIPTS)'; test -n "$(libexecdir)" || exit 0; \
+	files=`for p in $$list; do echo "$$p"; done | \
+	       sed -e 's,.*/,,;$(transform)'`; \
+	dir='$(DESTDIR)$(libexecdir)'; $(am__uninstall_files_from_dir)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -671,7 +708,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(PROGRAMS) $(SCRIPTS) $(DATA)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(sysconfdir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libexecdir)" "$(DESTDIR)$(sysconfdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -733,7 +770,7 @@ install-dvi: install-dvi-am
 install-dvi-am:
 
 install-exec-am: install-binPROGRAMS install-binSCRIPTS \
-	install-sysconfDATA
+	install-dist_libexecSCRIPTS install-sysconfDATA
 
 install-html: install-html-am
 
@@ -773,7 +810,7 @@ ps: ps-am
 ps-am:
 
 uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
-	uninstall-sysconfDATA
+	uninstall-dist_libexecSCRIPTS uninstall-sysconfDATA
 
 .MAKE: install-am install-strip
 
@@ -782,16 +819,17 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 	distclean-compile distclean-generic distclean-libtool \
 	distclean-tags distdir dvi dvi-am html html-am html-local info \
 	info-am install install-am install-binPROGRAMS \
-	install-binSCRIPTS install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am install-man \
-	install-pdf install-pdf-am install-ps install-ps-am \
-	install-strip install-sysconfDATA installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
-	uninstall-am uninstall-binPROGRAMS uninstall-binSCRIPTS \
-	uninstall-sysconfDATA
+	install-binSCRIPTS install-data install-data-am \
+	install-dist_libexecSCRIPTS install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	install-sysconfDATA installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-binSCRIPTS \
+	uninstall-dist_libexecSCRIPTS uninstall-sysconfDATA
 
 
 omdriver.c: omdriver.h

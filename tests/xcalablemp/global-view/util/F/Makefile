@@ -1,7 +1,8 @@
 INCDIR = ../../../../../Driver/etc
 XMP_LINK_FLAGS=$(shell grep "LinkerOption=" $(INCDIR)/omf.conf | sed "s/LinkerOption=//g" | sed "s/\"//g")
 MPI_FC=$(shell grep "COMPILER=" $(INCDIR)/native.conf.xmpf | sed "s/COMPILER=//g"         | sed "s/\"//g")
-GASNET_LIB=$(shell grep "GASNET_LIB=" $(INCDIR)/linker.conf.xmp | sed "s/GASNET_LIB=//g"  | sed "s/\"//g")
+XMPC_LINK_FLAGS=$(shell xmpcc --show-env | sed -n '/OMNI_LINKER_OPT=/p' | sed 's/OMNI_LINKER_OPT=//' | sed "s/\"//g" | sed "s/-std=gnu99//") # Fix soon by mnakao
+
 XFC     = xmpf90 -O2
 XRUN    = mpiexec
 TESTS = $(wildcard *.f90)
@@ -24,7 +25,7 @@ sub_mpi.o: ./sub/sub_mpi.f90
 	$(XFC) -o $@ $<
 
 mpi_xmp.x: mpi_xmp.f90 ixmp_sub.o
-	$(MPI_FC) $(XMP_LINK_FLAGS) -o $@ mpi_xmp.f90 ixmp_sub.o -L../../../../../libxmpf/src -lxmpf -L../../../../../libxmp/src -lxmp $(GASNET_LIB)
+	$(MPI_FC) $(XMP_LINK_FLAGS) -o $@ mpi_xmp.f90 ixmp_sub.o -L../../../../../libxmpf/src -lxmpf -L../../../../../libxmp/src -lxmp $(XMPC_LINK_FLAGS)
 
 xmp_mpi.x: xmp_mpi.f90 sub_mpi.o
 	$(XFC) -o $@ xmp_mpi.f90 sub_mpi.o
