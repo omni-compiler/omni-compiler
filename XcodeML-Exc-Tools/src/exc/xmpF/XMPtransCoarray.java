@@ -16,6 +16,9 @@ public class XMPtransCoarray
   final static String CRAYPOINTER_PREFIX = "xmpf_crayptr";
   final static String INITPROC_PREFIX = "xmpf_traverse_initcoarray";
 
+  // the current class instances corresponding to the ancestor host procedures
+  static ArrayList<XMPtransCoarray> current_hosts = new ArrayList<XMPtransCoarray>();
+
   //private FuncDefBlock def;          // (XobjectDef)def.getDef() is more useful????
   // contains
   //  - XobjectDef def
@@ -78,11 +81,34 @@ public class XMPtransCoarray
       }
     }
 
+    // renew the list of the current hosts
+    // (assuming top-down analysis)
+    XobjectDef pdef = def.getParent();
+    if (pdef == null) {
+      // no host procedure of mine.  I.e., This is an external procedure.
+      current_hosts.clear();
+    } else {
+      for (int i = current_hosts.size() - 1; i >= 0; i--) {
+        if (pdef == current_hosts.get(i).def) {
+          // found the host (my parent) procedure
+          break;
+        }
+        current_hosts.remove(i);
+      }
+    }
+    current_hosts.add(this);
+
     // set all coarrays declared in the current and the host procedures
     visibleCoarrays = new Vector<XMPcoarray>();
     visibleCoarrays.addAll(staticLocalCoarrays);
     visibleCoarrays.addAll(allocLocalCoarrays);
+    if (current_hosts.size() > 1) {
+      // host association
+      XMPtransCoarray host = current_hosts.get(current_hosts.size() - 2);
+      visibleCoarrays.addAll(host.visibleCoarrays);
+    }
 
+    /****************************
     for (XobjectDef pdef = def.getParent();
          pdef != null; pdef = pdef.getParent()) {
       idList = pdef.getFuncIdList();
@@ -107,6 +133,7 @@ public class XMPtransCoarray
         }
       }
     }
+    ********************************/
   }
 
   //------------------------------
