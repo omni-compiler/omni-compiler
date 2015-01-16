@@ -76,7 +76,7 @@ public class XMPtransPragma
 
       Vector<XMPmodule> modules = env.getModules();
       for (int m = modules.size() - 1; m >= 0; m--){
-	Ident f = env.declIdent("xmpf_module_init_"+modules.get(m).getModuleName(),
+	Ident f = env.declIdent("xmpf_init_module_"+modules.get(m).getModuleName(),
 				Xtype.FsubroutineType);
 	prolog.insert(f.callSubroutine(Xcons.List()));
       }
@@ -94,7 +94,7 @@ public class XMPtransPragma
       // prolog_def.setParent(env.getCurrentDef().getDef());
 
       Ident prolog_f = 
-      	env.declIdent("xmpf_module_init_"+env.currentDefName(),
+      	env.declIdent("xmpf_init_module_"+env.currentDefName(),
 		      Xtype.FsubroutineType);
       XobjString modName = Xcons.Symbol(Xcode.IDENT, env.getCurrentDef().getDef().getName());
       Xobject decls = Xcons.List(Xcons.List(Xcode.F_USE_DECL, modName));
