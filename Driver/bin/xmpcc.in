@@ -53,7 +53,7 @@ trap "rm -rf $TEMP_DIR; exit 1" 1 2 3 15
 
 ### Preprocessor ###
 for c_file in $c_files; do
-    FILE_PREFIX=`xmp_get_file_prefix $c_file`     # /hoge/fuga/a.c -> hoge_fuga_a
+    FILE_PREFIX=`xmp_get_file_prefix $c_file`     # /hoge/fuga/a.c -> hoge_2f_fuga_2f_a
     FILE_PP_C=${TEMP_DIR}/${FILE_PREFIX}_pp.c
     FILE_PP_I=${TEMP_DIR}/${FILE_PREFIX}_pp.i
 
@@ -66,7 +66,7 @@ done
 
 ### C_Front ###
 for c_file in $c_files; do
-    FILE_PREFIX=`xmp_get_file_prefix $c_file`     # /hoge/fuga/a.c -> hoge_fuga_a
+    FILE_PREFIX=`xmp_get_file_prefix $c_file`     # /hoge/fuga/a.c -> hoge_2f_fuga_2f_a
     FILE_PP_I=${TEMP_DIR}/${FILE_PREFIX}_pp.i
     FILE_IN_X=${TEMP_DIR}/${FILE_PREFIX}_in.xml
 
@@ -77,7 +77,7 @@ done
 
 ### Translator ###
 for c_file in $c_files; do
-    FILE_PREFIX=`xmp_get_file_prefix $c_file`     # /hoge/fuga/a.c -> hoge_fuga_a
+    FILE_PREFIX=`xmp_get_file_prefix $c_file`     # /hoge/fuga/a.c -> hoge_2f_fuga_2f_a
     FILE_IN_X=${TEMP_DIR}/${FILE_PREFIX}_in.xml
     FILE_OUT_X=${TEMP_DIR}/${FILE_PREFIX}_out.xml
 
@@ -103,7 +103,7 @@ done
 
 ### Native Compiler ###
 for c_file in $c_files; do
-    FILE_PREFIX=`xmp_get_file_prefix $c_file`     # /hoge/fuga/a.c -> hoge_fuga_a
+    FILE_PREFIX=`xmp_get_file_prefix $c_file`     # /hoge/fuga/a.c -> hoge_2f_fuga_2f_a
     FILE_C=${TEMP_DIR}/${FILE_PREFIX}.c
     FILE_O=${TEMP_DIR}/${FILE_PREFIX}.o
     FILE_USER_O=`basename $c_file .c`.o
@@ -118,7 +118,7 @@ done
 ### Linker ###
 # collect initialize modules
 for c_file in $c_files; do
-    FILE_PREFIX=`xmp_get_file_prefix $c_file`     # /hoge/fuga/a.c -> hoge_fuga_a
+    FILE_PREFIX=`xmp_get_file_prefix $c_file`     # /hoge/fuga/a.c -> hoge_2f_fuga_2f_a
     FILE_O=${TEMP_DIR}/${FILE_PREFIX}.o
     obj_files="$obj_files $FILE_O"
 done
