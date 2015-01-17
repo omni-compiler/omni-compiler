@@ -26,7 +26,7 @@ Process Options
   --Wf[option] : Add frontend option.
   --Wx[option] : Add Xcode translator option.
   --Wb[option] : Add backend option.
-  --Wn[option] : Add compiler option.
+  --Wn[option] : Add native compiler option.
   --Wl[option] : Add linker option.
 
 XcalableMP Options
@@ -75,6 +75,8 @@ function xmp_show_env()
 
 function xmp_set_parameters()
 {
+    local tmp_args=""
+
     for arg in "${@}"; do
 	case $arg in
 	    -o)
@@ -149,7 +151,7 @@ function xmp_set_parameters()
 		    OUTPUT_FILE=$arg
 		    OUTPUT_FLAG=false
 		else
-		    compile_args="$compile_args $arg"
+		    tmp_args="$tmp_args $arg"
 		fi;;
 	esac
     done
@@ -158,7 +160,7 @@ function xmp_set_parameters()
         xmp_error_exit "cannot use both --tmp and --dry options at the same time."
     fi
 
-    for arg in $compile_args; do
+    for arg in $tmp_args; do
 	if [[ $arg =~ \.c$ ]]; then
             c_files="$c_files $arg"
 	elif [[ "${arg}" =~ \.o$ ]]; then
@@ -187,7 +189,8 @@ function xmp_exec()
     [ $? -ne 0 ] && { xmp_exec rm -rf $TEMP_DIR; exit 1; }
 }
 
-function xmp_get_file_prefix()
+# ./hoge/fuga.c -> hoge_2f_fuga_2f_a
+function xmp_norm_file_name()
 {
     local NORM_NAME=`echo $1 | sed 's/^\.\///'`      # ./hoge/fuga.c -> hoge/fuga.c
     NORM_NAME=`echo $NORM_NAME | sed 's/\//_2f_/g'`  # hoge/fuga/a.c -> hoge_2f_fuga_2f_a.c        # "2f" is a hex number of '/'.
