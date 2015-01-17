@@ -1278,9 +1278,9 @@ AC_SUBST(javadir)
 
 # java option
 # Fix: #338
-#JAVA_OPTION="-Xmx1024m -Xms1024m"
-JAVA_OPTION="-Xmx200m -Xms200m"
-AC_SUBST(JAVA_OPTION)
+#JAVA_OPT="-Xmx1024m -Xms1024m"
+JAVA_OPT="-Xmx200m -Xms200m"
+AC_SUBST(JAVA_OPT)
 
 #--------------------------------------------------------------------
 # endian check

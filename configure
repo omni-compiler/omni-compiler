@@ -705,7 +705,7 @@ SIZEOF_FLOAT
 SIZEOF_DOUBLE
 POW_LIB
 LIBOBJS
-JAVA_OPTION
+JAVA_OPT
 javadir
 JAR
 JAVAC
@@ -21978,8 +21978,8 @@ javadir='${prefix}/share/xcalablemp'
 
 # java option
 # Fix: #338
-#JAVA_OPTION="-Xmx1024m -Xms1024m"
-JAVA_OPTION="-Xmx200m -Xms200m"
+#JAVA_OPT="-Xmx1024m -Xms1024m"
+JAVA_OPT="-Xmx200m -Xms200m"
 
 
 #--------------------------------------------------------------------

@@ -5,44 +5,39 @@ usage: $1 <OPTIONS> <INPUTFILE> ...
 
 Compile Driver Options
 
-   -o <file>       : place the output into <file>
-   -c              : compile and assemble, but do not link
-   -E              : preprocess only; do not compile, assemble or link (as the same --stop-pp)
-   -v,--verbose    : print processing status.
-   --version       : print version.
-   -h,--help       : print usage.
-   --show-env      : show environment variables.
-   --tmp           : output parallel code (__omni_tmp_SRCNAME.c).
-   --dry           : only print processing status (not compile).
-   --stop-pp       : save intermediate file and stop after preprocess.
-   --stop-frontend : save intermediate file and stop after frontend.
-   --stop-xcode    : save intermediate file and stop after Xcode process.
-   --stop-backend  : save intermediate file and stop after backend.
-   --stop-compile  : save intermediate file and stop after native compile.
+   -o <file>         : place the output into <file>.
+   -c                : compile and assemble, but do not link.
+   -E                : preprocess only; do not compile, assemble or link.
+   -v,--verbose      : print processing status.
+   --version         : print version.
+   -h,--help         : print usage.
+   --show-env        : show environment variables.
+   --tmp             : output parallel code (__omni_tmp__<file>).
+   --dry             : only print processing status (not compile).
+   --stop-pp         : save intermediate file and stop after preprocess.
+   --stop-frontend   : save intermediate file and stop after frontend.
+   --stop-translator : save intermediate file and stop after translator.
+   --stop-backend    : save intermediate file and stop after backend.
+   --stop-compile    : save intermediate file and stop after compile.
 
 Process Options
 
   --Wp[option] : Add preprocessor option.
   --Wf[option] : Add frontend option.
-  --Wx[option] : Add Xcode processor option.
+  --Wx[option] : Add Xcode translator option.
   --Wb[option] : Add backend option.
-  --Wn[option] : Add native compiler option.
+  --Wn[option] : Add compiler option.
   --Wl[option] : Add linker option.
 
 XcalableMP Options
 
-  -omp,--openmp       : enable OpenMP function.
+  -omp,--openmp       : enable OpenMP.
   -xacc,--xcalableacc : enable XcalableACC.
-  --scalasca-all      : output results in scalasca format of all directives.
-  --scalasca          : output results in scalasca format of selected directives.
-  --tlog-all          : output results in tlog format of all directives.
-  --tlog              : output results in tlog format of selected directives.
+  --scalasca-all      : output results in scalasca format for all directives.
+  --scalasca          : output results in scalasca format for selected directives.
+  --tlog-all          : output results in tlog format for all directives.
+  --tlog              : output results in tlog format for selected directives.
 EOF
-}
-
-function xmp_print_version()
-{
-    echo "version"
 }
 
 function xmp_error_exit()
@@ -52,14 +47,30 @@ function xmp_error_exit()
     exit 1
 }
 
+function xmp_print_version()
+{
+    VERSION_FILE="${OMNI_HOME}/etc/version"
+    if [ -f $VERSION_FILE ]; then
+	cat $VERSION_FILE
+	echo ""
+    else
+	xmp_error_exit "$VERSION_FILE not exist."
+    fi
+}
+
 function xmp_show_env()
 {
-    for val in `sed '/^[[:space:]]*$/d' ${OMNI_HOME}/etc/xmpcc.conf | grep -v '^#' | awk -F= '{print $1}'`
-    do
-	echo -n ${val}=\"
-        eval echo -n \"\$$val\"
-	echo \"
-    done
+    CONF_FILE=${OMNI_HOME}/etc/xmpcc.conf
+    if [ -f $CONF_FILE ]; then
+	for val in `sed '/^[[:space:]]*$/d' ${CONF_FILE} | grep -v '^#' | awk -F= '{print $1}'`
+	do
+	    echo -n ${val}=\"
+            eval echo -n \"\$$val\"
+	    echo \"
+	done
+    else
+	xmp_error_exit "$CONF_FILE not exist."
+    fi
 }
 
 function xmp_set_parameters()
@@ -70,6 +81,8 @@ function xmp_set_parameters()
                 OUTPUT_FLAG=true;;
             -c)
 		ENABLE_LINKER=false;;
+	    -E)
+		ONLY_PP=true;;
             -v|--verbose)
 		VERBOSE=true;;
 	    --version)
@@ -86,14 +99,14 @@ function xmp_set_parameters()
 		OUTPUT_TEMPORAL=true;;
             --dry)
 		DRY_RUN=true;;
-            --stop-pp|-E)
+            --stop-pp)
 		STOP_PP=true
 		VERBOSE=true;;
             --stop-frontend)
 		STOP_FRONTEND=true
 		VERBOSE=true;;
-	    --stop-xcode)
-		STOP_XCODE=true
+	    --stop-translator)
+		STOP_TRANSLATOR=true
 		VERBOSE=true;;
 	    --stop-backend)
 		STOP_BACKEND=true
@@ -108,7 +121,7 @@ function xmp_set_parameters()
 		FRONTEND_ADD_OPT=${arg#--Wf}
                 ;;
             --Wx*)
-		XCODE_ADD_OPT=${arg#--Wx}
+		XCODE_TRANSLATOR_ADD_OPT=${arg#--Wt}
                 ;;
 	    --Wn*)
 		NATIVE_ADD_OPT=${arg#--Wn}
@@ -120,7 +133,7 @@ function xmp_set_parameters()
 		LINKER_ADD_OPT=${arg#--Wl}
 		;;
 	    --openmp|-omp)
-		compile_args="$compile_args $OPENMP_OPT";;
+		ENABLE_OPENMP=true;;
 	    --xcalableacc|-xacc)
 		ENABLE_XACC=true;;
 	    --scalasca-all)
@@ -171,16 +184,13 @@ function xmp_exec()
 	eval $@
     fi
 
-    if test $? -ne 0; then
-	exit 1
-    fi
+    [ $? -ne 0 ] && { xmp_exec rm -rf $TEMP_DIR; exit 1; }
 }
 
-# /hoge/fuga/a.c -> hoge-fuga-a
 function xmp_get_file_prefix()
 {
     local NORM_NAME=`echo $1 | sed 's/^\.\///'`      # ./hoge/fuga.c -> hoge/fuga.c
-    NORM_NAME=`echo $NORM_NAME | sed 's/\//_2f_/g'`  # hoge/fuga/a.c -> hoge_2f_fuga_2f_a.c # "2f" is a hex number of '/'
+    NORM_NAME=`echo $NORM_NAME | sed 's/\//_2f_/g'`  # hoge/fuga/a.c -> hoge_2f_fuga_2f_a.c        # "2f" is a hex number of '/'.
     NORM_NAME=`basename $NORM_NAME .c`               # hoge_2f_fuga_2f_a.c -> hoge_2f_fuga_2f_a
 
     echo $NORM_NAME
