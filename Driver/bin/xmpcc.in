@@ -31,6 +31,7 @@ ENABLE_TLOG=false
 # These parameters are set in xmp_set_parameters().
 OUTPUT_FILE=
 PROFILE_OPT=
+OPENMP_ADD_OPT=
 PP_ADD_OPT=
 FRONTEND_ADD_OPT=
 XCODE_TRANSLATOR_ADD_OPT=
@@ -99,7 +100,9 @@ for c_file in $c_files; do
 	PROFILE_OPT="-tlog-all"
     elif [ $ENABLE_TLOG = true ]; then
 	PROFILE_OPT="-tlog"
-    elif [ $ENABLE_SCALASCA_ALL = true ]; then
+    fi
+
+    if [ $ENABLE_SCALASCA_ALL = true ]; then
 	PROFILE_OPT="-scalasca-all"
     elif [ $ENABLE_SCALASCA = true ]; then
 	PROFILE_OPT="-scalasca"
@@ -135,7 +138,6 @@ for c_file in $c_files; do
     xmp_exec $OMNI_MPICC_CMD $NATIVE_ADD_OPT $OMNI_MPICC_OPT $OPENMP_ADD_OPT $other_args $FILE_C -o $FILE_O
     xmp_exec cp $FILE_O $FILE_USER_O
 done
-
 [ $STOP_COMPILE = true ] && exit 0;
 [ $ENABLE_LINKER = false ] && { xmp_exec rm -rf $TEMP_DIR; exit 0; }
 
