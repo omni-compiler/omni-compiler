@@ -14,11 +14,12 @@ Compile Driver Options
    --show-env        : show environment variables.
    --tmp             : output parallel code (__omni_tmp__<file>).
    --dry             : only print processing status (not compile).
-   --stop-pp         : save intermediate file and stop after preprocess.
-   --stop-frontend   : save intermediate file and stop after frontend.
-   --stop-translator : save intermediate file and stop after translator.
-   --stop-backend    : save intermediate file and stop after backend.
-   --stop-compile    : save intermediate file and stop after compile.
+   --debug[=<dir>]   : save intermediate files in <dir>. (default <dir> is __omni_tmp__).
+   --stop-pp         : save intermediate files and stop after preprocess.
+   --stop-frontend   : save intermediate files and stop after frontend.
+   --stop-translator : save intermediate files and stop after translator.
+   --stop-backend    : save intermediate files and stop after backend.
+   --stop-compile    : save intermediate files and stop after compile.
 
 Process Options
 
@@ -101,6 +102,11 @@ function xmp_set_parameters()
 		OUTPUT_TEMPORAL=true;;
             --dry)
 		DRY_RUN=true;;
+	    --debug)
+		ENABLE_DEBUG=true;;
+	    --debug=*)
+                ENABLE_DEBUG=true
+		DEBUG_TEMP_DIR=${arg#--debug=};;
             --stop-pp)
 		STOP_PP=true
 		VERBOSE=true;;
