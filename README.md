@@ -78,8 +78,3 @@ README
 
      #pragma xmp loop on t(i) profile
 
- To compile XMP source code with profiling, please add following options.
-    -profile         Emit XMP directive profiling code only for specified directives
-    -allprofile      Emit XMP directive profiling code for all directives
-    -with-scalasca   Emit Scalasca instrumentation
-    -with-tlog       Emit tlog instrumentation

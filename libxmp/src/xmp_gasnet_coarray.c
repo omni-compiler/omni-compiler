@@ -1,7 +1,7 @@
 #include <stdarg.h>
 #include "mpi.h"
 #include "xmp_internal.h"
-#include "xmp_atomic.h"
+
 static size_t _xmp_heap_size, _xmp_stride_size, _xmp_coarray_shift = 0;
 static int *_xmp_gasnet_stride_queue;
 static int _xmp_gasnet_stride_wait_size = 0;

@@ -1,3 +1,0 @@
-#OM_OPTIONS="${OM_OPTIONS} -fxmp"
-OM_OPTIONS="${OM_OPTIONS}"
-

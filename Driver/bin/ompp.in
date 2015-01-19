@@ -30,8 +30,6 @@ if [ ! -z "${OM_TRANSLATORS}" ]; then
     done;
 fi
 
-GASNET_CPPFLAGS="@GASNET_CPPFLAGS@"
-
 TMP_FILE="${INPFILE}"
 REPLACE_PRAGMA_CMD=""
 INCLUDES=""
@@ -72,7 +70,7 @@ for opt in ${OM_OPTIONS}; do
 done
 
 CMD=${PP}
-CMD_ARGS=( "${OM_OPTION_ARR[@]}" ${GASNET_CPPFLAGS} "${TMP_FILE}" )
+CMD_ARGS=( "${OM_OPTION_ARR[@]}" "${TMP_FILE}" )
 
 if [ "${OM_VERBOSE}" = "1" ]; then
     if [ "${REPLACE_PRAGMA_CMD}" != "" ]; then

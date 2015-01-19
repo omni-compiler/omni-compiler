@@ -1,5 +1,4 @@
-INCDIR = ../../../../Driver/etc
-include $(INCDIR)/native.conf.xmp
+COMPILER=$(shell xmpcc --show-env | grep OMNI_MPICC_CMD | sed 's/OMNI_MPICC_CMD=//' | sed "s/\"//g")
 MPIPATH=$(shell which $(COMPILER) | sed "s/bin\/$(COMPILER)/include/g")
 XCC     = xmpcc -O2
 XRUN    = mpirun
@@ -38,6 +37,7 @@ run:
 	XMP_NODE_SIZE0=2 $(XRUN) -n 4 ./343_dynamicnode.x
 	XMP_NODE_SIZE0=4 $(XRUN) -n 4 ./343_dynamicnode.x
 	$(XRUN) -n 1 ./344_include.x
+	$(XRUN) -n 1 ./293-hyphen.x
 
 #-- cleaning
 clean:

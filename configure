@@ -680,21 +680,6 @@ OM_EXEC_C_COMPILER
 OM_EXEC_C_PP
 OM_DRIVER_CONF_DIR
 OMNI_HOME
-GPGPU_PREFIX
-GPU_CFLAGS
-GPU_CMD
-GASNET_LIBS
-GASNET_LDFLAGS
-GASNET_CFLAGS
-GASNET_CPPFLAGS
-GASNET_CONDUIT
-GASNET_PREFIX
-GASNET_FALSE
-GASNET_TRUE
-TCA_PREFIX
-TCA_FALSE
-TCA_TRUE
-LIBXML_PREFIX
 omniQRealFillGap
 omniQRealPrecInLimb
 omniLimbT
@@ -720,7 +705,7 @@ SIZEOF_FLOAT
 SIZEOF_DOUBLE
 POW_LIB
 LIBOBJS
-JAVA_OPTION
+JAVA_OPT
 javadir
 JAR
 JAVAC
@@ -739,20 +724,31 @@ OMNI_LNK_FCFLAGS
 OMNI_NTV_FCFLAGS
 OMNI_LX2X_FCFLAGS
 OMNI_L2X_FCFLAGS
-OMNI_F_PP
 OMNI_LNK_CFLAGS
 OMNI_NTV_CFLAGS
 OMNI_LX2X_CFLAGS
 OMNI_L2X_CFLAGS
-OMNI_C_PP
 MPI_FCLIBS
 MPI_MODINC
 MPI_FCFLAGS
+MPI_FPPFLAGS
+MPI_FPP
 MPI_FC
 MPI_CLIBS
 MPI_CFLAGS
+MPI_CPPFLAGS
+MPI_CPP
 MPI_CC
 MPI_OPENMP_FLAG
+GASNET_LIBS
+GASNET_FALSE
+GASNET_TRUE
+TCA_FALSE
+TCA_TRUE
+LIBXML_PREFIX
+GPGPU_PREFIX
+GPU_CFLAGS
+GPU_CMD
 IS_PGI
 ENABLE_XACC
 ENABLE_XACC_FALSE
@@ -943,17 +939,17 @@ enable_atool
 enable_xacc
 enable_mpi3
 enable_FJRDMA
-enable_mreal
-with_gmp_lib
-with_gmp_include
-with_precision
+with_gpucc
+with_gpu_cflags
+with_cuda
 with_libxml
 with_TCA
 with_gasnet
 with_gasnet_conduit
-with_gpucc
-with_gpu_cflags
-with_cuda
+enable_mreal
+with_gmp_lib
+with_gmp_include
+with_precision
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1618,16 +1614,16 @@ Optional Packages:
                         (or the compiler's sysroot if not specified).
   --with-thread               type of openmp thread
   --with-lock                 type of openmp lock
-  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support.
-  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support.
-  --with-precision=NUM        the default precision of real*16 in bits (128).
+  --with-gpucc=CMD            GPU C compiler (default: nvcc)
+  --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)
+  --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)
   --with-libxml=DIR           libxml installation path (default: /usr)
   --with-TCA=DIR              TCA installation path
   --with-gasnet=DIR           GASNet installation path
   --with-gasnet-conduit=NAME  GASNet conduit
-  --with-gpucc=CMD            GPU C compiler (default: nvcc)
-  --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)
-  --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)
+  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support.
+  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support.
+  --with-precision=NUM        the default precision of real*16 in bits (128).
 
 Some influential environment variables:
   CC          C compiler command
@@ -12209,19 +12205,9 @@ if test -e "Driver/src/Makefile.am"; then
 
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/ompcc"
 
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omcpp"
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/xmpcc"
 
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omc2x"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omcx2x"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omx2c"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omcnative"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omclinker"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/omc.conf"
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/xmpcc.conf"
 
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omf2f"
 
@@ -12240,18 +12226,6 @@ if test -e "Driver/src/Makefile.am"; then
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omflinker"
 
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/omf.conf"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/xmpcc"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/pp.conf.xmp"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/l2x.conf.xmp"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/x2x.conf.xmp"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/native.conf.xmp"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/linker.conf.xmp"
 
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/xmpf90"
 
@@ -20545,27 +20519,27 @@ elif test "$target" = "powerpc-hitachi-aix"; then
   MPI_CC="mpCC_r"
   MPI_CPP=$MPI_CC
   MPI_CPPFLAGS="-E"
-  MPI_CFLAGS="-q64 -qipa -qhot -qsimd=auto -O5 $MPI_OPENMP_FLAG"
+  MPI_CFLAGS="-q64 -qhot -qsimd=auto -O5 $MPI_OPENMP_FLAG"
   MPI_CLIBS=""
 
 # MPI F
   MPI_FC="mpxlf90_r"
   MPI_FPP=$MPI_FC
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-q64 -qipa -qhot -qsimd=auto -O5 -qextname $MPI_OPENMP_FLAG"
+  MPI_FCFLAGS="-q64 -qhot -qsimd=auto -O5 -qextname $MPI_OPENMP_FLAG"
   MPI_MODINC="-I"
   MPI_FCLIBS=""
 
 # Omni C
   OMNI_L2X_CFLAGS=""
   OMNI_LX2X_CFLAGS=""
-  OMNI_NTV_CFLAGS="-q64 -qipa"
+  OMNI_NTV_CFLAGS="-q64"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
 # Omni F
   OMNI_L2X_FCFLAGS=""
   OMNI_LX2X_FCFLAGS=""
-  OMNI_NTV_FCFLAGS="-q64 -qipa -qextname"
+  OMNI_NTV_FCFLAGS="-q64 -qextname"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
 
 else
@@ -20698,8 +20672,187 @@ else
   esac
 fi
 
-# Set user defined value.
+# --------------------------------------------------------------------
+# specify GPU C compiler
 
+
+# Check whether --with-gpucc was given.
+if test "${with_gpucc+set}" = set; then :
+  withval=$with_gpucc; GPU_CMD="${withval}"
+else
+  GPU_CMD="nvcc"
+fi
+
+
+
+
+# --------------------------------------------------------------------
+# specify GPU C compiler flags
+
+
+# Check whether --with-gpu-cflags was given.
+if test "${with_gpu_cflags+set}" = set; then :
+  withval=$with_gpu_cflags; GPU_CFLAGS="${withval}"
+else
+  GPU_CFLAGS="-arch=sm_20 -O3"
+fi
+
+
+
+
+# --------------------------------------------------------------------
+# specify libgpu path
+
+
+# Check whether --with-cuda was given.
+if test "${with_cuda+set}" = set; then :
+  withval=$with_cuda; GPGPU_PREFIX="${withval}"
+else
+  GPGPU_PREFIX="/usr/local/cuda"
+fi
+
+
+
+
+# --------------------------------------------------------------------
+# specify libxmp path
+
+
+# Check whether --with-libxml was given.
+if test "${with_libxml+set}" = set; then :
+  withval=$with_libxml; LIBXML_PREFIX="${withval}"
+else
+  LIBXML_PREFIX="/usr"
+fi
+
+
+if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
+   as_fn_error $? "parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help" "$LINENO" 5
+fi
+
+
+
+# --------------------------------------------------------------------
+# set TCA
+
+
+# Check whether --with-TCA was given.
+if test "${with_TCA+set}" = set; then :
+  withval=$with_TCA; TCA_PREFIX="${withval}"; use_tca=yes
+else
+  use_tca=no
+fi
+
+
+if test x$use_tca = xyes; then
+   if ! test -f $TCA_PREFIX/tca-api.h; then
+      as_fn_error $? "$TCA_PREFIX/tca-api.h not found. Please check --with-TCA=<DIR>" "$LINENO" 5
+   fi
+
+  MPI_CPPFLAGS="${MPI_CPPFLAGS} -I${TCA_PREFIX}"
+  MPI_CFLAGS="${MPI_CFLAGS} -I${TCA_PREFIX}"
+  MPI_CLIBS="${MPI_CLIBS} -L${TCA_PREFIX} -ltca"
+fi
+
+ if test x${use_tca} = xyes; then
+  TCA_TRUE=
+  TCA_FALSE='#'
+else
+  TCA_TRUE='#'
+  TCA_FALSE=
+fi
+
+# --------------------------------------------------------------------
+# specify GASNet path
+
+
+# Check whether --with-gasnet was given.
+if test "${with_gasnet+set}" = set; then :
+  withval=$with_gasnet; GASNET_PREFIX="${withval}"; use_gasnet=yes
+else
+  use_gasnet=no
+fi
+
+
+if test x$use_gasnet = xyes; then
+  if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
+    as_fn_error $? "${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnet" "$LINENO" 5
+  fi
+fi
+
+ if test x${use_gasnet} = xyes; then
+  GASNET_TRUE=
+  GASNET_FALSE='#'
+else
+  GASNET_TRUE='#'
+  GASNET_FALSE=
+fi
+
+
+# --------------------------------------------------------------------
+# specify GASNet conduit
+
+
+# Check whether --with-gasnet_conduit was given.
+if test "${with_gasnet_conduit+set}" = set; then :
+  withval=$with_gasnet_conduit; GASNET_CONDUIT="${withval}"
+else
+  GASNET_CONDUIT="${default_gasnet_conduit}"
+fi
+
+
+if test x${use_gasnet} = xyes; then
+  gasnet_conduit_flag=no
+  if test "${GASNET_CONDUIT}" = ""; then
+    for c in smp udp mpi gm lapi elan vapi ibv portals gemini shmem dcmf sci
+    do
+      if test -d ${GASNET_PREFIX}/include/${c}-conduit; then
+         GASNET_CONDUIT=${c}
+         gasnet_conduit_flag=yes
+      fi
+    done
+  else
+    gasnet_conduit_flag=yes
+  fi
+
+  if test "${gasnet_conduit_flag}" = no || ! test -d $GASNET_PREFIX/include/${GASNET_CONDUIT}-conduit; then
+    as_fn_error $? "${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit not found. Please attach or check --with-gasnet-conduit" "$LINENO" 5
+  else
+    # Create temporary Makefile to set $(GASNET_CPPFLAGS) $(GASNET_CFLAGS) $(GASNET_LDFLAGS) $(GASNET_LIBS)
+    __ECHO=""
+    if test $OS = "darwin"; then
+        __ECHO="echo"
+    else
+        __ECHO="echo -e"
+    fi
+    tmp_file=_XMP_makefile.$$
+    mak_file=${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit/${GASNET_CONDUIT}-seq.mak
+
+    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CPPFLAGS)" > ${tmp_file}
+    GASNET_CPPFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
+    GASNET_CPPFLAGS="${GASNET_CPPFLAGS} -D_XMP_COARRAY_GASNET"
+
+    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CFLAGS)"   > ${tmp_file}
+    GASNET_CFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
+
+    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LDFLAGS)"  > ${tmp_file}
+    GASNET_LDFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
+
+    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LIBS)"     > ${tmp_file}
+    GASNET_LIBS=`make -s -f ${tmp_file} 2>/dev/null`
+    rm ${tmp_file}
+    unset __ECHO
+  fi
+
+  MPI_CPPFLAGS="${MPI_CPPFLAGS} ${GASNET_CPPFLAGS}"
+  MPI_CFLAGS="${MPI_CFLAGS} ${GASNET_CFLAGS} ${GASNET_CPPFLAGS}"
+  MPI_CLIBS="${MPI_CLIBS} ${GASNET_LDFLAGS} ${GASNET_LIBS}"
+  OMNI_LNK_CFLAGS="${OMNI_LNK_CFLAGS} ${GASNET_LIBS}"
+fi
+
+
+
+# Set user defined value.
 if test "${userMPI_CPP}" != ""; then
   MPI_CPP="${userMPI_CPP}"
 fi
@@ -20785,24 +20938,23 @@ fi
 
 
 
+
+
 # MPI F
 
 
 
 
 
+
+
 # Omni C
-OMNI_C_PP="$MPI_CPP $MPI_CPPFLAGS"
-
-
 
 
 
 
 
 # Omni F
-OMNI_F_PP="$MPI_FPP $MPI_FPPFLAGS"
-
 
 
 
@@ -21826,8 +21978,8 @@ javadir='${prefix}/share/xcalablemp'
 
 # java option
 # Fix: #338
-#JAVA_OPTION="-Xmx1024m -Xms1024m"
-JAVA_OPTION="-Xmx200m -Xms200m"
+#JAVA_OPT="-Xmx1024m -Xms1024m"
+JAVA_OPT="-Xmx200m -Xms200m"
 
 
 #--------------------------------------------------------------------
@@ -24431,181 +24583,6 @@ fi
 
 
 # --------------------------------------------------------------------
-# specify libxmp path
-
-# Check whether --with-libxml was given.
-if test "${with_libxml+set}" = set; then :
-  withval=$with_libxml; LIBXML_PREFIX="${withval}"
-else
-  LIBXML_PREFIX="/usr"
-fi
-
-
-if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
-   as_fn_error $? "parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help" "$LINENO" 5
-fi
-
-
-
-# --------------------------------------------------------------------
-# set TCA
-
-# Check whether --with-TCA was given.
-if test "${with_TCA+set}" = set; then :
-  withval=$with_TCA; TCA_PREFIX="${withval}"; use_tca=yes
-else
-  use_tca=no
-fi
-
-
-if test x$use_tca = xyes; then
-   if ! test -f $TCA_PREFIX/tca-api.h; then
-      as_fn_error $? "$TCA_PREFIX/tca-api.h not found. Please check --with-TCA=<DIR>" "$LINENO" 5
-   fi
-fi
-
- if test x${use_tca} = xyes; then
-  TCA_TRUE=
-  TCA_FALSE='#'
-else
-  TCA_TRUE='#'
-  TCA_FALSE=
-fi
-
-
-
-# --------------------------------------------------------------------
-# specify GASNet path
-
-# Check whether --with-gasnet was given.
-if test "${with_gasnet+set}" = set; then :
-  withval=$with_gasnet; GASNET_PREFIX="${withval}"; use_gasnet=yes
-else
-  use_gasnet=no
-fi
-
-
-if test x$use_gasnet = xyes; then
-  if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
-    as_fn_error $? "${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnet" "$LINENO" 5
-  fi
-fi
-
- if test x${use_gasnet} = xyes; then
-  GASNET_TRUE=
-  GASNET_FALSE='#'
-else
-  GASNET_TRUE='#'
-  GASNET_FALSE=
-fi
-
-
-
-# --------------------------------------------------------------------
-# specify GASNet conduit
-
-
-# Check whether --with-gasnet_conduit was given.
-if test "${with_gasnet_conduit+set}" = set; then :
-  withval=$with_gasnet_conduit; GASNET_CONDUIT="${withval}"
-else
-  GASNET_CONDUIT="${default_gasnet_conduit}"
-fi
-
-
-if test x${use_gasnet} = xyes; then
-  gasnet_conduit_flag=no
-  if test "${GASNET_CONDUIT}" = ""; then
-    for c in smp udp mpi gm lapi elan vapi ibv portals gemini shmem dcmf sci
-    do
-      if test -d ${GASNET_PREFIX}/include/${c}-conduit; then
-         GASNET_CONDUIT=${c}
-         gasnet_conduit_flag=yes
-      fi
-    done
-  else
-    gasnet_conduit_flag=yes
-  fi
-
-  if test "${gasnet_conduit_flag}" = no || ! test -d $GASNET_PREFIX/include/${GASNET_CONDUIT}-conduit; then
-    as_fn_error $? "${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit not found. Please attach or check --with-gasnet-conduit" "$LINENO" 5
-  else
-    # Create temporary Makefile to set $(GASNET_CPPFLAGS) $(GASNET_CFLAGS) $(GASNET_LDFLAGS) $(GASNET_LIBS)
-    __ECHO=""
-    if test $OS = "darwin"; then
-        __ECHO="echo"
-    else
-	__ECHO="echo -e"
-    fi
-    tmp_file=_XMP_makefile.$$
-    mak_file=${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit/${GASNET_CONDUIT}-seq.mak
-
-    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CPPFLAGS)" > ${tmp_file}
-    GASNET_CPPFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
-    GASNET_CPPFLAGS="${GASNET_CPPFLAGS} -D_XMP_COARRAY_GASNET"
-
-    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CFLAGS)"   > ${tmp_file}
-    GASNET_CFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
-
-    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LDFLAGS)"  > ${tmp_file}
-    GASNET_LDFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
-
-    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LIBS)"     > ${tmp_file}
-    GASNET_LIBS=`make -s -f ${tmp_file} 2>/dev/null`
-    rm ${tmp_file}
-    unset __ECHO
-  fi
-fi
-
-
-
-
-
-
-
-# --------------------------------------------------------------------
-# specify GPU C compiler
-
-
-# Check whether --with-gpucc was given.
-if test "${with_gpucc+set}" = set; then :
-  withval=$with_gpucc; GPU_CMD="${withval}"
-else
-  GPU_CMD="nvcc"
-fi
-
-
-
-
-# --------------------------------------------------------------------
-# specify GPU C compiler flags
-
-
-# Check whether --with-gpu-cflags was given.
-if test "${with_gpu_cflags+set}" = set; then :
-  withval=$with_gpu_cflags; GPU_CFLAGS="${withval}"
-else
-  GPU_CFLAGS="-arch=sm_20 -O3"
-fi
-
-
-
-
-# --------------------------------------------------------------------
-# specify libgpu path
-
-
-# Check whether --with-cuda was given.
-if test "${with_cuda+set}" = set; then :
-  withval=$with_cuda; GPGPU_PREFIX="${withval}"
-else
-  GPGPU_PREFIX="/usr/local/cuda"
-fi
-
-
-
-
-# --------------------------------------------------------------------
 # Export Omni Config Variable
 
 OMNI_HOME=${prefix}
@@ -25453,6 +25430,14 @@ if test -z "${ENABLE_XACC_TRUE}" && test -z "${ENABLE_XACC_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_XACC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${TCA_TRUE}" && test -z "${TCA_FALSE}"; then
+  as_fn_error $? "conditional \"TCA\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${GASNET_TRUE}" && test -z "${GASNET_FALSE}"; then
+  as_fn_error $? "conditional \"GASNET\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${IS_PGI_TRUE}" && test -z "${IS_PGI_FALSE}"; then
   as_fn_error $? "conditional \"IS_PGI\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -25466,14 +25451,6 @@ if test -z "${IS_SUPERUX_TRUE}" && test -z "${IS_SUPERUX_FALSE}"; then
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
-if test -z "${TCA_TRUE}" && test -z "${TCA_FALSE}"; then
-  as_fn_error $? "conditional \"TCA\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${GASNET_TRUE}" && test -z "${GASNET_FALSE}"; then
-  as_fn_error $? "conditional \"GASNET\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 
 : "${CONFIG_STATUS=./config.status}"
 ac_write_fail=0
@@ -26559,13 +26536,8 @@ do
     "$OMDRIVER_DIR/../etc/linker.conf.openmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/linker.conf.openmp" ;;
     "$OMDRIVER_DIR/../bin/omc2c") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omc2c" ;;
     "$OMDRIVER_DIR/../bin/ompcc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/ompcc" ;;
-    "$OMDRIVER_DIR/../bin/omcpp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omcpp" ;;
-    "$OMDRIVER_DIR/../bin/omc2x") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omc2x" ;;
-    "$OMDRIVER_DIR/../bin/omcx2x") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omcx2x" ;;
-    "$OMDRIVER_DIR/../bin/omx2c") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omx2c" ;;
-    "$OMDRIVER_DIR/../bin/omcnative") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omcnative" ;;
-    "$OMDRIVER_DIR/../bin/omclinker") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omclinker" ;;
-    "$OMDRIVER_DIR/../etc/omc.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/omc.conf" ;;
+    "$OMDRIVER_DIR/../bin/xmpcc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/xmpcc" ;;
+    "$OMDRIVER_DIR/../etc/xmpcc.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/xmpcc.conf" ;;
     "$OMDRIVER_DIR/../bin/omf2f") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omf2f" ;;
     "$OMDRIVER_DIR/../bin/ompf90") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/ompf90" ;;
     "$OMDRIVER_DIR/../bin/omfpp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omfpp" ;;
@@ -26575,12 +26547,6 @@ do
     "$OMDRIVER_DIR/../bin/omfnative") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omfnative" ;;
     "$OMDRIVER_DIR/../bin/omflinker") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omflinker" ;;
     "$OMDRIVER_DIR/../etc/omf.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/omf.conf" ;;
-    "$OMDRIVER_DIR/../bin/xmpcc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/xmpcc" ;;
-    "$OMDRIVER_DIR/../etc/pp.conf.xmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/pp.conf.xmp" ;;
-    "$OMDRIVER_DIR/../etc/l2x.conf.xmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/l2x.conf.xmp" ;;
-    "$OMDRIVER_DIR/../etc/x2x.conf.xmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/x2x.conf.xmp" ;;
-    "$OMDRIVER_DIR/../etc/native.conf.xmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/native.conf.xmp" ;;
-    "$OMDRIVER_DIR/../etc/linker.conf.xmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/linker.conf.xmp" ;;
     "$OMDRIVER_DIR/../bin/xmpf90") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/xmpf90" ;;
     "$OMDRIVER_DIR/../etc/pp.conf.xmpf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/pp.conf.xmpf" ;;
     "$OMDRIVER_DIR/../etc/l2x.conf.xmpf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/l2x.conf.xmpf" ;;
@@ -28316,6 +28282,8 @@ if test -d .git; then
   if test $? -eq 0; then
     VERSION=`git log --date=short --pretty=format:"Last Commit Day:%ad, Hash Value:%h" -1`
     echo -n Version:${XMPPKG_VERSION}, ${VERSION} > ${VERSIONTXT}
+  else
+    echo -n "This omni compiler was compiled on no-git environment however git clone it." > ${VERSIONTXT}
   fi
 fi
 
