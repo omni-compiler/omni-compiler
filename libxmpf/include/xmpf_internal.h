@@ -289,21 +289,21 @@ extern int _XMPF_coarrayMsg;          // default: message off
 extern void xmpf_coarray_msg_(int *sw);
 
 extern int _XMPF_get_coarrayElement(int serno);
-extern void *_XMPF_get_coarrayDesc(int serno);
-extern int _XMPF_get_coarrayStart(int serno, void* baseAddr);
+extern char *_XMPF_get_coarrayDesc(int serno);
+extern int _XMPF_get_coarrayStart(int serno, char *baseAddr);
 
-extern void xmpf_coarray_malloc_(int *serno, void **pointer, int *count, int *element);
-extern void _XMPF_coarray_malloc(int *serno, void **pointer, int count, size_t element);
+extern void xmpf_coarray_malloc_(int *serno, char **pointer, int *count, int *element);
+extern void _XMPF_coarray_malloc(int *serno, char **pointer, int count, size_t element);
 
 extern void xmp_sync_memory_(void);
 extern void xmp_sync_all_(void);
 
 
 /* xmpf_coarray_put.c */
-extern void xmpf_coarray_put_array_(int *serno, void *baseAddr, int *element,
-                                    int *coindex, void *rhs, int *rank, ...);
+extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
+                                    int *coindex, char *rhs, int *rank, ...);
 
 /* xmpf_coarray_get.c */
-extern void xmpf_coarray_get_array_(int *serno, void *baseAddr, int *element,
-                                    int *coindex, void *result, int *rank, ...);
+extern void xmpf_coarray_get_array_(int *serno, char *baseAddr, int *element,
+                                    int *coindex, char *result, int *rank, ...);
 

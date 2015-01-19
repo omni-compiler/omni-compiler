@@ -2,8 +2,8 @@
 
 typedef struct {
   BOOL    is_used;
-  void   *desc;
-  void   *orgAddr;
+  char   *desc;
+  char   *orgAddr;
   int     count;
   size_t  element;
 } _coarrayInfo_t;
@@ -12,7 +12,7 @@ static _coarrayInfo_t _coarrayInfoTab[DESCR_ID_MAX] = {};
 static int _nextId = 0;
 
 static int _getNewSerno();
-static int _set_coarrayInfo(void *desc, void *orgAddr, int count, size_t element);
+static int _set_coarrayInfo(char *desc, char *orgAddr, int count, size_t element);
 
 
 /*****************************************\
@@ -26,21 +26,21 @@ int _XMPF_get_coarrayElement(int serno)
   return _coarrayInfoTab[serno].element;
 }
 
-void* _XMPF_get_coarrayDesc(int serno)
+char *_XMPF_get_coarrayDesc(int serno)
 {
   return _coarrayInfoTab[serno].desc;
 }
 
-int _XMPF_get_coarrayStart(int serno, void* baseAddr)
+int _XMPF_get_coarrayStart(int serno, char *baseAddr)
 {
   int element = _coarrayInfoTab[serno].element;
-  void* orgAddr = _coarrayInfoTab[serno].orgAddr;
+  char* orgAddr = _coarrayInfoTab[serno].orgAddr;
   int start = ((size_t)baseAddr - (size_t)orgAddr) / element;
   return start;
 }
 
 
-int _set_coarrayInfo(void *desc, void *orgAddr, int count, size_t element)
+int _set_coarrayInfo(char *desc, char *orgAddr, int count, size_t element)
 {
   int serno;
 
@@ -84,7 +84,7 @@ static int _getNewSerno() {
 
 
 /*****************************************\
-  switches
+  SWITCHES
 \*****************************************/
 
 void xmpf_coarray_msg_(int *sw)
@@ -97,15 +97,15 @@ void xmpf_coarray_msg_(int *sw)
   MALLOC
 \*****************************************/
 
-void xmpf_coarray_malloc_(int *serno, void **pointer, int *count, int *element)
+void xmpf_coarray_malloc_(int *serno, char **pointer, int *count, int *element)
 {
   _XMPF_coarray_malloc(serno, pointer, *count, (size_t)(*element));
 }
 
-void _XMPF_coarray_malloc(int *serno, void **pointer, int count, size_t element)
+void _XMPF_coarray_malloc(int *serno, char **pointer, int count, size_t element)
 {
-  void* desc;
-  void* orgAddr;
+  char *desc;
+  char *orgAddr;
 
   // see libxmp/src/xmp_coarray_set.c
   _XMP_coarray_malloc_info_1(count, element);  
@@ -142,7 +142,3 @@ void xmp_sync_all_()
     fprintf(stderr, "**** done sync_all, status=%d (%s)\n",
             status, __FILE__);
 }
-
-
-
-
