@@ -84,12 +84,8 @@ target_triplet = @target@
 bin_PROGRAMS = omdriver$(EXEEXT) xmp_collect_init$(EXEEXT) \
 	om_replace_pragma$(EXEEXT)
 subdir = ./Driver/src
-<<<<<<< HEAD
-DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
-=======
 DIST_COMMON = $(dist_libexec_SCRIPTS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
->>>>>>> master
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/buildutils/libtool.m4 \
 	$(top_srcdir)/buildutils/ltoptions.m4 \
@@ -148,23 +144,7 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-<<<<<<< HEAD
-SCRIPTS = $(bin_SCRIPTS)
-AM_V_P = $(am__v_P_@AM_V@)
-am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
-am__v_P_0 = false
-am__v_P_1 = :
-AM_V_GEN = $(am__v_GEN_@AM_V@)
-am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
-am__v_GEN_0 = @echo "  GEN     " $@;
-am__v_GEN_1 = 
-AM_V_at = $(am__v_at_@AM_V@)
-am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
-am__v_at_0 = @
-am__v_at_1 = 
-=======
 SCRIPTS = $(bin_SCRIPTS) $(dist_libexec_SCRIPTS)
->>>>>>> master
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include -I$(top_builddir)/Driver/atool/src/include/nata
 depcomp =
 am__depfiles_maybe =
@@ -483,16 +463,9 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 bin_SCRIPTS = ../bin/ompp ../bin/oml2x ../bin/omx2x ../bin/omx2l ../bin/omnative ../bin/omlinker \
-<<<<<<< HEAD
-	../bin/omc2c ../bin/ompcc ../bin/omc2x ../bin/omcx2x ../bin/omx2c ../bin/omcpp \
-	../bin/omcnative ../bin/omclinker ../bin/omf2f ../bin/ompf90 ../bin/omf2x ../bin/omfx2x \
-        ../bin/omx2f ../bin/omfpp ../bin/omfnative ../bin/omflinker ../bin/xmpcc ../bin/xmpf90 \
-	../bin/omtranslate ../bin/omni_traverse
-=======
 	../bin/omc2c ../bin/ompcc ../bin/omf2f ../bin/ompf90 ../bin/omf2x ../bin/omfx2x \
         ../bin/omx2f ../bin/omfpp ../bin/omfnative ../bin/omflinker ../bin/xmpf90 ../bin/xmpcc\
 	../bin/omtranslate ../bin/omni_collect_init
->>>>>>> master
 
 sysconf_DATA = ../etc/xmpcc.conf ../etc/omf.conf ../etc/java.conf ../etc/pp.conf.openmp ../etc/native.conf.openmp \
         ../etc/linker.conf.openmp ../etc/l2x.conf.openmp ../etc/x2x.conf.openmp ../etc/pp.conf.xmpf \
@@ -910,23 +883,6 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 
 .MAKE: install-am install-strip
 
-<<<<<<< HEAD
-.PHONY: CTAGS GTAGS TAGS all all-am check check-am clean \
-	clean-binPROGRAMS clean-generic clean-libtool clean-local \
-	cscopelist-am ctags ctags-am distclean distclean-compile \
-	distclean-generic distclean-libtool distclean-tags distdir dvi \
-	dvi-am html html-am html-local info info-am install install-am \
-	install-binPROGRAMS install-binSCRIPTS install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip install-sysconfDATA \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS \
-	uninstall-binSCRIPTS uninstall-sysconfDATA
-=======
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-binPROGRAMS \
 	clean-generic clean-libtool clean-local ctags distclean \
 	distclean-compile distclean-generic distclean-libtool \
@@ -943,7 +899,6 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 	pdf pdf-am ps ps-am tags uninstall uninstall-am \
 	uninstall-binPROGRAMS uninstall-binSCRIPTS \
 	uninstall-dist_libexecSCRIPTS uninstall-sysconfDATA
->>>>>>> master
 
 
 omdriver.c: omdriver.h
