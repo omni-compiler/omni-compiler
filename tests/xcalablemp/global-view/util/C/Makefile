@@ -1,7 +1,6 @@
 INCDIR = ../../../../../Driver/etc
-XMP_LINK_FLAGS=$(shell grep "LinkerOption=" $(INCDIR)/omc.conf | sed "s/LinkerOption=//g" | sed "s/\"//g")
-MPI_CC:=$(shell grep "COMPILER=" $(INCDIR)/native.conf.xmp | sed "s/COMPILER=//g"         | sed "s/\"//g")
-GASNET_LIB=$(shell grep "GASNET_LIB=" $(INCDIR)/linker.conf.xmp | sed "s/GASNET_LIB=//g"  | sed "s/\"//g")
+XMP_LINK_FLAGS=$(shell xmpcc --show-env | sed -n '/OMNI_LINKER_OPT=/p' | sed 's/OMNI_LINKER_OPT=//' | sed "s/\"//g")
+MPI_CC=$(shell xmpcc --show-env         | sed -n '/OMNI_MPICC_CMD=/p'  | sed 's/OMNI_MPICC_CMD=//'  | sed "s/\"//g")
 
 XCC     = xmpcc -O2
 XRUN    = mpiexec
@@ -25,7 +24,7 @@ sub_mpi.o: ./sub/sub_mpi.c
 	$(XCC) -o $@ $<
 
 mpi_xmp.x: mpi_xmp.c ixmp_sub.o
-	$(MPI_CC) $(XMP_LINK_FLAGS) -o $@ mpi_xmp.c ixmp_sub.o -L../../../../../libxmp/src -lxmp $(GASNET_LIB)
+	$(MPI_CC) -o $@ mpi_xmp.c ixmp_sub.o $(XMP_LINK_FLAGS)
 
 xmp_mpi.x: xmp_mpi.c sub_mpi.o
 	$(XCC) -o $@ xmp_mpi.c sub_mpi.o

@@ -32,7 +32,7 @@ int debug_flag    = FALSE;
 char *cc_command  = "cc";
 char *cc_option   = "";
 char *INIT_MODULE_OBJ, *INIT_PREFIX;
-char *MODULE_INIT_NAME, *MODULE_INIT_NAME_;
+char *MODULE_INIT_NAME, *MODULE_INIT_NAME_, *_MODULE_INIT_NAME, *DOT_MODULE_INIT_NAME;
 char *MODULE_INIT_ENTRY_NAME;
 int pid = -INT_MAX;
 int is_Mac = FALSE;
@@ -41,7 +41,6 @@ int is_AIX = FALSE;
 
 #define IS_VALID_STRING(s)	\
     (((s) != NULL && *(s) != '\0') ? TRUE : FALSE)
-
 
 /**
  * quote arguments to be accepted in system() 
@@ -74,12 +73,10 @@ static void strcat_escaped(char *s1, char *s2)
   strcpy_escaped(s1 + strlen(s1), s2);
 }
 
-
-
 int main(int argc, char *argv[])
 {
     int i, len;
-    int init_name_len, init_name_len_;
+    int init_name_len, init_name_len_, _init_name_len, dot_init_name_len;
     char *arg;
     FILE *fp;
     char **files = (char **)alloca(sizeof(char *) * argc);
@@ -138,20 +135,24 @@ int main(int argc, char *argv[])
                 switch ((int)((*argv)[2])) {
                     case 'F': {
                         if (debug_flag) fprintf(stderr, "Fortran mode\n");
-                        INIT_MODULE_OBJ   = "_xmpf_module_INIT.o";
-                        INIT_PREFIX       = "_xmpf_init_";
-                        MODULE_INIT_NAME  = "_xmpf_module_init_";
-                        MODULE_INIT_NAME_ = "_xmpf_module_init__";
+                        INIT_MODULE_OBJ        = "_xmpf_module_INIT.o";
+                        INIT_PREFIX            = "_xmpf_init_";
+                        MODULE_INIT_NAME       = "_xmpf_module_init_";
+                        MODULE_INIT_NAME_      = "_xmpf_module_init__";
+			_MODULE_INIT_NAME      = "__xmpf_module_init_";  // Not used
                         MODULE_INIT_ENTRY_NAME = "xmpf_module_init__";
+			DOT_MODULE_INIT_NAME   = ".xmpf_module_init__";  // Not used
                         break;
                     }
                     case 'C': {
                         if (debug_flag) fprintf(stderr, "C mode\n");
-                        INIT_MODULE_OBJ   = "_xmpc_module_INIT.o";
-                        INIT_PREFIX       = "_xmpc_init_";
-                        MODULE_INIT_NAME  = "_xmpc_module_init_";
-                        MODULE_INIT_NAME_ = "_xmpc_module_init__";
+                        INIT_MODULE_OBJ        = "_xmpc_module_INIT.o";
+                        INIT_PREFIX            = "_xmpc_init_";
+                        MODULE_INIT_NAME       = "xmpc_init_file_";
+			_MODULE_INIT_NAME      = "_xmpc_init_file_";
+                        MODULE_INIT_NAME_      = "_xmpc_module_init__";  // Not used
                         MODULE_INIT_ENTRY_NAME = "xmpc_module_init";
+			DOT_MODULE_INIT_NAME   =".xmpc_init_file_";      // Not used
                         break;
                     }
                 }
@@ -213,8 +214,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    //    pid = getpid();
-    //    strcpy(command_buf,"nm");
     strcpy(command_buf, NM);
     for (i = 0; i < n_files; i++){
         arg = files[i];
@@ -231,24 +230,44 @@ int main(int argc, char *argv[])
         fprintf(stderr, "error: %s execution failure.\n", NM);
         return 1;
     }
-    init_name_len = strlen(MODULE_INIT_NAME);
-    init_name_len_ = strlen(MODULE_INIT_NAME_);
+
+    init_name_len     = strlen(MODULE_INIT_NAME);
+    init_name_len_    = strlen(MODULE_INIT_NAME_);
+    _init_name_len    = strlen(_MODULE_INIT_NAME);
+    dot_init_name_len = strlen(DOT_MODULE_INIT_NAME);
+
     while(fscanf(fp,"%s",buf) == 1){
       if(strncmp(buf,".jwe",4) == 0 || strncmp(buf,"jpj.",4) == 0){
         is_K_FC = TRUE;
         continue; // Fortran compiler on the K computer
       }
 
+      // On Mac OS X (Darwin), all module is added "_".
+      // For example, __shadow_xmpc_module_init_ -> ___shadow_xmpc_module_init_
       if(strncmp(buf,"_xmpc_init_all",14) == 0 || 
          strncmp(buf,"_xmpf_main_",11) == 0) is_Mac = TRUE;
 
-      if(strncmp(buf,".xmpf_main_",11)==0||
-         strncmp(buf,".xmpc_init_all",14)==0) is_AIX = TRUE;
-      // On Mac OS X (Darwin), all module is added "_".
-      // For example, __shadow_xmpc_module_init_ -> ___shadow_xmpc_module_init_
+      if(strncmp(buf,".xmpc_init_all",14) == 0 ||
+	 strncmp(buf,".xmpf_main_",11) == 0) is_AIX = TRUE;
       
       len = strlen(buf);
-      if(len > init_name_len && 
+
+      if(is_Mac){
+	if(len > _init_name_len && strncmp(buf,_MODULE_INIT_NAME,16) == 0)
+	  module_init_names[n_module_init++] = strdup(buf);
+	continue;
+      }
+      if(is_AIX){
+	if(len > dot_init_name_len && strncmp(buf,DOT_MODULE_INIT_NAME,16) == 0)
+	  module_init_names[n_module_init++] = strdup(buf);
+	continue;
+      }
+
+      if(len > init_name_len &&
+         strncmp(buf,MODULE_INIT_NAME,15) == 0){
+        module_init_names[n_module_init++] = strdup(buf);
+      }
+      else if(len > init_name_len && 
          strcmp(buf+(len-init_name_len),MODULE_INIT_NAME) == 0){
         module_init_names[n_module_init++] = strdup(buf);
       } 
@@ -257,7 +276,6 @@ int main(int argc, char *argv[])
         module_init_names[n_module_init++] = strdup(buf);
       }
       else{
-        // for the Cray
         // In Cray machines, when module name "foo", 
         // a subroutine for "foo" is converted to "foo_xmpf_module_init_$foo_".
         int module_name_len = (len - init_name_len - 2) / 2;
@@ -273,7 +291,7 @@ int main(int argc, char *argv[])
     if (pid >= 0 && IS_VALID_STRING(init_func_object) == FALSE) {
       sprintf(init_func_object,"%s%s%d.o",tmp_dir,INIT_PREFIX,pid);
     }
-    //    strcpy(init_func_object,INIT_MODULE_OBJ);
+
     fp = fopen(init_func_source,"w");
     if (fp == NULL){
       fprintf(stderr,"cannot open '%s'\n",init_func_source);
@@ -283,8 +301,9 @@ int main(int argc, char *argv[])
     if(!is_K_FC){
       for(i=0; i<n_module_init;i++){
         char *name = module_init_names[i];
-        if(is_Mac)
-        strcpy(name, name+sizeof(char)); // Remove the first charactor of function name
+        if(is_Mac){
+	  strcpy(name, name+sizeof(char)); // Remove the first charactor of function name
+	}
         if(is_AIX)                                   // ___shadow_xmpc_module_init_ -> __shadow_xmpc_module_init_
           {
             if(strncmp(name,".",1)==0)
@@ -306,7 +325,6 @@ int main(int argc, char *argv[])
      if(strchr(name,'.') != NULL){
        if(is_AIX)
          {
-           //fprintf(fp, "asm(\"mr 31,1\");\n"); 
            fprintf(fp, "asm(\"nop\");\n");
            fprintf(fp,"\t%s();\n",strcpy(name,name+1));
            break;

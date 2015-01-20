@@ -65,10 +65,10 @@ OMNI_JAR3="${OMNI_HOME}/share/xcalablemp/om-f-back.jar"
 OMNI_JAR4="${OMNI_HOME}/share/xcalablemp/om-common.jar"
 
 if [ -f $OMNI_JAR1 -a -f $OMNI_JAR2 -a -f $OMNI_JAR3 -a -f $OMNI_JAR4 ]; then
-  JAVA_CMD="${OMNI_JAVA} ${OMNI_JAVA_OPTION} -cp ${OMNI_JAR4}:${OMNI_JAR3}:${OMNI_JAR2}:${OMNI_JAR1} exc.util.omompx ${CMD_OPT}"
+  JAVA_CMD="${OMNI_JAVA} ${OMNI_JAVA_OPT} -cp ${OMNI_JAR4}:${OMNI_JAR3}:${OMNI_JAR2}:${OMNI_JAR1} exc.util.omompx ${CMD_OPT}"
 elif [ -f "${OMNI_HOME}/classes/exc/util/omompx.class" ]; then
   export CLASSPATH="${OMNI_HOME}/classes:${OMNI_HOME}/../C-BackEnd/binding/classes:${OMNI_HOME}/../C-BackEnd/classes:${OMNI_HOME}/../F-BackEnd/binding/classes:${OMNI_HOME}/../F-BackEnd/classes:${OMNI_HOME}/../XcodeML-Common/classes"
-  JAVA_CMD="${OMNI_JAVA} ${OMNI_JAVA_OPTION} exc.util.omompx ${CMD_OPT}"
+  JAVA_CMD="${OMNI_JAVA} ${OMNI_JAVA_OPT} exc.util.omompx ${CMD_OPT}"
 else
   echo program not found.
   exit 1

@@ -107,11 +107,6 @@ DELETABLES = C-BackEnd/bin/C_Back \
 	C-FrontEnd/src/c-parser.c \
 	C-FrontEnd/src/c-parser.h \
 	Driver/bin/omc2c \
-	Driver/bin/omc2x \
-	Driver/bin/omclinker \
-	Driver/bin/omcnative \
-	Driver/bin/omcpp \
-	Driver/bin/omcx2x \
 	Driver/bin/omf2f \
 	Driver/bin/omf2x \
 	Driver/bin/omflinker \
@@ -127,32 +122,27 @@ DELETABLES = C-BackEnd/bin/C_Back \
 	Driver/bin/omx2c \
 	Driver/bin/omx2f \
 	Driver/bin/omx2l \
-	Driver/bin/omx2x \
-	Driver/bin/xmpcc \
 	Driver/bin/xmpf90 \
+	Driver/bin/xmpcc \
+	 Driver/etc/xmpcc.conf \
 	Driver/bin/omtranslate \
 	Driver/bin/omni_traverse \
 	Driver/etc/java.conf \
 	Driver/etc/l2x.conf.openmp \
-	Driver/etc/l2x.conf.xmp \
 	Driver/etc/l2x.conf.xmpf \
 	Driver/etc/l2x.conf.acc \
 	Driver/etc/linker.conf.openmp \
-	Driver/etc/linker.conf.xmp \
 	Driver/etc/linker.conf.xmpf \
 	Driver/etc/linker.conf.acc \
 	Driver/etc/native.conf.openmp \
-	Driver/etc/native.conf.xmp \
 	Driver/etc/native.conf.xmpf \
 	Driver/etc/native.conf.acc \
-	Driver/etc/omc.conf \
+	Driver/etc/xmpcc.conf \
 	Driver/etc/omf.conf \
 	Driver/etc/pp.conf.openmp \
-	Driver/etc/pp.conf.xmp \
 	Driver/etc/pp.conf.xmpf \
 	Driver/etc/pp.conf.acc \
 	Driver/etc/x2x.conf.openmp \
-	Driver/etc/x2x.conf.xmp \
 	Driver/etc/x2x.conf.xmpf \
 	Driver/etc/x2x.conf.acc \
 	Driver/etc/setup.conf \
