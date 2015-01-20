@@ -30,6 +30,13 @@ extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
 {
   // element is not used.
 
+  ///////
+  printf("enter xmpf_coarray_put_array_\n");
+  printf("  rhs=%p\n", rhs);
+  float val = *((float*)rhs);
+  printf("  value of rhs=%f\n", val);
+  ////////
+
   if (*rank == 0) {   // scalar 
     char* desc = _XMPF_get_coarrayDesc(*serno);
     int start = _XMPF_get_coarrayStart(*serno, baseAddr);
