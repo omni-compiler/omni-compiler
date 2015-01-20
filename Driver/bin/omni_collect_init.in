@@ -4,6 +4,7 @@
 #
 
 #VERBOSE=yes
+VERBOSE=no
 
 NM="@NM@"
 
