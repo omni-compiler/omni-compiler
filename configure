@@ -12425,6 +12425,8 @@ if test -e "Driver/src/Makefile.am"; then
 
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omtranslate"
 
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omni_collect_init"
+
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omni_traverse"
 
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
@@ -26793,6 +26795,7 @@ do
     "$OMDRIVER_DIR/../etc/linker.conf.acc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/linker.conf.acc" ;;
     "$OMDRIVER_DIR/../etc/setup.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/setup.conf" ;;
     "$OMDRIVER_DIR/../bin/omtranslate") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omtranslate" ;;
+    "$OMDRIVER_DIR/../bin/omni_collect_init") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omni_collect_init" ;;
     "$OMDRIVER_DIR/../bin/omni_traverse") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omni_traverse" ;;
     "$LIBXMP_HEADER_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_HEADER_DIR/Makefile" ;;
     "$LIBXMP_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_DIR/Makefile" ;;
