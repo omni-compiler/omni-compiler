@@ -1,0 +1,163 @@
+#!/bin/bash
+#
+# V3
+#
+
+#VERBOSE=yes
+
+NM="@NM@"
+
+USAGE='usage: '$0' <option> ... <input_file> ...
+  <option>
+    --help               this help
+    --verbose            verbose mode
+    --F | --C            which language (necessary)
+    --prefix <prefix>    prefix characters of the target procecdure names, such as xmpf and xmpc
+    -o <output_file>     name of the output file (*.f90 or *.c file is expected)
+  <input_file>           input file name (.o and .a files are expected)
+'
+
+#--------------------------------------------------------------
+# option analysis
+#--------------------------------------------------------------
+INFILES=()
+while [ -n "$1" ]; do
+    case "$1" in
+    --help)     HELP=yes;;
+    --verbose)  VERBOSE=yes;;
+    --F)        LANG=F;;
+    --C)        LANG=C;;
+    --prefix)   shift; PREFIX="$1";;
+    -o)         shift; OUTFILE="$1";;
+    *.o)        INFILES+=("$1");;
+    *.a)        INFILES+=("$1");;
+    *)          echo "$0: illegal filename $1" 1>&2; HELP=yes;;
+    esac
+    shift
+done
+
+if [ "$HELP" = "yes" -o "$LANG" = "" ]; then
+   echo $USAGE 1>&2
+   exit 1
+fi
+
+if [ "$VERBOSE" = "yes" ]; then
+   echo ---------------------------
+   echo NM=$NM
+   echo HELP=$HELP
+   echo VERBOSE=$VERBOSE
+   echo LANG=$LANG
+   echo PREFIX=$PREFIX
+   echo INFILES=${INFILES[@]}
+   echo OUTFILE=$OUTFILE
+   echo ---------------------------
+fi
+
+
+#--------------------------------------------------------------
+# find names ${PREFIX}_{init|finalize}_* 
+#--------------------------------------------------------------
+
+#--- get candidates
+candidates=`$NM "${INFILES[@]}" | awk 'NF >= 2 && $(NF-1) == "T" { print $NF }'`
+
+#--- choose candidates "${PREFIX}_{init|finalize}_*_?*" and rename them if needed
+procedures=()
+for name in $candidates; do
+    case $name in
+        ${PREFIX}_init_*_?* | ${PREFIX}_finalize_*_?* )
+            case "$LANG" in
+                F) procedures+=( ${name%_} );;    # get name from "name_"
+                C) procedures+=( $name );;
+            esac;;
+        ${PREFIX}_init_* | ${PREFIX}_finalize_* )
+            echo found illegal name of init/finalize procedure: \"${name}\"
+            error=yes;;
+    esac
+done
+if [ "${error}" = "yes" ]; then
+    exit 1
+fi
+
+#--- classify the chosen names by keywords
+groupnames=()
+for name in "${procedures[@]}"; do
+    # separate procedure name "prefix_{init|finalize}_keywd_reststring"
+    # into three parts, groupname, '_' and basename, where
+    #  groupname is "prefix_{init|finalize}_keywd" and
+    #  basename is any string possibly including '_'
+    basename=${name#${PREFIX}_*_*_}
+    groupname=${name%_${basename}}
+
+    # append part1 to keystrings if not appended yet
+    case "${groupnames[*]}" in
+        $groupname)  ;;
+        *)           groupnames+=( $groupname );;
+    esac
+done
+
+if [ "$VERBOSE" = "yes" ]; then
+    echo ------------
+    echo "candidates="$candidates
+    echo "procedures=${procedures[@]}"
+    echo "groupnames=${groupnames[@]}"
+    echo ------------
+fi
+
+#--------------------------------------------------------------
+# file output
+#--------------------------------------------------------------
+
+fortran_output() {
+    for groupname in "${groupnames[@]}"; do
+        echo "subroutine ${groupname}"
+        for name in "${procedures[@]}"; do
+            if [[ ${name} =~ ${groupname}_* ]]; then
+                echo "  call ${name}"
+            fi
+        done
+        echo "end subroutine"
+        echo
+    done
+}
+
+c_output() {
+    for groupname in "${groupnames[@]}"; do
+        echo "extern void ${groupname}(void);"
+    done
+    echo
+
+    for groupname in "${groupnames[@]}"; do
+        echo "void ${groupname}() {"
+        for name in "${procedures[@]}"; do
+            if [[ ${name} =~ ${groupname}_* ]]; then
+                echo "  ${name}();"
+            fi
+        done
+        echo "}"
+        echo
+    done
+}
+
+file_output() {
+    case "$LANG" in
+        F) fortran_output;;
+        C) c_output;;
+    esac
+}    
+
+if [ "$VERBOSE" = "yes" ]; then
+    echo ---------------------------------------------- output $OUTFILE
+    file_output
+    echo ------------------------------------------ end output $OUTFILE
+fi
+
+if [ -z "$OUTFILE" ]; then
+    file_output
+else
+    file_output > $OUTFILE
+fi
+
+exit 0
+
+
