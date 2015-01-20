@@ -53,6 +53,7 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, const size_t co
   }
 
   coarray->addr = each_addr;
+  coarray->real_addr = each_addr[_XMP_world_rank];
   *addr = each_addr[_XMP_world_rank];
 }
 

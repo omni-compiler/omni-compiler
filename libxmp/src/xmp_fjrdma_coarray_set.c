@@ -41,13 +41,15 @@ void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray, void **buf, const size_t coa
   MPI_Barrier(MPI_COMM_WORLD);
   for(int i=1; i<_XMP_world_size+1; i++){
     int partner_rank = (_XMP_world_rank+i)%_XMP_world_size;
-    while((each_addr[partner_rank] = FJMPI_Rdma_get_remote_addr(partner_rank, memid)) == FJMPI_RDMA_ERROR);
+    if(partner_rank == _XMP_world_rank)
+      each_addr[partner_rank] = laddr;
+    else
+      while((each_addr[partner_rank] = FJMPI_Rdma_get_remote_addr(partner_rank, memid)) == FJMPI_RDMA_ERROR);
 
     if(i%3000 == 0)
       MPI_Barrier(MPI_COMM_WORLD);
   }
 
+  coarray->real_addr = *buf;
   coarray->addr = (void *)each_addr;
 }
-
-

@@ -14,11 +14,12 @@ Compile Driver Options
    --show-env        : show environment variables.
    --tmp             : output parallel code (__omni_tmp__<file>).
    --dry             : only print processing status (not compile).
-   --stop-pp         : save intermediate file and stop after preprocess.
-   --stop-frontend   : save intermediate file and stop after frontend.
-   --stop-translator : save intermediate file and stop after translator.
-   --stop-backend    : save intermediate file and stop after backend.
-   --stop-compile    : save intermediate file and stop after compile.
+   --debug           : save intermediate files in __omni_tmp__.
+   --stop-pp         : save intermediate files and stop after preprocess.
+   --stop-frontend   : save intermediate files and stop after frontend.
+   --stop-translator : save intermediate files and stop after translator.
+   --stop-backend    : save intermediate files and stop after backend.
+   --stop-compile    : save intermediate files and stop after compile.
 
 Process Options
 
@@ -101,6 +102,8 @@ function xmp_set_parameters()
 		OUTPUT_TEMPORAL=true;;
             --dry)
 		DRY_RUN=true;;
+	    --debug)
+		ENABLE_DEBUG=true;;
             --stop-pp)
 		STOP_PP=true
 		VERBOSE=true;;
@@ -194,6 +197,7 @@ function xmp_norm_file_name()
 {
     local NORM_NAME=`echo $1 | sed 's/^\.\///'`      # ./hoge/fuga.c -> hoge/fuga.c
     NORM_NAME=`echo $NORM_NAME | sed 's/\//_2f_/g'`  # hoge/fuga/a.c -> hoge_2f_fuga_2f_a.c        # "2f" is a hex number of '/'.
+    NORM_NAME=`echo $NORM_NAME | sed 's/\./_2e_/g'`  # "." -> "_2e_"
     NORM_NAME=`basename $NORM_NAME .c`               # hoge_2f_fuga_2f_a.c -> hoge_2f_fuga_2f_a
 
     echo $NORM_NAME

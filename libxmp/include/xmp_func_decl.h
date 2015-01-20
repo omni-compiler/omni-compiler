@@ -135,8 +135,8 @@ extern void _XMP_coarray_rdma_node_set_5(const int, const int, const int, const 
 extern void _XMP_coarray_rdma_node_set_6(const int, const int, const int, const int, const int, const int);
 extern void _XMP_coarray_rdma_node_set_7(const int, const int, const int, const int, const int, const int, const int);
 
-extern void _XMP_coarray_rdma_do_f(const int*, const void*, const void*, const void*);
-extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void *);
+extern void _XMP_coarray_rdma_do_f(const int*, void*, void*, void*);
+extern void _XMP_coarray_rdma_do(const int, void*, void*, void *);
 extern void _XMP_coarray_sync_all();
 extern void _XMP_coarray_sync_memory();
 extern void xmp_sync_memory(const int* status);

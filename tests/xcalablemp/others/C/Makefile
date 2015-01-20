@@ -16,6 +16,9 @@ all default: $(EXES)
 344_include.x: ./344_include.c
 	$(XCC) -I$(MPIPATH) $^ -o $@
 
+364.x: 364.c
+	$(XCC) --debug $^ -o $@
+
 #-- default rules
 .c.x:
 	$(XCC) -o $@ $<
@@ -38,7 +41,9 @@ run:
 	XMP_NODE_SIZE0=4 $(XRUN) -n 4 ./343_dynamicnode.x
 	$(XRUN) -n 1 ./344_include.x
 	$(XRUN) -n 1 ./293-hyphen.x
+	$(XRUN) -n 1 ./364.x
 
 #-- cleaning
 clean:
 	rm -f $(EXES) $(C_OBJS)
+	rm -rf __omni_tmp__

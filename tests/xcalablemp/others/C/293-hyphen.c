@@ -4,7 +4,7 @@
 int main()
 {
 #pragma xmp task on p(1)
-  printf("`PASS\n");
+  printf("PASS\n");
 
   return 0;
 }

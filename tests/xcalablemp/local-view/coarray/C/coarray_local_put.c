@@ -21,9 +21,10 @@ int main()
   xmp_sync_all(&stat);
 
   // Put
-  a[0]:[me] = n[0];
-  a[1]:[me] = n[1];
-  a[2]:[me] = n[2];
+    a[0]:[me] = n[0];
+    a[1]:[me] = n[1];
+    a[2]:[me] = n[2];
+  //    printf("%p %p\n", a, n);
 
   xmp_sync_all(&stat);
 
