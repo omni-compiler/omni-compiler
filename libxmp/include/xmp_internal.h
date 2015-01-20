@@ -93,6 +93,9 @@ extern void _XMP_pack_array(void *buffer, void *src, int array_type, size_t arra
 extern void _XMP_unpack_array(void *dst, void *buffer, int array_type, size_t array_type_size,
                               int array_dim, int *l, int *u, int *s, unsigned long long *d);
 
+// xmp_async.c
+_XMP_async_comm_t *_XMP_get_or_create_async(int async_id);
+
 // xmp_barrier.c
 extern void _XMP_barrier_NODES_ENTIRE(_XMP_nodes_t *nodes);
 extern void _XMP_barrier_EXEC(void);

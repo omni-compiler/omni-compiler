@@ -3,6 +3,9 @@
 _Bool xmpf_test_task_on__(_XMP_object_ref_t **r_desc);
 void xmpf_end_task__(void);
 
+#ifdef ASYNC_COMM
+_Bool is_async;
+#endif
 
 //#define DBG 1
 
@@ -303,7 +306,15 @@ void _XMPF_bcast_on_template(void *data_addr, int count, int datatype,
       }
     }
 
-    MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm));
+#ifdef ASYNC_COMM
+    if (is_async){
+      _XMP_async_comm_t *async = _XMP_get_or_create_async(async_id);
+      MPI_IBcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm), async->reqs);
+      async->nreqs = 1;
+    }
+    else
+#endif
+      MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm));
   }
   else {
     if (xmpf_test_task_on__(&on_desc)){
@@ -321,7 +332,16 @@ void _XMPF_bcast_on_template(void *data_addr, int count, int datatype,
 	}
       }
 
-      MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm));
+#ifdef ASYNC_COMM
+      if (is_async){
+	_XMP_async_comm_t *async = _XMP_get_or_create_async(async_id);
+	MPI_IBcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm), req);
+	async->nreqs = 1;
+      }
+      else
+#endif
+	MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm));
+
       xmpf_end_task__();
     }
   }
@@ -332,12 +352,33 @@ void _XMPF_bcast_on_template(void *data_addr, int count, int datatype,
 void xmpf_bcast__(void *data_addr, int *count, int *datatype,
 		  _XMP_object_ref_t **from_desc, _XMP_object_ref_t **on_desc)
 {
+
+#ifdef ASYNC_COMM
+  is_async = false;
+#endif
+
   if (*on_desc && (*on_desc)->ref_kind == XMP_OBJ_REF_TEMPL)
     _XMPF_bcast_on_template(data_addr, *count, *datatype, *from_desc, *on_desc);
   else
     _XMPF_bcast_on_nodes(data_addr, *count, *datatype, *from_desc, *on_desc);
 
 }
+
+
+#ifdef ASYNC_COMM
+void xmpf_bcast_async__(void *data_addr, int *count, int *datatype,
+			_XMP_object_ref_t **from_desc, _XMP_object_ref_t **on_desc, int *async_id)
+{
+
+  is_async = true;
+
+  if (*on_desc && (*on_desc)->ref_kind == XMP_OBJ_REF_TEMPL)
+    _XMPF_bcast_on_template(data_addr, *count, *datatype, *from_desc, *on_desc);
+  else
+    _XMPF_bcast_on_nodes(data_addr, *count, *datatype, *from_desc, *on_desc);
+
+}
+#endif
 
 
 //
