@@ -978,6 +978,15 @@ public class XMPrewriteExpr {
 	  case POINTER_REF:
 	    iter.setXobject(rewritePointerRef(myExpr, block));
 	    break;
+	  case FUNCTION_CALL:
+	    Xobject f = myExpr.getArg(0);
+	    if (f.getString().equals("malloc")){
+	      Xobject p = iter.getParent();
+	      if (p.Opcode() == Xcode.CAST_EXPR){
+	  	//p.SetArg(0, Xtype.Pointer());
+	  	p.setType(Xtype.voidType);
+	      }
+	    }
 	  default:
 	  }
 	}

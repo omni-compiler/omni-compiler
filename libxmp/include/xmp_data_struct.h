@@ -185,6 +185,9 @@ typedef struct _XMP_array_info_type {
   // -----------------------------------------
 
   int align_template_index;
+
+  unsigned long long *acc;
+
 } _XMP_array_info_t;
 
 typedef struct _XMP_array_type {

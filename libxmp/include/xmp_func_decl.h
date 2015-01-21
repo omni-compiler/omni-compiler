@@ -263,7 +263,8 @@ extern void _XMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_bu
                                         void *lo_send_buffer, void *hi_send_buffer,
                                         void *array_desc, int array_index);
 extern void _XMP_reflect_shadow_FULL(void *array_addr, void *array_desc, int array_index);
-extern void _XMP_init_shadow_noalloc(void *a, int shadow_type, int lshadow, int ushadow);
+//extern void _XMP_init_shadow_noalloc(void *a, int shadow_type, int lshadow, int ushadow);
+extern void _XMP_init_shadow_noalloc(void *a, ...);
 
 // xmp_template.c
 extern void _XMP_init_template_FIXED(void **template, int dim, ...);

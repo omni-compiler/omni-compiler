@@ -278,12 +278,29 @@ void _XMP_init_shadow(_XMP_array_t *array, ...) {
   }
 }
 
-void _XMP_init_shadow_noalloc(_XMP_array_t *a, int shadow_type, int lshadow, int ushadow) {
-  _XMP_ASSERT(a->dim == 1);
-  _XMP_array_info_t *ai = &(a->info[0]);
-  ai->shadow_type = shadow_type;
-  ai->shadow_size_lo = lshadow;
-  ai->shadow_size_hi = ushadow;
+/* void _XMP_init_shadow_noalloc(_XMP_array_t *a, int shadow_type, int lshadow, int ushadow) { */
+/*   _XMP_ASSERT(a->dim == 1); */
+/*   _XMP_array_info_t *ai = &(a->info[0]); */
+/*   ai->shadow_type = shadow_type; */
+/*   ai->shadow_size_lo = lshadow; */
+/*   ai->shadow_size_hi = ushadow; */
+/* } */
+
+void _XMP_init_shadow_noalloc(_XMP_array_t *a, ...) {
+
+  int dim = a->dim;
+
+  va_list args;
+  va_start(args, a);
+
+  for (int i = 0; i < dim; i++) {
+    _XMP_array_info_t *ai = &(a->info[i]);
+    ai->shadow_type = va_arg(args, int);
+    ai->shadow_size_lo = va_arg(args, int);
+    ai->shadow_size_hi = va_arg(args, int);
+  }
+
+  va_end(args);
 }
 
 void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_addr,
