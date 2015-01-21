@@ -1767,6 +1767,16 @@ get_keyword_optional_blank(int class)
     case MODULE: /* module procedure */
         if (get_keyword(keywords) == PROCEDURE) return MODULEPROCEDURE;
 	break;
+    case KW_SYNC:  /* #060 coarray */
+        switch (get_keyword(keywords)) {
+        case KW_ALL:    return SYNCALL;
+        case KW_IMAGES: return SYNCIMAGES;
+        case KW_MEMORY: return SYNCMEMORY;
+        }
+        break;
+    case KW_ERROR: /* module procedure */
+        if (get_keyword(keywords) == STOP) return ERRORSTOP;
+	break;
     default:
         break;
     }
@@ -3572,37 +3582,39 @@ struct keyword_token keywords[ ] =
     { "assign",         ASSIGN  },
     { "allocatable",    ALLOCATABLE },
     { "allocate",       ALLOCATE },
+    { "all",            KW_ALL },       /* #060 coarray */
     { "backspace",      BACKSPACE },
     { "blockdata",      BLOCKDATA },
     { "block",          KW_BLOCK},      /* optional */
     { "call",           CALL },
+    { "case",           CASE},
     { "character",      KW_CHARACTER, },
     { "close",          CLOSE, },
+    { "codimension",    CODIMENSION  },    /* #060 coarray */
     { "common",         COMMON },
     { "complex",        KW_COMPLEX },
-    { "continue",       CONTINUE  },
     { "contains",       CONTAINS },
+    { "continue",       CONTINUE  },
+    { "critical",       CRITICAL },       /* #060 coarray */
     { "cycle",          CYCLE},
-    { "case",           CASE},
     { "data",           DATA },
-    { "dimension",      DIMENSION  },
-    { "codimension",    CODIMENSION  },
-    { "doubleprecision",  KW_DOUBLE  },
-    { "doublecomplex",  KW_DCOMPLEX },  
-    { "double",         KW_DBL },     /* optional */
-    { "do",             DO },
-    { "default",        KW_DEFAULT},
     { "deallocate",     DEALLOCATE},
-    { "while",          KW_WHILE},
+    { "default",        KW_DEFAULT},
+    { "dimension",      DIMENSION  },
+    { "doublecomplex",  KW_DCOMPLEX },  
+    { "doubleprecision",  KW_DOUBLE  },
+    { "double",         KW_DBL },     /* optional */
     /* { "dowhile",     DOWHILE }, *//* blanks mandatory */
-    { "elsewhere",      ELSEWHERE },
+    { "do",             DO },
     { "elseif",         ELSEIFTHEN },
+    { "elsewhere",      ELSEWHERE },
     { "else",           ELSE },
     { "exit",           EXIT },
+    { "endblock",       KW_ENDBLOCK },
+    { "endcritical",    ENDCRITICAL },     /* #060 coarray */
     { "enddo",          ENDDO },
     { "endfile",        ENDFILE  },
     { "endif",          ENDIF },
-    { "endblock",       KW_ENDBLOCK },
     { "endforall",      ENDFORALL },
     { "endfunction",    ENDFUNCTION },
     { "endinterface",   ENDINTERFACE },
@@ -3615,6 +3627,8 @@ struct keyword_token keywords[ ] =
     { "end",            END  },
     { "entry",          ENTRY },
     { "equivalence",    EQUIV  },
+    { "errorstop",      ERRORSTOP },     /* #060 coarray */
+    { "error",          KW_ERROR },      /* #060 coarray */
     { "external",       EXTERNAL  },
     { "elemental",      ELEMENTAL },
     { "format",         FORMAT  },
@@ -3623,18 +3637,21 @@ struct keyword_token keywords[ ] =
     { "goto",           GOTO  },
     { "go",             KW_GO  },
     { "if",             LOGIF },
+    { "images",         KW_IMAGES },    /* #060 coarray */
     { "implicit",       IMPLICIT },
     { "include",        INCLUDE },
-    { "inquire",        INQUIRE },
-    { "intrinsic",      INTRINSIC },
-    { "integer",        KW_INTEGER  },
-    { "interface",      INTERFACE },
-    { "intent",         INTENT},
     { "inout",          KW_INOUT},
+    { "inquire",        INQUIRE },
+    { "integer",        KW_INTEGER  },
+    { "intent",         INTENT},
+    { "interface",      INTERFACE },
+    { "intrinsic",      INTRINSIC },
     { "in",             KW_IN},
+    { "kind",           KW_KIND},
     { "logical",        KW_LOGICAL  },
     { "len",            KW_LEN},
-    { "kind",           KW_KIND},
+    { "lock",           LOCK },          /* #060 coarray */
+    { "memory",         KW_MEMORY },     /* #060 coarray */
     { "module",         MODULE},
     { "namelist",       NAMELIST },
     { "none",           KW_NONE},
@@ -3652,8 +3669,8 @@ struct keyword_token keywords[ ] =
     { "procedure",      PROCEDURE },
     { "program",        PROGRAM },
     { "private",        PRIVATE},
-    { "pure",           PURE},
     { "public",         PUBLIC},
+    { "pure",           PURE},
     { "result",         RESULT},
     { "recursive",      RECURSIVE},
     /*    { "punch",    PUNCH }, */
@@ -3668,19 +3685,26 @@ struct keyword_token keywords[ ] =
     /*    { "static",   KW_STATIC },*/
     { "stop",           STOP },
     { "subroutine",     SUBROUTINE  },
+    { "syncall",        SYNCALL },     /* #060 coarray */
+    { "syncimages",     SYNCIMAGES },  /* #060 coarray */
+    { "syncmemory",     SYNCMEMORY },  /* #060 coarray */
+    { "sync",           KW_SYNC },     /* #060 coarray */
+    { "target",         TARGET},
     { "then",           THEN },
     { "to",             KW_TO},
     { "type",           KW_TYPE},
-    { "target",         TARGET},
     { "undefined",      KW_UNDEFINED },
+    { "unlock",         UNLOCK },        /* #060 coarray */
     { "use",            KW_USE },
-    { "write",          WRITE },
     { "where",          WHERE },
+    { "while",          KW_WHILE},
+    { "write",          WRITE },
     { 0, 0 }};
 
 struct keyword_token end_keywords[ ] = 
 {
     { "block",          KW_BLOCK },
+    { "critical",       ENDCRITICAL },     /* #060 coarray */
     { "do",             ENDDO },
     { "file",           ENDFILE },
     { "forall",         ENDFORALL },

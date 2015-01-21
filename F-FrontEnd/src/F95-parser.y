@@ -144,6 +144,22 @@
 %token NULLIFY
 %token KW_STAT
 
+/* Coarray keywords #060 */
+%token SYNCALL
+%token SYNCIMAGES
+%token SYNCMEMORY
+%token LOCK
+%token UNLOCK
+%token CRITICAL
+%token ENDCRITICAL
+%token ERRORSTOP
+%token KW_SYNC
+%token KW_ALL
+%token KW_IMAGES
+%token KW_MEMORY
+%token KW_ERROR
+
+
 %token REF_OP
 
 %token L_ARRAY_CONSTRUCTOR /* /( */
@@ -344,6 +360,7 @@ gen_default_real_kind(void) {
 %type <val> cray_pointer_list cray_pointer_pair cray_pointer_var
 %type <val> equiv_list data data_list data_val_list data_val value simple_value save_list save_item const_list const_item common_var data_var data_var_list image_dims image_dim_list image_dim image_dims_alloc image_dim_list_alloc image_dim_alloc dims dim_list dim ubound label_list implicit_decl imp_list letter_group letter_groups namelist_decl namelist_list ident_list access_ident_list access_ident
 %type <val> do_spec arg arg_list parenthesis_arg_list image_selector cosubscript_list
+%type <val> parenthesis_arg_list_or_null
 %type <val> set_expr
 %type <val> io_statement format_spec ctl_list io_clause io_list_or_null io_list io_item
 %type <val> IDENTIFIER CONSTANT const kind_parm GENERIC_SPEC USER_DEFINED_OP
@@ -354,6 +371,7 @@ gen_default_real_kind(void) {
 %type <val> intent_spec kind_selector kind_or_len_selector char_selector len_key_spec len_spec kind_key_spec array_allocation_list  array_allocation defered_shape_list defered_shape
 %type <val> result_opt type_keyword
 %type <val> action_statement95
+%type <val> action_coarray_statement coarray_keyword
 %type <val> use_rename_list use_rename use_only_list use_only 
 %type <val> allocation_list allocation
 %type <val> scene_list scene_range
@@ -1259,6 +1277,7 @@ action_statement_key: ASSIGN  label KW KW_TO IDENTIFIER
         | STOP  expr_or_null
         { $$ = list1(F_STOP_STATEMENT,$2); }
         | action_statement95 /* all has first key.  */
+        | action_coarray_statement /* all has first key.  */
         | io_statement /* all has first key.  */
         | PRAGMA_SLINE
         {
@@ -1293,8 +1312,38 @@ allocation:
         | set_expr
         ;
 
+action_coarray_statement:
+          coarray_keyword parenthesis_arg_list_or_null
+        { $$ = list2(F_CALL_STATEMENT,$1,$2); }
+        ;
+
+coarray_keyword:
+          SYNCALL
+        { $$ = GEN_NODE(IDENT, find_symbol("xmp_sync_all")); }
+        | SYNCIMAGES
+        { $$ = GEN_NODE(IDENT, find_symbol("xmp_sync_images")); }
+        | SYNCMEMORY
+        { $$ = GEN_NODE(IDENT, find_symbol("xmp_sync_memory")); }
+        | LOCK
+        { $$ = GEN_NODE(IDENT, find_symbol("xmp_lock")); }
+        | UNLOCK
+        { $$ = GEN_NODE(IDENT, find_symbol("xmp_unlock")); }
+        | CRITICAL
+        { $$ = GEN_NODE(IDENT, find_symbol("xmp_critical")); }
+        | ENDCRITICAL
+        { $$ = GEN_NODE(IDENT, find_symbol("xmp_end_critical")); }
+        | ERRORSTOP
+        { $$ = GEN_NODE(IDENT, find_symbol("xmp_error_stop")); }
+        ;
+
 comma_or_null:
         | ','
+        ;
+
+parenthesis_arg_list_or_null:
+        { $$ = NULL; } 
+        | parenthesis_arg_list
+        { $$ = $1; }
         ;
 
 parenthesis_arg_list:
