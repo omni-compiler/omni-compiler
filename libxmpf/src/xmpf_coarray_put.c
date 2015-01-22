@@ -6,14 +6,20 @@
 #include <stdarg.h>
 #include "xmpf_internal.h"
 
+// communication schemes
+#define SCHEME_Normal      0
+#define SCHEME_BufferCopy    1
+#define SCHEME_BufferSpread  2
+#define SCHEME_AuthorizedBufferCopy    3    /* not implemented yet */
+#define SCHEME_AuthorizedBufferSpread  4    /* not implemented yet */
+
+
 static void _putCoarray(int serno, char *baseAddr, int coindex, char *rhs,
-                        int bytes, int rank, int skip[], int count[],
-                        int isSpread);
+                        int bytes, int rank, int skip[], int count[]);
 
 static char *_putVectorIter(int serno, char *baseAddr, int bytes,
                             int coindex, char *src,
-                            int loops, int skip[], int count[],
-                            int isSpread);
+                            int loops, int skip[], int count[]);
 
 static void _putVectorByByte(int serno, char *baseAddr, int bytes,
                              int coindex, char* src);
@@ -31,24 +37,31 @@ static void _putVectorByElement(char *desc, int start, int vlength,
 extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
                                     int *coindex, char *rhs, int *scheme, int *rank, ...)
 {
-  ///////
-  printf("enter xmpf_coarray_put_array_\n");
-  printf("  rhs=%p\n", rhs);
-  float val = *((float*)rhs);
-  printf("  *(float*)rhs=%f\n", val);
-  ////////
+  size_t bufsize;
+  char *buf, *p;
+  int i, nelems;
 
   // shortcut for case scalar 
   if (*rank == 0) {   
-    char* desc = _XMPF_get_coarrayDesc(*serno);
+    char *desc = _XMPF_get_coarrayDesc(*serno);
     int start = _XMPF_get_coarrayStart(*serno, baseAddr);
-#ifdef _XMP_COARRAY_FJRDMA
-    if (scheme == 1) {
-      char *buf = malloc((size_t)(*element));
-      rhs = memcpy(buf, rhs, *element);
+
+    switch (*scheme) {
+    case SCHEME_Normal:
+      _putVectorByElement(desc, start, 1, *coindex, rhs);
+      break;
+
+    case SCHEME_BufferCopy:
+    case SCHEME_BufferSpread:
+      buf = malloc((size_t)(*element));
+      (void)memcpy(buf, rhs, *element);
+      _putVectorByElement(desc, start, 1, *coindex, buf);
+      break;
+
+    default:
+      _XMP_fatal("unexpected scheme number in " __FILE__);
     }
-#endif 
-    _putVectorByElement(desc, start, 1, *coindex, rhs);
+      
     return;
   }
 
@@ -66,51 +79,63 @@ extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
 
   int bytes = _XMPF_get_coarrayElement(*serno);
 
-#ifdef _XMP_COARRAY_FJRDMA
-    if (scheme == 1) {
-      ///////
-      printf("  here in #ifdef\n");
-      /////////
-      size_t bufsize = *element;
-      for (int i = 0; i < *rank; i++)
-        bufsize *= count[i];
-      char *buf = malloc(bufsize);
-      ///////
-      printf("  rhs = %p\n", rhs);
-      /////////
-      rhs = memcpy(buf, rhs, bufsize);
-      ///////
-      printf("  rhs = %p\n", rhs);
-      /////////
+  switch (*scheme) {
+  case SCHEME_Normal:
+    _putCoarray(*serno, baseAddr, *coindex, rhs, bytes, *rank, skip, count);
+    break;
+
+  case SCHEME_BufferCopy:
+    //////////
+    printf("here SCHEME_BufferCopy\n");
+    //////////
+    bufsize = *element;
+    for (i = 0; i < *rank; i++) {
+      bufsize *= count[i];
+      //////////
+      printf("  count[%d]=%d\n", i, count[i]);
+      //////////
     }
-#endif 
-  _putCoarray(*serno, baseAddr, *coindex, rhs, 
-              bytes, *rank, skip, count, 0 /*isSpread*/);
+    buf = malloc(bufsize);
+    (void)memcpy(buf, rhs, bufsize);
+    //////////
+    printf("  bufsize=%d *element=%d\n", bufsize, *element);
+    printf("  rhs=%p, buf=%p\n", rhs, buf);
+    //////////
+    _putCoarray(*serno, baseAddr, *coindex, buf, bytes, *rank, skip, count);
+    break;
+
+  case SCHEME_BufferSpread:
+    nelems = 1;
+    for (i = 0; i < *rank; i++)
+      nelems *= count[i];
+    bufsize = nelems * (*element);
+    buf = malloc(bufsize);
+    for (i = 0, p = buf; i < nelems; i++, p += *element)
+      (void)memcpy(p, rhs, *element);
+    _putCoarray(*serno, baseAddr, *coindex, buf, bytes, *rank, skip, count);
+    break;
+
+  default:
+    _XMP_fatal("unexpected scheme number in " __FILE__);
+  }
 }
 
 
 void _putCoarray(int serno, char *baseAddr, int coindex, char *rhs,
-                 int bytes, int rank, int skip[], int count[],
-                 int isSpread)
+                 int bytes, int rank, int skip[], int count[])
 {
   if (rank == 0) {  // fully contiguous after perfect collapsing
     if (_XMPF_coarrayMsg)
       fprintf(stderr, "**** %d bytes fully contiguous (%s)\n",
               bytes, __FILE__);
 
-    if (isSpread) {
-      _XMP_fatal("Not supported: \"<array-coindexed-var> = <scalar-expr>\""
-                 __FILE__);
-    } else {
-      _putVectorByByte(serno, baseAddr, bytes, coindex, rhs);
-    }
+    _putVectorByByte(serno, baseAddr, bytes, coindex, rhs);
     return;
   }
 
   if (bytes == skip[0]) {  // contiguous
     _putCoarray(serno, baseAddr, coindex, rhs,
-                bytes * count[0], rank - 1, skip + 1, count + 1,
-                isSpread);
+                bytes * count[0], rank - 1, skip + 1, count + 1);
     return;
   }
 
@@ -130,7 +155,7 @@ void _putCoarray(int serno, char *baseAddr, int coindex, char *rhs,
   }
 
   src = _putVectorIter(serno, baseAddr, bytes, coindex, src,
-                       rank, skip, count, isSpread);
+                       rank, skip, count);
 
   if (_XMPF_coarrayMsg) {
     fprintf(stderr, "**** end put\n");
@@ -140,7 +165,7 @@ void _putCoarray(int serno, char *baseAddr, int coindex, char *rhs,
   
 char *_putVectorIter(int serno, char *baseAddr, int bytes,
                      int coindex, char *src,
-                     int loops, int skip[], int count[], int isSpread)
+                     int loops, int skip[], int count[])
 {
   char* dst = baseAddr;
   int n = count[loops - 1];
@@ -156,7 +181,7 @@ char *_putVectorIter(int serno, char *baseAddr, int bytes,
     for (int i = 0; i < n; i++) {
       src = _putVectorIter(serno, baseAddr + i * gap, bytes,
                            coindex, src,
-                           loops - 1, skip, count, isSpread);
+                           loops - 1, skip, count);
     }
   }
   return src;
