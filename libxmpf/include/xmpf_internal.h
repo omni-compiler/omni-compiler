@@ -301,7 +301,7 @@ extern void xmp_sync_all_(void);
 
 /* xmpf_coarray_put.c */
 extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
-                                    int *coindex, char *rhs, int *rank, ...);
+                                    int *coindex, char *rhs, int *scheme, int *rank, ...);
 
 /* xmpf_coarray_get.c */
 extern void xmpf_coarray_get_array_(int *serno, char *baseAddr, int *element,

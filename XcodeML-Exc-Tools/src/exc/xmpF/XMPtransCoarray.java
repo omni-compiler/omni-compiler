@@ -283,8 +283,16 @@ public class XMPtransCoarray
     Xobject lhs = assignExpr.getArg(0);
     Xobject rhs = assignExpr.getArg(1);
 
+    Xobject scheme = Xcons.IntConstant(rhs.isConstant() ? 1 : 0);
+
+    ////////////////
+    System.out.println("XMPtransCoarray.coindexVarStmtToCallStmt");
+    System.out.println("  rhs   ="+rhs);
+    System.out.println("  scheme="+scheme);
+    ////////////////
+
     XMPcoindexObj coidxObj = new XMPcoindexObj(lhs, coarrays);
-    return coidxObj.toCallStmt(rhs);
+    return coidxObj.toCallStmt(rhs, scheme);
   }
 
 

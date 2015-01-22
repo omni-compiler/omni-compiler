@@ -171,9 +171,9 @@ public class XMPcoindexObj {
     return funcRef;
   }
 
-  public Xobject toCallStmt(Xobject rhs) {
+  public Xobject toCallStmt(Xobject rhs, Xobject scheme) {
     // type-5 used
-    Xobject actualArgs = _makeActualArgs_type5(rhs);
+    Xobject actualArgs = _makeActualArgs_type5(rhs, scheme);
 
     String subrName = COARRAYPUT_NAME;
     Ident subrIdent = getEnv().findVarIdent(subrName, null);
@@ -198,7 +198,7 @@ public class XMPcoindexObj {
    *
    * Type-5:
    *       (int serno, void* baseAddr, int element, int coindex,
-   *        [void* rhs,] int rank,
+   *        [void* rhs, int scheme,] int rank,
    *        void* nextAddr1, int count1,
    *        ...
    *        void* nextAddrN, int countN )
@@ -232,9 +232,9 @@ public class XMPcoindexObj {
   }
 
   private Xobject _makeActualArgs_type5() {
-    return _makeActualArgs_type5(null);
+    return _makeActualArgs_type5(null, null);
   }
-  private Xobject _makeActualArgs_type5(Xobject rhs) {
+  private Xobject _makeActualArgs_type5(Xobject rhs, Xobject scheme) {
     XMPcoarray coarray = getCoarray();
 
     Xobject serno = coarray.getDescriptorId();
@@ -246,6 +246,8 @@ public class XMPcoindexObj {
 
     if (rhs != null)
       actualArgs.add(rhs);
+    if (scheme != null)
+      actualArgs.add(scheme);
 
     actualArgs.add(Xcons.IntConstant(rank));
 

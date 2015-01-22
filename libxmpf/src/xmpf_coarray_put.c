@@ -25,21 +25,29 @@ static void _putVectorByElement(char *desc, int start, int vlength,
     entry
 \***************************************************/
 
+/*
+ *  assumed that tha value of emelent is the same as the one recorded previously.
+ */
 extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
-                                    int *coindex, char *rhs, int *rank, ...)
+                                    int *coindex, char *rhs, int *scheme, int *rank, ...)
 {
-  // element is not used.
-
   ///////
   printf("enter xmpf_coarray_put_array_\n");
   printf("  rhs=%p\n", rhs);
   float val = *((float*)rhs);
-  printf("  value of rhs=%f\n", val);
+  printf("  *(float*)rhs=%f\n", val);
   ////////
 
-  if (*rank == 0) {   // scalar 
+  // shortcut for case scalar 
+  if (*rank == 0) {   
     char* desc = _XMPF_get_coarrayDesc(*serno);
     int start = _XMPF_get_coarrayStart(*serno, baseAddr);
+#ifdef _XMP_COARRAY_FJRDMA
+    if (scheme == 1) {
+      char *buf = malloc((size_t)(*element));
+      rhs = memcpy(buf, rhs, *element);
+    }
+#endif 
     _putVectorByElement(desc, start, 1, *coindex, rhs);
     return;
   }
@@ -51,13 +59,22 @@ extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
   va_start(argList, rank);
 
   for (int i = 0; i < *rank; i++) {
-    nextAddr = va_arg(argList, char*);
+    nextAddr = va_arg(argList, char*);         // nextAddr1, nextAddr2, ...
     skip[i] = nextAddr - baseAddr;
-    count[i] = *(va_arg(argList, int*));
+    count[i] = *(va_arg(argList, int*));       // count1, count2, ...
   }
 
   int bytes = _XMPF_get_coarrayElement(*serno);
 
+#ifdef _XMP_COARRAY_FJRDMA
+    if (scheme == 1) {
+      size_t bufsize = *element;
+      for (int i = 0; i < *rank; i++)
+        bufsize *= count[i];
+      char *buf = malloc(bufsize);
+      rhs = memcpy(buf, rhs, bufsize);
+    }
+#endif 
   _putCoarray(*serno, baseAddr, *coindex, rhs, 
               bytes, *rank, skip, count, 0 /*isSpread*/);
 }
