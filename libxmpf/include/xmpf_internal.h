@@ -253,8 +253,8 @@ extern void _XMP_coarray_rdma_node_set_1(const int);
 extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void *);
 //extern void _XMP_coarray_sync_all();
 //extern void _XMP_coarray_sync_memory();
-//extern void xmp_sync_memory(const int* status);
-//extern void xmp_sync_all(const int* status);
+extern void xmp_sync_memory(const int* status);
+extern void xmp_sync_all(const int* status);
 //extern void xmp_sync_image(int image, int* status);
 //extern void xmp_sync_image_f(int *image, int* status);
 //extern void xmp_sync_images(int num, int* image_set, int* status);
@@ -285,8 +285,11 @@ extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void
 #define COARRAY_PUT_CODE  701
 
 /* xmpf_coarray.c */
-extern int _XMPF_coarrayMsg;          // default: message off
+extern int _XMPF_coarrayMsg;          // default: debug message off
 extern void xmpf_coarray_msg_(int *sw);
+
+extern char *_XMPF_errmsg;   // to answer ERRMSG argument in Fortran
+extern void xmpf_copy_errmsg_(char *errmsg, int *msglen);
 
 extern int _XMPF_get_coarrayElement(int serno);
 extern char *_XMPF_get_coarrayDesc(int serno);
@@ -295,8 +298,10 @@ extern int _XMPF_get_coarrayStart(int serno, char *baseAddr);
 extern void xmpf_coarray_malloc_(int *serno, char **pointer, int *count, int *element);
 extern void _XMPF_coarray_malloc(int *serno, char **pointer, int count, size_t element);
 
-extern void xmp_sync_memory_(void);
-extern void xmp_sync_all_(void);
+extern void xmp_sync_all_(int *status);
+extern void xmp_sync_memory_(int *status);
+extern void xmp_sync_images_one_(int *image, int *status);
+extern void xmp_sync_images_ast_(int *status);
 
 
 /* xmpf_coarray_put.c */

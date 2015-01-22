@@ -1,5 +1,27 @@
 #include "xmpf_internal.h"
 
+#define NotSupportedError 1
+
+static int _getNewSerno();
+static int _set_coarrayInfo(char *desc, char *orgAddr, int count, size_t element);
+
+
+/*****************************************\
+  internal switches
+\*****************************************/
+
+int _XMPF_coarrayMsg = 0;          // default: message off
+
+void xmpf_coarray_msg_(int *sw)
+{
+  _XMPF_coarrayMsg = *sw;
+}
+
+
+/*****************************************\
+  internal information management
+\*****************************************/
+
 typedef struct {
   BOOL    is_used;
   char   *desc;
@@ -11,15 +33,6 @@ typedef struct {
 static _coarrayInfo_t _coarrayInfoTab[DESCR_ID_MAX] = {};
 static int _nextId = 0;
 
-static int _getNewSerno();
-static int _set_coarrayInfo(char *desc, char *orgAddr, int count, size_t element);
-
-
-/*****************************************\
-  internal information management
-\*****************************************/
-
-int _XMPF_coarrayMsg = 0;          // default: message off
 
 int _XMPF_get_coarrayElement(int serno)
 {
@@ -84,17 +97,7 @@ static int _getNewSerno() {
 
 
 /*****************************************\
-  SWITCHES
-\*****************************************/
-
-void xmpf_coarray_msg_(int *sw)
-{
-  _XMPF_coarrayMsg = *sw;
-}
-
-
-/*****************************************\
-  MALLOC
+  coarray allocation
 \*****************************************/
 
 void xmpf_coarray_malloc_(int *serno, char **pointer, int *count, int *element)
@@ -104,8 +107,8 @@ void xmpf_coarray_malloc_(int *serno, char **pointer, int *count, int *element)
 
 void _XMPF_coarray_malloc(int *serno, char **pointer, int count, size_t element)
 {
-  char *desc;
-  char *orgAddr;
+  void *desc;
+  void *orgAddr;
 
   // see libxmp/src/xmp_coarray_set.c
   _XMP_coarray_malloc_info_1(count, element);  
@@ -118,27 +121,78 @@ void _XMPF_coarray_malloc(int *serno, char **pointer, int count, size_t element)
 
 
 /*****************************************\
-  wrappers
+  synchronizations
 \*****************************************/
 
-void xmp_sync_memory_()
+void xmp_sync_all_(int *status)
 {
-  int status;
+  _XMPF_errmsg = NULL;
+  xmp_sync_all(status);
 
-  xmp_sync_memory(&status);
+  _XMPF_errmsg = "short test";
 
   if (_XMPF_coarrayMsg)
-    fprintf(stderr, "**** done sync_memory, status=%d (%s)\n",
-            status, __FILE__);
+    fprintf(stderr, "**** done sync_all, *status=%d (%s)\n",
+            *status, __FILE__);
 }
 
-void xmp_sync_all_()
+void xmp_sync_memory_(int *status)
 {
-  int status;
+  _XMPF_errmsg = NULL;
+  xmp_sync_memory(status);
 
-  xmp_sync_all(&status);
+  _XMPF_errmsg = "test test test. long message test.";
 
   if (_XMPF_coarrayMsg)
-    fprintf(stderr, "**** done sync_all, status=%d (%s)\n",
-            status, __FILE__);
+    fprintf(stderr, "**** done sync_memory, *status=%d (%s)\n",
+            *status, __FILE__);
 }
+
+void xmpf_sync_images_one_(int *image, int *status)
+{
+  _XMPF_errmsg = NULL;
+
+  /*** not supported ***/
+
+  *status = NotSupportedError;
+  _XMPF_errmsg = "not supported yet: sync images(<image> ...)";
+}
+
+void xmpf_sync_images_ast_(int *status)
+{
+  _XMPF_errmsg = NULL;
+
+  /*** not supported ***/
+
+  *status = NotSupportedError;
+  _XMPF_errmsg = "not supported yet: sync images(* ...)";
+}
+
+
+
+/*****************************************\
+  error message to reply to Fortran
+\*****************************************/
+
+char *_XMPF_errmsg = NULL;
+
+void xmpf_get_errmsg_(unsigned char *errmsg, int *msglen)
+{
+  int i, len;
+
+  if (_XMPF_errmsg == NULL) {
+    len = 0;
+  } else {
+    len = strlen(_XMPF_errmsg);
+    if (len > *msglen)
+      len = *msglen;
+    memcpy(errmsg, _XMPF_errmsg, len);      // '\n' is not needed
+  }
+
+  for (i = len; i < *msglen; )
+    errmsg[i++] = ' ';
+
+  return;
+}
+
+  

@@ -14,36 +14,55 @@
          integer, optional, intent(out) :: stat
          character(len=*), optional, intent(out) :: errmsg
          end subroutine
+      end interface
 
-         subroutine xmp_sync_images(stat, errmsg)
+      interface
+        subroutine xmp_sync_memory(stat, errmsg)
          integer, optional, intent(out) :: stat
          character(len=*), optional, intent(out) :: errmsg
          end subroutine
+      end interface
 
-         subroutine xmp_sync_memory(stat, errmsg)
+      interface xmp_sync_images
+         subroutine xmp_sync_images_one(image, stat, errmsg)
+         integer, intent(in) :: image
          integer, optional, intent(out) :: stat
          character(len=*), optional, intent(out) :: errmsg
          end subroutine
+         subroutine xmp_sync_images_ast(image, stat, errmsg)
+         character(len=1), intent(in) :: image
+         integer, optional, intent(out) :: stat
+         character(len=*), optional, intent(out) :: errmsg
+         end subroutine
+      end interface
 
+      interface
          subroutine xmp_lock(stat, errmsg)
          integer, optional, intent(out) :: stat
          character(len=*), optional, intent(out) :: errmsg
          end subroutine
+      end interface
 
+      interface
          subroutine xmp_unlock(stat, errmsg)
          integer, optional, intent(out) :: stat
          character(len=*), optional, intent(out) :: errmsg
          end subroutine
+      end interface
 
+      interface
          subroutine xmp_critical
          end subroutine
+      end interface
 
+      interface
          subroutine xmp_end_critical
          end subroutine
+      end interface
 
+      interface
          subroutine xmp_error_stop
          end subroutine
-
       end interface
 
 !-------------------------------

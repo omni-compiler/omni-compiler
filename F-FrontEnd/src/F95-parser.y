@@ -371,7 +371,8 @@ gen_default_real_kind(void) {
 %type <val> intent_spec kind_selector kind_or_len_selector char_selector len_key_spec len_spec kind_key_spec array_allocation_list  array_allocation defered_shape_list defered_shape
 %type <val> result_opt type_keyword
 %type <val> action_statement95
-%type <val> action_coarray_statement coarray_keyword
+%type <val> action_coarray_statement coarray_keyword coarray_syncimages_keyword
+%type <val> syncimages_arg_list
 %type <val> use_rename_list use_rename use_only_list use_only 
 %type <val> allocation_list allocation
 %type <val> scene_list scene_range
@@ -1315,13 +1316,13 @@ allocation:
 action_coarray_statement:
           coarray_keyword parenthesis_arg_list_or_null
         { $$ = list2(F_CALL_STATEMENT,$1,$2); }
+        | coarray_syncimages_keyword '(' syncimages_arg_list ')'
+        { $$ = list2(F_CALL_STATEMENT,$1,$3); }
         ;
 
 coarray_keyword:
           SYNCALL
         { $$ = GEN_NODE(IDENT, find_symbol("xmp_sync_all")); }
-        | SYNCIMAGES
-        { $$ = GEN_NODE(IDENT, find_symbol("xmp_sync_images")); }
         | SYNCMEMORY
         { $$ = GEN_NODE(IDENT, find_symbol("xmp_sync_memory")); }
         | LOCK
@@ -1334,6 +1335,11 @@ coarray_keyword:
         { $$ = GEN_NODE(IDENT, find_symbol("xmp_end_critical")); }
         | ERRORSTOP
         { $$ = GEN_NODE(IDENT, find_symbol("xmp_error_stop")); }
+        ;
+
+coarray_syncimages_keyword:
+          SYNCIMAGES 
+        { $$ = GEN_NODE(IDENT, find_symbol("xmp_sync_images")); }
         ;
 
 comma_or_null:
@@ -1371,6 +1377,15 @@ arg:
          { $$ = list3(F95_TRIPLET_EXPR,$1,$3,$5); }
         | expr_or_null COL2 expr
          { $$ = list3(F95_TRIPLET_EXPR,$1,NULL,$3); }
+        ;
+
+syncimages_arg_list:
+          expr
+        { $$ = $1; }
+        | '*'
+        { $$ = GEN_NODE(STRING_CONSTANT,strdup("*")); }
+        | syncimages_arg_list ',' arg
+        { $$ = list_put_last($1,$3); }
         ;
 
 image_selector:

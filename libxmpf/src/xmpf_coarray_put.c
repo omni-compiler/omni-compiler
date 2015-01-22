@@ -68,11 +68,20 @@ extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
 
 #ifdef _XMP_COARRAY_FJRDMA
     if (scheme == 1) {
+      ///////
+      printf("  here in #ifdef\n");
+      /////////
       size_t bufsize = *element;
       for (int i = 0; i < *rank; i++)
         bufsize *= count[i];
       char *buf = malloc(bufsize);
+      ///////
+      printf("  rhs = %p\n", rhs);
+      /////////
       rhs = memcpy(buf, rhs, bufsize);
+      ///////
+      printf("  rhs = %p\n", rhs);
+      /////////
     }
 #endif 
   _putCoarray(*serno, baseAddr, *coindex, rhs, 
