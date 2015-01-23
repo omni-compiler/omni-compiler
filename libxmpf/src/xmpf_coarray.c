@@ -141,7 +141,13 @@ void _XMPF_coarray_malloc(int *serno, char **pointer, int count, size_t element)
   synchronizations
 \*****************************************/
 
-void xmp_sync_all_(int *status)
+void xmpf_sync_all_0_(void)
+{
+  int dummy;
+  xmpf_sync_all_1_(&dummy);
+}
+
+void xmpf_sync_all_1_(int *status)
 {
   _XMPF_errmsg = NULL;
   xmp_sync_all(status);
@@ -153,7 +159,13 @@ void xmp_sync_all_(int *status)
             *status, __FILE__);
 }
 
-void xmp_sync_memory_(int *status)
+void xmpf_sync_memory_0_(void)
+{
+  int dummy;
+  xmpf_sync_memory_1_(&dummy);
+}
+
+void xmpf_sync_memory_1_(int *status)
 {
   _XMPF_errmsg = NULL;
   xmp_sync_memory(status);
@@ -165,7 +177,13 @@ void xmp_sync_memory_(int *status)
             *status, __FILE__);
 }
 
-void xmpf_sync_images_one_(int *image, int *status)
+void xmpf_sync_image_0_(int *image)
+{
+  int dummy;
+  xmpf_sync_image_1_(image, &dummy);
+}
+
+void xmpf_sync_image_1_(int *image, int *status)
 {
   _XMPF_errmsg = NULL;
 
@@ -175,7 +193,29 @@ void xmpf_sync_images_one_(int *image, int *status)
   _XMPF_errmsg = "not supported yet: sync images(<image> ...)";
 }
 
-void xmpf_sync_images_ast_(int *status)
+void xmpf_sync_images_0s_(int *size, int *images)
+{
+  int dummy;
+  xmpf_sync_images_1_(size, images, &dummy);
+}
+
+void xmpf_sync_images_1s_(int *size, int *images, int *status)
+{
+  _XMPF_errmsg = NULL;
+
+  /*** not supported ***/
+
+  *status = NotSupportedError;
+  _XMPF_errmsg = "not supported yet: sync images(<image-set> ...)";
+}
+
+void xmpf_sync_images_all_0_(void)
+{
+  int dummy;
+  xmpf_sync_images_all_1_(&dummy);
+}
+
+void xmpf_sync_images_all_1_(int *status)
 {
   _XMPF_errmsg = NULL;
 

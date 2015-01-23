@@ -285,12 +285,6 @@ public class XMPtransCoarray
 
     int scheme = _selectSchemeOfPut(rhs);
 
-    ////////////////
-    System.out.println("XMPtransCoarray.coindexVarStmtToCallStmt");
-    System.out.println("  rhs   ="+rhs);
-    System.out.println("  scheme="+scheme);
-    ////////////////
-
     XMPcoindexObj coidxObj = new XMPcoindexObj(lhs, coarrays);
     return coidxObj.toCallStmt(rhs, Xcons.IntConstant(scheme));
   }
@@ -303,22 +297,11 @@ public class XMPtransCoarray
     final int SCHEME_AuthorizedBufferCopy =   3;    /* not implemented yet */
     final int SCHEME_AuthorizedBufferSpread = 4;    /* not implemented yet */
 
-    /////////////
-    System.out.println("in _selectSchemeOfPut\n");
-    System.out.println("  rhs="+rhs);
-    //////////////
-
     if (rhs.isConstant())
       return SCHEME_BufferCopy;
 
-    /////////////
-    System.out.println("  before");
-    //////////////
     if (rhs.Opcode() == Xcode.F_ARRAY_CONSTRUCTOR)
       return SCHEME_BufferCopy;
-    /////////////
-    System.out.println("  after");
-    //////////////
 
     return SCHEME_Normal;
   }

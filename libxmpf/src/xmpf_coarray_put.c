@@ -85,22 +85,12 @@ extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
     break;
 
   case SCHEME_BufferCopy:
-    //////////
-    printf("here SCHEME_BufferCopy\n");
-    //////////
     bufsize = *element;
     for (i = 0; i < *rank; i++) {
       bufsize *= count[i];
-      //////////
-      printf("  count[%d]=%d\n", i, count[i]);
-      //////////
     }
     buf = malloc(bufsize);
     (void)memcpy(buf, rhs, bufsize);
-    //////////
-    printf("  bufsize=%d *element=%d\n", bufsize, *element);
-    printf("  rhs=%p, buf=%p\n", rhs, buf);
-    //////////
     _putCoarray(*serno, baseAddr, *coindex, buf, bytes, *rank, skip, count);
     break;
 

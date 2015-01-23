@@ -9,59 +9,99 @@
 !-------------------------------
 !  coarray statements
 !-------------------------------
+      interface xmpf_sync_all
+         subroutine xmpf_sync_all_0()
+         end subroutine
+         subroutine xmpf_sync_all_1(stat)
+           integer, intent(out) :: stat
+         end subroutine
+         subroutine xmpf_sync_all_2(stat, errmsg)
+           integer, intent(out) :: stat
+           character(len=*), intent(out) :: errmsg
+         end subroutine
+      end interface
+
+      interface xmpf_sync_memory
+         subroutine xmpf_sync_memory_0()
+         end subroutine
+         subroutine xmpf_sync_memory_1(stat)
+           integer, intent(out) :: stat
+         end subroutine
+         subroutine xmpf_sync_memory_2(stat, errmsg)
+           integer, intent(out) :: stat
+           character(len=*), intent(out) :: errmsg
+         end subroutine
+      end interface
+
+      interface xmpf_sync_images
+         subroutine xmpf_sync_image_0(image)
+           integer, intent(in) :: image
+         end subroutine
+         subroutine xmpf_sync_image_1(image, stat)
+           integer, intent(in) :: image
+           integer, intent(out) :: stat
+         end subroutine
+         subroutine xmpf_sync_image_2(image, stat, errmsg)
+           integer, intent(in) :: image
+           integer, intent(out) :: stat
+           character(len=*), intent(out) :: errmsg
+         end subroutine
+
+         subroutine xmpf_sync_images_0(images)
+           integer, intent(in) :: images(:)
+         end subroutine
+         subroutine xmpf_sync_images_1(images, stat)
+           integer, intent(in) :: images(:)
+           integer, intent(out) :: stat
+         end subroutine
+         subroutine xmpf_sync_images_2(images, stat, errmsg)
+           integer, intent(in) :: images(:)
+           integer, intent(out) :: stat
+           character(len=*), intent(out) :: errmsg
+         end subroutine
+
+         subroutine xmpf_sync_images_all_0(aster)
+           character(len=1), intent(in) :: aster
+         end subroutine
+         subroutine xmpf_sync_images_all_1(aster, stat)
+           character(len=1), intent(in) :: aster
+           integer, intent(out) :: stat
+         end subroutine
+         subroutine xmpf_sync_images_all_2(aster, stat, errmsg)
+           character(len=1), intent(in) :: aster
+           integer, intent(out) :: stat
+           character(len=*), intent(out) :: errmsg
+         end subroutine
+      end interface
+
+!!!! not supported yet
       interface
-         subroutine xmp_sync_all(stat, errmsg)
+         subroutine xmpf_lock(stat, errmsg)
+         integer, optional, intent(out) :: stat
+         character(len=*), optional, intent(out) :: errmsg
+         end subroutine
+      end interface
+
+!!!! not supported yet
+      interface
+         subroutine xmpf_unlock(stat, errmsg)
          integer, optional, intent(out) :: stat
          character(len=*), optional, intent(out) :: errmsg
          end subroutine
       end interface
 
       interface
-        subroutine xmp_sync_memory(stat, errmsg)
-         integer, optional, intent(out) :: stat
-         character(len=*), optional, intent(out) :: errmsg
-         end subroutine
-      end interface
-
-      interface xmp_sync_images
-         subroutine xmp_sync_images_one(image, stat, errmsg)
-         integer, intent(in) :: image
-         integer, optional, intent(out) :: stat
-         character(len=*), optional, intent(out) :: errmsg
-         end subroutine
-         subroutine xmp_sync_images_ast(image, stat, errmsg)
-         character(len=1), intent(in) :: image
-         integer, optional, intent(out) :: stat
-         character(len=*), optional, intent(out) :: errmsg
+         subroutine xmpf_critical
          end subroutine
       end interface
 
       interface
-         subroutine xmp_lock(stat, errmsg)
-         integer, optional, intent(out) :: stat
-         character(len=*), optional, intent(out) :: errmsg
+         subroutine xmpf_end_critical
          end subroutine
       end interface
 
       interface
-         subroutine xmp_unlock(stat, errmsg)
-         integer, optional, intent(out) :: stat
-         character(len=*), optional, intent(out) :: errmsg
-         end subroutine
-      end interface
-
-      interface
-         subroutine xmp_critical
-         end subroutine
-      end interface
-
-      interface
-         subroutine xmp_end_critical
-         end subroutine
-      end interface
-
-      interface
-         subroutine xmp_error_stop
+         subroutine xmpf_error_stop
          end subroutine
       end interface
 

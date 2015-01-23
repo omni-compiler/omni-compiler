@@ -1322,24 +1322,24 @@ action_coarray_statement:
 
 coarray_keyword:
           SYNCALL
-        { $$ = GEN_NODE(IDENT, find_symbol("xmp_sync_all")); }
+        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_all")); }
         | SYNCMEMORY
-        { $$ = GEN_NODE(IDENT, find_symbol("xmp_sync_memory")); }
+        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_memory")); }
         | LOCK
-        { $$ = GEN_NODE(IDENT, find_symbol("xmp_lock")); }
+        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_lock")); }
         | UNLOCK
-        { $$ = GEN_NODE(IDENT, find_symbol("xmp_unlock")); }
+        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_unlock")); }
         | CRITICAL
-        { $$ = GEN_NODE(IDENT, find_symbol("xmp_critical")); }
+        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_critical")); }
         | ENDCRITICAL
-        { $$ = GEN_NODE(IDENT, find_symbol("xmp_end_critical")); }
+        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_end_critical")); }
         | ERRORSTOP
-        { $$ = GEN_NODE(IDENT, find_symbol("xmp_error_stop")); }
+        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_error_stop")); }
         ;
 
 coarray_syncimages_keyword:
           SYNCIMAGES 
-        { $$ = GEN_NODE(IDENT, find_symbol("xmp_sync_images")); }
+        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_images")); }
         ;
 
 comma_or_null:

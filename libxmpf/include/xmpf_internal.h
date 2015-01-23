@@ -1,4 +1,5 @@
 #include "mpi.h"
+#include "xmp.h"
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 #include <stdio.h>
@@ -253,13 +254,6 @@ extern void _XMP_coarray_rdma_node_set_1(const int);
 extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void *);
 //extern void _XMP_coarray_sync_all();
 //extern void _XMP_coarray_sync_memory();
-extern void xmp_sync_memory(const int* status);
-extern void xmp_sync_all(const int* status);
-//extern void xmp_sync_image(int image, int* status);
-//extern void xmp_sync_image_f(int *image, int* status);
-//extern void xmp_sync_images(int num, int* image_set, int* status);
-//extern void xmp_sync_images_f(int *num, int* image_set, int* status);
-//extern void xmp_sync_images_all(int* status);
 //extern size_t get_offset(const void *, const int);
 //extern void _XMP_coarray_shortcut_put(const int, const void*, const void*, const size_t, const size_t, const size_t);
 //extern void _XMP_coarray_shortcut_put_f(const int*, const void*, const void*, const size_t*, const size_t*, const size_t*);
@@ -298,13 +292,19 @@ extern int _XMPF_get_coarrayStart(int serno, char *baseAddr);
 extern void xmpf_coarray_malloc_(int *serno, char **pointer, int *count, int *element);
 extern void _XMPF_coarray_malloc(int *serno, char **pointer, int count, size_t element);
 
-extern void xmp_sync_all_(int *status);
-extern void xmp_sync_memory_(int *status);
-extern void xmp_sync_images_one_(int *image, int *status);
-extern void xmp_sync_images_ast_(int *status);
+extern void xmpf_sync_all_0_(void);
+extern void xmpf_sync_all_1_(int *status);
+extern void xmpf_sync_memory_0_(void);
+extern void xmpf_sync_memory_1_(int *status);
+extern void xmpf_sync_image_0_(int *image);
+extern void xmpf_sync_image_1_(int *image, int *status);
+extern void xmpf_sync_images_0s_(int *size, int *images);
+extern void xmpf_sync_images_1s_(int *size, int *images, int *status);
+extern void xmpf_sync_images_all_0_(void);
+extern void xmpf_sync_images_all_1_(int *status);
 
-extern int xmp_num_nodes(void);
-extern int xmp_node_num(void);
+extern int xmpf_num_nodes_(void);
+extern int xmpf_node_num_(void);
 
 /* xmpf_coarray_put.c */
 extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
