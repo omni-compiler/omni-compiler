@@ -728,7 +728,7 @@ void *xmp_malloc(xmp_desc_t d, ...){
 	return NULL;
       }
 
-      _XMP_init_shadow(a, ai->shadow_type, ai->shadow_size_lo, ai->shadow_size_hi);
+      _XMP_init_shadow_dim(a, i, ai->shadow_type, ai->shadow_size_lo, ai->shadow_size_hi);
 
     }
 
