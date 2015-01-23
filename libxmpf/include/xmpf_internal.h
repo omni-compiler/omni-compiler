@@ -303,6 +303,8 @@ extern void xmp_sync_memory_(int *status);
 extern void xmp_sync_images_one_(int *image, int *status);
 extern void xmp_sync_images_ast_(int *status);
 
+extern int xmp_num_nodes(void);
+extern int xmp_node_num(void);
 
 /* xmpf_coarray_put.c */
 extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,

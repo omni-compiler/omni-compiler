@@ -101,12 +101,12 @@ static int _getNewSerno() {
   through the wrappers in xmpf_coarray_wrap.f90
 \*****************************************/
 
-int xmp_num_images_(void)
+int xmpf_num_images_(void)
 {
   return xmp_num_nodes();
 }
 
-int xmp_this_image_(void)
+int xmpf_this_image_(void)
 {
   return xmp_node_num();
 }

@@ -1,11 +1,11 @@
 !-----------------------------------------------------------------------
-      integer function xmp_num_images()
+      integer function num_images()
 !-----------------------------------------------------------------------
       return xmpf_num_images()
       end function
 
 !-----------------------------------------------------------------------
-      integer function xmp_this_image()
+      integer function this_image()
 !-----------------------------------------------------------------------
       return xmpf_this_image()
       end function
