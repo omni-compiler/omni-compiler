@@ -68,8 +68,8 @@
 !-------------------------------
 !  coarray intrinsic functions
 !-------------------------------
-      integer, external :: image_index
-      integer, external :: lcobound, ucobound
+!!      integer, external :: image_index
+!!      integer, external :: lcobound, ucobound
       integer, external :: num_images, this_image
 
 !-------------------------------
