@@ -725,7 +725,10 @@ static _Bool is_same_alignmanner(_XMP_array_t *adesc0, _XMP_array_t *adesc1)
   for (int i = 0; i < adesc0->dim; i++) {
     int idim0 = adesc0->info[i].align_template_index;
     int idim1 = adesc1->info[i].align_template_index;
-    if (adesc0->info[i].align_manner != adesc1->info[i].align_manner){
+    if ((adesc0->info[i].align_manner == _XMP_N_ALIGN_DUPLICATION)
+        || (adesc1->info[i].align_manner == _XMP_N_ALIGN_DUPLICATION)){
+       return false;
+    }else if (adesc0->info[i].align_manner != adesc1->info[i].align_manner){
        return false;
     }else{
        if(adesc0->info[i].align_manner==_XMP_N_ALIGN_BLOCK_CYCLIC
@@ -1151,7 +1154,6 @@ void _XMP_gmove_calc_elmts_myrank(int dim, int *num_triplet, int **irank, int *r
   switch(dim){
   case 1:
     for(i0=0;i0<num_triplet[0];i0++){
-
       if (rank_acc[0]*irank[0][i0]
          == myrank){
         (*num_myrank)++;
@@ -1161,7 +1163,6 @@ void _XMP_gmove_calc_elmts_myrank(int dim, int *num_triplet, int **irank, int *r
   case 2:
     for(i1=0;i1<num_triplet[1];i1++){
       for(i0=0;i0<num_triplet[0];i0++){
-
         if (rank_acc[1]*irank[1][i1]
            +rank_acc[0]*irank[0][i0]
            == myrank){
@@ -1280,79 +1281,54 @@ void _XMP_gmove_calc_elmts_myrank(int dim, int *num_triplet, int **irank, int *r
   }
 }
 
-void _XMP_gmove_set_align_flag(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_align_flag, int *src_align_flag, int *calc_color_flag){
-
-  int i;
-  _XMP_array_t *dst_array;
-  _XMP_array_t *src_array = gmv_desc_rightp->a_desc;
-  _XMP_template_t *dst_template;
-  _XMP_template_t *src_template = src_array->align_template;
-
-  if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true){
-    dst_array = gmv_desc_leftp->a_desc;
-    dst_template = dst_array->align_template;
-  }
-
-  int dst_dim = gmv_desc_leftp->ndims;
-  int src_dim = gmv_desc_rightp->ndims;
-  int dst_t_dim, src_t_dim;
-  int dst_noalign_count=0, src_noalign_count=0;
-  if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true){
-    dst_t_dim = dst_template->dim;
-    src_t_dim = src_template->dim;
-    if (dst_t_dim == src_t_dim && dst_t_dim == dst_dim && src_t_dim == src_dim){
-      for(i=0;i<src_dim;i++){
-        src_align_flag[i]=1;
-        if (src_array->info[i].align_manner == _XMP_N_ALIGN_NOT_ALIGNED){
-          _XMP_fatal("Not supported a collapsed distributed array on the right hand side for gmove");
-        }
-      }
-      for(i=0;i<dst_dim;i++){
-        dst_align_flag[i]=1;
-        if (dst_array->info[i].align_manner == _XMP_N_ALIGN_NOT_ALIGNED){
-          dst_align_flag[i]=0;
-          dst_noalign_count++;
-        }
-      }
-    }
-  }
-
-  /* if aflag==1, a color is calculated. */
-  if (dst_noalign_count > src_noalign_count){
-    *calc_color_flag=1;
-  }else{
-    *calc_color_flag=0;
-  }
-
-}
-
-void _XMP_gmove_calc_color(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_align_flag, int *src_align_flag, MPI_Comm *newcomm, int *calc_color_flag, int *color){
+void _XMP_gmove_create_subcomm(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, MPI_Comm *newcomm, int *create_subcomm_flag){
 
   _XMP_array_t *dst_array;
-  _XMP_array_t *src_array = gmv_desc_rightp->a_desc;
   _XMP_template_t *dst_template;
-  _XMP_template_t *src_template = src_array->align_template;
   _XMP_nodes_t *dst_n;
   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
   int myrank = exec_nodes->comm_rank;
+  int i, j, temp_index, nodes_index, num_term;
+  int dst_dim, dst_n_dim, dst_align_flag[_XMP_N_MAX_DIM];
+  int dst_align_count=0;
 
   if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true){
+    dst_dim = gmv_desc_leftp->ndims;
     dst_array = gmv_desc_leftp->a_desc;
     dst_template = dst_array->align_template;
     dst_n = dst_template->onto_nodes;
+    dst_n_dim = dst_n->dim;
+
+    for(i=0;i<dst_n_dim;i++){
+      dst_align_flag[i]=0;
+    }
+
+    for(i=0;i<dst_dim;i++){
+      if ((dst_array->info[i].align_manner == _XMP_N_ALIGN_BLOCK)
+         || (dst_array->info[i].align_manner == _XMP_N_ALIGN_CYCLIC)
+         || (dst_array->info[i].align_manner == _XMP_N_ALIGN_BLOCK_CYCLIC)
+         || (dst_array->info[i].align_manner == _XMP_N_ALIGN_GBLOCK)) {
+        temp_index = dst_array->info[i].align_template_index;
+        nodes_index = dst_template->chunk[temp_index].onto_nodes_index;
+        dst_align_flag[nodes_index]=1;
+        dst_align_count++;
+      }
+    }
+
+    if (dst_align_count < dst_n_dim){
+      *create_subcomm_flag=1;
+    }else{
+      *create_subcomm_flag=0;
+    }
+
   }
 
-  int dst_dim = gmv_desc_leftp->ndims;
-  int src_dim = gmv_desc_rightp->ndims;
-
-  if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true && *calc_color_flag == 1){
+  if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true && *create_subcomm_flag == 1){
     int dst_psize[_XMP_N_MAX_DIM];
-    int i, j, temp_index, num_term;
     int noalign_flag;
     int div[4], mod[4], mult[4];
 
-    int dst_t_dim = dst_template->dim;
-    int src_t_dim = src_template->dim;
+    dst_n_dim = dst_n->dim;
 
     for(i=0;i<4;i++){
       div[i]=1;
@@ -1360,22 +1336,33 @@ void _XMP_gmove_calc_color(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv
       mult[i]=1;
     }
 
-    if (dst_t_dim == src_t_dim && dst_t_dim == dst_dim && src_t_dim == src_dim){
+    if (dst_n_dim >= dst_dim ){
+
+      for(i=0;i<dst_n_dim;i++){
+        dst_psize[i]=0;
+      }
 
       for(i=0;i<dst_dim;i++){
         temp_index = dst_array->info[i].align_template_index;
+        nodes_index = dst_template->chunk[temp_index].onto_nodes_index;
         if (temp_index==-1){
           dst_psize[i]=dst_n->info[i].size;
         }else{
-          dst_psize[temp_index]=dst_n->info[temp_index].size;
+          dst_psize[nodes_index]=dst_n->info[nodes_index].size;
         }
       }
 
-      /* Calculation of the number of terms of a color polynomial*/
+      for(i=0;i<dst_n_dim;i++){
+        if (dst_psize[i]==0){
+          dst_psize[i]=dst_n->info[i].size;
+        }
+      }
+
+      /* Calculate the number of terms of a color polynomial*/
       int dst_term_num_loc[4];
       noalign_flag=1;
       num_term=0;
-      for(i=0;i<dst_dim;i++){
+      for(i=0;i<dst_n_dim;i++){
         if (dst_align_flag[i] == 1){
           if (noalign_flag==1){
             num_term++;
@@ -1387,7 +1374,8 @@ void _XMP_gmove_calc_color(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv
         }
       }
 
-      *color=0;
+      /* Calculate the coefficient of a color polynomial and create new communicator.*/
+      int color=0;
       for(j=0;j<num_term;j++){
         for(i=0;i<dst_term_num_loc[j]+1;i++){
           div[j]=div[j]*dst_psize[i];
@@ -1395,18 +1383,18 @@ void _XMP_gmove_calc_color(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv
             mult[j]=mult[j]*dst_psize[i];
           }
         }
-        for(i=dst_term_num_loc[j]+1;i<dst_dim;i++){
+        for(i=dst_term_num_loc[j]+1;i<dst_n_dim;i++){
           if(dst_align_flag[i]==1){
             mod[j]=mod[j]*dst_psize[i];
           }else{
             break;
           }
         }
-        *color=*color+((myrank/div[j])%mod[j])*mult[j];
+        color=color+((myrank/div[j])%mod[j])*mult[j];
       }
 
       MPI_Comm newcomm0;
-      MPI_Comm_split( *(MPI_Comm *)dst_n->comm, *color, myrank, &newcomm0);
+      MPI_Comm_split( *(MPI_Comm *)dst_n->comm, color, myrank, &newcomm0);
       *newcomm=newcomm0;
 
     }
@@ -1419,7 +1407,7 @@ int _XMP_gmove_calc_seq_rank(int *count, int *rank_acc, int **irank, int dim){
 
   switch(dim){
   case 1:
-    rank_ref = irank[0][count[0]];
+    rank_ref = rank_acc[0]*irank[0][count[0]];
   break;
   case 2:
     rank_ref = rank_acc[1]*irank[1][count[1]]
@@ -1474,7 +1462,7 @@ int _XMP_gmove_calc_seq_loc(int *count, unsigned long long *array_acc, int **loc
 
   switch(dim){
   case 1:
-    loc_ref = local_idx[0][count[0]];
+    loc_ref = array_acc[0]*local_idx[0][count[0]];
   break;
   case 2:
     loc_ref = array_acc[1]*local_idx[1][count[1]]
@@ -1516,7 +1504,7 @@ int _XMP_gmove_calc_seq_loc(int *count, unsigned long long *array_acc, int **loc
              +array_acc[0]*local_idx[0][0];
   break;
   default:
-    _XMP_fatal("_XMP_: unknown a dimension number");
+    _XMP_fatal("_XMP_: gmove_calc_seq_loc unknown a dimension number");
   }
 
   return loc_ref;
@@ -1575,9 +1563,9 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
   unsigned long long dst_array_acc[_XMP_N_MAX_DIM];
   unsigned long long src_array_acc[_XMP_N_MAX_DIM];
   int i,j,jj,i0,i1,i2,i3,i4,i5,i6;
-  int temp_index, calc_color_flag;
+  int temp_index, nodes_index, create_subcomm_flag;
   int src_template_index[_XMP_N_MAX_DIM], dst_template_index[_XMP_N_MAX_DIM];
-  int src_align_flag[_XMP_N_MAX_DIM], dst_align_flag[_XMP_N_MAX_DIM];
+  int src_nodes_index[_XMP_N_MAX_DIM], dst_nodes_index[_XMP_N_MAX_DIM];
 
   int dst_sub_num_ref[_XMP_N_MAX_DIM], src_sub_num_ref[_XMP_N_MAX_DIM];
   int dst_count[_XMP_N_MAX_DIM], src_count[_XMP_N_MAX_DIM];
@@ -1618,12 +1606,14 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
 
   for (i=0;i<src_dim;i++){
     temp_index = src_array->info[i].align_template_index;
+    nodes_index = src_template->chunk[temp_index].onto_nodes_index;
     src_array_acc[i] = src_array->info[i].dim_acc;
     if (temp_index == -1){
       src_rank_acc[i]=0;
     }else{
       src_template_index[i] = temp_index;
-      src_rank_acc[i]=src_n->info[temp_index].multiplier;
+      src_nodes_index[i] = nodes_index;
+      src_rank_acc[i]=src_n->info[nodes_index].multiplier;
     }
 
     jj=0;
@@ -1664,14 +1654,16 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
     for (i=0;i<dst_dim;i++){
       dst_total_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
       temp_index = dst_array->info[i].align_template_index;
+      nodes_index = dst_template->chunk[temp_index].onto_nodes_index;
       dst_array_acc[i] = dst_array->info[i].dim_acc;
       if (temp_index == -1){
         dst_myindex[i]=0;
         dst_rank_acc[i]=0;
       }else{
         dst_template_index[i] = temp_index;
-        dst_myindex[i]=dst_n->info[dst_template_index[i]].rank;
-        dst_rank_acc[i]=dst_n->info[dst_template_index[i]].multiplier;
+        dst_nodes_index[i] = nodes_index;
+        dst_myindex[i]=dst_n->info[dst_nodes_index[i]].rank;
+        dst_rank_acc[i]=dst_n->info[dst_nodes_index[i]].multiplier;
       }
 
       jj=0;
@@ -1688,7 +1680,7 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
   }else{
     for (i=0;i<dst_dim;i++){
       dst_total_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
-      dst_myindex[i]=src_n->info[src_array->info[i].align_template_index].rank;
+      dst_myindex[i]=0;
       dst_rank_acc[i]=0;
       dst_array_acc[i]=dst_d[i];
 
@@ -1706,14 +1698,12 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
 
   _XMP_gmove_calc_elmts_myrank(dst_dim, dst_num, dst_irank, dst_rank_acc, &dst_num_myrank_total);
 
-  _XMP_gmove_set_align_flag(gmv_desc_leftp, gmv_desc_rightp, dst_align_flag, src_align_flag, &calc_color_flag);
-
-  int color, newcomm_rank;
+  int newcomm_rank;
   MPI_Comm newcomm;
-  _XMP_gmove_calc_color(gmv_desc_leftp, gmv_desc_rightp, dst_align_flag, src_align_flag, &newcomm, &calc_color_flag, &color);
+  _XMP_gmove_create_subcomm(gmv_desc_leftp, gmv_desc_rightp, &newcomm, &create_subcomm_flag);
 
-  int dst_type_size=type_size;
-  int src_type_size=src_array->type_size;
+  size_t dst_type_size=type_size;
+  size_t src_type_size=src_array->type_size;
 
   int icount, dst_loc;
   int *unpack_ref;
@@ -1728,8 +1718,8 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
   src_status=(MPI_Status *)malloc(src_num_myrank_total*sizeof(MPI_Status));
   unpack_ref=(int *)malloc(dst_num_myindex_total*sizeof(int));
   dst_buf=(char *)malloc(dst_num_myindex_total*dst_type_size*sizeof(char));
-
   int dst_seq_rank, src_seq_rank, dst_seq_loc, src_seq_loc;
+
   switch(dst_sub_dim){
   case 1:
     icount=0;
@@ -1740,6 +1730,7 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
       dst_seq_loc=_XMP_gmove_calc_seq_loc(dst_count, dst_array_acc, dst_local_idx, dst_dim);
       src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim);
       if (dst_seq_rank == myrank){
+        unpack_ref[icount]=dst_seq_loc;
         MPI_Irecv((char *)dst_addr+dst_seq_loc*dst_type_size, 
                   dst_type_size, MPI_BYTE, src_seq_rank, _XMP_N_MPI_TAG_GMOVE, 
                   *exec_comm, &dst_request[icount]);
@@ -1944,7 +1935,7 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
 
     break;
   default:
-    _XMP_fatal("_XMP_: unknown a dimension number");
+    _XMP_fatal("_XMP_: dst_sub_dim unknown a dimension number");
   }
 
   switch(src_sub_dim){
@@ -2153,7 +2144,7 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
 
     break;
   default:
-    _XMP_fatal("_XMP_: unknown a dimension number");
+    _XMP_fatal("_XMP_: src_sub_dim unknown a dimension number");
   }
 
   MPI_Waitall(dst_num_myrank_total, dst_request, dst_status);
@@ -2177,7 +2168,7 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
   free(dst_local_idx);
   free(dst_irank);
 
-  if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true && calc_color_flag == 1){
+  if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true && create_subcomm_flag == 1){
     MPI_Comm_rank(newcomm, &newcomm_rank);
     if (newcomm_rank==0){
       for(i0=0;i0<dst_num_myindex_total;i0++){
@@ -2225,13 +2216,13 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
   _XMP_array_t *dst_array;
   _XMP_array_t *src_array = gmv_desc_rightp->a_desc;
   _XMP_template_t *dst_template, *src_template;
+  _XMP_nodes_t *dst_nodes, *src_nodes;
 
   void *dst_addr, *src_addr;
   int type;
   size_t type_size;
   int dst_dim = gmv_desc_leftp->ndims;
   int src_dim = gmv_desc_rightp->ndims;
-  int dst_template_index, src_template_index;
   int dst_num, src_num, dst_sub_dim=0, src_sub_dim=0;
 
   if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true){
@@ -2242,6 +2233,8 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
     src_addr = src_array->array_addr_p;
     dst_template = dst_array->align_template;
     src_template = src_array->align_template;
+    dst_nodes = dst_template->onto_nodes;
+    src_nodes = src_template->onto_nodes;
   }else if(gmv_desc_leftp->is_global == false && gmv_desc_rightp->is_global == true){
     dst_addr = gmv_desc_leftp->local_data;
     src_addr = src_array->array_addr_p;
@@ -2330,8 +2323,8 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
        }
      }
 
-     if (dst_dim==dst_template->dim){
-        if(src_dim==src_template->dim){
+     if (dst_dim==dst_nodes->dim){
+        if(src_dim==src_nodes->dim){
 
           for(int i=0; i<dst_dim;i++){
             if ((dst_array->info[i].align_subscript != 0 )
@@ -2357,20 +2350,21 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
           src_chk_flag=0;
         }
 
-     }else if (dst_dim < dst_template->dim){
-        if(src_dim < src_template->dim){
-          if(dst_template->dim > 2 
-            || src_template->dim > 2
-            || dst_array->info[0].align_subscript != 0
-            || src_array->info[0].align_subscript != 0){
-             _XMP_fatal("not implemented yet");
+     }else if (dst_dim < dst_nodes->dim){
+        if(src_dim < src_nodes->dim){
+          if((dst_nodes->dim != 2) 
+            || (src_nodes->dim != 2)
+            || (dst_array->info[0].align_subscript != 0)
+            || (src_array->info[0].align_subscript != 0)){
+            dst_chk_flag=0;
+            src_chk_flag=0;
           }
         }else{
           dst_chk_flag=0;
           src_chk_flag=0;
         }
-     }else if (dst_dim > dst_template->dim){
-        if (src_dim > src_template->dim){
+     }else if (dst_dim > dst_nodes->dim){
+        if (src_dim > src_nodes->dim){
            if (_XMPF_running == 1
                && _XMPC_running == 0){
               dst_chk_flag=0;
