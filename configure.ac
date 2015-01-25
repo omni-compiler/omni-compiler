@@ -746,7 +746,7 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   fi
   MPI_FPP=$MPI_FC
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist $INC_PATH $MPI_OPENMP_FLAG"
+  MPI_FCFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist -qextname $INC_PATH $MPI_OPENMP_FLAG"
   MPI_MODINC="-I"
 
   INC_PATH="/usr/local/bg/include"
