@@ -723,16 +723,20 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   else
     MPI_CC="mpixlcxx_r"
   fi
-  MPI_CPP=$MPI_CC
+
+# $MPICC cannot be used for XcodeML bug. Instead of $MPICC, 
+# $CC (gcc) is used. But, this is not a good idea. Wish to fix the bug.
+#  MPI_CPP=$MPI_CC
+  MPI_CPP=$CC
   MPI_CPPFLAGS="-E"
   MPI_CFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist $INC_PATH $MPI_OPENMP_FLAG"
 
   if test -f /usr/local/bg/lib/libkek.a; then
-    MPI_CLIBS="-L/usr/local/bg/lib/ -lkek"
+    MPI_CLIBS="/usr/local/bg/lib/libkek.a"
   fi
 
   if test -f /bgsys/drivers/ppcfloor/bgpm/lib/libbgpm.a; then
-    MPI_CLIBS="$MPI_CLIBS -L/bgsys/drivers/ppcfloor/bgpm/lib/ -lbgpm"
+    MPI_CLIBS="$MPI_CLIBS /bgsys/drivers/ppcfloor/bgpm/lib/libbgpm.a"
   fi
   
 # MPI F
@@ -743,7 +747,7 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   fi
   MPI_FPP=$MPI_FC
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist $INC_PATH $MPI_OPENMP_FLAG"
+  MPI_FCFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist -qextname $INC_PATH $MPI_OPENMP_FLAG"
   MPI_MODINC="-I"
 
   INC_PATH="/usr/local/bg/include"
@@ -758,13 +762,13 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   OMNI_L2X_CFLAGS=""
   OMNI_LX2X_CFLAGS=""
   OMNI_NTV_CFLAGS="-q64 -qipa"
-  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG $MPI_CLIBS"
 
 # Omni F
   OMNI_L2X_FCFLAGS=""
   OMNI_LX2X_FCFLAGS=""
   OMNI_NTV_FCFLAGS="-q64 -qipa -qextname"
-  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG $MPI_CLIBS"
 
 elif test "$target" = "powerpc-hitachi-aix"; then
 # MPI OpenMP
