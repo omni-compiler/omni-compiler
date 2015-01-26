@@ -85,6 +85,7 @@ Driver/etc/x2x.conf.acc
 Driver/etc/x2x.conf.openmp
 Driver/etc/x2x.conf.xmp
 Driver/etc/x2x.conf.xmpf
+Driver/etc/xmpcc.conf
 Driver/src/Makefile
 Driver/src/omdriver
 Driver/src/xmp_collect_init
