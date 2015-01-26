@@ -978,6 +978,18 @@ public class XMPrewriteExpr {
 	  case POINTER_REF:
 	    iter.setXobject(rewritePointerRef(myExpr, block));
 	    break;
+	  case FUNCTION_CALL:
+	    Xobject f = myExpr.getArg(0);
+	    if (f.Opcode() == Xcode.FUNC_ADDR && f.getString().equals("xmp_malloc")){
+	      Xobject p = iter.getParent();
+	      if (p.Opcode() == Xcode.CAST_EXPR){
+		Xtype pt = p.Type();
+		if (!pt.isPointer()) break;
+		Xtype t = pt.getRef();
+		if (t.isArray()) t = t.getArrayElementType();
+	  	p.setType(Xtype.Pointer(t));
+	      }
+	    }
 	  default:
 	  }
 	}
@@ -1484,21 +1496,50 @@ public class XMPrewriteExpr {
 	} break;
       case POINTER_REF:
 	{
-	  Xobject addr_expr = myExpr.getArg(0);
-	  if (addr_expr.Opcode() == Xcode.PLUS_EXPR){
+	  // Xobject addr_expr = myExpr.getArg(0);
+	  // if (addr_expr.Opcode() == Xcode.PLUS_EXPR){
 
-	    Xobject pointer = addr_expr.getArg(0);
-	    Xobject offset = addr_expr.getArg(1);
+	  //   Xobject pointer = addr_expr.getArg(0);
+	  //   Xobject offset = addr_expr.getArg(1);
 
-	    if (pointer.Opcode() == Xcode.VAR){
-	      XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(pointer.getSym(), block);
-	      if (alignedArray != null){
-		  addr_expr.setArg(0, alignedArray.getAddrId().Ref());
-		  addr_expr.setArg(1, rewriteLoopIndexArrayRef(templateObj, templateIndex, alignedArray, 0,
-							       loopIndexName, offset));
-	      }
+	  //   if (pointer.Opcode() == Xcode.VAR){
+	  //     XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(pointer.getSym(), block);
+	  //     if (alignedArray != null){
+	  // 	  addr_expr.setArg(0, alignedArray.getAddrId().Ref());
+	  // 	  addr_expr.setArg(1, rewriteLoopIndexArrayRef(templateObj, templateIndex, alignedArray, 0,
+	  // 						       loopIndexName, offset));
+	  //     }
+	  //   }
+	  // }
+
+	  XMPalignedArray alignedArray = null;
+	  XobjList indexList = Xcons.List();
+
+	  Xobject addr_expr = myExpr;
+	  while (addr_expr.Opcode() == Xcode.POINTER_REF){
+	    addr_expr = addr_expr.getArg(0);
+	    if (addr_expr.Opcode() == Xcode.PLUS_EXPR){
+	      indexList.cons(addr_expr.getArg(1));
+	      addr_expr = addr_expr.getArg(0);
 	    }
+
+	    if (addr_expr.Opcode() == Xcode.VAR){
+	      alignedArray = globalDecl.getXMPalignedArray(addr_expr.getSym(), block);
+	      break;
+	    }
+
 	  }
+
+	  if (alignedArray != null){
+	    Xobject newExpr = Xcons.arrayRef(alignedArray.getType(), alignedArray.getAddrId().Ref(),
+					     rewriteLoopIndexArrayRefList(templateObj, templateIndex, alignedArray,
+									  loopIndexName, indexList));
+	    iter.setXobject(newExpr);
+	    // myExpr.getArg(0).setArg(0, alignedArray.getAddrId().Ref());
+	    // myExpr.getArg(0).setArg(1, rewriteLoopIndexArrayRefList(templateObj, templateIndex, alignedArray,
+	    // 							    loopIndexName, indexList));
+	  }
+
 	  break;
 	}
       default:

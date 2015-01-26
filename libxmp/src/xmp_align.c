@@ -72,6 +72,8 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
     ai->shadow_comm = NULL;
     ai->shadow_comm_size = 1;
     ai->shadow_comm_rank = _XMP_N_INVALID_RANK;
+
+    ai->align_template_index = -1;
   }
   va_end(args);
 
@@ -548,6 +550,39 @@ void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...) {
 #endif
 }
 
+void _XMP_alloc_array2(void **array_addr, _XMP_array_t *array_desc,
+		       unsigned long long *acc[]) {
+  if (!array_desc->is_allocated) {
+    *array_addr = NULL;
+    return;
+  }
+
+  unsigned long long total_elmts = 1;
+  int dim = array_desc->dim;
+
+  for (int i = dim - 1; i >= 0; i--) {
+    *acc[i] = total_elmts;
+
+    array_desc->info[i].dim_acc = total_elmts;
+
+    total_elmts *= array_desc->info[i].alloc_size;
+  }
+
+  for (int i = 0; i < dim; i++) {
+    _XMP_calc_array_dim_elmts(array_desc, i);
+  }
+
+  *array_addr = _XMP_alloc(total_elmts * (array_desc->type_size));
+
+  // set members
+  array_desc->array_addr_p = *array_addr;
+  array_desc->total_elmts = total_elmts;
+
+#ifdef _XMP_TCA
+  _XMP_alloc_tca(array_desc);
+#endif
+}
+
 void _XMP_alloc_array_EXTERN(void **array_addr, _XMP_array_t *array_desc, ...) {
   if (!array_desc->is_allocated) {
     return;
@@ -768,7 +803,7 @@ void _XMP_align_array_noalloc(_XMP_array_t *a, int adim, int tdim, long long ali
   ai->align_subscript = align_subscript; /* not normalized, to be done at xmp_malloc */
 
   ai->temp0 = temp0;
-  a->array_addr_p = (void *)acc0; // temporarily stored to this member
+  ai->acc = acc0; // temporarily stored to this member
 
   a->array_nodes = NULL;
 }

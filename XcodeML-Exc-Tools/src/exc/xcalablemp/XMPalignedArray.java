@@ -432,6 +432,7 @@ public class XMPalignedArray {
     if (isLocalPragma) {
       if (!isPointer) arrayAddrId = XMPlocalDecl.addObjectId2(XMP.ADDR_PREFIX_ + arrayName,
 							      Xtype.Pointer(arrayElmtType), parentBlock);
+      else arrayAddrId.setType(Xtype.Pointer(arrayElmtType));
       arrayDescId = XMPlocalDecl.addObjectId2(XMP.DESC_PREFIX_ + arrayName, parentBlock);
     }
     else {
@@ -449,6 +450,7 @@ public class XMPalignedArray {
 	  throw new XMPexception("cannot align array '" + arrayName + "', wrong storage class");
 	}
       }
+      else arrayAddrId.setType(Xtype.Pointer(arrayElmtType));
       arrayDescId = globalDecl.declStaticIdent(XMP.DESC_PREFIX_ + arrayName, Xtype.voidPtrType);
     }
 
