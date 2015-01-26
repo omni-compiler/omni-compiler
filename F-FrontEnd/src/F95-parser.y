@@ -1381,9 +1381,9 @@ arg:
 
 syncimages_arg_list:
           expr
-        { $$ = $1; }
+        { $$ = list1(LIST,$1); }
         | '*'
-        { $$ = GEN_NODE(STRING_CONSTANT,strdup("*")); }
+        { $$ = list1(LIST,GEN_NODE(STRING_CONSTANT,strdup("*"))); }
         | syncimages_arg_list ',' arg
         { $$ = list_put_last($1,$3); }
         ;

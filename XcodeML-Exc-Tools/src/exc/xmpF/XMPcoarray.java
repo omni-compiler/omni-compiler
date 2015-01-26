@@ -98,13 +98,15 @@ public class XMPcoarray {
   public void errorCheck() {
     if (isPointer())
       XMP.error("Coarray cannot be a pointer: "+name);
-    if (isAllocatable()) {
-      //
-    } else {
+    if (isDummyArg()) {
       if (!isScalar() && !isExplicitShape())
-        XMP.error("Static coarray should be scalar or explicit shape: "+name);
+        XMP.error("Static coarray should be scalar or explicit shaped: "+name);
     }
   }
+
+
+
+
 
   //------------------------------
   //  evaluation
@@ -230,6 +232,12 @@ public class XMPcoarray {
     return ident.Type().isFpointer();
   }
 
+  public Boolean isDummyArg() {
+    if (ident.getStorageClass() == StorageClass.FPARAM)
+      return true;
+    return false;
+  }
+
   public Boolean isAssumedSize() {
     return ident.Type().isFassumedSize();
   }
@@ -265,6 +273,19 @@ public class XMPcoarray {
 
   public Ident getDescriptorId() {
     return descrId;
+  }
+
+  public Xobject getDescriptorIdExpr(Xobject baseAddr) {
+    if (descrId != null)
+      return descrId;
+
+    ///////////////
+    System.out.println(">>>> gaccha");
+    ///////////////
+    Ident funcIdent =
+      getEnv().declExternIdent("xmpf_get_descr_id", Xtype.FintFunctionType);
+    Xobject descId = funcIdent.Call(Xcons.List(baseAddr));
+    return descId;
   }
 
   public Xobject[] getCodimensions() {

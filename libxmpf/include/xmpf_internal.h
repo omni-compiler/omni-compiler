@@ -73,6 +73,10 @@ size_t _XMP_get_datatype_size(int datatype);
 int _XMPF_get_owner_pos_BLOCK(_XMP_array_t *a, int dim, int index);
 _Bool _XMP_is_entire(_XMP_object_ref_t *rp);
 
+// From xmp_world.c
+extern int _XMP_world_size;
+extern int _XMP_world_rank;
+
 /* From xmp_align.c */
 void _XMP_finalize_array_desc(_XMP_array_t *array);
 void _XMP_align_array_NOT_ALIGNED(_XMP_array_t *array, int array_index);
@@ -173,6 +177,7 @@ void _XMP_wait_async__(int async_id);
 void _XMP_reflect_async__(_XMP_array_t *a_desc, int async_id);
 
 /* From xmp_coarray.c */
+extern int xmpf_get_descr_id_(char *baseAddr);
 extern void _XMP_gasnet_not_continuous_put();
 extern void _XMP_gasnet_continuous_put();
 extern void _XMP_gasnet_not_continuous_get();

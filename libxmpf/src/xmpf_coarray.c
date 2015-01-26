@@ -34,6 +34,30 @@ static _coarrayInfo_t _coarrayInfoTab[DESCR_ID_MAX] = {};
 static int _nextId = 0;
 
 
+/*
+ * find descriptor-ID corresponding to baseAddr
+ *   This routine is used for dummy arguments currently.
+ */
+int xmpf_get_descr_id_(char *baseAddr)
+{
+  int i;
+  _coarrayInfo_t *cp;
+
+  for (i = 0, cp = _coarrayInfoTab;
+       i < DESCR_ID_MAX;
+       i++, cp++) {
+    if (cp->is_used) {
+      if (cp->orgAddr <= baseAddr &&
+          baseAddr < cp->orgAddr + cp->count * cp->element)
+        return i;
+    }
+  }
+
+  _XMP_fatal("cannot access unallocated coarray");
+  return -1;
+}
+
+
 int _XMPF_get_coarrayElement(int serno)
 {
   return _coarrayInfoTab[serno].element;
@@ -101,12 +125,12 @@ static int _getNewSerno() {
   through the wrappers in xmpf_coarray_wrap.f90
 \*****************************************/
 
-int xmpf_num_images_(void)
+int num_images_(void)
 {
   return xmp_num_nodes();
 }
 
-int xmpf_this_image_(void)
+int this_image_(void)
 {
   return xmp_node_num();
 }

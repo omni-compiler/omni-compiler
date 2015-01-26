@@ -115,9 +115,9 @@
 !-------------------------------
 !  coarray atomic subroutines
 !-------------------------------
-! Exactly, atom should be integer(kind=atomc_int_kind) or 
-! logical(kind=atomic_logical_kind), whose kind is defined in
-! the intrinsic module iso_fortran_env [J.Reid, N1824:15.3].
+! Exactly, variable atom should be integer(kind=atomc_int_kind) or 
+! logical(kind=atomic_logical_kind), whose kind is defined in the 
+! intrinsic module iso_fortran_env [J.Reid, N1824:15.3].
 
       interface atmic_define
          subroutine atomic_define_i2(atom, value)
@@ -173,6 +173,8 @@
          end subroutine
       end interface
 
+!-------------------------------
+!  array functions to support reference of coindexed-objects
+!-------------------------------
       include "xmp_lib_coarray_get.h"
-
 

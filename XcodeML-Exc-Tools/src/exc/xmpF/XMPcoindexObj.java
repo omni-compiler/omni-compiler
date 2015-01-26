@@ -204,41 +204,15 @@ public class XMPcoindexObj {
    *        void* nextAddrN, int countN )
    *   where N is rank of the reference (0<=N<=15 in Fortran 2008).
    */
-  private Xobject _makeActualArgs_type4() {
-    return _makeActualArgs_type4(null);
-  }
-  private Xobject _makeActualArgs_type4(Xobject rhs) {
-    XMPcoarray coarray = getCoarray();
-
-    Xobject serno = coarray.getDescriptorId();
-    Xobject baseAddr = getBaseAddr();
-    Xobject coindex = getCoindex();
-    Xobject actualArgs = Xcons.List(serno, baseAddr, coindex);
-
-    if (rhs != null)
-      actualArgs.add(rhs);
-
-    actualArgs.add(Xcons.IntConstant(rank));
-
-    int hostRank = coarray.getRank();
-    for (int i = 0; i < hostRank; i++) {
-      if (isTripletIndex(i)) {
-        actualArgs.add(getNeighboringAddr(i));
-        actualArgs.add(getSizeFromTriplet(i));
-      }
-    }
-
-    return actualArgs;
-  }
-
   private Xobject _makeActualArgs_type5() {
     return _makeActualArgs_type5(null, null);
   }
+
   private Xobject _makeActualArgs_type5(Xobject rhs, Xobject scheme) {
     XMPcoarray coarray = getCoarray();
 
-    Xobject serno = coarray.getDescriptorId();
     Xobject baseAddr = getBaseAddr();
+    Xobject serno = coarray.getDescriptorIdExpr(baseAddr);
     Xobject element = coarray.getElementLengthExpr();
     Xobject coindex = getCoindex();
 
