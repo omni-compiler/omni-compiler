@@ -192,8 +192,11 @@ public class XMPtranslate implements XobjectDefVisitor
 
     // System.out.println("def="+d.getDef());
     if(is_module){
-      if(!haveXMPpragma(d.getDef())) return;
       fd = XMPmoduleBlock(d);
+      // for coarray #060
+      XMPtransCoarray transCoarray = new XMPtransCoarray(fd, env);
+      transCoarray.run();
+      if(!haveXMPpragma(d.getDef())) return;
     } else if(d.isFuncDef()){ // declarations
       Xtype ft = d.getFuncType();
       if(ft != null && ft.isFprogram()) {

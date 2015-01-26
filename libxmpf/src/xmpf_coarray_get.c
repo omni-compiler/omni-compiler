@@ -6,6 +6,11 @@
 #include <stdarg.h>
 #include "xmpf_internal.h"
 
+// communication schemes
+#define SCHEME_Normal      0
+#define SCHEME_BufferCopy    1
+#define SCHEME_BufferSpread  2  /* not used in the case get */
+
 static void _getCoarray(int serno, char *baseAddr, int coindex, char *res,
                         int bytes, int rank, int skip[], int count[]);
 
@@ -26,12 +31,33 @@ static void _getVectorByElement(char *desc, int start, int vlength,
 extern void xmpf_coarray_get_array_(int *serno, char *baseAddr, int *element,
                                     int *coindex, char *res, int *rank, ...)
 {
-  // element is not used.
+  size_t bufsize;
+  char *buf, *p;
+  int i, nelems;
 
-  if (*rank == 0) {   // scalar 
+  /*** temporary ****/
+  int scheme = SCHEME_BufferCopy;
+
+  // shortcut for case scalar 
+  if (*rank == 0) {   
     char* desc = _XMPF_get_coarrayDesc(*serno);
     int start = _XMPF_get_coarrayStart(*serno, baseAddr);
-    _getVectorByElement(desc, start, 1, *coindex, res);
+
+    switch (scheme) {
+    case SCHEME_Normal:
+      _getVectorByElement(desc, start, 1, *coindex, res);
+      break;
+
+    case SCHEME_BufferCopy:
+      buf = malloc((size_t)(*element));
+      _getVectorByElement(desc, start, 1, *coindex, buf);
+      (void)memcpy(res, buf, *element);
+      break;
+
+    default:
+      _XMP_fatal("unexpected scheme number in " __FILE__);
+    }
+
     return;
   }
 
@@ -49,8 +75,24 @@ extern void xmpf_coarray_get_array_(int *serno, char *baseAddr, int *element,
 
   int bytes = _XMPF_get_coarrayElement(*serno);
 
-  _getCoarray(*serno, baseAddr, *coindex, res, 
-              bytes, *rank, skip, count);
+  switch (scheme) {
+  case SCHEME_Normal:
+    _getCoarray(*serno, baseAddr, *coindex, res, bytes, *rank, skip, count);
+    break;
+
+  case SCHEME_BufferCopy:
+    bufsize = *element;
+    for (i = 0; i < *rank; i++) {
+      bufsize *= count[i];
+    }
+    buf = malloc(bufsize);
+    _getCoarray(*serno, baseAddr, *coindex, buf, bytes, *rank, skip, count);
+    (void)memcpy(res, buf, bufsize);
+    break;
+
+  default:
+    _XMP_fatal("unexpected scheme number in " __FILE__);
+  }
 }
 
 

@@ -10,9 +10,8 @@
 #define SCHEME_Normal      0
 #define SCHEME_BufferCopy    1
 #define SCHEME_BufferSpread  2
-#define SCHEME_AuthorizedBufferCopy    3    /* not implemented yet */
-#define SCHEME_AuthorizedBufferSpread  4    /* not implemented yet */
-
+#define SCHEME_RDMABufferCopy    3    /* not implemented yet */
+#define SCHEME_RDMABufferSpread  4    /* not implemented yet */
 
 static void _putCoarray(int serno, char *baseAddr, int coindex, char *rhs,
                         int bytes, int rank, int skip[], int count[]);
