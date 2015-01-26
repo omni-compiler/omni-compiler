@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
+# $TSUKUBA_Copyright:
+#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
+#  $
+
+L2X="${OMNI_HOME}/bin/C_Front"
+. ${OMNI_HOME}/bin/oml2x "$@"

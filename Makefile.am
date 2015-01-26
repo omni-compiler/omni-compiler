@@ -106,6 +106,11 @@ DELETABLES = C-BackEnd/bin/C_Back \
 	C-FrontEnd/src/c-exprcode.h \
 	C-FrontEnd/src/c-parser.c \
 	C-FrontEnd/src/c-parser.h \
+        Driver/bin/omcpp \
+        Driver/bin/omclinker \
+        Driver/bin/omcnative \
+        Driver/bin/omcx2x \
+        Driver/bin/omc2x \
 	Driver/bin/omc2c \
 	Driver/bin/omf2f \
 	Driver/bin/omf2x \
@@ -124,7 +129,8 @@ DELETABLES = C-BackEnd/bin/C_Back \
 	Driver/bin/omx2l \
 	Driver/bin/xmpf90 \
 	Driver/bin/xmpcc \
-	 Driver/etc/xmpcc.conf \
+	Driver/etc/xmpcc.conf \
+        Driver/etc/ompcc \
 	Driver/bin/omtranslate \
 	Driver/bin/omni_traverse \
 	Driver/etc/java.conf \
@@ -138,6 +144,7 @@ DELETABLES = C-BackEnd/bin/C_Back \
 	Driver/etc/native.conf.xmpf \
 	Driver/etc/native.conf.acc \
 	Driver/etc/xmpcc.conf \
+        Driver/etc/omc.conf \
 	Driver/etc/omf.conf \
 	Driver/etc/pp.conf.openmp \
 	Driver/etc/pp.conf.xmpf \
