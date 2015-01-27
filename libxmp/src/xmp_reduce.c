@@ -261,6 +261,29 @@ void _XMP_reduce_threads(void *addr, int count, int datatype, int op) {
   }
 }
 
+float _XMP_reduce_fast_field;
+
+void _XMP_reduce_threads_fast(void *addr, int count, int datatype, int op) {
+  // assume count == 1 && datatype == float && op == sum
+
+  _XMP_RETURN_IF_SINGLE;
+
+  _XMP_thread_barrier_t *barrier = &_XMP_thread_barrier_key;
+  float *float_addr = (float *)addr;
+
+  _Bool sense = barrier->sense;
+  __sync_fetch_and_add(&_XMP_reduce_fast_field, *float_addr);
+  int count = __sync_fetch_and_add(&barrier->count, 1);
+  if (count == _XMP_num_threads - 1) {
+    barrier->count = 0;
+    barrier->sense = !sense;
+  } else {
+    while (barrier->sense == sense) ;
+  }
+
+  *float_addr = _XMP_reduce_fast_field;
+}
+
 // _XMP_M_REDUCE_EXEC(addr, count, datatype, op) is in xmp_comm_macro.h
 
 void _XMP_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes,
