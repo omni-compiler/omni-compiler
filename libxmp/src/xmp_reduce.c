@@ -281,8 +281,8 @@ void _XMP_reduce_threads_fast(void *addr, int count, int datatype, int op) {
       (int *)&reduce_field, oldval, newval);
     if (written) break;
   }
-  int count = __sync_fetch_and_add(&barrier->count, 1);
-  if (count == _XMP_num_threads - 1) {
+  int oldcount = __sync_fetch_and_add(&barrier->count, 1);
+  if (oldcount == _XMP_num_threads - 1) {
     reduce_result = reduce_field;
     reduce_field = 0.0;
     barrier->count = 0;
