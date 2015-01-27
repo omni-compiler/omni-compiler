@@ -261,27 +261,37 @@ void _XMP_reduce_threads(void *addr, int count, int datatype, int op) {
   }
 }
 
-float _XMP_reduce_fast_field;
-
 void _XMP_reduce_threads_fast(void *addr, int count, int datatype, int op) {
   // assume count == 1 && datatype == float && op == sum
 
+  static float reduce_field = 0.0;
+  static float reduce_result;
+
   _XMP_RETURN_IF_SINGLE;
 
-  _XMP_thread_barrier_t *barrier = &_XMP_thread_barrier_key;
-  float *float_addr = (float *)addr;
-
+  volatile _XMP_thread_barrier_t *barrier = &_XMP_thread_barrier_key;
+  float value = *(float *)addr;
   _Bool sense = barrier->sense;
-  __sync_fetch_and_add(&_XMP_reduce_fast_field, *float_addr);
+
+  while (1) {
+    int oldval, newval;
+    *(float *)&oldval = reduce_field;
+    *(float *)&newval = *(float *)&oldval + value;
+    _Bool written = __sync_bool_compare_and_swap(
+      (int *)&reduce_field, oldval, newval);
+    if (written) break;
+  }
   int count = __sync_fetch_and_add(&barrier->count, 1);
   if (count == _XMP_num_threads - 1) {
+    reduce_result = reduce_field;
+    reduce_field = 0.0;
     barrier->count = 0;
     barrier->sense = !sense;
   } else {
     while (barrier->sense == sense) ;
   }
 
-  *float_addr = _XMP_reduce_fast_field;
+  *(float *)addr = reduce_result;
 }
 
 // _XMP_M_REDUCE_EXEC(addr, count, datatype, op) is in xmp_comm_macro.h
