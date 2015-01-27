@@ -1724,7 +1724,11 @@ AC_SUBST(omniQRealFillGap)
 # --------------------------------------------------------------------
 # Export Omni Config Variable
 
-OMNI_HOME=${prefix}
+if test "${prefix}" = "NONE" -o "${prefix}" = ""; then
+  OMNI_HOME=/usr/local
+else
+  OMNI_HOME=${prefix}
+fi
 AC_SUBST(OMNI_HOME)
 AH_TEMPLATE(OMNI_HOME, [omni compiler install directory])
 AC_DEFINE_UNQUOTED(OMNI_HOME, "${OMNI_HOME}")

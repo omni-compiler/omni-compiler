@@ -24603,7 +24603,11 @@ fi
 # --------------------------------------------------------------------
 # Export Omni Config Variable
 
-OMNI_HOME=${prefix}
+if test "${prefix}" = "NONE" -o "${prefix}" = ""; then
+  OMNI_HOME=/usr/local
+else
+  OMNI_HOME=${prefix}
+fi
 
 
 cat >>confdefs.h <<_ACEOF
