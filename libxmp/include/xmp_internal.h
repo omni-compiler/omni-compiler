@@ -75,6 +75,7 @@ extern void _XMP_init_array_nodes(_XMP_array_t *array);
 extern void _XMP_init_array_comm(_XMP_array_t *array, ...);
 extern void _XMP_init_array_comm2(_XMP_array_t *array, int args[]);
 extern void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...);
+extern void _XMP_alloc_array2(void **array_addr, _XMP_array_t *array_desc, unsigned long long *acc[]);
 extern void _XMP_dealloc_array(_XMP_array_t *array_desc);
 
 // xmp_array_section.c

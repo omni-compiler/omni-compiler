@@ -281,12 +281,111 @@ void _XMP_init_shadow(_XMP_array_t *array, ...) {
   }
 }
 
-void _XMP_init_shadow_noalloc(_XMP_array_t *a, int shadow_type, int lshadow, int ushadow) {
-  _XMP_ASSERT(a->dim == 1);
-  _XMP_array_info_t *ai = &(a->info[0]);
-  ai->shadow_type = shadow_type;
-  ai->shadow_size_lo = lshadow;
-  ai->shadow_size_hi = ushadow;
+
+void _XMP_init_shadow_dim(_XMP_array_t *array, int i, int type, int lo, int hi){
+
+  _XMP_array_info_t *ai = &(array->info[i]);
+
+  switch (type) {
+  case _XMP_N_SHADOW_NONE:
+    ai->shadow_type = _XMP_N_SHADOW_NONE;
+    break;
+  case _XMP_N_SHADOW_NORMAL:
+    {
+      _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
+
+      if (lo < 0) {
+	_XMP_fatal("<shadow-width> should be a nonnegative integer");
+      }
+
+      if (hi < 0) {
+	_XMP_fatal("<shadow-width> should be a nonnegative integer");
+      }
+
+      if ((lo == 0) && (hi == 0)) {
+	ai->shadow_type = _XMP_N_SHADOW_NONE;
+      }
+      else {
+	ai->shadow_type = _XMP_N_SHADOW_NORMAL;
+	ai->shadow_size_lo = lo;
+	ai->shadow_size_hi = hi;
+
+	if (array->is_allocated) {
+	  ai->local_lower += lo;
+	  ai->local_upper += lo;
+	  // ai->local_stride is not changed
+	  ai->alloc_size += lo + hi;
+
+	  *(ai->temp0) -= lo;
+	  ai->temp0_v -= lo;
+	}
+
+	if (!ai->reflect_sched){
+	  _XMP_reflect_sched_t *sched = _XMP_alloc(sizeof(_XMP_reflect_sched_t));
+	  sched->is_periodic = -1; /* not used yet */
+	  sched->datatype_lo = MPI_DATATYPE_NULL;
+	  sched->datatype_hi = MPI_DATATYPE_NULL;
+	  for (int j = 0; j < 4; j++) sched->req[j] = MPI_REQUEST_NULL;
+	  sched->lo_send_buf = NULL;
+	  sched->lo_recv_buf = NULL;
+	  sched->hi_send_buf = NULL;
+	  sched->hi_recv_buf = NULL;
+	  ai->reflect_sched = sched;
+	}
+	ai->reflect_acc_sched = NULL;
+
+	_XMP_create_shadow_comm(array, i);
+      }
+
+      break;
+    }
+  case _XMP_N_SHADOW_FULL:
+    {
+      ai->shadow_type = _XMP_N_SHADOW_FULL;
+
+      if (array->is_allocated) {
+	ai->shadow_size_lo = ai->par_lower - ai->ser_lower;
+	ai->shadow_size_hi = ai->ser_upper - ai->par_upper;
+
+	ai->local_lower = ai->par_lower;
+	ai->local_upper = ai->par_upper;
+	ai->local_stride = ai->par_stride;
+	ai->alloc_size = ai->ser_size;
+      }
+
+      _XMP_create_shadow_comm(array, i);
+      break;
+    }
+  default:
+    _XMP_fatal("unknown shadow type");
+  }
+
+}
+
+
+/* void _XMP_init_shadow_noalloc(_XMP_array_t *a, int shadow_type, int lshadow, int ushadow) { */
+/*   _XMP_ASSERT(a->dim == 1); */
+/*   _XMP_array_info_t *ai = &(a->info[0]); */
+/*   ai->shadow_type = shadow_type; */
+/*   ai->shadow_size_lo = lshadow; */
+/*   ai->shadow_size_hi = ushadow; */
+/* } */
+
+void _XMP_init_shadow_noalloc(_XMP_array_t *a, ...) {
+
+  int dim = a->dim;
+
+  va_list args;
+  va_start(args, a);
+
+  for (int i = 0; i < dim; i++) {
+    _XMP_array_info_t *ai = &(a->info[i]);
+    ai->shadow_type = va_arg(args, int);
+    ai->shadow_size_lo = va_arg(args, int);
+    ai->shadow_size_hi = va_arg(args, int);
+  }
+
+  va_end(args);
 }
 
 void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_addr,

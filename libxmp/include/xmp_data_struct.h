@@ -202,6 +202,9 @@ typedef struct _XMP_array_info_type {
   // -----------------------------------------
 
   int align_template_index;
+
+  unsigned long long *acc;
+
 } _XMP_array_info_t;
 
 typedef struct _XMP_array_type {
@@ -259,6 +262,9 @@ typedef struct _XMP_task_desc_type {
 typedef struct xmp_coarray{
   char **addr;      // Pointer to each node.
                     // e.g.) xmp_coarray.addr[2] is a pointer of an object on node 2.
+
+  char *real_addr; // Pointer to local node.
+                   // Note that xmp_coarray.addr[my_rank] may not be a pointer of an object.
 
   size_t elmt_size; // Element size of a coarray. A unit of it is Byte.
                     // e.g.) "int a[10]:[*]" is 4.

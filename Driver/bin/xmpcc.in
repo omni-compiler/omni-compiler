@@ -8,11 +8,13 @@ OMNI_HOME=@OMNI_HOME@
 ### Directory for saving intermediate files ###
 PID=$$
 TEMP_DIR=/tmp/__omni_tmp__${PID}
+DEBUG_TEMP_DIR="__omni_tmp__"
 
 ### Default options ###
 ENABLE_LINKER=true
 ONLY_PP=false
 VERBOSE=false
+ENABLE_DEBUG=false
 OUTPUT_TEMPORAL=false
 DRY_RUN=false
 STOP_PP=false
@@ -31,6 +33,7 @@ ENABLE_TLOG=false
 # These parameters are set in xmp_set_parameters().
 OUTPUT_FILE=
 PROFILE_OPT=
+OPENMP_ADD_OPT=
 PP_ADD_OPT=
 FRONTEND_ADD_OPT=
 XCODE_TRANSLATOR_ADD_OPT=
@@ -41,19 +44,28 @@ LINKER_ADD_OPT=
 ### Set options ###
 # e.g.) xmpcc -I/usr/lib a.c b.c c.o --tmp --Wlfoo lib.a -omp
 #
-#  c_files="a.c b.c"                      # Only C files
-#  obj_files="c.o"                        # Only Object files
-#  other_args="-I/usr/lib lib.a"          # Options for Preprocessor, Compiler, and Linker
+#  c_files="a.c b.c"                  # C files
+#  archive_files="lib.a"              # Archive files
+#  obj_files="c.o"                    # Object files
+#  other_args="-I/usr/lib"            # Options for Preprocessor, Compiler, and Linker
 # 
 #  Note that "-omp" is extracted by xmp_set_parameters, and set "ENABLE_OPENMP".
 c_files=
+archive_files=
 obj_files=
 other_args=
 xmp_set_parameters ${@+"$@"}
 xmp_check_file_exist
 
 ### Create temporal directory ###
-xmp_exec mkdir $TEMP_DIR
+if [ $ENABLE_DEBUG = true ]; then
+    TEMP_DIR=$DEBUG_TEMP_DIR
+    if [ -d $TEMP_DIR ]; then
+	xmp_exec rm -rf $TEMP_DIR
+    fi
+fi
+
+xmp_exec mkdir -p $TEMP_DIR
 
 ### Clean temporal directory before exit ###
 trap "rm -rf $TEMP_DIR; exit 1" 1 2 3 15
@@ -99,7 +111,9 @@ for c_file in $c_files; do
 	PROFILE_OPT="-tlog-all"
     elif [ $ENABLE_TLOG = true ]; then
 	PROFILE_OPT="-tlog"
-    elif [ $ENABLE_SCALASCA_ALL = true ]; then
+    fi
+
+    if [ $ENABLE_SCALASCA_ALL = true ]; then
 	PROFILE_OPT="-scalasca-all"
     elif [ $ENABLE_SCALASCA = true ]; then
 	PROFILE_OPT="-scalasca"
@@ -135,7 +149,6 @@ for c_file in $c_files; do
     xmp_exec $OMNI_MPICC_CMD $NATIVE_ADD_OPT $OMNI_MPICC_OPT $OPENMP_ADD_OPT $other_args $FILE_C -o $FILE_O
     xmp_exec cp $FILE_O $FILE_USER_O
 done
-
 [ $STOP_COMPILE = true ] && exit 0;
 [ $ENABLE_LINKER = false ] && { xmp_exec rm -rf $TEMP_DIR; exit 0; }
 
@@ -157,12 +170,12 @@ if [ $ENABLE_TLOG_ALL = true ] || [ $ENABLE_TLOG = true ]; then
 fi
 
 if [ "$OUTPUT_FILE" = "" ]; then
-    xmp_exec $OMNI_LINKER_CMD $FILE_COLLECT_O $obj_files $OMNI_LINKER_OPT $PROFILE_OPT $LINKER_ADD_OPT $other_args
+    xmp_exec $OMNI_LINKER_CMD $FILE_COLLECT_O $obj_files $OMNI_LINKER_OPT $PROFILE_OPT $LINKER_ADD_OPT $other_args $archive_files
 else
-    xmp_exec $OMNI_LINKER_CMD $FILE_COLLECT_O $obj_files $OMNI_LINKER_OPT $PROFILE_OPT $LINKER_ADD_OPT $other_args -o $OUTPUT_FILE
+    xmp_exec $OMNI_LINKER_CMD $FILE_COLLECT_O $obj_files $OMNI_LINKER_OPT $PROFILE_OPT $LINKER_ADD_OPT $other_args $archive_files -o $OUTPUT_FILE
 fi
 
 ### Delete temporal directory ###
-xmp_exec rm -rf $TEMP_DIR
+[ $ENABLE_DEBUG = false ] && xmp_exec rm -rf $TEMP_DIR
 
 exit 0
