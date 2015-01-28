@@ -27,12 +27,12 @@ void _XMP_init(int argc, char** argv)
       _XMP_coarray_initialize(argc, argv);
       _XMP_post_wait_initialize();
     }
-    else{
-      if(_XMP_world_rank == 0){
-	fprintf(stderr, "Coarray cannot be used in more than %d physical nodes ", XMP_FJRDMA_MAX_NODES);
-	fprintf(stderr, "(Now using %d physical nodes)\n", _num_of_physical_nodes);
-      }
-    }
+    //    else{
+    //      if(_XMP_world_rank == 0){
+    //	fprintf(stderr, "Coarray cannot be used in more than %d physical nodes ", XMP_FJRDMA_MAX_NODES);
+    //	fprintf(stderr, "(Now using %d physical nodes)\n", _num_of_physical_nodes);
+    //      }
+    //    }
 #elif _XMP_COARRAY_GASNET
     _XMP_coarray_initialize(argc, argv);
     _XMP_post_wait_initialize();
