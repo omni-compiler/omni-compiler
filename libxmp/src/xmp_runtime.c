@@ -29,9 +29,10 @@ void _XMP_init(int argc, char** argv)
   _XMP_check_reflect_type();
 }
 
-void _XMP_init_thread(int argc, char **argv, int num_threads)
+void _XMP_init_thread(int argc, char **argv, int num_threads, int thread_num)
 {
   _XMP_num_threads = num_threads;
+  _XMP_thread_num = thread_num;
   _XMP_init(argc, argv);
 }
 
@@ -53,27 +54,17 @@ char *_XMP_desc_of(void *p)
   return (char *)p;
 }
 
-void _XMP_set_thread_num(int thread_num)
-{
-  _XMP_thread_num = thread_num;
-}
-
 void xmpc_init_all(int argc, char** argv)
 {
   _XMP_init(argc, argv);
 }
 
-void xmpc_init_thread_all(int argc, char **argv, int num_threads)
+void xmpc_init_thread_all(int argc, char **argv, int num_threads, int thread_num)
 {
-  _XMP_init_thread(argc, argv, num_threads);
+  _XMP_init_thread(argc, argv, num_threads, thread_num);
 }
 
 void xmpc_finalize_all(int return_val)
 {
   _XMP_finalize(return_val);
-}
-
-void xmpc_set_thread_num(int thread_num)
-{
-  _XMP_set_thread_num(thread_num);
 }
