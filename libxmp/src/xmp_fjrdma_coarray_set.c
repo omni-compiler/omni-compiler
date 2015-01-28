@@ -58,7 +58,7 @@ void _XMP_fjrdma_initialize(int argc, char **argv)
   MPI_Comm_rank(MPI_COMM_WORLD, &_XMP_world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &_XMP_world_size);
 
-  if(_XMP_world_size >= XMP_FJRDMA_MAX_NODES)
+  if(_XMP_world_size > XMP_FJRDMA_MAX_NODES)
     num_of_nodes = get_num_of_physical_nodes();
 
   int ret = FJMPI_Rdma_init();
@@ -73,7 +73,7 @@ void _XMP_fjrdma_finalize()
 
 void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray, void **buf, const size_t coarray_size)
 {
-  if(num_of_nodes >= XMP_FJRDMA_MAX_NODES){
+  if(num_of_nodes > XMP_FJRDMA_MAX_NODES){
     if(_XMP_world_rank == 0)
       fprintf(stderr, "Coarray cannot be used in more than %d physical nodes (Now using %d physical nodes)\n", 
 	      XMP_FJRDMA_MAX_NODES, num_of_nodes);
