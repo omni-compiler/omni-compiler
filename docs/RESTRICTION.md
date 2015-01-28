@@ -1,5 +1,3 @@
-Restriction
-
 # XMP/C and XMP/Fortran
 ## Using GASNet for coarray, lock/unlock, and post/wait (local-view operations)
 The Omni compiler uses GASNet for local-view operations, and also uses MPI library for global-view operations.
