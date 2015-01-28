@@ -7,7 +7,7 @@ integer ierr
      write(*,*) "PASS"
   else
      write(*,*) "ERROR"
-     call exit(1)
+     call abort
   endif
 !$xmp end task
 
@@ -24,7 +24,7 @@ integer irank, xmp_node_num, ierr
        write(*,*) "PASS"
     else
        write(*,*) "ERROR"
-       call exit(1)
+       call abort
     endif
   endif
 return
@@ -39,7 +39,7 @@ integer ierr
      write(*,*) "PASS"
   else
      write(*,*) "ERROR"
-     call exit(1)
+     call abort
   endif
 !$xmp end task
 

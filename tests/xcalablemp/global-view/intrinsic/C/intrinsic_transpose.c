@@ -332,7 +332,7 @@ int a[m][n],b[n][m];
     }
   }
 
-#pragma task on p(1,1:2)
+#pragma xmp task on p(1,1:2)
 {
   chk_int2(ierr);
 }
