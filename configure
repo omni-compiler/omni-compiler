@@ -938,7 +938,6 @@ enable_openacc
 enable_atool
 enable_xacc
 enable_mpi3
-enable_FJRDMA
 with_gpucc
 with_gpu_cflags
 with_cuda
@@ -1601,7 +1600,6 @@ Optional Features:
   --enable-atool                 enable atool (false default).
   --enable-xacc                  enable XcalableACC (false default).
   --enable-mpi3                  enable MPI3 (false default).
-  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10.
   --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default).
 
 Optional Packages:
@@ -12584,15 +12582,14 @@ fi
 
 
 ## Add temporarily by mnakao
-# Check whether --enable-FJRDMA was given.
-if test "${enable_FJRDMA+set}" = set; then :
-  enableval=$enable_FJRDMA; enableFJRDMA=yes
-else
-  enableFJRDMA=no
-fi
+#AC_ARG_ENABLE(FJRDMA,
+#   [  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10.],
+#   [enableFJRDMA=yes], [enableFJRDMA=no])
+#
+#AM_CONDITIONAL(FJRDMA, test x${enableFJRDMA} = xyes)
+## End Add temporarily
 
-
- if test x${enableFJRDMA} = xyes; then
+ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
   FJRDMA_TRUE=
   FJRDMA_FALSE='#'
 else
@@ -12600,11 +12597,6 @@ else
   FJRDMA_FALSE=
 fi
 
-## End Add temporarily
-
-## Delete temporarily by mnakao
-#AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
-## End Delete temporarily
 
 
 
