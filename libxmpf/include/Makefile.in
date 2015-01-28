@@ -432,7 +432,7 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-include_HEADERS = xmp_lib.h xmp_lib_coarray_get.h
+include_HEADERS = xmp_lib.h xmp_lib_coarray_get.h xmp_lib_coarray_sync.h
 all: all-am
 
 .SUFFIXES:

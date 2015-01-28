@@ -154,6 +154,12 @@ public class Ident extends Xobject
             return name;
     }
 
+    @Override
+    public int getFrank()
+    {
+        return type.getNumDimensions();
+    }
+
     public void setName(String name)
     {
         this.name = name;

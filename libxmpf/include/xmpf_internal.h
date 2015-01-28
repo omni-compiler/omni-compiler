@@ -273,11 +273,19 @@ extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void
 #define TRUE   1
 #define FALSE  0
 
-/*-- limitations --*/
-#define DESCR_ID_MAX   250
+#ifdef _XMP_COARRAY_FJRDMA
+#  define BOUNDARY_BYTE 4
+#else
+#  define BOUNDARY_BYTE 1
+#endif
 
-/*-- thresholds --*/
+#define ROUND_UP(n,p)         ((((n)-1)/(p))*(p)+1)
+#define ROUND_UP_BOUNDARY(n)  ROUND_UP((n),BOUNDARY_BYTE)
+
+/*-- parameters --*/
+#define DESCR_ID_MAX   250
 #define SMALL_WORK_SIZE_KB  10
+extern int _XMP_boundaryByte;     // communication boundary (bytes)
 
 /*-- codes --*/
 #define COARRAY_GET_CODE  700
@@ -295,27 +303,38 @@ extern char *_XMPF_get_coarrayDesc(int serno);
 extern int _XMPF_get_coarrayStart(int serno, char *baseAddr);
 
 extern void xmpf_coarray_malloc_(int *serno, char **pointer, int *count, int *element);
-extern void _XMPF_coarray_malloc(int *serno, char **pointer, int count, size_t element);
 
-extern void xmpf_sync_all_0_(void);
-extern void xmpf_sync_all_1_(int *status);
-extern void xmpf_sync_memory_0_(void);
-extern void xmpf_sync_memory_1_(int *status);
-extern void xmpf_sync_image_0_(int *image);
-extern void xmpf_sync_image_1_(int *image, int *status);
-extern void xmpf_sync_images_0s_(int *size, int *images);
-extern void xmpf_sync_images_1s_(int *size, int *images, int *status);
-extern void xmpf_sync_images_all_0_(void);
-extern void xmpf_sync_images_all_1_(int *status);
+extern void xmpf_sync_all_nostat_(void);
+extern void xmpf_sync_all_stat_(int *stat, char *msg, int *msglen);
+
+extern void xmpf_sync_memory_nostat_(void);
+extern void xmpf_sync_memory_stat_(int *stat, char *msg, int *msglen);
+
+extern void xmpf_sync_image_nostat_(int *image);
+extern void xmpf_sync_image_stat_(int *image,
+                                  int *stat, char *msg, int *msglen);
+extern void xmpf_sync_images_nostat_(int *images, int *size);
+extern void xmpf_sync_images_stat_(int *images, int *size,
+                                   int *stat, char *msg, int *msglen);
+extern void xmpf_sync_allimages_nostat_(void);
+extern void xmpf_sync_allimages_stat_(int *stat, char *msg, int *msglen);
 
 extern int xmpf_num_nodes_(void);
 extern int xmpf_node_num_(void);
 
 /* xmpf_coarray_put.c */
+extern void xmpf_coarray_put_scalar_(int *serno, char *baseAddr, int *element,
+                                     int *coindex, char *rhs, int *condition);
 extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
-                                    int *coindex, char *rhs, int *scheme, int *rank, ...);
+                                    int *coindex, char *rhs, int *condition,
+                                    int *rank, ...);
+extern void xmpf_coarray_put_spread_(int *serno, char *baseAddr, int *element,
+                                     int *coindex, char *rhs, int *condition,
+                                     int *rank, ...);
 
 /* xmpf_coarray_get.c */
+extern void xmpf_coarray_get_scalar_(int *serno, char *baseAddr, int *element,
+                                     int *coindex, char *result);
 extern void xmpf_coarray_get_array_(int *serno, char *baseAddr, int *element,
                                     int *coindex, char *result, int *rank, ...);
 

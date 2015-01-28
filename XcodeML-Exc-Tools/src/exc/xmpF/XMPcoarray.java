@@ -251,6 +251,10 @@ public class XMPcoarray {
             !isAllocatable() && !isPointer());
   }
 
+  public Boolean isUseAssociated() {
+    return ident.getFdeclaredModule() != null;
+  }
+
   public Ident getIdent() {
     return ident;
   }
@@ -279,9 +283,6 @@ public class XMPcoarray {
     if (descrId != null)
       return descrId;
 
-    ///////////////
-    System.out.println(">>>> gaccha");
-    ///////////////
     Ident funcIdent =
       getEnv().declExternIdent("xmpf_get_descr_id", Xtype.FintFunctionType);
     Xobject descId = funcIdent.Call(Xcons.List(baseAddr));

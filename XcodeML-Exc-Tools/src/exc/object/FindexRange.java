@@ -251,4 +251,8 @@ public class FindexRange
   }
 
 
+  public int getFrank()
+  {
+    return 1;
+  }
 }

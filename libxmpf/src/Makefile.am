@@ -13,6 +13,10 @@ libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_array.c xmpf_gcomm.c \
 		    xmpf_template.c xmpf_coarray.c xmpf_coarray_wrap.f90\
                     xmpf_coarray_put.c xmpf_coarray_get.c xmpf_coarray_get_wrap.f90
 
+if FJRDMA
+    CFLAGS           += -D_XMP_COARRAY_FJRDMA
+endif
+
 xmpf_main.o: xmpf_main.f
 	$(FC) $(FCFLAGS) -c xmpf_main.f
 

@@ -45,12 +45,18 @@ print_function() {
     esac
     echo
 
-    echo72     "      call xmpf_coarray_get_array(serno, baseAddr, element,"
-    echo72     "     &   coindex, val, rank"
-    for i in `seq 1 ${DIM}`; do
-        echo72 "     &   , nextAddr${i}, count${i}"
-    done
-    echo '     &   )'
+    case ${DIM} in
+        0)  echo72 "      call xmpf_coarray_get_scalar(serno, baseAddr, element,"
+            echo   "     &   coindex, val)"
+            ;;
+        *)  echo72 "      call xmpf_coarray_get_array(serno, baseAddr, element,"
+            echo72 "     &   coindex, val, rank"
+            for i in `seq 1 ${DIM}`; do
+                echo72 "     &   , nextAddr${i}, count${i}"
+            done
+            echo '     &   )'
+            ;;
+    esac
     echo
 
     echo "      end function"

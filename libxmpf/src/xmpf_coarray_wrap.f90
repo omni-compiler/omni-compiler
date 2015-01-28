@@ -1,65 +1,88 @@
 !-----------------------------------------------------------------------
-      subroutine xmpf_sync_all_2(stat, errmsg)
+!   sync all
 !-----------------------------------------------------------------------
-      integer, intent(out) :: stat
-      character(len=*), intent(out) :: errmsg
-      call xmpf_sync_all_1(stat)
-      call xmpf_get_errmsg(errmsg, len(errmsg))
+      subroutine xmpf_sync_all_stat_wrap(stat, errmsg)
+        integer, intent(out) :: stat
+        character(len=*), intent(out), optional :: errmsg
+        character(len=4) :: dummy
+
+        if (present(errmsg)) then
+           call xmpf_sync_all_stat(stat, errmsg, len(errmsg))
+        else
+           call xmpf_sync_all_stat(stat, dummy, 0)
+        endif
+      end subroutine xmpf_sync_all_stat_wrap
+
+!-----------------------------------------------------------------------
+!   sync memory
+!-----------------------------------------------------------------------
+      subroutine xmpf_sync_memory_stat_wrap(stat, errmsg)
+        integer, intent(out) :: stat
+        character(len=*), intent(out), optional :: errmsg
+        character(len=4) :: dummy
+
+        if (present(errmsg)) then
+           call xmpf_sync_memory_stat(stat, errmsg, len(errmsg))
+        else
+           call xmpf_sync_memory_stat(stat, dummy, 0)
+        endif
       end subroutine
 
 !-----------------------------------------------------------------------
-      subroutine xmpf_sync_memory_2(stat, errmsg)
+!   sync images
 !-----------------------------------------------------------------------
-      integer, intent(out) :: stat
-      character(len=*), intent(out) :: errmsg
-      call xmpf_sync_memory_1(stat)
-      call xmpf_get_errmsg(errmsg, len(errmsg))
-      end subroutine
 
-!-----------------------------------------------------------------------
-      subroutine xmpf_sync_image_2(image, stat, errmsg)
-!-----------------------------------------------------------------------
-      integer, intent(in) :: image
-      integer, intent(out) :: stat
-      character(len=*), intent(out) :: errmsg
-      call xmpf_sync_image_1(image, status)
-      call xmpf_get_errmsg(errmsg, len(errmsg))
-      end subroutine
+!!    no xmpf_sync_image_nostat_wrap(image)
 
-!-----------------------------------------------------------------------
-      subroutine xmpf_sync_images_0(images)
-!-----------------------------------------------------------------------
-      integer, intent(in) :: images(:)
-      call xmpf_sync_images_0s(size(images), images, status)
-      end subroutine
+      subroutine xmpf_sync_images_nostat_wrap(images)
+        integer, intent(in) :: images(:)
+        call xmpf_sync_images_nostat(images, size(images))
+      end subroutine xmpf_sync_images_nostat_wrap
 
-!-----------------------------------------------------------------------
-      subroutine xmpf_sync_images_1(images, stat)
-!-----------------------------------------------------------------------
-      integer, intent(in) :: images(:)
-      integer, intent(out) :: stat
-      call xmpf_sync_images_1s(size(images), images, status)
-      end subroutine
+      subroutine xmpf_sync_allimages_nostat_wrap(aster)
+        character(len=1), intent(in) :: aster
+        call xmpf_sync_allimages_nostat()
+      end subroutine xmpf_sync_allimages_nostat_wrap
 
-!-----------------------------------------------------------------------
-      subroutine xmpf_sync_images_2(images, stat, errmsg)
-!-----------------------------------------------------------------------
-      integer, intent(in) :: images(:)
-      integer, intent(out) :: stat
-      character(len=*), intent(out) :: errmsg
-      call xmpf_sync_images_1s(size(images), images, status)
-      call xmpf_get_errmsg(errmsg, len(errmsg))
-      end subroutine
+      subroutine xmpf_sync_image_stat_wrap(image, stat, errmsg)
+        integer, intent(in) :: image
+        integer, intent(out) :: stat
+        character(len=*), intent(out), optional :: errmsg
+        character(len=4) :: dummy
 
-!-----------------------------------------------------------------------
-      subroutine xmpf_sync_images_all_2(aster, stat, errmsg)
-!-----------------------------------------------------------------------
-      character(len=1), intent(in) :: aster
-      integer, intent(out) :: stat
-      character(len=*), intent(out) :: errmsg
-      integer msglen, status
-      call xmpf_sync_images_all_1(status)
-      call xmpf_get_errmsg(errmsg, len(errmsg))
-      end subroutine
+        if (present(errmsg)) then
+           call xmpf_sync_image_stat(image, stat, errmsg,               &
+     &          len(errmsg))
+        else
+           call xmpf_sync_image_stat(image, stat, dummy, 0)
+        endif
+      end subroutine xmpf_sync_image_stat_wrap
 
+      subroutine xmpf_sync_images_stat_wrap(images, stat, errmsg)
+        integer, intent(in) :: images(:)
+        integer, intent(out) :: stat
+        character(len=*), intent(out), optional :: errmsg
+        character(len=4) :: dummy
+
+        if (present(errmsg)) then
+           call xmpf_sync_images_stat(images, size(images), stat,       &
+     &          errmsg, len(errmsg))
+        else
+           call xmpf_sync_images_stat(images, size(images), stat,       &
+     &          dummy, 0)
+        endif
+      end subroutine xmpf_sync_images_stat_wrap
+
+      subroutine xmpf_sync_allimages_stat_wrap(aster, stat, errmsg)
+        character(len=1), intent(in) :: aster
+        integer, intent(out) :: stat
+        character(len=*), intent(out), optional :: errmsg
+        character(len=4) :: dummy
+
+        if (present(errmsg)) then
+           call xmpf_sync_allimages_stat(stat, errmsg, len(errmsg))
+        else
+           call xmpf_sync_allimages_stat(stat, dummy, 0)
+        endif
+      end subroutine xmpf_sync_allimages_stat_wrap
 

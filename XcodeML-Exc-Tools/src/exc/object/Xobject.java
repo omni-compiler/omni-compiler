@@ -329,6 +329,17 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
     }
 
     /**
+     * Get rank in the term of Fortran.
+     * Eg: Rank of a scalar expr is 0.
+     *     Rank of a subarray is equal to or less than the rank of
+     *     the host array.
+     */
+    public int getFrank()
+    {
+        throw new UnsupportedOperationException(toString());
+    }
+
+    /**
      * Return argument list in XobjArgs.
      * Dummy method at base class, it causes exception.
      */

@@ -7,11 +7,10 @@
 #include "xmpf_internal.h"
 
 // communication schemes
-#define SCHEME_Normal      0
-#define SCHEME_BufferCopy    1
-#define SCHEME_BufferSpread  2
-#define SCHEME_RDMABufferCopy    3    /* not implemented yet */
-#define SCHEME_RDMABufferSpread  4    /* not implemented yet */
+#define PUTSCHEME_Normal        0
+#define PUTSCHEME_SendBuffer    1
+
+static int _select_putscheme(int condition);
 
 static void _putCoarray(int serno, char *baseAddr, int coindex, char *rhs,
                         int bytes, int rank, int skip[], int count[]);
@@ -33,34 +32,46 @@ static void _putVectorByElement(char *desc, int start, int vlength,
 /*
  *  assumed that tha value of emelent is the same as the one recorded previously.
  */
+
+extern void xmpf_coarray_put_scalar_(int *serno, char *baseAddr, int *element,
+                                     int *coindex, char *rhs, int *condition)
+{
+  char *buf;
+
+  int scheme = _select_putscheme(*condition);
+
+  char *desc = _XMPF_get_coarrayDesc(*serno);
+  int start = _XMPF_get_coarrayStart(*serno, baseAddr);
+
+  switch (scheme) {
+  case PUTSCHEME_Normal:
+    _putVectorByElement(desc, start, 1, *coindex, rhs);
+    break;
+    
+  case PUTSCHEME_SendBuffer:
+    buf = malloc((size_t)(*element));
+    (void)memcpy(buf, rhs, *element);
+    _putVectorByElement(desc, start, 1, *coindex, buf);
+    break;
+
+  default:
+    _XMP_fatal("unexpected scheme number in " __FILE__);
+  }
+}
+
+
 extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
-                                    int *coindex, char *rhs, int *scheme, int *rank, ...)
+                                    int *coindex, char *rhs, int *condition,
+                                    int *rank, ...)
 {
   size_t bufsize;
   char *buf, *p;
   int i, nelems;
 
-  // shortcut for case scalar 
-  if (*rank == 0) {   
-    char *desc = _XMPF_get_coarrayDesc(*serno);
-    int start = _XMPF_get_coarrayStart(*serno, baseAddr);
+  int scheme = _select_putscheme(*condition);
 
-    switch (*scheme) {
-    case SCHEME_Normal:
-      _putVectorByElement(desc, start, 1, *coindex, rhs);
-      break;
-
-    case SCHEME_BufferCopy:
-    case SCHEME_BufferSpread:
-      buf = malloc((size_t)(*element));
-      (void)memcpy(buf, rhs, *element);
-      _putVectorByElement(desc, start, 1, *coindex, buf);
-      break;
-
-    default:
-      _XMP_fatal("unexpected scheme number in " __FILE__);
-    }
-      
+  if (*element % BOUNDARY_BYTE != 0) {
+    _XMP_fatal("violation of boundary in put communication");
     return;
   }
 
@@ -78,12 +89,12 @@ extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
 
   int bytes = _XMPF_get_coarrayElement(*serno);
 
-  switch (*scheme) {
-  case SCHEME_Normal:
+  switch (scheme) {
+  case PUTSCHEME_Normal:
     _putCoarray(*serno, baseAddr, *coindex, rhs, bytes, *rank, skip, count);
     break;
 
-  case SCHEME_BufferCopy:
+  case PUTSCHEME_SendBuffer:
     bufsize = *element;
     for (i = 0; i < *rank; i++) {
       bufsize *= count[i];
@@ -93,20 +104,60 @@ extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
     _putCoarray(*serno, baseAddr, *coindex, buf, bytes, *rank, skip, count);
     break;
 
-  case SCHEME_BufferSpread:
-    nelems = 1;
-    for (i = 0; i < *rank; i++)
-      nelems *= count[i];
-    bufsize = nelems * (*element);
-    buf = malloc(bufsize);
-    for (i = 0, p = buf; i < nelems; i++, p += *element)
-      (void)memcpy(p, rhs, *element);
-    _putCoarray(*serno, baseAddr, *coindex, buf, bytes, *rank, skip, count);
-    break;
-
   default:
     _XMP_fatal("unexpected scheme number in " __FILE__);
   }
+}
+
+
+extern void xmpf_coarray_put_spread_(int *serno, char *baseAddr, int *element,
+                                     int *coindex, char *rhs, int *condition,
+                                     int *rank, ...)
+{
+  size_t bufsize;
+  char *buf, *p;
+  int i, nelems;
+
+  if (*element % BOUNDARY_BYTE != 0) {
+    _XMP_fatal("violation of boundary in spread-put communication");
+    return;
+  }
+
+  char *nextAddr;
+  int skip[MAX_RANK];
+  int count[MAX_RANK];
+  va_list argList;
+  va_start(argList, rank);
+
+  for (int i = 0; i < *rank; i++) {
+    nextAddr = va_arg(argList, char*);         // nextAddr1, nextAddr2, ...
+    skip[i] = nextAddr - baseAddr;
+    count[i] = *(va_arg(argList, int*));       // count1, count2, ...
+  }
+
+  int bytes = _XMPF_get_coarrayElement(*serno);
+
+  nelems = 1;
+  for (i = 0; i < *rank; i++)
+    nelems *= count[i];
+  bufsize = nelems * (*element);
+  buf = malloc(bufsize);
+  for (i = 0, p = buf; i < nelems; i++, p += *element)
+    (void)memcpy(p, rhs, *element);
+  _putCoarray(*serno, baseAddr, *coindex, buf, bytes, *rank, skip, count);
+}
+
+
+int _select_putscheme(int condition)
+{
+  int scheme = PUTSCHEME_Normal;
+
+#ifdef _XMP_COARRAY_FJRDMA
+  if (condition == 1)
+    scheme = PUTSCHEME_SendBuffer;
+#endif
+
+  return scheme;
 }
 
 
@@ -198,3 +249,4 @@ void _putVectorByElement(char *desc, int start, int vlength,
   _XMP_coarray_rdma_node_set_1(coindex);
   _XMP_coarray_rdma_do(COARRAY_PUT_CODE, desc, src, NULL);
 }
+

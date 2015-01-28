@@ -16,15 +16,8 @@ public class XMPtransCoarray
   final static String CRAYPOINTER_PREFIX = "xmpf_crayptr";
   final static String INITPROC_PREFIX = "xmpf_traverse_initcoarray";
 
-  // the current class instances corresponding to the ancestor host procedures
-  static ArrayList<XMPtransCoarray> current_hosts = new ArrayList<XMPtransCoarray>();
-
-  //private FuncDefBlock def;          // (XobjectDef)def.getDef() is more useful????
-  // contains
-  //  - XobjectDef def
-  //  - FunbtionBlock fblock
-  // useful methods are:
-  //     add/removeIdent, findLocalDecl(String)
+  static ArrayList<XMPtransCoarray> ancestors
+    = new ArrayList<XMPtransCoarray>();
 
   private XMPenv env;
 
@@ -35,6 +28,7 @@ public class XMPtransCoarray
   private FunctionBlock fblock;
 
   private Vector<XMPcoarray> localCoarrays;
+  private Vector<XMPcoarray> useAssociatedCoarrays;
   private Vector<XMPcoarray> visibleCoarrays;
 
   //private XMPinitProcedure initProcedure;
@@ -64,8 +58,42 @@ public class XMPtransCoarray
   }
 
   private void _setCoarrays() {
-    // set coarrays declared in the current procedure
+    // set localCoarrays as coarrays declared in the current procedure
+    // set useAssociatedCoarrays as coarrays declared in using modules
+    _setLocalCoarrays();
+
+    // renew the list of the current hosts
+    // (assuming top-down analysis)
+    XobjectDef pdef = def.getParent();
+    if (pdef == null) {
+      // I have no host procedure.  I.e., I am an external procedure.
+      ancestors.clear();
+    } else {
+      for (int i = ancestors.size() - 1; i >= 0; i--) {
+        if (pdef == ancestors.get(i).def) {
+          // found the host (my parent) procedure
+          break;
+        }
+        ancestors.remove(i);
+      }
+    }
+    ancestors.add(this);
+
+    // set all coarrays declared in the current and the host procedures
+    visibleCoarrays = new Vector<XMPcoarray>();
+    visibleCoarrays.addAll(localCoarrays);
+    visibleCoarrays.addAll(useAssociatedCoarrays);
+    if (ancestors.size() > 1) {
+      // host association
+      XMPtransCoarray host = ancestors.get(ancestors.size() - 2);
+      visibleCoarrays.addAll(host.visibleCoarrays);
+    }
+  }
+
+
+  private void _setLocalCoarrays() {
     localCoarrays = new Vector<XMPcoarray>();
+    useAssociatedCoarrays = new Vector<XMPcoarray>();
 
     Xobject idList = def.getFuncIdList();
     for (Xobject obj: (XobjList)idList) {
@@ -73,63 +101,14 @@ public class XMPtransCoarray
       if (ident.wasCoarray()) {
         // found it is a coarray or a variable converted from a coarray
         XMPcoarray coarray = new XMPcoarray(ident, funcDef, env);
-        localCoarrays.add(coarray);
+        if (coarray.isUseAssociated())
+          useAssociatedCoarrays.add(coarray);
+        else
+          localCoarrays.add(coarray);
       }
     }
-
-    // renew the list of the current hosts
-    // (assuming top-down analysis)
-    XobjectDef pdef = def.getParent();
-    if (pdef == null) {
-      // no host procedure of mine.  I.e., This is an external procedure.
-      current_hosts.clear();
-    } else {
-      for (int i = current_hosts.size() - 1; i >= 0; i--) {
-        if (pdef == current_hosts.get(i).def) {
-          // found the host (my parent) procedure
-          break;
-        }
-        current_hosts.remove(i);
-      }
-    }
-    current_hosts.add(this);
-
-    // set all coarrays declared in the current and the host procedures
-    visibleCoarrays = new Vector<XMPcoarray>();
-    visibleCoarrays.addAll(localCoarrays);
-    if (current_hosts.size() > 1) {
-      // host association
-      XMPtransCoarray host = current_hosts.get(current_hosts.size() - 2);
-      visibleCoarrays.addAll(host.visibleCoarrays);
-    }
-
-    /****************************
-    for (XobjectDef pdef = def.getParent();
-         pdef != null; pdef = pdef.getParent()) {
-      idList = pdef.getFuncIdList();
-      for (Xobject obj: (XobjList)idList) {
-        Ident ident = (Ident)obj;
-        if (ident.wasCoarray()) {
-          // found it is a variable converted from a coarray in the host procedure
-          XMPcoarray coarray = new XMPcoarray(ident, funcDef, env);
-
-          // check if it has an overriden name
-          String name = ident.getName();
-          boolean is_new = true;
-          for (XMPcoarray coarray1 : visibleCoarrays) {
-            if (name == coarray1.getName()) {
-              is_new = false;
-              break;
-            }
-          }
-          if (is_new)
-            // the name is not found yet.
-            visibleCoarrays.add(coarray);
-        }
-      }
-    }
-    ********************************/
   }
+
 
   //------------------------------------------------------------
   //  TRANSLATION
@@ -147,19 +126,20 @@ public class XMPtransCoarray
     }
 
     // a. declare cray-pointers and descriptors and
-    //     generate common stmt inside this procedure
+    //    generate common stmt inside this procedure
     genCommonStmt(commonName1, commonName2, staticLocalCoarrays, def);
 
     // e. replace coindexed objects with function references
-    replaceCoidxObjs(visibleCoarrays);
+    replaceCoindexObjs(visibleCoarrays);
 
     // d. replace coindexed variable assignment stmts with call stmts
-    replaceCoidxVarStmts(visibleCoarrays);
+    replaceCoindexVarStmts(visibleCoarrays);
 
     // b. generate allocation for static coarrays
     genAllocationOfStaticCoarrays(staticLocalCoarrays);
 
     // c. convert allocate stmt for allocatable coarrays
+    //    (not supported yet)
     genAllocationOfAllocCoarrays(localCoarrays);
 
     // f. remove codimensions from declarations of coarrays
@@ -181,8 +161,6 @@ public class XMPtransCoarray
     // declare idents of cray pointers & descriptors
     for (XMPcoarray coarray: coarrays)
       coarray.declareIdents(CRAYPOINTER_PREFIX, DESCRIPTOR_PREFIX);
-
-    /* cf. XMPenv.declOrGetSizeArray */
 
     // common block name
     Xobject cnameObj1 = Xcons.Symbol(Xcode.IDENT, commonName1);
@@ -212,31 +190,7 @@ public class XMPtransCoarray
   //  convert statements whose LHS are coindexed variables
   //  to subroutine calls
   //-----------------------------------------------------
-  private void replaceCoidxVarStmts(Vector<XMPcoarray> coarrays) {
-    /************************
-    //XobjectIterator xi = new bottomupXobjectIterator(def.getFuncBody());
-    XobjectIterator xi = new topdownXobjectIterator(def.getFuncBody());
-
-    for (xi.init(); !xi.end(); xi.next()) {
-      Xobject xobj = xi.getXobject();
-
-      if (xobj == null) {
-        continue;
-      }
-
-      if (xobj.Opcode() == Xcode.F_ASSIGN_STATEMENT) {
-        // found an assignment statement
-
-        if (xobj.getArg(0).Opcode() == Xcode.CO_ARRAY_REF) {
-          // found its left-hand side is a coindexed variable
-          Xobject callExpr = coidxVarStmtToCallStmt(xobj, coarrays);
-          xi.setXobject(callExpr);
-        }
-      }
-
-    }
-    *********************/
-
+  private void replaceCoindexVarStmts(Vector<XMPcoarray> coarrays) {
     BlockIterator bi = new topdownBlockIterator(fblock);
 
     for (bi.init(); !bi.end(); bi.next()) {
@@ -248,28 +202,19 @@ public class XMPtransCoarray
         if (assignExpr == null)
           continue;
 
-        if (_isCoidxVarStmt(assignExpr)) {
+        if (_isCoindexVarStmt(assignExpr)) {
           // found -- convert the statement
-          Xobject callExpr = coidxVarStmtToCallStmt(assignExpr, coarrays);
+          Xobject callExpr = coindexVarStmtToCallStmt(assignExpr, coarrays);
           //s.insert(callExpr);
           //s.remove();
           s.setExpr(callExpr);
         }
       }
-
-      /***************
-      Xobject stmt = bi.getBlock().toXobject();
-      if (_isCoidxVarStmt(stmt)) {
-        // found an assignment stmt whose LHS is a coindexed variable
-        Xobject callExpr = coidxVarStmtToCallStmt(stmt, coarrays);
-        bi.setBlock(Bcons.Statement(callExpr));
-      }
-      ***************/
     }
   }
 
 
-  private Boolean _isCoidxVarStmt(Xobject xobj) {
+  private Boolean _isCoindexVarStmt(Xobject xobj) {
     if (xobj.Opcode() == Xcode.F_ASSIGN_STATEMENT) {
       Xobject lhs = xobj.getArg(0);
       if (lhs.Opcode() == Xcode.CO_ARRAY_REF)
@@ -286,45 +231,42 @@ public class XMPtransCoarray
    *    external :: PutCommLibName
    *    call PutCommLibName(..., rhs)
    */
-  private Xobject coidxVarStmtToCallStmt(Xobject assignExpr,
+  private Xobject coindexVarStmtToCallStmt(Xobject assignExpr,
                                          Vector<XMPcoarray> coarrays) {
     Xobject lhs = assignExpr.getArg(0);
     Xobject rhs = assignExpr.getArg(1);
 
-    int scheme = _selectSchemeOfPut(rhs);
+    int condition = _getConditionOfCoarrayPut(rhs);
 
-    XMPcoindexObj coidxObj = new XMPcoindexObj(lhs, coarrays);
-    return coidxObj.toCallStmt(rhs, Xcons.IntConstant(scheme));
+    XMPcoindexObj coindexObj = new XMPcoindexObj(lhs, coarrays);
+    return coindexObj.toCallStmt(rhs, Xcons.IntConstant(condition));
   }
 
-  private int _selectSchemeOfPut(Xobject rhs) {
-    // see libxmpf/src/xmpf_coarray_put.c
-    final int SCHEME_Normal =     0;
-    final int SCHEME_BufferCopy =   1;
-    final int SCHEME_BufferSpread = 2;
-    final int SCHEME_AuthorizedBufferCopy =   3;    /* not implemented yet */
-    final int SCHEME_AuthorizedBufferSpread = 4;    /* not implemented yet */
-
+  /*
+   * condition 1: It may be necessary to use buffer copy.
+   *              The address of RHS may not be accessed by FJ-RDMA.
+   * condition 0: Otherwise.
+   */
+  private int _getConditionOfCoarrayPut(Xobject rhs) {
     if (rhs.isConstant())
-      return SCHEME_BufferCopy;
+      return 1;
 
     if (rhs.Opcode() == Xcode.F_ARRAY_CONSTRUCTOR)
-      return SCHEME_BufferCopy;
+      return 1;
 
-    return SCHEME_Normal;
+    return 0;
   }
-
 
   //-----------------------------------------------------
   //  TRANSLATION e. (GET)
   //  convert coindexed objects to function references
   //-----------------------------------------------------
-  private void replaceCoidxObjs(Vector<XMPcoarray> coarrays) {
+  private void replaceCoindexObjs(Vector<XMPcoarray> coarrays) {
     // itaration to solve nested reference of coindexed object.
-    while (_replaceCoidxObjs1(coarrays));
+    while (_replaceCoindexObjs1(coarrays));
   }
 
-  private Boolean _replaceCoidxObjs1(Vector<XMPcoarray> coarrays) {
+  private Boolean _replaceCoindexObjs1(Vector<XMPcoarray> coarrays) {
     XobjectIterator xi = new topdownXobjectIterator(def.getFuncBody());
 
     Boolean done = false;
@@ -342,7 +284,7 @@ public class XMPtransCoarray
           continue;  // do nothing 
 
         // found target to convert
-        Xobject funcCall = coidxObjToFuncRef(xobj, coarrays);
+        Xobject funcCall = coindexObjToFuncRef(xobj, coarrays);
         xi.setXobject(funcCall);
         done = true;
       }
@@ -358,10 +300,10 @@ public class XMPtransCoarray
    *    type,external,dimension(:,:,..) :: commGetLibName_M
    *    commGetLibName_M(...)
    */
-  private Xobject coidxObjToFuncRef(Xobject funcRef,
+  private Xobject coindexObjToFuncRef(Xobject funcRef,
                                     Vector<XMPcoarray> coarrays) {
-    XMPcoindexObj coidxObj = new XMPcoindexObj(funcRef, coarrays);
-    return coidxObj.toFuncRef();
+    XMPcoindexObj coindexObj = new XMPcoindexObj(funcRef, coarrays);
+    return coindexObj.toFuncRef();
   }
 
 

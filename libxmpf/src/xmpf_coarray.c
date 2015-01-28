@@ -1,9 +1,9 @@
 #include "xmpf_internal.h"
 
-#define NotSupportedError 1
-
 static int _getNewSerno();
 static int _set_coarrayInfo(char *desc, char *orgAddr, int count, size_t element);
+
+static void _XMPF_coarray_malloc(int *serno, char **pointer, int count, int element);
 
 
 /*****************************************\
@@ -143,16 +143,29 @@ int this_image_(void)
 
 void xmpf_coarray_malloc_(int *serno, char **pointer, int *count, int *element)
 {
-  _XMPF_coarray_malloc(serno, pointer, *count, (size_t)(*element));
+  _XMPF_coarray_malloc(serno, pointer, *count, *element);
 }
 
-void _XMPF_coarray_malloc(int *serno, char **pointer, int count, size_t element)
+void _XMPF_coarray_malloc(int *serno, char **pointer, int count, int element)
 {
   void *desc;
   void *orgAddr;
+  size_t allocElem = (size_t)element;
+
+  // boundary check and recovery
+  if (element % BOUNDARY_BYTE != 0) {
+    if (count == 0) {
+      /* round up */
+      allocElem = ROUND_UP_BOUNDARY(allocElem);
+    } else {
+      /* restriction */
+      _XMP_fatal("violation of communication boundary");
+      return;
+    }
+  }
 
   // see libxmp/src/xmp_coarray_set.c
-  _XMP_coarray_malloc_info_1(count, element);  
+  _XMP_coarray_malloc_info_1(count, allocElem);
   _XMP_coarray_malloc_image_info_1();
   _XMP_coarray_malloc_do(&desc, &orgAddr);
 
@@ -162,97 +175,127 @@ void _XMPF_coarray_malloc(int *serno, char **pointer, int count, size_t element)
 
 
 /*****************************************\
-  synchronizations
+  sync all
 \*****************************************/
 
-void xmpf_sync_all_0_(void)
+void xmpf_sync_all_nostat_(void)
 {
-  int dummy;
-  xmpf_sync_all_1_(&dummy);
+  int status;
+  xmp_sync_all(&status);
 }
 
-void xmpf_sync_all_1_(int *status)
+void xmpf_sync_all_stat_(int *stat, char *msg, int *msglen)
 {
-  _XMPF_errmsg = NULL;
-  xmp_sync_all(status);
+  static BOOL firstCall = TRUE;
+  if (firstCall) {
+    firstCall = FALSE;
+    fprintf(stderr, "not supported yet: "
+            "stat= specifier in SYNC ALL statement\n");
+    fprintf(stderr, "  -- ignored.\n");
+  }
 
-  _XMPF_errmsg = "short test";
-
-  if (_XMPF_coarrayMsg)
-    fprintf(stderr, "**** done sync_all, *status=%d (%s)\n",
-            *status, __FILE__);
+  int status;
+  xmp_sync_all(&status);
 }
 
-void xmpf_sync_memory_0_(void)
+
+/*****************************************\
+  sync memory
+\*****************************************/
+
+void xmpf_sync_memory_nostat_(void)
 {
-  int dummy;
-  xmpf_sync_memory_1_(&dummy);
+  int status;
+  xmp_sync_memory(&status);
 }
 
-void xmpf_sync_memory_1_(int *status)
+void xmpf_sync_memory_stat_(int *stat, char *msg, int *msglen)
 {
-  _XMPF_errmsg = NULL;
-  xmp_sync_memory(status);
+  static BOOL firstCall = TRUE;
+  if (firstCall) {
+    firstCall = FALSE;
+    fprintf(stderr, "not supported yet: "
+            "stat= specifier in SYNC MEMORY statement\n");
+    fprintf(stderr, "  -- ignored.\n");
+  }
 
-  _XMPF_errmsg = "test test test. long message test.";
-
-  if (_XMPF_coarrayMsg)
-    fprintf(stderr, "**** done sync_memory, *status=%d (%s)\n",
-            *status, __FILE__);
+  int status;
+  xmp_sync_memory(&status);
 }
 
-void xmpf_sync_image_0_(int *image)
+
+/*****************************************\
+  sync images
+\*****************************************/
+
+void xmpf_sync_image_nostat_(int *image)
 {
-  int dummy;
-  xmpf_sync_image_1_(image, &dummy);
+  int status;
+  xmp_sync_image(*image, &status);
 }
 
-void xmpf_sync_image_1_(int *image, int *status)
+void xmpf_sync_image_stat_(int *image, int *stat, char *msg, int *msglen)
 {
-  _XMPF_errmsg = NULL;
+  static BOOL firstCall = TRUE;
+  if (firstCall) {
+    firstCall = FALSE;
+    fprintf(stderr, "not supported yet: "
+            "stat= specifier in SYNC IMAGES (<image>) statement\n");
+    fprintf(stderr, "  -- ignored.\n");
+  }
 
-  /*** not supported ***/
-
-  *status = NotSupportedError;
-  _XMPF_errmsg = "not supported yet: sync images(<image> ...)";
+  int status;
+  xmp_sync_image(*image, &status);
 }
 
-void xmpf_sync_images_0s_(int *size, int *images)
+
+void xmpf_sync_images_nostat_(int *images, int *size)
 {
-  int dummy;
-  xmpf_sync_images_1_(size, images, &dummy);
+  int status;
+  xmp_sync_images(*size, images, &status);
 }
 
-void xmpf_sync_images_1s_(int *size, int *images, int *status)
+void xmpf_sync_images_stat_(int *images, int *size, int *stat,
+                            char *msg, int *msglen)
 {
-  _XMPF_errmsg = NULL;
+  static BOOL firstCall = TRUE;
+  if (firstCall) {
+    firstCall = FALSE;
+    fprintf(stderr, "not supported yet: "
+            "stat= specifier in SYNC IMAGES (<images>) statement\n");
+    fprintf(stderr, "  -- ignored.\n");
+  }
 
-  /*** not supported ***/
-
-  *status = NotSupportedError;
-  _XMPF_errmsg = "not supported yet: sync images(<image-set> ...)";
+  int status;
+  xmp_sync_images(*size, images, &status);
 }
 
-void xmpf_sync_images_all_0_(void)
+
+void xmpf_sync_allimages_nostat_(void)
 {
-  int dummy;
-  xmpf_sync_images_all_1_(&dummy);
+  int status;
+  xmp_sync_images_all(&status);
 }
 
-void xmpf_sync_images_all_1_(int *status)
+void xmpf_sync_allimages_stat_(int *stat, char *msg, int *msglen)
 {
-  _XMPF_errmsg = NULL;
+  static BOOL firstCall = TRUE;
+  if (firstCall) {
+    firstCall = FALSE;
+    fprintf(stderr, "not supported yet: "
+            "stat= specifier in SYNC IMAGES (*) statement\n");
+    fprintf(stderr, "  -- ignored.\n");
+  }
 
-  /*** not supported ***/
-
-  *status = NotSupportedError;
-  _XMPF_errmsg = "not supported yet: sync images(* ...)";
+  int status;
+  xmp_sync_images_all(&status);
 }
 
 
 
 /*****************************************\
   error message to reply to Fortran
+  (not used yet)
 \*****************************************/
 
 char *_XMPF_errmsg = NULL;

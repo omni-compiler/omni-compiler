@@ -9,9 +9,8 @@
       integer(2), intent(in) :: baseAddr
       integer(2) :: val
 
-      call xmpf_coarray_get_array(serno, baseAddr, element,             &
-     &   coindex, val, rank                                             &
-     &   )
+      call xmpf_coarray_get_scalar(serno, baseAddr, element,            &
+     &   coindex, val)
 
       end function
 
@@ -24,9 +23,8 @@
       integer(4), intent(in) :: baseAddr
       integer(4) :: val
 
-      call xmpf_coarray_get_array(serno, baseAddr, element,             &
-     &   coindex, val, rank                                             &
-     &   )
+      call xmpf_coarray_get_scalar(serno, baseAddr, element,            &
+     &   coindex, val)
 
       end function
 
@@ -39,9 +37,8 @@
       integer(8), intent(in) :: baseAddr
       integer(8) :: val
 
-      call xmpf_coarray_get_array(serno, baseAddr, element,             &
-     &   coindex, val, rank                                             &
-     &   )
+      call xmpf_coarray_get_scalar(serno, baseAddr, element,            &
+     &   coindex, val)
 
       end function
 
@@ -54,9 +51,8 @@
       logical(2), intent(in) :: baseAddr
       logical(2) :: val
 
-      call xmpf_coarray_get_array(serno, baseAddr, element,             &
-     &   coindex, val, rank                                             &
-     &   )
+      call xmpf_coarray_get_scalar(serno, baseAddr, element,            &
+     &   coindex, val)
 
       end function
 
@@ -69,9 +65,8 @@
       logical(4), intent(in) :: baseAddr
       logical(4) :: val
 
-      call xmpf_coarray_get_array(serno, baseAddr, element,             &
-     &   coindex, val, rank                                             &
-     &   )
+      call xmpf_coarray_get_scalar(serno, baseAddr, element,            &
+     &   coindex, val)
 
       end function
 
@@ -84,9 +79,8 @@
       logical(8), intent(in) :: baseAddr
       logical(8) :: val
 
-      call xmpf_coarray_get_array(serno, baseAddr, element,             &
-     &   coindex, val, rank                                             &
-     &   )
+      call xmpf_coarray_get_scalar(serno, baseAddr, element,            &
+     &   coindex, val)
 
       end function
 
@@ -99,9 +93,8 @@
       real(4), intent(in) :: baseAddr
       real(4) :: val
 
-      call xmpf_coarray_get_array(serno, baseAddr, element,             &
-     &   coindex, val, rank                                             &
-     &   )
+      call xmpf_coarray_get_scalar(serno, baseAddr, element,            &
+     &   coindex, val)
 
       end function
 
@@ -114,9 +107,8 @@
       real(8), intent(in) :: baseAddr
       real(8) :: val
 
-      call xmpf_coarray_get_array(serno, baseAddr, element,             &
-     &   coindex, val, rank                                             &
-     &   )
+      call xmpf_coarray_get_scalar(serno, baseAddr, element,            &
+     &   coindex, val)
 
       end function
 
@@ -129,9 +121,8 @@
       complex(4), intent(in) :: baseAddr
       complex(4) :: val
 
-      call xmpf_coarray_get_array(serno, baseAddr, element,             &
-     &   coindex, val, rank                                             &
-     &   )
+      call xmpf_coarray_get_scalar(serno, baseAddr, element,            &
+     &   coindex, val)
 
       end function
 
@@ -144,9 +135,8 @@
       complex(8), intent(in) :: baseAddr
       complex(8) :: val
 
-      call xmpf_coarray_get_array(serno, baseAddr, element,             &
-     &   coindex, val, rank                                             &
-     &   )
+      call xmpf_coarray_get_scalar(serno, baseAddr, element,            &
+     &   coindex, val)
 
       end function
 
@@ -159,9 +149,8 @@
       character(element), intent(in) :: baseAddr
       character(element) :: val
 
-      call xmpf_coarray_get_array(serno, baseAddr, element,             &
-     &   coindex, val, rank                                             &
-     &   )
+      call xmpf_coarray_get_scalar(serno, baseAddr, element,            &
+     &   coindex, val)
 
       end function
 
