@@ -53,7 +53,7 @@ README
     !$xmp nodes p(*,*,*)
 
 ## Compiler Options
-* -openmp
+* --openmp
 * -omp
  These options enable handling of OpenMP directives.
 

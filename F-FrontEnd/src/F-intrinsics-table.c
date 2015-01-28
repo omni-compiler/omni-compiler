@@ -252,8 +252,7 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_LEN,         INTR_NAME_GENERIC,      "len",          0,      {INTR_TYPE_CHAR},       INTR_TYPE_INT,  1, -6, LANGSPEC_F77 },
 
     /* 6. Fortran77 non-standard */
-    //LOC () : FIXME tentative implementation
-    { INTR_LOC,         INTR_NAME_GENERIC,      "loc",          0,      {INTR_TYPE_ANY},       INTR_TYPE_ANY,  1, 0, LANGSPEC_NONSTD },
+    { INTR_LOC,         INTR_NAME_GENERIC,      "loc",          0,      {INTR_TYPE_ANY},       INTR_TYPE_INT,  1, -9, LANGSPEC_NONSTD },
 
 
     /*

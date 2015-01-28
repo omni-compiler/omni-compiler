@@ -1,7 +1,7 @@
 AC_PREREQ(2.60)
 LT_PREREQ(2.4)
 
-AC_INIT([Omni Compiler], [0.9.0], [h-murai@riken.jp], [omni])
+AC_INIT([Omni Compiler], [0.9.1], [h-murai@riken.jp], [omni])
 
 AC_CONFIG_AUX_DIR([./buildutils])
 AC_CONFIG_MACRO_DIR([./buildutils])
@@ -477,16 +477,14 @@ AC_ARG_ENABLE(mpi3,
     [doMPI3=yes], [doMPI3=no])
 
 ## Add temporarily by mnakao
-AC_ARG_ENABLE(FJRDMA,
-   [  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10.],
-   [enableFJRDMA=yes], [enableFJRDMA=no])
-
-AM_CONDITIONAL(FJRDMA, test x${enableFJRDMA} = xyes)
+#AC_ARG_ENABLE(FJRDMA,
+#   [  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10.],
+#   [enableFJRDMA=yes], [enableFJRDMA=no])
+#
+#AM_CONDITIONAL(FJRDMA, test x${enableFJRDMA} = xyes)
 ## End Add temporarily
 
-## Delete temporarily by mnakao
-#AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
-## End Delete temporarily 
+AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
 
 AC_SUBST(FJRDMA)
 
@@ -1725,7 +1723,11 @@ AC_SUBST(omniQRealFillGap)
 # --------------------------------------------------------------------
 # Export Omni Config Variable
 
-OMNI_HOME=${prefix}
+if test "${prefix}" = "NONE" -o "${prefix}" = ""; then
+  OMNI_HOME=/usr/local
+else
+  OMNI_HOME=${prefix}
+fi
 AC_SUBST(OMNI_HOME)
 AH_TEMPLATE(OMNI_HOME, [omni compiler install directory])
 AC_DEFINE_UNQUOTED(OMNI_HOME, "${OMNI_HOME}")

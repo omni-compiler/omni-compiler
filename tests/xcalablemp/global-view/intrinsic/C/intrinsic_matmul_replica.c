@@ -65,7 +65,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
     }
   }
 
-#pragma task on p(1,1:2)
+#pragma xmp task on p(1,1:2)
 {
   chk_int2(ierr);
 }
@@ -132,7 +132,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
     }
   }
 
-#pragma task on p(1:2,1)
+#pragma xmp task on p(1:2,1)
 {
   chk_int2(ierr);
 }
@@ -263,7 +263,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
     }
   }
 
-#pragma task on p(1,1:2)
+#pragma xmp task on p(1,1:2)
 {
   chk_int2(ierr);
 }
@@ -330,7 +330,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
     }
   }
 
-#pragma task on p(1:2,1)
+#pragma xmp task on p(1:2,1)
 {
   chk_int2(ierr);
 }
@@ -461,7 +461,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
     }
   }
 
-#pragma task on p(1,1:2)
+#pragma xmp task on p(1,1:2)
 {
   chk_int2(ierr);
 }
@@ -528,7 +528,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
     }
   }
 
-#pragma task on p(1:2,1)
+#pragma xmp task on p(1:2,1)
 {
   chk_int2(ierr);
 }
@@ -659,7 +659,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
     }
   }
 
-#pragma task on p(1,1:2)
+#pragma xmp task on p(1,1:2)
 {
   chk_int2(ierr);
 }
@@ -726,7 +726,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
     }
   }
 
-#pragma task on p(1:2,1)
+#pragma xmp task on p(1:2,1)
 {
   chk_int2(ierr);
 }
@@ -857,7 +857,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
     }
   }
 
-#pragma task on p(1,1:2)
+#pragma xmp task on p(1,1:2)
 {
   chk_int2(ierr);
 }
@@ -924,7 +924,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
     }
   }
 
-#pragma task on p(1:2,1)
+#pragma xmp task on p(1:2,1)
 {
   chk_int2(ierr);
 }
@@ -1055,7 +1055,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
     }
   }
 
-#pragma task on p(1,1:2)
+#pragma xmp task on p(1,1:2)
 {
   chk_int2(ierr);
 }
@@ -1122,7 +1122,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
     }
   }
 
-#pragma task on p(1:2,1)
+#pragma xmp task on p(1:2,1)
 {
   chk_int2(ierr);
 }
@@ -1253,7 +1253,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
     }
   }
 
-#pragma task on p(1,1:2)
+#pragma xmp task on p(1,1:2)
 {
   chk_int2(ierr);
 }
@@ -1320,7 +1320,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
     }
   }
 
-#pragma task on p(1:2,1)
+#pragma xmp task on p(1:2,1)
 {
   chk_int2(ierr);
 }
@@ -1451,7 +1451,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
     }
   }
 
-#pragma task on p(1,1:2)
+#pragma xmp task on p(1,1:2)
 {
   chk_int2(ierr);
 }
@@ -1518,7 +1518,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
     }
   }
 
-#pragma task on p(1:2,1)
+#pragma xmp task on p(1:2,1)
 {
   chk_int2(ierr);
 }
@@ -1649,7 +1649,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
     }
   }
 
-#pragma task on p(1,1:2)
+#pragma xmp task on p(1,1:2)
 {
   chk_int2(ierr);
 }
@@ -1716,7 +1716,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
     }
   }
 
-#pragma task on p(1:2,1)
+#pragma xmp task on p(1:2,1)
 {
   chk_int2(ierr);
 }
