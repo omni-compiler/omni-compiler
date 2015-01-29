@@ -14,18 +14,9 @@ import java.util.*;
  * Madiator for coindexed object such as a(i,j)[k]
  */
 public class XMPcoindexObj {
-
   // constants
-  final static String COARRAYPUT_NAME = "xmpf_coarray_put_array";
-  final static String COARRAYGET_NAME = "xmpf_coarray_get_array";
-
-  final static String COARRAYPUT_PREFIX = "xmpf_coarray_put";    // used
-  final static String COARRAYGET_PREFIX = "xmpf_coarray_get";    // used
-
-  final static String PUT77_LIB_PREFIX = "xmpf_coarray_put77";
-  final static String GET77_LIB_PREFIX = "xmpf_coarray_get77";
-  final static String PUT90_LIB_PREFIX = "xmpf_coarray_put90";
-  final static String GET90_LIB_PREFIX = "xmpf_coarray_get90";
+  final static String COARRAYPUT_PREFIX = "xmpf_coarray_put";
+  final static String COARRAYGET_PREFIX = "xmpf_coarray_get";
 
   // attributes
   String name;
@@ -97,7 +88,7 @@ public class XMPcoindexObj {
     Xobject c = cosubList.getArg(0).getArg(0);         // =c[0]
     Xobject coindex = c;                               // =coindex(1)
     if (corank == 1)
-      return _genInt(coindex);
+      return _convInt4(coindex);
 
     Xobject cosize = coarray.getSizeFromIndexRange(codims[0]);   // =cosize[0]
     Xobject factor = cosize;                               // =factor(1)
@@ -116,10 +107,10 @@ public class XMPcoindexObj {
       factor = Xcons.binaryOp(Xcode.MUL_EXPR, factor, cosize);
     }
 
-    return _genInt(coindex);
+    return _convInt4(coindex);
   }
 
-  private Xobject _genInt(Xobject expr) {
+  private Xobject _convInt4(Xobject expr) {
     if (expr.Type().isBasic() &&
         expr.Type().getBasicType() == BasicType.INT) {
       if (expr.isIntConstant()) {
@@ -138,6 +129,54 @@ public class XMPcoindexObj {
 
     return intrinsicInt.Call(Xcons.List(expr));
   }    
+
+  /* TEMPORARY VERSION
+   *  not conversion but only error checking
+   */
+  private Xobject _convRhsType(Xobject rhs) {
+    Xtype lhsType = coarray.getFtype();
+    Xobject lhsKind = coarray.getFkind();
+
+    Xtype rhsType;
+    Xobject rhsKind;
+
+    rhsType = rhs.Type();
+    if (rhsType.getKind() == Xtype.F_ARRAY)
+      rhsType = rhsType.getRef();
+    rhsKind = rhsType.getFkind();
+
+    int ltype = (lhsType == null) ? 0 : (lhsType.getKind());
+    int rtype = (rhsType == null) ? 0 : (rhsType.getKind());
+
+    int lkind = (lhsKind == null) ? 0 : (lhsKind.getInt());
+    int rkind = (rhsKind == null) ? 0 : (rhsKind.getInt());
+
+    if (ltype == 0 || rtype == 0) {
+      // doubtful
+      XMP.warning("Automatic type conversion will not be generated " +
+                  "in this coindexed assignment statement.");
+      return rhs;
+    }
+
+    if (ltype != rtype) {
+      // error
+      XMP.error("current restriction: found coindexed assignment statement " +
+                "with implicit type conversion");
+      return rhs;
+    }
+
+    if (lkind != 0 && rkind != 0 && lkind != rkind) {
+      // error
+      XMP.error("current restriction: found coindexed assignment statement " +
+                "with implicit type-kind conversion");
+      return rhs;
+    }
+
+    // Though it is still doubtful in the case (lkind == 0 || rkind == ).
+
+    return rhs;
+  }
+
 
   private int _getRank() {
     int hostRank = coarray.getRank();
@@ -256,7 +295,7 @@ public class XMPcoindexObj {
     Xobject actualArgs = Xcons.List(serno, baseAddr, element, coindex);
 
     if (rhs != null)
-      actualArgs.add(rhs);
+      actualArgs.add(_convRhsType(rhs));
     if (condition != null)
       actualArgs.add(condition);
 
@@ -294,67 +333,6 @@ public class XMPcoindexObj {
     }
 
     return new BasicType(baseTypeCode);
-  }
-
-
-
-  private String _getTypeSuffix(Xtype xtype) {
-    String key = null;
-    switch (xtype.getKind()) {
-    case Xtype.F_ARRAY:
-      key = _getTypeSuffixKey(xtype.getRef());
-      break;
-    case Xtype.BASIC:
-      key = _getTypeSuffixKey(xtype);
-      break;
-    case Xtype.STRUCT:
-      XMP.error("internal error: STRUCT unsupported in _getTypeSuffix()");
-      break;
-    default:
-      XMP.error("internal error: unexpected kind in _getTypeSuffix(): xtype.getKind()");
-      break;
-    }
-
-    int bytes = xtype.getElementLength(getBlock());
-    return key + bytes;
-  }
-
-  /// see also BasicType.getElementLength
-  private String _getTypeSuffixKey(Xtype xtype) {
-    String key = null;
-    switch(xtype.getBasicType()) {
-    case BasicType.BOOL:
-      key = "l";
-      break;
-    case BasicType.SHORT:
-    case BasicType.UNSIGNED_SHORT:
-    case BasicType.INT:
-    case BasicType.UNSIGNED_INT:
-    case BasicType.LONG:
-    case BasicType.UNSIGNED_LONG:
-    case BasicType.LONGLONG:
-    case BasicType.UNSIGNED_LONGLONG:
-      key = "i";
-      break;
-    case BasicType.FLOAT:
-    case BasicType.DOUBLE:
-    case BasicType.LONG_DOUBLE:
-      key = "r";
-      break;
-    case BasicType.FLOAT_COMPLEX:
-    case BasicType.DOUBLE_COMPLEX:
-    case BasicType.LONG_DOUBLE_COMPLEX:
-      key = "z";
-      break;
-    case BasicType.CHAR:
-    case BasicType.UNSIGNED_CHAR:
-    case BasicType.F_CHARACTER:
-    default:
-      XMP.error("[XMPcoindexObj] unsupported type of coarray");
-      break;
-    }
-
-    return key;
   }
 
 

@@ -342,5 +342,97 @@ public class XMPcoarray {
       + ", originalType:" + toString(originalType)
       + "}";
   }
+
+
+  //------------------------------------------------------------
+  //  Fortran Type and Kind
+  //   ******** under construction *********
+  //------------------------------------------------------------
+
+  /* TEMPORARY VERSION
+   *   getFkind().getKind() is useful, which is integer as Xtype.Fxxx
+   */
+  public Xtype getFtype() {
+    Xtype ftype = ident.Type();
+    if (ftype.getKind() == Xtype.F_ARRAY)
+      ftype = ftype.getRef();
+    return ftype;
+  }
+
+  /* TEMPORARY VERSION
+   *   getFkind().getInt() is useful.
+   */
+  public Xobject getFkind() {
+    return getFtype().getFkind();
+  }
+
+  /*
+   * return a name of Fortran intrinsic function
+   */
+  private String getTypeIntrinsicName() {
+    return getTypeIntrinsicName(getType());
+  }
+
+  private String getTypeIntrinsicName(Xtype xtype) {
+    String name = null;
+
+    switch (xtype.getKind()) {
+    case Xtype.F_ARRAY:
+      name = _getTypeIntrinName_1(xtype.getRef());
+      break;
+    case Xtype.BASIC:
+      name = _getTypeIntrinName_1(xtype);
+      break;
+    case Xtype.STRUCT:
+      //XMP.error("internal error: STRUCT unsupported in _getTypeSuffix()");
+    default:
+      //XMP.error("internal error: unexpected kind in _getTypeSuffix(): xtype.getKind()");
+      break;
+    }
+
+    return name;
+  }
+
+  /// see also BasicType.getElementLength
+  private String _getTypeIntrinName_1(Xtype xtype) {
+    String key = null;
+    switch(xtype.getBasicType()) {
+    case BasicType.BOOL:
+      key = "l";
+      break;
+    case BasicType.SHORT:
+    case BasicType.UNSIGNED_SHORT:
+    case BasicType.INT:
+    case BasicType.UNSIGNED_INT:
+    case BasicType.LONG:
+    case BasicType.UNSIGNED_LONG:
+    case BasicType.LONGLONG:
+    case BasicType.UNSIGNED_LONGLONG:
+      key = "int";
+      break;
+    case BasicType.FLOAT:
+    case BasicType.DOUBLE:
+    case BasicType.LONG_DOUBLE:
+      key = "real";
+      break;
+    case BasicType.FLOAT_COMPLEX:
+    case BasicType.DOUBLE_COMPLEX:
+    case BasicType.LONG_DOUBLE_COMPLEX:
+      key = "cmplx";
+      break;
+    case BasicType.CHAR:
+    case BasicType.UNSIGNED_CHAR:
+    case BasicType.F_CHARACTER:
+      key = "c";
+      break;
+
+    default:
+      XMP.error("found unsupported type of coarray");
+      break;
+    }
+
+    return key;
+  }
+
 }
 
