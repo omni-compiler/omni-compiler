@@ -33,6 +33,7 @@ extern void xmpf_coarray_get_scalar_(int *serno, char *baseAddr, int *element,
                                      int *coindex, char *result)
 {
   char *buf;
+  size_t elementRU;
 
   int scheme = _select_getscheme(result);
 
@@ -41,11 +42,20 @@ extern void xmpf_coarray_get_scalar_(int *serno, char *baseAddr, int *element,
 
   switch (scheme) {
   case GETSCHEME_Normal:
+    if (_XMPF_coarrayMsg) {
+      fpirntf(stderr, "GETSCHEME_Normal selected\n");
+    }
     _getVectorByElement(desc, start, 1, *coindex, result);
     break;
 
   case GETSCHEME_RecvBuffer:
-    buf = malloc((size_t)ROUND_UP_BOUNDARY(*element));
+    elementRU = (size_t)ROUND_UP_BOUNDARY(*element);
+    buf = malloc(elementRU);
+    if (_XMPF_coarrayMsg) {
+      fpirntf(stderr, "GETSCHEME_RecvBuffer selected\n");
+      fprintf(stderf, "  *element=%d, elementRU=%d, buf=%p\n",
+              *element, elementRU, buf);
+    }
     _getVectorByElement(desc, start, 1, *coindex, buf);
     (void)memcpy(result, buf, *element);
     break;
@@ -72,7 +82,8 @@ extern void xmpf_coarray_get_array_(int *serno, char *baseAddr, int *element,
   va_start(argList, rank);
 
   if (*element % BOUNDARY_BYTE != 0) {
-    _XMP_fatal("violation of boundary in get communication");
+    _XMP_fatal("violation of boundary in get communication"
+               "xmpf_coarray_get_array_, " __FILE__);
     return;
   }
 

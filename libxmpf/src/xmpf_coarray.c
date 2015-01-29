@@ -3,8 +3,6 @@
 static int _getNewSerno();
 static int _set_coarrayInfo(char *desc, char *orgAddr, int count, size_t element);
 
-static void _XMPF_coarray_malloc(int *serno, char **pointer, int count, int element);
-
 
 /*****************************************\
   internal switches
@@ -15,6 +13,16 @@ int _XMPF_coarrayMsg = 0;          // default: message off
 void xmpf_coarray_msg_(int *sw)
 {
   _XMPF_coarrayMsg = *sw;
+
+  if (_XMPF_coarrayMsg) {
+    fpirntf(stderr, "xmpf_coarray_msg ON\n");
+#ifdef _XMP_COARRAY_FJRDMA
+    fprintf(stderf, "  XMP_COARRAY_FJRDMA defined\n");
+#else
+    fprintf(stderf, "  XMP_COARRAY_FJRDMA not defined\n");
+#endif
+    fprintf(stderf, "  BOUNDARY_BYTE = %d\n", BOUNDARY_BYTE);
+  }
 }
 
 
@@ -143,34 +151,32 @@ int this_image_(void)
 
 void xmpf_coarray_malloc_(int *serno, char **pointer, int *count, int *element)
 {
-  _XMPF_coarray_malloc(serno, pointer, *count, *element);
-}
-
-void _XMPF_coarray_malloc(int *serno, char **pointer, int count, int element)
-{
   void *desc;
   void *orgAddr;
-  size_t allocElem = (size_t)element;
+  size_t elementRU;
 
   // boundary check and recovery
-  if (element % BOUNDARY_BYTE != 0) {
-    if (count == 0) {
+  if ((*element) % BOUNDARY_BYTE == 0) {
+    elementRU = (size_t)(*element);
+  if (*element % BOUNDARY_BYTE != 0) {
+    if (*count == 0) {
       /* round up */
-      allocElem = ROUND_UP_BOUNDARY(allocElem);
+      elementRU = (size_t)ROUND_UP_BOUNDARY(elementRU);
     } else {
       /* restriction */
-      _XMP_fatal("violation of communication boundary");
+      _XMP_fatal("violation of communication boundary: "
+                 "xmpf_coarray_malloc_, " __FILE__);
       return;
     }
   }
 
   // see libxmp/src/xmp_coarray_set.c
-  _XMP_coarray_malloc_info_1(count, allocElem);
+  _XMP_coarray_malloc_info_1(*count, elementRU);
   _XMP_coarray_malloc_image_info_1();
   _XMP_coarray_malloc_do(&desc, &orgAddr);
 
   *pointer = orgAddr;
-  *serno = _set_coarrayInfo(desc, orgAddr, count, element);
+  *serno = _set_coarrayInfo(desc, orgAddr, *count, *element);
 }
 
 
