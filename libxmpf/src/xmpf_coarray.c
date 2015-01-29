@@ -15,13 +15,13 @@ void xmpf_coarray_msg_(int *sw)
   _XMPF_coarrayMsg = *sw;
 
   if (_XMPF_coarrayMsg) {
-    fpirntf(stderr, "xmpf_coarray_msg ON\n");
+    fprintf(stderr, "xmpf_coarray_msg ON\n");
 #ifdef _XMP_COARRAY_FJRDMA
-    fprintf(stderf, "  XMP_COARRAY_FJRDMA defined\n");
+    fprintf(stderr, "  _XMP_COARRAY_FJRDMA defined\n");
 #else
-    fprintf(stderf, "  XMP_COARRAY_FJRDMA not defined\n");
+    fprintf(stderr, "  _XMP_COARRAY_FJRDMA not defined\n");
 #endif
-    fprintf(stderf, "  BOUNDARY_BYTE = %d\n", BOUNDARY_BYTE);
+    fprintf(stderr, "  BOUNDARY_BYTE = %d\n", BOUNDARY_BYTE);
   }
 }
 
@@ -158,19 +158,22 @@ void xmpf_coarray_malloc_(int *serno, char **pointer, int *count, int *element)
   // boundary check and recovery
   if ((*element) % BOUNDARY_BYTE == 0) {
     elementRU = (size_t)(*element);
-  if (*element % BOUNDARY_BYTE != 0) {
-    if (*count == 0) {
-      /* round up */
-      elementRU = (size_t)ROUND_UP_BOUNDARY(elementRU);
-    } else {
-      /* restriction */
-      _XMP_fatal("violation of communication boundary: "
-                 "xmpf_coarray_malloc_, " __FILE__);
-      return;
-    }
+  } else if (*count == 1) {              // scalar or one-element array
+    /* round up */
+    elementRU = (size_t)ROUND_UP_BOUNDARY(*element);
+  } else {
+    /* restriction */
+    _XMP_fatal("violation of boundary: "
+               "xmpf_coarray_malloc_(), " __FILE__);
+    return;
   }
 
-  // see libxmp/src/xmp_coarray_set.c
+  // set (see libxmp/src/xmp_coarray_set.c)
+  if (_XMPF_coarrayMsg) {
+    fprintf(stderr, "COARRAY ALLOCATION\n");
+    fprintf(stderr, "  *count=%d, elementRU=%zd, *element=%d\n",
+            *count, elementRU, *element);
+  }
   _XMP_coarray_malloc_info_1(*count, elementRU);
   _XMP_coarray_malloc_image_info_1();
   _XMP_coarray_malloc_do(&desc, &orgAddr);

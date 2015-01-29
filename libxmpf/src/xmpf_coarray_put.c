@@ -37,6 +37,7 @@ extern void xmpf_coarray_put_scalar_(int *serno, char *baseAddr, int *element,
                                      int *coindex, char *rhs, int *condition)
 {
   char *buf;
+  size_t elementRU;
 
   int scheme = _select_putscheme(*condition);
 
@@ -45,11 +46,23 @@ extern void xmpf_coarray_put_scalar_(int *serno, char *baseAddr, int *element,
 
   switch (scheme) {
   case PUTSCHEME_Normal:
+    if (_XMPF_coarrayMsg) {
+      fprintf(stderr, "PUTSCHEME_Normal/scalar selected\n");
+      fprintf(stderr, "  element in descr=%d, *element=%d\n",
+              _XMPF_get_coarrayElement(*serno), *element);
+    }
     _putVectorByElement(desc, start, 1, *coindex, rhs);
     break;
     
   case PUTSCHEME_SendBuffer:
-    buf = malloc((size_t)(*element));
+    elementRU = (size_t)ROUND_UP_BOUNDARY(*element);
+    buf = malloc(elementRU);
+    if (_XMPF_coarrayMsg) {
+      fprintf(stderr, "PUTSCHEME_SendBuffer/scalar selected\n");
+      fprintf(stderr, "  element in descr=%d, *element=%d\n",
+              _XMPF_get_coarrayElement(*serno), *element);
+      fprintf(stderr, "  elementRU=%zd, buf=%p\n", elementRU, buf);
+    }
     (void)memcpy(buf, rhs, *element);
     _putVectorByElement(desc, start, 1, *coindex, buf);
     break;
@@ -65,8 +78,8 @@ extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
                                     int *rank, ...)
 {
   size_t bufsize;
-  char *buf, *p;
-  int i, nelems;
+  char *buf;
+  int i;
 
   int scheme = _select_putscheme(*condition);
 
@@ -91,6 +104,11 @@ extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
 
   switch (scheme) {
   case PUTSCHEME_Normal:
+    if (_XMPF_coarrayMsg) {
+      fprintf(stderr, "PUTSCHEME_Normal/array selected\n");
+      fprintf(stderr, "  element in descr=%d, *element=%d\n",
+              _XMPF_get_coarrayElement(*serno), *element);
+    }
     _putCoarray(*serno, baseAddr, *coindex, rhs, bytes, *rank, skip, count);
     break;
 
@@ -98,6 +116,12 @@ extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
     bufsize = *element;
     for (i = 0; i < *rank; i++) {
       bufsize *= count[i];
+    }
+    if (_XMPF_coarrayMsg) {
+      fprintf(stderr, "PUTSCHEME_SendBuffer/array selected\n");
+      fprintf(stderr, "  element in descr=%d, *element=%d\n",
+              _XMPF_get_coarrayElement(*serno), *element);
+      fprintf(stderr, "  *bufsize=%zd\n", bufsize);
     }
     buf = malloc(bufsize);
     (void)memcpy(buf, rhs, bufsize);
@@ -150,11 +174,12 @@ extern void xmpf_coarray_put_spread_(int *serno, char *baseAddr, int *element,
 
 int _select_putscheme(int condition)
 {
-  int scheme = PUTSCHEME_Normal;
+  int scheme;
 
 #ifdef _XMP_COARRAY_FJRDMA
-  if (condition == 1)
-    scheme = PUTSCHEME_SendBuffer;
+  scheme = (condition >= 1) ? PUTSCHEME_SendBuffer : PUTSCHEME_Normal;
+#else
+  scheme = (condition >= 2) ? PUTSCHEME_SendBuffer : PUTSCHEME_Normal;
 #endif
 
   return scheme;
@@ -166,7 +191,7 @@ void _putCoarray(int serno, char *baseAddr, int coindex, char *rhs,
 {
   if (rank == 0) {  // fully contiguous after perfect collapsing
     if (_XMPF_coarrayMsg)
-      fprintf(stderr, "**** %d bytes fully contiguous (%s)\n",
+      fprintf(stderr, "**** put %d bytes fully contiguous (%s)\n",
               bytes, __FILE__);
 
     _putVectorByByte(serno, baseAddr, bytes, coindex, rhs);
@@ -185,10 +210,10 @@ void _putCoarray(int serno, char *baseAddr, int coindex, char *rhs,
   if (_XMPF_coarrayMsg) {
     char work[200];
     char* p;
-    sprintf(work, "**** put, %d-byte contiguous", bytes);
+    sprintf(work, "**** put %d bytes", bytes);
     p = work + strlen(work);
     for (int i = 0; i < rank; i++) {
-      sprintf(p, ", %d %d-byte skips", count[i], skip[i]);
+      sprintf(p, " in %d bytes * %d", skip[i], count[i]);
       p += strlen(p);
     }
     fprintf(stderr, "%s (%s)\n", work, __FILE__);
@@ -196,10 +221,6 @@ void _putCoarray(int serno, char *baseAddr, int coindex, char *rhs,
 
   src = _putVectorIter(serno, baseAddr, bytes, coindex, src,
                        rank, skip, count);
-
-  if (_XMPF_coarrayMsg) {
-    fprintf(stderr, "**** end put\n");
-  }
 }
 
   

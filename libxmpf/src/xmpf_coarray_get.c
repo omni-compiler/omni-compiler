@@ -43,7 +43,9 @@ extern void xmpf_coarray_get_scalar_(int *serno, char *baseAddr, int *element,
   switch (scheme) {
   case GETSCHEME_Normal:
     if (_XMPF_coarrayMsg) {
-      fpirntf(stderr, "GETSCHEME_Normal selected\n");
+      fprintf(stderr, "GETSCHEME_Normal/scalar selected\n");
+      fprintf(stderr, "  element in descr=%d, *element=%d\n",
+              _XMPF_get_coarrayElement(*serno), *element);
     }
     _getVectorByElement(desc, start, 1, *coindex, result);
     break;
@@ -52,9 +54,10 @@ extern void xmpf_coarray_get_scalar_(int *serno, char *baseAddr, int *element,
     elementRU = (size_t)ROUND_UP_BOUNDARY(*element);
     buf = malloc(elementRU);
     if (_XMPF_coarrayMsg) {
-      fpirntf(stderr, "GETSCHEME_RecvBuffer selected\n");
-      fprintf(stderf, "  *element=%d, elementRU=%d, buf=%p\n",
-              *element, elementRU, buf);
+      fprintf(stderr, "GETSCHEME_RecvBuffer/scalar selected\n");
+      fprintf(stderr, "  element in descr=%d, *element=%d\n",
+              _XMPF_get_coarrayElement(*serno), *element);
+      fprintf(stderr, "  elementRU=%zd, buf=%p\n", elementRU, buf);
     }
     _getVectorByElement(desc, start, 1, *coindex, buf);
     (void)memcpy(result, buf, *element);
@@ -70,8 +73,8 @@ extern void xmpf_coarray_get_array_(int *serno, char *baseAddr, int *element,
                                     int *coindex, char *result, int *rank, ...)
 {
   size_t bufsize;
-  char *buf, *p;
-  int i, nelems;
+  char *buf;
+  int i;
 
   int scheme = _select_getscheme(result);
 
@@ -97,6 +100,11 @@ extern void xmpf_coarray_get_array_(int *serno, char *baseAddr, int *element,
 
   switch (scheme) {
   case GETSCHEME_Normal:
+    if (_XMPF_coarrayMsg) {
+      fprintf(stderr, "GETSCHEME_Normal/array selected\n");
+      fprintf(stderr, "  element in descr=%d, *element=%d\n",
+              _XMPF_get_coarrayElement(*serno), *element);
+    }
     _getCoarray(*serno, baseAddr, *coindex, result, bytes, *rank, skip, count);
     break;
 
@@ -104,6 +112,12 @@ extern void xmpf_coarray_get_array_(int *serno, char *baseAddr, int *element,
     bufsize = *element;
     for (i = 0; i < *rank; i++) {
       bufsize *= count[i];
+    }
+    if (_XMPF_coarrayMsg) {
+      fprintf(stderr, "GETSCHEME_RecvBuffer/array selected\n");
+      fprintf(stderr, "  element in descr=%d, *element=%d\n",
+              _XMPF_get_coarrayElement(*serno), *element);
+      fprintf(stderr, "  *bufsize=%zd\n", bufsize);
     }
     buf = malloc(bufsize);
     _getCoarray(*serno, baseAddr, *coindex, buf, bytes, *rank, skip, count);
@@ -118,11 +132,13 @@ extern void xmpf_coarray_get_array_(int *serno, char *baseAddr, int *element,
 
 int _select_getscheme(char *result)
 {
-  int scheme = GETSCHEME_Normal;
+  int scheme;
 
 #ifdef _XMP_COARRAY_FJRDMA
   // if the address of result may not be written in:
   scheme = GETSCHEME_RecvBuffer;
+#else
+  scheme = GETSCHEME_Normal;
 #endif
 
   return scheme;
@@ -135,7 +151,7 @@ void _getCoarray(int serno, char *baseAddr, int coindex, char *result,
 {
   if (rank == 0) {  // fully contiguous after perfect collapsing
     if (_XMPF_coarrayMsg)
-      fprintf(stderr, "**** %d bytes fully contiguous (%s)\n",
+      fprintf(stderr, "**** get %d bytes fully contiguous (%s)\n",
               bytes, __FILE__);
 
     _getVectorByByte(serno, baseAddr, bytes, coindex, result);
@@ -154,10 +170,10 @@ void _getCoarray(int serno, char *baseAddr, int coindex, char *result,
   if (_XMPF_coarrayMsg) {
     char work[200];
     char* p;
-    sprintf(work, "**** get, %d-byte contiguous", bytes);
+    sprintf(work, "**** get %d-bytes", bytes);
     p = work + strlen(work);
     for (int i = 0; i < rank; i++) {
-      sprintf(p, ", %d %d-byte skips", count[i], skip[i]);
+      sprintf(p, " in %d bytes * %d", skip[i], count[i]);
       p += strlen(p);
     }
     fprintf(stderr, "%s (%s)\n", work, __FILE__);
@@ -165,10 +181,6 @@ void _getCoarray(int serno, char *baseAddr, int coindex, char *result,
 
   dst = _getVectorIter(serno, baseAddr, bytes, coindex, dst,
                        rank, skip, count);
-
-  if (_XMPF_coarrayMsg) {
-    fprintf(stderr, "**** end get\n");
-  }
 }
 
   

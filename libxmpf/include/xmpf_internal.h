@@ -273,13 +273,17 @@ extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void
 #define TRUE   1
 #define FALSE  0
 
+//////////////////////////// TEST TEST TEST
+//#define _XMP_COARRAY_FJRDMA
+//////////////////////////// TEST TEST TEST
+
 #ifdef _XMP_COARRAY_FJRDMA
 #  define BOUNDARY_BYTE 4
 #else
 #  define BOUNDARY_BYTE 1
 #endif
 
-#define ROUND_UP(n,p)         ((((n)-1)/(p))*(p)+1)
+#define ROUND_UP(n,p)         ((((n)-1)/(p)+1)*(p))
 #define ROUND_UP_BOUNDARY(n)  ROUND_UP((n),BOUNDARY_BYTE)
 
 /*-- parameters --*/

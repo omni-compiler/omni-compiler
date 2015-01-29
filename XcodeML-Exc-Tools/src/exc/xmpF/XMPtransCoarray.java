@@ -434,8 +434,8 @@ public class XMPtransCoarray
     Ident id = def.findIdent("xmpf_coarray_get0d");
     if (id == null) {
       /* xmpf_lib.h seems not included. */
-      XMP.error("Current restriction: " +
-                "\"Include \'xmp_lib.h\'\" is needed to use coarray features.");
+      XMP.error("current restriction: \"include \'xmp_lib.h\'\" is " +
+                "necessary to use any coarray features.");
     }
   }
 
