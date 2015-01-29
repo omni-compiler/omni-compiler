@@ -844,9 +844,12 @@ public class XMPanalyzePragma
       }
       else if (sub.Opcode() == Xcode.F_INDEX_RANGE){
 
+	int tidx = leftArray.getAlignSubscriptIndexAt(i);
+	if (tidx == -1) continue;
+
     	var = env.declIdent(XMP.genSym("XMP_loop_i"), Xtype.intType, pb);
     	varList.add(var);
-	varListTemplate.set(leftArray.getAlignSubscriptIndexAt(i), var);
+	varListTemplate.set(tidx, var);
 
 	lb = ((XobjList)sub).getArg(0);
 	if (lb == null){
@@ -910,6 +913,9 @@ public class XMPanalyzePragma
 	  Xobject sub = subscripts1.getArg(i);
 	  if (sub.Opcode() == Xcode.F_INDEX_RANGE){
 
+	    int tidx = array1.getAlignSubscriptIndexAt(i);
+	    if (tidx == -1) continue;
+
 	    Xobject lb, st;
 
 	    lb = ((XobjList)sub).getArg(0);
@@ -928,7 +934,7 @@ public class XMPanalyzePragma
 
 	    Xobject expr;
 	    //expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
-	    Ident loopVar = varListTemplate.get(array1.getAlignSubscriptIndexAt(i));
+	    Ident loopVar = varListTemplate.get(tidx);
 	    if (loopVar == null) XMP.fatal("array on rhs does not conform to that on lhs.");
 	    expr = Xcons.binaryOp(Xcode.MUL_EXPR, loopVar.Ref(), st);
 	    expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
