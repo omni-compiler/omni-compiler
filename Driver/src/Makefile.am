@@ -2,7 +2,7 @@ bin_PROGRAMS=omdriver xmp_collect_init om_replace_pragma
 bin_SCRIPTS= ../bin/ompp ../bin/oml2x ../bin/omx2x ../bin/omx2l ../bin/omnative ../bin/omlinker \
 	../bin/omc2c ../bin/ompcc ../bin/omf2f ../bin/ompf90 ../bin/omf2x ../bin/omfx2x \
         ../bin/omx2f ../bin/omfpp ../bin/omfnative ../bin/omflinker ../bin/xmpf90 ../bin/xmpcc\
-	../bin/omtranslate ../bin/omni_collect_init ../bin/omcpp ../bin/omc2x ../bin/omcx2x ../bin/omx2c \
+	../bin/omtranslate ../bin/omcpp ../bin/omc2x ../bin/omcx2x ../bin/omx2c \
         ../bin/omcnative ../bin/omclinker ../bin/omni_traverse
 
 sysconf_DATA= ../etc/omf.conf ../etc/omc.conf ../etc/java.conf ../etc/pp.conf.openmp ../etc/native.conf.openmp \
