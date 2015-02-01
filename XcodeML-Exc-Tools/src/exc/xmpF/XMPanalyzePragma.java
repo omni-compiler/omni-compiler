@@ -991,7 +991,7 @@ public class XMPanalyzePragma
 
     Xobject onSubscripts = pb.getClauses().getArg(0).getArg(1);
 
-    if (onSubscripts != null){
+    if (onSubscripts != null && !onSubscripts.isEmptyList()){
       int k = 0;
       for (int i = 0; i < onSubscripts.Nargs(); i++){
     	Xobject sub = onSubscripts.getArg(i);
