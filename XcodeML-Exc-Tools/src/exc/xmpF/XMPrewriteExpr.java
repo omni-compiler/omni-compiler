@@ -574,7 +574,10 @@ public class XMPrewriteExpr
       i.setArg(0,x);
       return i;
 
+    case F_INDEX_RANGE:
+      if (!a.isDistributed(dim_i)) return i;
       /* what to do for array_range expression */
+
     default:
       XMP.errorAt(block,"bad expression in XMP array index");
       return null;
