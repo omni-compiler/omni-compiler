@@ -582,6 +582,14 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             }
             break;
 
+        case CO_ARRAY_REF:                                 // #060
+            e = addChildNode(createElement(name),
+                             trans(xobj.getArg(0)));
+            for (Xobject a : (XobjList)xobj.getArg(1)) {
+                addChildNode(e, trans(a));
+            }
+            break;
+
         case F_USER_UNARY_EXPR:
         case LOG_NOT_EXPR:
         case UNARY_MINUS_EXPR:
@@ -813,6 +821,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                       "is_parameter", toBoolStr(type.isFparameter()),
                       "is_allocatable", toBoolStr(type.isFallocatable()),
                       "is_cray_pointer", toBoolStr(type.isFcrayPointer()));
+
         if (type.isFintentIN()) {
             addAttributes(basicTypeElem, "intent", "in");
         }
@@ -835,22 +844,22 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         } else {
             switch (type.getKind()) {
             case Xtype.BASIC:
+                typeElem = createElement("FbasicType");
+                addAttributes(typeElem,
+                              "ref", BasicType.getTypeInfo(type.getBasicType()).fname);
+                addChildNodes(typeElem,
+                              transKind(type.getFkind()),
+                              transLen(type));
+                setBasicTypeFlags(typeElem, type);
+                break;
+
             case Xtype.F_ARRAY:
                 typeElem = createElement("FbasicType");
-                if (type.getKind() == Xtype.BASIC) {
-                    addAttributes(typeElem,
-                                  "ref", BasicType.getTypeInfo(type.getBasicType()).fname);
-                    addChildNodes(typeElem,
-                                  transKind(type.getFkind()),
-                                  transLen(type));
-                } else {
-                    addAttributes(typeElem,
-                                  "ref", type.getRef().getXcodeFId());
-                    for (Xobject sizeExpr : type.getFarraySizeExpr()) {
-                        addChildNode(typeElem, trans(sizeExpr));
-                    }
+                addAttributes(typeElem,
+                              "ref", type.getRef().getXcodeFId());
+                for (Xobject sizeExpr : type.getFarraySizeExpr()) {
+                    addChildNode(typeElem, trans(sizeExpr));
                 }
-
                 setBasicTypeFlags(typeElem, type);
                 break;
 
@@ -887,6 +896,17 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
         addAttributes(typeElem,
                       "type", type.getXcodeFId());
+
+        /*
+         *  add <coShape> block if it has codimensions (ID=060)
+         */
+        if (type.isCoarray()) {
+          Element typeElem1 = createElement("coShape");
+          addChildNode(typeElem, typeElem1);
+
+          for (Xobject codimension : type.getCodimensions())
+            addChildNode(typeElem1, trans(codimension));
+        }
 
         return typeElem;
     }
@@ -1042,7 +1062,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                                                 XobjList identList,
                                                 Xobject body) {
         if (identList == null)
-            return null;
+            return declList;
 
         // collect identifiers which are set to 'delayed decl'
         if (body != null && body instanceof XobjList) {

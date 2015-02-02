@@ -132,7 +132,7 @@ DELETABLES = C-BackEnd/bin/C_Back \
 	Driver/etc/xmpcc.conf \
         Driver/etc/ompcc \
 	Driver/bin/omtranslate \
-	Driver/bin/omni_collect_init \
+	Driver/bin/omni_traverse \
 	Driver/etc/java.conf \
 	Driver/etc/l2x.conf.openmp \
 	Driver/etc/l2x.conf.xmpf \

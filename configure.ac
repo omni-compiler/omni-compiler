@@ -207,7 +207,7 @@ if test -e "Driver/src/Makefile.am"; then
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.acc)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/setup.conf)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omtranslate)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omni_collect_init)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omni_traverse)
     AC_MSG_RESULT(yes)
 else
     OMDRIVER_DIR=''

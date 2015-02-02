@@ -63,14 +63,16 @@ public class omompx
   private static void usage()
   {
     final String[] lines = {
-      "arguments: <-xc|-xf> <-l> <-fopenmp> <-dxcode> <-ddecomp> <-dump>",
+      "arguments: [-xc|-xf] [-l] [-fopenmp] [-f[no]coarray] [-dxcode] [-ddecomp] [-dump]",
       "           <input XcodeML file>",
-      "           <-o output reconstructed XcodeML file>",
+      "           [-o <output reconstructed XcodeML file>]",
       "",
       "  -xc          process XcodeML/C document.",
       "  -xf          process XcodeML/Fortran document.",
       "  -l           suppress line directive in decompiled code.",
       "  -fopenmp     enable OpenMP translation.",
+      "  -fcoarry     enable coarray translation.",
+      "  -fnocoarry   pass without coarray translation (default).",
       "  -fatomicio   enable transforming Fortran IO statements to atomic operations.",
       "  -w N         set max columns to N for Fortran source.",
       "  -gnu         decompile for GNU Fortran (default).",
@@ -107,6 +109,7 @@ public class omompx
     String lang = "C";
     boolean openMP = false;
     boolean openACC = false;
+    boolean coarray = false;
     boolean xcalableMP = false;
     boolean xcalableMPthreads = false;
     boolean xcalableMPGPU = false;
@@ -134,6 +137,10 @@ public class omompx
         XmOption.setIsSuppressLineDirective(true);
       } else if(arg.equals("-fopenmp")) {
         openMP = true;
+      } else if(arg.equals("-fcoarray")) {
+        coarray = true;
+      } else if(arg.equals("-fnocoarray")) {
+        coarray = false;
       } else if(arg.equals("-facc")) {
         openACC = true; 
       } else if(arg.equals("-fxmp")) {
@@ -245,6 +252,7 @@ public class omompx
     XmToolFactory toolFactory = new XmToolFactory(lang);
     XmOption.setLanguage(XmLanguage.valueOf(lang));
     XmOption.setIsOpenMP(openMP);
+    XmOption.setIsCoarray(coarray);
     XmOption.setIsXcalableMP(xcalableMP);
     XmOption.setIsXcalableMPthreads(xcalableMPthreads);
     XmOption.setIsXcalableMPGPU(xcalableMPGPU);
@@ -466,12 +474,15 @@ public class omompx
       }
             
       XmDecompiler decompiler = toolFactory.createDecompiler();
+
       if (xcodeDoc == null) {
         javax.xml.parsers.DocumentBuilderFactory docFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
         javax.xml.parsers.DocumentBuilder builder = docFactory.newDocumentBuilder();
         xcodeDoc = builder.parse(outXmlFile);
       }
       decompiler.decompile(context, xcodeDoc, decompWriter);
+      // for collect-init
+      decompWriter.write(xobjFile.getTailText());
       decompWriter.flush();
     
       if(!dump && outputDecomp) {

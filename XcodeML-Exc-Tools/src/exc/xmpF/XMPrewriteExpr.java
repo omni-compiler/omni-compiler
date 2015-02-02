@@ -9,6 +9,7 @@ package exc.xmpF;
 import exc.object.*;
 import exc.block.*;
 import java.util.*;
+import static xcodeml.util.XmLog.fatal;
 
 /**
  * pass2: check and write variables
@@ -27,8 +28,11 @@ public class XMPrewriteExpr
     FunctionBlock fb = def.getBlock();
     if (fb == null) return;
 
-    // rewrite return statements
+    // translate all about coarray #060
+    XMPtransCoarray transCoarray = new XMPtransCoarray(def, env);
+    transCoarray.run();
 
+    // rewrite return statements
     BlockIterator iter5 = new topdownBlockIterator(fb);
     for (iter5.init(); !iter5.end(); iter5.next()){
       if (iter5.getBlock().Opcode() == Xcode.RETURN_STATEMENT){
@@ -38,7 +42,6 @@ public class XMPrewriteExpr
     }
 
     // rewrite allocate, deallocate, and stop statements
-
     BasicBlockIterator iter3 = new BasicBlockIterator(fb);
     for (iter3.init(); !iter3.end(); iter3.next()){
       StatementIterator iter4 = iter3.getBasicBlock().statements();
@@ -168,6 +171,7 @@ public class XMPrewriteExpr
     for(iter.init(); !iter.end();iter.next()){
       Xobject x = iter.getXobject();
       if (x == null)  continue;
+      if (x.Opcode() == null) continue;      // #060  see [Xmp-dev:4675]
       switch (x.Opcode()) {
       case VAR:
 	{
@@ -211,9 +215,9 @@ public class XMPrewriteExpr
         // XXX delete this
       case CO_ARRAY_REF:
 	{
-	  System.out.println("coarray not yet: "+ x);
 	  break;
 	}
+
       case FUNCTION_CALL:
 	{
 	  String fname = x.getArg(0).getString();
