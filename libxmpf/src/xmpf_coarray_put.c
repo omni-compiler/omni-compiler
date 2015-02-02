@@ -36,6 +36,8 @@ static void _putVectorByElement(char *desc, int start, int vlength,
 extern void xmpf_coarray_put_scalar_(int *serno, char *baseAddr, int *element,
                                      int *coindex, char *rhs, int *condition)
 {
+  _XMPF_checkIfInTask("scalar coindexed variable");
+
   char *buf;
   size_t elementRU;
 
@@ -47,6 +49,7 @@ extern void xmpf_coarray_put_scalar_(int *serno, char *baseAddr, int *element,
   switch (scheme) {
   case PUTSCHEME_Normal:
     if (_XMPF_coarrayMsg) {
+      _XMPF_coarrayMsgPrefix();
       fprintf(stderr, "PUTSCHEME_Normal/scalar selected\n");
       fprintf(stderr, "  element in descr=%d, *element=%d\n",
               _XMPF_get_coarrayElement(*serno), *element);
@@ -58,6 +61,7 @@ extern void xmpf_coarray_put_scalar_(int *serno, char *baseAddr, int *element,
     elementRU = (size_t)ROUND_UP_BOUNDARY(*element);
     buf = malloc(elementRU);
     if (_XMPF_coarrayMsg) {
+      _XMPF_coarrayMsgPrefix();
       fprintf(stderr, "PUTSCHEME_SendBuffer/scalar selected\n");
       fprintf(stderr, "  element in descr=%d, *element=%d\n",
               _XMPF_get_coarrayElement(*serno), *element);
@@ -77,6 +81,8 @@ extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
                                     int *coindex, char *rhs, int *condition,
                                     int *rank, ...)
 {
+  _XMPF_checkIfInTask("array coindexed variable");
+
   size_t bufsize;
   char *buf;
   int i;
@@ -105,6 +111,7 @@ extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
   switch (scheme) {
   case PUTSCHEME_Normal:
     if (_XMPF_coarrayMsg) {
+      _XMPF_coarrayMsgPrefix();
       fprintf(stderr, "PUTSCHEME_Normal/array selected\n");
       fprintf(stderr, "  element in descr=%d, *element=%d\n",
               _XMPF_get_coarrayElement(*serno), *element);
@@ -118,6 +125,7 @@ extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
       bufsize *= count[i];
     }
     if (_XMPF_coarrayMsg) {
+      _XMPF_coarrayMsgPrefix();
       fprintf(stderr, "PUTSCHEME_SendBuffer/array selected\n");
       fprintf(stderr, "  element in descr=%d, *element=%d\n",
               _XMPF_get_coarrayElement(*serno), *element);
@@ -138,6 +146,8 @@ extern void xmpf_coarray_put_spread_(int *serno, char *baseAddr, int *element,
                                      int *coindex, char *rhs, int *condition,
                                      int *rank, ...)
 {
+  _XMPF_checkIfInTask("array coindexed variable");
+
   size_t bufsize;
   char *buf, *p;
   int i, nelems;
@@ -191,6 +201,7 @@ void _putCoarray(int serno, char *baseAddr, int coindex, char *rhs,
 {
   if (rank == 0) {  // fully contiguous after perfect collapsing
     if (_XMPF_coarrayMsg)
+      _XMPF_coarrayMsgPrefix();
       fprintf(stderr, "**** put %d bytes fully contiguous (%s)\n",
               bytes, __FILE__);
 
@@ -216,6 +227,7 @@ void _putCoarray(int serno, char *baseAddr, int coindex, char *rhs,
       sprintf(p, " in %d bytes * %d", skip[i], count[i]);
       p += strlen(p);
     }
+    _XMPF_coarrayMsgPrefix();
     fprintf(stderr, "%s (%s)\n", work, __FILE__);
   }
 

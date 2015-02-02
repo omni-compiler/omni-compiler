@@ -15,6 +15,7 @@ void xmpf_coarray_msg_(int *sw)
   _XMPF_coarrayMsg = *sw;
 
   if (_XMPF_coarrayMsg) {
+    _XMPF_coarrayMsgPrefix();
     fprintf(stderr, "xmpf_coarray_msg ON\n");
 #ifdef _XMP_COARRAY_FJRDMA
     fprintf(stderr, "  _XMP_COARRAY_FJRDMA defined\n");
@@ -133,13 +134,19 @@ static int _getNewSerno() {
   through the wrappers in xmpf_coarray_wrap.f90
 \*****************************************/
 
+/*  MPI_Comm_size() of the current communicator
+ */
 int num_images_(void)
 {
+  _XMPF_checkIfInTask("num_images()");
   return xmp_num_nodes();
 }
 
+/*  (MPI_Comm_rank() + 1) in the current communicator
+ */
 int this_image_(void)
 {
+  _XMPF_checkIfInTask("this_image()");
   return xmp_node_num();
 }
 
@@ -154,6 +161,8 @@ void xmpf_coarray_malloc_(int *serno, char **pointer, int *count, int *element)
   void *desc;
   void *orgAddr;
   size_t elementRU;
+
+  _XMPF_checkIfInTask("coarray allocation");
 
   // boundary check and recovery
   if ((*element) % BOUNDARY_BYTE == 0) {
@@ -170,6 +179,7 @@ void xmpf_coarray_malloc_(int *serno, char **pointer, int *count, int *element)
 
   // set (see libxmp/src/xmp_coarray_set.c)
   if (_XMPF_coarrayMsg) {
+    _XMPF_coarrayMsgPrefix();
     fprintf(stderr, "COARRAY ALLOCATION\n");
     fprintf(stderr, "  *count=%d, elementRU=%zd, *element=%d\n",
             *count, elementRU, *element);
@@ -189,12 +199,16 @@ void xmpf_coarray_malloc_(int *serno, char **pointer, int *count, int *element)
 
 void xmpf_sync_all_nostat_(void)
 {
+  _XMPF_checkIfInTask("sync all");
+
   int status;
   xmp_sync_all(&status);
 }
 
 void xmpf_sync_all_stat_(int *stat, char *msg, int *msglen)
 {
+  _XMPF_checkIfInTask("sync all");
+
   static BOOL firstCall = TRUE;
   if (firstCall) {
     firstCall = FALSE;
@@ -214,12 +228,16 @@ void xmpf_sync_all_stat_(int *stat, char *msg, int *msglen)
 
 void xmpf_sync_memory_nostat_(void)
 {
+  _XMPF_checkIfInTask("sync memory");
+
   int status;
   xmp_sync_memory(&status);
 }
 
 void xmpf_sync_memory_stat_(int *stat, char *msg, int *msglen)
 {
+  _XMPF_checkIfInTask("sync memory");
+
   static BOOL firstCall = TRUE;
   if (firstCall) {
     firstCall = FALSE;
@@ -253,6 +271,8 @@ void xmpf_sync_image_stat_(int *image, int *stat, char *msg, int *msglen)
     fprintf(stderr, "  -- ignored.\n");
   }
 
+  _XMPF_checkIfInTask("sync image");
+
   int status;
   xmp_sync_image(*image, &status);
 }
@@ -275,6 +295,8 @@ void xmpf_sync_images_stat_(int *images, int *size, int *stat,
     fprintf(stderr, "  -- ignored.\n");
   }
 
+  _XMPF_checkIfInTask("sync image");
+
   int status;
   xmp_sync_images(*size, images, &status);
 }
@@ -296,6 +318,8 @@ void xmpf_sync_allimages_stat_(int *stat, char *msg, int *msglen)
     fprintf(stderr, "  -- ignored.\n");
   }
 
+  _XMPF_checkIfInTask("sync image");
+
   int status;
   xmp_sync_images_all(&status);
 }
@@ -303,7 +327,7 @@ void xmpf_sync_allimages_stat_(int *stat, char *msg, int *msglen)
 
 
 /*****************************************\
-  error message to reply to Fortran
+  error message to reply to Fortran (temporary)
   (not used yet)
 \*****************************************/
 
@@ -329,3 +353,28 @@ void xmpf_get_errmsg_(unsigned char *errmsg, int *msglen)
 }
 
   
+/*****************************************\
+  restriction checker
+\*****************************************/
+
+int _XMPF_nowInTask()
+{
+  return xmp_num_nodes() < xmp_all_num_nodes();
+}
+
+void _XMPF_checkIfInTask(char *msgopt)
+{
+  if (_XMPF_nowInTask()) {
+    char work[200];
+    sprintf(work, "current rextriction: cannot use %s in any task construct",
+            msgopt);
+    _XMP_fatal(work);
+  }
+}
+
+
+void _XMPF_coarrayMsgPrefix(void)
+{
+  fprintf(stderr, "coarray[%d] ", xmp_num_nodes());
+}
+

@@ -302,6 +302,10 @@ extern void xmpf_coarray_msg_(int *sw);
 extern char *_XMPF_errmsg;   // to answer ERRMSG argument in Fortran
 extern void xmpf_copy_errmsg_(char *errmsg, int *msglen);
 
+extern int _XMPF_nowInTask(void);   // for restriction check
+extern void _XMPF_checkIfInTask(char *msgopt);   // restriction check
+extern void _XMPF_coarrayMsgPrefix(void);    // fprintf
+
 extern int _XMPF_get_coarrayElement(int serno);
 extern char *_XMPF_get_coarrayDesc(int serno);
 extern int _XMPF_get_coarrayStart(int serno, char *baseAddr);
