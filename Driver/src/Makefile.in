@@ -81,8 +81,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-bin_PROGRAMS = omdriver$(EXEEXT) xmp_collect_init$(EXEEXT) \
-	om_replace_pragma$(EXEEXT)
+bin_PROGRAMS = omdriver$(EXEEXT) om_replace_pragma$(EXEEXT)
 subdir = ./Driver/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(dist_libexec_SCRIPTS)
@@ -113,10 +112,6 @@ am__v_lt_1 =
 am_omdriver_OBJECTS = omdriver.$(OBJEXT)
 omdriver_OBJECTS = $(am_omdriver_OBJECTS)
 omdriver_LDADD = $(LDADD)
-am_xmp_collect_init_OBJECTS =  \
-	xmp_collect_init-xmp_collect_init.$(OBJEXT)
-xmp_collect_init_OBJECTS = $(am_xmp_collect_init_OBJECTS)
-xmp_collect_init_LDADD = $(LDADD)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -178,10 +173,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = om_replace_pragma.c $(omdriver_SOURCES) \
-	$(xmp_collect_init_SOURCES)
-DIST_SOURCES = om_replace_pragma.c $(omdriver_SOURCES) \
-	$(xmp_collect_init_SOURCES)
+SOURCES = om_replace_pragma.c $(omdriver_SOURCES)
+DIST_SOURCES = om_replace_pragma.c $(omdriver_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -488,8 +481,6 @@ sysconf_DATA = ../etc/omf.conf ../etc/omc.conf ../etc/java.conf ../etc/pp.conf.o
 
 dist_libexec_SCRIPTS = ../libexec/driver_common.sh
 omdriver_SOURCES = omdriver.c
-xmp_collect_init_SOURCES = xmp_collect_init.c
-xmp_collect_init_CPPFLAGS = -DNM="\"$(NM)\""
 all: all-am
 
 .SUFFIXES:
@@ -581,10 +572,6 @@ om_replace_pragma$(EXEEXT): $(om_replace_pragma_OBJECTS) $(om_replace_pragma_DEP
 omdriver$(EXEEXT): $(omdriver_OBJECTS) $(omdriver_DEPENDENCIES) $(EXTRA_omdriver_DEPENDENCIES) 
 	@rm -f omdriver$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(omdriver_OBJECTS) $(omdriver_LDADD) $(LIBS)
-
-xmp_collect_init$(EXEEXT): $(xmp_collect_init_OBJECTS) $(xmp_collect_init_DEPENDENCIES) $(EXTRA_xmp_collect_init_DEPENDENCIES) 
-	@rm -f xmp_collect_init$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(xmp_collect_init_OBJECTS) $(xmp_collect_init_LDADD) $(LIBS)
 install-binSCRIPTS: $(bin_SCRIPTS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_SCRIPTS)'; test -n "$(bindir)" || list=; \
@@ -670,12 +657,6 @@ distclean-compile:
 
 .c.lo:
 	$(AM_V_CC)$(LTCOMPILE) -c -o $@ $<
-
-xmp_collect_init-xmp_collect_init.o: xmp_collect_init.c
-	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(xmp_collect_init_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o xmp_collect_init-xmp_collect_init.o `test -f 'xmp_collect_init.c' || echo '$(srcdir)/'`xmp_collect_init.c
-
-xmp_collect_init-xmp_collect_init.obj: xmp_collect_init.c
-	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(xmp_collect_init_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o xmp_collect_init-xmp_collect_init.obj `if test -f 'xmp_collect_init.c'; then $(CYGPATH_W) 'xmp_collect_init.c'; else $(CYGPATH_W) '$(srcdir)/xmp_collect_init.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo

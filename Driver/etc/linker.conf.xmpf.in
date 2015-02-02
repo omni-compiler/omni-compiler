@@ -14,25 +14,6 @@ PID=$$
 files=( "$@" )
 
 #-------------------------------------------------
-# call xmp_collect_init
-#-------------------------------------------------
-INIT_MODULE_OBJ="/tmp/_xmpf_init_${PID}.o"
-if [ "${IS_CRAY}" = "Yes" ]; then
-   CMD="@OMNI_HOME@/bin/xmp_collect_init"
-   args=( --cc @MPI_CC@ --PID ${PID} --F --OPTION -hgnu "${files[@]}" )
-   set -- "${args[@]}"
-else
-   CMD="@OMNI_HOME@/bin/xmp_collect_init"
-   args=( --cc @MPI_CC@ --PID ${PID} --F "${files[@]}" )
-   set -- "${args[@]}"
-fi
-
-if [ "${OM_VERBOSE}" = "1" ]; then
-    echo $CMD "$@"
-fi
-$CMD "$@" || exit 1
-
-#-------------------------------------------------
 # call omni_traverse
 #-------------------------------------------------
 TRAVERSER="/tmp/omni_traverse_${PID}.f90"
@@ -67,9 +48,9 @@ done
 
 GASNET_LIBS="@GASNET_LIBS@"
 if [ -s ${TRAVERSER} ]; then
-    LIBS="@OMNI_HOME@/lib/xmpf_main.o ${TRAVERSER} ${INIT_MODULE_OBJ} ${LIBS} -lxmpf -lxmp ${GASNET_LIBS} @BLASLIB@"
+    LIBS="@OMNI_HOME@/lib/xmpf_main.o ${TRAVERSER} ${LIBS} -lxmpf -lxmp ${GASNET_LIBS} @BLASLIB@"
 else  # ${TRAVERSER} is empty
-    LIBS="@OMNI_HOME@/lib/xmpf_main.o ${INIT_MODULE_OBJ} ${LIBS} -lxmpf -lxmp ${GASNET_LIBS} @BLASLIB@"
+    LIBS="@OMNI_HOME@/lib/xmpf_main.o ${LIBS} -lxmpf -lxmp ${GASNET_LIBS} @BLASLIB@"
 fi
 
 LINKER=@MPI_FC@
