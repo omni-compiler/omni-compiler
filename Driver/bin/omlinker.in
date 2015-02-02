@@ -58,6 +58,8 @@ fi
 
 $CMD "$@"
 v=$?
+rm -f ${INIT_MODULE_OBJ}
+rm -f /tmp/omni_collect_init_${PID}.*
 rm -f /tmp/omni_omlinker_${PID}.*
 exit $v
 
