@@ -1062,7 +1062,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                                                 XobjList identList,
                                                 Xobject body) {
         if (identList == null)
-            return null;
+            return declList;
 
         // collect identifiers which are set to 'delayed decl'
         if (body != null && body instanceof XobjList) {

@@ -62,20 +62,46 @@ public class XMPtransPragma
     }
 
     if(env.currentDefIsModule()){
+
       Xtype save_logical = Xtype.FlogicalType.copy();
       save_logical.setIsFsave(true);
-      save_logical.setIsFprivate(true);
-      Ident init_flag_var = env.declIdent("xmpf_init_flag",save_logical);
+      //save_logical.setIsFprivate(true);
+      //Ident init_flag_var = env.declIdent("xmpf_init_flag", save_logical);
+      BlockList body= env.getCurrentDef().getBlock().getBody();
+      Ident init_flag_var = body.declLocalIdent("xmpf_init_flag_"+env.currentDefName(), save_logical,
+      						StorageClass.FSAVE,
+      						Xcons.List(Xcode.F_VALUE, Xcons.FlogicalConstant(false)));
+
+      // NOTE: it is guaranteed that no threadprivate exists.
+
+      Vector<XMPmodule> modules = env.getModules();
+      for (int m = modules.size() - 1; m >= 0; m--){
+	Ident f = env.declIdent("xmpf_init_module_"+modules.get(m).getModuleName(),
+				Xtype.FsubroutineType);
+	prolog.insert(f.callSubroutine(Xcons.List()));
+      }
+
+      prolog.insert(Bcons.IF(init_flag_var.Ref(), Xcons.List(Xcode.RETURN_STATEMENT), null));
       prolog.add(Xcons.Set(init_flag_var.Ref(),
 			   Xcons.FlogicalConstant(true)));
 
+      // Ident prolog_f = 
+      // 	env.declIdent(env.currentDefName()+"_xmpf_module_init_",
+      // 		      Xtype.FsubroutineType);
+      // XobjectDef prolog_def = 
+      // 	XobjectDef.Func(prolog_f, null, null, prolog.toXobject());
+      // env.getCurrentDef().getDef().getChildren().addFirst(prolog_def);
+      // prolog_def.setParent(env.getCurrentDef().getDef());
+
       Ident prolog_f = 
-	env.declIdent(env.currentDefName()+"_xmpf_module_init_",
+      	env.declIdent("xmpf_init_module_"+env.currentDefName(),
 		      Xtype.FsubroutineType);
+      XobjString modName = Xcons.Symbol(Xcode.IDENT, env.getCurrentDef().getDef().getName());
+      Xobject decls = Xcons.List(Xcons.List(Xcode.F_USE_DECL, modName));
       XobjectDef prolog_def = 
-	XobjectDef.Func(prolog_f, null, null, prolog.toXobject());
-      env.getCurrentDef().getDef().getChildren().addFirst(prolog_def);
-      prolog_def.setParent(env.getCurrentDef().getDef());
+      	XobjectDef.Func(prolog_f, null, decls, prolog.toXobject());
+      env.getEnv().add(prolog_def);
+
     } else {
       // fblock = (FunckBlock ident <param_env> [BlockList 
       //   (CompoundBlock <local_env> [BlockList statment ...]))
