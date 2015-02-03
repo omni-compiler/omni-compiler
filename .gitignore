@@ -50,6 +50,7 @@ Driver/bin/oml2x
 Driver/bin/omlinker
 Driver/bin/omnative
 Driver/bin/omni_collect_init
+Driver/bin/omni_traverse
 Driver/bin/ompcc
 Driver/bin/ompf90
 Driver/bin/ompp

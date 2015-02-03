@@ -665,6 +665,12 @@ public class Xtype
     {
         throw new UnsupportedOperationException();
     }
+
+    /** Fortran: get function result name */
+    public void setFuncResultName(String fresult_name)
+    {
+        throw new UnsupportedOperationException();
+    }
     
     @Deprecated
     public final long getArrayDim()

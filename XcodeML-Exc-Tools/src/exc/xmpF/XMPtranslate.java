@@ -56,6 +56,7 @@ public class XMPtranslate implements XobjectDefVisitor
     String name = d.getName();
 
     Xtype funcType = d.getFuncType().copy();
+    funcType.setFuncResultName(null);
     Ident funcId = Ident.FidentNotExternal("xmpf_" + name, funcType);
     funcId.setProp(XMP_GENERATED_CHILD, true);
 
