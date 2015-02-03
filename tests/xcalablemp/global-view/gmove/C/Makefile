@@ -70,6 +70,7 @@ run: $(EXES)
 	$(XRUN) -n 4 ./gmove_bca_1a2t_b2.x
 	$(XRUN) -n 4 ./gmove_bca_1a2t_b.x
 	$(XRUN) -n 4 ./gmove_bca_2a3t_b2.x
+	$(XRUN) -n 8 ./gmove_bca_2a3t_b2_subcomm.x
 	$(XRUN) -n 8 ./gmove_bca_2a3t_b.x
 	$(XRUN) -n 8 ./gmove_bca_3a3t_b2.x
 	$(XRUN) -n 8 ./gmove_bca_3a3t_b.x
