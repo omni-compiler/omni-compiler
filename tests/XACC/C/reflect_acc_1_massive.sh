@@ -1,7 +1,7 @@
 #PBS -S /bin/bash
 #PBS -N mnakao_job
 #PBS -A XMPTCA
-#PBS -q tcaq-q1
+#PBS -q tcaq
 #PBS -l select=1:ncpus=1:host=tca-0001-eth0+1:ncpus=1:host=tca-0002-eth0+1:ncpus=1:host=tca-0003-eth0+1:ncpus=1:host=tca-0004-eth0+1:ncpus=1:host=tca-0005-eth0+1:ncpus=1:host=tca-0006-eth0+1:ncpus=1:host=tca-0007-eth0+1:ncpus=1:host=tca-0008-eth0
 NP=8
 #PBS -l walltime=00:01:00

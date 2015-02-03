@@ -97,6 +97,10 @@ for c_file in $c_files; do
     FILE_PP_I=${TEMP_DIR}/${FILE_NAME}_pp.i
     FILE_IN_X=${TEMP_DIR}/${FILE_NAME}_in.xml
 
+    if [ $ENABLE_XACC = true ]; then
+	FRONTEND_ADD_OPT="-facc $FRONTEND_ADD_OPT"
+    fi
+
     xmp_exec $OMNI_C2X_CMD $FRONTEND_ADD_OPT $OMNI_C2X_OPT $FILE_PP_I -o $FILE_IN_X
 done
 [ $STOP_FRONTEND = true ] && exit 0;
@@ -117,6 +121,10 @@ for c_file in $c_files; do
 	PROFILE_OPT="-scalasca-all"
     elif [ $ENABLE_SCALASCA = true ]; then
 	PROFILE_OPT="-scalasca"
+    fi
+
+    if [ $ENABLE_XACC = true ]; then
+        XCODE_TRANSLATOR_ADD_OPT="-facc $XCODE_TRANSLATOR_ADD_OPT"
     fi
 
     xmp_exec $OMNI_CX2X_CMD $OMNI_CX2X_OPT $XCODE_TRANSLATOR_ADD_OPT $PROFILE_OPT $FILE_IN_X -o $FILE_OUT_X
@@ -167,6 +175,10 @@ xmp_exec mv /tmp/_xmpc_init_${PID}.o $FILE_COLLECT_O
 # link
 if [ $ENABLE_TLOG_ALL = true ] || [ $ENABLE_TLOG = true ]; then
     PROFILE_OPT="-ltlog_mpi"
+fi
+
+if [ $ENABLE_XACC = true ]; then
+    LINKER_ADD_OPT="-lacc $LINKER_ADD_OPT"
 fi
 
 if [ "$OUTPUT_FILE" = "" ]; then
