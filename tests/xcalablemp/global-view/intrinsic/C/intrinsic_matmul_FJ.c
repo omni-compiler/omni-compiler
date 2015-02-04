@@ -2,6 +2,8 @@
 #include <xmp.h>
 #include <math.h>
 #include <complex.h>
+extern int chk_int(int ierr);
+extern void xmp_matmul(void *x_p, void *a_p, void *b_p);
 
 int test_matmul_001(){
 
