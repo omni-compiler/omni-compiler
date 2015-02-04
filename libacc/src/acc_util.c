@@ -19,8 +19,8 @@ void _ACC_free(void *p) {
 
 void _ACC_fatal(const char *msg) {
   fprintf(stderr, "OpenACC runtime error: %s\n", msg);
-  //exit(1);
-  raise(SIGQUIT);
+  exit(1);
+  //raise(SIGQUIT);
 }
 
 void _ACC_unexpected_error(void) {
