@@ -2099,7 +2099,9 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
   /* bcast & unpack */
   if (gmv_desc_rightp->is_global == true){
     if (gmv_desc_leftp->is_global == true && create_subcomm_flag == 1){
-      MPI_Bcast(recv_buf, dst_num_myindex_total*dst_type_size, MPI_BYTE, iroot, newcomm);
+      if(dst_array->is_allocated){
+        MPI_Bcast(recv_buf, dst_num_myindex_total*dst_type_size, MPI_BYTE, iroot, newcomm);
+      }
     }else if (gmv_desc_leftp->is_global == false){
       MPI_Bcast(recv_buf, dst_num_myindex_total*dst_type_size, MPI_BYTE, iroot, *exec_comm);
     }
