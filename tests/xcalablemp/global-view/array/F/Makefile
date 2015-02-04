@@ -14,6 +14,7 @@ all default: $(EXES)
 	$(XCC) -o $@ $<
 
 run: $(EXES)
+	$(XRUN) -n 8 ./361_exprInOnClause.x
 	$(XRUN) -n 4 ./array.x
 	$(XRUN) -n 4 ./offset.x
 
