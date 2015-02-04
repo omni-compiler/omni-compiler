@@ -3,6 +3,7 @@
 
 extern int chk_int(int ierr);
 extern int chk_int2(int ierr);
+extern void xmp_matmul(void *x_p, void *a_p, void *b_p);
 
 #pragma xmp nodes p(4)
 

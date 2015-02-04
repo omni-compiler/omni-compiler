@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <xmp.h>
+extern int chk_int(int ierr);
+extern void xmp_transpose(void *dst_d, void *src_d, int opt);
 
 int main(){
 
