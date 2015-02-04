@@ -21,10 +21,6 @@ __thread int _XMP_thread_num;
 void _XMP_init(int argc, char** argv)
 {
   if (!_XMP_runtime_working) {
-    MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &_XMP_world_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &_XMP_world_size);
-
 #ifdef _XMP_COARRAY_FJRDMA
     if(within_limit_of_physical_nodes()){
       _XMP_coarray_initialize(argc, argv);
