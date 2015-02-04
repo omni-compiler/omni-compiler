@@ -22,4 +22,4 @@ run: $(EXES)
 	qsub ./reflect_acc_2_dup_2.sh
 
 clean:
-	rm -f $(EXES) $(OBJS)
+	rm -f $(EXES) $(OBJS) o_* e_*
