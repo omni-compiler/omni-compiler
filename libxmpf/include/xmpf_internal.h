@@ -74,8 +74,8 @@ int _XMPF_get_owner_pos_BLOCK(_XMP_array_t *a, int dim, int index);
 _Bool _XMP_is_entire(_XMP_object_ref_t *rp);
 
 // From xmp_world.c
-extern int _XMP_world_size;
-extern int _XMP_world_rank;
+extern __thread int _XMP_world_size;
+extern __thread int _XMP_world_rank;
 
 /* From xmp_align.c */
 void _XMP_finalize_array_desc(_XMP_array_t *array);
