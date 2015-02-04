@@ -23,4 +23,10 @@ public abstract class XobjConst extends Xobject
     {
         return fkind;
     }
+
+    @Override
+    public int getFrank()
+    {
+        return 0;
+    }
 }

@@ -10,6 +10,7 @@ import exc.block.Block;
 import exc.util.MachineDepConst;
 
 import xcodeml.util.XmOption;
+import static xcodeml.util.XmLog.fatal;
 
 public class Xtype
 {
@@ -24,6 +25,7 @@ public class Xtype
     public final static int POINTER         = 7;
     public final static int F_ARRAY         = 8;
     public final static int XMP_CO_ARRAY    = 9;
+    public final static int F_COARRAY       = 10;        // ID=060
 
     final static String kind_names[] = {
         "UNDEF",
@@ -36,6 +38,7 @@ public class Xtype
         "POINTER",
         "F_ARRAY",
         "XMP_COARRAY",
+        "F_COARRAY",        // ID=060
     };
     
     //
@@ -69,7 +72,7 @@ public class Xtype
     public static final int TQ_FEXTERNAL            = 1 << 21;  // external
     public static final int TQ_FSEQUENCE            = 1 << 22;  // sequence
     public static final int TQ_FINTERNAL_PRIVATE    = 1 << 23;  // private in structure decl
-    public static final int TQ_FCRAY_POINTER        = 1 << 24;  // cray pointer (ID=60)
+    public static final int TQ_FCRAY_POINTER        = 1 << 24;  // cray pointer (ID=060c)
     
     private String type_id;
     private int type_kind;
@@ -92,6 +95,10 @@ public class Xtype
     /** type name */
     protected Ident tag;
     
+    /** coshape infos. incl. corank and codimensions (ID=060) */
+    protected boolean is_coarray = false;
+    protected Coshape coshape = new Coshape();
+
     /*
      * for pre-defined basic type
      */
@@ -224,23 +231,37 @@ public class Xtype
     };
 
     // constructor
-    public Xtype(int kind, String id, int typeQualFlags, Xobject gccAttrs, Ident tag)
+    public Xtype(int kind, String id, int typeQualFlags, Xobject gccAttrs,
+                 Ident tag, Xobject[] codimensions)
     {
         this.type_kind = kind;
         this.type_id = id;
         setTypeQualFlags(typeQualFlags);
         this.gcc_attrs = gccAttrs;
         this.tag = tag;
+        setCodimensions(codimensions);
+    }
+
+    public Xtype(int kind, String id, int typeQualFlags, Xobject gccAttrs,
+                 Ident tag)
+    {
+        this(kind, id, typeQualFlags, gccAttrs, tag, null);
+    }
+    
+    public Xtype(int kind, String id, int typeQualFlags, Xobject gccAttrs,
+                 Xobject[] codimensions)
+    {
+        this(kind, id, typeQualFlags, gccAttrs, null, codimensions);
     }
     
     public Xtype(int kind, String id, int typeQualFlags, Xobject gccAttrs)
     {
-    	this(kind, id, typeQualFlags, gccAttrs, null);
+        this(kind, id, typeQualFlags, gccAttrs, null, null);
     }
     
     public Xtype(int kind)
     {
-        this(kind, null, 0, null, null);
+        this(kind, null, 0, null, null, null);
     }
 
     /** return if is qualifed by qualifier,
@@ -477,13 +498,13 @@ public class Xtype
         setTypeQualFlag(TQ_FALLOCATABLE, enabled);
     }
 
-    /** Fortran : return if it is a cray pointer (ID=60) */
+    /** Fortran : return if it is a cray pointer (ID=060c) */
     public final boolean isFcrayPointer()
     {
         return getTypeQualFlag(TQ_FCRAY_POINTER);
     }
     
-    /** Fortran : set qualifier 'cray pointer' (ID=60) */
+    /** Fortran : set qualifier 'cray pointer' (ID=060c) */
     public final void setIsFcrayPointer(boolean enabled)
     {
         setTypeQualFlag(TQ_FCRAY_POINTER, enabled);
@@ -603,7 +624,7 @@ public class Xtype
         return getTypeQualFlag(TQ_FINTERNAL_PRIVATE);
     }
     
-    /** Fortran : set qualifier 'private ' in structure decl */
+    /** Fortran : set qualifier 'private' in structure decl */
     public final void setIsFinternalPrivate(boolean enabled)
     {
         setTypeQualFlag(TQ_FINTERNAL_PRIVATE, enabled);
@@ -641,6 +662,12 @@ public class Xtype
 
     /** Fortran: get function result name */
     public String getFuncResultName()
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    /** Fortran: get function result name */
+    public void setFuncResultName(String fresult_name)
     {
         throw new UnsupportedOperationException();
     }
@@ -687,6 +714,24 @@ public class Xtype
         throw new UnsupportedOperationException();
     }
 
+    /** Fortran: get Fortran array size or 1 for scalar */     // #060
+    public Xobject getTotalArraySizeExpr(Block block)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    /** Fortran: get Fortran type element length (bytes) in Expr */     // #060
+    public Xobject getElementLengthExpr(Block block)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    /** Fortran: get Fortran type element length (bytes) in integer */     // #060
+    public int getElementLength(Block block)
+    {
+        throw new UnsupportedOperationException();
+    }
+
     /** Fortran: return if is assumed size array */
     public boolean isFassumedSize()
     {
@@ -729,6 +774,48 @@ public class Xtype
         throw new UnsupportedOperationException();
     }
 
+    /*
+     *  implements Coshape (#060)
+     */
+    public int getCorank()
+    {
+        return coshape.getCorank();
+    }
+    public boolean isCoarray()
+    {
+        return is_coarray;
+    }
+    public void setIsCoarray(boolean is_coarray)
+    {
+        this.is_coarray = is_coarray;
+    }
+    public boolean wasCoarray()
+    {
+        return getCorank() > 0;
+    }
+    public Xobject[] getCodimensions()
+    {
+        return coshape.getCodimensions();
+    }
+    public void setCodimensions(Xobject[] codimensions)
+    {
+        coshape.setCodimensions(codimensions);
+        is_coarray  = (getCorank() > 0);
+    }
+    public void removeCodimensions()
+    {
+        coshape.removeCodimensions();
+        is_coarray  = false;
+    }
+    public void hideCodimensions()
+    {
+        is_coarray  = false;
+    }
+     public Xobject[] copyCodimensions()
+    {
+        return coshape.copyCodimensions();
+    }
+
     /** @deprecated */
     @Deprecated
     public XobjList getMoeList()
@@ -757,7 +844,7 @@ public class Xtype
     /** create copy */
     protected Xtype copy(String id)
     {
-        return new Xtype(type_kind, id, getTypeQualFlags(), gcc_attrs, tag);
+        return new Xtype(type_kind, id, getTypeQualFlags(), gcc_attrs, tag, copyCodimensions());
     }
     
     /** create copy. created copy references this instance as copied */
@@ -859,7 +946,8 @@ public class Xtype
     }
 
     /** return if is numeric type */
-    public final boolean isNumeric()
+    //public final boolean isNumeric()       #357
+    public boolean isNumeric()
     {
         return isIntegral() || isFloating() || isComplexOrImaginary();
     }
@@ -882,7 +970,7 @@ public class Xtype
         return null;
     }
     
-    /** Fortran: return if len parameter is varaible value */
+    /** Fortran: return if len parameter is variable value */
     public boolean isFlenVariable()
     {
         return false;

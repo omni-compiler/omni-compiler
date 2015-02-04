@@ -56,6 +56,7 @@ public class XMPtranslate implements XobjectDefVisitor
     String name = d.getName();
 
     Xtype funcType = d.getFuncType().copy();
+    funcType.setFuncResultName(null);
     Ident funcId = Ident.FidentNotExternal("xmpf_" + name, funcType);
     funcId.setProp(XMP_GENERATED_CHILD, true);
 
@@ -192,8 +193,13 @@ public class XMPtranslate implements XobjectDefVisitor
 
     // System.out.println("def="+d.getDef());
     if(is_module){
-      if(!haveXMPpragma(d.getDef())) return;
       fd = XMPmoduleBlock(d);
+      if(!haveXMPpragma(d.getDef())) {
+        // for coarray #060
+        XMPtransCoarray transCoarray = new XMPtransCoarray(fd, env);
+        transCoarray.run();
+        return;
+      }
     } else if(d.isFuncDef()){ // declarations
       Xtype ft = d.getFuncType();
       if(ft != null && ft.isFprogram()) {

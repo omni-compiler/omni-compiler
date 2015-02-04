@@ -48,6 +48,7 @@ run: $(EXES)
 	$(XRUN) -n 2 ./gmove_ata_2a1t_b.x
 	$(XRUN) -n 2 ./gmove_ata_2a1t_b_c.x
 	$(XRUN) -n 2 ./gmove_ata_2a1t_b_h.x
+	$(XRUN) -n 4 ./gmove_ata_2a1t_subcomm.x
 	$(XRUN) -n 2 ./gmove_ata_2a1t_c.x
 	$(XRUN) -n 2 ./gmove_ata_3a1t_b2.x
 	$(XRUN) -n 2 ./gmove_ata_3a1t_b.x
@@ -69,6 +70,7 @@ run: $(EXES)
 	$(XRUN) -n 4 ./gmove_bca_1a2t_b2.x
 	$(XRUN) -n 4 ./gmove_bca_1a2t_b.x
 	$(XRUN) -n 4 ./gmove_bca_2a3t_b2.x
+	$(XRUN) -n 8 ./gmove_bca_2a3t_b2_subcomm.x
 	$(XRUN) -n 8 ./gmove_bca_2a3t_b.x
 	$(XRUN) -n 8 ./gmove_bca_3a3t_b2.x
 	$(XRUN) -n 8 ./gmove_bca_3a3t_b.x

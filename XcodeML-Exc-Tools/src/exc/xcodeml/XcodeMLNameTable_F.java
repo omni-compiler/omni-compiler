@@ -36,6 +36,7 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.F_RENAMABLE, "renamable"),
 			new XcodeMLName(Xcode.F_ARRAY_INDEX, "arrayIndex"),
 			new XcodeMLName(Xcode.F_INDEX_RANGE, "indexRange"),
+			new XcodeMLName(Xcode.F_CO_SHAPE, "coShape"),           // #060
 			new XcodeMLName(Xcode.F_DO_LOOP, "FdoLoop"),
 			new XcodeMLName(Xcode.F_NAMED_VALUE, "namedValue"),
 			new XcodeMLName(Xcode.F_NAMED_VALUE_LIST, "namedValueList"),
@@ -53,6 +54,7 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.F_ARRAY_REF, "FarrayRef"),
 			new XcodeMLName(Xcode.F_CHARACTER_REF, "FcharacterRef"),
 			new XcodeMLName(Xcode.MEMBER_REF, "FmemberRef"),
+			new XcodeMLName(Xcode.CO_ARRAY_REF, "FcoArrayRef"),      // #060
 			new XcodeMLName(Xcode.FUNC_ADDR, "Ffunction"),
 			new XcodeMLName(Xcode.F_VAR_REF, "varRef"),
 			new XcodeMLName(Xcode.FUNCTION_CALL, "functionCall"),

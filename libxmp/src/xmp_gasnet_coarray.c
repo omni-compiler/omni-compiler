@@ -33,8 +33,9 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, const size_t co
 
   each_addr = (char **)_XMP_alloc(sizeof(char *) * _XMP_world_size);
 
-  for(int i=0;i<_XMP_world_size;i++)
+  for(int i=0;i<_XMP_world_size;i++) {
     each_addr[i] = (char *)(_xmp_gasnet_buf[i]) + _xmp_coarray_shift;
+  }
 
   if(coarray_size % _XMP_GASNET_ALIGNMENT == 0)
     _xmp_coarray_shift += coarray_size;

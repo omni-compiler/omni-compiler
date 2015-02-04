@@ -1,5 +1,4 @@
-#XCC     = xmpcc --Wf-facc --Wn-acc --Wl-acc -O2
-XCC     = xmpcc -facc -O2
+XCC     = xmpcc -xacc -O2
 XRUN    = mpiexec
 TESTS = $(wildcard *.c)
 EXES  = $(TESTS:.c=.x)

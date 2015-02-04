@@ -9,6 +9,7 @@ package exc.object;
 import java.util.Iterator;
 
 import xcodeml.IXobject;
+import exc.block.Block;
 
 /**
  * Xobject which contains the list of Xobjects.
@@ -419,6 +420,18 @@ public class XobjList extends Xobject implements Iterable<Xobject>, XobjContaine
                 ((XobjList)a).setParentRecursively(this);
         }
     }
+
+    @Override
+    public Xobject cfold(Block block)
+    {
+      Xobject that = copy();
+      for (XobjArgs a = ((XobjList)that).args; a != null; a = a.nextArgs()) {
+        if (a.getArg() != null)
+          a.setArg(a.getArg().cfold(block));
+      }
+      return (Xobject)that;
+    }
+
 
     @Override
     public Ident find(String name, int find_kind)

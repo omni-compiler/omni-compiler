@@ -52,6 +52,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
+@FJRDMA_TRUE@am__append_1 = -D_XMP_COARRAY_FJRDMA
 subdir = ./libxmpf/src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -98,7 +99,10 @@ am_libxmpf_a_OBJECTS = xmpf_array.$(OBJEXT) xmpf_gcomm.$(OBJEXT) \
 	xmpf_gmove.$(OBJEXT) xmpf_index.$(OBJEXT) xmpf_lib.$(OBJEXT) \
 	xmpf_loop.$(OBJEXT) xmpf_misc.$(OBJEXT) xmpf_nodes.$(OBJEXT) \
 	xmpf_pack.$(OBJEXT) xmpf_reflect.$(OBJEXT) xmpf_sort.$(OBJEXT) \
-	xmpf_task.$(OBJEXT) xmpf_template.$(OBJEXT)
+	xmpf_task.$(OBJEXT) xmpf_template.$(OBJEXT) \
+	xmpf_coarray.$(OBJEXT) xmpf_coarray_wrap.$(OBJEXT) \
+	xmpf_coarray_put.$(OBJEXT) xmpf_coarray_get.$(OBJEXT) \
+	xmpf_coarray_get_wrap.$(OBJEXT)
 libxmpf_a_OBJECTS = $(am_libxmpf_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include -I$(top_builddir)/Driver/atool/src/include/nata
 depcomp =
@@ -111,6 +115,13 @@ LTCOMPILE = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
+FCCOMPILE = $(FC) $(AM_FCFLAGS) $(FCFLAGS)
+LTFCCOMPILE = $(LIBTOOL) --tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=compile $(FC) $(AM_FCFLAGS) $(FCFLAGS)
+FCLD = $(FC)
+FCLINK = $(LIBTOOL) --tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(FCLD) $(AM_FCFLAGS) $(FCFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(libxmpf_a_SOURCES)
 DIST_SOURCES = $(libxmpf_a_SOURCES)
@@ -135,7 +146,8 @@ AWK = @AWK@
 BLASLIB = @BLASLIB@
 CC = @MPI_CC@
 CCDEPMODE = @CCDEPMODE@
-CFLAGS = -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) @MPI_CFLAGS@
+CFLAGS = -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) @MPI_CFLAGS@ \
+	$(am__append_1)
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CPU = @CPU@
@@ -393,12 +405,13 @@ lib_LIBRARIES = libxmpf.a
 libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_array.c xmpf_gcomm.c \
                     xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c \
                     xmpf_nodes.c xmpf_pack.c xmpf_reflect.c xmpf_sort.c xmpf_task.c \
-		    xmpf_template.c
+		    xmpf_template.c xmpf_coarray.c xmpf_coarray_wrap.f90\
+                    xmpf_coarray_put.c xmpf_coarray_get.c xmpf_coarray_get_wrap.f90
 
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .lo .o .obj
+.SUFFIXES: .c .f90 .lo .o .obj
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -479,6 +492,15 @@ distclean-compile:
 
 .c.lo:
 	$(LTCOMPILE) -c -o $@ $<
+
+.f90.o:
+	$(FCCOMPILE) -c -o $@ $<
+
+.f90.obj:
+	$(FCCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+.f90.lo:
+	$(LTFCCOMPILE) -c -o $@ $<
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -693,6 +715,15 @@ uninstall-am: uninstall-libLIBRARIES
 
 xmpf_main.o: xmpf_main.f
 	$(FC) $(FCFLAGS) -c xmpf_main.f
+
+xmpf_coarray_get_wrap.f90: xmpf_coarray_get_wrap.f90.sh
+	./xmpf_coarray_get_wrap.f90.sh > xmpf_coarray_get_wrap.f90
+
+xmpf_coarray_get_wrap.o: xmpf_coarray_get_wrap.f90
+	$(FC) $(FCFLAGS) -c xmpf_coarray_get_wrap.f90
+
+xmpf_coarray_wrap.o: xmpf_coarray_wrap.f90
+	$(FC) $(FCFLAGS) -c xmpf_coarray_wrap.f90
 
 install-exec-local: xmpf_main.o
 	test -z $(DESTDIR)$(libdir) || /bin/mkdir -p $(DESTDIR)$(libdir)

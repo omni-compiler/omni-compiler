@@ -250,8 +250,13 @@ void compile_XMP_directive(expr x)
 
     case XMP_ARRAY:
       check_INEXEC();
+      /* check arg: node_ref opt */
+      x1 = XMP_compile_ON_ref(EXPR_ARG1(c));
+      x2 = XMP_compile_clause_opt(EXPR_ARG2(c));
+      c = list2(LIST,x1,x2);
       XMP_st_required = XMP_ST_ARRAY;
-      XMP_array_directive = x;
+      //XMP_array_directive = x;
+      XMP_array_directive = list2(XMP_PRAGMA, EXPR_ARG1(x), list2(LIST, x1, x2));
       break;
 
     case XMP_REFLECT:

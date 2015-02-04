@@ -52,6 +52,10 @@ public class XMPenv {
     table.addUseModule(module_name);
   }
 
+  public Vector<XMPmodule> getModules(){
+    return modules;
+  }
+
   // set current definition and set symbol table each DEF
   public void setCurrentDef(FuncDefBlock def){
     current_def = def;
@@ -313,6 +317,19 @@ public class XMPenv {
     }
 
     return sizeArray;
+  }
+
+  /*
+   *  wrapper -- for collect init
+   */
+  public String getTailText() {
+    return env.getTailText();
+  }
+  public void clearTailText() {
+    env.clearTailText();
+  }
+  public void addTailText(String text) {
+    env.addTailText(text);
   }
 
 }

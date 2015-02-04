@@ -1,5 +1,3 @@
-HOW TO INSTALL
-
 # Needed softwares
  * Lex, Yacc
  * C and Fortran Compilers (supports C99 and Fortran 90)
@@ -19,16 +17,11 @@ HOW TO INSTALL
 
  * flex gcc gfortran gcc-c++ java-1.7.0-openjdk-devel openmpi-devel libxml2-devel byacc make
 
-## Usage of local-view operations (coarray, post/wait, lock/unlock)
-### On the K computer and FX10
- * To use the local-view operations, please add "--enable-FJRDMA" option in ./configure script.
- * Don't use the local-view operations on a large number of nodes (> 10,000 nodes) due to some bugs of the Fujitsu compiler.
- $ ./configure --target=Kcomputer-linux-gnu --enable-FJRDMA
+## For local-view operations (coarray, post/wait, lock/unlock)
+ * On the K computer or FX10, the Omni compiler automatically uses Fujitsu RDMA.
+ * On the other system, please install GASNet (http://gasnet.lbl.gov) before installing the Omni compiler.
 
-### Except for the K computer and FX10
- * Before installing the Omni compiler, please install GASNet (http://gasnet.lbl.gov).
-
-## Usage of OpenACC compiler
+## For Omni OpenACC compiler
  * Need to install CUDA (https://developer.nvidia.com/cuda-zone).
 
 # Install Step
@@ -56,8 +49,10 @@ HOW TO INSTALL
     If you want to compile for Kepler or newer GPU, you should specify '--with-gpu-cflags="-arch=sm_XX -O3"'
     (XX is compute capability version of the GPU).
 
-### On the K computer or FX10
+### On the K computer
     $ ./configure --target=Kcomputer-linux-gnu --prefix=[INSTALLATION PATH]
+
+### On FX10
     $ ./configure --target=FX10-linux-gnu --prefix=[INSTALLATION PATH]
 
 ### On Cray machines

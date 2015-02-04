@@ -4,7 +4,12 @@
  *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
  *  $
  */
+
 package exc.object;
+import exc.block.Block;
+
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Xtype object to present Basic type, such as int, char, ...
@@ -48,19 +53,18 @@ public class BasicType extends Xtype
     private Xobject flen;
 
     /** constructor */
-    public BasicType(int basic_type)
-    {
-        this(basic_type, null, 0, null, null, null);
-    }
-
-    /** constructor */
     public BasicType(int basic_type, String id, int typeQualFlags, Xobject gccAttrs,
-            Xobject fkind, Xobject flen)
+                     Xobject fkind, Xobject flen, Xobject[] codimensions)
     {
-        super(Xtype.BASIC, id, typeQualFlags, gccAttrs);
+        super(Xtype.BASIC, id, typeQualFlags, gccAttrs, codimensions);
         this.basic_type = basic_type;
         this.fkind = fkind;
         this.flen = flen;
+    }
+
+    public BasicType(int basic_type)
+    {
+        this(basic_type, null, 0, null, null, null);
     }
 
     public BasicType(int basic_type, int typeQualFlags)
@@ -68,6 +72,12 @@ public class BasicType extends Xtype
         this(basic_type, null, typeQualFlags, null, null, null);
     }
     
+    public BasicType(int basic_type, String id, int typeQualFlags, Xobject gccAttrs,
+                     Xobject fkind, Xobject flen)
+    {
+        this(basic_type, id, typeQualFlags, gccAttrs, fkind, flen, null);
+    }
+
     /** return basic type */
     @Override
     public int getBasicType()
@@ -151,6 +161,13 @@ public class BasicType extends Xtype
         return (basic_type >= FLOAT_COMPLEX) && (basic_type <= LONG_DOUBLE_COMPLEX);
     }
     
+    @Override                           // #357
+    public boolean isNumeric()
+    {
+        return isIntegral() || isFloating() || isComplexOrImaginary() ||
+          (basic_type == F_NUMERIC) || (basic_type == F_NUMERIC_ALL);
+    }
+    
     @Override
     public boolean isVoid()
     {
@@ -192,10 +209,90 @@ public class BasicType extends Xtype
     }
     
     @Override
+    public Xobject getTotalArraySizeExpr(Block block)
+    {
+        return Xcons.IntConstant(1);
+    }
+
+    @Override
+    public Xobject getElementLengthExpr(Block block)
+    {
+      int len = getElementLength(block);
+        return Xcons.IntConstant(len);
+    }
+
+    @Override
+    public int getElementLength(Block block)
+    {
+      //////////////
+      // TEMPORARY
+      //  assuming default integer as integer*4, etc.
+      //////////////
+      Map<Integer,Integer> default_len = new HashMap<Integer,Integer>() {
+        {
+          put(UNDEF                  , 0 );   // 0 means error
+          put(VOID                   , 0 );
+          put(BOOL                   , 4 );
+          put(CHAR                   , 1 );    // ???
+          put(UNSIGNED_CHAR          , 1 );
+          put(SHORT                  , 2 );    // ???
+          put(UNSIGNED_SHORT         , 2 );    // ???
+          put(INT                    , 4 );
+          put(UNSIGNED_INT           , 4 );
+          put(LONG                   , 4 );    // ???
+          put(UNSIGNED_LONG          , 4 );    // ???
+          put(LONGLONG               , 8 );    // ???
+          put(UNSIGNED_LONGLONG      , 8 );    // ???
+          put(FLOAT                  , 4 );
+          put(DOUBLE                 , 8 );
+          put(LONG_DOUBLE            , 8 );    // ???
+          put(FLOAT_IMAGINARY        , 4 );
+          put(DOUBLE_IMAGINARY       , 8 );
+          put(LONG_DOUBLE_IMAGINARY  , 8 );    // ???
+          put(FLOAT_COMPLEX          , 8 );
+          put(DOUBLE_COMPLEX         , 8 ); // should be 16 but bug347. 
+          put(LONG_DOUBLE_COMPLEX    ,16 );    // ???
+          put(GCC_BUILTIN_VA_LIST    , 0 );
+          put(F_CHARACTER            , 1 );
+          put(F_NUMERIC              , 0 );
+          put(F_NUMERIC_ALL          , 0 );
+        }
+      };
+
+      // case: Fortran character type
+      if (basic_type == F_CHARACTER) {   
+        if (fkind != null && flen.getInt() != 1) {
+            throw new UnsupportedOperationException
+              ("unsupported kind parameter for character: " + flen.getInt());
+        }
+        return (flen == null) ?
+          default_len.get(basic_type) : flen.getInt();
+      }
+
+      // case: Fortran kind-parameter specified
+      if (fkind != null) {
+        if (basic_type == FLOAT_COMPLEX ||
+            basic_type == DOUBLE_COMPLEX ||
+            basic_type == LONG_DOUBLE_COMPLEX)
+          return fkind.getInt() * 2;
+        return fkind.getInt();
+      }
+
+      // otherwise
+      int len = default_len.get(basic_type);
+      if (len < 0)
+        throw new UnsupportedOperationException
+          ("internal error: unexpected type here. basic_type=" + basic_type);
+      return len;
+    }
+
+
+    @Override
     public Xtype copy(String id)
     {
-        BasicType t = new BasicType(basic_type, id, getTypeQualFlags(),
-            getGccAttributes(), getFkind(), getFlen());
-        return t;
+        BasicType type = new BasicType(basic_type, id, getTypeQualFlags(),
+                                       getGccAttributes(), getFkind(), getFlen(),
+                                       copyCodimensions());
+        return type;
     }
 }

@@ -1,7 +1,7 @@
 AC_PREREQ(2.60)
 LT_PREREQ(2.4)
 
-AC_INIT([Omni Compiler], [0.9.0], [h-murai@riken.jp], [omni])
+AC_INIT([Omni Compiler], [0.9.1], [h-murai@riken.jp], [omni])
 
 AC_CONFIG_AUX_DIR([./buildutils])
 AC_CONFIG_MACRO_DIR([./buildutils])
@@ -207,7 +207,7 @@ if test -e "Driver/src/Makefile.am"; then
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.acc)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/setup.conf)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omtranslate)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omni_collect_init)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omni_traverse)
     AC_MSG_RESULT(yes)
 else
     OMDRIVER_DIR=''
@@ -476,16 +476,14 @@ AC_ARG_ENABLE(mpi3,
     [doMPI3=yes], [doMPI3=no])
 
 ## Add temporarily by mnakao
-AC_ARG_ENABLE(FJRDMA,
-   [  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10.],
-   [enableFJRDMA=yes], [enableFJRDMA=no])
-
-AM_CONDITIONAL(FJRDMA, test x${enableFJRDMA} = xyes)
+#AC_ARG_ENABLE(FJRDMA,
+#   [  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10.],
+#   [enableFJRDMA=yes], [enableFJRDMA=no])
+#
+#AM_CONDITIONAL(FJRDMA, test x${enableFJRDMA} = xyes)
 ## End Add temporarily
 
-## Delete temporarily by mnakao
-#AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
-## End Delete temporarily 
+AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
 
 AC_SUBST(FJRDMA)
 
@@ -992,6 +990,7 @@ if test x$use_tca = xyes; then
   MPI_CPPFLAGS="${MPI_CPPFLAGS} -I${TCA_PREFIX}"
   MPI_CFLAGS="${MPI_CFLAGS} -I${TCA_PREFIX}"
   MPI_CLIBS="${MPI_CLIBS} -L${TCA_PREFIX} -ltca"
+  OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS ${MPI_CLIBS}"
 fi
 
 AM_CONDITIONAL(TCA, test x${use_tca} = xyes)

@@ -180,9 +180,15 @@ public class Xcons
         return new XobjList(Xcode.ID_LIST);
     }
 
-    public static Ident Ident(String name, StorageClass stg_class, Xtype type, Xobject v, VarScope scope)
+    public static Ident Ident(String name, StorageClass stg_class, Xtype type,
+                              Xobject v, VarScope scope)
     {
-        return new Ident(name, stg_class, type, v, scope);
+        return new Ident(name, stg_class, type, v, scope, null);
+    }
+    public static Ident Ident(String name, StorageClass stg_class, Xtype type,
+                              Xobject v, VarScope scope, Xobject codimensions)
+    {
+        return new Ident(name, stg_class, type, v, scope, codimensions);
     }
     
     //
@@ -383,7 +389,8 @@ public class Xcons
                 t = ConversionIntegral(lt, rt);
                 break;
             }
-            if(lt.isFloating() && rt.isFloating()) {
+            //if(lt.isFloating() && rt.isFloating()) {
+            if(lt.isNumeric() && rt.isNumeric()) {           // #357
                 t = BasicType.Conversion(lt, rt);
                 break;
             }
@@ -412,7 +419,8 @@ public class Xcons
                 t = ConversionIntegral(lt, rt);
                 break;
             }
-            if(lt.isFloating() && rt.isFloating()) {
+            //if(lt.isFloating() && rt.isFloating()) {
+            if(lt.isNumeric() && rt.isNumeric()) {           // #357
                 t = BasicType.Conversion(lt, rt);
                 break;
             }
@@ -423,6 +431,10 @@ public class Xcons
                 return x;
             if(lt.isIntegral() && rt.isIntegral()) {
                 t = ConversionIntegral(lt, rt);
+                break;
+            }
+            if(lt.isNumeric() && rt.isNumeric()) {           // #357
+                t = BasicType.Conversion(lt, rt);
                 break;
             }
             fatal("BinaryOp: bad type");

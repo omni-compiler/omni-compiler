@@ -295,19 +295,19 @@ public class XMPtemplate extends XMPobject {
     // get template object
     String templateName = distDecl.getArg(0).getString();
     XMPtemplate templateObject = null;
-    if (isLocalPragma) {
-      templateObject = localXMPsymbolTable.getXMPtemplate(templateName);
-      if (templateObject == null) {
-        templateObject = globalDecl.getXMPtemplate(templateName);
-        if (templateObject != null) {
-          throw new XMPexception("global template cannot be distributed in local scope");
-        }
-      }
-    }
-    else {
-      templateObject = globalDecl.getXMPtemplate(templateName);
-    }
-
+    // if (isLocalPragma) {
+    //   templateObject = localXMPsymbolTable.getXMPtemplate(templateName);
+    //   if (templateObject == null) {
+    //     templateObject = globalDecl.getXMPtemplate(templateName);
+    //     if (templateObject != null) {
+    //       throw new XMPexception("global template cannot be distributed in local scope");
+    //     }
+    //   }
+    // }
+    // else {
+    //   templateObject = globalDecl.getXMPtemplate(templateName);
+    // }
+    templateObject = globalDecl.getXMPtemplate(templateName, pb);
     if (templateObject == null) {
       throw new XMPexception("template '" + templateName + "' is not declared");
     }

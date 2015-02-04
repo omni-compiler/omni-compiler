@@ -1241,6 +1241,12 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
                 break;
             }
 
+            case -9: {
+                bType = intr_type_to_basic_type(INTR_RETURN_TYPE(ep));
+                ret = type_basic(bType);
+                break;
+            }
+
             default: {
                 fatal("%s: Unknown return type specification.", __func__);
                 break;

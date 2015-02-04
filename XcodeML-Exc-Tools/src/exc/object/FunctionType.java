@@ -60,6 +60,11 @@ public class FunctionType extends Xtype
         return fresult_name;
     }
 
+    public void setFuncResultName(String fresult_name)
+    {
+        this.fresult_name = fresult_name;
+    }
+
     public void setFuncParam(Xobject param_list)
     {
         this.param_list = param_list;

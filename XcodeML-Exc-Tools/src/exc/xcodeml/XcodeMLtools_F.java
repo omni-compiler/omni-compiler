@@ -89,7 +89,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
       | (getAttrBool(n, "is_public") ? Xtype.TQ_FPUBLIC : 0)
       | (getAttrBool(n, "is_save") ? Xtype.TQ_FSAVE : 0)
       | (getAttrBool(n, "is_target") ? Xtype.TQ_FTARGET : 0)
-      | (getAttrBool(n, "is_cray_pointer") ? Xtype.TQ_FCRAY_POINTER : 0);
+      | (getAttrBool(n, "is_cray_pointer") ? Xtype.TQ_FCRAY_POINTER : 0); //#060c
 
     String intent = getAttr(n, "intent");
 
@@ -104,8 +104,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
     }
 
     Xobject fkind = toXobject(getContent(getElement(n, "kind")));
-    Xobject flen = null, sizeExprs[] = null;
-    Node nn;
+    Xobject flen = null, sizeExprs[] = null, cosizeExprs[] = null;
+    Node nn, nnn;
 
     if ((nn = getElement(n, "len")) != null) {
       flen = toXobject(getContent(nn));
@@ -115,6 +115,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
       NodeList list = n.getChildNodes();
       if (list.getLength() > 0) {
 	List<Xobject> sizeExprList = new ArrayList<Xobject>();
+	List<Xobject> cosizeExprList = new ArrayList<Xobject>();            // #060
 	for (int i = 0; i < list.getLength(); i++) {
 	  nn = list.item(i);
 	  if (nn.getNodeType() != Node.ELEMENT_NODE)
@@ -126,11 +127,30 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	  if (x.Opcode() == Xcode.F_ARRAY_INDEX
 	      || x.Opcode() == Xcode.F_INDEX_RANGE) {
 	    sizeExprList.add(x);
-	  } else
+	  } else if (x.Opcode() == Xcode.F_CO_SHAPE) {              // #060
+            NodeList colist = nn.getChildNodes();
+            for (int j = 0; j < colist.getLength(); j++) {
+              nnn = colist.item(j);
+              if (nnn.getNodeType() != Node.ELEMENT_NODE)
+                continue;
+              if (nnn.getNodeName() == "kind") {
+                continue;
+              }
+              Xobject xx = toXobject(nnn);
+              if (xx.Opcode() == Xcode.F_ARRAY_INDEX
+                  || xx.Opcode() == Xcode.F_INDEX_RANGE) {
+                cosizeExprList.add(xx);
+              } else
+                fatal("bad coindex in type:" + nn); 
+            }
+          } else
 	    fatal("bad index in type:" + nn);
 	}
 	if (sizeExprList.size() > 0) {
 	  sizeExprs = sizeExprList.toArray(new Xobject[0]);
+	}
+	if (cosizeExprList.size() > 0) {                                // #060
+	  cosizeExprs = cosizeExprList.toArray(new Xobject[0]);
 	}
       }
     }
@@ -138,17 +158,18 @@ public class XcodeMLtools_F extends XcodeMLtools {
     Xtype type;
 
     if (sizeExprs == null) {
-      if (ti == null) { // inherited type
+      if (ti == null) { // inherited type such as structure
 	Xtype ref = getType(getAttr(n, "ref"));
 	type = ref.inherit(tid);
 	type.setTypeQualFlags(tq);
+        type.setCodimensions(cosizeExprs);                           // #060
       } else {
 	type = new BasicType(ti.type.getBasicType(), tid, tq, null,
-			     fkind, flen);
+			     fkind, flen, cosizeExprs);             // #060
       }
     } else {
       Xtype ref = getType(getAttr(n, "ref"));
-      type = new FarrayType(tid, ref, tq, sizeExprs);
+      type = new FarrayType(tid, ref, tq, sizeExprs, cosizeExprs);    // #060
     }
 
     xobjFile.addType(type);
@@ -341,7 +362,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
       return Xcons.Symbol(code, type, getContentText(n));
 
     case F_ALLOC:
-    case F_ARRAY_REF: {
+    case F_ARRAY_REF:
+    case CO_ARRAY_REF: {
       NodeList list = n.getChildNodes();
       int i;
       x = null;
@@ -658,8 +680,9 @@ public class XcodeMLtools_F extends XcodeMLtools {
     }
 
     // create ident
+    //   ### It might be better to set codimensions here...
     Ident ident = new Ident(name, sclass, type, addr, 0, null, 0, null,
-			    null, null);
+			    null, null, null/*codimensions*/);
 
     if (type != null && StorageClass.FTYPE_NAME.equals(sclass))
       type.setTagIdent(ident);
