@@ -60,23 +60,23 @@ static void _XMP_reflect_acc_sched_dim(_XMP_array_t *adesc, int dim, int is_peri
     blocklength = type_size;
     stride = ainfo[0].alloc_size * type_size;
 
-    for(int i=ndims-2; i>=dim; i--)
+    for(int i = ndims-2; i >= dim; i--)
       count *= ainfo[i+1].alloc_size;
 
-    for(int i=1; i<=dim; i++){
+    for(int i = 1; i <= dim; i++){
       blocklength *= ainfo[i-1].alloc_size;
       stride *= ainfo[i].alloc_size;
     }
   }
-  else if(!_XMPF_running & _XMPC_running){ /* for XMP/C */
+  else if((!_XMPF_running) & _XMPC_running){ /* for XMP/C */
     count = 1;
     blocklength = type_size;
     stride = ainfo[ndims-1].alloc_size * type_size;
 
-    for(int i=1; i <= dim; i++)
+    for(int i = 1; i <= dim; i++)
       count *= ainfo[i-1].alloc_size;
 
-    for(int i=ndims-2; i >= dim; i--){
+    for(int i = ndims-2; i >= dim; i--){
       blocklength *= ainfo[i+1].alloc_size;
       stride *= ainfo[i].alloc_size;
     }
@@ -94,7 +94,7 @@ static void _XMP_reflect_acc_sched_dim(_XMP_array_t *adesc, int dim, int is_peri
   // Calulate offset
   off_t hi_src_offset = 0, hi_dst_offset = 0;
   if(lwidth){
-    for(int i=0; i<ndims; i++) {
+    for(int i = 0; i < ndims; i++) {
       int lb_send, lb_recv, dim_acc;
 
       if (i == dim){
@@ -115,7 +115,7 @@ static void _XMP_reflect_acc_sched_dim(_XMP_array_t *adesc, int dim, int is_peri
 
   off_t lo_src_offset = 0, lo_dst_offset = 0;
   if(uwidth){
-    for(int i=0; i<ndims; i++){
+    for(int i = 0; i < ndims; i++){
       int lb_send, lb_recv, dim_acc;
       if (i == dim) {
         lb_send = ainfo[i].local_lower;
@@ -144,8 +144,8 @@ static void _XMP_reflect_acc_sched_dim(_XMP_array_t *adesc, int dim, int is_peri
   reflect->hi_dst_offset = hi_dst_offset;
 }
 
-static tcaDMAFlag getFlag(int j, int num_of_neighbors){
-  if(j != num_of_neighbors-1)
+static tcaDMAFlag getFlag(int j, int num_of_tca_neighbors){
+  if(j != num_of_tca_neighbors-1)
     return _XMP_TCA_CHAIN_FLAG;
   else
     return _XMP_TCA_LAST_FLAG;
@@ -157,7 +157,7 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
   adesc->dma_slot = dma_slot;
   int array_dim = adesc->dim;
   
-  for(int i=0;i<array_dim;i++){
+  for(int i = 0; i < array_dim; i++){
     _XMP_array_info_t *ai = &(adesc->info[i]);
     if(ai->shadow_type == _XMP_N_SHADOW_NONE)
       continue;
@@ -165,23 +165,25 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
     _XMP_reflect_acc_sched_dim(adesc, i, is_periodic);
   }
 
-  int num_of_neighbors = 0;
-  for(int i=0;i<array_dim;i++){
+  int num_of_tca_neighbors = 0;
+  for(int i = 0; i < array_dim; i++){
     _XMP_array_info_t *ai = &(adesc->info[i]);
-    if(ai->shadow_type == _XMP_N_SHADOW_NONE)  continue;
+    if(ai->shadow_type == _XMP_N_SHADOW_NONE)
+      continue;
     int lo_rank = ai->reflect_acc_sched->lo_rank;
     int hi_rank = ai->reflect_acc_sched->hi_rank;
     if(lo_rank != -1)
-      num_of_neighbors++;
+      num_of_tca_neighbors++;
     if(hi_rank != -1)
-      num_of_neighbors++;
+      num_of_tca_neighbors++;
   }
 
   int j = 0;
   tcaHandle* h = (tcaHandle*)adesc->tca_handle;
-  for(int i=0;i<array_dim;i++){
+  for(int i=0; i < array_dim; i++){
     _XMP_array_info_t *ai = &(adesc->info[i]);
-    if(ai->shadow_type == _XMP_N_SHADOW_NONE)  continue;
+    if(ai->shadow_type == _XMP_N_SHADOW_NONE)
+      continue;
 
     int lo_rank = ai->reflect_acc_sched->lo_rank;
     int hi_rank = ai->reflect_acc_sched->hi_rank;
@@ -207,9 +209,9 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
 
     if(count == 1){
       if(lo_rank != -1){
-	tcaSetDMADescInt_Memcpy(dma_slot, &dma_slot, &h[lo_rank], lo_dst_offset, 
-				&h[_XMP_world_rank], lo_src_offset, reflect->blocklength, 
-				getFlag(j, num_of_neighbors), adesc->wait_slot, adesc->wait_tag);
+	TCA_CHECK(tcaSetDMADescInt_Memcpy(dma_slot, &dma_slot, &h[lo_rank], lo_dst_offset, 
+					  &h[_XMP_world_rank], lo_src_offset, reflect->blocklength, 
+					  getFlag(j, num_of_tca_neighbors), adesc->wait_slot, adesc->wait_tag));
 #if 1
 	printf("[%d] tcaSetDMADescInt_Memcpy   lo_rank = %d lo_dst_offset = %zd lo_src_offset=%zd length = %d\n", 
 	       _XMP_world_rank, lo_rank, lo_dst_offset, lo_src_offset, reflect->blocklength);
@@ -219,9 +221,9 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
 	lo_dst_offset += reflect->stride;
       }
       if(hi_rank != -1){
-	tcaSetDMADescInt_Memcpy(dma_slot, &dma_slot, &h[hi_rank], hi_dst_offset,
-				&h[_XMP_world_rank], hi_src_offset, reflect->blocklength,
-				getFlag(j, num_of_neighbors), adesc->wait_slot, adesc->wait_tag);
+	TCA_CHECK(tcaSetDMADescInt_Memcpy(dma_slot, &dma_slot, &h[hi_rank], hi_dst_offset,
+					  &h[_XMP_world_rank], hi_src_offset, reflect->blocklength,
+					  getFlag(j, num_of_tca_neighbors), adesc->wait_slot, adesc->wait_tag));
 #if 1
         printf("[%d] tcaSetDMADescInt_Memcpy   hi_rank = %d hi_dst_offset = %zd hi_src_offset=%zd length = %d\n",
                _XMP_world_rank, hi_rank, hi_dst_offset, hi_src_offset, reflect->blocklength);
@@ -235,9 +237,9 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
       size_t pitch  = reflect->stride;
       size_t width  = reflect->blocklength;
       if(lo_rank != -1){
-	tcaSetDMADescInt_Memcpy2D(dma_slot, &dma_slot, &h[lo_rank], lo_dst_offset, pitch,
-				   &h[_XMP_world_rank], lo_src_offset, pitch,
-				   width, count, getFlag(j, num_of_neighbors), adesc->wait_slot, adesc->wait_tag);
+	TCA_CHECK(tcaSetDMADescInt_Memcpy2D(dma_slot, &dma_slot, &h[lo_rank], lo_dst_offset, pitch,
+					    &h[_XMP_world_rank], lo_src_offset, pitch,
+					    width, count, getFlag(j, num_of_tca_neighbors), adesc->wait_slot, adesc->wait_tag));
 #if 0
         printf("[%d] tcaSetDMADescInt_Memcpy2D lo_rank = %d lo_dst_offset = %zd lo_src_offset=%zd pitch=%d width=%d count=%d\n",
                _XMP_world_rank, lo_rank, lo_dst_offset, lo_src_offset, pitch, width, count);
@@ -245,9 +247,9 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
 	j++;
       }
       if(hi_rank != -1){
-	tcaSetDMADescInt_Memcpy2D(dma_slot, &dma_slot, &h[hi_rank], hi_dst_offset, pitch,
-				   &h[_XMP_world_rank], hi_src_offset, pitch,
-				   width, count, getFlag(j, num_of_neighbors), adesc->wait_slot, adesc->wait_tag);
+	TCA_CHECK(tcaSetDMADescInt_Memcpy2D(dma_slot, &dma_slot, &h[hi_rank], hi_dst_offset, pitch,
+					    &h[_XMP_world_rank], hi_src_offset, pitch,
+					    width, count, getFlag(j, num_of_tca_neighbors), adesc->wait_slot, adesc->wait_tag));
 #if 0
         printf("[%d] tcaSetDMADescInt_Memcpy2D hi_rank = %d hi_dst_offset = %zd hi_src_offset=%zd pitch=%d width=%d count=%d\n",
                _XMP_world_rank, hi_rank, hi_dst_offset, hi_src_offset, pitch, width, count);
@@ -257,7 +259,7 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
     }
   }
 
-  tcaSetDMAChainInt(_XMP_TCA_DMAC, adesc->dma_slot);
+  TCA_CHECK(tcaSetDMAChainInt(_XMP_TCA_DMAC, adesc->dma_slot));
 #if 0
   printf("[%d] DMA SLOT = %d\n", _XMP_world_rank, dma_slot);
 #endif
@@ -281,7 +283,7 @@ void _XMP_init_tca()
 {
   if(_XMP_world_size > 16)
     _XMP_fatal("TCA reflect has been not implemented in 16 more than nodes.");
-  tcaInit();
+  TCA_CHECK(tcaInit());
   tcaDMADescInt_Init(); // Initialize Descriptor (Internal Memory) Mode
 }
 
@@ -289,7 +291,7 @@ void _XMP_alloc_tca(_XMP_array_t *adesc)
 {
   adesc->set_handle = _XMP_N_INT_FALSE;
   int array_dim = adesc->dim;
-  for(int i=0;i<array_dim;i++){
+  for(int i = 0; i < array_dim; i++){
     _XMP_array_info_t *ai = &(adesc->info[i]);
     if(ai->shadow_type == _XMP_N_SHADOW_NONE)
       continue;
@@ -305,7 +307,7 @@ static void _XMP_refect_wait_tca(_XMP_array_t *adesc)
   int array_dim = adesc->dim;
   tcaHandle* h = (tcaHandle*)adesc->tca_handle;
   
-  for(int i=0;i<array_dim;i++){
+  for(int i = 0; i < array_dim; i++){
     _XMP_array_info_t *ai = &(adesc->info[i]);
     if(ai->shadow_type == _XMP_N_SHADOW_NONE)
       continue;
@@ -320,10 +322,10 @@ static void _XMP_refect_wait_tca(_XMP_array_t *adesc)
 #endif
 
     if(lo_rank != -1)
-      tcaWaitDMARecvDesc(&h[lo_rank], adesc->wait_slot, adesc->wait_tag);
+      TCA_CHECK(tcaWaitDMARecvDesc(&h[lo_rank], adesc->wait_slot, adesc->wait_tag));
 
     if(hi_rank != -1)
-      tcaWaitDMARecvDesc(&h[hi_rank], adesc->wait_slot, adesc->wait_tag);
+      TCA_CHECK(tcaWaitDMARecvDesc(&h[hi_rank], adesc->wait_slot, adesc->wait_tag));
 
   }
 }

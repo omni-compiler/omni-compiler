@@ -20,6 +20,7 @@ extern int _XMPF_running;
 // --------------- including headers  --------------------------------
 #include <mpi.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stddef.h>
 #include <stdarg.h>
 #include <stdint.h>
