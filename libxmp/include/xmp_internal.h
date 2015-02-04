@@ -400,23 +400,20 @@ struct _XMPTIMING
 #endif
 
 #ifdef _XMP_TCA
-#define TCA_CHECK(tca_call) do { \
-  int status = tca_call;         \
-  if(status != TCA_SUCCESS) {    \
-  if(status == TCA_ERROR_INVALID_VALUE) {                 \
-  fprintf(stderr,"(TCA) error TCA API, INVALID_VALUE\n"); \
-  exit(-1);                                               \
-  }else if(status == TCA_ERROR_OUT_OF_MEMORY){            \
-  fprintf(stderr,"(TCA) error TCA API, OUT_OF_MEMORY\n"); \
-  exit(-1);                                               \
-  }else if(status == TCA_ERROR_NOT_SUPPORTED){            \
-  fprintf(stderr,"(TCA) error TCA API, NOT_SUPPORTED\n"); \
-  exit(-1);                                               \
-  }else{                                                  \
-  fprintf(stderr,"(TCA) error TCA API, UNKWON\n");        \
+#define TCA_CHECK(tca_call) do {    \
+  int status = tca_call;                        \
+  if(status != TCA_SUCCESS) {                   \
+  if(status == TCA_ERROR_INVALID_VALUE) {                   \
+  fprintf(stderr,"(TCA) error TCA API, INVALID_VALUE at line %d of %s\n", __LINE__, __FILE__);      \
+  }else if(status == TCA_ERROR_OUT_OF_MEMORY){           \
+  fprintf(stderr,"(TCA) error TCA API, OUT_OF_MEMORY at line %d of %s\n", __LINE__, __FILE__); \
+  }else if(status == TCA_ERROR_NOT_SUPPORTED){           \
+  fprintf(stderr,"(TCA) error TCA API, NOT_SUPPORTED at line %d of %s\n", __LINE__, __FILE__);      \
+  }else{                \
+    fprintf(stderr,"(TCA) error TCA API, UNKWON at line %d of %s\n",  __LINE__, __FILE__); \
+  }               \
   exit(-1); \
-  }         \
-  }         \
+  }               \
   }while (0)
 #endif
 

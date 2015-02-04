@@ -4,6 +4,41 @@
 #define _XMP_TCA_CHAIN_FLAG (tcaDMANotify|tcaDMAContinue)
 #define _XMP_TCA_LAST_FLAG  (tcaDMANotify)
 
+/* static int get_subcluster_id (_XMP_array_t *adesc, int rank) */
+/* { */
+/*   return adesc->sc_id[rank]; */
+/* } */
+
+static int is_same_sc(_XMP_array_t *adesc, int src_rank, int dst_rank)
+{
+  int src_id = adesc->sc_id[src_rank];
+  int dst_id = adesc->sc_id[dst_rank];
+  
+  if (src_id == dst_id) {
+    return 1;
+  } else {
+    return 0;
+  } 
+}
+
+static void set_sbucluster_id (_XMP_array_t *adesc)
+{
+  int my_rank = adesc->align_template->onto_nodes->comm_rank;
+  int my_id;
+  int *sc_id = _XMP_alloc(sizeof(int) * _XMP_world_size);
+  
+  // temporary, FIX me
+  if ((my_rank % 2) == 0) {
+    my_id = 0;
+  } else {
+    my_id = 1;
+  }
+
+  MPI_Allgather(&my_id, 1, MPI_INT, sc_id, 1, MPI_INT, MPI_COMM_WORLD);
+  
+  adesc->sc_id = sc_id;
+}
+
 void _XMP_create_TCA_handle(void *acc_addr, _XMP_array_t *adesc)
 {
   if(adesc->set_handle)
@@ -27,6 +62,14 @@ void _XMP_create_TCA_handle(void *acc_addr, _XMP_array_t *adesc)
   adesc->tca_handle = _XMP_alloc(sizeof(tcaHandle) * _XMP_world_size);
   MPI_Allgather(&tmp_handle, sizeof(tcaHandle), MPI_BYTE,
                 adesc->tca_handle, sizeof(tcaHandle), MPI_BYTE, MPI_COMM_WORLD);
+
+  set_sbucluster_id(adesc);
+
+  if (_XMP_world_rank == 0) {
+    for (int i = 0; i < _XMP_world_size; i++) {
+      printf("%d\n", adesc->sc_id[i]);
+    }
+  }
 
   adesc->set_handle = _XMP_N_INT_TRUE;
 }
