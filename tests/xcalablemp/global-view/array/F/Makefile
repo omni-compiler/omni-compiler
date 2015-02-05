@@ -17,6 +17,7 @@ run: $(EXES)
 	$(XRUN) -n 8 ./361_exprInOnClause.x
 	$(XRUN) -n 4 ./array.x
 	$(XRUN) -n 4 ./offset.x
+	$(XRUN) -n 4 ./361_array.x
 
 clean:
 	rm -f $(EXES) $(OBJS)
