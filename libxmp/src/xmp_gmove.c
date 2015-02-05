@@ -1167,7 +1167,8 @@ int _XMP_gmove_calc_seq_loc(int *count, unsigned long long *array_acc, int **loc
 
 }
 
-void _XMP_gmove_calc_elmts_myrank(_XMP_gmv_desc_t *gmv_desc_leftp, int src_sub_dim, int src_dim, int dst_dim, 
+void _XMP_gmove_calc_elmts_myrank(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, 
+                                  int src_sub_dim, int src_dim, int dst_dim, 
                                   int *src_sub_num_ref, int *dst_sub_num_ref, int *src_count, int *dst_count, 
                                   int *num_triplet, 
                                   int **src_irank, int **dst_irank, int *src_rank_acc, int *dst_rank_acc, 
@@ -1199,12 +1200,13 @@ void _XMP_gmove_calc_elmts_myrank(_XMP_gmv_desc_t *gmv_desc_leftp, int src_sub_d
         (*dst_num_myrank)++;
         recv_size_ref[src_seq_rank]++;
       }
-      if(*create_subcomm_flag == 1) {
+      if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) && 
+          (*create_subcomm_flag == 1)) {
         if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){
            recv_size_ref2[src_seq_rank]++;
         }
       }
-      if(gmv_desc_leftp->is_global==false){
+      if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){
         recv_size_ref2[src_seq_rank]++;
       }
     }
@@ -1226,19 +1228,19 @@ void _XMP_gmove_calc_elmts_myrank(_XMP_gmv_desc_t *gmv_desc_leftp, int src_sub_d
           (*dst_num_myrank)++;
           recv_size_ref[src_seq_rank]++;
         }
-        if (*create_subcomm_flag == 1) {
+        if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) && 
+           (*create_subcomm_flag == 1)) {
           if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){
             recv_size_ref2[src_seq_rank]++;
           }
         }
-        if(gmv_desc_leftp->is_global==false){
+        if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){
           recv_size_ref2[src_seq_rank]++;
         }
       }
     }
     break;
   case 3:
-    //printf("bbb calc num_triplet[src_sub_num_ref[0]]=%d, num_triplet[src_sub_num_ref[1]]=%d,num_triplet[src_sub_num_ref[2]]=%d\n",num_triplet[src_sub_num_ref[0]], num_triplet[src_sub_num_ref[1]], num_triplet[src_sub_num_ref[2]]);
     for(i2=0;i2<num_triplet[src_sub_num_ref[2]];i2++){
       for(i1=0;i1<num_triplet[src_sub_num_ref[1]];i1++){
         for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){
@@ -1258,12 +1260,13 @@ void _XMP_gmove_calc_elmts_myrank(_XMP_gmv_desc_t *gmv_desc_leftp, int src_sub_d
             (*dst_num_myrank)++;
             recv_size_ref[src_seq_rank]++;
           }
-          if (*create_subcomm_flag == 1) {
+          if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) && 
+              (*create_subcomm_flag == 1)) {
             if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){
               recv_size_ref2[src_seq_rank]++;
             }
           }
-          if(gmv_desc_leftp->is_global==false){
+          if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){
             recv_size_ref2[src_seq_rank]++;
           }
         }
@@ -1293,12 +1296,13 @@ void _XMP_gmove_calc_elmts_myrank(_XMP_gmv_desc_t *gmv_desc_leftp, int src_sub_d
               (*dst_num_myrank)++;
               recv_size_ref[src_seq_rank]++;
             }
-            if (*create_subcomm_flag == 1) {
+            if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) && 
+                (*create_subcomm_flag == 1)) {
               if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){
                 recv_size_ref2[src_seq_rank]++;
               }
             }
-            if(gmv_desc_leftp->is_global==false){
+            if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){
               recv_size_ref2[src_seq_rank]++;
             }
           }
@@ -1332,12 +1336,13 @@ void _XMP_gmove_calc_elmts_myrank(_XMP_gmv_desc_t *gmv_desc_leftp, int src_sub_d
                 (*dst_num_myrank)++;
                 recv_size_ref[src_seq_rank]++;
               }
-              if(*create_subcomm_flag == 1) {
+              if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) && 
+                  (*create_subcomm_flag == 1)) {
                 if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){
                   recv_size_ref2[src_seq_rank]++;
                 }
               }
-              if(gmv_desc_leftp->is_global==false){
+              if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){
                 recv_size_ref2[src_seq_rank]++;
               }
             }
@@ -1375,12 +1380,13 @@ void _XMP_gmove_calc_elmts_myrank(_XMP_gmv_desc_t *gmv_desc_leftp, int src_sub_d
                   (*dst_num_myrank)++;
                   recv_size_ref[src_seq_rank]++;
                 }
-                if(*create_subcomm_flag == 1) {
+                if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) && 
+                    (*create_subcomm_flag == 1)) {
                   if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){
                     recv_size_ref2[src_seq_rank]++;
                   }
                 }
-                if(gmv_desc_leftp->is_global==false){
+                if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){
                   recv_size_ref2[src_seq_rank]++;
                 }
               }
@@ -1422,12 +1428,13 @@ void _XMP_gmove_calc_elmts_myrank(_XMP_gmv_desc_t *gmv_desc_leftp, int src_sub_d
                     (*dst_num_myrank)++;
                     recv_size_ref[src_seq_rank]++;
                   }
-                  if(*create_subcomm_flag == 1) {
+                  if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) && 
+                      (*create_subcomm_flag == 1)) {
                     if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){
                       recv_size_ref2[src_seq_rank]++;
                     }
                   }
-                  if(gmv_desc_leftp->is_global==false){
+                  if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){
                     recv_size_ref2[src_seq_rank]++;
                   }
                 }
@@ -1679,7 +1686,7 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
   unsigned long long dst_array_acc[_XMP_N_MAX_DIM];
   unsigned long long src_array_acc[_XMP_N_MAX_DIM];
   int i,j,jj,i0,i1,i2,i3,i4,i5,i6;
-  int temp_index, nodes_index, create_subcomm_flag;
+  int temp_index, nodes_index, create_subcomm_flag=0;
   int src_template_index[_XMP_N_MAX_DIM], dst_template_index[_XMP_N_MAX_DIM];
   int src_nodes_index[_XMP_N_MAX_DIM], dst_nodes_index[_XMP_N_MAX_DIM];
 
@@ -1835,7 +1842,7 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
   MPI_Comm newcomm;
   _XMP_gmove_create_subcomm(gmv_desc_leftp, gmv_desc_rightp, &newcomm, &create_subcomm_flag, d2e, dst_color_ref);
 
-  _XMP_gmove_calc_elmts_myrank(gmv_desc_leftp, src_sub_dim, src_dim, dst_dim, src_sub_num_ref, dst_sub_num_ref, src_count, dst_count, src_num, src_irank, dst_irank, src_rank_acc, dst_rank_acc, &src_num_myrank_total, &dst_num_myrank_total, s2e, d2e, send_size_ref, recv_size_ref, recv_size_ref2, &create_subcomm_flag, dst_color_ref);
+  _XMP_gmove_calc_elmts_myrank(gmv_desc_leftp, gmv_desc_rightp, src_sub_dim, src_dim, dst_dim, src_sub_num_ref, dst_sub_num_ref, src_count, dst_count, src_num, src_irank, dst_irank, src_rank_acc, dst_rank_acc, &src_num_myrank_total, &dst_num_myrank_total, s2e, d2e, send_size_ref, recv_size_ref, recv_size_ref2, &create_subcomm_flag, dst_color_ref);
 
   int isend_count=0, irecv_count=0, irecv_count2=0;
   int count_acc=0, count_acc_tmp=0;
