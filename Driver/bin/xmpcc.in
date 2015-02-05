@@ -155,6 +155,18 @@ for c_file in $c_files; do
 
     [ $ENABLE_OPENMP = true ] && OPENMP_ADD_OPT="$OPENMP_OPT"
     xmp_exec $OMNI_MPICC_CMD $NATIVE_ADD_OPT $OMNI_MPICC_OPT $OPENMP_ADD_OPT $other_args $FILE_C -o $FILE_O
+
+    ### GPU Compiler ###
+    FILE_CU=${TEMP_DIR}/${FILE_NAME}_pp.cu
+    FILE_GPUO=${TEMP_DIR}/${FILE_NAME}.gpu.o
+    if [ $ENABLE_XACC = true ] && [ -e $FILE_CU ]; then
+	xmp_exec $OMNI_GPUCC_CMD $OMNI_GPUCC_OPT $FILE_CU -o $FILE_GPUO
+	FILE_O_TMP=${TEMP_DIR}/${FILE_NAME}.cpu.o
+	xmp_exec mv $FILE_O $FILE_O_TMP
+	xmp_exec ld -r $FILE_O_TMP $FILE_GPUO -o $FILE_O
+	xmp_exec rm $FILE_O_TMP
+    fi
+
     xmp_exec cp $FILE_O $FILE_USER_O
 done
 [ $STOP_COMPILE = true ] && exit 0;
@@ -178,7 +190,7 @@ if [ $ENABLE_TLOG_ALL = true ] || [ $ENABLE_TLOG = true ]; then
 fi
 
 if [ $ENABLE_XACC = true ]; then
-    LINKER_ADD_OPT="-lacc $LINKER_ADD_OPT"
+    LINKER_ADD_OPT="-lacc -L@GPGPU_PREFIX@/lib64 -lcudart $LINKER_ADD_OPT"
 fi
 
 if [ "$OUTPUT_FILE" = "" ]; then
