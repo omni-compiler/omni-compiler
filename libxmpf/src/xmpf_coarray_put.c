@@ -200,11 +200,11 @@ void _putCoarray(int serno, char *baseAddr, int coindex, char *rhs,
                  int bytes, int rank, int skip[], int count[])
 {
   if (rank == 0) {  // fully contiguous after perfect collapsing
-    if (_XMPF_coarrayMsg)
+    if (_XMPF_coarrayMsg) {
       _XMPF_coarrayMsgPrefix();
       fprintf(stderr, "**** put %d bytes fully contiguous (%s)\n",
               bytes, __FILE__);
-
+    }
     _putVectorByByte(serno, baseAddr, bytes, coindex, rhs);
     return;
   }
