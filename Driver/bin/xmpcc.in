@@ -44,12 +44,14 @@ LINKER_ADD_OPT=
 ### Set options ###
 # e.g.) xmpcc -I/usr/lib a.c b.c c.o --tmp --Wlfoo lib.a -omp
 #
-#  c_files="a.c b.c"                      # Only C files
-#  obj_files="c.o"                        # Only Object files
-#  other_args="-I/usr/lib lib.a"          # Options for Preprocessor, Compiler, and Linker
+#  c_files="a.c b.c"                  # C files
+#  archive_files="lib.a"              # Archive files
+#  obj_files="c.o"                    # Object files
+#  other_args="-I/usr/lib"            # Options for Preprocessor, Compiler, and Linker
 # 
 #  Note that "-omp" is extracted by xmp_set_parameters, and set "ENABLE_OPENMP".
 c_files=
+archive_files=
 obj_files=
 other_args=
 xmp_set_parameters ${@+"$@"}
@@ -95,6 +97,10 @@ for c_file in $c_files; do
     FILE_PP_I=${TEMP_DIR}/${FILE_NAME}_pp.i
     FILE_IN_X=${TEMP_DIR}/${FILE_NAME}_in.xml
 
+    if [ $ENABLE_XACC = true ]; then
+	FRONTEND_ADD_OPT="-facc $FRONTEND_ADD_OPT"
+    fi
+
     xmp_exec $OMNI_C2X_CMD $FRONTEND_ADD_OPT $OMNI_C2X_OPT $FILE_PP_I -o $FILE_IN_X
 done
 [ $STOP_FRONTEND = true ] && exit 0;
@@ -115,6 +121,10 @@ for c_file in $c_files; do
 	PROFILE_OPT="-scalasca-all"
     elif [ $ENABLE_SCALASCA = true ]; then
 	PROFILE_OPT="-scalasca"
+    fi
+
+    if [ $ENABLE_XACC = true ]; then
+        XCODE_TRANSLATOR_ADD_OPT="-facc $XCODE_TRANSLATOR_ADD_OPT"
     fi
 
     xmp_exec $OMNI_CX2X_CMD $OMNI_CX2X_OPT $XCODE_TRANSLATOR_ADD_OPT $PROFILE_OPT $FILE_IN_X -o $FILE_OUT_X
@@ -167,10 +177,14 @@ if [ $ENABLE_TLOG_ALL = true ] || [ $ENABLE_TLOG = true ]; then
     PROFILE_OPT="-ltlog_mpi"
 fi
 
+if [ $ENABLE_XACC = true ]; then
+    LINKER_ADD_OPT="-lacc $LINKER_ADD_OPT"
+fi
+
 if [ "$OUTPUT_FILE" = "" ]; then
-    xmp_exec $OMNI_LINKER_CMD $FILE_COLLECT_O $obj_files $OMNI_LINKER_OPT $PROFILE_OPT $LINKER_ADD_OPT $other_args
+    xmp_exec $OMNI_LINKER_CMD $FILE_COLLECT_O $obj_files $OMNI_LINKER_OPT $PROFILE_OPT $LINKER_ADD_OPT $other_args $archive_files
 else
-    xmp_exec $OMNI_LINKER_CMD $FILE_COLLECT_O $obj_files $OMNI_LINKER_OPT $PROFILE_OPT $LINKER_ADD_OPT $other_args -o $OUTPUT_FILE
+    xmp_exec $OMNI_LINKER_CMD $FILE_COLLECT_O $obj_files $OMNI_LINKER_OPT $PROFILE_OPT $LINKER_ADD_OPT $other_args $archive_files -o $OUTPUT_FILE
 fi
 
 ### Delete temporal directory ###

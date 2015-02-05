@@ -26,8 +26,11 @@ public class XmOption
 
     private static boolean _tlog = false;
 
-    /** if compiling Xcalable MP is enabled */
+    /** if compiling OpenMP is enabled */
     private static boolean _openMP = false;
+
+    /** if compiling coarray is enabled */
+    private static boolean _coarray = false;
 
     /** if debug output is enabled */
     private static boolean _debugOutput = false;
@@ -136,7 +139,7 @@ public class XmOption
     /**
      * Sets compiler to or not to translate OpenMP directive.
      *
-     * @param enable true then translate XcalableMP directive.
+     * @param enable true then translate OpenMP directive.
      */
     public static void setIsOpenMP(boolean enable)
     {
@@ -151,6 +154,26 @@ public class XmOption
     public static boolean isOpenMP()
     {
         return _openMP;
+    }
+
+    /**
+     * Sets compiler to or not to translate coarrays
+     *
+     * @param enable true then translate coarrays.
+     */
+    public static void setIsCoarray(boolean enable)
+    {
+        _coarray = enable;
+    }
+
+    /**
+     * Checks does compiler translate coarrays.
+     *
+     * @return true if compiler translate coarrays.
+     */
+    public static boolean isCoarray()
+    {
+        return _coarray;
     }
 
     /**

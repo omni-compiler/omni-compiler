@@ -3100,7 +3100,10 @@ public class XMPtranslateLocalPragma {
 
       var = declIdentWithBlock(pb, "_XMP_loop_i" + Integer.toString(i), Xtype.intType);
       varList.add(var);
-      varListTemplate.set(leftAlignedArray.getAlignSubscriptIndexAt(i), var);
+
+      if (leftAlignedArray.getAlignMannerAt(i) != XMPalignedArray.NOT_ALIGNED){
+	varListTemplate.set(leftAlignedArray.getAlignSubscriptIndexAt(i), var);
+      }
 
       lb = ((XobjList)sub).getArg(0);
       if (lb == null) lb = Xcons.IntConstant(0);
@@ -3170,6 +3173,7 @@ public class XMPtranslateLocalPragma {
 	Xobject lb, st;
 
 	if (sub.Opcode() != Xcode.LIST) continue;
+	//if (array1.getAlignMannerAt(i) == XMPalignedArray.NOT_ALIGNED) continue;
 
 	lb = ((XobjList)sub).getArg(0);
 	if (lb == null) lb = Xcons.IntConstant(0);
@@ -3177,10 +3181,10 @@ public class XMPtranslateLocalPragma {
 	if (st == null) st = Xcons.IntConstant(1);
 
 	Xobject expr;
-	//expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
-	Ident loopVar = varListTemplate.get(array1.getAlignSubscriptIndexAt(i));
-	if (loopVar == null) XMP.fatal("array on rhs does not conform to that on lhs.");
-	expr = Xcons.binaryOp(Xcode.MUL_EXPR, loopVar.Ref(), st);
+	expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
+	//Ident loopVar = varListTemplate.get(array1.getAlignSubscriptIndexAt(i));
+	//if (loopVar == null) XMP.fatal("array on rhs does not conform to that on lhs.");
+	//expr = Xcons.binaryOp(Xcode.MUL_EXPR, loopVar.Ref(), st);
 	expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
 
 	subscripts1.setArg(i, expr);
@@ -3201,7 +3205,7 @@ public class XMPtranslateLocalPragma {
     BlockList body = Bcons.emptyBody();
     body.add(Xcons.Set(new_left, assignStmt.right()));
 
-    for (int i = 0; i < varList.size(); i++){
+    for (int i = varList.size() - 1; i >= 0; i--){
       loop = Bcons.emptyBody();
       // Xobject ub = Xcons.binaryOp(Xcode.MINUS_EXPR, ubList.get(i), lbList.get(i));
       // ub = Xcons.binaryOp(Xcode.PLUS_EXPR, ub, stList.get(i));
@@ -3220,7 +3224,9 @@ public class XMPtranslateLocalPragma {
 
     XobjList loopIterList = Xcons.List();
     for (int i = 0; i < varList.size(); i++){
-      loopIterList.add(varList.get(i).Ref());
+      if (leftAlignedArray.getAlignMannerAt(i) != XMPalignedArray.NOT_ALIGNED){
+	loopIterList.add(varList.get(i).Ref());
+      }
     }
     args.add(loopIterList);
 

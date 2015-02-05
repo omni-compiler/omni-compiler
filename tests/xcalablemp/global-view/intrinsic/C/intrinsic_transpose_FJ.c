@@ -3,7 +3,7 @@
 #include <complex.h>
 
 extern int chk_int(int ierr);
-
+extern void xmp_transpose(void *dst_d, void *src_d, int opt);
 #pragma xmp nodes p(8)
 
 int test_transpose_001(){
@@ -519,7 +519,7 @@ int test_transpose_014(){
 int test_transpose_015(){
 #define M 23
 #define N 31
-int m1[2]={11,20};
+int m1[2]={11,12};
 
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(8)
@@ -560,7 +560,7 @@ int m1[2]={11,20};
 int test_transpose_016(){
 #define M 23
 #define N 31
-int m1[2]={11,20};
+int m1[2]={11,12};
 
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(4)=p(3:6)
@@ -1217,7 +1217,7 @@ int test_transpose_032(){
 
 #define M 23
 #define N 31
-int m1[2]={20,11};
+int m1[2]={12,11};
 int m2[8]={10,3,2,1,3,2,1,9};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(2,4)
@@ -1259,7 +1259,7 @@ int test_transpose_033(){
 
 #define M 23
 #define N 31
-int m1[2]={20,11};
+int m1[2]={12,11};
 int m2[2]={10,21};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(2,4)

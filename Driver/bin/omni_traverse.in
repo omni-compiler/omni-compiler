@@ -4,6 +4,8 @@
 #
 
 #VERBOSE=yes
+#MODE=1         # generate subroutines respectively for all groups
+MODE=2          # generate one subroutine for all proceures of all groups
 
 NM="@NM@"
 
@@ -55,23 +57,23 @@ fi
 
 
 #--------------------------------------------------------------
-# find names ${PREFIX}_{init|finalize}_* 
+# find names ${PREFIX}_traverse_* 
 #--------------------------------------------------------------
 
 #--- get candidates
 candidates=`$NM "${INFILES[@]}" | awk 'NF >= 2 && $(NF-1) == "T" { print $NF }'`
 
-#--- choose candidates "${PREFIX}_{init|finalize}_*_?*" and rename them if needed
+#--- choose candidates "${PREFIX}_traverse_*_?*" and rename them if needed
 procedures=()
 for name in $candidates; do
     case $name in
-        ${PREFIX}_init_*_?* | ${PREFIX}_finalize_*_?* )
+        ${PREFIX}_traverse_*_?* )
             case "$LANG" in
                 F) procedures+=( ${name%_} );;    # get name from "name_"
                 C) procedures+=( $name );;
             esac;;
-        ${PREFIX}_init_* | ${PREFIX}_finalize_* )
-            echo found illegal name of init/finalize procedure: \"${name}\"
+        ${PREFIX}_traverse_* )
+            echo found unacceptable name of traverse procedure: \"${name}\"
             error=yes;;
     esac
 done
@@ -82,9 +84,9 @@ fi
 #--- classify the chosen names by keywords
 groupnames=()
 for name in "${procedures[@]}"; do
-    # separate procedure name "prefix_{init|finalize}_keywd_reststring"
+    # separate procedure name "prefix_travserse_keywd_reststring"
     # into three parts, groupname, '_' and basename, where
-    #  groupname is "prefix_{init|finalize}_keywd" and
+    #  groupname is "prefix_travserse_keywd" and
     #  basename is any string possibly including '_'
     basename=${name#${PREFIX}_*_*_}
     groupname=${name%_${basename}}
@@ -108,7 +110,7 @@ fi
 # file output
 #--------------------------------------------------------------
 
-fortran_output() {
+fortran_output_MODE1() {
     for groupname in "${groupnames[@]}"; do
         echo "subroutine ${groupname}"
         for name in "${procedures[@]}"; do
@@ -121,7 +123,15 @@ fortran_output() {
     done
 }
 
-c_output() {
+fortran_output_MODE2() {
+    echo "subroutine ${PREFIX}_traverse"
+        for name in "${procedures[@]}"; do
+            echo "  call ${name}"
+        done
+    echo "end subroutine"
+}
+
+c_output_MODE1() {
     for groupname in "${groupnames[@]}"; do
         echo "extern void ${groupname}(void);"
     done
@@ -139,10 +149,30 @@ c_output() {
     done
 }
 
+c_output_MODE2() {
+    for groupname in "${groupnames[@]}"; do
+        echo "extern void ${groupname}(void);"
+    done
+    echo
+
+    echo "void ${PREFIX}_traverse()"
+    echo "{"
+        for name in "${procedures[@]}"; do
+            echo "  ${name}();"
+        done
+    echo "}"
+}
+
 file_output() {
-    case "$LANG" in
-        F) fortran_output;;
-        C) c_output;;
+    case $MODE in
+    1)  case "$LANG" in
+        F) fortran_output_MODE1;;
+        C) c_output_MODE1;;
+        esac;;
+    2)  case "$LANG" in
+        F) fortran_output_MODE2;;
+        C) c_output_MODE2;;
+        esac;;
     esac
 }    
 

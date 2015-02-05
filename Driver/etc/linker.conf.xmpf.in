@@ -14,30 +14,11 @@ PID=$$
 files=( "$@" )
 
 #-------------------------------------------------
-# call xmp_collect_init, which will be abolished
+# call omni_traverse
 #-------------------------------------------------
-INIT_MODULE_OBJ="/tmp/_xmpf_init_${PID}.o"
-if [ "${IS_CRAY}" = "Yes" ]; then
-   CMD="@OMNI_HOME@/bin/xmp_collect_init"
-   args=( --cc @MPI_CC@ --PID ${PID} --F --OPTION -hgnu "${files[@]}" )
-   set -- "${args[@]}"
-else
-   CMD="@OMNI_HOME@/bin/xmp_collect_init"
-   args=( --cc @MPI_CC@ --PID ${PID} --F "${files[@]}" )
-   set -- "${args[@]}"
-fi
-
-if [ "${OM_VERBOSE}" = "1" ]; then
-    echo $CMD "$@"
-fi
-$CMD "$@" || exit 1
-
-#-------------------------------------------------
-# call omni_collect_init
-#-------------------------------------------------
-COLLECT_INIT_SRC="/tmp/omni_collect_init_${PID}.f90"
-CMD="@OMNI_HOME@/bin/omni_collect_init"
-args=( --F --prefix xmpf -o ${COLLECT_INIT_SRC} "${files[@]}" )
+TRAVERSER="/tmp/omni_traverse_${PID}.f90"
+CMD="@OMNI_HOME@/bin/omni_traverse"
+args=( --F --prefix xmpf -o ${TRAVERSER} "${files[@]}" )
 set -- ${args[@]}
 if [ "${OM_VERBOSE}" = "1" ]; then
     echo $CMD "$@"
@@ -66,10 +47,10 @@ for i in ${OM_OPTIONS}; do
 done
 
 GASNET_LIBS="@GASNET_LIBS@"
-if [ -s ${COLLECT_INIT_SRC} ]; then
-    LIBS="@OMNI_HOME@/lib/xmpf_main.o ${COLLECT_INIT_SRC} ${INIT_MODULE_OBJ} ${LIBS} -lxmpf -lxmp ${GASNET_LIBS} @BLASLIB@"
-else  # ${COLLECT_INIT_SRC} is empty
-    LIBS="@OMNI_HOME@/lib/xmpf_main.o ${INIT_MODULE_OBJ} ${LIBS} -lxmpf -lxmp ${GASNET_LIBS} @BLASLIB@"
+if [ -s ${TRAVERSER} ]; then
+    LIBS="@OMNI_HOME@/lib/xmpf_main.o ${TRAVERSER} ${LIBS} -lxmpf -lxmp ${GASNET_LIBS} @BLASLIB@"
+else  # ${TRAVERSER} is empty
+    LIBS="@OMNI_HOME@/lib/xmpf_main.o ${LIBS} -lxmpf -lxmp ${GASNET_LIBS} @BLASLIB@"
 fi
 
 LINKER=@MPI_FC@

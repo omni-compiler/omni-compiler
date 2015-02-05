@@ -1,7 +1,7 @@
 AC_PREREQ(2.60)
 LT_PREREQ(2.4)
 
-AC_INIT([Omni Compiler], [0.9.0], [h-murai@riken.jp], [omni])
+AC_INIT([Omni Compiler], [0.9.1], [h-murai@riken.jp], [omni])
 
 AC_CONFIG_AUX_DIR([./buildutils])
 AC_CONFIG_MACRO_DIR([./buildutils])
@@ -163,11 +163,16 @@ if test -e "Driver/src/Makefile.am"; then
     OMDRIVER_DIR=Driver/src
     AC_CONFIG_FILES($OMDRIVER_DIR/Makefile)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/ompp)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omcx2x)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omclinker)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omnative)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omcnative)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omlinker)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/oml2x)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omx2x)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omx2c)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omx2l)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/omc.conf)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/java.conf)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/pp.conf.openmp)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/l2x.conf.openmp)
@@ -175,6 +180,8 @@ if test -e "Driver/src/Makefile.am"; then
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/native.conf.openmp)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.openmp)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omc2c)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omc2x)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omcpp)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/ompcc)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/xmpcc)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/xmpcc.conf)
@@ -200,7 +207,7 @@ if test -e "Driver/src/Makefile.am"; then
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.acc)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/setup.conf)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omtranslate)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omni_collect_init)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omni_traverse)
     AC_MSG_RESULT(yes)
 else
     OMDRIVER_DIR=''
@@ -469,16 +476,14 @@ AC_ARG_ENABLE(mpi3,
     [doMPI3=yes], [doMPI3=no])
 
 ## Add temporarily by mnakao
-AC_ARG_ENABLE(FJRDMA,
-   [  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10.],
-   [enableFJRDMA=yes], [enableFJRDMA=no])
-
-AM_CONDITIONAL(FJRDMA, test x${enableFJRDMA} = xyes)
+#AC_ARG_ENABLE(FJRDMA,
+#   [  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10.],
+#   [enableFJRDMA=yes], [enableFJRDMA=no])
+#
+#AM_CONDITIONAL(FJRDMA, test x${enableFJRDMA} = xyes)
 ## End Add temporarily
 
-## Delete temporarily by mnakao
-#AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
-## End Delete temporarily 
+AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
 
 AC_SUBST(FJRDMA)
 
@@ -722,16 +727,20 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   else
     MPI_CC="mpixlcxx_r"
   fi
-  MPI_CPP=$MPI_CC
+
+# $MPICC cannot be used for XcodeML bug. Instead of $MPICC, 
+# $CC (gcc) is used. But, this is not a good idea. Wish to fix the bug.
+#  MPI_CPP=$MPI_CC
+  MPI_CPP=$CC
   MPI_CPPFLAGS="-E"
   MPI_CFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist $INC_PATH $MPI_OPENMP_FLAG"
 
   if test -f /usr/local/bg/lib/libkek.a; then
-    MPI_CLIBS="-L/usr/local/bg/lib/ -lkek"
+    MPI_CLIBS="/usr/local/bg/lib/libkek.a"
   fi
 
   if test -f /bgsys/drivers/ppcfloor/bgpm/lib/libbgpm.a; then
-    MPI_CLIBS="$MPI_CLIBS -L/bgsys/drivers/ppcfloor/bgpm/lib/ -lbgpm"
+    MPI_CLIBS="$MPI_CLIBS /bgsys/drivers/ppcfloor/bgpm/lib/libbgpm.a"
   fi
   
 # MPI F
@@ -742,7 +751,7 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   fi
   MPI_FPP=$MPI_FC
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist $INC_PATH $MPI_OPENMP_FLAG"
+  MPI_FCFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist -qextname $INC_PATH $MPI_OPENMP_FLAG"
   MPI_MODINC="-I"
 
   INC_PATH="/usr/local/bg/include"
@@ -757,13 +766,13 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   OMNI_L2X_CFLAGS=""
   OMNI_LX2X_CFLAGS=""
   OMNI_NTV_CFLAGS="-q64 -qipa"
-  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG $MPI_CLIBS"
 
 # Omni F
   OMNI_L2X_FCFLAGS=""
   OMNI_LX2X_FCFLAGS=""
   OMNI_NTV_FCFLAGS="-q64 -qipa -qextname"
-  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG $MPI_CLIBS"
 
 elif test "$target" = "powerpc-hitachi-aix"; then
 # MPI OpenMP
@@ -981,6 +990,7 @@ if test x$use_tca = xyes; then
   MPI_CPPFLAGS="${MPI_CPPFLAGS} -I${TCA_PREFIX}"
   MPI_CFLAGS="${MPI_CFLAGS} -I${TCA_PREFIX}"
   MPI_CLIBS="${MPI_CLIBS} -L${TCA_PREFIX} -ltca"
+  OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS ${MPI_CLIBS}"
 fi
 
 AM_CONDITIONAL(TCA, test x${use_tca} = xyes)
@@ -1160,6 +1170,8 @@ AC_SUBST(OMNI_NTV_CFLAGS)
 AC_SUBST(OMNI_LNK_CFLAGS)
 
 # Omni F
+OMNI_F_PP="$MPI_FPP $MPI_FPPFLAGS"
+AC_SUBST(OMNI_F_PP)
 AC_SUBST(OMNI_L2X_FCFLAGS)
 AC_SUBST(OMNI_LX2X_FCFLAGS)
 AC_SUBST(OMNI_NTV_FCFLAGS)
@@ -1713,7 +1725,11 @@ AC_SUBST(omniQRealFillGap)
 # --------------------------------------------------------------------
 # Export Omni Config Variable
 
-OMNI_HOME=${prefix}
+if test "${prefix}" = "NONE" -o "${prefix}" = ""; then
+  OMNI_HOME=/usr/local
+else
+  OMNI_HOME=${prefix}
+fi
 AC_SUBST(OMNI_HOME)
 AH_TEMPLATE(OMNI_HOME, [omni compiler install directory])
 AC_DEFINE_UNQUOTED(OMNI_HOME, "${OMNI_HOME}")

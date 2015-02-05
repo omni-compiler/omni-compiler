@@ -546,12 +546,12 @@ public class XcodeMLtools_C extends XcodeMLtools {
     }
 
     // create ident
+    // for coarray, set codiemnsions (ID=284)
     Ident ident = new Ident(name, sclass, type, addr,
 			    optionalFlags, gccAttrs,
-			    bitField, bitFieldExpr, enumValue, null);
-    // for coarray, set codiemnsions (ID=284)
-    if (codims != null)
-        ident.setCodimensions(codims);
+			    bitField, bitFieldExpr, enumValue, null, codims);
+    //if (codims != null)
+    //  ident.setCodimensions(codims);
 
     // declaring
     if (sclass != null && sclass.isVarOrFunc()) {

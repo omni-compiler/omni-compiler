@@ -126,7 +126,7 @@ function xmp_set_parameters()
 		FRONTEND_ADD_OPT=${arg#--Wf}
                 ;;
             --Wx*)
-		XCODE_TRANSLATOR_ADD_OPT=${arg#--Wt}
+		XCODE_TRANSLATOR_ADD_OPT=${arg#--Wx}
                 ;;
 	    --Wn*)
 		NATIVE_ADD_OPT=${arg#--Wn}
@@ -166,6 +166,8 @@ function xmp_set_parameters()
     for arg in $tmp_args; do
 	if [[ $arg =~ \.c$ ]]; then
             c_files="$c_files $arg"
+	elif [[ $arg =~ \.a$ ]]; then
+	    archive_files="$archive_files $arg"
 	elif [[ "${arg}" =~ \.o$ ]]; then
             obj_files="$obj_files $arg"
 	else

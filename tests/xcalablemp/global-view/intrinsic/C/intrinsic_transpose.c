@@ -5,7 +5,7 @@
 
 extern int chk_int(int ierr);
 extern int chk_int2(int ierr);
-
+extern void xmp_transpose(void *dst_d, void *src_d, int opt);
 #pragma xmp nodes p(4)
 
 void test_tr_a2a_bb_c16_1(){
@@ -332,7 +332,7 @@ int a[m][n],b[n][m];
     }
   }
 
-#pragma task on p(1,1:2)
+#pragma xmp task on p(1,1:2)
 {
   chk_int2(ierr);
 }

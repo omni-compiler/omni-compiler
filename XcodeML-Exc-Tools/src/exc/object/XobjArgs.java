@@ -5,6 +5,7 @@
  *  $
  */
 package exc.object;
+import exc.block.Block;
 
 /**
  * Iterator for the list of Xobject, which is used to represent the argment
@@ -46,6 +47,13 @@ public class XobjArgs
         return new XobjArgs(x, a);
     }
     
+    public XobjArgs cfold(Block block)
+    {
+        Xobject arg2 = (arg == null) ? null : arg.cfold(block);
+        XobjArgs next2 = (next == null) ? null : next.cfold(block);
+        return new XobjArgs(arg2, next2);
+    }
+
     @Override
     public String toString()
     {

@@ -1671,6 +1671,12 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         argASpec = expr_list_get_n(aSpecs, i);
         if (argASpec != NULL) {
             idASpec = expr_list_get_n(idShape, i);
+
+            expv lower = expr_list_get_n(argASpec, 0);
+            if (lower == NULL) expr_list_set_n(argASpec, 0, expr_list_get_n(idASpec, 0), FALSE);
+	    expv upper = expr_list_get_n(argASpec, 1);
+            if (upper == NULL) expr_list_set_n(argASpec, 1, expr_list_get_n(idASpec, 1), FALSE);
+
             /*
              * Now we have two array-spec. Determine which one to be used.
              */

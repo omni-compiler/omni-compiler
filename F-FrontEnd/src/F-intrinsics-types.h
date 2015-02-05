@@ -341,7 +341,10 @@ typedef struct {
                             left hand. */
 
                         /* -8 : return type is external. XMP original 
-                            intrinsic functions use this type. */
+                            intrinsic functions need to use this value. */
+
+                        /* -9 : return type is anything. returnType 
+                            may assume INTR_TYPE_INT. */
 
     int langSpec;
 } intrinsic_entry;

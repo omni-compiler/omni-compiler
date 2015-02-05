@@ -1,8 +1,12 @@
 /Makefile
 /config.log
 /config.status
+*~
 *.class
 *.[aox]
+.externalToolBuilders/
+.classpath
+.project
 C-FrontEnd/src/c-parser.output
 C-BackEnd/Makefile
 C-BackEnd/ant.properties
@@ -46,6 +50,7 @@ Driver/bin/oml2x
 Driver/bin/omlinker
 Driver/bin/omnative
 Driver/bin/omni_collect_init
+Driver/bin/omni_traverse
 Driver/bin/ompcc
 Driver/bin/ompf90
 Driver/bin/ompp
@@ -81,6 +86,7 @@ Driver/etc/x2x.conf.acc
 Driver/etc/x2x.conf.openmp
 Driver/etc/x2x.conf.xmp
 Driver/etc/x2x.conf.xmpf
+Driver/etc/xmpcc.conf
 Driver/src/Makefile
 Driver/src/omdriver
 Driver/src/xmp_collect_init
@@ -140,3 +146,4 @@ tests/tiny/Makefile
 tests/xcalablemp/global-view/intrinsic/F/*mod
 tests/xcalablemp/others/F/*mod
 */build.xml
+__omni_tmp__
