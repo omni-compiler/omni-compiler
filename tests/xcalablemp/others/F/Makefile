@@ -2,7 +2,7 @@ XFC     = xmpf90 -O2
 XRUN    = mpirun
 EXES    = exit.x module_test.x module_test0.x arg.x dnodes.x refobj.x 228.x
 
-all: module_test.x exit.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o refobj.x 228.x
+all: module_test.x exit.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o refobj.x 228.x 45_save.o 358_result.x
 
 module_test0.x: module0.o main.o
 	$(XFC) -o module_test0.x module0.o main.o
@@ -60,6 +60,12 @@ refobj.x: refobj.f90
 228.x: 228.f
 	$(XFC) -o 228.x 228.f
 
+45_save.o: 45_save.f90
+	$(XFC) -c 45_save.f90
+
+358_result.x: 358_result.f90
+	$(XFC) -o $@ $<
+
 run: $(EXES)
 	$(XRUN) -np 2 ./module_test.x
 	$(XRUN) -np 2 ./exit.x
@@ -70,6 +76,7 @@ run: $(EXES)
 	$(XRUN) -np 8 ./dnodes.x
 	$(XRUN) -np 4 ./refobj.x
 	$(XRUN) -np 1 ./228.x
+	./358_result.x
 
 clean:
 	rm -f $(EXES) *.o *.*mod
