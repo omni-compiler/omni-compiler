@@ -114,7 +114,8 @@ public class XMPcoarray {
   public int getElementLength() {
     Xobject elem = getElementLengthExpr(); 
     if (!elem.isIntConstant()) {
-      XMP.error("Restriction: could not evaluate the element length of: "+name);
+      XMP.error("current restriction: " +
+                "could not numerically evaluate the element length of: "+name);
       return 0;
     }
     return elem.getInt();
@@ -126,14 +127,16 @@ public class XMPcoarray {
   public Xobject getElementLengthExpr(Block block) {
     Xobject elem = ident.Type().getElementLengthExpr(block);    // see BasicType.java
     if (elem == null)
-      XMP.error("Restriction: could not get the element length of: "+name);
+      XMP.error("current restriction: " + 
+                "could not find the element length of: "+name);
     return elem;
   }
 
   public int getTotalArraySize() {
     Xobject size = getTotalArraySizeExpr();
     if (!size.isIntConstant()) {
-      XMP.error("Restriction: could not evaluate the total size of: "+name);
+      XMP.error("current restriction: " +
+                "could not numerically evaluate the total size of: "+name);
       return 0;
     }
     return size.getInt();
@@ -142,7 +145,8 @@ public class XMPcoarray {
   public Xobject getTotalArraySizeExpr() {
     Xobject size = getFindexRange().getTotalArraySizeExpr();
     if (size == null)
-      XMP.error("Restriction: could not get the size of: "+name);
+      XMP.error("current restriction: " +
+                "could not find the total size of: "+name);
     return size;
   }
 
