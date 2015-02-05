@@ -400,7 +400,7 @@ struct _XMPTIMING
 #endif
 
 #ifdef _XMP_TCA
-#define TCA_CHECK(tca_call) do {    \
+#define TCA_SAFE_CALL(tca_call) do {    \
   int status = tca_call;                        \
   if(status != TCA_SUCCESS) {                   \
   if(status == TCA_ERROR_INVALID_VALUE) {                   \

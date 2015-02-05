@@ -57,7 +57,7 @@ void _XMP_create_TCA_handle(void *acc_addr, _XMP_array_t *adesc)
   printf("[%d] tcaCreateHandle size = %d addr=%p\n", _XMP_world_rank, size, acc_addr);
 #endif
   tcaHandle tmp_handle;
-  TCA_CHECK(tcaCreateHandle(&tmp_handle, acc_addr, size, tcaMemoryGPU));
+  TCA_SAFE_CALL(tcaCreateHandle(&tmp_handle, acc_addr, size, tcaMemoryGPU));
 
   adesc->tca_handle = _XMP_alloc(sizeof(tcaHandle) * _XMP_world_size);
   MPI_Allgather(&tmp_handle, sizeof(tcaHandle), MPI_BYTE,
@@ -214,7 +214,7 @@ static void xmp_tcaSetDMADesc(_XMP_array_t *adesc, _XMP_reflect_sched_t *reflect
   }
   
   if (count == 1) {
-    TCA_CHECK(tcaSetDMADescInt_Memcpy(*dma_slot, dma_slot, &h[dst_rank], dst_offset,
+    TCA_SAFE_CALL(tcaSetDMADescInt_Memcpy(*dma_slot, dma_slot, &h[dst_rank], dst_offset,
 				      &h[src_rank], src_offset, width,
 				      getFlag(j, num_of_tca_neighbors), adesc->wait_slot, adesc->wait_tag));
 
@@ -223,7 +223,7 @@ static void xmp_tcaSetDMADesc(_XMP_array_t *adesc, _XMP_reflect_sched_t *reflect
 	   src_rank, dst_rank, dst_offset, src_offset, width);
 #endif
   } else if (count > 1) {
-    TCA_CHECK(tcaSetDMADescInt_Memcpy2D(*dma_slot, dma_slot, &h[dst_rank], dst_offset, pitch,
+    TCA_SAFE_CALL(tcaSetDMADescInt_Memcpy2D(*dma_slot, dma_slot, &h[dst_rank], dst_offset, pitch,
 					&h[src_rank], src_offset, pitch,
 					width, count, getFlag(j, num_of_tca_neighbors), adesc->wait_slot, adesc->wait_tag));
 
@@ -298,7 +298,7 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
     }
   }
 
-  TCA_CHECK(tcaSetDMAChainInt(_XMP_TCA_DMAC, adesc->dma_slot));
+  TCA_SAFE_CALL(tcaSetDMAChainInt(_XMP_TCA_DMAC, adesc->dma_slot));
 #if 1
   printf("[%d] DMA SLOT = %d\n", _XMP_world_rank, dma_slot);
 #endif
@@ -322,7 +322,7 @@ void _XMP_init_tca()
 {
   if(_XMP_world_size > 16)
     _XMP_fatal("TCA reflect has been not implemented in 16 more than nodes.");
-  TCA_CHECK(tcaInit());
+  TCA_SAFE_CALL(tcaInit());
   tcaDMADescInt_Init(); // Initialize Descriptor (Internal Memory) Mode
 }
 
@@ -361,16 +361,16 @@ static void _XMP_refect_wait_tca(_XMP_array_t *adesc)
 #endif
 
     if(lo_rank != -1)
-      TCA_CHECK(tcaWaitDMARecvDesc(&h[lo_rank], adesc->wait_slot, adesc->wait_tag));
+      TCA_SAFE_CALL(tcaWaitDMARecvDesc(&h[lo_rank], adesc->wait_slot, adesc->wait_tag));
 
     if(hi_rank != -1)
-      TCA_CHECK(tcaWaitDMARecvDesc(&h[hi_rank], adesc->wait_slot, adesc->wait_tag));
+      TCA_SAFE_CALL(tcaWaitDMARecvDesc(&h[hi_rank], adesc->wait_slot, adesc->wait_tag));
   }
 }
 
 void _XMP_reflect_do_tca(_XMP_array_t *adesc)
 {
-  TCA_CHECK(tcaStartDMADesc(_XMP_TCA_DMAC));
+  TCA_SAFE_CALL(tcaStartDMADesc(_XMP_TCA_DMAC));
   _XMP_refect_wait_tca(adesc);
   MPI_Barrier(MPI_COMM_WORLD);
 }

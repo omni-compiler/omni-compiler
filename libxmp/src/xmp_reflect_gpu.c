@@ -9,11 +9,11 @@ void _XMP_reflect_init_gpu(void *acc_addr, _XMP_array_t *array_desc);
 void _XMP_gpu_pack_vector_async(char * restrict dst, char * restrict src, int count, int blocklength, long stride, size_t typesize, void* async_id);
 void _XMP_gpu_unpack_vector_async(char * restrict dst, char * restrict src, int count, int blocklength, long stride, size_t typesize, void* async_id);
 void _XMP_gpu_pack_vector2_async(char * restrict dst0, char * restrict src0, int blocklength0, long stride0,
-				  char * restrict dst1, char * restrict src1, int blocklength1, long stride1,
-				  int count, size_t typesize, cudaStream_t st);
+				 char * restrict dst1, char * restrict src1, int blocklength1, long stride1,
+				 int count, size_t typesize, cudaStream_t st);
 void _XMP_gpu_unpack_vector2_async(char * restrict dst0, char * restrict src0, int blocklength0, long stride0,
-				    char * restrict dst1, char * restrict src1, int blocklength1, long stride1,
-				    int count, size_t typesize, cudaStream_t st);
+				   char * restrict dst1, char * restrict src1, int blocklength1, long stride1,
+				   int count, size_t typesize, cudaStream_t st);
 
 static void _XMP_reflect_wait(_XMP_array_t *a);
 
@@ -32,14 +32,14 @@ static char packVector = 1;
 static const int useSingleStreamLimit = 16 * 1024; //element
 
 // Macro to catch CUDA errors in CUDA runtime calls
-#define CUDA_SAFE_CALL(call)						\
-  do {                                                                  \
-    cudaError_t err = call;						\
-    if (cudaSuccess != err) {						\
-      fprintf (stderr, "Cuda error in file '%s' in line %i : %s.\n",	\
-	       __FILE__, __LINE__, cudaGetErrorString(err) );		\
-      exit(EXIT_FAILURE);						\
-    }									\
+#define CUDA_SAFE_CALL(call)					\
+  do {								\
+    cudaError_t err = call;					\
+    if (cudaSuccess != err) {					\
+      fprintf (stderr, "(CUDA) error, %s at line %d of %s\n",	\
+	       cudaGetErrorString(err), __FILE__, __LINE__);	\
+      exit(EXIT_FAILURE);					\
+    }								\
   } while (0)
 
 //#define _TLOG
@@ -140,10 +140,15 @@ static void _XMP_reflect_sched(_XMP_array_t *a, int *lwidth, int *uwidth,
 
       if(reflect == NULL){
 	reflect = _XMP_alloc(sizeof(_XMP_reflect_sched_t));
+      } 
+
+      if(reflect != NULL) {
 	reflect->is_periodic = -1; /* not used yet */
 	reflect->datatype_lo = MPI_DATATYPE_NULL;
 	reflect->datatype_hi = MPI_DATATYPE_NULL;
-	for (int j = 0; j < 4; j++) reflect->req[j] = MPI_REQUEST_NULL;
+	for (int j = 0; j < 4; j++) {
+	  reflect->req[j] = MPI_REQUEST_NULL;
+	}
 	reflect->lo_send_buf = NULL;
 	reflect->lo_recv_buf = NULL;
 	reflect->hi_send_buf = NULL;
@@ -153,7 +158,7 @@ static void _XMP_reflect_sched(_XMP_array_t *a, int *lwidth, int *uwidth,
 	reflect->hi_send_host_buf = NULL;
 	reflect->hi_recv_host_buf = NULL;
 	ai->reflect_acc_sched = reflect;
-      }else{
+      } else {
 	//
       }
 
@@ -193,7 +198,8 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 					 int lwidth, int uwidth, int is_periodic, void *dev_array_addr){
   //printf("desc=%p, tardim=%d, lw=%d, uw=%d, devp=%p\n", adesc, target_dim, lwidth, uwidth, dev_array_addr);
   
-  if (lwidth == 0 && uwidth == 0) return;
+  if (lwidth == 0 && uwidth == 0)
+    return;
 
   _XMP_array_info_t *ai = &(adesc->info[target_dim]);
   _XMP_array_info_t *ainfo = adesc->info;
@@ -571,14 +577,14 @@ static void gpu_update_host(_XMP_reflect_sched_t *reflect)
     size_t hi_buf_size = reflect->hi_width * reflect->blocklength * reflect->count;    
     gpu_memcpy_async(reflect->lo_send_host_buf, reflect->lo_send_buf, lo_buf_size + hi_buf_size, reflect->lo_async_id);
   }else{
-  if(reflect->hi_rank != MPI_PROC_NULL){
-    size_t lo_buf_size = reflect->lo_width * reflect->blocklength * reflect->count;
-    gpu_memcpy_async(reflect->lo_send_host_buf, reflect->lo_send_buf, lo_buf_size, reflect->lo_async_id);
-  }
-  if(reflect->lo_rank != MPI_PROC_NULL){
-    size_t hi_buf_size = reflect->hi_width * reflect->blocklength * reflect->count;
-    gpu_memcpy_async(reflect->hi_send_host_buf, reflect->hi_send_buf, hi_buf_size, reflect->hi_async_id);
-  }
+    if(reflect->hi_rank != MPI_PROC_NULL){
+      size_t lo_buf_size = reflect->lo_width * reflect->blocklength * reflect->count;
+      gpu_memcpy_async(reflect->lo_send_host_buf, reflect->lo_send_buf, lo_buf_size, reflect->lo_async_id);
+    }
+    if(reflect->lo_rank != MPI_PROC_NULL){
+      size_t hi_buf_size = reflect->hi_width * reflect->blocklength * reflect->count;
+      gpu_memcpy_async(reflect->hi_send_host_buf, reflect->hi_send_buf, hi_buf_size, reflect->hi_async_id);
+    }
   }
 }
 
@@ -589,16 +595,16 @@ static void gpu_update_device(_XMP_reflect_sched_t *reflect)
     size_t hi_buf_size = reflect->hi_width * reflect->blocklength * reflect->count;
     gpu_memcpy_async(reflect->lo_recv_buf, reflect->lo_recv_host_buf, lo_buf_size + hi_buf_size, reflect->lo_async_id);
   }else{
-  if(reflect->lo_rank != MPI_PROC_NULL){
-    int lo_width = reflect->lo_width;
-    size_t lo_buf_size = lo_width * reflect->blocklength * reflect->count;
-    gpu_memcpy_async(reflect->lo_recv_buf, reflect->lo_recv_host_buf, lo_buf_size, reflect->lo_async_id);
-  }
-  if(reflect->hi_rank != MPI_PROC_NULL){
-    int hi_width = reflect->hi_width;
-    size_t hi_buf_size = hi_width * reflect->blocklength * reflect->count;
-    gpu_memcpy_async(reflect->hi_recv_buf, reflect->hi_recv_host_buf, hi_buf_size, reflect->hi_async_id);
-  }
+    if(reflect->lo_rank != MPI_PROC_NULL){
+      int lo_width = reflect->lo_width;
+      size_t lo_buf_size = lo_width * reflect->blocklength * reflect->count;
+      gpu_memcpy_async(reflect->lo_recv_buf, reflect->lo_recv_host_buf, lo_buf_size, reflect->lo_async_id);
+    }
+    if(reflect->hi_rank != MPI_PROC_NULL){
+      int hi_width = reflect->hi_width;
+      size_t hi_buf_size = hi_width * reflect->blocklength * reflect->count;
+      gpu_memcpy_async(reflect->hi_recv_buf, reflect->hi_recv_host_buf, hi_buf_size, reflect->hi_async_id);
+    }
   }
 }
 
