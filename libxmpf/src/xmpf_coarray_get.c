@@ -158,11 +158,11 @@ void _getCoarray(int serno, char *baseAddr, int coindex, char *result,
                  int bytes, int rank, int skip[], int count[])
 {
   if (rank == 0) {  // fully contiguous after perfect collapsing
-    if (_XMPF_coarrayMsg)
+    if (_XMPF_coarrayMsg) {
       _XMPF_coarrayMsgPrefix();
       fprintf(stderr, "**** get %d bytes fully contiguous (%s)\n",
               bytes, __FILE__);
-
+    }
     _getVectorByByte(serno, baseAddr, bytes, coindex, result);
     return;
   }
