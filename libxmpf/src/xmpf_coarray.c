@@ -15,14 +15,13 @@ void xmpf_coarray_msg_(int *sw)
   _XMPF_coarrayMsg = *sw;
 
   if (_XMPF_coarrayMsg) {
-    _XMPF_coarrayMsgPrefix();
-    fprintf(stderr, "xmpf_coarray_msg ON\n");
+    _XMPF_coarrayDebugPrint("xmpf_coarray_msg ON\n");
 #ifdef _XMP_COARRAY_FJRDMA
-    fprintf(stderr, "  _XMP_COARRAY_FJRDMA defined\n");
+    fprintf(stderr, "  _XMP_COARRAY_FJRDMA defined -- ");
 #else
-    fprintf(stderr, "  _XMP_COARRAY_FJRDMA not defined\n");
+    fprintf(stderr, "  _XMP_COARRAY_FJRDMA not defined -- ");
 #endif
-    fprintf(stderr, "  BOUNDARY_BYTE = %d\n", BOUNDARY_BYTE);
+    fprintf(stderr, "%d-byte boundary\n", BOUNDARY_BYTE);
   }
 }
 
@@ -179,8 +178,7 @@ void xmpf_coarray_malloc_(int *serno, char **pointer, int *count, int *element)
 
   // set (see libxmp/src/xmp_coarray_set.c)
   if (_XMPF_coarrayMsg) {
-    _XMPF_coarrayMsgPrefix();
-    fprintf(stderr, "COARRAY ALLOCATION\n");
+    _XMPF_coarrayDebugPrint("COARRAY ALLOCATION\n");
     fprintf(stderr, "  *count=%d, elementRU=%zd, *element=%d\n",
             *count, elementRU, *element);
   }
@@ -199,10 +197,22 @@ void xmpf_coarray_malloc_(int *serno, char **pointer, int *count, int *element)
 
 void xmpf_sync_all_nostat_(void)
 {
+  static unsigned int id = 0;
+
   _XMPF_checkIfInTask("sync all");
+
+  id += 1;
+
+  if (_XMPF_coarrayMsg) {
+    _XMPF_coarrayDebugPrint("SYNC ALL in (id=%d)\n", id);
+  }
 
   int status;
   xmp_sync_all(&status);
+
+  if (_XMPF_coarrayMsg) {
+    _XMPF_coarrayDebugPrint("SYNC ALL out (id=%d)\n", id);
+  }
 }
 
 void xmpf_sync_all_stat_(int *stat, char *msg, int *msglen)
@@ -373,8 +383,12 @@ void _XMPF_checkIfInTask(char *msgopt)
 }
 
 
-void _XMPF_coarrayMsgPrefix(void)
+void _XMPF_coarrayDebugPrint(char *format, ...)
 {
-  fprintf(stderr, "coarray[%d] ", xmp_num_nodes());
+  va_list list;
+  va_start(list, format);
+  fprintf(stderr, "CAF[%d] ", xmp_node_num());
+  vfprintf(stderr, format, list);
+  va_end(list);
 }
 
