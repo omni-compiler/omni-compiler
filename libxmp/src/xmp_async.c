@@ -18,6 +18,7 @@ void _XMP_wait_async__(int async_id)
 {
   _XMP_async_comm_t *async;
 
+  //xmp_dbg_printf("async_id = %d\n", async_id);
   if (!(async = _XMP_get_async(async_id))) _XMP_fatal("wrong async-id");
 
   int nreqs = async->nreqs;;
@@ -155,6 +156,9 @@ _XMP_async_comm_t *_XMP_get_async(int async_id)
   int hash = async_id % _XMP_ASYNC_COMM_SIZE;
   _XMP_async_comm_t *async = &_XMP_async_comm_tab[hash];
 
+  //xmp_dbg_printf("get: hash = %d\n", hash);
+  //xmp_dbg_printf("async->nreqs = %d\n", async->nreqs);
+
   if (async->nreqs != 0){
     if (async->async_id == async_id){
       return async;
@@ -179,6 +183,8 @@ _XMP_async_comm_t *_XMP_get_or_create_async(int async_id)
 {
   int hash = async_id % _XMP_ASYNC_COMM_SIZE;
   _XMP_async_comm_t *async = &_XMP_async_comm_tab[hash];
+
+  //xmp_dbg_printf("put: hash = %d\n", hash);
 
   if (async->nreqs != 0){
     if (async->async_id == async_id){

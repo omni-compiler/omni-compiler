@@ -628,12 +628,12 @@ public class XMPanalyzePragma
     XobjList bcastNameList = (XobjList) bcastDecl.getArg(0);
     Xobject fromRef = bcastDecl.getArg(1);
     Xobject onRef = bcastDecl.getArg(2);
-    Xobject bcastOpt = bcastDecl.getArg(3);
+    Xobject asyncOpt = bcastDecl.getArg(3);
 
-    if(bcastOpt != null){
-      XMP.fatal("bcast opt is not supported yet, sorry!");
-      return;
-    }
+    // if(bcastOpt != null){
+    //   XMP.fatal("bcast opt is not supported yet, sorry!");
+    //   return;
+    // }
 
     Vector<Ident> bcast_vars = new Vector<Ident>();
     for(Xobject v: bcastNameList){
@@ -650,6 +650,7 @@ public class XMPanalyzePragma
     info.setBcastInfo(XMPobjectsRef.parseDecl(fromRef,env,pb),
 		      XMPobjectsRef.parseDecl(onRef,env,pb),
 		      bcast_vars);
+    info.setAsyncId(asyncOpt);
   }
 
   private void analyzeWaitAsync(Xobject waitAsyncDecl, 
