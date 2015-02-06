@@ -10,6 +10,13 @@ static void _XMP_wait_async_rdma(_XMP_async_comm_t *async);
 _XMP_async_comm_t *_XMP_get_async(int async_id);
 void _XMP_pop_async(int async_id);
 
+#define ASYNC_COMM 1
+
+#ifdef ASYNC_COMM
+_Bool is_async = false;
+int _async_id;
+#endif
+
 //
 //
 //
@@ -265,3 +272,32 @@ void _XMP_pop_async(int async_id)
   _XMP_fatal("internal error: inconsistent async table");
 
 }
+
+
+#ifdef ASYNC_COMM
+
+void xmp_init_async(int async_id){
+  is_async = true;
+  _async_id = async_id;
+}
+
+
+void xmpf_init_async__(int *async_id){
+  is_async = true;
+  _async_id = *async_id;
+}
+
+
+void xmp_start_async(int async_id){
+  //_XMP_async_comm_t *async = _XMP_get_or_create_async(async_id);
+  //MPI_Startall(async->nreqs, async->reqs);
+  is_async = false;
+}
+
+
+void xmpf_start_async__(int *async_id){
+  //xmp_start_async(*async_id);
+  is_async = false;
+}
+
+#endif

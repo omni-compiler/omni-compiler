@@ -94,13 +94,13 @@ public class XMP {
   public final static String set_reflect_f = "xmpf_set_reflect_";
   public final static String reflect_f = "xmpf_reflect_";
   public final static String reflect_async_f = "xmpf_reflect_async_";
+  public final static String init_async_f = "xmpf_init_async_";
+  public final static String start_async_f = "xmpf_start_async_";
   public final static String wait_async_f = "xmpf_wait_async_";
   public final static String barrier_f = "xmpf_barrier_";
   public final static String reduction_f = "xmpf_reduction_";
-  public final static String reduction_async_f = "xmpf_reduction_async_";
   public final static String reduction_loc_f = "xmpf_reduction_loc_";
   public final static String bcast_f = "xmpf_bcast_";
-  public final static String bcast_async_f = "xmpf_bcast_async_";
   public final static String test_task_on_f = "xmpf_test_task_on_";
   public final static String end_task_f = "xmpf_end_task_";
 

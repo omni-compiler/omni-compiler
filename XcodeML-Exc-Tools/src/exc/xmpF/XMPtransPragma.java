@@ -414,6 +414,12 @@ public class XMPtransPragma
 				    Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
     }
 
+    if (info.getAsyncId() != null){
+      Xobject arg = Xcons.List(info.getAsyncId());
+      Ident g = env.declInternIdent(XMP.init_async_f, Xtype.FsubroutineType);
+      ret_body.add(g.callSubroutine(arg));
+    }
+
     if (on_ref != null){
       if (info.pragma != XMPpragma.LOOP){
 	ret_body.add(on_ref.buildConstructor(env));
@@ -429,8 +435,8 @@ public class XMPtransPragma
 
     // object size
     int op = info.getReductionOp();
-    Ident f = env.declInternIdent(XMP.reduction_f,
-				  Xtype.FsubroutineType);
+
+    Ident f = env.declInternIdent(XMP.reduction_f, Xtype.FsubroutineType);
     Ident f2 = env.declInternIdent(XMP.reduction_loc_f, Xtype.FsubroutineType);
 
     //for(Ident id: info.getReductionVars()){
@@ -466,9 +472,16 @@ public class XMPtransPragma
 	ret_body.add(f2.callSubroutine(args2));
 	j++;
       }
-	  
+
       ret_body.add(f.callSubroutine(args));
     }
+
+    if (info.getAsyncId() != null){
+      Xobject arg = Xcons.List(info.getAsyncId());
+      Ident g = env.declInternIdent(XMP.start_async_f, Xtype.FsubroutineType);
+      ret_body.add(g.callSubroutine(arg));
+    }
+
     return Bcons.COMPOUND(ret_body);
   }
 
@@ -483,6 +496,12 @@ public class XMPtransPragma
     if (xmp_null == null){
 	xmp_null = env.declObjectId("XMP_NULL", null,
 				    Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
+    }
+
+    if (info.getAsyncId() != null){
+      Xobject arg = Xcons.List(info.getAsyncId());
+      Ident g = env.declInternIdent(XMP.init_async_f, Xtype.FsubroutineType);
+      ret_body.add(g.callSubroutine(arg));
     }
 
     XMPobjectsRef from_ref = info.getBcastFrom();
@@ -501,13 +520,7 @@ public class XMPtransPragma
     }
     else on_ref_arg = xmp_null;
 
-    Ident f;
-    if (info.getAsyncId() == null){
-      f = env.declInternIdent(XMP.bcast_f, Xtype.FsubroutineType);
-    }
-    else {
-      f = env.declInternIdent(XMP.bcast_async_f, Xtype.FsubroutineType);
-    }
+    Ident f = env.declInternIdent(XMP.bcast_f, Xtype.FsubroutineType);
 
     for(Ident id: info.getInfoVarIdents()){
       Xtype type = id.Type();
@@ -555,13 +568,16 @@ public class XMPtransPragma
 				from_ref_arg,
 				on_ref_arg);
 
-      if (info.getAsyncId() != null){
-	args.add(info.getAsyncId());
-      }
-
       ret_body.add(f.callSubroutine(args));
 
     }
+
+    if (info.getAsyncId() != null){
+      Xobject arg = Xcons.List(info.getAsyncId());
+      Ident g = env.declInternIdent(XMP.start_async_f, Xtype.FsubroutineType);
+      ret_body.add(g.callSubroutine(arg));
+    }
+
     return Bcons.COMPOUND(ret_body);
   }
 

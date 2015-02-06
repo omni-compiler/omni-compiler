@@ -2063,10 +2063,17 @@ xmp_bcast_clause:
 	      { $$ = list4(LIST,$2,NULL,NULL,$5); }
             ;
 
+/* xmp_reduction_clause: */
+/* 	       xmp_reduction_spec KW xmp_clause_opt */
+/* 	        { $$ = list3(LIST,$1,NULL,$3); } */
+/* 	     | xmp_reduction_spec KW xmp_ON xmp_obj_ref KW xmp_clause_opt */
+/*                 { $$ = list3(LIST,$1,$4,$6); } */
+/* 	     ; */
+
 xmp_reduction_clause:
-	       xmp_reduction_spec KW xmp_clause_opt
+	       xmp_reduction_spec KW xmp_async_opt
 	        { $$ = list3(LIST,$1,NULL,$3); }
-	     | xmp_reduction_spec KW xmp_ON xmp_obj_ref KW xmp_clause_opt
+	     | xmp_reduction_spec KW xmp_ON xmp_obj_ref KW xmp_async_opt
                 { $$ = list3(LIST,$1,$4,$6); }
 	     ;
 

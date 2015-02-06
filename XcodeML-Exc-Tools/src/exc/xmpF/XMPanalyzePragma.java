@@ -575,15 +575,16 @@ public class XMPanalyzePragma
 			XMPinfo info, PragmaBlock pb){
     Xobject reductionSpec = reductionDecl.getArg(0);
     Xobject reductionOnRef = reductionDecl.getArg(1);
-    Xobject reductionOpt = reductionDecl.getArg(2);
+    Xobject asyncOpt = reductionDecl.getArg(2);
 
-    if(reductionOpt != null){
-      XMP.fatal("redution opt is not supported yet, sorry!");
-      return;
-    }
+    // if(reductionOpt != null){
+    //   XMP.fatal("redution opt is not supported yet, sorry!");
+    //   return;
+    // }
 
     analyzeReductionSpec(info, reductionSpec, pb);
     info.setOnRef(XMPobjectsRef.parseDecl(reductionOnRef,env,pb));
+    info.setAsyncId(asyncOpt);
   }
 
   private void analyzeReductionSpec(XMPinfo info, Xobject reductionSpec,
