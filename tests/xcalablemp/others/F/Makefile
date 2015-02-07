@@ -1,6 +1,6 @@
 XFC     = xmpf90 -O2
 XRUN    = mpirun
-EXES    = exit.x module_test.x module_test0.x arg.x dnodes.x refobj.x 228.x
+EXES    = exit.x module_test.x module_test0.x arg.x dnodes.x refobj.x 228.x 358_result.x
 
 all: module_test.x exit.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o refobj.x 228.x 45_save.o 358_result.x
 
