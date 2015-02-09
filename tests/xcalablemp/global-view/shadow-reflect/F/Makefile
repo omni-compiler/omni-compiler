@@ -13,9 +13,7 @@ all default: $(EXES)
 .f90.x:
 	$(XCC) -o $@ $<
 
-run: full
-
-full:
+run: full.x
 	$(XRUN) -np 2 full.x
 
 clean:

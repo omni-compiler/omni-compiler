@@ -23,7 +23,7 @@ all default: $(EXES)
 .c.x:
 	$(XCC) -o $@ $<
 
-run:
+run:macro_in_pragma.x dnodes.x openmp.x 119.x 343_dynamicnode.x 344_include.x 293-hyphen.x 364.x
 	$(XRUN) -n 4 ./macro_in_pragma.x
 	export XMP_NODE_SIZE0=2; \
 	export XMP_NODE_SIZE1=2; \

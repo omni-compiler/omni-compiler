@@ -8,6 +8,8 @@
 #include "xmp_internal.h"
 #include "xmp.h"
 //#include "xmpf.h"
+extern void xmpf_gather(void *x_p, void *a_p, _XMP_array_t **idx_array);
+extern void xmpf_scatter(void *x_p, void *a_p, _XMP_array_t **idx_array);
 
 MPI_Fint xmp_get_mpi_comm_(void) {
   MPI_Comm commc = xmp_get_mpi_comm();
@@ -330,7 +332,7 @@ void xmp_gather_(_XMP_array_t **x_d, _XMP_array_t **a_d, ... )
   _XMP_array_t *idx_p;
   _XMP_array_t **idx_pp;
   _XMP_array_t **idx_array;
-  _XMP_array_t *x_p = *(_XMP_array_t **)x_d;
+//  _XMP_array_t *x_p = *(_XMP_array_t **)x_d;
   _XMP_array_t *a_p = *(_XMP_array_t **)a_d;
 
   idx_array = (_XMP_array_t **)_XMP_alloc(sizeof(_XMP_array_t *)*a_p->dim);
