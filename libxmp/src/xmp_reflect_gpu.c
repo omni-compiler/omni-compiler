@@ -3,6 +3,46 @@
 #include<stdio.h>
 #include<stdlib.h>
 
+static int is_same_sc(_XMP_array_t *adesc, int src_rank, int dst_rank)
+{
+  int src_id = adesc->sc_id[src_rank];
+  int dst_id = adesc->sc_id[dst_rank];
+
+  if (src_rank < 0 || dst_rank < 0) {
+    return -1;
+  }
+  
+  if (src_id == dst_id) {
+    return 1;
+  } else {
+    return 0;
+  } 
+}
+
+static void set_subcluster_id (_XMP_array_t *adesc)
+{
+  int my_rank = adesc->align_template->onto_nodes->comm_rank;
+  int my_id;
+  int *sc_id = _XMP_alloc(sizeof(int) * _XMP_world_size);
+
+  // temporary, FIX me
+  if ((my_rank % 2) == 0) {
+    my_id = 0;
+  } else {
+    my_id = 1;
+  }
+
+  MPI_Allgather(&my_id, 1, MPI_INT, sc_id, 1, MPI_INT, MPI_COMM_WORLD);
+
+  if (my_rank == 0) {
+    for (int i = 0; i < 8; i++){
+      printf("%d\n", sc_id[i]);
+    }
+  }
+  
+  adesc->sc_id = sc_id;
+}
+
 void _XMP_reflect_do_gpu(_XMP_array_t *array_desc);
 void _XMP_reflect_init_gpu(void *acc_addr, _XMP_array_t *array_desc);
 
@@ -30,6 +70,10 @@ static char useHostBuffer = 1;
 static char packVector = 1;
 //static const char useSingleKernel = 0;
 static const int useSingleStreamLimit = 16 * 1024; //element
+
+#ifdef _XMP_TCA
+static char useTCAHybrid = 0;
+#endif
 
 // Macro to catch CUDA errors in CUDA runtime calls
 #define CUDA_SAFE_CALL(call)					\
@@ -66,6 +110,8 @@ void _XMP_reflect_init_gpu(void *dev_addr,_XMP_array_t *a)
 {
   _XMP_RETURN_IF_SINGLE;
 
+  set_subcluster_id(a);
+
   static char isFlagSetted = 0;
   if(! isFlagSetted ){
     char *mode_str = getenv("XACC_COMM_MODE");
@@ -90,6 +136,22 @@ void _XMP_reflect_init_gpu(void *dev_addr,_XMP_array_t *a)
     isFlagSetted = 1;
   }
   //printf("reflect mode (%d, %d)\n", packVector, useHostBuffer);
+
+#ifdef _XMP_TCA
+  char *mode_str = getenv("USE_TCA_HYBRID");
+  if(mode_str !=  NULL){
+    int mode = atoi(mode_str);
+    switch(mode){
+    default:
+    case 0:
+      useTCAHybrid = 0;
+      break;
+    case 1:
+      useTCAHybrid = 1;
+      break;
+    }
+  }
+#endif
 
   if (!a->is_allocated){
     _xmpf_set_reflect_flag = 0;
@@ -482,6 +544,16 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   if (lwidth){
     src = lo_rank;
     dst = hi_rank;
+#ifdef _XMP_TCA
+    if (useTCAHybrid) {
+      if (is_same_sc(adesc, my_rank, src)) {
+	src = MPI_PROC_NULL;
+      }
+      if (is_same_sc(adesc, my_rank, dst)) {
+	dst = MPI_PROC_NULL;
+      }
+    }
+#endif
   } else {
     src = MPI_PROC_NULL;
     dst = MPI_PROC_NULL;
@@ -505,6 +577,16 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   if (uwidth){
     src = hi_rank;
     dst = lo_rank;
+#ifdef _XMP_TCA
+    if (useTCAHybrid) {
+      if (is_same_sc(adesc, my_rank, src)) {
+	src = MPI_PROC_NULL;
+      }
+      if (is_same_sc(adesc, my_rank, dst)) {
+	dst = MPI_PROC_NULL;
+      }
+    }
+#endif
   } else {
     src = MPI_PROC_NULL;
     dst = MPI_PROC_NULL;
