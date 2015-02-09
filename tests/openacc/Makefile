@@ -60,6 +60,7 @@ run: $(EXES)
 	$(XRUN) bug_exit_data.x
 	$(XRUN) bug_clause_comma.x
 	$(XRUN) kernels.x
+	$(XRUN) kernels-loop.x
 
 update_host_subarray_type:
 	$(XCC) -o update_host_subarray_char.x update_host_subarray.c -DCHAR
