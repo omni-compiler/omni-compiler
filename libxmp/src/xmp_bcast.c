@@ -27,6 +27,13 @@
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
+#define ASYNC_COMM 1
+
+#ifdef ASYNC_COMM
+extern _Bool is_async;
+extern int _async_id;
+#endif
+
 void _XMP_bcast_NODES_ENTIRE_OMITTED(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size) {
   _XMP_RETURN_IF_SINGLE;
 
@@ -34,40 +41,57 @@ void _XMP_bcast_NODES_ENTIRE_OMITTED(_XMP_nodes_t *bcast_nodes, void *addr, int 
     return;
   }
 
-  // setup type
-  MPI_Datatype mpi_datatype;
-  MPI_Type_contiguous(datatype_size, MPI_BYTE, &mpi_datatype);
-  MPI_Type_commit(&mpi_datatype);
-
   // bcast
-  MPI_Bcast(addr, count, mpi_datatype, _XMP_N_DEFAULT_ROOT_RANK, *((MPI_Comm *)bcast_nodes->comm));
+#ifdef ASYNC_COMM
+  if (is_async){
+    _XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
+    MPI_Ibcast(addr, count * datatype_size, MPI_BYTE, _XMP_N_DEFAULT_ROOT_RANK,
+	       *((MPI_Comm *)bcast_nodes->comm), &async->reqs[async->nreqs]);
+    async->nreqs++;
+  }
+  else
+#endif
+    MPI_Bcast(addr, count * datatype_size, MPI_BYTE, _XMP_N_DEFAULT_ROOT_RANK,
+	      *((MPI_Comm *)bcast_nodes->comm));
 
-  MPI_Type_free(&mpi_datatype);
+  /* // setup type */
+  /* MPI_Datatype mpi_datatype; */
+  /* MPI_Type_contiguous(datatype_size, MPI_BYTE, &mpi_datatype); */
+  /* MPI_Type_commit(&mpi_datatype); */
+
+  /* // bcast */
+  /* MPI_Bcast(addr, count, mpi_datatype, _XMP_N_DEFAULT_ROOT_RANK, *((MPI_Comm *)bcast_nodes->comm)); */
+
+  /* MPI_Type_free(&mpi_datatype); */
 }
 
-void _XMP_bcast_NODES_ENTIRE_GLOBAL(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
-                                    int from_lower, int from_upper, int from_stride) {
-  _XMP_RETURN_IF_SINGLE;
+//
+// no need for supporting this pattern yet
+//
 
-  if (!bcast_nodes->is_member) {
-    return;
-  }
+/* void _XMP_bcast_NODES_ENTIRE_GLOBAL(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size, */
+/*                                     int from_lower, int from_upper, int from_stride) { */
+/*   _XMP_RETURN_IF_SINGLE; */
 
-  // check <from-ref>
-  if (_XMP_M_COUNT_TRIPLETi(from_lower, from_upper, from_stride) != 1) {
-    _XMP_fatal("broadcast failed, multiple source nodes indicated");
-  }
+/*   if (!bcast_nodes->is_member) { */
+/*     return; */
+/*   } */
 
-  // setup type
-  MPI_Datatype mpi_datatype;
-  MPI_Type_contiguous(datatype_size, MPI_BYTE, &mpi_datatype);
-  MPI_Type_commit(&mpi_datatype);
+/*   // check <from-ref> */
+/*   if (_XMP_M_COUNT_TRIPLETi(from_lower, from_upper, from_stride) != 1) { */
+/*     _XMP_fatal("broadcast failed, multiple source nodes indicated"); */
+/*   } */
 
-  // bcast
-  MPI_Bcast(addr, count, mpi_datatype, from_lower, *((MPI_Comm *)bcast_nodes->comm));
+/*   // setup type */
+/*   MPI_Datatype mpi_datatype; */
+/*   MPI_Type_contiguous(datatype_size, MPI_BYTE, &mpi_datatype); */
+/*   MPI_Type_commit(&mpi_datatype); */
 
-  MPI_Type_free(&mpi_datatype);
-}
+/*   // bcast */
+/*   MPI_Bcast(addr, count, mpi_datatype, from_lower, *((MPI_Comm *)bcast_nodes->comm)); */
+
+/*   MPI_Type_free(&mpi_datatype); */
+/* } */
 
 // FIXME read spec
 void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
@@ -160,13 +184,25 @@ void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int co
     }
   }
 
-  // setup type
-  MPI_Datatype mpi_datatype;
-  MPI_Type_contiguous(datatype_size, MPI_BYTE, &mpi_datatype);
-  MPI_Type_commit(&mpi_datatype);
+#ifdef ASYNC_COMM
+  if (is_async){
+    _XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
+    MPI_Ibcast(addr, count * datatype_size, MPI_BYTE, root,
+	       *((MPI_Comm *)bcast_nodes->comm), &async->reqs[async->nreqs]);
+    async->nreqs++;
+  }
+  else
+#endif
+  MPI_Bcast(addr, count * datatype_size, MPI_BYTE, root,
+	    *((MPI_Comm *)bcast_nodes->comm));
 
-  // bcast
-  MPI_Bcast(addr, count, mpi_datatype, root, *((MPI_Comm *)bcast_nodes->comm));
+  /* // setup type */
+  /* MPI_Datatype mpi_datatype; */
+  /* MPI_Type_contiguous(datatype_size, MPI_BYTE, &mpi_datatype); */
+  /* MPI_Type_commit(&mpi_datatype); */
 
-  MPI_Type_free(&mpi_datatype);
+  /* // bcast */
+  /* MPI_Bcast(addr, count, mpi_datatype, root, *((MPI_Comm *)bcast_nodes->comm)); */
+
+  /* MPI_Type_free(&mpi_datatype); */
 }

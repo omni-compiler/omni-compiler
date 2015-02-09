@@ -1610,7 +1610,7 @@ public class XMPtranslateLocalPragma {
 
     // create function arguments
     XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
-    XobjList accOrHost = (XobjList)reductionDecl.getArg(2);
+    XobjList accOrHost = (XobjList)reductionDecl.getArg(3);
     boolean isHost = false;
     boolean isACC = false;
     for (Xobject x : accOrHost){
@@ -1648,7 +1648,7 @@ public class XMPtranslateLocalPragma {
                                                               execFuncArgs.operand(), reductionFuncArgsList);
       }
     }
-    
+
     if(isACC){
       XobjList vars = Xcons.List();
       XobjList reductionSpecList = (XobjList)reductionRef.getArg(1);
@@ -1659,10 +1659,19 @@ public class XMPtranslateLocalPragma {
       Bcons.PRAGMA(Xcode.ACC_PRAGMA, "HOST_DATA",
             Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"), vars)), Bcons.blockList(reductionFuncCallBlock));
     }
+
+    Xobject async = reductionDecl.getArg(2);
+    if (async.Opcode() != Xcode.LIST){
+      Ident f = _globalDecl.declExternFunc("xmpc_init_async");
+      pb.insert(f.Call(Xcons.List(async)));
+      Ident g = _globalDecl.declExternFunc("xmpc_start_async");
+      pb.add(g.Call(Xcons.List(async)));;
+    }
+    
     pb.replace(reductionFuncCallBlock);
 
-    // add function calls for profiling                                                                                    
-    Xobject profileClause = reductionDecl.getArg(3);
+    // add function calls for profiling
+    Xobject profileClause = reductionDecl.getArg(4);
     if( _all_profile || (profileClause != null && _selective_profile)){
         if (doScalasca == true) {
             XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp reduction:" + pb.getLineNo()));
@@ -2085,6 +2094,14 @@ public class XMPtranslateLocalPragma {
 	bcastFuncCallBlock = createBcastFuncCallBlock(false, execFuncSurfix,
                                             execFuncArgs.operand(), bcastArgsList, execFromRefArgs);
       }
+    }
+
+    Xobject async = bcastDecl.getArg(3);
+    if (async.Opcode() != Xcode.LIST){
+      Ident f = _globalDecl.declExternFunc("xmpc_init_async");
+      pb.insert(f.Call(Xcons.List(async)));
+      Ident g = _globalDecl.declExternFunc("xmpc_start_async");
+      pb.add(g.Call(Xcons.List(async)));;
     }
 
     pb.replace(bcastFuncCallBlock);
