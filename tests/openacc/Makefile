@@ -58,6 +58,7 @@ run: $(EXES)
 	$(XRUN) kernel_sync.x
 	$(XRUN) enter_exit_data.x
 	$(XRUN) bug_exit_data.x
+	$(XRUN) bug_clause_comma.x
 
 update_host_subarray_type:
 	$(XCC) -o update_host_subarray_char.x update_host_subarray.c -DCHAR
