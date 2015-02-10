@@ -56,7 +56,7 @@ if [ "${OM_VERBOSE}" = "1" ]; then
     echo $CMD "$@"
 fi
 
-$CMD "$@"
+$CMD $@
 v=$?
 rm -f ${INIT_MODULE_OBJ}
 rm -f /tmp/omni_traverse_${PID}.*

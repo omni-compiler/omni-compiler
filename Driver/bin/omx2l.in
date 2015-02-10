@@ -21,6 +21,11 @@ if [ "${OM_USE_OPENMP}" = "1" -o "${OM_USE_XMP}" = "1" -o "${OM_USE_XMPF}" = "1"
     if [ "${OM_VERBOSE}" = "1" ]; then
         echo "skip backend"
     fi
+
+    if [ "${OM_USE_ACC}" != "1" ]; then
+	mv ${OUTFILE%.*}.in.c $OUTFILE
+    fi
+
     if [ ! -e "$OUTFILE" ]; then
         echo "$OUTFILE" not found
         exit 1
