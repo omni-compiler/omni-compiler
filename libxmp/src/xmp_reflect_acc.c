@@ -23,12 +23,12 @@ void _XMP_reflect_init_acc(void *acc_addr, _XMP_array_t *array_desc)
   }
 
   if (useTCAHybrid) {
-    /* printf("Use TCA Hybrid reflect init\n"); */
+    printf("Use TCA Hybrid reflect init\n");
     _XMP_create_TCA_handle(acc_addr, array_desc);
     _XMP_create_TCA_desc(array_desc);
     _XMP_reflect_init_gpu(acc_addr, array_desc);
   } else {
-    /* printf("Use TCA reflect init\n"); */
+    printf("Use TCA reflect init\n");
     _XMP_create_TCA_handle(acc_addr, array_desc);
     _XMP_create_TCA_desc(array_desc);
   }
@@ -44,13 +44,12 @@ void _XMP_reflect_do_acc(_XMP_array_t *array_desc)
 #ifdef _XMP_TCA
 
   if (useTCAHybrid) {
-    /* printf("Use TCA Hybrid reflect do\n"); */
+    printf("Use TCA Hybrid reflect do\n");
     _XMP_reflect_do_tca(array_desc);
     _XMP_reflect_do_gpu(array_desc);
   } else {
-    /* printf("Use TCA reflect do\n"); */
+    printf("Use TCA reflect do\n");
     _XMP_reflect_do_tca(array_desc);
-    _XMP_reflect_do_gpu(array_desc);
   }
 #else
   _XMP_reflect_do_gpu(array_desc);
