@@ -415,6 +415,9 @@ struct _XMPTIMING
   exit(-1); \
   }               \
   }while (0)
+
+extern int useTCAHybrid;
+extern int useTCAHybridFlag;
 #endif
 
 #ifdef _XMP_COARRAY_GASNET

@@ -209,7 +209,7 @@ typedef struct _XMP_array_type {
   int   dma_slot;
   int   wait_slot;
   int   wait_tag;
-  int   *sc_id;
+  int   *network_id;
 #endif
   unsigned long long total_elmts;
   // --------------------------------

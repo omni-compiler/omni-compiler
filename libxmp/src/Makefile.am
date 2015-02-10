@@ -22,7 +22,7 @@ if FJRDMA
 endif
 
 if TCA
-    libxmp_a_SOURCES += xmp_reflect_tca.c
+    libxmp_a_SOURCES += xmp_reflect_tca.c xmp_tca_runtime.c
     CFLAGS        += -D_XMP_TCA
 endif
 

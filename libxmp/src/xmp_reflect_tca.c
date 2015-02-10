@@ -1,44 +1,9 @@
 #include "xmp_internal.h"
 #include "tca-api.h"
+#include <assert.h>
 #define _XMP_TCA_DMAC 0
 #define _XMP_TCA_CHAIN_FLAG (tcaDMANotify|tcaDMAContinue)
 #define _XMP_TCA_LAST_FLAG  (tcaDMANotify)
-
-static char useTCAHybrid = 0;
-
-static int is_same_sc(_XMP_array_t *adesc, int src_rank, int dst_rank)
-{
-  int src_id = adesc->sc_id[src_rank];
-  int dst_id = adesc->sc_id[dst_rank];
-
-  if (useTCAHybrid) {
-    if (src_id == dst_id) {
-      return 1;
-    } else {
-      return 0;
-    }
-  } else {
-    return 0;
-  }
-}
-
-static void set_subcluster_id (_XMP_array_t *adesc)
-{
-  int my_rank = adesc->align_template->onto_nodes->comm_rank;
-  int my_id;
-  int *sc_id = _XMP_alloc(sizeof(int) * _XMP_world_size);
-  
-  // temporary, FIX me
-  if ((my_rank % 2) == 0) {
-    my_id = 0;
-  } else {
-    my_id = 1;
-  }
-
-  MPI_Allgather(&my_id, 1, MPI_INT, sc_id, 1, MPI_INT, MPI_COMM_WORLD);
-
-  adesc->sc_id = sc_id;
-}
 
 void _XMP_create_TCA_handle(void *acc_addr, _XMP_array_t *adesc)
 {
@@ -63,7 +28,7 @@ void _XMP_create_TCA_handle(void *acc_addr, _XMP_array_t *adesc)
   MPI_Allgather(&tmp_handle, sizeof(tcaHandle), MPI_BYTE,
                 adesc->tca_handle, sizeof(tcaHandle), MPI_BYTE, MPI_COMM_WORLD);
 
-  set_subcluster_id(adesc);
+  _xmp_set_network_id(adesc);
 
   adesc->set_handle = _XMP_N_INT_TRUE;
 }
@@ -243,12 +208,11 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
     _XMP_array_info_t *ai = &(adesc->info[i]);
     if(ai->shadow_type == _XMP_N_SHADOW_NONE)
       continue;
-    int my_rank = _XMP_world_rank;
     int lo_rank = ai->reflect_acc_sched->lo_rank;
     int hi_rank = ai->reflect_acc_sched->hi_rank;
-    if(lo_rank != -1 && is_same_sc(adesc, my_rank, lo_rank))
+    if(lo_rank != -1 && _xmp_is_same_network_id(adesc, lo_rank))
       num_of_tca_neighbors++;
-    if(hi_rank != -1 && is_same_sc(adesc, my_rank, hi_rank))
+    if(hi_rank != -1 && _xmp_is_same_network_id(adesc, hi_rank))
       num_of_tca_neighbors++;
   }
 
@@ -269,7 +233,7 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
     off_t hi_dst_offset = reflect->hi_dst_offset;
     off_t hi_src_offset = reflect->hi_src_offset;
 
-    if(lo_rank != -1 && is_same_sc(adesc, my_rank, lo_rank)) {
+    if(lo_rank != -1 && _xmp_is_same_network_id(adesc, lo_rank)) {
       xmp_tcaSetDMADesc(adesc, reflect, h, &dma_slot, lo_rank, lo_dst_offset, my_rank, lo_src_offset, j++, num_of_tca_neighbors);
       if(count == 1){
 	lo_src_offset += reflect->stride;
@@ -277,7 +241,7 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
       }
     }
 
-    if(hi_rank != -1 && is_same_sc(adesc, my_rank, hi_rank)) {
+    if(hi_rank != -1 && _xmp_is_same_network_id(adesc, hi_rank)) {
       xmp_tcaSetDMADesc(adesc, reflect, h, &dma_slot, hi_rank, hi_dst_offset, my_rank, hi_src_offset, j++, num_of_tca_neighbors);
       if(count == 1){
 	hi_src_offset += reflect->stride;
@@ -293,20 +257,6 @@ static void create_TCA_desc_intraMEM(_XMP_array_t *adesc)
 
 void _XMP_create_TCA_desc(_XMP_array_t *adesc)
 {
-  char *mode_str = getenv("USE_TCA_HYBRID");
-  if(mode_str !=  NULL){
-    int mode = atoi(mode_str);
-    switch(mode){
-    default:
-    case 0:
-      useTCAHybrid = 0;
-      break;
-    case 1:
-      useTCAHybrid = 1;
-      break;
-    }
-  }
-
   //  if(! full_of_intraMEM)
   create_TCA_desc_intraMEM(adesc);
   //  else
@@ -315,29 +265,6 @@ void _XMP_create_TCA_desc(_XMP_array_t *adesc)
   /* int    namelen; */
   /* char   processor_name[MPI_MAX_PROCESSOR_NAME]; */
   /* MPI_Get_processor_name(processor_name,&namelen); */
-}
-
-void _XMP_init_tca()
-{
-  if(_XMP_world_size > 16)
-    _XMP_fatal("TCA reflect has been not implemented in 16 more than nodes.");
-  TCA_SAFE_CALL(tcaInit());
-  tcaDMADescInt_Init(); // Initialize Descriptor (Internal Memory) Mode
-}
-
-void _XMP_alloc_tca(_XMP_array_t *adesc)
-{
-  adesc->set_handle = _XMP_N_INT_FALSE;
-  int array_dim = adesc->dim;
-  for(int i = 0; i < array_dim; i++){
-    _XMP_array_info_t *ai = &(adesc->info[i]);
-    if(ai->shadow_type == _XMP_N_SHADOW_NONE)
-      continue;
-    ai->reflect_acc_sched = _XMP_alloc(sizeof(_XMP_reflect_sched_t));
-  }
-
-  adesc->wait_slot = 0;  // No change ?
-  adesc->wait_tag  = 0x100;  // No change ?
 }
 
 static void _XMP_refect_wait_tca(_XMP_array_t *adesc)
@@ -349,19 +276,18 @@ static void _XMP_refect_wait_tca(_XMP_array_t *adesc)
     _XMP_array_info_t *ai = &(adesc->info[i]);
     if(ai->shadow_type == _XMP_N_SHADOW_NONE)
       continue;
-    int my_rank = _XMP_world_rank;
     int lo_rank = ai->reflect_acc_sched->lo_rank;
     int hi_rank = ai->reflect_acc_sched->hi_rank;
     
-    /* if(lo_rank != -1) */
+    /* if(lo_rank != -1 && _xmp_is_same_network_id(adesc, lo_rank)) */
     /*   printf("[%d] lo wait from %d\n", _XMP_world_rank, lo_rank); */
-    /* if(hi_rank != -1) */
+    /* if(hi_rank != -1 && _xmp_is_same_network_id(adesc, hi_rank)) */
     /*   printf("[%d] hi wait from %d\n", _XMP_world_rank, hi_rank); */
 
-    if(lo_rank != -1 && is_same_sc(adesc, my_rank, lo_rank))
+    if(lo_rank != -1 && _xmp_is_same_network_id(adesc, lo_rank))
       TCA_SAFE_CALL(tcaWaitDMARecvDesc(&h[lo_rank], adesc->wait_slot, adesc->wait_tag));
 
-    if(hi_rank != -1 && is_same_sc(adesc, my_rank, hi_rank))
+    if(hi_rank != -1 && _xmp_is_same_network_id(adesc, hi_rank))
       TCA_SAFE_CALL(tcaWaitDMARecvDesc(&h[hi_rank], adesc->wait_slot, adesc->wait_tag));
   }
 }
