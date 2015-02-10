@@ -34,8 +34,8 @@ void _XMP_reflect_do_acc(_XMP_array_t *array_desc)
 
   if (useTCAHybrid) {
     printf("Use TCA Hybrid reflect do\n");
-    _XMP_reflect_do_gpu(array_desc);
     _XMP_reflect_do_tca(array_desc);
+    _XMP_reflect_do_gpu(array_desc);
   } else {
     printf("Use TCA reflect do\n");
     _XMP_reflect_do_tca(array_desc);

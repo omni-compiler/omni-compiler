@@ -478,24 +478,32 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     hi_rank = MPI_PROC_NULL;
   }
 
+
+#ifdef _XMP_TCA
+  //
+  // select communication
+  //
+
+  assert(useTCAHybridFlag == 1);
+
+  if (lo_rank != MPI_PROC_NULL) {
+    if (_xmp_is_same_network_id(adesc, lo_rank)) {
+      lo_rank = MPI_PROC_NULL;
+    }
+  }
+
+  if (hi_rank != MPI_PROC_NULL) {
+    if (_xmp_is_same_network_id(adesc, hi_rank)) {
+      hi_rank = MPI_PROC_NULL;
+    }
+  }
+#endif
+
   // for lower shadow
 
   if (lwidth){
     src = lo_rank;
     dst = hi_rank;
-#ifdef _XMP_TCA
-    assert(useTCAHybridFlag == 1);
-    if (src != -1)
-      if (useTCAHybrid) {
-	if (_xmp_is_same_network_id(adesc, src)) {
-	  src = MPI_PROC_NULL;
-	}
-	if (dst != -1)
-	  if (_xmp_is_same_network_id(adesc, dst)) {
-	    dst = MPI_PROC_NULL;
-	  }
-    }
-#endif
   } else {
     src = MPI_PROC_NULL;
     dst = MPI_PROC_NULL;
@@ -509,8 +517,11 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     MPI_Request_free(&reflect->req[1]);
   }
 
+  /* printf("[%d] : lwidth src = %d\n", my_rank, src); */
   MPI_Recv_init(mpi_lo_recv_buf, 1, reflect->datatype_lo, src,
 		_XMP_N_MPI_TAG_REFLECT_LO, *comm, &reflect->req[0]);
+
+  /* printf("[%d] : lwidth dst = %d\n", my_rank, dst); */
   MPI_Send_init(mpi_lo_send_buf, 1, reflect->datatype_lo, dst,
 		_XMP_N_MPI_TAG_REFLECT_LO, *comm, &reflect->req[1]);
 
@@ -519,19 +530,6 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   if (uwidth){
     src = hi_rank;
     dst = lo_rank;
-#ifdef _XMP_TCA
-    assert(useTCAHybridFlag == 1);
-    if (useTCAHybrid) {
-      if (src != -1)
-	if (_xmp_is_same_network_id(adesc, src)) {
-	  src = MPI_PROC_NULL;
-	}
-      if (dst != -1)
-	if (_xmp_is_same_network_id(adesc, dst)) {
-	  dst = MPI_PROC_NULL;
-	}
-    }
-#endif
   } else {
     src = MPI_PROC_NULL;
     dst = MPI_PROC_NULL;
@@ -545,8 +543,11 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     MPI_Request_free(&reflect->req[3]);
   }
 
+  /* printf("[%d] : uwidth src = %d\n", my_rank, src); */
   MPI_Recv_init(mpi_hi_recv_buf, 1, reflect->datatype_hi, src,
 		_XMP_N_MPI_TAG_REFLECT_HI, *comm, &reflect->req[2]);
+
+  /* printf("[%d] : uwidth dst = %d\n", my_rank, dst); */
   MPI_Send_init(mpi_hi_send_buf, 1, reflect->datatype_hi, dst,
 		_XMP_N_MPI_TAG_REFLECT_HI, *comm, &reflect->req[3]);
 
