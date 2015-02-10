@@ -3210,7 +3210,7 @@ static expv
 copy_function_args(const expv args) {
     expv v, new_args, varg, new_varg;
     list lp;
-    TYPE_DESC tp;
+    //TYPE_DESC tp;
 
     new_args = XMALLOC(expv, sizeof(*new_args));
     *new_args = *args;
@@ -3299,7 +3299,7 @@ use_assoc_common(SYMBOL name, struct use_argument * args, int isRename)
 
         // deep copy for function types!
         if((mep = PROC_EXT_ID(mid)) != NULL) {
-          ID id;
+          //ID id;
           expv v;
           list lp;
 
