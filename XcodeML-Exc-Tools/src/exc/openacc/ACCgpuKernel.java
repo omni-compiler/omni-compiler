@@ -274,7 +274,7 @@ public class ACCgpuKernel {
     XobjList deviceKernelParamIds = Xcons.IDList();
     //add paramId from outerId
     for(Ident id : outerIdList){
-      if(_readOnlyOuterIdSet.contains(id) && (id.Type().isArray() || id.Type().isPointer())){
+      if(ACC.useReadOnlyDataCache && _readOnlyOuterIdSet.contains(id) && (id.Type().isArray() || id.Type().isPointer())){
         Xtype constParamType = makeConstRestrictType(Xtype.voidType);
         Ident constParamId = Ident.Param("_ACC_cosnt_" + id.getName(), constParamType);
        

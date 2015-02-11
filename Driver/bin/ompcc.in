@@ -19,6 +19,8 @@ for i in "$@"; do
 	    else
 		echo "warning: -acc option is unavailable, rebuild the compiler with ./configure --enable-openacc"
 	    fi;;
+	-no-ldg)
+	    args=("${args[@]}" "--Wx${i}");;
         *)
             args=("${args[@]}" "${i}");;
     esac

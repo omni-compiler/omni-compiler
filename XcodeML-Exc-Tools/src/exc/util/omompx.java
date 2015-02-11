@@ -207,6 +207,8 @@ public class omompx
       } else if (arg.startsWith("-max_assumed_shape=")) {
 	  String n = arg.substring(19);
 	  exc.xmpF.XMP.MAX_ASSUMED_SHAPE = Integer.parseInt(n);
+      } else if (arg.equals("-no-ldg")){
+        exc.openacc.ACC.useReadOnlyDataCache = false;
       } else if(arg.startsWith("-")){
         error("unknown option " + arg);
       } else if(inXmlFile == null) {
