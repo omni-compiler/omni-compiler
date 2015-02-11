@@ -991,8 +991,10 @@ if test x$use_tca = xyes; then
   MPI_CFLAGS="${MPI_CFLAGS} -I${TCA_PREFIX}"
   MPI_CLIBS="${MPI_CLIBS} -L${TCA_PREFIX} -ltca"
   OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS ${MPI_CLIBS}"
+  TCA_CFLAGS+="-I${TCA_PREFIX}"
 fi
 
+AC_SUBST(TCA_CFLAGS)
 AM_CONDITIONAL(TCA, test x${use_tca} = xyes)
 # --------------------------------------------------------------------
 # specify GASNet path
