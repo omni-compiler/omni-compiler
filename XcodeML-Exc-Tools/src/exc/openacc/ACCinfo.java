@@ -163,6 +163,9 @@ public class ACCinfo {
     if(this.num_gangsExp != null) throw new ACCexception("number of gangs is already specified"); 
     if(num_gangsExp == null) return;
     
+    if(! num_gangsExp.isIntConstant()){
+      throw new ACCexception("only constant integer is allowed for num_gangs");
+    }
     if(isExpScalarInt(num_gangsExp)){
       this.num_gangsExp = num_gangsExp;
     }else{
@@ -191,6 +194,9 @@ public class ACCinfo {
     if(this.vect_lenExp != null) throw new ACCexception("vector length is already specified");
     if(vect_lenExp == null) return;
     
+    if(! vect_lenExp.isIntConstant()){
+      throw new ACCexception("only constant integer is allowed for vector_length");
+    }
     if(isExpScalarInt(vect_lenExp)){
       this.vect_lenExp = vect_lenExp;
     }else{

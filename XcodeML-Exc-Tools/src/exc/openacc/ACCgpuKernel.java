@@ -583,6 +583,12 @@ public class ACCgpuKernel {
 	ACC.fatal("non canonical loop");
       }
     }
+    
+    Xobject numGangsExpr = info.getNumGangsExp();
+    Xobject vectorLengthExpr = info.getVectorLengthExp();
+//    System.out.println(numGangsExpr);
+    if(numGangsExpr != null) gpuManager.setNumGangs(numGangsExpr);
+    if(vectorLengthExpr != null) gpuManager.setVectorLength(vectorLengthExpr);
 
     String execMethodName = gpuManager.getMethodName(forBlock);
     if(execMethodName == ""){ //if execMethod is not defined or seq
