@@ -306,7 +306,7 @@ int xmp_align_size(xmp_desc_t d, int dim){
 
 int xmp_align_replicated(xmp_desc_t d, int dim, int *replicated){
 
-  _XMP_array_t *a = (_XMP_array_t *)d;
+  //_XMP_array_t *a = (_XMP_array_t *)d;
 
   int andims, nndims, axis, counter=0; 
   xmp_desc_t dt, dn;

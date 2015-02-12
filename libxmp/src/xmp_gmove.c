@@ -1179,9 +1179,9 @@ void _XMP_gmove_calc_elmts_myrank(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc
   int i0,i1,i2,i3,i4,i5,i6;
   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
   int myrank = exec_nodes->comm_rank;
-  int comm_size = exec_nodes->comm_size;
+  //int comm_size = exec_nodes->comm_size;
   int src_seq_rank, dst_seq_rank;
-  int *unpack_loc;
+  //int *unpack_loc;
   (*src_num_myrank)=0;
   (*dst_num_myrank)=0;
 
@@ -1465,7 +1465,7 @@ void _XMP_gmove_create_subcomm(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t 
   _XMP_template_t *dst_template;
   _XMP_nodes_t *dst_n;
   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
-  int myrank = exec_nodes->comm_rank;
+  //int myrank = exec_nodes->comm_rank;
   int i, j, temp_index, nodes_index;
   int dst_dim, dst_n_dim, dst_myrank, dst_align_flag[_XMP_N_MAX_DIM];
   int dst_align_count=0;
@@ -1682,7 +1682,7 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
   int src_rank_acc[_XMP_N_MAX_DIM], dst_rank_acc[_XMP_N_MAX_DIM];
   int src_num[_XMP_N_MAX_DIM], dst_num[_XMP_N_MAX_DIM];
   int dst_num_myrank_total, src_num_myrank_total;
-  int root_rank;
+  //int root_rank;
   unsigned long long dst_array_acc[_XMP_N_MAX_DIM];
   unsigned long long src_array_acc[_XMP_N_MAX_DIM];
   int i,j,jj,i0,i1,i2,i3,i4,i5,i6;
@@ -1838,7 +1838,7 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
   for(int i=0;i<exec_comm_size;i++) recv_addr_ref[i] = 0;
   for(int i=0;i<exec_comm_size;i++) recv_addr_ref2[i] = 0;
 
-  int newcomm_rank, num_term=0;
+  //int newcomm_rank, num_term=0;
   MPI_Comm newcomm;
   _XMP_gmove_create_subcomm(gmv_desc_leftp, gmv_desc_rightp, &newcomm, &create_subcomm_flag, d2e, dst_color_ref);
 
@@ -2114,7 +2114,7 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
     }
   }
 
-  int mycolor, dst_color;
+  //int mycolor, dst_color;
   switch(dst_sub_dim){
   case 1:
     for(i=0;i<src_num[src_sub_num_ref[0]];i++){
@@ -2937,7 +2937,7 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
 
   // get dst info
   unsigned long long dst_total_elmts = 1;
-  void *dst_addr = dst_array->array_addr_p;
+  //void *dst_addr = dst_array->array_addr_p;
   int dst_dim = dst_array->dim;
   int dst_l[dst_dim], dst_u[dst_dim], dst_s[dst_dim]; unsigned long long dst_d[dst_dim];
   for (int i = 0; i < dst_dim; i++) {
@@ -2951,7 +2951,7 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
 
   // get src info
   unsigned long long src_total_elmts = 1;
-  void *src_addr = src_array->array_addr_p;
+  //void *src_addr = src_array->array_addr_p;
   int src_dim = src_array->dim;;
   int src_l[src_dim], src_u[src_dim], src_s[src_dim]; unsigned long long src_d[src_dim];
   for (int i = 0; i < src_dim; i++) {
