@@ -267,7 +267,7 @@ void _XMP_create_TCA_desc(_XMP_array_t *adesc)
   /* MPI_Get_processor_name(processor_name,&namelen); */
 }
 
-static void _XMP_refect_wait_tca(_XMP_array_t *adesc)
+void _XMP_reflect_wait_tca(_XMP_array_t *adesc)
 {
   int array_dim = adesc->dim;
   tcaHandle* h = (tcaHandle*)adesc->tca_handle;
@@ -295,6 +295,12 @@ static void _XMP_refect_wait_tca(_XMP_array_t *adesc)
 void _XMP_reflect_do_tca(_XMP_array_t *adesc)
 {
   TCA_SAFE_CALL(tcaStartDMADesc(_XMP_TCA_DMAC));
-  _XMP_refect_wait_tca(adesc);
+  _XMP_reflect_wait_tca(adesc);
   MPI_Barrier(MPI_COMM_WORLD);
 }
+
+void _XMP_reflect_start_tca(void)
+{
+  TCA_SAFE_CALL(tcaStartDMADesc(_XMP_TCA_DMAC));
+}
+

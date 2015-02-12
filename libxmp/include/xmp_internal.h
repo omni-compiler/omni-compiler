@@ -281,6 +281,8 @@ extern void _XMP_finalize_world(void);
 extern int _XMP_split_world_by_color(int color);
 
 #ifdef _XMP_XACC
+extern void _XMP_reflect_start_gpu(_XMP_array_t *array_desc);
+extern void _XMP_reflect_wait_gpu(_XMP_array_t *array_desc);
 extern void _XMP_reflect_do_gpu(_XMP_array_t *array_desc);
 extern void _XMP_reflect_init_gpu(void *acc_addr, _XMP_array_t *array_desc);
 extern int _XMP_get_owner_pos(_XMP_array_t *a, int dim, int index);

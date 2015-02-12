@@ -116,6 +116,20 @@ void _XMP_reflect_init_gpu(void *dev_addr,_XMP_array_t *a)
   }
 }
 
+void _XMP_reflect_start_gpu(_XMP_array_t *array_desc)
+{
+  _XMP_RETURN_IF_SINGLE;
+
+  _XMP_reflect_start(array_desc, 0);
+}
+
+void _XMP_reflect_wait_gpu(_XMP_array_t *array_desc)
+{
+  _XMP_RETURN_IF_SINGLE;
+
+  _XMP_reflect_wait(array_desc);
+}
+
 void _XMP_reflect_do_gpu(_XMP_array_t *array_desc){
   _XMP_RETURN_IF_SINGLE;
 
