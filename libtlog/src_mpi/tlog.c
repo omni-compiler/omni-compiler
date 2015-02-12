@@ -177,9 +177,9 @@ static TLOG_DATA *_tlog_get_data(int tid)
 
 void _tlog_reset_buffer()
 {
-    TLOG_DATA *dp;
+    //TLOG_DATA *dp;
     TLOG_HANDLE *hp;
-    TLOG_BLOCK *bp;
+    //TLOG_BLOCK *bp;
 
     hp = &tlog_handle_table[0]; /* only for 0, no thread version */
     free_block = hp->block_top;

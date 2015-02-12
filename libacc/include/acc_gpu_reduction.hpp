@@ -353,10 +353,10 @@ static void _ACC_gpu_is_last_block(int *is_last, unsigned int *counter){
 
 template<typename T>
 __device__
-static void reduceInGridDefault_new(T *result, T *tmp, int kind){
+static void reduceInGridDefault_new(T *result, T *tmp, int kind, int numBlocks){
   T part_result;
   _ACC_gpu_init_reduction_var(&part_result, kind);
-  for(int idx = threadIdx.x; idx < gridDim.x; idx += blockDim.x){
+  for(int idx = threadIdx.x; idx < numBlocks; idx += blockDim.x){
     part_result = op(part_result, tmp[idx], kind);
   }
   T resultInGrid;
@@ -371,9 +371,23 @@ static void reduceInGridDefault_new(T *result, T *tmp, int kind){
 
 template<typename T>
 __device__
+static void _ACC_gpu_reduction_block(T* result, int kind, void* tmp, size_t offsetElementSize, int numBlocks){
+  void *tmpAddr = (char*)tmp + (numBlocks * offsetElementSize);
+  reduceInGridDefault_new(result, (T*)tmpAddr, kind, numBlocks);
+}
+
+template<typename T>
+__device__
 static void _ACC_gpu_reduction_block(T* result, int kind, void* tmp, size_t offsetElementSize){
-  void *tmpAddr = (char*)tmp + (gridDim.x * offsetElementSize);
-  reduceInGridDefault_new(result, (T*)tmpAddr, kind);
+  _ACC_gpu_reduction_block(result, kind, tmp, offsetElementSize, gridDim.x);
+}
+
+template<typename T>
+__device__
+static void _ACC_gpu_reduction_singleblock(T* result, T resultInBlock, int kind){
+  if(threadIdx.x == 0){
+    *result = op(*result, resultInBlock, kind);
+  }
 }
 
 //template<typename T>
