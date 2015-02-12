@@ -469,7 +469,7 @@ case $basic_machine in
 		;;
 	bluegeneq)
 		basic_machine=powerpc-ibm
-		os=-none
+		os=-cnk
 		;;
 	c90)
 		basic_machine=c90-cray
@@ -1016,7 +1016,7 @@ case $basic_machine in
 		os=-sysv2
 		;;
 	sr16000)
-		basic_machine=powerpc64-hitachi
+		basic_machine=powerpc-hitachi
 		os=-aix
 		;;
 	spur)
