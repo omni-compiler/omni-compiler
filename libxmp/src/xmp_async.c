@@ -282,10 +282,10 @@ void xmpc_init_async(int async_id){
 }
 
 
-void xmpf_init_async__(int *async_id){
-  is_async = true;
-  _async_id = *async_id;
-}
+/* void xmpf_init_async__(int *async_id){ */
+/*   is_async = true; */
+/*   _async_id = *async_id; */
+/* } */
 
 
 void xmpc_start_async(int async_id){
@@ -295,9 +295,9 @@ void xmpc_start_async(int async_id){
 }
 
 
-void xmpf_start_async__(int *async_id){
-  //xmp_start_async(*async_id);
-  is_async = false;
-}
+/* void xmpf_start_async__(int *async_id){ */
+/*   //xmp_start_async(*async_id); */
+/*   is_async = false; */
+/* } */
 
 #endif

@@ -131,14 +131,14 @@ am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libxmpf_a_AR = $(AR) $(ARFLAGS)
 libxmpf_a_LIBADD =
-am_libxmpf_a_OBJECTS = xmpf_array.$(OBJEXT) xmpf_gcomm.$(OBJEXT) \
-	xmpf_gmove.$(OBJEXT) xmpf_index.$(OBJEXT) xmpf_lib.$(OBJEXT) \
-	xmpf_loop.$(OBJEXT) xmpf_misc.$(OBJEXT) xmpf_nodes.$(OBJEXT) \
-	xmpf_pack.$(OBJEXT) xmpf_reflect.$(OBJEXT) xmpf_sort.$(OBJEXT) \
-	xmpf_task.$(OBJEXT) xmpf_template.$(OBJEXT) \
-	xmpf_coarray.$(OBJEXT) xmpf_coarray_wrap.$(OBJEXT) \
-	xmpf_coarray_put.$(OBJEXT) xmpf_coarray_get.$(OBJEXT) \
-	xmpf_coarray_get_wrap.$(OBJEXT)
+am_libxmpf_a_OBJECTS = xmpf_array.$(OBJEXT) xmpf_async.$(OBJEXT) \
+	xmpf_gcomm.$(OBJEXT) xmpf_gmove.$(OBJEXT) xmpf_index.$(OBJEXT) \
+	xmpf_lib.$(OBJEXT) xmpf_loop.$(OBJEXT) xmpf_misc.$(OBJEXT) \
+	xmpf_nodes.$(OBJEXT) xmpf_pack.$(OBJEXT) \
+	xmpf_reflect.$(OBJEXT) xmpf_sort.$(OBJEXT) xmpf_task.$(OBJEXT) \
+	xmpf_template.$(OBJEXT) xmpf_coarray.$(OBJEXT) \
+	xmpf_coarray_wrap.$(OBJEXT) xmpf_coarray_put.$(OBJEXT) \
+	xmpf_coarray_get.$(OBJEXT) xmpf_coarray_get_wrap.$(OBJEXT)
 libxmpf_a_OBJECTS = $(am_libxmpf_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -490,7 +490,7 @@ top_srcdir = @top_srcdir@
 XMP_INC_DIR = ../../libxmp/include
 XMPF_INC_DIR = ../include
 lib_LIBRARIES = libxmpf.a
-libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_array.c xmpf_gcomm.c \
+libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_array.c xmpf_async.c xmpf_gcomm.c \
                     xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c \
                     xmpf_nodes.c xmpf_pack.c xmpf_reflect.c xmpf_sort.c xmpf_task.c \
 		    xmpf_template.c xmpf_coarray.c xmpf_coarray_wrap.f90\

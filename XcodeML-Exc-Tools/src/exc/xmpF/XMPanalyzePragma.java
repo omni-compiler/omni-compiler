@@ -656,14 +656,17 @@ public class XMPanalyzePragma
 
   private void analyzeWaitAsync(Xobject waitAsyncDecl, 
 				XMPinfo info, PragmaBlock pb){
+
     XobjList asyncIdList = (XobjList) waitAsyncDecl.getArg(0);
     Vector<Xobject> asyncIds = new Vector<Xobject>();
     for (Xobject x: asyncIdList){
 	asyncIds.add(x);
     }
     info.setWaitAsyncIds(asyncIds);
-    //    Xobject async_id = waitAsyncDecl.getArg(0);
-    //    info.setAsyncId(async_id);
+
+    Xobject onRef = waitAsyncDecl.getArg(1);
+    info.setOnRef(XMPobjectsRef.parseDecl(onRef, env, pb));
+
   }
 
   void analyzeTask(Xobject taskDecl, BlockList taskBody,

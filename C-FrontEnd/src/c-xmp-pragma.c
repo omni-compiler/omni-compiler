@@ -1793,7 +1793,12 @@ static CExpr* parse_ASYNC_clause()
 static CExpr* parse_WAIT_ASYNC_clause()
 {
     CExpr *asyncIdList = parse_expr_list();
-    return XMP_LIST1(asyncIdList);
+    CExpr* onRef = NULL;
+    if (PG_IS_IDENT("on")){
+      pg_get_token();
+      onRef = parse_task_ON_ref();
+    }
+    return XMP_LIST2(asyncIdList, onRef);
 }
 
 

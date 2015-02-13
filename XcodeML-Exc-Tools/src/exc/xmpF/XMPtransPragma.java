@@ -582,18 +582,26 @@ public class XMPtransPragma
   }
 
   private Block translateWaitAsync(PragmaBlock pb, XMPinfo info){
-    Block b = Bcons.emptyBlock();
-    BasicBlock bb = b.getBasicBlock();
+    //Block b = Bcons.emptyBlock();
+    //BasicBlock bb = b.getBasicBlock();
+
+    BlockList ret_body = Bcons.emptyBody();
+
+    XMPobjectsRef on_ref = info.getOnRef();
+    Xobject on_ref_arg;
+    if (on_ref != null){
+      ret_body.add(on_ref.buildConstructor(env));
+      on_ref_arg = on_ref.getDescId().Ref();
+    }
+    else on_ref_arg = env.getNullIdent(pb).Ref();
 
     Ident f = env.declInternIdent(XMP.wait_async_f, Xtype.FsubroutineType);
 
     for (Xobject i: info.waitAsyncIds){
-	bb.add(f.callSubroutine(Xcons.List(i)));
+      ret_body.add(f.callSubroutine(Xcons.List(i, on_ref_arg)));
     }
 
-    //    bb.add(f.callSubroutine(Xcons.List(info.async_id)));
-
-    return b;
+    return Bcons.COMPOUND(ret_body);
   }
 
   private Block translateTask(PragmaBlock pb, XMPinfo info){

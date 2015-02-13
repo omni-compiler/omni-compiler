@@ -401,13 +401,24 @@ public class XMPtranslateLocalPragma {
 
     Ident funcId = _globalDecl.declExternFunc("_XMP_wait_async__");
     XobjList funcArgs = (XobjList)pb.getClauses().getArg(0);
-
     BlockList funcBody = Bcons.emptyBody();
     funcBody.add(Bcons.Statement(funcId.Call(funcArgs)));
-
     Block funcCallBlock = Bcons.COMPOUND(funcBody);
-    pb.replace(funcCallBlock);
 
+    // the following code comes from translateBcast.
+    XobjList onRef = (XobjList)pb.getClauses().getArg(1);
+    if (onRef != null && onRef.getArgs() != null) {
+      XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
+      String execFuncSurfix = execOnRefArgs.getFirst();
+      boolean splitComm = execOnRefArgs.getSecond().booleanValue();
+      XobjList execFuncArgs = execOnRefArgs.getThird();
+      if (splitComm) {
+        BlockList waitAsyncBody = Bcons.blockList(funcCallBlock);
+	funcCallBlock = createCommTaskBlock(waitAsyncBody, execFuncSurfix, execFuncArgs);
+      }
+    }
+
+    pb.replace(funcCallBlock);
   }
 
   private void translateShadow(PragmaBlock pb) throws XMPexception {
