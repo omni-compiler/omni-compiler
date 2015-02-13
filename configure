@@ -722,13 +722,12 @@ IS_PGI_FALSE
 IS_PGI_TRUE
 OMNI_LNK_FCFLAGS
 OMNI_NTV_FCFLAGS
-OMNI_LX2X_FCFLAGS
-OMNI_L2X_FCFLAGS
+OMNI_F2X_FLAGS
 OMNI_F_PP
 OMNI_LNK_CFLAGS
 OMNI_NTV_CFLAGS
-OMNI_LX2X_CFLAGS
-OMNI_L2X_CFLAGS
+OMNI_X2X_FLAGS
+OMNI_C2X_FLAGS
 MPI_FCLIBS
 MPI_MODINC
 MPI_FCFLAGS
@@ -4737,8 +4736,7 @@ else
     ;;
   *)
     lt_cv_sys_max_cmd_len=`(getconf ARG_MAX) 2> /dev/null`
-    if test -n "$lt_cv_sys_max_cmd_len" && \
-	test undefined != "$lt_cv_sys_max_cmd_len"; then
+    if test -n "$lt_cv_sys_max_cmd_len"; then
       lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \/ 4`
       lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \* 3`
     else
@@ -6301,7 +6299,7 @@ ia64-*-hpux*)
   rm -rf conftest*
   ;;
 
-x86_64-*kfreebsd*-gnu|x86_64-*linux*|powerpc*-*linux*| \
+x86_64-*kfreebsd*-gnu|x86_64-*linux*|ppc*-*linux*|powerpc*-*linux*| \
 s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
   # Find out which ABI we are using.
   echo 'int i;' > conftest.$ac_ext
@@ -6317,19 +6315,9 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	    LD="${LD-ld} -m elf_i386_fbsd"
 	    ;;
 	  x86_64-*linux*)
-	    case `/usr/bin/file conftest.o` in
-	      *x86-64*)
-		LD="${LD-ld} -m elf32_x86_64"
-		;;
-	      *)
-		LD="${LD-ld} -m elf_i386"
-		;;
-	    esac
+	    LD="${LD-ld} -m elf_i386"
 	    ;;
-	  powerpc64le-*)
-	    LD="${LD-ld} -m elf32lppclinux"
-	    ;;
-	  powerpc64-*)
+	  ppc64-*linux*|powerpc64-*linux*)
 	    LD="${LD-ld} -m elf32ppclinux"
 	    ;;
 	  s390x-*linux*)
@@ -6348,10 +6336,7 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	  x86_64-*linux*)
 	    LD="${LD-ld} -m elf_x86_64"
 	    ;;
-	  powerpcle-*)
-	    LD="${LD-ld} -m elf64lppc"
-	    ;;
-	  powerpc-*)
+	  ppc*-*linux*|powerpc*-*linux*)
 	    LD="${LD-ld} -m elf64ppc"
 	    ;;
 	  s390*-*linux*|s390*-*tpf*)
@@ -12408,6 +12393,8 @@ if test -e "Driver/src/Makefile.am"; then
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/xmpcc"
 
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/xmpcc.conf"
+
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/xmpf90.conf"
 
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omf2f"
 
@@ -20604,14 +20591,14 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
   MPI_FCLIBS=""
 
 # Omni C
-  OMNI_L2X_CFLAGS=""
-  OMNI_LX2X_CFLAGS=""
+  OMNI_C2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
   OMNI_NTV_CFLAGS="-Xg -noansi"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
 # Omni F
-  OMNI_L2X_FCFLAGS=""
-  OMNI_LX2X_FCFLAGS=""
+  OMNI_F2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-Free"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
 
@@ -20635,14 +20622,14 @@ elif test "$target" = "MIC-linux-gnu"; then
   MPI_FCLIBS=""
 
 # Omni C
-  OMNI_L2X_CFLAGS=""
-  OMNI_LX2X_CFLAGS=""
+  OMNI_C2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
   OMNI_NTV_CFLAGS="-std=gnu99"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
 # Omni F
-  OMNI_L2X_FCFLAGS=""
-  OMNI_LX2X_FCFLAGS=""
+  OMNI_F2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
   OMNI_NTV_FCFLAGS=""
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
 
@@ -20666,14 +20653,14 @@ elif test "$target" = "Cray-linux-gnu"; then
   MPI_FCLIBS=""
 
 # Omni C
-  OMNI_L2X_CFLAGS=""
-  OMNI_LX2X_CFLAGS=""
+  OMNI_C2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
   OMNI_NTV_CFLAGS="-hgnu -D_XMP_CRAY"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
 # Omni F
-  OMNI_L2X_FCFLAGS=""
-  OMNI_LX2X_FCFLAGS=""
+  OMNI_F2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-f free"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
 
@@ -20697,14 +20684,14 @@ elif test "$target" = "sx-nec-superux"; then
   MPI_FCLIBS=""
 
 # Omni C
-  OMNI_L2X_CFLAGS=""
-  OMNI_LX2X_CFLAGS=""
+  OMNI_C2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
   OMNI_NTV_CFLAGS="-Kgcc -w"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
 # Omni F
-  OMNI_L2X_FCFLAGS=""
-  OMNI_LX2X_FCFLAGS=""
+  OMNI_F2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-f4 -w"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
 
@@ -20757,14 +20744,14 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   MPI_FCLIBS=$MPI_CLIBS
 
 # Omni C
-  OMNI_L2X_CFLAGS=""
-  OMNI_LX2X_CFLAGS=""
+  OMNI_C2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
   OMNI_NTV_CFLAGS="-q64 -qipa"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG $MPI_CLIBS"
 
 # Omni F
-  OMNI_L2X_FCFLAGS=""
-  OMNI_LX2X_FCFLAGS=""
+  OMNI_F2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-q64 -qipa -qextname"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG $MPI_CLIBS"
 
@@ -20788,14 +20775,14 @@ elif test "$target" = "powerpc-hitachi-aix"; then
   MPI_FCLIBS=""
 
 # Omni C
-  OMNI_L2X_CFLAGS=""
-  OMNI_LX2X_CFLAGS=""
+  OMNI_C2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
   OMNI_NTV_CFLAGS="-q64"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
 # Omni F
-  OMNI_L2X_FCFLAGS=""
-  OMNI_LX2X_FCFLAGS=""
+  OMNI_F2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-q64 -qextname"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
 
@@ -20829,14 +20816,14 @@ else
     MPI_FCLIBS=""
 
     # Omni C
-    OMNI_L2X_CFLAGS=""
-    OMNI_LX2X_CFLAGS=""
+    OMNI_C2X_FLAGS=""
+    OMNI_X2X_FLAGS=""
     OMNI_NTV_CFLAGS="-std=gnu99"
     OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
     # Omni F
-    OMNI_L2X_FCFLAGS=""
-    OMNI_LX2X_FCFLAGS="-gnu"
+    OMNI_F2X_FLAGS=""
+    OMNI_X2X_FLAGS="-gnu"
     OMNI_NTV_FCFLAGS="-ffree-form -fcray-pointer"
     OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS -fopenmp -lgomp"
     ;;
@@ -20865,14 +20852,14 @@ else
     MPI_FCLIBS=""
 
     # Omni C
-    OMNI_L2X_CFLAGS=""
-    OMNI_LX2X_CFLAGS=""
+    OMNI_C2X_FLAGS=""
+    OMNI_X2X_FLAGS=""
     OMNI_NTV_CFLAGS="-std=gnu99"
     OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
     # Omni F
-    OMNI_L2X_FCFLAGS=""
-    OMNI_LX2X_FCFLAGS="-intel"
+    OMNI_F2X_FLAGS=""
+    OMNI_X2X_FLAGS="-intel"
     OMNI_NTV_FCFLAGS=""
     OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
     ;;
@@ -20898,14 +20885,14 @@ else
       MPI_FCLIBS=""
 
       # Omni C
-      OMNI_L2X_CFLAGS="--no-builtin-va-arg"
-      OMNI_LX2X_CFLAGS=""
+      OMNI_C2X_FLAGS="--no-builtin-va-arg"
+      OMNI_X2X_FLAGS=""
       OMNI_NTV_CFLAGS="-D_XMP_PGI"
       OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
 
       # Omni F
-      OMNI_L2X_FCFLAGS=""
-      OMNI_LX2X_FCFLAGS=""
+      OMNI_F2X_FLAGS=""
+      OMNI_X2X_FLAGS=""
       OMNI_NTV_FCFLAGS=""
       OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
 
@@ -21106,6 +21093,7 @@ if test x${use_gasnet} = xyes; then
   MPI_CFLAGS="${MPI_CFLAGS} ${GASNET_CFLAGS} ${GASNET_CPPFLAGS}"
   MPI_CLIBS="${MPI_CLIBS} ${GASNET_LDFLAGS} ${GASNET_LIBS}"
   OMNI_LNK_CFLAGS="${OMNI_LNK_CFLAGS} ${GASNET_LIBS}"
+  OMNI_LNK_FCFLAGS="${OMNI_LNK_FCFLAGS} ${GASNET_LIBS}"
 fi
 
 
@@ -21161,7 +21149,7 @@ if test "x${doMPI3}" = "xyes"; then
    MPI_FPPFLAGS="$MPI_FPPFLAGS -D_XMP_MPI3"
    MPI_CFLAGS="$MPI_CFLAGS -D_XMP_MPI3"
    MPI_FCFLAGS="$MPI_FCFLAGS -D_XMP_MPI3"
-   OMNI_LX2X_CFLAGS="$OMNI_LX2X_CFLAGS -mpi3"
+   OMNI_X2X_FLAGS="$OMNI_X2X_FLAGS -mpi3"
 fi
 
 if test "${userFCFLAGS}" != ""; then
@@ -26817,6 +26805,7 @@ do
     "$OMDRIVER_DIR/../bin/ompcc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/ompcc" ;;
     "$OMDRIVER_DIR/../bin/xmpcc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/xmpcc" ;;
     "$OMDRIVER_DIR/../etc/xmpcc.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/xmpcc.conf" ;;
+    "$OMDRIVER_DIR/../etc/xmpf90.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/xmpf90.conf" ;;
     "$OMDRIVER_DIR/../bin/omf2f") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omf2f" ;;
     "$OMDRIVER_DIR/../bin/ompf90") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/ompf90" ;;
     "$OMDRIVER_DIR/../bin/omfpp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omfpp" ;;

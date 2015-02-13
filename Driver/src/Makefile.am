@@ -9,9 +9,9 @@ sysconf_DATA= ../etc/omf.conf ../etc/omc.conf ../etc/java.conf ../etc/pp.conf.op
         ../etc/linker.conf.openmp ../etc/l2x.conf.openmp ../etc/x2x.conf.openmp ../etc/pp.conf.xmpf \
 	../etc/native.conf.xmpf ../etc/linker.conf.xmpf ../etc/l2x.conf.xmpf ../etc/x2x.conf.xmpf \
 	../etc/pp.conf.acc ../etc/native.conf.acc ../etc/linker.conf.acc ../etc/l2x.conf.acc ../etc/x2x.conf.acc \
-	../etc/setup.conf ../etc/version ../etc/xmpcc.conf
+	../etc/setup.conf ../etc/version ../etc/xmpcc.conf ../etc/xmpf90.conf
 
-dist_libexec_SCRIPTS=../libexec/driver_common.sh
+dist_libexec_SCRIPTS=../libexec/common_lib.sh ../libexec/xmpf90_lib.sh ../libexec/xmpcc_lib.sh
 omdriver_SOURCES=omdriver.c
 xmp_collect_init_SOURCES=xmp_collect_init.c
 xmp_collect_init_CPPFLAGS=-DNM="\"$(NM)\""

@@ -3,7 +3,8 @@
 ### Read configration file and library ###
 OMNI_HOME=@OMNI_HOME@
 . ${OMNI_HOME}/etc/xmpcc.conf
-. ${OMNI_HOME}/libexec/driver_common.sh
+. ${OMNI_HOME}/libexec/common_lib.sh
+. ${OMNI_HOME}/libexec/xmpcc_lib.sh
 
 ### Directory for saving intermediate files ###
 PID=$$
@@ -30,7 +31,7 @@ ENABLE_TLOG_ALL=false
 ENABLE_TLOG=false
 
 # Additional options defined by command line (e.g. --Wl..)
-# These parameters are set in xmp_set_parameters().
+# These parameters are set in xmpcc_set_parameters().
 OUTPUT_FILE=
 PROFILE_OPT=
 OPENMP_ADD_OPT=
@@ -49,13 +50,13 @@ LINKER_ADD_OPT=
 #  obj_files="c.o"                    # Object files
 #  other_args="-I/usr/lib"            # Options for Preprocessor, Compiler, and Linker
 # 
-#  Note that "-omp" is extracted by xmp_set_parameters, and set "ENABLE_OPENMP".
+#  Note that "-omp" is extracted by xmpcc_set_parameters, and set "ENABLE_OPENMP".
 c_files=
 archive_files=
 obj_files=
 other_args=
-xmp_set_parameters ${@+"$@"}
-xmp_check_file_exist
+xmpcc_set_parameters ${@+"$@"}
+xmpcc_check_file_exist
 
 ### Create temporal directory ###
 if [ $ENABLE_DEBUG = true ]; then
@@ -71,8 +72,12 @@ xmp_exec mkdir -p $TEMP_DIR
 trap "rm -rf $TEMP_DIR; exit 1" 1 2 3 15
 
 ### Preprocessor ###
+if [ $ONLY_PP = true -a -f "$OUTPUT_FILE" ]; then
+    xmp_exec rm $OUTPUT_FILE
+fi
+
 for c_file in $c_files; do
-    FILE_NAME=`xmp_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
+    FILE_NAME=`xmpcc_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
     FILE_PP_C=${TEMP_DIR}/${FILE_NAME}_pp.c
     FILE_PP_I=${TEMP_DIR}/${FILE_NAME}_pp.i
 
@@ -93,7 +98,7 @@ done
 
 ### Frontend ###
 for c_file in $c_files; do
-    FILE_NAME=`xmp_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
+    FILE_NAME=`xmpcc_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
     FILE_PP_I=${TEMP_DIR}/${FILE_NAME}_pp.i
     FILE_IN_X=${TEMP_DIR}/${FILE_NAME}_in.xml
 
@@ -107,9 +112,10 @@ done
 
 ### Translator ###
 for c_file in $c_files; do
-    FILE_NAME=`xmp_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
+    FILE_NAME=`xmpcc_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
     FILE_IN_X=${TEMP_DIR}/${FILE_NAME}_in.xml
     FILE_OUT_X=${TEMP_DIR}/${FILE_NAME}_out.xml
+    FILE_C=${TEMP_DIR}/${FILE_NAME}.c
 
     if [ $ENABLE_TLOG_ALL = true ]; then
 	PROFILE_OPT="-tlog-all"
@@ -129,26 +135,25 @@ for c_file in $c_files; do
 
     xmp_exec $OMNI_CX2X_CMD $OMNI_CX2X_OPT $XCODE_TRANSLATOR_ADD_OPT $PROFILE_OPT $FILE_IN_X -o $FILE_OUT_X
     # also create ${TEMP_DIR}/${FILE_NAME}_in.c
+    xmp_exec cp ${TEMP_DIR}/${FILE_NAME}_in.c $FILE_C
 done
 [ $STOP_TRANSLATOR = true ] && exit 0;
 
 ### Backend ###
-for c_file in $c_files; do
-    FILE_NAME=`xmp_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
-    FILE_IN_X=${TEMP_DIR}/${FILE_NAME}_in.c
-    FILE_C=${TEMP_DIR}/${FILE_NAME}.c
+if [ $OUTPUT_TEMPORAL = true ]; then
+    for c_file in $c_files; do
+	FILE_NAME=`xmpcc_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
+	FILE_C=${TEMP_DIR}/${FILE_NAME}.c
     
-    xmp_exec cp $FILE_IN_X $FILE_C
-    if [ $OUTPUT_TEMPORAL = true ]; then
 	xmp_exec cp $FILE_C __omni_tmp__${FILE_NAME}.c
 	echo "output __omni_tmp__${FILE_NAME}.c"
-    fi
-done
+    done
+fi
 [ $STOP_BACKEND = true ] && exit 0;
 
 ### Native Compiler ###
 for c_file in $c_files; do
-    FILE_NAME=`xmp_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
+    FILE_NAME=`xmpcc_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
     FILE_C=${TEMP_DIR}/${FILE_NAME}.c
     FILE_O=${TEMP_DIR}/${FILE_NAME}.o
     FILE_USER_O=`basename $c_file .c`.o
@@ -175,7 +180,7 @@ done
 ### Linker ###
 # collect initialize modules
 for c_file in $c_files; do
-    FILE_NAME=`xmp_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
+    FILE_NAME=`xmpcc_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
     FILE_O=${TEMP_DIR}/${FILE_NAME}.o
     obj_files="$obj_files $FILE_O"
 done
@@ -200,6 +205,10 @@ else
 fi
 
 ### Delete temporal directory ###
-[ $ENABLE_DEBUG = false ] && xmp_exec rm -rf $TEMP_DIR
+if [ $ENABLE_DEBUG = true ]; then
+    echo "Create ${TEMP_DIR}/"
+else
+    xmp_exec rm -rf $TEMP_DIR
+fi
 
 exit 0

@@ -130,6 +130,7 @@ DELETABLES = C-BackEnd/bin/C_Back \
 	Driver/bin/xmpf90 \
 	Driver/bin/xmpcc \
 	Driver/etc/xmpcc.conf \
+	Driver/etc/xmpf90.conf \
         Driver/etc/ompcc \
 	Driver/bin/omtranslate \
 	Driver/bin/omni_traverse \

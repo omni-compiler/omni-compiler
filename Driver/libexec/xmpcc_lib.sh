@@ -1,4 +1,4 @@
-function xmp_print_help()
+function xmpcc_print_help()
 {
 cat <<EOF
 usage: $1 <OPTIONS> <INPUTFILE> ...
@@ -41,25 +41,7 @@ XcalableMP Options
 EOF
 }
 
-function xmp_error_exit()
-{
-    echo "$0: error: $1"
-    echo "compilation terminated."
-    exit 1
-}
-
-function xmp_print_version()
-{
-    VERSION_FILE="${OMNI_HOME}/etc/version"
-    if [ -f $VERSION_FILE ]; then
-	cat $VERSION_FILE
-	echo ""
-    else
-	xmp_error_exit "$VERSION_FILE not exist."
-    fi
-}
-
-function xmp_show_env()
+function xmpcc_show_env()
 {
     CONF_FILE=${OMNI_HOME}/etc/xmpcc.conf
     if [ -f $CONF_FILE ]; then
@@ -74,7 +56,7 @@ function xmp_show_env()
     fi
 }
 
-function xmp_set_parameters()
+function xmpcc_set_parameters()
 {
     local tmp_args=""
 
@@ -93,10 +75,10 @@ function xmp_set_parameters()
 		exit 0;;
             -h|--help)
 		local scriptname=`basename $0`
-		xmp_print_help $scriptname
+		xmpcc_print_help $scriptname
 		exit 0;;
 	    --show-env)
-		xmp_show_env
+		xmpcc_show_env
 		exit 0;;
             --tmp)
 		OUTPUT_TEMPORAL=true;;
@@ -176,31 +158,27 @@ function xmp_set_parameters()
     done
 }
 
-function xmp_check_file_exist()
+function xmpcc_check_file_exist()
 {
     ([ "$c_files" = "" ] && [ "$obj_files" = "" ]) && xmp_error_exit "no input files."
+
+    for file in $c_files $obj_files; do
+	if [ ! -f $file ]; then
+	    xmp_error_exit "not found ${file}"
+        fi
+    done
 }
 
-function xmp_exec()
+# ./hoge/fuga.c -> hoge_2f_fuga
+function xmpcc_norm_file_name()
 {
-    if [ $VERBOSE = true ] || [ $DRY_RUN = true ]; then
-	echo $@
-    fi
-
-    if [ $DRY_RUN = false ]; then
-	eval $@
-    fi
-
-    [ $? -ne 0 ] && { xmp_exec rm -rf $TEMP_DIR; exit 1; }
-}
-
-# ./hoge/fuga.c -> hoge_2f_fuga_2f_a
-function xmp_norm_file_name()
-{
-    local NORM_NAME=`echo $1 | sed 's/^\.\///'`      # ./hoge/fuga.c -> hoge/fuga.c
-    NORM_NAME=`echo $NORM_NAME | sed 's/\//_2f_/g'`  # hoge/fuga/a.c -> hoge_2f_fuga_2f_a.c        # "2f" is a hex number of '/'.
+    local NORM_NAME=`basename $1 .c`   # ./hoge/fuga.c -> ./hoge/fuga
+    local DIR=`dirname $1`
+    NORM_NAME=${DIR}/${NORM_NAME}
+    NORM_NAME=`echo $NORM_NAME | sed 's/^\.\///'`    # ./hoge/fuga -> hoge/fuga
+    NORM_NAME=`echo $NORM_NAME | sed 's/\//_2f_/g'`  # hoge/fuga -> hoge_2f_fuga
+                                                     # "2f" is a hex number of '/'.
     NORM_NAME=`echo $NORM_NAME | sed 's/\./_2e_/g'`  # "." -> "_2e_"
-    NORM_NAME=`basename $NORM_NAME .c`               # hoge_2f_fuga_2f_a.c -> hoge_2f_fuga_2f_a
 
     echo $NORM_NAME
 }
