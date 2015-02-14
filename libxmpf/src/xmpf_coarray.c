@@ -9,9 +9,13 @@ static int _set_coarrayInfo(char *desc, char *orgAddr, int count, size_t element
 \*****************************************/
 
 int _XMPF_coarrayMsg = 0;          // default: message off
+int _XMPF_coarrayErr = 0;          // default: aggressive error check off
 
 void xmpf_coarray_msg_(int *sw)
 {
+  if (_XMPF_coarrayMsg && *sw == 0)
+    _XMPF_coarrayDebugPrint("xmpf_coarray_msg OFF\n");
+
   _XMPF_coarrayMsg = *sw;
 
   if (_XMPF_coarrayMsg) {
@@ -24,6 +28,7 @@ void xmpf_coarray_msg_(int *sw)
     fprintf(stderr, "%d-byte boundary\n", BOUNDARY_BYTE);
   }
 }
+
 
 
 /*****************************************\
@@ -385,10 +390,11 @@ void _XMPF_checkIfInTask(char *msgopt)
 
 void _XMPF_coarrayDebugPrint(char *format, ...)
 {
+  char work[200];
   va_list list;
   va_start(list, format);
-  fprintf(stderr, "CAF[%d] ", xmp_node_num());
-  vfprintf(stderr, format, list);
+  vsprintf(work, format, list);
+  fprintf(stderr, "CAF[%d] %s", xmp_node_num(), work);
   va_end(list);
 }
 
