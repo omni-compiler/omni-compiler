@@ -5,6 +5,11 @@ sysconf_DATA = ../etc/java.conf ../etc/version ../etc/xmpcc.conf ../etc/xmpf90.c
 dist_libexec_SCRIPTS = ../libexec/omni_common_lib.sh ../libexec/xmpf90_lib.sh ../libexec/xmpcc_lib.sh \
                        ../libexec/ompcc_lib.sh ../libexec/ompf90_lib.sh ../libexec/omni_traverse ./om_replace_pragma
 xmp_collect_init_SOURCES=xmp_collect_init.c
-om_replace_pragma_init_SOURCE=om_replace_pragma.c
+
+om_replace_pragma: om_replace_pragma.c
+	$(CC) $^ -o $@
+
 xmp_collect_init_CPPFLAGS=-DNM="\"$(NM)\""
 
+clean:
+	rm -f om_replace_pragma xmp_collect_init *.o

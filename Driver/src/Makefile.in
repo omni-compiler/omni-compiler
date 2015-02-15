@@ -473,7 +473,6 @@ dist_libexec_SCRIPTS = ../libexec/omni_common_lib.sh ../libexec/xmpf90_lib.sh ..
                        ../libexec/ompcc_lib.sh ../libexec/ompf90_lib.sh ../libexec/omni_traverse ./om_replace_pragma
 
 xmp_collect_init_SOURCES = xmp_collect_init.c
-om_replace_pragma_init_SOURCE = om_replace_pragma.c
 xmp_collect_init_CPPFLAGS = -DNM="\"$(NM)\""
 all: all-am
 
@@ -800,8 +799,6 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-clean: clean-am
-
 clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
@@ -889,6 +886,12 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 	uninstall-binPROGRAMS uninstall-binSCRIPTS \
 	uninstall-dist_libexecSCRIPTS uninstall-sysconfDATA
 
+
+om_replace_pragma: om_replace_pragma.c
+	$(CC) $^ -o $@
+
+clean:
+	rm -f om_replace_pragma xmp_collect_init *.o
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
