@@ -101,60 +101,22 @@ clean-local:
 		-name '*.core' \
 	\) -exec rm -f {} \;
 
-DELETABLES = C-BackEnd/bin/C_Back \
-	C-FrontEnd/src/c-exprcode.c \
-	C-FrontEnd/src/c-exprcode.h \
-	C-FrontEnd/src/c-parser.c \
-	C-FrontEnd/src/c-parser.h \
-        Driver/bin/omcpp \
-        Driver/bin/omclinker \
-        Driver/bin/omcnative \
-        Driver/bin/omcx2x \
-        Driver/bin/omc2x \
-	Driver/bin/omc2c \
-	Driver/bin/omf2f \
-	Driver/bin/omf2x \
-	Driver/bin/omflinker \
-	Driver/bin/omfnative \
-	Driver/bin/omfpp \
-	Driver/bin/omfx2x \
-	Driver/bin/oml2x \
-	Driver/bin/omlinker \
-	Driver/bin/omnative \
-	Driver/bin/ompcc \
+DELETABLES = Driver/bin/ompcc \
 	Driver/bin/ompf90 \
-	Driver/bin/ompp \
-	Driver/bin/omx2c \
-	Driver/bin/omx2f \
-	Driver/bin/omx2l \
 	Driver/bin/xmpf90 \
 	Driver/bin/xmpcc \
 	Driver/etc/xmpcc.conf \
 	Driver/etc/xmpf90.conf \
-        Driver/etc/ompcc \
-	Driver/bin/omtranslate \
-	Driver/bin/omni_traverse \
+	Driver/etc/ompcc.conf \
+	Driver/etc/ompf90.conf \
 	Driver/etc/java.conf \
-	Driver/etc/l2x.conf.openmp \
-	Driver/etc/l2x.conf.xmpf \
-	Driver/etc/l2x.conf.acc \
-	Driver/etc/linker.conf.openmp \
-	Driver/etc/linker.conf.xmpf \
-	Driver/etc/linker.conf.acc \
-	Driver/etc/native.conf.openmp \
-	Driver/etc/native.conf.xmpf \
-	Driver/etc/native.conf.acc \
-	Driver/etc/xmpcc.conf \
-        Driver/etc/omc.conf \
-	Driver/etc/omf.conf \
-	Driver/etc/pp.conf.openmp \
-	Driver/etc/pp.conf.xmpf \
-	Driver/etc/pp.conf.acc \
-	Driver/etc/x2x.conf.openmp \
-	Driver/etc/x2x.conf.xmpf \
-	Driver/etc/x2x.conf.acc \
-	Driver/etc/setup.conf \
+	Driver/libexec/omni_traverse \
+        C-FrontEnd/src/c-exprcode.c \
+        C-FrontEnd/src/c-exprcode.h \
+        C-FrontEnd/src/c-parser.c \
+        C-FrontEnd/src/c-parser.h \
 	C-FrontEnd/src/c-token.c \
+	C-BackEnd/bin/C_Back \
 	F-BackEnd/bin/F_Back \
 	F-BackEnd/bin/F_Trans \
 	F-BackEnd/bin/F_Decomp \

@@ -1,7 +1,5 @@
-INCDIR = ../../../../../Driver/etc
-XMP_LINK_FLAGS=$(shell grep "LinkerOption=" $(INCDIR)/omf.conf | sed "s/LinkerOption=//g" | sed "s/\"//g")
-MPI_FC=$(shell grep "COMPILER=" $(INCDIR)/native.conf.xmpf | sed "s/COMPILER=//g"         | sed "s/\"//g")
-XMPC_LINK_FLAGS=$(shell xmpcc --show-env | sed -n '/OMNI_LINKER_OPT=/p' | sed 's/OMNI_LINKER_OPT=//' | sed "s/\"//g" | sed "s/-std=gnu99//") # Fix soon by mnakao
+MPI_FC=$(shell xmpf90 --show-env          | sed -n '/OMNI_MPIFC_CMD=/p'  | sed 's/OMNI_MPIFC_CMD=//'  | sed "s/\"//g")
+XMPF_LINK_FLAGS=$(shell xmpf90 --show-env | sed -n '/OMNI_LINKER_OPT=/p' | sed 's/OMNI_LINKER_OPT=//' | sed "s/\"//g") 
 
 XFC     = xmpf90 -O2
 XRUN    = mpiexec
@@ -19,13 +17,13 @@ ixmp_sub.o: ./sub/ixmp_sub.f90
 	$(XFC) -c $^ -o $@
 
 sub_mpi.o: ./sub/sub_mpi.f90
-	$(MPI_FC) $(XMP_LINK_FLAGS) -c $^ -o $@
+	$(MPI_FC) $(XMPF_LINK_FLAGS) -c $^ -o $@
 
 %.x: %.f90
 	$(XFC) -o $@ $<
 
 mpi_xmp.x: mpi_xmp.f90 ixmp_sub.o
-	$(MPI_FC) $(XMP_LINK_FLAGS) -o $@ mpi_xmp.f90 ixmp_sub.o -L../../../../../libxmpf/src -lxmpf -L../../../../../libxmp/src -lxmp $(XMPC_LINK_FLAGS)
+	$(MPI_FC) $(XMPF_LINK_FLAGS) -o $@ mpi_xmp.f90 ixmp_sub.o -L../../../../../libxmpf/src -lxmpf -L../../../../../libxmp/src -lxmp $(XMPF_LINK_FLAGS)
 
 xmp_mpi.x: xmp_mpi.f90 sub_mpi.o
 	$(XFC) -o $@ xmp_mpi.f90 sub_mpi.o

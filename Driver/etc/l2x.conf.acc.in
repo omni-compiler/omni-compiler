@@ -1,9 +1,0 @@
-OM_OPTIONS="${OM_OPTIONS} -facc"
-
-IS_PGI=@IS_PGI@
-
-if [ "${IS_PGI}" = "Yes" ]; then
-  OM_OPTIONS="${OM_OPTIONS} --no-builtin-va-arg"
-else
-  OM_OPTIONS="${OM_OPTIONS}"
-fi

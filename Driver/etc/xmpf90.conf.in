@@ -1,5 +1,5 @@
 OMNI_HOME="@OMNI_HOME@"
-OPENMP_OPT="@MPI_OPENMP_FLAG@"
+OPENMP_OPT="@OPENMP_OPT@"
 
 # Preprocessor
 OMNI_FPP_CMD="@MPI_FPP@"
@@ -26,7 +26,8 @@ OMNI_MPIFC_MUST_OPT="-c -I${OMNI_HOME}/include -D_XCALABLEMP"
 OMNI_MPIFC_OPT="@OMNI_NTV_FCFLAGS@ ${OMNI_MPIFC_MUST_OPT}"
 
 # Linker
-OMNI_TRAVERSE="${OMNI_HOME}/bin/omni_traverse --F --prefix xmpf"
+OMNI_TRAVERSE="${OMNI_HOME}/libexec/omni_traverse --F --prefix xmpf"
 OMNI_LINKER_CMD="@MPI_FC@"
-OMNI_LINKER_MUST_OPT="${OMNI_HOME}/lib/xmpf_main.o -L${OMNI_HOME}/lib -lxmpf -lxmp"
+XMPF_MAIN_O="${OMNI_HOME}/lib/xmpf_main.o"
+OMNI_LINKER_MUST_OPT="-L${OMNI_HOME}/lib -lxmpf -lxmp"
 OMNI_LINKER_OPT="${OMNI_LINKER_MUST_OPT} @OMNI_LNK_FCFLAGS@"

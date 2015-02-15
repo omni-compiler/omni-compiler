@@ -1,38 +1,196 @@
 #!/bin/bash
 
-# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
-# $TSUKUBA_Copyright:
-#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
-#  $
+### Read configration file and library ###
+OMNI_HOME=@OMNI_HOME@
+. ${OMNI_HOME}/etc/ompcc.conf
+. ${OMNI_HOME}/libexec/omni_common_lib.sh
+. ${OMNI_HOME}/libexec/ompcc_lib.sh
 
-BINDIR=`dirname $0`
+### Directory for saving intermediate files ###
+PID=$$
+TEMP_DIR=/tmp/__omni_tmp__${PID}
+DEBUG_TEMP_DIR="__omni_tmp__"
 
-USE_ACC=''
-args=()
-for i in "$@"; do
-    case "${i}" in
-        -tmp)
-            args=("${args[@]}" "--Wn${i}");;
-	-acc)
-	    if test @ENABLE_ACC@ -eq 1; then
-		USE_ACC="1"
-	    else
-		echo "warning: -acc option is unavailable, rebuild the compiler with ./configure --enable-openacc"
-	    fi;;
-	-no-ldg)
-	    args=("${args[@]}" "--Wx${i}");;
-        *)
-            args=("${args[@]}" "${i}");;
-    esac
-done
+### Default options ###
+ENABLE_LINKER=true
+ONLY_PP=false
+VERBOSE=false
+ENABLE_DEBUG=false
+OUTPUT_TEMPORAL=false
+DRY_RUN=false
+STOP_PP=false
+STOP_FRONTEND=false
+STOP_TRANSLATOR=false
+STOP_BACKEND=false
+STOP_COMPILE=false
 
-set -- "${args[@]}"
+# Additional options defined by command line (e.g. --Wl..)
+# These parameters are set in ompcc_set_parameters().
+OUTPUT_FILE=
+PP_ADD_OPT=
+FRONTEND_ADD_OPT=
+XCODE_TRANSLATOR_ADD_OPT=
+BACKEND_ADD_OPT=
+NATIVE_ADD_OPT=
+LINKER_ADD_OPT=
 
-if [ -z "${USE_ACC}" ]; then
-    ${BINDIR}/omdriver --xc -Topenmp "$@"
-else
-    ${BINDIR}/omdriver --xc -Tacc "$@"
+### Set options ###
+# e.g.) ompcc -I/usr/lib a.c b.c c.o --tmp --Wlfoo lib.a
+#
+#  c_files="a.c b.c"                  # C files
+#  archive_files="lib.a"              # Archive files
+#  obj_files="c.o"                    # Object files
+#  other_args="-I/usr/lib"            # Options for Preprocessor, Compiler, and Linker
+
+c_files=
+archive_files=
+obj_files=
+other_args=
+ompcc_set_parameters ${@+"$@"}
+omni_c_check_file_exist
+
+### Create temporal directory ###
+if [ $ENABLE_DEBUG = true ]; then
+    TEMP_DIR=$DEBUG_TEMP_DIR
+    if [ -d $TEMP_DIR ]; then
+	omni_exec rm -rf $TEMP_DIR
+    fi
 fi
 
-exit $?
+omni_exec mkdir -p $TEMP_DIR
 
+### Clean temporal directory before exit ###
+trap "rm -rf $TEMP_DIR; exit 1" 1 2 3 15
+
+### Preprocessor ###
+[ $ONLY_PP = true -a -f "$OUTPUT_FILE" ] && omni_exec rm $OUTPUT_FILE
+
+if [ $ENABLE_ACC = true ]; then
+    OMNI_CPP_OPT="$OMNI_CPP_OPT ${OPENACC_DEF}"
+else
+    OMNI_CPP_OPT="$OMNI_CPP_OPT ${OPENMP_DEF}"
+fi
+for c_file in $c_files; do
+    FILE_NAME=`omni_c_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
+    FILE_PP_C=${TEMP_DIR}/${FILE_NAME}_pp.c
+    FILE_PP_I=${TEMP_DIR}/${FILE_NAME}_pp.i
+
+    omni_exec $OMNI_REPLACE_PRAGMA_CMD $OMNI_REPLACE_PRAGMA_OPT $c_file -o $FILE_PP_C
+    omni_exec $OMNI_CPP_CMD $PP_ADD_OPT $OMNI_CPP_OPT $other_args $FILE_PP_C ">" $FILE_PP_I
+    # AIX compiler cannot output file with ".i" suffix. So, ">" is used.
+
+    if [ $ONLY_PP = true ]; then
+	if [ "$OUTPUT_FILE" = "" ]; then
+	    omni_exec cat $FILE_PP_I
+	else
+	    omni_exec cat $FILE_PP_I ">>" $OUTPUT_FILE
+	fi
+    fi
+done
+[ $STOP_PP = true ] && exit 0;
+[ $ONLY_PP = true ] && { omni_exec rm -rf $TEMP_DIR; exit 0; }
+
+### Frontend ###
+[ $ENABLE_ACC = true ] && FRONTEND_ADD_OPT="$FRONTEND_ADD_OPT -facc"
+for c_file in $c_files; do
+    FILE_NAME=`omni_c_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
+    FILE_PP_I=${TEMP_DIR}/${FILE_NAME}_pp.i
+    FILE_IN_X=${TEMP_DIR}/${FILE_NAME}_in.xml
+
+    omni_exec $OMNI_C2X_CMD $FRONTEND_ADD_OPT $OMNI_C2X_OPT $FILE_PP_I -o $FILE_IN_X
+done
+[ $STOP_FRONTEND = true ] && exit 0;
+
+### Translator ###
+if [ $ENABLE_ACC = true ]; then
+    XCODE_TRANSLATOR_ADD_OPT="$XCODE_TRANSLATOR_ADD_OPT -facc"
+else
+    XCODE_TRANSLATOR_ADD_OPT="$XCODE_TRANSLATOR_ADD_OPT -fopenmp"
+fi
+for c_file in $c_files; do
+    FILE_NAME=`omni_c_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
+    FILE_IN_X=${TEMP_DIR}/${FILE_NAME}_in.xml
+    FILE_OUT_X=${TEMP_DIR}/${FILE_NAME}_out.xml
+    FILE_C=${TEMP_DIR}/${FILE_NAME}.c
+
+    omni_exec $OMNI_CX2X_CMD $OMNI_CX2X_OPT $XCODE_TRANSLATOR_ADD_OPT $FILE_IN_X -o $FILE_OUT_X
+    # also create ${TEMP_DIR}/${FILE_NAME}_in.c
+    omni_exec cp ${TEMP_DIR}/${FILE_NAME}_in.c $FILE_C
+done
+[ $STOP_TRANSLATOR = true ] && exit 0;
+
+### Backend ###
+if [ $OUTPUT_TEMPORAL = true ]; then
+    for c_file in $c_files; do
+	FILE_NAME=`omni_c_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
+	FILE_C=${TEMP_DIR}/${FILE_NAME}.c
+    
+	omni_exec cp $FILE_C __omni_tmp__${FILE_NAME}.c
+	echo "output __omni_tmp__${FILE_NAME}.c"
+    done
+fi
+[ $STOP_BACKEND = true ] && exit 0;
+
+### Native Compiler ###
+if [ $ENABLE_ACC = true ]; then
+    OMNI_CC_OPT="$OMNI_CC_OPT ${OPENACC_DEF}"
+else
+    OMNI_CC_OPT="$OMNI_CC_OPT ${OPENMP_DEF}"
+fi
+for c_file in $c_files; do
+    FILE_NAME=`omni_c_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
+    FILE_C=${TEMP_DIR}/${FILE_NAME}.c
+    FILE_O=${TEMP_DIR}/${FILE_NAME}.o
+    FILE_USER_O=`basename $c_file .c`.o
+
+    omni_exec $OMNI_CC_CMD $NATIVE_ADD_OPT $OMNI_CC_OPT $other_args $FILE_C -o $FILE_O
+
+    ### GPU Compiler ###
+    FILE_CU=${TEMP_DIR}/${FILE_NAME}_pp.cu
+    FILE_GPUO=${TEMP_DIR}/${FILE_NAME}.gpu.o
+    if [ -e $FILE_CU ]; then
+	omni_exec $OMNI_GPUCC_CMD $OMNI_GPUCC_OPT $FILE_CU -o $FILE_GPUO
+	FILE_O_TMP=${TEMP_DIR}/${FILE_NAME}.cpu.o
+	omni_exec mv $FILE_O $FILE_O_TMP
+	omni_exec ld -r $FILE_O_TMP $FILE_GPUO -o $FILE_O
+	omni_exec rm $FILE_O_TMP
+    fi
+
+    if [ $ENABLE_LINKER = false -a "$OUTPUT_FILE" != "" ]; then
+        omni_exec mv $FILE_O $OUTPUT_FILE  # only a single file is created.
+    else
+	omni_exec cp $FILE_O $FILE_USER_O
+    fi
+done
+[ $STOP_COMPILE = true ] && exit 0;
+[ $ENABLE_LINKER = false ] && { omni_exec rm -rf $TEMP_DIR; exit 0; }
+
+### Linker ###
+# collect initialize modules
+for c_file in $c_files; do
+    FILE_NAME=`omni_c_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
+    FILE_O=${TEMP_DIR}/${FILE_NAME}.o
+    obj_files="$obj_files $FILE_O"
+done
+
+# link
+if [ $ENABLE_ACC = true ]; then
+    LINKER_ADD_OPT="$LINKER_ADD_OPT $OMNI_GPUCC_LIB"
+else
+    obj_files="$OMPC_MAIN_O $obj_files"
+fi
+
+if [ "$OUTPUT_FILE" = "" ]; then
+    omni_exec $OMNI_LINKER_CMD $obj_files $OMNI_LINKER_OPT $LINKER_ADD_OPT $other_args $archive_files
+else
+    omni_exec $OMNI_LINKER_CMD $obj_files $OMNI_LINKER_OPT $LINKER_ADD_OPT $other_args $archive_files -o $OUTPUT_FILE
+fi
+
+### Delete temporal directory ###
+if [ $ENABLE_DEBUG = true ]; then
+    echo "Create ${TEMP_DIR}/"
+else
+    omni_exec rm -rf $TEMP_DIR
+fi
+
+exit 0

@@ -52,7 +52,7 @@ function xmpcc_show_env()
 	    echo \"
 	done
     else
-	xmp_error_exit "$CONF_FILE not exist."
+	omni_error_exit "$CONF_FILE not exist."
     fi
 }
 
@@ -71,7 +71,7 @@ function xmpcc_set_parameters()
             -v|--verbose)
 		VERBOSE=true;;
 	    --version)
-		xmp_print_version
+		omni_print_version
 		exit 0;;
             -h|--help)
 		local scriptname=`basename $0`
@@ -142,7 +142,7 @@ function xmpcc_set_parameters()
     done
 
     if test $OUTPUT_TEMPORAL = true -a $DRY_RUN = true; then
-        xmp_error_exit "cannot use both --tmp and --dry options at the same time."
+        omni_error_exit "cannot use both --tmp and --dry options at the same time."
     fi
 
     for arg in $tmp_args; do
@@ -158,27 +158,3 @@ function xmpcc_set_parameters()
     done
 }
 
-function xmpcc_check_file_exist()
-{
-    ([ "$c_files" = "" ] && [ "$obj_files" = "" ]) && xmp_error_exit "no input files."
-
-    for file in $c_files $obj_files; do
-	if [ ! -f $file ]; then
-	    xmp_error_exit "not found ${file}"
-        fi
-    done
-}
-
-# ./hoge/fuga.c -> hoge_2f_fuga
-function xmpcc_norm_file_name()
-{
-    local NORM_NAME=`basename $1 .c`   # ./hoge/fuga.c -> ./hoge/fuga
-    local DIR=`dirname $1`
-    NORM_NAME=${DIR}/${NORM_NAME}
-    NORM_NAME=`echo $NORM_NAME | sed 's/^\.\///'`    # ./hoge/fuga -> hoge/fuga
-    NORM_NAME=`echo $NORM_NAME | sed 's/\//_2f_/g'`  # hoge/fuga -> hoge_2f_fuga
-                                                     # "2f" is a hex number of '/'.
-    NORM_NAME=`echo $NORM_NAME | sed 's/\./_2e_/g'`  # "." -> "_2e_"
-
-    echo $NORM_NAME
-}
