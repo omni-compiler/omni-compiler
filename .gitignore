@@ -80,7 +80,6 @@ libompc/src/Makefile
 libompc/src/target.tmpl
 libompc/src/*mutex_pthread_o
 libompf/src/Makefile
-libompf/src/*.xmod
 libtlog/src_mpi/Makefile
 libtlog/src_mpi/bin/tlogview
 libtlog/src_threads/Makefile
@@ -101,7 +100,8 @@ tests/C-test/Makefile
 tests/F-test/OMP-test/Makefile
 tests/clinpack/Makefile
 tests/tiny/Makefile
-tests/xcalablemp/global-view/intrinsic/F/*mod
-tests/xcalablemp/others/F/*mod
+tests/xcalablemp/others/[CF]/377.txt
 */build.xml
 __omni_tmp__
+*.mod
+*.xmod
