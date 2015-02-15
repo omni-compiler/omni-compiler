@@ -33,6 +33,7 @@ Process Options
 Omni OpenACC Options
 
   -acc, --openacc : Enable OpenACC.
+  --no-ldg        : Disable use of read-only data cache.
 EOF
 }
 
@@ -119,6 +120,9 @@ function ompcc_set_parameters()
 		    omni_error_exit "warning: $arg option is unavailable, rebuild the compiler with ./configure --enable-openacc"
 		fi
 		ENABLE_ACC=true
+		;;
+	    --no-ldg)
+		DISABLE_LDG=true
 		;;
             *)
 		if [ "$OUTPUT_FLAG" = true ]; then

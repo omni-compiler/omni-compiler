@@ -33,6 +33,7 @@ XCODE_TRANSLATOR_ADD_OPT=
 BACKEND_ADD_OPT=
 NATIVE_ADD_OPT=
 LINKER_ADD_OPT=
+DISABLE_LDG=
 
 ### Set options ###
 # e.g.) ompcc -I/usr/lib a.c b.c c.o --tmp --Wlfoo lib.a
@@ -106,6 +107,9 @@ if [ $ENABLE_ACC = true ]; then
     XCODE_TRANSLATOR_ADD_OPT="$XCODE_TRANSLATOR_ADD_OPT -facc"
 else
     XCODE_TRANSLATOR_ADD_OPT="$XCODE_TRANSLATOR_ADD_OPT -fopenmp"
+fi
+if [ -n "$DISABLE_LDG" ]; then
+    XCODE_TRANSLATOR_ADD_OPT="$XCODE_TRANSLATOR_ADD_OPT -no-ldg"
 fi
 for c_file in $c_files; do
     FILE_NAME=`omni_c_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
