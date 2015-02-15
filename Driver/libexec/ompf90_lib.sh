@@ -74,7 +74,7 @@ function ompf90_set_parameters()
             -v|--verbose)
 		VERBOSE=true;;
 	    --version)
-		ompf90_print_version
+		omni_print_version
 		exit 0;;
             -h|--help)
 		local scriptname=`basename $0`
