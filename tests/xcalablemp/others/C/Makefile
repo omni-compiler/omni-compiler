@@ -16,17 +16,14 @@ all default: $(EXES)
 344_include.x: ./344_include.c
 	$(XCC) -I$(MPIPATH) $^ -o $@
 
-364.x: 364.c
-	$(XCC) --debug $^ -o $@
-
 377.x: 377.c
 	rm -f 377.txt; \
-	$(XCC) -c -o 377.txt 377.c; \
-	if test -f 377.txt; then \
-	  echo "PASS";\
-	else \
-	  exit 1; \
-	fi;
+	$(XCC) -c -o 377.txt $<; \
+	[ ! -f 377.txt ] && exit 1; \
+	rm -rf __omni_tmp__; \
+	$(XCC) -c $< --debug 1> /dev/null; \
+	[ ! -d __omni_tmp__ ] && exit 1; \
+	echo "PASS"; 
 
 #-- default rules
 .c.x:
